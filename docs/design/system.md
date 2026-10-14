@@ -2,7 +2,7 @@
 doc: design-system
 title: Design system (slice)
 source: 03§Brand and visual language
-version: 0.7
+version: 0.8
 status: Draft, direction A (Lagoon) chosen by the client
 date: 2026-10-15
 owner: Design Lead
@@ -436,6 +436,8 @@ Motion has a reason: feedback (press scale 0.98), state change (sheet snap, swit
 | Cluster | 40 px disc `marker-cluster` with the count | Several reports close together |
 | Sighting dot | 14 px `marker-sighted` dot | Detail-page map only |
 | You | 18 px `marker-me` dot with a 3 px `marker-ring` halo | Only after location permission, on the main map and the location picker. Never on a detail map: it would read as a sighting dot (both are blue dots) |
+| Area disc (to scale) | Translucent disc in the report's status hue at `--marker-area-alpha` (0.16 light, 0.20 dark): lost `marker-area`, found `marker-found`, sighted `marker-sighted`; the user's own alert or home area `primary`. No edge, except a 2 px edge in the same hue while editing in the picker (lost: `marker-lost`). Always with the area name and radius as text | Detail maps and the fuzzed-area component (P5). The main map draws discs for lost reports only |
+| Pin | 48 px `primary` head with a tail and a 3 px `marker-ring` halo; `paw-print` icon (reports), `house` (alert and home area) or `buildings` (shelter); the tail tip is the point | The picker centre (P5), the owner's own exact pin with "Vidno samo vam" (P5, P9), a shelter address (P3 T6). Never for someone else's report |
 
 # 10. Components
 
@@ -524,7 +526,7 @@ Top bar, then (optional) a photo, an h1 question (34/40), the answer or control 
 | Component | Spec |
 |---|---|
 | Toast | `popover` surface, radius 20, `shadow-pop` (one shadow only; do not stack shadows), 15/22, status icon, 5 s, dismissible, announced politely. |
-| Dialog | `popover`, radius 24, `scrim`, max 440 px wide, padding 28/24/20, title in the `title` role (18/28, 20/28 on web), text, buttons stacked full width (main action then `text`). Focus trapped, Escape closes. With a `destructive` main action (alert dialog), focus starts on the `text` cancel button. |
+| Dialog | `popover`, radius 24, `scrim`, max 440 px wide, padding 28/24/20, title in the `title` role (18/28, 20/28 on web), text, buttons stacked full width (main action then `text`). Focus trapped, Escape closes. With a `destructive` main action (alert dialog), focus starts on the `text` cancel button. **Content dialog** (a flow step on web, for example the location picker): up to 600 px wide, padding 28, the step question as the title in the h2 role (30/36 on web), a close icon button top right, the same single primary. |
 | Timeline (sightings) | Plain list: status word with date and time, then the sentence (16/24), 28 px between items. No cards, no line. |
 | Gallery | Main photo radius 32, thumbs 88x72 radius 16, inactive thumbs at 55 % opacity. |
 | Share | One ghost button "Deli ali natisni plakat" that opens a menu (Facebook, WhatsApp, copy link, poster with QR code). |
@@ -661,3 +663,4 @@ Each page slice in `docs/design/pages/P<n>-<slug>.md` gets one static mockup at 
 | 0.5 | 2026-10-15 | P23 review (TASK-8.1): `destructive` darkened to crimson.700 light and crimson.300 dark (8.2 and 8.7:1, meets 7:1 as the main action of a delete dialog; tokens 0.3.0, new pairs on background, popover, muted). Flow top bar draws one bar per step. Radio checked = dot. Tile hover, pressed and 6 px focus offset. States written down from the gallery: disabled field (dashed line), select listbox, search field, checkbox and radio anatomy, choice-row hover, pressed and disabled, segmented hover and disabled, switch disabled, dialog title role and alert-dialog focus, menu, avatar initials, inline region error, progress done and failed, reduced-motion spinner. "You" dot never on detail maps. |
 | 0.6 | 2026-10-15 | P16 review (TASK-9.1): `provider` button variant and `provider`, `provider-foreground`, `provider-border` tokens (brand-literal white and near-black with a 1 px stroke, same on every surface; tokens 0.4.0). |
 | 0.7 | 2026-10-15 | FR-044 shelter directory: footer gains the "Shelters" link (13 links). Screens live in P3 (T5, T6), P19 and the P6 and P7 call rows. |
+| 0.8 | 2026-10-15 | P5 review (TASK-15.1): area discs take the status hue (found green, sighted blue, own alert area teal; lost stays `marker-area`), pin marker documented, content dialog (up to 600 px, h2 title) for web flow steps. |
