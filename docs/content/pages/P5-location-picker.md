@@ -32,6 +32,9 @@ Namespace `location`. Used inside P6, P7, P13 and the profile. Area names come f
 | location.searching | Iščemo … | Searching … |
 | location.no_results | Tega kraja ne najdemo. Poskusite z drugim imenom ali premaknite zemljevid na pravo mesto. | We cannot find that place. Try another name or move the map to the right spot. |
 | location.search_clear | Počisti iskanje | Clear search |
+| location.search_attribution | Iskanje: © MapTiler © sodelavci OpenStreetMap | Search: © MapTiler © OpenStreetMap contributors |
+
+`location.search_attribution` sits in small muted text under the results list (and under "no results"); "MapTiler" links to maptiler.com/copyright and "OpenStreetMap" to openstreetmap.org/copyright. The map itself carries `map.attribution` (P4).
 
 # 3. Map and pin
 

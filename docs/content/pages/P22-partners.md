@@ -44,6 +44,8 @@ Lede: 18 words (SL).
 
 Zero stays "0"; any value from 1 to 4 shows as "< 5" (C14 `CountValue`).
 
+Under `partners.stats_source`, in the same small muted style: `common.geo_attribution` (P1), because the figures are grouped by GURS statistical regions (CC BY 4.0 attribution).
+
 # 3. Where your ad appears
 
 | Key | SL | EN |

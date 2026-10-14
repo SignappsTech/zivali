@@ -111,7 +111,7 @@ All drafts carry "Draft — requires client/legal review" at the top and end wit
 | Privacy policy | [privacy-policy.md](../content/legal/privacy-policy.md) | 0.3 (processors per brief v1.0, on-device geofencing) | `/zasebnost` / `/en/privacy` | Company details (CD-01); features not live yet are described as at launch (LQ-04) |
 | Cookie policy | [cookie-policy.md](../content/legal/cookie-policy.md) | 0.2 (offline cache and geofences added) | `/piskotki` / `/en/cookies` | Real cookie durations to verify in the built product |
 | Terms of use | [terms-of-use.md](../content/legal/terms-of-use.md) | 0.1 | `/pogoji-uporabe` / `/en/terms` | Finder duties (LQ-08), withdrawal right (LQ-41), dispute body (LQ-44), DSA wording (LQ-40) |
-| Imprint | [imprint.md](../content/legal/imprint.md) | 0.2 (hosting per brief v1.0) | `/impresum` / `/en/imprint` | Company details (CD-01) |
+| Imprint | [imprint.md](../content/legal/imprint.md) | 0.3 (hosting per brief v1.0; data sources and map attributions) | `/impresum` / `/en/imprint` | Company details (CD-01) |
 | Accessibility statement | [accessibility-statement.md](../content/legal/accessibility-statement.md) | 0.1 | `/dostopnost` / `/en/accessibility` | Authority and act (LQ-62); status after the M5 audit |
 
 Related content with legal relevance:
@@ -495,4 +495,4 @@ Status today: no agreement has been signed or accepted for production; staging u
 
 | Version | Date | Change |
 |---|---|---|
-| 0.1 | 2026-10-15 | First version for the lawyer: features, processors per brief v1.0 (Hetzner, Supabase Free for database, auth and realtime, Cloudflare R2, Brevo, no Vercel), 66 consolidated questions, DPIA outline, retention table, DPA checklist, client decisions. Drafts refreshed with it: privacy policy 0.3, cookie policy 0.2, imprint 0.2. |
+| 0.1 | 2026-10-15 | First version for the lawyer: features, processors per brief v1.0 (Hetzner, Supabase Free for database, auth and realtime, Cloudflare R2, Brevo, no Vercel), 66 consolidated questions, DPIA outline, retention table, DPA checklist, client decisions. Drafts refreshed with it: privacy policy 0.3, cookie policy 0.2, imprint 0.3 (with the data sources chapter). |

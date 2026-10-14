@@ -1,9 +1,9 @@
 **Draft — requires client/legal review.**
-source: 02§Content, SEO and legal requirements (Legal); 03§Content strategy / page inventory; brief v0.7
+source: 02§Content, SEO and legal requirements (Legal); 03§Content strategy / page inventory; brief v1.0 (maps and geo); supabase/seed/geo/LICENSE.md
 
 | Field | Value |
 |---|---|
-| Version | 0.2 |
+| Version | 0.3 |
 | Date | 2026-10-15 |
 | Route SL | `/impresum` |
 | Route EN | `/en/imprint` |
@@ -11,18 +11,20 @@ source: 02§Content, SEO and legal requirements (Legal); 03§Content strategy / 
 | Structured data | WebPage |
 | Template | T4 Legal (numbered h2 sections, "On this page" list, draft note) |
 
+Change in 0.3: new chapter 7 "Data sources and maps" with the GURS (CC BY 4.0), OpenStreetMap/OpenFreeMap and MapTiler attributions; "Rules of use" is now chapter 8.
+
 Change in 0.2: hosting per brief v1.0 (Hetzner server in the EU, Supabase for the database and sign-in, Cloudflare R2 for photos and backups; Vercel removed).
 
 **SEO (SL)**
 
 - Meta title: Impresum · Najdimo
-- Meta description: Kdo upravlja Najdimo: podatki o družbi Signapps, kontakt, odgovorna oseba, gostovanje in avtorstvo fotografij.
+- Meta description: Kdo upravlja Najdimo: podatki o družbi Signapps, kontakt, odgovorna oseba, gostovanje, viri podatkov in avtorstvo fotografij.
 - Focus keyword: impresum
 
 **SEO (EN)**
 
 - Meta title: Imprint · Najdimo
-- Meta description: Who runs Najdimo: company details of Signapps, contact, responsible person, hosting and photo credits.
+- Meta description: Who runs Najdimo: company details of Signapps, contact, responsible person, hosting, data sources and photo credits.
 - Focus keyword: imprint
 
 ---
@@ -73,7 +75,13 @@ Najdimo je delovno ime storitve.
 
 Fotografije živali v prijavah so last njihovih avtorjev, ki so nam dovolili prikaz v Najdimo. Ilustracije so delo ekipe Najdimo. [naročnik: dodati morebitne druge navedbe avtorjev.]
 
-## 7. Pravila uporabe
+## 7. Viri podatkov in zemljevidi
+
+- **Meje občin in statističnih regij.** Vir: Geodetska uprava Republike Slovenije, Register prostorskih enot, stanje 15. 10. 2026 (licenca [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/deed.sl)). Meje so poenostavljene. Z njimi prijavi določimo občino in regijo, pripravimo statistiko po regijah in izberemo oglase za regijo.
+- **Zemljevid.** Ploščice [OpenFreeMap](https://openfreemap.org), © [OpenMapTiles](https://www.openmaptiles.org), podatki © [sodelavci OpenStreetMap](https://www.openstreetmap.org/copyright) (licenca ODbL).
+- **Iskanje krajev in naslovov.** © [MapTiler](https://www.maptiler.com/copyright/), podatki © [sodelavci OpenStreetMap](https://www.openstreetmap.org/copyright).
+
+## 8. Pravila uporabe
 
 Pravila uporabe so v [pogojih uporabe](/pogoji-uporabe). O piškotkih beremo v [politiki piškotkov](/piskotki), o dostopnosti pa v [izjavi o dostopnosti](/dostopnost).
 
@@ -125,7 +133,13 @@ Najdimo is a working name of the service.
 
 Photos of animals in reports belong to their authors, who allowed us to display them in Najdimo. Illustrations are by the Najdimo team. [client: add any other credits.]
 
-## 7. Rules of use
+## 7. Data sources and maps
+
+- **Municipal and statistical region boundaries.** Source: Surveying and Mapping Authority of the Republic of Slovenia, Register of Spatial Units, as of 15 October 2026 ([CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)). Boundaries simplified. We use them to set the municipality and region of a report, for statistics by region and to choose ads for a region.
+- **Map.** Tiles by [OpenFreeMap](https://openfreemap.org), © [OpenMapTiles](https://www.openmaptiles.org), data © [OpenStreetMap contributors](https://www.openstreetmap.org/copyright) (ODbL licence).
+- **Place and address search.** © [MapTiler](https://www.maptiler.com/copyright/), data © [OpenStreetMap contributors](https://www.openstreetmap.org/copyright).
+
+## 8. Rules of use
 
 The rules of use are in the [terms of use](/en/terms). Read about cookies in the [cookie policy](/en/cookies) and about accessibility in the [accessibility statement](/en/accessibility).
 
@@ -139,3 +153,4 @@ The rules of use are in the [terms of use](/en/terms). Read about cookies in the
 4. **Image credits.** Confirm the licence of any stock photos, fonts or icon sets used on the site and list them here.
 5. **Working name.** The line "Najdimo is a working name" must be removed or updated when the client picks the final name (Q-001); the legal pages then change with the name.
 6. **Quality.** The Slovenian text needs a native review.
+7. **Data sources (new in 0.3).** The GURS lines are the attribution required by the GURS terms and CC BY 4.0 (`supabase/seed/geo/LICENSE.md`): source, data type, data state date, licence link and the note that the data were changed. Update the date whenever the geodata are refreshed; the same line is the shared key `common.geo_attribution` (P1) for every page that shows boundaries or figures by municipality or region (P22 statistics, SEO location pages, municipality reports). The map line matches `map.attribution` (P4) and the search line `location.search_attribution` (P5). Check MapTiler's attribution terms for geocoding-only use and the OpenFreeMap wording at build time (lawyer briefing LQ-63, LQ-64).

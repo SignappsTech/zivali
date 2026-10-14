@@ -186,6 +186,14 @@ Buttons on error pages: primary `common.go_to_map`, text button `common.go_home`
 |---|---|---|
 | common.translation_missing | Ta stran še ni prevedena, zato je prikazana v slovenščini. | This page is not translated yet, so it is shown in Slovenian. |
 
+## 5.7 Data source line (GURS boundaries)
+
+| Key | SL | EN |
+|---|---|---|
+| common.geo_attribution | Vir: Geodetska uprava Republike Slovenije, Register prostorskih enot, stanje {date} (licenca CC BY 4.0). Meje so poenostavljene. | Source: Surveying and Mapping Authority of the Republic of Slovenia, Register of Spatial Units, as of {date} (CC BY 4.0). Boundaries simplified. |
+
+Required by the GURS terms and CC BY 4.0 (`supabase/seed/geo/LICENSE.md`). `{date}` is the data state date of the loaded geodata (now 15. 10. 2026 / 15 October 2026), formatted per locale; "CC BY 4.0" links to the licence. Show it in small muted text wherever boundaries or figures by municipality or region are published: the Partners statistics (P22), SEO location pages, municipality reports (PDF and CSV) and the imprint (chapter 7).
+
 # 6. Errors catalogue (`errors`, one key per C1 code)
 
 Shown in notes and toasts. Pages may override with a more specific message (for example P7 rate limit).
