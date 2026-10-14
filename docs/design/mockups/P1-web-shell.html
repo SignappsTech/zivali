@@ -1,0 +1,847 @@
+<!doctype html>
+<!--
+  P1 Web shell mockup (TASK-11.1). Built from docs/design/mockups/_template.html.
+  Sources: docs/design/pages/P1-web-shell.md, docs/design/system.md, docs/content/pages/P1-web-shell.md (v0.1).
+  Page bodies inside the frames use P3 copy (docs/content/pages/P3-public-pages.md). The flow question and the ad slot are samples (P7 and P21 own them).
+  Everything in #src is cloned once per colour mode by ../directions/directions.js.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Najdimo mockup: P1 Web shell</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:wght@400;500;600;700&family=Bricolage+Grotesque:opsz,wght@12..96,500..800&display=swap" rel="stylesheet">
+<link href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css" rel="stylesheet">
+<link href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/bold/style.css" rel="stylesheet">
+<link href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css" rel="stylesheet">
+<link href="../tokens.css" rel="stylesheet">
+<link href="../directions/directions.css" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com/3.4.17"></script>
+<script src="../directions/tailwind-config.js"></script>
+<style>
+/* Shell parts used only by this mockup. Token-driven; frontend maps them to the header, menu and footer components. */
+.scope h1, .scope h2, .scope h3 { text-wrap: balance; }
+
+/* Logo link */
+.logo-link { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; border-radius: 12px; color: hsl(var(--foreground)); text-decoration: none; flex: none; }
+
+/* Header text links: 16 semibold, current = foreground + underline (never colour alone) */
+.nl { display: inline-flex; align-items: center; min-height: 44px; padding: 0 12px; border-radius: 999px; font-weight: 600; font-size: 16px; line-height: 24px; color: hsl(var(--muted-foreground)); text-decoration: none; white-space: nowrap; transition: background-color 150ms var(--ease), color 150ms var(--ease); }
+.nl[aria-current="page"], .ml[aria-current="page"] { color: hsl(var(--foreground)); text-decoration: underline; text-decoration-color: hsl(var(--primary)); text-decoration-thickness: 2px; text-underline-offset: 8px; }
+
+/* Hover (system v0.3, 10.1): ghost, text-like, icon buttons and menu rows get foreground at 10 % over the surface.
+   Overrides the accent hover still in directions.css for .btn-ghost and .iconbtn. Filled rows (choice) get the same 10 % as an overlay on their fill. */
+.nl:hover, .nl.is-hover, .ml:hover, .ml.is-hover, .mi:hover, .mi.is-hover,
+.btn-ghost:hover, .btn-ghost.is-hover, .iconbtn:hover, .iconbtn.is-hover, .iconbtn.is-open { background-color: hsl(var(--foreground) / 0.1); color: hsl(var(--foreground)); }
+.choice:hover, .choice.is-hover { background-image: linear-gradient(hsl(var(--foreground) / 0.1), hsl(var(--foreground) / 0.1)); }
+.is-focus { outline: 3px solid hsl(var(--ring)); outline-offset: 2px; }
+
+/* Language switcher: text toggle, current underlined */
+.lang { display: inline-flex; align-items: center; font-weight: 600; font-size: 15px; color: hsl(var(--muted-foreground)); }
+.ll { display: inline-flex; align-items: center; justify-content: center; min-width: 44px; min-height: 44px; padding: 0 6px; border-radius: 999px; color: hsl(var(--muted-foreground)); text-decoration: none; white-space: nowrap; }
+.ll:hover { color: hsl(var(--foreground)); }
+.ll[aria-current="true"], .ll[aria-checked="true"] { color: hsl(var(--foreground)); text-decoration: underline; text-decoration-color: hsl(var(--primary)); text-decoration-thickness: 2px; text-underline-offset: 6px; }
+
+.avatar { width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; background: hsl(var(--secondary)); color: hsl(var(--secondary-foreground)); font-size: 14px; font-weight: 700; }
+
+/* Popover surface (menus, toasts): shadow-pop casts downward (system v0.3, section 6) */
+.pop { background: hsl(var(--popover)); color: hsl(var(--popover-foreground)); box-shadow: var(--shadow-pop); z-index: 5; }
+.pop .choice { background-color: hsl(var(--background)); text-decoration: none; }
+.mi { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 48px; padding: 0 12px; border: 0; border-radius: calc(var(--radius) - 4px); background: transparent; font: inherit; font-weight: 600; font-size: 16px; line-height: 24px; color: inherit; text-decoration: none; text-align: left; cursor: pointer; }
+.mi i { font-size: 20px; line-height: 1; }
+.sep { height: 1px; margin: 6px 12px; background: hsl(var(--border)); }
+
+/* Menu sheet links (below lg) */
+.ml { display: flex; align-items: center; min-height: 56px; padding: 0 12px; margin: 0 -12px; border-radius: calc(var(--radius) - 4px); font-family: var(--font-display); font-weight: 600; font-size: 24px; line-height: 30px; letter-spacing: -0.01em; color: hsl(var(--foreground)); text-decoration: none; }
+
+/* Footer links */
+.fl { display: inline-flex; align-items: center; min-height: 44px; min-width: 44px; padding: 0; border: 0; background: none; font: inherit; font-size: 15px; line-height: 22px; color: hsl(var(--muted-foreground)); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 4px; cursor: pointer; white-space: nowrap; }
+.fl:hover { color: hsl(var(--foreground)); }
+
+.skip { position: absolute; display: inline-flex; align-items: center; min-height: 44px; padding: 0 20px; border-radius: 999px; background: hsl(var(--popover)); color: hsl(var(--popover-foreground)); box-shadow: var(--shadow-pop); font-weight: 700; text-decoration: none; z-index: 6; }
+.toast { display: flex; align-items: center; gap: 12px; min-height: 56px; padding: 6px 6px 6px 18px; border-radius: var(--radius-row); font-size: 15px; line-height: 22px; }
+
+/* Mobile web address bar, so 390 frames read as the website and not the app (P2) */
+.mweb { flex: none; height: 44px; display: flex; align-items: center; padding: 0 16px; }
+.mweb span { flex: 1; height: 32px; border-radius: 999px; background: hsl(var(--muted)); display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 13px; color: hsl(var(--muted-foreground)); }
+
+/* Mockup annotations (not product UI) */
+.anno { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; font-size: 13px; line-height: 18px; font-weight: 700; background: hsl(var(--foreground)); color: hsl(var(--background)); white-space: nowrap; }
+</style>
+</head>
+<body>
+<a class="sr-only focus:not-sr-only" href="#stage">Skip to content</a>
+
+<!-- Symbols, defined once: logo mark and the spot-illustration placeholder -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <symbol id="nj-mark" viewBox="0 0 48 48">
+    <g fill="currentColor" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round">
+      <path d="M24 45.5 C24 45.5 10.5 33.2 10.5 24.4 A13.5 13.5 0 0 1 37.5 24.4 C37.5 33.2 24 45.5 24 45.5 Z M24 17.9 A6.5 6.5 0 1 0 24 30.9 A6.5 6.5 0 1 0 24 17.9 Z"/>
+      <path d="M12.2 19.6 L11.2 5 L22.6 11.4 Z"/><path d="M35.8 19.6 L25.4 11.4 L36.8 5 Z"/>
+    </g>
+    <circle cx="24" cy="24.4" r="3.6" fill="#F7B32B"/>
+  </symbol>
+  <!-- PLACEHOLDER for ../../../assets/empty-inbox.png (image task pending). Flat geometry in brand tokens; status-reunited stands in for sun.400. -->
+  <symbol id="illo-spot" viewBox="0 0 320 210">
+    <rect width="320" height="210" style="fill:hsl(var(--accent))"/>
+    <circle cx="232" cy="70" r="32" style="fill:hsl(var(--status-reunited))"/>
+    <path d="M0 150 C60 112 120 120 172 140 C222 160 272 150 320 120 V210 H0Z" style="fill:hsl(var(--secondary))"/>
+    <path d="M0 182 C70 146 130 162 190 180 C240 194 290 186 320 170 V210 H0Z" style="fill:hsl(var(--primary))"/>
+    <path d="M52 198 C96 160 150 182 196 148" fill="none" style="stroke:hsl(var(--status-reunited))" stroke-width="3" stroke-linecap="round" stroke-dasharray="1 9"/>
+  </symbol>
+</svg>
+
+<header class="chrome">
+  <div class="flex flex-wrap items-center gap-x-5 gap-y-2 px-6 py-2 max-w-[1400px] mx-auto">
+    <span class="flex items-center gap-2 font-display font-bold text-lg"><svg class="logo-mark w-7 h-7" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg>Najdimo</span>
+    <span class="text-muted-foreground text-[15px]">P1 Web shell (mockup)</span>
+    <div class="ml-auto flex items-center gap-2" role="group" aria-label="Colour mode">
+      <button class="mode-btn" data-mode="light" aria-pressed="true">Light</button>
+      <button class="mode-btn" data-mode="dark" aria-pressed="false">Dark</button>
+      <button class="mode-btn" data-mode="both" aria-pressed="false">Side by side</button>
+    </div>
+  </div>
+</header>
+
+<main id="stage"></main>
+
+<div id="src" hidden>
+
+<!-- ================= INTRO ================= -->
+<section class="tile-section !max-w-[1400px] !pb-0">
+  <h1 class="tile-title">P1 Web shell</h1>
+  <p class="tile-lede">The frame every web page sits in: header, footer, the three layout variants, the header popovers, the menu at 768 and 390 px, and the shared loading, empty, error, toast and banner patterns. Shell copy is final from the P1 content slice; page bodies come from P3. Two items are samples and are marked as such: the flow question (P7) and the ad slot (P21).</p>
+  <div class="flex flex-wrap gap-2">
+    <span class="anno">Header 88 px, no border</span><span class="anno">Content 1120 max, gutters 48 / 20</span><span class="anno">Sidebar 320 from lg</span><span class="anno">Flow column 560</span><span class="anno">Mobile header 64 px</span>
+  </div>
+</section>
+
+<!-- ================= 1. LAYOUT VARIANTS ================= -->
+<section class="tile-section !max-w-[1400px]">
+  <h2 class="tile-title">1. Layout variants at 1200 px</h2>
+  <p class="tile-lede">Content (signed out), content with sidebar (signed in), flow, and the signed-in header at 1024 px. The full footer (12 links) is under the first frame; the flow variant uses the minimal one-row footer.</p>
+
+  <!-- A1: Content, signed out -->
+  <p class="tile-h !mt-0">A1 · Content variant, signed out · current page "Kako deluje" · keyboard focus on the "Najdene" link</p>
+  <div class="wrap-x"><div class="browser" lang="sl">
+    <div class="browser-bar"><span class="dots"><i></i><i></i><i></i></span><span class="url"><i class="ph ph-lock-simple"></i>najdimo.si/kako-deluje</span></div>
+    <header class="flex items-center gap-8 px-12 h-[88px]">
+      <a href="#" class="logo-link" aria-label="Najdimo, na začetno stran"><svg class="logo-mark w-9 h-9" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg><span class="font-display font-bold text-2xl tracking-[-0.03em]" aria-hidden="true">Najdimo</span></a>
+      <nav aria-label="Glavni meni"><ul class="flex items-center gap-2">
+        <li><a href="#" class="nl">Zemljevid</a></li>
+        <li><a href="#" class="nl">Izgubljene</a></li>
+        <li><a href="#" class="nl is-focus">Najdene</a></li>
+        <li><a href="#" class="nl" aria-current="page">Kako deluje</a></li>
+      </ul></nav>
+      <div class="ml-auto flex items-center gap-2">
+        <div class="lang" role="group" aria-label="Jezik: Slovenščina"><a href="#" class="ll" lang="sl" aria-current="true" aria-label="Slovenščina">SL</a><span aria-hidden="true">/</span><a href="#" class="ll" lang="en" hreflang="en" aria-label="English">EN</a></div>
+        <a href="#" class="btn btn-ghost btn-sm">Vpis</a>
+        <button type="button" class="btn btn-primary btn-sm" aria-haspopup="menu" aria-expanded="false">Prijavi</button>
+      </div>
+    </header>
+    <main class="px-12 pt-8">
+      <div class="max-w-[640px]">
+        <h1 class="font-display font-bold text-5xl tracking-[-0.02em]">Kako deluje Najdimo</h1>
+        <p class="text-xl leading-8 mt-4">Najdimo poveže ljudi, ki pogrešajo žival, s tistimi, ki so jo našli ali videli. Ujemanja iščemo mi, odločitve pa so vaše.</p>
+        <section class="mt-24">
+          <h2 class="font-display font-bold text-3xl tracking-[-0.015em]">Če ste izgubili žival</h2>
+          <ol class="grid gap-5 mt-6">
+            <li class="flex gap-4"><span class="font-display font-bold text-xl leading-6 text-primary tnum w-5 flex-none" aria-hidden="true">1</span><p>Prijavite izgubljeno žival: dodajte fotografijo, opis ter kraj in čas, ko ste jo nazadnje videli.</p></li>
+            <li class="flex gap-4"><span class="font-display font-bold text-xl leading-6 text-primary tnum w-5 flex-none" aria-hidden="true">2</span><p>Iskanje objavimo v nekaj minutah. Ljudje v bližini, ki imajo vklopljena opozorila, prejmejo obvestilo.</p></li>
+            <li class="flex gap-4"><span class="font-display font-bold text-xl leading-6 text-primary tnum w-5 flex-none" aria-hidden="true">3</span><p>Ko kdo prijavi najdeno ali opaženo žival, ki je podobna vaši, vam sporočimo možno ujemanje.</p></li>
+          </ol>
+        </section>
+      </div>
+    </main>
+    <!-- FOOTER (full) -->
+    <footer class="px-12 pt-12 pb-10 mt-24">
+      <p class="flex items-center gap-4"><a href="#" class="logo-link" aria-label="Najdimo, na začetno stran"><svg class="logo-mark w-7 h-7" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg><span class="font-display font-bold text-lg" aria-hidden="true">Najdimo</span></a><span class="text-muted-foreground">Spet doma.</span></p>
+      <nav aria-label="Noga strani" class="mt-4 flex items-end gap-8">
+        <div class="flex-1 min-w-0">
+          <ul class="flex flex-wrap gap-x-6">
+            <li><a href="#" class="fl">Kako deluje</a></li>
+            <li><a href="#" class="fl">Nasveti za varnost</a></li>
+            <li><a href="#" class="fl">Pogosta vprašanja</a></li>
+            <li><a href="#" class="fl">Za zavetišča</a></li>
+            <li><a href="#" class="fl">Oglašujte pri nas</a></li>
+            <li><a href="#" class="fl">O nas</a></li>
+          </ul>
+          <ul class="flex flex-wrap gap-x-6">
+            <li><a href="#" class="fl">Zasebnost</a></li>
+            <li><a href="#" class="fl">Piškotki</a></li>
+            <li><button type="button" class="fl" aria-haspopup="dialog">Nastavitve piškotkov</button></li>
+            <li><a href="#" class="fl">Pogoji uporabe</a></li>
+            <li><a href="#" class="fl">Impresum</a></li>
+            <li><a href="#" class="fl">Dostopnost</a></li>
+          </ul>
+        </div>
+        <div class="lang" role="group" aria-label="Jezik: Slovenščina"><a href="#" class="ll" lang="sl" aria-current="true" aria-label="Slovenščina">SL</a><span aria-hidden="true">/</span><a href="#" class="ll" lang="en" hreflang="en" aria-label="English">EN</a></div>
+      </nav>
+      <p class="text-sm text-muted-foreground mt-6">© 2026 Signapps. Najdimo je delovno ime storitve.</p>
+    </footer>
+  </div></div>
+
+  <!-- B1: Content with sidebar, signed in -->
+  <p class="tile-h" style="margin-top:64px">B1 · Content with sidebar, signed in (lg and up) · hover on "Zemljevid" · footer page, so no header link is current</p>
+  <div class="wrap-x"><div class="browser" lang="sl">
+    <div class="browser-bar"><span class="dots"><i></i><i></i><i></i></span><span class="url"><i class="ph ph-lock-simple"></i>najdimo.si/varnost</span></div>
+    <header class="flex items-center gap-8 px-12 h-[88px]">
+      <a href="#" class="logo-link" aria-label="Najdimo, na začetno stran"><svg class="logo-mark w-9 h-9" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg><span class="font-display font-bold text-2xl tracking-[-0.03em]" aria-hidden="true">Najdimo</span></a>
+      <nav aria-label="Glavni meni"><ul class="flex items-center gap-2">
+        <li><a href="#" class="nl is-hover">Zemljevid</a></li>
+        <li><a href="#" class="nl">Izgubljene</a></li>
+        <li><a href="#" class="nl">Najdene</a></li>
+        <li><a href="#" class="nl">Moje živali</a></li>
+      </ul></nav>
+      <div class="ml-auto flex items-center gap-2">
+        <div class="lang" role="group" aria-label="Jezik: Slovenščina"><a href="#" class="ll" lang="sl" aria-current="true" aria-label="Slovenščina">SL</a><span aria-hidden="true">/</span><a href="#" class="ll" lang="en" hreflang="en" aria-label="English">EN</a></div>
+        <a href="#" class="iconbtn" aria-label="Sporočila in obvestila"><i class="ph-bold ph-tray"></i></a>
+        <button type="button" class="iconbtn" aria-label="Moj račun" aria-haspopup="menu" aria-expanded="false"><span class="avatar" aria-hidden="true">AN</span></button>
+        <button type="button" class="btn btn-primary btn-sm ml-2" aria-haspopup="menu" aria-expanded="false">Prijavi</button>
+      </div>
+    </header>
+    <div class="px-12 pt-8 grid gap-8 items-start" style="grid-template-columns:minmax(0,1fr) 320px">
+      <main class="min-w-0">
+        <div class="max-w-[640px]">
+          <h1 class="font-display font-bold text-5xl tracking-[-0.02em]">Nasveti za varnost</h1>
+          <p class="text-xl leading-8 mt-4">Ko se žival izgubi, smo ranljivi. Večina ljudi želi pomagati, nekateri pa poskušajo izkoristiti stisko. Ti nasveti vam pomagajo prepoznati prevaro in varno prevzeti žival.</p>
+          <section class="mt-24">
+            <h2 class="font-display font-bold text-3xl tracking-[-0.015em]">Kako se zaščitite</h2>
+            <ul class="bullets mt-6">
+              <li><i class="ph-bold ph-hand-coins" aria-hidden="true"></i><span><b>Nikoli ne pošiljajte denarja vnaprej.</b> Kdor je žival res našel, denarja ne zahteva.</span></li>
+              <li><i class="ph-bold ph-chat-circle" aria-hidden="true"></i><span><b>Pogovor imejte v aplikaciji.</b> Tako vaša telefonska številka ostane skrita.</span></li>
+              <li><i class="ph-bold ph-eye-slash" aria-hidden="true"></i><span><b>Eno posebnost obdržite zase.</b> V prijavi ne opišite vsega. Če nekdo trdi, da ima vašo žival, ga vprašajte za posebnost, ki je niste objavili, na primer brazgotino ali obliko lise.</span></li>
+              <li><i class="ph-bold ph-camera" aria-hidden="true"></i><span><b>Prosite za novo fotografijo</b>, na primer z listkom, na katerem je današnji datum.</span></li>
+            </ul>
+          </section>
+        </div>
+      </main>
+      <aside aria-label="Dodatna vsebina" class="sticky top-6">
+        <!-- SAMPLE: ad slot design and label belong to P21. Region is reserved even when empty (CLS). -->
+        <div class="bg-muted grid place-items-center h-[267px]" style="border-radius:var(--radius-card)"><span class="anno">Ad slot 300 × 250 · sample, P21</span></div>
+        <p class="mt-3"><span class="anno">Sidebar 320 px, sticky, reserved when empty</span></p>
+      </aside>
+    </div>
+    <div class="h-24" aria-hidden="true"></div>
+  </div></div>
+
+  <!-- C: Flow -->
+  <p class="tile-h" style="margin-top:64px">C · Flow variant: reduced header, centred 560 px column, no sidebar, no ad slot · question is SAMPLE copy (P7 owns it)</p>
+  <div class="wrap-x"><div class="browser" lang="sl">
+    <div class="browser-bar"><span class="dots"><i></i><i></i><i></i></span><span class="url"><i class="ph ph-lock-simple"></i>najdimo.si/prijavi/najdena</span></div>
+    <header class="flex items-center gap-8 px-12 h-[88px]">
+      <a href="#" class="logo-link" aria-label="Najdimo, na začetno stran"><svg class="logo-mark w-9 h-9" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg><span class="font-display font-bold text-2xl tracking-[-0.03em]" aria-hidden="true">Najdimo</span></a>
+      <a href="#" class="btn btn-ghost btn-sm ml-auto"><i class="ph-bold ph-x" aria-hidden="true"></i>Zapri</a>
+    </header>
+    <main class="w-full max-w-[560px] mx-auto pt-8">
+      <div class="steps" role="progressbar" aria-valuemin="1" aria-valuemax="4" aria-valuenow="3" aria-label="Korak 3 od 4"><span class="on"></span><span class="on"></span><span class="on"></span><span></span></div>
+      <h1 class="font-display font-bold text-5xl tracking-[-0.02em] mt-10">Je žival pri vas?</h1>
+      <div class="grid gap-3 mt-8" role="radiogroup" aria-label="Je žival pri vas?">
+        <button type="button" class="choice" role="radio" aria-checked="true"><i class="ph-bold ph-house-line" aria-hidden="true"></i><span class="flex-1"><span class="t">Da, je pri meni</span></span><i class="ph-bold ph-check" aria-hidden="true"></i></button>
+        <button type="button" class="choice" role="radio" aria-checked="false"><i class="ph-bold ph-eye" aria-hidden="true"></i><span class="flex-1"><span class="t">Ne, ni pri meni</span></span></button>
+      </div>
+      <p class="flex gap-2 text-sm text-muted-foreground mt-6"><i class="ph-fill ph-shield-check text-base mt-0.5" style="color:hsl(var(--primary))" aria-hidden="true"></i>Vaša telefonska številka ostane skrita.</p>
+      <div class="grid gap-1 mt-12">
+        <button type="button" class="btn btn-primary btn-lg btn-block">Naprej</button>
+        <button type="button" class="btn btn-text btn-block">Nazaj</button>
+      </div>
+    </main>
+    <!-- Flow footer: minimal single quiet row, no logo block, no copyright (system v0.3, 10.7) -->
+    <footer class="px-12 pt-6 pb-6 mt-24">
+      <nav aria-label="Noga strani"><ul class="flex flex-wrap justify-center gap-x-6">
+        <li><a href="#" class="fl">Zasebnost</a></li>
+        <li><a href="#" class="fl">Pogoji uporabe</a></li>
+        <li><button type="button" class="fl" aria-haspopup="dialog">Nastavitve piškotkov</button></li>
+        <li><a href="#" class="fl">Dostopnost</a></li>
+      </ul></nav>
+    </footer>
+  </div></div>
+
+  <!-- B3: Signed in at 1024 -->
+  <p class="tile-h" style="margin-top:64px">B3 · Signed in at 1024 px (lg, below xl): the header needs about 1000 of 1024 px with the language switch, so below xl the switch moves into the account menu (shown open)</p>
+  <div class="wrap-x"><div class="browser relative" style="width:1024px" lang="sl">
+    <div class="browser-bar"><span class="dots"><i></i><i></i><i></i></span><span class="url"><i class="ph ph-lock-simple"></i>najdimo.si/moje</span></div>
+    <header class="flex items-center gap-8 px-12 h-[88px]">
+      <a href="#" class="logo-link" aria-label="Najdimo, na začetno stran"><svg class="logo-mark w-9 h-9" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg><span class="font-display font-bold text-2xl tracking-[-0.03em]" aria-hidden="true">Najdimo</span></a>
+      <nav aria-label="Glavni meni"><ul class="flex items-center gap-2">
+        <li><a href="#" class="nl">Zemljevid</a></li><li><a href="#" class="nl">Izgubljene</a></li><li><a href="#" class="nl">Najdene</a></li><li><a href="#" class="nl" aria-current="page">Moje živali</a></li>
+      </ul></nav>
+      <div class="ml-auto flex items-center gap-2">
+        <a href="#" class="iconbtn" aria-label="Sporočila in obvestila"><i class="ph-bold ph-tray"></i></a>
+        <button type="button" class="iconbtn is-open" aria-label="Moj račun" aria-haspopup="menu" aria-expanded="true"><span class="avatar" aria-hidden="true">AN</span></button>
+        <button type="button" class="btn btn-primary btn-sm ml-2" aria-haspopup="menu" aria-expanded="false">Prijavi</button>
+      </div>
+    </header>
+    <div class="px-12 pt-8 pb-16 min-h-[360px]">
+      <p><span class="anno">Page content belongs to P8</span></p>
+    </div>
+    <div class="pop absolute top-[122px] w-[288px] p-2 rounded-xl" style="right:142px" role="menu" aria-label="Moj račun">
+      <a href="#" role="menuitem" class="mi"><i class="ph-bold ph-user-circle" aria-hidden="true"></i>Profil</a>
+      <a href="#" role="menuitem" class="mi"><i class="ph-bold ph-bell" aria-hidden="true"></i>Opozorila v bližini</a>
+      <a href="#" role="menuitem" class="mi"><i class="ph-bold ph-credit-card" aria-hidden="true"></i>Plačila</a>
+      <div class="sep" role="separator"></div>
+      <div class="lang flex items-center gap-1 pl-3 min-h-[48px]" role="group" aria-label="Jezik">
+        <i class="ph-bold ph-globe-simple text-xl mr-1.5 text-foreground" aria-hidden="true"></i>
+        <a href="#" role="menuitemradio" aria-checked="true" class="ll" lang="sl">Slovenščina</a><span aria-hidden="true">/</span><a href="#" role="menuitemradio" aria-checked="false" class="ll" lang="en" hreflang="en">English</a>
+      </div>
+      <div class="sep" role="separator"></div>
+      <button type="button" role="menuitem" class="mi"><i class="ph-bold ph-sign-out" aria-hidden="true"></i>Odjava</button>
+    </div>
+  </div></div>
+</section>
+
+<!-- ================= 2. HEADER STATES ================= -->
+<section class="tile-section !max-w-[1400px] !pt-0">
+  <h2 class="tile-title">2. Header popovers and focus at 1200 px</h2>
+  <p class="tile-lede">"Prijavi" opens a popover of three choice rows; the avatar opens the account menu. Both open with Enter or Space, move with the arrow keys, close with Escape and return focus to their button. The skip link is the first stop in the tab order.</p>
+
+  <!-- A2: Report popover open -->
+  <p class="tile-h !mt-0">A2 · "Prijavi" popover open, focus on the first row</p>
+  <div class="wrap-x"><div class="browser relative" lang="sl">
+    <div class="browser-bar"><span class="dots"><i></i><i></i><i></i></span><span class="url"><i class="ph ph-lock-simple"></i>najdimo.si/kako-deluje</span></div>
+    <header class="flex items-center gap-8 px-12 h-[88px]">
+      <a href="#" class="logo-link" aria-label="Najdimo, na začetno stran"><svg class="logo-mark w-9 h-9" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg><span class="font-display font-bold text-2xl tracking-[-0.03em]" aria-hidden="true">Najdimo</span></a>
+      <nav aria-label="Glavni meni"><ul class="flex items-center gap-2">
+        <li><a href="#" class="nl">Zemljevid</a></li><li><a href="#" class="nl">Izgubljene</a></li><li><a href="#" class="nl">Najdene</a></li><li><a href="#" class="nl" aria-current="page">Kako deluje</a></li>
+      </ul></nav>
+      <div class="ml-auto flex items-center gap-2">
+        <div class="lang" role="group" aria-label="Jezik: Slovenščina"><a href="#" class="ll" lang="sl" aria-current="true" aria-label="Slovenščina">SL</a><span aria-hidden="true">/</span><a href="#" class="ll" lang="en" hreflang="en" aria-label="English">EN</a></div>
+        <a href="#" class="btn btn-ghost btn-sm">Vpis</a>
+        <button type="button" class="btn btn-primary btn-sm is-hover" aria-haspopup="menu" aria-expanded="true">Prijavi</button>
+      </div>
+    </header>
+    <div class="px-12 pt-8 pb-16 min-h-[380px]">
+      <h1 class="font-display font-bold text-5xl tracking-[-0.02em]">Kako deluje Najdimo</h1>
+      <p class="text-xl leading-8 mt-4 max-w-[640px]">Najdimo poveže ljudi, ki pogrešajo žival, s tistimi, ki so jo našli ali videli. Ujemanja iščemo mi, odločitve pa so vaše.</p>
+    </div>
+    <div class="pop absolute right-12 top-[122px] w-[408px] p-2" style="border-radius:var(--radius-sheet)">
+      <p class="font-display font-semibold text-xl px-3 pt-3 pb-3">Kaj želite prijaviti?</p>
+      <div class="grid gap-2" role="menu" aria-label="Kaj želite prijaviti?">
+        <a href="#" role="menuitem" class="choice is-focus"><i class="ph-bold ph-megaphone" style="color:hsl(var(--status-lost-subtle-foreground))" aria-hidden="true"></i><span class="flex-1"><span class="t">Izgubljena žival</span><span class="d">Pogrešate svojega psa ali mačko.</span></span><i class="ph-bold ph-caret-right text-muted-foreground" style="font-size:20px" aria-hidden="true"></i></a>
+        <a href="#" role="menuitem" class="choice"><i class="ph-bold ph-hand-heart" style="color:hsl(var(--status-found-subtle-foreground))" aria-hidden="true"></i><span class="flex-1"><span class="t">Najdena žival</span><span class="d">Žival je pri vas. Brez računa.</span></span><i class="ph-bold ph-caret-right text-muted-foreground" style="font-size:20px" aria-hidden="true"></i></a>
+        <a href="#" role="menuitem" class="choice"><i class="ph-bold ph-eye" style="color:hsl(var(--status-sighted-subtle-foreground))" aria-hidden="true"></i><span class="flex-1"><span class="t">Opažena žival</span><span class="d">Videli ste žival, ki se je morda izgubila. Brez računa.</span></span><i class="ph-bold ph-caret-right text-muted-foreground" style="font-size:20px" aria-hidden="true"></i></a>
+      </div>
+    </div>
+  </div></div>
+
+  <!-- B2: Account popover open -->
+  <p class="tile-h" style="margin-top:64px">B2 · Account menu open (signed in), hover on "Opozorila v bližini"</p>
+  <div class="wrap-x"><div class="browser relative" lang="sl">
+    <div class="browser-bar"><span class="dots"><i></i><i></i><i></i></span><span class="url"><i class="ph ph-lock-simple"></i>najdimo.si/moje</span></div>
+    <header class="flex items-center gap-8 px-12 h-[88px]">
+      <a href="#" class="logo-link" aria-label="Najdimo, na začetno stran"><svg class="logo-mark w-9 h-9" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg><span class="font-display font-bold text-2xl tracking-[-0.03em]" aria-hidden="true">Najdimo</span></a>
+      <nav aria-label="Glavni meni"><ul class="flex items-center gap-2">
+        <li><a href="#" class="nl">Zemljevid</a></li><li><a href="#" class="nl">Izgubljene</a></li><li><a href="#" class="nl">Najdene</a></li><li><a href="#" class="nl" aria-current="page">Moje živali</a></li>
+      </ul></nav>
+      <div class="ml-auto flex items-center gap-2">
+        <div class="lang" role="group" aria-label="Jezik: Slovenščina"><a href="#" class="ll" lang="sl" aria-current="true" aria-label="Slovenščina">SL</a><span aria-hidden="true">/</span><a href="#" class="ll" lang="en" hreflang="en" aria-label="English">EN</a></div>
+        <a href="#" class="iconbtn" aria-label="Sporočila in obvestila"><i class="ph-bold ph-tray"></i></a>
+        <button type="button" class="iconbtn is-open" aria-label="Moj račun" aria-haspopup="menu" aria-expanded="true"><span class="avatar" aria-hidden="true">AN</span></button>
+        <button type="button" class="btn btn-primary btn-sm ml-2" aria-haspopup="menu" aria-expanded="false">Prijavi</button>
+      </div>
+    </header>
+    <div class="px-12 pt-8 pb-16 min-h-[300px]">
+      <p><span class="anno">Page content belongs to P8 and P13</span></p>
+    </div>
+    <div class="pop absolute top-[122px] w-[272px] p-2 rounded-xl" style="right:142px" role="menu" aria-label="Moj račun">
+      <a href="#" role="menuitem" class="mi"><i class="ph-bold ph-user-circle" aria-hidden="true"></i>Profil</a>
+      <a href="#" role="menuitem" class="mi is-hover"><i class="ph-bold ph-bell" aria-hidden="true"></i>Opozorila v bližini</a>
+      <a href="#" role="menuitem" class="mi"><i class="ph-bold ph-credit-card" aria-hidden="true"></i>Plačila</a>
+      <div class="sep" role="separator"></div>
+      <button type="button" role="menuitem" class="mi"><i class="ph-bold ph-sign-out" aria-hidden="true"></i>Odjava</button>
+    </div>
+  </div></div>
+
+  <!-- S: Skip link -->
+  <p class="tile-h" style="margin-top:64px">S · Skip link visible on first Tab ("Preskoči na vsebino"), jumps to <code>main</code></p>
+  <div class="wrap-x"><div class="browser relative" lang="sl">
+    <div class="browser-bar"><span class="dots"><i></i><i></i><i></i></span><span class="url"><i class="ph ph-lock-simple"></i>najdimo.si/kako-deluje</span></div>
+    <a href="#" class="skip is-focus" style="left:48px;top:66px">Preskoči na vsebino</a>
+    <header class="flex items-center gap-8 px-12 h-[88px]">
+      <a href="#" class="logo-link" aria-label="Najdimo, na začetno stran"><svg class="logo-mark w-9 h-9" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg><span class="font-display font-bold text-2xl tracking-[-0.03em]" aria-hidden="true">Najdimo</span></a>
+      <nav aria-label="Glavni meni"><ul class="flex items-center gap-2">
+        <li><a href="#" class="nl">Zemljevid</a></li><li><a href="#" class="nl">Izgubljene</a></li><li><a href="#" class="nl">Najdene</a></li><li><a href="#" class="nl" aria-current="page">Kako deluje</a></li>
+      </ul></nav>
+      <div class="ml-auto flex items-center gap-2">
+        <div class="lang" role="group" aria-label="Jezik: Slovenščina"><a href="#" class="ll" lang="sl" aria-current="true" aria-label="Slovenščina">SL</a><span aria-hidden="true">/</span><a href="#" class="ll" lang="en" hreflang="en" aria-label="English">EN</a></div>
+        <a href="#" class="btn btn-ghost btn-sm">Vpis</a>
+        <button type="button" class="btn btn-primary btn-sm" aria-haspopup="menu" aria-expanded="false">Prijavi</button>
+      </div>
+    </header>
+    <div class="px-12 pt-8 pb-14">
+      <h1 class="font-display font-bold text-5xl tracking-[-0.02em]">Kako deluje Najdimo</h1>
+    </div>
+  </div></div>
+
+  <!-- H: Hover -->
+  <p class="tile-h" style="margin-top:64px">H · Hover: pointer on the "Najdena žival" row. Ghost, icon, text-link-like controls and menu rows get foreground at 10 % over their surface; filled buttons mix 14 % foreground into the fill</p>
+  <div class="wrap-x"><div class="browser relative" lang="sl">
+    <div class="browser-bar"><span class="dots"><i></i><i></i><i></i></span><span class="url"><i class="ph ph-lock-simple"></i>najdimo.si/kako-deluje</span></div>
+    <header class="flex items-center gap-8 px-12 h-[88px]">
+      <a href="#" class="logo-link" aria-label="Najdimo, na začetno stran"><svg class="logo-mark w-9 h-9" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg><span class="font-display font-bold text-2xl tracking-[-0.03em]" aria-hidden="true">Najdimo</span></a>
+      <nav aria-label="Glavni meni"><ul class="flex items-center gap-2">
+        <li><a href="#" class="nl">Zemljevid</a></li><li><a href="#" class="nl">Izgubljene</a></li><li><a href="#" class="nl">Najdene</a></li><li><a href="#" class="nl" aria-current="page">Kako deluje</a></li>
+      </ul></nav>
+      <div class="ml-auto flex items-center gap-2">
+        <div class="lang" role="group" aria-label="Jezik: Slovenščina"><a href="#" class="ll" lang="sl" aria-current="true" aria-label="Slovenščina">SL</a><span aria-hidden="true">/</span><a href="#" class="ll" lang="en" hreflang="en" aria-label="English">EN</a></div>
+        <a href="#" class="btn btn-ghost btn-sm">Vpis</a>
+        <button type="button" class="btn btn-primary btn-sm" aria-haspopup="menu" aria-expanded="true">Prijavi</button>
+      </div>
+    </header>
+    <div class="px-12 pt-8 pb-16 min-h-[380px]">
+      <h1 class="font-display font-bold text-5xl tracking-[-0.02em]">Kako deluje Najdimo</h1>
+      <p class="text-xl leading-8 mt-4 max-w-[640px]">Najdimo poveže ljudi, ki pogrešajo žival, s tistimi, ki so jo našli ali videli. Ujemanja iščemo mi, odločitve pa so vaše.</p>
+    </div>
+    <div class="pop absolute right-12 top-[122px] w-[408px] p-2" style="border-radius:var(--radius-sheet)">
+      <p class="font-display font-semibold text-xl px-3 pt-3 pb-3">Kaj želite prijaviti?</p>
+      <div class="grid gap-2" role="menu" aria-label="Kaj želite prijaviti?">
+        <a href="#" role="menuitem" class="choice"><i class="ph-bold ph-megaphone" style="color:hsl(var(--status-lost-subtle-foreground))" aria-hidden="true"></i><span class="flex-1"><span class="t">Izgubljena žival</span><span class="d">Pogrešate svojega psa ali mačko.</span></span><i class="ph-bold ph-caret-right text-muted-foreground" style="font-size:20px" aria-hidden="true"></i></a>
+        <a href="#" role="menuitem" class="choice is-hover"><i class="ph-bold ph-hand-heart" style="color:hsl(var(--status-found-subtle-foreground))" aria-hidden="true"></i><span class="flex-1"><span class="t">Najdena žival</span><span class="d">Žival je pri vas. Brez računa.</span></span><i class="ph-bold ph-caret-right text-muted-foreground" style="font-size:20px" aria-hidden="true"></i></a>
+        <a href="#" role="menuitem" class="choice"><i class="ph-bold ph-eye" style="color:hsl(var(--status-sighted-subtle-foreground))" aria-hidden="true"></i><span class="flex-1"><span class="t">Opažena žival</span><span class="d">Videli ste žival, ki se je morda izgubila. Brez računa.</span></span><i class="ph-bold ph-caret-right text-muted-foreground" style="font-size:20px" aria-hidden="true"></i></a>
+      </div>
+    </div>
+  </div></div>
+
+  <p class="tile-h">Default and hover, side by side, on the page background and on a popover</p>
+  <div class="flex flex-wrap items-start gap-x-14 gap-y-8" lang="sl">
+    <div><p class="text-sm text-muted-foreground mb-2">Header link</p><div class="flex gap-3"><a href="#" class="nl">Zemljevid</a><a href="#" class="nl is-hover">Zemljevid</a></div></div>
+    <div><p class="text-sm text-muted-foreground mb-2">Ghost button</p><div class="flex gap-3"><a href="#" class="btn btn-ghost btn-sm">Vpis</a><a href="#" class="btn btn-ghost btn-sm is-hover">Vpis</a></div></div>
+    <div><p class="text-sm text-muted-foreground mb-2">Icon button</p><div class="flex gap-3"><a href="#" class="iconbtn" aria-label="Sporočila in obvestila"><i class="ph-bold ph-tray"></i></a><a href="#" class="iconbtn is-hover" aria-label="Sporočila in obvestila"><i class="ph-bold ph-tray"></i></a></div></div>
+    <div><p class="text-sm text-muted-foreground mb-2">Primary (filled, 14 % mix)</p><div class="flex gap-3"><button type="button" class="btn btn-primary btn-sm">Prijavi</button><button type="button" class="btn btn-primary btn-sm is-hover">Prijavi</button></div></div>
+    <div><p class="text-sm text-muted-foreground mb-2">Footer link</p><div class="flex gap-5"><a href="#" class="fl">Zasebnost</a><a href="#" class="fl" style="color:hsl(var(--foreground))">Zasebnost</a></div></div>
+    <div><p class="text-sm text-muted-foreground mb-2">Menu row on a popover</p><div class="pop p-2 rounded-xl w-[260px] grid gap-1"><a href="#" class="mi"><i class="ph-bold ph-user-circle" aria-hidden="true"></i>Profil</a><a href="#" class="mi is-hover"><i class="ph-bold ph-user-circle" aria-hidden="true"></i>Profil</a></div></div>
+  </div>
+</section>
+
+<!-- ================= 3. TABLET ================= -->
+<section class="tile-section !max-w-[1400px] !pt-0">
+  <h2 class="tile-title">3. Tablet, 768 px</h2>
+  <p class="tile-lede">From md to lg the header keeps the logo, the language switcher, "Prijavi" and a menu button; the four links move into a side sheet. Focus goes to the close button when the sheet opens and returns to the menu button on Escape.</p>
+  <div class="wrap-x"><div class="flex flex-wrap gap-10 items-start">
+
+    <div>
+      <p class="tile-h !mt-0">T1 · Menu closed (signed out)</p>
+      <div class="browser relative" style="width:768px;height:720px" lang="sl">
+        <div class="browser-bar"><span class="dots"><i></i><i></i><i></i></span><span class="url"><i class="ph ph-lock-simple"></i>najdimo.si/kako-deluje</span></div>
+        <header class="flex items-center gap-2 px-12 h-[88px]">
+          <a href="#" class="logo-link mr-auto" aria-label="Najdimo, na začetno stran"><svg class="logo-mark w-9 h-9" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg><span class="font-display font-bold text-2xl tracking-[-0.03em]" aria-hidden="true">Najdimo</span></a>
+          <div class="lang" role="group" aria-label="Jezik: Slovenščina"><a href="#" class="ll" lang="sl" aria-current="true" aria-label="Slovenščina">SL</a><span aria-hidden="true">/</span><a href="#" class="ll" lang="en" hreflang="en" aria-label="English">EN</a></div>
+          <button type="button" class="btn btn-primary btn-sm" aria-haspopup="menu" aria-expanded="false"><i class="ph-bold ph-plus" aria-hidden="true"></i>Prijavi</button>
+          <button type="button" class="iconbtn" aria-label="Odpri meni" aria-expanded="false"><i class="ph-bold ph-list"></i></button>
+        </header>
+        <main class="px-12 pt-8">
+          <h1 class="font-display font-bold text-3xl tracking-[-0.02em]">Kako deluje Najdimo</h1>
+          <p class="text-lg leading-7 mt-3 max-w-[58ch]">Najdimo poveže ljudi, ki pogrešajo žival, s tistimi, ki so jo našli ali videli. Ujemanja iščemo mi, odločitve pa so vaše.</p>
+          <h2 class="font-display font-bold text-2xl tracking-[-0.015em] mt-12">Če ste izgubili žival</h2>
+          <ol class="grid gap-5 mt-5 max-w-[58ch]">
+            <li class="flex gap-4"><span class="font-display font-bold text-xl leading-6 text-primary tnum w-5 flex-none" aria-hidden="true">1</span><p>Prijavite izgubljeno žival: dodajte fotografijo, opis ter kraj in čas, ko ste jo nazadnje videli.</p></li>
+            <li class="flex gap-4"><span class="font-display font-bold text-xl leading-6 text-primary tnum w-5 flex-none" aria-hidden="true">2</span><p>Iskanje objavimo v nekaj minutah. Ljudje v bližini, ki imajo vklopljena opozorila, prejmejo obvestilo.</p></li>
+            <li class="flex gap-4"><span class="font-display font-bold text-xl leading-6 text-primary tnum w-5 flex-none" aria-hidden="true">3</span><p>Ko kdo prijavi najdeno ali opaženo žival, ki je podobna vaši, vam sporočimo možno ujemanje.</p></li>
+          </ol>
+        </main>
+      </div>
+    </div>
+
+    <div>
+      <p class="tile-h !mt-0">T2 · Menu open: side sheet, focus on close</p>
+      <div class="browser relative" style="width:768px;height:720px" lang="sl">
+        <div class="browser-bar"><span class="dots"><i></i><i></i><i></i></span><span class="url"><i class="ph ph-lock-simple"></i>najdimo.si/kako-deluje</span></div>
+        <header class="flex items-center gap-2 px-12 h-[88px]">
+          <a href="#" class="logo-link mr-auto" aria-label="Najdimo, na začetno stran"><svg class="logo-mark w-9 h-9" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg><span class="font-display font-bold text-2xl tracking-[-0.03em]" aria-hidden="true">Najdimo</span></a>
+          <div class="lang" role="group" aria-label="Jezik: Slovenščina"><a href="#" class="ll" lang="sl" aria-current="true" aria-label="Slovenščina">SL</a><span aria-hidden="true">/</span><a href="#" class="ll" lang="en" hreflang="en" aria-label="English">EN</a></div>
+          <button type="button" class="btn btn-primary btn-sm" aria-haspopup="menu" aria-expanded="false"><i class="ph-bold ph-plus" aria-hidden="true"></i>Prijavi</button>
+          <button type="button" class="iconbtn" aria-label="Odpri meni" aria-expanded="true"><i class="ph-bold ph-list"></i></button>
+        </header>
+        <main class="px-12 pt-8" aria-hidden="true">
+          <h1 class="font-display font-bold text-3xl tracking-[-0.02em]">Kako deluje Najdimo</h1>
+          <p class="text-lg leading-7 mt-3 max-w-[58ch]">Najdimo poveže ljudi, ki pogrešajo žival, s tistimi, ki so jo našli ali videli. Ujemanja iščemo mi, odločitve pa so vaše.</p>
+        </main>
+        <div class="scrim" style="top:44px"></div>
+        <div class="absolute right-0 bottom-0 w-[360px] bg-card text-card-foreground shadow-pop flex flex-col" style="top:44px;z-index:5" role="dialog" aria-modal="true" aria-label="Glavni meni">
+          <div class="flex items-center justify-end px-6 h-[88px] flex-none"><button type="button" class="iconbtn is-focus" aria-label="Zapri meni"><i class="ph-bold ph-x"></i></button></div>
+          <nav aria-label="Glavni meni" class="px-6"><ul class="grid gap-1">
+            <li><a href="#" class="ml">Zemljevid</a></li>
+            <li><a href="#" class="ml">Izgubljene</a></li>
+            <li><a href="#" class="ml">Najdene</a></li>
+            <li><a href="#" class="ml" aria-current="page">Kako deluje</a></li>
+          </ul></nav>
+          <div class="px-6 mt-8"><a href="#" class="btn btn-secondary btn-block">Vpis</a></div>
+        </div>
+      </div>
+    </div>
+
+  </div></div>
+</section>
+
+<!-- ================= 4. MOBILE ================= -->
+<section class="tile-section !max-w-[1400px] !pt-0">
+  <h2 class="tile-title">4. Mobile web, 390 px</h2>
+  <p class="tile-lede">Header 64 px: logo, "Prijavi" with icon and word, menu button. The menu is a full-height sheet; "Prijavi" opens a bottom sheet with the same three rows. No bottom tab bar on the web (the app has it, P2). Below 360 px the wordmark hides and the mark keeps the link name, so 320 px fits without horizontal scroll.</p>
+  <div class="wrap-x"><div class="flex flex-wrap gap-x-10 gap-y-12 items-start">
+
+    <!-- M1 -->
+    <div>
+      <p class="tile-h !mt-0">M1 · Menu closed (signed out)</p>
+      <div class="phone"><div class="phone-screen" lang="sl">
+        <div class="statusbar"><span>14:20</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <div class="mweb"><span><i class="ph ph-lock-simple"></i>najdimo.si/kako-deluje</span></div>
+        <header class="flex items-center gap-2 px-5 h-16 flex-none">
+          <a href="#" class="logo-link mr-auto" aria-label="Najdimo, na začetno stran"><svg class="logo-mark w-8 h-8" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg><span class="font-display font-bold text-xl tracking-[-0.03em]" aria-hidden="true">Najdimo</span></a>
+          <button type="button" class="btn btn-primary btn-sm !px-4" aria-haspopup="menu" aria-expanded="false"><i class="ph-bold ph-plus" aria-hidden="true"></i>Prijavi</button>
+          <button type="button" class="iconbtn" aria-label="Odpri meni" aria-expanded="false"><i class="ph-bold ph-list"></i></button>
+        </header>
+        <main class="flex-1 px-5 pt-8 overflow-hidden">
+          <h1 class="font-display font-bold text-3xl tracking-[-0.02em]">Kako deluje Najdimo</h1>
+          <p class="text-lg leading-7 mt-3">Najdimo poveže ljudi, ki pogrešajo žival, s tistimi, ki so jo našli ali videli. Ujemanja iščemo mi, odločitve pa so vaše.</p>
+          <h2 class="font-display font-bold text-2xl tracking-[-0.015em] mt-12">Če ste izgubili žival</h2>
+          <ol class="grid gap-5 mt-5">
+            <li class="flex gap-4"><span class="font-display font-bold text-xl leading-6 text-primary tnum w-5 flex-none" aria-hidden="true">1</span><p>Prijavite izgubljeno žival: dodajte fotografijo, opis ter kraj in čas, ko ste jo nazadnje videli.</p></li>
+            <li class="flex gap-4"><span class="font-display font-bold text-xl leading-6 text-primary tnum w-5 flex-none" aria-hidden="true">2</span><p>Iskanje objavimo v nekaj minutah. Ljudje v bližini, ki imajo vklopljena opozorila, prejmejo obvestilo.</p></li>
+            <li class="flex gap-4"><span class="font-display font-bold text-xl leading-6 text-primary tnum w-5 flex-none" aria-hidden="true">3</span><p>Ko kdo prijavi najdeno ali opaženo žival, ki je podobna vaši, vam sporočimo možno ujemanje.</p></li>
+          </ol>
+        </main>
+        <span class="home-ind"></span>
+      </div></div>
+    </div>
+
+    <!-- M2 -->
+    <div>
+      <p class="tile-h !mt-0">M2 · Menu open, full-height sheet (signed in)</p>
+      <div class="phone"><div class="phone-screen" lang="sl">
+        <div class="statusbar"><span>14:20</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <div class="mweb"><span><i class="ph ph-lock-simple"></i>najdimo.si/moje</span></div>
+        <div class="absolute inset-x-0 bottom-0 bg-card text-card-foreground flex flex-col" style="top:92px;z-index:6" role="dialog" aria-modal="true" aria-label="Glavni meni">
+          <div class="flex items-center gap-2 px-5 h-16 flex-none">
+            <a href="#" class="logo-link mr-auto" aria-label="Najdimo, na začetno stran"><svg class="logo-mark w-8 h-8" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg><span class="font-display font-bold text-xl tracking-[-0.03em]" aria-hidden="true">Najdimo</span></a>
+            <button type="button" class="iconbtn is-focus" aria-label="Zapri meni"><i class="ph-bold ph-x"></i></button>
+          </div>
+          <div class="flex-1 px-5 pt-3">
+            <nav aria-label="Glavni meni"><ul class="grid gap-1">
+              <li><a href="#" class="ml">Zemljevid</a></li>
+              <li><a href="#" class="ml">Izgubljene</a></li>
+              <li><a href="#" class="ml">Najdene</a></li>
+              <li><a href="#" class="ml" aria-current="page">Moje živali</a></li>
+            </ul></nav>
+            <div class="mt-7 -mx-3" role="group" aria-label="Moj račun">
+              <a href="#" class="mi"><i class="ph-bold ph-tray" aria-hidden="true"></i>Sporočila in obvestila</a>
+              <a href="#" class="mi"><i class="ph-bold ph-user-circle" aria-hidden="true"></i>Profil</a>
+              <a href="#" class="mi"><i class="ph-bold ph-bell" aria-hidden="true"></i>Opozorila v bližini</a>
+              <a href="#" class="mi"><i class="ph-bold ph-credit-card" aria-hidden="true"></i>Plačila</a>
+              <button type="button" class="mi"><i class="ph-bold ph-sign-out" aria-hidden="true"></i>Odjava</button>
+            </div>
+            <div class="lang mt-6 -ml-1.5" role="group" aria-label="Jezik: Slovenščina"><a href="#" class="ll" lang="sl" aria-current="true">Slovenščina</a><span aria-hidden="true" class="px-1">/</span><a href="#" class="ll" lang="en" hreflang="en">English</a></div>
+          </div>
+        </div>
+        <span class="home-ind"></span>
+      </div></div>
+    </div>
+
+    <!-- M3 -->
+    <div>
+      <p class="tile-h !mt-0">M3 · "Prijavi" open as a bottom sheet</p>
+      <div class="phone"><div class="phone-screen" lang="sl">
+        <div class="statusbar"><span>14:20</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <div class="mweb"><span><i class="ph ph-lock-simple"></i>najdimo.si/kako-deluje</span></div>
+        <header class="flex items-center gap-2 px-5 h-16 flex-none">
+          <a href="#" class="logo-link mr-auto" aria-label="Najdimo, na začetno stran"><svg class="logo-mark w-8 h-8" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg><span class="font-display font-bold text-xl tracking-[-0.03em]" aria-hidden="true">Najdimo</span></a>
+          <button type="button" class="btn btn-primary btn-sm !px-4" aria-haspopup="menu" aria-expanded="true"><i class="ph-bold ph-plus" aria-hidden="true"></i>Prijavi</button>
+          <button type="button" class="iconbtn" aria-label="Odpri meni" aria-expanded="false"><i class="ph-bold ph-list"></i></button>
+        </header>
+        <main class="flex-1 px-5 pt-8 overflow-hidden" aria-hidden="true">
+          <h1 class="font-display font-bold text-3xl tracking-[-0.02em]">Kako deluje Najdimo</h1>
+          <p class="text-lg leading-7 mt-3">Najdimo poveže ljudi, ki pogrešajo žival, s tistimi, ki so jo našli ali videli. Ujemanja iščemo mi, odločitve pa so vaše.</p>
+        </main>
+        <div class="scrim" style="top:92px"></div>
+        <div class="sheet" style="z-index:8;padding-bottom:34px" role="dialog" aria-modal="true" aria-label="Kaj želite prijaviti?">
+          <div class="grabber"></div>
+          <div class="flex items-center justify-between gap-2 pl-5 pr-3"><h2 class="font-display font-bold text-2xl tracking-[-0.015em]">Kaj želite prijaviti?</h2><button type="button" class="iconbtn" aria-label="Zapri"><i class="ph-bold ph-x"></i></button></div>
+          <div class="grid gap-3 px-5 pt-5" role="menu" aria-label="Kaj želite prijaviti?">
+            <a href="#" role="menuitem" class="choice" style="background-color:hsl(var(--background));text-decoration:none"><i class="ph-bold ph-megaphone" style="color:hsl(var(--status-lost-subtle-foreground))" aria-hidden="true"></i><span class="flex-1"><span class="t">Izgubljena žival</span><span class="d">Pogrešate svojega psa ali mačko.</span></span><i class="ph-bold ph-caret-right text-muted-foreground" style="font-size:20px" aria-hidden="true"></i></a>
+            <a href="#" role="menuitem" class="choice" style="background-color:hsl(var(--background));text-decoration:none"><i class="ph-bold ph-hand-heart" style="color:hsl(var(--status-found-subtle-foreground))" aria-hidden="true"></i><span class="flex-1"><span class="t">Najdena žival</span><span class="d">Žival je pri vas. Brez računa.</span></span><i class="ph-bold ph-caret-right text-muted-foreground" style="font-size:20px" aria-hidden="true"></i></a>
+            <a href="#" role="menuitem" class="choice" style="background-color:hsl(var(--background));text-decoration:none"><i class="ph-bold ph-eye" style="color:hsl(var(--status-sighted-subtle-foreground))" aria-hidden="true"></i><span class="flex-1"><span class="t">Opažena žival</span><span class="d">Videli ste žival, ki se je morda izgubila. Brez računa.</span></span><i class="ph-bold ph-caret-right text-muted-foreground" style="font-size:20px" aria-hidden="true"></i></a>
+          </div>
+        </div>
+        <span class="home-ind" style="z-index:12"></span>
+      </div></div>
+    </div>
+
+    <!-- M4 -->
+    <div>
+      <p class="tile-h !mt-0">M4 · Footer at 390 and a toast (bottom centre, 5 s)</p>
+      <div class="phone"><div class="phone-screen" lang="sl">
+        <div class="statusbar"><span>14:22</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <div class="mweb"><span><i class="ph ph-lock-simple"></i>najdimo.si/kako-deluje</span></div>
+        <div class="flex-1 px-5 pt-4 overflow-hidden">
+          <p class="text-[15px] leading-6 text-muted-foreground">Nasvet: profil živali s fotografijami in številko čipa lahko shranite že vnaprej. Če se žival kdaj izgubi, je prijava oddana v nekaj sekundah.</p>
+          <footer class="mt-12">
+            <p class="flex items-center gap-3"><a href="#" class="logo-link" aria-label="Najdimo, na začetno stran"><svg class="logo-mark w-7 h-7" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg><span class="font-display font-bold text-lg" aria-hidden="true">Najdimo</span></a><span class="text-muted-foreground">Spet doma.</span></p>
+            <nav aria-label="Noga strani" class="mt-3">
+              <ul class="flex flex-wrap gap-x-5">
+                <li><a href="#" class="fl">Kako deluje</a></li><li><a href="#" class="fl">Nasveti za varnost</a></li><li><a href="#" class="fl">Pogosta vprašanja</a></li><li><a href="#" class="fl">Za zavetišča</a></li><li><a href="#" class="fl">Oglašujte pri nas</a></li><li><a href="#" class="fl">O nas</a></li>
+              </ul>
+              <ul class="flex flex-wrap gap-x-5 mt-3">
+                <li><a href="#" class="fl">Zasebnost</a></li><li><a href="#" class="fl">Piškotki</a></li><li><button type="button" class="fl" aria-haspopup="dialog">Nastavitve piškotkov</button></li><li><a href="#" class="fl">Pogoji uporabe</a></li><li><a href="#" class="fl">Impresum</a></li><li><a href="#" class="fl">Dostopnost</a></li>
+              </ul>
+            </nav>
+            <div class="lang mt-3 -ml-1.5" role="group" aria-label="Jezik: Slovenščina"><a href="#" class="ll" lang="sl" aria-current="true" aria-label="Slovenščina">SL</a><span aria-hidden="true">/</span><a href="#" class="ll" lang="en" hreflang="en" aria-label="English">EN</a></div>
+            <p class="text-sm text-muted-foreground mt-3">© 2026 Signapps. Najdimo je delovno ime storitve.</p>
+          </footer>
+        </div>
+        <div class="pop toast absolute left-5 right-5" style="bottom:34px;z-index:8" role="status" aria-live="polite">
+          <i class="ph-fill ph-check-circle text-[22px]" style="color:hsl(var(--primary))" aria-hidden="true"></i>
+          <span class="flex-1">Povezava je kopirana.</span>
+          <button type="button" class="iconbtn" aria-label="Zapri"><i class="ph-bold ph-x"></i></button>
+        </div>
+        <span class="home-ind" style="z-index:12"></span>
+      </div></div>
+    </div>
+
+    <!-- M5 -->
+    <div>
+      <p class="tile-h !mt-0">M5 · Page loading: skeleton in the final shape</p>
+      <div class="phone"><div class="phone-screen" lang="sl">
+        <div class="statusbar"><span>14:20</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <div class="mweb"><span><i class="ph ph-lock-simple"></i>najdimo.si/najdene</span></div>
+        <header class="flex items-center gap-2 px-5 h-16 flex-none">
+          <a href="#" class="logo-link mr-auto" aria-label="Najdimo, na začetno stran"><svg class="logo-mark w-8 h-8" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg><span class="font-display font-bold text-xl tracking-[-0.03em]" aria-hidden="true">Najdimo</span></a>
+          <button type="button" class="btn btn-primary btn-sm !px-4" aria-haspopup="menu" aria-expanded="false"><i class="ph-bold ph-plus" aria-hidden="true"></i>Prijavi</button>
+          <button type="button" class="iconbtn" aria-label="Odpri meni" aria-expanded="false"><i class="ph-bold ph-list"></i></button>
+        </header>
+        <main class="flex-1 px-5 pt-8 overflow-hidden" aria-busy="true">
+          <p class="sr-only" role="status">Stran se nalaga.</p>
+          <div aria-hidden="true">
+            <div class="skel h-9 w-56"></div>
+            <div class="skel h-5 w-full mt-4"></div>
+            <div class="skel h-5 w-3/4 mt-2"></div>
+            <ul class="grid gap-5 mt-10">
+              <li class="flex items-center gap-4"><div class="skel w-16 h-16 flex-none" style="border-radius:var(--radius-row)"></div><div class="flex-1 grid gap-2"><div class="skel h-6 w-32"></div><div class="skel h-4 w-44"></div></div></li>
+              <li class="flex items-center gap-4"><div class="skel w-16 h-16 flex-none" style="border-radius:var(--radius-row)"></div><div class="flex-1 grid gap-2"><div class="skel h-6 w-28"></div><div class="skel h-4 w-40"></div></div></li>
+              <li class="flex items-center gap-4"><div class="skel w-16 h-16 flex-none" style="border-radius:var(--radius-row)"></div><div class="flex-1 grid gap-2"><div class="skel h-6 w-36"></div><div class="skel h-4 w-44"></div></div></li>
+              <li class="flex items-center gap-4"><div class="skel w-16 h-16 flex-none" style="border-radius:var(--radius-row)"></div><div class="flex-1 grid gap-2"><div class="skel h-6 w-24"></div><div class="skel h-4 w-36"></div></div></li>
+              <li class="flex items-center gap-4"><div class="skel w-16 h-16 flex-none" style="border-radius:var(--radius-row)"></div><div class="flex-1 grid gap-2"><div class="skel h-6 w-32"></div><div class="skel h-4 w-40"></div></div></li>
+            </ul>
+          </div>
+        </main>
+        <span class="home-ind"></span>
+      </div></div>
+    </div>
+
+    <!-- M6 -->
+    <div>
+      <p class="tile-h !mt-0">M6 · 404 at 390</p>
+      <div class="phone"><div class="phone-screen" lang="sl">
+        <div class="statusbar"><span>14:20</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <div class="mweb"><span><i class="ph ph-lock-simple"></i>najdimo.si/izgubljene/maks</span></div>
+        <header class="flex items-center gap-2 px-5 h-16 flex-none">
+          <a href="#" class="logo-link mr-auto" aria-label="Najdimo, na začetno stran"><svg class="logo-mark w-8 h-8" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg><span class="font-display font-bold text-xl tracking-[-0.03em]" aria-hidden="true">Najdimo</span></a>
+          <button type="button" class="btn btn-primary btn-sm !px-4" aria-haspopup="menu" aria-expanded="false"><i class="ph-bold ph-plus" aria-hidden="true"></i>Prijavi</button>
+          <button type="button" class="iconbtn" aria-label="Odpri meni" aria-expanded="false"><i class="ph-bold ph-list"></i></button>
+        </header>
+        <main class="flex-1 px-5 pt-8 flex flex-col">
+          <h1 class="font-display font-bold text-3xl tracking-[-0.02em]">Te strani ne najdemo</h1>
+          <p class="mt-3">Morda je povezava napačna ali je stran premaknjena. Na zemljevidu so vse aktualne prijave.</p>
+          <svg class="w-full h-auto mt-8" style="border-radius:var(--radius-card)" viewBox="0 0 320 210" aria-hidden="true"><use href="#illo-spot"/></svg>
+        </main>
+        <div class="px-5 pb-11 grid gap-1">
+          <a href="#" class="btn btn-primary btn-lg btn-block"><i class="ph-bold ph-map-trifold" aria-hidden="true"></i>Na zemljevid</a>
+          <a href="#" class="btn btn-text btn-block">Na začetno stran</a>
+        </div>
+        <span class="home-ind"></span>
+      </div></div>
+    </div>
+
+  </div></div>
+</section>
+
+<!-- ================= 5. SHARED PATTERNS ================= -->
+<section class="tile-section !max-w-[1400px] !pt-0">
+  <h2 class="tile-title">5. Shared patterns</h2>
+  <p class="tile-lede">Loading, banner area, empty state, inline error, toast and the error pages. Sizes are real; patterns sit on the page canvas, never in an extra card.</p>
+
+  <!-- Loading, web -->
+  <p class="tile-h !mt-0">L · Page loading at 1200: the sidebar region stays reserved, so nothing shifts when the ad arrives</p>
+  <div class="wrap-x"><div class="browser" lang="sl">
+    <div class="browser-bar"><span class="dots"><i></i><i></i><i></i></span><span class="url"><i class="ph ph-lock-simple"></i>najdimo.si/najdene</span></div>
+    <header class="flex items-center gap-8 px-12 h-[88px]">
+      <a href="#" class="logo-link" aria-label="Najdimo, na začetno stran"><svg class="logo-mark w-9 h-9" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg><span class="font-display font-bold text-2xl tracking-[-0.03em]" aria-hidden="true">Najdimo</span></a>
+      <nav aria-label="Glavni meni"><ul class="flex items-center gap-2">
+        <li><a href="#" class="nl">Zemljevid</a></li><li><a href="#" class="nl">Izgubljene</a></li><li><a href="#" class="nl" aria-current="page">Najdene</a></li><li><a href="#" class="nl">Moje živali</a></li>
+      </ul></nav>
+      <div class="ml-auto flex items-center gap-2">
+        <div class="lang" role="group" aria-label="Jezik: Slovenščina"><a href="#" class="ll" lang="sl" aria-current="true" aria-label="Slovenščina">SL</a><span aria-hidden="true">/</span><a href="#" class="ll" lang="en" hreflang="en" aria-label="English">EN</a></div>
+        <a href="#" class="iconbtn" aria-label="Sporočila in obvestila"><i class="ph-bold ph-tray"></i></a>
+        <button type="button" class="iconbtn" aria-label="Moj račun" aria-haspopup="menu" aria-expanded="false"><span class="avatar" aria-hidden="true">AN</span></button>
+        <button type="button" class="btn btn-primary btn-sm ml-2" aria-haspopup="menu" aria-expanded="false">Prijavi</button>
+      </div>
+    </header>
+    <div class="px-12 pt-8 pb-20 grid gap-8 items-start" style="grid-template-columns:minmax(0,1fr) 320px">
+      <main class="min-w-0" aria-busy="true">
+        <p class="sr-only" role="status">Stran se nalaga.</p>
+        <div aria-hidden="true">
+          <div class="skel h-[52px] w-[380px]"></div>
+          <div class="skel h-5 w-[600px] max-w-full mt-5"></div>
+          <div class="skel h-5 w-[440px] mt-3"></div>
+          <div class="grid grid-cols-2 gap-8 mt-12">
+            <div><div class="skel w-full aspect-[4/3]" style="border-radius:var(--radius-card)"></div><div class="skel h-7 w-40 mt-4"></div><div class="skel h-4 w-56 mt-2"></div></div>
+            <div><div class="skel w-full aspect-[4/3]" style="border-radius:var(--radius-card)"></div><div class="skel h-7 w-32 mt-4"></div><div class="skel h-4 w-48 mt-2"></div></div>
+          </div>
+        </div>
+      </main>
+      <aside aria-label="Dodatna vsebina">
+        <div class="skel h-[267px]" style="border-radius:var(--radius-card)" aria-hidden="true"></div>
+        <p class="mt-3"><span class="anno">Reserved 320 px column (CLS)</span></p>
+      </aside>
+    </div>
+  </div></div>
+
+  <!-- Banner area -->
+  <p class="tile-h" style="margin-top:64px">B · Banner area: one slot under the header, at most one notice (consent banner P17 uses the same slot)</p>
+  <div class="wrap-x"><div class="browser" lang="sl">
+    <div class="browser-bar"><span class="dots"><i></i><i></i><i></i></span><span class="url"><i class="ph ph-lock-simple"></i>najdimo.si/kako-deluje</span></div>
+    <header class="flex items-center gap-8 px-12 h-[88px]">
+      <a href="#" class="logo-link" aria-label="Najdimo, na začetno stran"><svg class="logo-mark w-9 h-9" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg><span class="font-display font-bold text-2xl tracking-[-0.03em]" aria-hidden="true">Najdimo</span></a>
+      <nav aria-label="Glavni meni"><ul class="flex items-center gap-2">
+        <li><a href="#" class="nl">Zemljevid</a></li><li><a href="#" class="nl">Izgubljene</a></li><li><a href="#" class="nl">Najdene</a></li><li><a href="#" class="nl" aria-current="page">Kako deluje</a></li>
+      </ul></nav>
+      <div class="ml-auto flex items-center gap-2">
+        <div class="lang" role="group" aria-label="Jezik: Slovenščina"><a href="#" class="ll" lang="sl" aria-current="true" aria-label="Slovenščina">SL</a><span aria-hidden="true">/</span><a href="#" class="ll" lang="en" hreflang="en" aria-label="English">EN</a></div>
+        <a href="#" class="btn btn-ghost btn-sm">Vpis</a>
+        <button type="button" class="btn btn-primary btn-sm" aria-haspopup="menu" aria-expanded="false">Prijavi</button>
+      </div>
+    </header>
+    <div class="px-12">
+      <div class="note items-center !py-1.5 !pr-1.5" role="note">
+        <i class="ph-fill ph-wrench" style="color:hsl(var(--primary))" aria-hidden="true"></i>
+        <p class="flex-1">Ob 22.00 bomo za kratek čas izvajali vzdrževanje. Prijave, oddane prej, so varne.</p>
+        <button type="button" class="iconbtn" aria-label="Skrij obvestilo"><i class="ph-bold ph-x"></i></button>
+      </div>
+    </div>
+    <div class="px-12 pt-8 pb-14">
+      <h1 class="font-display font-bold text-5xl tracking-[-0.02em]">Kako deluje Najdimo</h1>
+      <p class="text-xl leading-8 mt-4 max-w-[640px]">Najdimo poveže ljudi, ki pogrešajo žival, s tistimi, ki so jo našli ali videli. Ujemanja iščemo mi, odločitve pa so vaše.</p>
+    </div>
+  </div></div>
+  <p class="tile-h">Other notice type in the same slot: test version (stays visible, no hide button)</p>
+  <div class="max-w-[1104px]" lang="sl">
+    <div class="note items-center !py-1.5 min-h-[56px]" role="note">
+      <i class="ph-fill ph-flask" style="color:hsl(var(--primary))" aria-hidden="true"></i>
+      <p class="flex-1">Testna različica. Plačila so preizkusna, s kartic se ne bremeni denar.</p>
+    </div>
+  </div>
+
+  <!-- Specimens -->
+  <div class="grid gap-14 items-start mt-16" style="grid-template-columns:repeat(3,minmax(0,1fr))" lang="sl">
+    <div>
+      <p class="tile-h !mt-0">E · Empty state (generic fallback; pages bring their own copy)</p>
+      <div class="text-center max-w-[360px] mx-auto">
+        <svg class="w-full h-auto" style="border-radius:var(--radius-card)" viewBox="0 0 320 210" aria-hidden="true"><use href="#illo-spot"/></svg>
+        <h3 class="font-display font-semibold text-2xl mt-6">Tu še ni ničesar</h3>
+        <p class="mt-2">Ko bo kaj novega, se bo pokazalo tukaj.</p>
+        <a href="#" class="btn btn-secondary btn-sm mt-6">Na zemljevid</a>
+      </div>
+    </div>
+    <div>
+      <p class="tile-h !mt-0">I · Inline error: note with icon and a retry text button</p>
+      <div class="note items-center !pr-2" role="alert">
+        <i class="ph-fill ph-warning-circle" style="color:hsl(var(--destructive))" aria-hidden="true"></i>
+        <p class="flex-1">Tega trenutno ne moremo naložiti.</p>
+        <button type="button" class="btn btn-text btn-sm"><i class="ph-bold ph-arrow-clockwise" aria-hidden="true"></i>Poskusi znova</button>
+      </div>
+      <p class="tile-h">Retry pressed: label stays, spinner before it</p>
+      <div class="note items-center !pr-2">
+        <i class="ph-fill ph-warning-circle" style="color:hsl(var(--destructive))" aria-hidden="true"></i>
+        <p class="flex-1">Tega trenutno ne moremo naložiti.</p>
+        <button type="button" class="btn btn-text btn-sm" aria-busy="true"><span class="spin" aria-hidden="true"></span>Poskusi znova</button>
+      </div>
+    </div>
+    <div>
+      <p class="tile-h !mt-0">T · Toast: popover surface, bottom centre, 24 px from the edge, 5 s, polite</p>
+      <div class="pop toast max-w-[420px] mx-auto" role="status" aria-live="polite">
+        <i class="ph-fill ph-check-circle text-[22px]" style="color:hsl(var(--primary))" aria-hidden="true"></i>
+        <span class="flex-1">Povezava je kopirana.</span>
+        <button type="button" class="iconbtn" aria-label="Zapri"><i class="ph-bold ph-x"></i></button>
+      </div>
+      <div class="pop toast max-w-[420px] mx-auto mt-6">
+        <i class="ph-fill ph-warning-circle text-[22px]" style="color:hsl(var(--destructive))" aria-hidden="true"></i>
+        <span class="flex-1">Tega ni bilo mogoče shraniti. Poskusite znova.</span>
+        <button type="button" class="iconbtn" aria-label="Zapri"><i class="ph-bold ph-x"></i></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 404 full -->
+  <p class="tile-h" style="margin-top:72px">404 · Error page at 1200: h1 32 px under the header, illustration right, primary "Na zemljevid" and a text button</p>
+  <div class="wrap-x"><div class="browser" lang="sl">
+    <div class="browser-bar"><span class="dots"><i></i><i></i><i></i></span><span class="url"><i class="ph ph-lock-simple"></i>najdimo.si/izgubljene/maks</span></div>
+    <header class="flex items-center gap-8 px-12 h-[88px]">
+      <a href="#" class="logo-link" aria-label="Najdimo, na začetno stran"><svg class="logo-mark w-9 h-9" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg><span class="font-display font-bold text-2xl tracking-[-0.03em]" aria-hidden="true">Najdimo</span></a>
+      <nav aria-label="Glavni meni"><ul class="flex items-center gap-2">
+        <li><a href="#" class="nl">Zemljevid</a></li><li><a href="#" class="nl">Izgubljene</a></li><li><a href="#" class="nl">Najdene</a></li><li><a href="#" class="nl">Kako deluje</a></li>
+      </ul></nav>
+      <div class="ml-auto flex items-center gap-2">
+        <div class="lang" role="group" aria-label="Jezik: Slovenščina"><a href="#" class="ll" lang="sl" aria-current="true" aria-label="Slovenščina">SL</a><span aria-hidden="true">/</span><a href="#" class="ll" lang="en" hreflang="en" aria-label="English">EN</a></div>
+        <a href="#" class="btn btn-ghost btn-sm">Vpis</a>
+        <button type="button" class="btn btn-primary btn-sm" aria-haspopup="menu" aria-expanded="false">Prijavi</button>
+      </div>
+    </header>
+    <main class="px-12 pt-8 grid gap-16 items-start" style="grid-template-columns:minmax(0,7fr) minmax(0,5fr)">
+      <div>
+        <h1 class="font-display font-bold text-5xl tracking-[-0.02em] max-w-[16ch]">Te strani ne najdemo</h1>
+        <p class="text-xl leading-8 mt-4 max-w-[44ch]">Morda je povezava napačna ali je stran premaknjena. Na zemljevidu so vse aktualne prijave.</p>
+        <div class="flex flex-wrap items-center gap-3 mt-10">
+          <a href="#" class="btn btn-primary btn-lg"><i class="ph-bold ph-map-trifold" aria-hidden="true"></i>Na zemljevid</a>
+          <a href="#" class="btn btn-text btn-lg">Na začetno stran</a>
+        </div>
+      </div>
+      <svg class="w-full h-auto" style="border-radius:32px" viewBox="0 0 320 210" aria-hidden="true"><use href="#illo-spot"/></svg>
+    </main>
+    <footer class="px-12 pt-12 pb-10 mt-24">
+      <p class="flex items-center gap-4"><a href="#" class="logo-link" aria-label="Najdimo, na začetno stran"><svg class="logo-mark w-7 h-7" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg><span class="font-display font-bold text-lg" aria-hidden="true">Najdimo</span></a><span class="text-muted-foreground">Spet doma.</span></p>
+      <nav aria-label="Noga strani" class="mt-4 flex items-end gap-8">
+        <div class="flex-1 min-w-0">
+          <ul class="flex flex-wrap gap-x-6">
+            <li><a href="#" class="fl">Kako deluje</a></li><li><a href="#" class="fl">Nasveti za varnost</a></li><li><a href="#" class="fl">Pogosta vprašanja</a></li><li><a href="#" class="fl">Za zavetišča</a></li><li><a href="#" class="fl">Oglašujte pri nas</a></li><li><a href="#" class="fl">O nas</a></li>
+          </ul>
+          <ul class="flex flex-wrap gap-x-6">
+            <li><a href="#" class="fl">Zasebnost</a></li><li><a href="#" class="fl">Piškotki</a></li><li><button type="button" class="fl" aria-haspopup="dialog">Nastavitve piškotkov</button></li><li><a href="#" class="fl">Pogoji uporabe</a></li><li><a href="#" class="fl">Impresum</a></li><li><a href="#" class="fl">Dostopnost</a></li>
+          </ul>
+        </div>
+        <div class="lang" role="group" aria-label="Jezik: Slovenščina"><a href="#" class="ll" lang="sl" aria-current="true" aria-label="Slovenščina">SL</a><span aria-hidden="true">/</span><a href="#" class="ll" lang="en" hreflang="en" aria-label="English">EN</a></div>
+      </nav>
+      <p class="text-sm text-muted-foreground mt-6">© 2026 Signapps. Najdimo je delovno ime storitve.</p>
+    </footer>
+  </div></div>
+
+  <!-- 410, 500, offline -->
+  <p class="tile-h" style="margin-top:64px">410, 500 and offline: same layout as 404, only the text column changes (shown at its real width)</p>
+  <div class="grid gap-x-16 gap-y-14 items-start" style="grid-template-columns:repeat(2,minmax(0,1fr))" lang="sl">
+    <div>
+      <p class="tile-h !mt-0">410 · Report no longer available</p>
+      <h1 class="font-display font-bold text-5xl tracking-[-0.02em] max-w-[16ch]">Ta prijava ni več na voljo</h1>
+      <p class="text-xl leading-8 mt-4 max-w-[44ch]">Prijava je zaključena ali odstranjena. Morda je žival že spet doma.</p>
+      <div class="flex flex-wrap items-center gap-3 mt-10"><a href="#" class="btn btn-primary btn-lg"><i class="ph-bold ph-map-trifold" aria-hidden="true"></i>Na zemljevid</a><a href="#" class="btn btn-text btn-lg">Na začetno stran</a></div>
+    </div>
+    <div>
+      <p class="tile-h !mt-0">500 · Server error</p>
+      <h1 class="font-display font-bold text-5xl tracking-[-0.02em] max-w-[16ch]">Nekaj je šlo narobe pri nas</h1>
+      <p class="text-xl leading-8 mt-4 max-w-[44ch]">Napako že odpravljamo. Poskusite znova čez nekaj minut. Vaši osnutki so shranjeni na tej napravi.</p>
+      <div class="flex flex-wrap items-center gap-3 mt-10"><a href="#" class="btn btn-primary btn-lg"><i class="ph-bold ph-map-trifold" aria-hidden="true"></i>Na zemljevid</a><button type="button" class="btn btn-text btn-lg"><i class="ph-bold ph-arrow-clockwise" aria-hidden="true"></i>Poskusi znova</button></div>
+    </div>
+    <div>
+      <p class="tile-h !mt-0">Offline</p>
+      <h1 class="font-display font-bold text-5xl tracking-[-0.02em] max-w-[16ch]">Ni povezave z internetom</h1>
+      <p class="text-xl leading-8 mt-4 max-w-[44ch]">Ko boste spet povezani, se stran naloži sama. Osnutki ostanejo shranjeni.</p>
+      <div class="flex flex-wrap items-center gap-3 mt-10"><a href="#" class="btn btn-primary btn-lg"><i class="ph-bold ph-map-trifold" aria-hidden="true"></i>Na zemljevid</a><button type="button" class="btn btn-text btn-lg"><i class="ph-bold ph-arrow-clockwise" aria-hidden="true"></i>Poskusi znova</button></div>
+    </div>
+  </div>
+</section>
+
+<p class="tile-section !max-w-[1400px] !py-8 text-sm text-muted-foreground">Copy: docs/content/pages/P1-web-shell.md (v0.1, native review pending); page bodies from docs/content/pages/P3-public-pages.md. Samples, not final: the flow question in frame C (P7), the ad slot in B1 (P21), the avatar initials. Illustration: flat placeholder for assets/empty-inbox.png (image task pending). Icons: Phosphor.</p>
+
+</div><!-- /#src -->
+
+<script src="../directions/directions.js"></script>
+</body>
+</html>
