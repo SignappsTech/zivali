@@ -4,7 +4,7 @@
   "type": "module",
   "packageManager": "pnpm@11.28.5",
   "engines": {
-    "node": ">=22.13 <23"
+    "node": "22.x"
   },
   "scripts": {
     "bootstrap": "pnpm install && pnpm db:start && pnpm db:reset && node scripts/if-exists.mjs scripts/seed-photos.mjs TASK-6.6 -- node scripts/seed-photos.mjs && turbo run build --filter=@zivali/*",
@@ -15,7 +15,7 @@
     "test": "turbo run test",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "verify": "pnpm format:check && pnpm lint && turbo run typecheck test build",
+    "verify": "prettier --check . && eslint --max-warnings=0 scripts eslint.config.mjs && turbo run lint typecheck test build",
     "quality": "node scripts/if-exists.mjs tests/quality TASK-4.1 -- \"playwright test tests/quality && lhci autorun && linkinator http://localhost:8080 --recurse\"",
     "db:start": "node scripts/if-exists.mjs supabase/config.toml TASK-3.2 -- supabase start",
     "db:stop": "node scripts/if-exists.mjs supabase/config.toml TASK-3.2 -- supabase stop",
