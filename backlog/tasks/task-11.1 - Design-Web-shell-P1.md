@@ -1,11 +1,11 @@
 ---
 id: TASK-11.1
 title: 'Design: Web shell (P1)'
-status: In Progress
+status: Done
 assignee:
   - '@ui-designer'
 created_date: '2026-10-14 21:50'
-updated_date: '2026-10-14 22:21'
+updated_date: '2026-10-14 22:29'
 labels:
   - design
   - 'est:S'
