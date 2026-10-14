@@ -1,6 +1,6 @@
-# Izgubljene živali
+# Najdimo
 
-Lost pet finder for Slovenia (dogs and cats), on the web and on mobile. Owners report a lost pet, finders and shelters report found or sighted animals, and the system matches the two sides by chip number, photo, location, time and attributes.
+Najdimo (working name Izgubljene živali) is a lost pet finder for Slovenia (dogs and cats), on the web and on mobile. Owners report a lost pet, finders and shelters report found or sighted animals, and the system matches the two sides by chip number, photo, location, time and attributes.
 
 Product: [`docs/01-project-brief.md`](docs/01-project-brief.md). Architecture: [`docs/04-technical-design.md`](docs/04-technical-design.md). Implementers work from the slices [`docs/tech/frontend.md`](docs/tech/frontend.md) and [`docs/tech/backend.md`](docs/tech/backend.md) and the contracts in [`docs/tech/contracts/`](docs/tech/contracts/).
 
