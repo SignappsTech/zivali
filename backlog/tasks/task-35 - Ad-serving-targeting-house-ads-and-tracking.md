@@ -5,7 +5,7 @@ status: To Do
 assignee:
   - '@tech-lead'
 created_date: '2026-10-14 21:03'
-updated_date: '2026-10-14 22:13'
+updated_date: '2026-10-14 23:08'
 labels:
   - story
   - 'req:FR-029'
@@ -31,6 +31,7 @@ The client needs to pitch sponsors as soon as users exist; a cheap, privacy-safe
 - [ ] #5 Given targeting, when regions are used, then Slovenian statistical regions and municipalities (open data, licence checked) are loaded as reference data and a point maps to its region and municipality.
 - [ ] #6 Given an ad record, when stored, then it has an image with required alt text, title, text, https link, language, dates, status and targeting, and only admins can write.
 - [ ] #7 Given a request whose context marks the user as ad-free (active Premium entitlement), when a slot is requested, then no ad and no house ad is returned; Podpornik supporters are not ad-free.
+- [ ] #8 Given an ad or house ad request, when content is checked, then ads selling, giving away or rehoming animals are not allowed (blocklist of categories and keywords, since the ad-space provider must verify marking data for pet ads).
 <!-- AC:END -->
 
 ## Packet

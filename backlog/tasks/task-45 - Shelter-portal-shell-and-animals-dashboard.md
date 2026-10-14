@@ -5,6 +5,7 @@ status: To Do
 assignee:
   - '@design-lead'
 created_date: '2026-10-14 21:04'
+updated_date: '2026-10-14 23:08'
 labels:
   - story
   - 'req:FR-015'
@@ -27,9 +28,9 @@ Shelters work on desktop; a calm, efficient web portal with a list of their anim
 <!-- AC:BEGIN -->
 - [ ] #1 Given a member of a verified organisation, when they open the portal, then a dashboard shows counts (animals in care, new matches, outcomes this month) and an animals table with filters, sort and search.
 - [ ] #2 Given an animal, when opened, then notes, holding start date and status (in care, returned to owner, adopted, transferred) can be updated and outcome changes are logged.
-- [ ] #3 Given per-organisation holding-period days (rules to be confirmed, Q-006), when configured, then the portal shows days in care and a reminder, and the app never asserts legal rules itself.
-- [ ] #4 Given a viewer role, when logged in, then all data is read-only.
-- [ ] #5 Given desktop and tablet, when used, then the layout is responsive, SL and EN, keyboard friendly and meets WCAG 2.2 AA.
+- [ ] #3 Given a viewer role, when logged in, then all data is read-only.
+- [ ] #4 Given desktop and tablet, when used, then the layout is responsive, SL and EN, keyboard friendly and meets WCAG 2.2 AA.
+- [ ] #5 Given the holding period (default 8 days after placement in the shelter, configurable per organisation, rules confirmed in Q-006), when an animal is in care, then the dashboard shows a countdown (days until possible rehoming) and flags animals near the end, and the app never asserts legal rules itself.
 <!-- AC:END -->
 
 ## Packet

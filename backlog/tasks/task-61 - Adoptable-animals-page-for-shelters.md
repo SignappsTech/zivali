@@ -5,7 +5,7 @@ status: To Do
 assignee:
   - '@design-lead'
 created_date: '2026-10-14 21:05'
-updated_date: '2026-10-14 22:01'
+updated_date: '2026-10-14 23:08'
 labels:
   - story
   - 'req:FR-028'
@@ -28,6 +28,7 @@ Adoption listings give shelters a reason to return and give the product a positi
 - [ ] #2 Given the public page, when opened, then it shows the shelter with its verified badge, a contact action through chat and indexable SEO pages in SL and EN.
 - [ ] #3 Given an adoptable animal reclaimed by its owner, when a match is confirmed, then the adoption listing is removed.
 - [ ] #4 Given the house ad adopt from a shelter, when shown, then it can link to the Adopt section.
+- [ ] #5 Given adoptable animals from verified shelters, when published, then chip or marking data is required, and the page never accepts private sell-or-give-away listings.
 <!-- AC:END -->
 
 ## Packet

@@ -5,7 +5,7 @@ status: To Do
 assignee:
   - '@design-lead'
 created_date: '2026-10-14 21:02'
-updated_date: '2026-10-14 22:10'
+updated_date: '2026-10-14 23:08'
 labels:
   - story
   - 'req:FR-011'
@@ -32,6 +32,7 @@ Owners still print posters and post in Facebook groups; a good poster with a QR 
 - [ ] #4 Given a shared link, when previewed in WhatsApp or Facebook, then an Open Graph image shows the pet photo with type label and no exact location.
 - [ ] #5 Given a FOUND report, when shared, then the preview never reveals where the animal is kept.
 - [ ] #6 Given the poster QR code, when scanned, then it resolves to the public listing only (never to a pet profile, owner data or a tag page).
+- [ ] #7 Given a report, when the owner opens the Facebook share kit, then it provides ready SL text, a square image and a list of regional Facebook lost-pet groups to post in (group names supplied by the client, shown as links) plus the Radio Aktual submission form.
 <!-- AC:END -->
 
 ## Packet

@@ -5,6 +5,7 @@ status: To Do
 assignee:
   - '@design-lead'
 created_date: '2026-10-14 21:03'
+updated_date: '2026-10-14 23:08'
 labels:
   - story
   - 'req:FR-031'
@@ -29,6 +30,7 @@ There is no self-serve yet: the client or an admin books sponsors by hand, so ad
 - [ ] #3 Given an ad, when its detail is opened, then impressions, clicks and CTR per day, slot and region are shown with CSV export for sponsor reports.
 - [ ] #4 Given house ads, when managed, then admins can edit and enable the three default house ads (SL and EN) from the public copy story.
 - [ ] #5 Given any edit or status change, when saved, then it is written to the audit log.
+- [ ] #6 Given validation, when an ad is saved, then it is rejected if it advertises the sale, gift or change of ownership of animals.
 <!-- AC:END -->
 
 ## Packet

@@ -5,6 +5,7 @@ status: To Do
 assignee:
   - '@design-lead'
 created_date: '2026-10-14 21:05'
+updated_date: '2026-10-14 23:08'
 labels:
   - story
   - 'req:FR-018'
@@ -30,6 +31,7 @@ Without a queue, abuse reports pile up and scams stay visible; moderators need o
 - [ ] #3 Given a suspended user, when they sign in, then they see the reason and cannot post or message and their listings are hidden.
 - [ ] #4 Given items older than 24 h, when listed, then they are highlighted (target: 90 percent reviewed within 24 h).
 - [ ] #5 Given an admin lookup of a user or listing, when searched, then status and actions taken are visible, and private chats only if they were reported.
+- [ ] #6 Given listings or chat messages offering to sell or give away animals (such as podarim or prodam), when reported or detected, then moderators can remove them and the account is warned.
 <!-- AC:END -->
 
 ## Packet

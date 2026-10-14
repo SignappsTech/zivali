@@ -5,6 +5,7 @@ status: To Do
 assignee:
   - '@content-strategist'
 created_date: '2026-10-14 22:15'
+updated_date: '2026-10-14 23:08'
 labels:
   - story
   - 'req:FR-040'
@@ -28,4 +29,6 @@ The product only works with users and listings; a written go-to-market plan (no 
 - [ ] #4 Given growth, when planned, then a referral and word-of-mouth loop (reunited stories, sharing, poster) is described with the product hooks it needs.
 - [ ] #5 Given the first 3 months, when scheduled, then a weekly content calendar exists and three budget scenarios (EUR 0, EUR 500, EUR 2000) list what each buys.
 - [ ] #6 Given measurement, when KPIs are set, then each maps to GA4 events or DB metrics already in the taxonomy (for example report_lost_submit, reunited, share, poster_download, alert_opt_in, ad_click) with targets tied to goals G-1 to G-5.
+- [ ] #7 Given partners, when the outreach list is built, then it includes Radio Aktual Živalski radio (feed and form), Mr. Pet (first Oglas prospect), K9 iskanje pogrešanih (search help) and pet insurers, with a pitch for each.
+- [ ] #8 Given seasonal timing, when the content calendar is written, then it includes a December fireworks campaign (keep pets safe, what to do if they run away).
 <!-- AC:END -->

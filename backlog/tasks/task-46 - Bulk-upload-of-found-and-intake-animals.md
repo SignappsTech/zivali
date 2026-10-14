@@ -5,6 +5,7 @@ status: To Do
 assignee:
   - '@design-lead'
 created_date: '2026-10-14 21:04'
+updated_date: '2026-10-14 23:08'
 labels:
   - story
   - 'req:FR-015'
@@ -26,11 +27,11 @@ Shelters will not adopt a tool slower than their own paperwork; uploading ten an
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Given a portal user, when they drop up to 30 photos, then one draft row per photo appears with a thumbnail and fields for chip, species, intake date and found location (defaulting to the shelter area), saved as drafts.
-- [ ] #2 Given rows, when the user submits, then valid rows are published as FOUND reports owned by the organisation and invalid rows stay with inline errors.
-- [ ] #3 Given AI is available, when photos upload, then attributes pre-fill per row.
-- [ ] #4 Given the same photo uploaded twice, when detected, then the user is warned about duplicates.
-- [ ] #5 Given a running batch, when a row fails, then per-row status is shown and that row can be retried without re-uploading the others, and 10 animals can be published in under 5 minutes of user time.
+- [ ] #1 Given rows, when the user submits, then valid rows are published as FOUND reports owned by the organisation and invalid rows stay with inline errors.
+- [ ] #2 Given AI is available, when photos upload, then attributes pre-fill per row.
+- [ ] #3 Given the same photo uploaded twice, when detected, then the user is warned about duplicates.
+- [ ] #4 Given a running batch, when a row fails, then per-row status is shown and that row can be retried without re-uploading the others, and 10 animals can be published in under 5 minutes of user time.
+- [ ] #5 Given a portal user, when they drop up to 30 photos, then one draft row per photo appears with a thumbnail and fields for chip, species, intake date and required found location and found date and time (shelters do not publish these today), saved as drafts.
 <!-- AC:END -->
 
 ## Packet

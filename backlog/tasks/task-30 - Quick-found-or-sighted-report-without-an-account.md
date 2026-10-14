@@ -5,6 +5,7 @@ status: To Do
 assignee:
   - '@design-lead'
 created_date: '2026-10-14 21:03'
+updated_date: '2026-10-14 23:08'
 labels:
   - story
   - 'req:FR-006'
@@ -14,6 +15,7 @@ dependencies:
   - TASK-15
   - TASK-17
   - TASK-7
+  - TASK-88
 priority: high
 ordinal: 30000
 ---
@@ -32,8 +34,9 @@ Finders will not register; conversion depends on a found report taking under 60 
 - [ ] #4 Given a lost listing, when a visitor taps I saw this pet, then a SIGHTED report is created linked to that lost report.
 - [ ] #5 Given anonymous submissions over the limits, when received, then the safeguards from the anonymous-reporter story apply and the user sees a friendly message.
 - [ ] #6 Given the flow, when it starts and when it is submitted, then report_found_start and report_found_submit fire (consent only) and no ad appears anywhere in the flow.
+- [ ] #7 Given a submitted found report, when the confirmation shows (after submit, so the 60 s target is unaffected), then a notice says the find should be reported to the responsible shelter within 24 hours with call buttons from the directory and that any vet or shelter can read the chip; the legal timing appears only when the legal-content flag is on, and the notice also shows once a queued offline report is sent.
 <!-- AC:END -->
 
 ## Packet
 
-Unblocks on: uploadPhoto API (TASK-14); LocationPicker API (TASK-15); anonymous submit endpoint and manage-token contract (TASK-17); track() (TASK-7)
+Unblocks on: responsible-shelter lookup contract (TASK-88); uploadPhoto API (TASK-14); LocationPicker API (TASK-15); anonymous submit endpoint and manage-token contract (TASK-17); track() (TASK-7)

@@ -5,6 +5,7 @@ status: To Do
 assignee:
   - '@content-strategist'
 created_date: '2026-10-14 21:05'
+updated_date: '2026-10-14 23:08'
 labels:
   - story
   - 'req:FR-035'
@@ -31,6 +32,9 @@ People search Google for izgubljen pes Kranj; regional pages and clean markup br
 - [ ] #3 Given sitemap and robots, when requested, then an XML sitemap with fresh listing URLs, robots.txt and 404 or 410 behaviour for removed reports work.
 - [ ] #4 Given Lighthouse SEO, when run on key pages, then the score is at least 95.
 - [ ] #5 Given redirects, when planned, then none are needed because no legacy site exists (recorded as not applicable).
+- [ ] #6 Given the route plan, when pages are generated, then plural phrase hubs exist: /izgubljene-zivali/{lokacija}, /izgubljeni-psi/{lokacija}, /izgubljene-macke/{lokacija}, /najdene-... equivalents, plus /zavetisca/{slug}, /nasveti/{slug} and /r/{code} stays for listings.
+- [ ] #7 Given the index rules, when a hub is rendered, then national, regional and the 12 city hubs are indexable and other locations are indexable only with at least 3 open listings, otherwise noindex.
+- [ ] #8 Given the guide /nasveti/cipiranje-mack, when published, then it is live before 1 January 2027 and links to the shelter directory.
 <!-- AC:END -->
 
 ## Packet

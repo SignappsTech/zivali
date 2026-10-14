@@ -7,7 +7,7 @@ status: To Do
 assignee:
   - '@tech-lead'
 created_date: '2026-10-14 22:10'
-updated_date: '2026-10-14 22:37'
+updated_date: '2026-10-14 23:08'
 labels:
   - story
   - 'req:FR-028'
@@ -30,12 +30,12 @@ The plan only has value if clinics get visible and can see results; this builds 
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Given a Vet Partner clinic, when a nearest-vet slot is requested in its municipality or region, then the clinic is returned ahead of other ads, rotating fairly between partners in the same area, labelled Oglas, and without a partner a sponsor or house ad is used.
-- [ ] #2 Given a lost-pet alert or poster for a region with a partner, when generated, then it includes one line Need help? Nearest vet with the nearest partner clinic name and phone link, never inside the report-lost flow itself, and alerts and posters work unchanged without a partner.
-- [ ] #3 Given each month ends, when the report runs, then the clinic owner gets profile views, clicks, ad impressions and reunions in the area in the portal and by email as PDF and CSV, aggregate only, with values under 5 shown as under 5.
-- [ ] #4 Given a lapsed plan, when the period ends, then featured placement and mentions stop within 1 hour.
-- [ ] #5 Given the counts, when computed, then they come from our DB without personal data or cookies.
-- [ ] #6 Owners can switch off the Vet Partner line on their own poster (any user, not a Premium perk); the poster renders cleanly without it
+- [ ] #1 Given each month ends, when the report runs, then the clinic owner gets profile views, clicks, ad impressions and reunions in the area in the portal and by email as PDF and CSV, aggregate only, with values under 5 shown as under 5.
+- [ ] #2 Given a lapsed plan, when the period ends, then featured placement and mentions stop within 1 hour.
+- [ ] #3 Given the counts, when computed, then they come from our DB without personal data or cookies.
+- [ ] #4 Owners can switch off the Vet Partner line on their own poster (any user, not a Premium perk); the poster renders cleanly without it
+- [ ] #5 Given a Vet Partner clinic, when a vet slot is requested in its municipality or region, then the clinic is returned ahead of other ads, rotating fairly between partners in the same area, always labelled Oglas, titled Veterinar v vaši regiji (never nearest unless it truly is), with a Kako razvrščamo link explaining the ranking rules.
+- [ ] #6 Given a lost-pet poster for a region with a partner, when generated, then it includes one line labelled Oglas with the partner clinic name and phone link and never inside the report-lost flow; alerts by push or email carry no paid vet line unless the user gave marketing consent; posters and alerts work unchanged without a partner.
 <!-- AC:END -->
 
 ## Packet

@@ -5,6 +5,7 @@ status: To Do
 assignee:
   - '@design-lead'
 created_date: '2026-10-14 22:10'
+updated_date: '2026-10-14 23:08'
 labels:
   - story
   - 'req:FR-028'
@@ -30,6 +31,7 @@ Vets get everything that reunites animals for free; the paid Vet Partner plan se
 - [ ] #4 Given the subscription lapses, when the period ends, then the profile stays as a basic verified entry without featured placement and the free reunite features are unaffected.
 - [ ] #5 Given a shelter or municipality organisation, when it uses the portal, then no Vet Partner offer or upgrade prompt appears.
 - [ ] #6 Given a vet without the plan, when they use chip lookup, found-animal reports, matches and chat, then they work without restriction.
+- [ ] #7 Given production, when Vet Partner is considered for go-live, then it stays behind a feature flag until a lawyer has confirmed the labelling, ranking rules and contract terms (which state the ranking rules).
 <!-- AC:END -->
 
 ## Packet

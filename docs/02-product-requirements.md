@@ -1,7 +1,7 @@
 ---
 doc_id: DOC-02
 title: Product Requirements
-version: 0.5
+version: 0.6
 status: Draft
 date: 2026-10-14
 owner: Product Manager
@@ -81,11 +81,11 @@ approvals:
 - **Priority:** Must · **Milestone:** M2
 - **User story:** As an owner, I want to register my pets with chip and photos in advance so that reporting a loss takes seconds and matching has data.
 - **Requirements**
-  - R-002.1 Fields: species (dog, cat), name, breeds, colours, pattern, size, sex, birth year, chip number, collar, 1–5 photos, notes (medication, temperament).
+  - R-002.1 Fields: species (dog, cat), name, breeds, colours, pattern, size, sex, birth year, chip number (equally prominent for cats and dogs; cat chipping is mandatory from 1 Jan 2027), collar, 1–5 photos, notes (medication, temperament); for cats also ear tip (sterilised free-living cat) and indoor or outdoor.
   - R-002.2 Chip number normalised and validated (digits, 9–15; 15-digit ISO 11784 expected; Slovenian dog chips typically start 705, not enforced).
   - R-002.3 Duplicate chip across owners is flagged to moderators without revealing the other owner.
   - R-002.4 Free accounts can save up to 2 profiles (Premium: unlimited); the limit never blocks a lost report (P-1).
-  - R-002.5 Dogs show a link to the official CRPsi lookup.
+  - R-002.5 Question "Is the chip registered in CRHŽ with your current phone number?" (yes / no / don't know) with a reminder to update it at the vet; a note that a vet or the responsible shelter can read the chip. No link to the closed public CRPsi lookup; a future public lookup URL lives in config, off.
 - **Acceptance criteria**
   - [ ] Given an owner, when they add a pet with a 15-digit chip, then it is saved normalised and the chip is never shown publicly.
   - [ ] Given a free account with two profiles, when they add a third, then they see the Premium option and can still report that pet lost with inline details.
@@ -137,7 +137,7 @@ approvals:
 - **Requirements**
   - R-005.1 Choose a saved pet or enter details inline; last-seen place and radius, date and time (default now), circumstances, contact preference (chat only by default).
   - R-005.2 Visitors can fill the form first; sign-up or sign-in completes the report without data loss.
-  - R-005.3 On submit: listed within 1 minute, matching runs, nearby alerts fan out, confirmation shows next steps (poster, share, tips).
+  - R-005.3 On submit: listed within 1 minute, matching runs, nearby alerts fan out, confirmation shows next steps (poster, share, tips) and a checklist: report the escape to a vet or the responsible shelter (within 3 days; the nearest shelter within 72 h) with a one-tap call from the shelter directory (FR-044). The app never claims to replace the legal duty; legal timings show only when the legal-content flag is on.
   - R-005.4 Confirmation reserves a slot for the optional contribution (FR-021); never an ad (P-2).
   - R-005.5 Events `report_lost_start`, `report_lost_submit` (FR-038).
 - **Acceptance criteria**
@@ -153,7 +153,7 @@ approvals:
 - **Priority:** Must · **Milestone:** M2
 - **User story:** As a finder or passer-by, I want to report an animal in under a minute without registering so that its owner can find it.
 - **Requirements**
-  - R-006.1 Sequence: photo, location (GPS or EXIF), "I have the animal" vs "I only saw it", optional note, optional email; median < 60 s on mobile (G-3).
+  - R-006.1 Sequence: photo, location (GPS or EXIF), "I have the animal" vs "I only saw it", optional note, optional email; median < 60 s on mobile (G-3). After submit (not before) a notice: report the find to the responsible shelter within 24 hours, with call buttons (FR-044) and "any vet or shelter can read the chip"; legal timing behind the legal-content flag; also shown once a queued offline report is sent (FR-042).
   - R-006.2 Private manage link (high entropy) to edit, close, mark returned and chat on any device; optional email delivery.
   - R-006.3 Safeguards: captcha, rate limit per IP and device (default 5/hour, 20/day), duplicate-photo detection, hold for moderation on abuse patterns.
   - R-006.4 "I saw this pet" on a lost listing creates a SIGHTED report linked to it.
@@ -247,7 +247,7 @@ approvals:
 - **User story:** As an owner, I want a printable poster and one-tap sharing so that I reach neighbours and Facebook groups.
 - **Requirements**
   - R-011.1 A4 PDF, SL or EN, large photo, key details, area, QR and short link that resolve to the public listing only, no phone number; high-contrast, greyscale-safe.
-  - R-011.2 Share to WhatsApp, Facebook, copy link, native sheet with localised text.
+  - R-011.2 Share to WhatsApp, Facebook, copy link, native sheet with localised text; Facebook-ready share kit: SL text, square image, list of regional Facebook lost-pet groups (names supplied by the client) and the Radio Aktual submission form.
   - R-011.3 Open Graph preview shows photo and type, never exact location or where an animal is kept.
   - R-011.4 Events `poster_download`, `share`.
 - **Acceptance criteria**
@@ -318,7 +318,8 @@ approvals:
 - **User story:** As a shelter, vet or municipality worker, I want to upload intake animals fast and see probable owners so that kennels empty sooner.
 - **Requirements**
   - R-015.1 Organisation registration (shelter, vet, municipality), admin verification with badge, roles owner/editor/viewer, invitations.
-  - R-015.2 Portal (web): dashboard, animals table, status (in care, returned, adopted, transferred), holding-period days per organisation.
+  - R-015.2 Portal (web): dashboard, animals table, status (in care, returned, adopted, transferred), holding period default 8 days after placement (configurable per organisation) with a countdown "days until possible rehoming" and urgent intake-match alerts near its end.
+  - R-015.8 Shelter uploads (bulk and CSV) must capture where and when the animal was found, which shelters do not publish today.
   - R-015.3 Bulk photo upload: up to 30 photos to draft rows with chip, species, intake date, found location; publish valid rows as FOUND reports.
   - R-015.4 CSV import: template, dry run, row-level errors, safe photo URL fetch, limit 500 rows / 5 MB.
   - R-015.5 Matches dashboard: top probable owners per animal, contact through chat, no personal data shown to staff, automatic matching of new lost reports.
@@ -330,7 +331,7 @@ approvals:
   - [ ] Given a new lost report matches an intake animal, when saved, then the shelter is notified and sees the match in the dashboard.
 - **Edge cases**
   - Viewer role cannot edit.
-  - Holding-period rules are shown as configurable reminders only; the app never asserts legal obligations (Q-006).
+  - Holding-period default (8 days, no 30-day rule exists) is a configurable reminder; the app never asserts legal obligations (Q-006).
 
 ## FR-016: Chip lookup for shelters and vets
 
@@ -338,13 +339,13 @@ approvals:
 - **User story:** As a shelter or vet, I want to enter a scanned chip and learn whether the owner can be reached so that I can return the animal.
 - **Requirements**
   - R-016.1 Verified organisation members only; chip normalised.
-  - R-016.2 Result: registered (owner notified, nothing personal shown) or not found (link to the official CRPsi lookup for dogs; note for cats).
+  - R-016.2 Result: registered (owner notified, nothing personal shown) or not found (message: a vet or the responsible shelter reads the chip and registry data in CRHŽ; a public lookup link only behind a config flag, off).
   - R-016.3 Throttle (default 30/hour/member); audit log stores a chip hash, not the number.
   - R-016.4 Response never contains owner name, contact or address.
 - **Acceptance criteria**
   - [ ] Given a chip on an open lost report, when looked up, then the owner receives an alert and the lookup shows only "owner notified".
   - [ ] Given 31 lookups within an hour, when the last is sent, then it is throttled.
-  - [ ] Given an unknown chip, when looked up, then the CRPsi link is shown for dogs.
+  - [ ] Given an unknown chip, when looked up, then the screen says a vet or the responsible shelter reads the chip and shows no CRPsi link.
 - **Edge cases**
   - Chip registered on a pet profile without a lost report: owner gets an informational notification only if they enabled it.
 
@@ -368,7 +369,7 @@ approvals:
 - **Priority:** Must · **Milestone:** M2 (reporting), M4 (queue, image screening)
 - **User story:** As a user, I want to flag scams and inappropriate content so that moderators remove them.
 - **Requirements**
-  - R-018.1 Report abuse on listings, profiles and chat messages; reasons (scam, fake, spam, inappropriate image, other); anonymous visitors can report listings (rate limited).
+  - R-018.1 Report abuse on listings, profiles and chat messages; reasons (scam, fake, spam, inappropriate image, other); anonymous visitors can report listings (rate limited). Listings and messages offering to sell or give away animals (podarim, prodam) are removed.
   - R-018.2 Three independent reports hide a listing pending review (configurable).
   - R-018.3 Moderation queue: age/severity order, dismiss, hide/remove, warn, suspend, ban, notify, audit log, reversible; target 90 % reviewed in 24 h.
   - R-018.4 Automated image screening from the vision result: held and queued within 60 s when flagged.
@@ -472,7 +473,7 @@ approvals:
 - **User story:** As a prospective supporter, I want to see where my money goes so that I trust the service.
 - **Requirements**
   - R-024.1 Public page (SL/EN): what contributions fund, fees (Stripe fixed fees, EUR 2 minimum, escrow percent), latest published totals.
-  - R-024.2 Dohodnina section (income-tax share via eDavki) shown only after the legal entity check confirms eligibility (Q-008); until then hidden by a flag.
+  - R-024.2 Dohodnina (income-tax share via eDavki) is deferred: it needs a non-profit with public-interest status on the tax authority list; Signapps d.o.o. can never qualify and a new society needs about 2 years. Option: a partner-NGO model (Q-008). Until then the section stays hidden by a flag.
   - R-024.3 Wording never implies charitable status where none exists.
 - **Acceptance criteria**
   - [ ] Given the flag is off, when the page loads, then no dohodnina text is present.
@@ -488,7 +489,7 @@ approvals:
 - **Requirements**
   - R-025.1 One-off purchase, EUR 4.99 fixed (config), 7 days, via Stripe Checkout (test).
   - R-025.2 Effects: alert radius up to 25 km (daily cap respected), sort first, top of the map, an auto-generated social post (template text and image, one-tap share; Premium may use the AI-written version, FR-026).
-  - R-025.3 Ends on expiry or reunion; refunds by admin only. Premium users have 1 free Boost per year.
+  - R-025.3 No auto-renew; ends on expiry and stops automatically on reunion; refunds by admin only. Premium users have 1 free Boost per year.
   - R-025.4 Event `boost_purchase` with value and currency EUR.
   - R-025.5 Boost adds reach on top of an already effective free alert radius; nothing in the free loop is removed.
 - **Acceptance criteria**
@@ -532,7 +533,7 @@ approvals:
   - R-028.2 Vets: free for found-animal reports, chip lookup, matches and chat with owners.
   - R-028.3 API keys (hashed, scoped, revocable), idempotent intake endpoint with OpenAPI docs.
   - R-028.4 Analytics and municipality PDF/CSV reports (counts < 5 aggregated); public adoptable animals page.
-  - R-028.5 Vet Partner (B2B, Stripe Billing with VAT invoices, test EUR 39 per month): verified clinic profile (hours, 24h emergency badge, services, booking or phone link); featured placement in "nearest vet" ad slots in its area; one "Need help? Nearest vet" line in lost-pet alerts and posters of its region; monthly stats report (views, clicks, impressions, reunions in the area, aggregate only).
+  - R-028.5 Vet Partner (B2B, Stripe Billing with VAT invoices, test EUR 39 per month): verified clinic profile (hours, 24h emergency badge, services, booking or phone link); featured placement in vet slots of its area titled "Veterinar v vaši regiji", always labelled "Oglas" (never called "nearest" unless it truly is, with a "Kako razvrščamo" ranking link); one labelled "Oglas" vet line on posters of its region and none in alert push or email without marketing consent; ranking rules stated in the contract; live only after a lawyer confirms; monthly stats report (views, clicks, impressions, reunions in the area, aggregate only).
   - R-028.6 Lapsed Vet Partner keeps a basic verified entry; free features are unaffected. Pet shops, groomers and insurers buy ads (FR-029..031).
 - **Acceptance criteria**
   - [ ] Given a shelter or municipality member, when they use any portal feature, then no payment, entitlement check or upgrade prompt exists.
@@ -551,7 +552,7 @@ approvals:
 - **Requirements**
   - R-029.1 Fixed slots: feed (every N cards), lost-pet detail, reunited screen, web sidebar. No slot exists in report-lost or report-found flows (enforced by API and test).
   - R-029.2 Targeting by statistical region or municipality and by species; dates; status; fair rotation between matches.
-  - R-029.3 House ads (supporter, partner with us, adopt) fill every empty slot.
+  - R-029.3 House ads (supporter, partner with us, adopt) fill every empty slot. Blocklist: no ads that sell, give away or rehome animals (the ad-space provider must verify marking data for pet ads).
   - R-029.4 Impressions and clicks aggregated per ad, slot, day, region in our DB with no user identifiers, cookies or device storage; clicks via counting redirect, `rel="sponsored"`. This DB is the source of truth for sponsor reports.
   - R-029.5 Slovenian regions (12) and municipalities (212) loaded as open reference data (licence checked).
 - **Acceptance criteria**
@@ -567,7 +568,7 @@ approvals:
 - **Priority:** Must · **Milestone:** M2
 - **User story:** As a sponsor, I want a clearly labelled, trusted placement so that users respond to it.
 - **Requirements**
-  - R-030.1 Label "Oglas" (EN "Ad") on every ad; distinct but calm styling; never first in a feed, never adjacent to another ad.
+  - R-030.1 Label "Oglas" (EN "Ad") on every ad including paid vet lines on posters; distinct but calm styling; never first in a feed, never adjacent to another ad; paid clinics are never called nearest unless truthful.
   - R-030.2 One slot on lost-pet detail ("nearest 24h vet", "pet shop near you"), one on the reunited screen, one in the web sidebar (≥ lg).
   - R-030.3 Alt text, keyboard focus, `rel="sponsored noopener"`, 44 px targets, reserved size (CLS budget); silent collapse on failure.
   - R-030.4 No ads on report-lost, report-found, sign-in, chat or payment screens.
@@ -586,7 +587,7 @@ approvals:
 - **User story:** As an admin, I want to create and schedule ads and see their results so that I can run campaigns by hand.
 - **Requirements**
   - R-031.1 Create/edit: image with required alt, title, text, https link, languages, slots, region or municipality, species, dates, status; live preview per slot.
-  - R-031.2 Validation: missing alt, non-https, wrong image size, overlapping dates in an exclusive slot.
+  - R-031.2 Validation: missing alt, non-https, wrong image size, overlapping dates in an exclusive slot, animal sale or give-away content.
   - R-031.3 Per-ad stats (impressions, clicks, CTR by day, slot, region) and CSV export.
   - R-031.4 Manage the three house ads; every change audit-logged.
 - **Acceptance criteria**
@@ -651,7 +652,7 @@ approvals:
   - R-035.1 Header, footer (About, Safety tips, Partners, Privacy, Cookies, Terms, Imprint, Accessibility, Cookie settings), skip link, responsive layout, reserved sidebar slot.
   - R-035.2 Final SL/EN copy: home, how it works, safety tips (scam awareness), FAQ, For shelters.
   - R-035.3 Legal pages SL/EN (see Content, SEO and legal); drafts M2, final M5.
-  - R-035.4 SEO: regional landing pages, structured data, sitemap, robots, hreflang (M5).
+  - R-035.4 SEO routes (M5, shelter pages M3): plural phrase hubs /izgubljene-zivali/{lokacija}, /izgubljeni-psi/…, /izgubljene-macke/…, /najdene-…; /zavetisca/{slug} (AnimalShelter JSON-LD); /nasveti/{slug} with the cat-chipping guide /nasveti/cipiranje-mack live before 1 Jan 2027; /r/{code} for listings. Index rules: national, regional and the 12 city hubs; other locations only with ≥ 3 open listings; structured data, sitemap, robots, hreflang.
 - **Acceptance criteria**
   - [ ] Given any page, when rendered, then footer links to every legal page resolve.
   - [ ] Given a regional page, when crawled, then it has unique title, description and valid structured data.
@@ -731,7 +732,7 @@ approvals:
 - **Priority:** Could · **Milestone:** M5 (startable any time; no code)
 - **User story:** As the client, I want a go-to-market plan so that I can start outreach and grow users, listings and sponsors.
 - **Requirements**
-  - R-040.1 `docs/07-marketing-plan.md`: positioning and messaging (SL/EN), launch phases (pilot region to Slovenia), channels (Facebook lost-pet groups and admins, shelters and vets as distribution, SEO landing pages, Instagram and TikTok success stories, local media and PR, municipalities, influencers and pet communities).
+  - R-040.1 `docs/07-marketing-plan.md`: positioning and messaging (SL/EN), launch phases (pilot region to Slovenia), channels and partners (Radio Aktual Živalski radio, Mr. Pet, K9 iskanje pogrešanih, pet insurers; December fireworks campaign; Facebook lost-pet groups and admins, shelters and vets as distribution, SEO landing pages, Instagram and TikTok success stories, local media and PR, municipalities, influencers and pet communities).
   - R-040.2 Sponsor and Vet Partner pitch and an outreach list template.
   - R-040.3 Referral and word-of-mouth loop; 3-month content calendar; budget scenarios EUR 0 / 500 / 2000.
   - R-040.4 KPIs tied to GA4 events and DB metrics.
@@ -792,6 +793,23 @@ approvals:
   - Permission downgraded by the OS: feature disables itself with an explanation.
   - Reunited or closed report: geofence removed on next refresh.
 
+## FR-044: Responsible-shelter directory
+
+- **Priority:** Must · **Milestone:** M2 (data and API), M3 (admin editing, public pages)
+- **User story:** As an owner or finder, I want to reach the shelter that is responsible for my municipality so that I can meet my reporting duty and get help fast.
+- **Requirements**
+  - R-044.1 Directory mapping the 212 municipalities to the 17 registered shelters (name, address, phone, opening hours, website, source, last verified), public data without personal data, available online and in the offline cache.
+  - R-044.2 Powers the post-submit checklists and call buttons in FR-005 and FR-006.
+  - R-044.3 Editable in the admin console, versioned and audit-logged; reminder to refresh yearly after 31 March.
+  - R-044.4 Public pages /zavetisca/{slug} and an index with municipality search, AnimalShelter structured data, SL/EN (the strongest SEO asset).
+  - R-044.5 Unknown or unconfirmed municipality: say so, never show a wrong number.
+- **Acceptance criteria**
+  - [ ] Given a municipality, when the directory is queried, then the responsible shelter and its phone are returned.
+  - [ ] Given an admin edit, when saved, then it is versioned and visible in the app at once.
+  - [ ] Given /zavetisca/{slug}, when crawled, then valid AnimalShelter JSON-LD is present.
+- **Edge cases**
+  - Shelters serving several municipalities appear on each municipality result.
+
 # Non-functional requirements
 
 | ID | Area | Requirement | Target / measure |
@@ -825,7 +843,7 @@ approvals:
   - Keyword focus per public page (for example izgubljen pes, najden mačka, izgubljena mačka Ljubljana); regional and species landing pages; unique titles and descriptions; hreflang SL/EN.
   - Structured data on detail pages and Organization data on the home page; XML sitemap with fresh listings; robots.txt; closed or hidden reports noindex or 410.
   - Open Graph images for listings, never showing exact or holding location.
-  - Local business structured data (LocalBusiness): N/A — Signapps is not a local service business for this product; use Organization.
+  - Structured data: Organization on the home page; AnimalShelter on /zavetisca pages (an exception to LocalBusiness being N/A); no LocalBusiness for the product itself.
 - **Ads and commercial labelling:**
   - Every ad labelled "Oglas" (EN "Ad"); links `rel="sponsored noopener"`; no ads in the report-lost, report-found, sign-in, chat or payment screens.
   - Wording for contributions: "podpora / prispevek". "Donacija" and charity wording only if a qualifying non-profit entity operates the service (Q-008).
@@ -842,10 +860,10 @@ approvals:
 
 | | Features |
 |---|---|
-| **MVP** (M1–M2) | Offline cache and offline report queue (mobile); monorepo, design system, UI kit, SL/EN, auth, analytics (GA4/Firebase) and consent; pet profiles, photos, location with fuzzing; report lost; report found without account; map, list, detail; matching v1 and review; chat; notifications and nearby alerts; poster and sharing; reunited and lifecycle; abuse reporting; admin shell; payments core (Stripe test); Reunited tip and report contribution; ads (serving, placements, admin, Partners page); public copy and legal drafts |
+| **MVP** (M1–M2) | Responsible-shelter directory and post-submit checklists; Offline cache and offline report queue (mobile); monorepo, design system, UI kit, SL/EN, auth, analytics (GA4/Firebase) and consent; pet profiles, photos, location with fuzzing; report lost; report found without account; map, list, detail; matching v1 and review; chat; notifications and nearby alerts; poster and sharing; reunited and lifecycle; abuse reporting; admin shell; payments core (Stripe test); Reunited tip and report contribution; ads (serving, placements, admin, Partners page); public copy and legal drafts |
 | **Version 1** (M3–M5) | AI pre-fill; image-similarity matching; organisations and shelter portal (bulk, CSV, matches, chip lookup); sighting trail; local proximity alerts (mobile geofences); export and delete; subscriptions; boost; Premium (incl. AI extras, ad-free); Podpornik; reward escrow; free shelter tools (API, analytics, municipality reports, adoption page); Vet Partner; transparency page; moderation queue and image screening; KPI dashboard; security, accessibility and performance audits; observability and backups; SEO pages; success stories; final legal pages; pilot onboarding kit; mobile release candidate builds |
-| **Future** | Self-serve ad booking and Stripe invoicing, founding-partner pricing (M6); IAP or RevenueCat for mobile purchases; social auto-posting for boosts; privacy-first pet tags (redesign); chat photo attachments; CRPsi integration (needs an agreement); server-side GA tagging; more species, countries and languages; vets, shop and insurer partnerships beyond ads |
-| **Out of scope** | Species other than dogs and cats; countries other than Slovenia; live payments; App Store and Play Store submission; QR/NFC pet tags (physical and printable); official CRPsi integration |
+| **Future** | Self-serve ad booking and Stripe invoicing, founding-partner pricing (M6); IAP or RevenueCat for mobile purchases; social auto-posting for boosts; privacy-first pet tags (redesign); chat photo attachments; CRHŽ integration (needs an agreement); server-side GA tagging; more species, countries and languages; vets, shop and insurer partnerships beyond ads |
+| **Out of scope** | Species other than dogs and cats; countries other than Slovenia; live payments; App Store and Play Store submission; QR/NFC pet tags (physical and printable); official CRHŽ integration |
 
 # User flows
 
@@ -875,7 +893,7 @@ approvals:
       → matching vs open lost reports → probable owners → contact owner (chat) → mark returned
 
     Chip lookup (shelter/vet)
-    Enter chip → registered with us: owner notified, nothing personal shown | not found: link to CRPsi (dogs)
+    Enter chip → registered with us: owner notified, nothing personal shown | not found: a vet or the responsible shelter reads the chip
 
     Monetisation (Stripe test)
     Boost: lost report → Boost → Checkout → wider alerts + top of list
@@ -897,10 +915,10 @@ approvals:
 
 - A-001: Working name "Izgubljene živali" stays until the design team's proposal is approved (Q-001).
 - A-002: Anonymous found reports are allowed with captcha and rate limits; no phone verification (Q-003 default).
-- A-003: CRPsi is only linked, not integrated (Q-004).
-- A-004: Shelter holding periods are configurable reminders; the product states no legal rules before review (Q-006).
-- A-005: Cloud credentials (Q-002 Supabase, Vercel, Stripe; Q-007 Apple, Google, Firebase push) are pending; everything is built and tested locally first; deploy, push delivery and real GA4/Firebase data wait for them.
-- A-006: Pilot region is Ljubljana; 2–3 shelters onboarded by hand (Q-005).
+- A-003: The public CRPsi lookup was closed in June 2026 and the register is now CRHŽ; we do not link to it. A vet or the responsible shelter reads the chip. A future public lookup stays behind config (Q-004).
+- A-004: Shelter holding period default is 8 days after placement (the owner may demand return; after 8 days the shelter may rehome); configurable; the product states no other legal rules before review (Q-006).
+- A-005: Cloud credentials (Q-002 hosting: Hetzner VPS, Supabase Free for DB and Auth, R2 storage, Stripe; Q-007 Apple, Google, Firebase push) are pending; everything is built and tested locally first; deploy, push delivery and real GA4/Firebase data wait for them.
+- A-006: Pilot regions Ljubljana (shelter Gmajnice) and Maribor; 2–3 shelters onboarded by hand (Q-005).
 - A-007: Prices are test-mode placeholders from the client monetisation model (brief v0.8), configurable: Boost EUR 4.99 fixed (7 days); Premium EUR 2.99 per month or EUR 24.99 per year (includes 1 free Boost per year); Podpornik from EUR 2 per month (user chooses); support amounts EUR 3 / 5 (highlighted) / 10 / custom with a EUR 2 minimum (Stripe fees of about EUR 0.25 + 1.5 % and store cuts eat most of a EUR 1 payment); Vet Partner EUR 39 per month (B2B); escrow fee 5 %.
 - A-008: Free forever (P-1): reporting, matching, chat, alerts in the default radius, poster, 1 saved pet profile. The pet-profile limit never blocks a lost report.
 - A-009: Fuzzing defaults: LOST ≥ 500 m, FOUND/SIGHTED ≥ 150 m, configurable.
@@ -912,7 +930,7 @@ approvals:
 - A-015: The client provides the GA4 property and Firebase project (Q-009); until then events go to the mock adapter.
 - A-016: Ad impressions are rendered counts without viewability; counting is aggregate and cookieless; sponsor reports state this method.
 - A-017: Premium is ad-free (Q-010 decided); Podpornik supporters still see ads.
-- A-018: Dohodnina and "donation" wording need a qualifying non-profit entity (društvo or zavod); until confirmed the section is hidden (Q-008).
+- A-018: Dohodnina is deferred: the operating company can never qualify; a new society needs about 2 years; a partner-NGO model is an option (Q-008). "Donation" wording stays out until a qualifying non-profit exists.
 - A-019: Reward escrow uses Stripe Connect (Stripe holds funds); live use needs legal review (Q-011).
 - A-020: Region and municipality reference data come from Slovenian open data; licence to be verified.
 - A-021: Minimum mobile OS versions follow the Expo SDK chosen in the TDD.
@@ -923,6 +941,8 @@ approvals:
 - A-026: Vet Partner needs verified vet organisations (FR-015) and the ads infrastructure (FR-029..031); VAT invoices via Stripe Billing, company VAT ID collected.
 - A-027: Offline cache defaults 50 MB and 7 days; geofence alerts default cap 3 per day; iOS allows about 20 monitored regions, Android has its own limit, so the nearest and most recent areas are chosen.
 - A-028: The Always location permission is opt-in only, with a primer; store justification is prepared before store release (risk R-024).
+- A-029: Legal timings (3 days / 72 h owner duty, 24 h find notice, 8-day holding) appear in the product only after legal confirmation, behind a content flag.
+- A-030: The municipality-to-shelter directory (212 municipalities, 17 registered shelters) is refreshed yearly after 31 March.
 
 # Glossary
 
@@ -934,7 +954,7 @@ approvals:
 | Reunited | Owner and animal back together; report status REUNITED |
 | Fuzzing | Showing an approximate area instead of the exact point |
 | Manage link | Secret URL that lets an anonymous finder manage and chat on their report |
-| CRPsi | Centralni register psov (central dog register, UVHVVR) |
+| CRHŽ / CRPsi | CRHŽ is the current central register of dogs and (from 2027) cats; the former public dog lookup CRPsi (Javni vpogled) was closed in June 2026 |
 | Oglas | Slovenian for ad; mandatory label on sponsored placements |
 | House ad | Own promotion shown when no sponsor ad matches a slot |
 | Slot | Fixed ad position: feed, detail, reunited screen, web sidebar |
@@ -965,3 +985,4 @@ approvals:
 | 0.3 | 2026-10-15 | Brief v0.4-v0.7: Shelter Pro removed (FR-028 now free shelter tools + Vet Partner), explicit free-forever list (P-1, P-7), QR/NFC tags withdrawn (FR-027, P-8), new assumptions A-024..A-026 |
 | 0.4 | 2026-10-15 | Brief v0.8 monetisation model: Boost EUR 4.99 fixed; Premium EUR 2.99/month or EUR 24.99/year with unlimited pets, AI extras (written listing and posts, poster designs, search plan), one-tap lost mode, 1 free Boost per year, ad-free (Q-010 decided: Podpornik not ad-free); free tier includes basic AI and up to 2 pet profiles; support asks after reunion, after report and on profile (EUR 3 / 5 / 10 / custom, min EUR 2); Vet Partner EUR 39; prices in A-007; FR-040 marketing plan (low priority) added |
 | 0.5 | 2026-10-15 | Offline mode: FR-041 offline cache and FR-042 offline report queue (M2), FR-043 local proximity alerts (M3), NFR-OFFLINE, NFR-BATT, A-027, A-028 |
+| 0.6 | 2026-10-15 | Discovery changes: CRPsi lookup closed, now CRHŽ (FR-002, FR-016, A-003); cats first (FR-002); post-submit checklists (FR-005, FR-006); new FR-044 shelter directory; holding period 8 days and found location/time capture (FR-015, A-004); dohodnina deferred (FR-024, A-018); no animal sale ads (FR-018, FR-029, FR-031); Vet Partner labelling (FR-028, FR-030); SEO routes (FR-035); share kit (FR-011); marketing partners (FR-040); backend wording per brief v1.0 (A-005) |
