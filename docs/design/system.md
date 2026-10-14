@@ -619,3 +619,16 @@ module.exports = {
 - Illustration set (empty states, onboarding) not yet drawn: image tasks to follow in planning.
 - Content strings in mockups are samples; the content slices own the final copy (status labels agree with "žival").
 - Open for the tech-lead: Atkinson Hyperlegible Next package availability for Expo, and bottom-sheet library choice.
+
+# 15. Mockup conventions (for the ui-designer)
+
+Each page slice in `docs/design/pages/P<n>-<slug>.md` gets one static mockup at `docs/design/mockups/P<n>-<slug>.html`.
+
+- Start from `docs/design/mockups/_template.html`. It loads the tokens (`../tokens.css`), the Tailwind stand-in config (`../directions/tailwind-config.js`), the component classes (`../directions/directions.css`) and the renderer (`../directions/directions.js`) that shows the content in light, dark or side by side. Put one copy of the content in `#src`.
+- Use only token classes and the component classes already in `directions.css` (`.btn`, `.pill`, `.choice`, `.input`, `.st`, `.badge`, `.note`, `.card`, `.sheet`, `.bottomnav`, `.steps`, `.phone`, `.browser`, markers). Add a new class to `directions.css` only when a component in section 10 needs it, and keep it token-driven. Never use hex values.
+- Show every state the slice lists, on the platforms it names: mobile in 390 px phone frames, web in a 1200 px browser frame, plus a 768 px frame when the slice asks for tablet behaviour. Label each frame with its state name.
+- Map areas use `<div class="map-canvas" data-center="lng,lat" data-zoom="13.5">` (live OpenFreeMap restyled with the `map-*` tokens, calm style).
+- Copy: read `docs/content/pages/P<n>-<slug>.md`. If it does not exist yet, use clearly marked sample Slovenian text (gender-neutral, status labels agree with "žival") and say so in the footer note. Never invent legal or pricing claims.
+- Images: placeholder pet photos from `docs/design/directions/img/`; generated assets from the image tasks at `assets/<name>.png` (reference as `../../../assets/<name>.png`).
+- Accessibility in the mockup: real headings, labels above fields, alt text, 44 px targets, visible focus state shown at least once per page, no colour-only status, no ad slot on routes where the slice forbids it.
+- Done when: all states in light and dark render without overflow at 390 and 1200 px, the review checklist in section 1 passes, and the mockup path is the one in the slice.

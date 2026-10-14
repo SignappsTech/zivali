@@ -1,0 +1,38 @@
+---
+id: TASK-8.1
+title: 'Design: UI kit gallery (P23)'
+status: To Do
+assignee:
+  - '@ui-designer'
+created_date: '2026-10-14 21:50'
+labels:
+  - design
+  - 'est:M'
+  - 'req:NFR-A11Y'
+dependencies: []
+references:
+  - docs/design/system.md
+  - docs/design/pages/P23-ui-kit-gallery.md
+  - docs/content/pages/P23-ui-kit-gallery.md
+  - docs/design/mockups/_template.html
+parent_task_id: TASK-8
+priority: high
+ordinal: 88000
+---
+
+## Description
+
+<!-- SECTION:DESCRIPTION:BEGIN -->
+Both UI kits (shadcn/ui and React Native Reusables) are checked against one visual reference, so stories do not each invent buttons and forms. Build the static HTML mockup for P23 from its page slice, the design system and the content slice (if docs/content/pages/P23-ui-kit-gallery.md does not exist yet, use clearly marked sample Slovenian copy). Frontend implements from this mockup, so every state in the slice has to be drawn.
+
+## Packet
+Branch: design/P23-ui-kit-gallery
+<!-- SECTION:DESCRIPTION:END -->
+
+## Acceptance Criteria
+<!-- AC:BEGIN -->
+- [ ] #1 Given docs/design/pages/P23-ui-kit-gallery.md, when docs/design/mockups/P23-ui-kit-gallery.html is opened in light, dark and side by side, then every state and platform listed in "Mockup scope" is shown and nothing is clipped or scrolls horizontally at 390 and 1200 px.
+- [ ] #2 Given the visual review checklist in docs/design/system.md section 1, when the mockup is reviewed, then it passes: one primary action per view, no card borders, status as icon plus word, one accent, status and meaning never by colour alone.
+- [ ] #3 Given accessibility, when the mockup is checked, then text meets 4.5:1 (7:1 for body text and the main action), targets are at least 44 px, a visible focus state is shown, and labels sit above fields.
+- [ ] #4 Given the gallery, when reviewed, then every component group in the slice shows default, focus, disabled, error, loading and selected states where they apply, in light and dark, with Slovenian-length sample text.
+<!-- AC:END -->

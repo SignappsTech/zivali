@@ -1,0 +1,69 @@
+---
+source: 03§P18
+page: P18 Poster and sharing
+stories: TASK-24 (FR-011)
+platforms: web, mobile
+mockup: docs/design/mockups/P18-poster-share.html
+copy: docs/content/pages/P18-poster-share.md
+---
+
+# P18 Poster and sharing
+
+## Purpose
+
+Give an owner a printable A4 poster and one-tap sharing so the search reaches neighbours and Facebook groups. The poster works in greyscale at distance and never shows a phone number, exact location or where a found animal is kept.
+
+## Screen: "Poster and sharing" (from the detail page or confirmation)
+
+1. Top bar (back, title).
+2. **Poster preview:** the A4 page at the top (portrait, `card` frame with the page on `background`, radius 12 corners, no border), zoomable.
+3. Language choice as two toggle pills (Slovenian, English) above the preview.
+4. Primary `lg` "Download PDF" (generation under 5 s, progress state). Text button "Print".
+5. **Share:** a list of rows (WhatsApp, Facebook, Copy link, More...) or the native share sheet on mobile; a short preview of the link card (photo, title) below.
+6. Quiet note: poster contains a QR code that opens the listing.
+
+## Poster layout (A4 portrait, 210 by 297 mm, print safe margin 12 mm)
+
+| Zone | Content | Size and rule |
+|---|---|---|
+| Top band | the word for "missing" and the species ("Missing dog"), SL or EN | 80 pt bold display, black on white; status by word, not colour |
+| Photo | best photo, 4:3, full width inside margins | at least 40 % of the page height, high contrast crop on the face |
+| Name | pet name | 96 pt bold display |
+| Facts | colour, size, collar, special marks (3 to 5 lines) | 26 pt, regular, black |
+| Where and when | area name, approximate (never an address), date | 26 pt |
+| Call to action | "If you see this animal, scan the code" | 32 pt bold |
+| QR | large code (at least 55 mm) with the short link printed below it | quiet zone 4 modules, black on white, must scan in greyscale |
+| Footer | logo mark and wordmark, small | greyscale-safe, 12 pt |
+
+No phone number, no email, no chip number, no exact address. The poster uses only black, white and one mid-grey; brand colour appears in screen previews only. Closed or reunited reports render "Home again" instead of the appeal (or the download is unavailable).
+
+## Open Graph and share card
+
+1200 by 630: photo left (square crop, radius 24), right side species and name in display type, short line of the area (approximate), logo at the bottom; no exact or holding location. Localised text. Used by WhatsApp, Facebook and the web app's metadata.
+
+## States
+
+| State | Behaviour |
+|---|---|
+| Generating | primary shows a spinner and "Preparing", skeleton preview |
+| Ready | primary becomes "Download PDF", file name shown |
+| Failure | note with retry |
+| No good photo | blocks download with a `note` and primary "Add a photo" |
+| Report closed or reunited | shows the "Home again" variant or an unavailable note |
+| Share unsupported (web) | falls back to Copy link |
+| Copied | toast "Link copied" |
+
+## Responsive and accessibility
+
+On mobile the preview is a scrollable thumbnail with "View full size". The preview has an `alt` summarising the poster; the PDF is tagged with the title and language; QR code has the link printed beside it as text; buttons have accessible names; the share rows are a list of buttons.
+
+## Assets
+
+None (the poster uses the report photo; logo mark from `docs/design/brand/`).
+
+## Mockup scope (`P18-poster-share.html`)
+
+1. Mobile and web: the screen with preview, language pills, share rows; generating, failure and no-photo states.
+2. The A4 poster (SL and EN, lost dog example) as print HTML with `@media print` rules and its greyscale rendering.
+3. The Open Graph card at 1200 by 630.
+4. Light and dark for the screen (the poster itself is always black on white).

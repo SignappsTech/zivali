@@ -1,25 +1,25 @@
 ---
 doc_id: DOC-03
 title: Design Specification
-version: 0.2
-status: Draft
+version: 0.3
+status: Draft (direction approved 2026-10-14)
 date: 2026-10-14
 owner: Design Lead
 audience: Client, team
 approvals:
-  - Client | | |
-  - Design Lead | | |
+  - Client | Primož Božič | 2026-10-14 |
+  - Design Lead | Claude | 2026-10-14 |
 ---
 
 <!-- Owner: design-lead. Master design doc. Implementers never read this: they read docs/design/system.md and docs/design/pages/P*.md slices. -->
 
 # Design directions
 
-Lean mode: one direction with two variations, explored as style tiles and key screens in `design/directions/` (overview at `design/directions/index.html`). The client chose variation A on 2026-10-14, after a second review asked for a calmer, cleaner pass (one primary action, one question per screen, fewer outlines, fewer badges, fewer map markers). The chosen direction below includes that pass.
+Lean mode: one direction with two variations, explored as style tiles and key screens in `design/directions/` (overview at `design/directions/index.html`). The client chose variation A on 2026-10-14 and, after a second review that asked for a calmer, cleaner pass (one primary action, one question per screen, fewer outlines, fewer badges, fewer map markers), **approved the decluttered direction A the same day**. The direction is approved; this document and the page slices still need client approval when the mockups exist.
 
 | Direction | Idea | Mood | Chosen |
 |---|---|---|---|
-| A Lagoon | Cool teal on mist, soft pill shapes, flat tonal surfaces, sun yellow as the only warm accent | Calm, warm, hopeful, held | **Yes** (2026-10-14) |
+| A Lagoon | Cool teal on mist, soft pill shapes, flat tonal surfaces, sun yellow as the only warm accent | Calm, warm, hopeful, held | **Approved by the client, 2026-10-14** |
 | B Ink and Sun | Poster-clear ink type, one sun-yellow action colour, crisp corners | Clear, confident, urgent without panic | No (explored, dropped) |
 
 Direction name: **Warm harbour**, realised as Lagoon. Mockups: `design/directions/A.html` (style tile, three mobile screens, one web page, light and dark, side by side). Tokens: `design/tokens.json`. System slice: `design/system.md`.
@@ -31,29 +31,95 @@ Direction name: **Warm harbour**, realised as Lagoon. Mockups: `design/direction
 - **Logo:** a map pin with two soft ears, the hole holding a sun-yellow dot ("the eye of the search"). Works at 16 px and in one colour plus the dot. Files in `design/brand/` (`najdimo-mark.svg`, `najdimo-mark-light.svg`, `najdimo-app-icon.svg`). The wordmark is live text in Bricolage Grotesque for now and will be outlined in the final logo pack.
 - **Color:** lagoon teal (`#145360` primary), mist neutrals (`#E8EEEE` canvas, `#FBFDFD` card), night neutrals for dark mode, sun yellow (`#F7B32B`) as the single warm accent. Status colours: coral (lost), leaf green (found), blue (sighted), sun (reunited). Premium plum, verified teal. 7:1 contrast for body text and the primary action, 4.5:1 minimum elsewhere, verified by the token build. Roles and values in `design/system.md`.
 - **Typography:** Bricolage Grotesque (headings) and Atkinson Hyperlegible Next (text), both Google Fonts with full Slovenian diacritics (Č, Š, Ž verified). Body 16 px minimum, meta 14 px, chip numbers tabular with a slashed zero.
-- **Imagery:** honest owner-snapshot photography, rounded frames, no text or pills on photos. Illustration is flat geometry in brand colours, used only for empty states and onboarding. Generated images are never used as a stand-in for a real report. Brief format for image tasks is in `design/system.md`.
+- **Imagery:** honest owner-snapshot photography, rounded frames, no text or pills on photos. Illustration is flat geometry in brand colours, used only for empty states, the reunited moment and house ads. Generated images are never used as a stand-in for a real report. Brief format for image tasks is in `design/system.md`.
 - **Iconography and motion:** Phosphor Icons (regular, bold, fill), status always icon plus word plus colour. Motion only for feedback and state change, `transform` and `opacity` only, reduced motion honoured.
 - **Maps:** OpenFreeMap tiles in a calm style (land, water, parks, main roads, area names). Lost pets appear as a translucent area with the pet photo, never an exact pin. At most three marker styles.
-- **Surface rules (the "clean" pass):** surfaces separate by tone and space, not by outline. No card borders, no shadows except on floating controls and sheets, no card inside a card, one primary button per view, fields are a label and a line, bottom navigation has at most four items and no count badges.
+- **Surface rules (the "clean" pass):** surfaces separate by tone and space, not by outline. No card borders, no shadows except on floating controls and sheets, no card inside a card, one primary button per view, fields are a label and a line, bottom navigation has at most four items and no count badges. Dense admin tables may use hairlines.
 
 # Information architecture
 
-To be completed in planning, after the product requirements (DOC-02) are final. Working shape from the brief:
+Sitemap (web). Mobile app navigation follows below.
 
-- Mobile: bottom navigation with four items (Zemljevid, Opozorila, Prijavi, Profil). "Prijavi" opens a choice of lost, found or sighted report.
-- Web: header with Zemljevid, Izgubljene, Najdene, Kako deluje; "Prijava" and "Prijavi" on the right. Public lost and found pages are indexable (SEO). Shelter portal and admin use the sidebar pattern.
+    Najdimo (web)
+    ├── Home (P3)
+    ├── Map and list  /map (P4) → Report detail  /r/<code> (P9)
+    │     ├── Lost, Found (filtered views of the same page)
+    │     └── Contact → Chat (P12) · Report a sighting (P7) · Share and poster (P18) · Report abuse (P10)
+    ├── Report ("Prijavi" menu, header primary action)
+    │     ├── Lost animal (P6) → Location (P5) → Confirmation → Poster (P18), optional support (P15)
+    │     ├── Found animal (P7, no account) → private manage page /m/<token> (P7)
+    │     └── Sighted animal (P7)
+    ├── Content pages (P3): How it works · Safety tips · FAQ · For shelters · About · Where your money goes (M4)
+    ├── Partners "Oglašujte pri nas" (P22)
+    ├── Sign in and create account (P16)
+    ├── My account (signed in)
+    │     ├── My pets (P8) · My reports → Match review (P11) → Chat (P12) → Reunited (P14) → Support (P15)
+    │     ├── Inbox: Conversations (P12) · Notifications (P13)
+    │     ├── Alerts and settings (P13) · Payments (P15)
+    │     └── Cookie settings (P17)
+    ├── Legal (P3 T4): Privacy · Cookies · Terms · Imprint · Accessibility statement
+    └── Admin  /admin (P19): Dashboard · Ads (P20) · House ads (P20) · Enquiries · Audit log · Settings
+          (M3: Organisations and portal · M4: Moderation, Users, Orders, KPIs)
+
+**Header (web):** logo, at most four links (Map, Lost, Found, How it works; signed in: How it works becomes My pets and reports), language, inbox icon and account menu (signed in) or Sign in, and the single primary "Report" menu. **Footer:** About, Safety tips, Partners, Privacy, Cookies, Terms, Imprint, Accessibility, Cookie settings, For shelters, How it works, language.
+
+**Mobile app tabs (four):** Map, Inbox, Report (action, opens the Report sheet), Profile. Signed-out users get the same tabs; Inbox and Profile show sign-in prompts, Cookie settings and language stay available.
+
+## Key flows
+
+    Report lost (owner)            P6: pet → [photos → details] → where (P5) → when → circumstances → review → [sign in P16] → confirmation → poster P18 · support P15 (optional)
+    Report found (finder)          P7: photo → what (AI confirm from M3) → where (P5) → situation → publish → success with private link → manage page · chat via link
+    Sighting                       P9 "Report a sighting" → P7 short flow → linked to the lost report, owner notified
+    Browse                         P4 map and list ⇄ filters → P9 detail → contact / sighting / share / poster / abuse · ad slots: feed, detail, reunited, sidebar only (P21)
+    Match and confirm              notification → P11 list → review → confirm → chat P12 | reject (hidden for good)
+    Reunite                        P12 chat → owner marks home (P14) → reunited screen: story consent, tip (P15), one ad (P21) → report closed
+    Alerts                         opt-in sheet or settings (P13, P5 alert area) → nearby alert → listing P9 → sighting or share
+    Consent                        first visit → banner (P17) → analytics on or off → change later via Cookie settings
+    Account                        gate sheet in any flow → sign in or create (P16) → return to the same step
+    Admin ads                      P19 sign in with strong authentication → P20 create, preview in four slots, schedule → statistics and CSV
+    Partners                       P22 page → enquiry form → lead in admin and email to the client
 
 # Page inventory
 
-To be completed in planning (page list, purposes and mockup paths come from the requirements). Direction mockups already cover: home with map and nearby reports, the "Prijavi" choices, one question of the found-report flow (AI confirmation), and the public lost-pet page.
+IDs are canonical: design slices are `design/pages/P<n>-<slug>.md`, mockups `design/mockups/P<n>-<slug>.html`, copy slices `content/pages/P<n>-<slug>.md`. M1 and M2 scope. Later milestones add pages (shelter portal, moderation queue, Premium, Boost, tags, transparency page, success stories) with their stories.
 
-| ID | Page | Purpose | Key sections | Mockup | Status |
-|---|---|---|---|---|---|
-| | | | | design/directions/A.html (direction screens only) | Direction approved, page mockups pending |
+| ID | Page | Purpose | Key sections | Stories | Mockup | Status |
+|---|---|---|---|---|---|---|
+| P1 | Web shell | Header, footer, containers, sidebar region, shared states | Header with Report menu, footer, layout variants, loading, empty and error patterns | TASK-11 | design/mockups/P1-web-shell.html | Slice written, mockup pending |
+| P2 | Mobile shell | Four tabs, Report sheet, permission primers, deep link landing | Bottom navigation, Report sheet, primers, signed-out states | TASK-12 | design/mockups/P2-mobile-shell.html | Slice written, mockup pending |
+| P3 | Public pages | Home and content templates (article, FAQ, legal) | Hero, near you, how it works, safety, templates | TASK-27, TASK-28 | design/mockups/P3-public-pages.html | Slice written, mockup pending |
+| P4 | Map and list | Browse reports near you, always with a list alternative | Area pill, markers, sheet and list, filter sheet, web two panes | TASK-31 | design/mockups/P4-map-list.html | Slice written, mockup pending |
+| P5 | Location picker | One picker and the fuzzed public area | Search, centre pin, radius, privacy line, fuzzed disc | TASK-15 | design/mockups/P5-location-picker.html | Slice written, mockup pending |
+| P6 | Report lost | Owner reports in minutes, one question per screen | Steps, sign-in gate, confirmation with optional support | TASK-29 | design/mockups/P6-report-lost.html | Slice written, mockup pending |
+| P7 | Report found or sighted | No account, under a minute, private manage link | Photo, what, where, situation, publish, success link, manage page | TASK-30, TASK-17 | design/mockups/P7-report-found.html | Slice written, mockup pending |
+| P8 | Pet profiles | Register pets, chip, photos | List, add and edit sections, detail | TASK-16 | design/mockups/P8-pet-profiles.html | Slice written, mockup pending |
+| P9 | Report detail | The listing page and action slots | Photo, status, facts, area, actions, sightings, ad slot, owner view | TASK-18 | design/mockups/P9-report-detail.html | Slice written, mockup pending |
+| P10 | Report abuse | Flag scams and bad content in two taps | Reason sheet, block, confirmation | TASK-25 | design/mockups/P10-report-abuse.html | Slice written, mockup pending |
+| P11 | Match review | Understand and confirm or reject suggestions | List, comparison, reasons, confirm | TASK-20 | design/mockups/P11-match-review.html | Slice written, mockup pending |
+| P12 | Chat | Safe talk without phone numbers | Conversation list, thread, safety banner, composer | TASK-21 | design/mockups/P12-chat.html | Slice written, mockup pending |
+| P13 | Alerts, inbox and settings | Notifications, nearby alerts, account | Notification list, alert settings, account screen | TASK-22, TASK-23, TASK-9 | design/mockups/P13-alerts-inbox-settings.html | Slice written, mockup pending |
+| P14 | Reunited and lifecycle | Close the loop gracefully | Mark home, reunited screen, close, reminders | TASK-26 | design/mockups/P14-reunited.html | Slice written, mockup pending |
+| P15 | Support moments | Voluntary tip and contribution, checkout hand-off | Tip block, contribution row, return states, payments list | TASK-33 | design/mockups/P15-support-moments.html | Slice written, mockup pending |
+| P16 | Auth | Sign in, create account, gates | Sign in, create, verify, reset, contextual gate | TASK-9 | design/mockups/P16-auth.html | Slice written, mockup pending |
+| P17 | Consent | Equal-weight analytics choice | Banner, customise, settings, re-ask | TASK-13 | design/mockups/P17-consent.html | Slice written, mockup pending |
+| P18 | Poster and sharing | A4 poster, share and link card | Preview, download, share rows, poster layout, OG card | TASK-24 | design/mockups/P18-poster-share.html | Slice written, mockup pending |
+| P19 | Admin shell | Console frame, tables, access patterns | Sidebar, top bar, table pattern, strong-auth screens, audit log | TASK-34 | design/mockups/P19-admin-shell.html | Slice written, mockup pending |
+| P20 | Admin ads | Create, preview, schedule and measure ads | List, form with validation, statistics, house ads | TASK-37 | design/mockups/P20-admin-ads.html | Slice written, mockup pending |
+| P21 | Ad slots and house ads | Labelled calm placements, four slots | Feed, detail, reunited, sidebar, house ads, no-ad routes | TASK-36 | design/mockups/P21-ad-slots.html | Slice written, mockup pending |
+| P22 | Partners page | Audience, placements and an enquiry | Hero, live numbers, slot previews, form | TASK-38 | design/mockups/P22-partners.html | Slice written, mockup pending |
+| P23 | UI kit gallery | Visual reference for all core components and states | Components by group in light and dark | TASK-8 | design/mockups/P23-ui-kit-gallery.html | Slice written, mockup pending |
 
 # Content strategy
 
-To be completed with the content strategist. Direction rules already fixed: Slovenian is the default language, English second; copy is gender-neutral (nouns and imperatives); status labels agree with the noun "žival" ("Izgubljena", "Najdena", "Opažena", "Spet doma"); one clear action per screen; reassurance about privacy at the moment it matters (phone number stays hidden); no promises of success; text lengths grow 15 to 20 % in Slovenian, so no fixed-width controls.
+Final copy is owned by the content strategist (one slice per page at `content/pages/P<n>-<slug>.md`, glossary and voice guide first, TASK-2). Fixed by the design:
+
+- **Tone:** calm, warm, hopeful, trustworthy; short sentences; no alarm and no cute talk; no promises of success.
+- **Language:** Slovenian is the source, English follows; gender-neutral wording (nouns and imperatives, for example "Prijavi izgubo"); status labels agree with "žival" (Izgubljena, Najdena, Opažena, Spet doma); Slovenian runs 15 to 20 % longer, so no fixed-width controls.
+- **Messaging hierarchy per screen:** one question or one heading, one supporting sentence at most, one primary action, quiet secondary actions. Reassurance appears where the worry arises (hidden phone numbers at publish, approximate location at the picker, "never send money first" in chat and on the detail page).
+- **Calls to action:** verb plus object ("Prijavi izgubo", "Prijavi najdbo", "Prijavi opažanje"). One label per intent across a page. Report entry points always lead to the same Report choices.
+- **Microcopy rules:** errors say what to do next; no blame; empty states are good news when true ("Ni prijav v bližini"); counts use Slovenian plural forms (one, two, few, other); dates and distances in Slovenian formats (14. 10., 1,2 km).
+- **Commercial wording:** ads are labelled "Oglas" (EN "Ad"); support is "podpora / prispevek", never "donacija" unless the legal entity qualifies (Q-008); pricing is never invented on the Partners page.
+- **Legal and consent copy:** drafts are marked "requires client and legal review"; consent buttons carry equal weight and neutral wording.
 
 # Accessibility
 
@@ -62,17 +128,20 @@ WCAG 2.2 AA throughout, with AAA (7:1) for body text and the primary action beca
 - Contrast pairs are declared in `design/tokens.json` and enforced by `design/build-tokens.mjs`.
 - Visible 3 px focus ring with 2 px offset everywhere. Touch targets 44 px or more, main action 56 px.
 - Every field has a visible label above it, errors are text with an icon tied to the field, no placeholder-as-label.
-- Status is never colour alone. Map reports are always also available as a list.
-- Light and dark modes meet the same ratios. Reduced motion and OS text scaling up to 200 % are supported.
-- Alt text for every photo (species, colour, one mark). Accessibility statement required (European Accessibility Act).
+- Status is never colour alone. Map reports are always also available as a list; every map has a text alternative.
+- Light and dark modes meet the same ratios. Reduced motion and OS text scaling up to 200 % are supported; pages reflow at 400 % zoom.
+- Alt text for every photo (species, colour, one mark); ad images require alt text in admin.
+- The consent banner has equal-weight buttons, is focus-managed and labelled (P17).
+- Accessibility statement required (European Accessibility Act); audited in M5.
 
 # Responsive behavior
 
-Mobile first. Breakpoints: 640 (sm), 768 (md), 1024 (lg), 1280 (xl), 1536 (2xl). Mobile uses a single column, 20 px gutters, bottom navigation, bottom sheets and one question per flow screen. From `md` the navigation moves to a top bar and tiles go two-column. From `lg` the web layout applies (two-column detail, 1120 px content, 48 px gutters). Pages reflow to 320 px and at 400 % zoom without horizontal scroll. Details in `design/system.md`.
+Mobile first. Breakpoints: 640 (sm), 768 (md), 1024 (lg), 1280 (xl), 1536 (2xl). Mobile uses a single column, 20 px gutters, bottom navigation, bottom sheets and one question per flow screen. From `md` the web header shows the full menu pattern as the slice describes; from `lg` the web layout applies (two-column detail, 1120 px content, 48 px gutters, right sidebar region for ads). Pages reflow to 320 px and at 400 % zoom without horizontal scroll. Details in `design/system.md` and each page slice.
 
 # Change log
 
 | Version | Date | Change |
 |---|---|---|
 | 0.1 | | Initial draft |
-| 0.2 | 2026-10-14 | Direction phase: brand proposal (name Najdimo, tone, logo, palette, type), directions A and B explored, client chose A, decluttering pass applied, direction section and brand and visual language written. IA, page inventory and content strategy left for planning. |
+| 0.2 | 2026-10-14 | Direction phase: brand proposal (name Najdimo, tone, logo, palette, type), directions A and B explored, client chose A, decluttering pass applied, direction section and brand and visual language written. |
+| 0.3 | 2026-10-14 | Client approved the decluttered direction A. Information architecture, key flows, page inventory P1 to P23 (M1 and M2) with design slices, content strategy rules, accessibility and responsive sections completed from requirements v0.2. |

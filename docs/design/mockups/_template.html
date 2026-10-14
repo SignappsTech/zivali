@@ -1,0 +1,95 @@
+<!doctype html>
+<!--
+  Najdimo mockup starter. Copy to docs/design/mockups/P<n>-<slug>.html and fill #src.
+  Rules (see docs/design/system.md section 15):
+  - Everything in #src is cloned once per colour mode (light, dark, side by side) by directions.js. Keep ONE copy of the content.
+  - Colours, radii, shadows and fonts come from tokens only (Tailwind classes from tailwind-config.js and the component classes in directions.css). No hex values.
+  - Copy comes from docs/content/pages/P<n>-<slug>.md. If that file is missing, use clearly sample Slovenian text and say so in the footer note.
+  - Show every state listed in the page slice, on the platforms the slice names (phone frames 390 wide, browser frame 1200 wide, tablet 768 if the slice asks).
+  - Images: pet photos from ../directions/img/ (placeholders), generated assets from ../../../assets/<name>.png.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Najdimo mockup: PAGE NAME</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:wght@400;500;600;700&family=Bricolage+Grotesque:opsz,wght@12..96,500..800&display=swap" rel="stylesheet">
+<link href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css" rel="stylesheet">
+<link href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/bold/style.css" rel="stylesheet">
+<link href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css" rel="stylesheet">
+<link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet">
+<link href="../tokens.css" rel="stylesheet">
+<link href="../directions/directions.css" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com/3.4.17"></script>
+<script src="../directions/tailwind-config.js"></script>
+</head>
+<body>
+<a class="sr-only focus:not-sr-only" href="#stage">Skip to content</a>
+
+<!-- Logo symbol, defined once -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <symbol id="nj-mark" viewBox="0 0 48 48">
+    <g fill="currentColor" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round">
+      <path d="M24 45.5 C24 45.5 10.5 33.2 10.5 24.4 A13.5 13.5 0 0 1 37.5 24.4 C37.5 33.2 24 45.5 24 45.5 Z M24 17.9 A6.5 6.5 0 1 0 24 30.9 A6.5 6.5 0 1 0 24 17.9 Z"/>
+      <path d="M12.2 19.6 L11.2 5 L22.6 11.4 Z"/><path d="M35.8 19.6 L25.4 11.4 L36.8 5 Z"/>
+    </g>
+    <circle cx="24" cy="24.4" r="3.6" fill="#F7B32B"/>
+  </symbol>
+</svg>
+
+<header class="chrome">
+  <div class="flex flex-wrap items-center gap-x-5 gap-y-2 px-6 py-2 max-w-[1400px] mx-auto">
+    <span class="flex items-center gap-2 font-display font-bold text-lg"><svg class="logo-mark w-7 h-7" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg>Najdimo</span>
+    <span class="text-muted-foreground text-[15px]">P0 Page name (mockup)</span>
+    <div class="ml-auto flex items-center gap-2" role="group" aria-label="Colour mode">
+      <button class="mode-btn" data-mode="light" aria-pressed="true">Light</button>
+      <button class="mode-btn" data-mode="dark" aria-pressed="false">Dark</button>
+      <button class="mode-btn" data-mode="both" aria-pressed="false">Side by side</button>
+    </div>
+  </div>
+</header>
+
+<main id="stage"></main>
+
+<div id="src" hidden>
+<section class="tile-section !max-w-[1400px]">
+  <h1 class="tile-title">P0 Page name</h1>
+  <p class="tile-lede">One sentence: what this mockup shows and which states it covers.</p>
+
+  <!-- MOBILE: one block per state. Copy this skeleton. -->
+  <div class="wrap-x"><div class="flex flex-wrap gap-x-10 gap-y-12 items-start">
+    <div>
+      <p class="tile-h !mt-0">Mobile: state name</p>
+      <div class="phone"><div class="phone-screen">
+        <div class="statusbar"><span>14:20</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <div class="flex-1 px-5 pt-3">
+          <h1 class="font-display font-bold text-[34px] leading-[40px] tracking-[-0.02em]">Screen question</h1>
+        </div>
+        <div class="px-5 pb-11 grid gap-1">
+          <button class="btn btn-primary btn-lg btn-block">Primary action</button>
+          <button class="btn btn-text btn-block">Quiet action</button>
+        </div>
+        <span class="home-ind"></span>
+      </div></div>
+    </div>
+  </div></div>
+
+  <!-- WEB: one block per state. Copy this skeleton. -->
+  <p class="tile-h" style="margin-top:64px">Web: state name</p>
+  <div class="wrap-x"><div class="browser">
+    <div class="browser-bar"><span class="dots"><i></i><i></i><i></i></span><span class="url"><i class="ph ph-lock-simple"></i>najdimo.si/path</span></div>
+    <header class="flex items-center gap-10 px-12 h-[88px]">
+      <span class="inline-flex items-center gap-2"><svg class="logo-mark w-9 h-9" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg><span class="font-display font-bold text-2xl tracking-[-0.03em]">Najdimo</span></span>
+    </header>
+    <div class="px-12 pb-20"><!-- page --></div>
+  </div></div>
+</section>
+<p class="tile-section !py-8 text-sm text-muted-foreground">Placeholder photography from Unsplash (Unsplash License). Copy source: docs/content/pages/P0-page-name.md (or sample text).</p>
+</div>
+
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<script src="../directions/directions.js"></script>
+</body>
+</html>
