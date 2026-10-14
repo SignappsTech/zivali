@@ -78,7 +78,7 @@ Run by GitHub Actions once a remote exists; until then `pnpm verify` runs the sa
 - **Lawful bases** (proposal for legal review): contract (account, reports, chat, payments), legitimate interest (fraud and abuse prevention, aggregate ad counts), consent (analytics, success stories, partner contact), legal obligation (payment records).
 - **Data minimisation**: no camera originals or EXIF stored; exact location private and purged on retention; chip numbers never public; IPs only as keyed hashes for 48 h; analytics events contain enums and slugs only; ad counting cookieless and aggregate (A-016).
 - **Consent**: no analytics script, request or cookie before opt-in (basic Consent Mode v2, ADR-009); choice, version and timestamp stored first-party; withdrawal as easy as giving; re-ask after 12 months or version change.
-- **Retention** (NFR-PRIV): chat 6 months after close; closed-report photos and locations 12 months; tag addresses 90 days after shipping; payment records as legally required; implemented by `purge_retention`.
+- **Retention** (NFR-PRIV): chat 6 months after close; closed-report photos and locations 12 months; payment records as legally required; implemented by `purge_retention`.
 - **Rights**: export and delete (M3, FR-034); anonymous reporters delete via manage link.
 - **Processors and transfers** (for the privacy policy, TASK-28): Supabase (EU, Frankfurt), Vercel (EU/US edge), Stripe, Brevo (EU), Cloudflare (Turnstile), Expo (push), Google (GA4, Firebase), MapTiler (EU) or komoot Photon, Anthropic (M3), Voyage AI (M3), Sentry (EU, M5). DPAs to be signed by the client before production.
 - **Accessibility**: WCAG 2.2 AA (EAA); axe in CI from M1; formal audit in M5 before the accessibility statement is finalised.

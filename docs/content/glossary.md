@@ -2,9 +2,9 @@
 source: 02§Glossary; 02§Content, SEO and legal requirements; 03§Content strategy
 doc: glossary
 title: SL/EN terminology glossary
-version: 0.1
+version: 0.2
 status: Draft, needs native Slovenian review and client approval (TASK-2 AC#3)
-date: 2026-10-14
+date: 2026-10-15
 owner: Content Strategist
 story: TASK-2
 ---
@@ -149,9 +149,10 @@ Species in headings and SEO titles agree with the species, not with "žival": "I
 | Monthly supporter (M4) | Podpornik (plan name); badge text "Podpira Najdimo" | Supporter; badge "Supports Najdimo" | Badge text is gender-neutral. |
 | Boost (M4) | Povečan doseg | Boost | Pill "Povečan doseg"; action "Povečaj doseg". |
 | Premium (M4) | Premium Zaščita | Premium Protect | |
-| QR tag (M4) | QR obesek | QR tag | |
 | Reward (M4) | nagrada | reward | Escrow: "nagrada, ki jo varno hrani Stripe". |
-| Ad label | Oglas | Ad | On every ad, no exceptions. |
+| Vet Partner (paid clinic visibility) | Veterinarski partner (plan name); profile mark "Partnerska ambulanta" | Vet Partner; profile mark "Partner clinic" | B2B subscription for vet clinics. Its placements in ad slots, alerts and posters are paid and always carry the "Oglas" label. |
+| 24h emergency (clinic badge) | Nujna pomoč 24 ur | 24-hour emergency care | Clinic profile badge. |
+| Ad label | Oglas | Ad | On every ad and every paid placement, no exceptions. |
 | Advertise with us (page) | Oglašujte pri nas | Advertise with us | Footer link "Partnerji" / "Partners" points here. |
 | Partner, sponsor | partner, oglaševalec | partner, advertiser | Public copy uses "partner". |
 | House ad | lastni oglas | house ad | Internal and admin only. |
@@ -290,4 +291,5 @@ Distance band codes are fixed in C6 (`lt1`, `1to3`, `3to10`, `gt10`). Only `lt24
 
 | Version | Date | Change |
 |---|---|---|
+| 0.2 | 2026-10-15 | Brief v0.7: QR tags removed, Vet Partner and clinic badge added, "Oglas" applies to every paid placement. |
 | 0.1 | 2026-10-14 | First glossary: report types and statuses, core terms, accounts (Vpis for sign-in), money and ads, attributes, plural forms, bands, banned words, open points. |

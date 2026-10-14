@@ -137,9 +137,9 @@ All tables in schema `public`, RLS enabled (ADR-003), `id uuid default gen_rando
 | audit_log | actor_id, action, target_type, target_id, diff jsonb, at | append-only | Medium |
 | email_outbox | to_user_id, template, locale, status, provider_id, error | 30 days | Low |
 | jobs (pgmq) / jobs_dead | type, payload, attempts, last_error | archive 7 days | Low |
-| Planned M3–M4 | photo_embeddings, ai_results, ai_calls, intake_batches, chip_lookups (hash only), subscriptions and entitlements for owners (Premium, Podpornik) and for vet organisations only (Vet Partner, Stripe Billing with VAT invoices; shelters and municipalities stay free, brief v0.4), tag_orders, tags, rewards (Connect escrow), moderation_actions | defined as wire types in `packages/types/src/domain` in M1; migrations with their stories | - |
+| Planned M3–M4 | photo_embeddings, ai_results, ai_calls, intake_batches, chip_lookups (hash only), subscriptions and entitlements for owners (Premium, Podpornik) and for vet organisations only (Vet Partner, Stripe Billing with VAT invoices; shelters and municipalities stay free; QR/NFC tags out of scope, brief v0.7), rewards (Connect escrow), moderation_actions | defined as wire types in `packages/types/src/domain` in M1; migrations with their stories | - |
 
-**Deletion and retention** (NFR-PRIV, proposals for legal review, A-012): chat deleted 6 months after report close; closed-report photos and exact locations deleted or nulled 12 months after close; tag addresses 90 days after shipping (M4); payment records kept as legally required; IP hashes 48 h; anonymous auth users without a live report 30 days; orphan uploads 24 h. All by the `purge_retention` job. Account deletion (M3, FR-034) closes open reports, anonymises messages and deletes personal rows per `supabase/data-inventory.json`; a pgTAP test fails when a table is missing from the inventory.
+**Deletion and retention** (NFR-PRIV, proposals for legal review, A-012): chat deleted 6 months after report close; closed-report photos and exact locations deleted or nulled 12 months after close; payment records kept as legally required; IP hashes 48 h; anonymous auth users without a live report 30 days; orphan uploads 24 h. All by the `purge_retention` job. Account deletion (M3, FR-034) closes open reports, anonymises messages and deletes personal rows per `supabase/data-inventory.json`; a pgTAP test fails when a table is missing from the inventory.
 
 # Interfaces and contracts
 
@@ -161,7 +161,7 @@ All tables in schema `public`, RLS enabled (ADR-003), `id uuid default gen_rando
 | C14 | Ads, partner stats and leads | API / data | docs/tech/contracts/C14-ads-partners.md |
 | C15 | Routes, deep links, page slots, server endpoints | routes | docs/tech/contracts/C15-routes-deeplinks.md |
 | C16 | i18n catalogues and formatting | data / library | docs/tech/contracts/C16-i18n.md |
-| C17+ | M3–M6 (AI extraction, embeddings, organisations (free for shelters, vets, municipalities), intake/CSV, chip lookup, export/delete, owner and Vet Partner subscriptions, tags, escrow, moderation, sponsor invoices) | - | written at each milestone's breakdown |
+| C17+ | M3–M6 (AI extraction, embeddings, organisations (reunite features free for all), intake/CSV, chip lookup, export/delete, owner and Vet Partner subscriptions, escrow, moderation, sponsor invoices) | - | written at each milestone's breakdown |
 
 **API standards**
 

@@ -5,7 +5,7 @@ status: To Do
 assignee:
   - '@tech-lead'
 created_date: '2026-10-14 21:04'
-updated_date: '2026-10-14 22:02'
+updated_date: '2026-10-14 22:10'
 labels:
   - story
   - 'req:FR-020'
@@ -20,7 +20,7 @@ ordinal: 52000
 ## Description
 
 <!-- SECTION:DESCRIPTION:BEGIN -->
-Premium and Podpornik are recurring; one subscription and entitlement layer for individual users lets them be built in parallel. Organisations (shelters, vets, municipalities) never have a plan or entitlement: everything for them is free.
+Premium, Podpornik and Vet Partner are recurring; one subscription and entitlement layer lets them be built in parallel. Entitlements belong to individual users, except Vet Partner which belongs to a vet organisation; shelters and municipalities never have a plan.
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Acceptance Criteria
@@ -31,7 +31,7 @@ Premium and Podpornik are recurring; one subscription and entitlement layer for 
 - [ ] #4 Given local development, when the mock provider runs, then all lifecycle events are simulated from fixtures.
 - [ ] #5 Given a missing or expired entitlement, when a premium feature is called, then the server returns a clear upgrade-needed error that never affects the core loop.
 - [ ] #6 Given mobile, when a user wants to subscribe, then the app hands off to web and the IAP risk is documented.
-- [ ] #7 Given an organisation member acting for a shelter, vet or municipality, when they use any organisation feature, then no entitlement is checked and no upgrade prompt is shown (an architecture test asserts organisation routes never call hasEntitlement).
+- [ ] #7 Given a shelter or municipality organisation, or a vet using free reunite features, when they use the product, then no entitlement is checked and no upgrade prompt is shown (an architecture test asserts those routes never call hasEntitlement); organisation entitlements exist only for the Vet Partner plan.
 <!-- AC:END -->
 
 ## Packet

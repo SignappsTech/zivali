@@ -5,7 +5,7 @@ source: docs/04-technical-design.md§External integrations, ADR-011; FR-020, FR-
 ## Tables
 
 ```sql
-create type payment_purpose as enum ('tip','report_contribution','boost','tag','subscription');  -- boost/tag/subscription used from M4
+create type payment_purpose as enum ('tip','report_contribution','boost','subscription');  -- boost/subscription used from M4
 create type payment_status as enum ('pending','succeeded','failed','canceled','refunded');
 payments(id, user_id, purpose, amount_cents int check (amount_cents >= 200), currency text default 'EUR' check (currency = 'EUR'),
          status payment_status default 'pending', provider text ('stripe'|'mock'), provider_session_id text unique,
@@ -45,10 +45,10 @@ getPayment(id) / listMyPayments({ cursor? })
 ```
 Analytics: `donation` fires on the return page when status is `succeeded` (consent only, C12).
 
-## Scope now and later (brief v0.4)
+## Scope now and later (brief v0.7)
 
 - M2 (this contract): one-off owner payments for `tip` and `report_contribution`.
-- M4 extends the same ledger, provider interface and webhook: owner one-time payments (`boost`, `tag`), owner subscriptions (Premium, Podpornik) and one organisation subscription, **Vet Partner** (vet organisations only, Stripe Billing with VAT invoices, indicative EUR 39/month). Entitlements are keyed by `user_id` or `organisation_id` (vet). Shelters and municipalities never pay; all reunite features stay free for every organisation.
+- M4 extends the same ledger, provider interface and webhook: owner one-time payments (`boost`), owner subscriptions (Premium, Podpornik) and one organisation subscription, **Vet Partner** (vet organisations only, Stripe Billing with VAT invoices, indicative EUR 39/month). Entitlements are keyed by `user_id` or `organisation_id` (vet). Shelters and municipalities never pay; all reunite features stay free for every organisation. QR/NFC tags are out of scope (brief v0.7).
 - M4 (legal-gated, Q-011): Stripe Connect for reward escrow. M6: Stripe invoices for ad sponsors.
 - A Stripe implementation plan from the client is pending; it may refine this contract (tech lead updates C13 and dependent tasks).
 

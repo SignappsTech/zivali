@@ -5,6 +5,7 @@ status: To Do
 assignee:
   - '@design-lead'
 created_date: '2026-10-14 21:02'
+updated_date: '2026-10-14 22:10'
 labels:
   - story
   - 'req:FR-011'
@@ -30,6 +31,7 @@ Owners still print posters and post in Facebook groups; a good poster with a QR 
 - [ ] #3 Given a report, when the user taps Share, then WhatsApp, Facebook, copy link and the native share sheet are offered with prefilled localised text, and share fires (consent only).
 - [ ] #4 Given a shared link, when previewed in WhatsApp or Facebook, then an Open Graph image shows the pet photo with type label and no exact location.
 - [ ] #5 Given a FOUND report, when shared, then the preview never reveals where the animal is kept.
+- [ ] #6 Given the poster QR code, when scanned, then it resolves to the public listing only (never to a pet profile, owner data or a tag page).
 <!-- AC:END -->
 
 ## Packet

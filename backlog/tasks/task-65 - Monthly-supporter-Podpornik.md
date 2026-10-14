@@ -5,6 +5,7 @@ status: To Do
 assignee:
   - '@design-lead'
 created_date: '2026-10-14 21:05'
+updated_date: '2026-10-14 22:11'
 labels:
   - story
   - 'req:FR-022'
@@ -25,11 +26,11 @@ Many people want to help without needing features; a small monthly support with 
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Given a signed-in user, when they choose Podpornik (EUR 2 or 3 per month, test mode), then Checkout (test) completes and an active supporter state with a thank-you is shown.
-- [ ] #2 Given a supporter, when their profile or listings are shown, then a small badge appears (opt-out toggle) and no feature or ranking advantage is granted.
-- [ ] #3 Given a cancellation, when the period ends, then the badge disappears and the user is thanked.
-- [ ] #4 Given a completed subscription, when recorded, then supporter_subscribe fires (consent only).
-- [ ] #5 Given a user who is not a supporter, when using the product, then nothing is degraded.
+- [ ] #1 Given a supporter, when their profile or listings are shown, then a small badge appears (opt-out toggle) and no feature or ranking advantage is granted.
+- [ ] #2 Given a cancellation, when the period ends, then the badge disappears and the user is thanked.
+- [ ] #3 Given a completed subscription, when recorded, then supporter_subscribe fires (consent only).
+- [ ] #4 Given a user who is not a supporter, when using the product, then nothing is degraded.
+- [ ] #5 Given a signed-in user, when they choose Podpornik and an amount of their choice from EUR 2 per month (test mode), then Checkout (test) completes and an active supporter state with a thank-you is shown.
 <!-- AC:END -->
 
 ## Packet

@@ -5,7 +5,7 @@ status: To Do
 assignee:
   - '@tech-lead'
 created_date: '2026-10-14 21:04'
-updated_date: '2026-10-14 22:02'
+updated_date: '2026-10-14 22:10'
 labels:
   - story
   - 'req:FR-015'
@@ -31,7 +31,7 @@ Shelters, vets and municipalities need a shared organisation account with roles,
 - [ ] #3 Given an organisation owner, when they invite colleagues by email, then members join with roles (owner, editor, viewer) and RLS limits data to the organisation.
 - [ ] #4 Given an unverified organisation, when it publishes listings, then they are held for moderation until it is verified.
 - [ ] #5 Given a pilot shelter onboarded by hand, when an admin acts on its behalf, then the admin can create and verify the organisation.
-- [ ] #6 Given any organisation type (shelter, vet, municipality), when its verified members use the portal, bulk and CSV upload, matches, chip lookup, API keys, analytics and adoption page, then all are free forever: there is no plan, quota-for-payment, entitlement check or upgrade prompt for organisations.
+- [ ] #6 Given the free-forever rule, when shelters and municipalities use any portal feature (bulk and CSV upload, matches, chip lookup, API keys, analytics, municipality reports, adoption page) or vets use found-animal reports, chip lookup, matches and chat, then all are free with no plan, entitlement check or upgrade prompt; the only paid organisation plan is Vet Partner (visibility only).
 <!-- AC:END -->
 
 ## Packet

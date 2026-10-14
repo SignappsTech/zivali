@@ -5,6 +5,7 @@ status: To Do
 assignee:
   - '@tech-lead'
 created_date: '2026-10-14 21:03'
+updated_date: '2026-10-14 22:10'
 labels:
   - story
   - 'req:FR-020'
@@ -19,7 +20,7 @@ ordinal: 32000
 ## Description
 
 <!-- SECTION:DESCRIPTION:BEGIN -->
-Voluntary support, boosts, tags and subscriptions all need one safe way to take card payments; a mockable test-mode core first lets the Reunited tip ship in the core-loop milestone.
+Voluntary support, boosts, Premium and Vet Partner subscriptions all need one safe way to take card payments; a mockable test-mode core first lets the Reunited tip ship in the core-loop milestone.
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Acceptance Criteria

@@ -1,7 +1,7 @@
 ---
 doc_id: DOC-01
 title: Project Brief
-version: 0.7
+version: 0.8
 status: Draft
 date: 2026-10-14
 owner: Project Lead
@@ -56,7 +56,16 @@ Izgubljene živali (working name) is a web and mobile app that reunites lost cat
   - Push and in-app notifications and radius alerts
   - In-app chat, a printable QR poster, sharing
   - Shelter portal with bulk/CSV upload and a matches dashboard
-  - Monetisation: boost listing, Premium subscription. **Stripe in test mode only.**
+  - **Monetisation model (client decision, 2026-10-15). People will pay a few euros when it works.** Stripe in test mode only.
+    - **Free:** everything that gets animals home (see the free-forever list), incl. basic AI (breed/colour pre-fill, photo matching) and up to **2 pet profiles**.
+    - **Voluntary support "Pomagajte nam izboljšati Najdimo"**, always optional: shown after a reunion, after a report and on the profile. €3 / **€5** (highlighted, not pre-selected) / €10 / custom; or monthly Podpornik from €2/month (badge).
+    - **Boost €4.99** (fixed): 7 days of wider alert radius, top of the map, an auto-generated social post.
+    - **Premium €2.99/month or €24.99/year:**
+      - unlimited pet profiles
+      - AI extras: AI-written listing and social posts SL/EN, AI poster designs, and an AI search plan (species and behaviour-based search guidance)
+      - one-tap lost mode
+      - 1 free Boost per year
+      - **ad-free**
   - **Main goal: getting animals home. Everything that does that is free for everyone, forever:** reporting lost/found/sighted, the map and alerts, matching (chip, photo AI, attributes), chat, **the printable PDF poster with QR code** (the QR links to the public listing only), sharing, and chip lookup. Paid extras never gate any of these. Boost only adds reach on top of an already effective free alert radius.
   - **QR/NFC pet tags are out of scope for now** (physical and printable). A tag that links a pet to its owner feels too close to personal data; revisit later with a privacy-first design.
   - **Shelters (and municipalities) use everything for free, forever.** That includes the portal, bulk/CSV upload, matching, API and integrations, analytics, the adoption page and municipality reports. There is no paid shelter tier. Mission first: the goal is to help animals and keep the project self-sustaining, not to maximise profit.
@@ -152,7 +161,7 @@ Izgubljene živali (working name) is a web and mobile app that reunites lost cat
 | Q-007 | Apple Developer, Play Console and Firebase accounts for store builds and push | Client | Store release only | Open |
 | Q-008 | Legal entity eligible for dohodnina; "donation" wording, VAT and accounting of contributions | Client / accountant | Before the transparency page and dohodnina section are enabled | Open |
 | Q-009 | GA4 property and Firebase project access | Client | Real analytics data only | GA4 done (property 559038055); Firebase open |
-| Q-010 | Should Premium or Podpornik users be ad-free? | Client | No (default: no, A-017) | Open |
+| Q-010 | Should Premium or Podpornik users be ad-free? | Client | No | Decided: Premium is ad-free; Podpornik is not |
 | Q-011 | Legal review of reward escrow and payment-services rules | Client / legal | Before any live use of escrow | Open |
 
 # Change log
@@ -166,3 +175,4 @@ Izgubljene živali (working name) is a web and mobile app that reunites lost cat
 | 0.5 | 2026-10-15 | Vets pay for visibility (Vet Partner subscription); reunite features stay free for vets; shelters and municipalities free |
 | 0.6 | 2026-10-15 | Explicit free-forever list (poster PDF + QR, printable QR tag PDF, chip lookup); physical tag near cost |
 | 0.7 | 2026-10-15 | QR/NFC tags removed from scope (physical and printable); the poster QR links to the public listing only |
+| 0.8 | 2026-10-15 | Monetisation model: voluntary support (€5 suggested), Boost €4.99, Premium €2.99/€24.99 (unlimited pets, AI extras, ad-free); free = 2 pets + basic AI |

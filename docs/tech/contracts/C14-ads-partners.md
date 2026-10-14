@@ -34,7 +34,7 @@ Matching: `status = 'active'`, now within dates, slot in `slots`, locale in `loc
 record_ad_event(p_ad_id, p_slot, p_kind 'impression'|'click', p_region_id?) → void
 // security definer upsert into ad_stats_daily (day in Europe/Ljubljana); no user ids, no cookies; light abuse guard: 300 events/min per IP hash
 ```
-Click: web route `GET /a/[id]?s=<slot>&r=<region>` (TASK-35.2) calls `record_ad_event(click)` and `302` to the stored `link_url` (no user-supplied target). Links carry `rel="sponsored noopener"` and `target="_blank"`. Impression = client calls `record_ad_event(impression)` once when the ad first renders (rendered count, A-016).
+Click: web route `GET /a/[id]?s=<slot>&r=<region>` (@@ads-click-web@@) calls `record_ad_event(click)` and `302` to the stored `link_url` (no user-supplied target). Links carry `rel="sponsored noopener"` and `target="_blank"`. Impression = client calls `record_ad_event(impression)` once when the ad first renders (rendered count, A-016).
 
 Client hook (`@zivali/api/ads`): `useAd(slot, ctx): { ad, loading, error }` (errors collapse the slot silently).
 

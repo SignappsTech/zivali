@@ -63,7 +63,7 @@ Reminders for LOST at 7, 14, 30 days after `created_at` (`lifecycle_tick`, hourl
 
 ```ts
 create_report(p: CreateReportInput, p_client_request_id?: uuid) → { id, short_code, manage_token?: string, moderation_state }
-// owned by TASK-29.1; anonymous guard hook submission_guard(p) is replaced by TASK-17.1 (C7)
+// owned by @@report-write-be@@; anonymous guard hook submission_guard(p) is replaced by @@anon-be@@ (C7)
 type CreateReportInput = {
   type: 'lost'|'found'|'sighted'; pet_id?: uuid;          // lost: either pet_id or inline attributes
   species; name?; breed_codes?; colours?; pattern?; size?; sex?; chip?: string; collar?;
@@ -78,10 +78,10 @@ Rules: `event_at` not in the future (+10 min tolerance) → `VALIDATION`; older 
 
 ```ts
 update_report(id, patch: Partial<CreateReportInput minus type>) → { id }        // managers; re-runs matching on attribute/location change
-transition_report(id, action, reason?) → { status }                           // TASK-26.1
+transition_report(id, action, reason?) → { status }                           // @@lifecycle-be@@
 ```
 
-## Public read model (RPCs, owned by TASK-6.2 and TASK-31.1)
+## Public read model (RPCs, owned by @@reports-schema@@ and @@search-be@@)
 
 ```ts
 type PublicReport = {

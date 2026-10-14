@@ -2,9 +2,9 @@
 source: 02§Content, SEO and legal requirements; 03§Content strategy; 03§Brand and visual language
 doc: voice-and-tone
 title: Voice and tone guide (SL source, EN second)
-version: 0.1
+version: 0.2
 status: Draft, needs native Slovenian review and client approval (TASK-2 AC#3)
-date: 2026-10-14
+date: 2026-10-15
 owner: Content Strategist
 story: TASK-2
 ---
@@ -25,7 +25,11 @@ The product name is **Najdimo** (working name, Q-001). Tagline: **Spet doma.** /
 | Shelter, vet, municipality | Overworked, practical, sceptical of new tools | Less work, plain facts, no marketing gloss. |
 | Sponsor | Commercial, wants proof | Real numbers, clear formats, honesty about pilot size. |
 
-# 2. Voice: a kind neighbour who knows what to do
+# 2. Mission first
+
+Our goal is getting animals home. Money only keeps the service running. Everything that helps an animal home is free for everyone, forever: reporting lost, found and sighted animals, the map and alerts, matching, messaging, the poster with its QR code, sharing and chip lookup. Copy never suggests that paying improves someone's chances, and money is never mentioned in a match, an alert or a reunion message. Paid extras (Boost, Premium, Podpornik, Vet Partner, ads) are described as optional, after the help.
+
+# 2a. Voice: a kind neighbour who knows what to do
 
 We sound like a calm, competent neighbour who has helped before. Four traits, always together:
 
@@ -223,4 +227,5 @@ English is a translation for residents and visitors who do not read Slovenian. S
 
 | Version | Date | Change |
 |---|---|---|
+| 0.2 | 2026-10-15 | Brief v0.7: mission-first principle (§2). |
 | 0.1 | 2026-10-14 | First draft: voice, address form (vikanje, imperative buttons), gender-neutral rules, plural rules, tone by moment, do and do not for headings, errors, notifications and scam warnings. |
