@@ -163,6 +163,8 @@ approvals:
 | Q-009 | GA4 property and Firebase project access | Client | Real analytics data only | GA4 done (property 559038055); Firebase open |
 | Q-010 | Should Premium or Podpornik users be ad-free? | Client | No | Decided: Premium is ad-free; Podpornik is not |
 | Q-011 | Legal review of reward escrow and payment-services rules | Client / legal | Before any live use of escrow | Open |
+| Q-012 | Do online card payments (Boost, Premium, tips, Vet Partner) require fiscally verified invoices (davčno potrjevanje računov, ZDavPR: cards count as cash)? Which provider? | Client / accountant | Before live payments | Open |
+| Q-013 | Lawyer review of terms, privacy policy, DPIA, processor agreements and the open legal questions (see the lawyer briefing pack) | Client / lawyer | Before public launch | Open |
 
 # Change log
 
