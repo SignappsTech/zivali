@@ -1,7 +1,7 @@
 ---
 doc_id: DOC-01
 title: Project Brief
-version: 1.0
+version: 1.1
 status: Draft
 date: 2026-10-14
 owner: Project Lead
@@ -77,7 +77,7 @@ approvals:
     - **"Reunited" thank-you:** after marking a pet reunited, offer a one-tap tip (€3 / €5 / €10 / custom). This is the highest-converting moment.
     - **Optional contribution when reporting:** the "Pomagajte nam izboljšati Najdimo" ask (€3 / €5 / €10 / custom, never pre-selected) on the report confirmation screen.
     - **Monthly supporter ("Podpornik"):** from €2/month, no features, only a supporter badge on the profile and listings.
-    - **Finder's reward fee:** a small % platform fee when a reward is paid through escrow.
+    - ~~Finder's reward fee~~: **dropped (2026-10-15).** There is no reward escrow; owners arrange any reward directly with the finder, outside the app. A listing may show an optional, display-only "Nagrada" line plus a scam warning (never pay before you have the animal back).
     - **Dohodnina:** if we operate as an eligible društvo or zavod, users can direct part of their income tax to us via eDavki at no cost to them. This needs a legal entity check.
     - Minimum card amount €2 (Stripe fixed fees); a transparent "where your money goes" page.
   - **Ads ("oglasi"), early (core-loop milestone)** so the client can start talking to companies (vets, pet shops, groomers, pet insurers, pet food brands). Revenue is expected only once there are users, so keep the first version cheap:
@@ -162,7 +162,7 @@ approvals:
 | Q-008 | Legal entity eligible for dohodnina; "donation" wording, VAT and accounting of contributions | Client / accountant | Before the transparency page and dohodnina section are enabled | Open |
 | Q-009 | GA4 property and Firebase project access | Client | Real analytics data only | GA4 done (property 559038055); Firebase open |
 | Q-010 | Should Premium or Podpornik users be ad-free? | Client | No | Decided: Premium is ad-free; Podpornik is not |
-| Q-011 | Legal review of reward escrow and payment-services rules | Client / legal | Before any live use of escrow | Open |
+| Q-011 | Legal review of reward escrow and payment-services rules | Client / legal | Before any live use of escrow | Closed: escrow dropped from scope (2026-10-15) |
 | Q-012 | Do online card payments (Boost, Premium, tips, Vet Partner) require fiscally verified invoices (davčno potrjevanje računov, ZDavPR: cards count as cash)? Which provider? | Client / accountant | Before live payments | Open |
 | Q-013 | Lawyer review of terms, privacy policy, DPIA, processor agreements and the open legal questions (see the lawyer briefing pack) | Client / lawyer | Before public launch | Open |
 
@@ -180,3 +180,4 @@ approvals:
 | 0.8 | 2026-10-15 | Monetisation model: voluntary support (€5 suggested), Boost €4.99, Premium €2.99/€24.99 (unlimited pets, AI extras, ad-free); free = 2 pets + basic AI |
 | 0.9 | 2026-10-15 | Client decisions: name Najdimo; formal vikanje, "Vpis" for sign-in; owners may remove the Vet Partner poster line; Partners page promises a reply within 2 working days and better terms for founding partners |
 | 1.0 | 2026-10-15 | Architecture change: Express + Prisma API, Supabase Free for DB/Auth only, Hetzner VPS + Cloudflare R2, budget about €5–10/month at start |
+| 1.1 | 2026-10-15 | Reward escrow dropped (no Stripe Connect, payment-services licence or DAC7); optional display-only "Nagrada" line + scam warning |
