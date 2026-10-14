@@ -5,5 +5,4 @@ docs/
 backlog/
 AGENTS.md
 CLAUDE.md
-packages/types/src/database.ts
 supabase/seed/

@@ -1,4 +1,4 @@
-source: docs/04-technical-design.md (v0.5) §Architecture, §Data model, §Authentication, §Environments, §CI/CD, §Observability; docs/05-quality-security-plan.md (v0.5) §Security, §Privacy, §Definition of Done; ADR-020 (API, klikni conventions), ADR-021, ADR-022, ADR-023
+source: docs/04-technical-design.md (v0.6) §Architecture, §Data model, §Authentication, §Environments, §CI/CD, §Observability; docs/05-quality-security-plan.md (v0.5) §Security, §Privacy, §Definition of Done; ADR-020 (API, klikni conventions), ADR-021, ADR-022, ADR-023
 
 # Backend slice (apps/api: Express + Prisma, worker; supabase/ local stack; scripts/)
 
@@ -13,7 +13,7 @@ Read this, your task packet and the contract(s) it references. Conventions for e
 
 ## Repo map (your side), klikni style (ADR-020)
 
-    apps/api/
+    apps/api/            package name `api` (unscoped; `@zivali/api` is the REST client in packages/api)
       app.ts, server.ts (graceful shutdown), worker.ts (pg-boss handlers and schedules)
       routes/index.ts                     mounts each area router under /v1
       routes/<area>.routes.ts             one Express Router per area (reports, pets, chat, payments, admin, webhooks, …); admin areas stay in routes/admin.routes.ts
@@ -29,7 +29,9 @@ Read this, your task packet and the contract(s) it references. Conventions for e
       adapters/{ai,embedder,payments,email,push,captcha,storage}/{index,mock,<provider>}.ts
       prisma/ prisma.ts (singleton), schemas/*.prisma + migrations/, sql/*.sql (TypedSQL), includes/*.ts, seed.ts, seeders/, data-inventory.json
       test/ setup.ts, helpers/ (token factory, db reset, factories), routes/, domains/, jobs/, security/
-      Dockerfile (multi-stage; one image for api and worker), tsup.config.ts, prisma.config.ts, vitest.config.ts, .env.example
+      scripts/jobs-drain.ts               CLI for `pnpm jobs:drain`: calls drain() from lib/jobs.ts (TASK-6.3)
+      package.json scripts: dev (tsx watch server.ts), dev:worker (tsx watch worker.ts), build, lint, typecheck, test, test:security
+      Dockerfile (multi-stage; one image for api and worker), tsup.config.ts, prisma.config.ts (loads the env file, schema folder, migrations.seed), vitest.config.ts, .env.example
     supabase/        config.toml (local Postgres, Auth, Realtime, mail catcher), templates/*.html (Auth emails), seed/geo/ (GURS data), README.md
     scripts/         deploy.mjs, geo-to-sql.mjs, admin-create.mjs
     deploy/          docker-compose.yml, Caddyfile, backup notes (TASK-5.1)
@@ -75,7 +77,7 @@ A domain function never imports Express, never reads `req`/`res`, and never catc
 - Geo and vector queries only in TypedSQL files (`prisma/sql/*.sql`) or parameterised `$queryRaw`; never string-concatenated SQL.
 - Jobs idempotent (unique keys, upserts); fan-outs in chunks of ≤ 500; no external calls inside DB transactions.
 - Logs: pino JSON (`level, msg, req_id, user_id?, route, status, duration_ms`, job logs with `queue, job_id`); no PII or secrets; `console.*` is a lint error.
-- Prettier and ESLint as configured at the root (klikni settings: tabs, width 120, single quotes).
+- Prettier and ESLint as configured at the root (klikni settings: tabs, width 120, single quotes; imports grouped builtin / external / internal with a blank line between, `import-x/order`). husky + lint-staged run `eslint --fix` and `prettier --write` on staged files; Docker installs set `HUSKY=0` or use `--ignore-scripts`.
 - Every new model: `@@schema("app")`, RLS-enable line in the migration, an entry in `prisma/data-inventory.json`, permission tests for its endpoints.
 
 ## Error handling
@@ -106,15 +108,16 @@ Domains throw `AppError`; unknown errors become `INTERNAL` (500) with the reques
 
 | Command | What |
 |---|---|
-| `pnpm bootstrap` | install, `supabase start`, MinIO up, `prisma migrate reset` (migrations + seed), build packages |
+| `pnpm bootstrap` | install, `db:start`, MinIO up (`docker-compose.dev.yml`), `db:reset`, build packages |
+| `pnpm dev` | `turbo run dev dev:worker`: API on :4000, worker, web on :3000, packages in watch |
 | `pnpm db:start` / `db:stop` | local Supabase (Postgres, Auth, Realtime, mail catcher) |
-| `pnpm db:migrate` | `prisma migrate dev` (creates a migration from schema changes) |
-| `pnpm db:reset` | `prisma migrate reset --force` (drop, migrate, seed) |
-| `pnpm db:seed` | `prisma db seed` |
+| `pnpm db:migrate` | `prisma migrate dev` in apps/api (creates a migration from schema changes) |
+| `pnpm db:reset` | `prisma migrate reset --force`, then `prisma db seed` (Prisma 7 no longer seeds on reset) |
+| `pnpm db:seed` | `prisma db seed` (seed command from `migrations.seed` in prisma.config.ts) |
 | `pnpm --filter api dev` | API on :4000 with tsx watch; `pnpm --filter api dev:worker` for the worker |
 | `pnpm --filter api test` | Vitest + Supertest (needs `pnpm db:start`; resets the test schema) |
 | `pnpm --filter api test:security` | ADR-021 exposure checks |
-| `pnpm jobs:drain` | process all queued jobs once (tests, manual checks) |
+| `pnpm jobs:drain` | process all queued jobs once (tests, manual checks); runs `apps/api/scripts/jobs-drain.ts` |
 | `pnpm --filter api build` | tsup → `dist/` |
 | `pnpm admin:create <email>` | promote an existing local account to admin |
 | `node scripts/deploy.mjs staging [--dry-run]` | build, push, migrate, deploy to the VPS (ADR-016) |
