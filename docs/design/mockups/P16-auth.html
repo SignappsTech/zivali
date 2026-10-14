@@ -1,0 +1,847 @@
+<!doctype html>
+<!--
+  P16 Sign in and account creation mockup (TASK-9.1). Built from docs/design/mockups/_template.html.
+  Sources: docs/design/pages/P16-auth.md, docs/design/system.md (v0.4), docs/content/pages/P16-auth.md (v0.1).
+  errors.CAPTCHA_FAILED comes from docs/content/pages/P1-web-shell.md. Shell patterns follow the merged P1 and P2 mockups.
+  Elements marked data-sample belong to other pages (P6 draft, P9 listing) or are sample data (e-mail address, ban reason).
+  Everything in #src is cloned once per colour mode by ../directions/directions.js. Tokens only; the only fixed colours are the
+  logo dot and the Google "G" (brand colours, not themable).
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Najdimo mockup: P16 Auth</title>
+<meta name="description" content="Sign in, create account, e-mail confirmation, password reset, the account gate, account linking and every auth error state, on mobile and web, in light and dark.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:wght@400;500;600;700&family=Bricolage+Grotesque:opsz,wght@12..96,500..800&display=swap" rel="stylesheet">
+<link href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css" rel="stylesheet">
+<link href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/bold/style.css" rel="stylesheet">
+<link href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css" rel="stylesheet">
+<link href="../tokens.css" rel="stylesheet">
+<link href="../directions/directions.css" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com/3.4.17"></script>
+<script src="../directions/tailwind-config.js"></script>
+<style>
+/* Parts used only by this mockup. Token-driven; frontend maps them to Button, Input and the auth screens. */
+.scope h1, .scope h2, .scope h3 { text-wrap: balance; }
+
+/* Shell parts, as in P1 */
+.logo-link { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; border-radius: 12px; color: hsl(var(--foreground)); text-decoration: none; flex: none; }
+.nl { display: inline-flex; align-items: center; min-height: 44px; padding: 0 12px; border-radius: 999px; font-weight: 600; font-size: 16px; line-height: 24px; color: hsl(var(--muted-foreground)); text-decoration: none; white-space: nowrap; }
+.lang { display: inline-flex; align-items: center; font-weight: 600; font-size: 15px; color: hsl(var(--muted-foreground)); }
+.ll { display: inline-flex; align-items: center; justify-content: center; min-width: 44px; min-height: 44px; padding: 0 6px; border-radius: 999px; color: hsl(var(--muted-foreground)); text-decoration: none; }
+.ll[aria-current="true"] { color: hsl(var(--foreground)); text-decoration: underline; text-decoration-color: hsl(var(--primary)); text-decoration-thickness: 2px; text-underline-offset: 6px; }
+.fl { display: inline-flex; align-items: center; min-height: 44px; min-width: 44px; padding: 0; border: 0; background: none; font: inherit; font-size: 15px; line-height: 22px; color: hsl(var(--muted-foreground)); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 4px; cursor: pointer; white-space: nowrap; }
+.fl:hover { color: hsl(var(--foreground)); }
+
+/* Popover surface (dialogs, toasts): shadow-pop casts downward (system section 6) */
+.pop { background: hsl(var(--popover)); color: hsl(var(--popover-foreground)); box-shadow: var(--shadow-pop); }
+
+/* Provider buttons (Google, Apple). Same sizes as secondary, but a neutral surface tone, never the teal tint:
+   brand rules want a white, black or grey field behind the logos. card on the page background, background inside sheets and dialogs. */
+.btn-provider { background: hsl(var(--card)); color: hsl(var(--card-foreground)); }
+.btn-provider:hover, .btn-provider.is-hover { background: color-mix(in srgb, hsl(var(--card)) 86%, hsl(var(--foreground))); }
+.sheet .btn-provider, .pop .btn-provider, .card .btn-provider { background: hsl(var(--background)); color: hsl(var(--foreground)); }
+.sheet .btn-provider:hover, .pop .btn-provider:hover, .card .btn-provider:hover,
+.sheet .btn-provider.is-hover, .pop .btn-provider.is-hover, .card .btn-provider.is-hover { background: color-mix(in srgb, hsl(var(--background)) 86%, hsl(var(--foreground))); }
+.btn-provider svg { width: 20px; height: 20px; flex: none; }
+.btn-text.is-hover { text-decoration: underline; text-underline-offset: 4px; }
+
+/* Fields: the generic .is-focus outline must not box a line field */
+.input.is-focus { outline: none; }
+.input.is-hover { border-bottom-color: hsl(var(--foreground)); }
+.input-q { min-height: 64px; }
+.pw { position: relative; }
+.pw > .input { padding-right: 52px; }
+.pw > .iconbtn { position: absolute; right: 0; top: 50%; transform: translateY(-50%); }
+.err i { font-size: 18px; line-height: 20px; flex: none; }
+
+/* On-screen keyboard (static stand-in, Slovenian QWERTZ) */
+.kbd { flex: none; display: grid; gap: 11px; padding: 8px 3px 52px; background: hsl(var(--muted)); }
+.kr { display: flex; justify-content: center; gap: 5px; }
+.kr span { flex: 0 0 30px; height: 42px; border-radius: 6px; display: grid; place-items: center; background: hsl(var(--card)); color: hsl(var(--foreground)); font-size: 19px; line-height: 1; }
+.kr .w { flex-basis: 42px; background: hsl(var(--background)); font-size: 15px; font-weight: 600; }
+.kr .sp { flex: 1 1 auto; }
+.kr .w2 { flex-basis: 92px; background: hsl(var(--background)); font-size: 15px; font-weight: 600; }
+
+/* Mockup annotations (not product UI) */
+.anno { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; font-size: 13px; line-height: 18px; font-weight: 700; background: hsl(var(--foreground)); color: hsl(var(--background)); }
+</style>
+</head>
+<body>
+<a class="sr-only focus:not-sr-only" href="#stage">Skip to content</a>
+
+<!-- Symbols, defined once: logo mark and the two provider glyphs (stand-ins; the build uses the official assets) -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <symbol id="nj-mark" viewBox="0 0 48 48">
+    <g fill="currentColor" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round">
+      <path d="M24 45.5 C24 45.5 10.5 33.2 10.5 24.4 A13.5 13.5 0 0 1 37.5 24.4 C37.5 33.2 24 45.5 24 45.5 Z M24 17.9 A6.5 6.5 0 1 0 24 30.9 A6.5 6.5 0 1 0 24 17.9 Z"/>
+      <path d="M12.2 19.6 L11.2 5 L22.6 11.4 Z"/><path d="M35.8 19.6 L25.4 11.4 L36.8 5 Z"/>
+    </g>
+    <circle cx="24" cy="24.4" r="3.6" fill="#F7B32B"/>
+  </symbol>
+  <!-- Google "G": full colour in both modes (Google branding rule) -->
+  <symbol id="g-logo" viewBox="0 0 48 48">
+    <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+    <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+    <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+    <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+  </symbol>
+  <!-- Apple logo: one colour, follows the label colour (dark on light, light on dark) -->
+  <symbol id="apple-logo" viewBox="0 0 24 24">
+    <path fill="currentColor" d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701"/>
+  </symbol>
+</svg>
+
+<header class="chrome">
+  <div class="flex flex-wrap items-center gap-x-5 gap-y-2 px-6 py-2 max-w-[1400px] mx-auto">
+    <span class="flex items-center gap-2 font-display font-bold text-lg"><svg class="logo-mark w-7 h-7" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg>Najdimo</span>
+    <span class="text-muted-foreground text-[15px]">P16 Sign in and account creation (mockup)</span>
+    <div class="ml-auto flex items-center gap-2" role="group" aria-label="Colour mode">
+      <button class="mode-btn" data-mode="light" aria-pressed="true">Light</button>
+      <button class="mode-btn" data-mode="dark" aria-pressed="false">Dark</button>
+      <button class="mode-btn" data-mode="both" aria-pressed="false">Side by side</button>
+    </div>
+  </div>
+</header>
+
+<main id="stage"></main>
+
+<div id="src" hidden>
+
+<!-- ================= INTRO ================= -->
+<section class="tile-section !max-w-[1400px] !pb-0">
+  <h1 class="tile-title">P16 Sign in and account creation</h1>
+  <p class="tile-lede">Quick, calm sign-in and sign-up with e-mail, Google or Apple; e-mail confirmation and password reset; the account gate that other flows open, which never loses a draft; account linking; and every error state. App frames are 390 px, web frames 1200 px. Copy is final from the P16 content slice (v0.1, native review pending). Finders reporting without an account never see these screens.</p>
+  <div class="flex flex-wrap gap-2">
+    <span class="anno">One primary per view</span><span class="anno">Labels above line fields</span><span class="anno">Google and Apple: equal size, neutral tone, brand glyphs</span><span class="anno">Web: flow variant, 440 px column, no ads, no sidebar</span><span class="anno">Gate: "Vse, kar ste vnesli, ostane."</span>
+  </div>
+</section>
+
+<!-- ================= A. SIGN IN AND CREATE ACCOUNT (APP) ================= -->
+<section class="tile-section !max-w-[1400px]">
+  <h2 class="tile-title">A. App: sign in and create account</h2>
+  <p class="tile-lede">Full-screen with a close button; close returns to where the user was. The primary sits in the page flow under the fields and docks above the keyboard while typing. Focus lands on the h1 when a screen opens.</p>
+
+  <div class="flex flex-wrap gap-x-10 gap-y-14 items-start">
+
+    <!-- M1 SIGN IN -->
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">M1 Sign in: empty form</figcaption>
+      <div class="phone"><div class="phone-screen" lang="sl">
+        <div class="statusbar" aria-hidden="true"><span>14:20</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <div class="topbar justify-end"><button type="button" class="iconbtn" aria-label="Zapri"><i class="ph-bold ph-x" aria-hidden="true"></i></button></div>
+        <div class="flex-1 min-h-0 px-5 pt-2">
+          <h1 class="font-display font-bold text-[34px] leading-[40px] tracking-[-0.02em]" tabindex="-1">Vpišite se</h1>
+          <form class="mt-8" novalidate onsubmit="return false">
+            <div class="grid gap-6">
+              <div class="field"><label for="m1-email">E-naslov</label><input id="m1-email" class="input" type="email" name="email" autocomplete="email" inputmode="email" autocapitalize="none" spellcheck="false"></div>
+              <div class="field"><label for="m1-pw">Geslo</label><div class="pw"><input id="m1-pw" class="input" type="password" name="password" autocomplete="current-password"><button type="button" class="iconbtn" aria-label="Pokaži geslo"><i class="ph-bold ph-eye" aria-hidden="true"></i></button></div></div>
+            </div>
+            <a href="#" class="btn btn-text -ml-3 mt-1">Pozabljeno geslo?</a>
+            <button type="submit" class="btn btn-primary btn-lg btn-block mt-6">Vpiši se</button>
+          </form>
+          <p class="text-center text-muted-foreground mt-6">ali</p>
+          <div class="grid gap-3 mt-6">
+            <button type="button" class="btn btn-provider btn-block"><svg viewBox="0 0 48 48" aria-hidden="true" focusable="false"><use href="#g-logo"/></svg>Nadaljuj z Googlom</button>
+            <button type="button" class="btn btn-provider btn-block"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#apple-logo"/></svg>Nadaljuj z Applom</button>
+          </div>
+          <a href="#" class="btn btn-text btn-block mt-4">Ustvari račun</a>
+        </div>
+        <span class="home-ind"></span>
+      </div></div>
+      <p class="help mt-4" style="max-width:412px">h1 34/40, fields 24 apart, primary <code>lg</code> 56. E-naslov: <code>type=email</code>, <code>autocomplete=email</code>, no auto-capitals. Geslo: <code>autocomplete=current-password</code>; the eye button is named "Pokaži geslo", then "Skrij geslo". Return on Geslo submits. Google and Apple: 48 px like secondary, full width, neutral tone (<code>card</code> on <code>background</code>), glyph 20.</p>
+    </figure>
+
+    <!-- M2 CREATE ACCOUNT (FULL LENGTH) -->
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">M2 Create account: full length (the screen scrolls)</figcaption>
+      <div class="phone" style="height:1010px"><div class="phone-screen" style="height:1010px" lang="sl">
+        <div class="statusbar" aria-hidden="true"><span>14:20</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <div class="topbar justify-end"><button type="button" class="iconbtn" aria-label="Zapri"><i class="ph-bold ph-x" aria-hidden="true"></i></button></div>
+        <div class="flex-1 min-h-0 px-5 pt-2">
+          <h1 class="font-display font-bold text-[34px] leading-[40px] tracking-[-0.02em]" tabindex="-1">Ustvarite račun</h1>
+          <form class="mt-8" novalidate onsubmit="return false">
+            <div class="grid gap-6">
+              <div class="field"><label for="m2-name">Ime</label><input id="m2-name" class="input" type="text" name="name" autocomplete="given-name" aria-describedby="m2-name-help"><p id="m2-name-help" class="help">To ime vidijo ljudje, s katerimi se pogovarjate. Lahko je tudi vzdevek.</p></div>
+              <div class="field"><label for="m2-email">E-naslov</label><input id="m2-email" class="input" type="email" name="email" autocomplete="email" inputmode="email" autocapitalize="none" spellcheck="false"></div>
+              <div class="field"><label for="m2-pw">Geslo</label><div class="pw"><input id="m2-pw" class="input" type="password" name="new-password" autocomplete="new-password" aria-describedby="m2-pw-hint"><button type="button" class="iconbtn" aria-label="Pokaži geslo"><i class="ph-bold ph-eye" aria-hidden="true"></i></button></div><p id="m2-pw-hint" class="help">Najmanj 8 znakov. Daljše geslo ali več besed je varnejše.</p></div>
+            </div>
+            <p class="help mt-6">Z ustvaritvijo računa se strinjate s <a href="#" class="font-bold text-primary underline underline-offset-4">pogoji uporabe</a>. Kako ravnamo s podatki, piše v <a href="#" class="font-bold text-primary underline underline-offset-4">politiki zasebnosti</a>.</p>
+            <button type="submit" class="btn btn-primary btn-lg btn-block mt-6">Ustvari račun</button>
+          </form>
+          <p class="text-center text-muted-foreground mt-6">ali</p>
+          <div class="grid gap-3 mt-6">
+            <button type="button" class="btn btn-provider btn-block"><svg viewBox="0 0 48 48" aria-hidden="true" focusable="false"><use href="#g-logo"/></svg>Nadaljuj z Googlom</button>
+            <button type="button" class="btn btn-provider btn-block"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#apple-logo"/></svg>Nadaljuj z Applom</button>
+          </div>
+          <a href="#" class="btn btn-text btn-block mt-4">Že imam račun</a>
+        </div>
+        <span class="home-ind"></span>
+      </div></div>
+      <p class="help mt-4" style="max-width:412px">Ime: <code>autocomplete=given-name</code>, help tied by <code>aria-describedby</code>. Geslo: <code>autocomplete=new-password</code>; the minimum and the hint are text, no strength meter. Terms and privacy are a plain sentence with links (no checkbox, nothing pre-ticked). Sign in and create account are peers: the text buttons switch between them and keep the typed e-naslov.</p>
+    </figure>
+
+    <!-- M3 TYPING WITH KEYBOARD -->
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">M3 Typing: primary docked above the keyboard</figcaption>
+      <div class="phone"><div class="phone-screen" lang="sl">
+        <div class="statusbar" aria-hidden="true"><span>14:21</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <div class="topbar justify-end"><button type="button" class="iconbtn" aria-label="Zapri"><i class="ph-bold ph-x" aria-hidden="true"></i></button></div>
+        <form class="flex-1 min-h-0 flex flex-col" novalidate onsubmit="return false">
+          <div class="flex-1 min-h-0 overflow-hidden flex flex-col justify-end px-5 pb-2">
+            <h1 class="font-display font-bold text-[34px] leading-[40px] tracking-[-0.02em] mb-8">Ustvarite račun</h1>
+            <div class="grid gap-6">
+              <div class="field"><label for="m3-name">Ime</label><input id="m3-name" class="input" type="text" autocomplete="given-name" value="Ana" aria-describedby="m3-name-help"><p id="m3-name-help" class="help">To ime vidijo ljudje, s katerimi se pogovarjate. Lahko je tudi vzdevek.</p></div>
+              <div class="field"><label for="m3-email">E-naslov</label><input id="m3-email" class="input" type="email" autocomplete="email" value="ana.novak@gmail.com" data-sample></div>
+              <div class="field"><label for="m3-pw">Geslo</label><div class="pw"><input id="m3-pw" class="input is-focus" type="password" autocomplete="new-password" value="mačkavškornjih" aria-describedby="m3-pw-hint"><button type="button" class="iconbtn" aria-label="Pokaži geslo"><i class="ph-bold ph-eye" aria-hidden="true"></i></button></div><p id="m3-pw-hint" class="help">Najmanj 8 znakov. Daljše geslo ali več besed je varnejše.</p></div>
+            </div>
+          </div>
+          <div class="px-5 py-3 flex-none"><button type="submit" class="btn btn-primary btn-lg btn-block">Ustvari račun</button></div>
+        </form>
+        <div class="kbd" aria-hidden="true">
+          <div class="kr"><span>q</span><span>w</span><span>e</span><span>r</span><span>t</span><span>z</span><span>u</span><span>i</span><span>o</span><span>p</span><span>š</span></div>
+          <div class="kr"><span>a</span><span>s</span><span>d</span><span>f</span><span>g</span><span>h</span><span>j</span><span>k</span><span>l</span><span>č</span><span>ž</span></div>
+          <div class="kr"><span class="w"><i class="ph-bold ph-arrow-fat-up"></i></span><span>y</span><span>x</span><span>c</span><span>v</span><span>b</span><span>n</span><span>m</span><span class="w"><i class="ph-bold ph-backspace"></i></span></div>
+          <div class="kr"><span class="w">123</span><span class="sp"></span><span class="w2">Pojdi</span></div>
+        </div>
+        <span class="home-ind"></span>
+      </div></div>
+      <p class="help mt-4" style="max-width:412px">The keyboard never hides the primary: it docks 12 px above the keyboard, and the focused field scrolls into view above it. Focused field: <code>ring</code> underline plus 2 px. The return key on the last field submits.</p>
+    </figure>
+
+    <!-- L1 SIGNING IN -->
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">L1 Signing in (loading)</figcaption>
+      <div class="phone"><div class="phone-screen" lang="sl">
+        <div class="statusbar" aria-hidden="true"><span>14:22</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <div class="topbar justify-end"><button type="button" class="iconbtn" aria-label="Zapri"><i class="ph-bold ph-x" aria-hidden="true"></i></button></div>
+        <div class="flex-1 min-h-0 px-5 pt-2">
+          <h1 class="font-display font-bold text-[34px] leading-[40px] tracking-[-0.02em]">Vpišite se</h1>
+          <form class="mt-8" novalidate onsubmit="return false" aria-busy="true">
+            <div class="grid gap-6">
+              <div class="field"><label for="l1-email">E-naslov</label><input id="l1-email" class="input" type="email" autocomplete="email" value="ana.novak@gmail.com" readonly data-sample></div>
+              <div class="field"><label for="l1-pw">Geslo</label><div class="pw"><input id="l1-pw" class="input" type="password" autocomplete="current-password" value="mačkavškornjih" readonly><button type="button" class="iconbtn" aria-label="Pokaži geslo"><i class="ph-bold ph-eye" aria-hidden="true"></i></button></div></div>
+            </div>
+            <a href="#" class="btn btn-text -ml-3 mt-1">Pozabljeno geslo?</a>
+            <button type="submit" class="btn btn-primary btn-lg btn-block mt-6" aria-busy="true"><span class="spin" aria-hidden="true"></span>Vpiši se</button>
+          </form>
+          <p class="text-center text-muted-foreground mt-6">ali</p>
+          <div class="grid gap-3 mt-6">
+            <button type="button" class="btn btn-provider btn-block"><svg viewBox="0 0 48 48" aria-hidden="true" focusable="false"><use href="#g-logo"/></svg>Nadaljuj z Googlom</button>
+            <button type="button" class="btn btn-provider btn-block"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#apple-logo"/></svg>Nadaljuj z Applom</button>
+          </div>
+          <a href="#" class="btn btn-text btn-block mt-4">Ustvari račun</a>
+        </div>
+        <span class="home-ind"></span>
+      </div></div>
+      <p class="help mt-4" style="max-width:412px">The label stays, a spinner goes before it, <code>aria-busy</code>, presses are ignored and the fields are read-only. Nothing moves. Google and Apple show the same spinner in their own button while the provider window opens.</p>
+    </figure>
+
+  </div>
+</section>
+
+<!-- ================= B. E-MAIL AND PASSWORD (APP) ================= -->
+<section class="tile-section !max-w-[1400px] !pt-0">
+  <h2 class="tile-title">B. App: confirm e-mail and reset password</h2>
+  <p class="tile-lede">Check e-mail and verified are single-message screens: a spot icon, the h1, one sentence, and the actions at the bottom. Forgot password and new password are single-question screens with a 64 px field.</p>
+
+  <div class="flex flex-wrap gap-x-10 gap-y-14 items-start">
+
+    <!-- M4 CHECK EMAIL -->
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">M4 Check your e-mail (resend cooling down)</figcaption>
+      <div class="phone"><div class="phone-screen" lang="sl">
+        <div class="statusbar" aria-hidden="true"><span>14:23</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <div class="topbar justify-end"><button type="button" class="iconbtn" aria-label="Zapri"><i class="ph-bold ph-x" aria-hidden="true"></i></button></div>
+        <div class="flex-1 min-h-0 flex flex-col px-5">
+          <div class="flex-1 flex flex-col justify-center">
+            <span class="spot" aria-hidden="true"><i class="ph-bold ph-envelope-simple"></i></span>
+            <h1 class="font-display font-bold text-[34px] leading-[40px] tracking-[-0.02em] mt-8" tabindex="-1">Preverite e-pošto</h1>
+            <p class="text-lg leading-7 mt-3">Povezavo smo poslali na <b class="break-words" data-sample>ana.novak@gmail.com</b>. Odprite jo, da potrdite e-naslov.</p>
+            <p class="flex gap-2 text-sm leading-5 text-muted-foreground mt-5"><i class="ph-bold ph-tray text-base mt-0.5" aria-hidden="true"></i><span>Ne najdete sporočila? Preverite mapo z neželeno pošto.</span></p>
+          </div>
+          <div class="grid gap-1 pb-11">
+            <a href="#" class="btn btn-primary btn-lg btn-block"><i class="ph-bold ph-envelope-open" aria-hidden="true"></i>Odpri e-pošto</a>
+            <button type="button" class="btn btn-text btn-block" disabled aria-describedby="m4-wait">Pošlji znova</button>
+            <p id="m4-wait" class="text-sm leading-5 text-muted-foreground text-center tnum pb-1" aria-live="polite">Znova lahko pošljete čez 42 s.</p>
+            <button type="button" class="btn btn-text btn-block">Spremeni e-naslov</button>
+          </div>
+        </div>
+        <span class="home-ind"></span>
+      </div></div>
+      <p class="help mt-4" style="max-width:412px">Spot 88 px, the address just entered in bold. "Odpri e-pošto" opens the mail app (mobile only). After each send "Pošlji znova" is disabled with the countdown as text (polite live region, updated every 10 s, not every second); then it is a normal text button. "Spremeni e-naslov" returns to M2 with E-naslov focused.</p>
+    </figure>
+
+    <!-- M5 VERIFIED -->
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">M5 E-mail verified</figcaption>
+      <div class="phone"><div class="phone-screen" lang="sl">
+        <div class="statusbar" aria-hidden="true"><span>14:26</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <div class="topbar" aria-hidden="true"></div>
+        <div class="flex-1 min-h-0 flex flex-col px-5">
+          <div class="flex-1 flex flex-col justify-center">
+            <span class="spot" aria-hidden="true"><i class="ph-bold ph-check"></i></span>
+            <h1 class="font-display font-bold text-[34px] leading-[40px] tracking-[-0.02em] mt-8" tabindex="-1">E-naslov je potrjen</h1>
+            <p class="text-lg leading-7 mt-3">Zdaj lahko prejemate opozorila in se pogovarjate.</p>
+          </div>
+          <div class="grid gap-1 pb-11">
+            <a href="#" class="btn btn-primary btn-lg btn-block">Nadaljuj</a>
+          </div>
+        </div>
+        <span class="home-ind"></span>
+      </div></div>
+      <p class="help mt-4" style="max-width:412px">Opens from the confirmation link (app link or web). "Nadaljuj" goes back to the step that asked for the account, with its draft, or to Zemljevid when there was none.</p>
+    </figure>
+
+    <!-- M6 FORGOT PASSWORD -->
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">M6 Forgot password</figcaption>
+      <div class="phone"><div class="phone-screen" lang="sl">
+        <div class="statusbar" aria-hidden="true"><span>14:24</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <div class="topbar justify-between">
+          <button type="button" class="iconbtn" aria-label="Nazaj"><i class="ph-bold ph-caret-left" aria-hidden="true"></i></button>
+          <button type="button" class="iconbtn" aria-label="Zapri"><i class="ph-bold ph-x" aria-hidden="true"></i></button>
+        </div>
+        <form class="flex-1 min-h-0 flex flex-col px-5 pt-2" novalidate onsubmit="return false">
+          <div class="flex-1">
+            <h1 class="font-display font-bold text-[34px] leading-[40px] tracking-[-0.02em]" tabindex="-1">Pozabljeno geslo</h1>
+            <p class="text-lg leading-7 mt-3">Vpišite e-naslov in poslali vam bomo povezavo za novo geslo.</p>
+            <div class="field mt-8"><label for="m6-email">E-naslov</label><input id="m6-email" class="input input-q" type="email" autocomplete="email" inputmode="email" autocapitalize="none" spellcheck="false"></div>
+          </div>
+          <div class="pb-11"><button type="submit" class="btn btn-primary btn-lg btn-block">Pošlji povezavo</button></div>
+        </form>
+        <span class="home-ind"></span>
+      </div></div>
+      <p class="help mt-4" style="max-width:412px">Single question, so the field is 64 px. The e-naslov from sign in is carried over when there is one. While typing, the primary docks above the keyboard as in M3.</p>
+    </figure>
+
+    <!-- M7 FORGOT: SENT -->
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">M7 Forgot password: link sent (same answer for every address)</figcaption>
+      <div class="phone"><div class="phone-screen" lang="sl">
+        <div class="statusbar" aria-hidden="true"><span>14:24</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <div class="topbar justify-between">
+          <button type="button" class="iconbtn" aria-label="Nazaj"><i class="ph-bold ph-caret-left" aria-hidden="true"></i></button>
+          <button type="button" class="iconbtn" aria-label="Zapri"><i class="ph-bold ph-x" aria-hidden="true"></i></button>
+        </div>
+        <form class="flex-1 min-h-0 flex flex-col px-5 pt-2" novalidate onsubmit="return false">
+          <div class="flex-1">
+            <h1 class="font-display font-bold text-[34px] leading-[40px] tracking-[-0.02em]">Pozabljeno geslo</h1>
+            <p class="text-lg leading-7 mt-3">Vpišite e-naslov in poslali vam bomo povezavo za novo geslo.</p>
+            <div class="field mt-8"><label for="m7-email">E-naslov</label><input id="m7-email" class="input input-q" type="email" autocomplete="email" value="ana.novak@gmail.com" data-sample></div>
+            <div class="note mt-8" role="status"><i class="ph-bold ph-envelope-simple" aria-hidden="true"></i><p>Če za ta e-naslov obstaja račun, smo nanj poslali povezavo. Zaradi varnosti je odgovor vedno enak.</p></div>
+          </div>
+          <div class="pb-11"><button type="submit" class="btn btn-primary btn-lg btn-block">Pošlji povezavo</button></div>
+        </form>
+        <span class="home-ind"></span>
+      </div></div>
+      <p class="help mt-4" style="max-width:412px">The answer never says whether an account exists. It is the one <code>note</code> on the screen, announced politely. Sending again is allowed (rate limited, then E3).</p>
+    </figure>
+
+    <!-- M8 NEW PASSWORD -->
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">M8 New password (from the reset link)</figcaption>
+      <div class="phone"><div class="phone-screen" lang="sl">
+        <div class="statusbar" aria-hidden="true"><span>14:28</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <div class="topbar justify-end"><button type="button" class="iconbtn" aria-label="Zapri"><i class="ph-bold ph-x" aria-hidden="true"></i></button></div>
+        <form class="flex-1 min-h-0 flex flex-col px-5 pt-2" novalidate onsubmit="return false">
+          <div class="flex-1">
+            <h1 class="font-display font-bold text-[34px] leading-[40px] tracking-[-0.02em]" tabindex="-1">Novo geslo</h1>
+            <input type="email" class="sr-only" autocomplete="username" value="ana.novak@gmail.com" tabindex="-1" aria-hidden="true" data-sample>
+            <div class="field mt-8"><label for="m8-pw">Novo geslo</label><div class="pw"><input id="m8-pw" class="input input-q" type="password" autocomplete="new-password" aria-describedby="m8-hint"><button type="button" class="iconbtn" aria-label="Pokaži geslo"><i class="ph-bold ph-eye" aria-hidden="true"></i></button></div><p id="m8-hint" class="help">Najmanj 8 znakov. Daljše geslo ali več besed je varnejše.</p></div>
+          </div>
+          <div class="pb-11"><button type="submit" class="btn btn-primary btn-lg btn-block">Shrani geslo</button></div>
+        </form>
+        <span class="home-ind"></span>
+      </div></div>
+      <p class="help mt-4" style="max-width:412px">A hidden <code>autocomplete=username</code> field carries the address so password managers save the new password to the right entry. After saving, the user is signed in and sees the toast "Geslo je spremenjeno." (section F).</p>
+    </figure>
+
+  </div>
+</section>
+
+<!-- ================= C. GATES AND LINKING (APP) ================= -->
+<section class="tile-section !max-w-[1400px] !pt-0">
+  <h2 class="tile-title">C. App: the account gate, linking and session expiry</h2>
+  <p class="tile-lede">The gate is a bottom sheet over the step that needs an account. It stays short, so the draft remains visible above it: what the user entered is still there, which is the promise in the sheet. After success the user returns to exactly the same step.</p>
+
+  <div class="flex flex-wrap gap-x-10 gap-y-14 items-start">
+
+    <!-- G1 GATE -->
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">G1 Gate over the lost-report draft (P6)</figcaption>
+      <div class="phone"><div class="phone-screen" lang="sl">
+        <div class="statusbar" aria-hidden="true"><span>14:31</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <div inert aria-hidden="true" data-sample>
+          <div class="topbar"><span class="iconbtn"><i class="ph-bold ph-caret-left"></i></span><div class="steps flex-1"><span class="on"></span><span class="on"></span><span class="on"></span><span class="on"></span></div><span class="iconbtn"><i class="ph-bold ph-x"></i></span></div>
+          <div class="px-5 pt-3">
+            <img class="thumb w-full h-[220px]" style="border-radius:32px" src="../directions/img/dog-aussie.jpg" alt="">
+            <p class="font-display font-bold text-[34px] leading-[40px] tracking-[-0.02em] mt-6">Maks</p>
+            <p class="st st-lost st-lg mt-2"><i class="ph-fill ph-megaphone"></i>Izgubljena</p>
+          </div>
+        </div>
+        <div class="scrim"></div>
+        <div class="sheet" role="dialog" aria-modal="true" aria-label="Za objavo potrebujete račun" style="z-index:8;padding-bottom:34px">
+          <button type="button" class="grab" aria-label="Zapri"></button>
+          <div class="px-5 pt-3">
+            <h2 class="font-display font-bold text-[24px] leading-[30px] tracking-[-0.015em]" tabindex="-1">Za objavo potrebujete račun</h2>
+            <p class="flex gap-2 text-lg leading-7 mt-3"><i class="ph-fill ph-shield-check text-primary text-[22px] leading-7 flex-none" aria-hidden="true"></i><span>Vse, kar ste vnesli, ostane.</span></p>
+          </div>
+          <div class="grid gap-3 px-5 pt-7">
+            <a href="#" class="btn btn-primary btn-lg btn-block">Vpiši se</a>
+            <a href="#" class="btn btn-secondary btn-block">Ustvari račun</a>
+            <p class="text-center text-muted-foreground">ali</p>
+            <button type="button" class="btn btn-provider btn-block"><svg viewBox="0 0 48 48" aria-hidden="true" focusable="false"><use href="#g-logo"/></svg>Nadaljuj z Googlom</button>
+            <button type="button" class="btn btn-provider btn-block"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#apple-logo"/></svg>Nadaljuj z Applom</button>
+            <button type="button" class="btn btn-text btn-block">Prekliči</button>
+          </div>
+        </div>
+        <span class="home-ind" style="z-index:12"></span>
+      </div></div>
+      <p class="help mt-4" style="max-width:412px">The h2 names the reason, one per source: objava (report lost), pogovor (contact), opozorila, prispevek (tip), shranjevanje živali (My pets). Sheet: <code>card</code>, top radius 28, <code>shadow-lg</code>, <code>scrim</code>. Inside the sheet Google and Apple take the <code>background</code> tone. Grabber (44 px "Zapri"), scrim tap, swipe and "Prekliči" all close it with the draft untouched. Draft behind the scrim is a P6 sample.</p>
+    </figure>
+
+    <!-- G2 GATE UNVERIFIED -->
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">G2 Gate, unverified variant (not an error)</figcaption>
+      <div class="phone"><div class="phone-screen" lang="sl">
+        <div class="statusbar" aria-hidden="true"><span>14:33</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <div inert aria-hidden="true" data-sample>
+          <div class="topbar"><span class="iconbtn"><i class="ph-bold ph-caret-left"></i></span><div class="steps flex-1"><span class="on"></span><span class="on"></span><span class="on"></span><span class="on"></span></div><span class="iconbtn"><i class="ph-bold ph-x"></i></span></div>
+          <div class="px-5 pt-3">
+            <img class="thumb w-full h-[220px]" style="border-radius:32px" src="../directions/img/dog-aussie.jpg" alt="">
+            <p class="font-display font-bold text-[34px] leading-[40px] tracking-[-0.02em] mt-6">Maks</p>
+            <p class="st st-lost st-lg mt-2"><i class="ph-fill ph-megaphone"></i>Izgubljena</p>
+          </div>
+        </div>
+        <div class="scrim"></div>
+        <div class="sheet" role="dialog" aria-modal="true" aria-label="Potrdite svoj e-naslov" style="z-index:8;padding-bottom:34px">
+          <button type="button" class="grab" aria-label="Zapri"></button>
+          <div class="px-5 pt-3">
+            <h2 class="font-display font-bold text-[24px] leading-[30px] tracking-[-0.015em]" tabindex="-1">Potrdite svoj e-naslov</h2>
+            <p class="text-lg leading-7 mt-3">Povezavo smo poslali na <b class="break-words" data-sample>ana.novak@gmail.com</b>. Osnutki medtem delujejo.</p>
+          </div>
+          <div class="grid gap-1 px-5 pt-7">
+            <a href="#" class="btn btn-primary btn-lg btn-block"><i class="ph-bold ph-envelope-open" aria-hidden="true"></i>Odpri e-pošto</a>
+            <button type="button" class="btn btn-text btn-block">Pošlji znova</button>
+            <button type="button" class="btn btn-text btn-block">Prekliči</button>
+          </div>
+        </div>
+        <span class="home-ind" style="z-index:12"></span>
+      </div></div>
+      <p class="help mt-4" style="max-width:412px">Signed in, address not yet confirmed. No red, no error icon. "Pošlji znova" follows the M4 cooldown. The draft keeps working and is kept; the step continues once the address is confirmed. On web there is no mail-app button, so "Pošlji znova" becomes the primary.</p>
+    </figure>
+
+    <!-- G3 ACCOUNT LINKING -->
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">G3 Account linking (Google returned a known address)</figcaption>
+      <div class="phone"><div class="phone-screen" lang="sl">
+        <div class="statusbar" aria-hidden="true"><span>14:35</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <div class="flex-1 min-h-0 flex flex-col" inert aria-hidden="true">
+          <div class="topbar justify-end"><span class="iconbtn"><i class="ph-bold ph-x"></i></span></div>
+          <div class="px-5 pt-2">
+            <p class="font-display font-bold text-[34px] leading-[40px] tracking-[-0.02em]">Vpišite se</p>
+            <div class="grid gap-6 mt-8">
+              <div class="field"><span class="label">E-naslov</span><span class="input block"></span></div>
+              <div class="field"><span class="label">Geslo</span><span class="input block"></span></div>
+            </div>
+            <span class="btn btn-text -ml-3 mt-1">Pozabljeno geslo?</span>
+            <span class="btn btn-primary btn-lg btn-block mt-6">Vpiši se</span>
+          </div>
+        </div>
+        <div class="scrim"></div>
+        <div class="pop absolute left-5 right-5 p-6" role="alertdialog" aria-modal="true" aria-label="Povežete ta način vpisa z računom?" style="top:50%;transform:translateY(-50%);z-index:8;border-radius:var(--radius-card)">
+          <h2 class="font-display font-bold text-[24px] leading-[30px] tracking-[-0.015em]" tabindex="-1">Povežete ta način vpisa z računom?</h2>
+          <p class="mt-3">Račun z e-naslovom <b class="break-words" data-sample>ana.novak@gmail.com</b> že obstaja. Če ju povežete, se lahko vpisujete na oba načina.</p>
+          <div class="grid gap-1 mt-6">
+            <button type="button" class="btn btn-primary btn-lg btn-block">Poveži</button>
+            <button type="button" class="btn btn-text btn-block">Prekliči</button>
+          </div>
+        </div>
+        <span class="home-ind" style="z-index:12"></span>
+      </div></div>
+      <p class="help mt-4" style="max-width:412px">Dialog: <code>popover</code>, radius 24, padding 24, <code>shadow-pop</code>, <code>scrim</code>; h2, text, primary then text button. Focus trapped, Escape (web) and "Prekliči" cancel this sign-in and leave the account as it was. An Apple relay address is never shown; it reads "e-naslov skriva Apple" (section F).</p>
+    </figure>
+
+    <!-- E5 SESSION EXPIRED -->
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">E5 Session expired: sign in again, draft kept</figcaption>
+      <div class="phone"><div class="phone-screen" lang="sl">
+        <div class="statusbar" aria-hidden="true"><span>14:40</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <div inert aria-hidden="true" data-sample>
+          <div class="topbar"><span class="iconbtn"><i class="ph-bold ph-caret-left"></i></span><div class="steps flex-1"><span class="on"></span><span class="on"></span><span class="on"></span><span class="on"></span></div><span class="iconbtn"><i class="ph-bold ph-x"></i></span></div>
+          <div class="px-5 pt-3">
+            <img class="thumb w-full h-[220px]" style="border-radius:32px" src="../directions/img/dog-aussie.jpg" alt="">
+          </div>
+        </div>
+        <div class="scrim"></div>
+        <div class="sheet" role="dialog" aria-modal="true" aria-label="Znova se vpišite" style="z-index:8;padding-bottom:34px">
+          <button type="button" class="grab" aria-label="Zapri"></button>
+          <div class="px-5 pt-3">
+            <h2 class="font-display font-bold text-[24px] leading-[30px] tracking-[-0.015em]" tabindex="-1">Znova se vpišite</h2>
+            <p class="text-lg leading-7 mt-3">Zaradi varnosti vas moramo znova vpisati. Vaš osnutek je shranjen.</p>
+          </div>
+          <form class="px-5 pt-7" novalidate onsubmit="return false">
+            <div class="grid gap-6">
+              <div class="field"><label for="e5-email">E-naslov</label><input id="e5-email" class="input" type="email" autocomplete="username" value="ana.novak@gmail.com" readonly data-sample></div>
+              <div class="field"><label for="e5-pw">Geslo</label><div class="pw"><input id="e5-pw" class="input is-focus" type="password" autocomplete="current-password"><button type="button" class="iconbtn" aria-label="Pokaži geslo"><i class="ph-bold ph-eye" aria-hidden="true"></i></button></div></div>
+            </div>
+            <div class="grid gap-1 mt-6">
+              <button type="submit" class="btn btn-primary btn-lg btn-block">Vpiši se</button>
+              <button type="button" class="btn btn-text btn-block">Prekliči</button>
+            </div>
+          </form>
+        </div>
+        <span class="home-ind" style="z-index:12"></span>
+      </div></div>
+      <p class="help mt-4" style="max-width:412px">Sheet over the step the user was on. E-naslov is read-only so the right password-manager entry fills; focus goes to Geslo. If the account has no password, the matching Google or Apple button replaces the field and the primary. "Prekliči" keeps the draft on the device.</p>
+    </figure>
+
+  </div>
+</section>
+
+<!-- ================= D. ERRORS (APP) ================= -->
+<section class="tile-section !max-w-[1400px] !pt-0">
+  <h2 class="tile-title">D. App: errors</h2>
+  <p class="tile-lede">Errors say what happened and what to do, in text with an icon, never colour alone. Field errors use the <code>destructive</code> line; everything about the whole form is a single message under it.</p>
+
+  <div class="flex flex-wrap gap-x-10 gap-y-14 items-start">
+
+    <!-- E1 WRONG CREDENTIALS -->
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">E1 Wrong e-mail or password (one generic message)</figcaption>
+      <div class="phone"><div class="phone-screen" lang="sl">
+        <div class="statusbar" aria-hidden="true"><span>14:22</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <div class="topbar justify-end"><button type="button" class="iconbtn" aria-label="Zapri"><i class="ph-bold ph-x" aria-hidden="true"></i></button></div>
+        <div class="flex-1 min-h-0 px-5 pt-2">
+          <h1 class="font-display font-bold text-[34px] leading-[40px] tracking-[-0.02em]">Vpišite se</h1>
+          <form class="mt-8" novalidate onsubmit="return false" aria-describedby="e1-err">
+            <div class="grid gap-6">
+              <div class="field"><label for="e1-email">E-naslov</label><input id="e1-email" class="input" type="email" autocomplete="email" value="ana.novak@gmail.com" data-sample></div>
+              <div class="field"><label for="e1-pw">Geslo</label><div class="pw"><input id="e1-pw" class="input" type="password" autocomplete="current-password" value="mackavskornjih"><button type="button" class="iconbtn" aria-label="Pokaži geslo"><i class="ph-bold ph-eye" aria-hidden="true"></i></button></div></div>
+            </div>
+            <p id="e1-err" class="err mt-4" role="alert"><i class="ph-fill ph-warning-circle" aria-hidden="true"></i><span>E-naslov ali geslo ni pravilno.</span></p>
+            <a href="#" class="btn btn-text -ml-3 mt-1">Pozabljeno geslo?</a>
+            <button type="submit" class="btn btn-primary btn-lg btn-block mt-6">Vpiši se</button>
+          </form>
+          <p class="text-center text-muted-foreground mt-6">ali</p>
+          <div class="grid gap-3 mt-6">
+            <button type="button" class="btn btn-provider btn-block"><svg viewBox="0 0 48 48" aria-hidden="true" focusable="false"><use href="#g-logo"/></svg>Nadaljuj z Googlom</button>
+            <button type="button" class="btn btn-provider btn-block"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#apple-logo"/></svg>Nadaljuj z Applom</button>
+          </div>
+        </div>
+        <span class="home-ind"></span>
+      </div></div>
+      <p class="help mt-4" style="max-width:412px">Under the fields, above "Pozabljeno geslo?", so the way out is next to the problem. Never says which field is wrong; both lines stay normal and keep their values. <code>role=alert</code>, cleared when either field changes.</p>
+    </figure>
+
+    <!-- E2 FIELD ERRORS -->
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">E2 Create account: field errors on submit</figcaption>
+      <div class="phone"><div class="phone-screen" lang="sl">
+        <div class="statusbar" aria-hidden="true"><span>14:22</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <div class="topbar justify-end"><button type="button" class="iconbtn" aria-label="Zapri"><i class="ph-bold ph-x" aria-hidden="true"></i></button></div>
+        <div class="flex-1 min-h-0 px-5 pt-2 overflow-hidden scrollfade">
+          <h1 class="font-display font-bold text-[34px] leading-[40px] tracking-[-0.02em]">Ustvarite račun</h1>
+          <form class="mt-8" novalidate onsubmit="return false">
+            <div class="grid gap-6">
+              <div class="field"><label for="e2-name">Ime</label><input id="e2-name" class="input is-error" type="text" autocomplete="given-name" aria-invalid="true" aria-describedby="e2-name-err"><p id="e2-name-err" class="err"><i class="ph-fill ph-warning-circle" aria-hidden="true"></i><span>Vpišite ime ali vzdevek.</span></p></div>
+              <div class="field"><label for="e2-email">E-naslov</label><input id="e2-email" class="input is-error" type="email" autocomplete="email" value="ana.novak@gmail" aria-invalid="true" aria-describedby="e2-email-err" data-sample><p id="e2-email-err" class="err"><i class="ph-fill ph-warning-circle" aria-hidden="true"></i><span>Vpišite veljaven e-naslov, na primer ime@primer.si.</span></p></div>
+              <div class="field"><label for="e2-pw">Geslo</label><div class="pw"><input id="e2-pw" class="input is-error" type="password" autocomplete="new-password" value="maks1" aria-invalid="true" aria-describedby="e2-pw-err"><button type="button" class="iconbtn" aria-label="Pokaži geslo"><i class="ph-bold ph-eye" aria-hidden="true"></i></button></div><p id="e2-pw-err" class="err"><i class="ph-fill ph-warning-circle" aria-hidden="true"></i><span>Geslo mora imeti najmanj 8 znakov.</span></p></div>
+            </div>
+            <p class="help mt-6">Z ustvaritvijo računa se strinjate s <a href="#" class="font-bold text-primary underline underline-offset-4">pogoji uporabe</a>. Kako ravnamo s podatki, piše v <a href="#" class="font-bold text-primary underline underline-offset-4">politiki zasebnosti</a>.</p>
+            <button type="submit" class="btn btn-primary btn-lg btn-block mt-6">Ustvari račun</button>
+          </form>
+          <p class="text-center text-muted-foreground mt-6">ali</p>
+        </div>
+        <span class="home-ind"></span>
+      </div></div>
+      <p class="help mt-4" style="max-width:412px">Checked on submit, then live per field once corrected. Each: <code>destructive</code> line, icon and message below, replacing the help text, tied by <code>aria-describedby</code>, <code>aria-invalid</code>. Focus moves to the first invalid field. "Račun s tem e-naslovom že obstaja…" uses the same pattern (web W2).</p>
+    </figure>
+
+    <!-- E3 RATE LIMITED -->
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">E3 Too many attempts (rate limited)</figcaption>
+      <div class="phone"><div class="phone-screen" lang="sl">
+        <div class="statusbar" aria-hidden="true"><span>14:24</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <div class="topbar justify-end"><button type="button" class="iconbtn" aria-label="Zapri"><i class="ph-bold ph-x" aria-hidden="true"></i></button></div>
+        <div class="flex-1 min-h-0 px-5 pt-2">
+          <h1 class="font-display font-bold text-[34px] leading-[40px] tracking-[-0.02em]">Vpišite se</h1>
+          <form class="mt-8" novalidate onsubmit="return false">
+            <div class="grid gap-6">
+              <div class="field"><label for="e3-email">E-naslov</label><input id="e3-email" class="input" type="email" autocomplete="email" value="ana.novak@gmail.com" data-sample></div>
+              <div class="field"><label for="e3-pw">Geslo</label><div class="pw"><input id="e3-pw" class="input" type="password" autocomplete="current-password" value="mackavskornjih"><button type="button" class="iconbtn" aria-label="Pokaži geslo"><i class="ph-bold ph-eye" aria-hidden="true"></i></button></div></div>
+            </div>
+            <a href="#" class="btn btn-text -ml-3 mt-1">Pozabljeno geslo?</a>
+            <div class="note mt-4" role="status" id="e3-note"><i class="ph-bold ph-clock" aria-hidden="true"></i><p>Preveč poskusov. Poskusite znova čez nekaj minut.</p></div>
+            <button type="submit" class="btn btn-primary btn-lg btn-block mt-4" disabled aria-describedby="e3-note">Vpiši se</button>
+          </form>
+          <p class="text-center text-muted-foreground mt-6">ali</p>
+          <div class="grid gap-3 mt-6">
+            <button type="button" class="btn btn-provider btn-block"><svg viewBox="0 0 48 48" aria-hidden="true" focusable="false"><use href="#g-logo"/></svg>Nadaljuj z Googlom</button>
+            <button type="button" class="btn btn-provider btn-block"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#apple-logo"/></svg>Nadaljuj z Applom</button>
+          </div>
+        </div>
+        <span class="home-ind"></span>
+      </div></div>
+      <p class="help mt-4" style="max-width:412px">A calm <code>note</code> (neutral icon, no red) right above the primary, which is disabled (<code>muted</code>, still 5.8:1) until the wait is over; the note says why. Google and Apple stay available. A failed captcha uses the same note with <code>errors.CAPTCHA_FAILED</code> and keeps the primary enabled (section F).</p>
+    </figure>
+
+    <!-- E4 PROVIDER CANCELLED -->
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">E4 Provider window closed: quiet toast, form unchanged</figcaption>
+      <div class="phone"><div class="phone-screen" lang="sl">
+        <div class="statusbar" aria-hidden="true"><span>14:25</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <div class="topbar justify-end"><button type="button" class="iconbtn" aria-label="Zapri"><i class="ph-bold ph-x" aria-hidden="true"></i></button></div>
+        <div class="flex-1 min-h-0 px-5 pt-2">
+          <h1 class="font-display font-bold text-[34px] leading-[40px] tracking-[-0.02em]">Vpišite se</h1>
+          <form class="mt-8" novalidate onsubmit="return false">
+            <div class="grid gap-6">
+              <div class="field"><label for="e4-email">E-naslov</label><input id="e4-email" class="input" type="email" autocomplete="email" value="ana.novak@gm" data-sample></div>
+              <div class="field"><label for="e4-pw">Geslo</label><div class="pw"><input id="e4-pw" class="input" type="password" autocomplete="current-password"><button type="button" class="iconbtn" aria-label="Pokaži geslo"><i class="ph-bold ph-eye" aria-hidden="true"></i></button></div></div>
+            </div>
+            <a href="#" class="btn btn-text -ml-3 mt-1">Pozabljeno geslo?</a>
+            <button type="submit" class="btn btn-primary btn-lg btn-block mt-6">Vpiši se</button>
+          </form>
+          <p class="text-center text-muted-foreground mt-6">ali</p>
+          <div class="grid gap-3 mt-6">
+            <button type="button" class="btn btn-provider btn-block"><svg viewBox="0 0 48 48" aria-hidden="true" focusable="false"><use href="#g-logo"/></svg>Nadaljuj z Googlom</button>
+            <button type="button" class="btn btn-provider btn-block is-focus"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#apple-logo"/></svg>Nadaljuj z Applom</button>
+          </div>
+          <a href="#" class="btn btn-text btn-block mt-4">Ustvari račun</a>
+        </div>
+        <div class="toast pop absolute" style="left:12px;right:12px;bottom:34px;z-index:7" role="status" aria-live="polite"><i class="ph-fill ph-info" aria-hidden="true"></i><p>Vpis je bil preklican.</p><button type="button" class="iconbtn" aria-label="Zapri"><i class="ph-bold ph-x" aria-hidden="true"></i></button></div>
+        <span class="home-ind" style="z-index:12"></span>
+      </div></div>
+      <p class="help mt-4" style="max-width:412px">The user closed the Apple sheet. Focus returns to the button that opened it (ring shown). Toast: <code>popover</code>, radius 20, <code>shadow-pop</code>, 15/22, 5 s, polite, under all buttons. What was typed stays.</p>
+    </figure>
+
+    <!-- E6 BANNED -->
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">E6 Account closed (from M4 milestone)</figcaption>
+      <div class="phone"><div class="phone-screen" lang="sl">
+        <div class="statusbar" aria-hidden="true"><span>14:26</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <div class="topbar justify-end"><button type="button" class="iconbtn" aria-label="Zapri"><i class="ph-bold ph-x" aria-hidden="true"></i></button></div>
+        <div class="flex-1 min-h-0 flex flex-col px-5 pb-11">
+          <div class="flex-1 flex flex-col justify-center">
+            <span class="spot" aria-hidden="true"><i class="ph-bold ph-lock-simple"></i></span>
+            <h1 class="font-display font-bold text-[34px] leading-[40px] tracking-[-0.02em] mt-8" tabindex="-1">Račun je zaprt</h1>
+            <p class="text-lg leading-7 mt-3">Račun smo zaprli zaradi kršitve pogojev uporabe. Razlog: <span data-sample>objavljanje lažnih prijav</span>. Če menite, da gre za napako, <a href="#" class="font-bold text-primary underline underline-offset-4">nam pišite</a>.</p>
+          </div>
+        </div>
+        <span class="home-ind"></span>
+      </div></div>
+      <p class="help mt-4" style="max-width:412px">Shown after sign-in when the account is closed; no session is kept. The reason comes from the moderation record (sample here). "nam pišite" opens the support contact. No primary: nothing else can be done here. "Zapri" returns to the map, signed out.</p>
+    </figure>
+
+  </div>
+</section>
+
+<!-- ================= E. WEB ================= -->
+<section class="tile-section !max-w-[1400px] !pt-0">
+  <h2 class="tile-title">E. Web at 1200 px</h2>
+  <p class="tile-lede">Flow variant from P1: reduced header (logo, "Zapri"), a centred 440 px column, the minimal footer row. No ads, no sidebar, no side panel. Enter submits. Below 1024 px the same column takes the full width with 20 px gutters.</p>
+
+  <!-- W1 SIGN IN -->
+  <p class="tile-h !mt-0">W1 Sign in · keyboard focus on E-naslov · pointer on "Nadaljuj z Googlom"</p>
+  <div class="wrap-x"><div class="browser" lang="sl">
+    <div class="browser-bar"><span class="dots"><i></i><i></i><i></i></span><span class="url"><i class="ph ph-lock-simple"></i>najdimo.si/vpis</span></div>
+    <header class="flex items-center gap-8 px-12 h-[88px]">
+      <a href="#" class="logo-link" aria-label="Najdimo, na začetno stran"><svg class="logo-mark w-9 h-9" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg><span class="font-display font-bold text-2xl tracking-[-0.03em]" aria-hidden="true">Najdimo</span></a>
+      <a href="#" class="btn btn-ghost btn-sm ml-auto"><i class="ph-bold ph-x" aria-hidden="true"></i>Zapri</a>
+    </header>
+    <div class="w-full max-w-[440px] mx-auto pt-6">
+      <h1 class="font-display font-bold text-5xl tracking-[-0.02em]" tabindex="-1">Vpišite se</h1>
+      <form class="mt-10" novalidate onsubmit="return false">
+        <div class="grid gap-6">
+          <div class="field"><label for="w1-email">E-naslov</label><input id="w1-email" class="input is-focus" type="email" name="email" autocomplete="email" spellcheck="false"></div>
+          <div class="field"><label for="w1-pw">Geslo</label><div class="pw"><input id="w1-pw" class="input" type="password" name="password" autocomplete="current-password"><button type="button" class="iconbtn" aria-label="Pokaži geslo"><i class="ph-bold ph-eye" aria-hidden="true"></i></button></div></div>
+        </div>
+        <a href="#" class="btn btn-text -ml-3 mt-1">Pozabljeno geslo?</a>
+        <button type="submit" class="btn btn-primary btn-lg btn-block mt-8">Vpiši se</button>
+      </form>
+      <p class="text-center text-muted-foreground mt-6">ali</p>
+      <div class="grid gap-3 mt-6">
+        <button type="button" class="btn btn-provider btn-block is-hover"><svg viewBox="0 0 48 48" aria-hidden="true" focusable="false"><use href="#g-logo"/></svg>Nadaljuj z Googlom</button>
+        <button type="button" class="btn btn-provider btn-block"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#apple-logo"/></svg>Nadaljuj z Applom</button>
+      </div>
+      <a href="#" class="btn btn-text btn-block mt-4">Ustvari račun</a>
+    </div>
+    <footer class="px-12 pt-6 pb-6 mt-24">
+      <nav aria-label="Noga strani"><ul class="flex flex-wrap justify-center gap-x-6">
+        <li><a href="#" class="fl">Zasebnost</a></li>
+        <li><a href="#" class="fl">Pogoji uporabe</a></li>
+        <li><button type="button" class="fl" aria-haspopup="dialog">Nastavitve piškotkov</button></li>
+        <li><a href="#" class="fl">Dostopnost</a></li>
+      </ul></nav>
+    </footer>
+  </div></div>
+  <p class="help mt-4" style="max-width:640px">Route <code>/vpis</code> (<code>noindex</code>, title "Vpis · Najdimo"). h1 48/52. The header logo is the "logo above"; there is no second logo in the column. Autofill keeps the line style (no browser fill colour). After success the user returns to the page that sent them here.</p>
+
+  <!-- W2 CREATE ACCOUNT -->
+  <p class="tile-h" style="margin-top:64px">W2 Create account · server error on E-naslov (address taken) · password shown · pointer on "Že imam račun"</p>
+  <div class="wrap-x"><div class="browser" lang="sl">
+    <div class="browser-bar"><span class="dots"><i></i><i></i><i></i></span><span class="url"><i class="ph ph-lock-simple"></i>najdimo.si/registracija</span></div>
+    <header class="flex items-center gap-8 px-12 h-[88px]">
+      <a href="#" class="logo-link" aria-label="Najdimo, na začetno stran"><svg class="logo-mark w-9 h-9" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg><span class="font-display font-bold text-2xl tracking-[-0.03em]" aria-hidden="true">Najdimo</span></a>
+      <a href="#" class="btn btn-ghost btn-sm ml-auto"><i class="ph-bold ph-x" aria-hidden="true"></i>Zapri</a>
+    </header>
+    <div class="w-full max-w-[440px] mx-auto pt-6">
+      <h1 class="font-display font-bold text-5xl tracking-[-0.02em]" tabindex="-1">Ustvarite račun</h1>
+      <form class="mt-10" novalidate onsubmit="return false">
+        <div class="grid gap-6">
+          <div class="field"><label for="w2-name">Ime</label><input id="w2-name" class="input" type="text" name="name" autocomplete="given-name" value="Ana" aria-describedby="w2-name-help"><p id="w2-name-help" class="help">To ime vidijo ljudje, s katerimi se pogovarjate. Lahko je tudi vzdevek.</p></div>
+          <div class="field"><label for="w2-email">E-naslov</label><input id="w2-email" class="input is-error" type="email" name="email" autocomplete="email" value="ana.novak@gmail.com" aria-invalid="true" aria-describedby="w2-email-err" data-sample><p id="w2-email-err" class="err"><i class="ph-fill ph-warning-circle" aria-hidden="true"></i><span>Račun s tem e-naslovom že obstaja. Vpišite se ali ponastavite geslo.</span></p></div>
+          <div class="field"><label for="w2-pw">Geslo</label><div class="pw"><input id="w2-pw" class="input" type="text" name="new-password" autocomplete="new-password" value="mačka v škornjih" aria-describedby="w2-pw-hint"><button type="button" class="iconbtn" aria-label="Skrij geslo"><i class="ph-bold ph-eye-slash" aria-hidden="true"></i></button></div><p id="w2-pw-hint" class="help">Najmanj 8 znakov. Daljše geslo ali več besed je varnejše.</p></div>
+        </div>
+        <p class="help mt-6">Z ustvaritvijo računa se strinjate s <a href="#" class="font-bold text-primary underline underline-offset-4">pogoji uporabe</a>. Kako ravnamo s podatki, piše v <a href="#" class="font-bold text-primary underline underline-offset-4">politiki zasebnosti</a>.</p>
+        <button type="submit" class="btn btn-primary btn-lg btn-block mt-8">Ustvari račun</button>
+      </form>
+      <p class="text-center text-muted-foreground mt-6">ali</p>
+      <div class="grid gap-3 mt-6">
+        <button type="button" class="btn btn-provider btn-block"><svg viewBox="0 0 48 48" aria-hidden="true" focusable="false"><use href="#g-logo"/></svg>Nadaljuj z Googlom</button>
+        <button type="button" class="btn btn-provider btn-block"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#apple-logo"/></svg>Nadaljuj z Applom</button>
+      </div>
+      <a href="#" class="btn btn-text btn-block mt-4 is-hover">Že imam račun</a>
+    </div>
+    <footer class="px-12 pt-6 pb-6 mt-24">
+      <nav aria-label="Noga strani"><ul class="flex flex-wrap justify-center gap-x-6">
+        <li><a href="#" class="fl">Zasebnost</a></li>
+        <li><a href="#" class="fl">Pogoji uporabe</a></li>
+        <li><button type="button" class="fl" aria-haspopup="dialog">Nastavitve piškotkov</button></li>
+        <li><a href="#" class="fl">Dostopnost</a></li>
+      </ul></nav>
+    </footer>
+  </div></div>
+  <p class="help mt-4" style="max-width:640px">Route <code>/registracija</code> (<code>noindex</code>). Shown password: plain text, the button now reads "Skrij geslo". The address-taken error keeps the typed values; "Že imam račun" carries the address to <code>/vpis</code>.</p>
+
+  <!-- W3 GATE DIALOG -->
+  <p class="tile-h" style="margin-top:64px">W3 Gate as a dialog over a listing (contact, P9) · Tab focus on the primary</p>
+  <div class="wrap-x"><div class="browser relative" style="height:720px" lang="sl">
+    <div class="browser-bar"><span class="dots"><i></i><i></i><i></i></span><span class="url"><i class="ph ph-lock-simple"></i>najdimo.si/izgubljene/maks</span></div>
+    <div inert aria-hidden="true" data-sample>
+      <header class="flex items-center gap-8 px-12 h-[88px]">
+        <span class="logo-link"><svg class="logo-mark w-9 h-9" viewBox="0 0 48 48"><use href="#nj-mark"/></svg><span class="font-display font-bold text-2xl tracking-[-0.03em]">Najdimo</span></span>
+        <ul class="flex items-center gap-2"><li><span class="nl">Zemljevid</span></li><li><span class="nl">Izgubljene</span></li><li><span class="nl">Najdene</span></li><li><span class="nl">Kako deluje</span></li></ul>
+        <div class="ml-auto flex items-center gap-2">
+          <div class="lang"><span class="ll" aria-current="true">SL</span><span>/</span><span class="ll">EN</span></div>
+          <span class="btn btn-ghost btn-sm">Vpis</span>
+          <span class="btn btn-primary btn-sm">Prijavi</span>
+        </div>
+      </header>
+      <div class="px-12 pt-8 grid grid-cols-[minmax(0,7fr)_minmax(0,5fr)] gap-12 items-start">
+        <img class="thumb w-full aspect-[4/3]" style="border-radius:32px" src="../directions/img/dog-aussie-wide.jpg" alt="">
+        <div>
+          <span class="badge b-lost"><i class="ph-fill ph-megaphone"></i>Izgubljena</span>
+          <p class="font-display font-bold text-6xl tracking-[-0.02em] mt-4">Maks</p>
+          <p class="text-lg mt-3 text-muted-foreground">Šiška, Ljubljana · pred 3 h</p>
+          <span class="btn btn-primary btn-lg mt-8"><i class="ph-bold ph-chat-circle"></i>Pošlji sporočilo</span>
+        </div>
+      </div>
+    </div>
+    <div class="scrim" style="top:44px"></div>
+    <div class="pop absolute p-8" role="dialog" aria-modal="true" aria-label="Za pogovor potrebujete račun" style="left:50%;top:124px;width:480px;margin-left:-240px;z-index:5;border-radius:var(--radius-card)">
+      <h2 class="font-display font-bold text-3xl tracking-[-0.015em]" tabindex="-1">Za pogovor potrebujete račun</h2>
+      <p class="flex gap-3 text-xl leading-8 mt-3"><i class="ph-fill ph-shield-check text-primary text-[24px] leading-8 flex-none" aria-hidden="true"></i><span>Vse, kar ste vnesli, ostane.</span></p>
+      <div class="grid gap-3 mt-8">
+        <a href="#" class="btn btn-primary btn-lg btn-block is-focus">Vpiši se</a>
+        <a href="#" class="btn btn-secondary btn-block">Ustvari račun</a>
+        <p class="text-center text-muted-foreground">ali</p>
+        <button type="button" class="btn btn-provider btn-block"><svg viewBox="0 0 48 48" aria-hidden="true" focusable="false"><use href="#g-logo"/></svg>Nadaljuj z Googlom</button>
+        <button type="button" class="btn btn-provider btn-block"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#apple-logo"/></svg>Nadaljuj z Applom</button>
+        <button type="button" class="btn btn-text btn-block">Prekliči</button>
+      </div>
+    </div>
+  </div></div>
+  <p class="help mt-4" style="max-width:640px">Dialog: <code>popover</code>, 480 px, radius 24, padding 32, <code>shadow-pop</code>, <code>scrim</code>. Focus starts on the h2, Tab reaches the primary (ring shown), focus is trapped, Escape and "Prekliči" close it and return focus to "Pošlji sporočilo". "Vpiši se" and "Ustvari račun" open <code>/vpis</code> and <code>/registracija</code> with a return address; Google and Apple sign in from here and the user stays on the listing. Listing behind the scrim is a P9 sample.</p>
+</section>
+
+<!-- ================= F. PARTS AND STATES ================= -->
+<section class="tile-section !max-w-[1400px] !pt-0">
+  <h2 class="tile-title">F. Parts and states at real size</h2>
+  <p class="tile-lede">Fields, buttons and messages used above, state by state. Hover is web only; pressed adds <code>scale(0.98)</code> and a light haptic on the primary in the app.</p>
+
+  <div class="grid gap-x-14 gap-y-12 items-start" style="grid-template-columns:repeat(3,minmax(0,1fr))" lang="sl">
+
+    <!-- Fields -->
+    <div>
+      <p class="tile-h !mt-0">Field: empty with example placeholder · hover · keyboard focus</p>
+      <div class="grid gap-6">
+        <div class="field"><label for="f-e1">E-naslov</label><input id="f-e1" class="input" type="email" autocomplete="off" placeholder="ime@primer.si"></div>
+        <div class="field"><label for="f-e2">E-naslov</label><input id="f-e2" class="input is-hover" type="email" autocomplete="off" placeholder="ime@primer.si"></div>
+        <div class="field"><label for="f-e3">E-naslov</label><input id="f-e3" class="input is-focus" type="email" autocomplete="off" value="ana.novak@gmail.com" data-sample></div>
+      </div>
+      <p class="tile-h">Error (line, icon and text)</p>
+      <div class="field"><label for="f-e4">E-naslov</label><input id="f-e4" class="input is-error" type="email" autocomplete="off" value="ana.novak@" aria-invalid="true" aria-describedby="f-e4-err" data-sample><p id="f-e4-err" class="err"><i class="ph-fill ph-warning-circle" aria-hidden="true"></i><span>Vpišite veljaven e-naslov, na primer ime@primer.si.</span></p></div>
+      <p class="tile-h">Password hidden · shown (button renamed) · toggle focused</p>
+      <div class="grid gap-6">
+        <div class="field"><label for="f-p1">Geslo</label><div class="pw"><input id="f-p1" class="input" type="password" autocomplete="off" value="mačkavškornjih"><button type="button" class="iconbtn" aria-label="Pokaži geslo"><i class="ph-bold ph-eye" aria-hidden="true"></i></button></div></div>
+        <div class="field"><label for="f-p2">Geslo</label><div class="pw"><input id="f-p2" class="input" type="text" autocomplete="off" value="mačka v škornjih"><button type="button" class="iconbtn is-focus" aria-label="Skrij geslo"><i class="ph-bold ph-eye-slash" aria-hidden="true"></i></button></div></div>
+      </div>
+    </div>
+
+    <!-- Buttons -->
+    <div>
+      <p class="tile-h !mt-0">Primary <code>lg</code></p>
+      <div class="grid gap-3">
+        <div class="flex flex-wrap items-center gap-x-4 gap-y-1"><span class="help w-24 flex-none">Default</span><button type="button" class="btn btn-primary btn-lg flex-1">Vpiši se</button></div>
+        <div class="flex flex-wrap items-center gap-x-4 gap-y-1"><span class="help w-24 flex-none">Hover</span><button type="button" class="btn btn-primary btn-lg flex-1 is-hover">Vpiši se</button></div>
+        <div class="flex flex-wrap items-center gap-x-4 gap-y-1"><span class="help w-24 flex-none">Focus</span><button type="button" class="btn btn-primary btn-lg flex-1 is-focus">Vpiši se</button></div>
+        <div class="flex flex-wrap items-center gap-x-4 gap-y-1"><span class="help w-24 flex-none">Loading</span><button type="button" class="btn btn-primary btn-lg flex-1" aria-busy="true"><span class="spin" aria-hidden="true"></span>Vpiši se</button></div>
+        <div class="flex flex-wrap items-center gap-x-4 gap-y-1"><span class="help w-24 flex-none">Disabled</span><button type="button" class="btn btn-primary btn-lg flex-1" disabled>Vpiši se</button></div>
+      </div>
+      <p class="tile-h">Google and Apple on the page (<code>card</code> tone)</p>
+      <div class="grid gap-3">
+        <div class="flex flex-wrap items-center gap-x-4 gap-y-1"><span class="help w-24 flex-none">Default</span><button type="button" class="btn btn-provider flex-1"><svg viewBox="0 0 48 48" aria-hidden="true" focusable="false"><use href="#g-logo"/></svg>Nadaljuj z Googlom</button></div>
+        <div class="flex flex-wrap items-center gap-x-4 gap-y-1"><span class="help w-24 flex-none">Hover</span><button type="button" class="btn btn-provider flex-1 is-hover"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#apple-logo"/></svg>Nadaljuj z Applom</button></div>
+        <div class="flex flex-wrap items-center gap-x-4 gap-y-1"><span class="help w-24 flex-none">Focus</span><button type="button" class="btn btn-provider flex-1 is-focus"><svg viewBox="0 0 48 48" aria-hidden="true" focusable="false"><use href="#g-logo"/></svg>Nadaljuj z Googlom</button></div>
+        <div class="flex flex-wrap items-center gap-x-4 gap-y-1"><span class="help w-24 flex-none">Loading</span><button type="button" class="btn btn-provider flex-1" aria-busy="true"><span class="spin" aria-hidden="true"></span>Nadaljuj z Applom</button></div>
+      </div>
+      <p class="tile-h">In a sheet or dialog (<code>background</code> tone)</p>
+      <div class="card p-5 grid gap-3">
+        <button type="button" class="btn btn-provider btn-block"><svg viewBox="0 0 48 48" aria-hidden="true" focusable="false"><use href="#g-logo"/></svg>Nadaljuj z Googlom</button>
+        <button type="button" class="btn btn-provider btn-block is-hover"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#apple-logo"/></svg>Nadaljuj z Applom</button>
+      </div>
+      <p class="tile-h">Text button: default · hover · disabled during the cooldown</p>
+      <div class="grid gap-2 justify-items-start">
+        <a href="#" class="btn btn-text">Pozabljeno geslo?</a>
+        <a href="#" class="btn btn-text is-hover">Pozabljeno geslo?</a>
+        <button type="button" class="btn btn-text" disabled aria-describedby="f-wait">Pošlji znova</button>
+        <p id="f-wait" class="help tnum">Znova lahko pošljete čez 42 s.</p>
+      </div>
+    </div>
+
+    <!-- Messages -->
+    <div>
+      <p class="tile-h !mt-0">Whole-form message (wrong e-mail or password)</p>
+      <p class="err" role="alert"><i class="ph-fill ph-warning-circle" aria-hidden="true"></i><span>E-naslov ali geslo ni pravilno.</span></p>
+      <p class="tile-h">Calm notes: rate limited · captcha failed</p>
+      <div class="grid gap-4">
+        <div class="note" role="status"><i class="ph-bold ph-clock" aria-hidden="true"></i><p>Preveč poskusov. Poskusite znova čez nekaj minut.</p></div>
+        <div class="note" role="status"><i class="ph-bold ph-shield-warning" aria-hidden="true"></i><p>Nismo mogli preveriti, da pošiljate vi in ne program. Poskusite znova.</p></div>
+      </div>
+      <p class="tile-h">Toasts: provider cancelled · password saved</p>
+      <div class="grid gap-4">
+        <div class="toast pop" role="status"><i class="ph-fill ph-info" aria-hidden="true"></i><p>Vpis je bil preklican.</p><button type="button" class="iconbtn" aria-label="Zapri"><i class="ph-bold ph-x" aria-hidden="true"></i></button></div>
+        <div class="toast pop" role="status"><i class="ph-fill ph-check-circle" aria-hidden="true"></i><p>Geslo je spremenjeno.</p><button type="button" class="iconbtn" aria-label="Zapri"><i class="ph-bold ph-x" aria-hidden="true"></i></button></div>
+      </div>
+      <p class="tile-h">How a sign-in address is shown (account linking, profile)</p>
+      <ul class="grid gap-4">
+        <li class="flex items-center gap-3"><svg class="w-5 h-5 flex-none" viewBox="0 0 48 48" aria-hidden="true" focusable="false"><use href="#g-logo"/></svg><span class="sr-only">Google:</span><span class="break-words" data-sample>ana.novak@gmail.com</span></li>
+        <li class="flex items-center gap-3"><svg class="w-5 h-5 flex-none" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#apple-logo"/></svg><span class="sr-only">Apple:</span><span class="text-muted-foreground">e-naslov skriva Apple</span></li>
+      </ul>
+    </div>
+
+  </div>
+</section>
+
+<p class="tile-section !max-w-[1400px] !py-8 text-sm text-muted-foreground">Copy: docs/content/pages/P16-auth.md v0.1 (native Slovenian review pending); <code>errors.CAPTCHA_FAILED</code> from docs/content/pages/P1-web-shell.md. Samples (marked <code>data-sample</code>): the e-mail address and typed values, the P6 draft and the P9 listing behind the gates, the ban reason. Google and Apple glyphs are stand-ins drawn for the mockup; the build uses the official assets (Google full-colour G, Apple logo in the label colour), and on iOS the native Apple button may take this place at the same size. The keyboard is a static stand-in. Placeholder photography from Unsplash (Unsplash License). Icons: Phosphor. No generated assets on this page.</p>
+
+</div><!-- /#src -->
+
+<script src="../directions/directions.js"></script>
+</body>
+</html>
