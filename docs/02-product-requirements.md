@@ -1,7 +1,7 @@
 ---
 doc_id: DOC-02
 title: Product Requirements
-version: 0.4
+version: 0.5
 status: Draft
 date: 2026-10-14
 owner: Product Manager
@@ -683,7 +683,7 @@ approvals:
   - R-037.2 Universal and app links for listings and poster QR; web fallback.
   - R-037.3 Permission primers before camera, location, notifications; denial leaves a working fallback.
   - R-037.4 Push token lifecycle; EAS development, preview and release profiles; store submission out of scope (Q-007).
-  - R-037.5 Offline tolerance for found reports: drafts queue and retry (Should).
+  - R-037.5 Offline tolerance: cache of nearby reports (FR-041), queue for found and sighting reports (FR-042) and local proximity alerts (FR-043).
 - **Acceptance criteria**
   - [ ] Given a listing link on a phone with the app, when tapped, then the report opens in the app.
   - [ ] Given location denied, when reporting, then manual pin works.
@@ -741,6 +741,57 @@ approvals:
 - **Edge cases**
   - Budget EUR 0 scenario relies on community, shelters and SEO only.
 
+## FR-041: Offline cache of nearby reports (mobile)
+
+- **Priority:** Should · **Milestone:** M2 (data layer from the start)
+- **User story:** As a user outdoors with weak signal, I want the map and list to keep working so that I can still check nearby lost and found animals.
+- **Requirements**
+  - R-041.1 While online, cache active lost and found reports around the home area and the current area: thumbnails and public fuzzed locations only; default limits 50 MB and 7 days.
+  - R-041.2 Offline, map and list show cached reports with a clear "offline, last updated …" state; connection-only actions explain why they are unavailable.
+  - R-041.3 Never cached: exact locations, chip numbers, contact data, chat. Cache wiped on logout, account deletion and on request.
+  - R-041.4 Incremental, battery- and data-friendly refresh; closed, hidden and expired reports removed.
+- **Acceptance criteria**
+  - [ ] Given airplane mode, when the map opens, then cached reports show with a last-updated label.
+  - [ ] Given a logout, when it completes, then the cache is empty.
+  - [ ] Given a cache dump, when inspected, then it holds only public fuzzed locations.
+- **Edge cases**
+  - Cache full: oldest and farthest reports are evicted first.
+  - First launch offline: empty state with explanation.
+
+## FR-042: Offline queue for found and sighting reports (mobile)
+
+- **Priority:** Should · **Milestone:** M2
+- **User story:** As a finder without signal, I want to create a report now and have it sent later so that the owner can still be reached.
+- **Requirements**
+  - R-042.1 Found and sighted reports (photo, GPS, capture time) can be created offline and show "waiting to send".
+  - R-042.2 Automatic send on reconnect with idempotency keys; original capture time used for matching; manage link shown after sending.
+  - R-042.3 Failures show a reason with retry or delete; nothing is lost silently.
+- **Acceptance criteria**
+  - [ ] Given no connectivity, when a found report is completed, then it is stored and shown as waiting to send.
+  - [ ] Given connectivity returns, when the app is open, then it is sent once, even if the send is retried.
+  - [ ] Given a rate-limit or captcha failure, when sending, then the user sees the reason and can retry.
+- **Edge cases**
+  - App killed while offline: the queue survives and sends on next launch.
+  - Lost reports need an account and a connection to submit (not queued in this phase).
+
+## FR-043: Local proximity alerts (mobile)
+
+- **Priority:** Should · **Milestone:** M3
+- **User story:** As a community member, I want a gentle alert when I am near where a pet was last seen so that I can keep an eye out, even offline.
+- **Requirements**
+  - R-043.1 Explicit opt-in with a primer for background ("Always") location; everything else works if declined.
+  - R-043.2 OS geofences around cached lost-pet areas, nearest and most recent first, within OS limits (about 20 regions on iOS); no continuous GPS.
+  - R-043.3 On entry, a local notification ("You are near where Maks was last seen yesterday, keep an eye out") with a deep link.
+  - R-043.4 Quiet hours, daily cap (default 3), each pet once per area, easy off switch removing all geofences.
+  - R-043.5 Only public fuzzed areas monitored; location never uploaded.
+- **Acceptance criteria**
+  - [ ] Given opt-in and a cached area, when the user enters it offline, then a local notification appears once.
+  - [ ] Given 20 cached areas on iOS, when registering, then only the nearest and most recent are registered.
+  - [ ] Given the toggle off, when saved, then all geofences are removed.
+- **Edge cases**
+  - Permission downgraded by the OS: feature disables itself with an explanation.
+  - Reunited or closed report: geofence removed on next refresh.
+
 # Non-functional requirements
 
 | ID | Area | Requirement | Target / measure |
@@ -758,6 +809,8 @@ approvals:
 | NFR-AI | AI cost and safety | 1 vision call and 1 embedding per photo, cache by image hash, per-device daily limit, monthly budget, fail open; no PII to providers; mock for local use | Cost per report ≤ EUR 0.05 · 0 requests above cap |
 | NFR-DEVX | Developer experience | One-command local stack without cloud credentials; mocked AI, Stripe, email, push, analytics; contracts first | Fresh clone to running apps < 15 min |
 | NFR-QUAL | Quality gates | CI on every PR: lint, types, unit, e2e smoke, axe, Lighthouse budgets, dependency and secret scan | All green to merge |
+| NFR-OFFLINE | Offline and cache privacy | Mobile cache holds only public fuzzed data and thumbnails, size and age limited, wiped on logout; offline states are explicit; queued reports are idempotent | 0 exact locations in cache · 50 MB / 7 days defaults · 0 duplicate sends |
+| NFR-BATT | Battery | OS geofencing only (no continuous GPS), incremental background refresh, caps on alerts | No background location use unless opted in · alerts ≤ 3/day |
 | NFR-OBS | Observability | Error tracking with PII scrubbing, uptime checks, structured logs, runbook | Alert within 5 min of outage |
 
 # Content, SEO and legal requirements
@@ -789,8 +842,8 @@ approvals:
 
 | | Features |
 |---|---|
-| **MVP** (M1–M2) | Monorepo, design system, UI kit, SL/EN, auth, analytics (GA4/Firebase) and consent; pet profiles, photos, location with fuzzing; report lost; report found without account; map, list, detail; matching v1 and review; chat; notifications and nearby alerts; poster and sharing; reunited and lifecycle; abuse reporting; admin shell; payments core (Stripe test); Reunited tip and report contribution; ads (serving, placements, admin, Partners page); public copy and legal drafts |
-| **Version 1** (M3–M5) | AI pre-fill; image-similarity matching; organisations and shelter portal (bulk, CSV, matches, chip lookup); sighting trail; export and delete; subscriptions; boost; Premium (incl. AI extras, ad-free); Podpornik; reward escrow; free shelter tools (API, analytics, municipality reports, adoption page); Vet Partner; transparency page; moderation queue and image screening; KPI dashboard; security, accessibility and performance audits; observability and backups; SEO pages; success stories; final legal pages; pilot onboarding kit; mobile release candidate builds |
+| **MVP** (M1–M2) | Offline cache and offline report queue (mobile); monorepo, design system, UI kit, SL/EN, auth, analytics (GA4/Firebase) and consent; pet profiles, photos, location with fuzzing; report lost; report found without account; map, list, detail; matching v1 and review; chat; notifications and nearby alerts; poster and sharing; reunited and lifecycle; abuse reporting; admin shell; payments core (Stripe test); Reunited tip and report contribution; ads (serving, placements, admin, Partners page); public copy and legal drafts |
+| **Version 1** (M3–M5) | AI pre-fill; image-similarity matching; organisations and shelter portal (bulk, CSV, matches, chip lookup); sighting trail; local proximity alerts (mobile geofences); export and delete; subscriptions; boost; Premium (incl. AI extras, ad-free); Podpornik; reward escrow; free shelter tools (API, analytics, municipality reports, adoption page); Vet Partner; transparency page; moderation queue and image screening; KPI dashboard; security, accessibility and performance audits; observability and backups; SEO pages; success stories; final legal pages; pilot onboarding kit; mobile release candidate builds |
 | **Future** | Self-serve ad booking and Stripe invoicing, founding-partner pricing (M6); IAP or RevenueCat for mobile purchases; social auto-posting for boosts; privacy-first pet tags (redesign); chat photo attachments; CRPsi integration (needs an agreement); server-side GA tagging; more species, countries and languages; vets, shop and insurer partnerships beyond ads |
 | **Out of scope** | Species other than dogs and cats; countries other than Slovenia; live payments; App Store and Play Store submission; QR/NFC pet tags (physical and printable); official CRPsi integration |
 
@@ -868,6 +921,8 @@ approvals:
 - A-024: Shelters and municipalities are free forever; vets are free for reunite features and pay only for Vet Partner visibility (brief v0.5). Shelter Pro no longer exists.
 - A-025: QR/NFC pet tags are out of scope (brief v0.7); the poster QR links to the public listing only.
 - A-026: Vet Partner needs verified vet organisations (FR-015) and the ads infrastructure (FR-029..031); VAT invoices via Stripe Billing, company VAT ID collected.
+- A-027: Offline cache defaults 50 MB and 7 days; geofence alerts default cap 3 per day; iOS allows about 20 monitored regions, Android has its own limit, so the nearest and most recent areas are chosen.
+- A-028: The Always location permission is opt-in only, with a primer; store justification is prepared before store release (risk R-024).
 
 # Glossary
 
@@ -909,3 +964,4 @@ approvals:
 | 0.2 | 2026-10-14 | Initial requirements from brief v0.2 plus client additions: voluntary support (tips, contribution, Podpornik, escrow fee, dohodnina, transparency page), early ads (M2) with Partners page, GA4/Firebase analytics and Consent Mode v2 as core from M1. FR-001…FR-039, NFRs, assumptions A-001…A-023 |
 | 0.3 | 2026-10-15 | Brief v0.4-v0.7: Shelter Pro removed (FR-028 now free shelter tools + Vet Partner), explicit free-forever list (P-1, P-7), QR/NFC tags withdrawn (FR-027, P-8), new assumptions A-024..A-026 |
 | 0.4 | 2026-10-15 | Brief v0.8 monetisation model: Boost EUR 4.99 fixed; Premium EUR 2.99/month or EUR 24.99/year with unlimited pets, AI extras (written listing and posts, poster designs, search plan), one-tap lost mode, 1 free Boost per year, ad-free (Q-010 decided: Podpornik not ad-free); free tier includes basic AI and up to 2 pet profiles; support asks after reunion, after report and on profile (EUR 3 / 5 / 10 / custom, min EUR 2); Vet Partner EUR 39; prices in A-007; FR-040 marketing plan (low priority) added |
+| 0.5 | 2026-10-15 | Offline mode: FR-041 offline cache and FR-042 offline report queue (M2), FR-043 local proximity alerts (M3), NFR-OFFLINE, NFR-BATT, A-027, A-028 |
