@@ -1,13 +1,32 @@
+# dependencies
 node_modules/
+
+# env and secrets (names live in .env.example)
 .env
-.env.local
-.env.*.local
+.env.*
+!.env.example
+.secrets/
+
+# build output and caches
+dist/
 .next/
 .expo/
-dist/
 .turbo/
 .vercel/
+*.tsbuildinfo
+
+# test and quality output
+coverage/
+test-results/
+playwright-report/
+quality-report/
+.lighthouseci/
+
+# supabase CLI state
+supabase/.temp/
+supabase/.branches/
+
+# misc
 *.log
 .DS_Store
 docs/out/
-.secrets/

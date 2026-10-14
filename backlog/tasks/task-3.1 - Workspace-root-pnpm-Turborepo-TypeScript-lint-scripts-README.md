@@ -1,10 +1,11 @@
 ---
 id: TASK-3.1
 title: 'Workspace root: pnpm + Turborepo, TypeScript, lint, scripts, README'
-status: To Do
+status: In Progress
 assignee:
   - '@tech-lead'
 created_date: '2026-10-14 22:11'
+updated_date: '2026-10-14 22:28'
 labels:
   - tech
   - 'est:S'
@@ -39,3 +40,14 @@ Branch: agent/task-3.1-ws
 - [ ] #4 README documents the bootstrap (target under 15 minutes from a fresh clone), commands, environment variable names without values, branch and commit conventions, the `pnpm verify` rule and Windows notes (Docker Desktop, LF).
 - [ ] #5 `pnpm install` and `pnpm verify` succeed on the workspace as it stands.
 <!-- AC:END -->
+
+## Implementation Plan
+
+<!-- SECTION:PLAN:BEGIN -->
+1. Root config: package.json (packageManager pnpm 11, engines node 22, devDeps turbo/typescript 6.0/eslint 10/typescript-eslint/prettier/supabase CLI/deno), pnpm-workspace.yaml (apps/*, packages/*, supabase/functions), turbo.json, .npmrc hoisted, .nvmrc, tsconfig.base.json, eslint.config.mjs (shared base), .prettierrc.json/.prettierignore, .editorconfig.
+2. scripts/if-exists.mjs guard so db:*, functions:*, quality, db:drain, admin:create activate when the owning task lands and print the task id until then; gen:types via Turbo no-op.
+3. .env.example from both slices; .gitignore additions (env, quality-report, test output).
+4. README.md (bootstrap, commands, env names, git conventions, verify rule, Windows notes); the old readme.md plan sketch moves to docs/plan-sketch.md (CHANGE request for the brief link).
+5. ADR-017: dev rows for @eslint/js, typescript-eslint, globals, deno.
+6. pnpm install + pnpm verify on Windows; commit.
+<!-- SECTION:PLAN:END -->

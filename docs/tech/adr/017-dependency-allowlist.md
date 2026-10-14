@@ -32,6 +32,8 @@ Runtime dependencies outside this list (and outside what the Expo SDK 57 templat
 | `@anthropic-ai/sdk` | functions (M3) | ADR-012 |
 | `@sentry/nextjs`, `@sentry/react-native` | web, mobile (M5, TASK-70) | Error tracking, EU region, PII scrubbing |
 | Dev: `vitest`, `@testing-library/*`, `jsdom`, `@playwright/test`, `@axe-core/playwright`, `@lhci/cli`, `linkinator`, `jest-expo`, `secretlint`, `supabase` (CLI), `turbo`, `eslint`, `prettier`, `typescript` | repo | ADR-001, ADR-015 |
+| Dev: `@eslint/js`, `typescript-eslint`, `globals` | repo | Root ESLint base config: JS recommended rules, TypeScript parsing and rules, Node globals for scripts (TASK-3.1) |
+| Dev: `deno` (npm build of the Deno CLI) | repo | `pnpm functions:check` (`deno check`) on every machine and in CI without a global install (TASK-3.1) |
 
 Not used, on purpose: MMKV, WatermelonDB/RxDB, TanStack query persisters (ADR-019), date libraries (use `Intl`), lodash, axios, state managers (React state + TanStack Query), CSS-in-JS, Redux, UUID packages (`crypto.randomUUID`), HEIC converters, TUS clients, Mapbox/Google SDKs, i18next.
 

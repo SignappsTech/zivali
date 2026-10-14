@@ -1,0 +1,42 @@
+{
+  "name": "zivali",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@11.28.5",
+  "engines": {
+    "node": ">=22.13 <23"
+  },
+  "scripts": {
+    "bootstrap": "pnpm install && pnpm db:start && pnpm db:reset && node scripts/if-exists.mjs scripts/seed-photos.mjs TASK-6.6 -- node scripts/seed-photos.mjs && turbo run build --filter=@zivali/*",
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "lint": "eslint --max-warnings=0 scripts eslint.config.mjs && turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "verify": "pnpm format:check && pnpm lint && turbo run typecheck test build",
+    "quality": "node scripts/if-exists.mjs tests/quality TASK-4.1 -- \"playwright test tests/quality && lhci autorun && linkinator http://localhost:8080 --recurse\"",
+    "db:start": "node scripts/if-exists.mjs supabase/config.toml TASK-3.2 -- supabase start",
+    "db:stop": "node scripts/if-exists.mjs supabase/config.toml TASK-3.2 -- supabase stop",
+    "db:reset": "node scripts/if-exists.mjs supabase/config.toml TASK-3.2 -- supabase db reset",
+    "db:test": "node scripts/if-exists.mjs supabase/tests TASK-3.2 -- supabase test db",
+    "db:lint": "node scripts/if-exists.mjs supabase/migrations TASK-3.2 -- supabase db lint",
+    "db:drain": "node scripts/if-exists.mjs scripts/drain.mjs TASK-6.3 -- node scripts/drain.mjs",
+    "gen:types": "turbo run gen:types",
+    "functions:serve": "node scripts/if-exists.mjs supabase/functions/deno.json TASK-3.2 -- supabase functions serve --env-file supabase/functions/.env.local",
+    "functions:check": "node scripts/if-exists.mjs supabase/functions/deno.json TASK-3.2 -- deno check --config supabase/functions/deno.json supabase/functions",
+    "admin:create": "node scripts/if-exists.mjs scripts/admin-create.mjs TASK-34.2 -- node scripts/admin-create.mjs"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "deno": "^2.9.6",
+    "eslint": "^10.12.0",
+    "globals": "^17.13.0",
+    "prettier": "^3.9.10",
+    "supabase": "^2.120.0",
+    "turbo": "^2.11.7",
+    "typescript": "~6.0.3",
+    "typescript-eslint": "^8.71.2"
+  }
+}
