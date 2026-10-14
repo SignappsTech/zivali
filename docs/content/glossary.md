@@ -1,9 +1,9 @@
 ---
-source: 02§Glossary; 02§Content, SEO and legal requirements; 03§Content strategy
+source: 02§Glossary; 02§Content, SEO and legal requirements; 03§Content strategy; supabase/seed/geo (GURS regions and municipalities)
 doc: glossary
 title: SL/EN terminology glossary
-version: 0.2
-status: Approved (client, 2026-10-15)
+version: 0.3
+status: Approved (client, 2026-10-15); v0.3 additions (§3a, CRHŽ row) pending native review
 date: 2026-10-15
 owner: Content Strategist
 story: TASK-2
@@ -73,7 +73,7 @@ Species in headings and SEO titles agree with the species, not with "žival": "I
 | Chip on file | Čip vpisan | Chip on file | Detail and profile indicator. |
 | No chip | Brez čipa | No chip | |
 | Unknown chip | Čip ni znan | Chip unknown | For invalid numbers saved as unknown. |
-| CRPsi | Centralni register psov (CRPsi) | Central Register of Dogs (CRPsi) | Official register at UVHVVR; we link, we do not integrate. |
+| CRHŽ (central pet register) | Centralni register hišnih živali (CRHŽ) | Central Register of Pets (CRHŽ) | Official register at UVHVVR for dogs and, from 1 Jan 2027, cats. Not public: we never link to it or integrate. Copy: "Čip prebere veterinar ali pristojno zavetišče." Do not use the old name "Centralni register psov (CRPsi)"; its public lookup closed in June 2026. |
 | Collar | ovratnica | collar | |
 | Circumstances | Kaj se je zgodilo | What happened | Field label in the lost flow. |
 | Approximate area | približno območje | approximate area | Never "lokacija" for the public view. |
@@ -96,6 +96,38 @@ Species in headings and SEO titles agree with the species, not with "žival": "I
 | Vet, vet practice | veterinar, veterinarska ambulanta | vet, vet practice | |
 | Municipality | občina | municipality | |
 | Statistical region | statistična regija; in UI "regija" | statistical region; in UI "region" | |
+
+# 3a. Places: statistical regions and municipalities
+
+Names come from the GURS Register of Spatial Units (`supabase/seed/geo/regions.geojson`, `municipalities.geojson`, field `name_sl` and `name_en`). This is the reviewed, canonical list.
+
+| ID | Slug | SL (`name_sl`) | EN (`name_en`) | Orientation: largest town |
+|---|---|---|---|---|
+| 1 | pomurska | Pomurska | Mura | Murska Sobota |
+| 2 | podravska | Podravska | Drava | Maribor |
+| 3 | koroska | Koroška | Carinthia | Slovenj Gradec |
+| 4 | savinjska | Savinjska | Savinja | Celje |
+| 5 | zasavska | Zasavska | Central Sava | Trbovlje |
+| 6 | posavska | Posavska | Lower Sava | Krško |
+| 7 | jugovzhodna-slovenija | Jugovzhodna Slovenija | Southeast Slovenia | Novo mesto |
+| 8 | osrednjeslovenska | Osrednjeslovenska | Central Slovenia | Ljubljana |
+| 9 | gorenjska | Gorenjska | Upper Carniola | Kranj |
+| 10 | primorsko-notranjska | Primorsko-notranjska | Littoral–Inner Carniola | Postojna |
+| 11 | goriska | Goriška | Gorizia | Nova Gorica |
+| 12 | obalno-kraska | Obalno-kraška | Coastal–Karst | Koper |
+| (all) | – | Vsa Slovenija | All of Slovenia | `partners.region_all` (P22) |
+
+**Decision (2026-10-15): the English names in the geodata are confirmed, unchanged.** They are the established English names of the 12 statistical regions. The "largest town" column is for orientation in copy and support; it is not a UI field.
+
+Rules:
+
+- **SL interface** (lists, filters, chips, admin): `name_sl` exactly as published, on its own: "Osrednjeslovenska", "Jugovzhodna Slovenija". Never inflect a region name that code inserts: write "Regija: {region}" or "{region} (regija)", not "v {region} regiji" (voice guide §3.4a). Hand-written copy (SEO pages, marketing) uses normal grammar: "v osrednjeslovenski regiji", "na Gorenjskem".
+- **EN interface:** `name_en` on its own: "Central Slovenia". In running text add "region": "lost pets in the Upper Carniola region".
+- **EN long-form pages** (SEO location pages, Partners): the first mention adds the Slovenian name in brackets, because many English-speaking residents know it: "Upper Carniola (Gorenjska)", "Gorizia (Goriška)". "Carinthia" and "Gorizia" always carry "region" or the bracket in running text, so they are not read as the Austrian state or the Italian town.
+- **Dashes:** "Littoral–Inner Carniola" and "Coastal–Karst" take an en dash (–); "Primorsko-notranjska" and "Obalno-kraška" take a hyphen.
+- **Slugs:** one Slovenian slug for both languages; region slugs are never translated.
+- **Municipalities (212):** never translated (`name_en` = `name_sl`). Show them as GURS publishes them, including the hyphen without spaces in double names ("Dobrova-Polhov Gradec", "Rače-Fram"). One exception: GURS shortens id 182 to "Sveti Andraž v Slov. goricah"; display "Sveti Andraž v Slovenskih goricah", like the two other "… v Slovenskih goricah" municipalities (CHANGE request to the geodata).
+- **Attribution:** every page that shows boundaries or figures by region or municipality also shows `common.geo_attribution` (P1).
 
 # 4. Alerts, notifications, inbox
 
@@ -288,10 +320,12 @@ Distance band codes are fixed in C6 (`lt1`, `1to3`, `3to10`, `gt10`). Only `lt24
 1. Resolved in P12: chat aliases use neutral role descriptions ("Oseba, ki išče žival", "Oseba, ki je žival našla"); a display name replaces them when set. "Lastnik" and "najditelj" remain only in admin screens and legal texts (with the gender clause).
 2. "Vpis" for sign-in instead of the more common "Prijava". Recommended because "prijava" is the core product noun.
 3. "Spet doma" vs "Ponovno skupaj": we use "Spet doma" everywhere (status, screen, route) to match the tagline.
+4. "QR koda" (this glossary, legal texts) vs "koda QR" (P18 poster strings) vs "QR-koda": native review picks one form; then align P18 or this row.
 
 # Change log
 
 | Version | Date | Change |
 |---|---|---|
+| 0.3 | 2026-10-15 | §3a statistical regions (12, SL/EN confirmed) and municipality display rules; CRPsi row replaced by CRHŽ (not public, never linked); open point on "QR koda". |
 | 0.2 | 2026-10-15 | Brief v0.7: QR tags removed, Vet Partner and clinic badge added, "Oglas" applies to every paid placement. |
 | 0.1 | 2026-10-14 | First glossary: report types and statuses, core terms, accounts (Vpis for sign-in), money and ads, attributes, plural forms, bands, banned words, open points. |
