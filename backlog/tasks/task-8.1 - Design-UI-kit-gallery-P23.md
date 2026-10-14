@@ -1,11 +1,11 @@
 ---
 id: TASK-8.1
 title: 'Design: UI kit gallery (P23)'
-status: In Progress
+status: Done
 assignee:
   - '@ui-designer'
 created_date: '2026-10-14 21:50'
-updated_date: '2026-10-14 22:45'
+updated_date: '2026-10-14 23:58'
 labels:
   - design
   - 'est:M'
