@@ -53,6 +53,7 @@ Only dependencies listed in `docs/tech/adr/017-dependency-allowlist.md` (or inst
 - **`@zivali/api`**: one file per domain (`src/reports.ts`, `src/chat.ts`, …), exported by subpath (`@zivali/api/reports`); no barrel edits. You write the client functions against the contract; the backend task implements the RPC. Until it is merged, tests mock the Supabase client and pages may use fixtures from the contract example (`src/__fixtures__/<domain>.ts`). Never wait for the backend.
 - **Report detail slots**: fill your slot in `components/report/slots/<name>.tsx`; do not edit the detail page layout unless your task owns it.
 - Generated files (`packages/tokens/dist`, `packages/i18n/dist`, `packages/types/src/database.ts`) are never edited by hand.
+- **Root config** (`package.json`, `turbo.json`, `tsconfig.base.json`, `eslint.config.mjs`, `pnpm-workspace.yaml`) is owned by TASK-3.1 (TASK-4.1 and TASK-4.2 finish the `quality` and `verify` scripts); do not edit it otherwise. Each app adds its framework ESLint preset in its own `apps/<app>/eslint.config.mjs` that spreads the root base, and its own `tsconfig.json` that extends `../../tsconfig.base.json`. Add app dependencies to the app's `package.json`. The one exception to the rule above: a dependency with an install script fails `pnpm install` until it is listed under `allowBuilds` in `pnpm-workspace.yaml`; add one line (`<name>: true`) only if the script is really needed, and name it in your report.
 
 ## Standards
 

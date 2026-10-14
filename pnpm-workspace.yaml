@@ -1,0 +1,10 @@
+packages:
+  - apps/*
+  - packages/*
+  - supabase/functions
+
+# Expo/Metro needs a flat node_modules (ADR-001). pnpm 11 reads this here; .npmrc keeps it for other tools.
+nodeLinker: hoisted
+
+allowBuilds:
+  deno: true

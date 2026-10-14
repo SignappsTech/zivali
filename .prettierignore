@@ -1,0 +1,9 @@
+# Prettier also skips everything in .gitignore.
+pnpm-lock.yaml
+.claude/
+docs/
+backlog/
+AGENTS.md
+CLAUDE.md
+packages/types/src/database.ts
+supabase/seed/

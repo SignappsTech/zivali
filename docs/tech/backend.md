@@ -39,6 +39,7 @@ Read this, your task packet and the contract(s) it references. Conventions for e
 - `enqueue_notification()` belongs to the notifications task; until it is merged, call it anyway (the TASK-6 stub enqueues `notify` jobs that the stub handler logs).
 - `app_config` keys: insert your defaults in your migration (`on conflict do nothing`).
 - Idempotency: `client_requests` (C1) belongs to the report-write task; other RPCs reuse its helper. The mobile outbox (C17) retries `create_report` with the same `p_client_request_id`, so replays must return the original result, including the manage token.
+- Root config (`package.json`, `turbo.json`, `tsconfig.base.json`, `eslint.config.mjs`, `pnpm-workspace.yaml`) is owned by TASK-3.1 (TASK-4.1 and TASK-4.2 finish the `quality` and `verify` scripts); do not edit it otherwise. The root `db:*`, `functions:*`, `db:drain` and `admin:create` scripts switch on by themselves once the file they need exists (`supabase/config.toml`, `supabase/functions/deno.json`, `scripts/drain.mjs`, `scripts/admin-create.mjs`); `gen:types` runs the `gen:types` script of `packages/types` through Turbo. Add dependencies to your package's `package.json`. The one exception to the rule above: a dependency with an install script fails `pnpm install` until it is listed under `allowBuilds` in `pnpm-workspace.yaml`; add one line (`<name>: true`) only if the script is really needed, and name it in your report.
 
 ## Standards
 
