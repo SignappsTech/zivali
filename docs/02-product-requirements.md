@@ -1,7 +1,7 @@
 ---
 doc_id: DOC-02
 title: Product Requirements
-version: 0.7
+version: 0.6
 status: Draft
 date: 2026-10-14
 owner: Product Manager
@@ -810,37 +810,6 @@ approvals:
 - **Edge cases**
   - Shelters serving several municipalities appear on each municipality result.
 
-## FR-045: Lawyer briefing pack
-
-- **Priority:** Must · **Milestone:** M5 (start now for lead time)
-- **User story:** As the client, I want one document a Slovenian lawyer can review quickly so that legal sign-off (Q-013) does not delay launch.
-- **Requirements**
-  - R-045.1 `docs/legal/lawyer-briefing.md`: what the app does and the legally relevant features (anonymous found reports, location blurring, on-device geofencing, AI photo analysis, chat, payments, reward escrow, ads and Vet Partner, shelter data uploads).
-  - R-045.2 Data flows and processors with locations (Supabase EU, Hetzner, Cloudflare R2, Stripe, Anthropic, Voyage, Brevo, Google/GA4/Firebase, Expo); links to `docs/content/legal/` drafts.
-  - R-045.3 All open legal questions consolidated (content legal notes, `discovery/regulatory.md`, delivery-plan risks) each with our proposed answer; DPIA outline, draft retention table, DPA checklist; client decisions list.
-  - R-045.4 Marked "not legal advice; for lawyer review".
-- **Acceptance criteria**
-  - [ ] Given the briefing, when a lawyer reads it, then features, flows, processors, open questions, DPIA outline, retention table and DPA checklist are all present.
-  - [ ] Given a legal draft in docs/content/legal/, when checked, then the briefing links it.
-- **Edge cases**
-  - Features change after the briefing is sent: the document is versioned and the delta is flagged.
-
-## FR-046: Fiscal invoices for card payments
-
-- **Priority:** Must for live payments · **Milestone:** M2
-- **User story:** As the operator, I want card payments invoiced in line with Slovenian fiscal rules so that going live is lawful.
-- **Requirements**
-  - R-046.1 The client's accountant decides whether online card payments (Boost, Premium, tips/contributions, Vet Partner) need fiscally verified invoices (davčno potrjevanje računov, ZDavPR: payment cards count as cash); decision recorded (Q-012).
-  - R-046.2 If required: verification through a FURS-certified provider API behind an adapter with a mock; ZOI and EOR on the receipt email and PDF; retry on failure; premises/device registration note in the runbook.
-  - R-046.3 Every invoice shows a VAT 22 % breakdown.
-  - R-046.4 Live payments are blocked by config until this is done or the decision is "not required" (extends R-020.2).
-- **Acceptance criteria**
-  - [ ] Given a succeeded payment and "required", when invoiced, then ZOI and EOR appear on the receipt and a failed verification is retried.
-  - [ ] Given any invoice, when issued, then VAT 22 % is itemised.
-  - [ ] Given live mode without a recorded decision or a finished story, when enabled, then it is refused.
-- **Edge cases**
-  - Refunds need a fiscally verified credit note when verification applies.
-
 # Non-functional requirements
 
 | ID | Area | Requirement | Target / measure |
@@ -1017,4 +986,3 @@ approvals:
 | 0.4 | 2026-10-15 | Brief v0.8 monetisation model: Boost EUR 4.99 fixed; Premium EUR 2.99/month or EUR 24.99/year with unlimited pets, AI extras (written listing and posts, poster designs, search plan), one-tap lost mode, 1 free Boost per year, ad-free (Q-010 decided: Podpornik not ad-free); free tier includes basic AI and up to 2 pet profiles; support asks after reunion, after report and on profile (EUR 3 / 5 / 10 / custom, min EUR 2); Vet Partner EUR 39; prices in A-007; FR-040 marketing plan (low priority) added |
 | 0.5 | 2026-10-15 | Offline mode: FR-041 offline cache and FR-042 offline report queue (M2), FR-043 local proximity alerts (M3), NFR-OFFLINE, NFR-BATT, A-027, A-028 |
 | 0.6 | 2026-10-15 | Discovery changes: CRPsi lookup closed, now CRHŽ (FR-002, FR-016, A-003); cats first (FR-002); post-submit checklists (FR-005, FR-006); new FR-044 shelter directory; holding period 8 days and found location/time capture (FR-015, A-004); dohodnina deferred (FR-024, A-018); no animal sale ads (FR-018, FR-029, FR-031); Vet Partner labelling (FR-028, FR-030); SEO routes (FR-035); share kit (FR-011); marketing partners (FR-040); backend wording per brief v1.0 (A-005) |
-| 0.7 | 2026-10-15 | New FR-045 lawyer briefing pack (Q-013) and FR-046 fiscal invoices for card payments (Q-012) |
