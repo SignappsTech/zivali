@@ -1,10 +1,11 @@
 ---
 id: TASK-8.1
 title: 'Design: UI kit gallery (P23)'
-status: To Do
+status: In Progress
 assignee:
   - '@ui-designer'
 created_date: '2026-10-14 21:50'
+updated_date: '2026-10-14 22:45'
 labels:
   - design
   - 'est:M'
@@ -27,6 +28,7 @@ Both UI kits (shadcn/ui and React Native Reusables) are checked against one visu
 
 ## Packet
 Branch: design/P23-ui-kit-gallery
+Branch: agent/TASK-8.1-mockup
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Acceptance Criteria
