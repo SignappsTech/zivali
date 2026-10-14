@@ -1,0 +1,26 @@
+{
+  "name": "@zivali/tokens",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Design tokens for web and mobile, generated from docs/design/tokens.json (contract C2, ADR-002)",
+  "type": "module",
+  "exports": {
+    "./tokens.css": "./dist/tokens.css",
+    "./web.css": "./dist/web.css",
+    "./native.css": "./dist/native.css",
+    "./tailwind-preset": "./dist/tailwind-preset.cjs",
+    "./values": "./dist/values.ts",
+    "./map-style": "./dist/map-style.ts"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "node build.mjs",
+    "lint": "eslint .",
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}
