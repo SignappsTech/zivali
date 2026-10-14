@@ -4,7 +4,7 @@ page: P22 Partners page ("Oglašujte pri nas")
 stories: TASK-38 (FR-032)
 copy-for: docs/design/pages/P22-partners.md
 version: 0.1
-status: Draft, client approval pending (pricing, reply time and media kit are client decisions)
+status: Draft; reply time and founding-partner terms confirmed by client (2026-10-15); pricing and media kit still pending client decision
 date: 2026-10-15
 ---
 
@@ -101,13 +101,13 @@ Zero stays "0"; any value from 1 to 4 shows as "< 5" (C14 `CountValue`).
 | Key | SL | EN |
 |---|---|---|
 | partners.pricing_title | Cene in naslednji koraki | Pricing and next steps |
-| partners.pricing_body | Med pilotom cene za oglase in Veterinarskega partnerja sporočimo na povpraševanje. Prvim partnerjem ponudimo ugodnejše pogoje. | During the pilot we share prices for ads and Vet Partner on request. Our first partners get better terms. |
+| partners.pricing_body | Med pilotom cene za oglase in Veterinarskega partnerja sporočimo na povpraševanje. Prvi partnerji prejmejo ugodnejše pogoje. | During the pilot we share prices for ads and Vet Partner on request. The first partners receive more favourable terms. |
 | partners.step_1 | Pošljete povpraševanje. | You send an enquiry. |
-| partners.step_2 | Odgovorimo v dveh delovnih dneh in pripravimo predlog za vašo regijo. | We reply within two working days with a proposal for your region. |
+| partners.step_2 | Odgovorimo v 2 delovnih dneh in pripravimo predlog za vašo regijo. | We reply within 2 working days with a proposal for your region. |
 | partners.step_3 | Ko predlog potrdite, pripravimo oglas in ga začnemo prikazovati. | Once you approve it, we prepare your ad and start showing it. |
 | partners.media_kit | Prenesi predstavitev (PDF) | Download the media kit (PDF) |
 
-`partners.pricing_body` second sentence and `partners.step_2` reply time are client commitments: confirm before publishing. `partners.media_kit` stays hidden until the PDF exists.
+Both promises are confirmed by the client (2026-10-15): the 2-working-day reply time (`partners.step_2`) and the founding-partner terms (`partners.pricing_body`). Keep them live; the client must still honour them. `partners.media_kit` stays hidden until the PDF exists.
 
 # 8. Enquiry form (`#povprasevanje`)
 

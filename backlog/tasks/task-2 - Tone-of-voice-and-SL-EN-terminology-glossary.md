@@ -1,11 +1,11 @@
 ---
 id: TASK-2
 title: Tone of voice and SL/EN terminology glossary
-status: In Review
+status: Done
 assignee:
   - '@content-strategist'
 created_date: '2026-10-14 21:01'
-updated_date: '2026-10-14 22:34'
+updated_date: '2026-10-14 22:38'
 labels:
   - story
   - 'req:FR-036'

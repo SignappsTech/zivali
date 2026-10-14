@@ -3,7 +3,7 @@ source: 02§Glossary; 02§Content, SEO and legal requirements; 03§Content strat
 doc: glossary
 title: SL/EN terminology glossary
 version: 0.2
-status: Draft, needs native Slovenian review and client approval (TASK-2 AC#3)
+status: Approved (client, 2026-10-15)
 date: 2026-10-15
 owner: Content Strategist
 story: TASK-2
