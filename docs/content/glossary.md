@@ -83,8 +83,8 @@ Species in headings and SEO titles agree with the species, not with "žival": "I
 | Poster | plakat | poster | "Prenesi plakat", "plakat s QR kodo". |
 | Share | Deli | Share | |
 | Private link (manage link) | zasebna povezava | private link | Finder's link to manage the report: "Shranite zasebno povezavo". |
-| Finder | najditelj (labels only) | finder | In sentences prefer "oseba, ki je žival našla". |
-| Owner | lastnik (labels only) | owner | In sentences prefer "oseba, ki žival išče" or the pet's name. |
+| Finder | najditelj (admin and legal only) | finder | In the product say "oseba, ki je žival našla"; chat alias `chat.alias_finder` (P12). |
+| Owner | lastnik (admin and legal only) | owner | In the product say "oseba, ki žival išče" or use the pet's name; chat alias `chat.alias_owner` (P12). |
 | Chat, conversation | pogovor; sporočila | conversation; messages | "Pogovori" (list), "Novo sporočilo". |
 | Contact (send a message) | Pošlji sporočilo | Send a message | Detail page contact action. Never "Piši lastniku" (gendered). |
 | Safety banner | Nikoli ne pošiljajte denarja vnaprej. | Never send money in advance. | Chat banner, fixed text. |
@@ -285,7 +285,7 @@ Distance band codes are fixed in C6 (`lt1`, `1to3`, `3to10`, `gt10`). Only `lt24
 
 # 11. Open points for native review and the client
 
-1. Role labels "lastnik" and "najditelj" in chat aliases (C9) are generic masculine forms. Alternative: "Oseba, ki išče" / "Oseba, ki je našla" (longer, neutral). Proposal: keep the short forms in chat headers only, with the display name preferred when the user set one.
+1. Resolved in P12: chat aliases use neutral role descriptions ("Oseba, ki išče žival", "Oseba, ki je žival našla"); a display name replaces them when set. "Lastnik" and "najditelj" remain only in admin screens and legal texts (with the gender clause).
 2. "Vpis" for sign-in instead of the more common "Prijava". Recommended because "prijava" is the core product noun.
 3. "Spet doma" vs "Ponovno skupaj": we use "Spet doma" everywhere (status, screen, route) to match the tagline.
 

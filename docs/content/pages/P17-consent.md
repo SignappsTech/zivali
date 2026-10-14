@@ -53,7 +53,7 @@ Customise buttons, equal size: Shrani izbiro, Sprejmi vse, Zavrni vse. The setti
 | consent.reask_changed | Od vaše zadnje izbire se je nekaj spremenilo: {change}. Prosimo, izberite znova. | Something has changed since your last choice: {change}. Please choose again. |
 | consent.reask_year | Od vaše zadnje izbire je minilo leto dni. Prosimo, izberite znova. | It has been a year since your last choice. Please choose again. |
 
-`{change}` is a short phrase written with each consent version, for example "dodali smo novega ponudnika analitike" / "we added a new analytics provider". It replaces the first sentence of `consent.body_web` or `consent.body_app`; the rest of the banner stays the same.
+`{change}` is a short phrase written with each consent version, for example "dodali smo novega ponudnika analitike" / "we added a new analytics provider". It is shown as the first sentence, before the normal `consent.body_web` or `consent.body_app`; the rest of the banner stays the same.
 
 # 4. SEO and alt text
 

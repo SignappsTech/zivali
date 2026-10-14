@@ -67,6 +67,7 @@ Links inside sentences describe the destination: "Preberite nasvete za varnost",
 - Address the reader with vikanje (3.1); describe the animal with "žival" (feminine), which keeps adjectives stable: "izgubljena žival", "najdena žival".
 - Avoid role nouns about the reader in the interface. Instead of "Lastnik bo obveščen" write "Obvestili bomo osebo, ki žival išče" or rephrase around the animal: "Lunino iskanje je objavljeno".
 - Where a short role label is unavoidable (chat alias, legal defined terms, admin tables), we use the generic forms from the glossary ("lastnik", "najditelj"). Legal texts add the standard clause that grammatical masculine forms apply to all genders. This is an open point for native review (see glossary §Open points).
+- Plural role nouns for groups of third parties are fine in B2B, SEO and legal copy ("dosezite lastnike psov in mačk", "zavetišča najdejo lastnike"); the rule above is about addressing or describing the individual reader.
 - Never write "on/ona" about users. About animals, follow the pet's sex when known ("Luna je spet doma."), otherwise talk about "žival".
 
 ## 3.4 Numbers, counters and the dual

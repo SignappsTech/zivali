@@ -3,23 +3,25 @@ source: 02§Content, SEO and legal requirements (Legal); FR-034; FR-035; FR-038;
 
 | Field | Value |
 |---|---|
-| Version | 0.1 |
-| Date | 2026-10-14 |
+| Version | 0.2 |
+| Date | 2026-10-15 |
 | Route SL | `/zasebnost` |
 | Route EN | `/en/privacy` |
 | Slug SL / EN | `zasebnost` / `privacy` |
 | Structured data | WebPage |
 | Template | T4 Legal (numbered h2 sections, "On this page" list, draft note) |
 
+Change in 0.2: removed QR/NFC pet tags and Shelter Pro (brief v0.7); added Vet Partner (chapter 9); added the mission line; meta titles use the " · Najdimo" suffix.
+
 **SEO (SL)**
 
-- Meta title: Politika zasebnosti | Najdimo
+- Meta title: Politika zasebnosti · Najdimo
 - Meta description: Kako Najdimo ravna z osebnimi podatki: kaj zbiramo in zakaj, kako dolgo hranimo, komu zaupamo in kako uveljavite svoje pravice.
 - Focus keyword: politika zasebnosti
 
 **SEO (EN)**
 
-- Meta title: Privacy policy | Najdimo
+- Meta title: Privacy policy · Najdimo
 - Meta description: How Najdimo handles personal data: what we collect and why, how long we keep it, who we share it with and how to use your rights.
 - Focus keyword: privacy policy
 
@@ -29,11 +31,11 @@ source: 02§Content, SEO and legal requirements (Legal); FR-034; FR-035; FR-038;
 
 **Osnutek – zahteva pregled naročnika in pravnika.**
 
-Zadnja posodobitev: 14. 10. 2026
+Zadnja posodobitev: 15. 10. 2026
 
 ## 1. Na kratko
 
-Najdimo pomaga, da se izgubljene živali vrnejo domov. Za to potrebujemo nekaj osebnih podatkov. Tu je povzetek, v nadaljevanju pa je vse natančno.
+Najdimo pomaga, da se izgubljene živali vrnejo domov. Vse, kar živali vrača domov, je za vse brezplačno. Za to potrebujemo nekaj osebnih podatkov. Tu je povzetek, v nadaljevanju pa je vse natančno.
 
 - Podatke uporabljamo za delovanje storitve: račun, prijave, ujemanje, pogovor, opozorila in plačila.
 - Javno prikažemo le fotografije, lastnosti živali, približno območje, datum in okoliščine. Številke čipa, telefonske številke, e-naslova, točne lokacije in kraja, kjer je najdena žival, ne prikažemo nikomur.
@@ -66,7 +68,8 @@ Večino podatkov nam daste sami: ko ustvarite račun, objavite prijavo ali piše
 | Pogovori | sporočila, vzdevki, stanje prebranosti, blokade |
 | Obvestila in opozorila | nabiralnik obvestil, naročnina na opozorila v bližini (domača točka in polmer) |
 | Zlorabe in moderiranje | prijave zlorab, odločitve moderatorjev, revizijski dnevnik skrbniških dejanj |
-| Plačila | ID plačila, namen, znesek, stanje in časi; naslov za dostavo QR obeska, ko bo naročanje mogoče. Podatkov o kartici ne vidimo. |
+| Plačila | ID plačila, namen, znesek, stanje in časi. Podatkov o kartici ne vidimo. |
+| Veterinarski partner (podjetja) | podatki ambulante (naziv, naslov, delovni čas, storitve, povezava za naročanje ali telefon, oznaka 24-urne nujne pomoči), ime, e-naslov in telefonska številka kontaktne osebe, podatki za obračun in davčna številka za DDV (prek Stripa), računi |
 | Povpraševanja partnerjev | podjetje, kontaktna oseba, e-naslov, neobvezna telefonska številka, regija zanimanja, sporočilo, čas privolitve |
 | Zgodbe z lepim koncem | besedilo in fotografije, ki jih objavimo samo z vašo izrecno privolitvijo |
 | Privolitve | vaša izbira, različica besedila, čas |
@@ -94,6 +97,7 @@ Večino podatkov nam daste sami: ko ustvarite račun, objavite prijavo ali piše
 | Zgodbe z lepim koncem | besedilo in fotografije | privolitev |
 | Potisna obvestila | žeton naprave | opozorila, ki jih vklopite: pogodba; dovoljenje za prikaz obvestil nastavite v napravi in ga kadar koli prekličete |
 | Odgovor na povpraševanje partnerja | podatki iz obrazca | ukrepi pred sklenitvijo pogodbe na vašo zahtevo in privolitev, ki jo date z oddajo obrazca |
+| Veterinarski partner: naročnina, račun, profil ambulante, mesečno poročilo | podatki ambulante in kontaktne osebe, podatki za obračun | pogodba |
 | Računovodske in davčne evidence | podatki o plačilih | zakonska obveznost (člen 6(1)(c)) |
 
 Pri zakoniti podlagi „zakoniti interes“ smo presodili, da vaši interesi in pravice ne prevladajo nad našim interesom, da je storitev varna in brez zlorab. Zoper tako obdelavo lahko ugovarjate (poglavje 15).
@@ -151,9 +155,20 @@ Ponudnikoma ne pošljemo niti oznak uporabnikov niti metapodatkov EXIF niti poda
 
 **Kako poteka plačilo.** Plačila obdeluje Stripe Payments Europe, Limited (Irska) prek strani Stripe Checkout. Ob plačilu vas preusmerimo na Stripovo stran. Podatkov o vaši kartici ne vidimo in jih ne hranimo. Pri nas ostanejo ID plačila, namen, znesek, stanje in časi. Stripe je za del obdelave (na primer preprečevanje goljufij in zakonske obveznosti) samostojni upravljavec; zanj velja Stripova politika zasebnosti.
 
-**Za kaj lahko plačate.** Zdaj: prispevek v zahvalo po ponovnem srečanju z živaljo (najmanj 2 €) in neobvezni prispevek po prijavi izgubljene živali (2–5 €). Pozneje: povečan doseg prijave (Boost), naročnina Premium Zaščita, mesečna podpora Podpornik, naročilo QR obeska (naslov za dostavo izbrišemo 90 dni po odpremi), Shelter Pro in nagrada najditelju prek Stripe Connect. Pri nagradi denar do potrditve srečanja hrani Stripe, mi pa zaračunamo provizijo platforme v višini 5 %. Ta možnost bo na voljo šele po dodatnem pravnem pregledu.
+**Kaj je vedno brezplačno.** Prijava izgubljene, najdene ali opažene živali, zemljevid in opozorila, ujemanje (čip, fotografija, lastnosti), pogovor, plakat v obliki PDF s QR kodo, deljenje in iskanje po številki čipa so brezplačni za vse, za vedno. Zavetišča in občine vse uporabljajo brezplačno. Plačljive možnosti tega nikoli ne omejujejo. QR koda na plakatu vodi samo na javno prijavo.
+
+**Za kaj lahko plačate.** Zdaj: prispevek v zahvalo po ponovnem srečanju z živaljo (najmanj 2 €) in neobvezni prispevek po prijavi izgubljene živali (2–5 €). Pozneje: povečan doseg prijave (Boost), naročnina Premium Zaščita, mesečna podpora Podpornik in nagrada najditelju prek Stripe Connect. Pri nagradi denar do potrditve srečanja hrani Stripe, mi pa zaračunamo provizijo platforme v višini 5 %. Ta možnost bo na voljo šele po dodatnem pravnem pregledu. Veterinarske ambulante lahko postanejo plačljivi Veterinarski partner (spodaj).
 
 Prispevki so prostovoljna plačila družbi za delovanje storitve. Niso donacije.
+
+### Veterinarski partner (poslovne stranke)
+
+Veterinarski partner je mesečna poslovna naročnina za veterinarske ambulante. Vključuje preverjen profil ambulante, izpostavljeno mesto v oglasnih mestih „najbližji veterinar“ na njihovem območju, omembo v opozorilih o izgubljenih živalih in na plakatih v njihovi regiji (vedno označeno kot „Oglas“) ter mesečno poročilo z združenimi številkami (prikazi, kliki, ponovna srečanja na območju). Poročilo ne vsebuje osebnih podatkov.
+
+- **Podatki:** podatki ambulante, ime, e-naslov in telefonska številka kontaktne osebe, podatki za obračun in davčna številka za DDV ter računi. Naročnino in račune z DDV obdeluje Stripe Billing; podatkov o kartici ne vidimo. Zdaj je Stripe samo v preskusnem načinu.
+- **Pravna podlaga:** pogodba (člen 6(1)(b)) in zakonska obveznost za račune (člen 6(1)(c)).
+- **Hramba:** profil ambulante in podatke kontaktne osebe hranimo do prenehanja naročnine in jih nato izbrišemo v 30 dneh, na zahtevo prej; račune in plačilne zapise toliko časa, kot zahtevata davčna in računovodska zakonodaja (pričakovano do 10 let).
+- **Brezplačno ostane:** prijava najdene živali, iskanje po čipu, ujemanja in pogovor veljajo za veterinarje enako kot za vse.
 
 ## 10. Analitika in piškotki
 
@@ -193,7 +208,7 @@ Podatkov ne prodajamo. Ponudniki, ki jih potrebujemo za delovanje storitve, so:
 | MapTiler AG, Švica; nadomestno Photon (komoot GmbH), Nemčija | iskanje krajev in določitev naslova iz točke | iskalni niz ali koordinate izbrane točke, IP naslov; mi poizvedb ne shranjujemo | Švica; Nemčija |
 | Google Ireland Limited (obdelovalec), samo z vašo privolitvijo | Google Analytics 4 in Google Analytics for Firebase | analitični dogodki iz poglavja 10 | EU, možna obdelava tudi v ZDA |
 | Google in Apple (vsak kot samostojni upravljavec) | vpis z Googlom ali Applom, če ga izberete | podatki, ki jih ponudnik pošlje ob vpisu (e-naslov, ime, identifikator) | po pravilih ponudnika |
-| Stripe Payments Europe, Limited, Irska (obdelovalec; za del obdelave samostojni upravljavec) | plačila (ko so omogočena) | podatki za plačilo, ki jih vnesete na Stripovi strani | EU, možna obdelava tudi v ZDA |
+| Stripe Payments Europe, Limited, Irska (obdelovalec; za del obdelave samostojni upravljavec) | plačila in naročnine Veterinarski partner (ko so omogočeni), računi z DDV | podatki za plačilo, ki jih vnesete na Stripovi strani | EU, možna obdelava tudi v ZDA |
 | Anthropic PBC, ZDA, in Voyage AI, ZDA (obdelovalca), ko je pomoč umetne inteligence vklopljena | predlogi lastnosti iz fotografij, varnostni signal, vektorji slik | samo fotografija, brez oznak uporabnikov, metapodatkov EXIF in lokacije | ZDA |
 | Sentry (Functional Software, Inc.), podatkovna regija EU (obdelovalec), ko je sledenje napakam vklopljeno | sledenje napakam | tehnični podatki o napaki; osebne podatke pred pošiljanjem odstranimo | EU |
 
@@ -231,7 +246,7 @@ Glavna zbirka podatkov je v EU. Nekateri ponudniki iz poglavja 12 imajo sedež v
 | Zapis privolitve za analitiko | 12 mesecev (piškotek ali varna shramba naprave) |
 | Zgodbe z lepim koncem | do preklica privolitve; po preklicu jih odstranimo v 24 urah |
 | Plačilni zapisi | dokler to zahtevata davčna in računovodska zakonodaja (pričakovano do 10 let) |
-| Naslov za dostavo QR obeska | 90 dni po odpremi |
+| Veterinarski partner: profil ambulante in kontaktna oseba | do prenehanja naročnine, nato izbris v 30 dneh |
 | Povpraševanja partnerjev | 24 mesecev po zadnjem stiku |
 | Varnostne kopije | podatki iz njih izginejo najpozneje v 30 dneh |
 
@@ -282,11 +297,11 @@ Politiko lahko spremenimo, na primer ko dodamo novo funkcijo ali ponudnika. Pome
 
 **Draft — requires client/legal review.**
 
-Last updated: 14 October 2026
+Last updated: 15 October 2026
 
 ## 1. In short
 
-Najdimo helps lost animals get home again. To do that we need some personal data. Here is a summary; the details follow.
+Najdimo helps lost animals get home again. Everything that brings animals home is free for everyone. To do that we need some personal data. Here is a summary; the details follow.
 
 - We use data to run the service: account, reports, matching, chat, alerts and payments.
 - We show publicly only photos, the animal's attributes, an approximate area, the date and the circumstances. We never show a chip number, phone number, email address, exact location or the place where a found animal is kept.
@@ -319,7 +334,8 @@ You give us most of the data yourself: when you create an account, publish a rep
 | Chat | messages, aliases, read state, blocks |
 | Notifications and alerts | notification inbox, nearby-alert subscription (home point and radius) |
 | Abuse and moderation | abuse reports, moderator decisions, audit log of administrator actions |
-| Payments | payment ID, purpose, amount, status and timestamps; delivery address for a QR tag once ordering is available. We never see your card details. |
+| Payments | payment ID, purpose, amount, status and timestamps. We never see your card details. |
+| Vet Partner (businesses) | clinic data (name, address, opening hours, services, booking or phone link, 24-hour emergency badge), contact person's name, email address and phone number, billing details and VAT ID (via Stripe), invoices |
 | Partner enquiries | company, contact name, email address, optional phone number, region of interest, message, time of consent |
 | Success stories | text and photos that we publish only with your explicit consent |
 | Consents | your choice, text version, time |
@@ -347,6 +363,7 @@ You give us most of the data yourself: when you create an account, publish a rep
 | Success stories | text and photos | consent |
 | Push notifications | device token | alerts that you turn on: contract; the permission to show notifications is set on your device and you can withdraw it at any time |
 | Answering a partner enquiry | form data | steps before entering into a contract at your request, and the consent you give by submitting the form |
+| Vet Partner: subscription, invoice, clinic profile, monthly report | clinic and contact person data, billing details | contract |
 | Accounting and tax records | payment data | legal obligation (Article 6(1)(c)) |
 
 Where the legal basis is "legitimate interest", we have assessed that your interests and rights do not override our interest in keeping the service safe and free of abuse. You can object to such processing (chapter 15).
@@ -404,9 +421,20 @@ If three independent people report the same listing for abuse, we hide it tempor
 
 **How a payment works.** Payments are processed by Stripe Payments Europe, Limited (Ireland) through Stripe Checkout. When you pay, we redirect you to Stripe's page. We never see or store your card details. We keep the payment ID, purpose, amount, status and timestamps. For part of the processing (for example fraud prevention and legal obligations) Stripe is an independent controller and its own privacy policy applies.
 
-**What you can pay for.** Now: a thank-you contribution after a reunion with your animal (at least €2) and an optional contribution after reporting a lost animal (€2–5). Later: a boost for a report's visibility, the Premium Protect subscription, the monthly supporter plan Podpornik, an order for a QR tag (we delete the delivery address 90 days after shipping), Shelter Pro, and a reward for a finder through Stripe Connect. For a reward, Stripe holds the money until the reunion is confirmed, and we charge a platform fee of 5 %. This option will be available only after a further legal review.
+**What is always free.** Reporting a lost, found or sighted animal, the map and alerts, matching (chip, photo, attributes), chat, the printable PDF poster with a QR code, sharing and chip lookup are free for everyone, forever. Shelters and municipalities use everything for free. Paid options never restrict this. The QR code on the poster leads only to the public listing.
+
+**What you can pay for.** Now: a thank-you contribution after a reunion with your animal (at least €2) and an optional contribution after reporting a lost animal (€2–5). Later: a boost for a report's visibility, the Premium Protect subscription, the monthly supporter plan Podpornik, and a reward for a finder through Stripe Connect. For a reward, Stripe holds the money until the reunion is confirmed, and we charge a platform fee of 5 %. This option will be available only after a further legal review. Vet clinics can become a paying Vet Partner (below).
 
 Contributions are voluntary payments to a company to help run the service. They are not donations.
+
+### Vet Partner (business customers)
+
+Vet Partner is a monthly business subscription for vet clinics. It includes a verified clinic profile, featured placement in the "nearest vet" ad slots in their area, a mention in lost-pet alerts and on posters for their region (always labelled "Ad"), and a monthly report with aggregate figures (impressions, clicks, reunions in the area). The report contains no personal data.
+
+- **Data:** clinic data, the contact person's name, email address and phone number, billing details and VAT ID, and invoices. Stripe Billing handles the subscription and VAT invoices; we never see card details. Stripe is in test mode only for now.
+- **Legal basis:** contract (Article 6(1)(b)) and legal obligation for invoices (Article 6(1)(c)).
+- **Retention:** we keep the clinic profile and the contact person's data until the subscription ends and delete them within 30 days after that, or earlier on request; invoices and payment records for as long as tax and accounting law requires (expected up to 10 years).
+- **Stays free:** reporting a found animal, chip lookup, matches and chat work for vets exactly as for everyone else.
 
 ## 10. Analytics and cookies
 
@@ -446,7 +474,7 @@ We do not sell data. The providers we need to run the service are:
 | MapTiler AG, Switzerland; fallback Photon (komoot GmbH), Germany | place search and finding an address from a point | search text or coordinates of the chosen point, IP address; we do not store the queries | Switzerland; Germany |
 | Google Ireland Limited (processor), only with your consent | Google Analytics 4 and Google Analytics for Firebase | analytics events from chapter 10 | EU, processing in the USA is also possible |
 | Google and Apple (each an independent controller) | sign-in with Google or Apple, if you choose it | data the provider sends at sign-in (email, name, identifier) | under the provider's rules |
-| Stripe Payments Europe, Limited, Ireland (processor; for part of the processing an independent controller) | payments (once enabled) | payment data you enter on Stripe's page | EU, processing in the USA is also possible |
+| Stripe Payments Europe, Limited, Ireland (processor; for part of the processing an independent controller) | payments and Vet Partner subscriptions (once enabled), VAT invoices | payment data you enter on Stripe's page | EU, processing in the USA is also possible |
 | Anthropic PBC, USA, and Voyage AI, USA (processors), when AI assistance is switched on | suggested attributes from photos, safety signal, image vectors | only the photo, with no user identifiers, EXIF metadata or location | USA |
 | Sentry (Functional Software, Inc.), EU data region (processor), when error tracking is switched on | error tracking | technical data about the error; we remove personal data before sending | EU |
 
@@ -484,7 +512,7 @@ Switzerland has a European Commission adequacy decision (MapTiler AG). You can a
 | Consent record for analytics | 12 months (cookie or the device's secure storage) |
 | Success stories | until you withdraw consent; after withdrawal we remove them within 24 hours |
 | Payment records | as long as tax and accounting law requires (expected up to 10 years) |
-| Delivery address for a QR tag | 90 days after shipping |
+| Vet Partner: clinic profile and contact person | until the subscription ends, then deleted within 30 days |
 | Partner enquiries | 24 months after the last contact |
 | Backups | data disappears from them within 30 days at the latest |
 
@@ -546,9 +574,10 @@ We may change this policy, for example when we add a new feature or provider. We
 11. **AI providers.** The text does not claim that Anthropic or Voyage AI do not train on submitted images, because I could not verify the contract terms. Confirm the terms (no training, retention) and add the statement if true. Check whether any AI Act transparency duty applies.
 12. **Ads.** Confirm that ad selection uses only context (region, species) and never a user profile; the "by context" sentence in chapter 11 depends on it. Confirm that sponsors only get aggregate reports.
 13. **Background location.** "We do not track your location in the background" must be confirmed with the mobile developers.
-14. **Features that are not live yet.** AI assistance, payments, Boost, Premium, Podpornik, QR tags, Shelter Pro, finder rewards, success stories, self-service export and delete, and Sentry error tracking are written as they will be at launch. Publish each part only when the feature goes live, or version the page per release. Payments are test mode only now.
+14. **Features that are not live yet.** AI assistance, payments, Boost, Premium, Podpornik, Vet Partner, finder rewards, success stories, self-service export and delete, and Sentry error tracking are written as they will be at launch. Publish each part only when the feature goes live, or version the page per release. Payments are test mode only now.
 15. **Email.** The text says nothing about marketing emails (none planned). If any are added, a separate consent and an update are needed.
 16. **Shelters and organisations.** I wrote that they are responsible for data they collect outside Najdimo. If shelters upload intake data into Najdimo, check whether the relationship is joint controllership or processing on their behalf.
 17. **Third-party data.** Photos and free text may show other people. The text asks users to avoid it; moderation handling needs a procedure.
 18. **Template.** The section numbers are written into the headings and cross-references use "chapter N" (SL "poglavje N"). If the page template numbers headings itself, remove the manual numbers and keep the references in sync. English date format follows the style guide ("14 October 2026"); Slovenian uses "14. 10. 2026".
-19. **Quality.** The Slovenian text needs a native legal review of terminology (upravljavec, obdelovalec, zakoniti interes, pogodbene klavzule). Contributions are described as voluntary payments to a company, never donations (Q-008); no dohodnina text.
+19. **Vet Partner (new in 0.2).** (a) Controller/processor: the clinic is a business customer; the contact person is a natural person, so GDPR applies to their data. Confirm the legal basis (contract) and retention (30 days after the subscription ends; invoices per tax law, proposed up to 10 years, accountant to confirm). (b) Stripe Billing and VAT invoicing: confirm Stripe's role, the VAT ID collection and the invoice rules with the accountant. (c) The monthly report is aggregate only; confirm no personal data enters it. (d) Paid mentions in alerts and on posters must be labelled "Ad" (consumer-protection and ad-labelling rules). (e) Removed with this version: QR/NFC tags (order, delivery address, 90-day retention) and Shelter Pro (brief v0.7).
+20. **Quality.** The Slovenian text needs a native legal review of terminology (upravljavec, obdelovalec, zakoniti interes, pogodbene klavzule). Contributions are described as voluntary payments to a company, never donations (Q-008); no dohodnina text.

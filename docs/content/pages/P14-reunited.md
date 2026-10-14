@@ -116,7 +116,11 @@ Disagreement note for the owner: `report.owner_disagree` (P9).
 | Already closed | `lifecycle.already_closed` |
 | Reopened | `lifecycle.reopened_toast` |
 
-# 8. SEO and alt text
+# 8. CHANGE requests
+
+- `CHANGE docs/tech/contracts/C15-routes-deeplinks.md§Web routes: reportReunited SL /r/[code]/ponovno-skupaj → /r/[code]/spet-doma (one term everywhere: "Spet doma", glossary §2).`
+
+# 9. SEO and alt text
 
 SEO: N/A (signed-in and manage pages, `noindex`). Document title "Spet doma · Najdimo" / "Home again · Najdimo".
 
