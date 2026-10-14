@@ -3,13 +3,15 @@ source: 02§Content, SEO and legal requirements (Legal); 03§Content strategy / 
 
 | Field | Value |
 |---|---|
-| Version | 0.1 |
+| Version | 0.2 |
 | Date | 2026-10-15 |
 | Route SL | `/impresum` |
 | Route EN | `/en/imprint` |
 | Slug SL / EN | `impresum` / `imprint` |
 | Structured data | WebPage |
 | Template | T4 Legal (numbered h2 sections, "On this page" list, draft note) |
+
+Change in 0.2: hosting per brief v1.0 (Hetzner server in the EU, Supabase for the database and sign-in, Cloudflare R2 for photos and backups; Vercel removed).
 
 **SEO (SL)**
 
@@ -57,8 +59,9 @@ Za vsebino te spletne strani odgovarja [naročnik: ime in priimek odgovorne oseb
 
 ## 4. Gostovanje
 
-- Spletna stran je na Vercel Inc., ZDA.
-- Podatkovna zbirka in datoteke so pri Supabase Inc., v EU, regija Frankfurt.
+- Spletna stran in strežniški del: Hetzner Online GmbH, Gunzenhausen, Nemčija; strežnik je v EU.
+- Podatkovna zbirka in vpis: Supabase Inc., podatki v EU, regija Frankfurt.
+- Fotografije in varnostne kopije: Cloudflare, Inc., storitev R2, shramba v EU.
 
 Več o ponudnikih je v [politiki zasebnosti](/zasebnost).
 
@@ -108,8 +111,9 @@ The person responsible for the content of this website is [client: name of the r
 
 ## 4. Hosting
 
-- The website is hosted by Vercel Inc., USA.
-- The database and files are with Supabase Inc., in the EU, Frankfurt region.
+- Website and server: Hetzner Online GmbH, Gunzenhausen, Germany; the server is in the EU.
+- Database and sign-in: Supabase Inc., data in the EU, Frankfurt region.
+- Photos and backups: Cloudflare, Inc., R2 service, storage in the EU.
 
 More about providers is in the [privacy policy](/en/privacy).
 
@@ -131,7 +135,7 @@ The rules of use are in the [terms of use](/en/terms). Read about cookies in the
 
 1. **Company facts.** All company details are client markers: full name and form, seat, registration number, tax number and VAT ID, register entry (court register or AJPES), share capital (only for a d.o.o.), representative, contact email and phone, and the person responsible for content. The build should fail while a marker remains.
 2. **Required content.** Confirm the minimum imprint content under Slovenian law (company law and the e-commerce act, ZVEP) and add any item that counsel requires, for example supervisory authority if the activity needs one.
-3. **Hosting.** Vercel Inc. hosts the website (global edge network, US company) and Supabase Inc. hosts the database in Frankfurt (AWS eu-central-1), as stated in the privacy policy. The backup provider is not named here because it is undecided (privacy-policy note 9).
+3. **Hosting (updated in 0.2, brief v1.0).** One Hetzner server in the EU (Germany or Finland, client decision) runs the website, API and job worker; Supabase Inc. hosts the database and sign-in in Frankfurt (AWS eu-central-1); photos and nightly backups are on Cloudflare R2, which is "in the EU" only if the buckets use EU jurisdiction (privacy-policy note 9). Vercel is no longer used.
 4. **Image credits.** Confirm the licence of any stock photos, fonts or icon sets used on the site and list them here.
 5. **Working name.** The line "Najdimo is a working name" must be removed or updated when the client picks the final name (Q-001); the legal pages then change with the name.
 6. **Quality.** The Slovenian text needs a native review.

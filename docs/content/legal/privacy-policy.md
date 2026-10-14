@@ -3,13 +3,15 @@ source: 02§Content, SEO and legal requirements (Legal); FR-034; FR-035; FR-038;
 
 | Field | Value |
 |---|---|
-| Version | 0.2 |
+| Version | 0.3 |
 | Date | 2026-10-15 |
 | Route SL | `/zasebnost` |
 | Route EN | `/en/privacy` |
 | Slug SL / EN | `zasebnost` / `privacy` |
 | Structured data | WebPage |
 | Template | T4 Legal (numbered h2 sections, "On this page" list, draft note) |
+
+Change in 0.3: processors and hosting per brief v1.0 (Hetzner and Cloudflare R2; Vercel and Supabase file storage removed); exact location shared in a chat; on-device proximity alerts and offline data (chapter 6); database reachable only through our API (chapter 16). Open points are consolidated in `docs/legal/lawyer-briefing.md`.
 
 Change in 0.2: removed QR/NFC pet tags and Shelter Pro (brief v0.7); added Vet Partner (chapter 9); added the mission line; meta titles use the " · Najdimo" suffix.
 
@@ -39,10 +41,10 @@ Najdimo pomaga, da se izgubljene živali vrnejo domov. Vse, kar živali vrača d
 
 - Podatke uporabljamo za delovanje storitve: račun, prijave, ujemanje, pogovor, opozorila in plačila.
 - Javno prikažemo le fotografije, lastnosti živali, približno območje, datum in okoliščine. Številke čipa, telefonske številke, e-naslova, točne lokacije in kraja, kjer je najdena žival, ne prikažemo nikomur.
-- Točno lokacijo prijave vidite samo vi.
+- Točno lokacijo prijave vidite samo vi, razen če jo sami delite v pogovoru.
 - Google Analytics vklopimo le z vašo privolitvijo. Če jo zavrnete, Googlu ne pošljemo ničesar.
 - Oglase samo preštejemo, in sicer brez piškotkov in brez oznak, ki bi razkrile, kdo ste.
-- Glavna zbirka podatkov in datoteke so v EU (Frankfurt). Nekateri ponudniki so v ZDA; zanje veljajo zaščitni ukrepi (poglavje 13).
+- Glavna zbirka podatkov je v EU (Frankfurt), v EU so tudi naši strežniki in fotografije. Nekateri ponudniki so v ZDA; zanje veljajo zaščitni ukrepi (poglavje 13).
 - Podatke lahko izvozite, račun pa izbrišete. Pravice uveljavite na [naročnik: e-naslov za zasebnost].
 
 ## 2. Kdo je upravljavec
@@ -108,7 +110,7 @@ Pri zakoniti podlagi „zakoniti interes“ smo presodili, da vaši interesi in 
 
 - **Vsakdo, tudi brez računa, vidi:** fotografije, lastnosti živali, približno območje, datum in okoliščine, ki ste jih opisali.
 - **Nihče ne vidi:** številke čipa, telefonske številke, e-naslova, točne lokacije in kraja, kjer je najdena žival.
-- **Samo vi vidite:** točno lokacijo svoje prijave.
+- **Samo vi vidite:** točno lokacijo svoje prijave. Osebi v pogovoru jo pokažemo le, če jo tam sami delite.
 - **Osebi v pogovoru** vidita vzdevka in sporočila. Moderatorji sporočila preberejo samo, če je kdo pogovor prijavil kot zlorabo.
 - **Zavetišča in veterinarji:** ko vnesejo številko čipa, ki je pri nas vpisana, obvestimo osebo, ki žival išče. Zavetišču ali veterinarju ne pokažemo nobenih osebnih podatkov.
 
@@ -120,7 +122,11 @@ V prosto besedilo (opis okoliščin, opombe) ne vpisujte osebnih podatkov drugih
 
 **Točna lokacija.** Točno točko, ki jo označite, vidite samo vi. Javno prikažemo približno območje. Pri izgubljeni živali je polmer območja najmanj 500 m, pri najdeni in opaženi najmanj 150 m.
 
-**Lokacija naprave.** Lokacijo naprave uporabimo samo takrat, ko to izberete, na primer za določitev kraja prijave. Lokacije ne spremljamo v ozadju.
+**Lokacija naprave.** Lokacijo naprave uporabimo samo takrat, ko to izberete, na primer za določitev kraja prijave. Lokacije naprave ne spremljamo in je ne shranjujemo; shranimo le točko prijave, ki jo potrdite.
+
+**Opozorilo, ko ste blizu (mobilna aplikacija).** Če to funkcijo izrecno vklopite in aplikaciji dovolite lokacijo tudi v ozadju, telefon sam preverja, ali ste vstopili v približno območje, kjer je bila nazadnje videna izgubljena žival. Ta območja so javna in približna. Preverjanje poteka samo v telefonu: vaše lokacije ne pošljemo nam ali komur koli drugemu. Funkcijo kadar koli izklopite v nastavitvah aplikacije in takrat iz telefona odstranimo vsa območja.
+
+**Podatki v telefonu.** Da aplikacija deluje tudi brez povezave, v telefonu hrani javne prijave iz vaše okolice: približna območja in pomanjšane fotografije, največ 7 dni. Točnih lokacij, številk čipa, kontaktnih podatkov in pogovorov ne hrani. Ob odjavi te podatke izbrišemo.
 
 **Zemljevid in iskanje krajev.** Zemljevidne ploščice naloži vaš brskalnik ali aplikacija neposredno pri strežnikih OpenFreeMap. Ti vidijo vaš IP naslov, piškotkov pa ne uporabljajo. Za iskanje krajev in za določitev naslova iz točke na zemljevidu vaš brskalnik ali aplikacija pošlje poizvedbo ponudniku MapTiler AG (Švica), nadomestno pa ponudniku Photon (komoot GmbH, Nemčija). Teh poizvedb mi ne shranjujemo.
 
@@ -198,9 +204,9 @@ Podatkov ne prodajamo. Ponudniki, ki jih potrebujemo za delovanje storitve, so:
 
 | Ponudnik (vloga) | Čemu | Katere podatke prejme | Kje |
 |---|---|---|---|
-| Supabase Inc., ZDA (obdelovalec) | zbirka podatkov, vpis, shramba datotek, pogovori v živo, strežniške funkcije | podatki iz poglavja 3, razen tistih, ki jih obdelujejo drugi ponudniki v tej tabeli | podatki v EU, Frankfurt (AWS eu-central-1) |
-| Vercel Inc., ZDA (obdelovalec) | gostovanje spletne strani | IP naslov in tehnični podatki obiska, strežniški zapisi približno 7 dni | globalno omrežje robnih strežnikov |
-| Ponudnik varnostnih kopij: Cloudflare, Inc. (R2, jurisdikcija EU) ali Backblaze, Inc. (EU) (obdelovalec) | nočne šifrirane kopije zbirke in datotek | enako kot pri Supabase | EU |
+| Supabase Inc., ZDA (obdelovalec) | zbirka podatkov, vpis, dostava sporočil v pogovorih v živo | podatki iz poglavja 3 razen fotografij | podatki v EU, Frankfurt (AWS eu-central-1) |
+| Hetzner Online GmbH, Nemčija (obdelovalec) | strežnik za spletno stran, aplikacijski vmesnik in opravila v ozadju | podatki, ki potujejo skozi storitev, in strežniški zapisi (IP naslov, tehnični podatki obiska) približno 7 dni | EU (Nemčija ali Finska) |
+| Cloudflare, Inc., ZDA, storitev R2 (obdelovalec) | shramba fotografij, dostava javnih kopij fotografij prek Cloudflarovega omrežja, nočne šifrirane varnostne kopije zbirke | fotografije; varnostne kopije vsebujejo podatke iz poglavja 3; IP naslov, ko se naložijo javne fotografije | shramba v EU; javne kopije fotografij Cloudflare dostavlja prek svojega svetovnega omrežja |
 | Brevo (Sendinblue SAS), Francija (obdelovalec) | e-pošta za vpis in obvestila | e-naslov, ime, jezik, besedilo sporočila | EU |
 | Expo Push Service (650 Industries, Inc.), ZDA (obdelovalec); obvestila gredo prek Apple Push Notification service in Google Firebase Cloud Messaging | potisna obvestila | žeton naprave in besedilo obvestila, ki ne vsebuje osebnih podatkov | ZDA |
 | Cloudflare Turnstile (Cloudflare, Inc.), ZDA (obdelovalec) | preverjanje „nisem robot“ ob ustvarjanju računa, anonimnih prijavah in obrazcu za partnerje | podatki o napravi in brskalniku, IP naslov | ZDA |
@@ -275,7 +281,7 @@ Odgovorimo najpozneje v enem mesecu. Pri zapletenih zahtevah lahko ta rok po zak
 Podatke varujemo z organizacijskimi in tehničnimi ukrepi, med drugim:
 
 - povezave so šifrirane;
-- dostop do podatkov v zbirki je omejen s pravili na ravni vrstic, tako da vsak vidi samo tisto, kar sme;
+- zbirka podatkov ni neposredno dostopna iz brskalnika ali aplikacije: do podatkov pridemo samo prek našega strežnika, ki preveri, ali smete videti, kar zahtevate;
 - skrbniški dostop zahteva močno overitev;
 - varnostne kopije so šifrirane;
 - število zahtev je omejeno, anonimne obrazce varuje preverjanje „nisem robot“;
@@ -305,10 +311,10 @@ Najdimo helps lost animals get home again. Everything that brings animals home i
 
 - We use data to run the service: account, reports, matching, chat, alerts and payments.
 - We show publicly only photos, the animal's attributes, an approximate area, the date and the circumstances. We never show a chip number, phone number, email address, exact location or the place where a found animal is kept.
-- Only you can see the exact location of your report.
+- Only you can see the exact location of your report, unless you share it in a chat yourself.
 - We switch on Google Analytics only with your consent. If you decline, we send nothing to Google.
 - We only count ads, without cookies and without any marker that could reveal who you are.
-- The main database and files are in the EU (Frankfurt). Some providers are in the United States; safeguards apply (chapter 13).
+- The main database is in the EU (Frankfurt), and so are our servers and photos. Some providers are in the United States; safeguards apply (chapter 13).
 - You can export your data and delete your account. Use your rights at [client: privacy contact email].
 
 ## 2. Who is the controller
@@ -374,7 +380,7 @@ Where processing rests on consent, you can withdraw it at any time. Withdrawal d
 
 - **Anyone, even without an account, sees:** photos, the animal's attributes, the approximate area, the date and the circumstances you described.
 - **Nobody sees:** the chip number, phone number, email address, exact location and the place where a found animal is kept.
-- **Only you see:** the exact location of your report.
+- **Only you see:** the exact location of your report. We show it to the other person in a chat only if you share it there yourself.
 - **The two people in a chat** see the aliases and messages. Moderators read messages only if someone has reported the chat as abuse.
 - **Shelters and vets:** when they enter a chip number that is registered with us, we notify the person who is looking for the animal. We show the shelter or vet no personal data.
 
@@ -386,7 +392,11 @@ Please do not enter other people's personal data in free text (circumstances, no
 
 **Exact location.** Only you can see the exact point you mark. We show the public an approximate area. For a lost animal the radius of the area is at least 500 m; for a found or sighted animal it is at least 150 m.
 
-**Device location.** We use your device location only when you choose it, for example to set the place of a report. We do not track your location in the background.
+**Device location.** We use your device location only when you choose to, for example to set the place of a report. We do not track or store your device location; we store only the report point you confirm.
+
+**Alerts when you are nearby (mobile app).** If you turn this feature on and allow the app to use your location in the background, your phone itself checks whether you have entered an approximate area where a lost pet was last seen. These areas are public and approximate. The check happens only on your phone: your location is never sent to us or to anyone else. You can turn the feature off at any time in the app settings, and we then remove all areas from your phone.
+
+**Data on your phone.** So that the app also works offline, it keeps public reports from your area on your phone: approximate areas and small photos, for at most 7 days. It never keeps exact locations, chip numbers, contact details or chats. When you sign out, we delete this data.
 
 **Map and place search.** Your browser or app loads map tiles directly from OpenFreeMap servers. They can see your IP address and use no cookies. For place search and for finding an address from a point on the map, your browser or app sends a query to MapTiler AG (Switzerland) and, as a fallback, to Photon (komoot GmbH, Germany). We do not store these queries.
 
@@ -464,9 +474,9 @@ We do not sell data. The providers we need to run the service are:
 
 | Provider (role) | Purpose | Data it receives | Where |
 |---|---|---|---|
-| Supabase Inc., USA (processor) | database, sign-in, file storage, live chat, server functions | data from chapter 3, except what other providers in this table process | data in the EU, Frankfurt (AWS eu-central-1) |
-| Vercel Inc., USA (processor) | website hosting | IP address and technical data of the visit, server logs for about 7 days | global edge network |
-| Backup provider: Cloudflare, Inc. (R2, EU jurisdiction) or Backblaze, Inc. (EU) (processor) | nightly encrypted copies of the database and files | same as Supabase | EU |
+| Supabase Inc., USA (processor) | database, sign-in, delivery of live chat messages | data from chapter 3 except photos | data in the EU, Frankfurt (AWS eu-central-1) |
+| Hetzner Online GmbH, Germany (processor) | server for the website, the API and background jobs | data passing through the service, and server logs (IP address, technical data of the visit) for about 7 days | EU (Germany or Finland) |
+| Cloudflare, Inc., USA, R2 service (processor) | photo storage, delivery of public photo copies through Cloudflare's network, nightly encrypted database backups | photos; backups contain the data from chapter 3; IP address when public photos load | storage in the EU; Cloudflare delivers public photo copies through its global network |
 | Brevo (Sendinblue SAS), France (processor) | email for sign-in and notifications | email address, name, language, message text | EU |
 | Expo Push Service (650 Industries, Inc.), USA (processor); notifications travel through Apple Push Notification service and Google Firebase Cloud Messaging | push notifications | device token and notification text, which contains no personal data | USA |
 | Cloudflare Turnstile (Cloudflare, Inc.), USA (processor) | "not a robot" check at account creation, anonymous reports and the partner form | device and browser signals, IP address | USA |
@@ -541,7 +551,7 @@ We reply within one month at the latest. For complex requests the law allows us 
 We protect data with organisational and technical measures, including:
 
 - connections are encrypted;
-- access to data in the database is limited by row-level rules, so everyone sees only what they are allowed to;
+- the database cannot be reached directly from a browser or the app: data is accessed only through our server, which checks that you are allowed to see it;
 - administrator access requires strong authentication;
 - backups are encrypted;
 - the number of requests is limited, and anonymous forms are protected by a "not a robot" check;
@@ -568,12 +578,12 @@ We may change this policy, for example when we add a new feature or provider. We
 5. **Article 22 GDPR.** Automatic temporary hiding after three independent abuse reports could be seen as a decision with significant effect for the poster. I described human review and a contest route by email. Please confirm this is sufficient.
 6. **Minimum age 15.** Proposal based on the age of digital consent under ZVOP-2; I did not verify the article number. Contract capacity of minors under 18 under Slovenian civil law is limited, so I wrote that paid options are for adults (same line in the terms). This is a proposal, not a brief requirement.
 7. **Retention values are proposals** (A-012). Items I had to propose beyond the brief: "abuse reports and audit log: up to 24 months"; "consent record 12 months" (the cookie lifetime; evidence of consent may need to be kept longer). Open: what remains of a closed report after the photos and exact location are removed at 12 months (text, municipality, dates, species)? Payment records "up to 10 years" is a likely Slovenian requirement and must be confirmed by the accountant. Sentry retention is not stated in the text; confirm and add if needed.
-8. **International transfers.** Verify the Data Privacy Framework certification of each US provider at go-live (Supabase Inc., Vercel, Cloudflare, Stripe, 650 Industries/Expo, Anthropic, Voyage AI, Sentry, Google, Backblaze). Where not certified, standard contractual clauses and a transfer impact assessment are needed. Data processing agreements are needed with every processor in chapter 12 (the Google Analytics data processing terms must be accepted in GA4). The Swiss adequacy decision is cited as given in the brief.
-9. **Backup provider** is not yet decided (Cloudflare R2 EU or Backblaze EU). The text names both; update when decided.
+8. **International transfers.** Verify the Data Privacy Framework certification of each US provider at go-live (Supabase Inc., Cloudflare, Stripe, 650 Industries/Expo, Anthropic, Voyage AI (part of MongoDB, Inc. since 2025), Sentry, Google). Where not certified, standard contractual clauses and a transfer impact assessment are needed. Data processing agreements are needed with every processor in chapter 12 (the Google Analytics data processing terms must be accepted in GA4). The Swiss adequacy decision is cited as given in the brief.
+9. **Hosting and backups (updated in 0.3).** Brief v1.0: a Hetzner server in the EU runs the website, API and job worker; photos and nightly database backups are on Cloudflare R2; Vercel and Supabase file storage are no longer used. The text says R2 storage is in the EU, which holds only if the buckets are created with EU jurisdiction (requested from the tech lead). The Hetzner location (Germany or Finland) is a client decision.
 10. **Map providers.** The exact point a user selects (not fuzzed) is sent from the client to MapTiler for reverse geocoding. Check the MapTiler data processing terms and whether the point should be rounded first. OpenFreeMap is listed as an independent controller because we cannot control it.
 11. **AI providers.** The text does not claim that Anthropic or Voyage AI do not train on submitted images, because I could not verify the contract terms. Confirm the terms (no training, retention) and add the statement if true. Check whether any AI Act transparency duty applies.
 12. **Ads.** Confirm that ad selection uses only context (region, species) and never a user profile; the "by context" sentence in chapter 11 depends on it. Confirm that sponsors only get aggregate reports.
-13. **Background location.** "We do not track your location in the background" must be confirmed with the mobile developers.
+13. **Background location (updated in 0.3).** Chapter 6 now explains the opt-in proximity alerts (FR-043): the operating system checks geofences on the phone and no location leaves the device. Confirm with the mobile developers before publishing.
 14. **Features that are not live yet.** AI assistance, payments, Boost, Premium, Podpornik, Vet Partner, finder rewards, success stories, self-service export and delete, and Sentry error tracking are written as they will be at launch. Publish each part only when the feature goes live, or version the page per release. Payments are test mode only now.
 15. **Email.** The text says nothing about marketing emails (none planned). If any are added, a separate consent and an update are needed.
 16. **Shelters and organisations.** I wrote that they are responsible for data they collect outside Najdimo. If shelters upload intake data into Najdimo, check whether the relationship is joint controllership or processing on their behalf.
@@ -581,3 +591,4 @@ We may change this policy, for example when we add a new feature or provider. We
 18. **Template.** The section numbers are written into the headings and cross-references use "chapter N" (SL "poglavje N"). If the page template numbers headings itself, remove the manual numbers and keep the references in sync. English date format follows the style guide ("14 October 2026"); Slovenian uses "14. 10. 2026".
 19. **Vet Partner (new in 0.2).** (a) Controller/processor: the clinic is a business customer; the contact person is a natural person, so GDPR applies to their data. Confirm the legal basis (contract) and retention (30 days after the subscription ends; invoices per tax law, proposed up to 10 years, accountant to confirm). (b) Stripe Billing and VAT invoicing: confirm Stripe's role, the VAT ID collection and the invoice rules with the accountant. (c) The monthly report is aggregate only; confirm no personal data enters it. (d) Paid mentions in alerts and on posters must be labelled "Ad" (consumer-protection and ad-labelling rules). (e) Removed with this version: QR/NFC tags (order, delivery address, 90-day retention) and Shelter Pro (brief v0.7).
 20. **Quality.** The Slovenian text needs a native legal review of terminology (upravljavec, obdelovalec, zakoniti interes, pogodbene klavzule). Contributions are described as voluntary payments to a company, never donations (Q-008); no dohodnina text.
+21. **Version 0.3.** Processors per brief v1.0, exact location shared in a chat (FR-004 R-004.3), on-device proximity alerts and offline cache (FR-041, FR-043), API-only database access (ADR-021). Every open point of this draft is consolidated, with a proposed answer, in `docs/legal/lawyer-briefing.md` (§6).

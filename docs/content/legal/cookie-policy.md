@@ -3,13 +3,15 @@ source: 02§Content, SEO and legal requirements (Legal); FR-038; FR-039; NFR-PRI
 
 | Field | Value |
 |---|---|
-| Version | 0.1 |
+| Version | 0.2 |
 | Date | 2026-10-15 |
 | Route SL | `/piskotki` |
 | Route EN | `/en/cookies` |
 | Slug SL / EN | `piskotki` / `cookies` |
 | Structured data | WebPage |
 | Template | T4 Legal (numbered h2 sections, "On this page" list, draft note) |
+
+Change in 0.2: mobile items for drafts and queued reports, the offline copy of public reports and the proximity-alert areas (FR-041 to FR-043).
 
 **SEO (SL)**
 
@@ -74,6 +76,9 @@ Analitična piškotka nastavimo samo, če sprejmete. Podatke v Google Analytics 
 | Žeton za potisna obvestila | Najdimo; Apple in Google prenašata obvestila | Pošiljanje obvestil, ko jih dovolite v napravi. | nujni | dokler obvestil ne izklopite ali aplikacije ne odstranite |
 | Žeton zasebne povezave (varna shramba) | Najdimo | Upravljanje prijave brez računa. | nujni | do zaključka prijave ali do odstranitve aplikacije |
 | Identifikator naprave | Najdimo | Omejevanje zlorab. | nujni | do odstranitve aplikacije |
+| Osnutki in prijave, ki čakajo na pošiljanje | Najdimo | Shrani nedokončano prijavo in prijavo najdene živali, oddano brez povezave, dokler je ne pošljemo. | nujni | dokler prijave ne pošljemo ali osnutka ne zavržete; izbrišemo ob odjavi |
+| Kopija javnih prijav v okolici | Najdimo | Zemljevid in seznam delujeta tudi brez povezave. Samo približna območja in pomanjšane fotografije. | nujni | največ 7 dni in 50 MB; izbrišemo ob odjavi |
+| Območja za opozorila, ko ste blizu | Najdimo (preverja jih operacijski sistem telefona) | Telefon vas opozori, ko vstopite v približno območje izgubljene živali. Samo če funkcijo vklopite. | nujni | dokler se iskanje ne zaključi ali funkcije ne izklopite |
 | Identifikator namestitve aplikacije (Firebase Analytics) | Google Ireland Limited | Loči namestitve za statistiko uporabe. | analitični | po pravilih ponudnika; podatke v Googlu hranimo 14 mesecev [naročnik: preveriti] |
 
 Identifikator Firebase Analytics ustvarimo šele po vaši privolitvi.
@@ -161,6 +166,9 @@ We set the two analytics cookies only if you accept. We keep data in Google Anal
 | Push notification token | Najdimo; Apple and Google carry the notifications | Sends notifications once you allow them on your device. | necessary | until you turn notifications off or remove the app |
 | Private-link token (secure storage) | Najdimo | Manages a report without an account. | necessary | until the report closes or the app is removed |
 | Device identifier | Najdimo | Abuse limits. | necessary | until the app is removed |
+| Drafts and reports waiting to be sent | Najdimo | Keeps an unfinished report, and a found-animal report made offline until we send it. | necessary | until the report is sent or the draft discarded; deleted on sign-out |
+| Copy of public reports nearby | Najdimo | Lets the map and list work offline. Approximate areas and small photos only. | necessary | at most 7 days and 50 MB; deleted on sign-out |
+| Areas for alerts when you are nearby | Najdimo (checked by the phone's operating system) | Your phone alerts you when you enter the approximate area of a lost pet. Only if you turn the feature on. | necessary | until the search closes or you turn the feature off |
 | App-instance identifier (Firebase Analytics) | Google Ireland Limited | Tells installations apart for usage statistics. | analytics | per the provider's rules; we keep data in Google for 14 months [client: verify] |
 
 We create the Firebase Analytics identifier only after you consent.
