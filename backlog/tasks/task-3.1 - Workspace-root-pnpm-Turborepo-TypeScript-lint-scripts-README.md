@@ -5,7 +5,7 @@ status: In Review
 assignee:
   - '@tech-lead'
 created_date: '2026-10-14 22:11'
-updated_date: '2026-10-14 22:41'
+updated_date: '2026-10-14 23:09'
 labels:
   - tech
   - 'est:S'
@@ -57,6 +57,8 @@ Branch: agent/task-3.1-ws
 <!-- SECTION:NOTES:BEGIN -->
 Decisions: pnpm 11 ignores node-linker in .npmrc, so nodeLinker: hoisted lives in pnpm-workspace.yaml (.npmrc kept as mirror; ADR-001 updated). Ignored install scripts fail pnpm 11 installs: allowBuilds lists deno only. Root eslint.config.mjs is the shared base; apps add their own config that spreads it (ADR-001, slices). scripts/if-exists.mjs guards db:*, functions:*, quality, db:drain, admin:create and the seed-photos step, printing the owning task until the file exists; gen:types/dev/build/lint/typecheck/test are Turbo no-ops with no packages. Supabase CLI and deno are root devDependencies (ADR-017 rows added). Plan sketch moved readme.md -> docs/plan-sketch.md (brief link needs updating).
 Validation: pnpm install exit 0; pnpm verify exit 0 (worktree and a fresh git-archive copy with --frozen-lockfile, via global pnpm and corepack); pnpm bootstrap exit 0 with skips; every guarded script exits 0 with its task id; active path tested with a temp supabase/functions (deno check fails on a type error, passes when fixed) and exit-code passthrough; a throwaway packages/demo was picked up by Turbo lint (root ESLint config, unused var fails) and typecheck (tsconfig.base, .ts imports) then removed.
+
+Review round 1 (CHANGES) addressed: rebased on main (bb1c035), backend.md ownership conflict resolved keeping both bullets plus the allowBuilds rule; .env.example/README carry the new slice names (diffed against both slices: none missing); .gitignore covers next-env.d.ts, expo-env.d.ts, apps/mobile/ios|android; turbo.json globalEnv APP_ENV and build inputs .env*. pnpm install and pnpm verify exit 0.
 <!-- SECTION:NOTES:END -->
 
 ## Final Summary
