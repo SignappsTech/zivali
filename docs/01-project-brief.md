@@ -75,8 +75,8 @@ Izgubljene živali (working name) is a web and mobile app that reunites lost cat
     - Pet shops, groomers and insurers buy ads (see Ads).
   - **Support without premium (donation style):** the core stays free; we ask for voluntary support at emotional high points:
     - **"Reunited" thank-you:** after marking a pet reunited, offer a one-tap tip (€3 / €5 / €10 / custom). This is the highest-converting moment.
-    - **Optional contribution when reporting:** a small, never pre-selected "help keep this free" (€2–5) on the lost-report confirmation screen.
-    - **Monthly supporter ("Podpornik"):** €2–3/month, no features, only a supporter badge on the profile and listings.
+    - **Optional contribution when reporting:** the "Pomagajte nam izboljšati Najdimo" ask (€3 / €5 / €10 / custom, never pre-selected) on the report confirmation screen.
+    - **Monthly supporter ("Podpornik"):** from €2/month, no features, only a supporter badge on the profile and listings.
     - **Finder's reward fee:** a small % platform fee when a reward is paid through escrow.
     - **Dohodnina:** if we operate as an eligible društvo or zavod, users can direct part of their income tax to us via eDavki at no cost to them. This needs a legal entity check.
     - Minimum card amount €2 (Stripe fixed fees); a transparent "where your money goes" page.
