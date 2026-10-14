@@ -7,14 +7,13 @@ status: To Do
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 23:36'
+updated_date: '2026-10-14 23:56'
 labels:
   - fe
   - 'est:M'
 milestone: m-2
 dependencies:
-  - TASK-11.2
-  - TASK-88.3
-  - TASK-27.1
+  - TASK-90.3
 references:
   - docs/tech/frontend.md
   - docs/tech/contracts/C18-shelter-directory.md
