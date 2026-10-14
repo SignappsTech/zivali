@@ -17,6 +17,7 @@
   ],
   "scripts": {
     "build": "node build.mjs",
+    "lint": "eslint .",
     "test": "node --test"
   },
   "engines": {
