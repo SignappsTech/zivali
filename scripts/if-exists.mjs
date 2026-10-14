@@ -6,13 +6,13 @@ import { existsSync } from 'node:fs';
 const [path, task, separator, ...command] = process.argv.slice(2);
 
 if (!path || !task || separator !== '--' || command.length === 0) {
-  console.error('Usage: node scripts/if-exists.mjs <path> <task-id> -- <command> [args...]');
-  process.exit(2);
+	console.error('Usage: node scripts/if-exists.mjs <path> <task-id> -- <command> [args...]');
+	process.exit(2);
 }
 
 if (!existsSync(path)) {
-  console.log(`Skipped "${command.join(' ')}": ${path} does not exist yet (added by ${task}).`);
-  process.exit(0);
+	console.log(`Skipped "${command.join(' ')}": ${path} does not exist yet (added by ${task}).`);
+	process.exit(0);
 }
 
 // shell: true so Windows finds the .cmd shims in node_modules/.bin.
