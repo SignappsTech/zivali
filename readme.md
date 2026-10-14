@@ -88,7 +88,7 @@ Everything else (alerts, posters, AI, shelters, payments) exists to feed this lo
 | **Boost listing** | Owner | One-off (€5–15): push alert to a bigger radius and more users, top of map, auto-posts to social. The most natural thing to pay for in a panic moment |
 | **Premium subscription** "Protect" | Owner | ~€2–3/month or ~€20/year: multiple pets, instant alerts, AI continuous matching against all new shelter intakes, vet records storage, lost mode in 1 tap |
 | **QR / NFC smart tag** | Owner | Physical tag (€10–20). Scanning it opens the pet profile and notifies the owner with the finder's location. Good margin, good marketing |
-| **Shelter Pro** | Shelter / municipality | Basic is free. Paid: integrations, API, analytics, adoption page, reports for municipality contracts |
+| ~~Shelter Pro~~ | — | **Dropped.** Shelters, vets and municipalities get everything free (portal, API, analytics, adoption page, reports) |
 | **Sponsored / local ads** | Vets, pet shops, insurers | Non-intrusive, local ("nearest 24h vet"). Pet insurance referral fees are a good fit |
 | **Donations / reward escrow** | Owners, community | Optional finder's reward held in-app (prevents "pay first" scams); small fee |
 

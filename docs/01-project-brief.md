@@ -1,7 +1,7 @@
 ---
 doc_id: DOC-01
 title: Project Brief
-version: 0.3
+version: 0.4
 status: Draft
 date: 2026-10-14
 owner: Project Lead
@@ -56,7 +56,8 @@ Izgubljene živali (working name) is a web and mobile app that reunites lost cat
   - Push and in-app notifications and radius alerts
   - In-app chat, a printable QR poster, sharing
   - Shelter portal with bulk/CSV upload and a matches dashboard
-  - Monetisation: boost listing, Premium subscription, QR tag ordering, Shelter Pro. **Stripe in test mode only.**
+  - Monetisation: boost listing, Premium subscription, QR tag ordering. **Stripe in test mode only.**
+  - **Shelters, vets and municipalities use everything for free, forever.** That includes the portal, bulk/CSV upload, matching, API and integrations, analytics, the adoption page and municipality reports. There is no paid shelter tier. Mission first: the goal is to help animals and keep the project self-sustaining, not to maximise profit. Revenue comes only from voluntary support, owner-side extras (boost, Premium, tags) and ads.
   - **Support without premium (donation style):** the core stays free; we ask for voluntary support at emotional high points:
     - **"Reunited" thank-you:** after marking a pet reunited, offer a one-tap tip (€3 / €5 / €10 / custom). This is the highest-converting moment.
     - **Optional contribution when reporting:** a small, never pre-selected "help keep this free" (€2–5) on the lost-report confirmation screen.
@@ -155,3 +156,4 @@ Izgubljene živali (working name) is a web and mobile app that reunites lost cat
 | 0.1 | 2026-10-14 | Initial plan sketch (readme.md) |
 | 0.2 | 2026-10-14 | Brief written from the plan sketch and client decisions (UI library, stack, scope) |
 | 0.3 | 2026-10-14 | Added donation-style support, early ads (oglasi), GA4 analytics (configured), maps/geo decisions; Q-008..Q-011 |
+| 0.4 | 2026-10-14 | Shelter Pro removed: all shelter, vet and municipality features are free forever; mission-first principle |
