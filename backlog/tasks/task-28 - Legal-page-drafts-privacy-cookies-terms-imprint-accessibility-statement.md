@@ -5,7 +5,7 @@ status: To Do
 assignee:
   - '@content-strategist'
 created_date: '2026-10-14 21:02'
-updated_date: '2026-10-14 21:53'
+updated_date: '2026-10-14 22:34'
 labels:
   - story
   - 'req:FR-035'
@@ -25,16 +25,18 @@ A pilot with personal data, location, chat, payments, ads and analytics needs EU
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Given the features in scope, when the privacy policy is drafted, then it covers data collected (account, pet, photos, location, chat, payments, ad counters, analytics), purposes and legal bases, retention, processors with transfers (Supabase, Vercel, Stripe, AI provider, Google Analytics and Firebase) and user rights (access, export, delete).
-- [ ] #2 Given analytics, when the cookie policy is drafted, then it lists strictly necessary storage and GA4 and Firebase identifiers (such as _ga) with purpose, duration and the consent mechanism.
-- [ ] #3 Given the terms, when drafted, then they cover acceptable use, scams, finder rewards and escrow, boosts, subscriptions and contributions (not described as charitable donations unless a qualifying entity exists), ad labelling, shelter terms and liability.
-- [ ] #4 Given the imprint and accessibility statement, when drafted, then company details are marked as client-supplied and the EAA statement template is ready; all pages exist in SL and EN and are marked requires client and legal review.
+- [x] #1 Given the features in scope, when the privacy policy is drafted, then it covers data collected (account, pet, photos, location, chat, payments, ad counters, analytics), purposes and legal bases, retention, processors with transfers (Supabase, Vercel, Stripe, AI provider, Google Analytics and Firebase) and user rights (access, export, delete).
+- [x] #2 Given analytics, when the cookie policy is drafted, then it lists strictly necessary storage and GA4 and Firebase identifiers (such as _ga) with purpose, duration and the consent mechanism.
+- [x] #3 Given the terms, when drafted, then they cover acceptable use, scams, finder rewards and escrow, boosts, subscriptions and contributions (not described as charitable donations unless a qualifying entity exists), ad labelling, shelter terms and liability.
+- [x] #4 Given the imprint and accessibility statement, when drafted, then company details are marked as client-supplied and the EAA statement template is ready; all pages exist in SL and EN and are marked requires client and legal review.
 <!-- AC:END -->
 
 ## Implementation Notes
 
 <!-- SECTION:NOTES:BEGIN -->
 2026-10-14 content-strategist: drafts are being written now against the draft voice guide and glossary (TASK-2, awaiting native review and client approval). Status stays To Do until TASK-2 is approved. Copy files: docs/content/pages/ and docs/content/legal/.
+
+2026-10-15: drafts delivered in docs/content/legal/ (privacy-policy v0.2, cookie-policy, terms-of-use, imprint, accessibility-statement), SL + EN, each starting with 'Draft — requires client/legal review.', company facts as [naročnik: …] markers, review notes per file. Brief v0.7 applied (no QR tags, no Shelter Pro, Vet Partner). Status stays To Do until TASK-2 is approved; then client and legal review.
 <!-- SECTION:NOTES:END -->
 
 ## Packet
