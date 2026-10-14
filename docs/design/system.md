@@ -2,7 +2,7 @@
 doc: design-system
 title: Design system (slice)
 source: 03§Brand and visual language
-version: 0.3
+version: 0.4
 status: Draft, direction A (Lagoon) chosen by the client
 date: 2026-10-14
 owner: Design Lead
@@ -447,7 +447,7 @@ Web = shadcn/ui, mobile = React Native Reusables (NativeWind). Same names, same 
 | Variants | `default` (primary, teal), `secondary` (tonal), `ghost` (text with hover tone), `text` (teal text, for the quiet second action), `destructive`. The shadcn `outline` variant is not used; map it to `secondary`. |
 | Sizes | `sm` 44, `md` 48, `lg` 56 px high. Padding x 18 / 24 / 32. Icon button 44x44 with a 24 px icon. |
 | Type | 16 (17 on lg) bold, label never wraps. Icon 20 px before the label, gap 8. |
-| Shape | Full pill, no border, no shadow. |
+| Shape | Full pill, no border, no shadow. Labels never truncate: at large OS text sizes they wrap to a second line and the button grows in height (min-height stays 44/48/56). |
 | Rule | One `default` button per view. On mobile the primary is `lg` and full width, with the `text` button under it. |
 
 ## 10.3 Fields
@@ -492,7 +492,7 @@ Web = shadcn/ui, mobile = React Native Reusables (NativeWind). Same names, same 
 
 | Component | Spec |
 |---|---|
-| Bottom navigation | 88 px (including 20 px safe area), `card` surface, no top border, at most 4 items: **Zemljevid, Opozorila, Prijavi (action), Profil**. Icon 26 + label 13 bold. Active = `primary` colour and fill icon. Prijavi is a 48 px `primary` circle with `plus`. No count badges (counts live on the alerts screen). |
+| Bottom navigation | 88 px (including 20 px safe area), `card` surface, no top border, at most 4 items: **Zemljevid, Sporočila (inbox: conversations and notifications), Prijavi (action), Profil**. Icon 26 + label 13 bold. Active = `primary` colour and fill icon. Prijavi is a 48 px `primary` circle with `plus`. No count badges (counts live inside the inbox). All four labels sit on one baseline, so the 48 px Prijavi circle rises above the row (about 10 px). Nav label text scaling is capped at 1.3x (`maxFontSizeMultiplier`); the bar grows in height rather than clipping. |
 | Floating area control | `card` pill, 48 high, `shadow-md`: map-pin, "Ljubljana, 10 km", and a 32 px `secondary` circle with the filters icon. It is the only control on the map; it opens the filter sheet (status pills, species, radius). No locate button. |
 | Bottom sheet | `card`, top radius 28, grabber 40x5, `shadow-lg`, 20 px side padding. Snap points: peek about 40 % of the screen, full 92 %. Scrim behind modals. |
 | Flow top bar | 56 px: back (icon button), 4 step bars (4 px high, gap 6, `primary` for done, `muted` for the rest, `role="progressbar"`), close. No title. |
@@ -507,7 +507,7 @@ Top bar, then (optional) a photo, an h1 question (34/40), the answer or control 
 
 | Component | Spec |
 |---|---|
-| Toast | `popover` surface, radius 20, `shadow-lg`, 15/22, status icon, 5 s, dismissible, announced politely. |
+| Toast | `popover` surface, radius 20, `shadow-pop` (one shadow only; do not stack shadows), 15/22, status icon, 5 s, dismissible, announced politely. |
 | Dialog | `popover`, radius 24, `scrim`, h2, text, buttons stacked (primary then `text`). Focus trapped, Escape closes. |
 | Timeline (sightings) | Plain list: status word with date and time, then the sentence (16/24), 28 px between items. No cards, no line. |
 | Gallery | Main photo radius 32, thumbs 88x72 radius 16, inactive thumbs at 55 % opacity. |
