@@ -240,6 +240,8 @@ SL categories: one (1, 101 …), two (2, 102 …), few (3, 4, 103 …), other (0
 | prikaz (impression) | 1 prikaz | 2 prikaza | 3 prikazi | 5 prikazov | |
 | klik (click) | 1 klik | 2 klika | 3 kliki | 5 klikov | |
 
+Inserted names (pets, areas, people) stay in the nominative; see voice guide §3.4a.
+
 Verbs agree with the count: "1 žival je spet doma", "2 živali sta spet doma", "3 živali so spet doma", "5 živali je spet doma". Put the verb inside the ICU message.
 
 Relative time ("pred 5 minutami", "pred 2 urama", "včeraj") comes from `formatRelative` (Intl). Do not build it by hand.

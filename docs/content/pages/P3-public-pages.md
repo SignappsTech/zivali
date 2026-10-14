@@ -3,9 +3,9 @@ source: 03§P3; docs/design/pages/P3-public-pages.md; 02§FR-035, §Content, SEO
 page: P3 Public pages (home and content templates)
 stories: TASK-27, TASK-72 (FR-035)
 copy-for: docs/design/pages/P3-public-pages.md
-version: 0.1
+version: 0.2
 status: Draft, native Slovenian review and client approval pending (TASK-27 AC#4)
-date: 2026-10-14
+date: 2026-10-15
 ---
 
 # P3 Public pages: copy
@@ -72,15 +72,15 @@ Tiles use the row strings from P4 (status word, relative time, distance band).
 
 | Key | SL | EN |
 |---|---|---|
-| pages.home.shelters_title | Za zavetišča in veterinarje | For shelters and vets |
-| pages.home.shelters_body | Najdene živali objavite hitro, mi pa jih primerjamo z vsemi prijavami izgubljenih živali. Osnovne funkcije so brezplačne. | Publish found animals quickly and we compare them with every lost-pet report. The basic features are free. |
+| pages.home.shelters_title | Za zavetišča, veterinarje in občine | For shelters, vets and municipalities |
+| pages.home.shelters_body | Najdene živali objavite hitro, mi pa jih primerjamo z vsemi prijavami izgubljenih živali. Za zavetišča in občine je vse brezplačno, za vedno. | Publish found animals quickly and we compare them with every lost-pet report. For shelters and municipalities everything is free, forever. |
 | pages.home.shelters_action | Več za zavetišča | More for shelters |
 
 ## 6. Keep it free (hidden until M4, flag `transparency_page`)
 
 | Key | SL | EN |
 |---|---|---|
-| pages.home.free_body | Najdimo je brezplačno za vse, ki žival iščejo ali so jo našli. Delovanje pokrivajo označeni oglasi lokalnih partnerjev in prostovoljni prispevki. | Najdimo is free for everyone who is searching for a pet or has found one. Clearly labelled ads from local partners and voluntary contributions cover the costs. |
+| pages.home.free_body | Naš cilj je, da se živali vrnejo domov, zato je vse, kar k temu pripomore, brezplačno za vse in za vedno. Delovanje pokrivajo označeni oglasi lokalnih partnerjev in prostovoljni prispevki. | Our goal is getting animals home, so everything that helps is free for everyone, forever. Clearly labelled ads from local partners and voluntary contributions keep the service running. |
 | pages.home.free_link | Kam gre denar | Where the money goes |
 
 ## Home SEO
@@ -167,9 +167,9 @@ Vklopite opozorila za svoje domače območje (privzeto 5 km) in obvestili vas bo
 
 ### Kaj je brezplačno
 
-Prijava, iskanje ujemanj, pogovor, opozorila in plakat so brezplačni in takšni bodo tudi ostali.
+Naš cilj je, da se živali vrnejo domov. Zato je vse, kar k temu pripomore, brezplačno za vse in za vedno: prijava izgubljene, najdene ali opažene živali, zemljevid in opozorila, iskanje ujemanj, pogovor, plakat s QR kodo, deljenje in preverjanje čipa. Za zavetišča in občine je brezplačno vse.
 
-Delovanje pokrivajo oglasi lokalnih partnerjev, vedno označeni z besedo **Oglas**, in prostovoljni prispevki. Oglasov nikoli ne prikažemo med prijavo izgubljene ali najdene živali, v pogovoru ali pri plačilu.
+Denar potrebujemo le za delovanje: strežnike, zemljevide in pošiljanje opozoril. Pokrivajo ga oglasi lokalnih partnerjev, vedno označeni z besedo **Oglas**, in prostovoljni prispevki. Oglasov nikoli ne prikažemo med prijavo izgubljene ali najdene živali, v pogovoru ali pri plačilu.
 
 **Closing actions** primary "Prijavi izgubljeno žival", text button "Prijavi najdeno žival".
 
@@ -229,9 +229,9 @@ Turn on alerts for your home area (5 km by default) and we will let you know whe
 
 ### What is free
 
-Reporting, matching, messaging, alerts and the poster are free, and they will stay free.
+Our goal is getting animals home. So everything that helps is free for everyone, forever: reporting a lost, found or sighted animal, the map and alerts, matching, messaging, the poster with its QR code, sharing and chip lookup. For shelters and municipalities, everything is free.
 
-Costs are covered by ads from local partners, always labelled **Ad**, and by voluntary contributions. We never show ads while you report a lost or found animal, in conversations or during payment.
+We only need money to keep the service running: servers, maps and sending alerts. Ads from local partners, always labelled **Ad**, and voluntary contributions cover it. We never show ads while you report a lost or found animal, in conversations or during payment.
 
 **Closing actions** primary "Report a lost pet", text button "Report a found animal".
 
@@ -393,7 +393,7 @@ Alt text: no images. If an inline image is added later, it is decorative unless 
 
 **h1** Za zavetišča, veterinarje in občine
 
-**Lede** Pomagamo vam hitreje najti lastnike najdenih živali, z manj dela. Osnovne funkcije so brezplačne.
+**Lede** Pomagamo vam hitreje najti lastnike najdenih živali, z manj dela. Za zavetišča in občine je vse brezplačno, za vedno.
 
 ### Zakaj Najdimo
 
@@ -411,9 +411,13 @@ Alt text: no images. If an inline image is added later, it is decorative unless 
 - **Značka Preverjeno zavetišče** po preverjanju organizacije.
 - **Opomniki za roke hrambe**, ki jih nastavite sami.
 
-### Brezplačno, brez obveznosti
+### Brezplačno, za vedno
 
-Objava najdenih živali, iskanje ujemanj, pogovor z lastniki in preverjanje čipa so brezplačni. Za večja zavetišča in občine bomo pozneje ponudili paket Pro s povezavo API in poročili. Osnovne funkcije ostanejo brezplačne.
+Zavetišča in občine uporabljajo vse brezplačno in brez omejitev: portal, množično nalaganje in uvoz CSV, ujemanja, povezavo API, analitiko, stran za posvojitve in poročila za občine. Plačljivega paketa za zavetišča ni in ga ne bo. Naš cilj je, da se živali vrnejo domov, ne dobiček.
+
+### Za veterinarje
+
+Vse, kar pomaga vrniti žival domov, je brezplačno tudi za veterinarske ambulante: prijava najdenih živali, ki vam jih prinesejo, preverjanje čipa, ujemanja in pogovor z lastniki. Ambulante, ki želijo večjo prepoznavnost v svoji okolici, lahko izberejo [Veterinarski partner](/oglasevanje#veterinarski-partner).
 
 ### Sodelujte v pilotu
 
@@ -429,7 +433,7 @@ Najdimo ne nadomešča zakonskih obveznosti zavetišč in občin ter ne daje pra
 
 **h1** For shelters, vets and municipalities
 
-**Lede** We help you find the owners of found animals faster, with less work. The basic features are free.
+**Lede** We help you find the owners of found animals faster, with less work. For shelters and municipalities everything is free, forever.
 
 ### Why Najdimo
 
@@ -447,9 +451,13 @@ Najdimo ne nadomešča zakonskih obveznosti zavetišč in občin ter ne daje pra
 - **Verified shelter badge** once we have checked your organisation.
 - **Holding-period reminders** that you set yourself.
 
-### Free, no strings attached
+### Free, forever
 
-Publishing found animals, matching, talking to owners and chip lookup are free. Later we will offer a Pro plan for larger shelters and municipalities, with an API connection and reports. The basic features stay free.
+Shelters and municipalities use everything for free, with no limits: the portal, bulk upload and CSV import, matching, the API connection, analytics, the adoption page and municipality reports. There is no paid shelter plan and there will not be one. Our goal is getting animals home, not profit.
+
+### For vets
+
+Everything that helps an animal home is free for vet practices too: reporting found animals brought to you, chip lookup, matches and talking to owners. Practices that want more visibility in their area can choose [Vet Partner](/en/advertise#vet-partner).
 
 ### Join the pilot
 
@@ -466,7 +474,7 @@ Najdimo does not replace the legal duties of shelters and municipalities and doe
 | Field | SL | EN |
 |---|---|---|
 | Meta title | Za zavetišča: brezplačna objava najdenih živali · Najdimo | For shelters: publish found animals free · Najdimo |
-| Meta description | Najdene živali objavite v nekaj minutah, mi pa poiščemo ljudi, ki jih iščejo. Množično nalaganje, uvoz CSV in preverjanje čipa. Pilot v Ljubljani. | Publish found animals in minutes and we find the people searching for them. Bulk upload, CSV import and chip lookup. Pilot in Ljubljana. |
+| Meta description | Najdene živali objavite v nekaj minutah, mi pa poiščemo ljudi, ki jih iščejo. Za zavetišča in občine brezplačno, za vedno. Pilot v Ljubljani. | Publish found animals in minutes and we find the people searching for them. Free for shelters and municipalities, forever. Pilot in Ljubljana. |
 | Focus keyword | zavetišče za živali | animal shelter Slovenia |
 | Slug | `/za-zavetisca` | `/en/for-shelters` |
 | Structured data | `WebPage` + `BreadcrumbList` | same |
@@ -485,7 +493,7 @@ Alt text: no images. If a screenshot of the portal is added in M3, alt: "Portal 
 
 ### Kaj nas vodi
 
-- **Jedro je brezplačno, za vedno:** prijava, ujemanja, pogovor, opozorila in plakat.
+- **Vse, kar pomaga vrniti žival domov, je brezplačno, za vedno:** prijava, ujemanja, pogovor, opozorila, plakat in preverjanje čipa.
 - **Zasebnost je privzeta:** telefonske številke in točne lokacije niso nikoli javne.
 - **Iskreni smo:** ne obljubljamo, česar ne moremo izpolniti, in pokažemo prave številke, tudi ko so majhne.
 - **Varnost pred prevarami** je del vsakega koraka.
@@ -496,7 +504,7 @@ Najdimo razvija ekipa podjetja Signapps iz Slovenije. Najdimo je delovno ime sto
 
 ### Kako se financiramo
 
-Delovanje pokrivajo jasno označeni oglasi lokalnih partnerjev in prostovoljni prispevki. Ko je vaša žival spet doma, lahko pustite prispevek v zahvalo. Prispevek je prostovoljno plačilo za delovanje storitve in ne vpliva na nobeno funkcijo.
+Naš cilj je, da se živali vrnejo domov; denar potrebujemo le za delovanje. Pokrivajo ga jasno označeni oglasi lokalnih partnerjev, Veterinarski partner za ambulante in prostovoljni prispevki. Ko je vaša žival spet doma, lahko pustite prispevek v zahvalo. Prispevek je prostovoljno plačilo za delovanje storitve in ne vpliva na nobeno funkcijo.
 
 Oglašujete lahko tudi vi: [Oglašujte pri nas](/oglasevanje).
 
@@ -512,7 +520,7 @@ Pišite nam na [naročnik: e-naslov za podporo]. Podatki o podjetju so v [impres
 
 ### What guides us
 
-- **The core is free, for good:** reporting, matching, messaging, alerts and the poster.
+- **Everything that helps an animal home is free, forever:** reporting, matching, messaging, alerts, the poster and chip lookup.
 - **Privacy by default:** phone numbers and exact locations are never public.
 - **We are honest:** we do not promise what we cannot deliver, and we show real numbers, even when they are small.
 - **Protection from scams** is part of every step.
@@ -523,7 +531,7 @@ Najdimo is built by the team at Signapps in Slovenia. Najdimo is the service's w
 
 ### How we are funded
 
-Costs are covered by clearly labelled ads from local partners and by voluntary contributions. When your pet is home again, you can leave a thank-you contribution. A contribution is a voluntary payment towards running the service and does not change any feature.
+Our goal is getting animals home; we only need money to keep running. It comes from clearly labelled ads from local partners, Vet Partner for clinics and voluntary contributions. When your pet is home again, you can leave a thank-you contribution. A contribution is a voluntary payment towards running the service and does not change any feature.
 
 You can advertise too: [Advertise with us](/en/advertise).
 
@@ -555,7 +563,7 @@ Section anchor `#financiranje` / `#funding` is the M2 link target of the support
 
 | # | SL question | SL answer | EN question | EN answer |
 |---|---|---|---|---|
-| 1 | Ali je Najdimo brezplačno? | Da. Prijava, iskanje ujemanj, pogovor, opozorila in plakat so brezplačni. Delovanje pokrivajo označeni oglasi in prostovoljni prispevki. | Is Najdimo free? | Yes. Reporting, matching, messaging, alerts and the poster are free. Labelled ads and voluntary contributions cover the costs. |
+| 1 | Ali je Najdimo brezplačno? | Da, vse, kar pomaga vrniti žival domov, je brezplačno za vse in za vedno: prijava, ujemanja, pogovor, opozorila, plakat in preverjanje čipa. Delovanje pokrivajo označeni oglasi in prostovoljni prispevki. | Is Najdimo free? | Yes. Everything that helps an animal home is free for everyone, forever: reporting, matching, messaging, alerts, the poster and chip lookup. Labelled ads and voluntary contributions keep it running. |
 | 2 | Zakaj za prijavo izgubljene živali potrebujem račun? | Da vas lahko obvestimo o možnem ujemanju in da vam lahko ljudje pišejo, ne da bi videli vašo telefonsko številko. Vse, kar vnesete pred vpisom, se ohrani. | Why do I need an account to report a lost pet? | So we can tell you about possible matches and people can message you without seeing your phone number. Everything you enter before signing in is kept. |
 | 3 | Zakaj je na zemljevidu prikazano le približno območje? | Da vas zaščitimo. Namesto točnega kraja prikažemo območje s polmerom vsaj 500 metrov, pri najdenih in opaženih živalih vsaj 150 metrov. Točno lokacijo vidite samo vi. | Why does the map only show an approximate area? | To protect you. Instead of the exact spot, we show an area with a radius of at least 500 metres, or at least 150 metres for found and sighted animals. Only you see the exact location. |
 | 4 | Ali bo številka čipa javna? | Ne. Številko čipa vpišite v prijavo ali profil živali, a je nikoli ne prikažemo javno. Uporabimo jo samo za iskanje ujemanj. | Will the chip number be public? | No. Add the chip number to your report or pet profile; we never show it publicly. We only use it to find matches. |
@@ -598,7 +606,8 @@ Section anchor `#financiranje` / `#funding` is the M2 link target of the support
 
 | # | SL question | SL answer | EN question | EN answer |
 |---|---|---|---|---|
-| 19 | Ali je Najdimo za zavetišča brezplačno? | Da. Objava najdenih živali, iskanje ujemanj in pogovor z lastniki so brezplačni. Portal za zavetišča pripravljamo. Če želite sodelovati v pilotu, preberite [Za zavetišča](/za-zavetisca). | Is Najdimo free for shelters? | Yes. Publishing found animals, matching and talking to owners are free. We are building a shelter portal. If you would like to join the pilot, see [For shelters](/en/for-shelters). |
+| 19 | Ali je Najdimo za zavetišča brezplačno? | Da, vse in za vedno, tudi portal, uvoz in poročila za občine. Portal za zavetišča pripravljamo. Če želite sodelovati v pilotu, preberite [Za zavetišča](/za-zavetisca). | Is Najdimo free for shelters? | Yes, everything, forever, including the portal, imports and municipality reports. We are building the shelter portal. If you would like to join the pilot, see [For shelters](/en/for-shelters). |
+| 20 | Ali morajo veterinarji kaj plačati? | Ne za nič, kar pomaga vrniti žival domov: prijava najdene živali, preverjanje čipa, ujemanja in pogovor so brezplačni. Ambulante, ki želijo večjo prepoznavnost, lahko izberejo [Veterinarski partner](/oglasevanje#veterinarski-partner). | Do vets have to pay anything? | Not for anything that helps an animal home: reporting a found animal, chip lookup, matches and messaging are free. Practices that want more visibility can choose [Vet Partner](/en/advertise#vet-partner). |
 
 **Closing note** SL: Niste našli odgovora? Pišite nam na [naročnik: e-naslov za podporo]. EN: Did not find your answer? Write to us at [client: support email address].
 

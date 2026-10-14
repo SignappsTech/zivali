@@ -27,7 +27,7 @@ The product name is **Najdimo** (working name, Q-001). Tagline: **Spet doma.** /
 
 # 2. Mission first
 
-Our goal is getting animals home. Money only keeps the service running. Everything that helps an animal home is free for everyone, forever: reporting lost, found and sighted animals, the map and alerts, matching, messaging, the poster with its QR code, sharing and chip lookup. Copy never suggests that paying improves someone's chances, and money is never mentioned in a match, an alert or a reunion message. Paid extras (Boost, Premium, Podpornik, Vet Partner, ads) are described as optional, after the help.
+Our goal is getting animals home. Money only keeps the service running. Everything that helps an animal home is free for everyone, forever: reporting lost, found and sighted animals, the map and alerts, matching, messaging, the poster with its QR code, sharing and chip lookup. Copy never suggests that the free search is not enough (Boost is extra reach on top of an alert radius that already works), and money is never mentioned in a match, an alert or a reunion message. Paid extras (Boost, Premium, Podpornik, Vet Partner, ads) are described as optional, after the help.
 
 # 2a. Voice: a kind neighbour who knows what to do
 
@@ -81,6 +81,10 @@ Slovenian has four plural forms. Every string with a number uses ICU plural with
 | 0, 5 to 100, 105 … | other | 5 živali je spet doma |
 
 Case matters too: "Prikaži 1 prijavo / 2 prijavi / 3 prijave / 5 prijav" (accusative). The glossary lists the four forms for every counted noun.
+
+## 3.4a Names are never declined
+
+Pet names, area names and people's display names are inserted by software, which cannot decline them. Put them only where the nominative is correct: at the start of a sentence as the subject ("Luna je spet doma."), after a colon or middle dot ("Možno ujemanje · Luna", "Območje: Šiška"), or in apposition after a noun ("žival z imenom Luna", "v okolici kraja Šiška"). Never write templates like "Morda smo našli {name}" (needs the accusative "Luno") or "Novo sporočilo o {name}" (needs the locative "Luni"). The examples in §4 and §5 that show declined names illustrate tone only; the final strings are in the content slices and in `docs/content/notifications-and-emails.md`.
 
 ## 3.5 Formatting
 

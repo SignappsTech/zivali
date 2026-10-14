@@ -1,0 +1,128 @@
+---
+source: 03§P16; docs/design/pages/P16-auth.md
+page: P16 Sign in and account creation
+stories: TASK-9 (FR-001)
+copy-for: docs/design/pages/P16-auth.md
+version: 0.1
+status: Draft, native Slovenian review pending
+date: 2026-10-15
+---
+
+# P16 Auth: copy
+
+Namespace `auth`. Sign-in is **Vpis** / "vpišite se" everywhere ("Prijava" is the animal report). Auth emails are in `docs/content/notifications-and-emails.md`.
+
+# 1. Sign in
+
+| Key | SL | EN |
+|---|---|---|
+| auth.signin_title | Vpišite se | Sign in |
+| auth.email_label | E-naslov | Email address |
+| auth.password_label | Geslo | Password |
+| auth.password_show | Pokaži geslo | Show password |
+| auth.password_hide | Skrij geslo | Hide password |
+| auth.forgot_link | Pozabljeno geslo? | Forgot your password? |
+| auth.signin_button | Vpiši se | Sign in |
+| auth.or | ali | or |
+| auth.google | Nadaljuj z Googlom | Continue with Google |
+| auth.apple | Nadaljuj z Applom | Continue with Apple |
+| auth.to_signup | Ustvari račun | Create an account |
+
+Apple and Google buttons: where the platform renders its own localised button (iOS `ASAuthorizationAppleIDButton`, Apple JS, Google Identity Services), use the platform text; the strings above are the fallback.
+
+# 2. Create account
+
+| Key | SL | EN |
+|---|---|---|
+| auth.signup_title | Ustvarite račun | Create an account |
+| auth.name_label | Ime | Name |
+| auth.name_help | To ime vidijo ljudje, s katerimi se pogovarjate. Lahko je tudi vzdevek. | People you talk to see this name. A nickname is fine. |
+| auth.password_hint | Najmanj 8 znakov. Daljše geslo ali več besed je varnejše. | At least 8 characters. A longer password or several words is safer. |
+| auth.terms_sentence | Z ustvaritvijo računa se strinjate s [pogoji uporabe](/pogoji-uporabe). Kako ravnamo s podatki, piše v [politiki zasebnosti](/zasebnost). | By creating an account you agree to the [terms of use](/en/terms). How we handle your data is explained in the [privacy policy](/en/privacy). |
+| auth.signup_button | Ustvari račun | Create account |
+| auth.to_signin | Že imam račun | I already have an account |
+
+Minimum password length (8) to be confirmed by the tech-lead (Supabase Auth setting).
+
+# 3. Check your email and verified
+
+| Key | SL | EN |
+|---|---|---|
+| auth.check_title | Preverite e-pošto | Check your email |
+| auth.check_body | Povezavo smo poslali na {email}. Odprite jo, da potrdite e-naslov. | We have sent a link to {email}. Open it to confirm your email address. |
+| auth.check_open_mail | Odpri e-pošto | Open email app |
+| auth.check_resend | Pošlji znova | Resend |
+| auth.check_resend_wait | Znova lahko pošljete čez {seconds} s. | You can resend in {seconds} s. |
+| auth.check_change | Spremeni e-naslov | Change email address |
+| auth.check_spam | Ne najdete sporočila? Preverite mapo z neželeno pošto. | Cannot find it? Check your spam folder. |
+| auth.verified_title | E-naslov je potrjen | Your email address is confirmed |
+| auth.verified_body | Zdaj lahko prejemate opozorila in se pogovarjate. | You can now get alerts and send messages. |
+| auth.verified_continue | Nadaljuj | Continue |
+
+# 4. Forgot and new password
+
+| Key | SL | EN |
+|---|---|---|
+| auth.forgot_title | Pozabljeno geslo | Forgot your password |
+| auth.forgot_body | Vpišite e-naslov in poslali vam bomo povezavo za novo geslo. | Enter your email address and we will send you a link to set a new password. |
+| auth.forgot_button | Pošlji povezavo | Send link |
+| auth.forgot_done | Če za ta e-naslov obstaja račun, smo nanj poslali povezavo. Zaradi varnosti je odgovor vedno enak. | If there is an account for this address, we have sent a link to it. For your security, this answer is always the same. |
+| auth.newpass_title | Novo geslo | New password |
+| auth.newpass_label | Novo geslo | New password |
+| auth.newpass_button | Shrani geslo | Save password |
+| auth.newpass_done | Geslo je spremenjeno. | Your password has been changed. |
+
+# 5. Contextual gate
+
+| Key | SL | EN | Opened from |
+|---|---|---|---|
+| auth.gate_title_report | Za objavo potrebujete račun | You need an account to publish | report lost (P6 uses its own body) |
+| auth.gate_title_contact | Za pogovor potrebujete račun | You need an account to message | contact on a listing (P9) |
+| auth.gate_title_alerts | Za opozorila potrebujete račun | You need an account for alerts | alerts |
+| auth.gate_title_tip | Za prispevek potrebujete račun | You need an account to contribute | tip (P15) |
+| auth.gate_title_pets | Za shranjevanje živali potrebujete račun | You need an account to save pets | My pets |
+| auth.gate_kept | Vse, kar ste vnesli, ostane. | Everything you entered is kept. | all |
+| auth.gate_signin | Vpiši se | Sign in | |
+| auth.gate_signup | Ustvari račun | Create an account | |
+| auth.gate_cancel | Prekliči | Cancel | |
+| auth.gate_unverified_title | Potrdite svoj e-naslov | Confirm your email address | unverified variant |
+| auth.gate_unverified_body | Povezavo smo poslali na {email}. Osnutki medtem delujejo. | We have sent a link to {email}. Your drafts keep working in the meantime. | |
+| auth.gate_unverified_resend | Pošlji znova | Resend | |
+
+# 6. Account linking
+
+| Key | SL | EN |
+|---|---|---|
+| auth.link_title | Povežete ta način vpisa z računom? | Link this sign-in to your account? |
+| auth.link_body | Račun z e-naslovom {email} že obstaja. Če ju povežete, se lahko vpisujete na oba načina. | An account with {email} already exists. If you link them, you can sign in either way. |
+| auth.link_confirm | Poveži | Link |
+| auth.link_cancel | Prekliči | Cancel |
+| auth.apple_relay | e-naslov skriva Apple | hidden by Apple |
+
+# 7. Errors and states
+
+| Key | SL | EN |
+|---|---|---|
+| auth.error_credentials | E-naslov ali geslo ni pravilno. | The email address or password is not correct. |
+| auth.error_email_invalid | Vpišite veljaven e-naslov, na primer ime@primer.si. | Enter a valid email address, for example name@example.com. |
+| auth.error_password_short | Geslo mora imeti najmanj 8 znakov. | The password must have at least 8 characters. |
+| auth.error_name_required | Vpišite ime ali vzdevek. | Enter a name or nickname. |
+| auth.error_email_taken | Račun s tem e-naslovom že obstaja. Vpišite se ali ponastavite geslo. | An account with this email address already exists. Sign in or reset your password. |
+| auth.error_rate_limited | Preveč poskusov. Poskusite znova čez nekaj minut. | Too many attempts. Please try again in a few minutes. |
+| auth.provider_cancelled | Vpis je bil preklican. | Sign-in was cancelled. |
+| auth.session_title | Znova se vpišite | Please sign in again |
+| auth.session_body | Zaradi varnosti vas moramo znova vpisati. Vaš osnutek je shranjen. | For your security, please sign in again. Your draft is saved. |
+| auth.banned_title | Račun je zaprt | This account is closed |
+| auth.banned_body | Račun smo zaprli zaradi kršitve pogojev uporabe. Razlog: {reason}. Če menite, da gre za napako, nam pišite. | We closed this account because the terms of use were broken. Reason: {reason}. If you think this is a mistake, please write to us. |
+
+Captcha failure: `errors.CAPTCHA_FAILED` (P1). `auth.banned_*` is used from M4.
+
+# 8. SEO and alt text
+
+| Page | SL title | EN title | Indexing |
+|---|---|---|---|
+| Sign in `/vpis` (CHANGE from `/prijava-v-racun`) | Vpis · Najdimo | Sign in · Najdimo | `noindex` |
+| Sign up `/registracija` | Ustvarite račun · Najdimo | Create an account · Najdimo | `noindex` |
+| Reset `/pozabljeno-geslo` | Pozabljeno geslo · Najdimo | Forgot password · Najdimo | `noindex` |
+
+No meta descriptions needed (not indexed). Alt text: logo `alt=""` beside the wordmark; provider glyphs are part of the button's accessible name.

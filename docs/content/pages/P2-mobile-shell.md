@@ -3,9 +3,9 @@ source: 03§P2; docs/design/pages/P2-mobile-shell.md
 page: P2 Mobile shell
 stories: TASK-12 (FR-037)
 copy-for: docs/design/pages/P2-mobile-shell.md
-version: 0.1
+version: 0.2
 status: Draft, native Slovenian review pending
-date: 2026-10-14
+date: 2026-10-15
 ---
 
 # P2 Mobile shell: copy
@@ -17,7 +17,7 @@ Strings for the native frame. Shared buttons (`common`) and the `errors` catalog
 | Key | SL | EN | Notes |
 |---|---|---|---|
 | nav.tab_map | Zemljevid | Map | |
-| nav.tab_inbox | Sporočila | Inbox | Holds conversations and notifications |
+| nav.tab_inbox | Sporočila | Inbox | Holds conversations and notifications (not "Opozorila": alerts live in Profile and inside the inbox) |
 | nav.tab_report | Prijavi | Report | Announced as a button: `nav.tab_report_a11y` |
 | nav.tab_report_a11y | Prijavi žival | Report an animal | Accessible name |
 | nav.tab_profile | Profil | Profile | |
@@ -83,7 +83,15 @@ Each primer: h2, two sentences, primary, text button. The fallback note appears 
 | deeplink.invalid_body | Povezava je morda nepopolna. Aktualne prijave so na zemljevidu. | The link may be incomplete. Current reports are on the map. |
 | deeplink.invalid_action | Odpri zemljevid | Open the map |
 
-Removed or closed reports use the 410 strings from P1 §5.3.
+Removed or closed reports (410) and invalid links in the app:
+
+| Screen | Title | Body | Action |
+|---|---|---|---|
+| Report gone (410) | `errors.page_410_title` "Ta prijava ni več na voljo" / "This report is no longer available" | `errors.page_410_body` (P1 §5.3) | one primary: `common.open_map` "Odpri zemljevid" / "Open the map" |
+| Invalid link | `deeplink.invalid_title` | `deeplink.invalid_body` | one primary: `deeplink.invalid_action` "Odpri zemljevid" / "Open the map" |
+| Not found (404) | `errors.page_404_title` | `errors.page_404_body` | one primary: `common.open_map` |
+
+In the app the map is home, so these screens have no "Na začetno stran" button and no second action. We use "Odpri zemljevid" rather than "Nazaj na zemljevid": after a deep link there is no previous screen to go back to. The system back gesture and the top-bar back button still work.
 
 # 6. Shared mobile patterns
 
