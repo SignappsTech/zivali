@@ -1,7 +1,7 @@
 ---
 doc_id: DOC-01
 title: Project Brief
-version: 0.8
+version: 0.9
 status: Draft
 date: 2026-10-14
 owner: Project Lead
@@ -13,7 +13,7 @@ approvals:
 
 # Overview
 
-Izgubljene živali (working name) is a web and mobile app that reunites lost cats and dogs with their owners in Slovenia. Owners report a lost pet. Finders, passers-by and shelters report found or sighted animals. The system matches the two sides by **chip number, photo similarity, location, time and attributes**, then connects the people through in-app chat. Today, lost-pet searching in Slovenia happens in scattered Facebook groups and on paper posters. Dogs have a central chip register (CRPsi), but cats have none, and shelters have no easy way to reach owners. Internal product of Signapps; the plan sketch is in `/readme.md`.
+**Najdimo** (formerly the working name Izgubljene živali) is a web and mobile app that reunites lost cats and dogs with their owners in Slovenia. Owners report a lost pet. Finders, passers-by and shelters report found or sighted animals. The system matches the two sides by **chip number, photo similarity, location, time and attributes**, then connects the people through in-app chat. Today, lost-pet searching in Slovenia happens in scattered Facebook groups and on paper posters. Dogs have a central chip register (CRPsi), but cats have none, and shelters have no easy way to reach owners. Internal product of Signapps; the plan sketch is in `/readme.md`.
 
 # Problem
 
@@ -152,7 +152,7 @@ Izgubljene živali (working name) is a web and mobile app that reunites lost cat
 
 | ID | Question | Owner | Blocking | Status |
 |---|---|---|---|---|
-| Q-001 | Final app name and brand | Client + design-lead | No (working name used) | Open |
+| Q-001 | Final app name and brand | Client + design-lead | No | Decided 2026-10-15: **Najdimo**; domain and trademark check still to do |
 | Q-002 | Supabase, Vercel and Stripe credentials or connectors for cloud deploy | Client | Blocks deploy only | Open |
 | Q-003 | Anonymous found reports: rate limit only vs phone verification | Client | No (default: anonymous with rate limit and captcha) | Open |
 | Q-004 | CRPsi cooperation / API access | Client | No | Open |
@@ -176,3 +176,4 @@ Izgubljene živali (working name) is a web and mobile app that reunites lost cat
 | 0.6 | 2026-10-15 | Explicit free-forever list (poster PDF + QR, printable QR tag PDF, chip lookup); physical tag near cost |
 | 0.7 | 2026-10-15 | QR/NFC tags removed from scope (physical and printable); the poster QR links to the public listing only |
 | 0.8 | 2026-10-15 | Monetisation model: voluntary support (€5 suggested), Boost €4.99, Premium €2.99/€24.99 (unlimited pets, AI extras, ad-free); free = 2 pets + basic AI |
+| 0.9 | 2026-10-15 | Client decisions: name Najdimo; formal vikanje, "Vpis" for sign-in; owners may remove the Vet Partner poster line; Partners page promises a reply within 2 working days and better terms for founding partners |

@@ -7,6 +7,7 @@ status: To Do
 assignee:
   - '@tech-lead'
 created_date: '2026-10-14 22:10'
+updated_date: '2026-10-14 22:37'
 labels:
   - story
   - 'req:FR-028'
@@ -34,6 +35,7 @@ The plan only has value if clinics get visible and can see results; this builds 
 - [ ] #3 Given each month ends, when the report runs, then the clinic owner gets profile views, clicks, ad impressions and reunions in the area in the portal and by email as PDF and CSV, aggregate only, with values under 5 shown as under 5.
 - [ ] #4 Given a lapsed plan, when the period ends, then featured placement and mentions stop within 1 hour.
 - [ ] #5 Given the counts, when computed, then they come from our DB without personal data or cookies.
+- [ ] #6 Owners can switch off the Vet Partner line on their own poster (any user, not a Premium perk); the poster renders cleanly without it
 <!-- AC:END -->
 
 ## Packet
