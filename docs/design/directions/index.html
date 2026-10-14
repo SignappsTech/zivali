@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Najdimo brand and direction</title>
+<meta name="description" content="Name, tone, logo concept and the chosen visual direction (A, Lagoon) for the Najdimo lost-pet app.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:wght@400;500;600;700&family=Bricolage+Grotesque:opsz,wght@12..96,500..800&display=swap" rel="stylesheet">
+<link href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/bold/style.css" rel="stylesheet">
+<link href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css" rel="stylesheet">
+<link href="../tokens.css" rel="stylesheet">
+<link href="directions.css" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com/3.4.17"></script>
+<script src="tailwind-config.js"></script>
+<style>
+  .page { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
+  .sec { padding: 72px 0; }
+  .chosen { background: hsl(var(--secondary)); }
+  @media (max-width: 760px) { .cols-3, .cols-2 { grid-template-columns: 1fr !important; } .page { padding: 0 16px; } }
+</style>
+<script>
+  (function () { try { if (window.matchMedia('(prefers-color-scheme: dark)').matches) document.documentElement.classList.add('dark'); } catch (e) { /* default light */ } })();
+</script>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <symbol id="nj-mark" viewBox="0 0 48 48">
+    <g fill="currentColor" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round">
+      <path d="M24 45.5 C24 45.5 10.5 33.2 10.5 24.4 A13.5 13.5 0 0 1 37.5 24.4 C37.5 33.2 24 45.5 24 45.5 Z M24 17.9 A6.5 6.5 0 1 0 24 30.9 A6.5 6.5 0 1 0 24 17.9 Z"/>
+      <path d="M12.2 19.6 L11.2 5 L22.6 11.4 Z"/><path d="M35.8 19.6 L25.4 11.4 L36.8 5 Z"/>
+    </g>
+    <circle cx="24" cy="24.4" r="3.6" fill="#F7B32B"/>
+  </symbol>
+</svg>
+
+<header class="chrome">
+  <div class="flex flex-wrap items-center gap-x-5 gap-y-2 px-6 py-2 max-w-[1280px] mx-auto">
+    <span class="flex items-center gap-2 font-display font-bold text-lg"><svg class="logo-mark w-7 h-7" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg>Najdimo</span>
+    <nav class="flex items-center gap-1 text-[15px]" aria-label="Pages">
+      <a href="index.html" aria-current="page" class="px-3 py-2 rounded-full font-semibold no-underline bg-accent text-accent-foreground">Overview</a>
+      <a href="A.html" class="px-3 py-2 rounded-full font-semibold text-muted-foreground no-underline hover:bg-accent">Direction A</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+  <section class="pt-20 pb-6">
+    <div class="flex items-center gap-4">
+      <svg class="logo-mark w-16 h-16" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg>
+      <h1 class="font-display font-bold text-5xl tracking-[-0.03em] leading-none">Najdimo</h1>
+    </div>
+    <p class="font-display font-semibold text-2xl mt-8 max-w-[26ch] leading-9">Brand and chosen direction for the lost-pet app.</p>
+    <p class="text-lg text-muted-foreground mt-3 max-w-[62ch] leading-8">Calm, warm, hopeful and trustworthy for people who are often frightened and in a hurry. Readable in direct sunlight, in light and dark, and clean enough that nothing competes with the one thing to do next.</p>
+    <div class="flex flex-wrap gap-3 mt-8">
+      <a class="btn btn-primary btn-lg" href="A.html">Open style tile and screens<i class="ph-bold ph-arrow-right"></i></a>
+    </div>
+    <p class="text-sm text-muted-foreground mt-5">Draft, 2026-10-14. Direction A (Lagoon) chosen by the client. Name still open (Q-001).</p>
+  </section>
+
+  <!-- NAME -->
+  <section class="sec">
+    <h2 class="font-display font-bold text-3xl tracking-tight">Name</h2>
+    <p class="text-muted-foreground mt-3 max-w-[64ch] leading-7">Slovenian first, still easy for an English reader, short, and no diacritics in the name itself so it works in domains and links. DNS lookups only show whether a name resolves today, not whether it is free or safe to trademark. A registry and trademark check is still needed.</p>
+    <div class="grid gap-5 mt-10 cols-3" style="grid-template-columns:repeat(3,minmax(0,1fr))">
+      <article class="card chosen p-7">
+        <div class="flex items-center justify-between gap-2"><h3 class="font-display font-bold text-3xl tracking-tight">Najdimo</h3><span class="badge b-found"><i class="ph-fill ph-check-circle"></i>Recommended</span></div>
+        <p class="text-muted-foreground mt-1">"Let's find (them)." A call to the whole community.</p>
+        <p class="mt-5 text-[15px] leading-6"><b>For:</b> an active verb that matches the product (matching plus neighbours). Works for owners and finders. Seven letters, no diacritics. najdimo.si, .com, .app and .eu do not resolve today.</p>
+        <p class="mt-3 text-[15px] leading-6"><b>Against:</b> not self-explanatory to English readers, so the tagline carries the meaning.</p>
+        <p class="mt-5 text-[15px]"><b>Tagline:</b> Spet doma. / Home again.</p>
+      </article>
+      <article class="card p-7">
+        <h3 class="font-display font-bold text-2xl tracking-tight">Pot domov</h3>
+        <p class="text-muted-foreground mt-1">"The way home." A path, like the sighting trail.</p>
+        <p class="mt-5 text-[15px] leading-6"><b>For:</b> emotional, ties to the map path.</p>
+        <p class="mt-3 text-[15px] leading-6"><b>Against:</b> two words, long in a URL, "pot" also means sweat, and it names the goal rather than the action.</p>
+      </article>
+      <article class="card p-7">
+        <h3 class="font-display font-bold text-2xl tracking-tight">Spet doma</h3>
+        <p class="text-muted-foreground mt-1">"Home again." The happy ending as a name.</p>
+        <p class="mt-5 text-[15px] leading-6"><b>For:</b> warm, hopeful.</p>
+        <p class="mt-3 text-[15px] leading-6"><b>Against:</b> the English form collides with HomeAgain, an existing US pet-microchip brand. Better as the tagline.</p>
+      </article>
+      <article class="card p-7">
+        <h3 class="font-display font-bold text-2xl tracking-tight">Doma</h3>
+        <p class="text-muted-foreground mt-1">"At home." The state we want to reach.</p>
+        <p class="mt-5 text-[15px] leading-6"><b>For:</b> very short, gentle.</p>
+        <p class="mt-3 text-[15px] leading-6"><b>Against:</b> an everyday word, so weak for search and trademarks. doma.si is already taken.</p>
+      </article>
+      <article class="card p-7">
+        <h3 class="font-display font-bold text-2xl tracking-tight">Sled</h3>
+        <p class="text-muted-foreground mt-1">"Trail, trace." The tracking idea.</p>
+        <p class="mt-5 text-[15px] leading-6"><b>For:</b> short, the trail fits sightings.</p>
+        <p class="mt-3 text-[15px] leading-6"><b>Against:</b> reads as "sled" in English and sounds cold. sled.si is already taken.</p>
+      </article>
+      <article class="p-7">
+        <h3 class="font-display font-semibold text-xl">Why not "Izgubljene živali"?</h3>
+        <p class="text-[15px] text-muted-foreground mt-2 leading-6">It is a descriptive working name that leads with loss and sounds like a registry. It stays as the SEO phrase: "Najdimo, izgubljene živali v Sloveniji".</p>
+      </article>
+    </div>
+  </section>
+
+  <!-- TONE -->
+  <section class="sec">
+    <h2 class="font-display font-bold text-3xl tracking-tight">Tone of voice</h2>
+    <p class="text-muted-foreground mt-3 max-w-[64ch] leading-7">Calm, warm, hopeful, trustworthy. We speak like a kind neighbour who knows what to do, not like an alarm and not like a mascot.</p>
+    <div class="grid gap-5 mt-10 cols-2" style="grid-template-columns:repeat(2,minmax(0,1fr))">
+      <div class="card p-7">
+        <p class="font-semibold flex items-center gap-2"><i class="ph-bold ph-check-circle text-xl" style="color:hsl(var(--primary))"></i>We say</p>
+        <ul class="mt-4 grid gap-3 text-[17px] leading-7 m-0 p-0 list-none">
+          <li>"Prijavite izgubo. Takoj obvestimo sosede v vaši bližini."</li>
+          <li>"Našli smo možno ujemanje. Preverite fotografijo."</li>
+          <li>"Telefonska številka ostane skrita."</li>
+        </ul>
+      </div>
+      <div class="card p-7">
+        <p class="font-semibold flex items-center gap-2"><i class="ph-bold ph-x-circle text-xl" style="color:hsl(var(--destructive))"></i>We avoid</p>
+        <ul class="mt-4 grid gap-3 text-[17px] leading-7 text-muted-foreground m-0 p-0 list-none">
+          <li>Alarm: capitals, many exclamation marks, red banners.</li>
+          <li>Cute talk, paw puns and emoji in the interface.</li>
+          <li>Guilt, pity, or promises we cannot keep.</li>
+        </ul>
+      </div>
+    </div>
+    <p class="text-sm text-muted-foreground mt-5">Slovenian copy uses gender-neutral wording (nouns and imperatives such as "Prijavi izgubo") so it never guesses who is speaking.</p>
+  </section>
+
+  <!-- LOGO -->
+  <section class="sec">
+    <h2 class="font-display font-bold text-3xl tracking-tight">Logo concept</h2>
+    <div class="grid gap-16 mt-10 items-center cols-2" style="grid-template-columns:minmax(0,1fr) minmax(0,1fr)">
+      <div>
+        <p class="text-lg max-w-[52ch] leading-8">A map pin with two soft ears: a place and a pet at once, so it reads as "a lost animal on a map" before any word does. The hole in the pin is the eye of the search and holds a sun-yellow dot, the one spark of hope.</p>
+        <ul class="bullets mt-6">
+          <li><i class="ph-bold ph-check-circle"></i><span>Works at 16 px (favicon, map marker), in one colour plus the sun dot.</span></li>
+          <li><i class="ph-bold ph-check-circle"></i><span>The ears are neutral enough for both cats and dogs.</span></li>
+          <li><i class="ph-bold ph-check-circle"></i><span>The wordmark is live text in Bricolage Grotesque with tight tracking.</span></li>
+        </ul>
+        <p class="text-sm text-muted-foreground mt-6">Files: <code>docs/design/brand/najdimo-mark.svg</code>, <code>najdimo-mark-light.svg</code>, <code>najdimo-app-icon.svg</code>. The wordmark gets outlined in the final logo pack.</p>
+      </div>
+      <div class="grid grid-cols-3 gap-4">
+        <div class="aspect-square rounded-[22%] grid place-items-center" style="background:#145360;color:#EBF6F7"><svg class="w-[58%] h-[58%]" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg></div>
+        <div class="aspect-square rounded-[22%] grid place-items-center card" style="color:#145360"><svg class="w-[58%] h-[58%]" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg></div>
+        <div class="aspect-square rounded-[22%] grid place-items-center" style="background:#0B1618;color:#78C0C7"><svg class="w-[58%] h-[58%]" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg></div>
+        <div class="col-span-3 card p-6 flex items-center gap-4"><svg class="logo-mark w-12 h-12" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg><span class="font-display font-bold text-5xl tracking-[-0.03em] leading-none">Najdimo</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- DIRECTION -->
+  <section class="sec">
+    <h2 class="font-display font-bold text-3xl tracking-tight">Direction A: Lagoon, kept calm</h2>
+    <p class="text-muted-foreground mt-3 max-w-[66ch] leading-7">Cool teal and mist, soft shapes, sun yellow only for the logo dot and the reunited moment. After client review the screens were stripped back: one primary action per screen, one question at a time, no card borders, no shadows, status as an icon plus a coloured word.</p>
+    <div class="grid gap-5 mt-10 cols-3" style="grid-template-columns:repeat(3,minmax(0,1fr))">
+      <div class="card p-7"><p class="font-semibold">Palette</p>
+        <div class="flex mt-4 rounded-2xl overflow-hidden h-14" role="img" aria-label="Lagoon teal, mist, sun yellow, coral, leaf, sky">
+          <span class="flex-[3]" style="background:#145360"></span><span class="flex-[2]" style="background:#D3ECEE"></span><span class="flex-[2]" style="background:#E8EEEE"></span><span class="flex-[1]" style="background:#F7B32B"></span><span class="flex-[1]" style="background:#B8481A"></span><span class="flex-[1]" style="background:#195A36"></span><span class="flex-[1]" style="background:#3049B5"></span>
+        </div>
+        <p class="text-[15px] text-muted-foreground mt-4 leading-6">7:1 for body text and the main action. Light and dark designed together.</p></div>
+      <div class="card p-7"><p class="font-semibold">Type</p>
+        <p class="font-display font-bold text-3xl tracking-tight mt-3 leading-9">Bricolage Grotesque</p>
+        <p class="text-lg mt-1">Atkinson Hyperlegible Next</p>
+        <p class="text-[15px] text-muted-foreground mt-4 leading-6">Full Slovenian diacritics. Body 16 px or more.</p></div>
+      <div class="card p-7"><p class="font-semibold">Shape and surface</p>
+        <p class="text-[15px] mt-3 leading-6">Pill buttons, 24 px cards, 28 px sheets. Tone separates surfaces; no borders on cards, shadows only on floating overlays.</p>
+        <p class="text-[15px] text-muted-foreground mt-3 leading-6">Fields are a label and a line.</p></div>
+    </div>
+    <p class="mt-8"><a class="btn btn-primary" href="A.html">Open style tile and screens<i class="ph-bold ph-arrow-right"></i></a></p>
+    <p class="text-sm text-muted-foreground mt-6 max-w-[66ch] leading-6">Direction B (Ink and Sun, poster-clear with a yellow action colour) was explored and not chosen.</p>
+  </section>
+</main>
+<footer class="page py-12 text-sm text-muted-foreground">Placeholder photography from Unsplash (Unsplash License) and OpenFreeMap tiles in the mockups. Final images come from the image tasks.</footer>
+</body>
+</html>

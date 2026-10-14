@@ -1,0 +1,442 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Najdimo direction A: Lagoon</title>
+<meta name="description" content="Chosen direction (A, Lagoon, decluttered): style tile and key screens for the Najdimo lost-pet app.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:wght@400;500;600;700&family=Bricolage+Grotesque:opsz,wght@12..96,500..800&display=swap" rel="stylesheet">
+<link href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css" rel="stylesheet">
+<link href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/bold/style.css" rel="stylesheet">
+<link href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css" rel="stylesheet">
+<link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet">
+<link href="../tokens.css" rel="stylesheet">
+<link href="directions.css" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com/3.4.17"></script>
+<script src="tailwind-config.js"></script>
+</head>
+<body>
+<a class="sr-only focus:not-sr-only" href="#stage">Skip to content</a>
+
+<!-- Logo symbol, defined once. Pin with two soft ears: a map pin that is also a pet. The hole holds a sun-yellow dot. -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <symbol id="nj-mark" viewBox="0 0 48 48">
+    <g fill="currentColor" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round">
+      <path d="M24 45.5 C24 45.5 10.5 33.2 10.5 24.4 A13.5 13.5 0 0 1 37.5 24.4 C37.5 33.2 24 45.5 24 45.5 Z M24 17.9 A6.5 6.5 0 1 0 24 30.9 A6.5 6.5 0 1 0 24 17.9 Z"/>
+      <path d="M12.2 19.6 L11.2 5 L22.6 11.4 Z"/>
+      <path d="M35.8 19.6 L25.4 11.4 L36.8 5 Z"/>
+    </g>
+    <circle cx="24" cy="24.4" r="3.6" fill="#F7B32B"/>
+  </symbol>
+</svg>
+
+<header class="chrome">
+  <div class="flex flex-wrap items-center gap-x-5 gap-y-2 px-6 py-2 max-w-[1280px] mx-auto">
+    <a href="index.html" class="flex items-center gap-2 no-underline text-foreground font-display font-bold text-lg" aria-label="Najdimo overview">
+      <svg class="logo-mark w-7 h-7" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg>Najdimo
+    </a>
+    <nav class="flex items-center gap-1 text-[15px]" aria-label="Pages">
+      <a href="index.html" class="px-3 py-2 rounded-full font-semibold text-muted-foreground no-underline hover:bg-accent">Overview</a>
+      <a href="A.html" aria-current="page" class="px-3 py-2 rounded-full font-semibold no-underline bg-accent text-accent-foreground">Direction A</a>
+    </nav>
+    <div class="ml-auto flex items-center gap-2" role="group" aria-label="Colour mode">
+      <button class="mode-btn" data-mode="light" aria-pressed="true">Light</button>
+      <button class="mode-btn" data-mode="dark" aria-pressed="false">Dark</button>
+      <button class="mode-btn" data-mode="both" aria-pressed="false">Side by side</button>
+    </div>
+  </div>
+</header>
+
+<main id="stage"></main>
+
+<!-- Single source of content. The script clones this once per colour mode. -->
+<div id="src" hidden>
+
+<!-- ============ 1. INTRO ============ -->
+<section class="tile-section !pb-10">
+  <div class="flex flex-wrap items-center gap-5">
+    <span class="inline-flex items-center gap-3">
+      <svg class="logo-mark w-14 h-14" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg>
+      <span class="font-display font-bold text-[44px] leading-none tracking-[-0.03em]">Najdimo</span>
+    </span>
+    <span class="badge b-found">Chosen direction</span>
+  </div>
+  <h1 class="font-display font-bold text-5xl leading-[1.05] tracking-tight mt-10">Lagoon, kept calm</h1>
+  <p class="text-xl text-muted-foreground mt-4 max-w-[58ch] leading-8">Flat, quiet surfaces in cool teal and mist. One action per screen, one question at a time, and space instead of lines. Sun yellow stays in the logo and in the moment a pet is reunited.</p>
+  <div class="grid gap-16 items-start mt-10" style="grid-template-columns: minmax(0,1fr) 400px">
+    <ul class="bullets max-w-[62ch]">
+      <li><i class="ph-bold ph-stack"></i><span>Surfaces separate by tone, not by outline. Cards have no border and no shadow.</span></li>
+      <li><i class="ph-bold ph-cursor-click"></i><span>One primary action per view. Everything else is a quiet text button.</span></li>
+      <li><i class="ph-bold ph-text-aa"></i><span>One clear heading level, generous spacing, body text at 16 px or more.</span></li>
+      <li><i class="ph-bold ph-sun"></i><span>Readable in direct sunlight: 7:1 for body text and the main action, status never by colour alone.</span></li>
+    </ul>
+    <div class="card p-6">
+      <p class="font-display font-semibold text-lg">Logo: pin with ears</p>
+      <p class="text-[15px] text-muted-foreground mt-1 leading-6">A map pin that is also a pet. The hole is the eye of the search and holds the sun dot.</p>
+      <div class="grid grid-cols-4 gap-3 mt-5">
+        <div class="app-icon grid place-items-center aspect-square"><svg class="w-[58%] h-[58%]" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg></div>
+        <div class="light grid place-items-center aspect-square rounded-2xl" style="background:hsl(var(--background))"><svg class="logo-mark w-[58%] h-[58%]" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg></div>
+        <div class="dark grid place-items-center aspect-square rounded-2xl" style="background:hsl(var(--background))"><svg class="logo-mark w-[58%] h-[58%]" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg></div>
+        <div class="grid place-items-center aspect-square rounded-2xl" style="background:hsl(var(--background))"><span class="flex items-end gap-1.5"><svg class="logo-mark w-8 h-8" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg><svg class="logo-mark w-5 h-5" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg><svg class="logo-mark w-4 h-4" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg></span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 2. PALETTE ============ -->
+<section class="tile-section">
+  <h2 class="tile-title">Palette</h2>
+  <p class="tile-lede">Hex and contrast change with the colour mode. Every pair is checked by the token build.</p>
+  {{PALETTE}}
+</section>
+
+<!-- ============ 3. TYPE ============ -->
+<section class="tile-section">
+  <h2 class="tile-title">Type</h2>
+  <p class="tile-lede">Bricolage Grotesque for headings and Atkinson Hyperlegible Next for text. Atkinson was drawn by the Braille Institute for low vision, which suits glare and stress. Both carry full Latin Extended, so Č, Š and Ž render natively.</p>
+  <div class="grid gap-14 items-start" style="grid-template-columns: minmax(0,1.15fr) minmax(0,1fr)">
+    <div>
+      <p class="font-display font-bold text-6xl leading-[1.02] tracking-[-0.025em]">Spet doma.</p>
+      <p class="font-display font-bold text-3xl leading-9 tracking-[-0.015em] mt-8 max-w-[22ch]">Čakamo na vas: šapa, črn čopič, žoga in želva.</p>
+      <p class="text-lg mt-6 max-w-[48ch] leading-8">Odprite zemljevid, izberite žival in sporočite, kje ste jo videli. Lastnik dobi obvestilo takoj, telefonska številka pa ostane skrita.</p>
+      <p class="mt-5 text-muted-foreground text-[15px]">Številka čipa: <span class="tnum font-semibold text-foreground">705 1234 5678 901</span> (ničla je prečrtana, da je ne zamenjate s črko O)</p>
+    </div>
+    <div class="grid gap-8">
+      <div>
+        <p class="font-display font-bold text-2xl tracking-tight break-words leading-9">A B C Č D E F G H I J K L M N O P R S Š T U V Z Ž</p>
+        <p class="font-display text-2xl tracking-tight mt-1 break-words leading-9">a b c č d e f g h i j k l m n o p r s š t u v z ž</p>
+      </div>
+      <div class="grid gap-3">
+        <div class="flex items-baseline justify-between gap-4"><span class="font-display font-bold text-4xl leading-none tracking-tight">Display</span><span class="text-sm text-muted-foreground tnum">36 to 60, 700</span></div>
+        <div class="flex items-baseline justify-between gap-4"><span class="font-display font-bold text-3xl leading-none">Heading 1</span><span class="text-sm text-muted-foreground tnum">30 to 48, 700</span></div>
+        <div class="flex items-baseline justify-between gap-4"><span class="font-display font-bold text-2xl leading-none">Heading 2</span><span class="text-sm text-muted-foreground tnum">24 to 30, 700</span></div>
+        <div class="flex items-baseline justify-between gap-4"><span class="font-display font-semibold text-xl leading-none">Heading 3, row title</span><span class="text-sm text-muted-foreground tnum">20, 600</span></div>
+        <div class="flex items-baseline justify-between gap-4"><span class="text-base">Body: never below sixteen</span><span class="text-sm text-muted-foreground tnum">16/24, 400</span></div>
+        <div class="flex items-baseline justify-between gap-4"><span class="text-sm text-muted-foreground">Meta: time, distance, help text</span><span class="text-sm text-muted-foreground tnum">14/20, 400</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 4. COMPONENTS ============ -->
+<section class="tile-section">
+  <h2 class="tile-title">Buttons, fields, choices</h2>
+  <p class="tile-lede">Touch height 44 to 56 px. One primary button per view; the rest are secondary or plain text. Fields are a label and a line, not a box. Focus is a 3 px ring with 2 px offset.</p>
+  <div class="grid gap-16" style="grid-template-columns: minmax(0,1fr) minmax(0,1fr)">
+    <div>
+      <p class="tile-h !mt-0">Buttons</p>
+      <div class="flex flex-wrap gap-3 items-center">
+        <button class="btn btn-primary btn-lg"><i class="ph-bold ph-megaphone"></i>Prijavi izgubo</button>
+        <button class="btn btn-secondary btn-lg">Prijavi najdbo</button>
+        <button class="btn btn-text">Pošlji sporočilo</button>
+        <button class="btn btn-destructive">Izbriši prijavo</button>
+      </div>
+      <p class="tile-h">States of the primary button</p>
+      <div class="flex flex-wrap gap-3 items-center">
+        <button class="btn btn-primary">Privzeto</button>
+        <button class="btn btn-primary is-hover">Hover</button>
+        <button class="btn btn-primary is-pressed">Pritisnjeno</button>
+        <button class="btn btn-primary is-focus">Fokus</button>
+        <button class="btn btn-primary" disabled>Onemogočeno</button>
+        <button class="btn btn-primary" aria-busy="true"><span class="spin" aria-hidden="true"></span>Pošiljam</button>
+      </div>
+      <p class="tile-h">Choices</p>
+      <div class="flex flex-wrap gap-2 mb-5">
+        <button class="pill" data-toggle aria-pressed="true"><i class="ph-bold ph-check"></i>Izgubljene</button>
+        <button class="pill" data-toggle aria-pressed="false">Najdene</button>
+        <button class="pill" data-toggle aria-pressed="false">Opažene</button>
+      </div>
+      <div class="grid gap-3 max-w-[420px]" role="radiogroup" aria-label="Vrsta živali">
+        <button class="choice" role="radio" aria-checked="true"><i class="ph-bold ph-dog"></i><span class="flex-1"><span class="t">Pes</span></span><i class="ph-bold ph-check"></i></button>
+        <button class="choice" role="radio" aria-checked="false"><i class="ph-bold ph-cat"></i><span class="flex-1"><span class="t">Mačka</span></span></button>
+      </div>
+      <div class="flex items-center justify-between gap-4 mt-7 max-w-[420px]">
+        <span class="font-semibold">Obvesti me o živalih v bližini</span>
+        <button class="switch" role="switch" aria-checked="true" aria-label="Obvesti me o živalih v bližini"></button>
+      </div>
+    </div>
+    <div class="grid gap-8 content-start">
+      <div class="field"><label for="f1-{{ID}}">Številka čipa</label>
+        <div class="input-wrap"><i class="ph ph-identification-card"></i><input id="f1-{{ID}}" class="input tnum" placeholder="705 1234 5678 901"></div>
+        <span class="help">15 številk. Najdete jo v potnem listu ali pri veterinarju.</span></div>
+      <div class="field"><label for="f2-{{ID}}">Kraj</label>
+        <input id="f2-{{ID}}" class="input is-focus" value="Ljubljana Šiška"><span class="help">Fokus: debelejša črta in obroč.</span></div>
+      <div class="field"><label for="f3-{{ID}}">Telefonska številka (ostane skrita)</label>
+        <input id="f3-{{ID}}" class="input is-error tnum" value="041 12" aria-invalid="true" aria-describedby="e3-{{ID}}">
+        <span class="err" id="e3-{{ID}}"><i class="ph-fill ph-warning-circle"></i>Vpišite celotno številko, na primer 041 123 456.</span></div>
+      <div class="note"><i class="ph-fill ph-shield-check" style="color:hsl(var(--primary))"></i><p>Nikoli ne pošiljajte denarja vnaprej. Pogovor poteka v aplikaciji, številka ostane skrita.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 5. ROWS, TILES, STATUS ============ -->
+<section class="tile-section">
+  <h2 class="tile-title">Pet rows, tiles and status</h2>
+  <p class="tile-lede">A row is a photo, a name, a status word with its icon, a time and a distance. Nothing else. Status is an icon plus a coloured word, never colour alone. A lost pet shows on the map as an area, never a home pin.</p>
+  <div class="grid gap-14 items-start" style="grid-template-columns: 380px minmax(0,1fr) 300px">
+    <div class="card p-6">
+      <ul class="grid gap-6 m-0 p-0 list-none">
+        <li class="flex items-center gap-4"><img class="thumb w-16 h-16" style="border-radius:var(--radius-row)" src="img/dog-aussie.jpg" alt="Pes Maks"><div class="flex-1 min-w-0"><h3 class="font-display font-semibold text-xl leading-6">Maks</h3><p class="mt-1 flex items-center gap-2 text-sm"><span class="st st-lost"><i class="ph-fill ph-megaphone"></i>Izgubljena</span><span class="text-muted-foreground tnum">pred 3 h</span></p></div><span class="text-sm text-muted-foreground tnum">1,2 km</span></li>
+        <li class="flex items-center gap-4"><img class="thumb w-16 h-16" style="border-radius:var(--radius-row)" src="img/cat-tabby.jpg" alt="Tigrasta mačka"><div class="flex-1 min-w-0"><h3 class="font-display font-semibold text-xl leading-6">Tigrasta mačka</h3><p class="mt-1 flex items-center gap-2 text-sm"><span class="st st-found"><i class="ph-fill ph-hand-heart"></i>Najdena</span><span class="text-muted-foreground tnum">danes</span></p></div><span class="text-sm text-muted-foreground tnum">2,8 km</span></li>
+        <li class="flex items-center gap-4"><img class="thumb w-16 h-16" style="border-radius:var(--radius-row)" src="img/dog-golden.jpg" alt="Zlat pes"><div class="flex-1 min-w-0"><h3 class="font-display font-semibold text-xl leading-6">Zlat pes</h3><p class="mt-1 flex items-center gap-2 text-sm"><span class="st st-sighted"><i class="ph-fill ph-eye"></i>Opažena</span><span class="text-muted-foreground tnum">včeraj</span></p></div><span class="text-sm text-muted-foreground tnum">3,4 km</span></li>
+        <li class="flex items-center gap-4"><img class="thumb w-16 h-16" style="border-radius:var(--radius-row)" src="img/cat-siamese.jpg" alt="Mačka Mici"><div class="flex-1 min-w-0"><h3 class="font-display font-semibold text-xl leading-6">Mici</h3><p class="mt-1 flex items-center gap-2 text-sm"><span class="st st-reunited"><i class="ph-fill ph-heart"></i>Spet doma</span><span class="text-muted-foreground tnum">pred 5 dnevi</span></p></div></li>
+      </ul>
+    </div>
+    <div>
+      <article class="max-w-[340px]">
+        <img class="thumb w-full h-[240px]" style="border-radius:var(--radius-card)" src="img/dog-aussie.jpg" alt="Maks, rjav in bel pes mešanec">
+        <h3 class="font-display font-semibold text-2xl leading-8 mt-4">Maks</h3>
+        <p class="mt-1 flex items-center gap-2"><span class="st st-lost"><i class="ph-fill ph-megaphone"></i>Izgubljena</span><span class="text-muted-foreground text-sm tnum">pred 2 dnevoma, 1,2 km</span></p>
+      </article>
+      <div class="flex flex-wrap items-center gap-3 mt-8">
+        <span class="badge b-lost"><i class="ph-fill ph-megaphone"></i>Izgubljena</span>
+        <span class="badge b-verified"><i class="ph-fill ph-seal-check"></i>Preverjeno zavetišče</span>
+        <span class="badge b-premium"><i class="ph-fill ph-lightning"></i>Povečan doseg</span>
+      </div>
+      <p class="help mt-3 max-w-[40ch]">The tonal pill is used once per detail page for the main status, and for premium and verified marks. Lists use the plain status word.</p>
+    </div>
+    <div class="grid gap-6 content-start">
+      <p class="tile-h !mt-0">Loading and empty</p>
+      <div class="card p-5 flex gap-4 items-center" aria-hidden="true"><div class="skel w-16 h-16"></div><div class="flex-1 grid gap-2"><div class="skel h-5 w-28"></div><div class="skel h-4 w-36"></div></div></div>
+      <div class="card p-6 text-center">
+        <svg viewBox="0 0 320 170" class="w-full rounded-2xl" aria-hidden="true"><rect width="320" height="170" style="fill:hsl(var(--accent))"/><circle cx="232" cy="62" r="30" fill="#F7B32B"/><path d="M0 120 C60 86 120 94 172 112 C222 130 272 122 320 96 V170 H0Z" style="fill:hsl(var(--secondary))"/><path d="M0 146 C70 114 130 130 190 146 C240 158 290 152 320 138 V170 H0Z" style="fill:hsl(var(--primary))"/><path d="M52 160 C96 128 150 148 196 118" fill="none" stroke="#F7B32B" stroke-width="3" stroke-linecap="round" stroke-dasharray="1 9"/></svg>
+        <p class="font-display font-semibold text-xl mt-5">Ni prijav v bližini</p>
+        <p class="text-muted-foreground mt-1 text-[15px] leading-6">To je dobra novica. Povečajte razdaljo ali nas obvestite, če kaj opazite.</p>
+        <button class="btn btn-secondary btn-sm mt-5">Povečaj razdaljo</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 6. IMAGERY ============ -->
+<section class="tile-section">
+  <h2 class="tile-title">Imagery</h2>
+  <p class="tile-lede">Honest, owner-snapshot photography: natural light, eye level, the animal fills the frame, faces readable. Photos sit in rounded frames with no labels on them. Illustration is flat geometry in two or three brand colours, only for empty states and onboarding. The photos here are placeholders.</p>
+  <div class="grid gap-5" style="grid-template-columns: 1.3fr 1fr 1fr 1fr">
+    <img class="thumb w-full h-[320px]" style="border-radius:var(--radius-card)" src="img/dog-golden-tall.jpg" alt="Zlat pes sedi na pločniku s cvetjo v gobcu">
+    <img class="thumb w-full h-[320px]" style="border-radius:var(--radius-card)" src="img/cat-siamese.jpg" alt="Sijamska mačka sedi ob oknu">
+    <img class="thumb w-full h-[320px]" style="border-radius:var(--radius-card)" src="img/dog-terrier.jpg" alt="Trobarvni terier z dolgimi ušesi">
+    <img class="thumb w-full h-[320px]" style="border-radius:var(--radius-card)" src="img/cat-ginger.jpg" alt="Rdeča mačka gleda navzgor">
+  </div>
+  <div class="grid gap-5 mt-6" style="grid-template-columns: 1.3fr 1fr 1fr 1fr">
+    <div><p class="font-semibold flex items-center gap-2"><i class="ph-bold ph-check-circle text-xl" style="color:hsl(var(--primary))"></i>Do</p><p class="text-[15px] text-muted-foreground mt-1 leading-6">Real pets in real places. Ask for 3 to 5 angles. Crop square for rows, 4:3 for detail.</p></div>
+    <div><p class="font-semibold flex items-center gap-2"><i class="ph-bold ph-x-circle text-xl" style="color:hsl(var(--destructive))"></i>Avoid</p><p class="text-[15px] text-muted-foreground mt-1 leading-6">Filters, text on photos, stock models, pity clichés, pills and bars over faces.</p></div>
+    <div><p class="font-semibold">Generated images</p><p class="text-[15px] text-muted-foreground mt-1 leading-6">Illustration and marketing only. Never for a real report.</p></div>
+    <div><p class="font-semibold">Alt text</p><p class="text-[15px] text-muted-foreground mt-1 leading-6">Species, colour, one distinguishing mark.</p></div>
+  </div>
+</section>
+
+<!-- ============ 7. HERO ============ -->
+<section class="tile-section">
+  <h2 class="tile-title">Hero snippet (web)</h2>
+  <p class="tile-lede">One message, one action, one photograph. The second action is a quiet text button.</p>
+  <div class="grid gap-16 items-center" style="grid-template-columns: minmax(0,1.05fr) minmax(0,1fr)">
+    <div class="py-6">
+      <h3 class="font-display font-bold text-6xl leading-[1.02] tracking-[-0.03em] max-w-[11ch]">Skupaj najdemo vašega ljubljenčka.</h3>
+      <p class="text-xl text-muted-foreground mt-6 max-w-[34ch] leading-8">Prijavite izgubljeno ali najdeno žival. Povežemo vas s sosedi in zavetišči v vaši bližini.</p>
+      <div class="flex flex-wrap items-center gap-4 mt-10">
+        <a class="btn btn-primary btn-lg" href="#"><i class="ph-bold ph-megaphone"></i>Prijavi izgubo</a>
+        <a class="btn btn-text btn-lg" href="#">Prijavi najdbo<i class="ph-bold ph-arrow-right"></i></a>
+      </div>
+    </div>
+    <img class="thumb w-full h-[520px]" style="border-radius:36px" src="img/dog-golden-tall.jpg" alt="Zlat pes sedi na pločniku s cvetjo v gobcu">
+  </div>
+</section>
+
+<!-- ============ 8. SCREENS ============ -->
+<section class="tile-section !max-w-[1400px]">
+  <h2 class="tile-title">Key screens</h2>
+  <p class="tile-lede">Home and map, the single "Prijavi" action opening its choices, one question of the found flow, and the public lost-pet page. Map tiles are live OpenFreeMap data restyled with the map tokens.</p>
+
+  <div class="wrap-x"><div class="flex flex-wrap gap-x-10 gap-y-12 items-start">
+
+    <!-- ===== MOBILE 1: HOME / MAP ===== -->
+    <div>
+      <p class="tile-h !mt-0">1. Home and map</p>
+      <div class="phone"><div class="phone-screen">
+        <div class="map-wrap" style="position:absolute;inset:0 0 88px 0">
+          <div class="map-canvas" data-center="14.4935,46.0690" data-zoom="13.5"></div>
+          <div class="mk mk-area" style="left:128px;top:196px"><img class="mk-avatar" src="img/dog-aussie.jpg" alt="Maks, izgubljena žival"></div>
+          <div class="mk mk-area" style="left:300px;top:150px;width:84px;height:84px"><img class="mk-avatar" style="width:36px;height:36px" src="img/cat-siamese.jpg" alt="Mici, izgubljena žival"></div>
+          <div class="mk" style="left:262px;top:296px"><img class="mk-avatar found" src="img/cat-tabby.jpg" alt="Najdena mačka"></div>
+          <div class="mk mk-cluster" style="left:58px;top:330px">3</div>
+          <button class="float absolute flex items-center gap-2 rounded-full pl-4 pr-3" style="left:20px;top:60px;height:48px;border:0;font:inherit;font-weight:700;color:inherit" aria-label="Območje in filtri">
+            <i class="ph-bold ph-map-pin text-lg"></i>Ljubljana, 10 km<span class="grid place-items-center w-8 h-8 rounded-full ml-1" style="background:hsl(var(--secondary));color:hsl(var(--secondary-foreground))"><i class="ph-bold ph-sliders-horizontal text-base"></i></span>
+          </button>
+          <div class="sheet" style="height:342px">
+            <div class="grabber"></div>
+            <div class="flex items-baseline justify-between px-5 pt-2"><h2 class="font-display font-bold text-2xl">V bližini</h2><span class="text-sm text-muted-foreground tnum">12 prijav</span></div>
+            <ul class="px-5 pt-5 grid gap-5 m-0 list-none scrollfade" style="height:250px;overflow:hidden">
+              <li class="flex items-center gap-4"><img class="thumb w-16 h-16" style="border-radius:var(--radius-row)" src="img/dog-aussie.jpg" alt="Pes Maks"><div class="flex-1 min-w-0"><h3 class="font-display font-semibold text-xl leading-6">Maks</h3><p class="mt-1 flex items-center gap-2 text-sm"><span class="st st-lost"><i class="ph-fill ph-megaphone"></i>Izgubljena</span><span class="text-muted-foreground tnum">pred 3 h</span></p></div><span class="text-sm text-muted-foreground tnum">1,2 km</span></li>
+              <li class="flex items-center gap-4"><img class="thumb w-16 h-16" style="border-radius:var(--radius-row)" src="img/cat-siamese.jpg" alt="Mačka Mici"><div class="flex-1 min-w-0"><h3 class="font-display font-semibold text-xl leading-6">Mici</h3><p class="mt-1 flex items-center gap-2 text-sm"><span class="st st-lost"><i class="ph-fill ph-megaphone"></i>Izgubljena</span><span class="text-muted-foreground tnum">včeraj</span></p></div><span class="text-sm text-muted-foreground tnum">2,1 km</span></li>
+              <li class="flex items-center gap-4"><img class="thumb w-16 h-16" style="border-radius:var(--radius-row)" src="img/cat-tabby.jpg" alt="Najdena tigrasta mačka"><div class="flex-1 min-w-0"><h3 class="font-display font-semibold text-xl leading-6">Tigrasta mačka</h3><p class="mt-1 flex items-center gap-2 text-sm"><span class="st st-found"><i class="ph-fill ph-hand-heart"></i>Najdena</span><span class="text-muted-foreground tnum">danes</span></p></div><span class="text-sm text-muted-foreground tnum">2,8 km</span></li>
+              <li class="flex items-center gap-4"><img class="thumb w-16 h-16" style="border-radius:var(--radius-row)" src="img/dog-golden.jpg" alt="Zlat pes"><div class="flex-1 min-w-0"><h3 class="font-display font-semibold text-xl leading-6">Zlat pes</h3><p class="mt-1 flex items-center gap-2 text-sm"><span class="st st-sighted"><i class="ph-fill ph-eye"></i>Opažena</span><span class="text-muted-foreground tnum">včeraj</span></p></div><span class="text-sm text-muted-foreground tnum">3,4 km</span></li>
+            </ul>
+          </div>
+        </div>
+        <div class="statusbar" style="position:absolute;left:0;right:0;top:0"><span>14:20</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <nav class="bottomnav" style="position:absolute;left:0;right:0;bottom:0" aria-label="Glavna navigacija">
+          <a href="#" aria-current="page"><i class="ph-fill ph-map-trifold"></i>Zemljevid</a>
+          <a href="#"><i class="ph ph-bell"></i>Opozorila</a>
+          <a href="#" class="go"><span class="act"><i class="ph-bold ph-plus"></i></span>Prijavi</a>
+          <a href="#"><i class="ph ph-user-circle"></i>Profil</a>
+        </nav>
+        <span class="home-ind"></span>
+      </div></div>
+    </div>
+
+    <!-- ===== MOBILE 2: PRIJAVI CHOICES ===== -->
+    <div>
+      <p class="tile-h !mt-0">2. The single "Prijavi" action</p>
+      <div class="phone"><div class="phone-screen">
+        <div class="map-wrap" style="position:absolute;inset:0 0 88px 0">
+          <div class="map-canvas" data-center="14.4935,46.0690" data-zoom="13.5"></div>
+          <div class="mk mk-area" style="left:128px;top:196px"><img class="mk-avatar" src="img/dog-aussie.jpg" alt="Maks, izgubljena žival"></div>
+          <div class="mk" style="left:262px;top:296px"><img class="mk-avatar found" src="img/cat-tabby.jpg" alt="Najdena mačka"></div>
+        </div>
+        <div class="scrim" style="bottom:0"></div>
+        <div class="statusbar" style="position:absolute;left:0;right:0;top:0"><span>14:20</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <div class="sheet" style="height:410px;z-index:8;padding-bottom:34px">
+          <div class="grabber"></div>
+          <h2 class="font-display font-bold text-[28px] leading-9 tracking-tight px-5 pt-3">Kaj želite prijaviti?</h2>
+          <div class="grid gap-3 px-5 pt-6">
+            <a href="#" class="choice" style="background:hsl(var(--background));text-decoration:none"><i class="ph-bold ph-megaphone" style="color:hsl(var(--status-lost-subtle-foreground))"></i><span class="flex-1"><span class="t">Izgubljena žival</span><span class="d">Objavite iskanje in obvestite sosede.</span></span><i class="ph-bold ph-caret-right text-muted-foreground" style="font-size:20px"></i></a>
+            <a href="#" class="choice" style="background:hsl(var(--background));text-decoration:none"><i class="ph-bold ph-hand-heart" style="color:hsl(var(--status-found-subtle-foreground))"></i><span class="flex-1"><span class="t">Najdena žival</span><span class="d">Sporočite, kje ste jo našli. Račun ni potreben.</span></span><i class="ph-bold ph-caret-right text-muted-foreground" style="font-size:20px"></i></a>
+            <a href="#" class="choice" style="background:hsl(var(--background));text-decoration:none"><i class="ph-bold ph-eye" style="color:hsl(var(--status-sighted-subtle-foreground))"></i><span class="flex-1"><span class="t">Opažena žival</span><span class="d">Videli ste jo, a je niste vzeli s seboj.</span></span><i class="ph-bold ph-caret-right text-muted-foreground" style="font-size:20px"></i></a>
+          </div>
+        </div>
+        <span class="home-ind" style="z-index:12"></span>
+      </div></div>
+    </div>
+
+    <!-- ===== MOBILE 3: REPORT FOUND, ONE QUESTION ===== -->
+    <div>
+      <p class="tile-h !mt-0">3. Report found, one question</p>
+      <div class="phone"><div class="phone-screen">
+        <div class="statusbar"><span>14:21</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <div class="flex items-center gap-2 px-3" style="height:56px">
+          <button class="iconbtn" aria-label="Nazaj"><i class="ph-bold ph-caret-left"></i></button>
+          <div class="steps flex-1" role="progressbar" aria-valuemin="1" aria-valuemax="4" aria-valuenow="2" aria-label="Korak 2 od 4"><span class="on"></span><span class="on"></span><span></span><span></span></div>
+          <button class="iconbtn" aria-label="Zapri"><i class="ph-bold ph-x"></i></button>
+        </div>
+        <div class="flex-1 px-5 pt-3 flex flex-col">
+          <img class="thumb w-full h-[280px]" style="border-radius:28px" src="img/dog-beagle.jpg" alt="Fotografija najdenega psa">
+          <h1 class="font-display font-bold text-[34px] leading-[40px] tracking-[-0.02em] mt-9">Je to pravilno?</h1>
+          <p class="text-[22px] leading-8 mt-3">Srednje velik pes, rjav in bel.</p>
+          <p class="flex gap-2 text-sm leading-5 text-muted-foreground mt-4"><i class="ph-fill ph-sparkle text-base mt-px" style="color:hsl(var(--primary))"></i><span>Predlog iz fotografije. Umetna inteligenca se lahko moti.</span></p>
+        </div>
+        <div class="px-5 pb-11 grid gap-1">
+          <button class="btn btn-primary btn-lg btn-block">Drži, naprej</button>
+          <button class="btn btn-text btn-block">Popravi podatke</button>
+        </div>
+        <span class="home-ind"></span>
+      </div></div>
+    </div>
+
+  </div></div>
+
+  <!-- ===== WEB: LOST PET DETAIL ===== -->
+  <p class="tile-h" style="margin-top:64px">4. Web: lost pet page</p>
+  <div class="wrap-x">
+  <div class="browser">
+    <div class="browser-bar"><span class="dots"><i></i><i></i><i></i></span><span class="url"><i class="ph ph-lock-simple"></i>najdimo.si/izgubljene/maks-siska</span></div>
+    <header class="flex items-center gap-10 px-12 h-[88px]">
+      <span class="inline-flex items-center gap-2"><svg class="logo-mark w-9 h-9" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg><span class="font-display font-bold text-2xl tracking-[-0.03em]">Najdimo</span></span>
+      <nav class="flex items-center gap-8 text-base font-semibold" aria-label="Glavna navigacija">
+        <a href="#" class="no-underline text-muted-foreground">Zemljevid</a>
+        <a href="#" class="no-underline text-foreground" aria-current="page">Izgubljene</a>
+        <a href="#" class="no-underline text-muted-foreground">Najdene</a>
+        <a href="#" class="no-underline text-muted-foreground">Kako deluje</a>
+      </nav>
+      <div class="ml-auto flex items-center gap-2">
+        <a href="#" class="btn btn-ghost btn-sm">Prijava</a>
+        <a href="#" class="btn btn-primary btn-sm">Prijavi</a>
+      </div>
+    </header>
+
+    <div class="px-12 pt-4 pb-20">
+      <a href="#" class="btn btn-text !px-0"><i class="ph-bold ph-caret-left"></i>Izgubljene živali</a>
+
+      <div class="grid gap-16 mt-4 items-start" style="grid-template-columns: minmax(0,7fr) minmax(0,5fr)">
+        <div>
+          <img class="thumb w-full h-[500px]" style="border-radius:32px" src="img/dog-aussie-wide.jpg" alt="Maks, rjav in bel pes mešanec z rdečo ovratnico">
+          <div class="flex gap-3 mt-4">
+            <img class="thumb w-[88px] h-[72px]" style="border-radius:16px" src="img/dog-aussie.jpg" alt="Maks od spredaj">
+            <div class="overflow-hidden w-[88px] h-[72px]" style="border-radius:16px;opacity:.55"><img class="thumb w-full h-full" style="transform:scale(1.9);transform-origin:56% 44%" src="img/dog-aussie-wide.jpg" alt="Maks, obraz od blizu"></div>
+            <div class="overflow-hidden w-[88px] h-[72px]" style="border-radius:16px;opacity:.55"><img class="thumb w-full h-full" style="transform:scale(1.6);transform-origin:80% 88%" src="img/dog-aussie-wide.jpg" alt="Maks, prsi in ovratnica"></div>
+            <div class="overflow-hidden w-[88px] h-[72px]" style="border-radius:16px;opacity:.55"><img class="thumb w-full h-full" style="transform:scale(1.4);transform-origin:10% 60%" src="img/dog-aussie-wide.jpg" alt="Maks, ozadje obale"></div>
+          </div>
+          <h2 class="font-display font-bold text-3xl leading-9 tracking-tight mt-16">O Maksu</h2>
+          <p class="text-lg mt-4 max-w-[58ch] leading-8">Maks je prijazen, a plašen pes. Odzove se na ime, tujcem pa se ne približa sam. Pobegnil je med sprehodom ob Savi.</p>
+          <p class="text-lg mt-4 max-w-[58ch] leading-8">Če ga vidite, ga ne lovite. Mirno počepnite, ga pokličite po imenu in nam sporočite, kje je.</p>
+        </div>
+
+        <div class="pt-2">
+          <p class="flex items-center gap-3"><span class="st st-lost st-lg"><i class="ph-fill ph-megaphone"></i>Izgubljena</span><span class="text-muted-foreground tnum">pogrešana od 12. 10.</span></p>
+          <h1 class="font-display font-bold text-[64px] leading-[1.02] tracking-[-0.03em] mt-4">Maks</h1>
+          <p class="text-xl text-muted-foreground mt-2">Mešanec, samec, 4 leta</p>
+          <dl class="grid grid-cols-2 gap-x-8 gap-y-7 mt-10 m-0">
+            <div><dt class="text-sm text-muted-foreground">Barva</dt><dd class="font-semibold text-[17px] m-0 mt-1">Rjava z belimi prsmi</dd></div>
+            <div><dt class="text-sm text-muted-foreground">Velikost</dt><dd class="font-semibold text-[17px] m-0 mt-1">Srednje velik</dd></div>
+            <div><dt class="text-sm text-muted-foreground">Ovratnica</dt><dd class="font-semibold text-[17px] m-0 mt-1">Rdeča, brez obeska</dd></div>
+            <div><dt class="text-sm text-muted-foreground">Čip</dt><dd class="font-semibold text-[17px] m-0 mt-1">Da, številka je skrita</dd></div>
+          </dl>
+          <p class="flex gap-3 mt-10 text-base leading-6"><i class="ph-bold ph-map-pin-area text-2xl flex-none" style="color:hsl(var(--primary))"></i><span><b>Zadnjič viden v okolici Šiške.</b> Prikazano je približno območje, ne natančen naslov.</span></p>
+          <div class="grid gap-2 mt-10">
+            <a href="#" class="btn btn-primary btn-lg btn-block"><i class="ph-bold ph-eye"></i>Prijavi opažanje</a>
+            <a href="#" class="btn btn-text btn-block"><i class="ph-bold ph-chat-circle"></i>Pošlji sporočilo lastniku</a>
+          </div>
+          <p class="flex gap-3 mt-8 text-[15px] leading-6 text-muted-foreground"><i class="ph-fill ph-gift text-xl flex-none"></i>Lastnik ponuja nagrado. Znesek je varno shranjen v aplikaciji.</p>
+          <div class="note mt-5"><i class="ph-fill ph-shield-check" style="color:hsl(var(--primary))"></i><p>Nikoli ne pošiljajte denarja vnaprej. Številka lastnika je skrita, pogovor poteka v aplikaciji.</p></div>
+          <button class="btn btn-ghost btn-sm !px-3 mt-5 -ml-3"><i class="ph-bold ph-share-network"></i>Deli ali natisni plakat</button>
+        </div>
+      </div>
+
+      <div class="grid gap-16 mt-24 items-start" style="grid-template-columns: minmax(0,7fr) minmax(0,5fr)">
+        <div>
+          <h2 class="font-display font-bold text-3xl leading-9 tracking-tight mb-6">Kje so ga videli</h2>
+          <div class="map-wrap" style="height:380px;border-radius:32px">
+            <div class="map-canvas" data-center="14.4890,46.0705" data-zoom="13.6" data-roads="all"></div>
+            <div class="mk mk-area" style="left:44%;top:50%;width:190px;height:190px"><img class="mk-avatar" style="width:52px;height:52px" src="img/dog-aussie.jpg" alt="Zadnje znano območje"></div>
+            <div class="mk mk-dot" style="left:62%;top:26%"></div>
+            <div class="mk mk-dot" style="left:28%;top:72%"></div>
+            <div class="mk mk-dot" style="left:74%;top:70%"></div>
+          </div>
+        </div>
+        <div>
+          <h2 class="font-display font-bold text-3xl leading-9 tracking-tight mb-6">Opažanja</h2>
+          <ol class="grid gap-7 m-0 p-0 list-none">
+            <li><span class="st st-sighted"><i class="ph-fill ph-eye"></i>Danes ob 7:15</span><p class="mt-1 leading-6">Rožna dolina, pred trgovino. Odšel je proti Viču.</p></li>
+            <li><span class="st st-sighted"><i class="ph-fill ph-eye"></i>Včeraj ob 18:40</span><p class="mt-1 leading-6">Šiška, ob cesti. Ni se pustil prijeti.</p></li>
+            <li><span class="st st-lost"><i class="ph-fill ph-megaphone"></i>12. 10. ob 16:05</span><p class="mt-1 leading-6">Ob Savi. Zadnje potrjeno mesto, pobegnil je med sprehodom.</p></li>
+          </ol>
+        </div>
+      </div>
+
+      <h2 class="font-display font-bold text-3xl leading-9 tracking-tight mt-24 mb-6">Še v bližini</h2>
+      <div class="grid grid-cols-3 gap-10">
+        <article><img class="thumb w-full h-[220px]" style="border-radius:var(--radius-card)" src="img/cat-siamese.jpg" alt="Sijamska mačka Mici"><h3 class="font-display font-semibold text-xl mt-4">Mici</h3><p class="mt-1 flex items-center gap-2 text-[15px]"><span class="st st-lost"><i class="ph-fill ph-megaphone"></i>Izgubljena</span><span class="text-muted-foreground tnum">včeraj, 2,1 km</span></p></article>
+        <article><img class="thumb w-full h-[220px]" style="border-radius:var(--radius-card)" src="img/dog-terrier.jpg" alt="Terier Fido"><h3 class="font-display font-semibold text-xl mt-4">Fido</h3><p class="mt-1 flex items-center gap-2 text-[15px]"><span class="st st-lost"><i class="ph-fill ph-megaphone"></i>Izgubljena</span><span class="text-muted-foreground tnum">pred 4 dnevi, 3,0 km</span></p></article>
+        <article><img class="thumb w-full h-[220px]" style="border-radius:var(--radius-card)" src="img/dog-beagle.jpg" alt="Najden pes beagle"><h3 class="font-display font-semibold text-xl mt-4">Beagle brez čipa</h3><p class="mt-1 flex items-center gap-2 text-[15px]"><span class="st st-found"><i class="ph-fill ph-hand-heart"></i>Najdena</span><span class="text-muted-foreground tnum">danes, 4,2 km</span></p></article>
+      </div>
+    </div>
+
+    <footer class="px-12 py-10 flex flex-wrap items-center gap-x-10 gap-y-3 text-[15px] text-muted-foreground">
+      <span class="inline-flex items-center gap-2 text-foreground"><svg class="logo-mark w-7 h-7" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg><b class="font-display text-lg">Najdimo</b></span>
+      <a href="#" class="underline underline-offset-4">Kako deluje</a><a href="#" class="underline underline-offset-4">Za zavetišča</a><a href="#" class="underline underline-offset-4">Zasebnost</a><a href="#" class="underline underline-offset-4">Izjava o dostopnosti</a>
+      <span class="ml-auto">SL / EN</span>
+    </footer>
+  </div>
+  </div>
+</section>
+
+<p class="tile-section !py-8 text-sm text-muted-foreground">Placeholder photography from Unsplash (Unsplash License) and live OpenFreeMap tiles. All copy is sample text; final copy comes from the content slices. Icons: Phosphor.</p>
+
+</div><!-- /#src -->
+
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<script src="directions.js"></script>
+</body>
+</html>
