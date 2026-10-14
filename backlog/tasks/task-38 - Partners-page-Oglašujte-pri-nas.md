@@ -5,6 +5,7 @@ status: To Do
 assignee:
   - '@content-strategist'
 created_date: '2026-10-14 21:03'
+updated_date: '2026-10-14 21:53'
 labels:
   - story
   - 'req:FR-032'
@@ -31,6 +32,12 @@ This is the client's main pitch tool: a public page that shows companies the aud
 - [ ] #4 Given SL and EN, when switched, then copy is final (no placeholders) and the page has meta tags and an Open Graph image and is indexable.
 - [ ] #5 Given a nearly empty database, when stats are low, then the page reads honestly (shows pilot status) and never shows invented numbers.
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+2026-10-14 content-strategist: drafts are being written now against the draft voice guide and glossary (TASK-2, awaiting native review and client approval). Status stays To Do until TASK-2 is approved and TASK-11/TASK-35 are done (build part). Copy files: docs/content/pages/ and docs/content/legal/.
+<!-- SECTION:NOTES:END -->
 
 ## Packet
 

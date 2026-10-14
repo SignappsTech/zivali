@@ -1,7 +1,7 @@
 ---
 doc_id: DOC-01
 title: Project Brief
-version: 0.6
+version: 0.7
 status: Draft
 date: 2026-10-14
 owner: Project Lead
@@ -56,8 +56,9 @@ Izgubljene živali (working name) is a web and mobile app that reunites lost cat
   - Push and in-app notifications and radius alerts
   - In-app chat, a printable QR poster, sharing
   - Shelter portal with bulk/CSV upload and a matches dashboard
-  - Monetisation: boost listing, Premium subscription, QR tag ordering. **Stripe in test mode only.**
-  - **Main goal: getting animals home. Everything that does that is free for everyone, forever:** reporting lost/found/sighted, the map and alerts, matching (chip, photo AI, attributes), chat, **the printable PDF poster with QR code**, a **printable QR collar tag/sticker PDF** (print at home), sharing, and chip lookup. Paid extras never gate any of these. Boost only adds reach on top of an already effective free alert radius. The durable physical QR/NFC tag is sold close to cost.
+  - Monetisation: boost listing, Premium subscription. **Stripe in test mode only.**
+  - **Main goal: getting animals home. Everything that does that is free for everyone, forever:** reporting lost/found/sighted, the map and alerts, matching (chip, photo AI, attributes), chat, **the printable PDF poster with QR code** (the QR links to the public listing only), sharing, and chip lookup. Paid extras never gate any of these. Boost only adds reach on top of an already effective free alert radius.
+  - **QR/NFC pet tags are out of scope for now** (physical and printable). A tag that links a pet to its owner feels too close to personal data; revisit later with a privacy-first design.
   - **Shelters (and municipalities) use everything for free, forever.** That includes the portal, bulk/CSV upload, matching, API and integrations, analytics, the adoption page and municipality reports. There is no paid shelter tier. Mission first: the goal is to help animals and keep the project self-sustaining, not to maximise profit.
   - **Vets: free for anything that reunites animals, paid for visibility.**
     - Free: reporting found animals brought to the clinic, chip lookup, matches and chat with owners.
@@ -164,3 +165,4 @@ Izgubljene živali (working name) is a web and mobile app that reunites lost cat
 | 0.4 | 2026-10-14 | Shelter Pro removed: all shelter, vet and municipality features are free forever; mission-first principle |
 | 0.5 | 2026-10-15 | Vets pay for visibility (Vet Partner subscription); reunite features stay free for vets; shelters and municipalities free |
 | 0.6 | 2026-10-15 | Explicit free-forever list (poster PDF + QR, printable QR tag PDF, chip lookup); physical tag near cost |
+| 0.7 | 2026-10-15 | QR/NFC tags removed from scope (physical and printable); the poster QR links to the public listing only |

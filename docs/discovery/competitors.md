@@ -1,0 +1,34 @@
+---
+doc: discovery/competitors
+date: 2026-10-14
+owner: Discovery Analyst
+status: Draft
+---
+
+# Competitors and references
+
+Figures are the operators' own claims unless marked otherwise. Accessed 2026-10-14. "Beat" means what we do better or differently.
+
+## A. International
+
+| Name | Core loop | Matching | Monetisation | Scale (claim) | Good (reuse) | We beat |
+|---|---|---|---|---|---|---|
+| **PawBoost** (US, 2014) | Form needs an account. Found sub-types: *in possession* / *sighting (roaming)* / *deceased*. Each report is auto-posted to the local FB page (843 pages, 5.5 M followers), emailed and pushed to "Rescue Squad" subscribers, gets a QR flyer, and auto-shares to Nextdoor within 2 mi. Contact via relay email. "Still missing?" emails bump listings. | Manual browse + "potential matches". Paid **SmartMatch** uses *human* reviewers on found reports and shelter intakes within 50 mi. No photo AI. | Free base. **Paid reach in 7-day units** with auto-renew: FB ad campaign, Featured, Homepage spotlight, SmartMatch. Reported prices $10–189 per week (no public price list). | 645 k reports/yr, 41 % reunited (lost 49 %, found dogs 32 %, **found cats 16 %**). Median 1.5 days to reunion. 2.3 M reunions total. | Regional FB page network; sighting vs possession; shelter **auto-ingest** from shelter software with auto-removal; strong scam guide; yearly data report for PR and SEO. | Finder needs an account; no AI; auto-renew complaints (BBB); no EU/SI presence. |
+| **Petco Love Lost** (US; formerly Finding Rover) | Lost or found → photo upload → instant AI search over community posts + **3,500+ partner shelters** (auto-feed from shelter software) + Ring/Nextdoor posts → SMS/email match alerts. Delaware made it the official state platform (Aug 2026). | **Photo AI** (up to 512 points; cats: coat, ear hair). Claims 88 % top-1 (unverified). | None for users. Funded by the Petco Love foundation (~$425 M invested since 1999). | 250 k reunions (Apr 2026). | No scrolling: ranked candidates; pre-register pet photos before loss; shelter auto-ingest; government endorsement. | US only; account needed; mostly works once the animal is in a shelter; no community broadcast; we cannot copy the foundation funding. |
+| **Pet FBI** (US non-profit, 1998) | Free post to a national database; volunteer "agents" get area emails. | 2026 auto-match on location, date and type. No AI. | Donations + local sponsors. | "Thousands/yr". | Trusted, simple, good action-plan guides. | Dated UX, small reach, no chat. |
+| **TASSO** (DE, e.V.) | Registry first. Finder enters the chip or tag → **24/7 hotline** → TASSO calls the owner and connects the parties ("in minutes"). Owner data goes to the finder only with consent. Lost: free search notice, volunteer "Suchhelfer" relay, free posters (PDF or printed) **showing TASSO's contact, not the owner's**. MeinTASSO app: pre-uploaded profile, radius filter, push. | Chip/tag registry; manual browse. No AI. | Donations only; everything free. | 11 M animals; **96.5 k reunions/yr**. | Proxy contact on posters (anti-scam); consent-gated data release; public chip lookup shows species/breed/colour only, no personal data; "prepare before an emergency" profile. | Chip-centric (weak for unchipped cats); a costly call centre; DE only; no photo matching. |
+| **FINDEFIX** (DE, Deutscher Tierschutzbund) | Free registration, free dog tag with the hotline (none for cats: collar safety), 24 h phone + chat. A lost report auto-generates a poster with the hotline and only the **last 4 digits** of the passport number. | Registry, searching 30+ registries via **Europetnet**. | Membership + donations. | ~20 k lost reports/yr (2015). | Shelter software interface (TEO); free shelter starter kits; masked IDs on posters. | No app, no AI. |
+| **Pet Alert** (FR, freemium) | Alert "in 2 min" → moderated → site + **FB page per département** + local groups; daily reposts for 7 days; poster studio. | **AI similarity, Premium only**. | **Free / Light €25 / Premium €49 (one-off)**. FB boost €30 / €50 / €100. **QR Pet-ID tag €19.90** (lifetime; finder scans with no app → owner gets an email with the location). | "7 M community" (unverified). | Clear one-off price ladder; QR tag without an app; vet alerts within ~30 km. | **Anti-scam filter paywalled**; gendarmerie scam warnings about the FB pages; murky ownership. |
+| **DogLost** (UK, volunteers) | Join → dog page + poster → emails to regional co-ordinators/helpers → **police liaison** for stolen dogs. | Volunteers. | Donations (PayPal, Patreon). | 163 k members. | Police channel; poster distribution to helpers within 30 mi. | Dogs only; account required. |
+| **Animal Search UK** | Free report; **daily auto-match**; 86 k "PetWatch" volunteers; "safe at home" pre-profile. **Exclusive RSPCA found-animal partner** (2022). | Auto-match (attributes). | Paid poster/FB campaigns **£248–1,000**; search team with thermal cameras; promotes pet-insurance "advertising and reward" cover. | ~14 k RSPCA pets/yr. | Insurer pays for promotion; one institutional intake partner. | Expensive; account needed to message. |
+| **Ring Search Party** (Amazon, US) | Lost dog → nearby Ring cameras AI-scan footage → the camera owner chooses whether to share. Searches expire after hours. | Video AI (dogs only). | Bundled with Ring. | ">1 dog/day". | Ephemeral, time-boxed searches. | Reportedly opt-out by default, which would not be GDPR-acceptable. |
+| Other AI apps | Petnow (KR: nose print + face, claims > 99 %); PiP (CA, 2013, unclear status); Mars ForPaws (IN, 2021). "Lost My Kitty": **not found**. | Biometric. | Mixed. | — | Biometric ID is a future option (nose print). | Need a close-up scan of the animal; no lost/found network. |
+| **Austria**: Heimtierdatenbank + animaldata.com | Official registry (dogs and breeding cats mandatory; fines up to €7,500). animaldata (vets' association) **emails all vets and shelters within 50 km** when a pet goes missing. | Registry. | One-time registration fee via the vet. | — | "Alert vets and shelters within X km". | No public lost/found UX. |
+
+## B. Slovenia and region
+
+| Name | Core loop | Matching | Monetisation | Good | We beat |
+|---|---|---|---|---|---|
+| **Radio Aktual "Živalski radio"** (Salomon d.o.o. / svet24 media) | Anonymous web form: lost or found, species, place, description, **phone (published)**, name, email, consents. **Read on air twice a day**, online for 14 days. About 11 active notices (≈ 1.5 per day; cats are the majority). | None (chronological list). | Sponsor: **Mr. Pet** (pet retail chain, ~20 stores) on the page; station ad sales. | Mass reach (radio); no account; titles like "Pogrešan mucek (Maribor – Tabor)" match search phrasing. | No matching, map, photo AI or scam warnings; public phone numbers; 14-day life. → **Media partner candidate**: feed our listings to their on-air slot. |
+
+*(Facebook groups, shelters, other SI sites and the CRPsi flow follow below.)*
