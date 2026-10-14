@@ -60,6 +60,7 @@ RPC: `raise exception using errcode = 'P0001', message = json_build_object('code
 |---|---|---|
 | `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SECRET_KEY` (prefer these new-style keys; legacy `SUPABASE_ANON_KEY` / `SUPABASE_SERVICE_ROLE_KEY` are auto-injected into functions and still work) | functions, scripts | local values from `supabase status`; cloud project `najdimo` (ref `omtpppzrugibquukhnyl`) values in `.env.local` |
 | `APP_URL`, `APP_ENV` | functions | links in emails, CORS, mock checkout |
+| `APP_VERSION` | functions (optional) | returned by the `health` function as `version`; default `dev` |
 | `PAYMENTS_PROVIDER` (`mock`/`stripe`), `STRIPE_SECRET_KEY`, `STRIPE_PUBLISHABLE_KEY` (scripts and web only), `STRIPE_WEBHOOK_SECRET`, `MOCK_WEBHOOK_SECRET` | functions | live keys rejected (C13) |
 | `EMAIL_PROVIDER` (`mock`/`brevo`), `BREVO_API_KEY`, `EMAIL_FROM`, `LEADS_NOTIFY_EMAIL` | functions | mock writes `email_outbox` |
 | `PUSH_PROVIDER` (`mock`/`expo`), `EXPO_ACCESS_TOKEN` | functions | |
@@ -90,6 +91,8 @@ RPC: `raise exception using errcode = 'P0001', message = json_build_object('code
 | `pnpm verify` | everything CI runs (required before reporting done) |
 
 Local endpoints: API http://127.0.0.1:54321, Studio http://127.0.0.1:54323, mail catcher http://127.0.0.1:54324, DB `postgresql://postgres:postgres@127.0.0.1:54322/postgres`. Docker Desktop must be running (Windows).
+
+Windows port clash: on some machines Hyper-V reserves TCP ports 54243–54342 (check with `netsh interface ipv4 show excludedportrange protocol=tcp`), so the default local Supabase ports above fail to start. Override them with the `SUPABASE_*_PORT` variables in `supabase/README.md` (lands with TASK-3.2).
 
 Credentials: staging credentials (Supabase `najdimo`, Vercel, Expo, Stripe test, MapTiler, GA) are in the gitignored `.env.local`; read them from the environment, never print or commit values. Local development and all tests stay offline on the mock adapters. If a task needs a credential that is still missing (production project, Brevo, Turnstile, Voyage, FCM/APNs, GitHub), finish everything that works with mocks, then report `STATUS: needs-input` with the variable names.
 

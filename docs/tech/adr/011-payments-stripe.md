@@ -5,7 +5,7 @@
 
 ## Decision
 
-- **Provider interface** `payments` with `createCheckout({ purpose, amountCents, currency: 'EUR', userId, refs, successUrl, cancelUrl })` and `parseWebhook(rawBody, signature)`. Implementations: `stripe` (Stripe SDK in Deno with the fetch HTTP client and async signature verification) and `mock`.
+- **Provider interface** `payments` with `createCheckout({ paymentId, purpose, amountCents, currency: 'EUR', userId, refs, successUrl, cancelUrl })` (`paymentId` is the `payments.id` of the row inserted `pending`; the mock checkout URL is built from it) and `parseWebhook(rawBody, signature)`. Implementations: `stripe` (Stripe SDK in Deno with the fetch HTTP client and async signature verification) and `mock`.
 - **Edge Function `payments-checkout`**: validates purpose and amount (integer cents, minimum 200, purpose-specific bounds), inserts a `payments` row `pending`, returns the Checkout URL.
 - **Edge Function `stripe-webhook`**: verifies the signature, inserts `payment_events(provider_event_id unique)` (idempotency), updates `payments` status, enqueues `payment_effects` (receipt email, entitlements later, analytics server-side milestones in DB only).
 - **Live mode is impossible in this phase**: the adapter refuses keys starting with `sk_live_` or `rk_live_` and the `livemode: true` flag on events, with a unit test (FR-020 R-020.2).
