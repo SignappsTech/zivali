@@ -1,10 +1,11 @@
 ---
 id: TASK-33
-title: Reunited thank-you tip and optional contribution
+title: 'Voluntary support: Pomagajte nam izboljšati Najdimo'
 status: To Do
 assignee:
   - '@design-lead'
 created_date: '2026-10-14 21:03'
+updated_date: '2026-10-14 22:12'
 labels:
   - story
   - 'req:FR-021'
@@ -21,16 +22,17 @@ ordinal: 33000
 ## Description
 
 <!-- SECTION:DESCRIPTION:BEGIN -->
-The core stays free; voluntary support at the two emotional high points (a reunion, and just after reporting) keeps the service sustainable without any paywall.
+The core stays free; a voluntary, never-pressuring support ask at the emotional high points (after a reunion, after a report, on the profile) keeps the service sustainable without any paywall.
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Given an owner who just marked a pet reunited, when the thank-you screen shows, then one-tap amounts EUR 3, 5 and 10 and a custom amount (minimum EUR 2) are offered and Skip is as visible as Pay.
-- [ ] #2 Given the lost-report confirmation screen, when shown, then an optional help-keep-this-free contribution of EUR 2-5 is offered, never pre-selected, collapsed by default and not shown again for that report once skipped.
-- [ ] #3 Given a completed contribution, when recorded, then the user sees a warm thank-you, a receipt email arrives and donation fires with an amount bucket and no personal data (consent only).
-- [ ] #4 Given the wording, when displayed, then it says support or contribution (podpora, prispevek) and not charitable donation unless the legal entity allows it (FR-024).
-- [ ] #5 Given the user ignores either ask, when continuing, then nothing blocks or delays their report, matching or alerts.
+- [ ] #1 Given an owner who just marked a pet reunited, when the thank-you screen shows, then one-tap amounts EUR 3, EUR 5 (highlighted, not pre-selected), EUR 10 and a custom amount (minimum EUR 2) are offered and Skip is as visible as Pay.
+- [ ] #2 Given the lost-report confirmation screen, when shown, then the same optional support ask is collapsed by default, nothing is pre-selected and it is not shown again for that report once skipped.
+- [ ] #3 Given the profile screen on web and mobile, when opened, then a Pomagajte nam izboljšati Najdimo card offers the same amounts and the monthly Podpornik option (FR-022), with no nagging or repeated prompts.
+- [ ] #4 Given a completed contribution, when recorded, then the user sees a warm thank-you, a receipt email arrives and donation fires with an amount bucket and no personal data (consent only).
+- [ ] #5 Given the wording, when displayed, then it says support or contribution (podpora, prispevek) and not charitable donation unless the legal entity allows it (FR-024).
+- [ ] #6 Given the user ignores any ask, when continuing, then nothing blocks or delays their report, matching or alerts.
 <!-- AC:END -->
 
 ## Packet

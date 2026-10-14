@@ -1,7 +1,7 @@
 ---
 doc_id: DOC-02
 title: Product Requirements
-version: 0.2
+version: 0.4
 status: Draft
 date: 2026-10-14
 owner: Product Manager
@@ -18,13 +18,15 @@ approvals:
 - Izgubljene živali (working name) reunites lost dogs and cats with their owners in Slovenia, on web (Next.js) and mobile (Expo), in Slovenian (default) and English.
 - Owners report LOST pets. Finders, passers-by and shelters report FOUND or SIGHTED animals, finders without an account.
 - The system matches both sides (chip, location, time, attributes, then photo similarity) and connects people through in-app chat with hidden contact data.
-- The core loop is free forever. Revenue comes from early ads (Oglas), voluntary support, boosts, Premium, tags, Shelter Pro and reward-escrow fees, all Stripe test mode in this phase.
+- The core loop is free forever. Revenue comes only from early ads (Oglas), voluntary support (tips, contributions, Podpornik, escrow fee), owner extras (Boost, Premium, which is also ad-free) and the B2B Vet Partner plan, all Stripe test mode in this phase. Shelters and municipalities use everything free forever; vets get everything that reunites animals free and pay only for visibility.
 - Google Analytics 4 (web) and Firebase Analytics (mobile) are core from M1, behind consent, with no personal data in events.
 - Delivery: M1 Foundation, M2 Core loop MVP (with ads and voluntary support), M3 AI and shelters, M4 Monetisation and moderation, M5 Hardening and launch prep, M6 Ads self-serve (post-launch). See `06-delivery-plan.md`.
 
 **Product rules (apply to every FR)**
 
-- P-1: Reporting, matching, chat, owner alerts and the poster are never paywalled.
+- P-1: Everything that gets animals home is free for everyone, forever, including basic AI (pre-fill, photo matching) and up to 2 pet profiles: reporting lost/found/sighted, map and alerts in the default radius, matching (chip, photo AI, attributes), chat, the printable PDF poster with QR, sharing and chip lookup. Paid extras never gate these; Boost only adds reach on top of an effective free radius.
+- P-7: Shelters and municipalities never pay (no plan, entitlement or upgrade prompt). Vets pay only for the optional Vet Partner visibility plan. Mission first: help animals and stay self-sustaining, not maximise profit.
+- P-8: QR/NFC pet tags (physical and printable) are out of scope; the poster QR links to the public listing only.
 - P-2: No ad and no payment prompt inside the report-lost or report-found flows.
 - P-3: Public locations are always fuzzed; chip numbers, phone numbers and emails are never public.
 - P-4: Every user-facing feature ships on web and mobile unless marked web-only (shelter portal, admin, legal pages).
@@ -82,11 +84,11 @@ approvals:
   - R-002.1 Fields: species (dog, cat), name, breeds, colours, pattern, size, sex, birth year, chip number, collar, 1–5 photos, notes (medication, temperament).
   - R-002.2 Chip number normalised and validated (digits, 9–15; 15-digit ISO 11784 expected; Slovenian dog chips typically start 705, not enforced).
   - R-002.3 Duplicate chip across owners is flagged to moderators without revealing the other owner.
-  - R-002.4 Free accounts can save at least 1 profile; the limit never blocks a lost report (P-1).
+  - R-002.4 Free accounts can save up to 2 profiles (Premium: unlimited); the limit never blocks a lost report (P-1).
   - R-002.5 Dogs show a link to the official CRPsi lookup.
 - **Acceptance criteria**
   - [ ] Given an owner, when they add a pet with a 15-digit chip, then it is saved normalised and the chip is never shown publicly.
-  - [ ] Given a free account with one profile, when they add a second, then they see the Premium option and can still report that pet lost with inline details.
+  - [ ] Given a free account with two profiles, when they add a third, then they see the Premium option and can still report that pet lost with inline details.
   - [ ] Given an owner deletes a pet, when confirmed, then its photos are removed.
 - **Edge cases**
   - Invalid or short chip numbers are accepted as "unknown" with a warning, not blocked.
@@ -244,7 +246,7 @@ approvals:
 - **Priority:** Should · **Milestone:** M2
 - **User story:** As an owner, I want a printable poster and one-tap sharing so that I reach neighbours and Facebook groups.
 - **Requirements**
-  - R-011.1 A4 PDF, SL or EN, large photo, key details, area, QR and short link, no phone number; high-contrast, greyscale-safe.
+  - R-011.1 A4 PDF, SL or EN, large photo, key details, area, QR and short link that resolve to the public listing only, no phone number; high-contrast, greyscale-safe.
   - R-011.2 Share to WhatsApp, Facebook, copy link, native sheet with localised text.
   - R-011.3 Open Graph preview shows photo and type, never exact location or where an animal is kept.
   - R-011.4 Events `poster_download`, `share`.
@@ -321,6 +323,7 @@ approvals:
   - R-015.4 CSV import: template, dry run, row-level errors, safe photo URL fetch, limit 500 rows / 5 MB.
   - R-015.5 Matches dashboard: top probable owners per animal, contact through chat, no personal data shown to staff, automatic matching of new lost reports.
   - R-015.6 Unverified organisations: listings held for moderation.
+  - R-015.7 Free forever for shelters and municipalities; vets free for found-animal reports, chip lookup, matches and chat (see FR-028).
 - **Acceptance criteria**
   - [ ] Given a verified shelter, when staff upload 10 photos with chips, then 10 FOUND reports exist within 5 minutes of user time.
   - [ ] Given a CSV with 3 invalid rows, when dry-run, then errors list row, field and message and nothing is saved.
@@ -385,7 +388,7 @@ approvals:
   - R-019.1 Role-filtered navigation, strong authentication for admin roles, audit log of every action, scripted bootstrap of the first admin.
   - R-019.2 Organisation verification screens (M3).
   - R-019.3 KPI dashboard from our DB (metric definitions above), filterable by region and species; GA4 funnels verified.
-  - R-019.4 Orders and leads lists (tag orders, partner enquiries).
+  - R-019.4 Leads list (partner enquiries, Vet Partner applications).
 - **Acceptance criteria**
   - [ ] Given a non-admin user, when they open the admin URL, then access is denied.
   - [ ] Given an admin changes an ad, when saved, then an audit entry exists.
@@ -398,9 +401,9 @@ approvals:
 - **Priority:** Must · **Milestone:** M2 (one-off payments), M4 (subscriptions, entitlements)
 - **User story:** As a payer, I want a safe, simple card payment so that I can support or buy.
 - **Requirements**
-  - R-020.1 Stripe Checkout in test mode; webhook-driven ledger; idempotent; EUR; integer cents; minimum card amount EUR 2.00.
+  - R-020.1 Stripe Checkout in test mode; webhook-driven ledger; idempotent; EUR; integer cents; minimum card amount EUR 2.00 for user-chosen amounts; fixed plan prices come from config.
   - R-020.2 Mock provider for local and CI; live mode impossible by configuration in this phase.
-  - R-020.3 Subscriptions and entitlements (`hasEntitlement`) for Premium, Supporter, Shelter Pro; customer portal for cancel and invoices.
+  - R-020.3 Subscriptions and entitlements (`hasEntitlement`) for Premium, Supporter (individual users) and Vet Partner (vet organisation only); never for shelters or municipalities; customer portal for cancel and invoices.
   - R-020.4 Confirmation email in the user language; My payments list.
   - R-020.5 Mobile opens web checkout in an in-app browser; no native purchase UI in this phase (see Risks in the delivery plan).
 - **Acceptance criteria**
@@ -411,19 +414,21 @@ approvals:
   - Payment succeeds but the user closes the browser: the webhook still applies the effect.
   - Refunds only by admin; entitlement ends at once.
 
-## FR-021: Voluntary support: Reunited tip and report contribution
+## FR-021: Voluntary support "Pomagajte nam izboljšati Najdimo"
 
 - **Priority:** Should · **Milestone:** M2
-- **User story:** As a grateful user, I want to leave a small contribution at a happy moment so that the service stays free for others.
+- **User story:** As a grateful user, I want to leave a small contribution at a good moment so that the service stays free for others.
 - **Requirements**
-  - R-021.1 After marking reunited: one-tap EUR 3 / 5 / 10 and custom (≥ EUR 2); Skip as visible as Pay.
-  - R-021.2 On lost-report confirmation: optional "help keep this free" EUR 2–5, never pre-selected, collapsed by default, not repeated for that report once skipped.
-  - R-021.3 Wording is "podpora / prispevek", not charitable donation, unless the legal entity allows (FR-024).
-  - R-021.4 Never blocks or delays reporting, matching or alerts (P-1, P-2).
-  - R-021.5 Event `donation` with amount bucket.
+  - R-021.1 After marking reunited: one-tap EUR 3 / EUR 5 (highlighted, not pre-selected) / EUR 10 and custom (≥ EUR 2); Skip as visible as Pay.
+  - R-021.2 After a report (lost-report confirmation): the same optional ask, collapsed by default, not repeated for that report once skipped.
+  - R-021.3 On the profile: a support card with the same amounts and the monthly Podpornik option (FR-022); no repeated prompts.
+  - R-021.4 Wording is "podpora / prispevek", not charitable donation, unless the legal entity allows (FR-024).
+  - R-021.5 Never blocks or delays reporting, matching or alerts (P-1, P-2).
+  - R-021.6 Event `donation` with value and currency EUR.
 - **Acceptance criteria**
-  - [ ] Given the reunited screen, when shown, then three preset amounts, a custom field and an equally visible Skip are present.
+  - [ ] Given the reunited screen, when shown, then EUR 3, 5 (highlighted, not selected), 10, a custom field and an equally visible Skip are present.
   - [ ] Given the lost confirmation, when shown, then no amount is selected by default.
+  - [ ] Given the profile screen, when opened, then the support card shows the amounts and Podpornik without a pop-up.
   - [ ] Given a completed payment, when recorded, then a receipt email is sent and `donation` fires with consent only.
 - **Edge cases**
   - Anonymous finders have no tip flow (account needed for receipts).
@@ -434,7 +439,7 @@ approvals:
 - **Priority:** Should · **Milestone:** M4
 - **User story:** As a supporter, I want to give monthly without needing features so that I help sustainably.
 - **Requirements**
-  - R-022.1 EUR 2 or 3 per month (test mode); badge on profile and listings with an opt-out toggle; no features, no ranking advantage.
+  - R-022.1 from EUR 2 per month, amount chosen by the user (test mode); ads are still shown to supporters; badge on profile and listings with an opt-out toggle; no features, no ranking advantage.
   - R-022.2 Cancel anytime; badge ends at period end.
   - R-022.3 Event `supporter_subscribe`.
 - **Acceptance criteria**
@@ -442,7 +447,7 @@ approvals:
   - [ ] Given a cancellation, when the period ends, then the badge is gone.
   - [ ] Given a non-supporter, when using any feature, then nothing is degraded.
 - **Edge cases**
-  - Supporter sees ads like everyone else (assumption A-017).
+  - Supporter sees ads like everyone else; only Premium is ad-free (A-017).
 
 ## FR-023: Finder reward escrow
 
@@ -481,12 +486,13 @@ approvals:
 - **Priority:** Should · **Milestone:** M4
 - **User story:** As an owner, I want to boost my listing so that more people see it quickly.
 - **Requirements**
-  - R-025.1 One-off purchase (test EUR 9, 7 days, configurable) via Stripe Checkout (test).
-  - R-025.2 Effects: alert radius up to 25 km (daily cap respected), sort first, map highlight, share kit.
-  - R-025.3 Ends on expiry or reunion; refunds by admin only.
-  - R-025.4 Event `boost_purchase`.
+  - R-025.1 One-off purchase, EUR 4.99 fixed (config), 7 days, via Stripe Checkout (test).
+  - R-025.2 Effects: alert radius up to 25 km (daily cap respected), sort first, top of the map, an auto-generated social post (template text and image, one-tap share; Premium may use the AI-written version, FR-026).
+  - R-025.3 Ends on expiry or reunion; refunds by admin only. Premium users have 1 free Boost per year.
+  - R-025.4 Event `boost_purchase` with value and currency EUR.
+  - R-025.5 Boost adds reach on top of an already effective free alert radius; nothing in the free loop is removed.
 - **Acceptance criteria**
-  - [ ] Given a paid boost, when active, then the report sorts first and alerts reach users within 25 km.
+  - [ ] Given a paid boost, when active, then the report sorts first, shows at the top of the map and alerts reach users within 25 km.
   - [ ] Given a cancelled checkout, when returning, then the report is unchanged.
   - [ ] Given a non-paying owner, when using the product, then all core features remain.
 - **Edge cases**
@@ -495,49 +501,48 @@ approvals:
 ## FR-026: Premium "Protect"
 
 - **Priority:** Should · **Milestone:** M4
-- **User story:** As an owner, I want extra protection and convenience so that I am prepared before my pet gets lost.
+- **User story:** As an owner, I want convenience and AI help so that I am prepared and effective when my pet is lost.
 - **Requirements**
-  - R-026.1 Test price EUR 2.50 per month or EUR 20 per year; honest plan page listing what stays free.
-  - R-026.2 Perks: unlimited pet profiles, private vet records, 1-tap lost mode (≤ 2 taps), proactive matching of registered pets against new found and intake reports, up to 3 alert zones, radius up to 25 km.
-  - R-026.3 Downgrade keeps extra data read-only 90 days.
+  - R-026.1 Test price EUR 2.99 per month or EUR 24.99 per year; honest plan page listing what stays free (reporting, matching incl. basic AI, chat, poster, up to 2 pet profiles).
+  - R-026.2 Perks: unlimited pet profiles; one-tap lost mode (≤ 2 taps); 1 free Boost per year; ad-free (no sponsor and no house ads; Podpornik does not remove ads).
+  - R-026.3 AI extras (capped, SL/EN, mock locally): AI-written listing and social posts; AI poster designs (standard poster stays free); AI search plan (species and behaviour-based guidance; free users see a generic checklist).
+  - R-026.4 Downgrade keeps extra pets read-only 90 days; ads return.
+  - R-026.5 Core matching, chat and alerts are never part of Premium.
 - **Acceptance criteria**
   - [ ] Given a Premium user, when they tap Lost mode, then a prefilled lost report is created in ≤ 2 taps.
-  - [ ] Given a new intake animal strongly matching a protected pet, when saved, then the owner is alerted.
+  - [ ] Given a Premium user, when an ad slot is requested, then none is returned.
+  - [ ] Given a Premium user, when they tap Write for me, then SL and EN listing and social texts are generated without chip number or exact location.
   - [ ] Given a lapse, when the period ends, then premium-only features lock and data stays.
 - **Edge cases**
-  - Free accounts keep matching, chat and alerts for their open lost reports.
+  - Free accounts keep matching, chat, alerts and the standard poster for their open lost reports.
+  - AI cap reached: the manual text, standard poster and generic checklist remain.
 
-## FR-027: QR pet tags
+## FR-027: QR/NFC pet tags (withdrawn)
 
-- **Priority:** Should · **Milestone:** M4
-- **User story:** As an owner, I want a tag that lets a stranger reach me safely.
+- **Priority:** Out of scope · **Milestone:** none
+- **Status:** Withdrawn in v0.3 (brief v0.7). Physical and printable tags, tag ordering, the tag scan page, tag prices and tag order fulfilment are out of scope because a tag linking a pet to its owner feels too close to personal data. Revisit later with a privacy-first design. The ID is kept so numbering stays stable. Stories TASK-56 and TASK-57 are archived.
+- **Still in scope:** the poster PDF QR (FR-011), which links to the public listing only.
+
+## FR-028: Free shelter tools and Vet Partner
+
+- **Priority:** Should (reports, adoption page, Vet Partner) / Could (API) · **Milestone:** M3 (shelter tools), M4 (Vet Partner)
+- **User story:** As a shelter, municipality or vet, I want tools that save time and, for vets, visibility, so that more animals get home.
 - **Requirements**
-  - R-027.1 Order flow: test price EUR 12 plus EUR 3 shipping, address, Stripe Checkout (test), confirmation email, status and tracking.
-  - R-027.2 Unique unguessable code linked to a pet; admin Orders list and CSV export; addresses deleted 90 days after shipping.
-  - R-027.3 Scan page without app or account: pet photo, name, owner-chosen notes, "I found this pet" with optional GPS; owner notified with approximate location and private chat; no ads, rate limited.
-  - R-027.4 NFC and physical manufacturing are out of scope.
+  - R-028.1 Shelters and municipalities: everything free forever (portal, bulk and CSV upload, matches, chip lookup, API keys, analytics, municipality reports, adoption page). No plan, entitlement or upgrade prompt; rate limits are abuse protection and equal for every organisation.
+  - R-028.2 Vets: free for found-animal reports, chip lookup, matches and chat with owners.
+  - R-028.3 API keys (hashed, scoped, revocable), idempotent intake endpoint with OpenAPI docs.
+  - R-028.4 Analytics and municipality PDF/CSV reports (counts < 5 aggregated); public adoptable animals page.
+  - R-028.5 Vet Partner (B2B, Stripe Billing with VAT invoices, test EUR 39 per month): verified clinic profile (hours, 24h emergency badge, services, booking or phone link); featured placement in "nearest vet" ad slots in its area; one "Need help? Nearest vet" line in lost-pet alerts and posters of its region; monthly stats report (views, clicks, impressions, reunions in the area, aggregate only).
+  - R-028.6 Lapsed Vet Partner keeps a basic verified entry; free features are unaffected. Pet shops, groomers and insurers buy ads (FR-029..031).
 - **Acceptance criteria**
-  - [ ] Given a paid order, when recorded, then it appears in admin Orders with a unique code.
-  - [ ] Given a scan with GPS shared, when confirmed, then the owner is notified with an approximate location.
-  - [ ] Given the scan page, when inspected, then it contains no phone, email or address.
-- **Edge cases**
-  - Scan of a code not yet activated shows a neutral page.
-
-## FR-028: Shelter Pro
-
-- **Priority:** Should (plan gating) / Could (API, analytics, adoption page) · **Milestone:** M4
-- **User story:** As a shelter or municipality, I want integrations and reports so that I save time and justify funding.
-- **Requirements**
-  - R-028.1 Plan: test EUR 29 per month; server-side gating; basic features (bulk, CSV, matches, chip lookup) stay free.
-  - R-028.2 API keys (hashed, scoped, revocable) and idempotent intake endpoint with OpenAPI docs.
-  - R-028.3 Analytics and municipality PDF/CSV reports; counts < 5 aggregated.
-  - R-028.4 Adoptable animals public page.
-- **Acceptance criteria**
-  - [ ] Given a free organisation, when it calls a Pro endpoint, then it gets a gated error and the UI shows an upgrade prompt.
+  - [ ] Given a shelter or municipality member, when they use any portal feature, then no payment, entitlement check or upgrade prompt exists.
   - [ ] Given an API key, when it posts the same external id twice, then one report exists.
-  - [ ] Given a lapse, when the plan ends, then Pro data is read-only.
+  - [ ] Given a vet without Vet Partner, when they use chip lookup, found reports, matches and chat, then all work unrestricted.
+  - [ ] Given an active Vet Partner clinic, when a nearest-vet slot is requested in its area, then the clinic is shown first and labelled Oglas.
+  - [ ] Given the plan lapses, when the period ends, then featured placement and mentions stop within 1 hour.
 - **Edge cases**
-  - Municipality organisations may need invoices (see FR-033).
+  - Two partner clinics in one area rotate fairly; alerts and posters carry at most one clinic.
+  - Municipality invoicing is not needed (nothing is sold to them).
 
 ## FR-029: Ad serving, targeting, house ads and tracking
 
@@ -566,6 +571,7 @@ approvals:
   - R-030.2 One slot on lost-pet detail ("nearest 24h vet", "pet shop near you"), one on the reunited screen, one in the web sidebar (≥ lg).
   - R-030.3 Alt text, keyboard focus, `rel="sponsored noopener"`, 44 px targets, reserved size (CLS budget); silent collapse on failure.
   - R-030.4 No ads on report-lost, report-found, sign-in, chat or payment screens.
+  - R-030.6 Premium users get no ads and no house ads; slots collapse.
   - R-030.5 Events `ad_impression`, `ad_click` to GA4 with consent; DB counts always (R-029.4).
 - **Acceptance criteria**
   - [ ] Given the feed, when 9 cards are shown with N = 8, then one "Oglas" card appears after card 8.
@@ -720,6 +726,21 @@ approvals:
 - **Edge cases**
   - Ad impression and click counting in our DB is aggregate and cookieless, so it does not need consent (A-016).
 
+## FR-040: Marketing and go-to-market plan
+
+- **Priority:** Could · **Milestone:** M5 (startable any time; no code)
+- **User story:** As the client, I want a go-to-market plan so that I can start outreach and grow users, listings and sponsors.
+- **Requirements**
+  - R-040.1 `docs/07-marketing-plan.md`: positioning and messaging (SL/EN), launch phases (pilot region to Slovenia), channels (Facebook lost-pet groups and admins, shelters and vets as distribution, SEO landing pages, Instagram and TikTok success stories, local media and PR, municipalities, influencers and pet communities).
+  - R-040.2 Sponsor and Vet Partner pitch and an outreach list template.
+  - R-040.3 Referral and word-of-mouth loop; 3-month content calendar; budget scenarios EUR 0 / 500 / 2000.
+  - R-040.4 KPIs tied to GA4 events and DB metrics.
+- **Acceptance criteria**
+  - [ ] Given the plan, when reviewed, then every channel has a goal, actions, owner and KPI.
+  - [ ] Given the KPIs, when listed, then each maps to an existing event or metric.
+- **Edge cases**
+  - Budget EUR 0 scenario relies on community, shelters and SEO only.
+
 # Non-functional requirements
 
 | ID | Area | Requirement | Target / measure |
@@ -729,7 +750,7 @@ approvals:
 | NFR-A11Y | Accessibility | WCAG 2.2 AA (EAA), keyboard, VoiceOver and TalkBack; outdoor contrast; map always has a list alternative; reduced motion | axe: 0 violations · body text ≥ 4.5:1 · primary actions ≥ 7:1 · targets ≥ 44 px |
 | NFR-SEO | SEO | Titles/meta, structured data, sitemap, hreflang on public pages; closed/hidden reports noindex | Lighthouse SEO ≥ 95 |
 | NFR-SEC | Security | RLS on every table; captcha and rate limits on anonymous endpoints; hashed API keys; SSRF-safe fetches; webhook signatures; admin strong auth. See `05-quality-security-plan.md` | RLS test matrix green · 0 high/critical findings at launch |
-| NFR-PRIV | Privacy and consent | GDPR: EU region (Frankfurt); fuzzed public location; no PII in analytics; consent before analytics; export and delete; retention: chat 6 months after close, closed-report photos and locations 12 months, tag addresses 90 days after shipping, payment records as legally required | 0 analytics requests without consent · export < 5 min · deletion ≤ 30 days |
+| NFR-PRIV | Privacy and consent | GDPR: EU region (Frankfurt); fuzzed public location; no PII in analytics; consent before analytics; export and delete; retention: chat 6 months after close, closed-report photos and locations 12 months, payment records as legally required | 0 analytics requests without consent · export < 5 min · deletion ≤ 30 days |
 | NFR-BROWSER | Browsers and devices | Latest 2 versions of Chrome, Edge, Firefox, Safari; iOS and Android via Expo (minimum OS versions set by the Expo SDK, confirmed in the TDD) | No blocking defects on spot checks |
 | NFR-I18N | Language | SL default, EN second; ICU plurals incl. SL dual; SL formats; translation completeness check in CI | 100 % keys translated; CI gate |
 | NFR-AVAIL | Availability | Monthly uptime; daily backups; restore drill; staging and production environments | 99.5 % · RPO ≤ 24 h · RTO ≤ 8 h |
@@ -769,9 +790,9 @@ approvals:
 | | Features |
 |---|---|
 | **MVP** (M1–M2) | Monorepo, design system, UI kit, SL/EN, auth, analytics (GA4/Firebase) and consent; pet profiles, photos, location with fuzzing; report lost; report found without account; map, list, detail; matching v1 and review; chat; notifications and nearby alerts; poster and sharing; reunited and lifecycle; abuse reporting; admin shell; payments core (Stripe test); Reunited tip and report contribution; ads (serving, placements, admin, Partners page); public copy and legal drafts |
-| **Version 1** (M3–M5) | AI pre-fill; image-similarity matching; organisations and shelter portal (bulk, CSV, matches, chip lookup); sighting trail; export and delete; subscriptions; boost; Premium; Podpornik; reward escrow; QR tag ordering and scan; Shelter Pro; transparency page; moderation queue and image screening; KPI dashboard; security, accessibility and performance audits; observability and backups; SEO pages; success stories; final legal pages; pilot onboarding kit; mobile release candidate builds |
-| **Future** | Self-serve ad booking and Stripe invoicing, founding-partner pricing (M6); IAP or RevenueCat for mobile purchases; social auto-posting for boosts; NFC tags; chat photo attachments; CRPsi integration (needs an agreement); server-side GA tagging; more species, countries and languages; vets, shop and insurer partnerships beyond ads |
-| **Out of scope** | Species other than dogs and cats; countries other than Slovenia; live payments; App Store and Play Store submission; physical tag manufacturing; official CRPsi integration |
+| **Version 1** (M3–M5) | AI pre-fill; image-similarity matching; organisations and shelter portal (bulk, CSV, matches, chip lookup); sighting trail; export and delete; subscriptions; boost; Premium (incl. AI extras, ad-free); Podpornik; reward escrow; free shelter tools (API, analytics, municipality reports, adoption page); Vet Partner; transparency page; moderation queue and image screening; KPI dashboard; security, accessibility and performance audits; observability and backups; SEO pages; success stories; final legal pages; pilot onboarding kit; mobile release candidate builds |
+| **Future** | Self-serve ad booking and Stripe invoicing, founding-partner pricing (M6); IAP or RevenueCat for mobile purchases; social auto-posting for boosts; privacy-first pet tags (redesign); chat photo attachments; CRPsi integration (needs an agreement); server-side GA tagging; more species, countries and languages; vets, shop and insurer partnerships beyond ads |
+| **Out of scope** | Species other than dogs and cats; countries other than Slovenia; live payments; App Store and Play Store submission; QR/NFC pet tags (physical and printable); official CRPsi integration |
 
 # User flows
 
@@ -805,8 +826,8 @@ approvals:
 
     Monetisation (Stripe test)
     Boost: lost report → Boost → Checkout → wider alerts + top of list
-    Premium / Podpornik / Shelter Pro: plan page → Checkout → entitlement → manage in Stripe portal
-    Tag: pet → Order tag → Checkout → admin fulfils → scan page → owner notified
+    Premium / Podpornik: plan page → Checkout → entitlement → manage in Stripe portal
+    Vet Partner: verified vet org → plan page → Billing Checkout (VAT invoice) → clinic profile, featured slot, alert/poster line, monthly report
     Reward: confirmed chat → fund reward → reunion confirmed → release (fee) → finder paid via Connect
 
     Ads
@@ -827,7 +848,7 @@ approvals:
 - A-004: Shelter holding periods are configurable reminders; the product states no legal rules before review (Q-006).
 - A-005: Cloud credentials (Q-002 Supabase, Vercel, Stripe; Q-007 Apple, Google, Firebase push) are pending; everything is built and tested locally first; deploy, push delivery and real GA4/Firebase data wait for them.
 - A-006: Pilot region is Ljubljana; 2–3 shelters onboarded by hand (Q-005).
-- A-007: All prices are test-mode placeholders pending client decision: Boost EUR 9 / 7 days; Premium EUR 2.50 per month or EUR 20 per year; Podpornik EUR 2–3 per month; tag EUR 12 + EUR 3 shipping; Shelter Pro EUR 29 per month; escrow fee 5 %; minimum card amount EUR 2.
+- A-007: Prices are test-mode placeholders from the client monetisation model (brief v0.8), configurable: Boost EUR 4.99 fixed (7 days); Premium EUR 2.99 per month or EUR 24.99 per year (includes 1 free Boost per year); Podpornik from EUR 2 per month (user chooses); support amounts EUR 3 / 5 (highlighted) / 10 / custom with a EUR 2 minimum (Stripe fees of about EUR 0.25 + 1.5 % and store cuts eat most of a EUR 1 payment); Vet Partner EUR 39 per month (B2B); escrow fee 5 %.
 - A-008: Free forever (P-1): reporting, matching, chat, alerts in the default radius, poster, 1 saved pet profile. The pet-profile limit never blocks a lost report.
 - A-009: Fuzzing defaults: LOST ≥ 500 m, FOUND/SIGHTED ≥ 150 m, configurable.
 - A-010: Matching defaults: threshold 0.5, top 10, found within 30 days after loss; tuned with pilot data.
@@ -837,13 +858,16 @@ approvals:
 - A-014: Mobile purchases (tips, Boost, subscriptions) open web checkout in this phase; the App Store and Play rules on in-app purchase, including tips and donations to non-charities, are handled before any store submission (risk in the delivery plan).
 - A-015: The client provides the GA4 property and Firebase project (Q-009); until then events go to the mock adapter.
 - A-016: Ad impressions are rendered counts without viewability; counting is aggregate and cookieless; sponsor reports state this method.
-- A-017: Supporters and Premium users still see ads (no ad-free tier); open question Q-010 for the client.
+- A-017: Premium is ad-free (Q-010 decided); Podpornik supporters still see ads.
 - A-018: Dohodnina and "donation" wording need a qualifying non-profit entity (društvo or zavod); until confirmed the section is hidden (Q-008).
 - A-019: Reward escrow uses Stripe Connect (Stripe holds funds); live use needs legal review (Q-011).
 - A-020: Region and municipality reference data come from Slovenian open data; licence to be verified.
 - A-021: Minimum mobile OS versions follow the Expo SDK chosen in the TDD.
 - A-022: Social auto-posting for boosts is deferred; Boost provides a share kit instead.
 - A-023: Success stories require explicit opt-in consent and moderation.
+- A-024: Shelters and municipalities are free forever; vets are free for reunite features and pay only for Vet Partner visibility (brief v0.5). Shelter Pro no longer exists.
+- A-025: QR/NFC pet tags are out of scope (brief v0.7); the poster QR links to the public listing only.
+- A-026: Vet Partner needs verified vet organisations (FR-015) and the ads infrastructure (FR-029..031); VAT invoices via Stripe Billing, company VAT ID collected.
 
 # Glossary
 
@@ -860,9 +884,9 @@ approvals:
 | House ad | Own promotion shown when no sponsor ad matches a slot |
 | Slot | Fixed ad position: feed, detail, reunited screen, web sidebar |
 | Podpornik | Supporter: monthly voluntary contribution with a badge, no features |
-| Boost | One-off paid visibility extension for a lost listing |
-| Premium "Protect" | Owner subscription: more pets, proactive protection, 1-tap lost mode |
-| Shelter Pro | Paid organisation plan: API, analytics, adoption page |
+| Boost | Fixed-price (EUR 4.99) 7-day visibility extension for a lost listing |
+| Premium "Protect" | Owner subscription (EUR 2.99/month or 24.99/year): unlimited pets, AI extras, one-tap lost mode, 1 free Boost per year, ad-free |
+| Vet Partner | Paid B2B plan for vets: clinic profile, featured nearest-vet slot, alert and poster mention, monthly report |
 | Entitlement | Server-side right to a paid feature, derived from a subscription |
 | Escrow | Reward held by Stripe until the owner confirms reunion |
 | Dohodnina | Slovenian income tax; eligible non-profits can receive a share by taxpayer choice via eDavki |
@@ -883,3 +907,5 @@ approvals:
 |---|---|---|
 | 0.1 | 2026-10-14 | Template |
 | 0.2 | 2026-10-14 | Initial requirements from brief v0.2 plus client additions: voluntary support (tips, contribution, Podpornik, escrow fee, dohodnina, transparency page), early ads (M2) with Partners page, GA4/Firebase analytics and Consent Mode v2 as core from M1. FR-001…FR-039, NFRs, assumptions A-001…A-023 |
+| 0.3 | 2026-10-15 | Brief v0.4-v0.7: Shelter Pro removed (FR-028 now free shelter tools + Vet Partner), explicit free-forever list (P-1, P-7), QR/NFC tags withdrawn (FR-027, P-8), new assumptions A-024..A-026 |
+| 0.4 | 2026-10-15 | Brief v0.8 monetisation model: Boost EUR 4.99 fixed; Premium EUR 2.99/month or EUR 24.99/year with unlimited pets, AI extras (written listing and posts, poster designs, search plan), one-tap lost mode, 1 free Boost per year, ad-free (Q-010 decided: Podpornik not ad-free); free tier includes basic AI and up to 2 pet profiles; support asks after reunion, after report and on profile (EUR 3 / 5 / 10 / custom, min EUR 2); Vet Partner EUR 39; prices in A-007; FR-040 marketing plan (low priority) added |

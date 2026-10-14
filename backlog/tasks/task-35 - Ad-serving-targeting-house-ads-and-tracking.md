@@ -5,6 +5,7 @@ status: To Do
 assignee:
   - '@tech-lead'
 created_date: '2026-10-14 21:03'
+updated_date: '2026-10-14 22:13'
 labels:
   - story
   - 'req:FR-029'
@@ -29,6 +30,7 @@ The client needs to pitch sponsors as soon as users exist; a cheap, privacy-safe
 - [ ] #4 Given impressions and clicks, when counted, then they are aggregated per ad, slot, day and region in our DB without user identifiers, cookies or device storage, clicks go through a counting redirect with rel sponsored, and this DB is the source of truth for sponsor reports.
 - [ ] #5 Given targeting, when regions are used, then Slovenian statistical regions and municipalities (open data, licence checked) are loaded as reference data and a point maps to its region and municipality.
 - [ ] #6 Given an ad record, when stored, then it has an image with required alt text, title, text, https link, language, dates, status and targeting, and only admins can write.
+- [ ] #7 Given a request whose context marks the user as ad-free (active Premium entitlement), when a slot is requested, then no ad and no house ad is returned; Podpornik supporters are not ad-free.
 <!-- AC:END -->
 
 ## Packet
