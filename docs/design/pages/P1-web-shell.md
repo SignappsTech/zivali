@@ -30,7 +30,7 @@ Left to right:
 2. At most four text links (16 semibold; current page `foreground`, others `muted-foreground`, `aria-current="page"`): public set is Map, Lost, Found, How it works. Signed-in replaces "How it works" with "My pets and reports" (how it works moves to the footer).
 3. Spacer.
 4. Language switcher: text toggle `SL / EN`, current language underlined. Keeps the current path.
-5. Signed-in: inbox icon button (links to the messages and notifications page) and account menu (avatar, opens a popover: Profile, Alerts, Payments, Sign out). Signed-out: ghost button "Sign in".
+5. Signed-in: inbox icon button (links to the messages and notifications page) and account menu (avatar, opens a popover: Profile, Alerts, Payments, Sign out). Signed-out: ghost button "Sign in" (Slovenian label "Vpis").
 6. Primary `sm` button "Report" that opens a popover of three choice rows (Lost animal, Found animal, Sighted animal). This is the single primary action in the header.
 
 No notification count badges. Unread state is shown inside the inbox, not on the icon.

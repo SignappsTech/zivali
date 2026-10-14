@@ -36,7 +36,7 @@ Sticky bottom bar on mobile with primary "Save"; web has Save at the end of the 
 
 ## Pet detail
 
-Cover photo (radius 32), name h1, facts as a plain 2-column list, notes, chip row (never shows the number to anyone but the owner; the owner sees it with a reveal toggle), actions: primary "Report lost" (opens P6 with this pet prefilled), text buttons "Edit", "Order a tag" (M4 slot, hidden until then), "Delete". Delete uses a dialog that states photos are removed.
+Cover photo (radius 32), name h1, facts as a plain 2-column list, notes, chip row (never shows the number to anyone but the owner; the owner sees it with a reveal toggle), actions: primary "Report lost" (opens P6 with this pet prefilled), text buttons "Edit", "Delete". Delete uses a dialog that states photos are removed.
 
 ## States
 

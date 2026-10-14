@@ -67,6 +67,10 @@ Sheet snap points scale with screen height; at 320 px the pill shortens to place
 
 Rows are links with name, status word, time and distance in the accessible name. Marker and cluster labels are announced via the list; the map has a text alternative ("Map of 12 reports near Ljubljana, listed below"). Reduced motion removes sheet spring and marker fade. Filter state is announced when the count changes (polite live region).
 
+### Offline
+
+A `note` above the list: "Brez povezave, zadnja posodobitev …" with the cached list and static map area; filters work on cached data; markers of the cached area only.
+
 ## Assets
 
 | File | Brief |

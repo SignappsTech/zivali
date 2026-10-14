@@ -24,7 +24,7 @@ One console for the client and moderators: ads, organisations, moderation, order
 | Safety | Moderation queue, Reports | moderator, admin | M4 (shell item visible, "coming" state until built) |
 | Organisations | Verification, Organisations | admin | M3 |
 | People | Users | admin | M4 |
-| Commerce | Orders, Enquiries (leads) | admin | M2 for enquiries, M4 for orders |
+| Commerce | Enquiries (leads), Vet Partners | admin | M2 for enquiries, Vet Partners with its story |
 | System | Audit log, Settings | admin | M2 |
 
 - **Top bar** (72 px, `background`): breadcrumb as text links, page title h1 below it, right side: environment label (Local, Staging, Production), role word, account menu.

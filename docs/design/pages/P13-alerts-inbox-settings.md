@@ -56,6 +56,10 @@ Loading skeleton rows; saving feedback as a toast "Saved"; validation on phone; 
 
 Switches are real `switch` roles with visible labels, sliders have number inputs on web and value text, time fields use native pickers, group labels are headings, the unread dot is accompanied by "unread" in the accessible name, no information by colour alone.
 
+## Proximity alerts and Always-location primer
+
+An extra switch under "Alerts near me": "Alert me when I am near a lost animal" (proximity alerts, M3 offline feature). Turning it on shows an **Always-location primer** (full sheet like P2 primers): why background location is needed in two lines, what is and is not stored, primary "Allow always", text "Not now"; denial leaves the switch off with a note and a text button "Open system settings". Opt-in sheet and settings both show the same state.
+
 ## Assets
 
 | File | Brief |

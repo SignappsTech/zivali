@@ -58,6 +58,10 @@ Centred 560 px column; camera button becomes a file input and drag area; GPS via
 
 Large controls, 56 px primary, bottom-anchored on mobile. Camera and thumbnail controls named, focus to the heading on step change, copy button announces "Copied", the private link is real selectable text. Works at 200 % text.
 
+### Waiting to send
+
+A report made offline shows a success-like screen with a clock icon and "Čaka na pošiljanje": it will be sent when online, a text button "Cancel", and a quiet row on the Map tab for queued reports with status words (Waiting, Sending, Sent, Failed with retry). No duplicate on retry.
+
 ## Assets
 
 None.

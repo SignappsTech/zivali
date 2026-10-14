@@ -61,6 +61,10 @@ Phones 360 to 430 px wide; test 320. Respect safe areas, dynamic type up to 200 
 
 Tab bar items are buttons with `accessibilityRole="tab"` and selected state; the Report action is announced as a button, not a tab. Sheets trap focus, have a close button for screen readers, and announce their title. Touch targets 44 px or more. Primers are readable at 200 % text size without clipping.
 
+## Offline state
+
+When there is no connection every tab shows a quiet `note` under the top bar: "Brez povezave" with the time of the last update ("zadnja posodobitev 14:20"). Cached lists stay readable; actions that need the network are disabled with an explanation; queued items show a clock icon.
+
 ## Assets
 
 None (icons only).

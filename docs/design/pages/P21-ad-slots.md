@@ -15,7 +15,7 @@ Labelled, calm sponsor placements that earn revenue without eroding trust in a s
 
 ## Rules (enforced by API and test, not only by design)
 
-- **No ad** on report lost, report found, sign-in and auth, chat, payment, tag scan, consent settings, admin, and the Partners page (P22). The shell's Flow variant has no sidebar slot (P1).
+- **No ad** on report lost, report found, sign-in and auth, chat, payment, consent settings, admin, and the Partners page (P22). The shell's Flow variant has no sidebar slot (P1).
 - Every ad shows the label **"Oglas"** (EN "Ad") in 13 px bold `muted-foreground`, top-left of the unit, always visible and in the accessible name.
 - Never the first item in a feed, never adjacent to another ad, at most one ad per screen on mobile and per page except the web sidebar plus one inline.
 - Links use `rel="sponsored noopener"`; targets 44 px or more; focus ring; alt text on the image; silent collapse when no ad or when blocked (the space collapses without a gap, the reserved size avoids layout shift while loading).
@@ -32,6 +32,8 @@ One image format: **4:3, minimum 1200 by 900 px**, JPG or PNG under 500 KB. Slot
 | Reunited | reunited screen below the tip (P14) | unit like Detail, full width | 1:1 crop |
 | Sidebar | web, from `lg`, right column, sticky (P1) | unit 320 wide: label, image 4:3 on top, title, text, text button | 4:3 |
 
+**Vet Partner placement:** a featured "nearest vet" unit in the Detail slot (and optionally the Feed slot) for a verified vet partner: same layout as Detail with the partner name, area and a text button "Call or open map"; always labelled "Oglas"; the same calm rules, never in the no-ad routes. Admin previews it in P20.
+
 Reserved sizes: Feed 88 px row, Detail and Reunited 136 px, Sidebar 320 by 360 px.
 
 ## House ads (fill every empty slot, no tracking pixels)
@@ -40,7 +42,7 @@ Reserved sizes: Feed 88 px row, Detail and Reunited 136 px, Sidebar 320 by 360 p
 |---|---|---|
 | Support | keep the service free | support page (M4: transparency) or the contribution flow |
 | Partner with us | advertise your business | Partners page (P22) |
-| Adopt | adopt an animal from a shelter | shelters list (M3 adoptable page; until then the shelters page) |
+| Adopt | adopt an animal from a shelter | the adoption information page (content decides the target; never /za-zavetisca) |
 
 Same layout as sponsor ads, labelled "Oglas" as well (honest), but with a quiet marker "House" only in admin previews. Each has an illustration asset (see image tasks) of the same 4:3 format.
 
