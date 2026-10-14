@@ -37,6 +37,8 @@ deletePhoto(photoId: string): Promise<void>
 photoAlt(r: { species; colours; areaName?: string }, locale): string    // e.g. "Rjav pes, območje Ljubljana Šiška"
 ```
 
+Offline (C17): the mobile outbox keeps `PreparedPhoto` files in `documentDirectory/outbox/<id>/` and calls `register_photo` + upload when it sends; the `(owner, sha256)` dedupe makes repeated sends safe.
+
 ## Server processing
 
 - `register_photo` (RPC): validates dimensions (≤ 1600 long edge, ≥ 320 short edge), returns an existing row for the same `(owner, sha256)`.

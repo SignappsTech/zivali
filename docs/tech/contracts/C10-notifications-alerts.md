@@ -17,21 +17,28 @@ email_outbox(id, user_id, template, locale, to_address_hash, status ('queued'|'s
 
 ## Types and channels
 
-| Type | Payload | Quiet hours | Default channels | Deep link |
-|---|---|---|---|---|
-| `match_chip` | `{ match_id, lost_code, other_code }` | ignored | in-app, push, email | `/r/<lost_code>/matches` |
-| `match_suggested` | `{ match_id, lost_code, strength }` | apply | in-app, push, email | same |
-| `match_confirmed` | `{ conversation_id, report_code }` | apply | in-app, push, email | `/inbox/<id>` |
-| `chat_message` | `{ conversation_id, preview_alias }` (no body) | ignored | in-app, push; email after 30 min unread | `/inbox/<id>` |
-| `nearby_lost` | `{ report_code, species, distance_band }` | apply | in-app, push | `/r/<code>` |
-| `report_reminder` | `{ report_code, day: 7|14|30 }` | apply | in-app, push, email | `/my-reports` |
-| `report_expiring` / `report_closed` | `{ report_code }` | apply | in-app, email | `/my-reports` |
-| `report_hidden` | `{ report_code, reason }` | apply | in-app, email | `/my-reports` |
-| `report_reunited` | `{ report_code }` | apply | in-app, push | `/r/<code>` |
-| `manage_link` | `{ report_code, token }` (email only, to `report_contacts`) | n/a | email | `/m#token` |
-| `payment_receipt` | `{ payment_id, amount_cents, purpose }` | n/a | email, in-app | `/account/payments` |
+| Type | Payload (variables for `docs/content/notifications-and-emails.md`) | Quiet hours | Default channels | Category | Deep link |
+|---|---|---|---|---|---|
+| `match_chip` | `{ match_id, lost_code, other_code, other_type: 'found'|'sighted', has_name, pet_name?, species }` | ignored | in-app, push, email | search | `/r/<lost_code>/matches` |
+| `match_suggested` | `{ match_id, lost_code, strength: 'good'|'strong', other_type, has_name, pet_name?, species }` | apply | in-app, push, email | search | same |
+| `match_confirmed` | `{ conversation_id, report_code, species, report_type: 'found'|'sighted' }` | apply | in-app, push, email | search | `/inbox/<id>` |
+| `chat_message` | `{ conversation_id, preview_alias (≤ 24 chars, alias or chosen display name), unread_count }` (no body) | ignored | in-app, push; email after 30 min unread | search | `/inbox/<id>` |
+| `nearby_lost` | `{ report_code, species, distance_band, has_area, area_name? (public approximate area), reported_at }`; email only: `{ has_vet_partner, clinic_name?, clinic_area?, clinic_url? (tracked click), ad_id?, unsubscribe_url }` | apply | in-app, push; email opt-in (default off) | alert | `/r/<code>` |
+| `report_reminder` | `{ report_code, day: 7|14|30, has_name, pet_name?, species }` | apply | in-app, push, email | search | `/my-reports?r=<code>&action=keep|close|extend` |
+| `report_expiring` | `{ report_code, report_type, days_left, has_name, pet_name?, species }` | apply | in-app, email | search / finder | same with action |
+| `report_closed` | `{ report_code, report_type, idle_days, reopen_days, has_name, pet_name?, species }` | apply | in-app, email | search / finder | `/my-reports` |
+| `report_hidden` | `{ report_code, report_type, support_email }` (no free-text reason) | apply | in-app, email | search / finder | `/my-reports` |
+| `report_reunited` | `{ report_code, species }` | apply | in-app, push | search | `/r/<code>` |
+| `manage_link` | `{ report_code, report_type: 'found'|'sighted', species, manage_url }` (email only, to `report_contacts`; transactional, not governed by prefs; URL in the recipient locale: `/m#token` or `/en/m#token`) | n/a | email | finder | `/m#token` |
+| `payment_receipt` | `{ payment_id, amount_cents, purpose, paid_at, receipt_ref, is_test }` (`is_test` when APP_ENV is not production or the provider is mock/test) | n/a | email, in-app | payment | `/account/payments` |
+
+The handler derives `has_name` (`yes`/`no`) and truncates `pet_name` to 18 and `preview_alias` to 24 characters; `species` may be `other` in copy for future-proofing. The email layout picks the footer reason line from the category (account, search, alert, finder, payment). Vet Partner fields are resolved from the report's region (M4) and never appear in push or in-app payloads. `unsubscribe_url` is a signed one-click link that turns the type's email channel off without sign-in.
 
 Email-only types to unverified addresses are skipped (FR-010 edge). Text comes from i18n namespace `notifications` and `email` in the recipient's `profiles.locale`.
+
+## Local proximity alerts (M3, TASK-87)
+
+Not server notifications: the mobile app raises them locally from OS geofences around cached lost-report areas (C17). They are not stored in `notifications`, never upload location, use the profile quiet hours (cached on the device), a local daily cap (default 3) and once per pet per area. Category `nearby_local`; deep link `/r/<code>`.
 
 ## API
 

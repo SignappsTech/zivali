@@ -1,4 +1,4 @@
-source: docs/04-technical-design.md (v0.3) §Architecture, §Data model, §Authentication, §Environments, §CI/CD, §Observability; docs/05-quality-security-plan.md (v0.3) §Security, §Privacy, §Definition of Done
+source: docs/04-technical-design.md (v0.4) §Architecture, §Data model, §Authentication, §Environments, §CI/CD, §Observability; docs/05-quality-security-plan.md (v0.4) §Security, §Privacy, §Definition of Done
 
 # Backend slice (supabase/, scripts/, packages/types database types)
 
@@ -38,6 +38,7 @@ Read this, your task packet and the contract(s) it references. Conventions for e
 - `create_report` belongs to the report-write task (TASK-29.2); the anonymous guard is a separate function `submission_guard(p jsonb)` (stub from TASK-29.2, real body from TASK-17.1).
 - `enqueue_notification()` belongs to the notifications task; until it is merged, call it anyway (the TASK-6 stub enqueues `notify` jobs that the stub handler logs).
 - `app_config` keys: insert your defaults in your migration (`on conflict do nothing`).
+- Idempotency: `client_requests` (C1) belongs to the report-write task; other RPCs reuse its helper. The mobile outbox (C17) retries `create_report` with the same `p_client_request_id`, so replays must return the original result, including the manage token.
 
 ## Standards
 
@@ -59,13 +60,15 @@ RPC: `raise exception using errcode = 'P0001', message = json_build_object('code
 |---|---|---|
 | `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SECRET_KEY` (prefer these new-style keys; legacy `SUPABASE_ANON_KEY` / `SUPABASE_SERVICE_ROLE_KEY` are auto-injected into functions and still work) | functions, scripts | local values from `supabase status`; cloud project `najdimo` (ref `omtpppzrugibquukhnyl`) values in `.env.local` |
 | `APP_URL`, `APP_ENV` | functions | links in emails, CORS, mock checkout |
-| `PAYMENTS_PROVIDER` (`mock`/`stripe`), `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `MOCK_WEBHOOK_SECRET` | functions | live keys rejected (C13) |
+| `PAYMENTS_PROVIDER` (`mock`/`stripe`), `STRIPE_SECRET_KEY`, `STRIPE_PUBLISHABLE_KEY` (scripts and web only), `STRIPE_WEBHOOK_SECRET`, `MOCK_WEBHOOK_SECRET` | functions | live keys rejected (C13) |
 | `EMAIL_PROVIDER` (`mock`/`brevo`), `BREVO_API_KEY`, `EMAIL_FROM`, `LEADS_NOTIFY_EMAIL` | functions | mock writes `email_outbox` |
 | `PUSH_PROVIDER` (`mock`/`expo`), `EXPO_ACCESS_TOKEN` | functions | |
 | `CAPTCHA_PROVIDER` (`mock`/`turnstile`), `TURNSTILE_SECRET_KEY` | functions | Auth captcha configured in the dashboard / config.toml |
 | `AI_PROVIDER` (`mock`/`anthropic`), `ANTHROPIC_API_KEY`, `AI_VISION_MODEL`, `AI_VISION_EFFORT` | functions (M3) | ADR-012 |
 | `EMBEDDER_PROVIDER` (`mock`/`voyage`), `VOYAGE_API_KEY` | functions (M3) | ADR-013 |
 | Vault secrets `worker_url`, `worker_key`, `fuzz_secret`, `rate_salt` | database | set by migration locally, by `deploy.mjs` in cloud |
+| `MAPTILER_API_KEY` | team `.env.local` | source for the public `NEXT_PUBLIC_/EXPO_PUBLIC_MAPTILER_KEY`; not used server-side |
+| `GA_PROPERTY_ID`, `GA_SERVICE_ACCOUNT_KEY_FILE` | partner-stats enrichment (flag `partners.ga_enrichment`), GA admin checks | key file in `.secrets/`, never committed or uploaded as plain text |
 | `SUPABASE_ACCESS_TOKEN`, `SUPABASE_PROJECT_REF` (staging = `najdimo`), `SUPABASE_DB_PASSWORD`, `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`, `EXPO_TOKEN`, `STRIPE_SECRET_KEY` (sk_test only) | deploy script / CI | set in `.env.local` for staging (2026-10-15); still gated for production (missing → `NEEDS-INPUT`, dry run) |
 | `SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID/_SECRET`, `…_APPLE_…` | config.toml `env()` | providers enabled only when set |
 

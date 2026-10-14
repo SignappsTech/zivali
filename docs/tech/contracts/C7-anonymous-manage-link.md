@@ -28,6 +28,10 @@ For anonymous callers (`is_anonymous_user()`):
 
 Token: 32 random bytes (`gen_random_bytes(32)`), base64url, only `sha256` stored in `reports.manage_token_hash`; cleared on close (`transition_report`).
 
+## Queued submissions (mobile outbox, C17)
+
+A found or sighted report created offline is sent later by the outbox: anonymous sign-in at send time (Turnstile in the WebView; if interaction is needed the item waits in `needs_action`), then photos, then `create_report` with `p_client_request_id` = outbox id. A retry with the same id returns the same report and the same manage token (encrypted replay, C1), so a lost response never loses the token or creates a duplicate. Rate limits apply at send time.
+
 ## Client headers
 
 All clients send `x-device-id: <uuid>` (generated once per install/browser, stored locally) on Supabase requests (`global.headers` in the supabase client).

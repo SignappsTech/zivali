@@ -1,0 +1,43 @@
+---
+id: TASK-87.2
+title: Mobile proximity-alert settings and Always-location primer
+status: To Do
+assignee:
+  - '@frontend-dev'
+created_date: '2026-10-14 22:40'
+labels:
+  - fe
+  - 'est:S'
+milestone: m-2
+dependencies:
+  - TASK-87.1
+  - TASK-23.3
+  - TASK-22.2
+references:
+  - docs/tech/frontend.md
+  - docs/tech/contracts/C17-mobile-offline-data.md
+  - docs/design/pages/P13-alerts-inbox-settings.md
+parent_task_id: TASK-87
+priority: medium
+ordinal: 268000
+---
+
+## Description
+
+<!-- SECTION:DESCRIPTION:BEGIN -->
+Background location is sensitive; it must be an explicit, well-explained opt-in that is easy to switch off (FR-043 R-043.1, R-043.4).
+## Packet
+Unblocks on: >- merged (TASK-87.1); Mobile nearby-alert settings merged (TASK-23.3); Design: Notifications, nearby alerts and settings (P13) approved (TASK-22.2)
+Design: P13 docs/design/pages/P13-alerts-inbox-settings.md (TASK-22.2); offline states requested from the design lead (CHANGE)
+Copy: docs/content/pages/P13-alerts-inbox-settings.md (add offline-state keys as SL/EN drafts if missing and list them)
+Contracts: C17 (in references); ADR-019
+Review: tech-lead code review (full mode); run `pnpm verify` before reporting done.
+Branch: agent/task-87.2-geofence-ui
+<!-- SECTION:DESCRIPTION:END -->
+
+## Acceptance Criteria
+<!-- AC:BEGIN -->
+- [ ] #1 Settings → Alerts has a "Nearby reminders" switch; turning it on shows a plain-language primer (what is monitored, nothing uploaded, how to turn off) before the OS asks for Always location; declining leaves everything else working.
+- [ ] #2 Turning it off removes all geofences at once; a permission downgraded by the OS disables the feature with an explanation.
+- [ ] #3 The daily cap and quiet hours are shown; screen-reader labels verified on Android.
+<!-- AC:END -->

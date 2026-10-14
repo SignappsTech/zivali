@@ -7,6 +7,7 @@ status: To Do
 assignee:
   - '@backend-dev'
 created_date: '2026-10-14 22:13'
+updated_date: '2026-10-14 22:41'
 labels:
   - be
   - 'est:M'
@@ -39,7 +40,7 @@ Branch: agent/task-29.2-report-write-be
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 create_report and update_report implement C4 for lost, found and sighted (inline attributes or pet_id, photo_ids, location, event_at, circumstances, contact_pref, linked_report_id) with an idempotent client_request_id.
+- [ ] #1 create_report and update_report implement C4 for lost, found and sighted (inline attributes or pet_id, photo_ids, location, event_at, circumstances, contact_pref, linked_report_id); p_client_request_id replays from the same user return the original result for 24 h from client_requests (C1), another user gets CONFLICT.
 - [ ] #2 Validation: a future event_at is rejected, events older than 30 days return the OLD_EVENT warning, a pet with an open lost report returns DUPLICATE_OPEN_REPORT with the existing code, and chips are normalised.
 - [ ] #3 The creator is added to report_managers; a stub submission_guard(p jsonb) is called first (the anonymous rules come from the anonymous-reporter task).
 - [ ] #4 The on_report_published trigger enqueues publish_photos, match_report and, for lost reports, fanout_alerts; a published report is returned by get_public_report within one minute after `pnpm db:drain`.

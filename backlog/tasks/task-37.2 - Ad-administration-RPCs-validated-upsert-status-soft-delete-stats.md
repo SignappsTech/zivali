@@ -5,6 +5,7 @@ status: To Do
 assignee:
   - '@backend-dev'
 created_date: '2026-10-14 22:13'
+updated_date: '2026-10-14 22:41'
 labels:
   - be
   - 'est:S'
@@ -36,7 +37,7 @@ Branch: agent/task-37.2-ads-admin-be
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 admin_upsert_ad rejects missing alt text, non-https links, wrong image size for the chosen slots and overlapping dates in an exclusive slot with clear error details.
+- [ ] #1 admin_upsert_ad rejects missing alt text, non-https links, images that are not 4:3 at least 1200×900 px (JPG or PNG under 500 KB, design P21), text over 120 characters and overlapping dates in an exclusive slot, with clear error details.
 - [ ] #2 Ad images upload to the ad-images bucket (admins with aal2 only).
 - [ ] #3 admin_ad_stats returns impressions, clicks and CTR per day, slot and region for a date range.
 - [ ] #4 Every create, edit, status change and soft delete is written to the audit log; ending an ad mid-day keeps its stats.

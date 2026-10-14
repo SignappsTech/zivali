@@ -9,7 +9,7 @@ source: docs/04-technical-design.md§Data model (ads), ADR-003; FR-029, FR-030, 
 ## Tables
 
 ```sql
-ads(id, title text (≤ 60), body text (≤ 140), cta text (≤ 24), link_url text check (link_url ~ '^https://'),
+ads(id, title text (≤ 60), body text (≤ 120), cta text (≤ 24), link_url text check (link_url ~ '^https://'),
     image_path text, image_alt text not null check (char_length(image_alt) between 5 and 140),
     locales text[] default '{sl,en}', slots ad_slot[] not null, region_ids smallint[] null, municipality_ids smallint[] null,
     species species[] null, starts_at timestamptz, ends_at timestamptz, status text ('draft'|'active'|'paused'|'ended'),
@@ -17,7 +17,7 @@ ads(id, title text (≤ 60), body text (≤ 140), cta text (≤ 24), link_url te
     weight int default 1, deleted_at, created_by, created_at, updated_at)
 ad_stats_daily(day date, ad_id uuid, slot ad_slot, region_id smallint default 0, impressions int default 0, clicks int default 0,
                primary key (day, ad_id, slot, region_id))
-leads(id, company, contact_name, email, phone null, region_interest text null, message text (≤ 2000), consent_at timestamptz not null,
+leads(id, company, contact_name, email, phone null, region_interest text null, interest text not null default 'unsure' check (interest in ('ad','vet_partner','unsure')), message text (≤ 2000), consent_at timestamptz not null,
       status text default 'new', created_at)
 ```
 RLS: `ads` and `ad_stats_daily` writable only by admins (aal2) and security definer functions; public reads only through `get_ad`; `leads` admin-only.
@@ -40,10 +40,14 @@ Click: web route `GET /a/[id]?s=<slot>&r=<region>` (TASK-35.2) calls `record_ad_
 
 Client hook (`@zivali/api/ads`): `useAd(slot, ctx): { ad, loading, error }` (errors collapse the slot silently).
 
+## Vet Partner placement (M4)
+
+A verified Vet Partner clinic (organisation kind `vet` with an active Vet Partner entitlement) gets a featured "nearest vet" unit in the `detail` slot (optionally `feed`) for its region, labelled Oglas/Ad like every paid placement, and the one-line mention in `nearby_lost` emails (C10). Built on the same `ads` serving path (no new slot); designed in P21. There are no tag-scan placements (QR tags out of scope).
+
 ## Admin (owned by TASK-37)
 
 ```ts
-admin_upsert_ad(ad: AdInput) → { id }            // validation: alt required, https link, image 1200×628 (feed/detail/reunited) or 300×600 (sidebar) ±2 %, no exclusive overlap; audited
+admin_upsert_ad(ad: AdInput) → { id }            // validation: alt required, https link, image 4:3, at least 1200×900 px, JPG or PNG under 500 KB (one format for every slot, design P21), no exclusive overlap; audited
 admin_set_ad_status(id, status) / admin_delete_ad(id) (soft)   // audited
 admin_ad_stats(id, from, to) → { day, slot, region_slug, impressions, clicks, ctr }[]   // CSV export client-side
 ```
@@ -58,7 +62,7 @@ type CountValue = number | '<5'          // any value 1–4 is returned as '<5';
 ```
 Materialised view refreshed hourly by `refresh_partner_stats`; optional GA Data API enrichment only behind `partners.ga_enrichment` flag (off).
 
-Edge Function `submit-lead` (POST, no auth): body `{ company, contact_name, email, phone?, region_interest?, message, consent: true, captcha_token, locale }` → captcha adapter verify → `check_rate_limit('lead:ip', 3, '1 hour')` → insert → email to `LEADS_NOTIFY_EMAIL` via email adapter → `201 { id }`. Errors: `VALIDATION`, `CAPTCHA_FAILED`, `RATE_LIMITED`.
+Edge Function `submit-lead` (POST, no auth): body `{ company, contact_name, email, phone?, region_interest?, interest: 'ad'|'vet_partner'|'unsure', message, consent: true, captcha_token, locale }` → captcha adapter verify → `check_rate_limit('lead:ip', 3, '1 hour')` → insert → email to `LEADS_NOTIFY_EMAIL` via email adapter → `201 { id }`. Errors: `VALIDATION`, `CAPTCHA_FAILED`, `RATE_LIMITED`.
 
 ## Example
 

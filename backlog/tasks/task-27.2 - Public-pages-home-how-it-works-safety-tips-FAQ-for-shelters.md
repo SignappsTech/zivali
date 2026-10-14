@@ -5,6 +5,7 @@ status: To Do
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:14'
+updated_date: '2026-10-14 22:41'
 labels:
   - fe
   - 'est:M'
@@ -16,7 +17,7 @@ references:
   - docs/tech/frontend.md
   - docs/design/pages/P3-public-pages.md
   - docs/tech/contracts/C15-routes-deeplinks.md
-  - docs/tech/contracts/C16-i18n.md
+  - docs/content/pages/P3-public-pages.md
 parent_task_id: TASK-27
 priority: medium
 ordinal: 199000
@@ -39,7 +40,7 @@ Branch: agent/task-27.2-pages-web
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Home, How it works, Safety tips, FAQ and For shelters exist at the C15 paths in SL and EN with the final copy from the content slice, per P3.
+- [ ] #1 Home, About, How it works, Safety tips, FAQ and For shelters exist at the C15 paths in SL and EN with the final copy from the content slice, per P3.
 - [ ] #2 Each page has a unique title, meta description and Open Graph image, one h1 and alt text for every image.
 - [ ] #3 Lighthouse performance ≥ 90, accessibility ≥ 95 and SEO ≥ 95 on each page; links pass linkinator.
 <!-- AC:END -->

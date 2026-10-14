@@ -32,7 +32,7 @@ mark_read(p_conversation_id) → void
 block_participant(p_conversation_id, p_user_id) → void       // also creates blocks row
 list_conversations() → { id, about_report: { short_code, type, species, thumb_url }, other_alias, last_message_preview, unread }[]
 ```
-Aliases: participants see "Lastnik/Owner", "Najditelj/Finder" or the profile `display_name`; never email or phone.
+Aliases: `list_conversations` and message payloads return `alias_key` (`owner` | `finder` | `sighter` | `contact` | `shelter`) or the participant's chosen `display_name`; clients render the neutral i18n keys `chat.alias_owner` ("Oseba, ki išče žival" / "Person searching"), `chat.alias_finder`, `chat.alias_sighter`, `chat.alias_contact`, `chat.alias_shelter` (P12 content slice). Never email or phone.
 
 ## Client rendering rules
 

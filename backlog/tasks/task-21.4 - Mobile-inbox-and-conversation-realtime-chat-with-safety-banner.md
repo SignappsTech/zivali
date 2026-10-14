@@ -5,6 +5,7 @@ status: To Do
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:14'
+updated_date: '2026-10-14 22:42'
 labels:
   - fe
   - 'est:M'
@@ -34,7 +35,7 @@ Chat happens mostly on phones, often while meeting to hand over the animal (FR-0
 
 Unblocks on: Mobile shell: tabs, Report action, permission primer, settings stack merged (TASK-12.2); Mobile sign-in, sign-up, verification, reset and profile merged (TASK-9.4); Contract clients in @zivali/api: chat, notifications, alerts, abuse, payments, ads, partners merged (TASK-6.10); Mobile report-abuse sheet and detail slot merged (TASK-25.4); Design: Chat (P12) approved (TASK-21.1)
 Design: P12 docs/design/pages/P12-chat.md (mockup docs/design/mockups/P12-chat.html; TASK-21.1)
-Copy: docs/content/pages/P12-*.md (content strategist; until it exists use clear SL and EN drafts and list the keys in your report)
+Copy: docs/content/pages/P12-chat.md
 Contracts: C9, C15 (in references); conventions in C1
 Review: tech-lead code review (full mode); run `pnpm verify` before reporting done.
 Branch: agent/task-21.4-chat-mob

@@ -5,9 +5,11 @@ status: To Do
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:14'
+updated_date: '2026-10-14 22:43'
 labels:
   - fe
   - 'est:S'
+  - trivial
 milestone: m-1
 dependencies:
   - TASK-18.3
@@ -32,7 +34,7 @@ Sharing into WhatsApp and Facebook happens on phones (FR-011).
 
 Unblocks on: Mobile report detail screen with slots merged (TASK-18.3); packages/analytics: typed track(), event registry, consent store, adapters merged (TASK-7.1); Design: Poster and sharing (P18) approved (TASK-24.1)
 Design: P18 docs/design/pages/P18-poster-share.md (mockup docs/design/mockups/P18-poster-share.html; TASK-24.1)
-Copy: docs/content/pages/P18-*.md (content strategist; until it exists use clear SL and EN drafts and list the keys in your report)
+Copy: docs/content/pages/P18-poster-share.md
 Contracts: C15, C12 (in references); conventions in C1
 Review: tech-lead code review (full mode); run `pnpm verify` before reporting done.
 Branch: agent/task-24.3-share-mob

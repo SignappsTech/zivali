@@ -1,7 +1,7 @@
 ---
 doc_id: DOC-04
 title: Technical Design
-version: 0.3
+version: 0.4
 status: Draft
 date: 2026-10-15
 owner: Tech Lead
@@ -53,11 +53,12 @@ approvals:
 | Language | TypeScript, strict | version pinned by Expo SDK 57 template | one version workspace-wide |
 | Web | Next.js App Router, React 19 | Next 16.x | RSC for reads, server actions not used for domain writes (RPC instead) |
 | Web UI | shadcn/ui (Radix) + Tailwind CSS | Tailwind 4 | themed by `@zivali/tokens` (ADR-002) |
-| Mobile | Expo + Expo Router, React Native (New Architecture) | SDK 57 / RN 0.87 | development builds (MapLibre, Firebase) |
+| Mobile | Expo + Expo Router, React Native (New Architecture) | SDK 57 / RN 0.86.3 (as pinned by the SDK 57 template; upgrade with the next Expo SDK, never ahead of it) | development builds (MapLibre, Firebase) |
 | Mobile UI | React Native Reusables + NativeWind | NativeWind 4.2, Tailwind 3.4 | same component names and props as web |
 | Tokens | `packages/tokens` generator from `docs/design/tokens.json` | - | CSS vars, TW4 theme, TW3 preset, TS values, contrast lint |
 | Validation | zod | 4.x | shared with Edge Functions |
 | Data fetching | supabase-js 2, `@supabase/ssr`, TanStack Query 5 | - | ADR-003 |
+| Mobile offline store | expo-sqlite (drafts, outbox, public report cache), expo-network, expo-background-task, expo-task-manager + expo-location geofencing (M3) | SDK 57 | ADR-019, contract C17 |
 | Forms | react-hook-form + zod resolver | - | both platforms |
 | i18n | next-intl (web), use-intl (mobile), ICU catalogues | next-intl 4 | ADR-008 |
 | Backend | Supabase: Postgres 17, PostGIS, pgvector, pgmq, pg_cron, pg_net, Auth, Storage, Realtime, Edge Functions (Deno) | CLI 2.x | EU Frankfurt (eu-central-1) |
@@ -85,7 +86,8 @@ Minimum OS versions (A-021): those of Expo SDK 57 (iOS 15.1+ and Android 7+ at S
     │  ├─ web/                 Next.js: app/[locale]/(public|app|admin|portal), app/r/…, app/a/[id] (ad click),
     │  │                       components/ui (shadcn), lib/, e2e/ (Playwright), content/ (MDX legal pages)
     │  └─ mobile/              Expo: app/ (Expo Router: (tabs), r/[code], m, report/…, settings/…),
-    │                          components/ui (RN Reusables), lib/, e2e/ (Maestro flows)
+    │                          components/ui (RN Reusables), lib/ (db/ local SQLite store, data/ report seam,
+    │                          offline/ sync, outbox, geofence, wipe), e2e/ (Maestro flows)
     ├─ packages/
     │  ├─ tokens/              build.mjs → dist/{tokens,web,native}.css, tailwind-preset.cjs, values.ts
     │  ├─ types/               src/database.ts (generated), src/domain/*.ts (hand-written wire types)
@@ -139,7 +141,7 @@ All tables in schema `public`, RLS enabled (ADR-003), `id uuid default gen_rando
 | jobs (pgmq) / jobs_dead | type, payload, attempts, last_error | archive 7 days | Low |
 | Planned M3–M4 | photo_embeddings, ai_results, ai_calls, intake_batches, chip_lookups (hash only), subscriptions and entitlements for owners (Premium, Podpornik) and for vet organisations only (Vet Partner, Stripe Billing with VAT invoices; shelters and municipalities stay free; QR/NFC tags out of scope, brief v0.7), rewards (Connect escrow), moderation_actions | defined as wire types in `packages/types/src/domain` in M1; migrations with their stories | - |
 
-**Deletion and retention** (NFR-PRIV, proposals for legal review, A-012): chat deleted 6 months after report close; closed-report photos and exact locations deleted or nulled 12 months after close; payment records kept as legally required; IP hashes 48 h; anonymous auth users without a live report 30 days; orphan uploads 24 h. All by the `purge_retention` job. Account deletion (M3, FR-034) closes open reports, anonymises messages and deletes personal rows per `supabase/data-inventory.json`; a pgTAP test fails when a table is missing from the inventory.
+**Deletion and retention** (NFR-PRIV, proposals for legal review, A-012): chat deleted 6 months after report close; closed-report photos and exact locations deleted or nulled 12 months after close; payment records kept as legally required; IP hashes 48 h; anonymous auth users without a live report 30 days; orphan uploads 24 h. All by the `purge_retention` job. Device data (mobile, C17): public report cache ≤ 50 MB / 7 days, own drafts and outbox; wiped on sign-out, account deletion and on request; `client_requests` idempotency rows 24 h. Account deletion (M3, FR-034) closes open reports, anonymises messages and deletes personal rows per `supabase/data-inventory.json`; a pgTAP test fails when a table is missing from the inventory.
 
 # Interfaces and contracts
 
@@ -161,7 +163,8 @@ All tables in schema `public`, RLS enabled (ADR-003), `id uuid default gen_rando
 | C14 | Ads, partner stats and leads | API / data | docs/tech/contracts/C14-ads-partners.md |
 | C15 | Routes, deep links, page slots, server endpoints | routes | docs/tech/contracts/C15-routes-deeplinks.md |
 | C16 | i18n catalogues and formatting | data / library | docs/tech/contracts/C16-i18n.md |
-| C17+ | M3–M6 (AI extraction, embeddings, organisations (reunite features free for all), intake/CSV, chip lookup, export/delete, owner and Vet Partner subscriptions, escrow, moderation, sponsor invoices) | - | written at each milestone's breakdown |
+| C17 | Mobile offline data layer: local schema, report cache sync, outbox, geofences, wipe | data (device) | docs/tech/contracts/C17-mobile-offline-data.md |
+| C18+ | M3–M6 (AI extraction, embeddings, organisations (reunite features free for all), intake/CSV, chip lookup, export/delete, owner and Vet Partner subscriptions, escrow, moderation, sponsor invoices) | - | written at each milestone's breakdown |
 
 **API standards**
 
@@ -194,7 +197,7 @@ Configuration through environment variables only (names in `frontend.md` / `back
 |---|---|---|---|
 | Supabase project `najdimo`: URL, publishable and secret keys (plus legacy anon/service role), DB password, access token | Client | **set** (2026-10-15) | - (production project still to be created) |
 | Vercel token (team `primozbozics-projects`) | Client | **set**; project for `apps/web` created by the deploy task | - |
-| GitHub repo + token | Client | missing | hosted CI (local `pnpm verify` meanwhile) |
+| GitHub repository `pbozic/zivali` (SSH remote `origin`) | Client | **set**; Actions secrets for CI and deploy still to be added | hosted CI runs once secrets are set (local `pnpm verify` always) |
 | Stripe test sandbox "Najdimo sandbox" (SI): secret + publishable key | Client | **set**; webhook endpoint and secret created by the payments task | - (local and CI stay on the mock) |
 | Expo token | Client | **set** | - (Android preview builds possible) |
 | Apple Developer account, APNs key | Client | missing (Q-007) | iOS builds, iOS push, Sign in with Apple in production |
@@ -269,6 +272,7 @@ Configuration through environment variables only (names in `frontend.md` / `back
 | ADR-016 | Environments, credential-gated deploys, `pnpm verify` until a Git remote exists | Accepted |
 | ADR-017 | Dependency allowlist | Accepted |
 | ADR-018 | Roles in JWT claim; admins and moderators need TOTP (AAL2) | Accepted |
+| ADR-019 | Mobile offline data layer: expo-sqlite store for drafts, public cache and outbox; incremental sync; OS geofences for local alerts; wipe on logout | Accepted |
 
 Full records: `docs/tech/adr/NNN-*.md` (context, decision, alternatives, consequences).
 
@@ -279,3 +283,4 @@ Full records: `docs/tech/adr/NNN-*.md` (context, decision, alternatives, consequ
 | 0.1 | | Initial draft (template) |
 | 0.2 | 2026-10-14 | Full technical design: architecture, stack (versions checked 2026-10-14), repo map, data model, contracts C1–C16 for M1–M2, auth, environments with credentials matrix, CI/CD, observability, backup, integrations, ADR-001…018 |
 | 0.3 | 2026-10-15 | Brief v0.7: Shelter Pro removed (organisations free), Vet Partner as the only B2B subscription (M4), QR/NFC tags out of scope; staging on Supabase `najdimo` + Vercel with credentials available; final Lagoon tokens (single theme), positron map style, Phosphor icons, bottom sheet; inbox routes aligned with design; M1/M2 task breakdown created |
+| 0.4 | 2026-10-15 | Offline mode (FR-041..043, NFR-OFFLINE, NFR-BATT): ADR-019 and contract C17 (device store, sync RPC, outbox with server-side idempotent replay, geofences); content CHANGEs applied to C3, C9, C10, C14, C15 |

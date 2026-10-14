@@ -5,6 +5,7 @@ status: To Do
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:14'
+updated_date: '2026-10-14 22:42'
 labels:
   - fe
   - 'est:M'
@@ -32,7 +33,7 @@ Owners still print posters and post in Facebook groups; a QR poster and one-tap 
 
 Unblocks on: Web report detail /r/[code]: SSR, slots, OG image, JSON-LD, 410 merged (TASK-18.2); packages/analytics: typed track(), event registry, consent store, adapters merged (TASK-7.1); Design: Poster and sharing (P18) approved (TASK-24.1)
 Design: P18 docs/design/pages/P18-poster-share.md (mockup docs/design/mockups/P18-poster-share.html; TASK-24.1)
-Copy: docs/content/pages/P18-*.md (content strategist; until it exists use clear SL and EN drafts and list the keys in your report)
+Copy: docs/content/pages/P18-poster-share.md
 Contracts: C15, C12 (in references); conventions in C1
 Review: tech-lead code review (full mode); run `pnpm verify` before reporting done.
 Branch: agent/task-24.2-poster-web

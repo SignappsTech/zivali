@@ -5,7 +5,7 @@ status: To Do
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:14'
-updated_date: '2026-10-14 22:17'
+updated_date: '2026-10-14 22:43'
 labels:
   - fe
   - 'est:S'
@@ -35,7 +35,7 @@ Most reunions are marked on a phone (FR-021).
 
 Unblocks on: Mobile My reports, owner actions and reunited screen merged (TASK-26.5); Mobile lost flow: signed-out draft hand-off and confirmation screen merged (TASK-29.6); Mobile checkout hand-off and My payments merged (TASK-32.3); packages/analytics: typed track(), event registry, consent store, adapters merged (TASK-7.1); Design: Support moments: tip and contribution (P15) approved (TASK-33.1)
 Design: P15 docs/design/pages/P15-support-moments.md (mockup docs/design/mockups/P15-support-moments.html; TASK-33.1)
-Copy: docs/content/pages/P15-*.md (content strategist; until it exists use clear SL and EN drafts and list the keys in your report)
+Copy: docs/content/pages/P15-support-moments.md
 Contracts: C13, C12 (in references); conventions in C1
 Review: tech-lead code review (full mode); run `pnpm verify` before reporting done.
 Branch: agent/task-33.3-support-mob

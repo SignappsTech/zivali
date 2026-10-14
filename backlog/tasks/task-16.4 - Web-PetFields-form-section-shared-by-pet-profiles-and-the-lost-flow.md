@@ -5,6 +5,7 @@ status: To Do
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:13'
+updated_date: '2026-10-14 22:42'
 labels:
   - fe
   - 'est:S'
@@ -32,7 +33,7 @@ The lost-report flow and pet profiles share one form section; building it first 
 
 Unblocks on: Web UI kit: shadcn primitives styled to the design system, /dev/kit gallery merged (TASK-8.2); Contract clients in @zivali/api: auth, profiles, pets, reports, photos, geocode, matches merged (TASK-6.9); Design: Pet profiles (P8) approved (TASK-16.2)
 Design: P8 docs/design/pages/P8-pet-profiles.md (mockup docs/design/mockups/P8-pet-profiles.html; TASK-16.2)
-Copy: docs/content/pages/P8-*.md (content strategist; until it exists use clear SL and EN drafts and list the keys in your report)
+Copy: docs/content/pages/P8-pet-profiles.md
 Contracts: C4 (in references); conventions in C1
 Review: tech-lead code review (full mode); run `pnpm verify` before reporting done.
 Branch: agent/task-16.4-petfields-web

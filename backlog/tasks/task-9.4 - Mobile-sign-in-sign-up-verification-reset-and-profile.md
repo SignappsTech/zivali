@@ -5,6 +5,7 @@ status: To Do
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:12'
+updated_date: '2026-10-14 22:41'
 labels:
   - fe
   - 'est:M'
@@ -13,6 +14,7 @@ dependencies:
   - TASK-12.2
   - TASK-6.9
   - TASK-9.1
+  - TASK-12.5
 references:
   - docs/tech/frontend.md
   - docs/design/pages/P16-auth.md
@@ -30,9 +32,9 @@ The same account works on mobile with native Google/Apple when configured and em
 
 ## Packet
 
-Unblocks on: Mobile shell: tabs, Report action, permission primer, settings stack merged (TASK-12.2); Contract clients in @zivali/api: auth, profiles, pets, reports, photos, geocode, matches merged (TASK-6.9); Design: Sign in, account creation and gates (P16) approved (TASK-9.1)
+Unblocks on: Mobile shell: tabs, Report action, permission primer, settings stack merged (TASK-12.2); Contract clients in @zivali/api: auth, profiles, pets, reports, photos, geocode, matches merged (TASK-6.9); Design: Sign in, account creation and gates (P16) approved (TASK-9.1); Mobile local data layer merged (TASK-12.5)
 Design: P16 docs/design/pages/P16-auth.md (mockup docs/design/mockups/P16-auth.html; TASK-9.1)
-Copy: docs/content/pages/P16-*.md (content strategist; until it exists use clear SL and EN drafts and list the keys in your report)
+Copy: docs/content/pages/P16-auth.md
 Contracts: C3, C15 (in references); conventions in C1
 Review: tech-lead code review (full mode); run `pnpm verify` before reporting done.
 Branch: agent/task-9.4-auth-mob
@@ -45,4 +47,5 @@ Branch: agent/task-9.4-auth-mob
 - [ ] #3 The contextual sign-in gate (bottom sheet) keeps the user's draft and returns them to the flow.
 - [ ] #4 The profile screen edits name, language, home area, alert radius and optional phone.
 - [ ] #5 TalkBack labels, focus order and 44 px targets are verified on Android (screenshots).
+- [ ] #6 Sign-out (and account deletion) call signOutAndWipe() from the local data layer (C17): pending outbox items are offered first, then cache, drafts and geofences are wiped.
 <!-- AC:END -->

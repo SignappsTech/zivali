@@ -5,6 +5,7 @@ status: To Do
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:13'
+updated_date: '2026-10-14 22:42'
 labels:
   - fe
   - 'est:M'
@@ -33,7 +34,7 @@ Every other story links to or acts from one listing page, and it is what Google 
 
 Unblocks on: Web shell: header, footer, layout, route groups and guards, shared states merged (TASK-11.2); Web MapView: MapLibre + OpenFreeMap, markers, clusters, areas, list alternative merged (TASK-15.2); Contract clients in @zivali/api: auth, profiles, pets, reports, photos, geocode, matches merged (TASK-6.9); Design: Report detail (lost, found, sighted) (P9) approved (TASK-18.1)
 Design: P9 docs/design/pages/P9-report-detail.md (mockup docs/design/mockups/P9-report-detail.html; TASK-18.1)
-Copy: docs/content/pages/P9-*.md (content strategist; until it exists use clear SL and EN drafts and list the keys in your report)
+Copy: docs/content/pages/P9-report-detail.md
 Contracts: C4, C15 (in references); conventions in C1
 Review: tech-lead code review (full mode); run `pnpm verify` before reporting done.
 Branch: agent/task-18.2-detail-web

@@ -5,6 +5,7 @@ status: To Do
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:13'
+updated_date: '2026-10-14 22:42'
 labels:
   - fe
   - 'est:S'
@@ -31,7 +32,7 @@ Most scam reports will come from phones (FR-018).
 
 Unblocks on: Mobile report detail screen with slots merged (TASK-18.3); Contract clients in @zivali/api: chat, notifications, alerts, abuse, payments, ads, partners merged (TASK-6.10); Design: Report abuse (P10) approved (TASK-25.1)
 Design: P10 docs/design/pages/P10-report-abuse.md (mockup docs/design/mockups/P10-report-abuse.html; TASK-25.1)
-Copy: docs/content/pages/P10-*.md (content strategist; until it exists use clear SL and EN drafts and list the keys in your report)
+Copy: docs/content/pages/P10-report-abuse.md
 Contracts: C11 (in references); conventions in C1
 Review: tech-lead code review (full mode); run `pnpm verify` before reporting done.
 Branch: agent/task-25.4-abuse-mob

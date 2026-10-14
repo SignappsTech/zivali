@@ -5,6 +5,7 @@ status: To Do
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:12'
+updated_date: '2026-10-14 22:41'
 labels:
   - fe
   - 'est:M'
@@ -33,7 +34,7 @@ Every report starts with a photo; capture must be fast on a weak connection and 
 
 Unblocks on: Web UI kit: shadcn primitives styled to the design system, /dev/kit gallery merged (TASK-8.2); Contract clients in @zivali/api: auth, profiles, pets, reports, photos, geocode, matches merged (TASK-6.9); Design: Report found or sighted (no account) and manage page (P7) approved (TASK-30.1); Design: Report lost flow (P6) approved (TASK-29.1)
 Design: P7 docs/design/pages/P7-report-found.md (mockup docs/design/mockups/P7-report-found.html; TASK-30.1); P6 docs/design/pages/P6-report-lost.md (mockup docs/design/mockups/P6-report-lost.html; TASK-29.1)
-Copy: docs/content/pages/P7-*.md (content strategist; until it exists use clear SL and EN drafts and list the keys in your report); docs/content/pages/P6-*.md (content strategist; until it exists use clear SL and EN drafts and list the keys in your report)
+Copy: docs/content/pages/P7-report-found.md; docs/content/pages/P6-report-lost.md
 Contracts: C5 (in references); conventions in C1
 Review: tech-lead code review (full mode); run `pnpm verify` before reporting done.
 Branch: agent/task-14.2-photos-web

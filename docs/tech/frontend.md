@@ -1,4 +1,4 @@
-source: docs/04-technical-design.md (v0.3) §Architecture, §Technology stack, §Repository structure; docs/05-quality-security-plan.md (v0.3) §Quality gates, §Definition of Done
+source: docs/04-technical-design.md (v0.4) §Architecture, §Technology stack, §Repository structure; docs/05-quality-security-plan.md (v0.4) §Quality gates, §Definition of Done
 
 # Frontend slice (apps/web, apps/mobile, packages/{tokens,api,i18n,analytics})
 
@@ -8,7 +8,7 @@ Read this, your task packet, the contract(s) it references, the design page slic
 
 | | Web (`apps/web`) | Mobile (`apps/mobile`) |
 |---|---|---|
-| Framework | Next.js 16 App Router, React 19, TypeScript strict | Expo SDK 57, Expo Router, React Native 0.87 (New Architecture), development builds (`expo-dev-client`) |
+| Framework | Next.js 16 App Router, React 19, TypeScript strict | Expo SDK 57, Expo Router, React Native 0.86.3 as pinned by the SDK 57 template (New Architecture), development builds (`expo-dev-client`) |
 | UI | shadcn/ui (Radix) + Tailwind 4, themed by `@zivali/tokens/{tokens,web}.css` | React Native Reusables + NativeWind 4.2 / Tailwind 3.4, `@zivali/tokens/native.css` + `tailwind-preset` |
 | Icons, toasts, sheets | `@phosphor-icons/react`, `sonner`, shadcn `sheet` | `phosphor-react-native`, `sonner-native`, `@gorhom/bottom-sheet` |
 | Data | server components with `@supabase/ssr`; client components with TanStack Query over `@zivali/api` | TanStack Query over `@zivali/api`, `supabase-js` session in `expo-sqlite` localStorage |
@@ -38,7 +38,9 @@ Only dependencies listed in `docs/tech/adr/017-dependency-allowlist.md` (or inst
       app/_layout.tsx, app/(tabs)/{index,report,inbox,profile}.tsx, app/r/[code]/…, app/m.tsx,
       app/report/{lost,found}/…, app/pets/…, app/inbox/[id].tsx, app/settings/…, app/auth/…, app/payments/return.tsx
       components/ui/               RN Reusables components, edited to the design system
-      components/<feature>/, lib/{supabase,env,query}.ts, e2e/*.yaml (Maestro)
+      components/<feature>/, lib/{supabase,env,query,net}.ts, e2e/*.yaml (Maestro)
+      lib/db/ (expo-sqlite store + local migrations), lib/data/reports.ts (only path for report lists: network or offline cache),
+      lib/offline/{sync,outbox,geofence,wipe}.ts (C17)
       app.config.ts (bundle id si.signapps.zivali, scheme zivali), eas.json, firebase.json
     packages/tokens/   build.mjs → dist/ (C2)                packages/api/  src/<domain>.ts (C3–C14), geocode.ts
     packages/i18n/     messages/{sl,en}/<ns>.json (C16)      packages/analytics/ src/ (C12)
@@ -60,6 +62,7 @@ Only dependencies listed in `docs/tech/adr/017-dependency-allowlist.md` (or inst
 - Web: server components by default; `"use client"` only where needed; MapLibre, PDF and heavy code via dynamic import; images with explicit width/height; no layout shift (reserved sizes for photos and ad slots).
 - Mobile: safe areas, OS font scaling up to 200 % (`maxFontSizeMultiplier` 2), permission primer before every OS prompt (camera, location, notifications) with a working fallback on denial.
 - Privacy: never render or log exact coordinates, chip numbers, emails or phone numbers of other users; `track()` only with registered params (C12); no PII in `console` output.
+- Device storage (mobile): only the C17 tables (own drafts and outbox, public report cache) and secure-store tokens; never persist chat, matches, notifications or other private queries (no TanStack persister); screens read report lists only through `lib/data/reports.ts`; sign-out calls `wipeLocalData()`.
 - Accessibility first: every map has a list alternative; every icon-only button has an accessible name; dialogs and sheets trap and restore focus.
 - No ad component in protected flows (C15): report-lost, report-found, manage, inbox and conversations, sign-in/up/reset, payments return.
 
@@ -76,10 +79,11 @@ Only dependencies listed in `docs/tech/adr/017-dependency-allowlist.md` (or inst
 |---|---|---|
 | `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | `EXPO_PUBLIC_SUPABASE_URL`, `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Supabase (local values printed by `supabase status`; staging = project `najdimo`, new-style publishable key) |
 | `NEXT_PUBLIC_APP_URL`, `APP_ENV` (`local`/`staging`/`production`) | `EXPO_PUBLIC_APP_URL`, `EXPO_PUBLIC_APP_ENV` | links, guards for dev pages |
-| `NEXT_PUBLIC_ANALYTICS_PROVIDER` (`mock`/`ga4`), `NEXT_PUBLIC_GA_MEASUREMENT_ID` | `EXPO_PUBLIC_ANALYTICS_PROVIDER` (`mock`/`firebase`) | C12 |
-| `NEXT_PUBLIC_GEOCODER` (`maptiler`/`photon`/`mock`), `NEXT_PUBLIC_MAPTILER_KEY` | `EXPO_PUBLIC_GEOCODER`, `EXPO_PUBLIC_MAPTILER_KEY` | C6 |
+| `NEXT_PUBLIC_ANALYTICS_PROVIDER` (`mock`/`ga4`), `NEXT_PUBLIC_GA_MEASUREMENT_ID`; server-only `GA_PROPERTY_ID`, `GA_SERVICE_ACCOUNT_KEY_FILE` (GA Data API for partner stats behind a flag, admin scripts; the key file stays in `.secrets/`) | `EXPO_PUBLIC_ANALYTICS_PROVIDER` (`mock`/`firebase`) | C12 |
+| `NEXT_PUBLIC_GEOCODER` (`maptiler`/`photon`/`mock`), `NEXT_PUBLIC_MAPTILER_KEY` (value of the team's `MAPTILER_API_KEY`, a public domain-restricted key) | `EXPO_PUBLIC_GEOCODER`, `EXPO_PUBLIC_MAPTILER_KEY` | C6 |
 | `NEXT_PUBLIC_TURNSTILE_SITE_KEY` (empty = captcha off) | uses web `/captcha` page | C7 |
 | `SUPABASE_SECRET_KEY` (server routes only: ad click, OG; never `NEXT_PUBLIC_`) | - | never exposed to the browser |
+| `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` (value of the team's `STRIPE_PUBLISHABLE_KEY`, pk_test only; optional, Checkout is server-created) | - | payments (C13) |
 | - | `GOOGLE_SERVICES_JSON`, `GOOGLE_SERVICE_INFO_PLIST` (EAS file secrets; locally from `.secrets/`) | Firebase config |
 | - | `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID`, `EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID` | native Google sign-in (credential-gated) |
 
@@ -119,4 +123,5 @@ Branch `agent/<task-id>-<slug>` from `main`; commits `<task-id>: <what>`; never 
 - [ ] No ad slot in protected flows; no analytics request or `_ga` cookie before consent
 - [ ] Keyboard and screen reader checked on the new UI; touch targets ≥ 44 px; works at 320 px width and 200 % text
 - [ ] No PII in logs or analytics; no secrets in code; no new dependency outside ADR-017
+- [ ] Mobile: nothing private written to device storage beyond C17; offline and error states explicit; no background location without opt-in
 - [ ] No unrelated changes; README or package README updated if behaviour or commands changed

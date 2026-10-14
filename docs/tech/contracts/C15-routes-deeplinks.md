@@ -10,20 +10,21 @@ SL slugs are proposals; the content strategist may change them through a `CHANGE
 |---|---|---|---|---|---|
 | home | `/` | `/en` | public | - | sidebar |
 | map | `/zemljevid` | `/en/map` | public | - | feed (list), sidebar |
-| reportLost | `/prijava/izgubljen` | `/en/report/lost` | public | submit needs account (C3 draft hand-off) | **none** |
-| reportFound | `/prijava/najden` | `/en/report/found` | public | - | **none** |
+| reportLost | `/prijava/izgubljena-zival` | `/en/report/lost` | public | submit needs account (C3 draft hand-off) | **none** |
+| reportFound | `/prijava/najdena-zival` | `/en/report/found` | public | - | **none** |
 | report | `/r/[code]` | `/en/r/[code]` | public | - | detail, sidebar |
 | reportMatches | `/r/[code]/ujemanja` | `/en/r/[code]/matches` | app | manager | none |
-| reportReunited | `/r/[code]/ponovno-skupaj` | `/en/r/[code]/reunited` | app | manager | reunited |
+| reportReunited | `/r/[code]/spet-doma` | `/en/r/[code]/reunited` | app | manager | reunited |
 | manage | `/m` (token in `#fragment`) | `/en/m` | public | anonymous sign-in | none |
-| myPets | `/moji-ljubljenci` | `/en/my-pets` | app | signed in | none |
+| myPets | `/moje-zivali` | `/en/my-pets` | app | signed in | none |
 | myReports | `/moje-prijave` | `/en/my-reports` | app | signed in or manager | none |
 | inbox (messages + notifications views, design P12/P13) | `/nabiralnik` (`?pogled=obvestila`) | `/en/inbox` (`?view=notifications`) | app | signed in or manager | **none** |
 | conversation | `/nabiralnik/[id]` | `/en/inbox/[id]` | app | participant | **none** |
 | account | `/racun` (+ `/opozorila`, `/obvestila`, `/placila`, `/varnost`) | `/en/account` (+ `/alerts`, `/notifications`, `/payments`, `/security`) | app | signed in | none |
-| signIn / signUp / reset | `/prijava-v-racun`, `/registracija`, `/pozabljeno-geslo` | `/en/sign-in`, `/en/sign-up`, `/en/reset-password` | public | - | **none** |
+| signIn / signUp / reset | `/vpis`, `/registracija`, `/pozabljeno-geslo` | `/en/sign-in`, `/en/sign-up`, `/en/reset-password` | public | - | **none** |
 | paymentsReturn | `/placila/zakljucek` | `/en/payments/return` | app | signed in | **none** |
 | partners | `/oglasevanje` | `/en/advertise` | public | - | none |
+| about | `/o-nas` | `/en/about` | public | - | sidebar |
 | howItWorks, safety, faq, forShelters | `/kako-deluje`, `/varnost`, `/pogosta-vprasanja`, `/za-zavetisca` | `/en/how-it-works`, `/en/safety`, `/en/faq`, `/en/for-shelters` | public | - | sidebar |
 | privacy, cookies, terms, imprint, accessibility | `/zasebnost`, `/piskotki`, `/pogoji-uporabe`, `/impresum`, `/dostopnost` | `/en/privacy`, `/en/cookies`, `/en/terms`, `/en/imprint`, `/en/accessibility` | public | - | none |
 | admin | `/admin/*` | `/en/admin/*` | admin | moderator/admin + aal2 | none |

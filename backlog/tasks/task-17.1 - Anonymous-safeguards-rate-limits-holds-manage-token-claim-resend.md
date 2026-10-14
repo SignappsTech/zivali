@@ -5,6 +5,7 @@ status: To Do
 assignee:
   - '@backend-dev'
 created_date: '2026-10-14 22:13'
+updated_date: '2026-10-14 22:41'
 labels:
   - be
   - 'est:M'
@@ -38,7 +39,7 @@ Branch: agent/task-17.1-anon-be
 <!-- AC:BEGIN -->
 - [ ] #1 submission_guard enforces anonymous limits per IP hash and device id (default 5/hour and 20/day from app_config) and returns RATE_LIMITED with retry_after; pgTAP proves the sixth report within an hour from one device is refused.
 - [ ] #2 Anonymous reports are held (moderation_state 'held', manage link still issued) when the device exceeded 10 reports in 7 days or a photo hash matches a held or removed report.
-- [ ] #3 create_report returns a 256-bit manage token for anonymous callers, stores only its SHA-256, stores the optional finder email in report_contacts and enqueues the manage_link email.
+- [ ] #3 create_report returns a 256-bit manage token for anonymous callers, stores only its SHA-256 on the report plus an encrypted copy in client_requests for 24 h so an offline retry gets the same token (C1, C7), stores the optional finder email in report_contacts and enqueues the manage_link email.
 - [ ] #4 claim_manage_token binds the caller's anonymous or signed-in uid to report_managers, is rate limited and returns GONE after close; resend_manage_link works for managers with an email on file.
 - [ ] #5 Converting the anonymous user to a permanent account keeps the same uid and all report access (tested through the Auth admin API on the local stack).
 - [ ] #6 Turnstile captcha for sign-up and anonymous sign-in is documented for cloud environments (credential-gated); locally it stays off.

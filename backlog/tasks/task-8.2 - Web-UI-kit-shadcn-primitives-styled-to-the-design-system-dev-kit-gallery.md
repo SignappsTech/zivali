@@ -5,6 +5,7 @@ status: To Do
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:12'
+updated_date: '2026-10-14 22:41'
 labels:
   - fe
   - 'est:M'
@@ -31,7 +32,7 @@ Web features need the same accessible building blocks bound to the tokens instea
 
 Unblocks on: Web app scaffold: Next.js 16, Tailwind 4 + shadcn, tokens, locale routing, Supabase helpers merged (TASK-3.3); Design: UI kit gallery (P23) approved (TASK-8.1)
 Design: P23 docs/design/pages/P23-ui-kit-gallery.md (mockup docs/design/mockups/P23-ui-kit-gallery.html; TASK-8.1)
-Copy: docs/content/pages/P23-*.md (content strategist; until it exists use clear SL and EN drafts and list the keys in your report)
+Copy: docs/content/pages/P23-ui-kit-gallery.md
 Contracts: C2 (in references); conventions in C1
 Review: tech-lead code review (full mode); run `pnpm verify` before reporting done.
 Branch: agent/task-8.2-kit-web

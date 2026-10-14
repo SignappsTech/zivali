@@ -1,7 +1,7 @@
 ---
 doc_id: DOC-05
 title: Quality and Security Plan
-version: 0.3
+version: 0.4
 status: Draft
 date: 2026-10-15
 owner: Tech Lead
@@ -33,6 +33,8 @@ Run by GitHub Actions once a remote exists; until then `pnpm verify` runs the sa
 | No ads in protected flows | Playwright route test: report-lost, report-found, sign-in, chat, payment routes contain no `[data-ad-slot]` | 0 | Yes |
 | Analytics without consent | Playwright: no request to `*.google-analytics.com` / `googletagmanager.com`, no `_ga` cookie before consent | 0 | Yes |
 | Mobile build health | `expo export` (web + native bundles) and `tsc` | success | Yes |
+| Offline cache privacy (NFR-OFFLINE) | jest test dumps the local SQLite schema and rows | only C17 public columns; 0 exact coordinates, chips, contacts, chat | Yes |
+| Offline queue idempotency | jest (outbox) + pgTAP (`client_requests`) | a replayed submission yields 1 report and the same manage token | Yes |
 | Visual | Playwright screenshots vs approved mockups | ≤ 2 % pixel diff | Review (design lead) |
 | Security | secretlint, `pnpm audit --audit-level high`, tech-lead security review on est:M/L PRs | no high/critical, no secrets | Yes |
 
@@ -42,7 +44,7 @@ Run by GitHub Actions once a remote exists; until then `pnpm verify` runs the sa
 - **Database (pgTAP)**: one file per domain. The **RLS matrix** tests every table for anon, anonymous-signed-in, user (owner / non-owner), report manager, moderator (aal1 and aal2), admin (aal2): select, insert, update, delete expectations. Plus: a test that fails if any `public` table lacks RLS; a test that fails if any table or bucket is missing from `supabase/data-inventory.json`; RPC behaviour (status transitions, rate limits, chip match, rejected pairs, fuzz determinism and bounds).
 - **Integration**: Edge Functions against the local stack (`payments-checkout` + mock webhook, `submit-lead`, worker handlers via `pnpm db:drain`), with mock adapters.
 - **End-to-end (web)**: Playwright flows per story QA; the core-loop suite (TASK-39) runs lost → anonymous found → match → confirm → chat → reunited in SL and EN, with consent denied and granted.
-- **Mobile**: component tests (jest-expo); Maestro smoke on an Android dev build for found report and match confirm (TASK-39).
+- **Mobile**: component tests (jest-expo); offline tests for the cache (airplane mode, eviction, wipe), the outbox (kill and restart, duplicate send, rate limit) and geofences (mocked task manager, caps, quiet hours); Maestro smoke on an Android dev build for found report and match confirm (TASK-39).
 - **Performance**: Lighthouse CI on home, report detail, map, partners; a seeded 500-report viewport test for the map (FR-007 AC#1); fan-out test of 1000 recipients < 60 s (FR-010); embedding search at 50k photos < 300 ms (M3).
 - **Manual QA**: per story against acceptance criteria (qa agent); mobile, keyboard-only and screen-reader spot checks (VoiceOver, TalkBack, NVDA); outdoor contrast check on a phone at full brightness for key screens.
 - **Cross-browser** (NFR-BROWSER): latest 2 versions of Chrome, Edge, Firefox, Safari (desktop + iOS Safari), Android Chrome; spot checks per milestone, full pass in M5.
@@ -76,6 +78,7 @@ Run by GitHub Actions once a remote exists; until then `pnpm verify` runs the sa
 
 - **Data inventory**: `supabase/data-inventory.json` lists every table and bucket with category (account, pet, photo, location, chat, payment, ads aggregate, analytics none), personal data flag, lawful basis, retention, export and delete handling. CI fails on a missing entry (FR-034 R-034.3).
 - **Lawful bases** (proposal for legal review): contract (account, reports, chat, payments), legitimate interest (fraud and abuse prevention, aggregate ad counts), consent (analytics, success stories, partner contact), legal obligation (payment records).
+- **Device data** (ADR-019, C17): only public fuzzed report data, thumbnails and the user's own drafts and outbox on the device; no query persister; wiped on sign-out, account deletion and on request; background location only after explicit opt-in (M3) and never uploaded.
 - **Data minimisation**: no camera originals or EXIF stored; exact location private and purged on retention; chip numbers never public; IPs only as keyed hashes for 48 h; analytics events contain enums and slugs only; ad counting cookieless and aggregate (A-016).
 - **Consent**: no analytics script, request or cookie before opt-in (basic Consent Mode v2, ADR-009); choice, version and timestamp stored first-party; withdrawal as easy as giving; re-ask after 12 months or version change.
 - **Retention** (NFR-PRIV): chat 6 months after close; closed-report photos and locations 12 months; payment records as legally required; implemented by `purge_retention`.
@@ -105,3 +108,4 @@ Run by GitHub Actions once a remote exists; until then `pnpm verify` runs the sa
 | 0.1 | | Initial draft (template) |
 | 0.2 | 2026-10-14 | Gates with thresholds from NFRs, testing strategy incl. RLS matrix and protected-flow tests, security (threats, CSP, rate limits), privacy (inventory, processors, retention), DoD |
 | 0.3 | 2026-10-15 | Tag-address retention removed (tags out of scope, brief v0.7); protected flows include inbox and conversations |
+| 0.4 | 2026-10-15 | Offline mode: cache-privacy and idempotency gates, device-data privacy rules |

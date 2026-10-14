@@ -5,6 +5,7 @@ status: To Do
 assignee:
   - '@backend-dev'
 created_date: '2026-10-14 22:13'
+updated_date: '2026-10-14 22:41'
 labels:
   - be
   - 'est:M'
@@ -16,6 +17,7 @@ references:
   - docs/tech/backend.md
   - docs/tech/contracts/C10-notifications-alerts.md
   - docs/tech/contracts/C6-location-geo-maps.md
+  - docs/content/notifications-and-emails.md
 parent_task_id: TASK-23
 priority: medium
 ordinal: 171000

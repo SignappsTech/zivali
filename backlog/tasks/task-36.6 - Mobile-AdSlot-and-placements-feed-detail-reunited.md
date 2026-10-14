@@ -5,6 +5,7 @@ status: To Do
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:14'
+updated_date: '2026-10-14 22:43'
 labels:
   - fe
   - 'est:S'
@@ -35,7 +36,7 @@ The same labelled placements appear in the app, never in protected flows (FR-030
 
 Unblocks on: Mobile Map tab with list sheet and filters merged (TASK-31.5); Mobile report detail screen with slots merged (TASK-18.3); Mobile My reports, owner actions and reunited screen merged (TASK-26.5); Contract clients in @zivali/api: chat, notifications, alerts, abuse, payments, ads, partners merged (TASK-6.10); packages/analytics: typed track(), event registry, consent store, adapters merged (TASK-7.1); Design: Ad slots and house ads (P21) approved (TASK-36.4)
 Design: P21 docs/design/pages/P21-ad-slots.md (mockup docs/design/mockups/P21-ad-slots.html; TASK-36.4)
-Copy: docs/content/pages/P21-*.md (content strategist; until it exists use clear SL and EN drafts and list the keys in your report)
+Copy: docs/content/pages/P21-ad-slots.md
 Contracts: C14, C12 (in references); conventions in C1
 Review: tech-lead code review (full mode); run `pnpm verify` before reporting done.
 Branch: agent/task-36.6-adslot-mob

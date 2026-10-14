@@ -5,7 +5,7 @@ status: To Do
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:13'
-updated_date: '2026-10-14 22:17'
+updated_date: '2026-10-14 22:42'
 labels:
   - fe
   - 'est:M'
@@ -34,7 +34,7 @@ Owners who register pets in advance report a loss in seconds (FR-002).
 
 Unblocks on: Web PetFields form section (shared by pet profiles and the lost flow) merged (TASK-16.4); Web PhotoPicker: resize, EXIF read and strip, drafts, upload with retry merged (TASK-14.2); Web sign-in, sign-up, verification, reset, account page and guards merged (TASK-9.3); Design: Pet profiles (P8) approved (TASK-16.2)
 Design: P8 docs/design/pages/P8-pet-profiles.md (mockup docs/design/mockups/P8-pet-profiles.html; TASK-16.2)
-Copy: docs/content/pages/P8-*.md (content strategist; until it exists use clear SL and EN drafts and list the keys in your report)
+Copy: docs/content/pages/P8-pet-profiles.md
 Contracts: C4, C5 (in references); conventions in C1
 Review: tech-lead code review (full mode); run `pnpm verify` before reporting done.
 Branch: agent/task-16.6-pets-web

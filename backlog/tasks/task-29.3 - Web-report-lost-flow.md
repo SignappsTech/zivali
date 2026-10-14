@@ -5,6 +5,7 @@ status: To Do
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:14'
+updated_date: '2026-10-14 22:42'
 labels:
   - fe
   - 'est:M'
@@ -35,7 +36,7 @@ The entry point of the core loop; owners are panicked, so it must take minutes a
 
 Unblocks on: Web PetFields form section (shared by pet profiles and the lost flow) merged (TASK-16.4); Web PhotoPicker: resize, EXIF read and strip, drafts, upload with retry merged (TASK-14.2); Web LocationPicker: GPS, pin, search, radius, permission fallback merged (TASK-15.3); Contract clients in @zivali/api: auth, profiles, pets, reports, photos, geocode, matches merged (TASK-6.9); packages/analytics: typed track(), event registry, consent store, adapters merged (TASK-7.1); Design: Report lost flow (P6) approved (TASK-29.1)
 Design: P6 docs/design/pages/P6-report-lost.md (mockup docs/design/mockups/P6-report-lost.html; TASK-29.1)
-Copy: docs/content/pages/P6-*.md (content strategist; until it exists use clear SL and EN drafts and list the keys in your report)
+Copy: docs/content/pages/P6-report-lost.md
 Contracts: C4, C6 (in references); conventions in C1
 Review: tech-lead code review (full mode); run `pnpm verify` before reporting done.
 Branch: agent/task-29.3-lost-web

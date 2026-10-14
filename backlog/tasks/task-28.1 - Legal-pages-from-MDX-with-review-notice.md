@@ -5,9 +5,11 @@ status: To Do
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:14'
+updated_date: '2026-10-14 22:43'
 labels:
   - fe
   - 'est:S'
+  - trivial
 milestone: m-1
 dependencies:
   - TASK-11.2
@@ -16,6 +18,7 @@ references:
   - docs/tech/frontend.md
   - docs/design/pages/P3-public-pages.md
   - docs/tech/contracts/C15-routes-deeplinks.md
+  - docs/content/legal/
 parent_task_id: TASK-28
 priority: medium
 ordinal: 200000

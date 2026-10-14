@@ -42,7 +42,7 @@ A pgTAP test (`supabase/tests/000_rls_enabled.sql`) fails if any table in `publi
 - `security definer`, `set search_path = ''`, fully qualified names, explicit `auth.uid()` checks, input validated (types + `check` constraints + explicit checks).
 - Errors: `raise exception using errcode = 'P0001', message = json_build_object('code','RATE_LIMITED','message','Too many reports','details', json_build_object('retry_after_s', 1800))::text;`
 - Stable error codes: `VALIDATION`, `NOT_FOUND`, `GONE`, `FORBIDDEN`, `UNVERIFIED_EMAIL`, `RATE_LIMITED`, `CAPTCHA_FAILED`, `CONFLICT`, `DUPLICATE_OPEN_REPORT`, `MIN_AMOUNT`, `LIVE_MODE_FORBIDDEN`, `INTERNAL`. `@zivali/api` parses them into `ApiError { code, message, details }`; UIs map `code` to `errors.<code>` i18n keys.
-- Writes accept optional `p_client_request_id uuid`; a repeat returns the first result.
+- Writes accept optional `p_client_request_id uuid`; a repeat returns the first result. Storage: `client_requests(id uuid primary key, user_id uuid, fn text, result jsonb, secret bytea null, created_at)`; a repeat by the same user returns `result` (and a secret such as a manage token decrypted from `secret`, which is `pgp_sym_encrypt`ed with the Vault key `idem_key`); a repeat by another user returns `CONFLICT`; rows purged after 24 h. Offline clients (C17 outbox) rely on this to retry safely.
 
 ## app_config
 

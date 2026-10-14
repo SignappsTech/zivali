@@ -5,6 +5,7 @@ status: To Do
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:14'
+updated_date: '2026-10-14 22:42'
 labels:
   - fe
   - 'est:S'
@@ -34,7 +35,7 @@ Alert settings live under Profile in the app (FR-010).
 
 Unblocks on: Mobile LocationPicker: GPS, pin, search, radius, permission fallback merged (TASK-15.5); Mobile sign-in, sign-up, verification, reset and profile merged (TASK-9.4); Contract clients in @zivali/api: chat, notifications, alerts, abuse, payments, ads, partners merged (TASK-6.10); packages/analytics: typed track(), event registry, consent store, adapters merged (TASK-7.1); Design: Notifications, nearby alerts and settings (P13) approved (TASK-22.2)
 Design: P13 docs/design/pages/P13-alerts-inbox-settings.md (mockup docs/design/mockups/P13-alerts-inbox-settings.html; TASK-22.2)
-Copy: docs/content/pages/P13-*.md (content strategist; until it exists use clear SL and EN drafts and list the keys in your report)
+Copy: docs/content/pages/P13-alerts-inbox-settings.md
 Contracts: C10, C6 (in references); conventions in C1
 Review: tech-lead code review (full mode); run `pnpm verify` before reporting done.
 Branch: agent/task-23.3-alerts-mob

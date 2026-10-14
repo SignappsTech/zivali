@@ -7,6 +7,7 @@ status: To Do
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:13'
+updated_date: '2026-10-14 22:41'
 labels:
   - fe
   - 'est:M'
@@ -35,7 +36,7 @@ The mobile Map tab, detail and pickers share one map component with the web prop
 
 Unblocks on: Mobile UI kit: RN Reusables primitives styled to the design system, gallery screen merged (TASK-8.3); Contract clients in @zivali/api: auth, profiles, pets, reports, photos, geocode, matches merged (TASK-6.9); Design: Location picker and fuzzed area (P5) approved (TASK-15.1); Design: Map and list (browse) (P4) approved (TASK-31.2)
 Design: P5 docs/design/pages/P5-location-picker.md (mockup docs/design/mockups/P5-location-picker.html; TASK-15.1); P4 docs/design/pages/P4-map-list.md (mockup docs/design/mockups/P4-map-list.html; TASK-31.2)
-Copy: docs/content/pages/P5-*.md (content strategist; until it exists use clear SL and EN drafts and list the keys in your report); docs/content/pages/P4-*.md (content strategist; until it exists use clear SL and EN drafts and list the keys in your report)
+Copy: docs/content/pages/P5-location-picker.md; docs/content/pages/P4-map-list.md
 Contracts: C6, C2 (in references); conventions in C1
 Review: tech-lead code review (full mode); run `pnpm verify` before reporting done.
 Branch: agent/task-15.4-mapview-mob

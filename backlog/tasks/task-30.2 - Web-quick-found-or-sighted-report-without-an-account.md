@@ -5,6 +5,7 @@ status: To Do
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:14'
+updated_date: '2026-10-14 22:42'
 labels:
   - fe
   - 'est:M'
@@ -35,7 +36,7 @@ Finders will not register; conversion depends on a found report taking under 60 
 
 Unblocks on: Web PhotoPicker: resize, EXIF read and strip, drafts, upload with retry merged (TASK-14.2); Web LocationPicker: GPS, pin, search, radius, permission fallback merged (TASK-15.3); Web anonymous session, Turnstile captcha and manage-link page merged (TASK-17.2); Web report detail /r/[code]: SSR, slots, OG image, JSON-LD, 410 merged (TASK-18.2); packages/analytics: typed track(), event registry, consent store, adapters merged (TASK-7.1); Design: Report found or sighted (no account) and manage page (P7) approved (TASK-30.1)
 Design: P7 docs/design/pages/P7-report-found.md (mockup docs/design/mockups/P7-report-found.html; TASK-30.1)
-Copy: docs/content/pages/P7-*.md (content strategist; until it exists use clear SL and EN drafts and list the keys in your report)
+Copy: docs/content/pages/P7-report-found.md
 Contracts: C7, C4 (in references); conventions in C1
 Review: tech-lead code review (full mode); run `pnpm verify` before reporting done.
 Branch: agent/task-30.2-found-web

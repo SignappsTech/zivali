@@ -5,6 +5,7 @@ status: To Do
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:13'
+updated_date: '2026-10-14 22:42'
 labels:
   - fe
   - 'est:M'
@@ -32,7 +33,7 @@ Finders without an account must be able to return to their report from any devic
 
 Unblocks on: Web shell: header, footer, layout, route groups and guards, shared states merged (TASK-11.2); Contract clients in @zivali/api: auth, profiles, pets, reports, photos, geocode, matches merged (TASK-6.9); Design: Report found or sighted (no account) and manage page (P7) approved (TASK-30.1)
 Design: P7 docs/design/pages/P7-report-found.md (mockup docs/design/mockups/P7-report-found.html; TASK-30.1)
-Copy: docs/content/pages/P7-*.md (content strategist; until it exists use clear SL and EN drafts and list the keys in your report)
+Copy: docs/content/pages/P7-report-found.md
 Contracts: C7, C15 (in references); conventions in C1
 Review: tech-lead code review (full mode); run `pnpm verify` before reporting done.
 Branch: agent/task-17.2-anon-web

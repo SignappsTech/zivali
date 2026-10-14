@@ -38,7 +38,7 @@ create table profiles (
 - Providers Google, Apple: enabled only when `SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID` / `…APPLE…` are set (credential-gated).
 - Captcha (Turnstile): off locally, on in cloud for sign-up and anonymous sign-in.
 - Redirect URLs: `APP_URL/**`, `zivali://**`, Expo dev URLs.
-- Email templates (confirm, recovery, magic link, email change) in `supabase/templates/*.html`, localised with `{{ if eq .Data.locale "en" }}…{{ else }}…{{ end }}`.
+- Email templates (confirm, recovery, magic link, email change, reauthentication, and the identity-linked security notice) in `supabase/templates/*.html`, copy from `docs/content/notifications-and-emails.md` §5; verify the available variables (`{{ .Provider }}`, `{{ .NewEmail }}`) against the deployed Supabase version; localised with `{{ if eq .Data.locale "en" }}…{{ else }}…{{ end }}`.
 
 ## Client API (`@zivali/api/auth`)
 

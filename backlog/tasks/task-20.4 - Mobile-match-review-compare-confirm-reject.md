@@ -5,6 +5,7 @@ status: To Do
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:14'
+updated_date: '2026-10-14 22:42'
 labels:
   - fe
   - 'est:M'
@@ -34,7 +35,7 @@ Owners usually get the match push on their phone and decide there (FR-008).
 
 Unblocks on: Mobile report detail screen with slots merged (TASK-18.3); Mobile sign-in, sign-up, verification, reset and profile merged (TASK-9.4); Contract clients in @zivali/api: auth, profiles, pets, reports, photos, geocode, matches merged (TASK-6.9); packages/analytics: typed track(), event registry, consent store, adapters merged (TASK-7.1); Design: Match review (P11) approved (TASK-20.1)
 Design: P11 docs/design/pages/P11-match-review.md (mockup docs/design/mockups/P11-match-review.html; TASK-20.1)
-Copy: docs/content/pages/P11-*.md (content strategist; until it exists use clear SL and EN drafts and list the keys in your report)
+Copy: docs/content/pages/P11-match-review.md
 Contracts: C8, C12 (in references); conventions in C1
 Review: tech-lead code review (full mode); run `pnpm verify` before reporting done.
 Branch: agent/task-20.4-matchreview-mob

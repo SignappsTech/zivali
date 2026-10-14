@@ -5,6 +5,7 @@ status: To Do
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:13'
+updated_date: '2026-10-14 22:42'
 labels:
   - fe
   - 'est:M'
@@ -33,7 +34,7 @@ Ads, abuse reports, organisation verification and orders plug into one admin are
 
 Unblocks on: Web shell: header, footer, layout, route groups and guards, shared states merged (TASK-11.2); Web sign-in, sign-up, verification, reset, account page and guards merged (TASK-9.3); Contract clients in @zivali/api: auth, profiles, pets, reports, photos, geocode, matches merged (TASK-6.9); Design: Admin console shell (P19) approved (TASK-34.1)
 Design: P19 docs/design/pages/P19-admin-shell.md (mockup docs/design/mockups/P19-admin-shell.html; TASK-34.1)
-Copy: docs/content/pages/P19-*.md (content strategist; until it exists use clear SL and EN drafts and list the keys in your report)
+Copy: docs/content/pages/P19-admin-shell.md
 Contracts: C3, C15 (in references); conventions in C1
 Review: tech-lead code review (full mode); run `pnpm verify` before reporting done.
 Branch: agent/task-34.3-admin-web

@@ -19,7 +19,7 @@ Runtime dependencies outside this list (and outside what the Expo SDK 57 templat
 | `exifr` | web | EXIF GPS/time read before re-encode (ADR-014) |
 | `idb-keyval` | web | IndexedDB drafts (≈ 600 B) |
 | `@react-native-firebase/app`, `@react-native-firebase/analytics` | mobile | ADR-009 |
-| `expo-image-picker`, `expo-image-manipulator`, `expo-location`, `expo-notifications`, `expo-web-browser`, `expo-secure-store`, `expo-sqlite`, `expo-file-system`, `expo-sharing`, `expo-apple-authentication`, `expo-dev-client`, `react-native-webview` | mobile | Expo-native capabilities |
+| `expo-image-picker`, `expo-image-manipulator`, `expo-location`, `expo-notifications`, `expo-web-browser`, `expo-secure-store`, `expo-sqlite`, `expo-file-system`, `expo-sharing`, `expo-apple-authentication`, `expo-dev-client`, `react-native-webview`, `expo-network`, `expo-background-task`, `expo-task-manager` | mobile | Expo-native capabilities (offline data layer and geofencing: ADR-019) |
 | `@react-native-google-signin/google-signin` | mobile | Native Google ID token for `signInWithIdToken` |
 | `@react-pdf/renderer` | web (server route only) | A4 poster PDF with embedded fonts (š, č, ž) |
 | `qrcode` | web (server) | QR on posters |
@@ -33,7 +33,7 @@ Runtime dependencies outside this list (and outside what the Expo SDK 57 templat
 | `@sentry/nextjs`, `@sentry/react-native` | web, mobile (M5, TASK-70) | Error tracking, EU region, PII scrubbing |
 | Dev: `vitest`, `@testing-library/*`, `jsdom`, `@playwright/test`, `@axe-core/playwright`, `@lhci/cli`, `linkinator`, `jest-expo`, `secretlint`, `supabase` (CLI), `turbo`, `eslint`, `prettier`, `typescript` | repo | ADR-001, ADR-015 |
 
-Not used, on purpose: date libraries (use `Intl`), lodash, axios, state managers (React state + TanStack Query), CSS-in-JS, Redux, UUID packages (`crypto.randomUUID`), HEIC converters, TUS clients, Mapbox/Google SDKs, i18next.
+Not used, on purpose: MMKV, WatermelonDB/RxDB, TanStack query persisters (ADR-019), date libraries (use `Intl`), lodash, axios, state managers (React state + TanStack Query), CSS-in-JS, Redux, UUID packages (`crypto.randomUUID`), HEIC converters, TUS clients, Mapbox/Google SDKs, i18next.
 
 ## Consequences
 

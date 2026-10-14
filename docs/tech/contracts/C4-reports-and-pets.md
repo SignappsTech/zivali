@@ -35,7 +35,7 @@ reports(id, short_code text unique,            -- 8 chars base58, public identif
         exact_point geography(Point) not null, requested_radius_m int null (lost: 200–20000),
         public_point geography(Point), public_radius_m int,          -- set by trigger (C6)
         municipality_id, region_id, in_slovenia bool,                -- set by trigger (C6)
-        event_at timestamptz not null,       -- lost: last seen; found/sighted: when seen
+        event_at timestamptz not null,       -- lost: last seen; found/sighted: when seen (offline queue: original capture time, C17); matching uses event_at, never created_at
         circumstances text (≤ 1000), contact_pref default 'chat_only',
         linked_report_id → reports null,     -- a sighting of a lost report
         source, organisation_id null, boosted_until timestamptz null,
@@ -102,6 +102,13 @@ search_reports(f: {
 }) → { items: PublicReport[] /* map mode returns { id, short_code, type, species, area, boosted } */; next_cursor?; total_estimate: number }
 ```
 Never returned: `exact_point`, `chip_number`, `manage_token_hash`, `created_by`, finder email, phone. Boosted (`boosted_until > now()`) sort first.
+
+```ts
+sync_public_reports(p_areas: { lat: number; lng: number; radius_km: number /* ≤ 25 */ }[] /* ≤ 3 */, p_since: string | null, p_limit: number /* ≤ 1000 */)
+  → { upserts: CachedReport[]; removed_ids: uuid[]; server_time: string; has_more: boolean }
+type CachedReport = Pick<PublicReport, 'id'|'short_code'|'type'|'status'|'species'|'name'|'breed_codes'|'colours'|'pattern'|'size'|'sex'|'has_chip'|'event_at'|'area'|'municipality_slug'|'region_slug'|'boosted'|'updated_at'> & { thumb_url?: string }
+```
+Owned by TASK-85 (backend). Offline cache feed for mobile (C17): open, visible reports whose public area intersects an area and `updated_at > p_since` (all when null); `removed_ids` = reports in those areas changed since `p_since` that are no longer open and visible (closed, reunited, expired, hidden, removed). Callable by anonymous and signed-in users, rate limited 60/hour per device id. Never returns more than the public whitelist.
 
 ## Drafts (clients)
 

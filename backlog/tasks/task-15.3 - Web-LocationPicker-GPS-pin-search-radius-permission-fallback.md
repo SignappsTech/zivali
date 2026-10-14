@@ -5,6 +5,7 @@ status: To Do
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:12'
+updated_date: '2026-10-14 22:41'
 labels:
   - fe
   - 'est:S'
@@ -30,7 +31,7 @@ Reports need an accurate place and radius set quickly, while the public only eve
 
 Unblocks on: Web MapView: MapLibre + OpenFreeMap, markers, clusters, areas, list alternative merged (TASK-15.2); Design: Location picker and fuzzed area (P5) approved (TASK-15.1)
 Design: P5 docs/design/pages/P5-location-picker.md (mockup docs/design/mockups/P5-location-picker.html; TASK-15.1)
-Copy: docs/content/pages/P5-*.md (content strategist; until it exists use clear SL and EN drafts and list the keys in your report)
+Copy: docs/content/pages/P5-location-picker.md
 Contracts: C6 (in references); conventions in C1
 Review: tech-lead code review (full mode); run `pnpm verify` before reporting done.
 Branch: agent/task-15.3-picker-web

@@ -5,6 +5,7 @@ status: To Do
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:14'
+updated_date: '2026-10-14 22:42'
 labels:
   - fe
   - 'est:S'
@@ -33,7 +34,7 @@ Visitors can start reporting in the app and sign up at the end without losing da
 
 Unblocks on: Mobile report-lost flow merged (TASK-29.5); Mobile sign-in, sign-up, verification, reset and profile merged (TASK-9.4); Design: Report lost flow (P6) approved (TASK-29.1); Design: Support moments: tip and contribution (P15) approved (TASK-33.1)
 Design: P6 docs/design/pages/P6-report-lost.md (mockup docs/design/mockups/P6-report-lost.html; TASK-29.1); P15 docs/design/pages/P15-support-moments.md (mockup docs/design/mockups/P15-support-moments.html; TASK-33.1)
-Copy: docs/content/pages/P6-*.md (content strategist; until it exists use clear SL and EN drafts and list the keys in your report); docs/content/pages/P15-*.md (content strategist; until it exists use clear SL and EN drafts and list the keys in your report)
+Copy: docs/content/pages/P6-report-lost.md; docs/content/pages/P15-support-moments.md
 Contracts: C3 (in references); conventions in C1
 Review: tech-lead code review (full mode); run `pnpm verify` before reporting done.
 Branch: agent/task-29.6-lost-mob-confirm

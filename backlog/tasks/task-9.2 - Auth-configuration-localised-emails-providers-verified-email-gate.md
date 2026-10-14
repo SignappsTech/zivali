@@ -5,6 +5,7 @@ status: To Do
 assignee:
   - '@backend-dev'
 created_date: '2026-10-14 22:12'
+updated_date: '2026-10-14 22:41'
 labels:
   - be
   - 'est:S'
@@ -15,6 +16,7 @@ references:
   - docs/tech/backend.md
   - docs/tech/contracts/C3-auth-profiles-roles.md
   - docs/tech/contracts/C1-platform-conventions.md
+  - docs/content/notifications-and-emails.md
 parent_task_id: TASK-9
 priority: high
 ordinal: 142000
@@ -35,7 +37,7 @@ Branch: agent/task-9.2-auth-be
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Auth email templates (confirm, recovery, magic link, email change) are localised SL/EN through user_metadata.locale and arrive in the local mail catcher.
+- [ ] #1 Auth email templates (confirm, recovery, magic link, email change, reauthentication and the identity-linked security notice) use the copy in docs/content/notifications-and-emails.md, are localised SL/EN through user_metadata.locale and arrive in the local mail catcher.
 - [ ] #2 Google and Apple providers are configured through env() in config.toml and enabled only when credentials exist; redirect URLs cover APP_URL and zivali://.
 - [ ] #3 email_verified() blocks unverified email accounts and allows verified and anonymous users; pgTAP covers all three.
 - [ ] #4 Profile updates enforce locale sl/en, alert radius 1–25 km and an immutable role; password-reset and sign-in rate limits are configured and documented.

@@ -5,6 +5,7 @@ status: To Do
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:14'
+updated_date: '2026-10-14 22:43'
 labels:
   - fe
   - 'est:M'
@@ -35,7 +36,7 @@ Sponsors pay only for visible, trusted placements; ads must be clearly labelled 
 
 Unblocks on: Ad click counter route /a/[id] (no open redirect) merged (TASK-35.2); Web map and list browse with filters merged (TASK-31.4); Web report detail /r/[code]: SSR, slots, OG image, JSON-LD, 410 merged (TASK-18.2); Web My reports, owner actions and reunited screen merged (TASK-26.4); packages/analytics: typed track(), event registry, consent store, adapters merged (TASK-7.1); Design: Ad slots and house ads (P21) approved (TASK-36.4)
 Design: P21 docs/design/pages/P21-ad-slots.md (mockup docs/design/mockups/P21-ad-slots.html; TASK-36.4)
-Copy: docs/content/pages/P21-*.md (content strategist; until it exists use clear SL and EN drafts and list the keys in your report)
+Copy: docs/content/pages/P21-ad-slots.md
 Contracts: C14, C12 (in references); conventions in C1
 Review: tech-lead code review (full mode); run `pnpm verify` before reporting done.
 Branch: agent/task-36.5-adslot-web

@@ -5,6 +5,7 @@ status: To Do
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:12'
+updated_date: '2026-10-14 22:41'
 labels:
   - fe
   - 'est:S'
@@ -31,7 +32,7 @@ EU law requires opt-in before analytics, with Accept and Reject at equal weight 
 
 Unblocks on: Web shell: header, footer, layout, route groups and guards, shared states merged (TASK-11.2); GA4 on web with basic Consent Mode v2 merged (TASK-7.2); Design: Consent banner and preferences (P17) approved (TASK-13.1)
 Design: P17 docs/design/pages/P17-consent.md (mockup docs/design/mockups/P17-consent.html; TASK-13.1)
-Copy: docs/content/pages/P17-*.md (content strategist; until it exists use clear SL and EN drafts and list the keys in your report)
+Copy: docs/content/pages/P17-consent.md
 Contracts: C12 (in references); conventions in C1
 Review: tech-lead code review (full mode); run `pnpm verify` before reporting done.
 Branch: agent/task-13.2-consent-web

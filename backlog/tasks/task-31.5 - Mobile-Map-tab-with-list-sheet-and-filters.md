@@ -5,6 +5,7 @@ status: To Do
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:14'
+updated_date: '2026-10-14 22:41'
 labels:
   - fe
   - 'est:M'
@@ -18,7 +19,7 @@ references:
   - docs/tech/frontend.md
   - docs/tech/contracts/C4-reports-and-pets.md
   - docs/design/pages/P4-map-list.md
-  - docs/tech/contracts/C6-location-geo-maps.md
+  - docs/tech/contracts/C17-mobile-offline-data.md
 parent_task_id: TASK-31
 priority: high
 ordinal: 208000
@@ -44,4 +45,5 @@ Branch: agent/task-31.5-browse-mob
 - [ ] #1 The Map tab shows clustered reports with a bottom-sheet list (@gorhom/bottom-sheet) as the accessible alternative, per P4.
 - [ ] #2 Filters (type, species, distance, date range, colour, size) narrow map and list and show counts with correct SL plurals.
 - [ ] #3 Boosted reports first, closed excluded by default, empty state with Report and Set alert, and an insertion point for ad cards.
+- [ ] #4 Map, list and report screens read reports only through lib/data/reports.ts hooks (C17 data seam), so the offline cache plugs in without screen changes.
 <!-- AC:END -->

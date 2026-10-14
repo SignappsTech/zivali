@@ -5,6 +5,7 @@ status: To Do
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:14'
+updated_date: '2026-10-14 22:42'
 labels:
   - fe
   - 'est:M'
@@ -35,7 +36,7 @@ Owners and finders close the loop and keep listings fresh; the reunited moment h
 
 Unblocks on: Web report detail /r/[code]: SSR, slots, OG image, JSON-LD, 410 merged (TASK-18.2); Web sign-in, sign-up, verification, reset, account page and guards merged (TASK-9.3); Contract clients in @zivali/api: auth, profiles, pets, reports, photos, geocode, matches merged (TASK-6.9); packages/analytics: typed track(), event registry, consent store, adapters merged (TASK-7.1); Design: Reunited and lifecycle (P14) approved (TASK-26.2); Design: Report detail (lost, found, sighted) (P9) approved (TASK-18.1)
 Design: P14 docs/design/pages/P14-reunited.md (mockup docs/design/mockups/P14-reunited.html; TASK-26.2); P9 docs/design/pages/P9-report-detail.md (mockup docs/design/mockups/P9-report-detail.html; TASK-18.1)
-Copy: docs/content/pages/P14-*.md (content strategist; until it exists use clear SL and EN drafts and list the keys in your report); docs/content/pages/P9-*.md (content strategist; until it exists use clear SL and EN drafts and list the keys in your report)
+Copy: docs/content/pages/P14-reunited.md; docs/content/pages/P9-report-detail.md
 Contracts: C4 (in references); conventions in C1
 Review: tech-lead code review (full mode); run `pnpm verify` before reporting done.
 Branch: agent/task-26.4-lifecycle-web
