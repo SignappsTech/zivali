@@ -49,7 +49,7 @@ a:focus-visible, button:focus-visible { outline: 3px solid hsl(var(--ring)); out
 .btn-secondary { background: hsl(var(--secondary)); color: hsl(var(--secondary-foreground)); }
 .btn-secondary:hover, .btn-secondary.is-hover { background: color-mix(in srgb, hsl(var(--secondary)) 88%, hsl(var(--foreground))); }
 .btn-ghost { background: transparent; color: hsl(var(--foreground)); }
-.btn-ghost:hover, .btn-ghost.is-hover { background: hsl(var(--accent)); color: hsl(var(--accent-foreground)); }
+.btn-ghost:hover, .btn-ghost.is-hover { background: hsl(var(--foreground) / 0.10); color: hsl(var(--foreground)); }
 .btn-text { background: transparent; color: hsl(var(--primary)); padding: 0 12px; min-height: 44px; }
 .btn-text:hover { text-decoration: underline; text-underline-offset: 4px; }
 .btn-destructive { background: hsl(var(--destructive)); color: hsl(var(--destructive-foreground)); }
@@ -60,7 +60,7 @@ a:focus-visible, button:focus-visible { outline: 3px solid hsl(var(--ring)); out
 @media (prefers-reduced-motion: reduce) { .spin { animation-duration: 2.4s; } .btn { transition: none; } }
 
 .iconbtn { display: inline-grid; place-items: center; width: 44px; height: 44px; border-radius: 999px; background: transparent; border: 0; color: inherit; cursor: pointer; position: relative; }
-.iconbtn:hover { background: hsl(var(--accent)); }
+.iconbtn:hover { background: hsl(var(--foreground) / 0.10); }
 .iconbtn i { font-size: 24px; line-height: 1; }
 
 /* ---------- fields: line style, no boxes ---------- */
