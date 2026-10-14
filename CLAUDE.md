@@ -9,6 +9,7 @@ Lost pet finder (dogs and cats, Slovenia). Web and mobile. Brief: `docs/01-proje
 - Review: local
 - Base branch: main
 - Auto-merge: approved (merge once review passes, report after)
+- Trivial tasks: smaller models (haiku for text/copy/config-only changes, sonnet for est:XS local code); see the dev-team skill "Trivial tasks"
 - Stack: pnpm + Turborepo monorepo; apps/web Next.js (App Router) + shadcn/ui; apps/mobile Expo Router + React Native Reusables (NativeWind); shared packages (tokens, types, api, validation); Supabase (Postgres/PostGIS/pgvector, Auth, Storage, Realtime, Edge Functions); Vercel; EAS
 - Run/preview: -
 - Docs artifact: https://claude.ai/artifact/2jhatCqvPbqHhEHVsLexbW
