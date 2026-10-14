@@ -30,7 +30,7 @@ Izgubljene živali (working name) is a web and mobile app that reunites lost cat
 | G-2 | Fast matching | Median time from report to first match suggestion | < 10 min when a matching found report exists |
 | G-3 | Frictionless found reports | Time to submit a found report (no account) | < 60 s on mobile |
 | G-4 | Shelter adoption | Pilot shelters actively uploading | 2–3 shelters in first 3 months |
-| G-5 | Sustainable revenue | Paying users (boost/premium/tags) | Revenue covers infrastructure + AI costs by month 6 |
+| G-5 | Sustainable revenue | Paying users and supporters (boost, Premium, Podpornik, tips, ads, Vet Partner) | Revenue covers infrastructure + AI costs by month 6 |
 
 # Audience
 
@@ -107,7 +107,7 @@ Izgubljene živali (working name) is a web and mobile app that reunites lost cat
   - Countries other than Slovenia
   - Live payments
   - App Store and Play Store submission
-  - Physical tag manufacturing (only the ordering flow is in scope)
+  - QR/NFC pet tags (physical and printable): out of scope for now (privacy)
   - Official CRPsi integration (we link to it; integration later, subject to an agreement)
 
 # Constraints
