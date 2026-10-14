@@ -1,10 +1,11 @@
 ---
 id: TASK-11.1
 title: 'Design: Web shell (P1)'
-status: To Do
+status: In Progress
 assignee:
   - '@ui-designer'
 created_date: '2026-10-14 21:50'
+updated_date: '2026-10-14 22:21'
 labels:
   - design
   - 'est:S'
@@ -27,6 +28,7 @@ Every web page sits in this frame, so header, footer, layout variants and the sh
 
 ## Packet
 Branch: design/P1-web-shell
+Branch: agent/TASK-11.1-p1-web-shell
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Acceptance Criteria
