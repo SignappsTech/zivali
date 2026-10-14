@@ -17,14 +17,14 @@ Quick, trustworthy account creation and sign-in with email, Google or Apple, plu
 
 | Screen | Content (top to bottom) |
 |---|---|
-| Sign in | h1; email and password line fields (show password toggle); text button "Forgot password"; primary `lg` "Sign in"; "or" text; Google and Apple buttons (secondary, equal width, brand-correct glyphs); text button "Create an account" |
+| Sign in | h1; email and password line fields (show password toggle); text button "Forgot password"; primary `lg` "Sign in"; "or" text; Google and Apple `provider` buttons (system 10.2: equal size, stacked, brand-correct glyphs); text button "Create an account" |
 | Create account | h1; name, email, password (strength hint as text, minimum shown); a plain sentence linking Terms and Privacy (no pre-ticked box); primary `lg` "Create account"; Google and Apple; text button "I have an account" |
 | Check your email | spot icon (envelope) in a tonal circle, h1, the address, primary "Open mail app" (mobile only), text buttons "Resend" (with cooldown text) and "Change email" |
 | Email verified | check icon, h1, primary "Continue" |
 | Forgot password | h1, email field, primary "Send link", sentence that the answer is always the same for privacy |
 | New password | h1, password field with hint, primary "Save password" |
 
-Apple sign-in follows Apple's button rules on iOS and web (use the platform button or the specified assets); Google follows Google's branding rules. Both appear on every sign-in and sign-up screen with the same size as the secondary buttons.
+Apple sign-in follows Apple's button rules on iOS and web (use the platform button or the specified assets); Google follows Google's branding rules. Both appear on every sign-in and sign-up screen as `provider` buttons (system 10.2), the same size as the secondary buttons, identical on the page, in sheets and in dialogs.
 
 ## Contextual gate (sheet on mobile, dialog on web)
 

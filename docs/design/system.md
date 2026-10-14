@@ -2,7 +2,7 @@
 doc: design-system
 title: Design system (slice)
 source: 03§Brand and visual language
-version: 0.5
+version: 0.6
 status: Draft, direction A (Lagoon) chosen by the client
 date: 2026-10-15
 owner: Design Lead
@@ -175,6 +175,14 @@ The generated hex values below come from `tokens.json`. "Role" tells you where t
 | `warning-border` | Caution notice edge | #E09A12 | #8F5C0C |
 | `scrim` | Overlay behind sheets and dialogs (alpha 0.56 light, 0.72 dark) | #071113 | #071113 |
 
+#### Sign-in providers (brand colours, literal values)
+
+| Token | Role | Light | Dark |
+|---|---|---|---|
+| `provider` | Fill of the Google and Apple buttons (Google light and dark theme; Apple white and black) | #FFFFFF | #131314 |
+| `provider-foreground` | Label on provider buttons (Google's label colours; read as black and white for Apple) | #1F1F1F | #E3E3E3 |
+| `provider-border` | 1 px inside stroke of provider buttons (Google's stroke; Apple allows a stroke) | #747775 | #8E918F |
+
 #### Map markers
 
 | Token | Role | Light | Dark |
@@ -244,6 +252,9 @@ Floors: 4.5:1 text, 3:1 UI and graphics. Targets: 7:1 for body text and primary 
 | `verified-subtle-foreground` on `verified-subtle` | 10.8:1 | 10.8:1 | 7:1 |
 | `warning-foreground` on `warning` | 9.6:1 | 9.6:1 | 7:1 |
 | `warning-subtle-foreground` on `warning-subtle` | 7.4:1 | 10.5:1 | 7:1 |
+| `provider-foreground` on `provider` | 16.5:1 | 14.5:1 | 7:1 |
+| `provider-border` on `background` | 3.9:1 | 5.8:1 | 3:1 |
+| `provider-border` on `card` | 4.4:1 | 5.3:1 | 3:1 |
 | `sidebar-foreground` on `sidebar` | 12.1:1 | 16.3:1 | 7:1 |
 | `sidebar-primary-foreground` on `sidebar-primary` | 9.6:1 | 9.6:1 | 7:1 |
 | `sidebar-accent-foreground` on `sidebar-accent` | 10.0:1 | 13.1:1 | 7:1 |
@@ -447,7 +458,8 @@ Web = shadcn/ui, mobile = React Native Reusables (NativeWind). Same names, same 
 
 | | |
 |---|---|
-| Variants | `default` (primary, teal), `secondary` (tonal), `ghost` (text with hover tone), `text` (teal text, for the quiet second action), `destructive`. The shadcn `outline` variant is not used; map it to `secondary`. |
+| Variants | `default` (primary, teal), `secondary` (tonal), `ghost` (text with hover tone), `text` (teal text, for the quiet second action), `destructive`, `provider` (Google and Apple sign-in only). The shadcn `outline` variant is not used; map it to `secondary`. |
+| Provider | `provider` fill, `provider-foreground` label, 1 px inside `provider-border` stroke, the same on every surface (page, sheet, dialog). The one bordered button, because Google and Apple only allow white or black fields (plus Google's grey stroke) behind their marks; never `secondary`, never a surface token. Size `md` (48), full pill, full width, the two stacked with 12 px between, equal size, Google first. Official glyphs only (Google "G" in full colour in both modes, Apple logo in `provider-foreground`), 20 px, gap 8. Labels "Nadaljuj z Googlom" and "Nadaljuj z Applom" (content slice). States as 10.1: hover mixes 14 % `provider-foreground` into the fill; focus ring; loading puts the spinner in the glyph's place; they stay enabled when e-mail sign-in is rate limited. The official SDK buttons (Google Identity Services, Sign in with Apple JS, `expo-apple-authentication`) are fine if they match this look; brand rules on font, padding and glyph size are checked against the brands' current pages at build time. |
 | Sizes | `sm` 44, `md` 48, `lg` 56 px high. Padding x 18 / 24 / 32. Icon button 44x44 with a 24 px icon. |
 | Type | 16 (17 on lg) bold, label never wraps. Icon 20 px before the label, gap 8. |
 | Shape | Full pill, no border, no shadow. Labels never truncate: at large OS text sizes they wrap to a second line and the button grows in height (min-height stays 44/48/56). |
@@ -647,3 +659,4 @@ Each page slice in `docs/design/pages/P<n>-<slug>.md` gets one static mockup at 
 | 0.3 | 2026-10-14 | P1 review: ghost hover tone, `shadow-pop`, header and footer rules, `accent` role. |
 | 0.4 | 2026-10-14 | P2 review: Sporočila tab, bottom-nav baseline and text scaling cap, button label wrap, toast shadow. |
 | 0.5 | 2026-10-15 | P23 review (TASK-8.1): `destructive` darkened to crimson.700 light and crimson.300 dark (8.2 and 8.7:1, meets 7:1 as the main action of a delete dialog; tokens 0.3.0, new pairs on background, popover, muted). Flow top bar draws one bar per step. Radio checked = dot. Tile hover, pressed and 6 px focus offset. States written down from the gallery: disabled field (dashed line), select listbox, search field, checkbox and radio anatomy, choice-row hover, pressed and disabled, segmented hover and disabled, switch disabled, dialog title role and alert-dialog focus, menu, avatar initials, inline region error, progress done and failed, reduced-motion spinner. "You" dot never on detail maps. |
+| 0.6 | 2026-10-15 | P16 review (TASK-9.1): `provider` button variant and `provider`, `provider-foreground`, `provider-border` tokens (brand-literal white and near-black with a 1 px stroke, same on every surface; tokens 0.4.0). |
