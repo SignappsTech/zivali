@@ -1,0 +1,817 @@
+<!doctype html>
+<!--
+  P23 UI kit gallery mockup (TASK-8.1). Built from docs/design/mockups/_template.html.
+  Sources: docs/design/pages/P23-ui-kit-gallery.md, docs/design/system.md (v0.4), docs/content/pages/P23-ui-kit-gallery.md (v0.1).
+  Component classes live in ../directions/directions.css (UI kit block). This file only adds gallery scaffolding (captions,
+  ratio notes, 390 strips, 200 % text, reduced motion, 44 px target outlines) and the SL/EN sample-text switch.
+  Every [data-en] element swaps its text to English; [data-sample] marks placeholder copy that no content slice owns yet.
+  Everything in #src is cloned once per colour mode by ../directions/directions.js. Tokens only, no hex (except the logo dot).
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Najdimo mockup: P23 UI kit gallery</title>
+<meta name="description" content="Every core component of the Najdimo UI kit in every state, light and dark, Slovenian and English text, web at 1200 px and mobile at 390 px.">
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:wght@400;500;600;700&family=Bricolage+Grotesque:opsz,wght@12..96,500..800&display=swap" rel="stylesheet">
+<link href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css" rel="stylesheet">
+<link href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/bold/style.css" rel="stylesheet">
+<link href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css" rel="stylesheet">
+<link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet">
+<link href="../tokens.css" rel="stylesheet">
+<link href="../directions/directions.css" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com/3.4.17"></script>
+<script src="../directions/tailwind-config.js"></script>
+<style>
+/* Gallery scaffolding only (not product UI). Product components come from directions.css. */
+.scope h1, .scope h2, .scope h3, .scope h4 { text-wrap: balance; }
+.kit { max-width: 1248px; }
+.kit + .kit { padding-top: 16px; }
+.kit-h3 { font-family: var(--font-display); font-weight: 600; font-size: 20px; line-height: 28px; letter-spacing: -0.005em; margin: 56px 0 4px; }
+.kit-note { max-width: 74ch; margin: 0 0 20px; font-size: 15px; line-height: 22px; color: hsl(var(--muted-foreground)); }
+.row-specs { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 28px 32px; }
+.grid-specs { display: grid; gap: 40px 32px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); }
+.spec { margin: 0; min-width: 0; }
+.cap { margin: 0 0 12px; font-size: 14px; line-height: 20px; font-weight: 700; color: hsl(var(--muted-foreground)); }
+.ratio { margin: 10px 0 0; font-size: 14px; line-height: 20px; color: hsl(var(--muted-foreground)); font-variant-numeric: tabular-nums; }
+.anno { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; font-size: 13px; line-height: 18px; font-weight: 700; background: hsl(var(--foreground)); color: hsl(var(--background)); }
+/* A 390 px slice of a phone screen; shrinks below 422 px so the page never scrolls sideways */
+.strip { position: relative; width: 390px; max-width: 100%; box-sizing: border-box; overflow: hidden; border-radius: 28px; background: hsl(var(--background)); box-shadow: 0 0 0 1px hsl(var(--input) / 0.45); }
+.browser.fluid { width: auto; box-shadow: 0 0 0 1px hsl(var(--input) / 0.45); }
+.ringbox { position: relative; width: 136px; height: 136px; border-radius: var(--radius-row); background: hsl(var(--map-land)); box-shadow: 0 0 0 1px hsl(var(--input) / 0.45); }
+.legend-mk { position: relative; width: 56px; height: 56px; flex: none; border-radius: 16px; background: hsl(var(--map-land)); box-shadow: 0 0 0 1px hsl(var(--input) / 0.45); }
+.swrow { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 56px; max-width: 360px; font-weight: 700; cursor: pointer; }
+.bottomnav a { border-radius: 16px; }
+.nav13 { height: auto; min-height: 98px; padding-top: 8px; }
+.nav13 a { font-size: 17px; line-height: 22px; }
+/* Wide web frame: 1120 px (content width), zoomed down on smaller screens so nothing scrolls sideways */
+.fit-wide { width: 1120px; }
+@media (max-width: 1167px) { .fit-wide { zoom: 0.62; } }
+@media (max-width: 767px) { .fit-wide { zoom: 0.44; } }
+@media (max-width: 559px) { .fit-wide { zoom: 0.3; } }
+@media (max-width: 389px) { .fit-wide { zoom: 0.27; } }
+@media (max-width: 333px) { .fit-wide { zoom: 0.25; } }
+/* Text at 200 %: the OS doubles every text style; labels wrap, buttons grow */
+.t200 .btn { white-space: normal; font-size: 32px; line-height: 40px; padding: 12px 24px; text-align: center; }
+.t200 .btn-lg { font-size: 34px; line-height: 44px; }
+/* Reduced motion sample */
+.rm .skel { animation: none; }
+.rm .spin { animation-duration: 2.4s; }
+.rm *, .rm *::after { transition: none !important; }
+.rm .btn:active, .rm .switch:active { transform: none; }
+/* 44 px target outlines on demand (top bar toggle) */
+.show-targets #stage :is(a, button, textarea, .input, .check, [role="radio"], [role="option"]) { outline: 2px dashed hsl(var(--status-sighted)) !important; outline-offset: 0 !important; }
+code { font-size: 0.92em; }
+</style>
+</head>
+<body>
+<a class="sr-only focus:not-sr-only" href="#stage">Skip to content</a>
+
+<!-- Symbols, defined once: logo mark and the spot-illustration placeholder -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <symbol id="nj-mark" viewBox="0 0 48 48">
+    <g fill="currentColor" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round">
+      <path d="M24 45.5 C24 45.5 10.5 33.2 10.5 24.4 A13.5 13.5 0 0 1 37.5 24.4 C37.5 33.2 24 45.5 24 45.5 Z M24 17.9 A6.5 6.5 0 1 0 24 30.9 A6.5 6.5 0 1 0 24 17.9 Z"/>
+      <path d="M12.2 19.6 L11.2 5 L22.6 11.4 Z"/><path d="M35.8 19.6 L25.4 11.4 L36.8 5 Z"/>
+    </g>
+    <circle cx="24" cy="24.4" r="3.6" fill="#F7B32B"/>
+  </symbol>
+  <!-- PLACEHOLDER spot illustration (image task pending). Flat geometry in brand tokens; status-reunited stands in for sun.400. -->
+  <symbol id="illo-spot" viewBox="0 0 320 210">
+    <rect width="320" height="210" style="fill:hsl(var(--accent))"/>
+    <circle cx="232" cy="70" r="32" style="fill:hsl(var(--status-reunited))"/>
+    <path d="M0 150 C60 112 120 120 172 140 C222 160 272 150 320 120 V210 H0Z" style="fill:hsl(var(--secondary))"/>
+    <path d="M0 182 C70 146 130 162 190 180 C240 194 290 186 320 170 V210 H0Z" style="fill:hsl(var(--primary))"/>
+    <path d="M52 198 C96 160 150 182 196 148" fill="none" style="stroke:hsl(var(--status-reunited))" stroke-width="3" stroke-linecap="round" stroke-dasharray="1 9"/>
+  </symbol>
+</svg>
+
+<header class="chrome">
+  <div class="flex flex-wrap items-center gap-x-5 gap-y-2 px-6 py-2 max-w-[1400px] mx-auto">
+    <span class="flex items-center gap-2 font-display font-bold text-lg"><svg class="logo-mark w-7 h-7" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg>Najdimo</span>
+    <span class="text-muted-foreground text-[15px]">P23 UI kit gallery (mockup)</span>
+    <div class="ml-auto flex flex-wrap items-center gap-2">
+      <div class="flex items-center gap-2" role="group" aria-label="Sample text language">
+        <button class="mode-btn" data-lang="sl" aria-pressed="true">SL</button>
+        <button class="mode-btn" data-lang="en" aria-pressed="false">EN</button>
+      </div>
+      <button class="mode-btn" id="targets" aria-pressed="false">44 px targets</button>
+      <div class="flex items-center gap-2" role="group" aria-label="Colour mode">
+        <button class="mode-btn" data-mode="light" aria-pressed="true">Light</button>
+        <button class="mode-btn" data-mode="dark" aria-pressed="false">Dark</button>
+        <button class="mode-btn" data-mode="both" aria-pressed="false">Side by side</button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main id="stage"></main>
+
+<div id="src" hidden>
+
+<!-- ================= INTRO ================= -->
+<section class="tile-section kit !pb-8">
+  <h1 class="tile-title">P23 UI kit gallery</h1>
+  <p class="tile-lede">Every core component in every state, as the one visual reference for shadcn/ui on web and React Native Reusables on mobile. Web styling at up to 1200 px; mobile-only parts (choice rows, bottom navigation, top bar, sheet) in 390 px frames. The top bar switches light, dark and side by side, Slovenian and English sample text (Slovenian runs 15 to 20 % longer), and 44 px target outlines.</p>
+  <div class="flex flex-wrap gap-2">
+    <span class="anno">Specimen rows are not views. Each frame that stands for a screen has one primary action.</span>
+    <span class="anno">Ratios: contrast on the element's own surface, for the mode shown</span>
+    <span class="anno">Copy: P23 content slice; "sample" in a caption = placeholder text</span>
+  </div>
+</section>
+
+<!-- ================= 1. ACTIONS ================= -->
+<section class="tile-section kit">
+  <h2 class="tile-title">1. Actions</h2>
+  <p class="tile-lede">Button in five variants, three sizes and six states, and the icon button. Full pill, no border, no shadow, 16 px bold (17 on lg), icon 20 before the label with an 8 px gap. Labels never truncate.</p>
+
+  <h3 class="kit-h3">Primary (<code>default</code>)</h3>
+  <p class="kit-note">One per view. Hover and pressed mix 14 % foreground into the fill; pressed also scales to 0.98 for 80 ms (light haptic on mobile).</p>
+  <div class="row-specs" lang="sl">
+    <figure class="spec"><figcaption class="cap">Default</figcaption><button type="button" class="btn btn-primary" data-en="Report a lost pet">Prijavi izgubljeno žival</button><p class="ratio">Text <span class="cr" data-l="7.8:1" data-d="8.0:1"></span></p></figure>
+    <figure class="spec"><figcaption class="cap">Hover</figcaption><button type="button" class="btn btn-primary is-hover" data-en="Report a lost pet">Prijavi izgubljeno žival</button><p class="ratio">Text <span class="cr" data-l="8.8:1" data-d="8.6:1"></span></p></figure>
+    <figure class="spec"><figcaption class="cap">Pressed</figcaption><button type="button" class="btn btn-primary is-hover is-pressed" data-en="Report a lost pet">Prijavi izgubljeno žival</button><p class="ratio">Text <span class="cr" data-l="8.8:1" data-d="8.6:1"></span> · scale 0.98</p></figure>
+    <figure class="spec"><figcaption class="cap">Focus</figcaption><button type="button" class="btn btn-primary is-focus" data-en="Report a lost pet">Prijavi izgubljeno žival</button><p class="ratio">Ring <span class="cr" data-l="5.5:1" data-d="8.9:1"></span> on background</p></figure>
+    <figure class="spec"><figcaption class="cap">Disabled</figcaption><button type="button" class="btn btn-primary" disabled data-en="Report a lost pet">Prijavi izgubljeno žival</button><p class="ratio">Text <span class="cr" data-l="5.8:1" data-d="8.1:1"></span> · say why in help text</p></figure>
+    <figure class="spec"><figcaption class="cap">Loading</figcaption><button type="button" class="btn btn-primary" aria-busy="true"><span class="spin" aria-hidden="true"></span><span data-en="Report a lost pet">Prijavi izgubljeno žival</span></button><p class="ratio">Label stays, width locked on press</p></figure>
+  </div>
+
+  <h3 class="kit-h3">Secondary</h3>
+  <p class="kit-note">Tonal, lower emphasis. Also the one button of an empty state and the boost buttons.</p>
+  <div class="row-specs" lang="sl">
+    <figure class="spec"><figcaption class="cap">Default</figcaption><button type="button" class="btn btn-secondary" data-en="Turn on alerts">Vklopi opozorila</button><p class="ratio">Text <span class="cr" data-l="10.8:1" data-d="10.8:1"></span></p></figure>
+    <figure class="spec"><figcaption class="cap">Hover</figcaption><button type="button" class="btn btn-secondary is-hover" data-en="Turn on alerts">Vklopi opozorila</button><p class="ratio">Text <span class="cr" data-l="8.2:1" data-d="7.3:1"></span></p></figure>
+    <figure class="spec"><figcaption class="cap">Pressed</figcaption><button type="button" class="btn btn-secondary is-hover is-pressed" data-en="Turn on alerts">Vklopi opozorila</button><p class="ratio">Text <span class="cr" data-l="8.2:1" data-d="7.3:1"></span></p></figure>
+    <figure class="spec"><figcaption class="cap">Focus</figcaption><button type="button" class="btn btn-secondary is-focus" data-en="Turn on alerts">Vklopi opozorila</button><p class="ratio">Ring <span class="cr" data-l="5.5:1" data-d="8.9:1"></span></p></figure>
+    <figure class="spec"><figcaption class="cap">Disabled</figcaption><button type="button" class="btn btn-secondary" disabled data-en="Turn on alerts">Vklopi opozorila</button><p class="ratio">Text <span class="cr" data-l="5.8:1" data-d="8.1:1"></span></p></figure>
+    <figure class="spec"><figcaption class="cap">Loading</figcaption><button type="button" class="btn btn-secondary" aria-busy="true"><span class="spin" aria-hidden="true"></span><span data-en="Turn on alerts">Vklopi opozorila</span></button><p class="ratio">Text <span class="cr" data-l="10.8:1" data-d="10.8:1"></span></p></figure>
+  </div>
+
+  <h3 class="kit-h3">Ghost (with icon)</h3>
+  <p class="kit-note">Text with a hover tone: foreground at 10 % over the surface. Here with a leading icon; while loading, the spinner takes the icon's place, so nothing moves.</p>
+  <div class="row-specs" lang="sl">
+    <figure class="spec"><figcaption class="cap">Default</figcaption><button type="button" class="btn btn-ghost"><i class="ph-bold ph-share-network" aria-hidden="true"></i><span data-en="Share or print a poster">Deli ali natisni plakat</span></button><p class="ratio">Text <span class="cr" data-l="15.1:1" data-d="15.7:1"></span></p></figure>
+    <figure class="spec"><figcaption class="cap">Hover</figcaption><button type="button" class="btn btn-ghost is-hover"><i class="ph-bold ph-share-network" aria-hidden="true"></i><span data-en="Share or print a poster">Deli ali natisni plakat</span></button><p class="ratio">Text <span class="cr" data-l="12.4:1" data-d="12.2:1"></span></p></figure>
+    <figure class="spec"><figcaption class="cap">Pressed</figcaption><button type="button" class="btn btn-ghost is-hover is-pressed"><i class="ph-bold ph-share-network" aria-hidden="true"></i><span data-en="Share or print a poster">Deli ali natisni plakat</span></button><p class="ratio">Text <span class="cr" data-l="12.4:1" data-d="12.2:1"></span></p></figure>
+    <figure class="spec"><figcaption class="cap">Focus</figcaption><button type="button" class="btn btn-ghost is-focus"><i class="ph-bold ph-share-network" aria-hidden="true"></i><span data-en="Share or print a poster">Deli ali natisni plakat</span></button><p class="ratio">Ring <span class="cr" data-l="5.5:1" data-d="8.9:1"></span></p></figure>
+    <figure class="spec"><figcaption class="cap">Disabled</figcaption><button type="button" class="btn btn-ghost" disabled><i class="ph-bold ph-share-network" aria-hidden="true"></i><span data-en="Share or print a poster">Deli ali natisni plakat</span></button><p class="ratio">Text <span class="cr" data-l="5.8:1" data-d="8.1:1"></span></p></figure>
+    <figure class="spec"><figcaption class="cap">Loading</figcaption><button type="button" class="btn btn-ghost" aria-busy="true"><span class="spin" aria-hidden="true"></span><span data-en="Share or print a poster">Deli ali natisni plakat</span></button><p class="ratio">Spinner replaces the icon</p></figure>
+  </div>
+
+  <h3 class="kit-h3">Text</h3>
+  <p class="kit-note">Teal text for the quiet second action, always 44 px high with 12 px padding. On mobile it sits under the primary.</p>
+  <div class="row-specs" lang="sl">
+    <figure class="spec"><figcaption class="cap">Default</figcaption><button type="button" class="btn btn-text" data-en="Create an account to keep it">Ustvari račun in obdrži prijavo</button><p class="ratio">Text <span class="cr" data-l="7.3:1" data-d="8.9:1"></span></p></figure>
+    <figure class="spec"><figcaption class="cap">Hover</figcaption><button type="button" class="btn btn-text is-hover" data-en="Create an account to keep it">Ustvari račun in obdrži prijavo</button><p class="ratio">Text <span class="cr" data-l="6.0:1" data-d="6.9:1"></span></p></figure>
+    <figure class="spec"><figcaption class="cap">Pressed</figcaption><button type="button" class="btn btn-text is-hover is-pressed" data-en="Create an account to keep it">Ustvari račun in obdrži prijavo</button><p class="ratio">Text <span class="cr" data-l="6.0:1" data-d="6.9:1"></span></p></figure>
+    <figure class="spec"><figcaption class="cap">Focus</figcaption><button type="button" class="btn btn-text is-focus" data-en="Create an account to keep it">Ustvari račun in obdrži prijavo</button><p class="ratio">Ring <span class="cr" data-l="5.5:1" data-d="8.9:1"></span></p></figure>
+    <figure class="spec"><figcaption class="cap">Disabled</figcaption><button type="button" class="btn btn-text" disabled data-en="Create an account to keep it">Ustvari račun in obdrži prijavo</button><p class="ratio">Text <span class="cr" data-l="5.8:1" data-d="8.1:1"></span></p></figure>
+    <figure class="spec"><figcaption class="cap">Loading</figcaption><button type="button" class="btn btn-text" aria-busy="true"><span class="spin" aria-hidden="true"></span><span data-en="Create an account to keep it">Ustvari račun in obdrži prijavo</span></button><p class="ratio">Text <span class="cr" data-l="7.3:1" data-d="8.9:1"></span></p></figure>
+  </div>
+
+  <h3 class="kit-h3">Destructive</h3>
+  <p class="kit-note">Delete and other irreversible actions, usually as the main action of a confirmation dialog (see 6).</p>
+  <div class="row-specs" lang="sl">
+    <figure class="spec"><figcaption class="cap">Default</figcaption><button type="button" class="btn btn-destructive" data-en="Delete profile">Izbriši profil</button><p class="ratio">Text <span class="cr" data-l="6.0:1" data-d="5.5:1"></span> (target 7:1)</p></figure>
+    <figure class="spec"><figcaption class="cap">Hover</figcaption><button type="button" class="btn btn-destructive is-hover" data-en="Delete profile">Izbriši profil</button><p class="ratio">Text <span class="cr" data-l="7.2:1" data-d="6.3:1"></span></p></figure>
+    <figure class="spec"><figcaption class="cap">Pressed</figcaption><button type="button" class="btn btn-destructive is-hover is-pressed" data-en="Delete profile">Izbriši profil</button><p class="ratio">Text <span class="cr" data-l="7.2:1" data-d="6.3:1"></span></p></figure>
+    <figure class="spec"><figcaption class="cap">Focus</figcaption><button type="button" class="btn btn-destructive is-focus" data-en="Delete profile">Izbriši profil</button><p class="ratio">Ring <span class="cr" data-l="5.5:1" data-d="8.9:1"></span></p></figure>
+    <figure class="spec"><figcaption class="cap">Disabled</figcaption><button type="button" class="btn btn-destructive" disabled data-en="Delete profile">Izbriši profil</button><p class="ratio">Text <span class="cr" data-l="5.8:1" data-d="8.1:1"></span></p></figure>
+    <figure class="spec"><figcaption class="cap">Loading</figcaption><button type="button" class="btn btn-destructive" aria-busy="true"><span class="spin" aria-hidden="true"></span><span data-en="Delete profile">Izbriši profil</span></button><p class="ratio">Text <span class="cr" data-l="6.0:1" data-d="5.5:1"></span></p></figure>
+  </div>
+
+  <h3 class="kit-h3">Sizes</h3>
+  <p class="kit-note">sm 44 px high (padding 18), md 48 px (padding 24), lg 56 px (padding 32, 17 px label). Same sizes for every variant except text. At large OS text the label wraps and the height grows from these minimums (see 10).</p>
+  <div class="grid gap-6" lang="sl">
+    <div class="row-specs">
+      <figure class="spec"><figcaption class="cap">Primary sm · 44</figcaption><button type="button" class="btn btn-primary btn-sm" data-en="Report">Prijavi</button></figure>
+      <figure class="spec"><figcaption class="cap">md · 48</figcaption><button type="button" class="btn btn-primary" data-en="Report a lost pet">Prijavi izgubljeno žival</button></figure>
+      <figure class="spec"><figcaption class="cap">lg · 56</figcaption><button type="button" class="btn btn-primary btn-lg" data-en="Report a lost pet">Prijavi izgubljeno žival</button></figure>
+    </div>
+    <div class="row-specs">
+      <figure class="spec"><figcaption class="cap">Secondary sm</figcaption><button type="button" class="btn btn-secondary btn-sm" data-en="Turn on alerts">Vklopi opozorila</button></figure>
+      <figure class="spec"><figcaption class="cap">md</figcaption><button type="button" class="btn btn-secondary" data-en="Turn on alerts">Vklopi opozorila</button></figure>
+      <figure class="spec"><figcaption class="cap">lg</figcaption><button type="button" class="btn btn-secondary btn-lg" data-en="Turn on alerts">Vklopi opozorila</button></figure>
+    </div>
+    <div class="row-specs">
+      <figure class="spec"><figcaption class="cap">Ghost sm</figcaption><button type="button" class="btn btn-ghost btn-sm"><i class="ph-bold ph-share-network" aria-hidden="true"></i><span data-en="Share or print a poster">Deli ali natisni plakat</span></button></figure>
+      <figure class="spec"><figcaption class="cap">md</figcaption><button type="button" class="btn btn-ghost"><i class="ph-bold ph-share-network" aria-hidden="true"></i><span data-en="Share or print a poster">Deli ali natisni plakat</span></button></figure>
+      <figure class="spec"><figcaption class="cap">lg</figcaption><button type="button" class="btn btn-ghost btn-lg"><i class="ph-bold ph-share-network" aria-hidden="true"></i><span data-en="Share or print a poster">Deli ali natisni plakat</span></button></figure>
+    </div>
+    <div class="row-specs">
+      <figure class="spec"><figcaption class="cap">Destructive sm</figcaption><button type="button" class="btn btn-destructive btn-sm" data-en="Delete profile">Izbriši profil</button></figure>
+      <figure class="spec"><figcaption class="cap">md</figcaption><button type="button" class="btn btn-destructive" data-en="Delete profile">Izbriši profil</button></figure>
+      <figure class="spec"><figcaption class="cap">lg</figcaption><button type="button" class="btn btn-destructive btn-lg" data-en="Delete profile">Izbriši profil</button></figure>
+    </div>
+  </div>
+
+  <div class="flex flex-wrap gap-x-16 gap-y-4 items-start">
+    <div class="min-w-0 max-w-full">
+      <h3 class="kit-h3">Mobile action stack</h3>
+      <p class="kit-note !max-w-[390px]">lg primary, full width, with the text button under it; 44 px from the bottom edge. Specimen pairing (the strings come from P3 and P7).</p>
+      <div class="strip px-5 pt-6 pb-11 grid gap-1" lang="sl">
+        <button type="button" class="btn btn-primary btn-lg btn-block" data-en="Report a lost pet">Prijavi izgubljeno žival</button>
+        <button type="button" class="btn btn-text btn-block" data-en="Create an account to keep it">Ustvari račun in obdrži prijavo</button>
+      </div>
+    </div>
+    <div class="min-w-0">
+      <h3 class="kit-h3">Icon button</h3>
+      <p class="kit-note !max-w-[56ch]">44 × 44, 24 px bold icon, always an accessible name (here "Zapri"). Ghost style.</p>
+      <div class="row-specs" lang="sl">
+        <figure class="spec"><figcaption class="cap">Default</figcaption><button type="button" class="iconbtn" aria-label="Zapri"><i class="ph-bold ph-x" aria-hidden="true"></i></button><p class="ratio"><span class="cr" data-l="15.1:1" data-d="15.7:1"></span></p></figure>
+        <figure class="spec"><figcaption class="cap">Hover</figcaption><button type="button" class="iconbtn is-hover" aria-label="Zapri"><i class="ph-bold ph-x" aria-hidden="true"></i></button><p class="ratio"><span class="cr" data-l="12.4:1" data-d="12.2:1"></span></p></figure>
+        <figure class="spec"><figcaption class="cap">Pressed</figcaption><button type="button" class="iconbtn is-hover is-pressed" aria-label="Zapri"><i class="ph-bold ph-x" aria-hidden="true"></i></button><p class="ratio">0.98</p></figure>
+        <figure class="spec"><figcaption class="cap">Focus</figcaption><button type="button" class="iconbtn is-focus" aria-label="Zapri"><i class="ph-bold ph-x" aria-hidden="true"></i></button><p class="ratio">Ring</p></figure>
+        <figure class="spec"><figcaption class="cap">Disabled</figcaption><button type="button" class="iconbtn" disabled aria-label="Zapri"><i class="ph-bold ph-x" aria-hidden="true"></i></button><p class="ratio"><span class="cr" data-l="5.8:1" data-d="8.1:1"></span></p></figure>
+        <figure class="spec"><figcaption class="cap">Loading</figcaption><button type="button" class="iconbtn" aria-busy="true" aria-label="Zapri"><span class="spin" aria-hidden="true"></span></button><p class="ratio">busy</p></figure>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 2. FIELDS ================= -->
+<section class="tile-section kit">
+  <h2 class="tile-title">2. Fields</h2>
+  <p class="tile-lede">FormField: label above (15/20 bold), line input with a 2 px underline, help below (14/20), error below with an icon, tied by <code>aria-describedby</code>. 56 px high (64 on single-question screens), 18 px text, no box. Placeholders show an example format only, never a label.</p>
+
+  <h3 class="kit-h3">Input</h3>
+  <p class="kit-note">Real P6 strings: the chip number field. Hover turns the line foreground; focus adds 2 px in the ring colour; error turns it destructive; disabled is dashed, so it never relies on colour.</p>
+  <div class="grid-specs" lang="sl">
+    <figure class="spec"><figcaption class="cap">Default</figcaption>
+      <div class="field"><label for="chip-1" data-en="Chip number (optional)">Številka čipa (neobvezno)</label><input id="chip-1" class="input tnum" inputmode="numeric" autocomplete="off" aria-describedby="chip-1-h"><p id="chip-1-h" class="help" data-en="It usually has 15 digits, for example 705 1234 5678 901.">Običajno ima 15 števk, na primer 705 1234 5678 901.</p></div>
+      <p class="ratio">Line <span class="cr" data-l="3.5:1" data-d="4.4:1"></span> · help <span class="cr" data-l="6.8:1" data-d="10.5:1"></span></p></figure>
+    <figure class="spec"><figcaption class="cap">Hover</figcaption>
+      <div class="field"><label for="chip-2" data-en="Chip number (optional)">Številka čipa (neobvezno)</label><input id="chip-2" class="input tnum is-hover" inputmode="numeric" autocomplete="off" aria-describedby="chip-2-h"><p id="chip-2-h" class="help" data-en="It usually has 15 digits, for example 705 1234 5678 901.">Običajno ima 15 števk, na primer 705 1234 5678 901.</p></div>
+      <p class="ratio">Line <span class="cr" data-l="15.1:1" data-d="15.7:1"></span></p></figure>
+    <figure class="spec"><figcaption class="cap">Focus (typing)</figcaption>
+      <div class="field"><label for="chip-3" data-en="Chip number (optional)">Številka čipa (neobvezno)</label><input id="chip-3" class="input tnum is-focus" inputmode="numeric" autocomplete="off" value="705 1234" aria-describedby="chip-3-h"><p id="chip-3-h" class="help" data-en="It usually has 15 digits, for example 705 1234 5678 901.">Običajno ima 15 števk, na primer 705 1234 5678 901.</p></div>
+      <p class="ratio">Ring line <span class="cr" data-l="5.5:1" data-d="8.9:1"></span>, 2 + 2 px</p></figure>
+    <figure class="spec"><figcaption class="cap">Filled</figcaption>
+      <div class="field"><label for="chip-4" data-en="Chip number (optional)">Številka čipa (neobvezno)</label><input id="chip-4" class="input tnum" inputmode="numeric" autocomplete="off" value="705 1234 5678 901" aria-describedby="chip-4-h"><p id="chip-4-h" class="help" data-en="It usually has 15 digits, for example 705 1234 5678 901.">Običajno ima 15 števk, na primer 705 1234 5678 901.</p></div>
+      <p class="ratio">Text <span class="cr" data-l="15.1:1" data-d="15.7:1"></span> · grouped, tabular numbers</p></figure>
+    <figure class="spec"><figcaption class="cap">Error</figcaption>
+      <div class="field"><label for="chip-5" data-en="Chip number (optional)">Številka čipa (neobvezno)</label><input id="chip-5" class="input tnum is-error" inputmode="numeric" autocomplete="off" value="705 1234 567" aria-invalid="true" aria-describedby="chip-5-d">
+        <div id="chip-5-d" class="grid gap-1.5"><p class="help" data-en="It usually has 15 digits, for example 705 1234 5678 901.">Običajno ima 15 števk, na primer 705 1234 5678 901.</p><p class="err"><i class="ph-fill ph-warning-circle text-[18px] leading-5" aria-hidden="true"></i><span data-en="Chip numbers usually have 15 digits. We will save it as unknown; please check it when you can.">Številka čipa je običajno dolga 15 števk. Shranili jo bomo kot neznano, preverite jo, ko boste lahko.</span></p></div></div>
+      <p class="ratio">Message <span class="cr" data-l="5.7:1" data-d="5.5:1"></span> on background</p></figure>
+    <figure class="spec"><figcaption class="cap">Disabled (reason is sample copy)</figcaption>
+      <div class="field is-disabled"><label for="chip-6" data-en="Chip number (optional)">Številka čipa (neobvezno)</label><input id="chip-6" class="input tnum" inputmode="numeric" disabled aria-describedby="chip-6-h"><p id="chip-6-h" class="help" data-sample data-en="You can enter it once you choose the species.">Vpišete jo lahko, ko izberete vrsto živali.</p></div>
+      <p class="ratio">Label and text <span class="cr" data-l="6.8:1" data-d="10.5:1"></span> · dashed line</p></figure>
+  </div>
+
+  <h3 class="kit-h3">Textarea, select and search</h3>
+  <p class="kit-note">Same line style and the same hover, focus, error and disabled rules as the input. Textarea starts at 96 px. Select is a line with a caret; on web it opens a listbox popover, on mobile a bottom sheet of choice rows (see 6). Search has a leading icon and a 44 px clear button. All strings here are sample copy.</p>
+  <div class="grid-specs" lang="sl">
+    <figure class="spec"><figcaption class="cap">Textarea · default</figcaption>
+      <div class="field"><label for="desc-1" data-sample data-en="Description (optional)">Opis (neobvezno)</label><textarea id="desc-1" class="input" rows="3" aria-describedby="desc-1-h"></textarea><p id="desc-1-h" class="help" data-sample data-en="Collar, markings, behaviour.">Ovratnica, posebna znamenja, obnašanje.</p></div></figure>
+    <figure class="spec"><figcaption class="cap">Textarea · focus, filled</figcaption>
+      <div class="field"><label for="desc-2" data-sample data-en="Description (optional)">Opis (neobvezno)</label><textarea id="desc-2" class="input is-focus" rows="3" aria-describedby="desc-2-h" data-sample data-en="Brown and white dog with a red collar. Shy, does not come when called.">Rjav in bel pes z rdečo ovratnico. Plašen, ne pride na klic.</textarea><p id="desc-2-h" class="help" data-sample data-en="Collar, markings, behaviour.">Ovratnica, posebna znamenja, obnašanje.</p></div></figure>
+    <figure class="spec"><figcaption class="cap">Textarea · error</figcaption>
+      <div class="field"><label for="desc-3" data-sample data-en="Description (optional)">Opis (neobvezno)</label><textarea id="desc-3" class="input is-error" rows="3" aria-invalid="true" aria-describedby="desc-3-d" data-sample data-en="Brown and white dog with a red collar. Shy, does not come when called.">Rjav in bel pes z rdečo ovratnico. Plašen, ne pride na klic.</textarea>
+        <div id="desc-3-d"><p class="err"><i class="ph-fill ph-warning-circle text-[18px] leading-5" aria-hidden="true"></i><span data-sample data-en="Remove the phone number from the description. Contact goes through the in-app chat.">Iz opisa odstranite telefonsko številko. Stik poteka prek klepeta v aplikaciji.</span></p></div></div></figure>
+
+    <figure class="spec"><figcaption class="cap">Select · default (placeholder)</figcaption>
+      <div class="field"><label for="col-1" data-sample data-en="Coat colour">Barva dlake</label><button type="button" id="col-1" class="input select" aria-haspopup="listbox" aria-expanded="false"><span class="is-placeholder" data-sample data-en="Choose">Izberite</span><i class="ph-bold ph-caret-down" aria-hidden="true"></i></button></div>
+      <p class="ratio">Caret and placeholder <span class="cr" data-l="6.8:1" data-d="10.5:1"></span></p></figure>
+    <figure class="spec"><figcaption class="cap">Select · focus, filled</figcaption>
+      <div class="field"><label for="col-2" data-sample data-en="Coat colour">Barva dlake</label><button type="button" id="col-2" class="input select is-focus" aria-haspopup="listbox" aria-expanded="false"><span data-sample data-en="Brown and white">Rjava in bela</span><i class="ph-bold ph-caret-down" aria-hidden="true"></i></button></div></figure>
+    <figure class="spec"><figcaption class="cap">Select · open on web (hover on "Tigrasta")</figcaption>
+      <div class="field"><label for="col-3" data-sample data-en="Coat colour">Barva dlake</label><button type="button" id="col-3" class="input select is-focus" aria-haspopup="listbox" aria-expanded="true"><span data-sample data-en="Brown and white">Rjava in bela</span><i class="ph-bold ph-caret-up" aria-hidden="true"></i></button></div>
+      <ul class="listbox pop mt-2" role="listbox" aria-label="Barva dlake">
+        <li role="option" aria-selected="false"><span data-sample data-en="Black">Črna</span><i class="ph-bold ph-check" aria-hidden="true"></i></li>
+        <li role="option" aria-selected="false"><span data-sample data-en="White">Bela</span><i class="ph-bold ph-check" aria-hidden="true"></i></li>
+        <li role="option" aria-selected="true"><span data-sample data-en="Brown and white">Rjava in bela</span><i class="ph-bold ph-check" aria-hidden="true"></i></li>
+        <li role="option" aria-selected="false" class="is-hover"><span data-sample data-en="Tabby">Tigrasta</span><i class="ph-bold ph-check" aria-hidden="true"></i></li>
+      </ul>
+      <p class="ratio">Options <span class="cr" data-l="17.3:1" data-d="12.1:1"></span> · hover <span class="cr" data-l="14.1:1" data-d="9.1:1"></span> · selected = bold + check</p></figure>
+
+    <figure class="spec"><figcaption class="cap">Search · default (placeholder)</figcaption>
+      <div class="field"><label for="srch-1" data-sample data-en="Place or street">Kraj ali ulica</label><div class="input-wrap"><i class="ph-bold ph-magnifying-glass" aria-hidden="true"></i><input id="srch-1" type="search" class="input" autocomplete="off" placeholder="npr. Šiška, Ljubljana" data-en-ph="e.g. Šiška, Ljubljana"></div></div>
+      <p class="ratio">Placeholder <span class="cr" data-l="6.8:1" data-d="10.5:1"></span></p></figure>
+    <figure class="spec"><figcaption class="cap">Search · filled, clear button</figcaption>
+      <div class="field"><label for="srch-2" data-sample data-en="Place or street">Kraj ali ulica</label><div class="input-wrap has-end"><i class="ph-bold ph-magnifying-glass" aria-hidden="true"></i><input id="srch-2" type="search" class="input" autocomplete="off" value="Šiška"><span class="end"><button type="button" class="iconbtn" aria-label="Počisti iskanje"><i class="ph-bold ph-x-circle" aria-hidden="true"></i></button></span></div></div></figure>
+    <figure class="spec"><figcaption class="cap">Search · loading results</figcaption>
+      <div class="field"><label for="srch-3" data-sample data-en="Place or street">Kraj ali ulica</label><div class="input-wrap has-end" aria-busy="true"><i class="ph-bold ph-magnifying-glass" aria-hidden="true"></i><input id="srch-3" type="search" class="input is-focus" autocomplete="off" value="Šiška"><span class="end text-primary"><span class="spin" aria-hidden="true"></span></span></div><p class="sr-only" role="status">Iščemo …</p></div>
+      <p class="ratio">Spinner in the clear button's place</p></figure>
+  </div>
+</section>
+
+<!-- ================= 3. CHOICES ================= -->
+<section class="tile-section kit">
+  <h2 class="tile-title">3. Choices</h2>
+  <p class="tile-lede">Choice row, toggle pill, segmented control, switch, checkbox and radio. Selected is always a fill plus a check (or a dot, or the thumb position), never colour alone.</p>
+
+  <h3 class="kit-h3">Choice row (390)</h3>
+  <p class="kit-note">Full width, 64 px minimum, card on background, radius 20, 20 px side padding, icon 24, title 17 bold, description 14. Selected: primary fill with the check on the right. A radiogroup for species and situation; the Report menu uses the same row as a menu item with a caret (see 6).</p>
+  <div class="flex flex-wrap gap-10 items-start" lang="sl">
+    <figure class="spec"><figcaption class="cap">Unselected · selected · focus</figcaption>
+      <div class="strip p-5"><div class="grid gap-3" role="radiogroup" aria-label="Kaj želite prijaviti?">
+        <div class="choice" role="radio" aria-checked="false" tabindex="-1"><i class="ph-fill ph-megaphone st-lost" aria-hidden="true"></i><span class="flex-1 min-w-0"><span class="t" data-en="Lost pet">Izgubljena žival</span><span class="d" data-en="You are missing your dog or cat.">Pogrešate svojega psa ali mačko.</span></span><i class="ph-bold ph-check tick" aria-hidden="true"></i></div>
+        <div class="choice" role="radio" aria-checked="true" tabindex="0"><i class="ph-fill ph-hand-heart st-found" aria-hidden="true"></i><span class="flex-1 min-w-0"><span class="t" data-en="Found pet">Najdena žival</span><span class="d" data-en="The animal is with you. No account needed.">Žival je pri vas. Brez računa.</span></span><i class="ph-bold ph-check tick" aria-hidden="true"></i></div>
+        <div class="choice is-focus" role="radio" aria-checked="false" tabindex="-1"><i class="ph-fill ph-eye st-sighted" aria-hidden="true"></i><span class="flex-1 min-w-0"><span class="t" data-en="Sighted animal">Opažena žival</span><span class="d" data-en="You saw an animal that may be lost. No account needed.">Videli ste žival, ki se je morda izgubila. Brez računa.</span></span><i class="ph-bold ph-check tick" aria-hidden="true"></i></div>
+      </div></div>
+      <p class="ratio !max-w-[390px]">Title <span class="cr" data-l="17.3:1" data-d="14.2:1"></span> · description <span class="cr" data-l="7.8:1" data-d="9.5:1"></span> · selected <span class="cr" data-l="7.8:1" data-d="8.0:1"></span>, its description <span class="cr" data-l="6.2:1" data-d="5.9:1"></span></p>
+    </figure>
+    <figure class="spec"><figcaption class="cap">Hover · pressed · disabled</figcaption>
+      <div class="strip p-5 grid gap-3" role="radiogroup" aria-label="Stanja vrstice">
+        <div class="choice is-hover" role="radio" aria-checked="false"><i class="ph-fill ph-megaphone st-lost" aria-hidden="true"></i><span class="flex-1 min-w-0"><span class="t" data-en="Lost pet">Izgubljena žival</span><span class="d" data-en="You are missing your dog or cat.">Pogrešate svojega psa ali mačko.</span></span><i class="ph-bold ph-check tick" aria-hidden="true"></i></div>
+        <div class="choice is-pressed" role="radio" aria-checked="false"><i class="ph-fill ph-hand-heart st-found" aria-hidden="true"></i><span class="flex-1 min-w-0"><span class="t" data-en="Found pet">Najdena žival</span><span class="d" data-en="The animal is with you. No account needed.">Žival je pri vas. Brez računa.</span></span><i class="ph-bold ph-check tick" aria-hidden="true"></i></div>
+        <div class="choice" role="radio" aria-checked="false" aria-disabled="true"><i class="ph-fill ph-eye" aria-hidden="true"></i><span class="flex-1 min-w-0"><span class="t" data-en="Sighted animal">Opažena žival</span><span class="d" data-en="You saw an animal that may be lost. No account needed.">Videli ste žival, ki se je morda izgubila. Brez računa.</span></span><i class="ph-bold ph-check tick" aria-hidden="true"></i></div>
+      </div>
+      <p class="ratio !max-w-[390px]">Hover (foreground 10 %) <span class="cr" data-l="14.1:1" data-d="10.8:1"></span> · pressed (accent, 0.98) <span class="cr" data-l="10.8:1" data-d="13.1:1"></span> · disabled <span class="cr" data-l="5.8:1" data-d="8.1:1"></span></p>
+    </figure>
+  </div>
+
+  <h3 class="kit-h3">Toggle pill</h3>
+  <p class="kit-note">44 px, secondary fill; selected = primary fill plus a check. Filters in the filter sheet (status, species).</p>
+  <div class="row-specs" lang="sl">
+    <figure class="spec"><figcaption class="cap">Unselected</figcaption><button type="button" class="pill" aria-pressed="false" data-toggle><i class="ph-bold ph-check tick" aria-hidden="true"></i><span data-en="Sighted">Opažene</span></button><p class="ratio"><span class="cr" data-l="10.8:1" data-d="10.8:1"></span></p></figure>
+    <figure class="spec"><figcaption class="cap">Selected</figcaption><button type="button" class="pill" aria-pressed="true" data-toggle><i class="ph-bold ph-check tick" aria-hidden="true"></i><span data-en="Lost">Izgubljene</span></button><p class="ratio"><span class="cr" data-l="7.8:1" data-d="8.0:1"></span></p></figure>
+    <figure class="spec"><figcaption class="cap">Hover</figcaption><button type="button" class="pill is-hover" aria-pressed="false" data-toggle><i class="ph-bold ph-check tick" aria-hidden="true"></i><span data-en="Sighted">Opažene</span></button><p class="ratio"><span class="cr" data-l="8.2:1" data-d="7.3:1"></span></p></figure>
+    <figure class="spec"><figcaption class="cap">Focus</figcaption><button type="button" class="pill is-focus" aria-pressed="false" data-toggle><i class="ph-bold ph-check tick" aria-hidden="true"></i><span data-en="Found">Najdene</span></button><p class="ratio">Ring</p></figure>
+    <figure class="spec"><figcaption class="cap">Disabled</figcaption><button type="button" class="pill" aria-pressed="false" disabled><i class="ph-bold ph-check tick" aria-hidden="true"></i><span data-en="Found">Najdene</span></button><p class="ratio"><span class="cr" data-l="5.8:1" data-d="8.1:1"></span></p></figure>
+  </div>
+
+  <h3 class="kit-h3">Segmented control</h3>
+  <p class="kit-note">Track muted, selected segment card. Only for switching between two or three views of the same content, never for primary navigation. Built on shadcn Tabs (see 7). Sample copy.</p>
+  <div class="row-specs" lang="sl">
+    <figure class="spec"><figcaption class="cap">Selected · unselected</figcaption><div class="seg w-[280px]" role="tablist" aria-label="Pogled"><button type="button" role="tab" aria-selected="true" data-en="Map">Zemljevid</button><button type="button" role="tab" aria-selected="false" tabindex="-1" data-sample data-en="List">Seznam</button></div><p class="ratio">Selected <span class="cr" data-l="17.3:1" data-d="14.2:1"></span> · unselected <span class="cr" data-l="5.8:1" data-d="8.1:1"></span></p></figure>
+    <figure class="spec"><figcaption class="cap">Hover on unselected</figcaption><div class="seg w-[280px]" role="tablist" aria-label="Pogled"><button type="button" role="tab" aria-selected="true" data-en="Map">Zemljevid</button><button type="button" role="tab" aria-selected="false" tabindex="-1" class="is-hover" data-sample data-en="List">Seznam</button></div><p class="ratio">Hover <span class="cr" data-l="4.8:1" data-d="6.1:1"></span></p></figure>
+    <figure class="spec"><figcaption class="cap">Focus</figcaption><div class="seg w-[280px]" role="tablist" aria-label="Pogled"><button type="button" role="tab" aria-selected="true" class="is-focus" data-en="Map">Zemljevid</button><button type="button" role="tab" aria-selected="false" tabindex="-1" data-sample data-en="List">Seznam</button></div><p class="ratio">Ring</p></figure>
+    <figure class="spec"><figcaption class="cap">Disabled</figcaption><div class="seg is-disabled w-[280px]" role="tablist" aria-label="Pogled"><button type="button" role="tab" aria-selected="true" disabled data-en="Map">Zemljevid</button><button type="button" role="tab" aria-selected="false" disabled data-sample data-en="List">Seznam</button></div><p class="ratio"><span class="cr" data-l="5.8:1" data-d="8.1:1"></span></p></figure>
+  </div>
+
+  <h3 class="kit-h3">Switch</h3>
+  <p class="kit-note">56 × 32, track input (off) or primary (on), thumb card. The whole row is the target and the label; the thumb position carries the state as well as the colour.</p>
+  <div class="grid-specs" lang="sl">
+    <figure class="spec"><figcaption class="cap">Off</figcaption><label class="swrow"><span data-en="Nearby alerts">Opozorila v bližini</span><button type="button" class="switch" role="switch" aria-checked="false"></button></label><p class="ratio">Track <span class="cr" data-l="3.5:1" data-d="4.4:1"></span> · thumb on track <span class="cr" data-l="4.1:1" data-d="4.0:1"></span></p></figure>
+    <figure class="spec"><figcaption class="cap">On</figcaption><label class="swrow"><span data-en="Nearby alerts">Opozorila v bližini</span><button type="button" class="switch" role="switch" aria-checked="true"></button></label><p class="ratio">Track <span class="cr" data-l="7.3:1" data-d="8.9:1"></span></p></figure>
+    <figure class="spec"><figcaption class="cap">Focus</figcaption><label class="swrow"><span data-en="Nearby alerts">Opozorila v bližini</span><button type="button" class="switch is-focus" role="switch" aria-checked="true"></button></label><p class="ratio">Ring</p></figure>
+    <figure class="spec"><figcaption class="cap">Disabled (reason is sample copy)</figcaption><label class="swrow !text-muted-foreground !cursor-not-allowed"><span data-en="Nearby alerts">Opozorila v bližini</span><button type="button" class="switch" role="switch" aria-checked="false" disabled aria-describedby="sw-4-h"></button></label><p id="sw-4-h" class="help" data-sample data-en="First allow notifications in your phone settings.">Najprej dovolite obvestila v nastavitvah telefona.</p><p class="ratio">Thumb <span class="cr" data-l="5.8:1" data-d="8.1:1"></span></p></figure>
+  </div>
+
+  <h3 class="kit-h3">Checkbox and radio</h3>
+  <p class="kit-note">24 px box inside a 44 px target (the whole label). Checked = primary fill with a check (checkbox) or a dot (radio). Prefer choice rows for 2 to 4 options; radios are for longer lists. Sample copy.</p>
+  <div class="grid-specs" lang="sl">
+    <figure class="spec"><figcaption class="cap">Checkbox: checked · unchecked with focus · disabled checked</figcaption>
+      <form><fieldset class="m-0 p-0 border-0 grid">
+        <legend class="label mb-1" data-sample data-en="Send me notifications">Obvestila prejemam</legend>
+        <label class="check"><input type="checkbox" checked><span class="cbx"><i class="ph-bold ph-check" aria-hidden="true"></i></span><span data-sample data-en="As push notifications">Kot potisna obvestila</span></label>
+        <label class="check"><input type="checkbox"><span class="cbx is-focus"><i class="ph-bold ph-check" aria-hidden="true"></i></span><span data-sample data-en="By email">Po e-pošti</span></label>
+        <label class="check"><input type="checkbox" checked disabled aria-describedby="cb-3-h"><span class="cbx"><i class="ph-bold ph-check" aria-hidden="true"></i></span><span data-sample data-en="In the app">V aplikaciji</span></label>
+        <p id="cb-3-h" class="help" data-sample data-en="Notifications in the app are always on.">Obvestila v aplikaciji so vedno vklopljena.</p>
+      </fieldset></form>
+      <p class="ratio">Box line <span class="cr" data-l="3.5:1" data-d="4.4:1"></span> · checked fill <span class="cr" data-l="7.3:1" data-d="8.9:1"></span> · check <span class="cr" data-l="7.8:1" data-d="8.0:1"></span></p></figure>
+    <figure class="spec"><figcaption class="cap">Radio: selected · unselected · focus · disabled</figcaption>
+      <form><fieldset class="m-0 p-0 border-0 grid">
+        <legend class="label mb-1" data-sample data-en="Alert distance">Doseg opozoril</legend>
+        <label class="check tnum"><input type="radio" name="dist" value="1"><span class="rad"></span>1 km</label>
+        <label class="check tnum"><input type="radio" name="dist" value="3"><span class="rad is-focus"></span>3 km</label>
+        <label class="check tnum"><input type="radio" name="dist" value="5" checked><span class="rad"></span>5 km</label>
+        <label class="check tnum"><input type="radio" name="dist" value="10"><span class="rad"></span>10 km</label>
+        <label class="check tnum"><input type="radio" name="dist" value="20" disabled aria-describedby="rd-5-h"><span class="rad"></span>20 km</label>
+        <p id="rd-5-h" class="help" data-sample data-en="Available once location is on.">Na voljo, ko vklopite lokacijo.</p>
+      </fieldset></form>
+      <p class="ratio">Ring line <span class="cr" data-l="3.5:1" data-d="4.4:1"></span> · selected <span class="cr" data-l="7.3:1" data-d="8.9:1"></span> · dot <span class="cr" data-l="7.8:1" data-d="8.0:1"></span></p></figure>
+    <figure class="spec"><figcaption class="cap">Hover (pointer on the label)</figcaption>
+      <form><fieldset class="m-0 p-0 border-0 grid">
+        <legend class="sr-only">Hover</legend>
+        <label class="check is-hover"><input type="checkbox"><span class="cbx"><i class="ph-bold ph-check" aria-hidden="true"></i></span><span data-sample data-en="By email">Po e-pošti</span></label>
+        <label class="check is-hover tnum"><input type="radio" name="dist-h" value="10"><span class="rad"></span>10 km</label>
+      </fieldset></form>
+      <p class="ratio">Line turns foreground <span class="cr" data-l="15.1:1" data-d="15.7:1"></span></p></figure>
+  </div>
+</section>
+
+<!-- ================= 4. STATUS ================= -->
+<section class="tile-section kit">
+  <h2 class="tile-title">4. Status</h2>
+  <p class="tile-lede">Status is always an icon plus a coloured word. The four words agree with "žival". Solid status colours only appear as marker rings and chart fills.</p>
+
+  <h3 class="kit-h3">StatusLabel (icon + word)</h3>
+  <p class="kit-note">Fill icon 16 + word 14 bold in the <code>status-*-subtle-foreground</code> colour. The default way to show status in rows, tiles and timelines.</p>
+  <div class="grid-specs" lang="sl">
+    <figure class="spec"><figcaption class="cap">On background</figcaption>
+      <ul class="grid gap-3 list-none m-0 p-0 max-w-[300px]">
+        <li class="flex items-center justify-between gap-4"><span class="st st-lost"><i class="ph-fill ph-megaphone" aria-hidden="true"></i><span data-en="Lost">Izgubljena</span></span><span class="ratio !m-0"><span class="cr" data-l="8.9:1" data-d="14.6:1"></span></span></li>
+        <li class="flex items-center justify-between gap-4"><span class="st st-found"><i class="ph-fill ph-hand-heart" aria-hidden="true"></i><span data-en="Found">Najdena</span></span><span class="ratio !m-0"><span class="cr" data-l="9.1:1" data-d="15.0:1"></span></span></li>
+        <li class="flex items-center justify-between gap-4"><span class="st st-sighted"><i class="ph-fill ph-eye" aria-hidden="true"></i><span data-en="Sighted">Opažena</span></span><span class="ratio !m-0"><span class="cr" data-l="10.5:1" data-d="14.6:1"></span></span></li>
+        <li class="flex items-center justify-between gap-4"><span class="st st-reunited"><i class="ph-fill ph-heart" aria-hidden="true"></i><span data-en="Home again">Spet doma</span></span><span class="ratio !m-0"><span class="cr" data-l="7.3:1" data-d="15.8:1"></span></span></li>
+      </ul></figure>
+    <figure class="spec"><figcaption class="cap">On card</figcaption>
+      <ul class="card p-6 grid gap-3 list-none m-0 max-w-[300px]">
+        <li class="flex items-center justify-between gap-4"><span class="st st-lost"><i class="ph-fill ph-megaphone" aria-hidden="true"></i><span data-en="Lost">Izgubljena</span></span><span class="ratio !m-0"><span class="cr" data-l="10.3:1" data-d="13.3:1"></span></span></li>
+        <li class="flex items-center justify-between gap-4"><span class="st st-found"><i class="ph-fill ph-hand-heart" aria-hidden="true"></i><span data-en="Found">Najdena</span></span><span class="ratio !m-0"><span class="cr" data-l="10.5:1" data-d="13.6:1"></span></span></li>
+        <li class="flex items-center justify-between gap-4"><span class="st st-sighted"><i class="ph-fill ph-eye" aria-hidden="true"></i><span data-en="Sighted">Opažena</span></span><span class="ratio !m-0"><span class="cr" data-l="12.0:1" data-d="13.3:1"></span></span></li>
+        <li class="flex items-center justify-between gap-4"><span class="st st-reunited"><i class="ph-fill ph-heart" aria-hidden="true"></i><span data-en="Home again">Spet doma</span></span><span class="ratio !m-0"><span class="cr" data-l="8.4:1" data-d="14.4:1"></span></span></li>
+      </ul></figure>
+    <figure class="spec"><figcaption class="cap">Counts: four Slovenian plural forms, tabular numbers</figcaption>
+      <p class="tnum text-lg leading-7"><span data-en="1 report">1 prijava</span> · <span data-en="2 reports">2 prijavi</span> · <span data-en="3 reports">3 prijave</span> · <span data-en="5 reports">5 prijav</span></p>
+      <p class="ratio">Forms for 1, 2, 3 to 4 and 5 or more (also 101, 102, 103, 105).</p></figure>
+  </div>
+
+  <h3 class="kit-h3">Tonal pill</h3>
+  <p class="kit-note">30 px high, 14 bold, <code>-subtle</code> fill, fill icon. At most one per page: the main status on a detail page, or the premium and verified marks. Never on a photo.</p>
+  <div class="row-specs" lang="sl">
+    <figure class="spec"><figcaption class="cap">Lost</figcaption><span class="badge b-lost"><i class="ph-fill ph-megaphone" aria-hidden="true"></i><span data-en="Lost">Izgubljena</span></span><p class="ratio"><span class="cr" data-l="8.4:1" data-d="11.3:1"></span></p></figure>
+    <figure class="spec"><figcaption class="cap">Found</figcaption><span class="badge b-found"><i class="ph-fill ph-hand-heart" aria-hidden="true"></i><span data-en="Found">Najdena</span></span><p class="ratio"><span class="cr" data-l="8.7:1" data-d="11.3:1"></span></p></figure>
+    <figure class="spec"><figcaption class="cap">Sighted</figcaption><span class="badge b-sighted"><i class="ph-fill ph-eye" aria-hidden="true"></i><span data-en="Sighted">Opažena</span></span><p class="ratio"><span class="cr" data-l="9.8:1" data-d="11.8:1"></span></p></figure>
+    <figure class="spec"><figcaption class="cap">Home again</figcaption><span class="badge b-reunited"><i class="ph-fill ph-heart" aria-hidden="true"></i><span data-en="Home again">Spet doma</span></span><p class="ratio"><span class="cr" data-l="7.4:1" data-d="10.5:1"></span></p></figure>
+    <figure class="spec"><figcaption class="cap">Premium</figcaption><span class="badge b-premium"><i class="ph-fill ph-rocket-launch" aria-hidden="true"></i><span data-en="Boosted">Povečan doseg</span></span><p class="ratio"><span class="cr" data-l="10.4:1" data-d="12.7:1"></span></p></figure>
+    <figure class="spec"><figcaption class="cap">Verified</figcaption><span class="badge b-verified"><i class="ph-fill ph-seal-check" aria-hidden="true"></i><span data-en="Verified shelter">Preverjeno zavetišče</span></span><p class="ratio"><span class="cr" data-l="10.8:1" data-d="10.8:1"></span></p></figure>
+  </div>
+
+  <h3 class="kit-h3">Solid: marker rings</h3>
+  <p class="kit-note">3 px status ring plus a 3 px <code>marker-ring</code> halo, on map land. Ratios are the ring against the land.</p>
+  <div class="row-specs" lang="sl">
+    <figure class="spec"><figcaption class="cap">Lost (on its area)</figcaption><div class="ringbox"><div class="mk mk-area" style="left:50%;top:50%"><img class="mk-avatar" src="../directions/img/dog-aussie.jpg" alt="Izgubljena žival: rjav in bel pes"></div></div><p class="ratio"><span class="cr" data-l="4.5:1" data-d="5.9:1"></span></p></figure>
+    <figure class="spec"><figcaption class="cap">Found</figcaption><div class="ringbox"><div class="mk" style="left:50%;top:50%"><img class="mk-avatar found" src="../directions/img/cat-tabby.jpg" alt="Najdena žival: tigrasta mačka"></div></div><p class="ratio"><span class="cr" data-l="7.0:1" data-d="5.9:1"></span></p></figure>
+    <figure class="spec"><figcaption class="cap">Sighted</figcaption><div class="ringbox"><div class="mk" style="left:50%;top:50%"><img class="mk-avatar sighted" src="../directions/img/dog-golden.jpg" alt="Opažena žival: zlat pes"></div></div><p class="ratio"><span class="cr" data-l="6.5:1" data-d="7.5:1"></span></p></figure>
+    <figure class="spec"><figcaption class="cap">Home again</figcaption><div class="ringbox"><div class="mk" style="left:50%;top:50%"><img class="mk-avatar reunited" src="../directions/img/dog-beagle.jpg" alt="Spet doma: beagle"></div></div><p class="ratio"><span class="cr" data-l="3.1:1" data-d="9.4:1"></span></p></figure>
+  </div>
+</section>
+
+<!-- ================= 5. SURFACES ================= -->
+<section class="tile-section kit">
+  <h2 class="tile-title">5. Surfaces</h2>
+  <p class="tile-lede">Flat surfaces separated by tone and space: no borders, no shadows, never a card inside a card. Every surface has a skeleton in its final shape.</p>
+
+  <h3 class="kit-h3">Card</h3>
+  <p class="kit-note"><code>card</code> surface, radius 24, padding 24. Dialogs, forms and grouped content on web. Not pressable.</p>
+  <div class="grid-specs" lang="sl">
+    <figure class="spec"><figcaption class="cap">Default</figcaption>
+      <div class="card p-6"><h4 class="font-display font-semibold text-2xl leading-8 tracking-[-0.01em]" data-en="Nearby alerts">Opozorila v bližini</h4><p class="mt-2" data-en="Turn on alerts and we will let you know if someone nearby is missing a pet.">Vklopite opozorila in obvestili vas bomo, če bo kdo v bližini pogrešal žival.</p><button type="button" class="btn btn-secondary mt-5" data-en="Turn on alerts">Vklopi opozorila</button></div>
+      <p class="ratio">Text on card <span class="cr" data-l="17.3:1" data-d="14.2:1"></span></p></figure>
+    <figure class="spec"><figcaption class="cap">Loading skeleton</figcaption>
+      <div class="card p-6" aria-hidden="true"><div class="skel h-7 w-52"></div><div class="skel h-4 mt-4"></div><div class="skel h-4 mt-2 w-4/5"></div><div class="skel h-12 w-44 mt-6 !rounded-full"></div></div>
+      <p class="sr-only" role="status">Nalaganje …</p></figure>
+    <figure class="spec"><figcaption class="cap">Note (one per view at most)</figcaption>
+      <div class="note"><i class="ph-bold ph-shield-check" aria-hidden="true"></i><p data-en="Never send money in advance. A genuine finder does not ask for money.">Nikoli ne pošiljajte denarja vnaprej. Kdor je žival res našel, denarja ne zahteva.</p></div>
+      <p class="ratio"><code>muted</code>, radius 20, icon 22, text 15/22 · <span class="cr" data-l="12.9:1" data-d="12.1:1"></span></p></figure>
+  </div>
+
+  <div class="flex flex-wrap gap-x-16 gap-y-4 items-start">
+    <div class="min-w-0 max-w-full">
+      <h3 class="kit-h3">Pet row (390)</h3>
+      <p class="kit-note !max-w-[390px]">Photo 64 radius 20, gap 16, title 20/24, status word + time, distance right. No dividers, 20 px between rows. Pressed: accent. Sample pets.</p>
+      <figure class="spec"><figcaption class="cap">Default · pressed (second) · loading (last)</figcaption>
+        <div class="strip px-5 py-7" lang="sl"><ul class="grid gap-5 list-none m-0 p-0">
+          <li><a href="#" class="prow"><img class="thumb w-16 h-16" style="border-radius:var(--radius-row)" src="../directions/img/dog-aussie.jpg" alt="Rjav in bel pes"><span class="flex-1 min-w-0"><span class="block font-display font-semibold text-xl leading-6">Maks</span><span class="mt-1 flex items-center gap-2 text-sm"><span class="st st-lost"><i class="ph-fill ph-megaphone" aria-hidden="true"></i><span data-en="Lost">Izgubljena</span></span><span class="text-muted-foreground tnum" data-en="3 h ago">pred 3 h</span></span></span><span class="text-sm text-muted-foreground tnum" data-en="1.2 km">1,2 km</span></a></li>
+          <li><a href="#" class="prow is-pressed"><img class="thumb w-16 h-16" style="border-radius:var(--radius-row)" src="../directions/img/cat-siamese.jpg" alt="Sijamska mačka"><span class="flex-1 min-w-0"><span class="block font-display font-semibold text-xl leading-6">Mici</span><span class="mt-1 flex items-center gap-2 text-sm"><span class="st st-lost"><i class="ph-fill ph-megaphone" aria-hidden="true"></i><span data-en="Lost">Izgubljena</span></span><span class="tnum" data-en="yesterday">včeraj</span></span></span><span class="text-sm tnum" data-en="2.1 km">2,1 km</span></a></li>
+          <li><a href="#" class="prow"><img class="thumb w-16 h-16" style="border-radius:var(--radius-row)" src="../directions/img/cat-tabby.jpg" alt="Tigrasta mačka"><span class="flex-1 min-w-0"><span class="block font-display font-semibold text-xl leading-6" data-en="Tabby cat">Tigrasta mačka</span><span class="mt-1 flex items-center gap-2 text-sm"><span class="st st-found"><i class="ph-fill ph-hand-heart" aria-hidden="true"></i><span data-en="Found">Najdena</span></span><span class="text-muted-foreground tnum" data-en="today">danes</span></span></span><span class="text-sm text-muted-foreground tnum" data-en="2.8 km">2,8 km</span></a></li>
+          <li class="flex items-center gap-4" aria-hidden="true"><div class="skel w-16 h-16" style="border-radius:var(--radius-row)"></div><div class="flex-1 grid gap-2"><div class="skel h-5 w-32"></div><div class="skel h-4 w-40"></div></div><div class="skel h-4 w-10"></div></li>
+        </ul></div>
+        <p class="ratio !max-w-[390px]">Title <span class="cr" data-l="15.1:1" data-d="15.7:1"></span> · meta <span class="cr" data-l="6.8:1" data-d="10.5:1"></span> · pressed <span class="cr" data-l="10.8:1" data-d="13.1:1"></span></p></figure>
+    </div>
+    <div class="min-w-0">
+      <h3 class="kit-h3">Avatar</h3>
+      <p class="kit-note !max-w-[56ch]">32, 48 and 72 px, round. Photo, or initials on <code>secondary</code> when there is none. Sample names.</p>
+      <div class="row-specs" lang="sl">
+        <figure class="spec"><figcaption class="cap">72</figcaption><span class="av av-72"><img src="../directions/img/cat-ginger.jpg" alt="Rdeča mačka"></span></figure>
+        <figure class="spec"><figcaption class="cap">48</figcaption><span class="av av-48"><img src="../directions/img/dog-terrier.jpg" alt="Terier"></span></figure>
+        <figure class="spec"><figcaption class="cap">32</figcaption><span class="av av-32"><img src="../directions/img/cat-bw.jpg" alt="Črno-bela mačka"></span></figure>
+        <figure class="spec"><figcaption class="cap">Initials</figcaption><span class="flex items-end gap-3"><span class="av av-72" role="img" aria-label="Maja Šuštar" data-sample>MŠ</span><span class="av av-48" role="img" aria-label="Maja Šuštar">MŠ</span><span class="av av-32" role="img" aria-label="Maja Šuštar">MŠ</span></span><p class="ratio"><span class="cr" data-l="10.8:1" data-d="10.8:1"></span></p></figure>
+        <figure class="spec"><figcaption class="cap">Loading</figcaption><span class="flex items-end gap-3" aria-hidden="true"><span class="skel block" style="width:72px;height:72px;border-radius:50%"></span><span class="skel block" style="width:48px;height:48px;border-radius:50%"></span><span class="skel block" style="width:32px;height:32px;border-radius:50%"></span></span></figure>
+      </div>
+    </div>
+  </div>
+
+  <h3 class="kit-h3">Pet tile (web)</h3>
+  <p class="kit-note">Photo 4:3 radius 24, title (24/32) 16 px under it, meta line: status word, then time and distance. No container, nothing on the photo. Hover underlines the title; pressed scales to 0.98. Sample pets.</p>
+  <div class="grid gap-8" style="grid-template-columns:repeat(auto-fill,minmax(min(100%,240px),1fr))" lang="sl">
+    <figure class="spec"><figcaption class="cap">Default</figcaption><a href="#" class="tile"><img src="../directions/img/dog-golden.jpg" alt="Zlat pes"><h4 class="font-display font-semibold text-2xl leading-8 tracking-[-0.01em] mt-4" data-en="Golden dog">Zlat pes</h4><p class="mt-1 flex flex-wrap items-center gap-x-2 text-sm"><span class="st st-sighted"><i class="ph-fill ph-eye" aria-hidden="true"></i><span data-en="Sighted">Opažena</span></span><span class="text-muted-foreground tnum" data-en="yesterday, 3.4 km">včeraj, 3,4 km</span></p></a></figure>
+    <figure class="spec"><figcaption class="cap">Hover</figcaption><a href="#" class="tile is-hover"><img src="../directions/img/dog-beagle.jpg" alt="Beagle"><h4 class="font-display font-semibold text-2xl leading-8 tracking-[-0.01em] mt-4" data-en="Beagle without a chip">Beagle brez čipa</h4><p class="mt-1 flex flex-wrap items-center gap-x-2 text-sm"><span class="st st-found"><i class="ph-fill ph-hand-heart" aria-hidden="true"></i><span data-en="Found">Najdena</span></span><span class="text-muted-foreground tnum" data-en="today, 4.2 km">danes, 4,2 km</span></p></a></figure>
+    <figure class="spec"><figcaption class="cap">Focus</figcaption><a href="#" class="tile is-focus"><img src="../directions/img/dog-aussie-wide.jpg" alt="Rjav in bel pes"><h4 class="font-display font-semibold text-2xl leading-8 tracking-[-0.01em] mt-4">Maks</h4><p class="mt-1 flex flex-wrap items-center gap-x-2 text-sm"><span class="st st-lost"><i class="ph-fill ph-megaphone" aria-hidden="true"></i><span data-en="Lost">Izgubljena</span></span><span class="text-muted-foreground tnum" data-en="3 h ago, 1.2 km">pred 3 h, 1,2 km</span></p></a></figure>
+    <figure class="spec"><figcaption class="cap">Pressed</figcaption><a href="#" class="tile is-pressed"><img src="../directions/img/cat-siamese.jpg" alt="Sijamska mačka"><h4 class="font-display font-semibold text-2xl leading-8 tracking-[-0.01em] mt-4">Mici</h4><p class="mt-1 flex flex-wrap items-center gap-x-2 text-sm"><span class="st st-lost"><i class="ph-fill ph-megaphone" aria-hidden="true"></i><span data-en="Lost">Izgubljena</span></span><span class="text-muted-foreground tnum" data-en="yesterday, 2.1 km">včeraj, 2,1 km</span></p></a></figure>
+    <figure class="spec"><figcaption class="cap">Loading skeleton</figcaption><div class="tile" aria-hidden="true"><div class="skel tile-photo"></div><div class="skel h-7 w-36 mt-4"></div><div class="skel h-4 w-48 mt-2"></div></div></figure>
+  </div>
+</section>
+
+<!-- ================= 6. OVERLAYS ================= -->
+<section class="tile-section kit">
+  <h2 class="tile-title">6. Overlays</h2>
+  <p class="tile-lede">Dialog, bottom sheet, popover menu and toast, open, with real Slovenian text. Popover surface; shadow only here (<code>shadow-lg</code> for the sheet, <code>shadow-pop</code> for the rest). Scrim behind modals; focus is trapped and Escape closes.</p>
+
+  <div class="flex flex-wrap gap-x-10 gap-y-14 items-start" lang="sl">
+    <figure class="spec"><figcaption class="cap">Bottom sheet (390): Report menu over the dimmed map, first row focused</figcaption>
+      <div class="phone"><div class="phone-screen">
+        <div class="map-wrap" style="position:absolute;inset:0" aria-hidden="true">
+          <div class="map-canvas" data-center="14.4935,46.0690" data-zoom="13.5"></div>
+          <div class="mk mk-area" style="left:128px;top:196px"><img class="mk-avatar" src="../directions/img/dog-aussie.jpg" alt=""></div>
+          <div class="mk" style="left:262px;top:296px"><img class="mk-avatar found" src="../directions/img/cat-tabby.jpg" alt=""></div>
+        </div>
+        <div class="scrim"></div>
+        <div class="statusbar" style="position:absolute;left:0;right:0;top:0" aria-hidden="true"><span>14:20</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <div class="sheet" role="dialog" aria-modal="true" aria-label="Kaj želite prijaviti?" style="z-index:8;padding-bottom:34px">
+          <button type="button" class="grab" aria-label="Zapri"></button>
+          <h3 class="font-display font-bold text-[24px] leading-[30px] tracking-[-0.015em] px-5 pt-3" data-en="What would you like to report?">Kaj želite prijaviti?</h3>
+          <div class="grid gap-3 px-5 pt-5" role="menu" aria-label="Kaj želite prijaviti?">
+            <a href="#" role="menuitem" class="choice choice-tone is-focus no-underline"><i class="ph-fill ph-megaphone st-lost" aria-hidden="true"></i><span class="flex-1 min-w-0"><span class="t" data-en="Lost pet">Izgubljena žival</span><span class="d" data-en="You are missing your dog or cat.">Pogrešate svojega psa ali mačko.</span></span><i class="ph-bold ph-caret-right text-muted-foreground !text-[20px]" aria-hidden="true"></i></a>
+            <a href="#" role="menuitem" class="choice choice-tone no-underline"><i class="ph-fill ph-hand-heart st-found" aria-hidden="true"></i><span class="flex-1 min-w-0"><span class="t" data-en="Found pet">Najdena žival</span><span class="d" data-en="The animal is with you. No account needed.">Žival je pri vas. Brez računa.</span></span><i class="ph-bold ph-caret-right text-muted-foreground !text-[20px]" aria-hidden="true"></i></a>
+            <a href="#" role="menuitem" class="choice choice-tone no-underline"><i class="ph-fill ph-eye st-sighted" aria-hidden="true"></i><span class="flex-1 min-w-0"><span class="t" data-en="Sighted animal">Opažena žival</span><span class="d" data-en="You saw an animal that may be lost. No account needed.">Videli ste žival, ki se je morda izgubila. Brez računa.</span></span><i class="ph-bold ph-caret-right text-muted-foreground !text-[20px]" aria-hidden="true"></i></a>
+          </div>
+        </div>
+        <span class="home-ind" style="z-index:12"></span>
+      </div></div>
+      <p class="ratio !max-w-[412px]"><code>card</code>, top radius 28, grabber 40 × 5 inside a 44 px "Zapri" button, <code>shadow-lg</code>, 20 px sides. Snap points 40 % and 92 %.</p>
+    </figure>
+
+    <figure class="spec"><figcaption class="cap">Dialog (390): delete confirmation, focus starts on the safe action</figcaption>
+      <div class="phone"><div class="phone-screen">
+        <div class="statusbar" aria-hidden="true"><span>14:20</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <div aria-hidden="true">
+          <div class="topbar"><span class="iconbtn"><i class="ph-bold ph-caret-left"></i></span></div>
+          <div class="px-5 pt-4 flex items-center gap-4"><span class="av av-72"><img src="../directions/img/dog-aussie.jpg" alt=""></span><div><p class="font-display font-bold text-[30px] leading-9 tracking-[-0.02em]">Maks</p><p class="text-muted-foreground" data-sample>Pes · mešanec</p></div></div>
+        </div>
+        <div class="scrim"></div>
+        <div class="absolute inset-0 grid place-items-center px-5" style="z-index:4">
+          <div class="dialog" role="alertdialog" aria-modal="true" aria-label="Izbrišete ta profil?">
+            <h3 class="font-display font-semibold text-lg leading-7 tracking-[-0.005em]" data-en="Delete this profile?">Izbrišete ta profil?</h3>
+            <p class="mt-2" data-en="We will also delete all the profile's photos. Open reports stay as they are.">Izbrisali bomo tudi vse fotografije profila. Odprte prijave ostanejo.</p>
+            <div class="grid gap-2 mt-6"><button type="button" class="btn btn-destructive btn-block" data-en="Delete profile">Izbriši profil</button><button type="button" class="btn btn-text btn-block is-focus" data-sample data-en="Cancel">Prekliči</button></div>
+          </div>
+        </div>
+        <span class="home-ind" style="z-index:12"></span>
+      </div></div>
+      <p class="ratio !max-w-[412px]"><code>popover</code>, radius 24, title 18/28, buttons stacked (main, then text). Text <span class="cr" data-l="17.3:1" data-d="12.1:1"></span> · "Prekliči" <span class="cr" data-l="8.4:1" data-d="6.9:1"></span></p>
+    </figure>
+  </div>
+
+  <h3 class="kit-h3">Dialog on web</h3>
+  <p class="kit-note">Centred, max 440 px wide, title 20/28. Same buttons, same order.</p>
+  <div class="browser fluid" lang="sl">
+    <div class="browser-bar"><span class="dots"><i></i><i></i><i></i></span><span class="url"><i class="ph ph-lock-simple"></i>najdimo.si/moje-zivali/maks</span></div>
+    <div class="relative" style="height:440px">
+      <div class="px-6 sm:px-12 pt-10 flex items-center gap-6" aria-hidden="true"><span class="av av-72"><img src="../directions/img/dog-aussie.jpg" alt=""></span><div><p class="font-display font-bold text-5xl tracking-[-0.02em]">Maks</p><p class="text-muted-foreground mt-1" data-sample>Pes · mešanec</p></div></div>
+      <div class="scrim"></div>
+      <div class="absolute inset-0 grid place-items-center p-5" style="z-index:4">
+        <div class="dialog" role="alertdialog" aria-modal="true" aria-label="Izbrišete ta profil?">
+          <h3 class="font-display font-semibold text-xl leading-7 tracking-[-0.005em]" data-en="Delete this profile?">Izbrišete ta profil?</h3>
+          <p class="mt-2" data-en="We will also delete all the profile's photos. Open reports stay as they are.">Izbrisali bomo tudi vse fotografije profila. Odprte prijave ostanejo.</p>
+          <div class="grid gap-2 mt-6"><button type="button" class="btn btn-destructive btn-block" data-en="Delete profile">Izbriši profil</button><button type="button" class="btn btn-text btn-block is-focus" data-sample data-en="Cancel">Prekliči</button></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid gap-x-8 gap-y-10 mt-14" style="grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr))" lang="sl">
+    <figure class="spec"><figcaption class="cap">Popover menu: share menu open, focus on "Kopiraj povezavo", hover on the poster row (menu items are sample copy, P18 owns them)</figcaption>
+      <div class="browser fluid">
+        <div class="browser-bar"><span class="dots"><i></i><i></i><i></i></span><span class="url"><i class="ph ph-lock-simple"></i>najdimo.si/r/K7M2Q</span></div>
+        <div class="relative px-6 sm:px-10 pt-8" style="height:420px">
+          <p class="font-display font-bold text-4xl tracking-[-0.02em]" aria-hidden="true">Maks</p>
+          <button type="button" class="btn btn-ghost is-hover mt-4 -ml-3" aria-haspopup="menu" aria-expanded="true"><i class="ph-bold ph-share-network" aria-hidden="true"></i><span data-en="Share or print a poster">Deli ali natisni plakat</span></button>
+          <div class="pop absolute rounded-xl p-2 grid gap-1" style="top:156px;width:288px;max-width:calc(100% - 40px)" role="menu" aria-label="Deli ali natisni plakat">
+            <a href="#" role="menuitem" class="mi"><i class="ph-bold ph-facebook-logo" aria-hidden="true"></i>Facebook</a>
+            <a href="#" role="menuitem" class="mi"><i class="ph-bold ph-whatsapp-logo" aria-hidden="true"></i>WhatsApp</a>
+            <button type="button" role="menuitem" class="mi is-focus"><i class="ph-bold ph-link" aria-hidden="true"></i><span data-sample data-en="Copy link">Kopiraj povezavo</span></button>
+            <a href="#" role="menuitem" class="mi is-hover"><i class="ph-bold ph-qr-code" aria-hidden="true"></i><span data-sample data-en="Poster with QR code">Plakat s kodo QR</span></a>
+          </div>
+        </div>
+      </div>
+      <p class="ratio">Radius 20, rows 48 px, <code>shadow-pop</code>. Rows <span class="cr" data-l="17.3:1" data-d="12.1:1"></span> · hover <span class="cr" data-l="14.1:1" data-d="9.1:1"></span></p>
+    </figure>
+    <figure class="spec"><figcaption class="cap">Toast after copying: bottom centre, 24 px from the edge, 5 s, dismissible, announced politely</figcaption>
+      <div class="browser fluid">
+        <div class="browser-bar"><span class="dots"><i></i><i></i><i></i></span><span class="url"><i class="ph ph-lock-simple"></i>najdimo.si/r/K7M2Q</span></div>
+        <div class="relative px-6 sm:px-10 pt-8" style="height:420px">
+          <p class="font-display font-bold text-4xl tracking-[-0.02em]" aria-hidden="true">Maks</p>
+          <button type="button" class="btn btn-ghost mt-4 -ml-3" aria-haspopup="menu" aria-expanded="false"><i class="ph-bold ph-share-network" aria-hidden="true"></i><span data-en="Share or print a poster">Deli ali natisni plakat</span></button>
+          <div class="toast absolute" style="left:50%;bottom:24px;transform:translateX(-50%);width:min(400px, calc(100% - 40px))" role="status" aria-live="polite"><i class="ph-fill ph-check-circle" aria-hidden="true"></i><p data-en="Link copied.">Povezava je kopirana.</p><button type="button" class="iconbtn" aria-label="Zapri"><i class="ph-bold ph-x" aria-hidden="true"></i></button></div>
+        </div>
+      </div>
+      <p class="ratio"><code>popover</code>, radius 20, one shadow (<code>shadow-pop</code>), 15/22, status icon · <span class="cr" data-l="17.3:1" data-d="12.1:1"></span></p>
+    </figure>
+  </div>
+
+  <h3 class="kit-h3">Toast on mobile (390)</h3>
+  <p class="kit-note">12 px from the sides, 12 px above the bottom navigation.</p>
+  <div class="strip" style="height:200px" lang="sl">
+    <div class="toast absolute" style="left:12px;right:12px;bottom:100px;z-index:7" role="status" aria-live="polite"><i class="ph-fill ph-check-circle" aria-hidden="true"></i><p data-en="Link copied.">Povezava je kopirana.</p><button type="button" class="iconbtn" aria-label="Zapri"><i class="ph-bold ph-x" aria-hidden="true"></i></button></div>
+    <nav class="bottomnav" style="position:absolute;left:0;right:0;bottom:0" aria-label="Glavna navigacija">
+      <a href="#" aria-current="page"><i class="ph-fill ph-map-trifold" aria-hidden="true"></i><span data-en="Map">Zemljevid</span></a>
+      <a href="#"><i class="ph ph-chat-circle" aria-hidden="true"></i><span data-en="Inbox">Sporočila</span></a>
+      <a href="#" class="go" role="button" aria-haspopup="dialog" aria-label="Prijavi žival"><span class="act" aria-hidden="true"><i class="ph-bold ph-plus"></i></span><span data-en="Report">Prijavi</span></a>
+      <a href="#"><i class="ph ph-user-circle" aria-hidden="true"></i><span data-en="Profile">Profil</span></a>
+    </nav>
+  </div>
+</section>
+
+<!-- ================= 7. NAVIGATION ================= -->
+<section class="tile-section kit">
+  <h2 class="tile-title">7. Navigation</h2>
+  <p class="tile-lede">Bottom navigation and the flow top bar on mobile, the header and tabs on web. Active is always colour plus a second cue: fill icon, underline or a raised segment.</p>
+
+  <h3 class="kit-h3">Bottom navigation (390)</h3>
+  <p class="kit-note">88 px including the 20 px safe area, <code>card</code>, no top border, four items, no count badges. Icon 26 + label 13 bold. Active = primary colour and fill icon. Prijavi is a 48 px primary circle that rises above the row; it opens the Report sheet and is announced as a button.</p>
+  <div class="flex flex-wrap gap-8 items-start" lang="sl">
+    <figure class="spec"><figcaption class="cap">Zemljevid active</figcaption><div class="strip pt-8">
+      <nav class="bottomnav" aria-label="Glavna navigacija">
+        <a href="#" aria-current="page"><i class="ph-fill ph-map-trifold" aria-hidden="true"></i><span data-en="Map">Zemljevid</span></a>
+        <a href="#"><i class="ph ph-chat-circle" aria-hidden="true"></i><span data-en="Inbox">Sporočila</span></a>
+        <a href="#" class="go" role="button" aria-haspopup="dialog" aria-label="Prijavi žival"><span class="act" aria-hidden="true"><i class="ph-bold ph-plus"></i></span><span data-en="Report">Prijavi</span></a>
+        <a href="#"><i class="ph ph-user-circle" aria-hidden="true"></i><span data-en="Profile">Profil</span></a>
+      </nav></div>
+      <p class="ratio">Active <span class="cr" data-l="8.4:1" data-d="8.1:1"></span> · others <span class="cr" data-l="7.8:1" data-d="9.5:1"></span> on card</p></figure>
+    <figure class="spec"><figcaption class="cap">Sporočila active · keyboard focus on Prijavi</figcaption><div class="strip pt-8">
+      <nav class="bottomnav" aria-label="Glavna navigacija">
+        <a href="#"><i class="ph ph-map-trifold" aria-hidden="true"></i><span data-en="Map">Zemljevid</span></a>
+        <a href="#" aria-current="page"><i class="ph-fill ph-chat-circle" aria-hidden="true"></i><span data-en="Inbox">Sporočila</span></a>
+        <a href="#" class="go is-focus" role="button" aria-haspopup="dialog" aria-label="Prijavi žival"><span class="act" aria-hidden="true"><i class="ph-bold ph-plus"></i></span><span data-en="Report">Prijavi</span></a>
+        <a href="#"><i class="ph ph-user-circle" aria-hidden="true"></i><span data-en="Profile">Profil</span></a>
+      </nav></div>
+      <p class="ratio">Ring <span class="cr" data-l="6.4:1" data-d="8.1:1"></span> on card</p></figure>
+    <figure class="spec"><figcaption class="cap">Profil active · large OS text: labels capped at 1.3× (17 px), the bar grows</figcaption><div class="strip pt-8">
+      <nav class="bottomnav nav13" aria-label="Glavna navigacija">
+        <a href="#"><i class="ph ph-map-trifold" aria-hidden="true"></i><span data-en="Map">Zemljevid</span></a>
+        <a href="#"><i class="ph ph-chat-circle" aria-hidden="true"></i><span data-en="Inbox">Sporočila</span></a>
+        <a href="#" class="go" role="button" aria-haspopup="dialog" aria-label="Prijavi žival"><span class="act" aria-hidden="true"><i class="ph-bold ph-plus"></i></span><span data-en="Report">Prijavi</span></a>
+        <a href="#" aria-current="page"><i class="ph-fill ph-user-circle" aria-hidden="true"></i><span data-en="Profile">Profil</span></a>
+      </nav></div>
+      <p class="ratio"><code>maxFontSizeMultiplier</code> 1.3 on nav labels only</p></figure>
+  </div>
+
+  <h3 class="kit-h3">Flow top bar (390)</h3>
+  <p class="kit-note">56 px: back (icon button), one bar per step (4 px high, gap 6, primary for done and current, muted for the rest, <code>role="progressbar"</code>), close. No title. The bar is announced as "Korak 3 od 7".</p>
+  <div class="flex flex-wrap gap-8 items-start" lang="sl">
+    <figure class="spec"><figcaption class="cap">Lost flow, step 3 of 7</figcaption><div class="strip">
+      <div class="topbar"><button type="button" class="iconbtn" aria-label="Nazaj"><i class="ph-bold ph-caret-left" aria-hidden="true"></i></button><div class="steps flex-1" role="progressbar" aria-valuemin="1" aria-valuemax="7" aria-valuenow="3" aria-label="Korak 3 od 7"><span class="on"></span><span class="on"></span><span class="on"></span><span></span><span></span><span></span><span></span></div><button type="button" class="iconbtn" aria-label="Zapri"><i class="ph-bold ph-x" aria-hidden="true"></i></button></div></div>
+      <p class="ratio">Announced: "<span data-en="Step 3 of 7">Korak 3 od 7</span>" · done bars <span class="cr" data-l="7.3:1" data-d="8.9:1"></span></p></figure>
+    <figure class="spec"><figcaption class="cap">Focus on back · hover on close</figcaption><div class="strip">
+      <div class="topbar"><button type="button" class="iconbtn is-focus" aria-label="Nazaj"><i class="ph-bold ph-caret-left" aria-hidden="true"></i></button><div class="steps flex-1" role="progressbar" aria-valuemin="1" aria-valuemax="7" aria-valuenow="3" aria-label="Korak 3 od 7"><span class="on"></span><span class="on"></span><span class="on"></span><span></span><span></span><span></span><span></span></div><button type="button" class="iconbtn is-hover" aria-label="Zapri"><i class="ph-bold ph-x" aria-hidden="true"></i></button></div></div>
+      <p class="ratio">Ring <span class="cr" data-l="5.5:1" data-d="8.9:1"></span> · hover <span class="cr" data-l="12.4:1" data-d="12.2:1"></span></p></figure>
+  </div>
+
+  <h3 class="kit-h3">Web header</h3>
+  <p class="kit-note">88 px, no border, on background. At most four text links, 16 semibold: the current page is foreground and underlined, others muted. Right: language, ghost "Vpis", sm primary "Prijavi" (the one primary). Strings from P1.</p>
+  <figure class="spec"><figcaption class="cap">Current "Kako deluje" · hover on "Zemljevid" · keyboard focus on "Najdene" (1120 px frame, scaled down on small screens)</figcaption>
+    <div class="fit-wide" lang="sl"><div class="browser" style="width:1120px">
+      <div class="browser-bar"><span class="dots"><i></i><i></i><i></i></span><span class="url"><i class="ph ph-lock-simple"></i>najdimo.si/kako-deluje</span></div>
+      <header class="flex items-center gap-8 px-12 h-[88px]">
+        <a href="#" class="inline-flex items-center gap-2 min-h-[44px] rounded-xl no-underline text-foreground" aria-label="Najdimo, na začetno stran"><svg class="logo-mark w-9 h-9" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg><span class="font-display font-bold text-2xl tracking-[-0.03em]" aria-hidden="true">Najdimo</span></a>
+        <nav aria-label="Glavni meni"><ul class="flex items-center gap-2 list-none m-0 p-0">
+          <li><a href="#" class="nl is-hover" data-en="Map">Zemljevid</a></li>
+          <li><a href="#" class="nl" data-en="Lost">Izgubljene</a></li>
+          <li><a href="#" class="nl is-focus" data-en="Found">Najdene</a></li>
+          <li><a href="#" class="nl" aria-current="page" data-en="How it works">Kako deluje</a></li>
+        </ul></nav>
+        <div class="ml-auto flex items-center gap-2">
+          <div class="lang" role="group" aria-label="Jezik: Slovenščina"><a href="#" class="ll" lang="sl" aria-current="true" aria-label="Slovenščina">SL</a><span aria-hidden="true">/</span><a href="#" class="ll" lang="en" hreflang="en" aria-label="English">EN</a></div>
+          <a href="#" class="btn btn-ghost btn-sm" data-en="Sign in">Vpis</a>
+          <button type="button" class="btn btn-primary btn-sm" aria-haspopup="menu" aria-expanded="false" data-en="Report">Prijavi</button>
+        </div>
+      </header>
+    </div></div>
+    <p class="ratio">Current <span class="cr" data-l="15.1:1" data-d="15.7:1"></span> + underline · others <span class="cr" data-l="6.8:1" data-d="10.5:1"></span> · hover <span class="cr" data-l="12.4:1" data-d="12.2:1"></span></p>
+  </figure>
+
+  <h3 class="kit-h3">Tabs</h3>
+  <p class="kit-note">The segmented control as shadcn Tabs, for two or three views of the same content; arrow keys move between tabs. Sample copy.</p>
+  <figure class="spec"><figcaption class="cap">"Seznam" active · keyboard focus on "Zemljevid"</figcaption>
+    <div class="flex flex-wrap items-center justify-between gap-4 max-w-[560px]" lang="sl"><div class="seg w-[280px]" role="tablist" aria-label="Pogled"><button type="button" role="tab" aria-selected="false" tabindex="-1" class="is-focus" data-en="Map">Zemljevid</button><button type="button" role="tab" aria-selected="true" data-sample data-en="List">Seznam</button></div><span class="text-sm text-muted-foreground tnum" data-en="12 reports">12 prijav</span></div>
+  </figure>
+</section>
+
+<!-- ================= 8. FEEDBACK ================= -->
+<section class="tile-section kit">
+  <h2 class="tile-title">8. Feedback</h2>
+  <p class="tile-lede">Skeleton, empty state, inline error and progress. Loading keeps the final layout, so nothing jumps when content arrives; errors say what happened and offer the next step.</p>
+
+  <h3 class="kit-h3">Skeleton</h3>
+  <p class="kit-note"><code>muted</code> with an <code>accent</code> shimmer, in the exact shape of the final element; static under reduced motion. "Nalaganje …" is announced once in a live region. Rows, tiles, cards and avatars are in 5.</p>
+  <div class="grid-specs">
+    <figure class="spec"><figcaption class="cap">Heading and text</figcaption><div aria-hidden="true"><div class="skel h-9 w-3/4"></div><div class="skel h-4 mt-5"></div><div class="skel h-4 mt-2"></div><div class="skel h-4 mt-2 w-2/3"></div></div><p class="sr-only" role="status">Nalaganje …</p></figure>
+    <figure class="spec"><figcaption class="cap">Field</figcaption><div aria-hidden="true"><div class="skel h-4 w-40"></div><div class="skel h-[2px] mt-12 !rounded-none"></div><div class="skel h-4 w-56 mt-3"></div></div></figure>
+    <figure class="spec"><figcaption class="cap">Button row</figcaption><div class="flex gap-3" aria-hidden="true"><div class="skel h-12 w-48 !rounded-full"></div><div class="skel h-12 w-12 !rounded-full"></div></div></figure>
+  </div>
+
+  <div class="grid-specs mt-14">
+    <figure class="spec"><figcaption class="cap">Empty state (illustration is a placeholder until the image task delivers)</figcaption>
+      <div class="max-w-[360px]" lang="sl">
+        <div class="spot-art"><svg viewBox="0 0 320 210" aria-hidden="true"><use href="#illo-spot"/></svg></div>
+        <h4 class="font-display font-semibold text-2xl leading-8 tracking-[-0.01em] mt-6" data-en="No open reports near you">V bližini ni odprtih prijav</h4>
+        <p class="mt-2" data-en="That is good news. Turn on alerts and we will let you know if someone nearby is missing a pet.">To je dobra novica. Vklopite opozorila in obvestili vas bomo, če bo kdo v bližini pogrešal žival.</p>
+        <button type="button" class="btn btn-secondary mt-5" data-en="Turn on alerts">Vklopi opozorila</button>
+      </div>
+      <p class="ratio">Spot illustration, h3, one sentence, one secondary button. No container.</p></figure>
+    <figure class="spec"><figcaption class="cap">Inline error · retry · retrying</figcaption>
+      <div class="grid gap-6" lang="sl">
+        <div class="note" role="alert"><i class="ph-fill ph-warning-circle text-destructive" aria-hidden="true"></i><div><p data-en="We cannot load this right now.">Tega trenutno ne moremo naložiti.</p><button type="button" class="btn btn-text mt-1 -ml-3" data-en="Try again">Poskusi znova</button></div></div>
+        <div class="note"><i class="ph-fill ph-warning-circle text-destructive" aria-hidden="true"></i><div><p data-en="We cannot load this right now.">Tega trenutno ne moremo naložiti.</p><button type="button" class="btn btn-text mt-1 -ml-3" aria-busy="true"><span class="spin" aria-hidden="true"></span><span data-en="Try again">Poskusi znova</span></button></div></div>
+      </div>
+      <p class="ratio">In place of the region that failed. Text <span class="cr" data-l="12.9:1" data-d="12.1:1"></span> · icon <span class="cr" data-l="4.8:1" data-d="4.3:1"></span> · retry <span class="cr" data-l="6.3:1" data-d="6.9:1"></span>. Field errors are in 2.</p></figure>
+    <figure class="spec"><figcaption class="cap">Progress bar: uploading · done · failed (sample copy)</figcaption>
+      <div class="grid gap-7" lang="sl">
+        <div><p class="flex justify-between gap-4 text-sm"><span data-sample data-en="Uploading the photo …">Nalagamo fotografijo …</span><span class="tnum font-bold">40 %</span></p><div class="progress mt-2" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="40" aria-label="Nalaganje fotografije"><span style="width:40%"></span></div></div>
+        <div><p class="flex items-center gap-2 text-sm"><i class="ph-fill ph-check-circle text-primary text-[18px]" aria-hidden="true"></i><span data-sample data-en="Photo uploaded.">Fotografija je naložena.</span></p><div class="progress mt-2" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100" aria-label="Nalaganje fotografije"><span style="width:100%"></span></div></div>
+        <div><div class="progress is-error" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="60" aria-label="Nalaganje fotografije"><span style="width:60%"></span></div><p class="err mt-2"><i class="ph-fill ph-warning-circle text-[18px] leading-5" aria-hidden="true"></i><span data-sample data-en="The upload failed. Check your connection.">Nalaganje ni uspelo. Preverite povezavo.</span></p><button type="button" class="btn btn-text -ml-3" data-en="Try again">Poskusi znova</button></div>
+      </div>
+      <p class="ratio">4 px <code>primary</code> on <code>muted</code> <span class="cr" data-l="6.3:1" data-d="6.9:1"></span>; done and failed are said in words.</p></figure>
+  </div>
+</section>
+
+<!-- ================= 9. MAP ================= -->
+<section class="tile-section kit">
+  <h2 class="tile-title">9. Map</h2>
+  <p class="tile-lede">The calm map (land, water, parks, main roads and area names only) with every marker. A real map shows at most avatar, lost area and cluster, plus the sighting dot on detail maps; this specimen shows all five for reference. Markers have accessible names, and every report is also in the list.</p>
+  <div class="map-wrap rounded-3xl" style="height:420px" lang="sl">
+    <div class="map-canvas" data-center="14.4985,46.0560" data-zoom="13.6"></div>
+    <div class="mk mk-area" style="left:20%;top:38%"><img class="mk-avatar" src="../directions/img/dog-aussie.jpg" alt="Maks, izgubljena žival, približno območje"></div>
+    <div class="mk" style="left:46%;top:68%"><img class="mk-avatar found" src="../directions/img/cat-tabby.jpg" alt="Najdena žival: tigrasta mačka"></div>
+    <div class="mk" style="left:60%;top:28%"><img class="mk-avatar sighted" src="../directions/img/dog-golden.jpg" alt="Opažena žival: zlat pes"></div>
+    <div class="mk mk-dot" style="left:71%;top:46%" role="img" aria-label="Mesto opažanja"></div>
+    <div class="mk mk-cluster" style="left:84%;top:62%" role="img" aria-label="3 prijave">3</div>
+    <div class="mk mk-me" style="left:34%;top:56%" role="img" aria-label="Vaša lokacija"></div>
+  </div>
+  <ul class="grid gap-x-8 gap-y-6 list-none m-0 p-0 mt-8" style="grid-template-columns:repeat(auto-fill,minmax(min(100%,340px),1fr))" lang="sl">
+    <li class="flex gap-4 items-start"><span class="legend-mk"><span class="mk" style="left:50%;top:50%"><img class="mk-avatar found" style="width:30px;height:30px" src="../directions/img/cat-tabby.jpg" alt=""></span></span><span><b>Avatar</b> <span class="text-muted-foreground">· found and sighted</span><span class="block help">44 px photo, 3 px status ring, 3 px <code>marker-ring</code> halo. Ring on land: found <span class="cr" data-l="7.0:1" data-d="5.9:1"></span>, sighted <span class="cr" data-l="6.5:1" data-d="7.5:1"></span></span></span></li>
+    <li class="flex gap-4 items-start"><span class="legend-mk"><span class="mk mk-area" style="left:50%;top:50%;width:46px;height:46px"><img class="mk-avatar" style="width:22px;height:22px" src="../directions/img/dog-aussie.jpg" alt=""></span></span><span><b>Lost area</b><span class="block help">Avatar with the lost ring on a 104 px <code>marker-area</code> disc (16 % light, 20 % dark). Never an exact pin. Ring <span class="cr" data-l="4.5:1" data-d="5.9:1"></span></span></span></li>
+    <li class="flex gap-4 items-start"><span class="legend-mk"><span class="mk mk-cluster" style="left:50%;top:50%;width:32px;height:32px;font-size:14px">3</span></span><span><b>Cluster</b><span class="block help">40 px <code>marker-cluster</code> disc with the count. Disc <span class="cr" data-l="13.1:1" data-d="14.7:1"></span>, count <span class="cr" data-l="14.1:1" data-d="15.1:1"></span></span></span></li>
+    <li class="flex gap-4 items-start"><span class="legend-mk"><span class="mk mk-dot" style="left:50%;top:50%"></span></span><span><b>Sighting dot</b><span class="block help">14 px <code>marker-sighted</code>, detail-page maps only. <span class="cr" data-l="6.5:1" data-d="7.5:1"></span></span></span></li>
+    <li class="flex gap-4 items-start"><span class="legend-mk"><span class="mk mk-me" style="left:50%;top:50%"></span></span><span><b>You</b><span class="block help">18 px <code>marker-me</code>, only after location permission. <span class="cr" data-l="4.5:1" data-d="7.5:1"></span></span></span></li>
+  </ul>
+</section>
+
+<!-- ================= 10. ACCESSIBILITY CHECKS ================= -->
+<section class="tile-section kit">
+  <h2 class="tile-title">10. Accessibility checks</h2>
+  <p class="tile-lede">Focus ring on every control, 44 px targets ("44 px targets" in the top bar outlines every hit area), contrast numbers beside every state above, status never by colour alone, text at 200 % and reduced motion.</p>
+
+  <h3 class="kit-h3">Focus ring on every control</h3>
+  <p class="kit-note">3 px <code>ring</code>, 2 px offset, fill unchanged, never removed. Ring <span class="cr" data-l="5.5:1" data-d="8.9:1"></span> on background and <span class="cr" data-l="6.4:1" data-d="8.1:1"></span> on card.</p>
+  <div class="flex flex-wrap items-center gap-x-7 gap-y-6" lang="sl">
+    <button type="button" class="btn btn-primary btn-sm is-focus" data-en="Report">Prijavi</button>
+    <button type="button" class="btn btn-secondary btn-sm is-focus" data-en="Turn on alerts">Vklopi opozorila</button>
+    <button type="button" class="iconbtn is-focus" aria-label="Zapri"><i class="ph-bold ph-x" aria-hidden="true"></i></button>
+    <a href="#" class="inline-flex items-center min-h-[44px] px-2 text-primary underline underline-offset-4 rounded-sm is-focus" data-en="Terms of use">Pogoji uporabe</a>
+    <a href="#" class="nl is-focus" data-en="Found">Najdene</a>
+    <button type="button" class="pill is-focus" aria-pressed="true"><i class="ph-bold ph-check tick" aria-hidden="true"></i><span data-en="Lost">Izgubljene</span></button>
+    <button type="button" class="switch is-focus" role="switch" aria-checked="true" aria-label="Opozorila v bližini"></button>
+    <label class="check"><input type="checkbox" checked><span class="cbx is-focus"><i class="ph-bold ph-check" aria-hidden="true"></i></span><span data-sample data-en="By email">Po e-pošti</span></label>
+    <div class="w-[220px]"><label class="sr-only" for="foc-1">Številka čipa (neobvezno)</label><input id="foc-1" class="input tnum is-focus" value="705 1234"></div>
+  </div>
+
+  <div class="flex flex-wrap gap-x-10 gap-y-14 items-start mt-14">
+    <figure class="spec max-w-[412px]"><figcaption class="cap">Text at 200 % (OS setting) with P3 home strings: labels wrap and buttons grow, nothing truncates or clips</figcaption>
+      <div class="phone"><div class="phone-screen t200" lang="sl">
+        <div class="statusbar" aria-hidden="true"><span>14:20</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <div class="flex-1 min-h-0 overflow-hidden scrollfade px-5 pt-4">
+          <button type="button" class="btn btn-primary btn-lg btn-block" data-en="Report a lost pet">Prijavi izgubljeno žival</button>
+          <h3 class="font-display font-bold mt-10" style="font-size:48px;line-height:56px;letter-spacing:-0.015em" data-en="No open reports near you">V bližini ni odprtih prijav</h3>
+          <p class="mt-4" style="font-size:32px;line-height:48px" data-en="That is good news. Turn on alerts and we will let you know if someone nearby is missing a pet.">To je dobra novica. Vklopite opozorila in obvestili vas bomo, če bo kdo v bližini pogrešal žival.</p>
+          <button type="button" class="btn btn-secondary mt-6" data-en="Turn on alerts">Vklopi opozorila</button>
+        </div>
+        <span class="home-ind"></span>
+      </div></div>
+    </figure>
+    <div class="grid gap-12 min-w-0 flex-1" style="flex-basis:390px">
+      <figure class="spec"><figcaption class="cap">Motion on (default): shimmer, spinner, press scale, sheet slides</figcaption>
+        <div class="strip p-5 grid gap-5" lang="sl">
+          <div class="flex items-center gap-4" aria-hidden="true"><div class="skel w-16 h-16" style="border-radius:var(--radius-row)"></div><div class="flex-1 grid gap-2"><div class="skel h-5 w-32"></div><div class="skel h-4 w-40"></div></div></div>
+          <div class="flex items-center justify-between gap-4"><button type="button" class="btn btn-secondary" aria-busy="true"><span class="spin" aria-hidden="true"></span><span data-en="Turn on alerts">Vklopi opozorila</span></button><button type="button" class="switch" role="switch" aria-checked="true" aria-label="Opozorila v bližini"></button></div>
+        </div></figure>
+      <figure class="spec"><figcaption class="cap">Reduced motion: shimmer stops, spinner slows to 2.4 s, no press scale, sheets and dialogs cross-fade in 80 ms instead of sliding</figcaption>
+        <div class="strip p-5 grid gap-5 rm" lang="sl">
+          <div class="flex items-center gap-4" aria-hidden="true"><div class="skel w-16 h-16" style="border-radius:var(--radius-row)"></div><div class="flex-1 grid gap-2"><div class="skel h-5 w-32"></div><div class="skel h-4 w-40"></div></div></div>
+          <div class="flex items-center justify-between gap-4"><button type="button" class="btn btn-secondary" aria-busy="true"><span class="spin" aria-hidden="true"></span><span data-en="Turn on alerts">Vklopi opozorila</span></button><button type="button" class="switch" role="switch" aria-checked="true" aria-label="Opozorila v bližini"></button></div>
+        </div></figure>
+      <p class="kit-note">Status is icon plus word plus colour everywhere above (sections 3, 4, 5, 7). Selected states add a check, a dot, a raised segment or the thumb position.</p>
+    </div>
+  </div>
+</section>
+
+<p class="tile-section kit !py-8 text-sm text-muted-foreground">Copy: docs/content/pages/P23-ui-kit-gallery.md v0.1 (product strings with their source keys), plus shared shell strings already used in the P1 and P2 mockups (Report menu rows, header links, "Nalaganje …", "Tega trenutno ne moremo naložiti.", "Poskusi znova"). Sample copy, marked "sample" in captions and <code>data-sample</code> in the markup: textarea, select and search fields, disabled reasons, checkbox and radio groups, "Seznam", "Prekliči", the share menu items (P18 owns them), upload messages, pet names, times and distances, and most English strings other than those in the P23 slice. Spot illustration: token-drawn placeholder until an image task delivers. Placeholder photography from Unsplash (Unsplash License); live OpenFreeMap tiles. Icons: Phosphor.</p>
+</div>
+
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<script src="../directions/directions.js"></script>
+<script>
+/* Gallery controls: SL/EN sample text, 44 px target outlines, and no jumps on placeholder links. Runs after directions.js re-renders. */
+(function () {
+  var stage = document.getElementById('stage');
+  var langBtns = Array.prototype.slice.call(document.querySelectorAll('[data-lang]'));
+  var targets = document.getElementById('targets');
+  var lang = 'sl';
+  function apply() {
+    stage.querySelectorAll('[data-en]').forEach(function (el) {
+      if (!el.hasAttribute('data-sl')) el.setAttribute('data-sl', el.textContent);
+      el.textContent = el.getAttribute(lang === 'en' ? 'data-en' : 'data-sl');
+      if (lang === 'en') el.setAttribute('lang', 'en'); else el.removeAttribute('lang');
+    });
+    stage.querySelectorAll('[data-en-ph]').forEach(function (el) {
+      if (!el.hasAttribute('data-sl-ph')) el.setAttribute('data-sl-ph', el.placeholder);
+      el.placeholder = el.getAttribute(lang === 'en' ? 'data-en-ph' : 'data-sl-ph');
+    });
+    langBtns.forEach(function (b) { b.setAttribute('aria-pressed', String(b.getAttribute('data-lang') === lang)); });
+  }
+  langBtns.forEach(function (b) { b.addEventListener('click', function () { lang = b.getAttribute('data-lang'); apply(); }); });
+  document.querySelectorAll('[data-mode]').forEach(function (b) { b.addEventListener('click', apply); });
+  targets.addEventListener('click', function () { targets.setAttribute('aria-pressed', String(document.documentElement.classList.toggle('show-targets'))); });
+  stage.addEventListener('click', function (e) { if (e.target.closest('a[href="#"]')) e.preventDefault(); });
+  apply();
+})();
+</script>
+</body>
+</html>
