@@ -1,0 +1,12 @@
+{
+  "name": "functions",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "check": "deno check .",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "vitest": "^5.0.4"
+  }
+}
