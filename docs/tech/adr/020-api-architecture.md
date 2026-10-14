@@ -17,8 +17,8 @@ The client wants to own the backend in a stack they know: Express + Prisma, the 
       app.ts               builds the Express app (middleware order below), exports app
       server.ts            http server, graceful shutdown (SIGTERM: stop accepting, drain, prisma.$disconnect)
       worker.ts            pg-boss worker entry (same image, second process)
-      routes/              index.routes.ts (mounts /v1), <feature>.routes.ts, admin/<feature>.routes.ts
-      controllers/         <Feature>Controller.ts – thin: read the validated request, build ctx, call the domain, map the result, respond
+      routes/              index.ts (mounts /v1), <area>.routes.ts (one Router per area)
+      controllers/         <area>.controller.ts – thin: read the validated request, build ctx, call the domain, map the result, respond
       domains/<area>/      ALL business logic, HTTP-agnostic (client decision 2026-10-15):
                              <area>.domain.ts   functions (input, ctx) → result; permission and ownership checks; transactions; jobs.send; throw AppError
                              <area>.dao.ts      Prisma access only; every function takes tx?: Prisma.TransactionClient (const db = tx ?? prisma)
@@ -36,6 +36,7 @@ The client wants to own the backend in a stack they know: Express + Prisma, the 
 **Conventions**
 - Functions, not classes: each controller, domain and DAO module exports named async functions plus `export default { … }`; imported as `ReportsDomain.createReport(…)`, `ReportsDao.getById(…)`.
 - **Where logic goes**: routes declare validation and guards; controllers only translate HTTP ↔ domain (`req` → `(input, ctx)` → mapper → `res`); **domains hold every rule** (permissions, ownership, state machines, limits, transactions, job sends) and know nothing about Express; DAOs only talk to Prisma. The same domain functions are called by worker jobs, seeders, admin scripts and tests. `ctx = { actor: { user_id, role, is_anonymous, aal, email_verified } | null, locale, device_hash?, ip_hash?, tx?, now, jobs, logger, adapters }`.
+- **File naming (client convention)**: routes `<area>.routes.ts` (one Router each, mounted by `routes/index.ts`); suffixes `.controller.ts`, `.domain.ts`, `.dao.ts`, `.middleware.ts`, `.schema.ts`, `.job.ts`, `.test.ts`; details in `docs/tech/backend.md` §Naming.
 - Errors: domains throw typed `AppError(code, message?, details?)`; the central Express 5 error middleware maps `AppError`, `ZodError` and known Prisma errors (`P2002` → `CONFLICT`, `P2025` → `NOT_FOUND`) to `{ error: { code, message, … } }`. No boilerplate try/catch in controllers; a local try/catch only where an error is actually handled (retry, fallback, translating a unique violation into a domain error).
 - Route pattern: `router.post('/', authMiddleware, validate(CreateReportSchema), requireVerified, ReportsController.create)`; guards: `authMiddleware` (required), `optionalAuth`, `requireRole('moderator'|'admin')`, `requireAal2`, `requireVerified`; ownership and manager checks live in services.
 - **Prisma naming (mirrors klikni)**: snake_case plural model names without `@@map` (`reports`, `report_managers`), snake_case columns, `id String @id @default(uuid()) @db.Uuid`, `created_at DateTime @default(now()) @db.Timestamptz(6)`, `updated_at @updatedAt`, enums in SCREAMING_SNAKE, `/// @namespace` doc comments; plus `@@schema("app")` on every model (ADR-021). Include constants with `GetPayload` types in `prisma/includes/`. No `$extends` that rewrite results.

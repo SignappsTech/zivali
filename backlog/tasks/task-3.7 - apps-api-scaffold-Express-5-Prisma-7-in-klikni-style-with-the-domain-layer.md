@@ -5,7 +5,7 @@ status: To Do
 assignee:
   - '@backend-dev'
 created_date: '2026-10-14 23:35'
-updated_date: '2026-10-14 23:38'
+updated_date: '2026-10-14 23:45'
 labels:
   - tech
   - 'est:M'
@@ -41,4 +41,5 @@ Branch: agent/task-3.7-api-scaffold
 - [ ] #4 GET /ping and GET /v1/health/ready (database check, APP_VERSION) respond; OpenAPI built from the zod registry is served at /v1/docs outside production.
 - [ ] #5 A Vitest + Supertest harness runs against the local database with a locally signed test JWT helper; tsx watch for dev, tsup build, a multi-stage Dockerfile producing one image for api and worker; docker-compose.dev.yml starts MinIO with the three buckets.
 - [ ] #6 apps/api/README.md documents the layout, the where-does-logic-go rules from backend.md and the commands.
+- [ ] #7 Routes are split per area into routes/<area>.routes.ts (one Router each) mounted by routes/index.ts under /v1; file suffixes follow backend.md Naming
 <!-- AC:END -->

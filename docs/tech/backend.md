@@ -15,14 +15,16 @@ Read this, your task packet and the contract(s) it references. Conventions for e
 
     apps/api/
       app.ts, server.ts (graceful shutdown), worker.ts (pg-boss handlers and schedules)
-      routes/index.routes.ts (mounts /v1), routes/<feature>.routes.ts, routes/admin/<feature>.routes.ts
-      controllers/<Feature>Controller.ts   thin: validated request → ctx → domain function → mapper → res.json (no try/catch)
-      domains/<area>/<area>.domain.ts     ALL business logic: (input, ctx) → result; rules, permissions, ownership, transactions, jobs.send; throws AppError
+      routes/index.ts                     mounts each area router under /v1
+      routes/<area>.routes.ts             one Express Router per area (reports, pets, chat, payments, admin, webhooks, …); admin areas stay in routes/admin.routes.ts
+      controllers/<area>.controller.ts    thin: validated request → ctx → domain function → mapper → res.json (no try/catch)
+      domains/<area>/<thing>.domain.ts    ALL business logic: (input, ctx) → result; rules, permissions, ownership, transactions, jobs.send; throws AppError
       domains/<area>/<area>.dao.ts        Prisma only; every function takes tx?: Prisma.TransactionClient (const db = tx ?? prisma)
       domains/<area>/<area>.mapper.ts     Prisma payload → response DTO (parse with the DTO schema)
       domains/<area>/index.ts             public functions of the area
-      middleware/ auth.ts, permission.ts, validate.ts, rateLimit.ts, idempotency.ts, requestId.ts, error.ts
-      jobs/<queue>.job.ts                 export async function handle(data, ctx)
+      middleware/<name>.middleware.ts     auth, permission, validate, rateLimit, idempotency, requestId, error
+      jobs/<name>.job.ts                  export async function handle(data, ctx)
+      schemas: packages/validation/src/<area>.schema.ts (zod, shared with apps/web and apps/mobile)
       lib/ config.ts (zod env, once), logger.ts, errors.ts (AppError), prisma-tx.ts, jobs.ts, s3.ts, realtime.ts, fuzz.ts, geo.ts, config-store.ts
       adapters/{ai,embedder,payments,email,push,captcha,storage}/{index,mock,<provider>}.ts
       prisma/ prisma.ts (singleton), schemas/*.prisma + migrations/, sql/*.sql (TypedSQL), includes/*.ts, seed.ts, seeders/, data-inventory.json
@@ -32,6 +34,11 @@ Read this, your task packet and the contract(s) it references. Conventions for e
     scripts/         deploy.mjs, geo-to-sql.mjs, admin-create.mjs
     deploy/          docker-compose.yml, Caddyfile, backup notes (TASK-5.1)
     docker-compose.dev.yml   MinIO for local R2
+
+### Naming
+- Route files: `routes/<area>.routes.ts`, one Router each; `routes/index.ts` mounts them under `/v1/<area>`. Routes wire path, `validate`, guards and controller only; no logic.
+- Suffixes: `<area>.controller.ts`, `<thing>.domain.ts`, `<area>.dao.ts`, `<area>.mapper.ts`, `<name>.middleware.ts`, `<area>.schema.ts`, `<name>.job.ts`, `*.test.ts` (routes tests: `*.routes.test.ts`).
+- Area names match the URL segment after `/v1/` (`reports`, `pets`, `chat`, `payments`, `admin`, `webhooks`).
 
 ## Where does logic go
 
