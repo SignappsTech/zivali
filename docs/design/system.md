@@ -2,9 +2,9 @@
 doc: design-system
 title: Design system (slice)
 source: 03§Brand and visual language
-version: 0.4
+version: 0.5
 status: Draft, direction A (Lagoon) chosen by the client
-date: 2026-10-14
+date: 2026-10-15
 owner: Design Lead
 ---
 
@@ -101,7 +101,7 @@ The generated hex values below come from `tokens.json`. "Role" tells you where t
 | `muted-foreground` | Secondary text, meta (time, distance), placeholders | #425458 | #B9C6C8 |
 | `accent` | Soft selected fill (not the ghost hover, see 10.1) | #D3ECEE | #182E33 |
 | `accent-foreground` | Text on accent | #0D343D | #F3F6F6 |
-| `destructive` | Delete and error text and fill | #B3202F | #E8606E |
+| `destructive` | Delete and error text and fill (7:1 with its foreground, because it is the main action of a delete dialog) | #8F1925 | #F59AA3 |
 | `destructive-foreground` | Label on destructive | #FFF1F2 | #2A0A0E |
 | `border` | Rare hairline (table rows, separators). Not used on cards or fields | #D5DEDF | #223D43 |
 | `input` | Field underline and switch track (3:1 or more) | #6C8084 | #6C8084 |
@@ -218,8 +218,11 @@ Floors: 4.5:1 text, 3:1 UI and graphics. Targets: 7:1 for body text and primary 
 | `primary-foreground` on `primary` | 7.8:1 | 8.0:1 | 7:1 |
 | `secondary-foreground` on `secondary` | 10.8:1 | 10.8:1 | 7:1 |
 | `accent-foreground` on `accent` | 10.8:1 | 13.1:1 | 7:1 |
-| `destructive-foreground` on `destructive` | 6.0:1 | 5.5:1 | 4.5:1 |
-| `destructive` on `card` | 6.5:1 | 5.0:1 | 4.5:1 |
+| `destructive-foreground` on `destructive` | 8.2:1 | 8.7:1 | 7:1 |
+| `destructive` on `card` | 8.8:1 | 8.0:1 | 4.5:1 |
+| `destructive` on `background` | 7.7:1 | 8.8:1 | 4.5:1 |
+| `destructive` on `popover` | 8.8:1 | 6.8:1 | 4.5:1 |
+| `destructive` on `muted` (error icon in a note) | 6.6:1 | 6.8:1 | 3:1 |
 | `input` on `background` | 3.5:1 | 4.4:1 | 3:1 |
 | `input` on `card` | 4.1:1 | 4.0:1 | 3:1 |
 | `ring` on `background` | 5.5:1 | 8.9:1 | 3:1 |
@@ -376,7 +379,7 @@ React Native: use the `elevation.reactNative` values in tokens.json (`md`: eleva
 | easing enter | `cubic-bezier(0.16, 1, 0.3, 1)` |
 | easing exit | `cubic-bezier(0.4, 0, 1, 1)` |
 
-Motion has a reason: feedback (press scale 0.98), state change (sheet snap, switch, step progress), orientation (map to detail). Animate only `transform` and `opacity`. Honour `prefers-reduced-motion` and the OS "reduce motion" setting: replace movement with an 80 ms cross-fade, stop the skeleton shimmer, no autoplay loops. Scroll-reveal is not used in the product UI.
+Motion has a reason: feedback (press scale 0.98), state change (sheet snap, switch, step progress), orientation (map to detail). Animate only `transform` and `opacity`. Honour `prefers-reduced-motion` and the OS "reduce motion" setting: replace movement with an 80 ms cross-fade, stop the skeleton shimmer, drop the press scale, no autoplay loops. A loading spinner is essential feedback, so it keeps turning, slowed to 2.4 s per turn. Scroll-reveal is not used in the product UI.
 
 # 8. Iconography
 
@@ -421,7 +424,7 @@ Motion has a reason: feedback (press scale 0.98), state change (sheet snap, swit
 | Lost avatar | Avatar with `marker-lost` ring on a 96 to 104 px translucent `marker-area` disc | Lost reports (fuzzed area, never an exact pin) |
 | Cluster | 40 px disc `marker-cluster` with the count | Several reports close together |
 | Sighting dot | 14 px `marker-sighted` dot | Detail-page map only |
-| You | 18 px `marker-me` dot | Only after location permission |
+| You | 18 px `marker-me` dot with a 3 px `marker-ring` halo | Only after location permission, on the main map and the location picker. Never on a detail map: it would read as a sighting dot (both are blue dots) |
 
 # 10. Components
 
@@ -438,7 +441,7 @@ Web = shadcn/ui, mobile = React Native Reusables (NativeWind). Same names, same 
 | Disabled | `muted` fill, `muted-foreground` text, no opacity trick. Say why in help text. Still 4.5:1. |
 | Loading | Keep the label, put a spinner before it, `aria-busy`, ignore presses, no layout shift. |
 | Error (fields) | Underline `destructive`, message below with an icon, linked by `aria-describedby`. |
-| Selected | `primary` fill with `primary-foreground`, plus a check icon. Never colour alone. |
+| Selected | `primary` fill with `primary-foreground`, plus a shape cue: a check icon (choice row, pill, checkbox, listbox option), a dot (radio), the thumb position (switch) or the raised segment (segmented control). Never colour alone. |
 
 ## 10.2 Button
 
@@ -448,27 +451,28 @@ Web = shadcn/ui, mobile = React Native Reusables (NativeWind). Same names, same 
 | Sizes | `sm` 44, `md` 48, `lg` 56 px high. Padding x 18 / 24 / 32. Icon button 44x44 with a 24 px icon. |
 | Type | 16 (17 on lg) bold, label never wraps. Icon 20 px before the label, gap 8. |
 | Shape | Full pill, no border, no shadow. Labels never truncate: at large OS text sizes they wrap to a second line and the button grows in height (min-height stays 44/48/56). |
-| Rule | One `default` button per view. On mobile the primary is `lg` and full width, with the `text` button under it. |
+| Rule | One `default` button per view. On mobile the primary is `lg` and full width, with the `text` button under it. In a delete dialog the `destructive` button takes the primary's place, so it meets the same 7:1. |
 
 ## 10.3 Fields
 
 | | |
 |---|---|
 | Anatomy | Label above (15/20 bold), line input, help text below (14/20 muted), error below with icon. |
-| Input | Transparent background, 2 px `input` underline, 56 px high (64 for single-question screens), 18 px text, optional leading icon. Hover: `foreground` underline. Focus: `ring` underline plus 2 px extra. Error: `destructive` underline. |
-| Textarea | Same line style, min 96 px. |
-| Select | Line style with a caret. On mobile it opens a bottom sheet of choice rows. |
-| Switch | 56x32, track `input` (off) or `primary` (on), thumb `card`. |
-| Checkbox, radio | 24 px visual in a 44 px hit area, checked = `primary` fill with a check. Prefer choice rows for 2 to 4 options. |
+| Input | Transparent background, 2 px `input` underline, 56 px high (64 for single-question screens), 18 px text, optional leading icon. Hover: `foreground` underline. Focus: `ring` underline plus 2 px extra. Error: `destructive` underline. Disabled: **dashed** `input` underline, label and text `muted-foreground`, reason in the help text (the dash keeps it from being colour only). |
+| Textarea | Same line style and states, min 96 px. |
+| Select | Line style with a caret (`caret-down`, `caret-up` when open). On web it opens a listbox popover (radius 20, 8 px padding, 48 px options, hover `foreground` at 10 %, selected option bold with a check on the right). On mobile it opens a bottom sheet of choice rows. |
+| Search | Input with a leading `magnifying-glass` and, once filled, a 44 px clear icon button at the end ("Počisti iskanje"). While results load, a spinner takes the clear button's place and a polite live region says so. |
+| Switch | 56x32, track `input` (off) or `primary` (on), thumb `card`. The whole row (label and switch) is the target. Disabled: `muted` track, `muted-foreground` thumb that keeps its position. |
+| Checkbox, radio | 24 px visual in a 44 px hit area (the whole label). Unchecked: 2 px `input` line, no fill; hover turns the line `foreground`. Checked: `primary` fill; the checkbox (radius 6) shows a 16 px bold check, the radio (round) a 10 px `primary-foreground` **dot**, not a check. Disabled: `muted` fill, `muted-foreground` mark, reason in help text. Prefer choice rows for 2 to 4 options; radios are for longer lists. |
 | Placeholder | `muted-foreground`, example format only, never a label. |
 
 ## 10.4 Choices
 
 | Component | Spec |
 |---|---|
-| Choice row | Full width, 64 px minimum, `card` surface on `background`, radius 20, 20 px side padding, icon 24 left, title 17 bold, optional description 14 muted. Selected: `primary` fill, `primary-foreground`, check on the right. Group has `role="radiogroup"`. Used for species, situation, the "Prijavi" menu. |
+| Choice row | Full width, 64 px minimum, `card` surface on `background`, radius 20, 20 px side padding, icon 24 left, title 17 bold, optional description 14 muted. Selected: `primary` fill, `primary-foreground`, check on the right. Hover: `foreground` at 10 % over the row. Pressed: `accent` fill and `scale(0.98)`. Disabled: `muted` fill, `muted-foreground` text and icon. On a `card` sheet the rows use `background` instead of `card`. Group has `role="radiogroup"`. Used for species, situation, the "Prijavi" menu (there as menu items with a caret on the right instead of a check). |
 | Pill (toggle) | 44 px, `secondary` fill; selected `primary`. For filters in the filter sheet (status, species). |
-| Segmented control | Track `muted`, selected segment `card`. Only for switching between 2 or 3 views of the same content, never for primary navigation. |
+| Segmented control | Track `muted`, selected segment `card`, labels 15 bold (unselected `muted-foreground`). Hover on an unselected segment: `foreground` at 10 % and `foreground` text. Disabled: all labels `muted-foreground`, the selected segment loses its fill and keeps a 2 px `input` inset line. Only for switching between 2 or 3 views of the same content, never for primary navigation. |
 
 ## 10.5 Status
 
@@ -483,7 +487,7 @@ Web = shadcn/ui, mobile = React Native Reusables (NativeWind). Same names, same 
 | Component | Spec |
 |---|---|
 | Pet row (mobile list) | Photo 64x64 radius 20, gap 16, title (h3, 20/24), meta line (status word + time, 14), distance right (14 muted). No dividers, no border, no per-row card, 20 px between rows. Pressed: `accent` background. Skeleton: same shape. |
-| Pet tile (web) | Photo 4:3 radius 24, title (h3) 16 px under it, meta line (status word + "time, distance"). No container. |
+| Pet tile (web) | Photo 4:3 radius 24, title (h3) 16 px under it, meta line (status word + "time, distance"). No container. Hover: the title underlines (2 px, offset 4); nothing changes on the photo. Pressed: `scale(0.98)`. Focus: the 3 px `ring` wraps photo and text with a **6 px offset**, so it clears the photo's corners. Skeleton: same shape. |
 | Card | `card` surface, radius 24, padding 24, no border, no shadow. Never nested in another card. Used for dialogs, forms and grouped content on web. |
 | Note | `muted` surface, radius 20, icon 22 + text 15/22. One per view at most (for example the scam warning). |
 | Empty state | Spot illustration (flat geometry), h3, one sentence, one `secondary` button. |
@@ -495,7 +499,7 @@ Web = shadcn/ui, mobile = React Native Reusables (NativeWind). Same names, same 
 | Bottom navigation | 88 px (including 20 px safe area), `card` surface, no top border, at most 4 items: **Zemljevid, Sporočila (inbox: conversations and notifications), Prijavi (action), Profil**. Icon 26 + label 13 bold. Active = `primary` colour and fill icon. Prijavi is a 48 px `primary` circle with `plus`. No count badges (counts live inside the inbox). All four labels sit on one baseline, so the 48 px Prijavi circle rises above the row (about 10 px). Nav label text scaling is capped at 1.3x (`maxFontSizeMultiplier`); the bar grows in height rather than clipping. |
 | Floating area control | `card` pill, 48 high, `shadow-md`: map-pin, "Ljubljana, 10 km", and a 32 px `secondary` circle with the filters icon. It is the only control on the map; it opens the filter sheet (status pills, species, radius). No locate button. |
 | Bottom sheet | `card`, top radius 28, grabber 40x5, `shadow-lg`, 20 px side padding. Snap points: peek about 40 % of the screen, full 92 %. Scrim behind modals. |
-| Flow top bar | 56 px: back (icon button), 4 step bars (4 px high, gap 6, `primary` for done, `muted` for the rest, `role="progressbar"`), close. No title. |
+| Flow top bar | 56 px: back (icon button), **one bar per step** (the count comes from the flow's page slice, for example 7 for the lost flow; 4 px high, gap 6, equal widths, `primary` for done steps and the current one, `muted` for the rest), close. No title. The bars are one `role="progressbar"` with `aria-valuenow` and `aria-valuemax` and the name "Korak {current} od {total}" from the content slice. Flows keep to 8 steps or fewer so the bars stay readable at 320 px. |
 | Web header | 88 px, no border, on `background`. Logo left, at most 4 text links (16 semibold; the current page is `foreground` **and underlined**, others `muted-foreground`, so it is not colour only), right: language switch, ghost "Vpis" (EN "Sign in") and a `sm` primary "Prijavi". Signed in: the fourth link is the short label "Moje živali" (EN "My pets"; reports are inside), inbox icon button and avatar menu. The header must fit without overflow from 1024 px; if it does not, the language switch moves into the account menu below `xl`. |
 | Web footer | Content variant: logo with tagline, wrapped rows of the 12 links (How it works, Safety tips, FAQ, For shelters, Partners, About, Privacy, Cookies, Cookie settings, Terms, Imprint, Accessibility), language, copyright line; no panel. **Flow variant: minimal** single quiet row (Privacy, Terms, Cookie settings, Accessibility), no logo block, no copyright. |
 
@@ -508,13 +512,15 @@ Top bar, then (optional) a photo, an h1 question (34/40), the answer or control 
 | Component | Spec |
 |---|---|
 | Toast | `popover` surface, radius 20, `shadow-pop` (one shadow only; do not stack shadows), 15/22, status icon, 5 s, dismissible, announced politely. |
-| Dialog | `popover`, radius 24, `scrim`, h2, text, buttons stacked (primary then `text`). Focus trapped, Escape closes. |
+| Dialog | `popover`, radius 24, `scrim`, max 440 px wide, padding 28/24/20, title in the `title` role (18/28, 20/28 on web), text, buttons stacked full width (main action then `text`). Focus trapped, Escape closes. With a `destructive` main action (alert dialog), focus starts on the `text` cancel button. |
 | Timeline (sightings) | Plain list: status word with date and time, then the sentence (16/24), 28 px between items. No cards, no line. |
 | Gallery | Main photo radius 32, thumbs 88x72 radius 16, inactive thumbs at 55 % opacity. |
 | Share | One ghost button "Deli ali natisni plakat" that opens a menu (Facebook, WhatsApp, copy link, poster with QR code). |
-| Avatar | 32, 48, 72 px round. |
-| Skeleton | `muted` with an `accent` shimmer, static under reduced motion. Same shape as the final element. |
-| Progress | The step bars above, or a 4 px `primary` bar on `muted` for uploads. |
+| Menu (popover) | `popover`, radius 20, 8 px padding, `shadow-pop`, rows 48 px (icon 20, 16 semibold), hover `foreground` at 10 %. |
+| Avatar | 32, 48, 72 px round. Photo, or initials (bold, `secondary` fill, `secondary-foreground`) when there is none; the initials avatar has an accessible name. |
+| Skeleton | `muted` with an `accent` shimmer, static under reduced motion. Same shape as the final element. One polite "Nalaganje …" per region, not per skeleton. |
+| Inline error (region) | In place of the region that failed: a `note` with a fill `warning-circle` in `destructive`, one sentence in `foreground`, and a `text` button "Poskusi znova" under it (spinner while retrying). Field errors follow 10.3 instead. |
+| Progress | The step bars above, or a 4 px `primary` bar on `muted` for uploads, with the label and percentage above it. Done: full bar plus a check-circle and a sentence. Failed: the bar turns `destructive`, an error line with icon and a `text` retry button follow. Never colour alone. |
 | Premium and verified marks | Tonal pill with fill icon, for example "Povečan doseg" (`premium`) and "Preverjeno zavetišče" (`verified`). Boost buttons are normal secondary buttons. |
 | Chart (shelter portal) | `chart-1` to `chart-5`, direct labels, no legend boxes, grid lines `border`. |
 | Sidebar (shelter portal) | shadcn sidebar with the `sidebar-*` tokens: dark teal, `sidebar-primary` for the active item. |
@@ -626,10 +632,18 @@ module.exports = {
 Each page slice in `docs/design/pages/P<n>-<slug>.md` gets one static mockup at `docs/design/mockups/P<n>-<slug>.html`.
 
 - Start from `docs/design/mockups/_template.html`. It loads the tokens (`../tokens.css`), the Tailwind stand-in config (`../directions/tailwind-config.js`), the component classes (`../directions/directions.css`) and the renderer (`../directions/directions.js`) that shows the content in light, dark or side by side. Put one copy of the content in `#src`.
-- Use only token classes and the component classes already in `directions.css` (`.btn`, `.pill`, `.choice`, `.input`, `.st`, `.badge`, `.note`, `.card`, `.sheet`, `.bottomnav`, `.steps`, `.phone`, `.browser`, markers). Add a new class to `directions.css` only when a component in section 10 needs it, and keep it token-driven. Never use hex values.
+- Use only token classes and the component classes already in `directions.css` (`.btn`, `.iconbtn`, `.pill`, `.choice`, `.seg`, `.switch`, `.check` with `.cbx` and `.rad`, `.input`, `.select`, `.listbox`, `.st`, `.badge`, `.note`, `.card`, `.prow`, `.tile`, `.av`, `.dialog`, `.pop` with `.mi`, `.toast`, `.sheet`, `.bottomnav`, `.steps`, `.progress`, `.nl`, `.phone`, `.browser`, markers). State hooks for static drawings: `.is-hover`, `.is-pressed`, `.is-focus`, `.is-disabled`, `.is-error`. The P23 UI kit gallery (`mockups/P23-ui-kit-gallery.html`) shows every component in every state; copy from it. Add a new class to `directions.css` only when a component in section 10 needs it, and keep it token-driven. Never use hex values.
 - Show every state the slice lists, on the platforms it names: mobile in 390 px phone frames, web in a 1200 px browser frame, plus a 768 px frame when the slice asks for tablet behaviour. Label each frame with its state name.
 - Map areas use `<div class="map-canvas" data-center="lng,lat" data-zoom="13.5">` (live OpenFreeMap restyled with the `map-*` tokens, calm style).
 - Copy: read `docs/content/pages/P<n>-<slug>.md`. If it does not exist yet, use clearly marked sample Slovenian text (gender-neutral, status labels agree with "žival") and say so in the footer note. Never invent legal or pricing claims.
 - Images: placeholder pet photos from `docs/design/directions/img/`; generated assets from the image tasks at `assets/<name>.png` (reference as `../../../assets/<name>.png`).
 - Accessibility in the mockup: real headings, labels above fields, alt text, 44 px targets, visible focus state shown at least once per page, no colour-only status, no ad slot on routes where the slice forbids it.
 - Done when: all states in light and dark render without overflow at 390 and 1200 px, the review checklist in section 1 passes, and the mockup path is the one in the slice.
+
+# 16. Change log
+
+| Version | Date | Change |
+|---|---|---|
+| 0.3 | 2026-10-14 | P1 review: ghost hover tone, `shadow-pop`, header and footer rules, `accent` role. |
+| 0.4 | 2026-10-14 | P2 review: Sporočila tab, bottom-nav baseline and text scaling cap, button label wrap, toast shadow. |
+| 0.5 | 2026-10-15 | P23 review (TASK-8.1): `destructive` darkened to crimson.700 light and crimson.300 dark (8.2 and 8.7:1, meets 7:1 as the main action of a delete dialog; tokens 0.3.0, new pairs on background, popover, muted). Flow top bar draws one bar per step. Radio checked = dot. Tile hover, pressed and 6 px focus offset. States written down from the gallery: disabled field (dashed line), select listbox, search field, checkbox and radio anatomy, choice-row hover, pressed and disabled, segmented hover and disabled, switch disabled, dialog title role and alert-dialog focus, menu, avatar initials, inline region error, progress done and failed, reduced-motion spinner. "You" dot never on detail maps. |
