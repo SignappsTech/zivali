@@ -5,6 +5,7 @@ status: To Do
 assignee:
   - '@content-strategist'
 created_date: '2026-10-14 21:05'
+updated_date: '2026-10-14 23:18'
 labels:
   - story
   - 'req:FR-035'
@@ -14,6 +15,7 @@ dependencies:
   - TASK-28
   - TASK-69
   - TASK-67
+  - TASK-91
 priority: high
 ordinal: 71000
 ---

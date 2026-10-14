@@ -1,7 +1,7 @@
 ---
 doc_id: DOC-06
 title: Delivery Plan
-version: 0.5
+version: 0.6
 status: Draft
 date: 2026-10-14
 owner: Product Manager
@@ -107,6 +107,7 @@ Generated from the backlog on 2026-10-14; the backlog is the source of truth (`b
 | TASK-85 | Offline cache of nearby reports (mobile) | tech-lead | medium | FR-041, NFR-OFFLINE | TASK-6, TASK-12, TASK-31 |
 | TASK-86 | Offline queue for found and sighting reports (mobile) | tech-lead | medium | FR-042, FR-006 | TASK-30, TASK-14, TASK-12 |
 | TASK-88 | Responsible-shelter directory: data and API (municipality to shelter) | tech-lead | high | FR-044 | TASK-6 |
+| TASK-92 | Fiscal invoices for card payments (davčno potrjevanje računov); gates live payments, not test mode (Q-012) | tech-lead | high | FR-046, FR-020 | TASK-32 |
 
 ### M3 (18 stories)
 | ID | Story | Owner | Prio | Req | Depends on |
@@ -155,11 +156,12 @@ Generated from the backlog on 2026-10-14; the backlog is the source of truth (`b
 | TASK-68 | Security hardening and abuse testing | tech-lead | high | NFR-SEC | TASK-17, TASK-49, TASK-66, TASK-35 |
 | TASK-69 | Accessibility and performance audit and fixes | design-lead | high | NFR-A11Y, NFR-PERF, NFR-BROWSER | TASK-39, TASK-45, TASK-62, TASK-36 |
 | TASK-70 | Observability, backups and recovery drill | tech-lead | medium | NFR-OBS, NFR-AVAIL | TASK-5 |
-| TASK-71 | Final legal pages and accessibility statement | content-strategist | high | FR-035, NFR-PRIV | TASK-28, TASK-69, TASK-67 |
+| TASK-71 | Final legal pages and accessibility statement | content-strategist | high | FR-035, NFR-PRIV | TASK-28, TASK-69, TASK-67, TASK-91 |
 | TASK-72 | SEO landing pages, structured data and sitemap | content-strategist | medium | FR-035, NFR-SEO | TASK-18, TASK-31, TASK-27 |
 | TASK-73 | Success stories page | design-lead | low | FR-012 | TASK-26, TASK-27, TASK-62 |
 | TASK-74 | Pilot onboarding kit for shelters | content-strategist | high | FR-015 | TASK-46, TASK-47, TASK-48, TASK-49 |
 | TASK-75 | Mobile release candidate builds and store pack | tech-lead | low | FR-037 | TASK-12, TASK-5, TASK-39 |
+| TASK-91 | Lawyer briefing pack (start now for lead time; Q-013) | content-strategist | high | FR-045, NFR-PRIV | - |
 | TASK-76 | Launch readiness and go-live checklist | tech-lead | high | NFR-AVAIL | TASK-68, TASK-69, TASK-70, TASK-71, TASK-74, TASK-72 |
 | TASK-84 | Marketing and go-to-market plan (docs/07-marketing-plan.md) | content-strategist | low | FR-040 | - |
 
@@ -230,3 +232,4 @@ Status report per milestone (generated from the backlog), demo at each milestone
 | 0.3 | 2026-10-15 | Brief v0.4-v0.8: Shelter Pro dropped, shelter tools (TASK-59, 60, 61) free and moved to M3; Vet Partner (TASK-79, 80) and Premium AI extras (TASK-81, 82, 83) in M4; QR/NFC tags removed (TASK-56, 57 archived); monetisation model v0.8 (Boost EUR 4.99, Premium EUR 2.99/24.99, Podpornik from EUR 2); marketing plan story TASK-84; 81 stories; risks R-021..R-023 |
 | 0.4 | 2026-10-15 | Offline mode: TASK-85 offline cache and TASK-86 offline report queue (M2), TASK-87 local proximity alerts (M3); risks R-024, R-025; 84 stories |
 | 0.5 | 2026-10-15 | Discovery changes applied: shelter directory stories TASK-88 (M2), TASK-89, TASK-90 (M3); checklists in TASK-29/30; CRHŽ and cats first (TASK-16, 49); 8-day holding (TASK-45, 46, 47, 48); animal-sale ad blocklist (TASK-35, 37, 61, 62); Vet Partner labelling (TASK-36, 79, 80); SEO routes (TASK-72); share kit (TASK-24); marketing partners (TASK-84); risks R-026..R-028; 87 stories |
+| 0.6 | 2026-10-15 | TASK-91 lawyer briefing pack (M5, high, startable now, L1; TASK-71 now depends on it) and TASK-92 fiscal invoices (M2, depends on TASK-32; gates live payments); 89 stories |
