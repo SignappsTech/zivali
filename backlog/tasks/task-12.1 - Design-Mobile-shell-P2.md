@@ -1,10 +1,11 @@
 ---
 id: TASK-12.1
 title: 'Design: Mobile shell (P2)'
-status: To Do
+status: In Progress
 assignee:
   - '@ui-designer'
 created_date: '2026-10-14 21:50'
+updated_date: '2026-10-14 21:52'
 labels:
   - design
   - 'est:M'
@@ -27,6 +28,7 @@ The native app needs one navigation, one Report sheet and permission primers bef
 
 ## Packet
 Branch: design/P2-mobile-shell
+Branch: agent/TASK-12.1-mobile-shell
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Acceptance Criteria
