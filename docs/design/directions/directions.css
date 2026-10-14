@@ -42,18 +42,18 @@ a:focus-visible, button:focus-visible { outline: 3px solid hsl(var(--ring)); out
 .btn:focus-visible, .btn.is-focus { outline: 3px solid hsl(var(--ring)); outline-offset: 2px; }
 .btn i { font-size: 20px; line-height: 1; }
 .btn-lg { min-height: 56px; padding: 0 32px; font-size: 17px; }
-.btn-sm { min-height: 44px; padding: 0 18px; font-size: 15px; }
+.btn-sm { min-height: 44px; padding: 0 18px; font-size: 16px; }
 .btn-block { display: flex; width: 100%; }
 .btn-primary { background: hsl(var(--primary)); color: hsl(var(--primary-foreground)); }
 .btn-primary:hover, .btn-primary.is-hover { background: color-mix(in srgb, hsl(var(--primary)) 86%, hsl(var(--foreground))); }
 .btn-secondary { background: hsl(var(--secondary)); color: hsl(var(--secondary-foreground)); }
-.btn-secondary:hover, .btn-secondary.is-hover { background: color-mix(in srgb, hsl(var(--secondary)) 88%, hsl(var(--foreground))); }
+.btn-secondary:hover, .btn-secondary.is-hover { background: color-mix(in srgb, hsl(var(--secondary)) 86%, hsl(var(--foreground))); }
 .btn-ghost { background: transparent; color: hsl(var(--foreground)); }
 .btn-ghost:hover, .btn-ghost.is-hover { background: hsl(var(--foreground) / 0.10); color: hsl(var(--foreground)); }
 .btn-text { background: transparent; color: hsl(var(--primary)); padding: 0 12px; min-height: 44px; }
-.btn-text:hover { text-decoration: underline; text-underline-offset: 4px; }
+.btn-text:hover, .btn-text.is-hover { background: hsl(var(--foreground) / 0.10); }
 .btn-destructive { background: hsl(var(--destructive)); color: hsl(var(--destructive-foreground)); }
-.btn-destructive:hover, .btn-destructive.is-hover { background: color-mix(in srgb, hsl(var(--destructive)) 88%, hsl(var(--foreground))); }
+.btn-destructive:hover, .btn-destructive.is-hover { background: color-mix(in srgb, hsl(var(--destructive)) 86%, hsl(var(--foreground))); }
 .btn:disabled, .btn.is-disabled { background: hsl(var(--muted)); color: hsl(var(--muted-foreground)); cursor: not-allowed; transform: none; }
 .spin { display: inline-block; width: 18px; height: 18px; border-radius: 50%; border: 2.5px solid currentColor; border-right-color: transparent; animation: spin 800ms linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
@@ -191,8 +191,8 @@ textarea.input { min-height: 96px; resize: vertical; }
 /* Spot illustration frame: token-tinted SVG placeholder underneath, the generated asset on top once it exists. */
 .spot-art { position: relative; overflow: hidden; border-radius: var(--radius-card); aspect-ratio: 32 / 21; background: hsl(var(--accent)); }
 .spot-art > svg, .spot-art > img { position: absolute; inset: 0; width: 100%; height: 100%; display: block; object-fit: cover; }
-/* Toast: popover surface; shadow-md under shadow-lg so it lifts off a card sheet of the same tone. */
-.toast { display: flex; align-items: center; gap: 12px; min-height: 56px; padding: 6px 6px 6px 16px; border-radius: var(--radius-row); background: hsl(var(--popover)); color: hsl(var(--popover-foreground)); box-shadow: var(--shadow-md), var(--shadow-lg); font-size: 15px; line-height: 22px; }
+/* Toast: popover surface, one shadow only (shadow-pop, system 10.9). */
+.toast { display: flex; align-items: center; gap: 12px; min-height: 56px; padding: 6px 6px 6px 16px; border-radius: var(--radius-row); background: hsl(var(--popover)); color: hsl(var(--popover-foreground)); box-shadow: var(--shadow-pop); font-size: 15px; line-height: 22px; }
 .toast > i { font-size: 22px; line-height: 1; flex: none; color: hsl(var(--primary)); }
 .toast p { margin: 0; flex: 1; min-width: 0; }
 /* Bottom nav: items sit on one label baseline, so the 48 px Prijavi circle rises above the 26 px icons. */
@@ -203,3 +203,107 @@ textarea.input { min-height: 96px; resize: vertical; }
 @media (max-width: 459px) { .phone { zoom: 0.86; } }
 @media (max-width: 389px) { .phone { zoom: 0.79; } }
 @media (max-width: 359px) { .phone { zoom: 0.69; } }
+
+/* ---------- UI kit (P23 gallery, TASK-8.1): section 10 components and states the earlier mockups did not need ---------- */
+/* Static state hooks mirror the live pseudo-classes: .is-hover = :hover, .is-pressed = :active, .is-focus = :focus-visible, .is-disabled = :disabled. */
+.btn.is-pressed, .iconbtn.is-pressed, .iconbtn:active, .pill:active, .pill.is-pressed, .tile:active, .tile.is-pressed { transform: scale(0.98); }
+.btn[aria-busy="true"], .iconbtn[aria-busy="true"] { cursor: progress; }
+.iconbtn.is-hover { background: hsl(var(--foreground) / 0.10); }
+.iconbtn:disabled, .iconbtn.is-disabled { background: hsl(var(--muted)); color: hsl(var(--muted-foreground)); cursor: not-allowed; transform: none; }
+.iconbtn .spin { width: 20px; height: 20px; }
+
+/* Fields: hover, disabled (dashed line, so it is not colour only), select trigger, trailing control, 64 px single-question input */
+.input.is-hover { border-bottom-color: hsl(var(--foreground)); }
+.input:disabled, .input.is-disabled { color: hsl(var(--muted-foreground)); border-bottom-style: dashed; border-bottom-color: hsl(var(--input)); box-shadow: none; cursor: not-allowed; }
+.field.is-disabled > label, .field.is-disabled > .label { color: hsl(var(--muted-foreground)); }
+.input-lg { min-height: 64px; font-size: 22px; }
+.select { display: flex; align-items: center; justify-content: space-between; gap: 8px; text-align: left; cursor: pointer; }
+.select > i { font-size: 20px; line-height: 1; flex: none; color: hsl(var(--muted-foreground)); }
+.select .is-placeholder { color: hsl(var(--muted-foreground)); }
+.input-wrap > .end { position: absolute; right: 0; top: 50%; transform: translateY(-50%); display: grid; place-items: center; min-width: 44px; min-height: 44px; }
+.input-wrap.has-end > .input { padding-right: 48px; }
+.listbox { list-style: none; margin: 0; padding: 8px; border-radius: var(--radius-row); }
+.listbox [role="option"] { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 48px; padding: 0 12px; border-radius: calc(var(--radius) - 4px); font-size: 16px; cursor: pointer; }
+.listbox [role="option"]:hover, .listbox [role="option"].is-hover { background: hsl(var(--foreground) / 0.10); }
+.listbox [role="option"][aria-selected="true"] { font-weight: 700; }
+.listbox [role="option"] i { font-size: 20px; visibility: hidden; }
+.listbox [role="option"][aria-selected="true"] i { visibility: visible; }
+
+/* Choice rows: hover overlay, check on the selected row, disabled */
+.choice:hover, .choice.is-hover { background-image: linear-gradient(hsl(var(--foreground) / 0.10), hsl(var(--foreground) / 0.10)); }
+.choice .tick { font-size: 22px; flex: none; visibility: hidden; }
+.choice[aria-checked="true"] .tick { visibility: visible; }
+.choice[aria-checked="true"] > i, .choice[aria-disabled="true"] > i { color: inherit; }
+.choice[aria-disabled="true"] { background: hsl(var(--muted)); background-image: none; color: hsl(var(--muted-foreground)); cursor: not-allowed; transform: none; }
+.choice[aria-disabled="true"] .d { color: hsl(var(--muted-foreground)); }
+
+/* Toggle pill: hover (14 % mix), check when selected, disabled */
+.pill:hover, .pill.is-hover { background: color-mix(in srgb, hsl(var(--secondary)) 86%, hsl(var(--foreground))); }
+.pill[aria-pressed="true"]:hover, .pill[aria-pressed="true"].is-hover { background: color-mix(in srgb, hsl(var(--primary)) 86%, hsl(var(--foreground))); }
+.pill .tick { display: none; }
+.pill[aria-pressed="true"] .tick { display: inline; }
+.pill:disabled, .pill.is-disabled { background: hsl(var(--muted)); color: hsl(var(--muted-foreground)); cursor: not-allowed; transform: none; }
+
+/* Segmented control (shadcn tabs): hover on unselected, disabled */
+.seg button:hover, .seg button.is-hover { background: hsl(var(--foreground) / 0.10); color: hsl(var(--foreground)); }
+.seg button[aria-selected="true"]:hover, .seg button[aria-selected="true"].is-hover { background: hsl(var(--card)); }
+.seg.is-disabled button, .seg button:disabled { color: hsl(var(--muted-foreground)); background-color: transparent; cursor: not-allowed; }
+.seg.is-disabled button[aria-selected="true"] { background: hsl(var(--card)); }
+
+/* Switch: disabled keeps the thumb position as the state cue */
+.switch:disabled, .switch.is-disabled { background: hsl(var(--muted)); cursor: not-allowed; }
+.switch:disabled::after, .switch.is-disabled::after { background: hsl(var(--muted-foreground)); }
+
+/* Checkbox and radio: 24 px box in a 44 px label target, native input kept for semantics */
+.check { position: relative; display: inline-flex; align-items: flex-start; gap: 12px; min-height: 44px; padding: 10px 0; box-sizing: border-box; font-size: 16px; line-height: 24px; cursor: pointer; }
+.check > input { position: absolute; opacity: 0; width: 1px; height: 1px; margin: 0; pointer-events: none; }
+.cbx, .rad { flex: none; display: grid; place-items: center; width: 24px; height: 24px; box-sizing: border-box; border: 2px solid hsl(var(--input)); color: hsl(var(--primary-foreground)); transition: background-color 150ms var(--ease); }
+.cbx { border-radius: 6px; }
+.rad { border-radius: 50%; }
+.cbx i { font-size: 16px; line-height: 1; visibility: hidden; }
+.rad::after { content: ""; width: 10px; height: 10px; border-radius: 50%; background: currentColor; visibility: hidden; }
+.check:hover > .cbx, .check:hover > .rad, .check.is-hover > .cbx, .check.is-hover > .rad { border-color: hsl(var(--foreground)); }
+.check > input:checked + .cbx, .check > input:checked + .rad { background: hsl(var(--primary)); border-color: hsl(var(--primary)); }
+.check > input:checked + .cbx i, .check > input:checked + .rad::after { visibility: visible; }
+.check > input:focus-visible + .cbx, .check > input:focus-visible + .rad, .cbx.is-focus, .rad.is-focus { outline: 3px solid hsl(var(--ring)); outline-offset: 2px; }
+.check > input:disabled + .cbx, .check > input:disabled + .rad { background: hsl(var(--muted)); border-color: hsl(var(--input)); color: hsl(var(--muted-foreground)); }
+.check:has(> input:disabled) { color: hsl(var(--muted-foreground)); cursor: not-allowed; }
+
+/* Popover menu (same as the P1 header menus) and dialog */
+.pop { background: hsl(var(--popover)); color: hsl(var(--popover-foreground)); box-shadow: var(--shadow-pop); z-index: 5; }
+.mi { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 48px; padding: 0 12px; border: 0; border-radius: calc(var(--radius) - 4px); background: transparent; font: inherit; font-weight: 600; font-size: 16px; line-height: 24px; color: inherit; text-decoration: none; text-align: left; cursor: pointer; }
+.mi i { font-size: 20px; line-height: 1; }
+.mi:hover, .mi.is-hover { background-color: hsl(var(--foreground) / 0.10); color: hsl(var(--foreground)); }
+.dialog { position: relative; z-index: 4; width: 100%; max-width: 440px; box-sizing: border-box; padding: 28px 24px 20px; border-radius: var(--radius-card); background: hsl(var(--popover)); color: hsl(var(--popover-foreground)); box-shadow: var(--shadow-pop); }
+
+/* Web header link (same as P1): current = foreground + underline, never colour alone */
+.nl { display: inline-flex; align-items: center; min-height: 44px; padding: 0 12px; border-radius: 999px; font-weight: 600; font-size: 16px; line-height: 24px; color: hsl(var(--muted-foreground)); text-decoration: none; white-space: nowrap; transition: background-color 150ms var(--ease), color 150ms var(--ease); }
+.nl[aria-current="page"] { color: hsl(var(--foreground)); text-decoration: underline; text-decoration-color: hsl(var(--primary)); text-decoration-thickness: 2px; text-underline-offset: 8px; }
+.nl:hover, .nl.is-hover { background-color: hsl(var(--foreground) / 0.10); color: hsl(var(--foreground)); }
+.lang { display: inline-flex; align-items: center; font-weight: 600; font-size: 15px; color: hsl(var(--muted-foreground)); }
+.ll { display: inline-flex; align-items: center; justify-content: center; min-width: 44px; min-height: 44px; padding: 0 6px; border-radius: 999px; color: hsl(var(--muted-foreground)); text-decoration: none; white-space: nowrap; }
+.ll:hover { color: hsl(var(--foreground)); }
+.ll[aria-current="true"] { color: hsl(var(--foreground)); text-decoration: underline; text-decoration-color: hsl(var(--primary)); text-decoration-thickness: 2px; text-underline-offset: 6px; }
+
+/* Avatar 32 / 48 / 72, photo or initials */
+.av { display: inline-grid; place-items: center; flex: none; overflow: hidden; border-radius: 50%; background: hsl(var(--secondary)); color: hsl(var(--secondary-foreground)); font-weight: 700; }
+.av > img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.av-32 { width: 32px; height: 32px; font-size: 14px; }
+.av-48 { width: 48px; height: 48px; font-size: 18px; }
+.av-72 { width: 72px; height: 72px; font-size: 26px; font-family: var(--font-display); }
+
+/* Pet row (mobile list) pressed state and pet tile (web) */
+.prow { display: flex; align-items: center; gap: 16px; margin: -8px; padding: 8px; border-radius: var(--radius-row); color: inherit; text-decoration: none; }
+.prow:active, .prow.is-pressed { background: hsl(var(--accent)); color: hsl(var(--accent-foreground)); }
+.tile { display: block; border-radius: var(--radius-card); color: inherit; text-decoration: none; transition: transform 150ms var(--ease); }
+.tile img, .tile .skel { display: block; width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: var(--radius-card); }
+.tile:hover h3, .tile.is-hover h3 { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 4px; }
+
+/* Upload progress: 4 px primary on muted */
+.progress { height: 4px; border-radius: 2px; background: hsl(var(--muted)); overflow: hidden; }
+.progress > span { display: block; height: 100%; border-radius: inherit; background: hsl(var(--primary)); }
+.progress.is-error > span { background: hsl(var(--destructive)); }
+
+/* Markers not drawn before: reunited ring and the "you" dot */
+.mk-avatar.reunited { border-color: hsl(var(--marker-reunited)); }
+.mk-me { width: 18px; height: 18px; border-radius: 50%; background: hsl(var(--marker-me)); box-shadow: 0 0 0 3px hsl(var(--marker-ring)); }
