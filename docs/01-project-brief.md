@@ -13,7 +13,7 @@ approvals:
 
 # Overview
 
-**Najdimo** (formerly the working name Izgubljene živali) is a web and mobile app that reunites lost cats and dogs with their owners in Slovenia. Owners report a lost pet. Finders, passers-by and shelters report found or sighted animals. The system matches the two sides by **chip number, photo similarity, location, time and attributes**, then connects the people through in-app chat. Today, lost-pet searching in Slovenia happens in scattered Facebook groups and on paper posters. Dogs have a central chip register (CRPsi), but cats have none, and shelters have no easy way to reach owners. Internal product of Signapps; the plan sketch is in `/readme.md`.
+**Najdimo** (formerly the working name Izgubljene živali) is a web and mobile app that reunites lost cats and dogs with their owners in Slovenia. Owners report a lost pet. Finders, passers-by and shelters report found or sighted animals. The system matches the two sides by **chip number, photo similarity, location, time and attributes**, then connects the people through in-app chat. Today, lost-pet searching in Slovenia happens in scattered Facebook groups and on paper posters. Dogs have a central chip register (CRPsi), but cats have none, and shelters have no easy way to reach owners. Internal product of Signapps; the plan sketch is in `docs/plan-sketch.md`.
 
 # Problem
 

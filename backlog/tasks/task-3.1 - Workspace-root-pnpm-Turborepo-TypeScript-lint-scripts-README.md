@@ -1,7 +1,7 @@
 ---
 id: TASK-3.1
 title: 'Workspace root: pnpm + Turborepo, TypeScript, lint, scripts, README'
-status: In Review
+status: Done
 assignee:
   - '@tech-lead'
 created_date: '2026-10-14 22:11'
