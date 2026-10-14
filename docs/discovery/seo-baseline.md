@@ -1,8 +1,8 @@
 ---
 doc: discovery/seo-baseline
-date: 2026-10-14
+date: 2026-10-15
 owner: Discovery Analyst
-status: Draft (input for content-strategist and tech-lead)
+status: Draft (input for content-strategist and tech-lead); aligned with brief v0.9
 ---
 
 # SEO baseline (Slovenian)
@@ -35,7 +35,7 @@ Tier guess: **A** = thousands/month, **B** = hundreds, **C** = tens or fewer, sp
 | **čipiranje mačk** (+ 2026, zakon, kazen, subvencija, brezplačno, do kdaj, kje, cena, starost), ali je čipiranje mačk obvezno | informational, **rising** (law from 1 Jan 2027) | Trends 1.4 (> izgubljen pes). Spike Aug 2025 (law passed) | B by early 2027 | `/nasveti/cipiranje-mack` (evergreen + seasonal) |
 | čipiranje psa (+ cena, zakon), mikročip pes | informational | autocomplete present | C | `/nasveti/cipiranje-psa` (or merge into the cats guide) |
 | centralni register psov, **vpogled v centralni register psov**, register hišnih živali, crpsi | find the official chip lookup | autocomplete present; "crpsi" mostly noise (medical) | C | `/nasveti/vpogled-v-register` (links to the official lookup) |
-| gps za psa / za mačko, gps ovratnica, ploščica z imenom za psa, obesek za psa z imenom | commercial (prevention) | Trends 1.1; many variants | B–C | `/oznake` (QR tag, FR-027) + sponsor slots (pet shops) |
+| gps za psa / za mačko, gps ovratnica, ploščica z imenom za psa, obesek za psa z imenom | commercial (prevention) | Trends 1.1; many variants | B–C | sponsor slots (pet shops, GPS trackers) + `/nasveti` prevention guide (QR/NFC tags are out of scope since brief v0.7) |
 | posvojitev psa / mačke (+ city, iz zavetišča) | commercial (adopt) | autocomplete strong | B | out of scope: house ad and links to shelter pages |
 | lost dog slovenia, lost cat ljubljana | EN | no suggestions | C | `/en/...` hubs (low priority) |
 
@@ -99,7 +99,7 @@ Put the keywords in the title, H1 and breadcrumbs instead:
 ## Biggest organic opportunities (ranked)
 
 1. **Shelter directory + "responsible shelter per municipality".** It targets the largest query family (`zavetišče` + city) and answers "izgubljen pes kam poklicati". Few sites list which shelter serves which municipality; shelter sites list only their own. The data source is the UVHVVR shelter register and the yearly municipal reports (see regulatory.md R-07).
-2. **`/nasveti/cipiranje-mack` before 1 Jan 2027.** Interest in the new cat-chipping law is rising. The page converts to pet profiles with the chip number, QR tags and alerts.
+2. **`/nasveti/cipiranje-mack` before 1 Jan 2027.** Interest in the new cat-chipping law is rising. The page converts to pet profiles with the chip number and alerts.
 3. **Regional lost/found hubs.** Low volume, but they match how people phrase queries ("izgubljene živali Maribor") and they collect long-tail traffic from listings.
 4. Guides for "kam poklicati" and "kaj storiti, ko najdem psa", with the legal duties explained (24 h finder, 3 days for the owner).
 
