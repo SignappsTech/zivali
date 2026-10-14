@@ -1,4 +1,4 @@
-source: docs/04-technical-design.md (v0.2) §Architecture, §Technology stack, §Repository structure; docs/05-quality-security-plan.md (v0.2) §Quality gates, §Definition of Done
+source: docs/04-technical-design.md (v0.3) §Architecture, §Technology stack, §Repository structure; docs/05-quality-security-plan.md (v0.3) §Quality gates, §Definition of Done
 
 # Frontend slice (apps/web, apps/mobile, packages/{tokens,api,i18n,analytics})
 

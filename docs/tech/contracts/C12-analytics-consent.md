@@ -31,7 +31,7 @@ Adapters: `ga4` (web), `firebase` (mobile), `mock` (default locally and in tests
 | `value` + `currency` | number (EUR, 2 decimals) + `"EUR"`; monetary events only |
 | `amount_bucket` | `2-4` \| `5-9` \| `10-19` \| `20+` (donation) |
 | `method` | `whatsapp` \| `facebook` \| `copy_link` \| `native` (share) |
-| `purpose` | `tip` \| `report_contribution` (donation) |
+| `purpose` | `tip` \| `report_contribution` \| `support` (donation) |
 
 Forbidden always: names, emails, phone, chip numbers, coordinates, free text, report ids/short codes, user ids.
 

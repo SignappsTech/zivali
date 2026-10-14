@@ -1,9 +1,9 @@
 ---
 doc_id: DOC-04
 title: Technical Design
-version: 0.2
+version: 0.3
 status: Draft
-date: 2026-10-14
+date: 2026-10-15
 owner: Tech Lead
 audience: Team, client IT
 approvals:
@@ -278,3 +278,4 @@ Full records: `docs/tech/adr/NNN-*.md` (context, decision, alternatives, consequ
 |---|---|---|
 | 0.1 | | Initial draft (template) |
 | 0.2 | 2026-10-14 | Full technical design: architecture, stack (versions checked 2026-10-14), repo map, data model, contracts C1–C16 for M1–M2, auth, environments with credentials matrix, CI/CD, observability, backup, integrations, ADR-001…018 |
+| 0.3 | 2026-10-15 | Brief v0.7: Shelter Pro removed (organisations free), Vet Partner as the only B2B subscription (M4), QR/NFC tags out of scope; staging on Supabase `najdimo` + Vercel with credentials available; final Lagoon tokens (single theme), positron map style, Phosphor icons, bottom sheet; inbox routes aligned with design; M1/M2 task breakdown created |

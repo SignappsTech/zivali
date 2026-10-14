@@ -1,4 +1,4 @@
-source: docs/04-technical-design.md (v0.2) §Architecture, §Data model, §Authentication, §Environments, §CI/CD, §Observability; docs/05-quality-security-plan.md (v0.2) §Security, §Privacy, §Definition of Done
+source: docs/04-technical-design.md (v0.3) §Architecture, §Data model, §Authentication, §Environments, §CI/CD, §Observability; docs/05-quality-security-plan.md (v0.3) §Security, §Privacy, §Definition of Done
 
 # Backend slice (supabase/, scripts/, packages/types database types)
 
@@ -35,7 +35,7 @@ Read this, your task packet and the contract(s) it references. Conventions for e
 - Migrations: always a new file; change a function with `create or replace` in your own migration. Two tasks never edit the same migration.
 - Seed: your own `seed/NN-<task>-*.sql`; the shared fixture users and base reports come from TASK-6.
 - Worker: replace only your handler file (`handlers/<type>.ts`); the registry is fixed by TASK-6 with stubs for all M2 job types.
-- `create_report` belongs to the report-write task (@@report-write-be@@); the anonymous guard is a separate function `submission_guard(p jsonb)` (stub from @@report-write-be@@, real body from @@anon-be@@).
+- `create_report` belongs to the report-write task (TASK-29.2); the anonymous guard is a separate function `submission_guard(p jsonb)` (stub from TASK-29.2, real body from TASK-17.1).
 - `enqueue_notification()` belongs to the notifications task; until it is merged, call it anyway (the TASK-6 stub enqueues `notify` jobs that the stub handler logs).
 - `app_config` keys: insert your defaults in your migration (`on conflict do nothing`).
 

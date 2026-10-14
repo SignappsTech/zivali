@@ -1,9 +1,9 @@
 ---
 doc_id: DOC-05
 title: Quality and Security Plan
-version: 0.2
+version: 0.3
 status: Draft
-date: 2026-10-14
+date: 2026-10-15
 owner: Tech Lead
 audience: Team, client on request
 approvals:
@@ -104,3 +104,4 @@ Run by GitHub Actions once a remote exists; until then `pnpm verify` runs the sa
 |---|---|---|
 | 0.1 | | Initial draft (template) |
 | 0.2 | 2026-10-14 | Gates with thresholds from NFRs, testing strategy incl. RLS matrix and protected-flow tests, security (threats, CSP, rate limits), privacy (inventory, processors, retention), DoD |
+| 0.3 | 2026-10-15 | Tag-address retention removed (tags out of scope, brief v0.7); protected flows include inbox and conversations |

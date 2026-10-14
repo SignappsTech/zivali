@@ -92,8 +92,8 @@ pgTAP test fails if a `public` table or a storage bucket is missing.
 ## Example
 
 ```sql
--- 20261020120000_@@platform-lc@@_platform.sql
--- task: @@platform@@
+-- 20261020120000_task-6.2_platform.sql
+-- task: TASK-6.2
 -- rollback: drop function check_rate_limit; drop table rate_limits;
 create table public.rate_limits (key text not null, window_start timestamptz not null, count int not null default 0,
   primary key (key, window_start));
