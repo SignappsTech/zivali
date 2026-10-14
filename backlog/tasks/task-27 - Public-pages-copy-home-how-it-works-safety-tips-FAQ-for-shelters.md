@@ -5,6 +5,7 @@ status: To Do
 assignee:
   - '@content-strategist'
 created_date: '2026-10-14 21:02'
+updated_date: '2026-10-14 21:53'
 labels:
   - story
   - 'req:FR-035'
@@ -28,6 +29,12 @@ The first visit decides whether a panicked owner or a finder trusts the product;
 - [ ] #3 Given keyword focus, when pages are written, then each has one primary keyword (for example izgubljen pes, najden mačka) recorded in the content slice.
 - [ ] #4 Given client review, when approved, then copy is marked approved and legal claims (such as holding periods) are flagged as requiring legal review.
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+2026-10-14 content-strategist: drafts are being written now against the draft voice guide and glossary (TASK-2, awaiting native review and client approval). Status stays To Do until TASK-2 is approved. Copy files: docs/content/pages/ and docs/content/legal/.
+<!-- SECTION:NOTES:END -->
 
 ## Packet
 

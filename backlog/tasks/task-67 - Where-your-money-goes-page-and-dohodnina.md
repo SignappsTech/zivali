@@ -5,6 +5,7 @@ status: To Do
 assignee:
   - '@content-strategist'
 created_date: '2026-10-14 21:05'
+updated_date: '2026-10-14 22:02'
 labels:
   - story
   - 'req:FR-024'
@@ -29,6 +30,7 @@ Voluntary support only works if people trust where it goes; a transparent page a
 - [ ] #2 Given the legal entity decision (Q-008), when it confirms eligibility (a društvo or zavod on the tax authority list), then a section explains how to direct part of income tax through eDavki with exact steps and entity identifiers, and until then the section stays hidden behind a flag.
 - [ ] #3 Given wording, when displayed, then it never implies charitable status where none exists.
 - [ ] #4 Given accessibility and SEO, when audited, then the page meets WCAG 2.2 AA and is indexable.
+- [ ] #5 Given the page explains revenue, when read, then it states that shelters, vets and municipalities never pay and that income comes only from voluntary support, owner extras (Boost, Premium, tags) and ads.
 <!-- AC:END -->
 
 ## Packet

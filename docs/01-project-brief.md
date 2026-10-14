@@ -1,7 +1,7 @@
 ---
 doc_id: DOC-01
 title: Project Brief
-version: 0.3
+version: 0.7
 status: Draft
 date: 2026-10-14
 owner: Project Lead
@@ -30,7 +30,7 @@ Izgubljene živali (working name) is a web and mobile app that reunites lost cat
 | G-2 | Fast matching | Median time from report to first match suggestion | < 10 min when a matching found report exists |
 | G-3 | Frictionless found reports | Time to submit a found report (no account) | < 60 s on mobile |
 | G-4 | Shelter adoption | Pilot shelters actively uploading | 2–3 shelters in first 3 months |
-| G-5 | Sustainable revenue | Paying users (boost/premium/tags) | Revenue covers infrastructure + AI costs by month 6 |
+| G-5 | Sustainable revenue | Paying users and supporters (boost, Premium, Podpornik, tips, ads, Vet Partner) | Revenue covers infrastructure + AI costs by month 6 |
 
 # Audience
 
@@ -56,7 +56,14 @@ Izgubljene živali (working name) is a web and mobile app that reunites lost cat
   - Push and in-app notifications and radius alerts
   - In-app chat, a printable QR poster, sharing
   - Shelter portal with bulk/CSV upload and a matches dashboard
-  - Monetisation: boost listing, Premium subscription, QR tag ordering, Shelter Pro. **Stripe in test mode only.**
+  - Monetisation: boost listing, Premium subscription. **Stripe in test mode only.**
+  - **Main goal: getting animals home. Everything that does that is free for everyone, forever:** reporting lost/found/sighted, the map and alerts, matching (chip, photo AI, attributes), chat, **the printable PDF poster with QR code** (the QR links to the public listing only), sharing, and chip lookup. Paid extras never gate any of these. Boost only adds reach on top of an already effective free alert radius.
+  - **QR/NFC pet tags are out of scope for now** (physical and printable). A tag that links a pet to its owner feels too close to personal data; revisit later with a privacy-first design.
+  - **Shelters (and municipalities) use everything for free, forever.** That includes the portal, bulk/CSV upload, matching, API and integrations, analytics, the adoption page and municipality reports. There is no paid shelter tier. Mission first: the goal is to help animals and keep the project self-sustaining, not to maximise profit.
+  - **Vets: free for anything that reunites animals, paid for visibility.**
+    - Free: reporting found animals brought to the clinic, chip lookup, matches and chat with owners.
+    - **Paid "Vet Partner" subscription** (B2B, Stripe Billing with VAT invoices; indicative €29–49/month): a verified clinic profile (hours, 24h emergency badge, services, booking/phone link), featured placement in the "nearest vet" ad slots in its area, a mention in lost-pet alerts and posters for its region ("Need help? Nearest vet: …"), and a monthly stats report (views, clicks, reunions in the area). It is built on the ads infrastructure (M2) plus organisation profiles (M3).
+    - Pet shops, groomers and insurers buy ads (see Ads).
   - **Support without premium (donation style):** the core stays free; we ask for voluntary support at emotional high points:
     - **"Reunited" thank-you:** after marking a pet reunited, offer a one-tap tip (€3 / €5 / €10 / custom). This is the highest-converting moment.
     - **Optional contribution when reporting:** a small, never pre-selected "help keep this free" (€2–5) on the lost-report confirmation screen.
@@ -100,7 +107,7 @@ Izgubljene živali (working name) is a web and mobile app that reunites lost cat
   - Countries other than Slovenia
   - Live payments
   - App Store and Play Store submission
-  - Physical tag manufacturing (only the ordering flow is in scope)
+  - QR/NFC pet tags (physical and printable): out of scope for now (privacy)
   - Official CRPsi integration (we link to it; integration later, subject to an agreement)
 
 # Constraints
@@ -155,3 +162,7 @@ Izgubljene živali (working name) is a web and mobile app that reunites lost cat
 | 0.1 | 2026-10-14 | Initial plan sketch (readme.md) |
 | 0.2 | 2026-10-14 | Brief written from the plan sketch and client decisions (UI library, stack, scope) |
 | 0.3 | 2026-10-14 | Added donation-style support, early ads (oglasi), GA4 analytics (configured), maps/geo decisions; Q-008..Q-011 |
+| 0.4 | 2026-10-14 | Shelter Pro removed: all shelter, vet and municipality features are free forever; mission-first principle |
+| 0.5 | 2026-10-15 | Vets pay for visibility (Vet Partner subscription); reunite features stay free for vets; shelters and municipalities free |
+| 0.6 | 2026-10-15 | Explicit free-forever list (poster PDF + QR, printable QR tag PDF, chip lookup); physical tag near cost |
+| 0.7 | 2026-10-15 | QR/NFC tags removed from scope (physical and printable); the poster QR links to the public listing only |

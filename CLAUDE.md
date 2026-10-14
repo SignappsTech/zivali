@@ -3,7 +3,7 @@
 Lost pet finder (dogs and cats, Slovenia). Web and mobile. Brief: `docs/01-project-brief.md`.
 
 ## Dev team
-- Mode: lean
+- Mode: full
 - Control: auto
 - Tracker: local (Backlog.md)
 - Review: local

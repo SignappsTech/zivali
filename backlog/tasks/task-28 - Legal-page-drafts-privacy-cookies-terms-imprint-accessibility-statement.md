@@ -5,6 +5,7 @@ status: To Do
 assignee:
   - '@content-strategist'
 created_date: '2026-10-14 21:02'
+updated_date: '2026-10-14 21:53'
 labels:
   - story
   - 'req:FR-035'
@@ -29,6 +30,12 @@ A pilot with personal data, location, chat, payments, ads and analytics needs EU
 - [ ] #3 Given the terms, when drafted, then they cover acceptable use, scams, finder rewards and escrow, boosts, subscriptions and contributions (not described as charitable donations unless a qualifying entity exists), ad labelling, shelter terms and liability.
 - [ ] #4 Given the imprint and accessibility statement, when drafted, then company details are marked as client-supplied and the EAA statement template is ready; all pages exist in SL and EN and are marked requires client and legal review.
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+2026-10-14 content-strategist: drafts are being written now against the draft voice guide and glossary (TASK-2, awaiting native review and client approval). Status stays To Do until TASK-2 is approved. Copy files: docs/content/pages/ and docs/content/legal/.
+<!-- SECTION:NOTES:END -->
 
 ## Packet
 
