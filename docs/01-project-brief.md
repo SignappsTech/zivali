@@ -41,7 +41,7 @@ approvals:
 
 - One place that **actively matches**, instead of a feed you scroll: chip, photo AI and geo matching across owners, finders and shelters.
 - A found report without an account in under a minute. AI pre-fills breed, colour and size from the photo.
-- Safe contact: hidden phone numbers, in-app chat and reward escrow, which shut down scams.
+- Safe contact: hidden phone numbers and in-app chat, plus scam warnings, which shut down "pay first" scams.
 - For shelters: free, less work, emptier kennels.
 
 # Scope at a glance
