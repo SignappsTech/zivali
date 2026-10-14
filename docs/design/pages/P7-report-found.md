@@ -33,6 +33,8 @@ On a lost report, "Report a sighting" (P9) starts a shorter flow: Where, When (J
 
 h1 confirmation, one sentence that the report is live, a **private link block**: the long link in a read-only line with a "Copy link" button and, if an email was given, a note it was sent. Primary "Open my report", text buttons "Create an account to keep it" (claim, P16), "Share". No tip, no ad.
 
+**Responsible shelter** (FR-044, R-006.1), after submit only, under the link block, no card: a `phone` icon row with one sentence (report the find to the shelter responsible for {municipality}), the shelter name in bold, the number (`tabular-nums`), a `secondary` "Pokliči" (`tel:`) and the line that any vet or shelter can read the chip. Legal timing only when the `content.legal_timings` flag is on. Unknown or unconfirmed municipality: a `note` with a link to the directory (P3 T5), never a guessed number. The same row appears on the "sent" screen of a queued offline report (FR-042) and works from the cached directory. Shown when the finder has the animal; whether the "I only saw it" path shows it is the content slice's call.
+
 ## Manage page (private link, any device, no sign-in)
 
 Standard top bar and a content column. Sections in order: status word and photo; the report facts; a quiet note that the link is private; **Messages** entry (opens chat P12 without sign-in) with a count only when there are unread messages; actions as text rows: Edit, Close report, "Animal returned to owner" (mark returned), Delete my data (confirm dialog, R-034.4). Primary on this page: "Open messages" when messages exist, otherwise none. Expiry notice at day 25 with "Keep for 30 more days". Lost link: nothing can be recovered unless an email was given (the page for resend is a neutral request form with the generic response).
@@ -68,6 +70,6 @@ None.
 
 ## Mockup scope (`P7-report-found.html`)
 
-1. Mobile: steps 1 to 5 (both step-2 variants), sighted flow, success with link block, manage page (with and without messages), delete dialog, rate-limited note, camera denied.
+1. Mobile: steps 1 to 5 (both step-2 variants), sighted flow, success with link block and the responsible-shelter row (plus the unknown-municipality note variant), manage page (with and without messages), delete dialog, rate-limited note, camera denied.
 2. Web: steps 1, 3, 5, success with QR, manage page.
 3. Light and dark.

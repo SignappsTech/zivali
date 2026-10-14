@@ -37,6 +37,7 @@ A visitor can fill every step. When pressing Publish, a bottom sheet (web: dialo
 
 - Reunited-calm tone, spot illustration optional, h1 "Your search is published".
 - "What happens next" as a plain list of three rows (we notify neighbours, we look for matches, you will see matches in the inbox).
+- **Responsible shelter** (FR-044, R-005.3), right under that list, no card: a `phone` icon row with one sentence (report the escape to a vet or the shelter responsible for {municipality}), the shelter name in bold, the number (`tabular-nums`) and a `secondary` "Pokliči" (`tel:`); a text link to the shelter page (P3 T6). Legal timings appear only when the `content.legal_timings` flag is on, and the text never claims to replace the legal duty. Unknown or unconfirmed municipality: a `note` that says so with a link to the directory (P3 T5), never a guessed number. Works offline from the cached directory.
 - One primary: "Download poster" (P18). Text buttons: "Share", "Open my report".
 - Optional support row, **collapsed by default**: "Help keep this free"; expands to 2, 3, 5 EUR pills (none selected) and a button (P15). Shown once per report; skipping hides it.
 - Never an ad.
@@ -67,6 +68,6 @@ None. The confirmation screen is text and icons only.
 
 ## Mockup scope (`P6-report-lost.html`)
 
-1. Mobile: steps 1 to 7 (new pet path), the shorter path summary, sign-in gate sheet, confirmation (collapsed and expanded support row), duplicate-report note, validation error, upload failure.
+1. Mobile: steps 1 to 7 (new pet path), the shorter path summary, sign-in gate sheet, confirmation (collapsed and expanded support row, with the responsible-shelter row; and the unknown-municipality note variant), duplicate-report note, validation error, upload failure.
 2. Web: steps 2, 4, 7 and the confirmation.
 3. Light and dark.

@@ -37,7 +37,7 @@ No notification count badges. Unread state is shown inside the inbox, not on the
 
 ## Footer (text row on `background`, no panel)
 
-Logo and a wrapped row of links: About, Safety tips, Partners, Privacy, Cookies, Terms, Imprint, Accessibility, **Cookie settings** (opens the consent preferences, P17), How it works, For shelters. Language switcher repeated at the end. Copyright line in `muted-foreground`.
+Logo and a wrapped row of links: About, Safety tips, Partners, Privacy, Cookies, Terms, Imprint, Accessibility, **Cookie settings** (opens the consent preferences, P17), How it works, For shelters, **Shelters** (the public shelter directory `/zavetisca`, P3 T5; label from the content slice, kept distinct from "For shelters"). Language switcher repeated at the end. Copyright line in `muted-foreground`.
 
 ## Page container rules
 

@@ -2,7 +2,7 @@
 doc: design-system
 title: Design system (slice)
 source: 03§Brand and visual language
-version: 0.6
+version: 0.7
 status: Draft, direction A (Lagoon) chosen by the client
 date: 2026-10-15
 owner: Design Lead
@@ -513,7 +513,7 @@ Web = shadcn/ui, mobile = React Native Reusables (NativeWind). Same names, same 
 | Bottom sheet | `card`, top radius 28, grabber 40x5, `shadow-lg`, 20 px side padding. Snap points: peek about 40 % of the screen, full 92 %. Scrim behind modals. |
 | Flow top bar | 56 px: back (icon button), **one bar per step** (the count comes from the flow's page slice, for example 7 for the lost flow; 4 px high, gap 6, equal widths, `primary` for done steps and the current one, `muted` for the rest), close. No title. The bars are one `role="progressbar"` with `aria-valuenow` and `aria-valuemax` and the name "Korak {current} od {total}" from the content slice. Flows keep to 8 steps or fewer so the bars stay readable at 320 px. |
 | Web header | 88 px, no border, on `background`. Logo left, at most 4 text links (16 semibold; the current page is `foreground` **and underlined**, others `muted-foreground`, so it is not colour only), right: language switch, ghost "Vpis" (EN "Sign in") and a `sm` primary "Prijavi". Signed in: the fourth link is the short label "Moje živali" (EN "My pets"; reports are inside), inbox icon button and avatar menu. The header must fit without overflow from 1024 px; if it does not, the language switch moves into the account menu below `xl`. |
-| Web footer | Content variant: logo with tagline, wrapped rows of the 12 links (How it works, Safety tips, FAQ, For shelters, Partners, About, Privacy, Cookies, Cookie settings, Terms, Imprint, Accessibility), language, copyright line; no panel. **Flow variant: minimal** single quiet row (Privacy, Terms, Cookie settings, Accessibility), no logo block, no copyright. |
+| Web footer | Content variant: logo with tagline, wrapped rows of the 13 links (How it works, Safety tips, FAQ, For shelters, Shelters (the public directory), Partners, About, Privacy, Cookies, Cookie settings, Terms, Imprint, Accessibility), language, copyright line; no panel. **Flow variant: minimal** single quiet row (Privacy, Terms, Cookie settings, Accessibility), no logo block, no copyright. |
 
 ## 10.8 Flow screen ("one question per screen")
 
@@ -660,3 +660,4 @@ Each page slice in `docs/design/pages/P<n>-<slug>.md` gets one static mockup at 
 | 0.4 | 2026-10-14 | P2 review: Sporočila tab, bottom-nav baseline and text scaling cap, button label wrap, toast shadow. |
 | 0.5 | 2026-10-15 | P23 review (TASK-8.1): `destructive` darkened to crimson.700 light and crimson.300 dark (8.2 and 8.7:1, meets 7:1 as the main action of a delete dialog; tokens 0.3.0, new pairs on background, popover, muted). Flow top bar draws one bar per step. Radio checked = dot. Tile hover, pressed and 6 px focus offset. States written down from the gallery: disabled field (dashed line), select listbox, search field, checkbox and radio anatomy, choice-row hover, pressed and disabled, segmented hover and disabled, switch disabled, dialog title role and alert-dialog focus, menu, avatar initials, inline region error, progress done and failed, reduced-motion spinner. "You" dot never on detail maps. |
 | 0.6 | 2026-10-15 | P16 review (TASK-9.1): `provider` button variant and `provider`, `provider-foreground`, `provider-border` tokens (brand-literal white and near-black with a 1 px stroke, same on every surface; tokens 0.4.0). |
+| 0.7 | 2026-10-15 | FR-044 shelter directory: footer gains the "Shelters" link (13 links). Screens live in P3 (T5, T6), P19 and the P6 and P7 call rows. |

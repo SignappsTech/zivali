@@ -1,9 +1,9 @@
 ---
 doc_id: DOC-03
 title: Design Specification
-version: 0.3
+version: 0.4
 status: Draft (direction approved 2026-10-14)
-date: 2026-10-14
+date: 2026-10-15
 owner: Design Lead
 audience: Client, team
 approvals:
@@ -50,6 +50,7 @@ Sitemap (web). Mobile app navigation follows below.
     │     ├── Found animal (P7, no account) → private manage page /m/<token> (P7)
     │     └── Sighted animal (P7)
     ├── Content pages (P3): How it works · Safety tips · FAQ · For shelters · About · Where your money goes (M4)
+    ├── Shelter directory  /zavetisca (P3 T5) → Shelter page  /zavetisca/<slug> (P3 T6)
     ├── Partners "Oglašujte pri nas" (P22)
     ├── Sign in and create account (P16)
     ├── My account (signed in)
@@ -58,10 +59,10 @@ Sitemap (web). Mobile app navigation follows below.
     │     ├── Alerts and settings (P13) · Payments (P15)
     │     └── Cookie settings (P17)
     ├── Legal (P3 T4): Privacy · Cookies · Terms · Imprint · Accessibility statement
-    └── Admin  /admin (P19): Dashboard · Ads (P20) · House ads (P20) · Enquiries · Audit log · Settings
+    └── Admin  /admin (P19): Dashboard · Ads (P20) · House ads (P20) · Enquiries · Shelter directory · Audit log · Settings
           (M3: Organisations and portal · M4: Moderation, Users, Orders, KPIs)
 
-**Header (web):** logo, at most four links (Map, Lost, Found, How it works; signed in: How it works becomes My pets and reports), language, inbox icon and account menu (signed in) or Sign in, and the single primary "Report" menu. **Footer:** About, Safety tips, Partners, Privacy, Cookies, Terms, Imprint, Accessibility, Cookie settings, For shelters, How it works, language.
+**Header (web):** logo, at most four links (Map, Lost, Found, How it works; signed in: How it works becomes My pets and reports), language, inbox icon and account menu (signed in) or Sign in, and the single primary "Report" menu. **Footer:** About, Safety tips, Partners, Privacy, Cookies, Terms, Imprint, Accessibility, Cookie settings, For shelters, Shelters (directory), How it works, language.
 
 **Mobile app tabs (four):** Map, Inbox, Report (action, opens the Report sheet), Profile. Signed-out users get the same tabs; Inbox and Profile show sign-in prompts, Cookie settings and language stay available.
 
@@ -78,6 +79,8 @@ Sitemap (web). Mobile app navigation follows below.
     Account                        gate sheet in any flow → sign in or create (P16) → return to the same step
     Admin ads                      P19 sign in with strong authentication → P20 create, preview in four slots, schedule → statistics and CSV
     Partners                       P22 page → enquiry form → lead in admin and email to the client
+    Responsible shelter            P6 confirmation or P7 success → call the shelter for the municipality · or search /zavetisca (P3 T5) → shelter page (P3 T6) → call
+    Directory upkeep               P19 shelter directory: yearly reminder after 31 March → edit or CSV dry run → live at once, audit-logged
 
 # Page inventory
 
@@ -87,7 +90,7 @@ IDs are canonical: design slices are `design/pages/P<n>-<slug>.md`, mockups `des
 |---|---|---|---|---|---|---|
 | P1 | Web shell | Header, footer, containers, sidebar region, shared states | Header with Report menu, footer, layout variants, loading, empty and error patterns | TASK-11 | design/mockups/P1-web-shell.html | Slice written, mockup pending |
 | P2 | Mobile shell | Four tabs, Report sheet, permission primers, deep link landing | Bottom navigation, Report sheet, primers, signed-out states | TASK-12 | design/mockups/P2-mobile-shell.html | Slice written, mockup pending |
-| P3 | Public pages | Home and content templates (article, FAQ, legal) | Hero, near you, how it works, safety, templates | TASK-27, TASK-28 | design/mockups/P3-public-pages.html | Slice written, mockup pending |
+| P3 | Public pages | Home and content templates (article, FAQ, legal); shelter directory and shelter pages | Hero, near you, how it works, safety, templates; municipality search, call, hours, municipalities served | TASK-27, TASK-28, TASK-90 | design/mockups/P3-public-pages.html, design/mockups/P3-shelter-pages.html | Slice written, mockups pending |
 | P4 | Map and list | Browse reports near you, always with a list alternative | Area pill, markers, sheet and list, filter sheet, web two panes | TASK-31 | design/mockups/P4-map-list.html | Slice written, mockup pending |
 | P5 | Location picker | One picker and the fuzzed public area | Search, centre pin, radius, privacy line, fuzzed disc | TASK-15 | design/mockups/P5-location-picker.html | Slice written, mockup pending |
 | P6 | Report lost | Owner reports in minutes, one question per screen | Steps, sign-in gate, confirmation with optional support | TASK-29 | design/mockups/P6-report-lost.html | Slice written, mockup pending |
@@ -103,7 +106,7 @@ IDs are canonical: design slices are `design/pages/P<n>-<slug>.md`, mockups `des
 | P16 | Auth | Sign in, create account, gates | Sign in, create, verify, reset, contextual gate | TASK-9 | design/mockups/P16-auth.html | Slice written, mockup pending |
 | P17 | Consent | Equal-weight analytics choice | Banner, customise, settings, re-ask | TASK-13 | design/mockups/P17-consent.html | Slice written, mockup pending |
 | P18 | Poster and sharing | A4 poster, share and link card | Preview, download, share rows, poster layout, OG card | TASK-24 | design/mockups/P18-poster-share.html | Slice written, mockup pending |
-| P19 | Admin shell | Console frame, tables, access patterns | Sidebar, top bar, table pattern, strong-auth screens, audit log | TASK-34 | design/mockups/P19-admin-shell.html | Slice written, mockup pending |
+| P19 | Admin shell | Console frame, tables, access patterns; shelter directory upkeep | Sidebar, top bar, table pattern, strong-auth screens, audit log; directory tables, edit drawer, history, CSV dry run, yearly reminder | TASK-34, TASK-89 | design/mockups/P19-admin-shell.html, design/mockups/P19-shelter-directory.html | Slice written, mockups pending |
 | P20 | Admin ads | Create, preview, schedule and measure ads | List, form with validation, statistics, house ads | TASK-37 | design/mockups/P20-admin-ads.html | Slice written, mockup pending |
 | P21 | Ad slots and house ads | Labelled calm placements, four slots | Feed, detail, reunited, sidebar, house ads, no-ad routes | TASK-36 | design/mockups/P21-ad-slots.html | Slice written, mockup pending |
 | P22 | Partners page | Audience, placements and an enquiry | Hero, live numbers, slot previews, form | TASK-38 | design/mockups/P22-partners.html | Slice written, mockup pending |
@@ -145,3 +148,4 @@ Mobile first. Breakpoints: 640 (sm), 768 (md), 1024 (lg), 1280 (xl), 1536 (2xl).
 | 0.1 | | Initial draft |
 | 0.2 | 2026-10-14 | Direction phase: brand proposal (name Najdimo, tone, logo, palette, type), directions A and B explored, client chose A, decluttering pass applied, direction section and brand and visual language written. |
 | 0.3 | 2026-10-14 | Client approved the decluttered direction A. Information architecture, key flows, page inventory P1 to P23 (M1 and M2) with design slices, content strategy rules, accessibility and responsive sections completed from requirements v0.2. |
+| 0.4 | 2026-10-15 | FR-044 shelter directory (PRD 0.6, tech re-plan): IA and flows add /zavetisca and the admin directory; P3 gains T5 and T6, P19 the directory screen, P6 and P7 the responsible-shelter call row, P1 footer the Shelters link. Design system v0.5 to v0.7 (P23 and P16 reviews). |

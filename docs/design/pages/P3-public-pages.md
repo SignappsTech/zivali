@@ -1,9 +1,9 @@
 ---
 source: 03§P3
 page: P3 Public pages (home and content templates)
-stories: TASK-27, TASK-28, TASK-72 (FR-035)
+stories: TASK-27, TASK-28, TASK-72 (FR-035), TASK-90 (FR-044, shelter pages)
 platforms: web
-mockup: docs/design/mockups/P3-public-pages.html
+mockup: docs/design/mockups/P3-public-pages.html, docs/design/mockups/P3-shelter-pages.html (T5, T6)
 copy: docs/content/pages/P3-public-pages.md
 ---
 
@@ -21,8 +21,10 @@ The home page and the reusable templates for every public content page: how it w
 | T2 Article | How it works, Safety tips, For shelters, About, Where your money goes (M4), Success stories (M5) |
 | T3 FAQ | FAQ |
 | T4 Legal | Privacy, Cookies, Terms, Imprint, Accessibility statement |
+| T5 Shelter directory | `/zavetisca` (EN `/en/shelters`): find the shelter responsible for a municipality, and all shelters |
+| T6 Shelter page | `/zavetisca/{slug}` (EN `/en/shelters/{slug}`): one shelter, one per registered shelter (17) |
 
-All use the Content variant of the web shell (P1) without a sidebar. Public pages have **no ad slot** unless P21 says so.
+All use the Content variant of the web shell (P1) without a sidebar. Public pages have **no ad slot** unless P21 says so (T5 and T6 have none).
 
 ## T1 Home: section order
 
@@ -46,6 +48,49 @@ h1 and lede, then grouped questions. Each question is a full-width button row (`
 ## T4 Legal
 
 h1, "last updated" line, and a `note` that reads "requires client and legal review" while the page is a draft. Body in the Article style with numbered h2 sections. From `xl` a sticky "On this page" list on the left. Print stylesheet: single column, no header or footer chrome.
+
+## T5 Shelter directory (`/zavetisca`)
+
+Strings in quotes in T5 and T6 are placeholders; the content slice owns the final copy.
+
+Purpose: an owner or finder learns in one step which shelter is responsible for their municipality and can call it. Calm and useful: one question, one answer, then the full list. Linked from the footer (P1), the "For shelters" page, and the P6 and P7 post-submit checklists.
+
+Section order (640 px column, the list may use the 1120 px content width from `lg`):
+
+1. h1 and a one-sentence lede (content slice).
+2. **Municipality search**: one line field with a leading `map-pin-area` icon and the label above ("Vaša občina"), a combobox over the 212 municipalities. Matching ignores diacritics and case ("skofja" finds "Škofja Loka"); suggestions open as a listbox (system 10.3 Select on web), at most 8. No search button: choosing a municipality shows the answer.
+3. **Answer** (appears under the field, announced politely), on `card` (radius 24, padding 24, no border): meta line "Za občino {municipality} je pristojno", h2 shelter name (link to T6), phone in h3 size with `tabular-nums` (grouped "01 234 56 78"), the page's one primary `lg` "Pokliči" (`phone` icon, `tel:` link), and a text button "Delovni čas in naslov" to T6. If a municipality has two shelters (for example dogs and cats), show two answers stacked, each with its own call button as `secondary`, and no primary.
+4. **Unknown or unconfirmed municipality** (R-044.5): instead of the answer a `note` with an `info` icon: we do not have a confirmed shelter for this municipality yet, call the municipality, and a text link to the full list. Never a guessed name or number.
+5. **All shelters** (h2 with the count): plain rows, no cards, 20 px apart, alphabetical: shelter name (h3, link to T6), meta line with the area ("Ljubljana z okolico · 24 občin"), phone right-aligned on `lg` (`tabular-nums`, a `tel:` link). From `lg` two columns of rows.
+6. **Legal note slot**: a `note` with the reporting duty, rendered only when the `content.legal_timings` flag is on. Absent otherwise (no empty space).
+7. Quiet line: "Podatki preverjeni {date}", source, and a text link to report an error (contact).
+
+States: before search (field and list only), suggestions open, answer, two answers, unknown municipality, no match for the typed text ("Občine {text} ne najdemo", with the list still below), loading skeleton (answer card shape), error note with retry. Offline: the generic P1 offline note; the list stays if cached.
+
+## T6 Shelter page (`/zavetisca/{slug}`)
+
+Purpose: everything needed to reach this shelter, on one calm page that search engines understand. Structured data `AnimalShelter` (name, address, telephone, openingHoursSpecification, areaServed, url); unique title and description from the content slice.
+
+Section order:
+
+1. Text link back "Vsa zavetišča" (breadcrumb).
+2. h1 shelter name; meta line "Pristojno za {n} občin".
+3. **Contact** (from `lg` two columns, 7 and 5; contact left, map right):
+   - Phone in h2 size, `tabular-nums`, then the one primary `lg` "Pokliči" (`tel:`). If no phone is published: a sentence that says so and the website link takes its place as a `secondary` button.
+   - Address (two lines) with a text link "Odpri v zemljevidu" (opens the platform maps app or OpenStreetMap, new tab, says so).
+   - **Opening hours** as a plain two-column list (day range, hours; `tabular-nums`), for example "pon–pet 8.00–16.00", "sob 9.00–12.00", "ned in prazniki zaprto". No live "open now" claim (holidays make it unreliable).
+   - Website and e-mail as text links if present.
+   - Map: static calm map (radius 24, 4:3, `map-*` tokens), the shelter as the 48 px `primary` pin from P5 (a public address, so an exact pin is allowed here; this is the only exact pin outside the owner view). Not interactive; the address above is its text alternative.
+4. **Municipalities served** (h2 with the count): an alphabetical plain list in up to three columns on `lg`, one column on mobile. No pills or chips. Each municipality is plain text (the index search already covers lookup).
+5. **What to do** (h2): two plain rows with an icon, one sentence each and a text button: lost ("Prijavi izgubljeno žival", to P6) and found ("Prijavi najdeno žival", to P7). Not a second primary.
+6. **Legal note slot** as in T5 (flag-gated).
+7. Quiet line: last verified date and source, text link to report an error.
+
+States: loading skeleton (h1, phone, hours lines, map block), unknown slug (the P1 404 page with a link to T5), **stale data** (last verified more than 12 months ago): a `note` with a `clock` icon above the contact block, "Podatki so bili nazadnje preverjeni {date}. Pred obiskom pokličite." (still shows the data), missing phone (as above), missing hours ("Delovni čas ni objavljen"), map offline (the map block is omitted, the address stays).
+
+Responsive (T5 and T6): single column on mobile with 20 px gutters; the call button is full width `lg` in the page flow, never floating. Phone numbers and hours never wrap mid-number. 320 px and 400 % zoom reflow without horizontal scroll.
+
+Accessibility (T5 and T6): the search is a labelled combobox with `aria-expanded`, `aria-activedescendant` and a polite live region for the answer; call buttons have names that include the shelter ("Pokliči {shelter name}"); phone numbers are real `tel:` links; hours are a description list; the map is decorative (`alt=""`) because the address is text.
 
 ## States
 
@@ -72,3 +117,9 @@ One h1, ordered headings, FAQ rows are buttons with `aria-expanded`, legal TOC i
 3. T3 FAQ with one row expanded.
 4. T4 Legal with the draft note and the table of contents.
 5. Light and dark.
+
+## Mockup scope (`P3-shelter-pages.html`, TASK-90 design task)
+
+1. T5 at 1200 and 390 px: before search, suggestions open (typed "skof"), answer with call button, two answers, unknown municipality note, no match, legal note slot shown (flag on).
+2. T6 at 1200 and 390 px: full page, stale-data note, no-phone variant, loading skeleton.
+3. Light and dark. Shelter names, numbers and hours are marked sample data until the content slice and the directory provide them.
