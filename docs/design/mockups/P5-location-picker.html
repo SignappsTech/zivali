@@ -1,0 +1,879 @@
+<!doctype html>
+<!--
+  P5 Location picker and privacy-preserving area (TASK-15.1). Built from docs/design/pages/P5-location-picker.md,
+  docs/design/system.md (v0.4) and the copy in docs/content/pages/P5-location-picker.md (v0.1).
+  Shared strings: common.back "Nazaj", common.close "Zapri" (P1), permissions.open_settings and the step label (P2).
+  Elements marked data-sample are sample data (geocoder results, the page behind the dialog), not copy.
+  Everything in #src is cloned once per colour mode by ../directions/directions.js. Tokens only, no hex.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Najdimo mockup: P5 Location picker</title>
+<meta name="description" content="Location picker for every where-question (lost with radius, found, sighted, alert area) on mobile and web, all states, and the fuzzed public area component, in light and dark.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:wght@400;500;600;700&family=Bricolage+Grotesque:opsz,wght@12..96,500..800&display=swap" rel="stylesheet">
+<link href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css" rel="stylesheet">
+<link href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/bold/style.css" rel="stylesheet">
+<link href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css" rel="stylesheet">
+<link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet">
+<link href="../tokens.css" rel="stylesheet">
+<link href="../directions/directions.css" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com/3.4.17"></script>
+<script src="../directions/tailwind-config.js"></script>
+<style>
+/* P5 parts used only by this mockup. Token-driven; frontend maps them to LocationPicker, the centre pin and FuzzedArea. */
+.scope h1, .scope h2 { text-wrap: balance; }
+
+/* Shell parts copied from P1 (flow header logo link, minimal footer links) */
+.logo-link { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; border-radius: 12px; color: hsl(var(--foreground)); text-decoration: none; flex: none; }
+.fl { display: inline-flex; align-items: center; min-height: 44px; min-width: 44px; padding: 0; border: 0; background: none; font: inherit; font-size: 15px; line-height: 22px; color: hsl(var(--muted-foreground)); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 4px; cursor: pointer; white-space: nowrap; }
+.fl:hover { color: hsl(var(--foreground)); }
+
+/* System 10.1 hover: text and icon buttons get foreground at 10 % (directions.css on main still underlines text buttons) */
+.btn-text:hover, .btn-text.is-hover { background: hsl(var(--foreground) / 0.10); text-decoration: none; }
+.iconbtn.is-hover { background: hsl(var(--foreground) / 0.10); }
+.btn[aria-busy="true"] { cursor: progress; }
+
+/* Search and number fields: native chrome off, trailing clear button, unit suffix */
+.input[type="search"] { -webkit-appearance: none; appearance: none; }
+.input[type="search"]::-webkit-search-cancel-button, .input[type="search"]::-webkit-search-decoration { -webkit-appearance: none; display: none; }
+.input[type="number"] { -moz-appearance: textfield; appearance: textfield; }
+.input[type="number"]::-webkit-inner-spin-button, .input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+.input-wrap.has-end > .input { padding-right: 48px; }
+.lp-end { position: absolute; right: -4px; top: 50%; transform: translateY(-50%); color: hsl(var(--muted-foreground)); }
+.lp-end i { font-size: 22px; }
+.lp-unit > .input { padding-left: 2px; padding-right: 28px; }
+.lp-unit > span { position: absolute; right: 2px; top: 50%; transform: translateY(-50%); font-size: 18px; color: hsl(var(--muted-foreground)); pointer-events: none; }
+
+/* Centre pin: 48 px primary head with a tail, marker-ring halo. The tail tip is the chosen point. */
+.lp-pin { position: absolute; width: 54px; height: 66px; margin: -62px 0 0 -27px; pointer-events: none; z-index: 2; transition: transform 150ms var(--ease); }
+.lp-pin svg { display: block; overflow: visible; }
+.lp-pin path { fill: hsl(var(--primary)); stroke: hsl(var(--marker-ring)); stroke-width: 6px; paint-order: stroke; stroke-linejoin: round; }
+.lp-pin i { position: absolute; left: 27px; top: 27px; transform: translate(-50%, -50%); font-size: 24px; line-height: 1; color: hsl(var(--primary-foreground)); }
+.lp-pin.is-lifted { transform: translateY(-14px); }
+.lp-pin.sm { transform: scale(0.72); transform-origin: 27px 62px; }
+.lp-tip { position: absolute; width: 8px; height: 8px; margin: -4px 0 0 -4px; border-radius: 50%; background: hsl(var(--primary)); box-shadow: 0 0 0 2px hsl(var(--marker-ring)); z-index: 2; }
+@media (prefers-reduced-motion: reduce) { .lp-pin { transition: none; } }
+/* Editing disc (picker only): marker-area fill plus a 2 px marker-lost edge, so the boundary reads at 3:1 while adjusting. */
+.lp-disc { position: absolute; border-radius: 50%; transform: translate(-50%, -50%); background: hsl(var(--marker-area) / var(--marker-area-alpha)); box-shadow: inset 0 0 0 2px hsl(var(--marker-lost)); pointer-events: none; z-index: 1; }
+
+/* Fixed control panel under the map: card, sheet radius, shadow-lg (rises from the bottom edge over the map) */
+.lp-panel { position: relative; z-index: 4; flex: none; margin-top: -28px; padding: 20px 20px 44px; background: hsl(var(--card)); color: hsl(var(--card-foreground)); border-radius: var(--radius-sheet) var(--radius-sheet) 0 0; box-shadow: var(--shadow-lg); }
+.lp-addr { display: flex; align-items: center; gap: 8px; margin: 0; min-width: 0; min-height: 24px; font-weight: 700; font-size: 16px; line-height: 24px; }
+.lp-addr > i { font-size: 20px; line-height: 1; flex: none; color: hsl(var(--primary)); }
+.lp-addr.is-loading { font-weight: 600; color: hsl(var(--muted-foreground)); }
+.lp-addr .spin { width: 16px; height: 16px; border-width: 2px; flex: none; margin: 0 2px; }
+.lp-use { margin-left: -12px; }
+.lp-line { display: flex; gap: 8px; margin: 0; font-size: 14px; line-height: 20px; color: hsl(var(--muted-foreground)); }
+.lp-line > i { font-size: 16px; line-height: 20px; flex: none; color: hsl(var(--primary)); }
+.lp-warn { color: hsl(var(--foreground)); font-weight: 600; }
+.lp-warn > i { color: hsl(var(--foreground)); }
+
+/* Radius slider: 44 px target, 6 px track (input 3:1, primary fill), 28 px primary thumb on a surface ring */
+.lp-range { --f: 0.5; --s: var(--card); -webkit-appearance: none; appearance: none; display: block; width: 100%; height: 44px; margin: 0; padding: 0; background: transparent; cursor: pointer; }
+.lp-range.on-bg { --s: var(--background); }
+.lp-range:focus, .lp-range.is-focus { outline: none; }
+.lp-range::-webkit-slider-runnable-track { height: 6px; border-radius: 3px; background: linear-gradient(to right, hsl(var(--primary)) 0 calc(14px + (100% - 28px) * var(--f)), hsl(var(--input)) 0); }
+.lp-range::-moz-range-track { height: 6px; border-radius: 3px; background: hsl(var(--input)); }
+.lp-range::-moz-range-progress { height: 6px; border-radius: 3px; background: hsl(var(--primary)); }
+.lp-range::-webkit-slider-thumb { -webkit-appearance: none; width: 28px; height: 28px; margin-top: -11px; border: 0; border-radius: 50%; background: hsl(var(--primary)); box-shadow: 0 0 0 3px hsl(var(--s)); }
+.lp-range::-moz-range-thumb { width: 28px; height: 28px; border: 0; border-radius: 50%; background: hsl(var(--primary)); box-shadow: 0 0 0 3px hsl(var(--s)); }
+.lp-range:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 2px hsl(var(--s)), 0 0 0 5px hsl(var(--ring)); }
+.lp-range.is-focus::-webkit-slider-thumb { box-shadow: 0 0 0 2px hsl(var(--s)), 0 0 0 5px hsl(var(--ring)); }
+.lp-range:focus-visible::-moz-range-thumb { box-shadow: 0 0 0 2px hsl(var(--s)), 0 0 0 5px hsl(var(--ring)); }
+.lp-range.is-focus::-moz-range-thumb { box-shadow: 0 0 0 2px hsl(var(--s)), 0 0 0 5px hsl(var(--ring)); }
+
+/* Search results: plain rows (place, municipality); on web they drop over the map as a popover listbox */
+.lp-list { list-style: none; margin: 0; padding: 0; }
+.lp-opt { display: flex; align-items: center; gap: 12px; min-height: 52px; padding: 0 12px; border-radius: calc(var(--radius) - 4px); font-size: 16px; line-height: 24px; cursor: pointer; }
+.lp-opt > i { font-size: 20px; line-height: 1; flex: none; color: hsl(var(--muted-foreground)); }
+.lp-opt:hover, .lp-opt.is-hover { background: hsl(var(--foreground) / 0.10); }
+.lp-opt:active, .lp-opt.is-pressed { background: hsl(var(--accent)); color: hsl(var(--accent-foreground)); }
+.lp-opt[aria-selected="true"] { box-shadow: inset 0 0 0 3px hsl(var(--ring)); }
+.lp-pop { position: absolute; left: 0; right: 0; top: 100%; margin-top: 8px; padding: 8px; border-radius: var(--radius-row); background: hsl(var(--popover)); color: hsl(var(--popover-foreground)); box-shadow: var(--shadow-pop); z-index: 5; }
+
+/* Floating map controls (web keyboard support): zoom pill and the on-demand nudge pad */
+.lp-ctl { position: absolute; z-index: 3; display: flex; flex-direction: column; border-radius: 999px; background: hsl(var(--card)); color: hsl(var(--card-foreground)); box-shadow: var(--shadow-md); }
+.lp-nudge { position: absolute; z-index: 3; display: grid; grid-template-columns: repeat(3, 44px); grid-template-rows: repeat(3, 44px); gap: 4px; }
+.lp-fab { color: hsl(var(--card-foreground)); }
+.lp-fab i { font-size: 20px; }
+.lp-fab:hover, .lp-fab.is-hover { background: color-mix(in srgb, hsl(var(--card)) 90%, hsl(var(--foreground))); }
+
+/* Fuzzed area: text line, and the owner's own exact-pin label */
+.lp-area { display: flex; gap: 8px; margin: 0; font-weight: 700; font-size: 16px; line-height: 24px; }
+.lp-area > i { font-size: 20px; line-height: 24px; flex: none; color: hsl(var(--primary)); }
+.lp-own { position: absolute; z-index: 3; display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px 0 10px; border-radius: 999px; background: hsl(var(--card)); color: hsl(var(--card-foreground)); box-shadow: var(--shadow-md); font-size: 14px; line-height: 20px; font-weight: 700; white-space: nowrap; }
+.lp-own i { font-size: 16px; color: hsl(var(--primary)); }
+
+/* Web dialog: popover surface, radius 24, shadow-pop */
+.lp-dialog { position: absolute; z-index: 4; box-sizing: border-box; padding: 24px 28px 28px; border-radius: var(--radius-card); background: hsl(var(--popover)); color: hsl(var(--popover-foreground)); box-shadow: var(--shadow-pop); }
+
+/* Extra device frames: short phone (375 x 667, home button) and landscape (844 x 390) */
+.phone.se, .phone.se .phone-screen { width: 375px; height: 667px; }
+.phone.se { border-radius: 44px; }
+.phone.se .phone-screen { border-radius: 34px; }
+.sb-se { height: 20px; flex: none; display: flex; align-items: center; justify-content: space-between; padding: 0 10px; font-size: 12px; font-weight: 700; font-variant-numeric: tabular-nums; position: relative; z-index: 5; }
+.sb-se span { display: flex; gap: 4px; }
+.phone.land, .phone.land .phone-screen { width: 844px; height: 390px; }
+.phone.land .phone-screen { flex-direction: row; }
+</style>
+</head>
+<body>
+<a class="sr-only focus:not-sr-only" href="#stage">Skip to content</a>
+
+<!-- Logo symbol, defined once -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <symbol id="nj-mark" viewBox="0 0 48 48">
+    <g fill="currentColor" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round">
+      <path d="M24 45.5 C24 45.5 10.5 33.2 10.5 24.4 A13.5 13.5 0 0 1 37.5 24.4 C37.5 33.2 24 45.5 24 45.5 Z M24 17.9 A6.5 6.5 0 1 0 24 30.9 A6.5 6.5 0 1 0 24 17.9 Z"/>
+      <path d="M12.2 19.6 L11.2 5 L22.6 11.4 Z"/><path d="M35.8 19.6 L25.4 11.4 L36.8 5 Z"/>
+    </g>
+    <circle cx="24" cy="24.4" r="3.6" fill="#F7B32B"/>
+  </symbol>
+</svg>
+
+<header class="chrome">
+  <div class="flex flex-wrap items-center gap-x-5 gap-y-2 px-6 py-2 max-w-[1400px] mx-auto">
+    <span class="flex items-center gap-2 font-display font-bold text-lg"><svg class="logo-mark w-7 h-7" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg>Najdimo</span>
+    <span class="text-muted-foreground text-[15px]">P5 Location picker (mockup)</span>
+    <div class="ml-auto flex items-center gap-2" role="group" aria-label="Colour mode">
+      <button class="mode-btn" data-mode="light" aria-pressed="true">Light</button>
+      <button class="mode-btn" data-mode="dark" aria-pressed="false">Dark</button>
+      <button class="mode-btn" data-mode="both" aria-pressed="false">Side by side</button>
+    </div>
+  </div>
+</header>
+
+<main id="stage"></main>
+
+<div id="src" hidden>
+
+<!-- ================= A. MOBILE PICKER ================= -->
+<section class="tile-section !max-w-[1400px]">
+  <h1 class="tile-title">P5 Location picker and fuzzed public area</h1>
+  <p class="tile-lede">One picker for every "where" (lost, found, sighted, alert area, home area) and the one way an approximate public location is drawn. Accurate for the reporter, approximate for everyone else. The pin stays in the centre and the map moves under it. Copy from the P5 content slice.</p>
+
+  <h2 class="tile-title !text-2xl !mt-4">A. Mobile picker</h2>
+  <p class="tile-lede">Full screen inside a flow: top bar, the question, a line search field, the map, and a fixed panel with the address, "use my location", the radius (lost only), the privacy line and the one primary button.</p>
+
+  <div class="flex flex-wrap gap-x-10 gap-y-14 items-start">
+
+    <!-- A1 LOST -->
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">A1 Lost: radius 500 m (slider focused)</figcaption>
+      <div class="phone"><div class="phone-screen" lang="sl">
+        <div class="statusbar" aria-hidden="true"><span>14:20</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <div class="topbar">
+          <button type="button" class="iconbtn" aria-label="Nazaj"><i class="ph-bold ph-caret-left" aria-hidden="true"></i></button>
+          <div class="steps flex-1" role="progressbar" aria-valuemin="1" aria-valuemax="4" aria-valuenow="3" aria-label="Korak 3 od 4"><span class="on"></span><span class="on"></span><span class="on"></span><span></span></div>
+          <button type="button" class="iconbtn" aria-label="Zapri"><i class="ph-bold ph-x" aria-hidden="true"></i></button>
+        </div>
+        <h1 class="font-display font-bold text-[34px] leading-[40px] tracking-[-0.02em] px-5 pt-2">Kje ste žival nazadnje videli?</h1>
+        <div class="field px-5 mt-4">
+          <label for="a1-q">Iskanje kraja</label>
+          <div class="input-wrap"><i class="ph-bold ph-map-pin" aria-hidden="true"></i><input id="a1-q" class="input" type="search" role="combobox" aria-expanded="false" aria-autocomplete="list" autocomplete="off" placeholder="Ulica, kraj ali znamenitost"></div>
+        </div>
+        <div class="map-wrap flex-1 min-h-0 mt-3" role="region" aria-label="Zemljevid" aria-describedby="a1-pin">
+          <div class="map-canvas" data-center="14.4875,46.0700" data-zoom="12.9" data-roads="all"></div>
+          <span class="lp-disc" style="left:50%;top:calc(50% - 14px);width:141px;height:141px" aria-hidden="true"></span>
+          <span class="lp-pin" style="left:50%;top:calc(50% - 14px)" aria-hidden="true"><svg viewBox="0 0 54 66" width="54" height="66" focusable="false"><path d="M27 62 L15 47.78 A24 24 0 1 1 39 47.78 Z"/></svg><i class="ph-fill ph-paw-print"></i></span>
+          <p id="a1-pin" class="sr-only">Oznaka je na sredini zemljevida. Premaknite zemljevid, da jo postavite na pravo mesto.</p>
+        </div>
+        <div class="lp-panel">
+          <p class="lp-addr" aria-live="polite"><i class="ph-fill ph-map-pin-simple" aria-hidden="true"></i>Šiška, Ljubljana</p>
+          <button type="button" class="btn btn-text lp-use"><i class="ph-bold ph-crosshair" aria-hidden="true"></i>Uporabi mojo lokacijo</button>
+          <div class="mt-3">
+            <div class="flex items-baseline justify-between gap-3"><label class="label" for="a1-r">Območje iskanja</label><span class="font-bold text-[15px] leading-5 tnum" aria-hidden="true">Polmer 500 m</span></div>
+            <input id="a1-r" class="lp-range is-focus" type="range" min="0" max="13" step="1" value="3" style="--f:0.2308" aria-valuetext="Polmer 500 m" aria-describedby="a1-rh">
+            <p id="a1-rh" class="help">Izberite večje območje, če se je žival morda oddaljila.</p>
+          </div>
+          <p class="lp-line mt-3"><i class="ph-fill ph-shield-check" aria-hidden="true"></i><span>Javno prikažemo le približno območje, najmanj 500 m okoli oznake.</span></p>
+          <button type="button" class="btn btn-primary btn-lg btn-block mt-4">Potrdi kraj</button>
+        </div>
+        <span class="home-ind"></span>
+      </div></div>
+      <p class="help mt-4" style="max-width:412px">Pin: 48 px <code>primary</code> head with a tail and a <code>marker-ring</code> halo; the tail tip is the saved point. The disc is the chosen radius to scale (zoom 12.9: 500 m is about 70 px), <code>marker-area</code> fill with a 2 px <code>marker-lost</code> edge so the edge reads at 3:1 while editing. Slider: stepped 200 m to 5 km (proposed steps 200, 300, 400, 500, 750 m, 1, 1,5, 2, 2,5, 3, 3,5, 4, 4,5, 5 km), value as text and <code>aria-valuetext</code>. Below 500 m the search radius is kept for matching, but the public disc never draws under 500 m. Focus: 3 px <code>ring</code> around the thumb with a 2 px surface gap.</p>
+    </figure>
+
+    <!-- A2 FOUND -->
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">A2 Found: no radius</figcaption>
+      <div class="phone"><div class="phone-screen" lang="sl">
+        <div class="statusbar" aria-hidden="true"><span>14:20</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <div class="topbar">
+          <button type="button" class="iconbtn" aria-label="Nazaj"><i class="ph-bold ph-caret-left" aria-hidden="true"></i></button>
+          <div class="steps flex-1" role="progressbar" aria-valuemin="1" aria-valuemax="4" aria-valuenow="3" aria-label="Korak 3 od 4"><span class="on"></span><span class="on"></span><span class="on"></span><span></span></div>
+          <button type="button" class="iconbtn" aria-label="Zapri"><i class="ph-bold ph-x" aria-hidden="true"></i></button>
+        </div>
+        <h1 class="font-display font-bold text-[34px] leading-[40px] tracking-[-0.02em] px-5 pt-2">Kje ste žival našli?</h1>
+        <div class="field px-5 mt-4">
+          <label for="a2-q">Iskanje kraja</label>
+          <div class="input-wrap"><i class="ph-bold ph-map-pin" aria-hidden="true"></i><input id="a2-q" class="input" type="search" role="combobox" aria-expanded="false" aria-autocomplete="list" autocomplete="off" placeholder="Ulica, kraj ali znamenitost"></div>
+        </div>
+        <div class="map-wrap flex-1 min-h-0 mt-3" role="region" aria-label="Zemljevid" aria-describedby="a2-pin">
+          <div class="map-canvas" data-center="14.5130,46.0700" data-zoom="14.6" data-roads="all"></div>
+          <span class="lp-pin" style="left:50%;top:calc(50% - 14px)" aria-hidden="true"><svg viewBox="0 0 54 66" width="54" height="66" focusable="false"><path d="M27 62 L15 47.78 A24 24 0 1 1 39 47.78 Z"/></svg><i class="ph-fill ph-paw-print"></i></span>
+          <p id="a2-pin" class="sr-only">Oznaka je na sredini zemljevida. Premaknite zemljevid, da jo postavite na pravo mesto.</p>
+        </div>
+        <div class="lp-panel">
+          <p class="lp-addr" aria-live="polite"><i class="ph-fill ph-map-pin-simple" aria-hidden="true"></i>Bežigrad, Ljubljana</p>
+          <button type="button" class="btn btn-text lp-use"><i class="ph-bold ph-crosshair" aria-hidden="true"></i>Uporabi mojo lokacijo</button>
+          <p class="lp-line mt-3"><i class="ph-fill ph-shield-check" aria-hidden="true"></i><span>Javno prikažemo le približno območje. Ne sprašujemo, kje je žival zdaj.</span></p>
+          <button type="button" class="btn btn-primary btn-lg btn-block mt-4">Potrdi kraj</button>
+        </div>
+        <span class="home-ind"></span>
+      </div></div>
+      <p class="help mt-4" style="max-width:412px">Found and sighted have no radius: the public area is a fixed 150 m minimum (section F). The place where the animal is kept is never asked for; the privacy line says so. The address line is a polite live region, so a screen reader hears the new place when the map stops.</p>
+    </figure>
+
+    <!-- A3 SIGHTED, LOCATING -->
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">A3 Sighted: finding your location, unnamed place</figcaption>
+      <div class="phone"><div class="phone-screen" lang="sl">
+        <div class="statusbar" aria-hidden="true"><span>14:21</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <div class="topbar">
+          <button type="button" class="iconbtn" aria-label="Nazaj"><i class="ph-bold ph-caret-left" aria-hidden="true"></i></button>
+          <div class="steps flex-1" role="progressbar" aria-valuemin="1" aria-valuemax="4" aria-valuenow="3" aria-label="Korak 3 od 4"><span class="on"></span><span class="on"></span><span class="on"></span><span></span></div>
+          <button type="button" class="iconbtn" aria-label="Zapri"><i class="ph-bold ph-x" aria-hidden="true"></i></button>
+        </div>
+        <h1 class="font-display font-bold text-[34px] leading-[40px] tracking-[-0.02em] px-5 pt-2">Kje ste žival videli?</h1>
+        <div class="field px-5 mt-4">
+          <label for="a3-q">Iskanje kraja</label>
+          <div class="input-wrap"><i class="ph-bold ph-map-pin" aria-hidden="true"></i><input id="a3-q" class="input" type="search" role="combobox" aria-expanded="false" aria-autocomplete="list" autocomplete="off" placeholder="Ulica, kraj ali znamenitost"></div>
+        </div>
+        <div class="map-wrap flex-1 min-h-0 mt-3" role="region" aria-label="Zemljevid" aria-describedby="a3-pin">
+          <div class="map-canvas" data-center="14.4745,46.0590" data-zoom="14.6" data-roads="all"></div>
+          <span class="lp-pin" style="left:50%;top:calc(50% - 14px)" aria-hidden="true"><svg viewBox="0 0 54 66" width="54" height="66" focusable="false"><path d="M27 62 L15 47.78 A24 24 0 1 1 39 47.78 Z"/></svg><i class="ph-fill ph-paw-print"></i></span>
+          <p id="a3-pin" class="sr-only">Oznaka je na sredini zemljevida. Premaknite zemljevid, da jo postavite na pravo mesto.</p>
+        </div>
+        <div class="lp-panel">
+          <p class="lp-addr" aria-live="polite"><i class="ph-fill ph-map-pin-simple" aria-hidden="true"></i>Kraj brez imena</p>
+          <button type="button" class="btn btn-text lp-use" aria-busy="true" aria-disabled="true"><span class="spin" aria-hidden="true"></span>Določamo vašo lokacijo …</button>
+          <p class="lp-line mt-3"><i class="ph-fill ph-shield-check" aria-hidden="true"></i><span>Javno prikažemo le približno območje. Ne sprašujemo, kje je žival zdaj.</span></p>
+          <button type="button" class="btn btn-primary btn-lg btn-block mt-4">Potrdi kraj</button>
+        </div>
+        <span class="home-ind"></span>
+      </div></div>
+      <p class="help mt-4" style="max-width:412px">Loading on "Uporabi mojo lokacijo": spinner before the label, label from <code>location.locating</code>, <code>aria-busy</code>, presses ignored, no layout shift. The first tap goes through the P2 location primer (B2). When the fix arrives the map flies to it and the <code>marker-me</code> dot appears. The pin is over a wood with no geocoded name, so the address line reads "Kraj brez imena".</p>
+    </figure>
+
+    <!-- A4 DRAGGING -->
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">A4 Moving the map: pin lifted, address loading</figcaption>
+      <div class="phone"><div class="phone-screen" lang="sl">
+        <div class="statusbar" aria-hidden="true"><span>14:21</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <div class="topbar">
+          <button type="button" class="iconbtn" aria-label="Nazaj"><i class="ph-bold ph-caret-left" aria-hidden="true"></i></button>
+          <div class="steps flex-1" role="progressbar" aria-valuemin="1" aria-valuemax="4" aria-valuenow="3" aria-label="Korak 3 od 4"><span class="on"></span><span class="on"></span><span class="on"></span><span></span></div>
+          <button type="button" class="iconbtn" aria-label="Zapri"><i class="ph-bold ph-x" aria-hidden="true"></i></button>
+        </div>
+        <h1 class="font-display font-bold text-[34px] leading-[40px] tracking-[-0.02em] px-5 pt-2">Kje ste žival našli?</h1>
+        <div class="field px-5 mt-4">
+          <label for="a4-q">Iskanje kraja</label>
+          <div class="input-wrap"><i class="ph-bold ph-map-pin" aria-hidden="true"></i><input id="a4-q" class="input" type="search" role="combobox" aria-expanded="false" aria-autocomplete="list" autocomplete="off" placeholder="Ulica, kraj ali znamenitost"></div>
+        </div>
+        <div class="map-wrap flex-1 min-h-0 mt-3" role="region" aria-label="Zemljevid" aria-describedby="a4-pin">
+          <div class="map-canvas" data-center="14.5065,46.0640" data-zoom="14.6" data-roads="all"></div>
+          <span class="lp-tip" style="left:50%;top:calc(50% - 14px)" aria-hidden="true"></span>
+          <span class="lp-pin is-lifted" style="left:50%;top:calc(50% - 14px)" aria-hidden="true"><svg viewBox="0 0 54 66" width="54" height="66" focusable="false"><path d="M27 62 L15 47.78 A24 24 0 1 1 39 47.78 Z"/></svg><i class="ph-fill ph-paw-print"></i></span>
+          <p id="a4-pin" class="sr-only">Oznaka je na sredini zemljevida. Premaknite zemljevid, da jo postavite na pravo mesto.</p>
+        </div>
+        <div class="lp-panel">
+          <p class="lp-addr is-loading" aria-live="polite"><span class="spin" aria-hidden="true"></span>Iščemo naslov …</p>
+          <button type="button" class="btn btn-text lp-use"><i class="ph-bold ph-crosshair" aria-hidden="true"></i>Uporabi mojo lokacijo</button>
+          <p class="lp-line mt-3"><i class="ph-fill ph-shield-check" aria-hidden="true"></i><span>Javno prikažemo le približno območje. Ne sprašujemo, kje je žival zdaj.</span></p>
+          <button type="button" class="btn btn-primary btn-lg btn-block mt-4">Potrdi kraj</button>
+        </div>
+        <span class="home-ind"></span>
+      </div></div>
+      <p class="help mt-4" style="max-width:412px">While the map moves the pin lifts 14 px (150 ms, standard easing; no movement under reduced motion) and an 8 px dot marks the exact point. The address line shows a spinner and "Iščemo naslov …" until the map settles (debounced reverse geocode). Confirm stays enabled: the coordinates are what is saved, the name is a label.</p>
+    </figure>
+
+  </div>
+</section>
+
+<!-- ================= B. MOBILE SEARCH ================= -->
+<section class="tile-section !max-w-[1400px] !pt-0">
+  <h2 class="tile-title !text-2xl">B. Mobile search: results, searching, no results</h2>
+  <p class="tile-lede">Typing turns the field into a combobox. Results are plain rows (place, municipality); choosing one closes the list and centres the map there. The keyboard is not drawn.</p>
+
+  <div class="flex flex-wrap gap-x-10 gap-y-14 items-start">
+
+    <!-- B1 RESULTS -->
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">B1 Results under the field (first row pressed)</figcaption>
+      <div class="phone"><div class="phone-screen" lang="sl">
+        <div class="statusbar" aria-hidden="true"><span>14:22</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <div class="topbar">
+          <button type="button" class="iconbtn" aria-label="Nazaj"><i class="ph-bold ph-caret-left" aria-hidden="true"></i></button>
+          <div class="steps flex-1" role="progressbar" aria-valuemin="1" aria-valuemax="4" aria-valuenow="3" aria-label="Korak 3 od 4"><span class="on"></span><span class="on"></span><span class="on"></span><span></span></div>
+          <button type="button" class="iconbtn" aria-label="Zapri"><i class="ph-bold ph-x" aria-hidden="true"></i></button>
+        </div>
+        <h1 class="font-display font-bold text-[34px] leading-[40px] tracking-[-0.02em] px-5 pt-2">Kje ste žival nazadnje videli?</h1>
+        <div class="field px-5 mt-4">
+          <label for="b1-q">Iskanje kraja</label>
+          <div class="input-wrap has-end"><i class="ph-bold ph-map-pin" aria-hidden="true"></i><input id="b1-q" class="input is-focus" type="search" role="combobox" aria-expanded="true" aria-autocomplete="list" autocomplete="off" value="Tivoli"><button type="button" class="iconbtn lp-end" aria-label="Počisti iskanje"><i class="ph-fill ph-x-circle" aria-hidden="true"></i></button></div>
+        </div>
+        <ul class="lp-list px-2 mt-3" role="listbox" aria-label="Iskanje kraja" data-sample>
+          <li class="lp-opt is-pressed" role="option" aria-selected="false"><i class="ph-bold ph-map-pin" aria-hidden="true"></i><span><b>Park Tivoli</b>, Ljubljana</span></li>
+          <li class="lp-opt" role="option" aria-selected="false"><i class="ph-bold ph-map-pin" aria-hidden="true"></i><span><b>Hala Tivoli</b>, Ljubljana</span></li>
+          <li class="lp-opt" role="option" aria-selected="false"><i class="ph-bold ph-map-pin" aria-hidden="true"></i><span><b>Tivolska cesta</b>, Ljubljana</span></li>
+          <li class="lp-opt" role="option" aria-selected="false"><i class="ph-bold ph-map-pin" aria-hidden="true"></i><span><b>Tivolski grad</b>, Ljubljana</span></li>
+          <li class="lp-opt" role="option" aria-selected="false"><i class="ph-bold ph-map-pin" aria-hidden="true"></i><span><b>Ribnik v Tivoliju</b>, Ljubljana</span></li>
+        </ul>
+        <div class="flex-1"></div>
+        <span class="home-ind"></span>
+      </div></div>
+      <p class="help mt-4" style="max-width:412px">Rows: 52 px, map-pin icon, place bold and municipality (<code>location.result_line</code>), no dividers. The input is <code>role="combobox"</code> with <code>aria-expanded</code> and <code>aria-controls</code> on the listbox. The map and panel step aside while the keyboard is up. Clear button: 44 px, "Počisti iskanje". Sample geocoder data.</p>
+    </figure>
+
+    <!-- B2 SEARCHING -->
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">B2 Searching: skeleton rows</figcaption>
+      <div class="phone"><div class="phone-screen" lang="sl">
+        <div class="statusbar" aria-hidden="true"><span>14:22</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <div class="topbar">
+          <button type="button" class="iconbtn" aria-label="Nazaj"><i class="ph-bold ph-caret-left" aria-hidden="true"></i></button>
+          <div class="steps flex-1" role="progressbar" aria-valuemin="1" aria-valuemax="4" aria-valuenow="3" aria-label="Korak 3 od 4"><span class="on"></span><span class="on"></span><span class="on"></span><span></span></div>
+          <button type="button" class="iconbtn" aria-label="Zapri"><i class="ph-bold ph-x" aria-hidden="true"></i></button>
+        </div>
+        <h1 class="font-display font-bold text-[34px] leading-[40px] tracking-[-0.02em] px-5 pt-2">Kje ste žival videli?</h1>
+        <div class="field px-5 mt-4">
+          <label for="b2-q">Iskanje kraja</label>
+          <div class="input-wrap has-end"><i class="ph-bold ph-map-pin" aria-hidden="true"></i><input id="b2-q" class="input is-focus" type="search" role="combobox" aria-expanded="true" aria-autocomplete="list" autocomplete="off" value="Rožna d" aria-busy="true"><button type="button" class="iconbtn lp-end" aria-label="Počisti iskanje"><i class="ph-fill ph-x-circle" aria-hidden="true"></i></button></div>
+        </div>
+        <p class="help px-5 mt-4" role="status">Iščemo …</p>
+        <ul class="lp-list px-5 mt-3 grid gap-2" aria-hidden="true">
+          <li class="flex items-center gap-3" style="min-height:44px"><div class="skel w-5 h-5 !rounded-full"></div><div class="skel h-4" style="width:62%"></div></li>
+          <li class="flex items-center gap-3" style="min-height:44px"><div class="skel w-5 h-5 !rounded-full"></div><div class="skel h-4" style="width:48%"></div></li>
+          <li class="flex items-center gap-3" style="min-height:44px"><div class="skel w-5 h-5 !rounded-full"></div><div class="skel h-4" style="width:70%"></div></li>
+        </ul>
+        <div class="flex-1"></div>
+        <span class="home-ind"></span>
+      </div></div>
+      <p class="help mt-4" style="max-width:412px">After 300 ms of no typing: a polite status line "Iščemo …" and three skeleton rows in the row shape (<code>muted</code> with an <code>accent</code> shimmer, static under reduced motion). Earlier results are replaced, not appended.</p>
+    </figure>
+
+    <!-- B3 NO RESULTS -->
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">B3 No results: sentence and hint, map still usable</figcaption>
+      <div class="phone"><div class="phone-screen" lang="sl">
+        <div class="statusbar" aria-hidden="true"><span>14:22</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <div class="topbar">
+          <button type="button" class="iconbtn" aria-label="Nazaj"><i class="ph-bold ph-caret-left" aria-hidden="true"></i></button>
+          <div class="steps flex-1" role="progressbar" aria-valuemin="1" aria-valuemax="4" aria-valuenow="3" aria-label="Korak 3 od 4"><span class="on"></span><span class="on"></span><span class="on"></span><span></span></div>
+          <button type="button" class="iconbtn" aria-label="Zapri"><i class="ph-bold ph-x" aria-hidden="true"></i></button>
+        </div>
+        <h1 class="font-display font-bold text-[34px] leading-[40px] tracking-[-0.02em] px-5 pt-2">Kje ste žival našli?</h1>
+        <div class="field px-5 mt-4">
+          <label for="b3-q">Iskanje kraja</label>
+          <div class="input-wrap has-end"><i class="ph-bold ph-map-pin" aria-hidden="true"></i><input id="b3-q" class="input" type="search" role="combobox" aria-expanded="false" aria-autocomplete="list" autocomplete="off" value="Šišenska jasa"><button type="button" class="iconbtn lp-end" aria-label="Počisti iskanje"><i class="ph-fill ph-x-circle" aria-hidden="true"></i></button></div>
+        </div>
+        <p class="flex gap-3 px-5 mt-4" role="status"><i class="ph-bold ph-magnifying-glass text-[20px] leading-6 text-muted-foreground flex-none" aria-hidden="true"></i><span>Tega kraja ne najdemo. Poskusite z drugim imenom ali premaknite zemljevid na pravo mesto.</span></p>
+        <div class="map-wrap flex-1 min-h-0 mt-3" role="region" aria-label="Zemljevid" aria-describedby="b3-pin">
+          <div class="map-canvas" data-center="14.4790,46.0760" data-zoom="14.6" data-roads="all"></div>
+          <span class="lp-pin" style="left:50%;top:calc(50% - 14px)" aria-hidden="true"><svg viewBox="0 0 54 66" width="54" height="66" focusable="false"><path d="M27 62 L15 47.78 A24 24 0 1 1 39 47.78 Z"/></svg><i class="ph-fill ph-paw-print"></i></span>
+          <p id="b3-pin" class="sr-only">Oznaka je na sredini zemljevida. Premaknite zemljevid, da jo postavite na pravo mesto.</p>
+        </div>
+        <div class="lp-panel">
+          <p class="lp-addr" aria-live="polite"><i class="ph-fill ph-map-pin-simple" aria-hidden="true"></i>Šiška, Ljubljana</p>
+          <button type="button" class="btn btn-text lp-use"><i class="ph-bold ph-crosshair" aria-hidden="true"></i>Uporabi mojo lokacijo</button>
+          <p class="lp-line mt-3"><i class="ph-fill ph-shield-check" aria-hidden="true"></i><span>Javno prikažemo le približno območje. Ne sprašujemo, kje je žival zdaj.</span></p>
+          <button type="button" class="btn btn-primary btn-lg btn-block mt-4">Potrdi kraj</button>
+        </div>
+        <span class="home-ind"></span>
+      </div></div>
+      <p class="help mt-4" style="max-width:412px">Empty result: one sentence with the hint to move the map, 16/24 with a quiet search icon, announced as a status. No error colour: nothing is wrong. The map and panel come back so the hint can be acted on at once.</p>
+    </figure>
+
+  </div>
+</section>
+
+<!-- ================= C. MOBILE EXCEPTIONS ================= -->
+<section class="tile-section !max-w-[1400px] !pt-0">
+  <h2 class="tile-title !text-2xl">C. Mobile exceptions: GPS denied, outside Slovenia, very large radius, offline</h2>
+  <p class="tile-lede">None of these block the report. Each uses the one <code>note</code> the view allows, or the help line, with an icon and words, never colour alone.</p>
+
+  <div class="flex flex-wrap gap-x-10 gap-y-14 items-start">
+
+    <!-- C1 GPS DENIED -->
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">C1 GPS denied or unavailable</figcaption>
+      <div class="phone"><div class="phone-screen" lang="sl">
+        <div class="statusbar" aria-hidden="true"><span>14:23</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <div class="topbar">
+          <button type="button" class="iconbtn" aria-label="Nazaj"><i class="ph-bold ph-caret-left" aria-hidden="true"></i></button>
+          <div class="steps flex-1" role="progressbar" aria-valuemin="1" aria-valuemax="4" aria-valuenow="3" aria-label="Korak 3 od 4"><span class="on"></span><span class="on"></span><span class="on"></span><span></span></div>
+          <button type="button" class="iconbtn" aria-label="Zapri"><i class="ph-bold ph-x" aria-hidden="true"></i></button>
+        </div>
+        <h1 class="font-display font-bold text-[34px] leading-[40px] tracking-[-0.02em] px-5 pt-2">Kje ste žival našli?</h1>
+        <div class="field px-5 mt-4">
+          <label for="c1-q">Iskanje kraja</label>
+          <div class="input-wrap"><i class="ph-bold ph-map-pin" aria-hidden="true"></i><input id="c1-q" class="input" type="search" role="combobox" aria-expanded="false" aria-autocomplete="list" autocomplete="off" placeholder="Ulica, kraj ali znamenitost"></div>
+        </div>
+        <div class="map-wrap flex-1 min-h-0 mt-3" role="region" aria-label="Zemljevid" aria-describedby="c1-pin">
+          <div class="map-canvas" data-center="14.5058,46.0514" data-zoom="14.2" data-roads="all"></div>
+          <span class="lp-pin" style="left:50%;top:calc(50% - 14px)" aria-hidden="true"><svg viewBox="0 0 54 66" width="54" height="66" focusable="false"><path d="M27 62 L15 47.78 A24 24 0 1 1 39 47.78 Z"/></svg><i class="ph-fill ph-paw-print"></i></span>
+          <p id="c1-pin" class="sr-only">Oznaka je na sredini zemljevida. Premaknite zemljevid, da jo postavite na pravo mesto.</p>
+        </div>
+        <div class="lp-panel">
+          <p class="lp-addr" aria-live="polite"><i class="ph-fill ph-map-pin-simple" aria-hidden="true"></i>Center, Ljubljana</p>
+          <div class="note mt-3" role="status"><i class="ph-bold ph-gps-slash" aria-hidden="true"></i><p>Vaše lokacije nismo mogli dobiti. Kraj poiščite ali premaknite zemljevid. <a href="#" class="font-bold text-primary underline underline-offset-4">Odpri nastavitve telefona</a></p></div>
+          <p class="lp-line mt-3"><i class="ph-fill ph-shield-check" aria-hidden="true"></i><span>Javno prikažemo le približno območje. Ne sprašujemo, kje je žival zdaj.</span></p>
+          <button type="button" class="btn btn-primary btn-lg btn-block mt-4">Potrdi kraj</button>
+        </div>
+        <span class="home-ind"></span>
+      </div></div>
+      <p class="help mt-4" style="max-width:412px">The note takes the place of "Uporabi mojo lokacijo" (a tap there would only fail again). Search and moving the map keep working. The map opens on the last searched place, else Ljubljana centre. Settings link: <code>permissions.open_settings</code> from P2; on web it is left out.</p>
+    </figure>
+
+    <!-- C2 OUTSIDE SLOVENIA -->
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">C2 Outside Slovenia: non-blocking note</figcaption>
+      <div class="phone"><div class="phone-screen" lang="sl">
+        <div class="statusbar" aria-hidden="true"><span>14:24</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <div class="topbar">
+          <button type="button" class="iconbtn" aria-label="Nazaj"><i class="ph-bold ph-caret-left" aria-hidden="true"></i></button>
+          <div class="steps flex-1" role="progressbar" aria-valuemin="1" aria-valuemax="4" aria-valuenow="3" aria-label="Korak 3 od 4"><span class="on"></span><span class="on"></span><span class="on"></span><span></span></div>
+          <button type="button" class="iconbtn" aria-label="Zapri"><i class="ph-bold ph-x" aria-hidden="true"></i></button>
+        </div>
+        <h1 class="font-display font-bold text-[34px] leading-[40px] tracking-[-0.02em] px-5 pt-2">Kje ste žival videli?</h1>
+        <div class="field px-5 mt-4">
+          <label for="c2-q">Iskanje kraja</label>
+          <div class="input-wrap"><i class="ph-bold ph-map-pin" aria-hidden="true"></i><input id="c2-q" class="input" type="search" role="combobox" aria-expanded="false" aria-autocomplete="list" autocomplete="off" placeholder="Ulica, kraj ali znamenitost"></div>
+        </div>
+        <div class="map-wrap flex-1 min-h-0 mt-3" role="region" aria-label="Zemljevid" aria-describedby="c2-pin">
+          <div class="map-canvas" data-center="13.6180,45.9405" data-zoom="13.6" data-roads="all"></div>
+          <span class="lp-pin" style="left:50%;top:calc(50% - 14px)" aria-hidden="true"><svg viewBox="0 0 54 66" width="54" height="66" focusable="false"><path d="M27 62 L15 47.78 A24 24 0 1 1 39 47.78 Z"/></svg><i class="ph-fill ph-paw-print"></i></span>
+          <p id="c2-pin" class="sr-only">Oznaka je na sredini zemljevida. Premaknite zemljevid, da jo postavite na pravo mesto.</p>
+        </div>
+        <div class="lp-panel">
+          <p class="lp-addr" aria-live="polite"><i class="ph-fill ph-map-pin-simple" aria-hidden="true"></i><span data-sample>Gorica, Italija</span></p>
+          <button type="button" class="btn btn-text lp-use"><i class="ph-bold ph-crosshair" aria-hidden="true"></i>Uporabi mojo lokacijo</button>
+          <div class="note mt-3" role="status"><i class="ph-bold ph-globe-hemisphere-east" aria-hidden="true"></i><p>Ta kraj je zunaj Slovenije. Prijavo lahko oddate, vendar Najdimo zdaj deluje le v Sloveniji, zato jo bo videlo manj ljudi.</p></div>
+          <p class="lp-line mt-3"><i class="ph-fill ph-shield-check" aria-hidden="true"></i><span>Javno prikažemo le približno območje. Ne sprašujemo, kje je žival zdaj.</span></p>
+          <button type="button" class="btn btn-primary btn-lg btn-block mt-4">Potrdi kraj</button>
+        </div>
+        <span class="home-ind"></span>
+      </div></div>
+      <p class="help mt-4" style="max-width:412px">Shown when the pin leaves the Slovenian border polygon, hidden again when it returns. Neutral icon and <code>muted</code> note, no warning colour, confirm stays enabled. Place name as the geocoder returns it (sample data).</p>
+    </figure>
+
+    <!-- C3 VERY LARGE RADIUS -->
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">C3 Lost, very large radius: help turns into a warning</figcaption>
+      <div class="phone"><div class="phone-screen" lang="sl">
+        <div class="statusbar" aria-hidden="true"><span>14:25</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <div class="topbar">
+          <button type="button" class="iconbtn" aria-label="Nazaj"><i class="ph-bold ph-caret-left" aria-hidden="true"></i></button>
+          <div class="steps flex-1" role="progressbar" aria-valuemin="1" aria-valuemax="4" aria-valuenow="3" aria-label="Korak 3 od 4"><span class="on"></span><span class="on"></span><span class="on"></span><span></span></div>
+          <button type="button" class="iconbtn" aria-label="Zapri"><i class="ph-bold ph-x" aria-hidden="true"></i></button>
+        </div>
+        <h1 class="font-display font-bold text-[34px] leading-[40px] tracking-[-0.02em] px-5 pt-2">Kje ste žival nazadnje videli?</h1>
+        <div class="field px-5 mt-4">
+          <label for="c3-q">Iskanje kraja</label>
+          <div class="input-wrap"><i class="ph-bold ph-map-pin" aria-hidden="true"></i><input id="c3-q" class="input" type="search" role="combobox" aria-expanded="false" aria-autocomplete="list" autocomplete="off" placeholder="Ulica, kraj ali znamenitost"></div>
+        </div>
+        <div class="map-wrap flex-1 min-h-0 mt-3" role="region" aria-label="Zemljevid" aria-describedby="c3-pin">
+          <div class="map-canvas" data-center="14.4875,46.0700" data-zoom="10.1" data-roads="all"></div>
+          <span class="lp-disc" style="left:50%;top:calc(50% - 14px);width:141px;height:141px" aria-hidden="true"></span>
+          <span class="lp-pin" style="left:50%;top:calc(50% - 14px)" aria-hidden="true"><svg viewBox="0 0 54 66" width="54" height="66" focusable="false"><path d="M27 62 L15 47.78 A24 24 0 1 1 39 47.78 Z"/></svg><i class="ph-fill ph-paw-print"></i></span>
+          <p id="c3-pin" class="sr-only">Oznaka je na sredini zemljevida. Premaknite zemljevid, da jo postavite na pravo mesto.</p>
+        </div>
+        <div class="lp-panel">
+          <p class="lp-addr" aria-live="polite"><i class="ph-fill ph-map-pin-simple" aria-hidden="true"></i>Šiška, Ljubljana</p>
+          <button type="button" class="btn btn-text lp-use"><i class="ph-bold ph-crosshair" aria-hidden="true"></i>Uporabi mojo lokacijo</button>
+          <div class="mt-3">
+            <div class="flex items-baseline justify-between gap-3"><label class="label" for="c3-r">Območje iskanja</label><span class="font-bold text-[15px] leading-5 tnum" aria-hidden="true">Polmer 3,5 km</span></div>
+            <input id="c3-r" class="lp-range" type="range" min="0" max="13" step="1" value="10" style="--f:0.7692" aria-valuetext="Polmer 3,5 km" aria-describedby="c3-rh">
+            <p id="c3-rh" class="lp-line lp-warn" aria-live="polite"><i class="ph-bold ph-warning" aria-hidden="true"></i><span>Zelo veliko območje zmanjša natančnost ujemanj.</span></p>
+          </div>
+          <p class="lp-line mt-3"><i class="ph-fill ph-shield-check" aria-hidden="true"></i><span>Javno prikažemo le približno območje, najmanj 500 m okoli oznake.</span></p>
+          <button type="button" class="btn btn-primary btn-lg btn-block mt-4">Potrdi kraj</button>
+        </div>
+        <span class="home-ind"></span>
+      </div></div>
+      <p class="help mt-4" style="max-width:412px">From 3 km (proposed threshold) the help line becomes the warning: warning icon plus <code>foreground</code> semibold text, no yellow (sun stays out of the UI). It is advice, not an error; confirm stays enabled. The map zooms out so the whole disc stays in view (zoom 10.1: 3,5 km is about 70 px).</p>
+    </figure>
+
+    <!-- C4 OFFLINE -->
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">C4 Offline: map tiles unavailable, draft kept</figcaption>
+      <div class="phone"><div class="phone-screen" lang="sl">
+        <div class="statusbar" aria-hidden="true"><span>14:26</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-battery-high"></i></span></div>
+        <div class="topbar">
+          <button type="button" class="iconbtn" aria-label="Nazaj"><i class="ph-bold ph-caret-left" aria-hidden="true"></i></button>
+          <div class="steps flex-1" role="progressbar" aria-valuemin="1" aria-valuemax="4" aria-valuenow="3" aria-label="Korak 3 od 4"><span class="on"></span><span class="on"></span><span class="on"></span><span></span></div>
+          <button type="button" class="iconbtn" aria-label="Zapri"><i class="ph-bold ph-x" aria-hidden="true"></i></button>
+        </div>
+        <h1 class="font-display font-bold text-[34px] leading-[40px] tracking-[-0.02em] px-5 pt-2">Kje ste žival nazadnje videli?</h1>
+        <div class="field px-5 mt-4">
+          <label for="c4-q">Iskanje kraja</label>
+          <div class="input-wrap"><i class="ph-bold ph-map-pin" aria-hidden="true"></i><input id="c4-q" class="input" type="search" role="combobox" aria-expanded="false" aria-autocomplete="list" autocomplete="off" placeholder="Ulica, kraj ali znamenitost"></div>
+        </div>
+        <div class="map-wrap flex-1 min-h-0 mt-3">
+          <div class="note mx-5 mt-5" role="status"><i class="ph-bold ph-wifi-slash" aria-hidden="true"></i><div><p>Zemljevida ni mogoče naložiti. Kraj lahko izberete, ko boste spet povezani. Osnutek je shranjen.</p><button type="button" class="btn btn-text -ml-3 mt-1">Poskusi znova</button></div></div>
+        </div>
+        <div class="lp-panel">
+          <p class="lp-line"><i class="ph-fill ph-shield-check" aria-hidden="true"></i><span>Javno prikažemo le približno območje, najmanj 500 m okoli oznake.</span></p>
+          <button type="button" class="btn btn-primary btn-lg btn-block mt-4 is-disabled" aria-disabled="true">Potrdi kraj</button>
+        </div>
+        <span class="home-ind"></span>
+      </div></div>
+      <p class="help mt-4" style="max-width:412px">Plain <code>map-land</code> where the tiles would be, with the one note and a "Poskusi znova" text button. On this screen it replaces the P2 offline banner (one note per view; the copy already says the draft is saved). Address, "use my location" and radius wait for the map. Confirm is disabled (<code>muted</code> fill, still 4.5:1); the note says why. Back online: the map loads, the note goes, the P2 toast confirms.</p>
+    </figure>
+
+  </div>
+</section>
+
+<!-- ================= D. VARIANTS AND LAYOUTS ================= -->
+<section class="tile-section !max-w-[1400px] !pt-0">
+  <h2 class="tile-title !text-2xl">D. Alert area variant, short screen and landscape</h2>
+  <p class="tile-lede">The same screen for the P13 alert area, the short-screen collapse of the privacy line, and the landscape split.</p>
+
+  <div class="flex flex-wrap gap-x-10 gap-y-14 items-start">
+
+    <!-- D1 ALERT AREA -->
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">D1 Alert area (P13): home pin, 1 to 25 km</figcaption>
+      <div class="phone"><div class="phone-screen" lang="sl">
+        <div class="statusbar" aria-hidden="true"><span>14:30</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <div class="topbar">
+          <button type="button" class="iconbtn" aria-label="Nazaj"><i class="ph-bold ph-caret-left" aria-hidden="true"></i></button>
+        </div>
+        <h1 class="font-display font-bold text-[34px] leading-[40px] tracking-[-0.02em] px-5 pt-2">Za katero območje želite opozorila?</h1>
+        <div class="field px-5 mt-4">
+          <label for="d1-q">Iskanje kraja</label>
+          <div class="input-wrap"><i class="ph-bold ph-map-pin" aria-hidden="true"></i><input id="d1-q" class="input" type="search" role="combobox" aria-expanded="false" aria-autocomplete="list" autocomplete="off" placeholder="Ulica, kraj ali znamenitost"></div>
+        </div>
+        <div class="map-wrap flex-1 min-h-0 mt-3" role="region" aria-label="Zemljevid" aria-describedby="d1-pin">
+          <div class="map-canvas" data-center="14.4875,46.0700" data-zoom="9.5" data-roads="all"></div>
+          <span class="lp-disc" style="left:50%;top:calc(50% - 14px);width:133px;height:133px" aria-hidden="true"></span>
+          <span class="lp-pin" style="left:50%;top:calc(50% - 14px)" aria-hidden="true"><svg viewBox="0 0 54 66" width="54" height="66" focusable="false"><path d="M27 62 L15 47.78 A24 24 0 1 1 39 47.78 Z"/></svg><i class="ph-fill ph-house"></i></span>
+          <p id="d1-pin" class="sr-only">Oznaka je na sredini zemljevida. Premaknite zemljevid, da jo postavite na pravo mesto.</p>
+        </div>
+        <div class="lp-panel">
+          <p class="lp-addr" aria-live="polite"><i class="ph-fill ph-map-pin-simple" aria-hidden="true"></i>Šiška, Ljubljana</p>
+          <button type="button" class="btn btn-text lp-use"><i class="ph-bold ph-crosshair" aria-hidden="true"></i>Uporabi mojo lokacijo</button>
+          <div class="mt-3">
+            <div class="flex items-baseline justify-between gap-3"><label class="label" for="d1-r">Polmer opozoril</label><span class="font-bold text-[15px] leading-5 tnum" aria-hidden="true">5 km</span></div>
+            <input id="d1-r" class="lp-range" type="range" min="0" max="9" step="1" value="4" style="--f:0.4444" aria-valuetext="5 km" aria-describedby="d1-rh">
+            <p id="d1-rh" class="help">Obvestimo vas o izgubljenih živalih znotraj tega območja.</p>
+          </div>
+          <p class="lp-line mt-3"><i class="ph-fill ph-lock-simple" aria-hidden="true"></i><span>Vaše domače območje vidite samo vi.</span></p>
+          <button type="button" class="btn btn-primary btn-lg btn-block mt-4">Shrani območje</button>
+        </div>
+        <span class="home-ind"></span>
+      </div></div>
+      <p class="help mt-4" style="max-width:412px">Opened from settings, so the standard top bar (back only, no steps). House icon in the pin. Radius 1 to 25 km, proposed steps 1, 2, 3, 4, 5, 7, 10, 15, 20, 25 km, default 5 km (zoom 9.5: 5 km is about 67 px). No date or time. Lock icon: only the user sees this area. Home area uses the same screen with <code>location.title_home</code>.</p>
+    </figure>
+
+    <!-- D2 SHORT SCREEN -->
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">D2 Short screen (375 × 667): privacy line as an icon button (focused)</figcaption>
+      <div class="phone se"><div class="phone-screen" lang="sl">
+        <div class="sb-se" aria-hidden="true"><span>14:31</span><span><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <div class="topbar">
+          <button type="button" class="iconbtn" aria-label="Nazaj"><i class="ph-bold ph-caret-left" aria-hidden="true"></i></button>
+          <div class="steps flex-1" role="progressbar" aria-valuemin="1" aria-valuemax="4" aria-valuenow="3" aria-label="Korak 3 od 4"><span class="on"></span><span class="on"></span><span class="on"></span><span></span></div>
+          <button type="button" class="iconbtn" aria-label="Zapri"><i class="ph-bold ph-x" aria-hidden="true"></i></button>
+        </div>
+        <h1 class="font-display font-bold text-[34px] leading-[40px] tracking-[-0.02em] px-5 pt-2">Kje ste žival našli?</h1>
+        <div class="field px-5 mt-4">
+          <label for="d2-q">Iskanje kraja</label>
+          <div class="input-wrap"><i class="ph-bold ph-map-pin" aria-hidden="true"></i><input id="d2-q" class="input" type="search" role="combobox" aria-expanded="false" aria-autocomplete="list" autocomplete="off" placeholder="Ulica, kraj ali znamenitost"></div>
+        </div>
+        <div class="map-wrap flex-1 min-h-0 mt-3" role="region" aria-label="Zemljevid" aria-describedby="d2-pin">
+          <div class="map-canvas" data-center="14.4950,46.0560" data-zoom="14.6" data-roads="all"></div>
+          <span class="lp-pin" style="left:50%;top:calc(50% - 14px)" aria-hidden="true"><svg viewBox="0 0 54 66" width="54" height="66" focusable="false"><path d="M27 62 L15 47.78 A24 24 0 1 1 39 47.78 Z"/></svg><i class="ph-fill ph-paw-print"></i></span>
+          <p id="d2-pin" class="sr-only">Oznaka je na sredini zemljevida. Premaknite zemljevid, da jo postavite na pravo mesto.</p>
+        </div>
+        <div class="lp-panel" style="padding-bottom:20px">
+          <div class="flex items-center justify-between gap-2" style="margin:-10px 0">
+            <p class="lp-addr" aria-live="polite"><i class="ph-fill ph-map-pin-simple" aria-hidden="true"></i>Tivoli, Ljubljana</p>
+            <button type="button" class="iconbtn is-focus flex-none" aria-label="Kdo vidi ta kraj?" aria-haspopup="dialog"><i class="ph-bold ph-shield-check" aria-hidden="true"></i></button>
+          </div>
+          <button type="button" class="btn btn-text lp-use"><i class="ph-bold ph-crosshair" aria-hidden="true"></i>Uporabi mojo lokacijo</button>
+          <button type="button" class="btn btn-primary btn-lg btn-block mt-4">Potrdi kraj</button>
+        </div>
+      </div></div>
+      <p class="help mt-4" style="max-width:412px">When the visible map would drop below about 180 px (short phones, 200 % text) the privacy line collapses into a 44 px icon button at the end of the address line, named "Kdo vidi ta kraj?". It opens D3. Shield icon, so it reads as privacy, not help. No home indicator on this device: 20 px bottom padding.</p>
+    </figure>
+
+    <!-- D3 SHORT SCREEN, EXPLANATION OPEN -->
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">D3 Short screen: "Kdo vidi ta kraj?" sheet open</figcaption>
+      <div class="phone se"><div class="phone-screen" lang="sl">
+        <div class="absolute inset-0 flex flex-col" aria-hidden="true" inert>
+          <div class="sb-se"><span>14:31</span><span><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+          <div class="topbar"><span class="iconbtn"><i class="ph-bold ph-caret-left"></i></span><div class="steps flex-1"><span class="on"></span><span class="on"></span><span class="on"></span><span></span></div><span class="iconbtn"><i class="ph-bold ph-x"></i></span></div>
+          <p class="font-display font-bold text-[34px] leading-[40px] tracking-[-0.02em] px-5 pt-2">Kje ste žival našli?</p>
+          <div class="field px-5 mt-4"><span class="label">Iskanje kraja</span><div class="input-wrap"><i class="ph-bold ph-map-pin"></i><span class="input flex items-center text-muted-foreground">Ulica, kraj ali znamenitost</span></div></div>
+          <div class="map-wrap flex-1 min-h-0 mt-3">
+            <div class="map-canvas" data-center="14.4950,46.0560" data-zoom="14.6" data-roads="all"></div>
+            <span class="lp-pin" style="left:50%;top:calc(50% - 14px)"><svg viewBox="0 0 54 66" width="54" height="66" focusable="false"><path d="M27 62 L15 47.78 A24 24 0 1 1 39 47.78 Z"/></svg><i class="ph-fill ph-paw-print"></i></span>
+          </div>
+          <div class="lp-panel" style="padding-bottom:20px">
+            <div class="flex items-center justify-between gap-2" style="margin:-10px 0"><p class="lp-addr"><i class="ph-fill ph-map-pin-simple"></i>Tivoli, Ljubljana</p><span class="iconbtn"><i class="ph-bold ph-shield-check"></i></span></div>
+            <span class="btn btn-text lp-use"><i class="ph-bold ph-crosshair"></i>Uporabi mojo lokacijo</span>
+            <span class="btn btn-primary btn-lg btn-block mt-4">Potrdi kraj</span>
+          </div>
+        </div>
+        <div class="scrim"></div>
+        <div class="sheet" role="dialog" aria-modal="true" aria-label="Kdo vidi ta kraj?" style="z-index:8;padding-bottom:32px">
+          <button type="button" class="grab" aria-label="Zapri"></button>
+          <div class="px-5 pt-4">
+            <i class="ph-fill ph-shield-check text-[32px] leading-none text-primary" aria-hidden="true"></i>
+            <h2 class="font-display font-bold text-[24px] leading-[30px] tracking-[-0.015em] mt-3">Kdo vidi ta kraj?</h2>
+            <p class="text-lg leading-7 mt-2">Javno prikažemo le približno območje. Ne sprašujemo, kje je žival zdaj.</p>
+          </div>
+        </div>
+      </div></div>
+      <p class="help mt-4" style="max-width:412px">A small sheet (<code>card</code>, top radius 28, <code>shadow-lg</code>, <code>scrim</code>) with the same privacy sentence as real text, 18/28. Title = the button's name. The grabber is a 44 px "Zapri" button; scrim tap and swipe down also close. Focus returns to the shield button.</p>
+    </figure>
+
+    <!-- D4 LANDSCAPE -->
+    <figure class="m-0 max-w-full">
+      <figcaption class="tile-h !mt-0">D4 Landscape: controls and map side by side</figcaption>
+      <div class="wrap-x"><div class="phone land"><div class="phone-screen" lang="sl">
+        <div class="flex flex-col flex-none h-full" style="width:420px;padding-left:44px;box-sizing:border-box">
+          <div class="topbar">
+            <button type="button" class="iconbtn" aria-label="Nazaj"><i class="ph-bold ph-caret-left" aria-hidden="true"></i></button>
+            <div class="steps flex-1" role="progressbar" aria-valuemin="1" aria-valuemax="4" aria-valuenow="3" aria-label="Korak 3 od 4"><span class="on"></span><span class="on"></span><span class="on"></span><span></span></div>
+            <button type="button" class="iconbtn" aria-label="Zapri"><i class="ph-bold ph-x" aria-hidden="true"></i></button>
+          </div>
+          <div class="flex-1 min-h-0 overflow-y-auto scrollfade px-5 pb-6" tabindex="0" role="region" aria-label="Kje ste žival nazadnje videli?">
+            <h1 class="font-display font-bold text-[34px] leading-[40px] tracking-[-0.02em] pt-2">Kje ste žival nazadnje videli?</h1>
+            <div class="field mt-4">
+              <label for="d4-q">Iskanje kraja</label>
+              <div class="input-wrap"><i class="ph-bold ph-map-pin" aria-hidden="true"></i><input id="d4-q" class="input" type="search" role="combobox" aria-expanded="false" aria-autocomplete="list" autocomplete="off" placeholder="Ulica, kraj ali znamenitost"></div>
+            </div>
+            <p class="lp-addr mt-5" aria-live="polite"><i class="ph-fill ph-map-pin-simple" aria-hidden="true"></i>Šiška, Ljubljana</p>
+            <button type="button" class="btn btn-text lp-use"><i class="ph-bold ph-crosshair" aria-hidden="true"></i>Uporabi mojo lokacijo</button>
+            <div class="mt-3">
+              <div class="flex items-baseline justify-between gap-3"><label class="label" for="d4-r">Območje iskanja</label><span class="font-bold text-[15px] leading-5 tnum" aria-hidden="true">Polmer 500 m</span></div>
+              <input id="d4-r" class="lp-range on-bg" type="range" min="0" max="13" step="1" value="3" style="--f:0.2308" aria-valuetext="Polmer 500 m" aria-describedby="d4-rh">
+              <p id="d4-rh" class="help">Izberite večje območje, če se je žival morda oddaljila.</p>
+            </div>
+            <p class="lp-line mt-3"><i class="ph-fill ph-shield-check" aria-hidden="true"></i><span>Javno prikažemo le približno območje, najmanj 500 m okoli oznake.</span></p>
+          </div>
+          <div class="px-5 pt-2 pb-5"><button type="button" class="btn btn-primary btn-lg btn-block">Potrdi kraj</button></div>
+        </div>
+        <div class="map-wrap flex-1 min-w-0" role="region" aria-label="Zemljevid" aria-describedby="d4-pin">
+          <div class="map-canvas" data-center="14.4875,46.0700" data-zoom="13.5" data-roads="all"></div>
+          <span class="lp-disc" style="left:50%;top:50%;width:213px;height:213px" aria-hidden="true"></span>
+          <span class="lp-pin" style="left:50%;top:50%" aria-hidden="true"><svg viewBox="0 0 54 66" width="54" height="66" focusable="false"><path d="M27 62 L15 47.78 A24 24 0 1 1 39 47.78 Z"/></svg><i class="ph-fill ph-paw-print"></i></span>
+          <p id="d4-pin" class="sr-only">Oznaka je na sredini zemljevida. Premaknite zemljevid, da jo postavite na pravo mesto.</p>
+        </div>
+        <span class="home-ind"></span>
+      </div></div></div>
+      <p class="help mt-4" style="max-width:640px">Controls on the left behind the 44 px safe-area inset, on <code>background</code> (no panel needed), scrolling with a fade while the confirm button stays pinned. Map fills the right side; disc to scale at zoom 13.5 (500 m is about 107 px). Focus order still search, map, radius, confirm.</p>
+    </figure>
+
+  </div>
+</section>
+
+<!-- ================= E. WEB ================= -->
+<section class="tile-section !max-w-[1400px] !pt-0">
+  <h2 class="tile-title !text-2xl">E. Web: inline column and dialog</h2>
+  <p class="tile-lede">Inline in a flow step (centred 560 px column, map 400 px under the field), or as a dialog when launched from a flow step. Keyboard: arrows nudge the map, + and − zoom; the slider has a number input alternative.</p>
+
+  <!-- E1 INLINE -->
+  <p class="tile-h">E1 Inline column, lost (1200 px): map focused, move buttons shown, hover on "Uporabi mojo lokacijo"</p>
+  <div class="wrap-x"><div class="browser" lang="sl">
+    <div class="browser-bar"><span class="dots"><i></i><i></i><i></i></span><span class="url"><i class="ph ph-lock-simple"></i>najdimo.si/prijavi/izgubljena</span></div>
+    <header class="flex items-center gap-8 px-12 h-[88px]">
+      <a href="#" class="logo-link" aria-label="Najdimo, na začetno stran"><svg class="logo-mark w-9 h-9" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg><span class="font-display font-bold text-2xl tracking-[-0.03em]" aria-hidden="true">Najdimo</span></a>
+      <a href="#" class="btn btn-ghost btn-sm ml-auto"><i class="ph-bold ph-x" aria-hidden="true"></i>Zapri</a>
+    </header>
+    <main class="w-full max-w-[560px] mx-auto pt-8">
+      <div class="steps" role="progressbar" aria-valuemin="1" aria-valuemax="4" aria-valuenow="3" aria-label="Korak 3 od 4"><span class="on"></span><span class="on"></span><span class="on"></span><span></span></div>
+      <h1 class="font-display font-bold text-5xl tracking-[-0.02em] mt-10">Kje ste žival nazadnje videli?</h1>
+      <div class="field mt-8">
+        <label for="e1-q">Iskanje kraja</label>
+        <div class="input-wrap"><i class="ph-bold ph-map-pin" aria-hidden="true"></i><input id="e1-q" class="input" type="search" role="combobox" aria-expanded="false" aria-autocomplete="list" autocomplete="off" placeholder="Ulica, kraj ali znamenitost"></div>
+      </div>
+      <div class="relative mt-6">
+        <div class="map-wrap is-focus" tabindex="0" role="application" aria-label="Zemljevid" aria-describedby="e1-desc" style="height:400px;border-radius:var(--radius-card)">
+          <div class="map-canvas" data-center="14.4875,46.0700" data-zoom="13.5" data-roads="all"></div>
+          <span class="lp-disc" style="left:50%;top:50%;width:213px;height:213px" aria-hidden="true"></span>
+          <span class="lp-pin" style="left:50%;top:50%" aria-hidden="true"><svg viewBox="0 0 54 66" width="54" height="66" focusable="false"><path d="M27 62 L15 47.78 A24 24 0 1 1 39 47.78 Z"/></svg><i class="ph-fill ph-paw-print"></i></span>
+        </div>
+        <div class="lp-ctl" style="right:16px;top:16px">
+          <button type="button" class="iconbtn" aria-label="Povečaj"><i class="ph-bold ph-plus" aria-hidden="true"></i></button>
+          <button type="button" class="iconbtn" aria-label="Pomanjšaj"><i class="ph-bold ph-minus" aria-hidden="true"></i></button>
+        </div>
+        <div class="lp-nudge" style="left:16px;bottom:16px">
+          <button type="button" class="iconbtn float lp-fab" style="grid-area:1 / 2" aria-label="Premakni za 100 m proti severu"><i class="ph-bold ph-arrow-up" aria-hidden="true"></i></button>
+          <button type="button" class="iconbtn float lp-fab" style="grid-area:2 / 1" aria-label="Premakni za 100 m proti zahodu"><i class="ph-bold ph-arrow-left" aria-hidden="true"></i></button>
+          <button type="button" class="iconbtn float lp-fab" style="grid-area:2 / 3" aria-label="Premakni za 100 m proti vzhodu"><i class="ph-bold ph-arrow-right" aria-hidden="true"></i></button>
+          <button type="button" class="iconbtn float lp-fab" style="grid-area:3 / 2" aria-label="Premakni za 100 m proti jugu"><i class="ph-bold ph-arrow-down" aria-hidden="true"></i></button>
+        </div>
+      </div>
+      <div id="e1-desc" class="mt-3">
+        <p class="sr-only">Oznaka je na sredini zemljevida. Premaknite zemljevid, da jo postavite na pravo mesto.</p>
+        <p class="help flex gap-2"><i class="ph-bold ph-keyboard text-base mt-0.5" aria-hidden="true"></i><span>Zemljevid premikate s puščicami, povečate s tipko + in pomanjšate s tipko −.</span></p>
+      </div>
+      <button type="button" class="btn btn-text lp-use mt-1" aria-expanded="true"><i class="ph-bold ph-arrows-out-cardinal" aria-hidden="true"></i>Pokaži gumbe za premik<i class="ph-bold ph-caret-up" aria-hidden="true"></i></button>
+      <div class="flex items-center justify-between gap-4 mt-6">
+        <p class="lp-addr" aria-live="polite"><i class="ph-fill ph-map-pin-simple" aria-hidden="true"></i>Šiška, Ljubljana</p>
+        <button type="button" class="btn btn-text is-hover -mr-3"><i class="ph-bold ph-crosshair" aria-hidden="true"></i>Uporabi mojo lokacijo</button>
+      </div>
+      <div class="flex items-end gap-8 mt-8">
+        <div class="flex-1 min-w-0">
+          <div class="flex items-baseline justify-between gap-3"><label class="label" for="e1-r">Območje iskanja</label><span class="font-bold text-[15px] leading-5 tnum" aria-hidden="true">Polmer 500 m</span></div>
+          <input id="e1-r" class="lp-range on-bg" type="range" min="0" max="13" step="1" value="3" style="--f:0.2308;margin-bottom:6px" aria-valuetext="Polmer 500 m" aria-describedby="e1-rh">
+        </div>
+        <div class="field flex-none" style="width:160px">
+          <label for="e1-n">Polmer v metrih</label>
+          <div class="input-wrap lp-unit"><input id="e1-n" class="input tnum" type="number" inputmode="numeric" min="200" max="5000" step="50" value="500"><span aria-hidden="true">m</span></div>
+        </div>
+      </div>
+      <p id="e1-rh" class="help mt-2">Izberite večje območje, če se je žival morda oddaljila.</p>
+      <p class="lp-line mt-6"><i class="ph-fill ph-shield-check" aria-hidden="true"></i><span>Javno prikažemo le približno območje, najmanj 500 m okoli oznake.</span></p>
+      <div class="grid gap-1 mt-10">
+        <button type="button" class="btn btn-primary btn-lg btn-block">Potrdi kraj</button>
+        <button type="button" class="btn btn-text btn-block">Nazaj</button>
+      </div>
+    </main>
+    <footer class="px-12 pt-6 pb-6 mt-24">
+      <nav aria-label="Noga strani"><ul class="flex flex-wrap justify-center gap-x-6">
+        <li><a href="#" class="fl">Zasebnost</a></li>
+        <li><a href="#" class="fl">Pogoji uporabe</a></li>
+        <li><button type="button" class="fl" aria-haspopup="dialog">Nastavitve piškotkov</button></li>
+        <li><a href="#" class="fl">Dostopnost</a></li>
+      </ul></nav>
+    </footer>
+  </div></div>
+  <p class="help mt-4" style="max-width:62ch">P1 flow variant (reduced header, 560 px column, minimal footer). The map is a focusable <code>application</code> region (shown focused: 3 px <code>ring</code>, 2 px offset) described by the pin sentence and the keyboard hint. Arrows pan 100 m, Shift + arrow 500 m, + and − zoom. Zoom pill top right (<code>card</code>, <code>shadow-md</code>, floats over the map). "Pokaži gumbe za premik" is a disclosure (<code>aria-expanded</code>) for the 100 m move pad, bottom left. Slider and "Polmer v metrih" (200 to 5000, step 50) stay in sync; the number snaps to the nearest slider step on blur. Text button hover: <code>foreground</code> at 10 %. "Nazaj" is <code>common.back</code> (P1).</p>
+
+  <!-- E2 DIALOG -->
+  <p class="tile-h" style="margin-top:64px">E2 Dialog, found (1200 px): launched from a flow step, results open, keyboard on the first row, hover on the second</p>
+  <div class="wrap-x"><div class="browser" lang="sl">
+    <div class="browser-bar"><span class="dots"><i></i><i></i><i></i></span><span class="url"><i class="ph ph-lock-simple"></i>najdimo.si/prijavi/najdena</span></div>
+    <div class="relative overflow-hidden" style="height:820px">
+      <div aria-hidden="true" inert>
+        <header class="flex items-center gap-8 px-12 h-[88px]">
+          <span class="logo-link"><svg class="logo-mark w-9 h-9" viewBox="0 0 48 48"><use href="#nj-mark"/></svg><span class="font-display font-bold text-2xl tracking-[-0.03em]">Najdimo</span></span>
+          <span class="btn btn-ghost btn-sm ml-auto"><i class="ph-bold ph-x"></i>Zapri</span>
+        </header>
+        <div class="w-full max-w-[560px] mx-auto pt-8">
+          <div class="steps"><span class="on"></span><span class="on"></span><span class="on"></span><span class="on"></span></div>
+          <p class="font-display font-bold text-5xl tracking-[-0.02em] mt-10" data-sample>Je to pravilno?</p>
+          <img class="thumb w-full mt-8" style="height:320px;border-radius:var(--radius-card)" src="../directions/img/dog-golden.jpg" alt="">
+        </div>
+      </div>
+      <div class="scrim"></div>
+      <div class="lp-dialog" role="dialog" aria-modal="true" aria-label="Kje ste žival našli?" style="left:50%;top:44px;width:600px;margin-left:-300px">
+        <div class="flex items-start justify-between gap-4">
+          <h2 class="font-display font-bold text-[30px] leading-9 tracking-[-0.015em]">Kje ste žival našli?</h2>
+          <button type="button" class="iconbtn -mr-2 -mt-1 flex-none" aria-label="Zapri"><i class="ph-bold ph-x" aria-hidden="true"></i></button>
+        </div>
+        <div class="field mt-6 relative">
+          <label for="e2-q">Iskanje kraja</label>
+          <div class="input-wrap has-end"><i class="ph-bold ph-map-pin" aria-hidden="true"></i><input id="e2-q" class="input is-focus" type="search" role="combobox" aria-expanded="true" aria-autocomplete="list" autocomplete="off" value="Tivoli"><button type="button" class="iconbtn lp-end" aria-label="Počisti iskanje"><i class="ph-fill ph-x-circle" aria-hidden="true"></i></button></div>
+          <ul class="lp-list lp-pop" role="listbox" aria-label="Iskanje kraja" data-sample>
+            <li class="lp-opt" role="option" aria-selected="true"><i class="ph-bold ph-map-pin" aria-hidden="true"></i><span><b>Park Tivoli</b>, Ljubljana</span></li>
+            <li class="lp-opt is-hover" role="option" aria-selected="false"><i class="ph-bold ph-map-pin" aria-hidden="true"></i><span><b>Hala Tivoli</b>, Ljubljana</span></li>
+            <li class="lp-opt" role="option" aria-selected="false"><i class="ph-bold ph-map-pin" aria-hidden="true"></i><span><b>Tivolska cesta</b>, Ljubljana</span></li>
+            <li class="lp-opt" role="option" aria-selected="false"><i class="ph-bold ph-map-pin" aria-hidden="true"></i><span><b>Tivolski grad</b>, Ljubljana</span></li>
+          </ul>
+        </div>
+        <div class="map-wrap mt-4" role="application" tabindex="0" aria-label="Zemljevid" aria-describedby="e2-pin" style="height:300px;border-radius:var(--radius-row)">
+          <div class="map-canvas" data-center="14.5000,46.0590" data-zoom="15" data-roads="all"></div>
+          <span class="lp-pin" style="left:50%;top:50%" aria-hidden="true"><svg viewBox="0 0 54 66" width="54" height="66" focusable="false"><path d="M27 62 L15 47.78 A24 24 0 1 1 39 47.78 Z"/></svg><i class="ph-fill ph-paw-print"></i></span>
+          <p id="e2-pin" class="sr-only">Oznaka je na sredini zemljevida. Premaknite zemljevid, da jo postavite na pravo mesto.</p>
+        </div>
+        <div class="flex items-center justify-between gap-4 mt-4">
+          <p class="lp-addr" aria-live="polite"><i class="ph-fill ph-map-pin-simple" aria-hidden="true"></i>Center, Ljubljana</p>
+          <button type="button" class="btn btn-text -mr-3"><i class="ph-bold ph-crosshair" aria-hidden="true"></i>Uporabi mojo lokacijo</button>
+        </div>
+        <p class="lp-line mt-4"><i class="ph-fill ph-shield-check" aria-hidden="true"></i><span>Javno prikažemo le približno območje. Ne sprašujemo, kje je žival zdaj.</span></p>
+        <button type="button" class="btn btn-primary btn-lg btn-block mt-6">Potrdi kraj</button>
+      </div>
+    </div>
+  </div></div>
+  <p class="help mt-4" style="max-width:62ch">Dialog: <code>popover</code>, radius 24, <code>shadow-pop</code>, over <code>scrim</code>; 600 px wide, h2 30/36, focus trapped, Escape and "Zapri" (<code>common.close</code>) close and return focus to the trigger. Results drop over the map as a popover listbox (radius 20): the keyboard-active row (<code>aria-activedescendant</code>) has an inset 3 px <code>ring</code> while DOM focus stays in the field; the hovered row has the 10 % tone. Map 300 px, radius 20. One primary. The page behind is a sample (system 10.8).</p>
+</section>
+
+<!-- ================= F. FUZZED PUBLIC AREA ================= -->
+<section class="tile-section !max-w-[1400px] !pt-0">
+  <h2 class="tile-title !text-2xl">F. Fuzzed public area (display component)</h2>
+  <p class="tile-lede">Used by the detail page (P9), the map (P4) and sightings. A translucent <code>marker-area</code> disc to scale, never smaller than 500 m for lost and 150 m for found or sighted, always with the area name as text. The exact point is only drawn for its owner or reporter.</p>
+
+  <div class="flex flex-wrap gap-x-10 gap-y-12 items-start">
+
+    <!-- F1 LOST -->
+    <figure class="m-0 w-full max-w-[360px]">
+      <figcaption class="tile-h !mt-0">F1 Lost: 500 m minimum, pet avatar at the centre</figcaption>
+      <div class="map-wrap" role="img" aria-label="Približno območje okoli kraja Šiška, polmer približno 500 m" style="height:220px;border-radius:var(--radius-card)" lang="sl">
+        <div class="map-canvas" data-center="14.4875,46.0700" data-zoom="13.3" data-roads="all"></div>
+        <div class="mk mk-area" style="left:50%;top:50%;width:186px;height:186px"><img class="mk-avatar" src="../directions/img/dog-aussie.jpg" alt=""></div>
+      </div>
+      <div lang="sl">
+        <p class="lp-area mt-3"><i class="ph-bold ph-map-pin-area" aria-hidden="true"></i>Območje: Šiška, približno 500 m</p>
+        <p class="help mt-1">Prikazano območje je približno.</p>
+      </div>
+      <p class="help mt-4">Zoom 13.3: 500 m is about 93 px. Displayed radius = max(chosen radius, 500 m). Disc and avatar follow the system lost marker (<code>marker-lost</code> ring, <code>marker-ring</code> halo), drawn to scale here.</p>
+    </figure>
+
+    <!-- F2 FOUND -->
+    <figure class="m-0 w-full max-w-[360px]">
+      <figcaption class="tile-h !mt-0">F2 Found: 150 m minimum, ring marker</figcaption>
+      <div class="map-wrap" role="img" aria-label="Približno območje okoli kraja Bežigrad, polmer približno 150 m" style="height:220px;border-radius:var(--radius-card)" lang="sl">
+        <div class="map-canvas" data-center="14.5130,46.0700" data-zoom="14.5" data-roads="all"></div>
+        <div class="mk mk-area" style="left:50%;top:50%;width:128px;height:128px"><img class="mk-avatar found" src="../directions/img/cat-tabby.jpg" alt=""></div>
+      </div>
+      <div lang="sl">
+        <p class="lp-area mt-3"><i class="ph-bold ph-map-pin-area" aria-hidden="true"></i>Območje: Bežigrad, približno 150 m</p>
+        <p class="help mt-1">Prikazano območje je približno.</p>
+      </div>
+      <p class="help mt-4">Zoom 14.5: 150 m is about 64 px. Ring in <code>marker-found</code>. The disc keeps <code>marker-area</code> as the slice says (see the question in the footer note).</p>
+    </figure>
+
+    <!-- F3 SIGHTED -->
+    <figure class="m-0 w-full max-w-[360px]">
+      <figcaption class="tile-h !mt-0">F3 Sighted: 150 m minimum, ring marker</figcaption>
+      <div class="map-wrap" role="img" aria-label="Približno območje okoli kraja Rožna dolina, polmer približno 150 m" style="height:220px;border-radius:var(--radius-card)" lang="sl">
+        <div class="map-canvas" data-center="14.4790,46.0450" data-zoom="14.5" data-roads="all"></div>
+        <div class="mk mk-area" style="left:50%;top:50%;width:128px;height:128px"><img class="mk-avatar sighted" src="../directions/img/dog-golden.jpg" alt=""></div>
+      </div>
+      <div lang="sl">
+        <p class="lp-area mt-3"><i class="ph-bold ph-map-pin-area" aria-hidden="true"></i>Območje: Rožna dolina, približno 150 m</p>
+        <p class="help mt-1">Prikazano območje je približno.</p>
+      </div>
+      <p class="help mt-4">Same rule as found, ring in <code>marker-sighted</code>. The map's text alternative is <code>location.area_map_alt</code>; the visible area line repeats it for sighted readers.</p>
+    </figure>
+
+    <!-- F4 OWNER -->
+    <figure class="m-0 w-full max-w-[360px]">
+      <figcaption class="tile-h !mt-0">F4 Owner's own view: public area plus the exact pin, "Vidno samo vam"</figcaption>
+      <div class="relative" lang="sl">
+        <div class="map-wrap" role="img" aria-label="Približno območje okoli kraja Šiška, polmer približno 500 m" style="height:220px;border-radius:var(--radius-card)">
+          <div class="map-canvas" data-center="14.4875,46.0700" data-zoom="13.3" data-roads="all"></div>
+          <div class="mk mk-area" style="left:50%;top:50%;width:186px;height:186px"><img class="mk-avatar" src="../directions/img/dog-aussie.jpg" alt=""></div>
+          <span class="lp-pin sm" style="left:calc(50% - 48px);top:calc(50% + 72px)"><svg viewBox="0 0 54 66" width="54" height="66" focusable="false"><path d="M27 62 L15 47.78 A24 24 0 1 1 39 47.78 Z"/></svg><i class="ph-fill ph-paw-print"></i></span>
+        </div>
+        <span class="lp-own" style="left:calc(50% - 26px);top:calc(50% + 31px)"><i class="ph-fill ph-lock-simple" aria-hidden="true"></i>Vidno samo vam</span>
+      </div>
+      <div lang="sl">
+        <p class="lp-area mt-3"><i class="ph-bold ph-map-pin-area" aria-hidden="true"></i>Območje: Šiška, približno 500 m</p>
+        <p class="help mt-1">Prikazano območje je približno.</p>
+      </div>
+      <p class="help mt-4">Only for the signed-in owner or the reporter (manage link). The exact pin (pin at 72 %) sits off-centre: the public disc is offset from the true point, so the owner sees what others see plus their own point. The label is real text after the map image, announced as "Vidno samo vam". Never drawn for anyone else, never in shared images or the poster. The place where a found animal is kept is never asked for or shown.</p>
+    </figure>
+
+  </div>
+</section>
+
+<p class="tile-section !py-8 text-sm text-muted-foreground">Copy: docs/content/pages/P5-location-picker.md v0.1 (native Slovenian review pending); shared strings from P1 (<code>common.back</code>, <code>common.close</code>) and P2 (<code>permissions.open_settings</code>, step label). Sample data, not copy: geocoder results and place names (Park Tivoli, Gorica, Italija), and the page behind the dialog ("Je to pravilno?" from system 10.8). Proposals to confirm: slider steps, the 3 km "very large" threshold, and the short-screen trigger. Open question: found and sighted discs use <code>marker-area</code> (coral, defined for lost) as the slice says; a status-tinted or neutral area fill may read better. Placeholder photography from Unsplash (Unsplash License); live OpenFreeMap tiles, restyled with the <code>map-*</code> tokens. Icons: Phosphor. No image assets on this page.</p>
+
+</div><!-- /#src -->
+
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<script src="../directions/directions.js"></script>
+</body>
+</html>
