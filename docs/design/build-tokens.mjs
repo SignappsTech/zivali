@@ -92,7 +92,7 @@ const twc = {
     colors,
     borderRadius: { sm: 'calc(var(--radius) - 4px)', md: 'calc(var(--radius) - 2px)', lg: 'var(--radius)', xl: 'calc(var(--radius) + 4px)', '2xl': 'calc(var(--radius) + 8px)', '3xl': 'calc(var(--radius) + 16px)' },
     fontFamily: { display: ['var(--font-display)'], sans: ['var(--font-sans)'] },
-    boxShadow: { sm: 'var(--shadow-sm)', md: 'var(--shadow-md)', lg: 'var(--shadow-lg)' },
+    boxShadow: { sm: 'var(--shadow-sm)', md: 'var(--shadow-md)', lg: 'var(--shadow-lg)', pop: 'var(--shadow-pop)' },
     fontSize: Object.fromEntries(Object.entries(T.scale.type.size).map(([k, v]) => [k, [`${v.px / 16}rem`, `${v.line / 16}rem`]])),
     minHeight: { touch: '44px', comfort: '48px', primary: '56px' },
     minWidth: { touch: '44px', comfort: '48px' }

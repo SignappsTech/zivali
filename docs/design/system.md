@@ -2,7 +2,7 @@
 doc: design-system
 title: Design system (slice)
 source: 03§Brand and visual language
-version: 0.2
+version: 0.3
 status: Draft, direction A (Lagoon) chosen by the client
 date: 2026-10-14
 owner: Design Lead
@@ -99,7 +99,7 @@ The generated hex values below come from `tokens.json`. "Role" tells you where t
 | `secondary-foreground` | Label on secondary | #0D343D | #D3ECEE |
 | `muted` | Neutral fills: segmented track, skeleton, disabled button, tag background | #D5DEDF | #182E33 |
 | `muted-foreground` | Secondary text, meta (time, distance), placeholders | #425458 | #B9C6C8 |
-| `accent` | Hover and soft selected fill | #EBF6F7 | #182E33 |
+| `accent` | Soft selected fill (not the ghost hover, see 10.1) | #D3ECEE | #182E33 |
 | `accent-foreground` | Text on accent | #0D343D | #F3F6F6 |
 | `destructive` | Delete and error text and fill | #B3202F | #E8606E |
 | `destructive-foreground` | Label on destructive | #FFF1F2 | #2A0A0E |
@@ -217,7 +217,7 @@ Floors: 4.5:1 text, 3:1 UI and graphics. Targets: 7:1 for body text and primary 
 | `muted-foreground` on `muted` | 5.8:1 | 8.1:1 | 4.5:1 |
 | `primary-foreground` on `primary` | 7.8:1 | 8.0:1 | 7:1 |
 | `secondary-foreground` on `secondary` | 10.8:1 | 10.8:1 | 7:1 |
-| `accent-foreground` on `accent` | 12.1:1 | 13.1:1 | 7:1 |
+| `accent-foreground` on `accent` | 10.8:1 | 13.1:1 | 7:1 |
 | `destructive-foreground` on `destructive` | 6.0:1 | 5.5:1 | 4.5:1 |
 | `destructive` on `card` | 6.5:1 | 5.0:1 | 4.5:1 |
 | `input` on `background` | 3.5:1 | 4.4:1 | 3:1 |
@@ -267,7 +267,7 @@ Floors: 4.5:1 text, 3:1 UI and graphics. Targets: 7:1 for body text and primary 
 | `status-sighted-subtle-foreground` on `background` | 10.5:1 | 14.6:1 | 7:1 |
 | `status-reunited-subtle-foreground` on `card` | 8.4:1 | 14.4:1 | 7:1 |
 | `status-reunited-subtle-foreground` on `background` | 7.3:1 | 15.8:1 | 4.5:1 |
-| `muted-foreground` on `accent` | 7.2:1 | 8.1:1 | 4.5:1 |
+| `muted-foreground` on `accent` | 6.4:1 | 8.1:1 | 4.5:1 |
 | `secondary-foreground` on `card` | 13.1:1 | 13.5:1 | 7:1 |
 | `foreground` on `muted` | 12.9:1 | 12.1:1 | 7:1 |
 
@@ -358,9 +358,10 @@ Base `--radius: 1rem`. Utilities: `sm = r-4`, `md = r-2`, `lg = r`, `xl = r+4`, 
 |---|---|---|
 | `shadow-sm` | unused | none |
 | `shadow-md` | controls floating over a map (the area pill) | `0 2px 10px rgb(16 38 43 / 0.08)` |
-| `shadow-lg` | bottom sheets, dialogs, popovers | `0 -10px 40px -12px rgb(16 38 43 / 0.16)` |
+| `shadow-lg` | bottom sheets and other surfaces that rise from the bottom edge (casts upward) | `0 -10px 40px -12px rgb(16 38 43 / 0.16)` |
+| `shadow-pop` | popovers, menus, dropdowns, toasts and dialogs that open below or away from a trigger (casts downward) | `0 8px 24px -6px rgb(16 38 43 / 0.18)` |
 
-React Native: use the `elevation.reactNative` values in tokens.json (`md`: elevation 2, `lg`: elevation 8) and apply only to the same elements. Dark mode uses black shadows at higher opacity.
+React Native: use the `elevation.reactNative` values in tokens.json (`md`: elevation 2, `lg`: elevation 8, `pop`: elevation 6) and apply only to the same elements. Dark mode uses black shadows at higher opacity.
 
 **Borders.** Not used on cards, rows or buttons. `border` is a rare hairline for tables or dividers inside dense shelter-portal screens. Fields use a 2 px `input` underline.
 
@@ -431,7 +432,7 @@ Web = shadcn/ui, mobile = React Native Reusables (NativeWind). Same names, same 
 | State | Rule |
 |---|---|
 | Default | Token fill and text as specified. |
-| Hover (web) | Mix 14 % of `foreground` into the fill; ghost and text buttons show `accent`. Pointer cursor. |
+| Hover (web) | Filled buttons: mix 14 % of `foreground` into the fill. Ghost, text and icon buttons and menu rows: fill `foreground` at 10 % over the surface (the `accent` token is too close to `background` to show). Pointer cursor. |
 | Pressed | Hover colour plus `scale(0.98)` for 80 ms. Light haptic on the primary action on mobile. |
 | Focus-visible | 3 px `ring`, 2 px offset. Fill unchanged. |
 | Disabled | `muted` fill, `muted-foreground` text, no opacity trick. Say why in help text. Still 4.5:1. |
@@ -495,8 +496,8 @@ Web = shadcn/ui, mobile = React Native Reusables (NativeWind). Same names, same 
 | Floating area control | `card` pill, 48 high, `shadow-md`: map-pin, "Ljubljana, 10 km", and a 32 px `secondary` circle with the filters icon. It is the only control on the map; it opens the filter sheet (status pills, species, radius). No locate button. |
 | Bottom sheet | `card`, top radius 28, grabber 40x5, `shadow-lg`, 20 px side padding. Snap points: peek about 40 % of the screen, full 92 %. Scrim behind modals. |
 | Flow top bar | 56 px: back (icon button), 4 step bars (4 px high, gap 6, `primary` for done, `muted` for the rest, `role="progressbar"`), close. No title. |
-| Web header | 88 px, no border, on `background`. Logo left, at most 4 text links (16 semibold, current = `foreground`, others `muted-foreground`), right: ghost "Prijava" and a `sm` primary "Prijavi". |
-| Web footer | Text row on `background`: logo, 4 links, language. No panel. |
+| Web header | 88 px, no border, on `background`. Logo left, at most 4 text links (16 semibold; the current page is `foreground` **and underlined**, others `muted-foreground`, so it is not colour only), right: language switch, ghost "Vpis" (EN "Sign in") and a `sm` primary "Prijavi". Signed in: the fourth link is the short label "Moje živali" (EN "My pets"; reports are inside), inbox icon button and avatar menu. The header must fit without overflow from 1024 px; if it does not, the language switch moves into the account menu below `xl`. |
+| Web footer | Content variant: logo with tagline, wrapped rows of the 12 links (How it works, Safety tips, FAQ, For shelters, Partners, About, Privacy, Cookies, Cookie settings, Terms, Imprint, Accessibility), language, copyright line; no panel. **Flow variant: minimal** single quiet row (Privacy, Terms, Cookie settings, Accessibility), no logo block, no copyright. |
 
 ## 10.8 Flow screen ("one question per screen")
 
