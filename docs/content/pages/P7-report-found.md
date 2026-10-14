@@ -3,7 +3,7 @@ source: 03§P7; docs/design/pages/P7-report-found.md
 page: P7 Report found or sighted (no account) and manage page
 stories: TASK-30, TASK-17 (FR-006, FR-003, FR-004)
 copy-for: docs/design/pages/P7-report-found.md
-version: 0.1
+version: 0.2
 status: Draft, native Slovenian review pending
 date: 2026-10-15
 ---
@@ -86,6 +86,7 @@ Headings: `location.title_found` (found entry) or `location.title_sighted` (sigh
 | report_found.note_label | Opomba (neobvezno) | Note (optional) |
 | report_found.note_placeholder | Na primer: prestrašena je, ima modro ovratnico. | For example: frightened, wearing a blue collar. |
 | report_found.note_help | Opomba bo javno vidna. Ne navajajte naslova ali telefonske številke. | The note will be public. Do not include an address or phone number. |
+| report_found.note_too_long | Opomba je predolga. Skrajšajte jo na največ {max} znakov. | The note is too long. Please shorten it to {max} characters or fewer. |
 | report_found.email_label | E-naslov (neobvezno) | Email address (optional) |
 | report_found.email_help | Pošljemo vam zasebno povezavo, da prijavo urejate tudi na drugi napravi. E-naslova ne prikažemo nikomur. | We will send you a private link so you can manage the report on another device too. We never show your email address. |
 | report_found.email_invalid | Preverite e-naslov, na primer ime@primer.si. | Please check the email address, for example name@example.com. |

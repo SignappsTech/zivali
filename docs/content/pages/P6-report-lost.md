@@ -3,7 +3,7 @@ source: 03§P6; docs/design/pages/P6-report-lost.md
 page: P6 Report lost
 stories: TASK-29 (FR-005, FR-003, FR-002)
 copy-for: docs/design/pages/P6-report-lost.md
-version: 0.1
+version: 0.2
 status: Draft, native Slovenian review pending
 date: 2026-10-15
 ---
@@ -58,11 +58,16 @@ Saved pet rows show the pet name and species ("Luna · Mačka").
 | photos.move_right | Premakni fotografijo {n} nazaj | Move photo {n} later |
 | photos.cover | Naslovna fotografija | Cover photo |
 | photos.uploading | Nalaganje {percent} % | Uploading {percent}% |
+| photos.progress_a11y | Nalaganje fotografije {n} | Uploading photo {n} |
+| photos.uploaded | Fotografija je naložena. | Photo uploaded. |
 | photos.failed | Fotografija se ni naložila. | The photo did not upload. |
+| photos.failed_network | Fotografija se ni naložila. Preverite povezavo in poskusite znova. | The photo did not upload. Check your connection and try again. |
 | photos.retry | Poskusi znova | Try again |
 | photos.limit | Dodate lahko največ 5 fotografij. | You can add up to 5 photos. |
 | report_lost.photos_required | Dodajte vsaj eno fotografijo, da bodo ljudje žival prepoznali. | Add at least one photo so people can recognise your pet. |
 | report_lost.photos_wait | Počakajte, da se naloži vsaj ena fotografija. | Please wait until at least one photo has uploaded. |
+
+Upload states (v0.2): the progress bar carries `photos.progress_a11y` as its accessible name and `photos.uploading` as its visible label. When a photo is done, `photos.uploaded` is announced once in a polite live region (no lasting text on the thumbnail). Use `photos.failed_network` when the connection dropped and `photos.failed` for any other failure, both with `photos.retry`; wrong file type or size uses `errors.UPLOAD_TYPE` or `errors.UPLOAD_SIZE` (P1).
 
 # 4. Step 3: Details
 
@@ -115,6 +120,7 @@ Location picker (P5) with `location.title_lost` and the radius control.
 | report_lost.circumstances_label | Opis okoliščin (neobvezno) | What happened (optional) |
 | report_lost.circumstances_placeholder | Na primer: med sprehodom ga je prestrašil ognjemet in se je iztrgal s povodca. | For example: fireworks scared him on a walk and he slipped his lead. |
 | report_lost.circumstances_help | To bo javno vidno. Ne navajajte naslova ali telefonske številke. | This will be public. Do not include your address or phone number. |
+| report_lost.circumstances_too_long | Opis je predolg. Skrajšajte ga na največ {max} znakov. | The description is too long. Please shorten it to {max} characters or fewer. |
 | report_lost.contact_label | Kako vam lahko pišejo? | How can people reach you? |
 | report_lost.contact_chat | Samo s sporočili v aplikaciji | Only through messages in the app |
 | report_lost.contact_chat_desc | Priporočeno. Vaša telefonska številka ostane skrita. | Recommended. Your phone number stays hidden. |

@@ -3,7 +3,7 @@ source: 03§P18; docs/design/pages/P18-poster-share.md; 02§FR-011
 page: P18 Poster and sharing
 stories: TASK-24 (FR-011)
 copy-for: docs/design/pages/P18-poster-share.md
-version: 0.1
+version: 0.2
 status: Draft, native Slovenian review pending
 date: 2026-10-15
 ---
@@ -31,7 +31,10 @@ Namespaces `poster` and `share`. The poster and sharing are free for everyone, f
 | share.facebook | Facebook | Facebook |
 | share.copy | Kopiraj povezavo | Copy link |
 | share.more | Več … | More … |
+| share.poster | Plakat s QR kodo | Poster with QR code |
 | share.copied | Povezava je kopirana. | Link copied. |
+
+Share menu on the web detail page (v0.2): the button is `report.share_button` (P9) and also names the menu; items in this order: `share.facebook`, `share.whatsapp`, `share.copy`, `share.poster` (opens this screen). After copying, the toast is `share.copied`.
 
 File name: `najdimo-{code}.pdf` (no pet name, so the file is safe to forward).
 
