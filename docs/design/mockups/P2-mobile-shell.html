@@ -1,0 +1,667 @@
+<!doctype html>
+<!--
+  P2 Mobile shell mockup (TASK-12.1). Built from docs/design/pages/P2-mobile-shell.md, docs/design/system.md
+  and the copy in docs/content/pages/P2-mobile-shell.md (shared strings from docs/content/pages/P1-web-shell.md §4 to §5).
+  Strings marked data-sample belong to other pages (P4 list, P6/P7 flow questions) and are placeholders until those slices exist.
+  Everything in #src is cloned once per colour mode by ../directions/directions.js. Tokens only, no hex.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Najdimo mockup: P2 Mobile shell</title>
+<meta name="description" content="Native app frame: bottom navigation, the Report sheet, permission primers and fallbacks, signed-out tabs, deep-link landing and shared mobile patterns, in light and dark.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:wght@400;500;600;700&family=Bricolage+Grotesque:opsz,wght@12..96,500..800&display=swap" rel="stylesheet">
+<link href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css" rel="stylesheet">
+<link href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/bold/style.css" rel="stylesheet">
+<link href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css" rel="stylesheet">
+<link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet">
+<link href="../tokens.css" rel="stylesheet">
+<link href="../directions/directions.css" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com/3.4.17"></script>
+<script src="../directions/tailwind-config.js"></script>
+</head>
+<body>
+<a class="sr-only focus:not-sr-only" href="#stage">Skip to content</a>
+
+<!-- Logo symbol, defined once -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <symbol id="nj-mark" viewBox="0 0 48 48">
+    <g fill="currentColor" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round">
+      <path d="M24 45.5 C24 45.5 10.5 33.2 10.5 24.4 A13.5 13.5 0 0 1 37.5 24.4 C37.5 33.2 24 45.5 24 45.5 Z M24 17.9 A6.5 6.5 0 1 0 24 30.9 A6.5 6.5 0 1 0 24 17.9 Z"/>
+      <path d="M12.2 19.6 L11.2 5 L22.6 11.4 Z"/><path d="M35.8 19.6 L25.4 11.4 L36.8 5 Z"/>
+    </g>
+    <circle cx="24" cy="24.4" r="3.6" fill="#F7B32B"/>
+  </symbol>
+</svg>
+
+<header class="chrome">
+  <div class="flex flex-wrap items-center gap-x-5 gap-y-2 px-6 py-2 max-w-[1400px] mx-auto">
+    <span class="flex items-center gap-2 font-display font-bold text-lg"><svg class="logo-mark w-7 h-7" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg>Najdimo</span>
+    <span class="text-muted-foreground text-[15px]">P2 Mobile shell (mockup)</span>
+    <div class="ml-auto flex items-center gap-2" role="group" aria-label="Colour mode">
+      <button class="mode-btn" data-mode="light" aria-pressed="true">Light</button>
+      <button class="mode-btn" data-mode="dark" aria-pressed="false">Dark</button>
+      <button class="mode-btn" data-mode="both" aria-pressed="false">Side by side</button>
+    </div>
+  </div>
+</header>
+
+<main id="stage"></main>
+
+<div id="src" hidden>
+
+<!-- ================= A. TABS AND THE REPORT ACTION ================= -->
+<section class="tile-section !max-w-[1400px]">
+  <h1 class="tile-title">P2 Mobile shell</h1>
+  <p class="tile-lede">The native frame every app screen sits in: four-item bottom navigation, the single Report action and its sheet, permission primers with their fallbacks, signed-out tabs, deep-link landing, and the shared loading, empty, error, offline and toast patterns. Phones 390 px wide. Copy from the P2 content slice; strings that belong to other pages are marked as samples in the notes.</p>
+
+  <h2 class="tile-title !text-2xl !mt-4">A. Tabs and the Report action</h2>
+  <p class="tile-lede">Exactly four items, icon above a 13 px bold label, no count badges. Tabs look the same signed in and signed out.</p>
+
+  <div class="flex flex-wrap gap-x-10 gap-y-14 items-start">
+
+    <!-- A1 MAP TAB -->
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">A1 Map tab: floating area pill, sheet peek, bottom navigation</figcaption>
+      <div class="phone"><div class="phone-screen">
+        <h1 class="sr-only">Zemljevid</h1>
+        <div class="map-wrap" style="position:absolute;inset:0 0 88px 0">
+          <div class="map-canvas" data-center="14.4935,46.0690" data-zoom="13.5"></div>
+          <div class="mk mk-area" style="left:128px;top:196px"><img class="mk-avatar" src="../directions/img/dog-aussie.jpg" alt="Maks, izgubljena žival"></div>
+          <div class="mk mk-area" style="left:300px;top:150px;width:84px;height:84px"><img class="mk-avatar" style="width:36px;height:36px" src="../directions/img/cat-siamese.jpg" alt="Mici, izgubljena žival"></div>
+          <div class="mk" style="left:262px;top:296px"><img class="mk-avatar found" src="../directions/img/cat-tabby.jpg" alt="Najdena tigrasta mačka"></div>
+          <div class="mk mk-cluster" style="left:58px;top:330px" role="img" aria-label="3 prijave">3</div>
+          <button class="float absolute flex items-center gap-2 rounded-full pl-4 pr-2" style="left:20px;top:60px;height:48px;border:0;font:inherit;font-weight:700;color:inherit" aria-label="Območje in filtri: Ljubljana, 10 km" data-sample><i class="ph-bold ph-map-pin text-lg" aria-hidden="true"></i><span class="tnum">Ljubljana, 10 km</span><span class="grid place-items-center w-8 h-8 rounded-full ml-1 bg-secondary text-secondary-foreground" aria-hidden="true"><i class="ph-bold ph-sliders-horizontal text-base"></i></span></button>
+          <div class="sheet" style="height:342px">
+            <button class="grab" aria-label="Povleci ali tapni za razširitev"></button>
+            <div class="flex items-baseline justify-between px-5 pt-3"><h2 class="font-display font-bold text-[24px] leading-[30px] tracking-[-0.015em]" data-sample>V bližini</h2><span class="text-sm text-muted-foreground tnum" data-sample>12 prijav</span></div>
+            <ul class="px-5 pt-5 grid gap-5 list-none scrollfade" style="height:240px;overflow:hidden" data-sample>
+              <li class="flex items-center gap-4"><img class="thumb w-16 h-16" style="border-radius:var(--radius-row)" src="../directions/img/dog-aussie.jpg" alt="Rjav in bel pes"><div class="flex-1 min-w-0"><h3 class="font-display font-semibold text-xl leading-6">Maks</h3><p class="mt-1 flex items-center gap-2 text-sm"><span class="st st-lost"><i class="ph-fill ph-megaphone" aria-hidden="true"></i>Izgubljena</span><span class="text-muted-foreground tnum">pred 3 h</span></p></div><span class="text-sm text-muted-foreground tnum">1,2 km</span></li>
+              <li class="flex items-center gap-4"><img class="thumb w-16 h-16" style="border-radius:var(--radius-row)" src="../directions/img/cat-siamese.jpg" alt="Sijamska mačka"><div class="flex-1 min-w-0"><h3 class="font-display font-semibold text-xl leading-6">Mici</h3><p class="mt-1 flex items-center gap-2 text-sm"><span class="st st-lost"><i class="ph-fill ph-megaphone" aria-hidden="true"></i>Izgubljena</span><span class="text-muted-foreground tnum">včeraj</span></p></div><span class="text-sm text-muted-foreground tnum">2,1 km</span></li>
+              <li class="flex items-center gap-4"><img class="thumb w-16 h-16" style="border-radius:var(--radius-row)" src="../directions/img/cat-tabby.jpg" alt="Tigrasta mačka"><div class="flex-1 min-w-0"><h3 class="font-display font-semibold text-xl leading-6">Tigrasta mačka</h3><p class="mt-1 flex items-center gap-2 text-sm"><span class="st st-found"><i class="ph-fill ph-hand-heart" aria-hidden="true"></i>Najdena</span><span class="text-muted-foreground tnum">danes</span></p></div><span class="text-sm text-muted-foreground tnum">2,8 km</span></li>
+              <li class="flex items-center gap-4"><img class="thumb w-16 h-16" style="border-radius:var(--radius-row)" src="../directions/img/dog-golden.jpg" alt="Zlat pes"><div class="flex-1 min-w-0"><h3 class="font-display font-semibold text-xl leading-6">Zlat pes</h3><p class="mt-1 flex items-center gap-2 text-sm"><span class="st st-sighted"><i class="ph-fill ph-eye" aria-hidden="true"></i>Opažena</span><span class="text-muted-foreground tnum">včeraj</span></p></div><span class="text-sm text-muted-foreground tnum">3,4 km</span></li>
+            </ul>
+          </div>
+        </div>
+        <div class="statusbar" style="position:absolute;left:0;right:0;top:0" aria-hidden="true"><span>14:20</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <nav class="bottomnav" style="position:absolute;left:0;right:0;bottom:0" aria-label="Glavna navigacija">
+          <a href="#" aria-current="page"><i class="ph-fill ph-map-trifold" aria-hidden="true"></i>Zemljevid</a>
+          <a href="#"><i class="ph ph-chat-circle" aria-hidden="true"></i>Sporočila</a>
+          <a href="#" class="go" role="button" aria-haspopup="dialog" aria-label="Prijavi žival"><span class="act" aria-hidden="true"><i class="ph-bold ph-plus"></i></span>Prijavi</a>
+          <a href="#"><i class="ph ph-user-circle" aria-hidden="true"></i>Profil</a>
+        </nav>
+        <span class="home-ind"></span>
+      </div></div>
+      <p class="help mt-4" style="max-width:412px">Bar: 88 px incl. 20 px safe area, <code>card</code>, no top border. Icon 26, label 13/16 bold. Active = <code>primary</code> + fill icon. Prijavi = 48 px <code>primary</code> circle, announced as a button "Prijavi žival" (not a tab); the other three are tabs with a selected state. Map is the only screen without a top bar. Sample copy (P4): pill, "V bližini", rows.</p>
+    </figure>
+
+    <!-- A2 REPORT SHEET -->
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">A2 Report sheet open over the dimmed map (first row focused)</figcaption>
+      <div class="phone"><div class="phone-screen">
+        <div class="map-wrap" style="position:absolute;inset:0" aria-hidden="true">
+          <div class="map-canvas" data-center="14.4935,46.0690" data-zoom="13.5"></div>
+          <div class="mk mk-area" style="left:128px;top:196px"><img class="mk-avatar" src="../directions/img/dog-aussie.jpg" alt=""></div>
+          <div class="mk" style="left:262px;top:296px"><img class="mk-avatar found" src="../directions/img/cat-tabby.jpg" alt=""></div>
+        </div>
+        <div class="scrim"></div>
+        <div class="statusbar" style="position:absolute;left:0;right:0;top:0" aria-hidden="true"><span>14:20</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <div class="sheet" role="dialog" aria-modal="true" aria-label="Kaj želite prijaviti?" style="z-index:8;padding-bottom:34px">
+          <button class="grab" aria-label="Zapri"></button>
+          <h2 class="font-display font-bold text-[24px] leading-[30px] tracking-[-0.015em] px-5 pt-3">Kaj želite prijaviti?</h2>
+          <div class="grid gap-3 px-5 pt-5">
+            <a href="#" class="choice choice-tone is-focus no-underline"><i class="ph-fill ph-megaphone st-lost" aria-hidden="true"></i><span class="flex-1 min-w-0"><span class="t">Izgubljena žival</span><span class="d">Pogrešate svojega psa ali mačko.</span></span><i class="ph-bold ph-caret-right text-muted-foreground !text-[20px]" aria-hidden="true"></i></a>
+            <a href="#" class="choice choice-tone no-underline"><i class="ph-fill ph-hand-heart st-found" aria-hidden="true"></i><span class="flex-1 min-w-0"><span class="t">Najdena žival</span><span class="d">Žival je pri vas. Brez računa.</span></span><i class="ph-bold ph-caret-right text-muted-foreground !text-[20px]" aria-hidden="true"></i></a>
+            <a href="#" class="choice choice-tone no-underline"><i class="ph-fill ph-eye st-sighted" aria-hidden="true"></i><span class="flex-1 min-w-0"><span class="t">Opažena žival</span><span class="d">Videli ste žival, ki se je morda izgubila. Brez računa.</span></span><i class="ph-bold ph-caret-right text-muted-foreground !text-[20px]" aria-hidden="true"></i></a>
+          </div>
+        </div>
+        <span class="home-ind" style="z-index:12"></span>
+      </div></div>
+      <p class="help mt-4" style="max-width:412px">Sheet: <code>card</code>, top radius 28, <code>shadow-lg</code>, over <code>scrim</code>. Rows on <code>background</code> tone, status icon (fill) in the status text colour, caret. Lost goes to P6 (account gate P16), found and sighted to P7. Grabber is a 44 px button "Zapri"; scrim tap and swipe down also close. Focus trapped, title announced. Focus ring: 3 px <code>ring</code>, 2 px offset.</p>
+    </figure>
+
+    <!-- A3 INBOX SIGNED OUT -->
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">A3 Inbox tab, signed out</figcaption>
+      <div class="phone"><div class="phone-screen">
+        <div class="statusbar" aria-hidden="true"><span>14:20</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <div class="flex-1 min-h-0 flex flex-col px-5">
+          <div class="flex-1 flex flex-col justify-center">
+            <span class="spot" aria-hidden="true"><i class="ph-bold ph-chat-circle"></i></span>
+            <h1 class="font-display font-bold text-[30px] leading-9 tracking-[-0.02em] mt-8">Tu bodo vaša sporočila</h1>
+            <p class="text-lg leading-7 mt-3">Ko se vpišete, tu vidite možna ujemanja, pogovore in opozorila o živalih v bližini.</p>
+            <p class="flex gap-2 text-sm leading-5 text-muted-foreground mt-5"><i class="ph-bold ph-hand-heart text-base mt-0.5" aria-hidden="true"></i><span>Najdeno ali opaženo žival lahko prijavite tudi brez računa.</span></p>
+          </div>
+          <div class="grid gap-1 pb-6">
+            <a href="#" class="btn btn-primary btn-lg btn-block">Vpis</a>
+            <a href="#" class="btn btn-text btn-block">Ustvari račun</a>
+          </div>
+        </div>
+        <nav class="bottomnav" aria-label="Glavna navigacija">
+          <a href="#"><i class="ph ph-map-trifold" aria-hidden="true"></i>Zemljevid</a>
+          <a href="#" aria-current="page"><i class="ph-fill ph-chat-circle" aria-hidden="true"></i>Sporočila</a>
+          <a href="#" class="go" role="button" aria-haspopup="dialog" aria-label="Prijavi žival"><span class="act" aria-hidden="true"><i class="ph-bold ph-plus"></i></span>Prijavi</a>
+          <a href="#"><i class="ph ph-user-circle" aria-hidden="true"></i>Profil</a>
+        </nav>
+        <span class="home-ind"></span>
+      </div></div>
+      <p class="help mt-4" style="max-width:412px">Spot icon in a tonal circle (<code>secondary</code> fill, <code>primary</code> icon), h1 30/36, lead 18/28, quiet line 14 muted. One <code>lg</code> primary "Vpis" with the text button under it. Reporting found or sighted stays open without an account.</p>
+    </figure>
+
+    <!-- A4 PROFILE SIGNED OUT -->
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">A4 Profile tab, signed out (Jezik row pressed)</figcaption>
+      <div class="phone"><div class="phone-screen">
+        <div class="statusbar" aria-hidden="true"><span>14:20</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <div class="flex-1 min-h-0 px-5 pt-6">
+          <h1 class="font-display font-bold text-[30px] leading-9 tracking-[-0.02em]">Vpišite se</h1>
+          <p class="text-lg leading-7 mt-3">Z računom shranite profile svojih živali, prejemate opozorila in se pogovarjate z ljudmi, ki so žival videli.</p>
+          <div class="grid gap-1 mt-7">
+            <a href="#" class="btn btn-primary btn-lg btn-block">Vpis</a>
+            <a href="#" class="btn btn-text btn-block">Ustvari račun</a>
+          </div>
+          <ul class="grid gap-3 mt-10 p-0 list-none">
+            <li><a href="#" class="choice is-pressed no-underline"><i class="ph-bold ph-translate" aria-hidden="true"></i><span class="flex-1 min-w-0"><span class="t">Jezik</span><span class="d">Slovenščina</span></span><i class="ph-bold ph-caret-right text-muted-foreground !text-[20px]" aria-hidden="true"></i></a></li>
+            <li><a href="#" class="choice no-underline"><i class="ph-bold ph-cookie" aria-hidden="true"></i><span class="flex-1 min-w-0"><span class="t">Nastavitve piškotkov</span></span><i class="ph-bold ph-caret-right text-muted-foreground !text-[20px]" aria-hidden="true"></i></a></li>
+            <li><a href="#" class="choice no-underline"><i class="ph-bold ph-question" aria-hidden="true"></i><span class="flex-1 min-w-0"><span class="t">Pomoč in nasveti za varnost</span></span><i class="ph-bold ph-caret-right text-muted-foreground !text-[20px]" aria-hidden="true"></i></a></li>
+          </ul>
+        </div>
+        <nav class="bottomnav" aria-label="Glavna navigacija">
+          <a href="#"><i class="ph ph-map-trifold" aria-hidden="true"></i>Zemljevid</a>
+          <a href="#"><i class="ph ph-chat-circle" aria-hidden="true"></i>Sporočila</a>
+          <a href="#" class="go" role="button" aria-haspopup="dialog" aria-label="Prijavi žival"><span class="act" aria-hidden="true"><i class="ph-bold ph-plus"></i></span>Prijavi</a>
+          <a href="#" aria-current="page"><i class="ph-fill ph-user-circle" aria-hidden="true"></i>Profil</a>
+        </nav>
+        <span class="home-ind"></span>
+      </div></div>
+      <p class="help mt-4" style="max-width:412px">Rows are choice rows on <code>card</code> over <code>background</code>, 64 px, 12 px apart, no dividers. They work signed out. Pressed: <code>accent</code> fill and scale 0.98. Jezik opens A5; Nastavitve piškotkov opens P17. No QR tag or shelter-plan items.</p>
+    </figure>
+
+    <!-- A5 LANGUAGE SHEET -->
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">A5 Language select as a bottom sheet (selected state)</figcaption>
+      <div class="phone"><div class="phone-screen">
+        <div class="statusbar" aria-hidden="true"><span>14:20</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <div class="flex-1 min-h-0 px-5 pt-6" aria-hidden="true">
+          <p class="font-display font-bold text-[30px] leading-9 tracking-[-0.02em]">Vpišite se</p>
+          <p class="text-lg leading-7 mt-3">Z računom shranite profile svojih živali, prejemate opozorila in se pogovarjate z ljudmi, ki so žival videli.</p>
+          <div class="grid gap-1 mt-7"><span class="btn btn-primary btn-lg btn-block">Vpis</span><span class="btn btn-text btn-block">Ustvari račun</span></div>
+        </div>
+        <div class="bottomnav" aria-hidden="true">
+          <span class="flex flex-col items-center gap-[3px] text-[13px] leading-4 font-bold text-muted-foreground"><i class="ph ph-map-trifold text-[26px] leading-none"></i>Zemljevid</span>
+          <span class="flex flex-col items-center gap-[3px] text-[13px] leading-4 font-bold text-muted-foreground"><i class="ph ph-chat-circle text-[26px] leading-none"></i>Sporočila</span>
+          <span class="flex flex-col items-center gap-[3px] text-[13px] leading-4 font-bold"><span class="act"><i class="ph-bold ph-plus"></i></span>Prijavi</span>
+          <span class="flex flex-col items-center gap-[3px] text-[13px] leading-4 font-bold text-primary"><i class="ph-fill ph-user-circle text-[26px] leading-none"></i>Profil</span>
+        </div>
+        <div class="scrim"></div>
+        <div class="sheet" role="dialog" aria-modal="true" aria-label="Jezik" style="z-index:8;padding-bottom:34px">
+          <button class="grab" aria-label="Zapri"></button>
+          <h2 class="font-display font-bold text-[24px] leading-[30px] tracking-[-0.015em] px-5 pt-3">Jezik</h2>
+          <div class="grid gap-3 px-5 pt-5" role="radiogroup" aria-label="Jezik">
+            <button class="choice choice-tone" role="radio" aria-checked="true"><span class="flex-1 min-w-0"><span class="t">Slovenščina</span></span><i class="ph-bold ph-check" aria-hidden="true"></i></button>
+            <button class="choice choice-tone" role="radio" aria-checked="false" lang="en"><span class="flex-1 min-w-0"><span class="t">English</span></span></button>
+          </div>
+        </div>
+        <span class="home-ind" style="z-index:12"></span>
+      </div></div>
+      <p class="help mt-4" style="max-width:412px">Selects open a sheet of choice rows (no popovers on mobile). Selected: <code>primary</code> fill, <code>primary-foreground</code>, check icon. Language names always in their own language. Choosing a row applies it and closes the sheet.</p>
+    </figure>
+
+  </div>
+</section>
+
+<!-- ================= B. PERMISSION PRIMERS AND FALLBACKS ================= -->
+<section class="tile-section !max-w-[1400px] !pt-0">
+  <h2 class="tile-title !text-2xl">B. Permission primers and denied fallbacks</h2>
+  <p class="tile-lede">Shown once, before the OS prompt, as a full-height sheet: spot icon, h2, two sentences, <code>lg</code> primary, "Ne zdaj". Denial never blocks: the place that needed the permission gets a quiet note and a working alternative.</p>
+
+  <div class="flex flex-wrap gap-x-10 gap-y-14 items-start">
+
+    <!-- B1 CAMERA PRIMER -->
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">B1 Camera primer (first photo step in a flow)</figcaption>
+      <div class="phone"><div class="phone-screen">
+        <div class="statusbar" aria-hidden="true"><span>14:21</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <div class="topbar" aria-hidden="true"><span class="iconbtn"><i class="ph-bold ph-caret-left"></i></span><div class="steps flex-1"><span class="on"></span><span></span><span></span><span></span></div><span class="iconbtn"><i class="ph-bold ph-x"></i></span></div>
+        <div class="scrim"></div>
+        <div class="sheet flex flex-col" role="dialog" aria-modal="true" aria-label="Fotografija pomaga, da žival prepoznajo" style="top:64px;z-index:8;padding-bottom:44px">
+          <button class="grab" aria-label="Zapri"></button>
+          <div class="flex-1 min-h-0 flex flex-col justify-center px-5">
+            <span class="spot" aria-hidden="true"><i class="ph-bold ph-camera"></i></span>
+            <h2 class="font-display font-bold text-[24px] leading-[30px] tracking-[-0.015em] mt-8">Fotografija pomaga, da žival prepoznajo</h2>
+            <p class="text-lg leading-7 mt-3">Kamero uporabimo samo, ko fotografirate žival. Fotografijo lahko izberete tudi iz galerije.</p>
+          </div>
+          <div class="grid gap-1 px-5">
+            <button class="btn btn-primary btn-lg btn-block">Dovoli kamero</button>
+            <button class="btn btn-text btn-block">Ne zdaj</button>
+          </div>
+        </div>
+        <span class="home-ind" style="z-index:12"></span>
+      </div></div>
+      <p class="help mt-4" style="max-width:412px">Full snap (92 %) sheet over the flow it interrupts. Spot 88 px, h2 24/30, body 18/28, buttons pinned to the bottom with 44 px padding. "Dovoli kamero" triggers the OS prompt; "Ne zdaj" goes to B5 without asking.</p>
+    </figure>
+
+    <!-- B2 LOCATION PRIMER -->
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">B2 Location primer (first "use my location")</figcaption>
+      <div class="phone"><div class="phone-screen">
+        <div class="statusbar" aria-hidden="true"><span>14:22</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <div class="topbar" aria-hidden="true"><span class="iconbtn"><i class="ph-bold ph-caret-left"></i></span><div class="steps flex-1"><span class="on"></span><span class="on"></span><span class="on"></span><span></span></div><span class="iconbtn"><i class="ph-bold ph-x"></i></span></div>
+        <div class="scrim"></div>
+        <div class="sheet flex flex-col" role="dialog" aria-modal="true" aria-label="Kje se je to zgodilo?" style="top:64px;z-index:8;padding-bottom:44px">
+          <button class="grab" aria-label="Zapri"></button>
+          <div class="flex-1 min-h-0 flex flex-col justify-center px-5">
+            <span class="spot" aria-hidden="true"><i class="ph-bold ph-map-pin"></i></span>
+            <h2 class="font-display font-bold text-[24px] leading-[30px] tracking-[-0.015em] mt-8">Kje se je to zgodilo?</h2>
+            <p class="text-lg leading-7 mt-3">Vašo lokacijo uporabimo, da hitreje označite kraj. Javno prikažemo le približno območje.</p>
+          </div>
+          <div class="grid gap-1 px-5">
+            <button class="btn btn-primary btn-lg btn-block">Dovoli lokacijo</button>
+            <button class="btn btn-text btn-block">Ne zdaj</button>
+          </div>
+        </div>
+        <span class="home-ind" style="z-index:12"></span>
+      </div></div>
+      <p class="help mt-4" style="max-width:412px">Asked "when in use" only. The second sentence is the privacy promise (approximate area in public). Denied or "Ne zdaj": B6.</p>
+    </figure>
+
+    <!-- B3 NOTIFICATIONS PRIMER -->
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">B3 Notifications primer (after the first report)</figcaption>
+      <div class="phone"><div class="phone-screen">
+        <div class="statusbar" aria-hidden="true"><span>14:30</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <div class="scrim"></div>
+        <div class="sheet flex flex-col" role="dialog" aria-modal="true" aria-label="Naj vas obvestimo, ko bo kaj novega?" style="top:64px;z-index:8;padding-bottom:44px">
+          <button class="grab" aria-label="Zapri"></button>
+          <div class="flex-1 min-h-0 flex flex-col justify-center px-5">
+            <span class="spot" aria-hidden="true"><i class="ph-bold ph-bell"></i></span>
+            <h2 class="font-display font-bold text-[24px] leading-[30px] tracking-[-0.015em] mt-8">Naj vas obvestimo, ko bo kaj novega?</h2>
+            <p class="text-lg leading-7 mt-3">Obvestimo vas o možnem ujemanju, novih sporočilih in izgubljenih živalih v bližini. Kaj prejemate, izberete v nastavitvah.</p>
+          </div>
+          <div class="grid gap-1 px-5">
+            <button class="btn btn-primary btn-lg btn-block">Dovoli obvestila</button>
+            <button class="btn btn-text btn-block">Ne zdaj</button>
+          </div>
+        </div>
+        <span class="home-ind" style="z-index:12"></span>
+      </div></div>
+      <p class="help mt-4" style="max-width:412px">Shown after the first report is sent, or when alerts are switched on (P13). Never on first launch. Denied or "Ne zdaj": B7.</p>
+    </figure>
+
+    <!-- B4 CAMERA PRIMER AT 200 % TEXT -->
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">B4 Camera primer at 200 % text size</figcaption>
+      <div class="phone"><div class="phone-screen">
+        <div class="statusbar" aria-hidden="true"><span>14:21</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <div class="scrim"></div>
+        <div class="sheet flex flex-col" role="dialog" aria-modal="true" aria-label="Fotografija pomaga, da žival prepoznajo" style="top:64px;z-index:8;padding-bottom:44px">
+          <button class="grab" aria-label="Zapri"></button>
+          <div class="flex-1 min-h-0 overflow-y-auto scrollfade px-5 pt-6 pb-8" tabindex="0" role="region" aria-label="Fotografija pomaga, da žival prepoznajo">
+            <span class="spot" aria-hidden="true"><i class="ph-bold ph-camera"></i></span>
+            <h2 class="font-display font-bold text-[48px] leading-[56px] tracking-[-0.015em] mt-8">Fotografija pomaga, da žival prepoznajo</h2>
+            <p class="text-[36px] leading-[52px] mt-4">Kamero uporabimo samo, ko fotografirate žival. Fotografijo lahko izberete tudi iz galerije.</p>
+          </div>
+          <div class="grid gap-1 px-5 pt-2">
+            <button class="btn btn-primary btn-lg btn-block" style="white-space:normal;min-height:88px;font-size:34px;line-height:44px;padding:12px 24px">Dovoli kamero</button>
+            <button class="btn btn-text btn-block" style="white-space:normal;min-height:72px;font-size:32px;line-height:40px">Ne zdaj</button>
+          </div>
+        </div>
+        <span class="home-ind" style="z-index:12"></span>
+      </div></div>
+      <p class="help mt-4" style="max-width:412px">At 200 % the text block scrolls (focusable region, fade at the edge) while both buttons stay pinned and grow. Button labels may wrap at large OS text sizes so nothing clips. Icons keep their size.</p>
+    </figure>
+
+    <!-- B5 CAMERA DENIED -->
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">B5 Camera denied: gallery or later</figcaption>
+      <div class="phone"><div class="phone-screen">
+        <div class="statusbar" aria-hidden="true"><span>14:21</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <div class="topbar">
+          <button class="iconbtn" aria-label="Nazaj"><i class="ph-bold ph-caret-left" aria-hidden="true"></i></button>
+          <div class="steps flex-1" role="progressbar" aria-valuemin="1" aria-valuemax="4" aria-valuenow="1" aria-label="Korak 1 od 4"><span class="on"></span><span></span><span></span><span></span></div>
+          <button class="iconbtn" aria-label="Zapri"><i class="ph-bold ph-x" aria-hidden="true"></i></button>
+        </div>
+        <div class="flex-1 min-h-0 flex flex-col px-5 pt-3">
+          <div class="grid place-items-center bg-card text-muted-foreground" style="height:280px;border-radius:28px" aria-hidden="true"><i class="ph-bold ph-images text-[48px]"></i></div>
+          <h1 class="font-display font-bold text-[34px] leading-[40px] tracking-[-0.02em] mt-9" data-sample>Dodajte fotografijo živali</h1>
+          <p class="flex gap-2 text-sm leading-5 text-muted-foreground mt-4"><i class="ph-bold ph-camera-slash text-base mt-0.5" aria-hidden="true"></i><span>Kamera ni dovoljena. Fotografijo izberite iz galerije ali jo dodajte pozneje. <a href="#" class="font-bold text-primary underline underline-offset-4">Odpri nastavitve telefona</a></span></p>
+        </div>
+        <div class="grid gap-1 px-5 pb-11">
+          <button class="btn btn-primary btn-lg btn-block" data-sample><i class="ph-bold ph-images" aria-hidden="true"></i>Izberi iz galerije</button>
+          <button class="btn btn-text btn-block" data-sample>Dodaj pozneje</button>
+        </div>
+        <span class="home-ind"></span>
+      </div></div>
+      <p class="help mt-4" style="max-width:412px">Quiet note (14 muted, icon) in the photo step, not a dialog. The gallery picker needs no permission, so the flow continues. Bottom nav hidden in flows. Sample copy (P6/P7): h1 and both buttons.</p>
+    </figure>
+
+    <!-- B6 LOCATION DENIED -->
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">B6 Location denied: search or mark on the map</figcaption>
+      <div class="phone"><div class="phone-screen">
+        <div class="statusbar" aria-hidden="true"><span>14:22</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <div class="topbar">
+          <button class="iconbtn" aria-label="Nazaj"><i class="ph-bold ph-caret-left" aria-hidden="true"></i></button>
+          <div class="steps flex-1" role="progressbar" aria-valuemin="1" aria-valuemax="4" aria-valuenow="3" aria-label="Korak 3 od 4"><span class="on"></span><span class="on"></span><span class="on"></span><span></span></div>
+          <button class="iconbtn" aria-label="Zapri"><i class="ph-bold ph-x" aria-hidden="true"></i></button>
+        </div>
+        <div class="flex-1 min-h-0 flex flex-col px-5 pt-3">
+          <h1 class="font-display font-bold text-[34px] leading-[40px] tracking-[-0.02em]" data-sample>Kje ste videli žival?</h1>
+          <div class="field mt-6">
+            <label for="p2-place" data-sample>Kraj ali naslov</label>
+            <div class="input-wrap"><i class="ph ph-magnifying-glass" aria-hidden="true"></i><input id="p2-place" class="input" placeholder="Na primer Šiška, Ljubljana" data-sample></div>
+          </div>
+          <div class="map-wrap mt-5" style="height:220px;border-radius:28px" aria-hidden="true">
+            <div class="map-canvas" data-center="14.4890,46.0705" data-zoom="14" data-roads="all"></div>
+            <i class="ph-fill ph-map-pin absolute text-primary" style="left:50%;top:50%;font-size:44px;line-height:1;transform:translate(-50%,-100%)"></i>
+          </div>
+          <p class="flex gap-2 text-sm leading-5 text-muted-foreground mt-4"><i class="ph-bold ph-gps-slash text-base mt-0.5" aria-hidden="true"></i><span>Lokacija ni dovoljena. Kraj poiščite ali ga označite na zemljevidu. <a href="#" class="font-bold text-primary underline underline-offset-4">Odpri nastavitve telefona</a></span></p>
+        </div>
+        <div class="px-5 pb-11">
+          <button class="btn btn-primary btn-lg btn-block">Potrdi</button>
+        </div>
+        <span class="home-ind"></span>
+      </div></div>
+      <p class="help mt-4" style="max-width:412px">Search field (label above, line style) plus a movable map with a centre pin: both work without permission. No "you" dot. Picker details belong to P5. Sample copy (P5/P7): h1, label, placeholder.</p>
+    </figure>
+
+    <!-- B7 NOTIFICATIONS DENIED + EMPTY STATE -->
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">B7 Notifications off: inbox fallback, with the empty state</figcaption>
+      <div class="phone"><div class="phone-screen">
+        <div class="statusbar" aria-hidden="true"><span>14:31</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <div class="flex-1 min-h-0 flex flex-col px-5 pt-6">
+          <h1 class="font-display font-bold text-[30px] leading-9 tracking-[-0.02em]">Sporočila</h1>
+          <div class="note mt-5"><i class="ph-bold ph-bell-slash" aria-hidden="true"></i><p>Obvestila na telefonu so izklopljena. Vse boste našli med sporočili in v e-pošti. <a href="#" class="font-bold text-primary underline underline-offset-4">Odpri nastavitve telefona</a></p></div>
+          <div class="flex-1 flex flex-col items-center justify-center text-center pb-6">
+            <div class="spot-art" style="width:260px">
+              <svg viewBox="0 0 320 210" preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false"><rect width="320" height="210" style="fill:hsl(var(--accent))"/><path d="M0 172 C70 150 140 158 200 170 C250 180 290 172 320 160 V210 H0Z" style="fill:hsl(var(--secondary))"/><path d="M0 194 C80 176 150 186 210 196 C255 203 295 199 320 190 V210 H0Z" style="fill:hsl(var(--primary))"/><rect x="66" y="38" width="124" height="74" rx="28" style="fill:hsl(var(--card))"/><path d="M92 106 L86 130 L116 110Z" style="fill:hsl(var(--card))"/><rect x="144" y="82" width="108" height="62" rx="26" style="fill:hsl(var(--secondary))"/><path d="M228 138 L240 158 L210 142Z" style="fill:hsl(var(--secondary))"/><circle cx="200" cy="60" r="11" style="fill:hsl(var(--status-reunited))"/></svg>
+              <img src="../../../assets/empty-inbox.png" alt="" onerror="this.remove()">
+            </div>
+            <h2 class="font-display font-semibold text-[20px] leading-7 tracking-[-0.01em] mt-6">Tu še ni ničesar</h2>
+            <p class="text-muted-foreground mt-1">Ko bo kaj novega, se bo pokazalo tukaj.</p>
+            <a href="#" class="btn btn-secondary mt-5">Odpri zemljevid</a>
+          </div>
+        </div>
+        <nav class="bottomnav" aria-label="Glavna navigacija">
+          <a href="#"><i class="ph ph-map-trifold" aria-hidden="true"></i>Zemljevid</a>
+          <a href="#" aria-current="page"><i class="ph-fill ph-chat-circle" aria-hidden="true"></i>Sporočila</a>
+          <a href="#" class="go" role="button" aria-haspopup="dialog" aria-label="Prijavi žival"><span class="act" aria-hidden="true"><i class="ph-bold ph-plus"></i></span>Prijavi</a>
+          <a href="#"><i class="ph ph-user-circle" aria-hidden="true"></i>Profil</a>
+        </nav>
+        <span class="home-ind"></span>
+      </div></div>
+      <p class="help mt-4" style="max-width:412px">Signed in. The one <code>note</code> sits under the title while notifications are off; the inbox and email carry everything. Empty state: spot illustration <code>assets/empty-inbox.png</code> (TASK-22.1; token-tinted placeholder until it exists), h3 style, one sentence, one <code>secondary</code> button. Generic copy from P1 §5.1; P13 may override.</p>
+    </figure>
+
+  </div>
+</section>
+
+<!-- ================= C. DEEP LINK LANDING ================= -->
+<section class="tile-section !max-w-[1400px] !pt-0">
+  <h2 class="tile-title !text-2xl">C. Deep-link landing (listing link or poster QR)</h2>
+  <p class="tile-lede">A brief loading frame with the logo and the shape of the detail page, then the report (P9). Failures land on calm pages with one way back to the map. Without the app the same link opens the web page.</p>
+
+  <div class="flex flex-wrap gap-x-10 gap-y-14 items-start">
+
+    <!-- C1 LOADING -->
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">C1 Opening a report: loading skeleton</figcaption>
+      <div class="phone"><div class="phone-screen">
+        <div class="statusbar" aria-hidden="true"><span>14:40</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <div class="topbar">
+          <button class="iconbtn" aria-label="Nazaj"><i class="ph-bold ph-caret-left" aria-hidden="true"></i></button>
+          <span class="flex-1 flex items-center justify-center gap-2" aria-hidden="true"><svg class="logo-mark w-7 h-7" viewBox="0 0 48 48"><use href="#nj-mark"/></svg><span class="font-display font-bold text-lg tracking-[-0.02em]">Najdimo</span></span>
+          <span class="w-11 h-11 flex-none" aria-hidden="true"></span>
+        </div>
+        <div class="flex-1 min-h-0 overflow-hidden px-5 pt-1" aria-busy="true">
+          <p class="text-sm leading-5 text-muted-foreground mb-3" role="status">Odpiramo prijavo …</p>
+          <div aria-hidden="true">
+            <div class="skel w-full" style="height:240px;border-radius:32px"></div>
+            <div class="skel h-5 w-28 mt-7"></div>
+            <div class="skel h-9 w-44 mt-3"></div>
+            <div class="skel h-5 w-56 mt-3"></div>
+            <div class="grid grid-cols-2 gap-x-8 gap-y-6 mt-8">
+              <div><div class="skel h-4 w-16"></div><div class="skel h-5 w-28 mt-2"></div></div>
+              <div><div class="skel h-4 w-20"></div><div class="skel h-5 w-24 mt-2"></div></div>
+              <div><div class="skel h-4 w-16"></div><div class="skel h-5 w-32 mt-2"></div></div>
+              <div><div class="skel h-4 w-12"></div><div class="skel h-5 w-28 mt-2"></div></div>
+            </div>
+          </div>
+        </div>
+        <div class="px-5 pb-6" aria-hidden="true"><div class="skel h-14 w-full !rounded-full"></div></div>
+        <nav class="bottomnav" aria-label="Glavna navigacija">
+          <a href="#" aria-current="page"><i class="ph-fill ph-map-trifold" aria-hidden="true"></i>Zemljevid</a>
+          <a href="#"><i class="ph ph-chat-circle" aria-hidden="true"></i>Sporočila</a>
+          <a href="#" class="go" role="button" aria-haspopup="dialog" aria-label="Prijavi žival"><span class="act" aria-hidden="true"><i class="ph-bold ph-plus"></i></span>Prijavi</a>
+          <a href="#"><i class="ph ph-user-circle" aria-hidden="true"></i>Profil</a>
+        </nav>
+        <span class="home-ind"></span>
+      </div></div>
+      <p class="help mt-4" style="max-width:412px">Standard top bar (back, title slot, action slot) with the logo while loading. Skeleton in the final P9 shape: photo, status, name, meta, four facts, main button. No spinner. Status line announced politely. The report opens inside the Map tab stack.</p>
+    </figure>
+
+    <!-- C2 REMOVED (410) -->
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">C2 Report closed or removed (410)</figcaption>
+      <div class="phone"><div class="phone-screen">
+        <div class="statusbar" aria-hidden="true"><span>14:40</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <div class="topbar"><button class="iconbtn" aria-label="Nazaj"><i class="ph-bold ph-caret-left" aria-hidden="true"></i></button></div>
+        <div class="flex-1 min-h-0 flex flex-col px-5 pt-2">
+          <div class="spot-art w-full">
+            <svg viewBox="0 0 320 210" preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false"><rect width="320" height="210" style="fill:hsl(var(--accent))"/><path d="M0 172 C70 150 140 158 200 170 C250 180 290 172 320 160 V210 H0Z" style="fill:hsl(var(--secondary))"/><path d="M0 194 C80 176 150 186 210 196 C255 203 295 199 320 190 V210 H0Z" style="fill:hsl(var(--primary))"/><rect x="66" y="38" width="124" height="74" rx="28" style="fill:hsl(var(--card))"/><path d="M92 106 L86 130 L116 110Z" style="fill:hsl(var(--card))"/><rect x="144" y="82" width="108" height="62" rx="26" style="fill:hsl(var(--secondary))"/><path d="M228 138 L240 158 L210 142Z" style="fill:hsl(var(--secondary))"/><circle cx="200" cy="60" r="11" style="fill:hsl(var(--status-reunited))"/></svg>
+            <img src="../../../assets/empty-inbox.png" alt="" onerror="this.remove()">
+          </div>
+          <h1 class="font-display font-bold text-[30px] leading-9 tracking-[-0.02em] mt-8">Ta prijava ni več na voljo</h1>
+          <p class="text-lg leading-7 mt-3">Prijava je zaključena ali odstranjena. Morda je žival že spet doma.</p>
+          <div class="mt-auto pb-6">
+            <a href="#" class="btn btn-primary btn-lg btn-block"><i class="ph-bold ph-map-trifold" aria-hidden="true"></i>Na zemljevid</a>
+          </div>
+        </div>
+        <nav class="bottomnav" aria-label="Glavna navigacija">
+          <a href="#" aria-current="page"><i class="ph-fill ph-map-trifold" aria-hidden="true"></i>Zemljevid</a>
+          <a href="#"><i class="ph ph-chat-circle" aria-hidden="true"></i>Sporočila</a>
+          <a href="#" class="go" role="button" aria-haspopup="dialog" aria-label="Prijavi žival"><span class="act" aria-hidden="true"><i class="ph-bold ph-plus"></i></span>Prijavi</a>
+          <a href="#"><i class="ph ph-user-circle" aria-hidden="true"></i>Profil</a>
+        </nav>
+        <span class="home-ind"></span>
+      </div></div>
+      <p class="help mt-4" style="max-width:412px">Error page pattern: spot illustration (<code>assets/empty-inbox.png</code>, reused per TASK-22.1), h1, body, primary "Na zemljevid". P1 adds a text button "Na začetno stran"; in the app the map is home, so it is left out. Copy from P1 §5.3.</p>
+    </figure>
+
+    <!-- C3 INVALID LINK -->
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">C3 Link invalid (neutral page)</figcaption>
+      <div class="phone"><div class="phone-screen">
+        <div class="statusbar" aria-hidden="true"><span>14:40</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <div class="topbar"><button class="iconbtn" aria-label="Nazaj"><i class="ph-bold ph-caret-left" aria-hidden="true"></i></button></div>
+        <div class="flex-1 min-h-0 flex flex-col px-5">
+          <div class="flex-1 flex flex-col justify-center">
+            <span class="spot" aria-hidden="true"><i class="ph-bold ph-link-break"></i></span>
+            <h1 class="font-display font-bold text-[30px] leading-9 tracking-[-0.02em] mt-8">Te povezave ne moremo odpreti</h1>
+            <p class="text-lg leading-7 mt-3">Povezava je morda nepopolna. Aktualne prijave so na zemljevidu.</p>
+          </div>
+          <div class="pb-6">
+            <a href="#" class="btn btn-primary btn-lg btn-block"><i class="ph-bold ph-map-trifold" aria-hidden="true"></i>Odpri zemljevid</a>
+          </div>
+        </div>
+        <nav class="bottomnav" aria-label="Glavna navigacija">
+          <a href="#" aria-current="page"><i class="ph-fill ph-map-trifold" aria-hidden="true"></i>Zemljevid</a>
+          <a href="#"><i class="ph ph-chat-circle" aria-hidden="true"></i>Sporočila</a>
+          <a href="#" class="go" role="button" aria-haspopup="dialog" aria-label="Prijavi žival"><span class="act" aria-hidden="true"><i class="ph-bold ph-plus"></i></span>Prijavi</a>
+          <a href="#"><i class="ph ph-user-circle" aria-hidden="true"></i>Profil</a>
+        </nav>
+        <span class="home-ind"></span>
+      </div></div>
+      <p class="help mt-4" style="max-width:412px">Neutral: a spot icon instead of an illustration, no error colour. Malformed or unknown links. One primary action.</p>
+    </figure>
+
+  </div>
+</section>
+
+<!-- ================= D. SHARED PATTERNS ================= -->
+<section class="tile-section !max-w-[1400px] !pt-0">
+  <h2 class="tile-title !text-2xl">D. Shared patterns: offline, toast, loading, refresh, inline error</h2>
+  <p class="tile-lede">As in P1, with sheets instead of popovers. One notice at a time. The empty state is in B7.</p>
+
+  <div class="flex flex-wrap gap-x-10 gap-y-14 items-start">
+
+    <!-- D1 OFFLINE BANNER -->
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">D1 Offline banner in a flow</figcaption>
+      <div class="phone"><div class="phone-screen">
+        <div class="statusbar" aria-hidden="true"><span>14:25</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-battery-high"></i></span></div>
+        <div class="topbar">
+          <button class="iconbtn" aria-label="Nazaj"><i class="ph-bold ph-caret-left" aria-hidden="true"></i></button>
+          <div class="steps flex-1" role="progressbar" aria-valuemin="1" aria-valuemax="4" aria-valuenow="4" aria-label="Korak 4 od 4"><span class="on"></span><span class="on"></span><span class="on"></span><span class="on"></span></div>
+          <button class="iconbtn" aria-label="Zapri"><i class="ph-bold ph-x" aria-hidden="true"></i></button>
+        </div>
+        <div class="note mx-5" role="status"><i class="ph-bold ph-wifi-slash" aria-hidden="true"></i><p>Brez povezave. Osnutek je shranjen.</p></div>
+        <div class="flex-1 min-h-0 px-5 pt-8">
+          <h1 class="font-display font-bold text-[34px] leading-[40px] tracking-[-0.02em]" data-sample>Je žival pri vas?</h1>
+          <div class="grid gap-3 mt-8" role="radiogroup" aria-label="Je žival pri vas?">
+            <button class="choice" role="radio" aria-checked="true"><span class="flex-1 min-w-0"><span class="t">Da</span></span><i class="ph-bold ph-check" aria-hidden="true"></i></button>
+            <button class="choice" role="radio" aria-checked="false"><span class="flex-1 min-w-0"><span class="t">Ne</span></span></button>
+          </div>
+        </div>
+        <div class="px-5 pb-11">
+          <button class="btn btn-primary btn-lg btn-block">Naprej</button>
+        </div>
+        <span class="home-ind"></span>
+      </div></div>
+      <p class="help mt-4" style="max-width:412px">One <code>note</code> directly under the top bar, gone when the connection returns (then D2). The flow keeps working; sending waits for the connection. Sample copy (P7): the question.</p>
+    </figure>
+
+    <!-- D2 TOAST -->
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">D2 Toast: back online</figcaption>
+      <div class="phone"><div class="phone-screen">
+        <h1 class="sr-only">Zemljevid</h1>
+        <div class="map-wrap" style="position:absolute;inset:0 0 88px 0">
+          <div class="map-canvas" data-center="14.5060,46.0560" data-zoom="13.4"></div>
+          <div class="mk mk-area" style="left:220px;top:210px"><img class="mk-avatar" src="../directions/img/dog-terrier.jpg" alt="Fido, izgubljena žival"></div>
+          <div class="mk" style="left:96px;top:290px"><img class="mk-avatar sighted" src="../directions/img/dog-golden.jpg" alt="Opažen zlat pes"></div>
+          <button class="float absolute flex items-center gap-2 rounded-full pl-4 pr-2" style="left:20px;top:60px;height:48px;border:0;font:inherit;font-weight:700;color:inherit" aria-label="Območje in filtri: Ljubljana, 10 km" data-sample><i class="ph-bold ph-map-pin text-lg" aria-hidden="true"></i><span class="tnum">Ljubljana, 10 km</span><span class="grid place-items-center w-8 h-8 rounded-full ml-1 bg-secondary text-secondary-foreground" aria-hidden="true"><i class="ph-bold ph-sliders-horizontal text-base"></i></span></button>
+          <div class="sheet" style="height:342px">
+            <button class="grab" aria-label="Povleci ali tapni za razširitev"></button>
+            <div class="flex items-baseline justify-between px-5 pt-3"><h2 class="font-display font-bold text-[24px] leading-[30px] tracking-[-0.015em]" data-sample>V bližini</h2><span class="text-sm text-muted-foreground tnum" data-sample>9 prijav</span></div>
+            <ul class="px-5 pt-5 grid gap-5 list-none scrollfade" style="height:240px;overflow:hidden" data-sample>
+              <li class="flex items-center gap-4"><img class="thumb w-16 h-16" style="border-radius:var(--radius-row)" src="../directions/img/dog-terrier.jpg" alt="Trobarvni terier"><div class="flex-1 min-w-0"><h3 class="font-display font-semibold text-xl leading-6">Fido</h3><p class="mt-1 flex items-center gap-2 text-sm"><span class="st st-lost"><i class="ph-fill ph-megaphone" aria-hidden="true"></i>Izgubljena</span><span class="text-muted-foreground tnum">pred 4 dnevi</span></p></div><span class="text-sm text-muted-foreground tnum">0,8 km</span></li>
+              <li class="flex items-center gap-4"><img class="thumb w-16 h-16" style="border-radius:var(--radius-row)" src="../directions/img/dog-golden.jpg" alt="Zlat pes"><div class="flex-1 min-w-0"><h3 class="font-display font-semibold text-xl leading-6">Zlat pes</h3><p class="mt-1 flex items-center gap-2 text-sm"><span class="st st-sighted"><i class="ph-fill ph-eye" aria-hidden="true"></i>Opažena</span><span class="text-muted-foreground tnum">danes</span></p></div><span class="text-sm text-muted-foreground tnum">1,5 km</span></li>
+              <li class="flex items-center gap-4"><img class="thumb w-16 h-16" style="border-radius:var(--radius-row)" src="../directions/img/cat-bw.jpg" alt="Črno-bela mačka"><div class="flex-1 min-w-0"><h3 class="font-display font-semibold text-xl leading-6">Črno-bela mačka</h3><p class="mt-1 flex items-center gap-2 text-sm"><span class="st st-found"><i class="ph-fill ph-hand-heart" aria-hidden="true"></i>Najdena</span><span class="text-muted-foreground tnum">včeraj</span></p></div><span class="text-sm text-muted-foreground tnum">2,3 km</span></li>
+            </ul>
+          </div>
+        </div>
+        <div class="toast absolute" style="left:12px;right:12px;bottom:100px;z-index:7" role="status" aria-live="polite"><i class="ph-fill ph-wifi-high" aria-hidden="true"></i><p>Spet ste povezani.</p><button class="iconbtn" aria-label="Zapri"><i class="ph-bold ph-x" aria-hidden="true"></i></button></div>
+        <div class="statusbar" style="position:absolute;left:0;right:0;top:0" aria-hidden="true"><span>14:27</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <nav class="bottomnav" style="position:absolute;left:0;right:0;bottom:0" aria-label="Glavna navigacija">
+          <a href="#" aria-current="page"><i class="ph-fill ph-map-trifold" aria-hidden="true"></i>Zemljevid</a>
+          <a href="#"><i class="ph ph-chat-circle" aria-hidden="true"></i>Sporočila</a>
+          <a href="#" class="go" role="button" aria-haspopup="dialog" aria-label="Prijavi žival"><span class="act" aria-hidden="true"><i class="ph-bold ph-plus"></i></span>Prijavi</a>
+          <a href="#"><i class="ph ph-user-circle" aria-hidden="true"></i>Profil</a>
+        </nav>
+        <span class="home-ind"></span>
+      </div></div>
+      <p class="help mt-4" style="max-width:412px">Toast: <code>popover</code>, radius 20, <code>shadow-md</code> + <code>shadow-lg</code> (it can sit on a <code>card</code> sheet of the same tone), 15/22, icon, close button. 12 px above the bottom nav, 5 s, polite live region. Never covers the nav or a primary button.</p>
+    </figure>
+
+    <!-- D3 LOADING SKELETON -->
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">D3 Loading skeleton (first load of a list)</figcaption>
+      <div class="phone"><div class="phone-screen">
+        <h1 class="sr-only">Zemljevid</h1>
+        <div class="map-wrap" style="position:absolute;inset:0 0 88px 0">
+          <button class="float absolute flex items-center gap-2 rounded-full pl-4 pr-2" style="left:20px;top:60px;height:48px;border:0;font:inherit;font-weight:700;color:inherit" aria-label="Območje in filtri: Ljubljana, 10 km" data-sample><i class="ph-bold ph-map-pin text-lg" aria-hidden="true"></i><span class="tnum">Ljubljana, 10 km</span><span class="grid place-items-center w-8 h-8 rounded-full ml-1 bg-secondary text-secondary-foreground" aria-hidden="true"><i class="ph-bold ph-sliders-horizontal text-base"></i></span></button>
+          <div class="sheet" style="height:342px">
+            <button class="grab" aria-label="Povleci ali tapni za razširitev"></button>
+            <div class="flex items-center justify-between px-5 pt-3"><h2 class="font-display font-bold text-[24px] leading-[30px] tracking-[-0.015em]" data-sample>V bližini</h2><div class="skel h-4 w-16" aria-hidden="true"></div></div>
+            <p class="sr-only" role="status">Nalaganje …</p>
+            <ul class="px-5 pt-5 grid gap-5 list-none" aria-hidden="true">
+              <li class="flex items-center gap-4"><div class="skel w-16 h-16" style="border-radius:var(--radius-row)"></div><div class="flex-1 grid gap-2"><div class="skel h-5 w-32"></div><div class="skel h-4 w-40"></div></div><div class="skel h-4 w-10"></div></li>
+              <li class="flex items-center gap-4"><div class="skel w-16 h-16" style="border-radius:var(--radius-row)"></div><div class="flex-1 grid gap-2"><div class="skel h-5 w-24"></div><div class="skel h-4 w-36"></div></div><div class="skel h-4 w-10"></div></li>
+              <li class="flex items-center gap-4"><div class="skel w-16 h-16" style="border-radius:var(--radius-row)"></div><div class="flex-1 grid gap-2"><div class="skel h-5 w-36"></div><div class="skel h-4 w-32"></div></div><div class="skel h-4 w-10"></div></li>
+            </ul>
+          </div>
+        </div>
+        <div class="statusbar" style="position:absolute;left:0;right:0;top:0" aria-hidden="true"><span>14:20</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <nav class="bottomnav" style="position:absolute;left:0;right:0;bottom:0" aria-label="Glavna navigacija">
+          <a href="#" aria-current="page"><i class="ph-fill ph-map-trifold" aria-hidden="true"></i>Zemljevid</a>
+          <a href="#"><i class="ph ph-chat-circle" aria-hidden="true"></i>Sporočila</a>
+          <a href="#" class="go" role="button" aria-haspopup="dialog" aria-label="Prijavi žival"><span class="act" aria-hidden="true"><i class="ph-bold ph-plus"></i></span>Prijavi</a>
+          <a href="#"><i class="ph ph-user-circle" aria-hidden="true"></i>Profil</a>
+        </nav>
+        <span class="home-ind"></span>
+      </div></div>
+      <p class="help mt-4" style="max-width:412px">Skeleton rows in the exact row shape (64 px photo, title, meta, distance), <code>muted</code> with an <code>accent</code> shimmer, static under reduced motion. Map shows plain <code>map-land</code> until tiles arrive. Headings and controls are real from the start.</p>
+    </figure>
+
+    <!-- D4 PULL TO REFRESH -->
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">D4 Pull to refresh (list sheet at full snap)</figcaption>
+      <div class="phone"><div class="phone-screen">
+        <h1 class="sr-only">Zemljevid</h1>
+        <div class="map-wrap" style="position:absolute;inset:0 0 88px 0" aria-hidden="true"></div>
+        <div class="statusbar" style="position:absolute;left:0;right:0;top:0" aria-hidden="true"><span>14:20</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <div class="sheet" style="top:68px;bottom:88px">
+          <button class="grab" aria-label="Povleci ali tapni za razširitev"></button>
+          <div class="flex items-baseline justify-between px-5 pt-3"><h2 class="font-display font-bold text-[24px] leading-[30px] tracking-[-0.015em]" data-sample>V bližini</h2><span class="text-sm text-muted-foreground tnum" data-sample>12 prijav</span></div>
+          <p class="flex items-center justify-center gap-2 h-14 text-sm font-semibold text-primary" role="status"><span class="spin" aria-hidden="true"></span>Osvežujemo …</p>
+          <ul class="px-5 grid gap-5 list-none scrollfade" style="height:520px;overflow:hidden" data-sample>
+            <li class="flex items-center gap-4"><img class="thumb w-16 h-16" style="border-radius:var(--radius-row)" src="../directions/img/dog-aussie.jpg" alt="Rjav in bel pes"><div class="flex-1 min-w-0"><h3 class="font-display font-semibold text-xl leading-6">Maks</h3><p class="mt-1 flex items-center gap-2 text-sm"><span class="st st-lost"><i class="ph-fill ph-megaphone" aria-hidden="true"></i>Izgubljena</span><span class="text-muted-foreground tnum">pred 3 h</span></p></div><span class="text-sm text-muted-foreground tnum">1,2 km</span></li>
+            <li class="flex items-center gap-4"><img class="thumb w-16 h-16" style="border-radius:var(--radius-row)" src="../directions/img/cat-siamese.jpg" alt="Sijamska mačka"><div class="flex-1 min-w-0"><h3 class="font-display font-semibold text-xl leading-6">Mici</h3><p class="mt-1 flex items-center gap-2 text-sm"><span class="st st-lost"><i class="ph-fill ph-megaphone" aria-hidden="true"></i>Izgubljena</span><span class="text-muted-foreground tnum">včeraj</span></p></div><span class="text-sm text-muted-foreground tnum">2,1 km</span></li>
+            <li class="flex items-center gap-4"><img class="thumb w-16 h-16" style="border-radius:var(--radius-row)" src="../directions/img/cat-tabby.jpg" alt="Tigrasta mačka"><div class="flex-1 min-w-0"><h3 class="font-display font-semibold text-xl leading-6">Tigrasta mačka</h3><p class="mt-1 flex items-center gap-2 text-sm"><span class="st st-found"><i class="ph-fill ph-hand-heart" aria-hidden="true"></i>Najdena</span><span class="text-muted-foreground tnum">danes</span></p></div><span class="text-sm text-muted-foreground tnum">2,8 km</span></li>
+            <li class="flex items-center gap-4"><img class="thumb w-16 h-16" style="border-radius:var(--radius-row)" src="../directions/img/dog-golden.jpg" alt="Zlat pes"><div class="flex-1 min-w-0"><h3 class="font-display font-semibold text-xl leading-6">Zlat pes</h3><p class="mt-1 flex items-center gap-2 text-sm"><span class="st st-sighted"><i class="ph-fill ph-eye" aria-hidden="true"></i>Opažena</span><span class="text-muted-foreground tnum">včeraj</span></p></div><span class="text-sm text-muted-foreground tnum">3,4 km</span></li>
+            <li class="flex items-center gap-4"><img class="thumb w-16 h-16" style="border-radius:var(--radius-row)" src="../directions/img/dog-beagle.jpg" alt="Beagle"><div class="flex-1 min-w-0"><h3 class="font-display font-semibold text-xl leading-6">Beagle brez čipa</h3><p class="mt-1 flex items-center gap-2 text-sm"><span class="st st-found"><i class="ph-fill ph-hand-heart" aria-hidden="true"></i>Najdena</span><span class="text-muted-foreground tnum">danes</span></p></div><span class="text-sm text-muted-foreground tnum">4,2 km</span></li>
+            <li class="flex items-center gap-4"><img class="thumb w-16 h-16" style="border-radius:var(--radius-row)" src="../directions/img/cat-ginger.jpg" alt="Rdeča mačka"><div class="flex-1 min-w-0"><h3 class="font-display font-semibold text-xl leading-6">Rdeča mačka</h3><p class="mt-1 flex items-center gap-2 text-sm"><span class="st st-sighted"><i class="ph-fill ph-eye" aria-hidden="true"></i>Opažena</span><span class="text-muted-foreground tnum">pred 2 dnevoma</span></p></div><span class="text-sm text-muted-foreground tnum">4,9 km</span></li>
+          </ul>
+        </div>
+        <nav class="bottomnav" style="position:absolute;left:0;right:0;bottom:0" aria-label="Glavna navigacija">
+          <a href="#" aria-current="page"><i class="ph-fill ph-map-trifold" aria-hidden="true"></i>Zemljevid</a>
+          <a href="#"><i class="ph ph-chat-circle" aria-hidden="true"></i>Sporočila</a>
+          <a href="#" class="go" role="button" aria-haspopup="dialog" aria-label="Prijavi žival"><span class="act" aria-hidden="true"><i class="ph-bold ph-plus"></i></span>Prijavi</a>
+          <a href="#"><i class="ph ph-user-circle" aria-hidden="true"></i>Profil</a>
+        </nav>
+        <span class="home-ind"></span>
+      </div></div>
+      <p class="help mt-4" style="max-width:412px">Lists refresh with the platform control tinted <code>primary</code>: "Povlecite za osvežitev" while pulling, "Osvežujemo …" while loading, existing rows stay. Sheet at full snap (92 %), scrolls with the list; the nav stays.</p>
+    </figure>
+
+    <!-- D5 INLINE ERROR -->
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">D5 Inline error with retry</figcaption>
+      <div class="phone"><div class="phone-screen">
+        <h1 class="sr-only">Zemljevid</h1>
+        <div class="map-wrap" style="position:absolute;inset:0 0 88px 0">
+          <button class="float absolute flex items-center gap-2 rounded-full pl-4 pr-2" style="left:20px;top:60px;height:48px;border:0;font:inherit;font-weight:700;color:inherit" aria-label="Območje in filtri: Ljubljana, 10 km" data-sample><i class="ph-bold ph-map-pin text-lg" aria-hidden="true"></i><span class="tnum">Ljubljana, 10 km</span><span class="grid place-items-center w-8 h-8 rounded-full ml-1 bg-secondary text-secondary-foreground" aria-hidden="true"><i class="ph-bold ph-sliders-horizontal text-base"></i></span></button>
+          <div class="sheet" style="height:342px">
+            <button class="grab" aria-label="Povleci ali tapni za razširitev"></button>
+            <div class="flex items-baseline justify-between px-5 pt-3"><h2 class="font-display font-bold text-[24px] leading-[30px] tracking-[-0.015em]" data-sample>V bližini</h2></div>
+            <div class="note mx-5 mt-5" role="alert"><i class="ph-fill ph-warning-circle text-destructive" aria-hidden="true"></i><div><p>Tega trenutno ne moremo naložiti.</p><button class="btn btn-text !px-0 mt-1">Poskusi znova</button></div></div>
+          </div>
+        </div>
+        <div class="statusbar" style="position:absolute;left:0;right:0;top:0" aria-hidden="true"><span>14:20</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <nav class="bottomnav" style="position:absolute;left:0;right:0;bottom:0" aria-label="Glavna navigacija">
+          <a href="#" aria-current="page"><i class="ph-fill ph-map-trifold" aria-hidden="true"></i>Zemljevid</a>
+          <a href="#"><i class="ph ph-chat-circle" aria-hidden="true"></i>Sporočila</a>
+          <a href="#" class="go" role="button" aria-haspopup="dialog" aria-label="Prijavi žival"><span class="act" aria-hidden="true"><i class="ph-bold ph-plus"></i></span>Prijavi</a>
+          <a href="#"><i class="ph ph-user-circle" aria-hidden="true"></i>Profil</a>
+        </nav>
+        <span class="home-ind"></span>
+      </div></div>
+      <p class="help mt-4" style="max-width:412px">Server or timeout error inside a region: the one <code>note</code> with a <code>destructive</code> icon and a text-button retry, in place of the content. Offline uses D1 instead. Error text comes from the <code>errors</code> catalogue when the code is known.</p>
+    </figure>
+
+  </div>
+</section>
+
+<p class="tile-section !py-8 text-sm text-muted-foreground">Copy: docs/content/pages/P2-mobile-shell.md v0.1 and the shared strings in docs/content/pages/P1-web-shell.md §4 to §5 (native Slovenian review pending). Sample text (marked in the notes): the P4 map list and area pill, and the P5 to P7 flow questions. Spot illustration: placeholder for assets/empty-inbox.png (TASK-22.1). Placeholder photography from Unsplash (Unsplash License); live OpenFreeMap tiles. Icons: Phosphor. Tablet (768 px and up) follows the P1 web shell and is not drawn for M1.</p>
+
+</div><!-- /#src -->
+
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<script src="../directions/directions.js"></script>
+</body>
+</html>

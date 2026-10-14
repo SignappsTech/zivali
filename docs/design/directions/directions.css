@@ -55,9 +55,9 @@ a:focus-visible, button:focus-visible { outline: 3px solid hsl(var(--ring)); out
 .btn-destructive { background: hsl(var(--destructive)); color: hsl(var(--destructive-foreground)); }
 .btn-destructive:hover, .btn-destructive.is-hover { background: color-mix(in srgb, hsl(var(--destructive)) 88%, hsl(var(--foreground))); }
 .btn:disabled, .btn.is-disabled { background: hsl(var(--muted)); color: hsl(var(--muted-foreground)); cursor: not-allowed; transform: none; }
-.btn .spin { display: inline-block; width: 18px; height: 18px; border-radius: 50%; border: 2.5px solid currentColor; border-right-color: transparent; animation: spin 800ms linear infinite; }
+.spin { display: inline-block; width: 18px; height: 18px; border-radius: 50%; border: 2.5px solid currentColor; border-right-color: transparent; animation: spin 800ms linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
-@media (prefers-reduced-motion: reduce) { .btn .spin { animation-duration: 2.4s; } .btn { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .spin { animation-duration: 2.4s; } .btn { transition: none; } }
 
 .iconbtn { display: inline-grid; place-items: center; width: 44px; height: 44px; border-radius: 999px; background: transparent; border: 0; color: inherit; cursor: pointer; position: relative; }
 .iconbtn:hover { background: hsl(var(--accent)); }
@@ -195,6 +195,8 @@ textarea.input { min-height: 96px; resize: vertical; }
 .toast { display: flex; align-items: center; gap: 12px; min-height: 56px; padding: 6px 6px 6px 16px; border-radius: var(--radius-row); background: hsl(var(--popover)); color: hsl(var(--popover-foreground)); box-shadow: var(--shadow-md), var(--shadow-lg); font-size: 15px; line-height: 22px; }
 .toast > i { font-size: 22px; line-height: 1; flex: none; color: hsl(var(--primary)); }
 .toast p { margin: 0; flex: 1; min-width: 0; }
+/* Bottom nav: items sit on one label baseline, so the 48 px Prijavi circle rises above the 26 px icons. */
+.bottomnav > * { align-self: end; }
 /* Standard top bar (back, title, optional action), 56 px. */
 .topbar { display: flex; align-items: center; gap: 8px; height: 56px; flex: none; padding: 0 12px; }
 /* Phone frames shrink on narrow viewports so mockup pages never scroll sideways (390 and 320 px). */
