@@ -5,7 +5,7 @@ status: To Do
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:14'
-updated_date: '2026-10-14 22:42'
+updated_date: '2026-10-14 23:37'
 labels:
   - fe
   - 'est:M'
@@ -18,6 +18,7 @@ dependencies:
   - TASK-7.1
   - TASK-30.1
   - TASK-86.1
+  - TASK-88.3
 references:
   - docs/tech/frontend.md
   - docs/tech/contracts/C7-anonymous-manage-link.md
@@ -35,7 +36,7 @@ Finders report in the field, often offline or on a weak signal (FR-006, R-037.5)
 
 ## Packet
 
-Unblocks on: Mobile PhotoPicker: camera/gallery, resize, EXIF, drafts, upload with retry merged (TASK-14.3); Mobile LocationPicker: GPS, pin, search, radius, permission fallback merged (TASK-15.5); Mobile anonymous session, captcha WebView and manage-link screen merged (TASK-17.3); Mobile report detail screen with slots merged (TASK-18.3); packages/analytics: typed track(), event registry, consent store, adapters merged (TASK-7.1); Design: Report found or sighted (no account) and manage page (P7) approved (TASK-30.1); Mobile outbox engine merged (TASK-86.1)
+Unblocks on: Mobile PhotoPicker: camera/gallery, resize, EXIF, drafts, upload with retry merged (TASK-14.3); Mobile LocationPicker: GPS, pin, search, radius, permission fallback merged (TASK-15.5); Mobile anonymous session, captcha WebView and manage-link screen merged (TASK-17.3); Mobile report detail screen with slots merged (TASK-18.3); packages/analytics: typed track(), event registry, consent store, adapters merged (TASK-7.1); Design: Report found or sighted (no account) and manage page (P7) approved (TASK-30.1); Mobile outbox engine: queued found and sighting submissions sent once merged (TASK-86.1); Directory client in @zivali/api and useResponsibleShelter hook merged (TASK-88.3)
 Design: P7 docs/design/pages/P7-report-found.md (mockup docs/design/mockups/P7-report-found.html; TASK-30.1)
 Copy: docs/content/pages/P7-report-found.md
 Contracts: C7, C4 (in references); conventions in C1
@@ -49,4 +50,5 @@ Branch: agent/task-30.3-found-mob
 - [ ] #2 Submit goes through submitReport() of the outbox (C17): online it sends at once and shows the success screen with the manage link; offline it shows "Waiting to send" and the original capture time is kept for matching.
 - [ ] #3 Anonymous submission shows the manage link and stores the token securely; "I saw this pet" creates a linked SIGHTED report.
 - [ ] #4 report_found_start and report_found_submit fire with consent only; no ad component in the flow.
+- [ ] #5 After submit (so the 60 s target is unaffected) a notice says the find should be reported to the responsible shelter, with call buttons from the directory (C18), and that any vet or shelter can read the chip; the legal timing appears only when content.legal_timings is on, and the notice also shows when a queued offline report is sent.
 <!-- AC:END -->

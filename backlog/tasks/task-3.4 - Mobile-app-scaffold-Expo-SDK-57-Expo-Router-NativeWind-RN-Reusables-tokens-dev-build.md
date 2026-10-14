@@ -7,6 +7,7 @@ status: To Do
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:11'
+updated_date: '2026-10-14 23:39'
 labels:
   - tech
   - 'est:M'
@@ -14,6 +15,7 @@ milestone: m-0
 dependencies:
   - TASK-3.1
   - TASK-1.1
+  - TASK-3.8
 references:
   - docs/tech/frontend.md
   - docs/tech/contracts/C2-design-tokens.md
@@ -31,7 +33,7 @@ All mobile stories need one Expo app with the token theme, routing, Supabase ses
 
 ## Packet
 
-Unblocks on: Workspace root: pnpm + Turborepo, TypeScript, lint, scripts, README merged (TASK-3.1); Tokens pipeline: packages/tokens generated from docs/design/tokens.json merged (TASK-1.1)
+Unblocks on: Workspace root: pnpm + Turborepo, TypeScript, lint, scripts, README merged (TASK-3.1); Tokens pipeline: packages/tokens generated from docs/design/tokens.json merged (TASK-1.1); Workspace: klikni Prettier and ESLint style, husky, scripts and workspace for apps/api merged (TASK-3.8)
 Contracts: C2, C15, C16 (in references); conventions in C1
 Review: tech-lead code review (full mode); run `pnpm verify` before reporting done.
 Branch: agent/task-3.4-mob

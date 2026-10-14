@@ -1,6 +1,7 @@
 # ADR-006: Exact points stay private; deterministic fuzz on write; GURS boundaries in PostGIS
 
 - Status: Accepted · Date: 2026-10-14 · Owner: Tech Lead
+- Amended 2026-10-15 (ADR-020): fuzzing runs in the API report service (same deterministic HMAC algorithm, secret `FUZZ_SECRET`) when a location is written; reads go through API serializers that never include `exact_point`; `geo_lookup` and other spatial queries are Prisma TypedSQL files in `apps/api/prisma/sql/`.
 - Source: FR-004, P-3, NFR-PRIV, FR-029 R-029.5, brief §Maps and geo, R-011, R-019
 
 ## Context

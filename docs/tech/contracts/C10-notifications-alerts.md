@@ -1,13 +1,12 @@
-source: docs/04-technical-design.md§Data model, ADR-010; FR-010, NFR-LAT
+source: docs/04-technical-design.md§Data model, ADR-010, ADR-020, ADR-022, ADR-023; FR-010, NFR-LAT
 
 # C10 Notifications and nearby alerts
 
-## Tables
+## Models (Prisma `prisma/schemas/notifications.prisma`, schema `app`)
 
 ```sql
 notifications(id, user_id, type text, payload jsonb, read_at, dedupe_key text, created_at, unique(user_id, dedupe_key))
 notification_prefs(user_id, type text, in_app bool default true, push bool default true, email bool default true, pk(user_id,type))
-profiles.quiet_from time null, profiles.quiet_to time null       -- Europe/Ljubljana; added by the notifications task
 push_tokens(id, user_id, token text unique, platform text ('ios'|'android'), last_seen_at)
 alert_subscriptions(id, user_id unique, center_point geography(Point), radius_km int check (radius_km between 1 and 25),
                     species species[] default '{dog,cat}', paused boolean default false, daily_cap int default 5, created_at, updated_at)
@@ -40,28 +39,33 @@ Email-only types to unverified addresses are skipped (FR-010 edge). Text comes f
 
 Not server notifications: the mobile app raises them locally from OS geofences around cached lost-report areas (C17). They are not stored in `notifications`, never upload location, use the profile quiet hours (cached on the device), a local daily cap (default 3) and once per pet per area. Category `nearby_local`; deep link `/r/<code>`.
 
-## API
+## Producing notifications (API and worker)
 
-```sql
-enqueue_notification(p_user_id uuid, p_type text, p_payload jsonb, p_dedupe_key text default null) returns void
--- inserts nothing itself; enqueues job 'notify' (C1). Safe to call inside any RPC or trigger.
-```
-`notify` handler: load prefs + quiet hours → insert inbox row (dedupe) → push (Expo, adapter) and/or email (Brevo, adapter) → record outcomes; invalid push tokens deleted. Quiet-hour deferral re-enqueues for `quiet_to`.
+`NotificationsDomain.enqueueNotification({ user_id, type, payload, dedupe_key? }, ctx)` sends pg-boss job `notify.send` (inside the caller's transaction when given). The `notify.send` handler: load prefs and quiet hours (`profiles.quiet_from/to`) → insert the inbox row (unique `user_id, dedupe_key`) → broadcast `notification.created` on `user:<id>` (ADR-023) → push (Expo adapter) and/or email (Brevo adapter, rendered with `@zivali/i18n` in the recipient locale) → record outcomes; `DeviceNotRegistered` deletes the token. Quiet-hour deferral re-sends the job with `startAfter` = end of quiet hours.
 
-Client (`@zivali/api/notifications`):
-```ts
-listNotifications({ cursor?, limit? }) / unreadCount() / markRead(ids | 'all')
-subscribeNotifications(onInsert)                        // realtime on notifications for auth.uid()
-getPrefs() / setPref(type, { inApp?, push?, email? }) / setQuietHours(from|null, to|null)
-registerPushToken(token, platform) / unregisterPushToken(token)   // rpc; called on sign-in and sign-out
-```
+## REST (owned by TASK-22.3)
 
-## Nearby alerts (owned by TASK-23)
+| Method and path | Guards | Request | Response |
+|---|---|---|---|
+| `GET /v1/notifications` | auth | `?cursor&limit` | `{ items: Notification[], next_cursor, unread }` |
+| `POST /v1/notifications/read` | auth | `{ ids: uuid[] } | { all: true }` | `204` |
+| `GET /v1/notification-prefs` | auth | - | `{ items: { type, in_app, push, email }[], quiet_from, quiet_to }` |
+| `PUT /v1/notification-prefs/:type` | auth | `{ in_app?, push?, email? }` | the pref |
+| `POST /v1/push-tokens` | auth (incl. anonymous managers) | `{ token, platform: 'ios' | 'android' }` | `204` (upsert, `last_seen_at`) |
+| `DELETE /v1/push-tokens/:token` | auth | - | `204` |
+| `GET /v1/notifications/unsubscribe?token=` | none (signed one-click token) | - | HTML confirmation; turns that type's email off |
 
-```ts
-getAlertSubscription() / upsertAlertSubscription({ center, radiusKm, species, paused })   // verified email required
-```
-`fanout_alerts {report_id}` on a visible LOST report: recipients = subscriptions not paused, species match, `ST_DWithin(center_point, report.public_point, radius_km*1000)` (GiST), excluding the report's managers, users already delivered for this report, users at `daily_cap` today; chunks of 500 → `enqueue_notification(…,'nearby_lost', …, dedupe 'nearby:'||report_id)`. At most 1 push per report per user (`alert_deliveries`). Pending deliveries for a report closed/reunited are dropped by the `notify` handler (status check). Target: 1000 recipients < 60 s.
+Client (`@zivali/api/notifications`): `listNotifications`, `markRead`, `getPrefs`, `setPref`, `setQuietHours` (`PATCH /v1/me`), `registerPushToken`, `unregisterPushToken`, `subscribeInbox(onEvent)` (Realtime `user:<id>`).
+
+## Nearby alerts (owned by TASK-23.1)
+
+| Method and path | Guards | Request | Response |
+|---|---|---|---|
+| `GET /v1/alert-subscription` | auth, not anonymous | - | `AlertSubscription | null` |
+| `PUT /v1/alert-subscription` | auth, verified email | `{ center: { lat, lng }, radius_km (1–25), species: ('dog'|'cat')[], paused }` | `AlertSubscription` |
+| `DELETE /v1/alert-subscription` | auth | - | `204` |
+
+`alerts.fanout { report_id }` on a visible LOST report: TypedSQL `prisma/sql/alertRecipients.sql` finds subscriptions not paused, species match, `ST_DWithin(center_point, report.public_point, radius_km*1000)` (GiST), excluding the report's managers, users already in `alert_deliveries` for this report and users at their daily cap (default 5); chunks of 500 → `notify.send` type `nearby_lost` (dedupe `nearby:<report_id>`). At most 1 push per report per user. Pending deliveries for a report closed or reunited are dropped by the handler (status check). Target: 1000 recipients < 60 s.
 
 ## Example
 

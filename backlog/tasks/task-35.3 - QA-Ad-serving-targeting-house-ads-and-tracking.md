@@ -5,7 +5,7 @@ status: To Do
 assignee:
   - '@qa'
 created_date: '2026-10-14 22:15'
-updated_date: '2026-10-14 22:17'
+updated_date: '2026-10-14 23:38'
 labels:
   - qa
   - 'est:XS'
@@ -27,7 +27,7 @@ Verify story TASK-35 (Ad serving, targeting, house ads and tracking) on main onc
 
 ## Packet
 
-Unblocks on: all tasks of TASK-35 merged to main (TASK-35.1, TASK-35.2); leads add any later TASK-35 task to this task's dependencies.
+Unblocks on: Ad serving API: slot endpoint, targeting and rotation, house ads, impressions, no animal-sale ads merged (TASK-35.1); Ad click endpoint GET /v1/ads/:id/click (counting redirect, no open redirect) merged (TASK-35.2)
 Review: n/a (QA)
 Branch: - (verify on main)
 <!-- SECTION:DESCRIPTION:END -->
@@ -41,5 +41,6 @@ Branch: - (verify on main)
 - [ ] #5 Given targeting, when regions are used, then Slovenian statistical regions and municipalities (open data, licence checked) are loaded as reference data and a point maps to its region and municipality.
 - [ ] #6 Given an ad record, when stored, then it has an image with required alt text, title, text, https link, language, dates, status and targeting, and only admins can write.
 - [ ] #7 Given a request whose context marks the user as ad-free (active Premium entitlement), when a slot is requested, then no ad and no house ad is returned; Podpornik supporters are not ad-free.
-- [ ] #8 Story gates pass on main: `pnpm verify`, plus `pnpm quality` for the pages this story touches; results recorded in the QA notes.
+- [ ] #8 Given an ad or house ad request, when content is checked, then ads selling, giving away or rehoming animals are not allowed (blocklist of categories and keywords, since the ad-space provider must verify marking data for pet ads).
+- [ ] #9 Story gates pass on main: `pnpm verify`, plus `pnpm quality` for the pages this story touches; results recorded in the QA notes.
 <!-- AC:END -->

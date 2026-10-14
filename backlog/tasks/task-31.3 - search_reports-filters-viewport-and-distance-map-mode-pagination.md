@@ -1,10 +1,11 @@
 ---
 id: TASK-31.3
-title: 'search_reports: filters, viewport and distance, map mode, pagination'
+title: 'Report search API: list and map endpoints through TypedSQL'
 status: To Do
 assignee:
   - '@backend-dev'
 created_date: '2026-10-14 22:13'
+updated_date: '2026-10-14 23:38'
 labels:
   - be
   - 'est:S'
@@ -27,7 +28,7 @@ Map and list browse need one fast, privacy-safe search over public reports (FR-0
 
 ## Packet
 
-Unblocks on: Reports, pets and photos schema, deterministic fuzz, public read model, seed merged (TASK-6.6)
+Unblocks on: Reports, pets and photos models, deterministic fuzz, public report endpoint, seed merged (TASK-6.6)
 Contracts: C4, C6 (in references); conventions in C1
 Review: tech-lead code review (full mode); run `pnpm verify` before reporting done.
 Branch: agent/task-31.3-search-be
@@ -35,7 +36,7 @@ Branch: agent/task-31.3-search-be
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 search_reports implements the C4 filters (bbox or near+km, types, species, colours, sizes, date range, include_closed ≤ 30 days), sort by recency or distance, keyset pagination and the map mode with minimal fields.
+- [ ] #1 GET /v1/reports implements the C4 ReportSearch (bbox or near plus km, types, species, colours, sizes, date range, include_closed ≤ 30 days, sort, keyset pagination) and GET /v1/reports/map returns minimal map items, both through TypedSQL (prisma/sql/searchReports.sql).
 - [ ] #2 Boosted reports sort first; closed, expired and non-visible reports are excluded by default; no exact location, chip or contact data is returned.
-- [ ] #3 With 500 seeded reports in a viewport the RPC answers in under 300 ms locally (EXPLAIN shows the GiST index).
+- [ ] #3 With 500 seeded reports in a viewport the endpoints answer in under 300 ms locally (EXPLAIN shows the GiST index).
 <!-- AC:END -->

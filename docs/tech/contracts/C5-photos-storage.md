@@ -1,60 +1,49 @@
-source: docs/04-technical-design.md§Data model (photos), ADR-014; FR-003
+source: docs/04-technical-design.md§Data model (photos), ADR-014 (R2), ADR-022 (jobs); FR-003
 
-# C5 Photos and storage
+# C5 Photos and storage (Cloudflare R2, presigned uploads)
 
-## Buckets
+## Buckets (R2; MinIO locally; in-memory adapter in tests)
 
-| Bucket | Public | Limits | Paths | Write |
+| Bucket (env) | Public | Keys | Written by |
+|---|---|---|---|
+| `R2_BUCKET_PRIVATE` (`zivali-private`) | no | `uploads/<owner_id>/<photo_id>.jpg` (client upload), `variants/<photo_id>/{display.webp,display.jpg,thumb.webp}` | client via presigned PUT; worker |
+| `R2_BUCKET_MEDIA` (`zivali-media`), served at `MEDIA_BASE_URL` | yes | `r/<report_id>/<photo_id>/{display.webp,display.jpg,thumb.webp}` | worker (`photo.publish`) |
+| `R2_BUCKET_BACKUPS` (`zivali-backups`) | no | `pg/<yyyy-mm-dd>.dump.gz` | worker (`db.backup`) |
+
+## Model (Prisma, schema `app`)
+
+`Photo { id, ownerId, petId?, reportId?, position (0–4), sha256, width, height, bytes, status: uploaded | accepted | rejected | published | unpublished, rejectReason?, publicDisplayUrl?, publicThumbUrl?, createdAt }`, unique `(ownerId, sha256)`, check: not both `petId` and `reportId`.
+
+## REST
+
+| Method and path | Auth | Request | Response | Errors |
 |---|---|---|---|---|
-| `photos` | no | `image/jpeg`, 1 MB | `<uid>/<photo_id>.jpg`, `<uid>/<photo_id>_thumb.jpg` | owner (RLS on `storage.objects`: first path segment = `auth.uid()`) |
-| `public-photos` | yes | - | `<report_or_pet_id>/<photo_id>.jpg`, `…_thumb.jpg` | service role only (`publish_photos` job) |
-| `ad-images` | yes | `image/jpeg,image/png,image/webp`, 300 KB | `<ad_id>/<file>` | admins (aal2) |
+| `POST /v1/photos` | user or anonymous | `{ sha256, width, height, bytes }` (≤ 1 MB, long edge ≤ 1600, short edge ≥ 320) | `201 { photo_id, upload: { url, method: 'PUT', headers: { 'Content-Type': 'image/jpeg' }, expires_at } }`, or `200 { photo_id, existing: true }` for the same owner and hash | `VALIDATION`, `RATE_LIMITED` (60/hour) |
+| `POST /v1/photos/:id/complete` | owner | - | `202 { status: 'uploaded' }` and job `photo.process` | `NOT_FOUND`, `CONFLICT` (object missing in R2) |
+| `GET /v1/photos/:id` | owner | - | `{ id, status, reject_reason?, thumb_url }` (`thumb_url` is a 10-minute presigned GET while private, the public URL once published) | `NOT_FOUND` |
+| `DELETE /v1/photos/:id` | owner | - | `204`; objects deleted by the worker | `CONFLICT` if attached to a published report |
+| `PUT /v1/pets/:id/photos`, report create/update (C4) | owner/manager | `photo_ids: uuid[]` in order | attaches and sets positions | `VALIDATION` (> 5, foreign photo) |
 
-## Table
+## Worker jobs (ADR-022)
 
-```sql
-photos(id, owner_id, pet_id null, report_id null, position smallint (0–4),
-       storage_path text, thumb_path text, public_url text null, public_thumb_url text null,
-       sha256 text not null, width int, height int,
-       status text check (status in ('uploaded','accepted','rejected','published','unpublished')),
-       reject_reason text null, alt_hint jsonb null, created_at)
--- unique (owner_id, sha256); check (pet_id is null or report_id is null)
-```
+- `photo.process { photo_id }`: download the upload, check JPEG magic bytes and size, verify SHA-256, then **sharp** (`rotate()` from EXIF orientation, then re-encode without metadata) → `display` (≤ 1600 px, WebP q80 + JPEG q82) and `thumb` (480 px WebP) under `variants/`; status `accepted` or `rejected` (`not_jpeg`, `too_large`, `hash_mismatch`, `decode_failed`). Hook list `PHOTO_HOOKS` (empty in M2; M3: `ai.extract`, `photo.embed`; M4: screening).
+- `photo.publish { report_id }`: copy accepted variants of a visible report to the media bucket, set public URLs, status `published`; hidden, removed or expired → delete public copies, status `unpublished`.
+- `retention.purge`: uploads not attached after 24 h, pet photos of deleted pets, report photos 12 months after close.
 
-## Client API (`@zivali/api/photos`)
+## Client (`@zivali/api/photos`)
 
 ```ts
-preparePhoto(file: File | ImagePickerAsset): Promise<PreparedPhoto>
-// reads EXIF (GPS, DateTimeOriginal) → re-encodes JPEG long edge ≤ 1600, < 1 MB, plus 480 px thumb → sha256
-type PreparedPhoto = { display: Blob|FileUri; thumb: Blob|FileUri; sha256: string; width: number; height: number;
-                       exif?: { lat?: number; lng?: number; takenAt?: string } }   // exif only as form suggestion
-uploadPhoto(p: PreparedPhoto, opts?: { onProgress?(ratio: number): void; signal?: AbortSignal }): Promise<{ photoId: string }>
-// 1. rpc/register_photo { sha256, width, height } → { photo_id, storage_path, thumb_path, existing?: true }
-// 2. upload both files to storage (skipped when existing)
-// retries 3× with backoff; on failure the draft keeps the PreparedPhoto for a later retry
-attachPhotos(target: { petId?: string; reportId?: string }, photoIds: string[]): Promise<void>  // order = position
-deletePhoto(photoId: string): Promise<void>
-photoAlt(r: { species; colours; areaName?: string }, locale): string    // e.g. "Rjav pes, območje Ljubljana Šiška"
+preparePhoto(file | asset): Promise<PreparedPhoto>        // platform code in each app: EXIF read → resize ≤ 1600, < 1 MB → sha256
+uploadPhoto(api, p: PreparedPhoto, opts?: { onProgress?, signal? }): Promise<{ photoId }>
+// POST /v1/photos → PUT to the presigned URL (XHR on web for progress; FileSystem.uploadAsync on mobile) → POST /complete
+photoAlt(r, locale): string
 ```
-
-Offline (C17): the mobile outbox keeps `PreparedPhoto` files in `documentDirectory/outbox/<id>/` and calls `register_photo` + upload when it sends; the `(owner, sha256)` dedupe makes repeated sends safe.
-
-## Server processing
-
-- `register_photo` (RPC): validates dimensions (≤ 1600 long edge, ≥ 320 short edge), returns an existing row for the same `(owner, sha256)`.
-- Trigger on `storage.objects` insert in `photos` → `enqueue_job('photo_uploaded', {photo_id})`. Handler: download, check JPEG magic bytes, no APP1/EXIF segment, dimensions and hash match → `accepted`, else delete objects and set `rejected` + reason. Fan-out hook: enqueues later jobs (M3: `ai_extract`, `embed_photo`; M4: screening) through `photo_hooks` config, empty in M2.
-- `publish_photos {report_id|pet_id}`: copies accepted photos of visible reports to `public-photos`, sets `public_url`, `status = 'published'`. Hidden/removed reports → `unpublished` and public copies deleted.
-- `purge_retention`: deletes `uploaded`/`accepted` photos with no pet or report after 24 h; deletes report photos 12 months after close.
-- Pet photo deletion cascades to storage objects (trigger enqueues deletion).
-
-## Errors
-
-`VALIDATION` (dimensions, count > 5), `CONFLICT` (photo attached elsewhere), `FORBIDDEN`; server rejection reasons: `not_jpeg`, `exif_present`, `too_large`, `hash_mismatch`.
+Offline (C17): the mobile outbox keeps `PreparedPhoto` files and calls `uploadPhoto` when it sends; the `(owner, sha256)` dedupe makes repeats safe.
 
 ## Example
 
-```ts
-const p = await preparePhoto(file);            // p.exif → { lat: 46.05, lng: 14.5, takenAt: '2026-10-14T07:10:00Z' }
-const { photoId } = await uploadPhoto(p, { onProgress: setProgress });
-await createReport({ type: 'found', photo_ids: [photoId], location: p.exif ?? pickedPoint, … });
+```json
+// POST /v1/photos → 201
+{ "photo_id": "9b0e…", "upload": { "url": "https://<account>.r2.cloudflarestorage.com/zivali-private/uploads/u1/9b0e….jpg?X-Amz-…", "method": "PUT",
+  "headers": { "Content-Type": "image/jpeg" }, "expires_at": "2026-10-15T10:05:00Z" } }
 ```

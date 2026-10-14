@@ -5,6 +5,7 @@ status: To Do
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:40'
+updated_date: '2026-10-14 23:38'
 labels:
   - fe
   - 'est:S'
@@ -27,7 +28,7 @@ ordinal: 268000
 <!-- SECTION:DESCRIPTION:BEGIN -->
 Background location is sensitive; it must be an explicit, well-explained opt-in that is easy to switch off (FR-043 R-043.1, R-043.4).
 ## Packet
-Unblocks on: >- merged (TASK-87.1); Mobile nearby-alert settings merged (TASK-23.3); Design: Notifications, nearby alerts and settings (P13) approved (TASK-22.2)
+Unblocks on: Mobile geofence engine: region selection, offline handler, caps, local notifications merged (TASK-87.1); Mobile nearby-alert settings merged (TASK-23.3); Design: Notifications, nearby alerts and settings (P13) approved (TASK-22.2)
 Design: P13 docs/design/pages/P13-alerts-inbox-settings.md (TASK-22.2); offline states requested from the design lead (CHANGE)
 Copy: docs/content/pages/P13-alerts-inbox-settings.md (add offline-state keys as SL/EN drafts if missing and list them)
 Contracts: C17 (in references); ADR-019

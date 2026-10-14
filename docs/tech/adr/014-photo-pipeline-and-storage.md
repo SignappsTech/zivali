@@ -1,27 +1,25 @@
-# ADR-014: Client-side resize and EXIF strip; private uploads, public copies on publish; no server image processing
+# ADR-014: Photos on Cloudflare R2: client resize, presigned uploads, server re-encode with sharp, public copies on publish
 
-- Status: Accepted · Date: 2026-10-14 · Owner: Tech Lead
-- Source: FR-003, FR-018 R-018.4, NFR-PRIV, NFR-LAT (upload < 10 s on 4G)
+- Status: Accepted (revised 2026-10-15 for brief v1.0; replaces the Supabase Storage version) · Owner: Tech Lead
+- Source: FR-003, FR-018 R-018.4, NFR-PRIV, NFR-LAT (upload < 10 s on 4G), brief v1.0 (R2)
 
 ## Decision
 
-- **Client** (web canvas / `expo-image-manipulator`): read EXIF GPS and time first (web: `exifr`; mobile: `expo-image-picker` `exif`), then re-encode to JPEG, long edge ≤ 1600 px, quality stepped down until < 1 MB, plus a 480 px thumbnail. Re-encoding drops all metadata. SHA-256 of the display file is computed client-side and sent along.
-- We **never store camera originals**: the "original" in FR-003 is the private display file; no full-resolution or EXIF-bearing file ever leaves the device.
-- **Buckets**:
-  - `photos` (private): uploads at `<uid>/<uuid>.jpg` and `<uid>/<uuid>_thumb.jpg`; bucket limits `image/jpeg`, 1 MB (native Storage validation); RLS: owner insert/select/delete.
-  - `public-photos` (public read): copies made by the `publish_photos` job when a report becomes visible; deleted when it is hidden, removed or past retention.
-  - `ad-images` (public read, admin write).
-- **Server validation** (`photo_uploaded` job): magic bytes are JPEG, no APP1/EXIF segment, dimensions within bounds, hash matches; otherwise the object is deleted and the `photos` row marked `rejected`. Duplicate hashes are linked, not re-processed (cost cap for AI).
-- **Orphans**: `purge_retention` deletes uploads not referenced by a pet or report after 24 h.
-- **Drafts** keep files locally (web IndexedDB via `idb-keyval`; mobile app document directory) and re-upload the whole small file on retry. No resumable (TUS) protocol: files are < 1 MB.
-- **HEIC**: iOS converts to JPEG when picking from Photos (web `accept="image/*"` and `expo-image-picker`); desktop browsers that cannot decode a file show a clear "use JPEG or PNG" message.
+- **Client** (web canvas / `expo-image-manipulator`): read EXIF GPS and time first (web `exifr`, mobile `expo-image-picker` `exif`), then re-encode to JPEG, long edge ≤ 1600 px, < 1 MB, and compute SHA-256. This keeps uploads small on 4G. Camera originals never leave the device.
+- **Upload**: `POST /v1/photos` (JSON: sha256, width, height, bytes) → the API validates, creates the `photos` row (`uploaded`) or returns the existing one for the same owner and hash, and returns a **presigned PUT URL** (5 minutes, `Content-Type: image/jpeg`, `Content-Length` ≤ 1 MB) for the private bucket key `uploads/<owner>/<photo_id>.jpg`. The client PUTs directly to R2, then calls `POST /v1/photos/:id/complete`.
+- **Processing** (worker, `photo.process`): download from R2, check magic bytes and size, then **sharp** decodes and re-encodes (which drops all metadata whatever the client did) into `display` (≤ 1600 px, WebP q80 + JPEG fallback) and `thumb` (480 px WebP) in the private bucket; hash verified; row `accepted` or `rejected` with a reason. A future hook list adds `ai.extract`, `photo.embed` and image screening (M3, M4).
+- **Publishing** (`photo.publish`): when a report becomes visible, its accepted variants are copied to the **public bucket** (`media`, served at `MEDIA_BASE_URL`, an R2 custom domain or r2.dev URL behind Cloudflare's CDN); hidden, removed or expired reports have their public copies deleted. Private photos (pets, drafts, held reports) are shown to their owners through short-lived presigned GET URLs.
+- **Buckets**: `zivali-private` (uploads and variants, no public access), `zivali-media` (published variants, public read), `zivali-backups` (nightly `pg_dump`, 30-day lifecycle rule, ADR-016). R2 has no egress fees; the free tier (10 GB, 1M writes, 10M reads per month) covers the pilot.
+- **Local**: MinIO in `docker-compose.dev.yml` with the same three buckets (S3 API, presigned URLs work identically); tests use an in-memory storage adapter. `STORAGE_PROVIDER=r2|minio|memory`.
+- **Cleanup**: `retention.purge` deletes uploads not attached within 24 h and report photos 12 months after close.
 
 ## Alternatives
 
-- Supabase image transformations: paid tier only; server-side processing in Deno is CPU-limited.
-- One public bucket: would publish held or moderated images (FR-018 AC#3).
+- Supabase Storage (old ADR-014): ties photos to Supabase Free's 1 GB storage limit and to Storage RLS; R2 is cheaper and S3-standard.
+- Uploading through the API (multipart): doubles bandwidth on the small VPS.
+- Image CDN transformations (Cloudflare Images): paid; sharp in the worker is free and fast enough for 1 MB inputs.
 
 ## Consequences
 
-- No image-processing dependency on the server; all heavy lifting is on the device.
-- Public URLs are stable and CDN-cached, which Open Graph previews and SSR need.
+- New dependencies in the API: `@aws-sdk/client-s3`, `@aws-sdk/s3-request-presigner`, `sharp` (ADR-017).
+- Credentials needed: R2 account id, access key id and secret, bucket names, public media URL (client item).

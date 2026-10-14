@@ -1,13 +1,13 @@
 ---
 id: TASK-29.2
 title: >-
-  Report write API: create_report, update_report, publish trigger (all report
-  types)
+  Report write API: POST and PATCH /v1/reports with idempotency, guard hook and
+  jobs
 status: To Do
 assignee:
   - '@backend-dev'
 created_date: '2026-10-14 22:13'
-updated_date: '2026-10-14 22:41'
+updated_date: '2026-10-14 23:38'
 labels:
   - be
   - 'est:M'
@@ -15,6 +15,7 @@ milestone: m-1
 dependencies:
   - TASK-6.6
   - TASK-6.3
+  - TASK-6.12
 references:
   - docs/tech/backend.md
   - docs/tech/contracts/C4-reports-and-pets.md
@@ -32,7 +33,7 @@ One validated write path serves lost, found and sighted reports from owners and 
 
 ## Packet
 
-Unblocks on: Reports, pets and photos schema, deterministic fuzz, public read model, seed merged (TASK-6.6); Job queue: pgmq, enqueue_job, pg_cron trigger, worker with handler registry merged (TASK-6.3)
+Unblocks on: Reports, pets and photos models, deterministic fuzz, public report endpoint, seed merged (TASK-6.6); Worker and jobs: pg-boss, queue registry with stubs, schedules, keep-alive, drain merged (TASK-6.3); API auth and platform middleware: JWKS verification, guards, rate limits, idempotency, ctx, audit, public config merged (TASK-6.12)
 Contracts: C4, C1, C6 (in references); conventions in C1
 Review: tech-lead code review (full mode); run `pnpm verify` before reporting done.
 Branch: agent/task-29.2-report-write-be
@@ -40,9 +41,9 @@ Branch: agent/task-29.2-report-write-be
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 create_report and update_report implement C4 for lost, found and sighted (inline attributes or pet_id, photo_ids, location, event_at, circumstances, contact_pref, linked_report_id); p_client_request_id replays from the same user return the original result for 24 h from client_requests (C1), another user gets CONFLICT.
+- [ ] #1 POST /v1/reports (Idempotency-Key required) and PATCH /v1/reports/:code implement C4 for lost, found and sighted through ReportsDomain.createReport and updateReport; a replay with the same key from the same user returns the original response for 24 h, another user gets CONFLICT.
 - [ ] #2 Validation: a future event_at is rejected, events older than 30 days return the OLD_EVENT warning, a pet with an open lost report returns DUPLICATE_OPEN_REPORT with the existing code, and chips are normalised.
-- [ ] #3 The creator is added to report_managers; a stub submission_guard(p jsonb) is called first (the anonymous rules come from the anonymous-reporter task).
-- [ ] #4 The on_report_published trigger enqueues publish_photos, match_report and, for lost reports, fanout_alerts; a published report is returned by get_public_report within one minute after `pnpm db:drain`.
-- [ ] #5 pgTAP covers every validation, manager RLS and the enqueued jobs.
+- [ ] #3 The creator is added to report_managers; the domain calls the submission guard first (stub here, rules from the anonymous-reporter task); lost reports need a non-anonymous account.
+- [ ] #4 Creation applies the fuzz and geo lookup and, in the same transaction, queues photo.publish, match.report and, for visible lost reports, alerts.fanout; GET /v1/me/reports lists the caller's reports; the new report is returned by GET /v1/reports/:code within one minute after `pnpm jobs:drain`.
+- [ ] #5 Supertest covers every validation, the permission matrix and the queued jobs.
 <!-- AC:END -->

@@ -10,13 +10,13 @@ Migrations live in `apps/mobile/lib/db/migrations/NNN_<slug>.ts` and run in orde
 create table drafts (id text primary key, kind text not null check (kind in ('lost','found','sighted','pet')),
   data text not null /* JSON: CreateReportInput or PetInput minus photo ids */, photo_paths text not null default '[]',
   updated_at integer not null);
-create table outbox (id text primary key /* uuid = p_client_request_id */, kind text not null check (kind in ('found','sighted')),
+create table outbox (id text primary key /* uuid = Idempotency-Key */, kind text not null check (kind in ('found','sighted')),
   payload text not null /* CreateReportInput minus photo_ids, event_at = captured_at */, captured_at text not null,
   status text not null check (status in ('queued','sending','sent','failed','needs_action')),
   attempts integer not null default 0, next_attempt_at integer, last_error_code text, last_error_message text,
   result text /* JSON { report_id, short_code } after send */, created_at integer not null, updated_at integer not null);
 create table outbox_photos (outbox_id text not null references outbox(id) on delete cascade, position integer not null,
-  path text not null, sha256 text not null, photo_id text /* after register_photo */, uploaded integer not null default 0,
+  path text not null, sha256 text not null, photo_id text /* after POST /v1/photos */, uploaded integer not null default 0,
   primary key (outbox_id, position));
 create table reports_cache (id text primary key, short_code text not null, type text not null, status text not null,
   species text not null, name text, breed_codes text, colours text, pattern text, size text, sex text, has_chip integer,
@@ -43,8 +43,8 @@ create table geofence_events (report_id text not null, area_key text not null, f
 
 ## Sync (TASK-85)
 
-- Areas: `home` (profile `home_point`, `home_radius_km` capped to 10 km for caching) and `current` (last foreground location, 10 km; never uploaded except as the RPC area parameter, which is not stored server-side).
-- Call `syncPublicReports(client, { areas, since, limit: 500 })` (C4). Apply upserts, delete `removed_ids`, store `server_time` as the next `since`. First sync has `since = null` (full area snapshot).
+- Areas: `home` (profile `home_point`, `home_radius_km` capped to 10 km for caching) and `current` (last foreground location, 10 km; sent only as the sync request area, never stored server-side).
+- Call `syncReports(api, { areas, since, limit: 500 })` → `GET /v1/sync/reports` (C4). Apply upserts, delete `removed_ids`, store `server_time` as the next `since`. First sync has `since = null` (full area snapshot).
 - Triggers: foreground resume when `last_sync_at` older than 15 min; regaining an unmetered connection; `expo-background-task` (unmetered only). Thumbnails (480 px) downloaded on Wi-Fi, or on mobile data only if the user enabled it.
 - Limits (settings, defaults): `cache.max_mb` 50, `cache.max_age_days` 7. Eviction order: rows not seen by a sync for > max_age, then farthest from both areas and oldest `event_at`, until under the size budget (thumbnails count).
 - Settings → Offline data: size used, last updated, "Clear offline data", "Use mobile data for offline photos" (off).
@@ -58,7 +58,7 @@ send(): Promise<void>            // single-flight; runs on launch, resume, recon
 useOutbox(): { items: OutboxItem[], retry(id), remove(id) }
 pendingCount(): Promise<number>  // used before sign-out
 ```
-Send order per item: ensure session (anonymous sign-in with Turnstile token when enabled; if the widget needs interaction → `needs_action` with `CAPTCHA_REQUIRED`) → `register_photo` + upload each photo not yet uploaded → `create_report({ …payload, photo_ids, event_at: captured_at }, p_client_request_id = id)` → store `{ report_id, short_code }` in `result` and the manage token in secure store → status `sent` → delete outbox photos. Backoff: 1, 5, 15, 60 min; `RATE_LIMITED` waits `retry_after`; `VALIDATION`/`FORBIDDEN` → `failed` (user decides); network errors → retry. The item survives app kills (state is in SQLite). The server replays the first result for the same `p_client_request_id` for 24 h (C1), so a lost response never creates a duplicate.
+Send order per item: ensure session (anonymous sign-in with Turnstile token when enabled; if the widget needs interaction → `needs_action` with `CAPTCHA_REQUIRED`) → `uploadPhoto` (C5: `POST /v1/photos`, presigned PUT, `/complete`) for each photo not yet uploaded → `POST /v1/reports` with `Idempotency-Key: <id>` and `{ …payload, photo_ids, event_at: captured_at }` → store `{ report_id, short_code }` in `result` and the manage token in secure store → status `sent` → delete outbox photos. Backoff: 1, 5, 15, 60 min; `RATE_LIMITED` waits `retry_after`; `VALIDATION`/`FORBIDDEN` → `failed` (user decides); network errors → retry. The item survives app kills (state is in SQLite). The API replays the first response for the same `Idempotency-Key` for 24 h (C1), so a lost response never creates a duplicate.
 
 ## Geofences (TASK-87, M3)
 

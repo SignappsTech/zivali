@@ -1,6 +1,7 @@
 # ADR-013: Image similarity with a hosted multimodal embedding API behind an adapter, pgvector HNSW, gated by an evaluation set
 
 - Status: Accepted (implementation in M3, TASK-42/43) · Date: 2026-10-14 · Owner: Tech Lead
+- Amended 2026-10-15 (ADR-020): embedding runs in the Node worker (`photo.embed` job); vector search uses Prisma TypedSQL with pgvector; a self-hosted model could now run on the VPS if the evaluation requires it.
 - Source: FR-014, NFR-AI (1 embedding per photo), NFR-SCALE (50k photos < 300 ms), R-010
 
 ## Context

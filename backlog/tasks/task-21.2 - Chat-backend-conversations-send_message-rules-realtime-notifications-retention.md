@@ -1,23 +1,25 @@
 ---
 id: TASK-21.2
 title: >-
-  Chat backend: conversations, send_message rules, realtime, notifications,
-  retention
+  Chat API: conversations and messages endpoints, Realtime Broadcast with
+  membership policy, retention
 status: To Do
 assignee:
   - '@backend-dev'
 created_date: '2026-10-14 22:13'
+updated_date: '2026-10-14 23:38'
 labels:
   - be
   - 'est:M'
 milestone: m-1
 dependencies:
   - TASK-6.7
+  - TASK-6.12
 references:
   - docs/tech/backend.md
   - docs/tech/contracts/C9-chat.md
+  - docs/tech/adr/023-realtime-chat.md
   - docs/tech/contracts/C10-notifications-alerts.md
-  - docs/tech/contracts/C7-anonymous-manage-link.md
 parent_task_id: TASK-21
 priority: high
 ordinal: 167000
@@ -30,7 +32,7 @@ Hidden phone numbers and in-app chat are the main scam defence and the way owner
 
 ## Packet
 
-Unblocks on: Matching, chat, notification and alert schema with RLS and seed merged (TASK-6.7)
+Unblocks on: Matching, chat, notification and alert models with seed merged (TASK-6.7); API auth and platform middleware: JWKS verification, guards, rate limits, idempotency, ctx, audit, public config merged (TASK-6.12)
 Contracts: C9, C10, C7 (in references); conventions in C1
 Review: tech-lead code review (full mode); run `pnpm verify` before reporting done.
 Branch: agent/task-21.2-chat-be
@@ -38,9 +40,9 @@ Branch: agent/task-21.2-chat-be
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 start_conversation, send_message, mark_read, block_participant and list_conversations behave as in C9, including anonymous report managers participating through their anonymous session.
-- [ ] #2 send_message refuses non-participants, blocked senders, read-only conversations and over-limit senders (30/min, 500/day), flags has_link, and allows location messages only from a manager of the related report.
-- [ ] #3 Offline participants get a chat_message notification through enqueue_notification (deduped per conversation per 5 minutes, no message body in the payload).
-- [ ] #4 Conversations become read-only when the related report closes, and purge_retention deletes messages 6 months after close.
-- [ ] #5 Realtime delivers a new message to the other participant in under 2 s p95 on the local stack (integration test); pgTAP covers RLS and every refusal.
+- [ ] #1 POST and GET /v1/conversations, GET and POST /v1/conversations/:id/messages, POST /v1/conversations/:id/read and /block behave as in C9, including anonymous report managers through their anonymous session.
+- [ ] #2 Sending refuses non-participants, blocked senders, read-only conversations and over-limit senders (30/min, 500/day), flags has_link, and allows location messages only from a manager of the related report.
+- [ ] #3 After a message is stored the API broadcasts message.created on the private channel conversation:<id> with realtime.send in the same transaction; the realtime.messages RLS policy with app.can_join_topic lets only participants receive and clients cannot broadcast; a two-client test delivers in under 2 s p95 locally.
+- [ ] #4 Offline participants get a chat_message notification through enqueueNotification (deduped per conversation per 5 minutes, no message body in the payload).
+- [ ] #5 Conversations become read-only when the related report closes, and retention.purge deletes messages 6 months after close; Supertest covers the permission matrix and every refusal.
 <!-- AC:END -->

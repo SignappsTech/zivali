@@ -5,6 +5,7 @@ status: To Do
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:39'
+updated_date: '2026-10-14 23:38'
 labels:
   - fe
   - 'est:S'
@@ -30,7 +31,7 @@ ordinal: 264000
 <!-- SECTION:DESCRIPTION:BEGIN -->
 Users must see clearly that they are offline and how fresh the data is, and control what the app keeps on the device (FR-041 R-041.2, R-041.3).
 ## Packet
-Unblocks on: >- merged (TASK-85.2); Mobile Map tab with list sheet and filters merged (TASK-31.5); Mobile shell: tabs, Report action, permission primer, settings stack merged (TASK-12.2); Design: Map and list (browse) (P4) approved (TASK-31.2); Design: Notifications, nearby alerts and settings (P13) approved (TASK-22.2)
+Unblocks on: Mobile offline cache engine: area sync, thumbnails, limits, eviction, background refresh merged (TASK-85.2); Mobile Map tab with list sheet and filters merged (TASK-31.5); Mobile shell: tabs, Report action, permission primer, settings stack merged (TASK-12.2); Design: Map and list (browse) (P4) approved (TASK-31.2); Design: Notifications, nearby alerts and settings (P13) approved (TASK-22.2)
 Design: P4 docs/design/pages/P4-map-list.md (TASK-31.2); offline states requested from the design lead (CHANGE); P13 docs/design/pages/P13-alerts-inbox-settings.md (TASK-22.2); offline states requested from the design lead (CHANGE)
 Copy: docs/content/pages/P4-map-list.md; docs/content/pages/P13-alerts-inbox-settings.md (add offline-state keys as SL/EN drafts if missing and list them)
 Contracts: C17 (in references); ADR-019

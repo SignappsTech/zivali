@@ -2,7 +2,7 @@ source: docs/04-technical-design.md§Data model (matches), ADR-004; FR-008, FR-0
 
 # C8 Matching v1
 
-## Table
+## Models (Prisma `prisma/schemas/matching.prisma`, schema `app`)
 
 ```sql
 create type match_state as enum ('suggested','confirmed','rejected','closed');
@@ -13,12 +13,12 @@ matches(id, lost_report_id → reports, other_report_id → reports,   -- other 
         unique (lost_report_id, other_report_id))
 match_feedback(match_id, user_id, verdict text ('confirm'|'reject'), reason text null, created_at)
 ```
-RLS: managers of either report can select rows of their reports, but the counterpart's personal data is never in the row; staff select all.
+Access only through the API: managers of the lost report read and act on its suggestions; the other side sees only that a match was confirmed (C9); staff read all. RLS deny-all (ADR-021).
 
-## Engine (job `match_report {report_id}`, owned by TASK-19)
+## Engine (pg-boss job `match.report { report_id }`, owned by TASK-19.1)
 
 1. **Chip**: if the report has a valid chip, any open report of the opposite side with the same chip → score 1.000, `chip_match = true`, `strength = 'strong'`, immediate `notify` type `match_chip` to the lost report's managers (bypasses quiet hours). A sighting with a chip match is still a chip match; reason `chip_sighting` tells the owner the animal may have moved.
-2. **Candidates** (SQL `match_candidates(report_id)`): opposite side (lost ↔ found|sighted), status open/matched, moderation visible or held-by-org, same species, distance ≤ `matching.max_distance_km` (30) using exact points, time window: other.event_at ∈ [lost.event_at − 12 h, lost.event_at + `matching.max_days` (30) d], not previously rejected for the pair, excluding sex conflict (both known and different).
+2. **Candidates** (TypedSQL `prisma/sql/matchCandidates.sql`): opposite side (lost ↔ found|sighted), status open/matched, moderation visible or held-by-org, same species, distance ≤ `matching.max_distance_km` (30) using exact points, time window: other.event_at ∈ [lost.event_at − 12 h, lost.event_at + `matching.max_days` (30) d], not previously rejected for the pair, excluding sex conflict (both known and different).
 3. **Score** (TS `scoreMatch(features, config)` in `@zivali/validation/matching`):
    - `D = exp(−distance_km / matching.distance_scale_km (3))`
    - `T = 1 − min(1, max(0, Δhours) / (24 × 30))`
@@ -33,15 +33,17 @@ RLS: managers of either report can select rows of their reports, but the counter
  { "code": "size", "match": "equal" }, { "code": "colour", "overlap": 0.67 }, { "code": "sex", "match": "equal" }]
 ```
 
-## Review RPCs (owned by TASK-20)
+## REST (owned by TASK-20.2)
+
+| Method and path | Guards | Request | Response |
+|---|---|---|---|
+| `GET /v1/reports/:code/matches` | manager of the lost report | `?state=suggested,confirmed` | `{ items: MatchSuggestion[] }` ranked by score |
+| `POST /v1/matches/:id/confirm` | manager of the lost report, verified email | - | `{ conversation_id }`; state → confirmed, lost status → matched, conversation created (C9), other side notified; idempotent |
+| `POST /v1/matches/:id/reject` | manager of the lost report | `{ reason? }` | `204`; state → rejected, `match_feedback` row; never shown again |
 
 ```ts
-get_match_suggestions(p_lost_report_id) → MatchSuggestion[]
-type MatchSuggestion = { match_id; score; strength; chip_match; reasons; state;
+type MatchSuggestion = { id; score; strength; chip_match; reasons; state;
   other: Pick<PublicReport,'short_code'|'type'|'species'|'breed_codes'|'colours'|'size'|'sex'|'photos'|'event_at'|'area'> }
-confirm_match(p_match_id) → { conversation_id }   // lost managers only; state → confirmed; lost status → matched;
-                                                  // calls start_conversation (C9); notifies the other side
-reject_match(p_match_id, p_reason?) → void        // state → rejected; match_feedback row; never shown again
 ```
 Errors: `FORBIDDEN`, `CONFLICT` (already confirmed/rejected), `UNVERIFIED_EMAIL` (confirm opens chat).
 

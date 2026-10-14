@@ -1,12 +1,13 @@
 ---
 id: TASK-6.10
 title: >-
-  Contract clients in @zivali/api: chat, notifications, alerts, abuse, payments,
-  ads, partners
+  REST and Realtime clients in @zivali/api: chat, notifications, alerts, abuse,
+  payments, ads, partners
 status: To Do
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:12'
+updated_date: '2026-10-14 23:38'
 labels:
   - fe
   - 'est:M'
@@ -32,7 +33,7 @@ UI tasks code against these functions while backend tasks implement the RPCs and
 
 ## Packet
 
-Unblocks on: packages/api foundation: client conventions, ApiError, query defaults, fixtures merged (TASK-3.5); Domain wire types, zod schemas, chip normalisation and breed codes merged (TASK-6.5)
+Unblocks on: packages/api foundation: REST client, ApiError, idempotency and query helpers, fixtures merged (TASK-3.5); Domain wire types and DTOs, zod request schemas, chip normalisation and breed codes merged (TASK-6.5)
 Design: none (no UI of its own)
 Contracts: C9, C10, C14 (in references); conventions in C1
 Review: tech-lead code review (full mode); run `pnpm verify` before reporting done.
@@ -41,7 +42,7 @@ Branch: agent/task-6.10-api-collab
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 @zivali/api/chat, notifications, alerts, abuse, payments, ads and partners implement every client function named in C9, C10, C11, C13 and C14, including realtime subscriptions for messages and notifications.
+- [ ] #1 @zivali/api/chat, notifications, alerts, abuse, payments, ads and partners implement every client function in C9, C10, C11, C13 and C14 over REST, plus Realtime Broadcast subscriptions for conversation:<id> and user:<id> (private channels) that re-fetch on resubscribe.
 - [ ] #2 useAd(slot, ctx) returns { ad, loading, error } and never throws to the caller (errors collapse the slot).
 - [ ] #3 startCheckout returns the checkout URL; the web helper redirects and mobile opens it with expo-web-browser.
 - [ ] #4 Fixtures from the contract examples exist for each domain; unit tests cover argument and error mapping.

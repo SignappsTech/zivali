@@ -5,7 +5,7 @@ status: To Do
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:14'
-updated_date: '2026-10-14 22:42'
+updated_date: '2026-10-14 23:37'
 labels:
   - fe
   - 'est:M'
@@ -46,4 +46,5 @@ Branch: agent/task-24.2-poster-web
 - [ ] #3 The share slot offers WhatsApp, Facebook, copy link and the Web Share API with localised prefilled text.
 - [ ] #4 poster_download and share fire with consent only; the OG preview shows the photo and type label and never an exact or holding location.
 - [ ] #5 A greyscale print's QR scans and opens the listing (manual check, photo attached).
+- [ ] #6 The share slot offers a Facebook share kit: ready SL text, a square 1080×1080 image (next/og route) and links to the regional Facebook lost-pet groups (share.facebook_groups from GET /v1/config/public, supplied by the client) plus the Radio Aktual submission form.
 <!-- AC:END -->

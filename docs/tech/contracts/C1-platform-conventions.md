@@ -1,101 +1,81 @@
-source: docs/04-technical-design.md§Interfaces and contracts (C1), ADR-003, ADR-004, docs/05-quality-security-plan.md§Security
+source: docs/04-technical-design.md§Interfaces and contracts (C1), ADR-020 (API), ADR-021 (database lockdown), ADR-022 (jobs)
 
-# C1 Platform conventions
+# C1 API and platform conventions
 
-Applies to every migration, RPC, Edge Function and job. Owner: TASK-6 (platform task); later tasks extend, never fork.
+Applies to every endpoint, Prisma model, migration, job and seed in `apps/api`. Owners: the API scaffold task (TASK-3.7) and the platform tasks (TASK-6.2, TASK-6.12); later tasks extend, never fork.
 
-## Migrations
+## HTTP
 
-- File: `supabase/migrations/<YYYYMMDDHHMMSS>_<task-id>_<slug>.sql`, forward-only. First line: `-- task: TASK-x.y` ; second: `-- rollback: <how to undo, or "forward fix only">`.
-- Never edit a merged migration; add a new one. `CREATE OR REPLACE FUNCTION` in a new migration is how a later task changes a function body.
-- Extensions (first migration): `postgis`, `vector`, `pgmq`, `pg_cron`, `pg_net`, `pgcrypto`, `pgtap` (tests only, schema `extensions`).
-- Every table: `id uuid primary key default gen_random_uuid()` (except natural keys), `created_at timestamptz not null default now()`, `updated_at` + trigger `set_updated_at()` when mutable. Enums as Postgres enums with the names in this contract set.
-- After a migration change: `pnpm gen:types` regenerates `packages/types/src/database.ts`. On merge conflicts in that file, regenerate, never hand-merge.
+- Base URL `API_URL` (local `http://localhost:4000`, staging `https://api.staging.<domain>`), all routes under `/v1`. Health: `GET /ping` → `{ "message": "pong" }` (liveness), `GET /v1/health/ready` → `{ ok, version, db, queue_lag_s }` (readiness, touches the DB).
+- Auth header `Authorization: Bearer <Supabase access token>` (users and anonymous finders). Device header `x-device-id: <uuid>` on every request (C7). Language `Accept-Language: sl|en` (falls back to the profile locale).
+- JSON only (`Content-Type: application/json`, max 1 MB); snake_case keys on the wire; dates ISO 8601 UTC strings; money as integer cents.
+- Paths: kebab-case plural nouns (`/v1/reports`, `/v1/match-suggestions`), ids or short codes as params, actions as sub-resources (`POST /v1/matches/:id/confirm`). No verbs in paths otherwise.
+- **No envelope.** A single resource is the object; a list is `{ "items": [...], "next_cursor": "…" | null }` (keyset pagination: `?cursor=&limit=`, `limit` ≤ 50 unless stated).
+- **Errors**: always
+  ```json
+  { "error": { "code": "VALIDATION", "message": "…", "details": { … }, "issues": [{ "path": "location.lat", "message": "…" }] } }
+  ```
+  | Code | HTTP |
+  |---|---|
+  | `VALIDATION` | 400 |
+  | `UNAUTHENTICATED` | 401 |
+  | `FORBIDDEN`, `UNVERIFIED_EMAIL`, `AAL2_REQUIRED` | 403 |
+  | `NOT_FOUND` | 404 |
+  | `CONFLICT`, `DUPLICATE_OPEN_REPORT` | 409 |
+  | `GONE` | 410 |
+  | `MIN_AMOUNT`, `LIVE_MODE_FORBIDDEN`, `CAPTCHA_FAILED` | 422 |
+  | `RATE_LIMITED` (+ `Retry-After` header, `details.retry_after_s`) | 429 |
+  | `INTERNAL` | 500 (no details, logged with the request id) |
 
-## RLS templates
+  Thrown as `new AppError(code, message?, details?)` from domain functions (`domains/<area>`); zod failures become `VALIDATION` with `issues`. No stack traces or SQL to clients. Clients map `code` to `errors.<code>` i18n keys.
+- **Idempotency**: write endpoints that may be retried accept `Idempotency-Key: <uuid>` (required on `POST /v1/reports`, `POST /v1/payments/checkout`). The `idempotency` middleware stores `{ key, user_id, route, status, body (encrypted when it contains a secret), created_at }` in `app.idempotency_keys` for 24 h; a repeat by the same user returns the stored response; another user → `409 CONFLICT`. The mobile outbox (C17) relies on it.
+- **Rate limits**: `rateLimit(name, { limit, window, key: 'user'|'ip'|'device' })` middleware backed by `app.rate_limits` (Postgres, fixed window; IPs and device ids stored as HMAC with `RATE_SALT`, purged after 48 h). Defaults in `app_config` (`rate.*`).
+- **CORS**: allowlist `WEB_ORIGINS`; requests without `Origin` (mobile) allowed. Security headers via helmet; Caddy adds HSTS.
+- **OpenAPI**: zod schemas registered with `@asteasolutions/zod-to-openapi`; docs at `/v1/docs` when `APP_ENV !== 'production'`.
 
-`alter table … enable row level security;` in the same migration as `create table`. Helpers (all `stable security definer set search_path = ''`):
+## Auth middleware and guards (`middleware/auth.ts`, `middleware/permission.ts`)
 
-| Helper | Meaning |
+| Guard | Effect |
 |---|---|
-| `auth_role()` | `auth.jwt() ->> 'user_role'` (default `'user'`) |
-| `is_staff(min_role text)` | role ≥ `moderator` / `admin` **and** `auth.jwt() ->> 'aal' = 'aal2'` |
-| `is_anonymous_user()` | `(auth.jwt() ->> 'is_anonymous')::boolean` |
-| `can_manage_report(report_id uuid)` | caller in `report_managers` |
-| `email_verified()` | caller is anonymous or `auth.users.email_confirmed_at is not null` |
+| `authMiddleware` | verifies the JWT (JWKS, `jose`), loads `req.user = { user_id, role, is_anonymous, aal, email_verified, locale }`; 401 otherwise |
+| `optionalAuth` | same, never blocks (public endpoints that personalise, e.g. `is_mine`) |
+| `requireVerified` | non-anonymous users need a confirmed email (`UNVERIFIED_EMAIL`); anonymous managers pass where the contract says so |
+| `requireRole('moderator' \| 'admin')` | role from `app.profiles` (cached 60 s) |
+| `requireAal2` | `aal === 'aal2'` (TOTP) for every staff route (`AAL2_REQUIRED`) |
+| `rejectAnonymous` | routes that need a real account (payments, alerts) |
 
-Policy patterns:
+Ownership ("owner of pet", "manager of report", "participant of conversation") is checked in domain functions with helpers `assertCanManageReport(ctx, reportId)` etc., never in the client.
 
-```sql
--- owner-owned row
-create policy "own rows" on pets for all to authenticated
-  using (owner_id = auth.uid()) with check (owner_id = auth.uid());
--- staff read
-create policy "staff read" on abuse_reports for select to authenticated using (is_staff('moderator'));
--- public data only through security definer RPCs; never "to anon using (true)" on tables with personal data
-```
+## Database (Prisma, schema `app`)
 
-A pgTAP test (`supabase/tests/000_rls_enabled.sql`) fails if any table in `public` has `relrowsecurity = false`.
+- Prisma 7 multi-file schema `apps/api/prisma/schemas/<domain>.prisma` (`base`, `users`, `reports`, `photos`, `matching`, `chat`, `notifications`, `abuse`, `payments`, `ads`, `geo`, `directory`, `platform`), `@@schema("app")` on every model, `datasource` with `schemas = ["app"]`. Naming per ADR-020: snake_case plural models without `@@map`, snake_case fields, `id String @id @default(uuid()) @db.Uuid`, `created_at DateTime @default(now()) @db.Timestamptz(6)`, `updated_at DateTime @updatedAt @db.Timestamptz(6)`, enums SCREAMING_SNAKE.
+- PostGIS and pgvector columns are `Unsupported("geography(Point,4326)")` / `Unsupported("vector(1024)")` and read or written only through TypedSQL (`prisma/sql/*.sql`) or `$queryRaw` with parameters.
+- **Lockdown (ADR-021)**: the first migration creates schema `app`, enables `postgis`, `vector`, `pgcrypto` in schema `extensions`, revokes all on `app` and `pgboss` from `anon`, `authenticated`, `public`; every migration that creates a table also runs `alter table app.<t> enable row level security;` (no policies). A test fails otherwise (`test/security/schema-exposure.test.ts`).
+- Migrations: `prisma migrate dev` locally; one migration per task (`<timestamp>_<task-id>_<slug>`), never edit a merged migration; hand-written SQL inside Prisma migrations for RLS, extensions, check constraints and the `realtime.messages` policy (ADR-023). Header comment in `migration.sql`: `-- task: TASK-x.y` and `-- rollback: …`.
+- `app_config` (`key`, `value Json`, `is_public`, `description`): defaults inserted by each feature's migration or seeder (`on conflict do nothing`); read through `lib/config-store.ts` (cached 60 s); admin writes are audited. `GET /v1/config/public` returns the keys with `is_public = true` (feature and content flags such as `content.legal_timings`, `vet_partner.enabled`, `podpornik.enabled`, `share.facebook_groups`), `Cache-Control: public, max-age=300`.
+- `audit_log` (`actor_id`, `action`, `target_type`, `target_id`, `diff`, `created_at`): written by `AuditDao.write(tx, …)` in every staff service call.
+- Users: `profiles.id` equals the Supabase `auth.users.id` (no foreign key into `auth`); a profile is created on first authenticated request (`ensureProfile`). Deleting an account calls the Supabase Admin API and deletes or anonymises our rows in one service (M3).
+- **Data inventory**: `apps/api/prisma/data-inventory.json` lists every model and R2 bucket (category, personal data, basis, retention, export, delete); a test fails when a model is missing.
 
-## RPC conventions
+## Jobs (pg-boss, ADR-022)
 
-- `security definer`, `set search_path = ''`, fully qualified names, explicit `auth.uid()` checks, input validated (types + `check` constraints + explicit checks).
-- Errors: `raise exception using errcode = 'P0001', message = json_build_object('code','RATE_LIMITED','message','Too many reports','details', json_build_object('retry_after_s', 1800))::text;`
-- Stable error codes: `VALIDATION`, `NOT_FOUND`, `GONE`, `FORBIDDEN`, `UNVERIFIED_EMAIL`, `RATE_LIMITED`, `CAPTCHA_FAILED`, `CONFLICT`, `DUPLICATE_OPEN_REPORT`, `MIN_AMOUNT`, `LIVE_MODE_FORBIDDEN`, `INTERNAL`. `@zivali/api` parses them into `ApiError { code, message, details }`; UIs map `code` to `errors.<code>` i18n keys.
-- Writes accept optional `p_client_request_id uuid`; a repeat returns the first result. Storage: `client_requests(id uuid primary key, user_id uuid, fn text, result jsonb, secret bytea null, created_at)`; a repeat by the same user returns `result` (and a secret such as a manage token decrypted from `secret`, which is `pgp_sym_encrypt`ed with the Vault key `idem_key`); a repeat by another user returns `CONFLICT`; rows purged after 24 h. Offline clients (C17 outbox) rely on this to retry safely.
-
-## app_config
-
-`app_config(key text primary key, value jsonb not null, description text)`; read by `get_config(key)` (public keys whitelisted via `is_public boolean`), written only by admins (audited). Each feature migration inserts its defaults with `on conflict do nothing`. Keys use dotted names: `fuzz.lost_min_radius_m`, `rate.anon_report_per_hour`, `matching.threshold`, …
-
-## Rate limits
-
-```sql
-check_rate_limit(p_key text, p_limit int, p_window interval) returns void  -- raises RATE_LIMITED
-```
-Fixed-window counter in `rate_limits(key, window_start, count)`. Keys: `<action>:<scope>:<value>`, with IP and device values hashed: `encode(hmac(value, <vault secret 'rate_salt'>, 'sha256'), 'hex')`. Helpers `request_ip()` (first `x-forwarded-for` entry, else `cf-connecting-ip`) and `request_device_id()` (`x-device-id` header, uuid) read `current_setting('request.headers', true)`. Rows purged after 48 h.
-
-## Audit
-
-`audit_log(id, actor_id, action text, target_type text, target_id uuid, diff jsonb, at timestamptz)`; insert only through `audit(action, target_type, target_id, diff)`; select for admins (aal2). Every staff write and every `app_config` change is audited.
-
-## Job queue (ADR-004)
-
-```sql
-enqueue_job(p_type text, p_payload jsonb, p_dedupe_key text default null) returns bigint
-```
-- Types (registry fixed in TASK-6, stub handlers): `match_report`, `notify`, `fanout_alerts`, `photo_uploaded`, `publish_photos`, `lifecycle_tick`, `purge_retention`, `refresh_partner_stats`, `payment_effects`.
-- Dedupe: same `(type, dedupe_key)` within 10 minutes is ignored (`job_dedupe` table).
-- Handler contract (`supabase/functions/worker/handlers/<type>.ts`):
-
-```ts
-export default async function handle(payload: unknown, ctx: JobContext): Promise<void>
-// JobContext = { db: SupabaseClient /* service role */, log, adapters, now: () => Date, enqueue }
-// must be idempotent; throw to retry; after 5 attempts → jobs_dead
-```
-- Local: `pnpm db:drain` runs the worker until the queue is empty (tests and e2e use it).
-
-## Data inventory
-
-`supabase/data-inventory.json`, one entry per table and bucket:
-
-```json
-{ "reports": { "category": "report", "personal": true, "basis": "contract",
-  "retention": "exact_point and photos 12 months after close", "export": "owner", "delete": "close + anonymise" } }
-```
-pgTAP test fails if a `public` table or a storage bucket is missing.
+`jobs.send(queue, data, opts)` from domain functions (`lib/jobs.ts`, via `ctx.jobs`), optionally inside the Prisma transaction. Handlers in `jobs/<queue>.job.ts` export `async function handle(data, ctx)` and call domain functions; `ctx = { prisma, logger, adapters, now, send }`; idempotent; throw to retry (5 attempts, backoff). Queue names in C1 order: `match.report`, `notify.send`, `alerts.fanout`, `photo.process`, `photo.publish`, `report.lifecycle`, `retention.purge`, `partners.stats`, `payment.effects`, `directory.reminder`, `db.keepalive`, `db.backup`. Tests and `pnpm jobs:drain` process queues to empty.
 
 ## Seed
 
-`supabase/seed/NN-<task-id>-<slug>.sql` (globbed by `config.toml`), each task owns its file; photos uploaded by `scripts/seed-photos.mjs` (local service role). Fixture users (password `zivali-local-only`): `owner@zivali.test`, `owner2@zivali.test`, `finder@zivali.test`, `shelter@zivali.test`, `mod@zivali.test`, `admin@zivali.test` (admin/mod TOTP secret documented in the seed README for local only).
+`prisma/seed.ts` runs `prisma/seeders/<n>-<name>.seeder.ts` in order; each task owns its seeder file. Fixture users are created in local Supabase Auth through the Admin API (local service key) and get profiles: `owner@zivali.test`, `owner2@zivali.test`, `finder@zivali.test`, `shelter@zivali.test`, `mod@zivali.test`, `admin@zivali.test` (password `zivali-local-only`; local TOTP secret for mod and admin documented in the seed README). Seed photos are uploaded to MinIO.
 
 ## Example
 
-```sql
--- 20261020120000_task-6.2_platform.sql
--- task: TASK-6.2
--- rollback: drop function check_rate_limit; drop table rate_limits;
-create table public.rate_limits (key text not null, window_start timestamptz not null, count int not null default 0,
-  primary key (key, window_start));
-alter table public.rate_limits enable row level security;  -- no policies: only security definer functions touch it
+```http
+POST /v1/reports HTTP/1.1
+Authorization: Bearer eyJ…
+Idempotency-Key: 6f1c3f0e-…
+x-device-id: 0b2a…
+
+{ "type": "found", "species": "cat", "location": { "lat": 46.05, "lng": 14.5 }, "event_at": "2026-10-15T07:42:10Z", "photo_ids": ["9b0e…"] }
+```
+```json
+HTTP/1.1 429
+{ "error": { "code": "RATE_LIMITED", "message": "Too many reports", "details": { "retry_after_s": 1800 } } }
 ```

@@ -5,6 +5,7 @@ status: To Do
 assignee:
   - '@qa'
 created_date: '2026-10-14 22:15'
+updated_date: '2026-10-14 23:38'
 labels:
   - qa
   - 'est:XS'
@@ -28,7 +29,7 @@ Verify story TASK-37 (Ad management in admin) on main once all its tasks are mer
 
 ## Packet
 
-Unblocks on: all tasks of TASK-37 merged to main (TASK-37.2, TASK-37.3, TASK-37.1); leads add any later TASK-37 task to this task's dependencies.
+Unblocks on: Ad administration API: validated create and edit, image upload, status, soft delete, stats merged (TASK-37.2); Web admin ad management: editor with preview, stats and CSV merged (TASK-37.3); Design: Admin ad management (P20) approved (TASK-37.1)
 Review: n/a (QA)
 Branch: - (verify on main)
 <!-- SECTION:DESCRIPTION:END -->
@@ -40,5 +41,6 @@ Branch: - (verify on main)
 - [ ] #3 Given an ad, when its detail is opened, then impressions, clicks and CTR per day, slot and region are shown with CSV export for sponsor reports.
 - [ ] #4 Given house ads, when managed, then admins can edit and enable the three default house ads (SL and EN) from the public copy story.
 - [ ] #5 Given any edit or status change, when saved, then it is written to the audit log.
-- [ ] #6 Story gates pass on main: `pnpm verify`, plus `pnpm quality` for the pages this story touches; results recorded in the QA notes.
+- [ ] #6 Given validation, when an ad is saved, then it is rejected if it advertises the sale, gift or change of ownership of animals.
+- [ ] #7 Story gates pass on main: `pnpm verify`, plus `pnpm quality` for the pages this story touches; results recorded in the QA notes.
 <!-- AC:END -->

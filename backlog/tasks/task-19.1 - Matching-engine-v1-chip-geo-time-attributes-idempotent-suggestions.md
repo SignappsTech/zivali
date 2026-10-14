@@ -1,10 +1,13 @@
 ---
 id: TASK-19.1
-title: 'Matching engine v1: chip, geo, time, attributes; idempotent suggestions'
+title: >-
+  Matching engine v1: match.report job, TypedSQL candidates, scoring, idempotent
+  suggestions
 status: To Do
 assignee:
   - '@backend-dev'
 created_date: '2026-10-14 22:13'
+updated_date: '2026-10-14 23:38'
 labels:
   - be
   - 'est:M'
@@ -30,7 +33,7 @@ The product promise is active matching; v1 must be fast, explainable and safe to
 
 ## Packet
 
-Unblocks on: Matching, chat, notification and alert schema with RLS and seed merged (TASK-6.7); Job queue: pgmq, enqueue_job, pg_cron trigger, worker with handler registry merged (TASK-6.3); Domain wire types, zod schemas, chip normalisation and breed codes merged (TASK-6.5)
+Unblocks on: Matching, chat, notification and alert models with seed merged (TASK-6.7); Worker and jobs: pg-boss, queue registry with stubs, schedules, keep-alive, drain merged (TASK-6.3); Domain wire types and DTOs, zod request schemas, chip normalisation and breed codes merged (TASK-6.5)
 Contracts: C8, C4 (in references); conventions in C1
 Review: tech-lead code review (full mode); run `pnpm verify` before reporting done.
 Branch: agent/task-19.1-matching-be
@@ -38,9 +41,9 @@ Branch: agent/task-19.1-matching-be
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Report publish or a relevant update enqueues match_report; the handler stores suggestions idempotently (unique pair, never resurrecting rejected pairs) within 2 minutes p95 on the local stack.
-- [ ] #2 Equal normalised chips on opposite sides score 1.0 with chip_match and strength strong and immediately enqueue a match_chip notification that ignores quiet hours; a chip on a sighting adds the chip_sighting reason.
+- [ ] #1 Publishing a report or a relevant update queues match.report; MatchingDomain stores suggestions idempotently (unique pair, never resurrecting rejected pairs) within 2 minutes p95 on the local stack.
+- [ ] #2 Equal normalised chips on opposite sides score 1.0 with chip_match and strength strong and immediately queue a match_chip notification that ignores quiet hours; a chip on a sighting adds the chip_sighting reason.
 - [ ] #3 Without a chip, species must match, sex conflicts are excluded, and the C8 score (distance decay, time proximity, attribute overlap) with weights, threshold 0.5 and top 10 from app_config applies; reasons use bands only (no exact distance).
-- [ ] #4 scoreMatch lives in @zivali/validation/matching (pure TypeScript shared with tests); match_candidates uses spatial indexes; first_match_at is recorded.
+- [ ] #4 scoreMatch lives in @zivali/validation/matching; candidates come from TypedSQL prisma/sql/matchCandidates.sql using spatial indexes; first_match_at is recorded.
 - [ ] #5 New suggestions with strength good or better notify the lost report's managers once; neither side sees the other's contact data.
 <!-- AC:END -->

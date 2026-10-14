@@ -1,6 +1,7 @@
 # ADR-019: Mobile offline data layer: one expo-sqlite store for drafts, public cache and outbox; OS geofences for local alerts
 
 - Status: Accepted · Date: 2026-10-15 · Owner: Tech Lead
+- Amended 2026-10-15 (ADR-020): the sync feed is the REST endpoint `GET /v1/sync/reports` and the outbox replays `POST /v1/reports` with an `Idempotency-Key` header (C17, C4).
 - Source: FR-041, FR-042, FR-043, NFR-OFFLINE, NFR-BATT, FR-006, FR-003 R-003.3, FR-037 R-037.5; stories TASK-85, TASK-86, TASK-87
 
 ## Context

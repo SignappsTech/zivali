@@ -5,6 +5,7 @@ status: To Do
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:12'
+updated_date: '2026-10-14 23:39'
 labels:
   - fe
   - 'est:S'
@@ -12,6 +13,7 @@ labels:
 milestone: m-0
 dependencies:
   - TASK-3.1
+  - TASK-3.8
 references:
   - docs/tech/frontend.md
   - docs/tech/contracts/C16-i18n.md
@@ -28,7 +30,7 @@ Slovenian is the default with dual plural forms; one catalogue package with a CI
 
 ## Packet
 
-Unblocks on: Workspace root: pnpm + Turborepo, TypeScript, lint, scripts, README merged (TASK-3.1)
+Unblocks on: Workspace root: pnpm + Turborepo, TypeScript, lint, scripts, README merged (TASK-3.1); Workspace: klikni Prettier and ESLint style, husky, scripts and workspace for apps/api merged (TASK-3.8)
 Design: none (no UI of its own)
 Contracts: C16 (in references); conventions in C1
 Review: tech-lead code review (full mode); run `pnpm verify` before reporting done.

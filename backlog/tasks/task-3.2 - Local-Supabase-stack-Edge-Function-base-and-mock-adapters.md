@@ -1,19 +1,20 @@
 ---
 id: TASK-3.2
-title: 'Local Supabase stack, Edge Function base and mock adapters'
+title: 'Local Supabase stack for Postgres, Auth and Realtime (no Edge Functions)'
 status: To Do
 assignee:
   - '@backend-dev'
 created_date: '2026-10-14 22:11'
+updated_date: '2026-10-14 23:35'
 labels:
   - tech
-  - 'est:M'
+  - 'est:S'
 milestone: m-0
 dependencies: []
 references:
   - docs/tech/backend.md
-  - docs/tech/contracts/C1-platform-conventions.md
-  - docs/tech/adr/003-supabase-as-the-backend.md
+  - docs/tech/adr/021-database-not-exposed.md
+  - docs/tech/adr/020-api-architecture.md
 parent_task_id: TASK-3
 priority: high
 ordinal: 113000
@@ -22,11 +23,11 @@ ordinal: 113000
 ## Description
 
 <!-- SECTION:DESCRIPTION:BEGIN -->
-The backend runs entirely on the local Supabase stack with mock adapters, so no task needs cloud credentials (P-6, ADR-003). This task owns supabase/ only.
+Brief v1.0 keeps Supabase only for Postgres (PostGIS, pgvector), Auth and Realtime; the API moves to Express + Prisma (ADR-020). The unmerged branch agent/task-3.2-sb is reworked in a fix round: keep `supabase/config.toml` (updated), `supabase/.gitignore` and `supabase/README.md`; remove `supabase/functions/`, `supabase/migrations/` and `supabase/tests/` (Prisma owns the schema; the adapter code moves to apps/api in the adapters task).
 
 ## Packet
 
-Unblocks on: nothing (ready now; use `npx supabase` until the workspace root adds the CLI as a devDependency)
+Unblocks on: nothing (ready now)
 Contracts: C1 (in references); conventions in C1
 Review: tech-lead code review (full mode); run `pnpm verify` before reporting done.
 Branch: agent/task-3.2-sb
@@ -34,9 +35,8 @@ Branch: agent/task-3.2-sb
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 From a fresh clone `npx supabase start` and `npx supabase db reset` work with no cloud credentials; config.toml enables anonymous sign-ins, email confirmations and TOTP MFA, creates the photos (private, image/jpeg, 1 MB), public-photos and ad-images buckets, globs seed files from supabase/seed/, and keeps Turnstile captcha off locally.
-- [ ] #2 The first migration enables postgis, vector, pgmq, pg_cron, pg_net and pgcrypto; `supabase test db` runs a pgTAP suite with one passing test.
-- [ ] #3 supabase/functions has deno.json (import map incl. @zivali/validation and npm:zod), _shared env, JSON logger, error helpers and service client, and a health function returning { ok, version, env }.
-- [ ] #4 _shared/adapters defines interfaces and mock implementations for ai, embedder, payments, email, push and captcha, chosen by environment variable with mock as the default when credentials are missing; unit tests cover the selection.
-- [ ] #5 `deno check` passes for all functions; supabase/README.md documents local endpoints, the mail catcher and Docker Desktop on Windows.
+- [ ] #1 `supabase start` runs Postgres 17 (PostGIS and pgvector available), Auth (email confirmations, anonymous sign-ins, TOTP MFA, Turnstile off locally), Realtime with private channels and the mail catcher, with no cloud credentials; storage buckets are removed from config.toml (photos live in R2/MinIO).
+- [ ] #2 PostgREST exposes only the `public` schema (`[api] schemas = ["public"]`), and config.toml comments that app tables live in the non-exposed `app` schema (ADR-021).
+- [ ] #3 supabase/functions/, supabase/migrations/ and supabase/tests/ from the branch are removed; nothing else in the repo depends on them.
+- [ ] #4 supabase/README.md documents local endpoints, the mail catcher, port overrides for Hyper-V reserved ranges on Windows, and that Supabase holds only the database, Auth and Realtime.
 <!-- AC:END -->

@@ -1,6 +1,6 @@
 # ADR-004: Async work through Supabase Queues (pgmq) and one `worker` Edge Function
 
-- Status: Accepted · Date: 2026-10-14 · Owner: Tech Lead
+- Status: **Superseded by ADR-022** (2026-10-15, pg-boss worker; no Edge Functions) · Date: 2026-10-14 · Owner: Tech Lead
 - Source: FR-008 (suggestions < 2 min p95), FR-010 (fan-out < 60 s / 1000), FR-003 R-003.5, NFR-LAT
 
 ## Context

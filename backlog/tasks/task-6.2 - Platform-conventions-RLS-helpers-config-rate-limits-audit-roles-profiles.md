@@ -1,19 +1,23 @@
 ---
 id: TASK-6.2
-title: 'Platform conventions: RLS helpers, config, rate limits, audit, roles, profiles'
+title: >-
+  DB foundation and lockdown: schema app, extensions, deny-all RLS, security
+  tests, platform models, fixture users
 status: To Do
 assignee:
   - '@backend-dev'
 created_date: '2026-10-14 22:12'
+updated_date: '2026-10-14 23:35'
 labels:
   - be
   - 'est:M'
 milestone: m-0
 dependencies:
-  - TASK-3.2
+  - TASK-3.7
 references:
   - docs/tech/backend.md
   - docs/tech/contracts/C1-platform-conventions.md
+  - docs/tech/adr/021-database-not-exposed.md
   - docs/tech/contracts/C3-auth-profiles-roles.md
 parent_task_id: TASK-6
 priority: high
@@ -23,11 +27,11 @@ ordinal: 122000
 ## Description
 
 <!-- SECTION:DESCRIPTION:BEGIN -->
-Every later table, RPC and job relies on the same RLS helpers, config, rate limits, audit and roles; defining them once keeps 30+ backend tasks consistent.
+Supabase exposes the public schema to anyone with the anon key; app data must be unreachable except through the API (ADR-021), and every later model relies on the same platform tables and fixtures.
 
 ## Packet
 
-Unblocks on: Local Supabase stack, Edge Function base and mock adapters merged (TASK-3.2)
+Unblocks on: apps/api scaffold: Express 5 + Prisma 7 in klikni style with the domain layer merged (TASK-3.7)
 Contracts: C1, C3 (in references); conventions in C1
 Review: tech-lead code review (full mode); run `pnpm verify` before reporting done.
 Branch: agent/task-6.2-platform
@@ -35,8 +39,9 @@ Branch: agent/task-6.2-platform
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 RLS helpers (auth_role, is_staff with aal2, is_anonymous_user, email_verified), app_config with get_config, check_rate_limit with hashed request_ip and request_device_id, and audit()/audit_log exist exactly as in C1, each with pgTAP tests.
-- [ ] #2 profiles, the user_role enum, the profile-creation trigger on auth.users, the custom access token hook (enabled in config.toml) adding user_role, and set_user_role with last-admin protection exist; the RLS matrix proves a user cannot read or update another profile or change their own role.
-- [ ] #3 pgTAP guards fail when any public table lacks RLS and when a public table or storage bucket is missing from supabase/data-inventory.json.
-- [ ] #4 Fixture users owner, owner2, finder, shelter, mod and admin (@zivali.test, local-only password) are seeded; local TOTP setup for mod and admin is documented.
+- [ ] #1 The first Prisma migration creates schema app, enables postgis, vector and pgcrypto in schema extensions, revokes all on app and pgboss from anon, authenticated and public, and sets default privileges so new tables get no grants.
+- [ ] #2 Models profiles (USER_ROLE enum), app_config, audit_log, rate_limits and idempotency_keys exist per C1 and C3 with RLS enabled and no policies.
+- [ ] #3 Security tests (test/security) prove that every table in app and pgboss has RLS on and no policies, that anon and authenticated have no usage or table privileges there, and that PostgREST with the anon key exposes no app table (GET and POST).
+- [ ] #4 prisma/data-inventory.json lists every model and R2 bucket; a test fails when a model is missing.
+- [ ] #5 Seeder 00-users creates the fixture users in local Supabase Auth through the Admin API with profiles (roles user, shelter member, moderator, admin); local TOTP setup for mod and admin is documented.
 <!-- AC:END -->

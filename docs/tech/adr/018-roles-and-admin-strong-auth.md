@@ -1,6 +1,7 @@
 # ADR-018: Roles in a JWT claim; admins and moderators require TOTP (AAL2)
 
 - Status: Accepted · Date: 2026-10-14 · Owner: Tech Lead
+- Amended 2026-10-15 (ADR-020): roles are read from `app.profiles` by the API per request (short cache), no custom access token hook; the API checks `aal = aal2` from the verified JWT for staff routes; audit entries are written by the API service layer.
 - Source: FR-001 R-001.3, FR-019 R-019.1, TASK-34 AC#3, NFR-SEC
 
 ## Decision

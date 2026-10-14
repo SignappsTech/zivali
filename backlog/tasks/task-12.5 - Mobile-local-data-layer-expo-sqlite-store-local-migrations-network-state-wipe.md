@@ -7,6 +7,7 @@ status: To Do
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:39'
+updated_date: '2026-10-14 23:38'
 labels:
   - fe
   - 'est:M'
@@ -28,7 +29,7 @@ ordinal: 261000
 <!-- SECTION:DESCRIPTION:BEGIN -->
 Offline cache, offline report queue, drafts and later geofences share one on-device store; building it with the app shell means no screen or flow has to be reworked for offline (ADR-019, TASK-85/86/87).
 ## Packet
-Unblocks on: >- merged (TASK-3.4)
+Unblocks on: Mobile app scaffold: Expo SDK 57, Expo Router, NativeWind + RN Reusables, tokens, dev build merged (TASK-3.4)
 Design: none (no UI of its own)
 Contracts: C17 (in references); ADR-019
 Review: tech-lead code review (full mode); run `pnpm verify` before reporting done.

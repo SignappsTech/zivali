@@ -1,8 +1,8 @@
-source: docs/04-technical-design.md§Data model (conversations, messages), ADR-003; FR-009, NFR-LAT, NFR-PRIV
+source: docs/04-technical-design.md§Data model (conversations, messages), ADR-020, ADR-023; FR-009, NFR-LAT, NFR-PRIV
 
 # C9 Chat
 
-## Tables
+## Models (Prisma `prisma/schemas/chat.prisma`, schema `app`)
 
 ```sql
 conversations(id, lost_report_id null, other_report_id null, about_report_id, match_id null,
@@ -14,32 +14,42 @@ messages(id, conversation_id, sender_id, kind text check (kind in ('text','locat
          created_at)
 blocks(blocker_id, blocked_id, created_at, pk(blocker_id, blocked_id))
 ```
-RLS: participants select conversations, participants and messages; insert only through `send_message`. Moderators (aal2) select messages of a conversation only when an abuse report targets one of its messages (FR-018 edge).
+Access only through the API (RLS deny-all, ADR-021). Moderators (aal2) read messages of a conversation only when an abuse report targets one of its messages (FR-018 edge).
 
-Realtime: `messages` and `conversation_participants` in the `supabase_realtime` publication; clients subscribe to `postgres_changes` on `messages` with filter `conversation_id=eq.<id>` (RLS applies).
+## Realtime (ADR-023)
 
-## RPCs (owned by TASK-21)
+Supabase Realtime **Broadcast** on private channels; no table is published.
+- Topics: `conversation:<id>` (events `message.created`, `conversation.read`), `user:<id>` (events `notification.created`, `conversation.updated` for inbox badges).
+- The chat service broadcasts after insert in the same transaction: `select realtime.send(<payload jsonb>, 'message.created', 'conversation:' || <id>, true)` (Prisma `$executeRaw`). Payload = the `Message` DTO below, nothing more.
+- Policy (migration SQL): `create policy "members receive" on realtime.messages for select to authenticated using (app.can_join_topic(auth.uid(), realtime.topic()))`; `app.can_join_topic` is `security definer` and checks `conversation_participants` or `user:<own id>`. No insert policy: clients cannot broadcast.
+- Clients: `supabase.channel(topic, { config: { private: true } })`; on (re)subscribe they fetch `GET /v1/conversations/:id/messages?after=<last id>` so nothing is lost; offline recipients get push (C10).
+
+## REST (owned by TASK-21.2)
+
+| Method and path | Guards | Request | Response | Errors |
+|---|---|---|---|---|
+| `POST /v1/conversations` | auth, verified email or anonymous manager; rate limit `contact` 10/day | `{ about_report_code, match_id? }` | `{ id }` (idempotent per report and caller; participants: caller + report managers) | `FORBIDDEN`, `UNVERIFIED_EMAIL`, `RATE_LIMITED` |
+| `GET /v1/conversations` | auth | `?cursor` | `{ items: ConversationSummary[], next_cursor }` | - |
+| `GET /v1/conversations/:id/messages` | participant | `?after=&before=&limit` | `{ items: Message[], next_cursor }` | `FORBIDDEN` |
+| `POST /v1/conversations/:id/messages` | participant, rate limit 30/min and 500/day | `{ body, kind?: 'text' | 'location', location?: { lat, lng } }` | `201 Message` (+ broadcast, + `notify.send` `chat_message` for offline participants, deduped per conversation per 5 min) | `FORBIDDEN` (not participant or blocked), `GONE` (read-only), `VALIDATION`, `RATE_LIMITED` |
+| `POST /v1/conversations/:id/read` | participant | - | `204` (+ broadcast `conversation.read`) | - |
+| `POST /v1/conversations/:id/block` | participant | `{ participant_id }` | `204` (blocks row; further messages from them refused) | - |
 
 ```ts
-start_conversation(p_about_report_id uuid, p_match_id?: uuid) → { conversation_id }
-// from confirm_match (C8) or "Contact" on a listing; caller must be email-verified or anonymous manager;
-// idempotent per (about_report, caller); "contact" rate limit 10/day; participants: caller + report managers
-send_message(p_conversation_id, p_body, p_kind default 'text', p_location?: {lat,lng}) → { id, created_at }
-// checks: participant, conversation active, not blocked by any other participant, rate 30/min 500/day,
-// has_link = body ~ URL regex; location only from a manager of the related report (explicit exact-point share)
-// side effect: notify job type 'chat_message' for offline participants (dedupe per conversation per 5 min)
-mark_read(p_conversation_id) → void
-block_participant(p_conversation_id, p_user_id) → void       // also creates blocks row
-list_conversations() → { id, about_report: { short_code, type, species, thumb_url }, other_alias, last_message_preview, unread }[]
+type Message = { id; conversation_id; sender_alias_key: 'you'|'owner'|'finder'|'sighter'|'contact'|'shelter'; sender_display_name?: string;
+                 kind: 'text'|'location'|'system'; body; has_link: boolean; location?: { lat; lng }; created_at }
+type ConversationSummary = { id; about_report: { short_code, type, species, thumb_url }; other_alias_key; other_display_name?;
+                             last_message_preview; unread: number; status: 'active'|'read_only' }
 ```
-Aliases: `list_conversations` and message payloads return `alias_key` (`owner` | `finder` | `sighter` | `contact` | `shelter`) or the participant's chosen `display_name`; clients render the neutral i18n keys `chat.alias_owner` ("Oseba, ki išče žival" / "Person searching"), `chat.alias_finder`, `chat.alias_sighter`, `chat.alias_contact`, `chat.alias_shelter` (P12 content slice). Never email or phone.
+`has_link` is set by the service (URL regex). Location messages only from a manager of the related report (explicit exact-point share, R-004.3).
+Aliases: conversation lists and messages return alias keys (`owner` | `finder` | `sighter` | `contact` | `shelter`) or the participant's chosen `display_name`; clients render the neutral i18n keys `chat.alias_owner` ("Oseba, ki išče žival" / "Person searching"), `chat.alias_finder`, `chat.alias_sighter`, `chat.alias_contact`, `chat.alias_shelter` (P12 content slice). Never email or phone.
 
 ## Client rendering rules
 
 - Body rendered as plain text; URLs **not** linkified, shown with a caution icon and text (`chat.link_caution`); no previews.
 - Persistent safety banner at the top (`chat.safety_banner`: never send money or codes first).
 - `chat_started` analytics event when the user sends the first message in a conversation (consent only, C12).
-- Read-only conversations show the input disabled with an explanation; retention purge deletes messages 6 months after the related report closes (`purge_retention`).
+- Read-only conversations show the input disabled with an explanation; retention purge deletes messages 6 months after the related report closes (`retention.purge` job).
 
 ## Errors
 
@@ -48,6 +58,6 @@ Aliases: `list_conversations` and message payloads return `alias_key` (`owner` |
 ## Example
 
 ```json
-// realtime payload (INSERT on messages)
-{ "id": "…", "conversation_id": "c9…", "sender_id": "u2…", "kind": "text", "body": "Je pri meni, lahko pridete po 17h.", "has_link": false, "created_at": "2026-10-14T16:02:11Z" }
+// broadcast on conversation:c9… (event message.created)
+{ "id": "…", "conversation_id": "c9…", "sender_alias_key": "finder", "kind": "text", "body": "Je pri meni, lahko pridete po 17h.", "has_link": false, "created_at": "2026-10-14T16:02:11Z" }
 ```

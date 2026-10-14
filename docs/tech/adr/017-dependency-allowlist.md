@@ -1,6 +1,6 @@
 # ADR-017: Dependency allowlist
 
-- Status: Accepted · Date: 2026-10-14 · Owner: Tech Lead
+- Status: Accepted (revised 2026-10-15 for the Express + Prisma API, ADR-020) · Date: 2026-10-14 · Owner: Tech Lead
 - Source: lean-architecture rule "every new dependency needs an ADR"
 
 ## Decision
@@ -9,9 +9,9 @@ Runtime dependencies outside this list (and outside what the Expo SDK 57 templat
 
 | Package | Where | Why (and what it replaces) |
 |---|---|---|
-| `@supabase/supabase-js`, `@supabase/ssr` | web, mobile, api, functions | Supabase client; SSR cookie session |
-| `@tanstack/react-query` | web (client components), mobile | Cache, retry, offline for client fetching (ADR-003) |
-| `zod` 4 | validation (all) | Contracts shared by clients and Edge Functions |
+| `@supabase/supabase-js`, `@supabase/ssr` | web, mobile (auth and Realtime only), api (Admin API only) | Supabase Auth sessions, Realtime Broadcast (ADR-023) |
+| `@tanstack/react-query` | web (client components), mobile | Cache, retry, offline for client fetching over the REST API |
+| `zod` 4 | validation (all) | Request schemas and DTOs shared by the API and the clients |
 | `react-hook-form`, `@hookform/resolvers` | web, mobile | Forms with zod; RN Reusables and shadcn form patterns |
 | `next-intl` / `use-intl` | web / mobile | ADR-008 |
 | `@formatjs/intl-pluralrules` | mobile (conditional polyfill) | Only if Hermes lacks `sl` plural rules |
@@ -28,14 +28,25 @@ Runtime dependencies outside this list (and outside what the Expo SDK 57 templat
 | `@phosphor-icons/react` / `phosphor-react-native` | web / mobile | Icon set chosen by the design system (§8); replaces the lucide default of shadcn/RNR |
 | `@gorhom/bottom-sheet` (with `react-native-reanimated`, `react-native-gesture-handler` from the Expo SDK) | mobile | Bottom sheets (map list sheet, filters); answers the design system's open item |
 | `@expo-google-fonts/bricolage-grotesque`, `@expo-google-fonts/atkinson-hyperlegible-next` | mobile | Brand fonts (both packages exist on npm; web uses `next/font/google`) |
-| `stripe` | functions | ADR-011 |
-| `@anthropic-ai/sdk` | functions (M3) | ADR-012 |
+| `express` 5, `helmet`, `cors`, `compression`, `express-rate-limit` (store: our Postgres table) | api | HTTP server and standard middleware (ADR-020) |
+| `prisma`, `@prisma/client`, `@prisma/adapter-pg`, `pg` | api | ORM, migrations, TypedSQL (ADR-020) |
+| `jose` | api | JWT verification against the Supabase JWKS (C3) |
+| `pg-boss` | api (worker) | Jobs and schedules in Postgres (ADR-022) |
+| `pino`, `pino-http` (`pino-pretty` dev only) | api | Structured logs with request ids |
+| `@aws-sdk/client-s3`, `@aws-sdk/s3-request-presigner` | api | Cloudflare R2 (and MinIO locally) with presigned URLs (ADR-014) |
+| `sharp` | api (worker) | Photo re-encoding and variants (ADR-014) |
+| `@asteasolutions/zod-to-openapi` | api | OpenAPI from the zod schemas (docs outside production) |
+| `stripe` | api | ADR-011 |
+| `pdfkit` | api (worker) | Receipt and fiscal invoice PDFs (klikni uses it; TASK-92) |
+| `@anthropic-ai/sdk` | api worker (M3) | ADR-012 |
 | `@sentry/nextjs`, `@sentry/react-native` | web, mobile (M5, TASK-70) | Error tracking, EU region, PII scrubbing |
 | Dev: `vitest`, `@testing-library/*`, `jsdom`, `@playwright/test`, `@axe-core/playwright`, `@lhci/cli`, `linkinator`, `jest-expo`, `secretlint`, `supabase` (CLI), `turbo`, `eslint`, `prettier`, `typescript` | repo | ADR-001, ADR-015 |
 | Dev: `@eslint/js`, `typescript-eslint`, `globals` | repo | Root ESLint base config: JS recommended rules, TypeScript parsing and rules, Node globals for scripts (TASK-3.1) |
-| Dev: `deno` (npm build of the Deno CLI) | repo | `pnpm functions:check` (`deno check`) on every machine and in CI without a global install (TASK-3.1) |
+| Dev: `tsx`, `tsup`, `supertest` | api | Dev runner, build, HTTP tests (klikni toolchain, ADR-020) |
+| Dev: `husky`, `lint-staged` | repo | Pre-commit lint and format (klikni practice) |
+| Removed 2026-10-15: `deno` | repo | No Edge Functions any more (ADR-020) |
 
-Not used, on purpose: MMKV, WatermelonDB/RxDB, TanStack query persisters (ADR-019), date libraries (use `Intl`), lodash, axios, state managers (React state + TanStack Query), CSS-in-JS, Redux, UUID packages (`crypto.randomUUID`), HEIC converters, TUS clients, Mapbox/Google SDKs, i18next.
+Not used, on purpose: Redis, BullMQ, Socket.IO, node-cron, multer, morgan, nodemailer/pug, jsonwebtoken (klikni items replaced, ADR-020), MMKV, WatermelonDB/RxDB, TanStack query persisters (ADR-019), date libraries (use `Intl`), lodash, axios, state managers (React state + TanStack Query), CSS-in-JS, Redux, UUID packages (`crypto.randomUUID`), HEIC converters, TUS clients, Mapbox/Google SDKs, i18next.
 
 ## Consequences
 

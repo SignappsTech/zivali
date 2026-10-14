@@ -1,6 +1,7 @@
 # ADR-010: In-app inbox + Expo Push + Brevo email, all behind adapters
 
 - Status: Accepted · Date: 2026-10-14 · Owner: Tech Lead
+- Amended 2026-10-15 (ADR-020): the `notify.send` pg-boss job in the Node worker delivers push and email through the adapters in `apps/api/src/adapters/`; in-app live updates use Realtime Broadcast (ADR-023).
 - Source: FR-010, FR-001 R-001.4, FR-020 R-020.4, NFR-LAT, NFR-PRIV, P-6
 
 ## Decision

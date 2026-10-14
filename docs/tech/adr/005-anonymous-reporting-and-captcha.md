@@ -1,6 +1,7 @@
 # ADR-005: Anonymous finders use Supabase anonymous sign-in, a manage token and Turnstile
 
 - Status: Accepted · Date: 2026-10-14 · Owner: Tech Lead
+- Amended 2026-10-15 (ADR-020): the submission guard, rate limits, holds and the manage-token claim are Express middleware and services (`POST /v1/reports`, `POST /v1/manage/claim`), not SQL functions; Supabase anonymous sign-in and Auth-native Turnstile stay; report managers are checked by the API.
 - Source: FR-006, FR-009 R-009.2, Q-003 (default A-002), NFR-SEC, R-007
 
 ## Context

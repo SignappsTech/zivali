@@ -5,6 +5,7 @@ status: To Do
 assignee:
   - '@qa'
 created_date: '2026-10-14 22:15'
+updated_date: '2026-10-14 23:38'
 labels:
   - qa
   - 'est:XS'
@@ -20,6 +21,7 @@ dependencies:
   - TASK-6.8
   - TASK-6.9
   - TASK-6.10
+  - TASK-6.12
 references:
   - docs/tech/frontend.md
 parent_task_id: TASK-6
@@ -34,7 +36,7 @@ Verify story TASK-6 (Domain contracts v1 and data platform conventions) on main 
 
 ## Packet
 
-Unblocks on: all tasks of TASK-6 merged to main (TASK-6.1, TASK-6.2, TASK-6.3, TASK-6.4, TASK-6.5, TASK-6.6, TASK-6.7, TASK-6.8, TASK-6.9, TASK-6.10); leads add any later TASK-6 task to this task's dependencies.
+Unblocks on: GURS municipalities and statistical regions: data, licence, generator merged (TASK-6.1); DB foundation and lockdown: schema app, extensions, deny-all RLS, security tests, platform models, fixture users merged (TASK-6.2); Worker and jobs: pg-boss, queue registry with stubs, schedules, keep-alive, drain merged (TASK-6.3); Geo reference models, GURS seeder and TypedSQL geo lookup merged (TASK-6.4); Domain wire types and DTOs, zod request schemas, chip normalisation and breed codes merged (TASK-6.5); Reports, pets and photos models, deterministic fuzz, public report endpoint, seed merged (TASK-6.6); Matching, chat, notification and alert models with seed merged (TASK-6.7); Abuse, payments, ads, leads and organisations models with seed merged (TASK-6.8); REST clients in @zivali/api: auth, me, pets, reports, photos, geocode, matches merged (TASK-6.9); REST and Realtime clients in @zivali/api: chat, notifications, alerts, abuse, payments, ads, partners merged (TASK-6.10); API auth and platform middleware: JWKS verification, guards, rate limits, idempotency, ctx, audit, public config merged (TASK-6.12)
 Review: n/a (QA)
 Branch: - (verify on main)
 <!-- SECTION:DESCRIPTION:END -->

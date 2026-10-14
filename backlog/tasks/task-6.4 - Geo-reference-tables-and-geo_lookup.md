@@ -1,16 +1,17 @@
 ---
 id: TASK-6.4
-title: Geo reference tables and geo_lookup()
+title: 'Geo reference models, GURS seeder and TypedSQL geo lookup'
 status: To Do
 assignee:
   - '@backend-dev'
 created_date: '2026-10-14 22:12'
+updated_date: '2026-10-14 23:38'
 labels:
   - be
   - 'est:S'
 milestone: m-0
 dependencies:
-  - TASK-3.2
+  - TASK-6.2
   - TASK-6.1
 references:
   - docs/tech/backend.md
@@ -28,7 +29,7 @@ Reports, ads and stats derive municipality and region from a point inside Postgr
 
 ## Packet
 
-Unblocks on: Local Supabase stack, Edge Function base and mock adapters merged (TASK-3.2); GURS municipalities and statistical regions: data, licence, generator merged (TASK-6.1)
+Unblocks on: DB foundation and lockdown: schema app, extensions, deny-all RLS, security tests, platform models, fixture users merged (TASK-6.2); GURS municipalities and statistical regions: data, licence, generator merged (TASK-6.1)
 Contracts: C6, C1 (in references); conventions in C1
 Review: tech-lead code review (full mode); run `pnpm verify` before reporting done.
 Branch: agent/task-6.4-geo
@@ -36,7 +37,7 @@ Branch: agent/task-6.4-geo
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 regions and municipalities tables (GiST indexes) are loaded by a seed file generated from the GURS data; id, slug and names are publicly readable.
-- [ ] #2 geo_lookup(lat, lng) returns municipality and region ids and slugs plus in_slovenia as in C6; pgTAP covers inside, near-border and outside-Slovenia points.
-- [ ] #3 geo_lookup uses the spatial index and runs in under 5 ms per call on the local stack (EXPLAIN noted in the test file).
+- [ ] #1 Prisma models regions and municipalities (geom as Unsupported geography with GiST indexes in the migration) are loaded by seeder 01-geo, which runs the GURS SQL in supabase/seed/geo (scripts/geo-to-sql.mjs output) idempotently.
+- [ ] #2 TypedSQL prisma/sql/geoLookup.sql returns municipality and region ids and slugs for a point and breaks ties with `order by id limit 1` (the Ivančna Gorica and Žužemberk polygons overlap by about 330 m²); no row means in_slovenia = false; GeoDomain.lookup wraps it.
+- [ ] #3 Tests cover inside, the overlap tie, near-border and outside-Slovenia points; a lookup runs in under 5 ms locally using the spatial index.
 <!-- AC:END -->

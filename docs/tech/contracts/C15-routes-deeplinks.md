@@ -26,6 +26,9 @@ SL slugs are proposals; the content strategist may change them through a `CHANGE
 | partners | `/oglasevanje` | `/en/advertise` | public | - | none |
 | about | `/o-nas` | `/en/about` | public | - | sidebar |
 | howItWorks, safety, faq, forShelters | `/kako-deluje`, `/varnost`, `/pogosta-vprasanja`, `/za-zavetisca` | `/en/how-it-works`, `/en/safety`, `/en/faq`, `/en/for-shelters` | public | - | sidebar |
+| shelters (FR-044, TASK-90) | `/zavetisca`, `/zavetisca/[slug]` | `/en/shelters`, `/en/shelters/[slug]` | public | - | sidebar |
+| guides (TASK-72) | `/nasveti/[slug]` (e.g. `/nasveti/cipiranje-mack`) | `/en/guides/[slug]` | public | - | sidebar |
+| SEO hubs (TASK-72, M5) | `/izgubljene-zivali/[lokacija]`, `/izgubljeni-psi/[lokacija]`, `/izgubljene-macke/[lokacija]`, `/najdene-zivali/[lokacija]`, `/najdeni-psi/[lokacija]`, `/najdene-macke/[lokacija]` | `/en/lost-pets/[location]`, `/en/lost-dogs/[location]`, `/en/lost-cats/[location]`, `/en/found-pets/[location]`, `/en/found-dogs/[location]`, `/en/found-cats/[location]` | public | - | sidebar |
 | privacy, cookies, terms, imprint, accessibility | `/zasebnost`, `/piskotki`, `/pogoji-uporabe`, `/impresum`, `/dostopnost` | `/en/privacy`, `/en/cookies`, `/en/terms`, `/en/imprint`, `/en/accessibility` | public | - | none |
 | admin | `/admin/*` | `/en/admin/*` | admin | moderator/admin + aal2 | none |
 | portal (M3) | `/portal/*` | `/en/portal/*` | portal | org member | none |
@@ -40,12 +43,14 @@ Route groups: `app/[locale]/(public)`, `(app)`, `(admin)`, `(portal)`; guards in
 |---|---|
 | `/r/[code]/opengraph-image` | OG image (next/og): photo + type label, no location (FR-011 R-011.3) |
 | `/r/[code]/poster.pdf?lang=sl\|en` | A4 poster PDF (TASK-24) |
-| `/a/[id]` | ad click counter + 302 (C14) |
+| (moved) ad clicks | served by the API: `GET <API_URL>/v1/ads/:id/click` (C14) |
 | `/api/health` | `{ ok, version, env }` |
 | `/captcha` | Turnstile host page for the mobile WebView (posts token via `postMessage`) |
 | `/.well-known/apple-app-site-association`, `/.well-known/assetlinks.json` | universal / app links (TASK-12) |
 | `/dev/kit`, `/dev/checkout` | dev only (`APP_ENV !== 'production'`) |
 | `/sitemap.xml`, `/robots.txt` | M5 (TASK-72); until then robots disallow staging |
+
+Hub index rules (TASK-72): national, the 12 regional and the 12 city hubs are indexable; other locations only with at least 3 open listings, otherwise `noindex`. `/r/[code]` stays the listing URL.
 
 Detail page SEO: open, visible reports are indexable with `Article`-like JSON-LD (no exact location); closed > 30 days, hidden or removed → `410` page with `noindex` (FR-007 AC#3).
 

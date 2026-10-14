@@ -5,6 +5,7 @@ status: To Do
 assignee:
   - '@tech-lead'
 created_date: '2026-10-14 22:12'
+updated_date: '2026-10-14 23:38'
 labels:
   - tech
   - 'est:S'
@@ -13,6 +14,7 @@ dependencies:
   - TASK-4.1
   - TASK-3.4
   - TASK-3.2
+  - TASK-3.7
 references:
   - docs/tech/frontend.md
   - docs/tech/backend.md
@@ -28,15 +30,15 @@ Every merge must pass the same gates; until a GitHub remote exists the same sequ
 
 ## Packet
 
-Unblocks on: Quality kit: axe, visual, Lighthouse CI, links, PR template merged (TASK-4.1); Mobile app scaffold: Expo SDK 57, Expo Router, NativeWind + RN Reusables, tokens, dev build merged (TASK-3.4); Local Supabase stack, Edge Function base and mock adapters merged (TASK-3.2)
+Unblocks on: Quality kit: axe, visual, Lighthouse CI, links, PR template merged (TASK-4.1); Mobile app scaffold: Expo SDK 57, Expo Router, NativeWind + RN Reusables, tokens, dev build merged (TASK-3.4); Local Supabase stack for Postgres, Auth and Realtime (no Edge Functions) merged (TASK-3.2); apps/api scaffold: Express 5 + Prisma 7 in klikni style with the domain layer merged (TASK-3.7)
 Review: tech-lead code review (full mode); run `pnpm verify` before reporting done.
 Branch: agent/task-4.2-ci
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 .github/workflows/ci.yml runs on pull requests and main: pnpm install with cache, tokens build, lint, typecheck, unit tests (Vitest, jest-expo), i18n check, Supabase start + db reset + pgTAP, deno check, web build + Playwright smoke + quality kit + Lighthouse CI, and mobile `expo export` + `tsc`, using Turbo affected filtering where possible.
+- [ ] #1 .github/workflows/ci.yml runs on pull requests and main: pnpm install with cache, format check, lint, typecheck, tokens build, unit tests (Vitest, jest-expo), i18n check, supabase start + prisma migrate reset, API tests and the ADR-021 security tests, web build + Playwright smoke + quality kit + Lighthouse CI against the local API, mobile expo export + tsc, and Docker builds of the api and web images.
 - [ ] #2 secretlint and `pnpm audit --audit-level high` fail the build on findings (shown with a planted fake secret on a throwaway branch that is then deleted).
 - [ ] #3 `pnpm verify` runs the same sequence locally on Windows and Linux and is documented as mandatory before an implementer reports done.
-- [ ] #4 Branch protection for main (required checks) is documented for when the GitHub repository exists.
+- [ ] #4 Branch protection for main (required checks) is documented for the GitHub repository pbozic/zivali.
 <!-- AC:END -->

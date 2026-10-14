@@ -1,11 +1,13 @@
 ---
 id: TASK-37.2
-title: 'Ad administration RPCs: validated upsert, status, soft delete, stats'
+title: >-
+  Ad administration API: validated create and edit, image upload, status, soft
+  delete, stats
 status: To Do
 assignee:
   - '@backend-dev'
 created_date: '2026-10-14 22:13'
-updated_date: '2026-10-14 22:41'
+updated_date: '2026-10-14 23:38'
 labels:
   - be
   - 'est:S'
@@ -29,7 +31,7 @@ Without self-serve, admins create, schedule and report on ads by hand (FR-031).
 
 ## Packet
 
-Unblocks on: Ad serving: get_ad targeting and rotation, house-ad fallback, aggregate counting merged (TASK-35.1); Admin backend: aal2 enforcement, admin bootstrap script, audit log read merged (TASK-34.2)
+Unblocks on: Ad serving API: slot endpoint, targeting and rotation, house ads, impressions, no animal-sale ads merged (TASK-35.1); Admin API: aal2 enforcement, users and roles, audit log, queues, admin bootstrap script merged (TASK-34.2)
 Contracts: C14, C1 (in references); conventions in C1
 Review: tech-lead code review (full mode); run `pnpm verify` before reporting done.
 Branch: agent/task-37.2-ads-admin-be
@@ -37,8 +39,8 @@ Branch: agent/task-37.2-ads-admin-be
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 admin_upsert_ad rejects missing alt text, non-https links, images that are not 4:3 at least 1200×900 px (JPG or PNG under 500 KB, design P21), text over 120 characters and overlapping dates in an exclusive slot, with clear error details.
-- [ ] #2 Ad images upload to the ad-images bucket (admins with aal2 only).
-- [ ] #3 admin_ad_stats returns impressions, clicks and CTR per day, slot and region for a date range.
+- [ ] #1 POST and PUT /v1/admin/ads reject missing alt text, non-https links, images that are not 4:3 and at least 1200×900 px (JPG or PNG under 500 KB, design P21), text over 120 characters, ads that sell, give away or rehome animals, and overlapping dates in an exclusive slot, with clear error details.
+- [ ] #2 POST /v1/admin/ads/:id/image returns a presigned upload to the media bucket (admins with aal2 only).
+- [ ] #3 GET /v1/admin/ads/:id/stats returns impressions, clicks and CTR per day, slot and region for a date range.
 - [ ] #4 Every create, edit, status change and soft delete is written to the audit log; ending an ad mid-day keeps its stats.
 <!-- AC:END -->

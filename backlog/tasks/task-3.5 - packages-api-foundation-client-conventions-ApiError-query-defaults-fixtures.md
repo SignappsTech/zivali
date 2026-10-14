@@ -1,12 +1,13 @@
 ---
 id: TASK-3.5
 title: >-
-  packages/api foundation: client conventions, ApiError, query defaults,
+  packages/api foundation: REST client, ApiError, idempotency and query helpers,
   fixtures
 status: To Do
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:12'
+updated_date: '2026-10-14 23:39'
 labels:
   - fe
   - 'est:S'
@@ -14,6 +15,7 @@ labels:
 milestone: m-0
 dependencies:
   - TASK-3.1
+  - TASK-3.8
 references:
   - docs/tech/frontend.md
   - docs/tech/contracts/C1-platform-conventions.md
@@ -30,7 +32,7 @@ Both apps call Supabase through one typed client library; error mapping, the dev
 
 ## Packet
 
-Unblocks on: Workspace root: pnpm + Turborepo, TypeScript, lint, scripts, README merged (TASK-3.1)
+Unblocks on: Workspace root: pnpm + Turborepo, TypeScript, lint, scripts, README merged (TASK-3.1); Workspace: klikni Prettier and ESLint style, husky, scripts and workspace for apps/api merged (TASK-3.8)
 Design: none (no UI of its own)
 Contracts: C1, C7 (in references); conventions in C1
 Review: tech-lead code review (full mode); run `pnpm verify` before reporting done.
@@ -39,8 +41,8 @@ Branch: agent/task-3.5-api
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 @zivali/api exports by subpath (`./*` → src/*.ts); domain functions take a typed SupabaseClient as their first argument (apps create the clients).
-- [ ] #2 ApiError parses RPC P0001 JSON messages and Edge Function error bodies into { code, message, details } with the C1 code list as a typed union; unit tests cover both shapes and unknown errors.
-- [ ] #3 TanStack Query defaults (retry twice except 4xx, sensible staleTime), a queryKeys helper and deviceIdHeaders(id) for the x-device-id header (C7) are exported.
-- [ ] #4 A fixtures convention (src/__fixtures__/<domain>.ts) and a createMockClient() test helper exist so UI tasks can work before a backend RPC is merged.
+- [ ] #1 @zivali/api exports createApiClient({ baseUrl, getAccessToken, deviceId, locale }) that sends Authorization, x-device-id and Accept-Language, and an Idempotency-Key for calls marked idempotent; domain files are exported by subpath (`./*` → src/*.ts).
+- [ ] #2 ApiError parses `{ error: { code, message, details, issues } }` bodies (C1) with the code list as a typed union; network failures become a NETWORK client error; unit tests cover both.
+- [ ] #3 TanStack Query defaults (retry twice except 4xx, staleTime), a queryKeys helper and keyset pagination helpers are exported.
+- [ ] #4 A fixtures convention (src/__fixtures__/<domain>.ts) and createMockApi() let UI tasks work before an endpoint is merged.
 <!-- AC:END -->

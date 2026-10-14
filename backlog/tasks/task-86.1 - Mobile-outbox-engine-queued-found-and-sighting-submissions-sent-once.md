@@ -5,6 +5,7 @@ status: To Do
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:39'
+updated_date: '2026-10-14 23:38'
 labels:
   - fe
   - 'est:M'
@@ -30,7 +31,7 @@ ordinal: 265000
 <!-- SECTION:DESCRIPTION:BEGIN -->
 A finder may have no signal exactly where the animal is; the report must be stored with photo, GPS and capture time and sent later exactly once (FR-042).
 ## Packet
-Unblocks on: >- merged (TASK-12.5); >- merged (TASK-6.9); Mobile anonymous session, captcha WebView and manage-link screen merged (TASK-17.3); Mobile PhotoPicker: camera/gallery, resize, EXIF, drafts, upload with retry merged (TASK-14.3)
+Unblocks on: Mobile local data layer: expo-sqlite store, local migrations, network state, wipe merged (TASK-12.5); REST clients in @zivali/api: auth, me, pets, reports, photos, geocode, matches merged (TASK-6.9); Mobile anonymous session, captcha WebView and manage-link screen merged (TASK-17.3); Mobile PhotoPicker: camera/gallery, resize, EXIF, drafts, upload with retry merged (TASK-14.3)
 Design: none (no UI of its own)
 Contracts: C17, C7, C5 (in references); ADR-019
 Review: tech-lead code review (full mode); run `pnpm verify` before reporting done.

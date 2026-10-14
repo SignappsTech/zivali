@@ -7,6 +7,7 @@ status: To Do
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:39'
+updated_date: '2026-10-14 23:38'
 labels:
   - fe
   - 'est:M'
@@ -30,7 +31,7 @@ ordinal: 267000
 <!-- SECTION:DESCRIPTION:BEGIN -->
 Walking near where a pet was last seen is the best moment to ask for help, even offline; OS geofences do it without continuous GPS (FR-043, NFR-BATT).
 ## Packet
-Unblocks on: >- merged (TASK-85.2); Deep links (App Links, universal links) and push token registration path merged (TASK-12.3)
+Unblocks on: Mobile offline cache engine: area sync, thumbnails, limits, eviction, background refresh merged (TASK-85.2); Deep links (App Links, universal links) and push token registration path merged (TASK-12.3)
 Design: none (no UI of its own)
 Contracts: C17, C10 (in references); ADR-019
 Review: tech-lead code review (full mode); run `pnpm verify` before reporting done.

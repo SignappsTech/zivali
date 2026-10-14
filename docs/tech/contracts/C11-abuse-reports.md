@@ -13,25 +13,22 @@ abuse_reports(id, reporter_id, target_type text check (target_type in ('report',
               created_at, unique (reporter_id, target_type, target_id))
 moderation_flags(id, kind text ('duplicate_chip'|'anon_hold'|'auto_hidden'), target_type, target_id, details jsonb, created_at, resolved_at)
 ```
-RLS: reporters insert via RPC only and see their own rows; staff (aal2) select all; nobody else.
+Access only through the API (RLS deny-all): reporters create and see their own reports; staff (aal2) read all.
 
-## RPC (owned by TASK-25)
+## REST (owned by TASK-25.2)
 
-```ts
-report_abuse(p_target_type, p_target_id, p_reason, p_note?) → { id, duplicate: boolean }
-// any signed-in or anonymous user (anonymous visitors sign in anonymously with captcha first);
-// rate 10/hour per user and IP hash; duplicate from same reporter → returns existing, duplicate: true
-// message targets: reporter must be a participant of the conversation
-// when the weighted sum of open reports on a 'report' target ≥ cfg 'abuse.auto_hide_threshold' (3):
-//   reports.moderation_state = 'hidden', moderation_flags 'auto_hidden', publish_photos unpublishes,
-//   enqueue_notification(owner managers, 'report_hidden', …)
-```
-Staff read (until the M4 queue): `list_abuse_reports({ status?, target_type?, cursor? })` and `list_moderation_flags()` (aal2).
+| Method and path | Guards | Request | Response | Errors |
+|---|---|---|---|---|
+| `POST /v1/abuse-reports` | auth (user or anonymous; anonymous visitors sign in anonymously with captcha first); rate limit 10/hour per user and IP | `{ target_type: 'report' | 'message' | 'profile', target_id, reason, note? }` | `201 { id, duplicate: false }` or `200 { id, duplicate: true }` | `VALIDATION`, `FORBIDDEN` (message target and not a participant), `RATE_LIMITED` |
+| `GET /v1/admin/abuse-reports` | moderator, aal2 | `?status&target_type&cursor` | `{ items, next_cursor }` | `AAL2_REQUIRED` |
+| `GET /v1/admin/moderation-flags` | moderator, aal2 | `?cursor` | `{ items, next_cursor }` | `AAL2_REQUIRED` |
+
+Service rules: reports from accounts younger than 24 h weigh 0.5; when the weighted sum of open reports on a `report` target reaches `abuse.auto_hide_threshold` (3) the report becomes `hidden`, a `moderation_flags` row `auto_hidden` is written, `photo.publish` unpublishes its photos and the managers get `report_hidden` (C10).
 
 ## Example
 
 ```json
-// rpc/report_abuse
-{ "p_target_type": "report", "p_target_id": "7c1e…", "p_reason": "scam", "p_note": "Asks for money upfront" }
+// POST /v1/abuse-reports
+{ "target_type": "report", "target_id": "7c1e…", "reason": "scam", "note": "Asks for money upfront" }
 // → { "id": "ab1…", "duplicate": false }
 ```

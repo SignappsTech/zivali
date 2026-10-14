@@ -1,6 +1,7 @@
 # ADR-011: Stripe Checkout (test mode) through Edge Functions with a webhook ledger and a mock provider
 
 - Status: Accepted · Date: 2026-10-14 · Owner: Tech Lead
+- Amended 2026-10-15 (ADR-020): checkout and the webhook are Express routes (`POST /v1/payments/checkout`, `POST /v1/webhooks/stripe` with the raw body), using the Node Stripe SDK; effects run in the `payment.effects` job.
 - Source: FR-020, FR-021, P-6, R-003, A-014
 
 ## Decision

@@ -5,7 +5,7 @@ status: To Do
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:14'
-updated_date: '2026-10-14 22:42'
+updated_date: '2026-10-14 23:37'
 labels:
   - fe
   - 'est:M'
@@ -17,6 +17,7 @@ dependencies:
   - TASK-18.2
   - TASK-7.1
   - TASK-30.1
+  - TASK-88.3
 references:
   - docs/tech/frontend.md
   - docs/tech/contracts/C7-anonymous-manage-link.md
@@ -34,7 +35,7 @@ Finders will not register; conversion depends on a found report taking under 60 
 
 ## Packet
 
-Unblocks on: Web PhotoPicker: resize, EXIF read and strip, drafts, upload with retry merged (TASK-14.2); Web LocationPicker: GPS, pin, search, radius, permission fallback merged (TASK-15.3); Web anonymous session, Turnstile captcha and manage-link page merged (TASK-17.2); Web report detail /r/[code]: SSR, slots, OG image, JSON-LD, 410 merged (TASK-18.2); packages/analytics: typed track(), event registry, consent store, adapters merged (TASK-7.1); Design: Report found or sighted (no account) and manage page (P7) approved (TASK-30.1)
+Unblocks on: Web PhotoPicker: resize, EXIF read and strip, drafts, upload with retry merged (TASK-14.2); Web LocationPicker: GPS, pin, search, radius, permission fallback merged (TASK-15.3); Web anonymous session, Turnstile captcha and manage-link page merged (TASK-17.2); Web report detail /r/[code]: SSR, slots, OG image, JSON-LD, 410 merged (TASK-18.2); packages/analytics: typed track(), event registry, consent store, adapters merged (TASK-7.1); Design: Report found or sighted (no account) and manage page (P7) approved (TASK-30.1); Directory client in @zivali/api and useResponsibleShelter hook merged (TASK-88.3)
 Design: P7 docs/design/pages/P7-report-found.md (mockup docs/design/mockups/P7-report-found.html; TASK-30.1)
 Copy: docs/content/pages/P7-report-found.md
 Contracts: C7, C4 (in references); conventions in C1
@@ -49,4 +50,5 @@ Branch: agent/task-30.2-found-web
 - [ ] #3 'I saw this pet' on a lost listing (sighting slot) creates a SIGHTED report linked to it.
 - [ ] #4 Rate-limit and hold responses show friendly messages; report_found_start and report_found_submit fire with consent only; no ad slot in the flow.
 - [ ] #5 A scripted Playwright run completes the flow in under 60 s on a mobile viewport; axe 0 violations.
+- [ ] #6 After submit (so the 60 s target is unaffected) a notice says the find should be reported to the responsible shelter, with call buttons from the directory (C18), and that any vet or shelter can read the chip; the legal timing appears only when content.legal_timings is on.
 <!-- AC:END -->

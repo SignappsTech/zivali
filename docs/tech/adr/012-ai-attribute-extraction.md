@@ -1,6 +1,7 @@
 # ADR-012: Attribute extraction with Claude vision, structured outputs, hard cost caps
 
 - Status: Accepted (implementation in M3, TASK-40) · Date: 2026-10-14 · Owner: Tech Lead
+- Amended 2026-10-15 (ADR-020): runs in the Node worker (`ai.extract` job) with `@anthropic-ai/sdk`; `ANTHROPIC_API_KEY` is a VPS environment secret.
 - Source: FR-013, FR-018 R-018.4, NFR-AI (≤ EUR 0.05 per report), R-009
 
 ## Decision

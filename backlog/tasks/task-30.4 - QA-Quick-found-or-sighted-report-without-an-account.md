@@ -5,6 +5,7 @@ status: To Do
 assignee:
   - '@qa'
 created_date: '2026-10-14 22:15'
+updated_date: '2026-10-14 23:37'
 labels:
   - qa
   - 'est:XS'
@@ -13,6 +14,7 @@ dependencies:
   - TASK-30.2
   - TASK-30.3
   - TASK-30.1
+  - TASK-88.2
 references:
   - docs/tech/frontend.md
   - docs/design/pages/P7-report-found.md
@@ -28,7 +30,7 @@ Verify story TASK-30 (Quick found or sighted report without an account) on main 
 
 ## Packet
 
-Unblocks on: all tasks of TASK-30 merged to main (TASK-30.2, TASK-30.3, TASK-30.1); leads add any later TASK-30 task to this task's dependencies.
+Unblocks on: Web quick found or sighted report without an account merged (TASK-30.2); Mobile quick found or sighted report (submits through the outbox) merged (TASK-30.3); Design: Report found or sighted (no account) and manage page (P7) approved (TASK-30.1); Shelter directory API: models, versioned seed, public lookup endpoints merged (TASK-88.2)
 Review: n/a (QA)
 Branch: - (verify on main)
 <!-- SECTION:DESCRIPTION:END -->
@@ -41,5 +43,6 @@ Branch: - (verify on main)
 - [ ] #4 Given a lost listing, when a visitor taps I saw this pet, then a SIGHTED report is created linked to that lost report.
 - [ ] #5 Given anonymous submissions over the limits, when received, then the safeguards from the anonymous-reporter story apply and the user sees a friendly message.
 - [ ] #6 Given the flow, when it starts and when it is submitted, then report_found_start and report_found_submit fire (consent only) and no ad appears anywhere in the flow.
-- [ ] #7 Story gates pass on main: `pnpm verify`, plus `pnpm quality` for the pages this story touches; results recorded in the QA notes.
+- [ ] #7 Given a submitted found report, when the confirmation shows (after submit, so the 60 s target is unaffected), then a notice says the find should be reported to the responsible shelter within 24 hours with call buttons from the directory and that any vet or shelter can read the chip; the legal timing appears only when the legal-content flag is on, and the notice also shows once a queued offline report is sent.
+- [ ] #8 Story gates pass on main: `pnpm verify`, plus `pnpm quality` for the pages this story touches; results recorded in the QA notes.
 <!-- AC:END -->

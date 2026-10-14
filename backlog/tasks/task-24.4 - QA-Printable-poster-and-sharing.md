@@ -5,6 +5,7 @@ status: To Do
 assignee:
   - '@qa'
 created_date: '2026-10-14 22:15'
+updated_date: '2026-10-14 23:37'
 labels:
   - qa
   - 'est:XS'
@@ -28,7 +29,7 @@ Verify story TASK-24 (Printable poster and sharing) on main once all its tasks a
 
 ## Packet
 
-Unblocks on: all tasks of TASK-24 merged to main (TASK-24.2, TASK-24.3, TASK-24.1); leads add any later TASK-24 task to this task's dependencies.
+Unblocks on: Poster PDF route and web share menu merged (TASK-24.2); Mobile share sheet and poster download merged (TASK-24.3); Design: Poster and sharing (P18) approved (TASK-24.1)
 Review: n/a (QA)
 Branch: - (verify on main)
 <!-- SECTION:DESCRIPTION:END -->
@@ -41,5 +42,6 @@ Branch: - (verify on main)
 - [ ] #4 Given a shared link, when previewed in WhatsApp or Facebook, then an Open Graph image shows the pet photo with type label and no exact location.
 - [ ] #5 Given a FOUND report, when shared, then the preview never reveals where the animal is kept.
 - [ ] #6 Given the poster QR code, when scanned, then it resolves to the public listing only (never to a pet profile, owner data or a tag page).
-- [ ] #7 Story gates pass on main: `pnpm verify`, plus `pnpm quality` for the pages this story touches; results recorded in the QA notes.
+- [ ] #7 Given a report, when the owner opens the Facebook share kit, then it provides ready SL text, a square image and a list of regional Facebook lost-pet groups to post in (group names supplied by the client, shown as links) plus the Radio Aktual submission form.
+- [ ] #8 Story gates pass on main: `pnpm verify`, plus `pnpm quality` for the pages this story touches; results recorded in the QA notes.
 <!-- AC:END -->

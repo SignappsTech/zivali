@@ -1,6 +1,6 @@
 # ADR-003: Supabase is the API (RLS + RPC + Edge Functions); no separate API server
 
-- Status: Accepted · Date: 2026-10-14 · Owner: Tech Lead
+- Status: **Superseded by ADR-020** (2026-10-15, brief v1.0: Express + Prisma API; Supabase for Postgres and Auth only) · Date: 2026-10-14 · Owner: Tech Lead
 - Source: brief §Constraints, NFR-SEC, NFR-DEVX
 
 ## Context
