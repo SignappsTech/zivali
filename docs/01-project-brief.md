@@ -1,7 +1,7 @@
 ---
 doc_id: DOC-01
 title: Project Brief
-version: 0.9
+version: 1.0
 status: Draft
 date: 2026-10-14
 owner: Project Lead
@@ -130,13 +130,13 @@ approvals:
   - Animal-protection rules on found animals and shelter holding periods (to verify).
 - **Technical:**
   - TypeScript monorepo (pnpm and Turborepo): `apps/web` (Next.js App Router), `apps/mobile` (Expo and Expo Router), shared `packages/*` (types, API client, validation, **design tokens**).
-  - Backend: Supabase (Postgres, PostGIS, pgvector, Auth, Storage, Realtime, Edge Functions); EU region (Frankfurt).
+  - **Backend (client decision 2026-10-15): Express API (TypeScript) + Prisma** in `apps/api`, for all business logic and permissions (the client knows this stack from klikni and must be able to own it). **Supabase Free** provides only Postgres (PostGIS, pgvector), Auth (email, Google, anonymous finders) and optionally Realtime for chat. No Edge Functions or RPC-as-API. Geo and vector queries via Prisma TypedSQL. Background jobs via pg-boss in the same Postgres. EU region (Frankfurt).
   - **UI library:** shadcn/ui (Radix and Tailwind) on web, **React Native Reusables** (the shadcn port for React Native, on NativeWind) on mobile. Both are driven by **one shared token package** (CSS variables and a Tailwind preset), which the design team customises. The two sides use the same component vocabulary.
   - Maps: MapLibre with OpenFreeMap tiles (no key).
-  - Hosting: Vercel (web), Supabase cloud, EAS (mobile builds).
+  - **Hosting, budget-first (about €5–10/month at start):** one Hetzner VPS (Docker Compose + Caddy) runs the Express API, the pg-boss worker and the Next.js website (standalone; Vercel Hobby forbids commercial use). Photos on Cloudflare R2 (free tier). Nightly pg_dump to R2. Supabase Free with a keep-alive ping; upgrade to Supabase Pro only when limits or backups require it. EAS (mobile builds) free tier.
   - Payments: Stripe (web, test mode) and RevenueCat or IAP later for mobile.
   - AI: a Claude vision model for attribute extraction; an image-embedding model for similarity (choose in technical design).
-  - Local dev and tests must run without cloud credentials (local Supabase in Docker, mocked AI and Stripe).
+  - Local dev and tests must run without cloud credentials (local Supabase in Docker for Postgres/Auth, local S3-compatible storage or a mock for R2, mocked AI and Stripe).
 - **Brand:**
   - No existing identity; the design team proposes a name, logo and palette.
   - Tone: warm, calm, hopeful and trustworthy, never cutesy-chaotic. Users are often panicked.
@@ -177,3 +177,4 @@ approvals:
 | 0.7 | 2026-10-15 | QR/NFC tags removed from scope (physical and printable); the poster QR links to the public listing only |
 | 0.8 | 2026-10-15 | Monetisation model: voluntary support (€5 suggested), Boost €4.99, Premium €2.99/€24.99 (unlimited pets, AI extras, ad-free); free = 2 pets + basic AI |
 | 0.9 | 2026-10-15 | Client decisions: name Najdimo; formal vikanje, "Vpis" for sign-in; owners may remove the Vet Partner poster line; Partners page promises a reply within 2 working days and better terms for founding partners |
+| 1.0 | 2026-10-15 | Architecture change: Express + Prisma API, Supabase Free for DB/Auth only, Hetzner VPS + Cloudflare R2, budget about €5–10/month at start |
