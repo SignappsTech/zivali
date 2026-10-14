@@ -1,11 +1,11 @@
 ---
 id: TASK-12.1
 title: 'Design: Mobile shell (P2)'
-status: In Progress
+status: Done
 assignee:
   - '@ui-designer'
 created_date: '2026-10-14 21:50'
-updated_date: '2026-10-14 21:52'
+updated_date: '2026-10-14 22:27'
 labels:
   - design
   - 'est:M'
