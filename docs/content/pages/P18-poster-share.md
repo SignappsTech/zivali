@@ -71,8 +71,8 @@ Vet Partner line (later, behind a flag; paid placement, always labelled):
 | Key | SL | EN |
 |---|---|---|
 | poster.vet_line | Oglas · Potrebujete veterinarja? {clinic_name}, {clinic_area} | Ad · Need a vet? {clinic_name}, {clinic_area} |
-| poster.vet_toggle_label | Prikaži priporočeno veterinarsko ambulanto | Show the recommended vet practice |
-| poster.vet_toggle_hint | Vrstica je označena kot oglas. Izklopite jo, če je na plakatu ne želite. | The line is labelled as an ad. Turn it off if you do not want it on the poster. |
+| poster.vet_toggle_label | Prikaži oglas veterinarske ambulante | Show vet practice ad |
+| poster.vet_toggle_hint | Plačan oglas lokalnega veterinarskega partnerja. Na svojem plakatu ga lahko skrijete. | Paid ad from a local vet partner. You can hide it on your poster. |
 
 Toggle state: on by default for the owner's own poster; the owner may switch it off (decided by the client, 2026-10-15). The toggle lives in the poster options, next to the language choice. When it is off, `poster.vet_line` is left out and the poster reflows without an empty gap.
 
