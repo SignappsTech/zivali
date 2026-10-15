@@ -1,4 +1,5 @@
 // The /v1 router: one mount line per area router (routes/<area>.routes.ts, declared with apiRoutes(router, '/v1/<area>')).
+// /v1/webhooks is mounted in app.ts, before the JSON body parser (raw body for the Stripe signature, C13).
 import { Router } from 'express';
 
 import abuseReportsRoutes from './abuse-reports.routes.ts';
@@ -13,6 +14,7 @@ import manageRoutes from './manage.routes.ts';
 import matchesRoutes, { reportMatchesRouter } from './matches.routes.ts';
 import meRoutes from './me.routes.ts';
 import notificationsRoutes, { prefsRouter, pushTokensRouter } from './notifications.routes.ts';
+import paymentsRoutes from './payments.routes.ts';
 import petsRoutes from './pets.routes.ts';
 import photosRoutes from './photos.routes.ts';
 import reportsRoutes from './reports.routes.ts';
@@ -39,6 +41,7 @@ router.use('/pets', petsRoutes);
 router.use('/ads', adsRoutes);
 router.use('/reports', reportMatchesRouter);
 router.use('/matches', matchesRoutes);
+router.use('/payments', paymentsRoutes);
 router.use('/sync', syncRoutes);
 router.use('/abuse-reports', abuseReportsRoutes);
 

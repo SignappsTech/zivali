@@ -3060,6 +3060,50 @@
 				}
 			}
 		},
+		"/v1/me/payments": {
+			"get": {
+				"operationId": "listMyPayments",
+				"summary": "My payments",
+				"description": "The caller’s payments (every status), newest first, keyset-paginated (`cursor` = the last item id, `limit` ≤ 50). Real accounts only (C13).",
+				"tags": ["me"],
+				"parameters": [
+					{
+						"schema": { "type": "string", "format": "uuid" },
+						"required": false,
+						"name": "cursor",
+						"in": "query"
+					},
+					{
+						"schema": { "type": "integer", "minimum": 1, "maximum": 50 },
+						"required": false,
+						"name": "limit",
+						"in": "query"
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "One page of own payments",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/PaymentList" } } }
+					},
+					"400": {
+						"description": "VALIDATION",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"401": {
+						"description": "UNAUTHENTICATED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"429": {
+						"description": "RATE_LIMITED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"500": {
+						"description": "INTERNAL",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					}
+				}
+			}
+		},
 		"/v1/notifications": {
 			"get": {
 				"operationId": "listNotifications",
@@ -3330,6 +3374,95 @@
 					},
 					"401": {
 						"description": "UNAUTHENTICATED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"429": {
+						"description": "RATE_LIMITED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"500": {
+						"description": "INTERNAL",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					}
+				}
+			}
+		},
+		"/v1/payments/checkout": {
+			"post": {
+				"operationId": "startCheckout",
+				"summary": "Start a checkout",
+				"description": "Real accounts only; `Idempotency-Key` required. tip, report_contribution and support take `amount_cents` (integer, ≤ 50 000; below 200 → 422 MIN_AMOUNT); boost is priced by app_config payments.prices, never by the client; subscriptions arrive in M4 (503). report_contribution needs `refs.report_id` of a report the caller manages. Inserts a pending payment and returns the Stripe Checkout URL (mock provider: APP_URL/dev/checkout). `return_scheme: true` (mobile) returns through zivali://payments/return.",
+				"tags": ["payments"],
+				"requestBody": {
+					"required": true,
+					"content": { "application/json": { "schema": { "$ref": "#/components/schemas/CheckoutInput" } } }
+				},
+				"responses": {
+					"200": {
+						"description": "The pending payment and its checkout URL",
+						"content": {
+							"application/json": { "schema": { "$ref": "#/components/schemas/CheckoutResponse" } }
+						}
+					},
+					"400": {
+						"description": "VALIDATION",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"401": {
+						"description": "UNAUTHENTICATED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"403": {
+						"description": "FORBIDDEN",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"409": {
+						"description": "CONFLICT",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"422": {
+						"description": "MIN_AMOUNT",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"429": {
+						"description": "RATE_LIMITED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"500": {
+						"description": "INTERNAL",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"503": {
+						"description": "SERVICE_UNAVAILABLE",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					}
+				}
+			}
+		},
+		"/v1/payments/{id}": {
+			"get": {
+				"operationId": "getPayment",
+				"summary": "Own payment",
+				"description": "One of the caller’s payments (the return page polls it); anyone else’s answers 404.",
+				"tags": ["payments"],
+				"parameters": [
+					{ "schema": { "type": "string", "format": "uuid" }, "required": true, "name": "id", "in": "path" }
+				],
+				"responses": {
+					"200": {
+						"description": "The payment",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/Payment" } } }
+					},
+					"400": {
+						"description": "VALIDATION",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"401": {
+						"description": "UNAUTHENTICATED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"404": {
+						"description": "NOT_FOUND",
 						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
 					},
 					"429": {

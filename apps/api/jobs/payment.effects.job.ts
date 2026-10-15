@@ -1,6 +1,7 @@
-// payment.effects stub (TASK-6.3): logs and completes; the payments task (TASK-32.1) replaces it.
+// payment.effects (C13): after a payment succeeds, the payment_receipt notification; PaymentsDomain does the work.
+import { PaymentsDomain } from '../domains/payments/index.ts';
 import type { JobCtx } from './index.ts';
 
-export async function handle(_data: unknown, ctx: JobCtx): Promise<void> {
-	ctx.logger.info('job stub: no handler yet');
+export async function handle(data: unknown, ctx: JobCtx): Promise<void> {
+	await PaymentsDomain.paymentEffects(data, ctx);
 }

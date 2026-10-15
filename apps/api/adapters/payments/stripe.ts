@@ -1,61 +1,122 @@
-// Stripe over plain fetch (Checkout Sessions + signature check), so no SDK dependency is needed yet.
+// Stripe over plain fetch (Checkout Sessions + signature check), so no SDK dependency is needed.
 import { createHmac, timingSafeEqual } from 'node:crypto';
 
+import { z } from 'zod';
+
+import { AppError } from '../../lib/errors.ts';
 import type { PaymentEvent, PaymentsAdapter } from './index.ts';
+import { STRIPE_API_VERSION } from './stripe-version.ts';
 
 const TOLERANCE_S = 300;
-const TYPES: Record<string, PaymentEvent['type']> = {
-	'checkout.session.completed': 'checkout.completed',
-	'checkout.session.expired': 'checkout.expired',
-	'checkout.session.async_payment_failed': 'payment.failed',
-};
+
+// Only the fields the ledger uses; everything else (customer details, card data) is dropped right here.
+const StripeEvent = z.object({
+	id: z.string().min(1).max(255),
+	type: z.string().min(1).max(255),
+	livemode: z.boolean(),
+	data: z.object({
+		object: z.object({
+			id: z.string().min(1).max(255),
+			payment_intent: z.string().max(255).nullish(),
+			amount_total: z.number().int().nullish(),
+			amount: z.number().int().nullish(),
+			currency: z.string().max(8).nullish(),
+			payment_status: z.string().max(32).nullish(),
+			status: z.string().max(32).nullish(),
+			refunded: z.boolean().nullish(),
+			metadata: z.record(z.string(), z.string()).nullish(),
+		}),
+	}),
+});
+
+const invalid = () => new AppError('VALIDATION', 'Invalid webhook signature or payload');
+
+/** The Stripe-Signature header for a body (`t=<unix s>,v1=<hex HMAC-SHA256 of "t.body">`); mock events and tests. */
+export function signWebhook(rawBody: string, secret: string, t = Math.floor(Date.now() / 1000)): string {
+	return `t=${t},v1=${createHmac('sha256', secret).update(`${t}.${rawBody}`).digest('hex')}`;
+}
+
+/** Stripe's signature scheme, shared by the stripe and mock providers (different secrets). */
+export function verifyEvent(rawBody: string, signature: string | undefined, secret: string): PaymentEvent {
+	// The header may hold several v1 signatures during secret rotation: any one matching is enough.
+	const pairs = (signature ?? '').split(',').map((p) => p.split('=') as [string, string]);
+	const ts = pairs.find(([k]) => k === 't')?.[1] ?? '';
+	const t = Number(ts);
+	const expected = Buffer.from(createHmac('sha256', secret).update(`${ts}.${rawBody}`).digest('hex'));
+	const matches = pairs.some(([k, v]) => {
+		const given = Buffer.from(v ?? '');
+		return k === 'v1' && given.length === expected.length && timingSafeEqual(expected, given);
+	});
+	if (!t || Math.abs(Date.now() / 1000 - t) > TOLERANCE_S || !matches) throw invalid();
+	let json: unknown;
+	try {
+		json = JSON.parse(rawBody);
+	} catch {
+		throw invalid();
+	}
+	const parsed = StripeEvent.safeParse(json);
+	if (!parsed.success) throw invalid();
+	const { id, type, livemode, data } = parsed.data;
+	const o = data.object;
+	return {
+		id,
+		type,
+		livemode,
+		object: {
+			id: o.id,
+			payment_intent: o.payment_intent,
+			amount: o.amount_total ?? o.amount,
+			currency: o.currency,
+			status: o.payment_status ?? o.status,
+			refunded: o.refunded,
+			metadata: o.metadata ?? {},
+		},
+	};
+}
 
 export function stripePayments(secretKey: string, webhookSecret: string): PaymentsAdapter {
 	return {
+		provider: 'stripe',
 		async createCheckout(input) {
 			const form = new URLSearchParams({
 				mode: 'payment',
+				// The account turns Managed Payments on by default, which needs a product tax code per line item;
+				// Najdimo is the merchant here (fiscal invoices: TASK-92), so it is off per session.
+				'managed_payments[enabled]': 'false',
 				success_url: input.successUrl,
 				cancel_url: input.cancelUrl,
+				locale: input.locale,
+				client_reference_id: input.paymentId,
+				'metadata[payment_id]': input.paymentId,
+				// Copied to the charge, so charge.refunded finds the payment too.
+				'payment_intent_data[metadata][payment_id]': input.paymentId,
 				'line_items[0][quantity]': '1',
 				'line_items[0][price_data][currency]': input.currency,
 				'line_items[0][price_data][unit_amount]': String(input.amountCents),
 				'line_items[0][price_data][product_data][name]': input.description,
 			});
-			for (const [k, v] of Object.entries(input.metadata ?? {})) form.set(`metadata[${k}]`, v);
-			const res = await fetch('https://api.stripe.com/v1/checkout/sessions', {
-				method: 'POST',
-				headers: { authorization: `Bearer ${secretKey}`, 'idempotency-key': input.idempotencyKey },
-				body: form,
-			});
+			let res: Response;
+			try {
+				res = await fetch('https://api.stripe.com/v1/checkout/sessions', {
+					method: 'POST',
+					// One session per payment row: a retried request reuses it.
+					headers: {
+						authorization: `Bearer ${secretKey}`,
+						'idempotency-key': input.paymentId,
+						'stripe-version': STRIPE_API_VERSION,
+					},
+					body: form,
+					signal: AbortSignal.timeout(10_000),
+				});
+			} catch {
+				// Timeout or network failure: the provider is unavailable (C1/C13), no payment row is written.
+				throw new AppError('SERVICE_UNAVAILABLE', 'Payment provider unavailable');
+			}
 			if (!res.ok) throw new Error(`stripe: HTTP ${res.status}`);
-			const json = (await res.json()) as { id: string; url: string };
+			const json = (await res.json()) as { id: string; url: string; livemode?: boolean };
+			if (json.livemode) throw new AppError('LIVE_MODE_FORBIDDEN', 'Live mode is refused (test mode only)');
 			return { id: json.id, url: json.url };
 		},
-		parseWebhook(rawBody, signature) {
-			// The header may hold several v1 signatures during secret rotation: any one matching is enough.
-			const pairs = (signature ?? '').split(',').map((p) => p.split('=') as [string, string]);
-			const ts = pairs.find(([k]) => k === 't')?.[1] ?? '';
-			const t = Number(ts);
-			const expected = Buffer.from(createHmac('sha256', webhookSecret).update(`${ts}.${rawBody}`).digest('hex'));
-			const matches = pairs.some(([k, v]) => {
-				const given = Buffer.from(v ?? '');
-				return k === 'v1' && given.length === expected.length && timingSafeEqual(expected, given);
-			});
-			if (!t || Math.abs(Date.now() / 1000 - t) > TOLERANCE_S || !matches) {
-				throw new Error('invalid webhook signature');
-			}
-			const event = JSON.parse(rawBody) as {
-				id: string;
-				type: string;
-				data: { object: { id: string; metadata?: Record<string, string> } };
-			};
-			return {
-				id: event.id,
-				type: TYPES[event.type] ?? 'other',
-				checkoutId: event.data.object.id,
-				metadata: event.data.object.metadata ?? {},
-			};
-		},
+		parseWebhook: (rawBody, signature) => verifyEvent(rawBody, signature, webhookSecret),
 	};
 }
