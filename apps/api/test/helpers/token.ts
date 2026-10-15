@@ -6,6 +6,8 @@ import { SignJWT } from 'jose';
 import { config } from '../../lib/config.ts';
 
 export type TestTokenClaims = {
+	// 'anon' gives the equivalent of the anon key (PostgREST exposure tests).
+	role?: 'anon' | 'authenticated';
 	sub?: string;
 	email?: string;
 	is_anonymous?: boolean;

@@ -25,7 +25,8 @@ const EnvSchema = z.object({
 				.map((origin) => origin.trim())
 				.filter(Boolean)
 		),
-	// Local HS256 fallback for JWT verification; also signs test tokens.
+	SUPABASE_URL: z.url().optional(),
+	// Local HS256 fallback for JWT verification; also signs test tokens and the local Admin API token (seeder 00-users).
 	SUPABASE_JWT_SECRET: z.string().min(32).optional(),
 	// Adapters (backend.md): unset provider = mock (memory for storage) outside production.
 	STORAGE_PROVIDER: z.enum(['minio', 'r2', 'memory', 'off']).optional(),

@@ -84,6 +84,10 @@ Logs (pino, `lib/logger.ts`): one line per request with `req_id`, `route` (metho
 - `DATABASE_URL` and `DIRECT_URL` must end with `?schema=app`; `lib/config.ts` and `prisma.config.ts` refuse anything else. Prisma then keeps its migrations table in `app`, and `migrate reset` drops only `app`, never Supabase's `public`.
 - Models: one file per domain in `prisma/schemas/`, `@@schema("app")` on every model, RLS enabled in the migration.
 - The first migration (`TASK-3.7`) creates schemas `app` and `pgboss`, enables `postgis`, `vector` and `pgcrypto` in `extensions`, and revokes everything on `app` and `pgboss` from `public`, `anon` and `authenticated`.
+- Platform models (`TASK-6.2`): `profiles` (`users.prisma`, C3), `app_config`, `audit_log`, `rate_limits`, `idempotency_keys` (`platform.prisma`, C1). Every table in `app` and `pgboss` has RLS enabled and no policies; `test/security` proves it, plus no grants and no PostgREST exposure.
+- PostGIS types are schema-qualified in `Unsupported(...)` (`extensions.geography(Point,4326)`): with `?schema=app` the search path does not include `extensions`.
+- Every new model gets an entry in `prisma/data-inventory.json` (with each R2 bucket); `test/security/data-inventory.test.ts` fails otherwise.
+- Seed: fixture users, password and the local TOTP secret for mod and admin are in [prisma/seeders/README.md](prisma/seeders/README.md).
 - Prisma 7 no longer generates on `migrate dev`: run `pnpm --filter api exec prisma generate` after schema changes (`pnpm install` also does).
 - TypedSQL is enabled (`prisma/sql/`); `prisma generate --sql` needs the database running.
 
@@ -113,4 +117,4 @@ Coding agents: Prisma refuses `migrate reset` when it detects an AI agent unless
 
 ## Tests
 
-`test/helpers/token.ts` signs Supabase-style access tokens with the local `SUPABASE_JWT_SECRET` (HS256, audience `authenticated`): `await signTestToken({ sub, aal: 'aal2', is_anonymous })`. Test files run one at a time against the shared local database; `test/global-setup.ts` applies pending migrations (never resets).
+`test/helpers/token.ts` signs Supabase-style access tokens with the local `SUPABASE_JWT_SECRET` (HS256, audience `authenticated`): `await signTestToken({ sub, aal: 'aal2', is_anonymous })`. Test files run one at a time against the shared local database; `test/global-setup.ts` applies pending migrations (never resets). `test/security` and `test/seeders` also call the local Supabase at `SUPABASE_URL` (PostgREST, Auth): an `.env.local` copied before TASK-6.2 needs that line from `.env.example`.
