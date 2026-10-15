@@ -3,10 +3,11 @@ id: TASK-3.10
 title: >-
   Web: Redux store Provider and RTK Query api replace the TanStack
   QueryClientProvider
-status: To Do
+status: In Progress
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-15 01:35'
+updated_date: '2026-10-15 02:22'
 labels:
   - fe
   - 'est:S'
@@ -38,7 +39,7 @@ Branch: agent/task-fe-web-rtk
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 apps/web/providers.tsx wraps the app in react-redux Provider with the store from createApiStore (@zivali/api/rtk), lib/store.ts replaces lib/query.ts, and next.config has transpilePackages: ['@zivali/api'].
-- [ ] #2 @tanstack/react-query is removed from apps/web/package.json and the lockfile; react-redux and @reduxjs/toolkit are added as listed in ADR-017; no other new dependency.
-- [ ] #3 Existing tests and the e2e smoke pass; a component test renders a generated hook inside the Provider with a mock baseQuery; pnpm verify passes.
+- [x] #1 apps/web/providers.tsx wraps the app in react-redux Provider with the store from createApiStore (@zivali/api/rtk), lib/store.ts replaces lib/query.ts, and next.config has transpilePackages: ['@zivali/api'].
+- [x] #2 @tanstack/react-query is removed from apps/web/package.json and the lockfile; react-redux and @reduxjs/toolkit are added as listed in ADR-017; no other new dependency.
+- [x] #3 Existing tests and the e2e smoke pass; a component test renders a generated hook inside the Provider with a mock baseQuery; pnpm verify passes.
 <!-- AC:END -->

@@ -1,13 +1,18 @@
 'use client';
 
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useLocale } from 'next-intl';
+import { useMemo } from 'react';
+import { Provider } from 'react-redux';
 
-/** Client-side providers. TanStack Query is for client components; server components call the API directly. */
+import type { Locale } from '@zivali/api/client';
+import { makeStore } from '@/lib/store';
+
+/** Client-side providers. RTK Query hooks (@zivali/api) are for client components; server components call the API. */
 export function Providers({ children }: { children: React.ReactNode }) {
-	// One client per browser session (per request on the server), never shared between users.
-	// frontend.md: 2 retries, none for 4xx; the 4xx check needs ApiError from @zivali/api.
-	const [queryClient] = useState(() => new QueryClient({ defaultOptions: { queries: { retry: 2 } } }));
+	const locale = useLocale() as Locale;
+	// One store per browser session (per request on the server), never shared between users; a new one per locale,
+	// since responses are localised (Accept-Language).
+	const store = useMemo(() => makeStore(locale), [locale]);
 
-	return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
+	return <Provider store={store}>{children}</Provider>;
 }
