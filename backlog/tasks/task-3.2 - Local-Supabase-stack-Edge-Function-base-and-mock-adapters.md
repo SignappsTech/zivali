@@ -1,11 +1,11 @@
 ---
 id: TASK-3.2
 title: 'Local Supabase stack for Postgres, Auth and Realtime (no Edge Functions)'
-status: In Progress
+status: Done
 assignee:
   - '@backend-dev'
 created_date: '2026-10-14 22:11'
-updated_date: '2026-10-15 00:20'
+updated_date: '2026-10-15 00:26'
 labels:
   - tech
   - 'est:S'
