@@ -209,6 +209,10 @@ Used here (lost), on the P7 success screens (found and sighted) and in the P9 ow
 | shelter_row.unknown_municipality | Občine nismo mogli določiti. Pristojno zavetišče poiščite v imeniku zavetišč. | We could not tell the municipality. Find the responsible shelter in the shelter directory. |
 | shelter_row.directory_link | Imenik zavetišč | Shelter directory |
 | shelter_row.cached | Iz shranjenega imenika z dne {date}. | From the saved directory of {date}. |
+| shelter_row.suggested_label | Morda pristojno zavetišče | Possibly the responsible shelter |
+| shelter_row.unconfirmed_note | Ni potrjeno | Not confirmed |
+| shelter_row.unconfirmed_note_hint | Pristojnost za vašo občino še ni potrjena. Pred obiskom pokličite. | Responsibility for your municipality is not confirmed yet. Call before you visit. |
+| shelter_row.nearest_label | Najbližji zavetišči | Nearest shelters |
 
 Order in the row: the body sentence (`shelter_row.lost_body` here), `shelter_row.not_replace`, the shelter name in bold, the number (`tabular-nums`), `secondary` `shelter_row.call` (`tel:`, accessible name `shelter_row.call_a11y`) and the text link `shelter_row.details_link` to the shelter page (P3 T6). `shelter_row.title` is the compact label used in the P9 owner view. No municipality: `shelter_row.unknown_municipality`; no confirmed shelter: `shelter_row.unconfirmed`; both as a `note` with `shelter_row.directory_link` to P3 T5, never a guessed number. `shelter_row.cached` shows only when the row comes from the cached directory while offline. A statutory deadline appears only when `content.legal_timings` is on, with the wording the lawyer confirms (lawyer pack LQ-06); there is no string for it until then. With two shelters for the municipality, the row shows the one for the reported species.
 
