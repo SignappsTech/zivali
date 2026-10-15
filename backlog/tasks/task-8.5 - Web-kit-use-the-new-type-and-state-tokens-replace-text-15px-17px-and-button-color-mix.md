@@ -3,10 +3,11 @@ id: TASK-8.5
 title: >-
   Web kit: use the new type and state tokens (replace text-[15px]/[17px] and
   button color-mix)
-status: To Do
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-15 04:12'
+updated_date: '2026-10-15 04:48'
 labels:
   - fe
   - 'est:XS'
