@@ -84,11 +84,16 @@ async function notifyManagers(
 
 /**
  * reunited: reunited_at, boost stopped, its matches closed and its conversations read-only. The audit entry records
- * time to reunite and to the first match (seconds since creation) for the reunite-rate metric. Returns the reports on
- * the other side of its confirmed matches.
+ * time to reunite and to the first match (seconds since creation) for the reunite-rate metric. Like close, it ends the
+ * manage link and deletes the finder email. Returns the reports on the other side of its confirmed matches.
  */
 async function markReunited(report: Report, ctx: TxCtx, via?: string): Promise<string[]> {
-	await ReportsDao.updateReport(report.id, { status: 'reunited', reunited_at: ctx.now, boosted_until: null }, ctx.tx);
+	await ReportsDao.updateReport(
+		report.id,
+		{ status: 'reunited', reunited_at: ctx.now, boosted_until: null, manage_token_hash: null },
+		ctx.tx
+	);
+	await ReportsDao.deleteContacts([report.id], ctx.tx);
 	const counterparts = await MatchingDomain.closeMatchesOf({ report_id: report.id }, ctx);
 	await ChatDomain.closeForReport({ report_id: report.id }, ctx);
 	await audit(ctx, report.id, 'mark_reunited', {
@@ -101,15 +106,21 @@ async function markReunited(report: Report, ctx: TxCtx, via?: string): Promise<s
 }
 
 /**
- * mark_reunited (C4): the report and, through each confirmed match (the pair both sides know of, C8/C9), the
- * counterpart report while it is still searching. The counterpart's managers get report_reunited.
+ * mark_reunited (C4): the report and, when it has exactly one confirmed match (the pair both sides know of, C8/C9),
+ * the counterpart report while it is still searching. With several confirmed matches (an owner may confirm more than
+ * one suggestion) it is unknown which one was the pet, so nothing on the other side is closed; those managers are only
+ * notified. The counterpart's managers get report_reunited.
  */
 async function reunite(report: Report, ctx: TxCtx): Promise<void> {
-	for (const id of await markReunited(report, ctx)) {
-		const other = await ReportsDao.lockById(id, ctx.tx);
-		if (!other) continue;
-		if (LIVE.includes(other.status) && other.moderation_state !== 'removed')
-			await markReunited(other, ctx, report.id);
+	const counterparts = [...new Set(await markReunited(report, ctx))];
+	for (const id of counterparts) {
+		if (counterparts.length === 1) {
+			// skip locked: concurrent reunites from both sides must not deadlock (40P01)
+			const other = await ReportsDao.lockById(id, ctx.tx, true);
+			if (!other) continue;
+			if (LIVE.includes(other.status) && other.moderation_state !== 'removed')
+				await markReunited(other, ctx, report.id);
+		}
 		await notifyManagers(
 			[id],
 			'report_reunited',
@@ -240,7 +251,7 @@ function closedCopy(
 }
 
 /**
- * C4 `expire`: open LOST reports idle lost_idle_days, open FOUND and SIGHTED ones (not organisation intakes) idle
+ * C4 `expire`: open or matched LOST reports idle lost_idle_days, open or matched FOUND and SIGHTED ones (not organisation intakes) idle
  * found_idle_days close as expired, like a manager's close (token cleared, finder email deleted, chats read-only).
  * Managers get report_closed; the finder email on file gets it once, after the commit (transactional, C10).
  */
@@ -257,12 +268,13 @@ async function expire(settings: LifecycleConfig, ctx: Ctx): Promise<number> {
 			await ReportsDao.deleteContacts(ids(rows), txCtx.tx);
 			for (const row of rows) {
 				await ChatDomain.closeForReport({ report_id: row.id }, txCtx);
-				await audit(txCtx, row.id, 'expire', { from: 'open', reason: 'expired' });
+				await audit(txCtx, row.id, 'expire', { from: row.from_status, reason: 'expired' });
 			}
 			await notifyManagers(ids(rows), 'report_closed', (id) => `closed:${id}:${ctx.now.getTime()}`, txCtx);
 		},
 		ctx
 	);
+	// At most once by design: the address is deleted in the committed expiry transaction, so there is nothing to retry.
 	for (const row of expired) {
 		const vars = row.email && closedCopy(row, settings, ctx.now);
 		if (!row.email || !vars) continue;
@@ -330,7 +342,7 @@ export const reminderVars: Source = async ({ report_id }, { user_id }, ctx) => {
 /** Days left until the automatic close; null when the report was extended, updated or closed since the warning. */
 export const expiringVars: Source = async ({ report_id }, { user_id }, ctx) => {
 	const report = await managed(report_id, user_id, ctx);
-	if (!report || report.status !== 'open' || report.moderation_state === 'removed') return null;
+	if (!report || !LIVE.includes(report.status) || report.moderation_state === 'removed') return null;
 	const settings = await lifecycleConfig();
 	const idleDays = report.type === 'lost' ? settings.lost_idle_days : settings.found_idle_days;
 	const closesAt = report.last_owner_update_at.getTime() + idleDays * DAY_MS;
@@ -354,7 +366,7 @@ export const closedVars: Source = async ({ report_id }, { user_id }, ctx) => {
 /** For the managers of a counterpart report; null when it is searching again (reopened). */
 export const reunitedVars: Source = async ({ report_id }, { user_id }, ctx) => {
 	const report = await managed(report_id, user_id, ctx);
-	if (!report || LIVE.includes(report.status)) return null;
+	if (!report || LIVE.includes(report.status) || report.moderation_state === 'removed') return null;
 	return { report_code: report.short_code, species: report.species };
 };
 

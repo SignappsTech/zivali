@@ -183,6 +183,16 @@ describe('expiry warning', () => {
 	});
 });
 
+describe('concurrent runs', () => {
+	it('send each reminder and warning once when two ticks overlap', async () => {
+		const reminded = await report(owner, 'lost', { created: 8, idle: 1 });
+		const warned = await report(owner, 'lost', { created: 85, idle: 85 });
+		await Promise.all([tick(), tick()]);
+		expect(await queued('report_reminder', reminded)).toHaveLength(1);
+		expect(await queued('report_expiring', warned)).toHaveLength(1);
+	});
+});
+
 describe('expiry', () => {
 	it('closes idle lost (90 days) and found or sighted (30 days) reports as expired, except organisation intakes', async () => {
 		const lost = await report(owner, 'lost', { idle: 91, manage_token_hash: new Uint8Array(randomBytes(32)) });
@@ -201,14 +211,16 @@ describe('expiry', () => {
 
 		await handlers['report.lifecycle']({}, { ...systemCtx(), prisma, send: jobs.send });
 
-		for (const r of [lost, found]) {
+		for (const r of [lost, matched, found]) {
 			const closed = await row(r);
 			expect(closed).toMatchObject({ status: 'closed', close_reason: 'expired', manage_token_hash: null });
 			expect(closed.closed_at).toEqual(expect.any(Date));
 		}
 		for (const r of [sighted29, intake]) expect((await row(r)).status).toBe('open');
-		// C4: the automatic expiry starts from open only.
-		expect((await row(matched)).status).toBe('matched');
+		// C4: a matched report expires too; the audit entry keeps the status it had.
+		expect(await prisma.audit_log.findFirst({ where: { target_id: matched.id } })).toMatchObject({
+			diff: { from: 'matched', reason: 'expired' },
+		});
 
 		expect(await recipients('report_closed', lost)).toEqual([owner.id]);
 		expect(await recipients('report_closed', found)).toEqual([anonFinder.id]);

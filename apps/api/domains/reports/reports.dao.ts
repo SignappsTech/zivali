@@ -102,8 +102,12 @@ export async function lockWithRole(short_code: string, user_id: string, tx: Pris
 }
 
 /** The report row, locked until the transaction ends (the other side of a reunite). */
-export async function lockById(id: string, tx: Prisma.TransactionClient) {
-	await tx.$queryRaw`select 1 from app.reports where id = ${id}::uuid for update`;
+/** Locks the row; with `skipLocked` a row another transaction holds comes back null instead of waiting. */
+export async function lockById(id: string, tx: Prisma.TransactionClient, skipLocked = false) {
+	const locked = skipLocked
+		? await tx.$queryRaw<unknown[]>`select 1 from app.reports where id = ${id}::uuid for update skip locked`
+		: await tx.$queryRaw<unknown[]>`select 1 from app.reports where id = ${id}::uuid for update`;
+	if (skipLocked && !locked.length) return null;
 	return tx.reports.findUnique({ where: { id } });
 }
 
@@ -160,9 +164,9 @@ export async function claimReminders(
 		returning id::text as id`;
 }
 
-/** Open reports idle since before the cut-off of their type; organisation intakes never expire (C4). */
+/** Searching (open or matched) reports idle since before the cut-off of their type; organisation intakes never expire (C4). */
 const idleSince = (lostBefore: Date, foundBefore: Date) => Prisma.sql`
-	status = 'open' and moderation_state <> 'removed' and (
+	status in ('open', 'matched') and moderation_state <> 'removed' and (
 		(type = 'lost' and last_owner_update_at <= ${lostBefore})
 		or (type <> 'lost' and source <> 'organisation' and last_owner_update_at <= ${foundBefore}))`;
 
@@ -183,6 +187,8 @@ export async function claimExpiryWarnings(input: IdleCutoffs, tx: Prisma.Transac
 
 export type ExpiredRow = {
 	id: string;
+	/** The status it had before the expiry (open or matched). */
+	from_status: string;
 	short_code: string;
 	type: REPORT_TYPE;
 	species: string;
@@ -199,14 +205,17 @@ export type ExpiredRow = {
 export async function expireIdle(input: IdleCutoffs, tx: Prisma.TransactionClient): Promise<ExpiredRow[]> {
 	const { lostBefore, foundBefore, now, take } = input;
 	return tx.$queryRaw`
-		with expired as (
-			update app.reports set status = 'closed', close_reason = 'expired', closed_at = ${now},
+		with picked as (
+			select id, status::text as from_status from app.reports where ${idleSince(lostBefore, foundBefore)}
+			limit ${take} for update skip locked),
+		expired as (
+			update app.reports r set status = 'closed', close_reason = 'expired', closed_at = ${now},
 				manage_token_hash = null, updated_at = now()
-			where id in (
-				select id from app.reports where ${idleSince(lostBefore, foundBefore)}
-				limit ${take} for update skip locked)
-			returning id, short_code, type, species, name, last_owner_update_at, closed_at, created_by)
-		select e.id::text as id, e.short_code, e.type::text as type, e.species::text as species, e.name,
+			from picked
+			where r.id = picked.id
+			returning r.id, picked.from_status, r.short_code, r.type, r.species, r.name, r.last_owner_update_at,
+				r.closed_at, r.created_by)
+		select e.id::text as id, e.from_status, e.short_code, e.type::text as type, e.species::text as species, e.name,
 			e.last_owner_update_at, e.closed_at, c.email, p.locale
 		from expired e
 		left join app.report_contacts c on c.report_id = e.id

@@ -226,6 +226,9 @@ describe('status machine', () => {
 		const gone = await transition(owner, old.short_code, { action: 'reopen' });
 		expect(code(gone)).toEqual([410, 'GONE']);
 		expect(gone.body.error.details).toEqual({ reason: 'closed' });
+		const oldReunited = await report(owner, 'lost');
+		await set(oldReunited, { status: 'reunited', reunited_at: new Date(Date.now() - 8 * DAY) });
+		expect(code(await transition(owner, oldReunited.short_code, { action: 'reopen' }))).toEqual([410, 'GONE']);
 		// The window is app_config lifecycle.reopen_days.
 		const get = configStore.get;
 		const spy = vi
@@ -325,6 +328,39 @@ describe('side effects', () => {
 		expect(diff.time_to_reunite_s).toBeLessThan(600);
 		const [counterpart] = await prisma.audit_log.findMany({ where: { target_id: found.id } });
 		expect(counterpart!.diff).toMatchObject({ from: 'open', via_report_id: lost.id, time_to_first_match_s: null });
+		// A counterpart removed by moderation is not told.
+		await set(found, { moderation_state: 'removed' });
+		expect(await vars(finder.id)).toBeNull();
+	});
+
+	it('with several confirmed matches mark_reunited closes nothing on the other side and only notifies it', async () => {
+		const lost = await report(owner, 'lost');
+		const founds = [await report(finder, 'found'), await report(stranger, 'found')];
+		for (const found of founds)
+			await MatchReviewDomain.confirmMatch({ id: (await match(lost, found)).id }, userCtx(owner.actor));
+		expect((await transition(owner, lost.short_code, { action: 'mark_reunited' })).status).toBe(200);
+		for (const found of founds) {
+			expect((await row(found)).status).toBe('open');
+			expect(await reunitedJobs(found.id)).toHaveLength(1);
+		}
+		// From the finder's side: a found report confirmed by two owners reunites neither of them.
+		const found = await report(finder, 'found');
+		const losts = [await report(owner, 'lost'), await report(coOwner, 'lost')];
+		for (const [i, lost] of losts.entries())
+			await MatchReviewDomain.confirmMatch(
+				{ id: (await match(lost, found)).id },
+				userCtx((i ? coOwner : owner).actor)
+			);
+		await transition(finder, found.short_code, { action: 'mark_reunited' });
+		for (const lost of losts) expect((await row(lost)).status).toBe('matched');
+	});
+
+	it('mark_reunited ends the manage link and deletes the finder email, like close', async () => {
+		const found = await report(anonFinder, 'found', { manage_token_hash: new Uint8Array(randomBytes(32)) });
+		await prisma.report_contacts.create({ data: { report_id: found.id, email: `${randomUUID()}@test.invalid` } });
+		expect((await transition(anonFinder, found.short_code, { action: 'mark_reunited' })).status).toBe(200);
+		expect((await row(found)).manage_token_hash).toBeNull();
+		expect(await prisma.report_contacts.findUnique({ where: { report_id: found.id } })).toBeNull();
 	});
 
 	it('close clears the manage token and deletes the finder email; the report stays readable for its manager', async () => {
