@@ -29,6 +29,12 @@ jest.mock('@/lib/supabase', () => ({
 	clearSessionStorage: () => mockSession(),
 	supabase: { auth: { signOut: jest.fn(async () => ({ error: null })) } },
 }));
+// wipe waits for a running sync (lib/offline/sync); its native imports are inert here.
+jest.mock('expo-sqlite/localStorage/install', () => ({}));
+jest.mock('expo-network', () => ({ addNetworkStateListener: jest.fn(), getNetworkStateAsync: jest.fn() }));
+jest.mock('expo-task-manager', () => ({ defineTask: jest.fn() }));
+jest.mock('expo-background-task', () => ({}));
+jest.mock('@/lib/env', () => ({ env: { EXPO_PUBLIC_API_URL: 'http://api.default' } }));
 jest.mock('@/lib/offline/geofence', () => ({ stopGeofencing: jest.fn(async () => {}) }));
 
 const C17_TABLES = [

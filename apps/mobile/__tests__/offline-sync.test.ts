@@ -13,6 +13,7 @@ import * as fx from '@zivali/api/__fixtures__/reports';
 import { createMockApi, mockError } from '@zivali/api/mock';
 import type { CachedReport, SyncReportsResponse } from '@zivali/api/sync';
 import { getDb } from '@/lib/db';
+import { wipeLocalData } from '@/lib/offline/wipe';
 import { thumbsDir } from '@/lib/db/files';
 import {
 	cacheSettings,
@@ -22,6 +23,7 @@ import {
 	setCacheArea,
 	startCacheSync,
 	SYNC_TASK,
+	syncIdle,
 	syncNow,
 	upsertReports,
 } from '@/lib/offline/sync';
@@ -53,6 +55,9 @@ jest.mock('expo-background-task', () => ({
 	BackgroundTaskResult: { Success: 1, Failed: 2 },
 	registerTaskAsync: jest.fn(async () => {}),
 }));
+jest.mock('expo-secure-store', () => ({ deleteItemAsync: jest.fn(async () => {}) }));
+jest.mock('@/lib/supabase', () => ({ clearSessionStorage: jest.fn(async () => {}), supabase: { auth: {} } }));
+jest.mock('@/lib/offline/geofence', () => ({ stopGeofencing: jest.fn(async () => {}) }));
 jest.mock('@/lib/env', () => ({ env: { EXPO_PUBLIC_API_URL: 'http://api.default' } }));
 
 const WIFI = { isConnected: true, isInternetReachable: true, type: NetworkStateType.WIFI };
@@ -203,26 +208,42 @@ describe('area sync', () => {
 		expect(synced_at).toBe(NOW + 6 * DAY);
 	});
 
-	test('has_more pages continue after the newest upsert and store server_time at the end', async () => {
+	test('has_more pages continue from server_time, stored at the end', async () => {
 		await setCacheArea('home', LJUBLJANA);
 		const client = api((query) =>
 			query.since
 				? { upserts: [report('b')], removed_ids: [], server_time: 'T2', has_more: false }
-				: {
-						upserts: [report('a', { updated_at: '2026-10-15T07:59:00Z' })],
-						removed_ids: [],
-						server_time: 'T1',
-						has_more: true,
-					}
+				: { upserts: [report('a')], removed_ids: [], server_time: 'T1', has_more: true }
 		);
 
 		await syncNow(client);
 
 		expect(client.calls.filter((call) => call.path === '/v1/sync/reports').map((call) => call.query.since)).toEqual(
-			[undefined, '2026-10-15T07:59:00Z']
+			[undefined, 'T1']
 		);
 		expect(await ids()).toEqual(['a', 'b']);
 		expect((await all<{ since: string }>('select since from cache_areas'))[0]!.since).toBe('T2');
+	});
+
+	test('rows sharing one updated_at across a page boundary all land; a has_more page of removals continues', async () => {
+		await setCacheArea('home', LJUBLJANA);
+		const same = '2026-10-15T07:59:00Z';
+		const pages: Record<string, SyncReportsResponse> = {
+			start: {
+				upserts: [report('a', { updated_at: same }), report('b', { updated_at: same })],
+				removed_ids: [],
+				server_time: 'T1',
+				has_more: true,
+			},
+			T1: { upserts: [], removed_ids: ['a'], server_time: 'T2', has_more: true },
+			T2: { upserts: [report('c', { updated_at: same })], removed_ids: [], server_time: 'T3', has_more: false },
+		};
+		const client = api((query) => pages[query.since ?? 'start']!);
+
+		await syncNow(client);
+
+		expect(await ids()).toEqual(['b', 'c']);
+		expect((await all<{ since: string }>('select since from cache_areas'))[0]!.since).toBe('T3');
 	});
 
 	test('a moved area starts a fresh snapshot; a small move inside the rounding does not', async () => {
@@ -255,6 +276,32 @@ describe('area sync', () => {
 		expect(await ids()).toEqual([]);
 	});
 
+	test('a wipe waits for a running sync, and the page it was fetching is not written', async () => {
+		await setCacheArea('home', LJUBLJANA);
+		let release = () => {};
+		const client = createMockApi({
+			'GET /v1/sync/reports': async () => {
+				await new Promise<void>((resolve) => (release = resolve));
+				return fx.syncSnapshot;
+			},
+			'GET /v1/shelters/responsible': responsibleConfirmed,
+		});
+		const sync = syncNow(client);
+		await flush();
+
+		let wiped = false;
+		const wipe = wipeLocalData({ reason: 'sign_out' }).then(() => (wiped = true));
+		await flush();
+		expect(wiped).toBe(false);
+		release();
+		await wipe;
+		await syncIdle();
+
+		expect(await sync.then(() => 'ok')).toBe('ok');
+		expect(await ids()).toEqual([]);
+		expect(await all('select * from cache_areas')).toEqual([]);
+	});
+
 	test('a failed sync keeps the cache and rejects; concurrent calls share one run', async () => {
 		await setCacheArea('home', LJUBLJANA);
 		await syncNow(api(fx.syncSnapshot));
@@ -270,16 +317,29 @@ describe('area sync', () => {
 });
 
 describe('responsible shelter', () => {
-	test('is cached per area for the offline call button and fetched once', async () => {
+	test('is cached per area for the offline call button and refreshed on every completed sync', async () => {
 		await setCacheArea('home', LJUBLJANA);
 		const client = api(fx.syncSnapshot);
 
 		await syncNow(client);
-		await syncNow(client);
-
 		expect(await getCachedShelter('home')).toEqual(responsibleConfirmed);
 		expect(await getCachedShelter('current')).toBeNull();
-		expect(client.calls.filter((call) => call.path === '/v1/shelters/responsible')).toHaveLength(1);
+		await syncNow(client);
+
+		expect(client.calls.filter((call) => call.path === '/v1/shelters/responsible')).toHaveLength(2);
+	});
+
+	test('a failed refresh keeps the old value', async () => {
+		await setCacheArea('home', LJUBLJANA);
+		await syncNow(api(fx.syncSnapshot));
+		const failing = createMockApi({
+			'GET /v1/sync/reports': fx.syncSnapshot,
+			'GET /v1/shelters/responsible': () => mockError('SERVICE_UNAVAILABLE'),
+		});
+
+		await syncNow(failing);
+
+		expect(await getCachedShelter('home')).toEqual(responsibleConfirmed);
 	});
 });
 

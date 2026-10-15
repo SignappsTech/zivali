@@ -48,3 +48,6 @@ Branch: agent/task-85.2-cache-sync
 - [x] #5 A jest test dumps the database after a sync and proves it holds only C17 public columns, with every coordinate equal to a fuzzed area from the server fixture (no exact points, chips, contacts or chat).
 - [x] #6 The responsible shelter (C18) for the home and current areas is cached with the reports so the call button works offline.
 <!-- AC:END -->
+
+## Implementation Notes
+Review fix round: (1) server_time is the opaque cursor on every page (CH-142), has_more is the only continue signal; (2) C18 shelter refreshed after every completed area sync, old value kept on failure; (3) wipeLocalData awaits syncIdle() before its transactions, a resumed page is dropped by the existing area check (tested); (4) useOfflineCache() in lib/offline/use-offline-cache.ts, not mounted (TASK-85.3 AC#5; current area: TASK-31.5 AC#5).

@@ -4,6 +4,7 @@ import { deleteDb, getDb } from '@/lib/db';
 import { draftsDir, outboxDir, thumbsDir } from '@/lib/db/files';
 import { stopGeofencing } from '@/lib/offline/geofence';
 import { manageTokenKey, pendingCount } from '@/lib/offline/outbox';
+import { syncIdle } from '@/lib/offline/sync';
 import { clearSessionStorage, supabase } from '@/lib/supabase';
 
 export type WipeReason = 'sign_out' | 'account_deleted' | 'user_request';
@@ -20,6 +21,8 @@ export async function wipeLocalData({
 	removeManageLinks?: boolean;
 }): Promise<void> {
 	await stopGeofencing();
+	// A running sync holds a transaction on the same connection; its resumed page then finds the area gone and drops.
+	await syncIdle();
 	const deleted = reason === 'account_deleted';
 	const dirs = [thumbsDir, draftsDir];
 	let tokenKeys: string[] = [];

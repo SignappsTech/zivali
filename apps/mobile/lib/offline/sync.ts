@@ -163,15 +163,15 @@ const deleteIds = (db: SQLiteDatabase, ids: string[]) =>
 const SAME_AREA = 'id = ? and lat = ? and lng = ? and radius_km = ?';
 const sameArea = (area: Area) => [area.id, area.lat, area.lng, area.radius_km];
 
-async function syncArea(api: ApiClient, db: SQLiteDatabase, area: Area, now: number): Promise<void> {
+/** Resolves true when the area's sync completed (no more pages), false when MAX_PAGES or a wipe cut it short. */
+async function syncArea(api: ApiClient, db: SQLiteDatabase, area: Area, now: number): Promise<boolean> {
 	let since = area.since;
 	for (let page = 0; page < MAX_PAGES; page++) {
 		const feed = await syncReports(api, { areas: [area], since: since ?? undefined, limit: PAGE_LIMIT });
-		const done = !feed.has_more || feed.upserts.length === 0;
-		// The last page's server_time is the next cursor; within a run, pages continue after the newest upsert.
-		since = done
-			? feed.server_time
-			: feed.upserts.reduce((max, r) => (r.updated_at > max ? r.updated_at : max), since ?? '');
+		const done = !feed.has_more;
+		// server_time is an opaque cursor (C4): every page continues from it, so rows sharing an updated_at at a
+		// page boundary are not skipped.
+		since = feed.server_time;
 		let current = true;
 		await db.withTransactionAsync(async () => {
 			current = !!(await db.getFirstAsync(`select 1 from cache_areas where ${SAME_AREA}`, ...sameArea(area)));
@@ -186,8 +186,10 @@ async function syncArea(api: ApiClient, db: SQLiteDatabase, area: Area, now: num
 				area.id
 			);
 		});
-		if (done || !current) return;
+		if (!current) return false;
+		if (done) return true;
 	}
+	return false;
 }
 
 /**
@@ -208,7 +210,7 @@ async function confirmArea(db: SQLiteDatabase, area: Area, now: number): Promise
 	);
 }
 
-/** C18 responsible shelter of the area, so the call button works offline; retried on the next sync on failure. */
+/** C18 responsible shelter of the area, so the call button works offline; refreshed after every completed area sync; a failed fetch keeps the old value. */
 async function cacheShelter(api: ApiClient, db: SQLiteDatabase, area: Area): Promise<void> {
 	try {
 		const shelter = await api.request<ResponsibleShelterResponse>('GET', '/v1/shelters/responsible', {
@@ -293,8 +295,7 @@ async function run(api: ApiClient): Promise<void> {
 	const db = await getDb();
 	const now = Date.now();
 	for (const area of await db.getAllAsync<Area>('select * from cache_areas')) {
-		await syncArea(api, db, area, now);
-		if (!area.shelter) await cacheShelter(api, db, area);
+		if (await syncArea(api, db, area, now)) await cacheShelter(api, db, area);
 	}
 	const settings = cacheSettings();
 	if (settings.mobilePhotos || (await isUnmetered())) await downloadThumbs(db);
@@ -313,6 +314,9 @@ export function syncNow(api: ApiClient = defaultClient()): Promise<void> {
 	});
 	return running;
 }
+
+/** Resolves when no sync is running (success or not); a wipe waits for it so their transactions do not overlap. */
+export const syncIdle = (): Promise<void> | undefined => running?.catch(() => {});
 
 /** Last refresh of any area ("last updated"); null before the first sync. */
 export async function lastSyncAt(): Promise<number | null> {
