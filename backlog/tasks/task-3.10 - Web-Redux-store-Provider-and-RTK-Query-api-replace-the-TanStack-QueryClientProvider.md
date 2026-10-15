@@ -3,10 +3,11 @@ id: TASK-3.10
 title: >-
   Web: Redux store Provider and RTK Query api replace the TanStack
   QueryClientProvider
-status: To Do
+status: In Progress
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-15 01:35'
+updated_date: '2026-10-15 02:06'
 labels:
   - fe
   - 'est:S'
