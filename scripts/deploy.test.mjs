@@ -2,8 +2,8 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
+	credential,
 	exposureRootOk,
-	hostnames,
 	imageNames,
 	missingVars,
 	REQUIRED,
@@ -15,25 +15,30 @@ import {
 const all = Object.fromEntries(
 	Object.values(REQUIRED)
 		.flat()
-		.map((name) => [name, `value-of-${name}`])
+		.map((name) => [name.split('|')[0], `value-of-${name}`])
 );
 
 test('missingVars groups the missing names and treats empty values as missing', () => {
 	assert.deepEqual(missingVars(all), {});
 	const { HETZNER_SSH_KEY, R2_ACCOUNT_ID, ...rest } = all;
 	assert.ok(HETZNER_SSH_KEY && R2_ACCOUNT_ID);
-	assert.deepEqual(missingVars({ ...rest, DOMAIN: '' }), {
+	assert.deepEqual(missingVars({ ...rest, WEB_HOST: '' }), {
 		Hetzner: ['HETZNER_SSH_KEY'],
-		DNS: ['DOMAIN'],
+		Hostnames: ['WEB_HOST'],
 		R2: ['R2_ACCOUNT_ID'],
 	});
 	// Names only: nothing in the result is a value.
 	assert.ok(!JSON.stringify(missingVars({ HETZNER_HOST: 'secret-host' })).includes('secret-host'));
 });
 
-test('hostnames follow ADR-016 (staging. and api.staging., apex and api.)', () => {
-	assert.deepEqual(hostnames('staging', 'najdimo.si'), { web: 'staging.najdimo.si', api: 'api.staging.najdimo.si' });
-	assert.deepEqual(hostnames('production', 'najdimo.si'), { web: 'najdimo.si', api: 'api.najdimo.si' });
+test('certbot token: CERTBOT_CLOUDFLARE_TOKEN, else CLOUDFLARE_API_TOKEN; NEEDS-INPUT only without both', () => {
+	const { CERTBOT_CLOUDFLARE_TOKEN, ...rest } = all;
+	assert.ok(CERTBOT_CLOUDFLARE_TOKEN);
+	assert.deepEqual(missingVars(rest), { TLS: ['CERTBOT_CLOUDFLARE_TOKEN or CLOUDFLARE_API_TOKEN'] });
+	assert.deepEqual(missingVars({ ...rest, CLOUDFLARE_API_TOKEN: 'b' }), {});
+	const name = 'CERTBOT_CLOUDFLARE_TOKEN|CLOUDFLARE_API_TOKEN';
+	assert.equal(credential({ CERTBOT_CLOUDFLARE_TOKEN: 'a', CLOUDFLARE_API_TOKEN: 'b' }, name), 'a');
+	assert.equal(credential({ CERTBOT_CLOUDFLARE_TOKEN: '', CLOUDFLARE_API_TOKEN: 'b' }, name), 'b');
 });
 
 test('imageNames: one api image, a web image per environment (NEXT_PUBLIC_* are build-time)', () => {
@@ -43,20 +48,25 @@ test('imageNames: one api image, a web image per environment (NEXT_PUBLIC_* are 
 	});
 });
 
-test('webBuildEnv derives the public URLs and never passes a live Stripe key', () => {
-	const env = { SUPABASE_URL: 'https://x.supabase.co', SUPABASE_PUBLISHABLE_KEY: 'sb_publishable_x', DOMAIN: 'd.si' };
-	assert.deepEqual(webBuildEnv('staging', { ...env, STRIPE_PUBLISHABLE_KEY: 'pk_test_1' }), {
+test('webBuildEnv derives the public URLs from the hostnames and never passes a live Stripe key', () => {
+	const env = {
+		SUPABASE_URL: 'https://x.supabase.co',
+		SUPABASE_PUBLISHABLE_KEY: 'sb_publishable_x',
+		WEB_HOST: 'staging.najdimo.si',
+		API_HOST: 'api-staging.najdimo.si',
+	};
+	assert.deepEqual(webBuildEnv({ ...env, STRIPE_PUBLISHABLE_KEY: 'pk_test_1' }), {
 		NEXT_PUBLIC_SUPABASE_URL: 'https://x.supabase.co',
 		NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: 'sb_publishable_x',
-		NEXT_PUBLIC_API_URL: 'https://api.staging.d.si',
-		NEXT_PUBLIC_APP_URL: 'https://staging.d.si',
+		NEXT_PUBLIC_API_URL: 'https://api-staging.najdimo.si',
+		NEXT_PUBLIC_APP_URL: 'https://staging.najdimo.si',
 		NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: 'pk_test_1',
 	});
 	assert.equal(
-		webBuildEnv('production', { ...env, STRIPE_PUBLISHABLE_KEY: 'pk_live_1' }).NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY,
+		webBuildEnv({ ...env, STRIPE_PUBLISHABLE_KEY: 'pk_live_1' }).NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY,
 		undefined
 	);
-	assert.deepEqual(webBuildEnv('staging', {}), {});
+	assert.deepEqual(webBuildEnv({}), {});
 });
 
 test('scratchUrl keeps the local server and ?schema=app, and refuses a remote database', () => {

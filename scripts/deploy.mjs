@@ -2,9 +2,11 @@
 //   node scripts/deploy.mjs <staging|production> [--dry-run] [--skip-images] [--strict] [--yes]
 // The GitHub Actions workflow (.github/workflows/deploy.yml) runs this same script, so both paths take the same steps:
 //   1. checks: credentials (names only), the three R2 buckets (HeadBucket on the EU endpoint), the Supabase settings
-//      of ADR-021/ADR-023 (Management API, read-only GETs) and the VPS env files (read-only SSH);
+//      of ADR-021/ADR-023 (Management API, read-only GETs) and the VPS files and TLS certificate (`remote.sh check`
+//      over SSH, read-only);
 //   2. build the linux/arm64 api (also the worker) and web images and push them to GHCR;
-//   3. over SSH: copy deploy/ to /opt/zivali, pull, one-off `prisma migrate deploy`, restart (deploy/remote.sh);
+//   3. over SSH: copy deploy/ to /opt/zivali, write cloudflare.ini (certbot's token, mode 600), pull, one-off
+//      `prisma migrate deploy`, restart, nginx and certbot up, nginx reload (deploy/remote.sh);
 //   4. smoke checks: /ping, /v1/health/ready, web home and the ADR-021 exposure checks on Supabase.
 // Anything missing prints NEEDS-INPUT with variable names (never values) and runs the dry run instead: image builds,
 // migrations from zero on a scratch database on the local Supabase server + `prisma migrate diff`, the ADR-021 security
@@ -31,7 +33,10 @@ export const PLATFORM = 'linux/arm64';
 export const REQUIRED = {
 	Hetzner: ['HETZNER_HOST', 'HETZNER_SSH_KEY'],
 	GitHub: ['GHCR_TOKEN'],
-	DNS: ['DOMAIN'],
+	// This environment's public hostnames (staging: staging.najdimo.si, api-staging.najdimo.si).
+	Hostnames: ['WEB_HOST', 'API_HOST'],
+	// certbot's DNS-01 token (Zone DNS Edit on najdimo.si only); `A|B` = A, else B. Written to /opt/zivali/cloudflare.ini.
+	TLS: ['CERTBOT_CLOUDFLARE_TOKEN|CLOUDFLARE_API_TOKEN'],
 	R2: ['R2_ACCOUNT_ID', 'R2_ACCESS_KEY_ID', 'R2_SECRET_ACCESS_KEY'],
 	Supabase: ['SUPABASE_URL', 'SUPABASE_PUBLISHABLE_KEY', 'SUPABASE_ACCESS_TOKEN', 'SUPABASE_PROJECT_REF'],
 };
@@ -49,21 +54,31 @@ const WEB_ARGS_NEEDED = [
 ];
 const PROBE_TABLES = ['profiles', 'audit_log', 'app_config'];
 
-/** Missing credentials by group; empty values count as missing. */
+/** Missing credentials by group; empty values count as missing; `A|B` is satisfied by either and shown as "A or B". */
 export function missingVars(env) {
 	const out = {};
 	for (const [group, names] of Object.entries(REQUIRED)) {
-		const missing = names.filter((name) => !env[name]);
-		if (missing.length) out[group] = missing;
+		const missing = names.filter((name) => !name.split('|').some((alt) => env[alt]));
+		if (missing.length) out[group] = missing.map((name) => name.replace('|', ' or '));
 	}
 	return out;
 }
 
-export function hostnames(target, domain) {
-	return target === 'production'
-		? { web: domain, api: `api.${domain}` }
-		: { web: `staging.${domain}`, api: `api.staging.${domain}` };
-}
+/** The value of a credential with alternatives (`A|B`). */
+export const credential = (env, name) =>
+	name
+		.split('|')
+		.map((alt) => env[alt])
+		.find(Boolean);
+const ALL_CREDENTIALS = Object.values(REQUIRED).flatMap((names) => names.flatMap((name) => name.split('|')));
+
+/** Server-side items only an SSH check can see (`remote.sh check`); named up front when SSH is not possible yet. */
+export const VPS_ITEMS = (target) => [
+	'/opt/zivali/edge.env',
+	`/opt/zivali/${target}/.env`,
+	`/opt/zivali/${target}/web.env`,
+	'TLS certificate (first issuance)',
+];
 
 export function imageNames(owner, target, tag) {
 	const base = `ghcr.io/${owner.toLowerCase()}`;
@@ -71,14 +86,13 @@ export function imageNames(owner, target, tag) {
 }
 
 /** Build args of the web image: NEXT_PUBLIC_* are inlined at build time (apps/web/Dockerfile). Public values only. */
-export function webBuildEnv(target, env) {
-	const h = env.DOMAIN ? hostnames(target, env.DOMAIN) : undefined;
+export function webBuildEnv(env) {
 	const stripe = env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || env.STRIPE_PUBLISHABLE_KEY;
 	const values = {
 		NEXT_PUBLIC_SUPABASE_URL: env.SUPABASE_URL,
 		NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: env.SUPABASE_PUBLISHABLE_KEY,
-		NEXT_PUBLIC_API_URL: h && `https://${h.api}`,
-		NEXT_PUBLIC_APP_URL: h && `https://${h.web}`,
+		NEXT_PUBLIC_API_URL: env.API_HOST && `https://${env.API_HOST}`,
+		NEXT_PUBLIC_APP_URL: env.WEB_HOST && `https://${env.WEB_HOST}`,
 		NEXT_PUBLIC_ANALYTICS_PROVIDER: env.NEXT_PUBLIC_ANALYTICS_PROVIDER,
 		NEXT_PUBLIC_GA_MEASUREMENT_ID: env.NEXT_PUBLIC_GA_MEASUREMENT_ID,
 		NEXT_PUBLIC_TURNSTILE_SITE_KEY: env.NEXT_PUBLIC_TURNSTILE_SITE_KEY,
@@ -178,8 +192,9 @@ function sshClient(env) {
 	const host = env.HETZNER_HOST.includes('@') ? env.HETZNER_HOST : `root@${env.HETZNER_HOST}`;
 	return {
 		run: (command, input) => run('ssh', [...opts, host, command], { input }),
-		check: (command) => spawnSync('ssh', [...opts, host, command], { stdio: 'ignore' }).status === 0,
-		copy: (files, dest) => run('scp', [...opts, ...files, `${host}:${dest}`]),
+		capture: (command, input) =>
+			spawnSync('ssh', [...opts, host, command], { input, encoding: 'utf8', stdio: ['pipe', 'pipe', 'inherit'] }),
+		copy: (files, dest) => run('scp', [...opts, '-r', ...files, `${host}:${dest}`]),
 	};
 }
 
@@ -269,15 +284,14 @@ async function checkSupabase(env) {
 	return supabaseFindings(await postgrest.json(), await realtime.json());
 }
 
+/** `remote.sh check` over SSH (the script goes on stdin, so it works before the first deploy); read-only. */
 function checkVps(env, target) {
-	const ok = sshClient(env).check(
-		`test -f /opt/zivali/${target}/.env && test -f /opt/zivali/${target}/web.env && docker compose version`
-	);
-	return ok
-		? []
-		: [
-				`VPS: SSH, Docker Compose, /opt/zivali/${target}/.env and /opt/zivali/${target}/web.env (deploy/README.md, VPS)`,
-			];
+	const script = fs.readFileSync(path.join(root, 'deploy/remote.sh'), 'utf8');
+	const res = sshClient(env).capture(`sh -s -- check ${target}`, script);
+	if (res.status === 0) return [];
+	const lines = (res.stdout ?? '').split('\n').filter((line) => line.startsWith('NEEDS-INPUT: '));
+	if (lines.length) return lines.map((line) => `VPS: ${line.slice('NEEDS-INPUT: '.length)}`);
+	return [`VPS: SSH to HETZNER_HOST failed (exit ${res.status}; deploy/README.md, VPS)`];
 }
 
 // --- steps ---
@@ -299,7 +313,7 @@ function localEnv(dropped, dbUrl) {
 	const apiEnvFile = path.join(apiDir, '.env.local');
 	const local = fs.existsSync(apiEnvFile) ? parseEnv(fs.readFileSync(apiEnvFile, 'utf8')) : {};
 	const env = { ...process.env };
-	for (const name of [...dropped, ...Object.values(REQUIRED).flat()]) delete env[name];
+	for (const name of [...dropped, ...ALL_CREDENTIALS]) delete env[name];
 	// The tests' global setup runs `prisma` from PATH (spelled Path on Windows).
 	const pathKey = Object.keys(env).find((key) => key.toUpperCase() === 'PATH') ?? 'PATH';
 	const bin = path.join(root, 'node_modules/.bin');
@@ -353,7 +367,7 @@ async function dryRun(target, { skipImages, dropped }) {
 			steps.push({ name, result: `FAILED: ${err.message}`, s: (Date.now() - started) / 1000 });
 		}
 	};
-	const webEnv = webBuildEnv(target, process.env);
+	const webEnv = webBuildEnv(process.env);
 	if (skipImages) {
 		steps.push({ name: `images (${PLATFORM})`, result: 'skipped (--skip-images)', s: 0 });
 	} else {
@@ -413,8 +427,8 @@ function releaseTag(target) {
 	return tag;
 }
 
-async function smoke(target, env, { attempts = 12, delayMs = 5000 } = {}) {
-	const h = hostnames(target, env.DOMAIN);
+async function smoke(env, { attempts = 12, delayMs = 5000 } = {}) {
+	const h = { web: env.WEB_HOST, api: env.API_HOST };
 	const retry = async (name, fn) => {
 		for (let i = 1; ; i++) {
 			const ok = await fn().catch(() => false);
@@ -457,17 +471,22 @@ async function deploy(target, env) {
 	console.log(`\nDeploying ${target} ${tag}: ${images.api}, ${images.web}`);
 	run('docker', ['login', 'ghcr.io', '-u', user, '--password-stdin'], { input: env.GHCR_TOKEN });
 	buildImage('apps/api/Dockerfile', images.api, { push: true });
-	buildImage('apps/web/Dockerfile', images.web, { push: true, buildEnv: webBuildEnv(target, env) });
+	buildImage('apps/web/Dockerfile', images.web, { push: true, buildEnv: webBuildEnv(env) });
 	const ssh = sshClient(env);
 	ssh.run('mkdir -p /opt/zivali');
-	ssh.copy(['deploy/docker-compose.yml', 'deploy/Caddyfile', 'deploy/remote.sh'], '/opt/zivali/');
+	ssh.copy(['deploy/docker-compose.yml', 'deploy/remote.sh', 'deploy/nginx'], '/opt/zivali/');
+	// certbot's renewals read the token from here; it arrives on stdin and the file is private to the deploy user.
+	ssh.run(
+		'umask 077 && cat > /opt/zivali/cloudflare.ini && chmod 600 /opt/zivali/cloudflare.ini',
+		`dns_cloudflare_api_token = ${credential(env, 'CERTBOT_CLOUDFLARE_TOKEN|CLOUDFLARE_API_TOKEN')}\n`
+	);
 	// The registry login lives only for this pull; the token arrives on stdin.
 	ssh.run(
-		`docker login ghcr.io -u ${user} --password-stdin >/dev/null && sh /opt/zivali/remote.sh ${target} ${images.api} ${images.web} ${tag}; rc=$?; docker logout ghcr.io >/dev/null; exit $rc`,
+		`docker login ghcr.io -u ${user} --password-stdin >/dev/null && sh /opt/zivali/remote.sh deploy ${target} ${images.api} ${images.web} ${tag}; rc=$?; docker logout ghcr.io >/dev/null; exit $rc`,
 		env.GHCR_TOKEN
 	);
 	console.log('\nSmoke checks');
-	await smoke(target, env);
+	await smoke(env);
 	console.log(`\n${target} ${tag} is live. Rollback: deploy/README.md, Rollback.`);
 }
 
@@ -489,6 +508,8 @@ async function main(argv) {
 		);
 		for (const [group, names] of Object.entries(missing)) console.log(`  ${group}: ${names.join(', ')}`);
 	}
+	if (missing.Hetzner)
+		console.log(`  VPS (checked over SSH once HETZNER_* are set): ${VPS_ITEMS(target).join(', ')}`);
 	const closeSsh = missing.Hetzner ? async () => {} : await openSsh(env);
 	let blocked = Object.keys(missing).length > 0;
 	try {

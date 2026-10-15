@@ -1,0 +1,115 @@
+# One nginx per VPS (compose project zivali-edge, ADR-016) for every environment. The nginx image renders this file
+# with envsubst into /etc/nginx/conf.d/zivali.conf; ${...} values come from /opt/zivali/edge.env (hostnames,
+# CERT_NAME). TLS from certbot (DNS-01 through Cloudflare, deploy/README.md), HTTP -> HTTPS, TLS 1.2/1.3, security
+# headers, gzip, the real client IP from Cloudflare, and a proxy to <env>-web:3000 and <env>-api:4000 on the shared
+# network zivali-edge. Upstreams resolve per request (Docker DNS), so an environment that is not deployed yet answers
+# 502 instead of stopping nginx. No access log: it would hold client IPs and full URLs (docs/05 §Privacy).
+
+server_tokens off;
+access_log off;
+resolver 127.0.0.11 valid=10s ipv6=off;
+
+# Real client IP: only from Cloudflare's edge ranges (cloudflare-ips.conf, refresh: deploy/README.md).
+include /opt/zivali-nginx/cloudflare-ips.conf;
+real_ip_header CF-Connecting-IP;
+
+gzip on;
+gzip_vary on;
+gzip_proxied any;
+gzip_min_length 1024;
+gzip_types text/plain text/css text/javascript application/javascript application/json application/manifest+json image/svg+xml;
+
+ssl_certificate /etc/letsencrypt/live/${CERT_NAME}/fullchain.pem;
+ssl_certificate_key /etc/letsencrypt/live/${CERT_NAME}/privkey.pem;
+ssl_protocols TLSv1.2 TLSv1.3;
+ssl_prefer_server_ciphers off;
+ssl_session_cache shared:SSL:10m;
+ssl_session_timeout 1d;
+ssl_session_tickets off;
+
+# Baseline security headers, sent only when the app sent none: helmet (API) and next.config.ts/proxy.ts (web, with
+# the CSP) stay authoritative. An empty value means add_header sends nothing.
+map $upstream_http_strict_transport_security $zivali_hsts {
+	'' 'max-age=63072000; includeSubDomains';
+	default '';
+}
+map $upstream_http_x_content_type_options $zivali_nosniff {
+	'' 'nosniff';
+	default '';
+}
+map $upstream_http_referrer_policy $zivali_referrer {
+	'' 'strict-origin-when-cross-origin';
+	default '';
+}
+map $upstream_http_x_frame_options $zivali_frame {
+	'' 'DENY';
+	default '';
+}
+
+# Plain HTTP only redirects.
+server {
+	listen 80 default_server;
+	return 301 https://$host$request_uri;
+}
+
+# Unknown hostnames get no certificate and no content.
+server {
+	listen 443 ssl default_server;
+	ssl_reject_handshake on;
+}
+
+# Staging (deployed from main)
+server {
+	listen 443 ssl;
+	http2 on;
+	server_name ${STAGING_WEB_HOST};
+	location / {
+		set $zivali_upstream http://staging-web:3000;
+		proxy_pass $zivali_upstream;
+		include /opt/zivali-nginx/proxy.conf;
+	}
+}
+
+server {
+	listen 443 ssl;
+	http2 on;
+	server_name ${STAGING_API_HOST};
+	# JSON bodies only (photos go straight to R2); above the API's own 1 MB limit so it answers with its C1 error.
+	client_max_body_size 2m;
+	location / {
+		set $zivali_upstream http://staging-api:4000;
+		proxy_pass $zivali_upstream;
+		include /opt/zivali-nginx/proxy.conf;
+	}
+}
+
+# Production (deployed from version tags after approval)
+server {
+	listen 443 ssl;
+	http2 on;
+	server_name ${PRODUCTION_WEB_HOST};
+	location / {
+		set $zivali_upstream http://production-web:3000;
+		proxy_pass $zivali_upstream;
+		include /opt/zivali-nginx/proxy.conf;
+	}
+}
+
+server {
+	listen 443 ssl;
+	http2 on;
+	server_name www.${PRODUCTION_WEB_HOST};
+	return 301 https://${PRODUCTION_WEB_HOST}$request_uri;
+}
+
+server {
+	listen 443 ssl;
+	http2 on;
+	server_name ${PRODUCTION_API_HOST};
+	client_max_body_size 2m;
+	location / {
+		set $zivali_upstream http://production-api:4000;
+		proxy_pass $zivali_upstream;
+		include /opt/zivali-nginx/proxy.conf;
+	}
+}

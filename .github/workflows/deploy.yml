@@ -34,7 +34,7 @@ jobs:
     timeout-minutes: 40
     environment:
       name: staging
-      url: ${{ vars.STAGING_URL }}
+      url: https://${{ vars.WEB_HOST }}
     permissions:
       contents: read
       packages: write
@@ -63,7 +63,10 @@ jobs:
           HETZNER_KNOWN_HOSTS: ${{ secrets.HETZNER_KNOWN_HOSTS }}
           HETZNER_API_TOKEN: ${{ secrets.HETZNER_API_TOKEN }}
           HETZNER_FIREWALL_ID: ${{ vars.HETZNER_FIREWALL_ID }}
-          DOMAIN: ${{ vars.DOMAIN }}
+          WEB_HOST: ${{ vars.WEB_HOST }}
+          API_HOST: ${{ vars.API_HOST }}
+          CERTBOT_CLOUDFLARE_TOKEN: ${{ secrets.CERTBOT_CLOUDFLARE_TOKEN }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
           R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
           R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
@@ -83,7 +86,7 @@ jobs:
     # Required reviewers on this environment are the manual approval (README "Environments and credentials").
     environment:
       name: production
-      url: ${{ vars.PRODUCTION_URL }}
+      url: https://${{ vars.WEB_HOST }}
     permissions:
       contents: read
       packages: write
@@ -111,7 +114,10 @@ jobs:
           HETZNER_KNOWN_HOSTS: ${{ secrets.HETZNER_KNOWN_HOSTS }}
           HETZNER_API_TOKEN: ${{ secrets.HETZNER_API_TOKEN }}
           HETZNER_FIREWALL_ID: ${{ vars.HETZNER_FIREWALL_ID }}
-          DOMAIN: ${{ vars.DOMAIN }}
+          WEB_HOST: ${{ vars.WEB_HOST }}
+          API_HOST: ${{ vars.API_HOST }}
+          CERTBOT_CLOUDFLARE_TOKEN: ${{ secrets.CERTBOT_CLOUDFLARE_TOKEN }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
           R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
           R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
