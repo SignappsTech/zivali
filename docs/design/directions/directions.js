@@ -77,11 +77,11 @@
       el.setAttribute('data-ready', '1');
       if (g === gen) { active--; pump(style); }
     };
-    map.on('load', function () { paintMap(map, el); map.once('idle', function () { done(true); }); });
+    map.on('load', function () { if (!el.isConnected) { done(false); return; } paintMap(map, el); map.once('idle', function () { done(true); }); });
     setTimeout(function () { done(false); }, 20000);
   }
   function initMaps(root) {
-    var els = root.querySelectorAll('.map-canvas');
+    var els = Array.prototype.filter.call(root.querySelectorAll('.map-canvas'), function (e) { return e.isConnected; });
     if (!els.length || !window.maplibregl) return;
     if (!stylePromise) stylePromise = fetch(STYLE_URL).then(function (r) { return r.json(); });
     stylePromise.then(function (style) {
@@ -105,6 +105,12 @@
     body.querySelectorAll('[id]').forEach(function (n) { n.id = n.id + '-' + theme; });
     body.querySelectorAll('[for]').forEach(function (n) { n.setAttribute('for', n.getAttribute('for') + '-' + theme); });
     body.querySelectorAll('[aria-describedby]').forEach(function (n) { n.setAttribute('aria-describedby', n.getAttribute('aria-describedby') + '-' + theme); });
+    ['aria-controls', 'aria-activedescendant', 'aria-labelledby'].forEach(function (attr) {
+      body.querySelectorAll('[' + attr + ']').forEach(function (n) {
+        n.setAttribute(attr, n.getAttribute(attr).split(/\s+/).map(function (v) { return v + '-' + theme; }).join(' '));
+      });
+    });
+    body.querySelectorAll('a[href^="#"]').forEach(function (n) { if (n.getAttribute('href').length > 1) n.setAttribute('href', n.getAttribute('href') + '-' + theme); });
     w.appendChild(body);
     return w;
   }

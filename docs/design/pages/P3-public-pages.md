@@ -29,7 +29,7 @@ All use the Content variant of the web shell (P1) without a sidebar. Public page
 ## T1 Home: section order
 
 1. **Hero.** Two columns: left display headline (max 2 lines), one supporting sentence (max 20 words), primary "Report lost", text button "Report found" with arrow; right large photo (radius 36, placeholder from system imagery rules). No eyebrow, no logo strip.
-2. **Near you.** H2, three pet tiles (4:3 photo, name, status word, distance or area) from the live read model, text button "Open the map". Shows the empty-state pattern when no reports exist.
+2. **Near you.** H2, three pet tiles from `md` (4:3 photo, name, status word, distance or area); below `md` pet rows (system 10.6) instead of tiles from the live read model, text button "Open the map". Shows the empty-state pattern when no reports exist.
 3. **How it works.** H2 and three stacked rows (large number, h3, one sentence) on the left with one supporting photo on the right. Not three equal cards.
 4. **Safe by design.** One column: h2, a short paragraph, three plain list items (hidden phone numbers, approximate locations, in-app chat), text button "Read the safety tips".
 5. **For shelters and vets.** One block: h2, a sentence, text button "For shelters".
@@ -39,7 +39,7 @@ Section gap 96 px, each section a different layout family (split, list, stack). 
 
 ## T2 Article
 
-Breadcrumb text link back, h1, lede (20/32), body at 640 px reading width, h2 sections, optional inline image (radius 24), quote blocks only if content provides one, a closing action row (primary or text). Optional sticky "On this page" list from `xl` for pages longer than five sections.
+Breadcrumb text link back, h1, lede (20/32), body at 640 px reading width, h2 sections, optional inline image (radius 24), quote blocks only if content provides one, a closing action row (primary or text). Optional "On this page" list for pages longer than five sections: sticky from `lg` (240 + 48 gap + 640 = 928 fits 1024 minus 2 x 48); below `lg` one collapsed disclosure row above the body.
 
 ## T3 FAQ
 
@@ -47,7 +47,7 @@ h1 and lede, then grouped questions. Each question is a full-width button row (`
 
 ## T4 Legal
 
-h1, "last updated" line, and a `note` that reads "requires client and legal review" while the page is a draft. Body in the Article style with numbered h2 sections. From `xl` a sticky "On this page" list on the left. Print stylesheet: single column, no header or footer chrome.
+h1, "last updated" line, and a `note` that reads "requires client and legal review" while the page is a draft. Body in the Article style with numbered h2 sections. From `lg` a sticky "On this page" list on the left (240 + 48 gap + 640 = 928 = 1024 - 2 x 48); below `lg` one collapsed disclosure row above the body, so the 18 legal links do not push the text down. Print stylesheet: single column, no header or footer chrome.
 
 ## T5 Shelter directory (`/zavetisca`)
 
@@ -60,7 +60,10 @@ Section order (640 px column, the list may use the 1120 px content width from `l
 1. h1 and a one-sentence lede (content slice).
 2. **Municipality search**: one line field with a leading `map-pin-area` icon and the label above ("Vaša občina"), a combobox over the 212 municipalities. Matching ignores diacritics and case ("skofja" finds "Škofja Loka"); suggestions open as a listbox (system 10.3 Select on web), at most 8. No search button: choosing a municipality shows the answer.
 3. **Answer** (appears under the field, announced politely), on `card` (radius 24, padding 24, no border): meta line "Za občino {municipality} je pristojno", h2 shelter name (link to T6), phone in h3 size with `tabular-nums` (grouped "01 234 56 78"), the page's one primary `lg` "Pokliči" (`phone` icon, `tel:` link), and a text button "Delovni čas in naslov" to T6. If a municipality has two shelters (for example dogs and cats), show two answers stacked, each with its own call button as `secondary`, and no primary.
-4. **Unknown or unconfirmed municipality** (R-044.5): instead of the answer a `note` with an `info` icon: we do not have a confirmed shelter for this municipality yet, call the municipality, and a text link to the full list. Never a guessed name or number.
+4. **Unknown or unconfirmed municipality** (R-044.5). Never a guessed name or number.
+   - *Unknown* (no likely shelter): a `note` with an `info` icon: no confirmed shelter for this municipality yet, call the municipality, and a text link to the full list. Plus the 2 nearest shelters as plain rows (as in item 5).
+   - *Unconfirmed* (a likely shelter exists, not confirmed by the municipality): a card as in item 3 headed "Morda pristojno zavetišče" with the status "Ni potrjeno" (icon plus word, never colour only), the shelter name linking to T6. No "Pokliči" primary: the `tel:` call is a `secondary` button whose label says it is unconfirmed, plus the link to the shelter page. If no likely shelter can be named, show the list of the 2 nearest shelters instead.
+   - The map block on T6 (`.sh-map`) gets an inset 1 px `map-road-casing` hairline so its edge reads in light mode.
 5. **All shelters** (h2 with the count): plain rows, no cards, 20 px apart, alphabetical: shelter name (h3, link to T6), meta line with the area ("Ljubljana z okolico · 24 občin"), phone right-aligned on `lg` (`tabular-nums`, a `tel:` link). From `lg` two columns of rows.
 6. **Legal note slot**: a `note` with the reporting duty, rendered only when the `content.legal_timings` flag is on. Absent otherwise (no empty space).
 7. Quiet line: "Podatki preverjeni {date}", source, and a text link to report an error (contact).
@@ -90,7 +93,7 @@ States: loading skeleton (h1, phone, hours lines, map block), unknown slug (the 
 
 Responsive (T5 and T6): single column on mobile with 20 px gutters; the call button is full width `lg` in the page flow, never floating. Phone numbers and hours never wrap mid-number. 320 px and 400 % zoom reflow without horizontal scroll.
 
-Accessibility (T5 and T6): the search is a labelled combobox with `aria-expanded`, `aria-activedescendant` and a polite live region for the answer; call buttons have names that include the shelter ("Pokliči {shelter name}"); phone numbers are real `tel:` links; hours are a description list; the map is decorative (`alt=""`) because the address is text.
+Accessibility (T5 and T6): the search is a labelled combobox with `aria-expanded`, `aria-activedescendant` and a polite live region for the answer; call buttons have names that include the shelter ("Pokliči {shelter name}"); phone numbers are `tel:` links in the list rows; in the T5 answer card and on T6 the large number is selectable text beside one `tel:` "Pokliči" button (two adjacent links to one target are avoided), and the button's `aria-label` carries the shelter name; the answer card's 3-size limit counts text sizes only (meta 14, h2 name, phone h3), not the button label; hours are a description list; the map is decorative (`alt=""`) because the address is text.
 
 ## States
 

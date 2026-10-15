@@ -2,7 +2,7 @@
 doc: design-system
 title: Design system (slice)
 source: 03§Brand and visual language
-version: 0.12
+version: 0.13
 status: Draft, direction A (Lagoon) chosen by the client
 date: 2026-10-15
 owner: Design Lead
@@ -38,7 +38,7 @@ The product is a lost-pet app for Slovenia (web and mobile). The look is **calm 
 
 Use this for every mockup and visual review.
 
-- [ ] Exactly one primary button in the view.
+- [ ] At most one primary button in the view (none when the view has no primary action, for example an unconfirmed answer or a shelter without a phone).
 - [ ] No borders on cards, rows or fields (fields have an underline). No card inside a card.
 - [ ] Shadows only on floating controls over a map, sheets, dialogs and popovers.
 - [ ] Status is an icon plus a coloured word. A tonal pill appears at most once per page.
@@ -517,7 +517,7 @@ Web = shadcn/ui, mobile = React Native Reusables (NativeWind). Same names, same 
 | Pet row (mobile list) | Photo 64x64 radius 20, gap 16, title (h3, 20/24), meta line (status word + time, 14), distance right (14 muted). No dividers, no border, no per-row card, 20 px between rows. Pressed: `accent` background. Skeleton: same shape. |
 | Pet tile (web) | Photo 4:3 radius 24, title (h3) 16 px under it, meta line (status word + "time, distance"). No container. Hover: the title underlines (2 px, offset 4); nothing changes on the photo. Pressed: `scale(0.98)`. Focus: the 3 px `ring` wraps photo and text with a **6 px offset**, so it clears the photo's corners. Skeleton: same shape. |
 | Card | `card` surface, radius 24, padding 24, no border, no shadow. Never nested in another card. Used for dialogs, forms and grouped content on web. |
-| Note | `muted` surface, radius 20, icon 22 + text 15/22. One per view at most (for example the scam warning). |
+| Note | `muted` surface, radius 20, icon 22 + text 15/22. One per view at most (for example the scam warning), except the flag-gated legal note slot (P3 T5, T6), which sits in its own region and may share a view with one other note (unconfirmed, error or stale). |
 | Empty state | Spot illustration (flat geometry), h3, one sentence, one `secondary` button. |
 
 ## 10.7 Navigation and layout shells
@@ -528,7 +528,7 @@ Web = shadcn/ui, mobile = React Native Reusables (NativeWind). Same names, same 
 | Floating area control | `card` pill, 48 high, `shadow-md`: map-pin, "Ljubljana, 10 km", and a 32 px `secondary` circle with the filters icon. It is the only control on the map; it opens the filter sheet (status pills, species, radius). No locate button. |
 | Bottom sheet | `card`, top radius 28, grabber 40x5, `shadow-lg`, 20 px side padding. Snap points: peek about 40 % of the screen, full 92 %. Scrim behind modals. |
 | Flow top bar | 56 px: back (icon button), **one bar per step** (the count comes from the flow's page slice, for example 7 for the lost flow; 4 px high, gap 6, equal widths, `primary` for done steps and the current one, `muted` for the rest), close. No title. The bars are one `role="progressbar"` with `aria-valuenow` and `aria-valuemax` and the name "Korak {current} od {total}" from the content slice. Flows keep to 8 steps or fewer so the bars stay readable at 320 px. |
-| Web header | 88 px, no border, on `background`. Logo left, at most 4 text links (16 semibold; the current page is `foreground` **and underlined**, others `muted-foreground`, so it is not colour only), right: language switch, ghost "Vpis" (EN "Sign in") and a `sm` "Prijavi": `primary` by default, `secondary` on pages whose content has its own primary action (P3 home hero, P9 detail, P22 form), so a view never shows two primaries. Same place, label and menu either way. Signed in: the fourth link is the short label "Moje živali" (EN "My pets"; reports are inside), inbox icon button and avatar menu. The header must fit without overflow from 1024 px; if it does not, the language switch moves into the account menu below `xl`. |
+| Web header | 88 px, no border, on `background`. Logo left, at most 4 text links (16 semibold; the current page is `foreground` **and underlined**, others `muted-foreground`, so it is not colour only), right: language switch, ghost "Vpis" (EN "Sign in") and a `sm` "Prijavi": `primary` by default, `secondary` on pages whose content has its own primary action (P3 home hero, P3 T5 and T6 where the primary is "Pokliči", P9 detail, P22 form); in every T5/T6 state it stays `secondary`, even when the page shows no primary, so a view never shows two primaries. Same place, label and menu either way. Signed in: the fourth link is the short label "Moje živali" (EN "My pets"; reports are inside), inbox icon button and avatar menu. The header must fit without overflow from 1024 px; if it does not, the language switch moves into the account menu below `xl`. |
 | Web footer | Content variant: logo with tagline, wrapped rows of the 13 links (How it works, Safety tips, FAQ, For shelters, Shelters (the public directory), Partners, About, Privacy, Cookies, Cookie settings, Terms, Imprint, Accessibility), language, copyright line; no panel. **Flow variant: minimal** single quiet row (Privacy, Terms, Cookie settings, Accessibility), no logo block, no copyright. |
 
 ## 10.8 Flow screen ("one question per screen")
@@ -541,6 +541,8 @@ Top bar, then (optional) a photo, an h1 question (34/40), the answer or control 
 |---|---|
 | Toast | `popover` surface, radius 20, `shadow-pop` (one shadow only; do not stack shadows), 15/22, status icon, 5 s, dismissible, announced politely. |
 | Dialog | `popover`, radius 24, `scrim`, max 440 px wide, padding 28/24/20, title in the `title` role (18/28, 20/28 on web), text, buttons stacked full width (main action then `text`). Focus trapped, Escape closes. With a `destructive` main action (alert dialog), focus starts on the `text` cancel button. **Content dialog** (a flow step on web, for example the location picker): up to 600 px wide, padding 28, the step question as the title in the h2 role (30/36 on web), a close icon button top right, the same single primary. |
+| Accordion row (FAQ) | `card` surface, radius 20, 24 px padding (20 on mobile). The question is in the `title` role inside an `h3 > button` with `aria-expanded` and `aria-controls`; plus/minus icon 24 in `primary` on the right. Hover: `foreground` at 10 % overlay. The answer sits below in body 16/24. No border. |
+| On this page (list) | A `nav` with a label. 240 px sticky column from `lg`; rows 44 px, 15/20 semibold `muted-foreground`. Current row: `foreground` weight 700 plus a 3 px `primary` inset bar on the left (a shape cue, not colour only). Hover: `foreground` at 10 %. Below `lg` it is one collapsed disclosure row above the body, in the accordion row style. |
 | Timeline (sightings) | Plain list: status word with date and time, then the sentence (16/24), 28 px between items. No cards, no line. |
 | Gallery | Main photo radius 32, thumbs 88x72 radius 16, inactive thumbs at 55 % opacity. |
 | Share | One ghost button "Deli ali natisni plakat" that opens a menu (Facebook, WhatsApp, copy link, poster with QR code). |
@@ -686,3 +688,4 @@ Each page slice in `docs/design/pages/P<n>-<slug>.md` gets one static mockup at 
 | 0.10 | 2026-10-15 | CH-30, CH-33 (from TASK-3.4, TASK-30.1): `font-sans-bold` (Atkinson 700, `label-strong` role) and `qr` / `qr-foreground` tokens (fixed light field, dark modules, both themes; contrast pair 7:1). Tokens 0.5.0. |
 | 0.11 | 2026-10-15 | P19 review (TASK-34.1): `sidebar-primary` and `sidebar-ring` become light mist (sun yellow stays out of the console); admin h1 30/36 and h2 24/30 at all widths; added dense table, drawer, tooltip and mixed checkbox specs. |
 | 0.12 | 2026-10-15 | CH-46, CH-59: `suggested` pill state (§10.4); print tokens for the P18 poster documented (`qr`, `qr-foreground`, `input`; no tokens.json change). |
+| 0.13 | 2026-10-15 | CH-67, CH-68, CH-72: legal note slot exempt from one note per view; checklist "at most one primary" and header "Prijavi" secondary on P3 T5/T6; Accordion row and On this page list components (§10.9). |
