@@ -51,7 +51,8 @@ const EnvSchema = z.object({
 	R2_BUCKET_PRIVATE: z.string().default('zivali-private'),
 	R2_BUCKET_MEDIA: z.string().default('zivali-media'),
 	R2_BUCKET_BACKUPS: z.string().default('zivali-backups'),
-	MEDIA_BASE_URL: z.string().optional(),
+	// Public base of the media bucket (https://media.<domain>); required in production. Unset locally = the MinIO URL.
+	MEDIA_BASE_URL: z.url().optional(),
 	S3_ENDPOINT: z.string().default('http://127.0.0.1:9000'),
 	PAYMENTS_PROVIDER: z.enum(['mock', 'stripe', 'off']).optional(),
 	STRIPE_SECRET_KEY: z.string().optional(),
@@ -79,6 +80,9 @@ if (!parsed.success) {
 	const problems = parsed.error.issues.map((issue) => `${issue.path.join('.')}: ${issue.message}`).join('; ');
 	throw new Error(`Invalid environment: ${problems}`);
 }
+
+if (parsed.data.APP_ENV !== 'local' && !parsed.data.MEDIA_BASE_URL)
+	throw new Error('Invalid environment: MEDIA_BASE_URL: required when APP_ENV is staging or production');
 
 export const config = parsed.data;
 if (!config.SUPABASE_SECRET_KEY && config.SUPABASE_SERVICE_ROLE_KEY) {

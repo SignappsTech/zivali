@@ -521,7 +521,8 @@
 				"reject_reason",
 				"public_display_url",
 				"public_thumb_url",
-				"created_at"
+				"created_at",
+				"updated_at"
 			]
 		}
 	},

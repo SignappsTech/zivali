@@ -9,9 +9,14 @@ FROM --platform=$BUILDPLATFORM node:22-slim AS build
 RUN npm install -g pnpm@11.28.5
 WORKDIR /repo
 COPY . .
+# sharp (photo.process) is the one native production dependency: its binary and libvips come from the
+# @img/sharp-<os>-<cpu> optional dependencies, and pnpm installs only the build machine's by default. Adding the
+# target's (TARGETARCH amd64 → x64, arm64 stays) lets the runtime stage load linux-arm64 sharp on the CAX11.
+ARG TARGETARCH
+RUN printf 'supportedArchitectures:\n  os: [current, linux]\n  cpu: [current, %s]\n  libc: [current, glibc]\n' \
+	"$([ "$TARGETARCH" = amd64 ] && echo x64 || echo "${TARGETARCH:-current}")" >> pnpm-workspace.yaml
 # --ignore-scripts: the root `prepare: husky` fails without dev tooling, so the Prisma client is generated here.
-# The production dependencies are plain JS (Prisma 7 query compiler is wasm, pg is pure JS), so they are the same
-# for every platform.
+# The other production dependencies are plain JS (Prisma 7 query compiler is wasm, pg is pure JS).
 RUN pnpm install --frozen-lockfile --ignore-scripts --filter api...
 # The worker renders push and email text from the merged i18n catalogues (dist/*.json, bundled by tsup).
 RUN pnpm --filter @zivali/i18n build
@@ -39,6 +44,8 @@ COPY --from=build /repo/apps/api/prisma/schemas ./prisma/schemas
 # Fetch the schema engine for the target platform (linux-arm64 on the VPS) here, as root: the runtime user cannot
 # write to node_modules.
 RUN node node_modules/prisma/build/index.js version
+# sharp loads its platform binary at require time: fail the build here, not at the first photo.process.
+RUN node -e "require('sharp')"
 USER node
 EXPOSE 4000
 CMD ["node", "dist/server.js"]

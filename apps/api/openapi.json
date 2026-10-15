@@ -2880,6 +2880,164 @@
 				}
 			}
 		},
+		"/v1/photos": {
+			"post": {
+				"operationId": "createPhoto",
+				"summary": "Register a photo and get a presigned upload",
+				"description": "201 with a 5-minute presigned PUT (Content-Type image/jpeg, Content-Length = `bytes`) to the private bucket. The same owner and sha256 after a successful /complete answers 200 `existing: true` (restarting the 24 h purge clock of an unattached photo); before that, 201 with a fresh URL for the same `photo_id`.",
+				"tags": ["photos"],
+				"requestBody": {
+					"required": true,
+					"content": { "application/json": { "schema": { "$ref": "#/components/schemas/CreatePhotoInput" } } }
+				},
+				"responses": {
+					"200": {
+						"description": "Already uploaded (`existing: true`)",
+						"content": {
+							"application/json": { "schema": { "$ref": "#/components/schemas/CreatePhotoResponse" } }
+						}
+					},
+					"201": {
+						"description": "New upload",
+						"content": {
+							"application/json": { "schema": { "$ref": "#/components/schemas/CreatePhotoResponse" } }
+						}
+					},
+					"400": {
+						"description": "VALIDATION",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"401": {
+						"description": "UNAUTHENTICATED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"429": {
+						"description": "RATE_LIMITED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"500": {
+						"description": "INTERNAL",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					}
+				}
+			}
+		},
+		"/v1/photos/{id}/complete": {
+			"post": {
+				"operationId": "completePhoto",
+				"summary": "Confirm the upload",
+				"description": "Owner only. Queues photo.process (accepted or rejected, see GET). CONFLICT: no object in the bucket.",
+				"tags": ["photos"],
+				"parameters": [
+					{ "schema": { "type": "string", "format": "uuid" }, "required": true, "name": "id", "in": "path" }
+				],
+				"responses": {
+					"202": {
+						"description": "Uploaded, processing queued",
+						"content": {
+							"application/json": { "schema": { "$ref": "#/components/schemas/CompletePhotoResponse" } }
+						}
+					},
+					"400": {
+						"description": "VALIDATION",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"401": {
+						"description": "UNAUTHENTICATED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"404": {
+						"description": "NOT_FOUND",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"409": {
+						"description": "CONFLICT",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"429": {
+						"description": "RATE_LIMITED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"500": {
+						"description": "INTERNAL",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					}
+				}
+			}
+		},
+		"/v1/photos/{id}": {
+			"get": {
+				"operationId": "getPhoto",
+				"summary": "One own photo",
+				"description": "Owner only. `thumb_url` is a 10-minute presigned GET while private (it resolves once the photo is accepted), the public URL once published.",
+				"tags": ["photos"],
+				"parameters": [
+					{ "schema": { "type": "string", "format": "uuid" }, "required": true, "name": "id", "in": "path" }
+				],
+				"responses": {
+					"200": {
+						"description": "The photo",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/PhotoView" } } }
+					},
+					"400": {
+						"description": "VALIDATION",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"401": {
+						"description": "UNAUTHENTICATED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"404": {
+						"description": "NOT_FOUND",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"429": {
+						"description": "RATE_LIMITED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"500": {
+						"description": "INTERNAL",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					}
+				}
+			},
+			"delete": {
+				"operationId": "deletePhoto",
+				"summary": "Delete an own photo",
+				"description": "Owner only; the worker deletes the objects. CONFLICT while the photo is on a published report.",
+				"tags": ["photos"],
+				"parameters": [
+					{ "schema": { "type": "string", "format": "uuid" }, "required": true, "name": "id", "in": "path" }
+				],
+				"responses": {
+					"204": { "description": "Deleted" },
+					"400": {
+						"description": "VALIDATION",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"401": {
+						"description": "UNAUTHENTICATED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"404": {
+						"description": "NOT_FOUND",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"409": {
+						"description": "CONFLICT",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"429": {
+						"description": "RATE_LIMITED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"500": {
+						"description": "INTERNAL",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					}
+				}
+			}
+		},
 		"/v1/reports": {
 			"post": {
 				"operationId": "createReport",

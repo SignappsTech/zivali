@@ -184,16 +184,38 @@ export async function findType(id: string, tx?: Prisma.TransactionClient): Promi
 	return (await db.reports.findUnique({ where: { id }, select: { type: true } }))?.type ?? null;
 }
 
+/** A photo that had public copies, as photo-objects' publicObjects needs it. */
+type PublicPhoto = {
+	id: string;
+	report_id: string;
+	public_display_url: string | null;
+	public_thumb_url: string | null;
+};
+
 /**
  * Sets the report's photos in order (position = index): the owner's unattached uploads or photos already on this
- * report; photos left out are detached. Returns how many of `photo_ids` were attached.
+ * report; photos left out are detached (and unpublished). Returns how many of `photo_ids` were attached and the photos that
+ * were public.
  */
 export async function setPhotos(
 	input: { report_id: string; owner_id: string; photo_ids: string[] },
 	tx: Prisma.TransactionClient
-): Promise<number> {
+): Promise<{ attached: number; unpublished: PublicPhoto[] }> {
 	const { report_id, owner_id, photo_ids } = input;
-	await tx.photos.updateMany({ where: { report_id, id: { notIn: photo_ids } }, data: { report_id: null } });
+	// Detached photos that were public go back to unpublished; their public copies are deleted by the caller.
+	const detached = await tx.photos.findMany({
+		where: { report_id, id: { notIn: photo_ids } },
+		select: { id: true, status: true, public_display_url: true, public_thumb_url: true },
+	});
+	const ids = detached.map((p) => p.id);
+	await tx.photos.updateMany({
+		where: { id: { in: ids }, status: 'published' },
+		data: { status: 'unpublished' },
+	});
+	await tx.photos.updateMany({
+		where: { id: { in: ids } },
+		data: { report_id: null, public_display_url: null, public_thumb_url: null },
+	});
 	let attached = 0;
 	for (const [position, id] of photo_ids.entries()) {
 		const { count } = await tx.photos.updateMany({
@@ -202,7 +224,15 @@ export async function setPhotos(
 		});
 		attached += count;
 	}
-	return attached;
+	const unpublished = detached
+		.filter((p) => p.public_display_url || p.public_thumb_url)
+		.map(({ id, public_display_url, public_thumb_url }) => ({
+			id,
+			report_id,
+			public_display_url,
+			public_thumb_url,
+		}));
+	return { attached, unpublished };
 }
 
 /** held → visible; the report type, or null when the report is missing or not held. */

@@ -34,6 +34,7 @@ import { distanceM, fuzzArea, fuzzSettings, publicRadius, type Point } from '../
 import type { QueueName } from '../../lib/jobs.ts';
 import { prisma, type Prisma } from '../../prisma/prisma.ts';
 import { GeoDomain } from '../geo/index.ts';
+import { publicObjects } from '../photos/photo-objects.ts';
 import ReportsDao, { type LocationColumns, type ReportRow, type StoredLocation } from './reports.dao.ts';
 import { submissionGuard } from './submission-guard.ts';
 
@@ -232,11 +233,18 @@ async function setPhotos(
 	report: { id: string; type: ReportType },
 	photo_ids: string[],
 	actor: Actor,
+	ctx: Ctx,
 	tx: Prisma.TransactionClient
 ) {
 	if (report.type !== 'sighted' && photo_ids.length < 1) throw invalid('photo_ids', 'At least one photo');
-	const attached = await ReportsDao.setPhotos({ report_id: report.id, owner_id: actor.user_id, photo_ids }, tx);
+	const { attached, unpublished } = await ReportsDao.setPhotos(
+		{ report_id: report.id, owner_id: actor.user_id, photo_ids },
+		tx
+	);
 	if (attached !== photo_ids.length) throw invalid('photo_ids', 'Unknown or foreign photo');
+	// Detached photos are no longer public: delete their media copies (queued with the write).
+	const objects = unpublished.flatMap(publicObjects);
+	if (objects.length) await ctx.jobs.send('retention.purge', { objects }, { tx });
 }
 
 /**
@@ -302,7 +310,7 @@ export async function createReport(input: CreateInput, ctx: Ctx): Promise<Create
 			{ ...ctx, tx }
 		);
 		const report = { id, type: fields.type, moderation_state };
-		await setPhotos(report, photo_ids, actor, tx);
+		await setPhotos(report, photo_ids, actor, ctx, tx);
 		await sendJobs(report, ['photo.publish', 'match.report', 'alerts.fanout'], ctx, tx);
 		return { id, short_code, moderation_state, warnings };
 	});
@@ -332,7 +340,7 @@ export async function updateReport(input: UpdateInput, ctx: Ctx): Promise<Manage
 		if (fields.linked_report_id) await checkLinked(report.type, fields.linked_report_id, tx);
 		if (fields.pet_id && fields.pet_id !== report.pet_id)
 			await checkPet({ pet_id: fields.pet_id, species, report_id: report.id }, actor, tx);
-		if (photo_ids) await setPhotos(report, photo_ids, actor, tx);
+		if (photo_ids) await setPhotos(report, photo_ids, actor, ctx, tx);
 
 		const normalized = chip === undefined ? undefined : normalizeChip(chip);
 		const data = {
@@ -380,15 +388,25 @@ export type ReportView = {
 	now: Date;
 };
 
-/** Signed-out callers and non-managers: held reads as unknown, hidden/removed and long-closed as gone. */
-function assertPublic(report: ReportRow, now: Date): void {
-	if (report.moderation_state === 'held') throw new AppError('NOT_FOUND', 'Report not found');
-	if (report.moderation_state === 'hidden' || report.moderation_state === 'removed')
-		throw new AppError('GONE', 'Report is no longer available', { reason: report.moderation_state });
+/** Why a report is not public right now (held, hidden, removed, closed > 30 days), or null while it is. */
+export function notPublicReason(
+	report: Pick<ReportRow, 'moderation_state' | 'status' | 'closed_at' | 'reunited_at'>,
+	now: Date
+): 'held' | 'hidden' | 'removed' | 'closed' | null {
+	if (report.moderation_state !== 'visible') return report.moderation_state;
 	const endedAt =
 		report.status === 'closed' ? report.closed_at : report.status === 'reunited' ? report.reunited_at : null;
-	if (endedAt && now.getTime() - endedAt.getTime() > CLOSED_PUBLIC_MS)
-		throw new AppError('GONE', 'Report is closed', { reason: 'closed' });
+	return endedAt && now.getTime() - endedAt.getTime() > CLOSED_PUBLIC_MS ? 'closed' : null;
+}
+
+/** Signed-out callers and non-managers: held reads as unknown, hidden/removed and long-closed as gone. */
+function assertPublic(report: ReportRow, now: Date): void {
+	const reason = notPublicReason(report, now);
+	if (reason === 'held') throw new AppError('NOT_FOUND', 'Report not found');
+	if (reason)
+		throw new AppError('GONE', reason === 'closed' ? 'Report is closed' : 'Report is no longer available', {
+			reason,
+		});
 }
 
 /** GET /v1/reports/:code. Managers always see their report; everyone else only while it is public. */
@@ -438,6 +456,7 @@ export default {
 	createReport,
 	updateReport,
 	releaseReport,
+	notPublicReason,
 	getReport,
 	listMyReports,
 };
