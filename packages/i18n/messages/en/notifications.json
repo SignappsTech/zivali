@@ -51,5 +51,16 @@
 	"payment_receipt": {
 		"title": "Payment receipt",
 		"body": "{amount}, {purpose, select, tip {thank-you contribution} other {contribution}}. Thank you.{is_test, select, yes { Test payment.} other {}}"
-	}
+	},
+	"title": "Notifications",
+	"mark_all": "Mark all as read",
+	"group_today": "Today",
+	"group_week": "This week",
+	"group_earlier": "Earlier",
+	"row_unread_a11y": "{title}, unread",
+	"reminder_keep": "Keep searching",
+	"reminder_close": "Close search",
+	"empty_title": "No notifications yet",
+	"empty_body": "Possible matches, messages and alerts about lost pets nearby will appear here.",
+	"empty_action": "Set up alerts"
 }

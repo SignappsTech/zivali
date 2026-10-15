@@ -12,7 +12,6 @@ const PENDING = {
 	'/map': 'nav.map',
 	'/report/lost': 'nav.report_lost_title',
 	'/report/found': 'nav.report_found_title',
-	'/inbox': 'nav.inbox',
 	'/advertise': 'footer.partners',
 } as const;
 
