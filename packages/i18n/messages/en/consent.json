@@ -18,5 +18,7 @@
 	"saved_toast": "Choice saved.",
 	"ads_note": "We count ads without cookies and without any data about you, so this needs no consent.",
 	"reask_changed": "Something has changed since your last choice: {change}. Please choose again.",
-	"reask_year": "It has been a year since your last choice. Please choose again."
+	"reask_year": "It has been a year since your last choice. Please choose again.",
+	"body_app": "The app needs to store a little data on your device to work, for example to keep you signed in. If you allow it, we also use Google Analytics for Firebase to see how the app is used, without names, exact locations or chip numbers; nothing is sent to Google before you decide.",
+	"analytics_body_app": "They help us understand which screens and steps are used, so we can improve searching. Provider: Google (Google Analytics for Firebase). Data is kept in Google Analytics for 14 months. We do not use advertising identifiers."
 }
