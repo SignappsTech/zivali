@@ -37,7 +37,7 @@ function Toaster({ closeLabel, label, ...props }: ToasterProps & { closeLabel: s
 				unstyled: true,
 				closeButtonAriaLabel: closeLabel,
 				classNames: {
-					toast: 'flex w-full min-h-14 items-center gap-3 rounded-row bg-popover py-1.5 pr-1.5 pl-4 font-sans text-[15px] leading-[22px] text-popover-foreground shadow-pop',
+					toast: 'flex w-full min-h-14 items-center gap-3 rounded-row bg-popover py-1.5 pr-1.5 pl-4 font-sans text-control leading-[22px] text-popover-foreground shadow-pop',
 					icon: 'flex shrink-0',
 					content: 'min-w-0 flex-1',
 					// Sonner renders the close button first; it sits at the end, as in the P23 mockup.

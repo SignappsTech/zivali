@@ -52,7 +52,7 @@ function ChoiceRow({ className, title, description, icon, ...props }: ChoiceRowP
 		>
 			{icon}
 			<span className="min-w-0 flex-1">
-				<span className="block text-[17px] leading-6 font-bold">{title}</span>
+				<span className="block text-control-lg font-bold">{title}</span>
 				{description && (
 					<span className="block text-sm text-muted-foreground group-data-[state=checked]/row:text-primary-foreground/85">
 						{description}
