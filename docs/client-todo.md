@@ -21,9 +21,15 @@ Put keys into `.env.local` (gitignored) unless noted. Never paste secrets into c
 - ⚠️ Cheap TLDs (.xyz and the like) often land in spam for email. That's fine for staging tests, not for real users.
 - 💡 najdimo.si / najdimo.com were still free last night (≈€15–20/year). Grab them whenever you're 100 % sure.
 
-### 2. Hetzner (server, about €4–5/month)
+### 2. Hetzner (server, €7.31/month)
 - [ ] Create an account at console.hetzner.cloud, then a project "najdimo".
-- [ ] Either **(a)** create an **API token** (Security → API tokens, Read & Write) → `HETZNER_API_TOKEN`, and we create the server; **or (b)** create the server yourself: **CX22** (2 vCPU / 4 GB), **Ubuntu 24.04**, location **Falkenstein or Nuremberg (EU)**, with your SSH key, and send the IP.
+- [ ] Either **(a)** create an **API token** (Security → API tokens, Read & Write) → `HETZNER_API_TOKEN`, and we create the server; **or (b)** create the server yourself and send the IP:
+  - **CAX11**: Arm64 Ampere, 2 vCPU, 4 GB RAM, 40 GB SSD, €7.31/month. The x86 cost-optimised type is out of stock, and our images are built for arm64.
+  - **Ubuntu 24.04**, location **Falkenstein or Nuremberg** (Helsinki is fine too).
+  - Your SSH key, and keep the public IPv4 (GitHub deploys over IPv4).
+  - **Cloud Firewall**: ports 80 and 443 open, port 22 only from your IP.
+  - No backups add-on: the server holds no data, and the database backups go to R2.
+  - Production can be resized to CAX21 (4 vCPU / 8 GB) later without a rebuild.
 
 ### 3. Cloudflare (DNS, photo storage, spam protection, all free tier)
 - [ ] **R2**: enable it (Cloudflare asks for a payment method even for the free tier).
