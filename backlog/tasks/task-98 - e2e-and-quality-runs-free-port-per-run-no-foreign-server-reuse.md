@@ -1,11 +1,11 @@
 ---
 id: TASK-98
 title: 'e2e and quality runs: free port per run, no foreign server reuse'
-status: In Progress
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-15 04:40'
-updated_date: '2026-10-15 04:48'
+updated_date: '2026-10-15 06:09'
 labels:
   - fe
   - 'est:XS'
