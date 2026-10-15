@@ -220,7 +220,7 @@ describe('DirectoryAdmin', () => {
 
 		fireEvent.click(within(versions).getByRole('button', { name: /13\. 10\. 2024/ }));
 		const diff = within(drawer).getByRole('table', { name: /13\. 10\. 2024/ });
-		expect(within(diff).getByRole('rowheader', { name: 'Delovni čas, pon–pet' })).toBeTruthy();
+		expect(within(diff).getByRole('rowheader', { name: 'Delovni čas, ponedeljek–petek' })).toBeTruthy();
 		expect(within(diff).getByText('8.00–16.00')).toBeTruthy();
 		fireEvent.click(within(drawer).getByRole('button', { name: d.history_restore }));
 		expect(await screen.findByText(d.history_restored)).toBeTruthy();

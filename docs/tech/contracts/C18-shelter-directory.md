@@ -82,7 +82,7 @@ All routes: staff aal2 (`authMiddleware`, `requireRole('admin')`, `requireAal2`)
 | `PUT /v1/admin/municipality-shelters/:municipality` | reassign one municipality | `{ shelter_slug | null, status, source, verified_at, version, audit_note }` → assignment row |
 | `POST /v1/admin/directory/import?dry_run=true` | CSV import | `{ csv: string }` (JSON, not multipart) → `{ changes: { entity, id, action: 'create' | 'update' | 'none', diff }[], errors: { row: number, field: string }[] }`; with `dry_run` nothing is written; without it, applied in one transaction only if `errors` is empty |
 
-Admin errors (C1 envelope): `CONFLICT` (409) when the body `version` is stale (another admin saved first; details carry the current version), `HAS_ASSIGNMENTS` (409) when `DELETE` targets a shelter that still has municipalities assigned (details: count; reassign first), `VALIDATION` (400) for bad bodies including a missing or blank `audit_note`, `NOT_FOUND`, `FORBIDDEN`/`AAL2_REQUIRED`. The two 409s are distinct codes so the UI can offer reload vs reassign. pg-boss job `directory.reminder` (cron 1 April 08:00 Europe/Ljubljana) notifies admins with entries whose `verified_at` is older than 12 months.
+Admin errors (C1 envelope): `CONFLICT` (409) when the body `version` is stale (another admin saved first; details carry the current version), `CONFLICT` (409) with `details.code = 'HAS_ASSIGNMENTS'` when `DELETE` targets a shelter that still has municipalities assigned (details: code, count; reassign first; repo convention like PET_LIMIT, not a new top-level code), `VALIDATION` (400) for bad bodies including a missing or blank `audit_note`, `NOT_FOUND`, `FORBIDDEN`/`AAL2_REQUIRED`. The two 409s are told apart by `details.code` (absent = stale version) so the UI can offer reload vs reassign. pg-boss job `directory.reminder` (cron 1 April 08:00 Europe/Ljubljana) notifies admins with entries whose `verified_at` is older than 12 months.
 
 ## Client (`@zivali/api/directory`)
 
@@ -107,3 +107,4 @@ Legal timings (3 days / 72 h owner duty, 24 h find notice, 8-day holding) render
 |---|---|---|
 | 1.1 | 2026-10-15 | CH-81: responsible-shelter returns status 'likely' (likely_shelter) or 'unconfirmed' with nearest (up to 2); municipality always included |
 | 1.2 | 2026-10-15 | CH-123, CH-125: admin lists, /changes history by slug, DELETE with audit_note, versioned bodies with municipalities[], {csv} import → {changes, errors[{row, field}]}, OpeningHours.closed, Shelter lat/lng/email, ShelterSummary phone/area/municipality_count/verified_at/source/species; CONFLICT vs HAS_ASSIGNMENTS |
+| 1.3 | 2026-10-15 | CH-128: delete refused while municipalities are assigned = 409 CONFLICT with details.code HAS_ASSIGNMENTS (not a top-level code) |

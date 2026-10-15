@@ -8,6 +8,7 @@ assignee:
   - '@tech-lead'
 created_date: '2026-10-15 03:29'
 labels:
+  - tech
   - trivial
   - 'est:XS'
 dependencies: []
