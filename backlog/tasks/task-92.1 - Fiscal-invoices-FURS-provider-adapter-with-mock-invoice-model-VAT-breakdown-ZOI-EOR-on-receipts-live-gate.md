@@ -3,11 +3,11 @@ id: TASK-92.1
 title: >-
   Fiscal invoices: FURS provider adapter with mock, invoice model, VAT
   breakdown, ZOI/EOR on receipts, live gate
-status: In Progress
+status: Done
 assignee:
   - '@backend-dev'
 created_date: '2026-10-14 23:36'
-updated_date: '2026-10-15 23:23'
+updated_date: '2026-10-15 23:55'
 labels:
   - be
   - 'est:M'
