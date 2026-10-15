@@ -32,20 +32,14 @@ type Channel = 'push' | 'email' | 'in_app';
  * matches and messages (P13), so those switches are locked on.
  */
 const GROUPS: {
-	key: string;
 	label: 'type_matches' | 'type_messages' | 'type_nearby' | 'type_reminders';
 	types: NotificationType[];
 	locked?: boolean;
 }[] = [
-	{
-		key: 'matches',
-		label: 'type_matches',
-		types: ['match_chip', 'match_suggested', 'match_confirmed'],
-		locked: true,
-	},
-	{ key: 'messages', label: 'type_messages', types: ['chat_message'], locked: true },
-	{ key: 'nearby', label: 'type_nearby', types: ['nearby_lost'] },
-	{ key: 'reminders', label: 'type_reminders', types: ['report_reminder', 'report_expiring', 'report_closed'] },
+	{ label: 'type_matches', types: ['match_chip', 'match_suggested', 'match_confirmed'], locked: true },
+	{ label: 'type_messages', types: ['chat_message'], locked: true },
+	{ label: 'type_nearby', types: ['nearby_lost'] },
+	{ label: 'type_reminders', types: ['report_reminder', 'report_expiring', 'report_closed'] },
 ];
 const CHANNELS = [
 	['push', 'channel_push'],
@@ -147,7 +141,7 @@ function Settings({ me, prefs }: { me: Me; prefs: NotificationPrefs }) {
 					</thead>
 					<tbody>
 						{GROUPS.map((group) => (
-							<tr key={group.key}>
+							<tr key={group.label}>
 								<th scope="row" className="py-1 text-left text-[17px] leading-6 font-bold">
 									{t(group.label)}
 								</th>
