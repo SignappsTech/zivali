@@ -115,7 +115,7 @@
 		},
 		"directory_changes": {
 			"category": "reference",
-			"personal_data": ["actor_id"],
+			"personal_data": ["actor_id", "audit_note"],
 			"basis": "legitimate interest (GDPR art. 6(1)(f)): accountability of directory edits",
 			"retention": "kept (append-only history)",
 			"export": false,

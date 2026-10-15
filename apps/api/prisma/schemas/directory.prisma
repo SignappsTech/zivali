@@ -51,6 +51,7 @@ model municipality_shelters {
 }
 
 // Append-only versions: entity 'shelter' (entity_id = shelters.id) or 'municipality_shelter' (municipality id).
+// actor_id is null for the seed and for imports; audit_note is the admin's note (null for the seed).
 model directory_changes {
   id         String   @id @default(uuid()) @db.Uuid
   entity     String
@@ -59,6 +60,7 @@ model directory_changes {
   data       Json
   source     String
   actor_id   String?  @db.Uuid
+  audit_note String?
   created_at DateTime @default(now()) @db.Timestamptz(6)
 
   @@unique([entity, entity_id, version])

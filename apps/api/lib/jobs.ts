@@ -30,6 +30,8 @@ export const SCHEDULES: Partial<Record<QueueName, string>> = {
 	'report.lifecycle': '0 * * * *',
 	'retention.purge': '30 3 * * *',
 	'partners.stats': '15 * * * *',
+	// After 31 March: the yearly directory refresh (C18).
+	'directory.reminder': '0 8 1 4 *',
 	// Supabase Free pauses a project without database activity.
 	'db.keepalive': '0 */6 * * *',
 	'db.backup': '0 2 * * *',
