@@ -4,6 +4,7 @@ export default defineConfig({
 	resolve: { tsconfigPaths: true },
 	test: {
 		environment: 'jsdom',
+		setupFiles: ['./vitest.setup.ts'],
 		// lib/env.ts validates on import; unit tests never reach Supabase.
 		env: {
 			NEXT_PUBLIC_SUPABASE_URL: 'http://127.0.0.1:54321',

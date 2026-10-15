@@ -32,6 +32,9 @@ app.get('/p2002', async () => {
 app.get('/p2025', async () => {
 	throw prismaError('P2025');
 });
+app.get('/pool-timeout', async () => {
+	throw new Error('x', { cause: new Error('timeout exceeded when trying to connect') });
+});
 app.get('/boom', async () => {
 	throw new Error('secret internals');
 });
@@ -107,6 +110,13 @@ describe('error middleware', () => {
 
 describe('validate middleware (ZodError → VALIDATION)', () => {
 	const id = crypto.randomUUID();
+
+	it('maps a pool connect timeout to 503 SERVICE_UNAVAILABLE with Retry-After', async () => {
+		const res = await request(app).get('/pool-timeout');
+		expect(res.status).toBe(503);
+		expect(res.body.error.code).toBe('SERVICE_UNAVAILABLE');
+		expect(res.headers['retry-after']).toBe('1');
+	});
 
 	it('passes parsed body, query and params to the controller', async () => {
 		const res = await request(app)

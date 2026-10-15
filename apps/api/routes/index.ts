@@ -2,11 +2,17 @@
 import { Router } from 'express';
 
 import configRoutes from './config.routes.ts';
+import geoRoutes from './geo.routes.ts';
 import healthRoutes from './health.routes.ts';
+import meRoutes from './me.routes.ts';
+import sheltersRoutes from './shelters.routes.ts';
 
 const router = Router();
 
 router.use('/health', healthRoutes);
 router.use('/config', configRoutes);
+router.use('/me', meRoutes);
+router.use('/shelters', sheltersRoutes);
+router.use('/geo', geoRoutes);
 
 export default router;

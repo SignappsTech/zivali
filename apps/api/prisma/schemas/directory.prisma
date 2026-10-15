@@ -1,0 +1,66 @@
+// Responsible-shelter directory (C18): the 17 registered shelters and the shelter responsible for each of the 212
+// municipalities. Public reference data, no personal data. Loaded by seeder 05-directory, edited by admins (TASK-89).
+
+enum DIRECTORY_STATUS {
+  CONFIRMED
+  UNCONFIRMED
+
+  @@schema("app")
+}
+
+model shelters {
+  id                    String                  @id @default(uuid()) @db.Uuid
+  slug                  String                  @unique
+  name                  String
+  address               String
+  postal_code           String
+  city                  String
+  lat                   Float?
+  lng                   Float?
+  phone                 String // E.164
+  phone_display         String
+  email                 String?
+  website               String?
+  opening_hours         Json
+  registry_id           String?
+  // Accepted species ('dog' | 'cat'), ShelterSummary.species.
+  species               String[]                @default(["dog", "cat"])
+  source                String
+  verified_at           DateTime                @db.Date
+  active                Boolean                 @default(true)
+  version               Int                     @default(1)
+  created_at            DateTime                @default(now()) @db.Timestamptz(6)
+  updated_at            DateTime                @updatedAt @db.Timestamptz(6)
+  municipality_shelters municipality_shelters[]
+
+  @@schema("app")
+}
+
+// One row per municipality. CONFIRMED: shelter_id is the responsible shelter. UNCONFIRMED: shelter_id is the likely
+// shelter (CSV suggested_shelter) or null; never presented as responsible.
+model municipality_shelters {
+  municipality_id Int              @id @db.SmallInt
+  shelter_id      String?          @db.Uuid
+  status          DIRECTORY_STATUS
+  source          String
+  verified_at     DateTime         @db.Date
+  version         Int              @default(1)
+  shelter         shelters?        @relation(fields: [shelter_id], references: [id])
+
+  @@schema("app")
+}
+
+// Append-only versions: entity 'shelter' (entity_id = shelters.id) or 'municipality_shelter' (municipality id).
+model directory_changes {
+  id         String   @id @default(uuid()) @db.Uuid
+  entity     String
+  entity_id  String
+  version    Int
+  data       Json
+  source     String
+  actor_id   String?  @db.Uuid
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+
+  @@unique([entity, entity_id, version])
+  @@schema("app")
+}

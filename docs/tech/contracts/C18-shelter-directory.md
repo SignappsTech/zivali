@@ -19,6 +19,7 @@ model shelters {
   phone          String                               // E.164, e.g. +38612345678
   phone_display  String                               // as published, e.g. "01 234 56 78"
   email          String?
+  species        String[] @default(["dog", "cat"])     // accepted species, 'dog' | 'cat' (ShelterSummary.species)
   website        String?
   opening_hours  Json                                 // [{ days: "mon-fri", from: "10:00", to: "16:00", note_sl?, note_en? }]
   registry_id    String?                              // veterinary administration register number
@@ -54,6 +55,10 @@ model directory_changes {                              // versioning (append-onl
 }
 ```
 
+The seed CSV may split a municipality by species. One assignment per municipality is kept: CONFIRMED only when cat and dog resolve to the same confirmed shelter. Otherwise it is UNCONFIRMED, and shelter_id is the likely shelter (the first suggested_shelter) or null. A likely shelter is returned as status likely only when it is active and has coordinates; otherwise the response is unconfirmed with nearest. `ShelterSummary.area` is the region derived from the shelter's lat/lng (C6 geo lookup). Optional hardening: the server also rounds `/responsible` lat/lng to 2 decimals.
+
+Follow-ups (TASK-88.2): foreign key `municipality_shelters.municipality_id` to `municipalities` after TASK-15.8; replace the `@zivali/api/directory` stubs via `gen:api`; data check of `species` for Mačja hiša and Sia in Lu.
+
 Seed (TASK-88): `apps/api/prisma/seeders/data/shelters.csv` and `municipality_shelters.csv` loaded by `prisma/seeders/05-directory.seeder.ts` with a `source` and `verified_at` per row; a validation script checks 212 municipalities, every confirmed row points at an active shelter, phones are E.164.
 
 ## REST API (public, no auth, cacheable `Cache-Control: public, max-age=3600`)
@@ -82,7 +87,7 @@ All routes: staff aal2 (`authMiddleware`, `requireRole('admin')`, `requireAal2`)
 | `PUT /v1/admin/municipality-shelters/:municipality` | reassign one municipality | `{ shelter_slug | null, status, source, verified_at, version, audit_note }` → assignment row |
 | `POST /v1/admin/directory/import?dry_run=true` | CSV import | `{ csv: string }` (JSON, not multipart) → `{ changes: { entity, id, action: 'create' | 'update' | 'none', diff }[], errors: { row: number, field: string }[] }`; with `dry_run` nothing is written; without it, applied in one transaction only if `errors` is empty |
 
-Admin errors (C1 envelope): `CONFLICT` (409) when the body `version` is stale (another admin saved first; details carry the current version), `HAS_ASSIGNMENTS` (409) when `DELETE` targets a shelter that still has municipalities assigned (details: count; reassign first), `VALIDATION` (400) for bad bodies including a missing or blank `audit_note`, `NOT_FOUND`, `FORBIDDEN`/`AAL2_REQUIRED`. The two 409s are distinct codes so the UI can offer reload vs reassign. pg-boss job `directory.reminder` (cron 1 April 08:00 Europe/Ljubljana) notifies admins with entries whose `verified_at` is older than 12 months.
+Admin errors (C1 envelope): `CONFLICT` (409) when the body `version` is stale (another admin saved first; details carry the current version), `CONFLICT` (409) with `details.code = 'HAS_ASSIGNMENTS'` when `DELETE` targets a shelter that still has municipalities assigned (details: code, count; reassign first; repo convention like PET_LIMIT, not a new top-level code), `VALIDATION` (400) for bad bodies including a missing or blank `audit_note`, `NOT_FOUND`, `FORBIDDEN`/`AAL2_REQUIRED`. The two 409s are told apart by `details.code` (absent = stale version) so the UI can offer reload vs reassign. pg-boss job `directory.reminder` (cron 1 April 08:00 Europe/Ljubljana) notifies admins with entries whose `verified_at` is older than 12 months.
 
 ## Client (`@zivali/api/directory`)
 
@@ -107,3 +112,5 @@ Legal timings (3 days / 72 h owner duty, 24 h find notice, 8-day holding) render
 |---|---|---|
 | 1.1 | 2026-10-15 | CH-81: responsible-shelter returns status 'likely' (likely_shelter) or 'unconfirmed' with nearest (up to 2); municipality always included |
 | 1.2 | 2026-10-15 | CH-123, CH-125: admin lists, /changes history by slug, DELETE with audit_note, versioned bodies with municipalities[], {csv} import → {changes, errors[{row, field}]}, OpeningHours.closed, Shelter lat/lng/email, ShelterSummary phone/area/municipality_count/verified_at/source/species; CONFLICT vs HAS_ASSIGNMENTS |
+| 1.3 | 2026-10-15 | CH-128: delete refused while municipalities are assigned = 409 CONFLICT with details.code HAS_ASSIGNMENTS (not a top-level code) |
+| 1.4 | 2026-10-15 | CH-132, CH-133: shelters.species, area from lat/lng, species split collapses to one row (CONFIRMED only if cat and dog agree, else UNCONFIRMED with likely shelter_id), server rounds /responsible coordinates; follow-ups listed |

@@ -105,7 +105,7 @@ describe('T6 /zavetisca/[slug]', () => {
 		const call = screen.getByRole('link', { name: 'Pokliči Zavetišče Ljubljana' });
 		expect(call.getAttribute('href')).toBe('tel:+38612345678');
 		expect(call.dataset.variant).toBe('default');
-		expect(screen.getByText('pon–ned').nextElementSibling?.textContent).toBe('10.00–18.00');
+		expect(screen.getByText('ponedeljek–nedelja').nextElementSibling?.textContent).toBe('10.00–18.00');
 		// jsdom's name computation trims the sr-only span; browsers keep its leading space.
 		const map = screen.getByRole('link', { name: /^Odpri v zemljevidu ?\(odpre se v novem zavihku\)$/ });
 		expect(map.getAttribute('href')).toBe(
