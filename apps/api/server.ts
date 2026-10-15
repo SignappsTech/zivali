@@ -3,7 +3,7 @@
 import '@zivali/validation/openapi';
 import { app } from './app.ts';
 import { config } from './lib/config.ts';
-import { startJobs } from './lib/jobs.ts';
+import { startJobs, stopJobs } from './lib/jobs.ts';
 import { logger } from './lib/logger.ts';
 import { prisma } from './prisma/prisma.ts';
 
@@ -27,6 +27,7 @@ function shutdown(signal: NodeJS.Signals): void {
 		process.exit(1);
 	}, SHUTDOWN_TIMEOUT_MS).unref();
 	server.close(async (err) => {
+		await stopJobs().catch((e: unknown) => logger.error({ err: e }, 'job queue stop failed'));
 		await prisma.$disconnect();
 		process.exit(err ? 1 : 0);
 	});
