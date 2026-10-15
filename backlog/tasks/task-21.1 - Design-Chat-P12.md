@@ -1,11 +1,11 @@
----
+﻿---
 id: TASK-21.1
 title: 'Design: Chat (P12)'
-status: To Do
+status: In Progress
 assignee:
   - '@ui-designer'
 created_date: '2026-10-14 21:50'
-updated_date: '2026-10-14 21:51'
+updated_date: '2026-10-15 21:52'
 labels:
   - design
   - 'est:M'
@@ -31,7 +31,7 @@ Owner and finder talk without exchanging phone numbers; safety has to be obvious
 
 ## Packet
 Unblocks on: P1 web shell and P2 mobile shell mockups merged (header, footer, tab bar and sheet patterns); assets/empty-inbox.png generated
-Branch: design/P12-chat
+Branch: agent/TASK-21.1-chat
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Acceptance Criteria
