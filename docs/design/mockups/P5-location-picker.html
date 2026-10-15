@@ -32,8 +32,7 @@
 .fl { display: inline-flex; align-items: center; min-height: 44px; min-width: 44px; padding: 0; border: 0; background: none; font: inherit; font-size: 15px; line-height: 22px; color: hsl(var(--muted-foreground)); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 4px; cursor: pointer; white-space: nowrap; }
 .fl:hover { color: hsl(var(--foreground)); }
 
-/* System 10.1 hover: text and icon buttons get foreground at 10 % (directions.css on main still underlines text buttons) */
-.btn-text:hover, .btn-text.is-hover { background: hsl(var(--foreground) / 0.10); text-decoration: none; }
+/* System 10.1 hover: icon buttons get foreground at 10 % (text buttons come from directions.css) */
 .iconbtn.is-hover { background: hsl(var(--foreground) / 0.10); }
 .btn[aria-busy="true"] { cursor: progress; }
 
