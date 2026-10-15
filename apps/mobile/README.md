@@ -48,3 +48,7 @@ Gallery: `/dev/kit` (redirects to `/` when `EXPO_PUBLIC_APP_ENV=production`). `r
 - `app/settings`: a stack above the tabs. `language` works; `[section]` is the placeholder for `notifications`, `alerts`, `consent`, `payments` and `account` until a story adds `app/settings/<section>.tsx`.
 - Permissions: show `PermissionPrimer` (`components/shell/permission-primer.tsx`) before every OS prompt while the OS can still ask, passing the prompt as `request`; on `onResult(false)` show `PermissionNote` where the permission was needed.
 - Sign-out (Profil) calls `signOutAndWipe({ removeManageLinks })` after a confirmation with the "remove links" choice.
+
+## Analytics (TASK-7.3)
+
+`lib/analytics.ts` wires `@zivali/analytics` (C12): consent in expo-secure-store (`zz_consent`), `screen_view` from Expo Router segments (route template) in the root layout, `firebase.json` defaults (collection off, all consent signals denied). Firebase is used only with `EXPO_PUBLIC_ANALYTICS_PROVIDER=firebase`, the Google files (`GOOGLE_SERVICES_JSON` / `GOOGLE_SERVICE_INFO_PLIST` EAS file env vars, locally `.secrets/google-services.json` and `.secrets/GoogleService-Info.plist`) and a dev build that includes `@react-native-firebase/*` (new EAS dev build needed). Otherwise the mock adapter runs (one dev warning). DebugView on Android: `adb shell setprop debug.firebase.analytics.app si.signapps.zivali`.

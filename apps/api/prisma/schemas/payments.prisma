@@ -1,0 +1,61 @@
+// Payments ledger (C13, ADR-011): Stripe test mode or the mock provider. Only provider ids are stored, never card
+// data. Rewards are display-only (C4) and never a payment. Written by TASK-32.1; RLS deny-all (ADR-021).
+
+enum PAYMENT_PURPOSE {
+  TIP
+  REPORT_CONTRIBUTION
+  SUPPORT
+  BOOST
+  SUBSCRIPTION
+
+  @@schema("app")
+}
+
+enum PAYMENT_STATUS {
+  PENDING
+  SUCCEEDED
+  FAILED
+  CANCELED
+  REFUNDED
+
+  @@schema("app")
+}
+
+model payments {
+  id                  String          @id @default(uuid()) @db.Uuid
+  // null once the account is deleted: the accounting record stays, anonymised
+  user_id             String?         @db.Uuid
+  purpose             PAYMENT_PURPOSE
+  // integer cents, >= 200 (check in the migration)
+  amount_cents        Int
+  // 'EUR' only (check in the migration)
+  currency            String          @default("EUR")
+  status              PAYMENT_STATUS  @default(PENDING)
+  // 'stripe' | 'mock' (check in the migration)
+  provider            String
+  provider_session_id String?         @unique
+  provider_payment_id String?
+  // e.g. { "report_id": "…" }
+  refs                Json?
+  receipt_sent_at     DateTime?       @db.Timestamptz(6)
+  created_at          DateTime        @default(now()) @db.Timestamptz(6)
+  updated_at          DateTime        @updatedAt @db.Timestamptz(6)
+  user                profiles?       @relation(fields: [user_id], references: [id], onDelete: SetNull)
+
+  @@index([user_id, created_at])
+  @@schema("app")
+}
+
+// Webhook ledger: a duplicate provider_event_id is a no-op.
+model payment_events {
+  id                String   @id @default(uuid()) @db.Uuid
+  provider          String
+  provider_event_id String   @unique
+  type              String
+  // A redacted summary (C13), NEVER the raw provider event (it carries customer details and card brand/last4/expiry):
+  // only the keys id, type, object_id, payment_intent, amount, currency, status, livemode (check in the migration).
+  payload           Json
+  received_at       DateTime @default(now()) @db.Timestamptz(6)
+
+  @@schema("app")
+}
