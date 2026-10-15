@@ -31,7 +31,8 @@ export const NotificationPrefInput = z
 export const PushTokenInput = z
 	.object({ token: z.string().min(1).max(512), platform: PushPlatform })
 	.openapi('PushTokenInput');
-export const PushTokenParams = z.object({ token: z.string().min(1).max(512) });
+// DELETE /v1/push-tokens takes the token in the body, so it stays out of URLs and access logs (C10, CH-76).
+export const PushTokenDeleteInput = PushTokenInput.pick({ token: true }).openapi('PushTokenDeleteInput');
 export const UnsubscribeQuery = z.object({ token: z.string().min(1).max(1024) });
 
 export const AlertSubscriptionInput = z

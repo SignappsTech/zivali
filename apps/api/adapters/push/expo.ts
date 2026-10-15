@@ -5,6 +5,7 @@ export function expoPush(accessToken?: string): PushAdapter {
 		async send(messages) {
 			const res = await fetch('https://exp.host/--/api/v2/push/send', {
 				method: 'POST',
+				signal: AbortSignal.timeout(10_000),
 				headers: {
 					'content-type': 'application/json',
 					...(accessToken && { authorization: `Bearer ${accessToken}` }),

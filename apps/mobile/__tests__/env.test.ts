@@ -31,3 +31,9 @@ test.each(['sb_secret_test', 'eyJhbGciOiJIUzI1NiJ9.service_role.sig', ''])(
 		);
 	}
 );
+
+test('production refuses the mock push provider', () => {
+	const prod = { ...valid, EXPO_PUBLIC_APP_ENV: 'production' };
+	expect(() => parseEnv(prod)).toThrow('EXPO_PUBLIC_PUSH_PROVIDER');
+	expect(parseEnv({ ...prod, EXPO_PUBLIC_PUSH_PROVIDER: 'expo' }).EXPO_PUBLIC_PUSH_PROVIDER).toBe('expo');
+});
