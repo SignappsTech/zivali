@@ -60,6 +60,8 @@ Ownership ("owner of pet", "manager of report", "participant of conversation") i
 
 ## Jobs (pg-boss, ADR-022)
 
+Adapters (`apps/api/src/adapters/*`: interface + mock + provider) are new code, not ported from any earlier branch.
+
 `jobs.send(queue, data, opts)` from domain functions (`lib/jobs.ts`, via `ctx.jobs`), optionally inside the Prisma transaction. Handlers in `jobs/<queue>.job.ts` export `async function handle(data, ctx)` and call domain functions; `ctx = { prisma, logger, adapters, now, send }`; idempotent; throw to retry (5 attempts, backoff). Queue names in C1 order: `match.report`, `notify.send`, `alerts.fanout`, `photo.process`, `photo.publish`, `report.lifecycle`, `retention.purge`, `partners.stats`, `payment.effects`, `directory.reminder`, `db.keepalive`, `db.backup`. Tests and `pnpm jobs:drain` process queues to empty.
 
 ## Seed

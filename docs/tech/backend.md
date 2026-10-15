@@ -6,7 +6,7 @@ Read this, your task packet and the contract(s) it references. Conventions for e
 
 ## Stack
 
-- **apps/api**: Node 22, TypeScript (repo version), ESM, **Express 5**, **Prisma 7** (`prisma-client` generator, `@prisma/adapter-pg`, `prisma.config.ts`, multi-file schema in `prisma/schemas/`, TypedSQL in `prisma/sql/`), zod (`@zivali/validation`), pino + pino-http, helmet, cors, compression, express-rate-limit, `jose` (JWKS), **pg-boss** (jobs, ADR-022), `@aws-sdk/client-s3` + presigner (Cloudflare R2 / MinIO, ADR-014), sharp (worker), Stripe SDK, zod-to-openapi (spec written to `apps/api/openapi.json`, consumed by the RTK codegen in `@zivali/api`; Swagger UI deferred). Dev `tsx watch`, build `tsup`, tests **Vitest + Supertest** against the real local database.
+- **apps/api**: Node 22, TypeScript (repo version), ESM, **Express 5**, **Prisma 7** (`prisma-client` generator, `@prisma/adapter-pg`, `prisma.config.ts`, multi-file schema in `prisma/schemas/`, TypedSQL in `prisma/sql/`), zod (`@zivali/validation`), pino + pino-http, helmet, cors, compression, express-rate-limit, `jose` (JWKS), **pg-boss** (jobs, ADR-022), `@aws-sdk/client-s3` + presigner (Cloudflare R2 / MinIO, ADR-014), sharp (worker), Stripe over `fetch` (no Stripe SDK), zod-to-openapi (spec written to `apps/api/openapi.json`, consumed by the RTK codegen in `@zivali/api`; Swagger UI deferred). Dev `tsx watch`, build `tsup`, tests **Vitest + Supertest** against the real local database.
 - **Supabase** provides only Postgres 17 (PostGIS, pgvector), Auth (email, Google, Apple, anonymous, TOTP, Turnstile) and Realtime Broadcast (chat and inbox, ADR-023). No Edge Functions, no RPC-as-API, no Supabase Storage.
 - **Database lockdown (ADR-021)**: all app tables in schema `app` (not exposed by PostgREST), no grants for `anon`/`authenticated`, RLS enabled with no policies on every table. Only `realtime.messages` has a policy (chat membership).
 - Shared pure TypeScript (zod schemas and DTOs, chip normalisation, matching score) lives in `packages/validation` and is imported by the API and both apps.
@@ -98,7 +98,7 @@ Domains throw `AppError`; unknown errors become `INTERNAL` (500) with the reques
 | `FUZZ_SECRET`, `RATE_SALT`, `IDEMPOTENCY_KEY` | random 32-byte secrets per environment |
 | `STORAGE_PROVIDER` (`minio`/`r2`/`memory`), `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_PRIVATE`, `R2_BUCKET_MEDIA`, `R2_BUCKET_BACKUPS`, `MEDIA_BASE_URL`, `S3_ENDPOINT` (MinIO locally) | ADR-014; buckets are in the R2 **EU jurisdiction**, so the r2 adapter always uses `https://<R2_ACCOUNT_ID>.eu.r2.cloudflarestorage.com` (also for presigned URLs) |
 | `PAYMENTS_PROVIDER` (`mock`/`stripe`), `STRIPE_SECRET_KEY` (sk_test only), `STRIPE_WEBHOOK_SECRET`, `MOCK_WEBHOOK_SECRET` | live keys rejected (C13) |
-| `EMAIL_PROVIDER` (`mock`/`brevo`), `BREVO_API_KEY`, `EMAIL_FROM`, `LEADS_NOTIFY_EMAIL` | mock writes `email_outbox` |
+| `EMAIL_PROVIDER` (`mock`/`brevo`), `BREVO_API_KEY`, `EMAIL_FROM`, `LEADS_NOTIFY_EMAIL` | mock keeps an in-memory sent list (no `email_outbox`); staging/production: configured or explicitly off |
 | `PUSH_PROVIDER` (`mock`/`expo`), `EXPO_ACCESS_TOKEN` | |
 | `CAPTCHA_PROVIDER` (`mock`/`turnstile`), `TURNSTILE_SECRET_KEY` | leads form; Auth captcha is configured in Supabase |
 | `AI_PROVIDER`, `ANTHROPIC_API_KEY`, `AI_VISION_MODEL`, `AI_VISION_EFFORT` (M3); `EMBEDDER_PROVIDER`, `VOYAGE_API_KEY` (M3) | ADR-012, ADR-013 |
@@ -106,7 +106,7 @@ Domains throw `AppError`; unknown errors become `INTERNAL` (500) with the reques
 | Deploy (CI / `scripts/deploy.mjs`): `SUPABASE_ACCESS_TOKEN`, `SUPABASE_PROJECT_REF`, `SUPABASE_DB_PASSWORD`, `HETZNER_HOST`, `HETZNER_SSH_KEY`, `GHCR_TOKEN`, `EXPO_TOKEN` | missing → `NEEDS-INPUT`, dry run |
 | `SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID/_SECRET`, `…_APPLE_…` (config.toml `env()`) | providers enabled only when set |
 
-`lib/config.ts` validates all of them with zod at startup (fails with the variable name); adapters fall back to `mock` when their credentials are missing outside production.
+`lib/config.ts` validates all of them with zod at startup (fails with the variable name); adapters fall back to `mock` when their credentials are missing in `local`/test only. In staging and production an adapter is either configured or explicitly `off` (feature not enabled: calls fail with `SERVICE_UNAVAILABLE`), never `mock`.
 
 ## Commands
 
@@ -156,3 +156,4 @@ Branch `agent/<task-id>-<slug>` from `main`; commits `<task-id>: <what>`; never 
 |---|---|---|
 | 1.1 | 2026-10-15 | CH-40: repo map adds scripts/geo-places.mjs and scripts/geo-shapes.mjs |
 | 1.2 | 2026-10-15 | CH-64: DoD migration check without migrate reset; CH-65: routes/index.ts |
+| 1.3 | 2026-10-15 | CH-99: Stripe over fetch; mock email in-memory sent list; staging/production adapters configured or off, never mock; CH-97: adapters are new code |

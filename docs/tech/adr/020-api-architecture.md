@@ -28,7 +28,7 @@ The client wants to own the backend in a stack they know: Express + Prisma, the 
       middleware/          auth.ts, permission.ts, validate.ts, rateLimit.ts, idempotency.ts, error.ts, requestId.ts
       jobs/                <queue>.job.ts handlers (ADR-022)
       lib/                 config.ts (zod env, loaded once), logger.ts, errors.ts (AppError), s3.ts, jobs.ts, realtime.ts, fuzz.ts, …
-      adapters/            ai/, embedder/, payments/, email/, push/, captcha/ – interface + mock + provider (ported from the TASK-3.2 branch)
+      adapters/            ai/, embedder/, payments/, email/, push/, captcha/ – interface + mock + provider (all new code, nothing ported)
       prisma/              prisma.ts (client singleton), schemas/*.prisma (by domain) + migrations/, sql/*.sql (TypedSQL), includes/*.ts, seed.ts, seeders/
       test/                setup.ts, helpers (auth token factory, db reset), routes/*.routes.test.ts, domains/*.test.ts, jobs/*.test.ts, security/*.test.ts
       Dockerfile, tsup.config.ts, prisma.config.ts, vitest.config.ts, .env.example
