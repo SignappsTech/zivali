@@ -1,13 +1,14 @@
 ---
 id: TASK-8.4
 title: 'QA: UI kit core primitives for web and mobile'
-status: To Do
+status: Done
 assignee:
   - '@qa'
 created_date: '2026-10-14 22:15'
 labels:
   - qa
   - 'est:XS'
+  - 'qa:pass'
 milestone: m-0
 dependencies:
   - TASK-8.2
@@ -41,3 +42,12 @@ Branch: - (verify on main)
 - [ ] #4 Given a token change, when the tokens package updates, then both platforms pick it up without component edits.
 - [ ] #5 Story gates pass on main: `pnpm verify`, plus `pnpm quality` for the pages this story touches; results recorded in the QA notes.
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+QA 2026-10-15 on main ba428d3: qa:pass.
+- AC1 same component names and FormField props on web and mobile. AC2/AC3 web: kit e2e 6/6, axe 0 violations in sl/en, light/dark, each overlay open; targets ≥44 px; 3 px focus ring. Mobile: jest gallery render in sl/en; min-h-11, maxFontSizeMultiplier 2, roles set. No hex colours or arbitrary sizes. AC4 tokens via @zivali/tokens on both. AC5 pnpm verify 30/30.
+- Open, not blocking: TalkBack, 200 % text scale and on-device states for the mobile kit wait for a new EAS dev build (TASK-8.3 AC#3).
+- Lighthouse budgets fail on public pages (script 287-315 KB, LCP 2.9-4.0 s locally under load): owned by TASK-11.2 / TASK-90.4, not the kit (the kit is only imported by /dev/kit).
+<!-- SECTION:NOTES:END -->

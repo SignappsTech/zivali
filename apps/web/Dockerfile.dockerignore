@@ -1,0 +1,18 @@
+# Build context is the repo root (see Dockerfile); BuildKit reads this file next to the Dockerfile.
+**/node_modules
+**/dist
+**/.next
+**/.expo
+**/.turbo
+**/coverage
+**/.env*
+!**/.env.example
+apps/api/generated
+apps/mobile
+.git
+.secrets
+.claude
+backlog
+# @zivali/tokens builds from docs/design/tokens.json; nothing else under docs/ is needed.
+docs/**
+!docs/design/tokens.json

@@ -28,7 +28,8 @@ export async function generateMetadata({ params }: PageProps<'/[locale]/shelters
 	const locale = (await params).locale as Locale;
 	const [t, data] = await Promise.all([getTranslations({ locale, namespace: 'shelters' }), load(locale)]);
 	return {
-		title: t('seo_title'),
+		// The string carries the brand suffix itself (shelters content slice), so not through the layout template.
+		title: { absolute: t('seo_title') },
 		description: t('seo_description', { count: data?.shelters.length ?? 0 }),
 		alternates: { canonical: absoluteUrl(locale, '/shelters') },
 		// An error state is not a page to index.
@@ -51,7 +52,7 @@ export default async function SheltersPage({ params }: PageProps<'/[locale]/shel
 	const url = (slug: string) => absoluteUrl(locale, { pathname: '/shelters/[slug]', params: { slug } });
 
 	return (
-		<main className="mx-auto box-content max-w-[1120px] px-5 pt-6 pb-12 lg:px-12 lg:pt-8 lg:pb-24">
+		<main id="main" className="mx-auto box-content max-w-[1120px] px-5 pt-6 pb-12 lg:px-12 lg:pt-8 lg:pb-24">
 			<div className="max-w-[640px]">
 				<h1 className="font-display text-3xl font-bold tracking-[-0.02em] text-balance lg:text-5xl">
 					{t('h1')}

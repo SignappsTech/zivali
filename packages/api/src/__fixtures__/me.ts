@@ -34,7 +34,7 @@ export const adminUsers: AdminUserList = {
 		{
 			id: me.id,
 			display_name: 'Ana',
-			email: 'a***@example.si',
+			email_masked: 'a***@example.si',
 			role: 'USER',
 			is_anonymous: false,
 			created_at: '2026-10-01T08:00:00Z',

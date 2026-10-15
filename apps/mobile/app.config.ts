@@ -39,6 +39,13 @@ const config: ExpoConfig = {
 	plugins: [
 		'expo-router',
 		'expo-dev-client',
+		// Native Firebase needs both Google config files; without them the build skips it and analytics stays on the mock.
+		...(googleServicesFile && googleServiceInfoPlist
+			? ([
+					'@react-native-firebase/app',
+					['expo-build-properties', { ios: { useFrameworks: 'static' } }],
+				] as NonNullable<ExpoConfig['plugins']>)
+			: []),
 		// iOS BGTaskScheduler identifier and the `processing` background mode for the offline cache refresh (C17).
 		'expo-background-task',
 		[
@@ -72,6 +79,7 @@ const config: ExpoConfig = {
 	experiments: { typedRoutes: true },
 	// EXPO_PUBLIC_* (API and app URLs, Supabase) come from the eas.json profile env; only the environment name is surfaced here.
 	extra: {
+		firebase: Boolean(googleServicesFile && googleServiceInfoPlist),
 		appEnv: process.env.EXPO_PUBLIC_APP_ENV ?? 'local',
 		eas: { projectId: '0b3c27cb-3512-4f5c-bb56-4b609f160e02' },
 	},

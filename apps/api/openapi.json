@@ -244,17 +244,28 @@
 				},
 				"required": ["items", "next_cursor"]
 			},
+			"AdminQueues": {
+				"type": "object",
+				"properties": {
+					"available": { "type": "boolean" },
+					"queues": { "type": "array", "items": { "$ref": "#/components/schemas/QueueCounts" } },
+					"failed_jobs": { "type": "array", "items": { "$ref": "#/components/schemas/FailedJob" } }
+				},
+				"required": ["available", "queues", "failed_jobs"],
+				"description": "available is false while pg-boss has not created its tables yet."
+			},
 			"AdminUser": {
 				"type": "object",
 				"properties": {
 					"id": { "type": "string", "format": "uuid" },
 					"display_name": { "type": ["string", "null"] },
-					"email": { "type": ["string", "null"] },
+					"email_masked": { "type": ["string", "null"] },
 					"role": { "$ref": "#/components/schemas/UserRole" },
 					"is_anonymous": { "type": "boolean" },
 					"created_at": { "type": "string", "format": "date-time" }
 				},
-				"required": ["id", "display_name", "email", "role", "is_anonymous", "created_at"]
+				"required": ["id", "display_name", "email_masked", "role", "is_anonymous", "created_at"],
+				"description": "No phone; the email is masked (a***@example.si)."
 			},
 			"AdminUserList": {
 				"type": "object",
@@ -324,6 +335,28 @@
 						"details": { "retry_after_s": 1800 }
 					}
 				}
+			},
+			"AuditLogEntry": {
+				"type": "object",
+				"properties": {
+					"id": { "type": "string", "format": "uuid" },
+					"actor_id": { "type": ["string", "null"], "format": "uuid" },
+					"action": { "type": "string" },
+					"target_type": { "type": "string" },
+					"target_id": { "type": ["string", "null"] },
+					"diff": { "type": ["object", "null"], "additionalProperties": {} },
+					"created_at": { "type": "string", "format": "date-time" }
+				},
+				"required": ["id", "actor_id", "action", "target_type", "target_id", "diff", "created_at"],
+				"description": "actor_id is null for system actions; diff.note is the staff note."
+			},
+			"AuditLogList": {
+				"type": "object",
+				"properties": {
+					"items": { "type": "array", "items": { "$ref": "#/components/schemas/AuditLogEntry" } },
+					"next_cursor": { "type": ["string", "null"] }
+				},
+				"required": ["items", "next_cursor"]
 			},
 			"BlockInput": {
 				"type": "object",
@@ -687,6 +720,19 @@
 					"INTERNAL",
 					"SERVICE_UNAVAILABLE"
 				]
+			},
+			"FailedJob": {
+				"type": "object",
+				"properties": {
+					"id": { "type": "string", "format": "uuid" },
+					"queue": { "type": "string" },
+					"error": { "type": ["string", "null"] },
+					"retry_count": { "type": "integer" },
+					"created_at": { "type": "string", "format": "date-time" },
+					"failed_at": { "anyOf": [{ "type": "string", "format": "date-time" }, { "type": "null" }] }
+				},
+				"required": ["id", "queue", "error", "retry_count", "created_at", "failed_at"],
+				"description": "No payload (it may hold personal data), only the error message."
 			},
 			"GeoReverseInput": {
 				"type": "object",
@@ -1253,7 +1299,7 @@
 			},
 			"PhotoStatus": {
 				"type": "string",
-				"enum": ["uploaded", "accepted", "rejected", "published", "unpublished"]
+				"enum": ["pending", "uploaded", "accepted", "rejected", "published", "unpublished"]
 			},
 			"PhotoView": {
 				"type": "object",
@@ -1419,6 +1465,19 @@
 				},
 				"required": ["token", "platform"]
 			},
+			"QueueCounts": {
+				"type": "object",
+				"properties": {
+					"name": { "type": "string" },
+					"created": { "type": "integer" },
+					"retry": { "type": "integer" },
+					"active": { "type": "integer" },
+					"completed": { "type": "integer" },
+					"cancelled": { "type": "integer" },
+					"failed": { "type": "integer" }
+				},
+				"required": ["name", "created", "retry", "active", "completed", "cancelled", "failed"]
+			},
 			"RejectMatchInput": {
 				"type": "object",
 				"properties": { "reason": { "type": "string", "minLength": 1, "maxLength": 500 } }
@@ -1555,8 +1614,12 @@
 			},
 			"SetRoleInput": {
 				"type": "object",
-				"properties": { "role": { "$ref": "#/components/schemas/UserRole" } },
-				"required": ["role"]
+				"properties": {
+					"role": { "$ref": "#/components/schemas/UserRole" },
+					"note": { "type": "string", "minLength": 1, "maxLength": 500 }
+				},
+				"required": ["role", "note"],
+				"additionalProperties": false
 			},
 			"SetRoleResponse": {
 				"type": "object",
@@ -1743,6 +1806,215 @@
 		"parameters": {}
 	},
 	"paths": {
+		"/v1/admin/users": {
+			"get": {
+				"operationId": "listAdminUsers",
+				"summary": "Users for moderation",
+				"description": "Moderators and admins (aal2). query matches the display name or the email; emails are masked, no phone (C3). Audited.",
+				"tags": ["admin"],
+				"parameters": [
+					{
+						"schema": { "type": "string", "maxLength": 100 },
+						"required": false,
+						"name": "query",
+						"in": "query"
+					},
+					{
+						"schema": { "type": "string", "format": "uuid" },
+						"required": false,
+						"name": "cursor",
+						"in": "query"
+					},
+					{
+						"schema": { "type": "integer", "minimum": 1, "maximum": 50 },
+						"required": false,
+						"name": "limit",
+						"in": "query"
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "One page of users, newest first",
+						"content": {
+							"application/json": { "schema": { "$ref": "#/components/schemas/AdminUserList" } }
+						}
+					},
+					"400": {
+						"description": "VALIDATION",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"401": {
+						"description": "UNAUTHENTICATED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"403": {
+						"description": "FORBIDDEN, AAL2_REQUIRED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"429": {
+						"description": "RATE_LIMITED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"500": {
+						"description": "INTERNAL",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					}
+				}
+			}
+		},
+		"/v1/admin/users/{id}/role": {
+			"put": {
+				"operationId": "setUserRole",
+				"summary": "Change a user's role",
+				"description": "Admins (aal2). The note is required and stored in the audit entry; the last admin cannot be demoted (CONFLICT). Takes effect on the next request of the user.",
+				"tags": ["admin"],
+				"parameters": [
+					{ "schema": { "type": "string", "format": "uuid" }, "required": true, "name": "id", "in": "path" }
+				],
+				"requestBody": {
+					"required": true,
+					"content": { "application/json": { "schema": { "$ref": "#/components/schemas/SetRoleInput" } } }
+				},
+				"responses": {
+					"200": {
+						"description": "The new role",
+						"content": {
+							"application/json": { "schema": { "$ref": "#/components/schemas/SetRoleResponse" } }
+						}
+					},
+					"400": {
+						"description": "VALIDATION",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"401": {
+						"description": "UNAUTHENTICATED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"403": {
+						"description": "FORBIDDEN, AAL2_REQUIRED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"404": {
+						"description": "NOT_FOUND",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"409": {
+						"description": "CONFLICT",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"429": {
+						"description": "RATE_LIMITED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"500": {
+						"description": "INTERNAL",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					}
+				}
+			}
+		},
+		"/v1/admin/audit-log": {
+			"get": {
+				"operationId": "listAuditLog",
+				"summary": "Audit log",
+				"description": "Admins (aal2). Staff and system actions, newest first, with exact-match filters. Audited.",
+				"tags": ["admin"],
+				"parameters": [
+					{
+						"schema": { "type": "string", "format": "uuid" },
+						"required": false,
+						"name": "actor_id",
+						"in": "query"
+					},
+					{
+						"schema": { "type": "string", "minLength": 1, "maxLength": 100 },
+						"required": false,
+						"name": "action",
+						"in": "query"
+					},
+					{
+						"schema": { "type": "string", "minLength": 1, "maxLength": 100 },
+						"required": false,
+						"name": "target_type",
+						"in": "query"
+					},
+					{
+						"schema": { "type": "string", "minLength": 1, "maxLength": 100 },
+						"required": false,
+						"name": "target_id",
+						"in": "query"
+					},
+					{
+						"schema": { "type": "string", "format": "uuid" },
+						"required": false,
+						"name": "cursor",
+						"in": "query"
+					},
+					{
+						"schema": { "type": "integer", "minimum": 1, "maximum": 50 },
+						"required": false,
+						"name": "limit",
+						"in": "query"
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "One page of audit entries",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/AuditLogList" } } }
+					},
+					"400": {
+						"description": "VALIDATION",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"401": {
+						"description": "UNAUTHENTICATED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"403": {
+						"description": "FORBIDDEN, AAL2_REQUIRED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"429": {
+						"description": "RATE_LIMITED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"500": {
+						"description": "INTERNAL",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					}
+				}
+			}
+		},
+		"/v1/admin/queues": {
+			"get": {
+				"operationId": "getAdminQueues",
+				"summary": "Job queues",
+				"description": "Admins (aal2). pg-boss jobs per queue and state, and the latest failed jobs (error message only). Read-only; audited.",
+				"tags": ["admin"],
+				"responses": {
+					"200": {
+						"description": "Queue state",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/AdminQueues" } } }
+					},
+					"401": {
+						"description": "UNAUTHENTICATED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"403": {
+						"description": "FORBIDDEN, AAL2_REQUIRED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"429": {
+						"description": "RATE_LIMITED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"500": {
+						"description": "INTERNAL",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					}
+				}
+			}
+		},
 		"/v1/config/public": {
 			"get": {
 				"operationId": "getPublicConfig",
@@ -1900,6 +2172,57 @@
 					},
 					"401": {
 						"description": "UNAUTHENTICATED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"429": {
+						"description": "RATE_LIMITED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"500": {
+						"description": "INTERNAL",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					}
+				}
+			}
+		},
+		"/v1/reports/{code}": {
+			"get": {
+				"operationId": "getReport",
+				"summary": "One report by its short code",
+				"description": "PublicReport (fuzzed area; no chip number, contact data or exact point). A manager of the report gets ReportOwnerView. Hidden, removed and reports closed more than 30 days ago answer GONE with `details.reason`.",
+				"tags": ["reports"],
+				"parameters": [
+					{
+						"schema": { "type": "string", "pattern": "^[1-9A-HJ-NP-Za-km-z]{8}$" },
+						"required": true,
+						"name": "code",
+						"in": "path"
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "The report",
+						"content": {
+							"application/json": {
+								"schema": {
+									"anyOf": [
+										{ "$ref": "#/components/schemas/ReportOwnerView" },
+										{ "$ref": "#/components/schemas/PublicReport" }
+									]
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "VALIDATION",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"404": {
+						"description": "NOT_FOUND",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"410": {
+						"description": "GONE",
 						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
 					},
 					"429": {

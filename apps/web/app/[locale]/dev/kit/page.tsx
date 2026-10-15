@@ -6,7 +6,7 @@ import { env } from '@/lib/env';
 import { Kit } from './kit';
 import { samples } from './samples';
 
-export const metadata: Metadata = { title: 'UI kit · Najdimo', robots: { index: false, follow: false } };
+export const metadata: Metadata = { title: 'UI kit', robots: { index: false, follow: false } };
 
 /** P23 UI kit gallery (TASK-8.2): every components/ui primitive in its states, SL at /dev/kit, EN at /en/dev/kit. */
 export default async function KitPage({ params }: PageProps<'/[locale]/dev/kit'>) {
