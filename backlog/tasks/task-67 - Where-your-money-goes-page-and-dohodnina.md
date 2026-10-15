@@ -26,7 +26,7 @@ Voluntary support only works if people trust where it goes; a transparent page a
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Given the page, when opened, then it explains in SL and EN what contributions fund (infrastructure, AI, shelter tools), how fees work (Stripe fees, EUR 2 minimum, escrow fee percent) and shows the latest published totals (manual or from the ledger).
+- [ ] #1 Given the page, when opened, then it explains in SL and EN what contributions fund (infrastructure, AI, shelter tools), how fees work (Stripe fees, EUR 2 minimum) and shows the latest published totals (manual or from the ledger).
 - [ ] #2 Given wording, when displayed, then it never implies charitable status where none exists.
 - [ ] #3 Given accessibility and SEO, when audited, then the page meets WCAG 2.2 AA and is indexable.
 - [ ] #4 Given the page explains revenue, when read, then it states that shelters and municipalities never pay, vets pay only for the optional Vet Partner visibility plan, and income comes from voluntary support, owner extras (Boost, Premium), Vet Partner and ads.

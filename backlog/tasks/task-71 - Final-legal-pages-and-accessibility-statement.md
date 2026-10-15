@@ -30,7 +30,7 @@ Public launch needs legally reviewed pages (Q-006) that match what the product r
 <!-- AC:BEGIN -->
 - [ ] #1 Given the reviewed drafts, when client and legal comments are applied, then privacy, cookie, terms, imprint and accessibility pages are final in SL and EN without review banners.
 - [ ] #2 Given the audit result and shipped features, when the accessibility statement is updated, then it states conformance level, known gaps, date and a feedback contact.
-- [ ] #3 Given the final feature list (analytics, ads, contributions, escrow, subscriptions), when compared with the policies, then every processor, purpose, retention period and cookie is covered and a checklist is signed.
+- [ ] #3 Given the final feature list (analytics, ads, contributions, display-only rewards, subscriptions), when compared with the policies, then every processor, purpose, retention period and cookie is covered and a checklist is signed.
 - [ ] #4 Given the legal entity decision (Q-008), when known, then the dohodnina and contribution wording matches it.
 <!-- AC:END -->
 

@@ -13,7 +13,6 @@ milestone: m-4
 dependencies:
   - TASK-17
   - TASK-49
-  - TASK-66
   - TASK-35
 priority: high
 ordinal: 68000
@@ -37,4 +36,4 @@ Anonymous endpoints, chip lookup, payments and API keys are the attack surface; 
 
 ## Packet
 
-Unblocks on: attack surfaces implemented: anonymous submit (TASK-17), chip lookup (TASK-49), escrow (TASK-66), ad redirect (TASK-35); API keys (TASK-59) are audited too if shipped, but do not gate this story
+Unblocks on: attack surfaces implemented: anonymous submit (TASK-17), chip lookup (TASK-49), ad redirect (TASK-35); API keys (TASK-59) are audited too if shipped, but do not gate this story

@@ -1,7 +1,7 @@
 ---
 doc_id: DOC-02
 title: Product Requirements
-version: 0.7
+version: 0.8
 status: Draft
 date: 2026-10-14
 owner: Product Manager
@@ -18,7 +18,7 @@ approvals:
 - Izgubljene živali (working name) reunites lost dogs and cats with their owners in Slovenia, on web (Next.js) and mobile (Expo), in Slovenian (default) and English.
 - Owners report LOST pets. Finders, passers-by and shelters report FOUND or SIGHTED animals, finders without an account.
 - The system matches both sides (chip, location, time, attributes, then photo similarity) and connects people through in-app chat with hidden contact data.
-- The core loop is free forever. Revenue comes only from early ads (Oglas), voluntary support (tips, contributions, Podpornik, escrow fee), owner extras (Boost, Premium, which is also ad-free) and the B2B Vet Partner plan, all Stripe test mode in this phase. Shelters and municipalities use everything free forever; vets get everything that reunites animals free and pay only for visibility.
+- The core loop is free forever. Revenue comes only from early ads (Oglas), voluntary support (tips, contributions, Podpornik), owner extras (Boost, Premium, which is also ad-free) and the B2B Vet Partner plan, all Stripe test mode in this phase. Shelters and municipalities use everything free forever; vets get everything that reunites animals free and pay only for visibility.
 - Google Analytics 4 (web) and Firebase Analytics (mobile) are core from M1, behind consent, with no personal data in events.
 - Delivery: M1 Foundation, M2 Core loop MVP (with ads and voluntary support), M3 AI and shelters, M4 Monetisation and moderation, M5 Hardening and launch prep, M6 Ads self-serve (post-launch). See `06-delivery-plan.md`.
 
@@ -450,29 +450,28 @@ approvals:
 - **Edge cases**
   - Supporter sees ads like everyone else; only Premium is ad-free (A-017).
 
-## FR-023: Finder reward escrow
+## FR-023: Display-only reward line
 
 - **Priority:** Should · **Milestone:** M4
-- **User story:** As an owner, I want to secure a reward in the app so that nobody asks me to pay first.
+- **User story:** As an owner, I want to mention a reward on my listing so that finders know one is offered, while any payment stays between us outside the app.
 - **Requirements**
-  - R-023.1 Reward EUR 10–500 funded in Stripe (test); funds held through Stripe Connect (Stripe holds funds, no own wallet).
-  - R-023.2 Release after owner confirms reunion; finder paid via Connect Express (test) minus platform fee (default 5 %, configurable, shown before funding).
-  - R-023.3 Refund to owner after 30 days or on admin-resolved dispute; audit-logged.
-  - R-023.4 Finder without an account claims their report and onboards to receive payment.
-  - R-023.5 Legal review of the operating model before any live use (Q-011).
+  - R-023.1 A lost listing has an optional free-text or amount reward line (display only, EUR 0–500 if numeric); the app never holds, moves or intermediates money for rewards: no escrow, no fee, no Stripe Connect, no DAC7 reporting.
+  - R-023.2 Every listing with a reward line and the chat show a scam warning: never pay first, never send money to claim a found pet, arrange any reward in person after seeing the animal.
+  - R-023.3 Reward text is moderated like other listing text; scam patterns can be reported (FR-014).
+  - R-023.4 Terms state that rewards are arranged between the parties and outside the app (FR-035).
 - **Acceptance criteria**
-  - [ ] Given a funded reward, when the owner confirms release, then the finder payout is created in test mode and both get receipts.
-  - [ ] Given no reunion in 30 days, when it elapses, then funds return to the owner.
-  - [ ] Given test mode, when running, then no live money moves.
+  - [ ] Given an owner adds a reward line, when the listing is shown, then the line and the scam warning appear.
+  - [ ] Given a listing without a reward, when shown, then neither appears.
+  - [ ] Given any reward, when the flows run, then no payment, hold or payout is created.
 - **Edge cases**
-  - Dispute: both sides give a statement; admin decides; decision is final within the app.
+  - A reward line asking for payment up front is reportable and removable by moderation.
 
 ## FR-024: Transparency page and dohodnina
 
 - **Priority:** Should · **Milestone:** M4
 - **User story:** As a prospective supporter, I want to see where my money goes so that I trust the service.
 - **Requirements**
-  - R-024.1 Public page (SL/EN): what contributions fund, fees (Stripe fixed fees, EUR 2 minimum, escrow percent), latest published totals.
+  - R-024.1 Public page (SL/EN): what contributions fund, fees (Stripe fixed fees, EUR 2 minimum), latest published totals.
   - R-024.2 Dohodnina (income-tax share via eDavki) is deferred: it needs a non-profit with public-interest status on the tax authority list; Signapps d.o.o. can never qualify and a new society needs about 2 years. Option: a partner-NGO model (Q-008). Until then the section stays hidden by a flag.
   - R-024.3 Wording never implies charitable status where none exists.
 - **Acceptance criteria**
@@ -815,7 +814,7 @@ approvals:
 - **Priority:** Must · **Milestone:** M5 (start now for lead time)
 - **User story:** As the client, I want one document a Slovenian lawyer can review quickly so that legal sign-off (Q-013) does not delay launch.
 - **Requirements**
-  - R-045.1 `docs/legal/lawyer-briefing.md`: what the app does and the legally relevant features (anonymous found reports, location blurring, on-device geofencing, AI photo analysis, chat, payments, reward escrow, ads and Vet Partner, shelter data uploads).
+  - R-045.1 `docs/legal/lawyer-briefing.md`: what the app does and the legally relevant features (anonymous found reports, location blurring, on-device geofencing, AI photo analysis, chat, payments, display-only rewards, ads and Vet Partner, shelter data uploads).
   - R-045.2 Data flows and processors with locations (Supabase EU, Hetzner, Cloudflare R2, Stripe, Anthropic, Voyage, Brevo, Google/GA4/Firebase, Expo); links to `docs/content/legal/` drafts.
   - R-045.3 All open legal questions consolidated (content legal notes, `discovery/regulatory.md`, delivery-plan risks) each with our proposed answer; DPIA outline, draft retention table, DPA checklist; client decisions list.
   - R-045.4 Marked "not legal advice; for lawyer review".
@@ -832,7 +831,7 @@ approvals:
 - **Requirements**
   - R-046.1 The client's accountant decides whether online card payments (Boost, Premium, tips/contributions, Vet Partner) need fiscally verified invoices (davčno potrjevanje računov, ZDavPR: payment cards count as cash); decision recorded (Q-012).
   - R-046.2 If required: verification through a FURS-certified provider API behind an adapter with a mock; ZOI and EOR on the receipt email and PDF; retry on failure; premises/device registration note in the runbook.
-  - R-046.3 Every invoice shows a VAT 22 % breakdown.
+  - R-046.3 Every invoice shows a VAT 22 % breakdown; whether VAT applies to voluntary contributions and tips is open (OQ-001, Q-012).
   - R-046.4 Live payments are blocked by config until this is done or the decision is "not required" (extends R-020.2).
 - **Acceptance criteria**
   - [ ] Given a succeeded payment and "required", when invoiced, then ZOI and EOR appear on the receipt and a failed verification is retried.
@@ -879,20 +878,20 @@ approvals:
   - Every ad labelled "Oglas" (EN "Ad"); links `rel="sponsored noopener"`; no ads in the report-lost, report-found, sign-in, chat or payment screens.
   - Wording for contributions: "podpora / prispevek". "Donacija" and charity wording only if a qualifying non-profit entity operates the service (Q-008).
 - **Legal (EU, drafts marked requires client and legal review):**
-  - Privacy policy: data categories (account, pet, photos, location, chat, payments, ad counters, analytics), purposes and legal bases, retention, processors and transfers (Supabase, Vercel, Stripe, AI provider, Google Analytics and Firebase), user rights, contact.
+  - Privacy policy: data categories (account, pet, photos, location, chat, payments, ad counters, analytics), purposes and legal bases, retention, processors and transfers (Hetzner VPS; Supabase: Postgres/Auth/Realtime, Frankfurt; Cloudflare: R2 EU and Turnstile; Brevo; Expo; Stripe; Anthropic; Voyage; Google: GA4/Firebase). MapTiler is not used: geocoding is our own, on GURS data (ADR-007), user rights, contact.
   - Cookie policy: strictly necessary storage and GA4/Firebase identifiers (such as `_ga`) with purpose, duration and consent mechanism.
   - GDPR consent: Consent Mode v2 with all four signals denied by default; no analytics before consent; consent record with version and timestamp; withdrawal as easy as giving; re-ask after 12 months. Our own ad counting is aggregate and cookieless.
-  - Terms of use: acceptable use, scams, finder rewards and escrow, boosts, subscriptions and contributions, ad labelling, shelter terms, liability.
+  - Terms of use: acceptable use, scams, display-only finder rewards (arranged outside the app, scam warning), boosts, subscriptions and contributions, ad labelling, shelter terms, liability.
   - Imprint: company legal details supplied by the client (name, address, registration and VAT numbers, contact).
   - Accessibility statement (European Accessibility Act): conformance level, known gaps, date, feedback contact; updated after the M5 audit.
-  - To verify before public launch: animal-protection rules and shelter holding periods (Q-006), payment-services regulation for reward escrow (Q-011), VAT and accounting treatment of contributions, dohodnina eligibility (Q-008).
+  - To verify before public launch: animal-protection rules and shelter holding periods (Q-006), VAT and accounting treatment of voluntary contributions/tips (Q-012, OQ-001), dohodnina eligibility (Q-008).
 
 # Scope
 
 | | Features |
 |---|---|
 | **MVP** (M1–M2) | Responsible-shelter directory and post-submit checklists; Offline cache and offline report queue (mobile); monorepo, design system, UI kit, SL/EN, auth, analytics (GA4/Firebase) and consent; pet profiles, photos, location with fuzzing; report lost; report found without account; map, list, detail; matching v1 and review; chat; notifications and nearby alerts; poster and sharing; reunited and lifecycle; abuse reporting; admin shell; payments core (Stripe test); Reunited tip and report contribution; ads (serving, placements, admin, Partners page); public copy and legal drafts |
-| **Version 1** (M3–M5) | AI pre-fill; image-similarity matching; organisations and shelter portal (bulk, CSV, matches, chip lookup); sighting trail; local proximity alerts (mobile geofences); export and delete; subscriptions; boost; Premium (incl. AI extras, ad-free); Podpornik; reward escrow; free shelter tools (API, analytics, municipality reports, adoption page); Vet Partner; transparency page; moderation queue and image screening; KPI dashboard; security, accessibility and performance audits; observability and backups; SEO pages; success stories; final legal pages; pilot onboarding kit; mobile release candidate builds |
+| **Version 1** (M3–M5) | AI pre-fill; image-similarity matching; organisations and shelter portal (bulk, CSV, matches, chip lookup); sighting trail; local proximity alerts (mobile geofences); export and delete; subscriptions; boost; Premium (incl. AI extras, ad-free); Podpornik; display-only reward line; free shelter tools (API, analytics, municipality reports, adoption page); Vet Partner; transparency page; moderation queue and image screening; KPI dashboard; security, accessibility and performance audits; observability and backups; SEO pages; success stories; final legal pages; pilot onboarding kit; mobile release candidate builds |
 | **Future** | Self-serve ad booking and Stripe invoicing, founding-partner pricing (M6); IAP or RevenueCat for mobile purchases; social auto-posting for boosts; privacy-first pet tags (redesign); chat photo attachments; CRHŽ integration (needs an agreement); server-side GA tagging; more species, countries and languages; vets, shop and insurer partnerships beyond ads |
 | **Out of scope** | Species other than dogs and cats; countries other than Slovenia; live payments; App Store and Play Store submission; QR/NFC pet tags (physical and printable); official CRHŽ integration |
 
@@ -950,7 +949,7 @@ approvals:
 - A-004: Shelter holding period default is 8 days after placement (the owner may demand return; after 8 days the shelter may rehome); configurable; the product states no other legal rules before review (Q-006).
 - A-005: Cloud credentials (Q-002 hosting: Hetzner VPS, Supabase Free for DB and Auth, R2 storage, Stripe; Q-007 Apple, Google, Firebase push) are pending; everything is built and tested locally first; deploy, push delivery and real GA4/Firebase data wait for them.
 - A-006: Pilot regions Ljubljana (shelter Gmajnice) and Maribor; 2–3 shelters onboarded by hand (Q-005).
-- A-007: Prices are test-mode placeholders from the client monetisation model (brief v0.8), configurable: Boost EUR 4.99 fixed (7 days); Premium EUR 2.99 per month or EUR 24.99 per year (includes 1 free Boost per year); Podpornik from EUR 2 per month (user chooses); support amounts EUR 3 / 5 (highlighted) / 10 / custom with a EUR 2 minimum (Stripe fees of about EUR 0.25 + 1.5 % and store cuts eat most of a EUR 1 payment); Vet Partner EUR 39 per month (B2B); escrow fee 5 %.
+- A-007: Prices are test-mode placeholders from the client monetisation model (brief v0.8), configurable: Boost EUR 4.99 fixed (7 days); Premium EUR 2.99 per month or EUR 24.99 per year (includes 1 free Boost per year); Podpornik from EUR 2 per month (user chooses); support amounts EUR 3 / 5 (highlighted) / 10 / custom with a EUR 2 minimum (Stripe fees of about EUR 0.25 + 1.5 % and store cuts eat most of a EUR 1 payment); Vet Partner EUR 39 per month (B2B).
 - A-008: Free forever (P-1): reporting, matching, chat, alerts in the default radius, poster, 1 saved pet profile. The pet-profile limit never blocks a lost report.
 - A-009: Fuzzing defaults: LOST ≥ 500 m, FOUND/SIGHTED ≥ 150 m, configurable.
 - A-010: Matching defaults: threshold 0.5, top 10, found within 30 days after loss; tuned with pilot data.
@@ -962,7 +961,7 @@ approvals:
 - A-016: Ad impressions are rendered counts without viewability; counting is aggregate and cookieless; sponsor reports state this method.
 - A-017: Premium is ad-free (Q-010 decided); Podpornik supporters still see ads.
 - A-018: Dohodnina is deferred: the operating company can never qualify; a new society needs about 2 years; a partner-NGO model is an option (Q-008). "Donation" wording stays out until a qualifying non-profit exists.
-- A-019: Reward escrow uses Stripe Connect (Stripe holds funds); live use needs legal review (Q-011).
+- A-019: Rewards are display-only (brief v1.1): owners arrange them outside the app; no escrow, fee, Stripe Connect or DAC7; Q-011 closed.
 - A-020: Region and municipality reference data come from Slovenian open data; licence to be verified.
 - A-021: Minimum mobile OS versions follow the Expo SDK chosen in the TDD.
 - A-022: Social auto-posting for boosts is deferred; Boost provides a share kit instead.
@@ -973,6 +972,7 @@ approvals:
 - A-027: Offline cache defaults 50 MB and 7 days; geofence alerts default cap 3 per day; iOS allows about 20 monitored regions, Android has its own limit, so the nearest and most recent areas are chosen.
 - A-028: The Always location permission is opt-in only, with a primer; store justification is prepared before store release (risk R-024).
 - A-029: Legal timings (3 days / 72 h owner duty, 24 h find notice, 8-day holding) appear in the product only after legal confirmation, behind a content flag.
+- OQ-001 (open, linked to Q-012, the accountant): FR-046 says "VAT 22 % on every invoice", but whether VAT applies to voluntary contributions and tips (no counter-performance) is unclear. Until the accountant decides, R-046.3 applies to Boost, Premium, Podpornik and Vet Partner; tips/contributions follow the decision recorded under Q-012.
 - A-030: The municipality-to-shelter directory (212 municipalities, 17 registered shelters) is refreshed yearly after 31 March.
 
 # Glossary
@@ -994,7 +994,6 @@ approvals:
 | Premium "Protect" | Owner subscription (EUR 2.99/month or 24.99/year): unlimited pets, AI extras, one-tap lost mode, 1 free Boost per year, ad-free |
 | Vet Partner | Paid B2B plan for vets: clinic profile, featured nearest-vet slot, alert and poster mention, monthly report |
 | Entitlement | Server-side right to a paid feature, derived from a subscription |
-| Escrow | Reward held by Stripe until the owner confirms reunion |
 | Dohodnina | Slovenian income tax; eligible non-profits can receive a share by taxpayer choice via eDavki |
 | eDavki | Slovenian tax authority online portal |
 | Društvo / zavod | Non-profit association / institute (possible eligible legal forms) |
@@ -1018,3 +1017,4 @@ approvals:
 | 0.5 | 2026-10-15 | Offline mode: FR-041 offline cache and FR-042 offline report queue (M2), FR-043 local proximity alerts (M3), NFR-OFFLINE, NFR-BATT, A-027, A-028 |
 | 0.6 | 2026-10-15 | Discovery changes: CRPsi lookup closed, now CRHŽ (FR-002, FR-016, A-003); cats first (FR-002); post-submit checklists (FR-005, FR-006); new FR-044 shelter directory; holding period 8 days and found location/time capture (FR-015, A-004); dohodnina deferred (FR-024, A-018); no animal sale ads (FR-018, FR-029, FR-031); Vet Partner labelling (FR-028, FR-030); SEO routes (FR-035); share kit (FR-011); marketing partners (FR-040); backend wording per brief v1.0 (A-005) |
 | 0.7 | 2026-10-15 | New FR-045 lawyer briefing pack (Q-013) and FR-046 fiscal invoices for card payments (Q-012) |
+| 0.8 | 2026-10-15 | Brief v1.1: reward escrow dropped, FR-023 now display-only reward line with scam warning (A-019, glossary, summary, A-007, FR-024 cleaned); processor list updated (Hetzner, Supabase Frankfurt, Cloudflare R2 EU/Turnstile, Brevo, Expo, Stripe, Anthropic, Voyage, Google), MapTiler removed (own GURS geocoder, ADR-007); open question OQ-001 on VAT for voluntary contributions linked to Q-012 |
