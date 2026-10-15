@@ -3,7 +3,7 @@ import { createHmac } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
 
 import { createAdapters } from '../../adapters/index.ts';
-import { signMockWebhook } from '../../adapters/payments/mock.ts';
+import { mockEvent, signWebhook } from '../../adapters/payments/mock.ts';
 import { config, type Config } from '../../lib/config.ts';
 import { systemCtx } from '../../lib/ctx.ts';
 
@@ -113,26 +113,32 @@ describe('adapter provider selection', () => {
 		const body = JSON.stringify({
 			id: 'e1',
 			type: 'checkout.session.async_payment_failed',
+			livemode: false,
 			data: { object: { id: 'cs_1' } },
 		});
 		const t = Math.floor(Date.now() / 1000);
 		const sig = createHmac('sha256', 'whsec_x').update(`${t}.${body}`).digest('hex');
 		const ok = `t=${t},v1=${'0'.repeat(64)},v1=${sig}`;
-		expect(payments.parseWebhook(body, ok)).toMatchObject({ id: 'e1', type: 'payment.failed', checkoutId: 'cs_1' });
+		expect(payments.parseWebhook(body, ok)).toMatchObject({
+			id: 'e1',
+			type: 'checkout.session.async_payment_failed',
+			object: { id: 'cs_1', metadata: {} },
+		});
 		expect(() => payments.parseWebhook(body, `t=${t},v1=${'0'.repeat(64)}`)).toThrow(/signature/);
 	});
 
 	it('refuses Stripe live keys even outside production', () => {
-		for (const key of ['sk_live_x', 'rk_live_x']) {
+		for (const key of ['sk_live_x', 'rk_live_x', 'pk_live_x']) {
 			expect(() => createAdapters({ ...blank, STRIPE_SECRET_KEY: key })).toThrow(/live keys/);
 		}
 	});
 
 	it('mock payments verify the webhook signature', () => {
 		const { payments } = createAdapters({ ...blank, MOCK_WEBHOOK_SECRET: 's' });
-		const body = JSON.stringify({ id: 'e1', type: 'checkout.completed', checkoutId: 'c1', metadata: {} });
-		expect(payments.parseWebhook(body, signMockWebhook(body, 's')).id).toBe('e1');
+		const body = mockEvent('success', 'p1');
+		expect(payments.parseWebhook(body, signWebhook(body, 's')).object.metadata).toEqual({ payment_id: 'p1' });
 		expect(() => payments.parseWebhook(body, 'bad')).toThrow(/signature/);
+		expect(() => payments.parseWebhook(body, signWebhook(body, 'other'))).toThrow(/signature/);
 	});
 
 	it('adapters are reachable as ctx.adapters', () => {
