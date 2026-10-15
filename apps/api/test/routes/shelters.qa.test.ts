@@ -112,8 +112,7 @@ describe('validation edge cases', () => {
 		}
 	});
 
-	// BUG (TASK-88.4 defect 1): empty lat/lng are coerced to 0 and answered as outside_slovenia instead of 400.
-	it.fails('rejects empty lat and lng', async () => {
+	it('rejects empty lat and lng', async () => {
 		expect((await request(app).get('/v1/shelters/responsible?lat=&lng=')).status).toBe(400);
 	});
 });
