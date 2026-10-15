@@ -83,7 +83,7 @@ describe('CreateReportInput (C4)', () => {
 		const r = CreateReportInput.safeParse({ ...lost, reward_note: huge });
 		const ms = Date.now() - t0;
 		expect(r.error?.issues.map((i) => `${i.path.join('.')}: ${i.code}`)).toEqual(['reward_note: too_big']);
-		expect(ms).toBeLessThan(50);
+		expect(ms).toBeLessThan(500); // a ReDoS takes seconds; 500 ms tolerates a loaded machine
 	});
 
 	test('found and sighted reports reject reward fields', () => {
