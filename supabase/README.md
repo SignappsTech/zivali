@@ -23,9 +23,50 @@ pnpm db:stop
 ## What config.toml sets up
 
 - **Database**: Postgres 17. PostgREST exposes only `public`, which stays empty; app tables live in schema `app` and pg-boss in `pgboss`, neither exposed nor granted to `anon`/`authenticated` (ADR-021). Seeding and migrations are Prisma's (`supabase/seed/geo/` holds source GeoJSON only).
-- **Auth**: email sign-up with confirmations (confirm links go to the mail catcher), anonymous sign-ins, TOTP MFA (required as aal2 for moderators and admins, enforced by the API). Captcha (Turnstile) is off locally; staging and production enable it.
+- **Auth**: email sign-up with confirmations (confirm links go to the mail catcher), anonymous sign-ins, TOTP MFA (required as aal2 for moderators and admins, enforced by the API). Captcha (Turnstile) is off locally; staging and production enable it. Details below.
 - **Realtime**: Broadcast on private channels for chat and inbox, authorised by the RLS policy on `realtime.messages` (ADR-023).
 - **Off**: Storage (R2/MinIO instead, ADR-014), the Edge Runtime and Analytics (its log collector crash-loops on Windows without the Docker daemon on tcp://localhost:2375; API logs come from pino).
+
+## Auth (C3)
+
+Staging and production mirror these settings in the Supabase dashboard (Authentication); `config.toml` is the source.
+
+### Emails
+
+`templates/*.html` with the copy of `docs/content/notifications-and-emails.md` §3: `confirmation`, `recovery`, `magic_link`, `email_change`, `reauthentication` and the `identity_linked` security notice. Language comes from `user_metadata.locale` (set by the clients at sign-up): `"en"` is English, anything else Slovenian (formal). Subjects are Go templates as well. Locally every email lands in the mail catcher. The magic-link copy is not in the content doc yet (derived from §3.1/§3.2, pending content review). The support and company addresses are still the client markers.
+
+Changing the locale in `PATCH /v1/me` updates `app.profiles` only; for Auth emails to follow, the client must also call `supabase.auth.updateUser({ data: { locale } })`.
+
+### Sign-in providers
+
+Email + password and anonymous sign-ins are always on. Google and Apple stay off until the client provides credentials. To turn one on, put all three in `supabase/.env` (or export them) and restart with `pnpm db:start`:
+
+```sh
+SUPABASE_AUTH_EXTERNAL_GOOGLE_ENABLED=true
+SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID=…
+SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET=…
+# Apple: the same with APPLE; CLIENT_ID is comma-separated (web Services ID, iOS bundle id)
+```
+
+`_ENABLED` overrides `enabled = false` in `config.toml`; the CLI refuses to start a provider that is enabled without a client id. Redirect URLs allowed after sign-in: `http://127.0.0.1:3000/**`, `http://localhost:3000/**` (APP_URL locally), `zivali://**` (the app) and `exp://**` (Expo dev); cloud uses the deployed `APP_URL/**` instead of the local ones. Provider callback: `<SUPABASE_URL>/auth/v1/callback`.
+
+### Rate limits
+
+| Limit                                         | Value                  | Setting                                              |
+| --------------------------------------------- | ---------------------- | ---------------------------------------------------- |
+| Sign-in and sign-up requests                  | 30 per 5 min per IP    | `auth.rate_limit.sign_in_sign_ups`                   |
+| OTP and magic-link verifications              | 30 per 5 min per IP    | `auth.rate_limit.token_verifications`                |
+| Anonymous sign-ins                            | 30 per hour per IP     | `auth.rate_limit.anonymous_users`                    |
+| Token refreshes                               | 150 per 5 min per IP   | `auth.rate_limit.token_refresh`                      |
+| Password reset (and confirmation) per address | 1 per 60 s (else 429)  | `auth.email.max_frequency`                           |
+| Auth emails, project-wide                     | `email_sent` per hour  | `auth.rate_limit.email_sent` (only with custom SMTP) |
+| Bots on sign-up, anonymous sign-in, reset     | Turnstile (cloud only) | `auth.captcha`                                       |
+
+Cloud with Brevo SMTP: set `email_sent` in the dashboard (Authentication > Rate Limits) to the Brevo plan's hourly budget.
+
+### Account linking
+
+Automatic identity linking (Supabase default): when someone signs in with Google or Apple and the provider's verified email equals the confirmed email of an existing account, the new identity joins that account (same user id, same `app.profiles` row) and the `identity_linked` notice tells the owner. An unconfirmed email is never trusted for linking: Supabase removes the unverified identity when a verified one with the same address signs in, so nobody can pre-register someone else's address. Manual linking (`linkIdentity`) stays off (`enable_manual_linking = false`).
 
 ## Docker Desktop on Windows
 
