@@ -250,6 +250,28 @@ describe('candidates without a chip (AC#3)', () => {
 		expect(stored[0]).toMatchObject({ strength: expected.strength, reasons: expected.reasons });
 	});
 
+	it('measures distance from the found report public point, never its exact point', async () => {
+		const at = month();
+		const lost = await lostReport(at);
+		const [far, beyond] = await Promise.all([
+			foundReport(at, { location: north(0.2) }),
+			foundReport(at, { location: north(0.2) }),
+		]);
+		// Exact points stay ~200 m away; only the public points are moved.
+		const movePublic = (id: string, km: number) => prisma.$executeRaw`
+			update app.reports set public_point = extensions.st_setsrid(extensions.st_makepoint(${LJ.lng}, ${north(km).lat}), 4326)
+			where id = ${id}::uuid`;
+		await movePublic(far.id, 12);
+		await movePublic(beyond.id, 45);
+		await run(lost.id);
+		const stored = await matchesOf(lost.id);
+		// 45 km public point is past matching.max_distance_km (30) although the exact point is close.
+		expect(stored.map((match) => match.other_report_id)).toEqual([far.id]);
+		const reasons = stored[0]!.reasons as Record<string, unknown>[];
+		expect(reasons).toContainEqual({ code: 'distance', band: 'gt10' });
+		expect(reasons).not.toContainEqual({ code: 'distance', band: 'lt1' });
+	});
+
 	it('keeps the top N per lost report, counting the suggestions it already has', async () => {
 		await setConfig('matching.top_n', 2);
 		try {
