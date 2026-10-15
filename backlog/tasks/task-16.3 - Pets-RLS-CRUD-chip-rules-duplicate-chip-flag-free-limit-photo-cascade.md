@@ -3,11 +3,11 @@ id: TASK-16.3
 title: >-
   Pets API: owner CRUD, chip rules incl. CRHŽ question, duplicate-chip flag,
   free limit
-status: To Do
+status: In Progress
 assignee:
   - '@backend-dev'
 created_date: '2026-10-14 22:13'
-updated_date: '2026-10-14 23:38'
+updated_date: '2026-10-15 20:56'
 labels:
   - be
   - 'est:S'
@@ -42,8 +42,8 @@ Branch: agent/task-16.3-pets-be
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 GET and POST /v1/pets, GET, PATCH and DELETE /v1/pets/:id and POST /v1/pets/:id/archive work for owners only (permission matrix), with chip normalisation (chip_status), chip_registered_crhz (yes, no, unknown), and ear_tip and lifestyle for cats.
-- [ ] #2 A chip already registered on another owner's pet creates a moderation_flags duplicate_chip entry without revealing the other owner to either user.
-- [ ] #3 Free accounts are limited to app_config pets.free_limit (default 2) active pets (CONFLICT with details.code PET_LIMIT); the limit never applies to lost reports.
-- [ ] #4 Deleting a pet removes its photos through the photo jobs; domain tests cover the limit and the duplicate flag.
+- [x] #1 GET and POST /v1/pets, GET, PATCH and DELETE /v1/pets/:id and POST /v1/pets/:id/archive work for owners only (permission matrix), with chip normalisation (chip_status), chip_registered_crhz (yes, no, unknown), and ear_tip and lifestyle for cats.
+- [x] #2 A chip already registered on another owner's pet creates a moderation_flags duplicate_chip entry without revealing the other owner to either user.
+- [x] #3 Free accounts are limited to app_config pets.free_limit (default 2) active pets (CONFLICT with details.code PET_LIMIT); the limit never applies to lost reports.
+- [x] #4 Deleting a pet removes its photos through the photo jobs; domain tests cover the limit and the duplicate flag.
 <!-- AC:END -->
