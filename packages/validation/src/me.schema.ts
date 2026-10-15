@@ -1,5 +1,5 @@
 // C3 profiles and roles: GET/PATCH /v1/me, GET /v1/admin/users, PUT /v1/admin/users/:id/role.
-import { ClockTime, Cursor, IsoDateTime, LatLng, page, text, Uuid } from './common.schema.ts';
+import { ClockTime, Cursor, IsoDateTime, LatLng, nullOr, page, text, Uuid } from './common.schema.ts';
 import { Aal, Locale, UserRole } from './enums.ts';
 import { z } from './zod.ts';
 
@@ -10,7 +10,7 @@ export const Profile = z
 		locale: Locale,
 		role: UserRole,
 		is_anonymous: z.boolean(),
-		home: LatLng.nullable(),
+		home: nullOr(LatLng),
 		home_radius_km: z.number().int(),
 		phone: z.string().nullable(),
 		quiet_from: z.string().nullable(),
@@ -24,7 +24,7 @@ export const UpdateMeInput = z
 	.object({
 		display_name: text(60).nullable().optional(),
 		locale: Locale.optional(),
-		home: LatLng.nullable().optional(),
+		home: nullOr(LatLng).optional(),
 		home_radius_km: z.number().int().min(1).max(25).optional(),
 		phone: z
 			.string()

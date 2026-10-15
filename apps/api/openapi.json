@@ -93,9 +93,7 @@
 					"ends_at": { "type": ["string", "null"], "format": "date-time" },
 					"status": { "$ref": "#/components/schemas/AdStatus" },
 					"is_house": { "type": "boolean" },
-					"house_kind": {
-						"allOf": [{ "$ref": "#/components/schemas/AdHouseKind" }, { "type": ["string", "null"] }]
-					},
+					"house_kind": { "anyOf": [{ "$ref": "#/components/schemas/AdHouseKind" }, { "type": "null" }] },
 					"exclusive": { "type": "boolean" },
 					"weight": { "type": "integer", "minimum": 1, "maximum": 100 }
 				},
@@ -171,9 +169,7 @@
 					"ends_at": { "type": ["string", "null"], "format": "date-time" },
 					"status": { "$ref": "#/components/schemas/AdStatus" },
 					"is_house": { "type": "boolean" },
-					"house_kind": {
-						"allOf": [{ "$ref": "#/components/schemas/AdHouseKind" }, { "type": ["string", "null"] }]
-					},
+					"house_kind": { "anyOf": [{ "$ref": "#/components/schemas/AdHouseKind" }, { "type": "null" }] },
 					"exclusive": { "type": "boolean" },
 					"weight": { "type": "integer" },
 					"created_at": { "type": "string", "format": "date-time" },
@@ -450,11 +446,9 @@
 					"name": { "type": "string" },
 					"breed_codes": { "type": "array", "items": { "$ref": "#/components/schemas/BreedCode" } },
 					"colours": { "type": "array", "items": { "$ref": "#/components/schemas/Colour" } },
-					"pattern": {
-						"allOf": [{ "$ref": "#/components/schemas/Pattern" }, { "type": ["string", "null"] }]
-					},
-					"size": { "allOf": [{ "$ref": "#/components/schemas/Size" }, { "type": ["string", "null"] }] },
-					"sex": { "allOf": [{ "$ref": "#/components/schemas/Sex" }, { "type": ["string", "null"] }] },
+					"pattern": { "anyOf": [{ "$ref": "#/components/schemas/Pattern" }, { "type": "null" }] },
+					"size": { "anyOf": [{ "$ref": "#/components/schemas/Size" }, { "type": "null" }] },
+					"sex": { "anyOf": [{ "$ref": "#/components/schemas/Sex" }, { "type": "null" }] },
 					"has_chip": { "type": "boolean" },
 					"event_at": { "type": "string", "format": "date-time" },
 					"area": { "$ref": "#/components/schemas/PublicArea" },
@@ -841,8 +835,8 @@
 					"species": { "$ref": "#/components/schemas/Species" },
 					"breed_codes": { "type": "array", "items": { "$ref": "#/components/schemas/BreedCode" } },
 					"colours": { "type": "array", "items": { "$ref": "#/components/schemas/Colour" } },
-					"size": { "allOf": [{ "$ref": "#/components/schemas/Size" }, { "type": ["string", "null"] }] },
-					"sex": { "allOf": [{ "$ref": "#/components/schemas/Sex" }, { "type": ["string", "null"] }] },
+					"size": { "anyOf": [{ "$ref": "#/components/schemas/Size" }, { "type": "null" }] },
+					"sex": { "anyOf": [{ "$ref": "#/components/schemas/Sex" }, { "type": "null" }] },
 					"photos": { "type": "array", "items": { "$ref": "#/components/schemas/PublicPhoto" } },
 					"event_at": { "type": "string", "format": "date-time" },
 					"area": { "$ref": "#/components/schemas/PublicArea" }
@@ -1141,21 +1135,17 @@
 					"name": { "type": "string" },
 					"breed_codes": { "type": "array", "items": { "$ref": "#/components/schemas/BreedCode" } },
 					"colours": { "type": "array", "items": { "$ref": "#/components/schemas/Colour" } },
-					"pattern": {
-						"allOf": [{ "$ref": "#/components/schemas/Pattern" }, { "type": ["string", "null"] }]
-					},
-					"size": { "allOf": [{ "$ref": "#/components/schemas/Size" }, { "type": ["string", "null"] }] },
-					"sex": { "allOf": [{ "$ref": "#/components/schemas/Sex" }, { "type": ["string", "null"] }] },
+					"pattern": { "anyOf": [{ "$ref": "#/components/schemas/Pattern" }, { "type": "null" }] },
+					"size": { "anyOf": [{ "$ref": "#/components/schemas/Size" }, { "type": "null" }] },
+					"sex": { "anyOf": [{ "$ref": "#/components/schemas/Sex" }, { "type": "null" }] },
 					"birth_year": { "type": ["integer", "null"] },
 					"chip_number": { "type": ["string", "null"] },
 					"chip_status": { "$ref": "#/components/schemas/ChipStatus" },
 					"chip_registered_crhz": {
-						"allOf": [{ "$ref": "#/components/schemas/ChipRegisteredCrhz" }, { "type": ["string", "null"] }]
+						"anyOf": [{ "$ref": "#/components/schemas/ChipRegisteredCrhz" }, { "type": "null" }]
 					},
 					"ear_tip": { "type": ["boolean", "null"] },
-					"lifestyle": {
-						"allOf": [{ "$ref": "#/components/schemas/Lifestyle" }, { "type": ["string", "null"] }]
-					},
+					"lifestyle": { "anyOf": [{ "$ref": "#/components/schemas/Lifestyle" }, { "type": "null" }] },
 					"collar": { "type": ["string", "null"] },
 					"notes": { "type": ["string", "null"] },
 					"photos": {
@@ -1208,20 +1198,16 @@
 						"maxItems": 5
 					},
 					"colours": { "type": "array", "items": { "$ref": "#/components/schemas/Colour" }, "maxItems": 10 },
-					"pattern": {
-						"allOf": [{ "$ref": "#/components/schemas/Pattern" }, { "type": ["string", "null"] }]
-					},
-					"size": { "allOf": [{ "$ref": "#/components/schemas/Size" }, { "type": ["string", "null"] }] },
-					"sex": { "allOf": [{ "$ref": "#/components/schemas/Sex" }, { "type": ["string", "null"] }] },
+					"pattern": { "anyOf": [{ "$ref": "#/components/schemas/Pattern" }, { "type": "null" }] },
+					"size": { "anyOf": [{ "$ref": "#/components/schemas/Size" }, { "type": "null" }] },
+					"sex": { "anyOf": [{ "$ref": "#/components/schemas/Sex" }, { "type": "null" }] },
 					"birth_year": { "type": ["integer", "null"], "minimum": 1990 },
 					"chip": { "type": ["string", "null"], "maxLength": 40 },
 					"chip_registered_crhz": {
-						"allOf": [{ "$ref": "#/components/schemas/ChipRegisteredCrhz" }, { "type": ["string", "null"] }]
+						"anyOf": [{ "$ref": "#/components/schemas/ChipRegisteredCrhz" }, { "type": "null" }]
 					},
 					"ear_tip": { "type": ["boolean", "null"] },
-					"lifestyle": {
-						"allOf": [{ "$ref": "#/components/schemas/Lifestyle" }, { "type": ["string", "null"] }]
-					},
+					"lifestyle": { "anyOf": [{ "$ref": "#/components/schemas/Lifestyle" }, { "type": "null" }] },
 					"collar": { "type": ["string", "null"], "minLength": 1, "maxLength": 200 },
 					"notes": { "type": ["string", "null"], "minLength": 1, "maxLength": 1000 }
 				},
@@ -1287,7 +1273,7 @@
 					"locale": { "$ref": "#/components/schemas/Locale" },
 					"role": { "$ref": "#/components/schemas/UserRole" },
 					"is_anonymous": { "type": "boolean" },
-					"home": { "allOf": [{ "$ref": "#/components/schemas/LatLng" }, { "type": ["object", "null"] }] },
+					"home": { "anyOf": [{ "$ref": "#/components/schemas/LatLng" }, { "type": "null" }] },
 					"home_radius_km": { "type": "integer" },
 					"phone": { "type": ["string", "null"] },
 					"quiet_from": { "type": ["string", "null"] },
@@ -1340,11 +1326,9 @@
 					"name": { "type": "string" },
 					"breed_codes": { "type": "array", "items": { "$ref": "#/components/schemas/BreedCode" } },
 					"colours": { "type": "array", "items": { "$ref": "#/components/schemas/Colour" } },
-					"pattern": {
-						"allOf": [{ "$ref": "#/components/schemas/Pattern" }, { "type": ["string", "null"] }]
-					},
-					"size": { "allOf": [{ "$ref": "#/components/schemas/Size" }, { "type": ["string", "null"] }] },
-					"sex": { "allOf": [{ "$ref": "#/components/schemas/Sex" }, { "type": ["string", "null"] }] },
+					"pattern": { "anyOf": [{ "$ref": "#/components/schemas/Pattern" }, { "type": "null" }] },
+					"size": { "anyOf": [{ "$ref": "#/components/schemas/Size" }, { "type": "null" }] },
+					"sex": { "anyOf": [{ "$ref": "#/components/schemas/Sex" }, { "type": "null" }] },
 					"has_chip": { "type": "boolean" },
 					"collar_described": { "type": "boolean" },
 					"event_at": { "type": "string", "format": "date-time" },
@@ -1424,10 +1408,7 @@
 							"manager_role": { "$ref": "#/components/schemas/ReportManagerRole" },
 							"moderation_state": { "$ref": "#/components/schemas/ModerationState" },
 							"close_reason": {
-								"allOf": [
-									{ "$ref": "#/components/schemas/CloseReason" },
-									{ "type": ["string", "null"] }
-								]
+								"anyOf": [{ "$ref": "#/components/schemas/CloseReason" }, { "type": "null" }]
 							},
 							"pet_id": { "type": ["string", "null"], "format": "uuid" },
 							"chip_number": { "type": ["string", "null"] },
@@ -1617,7 +1598,7 @@
 				"properties": {
 					"display_name": { "type": ["string", "null"], "minLength": 1, "maxLength": 60 },
 					"locale": { "$ref": "#/components/schemas/Locale" },
-					"home": { "allOf": [{ "$ref": "#/components/schemas/LatLng" }, { "type": ["object", "null"] }] },
+					"home": { "anyOf": [{ "$ref": "#/components/schemas/LatLng" }, { "type": "null" }] },
 					"home_radius_km": { "type": "integer", "minimum": 1, "maximum": 25 },
 					"phone": { "type": ["string", "null"], "pattern": "^\\+?[\\d ()/-]{6,20}$" },
 					"quiet_from": { "type": ["string", "null"], "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$" },
@@ -1636,20 +1617,16 @@
 						"maxItems": 5
 					},
 					"colours": { "type": "array", "items": { "$ref": "#/components/schemas/Colour" }, "maxItems": 10 },
-					"pattern": {
-						"allOf": [{ "$ref": "#/components/schemas/Pattern" }, { "type": ["string", "null"] }]
-					},
-					"size": { "allOf": [{ "$ref": "#/components/schemas/Size" }, { "type": ["string", "null"] }] },
-					"sex": { "allOf": [{ "$ref": "#/components/schemas/Sex" }, { "type": ["string", "null"] }] },
+					"pattern": { "anyOf": [{ "$ref": "#/components/schemas/Pattern" }, { "type": "null" }] },
+					"size": { "anyOf": [{ "$ref": "#/components/schemas/Size" }, { "type": "null" }] },
+					"sex": { "anyOf": [{ "$ref": "#/components/schemas/Sex" }, { "type": "null" }] },
 					"birth_year": { "type": ["integer", "null"], "minimum": 1990 },
 					"chip": { "type": ["string", "null"], "maxLength": 40 },
 					"chip_registered_crhz": {
-						"allOf": [{ "$ref": "#/components/schemas/ChipRegisteredCrhz" }, { "type": ["string", "null"] }]
+						"anyOf": [{ "$ref": "#/components/schemas/ChipRegisteredCrhz" }, { "type": "null" }]
 					},
 					"ear_tip": { "type": ["boolean", "null"] },
-					"lifestyle": {
-						"allOf": [{ "$ref": "#/components/schemas/Lifestyle" }, { "type": ["string", "null"] }]
-					},
+					"lifestyle": { "anyOf": [{ "$ref": "#/components/schemas/Lifestyle" }, { "type": "null" }] },
 					"collar": { "type": ["string", "null"], "minLength": 1, "maxLength": 200 },
 					"notes": { "type": ["string", "null"], "minLength": 1, "maxLength": 1000 }
 				}

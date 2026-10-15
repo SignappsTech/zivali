@@ -2,7 +2,7 @@
 import { COLOURS } from '@zivali/types';
 
 import { BreedCode, isBreedOf } from './breeds.ts';
-import { IsoDateTime, text, Uuid } from './common.schema.ts';
+import { IsoDateTime, nullOr, text, Uuid } from './common.schema.ts';
 import { ChipRegisteredCrhz, ChipStatus, Colour, Lifestyle, Pattern, Sex, Size, Species } from './enums.ts';
 import { z } from './zod.ts';
 
@@ -17,14 +17,14 @@ const PetFields = z.object({
 	name: text(60),
 	breed_codes: z.array(BreedCode).max(5).optional(),
 	colours: z.array(Colour).max(COLOURS.length).optional(),
-	pattern: Pattern.nullish(),
-	size: Size.nullish(),
-	sex: Sex.nullish(),
+	pattern: nullOr(Pattern).optional(),
+	size: nullOr(Size).optional(),
+	sex: nullOr(Sex).optional(),
 	birth_year: BirthYear.nullish(),
 	chip: z.string().max(40).nullish(),
-	chip_registered_crhz: ChipRegisteredCrhz.nullish(),
+	chip_registered_crhz: nullOr(ChipRegisteredCrhz).optional(),
 	ear_tip: z.boolean().nullish(),
-	lifestyle: Lifestyle.nullish(),
+	lifestyle: nullOr(Lifestyle).optional(),
 	collar: text(200).nullish(),
 	notes: text(1000).nullish(),
 });
@@ -45,15 +45,15 @@ export const Pet = z
 		name: z.string(),
 		breed_codes: z.array(BreedCode),
 		colours: z.array(Colour),
-		pattern: Pattern.nullable(),
-		size: Size.nullable(),
-		sex: Sex.nullable(),
+		pattern: nullOr(Pattern),
+		size: nullOr(Size),
+		sex: nullOr(Sex),
 		birth_year: z.number().int().nullable(),
 		chip_number: z.string().nullable(),
 		chip_status: ChipStatus,
-		chip_registered_crhz: ChipRegisteredCrhz.nullable(),
+		chip_registered_crhz: nullOr(ChipRegisteredCrhz),
 		ear_tip: z.boolean().nullable(),
-		lifestyle: Lifestyle.nullable(),
+		lifestyle: nullOr(Lifestyle),
 		collar: z.string().nullable(),
 		notes: z.string().nullable(),
 		photos: z.array(z.object({ id: Uuid, thumb_url: z.string() })),

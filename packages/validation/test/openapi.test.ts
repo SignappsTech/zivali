@@ -1,6 +1,20 @@
 import { getRefId, OpenApiGeneratorV31, OpenAPIRegistry } from '@asteasolutions/zod-to-openapi';
 import { expect, test, vi } from 'vitest';
 
+import abuseSrc from '../src/abuse.schema.ts?raw';
+import adsSrc from '../src/ads.schema.ts?raw';
+import chatSrc from '../src/chat.schema.ts?raw';
+import commonSrc from '../src/common.schema.ts?raw';
+import matchesSrc from '../src/matches.schema.ts?raw';
+import meSrc from '../src/me.schema.ts?raw';
+import notificationsSrc from '../src/notifications.schema.ts?raw';
+import paymentsSrc from '../src/payments.schema.ts?raw';
+import petsSrc from '../src/pets.schema.ts?raw';
+import photosSrc from '../src/photos.schema.ts?raw';
+import reportsSrc from '../src/reports.schema.ts?raw';
+import sheltersSrc from '../src/shelters.schema.ts?raw';
+import geoSrc from '../src/geo.schema.ts?raw';
+import enumsSrc from '../src/enums.ts?raw';
 import indexSrc from '../src/index.ts?raw';
 import zodSrc from '../src/zod.ts?raw';
 import * as root from '../src/index.ts';
@@ -82,6 +96,42 @@ test('wrong import order (stub installed before the extension) throws', async ()
 	} finally {
 		proto.openapi = real;
 	}
+});
+
+test('no named component is itself nullable (use nullOr, not .nullable(), on named schemas)', () => {
+	const intentional = new Set<string>(); // declare a component nullable on purpose by listing it here
+	const bad = Object.entries(generate(registry).components?.schemas ?? {}).filter(([name, s]) => {
+		const o = s as { type?: unknown; anyOf?: { type?: unknown }[]; oneOf?: { type?: unknown }[] };
+		const isNull = (t: unknown) => t === 'null' || (Array.isArray(t) && t.includes('null'));
+		return (
+			!intentional.has(name) &&
+			(isNull(o.type) || [...(o.anyOf ?? []), ...(o.oneOf ?? [])].some((x) => isNull(x.type)))
+		);
+	});
+	expect(bad.map(([name]) => name)).toEqual([]);
+});
+
+test('.nullable()/.nullish() is never applied to an .openapi()-named schema (the refId leaks, null is lost)', () => {
+	const src = [
+		abuseSrc,
+		adsSrc,
+		chatSrc,
+		commonSrc,
+		matchesSrc,
+		meSrc,
+		notificationsSrc,
+		paymentsSrc,
+		petsSrc,
+		photosSrc,
+		reportsSrc,
+		sheltersSrc,
+		geoSrc,
+		enumsSrc,
+	].join('\n');
+	const named = [...src.matchAll(/export const (\w+)\s*=[^;]*?\.openapi\('/gs)].map((m) => m[1]);
+	expect(named.length).toBeGreaterThan(50);
+	const bad = named.filter((n) => new RegExp(`\\b${n}\\.(nullable|nullish)\\(`).test(src));
+	expect(bad).toEqual([]);
 });
 
 test('GeoReverseResponse.place is nullable and Place stays a plain object, whatever the registration order', () => {
