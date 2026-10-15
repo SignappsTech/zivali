@@ -9,6 +9,7 @@ import conversationsRoutes from './conversations.routes.ts';
 import geoRoutes from './geo.routes.ts';
 import healthRoutes from './health.routes.ts';
 import manageRoutes from './manage.routes.ts';
+import matchesRoutes, { reportMatchesRouter } from './matches.routes.ts';
 import meRoutes from './me.routes.ts';
 import notificationsRoutes, { prefsRouter, pushTokensRouter } from './notifications.routes.ts';
 import photosRoutes from './photos.routes.ts';
@@ -32,5 +33,7 @@ router.use('/alert-subscription', alertSubscriptionRoutes);
 router.use('/conversations', conversationsRoutes);
 router.use('/photos', photosRoutes);
 router.use('/ads', adsRoutes);
+router.use('/reports', reportMatchesRouter);
+router.use('/matches', matchesRoutes);
 
 export default router;

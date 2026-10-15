@@ -2637,6 +2637,157 @@
 				}
 			}
 		},
+		"/v1/matches/{id}/confirm": {
+			"post": {
+				"operationId": "confirmMatch",
+				"summary": "Confirm a suggested match (lost report managers)",
+				"description": "The match becomes confirmed, the lost report matched, the match conversation opens (C9) and the other report's managers are notified. Idempotent: a confirmed match returns its conversation again. Rejected or closed matches answer CONFLICT, a closed lost report GONE.",
+				"tags": ["matches"],
+				"parameters": [
+					{ "schema": { "type": "string", "format": "uuid" }, "required": true, "name": "id", "in": "path" }
+				],
+				"responses": {
+					"200": {
+						"description": "The match conversation",
+						"content": {
+							"application/json": { "schema": { "$ref": "#/components/schemas/ConfirmMatchResponse" } }
+						}
+					},
+					"400": {
+						"description": "VALIDATION",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"401": {
+						"description": "UNAUTHENTICATED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"403": {
+						"description": "UNVERIFIED_EMAIL, FORBIDDEN",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"404": {
+						"description": "NOT_FOUND",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"409": {
+						"description": "CONFLICT",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"410": {
+						"description": "GONE",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"429": {
+						"description": "RATE_LIMITED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"500": {
+						"description": "INTERNAL",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					}
+				}
+			}
+		},
+		"/v1/matches/{id}/reject": {
+			"post": {
+				"operationId": "rejectMatch",
+				"summary": "Reject a suggested match (lost report managers)",
+				"description": "The pair is never suggested or listed again; the optional reason is kept with the verdict. Repeating it is a no-op; a confirmed or closed match answers CONFLICT.",
+				"tags": ["matches"],
+				"parameters": [
+					{ "schema": { "type": "string", "format": "uuid" }, "required": true, "name": "id", "in": "path" }
+				],
+				"requestBody": {
+					"required": true,
+					"content": { "application/json": { "schema": { "$ref": "#/components/schemas/RejectMatchInput" } } }
+				},
+				"responses": {
+					"204": { "description": "Rejected" },
+					"400": {
+						"description": "VALIDATION",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"401": {
+						"description": "UNAUTHENTICATED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"403": {
+						"description": "FORBIDDEN",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"404": {
+						"description": "NOT_FOUND",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"409": {
+						"description": "CONFLICT",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"429": {
+						"description": "RATE_LIMITED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"500": {
+						"description": "INTERNAL",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					}
+				}
+			}
+		},
+		"/v1/reports/{code}/matches": {
+			"get": {
+				"operationId": "listMatches",
+				"summary": "Match suggestions of a lost report (its managers)",
+				"description": "Best score first; `state` (comma-separated) defaults to suggested,confirmed. Rejected pairs are never listed. `other` is the other report's public view: no exact point, chip number or contact data.",
+				"tags": ["reports"],
+				"parameters": [
+					{
+						"schema": { "type": "string", "pattern": "^[1-9A-HJ-NP-Za-km-z]{8}$" },
+						"required": true,
+						"name": "code",
+						"in": "path"
+					},
+					{
+						"schema": {
+							"anyOf": [{ "type": "string" }, { "type": "array", "items": { "type": "string" } }]
+						},
+						"required": false,
+						"name": "state",
+						"in": "query"
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Suggestions",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/MatchList" } } }
+					},
+					"400": {
+						"description": "VALIDATION",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"401": {
+						"description": "UNAUTHENTICATED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"403": {
+						"description": "FORBIDDEN",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"404": {
+						"description": "NOT_FOUND",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"429": {
+						"description": "RATE_LIMITED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"500": {
+						"description": "INTERNAL",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					}
+				}
+			}
+		},
 		"/v1/me": {
 			"get": {
 				"operationId": "getMe",

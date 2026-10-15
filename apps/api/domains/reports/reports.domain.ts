@@ -452,6 +452,14 @@ function toView<R extends ReportManagerRole | null>(
 	return { report, exact: location.exact, area, manager_role, now: ctx.now };
 }
 
+/** Read models of several reports by id without a manager role (other features show them as public, C8). */
+export async function publicViews(ids: string[], ctx: Ctx): Promise<ReportView[]> {
+	if (!ids.length) return [];
+	const reports = await ReportsDao.findByIds(ids, ctx.tx);
+	const locations = await ReportsDao.getLocations(ids, ctx.tx);
+	return reports.map((report) => toView(report, locations.get(report.id)!, null, ctx));
+}
+
 /** GET /v1/me/reports: every report the caller manages (held, hidden and closed included), newest first. */
 export async function listMyReports(
 	input: { cursor?: string; limit?: number },
@@ -483,5 +491,6 @@ export default {
 	purgeDeviceHashes,
 	notPublicReason,
 	getReport,
+	publicViews,
 	listMyReports,
 };

@@ -186,6 +186,12 @@ export async function findByCode(short_code: string, userId: string | undefined,
 	return db.reports.findUnique({ where: { short_code }, include: readInclude(userId) });
 }
 
+/** Several reports with the read model's relations, as a signed-out caller sees them (no manager row). */
+export async function findByIds(ids: string[], tx?: Prisma.TransactionClient) {
+	const db = tx ?? prisma;
+	return db.reports.findMany({ where: { id: { in: ids } }, include: readInclude(undefined) });
+}
+
 /**
  * The report's columns and the user's manager role (null when not a manager), without relation includes: Prisma runs
  * those concurrently, which one transaction connection does not allow.
@@ -328,6 +334,7 @@ export default {
 	flagHeld,
 	clearDeviceHashes,
 	findByCode,
+	findByIds,
 	findWithRole,
 	listByManager,
 	lockOwnPet,
