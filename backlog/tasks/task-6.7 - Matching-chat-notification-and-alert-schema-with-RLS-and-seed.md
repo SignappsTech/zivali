@@ -1,11 +1,11 @@
 ---
 id: TASK-6.7
 title: 'Matching, chat, notification and alert models with seed'
-status: To Do
+status: In Progress
 assignee:
   - '@backend-dev'
 created_date: '2026-10-14 22:12'
-updated_date: '2026-10-14 23:38'
+updated_date: '2026-10-15 10:08'
 labels:
   - be
   - 'est:S'
@@ -37,7 +37,13 @@ Branch: agent/task-6.7-collab-schema
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Prisma models matches, match_feedback, conversations, conversation_participants, messages, blocks, notifications, notification_prefs, push_tokens, alert_subscriptions, alert_deliveries and email_outbox per C8–C10 (GiST on alert centres), with RLS enabled and data-inventory entries.
-- [ ] #2 Seeder 20-collab creates suggested and confirmed matches, one conversation with messages, notifications and alert subscriptions for fixture users.
-- [ ] #3 The ADR-021 security tests stay green.
+- [x] #1 Prisma models matches, match_feedback, conversations, conversation_participants, messages, blocks, notifications, notification_prefs, push_tokens, alert_subscriptions, alert_deliveries and email_outbox per C8–C10 (GiST on alert centres), with RLS enabled and data-inventory entries.
+- [x] #2 Seeder 20-collab creates suggested and confirmed matches, one conversation with messages, notifications and alert subscriptions for fixture users.
+- [x] #3 The ADR-021 security tests stay green.
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+Migration 20261015090920_task_6_7_collab. FKs to reports (matches.lost/other_report_id, conversations.*_report_id, alert_deliveries.report_id) and alert_subscriptions.species -> SPECIES[] are a follow-up migration once TASK-6.6 merges (steps in the migration header). Seeder 20-collab reads reports by C4 columns via SQL; verified against TASK-6.6's schema and seed (2 pairs, idempotent); its runIf test runs once reports exist.
+<!-- SECTION:NOTES:END -->
