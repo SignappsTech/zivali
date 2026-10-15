@@ -3,11 +3,11 @@ id: TASK-6.5
 title: >-
   Domain wire types and DTOs, zod request schemas, chip normalisation and breed
   codes
-status: In Progress
+status: Done
 assignee:
   - '@backend-dev'
 created_date: '2026-10-14 22:12'
-updated_date: '2026-10-15 01:35'
+updated_date: '2026-10-15 01:52'
 labels:
   - be
   - 'est:M'
