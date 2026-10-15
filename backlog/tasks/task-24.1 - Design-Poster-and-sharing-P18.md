@@ -1,11 +1,11 @@
 ---
 id: TASK-24.1
 title: 'Design: Poster and sharing (P18)'
-status: In Progress
+status: Done
 assignee:
   - '@ui-designer'
 created_date: '2026-10-14 21:50'
-updated_date: '2026-10-15 02:09'
+updated_date: '2026-10-15 02:53'
 labels:
   - design
   - 'est:M'
