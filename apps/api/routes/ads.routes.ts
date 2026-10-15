@@ -2,7 +2,7 @@
 // payment flows: any other slot value is VALIDATION. The click redirect is TASK-35.2.
 import { Router } from 'express';
 
-import { Ad, AdImpressionInput, AdSlotParams, AdSlotQuery, IdParams } from '@zivali/validation';
+import { Ad, AdImpressionInput, AdSlotParams, AdSlotQuery, IdParams, nullOr } from '@zivali/validation';
 
 import AdsController from '../controllers/ads.controller.ts';
 import { apiRoutes } from '../lib/openapi.ts';
@@ -23,7 +23,7 @@ route(
 			'species (weighted random; an exclusive ad owns its slot), else a house ad for the locale. `null` when ' +
 			'nothing fits or for ad-free users. `Cache-Control: private, max-age=60`.',
 		request: { params: AdSlotParams, query: AdSlotQuery },
-		responses: { 200: { description: 'Ad or null', schema: Ad.nullable() } },
+		responses: { 200: { description: 'Ad or null', schema: nullOr(Ad) } },
 	},
 	optionalAuth,
 	AdsController.slot
