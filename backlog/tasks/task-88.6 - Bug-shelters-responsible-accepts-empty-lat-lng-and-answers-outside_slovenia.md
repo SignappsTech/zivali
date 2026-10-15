@@ -1,10 +1,13 @@
 ---
 id: TASK-88.6
-title: 'Bug: /v1/shelters/responsible accepts empty lat/lng and answers outside_slovenia'
-status: To Do
+title: >-
+  Bug: /v1/shelters/responsible accepts empty lat/lng and answers
+  outside_slovenia
+status: Done
 assignee:
   - '@backend-dev'
 created_date: '2026-10-15 14:20'
+updated_date: '2026-10-15 14:00'
 labels:
   - bug
   - be
