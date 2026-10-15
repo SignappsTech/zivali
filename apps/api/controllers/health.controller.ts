@@ -2,10 +2,10 @@
 import type { Request, Response } from 'express';
 
 import { HealthDomain, HealthMapper } from '../domains/health/index.ts';
-import { requestCtx } from '../lib/ctx.ts';
+import { userCtx } from '../lib/ctx.ts';
 
 export async function ready(req: Request, res: Response): Promise<void> {
-	const readiness = await HealthDomain.getReadiness(undefined, requestCtx(req));
+	const readiness = await HealthDomain.getReadiness(undefined, userCtx(req));
 	res.status(readiness.ok ? 200 : 503).json(HealthMapper.toReadyDto(readiness));
 }
 

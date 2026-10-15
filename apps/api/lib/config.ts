@@ -25,9 +25,14 @@ const EnvSchema = z.object({
 				.map((origin) => origin.trim())
 				.filter(Boolean)
 		),
-	SUPABASE_URL: z.url().optional(),
-	// Local HS256 fallback for JWT verification; also signs test tokens and the local Admin API token (seeder 00-users).
+	// Access tokens are verified against ${SUPABASE_URL}/auth/v1/.well-known/jwks.json (C3).
+	SUPABASE_URL: z.url(),
+	// HS256 fallback for JWT verification, honoured only when APP_ENV=local; also signs test tokens and the local
+	// Admin API token (seeder 00-users).
 	SUPABASE_JWT_SECRET: z.string().min(32).optional(),
+	// Random 32-byte secrets per environment (C1): HMAC salt for IP and device ids, idempotency body encryption.
+	RATE_SALT: z.string().min(32),
+	IDEMPOTENCY_KEY: z.string().min(32),
 	// Adapters (backend.md): unset provider = mock (memory for storage) outside production.
 	STORAGE_PROVIDER: z.enum(['minio', 'r2', 'memory', 'off']).optional(),
 	R2_ACCOUNT_ID: z.string().optional(),

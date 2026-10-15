@@ -1304,6 +1304,11 @@
 				},
 				"required": ["lat", "lng", "radius_m"]
 			},
+			"PublicConfig": {
+				"type": "object",
+				"additionalProperties": {},
+				"description": "Public app_config flags by key, e.g. { \"vet_partner.enabled\": false }."
+			},
 			"PublicPhoto": {
 				"type": "object",
 				"properties": {
@@ -1667,6 +1672,28 @@
 		"parameters": {}
 	},
 	"paths": {
+		"/v1/config/public": {
+			"get": {
+				"operationId": "getPublicConfig",
+				"summary": "Public feature and content flags",
+				"description": "Every app_config key with is_public = true, as { key: value } (C1). Cached: `Cache-Control: public, max-age=300`.",
+				"tags": ["config"],
+				"responses": {
+					"200": {
+						"description": "Public flags by key",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/PublicConfig" } } }
+					},
+					"429": {
+						"description": "RATE_LIMITED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"500": {
+						"description": "INTERNAL",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					}
+				}
+			}
+		},
 		"/v1/health/ready": {
 			"get": {
 				"operationId": "getHealthReady",

@@ -18,9 +18,9 @@ domains/<area>/             all business logic, HTTP-agnostic
   <area>.dao.ts               Prisma only; every function takes tx?: Prisma.TransactionClient
   <area>.mapper.ts            domain/Prisma result → response DTO, parsed with the DTO schema
   index.ts                    the area's public functions (the DAO stays private)
-middleware/<name>.middleware.ts    requestId, validate (body, query, params), error (+ auth, rateLimit, … later)
+middleware/<name>.middleware.ts    requestId, validate, error, auth, permission, rateLimit, idempotency (below)
 lib/                        config.ts (zod env, read once), logger.ts (pino), errors.ts (AppError + C1 codes),
-                            ctx.ts (requestCtx, systemCtx), openapi.ts (apiRoutes over the @zivali/validation registry)
+                            ctx.ts (userCtx, systemCtx), config-store.ts (app_config, 60 s), crypto.ts, openapi.ts (apiRoutes over the @zivali/validation registry)
 scripts/gen-openapi.ts      writes openapi.json; `--check` fails when it is stale (part of `lint`)
 prisma/                     prisma.ts (client singleton), schemas/*.prisma + schemas/migrations/,
                             seed.ts (runs seeders/NN-<name>.seeder.ts in order)
@@ -71,7 +71,7 @@ route(
 | HTTP status, headers, cookies, redirects                                                                   | controller only                                                             |
 | Response shape                                                                                             | mapper in the area                                                          |
 | Background work                                                                                            | job handler in `jobs/` calling domain functions                             |
-| Scripts, seeders, admin tools, tests                                                                       | call domain functions with `systemCtx()`                                    |
+| Scripts, seeders, admin tools, tests                                                                       | call domain functions with `systemCtx()` or `userCtx(actor)`                |
 
 A domain function never imports Express, never reads `req`/`res`, and never catches an error just to rethrow it. Catch locally only where you handle it (retry, fallback, mapping a unique violation to a domain error); `getReadiness` is the example.
 
@@ -110,12 +110,33 @@ Logs (pino, `lib/logger.ts`): one line per request with `req_id`, `route` (metho
 | `docker run --rm -e DATABASE_URL=… zivali-api npx prisma migrate deploy` | migrations, one-off per deploy                                                                        |
 | `docker compose -f docker-compose.dev.yml up -d`                         | MinIO (S3 :9000, console :9001) with `zivali-private`, `zivali-media` (public read), `zivali-backups` |
 
-Endpoints: `GET /ping` → `{ "message": "pong" }`; `GET /v1/health/ready` → `{ ok, version, db, queue_lag_s }` (503 when the database is down; `queue_lag_s` is `null` until pg-boss, TASK-6.3). Every response, errors included, carries `x-request-id`. The OpenAPI document is the committed `openapi.json` (Swagger UI at `/docs` is a later task).
+Endpoints: `GET /ping` → `{ "message": "pong" }`; `GET /v1/health/ready` → `{ ok, version, db, queue_lag_s }` (503 when the database is down; `queue_lag_s` is `null` until pg-boss, TASK-6.3); `GET /v1/config/public` → public `app_config` flags as `{ key: value }` (`Cache-Control: public, max-age=300`). Every response, errors included, carries `x-request-id`. The OpenAPI document is the committed `openapi.json` (Swagger UI at `/docs` is a later task).
 
 Moved Supabase ports (Windows Hyper-V, [supabase/README.md](../../supabase/README.md)): change the port in `DATABASE_URL` and `DIRECT_URL` in `.env.local` too.
 
 Coding agents: Prisma refuses `migrate reset` when it detects an AI agent unless the user consents, so agents check "from zero" with `prisma migrate deploy` and `prisma db seed` on a scratch database and leave `pnpm db:reset` to a person.
 
+## Auth and platform middleware (C1, C3)
+
+```ts
+route(
+	spec,
+	authMiddleware,
+	rateLimit('reports.create', { limit: 10, window: 3600, key: 'user' }),
+	requireVerifiedOrAnonymous,
+	idempotency({ required: true }), // last, right before the controller
+	ReportsController.create
+);
+route(spec, authMiddleware, requireRole('moderator'), requireAal2, AdminController.list);
+```
+
+- `authMiddleware` verifies the Supabase access token with `jose` against `${SUPABASE_URL}/auth/v1/.well-known/jwks.json` (audience `authenticated`, issuer, exp); the HS256 `SUPABASE_JWT_SECRET` is accepted only when `APP_ENV=local`. It sets `req.user = { user_id, role, is_anonymous, aal, email_verified, locale }` with role and locale from `app.profiles` and `email_verified` from `auth.users.email_confirmed_at` (never from `user_metadata`, which users can write), cached 60 s (`invalidateProfile(id)` after a role change), and creates a missing profile (`ensureProfile`). `optionalAuth` never answers 401.
+- Guards (`permission.middleware.ts`): anonymous finders count as signed out (`UNAUTHENTICATED`) except in `requireVerifiedOrAnonymous`; `requireVerified` → `UNVERIFIED_EMAIL`, `requireRole('moderator' | 'admin')` → `FORBIDDEN`, `requireAal2` → `AAL2_REQUIRED`, `rejectAnonymous`.
+- `rateLimit(name, { limit, window (s), key: 'user' | 'ip' | 'device' })`: fixed window in `app.rate_limits`, IPs and `x-device-id` stored as HMAC (`RATE_SALT`); `key: 'user'` counts anonymous finders per device (else IP), signed-out callers per IP; `app_config` `rate.<name>` = `{ limit, window }` overrides the code values (positive integers, window ≤ 172 800 s, else ignored); 429 with `Retry-After`.
+- `idempotency({ required })` last, right before the controller (after auth and guards): same user + key + route + body (canonical JSON, SHA-256) within 24 h replays the stored response (`Idempotent-Replayed: true`); another user, route or body, or a running first request → 409 `CONFLICT`; bodies stored encrypted (`IDEMPOTENCY_KEY`); 5xx, 429, 401 and 403 are not stored.
+- Staff and destructive services write `AuditDao.write(tx, { actor_id, action, target_type, target_id, diff, note })` (`domains/platform`). `PlatformDao.purgeExpired(now)` is for the retention job.
+- pg-boss tables get RLS from `lockDownPgboss()` (`lib/pgboss-lockdown.ts`) at startup, after pg-boss created them (CH-106); if it fails, the API and the worker log `fatal` and exit 1.
+
 ## Tests
 
-`test/helpers/token.ts` signs Supabase-style access tokens with the local `SUPABASE_JWT_SECRET` (HS256, audience `authenticated`): `await signTestToken({ sub, aal: 'aal2', is_anonymous })`. Test files run one at a time against the shared local database; `test/global-setup.ts` applies pending migrations (never resets). `test/security` and `test/seeders` also call the local Supabase at `SUPABASE_URL` (PostgREST, Auth): an `.env.local` copied before TASK-6.2 needs that line from `.env.example`.
+`test/helpers/token.ts` signs Supabase-style access tokens with the local `SUPABASE_JWT_SECRET` (HS256, audience `authenticated`): `await signTestToken({ sub, aal: 'aal2', is_anonymous })`. A verified email needs a real `auth.users` row: `sub = await createAuthUser({ email_verified, is_anonymous })`, cleaned up with `deleteAuthUsers(ids)`. Test files run one at a time against the shared local database; `test/global-setup.ts` applies pending migrations (never resets). `test/security` and `test/seeders` also call the local Supabase at `SUPABASE_URL` (PostgREST, Auth): an `.env.local` copied before TASK-6.2 needs that line from `.env.example`, and one copied before TASK-6.12 needs `RATE_SALT` and `IDEMPOTENCY_KEY`.
