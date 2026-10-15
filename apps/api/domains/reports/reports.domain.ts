@@ -351,7 +351,7 @@ export async function updateReport(input: UpdateInput, ctx: Ctx): Promise<Manage
 	const actor = signedIn(ctx);
 	const { code, photo_ids, location, requested_radius_m, chip, finder_email: _finderEmail, ...fields } = input;
 	await inTransaction(ctx, async (tx) => {
-		const found = await ReportsDao.findWithRole(code, actor.user_id, tx);
+		const found = await ReportsDao.lockWithRole(code, actor.user_id, tx);
 		if (!found) throw new AppError('NOT_FOUND', 'Report not found');
 		if (!found.role) throw new AppError('FORBIDDEN', 'Not a manager of this report');
 		const { report } = found;
@@ -362,8 +362,9 @@ export async function updateReport(input: UpdateInput, ctx: Ctx): Promise<Manage
 		const species = fields.species ?? report.species;
 		checkFields(report.type, species, { ...input, breed_codes: fields.breed_codes ?? report.breed_codes }, ctx.now);
 		if (fields.linked_report_id) await checkLinked(report.type, fields.linked_report_id, tx);
-		if (fields.pet_id && fields.pet_id !== report.pet_id)
-			await checkPet({ pet_id: fields.pet_id, species, report_id: report.id }, actor, tx);
+		const pet_id = fields.pet_id === undefined ? report.pet_id : fields.pet_id;
+		if (pet_id && (pet_id !== report.pet_id || species !== report.species))
+			await checkPet({ pet_id, species, report_id: report.id }, actor, tx);
 		if (photo_ids) await setPhotos(report, photo_ids, actor, ctx, tx);
 
 		const normalized = chip === undefined ? undefined : normalizeChip(chip);

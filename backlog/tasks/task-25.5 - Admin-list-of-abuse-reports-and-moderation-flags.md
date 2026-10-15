@@ -1,11 +1,11 @@
 ---
 id: TASK-25.5
 title: Admin list of abuse reports and moderation flags
-status: To Do
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:13'
-updated_date: '2026-10-14 22:42'
+updated_date: '2026-10-15 22:39'
 labels:
   - fe
   - 'est:S'
@@ -43,4 +43,6 @@ Branch: agent/task-25.5-abuse-admin-web
 - [ ] #1 Admins and moderators with aal2 see abuse reports and moderation flags with target, reason, weight, status and date in the admin shell, per the P19 table pattern.
 - [ ] #2 Each row links to the target (listing, or the conversation context of a reported message).
 - [ ] #3 Non-staff users get 403; axe 0 violations.
+- [ ] #4 Restoring an auto-hidden listing (AbuseDomain.restoreReport, for the moderation actions) makes it visible again, dismisses its open abuse reports and resolves its auto_hidden flag, so the next single report does not hide it again; audited.
+- [ ] #5 POST /v1/abuse-reports refuses reports on your own listing (any manager of it) or your own profile with FORBIDDEN; Supertest covers #4 and #5.
 <!-- AC:END -->

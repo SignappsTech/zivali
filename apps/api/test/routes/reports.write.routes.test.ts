@@ -415,6 +415,34 @@ describe('PATCH /v1/reports/:code', () => {
 		});
 	});
 
+	it('runs the pet species check when the species of a report with a pet changes', async () => {
+		const pet = await prisma.pets.create({ data: { owner_id: ids.owner, species: 'dog', name: 'Rex' } });
+		const { short_code } = await lostReport({ pet_id: pet.id });
+		expect(issue(await patch(short_code, tokens.owner, { species: 'cat' })).path).toBe('species');
+		expect((await patch(short_code, tokens.owner, { species: 'dog' })).status).toBe(200);
+	});
+
+	it('waits for the row lock: a PATCH racing a close is GONE and writes nothing', async () => {
+		const { id, short_code } = await lostReport();
+		let release!: () => void;
+		const held = new Promise<void>((resolve) => (release = resolve));
+		let locked!: () => void;
+		const isLocked = new Promise<void>((resolve) => (locked = resolve));
+		const closing = prisma.$transaction(async (tx) => {
+			await tx.$queryRaw`select 1 from app.reports where id = ${id}::uuid for update`;
+			locked();
+			await held;
+			await tx.reports.update({ where: { id }, data: { status: 'closed', closed_at: new Date() } });
+		});
+		await isLocked;
+		const racing = patch(short_code, tokens.owner, { circumstances: 'Prepozno.' }).then((res) => res);
+		await new Promise((resolve) => setTimeout(resolve, 300));
+		release();
+		await closing;
+		expect((await racing).status).toBe(410);
+		expect((await prisma.reports.findUniqueOrThrow({ where: { id } })).circumstances).not.toBe('Prepozno.');
+	});
+
 	it('queues no nearby alerts for a held report whose point moved', async () => {
 		const { id, short_code } = await lostReport();
 		await prisma.reports.update({ where: { id }, data: { moderation_state: 'held' } });

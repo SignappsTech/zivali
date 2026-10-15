@@ -30,6 +30,16 @@ export async function profileExists(id: string, tx?: Tx): Promise<boolean> {
 	return (await db.profiles.findUnique({ where: { id }, select: { id: true } })) !== null;
 }
 
+/** Any manager role (owner, finder, staff) counts: nobody reports a listing they run. */
+export async function isManager(report_id: string, user_id: string, tx?: Tx): Promise<boolean> {
+	const db = tx ?? prisma;
+	const row = await db.report_managers.findUnique({
+		where: { report_id_user_id: { report_id, user_id } },
+		select: { user_id: true },
+	});
+	return row !== null;
+}
+
 /** Locks the reported listing until the transaction ends, so concurrent reports are summed (and hide it) once. */
 export async function lockReport(id: string, tx: Tx): Promise<{ moderation_state: string } | null> {
 	const [row] = await tx.$queryRaw<{ moderation_state: string }[]>`
@@ -73,6 +83,35 @@ export async function hideReport(id: string, tx?: Tx): Promise<void> {
 	await db.reports.update({ where: { id }, data: { moderation_state: 'hidden' }, select: { id: true } });
 }
 
+/** hidden → visible; false when the report is missing or not hidden. */
+export async function unhideReport(id: string, tx?: Tx): Promise<boolean> {
+	const db = tx ?? prisma;
+	const { count } = await db.reports.updateMany({
+		where: { id, moderation_state: 'hidden' },
+		data: { moderation_state: 'visible' },
+	});
+	return count === 1;
+}
+
+/** Open reports on a target → dismissed; how many. */
+export async function dismissOpen(target_type: string, target_id: string, tx?: Tx): Promise<number> {
+	const db = tx ?? prisma;
+	const { count } = await db.abuse_reports.updateMany({
+		where: { target_type, target_id, status: 'open' },
+		data: { status: 'dismissed' },
+	});
+	return count;
+}
+
+export async function resolveFlags(
+	flag: { kind: string; target_type: string; target_id: string },
+	at: Date,
+	tx?: Tx
+): Promise<void> {
+	const db = tx ?? prisma;
+	await db.moderation_flags.updateMany({ where: { ...flag, resolved_at: null }, data: { resolved_at: at } });
+}
+
 export async function managerIds(report_id: string, tx?: Tx): Promise<string[]> {
 	const db = tx ?? prisma;
 	const rows = await db.report_managers.findMany({ where: { report_id }, select: { user_id: true } });
@@ -110,6 +149,29 @@ export async function listReports(
 	});
 }
 
+/**
+ * Short code of the listing behind each target, by target id: the listing itself for `report`, the listing its
+ * conversation is about for `message`. Other targets (profiles, pets) have none.
+ */
+export async function targetCodes(
+	targets: { target_type: string; target_id: string }[],
+	tx?: Tx
+): Promise<Map<string, string>> {
+	const db = tx ?? prisma;
+	const ids = (type: string) => targets.filter((t) => t.target_type === type).map((t) => t.target_id);
+	const [reports, messages] = await Promise.all([
+		db.reports.findMany({ where: { id: { in: ids('report') } }, select: { id: true, short_code: true } }),
+		db.messages.findMany({
+			where: { id: { in: ids('message') } },
+			select: { id: true, conversation: { select: { about_report: { select: { short_code: true } } } } },
+		}),
+	]);
+	return new Map([
+		...reports.map((r) => [r.id, r.short_code] as const),
+		...messages.map((m) => [m.id, m.conversation.about_report.short_code] as const),
+	]);
+}
+
 export async function listFlags(input: { cursor?: string; take: number }, tx?: Tx): Promise<moderation_flags[]> {
 	const db = tx ?? prisma;
 	return db.moderation_flags.findMany({
@@ -123,14 +185,19 @@ export default {
 	accountCreatedAt,
 	isParticipant,
 	profileExists,
+	isManager,
 	lockReport,
 	findOwn,
 	insertReport,
 	openWeight,
 	hideReport,
+	unhideReport,
+	dismissOpen,
+	resolveFlags,
 	managerIds,
 	insertFlag,
 	hiddenReport,
 	listReports,
+	targetCodes,
 	listFlags,
 };

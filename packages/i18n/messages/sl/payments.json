@@ -1,4 +1,8 @@
 {
+	"handoff_title": "Plačali boste v brskalniku",
+	"handoff_body": "Odprli bomo varno plačilno stran Stripe. Ko končate, se vrnete v aplikacijo.",
+	"handoff_continue": "Nadaljuj",
+	"handoff_cancel": "Prekliči",
 	"success_title": "Hvala za vaš prispevek",
 	"success_body": "Potrdilo o plačilu smo vam poslali po e-pošti.",
 	"success_back": "Nazaj na prijavo",
@@ -13,8 +17,6 @@
 	"pending_title": "Potrjujemo plačilo …",
 	"pending_body": "To lahko traja nekaj trenutkov. Stran se bo osvežila sama.",
 	"pending_back": "Nazaj",
-	"pending_slow": "Potrditev še traja. Plačilo lahko preveriš med svojimi plačili, ko bo končano.",
-	"pending_payments": "Moja plačila",
 	"list_title": "Plačila",
 	"row": "{date} · {purpose} · {amount}",
 	"purpose_tip": "Prispevek v zahvalo",
@@ -23,6 +25,9 @@
 	"status_paid": "Plačano",
 	"status_refunded": "Vrnjeno",
 	"status_failed": "Neuspešno",
+	"receipt": "Potrdilo",
 	"test_label": "Testno",
-	"empty": "Plačil še ni."
+	"empty": "Plačil še ni.",
+	"pending_slow": "Potrditev še traja. Plačilo lahko preveriš med svojimi plačili, ko bo končano.",
+	"pending_payments": "Moja plačila"
 }
