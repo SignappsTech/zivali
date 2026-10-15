@@ -1,7 +1,7 @@
 ---
 doc_id: DOC-04
 title: Technical Design
-version: 0.5
+version: 0.6
 status: Draft
 date: 2026-10-15
 owner: Tech Lead
@@ -48,7 +48,7 @@ approvals:
 |---|---|---|---|
 | Monorepo | pnpm workspaces + Turborepo | pnpm 11, turbo 2 | ADR-001; Node 22 LTS |
 | Language | TypeScript, strict | repo version (TS 6.0) | one version workspace-wide |
-| Formatting | Prettier (tabs, width 4, print width 120, single quotes, trailing commas es5), ESLint flat + import/order | - | klikni style (ADR-020) |
+| Formatting | Prettier (tabs, width 4, print width 120, single quotes, trailing commas es5), ESLint flat + `import-x/order` + eslint-config-prettier; husky + lint-staged on commit | - | klikni style (ADR-020, ADR-017) |
 | Web | Next.js App Router, React 19, `output: 'standalone'` | Next 16.x | server components read through the API with the session token |
 | Web UI | shadcn/ui (Radix) + Tailwind CSS | Tailwind 4 | themed by `@zivali/tokens` (ADR-002) |
 | Mobile | Expo + Expo Router, React Native (New Architecture) | SDK 57 / RN 0.86.3 (pinned by the template) | development builds (MapLibre, Firebase) |
@@ -284,3 +284,4 @@ Full records: `docs/tech/adr/NNN-*.md` (context, decision, alternatives, consequ
 | 0.3 | 2026-10-15 | Brief v0.7: Shelter Pro removed, Vet Partner only B2B subscription, QR/NFC tags out of scope; final Lagoon tokens; M1/M2 breakdown |
 | 0.4 | 2026-10-15 | Offline mode (FR-041..043): ADR-019, C17; content CHANGEs to C3, C9, C10, C14, C15 |
 | 0.5 | 2026-10-15 | Brief v1.0 architecture: Express + Prisma API with a domain layer (ADR-020, klikni conventions), DB lockdown (ADR-021), pg-boss (ADR-022), Realtime Broadcast chat (ADR-023), R2 photos (ADR-014), Hetzner + Docker Compose + Caddy (ADR-016); ADR-003/004 superseded; contracts rewritten from RPC to REST; C18 shelter directory (FR-044); CRHŽ instead of CRPsi; SEO hub routes |
+| 0.6 | 2026-10-15 | TASK-3.8: formatting tools (import-x, eslint-config-prettier, husky + lint-staged; ADR-017), root scripts for Prisma and jobs, no Edge Functions in the workspace |

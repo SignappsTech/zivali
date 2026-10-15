@@ -23,8 +23,8 @@ Design tokens for web and mobile, generated from `docs/design/tokens.json` (owne
 ```js
 // apps/mobile/tailwind.config.js
 module.exports = {
-  presets: [require('nativewind/preset'), require('@zivali/tokens/tailwind-preset')],
-  content: [/* … */],
+	presets: [require('nativewind/preset'), require('@zivali/tokens/tailwind-preset')],
+	content: [/* … */],
 };
 ```
 
@@ -33,9 +33,9 @@ module.exports = {
 1. Edit values in `docs/design/tokens.json`.
 2. Run `pnpm --filter @zivali/tokens build` (or `node packages/tokens/build.mjs`). Both apps pick up the new `dist/` on their next `dev` or `build`; no component edits.
 3. If the build fails, the message names the problem:
-   - `light: foreground on background = 3.84:1, minimum 7:1`: a declared pair in `pairs.list` is below its ratio. Pick another step.
-   - `pairs.list[12] … unknown token "x"`: the pair names a token that does not exist.
-   - `semantic.dark.ring: missing …` or `scale.type.size.base: expected …`: the file shape changed. New tokens and new values are fine; a new _kind_ of value or section is a `CHANGE docs/tech/contracts/C2-design-tokens.md` request to the tech lead.
+    - `light: foreground on background = 3.84:1, minimum 7:1`: a declared pair in `pairs.list` is below its ratio. Pick another step.
+    - `pairs.list[12] … unknown token "x"`: the pair names a token that does not exist.
+    - `semantic.dark.ring: missing …` or `scale.type.size.base: expected …`: the file shape changed. New tokens and new values are fine; a new _kind_ of value or section is a `CHANGE docs/tech/contracts/C2-design-tokens.md` request to the tech lead.
 
 `docs/design/build-tokens.mjs` stays as the generator for the static mockups.
 

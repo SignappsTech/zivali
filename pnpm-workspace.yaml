@@ -1,10 +1,12 @@
 packages:
   - apps/*
   - packages/*
-  - supabase/functions
 
 # Expo/Metro needs a flat node_modules (ADR-001). pnpm 11 reads this here; .npmrc keeps it for other tools.
 nodeLinker: hoisted
 
+# Install scripts run only when listed here (true) or are skipped on purpose (false).
 allowBuilds:
-  deno: true
+  # eslint-plugin-import-x resolver: its postinstall only re-checks the native binding that pnpm already
+  # installs from optionalDependencies, so it is skipped.
+  unrs-resolver: false

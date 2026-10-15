@@ -44,9 +44,13 @@ Runtime dependencies outside this list (and outside what the Expo SDK 57 templat
 | Dev: `@eslint/js`, `typescript-eslint`, `globals` | repo | Root ESLint base config: JS recommended rules, TypeScript parsing and rules, Node globals for scripts (TASK-3.1) |
 | Dev: `tsx`, `tsup`, `supertest` | api | Dev runner, build, HTTP tests (klikni toolchain, ADR-020) |
 | Dev: `husky`, `lint-staged` | repo | Pre-commit lint and format (klikni practice) |
+| Dev: `eslint-plugin-import-x` | repo | `import-x/order` with klikni's groups (builtin, external, internal; blank line between). Replaces klikni's `eslint-plugin-import`, which does not support ESLint 10; resolver-free for this rule (TASK-3.8) |
+| Dev: `eslint-config-prettier` | repo | Last entry of the root ESLint config: turns off rules that conflict with Prettier, including those of the app presets (TASK-3.8) |
 | Removed 2026-10-15: `deno` | repo | No Edge Functions any more (ADR-020) |
 
-Not used, on purpose: Redis, BullMQ, Socket.IO, node-cron, multer, morgan, nodemailer/pug, jsonwebtoken (klikni items replaced, ADR-020), MMKV, WatermelonDB/RxDB, TanStack query persisters (ADR-019), date libraries (use `Intl`), lodash, axios, state managers (React state + TanStack Query), CSS-in-JS, Redux, UUID packages (`crypto.randomUUID`), HEIC converters, TUS clients, Mapbox/Google SDKs, i18next.
+Prettier runs as its own step (`prettier --check .` in `pnpm verify`, `prettier --write` in lint-staged after `eslint --fix`), not as an ESLint rule. klikni's lint-staged already runs both tools in that order, so its `eslint-plugin-prettier` only repeats Prettier inside ESLint, slower and with noisier reports; the formatting result is the same (decision 2026-10-15, TASK-3.8).
+
+Not used, on purpose: `eslint-plugin-prettier` and `eslint-plugin-import` (above), commitlint (commit format stays `<task-id>: <what>`, ADR-020), Redis, BullMQ, Socket.IO, node-cron, multer, morgan, nodemailer/pug, jsonwebtoken (klikni items replaced, ADR-020), MMKV, WatermelonDB/RxDB, TanStack query persisters (ADR-019), date libraries (use `Intl`), lodash, axios, state managers (React state + TanStack Query), CSS-in-JS, Redux, UUID packages (`crypto.randomUUID`), HEIC converters, TUS clients, Mapbox/Google SDKs, i18next.
 
 ## Consequences
 

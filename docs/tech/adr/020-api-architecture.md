@@ -81,7 +81,7 @@ The client wants to own the backend in a stack they know: Express + Prisma, the 
 | No response envelope; keyset `next_cursor` pagination | Adopt | Lists as `{ items, next_cursor }` everywhere |
 | Mixed URL casing and verb routes, `/api` without version | Skip | `/v1`, kebab-case plural nouns |
 | tsx for dev, tsup for build | Adopt | Same toolchain (tsx watch instead of nodemon) |
-| ESLint flat + import/order + prettier plugin; Prettier tabs (width 4), print width 120, single quotes, trailing commas es5 | Adopt (client confirmed) | Applied repo-wide once by an early trivial task |
+| ESLint flat + import/order + prettier plugin; Prettier tabs (width 4), print width 120, single quotes, trailing commas es5 | Adopt (client confirmed), two tool swaps | Same Prettier settings and import groups, applied repo-wide once (TASK-3.8); `eslint-plugin-import-x` for import order (klikni's plugin lacks ESLint 10 support) and Prettier run on its own with `eslint-config-prettier` instead of the prettier plugin (ADR-017) |
 | husky + lint-staged; commitlint | Adopt / Skip | Hooks adopted; commit format stays `<task-id>: <what>` |
 | CI without lint, types or tests; pm2 + rsync deploy | Skip | Full gates in CI; Docker Compose + Caddy on Hetzner (client decision) |
 | Path aliases in tsconfig, tsup, jest and shell profiles | Skip | Package subpath exports and relative imports |

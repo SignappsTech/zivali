@@ -1,42 +1,50 @@
 {
-  "name": "zivali",
-  "private": true,
-  "type": "module",
-  "packageManager": "pnpm@11.28.5",
-  "engines": {
-    "node": "22.x"
-  },
-  "scripts": {
-    "bootstrap": "pnpm install && pnpm db:start && pnpm db:reset && node scripts/if-exists.mjs scripts/seed-photos.mjs TASK-6.6 -- node scripts/seed-photos.mjs && turbo run build --filter=@zivali/*",
-    "dev": "turbo run dev",
-    "build": "turbo run build",
-    "lint": "eslint --max-warnings=0 scripts eslint.config.mjs && turbo run lint",
-    "typecheck": "turbo run typecheck",
-    "test": "node --test \"scripts/*.test.mjs\" && turbo run test",
-    "format": "prettier --write .",
-    "format:check": "prettier --check .",
-    "verify": "prettier --check . && eslint --max-warnings=0 scripts eslint.config.mjs && node --test \"scripts/*.test.mjs\" && turbo run lint typecheck test build",
-    "quality": "node scripts/if-exists.mjs tests/quality TASK-4.1 -- \"playwright test tests/quality && lhci autorun && linkinator http://localhost:8080 --recurse\"",
-    "db:start": "node scripts/if-exists.mjs supabase/config.toml TASK-3.2 -- supabase start",
-    "db:stop": "node scripts/if-exists.mjs supabase/config.toml TASK-3.2 -- supabase stop",
-    "db:reset": "node scripts/if-exists.mjs supabase/config.toml TASK-3.2 -- supabase db reset",
-    "db:test": "node scripts/if-exists.mjs supabase/tests TASK-3.2 -- supabase test db",
-    "db:lint": "node scripts/if-exists.mjs supabase/migrations TASK-3.2 -- supabase db lint",
-    "db:drain": "node scripts/if-exists.mjs scripts/drain.mjs TASK-6.3 -- node scripts/drain.mjs",
-    "gen:types": "turbo run gen:types",
-    "functions:serve": "node scripts/if-exists.mjs supabase/functions/deno.json TASK-3.2 -- supabase functions serve --env-file supabase/functions/.env.local",
-    "functions:check": "node scripts/if-exists.mjs supabase/functions/deno.json TASK-3.2 -- deno check --config supabase/functions/deno.json supabase/functions",
-    "admin:create": "node scripts/if-exists.mjs scripts/admin-create.mjs TASK-34.2 -- node scripts/admin-create.mjs"
-  },
-  "devDependencies": {
-    "@eslint/js": "^10.0.1",
-    "deno": "^2.9.6",
-    "eslint": "^10.12.0",
-    "globals": "^17.13.0",
-    "prettier": "^3.9.10",
-    "supabase": "^2.120.0",
-    "turbo": "^2.11.7",
-    "typescript": "~6.0.3",
-    "typescript-eslint": "^8.71.2"
-  }
+	"name": "zivali",
+	"private": true,
+	"type": "module",
+	"packageManager": "pnpm@11.28.5",
+	"engines": {
+		"node": "22.x"
+	},
+	"scripts": {
+		"prepare": "husky",
+		"bootstrap": "pnpm install && pnpm db:start && node scripts/if-exists.mjs docker-compose.dev.yml TASK-3.7 -- docker compose -f docker-compose.dev.yml up -d && pnpm db:reset && node scripts/if-exists.mjs scripts/seed-photos.mjs TASK-6.6 -- node scripts/seed-photos.mjs && turbo run build --filter=@zivali/*",
+		"dev": "turbo run dev dev:worker",
+		"build": "turbo run build",
+		"lint": "eslint --max-warnings=0 scripts eslint.config.mjs && turbo run lint",
+		"typecheck": "turbo run typecheck",
+		"test": "node --test \"scripts/*.test.mjs\" && turbo run test",
+		"format": "prettier --write .",
+		"format:check": "prettier --check .",
+		"verify": "prettier --check . && eslint --max-warnings=0 scripts eslint.config.mjs && node --test \"scripts/*.test.mjs\" && turbo run lint typecheck test build",
+		"quality": "node scripts/if-exists.mjs tests/quality TASK-4.1 -- \"playwright test tests/quality && lhci autorun && linkinator http://localhost:8080 --recurse\"",
+		"db:start": "node scripts/if-exists.mjs supabase/config.toml TASK-3.2 -- supabase start",
+		"db:stop": "node scripts/if-exists.mjs supabase/config.toml TASK-3.2 -- supabase stop",
+		"db:migrate": "node scripts/if-exists.mjs apps/api/prisma.config.ts TASK-3.7 -- pnpm --dir apps/api exec prisma migrate dev",
+		"db:reset": "node scripts/if-exists.mjs apps/api/prisma.config.ts TASK-3.7 -- \"pnpm --dir apps/api exec prisma migrate reset --force && pnpm --dir apps/api exec prisma db seed\"",
+		"db:seed": "node scripts/if-exists.mjs apps/api/prisma.config.ts TASK-3.7 -- pnpm --dir apps/api exec prisma db seed",
+		"jobs:drain": "node scripts/if-exists.mjs apps/api/scripts/jobs-drain.ts TASK-6.3 -- pnpm --dir apps/api exec tsx scripts/jobs-drain.ts",
+		"admin:create": "node scripts/if-exists.mjs scripts/admin-create.mjs TASK-34.2 -- node scripts/admin-create.mjs"
+	},
+	"lint-staged": {
+		"*.{js,mjs,cjs,jsx,ts,mts,cts,tsx}": [
+			"eslint --fix --max-warnings=0 --no-warn-ignored",
+			"prettier --write"
+		],
+		"*.{json,jsonc,md,mdx,css,html,yml,yaml}": "prettier --write"
+	},
+	"devDependencies": {
+		"@eslint/js": "^10.0.1",
+		"eslint": "^10.12.0",
+		"eslint-config-prettier": "^10.1.8",
+		"eslint-plugin-import-x": "^4.17.1",
+		"globals": "^17.13.0",
+		"husky": "^9.1.7",
+		"lint-staged": "^17.6.0",
+		"prettier": "^3.9.10",
+		"supabase": "^2.120.0",
+		"turbo": "^2.11.7",
+		"typescript": "~6.0.3",
+		"typescript-eslint": "^8.71.2"
+	}
 }
