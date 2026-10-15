@@ -90,6 +90,7 @@ Logs (pino, `lib/logger.ts`): one line per request with `req_id`, `route` (metho
 - Seed: fixture users, password and the local TOTP secret for mod and admin are in [prisma/seeders/README.md](prisma/seeders/README.md).
 - Prisma 7 no longer generates on `migrate dev`: run `pnpm --filter api exec prisma generate` after schema changes (`pnpm install` also does).
 - Geo reference (`TASK-6.4`, `geo.prisma`): `regions` and `municipalities` (GURS, GiST on `geom`), loaded by seeder `01-geo` in every environment. `GeoDomain.lookup({ lat, lng }, ctx)` (`lib/geo.ts`, one raw PostGIS query) returns the municipality and region ids and slugs, or `in_slovenia: false`.
+- Commerce and moderation (`TASK-6.8`): `abuse_reports`, `moderation_flags` (`abuse.prisma`, C11), `payments`, `payment_events` (`payments.prisma`, C13), `ads`, `ad_stats_daily`, `partner_stats_snapshot`, `leads` (`ads.prisma`, C14), `organisations`, `organisation_members` (`organisations.prisma`). Value lists, https ad links, ad alt text 5–140 and the EUR 2.00 minimum are database checks; `app_config` `payments.prices` (cents) and `payments.live_allowed` (false) come with the migration. Seeder `30-commerce` loads the house ads everywhere and local fixtures (sponsor ads, a verified shelter).
 - Staging and prod geo data: after `prisma migrate deploy`, run `pnpm --filter api db:seed` from a checkout with that `DATABASE_URL`. Reference data (`01-geo`) loads everywhere; fixture seeders skip themselves via `APP_ENV`.
 
 ## Commands

@@ -34,3 +34,8 @@ This secret and password exist only in the local stack; staging and production s
 ## 01-geo: GURS regions and municipalities (all environments)
 
 Runs the SQL that `scripts/geo-to-sql.mjs` generates from `supabase/seed/geo/regions.geojson` and `municipalities.geojson` (12 regions, 212 municipalities; `on conflict (id) do update`, so reruns are safe). Licence and required attribution: [supabase/seed/geo/LICENSE.md](../../../../supabase/seed/geo/LICENSE.md).
+
+## 30-commerce: house ads (all environments) and commerce fixtures (local only)
+
+- House ads (C14), ids `00000000-0000-4000-a000-000000000101`…`106`: `supporter`, `partner` and `adopt`, each in SL and EN, active in every slot. Created once and never overwritten, so admin edits survive a rerun. The copy is a **placeholder for the content strategist**.
+- Local only (`APP_ENV=local`): two made-up sponsor ads, `…201` (dogs, region 8 osrednjeslovenska, `detail` and `feed`) and `…202` (cats, region 2 podravska, `feed` and `sidebar`); a verified shelter organisation `…301` in Ljubljana with `shelter@zivali.test` as its admin.
