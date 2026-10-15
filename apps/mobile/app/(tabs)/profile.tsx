@@ -15,6 +15,7 @@ import { useLocale, useTranslations } from 'use-intl';
 import { useSession } from '@zivali/api/auth';
 import type { Me } from '@zivali/types';
 import { useErrorText } from '@/components/auth/parts';
+import { OutboxList, usePendingPrompt } from '@/components/outbox/queue';
 import { LanguageRow } from '@/components/shell/language';
 import { MenuRow, SignInButtons } from '@/components/shell/parts';
 import {
@@ -36,42 +37,49 @@ import { Text } from '@/components/ui/text';
 import { resendConfirmation, signOutProviders } from '@/lib/auth';
 import { env } from '@/lib/env';
 import { signOutAndWipe } from '@/lib/offline/wipe';
+import { unregisterPush } from '@/lib/push';
 
-/** "Odjava" and its confirmation; the wipe keeps the manage links unless the user ticks their removal (C17 §Wipe). */
+/**
+ * "Odjava" and its confirmation; the wipe keeps the manage links unless the user ticks their removal, and unsent
+ * reports first get "Send now / Delete / Cancel" (C17 §Wipe).
+ */
 function SignOutRow() {
 	const t = useTranslations();
 	const [removeManageLinks, setRemoveManageLinks] = React.useState(false);
+	const { resolvePending, prompt } = usePendingPrompt();
 	const signOut = async () => {
 		try {
-			// TASK-86.2 adds the "Send now / Delete / Cancel" prompt; until then unsent items stay in the outbox.
-			await signOutAndWipe({ resolvePending: async () => true, removeManageLinks });
-			await signOutProviders();
+			if (await signOutAndWipe({ resolvePending, removeManageLinks, beforeSignOut: unregisterPush }))
+				await signOutProviders();
 		} catch {
 			toast.error(t('errors.INTERNAL'));
 		}
 	};
 	return (
-		<AlertDialog>
-			<AlertDialogTrigger asChild>
-				<MenuRow icon={<Icon as={SignOutIcon} size={24} />} title={t('profile.sign_out')} />
-			</AlertDialogTrigger>
-			<AlertDialogContent>
-				<AlertDialogTitle>{t('profile.sign_out_title')}</AlertDialogTitle>
-				<AlertDialogDescription>{t('profile.sign_out_body')}</AlertDialogDescription>
-				<Checkbox
-					className="mt-4"
-					checked={removeManageLinks}
-					onCheckedChange={setRemoveManageLinks}
-					label={t('profile.sign_out_remove_links')}
-				/>
-				<AlertDialogFooter>
-					<AlertDialogAction variant="default" onPress={signOut}>
-						{t('profile.sign_out_confirm')}
-					</AlertDialogAction>
-					<AlertDialogCancel>{t('profile.sign_out_cancel')}</AlertDialogCancel>
-				</AlertDialogFooter>
-			</AlertDialogContent>
-		</AlertDialog>
+		<>
+			{prompt}
+			<AlertDialog>
+				<AlertDialogTrigger asChild>
+					<MenuRow icon={<Icon as={SignOutIcon} size={24} />} title={t('profile.sign_out')} />
+				</AlertDialogTrigger>
+				<AlertDialogContent>
+					<AlertDialogTitle>{t('profile.sign_out_title')}</AlertDialogTitle>
+					<AlertDialogDescription>{t('profile.sign_out_body')}</AlertDialogDescription>
+					<Checkbox
+						className="mt-4"
+						checked={removeManageLinks}
+						onCheckedChange={setRemoveManageLinks}
+						label={t('profile.sign_out_remove_links')}
+					/>
+					<AlertDialogFooter>
+						<AlertDialogAction variant="default" onPress={signOut}>
+							{t('profile.sign_out_confirm')}
+						</AlertDialogAction>
+						<AlertDialogCancel>{t('profile.sign_out_cancel')}</AlertDialogCancel>
+					</AlertDialogFooter>
+				</AlertDialogContent>
+			</AlertDialog>
+		</>
 	);
 }
 
@@ -153,6 +161,8 @@ export default function ProfileTab() {
 					{t(signedIn ? 'profile.title' : 'profile.signed_out_title')}
 				</Text>
 				{signedIn && me ? <AccountHeader me={me} /> : null}
+				{/* Reports sent or waiting on this device, signed in or not (FR-042); TASK-26.5 adds the account's own. */}
+				<OutboxList heading={t('report_found.my_reports')} className="mt-7" />
 				{signedIn ? (
 					<View className="mt-7 gap-3">
 						<LanguageRow />

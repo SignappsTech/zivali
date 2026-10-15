@@ -5,11 +5,9 @@ import { useTranslations } from 'use-intl';
 import { EmptyState } from '@/components/ui/empty-state';
 
 // Placeholders of the settings stack (C15). A story adds `app/settings/<section>.tsx`, which wins over this route:
-// notifications TASK-22.5, alerts TASK-23.3, payments TASK-32.3 (account and home-area exist).
+// alerts TASK-23.3 (account, home-area, notifications and payments exist).
 const TITLES = {
-	notifications: 'alerts.channels_title',
 	alerts: 'alerts.title',
-	payments: 'profile.row_payments',
 } as const;
 
 export default function SettingsPlaceholder() {

@@ -1,12 +1,15 @@
-import { toAppPath } from '@/lib/deep-link';
-import { requestPushPermission } from '@/lib/push';
+import { toAppPath, toTargetPath } from '@/lib/deep-link';
+import { registerIfGranted, requestPushPermission, unregisterPush } from '@/lib/push';
 
 jest.mock('@/lib/env', () => ({ env: { EXPO_PUBLIC_PUSH_PROVIDER: 'mock' } }));
 
 const mockRequestPermissions = jest.fn();
+const mockGetPermissions = jest.fn();
 const mockGetToken = jest.fn();
 jest.mock('expo-notifications', () => ({
+	setNotificationHandler: jest.fn(),
 	requestPermissionsAsync: () => mockRequestPermissions(),
+	getPermissionsAsync: () => mockGetPermissions(),
 	getExpoPushTokenAsync: (options: unknown) => mockGetToken(options),
 }));
 
@@ -52,6 +55,26 @@ describe('deep link paths', () => {
 	});
 });
 
+describe('notification targets (push data.url, C10 deep links)', () => {
+	test.each([
+		['/r/Pq7xK2mN/matches', '/r/Pq7xK2mN/matches'],
+		['/inbox/5e1d0a2b-0000-4000-8000-000000000001', '/inbox/5e1d0a2b-0000-4000-8000-000000000001'],
+		['/r/Hk3vT9qP', '/r/Hk3vT9qP'],
+		// The local proximity alert (TASK-87.1).
+		['zivali://r/Hk3vT9qP', '/r/Hk3vT9qP'],
+		['/my-reports?r=Hk3vT9qP&action=keep', '/r/Hk3vT9qP'],
+		['/my-reports', '/inbox'],
+		['/account/payments', '/settings/payments'],
+		['https://najdimo.si/en/r/Hk3vT9qP/matches', '/r/Hk3vT9qP/matches'],
+		['/settings/account', '/inbox'],
+		['/r/../dev/kit', '/inbox'],
+		['/auth/new-password', '/inbox'],
+		['javascript:alert(1)', '/inbox'],
+	])('%s -> %s', (url, path) => {
+		expect(toTargetPath(url)).toBe(path);
+	});
+});
+
 describe('app.config links', () => {
 	test('follow the host of APP_URL, https only', () => {
 		const config = loadConfig('https://staging.najdimo.si');
@@ -75,15 +98,22 @@ describe('app.config links', () => {
 });
 
 describe('push token registration', () => {
-	beforeEach(() => {
+	const api = (register = jest.fn().mockResolvedValue(undefined)) => ({
+		register,
+		unregister: jest.fn().mockResolvedValue(undefined),
+	});
+
+	beforeEach(async () => {
 		mockRequestPermissions.mockReset();
+		mockGetPermissions.mockReset();
 		mockGetToken.mockReset();
+		await unregisterPush();
 	});
 
 	test('mock provider: registers the placeholder token after permission, without asking Expo', async () => {
 		mockRequestPermissions.mockResolvedValue({ granted: true });
 		const register = jest.fn().mockResolvedValue(undefined);
-		await expect(requestPushPermission(register, 'mock')).resolves.toBe(true);
+		await expect(requestPushPermission(api(register), 'mock')).resolves.toBe(true);
 		expect(register).toHaveBeenCalledWith({
 			token: expect.stringMatching(/^ExponentPushToken\[mock-/),
 			platform: 'ios',
@@ -95,21 +125,54 @@ describe('push token registration', () => {
 		mockRequestPermissions.mockResolvedValue({ granted: true });
 		mockGetToken.mockResolvedValue({ data: 'ExponentPushToken[abc]' });
 		const register = jest.fn().mockResolvedValue(undefined);
-		await requestPushPermission(register, 'expo');
+		await requestPushPermission(api(register), 'expo');
 		expect(register).toHaveBeenCalledWith({ token: 'ExponentPushToken[abc]', platform: 'ios' });
 	});
 
 	test('denied: nothing registered', async () => {
 		mockRequestPermissions.mockResolvedValue({ granted: false });
 		const register = jest.fn();
-		await expect(requestPushPermission(register, 'mock')).resolves.toBe(false);
+		await expect(requestPushPermission(api(register), 'mock')).resolves.toBe(false);
 		expect(register).not.toHaveBeenCalled();
 	});
 
 	test('a failing registration still reports the permission as granted', async () => {
 		mockRequestPermissions.mockResolvedValue({ granted: true });
-		await expect(requestPushPermission(jest.fn().mockRejectedValue(new Error('offline')), 'mock')).resolves.toBe(
-			true
-		);
+		await expect(
+			requestPushPermission(api(jest.fn().mockRejectedValue(new Error('offline'))), 'mock')
+		).resolves.toBe(true);
+	});
+
+	test('sign-in: registers when already granted and never prompts; not granted registers nothing', async () => {
+		mockGetPermissions.mockResolvedValue({ granted: true });
+		const granted = api();
+		await registerIfGranted(granted, 'mock');
+		expect(granted.register).toHaveBeenCalledWith({ token: 'ExponentPushToken[mock-ios]', platform: 'ios' });
+
+		mockGetPermissions.mockResolvedValue({ granted: false });
+		const denied = api();
+		await registerIfGranted(denied, 'mock');
+		expect(denied.register).not.toHaveBeenCalled();
+		expect(mockRequestPermissions).not.toHaveBeenCalled();
+	});
+
+	test('sign-out deletes the registered token once; a failing delete does not throw', async () => {
+		mockGetPermissions.mockResolvedValue({ granted: true });
+		const registered = api();
+		registered.unregister.mockRejectedValueOnce(new Error('offline'));
+		await registerIfGranted(registered, 'mock');
+
+		await expect(unregisterPush()).resolves.toBeUndefined();
+		expect(registered.unregister).toHaveBeenCalledWith({ token: 'ExponentPushToken[mock-ios]' });
+		await unregisterPush();
+		expect(registered.unregister).toHaveBeenCalledTimes(1);
+	});
+
+	test('a token kept after a failed registration is still deleted on sign-out', async () => {
+		mockRequestPermissions.mockResolvedValue({ granted: true });
+		const offline = api(jest.fn().mockRejectedValue(new Error('offline')));
+		await requestPushPermission(offline, 'mock');
+		await unregisterPush();
+		expect(offline.unregister).toHaveBeenCalledWith({ token: 'ExponentPushToken[mock-ios]' });
 	});
 });

@@ -66,10 +66,19 @@ type Row = {
 	created_at: number;
 	updated_at: number;
 };
-export type OutboxItem = Omit<Row, 'payload' | 'result'> & {
-	payload: OutboxPayload;
-	result: { report_id: string; short_code: string } | null;
+/** All a sent row keeps (deliver() drops the rest): never read a place or an email from a sent item. */
+type SentPayload = Pick<OutboxPayload, 'type' | 'species'>;
+type ItemBase = Omit<Row, 'status' | 'payload' | 'result'> & {
+	/** The first photo on disk; null once sent (the files go with the send). */
+	photo: string | null;
 };
+export type OutboxItem =
+	| (ItemBase & {
+			status: Exclude<OutboxStatus, 'sent'>;
+			payload: OutboxPayload;
+			result: null;
+	  })
+	| (ItemBase & { status: 'sent'; payload: SentPayload; result: { report_id: string; short_code: string } });
 type PhotoRow = { path: string; sha256: string; width: number; height: number; bytes: number };
 /** How send() reaches the API: the app client, the anonymous session (Turnstile sheet) and the file PUT. */
 export type OutboxTransport = { api: ApiClient; ensureSession: () => Promise<unknown>; put: PutFile };
@@ -217,12 +226,13 @@ async function deliver(transport: OutboxTransport, item: Row): Promise<void> {
 		const { id, short_code, manage_token } = created;
 		if (manage_token) await saveManageToken(id, manage_token);
 		// A sent row outlives sign-out and is listed: keep only what the "sent" UI shows, not the email or the place.
-		const { type, species } = JSON.parse(item.payload) as { type: string; species?: string };
+		const { type, species } = JSON.parse(item.payload) as OutboxPayload;
+		const sent: SentPayload = { type, species };
 		await db.withTransactionAsync(async () => {
 			await db.runAsync(
 				`update outbox set status = 'sent', payload = ?, result = ?, next_attempt_at = null, last_error_code = null,
 				last_error_message = null, updated_at = ? where id = ?`,
-				JSON.stringify({ type, species }),
+				JSON.stringify(sent),
 				JSON.stringify({ report_id: id, short_code }),
 				Date.now(),
 				item.id
@@ -331,25 +341,48 @@ export function startOutbox(sender: OutboxTransport): () => void {
 
 async function listItems(): Promise<OutboxItem[]> {
 	const db = await getDb();
-	const rows = await db.getAllAsync<Row>('select * from outbox order by created_at desc');
-	return rows.map(({ payload, result, ...row }) => ({
-		...row,
-		payload: JSON.parse(payload) as OutboxPayload,
-		result: result ? JSON.parse(result) : null,
-	}));
+	const rows = await db.getAllAsync<Row & { photo: string | null }>(
+		`select *, (select path from outbox_photos where outbox_id = outbox.id order by position limit 1) as photo
+		from outbox order by created_at desc`
+	);
+	return rows.map(({ status, payload, result, ...row }) =>
+		status === 'sent'
+			? { ...row, status, payload: JSON.parse(payload) as SentPayload, result: JSON.parse(result ?? 'null') }
+			: { ...row, status, payload: JSON.parse(payload) as OutboxPayload, result: null }
+	);
 }
 
-/** A queued, failed or needs-action item is sent now, with a fresh backoff. */
-async function retry(id: string): Promise<void> {
+/** Queued, failed and needs-action items (all, or the one `id`) are sent now, with a fresh backoff. */
+async function requeue(id?: string): Promise<void> {
 	const db = await getDb();
 	await db.runAsync(
 		`update outbox set status = 'queued', attempts = 0, next_attempt_at = null, updated_at = ?
-		where id = ? and status in ('queued', 'failed', 'needs_action')`,
+		where status in ('queued', 'failed', 'needs_action') and (? is null or id = ?)`,
 		Date.now(),
-		id
+		id ?? null,
+		id ?? null
 	);
 	changed();
 	await send();
+}
+
+/** "Send now" before sign-out or account deletion: every unsent item goes now; resolves with how many are left. */
+export async function sendPending(): Promise<number> {
+	await requeue();
+	return pendingCount();
+}
+
+/** "Delete" before sign-out or account deletion: every unsent item and its photos go; one being sent ends first. */
+export async function removePending(): Promise<void> {
+	const db = await getDb();
+	const drop = () => db.runAsync(`delete from outbox where status not in ('sent', 'sending')`);
+	await drop();
+	if ((await pendingCount()) > 0) {
+		await running;
+		await drop();
+	}
+	await sweep().catch(() => {});
+	changed();
 }
 
 /** The person deletes an item and its photos; one being sent right now stays. */
@@ -383,5 +416,5 @@ export function useOutbox(): {
 			listeners.delete(load);
 		};
 	}, []);
-	return { items, retry, remove };
+	return { items, retry: requeue, remove };
 }

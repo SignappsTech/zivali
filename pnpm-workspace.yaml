@@ -60,17 +60,3 @@ auditConfig:
     - GHSA-86w9-cpqp-85rv
     # braces stack exhaustion (no fix): metro > micromatch; Metro's globs come from our own config.
     - GHSA-vfj7-8cjw-p6xm
-
-# temporary: exact versions younger than minimumReleaseAge (published 2026-10-14); remove after 2026-10-15 17:00 UTC.
-minimumReleaseAgeExclude:
-  - '@expo/cli@57.0.30'
-  - '@expo/metro-runtime@57.0.17'
-  - '@expo/prebuild-config@57.0.19'
-  - '@expo/ui@57.0.24'
-  - expo-asset@57.0.20
-  - expo-constants@57.0.22
-  - expo-linking@57.0.13
-  - expo-modules-autolinking@57.0.16
-  - expo-modules-core@57.0.23
-  - expo-router@57.0.27
-  - expo@57.0.29

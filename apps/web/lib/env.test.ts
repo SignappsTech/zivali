@@ -16,6 +16,18 @@ describe('parseEnv', () => {
 		});
 	});
 
+	it('defaults the mock webhook secret only on local', () => {
+		expect(parseEnv(valid).MOCK_WEBHOOK_SECRET).toBe('mock-webhook-secret');
+		const staging = {
+			...valid,
+			APP_ENV: 'staging',
+			NEXT_PUBLIC_API_URL: 'https://api.example.com',
+			NEXT_PUBLIC_APP_URL: 'https://najdimo.si',
+			R2_UPLOAD_ORIGIN: 'https://acct.eu.r2.cloudflarestorage.com',
+		};
+		expect(parseEnv(staging).MOCK_WEBHOOK_SECRET).toBeUndefined();
+	});
+
 	it('fails fast on a missing API URL outside local', () => {
 		expect(() => parseEnv({ ...valid, APP_ENV: 'staging' })).toThrow(/NEXT_PUBLIC_API_URL/);
 		expect(

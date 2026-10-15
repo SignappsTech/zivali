@@ -1,10 +1,11 @@
 ---
 id: TASK-102
-title: 'Test global-setup flags unmerged migrations already applied to the shared DB'
-status: To Do
+title: Test global-setup flags unmerged migrations already applied to the shared DB
+status: Done
 assignee:
   - '@tech-lead'
 created_date: '2026-10-15 19:45'
+updated_date: '2026-10-15 23:06'
 labels:
   - tech
   - 'est:XS'

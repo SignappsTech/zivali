@@ -48,12 +48,18 @@ export function AuthHeading({ focus = false, children }: { focus?: boolean; chil
 	);
 }
 
-/** Spot icon (P16 M4, M5): 88 px `secondary` circle around a 40 px `primary` glyph (pass the bold icon). */
-export function Spot({ children }: { children: React.ReactNode }) {
+/**
+ * Spot icon (P16 M4, M5): 88 px `secondary` circle around a 40 px `primary` glyph (pass the bold icon); `className`
+ * retints it (P15 cancelled: `bg-muted text-muted-foreground`).
+ */
+export function Spot({ className, children }: { className?: string; children: React.ReactNode }) {
 	return (
 		<span
 			aria-hidden="true"
-			className="mb-8 grid size-22 place-items-center rounded-full bg-secondary text-primary [&_svg]:size-10"
+			className={cn(
+				'mb-8 grid size-22 place-items-center rounded-full bg-secondary text-primary [&_svg]:size-10',
+				className
+			)}
 		>
 			{children}
 		</span>

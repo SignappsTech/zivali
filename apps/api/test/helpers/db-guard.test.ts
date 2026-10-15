@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { guardMessage, isSharedDb, isWorktree } from './db-guard';
+import { diffMigrations, guardMessage, isSharedDb, isWorktree } from './db-guard';
 
 const shared = 'postgresql://postgres:x@127.0.0.1:55322/postgres?schema=app';
 const scratch = 'postgresql://postgres:x@127.0.0.1:55322/task_101?schema=app';
@@ -33,5 +33,22 @@ describe('db guard (TASK-101)', () => {
 		expect(guardMessage({ databaseUrl: shared, cwd: base, pending: ['x'] })).toBeNull();
 		expect(guardMessage({ databaseUrl: scratch, cwd: wt, pending: ['x'] })).toBeNull();
 		expect(guardMessage({ databaseUrl: shared, cwd: wt, pending: ['x'], allowOverride: true })).toBeNull();
+	});
+
+	it('flags migrations applied on the shared db but missing locally (TASK-102), in base and worktree', () => {
+		for (const cwd of [base, wt]) {
+			const msg = guardMessage({ databaseUrl: shared, cwd, pending: [], unknown: ['2026_x'] });
+			expect(msg).toContain('2026_x');
+			expect(msg).toContain('_prisma_migrations');
+		}
+		expect(guardMessage({ databaseUrl: scratch, cwd: base, pending: [], unknown: ['2026_x'] })).toBeNull();
+		expect(guardMessage({ databaseUrl: shared, cwd: base, pending: [], unknown: [] })).toBeNull();
+		expect(
+			guardMessage({ databaseUrl: shared, cwd: base, pending: [], unknown: ['2026_x'], allowOverride: true })
+		).toBeNull();
+	});
+
+	it('diffs local and applied names', () => {
+		expect(diffMigrations(['a', 'b'], ['b', 'z', 'y'])).toEqual({ pending: ['a'], unknown: ['y', 'z'] });
 	});
 });

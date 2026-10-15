@@ -1,10 +1,13 @@
 ---
 id: TASK-106
-title: 'Report PATCH: row lock against a racing close; pet species check on species change'
-status: To Do
+title: >-
+  Report PATCH: row lock against a racing close; pet species check on species
+  change
+status: Done
 assignee:
   - '@backend-dev'
 created_date: '2026-10-15 20:25'
+updated_date: '2026-10-15 22:41'
 labels:
   - be
   - 'est:XS'
@@ -32,3 +35,5 @@ Branch: agent/task-106-report-patch-lock
 - [ ] #1 updateReport reads the report `FOR UPDATE` inside its transaction before the status/manager checks; a test races PATCH against a close and the PATCH gets GONE (or is serialised after it)
 - [ ] #2 When fields.species is set and (fields.pet_id ?? report.pet_id) is set, the pet species check runs (VALIDATION on mismatch); test
 <!-- AC:END -->
+
+Branch: agent/TASK-106-lock-update-report
