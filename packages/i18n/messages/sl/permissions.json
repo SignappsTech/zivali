@@ -1,0 +1,16 @@
+{
+	"camera_title": "Fotografija pomaga, da žival prepoznajo",
+	"camera_body": "Kamero uporabimo samo, ko fotografirate žival. Fotografijo lahko izberete tudi iz galerije.",
+	"camera_allow": "Dovoli kamero",
+	"camera_denied": "Kamera ni dovoljena. Fotografijo izberite iz galerije ali jo dodajte pozneje.",
+	"location_title": "Kje se je to zgodilo?",
+	"location_body": "Vašo lokacijo uporabimo, da hitreje označite kraj. Javno prikažemo le približno območje.",
+	"location_allow": "Dovoli lokacijo",
+	"location_denied": "Lokacija ni dovoljena. Kraj poiščite ali ga označite na zemljevidu.",
+	"notifications_title": "Naj vas obvestimo, ko bo kaj novega?",
+	"notifications_body": "Obvestimo vas o možnem ujemanju, novih sporočilih in izgubljenih živalih v bližini. Kaj prejemate, izberete v nastavitvah.",
+	"notifications_allow": "Dovoli obvestila",
+	"notifications_denied": "Obvestila na telefonu so izklopljena. Vse boste našli med sporočili in v e-pošti.",
+	"open_settings": "Odpri nastavitve telefona",
+	"not_now": "Ne zdaj"
+}

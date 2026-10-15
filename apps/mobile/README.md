@@ -38,6 +38,13 @@ NativeWind 4 with Tailwind 3.4: `tailwind.config.js` uses the `@zivali/tokens/ta
 - `Checkbox`, `Switch` and `RadioGroupItem` take a `label`, which makes the whole row the target (the web `label` row).
 - `Select` opens a bottom sheet of choice rows; `SelectContent` and `SheetContent` need a `closeLabel` for the grabber close button.
 - `toast` comes from `components/ui/sonner` (not `sonner-native`), so every toast gets a named close button.
-- `Sheet`, `Select` and `Toaster` need `GestureHandlerRootView`, `BottomSheetModalProvider` and one `<Toaster closeLabel>` above them; the dev gallery mounts them itself until the shell (TASK-12.2) puts them in `app/_layout.tsx`.
+- `app/_layout.tsx` mounts `GestureHandlerRootView`, `BottomSheetModalProvider` and the one `<Toaster>` that `Sheet`, `Select` and `toast` need; never mount them again in a screen.
 
 Gallery: `/dev/kit` (redirects to `/` when `EXPO_PUBLIC_APP_ENV=production`). `react-native-svg` and `react-native-gesture-handler` are native modules, so install a new development build after pulling them.
+
+## Shell (P2)
+
+- `app/(tabs)`: Zemljevid (`index`), Sporočila (`inbox`), Prijavi (`report`) and Profil (`profile`) with the bottom navigation in `components/shell/tab-bar.tsx`. The Prijavi button opens the Report sheet (lost → `/report/lost`, found → `/report/found`, sighted → `/report/found?type=sighted`); the `report` route shows the same choice for a link.
+- `app/settings`: a stack above the tabs. `language` works; `[section]` is the placeholder for `notifications`, `alerts`, `consent`, `payments` and `account` until a story adds `app/settings/<section>.tsx`.
+- Permissions: show `PermissionPrimer` (`components/shell/permission-primer.tsx`) before every OS prompt while the OS can still ask, passing the prompt as `request`; on `onResult(false)` show `PermissionNote` where the permission was needed.
+- Sign-out (Profil) calls `signOutAndWipe({ removeManageLinks })` after a confirmation with the "remove links" choice.

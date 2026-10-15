@@ -26,7 +26,10 @@ export const LatLng = z.object({ lat: Lat, lng: Lng }).openapi('LatLng');
 export const Location = z.object({ lat: Lat, lng: Lng, accuracy_m: z.number().min(0).optional() }).openapi('Location');
 
 // Query strings arrive as strings: coerce numbers, split comma lists (or repeated keys).
-export const limit = (max: number) => z.coerce.number().int().min(1).max(max).optional();
+/** Query number: blank is invalid (a bare coerce turns "" into 0). */
+export const queryNumber = <T extends z.ZodType>(n: T) =>
+	z.preprocess((v) => (typeof v === 'string' && v.trim() === '' ? Number.NaN : v), n);
+export const limit = (max: number) => queryNumber(z.coerce.number().int().min(1).max(max)).optional();
 export const Cursor = z.string().min(1).max(500);
 export const csv = <T extends z.ZodType<unknown, string>>(item: T) =>
 	z

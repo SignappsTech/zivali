@@ -3,11 +3,11 @@ id: TASK-85.2
 title: >-
   Mobile offline cache engine: area sync, thumbnails, limits, eviction,
   background refresh
-status: In Progress
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:39'
-updated_date: '2026-10-15 10:54'
+updated_date: '2026-10-15 13:39'
 labels:
   - fe
   - 'est:M'

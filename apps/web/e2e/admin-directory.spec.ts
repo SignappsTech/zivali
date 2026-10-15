@@ -64,6 +64,7 @@ for (const colorScheme of ['light', 'dark'] as const) {
 		page,
 		baseURL,
 	}) => {
+		test.setTimeout(90_000); // guard: five axe passes plus the drawer and import flows
 		const errors: string[] = [];
 		page.on('console', (message) => {
 			if (message.type() === 'error') errors.push(message.text());

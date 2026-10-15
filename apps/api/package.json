@@ -11,7 +11,7 @@
 		"build": "tsup",
 		"start": "node dist/server.js",
 		"start:worker": "node dist/worker.js",
-		"lint": "eslint --max-warnings=0 . && tsx scripts/gen-openapi.ts --check",
+		"lint": "eslint --cache --cache-strategy content --cache-location node_modules/.cache/eslint/ --max-warnings=0 . && tsx scripts/gen-openapi.ts --check",
 		"gen:openapi": "tsx scripts/gen-openapi.ts",
 		"typecheck": "tsc",
 		"test": "vitest run",
