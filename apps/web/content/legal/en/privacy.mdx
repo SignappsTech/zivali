@@ -1,0 +1,854 @@
+export const meta = {
+	title: 'Privacy policy · Najdimo',
+	description:
+		'How Najdimo handles personal data: what we collect and why, how long we keep it, who we share it with and how to use your rights.',
+	updated: '2026-10-15',
+	headings: [
+		{ id: 's1', text: '1. In short' },
+		{ id: 's2', text: '2. Who is the controller' },
+		{ id: 's3', text: '3. What data we process' },
+		{ id: 's4', text: '4. Why we process data and on what legal basis' },
+		{ id: 's5', text: '5. What others can see' },
+		{ id: 's6', text: '6. Photos and location' },
+		{ id: 's7', text: '7. Reports without an account' },
+		{ id: 's8', text: '8. Matching, artificial intelligence and automatic hiding' },
+		{ id: 's9', text: '9. Payments' },
+		{ id: 's10', text: '10. Analytics and cookies' },
+		{ id: 's11', text: '11. Ad counting' },
+		{ id: 's12', text: '12. Who we entrust data to' },
+		{ id: 's13', text: '13. Transfers outside the EU' },
+		{ id: 's14', text: '14. How long we keep data' },
+		{ id: 's15', text: '15. Your rights' },
+		{ id: 's16', text: '16. Security' },
+		{ id: 's17', text: '17. Children' },
+		{ id: 's18', text: '18. Changes to this policy' },
+	],
+};
+
+<h2 id="s1">1. In short</h2>
+
+<p>
+	Najdimo helps lost animals get home again. Everything that brings animals home is free for everyone. To do that we
+	need some personal data. Here is a summary; the details follow.
+</p>
+
+<ul>
+	<li>We use data to run the service: account, reports, matching, chat, alerts and payments.</li>
+	<li>
+		We show publicly only photos, the animal's attributes, an approximate area, the date and the circumstances. We
+		never show a chip number, phone number, email address, the stored point of a report or the place where a found
+		animal is kept.
+	</li>
+	<li>Only you can see the stored (approximate) point of your report, unless you share it in a chat yourself.</li>
+	<li>We switch on Google Analytics only with your consent. If you decline, we send nothing to Google.</li>
+	<li>We only count ads, without cookies and without any marker that could reveal who you are.</li>
+	<li>
+		The main database is in the EU (Frankfurt), and so are our servers and photos. Some providers are in the United
+		States; safeguards apply (chapter 13).
+	</li>
+	<li>You can export your data and delete your account. Use your rights at [client: privacy contact email].</li>
+</ul>
+
+<h2 id="s2">2. Who is the controller</h2>
+
+<p>
+	The controller of your personal data is the company Signapps, [client: full company name], [client: registered
+	address], registration number [client: registration number]. In this text "we" means that company as the operator of
+	Najdimo.
+</p>
+
+<p>
+	For questions about privacy and to use your rights, write to [client: privacy contact email] or call [client: phone
+	number].
+</p>
+
+<p>
+	Shelters and other organisations are responsible for data they collect outside Najdimo (for example when taking in
+	an animal).
+</p>
+
+<p>
+	Grammatically masculine terms in this text (for example "user", "controller", "moderator") apply to persons of all
+	genders.
+</p>
+
+<h2 id="s3">3. What data we process</h2>
+
+<p>
+	You give us most of the data yourself: when you create an account, publish a report or write in a chat. Some data
+	arises when you use the service, for example technical logs.
+</p>
+
+<div className="overflow-x-auto">
+	<table>
+		<thead>
+			<tr>
+				<th>Type of data</th>
+				<th>What it contains</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr>
+				<td>Account and settings</td>
+				<td>
+					display name, email address, password hash or Google/Apple identity, language, role (for example
+					owner, finder or shelter), home area, default alert radius, optional phone number (never public),
+					quiet hours, notification settings, push notification tokens
+				</td>
+			</tr>
+			<tr>
+				<td>Pet profiles</td>
+				<td>
+					species, name, breed, colours, pattern, size, sex, birth year, chip number (never public), chip
+					status, collar, notes (including medication and temperament), one to five photos; later also vet
+					records
+				</td>
+			</tr>
+			<tr>
+				<td>Reports (lost, found, sighted animal)</td>
+				<td>
+					report type, photos, approximate point, shifted by 20 to 30 m (visible only to the person who made
+					the report), public approximate area, municipality and region, date and time, description of the
+					circumstances, contact preference, and for a lost animal an optional reward line (amount, short
+					note)
+				</td>
+			</tr>
+			<tr>
+				<td>Reports without an account</td>
+				<td>
+					anonymous session, private link (we store only its hash), optional email address to which we send
+					the link, device identifier, hashed IP address for abuse limits
+				</td>
+			</tr>
+			<tr>
+				<td>Chat</td>
+				<td>messages, aliases, read state, blocks</td>
+			</tr>
+			<tr>
+				<td>Notifications and alerts</td>
+				<td>notification inbox, nearby-alert subscription (home point and radius)</td>
+			</tr>
+			<tr>
+				<td>Abuse and moderation</td>
+				<td>abuse reports, moderator decisions, audit log of administrator actions</td>
+			</tr>
+			<tr>
+				<td>Payments</td>
+				<td>payment ID, purpose, amount, status and timestamps. We never see your card details.</td>
+			</tr>
+			<tr>
+				<td>Vet Partner (businesses)</td>
+				<td>
+					clinic data (name, address, opening hours, services, booking or phone link, 24-hour emergency
+					badge), contact person's name, email address and phone number, billing details and VAT ID (via
+					Stripe), invoices
+				</td>
+			</tr>
+			<tr>
+				<td>Partner enquiries</td>
+				<td>
+					company, contact name, email address, optional phone number, region of interest, message, time of
+					consent
+				</td>
+			</tr>
+			<tr>
+				<td>Success stories</td>
+				<td>text and photos that we publish only with your explicit consent</td>
+			</tr>
+			<tr>
+				<td>Consents</td>
+				<td>your choice, text version, time</td>
+			</tr>
+			<tr>
+				<td>Technical data</td>
+				<td>IP address and device and browser type in server logs, email delivery log, error data</td>
+			</tr>
+		</tbody>
+	</table>
+</div>
+
+<p>
+	<strong>Do you have to provide data?</strong> Without an account you can browse and report a found or sighted animal
+	anonymously. For an account we need an email address or sign-in with Google or Apple. Other fields, such as the
+	phone number, are optional. If you do not provide data that a feature strictly needs, we cannot provide that
+	feature.
+</p>
+
+<h2 id="s4">4. Why we process data and on what legal basis</h2>
+
+<div className="overflow-x-auto">
+	<table>
+		<thead>
+			<tr>
+				<th>Purpose</th>
+				<th>Data</th>
+				<th>Legal basis</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr>
+				<td>Account and sign-in</td>
+				<td>account and settings</td>
+				<td>contract (Article 6(1)(b) GDPR)</td>
+			</tr>
+			<tr>
+				<td>Publishing reports, public display, poster, sharing</td>
+				<td>pet profiles, reports, photos</td>
+				<td>contract</td>
+			</tr>
+			<tr>
+				<td>Matching and notices about suggestions</td>
+				<td>reports, pet profiles, chip number</td>
+				<td>contract</td>
+			</tr>
+			<tr>
+				<td>Chat between two people</td>
+				<td>messages, aliases</td>
+				<td>contract</td>
+			</tr>
+			<tr>
+				<td>Nearby alerts that you turn on</td>
+				<td>home area, radius, tokens</td>
+				<td>contract</td>
+			</tr>
+			<tr>
+				<td>Payments, once enabled</td>
+				<td>payment data</td>
+				<td>contract</td>
+			</tr>
+			<tr>
+				<td>Security, "not a robot" check, rate limits, abuse prevention</td>
+				<td>IP (hashed), device identifier, server logs</td>
+				<td>legitimate interest (Article 6(1)(f))</td>
+			</tr>
+			<tr>
+				<td>Moderation, abuse reports, temporary hiding of a report</td>
+				<td>reports, messages (reported ones only), decisions</td>
+				<td>legitimate interest</td>
+			</tr>
+			<tr>
+				<td>AI suggestions and safety screening of images</td>
+				<td>photos</td>
+				<td>legitimate interest</td>
+			</tr>
+			<tr>
+				<td>Counting ad impressions and clicks</td>
+				<td>aggregate counters with no identifiers of people</td>
+				<td>legitimate interest</td>
+			</tr>
+			<tr>
+				<td>Improving the service without analytics cookies</td>
+				<td>aggregate statistics from our database</td>
+				<td>legitimate interest</td>
+			</tr>
+			<tr>
+				<td>Establishing, exercising and defending legal claims</td>
+				<td>data strictly needed for that</td>
+				<td>legitimate interest</td>
+			</tr>
+			<tr>
+				<td>Google Analytics 4 and Firebase</td>
+				<td>analytics events</td>
+				<td>consent (Article 6(1)(a))</td>
+			</tr>
+			<tr>
+				<td>Success stories</td>
+				<td>text and photos</td>
+				<td>consent</td>
+			</tr>
+			<tr>
+				<td>Push notifications</td>
+				<td>device token</td>
+				<td>
+					alerts that you turn on: contract; the permission to show notifications is set on your device and
+					you can withdraw it at any time
+				</td>
+			</tr>
+			<tr>
+				<td>Answering a partner enquiry</td>
+				<td>form data</td>
+				<td>
+					steps before entering into a contract at your request, and the consent you give by submitting the
+					form
+				</td>
+			</tr>
+			<tr>
+				<td>Vet Partner: subscription, invoice, clinic profile, monthly report</td>
+				<td>clinic and contact person data, billing details</td>
+				<td>contract</td>
+			</tr>
+			<tr>
+				<td>Accounting and tax records</td>
+				<td>payment data</td>
+				<td>legal obligation (Article 6(1)(c))</td>
+			</tr>
+		</tbody>
+	</table>
+</div>
+
+<p>
+	Where the legal basis is "legitimate interest", we have assessed that your interests and rights do not override our
+	interest in keeping the service safe and free of abuse. You can object to such processing (chapter 15).
+</p>
+
+<p>
+	Where processing rests on consent, you can withdraw it at any time. Withdrawal does not affect the lawfulness of
+	processing before it.
+</p>
+
+<h2 id="s5">5. What others can see</h2>
+
+<ul>
+	<li>
+		<strong>Anyone, even without an account, sees:</strong> photos, the animal's attributes, the approximate area,
+		the date and the circumstances you described.
+	</li>
+	<li>
+		<strong>Nobody sees:</strong> the chip number, phone number, email address, the stored point of a report and the
+		place where a found animal is kept.
+	</li>
+	<li>
+		<strong>Only you see:</strong> the approximate point of your report (shifted by 20 to 30 m). We show it to the
+		other person in a chat only if you share it there yourself.
+	</li>
+	<li>
+		<strong>The two people in a chat</strong> see the aliases and messages. Moderators read messages only if someone
+		has reported the chat as abuse.
+	</li>
+	<li>
+		<strong>Shelters and vets:</strong> when they enter a chip number that is registered with us, we notify the
+		person who is looking for the animal. We show the shelter or vet no personal data.
+	</li>
+</ul>
+
+<p>
+	Please do not enter other people's personal data in free text (circumstances, notes). Please also do not publish
+	photos in which people can be recognised.
+</p>
+
+<h2 id="s6">6. Photos and location</h2>
+
+<p>
+	<strong>Photos.</strong> Photos can contain metadata (EXIF), for example the time and position of the shot. On your
+	device we can use it to suggest a place and time for the form. We remove the metadata from the copies we show
+	publicly. The originals are private.
+</p>
+
+<p>
+	<strong>Report location.</strong> We never store the raw GPS point. When you save, we randomly move the point you
+	mark by 20 to 30 m: first on your device, and again on our server. The shift is made once and does not change
+	between views. The stored point is therefore approximate and only you can see it (labelled "Approximate location ·
+	visible only to you"). The public sees a wider area calculated from that point: at least 500 m radius for a lost
+	animal, at least 150 m for a found or sighted one. We do not write coordinates to logs. 30 days after a report
+	closes, we blur the stored point further, so only the blurred point and the area name remain.
+</p>
+
+<p>
+	<strong>Device location.</strong> We use your device location only when you choose to, for example to set the place
+	of a report. We do not track or store your device location; we store only the shifted report point you confirm.
+</p>
+
+<p>
+	<strong>Alerts when you are nearby (mobile app).</strong> If you turn this feature on and allow the app to use your
+	location in the background, your phone itself checks whether you have entered an approximate area where a lost pet
+	was last seen. These areas are public and approximate. The check happens only on your phone: your location is never
+	sent to us or to anyone else. You can turn the feature off at any time in the app settings, and we then remove all
+	areas from your phone.
+</p>
+
+<p>
+	<strong>Data on your phone.</strong> So that the app also works offline, it keeps public reports from your area on
+	your phone: approximate areas and small photos, for at most 7 days. It never keeps report points, chip numbers,
+	contact details or chats. When you sign out, we delete this data.
+</p>
+
+<p>
+	<strong>Map and place search.</strong> Your browser or app loads map tiles directly from OpenFreeMap servers. They
+	can see your IP address and use no cookies. Place search and the area name for a point on the map run on our own
+	servers, using open data from the Surveying and Mapping Authority of the Republic of Slovenia. We send the search
+	text and the point to no one else and do not store them.
+</p>
+
+<h2 id="s7">7. Reports without an account</h2>
+
+<p>
+	You can report a found or sighted animal without an account. This creates an anonymous session. When you submit the
+	report you receive a private link that you use to manage the report and to chat. We store only a hash of the link,
+	not the link itself. For that reason we cannot restore it unless you optionally entered an email address.
+</p>
+
+<p>
+	To limit abuse we keep a random device identifier and a hashed IP address. We delete the hashed IP address after 48
+	hours. You can delete the report and its data at any time through the private link.
+</p>
+
+<h2 id="s8">8. Matching, artificial intelligence and automatic hiding</h2>
+
+<h3>Matching</h3>
+
+<p>
+	When you publish a report, we compare it with other reports: by chip number, area, time and the animal's attributes.
+	Later we will also compare how similar the photos are. The result is only a suggestion. The person looking for the
+	animal decides: they confirm or reject the suggestion. A suggestion has no legal or similarly significant effect on
+	anyone.
+</p>
+
+<h3>AI assistance</h3>
+
+<p>When this feature is switched on, we will send the photos you upload to a report or pet profile to two providers:</p>
+
+<ul>
+	<li>
+		<strong>Anthropic PBC (USA)</strong>, the Claude model with image reading: suggests species, breed, colours,
+		size, collar and distinguishing marks, and gives a safety signal about the content of the image.
+	</li>
+	<li>
+		<strong>Voyage AI (USA)</strong>: computes a numerical representation of the image (a vector) that we use to
+		find visually similar photos.
+	</li>
+</ul>
+
+<p>
+	We do not send the providers any user identifiers, EXIF metadata or location data. The results are suggestions: you
+	confirm or correct them before publishing. We store the result against a hash of the image so that we do not process
+	the same image twice. Images flagged by the safety signal are held for review by human moderators before
+	publication.
+</p>
+
+<h3>Automatic temporary hiding</h3>
+
+<p>
+	If three independent people report the same listing for abuse, we hide it temporarily until a moderator reviews it.
+	The moderator then decides whether to restore or remove it. If you think a report was hidden unnecessarily, write to
+	[client: contact email]. A person will review the decision again.
+</p>
+
+<h2 id="s9">9. Payments</h2>
+
+<p>
+	<strong>Current status.</strong> Payments in Najdimo are at present in test mode only. No real money moves and no
+	card is charged. These chapters on payments apply once we enable live payments.
+</p>
+
+<p>
+	<strong>How a payment works.</strong> Payments are processed by Stripe Payments Europe, Limited (Ireland) through
+	Stripe Checkout. When you pay, we redirect you to Stripe's page. We never see or store your card details. We keep
+	the payment ID, purpose, amount, status and timestamps. For part of the processing (for example fraud prevention and
+	legal obligations) Stripe is an independent controller and its own privacy policy applies.
+</p>
+
+<p>
+	<strong>What is always free.</strong> Reporting a lost, found or sighted animal, the map and alerts, matching (chip,
+	photo, attributes), chat, the printable PDF poster with a QR code, sharing and chip lookup are free for everyone,
+	forever. Shelters and municipalities use everything for free. Paid options never restrict this. The QR code on the
+	poster leads only to the public listing.
+</p>
+
+<p>
+	<strong>What you can pay for.</strong> Now: a thank-you contribution after a reunion with your animal (at least €2)
+	and an optional contribution after reporting a lost animal (€2–5). Later: a boost for a report's visibility, the
+	Premium Protect subscription and the monthly supporter plan Podpornik. Vet clinics can become a paying Vet Partner
+	(below).
+</p>
+
+<p>
+	<strong>Rewards for finders.</strong> We do not pay out rewards and do not handle payments between users. If an
+	owner states in a report that they offer a reward, that statement is part of the report (chapter 3). The owner and
+	the finder arrange any reward between themselves, outside Najdimo, so we collect no payment data about it.
+</p>
+
+<p>Contributions are voluntary payments to a company to help run the service. They are not donations.</p>
+
+<h3>Vet Partner (business customers)</h3>
+
+<p>
+	Vet Partner is a monthly business subscription for vet clinics. It includes a verified clinic profile, featured
+	placement in the "nearest vet" ad slots in their area, a mention in lost-pet alerts and on posters for their region
+	(always labelled "Ad"), and a monthly report with aggregate figures (impressions, clicks, reunions in the area). The
+	report contains no personal data.
+</p>
+
+<ul>
+	<li>
+		<strong>Data:</strong> clinic data, the contact person's name, email address and phone number, billing details
+		and VAT ID, and invoices. Stripe Billing handles the subscription and VAT invoices; we never see card details.
+		Stripe is in test mode only for now.
+	</li>
+	<li>
+		<strong>Legal basis:</strong> contract (Article 6(1)(b)) and legal obligation for invoices (Article 6(1)(c)).
+	</li>
+	<li>
+		<strong>Retention:</strong> we keep the clinic profile and the contact person's data until the subscription ends
+		and delete them within 30 days after that, or earlier on request; invoices and payment records for as long as
+		tax and accounting law requires (expected up to 10 years).
+	</li>
+	<li>
+		<strong>Stays free:</strong> reporting a found animal, chip lookup, matches and chat work for vets exactly as
+		for everyone else.
+	</li>
+</ul>
+
+<h2 id="s10">10. Analytics and cookies</h2>
+
+<p>We measure the use of Najdimo only if you allow it.</p>
+
+<ul>
+	<li>
+		On the web we use Google Analytics 4 and in the app Google Analytics for Firebase. Both tools send data to the
+		same Google property, each through its own stream. The provider is Google Ireland Limited.
+	</li>
+	<li>Until you decide, we do not load any Google script, send any request to Google or set any Google cookie.</li>
+	<li>
+		All four Google consent settings (analytics_storage, ad_storage, ad_user_data, ad_personalization) are denied by
+		default. If you accept, we grant only analytics_storage. The advertising settings stay denied.
+	</li>
+	<li>
+		Events contain only the event name and parameters such as municipality, statistical region, species, report
+		type, ad slot and ad ID, and amount range. They never contain names, email addresses, phone numbers, chip
+		numbers, coordinates, free text, or report or user IDs.
+	</li>
+	<li>Google signals are off, data sharing is off, and we keep data in Google Analytics for 14 months.</li>
+	<li>
+		We store your choice (choice, version and time) in the <code>zz_consent</code> cookie for 12 months, and in the
+		app in the device's secure storage. We ask you again after 12 months or when providers or purposes change.
+	</li>
+	<li>
+		You can withdraw consent at any time through "Cookie settings" in the page footer or in the app settings.
+		Withdrawal takes effect at once and we delete the Google cookies.
+	</li>
+</ul>
+
+<p>
+	The list of all cookies and similar storage is in the <a href="/en/cookies">cookie policy</a>.
+</p>
+
+<h2 id="s11">11. Ad counting</h2>
+
+<p>
+	Ads are always labelled "Ad". There are no ads in the report-lost and report-found flows, at sign-in, in chat or at
+	payment.
+</p>
+
+<p>
+	We count impressions and clicks in our own database, aggregated by ad, ad slot, day and region. We use no cookies,
+	store nothing on your device and record no identifiers that could reveal who you are. For that reason we do not need
+	consent for this counting. We choose an ad by context, for example the region and species, not by who you are.
+</p>
+
+<p>
+	A click goes through our redirect to the advertiser's page. From there the advertiser's rules apply. Advertisers
+	receive only aggregated reports from us (impressions and clicks).
+</p>
+
+<h2 id="s12">12. Who we entrust data to</h2>
+
+<p>We do not sell data. The providers we need to run the service are:</p>
+
+<div className="overflow-x-auto">
+	<table>
+		<thead>
+			<tr>
+				<th>Provider (role)</th>
+				<th>Purpose</th>
+				<th>Data it receives</th>
+				<th>Where</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr>
+				<td>Supabase Inc., USA (processor)</td>
+				<td>database, sign-in, delivery of live chat messages</td>
+				<td>data from chapter 3 except photos</td>
+				<td>data in the EU, Frankfurt (AWS eu-central-1)</td>
+			</tr>
+			<tr>
+				<td>Hetzner Online GmbH, Germany (processor)</td>
+				<td>server for the website, the API and background jobs</td>
+				<td>
+					data passing through the service, and server logs (IP address, technical data of the visit) for
+					about 7 days
+				</td>
+				<td>EU (Germany or Finland)</td>
+			</tr>
+			<tr>
+				<td>Cloudflare, Inc., USA, R2 service (processor)</td>
+				<td>
+					photo storage, delivery of public photo copies through Cloudflare's network, nightly encrypted
+					database backups
+				</td>
+				<td>photos; backups contain the data from chapter 3; IP address when public photos load</td>
+				<td>storage in the EU; Cloudflare delivers public photo copies through its global network</td>
+			</tr>
+			<tr>
+				<td>Brevo (Sendinblue SAS), France (processor)</td>
+				<td>email for sign-in and notifications</td>
+				<td>email address, name, language, message text</td>
+				<td>EU</td>
+			</tr>
+			<tr>
+				<td>
+					Expo Push Service (650 Industries, Inc.), USA (processor); notifications travel through Apple Push
+					Notification service and Google Firebase Cloud Messaging
+				</td>
+				<td>push notifications</td>
+				<td>device token and notification text, which contains no personal data</td>
+				<td>USA</td>
+			</tr>
+			<tr>
+				<td>Cloudflare Turnstile (Cloudflare, Inc.), USA (processor)</td>
+				<td>"not a robot" check at account creation, anonymous reports and the partner form</td>
+				<td>device and browser signals, IP address</td>
+				<td>USA</td>
+			</tr>
+			<tr>
+				<td>OpenFreeMap (independent controller)</td>
+				<td>map tiles</td>
+				<td>IP address (your browser or app loads the tiles directly); no cookies</td>
+				<td>public tile servers</td>
+			</tr>
+			<tr>
+				<td>Google Ireland Limited (processor), only with your consent</td>
+				<td>Google Analytics 4 and Google Analytics for Firebase</td>
+				<td>analytics events from chapter 10</td>
+				<td>EU, processing in the USA is also possible</td>
+			</tr>
+			<tr>
+				<td>Google and Apple (each an independent controller)</td>
+				<td>sign-in with Google or Apple, if you choose it</td>
+				<td>data the provider sends at sign-in (email, name, identifier)</td>
+				<td>under the provider's rules</td>
+			</tr>
+			<tr>
+				<td>
+					Stripe Payments Europe, Limited, Ireland (processor; for part of the processing an independent
+					controller)
+				</td>
+				<td>payments and Vet Partner subscriptions (once enabled), VAT invoices</td>
+				<td>payment data you enter on Stripe's page</td>
+				<td>EU, processing in the USA is also possible</td>
+			</tr>
+			<tr>
+				<td>Anthropic PBC, USA, and Voyage AI, USA (processors), when AI assistance is switched on</td>
+				<td>suggested attributes from photos, safety signal, image vectors</td>
+				<td>only the photo, with no user identifiers, EXIF metadata or location</td>
+				<td>USA</td>
+			</tr>
+			<tr>
+				<td>
+					Sentry (Functional Software, Inc.), EU data region (processor), when error tracking is switched on
+				</td>
+				<td>error tracking</td>
+				<td>technical data about the error; we remove personal data before sending</td>
+				<td>EU</td>
+			</tr>
+		</tbody>
+	</table>
+</div>
+
+<p>We also share data with:</p>
+
+<ul>
+	<li>
+		<strong>other users</strong>, to the extent described in chapter 5;
+	</li>
+	<li>
+		<strong>authorities</strong> (courts, police, inspectorates) where the law requires us to;
+	</li>
+	<li>
+		<strong>advertisers</strong>, only aggregated data without personal data (chapter 11).
+	</li>
+</ul>
+
+<h2 id="s13">13. Transfers outside the EU</h2>
+
+<p>
+	The main database is in the EU. Some providers in chapter 12 are based in the United States or may process data
+	there. For such transfers we use:
+</p>
+
+<ul>
+	<li>the EU–US Data Privacy Framework, where the provider is certified under it;</li>
+	<li>otherwise, the European Commission's standard contractual clauses.</li>
+</ul>
+
+<p>You can ask for a copy of the safeguards at the email address in chapter 2.</p>
+
+<h2 id="s14">14. How long we keep data</h2>
+
+<div className="overflow-x-auto">
+	<table>
+		<thead>
+			<tr>
+				<th>Data</th>
+				<th>Retention</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr>
+				<td>Account, pet profiles, settings, notification inbox, nearby alerts</td>
+				<td>until you delete your account</td>
+			</tr>
+			<tr>
+				<td>Open reports</td>
+				<td>while they are open or until deleted</td>
+			</tr>
+			<tr>
+				<td>Photos of closed reports</td>
+				<td>deleted 12 months after the report closes</td>
+			</tr>
+			<tr>
+				<td>Stored (already approximate) point of a closed report</td>
+				<td>blurred 30 days after the report closes; only the blurred point and the area name remain</td>
+			</tr>
+			<tr>
+				<td>Chats</td>
+				<td>deleted 6 months after the related report closes</td>
+			</tr>
+			<tr>
+				<td>Finder's email address for the private link</td>
+				<td>deleted 30 days after the report closes</td>
+			</tr>
+			<tr>
+				<td>Hashed IP address and rate-limit data</td>
+				<td>48 hours</td>
+			</tr>
+			<tr>
+				<td>Anonymous accounts without an open report</td>
+				<td>30 days</td>
+			</tr>
+			<tr>
+				<td>Uploaded files not attached to a report</td>
+				<td>24 hours</td>
+			</tr>
+			<tr>
+				<td>Email delivery log</td>
+				<td>30 days</td>
+			</tr>
+			<tr>
+				<td>Server logs</td>
+				<td>about 7 days</td>
+			</tr>
+			<tr>
+				<td>Abuse reports and audit log of administrator actions</td>
+				<td>up to 24 months</td>
+			</tr>
+			<tr>
+				<td>Analytics (Google Analytics 4)</td>
+				<td>14 months</td>
+			</tr>
+			<tr>
+				<td>Consent record for analytics</td>
+				<td>12 months (cookie or the device's secure storage)</td>
+			</tr>
+			<tr>
+				<td>Success stories</td>
+				<td>until you withdraw consent; after withdrawal we remove them within 24 hours</td>
+			</tr>
+			<tr>
+				<td>Payment records</td>
+				<td>as long as tax and accounting law requires (expected up to 10 years)</td>
+			</tr>
+			<tr>
+				<td>Vet Partner: clinic profile and contact person</td>
+				<td>until the subscription ends, then deleted within 30 days</td>
+			</tr>
+			<tr>
+				<td>Partner enquiries</td>
+				<td>24 months after the last contact</td>
+			</tr>
+			<tr>
+				<td>Backups</td>
+				<td>data disappears from them within 30 days at the latest</td>
+			</tr>
+		</tbody>
+	</table>
+</div>
+
+<p>
+	<strong>Deleting your account.</strong> When you delete your account, we disable it at once, close open reports, and
+	delete or anonymise the data within 30 days. The exception is payment records, which we must keep by law.
+	Organisations must transfer or delete the organisation first.
+</p>
+
+<h2 id="s15">15. Your rights</h2>
+
+<p>You have the right to:</p>
+
+<ul>
+	<li>
+		<strong>access</strong> your data and receive a copy;
+	</li>
+	<li>
+		<strong>rectification</strong> of inaccurate data;
+	</li>
+	<li>
+		<strong>erasure</strong> of your data;
+	</li>
+	<li>
+		<strong>restriction</strong> of processing;
+	</li>
+	<li>
+		<strong>portability</strong>: you receive your data in a common machine-readable format;
+	</li>
+	<li>
+		<strong>object</strong> to processing based on legitimate interest;
+	</li>
+	<li>
+		<strong>withdraw consent</strong> at any time.
+	</li>
+</ul>
+
+<p>
+	You can export your data (a JSON or ZIP file) and delete your account in your account settings. Anonymous finders
+	can delete their report and data through the private link. For anything else, write to [client: privacy contact
+	email].
+</p>
+
+<p>
+	We reply within one month at the latest. For complex requests the law allows us to extend this period; we tell you
+	within the first month. Using your rights is free of charge. If we cannot confirm your identity, we may ask you for
+	further information.
+</p>
+
+<p>
+	<strong>Complaint.</strong> If you think we are acting unlawfully, you can complain to the supervisory authority:
+	Informacijski pooblaščenec Republike Slovenije (Information Commissioner of the Republic of Slovenia), Dunajska
+	cesta 22, 1000 Ljubljana, www.ip-rs.si. You may also complain to the supervisory authority in the country where you
+	live or work.
+</p>
+
+<h2 id="s16">16. Security</h2>
+
+<p>We protect data with organisational and technical measures, including:</p>
+
+<ul>
+	<li>connections are encrypted;</li>
+	<li>
+		the database cannot be reached directly from a browser or the app: data is accessed only through our server,
+		which checks that you are allowed to see it;
+	</li>
+	<li>administrator access requires strong authentication;</li>
+	<li>backups are encrypted;</li>
+	<li>the number of requests is limited, and anonymous forms are protected by a "not a robot" check;</li>
+	<li>copies of photos shown publicly carry no EXIF metadata.</li>
+</ul>
+
+<p>
+	If a personal data breach occurs that could put your rights at risk, we will act as the law requires, including by
+	notifying the Information Commissioner and, where necessary, you.
+</p>
+
+<h2 id="s17">17. Children</h2>
+
+<p>
+	You can create an account if you are at least 15 years old. If we learn that a younger person created an account, we
+	delete it. Paid options are intended for adults. If you are a parent or guardian and think a child has entered data
+	with us, write to [client: privacy contact email].
+</p>
+
+<h2 id="s18">18. Changes to this policy</h2>
+
+<p>
+	We may change this policy, for example when we add a new feature or provider. We will tell you about important
+	changes in advance in the app, on the website or by email. The date of the last update is at the top of the page.
+</p>

@@ -1,4 +1,5 @@
 import type { NextConfig } from 'next';
+import createMDX from '@next/mdx';
 import createNextIntlPlugin from 'next-intl/plugin';
 
 // Baseline for every response; the per-request CSP with its nonce is set in proxy.ts.
@@ -36,4 +37,5 @@ const nextConfig: NextConfig = {
 	],
 };
 
-export default createNextIntlPlugin()(nextConfig);
+// Legal pages are MDX modules under content/legal, imported by components/legal/legal-page.tsx.
+export default createNextIntlPlugin()(createMDX()(nextConfig));
