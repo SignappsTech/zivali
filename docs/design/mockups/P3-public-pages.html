@@ -1,0 +1,1010 @@
+<!doctype html>
+<!--
+  P3 Public pages mockup (TASK-27.1). Built from docs/design/mockups/_template.html.
+  Sources: docs/design/pages/P3-public-pages.md, docs/design/system.md (v0.11), docs/content/pages/P3-public-pages.md (v0.4),
+  docs/content/legal/privacy-policy.md (v0.6, legal body sample for T4), shell strings from P1 (docs/content/pages/P1-web-shell.md).
+  Templates: T1 Home, T2 Article (How it works), T3 FAQ, T4 Legal. T5 and T6 (shelter pages) live in P3-shelter-pages.html (TASK-90).
+  Everything in #src is cloned once per colour mode by ../directions/directions.js.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Najdimo mockup: P3 Public pages</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:wght@400;500;600;700&family=Bricolage+Grotesque:opsz,wght@12..96,500..800&display=swap" rel="stylesheet">
+<link href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css" rel="stylesheet">
+<link href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/bold/style.css" rel="stylesheet">
+<link href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css" rel="stylesheet">
+<link href="../tokens.css" rel="stylesheet">
+<link href="../directions/directions.css" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com/3.4.17"></script>
+<script src="../directions/tailwind-config.js"></script>
+<style>
+/* P3-only helpers. Token-driven; frontend maps them to Tailwind classes and the shadcn components named in system.md section 10. */
+.scope h1, .scope h2, .scope h3 { text-wrap: balance; }
+
+/* Type roles (system 4). Desktop sizes by default; inside a phone frame the mobile sizes apply. */
+.ty-display { font-family: var(--font-display); font-weight: 700; font-size: 60px; line-height: 64px; letter-spacing: -0.025em; }
+.ty-h1 { font-family: var(--font-display); font-weight: 700; font-size: 48px; line-height: 52px; letter-spacing: -0.02em; }
+.ty-h2 { font-family: var(--font-display); font-weight: 700; font-size: 30px; line-height: 36px; letter-spacing: -0.015em; }
+.ty-h3 { font-family: var(--font-display); font-weight: 600; font-size: 24px; line-height: 32px; letter-spacing: -0.01em; }
+.ty-lede { font-size: 20px; line-height: 32px; }
+.ty-num { font-family: var(--font-display); font-weight: 700; font-size: 48px; line-height: 52px; letter-spacing: -0.02em; color: hsl(var(--primary)); font-variant-numeric: tabular-nums; }
+.phone-screen .ty-display { font-size: 36px; line-height: 42px; }
+.phone-screen .ty-h1 { font-size: 30px; line-height: 36px; }
+.phone-screen .ty-h2 { font-size: 24px; line-height: 30px; }
+.phone-screen .ty-h3 { font-size: 20px; line-height: 28px; }
+.phone-screen .ty-lede { font-size: 18px; line-height: 28px; }
+.phone-screen .ty-num { font-size: 36px; line-height: 42px; }
+
+/* Shell parts, same as P1 */
+.logo-link { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; border-radius: 12px; color: hsl(var(--foreground)); text-decoration: none; flex: none; }
+.fl { display: inline-flex; align-items: center; min-height: 44px; min-width: 44px; padding: 0; border: 0; background: none; font: inherit; font-size: 15px; line-height: 22px; color: hsl(var(--muted-foreground)); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 4px; cursor: pointer; white-space: nowrap; }
+.fl:hover { color: hsl(var(--foreground)); }
+.mweb { flex: none; height: 44px; display: flex; align-items: center; padding: 0 16px; }
+.mweb span { flex: 1; height: 32px; border-radius: 999px; background: hsl(var(--muted)); display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 13px; color: hsl(var(--muted-foreground)); }
+
+/* Inline text link in body copy: primary, underlined (links are the one place underline is allowed) */
+.tlink { color: hsl(var(--primary)); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; border-radius: 4px; }
+.tlink:hover, .tlink.is-hover { text-decoration-thickness: 2px; }
+/* Client-only facts ([naročnik: …]) stay visible as markers until the client supplies them */
+.marker { font-weight: 700; }
+
+/* Text button with a trailing arrow, aligned to the text column (cancels the 12 px text-button padding) */
+.btn-text.flush { margin-left: -12px; }
+
+/* Frames are containing blocks, so visually hidden text inside a 1200 frame cannot widen the mockup page at 390 */
+.browser { position: relative; }
+/* Frame columns stay as wide as the phone, so long state labels wrap instead of pushing frames onto a new row */
+.wrap-x > .flex > div { max-width: 412px; }
+
+/* Long phone frame: the whole scrolled page, so nothing is clipped */
+.phone.phone-long { height: auto; }
+.phone-long .phone-screen { height: auto; min-height: 844px; }
+
+/* Article body (T2, T4): 640 px measure, h2 sections 48 px apart (40 on mobile) */
+.article > * + * { margin-top: 16px; }
+.article > h2 { margin-top: 48px; }
+.article > .ty-lede { margin-top: 16px; }
+.article > .actions { margin-top: 64px; }
+.phone-screen .article > h2 { margin-top: 40px; }
+.phone-screen .article > .actions { margin-top: 48px; }
+.olist { list-style: none; padding: 0; display: grid; gap: 20px; }
+.olist li { display: flex; gap: 16px; }
+.olist .n { flex: none; width: 20px; font-family: var(--font-display); font-weight: 700; font-size: 20px; line-height: 24px; color: hsl(var(--primary)); font-variant-numeric: tabular-nums; }
+.ulist { list-style: disc; padding-left: 22px; display: grid; gap: 12px; }
+.ulist li { padding-left: 4px; }
+.ulist li::marker { color: hsl(var(--muted-foreground)); }
+
+/* Two-column page with the sticky "Na tej strani" list (T2 long articles, T4 legal) */
+.toc-grid { display: grid; grid-template-columns: 240px minmax(0, 640px); gap: 64px; align-items: start; }
+.toc { position: sticky; top: 24px; }
+.toc-h { font-weight: 700; font-size: 15px; line-height: 20px; color: hsl(var(--muted-foreground)); padding-left: 16px; margin-bottom: 8px !important; }
+.toc-list { list-style: none; padding: 0; display: grid; gap: 2px; }
+.toc-list a { display: flex; gap: 8px; min-height: 44px; align-items: center; padding: 10px 12px 10px 16px; border-radius: 12px; font-size: 15px; line-height: 20px; font-weight: 600; color: hsl(var(--muted-foreground)); text-decoration: none; }
+.toc-list a .tnum { flex: none; min-width: 28px; }
+.toc-list a:hover, .toc-list a.is-hover { background: hsl(var(--foreground) / 0.10); color: hsl(var(--foreground)); }
+.toc-list a[aria-current="true"] { color: hsl(var(--foreground)); font-weight: 700; box-shadow: inset 3px 0 0 hsl(var(--primary)); border-radius: 0 12px 12px 0; }
+
+/* FAQ row (T3): card surface, radius 20, 24 px padding, plus/minus; also used for the mobile legal TOC disclosure */
+.faq { background: hsl(var(--card)); color: hsl(var(--card-foreground)); border-radius: var(--radius-row); }
+.faq-q { display: flex; align-items: center; justify-content: space-between; gap: 16px; width: 100%; min-height: 76px; padding: 24px; border: 0; border-radius: var(--radius-row); background: transparent; color: inherit; font-family: var(--font-display); font-weight: 600; font-size: 20px; line-height: 28px; letter-spacing: -0.005em; text-align: left; cursor: pointer; }
+.faq-q i { flex: none; font-size: 24px; line-height: 1; color: hsl(var(--primary)); }
+.faq-q:hover, .faq-q.is-hover { background-image: linear-gradient(hsl(var(--foreground) / 0.10), hsl(var(--foreground) / 0.10)); }
+.faq-q[aria-expanded="true"] { border-radius: var(--radius-row) var(--radius-row) 0 0; }
+.faq-a { padding: 0 24px 24px; font-size: 16px; line-height: 24px; }
+.faq-a p { max-width: 62ch; }
+.phone-screen .faq-q { font-size: 18px; min-height: 64px; padding: 18px 20px; }
+.phone-screen .faq-a { padding: 0 20px 20px; }
+.faq-q.toc-toggle { font-family: var(--font-sans); font-weight: 700; font-size: 16px; line-height: 24px; letter-spacing: 0; min-height: 56px; padding: 16px 20px; }
+
+/* Mockup annotations (not product UI) */
+.anno { display: inline-flex; align-items: center; gap: 6px; max-width: 100%; padding: 4px 10px; border-radius: 999px; font-size: 13px; line-height: 18px; font-weight: 700; background: hsl(var(--foreground)); color: hsl(var(--background)); }
+.fold { position: absolute; left: 0; right: 0; border-top: 2px dashed hsl(var(--foreground) / 0.45); pointer-events: none; z-index: 3; }
+.fold .anno { position: absolute; right: 16px; top: -15px; }
+.sample { outline: 2px dashed hsl(var(--input)); outline-offset: 6px; border-radius: 8px; }
+
+@media print { /* T4 print stylesheet, documented here for frontend: single column, no header or footer chrome, no TOC */
+  .print-hide { display: none !important; }
+}
+</style>
+</head>
+<body>
+<a class="sr-only focus:not-sr-only" href="#stage">Skip to content</a>
+
+<!-- Symbols, defined once: logo mark and the spot-illustration placeholder -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <symbol id="nj-mark" viewBox="0 0 48 48">
+    <g fill="currentColor" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round">
+      <path d="M24 45.5 C24 45.5 10.5 33.2 10.5 24.4 A13.5 13.5 0 0 1 37.5 24.4 C37.5 33.2 24 45.5 24 45.5 Z M24 17.9 A6.5 6.5 0 1 0 24 30.9 A6.5 6.5 0 1 0 24 17.9 Z"/>
+      <path d="M12.2 19.6 L11.2 5 L22.6 11.4 Z"/><path d="M35.8 19.6 L25.4 11.4 L36.8 5 Z"/>
+    </g>
+    <circle cx="24" cy="24.4" r="3.6" fill="#F7B32B"/>
+  </symbol>
+  <!-- PLACEHOLDER for ../../../assets/empty-no-reports.png (image task pending). Flat geometry in brand tokens; status-reunited stands in for sun.400. -->
+  <symbol id="illo-spot" viewBox="0 0 320 210">
+    <rect width="320" height="210" style="fill:hsl(var(--accent))"/>
+    <circle cx="232" cy="70" r="32" style="fill:hsl(var(--status-reunited))"/>
+    <path d="M0 150 C60 112 120 120 172 140 C222 160 272 150 320 120 V210 H0Z" style="fill:hsl(var(--secondary))"/>
+    <path d="M0 182 C70 146 130 162 190 180 C240 194 290 186 320 170 V210 H0Z" style="fill:hsl(var(--primary))"/>
+    <path d="M52 198 C96 160 150 182 196 148" fill="none" style="stroke:hsl(var(--status-reunited))" stroke-width="3" stroke-linecap="round" stroke-dasharray="1 9"/>
+  </symbol>
+</svg>
+
+<header class="chrome">
+  <div class="flex flex-wrap items-center gap-x-5 gap-y-2 px-6 py-2 max-w-[1400px] mx-auto">
+    <span class="flex items-center gap-2 font-display font-bold text-lg"><svg class="logo-mark w-7 h-7" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg>Najdimo</span>
+    <span class="text-muted-foreground text-[15px]">P3 Public pages (mockup)</span>
+    <div class="ml-auto flex items-center gap-2" role="group" aria-label="Colour mode">
+      <button class="mode-btn" data-mode="light" aria-pressed="true">Light</button>
+      <button class="mode-btn" data-mode="dark" aria-pressed="false">Dark</button>
+      <button class="mode-btn" data-mode="both" aria-pressed="false">Side by side</button>
+    </div>
+  </div>
+</header>
+
+<main id="stage"></main>
+
+<div id="src" hidden>
+
+<!-- ================= INTRO ================= -->
+<section class="tile-section !max-w-[1400px] !pb-0">
+  <h1 class="tile-title">P3 Public pages</h1>
+  <p class="tile-lede">Home (T1) and the content templates: article (T2, shown with How it works), FAQ (T3) and legal (T4, shown with the privacy policy draft). All use the P1 content variant without a sidebar and carry no ad slot. Shown at 1200 and 390 px, plus the "Near you" empty, loading and error states, page loading, language fallback and offline. Copy is final from the P3 content slice v0.4 (native review pending); tile data in "V vaši bližini" is sample.</p>
+  <div class="flex flex-wrap gap-2">
+    <span class="anno">No ad slot on T1 to T4</span><span class="anno">Text 640 · content 1120</span><span class="anno">Section gap 96 web / 48 mobile</span><span class="anno">Gutters 48 / 20</span><span class="anno">Header "Prijavi" secondary when the page has its own primary</span>
+  </div>
+</section>
+
+<!-- ================= 1. T1 HOME ================= -->
+<section class="tile-section !max-w-[1400px]">
+  <h2 class="tile-title">1. T1 Home</h2>
+  <p class="tile-lede">Six sections, each a different layout family: split hero, tile grid, numbered stack with a photo, single column with a spot icon, a card block, one quiet sentence. The hero fits a 1200 × 800 viewport: headline two lines at 60 px, a 15-word lede, one primary. Structured data: Organization + WebSite.</p>
+
+  <!-- W1: Home 1200 -->
+  <p class="tile-h !mt-0">W1 · Home at 1200, signed out · header "Prijavi" is secondary (the hero has the page's one primary) · hover on the "Rjav terier" tile (title underlines, photo unchanged)</p>
+  <div class="wrap-x"><div class="browser relative" lang="sl">
+    <div class="browser-bar"><span class="dots"><i></i><i></i><i></i></span><span class="url"><i class="ph ph-lock-simple"></i>najdimo.si</span></div>
+    <div class="fold" style="top:844px" aria-hidden="true"><span class="anno">End of a 1200 × 800 viewport</span></div>
+    <header class="flex items-center gap-8 px-12 h-[88px]">
+      <a href="#" class="logo-link" aria-label="Najdimo, na začetno stran"><svg class="logo-mark w-9 h-9" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg><span class="font-display font-bold text-2xl tracking-[-0.03em]" aria-hidden="true">Najdimo</span></a>
+      <nav aria-label="Glavni meni"><ul class="flex items-center gap-2">
+        <li><a href="#" class="nl">Zemljevid</a></li><li><a href="#" class="nl">Izgubljene</a></li><li><a href="#" class="nl">Najdene</a></li><li><a href="#" class="nl">Kako deluje</a></li>
+      </ul></nav>
+      <div class="ml-auto flex items-center gap-2">
+        <div class="lang" role="group" aria-label="Jezik: Slovenščina"><a href="#" class="ll" lang="sl" aria-current="true" aria-label="Slovenščina">SL</a><span aria-hidden="true">/</span><a href="#" class="ll" lang="en" hreflang="en" aria-label="English">EN</a></div>
+        <a href="#" class="btn btn-ghost btn-sm">Vpis</a>
+        <button type="button" class="btn btn-secondary btn-sm" aria-haspopup="menu" aria-expanded="false">Prijavi</button>
+      </div>
+    </header>
+    <main class="px-12">
+      <!-- 1 Hero: split 7 / 5 -->
+      <section class="grid grid-cols-12 gap-8 items-center pt-6" aria-labelledby="h-hero">
+        <div class="col-span-7">
+          <h1 id="h-hero" class="ty-display">Izgubljena žival? Skupaj jo pripeljemo domov.</h1>
+          <p class="ty-lede mt-6 max-w-[52ch]">Prijavite izgubljeno ali najdeno žival. Mi poiščemo možna ujemanja in obvestimo ljudi v bližini. Brezplačno.</p>
+          <div class="flex flex-wrap items-center gap-3 mt-10">
+            <a href="#" class="btn btn-primary btn-lg">Prijavi izgubljeno žival</a>
+            <a href="#" class="btn btn-text btn-lg">Prijavi najdeno žival<i class="ph-bold ph-arrow-right" aria-hidden="true"></i></a>
+          </div>
+        </div>
+        <img class="col-span-5 thumb w-full aspect-[4/5] rounded-[36px]" src="../directions/img/dog-aussie-wide.jpg" alt="Pes rjave in bele barve z dolgo dlako in privzdignjenim ušesom">
+      </section>
+
+      <!-- 2 Near you: tile grid -->
+      <section class="mt-24" aria-labelledby="h-near">
+        <h2 id="h-near" class="ty-h2">V vaši bližini</h2>
+        <ul class="grid grid-cols-3 gap-8 mt-8 sample" aria-label="Prijave v vaši bližini">
+          <li><a href="#" class="tile"><img src="../directions/img/dog-beagle.jpg" alt="Trobarvni beagle z rdečo ovratnico"><h3 class="ty-h3 mt-4">Maks</h3><p class="flex flex-wrap items-center gap-x-2 mt-1"><span class="st st-lost"><i class="ph-fill ph-megaphone" aria-hidden="true"></i>Izgubljena</span><span class="text-sm text-muted-foreground tnum">pred 2 urama · 1,2 km</span></p></a></li>
+          <li><a href="#" class="tile is-hover"><img src="../directions/img/dog-terrier.jpg" alt="Rjav terier z belo liso na prsih"><h3 class="ty-h3 mt-4">Rjav terier</h3><p class="flex flex-wrap items-center gap-x-2 mt-1"><span class="st st-found"><i class="ph-fill ph-hand-heart" aria-hidden="true"></i>Najdena</span><span class="text-sm text-muted-foreground tnum">danes ob 9.40 · 2,5 km</span></p></a></li>
+          <li><a href="#" class="tile"><img src="../directions/img/cat-ginger.jpg" alt="Rdeča mačka z belimi tačkami"><h3 class="ty-h3 mt-4">Rdeča mačka</h3><p class="flex flex-wrap items-center gap-x-2 mt-1"><span class="st st-sighted"><i class="ph-fill ph-eye" aria-hidden="true"></i>Opažena</span><span class="text-sm text-muted-foreground tnum">včeraj · Bežigrad</span></p></a></li>
+        </ul>
+        <a href="#" class="btn btn-text flush mt-6">Odpri zemljevid<i class="ph-bold ph-arrow-right" aria-hidden="true"></i></a>
+      </section>
+
+      <!-- 3 How it works: numbered stack + one photo -->
+      <section class="grid grid-cols-12 gap-8 items-center mt-24" aria-labelledby="h-how">
+        <div class="col-span-7">
+          <h2 id="h-how" class="ty-h2">Kako deluje</h2>
+          <ol class="grid gap-10 mt-10">
+            <li class="flex gap-6"><span class="ty-num w-12 flex-none" aria-hidden="true">1</span><div><h3 class="ty-h3">Prijavite</h3><p class="mt-2 max-w-[48ch]">Prijava izgubljene živali vzame nekaj minut, najdene pa manj kot minuto in brez računa.</p></div></li>
+            <li class="flex gap-6"><span class="ty-num w-12 flex-none" aria-hidden="true">2</span><div><h3 class="ty-h3">Poiščemo ujemanja</h3><p class="mt-2 max-w-[48ch]">Primerjamo številko čipa, območje, čas in opis ter vam sporočimo, ko najdemo možno ujemanje.</p></div></li>
+            <li class="flex gap-6"><span class="ty-num w-12 flex-none" aria-hidden="true">3</span><div><h3 class="ty-h3">Pogovorite se varno</h3><p class="mt-2 max-w-[48ch]">Pišete si v aplikaciji. Telefonska številka in točen naslov ostaneta skrita.</p></div></li>
+          </ol>
+          <a href="#" class="btn btn-text flush mt-8">Več o tem, kako deluje<i class="ph-bold ph-arrow-right" aria-hidden="true"></i></a>
+        </div>
+        <img class="col-span-5 thumb w-full aspect-[4/5] rounded-2xl" src="../directions/img/cat-tabby.jpg" alt="Tigrasta mačka z modro ovratnico in obeskom sedi na stopnicah">
+      </section>
+
+      <!-- 4 Safe by design: one column with a spot icon -->
+      <section class="flex gap-8 items-start mt-24" aria-labelledby="h-safe">
+        <span class="spot" aria-hidden="true"><i class="ph-fill ph-shield-check"></i></span>
+        <div class="max-w-[640px]">
+          <h2 id="h-safe" class="ty-h2">Zasnovano za vašo varnost</h2>
+          <p class="ty-lede mt-4">Ko se žival izgubi, se žal oglasijo tudi tisti, ki želijo izkoristiti stisko. Zato vaši podatki ostanejo pri vas.</p>
+          <ul class="bullets mt-6">
+            <li><i class="ph-bold ph-lock-simple" aria-hidden="true"></i>Telefonska številka ni nikoli javna.</li>
+            <li><i class="ph-bold ph-map-pin-area" aria-hidden="true"></i>Javno prikažemo le približno območje, nikoli naslova.</li>
+            <li><i class="ph-bold ph-chat-circle" aria-hidden="true"></i>Pogovor poteka v aplikaciji, z jasnim opozorilom pred prevarami.</li>
+          </ul>
+          <a href="#" class="btn btn-text flush mt-6">Preberite nasvete za varnost<i class="ph-bold ph-arrow-right" aria-hidden="true"></i></a>
+        </div>
+      </section>
+
+      <!-- 5 For shelters and vets: one card block -->
+      <section class="card p-6 grid grid-cols-12 gap-8 items-center mt-24" aria-labelledby="h-shelters">
+        <h2 id="h-shelters" class="ty-h2 col-span-5">Za zavetišča, veterinarje in občine</h2>
+        <div class="col-span-7">
+          <p class="max-w-[58ch]">Najdene živali objavite hitro, mi pa jih primerjamo z vsemi prijavami izgubljenih živali. Za zavetišča in občine je vse brezplačno, za vedno.</p>
+          <a href="#" class="btn btn-text flush mt-3">Več za zavetišča<i class="ph-bold ph-arrow-right" aria-hidden="true"></i></a>
+        </div>
+      </section>
+
+      <!-- 6 Keep it free: one quiet sentence (hidden until M4) -->
+      <section class="mt-24" aria-label="Brezplačno za vse">
+        <span class="anno mb-3">M4 only · flag transparency_page</span>
+        <p class="max-w-[640px]">Naš cilj je, da se živali vrnejo domov, zato je vse, kar k temu pripomore, brezplačno za vse in za vedno. Delovanje pokrivajo označeni oglasi lokalnih partnerjev in prostovoljni prispevki. <a href="#" class="tlink">Kam gre denar</a></p>
+      </section>
+    </main>
+    <footer class="px-12 pt-12 pb-10 mt-24">
+      <p class="flex items-center gap-4"><a href="#" class="logo-link" aria-label="Najdimo, na začetno stran"><svg class="logo-mark w-7 h-7" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg><span class="font-display font-bold text-lg" aria-hidden="true">Najdimo</span></a><span class="text-muted-foreground">Spet doma.</span></p>
+      <nav aria-label="Noga strani" class="mt-4 flex items-end gap-8">
+        <div class="flex-1 min-w-0">
+          <ul class="flex flex-wrap gap-x-6"><li><a href="#" class="fl">Kako deluje</a></li><li><a href="#" class="fl">Nasveti za varnost</a></li><li><a href="#" class="fl">Pogosta vprašanja</a></li><li><a href="#" class="fl">Za zavetišča</a></li><li><a href="#" class="fl">Zavetišča</a></li><li><a href="#" class="fl">Oglašujte pri nas</a></li><li><a href="#" class="fl">O nas</a></li></ul>
+          <ul class="flex flex-wrap gap-x-6"><li><a href="#" class="fl">Zasebnost</a></li><li><a href="#" class="fl">Piškotki</a></li><li><button type="button" class="fl" aria-haspopup="dialog">Nastavitve piškotkov</button></li><li><a href="#" class="fl">Pogoji uporabe</a></li><li><a href="#" class="fl">Impresum</a></li><li><a href="#" class="fl">Dostopnost</a></li></ul>
+        </div>
+        <div class="lang" role="group" aria-label="Jezik: Slovenščina"><a href="#" class="ll" lang="sl" aria-current="true" aria-label="Slovenščina">SL</a><span aria-hidden="true">/</span><a href="#" class="ll" lang="en" hreflang="en" aria-label="English">EN</a></div>
+      </nav>
+      <p class="text-sm text-muted-foreground mt-6">© 2026 Signapps. Najdimo je delovno ime storitve.</p>
+    </footer>
+  </div></div>
+
+  <!-- W2-W4: Near you region states at 1200 -->
+  <p class="tile-h" style="margin-top:64px">W2 · "V vaši bližini" empty at 1200 (section only): spot illustration, h3, one sentence, one secondary button. Without a known location the h2 reads "Nedavne prijave".</p>
+  <div class="wrap-x"><div class="browser" lang="sl">
+    <div class="browser-bar"><span class="dots"><i></i><i></i><i></i></span><span class="url"><i class="ph ph-lock-simple"></i>najdimo.si</span></div>
+    <section class="px-12 py-14" aria-labelledby="h-near-empty">
+      <h2 id="h-near-empty" class="ty-h2">V vaši bližini</h2>
+      <div class="grid grid-cols-12 gap-8 items-center mt-8">
+        <div class="col-span-4 spot-art"><svg viewBox="0 0 320 210" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><use href="#illo-spot"/></svg><img src="../../../assets/empty-no-reports.png" alt="" onerror="this.remove()"></div>
+        <div class="col-span-6">
+          <h3 class="ty-h3">V bližini ni odprtih prijav</h3>
+          <p class="mt-2 max-w-[52ch]">To je dobra novica. Vklopite opozorila in obvestili vas bomo, če bo kdo v bližini pogrešal žival.</p>
+          <a href="#" class="btn btn-secondary btn-sm mt-6"><i class="ph-bold ph-bell" aria-hidden="true"></i>Vklopi opozorila</a>
+        </div>
+      </div>
+    </section>
+  </div></div>
+
+  <p class="tile-h" style="margin-top:48px">W3 · "V vaši bližini" loading: three tile skeletons in the final shape, one polite "Nalaganje …" for the region</p>
+  <div class="wrap-x"><div class="browser" lang="sl">
+    <div class="browser-bar"><span class="dots"><i></i><i></i><i></i></span><span class="url"><i class="ph ph-lock-simple"></i>najdimo.si</span></div>
+    <section class="px-12 py-14" aria-labelledby="h-near-load" aria-busy="true">
+      <h2 id="h-near-load" class="ty-h2">V vaši bližini</h2>
+      <p class="sr-only" role="status">Nalaganje …</p>
+      <div class="grid grid-cols-3 gap-8 mt-8" aria-hidden="true">
+        <div><div class="skel aspect-[4/3]" style="border-radius:var(--radius-card)"></div><div class="skel h-7 w-40 mt-4"></div><div class="skel h-4 w-56 mt-3"></div></div>
+        <div><div class="skel aspect-[4/3]" style="border-radius:var(--radius-card)"></div><div class="skel h-7 w-32 mt-4"></div><div class="skel h-4 w-52 mt-3"></div></div>
+        <div><div class="skel aspect-[4/3]" style="border-radius:var(--radius-card)"></div><div class="skel h-7 w-44 mt-4"></div><div class="skel h-4 w-48 mt-3"></div></div>
+      </div>
+    </section>
+  </div></div>
+
+  <p class="tile-h" style="margin-top:48px">W4 · "V vaši bližini" error: inline region error (P1 copy) in place of the tiles, retry as a text button; the rest of the home page is unaffected</p>
+  <div class="wrap-x"><div class="browser" lang="sl">
+    <div class="browser-bar"><span class="dots"><i></i><i></i><i></i></span><span class="url"><i class="ph ph-lock-simple"></i>najdimo.si</span></div>
+    <section class="px-12 py-14" aria-labelledby="h-near-err">
+      <h2 id="h-near-err" class="ty-h2">V vaši bližini</h2>
+      <div class="note items-center !pr-2 mt-8 max-w-[640px]" role="alert">
+        <i class="ph-fill ph-warning-circle" style="color:hsl(var(--destructive))" aria-hidden="true"></i>
+        <p class="flex-1">Tega trenutno ne moremo naložiti.</p>
+        <button type="button" class="btn btn-text btn-sm"><i class="ph-bold ph-arrow-clockwise" aria-hidden="true"></i>Poskusi znova</button>
+      </div>
+    </section>
+  </div></div>
+
+  <!-- M1, M2: Home 390 -->
+  <p class="tile-h" style="margin-top:64px">Mobile web at 390: hero stacks (photo under the text, 4:3), every section one column, below md the tiles become pet rows (system 10.6). The full page is shown, so nothing is clipped.</p>
+  <div class="wrap-x"><div class="flex flex-wrap gap-x-10 gap-y-12 items-start">
+    <div>
+      <p class="tile-h !mt-0">M1 · Home at 390, full page</p>
+      <div class="phone phone-long"><div class="phone-screen" lang="sl">
+        <div class="statusbar"><span>14:20</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <div class="mweb"><span><i class="ph ph-lock-simple"></i>najdimo.si</span></div>
+        <header class="flex items-center gap-2 px-5 h-16 flex-none">
+          <a href="#" class="logo-link mr-auto" aria-label="Najdimo, na začetno stran"><svg class="logo-mark w-8 h-8" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg><span class="font-display font-bold text-xl tracking-[-0.03em]" aria-hidden="true">Najdimo</span></a>
+          <button type="button" class="btn btn-secondary btn-sm !px-4" aria-haspopup="menu" aria-expanded="false"><i class="ph-bold ph-plus" aria-hidden="true"></i>Prijavi</button>
+          <button type="button" class="iconbtn" aria-label="Odpri meni" aria-expanded="false"><i class="ph-bold ph-list"></i></button>
+        </header>
+        <main class="px-5 pt-6">
+          <section aria-labelledby="mh-hero">
+            <h1 id="mh-hero" class="ty-display">Izgubljena žival? Skupaj jo pripeljemo domov.</h1>
+            <p class="ty-lede mt-4">Prijavite izgubljeno ali najdeno žival. Mi poiščemo možna ujemanja in obvestimo ljudi v bližini. Brezplačno.</p>
+            <div class="grid gap-1 mt-8">
+              <a href="#" class="btn btn-primary btn-lg btn-block">Prijavi izgubljeno žival</a>
+              <a href="#" class="btn btn-text btn-block">Prijavi najdeno žival<i class="ph-bold ph-arrow-right" aria-hidden="true"></i></a>
+            </div>
+            <img class="thumb w-full aspect-[4/3] rounded-[32px] mt-8" src="../directions/img/dog-aussie-wide.jpg" alt="Pes rjave in bele barve z dolgo dlako in privzdignjenim ušesom">
+          </section>
+          <section class="mt-12" aria-labelledby="mh-near">
+            <h2 id="mh-near" class="ty-h2">V vaši bližini</h2>
+            <ul class="grid gap-5 mt-5 sample" aria-label="Prijave v vaši bližini">
+              <li><a href="#" class="prow"><img class="thumb w-16 h-16 flex-none" style="border-radius:var(--radius-row)" src="../directions/img/dog-beagle.jpg" alt="Trobarvni beagle z rdečo ovratnico"><span class="flex-1 min-w-0"><h3 class="font-display font-semibold text-xl leading-6 tracking-[-0.01em]">Maks</h3><span class="flex flex-wrap items-center gap-x-2 mt-1"><span class="st st-lost"><i class="ph-fill ph-megaphone" aria-hidden="true"></i>Izgubljena</span><span class="text-sm text-muted-foreground tnum">pred 2 urama</span></span></span><span class="text-sm text-muted-foreground tnum">1,2 km</span></a></li>
+              <li><a href="#" class="prow"><img class="thumb w-16 h-16 flex-none" style="border-radius:var(--radius-row)" src="../directions/img/dog-terrier.jpg" alt="Rjav terier z belo liso na prsih"><span class="flex-1 min-w-0"><h3 class="font-display font-semibold text-xl leading-6 tracking-[-0.01em]">Rjav terier</h3><span class="flex flex-wrap items-center gap-x-2 mt-1"><span class="st st-found"><i class="ph-fill ph-hand-heart" aria-hidden="true"></i>Najdena</span><span class="text-sm text-muted-foreground tnum">danes ob 9.40</span></span></span><span class="text-sm text-muted-foreground tnum">2,5 km</span></a></li>
+              <li><a href="#" class="prow"><img class="thumb w-16 h-16 flex-none" style="border-radius:var(--radius-row)" src="../directions/img/cat-ginger.jpg" alt="Rdeča mačka z belimi tačkami"><span class="flex-1 min-w-0"><h3 class="font-display font-semibold text-xl leading-6 tracking-[-0.01em]">Rdeča mačka</h3><span class="flex flex-wrap items-center gap-x-2 mt-1"><span class="st st-sighted"><i class="ph-fill ph-eye" aria-hidden="true"></i>Opažena</span><span class="text-sm text-muted-foreground tnum">včeraj</span></span></span><span class="text-sm text-muted-foreground">Bežigrad</span></a></li>
+            </ul>
+            <a href="#" class="btn btn-text flush mt-4">Odpri zemljevid<i class="ph-bold ph-arrow-right" aria-hidden="true"></i></a>
+          </section>
+          <section class="mt-12" aria-labelledby="mh-how">
+            <h2 id="mh-how" class="ty-h2">Kako deluje</h2>
+            <ol class="grid gap-7 mt-6">
+              <li class="flex gap-4"><span class="ty-num w-8 flex-none" aria-hidden="true">1</span><div><h3 class="ty-h3">Prijavite</h3><p class="mt-1">Prijava izgubljene živali vzame nekaj minut, najdene pa manj kot minuto in brez računa.</p></div></li>
+              <li class="flex gap-4"><span class="ty-num w-8 flex-none" aria-hidden="true">2</span><div><h3 class="ty-h3">Poiščemo ujemanja</h3><p class="mt-1">Primerjamo številko čipa, območje, čas in opis ter vam sporočimo, ko najdemo možno ujemanje.</p></div></li>
+              <li class="flex gap-4"><span class="ty-num w-8 flex-none" aria-hidden="true">3</span><div><h3 class="ty-h3">Pogovorite se varno</h3><p class="mt-1">Pišete si v aplikaciji. Telefonska številka in točen naslov ostaneta skrita.</p></div></li>
+            </ol>
+            <img class="thumb w-full aspect-[4/3] rounded-2xl mt-8" src="../directions/img/cat-tabby.jpg" alt="Tigrasta mačka z modro ovratnico in obeskom sedi na stopnicah">
+            <a href="#" class="btn btn-text flush mt-4">Več o tem, kako deluje<i class="ph-bold ph-arrow-right" aria-hidden="true"></i></a>
+          </section>
+          <section class="mt-12" aria-labelledby="mh-safe">
+            <span class="spot" aria-hidden="true"><i class="ph-fill ph-shield-check"></i></span>
+            <h2 id="mh-safe" class="ty-h2 mt-6">Zasnovano za vašo varnost</h2>
+            <p class="ty-lede mt-3">Ko se žival izgubi, se žal oglasijo tudi tisti, ki želijo izkoristiti stisko. Zato vaši podatki ostanejo pri vas.</p>
+            <ul class="bullets mt-5">
+              <li><i class="ph-bold ph-lock-simple" aria-hidden="true"></i>Telefonska številka ni nikoli javna.</li>
+              <li><i class="ph-bold ph-map-pin-area" aria-hidden="true"></i>Javno prikažemo le približno območje, nikoli naslova.</li>
+              <li><i class="ph-bold ph-chat-circle" aria-hidden="true"></i>Pogovor poteka v aplikaciji, z jasnim opozorilom pred prevarami.</li>
+            </ul>
+            <a href="#" class="btn btn-text flush mt-4">Preberite nasvete za varnost<i class="ph-bold ph-arrow-right" aria-hidden="true"></i></a>
+          </section>
+          <section class="card p-5 mt-12" aria-labelledby="mh-shelters">
+            <h2 id="mh-shelters" class="ty-h2">Za zavetišča, veterinarje in občine</h2>
+            <p class="mt-3">Najdene živali objavite hitro, mi pa jih primerjamo z vsemi prijavami izgubljenih živali. Za zavetišča in občine je vse brezplačno, za vedno.</p>
+            <a href="#" class="btn btn-text flush mt-2">Več za zavetišča<i class="ph-bold ph-arrow-right" aria-hidden="true"></i></a>
+          </section>
+          <section class="mt-12" aria-label="Brezplačno za vse">
+            <span class="anno mb-3">M4 only</span>
+            <p>Naš cilj je, da se živali vrnejo domov, zato je vse, kar k temu pripomore, brezplačno za vse in za vedno. Delovanje pokrivajo označeni oglasi lokalnih partnerjev in prostovoljni prispevki. <a href="#" class="tlink">Kam gre denar</a></p>
+          </section>
+          <footer class="mt-12 pb-12">
+            <p class="flex items-center gap-3"><a href="#" class="logo-link" aria-label="Najdimo, na začetno stran"><svg class="logo-mark w-7 h-7" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg><span class="font-display font-bold text-lg" aria-hidden="true">Najdimo</span></a><span class="text-muted-foreground">Spet doma.</span></p>
+            <nav aria-label="Noga strani" class="mt-3">
+              <ul class="flex flex-wrap gap-x-5"><li><a href="#" class="fl">Kako deluje</a></li><li><a href="#" class="fl">Nasveti za varnost</a></li><li><a href="#" class="fl">Pogosta vprašanja</a></li><li><a href="#" class="fl">Za zavetišča</a></li><li><a href="#" class="fl">Zavetišča</a></li><li><a href="#" class="fl">Oglašujte pri nas</a></li><li><a href="#" class="fl">O nas</a></li></ul>
+              <ul class="flex flex-wrap gap-x-5 mt-3"><li><a href="#" class="fl">Zasebnost</a></li><li><a href="#" class="fl">Piškotki</a></li><li><button type="button" class="fl" aria-haspopup="dialog">Nastavitve piškotkov</button></li><li><a href="#" class="fl">Pogoji uporabe</a></li><li><a href="#" class="fl">Impresum</a></li><li><a href="#" class="fl">Dostopnost</a></li></ul>
+            </nav>
+            <div class="lang mt-3 -ml-1.5" role="group" aria-label="Jezik: Slovenščina"><a href="#" class="ll" lang="sl" aria-current="true" aria-label="Slovenščina">SL</a><span aria-hidden="true">/</span><a href="#" class="ll" lang="en" hreflang="en" aria-label="English">EN</a></div>
+            <p class="text-sm text-muted-foreground mt-3">© 2026 Signapps. Najdimo je delovno ime storitve.</p>
+          </footer>
+        </main>
+        <span class="home-ind"></span>
+      </div></div>
+    </div>
+
+    <div>
+      <p class="tile-h !mt-0">M2 · "V vaši bližini" empty at 390 (scrolled to the section)</p>
+      <div class="phone"><div class="phone-screen" lang="sl">
+        <div class="statusbar"><span>14:20</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <div class="mweb"><span><i class="ph ph-lock-simple"></i>najdimo.si</span></div>
+        <main class="flex-1 px-5 pt-6 overflow-hidden">
+          <img class="thumb w-full h-24 object-bottom" style="border-radius:0 0 32px 32px" src="../directions/img/dog-aussie-wide.jpg" alt="">
+          <section class="mt-12" aria-labelledby="mh-near-empty">
+            <h2 id="mh-near-empty" class="ty-h2">V vaši bližini</h2>
+            <div class="spot-art w-full mt-5"><svg viewBox="0 0 320 210" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><use href="#illo-spot"/></svg><img src="../../../assets/empty-no-reports.png" alt="" onerror="this.remove()"></div>
+            <h3 class="ty-h3 mt-6">V bližini ni odprtih prijav</h3>
+            <p class="mt-2">To je dobra novica. Vklopite opozorila in obvestili vas bomo, če bo kdo v bližini pogrešal žival.</p>
+            <a href="#" class="btn btn-secondary btn-sm mt-5"><i class="ph-bold ph-bell" aria-hidden="true"></i>Vklopi opozorila</a>
+          </section>
+          <h2 class="ty-h2 mt-12">Kako deluje</h2>
+        </main>
+        <span class="home-ind"></span>
+      </div></div>
+    </div>
+  </div></div>
+</section>
+
+<!-- ================= 2. T2 ARTICLE ================= -->
+<section class="tile-section !max-w-[1400px] !pt-0">
+  <h2 class="tile-title">2. T2 Article: How it works</h2>
+  <p class="tile-lede">Breadcrumb text link back, h1, lede (20/32), body at 640 px, numbered h2 sections, one tip note, a closing action row. The page has seven sections, so the sticky "Na tej strani" list sits on the left (240 px, 64 px gap). Structured data: WebPage + BreadcrumbList.</p>
+
+  <p class="tile-h !mt-0">W5 · How it works at 1200 · current page "Kako deluje" in the header · "Na tej strani" sticky, current section "Če ste izgubili žival", hover on "Pogovor in prevzem" · header "Prijavi" secondary (closing row has the primary)</p>
+  <div class="wrap-x"><div class="browser" lang="sl">
+    <div class="browser-bar"><span class="dots"><i></i><i></i><i></i></span><span class="url"><i class="ph ph-lock-simple"></i>najdimo.si/kako-deluje</span></div>
+    <header class="flex items-center gap-8 px-12 h-[88px]">
+      <a href="#" class="logo-link" aria-label="Najdimo, na začetno stran"><svg class="logo-mark w-9 h-9" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg><span class="font-display font-bold text-2xl tracking-[-0.03em]" aria-hidden="true">Najdimo</span></a>
+      <nav aria-label="Glavni meni"><ul class="flex items-center gap-2">
+        <li><a href="#" class="nl">Zemljevid</a></li><li><a href="#" class="nl">Izgubljene</a></li><li><a href="#" class="nl">Najdene</a></li><li><a href="#" class="nl" aria-current="page">Kako deluje</a></li>
+      </ul></nav>
+      <div class="ml-auto flex items-center gap-2">
+        <div class="lang" role="group" aria-label="Jezik: Slovenščina"><a href="#" class="ll" lang="sl" aria-current="true" aria-label="Slovenščina">SL</a><span aria-hidden="true">/</span><a href="#" class="ll" lang="en" hreflang="en" aria-label="English">EN</a></div>
+        <a href="#" class="btn btn-ghost btn-sm">Vpis</a>
+        <button type="button" class="btn btn-secondary btn-sm" aria-haspopup="menu" aria-expanded="false">Prijavi</button>
+      </div>
+    </header>
+    <main class="px-12 pt-8 toc-grid">
+      <nav class="toc" aria-label="Na tej strani">
+        <p class="toc-h">Na tej strani</p>
+        <ul class="toc-list">
+          <li><a href="#kd-1" aria-current="true">Če ste izgubili žival</a></li>
+          <li><a href="#kd-2">Če ste našli ali videli žival</a></li>
+          <li><a href="#kd-3">Kako iščemo ujemanja</a></li>
+          <li><a href="#kd-4" class="is-hover">Pogovor in prevzem</a></li>
+          <li><a href="#kd-5">Ko je žival spet doma</a></li>
+          <li><a href="#kd-6">Opozorila v bližini</a></li>
+          <li><a href="#kd-7">Kaj je brezplačno</a></li>
+        </ul>
+      </nav>
+      <article class="article">
+        <nav aria-label="Drobtinice"><a href="#" class="btn btn-text btn-sm flush"><i class="ph-bold ph-arrow-left" aria-hidden="true"></i>Nazaj na začetno stran</a></nav>
+        <h1 class="ty-h1">Kako deluje Najdimo</h1>
+        <p class="ty-lede">Najdimo poveže ljudi, ki pogrešajo žival, s tistimi, ki so jo našli ali videli. Ujemanja iščemo mi, odločitve pa so vaše.</p>
+
+        <h2 id="kd-1" class="ty-h2">Če ste izgubili žival</h2>
+        <ol class="olist">
+          <li><span class="n" aria-hidden="true">1</span><p>Prijavite izgubljeno žival: dodajte fotografijo, opis ter kraj in čas, ko ste jo nazadnje videli.</p></li>
+          <li><span class="n" aria-hidden="true">2</span><p>Iskanje objavimo v nekaj minutah. Ljudje v bližini, ki imajo vklopljena opozorila, prejmejo obvestilo.</p></li>
+          <li><span class="n" aria-hidden="true">3</span><p>Ko kdo prijavi najdeno ali opaženo žival, ki je podobna vaši, vam sporočimo možno ujemanje.</p></li>
+          <li><span class="n" aria-hidden="true">4</span><p>Prenesite plakat s QR kodo ter ga delite s sosedi in v lokalnih skupinah na družbenih omrežjih.</p></li>
+        </ol>
+        <p>Za prijavo izgubljene živali potrebujete račun. Tako vas lahko obvestimo o ujemanjih, ljudje pa vam lahko pišejo, ne da bi videli vašo telefonsko številko. Vse, kar vnesete pred vpisom, se ohrani.</p>
+        <div class="note" role="note"><i class="ph-fill ph-lightbulb" style="color:hsl(var(--primary))" aria-hidden="true"></i><p><b>Nasvet:</b> profil živali s fotografijami in številko čipa lahko shranite že vnaprej. Če se žival kdaj izgubi, je prijava oddana v nekaj sekundah.</p></div>
+
+        <h2 id="kd-2" class="ty-h2">Če ste našli ali videli žival</h2>
+        <p>Prijava vzame manj kot minuto in ne potrebuje računa: fotografija, kraj in odgovor na vprašanje, ali je žival pri vas ali ste jo samo videli. Na koncu dobite zasebno povezavo, s katero prijavo urejate in se pogovarjate z osebo, ki žival išče.</p>
+        <p>Ne sprašujemo, kje je žival zdaj, in tega nikoli ne prikažemo.</p>
+        <p>Če ima žival ovratnico z obeskom ali čip, to zelo pomaga. Čip lahko prebere veterinar ali zavetišče.</p>
+
+        <h2 id="kd-3" class="ty-h2">Kako iščemo ujemanja</h2>
+        <p>Vsako novo prijavo primerjamo z odprtimi prijavami na drugi strani: izgubljene živali z najdenimi in opaženimi ter obratno.</p>
+        <ul class="ulist">
+          <li><b>Številka čipa.</b> Če se ujema, vas obvestimo takoj, tudi ponoči.</li>
+          <li><b>Območje.</b> Kako blizu sta kraja, kjer se je žival izgubila in kjer je bila najdena.</li>
+          <li><b>Čas.</b> Ali je bila žival najdena potem, ko se je izgubila.</li>
+          <li><b>Opis.</b> Vrsta, velikost, barva in spol.</li>
+        </ul>
+        <p>Kmalu bomo primerjali tudi podobnost fotografij.</p>
+        <p>Ujemanje je predlog, ne potrditev. Fotografije pogledate sami in se odločite, ali je to vaša žival. Ujemanj, ki jih zavrnete, ne pokažemo več.</p>
+
+        <h2 id="kd-4" class="ty-h2">Pogovor in prevzem</h2>
+        <p>Ko potrdite ujemanje ali nekomu pišete pri prijavi, se odpre pogovor v aplikaciji. Telefonskih številk in e-naslovov ne prikažemo.</p>
+        <p>Prevzem se dogovorite v pogovoru. Dobite se na javnem kraju, podnevi, in nikoli ne plačajte vnaprej. Preberite <a href="#" class="tlink">nasvete za varnost</a>.</p>
+
+        <h2 id="kd-5" class="ty-h2">Ko je žival spet doma</h2>
+        <p>Izberite <b>Žival je spet doma</b>. Opozorila se ustavijo, prijava pa pokaže, da je žival doma. Tako zemljevid ostane zanesljiv za vse.</p>
+        <p>Če prijave nekaj časa ne posodobite, vas po 7, 14 in 30 dneh vprašamo, ali še iščete. Prijava izgubljene živali se po 90 dneh brez posodobitve samodejno zaključi, podaljšate pa jo lahko takoj. Prijave najdenih in opaženih živali potečejo po 30 dneh brez posodobitve.</p>
+
+        <h2 id="kd-6" class="ty-h2">Opozorila v bližini</h2>
+        <p>Vklopite opozorila za svoje domače območje (privzeto 5 km) in obvestili vas bomo, ko se v bližini izgubi pes ali mačka. Izberete lahko vrsto živali, polmer, največje število opozoril na dan in tihi čas.</p>
+
+        <h2 id="kd-7" class="ty-h2">Kaj je brezplačno</h2>
+        <p>Naš cilj je, da se živali vrnejo domov. Zato je vse, kar k temu pripomore, brezplačno za vse in za vedno: prijava izgubljene, najdene ali opažene živali, zemljevid in opozorila, iskanje ujemanj, pogovor, plakat s QR kodo, deljenje in preverjanje čipa. Za zavetišča in občine je brezplačno vse.</p>
+        <p>Denar potrebujemo le za delovanje: strežnike, zemljevide in pošiljanje opozoril. Pokrivajo ga oglasi lokalnih partnerjev, vedno označeni z besedo <b>Oglas</b>, in prostovoljni prispevki. Oglasov nikoli ne prikažemo med prijavo izgubljene ali najdene živali, v pogovoru ali pri plačilu.</p>
+
+        <div class="actions flex flex-wrap items-center gap-3">
+          <a href="#" class="btn btn-primary btn-lg">Prijavi izgubljeno žival</a>
+          <a href="#" class="btn btn-text btn-lg">Prijavi najdeno žival<i class="ph-bold ph-arrow-right" aria-hidden="true"></i></a>
+        </div>
+      </article>
+    </main>
+    <footer class="px-12 pt-12 pb-10 mt-24">
+      <p class="flex items-center gap-4"><a href="#" class="logo-link" aria-label="Najdimo, na začetno stran"><svg class="logo-mark w-7 h-7" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg><span class="font-display font-bold text-lg" aria-hidden="true">Najdimo</span></a><span class="text-muted-foreground">Spet doma.</span></p>
+      <nav aria-label="Noga strani" class="mt-4 flex items-end gap-8">
+        <div class="flex-1 min-w-0">
+          <ul class="flex flex-wrap gap-x-6"><li><a href="#" class="fl">Kako deluje</a></li><li><a href="#" class="fl">Nasveti za varnost</a></li><li><a href="#" class="fl">Pogosta vprašanja</a></li><li><a href="#" class="fl">Za zavetišča</a></li><li><a href="#" class="fl">Zavetišča</a></li><li><a href="#" class="fl">Oglašujte pri nas</a></li><li><a href="#" class="fl">O nas</a></li></ul>
+          <ul class="flex flex-wrap gap-x-6"><li><a href="#" class="fl">Zasebnost</a></li><li><a href="#" class="fl">Piškotki</a></li><li><button type="button" class="fl" aria-haspopup="dialog">Nastavitve piškotkov</button></li><li><a href="#" class="fl">Pogoji uporabe</a></li><li><a href="#" class="fl">Impresum</a></li><li><a href="#" class="fl">Dostopnost</a></li></ul>
+        </div>
+        <div class="lang" role="group" aria-label="Jezik: Slovenščina"><a href="#" class="ll" lang="sl" aria-current="true" aria-label="Slovenščina">SL</a><span aria-hidden="true">/</span><a href="#" class="ll" lang="en" hreflang="en" aria-label="English">EN</a></div>
+      </nav>
+      <p class="text-sm text-muted-foreground mt-6">© 2026 Signapps. Najdimo je delovno ime storitve.</p>
+    </footer>
+  </div></div>
+
+  <p class="tile-h" style="margin-top:64px">M3 · How it works at 390, full article: no "Na tej strani" list below lg, closing actions stacked (primary lg full width, text button under it). Footer as M1.</p>
+  <div class="wrap-x"><div class="flex flex-wrap gap-x-10 gap-y-12 items-start">
+    <div class="phone phone-long"><div class="phone-screen" lang="sl">
+      <div class="statusbar"><span>14:20</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+      <div class="mweb"><span><i class="ph ph-lock-simple"></i>najdimo.si/kako-deluje</span></div>
+      <header class="flex items-center gap-2 px-5 h-16 flex-none">
+        <a href="#" class="logo-link mr-auto" aria-label="Najdimo, na začetno stran"><svg class="logo-mark w-8 h-8" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg><span class="font-display font-bold text-xl tracking-[-0.03em]" aria-hidden="true">Najdimo</span></a>
+        <button type="button" class="btn btn-secondary btn-sm !px-4" aria-haspopup="menu" aria-expanded="false"><i class="ph-bold ph-plus" aria-hidden="true"></i>Prijavi</button>
+        <button type="button" class="iconbtn" aria-label="Odpri meni" aria-expanded="false"><i class="ph-bold ph-list"></i></button>
+      </header>
+      <main class="px-5 pt-4 pb-14">
+        <article class="article">
+          <nav aria-label="Drobtinice"><a href="#" class="btn btn-text btn-sm flush"><i class="ph-bold ph-arrow-left" aria-hidden="true"></i>Nazaj na začetno stran</a></nav>
+          <h1 class="ty-h1">Kako deluje Najdimo</h1>
+          <p class="ty-lede">Najdimo poveže ljudi, ki pogrešajo žival, s tistimi, ki so jo našli ali videli. Ujemanja iščemo mi, odločitve pa so vaše.</p>
+
+          <h2 class="ty-h2">Če ste izgubili žival</h2>
+          <ol class="olist">
+            <li><span class="n" aria-hidden="true">1</span><p>Prijavite izgubljeno žival: dodajte fotografijo, opis ter kraj in čas, ko ste jo nazadnje videli.</p></li>
+            <li><span class="n" aria-hidden="true">2</span><p>Iskanje objavimo v nekaj minutah. Ljudje v bližini, ki imajo vklopljena opozorila, prejmejo obvestilo.</p></li>
+            <li><span class="n" aria-hidden="true">3</span><p>Ko kdo prijavi najdeno ali opaženo žival, ki je podobna vaši, vam sporočimo možno ujemanje.</p></li>
+            <li><span class="n" aria-hidden="true">4</span><p>Prenesite plakat s QR kodo ter ga delite s sosedi in v lokalnih skupinah na družbenih omrežjih.</p></li>
+          </ol>
+          <p>Za prijavo izgubljene živali potrebujete račun. Tako vas lahko obvestimo o ujemanjih, ljudje pa vam lahko pišejo, ne da bi videli vašo telefonsko številko. Vse, kar vnesete pred vpisom, se ohrani.</p>
+          <div class="note" role="note"><i class="ph-fill ph-lightbulb" style="color:hsl(var(--primary))" aria-hidden="true"></i><p><b>Nasvet:</b> profil živali s fotografijami in številko čipa lahko shranite že vnaprej. Če se žival kdaj izgubi, je prijava oddana v nekaj sekundah.</p></div>
+
+          <h2 class="ty-h2">Če ste našli ali videli žival</h2>
+          <p>Prijava vzame manj kot minuto in ne potrebuje računa: fotografija, kraj in odgovor na vprašanje, ali je žival pri vas ali ste jo samo videli. Na koncu dobite zasebno povezavo, s katero prijavo urejate in se pogovarjate z osebo, ki žival išče.</p>
+          <p>Ne sprašujemo, kje je žival zdaj, in tega nikoli ne prikažemo.</p>
+          <p>Če ima žival ovratnico z obeskom ali čip, to zelo pomaga. Čip lahko prebere veterinar ali zavetišče.</p>
+
+          <h2 class="ty-h2">Kako iščemo ujemanja</h2>
+          <p>Vsako novo prijavo primerjamo z odprtimi prijavami na drugi strani: izgubljene živali z najdenimi in opaženimi ter obratno.</p>
+          <ul class="ulist">
+            <li><b>Številka čipa.</b> Če se ujema, vas obvestimo takoj, tudi ponoči.</li>
+            <li><b>Območje.</b> Kako blizu sta kraja, kjer se je žival izgubila in kjer je bila najdena.</li>
+            <li><b>Čas.</b> Ali je bila žival najdena potem, ko se je izgubila.</li>
+            <li><b>Opis.</b> Vrsta, velikost, barva in spol.</li>
+          </ul>
+          <p>Kmalu bomo primerjali tudi podobnost fotografij.</p>
+          <p>Ujemanje je predlog, ne potrditev. Fotografije pogledate sami in se odločite, ali je to vaša žival. Ujemanj, ki jih zavrnete, ne pokažemo več.</p>
+
+          <h2 class="ty-h2">Pogovor in prevzem</h2>
+          <p>Ko potrdite ujemanje ali nekomu pišete pri prijavi, se odpre pogovor v aplikaciji. Telefonskih številk in e-naslovov ne prikažemo.</p>
+          <p>Prevzem se dogovorite v pogovoru. Dobite se na javnem kraju, podnevi, in nikoli ne plačajte vnaprej. Preberite <a href="#" class="tlink">nasvete za varnost</a>.</p>
+
+          <h2 class="ty-h2">Ko je žival spet doma</h2>
+          <p>Izberite <b>Žival je spet doma</b>. Opozorila se ustavijo, prijava pa pokaže, da je žival doma. Tako zemljevid ostane zanesljiv za vse.</p>
+          <p>Če prijave nekaj časa ne posodobite, vas po 7, 14 in 30 dneh vprašamo, ali še iščete. Prijava izgubljene živali se po 90 dneh brez posodobitve samodejno zaključi, podaljšate pa jo lahko takoj. Prijave najdenih in opaženih živali potečejo po 30 dneh brez posodobitve.</p>
+
+          <h2 class="ty-h2">Opozorila v bližini</h2>
+          <p>Vklopite opozorila za svoje domače območje (privzeto 5 km) in obvestili vas bomo, ko se v bližini izgubi pes ali mačka. Izberete lahko vrsto živali, polmer, največje število opozoril na dan in tihi čas.</p>
+
+          <h2 class="ty-h2">Kaj je brezplačno</h2>
+          <p>Naš cilj je, da se živali vrnejo domov. Zato je vse, kar k temu pripomore, brezplačno za vse in za vedno: prijava izgubljene, najdene ali opažene živali, zemljevid in opozorila, iskanje ujemanj, pogovor, plakat s QR kodo, deljenje in preverjanje čipa. Za zavetišča in občine je brezplačno vse.</p>
+          <p>Denar potrebujemo le za delovanje: strežnike, zemljevide in pošiljanje opozoril. Pokrivajo ga oglasi lokalnih partnerjev, vedno označeni z besedo <b>Oglas</b>, in prostovoljni prispevki. Oglasov nikoli ne prikažemo med prijavo izgubljene ali najdene živali, v pogovoru ali pri plačilu.</p>
+
+          <div class="actions grid gap-1">
+            <a href="#" class="btn btn-primary btn-lg btn-block">Prijavi izgubljeno žival</a>
+            <a href="#" class="btn btn-text btn-block">Prijavi najdeno žival<i class="ph-bold ph-arrow-right" aria-hidden="true"></i></a>
+          </div>
+        </article>
+      </main>
+      <span class="home-ind"></span>
+    </div></div>
+  </div></div>
+</section>
+
+<!-- ================= 3. T3 FAQ ================= -->
+<section class="tile-section !max-w-[1400px] !pt-0">
+  <h2 class="tile-title">3. T3 FAQ</h2>
+  <p class="tile-lede">h1 and lede, six groups 48 px apart, each with an h2. Every question is a full-width button row on the card surface (radius 20, 24 px padding, plus/minus) inside an h3, with <code>aria-expanded</code> and <code>aria-controls</code>; the answer opens below in body text. Rows are clickable in this mockup. A closing note links to contact. Structured data: FAQPage + BreadcrumbList.</p>
+
+  <p class="tile-h !mt-0">W6 · FAQ at 1200 · "Ali je Najdimo brezplačno?" expanded · keyboard focus on the second row · hover on the third row · header "Prijavi" primary (no other primary on the page)</p>
+  <div class="wrap-x"><div class="browser" lang="sl">
+    <div class="browser-bar"><span class="dots"><i></i><i></i><i></i></span><span class="url"><i class="ph ph-lock-simple"></i>najdimo.si/pogosta-vprasanja</span></div>
+    <header class="flex items-center gap-8 px-12 h-[88px]">
+      <a href="#" class="logo-link" aria-label="Najdimo, na začetno stran"><svg class="logo-mark w-9 h-9" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg><span class="font-display font-bold text-2xl tracking-[-0.03em]" aria-hidden="true">Najdimo</span></a>
+      <nav aria-label="Glavni meni"><ul class="flex items-center gap-2">
+        <li><a href="#" class="nl">Zemljevid</a></li><li><a href="#" class="nl">Izgubljene</a></li><li><a href="#" class="nl">Najdene</a></li><li><a href="#" class="nl">Kako deluje</a></li>
+      </ul></nav>
+      <div class="ml-auto flex items-center gap-2">
+        <div class="lang" role="group" aria-label="Jezik: Slovenščina"><a href="#" class="ll" lang="sl" aria-current="true" aria-label="Slovenščina">SL</a><span aria-hidden="true">/</span><a href="#" class="ll" lang="en" hreflang="en" aria-label="English">EN</a></div>
+        <a href="#" class="btn btn-ghost btn-sm">Vpis</a>
+        <button type="button" class="btn btn-primary btn-sm" aria-haspopup="menu" aria-expanded="false">Prijavi</button>
+      </div>
+    </header>
+    <main class="px-12 pt-8">
+      <div class="max-w-[640px]">
+        <nav aria-label="Drobtinice"><a href="#" class="btn btn-text btn-sm flush"><i class="ph-bold ph-arrow-left" aria-hidden="true"></i>Nazaj na začetno stran</a></nav>
+        <h1 class="ty-h1 mt-4">Pogosta vprašanja</h1>
+        <p class="ty-lede mt-4">Kratki odgovori na vprašanja, ki nam jih postavljate najpogosteje.</p>
+
+        <section class="mt-12" aria-labelledby="fq-g1">
+          <h2 id="fq-g1" class="ty-h2">Prijava izgubljene živali</h2>
+          <div class="grid gap-3 mt-5">
+            <div class="faq"><h3><button type="button" class="faq-q" data-toggle-region aria-expanded="true" aria-controls="fq-1"><span>Ali je Najdimo brezplačno?<span class="sr-only" data-sr-open="Skrij odgovor" data-sr-closed="Pokaži odgovor">Skrij odgovor</span></span><i class="ph-bold ph-minus" data-open="ph-minus" data-closed="ph-plus" aria-hidden="true"></i></button></h3><div class="faq-a" id="fq-1"><p>Da, vse, kar pomaga vrniti žival domov, je brezplačno za vse in za vedno: prijava, ujemanja, pogovor, opozorila, plakat in preverjanje čipa. Delovanje pokrivajo označeni oglasi in prostovoljni prispevki.</p></div></div>
+            <div class="faq"><h3><button type="button" class="faq-q is-focus" data-toggle-region aria-expanded="false" aria-controls="fq-2"><span>Zakaj za prijavo izgubljene živali potrebujem račun?<span class="sr-only" data-sr-open="Skrij odgovor" data-sr-closed="Pokaži odgovor">Pokaži odgovor</span></span><i class="ph-bold ph-plus" data-open="ph-minus" data-closed="ph-plus" aria-hidden="true"></i></button></h3><div class="faq-a" id="fq-2" hidden><p>Da vas lahko obvestimo o možnem ujemanju in da vam lahko ljudje pišejo, ne da bi videli vašo telefonsko številko. Vse, kar vnesete pred vpisom, se ohrani.</p></div></div>
+            <div class="faq"><h3><button type="button" class="faq-q is-hover" data-toggle-region aria-expanded="false" aria-controls="fq-3"><span>Zakaj je na zemljevidu prikazano le približno območje?<span class="sr-only" data-sr-open="Skrij odgovor" data-sr-closed="Pokaži odgovor">Pokaži odgovor</span></span><i class="ph-bold ph-plus" data-open="ph-minus" data-closed="ph-plus" aria-hidden="true"></i></button></h3><div class="faq-a" id="fq-3" hidden><p>Da vas zaščitimo. Namesto točnega kraja prikažemo območje s polmerom vsaj 500 metrov, pri najdenih in opaženih živalih vsaj 150 metrov. Točno lokacijo vidite samo vi.</p></div></div>
+            <div class="faq"><h3><button type="button" class="faq-q" data-toggle-region aria-expanded="false" aria-controls="fq-4"><span>Ali bo številka čipa javna?<span class="sr-only" data-sr-open="Skrij odgovor" data-sr-closed="Pokaži odgovor">Pokaži odgovor</span></span><i class="ph-bold ph-plus" data-open="ph-minus" data-closed="ph-plus" aria-hidden="true"></i></button></h3><div class="faq-a" id="fq-4" hidden><p>Ne. Številko čipa vpišite v prijavo ali profil živali, a je nikoli ne prikažemo javno. Uporabimo jo samo za iskanje ujemanj.</p></div></div>
+            <div class="faq"><h3><button type="button" class="faq-q" data-toggle-region aria-expanded="false" aria-controls="fq-5"><span>Kako dolgo ostane prijava objavljena?<span class="sr-only" data-sr-open="Skrij odgovor" data-sr-closed="Pokaži odgovor">Pokaži odgovor</span></span><i class="ph-bold ph-plus" data-open="ph-minus" data-closed="ph-plus" aria-hidden="true"></i></button></h3><div class="faq-a" id="fq-5" hidden><p>Dokler je ne zaključite. Po 7, 14 in 30 dneh vas vprašamo, ali še iščete. Če prijave 90 dni ne posodobite, se samodejno zaključi, podaljšate pa jo lahko takoj.</p></div></div>
+          </div>
+        </section>
+
+        <section class="mt-12" aria-labelledby="fq-g2">
+          <h2 id="fq-g2" class="ty-h2">Najdena ali opažena žival</h2>
+          <div class="grid gap-3 mt-5">
+            <div class="faq"><h3><button type="button" class="faq-q" data-toggle-region aria-expanded="false" aria-controls="fq-6"><span>Ali za prijavo najdene živali potrebujem račun?<span class="sr-only" data-sr-open="Skrij odgovor" data-sr-closed="Pokaži odgovor">Pokaži odgovor</span></span><i class="ph-bold ph-plus" data-open="ph-minus" data-closed="ph-plus" aria-hidden="true"></i></button></h3><div class="faq-a" id="fq-6" hidden><p>Ne. Prijava vzame manj kot minuto. Na koncu dobite zasebno povezavo, s katero prijavo urejate in odgovarjate na sporočila.</p></div></div>
+            <div class="faq"><h3><button type="button" class="faq-q" data-toggle-region aria-expanded="false" aria-controls="fq-7"><span>Kaj, če izgubim zasebno povezavo?<span class="sr-only" data-sr-open="Skrij odgovor" data-sr-closed="Pokaži odgovor">Pokaži odgovor</span></span><i class="ph-bold ph-plus" data-open="ph-minus" data-closed="ph-plus" aria-hidden="true"></i></button></h3><div class="faq-a" id="fq-7" hidden><p>Če ste ob prijavi vpisali e-naslov, vam jo pošljemo znova. Brez e-naslova je ne moremo obnoviti, prijava pa poteče po 30 dneh. Povezavo lahko ohranite tudi tako, da ustvarite račun.</p></div></div>
+            <div class="faq"><h3><button type="button" class="faq-q" data-toggle-region aria-expanded="false" aria-controls="fq-8"><span>Ali moram povedati, kje je žival zdaj?<span class="sr-only" data-sr-open="Skrij odgovor" data-sr-closed="Pokaži odgovor">Pokaži odgovor</span></span><i class="ph-bold ph-plus" data-open="ph-minus" data-closed="ph-plus" aria-hidden="true"></i></button></h3><div class="faq-a" id="fq-8" hidden><p>Ne. Tega ne sprašujemo in nikoli ne prikažemo. Prevzem se dogovorite v pogovoru.</p></div></div>
+            <div class="faq"><h3><button type="button" class="faq-q" data-toggle-region aria-expanded="false" aria-controls="fq-9"><span>Kaj naj storim, če žival ne morem obdržati?<span class="sr-only" data-sr-open="Skrij odgovor" data-sr-closed="Pokaži odgovor">Pokaži odgovor</span></span><i class="ph-bold ph-plus" data-open="ph-minus" data-closed="ph-plus" aria-hidden="true"></i></button></h3><div class="faq-a" id="fq-9" hidden><p>Pokličite zavetišče, s katerim sodeluje vaša občina, ali veterinarja. Prijavo na Najdimo vseeno oddajte, da jo tisti, ki jo pogrešajo, lažje najdejo.</p></div></div>
+          </div>
+        </section>
+
+        <section class="mt-12" aria-labelledby="fq-g3">
+          <h2 id="fq-g3" class="ty-h2">Ujemanja in pogovor</h2>
+          <div class="grid gap-3 mt-5">
+            <div class="faq"><h3><button type="button" class="faq-q" data-toggle-region aria-expanded="false" aria-controls="fq-10"><span>Kako veste, da je to moja žival?<span class="sr-only" data-sr-open="Skrij odgovor" data-sr-closed="Pokaži odgovor">Pokaži odgovor</span></span><i class="ph-bold ph-plus" data-open="ph-minus" data-closed="ph-plus" aria-hidden="true"></i></button></h3><div class="faq-a" id="fq-10" hidden><p>Ne vemo zagotovo. Primerjamo številko čipa, območje, čas in opis ter predlagamo možno ujemanje. Odločite se vi, ko pogledate fotografije.</p></div></div>
+            <div class="faq"><h3><button type="button" class="faq-q" data-toggle-region aria-expanded="false" aria-controls="fq-11"><span>Kdo vidi moja sporočila?<span class="sr-only" data-sr-open="Skrij odgovor" data-sr-closed="Pokaži odgovor">Pokaži odgovor</span></span><i class="ph-bold ph-plus" data-open="ph-minus" data-closed="ph-plus" aria-hidden="true"></i></button></h3><div class="faq-a" id="fq-11" hidden><p>Samo udeleženci pogovora. Naša ekipa vidi sporočilo le, če ga kdo prijavi kot zlorabo.</p></div></div>
+            <div class="faq"><h3><button type="button" class="faq-q" data-toggle-region aria-expanded="false" aria-controls="fq-12"><span>Se lahko pogovorimo po telefonu?<span class="sr-only" data-sr-open="Skrij odgovor" data-sr-closed="Pokaži odgovor">Pokaži odgovor</span></span><i class="ph-bold ph-plus" data-open="ph-minus" data-closed="ph-plus" aria-hidden="true"></i></button></h3><div class="faq-a" id="fq-12" hidden><p>Številko lahko delite v pogovoru, a priporočamo, da ostanete v aplikaciji, dokler žival ni varno doma.</p></div></div>
+          </div>
+        </section>
+
+        <section class="mt-12" aria-labelledby="fq-g4">
+          <h2 id="fq-g4" class="ty-h2">Zasebnost in varnost</h2>
+          <div class="grid gap-3 mt-5">
+            <div class="faq"><h3><button type="button" class="faq-q" data-toggle-region aria-expanded="false" aria-controls="fq-13"><span>Kako prepoznam prevaro?<span class="sr-only" data-sr-open="Skrij odgovor" data-sr-closed="Pokaži odgovor">Pokaži odgovor</span></span><i class="ph-bold ph-plus" data-open="ph-minus" data-closed="ph-plus" aria-hidden="true"></i></button></h3><div class="faq-a" id="fq-13" hidden><p>Najpogostejši znak je zahteva po denarju vnaprej. Kdor je žival res našel, denarja ne zahteva. Več v <a href="#" class="tlink">nasvetih za varnost</a>.</p></div></div>
+            <div class="faq"><h3><button type="button" class="faq-q" data-toggle-region aria-expanded="false" aria-controls="fq-14"><span>Kako izbrišem svoje podatke?<span class="sr-only" data-sr-open="Skrij odgovor" data-sr-closed="Pokaži odgovor">Pokaži odgovor</span></span><i class="ph-bold ph-plus" data-open="ph-minus" data-closed="ph-plus" aria-hidden="true"></i></button></h3><div class="faq-a" id="fq-14" hidden><p>Prijavo najdene ali opažene živali izbrišete prek zasebne povezave. Za izbris računa nam pišite na naslov iz <a href="#" class="tlink">politike zasebnosti</a>. Kmalu boste račun lahko izbrisali sami v nastavitvah.</p></div></div>
+            <div class="faq"><h3><button type="button" class="faq-q" data-toggle-region aria-expanded="false" aria-controls="fq-15"><span>Ali uporabljate piškotke?<span class="sr-only" data-sr-open="Skrij odgovor" data-sr-closed="Pokaži odgovor">Pokaži odgovor</span></span><i class="ph-bold ph-plus" data-open="ph-minus" data-closed="ph-plus" aria-hidden="true"></i></button></h3><div class="faq-a" id="fq-15" hidden><p>Nujne piškotke za delovanje, na primer za vpis. Analitične piškotke Google Analytics uporabimo le, če jih sprejmete. Izbiro lahko kadar koli spremenite v Nastavitvah piškotkov.</p></div></div>
+          </div>
+        </section>
+
+        <section class="mt-12" aria-labelledby="fq-g5">
+          <h2 id="fq-g5" class="ty-h2">Oglasi in podpora</h2>
+          <div class="grid gap-3 mt-5">
+            <div class="faq"><h3><button type="button" class="faq-q" data-toggle-region aria-expanded="false" aria-controls="fq-16"><span>Zakaj so na strani oglasi?<span class="sr-only" data-sr-open="Skrij odgovor" data-sr-closed="Pokaži odgovor">Pokaži odgovor</span></span><i class="ph-bold ph-plus" data-open="ph-minus" data-closed="ph-plus" aria-hidden="true"></i></button></h3><div class="faq-a" id="fq-16" hidden><p>Da Najdimo ostane brezplačno. Oglasi lokalnih partnerjev so vedno označeni z besedo Oglas. Nikoli jih ne prikažemo med prijavo, v pogovoru ali pri plačilu in ne uporabljajo piškotkov za sledenje.</p></div></div>
+            <div class="faq"><h3><button type="button" class="faq-q" data-toggle-region aria-expanded="false" aria-controls="fq-17"><span>Kako lahko podprem Najdimo?<span class="sr-only" data-sr-open="Skrij odgovor" data-sr-closed="Pokaži odgovor">Pokaži odgovor</span></span><i class="ph-bold ph-plus" data-open="ph-minus" data-closed="ph-plus" aria-hidden="true"></i></button></h3><div class="faq-a" id="fq-17" hidden><p>Ko je vaša žival spet doma, lahko pustite prispevek v zahvalo. Prispevek ni obvezen in ne vpliva na nobeno funkcijo.</p></div></div>
+            <div class="faq"><h3><button type="button" class="faq-q" data-toggle-region aria-expanded="false" aria-controls="fq-18"><span>Kako lahko oglašujem?<span class="sr-only" data-sr-open="Skrij odgovor" data-sr-closed="Pokaži odgovor">Pokaži odgovor</span></span><i class="ph-bold ph-plus" data-open="ph-minus" data-closed="ph-plus" aria-hidden="true"></i></button></h3><div class="faq-a" id="fq-18" hidden><p>Vse o oglasnih mestih in občinstvu je na strani <a href="#" class="tlink">Oglašujte pri nas</a>, kjer nam lahko tudi pišete.</p></div></div>
+          </div>
+        </section>
+
+        <section class="mt-12" aria-labelledby="fq-g6">
+          <h2 id="fq-g6" class="ty-h2">Zavetišča</h2>
+          <div class="grid gap-3 mt-5">
+            <div class="faq"><h3><button type="button" class="faq-q" data-toggle-region aria-expanded="false" aria-controls="fq-19"><span>Ali je Najdimo za zavetišča brezplačno?<span class="sr-only" data-sr-open="Skrij odgovor" data-sr-closed="Pokaži odgovor">Pokaži odgovor</span></span><i class="ph-bold ph-plus" data-open="ph-minus" data-closed="ph-plus" aria-hidden="true"></i></button></h3><div class="faq-a" id="fq-19" hidden><p>Da, vse in za vedno, tudi portal, uvoz in poročila za občine. Portal za zavetišča pripravljamo. Če želite sodelovati v pilotu, preberite <a href="#" class="tlink">Za zavetišča</a>.</p></div></div>
+            <div class="faq"><h3><button type="button" class="faq-q" data-toggle-region aria-expanded="false" aria-controls="fq-20"><span>Ali morajo veterinarji kaj plačati?<span class="sr-only" data-sr-open="Skrij odgovor" data-sr-closed="Pokaži odgovor">Pokaži odgovor</span></span><i class="ph-bold ph-plus" data-open="ph-minus" data-closed="ph-plus" aria-hidden="true"></i></button></h3><div class="faq-a" id="fq-20" hidden><p>Ne za nič, kar pomaga vrniti žival domov: prijava najdene živali, preverjanje čipa, ujemanja in pogovor so brezplačni. Ambulante, ki želijo večjo prepoznavnost, lahko izberejo <a href="#" class="tlink">Veterinarski partner</a>.</p></div></div>
+          </div>
+        </section>
+
+        <div class="note mt-12" role="note"><i class="ph-fill ph-envelope-simple" style="color:hsl(var(--primary))" aria-hidden="true"></i><p>Niste našli odgovora? Pišite nam na <a href="#" class="tlink marker">[naročnik: e-naslov za podporo]</a>.</p></div>
+      </div>
+    </main>
+    <footer class="px-12 pt-12 pb-10 mt-24">
+      <p class="flex items-center gap-4"><a href="#" class="logo-link" aria-label="Najdimo, na začetno stran"><svg class="logo-mark w-7 h-7" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg><span class="font-display font-bold text-lg" aria-hidden="true">Najdimo</span></a><span class="text-muted-foreground">Spet doma.</span></p>
+      <nav aria-label="Noga strani" class="mt-4 flex items-end gap-8">
+        <div class="flex-1 min-w-0">
+          <ul class="flex flex-wrap gap-x-6"><li><a href="#" class="fl">Kako deluje</a></li><li><a href="#" class="fl">Nasveti za varnost</a></li><li><a href="#" class="fl" aria-current="page">Pogosta vprašanja</a></li><li><a href="#" class="fl">Za zavetišča</a></li><li><a href="#" class="fl">Zavetišča</a></li><li><a href="#" class="fl">Oglašujte pri nas</a></li><li><a href="#" class="fl">O nas</a></li></ul>
+          <ul class="flex flex-wrap gap-x-6"><li><a href="#" class="fl">Zasebnost</a></li><li><a href="#" class="fl">Piškotki</a></li><li><button type="button" class="fl" aria-haspopup="dialog">Nastavitve piškotkov</button></li><li><a href="#" class="fl">Pogoji uporabe</a></li><li><a href="#" class="fl">Impresum</a></li><li><a href="#" class="fl">Dostopnost</a></li></ul>
+        </div>
+        <div class="lang" role="group" aria-label="Jezik: Slovenščina"><a href="#" class="ll" lang="sl" aria-current="true" aria-label="Slovenščina">SL</a><span aria-hidden="true">/</span><a href="#" class="ll" lang="en" hreflang="en" aria-label="English">EN</a></div>
+      </nav>
+      <p class="text-sm text-muted-foreground mt-6">© 2026 Signapps. Najdimo je delovno ime storitve.</p>
+    </footer>
+  </div></div>
+
+  <p class="tile-h" style="margin-top:64px">M4 · FAQ at 390 · "Zakaj je na zemljevidu prikazano le približno območje?" expanded · rows keep the card surface and radius 20 (20 px padding on mobile) · footer as M1</p>
+  <div class="wrap-x"><div class="flex flex-wrap gap-x-10 gap-y-12 items-start">
+    <div class="phone phone-long"><div class="phone-screen" lang="sl">
+      <div class="statusbar"><span>14:20</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+      <div class="mweb"><span><i class="ph ph-lock-simple"></i>najdimo.si/pogosta-vprasanja</span></div>
+      <header class="flex items-center gap-2 px-5 h-16 flex-none">
+        <a href="#" class="logo-link mr-auto" aria-label="Najdimo, na začetno stran"><svg class="logo-mark w-8 h-8" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg><span class="font-display font-bold text-xl tracking-[-0.03em]" aria-hidden="true">Najdimo</span></a>
+        <button type="button" class="btn btn-primary btn-sm !px-4" aria-haspopup="menu" aria-expanded="false"><i class="ph-bold ph-plus" aria-hidden="true"></i>Prijavi</button>
+        <button type="button" class="iconbtn" aria-label="Odpri meni" aria-expanded="false"><i class="ph-bold ph-list"></i></button>
+      </header>
+      <main class="px-5 pt-4 pb-14">
+        <nav aria-label="Drobtinice"><a href="#" class="btn btn-text btn-sm flush"><i class="ph-bold ph-arrow-left" aria-hidden="true"></i>Nazaj na začetno stran</a></nav>
+        <h1 class="ty-h1 mt-4">Pogosta vprašanja</h1>
+        <p class="ty-lede mt-3">Kratki odgovori na vprašanja, ki nam jih postavljate najpogosteje.</p>
+        <section class="mt-12" aria-labelledby="mfq-g1">
+          <h2 id="mfq-g1" class="ty-h2">Prijava izgubljene živali</h2>
+          <div class="grid gap-3 mt-5">
+            <div class="faq"><h3><button type="button" class="faq-q" data-toggle-region aria-expanded="false" aria-controls="mfq-1"><span>Ali je Najdimo brezplačno?<span class="sr-only" data-sr-open="Skrij odgovor" data-sr-closed="Pokaži odgovor">Pokaži odgovor</span></span><i class="ph-bold ph-plus" data-open="ph-minus" data-closed="ph-plus" aria-hidden="true"></i></button></h3><div class="faq-a" id="mfq-1" hidden><p>Da, vse, kar pomaga vrniti žival domov, je brezplačno za vse in za vedno: prijava, ujemanja, pogovor, opozorila, plakat in preverjanje čipa. Delovanje pokrivajo označeni oglasi in prostovoljni prispevki.</p></div></div>
+            <div class="faq"><h3><button type="button" class="faq-q" data-toggle-region aria-expanded="false" aria-controls="mfq-2"><span>Zakaj za prijavo izgubljene živali potrebujem račun?<span class="sr-only" data-sr-open="Skrij odgovor" data-sr-closed="Pokaži odgovor">Pokaži odgovor</span></span><i class="ph-bold ph-plus" data-open="ph-minus" data-closed="ph-plus" aria-hidden="true"></i></button></h3><div class="faq-a" id="mfq-2" hidden><p>Da vas lahko obvestimo o možnem ujemanju in da vam lahko ljudje pišejo, ne da bi videli vašo telefonsko številko. Vse, kar vnesete pred vpisom, se ohrani.</p></div></div>
+            <div class="faq"><h3><button type="button" class="faq-q" data-toggle-region aria-expanded="true" aria-controls="mfq-3"><span>Zakaj je na zemljevidu prikazano le približno območje?<span class="sr-only" data-sr-open="Skrij odgovor" data-sr-closed="Pokaži odgovor">Skrij odgovor</span></span><i class="ph-bold ph-minus" data-open="ph-minus" data-closed="ph-plus" aria-hidden="true"></i></button></h3><div class="faq-a" id="mfq-3"><p>Da vas zaščitimo. Namesto točnega kraja prikažemo območje s polmerom vsaj 500 metrov, pri najdenih in opaženih živalih vsaj 150 metrov. Točno lokacijo vidite samo vi.</p></div></div>
+            <div class="faq"><h3><button type="button" class="faq-q" data-toggle-region aria-expanded="false" aria-controls="mfq-4"><span>Ali bo številka čipa javna?<span class="sr-only" data-sr-open="Skrij odgovor" data-sr-closed="Pokaži odgovor">Pokaži odgovor</span></span><i class="ph-bold ph-plus" data-open="ph-minus" data-closed="ph-plus" aria-hidden="true"></i></button></h3><div class="faq-a" id="mfq-4" hidden><p>Ne. Številko čipa vpišite v prijavo ali profil živali, a je nikoli ne prikažemo javno. Uporabimo jo samo za iskanje ujemanj.</p></div></div>
+            <div class="faq"><h3><button type="button" class="faq-q" data-toggle-region aria-expanded="false" aria-controls="mfq-5"><span>Kako dolgo ostane prijava objavljena?<span class="sr-only" data-sr-open="Skrij odgovor" data-sr-closed="Pokaži odgovor">Pokaži odgovor</span></span><i class="ph-bold ph-plus" data-open="ph-minus" data-closed="ph-plus" aria-hidden="true"></i></button></h3><div class="faq-a" id="mfq-5" hidden><p>Dokler je ne zaključite. Po 7, 14 in 30 dneh vas vprašamo, ali še iščete. Če prijave 90 dni ne posodobite, se samodejno zaključi, podaljšate pa jo lahko takoj.</p></div></div>
+          </div>
+        </section>
+        <section class="mt-12" aria-labelledby="mfq-g2">
+          <h2 id="mfq-g2" class="ty-h2">Najdena ali opažena žival</h2>
+          <div class="grid gap-3 mt-5">
+            <div class="faq"><h3><button type="button" class="faq-q" data-toggle-region aria-expanded="false" aria-controls="mfq-6"><span>Ali za prijavo najdene živali potrebujem račun?<span class="sr-only" data-sr-open="Skrij odgovor" data-sr-closed="Pokaži odgovor">Pokaži odgovor</span></span><i class="ph-bold ph-plus" data-open="ph-minus" data-closed="ph-plus" aria-hidden="true"></i></button></h3><div class="faq-a" id="mfq-6" hidden><p>Ne. Prijava vzame manj kot minuto. Na koncu dobite zasebno povezavo, s katero prijavo urejate in odgovarjate na sporočila.</p></div></div>
+            <div class="faq"><h3><button type="button" class="faq-q" data-toggle-region aria-expanded="false" aria-controls="mfq-7"><span>Kaj, če izgubim zasebno povezavo?<span class="sr-only" data-sr-open="Skrij odgovor" data-sr-closed="Pokaži odgovor">Pokaži odgovor</span></span><i class="ph-bold ph-plus" data-open="ph-minus" data-closed="ph-plus" aria-hidden="true"></i></button></h3><div class="faq-a" id="mfq-7" hidden><p>Če ste ob prijavi vpisali e-naslov, vam jo pošljemo znova. Brez e-naslova je ne moremo obnoviti, prijava pa poteče po 30 dneh. Povezavo lahko ohranite tudi tako, da ustvarite račun.</p></div></div>
+            <div class="faq"><h3><button type="button" class="faq-q" data-toggle-region aria-expanded="false" aria-controls="mfq-8"><span>Ali moram povedati, kje je žival zdaj?<span class="sr-only" data-sr-open="Skrij odgovor" data-sr-closed="Pokaži odgovor">Pokaži odgovor</span></span><i class="ph-bold ph-plus" data-open="ph-minus" data-closed="ph-plus" aria-hidden="true"></i></button></h3><div class="faq-a" id="mfq-8" hidden><p>Ne. Tega ne sprašujemo in nikoli ne prikažemo. Prevzem se dogovorite v pogovoru.</p></div></div>
+            <div class="faq"><h3><button type="button" class="faq-q" data-toggle-region aria-expanded="false" aria-controls="mfq-9"><span>Kaj naj storim, če žival ne morem obdržati?<span class="sr-only" data-sr-open="Skrij odgovor" data-sr-closed="Pokaži odgovor">Pokaži odgovor</span></span><i class="ph-bold ph-plus" data-open="ph-minus" data-closed="ph-plus" aria-hidden="true"></i></button></h3><div class="faq-a" id="mfq-9" hidden><p>Pokličite zavetišče, s katerim sodeluje vaša občina, ali veterinarja. Prijavo na Najdimo vseeno oddajte, da jo tisti, ki jo pogrešajo, lažje najdejo.</p></div></div>
+          </div>
+        </section>
+        <section class="mt-12" aria-labelledby="mfq-g3">
+          <h2 id="mfq-g3" class="ty-h2">Ujemanja in pogovor</h2>
+          <div class="grid gap-3 mt-5">
+            <div class="faq"><h3><button type="button" class="faq-q" data-toggle-region aria-expanded="false" aria-controls="mfq-10"><span>Kako veste, da je to moja žival?<span class="sr-only" data-sr-open="Skrij odgovor" data-sr-closed="Pokaži odgovor">Pokaži odgovor</span></span><i class="ph-bold ph-plus" data-open="ph-minus" data-closed="ph-plus" aria-hidden="true"></i></button></h3><div class="faq-a" id="mfq-10" hidden><p>Ne vemo zagotovo. Primerjamo številko čipa, območje, čas in opis ter predlagamo možno ujemanje. Odločite se vi, ko pogledate fotografije.</p></div></div>
+            <div class="faq"><h3><button type="button" class="faq-q" data-toggle-region aria-expanded="false" aria-controls="mfq-11"><span>Kdo vidi moja sporočila?<span class="sr-only" data-sr-open="Skrij odgovor" data-sr-closed="Pokaži odgovor">Pokaži odgovor</span></span><i class="ph-bold ph-plus" data-open="ph-minus" data-closed="ph-plus" aria-hidden="true"></i></button></h3><div class="faq-a" id="mfq-11" hidden><p>Samo udeleženci pogovora. Naša ekipa vidi sporočilo le, če ga kdo prijavi kot zlorabo.</p></div></div>
+            <div class="faq"><h3><button type="button" class="faq-q" data-toggle-region aria-expanded="false" aria-controls="mfq-12"><span>Se lahko pogovorimo po telefonu?<span class="sr-only" data-sr-open="Skrij odgovor" data-sr-closed="Pokaži odgovor">Pokaži odgovor</span></span><i class="ph-bold ph-plus" data-open="ph-minus" data-closed="ph-plus" aria-hidden="true"></i></button></h3><div class="faq-a" id="mfq-12" hidden><p>Številko lahko delite v pogovoru, a priporočamo, da ostanete v aplikaciji, dokler žival ni varno doma.</p></div></div>
+          </div>
+        </section>
+        <section class="mt-12" aria-labelledby="mfq-g4">
+          <h2 id="mfq-g4" class="ty-h2">Zasebnost in varnost</h2>
+          <div class="grid gap-3 mt-5">
+            <div class="faq"><h3><button type="button" class="faq-q" data-toggle-region aria-expanded="false" aria-controls="mfq-13"><span>Kako prepoznam prevaro?<span class="sr-only" data-sr-open="Skrij odgovor" data-sr-closed="Pokaži odgovor">Pokaži odgovor</span></span><i class="ph-bold ph-plus" data-open="ph-minus" data-closed="ph-plus" aria-hidden="true"></i></button></h3><div class="faq-a" id="mfq-13" hidden><p>Najpogostejši znak je zahteva po denarju vnaprej. Kdor je žival res našel, denarja ne zahteva. Več v <a href="#" class="tlink">nasvetih za varnost</a>.</p></div></div>
+            <div class="faq"><h3><button type="button" class="faq-q" data-toggle-region aria-expanded="false" aria-controls="mfq-14"><span>Kako izbrišem svoje podatke?<span class="sr-only" data-sr-open="Skrij odgovor" data-sr-closed="Pokaži odgovor">Pokaži odgovor</span></span><i class="ph-bold ph-plus" data-open="ph-minus" data-closed="ph-plus" aria-hidden="true"></i></button></h3><div class="faq-a" id="mfq-14" hidden><p>Prijavo najdene ali opažene živali izbrišete prek zasebne povezave. Za izbris računa nam pišite na naslov iz <a href="#" class="tlink">politike zasebnosti</a>. Kmalu boste račun lahko izbrisali sami v nastavitvah.</p></div></div>
+            <div class="faq"><h3><button type="button" class="faq-q" data-toggle-region aria-expanded="false" aria-controls="mfq-15"><span>Ali uporabljate piškotke?<span class="sr-only" data-sr-open="Skrij odgovor" data-sr-closed="Pokaži odgovor">Pokaži odgovor</span></span><i class="ph-bold ph-plus" data-open="ph-minus" data-closed="ph-plus" aria-hidden="true"></i></button></h3><div class="faq-a" id="mfq-15" hidden><p>Nujne piškotke za delovanje, na primer za vpis. Analitične piškotke Google Analytics uporabimo le, če jih sprejmete. Izbiro lahko kadar koli spremenite v Nastavitvah piškotkov.</p></div></div>
+          </div>
+        </section>
+        <section class="mt-12" aria-labelledby="mfq-g5">
+          <h2 id="mfq-g5" class="ty-h2">Oglasi in podpora</h2>
+          <div class="grid gap-3 mt-5">
+            <div class="faq"><h3><button type="button" class="faq-q" data-toggle-region aria-expanded="false" aria-controls="mfq-16"><span>Zakaj so na strani oglasi?<span class="sr-only" data-sr-open="Skrij odgovor" data-sr-closed="Pokaži odgovor">Pokaži odgovor</span></span><i class="ph-bold ph-plus" data-open="ph-minus" data-closed="ph-plus" aria-hidden="true"></i></button></h3><div class="faq-a" id="mfq-16" hidden><p>Da Najdimo ostane brezplačno. Oglasi lokalnih partnerjev so vedno označeni z besedo Oglas. Nikoli jih ne prikažemo med prijavo, v pogovoru ali pri plačilu in ne uporabljajo piškotkov za sledenje.</p></div></div>
+            <div class="faq"><h3><button type="button" class="faq-q" data-toggle-region aria-expanded="false" aria-controls="mfq-17"><span>Kako lahko podprem Najdimo?<span class="sr-only" data-sr-open="Skrij odgovor" data-sr-closed="Pokaži odgovor">Pokaži odgovor</span></span><i class="ph-bold ph-plus" data-open="ph-minus" data-closed="ph-plus" aria-hidden="true"></i></button></h3><div class="faq-a" id="mfq-17" hidden><p>Ko je vaša žival spet doma, lahko pustite prispevek v zahvalo. Prispevek ni obvezen in ne vpliva na nobeno funkcijo.</p></div></div>
+            <div class="faq"><h3><button type="button" class="faq-q" data-toggle-region aria-expanded="false" aria-controls="mfq-18"><span>Kako lahko oglašujem?<span class="sr-only" data-sr-open="Skrij odgovor" data-sr-closed="Pokaži odgovor">Pokaži odgovor</span></span><i class="ph-bold ph-plus" data-open="ph-minus" data-closed="ph-plus" aria-hidden="true"></i></button></h3><div class="faq-a" id="mfq-18" hidden><p>Vse o oglasnih mestih in občinstvu je na strani <a href="#" class="tlink">Oglašujte pri nas</a>, kjer nam lahko tudi pišete.</p></div></div>
+          </div>
+        </section>
+        <section class="mt-12" aria-labelledby="mfq-g6">
+          <h2 id="mfq-g6" class="ty-h2">Zavetišča</h2>
+          <div class="grid gap-3 mt-5">
+            <div class="faq"><h3><button type="button" class="faq-q" data-toggle-region aria-expanded="false" aria-controls="mfq-19"><span>Ali je Najdimo za zavetišča brezplačno?<span class="sr-only" data-sr-open="Skrij odgovor" data-sr-closed="Pokaži odgovor">Pokaži odgovor</span></span><i class="ph-bold ph-plus" data-open="ph-minus" data-closed="ph-plus" aria-hidden="true"></i></button></h3><div class="faq-a" id="mfq-19" hidden><p>Da, vse in za vedno, tudi portal, uvoz in poročila za občine. Portal za zavetišča pripravljamo. Če želite sodelovati v pilotu, preberite <a href="#" class="tlink">Za zavetišča</a>.</p></div></div>
+            <div class="faq"><h3><button type="button" class="faq-q" data-toggle-region aria-expanded="false" aria-controls="mfq-20"><span>Ali morajo veterinarji kaj plačati?<span class="sr-only" data-sr-open="Skrij odgovor" data-sr-closed="Pokaži odgovor">Pokaži odgovor</span></span><i class="ph-bold ph-plus" data-open="ph-minus" data-closed="ph-plus" aria-hidden="true"></i></button></h3><div class="faq-a" id="mfq-20" hidden><p>Ne za nič, kar pomaga vrniti žival domov: prijava najdene živali, preverjanje čipa, ujemanja in pogovor so brezplačni. Ambulante, ki želijo večjo prepoznavnost, lahko izberejo <a href="#" class="tlink">Veterinarski partner</a>.</p></div></div>
+          </div>
+        </section>
+        <div class="note mt-12" role="note"><i class="ph-fill ph-envelope-simple" style="color:hsl(var(--primary))" aria-hidden="true"></i><p>Niste našli odgovora? Pišite nam na <a href="#" class="tlink marker">[naročnik: e-naslov za podporo]</a>.</p></div>
+      </main>
+      <span class="home-ind"></span>
+    </div></div>
+  </div></div>
+</section>
+
+<!-- ================= 4. T4 LEGAL ================= -->
+<section class="tile-section !max-w-[1400px] !pt-0">
+  <h2 class="tile-title">4. T4 Legal: privacy policy draft</h2>
+  <p class="tile-lede">h1, "Zadnja posodobitev" line with a print action, the draft review note while the page is a draft, then numbered h2 sections in the article style. "Na tej strani" is a labelled <code>nav</code>: sticky on the left on desktop, a collapsed disclosure row on mobile. Print: single column, no header, footer, note chrome or TOC. Body from docs/content/legal/privacy-policy.md v0.6 (sections 1 and 2 shown; 3 to 18 follow the same pattern).</p>
+
+  <p class="tile-h !mt-0">W7 · Privacy policy at 1200 · draft note shown · "Na tej strani" sticky with keyboard focus on "3. Katere podatke obdelujemo" · header "Prijavi" primary</p>
+  <div class="wrap-x"><div class="browser" lang="sl">
+    <div class="browser-bar"><span class="dots"><i></i><i></i><i></i></span><span class="url"><i class="ph ph-lock-simple"></i>najdimo.si/zasebnost</span></div>
+    <header class="flex items-center gap-8 px-12 h-[88px] print-hide">
+      <a href="#" class="logo-link" aria-label="Najdimo, na začetno stran"><svg class="logo-mark w-9 h-9" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg><span class="font-display font-bold text-2xl tracking-[-0.03em]" aria-hidden="true">Najdimo</span></a>
+      <nav aria-label="Glavni meni"><ul class="flex items-center gap-2">
+        <li><a href="#" class="nl">Zemljevid</a></li><li><a href="#" class="nl">Izgubljene</a></li><li><a href="#" class="nl">Najdene</a></li><li><a href="#" class="nl">Kako deluje</a></li>
+      </ul></nav>
+      <div class="ml-auto flex items-center gap-2">
+        <div class="lang" role="group" aria-label="Jezik: Slovenščina"><a href="#" class="ll" lang="sl" aria-current="true" aria-label="Slovenščina">SL</a><span aria-hidden="true">/</span><a href="#" class="ll" lang="en" hreflang="en" aria-label="English">EN</a></div>
+        <a href="#" class="btn btn-ghost btn-sm">Vpis</a>
+        <button type="button" class="btn btn-primary btn-sm" aria-haspopup="menu" aria-expanded="false">Prijavi</button>
+      </div>
+    </header>
+    <main class="px-12 pt-8 toc-grid">
+      <nav class="toc print-hide" aria-label="Na tej strani">
+        <p class="toc-h">Na tej strani</p>
+        <ul class="toc-list">
+          <li><a href="#pz-1" aria-current="true"><span class="tnum">1.</span>Na kratko</a></li>
+          <li><a href="#pz-2"><span class="tnum">2.</span>Kdo je upravljavec</a></li>
+          <li><a href="#" class="is-focus"><span class="tnum">3.</span>Katere podatke obdelujemo</a></li>
+          <li><a href="#"><span class="tnum">4.</span>Zakaj podatke obdelujemo in na kateri pravni podlagi</a></li>
+          <li><a href="#"><span class="tnum">5.</span>Kaj vidijo drugi</a></li>
+          <li><a href="#"><span class="tnum">6.</span>Fotografije in lokacija</a></li>
+          <li><a href="#"><span class="tnum">7.</span>Prijave brez računa</a></li>
+          <li><a href="#"><span class="tnum">8.</span>Ujemanje, umetna inteligenca in samodejno skrivanje</a></li>
+          <li><a href="#"><span class="tnum">9.</span>Plačila</a></li>
+          <li><a href="#"><span class="tnum">10.</span>Analitika in piškotki</a></li>
+          <li><a href="#"><span class="tnum">11.</span>Štetje oglasov</a></li>
+          <li><a href="#"><span class="tnum">12.</span>Komu podatke zaupamo</a></li>
+          <li><a href="#"><span class="tnum">13.</span>Prenosi izven EU</a></li>
+          <li><a href="#"><span class="tnum">14.</span>Kako dolgo podatke hranimo</a></li>
+          <li><a href="#"><span class="tnum">15.</span>Vaše pravice</a></li>
+          <li><a href="#"><span class="tnum">16.</span>Varnost</a></li>
+          <li><a href="#"><span class="tnum">17.</span>Otroci</a></li>
+          <li><a href="#"><span class="tnum">18.</span>Spremembe te politike</a></li>
+        </ul>
+      </nav>
+      <article class="article">
+        <h1 class="ty-h1">Politika zasebnosti</h1>
+        <div class="flex flex-wrap items-center justify-between gap-x-4 !mt-3">
+          <p class="text-sm text-muted-foreground tnum">Zadnja posodobitev: 15. 10. 2026</p>
+          <button type="button" class="btn btn-ghost btn-sm print-hide"><i class="ph-bold ph-printer" aria-hidden="true"></i>Natisni</button>
+        </div>
+        <div class="note print-hide" role="note"><i class="ph-fill ph-info" aria-hidden="true"></i><p><b>Osnutek – besedilo zahteva pregled naročnika in pravnika.</b></p></div>
+
+        <h2 id="pz-1" class="ty-h2">1. Na kratko</h2>
+        <p>Najdimo pomaga, da se izgubljene živali vrnejo domov. Vse, kar živali vrača domov, je za vse brezplačno. Za to potrebujemo nekaj osebnih podatkov. Tu je povzetek, v nadaljevanju pa je vse natančno.</p>
+        <ul class="ulist">
+          <li>Podatke uporabljamo za delovanje storitve: račun, prijave, ujemanje, pogovor, opozorila in plačila.</li>
+          <li>Javno prikažemo le fotografije, lastnosti živali, približno območje, datum in okoliščine. Številke čipa, telefonske številke, e-naslova, shranjene točke prijave in kraja, kjer je najdena žival, ne prikažemo nikomur.</li>
+          <li>Shranjeno (približno) točko prijave vidite samo vi, razen če jo sami delite v pogovoru.</li>
+          <li>Google Analytics vklopimo le z vašo privolitvijo. Če jo zavrnete, Googlu ne pošljemo ničesar.</li>
+          <li>Oglase samo preštejemo, in sicer brez piškotkov in brez oznak, ki bi razkrile, kdo ste.</li>
+          <li>Glavna zbirka podatkov je v EU (Frankfurt), v EU so tudi naši strežniki in fotografije. Nekateri ponudniki so v ZDA; zanje veljajo zaščitni ukrepi (poglavje 13).</li>
+          <li>Podatke lahko izvozite, račun pa izbrišete. Pravice uveljavite na <a href="#" class="tlink marker">[naročnik: e-naslov za zasebnost]</a>.</li>
+        </ul>
+
+        <h2 id="pz-2" class="ty-h2">2. Kdo je upravljavec</h2>
+        <p>Upravljavec vaših osebnih podatkov je družba Signapps, <span class="marker">[naročnik: polno ime družbe]</span>, <span class="marker">[naročnik: naslov sedeža]</span>, matična številka <span class="marker">[naročnik: matična številka]</span>. V tem besedilu „mi“ pomeni to družbo kot upravljavca storitve Najdimo.</p>
+        <p>Za vprašanja o zasebnosti in za uveljavljanje pravic nam pišite na <a href="#" class="tlink marker">[naročnik: e-naslov za zasebnost]</a> ali nas pokličite na <span class="marker">[naročnik: telefonska številka]</span>.</p>
+        <p>Za podatke, ki jih zavetišča in druge organizacije zbirajo zunaj Najdimo (na primer ob sprejemu živali), so odgovorne same.</p>
+        <p>Izrazi v moškem slovničnem spolu (na primer „uporabnik“, „upravljavec“, „moderator“) v tem besedilu veljajo za osebe vseh spolov.</p>
+
+        <h2 class="ty-h2">3. Katere podatke obdelujemo</h2>
+        <p class="anno !mt-4">Sections 3 to 18 continue in the same pattern</p>
+      </article>
+    </main>
+    <footer class="px-12 pt-12 pb-10 mt-24 print-hide">
+      <p class="flex items-center gap-4"><a href="#" class="logo-link" aria-label="Najdimo, na začetno stran"><svg class="logo-mark w-7 h-7" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg><span class="font-display font-bold text-lg" aria-hidden="true">Najdimo</span></a><span class="text-muted-foreground">Spet doma.</span></p>
+      <nav aria-label="Noga strani" class="mt-4 flex items-end gap-8">
+        <div class="flex-1 min-w-0">
+          <ul class="flex flex-wrap gap-x-6"><li><a href="#" class="fl">Kako deluje</a></li><li><a href="#" class="fl">Nasveti za varnost</a></li><li><a href="#" class="fl">Pogosta vprašanja</a></li><li><a href="#" class="fl">Za zavetišča</a></li><li><a href="#" class="fl">Zavetišča</a></li><li><a href="#" class="fl">Oglašujte pri nas</a></li><li><a href="#" class="fl">O nas</a></li></ul>
+          <ul class="flex flex-wrap gap-x-6"><li><a href="#" class="fl" aria-current="page">Zasebnost</a></li><li><a href="#" class="fl">Piškotki</a></li><li><button type="button" class="fl" aria-haspopup="dialog">Nastavitve piškotkov</button></li><li><a href="#" class="fl">Pogoji uporabe</a></li><li><a href="#" class="fl">Impresum</a></li><li><a href="#" class="fl">Dostopnost</a></li></ul>
+        </div>
+        <div class="lang" role="group" aria-label="Jezik: Slovenščina"><a href="#" class="ll" lang="sl" aria-current="true" aria-label="Slovenščina">SL</a><span aria-hidden="true">/</span><a href="#" class="ll" lang="en" hreflang="en" aria-label="English">EN</a></div>
+      </nav>
+      <p class="text-sm text-muted-foreground mt-6">© 2026 Signapps. Najdimo je delovno ime storitve.</p>
+    </footer>
+  </div></div>
+
+  <p class="tile-h" style="margin-top:64px">Mobile web at 390: "Na tej strani" becomes one disclosure row (same row pattern as the FAQ) above the body, so 18 links do not push the text down. Click to toggle.</p>
+  <div class="wrap-x"><div class="flex flex-wrap gap-x-10 gap-y-12 items-start">
+    <div>
+      <p class="tile-h !mt-0">M5 · Privacy policy at 390, "Na tej strani" collapsed</p>
+      <div class="phone phone-long"><div class="phone-screen" lang="sl">
+        <div class="statusbar"><span>14:20</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <div class="mweb"><span><i class="ph ph-lock-simple"></i>najdimo.si/zasebnost</span></div>
+        <header class="flex items-center gap-2 px-5 h-16 flex-none">
+          <a href="#" class="logo-link mr-auto" aria-label="Najdimo, na začetno stran"><svg class="logo-mark w-8 h-8" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg><span class="font-display font-bold text-xl tracking-[-0.03em]" aria-hidden="true">Najdimo</span></a>
+          <button type="button" class="btn btn-primary btn-sm !px-4" aria-haspopup="menu" aria-expanded="false"><i class="ph-bold ph-plus" aria-hidden="true"></i>Prijavi</button>
+          <button type="button" class="iconbtn" aria-label="Odpri meni" aria-expanded="false"><i class="ph-bold ph-list"></i></button>
+        </header>
+        <main class="px-5 pt-6 pb-14">
+          <article class="article">
+            <h1 class="ty-h1">Politika zasebnosti</h1>
+            <div class="flex flex-wrap items-center justify-between gap-x-4 !mt-2">
+              <p class="text-sm text-muted-foreground tnum">Zadnja posodobitev: 15. 10. 2026</p>
+              <button type="button" class="btn btn-ghost btn-sm !px-3"><i class="ph-bold ph-printer" aria-hidden="true"></i>Natisni</button>
+            </div>
+            <div class="note" role="note"><i class="ph-fill ph-info" aria-hidden="true"></i><p><b>Osnutek – besedilo zahteva pregled naročnika in pravnika.</b></p></div>
+            <nav class="faq" aria-label="Na tej strani">
+              <button type="button" class="faq-q toc-toggle" data-toggle-region aria-expanded="false" aria-controls="mpz-toc"><span>Na tej strani</span><i class="ph-bold ph-caret-down" data-open="ph-caret-up" data-closed="ph-caret-down" aria-hidden="true"></i></button>
+              <div class="faq-a !px-2 !pb-2" id="mpz-toc" hidden>
+                <ul class="toc-list">
+                  <li><a href="#mpz-1" aria-current="true"><span class="tnum">1.</span>Na kratko</a></li>
+                  <li><a href="#mpz-2"><span class="tnum">2.</span>Kdo je upravljavec</a></li>
+                  <li><a href="#"><span class="tnum">3.</span>Katere podatke obdelujemo</a></li>
+                  <li><a href="#"><span class="tnum">4.</span>Zakaj podatke obdelujemo in na kateri pravni podlagi</a></li>
+                  <li><a href="#"><span class="tnum">5.</span>Kaj vidijo drugi</a></li>
+                  <li><a href="#"><span class="tnum">6.</span>Fotografije in lokacija</a></li>
+                  <li><a href="#"><span class="tnum">7.</span>Prijave brez računa</a></li>
+                  <li><a href="#"><span class="tnum">8.</span>Ujemanje, umetna inteligenca in samodejno skrivanje</a></li>
+                  <li><a href="#"><span class="tnum">9.</span>Plačila</a></li>
+                  <li><a href="#"><span class="tnum">10.</span>Analitika in piškotki</a></li>
+                  <li><a href="#"><span class="tnum">11.</span>Štetje oglasov</a></li>
+                  <li><a href="#"><span class="tnum">12.</span>Komu podatke zaupamo</a></li>
+                  <li><a href="#"><span class="tnum">13.</span>Prenosi izven EU</a></li>
+                  <li><a href="#"><span class="tnum">14.</span>Kako dolgo podatke hranimo</a></li>
+                  <li><a href="#"><span class="tnum">15.</span>Vaše pravice</a></li>
+                  <li><a href="#"><span class="tnum">16.</span>Varnost</a></li>
+                  <li><a href="#"><span class="tnum">17.</span>Otroci</a></li>
+                  <li><a href="#"><span class="tnum">18.</span>Spremembe te politike</a></li>
+                </ul>
+              </div>
+            </nav>
+
+            <h2 id="mpz-1" class="ty-h2">1. Na kratko</h2>
+            <p>Najdimo pomaga, da se izgubljene živali vrnejo domov. Vse, kar živali vrača domov, je za vse brezplačno. Za to potrebujemo nekaj osebnih podatkov. Tu je povzetek, v nadaljevanju pa je vse natančno.</p>
+            <ul class="ulist">
+              <li>Podatke uporabljamo za delovanje storitve: račun, prijave, ujemanje, pogovor, opozorila in plačila.</li>
+              <li>Javno prikažemo le fotografije, lastnosti živali, približno območje, datum in okoliščine. Številke čipa, telefonske številke, e-naslova, shranjene točke prijave in kraja, kjer je najdena žival, ne prikažemo nikomur.</li>
+              <li>Shranjeno (približno) točko prijave vidite samo vi, razen če jo sami delite v pogovoru.</li>
+              <li>Google Analytics vklopimo le z vašo privolitvijo. Če jo zavrnete, Googlu ne pošljemo ničesar.</li>
+              <li>Oglase samo preštejemo, in sicer brez piškotkov in brez oznak, ki bi razkrile, kdo ste.</li>
+              <li>Glavna zbirka podatkov je v EU (Frankfurt), v EU so tudi naši strežniki in fotografije. Nekateri ponudniki so v ZDA; zanje veljajo zaščitni ukrepi (poglavje 13).</li>
+              <li>Podatke lahko izvozite, račun pa izbrišete. Pravice uveljavite na <a href="#" class="tlink marker">[naročnik: e-naslov za zasebnost]</a>.</li>
+            </ul>
+            <h2 id="mpz-2" class="ty-h2">2. Kdo je upravljavec</h2>
+            <p>Upravljavec vaših osebnih podatkov je družba Signapps, <span class="marker">[naročnik: polno ime družbe]</span>, <span class="marker">[naročnik: naslov sedeža]</span>, matična številka <span class="marker">[naročnik: matična številka]</span>. V tem besedilu „mi“ pomeni to družbo kot upravljavca storitve Najdimo.</p>
+            <p class="anno">Section 2 continues, then 3 to 18 · footer as M1</p>
+          </article>
+        </main>
+        <span class="home-ind"></span>
+      </div></div>
+    </div>
+  </div></div>
+</section>
+
+<!-- ================= 5. SHARED STATES ================= -->
+<section class="tile-section !max-w-[1400px] !pt-0">
+  <h2 class="tile-title">5. States for every P3 template</h2>
+  <p class="tile-lede">Page loading (a minimal skeleton for text pages), the language fallback notice (an EN page without a translation shows the SL text with one note; should not occur) and offline (the P1 offline page). Strings from the P1 content slice.</p>
+  <div class="wrap-x"><div class="flex flex-wrap gap-x-10 gap-y-12 items-start">
+
+    <div>
+      <p class="tile-h !mt-0">S1 · Loading: minimal skeleton in the article shape, one polite status</p>
+      <div class="phone"><div class="phone-screen" lang="sl">
+        <div class="statusbar"><span>14:20</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <div class="mweb"><span><i class="ph ph-lock-simple"></i>najdimo.si/kako-deluje</span></div>
+        <header class="flex items-center gap-2 px-5 h-16 flex-none">
+          <a href="#" class="logo-link mr-auto" aria-label="Najdimo, na začetno stran"><svg class="logo-mark w-8 h-8" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg><span class="font-display font-bold text-xl tracking-[-0.03em]" aria-hidden="true">Najdimo</span></a>
+          <button type="button" class="btn btn-secondary btn-sm !px-4" aria-haspopup="menu" aria-expanded="false"><i class="ph-bold ph-plus" aria-hidden="true"></i>Prijavi</button>
+          <button type="button" class="iconbtn" aria-label="Odpri meni" aria-expanded="false"><i class="ph-bold ph-list"></i></button>
+        </header>
+        <main class="flex-1 px-5 pt-6 overflow-hidden" aria-busy="true">
+          <p class="sr-only" role="status">Stran se nalaga.</p>
+          <div aria-hidden="true">
+            <div class="skel h-5 w-44"></div>
+            <div class="skel h-8 w-64 mt-8"></div>
+            <div class="skel h-8 w-40 mt-2"></div>
+            <div class="skel h-5 w-full mt-6"></div>
+            <div class="skel h-5 w-full mt-2"></div>
+            <div class="skel h-5 w-3/4 mt-2"></div>
+            <div class="skel h-7 w-56 mt-12"></div>
+            <div class="skel h-4 w-full mt-5"></div>
+            <div class="skel h-4 w-full mt-2"></div>
+            <div class="skel h-4 w-2/3 mt-2"></div>
+          </div>
+        </main>
+        <span class="home-ind"></span>
+      </div></div>
+    </div>
+
+    <div>
+      <p class="tile-h !mt-0">S2 · Language fallback: /en page without a translation, SL text under one note</p>
+      <div class="phone"><div class="phone-screen" lang="en">
+        <div class="statusbar"><span>14:20</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <div class="mweb"><span><i class="ph ph-lock-simple"></i>najdimo.si/en/how-it-works</span></div>
+        <header class="flex items-center gap-2 px-5 h-16 flex-none">
+          <a href="#" class="logo-link mr-auto" aria-label="Najdimo, home"><svg class="logo-mark w-8 h-8" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg><span class="font-display font-bold text-xl tracking-[-0.03em]" aria-hidden="true">Najdimo</span></a>
+          <button type="button" class="btn btn-secondary btn-sm !px-4" aria-haspopup="menu" aria-expanded="false"><i class="ph-bold ph-plus" aria-hidden="true"></i>Report</button>
+          <button type="button" class="iconbtn" aria-label="Open menu" aria-expanded="false"><i class="ph-bold ph-list"></i></button>
+        </header>
+        <main class="flex-1 px-5 pt-4 overflow-hidden">
+          <div class="note" role="note"><i class="ph-fill ph-translate" style="color:hsl(var(--primary))" aria-hidden="true"></i><p>This page is not translated yet, so it is shown in Slovenian.</p></div>
+          <article class="article mt-6" lang="sl">
+            <h1 class="ty-h1">Kako deluje Najdimo</h1>
+            <p class="ty-lede">Najdimo poveže ljudi, ki pogrešajo žival, s tistimi, ki so jo našli ali videli. Ujemanja iščemo mi, odločitve pa so vaše.</p>
+            <h2 class="ty-h2">Če ste izgubili žival</h2>
+            <ol class="olist">
+              <li><span class="n" aria-hidden="true">1</span><p>Prijavite izgubljeno žival: dodajte fotografijo, opis ter kraj in čas, ko ste jo nazadnje videli.</p></li>
+              <li><span class="n" aria-hidden="true">2</span><p>Iskanje objavimo v nekaj minutah. Ljudje v bližini, ki imajo vklopljena opozorila, prejmejo obvestilo.</p></li>
+            </ol>
+          </article>
+        </main>
+        <span class="home-ind"></span>
+      </div></div>
+    </div>
+
+    <div>
+      <p class="tile-h !mt-0">S3 · Offline: the P1 offline page; the page's own primary, so the header "Prijavi" is secondary</p>
+      <div class="phone"><div class="phone-screen" lang="sl">
+        <div class="statusbar"><span>14:20</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph ph-wifi-slash"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <div class="mweb"><span><i class="ph ph-lock-simple"></i>najdimo.si/pogosta-vprasanja</span></div>
+        <header class="flex items-center gap-2 px-5 h-16 flex-none">
+          <a href="#" class="logo-link mr-auto" aria-label="Najdimo, na začetno stran"><svg class="logo-mark w-8 h-8" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg><span class="font-display font-bold text-xl tracking-[-0.03em]" aria-hidden="true">Najdimo</span></a>
+          <button type="button" class="btn btn-secondary btn-sm !px-4" aria-haspopup="menu" aria-expanded="false"><i class="ph-bold ph-plus" aria-hidden="true"></i>Prijavi</button>
+          <button type="button" class="iconbtn" aria-label="Odpri meni" aria-expanded="false"><i class="ph-bold ph-list"></i></button>
+        </header>
+        <main class="flex-1 px-5 pt-8 flex flex-col">
+          <h1 class="ty-h1">Ni povezave z internetom</h1>
+          <p class="mt-3">Ko boste spet povezani, se stran naloži sama. Osnutki ostanejo shranjeni.</p>
+          <div class="spot-art w-full mt-8"><svg viewBox="0 0 320 210" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><use href="#illo-spot"/></svg></div>
+        </main>
+        <div class="px-5 pb-11 grid gap-1">
+          <a href="#" class="btn btn-primary btn-lg btn-block"><i class="ph-bold ph-map-trifold" aria-hidden="true"></i>Na zemljevid</a>
+          <button type="button" class="btn btn-text btn-block"><i class="ph-bold ph-arrow-clockwise" aria-hidden="true"></i>Poskusi znova</button>
+        </div>
+        <span class="home-ind"></span>
+      </div></div>
+    </div>
+
+  </div></div>
+</section>
+
+<p class="tile-section !py-8 text-sm text-muted-foreground">Copy: docs/content/pages/P3-public-pages.md v0.4 (draft, native Slovenian review pending), legal body from docs/content/legal/privacy-policy.md v0.6 (draft), shell and state strings from docs/content/pages/P1-web-shell.md. SAMPLE (dashed outline): tile data in "V vaši bližini" (names, times, distances come from the live read model and the P4 row strings). Bold [naročnik: …] markers are facts only the client can supply. Placeholder photography from Unsplash (Unsplash License): dog-aussie-wide and cat-tabby stand in for the licensed hero and how-it-works photos. Illustration placeholder for assets/empty-no-reports.png. No ad slot on any P3 template.</p>
+</div>
+
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<script src="../directions/directions.js"></script>
+<script>
+/* Mockup-only wiring: keep aria-controls and in-page anchors pointing at the per-theme ids that directions.js creates,
+   and make the FAQ rows and the mobile TOC disclosure toggle (aria-expanded, hidden, icon and screen-reader label). */
+(function () {
+  var stage = document.getElementById('stage');
+  function fix() {
+    stage.querySelectorAll('.scope').forEach(function (s) {
+      var t = '-' + s.getAttribute('data-theme');
+      s.querySelectorAll('[aria-controls]').forEach(function (n) { var v = n.getAttribute('aria-controls'); if (v.slice(-t.length) !== t) n.setAttribute('aria-controls', v + t); });
+      s.querySelectorAll('a[href^="#"]').forEach(function (a) { var v = a.getAttribute('href'); if (v.length > 1 && v.slice(-t.length) !== t && s.querySelector(v + t)) a.setAttribute('href', v + t); });
+    });
+  }
+  fix();
+  new MutationObserver(fix).observe(stage, { childList: true });
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest('[data-toggle-region]'); if (!b) return;
+    var open = b.getAttribute('aria-expanded') !== 'true';
+    b.setAttribute('aria-expanded', String(open));
+    var r = document.getElementById(b.getAttribute('aria-controls')); if (r) r.hidden = !open;
+    var i = b.querySelector('i[data-open]'); if (i) { i.classList.remove(open ? i.dataset.closed : i.dataset.open); i.classList.add(open ? i.dataset.open : i.dataset.closed); }
+    var s = b.querySelector('[data-sr-open]'); if (s) s.textContent = open ? s.dataset.srOpen : s.dataset.srClosed;
+  });
+})();
+</script>
+</body>
+</html>
