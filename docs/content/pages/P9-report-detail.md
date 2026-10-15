@@ -3,7 +3,7 @@ source: 03§P9; docs/design/pages/P9-report-detail.md; 02§FR-007 R-007.4, §Con
 page: P9 Report detail (lost, found, sighted)
 stories: TASK-18, TASK-72 (FR-007, FR-004, FR-011, FR-012)
 copy-for: docs/design/pages/P9-report-detail.md
-version: 0.2
+version: 0.3
 status: Draft, native Slovenian review pending
 date: 2026-10-15
 ---
@@ -38,6 +38,16 @@ Namespace `report`. The detail page is the main SEO landing page and link-previe
 | report.verified_shelter | Preverjeno zavetišče | Verified shelter | Pill (M3), followed by the shelter name |
 
 H1 without a name: `browse.row_title_lost|found|sighted` (P4).
+
+Animal in a shelter (shelter report, M3; v0.3):
+
+| Key | SL | EN | Notes |
+|---|---|---|---|
+| report.shelter_since | V zavetišču od {date} | In the shelter since {date} | `{date}` as "13. oktobra" / "13 October"; with the year when it is not the current year |
+| report.shelter_call | Pokliči zavetišče | Call the shelter | Web: `secondary` with the number beside it (`tabular-nums`); mobile: the action bar text button, no number printed |
+| report.shelter_call_a11y | Pokliči {shelter} | Call {shelter} | Accessible name of the call button |
+
+The shelter card (web; a plain block on mobile) shows `report.verified_shelter`, the shelter name and place from the shelter directory, `report.shelter_since` and the call. No countdown and no days-left count. A holding-period sentence appears under the date only when `content.legal_timings` is on, with the wording the lawyer confirms (Q-006, lawyer pack LQ-06); there is no string for it until then. "Sporoči opažanje" is hidden while the animal is in a shelter; "To je moja žival" stays the primary.
 
 # 2. Actions (slot A)
 
@@ -100,6 +110,8 @@ The ad slot between "Kje je bila videna" and "V bližini" uses P21 copy.
 | report.owner_reopen | Ponovno odpri | Reopen |
 | report.owner_reward_note | Nagrado izročite šele, ko je žival spet pri vas. Nikoli nikomur ne plačajte vnaprej, tudi ne za prevoz ali „stroške“. | Hand over the reward only once your pet is back with you. Never pay anyone in advance, not even for transport or "costs". |
 
+Responsible shelter row in the owner view of a lost report (FR-044, v0.3): `shelter_row.title` (P6) as the label, the shelter name in bold and the call. Web: the number (`tabular-nums`) with `shelter_row.call`; mobile: `report.shelter_call`, no number printed. No municipality or no confirmed shelter: `shelter_row.unknown_municipality` or `shelter_row.unconfirmed` with `shelter_row.directory_link`.
+
 `report.owner_boost` is hidden until M4. Exact pin label: `location.exact_own` (P5). In the owner view the reward line keeps its place and `report.owner_reward_note` replaces the public safety note; the owner changes or removes the reward with "Uredi" (P6 step 6). This follows the design slice §Web layout 6–7 (display-only reward line, one safety note below it).
 
 # 6. Status variants
@@ -140,6 +152,7 @@ Buttons: P16 gate.
 |---|---|
 | Loading | `common.loading` (P1) |
 | Map offline | Area line only: `report.area_line` + `report.area_note` |
+| Offline, saved copy (v0.3) | `report.offline_cached`: "Brez povezave. Prikazujemo shranjeno različico ({time})." / "You are offline. Showing the saved copy ({time})." `{time}` is "14.05" / "14:05" for today, otherwise "12. 10., 14.05" / "12 Oct, 14:05". A `note` with the `wifi-slash` icon at the top of the page; actions that need the network stay visible and explain themselves when tapped (`errors.offline_*`, P1). |
 | Network error | `common.inline_error`, `common.try_again` (P1) |
 
 # 10. SEO (dynamic, per report)

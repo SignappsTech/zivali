@@ -3,7 +3,7 @@ source: 03§P21; docs/design/pages/P21-ad-slots.md; 02§FR-029, FR-030; brief v0
 page: P21 Ad slots and house ads
 stories: TASK-36, TASK-35 (FR-029, FR-030)
 copy-for: docs/design/pages/P21-ad-slots.md
-version: 0.1
+version: 0.2
 status: Draft, native Slovenian review and client approval pending
 date: 2026-10-15
 ---
@@ -26,17 +26,17 @@ Namespace `ads`. Every ad and every paid placement (including Vet Partner) carri
 
 # 2. Vet Partner placement (later, built on the detail slot)
 
-Featured placement in the "nearest vet" context of the detail slot, for paying vet clinics in the area:
+Featured placement in the vet context of the detail slot, for paying vet clinics in the region:
 
 | Key | SL | EN |
 |---|---|---|
-| ads.vet_context | Veterinar v bližini | Vet nearby |
+| ads.vet_context | Veterinar v vaši regiji | Vet in your region |
 | ads.vet_badge_24h | Nujna pomoč 24 ur | 24-hour emergency care |
 | ads.vet_partner_mark | Partnerska ambulanta | Partner clinic |
 | ads.vet_open_now | Zdaj odprto | Open now |
-| ads.vet_cta | Odpri profil ambulante | View the clinic profile |
+| ads.vet_cta | Pokliči ali odpri zemljevid | Call or open map |
 
-Title, text and link come from the clinic's profile. The "Oglas" label stays on the unit.
+Title, text and link come from the clinic's profile. The "Oglas" label stays on the unit, followed by the context: "Oglas · Veterinar v vaši regiji" / "Ad · Vet in your region". v0.2: a paid placement never says "v bližini", "najbližji" or "nearest" (ad-labelling and ranking rules, lawyer pack LQ-56); a distance may only be shown when it is the real, measured distance. `ads.vet_cta` opens the clinic's phone (`tel:`) or its address in the maps app.
 
 # 3. House ads
 
@@ -71,7 +71,7 @@ Limits from C14: title ≤ 60, text ≤ 120 (design), button ≤ 24, alt 5 to 14
 | Title | Posvojite žival iz zavetišča | Adopt an animal from a shelter |
 | Text | Psi in mačke v zavetiščih čakajo na nov dom. Morda prav na vašega. | Dogs and cats in shelters are waiting for a new home. Maybe yours. |
 | Button | Poišči zavetišče | Find a shelter |
-| Link | Until the adoption page exists (shelter portal, free for shelters): the official list of registered shelters for abandoned animals published by UVHVVR on gov.si (exact URL to be confirmed by the client). Then the adoption page. | |
+| Link | Until the adoption page exists (shelter portal, free for shelters): our shelter directory `/zavetisca` (`/en/shelters`, P3 T5). Then the adoption page. | |
 | Alt | Ilustracija: odprta vrata hiše, sonce in pot čez griče | Illustration: an open front door, the sun and a path over the hills |
 | Kind | `adopt` | |
 
@@ -102,4 +102,4 @@ N/A: ad units are not indexed content. Links carry `rel="sponsored noopener"`.
 # 8. CHANGE requests
 
 - `CHANGE docs/design/pages/P21-ad-slots.md§Rules: drop "tag scan" from the no-ad list (QR tags out of scope, brief v0.7); add the Vet Partner featured placement (brief v0.7) to the Detail slot description.`
-- `CHANGE docs/design/pages/P21-ad-slots.md§House ads: the adopt house ad cannot link to "the shelters page" (that page is for shelters, not adopters); link to the UVHVVR list of registered shelters until the adoption page exists.`
+- `CHANGE docs/design/pages/P21-ad-slots.md§House ads: the adopt house ad cannot link to "the shelters page" (`/za-zavetisca` is for shelter staff, not adopters); link to the public shelter directory `/zavetisca` (P3 T5) until the adoption page exists.`
