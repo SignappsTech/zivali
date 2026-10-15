@@ -444,7 +444,7 @@
 				"device_hash"
 			],
 			"basis": "contract (GDPR art. 6(1)(b)); public reports show the fuzzed area only (C6); device_hash (HMAC of x-device-id, anonymous reports): legitimate interest in spam protection (GDPR art. 6(1)(f), C7)",
-			"retention": "exact_point (already coarsened 20–30 m at write, the raw point is never stored) is replaced by public_point 30 days after closing (retention.blur_location); device_hash cleared 7 days after creation (retention.purge); manage_token_hash cleared and report_contacts deleted on close or expiry (TODO TASK-26.3)",
+			"retention": "exact_point (already coarsened 20–30 m at write, the raw point is never stored) is replaced by public_point 30 days after closing (retention.blur_location); device_hash cleared 7 days after creation (retention.purge); manage_token_hash cleared and report_contacts deleted on close, reunite or expiry (POST /v1/reports/:code/transitions, report.lifecycle)",
 			"export": true,
 			"delete": "anonymise (created_by set null)",
 			"other_columns": [
@@ -480,6 +480,8 @@
 				"reunited_at",
 				"closed_at",
 				"last_owner_update_at",
+				"reminder_day",
+				"expiry_warned_at",
 				"created_at",
 				"updated_at"
 			]
@@ -497,7 +499,7 @@
 			"category": "reports",
 			"personal_data": ["email"],
 			"basis": "contract (GDPR art. 6(1)(b)): manage link of an anonymous report (C7)",
-			"retention": "deleted on close or expiry, together with reports.manage_token_hash (TODO TASK-26.3: the transitions endpoint and the expiry job delete it); cascades with the report",
+			"retention": "deleted on close, reunite or expiry, together with reports.manage_token_hash (the close and mark_reunited transitions and the report.lifecycle expiry); cascades with the report",
 			"export": false,
 			"delete": "delete",
 			"other_columns": ["report_id"]

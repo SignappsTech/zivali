@@ -224,7 +224,8 @@ export const SyncReportsQuery = z.object({
 			}
 		})
 		.pipe(z.array(SyncArea).min(1).max(3)),
-	since: IsoDateTime.optional(),
+	/** The previous response's `server_time`, sent back unchanged; left out on the first sync. */
+	since: Cursor.optional(),
 	limit: limit(1000),
 });
 export const CachedReport = PublicReport.pick({
@@ -253,7 +254,8 @@ export const SyncReportsResponse = z
 	.object({
 		upserts: z.array(CachedReport),
 		removed_ids: z.array(Uuid),
-		server_time: IsoDateTime,
+		/** Opaque cursor (C4 CH-142): the client stores it and sends it back as `since`, never parses it. */
+		server_time: Cursor,
 		has_more: z.boolean(),
 	})
 	.openapi('SyncReportsResponse');

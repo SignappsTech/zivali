@@ -7,8 +7,9 @@ export default defineConfig({
 		globalSetup: ['test/global-setup.ts'],
 		setupFiles: ['test/setup.ts'],
 		// ctx.adapters.storage is the in-memory adapter in tests, whatever .env.local says: tests never reach R2 or
-		// MinIO (the storage adapter test builds its MinIO client explicitly).
-		env: { STORAGE_PROVIDER: 'memory' },
+		// MinIO (the storage adapter test builds its MinIO client explicitly). Payments likewise stay on the mock provider:
+		// no test reaches Stripe (the stripe adapter test stubs fetch).
+		env: { STORAGE_PROVIDER: 'memory', PAYMENTS_PROVIDER: 'mock' },
 		// One shared database: test files run one after another.
 		fileParallelism: false,
 		// DB-heavy tests (seeders through Auth, geocoder, idempotency) pass in 1-2 s alone but exceed 5 s when many

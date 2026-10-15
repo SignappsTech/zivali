@@ -58,6 +58,7 @@ export const NotificationJobPayload = z
 		pet_id: Uuid.optional(),
 		thread_id: Uuid.optional(),
 		message_id: Uuid.optional(),
+		payment_id: Uuid.optional(),
 	})
 	.strict();
 export const NotificationJobInput = z

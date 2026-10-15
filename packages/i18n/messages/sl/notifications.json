@@ -19,6 +19,11 @@
 		"title": "{species, select, dog {Izgubljen pes} cat {Izgubljena mačka} other {Izgubljena žival}} v vaši bližini",
 		"body": "{has_area, select, yes {{area_name}, } other {}}{distance_band, select, lt1 {manj kot 1 km} 1to3 {1–3 km} 3to10 {3–10 km} gt10 {več kot 10 km} other {v bližini}} od vašega območja. Ste {species, select, dog {ga} other {jo}} morda videli?"
 	},
+	"nearby_local": {
+		"title": "{species, select, dog {Izgubljen pes} cat {Izgubljena mačka} other {Izgubljena žival}} v bližini",
+		"body": "Ste v bližini mesta, kjer je {species, select, dog {bil {when} nazadnje viden pes} cat {bila {when} nazadnje videna mačka} other {bila {when} nazadnje videna žival}}{has_name, select, yes { {pet_name}} other {}}. Bodite pozorni.",
+		"channel": "Opomniki v bližini"
+	},
 	"report_reminder": {
 		"title": "Še iščete žival?",
 		"body": "{has_name, select, yes {{pet_name}} other {{species, select, dog {Vaš pes} cat {Vaša mačka} other {Vaša žival}}}}: iščete že {day, plural, one {# dan} two {# dneva} few {# dni} other {# dni}}. Nadaljujte iskanje ali ga zaključite.",

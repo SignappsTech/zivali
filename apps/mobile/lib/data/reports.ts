@@ -5,8 +5,9 @@ import type { QueryError } from '@zivali/api/rtk';
 import type { CachedReport } from '@zivali/api/sync';
 import type { MapReportList, MapReportQuery, PublicReport, ReportSearch } from '@zivali/types';
 import { getDb } from '@/lib/db';
+import { distanceKm } from '@/lib/geo';
 import { isOnline, useNetworkState } from '@/lib/net';
-import { distanceKm, lastSyncAt, upsertReports } from '@/lib/offline/sync';
+import { lastSyncAt, upsertReports } from '@/lib/offline/sync';
 
 // The only path for report maps, lists and details on mobile (C17 §Data seam): online from the API, upserting the
 // offline cache; offline, or when a request fails for lack of network, from reports_cache.
