@@ -1,11 +1,11 @@
 ---
 id: TASK-6.7
 title: 'Matching, chat, notification and alert models with seed'
-status: In Progress
+status: Done
 assignee:
   - '@backend-dev'
 created_date: '2026-10-14 22:12'
-updated_date: '2026-10-15 10:08'
+updated_date: '2026-10-15 13:31'
 labels:
   - be
   - 'est:S'
