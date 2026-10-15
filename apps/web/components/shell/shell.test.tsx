@@ -175,13 +175,15 @@ describe('SiteFooter', () => {
 			['O nas', '/o-nas'],
 			['Zasebnost', '/zasebnost'],
 			['Piškotki', '/piskotki'],
-			['Nastavitve piškotkov', '/piskotki'],
 			['Pogoji uporabe', '/pogoji-uporabe'],
 			['Impresum', '/impresum'],
 			['Dostopnost', '/dostopnost'],
 			['SL', '/'],
 			['EN', '/en'],
 		]);
+		expect(within(footer).getByRole('button', { name: 'Nastavitve piškotkov' }).getAttribute('aria-haspopup')).toBe(
+			'dialog'
+		);
 		expect(within(footer).getByText(sl.footer.tagline)).toBeTruthy();
 		expect(footer.textContent).toContain(`© ${new Date().getFullYear()} Signapps.`);
 	});
@@ -193,7 +195,8 @@ describe('SiteFooter', () => {
 			within(screen.getByRole('contentinfo'))
 				.getAllByRole('link')
 				.map((link) => link.textContent)
-		).toEqual(['Privacy', 'Cookie settings', 'Terms of use', 'Accessibility']);
+		).toEqual(['Privacy', 'Terms of use', 'Accessibility']);
+		expect(screen.getByRole('button', { name: 'Cookie settings' })).toBeTruthy();
 	});
 });
 

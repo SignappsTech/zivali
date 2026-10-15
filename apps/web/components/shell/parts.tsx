@@ -149,6 +149,18 @@ export function ShellDialog(props: ComponentProps<'dialog'>) {
 	);
 }
 
+/** Footer "Cookie settings": reopens the P17 consent banner in its Customise view (withdrawal as easy as giving). */
+export function CookieSettingsButton(props: ComponentProps<'button'>) {
+	return (
+		<button
+			type="button"
+			aria-haspopup="dialog"
+			{...props}
+			onClick={() => window.dispatchEvent(new Event('zz:cookie-settings'))}
+		/>
+	);
+}
+
 /** Signs out on this device, then loads home, so no state of the signed-out user stays in memory (C3). */
 export function SignOutButton(props: ComponentProps<'button'>) {
 	const locale = useLocale();
