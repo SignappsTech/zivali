@@ -41,7 +41,11 @@ test('result states; an unconfirmed municipality never exposes a phone', async (
 		directoryApi.endpoints.getResponsibleShelter.initiate({ municipality: 'osilnica' })
 	);
 	const result = toResult(data, false);
-	assert.deepEqual(result, { status: 'unconfirmed', shelter: null });
+	assert.deepEqual(result, {
+		status: 'unconfirmed',
+		shelter: null,
+		municipality: { slug: 'osilnica', name: 'Osilnica' },
+	});
 	assert.ok(!JSON.stringify(result).includes('phone'));
 	// a misbehaving response with a shelter attached is still stripped
 	assert.equal(toResult({ status: 'unconfirmed', shelter: fx.ljubljanaShelter } as never, false).shelter, null);
@@ -49,4 +53,12 @@ test('result states; an unconfirmed municipality never exposes a phone', async (
 	assert.equal(toResult(undefined, false).status, 'loading');
 	assert.equal(toResult(undefined, true).status, 'error');
 	assert.equal(toResult(fx.responsibleOutside as never, false).status, 'outside_slovenia');
+});
+
+test('switching area while fetching never returns the previous shelter', () => {
+	// arg A confirmed, then arg B in flight: currentData is undefined (and isFetching true)
+	assert.equal(toResult(fx.responsibleConfirmed as never, false).status, 'confirmed');
+	assert.deepEqual(toResult(undefined, false, true), { status: 'loading', shelter: null });
+	// even if stale data were passed, fetching wins
+	assert.deepEqual(toResult(fx.responsibleConfirmed as never, false, true), { status: 'loading', shelter: null });
 });

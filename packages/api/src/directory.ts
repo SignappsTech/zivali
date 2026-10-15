@@ -51,21 +51,32 @@ export const { useGetResponsibleShelterQuery, useListSheltersQuery, useGetShelte
 	directoryApi;
 
 export type ResponsibleShelterResult =
-	| { status: 'loading' | 'error' | 'unconfirmed' | 'outside_slovenia'; shelter: null }
-	| { status: 'confirmed'; shelter: Shelter };
+	| { status: 'loading' | 'error'; shelter: null; municipality?: undefined }
+	| { status: 'unconfirmed' | 'outside_slovenia'; shelter: null; municipality?: MunicipalityRef }
+	| { status: 'confirmed'; shelter: Shelter; municipality?: MunicipalityRef };
 
 /** Pure mapping, shared by the hook and tests. The shelter (and its phone) is only returned when confirmed. */
-export function toResult(data: ResponsibleShelterResponse | undefined, isError: boolean): ResponsibleShelterResult {
+export function toResult(
+	data: ResponsibleShelterResponse | undefined,
+	isError: boolean,
+	isFetching = false
+): ResponsibleShelterResult {
 	if (isError) return { status: 'error', shelter: null };
-	if (!data) return { status: 'loading', shelter: null };
+	if (!data || isFetching) return { status: 'loading', shelter: null };
+	const municipality = data.municipality;
 	if (data.status === 'confirmed') {
-		return data.shelter ? { status: 'confirmed', shelter: data.shelter } : { status: 'unconfirmed', shelter: null };
+		return data.shelter
+			? { status: 'confirmed', shelter: data.shelter, municipality }
+			: { status: 'unconfirmed', shelter: null, municipality };
 	}
-	return { status: data.status, shelter: null };
+	return { status: data.status, shelter: null, municipality };
 }
 
 /** `useResponsibleShelter({ lat, lng })` or `useResponsibleShelter({ municipality })`; `null` skips the request. */
 export function useResponsibleShelter(arg: ResponsibleShelterArg | null): ResponsibleShelterResult {
-	const { data, isError } = useGetResponsibleShelterQuery(arg ?? { municipality: '' }, { skip: !arg });
-	return toResult(arg ? data : undefined, isError);
+	// currentData is undefined while the new arg loads, so the previous area's shelter never leaks through.
+	const { currentData, isError, isFetching } = useGetResponsibleShelterQuery(arg ?? { municipality: '' }, {
+		skip: !arg,
+	});
+	return toResult(arg ? currentData : undefined, isError, isFetching);
 }
