@@ -93,12 +93,78 @@ export async function updateReport(
 	await db.reports.update({ where: { id }, data, select: { id: true } });
 }
 
+/** Adds the manager; an existing manager row stays as it is (a repeated manage-link claim). */
 export async function addManager(
 	data: { report_id: string; user_id: string; role: 'owner' | 'finder' | 'staff' },
 	tx?: Prisma.TransactionClient
 ): Promise<void> {
 	const db = tx ?? prisma;
-	await db.report_managers.create({ data });
+	await db.report_managers.createMany({ data: [data], skipDuplicates: true });
+}
+
+/** The finder email of an anonymous report (manage link, C7). */
+export async function addContact(data: { report_id: string; email: string }, tx?: Prisma.TransactionClient) {
+	const db = tx ?? prisma;
+	await db.report_contacts.create({ data });
+}
+
+export async function getContactEmail(report_id: string, tx?: Prisma.TransactionClient): Promise<string | null> {
+	const db = tx ?? prisma;
+	return (await db.report_contacts.findUnique({ where: { report_id }, select: { email: true } }))?.email ?? null;
+}
+
+export async function findByManageToken(manage_token_hash: Uint8Array<ArrayBuffer>, tx?: Prisma.TransactionClient) {
+	const db = tx ?? prisma;
+	return db.reports.findUnique({
+		where: { manage_token_hash },
+		select: {
+			id: true,
+			short_code: true,
+			status: true,
+			moderation_state: true,
+			closed_at: true,
+			reunited_at: true,
+		},
+	});
+}
+
+/** Reports sent from this device (anonymous reports carry the device hash) since the given time. */
+export async function countByDevice(device_hash: string, since: Date, tx?: Prisma.TransactionClient) {
+	const db = tx ?? prisma;
+	return db.reports.count({ where: { device_hash, created_at: { gte: since } } });
+}
+
+/** Whether any of these photos has the same image (sha256) as a photo of a held or removed report. */
+export async function photosMatchHeld(photo_ids: string[], tx?: Prisma.TransactionClient): Promise<boolean> {
+	const db = tx ?? prisma;
+	const photos = await db.photos.findMany({ where: { id: { in: photo_ids } }, select: { sha256: true } });
+	if (!photos.length) return false;
+	const match = await db.photos.findFirst({
+		where: {
+			sha256: { in: photos.map((p) => p.sha256) },
+			report: { moderation_state: { in: ['held', 'removed'] } },
+		},
+		select: { id: true },
+	});
+	return match !== null;
+}
+
+/** An `anon_hold` moderation flag (C11) with the reasons the submission guard held the report for. */
+export async function flagHeld(report_id: string, reasons: string[], tx?: Prisma.TransactionClient) {
+	const db = tx ?? prisma;
+	await db.moderation_flags.create({
+		data: { kind: 'anon_hold', target_type: 'report', target_id: report_id, details: { reasons } },
+	});
+}
+
+/** Retention: device hashes are only needed for the 7-day hold rule. */
+export async function clearDeviceHashes(before: Date, tx?: Prisma.TransactionClient): Promise<number> {
+	const db = tx ?? prisma;
+	const { count } = await db.reports.updateMany({
+		where: { device_hash: { not: null }, created_at: { lt: before } },
+		data: { device_hash: null },
+	});
+	return count;
 }
 
 /** What the read model needs; `managers` holds only the caller's row (none when signed out). */
@@ -254,6 +320,13 @@ export default {
 	getLocation,
 	updateReport,
 	addManager,
+	addContact,
+	getContactEmail,
+	findByManageToken,
+	countByDevice,
+	photosMatchHeld,
+	flagHeld,
+	clearDeviceHashes,
 	findByCode,
 	findWithRole,
 	listByManager,

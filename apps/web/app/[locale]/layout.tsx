@@ -57,7 +57,7 @@ export default async function LocaleLayout({ children, params }: LayoutProps<'/[
 			</head>
 			<body className={`${display.variable} ${sans.variable}`}>
 				<NextIntlClientProvider>
-					<Providers>
+					<Providers signedIn={viewer !== null}>
 						<SiteHeader viewer={viewer} />
 						{children}
 						<SiteFooter />

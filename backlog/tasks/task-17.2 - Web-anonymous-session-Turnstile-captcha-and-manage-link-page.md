@@ -1,11 +1,11 @@
 ---
 id: TASK-17.2
 title: 'Web anonymous session, Turnstile captcha and manage-link page'
-status: To Do
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:13'
-updated_date: '2026-10-14 22:42'
+updated_date: '2026-10-15 19:29'
 labels:
   - fe
   - 'est:M'

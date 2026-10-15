@@ -13,13 +13,10 @@ import { AdminGate } from './admin-gate';
 const auth = vi.hoisted(() => ({ gate: 'loading' as AuthGate, require: undefined as unknown }));
 const replace = vi.hoisted(() => vi.fn());
 vi.mock('@zivali/api/auth', () => ({
-	configureAuth: () => () => {},
 	useRequireAuth: (require: unknown) => ((auth.require = require), { gate: auth.gate }),
 }));
-vi.mock('@/lib/supabase/client', () => ({ createClient: () => ({}) }));
 vi.mock('@/i18n/navigation', () => ({
 	Link: ({ href, children }: { href: string; children: React.ReactNode }) => <a href={href}>{children}</a>,
-	usePathname: () => '/admin/shelters',
 	useRouter: () => ({ replace }),
 }));
 
@@ -56,8 +53,9 @@ describe('AdminGate', () => {
 	});
 
 	it('sends signed-out users to sign-in with the page as next', () => {
+		window.history.pushState({}, '', '/admin/zavetisca?q=1');
 		renderGate('signin');
 		expect(screen.queryByText('secret directory')).toBeNull();
-		expect(replace).toHaveBeenCalledWith({ pathname: '/sign-in', query: { next: '/admin/shelters' } });
+		expect(replace).toHaveBeenCalledWith({ pathname: '/sign-in', query: { next: '/admin/zavetisca?q=1' } });
 	});
 });

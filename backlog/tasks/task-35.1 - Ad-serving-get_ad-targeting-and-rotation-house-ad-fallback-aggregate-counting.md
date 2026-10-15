@@ -3,11 +3,11 @@ id: TASK-35.1
 title: >-
   Ad serving API: slot endpoint, targeting and rotation, house ads, impressions,
   no animal-sale ads
-status: To Do
+status: Done
 assignee:
   - '@backend-dev'
 created_date: '2026-10-14 22:13'
-updated_date: '2026-10-14 23:38'
+updated_date: '2026-10-15 18:57'
 labels:
   - be
   - 'est:M'

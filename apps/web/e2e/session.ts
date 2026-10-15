@@ -8,7 +8,8 @@ const base64url = (value: object) => Buffer.from(JSON.stringify(value)).toString
 
 export type E2eUser = { id: string; role: string; aal: 'aal1' | 'aal2' };
 
-const api = () => `http://localhost:${process.env.E2E_API_PORT}`;
+/** Origin of the mock API, which the web build also uses as its Supabase URL (playwright.config.ts). */
+export const api = () => `http://localhost:${process.env.E2E_API_PORT}`;
 const cookieName = () => `sb-${new URL(api()).hostname.split('.')[0]}-auth-token`;
 
 async function setSession(page: Page, baseURL: string, accessToken: string, id: string) {

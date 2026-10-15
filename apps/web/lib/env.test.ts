@@ -42,6 +42,12 @@ describe('parseEnv', () => {
 		);
 	});
 
+	it('takes the sign-in provider flags as true or false only', () => {
+		expect(parseEnv({ ...valid, NEXT_PUBLIC_APPLE_SIGN_IN: '' }).NEXT_PUBLIC_APPLE_SIGN_IN).toBeUndefined();
+		expect(parseEnv({ ...valid, NEXT_PUBLIC_GOOGLE_SIGN_IN: 'true' }).NEXT_PUBLIC_GOOGLE_SIGN_IN).toBe('true');
+		expect(() => parseEnv({ ...valid, NEXT_PUBLIC_APPLE_SIGN_IN: 'maybe' })).toThrow(/NEXT_PUBLIC_APPLE_SIGN_IN/);
+	});
+
 	it('names an invalid variable', () => {
 		expect(() => parseEnv({ ...valid, APP_ENV: 'prod' })).toThrow(/APP_ENV/);
 	});

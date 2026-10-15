@@ -20,6 +20,7 @@
 		"@zivali/api": "workspace:*",
 		"@zivali/i18n": "workspace:*",
 		"@zivali/tokens": "workspace:*",
+		"@zivali/validation": "workspace:*",
 		"class-variance-authority": "^0.7.1",
 		"clsx": "^2.1.1",
 		"exifr": "^7.1.3",

@@ -1,11 +1,11 @@
 ---
 id: TASK-9.3
 title: 'Web sign-in, sign-up, verification, reset, account page and guards'
-status: In Progress
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:12'
-updated_date: '2026-10-15 16:04'
+updated_date: '2026-10-15 18:27'
 labels:
   - fe
   - 'est:M'
@@ -37,6 +37,7 @@ Copy: docs/content/pages/P16-auth.md
 Contracts: C3, C15 (in references); conventions in C1
 Review: tech-lead code review (full mode); run `pnpm verify` before reporting done.
 Branch: agent/task-9.3-auth-web
+Branch: agent/task-9.3-e2e-main
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Acceptance Criteria

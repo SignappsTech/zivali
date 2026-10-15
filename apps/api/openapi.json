@@ -33,7 +33,7 @@
 					"title": { "type": "string" },
 					"body": { "type": "string" },
 					"cta": { "type": "string" },
-					"image_url": { "type": "string" },
+					"image_url": { "type": ["string", "null"] },
 					"image_alt": { "type": "string" },
 					"click_url": { "type": "string" },
 					"is_house": { "type": "boolean" },
@@ -2020,6 +2020,104 @@
 				}
 			}
 		},
+		"/v1/ads/slot/{slot}": {
+			"get": {
+				"operationId": "getAdForSlot",
+				"summary": "The ad for a slot",
+				"description": "The best active ad for the slot, locale (`?locale`, else Accept-Language), region or municipality and species (weighted random; an exclusive ad owns its slot), else a house ad for the locale. `null` when nothing fits or for ad-free users. `Cache-Control: private, max-age=60`.",
+				"tags": ["ads"],
+				"parameters": [
+					{
+						"schema": { "$ref": "#/components/schemas/AdSlot" },
+						"required": true,
+						"name": "slot",
+						"in": "path"
+					},
+					{
+						"schema": { "type": ["integer", "null"], "minimum": 0, "maximum": 32767 },
+						"required": false,
+						"name": "region_id",
+						"in": "query"
+					},
+					{
+						"schema": { "type": ["integer", "null"], "minimum": 0, "maximum": 32767 },
+						"required": false,
+						"name": "municipality_id",
+						"in": "query"
+					},
+					{
+						"schema": { "$ref": "#/components/schemas/Species" },
+						"required": false,
+						"name": "species",
+						"in": "query"
+					},
+					{
+						"schema": { "$ref": "#/components/schemas/Locale" },
+						"required": false,
+						"name": "locale",
+						"in": "query"
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Ad or null",
+						"content": {
+							"application/json": {
+								"schema": { "anyOf": [{ "$ref": "#/components/schemas/Ad" }, { "type": "null" }] }
+							}
+						}
+					},
+					"400": {
+						"description": "VALIDATION",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"429": {
+						"description": "RATE_LIMITED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"500": {
+						"description": "INTERNAL",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					}
+				}
+			}
+		},
+		"/v1/ads/{id}/impressions": {
+			"post": {
+				"operationId": "recordAdImpression",
+				"summary": "Count one rendered impression",
+				"description": "Once, when the ad first renders (A-016). Aggregated per ad, slot, day (Europe/Ljubljana) and region; no user ids, no cookies. NOT_FOUND: unknown or deleted ad, or a slot the ad does not run in.",
+				"tags": ["ads"],
+				"parameters": [
+					{ "schema": { "type": "string", "format": "uuid" }, "required": true, "name": "id", "in": "path" }
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": { "schema": { "$ref": "#/components/schemas/AdImpressionInput" } }
+					}
+				},
+				"responses": {
+					"204": { "description": "Counted" },
+					"400": {
+						"description": "VALIDATION",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"404": {
+						"description": "NOT_FOUND",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"429": {
+						"description": "RATE_LIMITED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"500": {
+						"description": "INTERNAL",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					}
+				}
+			}
+		},
 		"/v1/alert-subscription": {
 			"get": {
 				"operationId": "getAlertSubscription",
@@ -2491,6 +2589,50 @@
 					"503": {
 						"description": "Not ready (database down)",
 						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/HealthReady" } } }
+					}
+				}
+			}
+		},
+		"/v1/manage/claim": {
+			"post": {
+				"operationId": "claimManageLink",
+				"summary": "Claim the manage link of a report",
+				"description": "`token` is the fragment of the manage link (`/m#<token>`). The caller (anonymous or signed in) becomes a manager of the report; claiming again changes nothing. Removed reports and reports closed more than 7 days ago answer GONE. 10 per hour per IP.",
+				"tags": ["manage"],
+				"requestBody": {
+					"required": true,
+					"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ManageClaimInput" } } }
+				},
+				"responses": {
+					"200": {
+						"description": "The claimed report",
+						"content": {
+							"application/json": { "schema": { "$ref": "#/components/schemas/ManageClaimResponse" } }
+						}
+					},
+					"400": {
+						"description": "VALIDATION",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"401": {
+						"description": "UNAUTHENTICATED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"404": {
+						"description": "NOT_FOUND",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"410": {
+						"description": "GONE",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"429": {
+						"description": "RATE_LIMITED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"500": {
+						"description": "INTERNAL",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
 					}
 				}
 			}
@@ -3042,7 +3184,7 @@
 			"post": {
 				"operationId": "createReport",
 				"summary": "Create a lost, found or sighted report",
-				"description": "Requires `Idempotency-Key: <uuid>` (a replay from the same user returns the stored response for 24 h). `location` is the point the client already coarsened; the API coarsens it again by 20–30 m and never stores or returns the received point. Lost reports need a real account. `warnings` may hold OLD_EVENT (event older than 30 days). Starts photo publishing, matching and, for visible lost reports, nearby alerts.",
+				"description": "Requires `Idempotency-Key: <uuid>` (a replay from the same user returns the stored response for 24 h). `location` is the point the client already coarsened; the API coarsens it again by 20–30 m and never stores or returns the received point. Lost reports need a real account. `warnings` may hold OLD_EVENT (event older than 30 days). Starts photo publishing, matching and, for visible lost reports, nearby alerts. Anonymous callers (C7): `manage_token` (shown once; a replay returns the same one), the manage link by email when `finder_email` is given (anonymous only), 5 reports per hour and 20 per day per IP and per `x-device-id`; a report may come back `held` (being checked).",
 				"tags": ["reports"],
 				"requestBody": {
 					"required": true,
@@ -3178,6 +3320,57 @@
 					},
 					"404": {
 						"description": "NOT_FOUND",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"410": {
+						"description": "GONE",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"429": {
+						"description": "RATE_LIMITED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"500": {
+						"description": "INTERNAL",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					}
+				}
+			}
+		},
+		"/v1/reports/{code}/manage-link/resend": {
+			"post": {
+				"operationId": "resendManageLink",
+				"summary": "Email the manage link again (managers)",
+				"description": "Sends a new manage link to the finder email on file; the old link stops working (only the token hash is stored; it is written only after the email went out); if the email cannot be sent nothing changes (500). 3 per report per day. No email on file: CONFLICT; removed or closed more than 7 days ago: GONE.",
+				"tags": ["reports"],
+				"parameters": [
+					{
+						"schema": { "type": "string", "pattern": "^[1-9A-HJ-NP-Za-km-z]{8}$" },
+						"required": true,
+						"name": "code",
+						"in": "path"
+					}
+				],
+				"responses": {
+					"204": { "description": "Sent" },
+					"400": {
+						"description": "VALIDATION",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"401": {
+						"description": "UNAUTHENTICATED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"403": {
+						"description": "FORBIDDEN",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"404": {
+						"description": "NOT_FOUND",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"409": {
+						"description": "CONFLICT",
 						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
 					},
 					"410": {

@@ -2,13 +2,10 @@
 
 import { useTranslations } from 'next-intl';
 import * as React from 'react';
-import { useStore } from 'react-redux';
 
-import { configureAuth, type RequireAuth, useRequireAuth } from '@zivali/api/auth';
-import type { ApiStore } from '@zivali/api/rtk';
+import { type RequireAuth, useRequireAuth } from '@zivali/api/auth';
 import { Button } from '@/components/ui/button';
-import { Link, usePathname, useRouter } from '@/i18n/navigation';
-import { createClient } from '@/lib/supabase/client';
+import { Link, useRouter } from '@/i18n/navigation';
 
 /**
  * The gate only hides UI: the API enforces role ADMIN and aal2 on every admin call (TASK-6.12).
@@ -21,16 +18,18 @@ export function AdminGate({ require, children }: { require: RequireAuth; childre
 	const t = useTranslations('admin');
 	const tCommon = useTranslations('common');
 	const tErrors = useTranslations('errors');
-	const store = useStore() as ApiStore;
 	const router = useRouter();
-	const pathname = usePathname();
-	// TODO(TASK-34.3): configureAuth runs once for the app (providers or the shell layout), not per page.
-	React.useEffect(() => configureAuth(createClient(), store), [store]);
+	// The session is connected for every signed-in page (app/providers.tsx SessionSync).
 	const { gate } = useRequireAuth(require);
 
 	React.useEffect(() => {
-		if (gate === 'signin') router.replace({ pathname: '/sign-in', query: { next: pathname } });
-	}, [gate, pathname, router]);
+		// `next` is the URL as the browser shows it (localised), as the server guards send it.
+		if (gate === 'signin')
+			router.replace({
+				pathname: '/sign-in',
+				query: { next: window.location.pathname + window.location.search },
+			});
+	}, [gate, router]);
 
 	if (gate === 'ok') return children;
 	if (gate === 'loading' || gate === 'signin')

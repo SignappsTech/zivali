@@ -29,6 +29,7 @@ GDPR gives users access and erasure rights and the pilot will hold real personal
 - [ ] #3 Given the data inventory register, when a data store is not covered by export and delete, then a test fails.
 - [ ] #4 Given an anonymous reporter, when they use their manage link, then they can delete their report and data without an account.
 - [ ] #5 Given an organisation owner, when they delete their account, then they must transfer or delete the organisation first.
+- [ ] #6 From TASK-17.2: an anonymous finder can delete their report data from the manage page (/m) per R-034.4.
 <!-- AC:END -->
 
 ## Packet

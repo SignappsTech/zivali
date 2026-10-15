@@ -43,4 +43,6 @@ Branch: agent/task-37.2-ads-admin-be
 - [ ] #2 POST /v1/admin/ads/:id/image returns a presigned upload to the media bucket (admins with aal2 only).
 - [ ] #3 GET /v1/admin/ads/:id/stats returns impressions, clicks and CTR per day, slot and region for a date range.
 - [ ] #4 Every create, edit, status change and soft delete is written to the audit log; ending an ad mid-day keeps its stats.
+- [ ] #5 TASK-35.1 review: assertAdWritable runs inside the save transaction under a per-slot advisory lock and treats a missing starts_at as now, so two concurrent exclusive saves cannot overlap and an expired exclusive ad that was never marked ended does not block a new one (tests for both).
+- [ ] #6 TASK-35.1 review: the default ads.blocked_terms gain SL prodajam, prodajamo, podarjam, oddajam, oddajamo and "v dobre roke", and EN sells, rehomed and rehomes (data migration, existing admin edits kept).
 <!-- AC:END -->
