@@ -1,0 +1,686 @@
+<!doctype html>
+<!--
+  P7 Report found or sighted (no account) and manage page. Static mockup (TASK-30.1). Built from _template.html.
+  Sources: docs/design/pages/P7-report-found.md, docs/content/pages/P7-report-found.md (v0.3), docs/design/system.md (v0.9).
+  Reuses P6 (flow screen, review list, shared shelter_row with its fallbacks), P5 (found picker, offline point) and P16 (claim goes to sign-up).
+  One copy of the content lives in #src.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Najdimo mockup: P7 Report found</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:wght@400;500;600;700&family=Bricolage+Grotesque:opsz,wght@12..96,500..800&display=swap" rel="stylesheet">
+<link href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css" rel="stylesheet">
+<link href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/bold/style.css" rel="stylesheet">
+<link href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css" rel="stylesheet">
+<link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet">
+<link href="../tokens.css" rel="stylesheet">
+<link href="../directions/directions.css" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com/3.4.17"></script>
+<script src="../directions/tailwind-config.js"></script>
+<style>
+/* P7 parts used only by this mockup. Token-driven; frontend maps them to the flow screen, LocationRow, PrivateLinkBlock, ShelterRow, ManageActions and QueueRow. */
+.scope h1, .scope h2, .scope h3 { text-wrap: balance; }
+.q { font-family: var(--font-display); font-weight: 700; font-size: 34px; line-height: 40px; letter-spacing: -0.02em; margin: 0; }
+.q:focus { outline: none; }
+/* Page h1 (non-flow, system 4): 30/36 */
+.h1p { font-family: var(--font-display); font-weight: 700; font-size: 30px; line-height: 36px; letter-spacing: -0.02em; margin: 0; }
+.h2p { font-family: var(--font-display); font-weight: 700; font-size: 24px; line-height: 30px; letter-spacing: -0.015em; margin: 0; }
+/* Group heading inside a step (h3 role): 20/28 */
+.gh { font-family: var(--font-display); font-weight: 600; font-size: 20px; line-height: 28px; letter-spacing: -0.01em; margin: 0 0 12px; }
+/* Title role (card and dialog titles): 18/28, 20/28 on web */
+.ttl { font-family: var(--font-display); font-weight: 600; font-size: 18px; line-height: 28px; letter-spacing: -0.005em; margin: 0; }
+/* Flow answer (body-lg flow answer 22/32) */
+.ans { font-size: 22px; line-height: 32px; margin: 0; }
+
+/* Shell parts, as in P1, P5 and P6 */
+.logo-link { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; border-radius: 12px; color: hsl(var(--foreground)); text-decoration: none; flex: none; }
+.fl { display: inline-flex; align-items: center; min-height: 44px; min-width: 44px; padding: 0; border: 0; background: none; font: inherit; font-size: 15px; line-height: 22px; color: hsl(var(--muted-foreground)); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 4px; cursor: pointer; white-space: nowrap; }
+.fl:hover { color: hsl(var(--foreground)); }
+.tl { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; font-weight: 700; color: hsl(var(--primary)); text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 4px; border-radius: 8px; }
+.tl:hover { text-decoration-thickness: 3px; }
+.input.is-focus { outline: none; }
+.err i { font-size: 18px; line-height: 20px; flex: none; }
+.btn[aria-busy="true"] { cursor: progress; }
+.lp-line { display: flex; gap: 8px; margin: 0; font-size: 14px; line-height: 20px; color: hsl(var(--muted-foreground)); }
+.lp-line > i { font-size: 16px; line-height: 20px; flex: none; color: hsl(var(--primary)); }
+
+/* Photo source tiles (P6): card surface, radius 20, the tile is the button */
+.ptile { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 96px; padding: 12px; border: 0; border-radius: var(--radius-row); background: hsl(var(--card)); color: hsl(var(--foreground)); font: inherit; font-weight: 700; font-size: 16px; line-height: 22px; text-align: center; cursor: pointer; transition: transform 150ms var(--ease); }
+.ptile i { font-size: 32px; line-height: 1; color: hsl(var(--primary)); }
+.ptile:hover, .ptile.is-hover { background-image: linear-gradient(hsl(var(--foreground) / 0.10), hsl(var(--foreground) / 0.10)); }
+.ptile:active { transform: scale(0.98); }
+.ptile:focus-visible { outline: 3px solid hsl(var(--ring)); outline-offset: 2px; }
+/* Thumbnail strip: 80 px photos, the remove button sits under the photo, never on it (system 9) */
+.strip { display: flex; flex-wrap: wrap; gap: 12px; list-style: none; margin: 0; padding: 0; }
+.strip li { display: grid; justify-items: center; gap: 4px; }
+.strip img { width: 80px; height: 80px; border-radius: var(--radius-row); object-fit: cover; display: block; }
+
+/* Review list (P6): label, value, Uredi on the right */
+.rv { display: grid; gap: 20px; margin: 0; }
+.rv > div { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 12px; align-items: start; }
+.rv dt { grid-column: 1; font-size: 14px; line-height: 20px; font-weight: 700; color: hsl(var(--muted-foreground)); }
+.rv dd { grid-column: 1; margin: 2px 0 0; font-size: 16px; line-height: 24px; }
+.rv dd.e { grid-column: 2; grid-row: 1 / span 2; margin: -8px -12px 0 0; }
+
+/* Location row (step 3): 80 px map thumbnail, address, Spremeni. Card row on background, no border */
+.loc { display: grid; grid-template-columns: 80px minmax(0, 1fr) auto; gap: 16px; align-items: center; padding: 12px 8px 12px 12px; border-radius: var(--radius-row); background: hsl(var(--card)); color: hsl(var(--card-foreground)); }
+.loc-map { width: 80px; height: 80px; border-radius: 16px; }
+.lp-pin { position: absolute; width: 54px; height: 66px; margin: -62px 0 0 -27px; pointer-events: none; z-index: 2; }
+.lp-pin svg { display: block; overflow: visible; }
+.lp-pin path { fill: hsl(var(--primary)); stroke: hsl(var(--marker-ring)); stroke-width: 6px; paint-order: stroke; stroke-linejoin: round; }
+.lp-pin i { position: absolute; left: 27px; top: 27px; transform: translate(-50%, -50%); font-size: 24px; line-height: 1; color: hsl(var(--primary-foreground)); }
+.loc-map .lp-pin { left: 50%; top: 70%; transform: scale(0.6); transform-origin: 27px 62px; }
+
+/* Private link block: the link is real, selectable text on a read-only line (2 px input underline, solid) */
+.lnk { margin: 0; padding: 8px 2px 8px; font-size: 16px; line-height: 24px; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; border-bottom: 2px solid hsl(var(--input)); user-select: all; -webkit-user-select: all; }
+.ok { display: flex; align-items: center; gap: 6px; margin: 0; font-size: 14px; line-height: 20px; font-weight: 700; color: hsl(var(--foreground)); }
+.ok i { font-size: 16px; color: hsl(var(--primary)); }
+/* QR (web success): placeholder glyph; the real code is generated. Dark modules on a light field in both modes (see CHANGE in the footer) */
+.qr { display: grid; place-items: center; width: 152px; height: 152px; border-radius: 16px; background: hsl(var(--background)); color: hsl(var(--foreground)); }
+.qr i { font-size: 128px; line-height: 1; }
+
+/* Shelter row (shared shelter_row from P6): phone icon, no card */
+.sh { display: grid; grid-template-columns: 24px minmax(0, 1fr); gap: 14px; }
+.sh > i { font-size: 24px; line-height: 28px; color: hsl(var(--primary)); }
+.sh-name { font-weight: 700; font-size: 16px; line-height: 24px; margin: 0; }
+.sh-num { font-size: 16px; line-height: 24px; font-variant-numeric: tabular-nums; margin: 0; }
+
+/* Manage page action rows: text rows, 56 px, icon 20, hover foreground at 10 % */
+.acts { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.arow { display: flex; align-items: center; gap: 14px; width: 100%; min-height: 56px; padding: 0 12px; margin: 0 -12px; box-sizing: content-box; border: 0; border-radius: var(--radius-row); background: transparent; color: hsl(var(--foreground)); font: inherit; font-weight: 600; font-size: 16px; line-height: 24px; text-align: left; text-decoration: none; cursor: pointer; }
+.arow > i { font-size: 20px; flex: none; color: hsl(var(--primary)); }
+.arow.danger, .arow.danger > i { color: hsl(var(--destructive)); }
+.arow:hover, .arow.is-hover { background: hsl(var(--foreground) / 0.10); }
+.arow:focus-visible, .arow.is-focus { outline: 3px solid hsl(var(--ring)); outline-offset: 2px; }
+
+/* Offline queue rows (Map tab): pet-row shape, status as icon plus word */
+.qrow { display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: 16px; align-items: center; }
+.qrow > img { width: 64px; height: 64px; border-radius: var(--radius-row); object-fit: cover; display: block; }
+.qrow .t { font-family: var(--font-display); font-weight: 600; font-size: 20px; line-height: 24px; letter-spacing: -0.01em; margin: 0; }
+.qst { display: inline-flex; align-items: center; gap: 5px; font-weight: 700; font-size: 14px; line-height: 20px; }
+.qst i { font-size: 16px; line-height: 1; }
+.qst .spin { width: 14px; height: 14px; border-width: 2px; }
+
+/* Region crop: mockup scaffolding only (a state that changes one part of a screen), not product UI */
+.tile-section figure { max-width: 100%; min-width: 0; }
+.crop { width: 390px; max-width: 100%; box-sizing: border-box; padding: 24px 20px; border-radius: 28px; background: hsl(var(--background)); outline: 2px dashed hsl(var(--input)); outline-offset: -2px; }
+.crop.modal { position: relative; overflow: hidden; display: grid; place-items: center; min-height: 400px; }
+.crop.modal .scrim { border-radius: inherit; }
+.crop-l { margin: 0 0 10px; font-size: 13px; line-height: 16px; font-weight: 700; color: hsl(var(--muted-foreground)); }
+.pill[role="radio"][aria-checked="true"] { background: hsl(var(--primary)); color: hsl(var(--primary-foreground)); }
+.pill[role="radio"][aria-checked="true"] .tick { display: inline; }
+@media (prefers-reduced-motion: reduce) { .spin { animation-duration: 2.4s; } }
+</style>
+</head>
+<body>
+<a class="sr-only focus:not-sr-only" href="#stage">Skip to content</a>
+
+<!-- Logo symbol, defined once -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <symbol id="nj-mark" viewBox="0 0 48 48">
+    <g fill="currentColor" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round">
+      <path d="M24 45.5 C24 45.5 10.5 33.2 10.5 24.4 A13.5 13.5 0 0 1 37.5 24.4 C37.5 33.2 24 45.5 24 45.5 Z M24 17.9 A6.5 6.5 0 1 0 24 30.9 A6.5 6.5 0 1 0 24 17.9 Z"/>
+      <path d="M12.2 19.6 L11.2 5 L22.6 11.4 Z"/><path d="M35.8 19.6 L25.4 11.4 L36.8 5 Z"/>
+    </g>
+    <circle cx="24" cy="24.4" r="3.6" fill="#F7B32B"/>
+  </symbol>
+</svg>
+
+<header class="chrome">
+  <div class="flex flex-wrap items-center gap-x-5 gap-y-2 px-6 py-2 max-w-[1400px] mx-auto">
+    <span class="flex items-center gap-2 font-display font-bold text-lg"><svg class="logo-mark w-7 h-7" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg>Najdimo</span>
+    <span class="text-muted-foreground text-[15px]">P7 Report found (mockup)</span>
+    <div class="ml-auto flex items-center gap-2" role="group" aria-label="Colour mode">
+      <button class="mode-btn" data-mode="light" aria-pressed="true">Light</button>
+      <button class="mode-btn" data-mode="dark" aria-pressed="false">Dark</button>
+      <button class="mode-btn" data-mode="both" aria-pressed="false">Side by side</button>
+    </div>
+  </div>
+</header>
+
+<main id="stage"></main>
+
+<div id="src" hidden>
+<section class="tile-section !max-w-[1400px]">
+  <h1 class="tile-title">P7 Report found or sighted</h1>
+  <p class="tile-lede">No account, under a minute, from a phone. Five screens (photo, which animal, where, is it with you, publish), one question and one primary each, no sign-in prompt and no ad. The finish is a private link that works on any device. Copy from the P7 content slice v0.3; the shelter row is the shared <code>shelter_row</code> from P6.</p>
+
+  <!-- ================= A. MOBILE FOUND FLOW ================= -->
+  <h2 class="tile-title !text-2xl !mt-4">A. Mobile found flow (no account)</h2>
+  <p class="tile-lede">390 px frames. Top bar: back, four bars (<code>role="progressbar"</code>, "Korak {n} od 4", as P5 A2), close. The fifth screen (publish) reviews the four answers with every bar done. Focus goes to the h1 on each step. The primary is <code>lg</code>, at the bottom, with 44 px bottom padding.</p>
+
+  <div class="flex flex-wrap gap-x-10 gap-y-14 items-start">
+
+    <!-- M1 STEP 1: PHOTO (empty) -->
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">M1 Step 1 · Photo: empty, camera is the primary</figcaption>
+      <div class="phone"><div class="phone-screen" lang="sl">
+        <div class="statusbar" aria-hidden="true"><span>14:30</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <div class="topbar">
+          <button type="button" class="iconbtn" aria-label="Nazaj"><i class="ph-bold ph-caret-left" aria-hidden="true"></i></button>
+          <div class="steps flex-1" role="progressbar" aria-valuemin="1" aria-valuemax="4" aria-valuenow="1" aria-label="Korak 1 od 4"><span class="on"></span><span></span><span></span><span></span></div>
+          <button type="button" class="iconbtn" aria-label="Zapri"><i class="ph-bold ph-x" aria-hidden="true"></i></button>
+        </div>
+        <div class="flex-1 min-h-0 px-5 pt-2">
+          <span class="spot" aria-hidden="true"><i class="ph-bold ph-camera"></i></span>
+          <h1 class="q mt-6" tabindex="-1">Fotografirajte žival</h1>
+          <p class="text-lg leading-7 mt-3">Dovolj je ena fotografija. Če je mogoče, naj bo viden obraz.</p>
+          <p class="lp-line mt-6"><i class="ph-bold ph-timer" aria-hidden="true"></i><span>Hvala, da pomagate. Vzelo vam bo le minuto, račun ni potreben.</span></p>
+        </div>
+        <div class="px-5 pb-11 grid gap-1">
+          <button type="button" class="btn btn-primary btn-lg btn-block"><i class="ph-bold ph-camera" aria-hidden="true"></i>Fotografiraj</button>
+          <button type="button" class="btn btn-text btn-block"><i class="ph-bold ph-images" aria-hidden="true"></i>Izberi iz galerije</button>
+        </div>
+        <span class="home-ind"></span>
+      </div></div>
+      <p class="help mt-4" style="max-width:412px">First tap goes through the P2 camera primer. After the first photo the screen switches to the S1 layout: two photo tiles, the strip (up to 5, only one required, remove button under each photo) and <code>common.next</code> "Naprej" as the primary. Duplicate photo: <code>report_found.duplicate_photo</code> as the one note with a <code>text</code> "Odpri prijavo". Camera denied: C2. Close asks <code>report_found.close_title</code> / <code>close_body</code> (the draft stays).</p>
+    </figure>
+
+    <!-- M2 STEP 2: WHAT (AI) -->
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">M2 Step 2 · Which animal: AI suggestion (M3 milestone)</figcaption>
+      <div class="phone"><div class="phone-screen" lang="sl">
+        <div class="statusbar" aria-hidden="true"><span>14:30</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <div class="topbar">
+          <button type="button" class="iconbtn" aria-label="Nazaj"><i class="ph-bold ph-caret-left" aria-hidden="true"></i></button>
+          <div class="steps flex-1" role="progressbar" aria-valuemin="1" aria-valuemax="4" aria-valuenow="2" aria-label="Korak 2 od 4"><span class="on"></span><span class="on"></span><span></span><span></span></div>
+          <button type="button" class="iconbtn" aria-label="Zapri"><i class="ph-bold ph-x" aria-hidden="true"></i></button>
+        </div>
+        <div class="flex-1 min-h-0 px-5 pt-2">
+          <img class="thumb w-full aspect-[4/3] rounded-[32px]" src="../directions/img/dog-beagle.jpg" alt="Fotografija, iz katere je predlog">
+          <h1 class="q mt-6" tabindex="-1">Je to pravilno?</h1>
+          <p class="ans mt-3">Srednje velik pes, rjave in bele barve</p>
+          <p class="lp-line mt-3"><i class="ph-fill ph-sparkle" aria-hidden="true"></i><span>Predlog iz fotografije. Umetna inteligenca se lahko moti.</span></p>
+        </div>
+        <div class="px-5 pb-11 grid gap-1">
+          <button type="button" class="btn btn-primary btn-lg btn-block">Da, nadaljuj</button>
+          <button type="button" class="btn btn-text btn-block">Uredi podatke</button>
+        </div>
+        <span class="home-ind"></span>
+      </div></div>
+      <p class="help mt-4" style="max-width:412px">A plain sentence, never a boxed panel (system 10.8). <code>ai_sentence</code> = size phrase agreeing with the species, then the glossary colour phrase. "Uredi podatke" opens the C1 choices prefilled. No suggestion, a low score or M2: C1 is the step.</p>
+    </figure>
+
+    <!-- M3 STEP 3: WHERE -->
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">M3 Step 3 · Where: place read from the photo</figcaption>
+      <div class="phone"><div class="phone-screen" lang="sl">
+        <div class="statusbar" aria-hidden="true"><span>14:31</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <div class="topbar">
+          <button type="button" class="iconbtn" aria-label="Nazaj"><i class="ph-bold ph-caret-left" aria-hidden="true"></i></button>
+          <div class="steps flex-1" role="progressbar" aria-valuemin="1" aria-valuemax="4" aria-valuenow="3" aria-label="Korak 3 od 4"><span class="on"></span><span class="on"></span><span class="on"></span><span></span></div>
+          <button type="button" class="iconbtn" aria-label="Zapri"><i class="ph-bold ph-x" aria-hidden="true"></i></button>
+        </div>
+        <div class="flex-1 min-h-0 px-5 pt-2">
+          <h1 class="q" tabindex="-1">Kje ste žival našli?</h1>
+          <div class="loc mt-8">
+            <div class="map-wrap loc-map" aria-hidden="true">
+              <div class="map-canvas" data-center="14.5130,46.0700" data-zoom="14.8"></div>
+              <span class="lp-pin"><svg viewBox="0 0 54 66" width="54" height="66" focusable="false"><path d="M27 62 L15 47.78 A24 24 0 1 1 39 47.78 Z"/></svg><i class="ph-fill ph-paw-print"></i></span>
+            </div>
+            <div class="min-w-0">
+              <p class="font-bold">Bežigrad, Ljubljana</p>
+              <p class="help mt-0.5">Kraj smo prebrali iz fotografije.</p>
+            </div>
+            <button type="button" class="btn btn-text">Spremeni</button>
+          </div>
+          <p class="lp-line mt-5"><i class="ph-fill ph-shield-check" aria-hidden="true"></i><span>Ne sprašujemo, kje je žival zdaj.</span></p>
+        </div>
+        <div class="px-5 pb-11">
+          <button type="button" class="btn btn-primary btn-lg btn-block">Naprej</button>
+        </div>
+        <span class="home-ind"></span>
+      </div></div>
+      <p class="help mt-4" style="max-width:412px">Prefilled from photo EXIF (<code>where_from_photo</code>) or GPS (<code>where_from_gps</code>, via the browser or P2 location prompt). "Spremeni" opens P5 A2 (found, no radius). No EXIF and no GPS: the step opens straight on P5. Heading <code>location.title_found</code>; the sighted entry uses <code>location.title_sighted</code>. Offline: the P5 C5 point, Naprej stays enabled.</p>
+    </figure>
+
+    <!-- M4 STEP 4: SITUATION (email error) -->
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">M4 Step 4 · Is it with you: note, e-mail error on Naprej</figcaption>
+      <div class="phone" style="height:1010px"><div class="phone-screen" style="height:1010px" lang="sl">
+        <div class="statusbar" aria-hidden="true"><span>14:31</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <div class="topbar">
+          <button type="button" class="iconbtn" aria-label="Nazaj"><i class="ph-bold ph-caret-left" aria-hidden="true"></i></button>
+          <div class="steps flex-1" role="progressbar" aria-valuemin="1" aria-valuemax="4" aria-valuenow="4" aria-label="Korak 4 od 4"><span class="on"></span><span class="on"></span><span class="on"></span><span class="on"></span></div>
+          <button type="button" class="iconbtn" aria-label="Zapri"><i class="ph-bold ph-x" aria-hidden="true"></i></button>
+        </div>
+        <div class="flex-1 min-h-0 px-5 pt-2">
+          <h1 class="q" tabindex="-1">Je žival pri vas?</h1>
+          <div class="grid gap-3 mt-6" role="radiogroup" aria-label="Je žival pri vas?">
+            <button type="button" class="choice" role="radio" aria-checked="true"><i class="ph-bold ph-hand-heart" aria-hidden="true"></i><span class="flex-1 min-w-0"><span class="t">Da, žival je pri meni</span><span class="d">Na varnem je pri vas ali pri nekom, ki ga poznate.</span></span><i class="ph-bold ph-check tick" aria-hidden="true"></i></button>
+            <button type="button" class="choice" role="radio" aria-checked="false"><i class="ph-bold ph-eye" aria-hidden="true"></i><span class="flex-1 min-w-0"><span class="t">Ne, žival ni pri meni</span><span class="d">Videli ste jo, a je niste mogli prijeti.</span></span><i class="ph-bold ph-check tick" aria-hidden="true"></i></button>
+          </div>
+          <div class="field mt-8">
+            <label for="m4-note">Opomba (neobvezno)</label>
+            <textarea id="m4-note" class="input" rows="3" aria-describedby="m4-note-h" placeholder="Na primer: prestrašena je, ima modro ovratnico.">Prijazen je, ima rdečo ovratnico brez ploščice.</textarea>
+            <p id="m4-note-h" class="help">Opomba bo javno vidna. Ne navajajte naslova ali telefonske številke.</p>
+          </div>
+          <div class="field mt-8">
+            <label for="m4-mail">E-naslov (neobvezno)</label>
+            <input id="m4-mail" class="input is-error" type="email" inputmode="email" autocomplete="email" value="petra.k@gmail" aria-invalid="true" aria-describedby="m4-mail-d">
+            <div id="m4-mail-d" class="grid gap-1.5">
+              <p class="err"><i class="ph-fill ph-warning-circle" aria-hidden="true"></i><span>Preverite e-naslov, na primer ime@primer.si.</span></p>
+              <p class="help">Pošljemo vam zasebno povezavo, da prijavo urejate tudi na drugi napravi. E-naslova ne prikažemo nikomur.</p>
+            </div>
+          </div>
+        </div>
+        <div class="px-5 pt-8 pb-11">
+          <button type="button" class="btn btn-primary btn-lg btn-block">Naprej</button>
+        </div>
+        <span class="home-ind"></span>
+      </div></div>
+      <p class="help mt-4" style="max-width:412px">Two choice rows (<code>radiogroup</code>), nothing preselected; Naprej without a choice moves focus to the group with an error line. The note is one textarea, public; over the limit: <code>note_too_long</code> under the field. The e-mail is optional and only checked when filled; the error is tied with <code>aria-describedby</code> and announced on Naprej. The answer picks the shelter row on the success screen (M6 or C4).</p>
+    </figure>
+
+    <!-- M5 STEP 5: PUBLISH (loading) -->
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">M5 Publish: summary, publishing (loading)</figcaption>
+      <div class="phone"><div class="phone-screen" lang="sl">
+        <div class="statusbar" aria-hidden="true"><span>14:32</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <div class="topbar">
+          <button type="button" class="iconbtn" aria-label="Nazaj"><i class="ph-bold ph-caret-left" aria-hidden="true"></i></button>
+          <div class="steps flex-1" role="progressbar" aria-valuemin="1" aria-valuemax="4" aria-valuenow="4" aria-label="Korak 4 od 4"><span class="on"></span><span class="on"></span><span class="on"></span><span class="on"></span></div>
+          <button type="button" class="iconbtn" aria-label="Zapri"><i class="ph-bold ph-x" aria-hidden="true"></i></button>
+        </div>
+        <div class="flex-1 min-h-0 px-5 pt-2">
+          <h1 class="q" tabindex="-1">Objavite prijavo</h1>
+          <dl class="rv mt-8">
+            <div><dt>Fotografija</dt><dd><img class="thumb w-[72px] h-[72px] rounded-xl mt-1" src="../directions/img/dog-beagle.jpg" alt="Vaša fotografija živali"></dd><dd class="e"><button type="button" class="btn btn-text" aria-label="Uredi: Fotografija">Uredi</button></dd></div>
+            <div><dt>Žival</dt><dd>Srednje velik pes, rjave in bele barve</dd><dd class="e"><button type="button" class="btn btn-text" aria-label="Uredi: Žival">Uredi</button></dd></div>
+            <div><dt>Kraj</dt><dd>Bežigrad, Ljubljana</dd><dd class="e"><button type="button" class="btn btn-text" aria-label="Uredi: Kraj">Uredi</button></dd></div>
+            <div><dt>Žival je</dt><dd>pri meni</dd><dd class="e"><button type="button" class="btn btn-text" aria-label="Uredi: Žival je">Uredi</button></dd></div>
+          </dl>
+        </div>
+        <div class="px-5 pb-11 grid gap-4">
+          <p class="lp-line"><i class="ph-fill ph-shield-check" aria-hidden="true"></i><span>Vaša telefonska številka ostane skrita. Oseba, ki žival išče, vam piše v aplikaciji.</span></p>
+          <button type="button" class="btn btn-primary btn-lg btn-block" aria-busy="true"><span class="spin" aria-hidden="true"></span>Objavljamo …</button>
+        </div>
+        <span class="home-ind"></span>
+      </div></div>
+      <p class="help mt-4" style="max-width:412px">Idle: "Objavi prijavo". Loading: spinner before <code>publishing</code>, <code>aria-busy</code>, presses ignored, no layout shift. Captcha is invisible; if the check takes longer than 2 s, <code>captcha_checking</code> appears as a polite line above the button; a challenge opens as a bottom sheet titled <code>captcha_title</code> with <code>captcha_body</code>. Rate limit and captcha failure: C3. Moderation hold: M6 uses <code>held_note</code> in place of <code>done_body</code>.</p>
+    </figure>
+
+    <!-- M6 SUCCESS -->
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">M6 Success: private link copied (focus on Copy), responsible shelter (full length)</figcaption>
+      <div class="phone" style="height:1450px"><div class="phone-screen" style="height:1450px" lang="sl">
+        <div class="statusbar" aria-hidden="true"><span>14:32</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <div class="topbar justify-end"><button type="button" class="iconbtn" aria-label="Zapri"><i class="ph-bold ph-x" aria-hidden="true"></i></button></div>
+        <div class="flex-1 min-h-0 px-5 pt-2">
+          <span class="spot" aria-hidden="true"><i class="ph-bold ph-hand-heart"></i></span>
+          <h1 class="q mt-6" tabindex="-1">Hvala, prijava je objavljena</h1>
+          <p class="text-lg leading-7 mt-3">Prijavo vidijo ljudje v bližini, mi pa jo primerjamo z vsemi prijavami izgubljenih živali.</p>
+
+          <section class="card p-6 mt-8" aria-label="Vaša zasebna povezava">
+            <h2 class="ttl">Vaša zasebna povezava</h2>
+            <p class="lnk mt-2" data-sample>https://najdimo.si/m/k7Q2xP9v4mRtLw8zN3hB</p>
+            <p class="help mt-2">S to povezavo urejate prijavo in odgovarjate na sporočila, tudi na drugi napravi. Shranite jo: brez e-naslova je ne moremo obnoviti.</p>
+            <button type="button" class="btn btn-secondary btn-block mt-4 is-focus"><i class="ph-bold ph-copy" aria-hidden="true"></i>Kopiraj povezavo</button>
+            <p class="ok mt-3" role="status"><i class="ph-fill ph-check-circle" aria-hidden="true"></i>Povezava je kopirana.</p>
+            <p class="lp-line mt-4"><i class="ph-bold ph-envelope-simple" aria-hidden="true"></i><span>Povezavo smo poslali tudi na vaš e-naslov.</span></p>
+          </section>
+
+          <div class="sh mt-10">
+            <i class="ph-bold ph-phone" aria-hidden="true"></i>
+            <div>
+              <p>Najdbo čim prej sporočite zavetišču, pristojnemu za občino Ljubljana. Prijava na Najdimo tega ne nadomesti.</p>
+              <p class="sh-name mt-3" data-sample>Zavetišče Ljubljana</p>
+              <p class="sh-num" data-sample>01 234 56 78</p>
+              <div class="flex flex-wrap items-center gap-x-4 gap-y-1 mt-3">
+                <a href="#" class="btn btn-secondary btn-sm" aria-label="Pokliči Zavetišče Ljubljana"><i class="ph-bold ph-phone" aria-hidden="true"></i>Pokliči</a>
+                <a href="#" class="tl">Delovni čas in naslov</a>
+              </div>
+              <p class="help mt-3">Čip lahko prebere katero koli zavetišče ali veterinar.</p>
+            </div>
+          </div>
+        </div>
+        <div class="px-5 pt-10 pb-11 grid gap-1">
+          <a href="#" class="btn btn-primary btn-lg btn-block">Odpri mojo prijavo</a>
+          <div class="flex flex-wrap justify-center gap-x-2">
+            <a href="#" class="btn btn-text">Ustvari račun in obdrži prijavo</a>
+            <button type="button" class="btn btn-text"><i class="ph-bold ph-share-network" aria-hidden="true"></i>Deli</button>
+          </div>
+        </div>
+        <span class="home-ind"></span>
+      </div></div>
+      <p class="help mt-4" style="max-width:412px">No tip, no ad. Link block: <code>card</code>, title, the link as selectable text on a read-only line, <code>link_help</code>, <code>secondary</code> Copy (focus shown: 3 px <code>ring</code>, 2 px offset), then <code>link_copied</code> in a polite status for 5 s. <code>link_emailed</code> only when an e-mail was given. Shelter row for "Da, žival je pri meni": <code>found_body</code>, <code>not_replace</code>, name, number (<code>tabular-nums</code>), Pokliči (<code>tel:</code>, name <code>call_a11y</code>), details link (P3 T6), <code>chip_line</code>. Unconfirmed shelter: P6 C3 or C4. Other variants: C4. Claim: P16 sign-up, the report moves to the new account.</p>
+    </figure>
+  </div>
+
+  <!-- ================= B. SIGHTING SHORT PATH AND OFFLINE ================= -->
+  <h2 class="tile-title !text-2xl" style="margin-top:72px">B. Sighting from a listing, and offline</h2>
+  <p class="tile-lede">"Sporoči opažanje" on a lost report (P9) starts three steps: where (P5 A3, <code>sighting_where</code>), when (Pravkar, Danes, Drugič; the P6 M5 choice rows), then an optional photo with a note and Send. The sighting is linked to the report and the owner is notified. Offline, a found or sighting report waits in the outbox and is sent once.</p>
+
+  <div class="flex flex-wrap gap-x-10 gap-y-14 items-start">
+
+    <!-- S1 SIGHTING STEP 3 -->
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">S1 Sighting step 3 · Photo and note: one photo added, note empty</figcaption>
+      <div class="phone" style="height:1000px"><div class="phone-screen" style="height:1000px" lang="sl">
+        <div class="statusbar" aria-hidden="true"><span>17:05</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <div class="topbar">
+          <button type="button" class="iconbtn" aria-label="Nazaj"><i class="ph-bold ph-caret-left" aria-hidden="true"></i></button>
+          <div class="steps flex-1" role="progressbar" aria-valuemin="1" aria-valuemax="3" aria-valuenow="3" aria-label="Korak 3 od 3"><span class="on"></span><span class="on"></span><span class="on"></span></div>
+          <button type="button" class="iconbtn" aria-label="Zapri"><i class="ph-bold ph-x" aria-hidden="true"></i></button>
+        </div>
+        <div class="flex-1 min-h-0 px-5 pt-2">
+          <div class="flex items-center gap-3">
+            <img class="thumb w-12 h-12 rounded-xl flex-none" src="../directions/img/dog-aussie.jpg" alt="">
+            <div class="min-w-0"><p class="font-bold">Medo</p><span class="st st-lost"><i class="ph-fill ph-megaphone" aria-hidden="true"></i>Izgubljena</span></div>
+          </div>
+          <h1 class="q mt-6" tabindex="-1">Dodate fotografijo?</h1>
+          <p class="text-lg leading-7 mt-3">Ni obvezno, pomaga pa pri prepoznavanju.</p>
+          <div class="grid grid-cols-2 gap-3 mt-6">
+            <button type="button" class="ptile"><i class="ph-bold ph-camera" aria-hidden="true"></i>Fotografiraj</button>
+            <button type="button" class="ptile is-hover"><i class="ph-bold ph-images" aria-hidden="true"></i>Izberi iz galerije</button>
+          </div>
+          <ul class="strip mt-5" aria-label="Fotografije">
+            <li><img src="../directions/img/dog-aussie-wide.jpg" alt="Vaša fotografija živali"><button type="button" class="iconbtn" aria-label="Odstrani fotografijo 1"><i class="ph-bold ph-trash" aria-hidden="true"></i></button></li>
+          </ul>
+          <div class="field mt-6">
+            <label for="s1-note">Kaj ste opazili? (neobvezno)</label>
+            <textarea id="s1-note" class="input" rows="3" aria-describedby="s1-note-h" placeholder="Na primer: tekla je proti gozdu, šepala je na zadnjo nogo."></textarea>
+            <p id="s1-note-h" class="help">Opomba bo javno vidna. Ne navajajte naslova ali telefonske številke.</p>
+          </div>
+        </div>
+        <div class="px-5 pt-8 pb-11">
+          <button type="button" class="btn btn-primary btn-lg btn-block">Pošlji opažanje</button>
+        </div>
+        <span class="home-ind"></span>
+      </div></div>
+      <p class="help mt-4" style="max-width:412px">The pet row (48 px photo, name, status word) keeps the context on every step. The same tiles and strip serve found step 1 after the first photo (tile hover shown: <code>foreground</code> at 10 %). Placeholder is the empty state. Send works with no photo and no note. Done: C5 (no shelter row; the owner is already notified). No e-mail is asked here.</p>
+    </figure>
+
+    <!-- Q1 WAITING TO SEND -->
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">Q1 Offline: waiting to send, shelter row from the saved directory</figcaption>
+      <div class="phone" style="height:1010px"><div class="phone-screen" style="height:1010px" lang="sl">
+        <div class="statusbar" aria-hidden="true"><span>14:33</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-battery-high"></i></span></div>
+        <div class="topbar justify-end"><button type="button" class="iconbtn" aria-label="Zapri"><i class="ph-bold ph-x" aria-hidden="true"></i></button></div>
+        <div class="flex-1 min-h-0 px-5 pt-2">
+          <span class="spot" aria-hidden="true"><i class="ph-bold ph-clock"></i></span>
+          <h1 class="q mt-6" tabindex="-1" data-sample>Čaka na pošiljanje</h1>
+          <p class="text-lg leading-7 mt-3">Shranjeno. Prijavo pošljemo, ko boste spet povezani.</p>
+          <div class="sh mt-10">
+            <i class="ph-bold ph-phone" aria-hidden="true"></i>
+            <div>
+              <p>Najdbo čim prej sporočite zavetišču, pristojnemu za občino Ljubljana. Prijava na Najdimo tega ne nadomesti.</p>
+              <p class="sh-name mt-3" data-sample>Zavetišče Ljubljana</p>
+              <p class="sh-num" data-sample>01 234 56 78</p>
+              <a href="#" class="btn btn-secondary btn-sm mt-3" aria-label="Pokliči Zavetišče Ljubljana"><i class="ph-bold ph-phone" aria-hidden="true"></i>Pokliči</a>
+              <p class="help mt-3">Čip lahko prebere katero koli zavetišče ali veterinar.</p>
+              <p class="lp-line mt-2"><i class="ph-bold ph-cloud-slash" aria-hidden="true"></i><span>Iz shranjenega imenika z dne 12. 10. 2026.</span></p>
+            </div>
+          </div>
+        </div>
+        <div class="px-5 pb-11 grid gap-1">
+          <button type="button" class="btn btn-primary btn-lg btn-block">Zapri</button>
+          <button type="button" class="btn btn-text btn-block">Prekliči</button>
+        </div>
+        <span class="home-ind"></span>
+      </div></div>
+      <p class="help mt-4" style="max-width:412px">Shown instead of M6 when Publish (or Pošlji opažanje) runs offline. Clock icon, title from the page slice (no content key yet), <code>offline_queued</code>. The shelter row works from the cached directory, adds <code>shelter_row.cached</code> and drops the details link (needs the network). Zapri (<code>common.close</code>) returns to the map, where C6 shows the queue. Prekliči (<code>common.cancel</code>) asks first, then removes it from the outbox. No link block until sent; on Sent, a notification opens M6.</p>
+    </figure>
+
+    <!-- MG1 MANAGE PAGE -->
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">MG1 Manage page (/m): unread messages, expires in 5 days (full length)</figcaption>
+      <div class="phone" style="height:1640px"><div class="phone-screen" style="height:1640px" lang="sl">
+        <div class="statusbar" aria-hidden="true"><span>09:12</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <div class="topbar">
+          <a href="#" class="iconbtn" aria-label="Nazaj"><i class="ph-bold ph-caret-left" aria-hidden="true"></i></a>
+        </div>
+        <div class="flex-1 min-h-0 px-5 pt-2">
+          <img class="thumb w-full aspect-[4/3] rounded-[32px]" src="../directions/img/dog-beagle.jpg" alt="Srednje velik rjav in bel pes z rdečo ovratnico" data-sample>
+          <span class="badge bg-status-found-subtle text-status-found-subtle-foreground mt-5"><i class="ph-fill ph-hand-heart" aria-hidden="true"></i>Najdena</span>
+          <h1 class="h1p mt-3" tabindex="-1">Vaša prijava</h1>
+          <dl class="rv mt-6">
+            <div><dt>Žival</dt><dd>Srednje velik pes, rjave in bele barve</dd></div>
+            <div><dt>Kraj</dt><dd>Bežigrad, Ljubljana</dd></div>
+            <div><dt>Žival je</dt><dd>pri meni</dd></div>
+          </dl>
+          <p class="lp-line mt-6"><i class="ph-fill ph-lock-simple" aria-hidden="true"></i><span>Ta stran je zasebna. Povezave ne delite z neznanci.</span></p>
+
+          <h2 class="h2p mt-10">Sporočila</h2>
+          <p class="flex items-center gap-2 mt-2 font-bold tnum"><i class="ph-bold ph-chat-circle text-primary text-xl" aria-hidden="true"></i>2 neprebrani sporočili</p>
+          <a href="#" class="btn btn-primary btn-lg btn-block mt-4">Odpri sporočila</a>
+
+          <div class="note mt-10">
+            <i class="ph-bold ph-clock" aria-hidden="true"></i>
+            <div>
+              <p>Prijava bo potekla čez <span class="tnum">5</span> dni. Če je žival še pri vas ali jo še vedno vidite, prijavo podaljšajte.</p>
+              <button type="button" class="btn btn-secondary btn-sm mt-3">Podaljšaj za 30 dni</button>
+            </div>
+          </div>
+
+          <ul class="acts mt-8">
+            <li><a href="#" class="arow is-hover"><i class="ph-bold ph-pencil-simple" aria-hidden="true"></i>Uredi prijavo</a></li>
+            <li><button type="button" class="arow"><i class="ph-bold ph-check-circle" aria-hidden="true"></i>Zaključi prijavo</button></li>
+            <li><button type="button" class="arow"><i class="ph-bold ph-heart" aria-hidden="true"></i>Žival je spet doma</button></li>
+            <li><button type="button" class="arow danger" aria-haspopup="dialog"><i class="ph-bold ph-trash" aria-hidden="true"></i>Izbriši moje podatke</button></li>
+          </ul>
+
+          <p class="lp-line mt-8"><i class="ph-bold ph-user-circle" aria-hidden="true"></i><span>Z računom imate vse svoje prijave na enem mestu.</span></p>
+          <a href="#" class="btn btn-text -ml-3 mt-1">Ustvari račun in obdrži prijavo</a>
+        </div>
+        <div class="pb-11"></div>
+        <span class="home-ind"></span>
+      </div></div>
+      <p class="help mt-4" style="max-width:412px">Opens from the private link on any device, no sign-in; <code>noindex</code>. Order: photo and the one tonal pill, h1, facts, private line, Messages (count only when unread, plural forms in <code>manage_unread</code>; Odpri sporočila opens P12 without sign-in), the one note, actions as text rows (hover shown on Uredi), claim. No messages yet: the Messages heading and count drop, "Sporočila" becomes the first text row and the page has no primary. Expiry note from day 25 only. "Žival je spet doma" opens P14 §5. Delete: C7. Under review, closed: C8. Web: the same order in the centred 560 px column with the P1 header.</p>
+    </figure>
+  </div>
+
+  <!-- ================= C. REGION STATES ================= -->
+  <h2 class="tile-title !text-2xl" style="margin-top:72px">C. States that change one region (mobile, 390 px crops)</h2>
+  <p class="tile-lede">Each crop replaces the matching region of the frame named in its label; the rest of that screen stays as drawn above.</p>
+  <div class="flex flex-wrap gap-x-10 gap-y-12 items-start">
+
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">C1 Step 2 without AI (M2 milestone and fallback), replaces M2 content</figcaption>
+      <div class="crop" lang="sl">
+        <h1 class="q" tabindex="-1">Katera žival je to?</h1>
+        <div class="grid gap-3 mt-6" role="radiogroup" aria-label="Katera žival je to?">
+          <button type="button" class="choice" role="radio" aria-checked="true"><i class="ph-bold ph-dog" aria-hidden="true"></i><span class="flex-1 min-w-0"><span class="t">Pes</span></span><i class="ph-bold ph-check tick" aria-hidden="true"></i></button>
+          <button type="button" class="choice" role="radio" aria-checked="false"><i class="ph-bold ph-cat" aria-hidden="true"></i><span class="flex-1 min-w-0"><span class="t">Mačka</span></span><i class="ph-bold ph-check tick" aria-hidden="true"></i></button>
+          <button type="button" class="choice is-pressed" role="radio" aria-checked="false"><i class="ph-bold ph-question" aria-hidden="true"></i><span class="flex-1 min-w-0"><span class="t">Ne vem</span></span><i class="ph-bold ph-check tick" aria-hidden="true"></i></button>
+        </div>
+        <h2 class="gh mt-8">Velikost (neobvezno)</h2>
+        <div class="flex flex-wrap gap-2" role="radiogroup" aria-label="Velikost (neobvezno)">
+          <button type="button" class="pill" role="radio" aria-checked="false"><i class="ph-bold ph-check tick" aria-hidden="true"></i>Zelo majhna</button>
+          <button type="button" class="pill" role="radio" aria-checked="false"><i class="ph-bold ph-check tick" aria-hidden="true"></i>Majhna</button>
+          <button type="button" class="pill" role="radio" aria-checked="true"><i class="ph-bold ph-check tick" aria-hidden="true"></i>Srednja</button>
+          <button type="button" class="pill" role="radio" aria-checked="false"><i class="ph-bold ph-check tick" aria-hidden="true"></i>Velika</button>
+          <button type="button" class="pill" role="radio" aria-checked="false"><i class="ph-bold ph-check tick" aria-hidden="true"></i>Zelo velika</button>
+        </div>
+        <h2 class="gh mt-8">Barva (neobvezno)</h2>
+        <div class="flex flex-wrap gap-2" role="group" aria-label="Barva (neobvezno)">
+          <button type="button" class="pill" aria-pressed="false" data-toggle><i class="ph-bold ph-check tick" aria-hidden="true"></i>Črna</button>
+          <button type="button" class="pill" aria-pressed="true" data-toggle><i class="ph-bold ph-check tick" aria-hidden="true"></i>Bela</button>
+          <button type="button" class="pill" aria-pressed="false" data-toggle><i class="ph-bold ph-check tick" aria-hidden="true"></i>Siva</button>
+          <button type="button" class="pill" aria-pressed="true" data-toggle><i class="ph-bold ph-check tick" aria-hidden="true"></i>Rjava</button>
+          <button type="button" class="pill" aria-pressed="false" data-toggle><i class="ph-bold ph-check tick" aria-hidden="true"></i>Kremna</button>
+          <button type="button" class="pill" aria-pressed="false" data-toggle><i class="ph-bold ph-check tick" aria-hidden="true"></i>Zlata</button>
+          <button type="button" class="pill" aria-pressed="false" data-toggle><i class="ph-bold ph-plus" aria-hidden="true"></i>Drugo</button>
+        </div>
+      </div>
+      <p class="help mt-4" style="max-width:390px">Species is the one required answer (Ne vem allowed; pressed state shown). Size and colour are optional pills with the glossary §7 labels used in P6; cats show Majhna, Srednja, Velika. Naprej as M3. Pills: selected = <code>primary</code> plus check, never colour alone.</p>
+    </figure>
+
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">C2 Step 1 · Camera denied: gallery path, replaces M1 content and buttons</figcaption>
+      <div class="crop" lang="sl">
+        <h1 class="q" tabindex="-1">Fotografirajte žival</h1>
+        <p class="text-lg leading-7 mt-3">Dovolj je ena fotografija. Če je mogoče, naj bo viden obraz.</p>
+        <div class="note mt-6" role="status"><i class="ph-bold ph-camera-slash" aria-hidden="true"></i><p>Kamera ni dovoljena. Fotografijo izberite iz galerije ali jo dodajte pozneje.</p></div>
+        <button type="button" class="btn btn-primary btn-lg btn-block mt-8"><i class="ph-bold ph-images" aria-hidden="true"></i>Izberi iz galerije</button>
+      </div>
+      <p class="help mt-4" style="max-width:390px"><code>permissions.camera_denied</code> (P2) as the one note; the gallery takes the primary's place and the camera button is gone. Web never shows this: it has the file input (W1 notes).</p>
+    </figure>
+
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">C3 Publish errors: rate limited, captcha failed (replace the M5 bottom block)</figcaption>
+      <div class="crop" lang="sl">
+        <p class="crop-l">Rate limited (5 per hour)</p>
+        <div id="c3-lim" class="note" role="alert"><i class="ph-bold ph-hourglass-medium" aria-hidden="true"></i><p>V kratkem času ste oddali več prijav, zato smo jih začasno omejili. Poskusite znova čez <span class="tnum">12</span> minut.</p></div>
+        <button type="button" class="btn btn-primary btn-lg btn-block mt-4" disabled aria-describedby="c3-lim">Objavi prijavo</button>
+        <p class="crop-l mt-8">Captcha failed or provider outage</p>
+        <div class="note" role="alert"><i class="ph-fill ph-warning-circle text-destructive" aria-hidden="true"></i><p>Preverjanje ni uspelo. Osnutek je shranjen, poskusili bomo znova samodejno.</p></div>
+        <button type="button" class="btn btn-primary btn-lg btn-block mt-4">Objavi prijavo</button>
+      </div>
+      <p class="help mt-4" style="max-width:390px">Rate limit: the note replaces the privacy line, Publish is disabled (<code>muted</code>, still 4.5:1) with the note as its reason, enabled again when the time is up; 20 per day uses <code>limit_day</code>. Captcha failure: calm note, the draft is kept, the app retries by itself and Publish stays enabled. Fail-open or closed is decided in the TDD.</p>
+    </figure>
+
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">C4 Shelter row variants (replace the M6 shelter row)</figcaption>
+      <div class="crop" lang="sl">
+        <p class="crop-l">"Ne, žival ni pri meni": softer, no chip line</p>
+        <div class="sh">
+          <i class="ph-bold ph-phone" aria-hidden="true"></i>
+          <div>
+            <p>Če žival ujamete ali jo kdo vzame k sebi, pokličite zavetišče, pristojno za občino Ljubljana.</p>
+            <p class="sh-name mt-3" data-sample>Zavetišče Ljubljana</p>
+            <p class="sh-num" data-sample>01 234 56 78</p>
+            <div class="flex flex-wrap items-center gap-x-4 gap-y-1 mt-3">
+              <a href="#" class="btn btn-secondary btn-sm" aria-label="Pokliči Zavetišče Ljubljana"><i class="ph-bold ph-phone" aria-hidden="true"></i>Pokliči</a>
+              <a href="#" class="tl">Delovni čas in naslov</a>
+            </div>
+          </div>
+        </div>
+        <p class="crop-l mt-8">Unknown municipality</p>
+        <div class="note"><i class="ph-bold ph-phone" aria-hidden="true"></i><div><p>Občine nismo mogli določiti. Pristojno zavetišče poiščite v imeniku zavetišč.</p><a href="#" class="tl mt-1">Imenik zavetišč</a></div></div>
+      </div>
+      <p class="help mt-4" style="max-width:390px">Sighted path: <code>sighted_body</code>, no <code>not_replace</code>, no <code>chip_line</code>. Unknown municipality: <code>unknown_municipality</code> note with <code>directory_link</code> (P3 T5), never a guessed number; known municipality without a shelter: the same note with <code>shelter_row.unconfirmed</code>. Suggested or two nearest unconfirmed shelters: P6 C3 and C4 unchanged. The short sighting flow shows no row.</p>
+    </figure>
+
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">C5 Sighting sent (replaces the M6 content above the shelter row)</figcaption>
+      <div class="crop" lang="sl">
+        <span class="spot" aria-hidden="true"><i class="ph-bold ph-eye"></i></span>
+        <h1 class="q mt-6" tabindex="-1">Hvala za opažanje</h1>
+        <p class="text-lg leading-7 mt-3">Osebo, ki žival išče, smo obvestili. Če vam bo pisala, boste sporočilo našli prek zasebne povezave.</p>
+        <section class="card p-6 mt-8" aria-label="Vaša zasebna povezava">
+          <h2 class="ttl">Vaša zasebna povezava</h2>
+          <p class="lnk mt-2" data-sample>https://najdimo.si/m/r4Tn8vW2qL6pXs9cJ7dK</p>
+          <p class="help mt-2">S to povezavo urejate prijavo in odgovarjate na sporočila, tudi na drugi napravi. Shranite jo: brez e-naslova je ne moremo obnoviti.</p>
+          <button type="button" class="btn btn-secondary btn-block mt-4"><i class="ph-bold ph-copy" aria-hidden="true"></i>Kopiraj povezavo</button>
+        </section>
+      </div>
+      <p class="help mt-4" style="max-width:390px">Same link block as M6, no shelter row. Bottom: primary <code>common.close</code> "Zapri" back to the listing (P9), which now lists the sighting in its timeline.</p>
+    </figure>
+
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">C6 Map tab: outbox rows (waiting, sending, sent, failed)</figcaption>
+      <div class="crop" lang="sl">
+        <ul class="grid gap-5" aria-label="Prijave, ki čakajo na pošiljanje" data-sample>
+          <li class="qrow"><img src="../directions/img/dog-beagle.jpg" alt=""><div class="min-w-0"><p class="t">Srednje velik pes</p><p class="flex items-center gap-2 mt-1"><span class="qst"><i class="ph-bold ph-clock" aria-hidden="true"></i>Čaka na pošiljanje</span><span class="help tnum">14.32</span></p></div></li>
+          <li class="qrow"><img src="../directions/img/cat-ginger.jpg" alt=""><div class="min-w-0"><p class="t">Mačka</p><p class="flex items-center gap-2 mt-1"><span class="qst text-muted-foreground"><span class="spin" aria-hidden="true"></span>Pošiljanje …</span><span class="help tnum">14.10</span></p></div></li>
+          <li class="qrow"><img src="../directions/img/dog-terrier.jpg" alt=""><div class="min-w-0"><p class="t">Majhen pes</p><p class="flex items-center gap-2 mt-1"><span class="qst text-primary"><i class="ph-fill ph-check-circle" aria-hidden="true"></i>Poslano</span><span class="help tnum">13.55</span></p></div></li>
+          <li class="qrow items-start"><img src="../directions/img/cat-bw.jpg" alt=""><div class="min-w-0"><p class="t">Mačka</p><p class="flex items-center gap-2 mt-1"><span class="qst text-destructive"><i class="ph-fill ph-warning-circle" aria-hidden="true"></i>Ni poslano</span><span class="help tnum">13.20</span></p>
+            <div class="flex items-center gap-1 -ml-3 mt-1"><button type="button" class="btn btn-text"><i class="ph-bold ph-arrow-clockwise" aria-hidden="true"></i>Poskusi znova</button><button type="button" class="iconbtn" aria-label="Izbriši iz čakalne vrste"><i class="ph-bold ph-trash" aria-hidden="true"></i></button></div></div></li>
+        </ul>
+      </div>
+      <p class="help mt-4" style="max-width:390px">A quiet group at the top of the Map tab sheet, only while something is queued; rows use the pet-row shape (photo, title, status word, time), no dividers. Status = icon + word + colour. Sent rows leave after the next app open. Retry never makes a duplicate (idempotency key). All row strings are SAMPLE (no content keys yet); behaviour belongs to TASK-86.2.</p>
+    </figure>
+
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">C7 Delete my data: alert dialog over MG1 (focus starts on Prekliči)</figcaption>
+      <div class="crop modal" lang="sl">
+        <div class="scrim"></div>
+        <div class="dialog" role="alertdialog" aria-modal="true" aria-label="Izbrišete prijavo in svoje podatke?" aria-describedby="c7-b">
+          <h2 class="ttl">Izbrišete prijavo in svoje podatke?</h2>
+          <p id="c7-b" class="mt-2">Prijava, fotografije in vaš e-naslov bodo izbrisani, pogovori pa zaprti. Tega ni mogoče razveljaviti.</p>
+          <div class="grid gap-2 mt-6">
+            <button type="button" class="btn btn-destructive btn-lg btn-block">Izbriši</button>
+            <button type="button" class="btn btn-text btn-block is-focus">Prekliči</button>
+          </div>
+        </div>
+      </div>
+      <p class="help mt-4" style="max-width:390px">R-034.4. <code>destructive</code> takes the primary's place (7:1). Focus trapped, Escape cancels. After delete: a plain screen with <code>report_found.deleted</code>, the link stops working (it then shows <code>link_invalid_*</code> with the resend form).</p>
+    </figure>
+
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">C8 Manage page: under review, closed (replace the MG1 note)</figcaption>
+      <div class="crop" lang="sl">
+        <p class="crop-l">Hidden by moderation</p>
+        <div class="note"><i class="ph-bold ph-hourglass-medium" aria-hidden="true"></i><div><p class="font-bold">Prijava je v pregledu</p><p>Prijavo pregleduje naša ekipa. Do takrat ni javno vidna.</p></div></div>
+        <p class="crop-l mt-8">Closed or expired (read-only)</p>
+        <div class="note"><i class="ph-bold ph-check-circle" aria-hidden="true"></i><div><p>Prijava je zaključena. V 7 dneh jo lahko ponovno odprete.</p><button type="button" class="btn btn-secondary btn-sm mt-3">Ponovno odpri</button></div></div>
+      </div>
+      <p class="help mt-4" style="max-width:390px">Under review: Messages and actions stay; the pill is unchanged. Closed or expired: facts read-only, only Ponovno odpri and Izbriši moje podatke remain; after 7 days the reopen button goes. Lost link: the resend page (<code>resend_*</code>) is a neutral e-mail form with one generic answer (<code>resend_done</code>), as P16 M7.</p>
+    </figure>
+  </div>
+
+  <!-- ================= W. WEB ================= -->
+  <h2 class="tile-title !text-2xl" style="margin-top:72px">W. Web</h2>
+  <p class="tile-lede">P1 flow shell (reduced header, minimal footer), centred 560 px column, the bars in a row under the header. Step 1 is a file input with a drop area ("Izberi fotografijo", "ali jo povlecite sem"); step 3 opens P5 E1 as a content dialog; step 5 is M5 in the column. Enter advances; errors are announced.</p>
+
+  <p class="tile-h">W1 Success with QR (1200 px): pointer on "Deli"</p>
+  <div class="wrap-x"><div class="browser" lang="sl">
+    <div class="browser-bar"><span class="dots"><i></i><i></i><i></i></span><span class="url"><i class="ph ph-lock-simple"></i>najdimo.si/prijava/najdena-zival</span></div>
+    <header class="flex items-center gap-8 px-12 h-[88px]">
+      <a href="#" class="logo-link" aria-label="Najdimo, na začetno stran"><svg class="logo-mark w-9 h-9" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg><span class="font-display font-bold text-2xl tracking-[-0.03em]" aria-hidden="true">Najdimo</span></a>
+      <a href="#" class="btn btn-ghost btn-sm ml-auto"><i class="ph-bold ph-x" aria-hidden="true"></i>Zapri</a>
+    </header>
+    <main class="w-full max-w-[560px] mx-auto pt-8">
+      <span class="spot" aria-hidden="true"><i class="ph-bold ph-hand-heart"></i></span>
+      <h1 class="font-display font-bold text-5xl leading-[52px] tracking-[-0.02em] mt-8" tabindex="-1">Hvala, prijava je objavljena</h1>
+      <p class="text-xl leading-8 mt-4">Prijavo vidijo ljudje v bližini, mi pa jo primerjamo z vsemi prijavami izgubljenih živali.</p>
+
+      <section class="card p-6 mt-10" aria-label="Vaša zasebna povezava">
+        <h2 class="ttl !text-xl">Vaša zasebna povezava</h2>
+        <div class="grid grid-cols-[minmax(0,1fr)_152px] gap-6 mt-2 items-start">
+          <div>
+            <p class="lnk" data-sample>https://najdimo.si/m/k7Q2xP9v4mRtLw8zN3hB</p>
+            <p class="help mt-2">S to povezavo urejate prijavo in odgovarjate na sporočila, tudi na drugi napravi. Shranite jo: brez e-naslova je ne moremo obnoviti.</p>
+            <button type="button" class="btn btn-secondary mt-4"><i class="ph-bold ph-copy" aria-hidden="true"></i>Kopiraj povezavo</button>
+            <p class="lp-line mt-4"><i class="ph-bold ph-envelope-simple" aria-hidden="true"></i><span>Povezavo smo poslali tudi na vaš e-naslov.</span></p>
+          </div>
+          <figure class="m-0">
+            <div class="qr" role="img" aria-label="Koda QR z vašo zasebno povezavo"><i class="ph ph-qr-code" aria-hidden="true"></i></div>
+            <figcaption class="help mt-2">Skenirajte kodo, da prijavo odprete na telefonu.</figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <div class="sh mt-10">
+        <i class="ph-bold ph-phone" aria-hidden="true"></i>
+        <div>
+          <p>Najdbo čim prej sporočite zavetišču, pristojnemu za občino Ljubljana. Prijava na Najdimo tega ne nadomesti.</p>
+          <p class="sh-name mt-3" data-sample>Zavetišče Ljubljana</p>
+          <p class="sh-num" data-sample>01 234 56 78</p>
+          <div class="flex flex-wrap items-center gap-x-4 gap-y-1 mt-3">
+            <a href="#" class="btn btn-secondary btn-sm" aria-label="Pokliči Zavetišče Ljubljana"><i class="ph-bold ph-phone" aria-hidden="true"></i>Pokliči</a>
+            <a href="#" class="tl">Delovni čas in naslov</a>
+          </div>
+          <p class="help mt-3">Čip lahko prebere katero koli zavetišče ali veterinar.</p>
+        </div>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-2 mt-12">
+        <a href="#" class="btn btn-primary btn-lg">Odpri mojo prijavo</a>
+        <a href="#" class="btn btn-text">Ustvari račun in obdrži prijavo</a>
+        <button type="button" class="btn btn-text is-hover"><i class="ph-bold ph-share-network" aria-hidden="true"></i>Deli</button>
+      </div>
+    </main>
+    <footer class="px-12 pt-6 pb-6 mt-24">
+      <nav aria-label="Noga strani"><ul class="flex flex-wrap justify-center gap-x-6">
+        <li><a href="#" class="fl">Zasebnost</a></li>
+        <li><a href="#" class="fl">Pogoji uporabe</a></li>
+        <li><button type="button" class="fl" aria-haspopup="dialog">Nastavitve piškotkov</button></li>
+        <li><a href="#" class="fl">Dostopnost</a></li>
+      </ul></nav>
+    </footer>
+  </div></div>
+  <p class="help mt-4" style="max-width:62ch">Link block: text column and a 152 px QR with <code>link_qr_web</code> under it; below 560 px the QR moves under the text. The QR keeps dark modules on a light field in dark mode too (placeholder glyph here; the code is generated, no asset). Hover on text buttons: <code>foreground</code> at 10 %. Shelter row as M6. Manage page on web: MG1 in this column, header "Prijavi" as <code>secondary</code> when "Odpri sporočila" is shown.</p>
+</section>
+<p class="tile-section !py-8 text-sm text-muted-foreground">Placeholder photography from Unsplash (Unsplash License). Copy: docs/content/pages/P7-report-found.md v0.3; <code>shelter_row.*</code> from P6 v0.4; <code>permissions.camera_denied</code>, <code>common.*</code> from P1 and P2; size and colour labels from the glossary §7 as used in P6; location from P5. Samples (marked <code>data-sample</code>): private links, shelter name and number, the waiting-to-send title (page slice wording, no key yet), the outbox row strings, the manage-page alt text, user-entered text.</p>
+</div>
+
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<script src="../directions/directions.js"></script>
+</body>
+</html>
