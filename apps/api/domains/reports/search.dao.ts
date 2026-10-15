@@ -38,9 +38,9 @@ const C = Prisma.raw('c');
 
 /**
  * Visible reports only; open and matched, plus with include_closed those closed or reunited after `closedSince`
- * (closed ≤ 30 days, as GET /v1/reports/:code). Expired reports are closed, so they follow the same rule.
+ * (closed â‰¤ 30 days, as GET /v1/reports/:code). Expired reports are closed, so they follow the same rule.
  */
-function where(f: SearchFilters, closedSince: Date): Prisma.Sql {
+export function searchWhere(f: SearchFilters, closedSince: Date): Prisma.Sql {
 	const conds = [
 		Prisma.sql`r.moderation_state = 'visible'`,
 		f.include_closed
@@ -72,7 +72,7 @@ export async function countReports(
 ): Promise<number> {
 	const db = tx ?? prisma;
 	const [row] = await db.$queryRaw<{ n: number }[]>`
-		select count(*)::int as n from app.reports r where ${where(f, closedSince)}`;
+		select count(*)::int as n from app.reports r where ${searchWhere(f, closedSince)}`;
 	return row?.n ?? 0;
 }
 
@@ -103,7 +103,7 @@ export async function searchIds(
 		: Prisma.empty;
 	const rows = await db.$queryRaw<{ id: string }[]>`
 		select r.id::text as id from app.reports r
-		where ${where(input, input.closedSince)} ${after}
+		where ${searchWhere(input, input.closedSince)} ${after}
 		order by ${order}
 		limit ${take}`;
 	return rows.map((row) => row.id);
@@ -125,7 +125,7 @@ export async function mapReports(
 				where p.report_id = r.id and p.status = 'published' and p.public_thumb_url is not null
 				order by p.position limit 1) as thumb_url
 		from app.reports r
-		where ${where(input, input.closedSince)}
+		where ${searchWhere(input, input.closedSince)}
 		order by ${boosted(R, now)} desc, r.event_at desc, r.id desc
 		limit ${take}`;
 }

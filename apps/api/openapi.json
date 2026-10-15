@@ -3375,6 +3375,97 @@
 						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
 					}
 				}
+			},
+			"get": {
+				"operationId": "searchReports",
+				"summary": "Search public reports (list)",
+				"description": "Visible open and matched reports (with `include_closed=true` also those closed or reunited in the last 30 days), filtered by `bbox=w,s,e,n` and/or `near=lat,lng,km` (km ≤ 100) on the fuzzed public centre, `types`, `species`, `colours` (any of), `sizes` (comma lists) and `from`/`to` on event_at. Boosted reports first, then `sort=recent` (event_at, newest first; default) or `sort=distance` (needs `near`). Keyset pages: `cursor` = the last item id, `limit` ≤ 50 (default 20). Items are PublicReport only (also your own reports, with `is_mine`). `Cache-Control: private, no-store`.",
+				"tags": ["reports"],
+				"parameters": [
+					{
+						"schema": {
+							"anyOf": [{ "type": "string" }, { "type": "array", "items": { "type": "string" } }]
+						},
+						"required": false,
+						"name": "types",
+						"in": "query"
+					},
+					{
+						"schema": {
+							"anyOf": [{ "type": "string" }, { "type": "array", "items": { "type": "string" } }]
+						},
+						"required": false,
+						"name": "species",
+						"in": "query"
+					},
+					{
+						"schema": {
+							"anyOf": [{ "type": "string" }, { "type": "array", "items": { "type": "string" } }]
+						},
+						"required": false,
+						"name": "colours",
+						"in": "query"
+					},
+					{
+						"schema": {
+							"anyOf": [{ "type": "string" }, { "type": "array", "items": { "type": "string" } }]
+						},
+						"required": false,
+						"name": "sizes",
+						"in": "query"
+					},
+					{
+						"schema": { "type": "string", "format": "date-time" },
+						"required": false,
+						"name": "from",
+						"in": "query"
+					},
+					{
+						"schema": { "type": "string", "format": "date-time" },
+						"required": false,
+						"name": "to",
+						"in": "query"
+					},
+					{ "schema": { "type": "string" }, "required": false, "name": "include_closed", "in": "query" },
+					{ "schema": { "type": "string" }, "required": false, "name": "bbox", "in": "query" },
+					{ "schema": { "type": "string" }, "required": false, "name": "near", "in": "query" },
+					{
+						"schema": { "$ref": "#/components/schemas/ReportSort" },
+						"required": false,
+						"name": "sort",
+						"in": "query"
+					},
+					{
+						"schema": { "type": "string", "format": "uuid" },
+						"required": false,
+						"name": "cursor",
+						"in": "query"
+					},
+					{
+						"schema": { "type": "integer", "minimum": 1, "maximum": 50 },
+						"required": false,
+						"name": "limit",
+						"in": "query"
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "One page of reports",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ReportList" } } }
+					},
+					"400": {
+						"description": "VALIDATION",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"429": {
+						"description": "RATE_LIMITED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"500": {
+						"description": "INTERNAL",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					}
+				}
 			}
 		},
 		"/v1/reports/{code}": {
@@ -3526,6 +3617,88 @@
 					},
 					"410": {
 						"description": "GONE",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"429": {
+						"description": "RATE_LIMITED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"500": {
+						"description": "INTERNAL",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					}
+				}
+			}
+		},
+		"/v1/reports/map": {
+			"get": {
+				"operationId": "getMapReports",
+				"summary": "Public reports in a map viewport",
+				"description": "Minimal map items (fuzzed area, boosted, first thumbnail) of the reports whose public centre is in `bbox=w,s,e,n`, with the list filters; boosted first, then newest events. `limit` ≤ 1000 (default 500). `Cache-Control: private, no-store`.",
+				"tags": ["reports"],
+				"parameters": [
+					{
+						"schema": {
+							"anyOf": [{ "type": "string" }, { "type": "array", "items": { "type": "string" } }]
+						},
+						"required": false,
+						"name": "types",
+						"in": "query"
+					},
+					{
+						"schema": {
+							"anyOf": [{ "type": "string" }, { "type": "array", "items": { "type": "string" } }]
+						},
+						"required": false,
+						"name": "species",
+						"in": "query"
+					},
+					{
+						"schema": {
+							"anyOf": [{ "type": "string" }, { "type": "array", "items": { "type": "string" } }]
+						},
+						"required": false,
+						"name": "colours",
+						"in": "query"
+					},
+					{
+						"schema": {
+							"anyOf": [{ "type": "string" }, { "type": "array", "items": { "type": "string" } }]
+						},
+						"required": false,
+						"name": "sizes",
+						"in": "query"
+					},
+					{
+						"schema": { "type": "string", "format": "date-time" },
+						"required": false,
+						"name": "from",
+						"in": "query"
+					},
+					{
+						"schema": { "type": "string", "format": "date-time" },
+						"required": false,
+						"name": "to",
+						"in": "query"
+					},
+					{ "schema": { "type": "string" }, "required": false, "name": "include_closed", "in": "query" },
+					{ "schema": { "type": "string" }, "required": true, "name": "bbox", "in": "query" },
+					{
+						"schema": { "type": "integer", "minimum": 1, "maximum": 1000 },
+						"required": false,
+						"name": "limit",
+						"in": "query"
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Map items",
+						"content": {
+							"application/json": { "schema": { "$ref": "#/components/schemas/MapReportList" } }
+						}
+					},
+					"400": {
+						"description": "VALIDATION",
 						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
 					},
 					"429": {
