@@ -43,7 +43,10 @@ export function circlePolygon(center: LatLng, radiusM: number): Position[] {
 	const cosLat = Math.cos((center.lat * Math.PI) / 180);
 	const ring = Array.from({ length: STEPS }, (_, i): Position => {
 		const a = (2 * Math.PI * i) / STEPS;
-		return [center.lng + (d * Math.sin(a) * 180) / Math.PI / cosLat, center.lat + (d * Math.cos(a) * 180) / Math.PI];
+		return [
+			center.lng + (d * Math.sin(a) * 180) / Math.PI / cosLat,
+			center.lat + (d * Math.cos(a) * 180) / Math.PI,
+		];
 	});
 	return [...ring, ring[0]];
 }
@@ -66,12 +69,10 @@ export const pathFeatures = (paths: Path[]) =>
 				geometry: { type: 'LineString', coordinates: p.points.map(pos) },
 				properties: { id: p.id },
 			},
-			...p.points.map(
-				(point, i): Feature => ({
-					type: 'Feature',
-					geometry: { type: 'Point', coordinates: pos(point) },
-					properties: p.numbered ? { id: p.id, n: i + 1 } : { id: p.id },
-				})
-			),
+			...p.points.map((point, i): Feature => ({
+				type: 'Feature',
+				geometry: { type: 'Point', coordinates: pos(point) },
+				properties: p.numbered ? { id: p.id, n: i + 1 } : { id: p.id },
+			})),
 		])
 	);

@@ -156,7 +156,12 @@ export function MapView({
 		try {
 			const zoom = await source.current?.getClusterExpansionZoom(Number(props.cluster_id));
 			if (center && zoom !== undefined)
-				camera.current?.easeTo({ center, zoom, duration: reduceMotion ? 0 : motion.duration.slow, easing: 'ease' });
+				camera.current?.easeTo({
+					center,
+					zoom,
+					duration: reduceMotion ? 0 : motion.duration.slow,
+					easing: 'ease',
+				});
 		} catch {
 			// The cluster changed under the tap (data refresh); the next tap works on the new one.
 		}
@@ -248,7 +253,11 @@ export function MapView({
 								'text-offset': [0, -1.5],
 								'text-allow-overlap': true,
 							}}
-							paint={{ 'text-color': c.foreground, 'text-halo-color': c['marker-ring'], 'text-halo-width': 2 }}
+							paint={{
+								'text-color': c.foreground,
+								'text-halo-color': c['marker-ring'],
+								'text-halo-width': 2,
+							}}
 						/>
 					</GeoJSONSource>
 					<GeoJSONSource
@@ -335,11 +344,19 @@ export function MapView({
 			{listOpen ? (
 				<View className="absolute inset-0 bg-card">
 					<View className="px-5 pt-2">
-						<Button ref={closeRef} variant="text" className="-ml-3 self-start" onPress={() => setListOpen(false)}>
+						<Button
+							ref={closeRef}
+							variant="text"
+							className="-ml-3 self-start"
+							onPress={() => setListOpen(false)}
+						>
 							{t('list_hide')}
 						</Button>
 					</View>
-					<ScrollView contentContainerClassName="px-5" contentContainerStyle={{ paddingBottom: bottomInset + 16 }}>
+					<ScrollView
+						contentContainerClassName="px-5"
+						contentContainerStyle={{ paddingBottom: bottomInset + 16 }}
+					>
 						{textAlternative}
 					</ScrollView>
 				</View>
