@@ -14,14 +14,14 @@ All three R2 buckets are created in the **EU jurisdiction**; the adapter and pre
 
 ## Model (Prisma, schema `app`)
 
-`Photo { id, ownerId, petId?, reportId?, position (0–4), sha256, width, height, bytes, status: uploaded | accepted | rejected | published | unpublished, rejectReason?, publicDisplayUrl?, publicThumbUrl?, createdAt }`, unique `(ownerId, sha256)`, check: not both `petId` and `reportId`.
+`Photo { id, ownerId, petId?, reportId?, position (0–4), sha256, width, height, bytes, status: pending | uploaded | accepted | rejected | published | unpublished, rejectReason?, publicDisplayUrl?, publicThumbUrl?, createdAt }`, unique `(ownerId, sha256)`, check: not both `petId` and `reportId`.
 
 ## REST
 
 | Method and path | Auth | Request | Response | Errors |
 |---|---|---|---|---|
-| `POST /v1/photos` | user or anonymous | `{ sha256, width, height, bytes }` (`bytes` ≤ 1 MB = 1 048 576 bytes, `MAX_PHOTO_BYTES` in `@zivali/validation`; long edge ≤ 1600, short edge ≥ 320) | `201 { photo_id, upload: { url, method: 'PUT', headers: { 'Content-Type': 'image/jpeg' }, expires_at } }`, or `200 { photo_id, existing: true }` only for the same owner and hash when `/complete` already succeeded (status `uploaded` or later); otherwise (never completed, failed PUT or `/complete`) a fresh upload `201` for the same `photo_id` with a new presigned URL, so an outbox retry always uploads | `VALIDATION`, `RATE_LIMITED` (60/hour) |
-| `POST /v1/photos/:id/complete` | owner | - | `202 { status: 'uploaded' }` and job `photo.process` | `NOT_FOUND`, `CONFLICT` (object missing in R2) |
+| `POST /v1/photos` | user or anonymous | `{ sha256, width, height, bytes }` (`bytes` ≤ 1 MB = 1 048 576 bytes, `MAX_PHOTO_BYTES` in `@zivali/validation`; long edge ≤ 1600, short edge ≥ 320) | `201 { photo_id, upload: { url, method: 'PUT', headers: { 'Content-Type': 'image/jpeg' }, expires_at } }`, or `200 { photo_id, existing: true }` only for the same owner and hash when `/complete` already succeeded (status `uploaded` or later; on an unattached photo this response restarts its 24 h purge clock, so a 23 h client re-upload does not lose it at 24 h); otherwise (never completed, failed PUT or `/complete`) a fresh upload `201` for the same `photo_id` with a new presigned URL, so an outbox retry always uploads | `VALIDATION`, `RATE_LIMITED` (60/hour) |
+| `POST /v1/photos/:id/complete` | owner | - | `202 { status: 'uploaded' }` (`POST /v1/photos` creates the row as `pending`; `/complete` sets `uploaded`) and job `photo.process` | `NOT_FOUND`, `CONFLICT` (object missing in R2) |
 | `GET /v1/photos/:id` | owner | - | `{ id, status, reject_reason?, thumb_url }` (`thumb_url` is a 10-minute presigned GET while private, the public URL once published) | `NOT_FOUND` |
 | `DELETE /v1/photos/:id` | owner | - | `204`; objects deleted by the worker | `CONFLICT` if attached to a published report |
 | `PUT /v1/pets/:id/photos`, report create/update (C4) | owner/manager | `photo_ids: uuid[]` in order | attaches and sets positions | `VALIDATION` (> 5, foreign photo) |
@@ -57,3 +57,5 @@ Offline (C17): the mobile outbox keeps `PreparedPhoto` files and calls `uploadPh
 |---|---|---|
 | 1.1 | 2026-10-15 | CH-55: uploadPhoto signature (client, onProgress fraction, put), PreparedPhoto type; photoAlt dropped (alt from the API) |
 | 1.2 | 2026-10-15 | CH-60: existing: true only after /complete succeeded; else fresh upload for the same photo_id |
+| 1.3 | 2026-10-15 | CH-131: photo status adds `pending` (POST creates pending, /complete sets uploaded) |
+| 1.4 | 2026-10-15 | CH-134: `existing: true` on an unattached photo resets its 24 h purge clock |

@@ -7,6 +7,7 @@ import { LOCALES, type Aal, type Locale, type UserRole } from '@zivali/types';
 import { adapters, type Adapters } from '../adapters/index.ts';
 import type { Prisma } from '../prisma/prisma.ts';
 import { hashKey } from './crypto.ts';
+import { jobs, type Jobs } from './jobs.ts';
 import { logger, type Logger } from './logger.ts';
 
 /** Who is calling, set on req.user by authMiddleware/optionalAuth. role and locale come from app.profiles (C3). */
@@ -24,17 +25,6 @@ declare module 'http' {
 		user?: Actor;
 	}
 }
-
-export type Jobs = {
-	send(queue: string, data: object, options?: { tx?: Prisma.TransactionClient }): Promise<string | null>;
-};
-
-// ponytail: placeholder until TASK-6.3 (lib/jobs.ts, pg-boss) plugs in the real sender; fails loudly, never drops a job.
-const jobs: Jobs = {
-	send: async (queue) => {
-		throw new Error(`job queue not available yet (TASK-6.3): ${queue}`);
-	},
-};
 
 export type Ctx = {
 	actor: Actor | null;

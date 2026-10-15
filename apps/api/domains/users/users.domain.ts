@@ -65,7 +65,7 @@ export async function updateMe(input: UpdateMeInput, ctx: Ctx): Promise<MeRow> {
 
 /** Auth emails read user_metadata.locale: keep it in step with the profile (best effort, the profile is the truth). */
 async function syncAuthLocale(id: string, locale: Locale): Promise<void> {
-	const key = config.SUPABASE_SERVICE_ROLE_KEY;
+	const key = config.SUPABASE_SECRET_KEY;
 	if (!key) return;
 	try {
 		const res = await fetch(`${config.SUPABASE_URL}/auth/v1/admin/users/${id}`, {

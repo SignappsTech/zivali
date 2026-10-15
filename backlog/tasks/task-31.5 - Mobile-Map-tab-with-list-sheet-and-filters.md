@@ -46,4 +46,5 @@ Branch: agent/task-31.5-browse-mob
 - [ ] #2 Filters (type, species, distance, date range, colour, size) narrow map and list and show counts with correct SL plurals.
 - [ ] #3 Boosted reports first, closed excluded by default, empty state with Report and Set alert, and an insertion point for ad cards.
 - [ ] #4 Map, list and report screens read reports only through lib/data/reports.ts hooks (C17 data seam), so the offline cache plugs in without screen changes.
+- [ ] #5 The map calls setCacheArea('current', point) with the last foreground location (TASK-85.2 offline cache), so the current area is cached for offline use.
 <!-- AC:END -->

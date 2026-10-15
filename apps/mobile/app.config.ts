@@ -23,6 +23,7 @@ const config: ExpoConfig = {
 	version: '0.1.0',
 	orientation: 'portrait',
 	userInterfaceStyle: 'automatic',
+	locales: { en: './locales/en.json', sl: './locales/sl.json' },
 	ios: { bundleIdentifier: 'si.signapps.zivali', supportsTablet: false, googleServicesFile: googleServiceInfoPlist },
 	android: { package: 'si.signapps.zivali', allowBackup: false, googleServicesFile },
 	plugins: [
@@ -34,6 +35,17 @@ const config: ExpoConfig = {
 				image: './assets/splash.png',
 				backgroundColor: colors.light.background,
 				dark: { image: './assets/splash-dark.png', backgroundColor: colors.dark.background },
+			},
+		],
+		// Camera for the photo step (P2 primer first, permissions.camera_body); the gallery is the system picker, which
+		// needs no photo library permission, and photos only (no microphone).
+		[
+			'expo-image-picker',
+			{
+				cameraPermission:
+					'Kamero uporabimo samo, ko fotografirate žival. Fotografijo lahko izberete tudi iz galerije.',
+				photosPermission: 'Fotografije dostopamo samo, ko izberete sliko živali. Ostalih fotografij ne beremo.',
+				microphonePermission: false,
 			},
 		],
 	],

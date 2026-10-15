@@ -47,4 +47,5 @@ Branch: agent/task-22.3-notify-be
 - [ ] #3 GET /v1/notifications, POST /v1/notifications/read, GET and PUT /v1/notification-prefs, POST and DELETE /v1/push-tokens and the signed unsubscribe link work per C10 with permission tests; DeviceNotRegistered deletes the token.
 - [ ] #4 Nearby-alert pushes are limited to one per report per user; quiet-hour items are re-sent for the end of quiet hours.
 - [ ] #5 Tests assert email_outbox rows (mocked) and push mock calls for each notification type in C10.
+- [ ] #6 Push and email text is rendered with createTranslator in the recipient's profiles.locale (C16, TASK-10.4 AC5); a test sends one notification to an sl and one to an en recipient and asserts the language.
 <!-- AC:END -->
