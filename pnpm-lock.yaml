@@ -47,15 +47,18 @@ importers:
 
   apps/web:
     dependencies:
+      '@reduxjs/toolkit':
+        specifier: ^2.13.0
+        version: 2.13.0(react-redux@9.3.0(@types/react@19.3.0)(react@19.3.0)(redux@5.0.1))(react@19.3.0)
       '@supabase/ssr':
         specifier: ^0.12.7
         version: 0.12.7(@supabase/supabase-js@2.117.3)
       '@supabase/supabase-js':
         specifier: ^2.117.3
         version: 2.117.3
-      '@tanstack/react-query':
-        specifier: ^5.104.2
-        version: 5.104.2(react@19.3.0)
+      '@zivali/api':
+        specifier: workspace:*
+        version: link:../../packages/api
       '@zivali/tokens':
         specifier: workspace:*
         version: link:../../packages/tokens
@@ -74,6 +77,9 @@ importers:
       react-dom:
         specifier: ~19.3.0
         version: 19.3.0(react@19.3.0)
+      react-redux:
+        specifier: ^9.3.0
+        version: 9.3.0(@types/react@19.3.0)(react@19.3.0)(redux@5.0.1)
       tailwind-merge:
         specifier: ^3.7.0
         version: 3.7.0
@@ -1219,14 +1225,6 @@ packages:
 
   '@tailwindcss/postcss@4.3.3':
     resolution: {integrity: sha512-JTSZZGQi1AyKirbLN3azmjVzef92tcX7h+iSqPdaeStyFpGpDlKvvpxeOE8njhbUanbRwr3z8DyzhICWnMtQeg==}
-
-  '@tanstack/query-core@5.104.2':
-    resolution: {integrity: sha512-/qbsxJK5c3Ve1aFIULWYNcT2jeRUAiD4HME6Eu2ZdpofHoVgAjpkQhLg5xHuOoBkTPQUJLfP7zOxy0qsBcqROA==}
-
-  '@tanstack/react-query@5.104.2':
-    resolution: {integrity: sha512-xKmzWGhadbE5wGS/ZmXShRITnI9oItox5GO14KvFZco3+vhTAyXS1erYzJWdiY280zapAGJXFUL9nHgwP6SV/g==}
-    peerDependencies:
-      react: ^18 || ^19
 
   '@testing-library/dom@10.4.2':
     resolution: {integrity: sha512-yzr2S9HyAIdhz2/6qHgbs665Q7PKVcDF05vsOlHPxG1mo36gKVesdYVeDLnXgfjJ03CrKRk08knc6+E/9m8v2Q==}
@@ -4266,13 +4264,6 @@ snapshots:
       '@tailwindcss/oxide': 4.3.3
       postcss: 8.5.30
       tailwindcss: 4.3.3
-
-  '@tanstack/query-core@5.104.2': {}
-
-  '@tanstack/react-query@5.104.2(react@19.3.0)':
-    dependencies:
-      '@tanstack/query-core': 5.104.2
-      react: 19.3.0
 
   '@testing-library/dom@10.4.2':
     dependencies:
