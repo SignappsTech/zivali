@@ -13,7 +13,7 @@ copy: docs/content/pages/P7-report-found.md
 
 A finder or passer-by reports an animal in under a minute, without an account, from a phone. Median under 60 seconds (G-3), so the flow is short and every screen has one question. No ad, no payment prompt.
 
-## Flow (Flow variant: flow top bar with back, four step bars, close)
+## Flow (Flow variant: flow top bar with back, five step bars, close)
 
 | Step | Question (h1) | Control |
 |---|---|---|

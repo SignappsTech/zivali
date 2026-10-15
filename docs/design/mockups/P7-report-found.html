@@ -79,9 +79,9 @@
 .lnk { margin: 0; padding: 8px 2px 8px; font-size: 16px; line-height: 24px; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; border-bottom: 2px solid hsl(var(--input)); user-select: all; -webkit-user-select: all; }
 .ok { display: flex; align-items: center; gap: 6px; margin: 0; font-size: 14px; line-height: 20px; font-weight: 700; color: hsl(var(--foreground)); }
 .ok i { font-size: 16px; color: hsl(var(--primary)); }
-/* QR (web success): placeholder glyph; the real code is generated. Must stay dark modules on a light field in both modes; nearest tokens used until a qr token exists (CHANGE request to system.md) */
-.qr { display: grid; place-items: center; width: 152px; height: 152px; border-radius: 16px; background: hsl(var(--background)); color: hsl(var(--foreground)); }
-.qr i { font-size: 128px; line-height: 1; }
+/* QR (web success): placeholder glyph; the real code is generated. Fixed light field (#fff), dark modules (#111) and a 12 px quiet zone in BOTH themes, for scanners; the 1 px border token keeps the edge on the dark card. Literals until a qr token exists (CHANGE request to system.md) */
+.qr { display: grid; place-items: center; box-sizing: border-box; width: 176px; height: 176px; padding: 12px; border-radius: 16px; background: #fff; color: #111; border: 1px solid hsl(var(--border)); }
+.qr i { font-size: 140px; line-height: 1; }
 
 /* Shelter row (shared shelter_row from P6): phone icon, no card */
 .sh { display: grid; grid-template-columns: 24px minmax(0, 1fr); gap: 14px; }
@@ -151,7 +151,7 @@
 
   <!-- ================= A. MOBILE FOUND FLOW ================= -->
   <h2 class="tile-title !text-2xl !mt-4">A. Mobile found flow (no account)</h2>
-  <p class="tile-lede">390 px frames. Top bar: back, four bars (<code>role="progressbar"</code>, "Korak {n} od 4", as P5 A2), close. The fifth screen (publish) reviews the four answers with every bar done. Focus goes to the h1 on each step. The primary is <code>lg</code>, at the bottom, with 44 px bottom padding.</p>
+  <p class="tile-lede">390 px frames. Top bar: back, five bars (<code>role="progressbar"</code>, "Korak {n} od 5"), close. Publish is bar 5 and reviews the four answers. Focus goes to the h1 on each step. The primary is <code>lg</code>, at the bottom, with 44 px bottom padding.</p>
 
   <div class="flex flex-wrap gap-x-10 gap-y-14 items-start">
 
@@ -162,7 +162,7 @@
         <div class="statusbar" aria-hidden="true"><span>14:30</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
         <div class="topbar">
           <button type="button" class="iconbtn" aria-label="Nazaj"><i class="ph-bold ph-caret-left" aria-hidden="true"></i></button>
-          <div class="steps flex-1" role="progressbar" aria-valuemin="1" aria-valuemax="4" aria-valuenow="1" aria-label="Korak 1 od 4"><span class="on"></span><span></span><span></span><span></span></div>
+          <div class="steps flex-1" role="progressbar" aria-valuemin="1" aria-valuemax="5" aria-valuenow="1" aria-label="Korak 1 od 5"><span class="on"></span><span></span><span></span><span></span><span></span></div>
           <button type="button" class="iconbtn" aria-label="Zapri"><i class="ph-bold ph-x" aria-hidden="true"></i></button>
         </div>
         <div class="flex-1 min-h-0 px-5 pt-2">
@@ -187,7 +187,7 @@
         <div class="statusbar" aria-hidden="true"><span>14:30</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
         <div class="topbar">
           <button type="button" class="iconbtn" aria-label="Nazaj"><i class="ph-bold ph-caret-left" aria-hidden="true"></i></button>
-          <div class="steps flex-1" role="progressbar" aria-valuemin="1" aria-valuemax="4" aria-valuenow="2" aria-label="Korak 2 od 4"><span class="on"></span><span class="on"></span><span></span><span></span></div>
+          <div class="steps flex-1" role="progressbar" aria-valuemin="1" aria-valuemax="5" aria-valuenow="2" aria-label="Korak 2 od 5"><span class="on"></span><span class="on"></span><span></span><span></span><span></span></div>
           <button type="button" class="iconbtn" aria-label="Zapri"><i class="ph-bold ph-x" aria-hidden="true"></i></button>
         </div>
         <div class="flex-1 min-h-0 px-5 pt-2">
@@ -212,7 +212,7 @@
         <div class="statusbar" aria-hidden="true"><span>14:31</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
         <div class="topbar">
           <button type="button" class="iconbtn" aria-label="Nazaj"><i class="ph-bold ph-caret-left" aria-hidden="true"></i></button>
-          <div class="steps flex-1" role="progressbar" aria-valuemin="1" aria-valuemax="4" aria-valuenow="3" aria-label="Korak 3 od 4"><span class="on"></span><span class="on"></span><span class="on"></span><span></span></div>
+          <div class="steps flex-1" role="progressbar" aria-valuemin="1" aria-valuemax="5" aria-valuenow="3" aria-label="Korak 3 od 5"><span class="on"></span><span class="on"></span><span class="on"></span><span></span><span></span></div>
           <button type="button" class="iconbtn" aria-label="Zapri"><i class="ph-bold ph-x" aria-hidden="true"></i></button>
         </div>
         <div class="flex-1 min-h-0 px-5 pt-2">
@@ -245,7 +245,7 @@
         <div class="statusbar" aria-hidden="true"><span>14:31</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
         <div class="topbar">
           <button type="button" class="iconbtn" aria-label="Nazaj"><i class="ph-bold ph-caret-left" aria-hidden="true"></i></button>
-          <div class="steps flex-1" role="progressbar" aria-valuemin="1" aria-valuemax="4" aria-valuenow="4" aria-label="Korak 4 od 4"><span class="on"></span><span class="on"></span><span class="on"></span><span class="on"></span></div>
+          <div class="steps flex-1" role="progressbar" aria-valuemin="1" aria-valuemax="5" aria-valuenow="4" aria-label="Korak 4 od 5"><span class="on"></span><span class="on"></span><span class="on"></span><span class="on"></span><span></span></div>
           <button type="button" class="iconbtn" aria-label="Zapri"><i class="ph-bold ph-x" aria-hidden="true"></i></button>
         </div>
         <div class="flex-1 min-h-0 px-5 pt-2">
@@ -283,7 +283,7 @@
         <div class="statusbar" aria-hidden="true"><span>14:32</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
         <div class="topbar">
           <button type="button" class="iconbtn" aria-label="Nazaj"><i class="ph-bold ph-caret-left" aria-hidden="true"></i></button>
-          <div class="steps flex-1" role="progressbar" aria-valuemin="1" aria-valuemax="4" aria-valuenow="4" aria-label="Korak 4 od 4"><span class="on"></span><span class="on"></span><span class="on"></span><span class="on"></span></div>
+          <div class="steps flex-1" role="progressbar" aria-valuemin="1" aria-valuemax="5" aria-valuenow="4" aria-label="Korak 4 od 5"><span class="on"></span><span class="on"></span><span class="on"></span><span class="on"></span><span></span></div>
           <button type="button" class="iconbtn" aria-label="Zapri"><i class="ph-bold ph-x" aria-hidden="true"></i></button>
         </div>
         <div class="flex-1 min-h-0 px-5 pt-2">
@@ -675,7 +675,7 @@
       </ul></nav>
     </footer>
   </div></div>
-  <p class="help mt-4" style="max-width:62ch">Link block: text column and a 152 px QR with <code>link_qr_web</code> under it; below 560 px the QR moves under the text. The QR keeps dark modules on a light field in dark mode too (placeholder glyph here; the code is generated, no asset). Hover on text buttons: <code>foreground</code> at 10 %. Shelter row as M6. Manage page on web: MG1 in this column, header "Prijavi" as <code>secondary</code> when "Odpri sporočila" is shown.</p>
+  <p class="help mt-4" style="max-width:62ch">Link block: text column and a 176 px QR (12 px quiet zone) with <code>link_qr_web</code> under it; below 560 px the QR moves under the text. The QR keeps a fixed #fff field with #111 modules in both themes, with a 1 px border token against the dark card (placeholder glyph here; the code is generated, no asset). Hover on text buttons: <code>foreground</code> at 10 %. Shelter row as M6. Manage page on web: MG1 in this column, header "Prijavi" as <code>secondary</code> when "Odpri sporočila" is shown.</p>
 </section>
 <p class="tile-section !py-8 text-sm text-muted-foreground">Placeholder photography from Unsplash (Unsplash License). Copy: docs/content/pages/P7-report-found.md v0.3; <code>shelter_row.*</code> from P6 v0.4; <code>permissions.camera_denied</code>, <code>common.*</code> from P1 and P2; size and colour labels from the glossary §7 as used in P6; location from P5. Samples (marked <code>data-sample</code>): private links, shelter name and number, the waiting-to-send title (page slice wording, no key yet), the outbox row strings, the manage-page alt text, user-entered text.</p>
 </div>
