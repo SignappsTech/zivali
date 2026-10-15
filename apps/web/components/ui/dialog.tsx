@@ -9,7 +9,7 @@ import { cn } from '@/lib/utils';
 
 // Shared with AlertDialog and Sheet (system §10.9): scrim behind modals; enter cross-fades (80 ms under reduced motion).
 const overlayClass =
-	'fixed inset-0 z-50 bg-[hsl(var(--scrim)/var(--scrim-alpha))] transition-opacity duration-[220ms] starting:opacity-0 motion-reduce:duration-[80ms]';
+	'fixed inset-0 z-50 bg-scrim transition-opacity duration-[220ms] starting:opacity-0 motion-reduce:duration-[80ms]';
 const dialogClass =
 	'fixed top-1/2 left-1/2 z-50 max-h-[calc(100dvh-2.5rem)] w-[calc(100%-2.5rem)] max-w-[440px] -translate-1/2 overflow-y-auto rounded-card bg-popover px-6 pt-7 pb-5 text-popover-foreground shadow-pop transition-opacity duration-[220ms] outline-hidden starting:opacity-0 motion-reduce:duration-[80ms]';
 const dialogTitleClass = 'font-display text-lg leading-7 font-semibold tracking-[-0.005em] text-balance lg:text-xl';

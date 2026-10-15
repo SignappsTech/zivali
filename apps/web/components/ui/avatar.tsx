@@ -11,7 +11,7 @@ const avatarVariants = cva(
 	'relative inline-grid shrink-0 place-items-center overflow-hidden rounded-full bg-secondary font-bold text-secondary-foreground',
 	{
 		variants: {
-			size: { 32: 'size-8 text-sm', 48: 'size-12 text-lg', 72: 'size-[72px] font-display text-[26px]' },
+			size: { 32: 'size-8 text-sm', 48: 'size-12 text-lg', 72: 'size-18 font-display text-[26px]' },
 		},
 		defaultVariants: { size: 48 },
 	}

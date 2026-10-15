@@ -1,11 +1,12 @@
 'use client';
 
 import { CheckCircleIcon } from '@phosphor-icons/react/dist/ssr/CheckCircle';
+import { XIcon } from '@phosphor-icons/react/dist/ssr/X';
 import { InfoIcon } from '@phosphor-icons/react/dist/ssr/Info';
 import { WarningCircleIcon } from '@phosphor-icons/react/dist/ssr/WarningCircle';
 import { Toaster as Sonner, type ToasterProps } from 'sonner';
 
-const iconClass = 'size-[22px] shrink-0';
+const iconClass = 'size-5.5 shrink-0';
 
 /**
  * Toasts (system §10.9): popover surface, radius 20, one shadow (shadow-pop), 15/22, status icon, 5 s, dismissible,
@@ -21,6 +22,7 @@ function Toaster({ closeLabel, label, ...props }: ToasterProps & { closeLabel: s
 			mobileOffset={12}
 			containerAriaLabel={label}
 			icons={{
+				close: <XIcon weight="bold" aria-hidden="true" />,
 				success: <CheckCircleIcon weight="fill" aria-hidden="true" className={`${iconClass} text-primary`} />,
 				info: <InfoIcon weight="fill" aria-hidden="true" className={`${iconClass} text-primary`} />,
 				warning: (

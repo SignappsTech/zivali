@@ -91,7 +91,7 @@ function Sub({ title }: { title: string }) {
 function Spec({ caption, className, children }: { caption: string; className?: string; children: React.ReactNode }) {
 	return (
 		<figure className={cn('m-0 min-w-0', className)}>
-			<figcaption lang="en" className="mb-3 text-sm font-bold text-muted-foreground">
+			<figcaption lang="en" className="mb-3 text-xs font-normal text-muted-foreground">
 				{caption}
 			</figcaption>
 			{children}

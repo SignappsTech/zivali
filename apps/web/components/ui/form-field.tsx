@@ -69,7 +69,7 @@ function FieldError({ className, children, ...props }: React.ComponentProps<'p'>
 			className={cn('flex items-start gap-1.5 text-sm font-semibold text-destructive', className)}
 			{...props}
 		>
-			<WarningCircleIcon weight="fill" aria-hidden="true" className="size-[18px] shrink-0 translate-y-px" />
+			<WarningCircleIcon weight="fill" aria-hidden="true" className="size-4.5 shrink-0 translate-y-px" />
 			<span>{children}</span>
 		</p>
 	);

@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils';
 
 // Tonal pill only (system §10.5): 30 px, 14 bold, subtle fill, fill icon first. One per page at most.
 const badgeVariants = cva(
-	'inline-flex h-[30px] w-fit shrink-0 items-center gap-[5px] rounded-full pr-3 pl-2.5 text-sm font-bold whitespace-nowrap [&>svg]:size-[17px] [&>svg]:shrink-0',
+	'inline-flex h-7.5 w-fit shrink-0 items-center gap-1.25 rounded-full pr-3 pl-2.5 text-sm font-bold whitespace-nowrap [&>svg]:size-4.25 [&>svg]:shrink-0',
 	{
 		variants: {
 			variant: {

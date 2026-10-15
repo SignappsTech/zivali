@@ -54,7 +54,7 @@ function ChoiceRow({ className, title, description, icon, ...props }: ChoiceRowP
 			<span className="min-w-0 flex-1">
 				<span className="block text-[17px] leading-6 font-bold">{title}</span>
 				{description && (
-					<span className="block text-sm text-muted-foreground group-disabled/row:text-muted-foreground group-data-[state=checked]/row:text-primary-foreground/85">
+					<span className="block text-sm text-muted-foreground group-data-[state=checked]/row:text-primary-foreground/85">
 						{description}
 					</span>
 				)}
@@ -62,7 +62,7 @@ function ChoiceRow({ className, title, description, icon, ...props }: ChoiceRowP
 			<CheckIcon
 				weight="bold"
 				aria-hidden="true"
-				className="invisible size-[22px] group-data-[state=checked]/row:visible"
+				className="invisible size-5.5 group-data-[state=checked]/row:visible"
 			/>
 		</RadioGroupPrimitive.Item>
 	);

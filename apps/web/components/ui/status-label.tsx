@@ -1,4 +1,4 @@
-import type { Icon } from '@phosphor-icons/react/dist/lib/types';
+import type { Icon } from '@phosphor-icons/react';
 import { EyeIcon } from '@phosphor-icons/react/dist/ssr/Eye';
 import { HandHeartIcon } from '@phosphor-icons/react/dist/ssr/HandHeart';
 import { HeartIcon } from '@phosphor-icons/react/dist/ssr/Heart';

@@ -24,7 +24,7 @@ const buttonVariants = cva(
 					'bg-destructive text-destructive-foreground hover:bg-[color-mix(in_srgb,hsl(var(--destructive))_86%,hsl(var(--foreground)))]',
 			},
 			size: {
-				sm: 'min-h-11 px-[18px]',
+				sm: 'min-h-11 px-4.5',
 				default: 'min-h-12 px-6',
 				lg: 'min-h-14 px-8 text-[17px]',
 				icon: 'size-11 [&_svg:not([class*=size-])]:size-6',
@@ -43,7 +43,7 @@ function Spinner({ className }: { className?: string }) {
 			data-slot="spinner"
 			aria-hidden="true"
 			className={cn(
-				'inline-block size-[18px] shrink-0 animate-spin rounded-full border-[2.5px] border-current border-r-transparent motion-reduce:[animation-duration:2.4s]',
+				'inline-block size-4.5 shrink-0 animate-spin rounded-full border-[2.5px] border-current border-r-transparent motion-reduce:[animation-duration:2.4s]',
 				className
 			)}
 		/>
