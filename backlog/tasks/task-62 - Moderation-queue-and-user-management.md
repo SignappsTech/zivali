@@ -32,6 +32,7 @@ Without a queue, abuse reports pile up and scams stay visible; moderators need o
 - [ ] #4 Given items older than 24 h, when listed, then they are highlighted (target: 90 percent reviewed within 24 h).
 - [ ] #5 Given an admin lookup of a user or listing, when searched, then status and actions taken are visible, and private chats only if they were reported.
 - [ ] #6 Given listings or chat messages offering to sell or give away animals (such as podarim or prodam), when reported or detected, then moderators can remove them and the account is warned.
+- [ ] #7 From the TASK-25.5 review: AbuseDomain.restoreReport (apps/api/domains/abuse) has no aal2 check of its own. The restore route must sit behind the moderator + aal2 guard (or the domain must check ctx.actor.aal), with a test that an aal1 moderator is refused.
 <!-- AC:END -->
 
 ## Packet
