@@ -83,6 +83,7 @@ Put keys into `.env.local` (gitignored) unless noted. Never paste secrets into c
 - [ ] Delete `MAPTILER_API_KEY` from `.env.local` (no longer used; our own geocoder replaced it).
 - [ ] Delete leftover folders in `.claude/worktrees/` that Windows kept locked (git no longer tracks them).
 - [ ] Keep Docker Desktop running while agents work (local database).
+- [ ] Install the **Codex CLI** and sign in with your ChatGPT account: `npm i -g @openai/codex`, then `codex login`. The 8 image tasks wait on it: the app icon, the empty states, the house ads and the reunited illustration.
 - [ ] Once the API scaffold (TASK-3.7) is merged, run `pnpm db:reset` once in the repo root. Prisma 7 refuses to reset a database when an AI agent runs it unless you consent, so this step needs you. It checks that migrations and seed build the local DB from zero.
 - [ ] Decide whether we may **push `main` to GitHub** (`pbozic/zivali`, private). Only the first setup commit is on GitHub. Some agent worktrees are created from that stale `origin/main`, and agents now have to repair that themselves. Pushing would fix it, and it's also your off-site backup.
 

@@ -8,7 +8,9 @@ assignee:
   - '@frontend-dev'
 created_date: '2026-10-15 10:24'
 labels:
-  - 'bug fe est:S'
+  - bug
+  - fe
+  - 'est:S'
 dependencies: []
 parent_task_id: TASK-90
 ordinal: 317000

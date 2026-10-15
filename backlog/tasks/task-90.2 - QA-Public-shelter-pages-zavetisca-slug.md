@@ -7,7 +7,9 @@ assignee:
 created_date: '2026-10-14 23:36'
 updated_date: '2026-10-15 10:34'
 labels:
-  - 'qa qa:fail'
+  - qa
+  - 'est:XS'
+  - 'qa:fail'
 milestone: m-2
 dependencies:
   - TASK-90.1
