@@ -3,11 +3,11 @@ id: TASK-6.6
 title: >-
   Reports, pets and photos models, deterministic fuzz, public report endpoint,
   seed
-status: In Progress
+status: Done
 assignee:
   - '@backend-dev'
 created_date: '2026-10-14 22:12'
-updated_date: '2026-10-15 09:35'
+updated_date: '2026-10-15 15:41'
 labels:
   - be
   - 'est:M'
