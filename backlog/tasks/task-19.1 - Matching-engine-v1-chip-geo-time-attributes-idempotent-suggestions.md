@@ -3,11 +3,11 @@ id: TASK-19.1
 title: >-
   Matching engine v1: match.report job, TypedSQL candidates, scoring, idempotent
   suggestions
-status: In Progress
+status: Done
 assignee:
   - '@backend-dev'
 created_date: '2026-10-14 22:13'
-updated_date: '2026-10-15 15:46'
+updated_date: '2026-10-15 17:18'
 labels:
   - be
   - 'est:M'
