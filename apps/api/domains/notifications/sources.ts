@@ -14,6 +14,7 @@ import { AlertsDomain } from '../alerts/index.ts';
 import type { Ctx } from '../../lib/ctx.ts';
 import { chatMessageVars } from '../chat/chat.notify.ts';
 import { matchConfirmedVars, matchVars } from '../matching/matching.notify.ts';
+import * as lifecycle from '../reports/lifecycle.domain.ts';
 
 export type Recipient = { user_id: string; locale: Locale };
 export type Source = (
@@ -29,6 +30,11 @@ export const sources: Partial<Record<NotificationType, Source>> = {
 	match_confirmed: matchConfirmedVars,
 	// The alerts fan-out already recorded alert_deliveries; null when the report or subscription is gone.
 	nearby_lost: ({ report_id }, { user_id }, ctx) => AlertsDomain.nearbyAlert({ user_id, report_id }, ctx),
+	// Report lifecycle (C4); called lazily, since the reports area imports this module back.
+	report_reminder: (...args) => lifecycle.reminderVars(...args),
+	report_expiring: (...args) => lifecycle.expiringVars(...args),
+	report_closed: (...args) => lifecycle.closedVars(...args),
+	report_reunited: (...args) => lifecycle.reunitedVars(...args),
 	report_hidden: reportHiddenVars,
 };
 
