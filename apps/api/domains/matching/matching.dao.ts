@@ -3,15 +3,11 @@
 import { Prisma } from '../../generated/client.ts';
 import { prisma } from '../../prisma/prisma.ts';
 
-/** One lost report and one found or sighted report, with what scoreMatch and the notification need. */
+/** One lost report and one found or sighted report, with what scoreMatch needs. */
 export type PairRow = {
 	lost_id: string;
 	other_id: string;
-	lost_code: string;
-	other_code: string;
 	other_type: 'found' | 'sighted';
-	species: 'dog' | 'cat';
-	pet_name: string | null;
 	chip_match: boolean;
 	distance_km: number;
 	delta_hours: number;
@@ -28,8 +24,7 @@ export type PairRow = {
 // The lost side's stored point against the other side's public circle centre: the lost report's managers see the
 // distance band, and for them the other report's stored point must stay private (CH-148).
 const PAIR_COLUMNS = Prisma.sql`
-	l.id as lost_id, o.id as other_id, l.short_code as lost_code, o.short_code as other_code,
-	o.type::text as other_type, l.species::text as species, l.name as pet_name,
+	l.id as lost_id, o.id as other_id, o.type::text as other_type,
 	(l.chip_status = 'valid' and o.chip_status = 'valid' and l.chip_number = o.chip_number) as chip_match,
 	extensions.st_distance(l.exact_point, o.public_point) / 1000 as distance_km,
 	(extract(epoch from o.event_at - l.event_at) / 3600)::float8 as delta_hours,

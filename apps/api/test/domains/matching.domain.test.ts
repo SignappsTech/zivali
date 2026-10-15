@@ -115,7 +115,12 @@ describe('chip (AC#2)', () => {
 
 		expect(await run(found.id)).toEqual({ stored: 1 });
 		const [match] = await matchesOf(lost.id);
-		expect(match).toMatchObject({ other_report_id: found.id, strength: 'strong', chip_match: true, state: 'suggested' });
+		expect(match).toMatchObject({
+			other_report_id: found.id,
+			strength: 'strong',
+			chip_match: true,
+			state: 'suggested',
+		});
 		expect(match!.score.toNumber()).toBe(1);
 		expect(match!.reasons).toContainEqual({ code: 'chip' });
 		expect(match!.notified_at).not.toBeNull();
@@ -124,16 +129,8 @@ describe('chip (AC#2)', () => {
 		expect(sent.map((job) => job.user_id).sort()).toEqual([owner.user_id, coOwner.user_id].sort());
 		for (const job of sent) {
 			expect(job).toMatchObject({ type: 'match_chip', dedupe_key: `match:${match!.id}` });
-			// Codes and the owner's own pet name only: no contact data, no chip number, no location.
-			expect(job.payload).toEqual({
-				match_id: match!.id,
-				lost_code: lost.short_code,
-				other_code: found.short_code,
-				other_type: 'found',
-				has_name: 'yes',
-				pet_name: 'Piki',
-				species: 'dog',
-			});
+			// Ids only: no contact data, chip number or location of either side.
+			expect(job.payload).toEqual({ template: 'match_chip', match_id: match!.id, report_id: lost.id });
 		}
 
 		const reports = await prisma.reports.findMany({
@@ -277,7 +274,7 @@ describe('candidates without a chip (AC#3)', () => {
 describe('idempotent suggestions and notifications (AC#1, AC#5)', () => {
 	it('stores a pair once, notifies once, and never resurrects a rejected pair', async () => {
 		const at = month();
-		const lost = await lostReport(at, { name: null });
+		const lost = await lostReport(at);
 		await foundReport(at);
 		await run(lost.id);
 		await run(lost.id);
@@ -287,15 +284,12 @@ describe('idempotent suggestions and notifications (AC#1, AC#5)', () => {
 
 		const sent = await notifications(match!.id);
 		expect(sent).toHaveLength(1);
-		expect(sent[0]).toMatchObject({ user_id: owner.user_id, type: 'match_suggested', dedupe_key: `match:${match!.id}` });
-		expect(sent[0]!.payload).toEqual({
-			match_id: match!.id,
-			lost_code: (await prisma.reports.findUniqueOrThrow({ where: { id: lost.id } })).short_code,
-			strength: match!.strength,
-			other_type: 'found',
-			has_name: 'no',
-			species: 'dog',
+		expect(sent[0]).toMatchObject({
+			user_id: owner.user_id,
+			type: 'match_suggested',
+			dedupe_key: `match:${match!.id}`,
 		});
+		expect(sent[0]!.payload).toEqual({ template: 'match_suggested', match_id: match!.id, report_id: lost.id });
 
 		await prisma.matches.update({ where: { id: match!.id }, data: { state: 'rejected', score: 0.123 } });
 		expect(await run(lost.id)).toEqual({ stored: 0 });

@@ -57,22 +57,15 @@ function scorePair(pair: PairRow, config: MatchingConfig): MatchScore {
 	);
 }
 
-/** match_chip or match_suggested to every manager of the lost report; codes and the pet's own name only (C10). */
-async function notifyManagers(matchId: string, pair: PairRow, strength: MatchStrength, ctx: Ctx): Promise<void> {
-	const named = {
-		has_name: pair.pet_name ? 'yes' : 'no',
-		pet_name: pair.pet_name ?? undefined,
-		species: pair.species,
-	};
-	const common = { match_id: matchId, lost_code: pair.lost_code, other_type: pair.other_type, ...named };
-	const notification = pair.chip_match
-		? { type: 'match_chip', payload: { ...common, other_code: pair.other_code } }
-		: { type: 'match_suggested', payload: { ...common, strength } };
+/**
+ * match_chip (quiet hours ignored, C10) or match_suggested to every manager of the lost report. The job carries ids
+ * only (CH-135); notify.send resolves the codes and the copy, so no contact data of either side is ever in it.
+ */
+async function notifyManagers(matchId: string, pair: PairRow, ctx: Ctx): Promise<void> {
+	const type = pair.chip_match ? 'match_chip' : 'match_suggested';
+	const payload = { template: type, match_id: matchId, report_id: pair.lost_id } as const;
 	for (const user_id of await MatchingDao.managerIds(pair.lost_id, ctx.tx)) {
-		await NotificationsDomain.enqueueNotification(
-			{ user_id, ...notification, dedupe_key: `match:${matchId}` },
-			ctx
-		);
+		await NotificationsDomain.enqueueNotification({ user_id, type, payload, dedupe_key: `match:${matchId}` }, ctx);
 	}
 }
 
@@ -115,7 +108,7 @@ export async function matchReport(input: { report_id: string }, ctx: Ctx): Promi
 			await MatchingDao.setFirstMatchAt(pair.lost_id, ctx.now, tx);
 			const notify = pair.chip_match || atLeast(strength, config.notify_min_strength);
 			if (notify && !match.notified_at && (await MatchingDao.claimNotification(match.id, ctx.now, tx))) {
-				await notifyManagers(match.id, pair, strength, { ...ctx, tx });
+				await notifyManagers(match.id, pair, { ...ctx, tx });
 			}
 			return true;
 		};
