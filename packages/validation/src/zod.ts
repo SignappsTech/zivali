@@ -1,8 +1,12 @@
-// zod with the zod-to-openapi extension (`.openapi(refId, { description, example })`). Schemas stay plain zod:
-// they validate without any registry; `registerSchemas()` in openapi.ts collects them for the API docs.
-import { extendZodWithOpenApi } from '@asteasolutions/zod-to-openapi';
+// Plain zod. Schemas call `.openapi(refId, meta)`: a no-op here, so client bundles (web, mobile) never load
+// @asteasolutions/zod-to-openapi. The server entry './openapi.ts' installs the real method BEFORE the schemas load.
+// The type-only import below brings in the `.openapi` typings and is erased at build time.
+import type {} from '@asteasolutions/zod-to-openapi';
 import { z } from 'zod';
 
-extendZodWithOpenApi(z);
+const proto = z.ZodType.prototype as unknown as { openapi?: unknown };
+proto.openapi ??= function (this: unknown) {
+	return this;
+};
 
 export { z };

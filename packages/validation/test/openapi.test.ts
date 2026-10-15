@@ -1,6 +1,8 @@
 import { OpenApiGeneratorV31, OpenAPIRegistry } from '@asteasolutions/zod-to-openapi';
 import { expect, test } from 'vitest';
 
+import indexSrc from '../src/index.ts?raw';
+import zodSrc from '../src/zod.ts?raw';
 import * as root from '../src/index.ts';
 import { ReportList, ReportSearch, SyncReportsQuery } from '../src/index.ts';
 import { registerSchemas, registry } from '../src/openapi.ts';
@@ -59,4 +61,8 @@ test('registerSchemas fills any registry (the API can keep its own)', () => {
 test('the registry is not exported from the package root (keeps it out of app bundles)', () => {
 	expect(root).not.toHaveProperty('registry');
 	expect(root).not.toHaveProperty('registerSchemas');
+});
+
+test('index and zod.ts do not import zod-to-openapi at runtime (lean client bundles)', () => {
+	for (const src of [zodSrc, indexSrc]) expect(src).not.toMatch(/^import (?!type)[^\n]*zod-to-openapi/m);
 });

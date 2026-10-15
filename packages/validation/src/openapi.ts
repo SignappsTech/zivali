@@ -1,5 +1,7 @@
 // OpenAPI components from the zod schemas (single source). apps/api adds its paths to `registry` and generates
 // openapi.json / Swagger UI from it; clients can be generated from that document.
+import './openapi-extend.ts'; // first: the schema modules below call `.openapi()` while loading
+
 import { getRefId, OpenAPIRegistry } from '@asteasolutions/zod-to-openapi';
 
 import * as abuse from './abuse.schema.ts';
@@ -44,6 +46,8 @@ export function registerSchemas(registry: OpenAPIRegistry): OpenAPIRegistry {
 			const refId = value instanceof z.ZodType ? getRefId(value) : undefined;
 			if (refId) registry.register(refId, value as z.ZodType);
 		}
+	if (!registry.definitions.length)
+		throw new Error('No OpenAPI refs found: import @zivali/validation/openapi before @zivali/validation.');
 	return registry;
 }
 

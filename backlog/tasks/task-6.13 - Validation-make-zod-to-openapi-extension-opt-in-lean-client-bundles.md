@@ -1,10 +1,11 @@
 ---
 id: TASK-6.13
 title: 'Validation: make zod-to-openapi extension opt-in (lean client bundles)'
-status: To Do
+status: In Progress
 assignee:
   - '@backend-dev'
 created_date: '2026-10-15 02:07'
+updated_date: '2026-10-15 03:00'
 labels:
   - be
   - 'est:S'
@@ -28,3 +29,6 @@ CH-32. zod.ts runs extendZodWithOpenApi at import, pulling @asteasolutions/zod-t
 - [ ] #3 Next and Metro bundles exclude zod-to-openapi (bundle analyzer / metro graph check noted)
 - [ ] #4 Validation tests, typecheck, lint pass
 <!-- AC:END -->
+
+## Packet
+Branch: agent/TASK-6.13-openapi-opt-in
