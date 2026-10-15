@@ -70,5 +70,5 @@ None. The confirmation screen is text and icons only.
 ## Mockup scope (`P6-report-lost.html`)
 
 1. Mobile: steps 1 to 7 (new pet path), the shorter path summary, sign-in gate sheet, confirmation (collapsed and expanded support row, with the responsible-shelter row; and the unknown-municipality note variant), duplicate-report note, validation error, upload failure.
-2. Web: steps 2, 4, 7 and the confirmation.
+2. Web layouts follow W1 (two-column review) and the mobile frames; no separate frames (mockup frame budget).
 3. Light and dark.
