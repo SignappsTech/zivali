@@ -24,7 +24,8 @@ export async function impression(req: Request, res: Response): Promise<void> {
 }
 
 export async function click(req: Request, res: Response): Promise<void> {
-	const { s, r } = req.query as AdClickQuery;
+	// Parsed by validate(AdClickQuery) in the route.
+	const { s, r } = req.query as unknown as AdClickQuery;
 	const link = await AdsDomain.recordClick({ ad_id: String(req.params.id), slot: s, region_id: r }, userCtx(req));
 	// Never cached, so every click reaches the counter; the target is the ad's stored link only.
 	res.set('Cache-Control', 'no-store').redirect(302, link);
