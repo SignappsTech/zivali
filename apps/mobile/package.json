@@ -17,6 +17,7 @@
 		"@expo-google-fonts/bricolage-grotesque": "^0.4.1",
 		"@formatjs/intl-pluralrules": "^6.3.15",
 		"@gorhom/bottom-sheet": "^5.2.14",
+		"@maplibre/maplibre-react-native": "11.4.1",
 		"@react-native-firebase/analytics": "26.4.0",
 		"@react-native-firebase/app": "26.4.0",
 		"@react-native-google-signin/google-signin": "^16.1.5",
