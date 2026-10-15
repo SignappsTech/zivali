@@ -1,11 +1,11 @@
 ---
 id: TASK-37.1
 title: 'Design: Admin ad management (P20)'
-status: To Do
+status: In Progress
 assignee:
   - '@ui-designer'
 created_date: '2026-10-14 21:50'
-updated_date: '2026-10-14 21:51'
+updated_date: '2026-10-15 22:11'
 labels:
   - design
   - 'est:M'
@@ -30,7 +30,7 @@ The client runs campaigns by hand and must see results, so the form, preview and
 
 ## Packet
 Unblocks on: P19 admin shell and P21 ad slot mockups merged
-Branch: design/P20-admin-ads
+Branch: agent/TASK-37.1-ad-admin-mockup
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Acceptance Criteria
