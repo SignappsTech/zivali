@@ -56,7 +56,7 @@ route(
 
 - `operationId`: stable, unique (checked at startup), camelCase verb + noun (`getReport`, `createLostReport`, `listNearbyReports`). The RTK Query codegen (`@rtk-query/codegen-openapi`) turns it into the endpoint and hook name (`useGetReportQuery`); renaming it renames the client hook.
 - Tag: the area (`reports`), from the base path; the codegen groups endpoints by it.
-- Errors: list the C1 codes the route can return besides the automatic `VALIDATION` (when it has request schemas), `RATE_LIMITED` and `INTERNAL`; they are documented per HTTP status with the `Error` schema.
+- Errors: list the C1 codes the route can return besides the automatic `VALIDATION` (when it has request schemas), `RATE_LIMITED` and `INTERNAL`; they are documented per HTTP status with the `ErrorResponse` schema.
 - Named types: give request and response schemas `.meta({ id: 'ReportDetail' })` so they become components (generated type names) instead of inline shapes.
 - After changing a route or schema, run `pnpm --filter api gen:openapi` and commit `openapi.json`; `pnpm verify` fails while it is stale.
 

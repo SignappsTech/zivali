@@ -4,11 +4,10 @@ import cors from 'cors';
 import express from 'express';
 import { rateLimit } from 'express-rate-limit';
 import helmet from 'helmet';
-import { pinoHttp } from 'pino-http';
 
 import { config } from './lib/config.ts';
 import { AppError } from './lib/errors.ts';
-import { logger } from './lib/logger.ts';
+import { requestLogger } from './lib/logger.ts';
 import { errorHandler, notFound } from './middleware/error.middleware.ts';
 import { requestId } from './middleware/requestId.middleware.ts';
 import v1Routes from './routes/index.ts';
@@ -20,19 +19,7 @@ app.set('trust proxy', 1);
 app.disable('x-powered-by');
 
 app.use(requestId);
-app.use(
-	pinoHttp({
-		logger,
-		quietReqLogger: true,
-		customAttributeKeys: { reqId: 'req_id', responseTime: 'duration_ms', res: 'status' },
-		// Route pattern and status only: no URLs with query strings, headers or bodies (backend.md).
-		serializers: { req: () => undefined, res: (res) => res.statusCode },
-		customProps: (req) => {
-			const { baseUrl, route } = req as express.Request;
-			return { route: route ? `${baseUrl}${route.path}` : undefined };
-		},
-	})
-);
+app.use(requestLogger());
 app.use(helmet());
 // Allowlisted web origins; requests without Origin (mobile, server to server) pass.
 app.use(cors({ origin: config.WEB_ORIGINS }));

@@ -3,7 +3,7 @@
 	"info": {
 		"title": "Izgubljene živali API",
 		"version": "v1",
-		"description": "Lost pet finder REST API. Every error body is `Error` with a stable code (contract C1)."
+		"description": "Lost pet finder REST API. Every error body is `ErrorResponse` with a stable code (contract C1)."
 	},
 	"components": {
 		"schemas": {
@@ -17,7 +17,7 @@
 				},
 				"required": ["ok", "version", "db", "queue_lag_s"]
 			},
-			"Error": {
+			"ErrorResponse": {
 				"type": "object",
 				"properties": {
 					"error": {
@@ -75,11 +75,15 @@
 					},
 					"429": {
 						"description": "RATE_LIMITED",
-						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
+						"content": {
+							"application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } }
+						}
 					},
 					"500": {
 						"description": "INTERNAL",
-						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
+						"content": {
+							"application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } }
+						}
 					},
 					"503": {
 						"description": "Not ready (database down)",

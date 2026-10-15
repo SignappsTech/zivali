@@ -25,7 +25,7 @@ export const ErrorSchema = z
 			issues: z.array(z.object({ path: z.string(), message: z.string() })).optional(),
 		}),
 	})
-	.meta({ id: 'Error' });
+	.meta({ id: 'ErrorResponse' }); // not 'Error': the generated client would shadow the global Error type
 
 export type ApiRouteSpec = {
 	method: 'get' | 'post' | 'put' | 'patch' | 'delete';
@@ -115,7 +115,8 @@ export function buildOpenApiDocument() {
 		info: {
 			title: 'Izgubljene živali API',
 			version: 'v1',
-			description: 'Lost pet finder REST API. Every error body is `Error` with a stable code (contract C1).',
+			description:
+				'Lost pet finder REST API. Every error body is `ErrorResponse` with a stable code (contract C1).',
 		},
 	});
 }

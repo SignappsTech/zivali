@@ -17,3 +17,5 @@ allowBuilds:
   # tsx, tsup and vitest (apps/api): esbuild's binary comes from the @esbuild/<platform> optional dependency, so its
   # postinstall check is skipped.
   esbuild: false
+  # Prisma CLI (apps/api): its preinstall only checks the Node version; engines are fetched on first use.
+  prisma: false

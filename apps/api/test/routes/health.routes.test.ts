@@ -58,7 +58,7 @@ describe('OpenAPI', () => {
 			tags: ['health'],
 			responses: {
 				200: { content: { 'application/json': { schema: { $ref: '#/components/schemas/HealthReady' } } } },
-				429: { content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } } },
+				429: { content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } },
 			},
 		});
 	});
