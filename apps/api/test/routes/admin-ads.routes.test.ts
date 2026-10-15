@@ -91,6 +91,8 @@ describe('guards: admins with aal2 only', () => {
 			[undefined, 'UNAUTHENTICATED'],
 			[await actor(null, { is_anonymous: true, aal: 'aal2' }), 'UNAUTHENTICATED'],
 			[await actor('USER', { aal: 'aal2' }), 'FORBIDDEN'],
+			[await actor('SHELTER_MEMBER', { aal: 'aal2' }), 'FORBIDDEN'],
+			[await actor('MODERATOR', { aal: 'aal1' }), 'AAL2_REQUIRED'],
 			[await actor('MODERATOR', { aal: 'aal2' }), 'FORBIDDEN'],
 			[await actor('ADMIN', { aal: 'aal1' }), 'AAL2_REQUIRED'],
 		] as const;
