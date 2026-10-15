@@ -34,3 +34,7 @@ This secret and password exist only in the local stack; staging and production s
 ## 01-geo: GURS regions and municipalities (all environments)
 
 Runs the SQL that `scripts/geo-to-sql.mjs` generates from `supabase/seed/geo/regions.geojson` and `municipalities.geojson` (12 regions, 212 municipalities; `on conflict (id) do update`, so reruns are safe). Licence and required attribution: [supabase/seed/geo/LICENSE.md](../../../../supabase/seed/geo/LICENSE.md).
+
+## 05-directory: responsible-shelter directory (all environments)
+
+Loads `data/shelters.csv` and `data/municipality_shelters.csv` (17 shelters, 212 municipalities, 74 confirmed; sources and the species rule in [data/README.md](data/README.md)) through `DirectoryDomain.loadInitialDirectory`. Only missing rows are created, each with version 1 and a `directory_changes` entry (`actor_id` null); existing rows are kept, so reruns are safe and admin edits (TASK-89) survive. Needs 01-geo.

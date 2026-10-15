@@ -58,6 +58,29 @@ describe('AdminDomain.setUserRole', () => {
 		});
 	});
 
+	it('lets exactly one of two parallel demotions of the last two admins through (CONFLICT for the other)', async () => {
+		const a = await profile('ADMIN');
+		const b = await profile('ADMIN');
+		// Committed transactions are needed to race, so the other admins are parked and restored afterwards.
+		const parked = (
+			await prisma.profiles.findMany({ where: { role: 'ADMIN', id: { notIn: [a, b] } }, select: { id: true } })
+		).map((p) => p.id);
+		await prisma.profiles.updateMany({ where: { id: { in: parked } }, data: { role: 'USER' } });
+		try {
+			const results = await Promise.allSettled([
+				AdminDomain.setUserRole({ id: a, role: 'USER', note: 'n' }, systemCtx()),
+				AdminDomain.setUserRole({ id: b, role: 'USER', note: 'n' }, systemCtx()),
+			]);
+			expect(results.filter((r) => r.status === 'fulfilled')).toHaveLength(1);
+			const rejected = results.filter((r): r is PromiseRejectedResult => r.status === 'rejected');
+			expect(rejected).toHaveLength(1);
+			expect(rejected[0].reason).toMatchObject({ code: 'CONFLICT' });
+			expect(await prisma.profiles.count({ where: { id: { in: [a, b] }, role: 'ADMIN' } })).toBe(1);
+		} finally {
+			await prisma.profiles.updateMany({ where: { id: { in: parked } }, data: { role: 'ADMIN' } });
+		}
+	});
+
 	it('writes who, what, target and note to the audit log (actor null for system calls)', async () => {
 		const id = await profile('USER');
 		await AdminDomain.setUserRole({ id, role: 'MODERATOR', note: 'why' }, systemCtx());

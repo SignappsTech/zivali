@@ -15,7 +15,7 @@ export type AdminUserRow = {
 	email: string | null;
 };
 
-/** `query` matches the display name or the email (case-insensitive substring, LIKE wildcards escaped). */
+/** `query` matches the display name (case-insensitive substring, LIKE wildcards escaped) or the whole email (exact, so a masked email cannot be rebuilt by probing substrings). */
 export async function listUsers(input: { query?: string; cursor?: string; take: number }, tx?: Tx) {
 	const db = tx ?? prisma;
 	const like = input.query ? `%${input.query.replace(/[\\%_]/g, (c) => `\\${c}`)}%` : undefined;
@@ -23,7 +23,7 @@ export async function listUsers(input: { query?: string; cursor?: string; take: 
 		select p.id::text as id, p.display_name, p.role::text as role, p.is_anonymous, p.created_at, u.email
 		from app.profiles p left join auth.users u on u.id = p.id
 		where true
-		${like ? Prisma.sql`and (p.display_name ilike ${like} or u.email ilike ${like})` : Prisma.empty}
+		${like ? Prisma.sql`and (p.display_name ilike ${like} or lower(u.email) = lower(${input.query}))` : Prisma.empty}
 		${
 			input.cursor
 				? Prisma.sql`and (p.created_at, p.id) < (select created_at, id from app.profiles where id = ${input.cursor}::uuid)`
@@ -37,7 +37,7 @@ export async function listUsers(input: { query?: string; cursor?: string; take: 
 export async function lockAdminIds(tx: Tx): Promise<string[]> {
 	const rows = await tx.$queryRaw<
 		{ id: string }[]
-	>`select id::text as id from app.profiles where role = 'ADMIN' for update`;
+	>`select id::text as id from app.profiles where role = 'ADMIN' order by id for update`;
 	return rows.map((row) => row.id);
 }
 
@@ -80,7 +80,7 @@ export type FailedJobRow = {
 	retry_count: number;
 	created_on: Date;
 	completed_on: Date | null;
-	output: unknown;
+	error: string | null;
 };
 
 /** pg-boss state (TASK-6.3 owns the schema; it is created at runtime). null while its tables do not exist yet. */
@@ -101,7 +101,7 @@ export async function getQueueState(failedLimit: number, tx?: Tx) {
 		group by q.name
 		order by q.name`;
 	const failed = await db.$queryRaw<FailedJobRow[]>`
-		select id::text as id, name, retry_count, created_on, completed_on, output
+		select id::text as id, name, retry_count, created_on, completed_on, left(output->>'message', 500) as error
 		from pgboss.job
 		where state = 'failed'
 		order by completed_on desc nulls last, id

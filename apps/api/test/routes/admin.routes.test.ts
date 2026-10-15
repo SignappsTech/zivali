@@ -117,9 +117,16 @@ describe('GET /v1/admin/users', () => {
 
 		const byEmail = await request(app)
 			.get('/v1/admin/users')
-			.query({ query: `${first.id}@test` })
+			.query({ query: `${first.id}@test.invalid` })
 			.set('Authorization', admin.auth);
 		expect(byEmail.body.items.map((u: { id: string }) => u.id)).toEqual([first.id]);
+
+		// A partial email matches nothing, so a masked email cannot be rebuilt by probing substrings.
+		const partial = await request(app)
+			.get('/v1/admin/users')
+			.query({ query: `${first.id}@test` })
+			.set('Authorization', admin.auth);
+		expect(partial.body.items).toEqual([]);
 
 		const audit = await prisma.audit_log.findMany({ where: { actor_id: admin.id, action: 'admin.users.list' } });
 		expect(audit.length).toBeGreaterThanOrEqual(3);
