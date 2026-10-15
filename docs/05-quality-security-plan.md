@@ -14,7 +14,7 @@ approvals:
 
 # Quality gates (automated, on every PR)
 
-Run by GitHub Actions (`.github/workflows/ci.yml`, jobs `verify`, `quality`, `images`; docs/04 §CI/CD) once the remote exists; locally `pnpm verify` runs the same list and is part of the DoD (ADR-016). The web gates (performance, accessibility, SEO, links, ads, consent, visual) live in the quality kit, `lighthouserc.json` and `tests/quality/`, which `pnpm quality` runs against a production build on :8080 (TASK-4.1).
+Run by GitHub Actions (`.github/workflows/ci.yml`, jobs `verify`, `quality`, `images`; docs/04 §CI/CD) once the remote exists; locally `pnpm verify` runs the lint, test and build gates and is part of the DoD; CI adds `pnpm audit --audit-level high` and the Playwright smoke as separate steps (ADR-016). The web gates (performance, accessibility, SEO, links, ads, consent, visual) live in the quality kit, `lighthouserc.json` and `tests/quality/`, which `pnpm quality` runs against a production build on :8080 (TASK-4.1).
 
 | Gate | Tool | Threshold | Blocks merge |
 |---|---|---|---|
@@ -56,7 +56,7 @@ Run by GitHub Actions (`.github/workflows/ci.yml`, jobs `verify`, `quality`, `im
 - **Threats in scope**: XSS (chat, listings, ads), CSRF (cookie session on web), SQL injection (TypedSQL and raw queries), SSRF (CSV photo URLs in M3; the geocoder makes no outbound calls), open redirect (ad click endpoint), insecure uploads (type, size, EXIF), spam and abuse on anonymous endpoints, **scams in chat** (R-007), **location leakage** (fuzz bypass, averaging, distance triangulation, points in URLs or logs: geocoder points travel only in POST bodies and are never logged or stored; R-011), **chip enumeration** (lookup throttling M3; chip never in public read model), account takeover, privilege escalation via missing API checks or an exposed table, webhook forgery, secret leakage, API key misuse (M4).
 - **Input**: zod at every client boundary and again in the API (`validate()` on body, query and params); SQL only through Prisma, TypedSQL parameters or `$queryRaw` tagged templates (never string concatenation); chat and listing text rendered as text (React escaping), URLs in chat not linkified (FR-009); ad links must be `https://` and are only reachable through `GET /v1/ads/:id/click` which redirects to the stored URL (no user-supplied redirect targets).
 - **AuthZ**: every endpoint has explicit guards and every rule lives in a domain function (ADR-020), covered by the permission matrix; the database is unreachable for clients (schema `app` not exposed, no grants, deny-all RLS, ADR-021); the only policy is the Realtime membership policy (ADR-023); the Supabase secret key is used only by the API for Admin API calls, never in clients.
-- **Secrets**: env vars only (VPS `.env` files mode 600, GitHub Actions secrets); `.env.local` and `.secrets/` gitignored; secretlint (recommended preset, masked output) in the pre-commit hook on staged files, in `pnpm verify` and in CI; keys rotatable (documented in the runbook); Stripe live keys rejected by code.
+- **Secrets**: env vars only (VPS `.env` files mode 600, GitHub Actions secrets); `.env.local` and `.secrets/` gitignored; secretlint (recommended preset, masked output) in the pre-commit hook on staged files, in `pnpm verify` (source roots) and in CI; keys rotatable (documented in the runbook); Stripe live keys rejected by code.
 - **Headers** (Next config for web, helmet + Caddy for the API): CSP with nonces (`script-src 'self' 'nonce-…'` + `https://www.googletagmanager.com` only after consent, `https://challenges.cloudflare.com`; `connect-src` the API origin, Supabase (Auth, Realtime websocket), OpenFreeMap, GA endpoints, the R2 upload endpoint `https://<R2_ACCOUNT_ID>.eu.r2.cloudflarestorage.com` (presigned PUT); no geocoder origin (our API); `img-src` self, the R2 media domain, the R2 EU endpoint (presigned GET of private photos), tiles, data:, blob:; `worker-src blob:` for MapLibre; `frame-src https://challenges.cloudflare.com`; `frame-ancestors 'none'`), HSTS (preload), `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Policy` (camera, geolocation self only).
 - **Rate limiting / anti-spam** (defaults in `app_config`):
 
@@ -72,7 +72,7 @@ Run by GitHub Actions (`.github/workflows/ci.yml`, jobs `verify`, `quality`, `im
 | Chip lookup (M3) | 30/hour/member | member |
 
 - **Abuse**: holds for anonymous patterns, auto-hide at 3 weighted abuse reports (accounts younger than 24 h count 0.5), duplicate-photo detection, chat safety banner, block, moderation queue (M4).
-- **Dependencies**: pinned through the lockfile, minimal (ADR-017), audited by `pnpm audit --audit-level high` in `pnpm verify` and CI. An advisory without a usable fix is accepted only in `pnpm-workspace.yaml` `auditConfig.ignoreGhsas` with a one-line reason why it is unreachable here (accepted 2026-10-15: 8 high, all in build or dev tooling: `@lhci/cli`/Lighthouse, the Prisma CLI, the Expo CLI, Metro); entries are re-checked on every dependency upgrade and dropped once fixed. CI actions are pinned to commit SHAs.
+- **Dependencies**: pinned through the lockfile, minimal (ADR-017), audited by `pnpm audit --audit-level high` in CI (a separate step after `pnpm verify`; run it locally when dependencies change). An advisory without a usable fix is accepted only in `pnpm-workspace.yaml` `auditConfig.ignoreGhsas` with a one-line reason why it is unreachable here (accepted 2026-10-15, review by 2026-12-15: 6 high, in build or dev tooling: Lighthouse, the Prisma CLI (`deepmerge-ts` also ships in the api image through `prisma`, an `apps/api` runtime dependency; not exploitable, it merges a static config), the Expo CLI, Metro); `tmp` and `mysql2` are fixed by `overrides` instead. Entries are re-checked on every dependency upgrade and dropped once fixed. CI actions are pinned to commit SHAs.
 - **Review**: tech-lead code review with security checklist on est:M/L tasks (lean mode); `security-review` pass and abuse tests in M5 (TASK-68); permission matrix and exposure tests reviewed at every schema change.
 
 # Privacy and compliance
@@ -94,7 +94,7 @@ Run by GitHub Actions (`.github/workflows/ci.yml`, jobs `verify`, `quality`, `im
 - [ ] Acceptance criteria of the task met and demonstrated (screenshot or test output in the report)
 - [ ] Follows the architecture, contracts and conventions in the slice (`frontend.md` / `backend.md`, contract C-files)
 - [ ] Tests added or updated, and passing (unit; domain and Supertest permission tests for every new endpoint; e2e for new routes)
-- [ ] `pnpm verify` passes locally (lint, typecheck, unit, i18n, tokens, API and security tests, build, e2e smoke, quality gates for touched pages)
+- [ ] `pnpm verify` passes locally (lint, typecheck, unit, i18n, tokens, API and security tests, build; quality gates for touched pages; `pnpm audit` and the e2e smoke when dependencies or web pages change, both also run in CI)
 - [ ] Quality gates pass for touched pages (performance, a11y, SEO, links, no ads in protected flows, no analytics before consent)
 - [ ] SL and EN strings complete; no hard-coded user-facing text
 - [ ] Security implications reviewed (guards, ownership rules in the domain, validation, rate limits, secrets, PII in logs and analytics, no exposed tables); error cases handled with stable codes
@@ -116,4 +116,4 @@ Run by GitHub Actions (`.github/workflows/ci.yml`, jobs `verify`, `quality`, `im
 | 0.7 | 2026-10-15 | Data minimisation line aligned with the coarsened point and 30-day post-closure blur; CH-32 handed to a validation task (opt-in OpenAPI extension) |
 | 0.8 | 2026-10-15 | Quality kit in place (TASK-4.1): where the web gates live, best-practices threshold, guard helpers named, visual baselines approved by the design lead, html-validate dropped |
 | 0.9 | 2026-10-15 | CH-104: retention proposal for audit_log (12 months) and zivali-backups (30 days), pending lawyer confirmation |
-| 0.10 | 2026-10-15 | TASK-4.2: CI runs the gates (`ci.yml`); secretlint also pre-commit; accepted audit advisories and their rule (§Security) |
+| 0.10 | 2026-10-15 | TASK-4.2: CI runs the gates (`ci.yml`; `pnpm audit` and the e2e smoke as separate CI steps, not in `pnpm verify`); secretlint also pre-commit; accepted audit advisories and their rule (§Security) |

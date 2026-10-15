@@ -16,7 +16,7 @@
 		"test": "node --test \"scripts/*.test.mjs\" && turbo run test",
 		"format": "prettier --write .",
 		"format:check": "prettier --check .",
-		"verify": "prettier --check . && eslint --max-warnings=0 scripts tests eslint.config.mjs && node --test \"scripts/*.test.mjs\" && secretlint \"**/*\" && pnpm audit --audit-level high && turbo run lint typecheck test build && pnpm --filter web e2e",
+		"verify": "prettier --check . && eslint --max-warnings=0 scripts tests eslint.config.mjs && node --test \"scripts/*.test.mjs\" && secretlint \"apps/**\" \"packages/**\" \"scripts/**\" \"tests/**\" \"supabase/**\" \"docs/**\" \".github/**\" \"*\" && turbo run lint typecheck test build",
 		"quality": "node scripts/quality.mjs",
 		"images": "docker build -f apps/api/Dockerfile -t zivali-api . && node scripts/if-exists.mjs apps/web/Dockerfile TASK-5.1 -- docker build -f apps/web/Dockerfile -t zivali-web .",
 		"db:start": "node scripts/if-exists.mjs supabase/config.toml TASK-3.2 -- supabase start",

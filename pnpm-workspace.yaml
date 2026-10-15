@@ -23,23 +23,26 @@ allowBuilds:
   # first use, so the script is skipped (without this entry pnpm 11 exits with ERR_PNPM_IGNORED_BUILDS).
   '@prisma/engines': false
 
-# `pnpm audit --audit-level high` (pnpm verify, CI) skips these advisories, accepted 2026-10-15 (docs/05 §Security).
-# Each sits in build or dev tooling and has no fix, or its fix is a major bump outside the parent's declared range;
-# none is reachable with untrusted input. Re-check on dependency upgrades and drop an entry once its fix lands.
+# Fixed versions forced over the pinned or too-narrow ranges of tooling parents (tmp via @lhci/cli > inquirer >
+# external-editor, mysql2 via the prisma CLI).
+overrides:
+  tmp: ^0.2.6
+  mysql2: ^3.22.0
+
+# `pnpm audit --audit-level high` (CI) skips these advisories, accepted 2026-10-15 (docs/05 §Security). Each has no
+# fix or its fix is a major bump outside the parent's declared range, and none is reachable with untrusted input.
+# Review each entry by 2026-12-15: drop an entry once its fix lands.
 auditConfig:
   ignoreGhsas:
-    # tmp <0.2.6 path traversal: @lhci/cli > inquirer > external-editor (tmp ^0.0.33); interactive prompts only.
-    - GHSA-ph9p-34f9-6g65
     # extract-zip symlink traversal (no fix): lighthouse > puppeteer-core browser download; Lighthouse uses
     # Playwright's Chromium (CHROME_PATH), so nothing is downloaded or unzipped.
     - GHSA-jmr9-qjv8-65gv
     - GHSA-7pqw-9j4j-h8q3
     # basic-ftp <6.2.1 ReDoS in Client.list(): lighthouse > puppeteer proxy-agent (basic-ftp ^5); no FTP is used.
     - GHSA-c475-qrg2-pj4r
-    # deepmerge-ts <8 stack exhaustion: prisma > @prisma/config (pinned 7.1.5); merges our static prisma.config.ts.
+    # deepmerge-ts <8 stack exhaustion: prisma > @prisma/config (pinned 7.1.5). prisma is an apps/api runtime
+    # dependency, so it ships in the api image; not exploitable, it only merges our static prisma.config.ts.
     - GHSA-ggr8-5vv4-36mx
-    # mysql2 <3.22 auth downgrade: prisma CLI (pinned 3.15.3); the MySQL driver is never loaded (Postgres only).
-    - GHSA-3f6p-5ww8-9rcr
     # node-forge PKCS#1 v1.5 signature check (no fix): expo > @expo/cli code signing, which we do not use.
     - GHSA-86w9-cpqp-85rv
     # braces stack exhaustion (no fix): metro > micromatch; Metro's globs come from our own config.

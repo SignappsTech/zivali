@@ -25,9 +25,9 @@ env:
 
 jobs:
   verify:
-    # Format, lint, root script tests, secretlint, pnpm audit, then Turbo: lint, typecheck, unit tests (Vitest,
-    # jest-expo), i18n check, tokens build (contrast), API and ADR-021 security tests, web build, mobile expo export;
-    # then the Playwright smoke (package.json "verify").
+    # `pnpm verify` (format, lint, root script tests, secretlint, then Turbo: lint, typecheck, unit tests (Vitest,
+    # jest-expo), i18n check, tokens build (contrast), API and ADR-021 security tests, web build, mobile expo
+    # export), then `pnpm audit --audit-level high` and the Playwright smoke as separate steps.
     runs-on: ubuntu-24.04
     timeout-minutes: 40
     steps:
@@ -44,7 +44,16 @@ jobs:
           key: turbo-${{ runner.os }}-${{ github.job }}-${{ github.sha }}
           restore-keys: turbo-${{ runner.os }}-${{ github.job }}-
       - run: pnpm install --frozen-lockfile
-      - run: pnpm exec playwright install --with-deps chromium
+      - name: Playwright browser cache
+        id: pw
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+      - if: steps.pw.outputs.cache-hit != 'true'
+        run: pnpm exec playwright install --with-deps chromium
+      - if: steps.pw.outputs.cache-hit == 'true'
+        run: pnpm exec playwright install-deps chromium
       - name: Start Supabase (Postgres with PostGIS and pgvector, Auth, Realtime)
         # stdout (URLs and the local demo keys) is dropped; errors still reach the log.
         run: |
@@ -55,6 +64,8 @@ jobs:
       - name: Migrate and seed (prisma migrate reset)
         run: pnpm db:reset
       - run: pnpm verify
+      - run: pnpm audit --audit-level high
+      - run: pnpm --filter web e2e
       - name: Trim the Turbo cache to the last 7 days
         run: find .turbo/cache -type f -mtime +7 -delete 2>/dev/null || true
 
@@ -77,7 +88,16 @@ jobs:
           key: turbo-${{ runner.os }}-${{ github.job }}-${{ github.sha }}
           restore-keys: turbo-${{ runner.os }}-${{ github.job }}-
       - run: pnpm install --frozen-lockfile
-      - run: pnpm exec playwright install --with-deps chromium
+      - name: Playwright browser cache
+        id: pw
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+      - if: steps.pw.outputs.cache-hit != 'true'
+        run: pnpm exec playwright install --with-deps chromium
+      - if: steps.pw.outputs.cache-hit == 'true'
+        run: pnpm exec playwright install-deps chromium
       # Once public pages read the API on the server, start it here before the kit runs:
       #   pnpm exec supabase start -x studio,postgres-meta,imgproxy > /dev/null && pnpm db:reset
       #   pnpm --filter api build && (node apps/api/dist/server.js &) with DATABASE_URL as in the verify job
