@@ -26,7 +26,7 @@ Only dependencies listed in `docs/tech/adr/017-dependency-allowlist.md` (or inst
 ## Repo map (your side)
 
     apps/web/
-      app/[locale]/(public)/…      public pages (home, map, report flows, /r/[code], partners, info, legal)
+      app/[locale]/(public)/…      public pages (home, map, report flows, /r/[code], partners, info, legal); route folders use the internal EN paths (e.g. shelters, lost-pets/[location]); next-intl `pathnames` map them to the SL URLs (e.g. /zavetisca)
       app/[locale]/(app)/…         signed-in areas (my pets, my reports, inbox, account)
       app/[locale]/(admin)/admin/… admin console (aal2)
       app/r/[code]/opengraph-image.tsx, app/r/[code]/poster.pdf/route.ts, app/api/health/route.ts (web only; ad clicks go to the API, C14)
@@ -136,3 +136,4 @@ Branch `agent/<task-id>-<slug>` from `main`; commits `<task-id>: <what>`; never 
 |---|---|---|
 | 1.1 | 2026-10-15 | CH-44/45/56: mobile session encryption at rest, single React version, bbox rounding and coarsenPoint ownership |
 | 1.2 | 2026-10-15 | CH-78: repo map matches proxy.ts and the /dev pages under [locale] |
+| 1.3 | 2026-10-15 | CH-100: route folders use internal EN paths, next-intl pathnames map to SL |

@@ -83,6 +83,7 @@ Run by GitHub Actions once a remote exists; until then `pnpm verify` runs the sa
 - **Data minimisation**: no camera originals or EXIF stored; exact location never stored in public reads (a coarsened point of 20-30 m is what is shown, the raw point stays private) and the stored point is blurred 30 days after closure (LQ-19, N=30); chip numbers never public; IPs only as keyed hashes for 48 h; analytics events contain enums and slugs only; ad counting cookieless and aggregate (A-016).
 - **Consent**: no analytics script, request or cookie before opt-in (basic Consent Mode v2, ADR-009); choice, version and timestamp stored first-party; withdrawal as easy as giving; re-ask after 12 months or version change.
 - **Retention** (NFR-PRIV): chat 6 months after close; closed-report photos and locations 12 months; payment records as legally required; implemented by `purge_retention`.
+- **Retention for `audit_log` and the `zivali-backups` bucket** (proposal, confirm with the lawyer pack LQ list): `audit_log` rows kept 12 months, then deleted; `zivali-backups` objects kept 30 days rolling. Both go into `data-inventory.json` (currently "not defined yet") and `purge_retention`.
 - **Rights**: export and delete (M3, FR-034); anonymous reporters delete via manage link.
 - **Processors and transfers** (for the privacy policy, TASK-28): Supabase (EU, Frankfurt), Hetzner (EU, hosting), Cloudflare (R2 storage in the EU jurisdiction, Turnstile), Stripe, Brevo (EU), Expo (push), Google (GA4, Firebase), Anthropic (M3), Voyage AI (M3), Sentry (EU, M5). DPAs to be signed by the client before production.
 - **Accessibility**: WCAG 2.2 AA (EAA); axe in CI from M1; formal audit in M5 before the accessibility statement is finalised.
@@ -114,3 +115,4 @@ Run by GitHub Actions once a remote exists; until then `pnpm verify` runs the sa
 | 0.6 | 2026-10-15 | Own geocoder (ADR-007 revised): MapTiler and Photon removed from CSP and processors, geocoder points never in URLs or logs; R2 in the EU jurisdiction |
 | 0.7 | 2026-10-15 | Data minimisation line aligned with the coarsened point and 30-day post-closure blur; CH-32 handed to a validation task (opt-in OpenAPI extension) |
 | 0.8 | 2026-10-15 | Quality kit in place (TASK-4.1): where the web gates live, best-practices threshold, guard helpers named, visual baselines approved by the design lead, html-validate dropped |
+| 0.9 | 2026-10-15 | CH-104: retention proposal for audit_log (12 months) and zivali-backups (30 days), pending lawyer confirmation |
