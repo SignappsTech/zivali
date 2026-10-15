@@ -51,8 +51,9 @@ Root scripts. Until the piece a script needs is merged, it prints which task add
 | `pnpm typecheck`            | `turbo run typecheck`                                                                                             | now                                    |
 | `pnpm test`                 | `turbo run test` (Vitest, jest-expo)                                                                              | now                                    |
 | `pnpm format`               | Prettier write; `pnpm format:check` checks only                                                                   | now                                    |
-| `pnpm verify`               | every gate, required before reporting a task done (see below)                                                     | now                                    |
+| `pnpm verify`               | every gate of the CI `verify` job, required before reporting a task done (see below)                              | now                                    |
 | `pnpm quality`              | build + serve web on :8080 (`QUALITY_PORT`): axe, console, consent, visual, Lighthouse CI, links → quality-report | now                                    |
+| `pnpm images`               | Docker builds of the api image (and web once `apps/web/Dockerfile` exists), as the CI `images` job                | now                                    |
 | `pnpm db:start` / `db:stop` | local Supabase stack lifecycle                                                                                    | TASK-3.2                               |
 | `pnpm db:migrate`           | `prisma migrate dev` in apps/api (new migration from schema changes)                                              | TASK-3.7                               |
 | `pnpm db:reset`             | `prisma migrate reset --force`, then `prisma db seed`                                                             | TASK-3.7                               |
@@ -66,7 +67,7 @@ Web: the app refuses to start without `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLI
 
 ## The `pnpm verify` rule
 
-`pnpm verify` runs the same gates CI will run ([ADR-016](docs/tech/adr/016-environments-hosting-cicd.md)); there is no hosted CI until the GitHub repository exists. Every implementer runs it on their branch and it must pass before the task is reported done. Today it runs the Prettier check, lint, typecheck, unit tests and builds; TASK-4.2 extends it to the full pipeline (tokens contrast, i18n parity, API and security tests against the local database, Playwright smoke, quality kit, secretlint, `pnpm audit`).
+`pnpm verify` runs the gates of the CI `verify` job ([ADR-016](docs/tech/adr/016-environments-hosting-cicd.md), `.github/workflows/ci.yml`): Prettier check, root lint and script tests, secretlint, `pnpm audit --audit-level high`, `turbo run lint typecheck test build` (tokens contrast, i18n parity, unit tests, API and ADR-021 security tests against the local database, web build, mobile `expo export`) and the Playwright smoke. Every implementer runs it on their branch and it must pass before the task is reported done. It needs the local database (`pnpm db:start`; with moved ports set `DATABASE_URL` and `DIRECT_URL`, which win over `apps/api/.env.local`) and Playwright's Chromium (`pnpm exec playwright install chromium`, once). CI also runs `pnpm quality` and `pnpm images` in their own jobs; run them locally when web pages, a Dockerfile or dependencies change. Branch protection for main requires all three jobs ([docs/04 §CI/CD](docs/04-technical-design.md)).
 
 ## Environment variables
 

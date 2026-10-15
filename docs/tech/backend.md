@@ -1,4 +1,4 @@
-source: docs/04-technical-design.md (v0.9) §Architecture, §Data model, §Authentication, §Environments, §CI/CD, §Observability; docs/05-quality-security-plan.md (v0.6) §Security, §Privacy, §Definition of Done; ADR-020 (API, klikni conventions), ADR-021, ADR-022, ADR-023
+source: docs/04-technical-design.md (v0.9) §Architecture, §Data model, §Authentication, §Environments, §CI/CD, §Observability; docs/05-quality-security-plan.md (v0.6) §Security, §Privacy, §Definition of Done; ADR-020 (API, klikni conventions), ADR-021, ADR-022, ADR-023; amended 2026-10-15 (TASK-4.2): full `pnpm verify`, `pnpm images`, CI
 
 # Backend slice (apps/api: Express + Prisma, worker; supabase/ local stack; scripts/)
 
@@ -125,7 +125,8 @@ Domains throw `AppError`; unknown errors become `INTERNAL` (500) with the reques
 | `pnpm --filter api build` | tsup → `dist/` |
 | `pnpm admin:create <email>` | promote an existing local account to admin |
 | `node scripts/deploy.mjs staging [--dry-run]` | build, push, migrate, deploy to the VPS (ADR-016) |
-| `pnpm verify` | everything CI runs (required before reporting done) |
+| `pnpm verify` | every gate of the CI `verify` job (`.github/workflows/ci.yml`), required before reporting done: Prettier check, lint, root script tests, secretlint, `pnpm audit --audit-level high`, `turbo run lint typecheck test build` (tokens contrast, i18n, unit, API and ADR-021 security tests, web build, mobile `expo export`), Playwright smoke. Needs `pnpm db:start` running and Chromium once (`pnpm exec playwright install chromium`); with moved Supabase ports set `DATABASE_URL`/`DIRECT_URL` (env wins over `apps/api/.env.local`). A failing `pnpm audit` on a new advisory: report it as `STATUS: blocked` with the GHSA id; the tech lead fixes it or accepts it in `auditConfig.ignoreGhsas` (`pnpm-workspace.yaml`). The pre-commit hook also runs secretlint on staged files |
+| `pnpm images` | Docker builds of the api image (and the web image once `apps/web/Dockerfile` exists), as the CI `images` job; run it when a Dockerfile or dependencies change |
 
 Local endpoints: API http://localhost:4000 (OpenAPI spec in apps/api/openapi.json; Swagger UI deferred), Supabase http://127.0.0.1:54321 (Auth, Realtime), Studio http://127.0.0.1:54323, mail catcher http://127.0.0.1:54324, DB `postgresql://postgres:postgres@127.0.0.1:54322/postgres`, MinIO http://127.0.0.1:9000 (console :9001). Docker Desktop must be running (Windows).
 
@@ -145,7 +146,7 @@ Branch `agent/<task-id>-<slug>` from `main`; commits `<task-id>: <what>`; never 
 - [ ] Permission tests for every new endpoint (anonymous visitor, anonymous user, owner/manager, other user, moderator aal1 and aal2, admin aal2)
 - [ ] New models: `@@schema("app")`, RLS enabled in the migration, data-inventory entry; `pnpm --filter api test:security` green
 - [ ] Migrations verified from zero: agents run `prisma migrate dev` (shadow DB) and `migrate deploy` plus seed on a scratch DB (Prisma 7 refuses `migrate reset` under an AI agent without user consent); a person runs `pnpm db:reset`. Migration header has the task id and rollback note
-- [ ] `pnpm verify` passes (lint, typecheck, unit, API tests, build)
+- [ ] `pnpm verify` passes (format, lint, secretlint, audit, typecheck, unit, API and security tests, build, e2e smoke)
 - [ ] No PII in logs; IPs and device ids hashed; secrets only from config
 - [ ] Mocks keep everything working offline; missing credentials reported as `needs-input`, not failures
 - [ ] No new dependency outside ADR-017; no unrelated changes; README updated where behaviour or commands changed

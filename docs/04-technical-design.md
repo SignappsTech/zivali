@@ -1,7 +1,7 @@
 ---
 doc_id: DOC-04
 title: Technical Design
-version: 0.10
+version: 0.11
 status: Draft
 date: 2026-10-15
 owner: Tech Lead
@@ -207,8 +207,21 @@ Configuration through environment variables only (names in `frontend.md` / `back
 
 # CI/CD
 
-- **PR pipeline** (GitHub Actions `ci.yml`; locally `pnpm verify`): install (pnpm cache) → format check → lint → typecheck → tokens build (contrast lint) → unit (Vitest, jest-expo) → i18n key check → `supabase start` + `prisma migrate reset` → API tests (Supertest, permission matrix, jobs) + security exposure tests (ADR-021) → web build + start (against the local API) → Playwright smoke + axe + quality kit → Lighthouse CI → mobile `expo export` + `tsc` → Docker build of api and web images → secretlint → `pnpm audit --audit-level high`. Affected-only via Turbo filters where possible.
-- **Deploy** (`deploy.yml`): on main → build and push images to GHCR → SSH to the VPS → `docker compose pull` → one-off `prisma migrate deploy` → `docker compose up -d` → smoke (`/ping`, `/v1/health/ready`, web home, exposure checks). Production on tags with manual approval. `scripts/deploy.mjs` runs the same steps and falls back to a dry run when credentials are missing (ADR-016).
+- **PR pipeline** (`.github/workflows/ci.yml`, on every pull request and every push to main; no secrets, all adapters on mocks). Three parallel jobs on `ubuntu-24.04`, actions pinned to commit SHAs, pnpm store and Turbo local cache (`.turbo/cache`) cached:
+  - `verify`: install → `playwright install --with-deps chromium` → `supabase start` (without Studio, postgres-meta, imgproxy; ports from `SUPABASE_API_PORT`/`SUPABASE_DB_PORT`, `DATABASE_URL`/`DIRECT_URL` derived from them; Turbo passes both through) → `pnpm db:reset` (`prisma migrate reset` + seed) → `pnpm verify`: format check → root ESLint → root script tests → secretlint → `pnpm audit --audit-level high` → `turbo run lint typecheck test build` (tokens build with contrast lint, unit tests in Vitest and jest-expo, i18n key check, API tests + ADR-021 security tests against the database, web build, mobile `expo export` + `tsc`) → Playwright smoke (`pnpm --filter web e2e`).
+  - `quality`: install → `playwright install --with-deps chromium` → `pnpm quality` (axe, console, consent and ad guards, visual, Lighthouse CI, links on the production web build at `QUALITY_PORT`, default 8080); `quality-report/` uploaded as an artifact. Public pages do not call the API on the server yet; the step that starts Supabase and the API for this job is commented in `ci.yml` until one does.
+  - `images`: `pnpm images`: Docker build of the api image (also the worker) and, once TASK-5.1 adds `apps/web/Dockerfile`, the web image.
+  - Locally the same gates: `pnpm verify` on every task (with `pnpm db:start` running and Playwright's Chromium installed), `pnpm quality` when web pages change, `pnpm images` when a Dockerfile or dependencies change. Accepted `pnpm audit` advisories live in `pnpm-workspace.yaml` `auditConfig.ignoreGhsas`, each with its reason (docs/05 §Security). secretlint also runs on staged files in the pre-commit hook.
+- **Branch protection** (repository `pbozic/zivali`, set once it exists; Settings → Branches, or the command below): main requires the status checks `verify`, `quality` and `images` on an up-to-date branch, pull requests for everyone else, no force pushes, no deletion. While reviews are local (CLAUDE.md `Review: local`) admins are not enforced, so the owner can push locally reviewed merges; every push to main still runs the full CI. Set `enforce_admins` to `true` when reviews move to pull requests.
+
+  ```sh
+  gh api -X PUT repos/pbozic/zivali/branches/main/protection --input - <<'EOF'
+  {"required_status_checks":{"strict":true,"contexts":["verify","quality","images"]},"enforce_admins":false,
+   "required_pull_request_reviews":{"required_approving_review_count":0},"restrictions":null,
+   "allow_force_pushes":false,"allow_deletions":false}
+  EOF
+  ```
+- **Deploy** (TASK-5.1; a commented placeholder job at the end of `ci.yml` until the client sets the deploy secrets in GitHub Actions): on main → build and push images to GHCR → SSH to the VPS → `docker compose pull` → one-off `prisma migrate deploy` → `docker compose up -d` → smoke (`/ping`, `/v1/health/ready`, web home, exposure checks). Production on tags with manual approval. `scripts/deploy.mjs` runs the same steps and falls back to a dry run when credentials are missing (ADR-016).
 - **Rollback**: redeploy the previous image tag (`docker compose` with the old tag); database fixes are forward migrations; restore from backup only for data loss (runbook).
 
 # Observability
@@ -290,3 +303,4 @@ Full records: `docs/tech/adr/NNN-*.md` (context, decision, alternatives, consequ
 | 0.8 | 2026-10-15 | Client decision: klikni API toolchain (zod-to-openapi spec, RTK Query + codegen replace TanStack Query; Swagger UI deferred); Next 16 proxy.ts, APP_VERSION, x-request-id (C1), proxy matcher (C15); ADR-008 server text via Node worker; ADR-017 rows |
 | 0.9 | 2026-10-15 | Client decision (CH-25, CH-24): raw GPS never stored, 20–30 m coarsening once at write on device and server, public blur from the coarsened point, post-closure blur job (ADR-006, C6); C4 models/DTOs/limits/query encoding confirmed from TASK-6.5; ADR-017 rows (CH-15, CH-28) |
 | 0.10 | 2026-10-15 | CH-109: §Environments notes that staging and production share Supabase project `najdimo` until a separate production project exists |
+| 0.11 | 2026-10-15 | TASK-4.2: CI in `ci.yml` (jobs verify, quality, images; deploy placeholder), full `pnpm verify` (secretlint, `pnpm audit`, API tests, Playwright smoke), `pnpm images`, branch protection for main, Turbo passes `DATABASE_URL`/`DIRECT_URL` through |

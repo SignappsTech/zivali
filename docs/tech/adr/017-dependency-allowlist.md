@@ -42,7 +42,7 @@ Runtime dependencies outside this list (and outside what the Expo SDK 57 templat
 | `pdfkit` | api (worker) | Receipt and fiscal invoice PDFs (klikni uses it; TASK-92) |
 | `@anthropic-ai/sdk` | api worker (M3) | ADR-012 |
 | `@sentry/nextjs`, `@sentry/react-native` | web, mobile (M5, TASK-70) | Error tracking, EU region, PII scrubbing |
-| Dev: `vitest`, `@testing-library/*`, `jsdom`, `@playwright/test`, `@axe-core/playwright`, `@lhci/cli`, `linkinator`, `jest-expo`, `secretlint`, `supabase` (CLI), `turbo`, `eslint`, `prettier`, `typescript` | repo | ADR-001, ADR-015 |
+| Dev: `vitest`, `@testing-library/*`, `jsdom`, `@playwright/test`, `@axe-core/playwright`, `@lhci/cli`, `linkinator`, `jest-expo`, `secretlint` (with `@secretlint/secretlint-rule-preset-recommend`), `supabase` (CLI), `turbo`, `eslint`, `prettier`, `typescript` | repo | ADR-001, ADR-015 |
 | Dev: `@eslint/js`, `typescript-eslint`, `globals` | repo | Root ESLint base config: JS recommended rules, TypeScript parsing and rules, Node globals for scripts (TASK-3.1) |
 | Dev: `jest`, `@types/jest`, `react-test-renderer`, `react-dom` 19.2.3 | mobile | `jest-expo` runner and types; `react-test-renderer` is the RNTL 14 peer; `react-dom` pinned to the Expo template version (TASK-3.4) |
 | `class-variance-authority` | mobile | Installed by the RN Reusables CLI for component variants (TASK-3.4); web already gets it from shadcn |
