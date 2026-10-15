@@ -1,11 +1,11 @@
 ---
 id: TASK-30.1
 title: 'Design: Report found or sighted (no account) and manage page (P7)'
-status: In Progress
+status: Done
 assignee:
   - '@ui-designer'
 created_date: '2026-10-14 21:50'
-updated_date: '2026-10-15 01:39'
+updated_date: '2026-10-15 02:00'
 labels:
   - design
   - 'est:M'
