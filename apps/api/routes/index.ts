@@ -7,6 +7,7 @@ import configRoutes from './config.routes.ts';
 import geoRoutes from './geo.routes.ts';
 import healthRoutes from './health.routes.ts';
 import meRoutes from './me.routes.ts';
+import notificationsRoutes, { prefsRouter, pushTokensRouter } from './notifications.routes.ts';
 import reportsRoutes from './reports.routes.ts';
 import sheltersRoutes from './shelters.routes.ts';
 
@@ -18,6 +19,9 @@ router.use('/me', meRoutes);
 router.use('/admin', adminRoutes);
 router.use('/shelters', sheltersRoutes);
 router.use('/geo', geoRoutes);
+router.use('/notifications', notificationsRoutes);
+router.use('/notification-prefs', prefsRouter);
+router.use('/push-tokens', pushTokensRouter);
 router.use('/reports', reportsRoutes);
 router.use('/alert-subscription', alertSubscriptionRoutes);
 

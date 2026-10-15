@@ -8,6 +8,8 @@ import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest
 
 import AlertsDao from '../../domains/alerts/alerts.dao.ts';
 import { AlertsDomain } from '../../domains/alerts/index.ts';
+import { adapters } from '../../adapters/index.ts';
+import { mockPush } from '../../adapters/push/mock.ts';
 import { Prisma } from '../../generated/client.ts';
 import type { JobCtx } from '../../jobs/index.ts';
 import { handle as fanoutJob } from '../../jobs/alerts.fanout.job.ts';
@@ -275,16 +277,16 @@ describe('jobs', () => {
 			const ctx = jobCtx();
 			const info = vi.spyOn(ctx.logger, 'info');
 			await notifySendJob(input, ctx);
-			const messages = info.mock.calls.map(([message]) => message);
+			const messages = info.mock.calls.map(([first, second]) => (typeof first === 'string' ? first : second));
 			info.mockRestore();
 			return messages;
 		};
 
 		expect(await deliverable()).toBe(true);
-		expect(await send()).toEqual(['job stub: no handler yet']);
+		expect(await send()).not.toContain('alert dropped');
 		await setReport('closed');
 		expect(await deliverable()).toBe(false);
-		expect(await send()).toEqual(['alert dropped']);
+		expect(await send()).toContain('notify.send: no longer relevant, dropped');
 		await setReport('reunited');
 		expect(await deliverable()).toBe(false);
 		await setReport('matched');
@@ -293,5 +295,39 @@ describe('jobs', () => {
 		expect(await deliverable()).toBe(false);
 		await prisma.alert_subscriptions.deleteMany({ where: { user_id: user } });
 		expect(await deliverable()).toBe(false);
+	});
+
+	it('notify.send delivers the fan-out alert in the recipient locale and keeps the single alert_deliveries row', async () => {
+		const user = await subscribe(at(P, 300, 0));
+		await prisma.profiles.update({ where: { id: user }, data: { locale: 'en' } });
+		await prisma.push_tokens.create({
+			data: { user_id: user, token: `ExponentPushToken[${randomUUID()}]`, platform: 'ios' },
+		});
+		const id = await report({ species: 'cat' });
+		await AlertsDomain.fanout({ report_id: id }, systemCtx());
+		const [input] = (await queued(id)).filter((data) => data.user_id === user);
+		const push = mockPush();
+		const ctx = { ...jobCtx(), adapters: { ...adapters, push } };
+		await notifySendJob(input, ctx);
+		await notifySendJob(input, ctx);
+
+		const rows = await prisma.notifications.findMany({ where: { user_id: user } });
+		expect(rows).toHaveLength(1);
+		expect(Object.keys(rows[0]!.payload as object).sort()).toEqual(
+			[
+				'distance_band',
+				'has_area',
+				'report_code',
+				'reported_at',
+				'species',
+				...((rows[0]!.payload as { area_name?: string }).area_name ? ['area_name'] : []),
+			].sort()
+		);
+		expect(push.sent).toHaveLength(1);
+		expect(push.sent![0]!.title).toBe('Lost cat near you');
+		expect(push.sent![0]!.body).toContain('Have you seen it?');
+		expect(await prisma.alert_deliveries.findMany({ where: { user_id: user } })).toEqual([
+			expect.objectContaining({ report_id: id, channel: 'push' }),
+		]);
 	});
 });

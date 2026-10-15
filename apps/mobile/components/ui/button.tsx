@@ -20,6 +20,9 @@ const buttonVariants = cva('flex-row items-center justify-center gap-2 rounded-b
 			ghost: 'bg-transparent active:bg-foreground/10',
 			text: 'bg-transparent active:bg-foreground/10',
 			destructive: 'bg-destructive active:bg-destructive-pressed',
+			// Google and Apple only (§10.2): brand-literal fill with a 1 px inside stroke, the same on every surface; RN
+			// cannot mix colours, so pressed tints with the label colour at 15 % (the web mixes 14 % into the fill).
+			provider: 'border border-provider-border bg-provider active:bg-provider-foreground/15',
 		},
 		size: {
 			sm: 'min-h-11 px-[18px]',
@@ -43,6 +46,7 @@ const buttonTextVariants = cva('shrink text-center font-sans-bold text-base', {
 			ghost: 'text-foreground',
 			text: 'text-primary',
 			destructive: 'text-destructive-foreground',
+			provider: 'text-provider-foreground',
 		},
 		size: { sm: '', default: '', lg: 'text-control-lg', icon: '' },
 	},
@@ -58,6 +62,7 @@ const idleFill = {
 	ghost: 'active:bg-transparent',
 	text: 'active:bg-transparent',
 	destructive: 'active:bg-destructive',
+	provider: 'active:bg-provider',
 };
 const ignorePress = () => {};
 

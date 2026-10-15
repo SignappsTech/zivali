@@ -84,6 +84,9 @@ importers:
       '@prisma/client':
         specifier: 7.10.0
         version: 7.10.0(prisma@7.10.0(@types/node@22.20.5)(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@6.0.3))(typescript@6.0.3)
+      '@zivali/i18n':
+        specifier: workspace:*
+        version: link:../../packages/i18n
       '@zivali/types':
         specifier: workspace:*
         version: link:../../packages/types
@@ -126,6 +129,9 @@ importers:
       swagger-ui-express:
         specifier: ^5.0.1
         version: 5.0.1(express@5.3.0(supports-color@10.2.2))
+      use-intl:
+        specifier: ^4.14.9
+        version: 4.14.9(@types/react@19.3.0)(react@19.2.3)
       zod:
         specifier: ^4.6.7
         version: 4.6.7
@@ -190,6 +196,9 @@ importers:
       '@react-native-firebase/app':
         specifier: 26.4.0
         version: 26.4.0(expo@57.0.29)(react-native@0.86.3(@babel/core@7.29.7(supports-color@10.2.2))(@react-native/jest-preset@0.86.3(@babel/core@7.29.7(supports-color@10.2.2))(react@19.2.3)(supports-color@10.2.2))(@react-native/metro-config@0.86.3(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.2.18)(react@19.2.3)(supports-color@10.2.2))(react@19.2.3)
+      '@react-native-google-signin/google-signin':
+        specifier: ^16.1.5
+        version: 16.1.5(expo@57.0.29)(react-native@0.86.3(@babel/core@7.29.7(supports-color@10.2.2))(@react-native/jest-preset@0.86.3(@babel/core@7.29.7(supports-color@10.2.2))(react@19.2.3)(supports-color@10.2.2))(@react-native/metro-config@0.86.3(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.2.18)(react@19.2.3)(supports-color@10.2.2))(react@19.2.3)
       '@reduxjs/toolkit':
         specifier: ^2.13.0
         version: 2.13.0(react-redux@9.3.0(@types/react@19.2.18)(react@19.2.3)(redux@5.0.1))(react@19.2.3)
@@ -238,6 +247,9 @@ importers:
       '@zivali/tokens':
         specifier: workspace:*
         version: link:../../packages/tokens
+      '@zivali/validation':
+        specifier: workspace:*
+        version: link:../../packages/validation
       class-variance-authority:
         specifier: ^0.7.1
         version: 0.7.1
@@ -247,6 +259,9 @@ importers:
       expo:
         specifier: ~57.0.29
         version: 57.0.29(14162d115d21f003b06d5ffe43fb239f)
+      expo-apple-authentication:
+        specifier: ~57.0.2
+        version: 57.0.2(expo@57.0.29)(react-native@0.86.3(@babel/core@7.29.7(supports-color@10.2.2))(@react-native/jest-preset@0.86.3(@babel/core@7.29.7(supports-color@10.2.2))(react@19.2.3)(supports-color@10.2.2))(@react-native/metro-config@0.86.3(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.2.18)(react@19.2.3)(supports-color@10.2.2))(react@19.2.3)
       expo-background-task:
         specifier: ~57.0.21
         version: 57.0.21(expo@57.0.29)(react-native@0.86.3(@babel/core@7.29.7(supports-color@10.2.2))(@react-native/jest-preset@0.86.3(@babel/core@7.29.7(supports-color@10.2.2))(react@19.2.3)(supports-color@10.2.2))(@react-native/metro-config@0.86.3(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.2.18)(react@19.2.3)(supports-color@10.2.2))
@@ -3512,6 +3527,16 @@ packages:
       expo:
         optional: true
 
+  '@react-native-google-signin/google-signin@16.1.5':
+    resolution: {integrity: sha512-9rmMwACzHK9Cbd0Yp7efg5uWgiYoLwmNAJh4gRCuMcSQH+qplpK7E4d1Q4tbsD8M9jvvVtRX2Z0AP9wwBKmPrQ==}
+    peerDependencies:
+      expo: '>=52.0.40'
+      react: '*'
+      react-native: '*'
+    peerDependenciesMeta:
+      expo:
+        optional: true
+
   '@react-native-masked-view/masked-view@0.3.2':
     resolution: {integrity: sha512-XwuQoW7/GEgWRMovOQtX3A4PrXhyaZm0lVUiY8qJDvdngjLms9Cpdck6SmGAUNqQwcj2EadHC1HwL0bEyoa/SQ==}
     peerDependencies:
@@ -6307,6 +6332,13 @@ packages:
   expect@29.7.0:
     resolution: {integrity: sha512-2Zks0hf1VLFYI1kbh0I5jP3KHHyCHpkfyHBzsSXRFgl/Bg9mWYfMW8oD+PdMPlEwy5HNsR9JutYy6pMeOh61nw==}
     engines: {node: ^14.15.0 || ^16.10.0 || >=18.0.0}
+
+  expo-apple-authentication@57.0.2:
+    resolution: {integrity: sha512-00KnlyRceRKski+ljZz8q8JhJZ4D3ZScU+Y0RqS6ElJ8GaCWfd7Qh5tMr47yIU/dKDrOnkzkFUM+6vyHS5HI7Q==}
+    peerDependencies:
+      expo: '*'
+      react: '*'
+      react-native: '*'
 
   expo-application@57.0.3:
     resolution: {integrity: sha512-t/CxeLio0NjY9/cOak1tQp62/hAUjzJxmhR4rVUR7K5bb9YoEtfl1ZekTn+Iuh+dYOMYzF0l72ODMSmY3CR1NA==}
@@ -13947,6 +13979,13 @@ snapshots:
     transitivePeerDependencies:
       - '@react-native-async-storage/async-storage'
 
+  '@react-native-google-signin/google-signin@16.1.5(expo@57.0.29)(react-native@0.86.3(@babel/core@7.29.7(supports-color@10.2.2))(@react-native/jest-preset@0.86.3(@babel/core@7.29.7(supports-color@10.2.2))(react@19.2.3)(supports-color@10.2.2))(@react-native/metro-config@0.86.3(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.2.18)(react@19.2.3)(supports-color@10.2.2))(react@19.2.3)':
+    dependencies:
+      react: 19.2.3
+      react-native: 0.86.3(@babel/core@7.29.7(supports-color@10.2.2))(@react-native/jest-preset@0.86.3(@babel/core@7.29.7(supports-color@10.2.2))(react@19.2.3)(supports-color@10.2.2))(@react-native/metro-config@0.86.3(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.2.18)(react@19.2.3)(supports-color@10.2.2)
+    optionalDependencies:
+      expo: 57.0.29(14162d115d21f003b06d5ffe43fb239f)
+
   '@react-native-masked-view/masked-view@0.3.2(react-native@0.86.3(@babel/core@7.29.7(supports-color@10.2.2))(@react-native/jest-preset@0.86.3(@babel/core@7.29.7(supports-color@10.2.2))(react@19.2.3)(supports-color@10.2.2))(@react-native/metro-config@0.86.3(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.2.18)(react@19.2.3)(supports-color@10.2.2))(react@19.2.3)':
     dependencies:
       react: 19.2.3
@@ -17189,6 +17228,12 @@ snapshots:
       jest-matcher-utils: 29.7.0
       jest-message-util: 29.7.0
       jest-util: 29.7.0
+
+  expo-apple-authentication@57.0.2(expo@57.0.29)(react-native@0.86.3(@babel/core@7.29.7(supports-color@10.2.2))(@react-native/jest-preset@0.86.3(@babel/core@7.29.7(supports-color@10.2.2))(react@19.2.3)(supports-color@10.2.2))(@react-native/metro-config@0.86.3(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.2.18)(react@19.2.3)(supports-color@10.2.2))(react@19.2.3):
+    dependencies:
+      expo: 57.0.29(14162d115d21f003b06d5ffe43fb239f)
+      react: 19.2.3
+      react-native: 0.86.3(@babel/core@7.29.7(supports-color@10.2.2))(@react-native/jest-preset@0.86.3(@babel/core@7.29.7(supports-color@10.2.2))(react@19.2.3)(supports-color@10.2.2))(@react-native/metro-config@0.86.3(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.2.18)(react@19.2.3)(supports-color@10.2.2)
 
   expo-application@57.0.3(expo@57.0.29):
     dependencies:

@@ -22,7 +22,7 @@ function DisabledLine() {
 	);
 }
 
-function Input({ className, editable, ...props }: React.ComponentProps<typeof TextInput>) {
+function Input({ className, editable, ...props }: React.ComponentPropsWithRef<typeof TextInput>) {
 	const { invalid, disabled, ...field } = useFormField();
 	const colors = useColors();
 	const off = disabled || editable === false;

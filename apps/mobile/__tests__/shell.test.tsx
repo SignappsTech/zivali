@@ -32,10 +32,25 @@ jest.mock('expo-sqlite/localStorage/install', () => {
 });
 jest.mock('@/lib/env', () => ({ env: { EXPO_PUBLIC_APP_URL: 'https://najdimo.test' } }));
 
-let mockSession = { session: null as object | null, isAnonymous: false, loading: false };
+// The auth helpers behind the Profile tab load the Supabase client; no call reaches it here.
+const mockResend = jest.fn();
+jest.mock('@/lib/supabase', () => ({ supabase: { auth: { resend: (...args: unknown[]) => mockResend(...args) } } }));
+
+let mockSession = {
+	session: null as object | null,
+	me: null as object | null,
+	isAnonymous: false,
+	loading: false,
+};
 jest.mock('@zivali/api/auth', () => ({ useSession: () => mockSession }));
 const mockSignOutAndWipe = jest.fn();
 jest.mock('@/lib/offline/wipe', () => ({ signOutAndWipe: (options: unknown) => mockSignOutAndWipe(options) }));
+
+const mockSignOutProviders = jest.fn();
+jest.mock('@/lib/auth', () => ({
+	...jest.requireActual('@/lib/auth'),
+	signOutProviders: () => mockSignOutProviders(),
+}));
 
 const routes = {
 	// The root Stack of app/_layout.tsx, without its fonts and store.
@@ -53,6 +68,7 @@ const routes = {
 	'report/found': () => null,
 	'auth/sign-in': () => null,
 	'auth/sign-up': () => null,
+	'auth/check-email': () => null,
 };
 
 function Providers({ children }: { children: ReactNode }) {
@@ -76,7 +92,7 @@ jest.setTimeout(60_000);
 beforeEach(() => {
 	mockStorage.clear();
 	mockStorage.set('locale', 'sl');
-	mockSession = { session: null, isAnonymous: false, loading: false };
+	mockSession = { session: null, me: null, isAnonymous: false, loading: false };
 	mockSignOutAndWipe.mockReset().mockResolvedValue(true);
 });
 
@@ -144,7 +160,7 @@ describe('signed-out tabs', () => {
 
 describe('signed in', () => {
 	beforeEach(() => {
-		mockSession = { session: {}, isAnonymous: false, loading: false };
+		mockSession = { session: {}, me: null, isAnonymous: false, loading: false };
 	});
 
 	test('Profile leads to the settings stack, and back returns to Profile', async () => {
@@ -156,7 +172,6 @@ describe('signed in', () => {
 			[sl.profile.row_alerts, '/settings/alerts'],
 			[sl.alerts.channels_title, '/settings/notifications'],
 			[sl.profile.row_payments, '/settings/payments'],
-			[sl.profile.nav_account, '/settings/account'],
 		]) {
 			await fireEvent.press(screen.getByRole('button', { name }));
 			expect(result.getPathname()).toBe(path);
@@ -169,6 +184,26 @@ describe('signed in', () => {
 		}
 	});
 
+	test('Profile shows the account header; an unconfirmed address can get a new link', async () => {
+		mockSession.me = { display_name: 'Ana', email: 'ana@primer.si', email_verified: false };
+		mockResend.mockResolvedValueOnce({ data: {}, error: null });
+		const result = await shell('/profile');
+
+		expect(screen.getByLabelText('Ana')).toBeOnTheScreen();
+		expect(screen.getByText('ana@primer.si')).toBeOnTheScreen();
+		expect(screen.getByText(sl.profile.email_unverified)).toBeOnTheScreen();
+		await fireEvent.press(screen.getByRole('button', { name: sl.profile.email_send_link }));
+		expect(mockResend).toHaveBeenCalledWith(expect.objectContaining({ type: 'signup', email: 'ana@primer.si' }));
+		expect(result.getPathname()).toBe('/auth/check-email');
+	});
+
+	test('Profile marks a confirmed address as verified', async () => {
+		mockSession.me = { display_name: 'Ana', email: 'ana@primer.si', email_verified: true };
+		await shell('/profile');
+		expect(screen.getByText(sl.profile.email_verified)).toBeOnTheScreen();
+		expect(screen.queryByRole('button', { name: sl.profile.email_send_link })).toBeNull();
+	});
+
 	test('sign-out asks first and passes the remove-links choice to the wipe', async () => {
 		await shell('/profile');
 
@@ -179,6 +214,7 @@ describe('signed in', () => {
 		await fireEvent.press(buttons[buttons.length - 1]);
 
 		expect(mockSignOutAndWipe).toHaveBeenCalledWith(expect.objectContaining({ removeManageLinks: true }));
+		expect(mockSignOutProviders).toHaveBeenCalled();
 	});
 
 	test('the settings language screen switches the language', async () => {

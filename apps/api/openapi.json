@@ -1457,6 +1457,11 @@
 				"description": "Public read model of a report (fuzzed area, no contact or chip data)."
 			},
 			"PushPlatform": { "type": "string", "enum": ["ios", "android"] },
+			"PushTokenDeleteInput": {
+				"type": "object",
+				"properties": { "token": { "type": "string", "minLength": 1, "maxLength": 512 } },
+				"required": ["token"]
+			},
 			"PushTokenInput": {
 				"type": "object",
 				"properties": {
@@ -2259,6 +2264,289 @@
 						"description": "Updated profile",
 						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/Profile" } } }
 					},
+					"400": {
+						"description": "VALIDATION",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"401": {
+						"description": "UNAUTHENTICATED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"429": {
+						"description": "RATE_LIMITED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"500": {
+						"description": "INTERNAL",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					}
+				}
+			}
+		},
+		"/v1/notifications": {
+			"get": {
+				"operationId": "listNotifications",
+				"summary": "Own inbox",
+				"description": "Newest first, keyset-paginated (`cursor` = the last item id, `limit` ≤ 50); `unread` counts all unread rows.",
+				"tags": ["notifications"],
+				"parameters": [
+					{
+						"schema": { "type": "string", "format": "uuid" },
+						"required": false,
+						"name": "cursor",
+						"in": "query"
+					},
+					{
+						"schema": { "type": "integer", "minimum": 1, "maximum": 50 },
+						"required": false,
+						"name": "limit",
+						"in": "query"
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "One page of notifications",
+						"content": {
+							"application/json": { "schema": { "$ref": "#/components/schemas/NotificationList" } }
+						}
+					},
+					"400": {
+						"description": "VALIDATION",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"401": {
+						"description": "UNAUTHENTICATED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"429": {
+						"description": "RATE_LIMITED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"500": {
+						"description": "INTERNAL",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					}
+				}
+			}
+		},
+		"/v1/notifications/read": {
+			"post": {
+				"operationId": "markNotificationsRead",
+				"summary": "Mark notifications read",
+				"description": "`{ ids }` (own rows; other ids are ignored) or `{ all: true }`.",
+				"tags": ["notifications"],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": { "schema": { "$ref": "#/components/schemas/MarkNotificationsReadInput" } }
+					}
+				},
+				"responses": {
+					"204": { "description": "Marked" },
+					"400": {
+						"description": "VALIDATION",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"401": {
+						"description": "UNAUTHENTICATED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"429": {
+						"description": "RATE_LIMITED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"500": {
+						"description": "INTERNAL",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					}
+				}
+			}
+		},
+		"/v1/notifications/unsubscribe": {
+			"get": {
+				"operationId": "unsubscribeEmailPage",
+				"summary": "Email unsubscribe confirmation page",
+				"description": "No sign-in. Verifies the signed token from an alert email and shows a confirm form (HTML, profile language); it writes nothing, so link scanners cannot turn alerts off.",
+				"tags": ["notifications"],
+				"parameters": [
+					{
+						"schema": { "type": "string", "minLength": 1, "maxLength": 1024 },
+						"required": true,
+						"name": "token",
+						"in": "query"
+					}
+				],
+				"responses": {
+					"200": { "description": "HTML confirm page" },
+					"400": {
+						"description": "VALIDATION",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"404": {
+						"description": "NOT_FOUND",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"429": {
+						"description": "RATE_LIMITED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"500": {
+						"description": "INTERNAL",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					}
+				}
+			},
+			"post": {
+				"operationId": "unsubscribeEmail",
+				"summary": "One-click email unsubscribe",
+				"description": "No sign-in: the signed token (query) from an alert email turns that type email channel off (the confirm form, or an RFC 8058 `List-Unsubscribe=One-Click` POST; the body is ignored) and returns an HTML confirmation in the profile language.",
+				"tags": ["notifications"],
+				"parameters": [
+					{
+						"schema": { "type": "string", "minLength": 1, "maxLength": 1024 },
+						"required": true,
+						"name": "token",
+						"in": "query"
+					}
+				],
+				"responses": {
+					"200": { "description": "HTML confirmation page" },
+					"400": {
+						"description": "VALIDATION",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"404": {
+						"description": "NOT_FOUND",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"429": {
+						"description": "RATE_LIMITED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"500": {
+						"description": "INTERNAL",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					}
+				}
+			}
+		},
+		"/v1/notification-prefs": {
+			"get": {
+				"operationId": "getNotificationPrefs",
+				"summary": "Own notification prefs",
+				"description": "One item per switchable type (defaults when never set; nearby_lost email is opt-in) plus the quiet hours (set with PATCH /v1/me).",
+				"tags": ["notification-prefs"],
+				"responses": {
+					"200": {
+						"description": "Prefs and quiet hours",
+						"content": {
+							"application/json": { "schema": { "$ref": "#/components/schemas/NotificationPrefs" } }
+						}
+					},
+					"401": {
+						"description": "UNAUTHENTICATED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"429": {
+						"description": "RATE_LIMITED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"500": {
+						"description": "INTERNAL",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					}
+				}
+			}
+		},
+		"/v1/notification-prefs/{type}": {
+			"put": {
+				"operationId": "setNotificationPref",
+				"summary": "Set the channels of one type",
+				"description": "Partial: omitted channels keep their value. manage_link and payment_receipt are transactional (VALIDATION).",
+				"tags": ["notification-prefs"],
+				"parameters": [
+					{
+						"schema": { "$ref": "#/components/schemas/NotificationType" },
+						"required": true,
+						"name": "type",
+						"in": "path"
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": { "schema": { "$ref": "#/components/schemas/NotificationPrefInput" } }
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "The pref",
+						"content": {
+							"application/json": { "schema": { "$ref": "#/components/schemas/NotificationPref" } }
+						}
+					},
+					"400": {
+						"description": "VALIDATION",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"401": {
+						"description": "UNAUTHENTICATED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"429": {
+						"description": "RATE_LIMITED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"500": {
+						"description": "INTERNAL",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					}
+				}
+			}
+		},
+		"/v1/push-tokens": {
+			"post": {
+				"operationId": "registerPushToken",
+				"summary": "Register an Expo push token",
+				"description": "Upsert by token: the token moves to the caller and `last_seen_at` is refreshed.",
+				"tags": ["push-tokens"],
+				"requestBody": {
+					"required": true,
+					"content": { "application/json": { "schema": { "$ref": "#/components/schemas/PushTokenInput" } } }
+				},
+				"responses": {
+					"204": { "description": "Registered" },
+					"400": {
+						"description": "VALIDATION",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"401": {
+						"description": "UNAUTHENTICATED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"429": {
+						"description": "RATE_LIMITED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"500": {
+						"description": "INTERNAL",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					}
+				}
+			},
+			"delete": {
+				"operationId": "unregisterPushToken",
+				"summary": "Remove an Expo push token",
+				"description": "The token travels in the body, never in the URL. Only the caller’s own token is removed.",
+				"tags": ["push-tokens"],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": { "schema": { "$ref": "#/components/schemas/PushTokenDeleteInput" } }
+					}
+				},
+				"responses": {
+					"204": { "description": "Removed (or not the caller’s)" },
 					"400": {
 						"description": "VALIDATION",
 						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }

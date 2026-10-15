@@ -17,6 +17,12 @@ test('defaults the analytics provider to mock and treats empty values as unset',
 	expect(env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID).toBeUndefined();
 });
 
+test('keeps Sign in with Apple off unless the flag is "true"', () => {
+	expect(parseEnv(valid).EXPO_PUBLIC_APPLE_SIGN_IN).toBe(false);
+	expect(parseEnv({ ...valid, EXPO_PUBLIC_APPLE_SIGN_IN: 'true' }).EXPO_PUBLIC_APPLE_SIGN_IN).toBe(true);
+	expect(() => parseEnv({ ...valid, EXPO_PUBLIC_APPLE_SIGN_IN: 'yes' })).toThrow('EXPO_PUBLIC_APPLE_SIGN_IN');
+});
+
 test('fails fast with the names of missing or invalid variables', () => {
 	expect(() => parseEnv({ ...valid, EXPO_PUBLIC_API_URL: undefined, EXPO_PUBLIC_APP_ENV: 'dev' })).toThrow(
 		'EXPO_PUBLIC_API_URL, EXPO_PUBLIC_APP_ENV'
