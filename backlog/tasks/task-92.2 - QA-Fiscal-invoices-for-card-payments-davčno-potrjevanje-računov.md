@@ -5,13 +5,15 @@ status: To Do
 assignee:
   - '@qa'
 created_date: '2026-10-14 23:36'
-updated_date: '2026-10-14 23:38'
+updated_date: '2026-10-15 23:41'
 labels:
   - qa
   - 'est:XS'
 milestone: m-1
 dependencies:
   - TASK-92.1
+  - TASK-92.3
+  - TASK-92.4
 references:
   - docs/tech/backend.md
   - docs/tech/contracts/C13-payments.md
