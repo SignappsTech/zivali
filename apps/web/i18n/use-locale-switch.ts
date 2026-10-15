@@ -21,6 +21,7 @@ export function useLocaleSwitch() {
 
 	const open = useCallback(
 		(next: Locale) =>
+			// The query string is dropped on purpose (accepted in review); only pathname and params carry over.
 			// @ts-expect-error -- params always belong to the current pathname (next-intl locale switcher pattern).
 			router.replace({ pathname, params }, { locale: next }),
 		[router, pathname, params]

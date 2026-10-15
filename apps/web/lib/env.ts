@@ -6,6 +6,8 @@ const schema = z
 		NEXT_PUBLIC_SUPABASE_URL: z.url(),
 		NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: z.string().min(1),
 		NEXT_PUBLIC_API_URL: z.url(),
+		// Origin of the public site: hreflang links are built on it, never on the request Host.
+		NEXT_PUBLIC_APP_URL: z.url(),
 		// @zivali/analytics reads it (and NEXT_PUBLIC_GA_MEASUREMENT_ID) itself; the proxy opens the CSP for ga4.
 		NEXT_PUBLIC_ANALYTICS_PROVIDER: z.enum(['mock', 'ga4']).default('mock'),
 		NEXT_PUBLIC_GA_MEASUREMENT_ID: z.string().regex(/^G-/).optional(),
@@ -26,7 +28,10 @@ export function parseEnv(source: Record<string, string | undefined>): Env {
 	// Only local development may omit the API URL; everywhere else a missing value fails fast.
 	// An unset APP_ENV is local only outside a production build (NODE_ENV comes in through the source).
 	values.APP_ENV ??= values.NODE_ENV === 'production' ? 'production' : 'local';
-	if (values.APP_ENV === 'local') values.NEXT_PUBLIC_API_URL ??= 'http://localhost:4000';
+	if (values.APP_ENV === 'local') {
+		values.NEXT_PUBLIC_API_URL ??= 'http://localhost:4000';
+		values.NEXT_PUBLIC_APP_URL ??= 'http://localhost:3000';
+	}
 	const result = schema.safeParse(values);
 	if (!result.success) {
 		const problems = result.error.issues.map((issue) => `${issue.path.join('.')} (${issue.message})`);
@@ -42,6 +47,7 @@ const source = {
 	NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
 	NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
 	NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
+	NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
 	NEXT_PUBLIC_ANALYTICS_PROVIDER: process.env.NEXT_PUBLIC_ANALYTICS_PROVIDER,
 	NEXT_PUBLIC_GA_MEASUREMENT_ID: process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID,
 	APP_ENV: process.env.APP_ENV,

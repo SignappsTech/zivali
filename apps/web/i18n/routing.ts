@@ -3,7 +3,7 @@ import { defineRouting } from 'next-intl/routing';
 /**
  * SL unprefixed, EN under /en (C15, C16). Keys are the internal paths, so route folders under app/[locale] use the
  * EN names (`app/[locale]/(public)/map/page.tsx` serves /zemljevid and /en/map). The proxy answers every page with
- * a `Link` header of hreflang alternates (sl, en, x-default) and keeps the NEXT_LOCALE cookie in step with the page.
+ * a `Link` header of hreflang alternates (sl, en, x-default; see alternates.ts) and keeps the NEXT_LOCALE cookie in step with the page.
  */
 export const routing = defineRouting({
 	locales: ['sl', 'en'],
@@ -11,6 +11,8 @@ export const routing = defineRouting({
 	localePrefix: 'as-needed',
 	// Locale comes from the path, so an English browser still gets the SL page at `/`.
 	localeDetection: false,
+	// next-intl would build the hreflang links from the request URL (Host); proxy.ts builds them from NEXT_PUBLIC_APP_URL.
+	alternateLinks: false,
 	// The C15 route table. Paths not listed here (admin pages, /dev/*) are the same in both locales.
 	pathnames: {
 		'/': '/',

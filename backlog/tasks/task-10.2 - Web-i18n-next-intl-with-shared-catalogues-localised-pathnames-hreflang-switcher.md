@@ -37,6 +37,7 @@ Design: none (no UI of its own)
 Contracts: C16, C15 (in references); conventions in C1
 Review: tech-lead code review (full mode); run `pnpm verify` before reporting done.
 Branch: agent/task-10.2-i18n-web
+Note: rel=canonical is not emitted here; it comes with page metadata (TASK-11.2). hreflang is built in proxy.ts on NEXT_PUBLIC_APP_URL, never the request Host.
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Acceptance Criteria

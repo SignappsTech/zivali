@@ -1,6 +1,7 @@
 import createMiddleware from 'next-intl/middleware';
 import type { NextRequest } from 'next/server';
 
+import { hreflangLink } from '@/i18n/alternates';
 import { routing } from '@/i18n/routing';
 import { env } from '@/lib/env';
 import { updateSession } from '@/lib/supabase/middleware';
@@ -48,6 +49,13 @@ export async function proxy(request: NextRequest) {
 
 	const response = await updateSession(request, handleI18nRouting);
 	response.headers.set('content-security-policy', csp);
+
+	// Internal path: the rewrite target when the URL was localised, else the request path (already internal).
+	const rewrite = response.headers.get('x-middleware-rewrite');
+	const internal = new URL(rewrite ?? request.url).pathname.replace(/^\/(sl|en)(?=\/|$)/, '') || '/';
+	const link =
+		rewrite || !response.headers.has('location') ? hreflangLink(env.NEXT_PUBLIC_APP_URL, internal) : undefined;
+	if (link) response.headers.set('link', link);
 	return response;
 }
 
