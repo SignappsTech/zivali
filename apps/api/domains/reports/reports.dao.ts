@@ -51,26 +51,37 @@ export async function setLocation(id: string, cols: LocationColumns, tx?: Prisma
 		where id = ${id}::uuid`;
 }
 
-export async function getLocation(id: string, tx?: Prisma.TransactionClient): Promise<StoredLocation | null> {
+/** Stored points of several reports by id (one query for a list page). */
+export async function getLocations(ids: string[], tx?: Prisma.TransactionClient): Promise<Map<string, StoredLocation>> {
 	const db = tx ?? prisma;
-	const [row] = await db.$queryRaw<
-		(Omit<StoredLocation, 'exact' | 'public'> &
-			Record<'exact_lat' | 'exact_lng' | 'public_lat' | 'public_lng', number>)[]
+	const rows = await db.$queryRaw<
+		(Omit<StoredLocation, 'exact' | 'public'> & { id: string } & Record<
+				'exact_lat' | 'exact_lng' | 'public_lat' | 'public_lng',
+				number
+			>)[]
 	>`
-		select type::text as type, requested_radius_m, public_radius_m,
+		select id::text as id, type::text as type, requested_radius_m, public_radius_m,
 			extensions.st_y(exact_point::extensions.geometry) as exact_lat,
 			extensions.st_x(exact_point::extensions.geometry) as exact_lng,
 			extensions.st_y(public_point::extensions.geometry) as public_lat,
 			extensions.st_x(public_point::extensions.geometry) as public_lng
-		from app.reports where id = ${id}::uuid`;
-	if (!row) return null;
-	return {
-		type: row.type,
-		requested_radius_m: row.requested_radius_m,
-		public_radius_m: row.public_radius_m,
-		exact: { lat: row.exact_lat, lng: row.exact_lng },
-		public: { lat: row.public_lat, lng: row.public_lng },
-	};
+		from app.reports where id = any(${ids}::uuid[])`;
+	return new Map(
+		rows.map((row) => [
+			row.id,
+			{
+				type: row.type,
+				requested_radius_m: row.requested_radius_m,
+				public_radius_m: row.public_radius_m,
+				exact: { lat: row.exact_lat, lng: row.exact_lng },
+				public: { lat: row.public_lat, lng: row.public_lng },
+			},
+		])
+	);
+}
+
+export async function getLocation(id: string, tx?: Prisma.TransactionClient): Promise<StoredLocation | null> {
+	return (await getLocations([id], tx)).get(id) ?? null;
 }
 
 export async function updateReport(
@@ -90,25 +101,120 @@ export async function addManager(
 	await db.report_managers.create({ data });
 }
 
-/** A report with what its read model needs; `managers` holds only the caller's row (none when signed out). */
+/** What the read model needs; `managers` holds only the caller's row (none when signed out). */
+const readInclude = (userId: string | undefined) =>
+	({
+		managers: { where: { user_id: { in: userId ? [userId] : [] } }, select: { role: true } },
+		photos: {
+			where: { status: 'published' },
+			orderBy: { position: 'asc' },
+			select: { public_display_url: true, public_thumb_url: true, width: true, height: true },
+		},
+		municipality: { select: { slug: true } },
+		region: { select: { slug: true } },
+		linked_report: { select: { short_code: true } },
+	}) satisfies Prisma.reportsInclude;
+
 export async function findByCode(short_code: string, userId: string | undefined, tx?: Prisma.TransactionClient) {
 	const db = tx ?? prisma;
-	return db.reports.findUnique({
-		where: { short_code },
-		include: {
-			managers: { where: { user_id: { in: userId ? [userId] : [] } }, select: { role: true } },
-			photos: {
-				where: { status: 'published' },
-				orderBy: { position: 'asc' },
-				select: { public_display_url: true, public_thumb_url: true, width: true, height: true },
-			},
-			municipality: { select: { slug: true } },
-			region: { select: { slug: true } },
-			linked_report: { select: { short_code: true } },
+	return db.reports.findUnique({ where: { short_code }, include: readInclude(userId) });
+}
+
+/** Reports the user manages, newest first, keyset on (created_at, id); the cursor is the last item's id. */
+export async function listByManager(
+	input: { user_id: string; cursor?: string; take: number },
+	tx?: Prisma.TransactionClient
+) {
+	const db = tx ?? prisma;
+	const { user_id, cursor, take } = input;
+	const mine = { managers: { some: { user_id } } };
+	const after = cursor
+		? await db.reports.findFirst({ where: { id: cursor, ...mine }, select: { id: true, created_at: true } })
+		: null;
+	if (cursor && !after) return [];
+	return db.reports.findMany({
+		where: {
+			...mine,
+			...(after && {
+				OR: [{ created_at: { lt: after.created_at } }, { created_at: after.created_at, id: { lt: after.id } }],
+			}),
 		},
+		orderBy: [{ created_at: 'desc' }, { id: 'desc' }],
+		take,
+		include: readInclude(user_id),
 	});
+}
+
+/** The caller's own pet (not archived), row-locked until the transaction ends: one open lost report per pet. */
+export async function lockOwnPet(id: string, owner_id: string, tx: Prisma.TransactionClient) {
+	await tx.$queryRaw`select 1 from app.pets where id = ${id}::uuid for update`;
+	return tx.pets.findFirst({ where: { id, owner_id, archived_at: null } });
+}
+
+/** An open or matched lost report of the pet, other than `exceptId`. */
+export async function findOpenLostByPet(pet_id: string, exceptId: string | undefined, tx?: Prisma.TransactionClient) {
+	const db = tx ?? prisma;
+	return db.reports.findFirst({
+		where: {
+			pet_id,
+			type: 'lost',
+			status: { in: ['open', 'matched'] },
+			...(exceptId && { id: { not: exceptId } }),
+		},
+		select: { id: true, short_code: true },
+	});
+}
+
+export async function findType(id: string, tx?: Prisma.TransactionClient): Promise<REPORT_TYPE | null> {
+	const db = tx ?? prisma;
+	return (await db.reports.findUnique({ where: { id }, select: { type: true } }))?.type ?? null;
+}
+
+/**
+ * Sets the report's photos in order (position = index): the owner's unattached uploads or photos already on this
+ * report; photos left out are detached. Returns how many of `photo_ids` were attached.
+ */
+export async function setPhotos(
+	input: { report_id: string; owner_id: string; photo_ids: string[] },
+	tx: Prisma.TransactionClient
+): Promise<number> {
+	const { report_id, owner_id, photo_ids } = input;
+	await tx.photos.updateMany({ where: { report_id, id: { notIn: photo_ids } }, data: { report_id: null } });
+	let attached = 0;
+	for (const [position, id] of photo_ids.entries()) {
+		const { count } = await tx.photos.updateMany({
+			where: { id, OR: [{ report_id }, { owner_id, report_id: null, pet_id: null }] },
+			data: { report_id, position },
+		});
+		attached += count;
+	}
+	return attached;
+}
+
+/** held → visible; the report type, or null when the report is missing or not held. */
+export async function releaseHeld(id: string, tx?: Prisma.TransactionClient): Promise<REPORT_TYPE | null> {
+	const db = tx ?? prisma;
+	const [row] = await db.$queryRaw<{ type: REPORT_TYPE }[]>`
+		update app.reports set moderation_state = 'visible', updated_at = now()
+		where id = ${id}::uuid and moderation_state = 'held'
+		returning type::text as type`;
+	return row?.type ?? null;
 }
 
 export type ReportRow = NonNullable<Awaited<ReturnType<typeof findByCode>>>;
 
-export default { insertReport, setLocation, getLocation, updateReport, addManager, findByCode };
+export default {
+	insertReport,
+	setLocation,
+	getLocations,
+	getLocation,
+	updateReport,
+	addManager,
+	findByCode,
+	listByManager,
+	lockOwnPet,
+	findOpenLostByPet,
+	findType,
+	setPhotos,
+	releaseHeld,
+};
