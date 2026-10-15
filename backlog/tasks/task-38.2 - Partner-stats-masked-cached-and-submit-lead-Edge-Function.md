@@ -1,11 +1,11 @@
 ---
 id: TASK-38.2
 title: 'Partner stats job and endpoint, lead endpoint with captcha'
-status: To Do
+status: Done
 assignee:
   - '@backend-dev'
 created_date: '2026-10-14 22:13'
-updated_date: '2026-10-14 23:38'
+updated_date: '2026-10-15 21:54'
 labels:
   - be
   - 'est:S'

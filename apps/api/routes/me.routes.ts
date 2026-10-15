@@ -1,12 +1,14 @@
-// /v1/me (C3): the caller's own profile, and the reports they manage (C4). Wiring only.
+// /v1/me (C3): the caller's own profile, the reports they manage (C4) and their payments (C13). Wiring only.
 import { Router } from 'express';
 
-import { CursorQuery, Me, MyReportList, Profile, UpdateMeInput, Uuid } from '@zivali/validation';
+import { CursorQuery, Me, MyReportList, PaymentList, Profile, UpdateMeInput, Uuid } from '@zivali/validation';
 
 import MeController from '../controllers/me.controller.ts';
+import PaymentsController from '../controllers/payments.controller.ts';
 import ReportsController from '../controllers/reports.controller.ts';
 import { apiRoutes } from '../lib/openapi.ts';
 import { authMiddleware } from '../middleware/auth.middleware.ts';
+import { rejectAnonymous } from '../middleware/permission.middleware.ts';
 import { rateLimit } from '../middleware/rateLimit.middleware.ts';
 
 const router = Router();
@@ -59,6 +61,23 @@ route(
 	},
 	authMiddleware,
 	ReportsController.listMyReports
+);
+
+route(
+	{
+		method: 'get',
+		path: '/payments',
+		operationId: 'listMyPayments',
+		summary: 'My payments',
+		description:
+			'The caller’s payments (every status), newest first, keyset-paginated (`cursor` = the last item id, `limit` ≤ 50). Real accounts only (C13).',
+		request: { query: CursorQuery.extend({ cursor: Uuid.optional() }) },
+		responses: { 200: { description: 'One page of own payments', schema: PaymentList } },
+		errors: ['UNAUTHENTICATED'],
+	},
+	authMiddleware,
+	rejectAnonymous,
+	PaymentsController.listMine
 );
 
 export default router;

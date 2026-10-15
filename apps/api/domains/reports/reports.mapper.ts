@@ -3,10 +3,17 @@
 import type { z } from 'zod';
 
 import type { Locale, ReportType, Species } from '@zivali/types';
-import { CreateReportResponse, MapReport, PublicReport, ReportOwnerView } from '@zivali/validation';
+import {
+	CreateReportResponse,
+	MapReport,
+	PublicReport,
+	ReportOwnerView,
+	SyncReportsResponse,
+} from '@zivali/validation';
 
 import type { CreatedReport, ReportView } from './reports.domain.ts';
 import type { MapRow } from './search.dao.ts';
+import type { SyncFeed } from './sync.domain.ts';
 
 export type PublicReportDto = z.infer<typeof PublicReport>;
 export type ReportOwnerViewDto = z.infer<typeof ReportOwnerView>;
@@ -114,9 +121,20 @@ export function toCreated(created: CreatedReport) {
 	return CreateReportResponse.parse(created);
 }
 
+/** GET /v1/sync/reports: CachedReport keeps only the C17 cache fields of the public read model plus `thumb_url`. */
+export function toSyncFeed(feed: SyncFeed, locale: Locale) {
+	return SyncReportsResponse.parse({
+		...feed,
+		upserts: feed.upserts.map((view) => {
+			const report = toPublicReport(view, locale);
+			return { ...report, thumb_url: report.photos[0]?.thumb_url ?? null };
+		}),
+	});
+}
+
 /** GET /v1/reports/map item: the fuzzed area and the first thumbnail only. */
 export function toMapReport({ lat, lng, radius_m, ...row }: MapRow) {
 	return MapReport.parse({ ...row, area: { lat, lng, radius_m } });
 }
 
-export default { toPublicReport, toOwnerView, toDto, toCreated, toMapReport };
+export default { toPublicReport, toOwnerView, toDto, toCreated, toSyncFeed, toMapReport };

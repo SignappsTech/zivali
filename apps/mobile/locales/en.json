@@ -1,4 +1,6 @@
 {
 	"NSCameraUsageDescription": "We use the camera only when you photograph an animal. You can also pick a photo from your gallery.",
-	"NSPhotoLibraryUsageDescription": "We access photos only when you pick a picture of an animal. We do not read your other photos."
+	"NSPhotoLibraryUsageDescription": "We access photos only when you pick a picture of an animal. We do not read your other photos.",
+	"NSLocationWhenInUseUsageDescription": "We use your location to mark the place faster and to show reports nearby. We only show an approximate area in public.",
+	"NSLocationAlwaysAndWhenInUseUsageDescription": "If you turn on nearby reminders, your phone checks in the background whether you are near an area where a lost pet was last seen. Your location never leaves your phone."
 }

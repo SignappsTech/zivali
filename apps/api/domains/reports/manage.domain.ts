@@ -9,10 +9,10 @@ import { AppError } from '../../lib/errors.ts';
 import { prisma } from '../../prisma/prisma.ts';
 import { NotificationsDomain } from '../notifications/index.ts';
 import { consumeRateLimit } from '../platform/index.ts';
+import { lifecycleConfig } from './lifecycle.domain.ts';
 import ReportsDao from './reports.dao.ts';
 
-/** reunited and closed reports can be reopened this long (C4 status machine); later a manage link is GONE. */
-const REOPEN_WINDOW_MS = 7 * 24 * 3600 * 1000;
+const DAY_MS = 24 * 3600 * 1000;
 const RESEND_PER_DAY = 3;
 
 export const hashManageToken = (token: string) => new Uint8Array(createHash('sha256').update(token).digest());
@@ -22,15 +22,16 @@ export function newManageToken(): { token: string; hash: Uint8Array<ArrayBuffer>
 	return { token, hash: hashManageToken(token) };
 }
 
-function assertManageable(
+/** Removed, or reunited or closed longer ago than it can be reopened (C4 lifecycle.reopen_days): GONE. */
+async function assertManageable(
 	report: { status: string; moderation_state: string; closed_at: Date | null; reunited_at: Date | null },
 	now: Date
-): void {
+): Promise<void> {
 	if (report.moderation_state === 'removed')
 		throw new AppError('GONE', 'Report is no longer available', { reason: 'removed' });
 	const endedAt =
 		report.status === 'closed' ? report.closed_at : report.status === 'reunited' ? report.reunited_at : null;
-	if (endedAt && now.getTime() - endedAt.getTime() > REOPEN_WINDOW_MS)
+	if (endedAt && now.getTime() - endedAt.getTime() > (await lifecycleConfig()).reopen_days * DAY_MS)
 		throw new AppError('GONE', 'Report is closed', { reason: 'closed' });
 }
 
@@ -72,7 +73,7 @@ export async function claimManage(
 	if (!ctx.actor) throw new AppError('UNAUTHENTICATED', 'Sign in required');
 	const report = await ReportsDao.findByManageToken(hashManageToken(input.token), ctx.tx);
 	if (!report) throw new AppError('NOT_FOUND', 'Unknown manage link');
-	assertManageable(report, ctx.now);
+	await assertManageable(report, ctx.now);
 	await ReportsDao.addManager({ report_id: report.id, user_id: ctx.actor.user_id, role: 'finder' }, ctx.tx);
 	return { report_id: report.id, short_code: report.short_code };
 }
@@ -91,7 +92,7 @@ export async function resendManageLink(input: { code: string }, ctx: Ctx): Promi
 	if (!found) throw new AppError('NOT_FOUND', 'Report not found');
 	if (!found.role) throw new AppError('FORBIDDEN', 'Not a manager of this report');
 	const { report } = found;
-	assertManageable(report, ctx.now);
+	await assertManageable(report, ctx.now);
 	const to = await ReportsDao.getContactEmail(report.id, db);
 	if (!to) throw new AppError('CONFLICT', 'No finder email on file');
 	await consumeRateLimit(
