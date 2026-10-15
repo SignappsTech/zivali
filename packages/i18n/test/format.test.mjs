@@ -51,14 +51,51 @@ test('formatDate uses Europe/Ljubljana whatever the machine time zone', () => {
 });
 
 test('formatRelative', () => {
+	// 14:00 in Ljubljana.
 	const now = new Date('2026-10-15T12:00:00Z');
 	const ago = (s) => new Date(now.getTime() - s * 1000);
-	assert.equal(formatRelative(ago(5 * 60), 'sl', now), 'pred 5 minutami');
-	assert.equal(formatRelative(ago(2 * 3600), 'sl', now), 'pred 2 urama');
-	assert.equal(formatRelative(ago(30 * 3600), 'sl', now), 'včeraj');
-	assert.equal(formatRelative(ago(20), 'sl', now), 'zdaj');
-	assert.equal(formatRelative(ago(5 * 60), 'en', now), '5 minutes ago');
-	assert.equal(formatRelative(ago(-2 * 3600), 'en', now), 'in 2 hours');
+	const sl = (s) => formatRelative(ago(s), 'sl', now);
+	const en = (s) => formatRelative(ago(s), 'en', now);
+	assert.deepEqual(
+		[20, 60, 2 * 60, 3 * 60, 5 * 60, 3600, 2 * 3600, 4 * 3600, 13 * 3600, 30 * 3600, 3 * 86400, 10 * 86400].map(sl),
+		[
+			'zdaj',
+			'pred 1 minuto',
+			'pred 2 minutama',
+			'pred 3 minutami',
+			'pred 5 minutami',
+			'pred 1 uro',
+			'pred 2 urama',
+			'pred 4 urami',
+			'pred 13 urami',
+			'včeraj',
+			'pred 3 dnevi',
+			'5. 10. 2026',
+		]
+	);
+	assert.deepEqual([20, 60, 5 * 60, 3600, 2 * 3600, 30 * 3600, 2 * 86400].map(en), [
+		'now',
+		'1 minute ago',
+		'5 minutes ago',
+		'1 hour ago',
+		'2 hours ago',
+		'yesterday',
+		'2 days ago',
+	]);
+	assert.equal(en(-2 * 3600), 'now', 'a future time (clock skew) is now');
+});
+
+test('formatRelative counts Ljubljana calendar days', () => {
+	// 23:30 → 00:30 the next day in Ljubljana is one hour, but yesterday.
+	assert.equal(formatRelative('2026-10-14T21:30:00Z', 'sl', new Date('2026-10-14T22:30:00Z')), 'včeraj');
+	// 13:00 → 14:00 on 15 October, same day.
+	assert.equal(formatRelative('2026-10-15T11:00:00Z', 'sl', new Date('2026-10-15T12:00:00Z')), 'pred 1 uro');
+	// Spring forward (29 March 2026): 23:30 CET on the 28th → 00:30 CEST on the 30th is only 24 hours, but two
+	// midnights.
+	assert.equal(formatRelative('2026-03-28T22:30:00Z', 'sl', new Date('2026-03-29T22:30:00Z')), 'pred 2 dnevoma');
+	assert.equal(formatRelative('2026-03-28T22:30:00Z', 'en', new Date('2026-03-29T22:30:00Z')), '2 days ago');
+	// Fall back (25 October 2026): 00:30 CEST on the 25th → 23:30 CET the same day is 24 hours, still the same day.
+	assert.equal(formatRelative('2026-10-24T22:30:00Z', 'sl', new Date('2026-10-25T22:30:00Z')), 'pred 24 urami');
 });
 
 test('formatDistanceBand follows glossary §9', () => {

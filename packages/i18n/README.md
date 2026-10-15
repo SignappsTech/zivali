@@ -1,6 +1,6 @@
 # @zivali/i18n
 
-Slovenian (source, default) and English message catalogues for web, mobile and the API worker, plus `Intl` format helpers. Contract: `docs/tech/contracts/C16-i18n.md`, decision: ADR-008. `build.mjs` and `check.mjs` run on plain Node 22 with no dependencies.
+Slovenian (source, default) and English message catalogues for web, mobile and the API worker, plus `Intl` format helpers. Contract: `docs/tech/contracts/C16-i18n.md`, decision: ADR-008. `build.mjs` and `check.mjs` run on plain Node 22 with no dependencies. The ICU reader in `check.mjs` is hand-written because no allowlisted package (ADR-017) exposes an ICU parser as a public API.
 
 ## Catalogues
 
@@ -62,14 +62,16 @@ An Edge Function (Deno) that needs text does the same with `import { createTrans
 
 ## Format helpers (`@zivali/i18n/format`)
 
-All `Intl`, time zone `Europe/Ljubljana` (exported as `timeZone`), EN formatted as `en-GB` (British-leaning English, voice guide). `Locale` is `'sl' | 'en'`.
+`Intl` (no date library; see Hermes limits below), time zone `Europe/Ljubljana` (exported as `timeZone`), EN formatted as `en-GB` (British-leaning English, voice guide). `Locale` is `'sl' | 'en'`.
 
-| Helper                                                             | SL                                          | EN                                       |
-| ------------------------------------------------------------------ | ------------------------------------------- | ---------------------------------------- |
-| `formatDate(d, locale, 'short' \| 'long' \| 'time')`               | `15. 10. 2026`, `15. oktober 2026`, `14:30` | `15/10/2026`, `15 October 2026`, `14:30` |
-| `formatRelative(d, locale, now?)`                                  | `pred 5 minutami`, `včeraj`, `zdaj`         | `5 minutes ago`, `yesterday`, `now`      |
-| `formatEur(cents, locale)`                                         | `5,00 €`                                    | `€5.00`                                  |
-| `formatDistanceBand('lt1' \| '1to3' \| '3to10' \| 'gt10', locale)` | `manj kot 1 km`, `1–3 km`, `več kot 10 km`  | `under 1 km`, `1–3 km`, `over 10 km`     |
-| `formatCount(n, locale)`                                           | `12.345`                                    | `12,345`                                 |
+| Helper                                                             | SL                                                                                       | EN                                                               |
+| ------------------------------------------------------------------ | ---------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| `formatDate(d, locale, 'short' \| 'long' \| 'time')`               | `15. 10. 2026`, `15. oktober 2026`, `14:30`                                              | `15/10/2026`, `15 October 2026`, `14:30`                         |
+| `formatRelative(d, locale, now?)`                                  | `zdaj`, `pred 5 minutami`, `pred 2 urama`, `včeraj`, `pred 3 dnevi`, then the short date | `now`, `5 minutes ago`, `2 hours ago`, `yesterday`, `3 days ago` |
+| `formatEur(cents, locale)`                                         | `5,00 €`                                                                                 | `€5.00`                                                          |
+| `formatDistanceBand('lt1' \| '1to3' \| '3to10' \| 'gt10', locale)` | `manj kot 1 km`, `1–3 km`, `več kot 10 km`                                               | `under 1 km`, `1–3 km`, `over 10 km`                             |
+| `formatCount(n, locale)`                                           | `12.345`                                                                                 | `12,345`                                                         |
 
 Counted nouns ("2 prijavi") are ICU plural messages in the catalogue, not helpers. `src/format.ts` is erasable TypeScript, so Node runs it directly; the web app may need `transpilePackages: ['@zivali/i18n']`.
+
+**Hermes limits (mobile):** Hermes has no `Intl.RelativeTimeFormat` and no `Intl.NumberFormat.prototype.formatRange` (and `style: 'unit'` is not relied on), so `formatRelative` is a small SL/EN word table and `formatDistanceBand` joins plain numbers with "–" and " km". `formatRelative` counts Ljubljana calendar days (midnights), so 23:30 → 00:30 is "včeraj", also across DST changes.
