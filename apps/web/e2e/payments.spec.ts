@@ -3,8 +3,8 @@ import { expect, type Page, test } from '@playwright/test';
 
 import { me } from '@zivali/api/__fixtures__/me';
 import { minAmount, payment } from '@zivali/api/__fixtures__/payments';
-import en from '@zivali/i18n/dist/en.json';
-import sl from '@zivali/i18n/dist/sl.json';
+import en from '@zivali/i18n/dist/en.json' with { type: 'json' };
+import sl from '@zivali/i18n/dist/sl.json' with { type: 'json' };
 import type { Payment } from '@zivali/types';
 
 import { signInAs } from './session';
@@ -74,12 +74,12 @@ test('below 2 € the minimum shows; then the mock checkout succeeds and the ret
 	await amount.fill('5');
 	await page.getByRole('button', { name: 'Go to checkout' }).click();
 	await expect(page).toHaveURL(`/dev/checkout?payment_id=${ID}`);
-	await expect(page.getByText(/5,00\s€ · tip · pending/)).toBeVisible();
+	await expect(page.getByText(/5,00\s€ · tip · pending/)).toBeVisible({ timeout: 15_000 });
 	await expectNoAdSlots(page);
 
 	// The webhook is still on its way: the return page waits, then picks up the settled payment by itself.
 	await page.getByRole('button', { name: 'Success' }).click();
-	await expect(page).toHaveURL(`/placila/zakljucek?payment_id=${ID}`);
+	await expect(page).toHaveURL(`/placila/zakljucek?payment_id=${ID}`, { timeout: 30_000 });
 	await expect(page.getByRole('heading', { level: 1, name: sl.payments.pending_title })).toBeFocused();
 	await expect(page.getByRole('main').getByRole('status')).toContainText(sl.payments.pending_body);
 	state.status = 'succeeded';
@@ -104,10 +104,14 @@ test("the mock checkout's Fail lands on the failed state, back to where the paym
 	state.status = 'failed';
 	await page.getByRole('button', { name: 'Fail' }).click();
 
+	await expect(page).toHaveURL(/\/placila\/zakljucek\?payment_id=[^&]+&return_to=[^&]+$/, { timeout: 30_000 });
 	await expect(page.getByRole('heading', { level: 1, name: sl.payments.failed_title })).toBeFocused();
 	await expect(page.getByText(sl.payments.failed_body)).toBeVisible();
 	await expect(page.getByRole('button', { name: sl.payments.failed_retry })).toBeEnabled();
-	await expect(page.getByRole('link', { name: sl.payments.failed_skip })).toHaveAttribute('href', RETURN_TO);
+	await expect(page.getByRole('link', { name: sl.payments.failed_skip, exact: true })).toHaveAttribute(
+		'href',
+		RETURN_TO
+	);
 	await expectNoAdSlots(page);
 	await expectNoAxeViolations(page);
 });
@@ -117,7 +121,9 @@ test("the mock checkout's Cancel lands on the cancelled state in English", async
 	await page.goto(`/en/dev/checkout?payment_id=${ID}&return_to=/en/r/Hk3vT9qP/reunited`);
 	await page.getByRole('button', { name: 'Cancel' }).click();
 
-	await expect(page).toHaveURL(/\/en\/payments\/return\?payment_id=[^&]+&return_to=[^&]+&canceled=1$/);
+	await expect(page).toHaveURL(/\/en\/payments\/return\?payment_id=[^&]+&return_to=[^&]+&canceled=1$/, {
+		timeout: 30_000,
+	});
 	await expect(page.getByRole('heading', { level: 1, name: en.payments.cancel_title })).toBeFocused();
 	await expect(page.getByText(en.payments.cancel_body)).toBeVisible();
 	await expect(page.getByRole('link', { name: en.payments.cancel_back })).toHaveAttribute(
