@@ -48,3 +48,13 @@ Branch: agent/task-34.3-admin-web
 - [ ] #4 Admin pages are web-only, in SL and EN, and meet WCAG 2.2 AA (axe 0 violations).
 - [ ] #5 Admin pages send no GA page_views: /admin* routes are excluded from analytics (no gtag config/page_view on them)
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+CHANGE rows for backlog/changes.md (the worktree isolation refused the write to the main checkout; lead: please move them to the inbox):
+
+| - | - | docs/tech/contracts/C3-auth-profiles-roles.md§REST, §Client | `AuditLogEntry` carries only `actor_id`: add the actor's display name (e.g. `actor: { id, display_name } \| null`) so the P19 audit log shows who by name; until then the web shows the first 8 characters of the uuid and "Sistem" for null. Client as built (TASK-34.3): `mfa.listFactors()` and `mfa.unenroll(factorId)` in @zivali/api/auth (enrolment removes stale unverified TOTP factors first, they count against the factor limit); `listAuditLog` infinite query (`useListAuditLogInfiniteQuery`, filters actor_id/action/limit, keyset cursor) in @zivali/api/me. | TASK-34.3 | open |
+| - | - | docs/content/pages/P19-admin-shell.md§2, §4, §6 | New key `admin.breadcrumb_label` "Drobtine" / "Breadcrumb" (name of the top-bar breadcrumb landmark; the mockup's sample word). Audit actions have no labels: the log shows the raw code (`user.role.set`, `report.hide`, …); add `admin.audit_action_<code>` labels if wanted. The system actor reuses `admin.directory.history_system`. `admin.mfa_backup` is not used: Supabase TOTP has no backup codes (decide: a second factor, or an admin-assisted reset). AC#1 lists Orders and KPIs: Orders is dropped (§1), KPIs is the Dashboard item. | TASK-34.3 | open |
+| - | - | docs/design/pages/P19-admin-shell.md§Access patterns, §Dashboard; docs/tech/contracts/C15-routes-deeplinks.md§Web routes | As built (TASK-34.3): TOTP enrolment and code render in place at the requested admin URL (no /admin/preverjanje route). Session timeout dialog not built: an ended session goes to sign-in with `next` (keeping the page needs an in-place re-auth). Read-only banner not built (no flag or API yet). Dashboard: the four KPI numbers wait for a counts endpoint (M4), so it shows the "Kmalu" note, plus the five latest audit entries for admins. Routes: /admin, /admin/revizijska-sled (EN /en/admin/audit-log), /admin/zavetisca; sections not built yet open /admin/[section] with the EN slug in both locales (ads, house-ads, moderation, abuse-reports, verification, organisations, users, enquiries, vet-partners, settings) until their task adds its page and SL slug (components/admin/nav.ts). Unlisted admin paths are admin only. | TASK-34.3 | open |
+<!-- SECTION:NOTES:END -->

@@ -135,7 +135,7 @@ export function AdminShell({ env, initials, children }: { env: AppEnv; initials:
 function Denied() {
 	const t = useTranslations('admin');
 	return (
-		<>
+		<div>
 			<span
 				aria-hidden="true"
 				className="grid size-22 place-items-center rounded-full bg-secondary text-primary [&_svg]:size-10"
@@ -150,7 +150,7 @@ function Denied() {
 					{t('denied_back')}
 				</Link>
 			</Button>
-		</>
+		</div>
 	);
 }
 
@@ -222,14 +222,16 @@ function Console({
 
 	return (
 		<div className="flex min-h-dvh">
-			<div
+			{/* The whole rail is the landmark: logo, items and the collapse button. */}
+			<nav
+				aria-label={t('breadcrumb_root')}
 				className={cn(
 					'sticky top-0 flex h-dvh shrink-0 flex-col bg-sidebar text-sidebar-foreground max-lg:hidden',
 					collapsed ? 'w-18' : 'w-70'
 				)}
 			>
 				<SidebarHead collapsed={collapsed} />
-				<SidebarNav role={role} current={item} collapsed={collapsed} />
+				<SidebarNav role={role} current={item} collapsed={collapsed} landmark={false} />
 				<div className={cn('border-t border-sidebar-border py-3', collapsed ? 'px-3.5' : 'px-3')}>
 					<button
 						type="button"
@@ -247,7 +249,7 @@ function Console({
 						)}
 					</button>
 				</div>
-			</div>
+			</nav>
 
 			<div className="flex min-w-0 flex-1 flex-col">
 				<header className="flex h-18 shrink-0 items-center gap-3 px-5 lg:px-12">
@@ -393,18 +395,24 @@ function SidebarHead({ collapsed = false, action }: { collapsed?: boolean; actio
 	);
 }
 
-/** Groups and items the role may open; an empty group is left out. Collapsed: icons with tooltips, no group labels. */
+/**
+ * Groups and items the role may open; an empty group is left out. Collapsed: icons with tooltips, no group labels.
+ * Its own nav landmark unless the surrounding rail is one (`landmark={false}`).
+ */
 function SidebarNav({
 	role,
 	current,
 	collapsed = false,
+	landmark = true,
 	onNavigate,
 }: {
 	role: StaffRole;
 	current: AdminItem | undefined;
 	collapsed?: boolean;
+	landmark?: boolean;
 	onNavigate?: () => void;
 }) {
+	const Wrapper = landmark ? 'nav' : 'div';
 	const t = useTranslations('admin');
 	const id = React.useId();
 	const groups = ADMIN_NAV.map((group) => ({
@@ -414,8 +422,8 @@ function SidebarNav({
 
 	return (
 		<Tooltip.Provider delayDuration={0}>
-			<nav
-				aria-label={t('breadcrumb_root')}
+			<Wrapper
+				aria-label={landmark ? t('breadcrumb_root') : undefined}
 				className={cn('flex-1 overflow-y-auto pt-1 pb-5', collapsed ? 'px-3.5' : 'px-3')}
 			>
 				{groups.map((group) => (
@@ -495,7 +503,7 @@ function SidebarNav({
 						</ul>
 					</div>
 				))}
-			</nav>
+			</Wrapper>
 		</Tooltip.Provider>
 	);
 }

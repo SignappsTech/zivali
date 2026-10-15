@@ -50,7 +50,7 @@ for (const colorScheme of ['light', 'dark'] as const) {
 		await expect(page.locator('meta[name=robots]')).toHaveAttribute('content', 'noindex, nofollow');
 		for (const group of ['Pregled', 'Vsebina', 'Varnost', 'Organizacije', 'Ljudje', 'Posel', 'Sistem'])
 			await expect(sidebar(page).getByRole('list', { name: group })).toBeVisible();
-		await expect(sidebar(page).getByRole('link', { name: 'Oglasi, Kmalu' })).toBeVisible();
+		await expect(sidebar(page).getByRole('link', { name: 'Oglasi, Kmalu', exact: true })).toBeVisible();
 		await expect(page.getByText('Lokalno')).toBeVisible();
 		await expect(page.getByText('Skrbnik')).toBeVisible();
 		await expect(page.getByRole('table', { name: 'Zadnje spremembe' }).getByRole('row')).toHaveCount(4);
@@ -164,7 +164,7 @@ async function mockTotp(page: Page, user: Me, factors: object[]) {
 		if (route.request().postDataJSON().code !== '482913')
 			return route.fulfill({
 				status: 422,
-				json: { code: 'mfa_verification_failed', msg: 'Invalid TOTP code entered' },
+				json: { code: 422, error_code: 'mfa_verification_failed', msg: 'Invalid TOTP code entered' },
 			});
 		const query = new URLSearchParams({ sub: user.id, role: user.role.toLowerCase(), aal: 'aal2' });
 		const access_token = await (await fetch(`${api()}/e2e/token?${query}`)).text();
