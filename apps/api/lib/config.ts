@@ -61,6 +61,8 @@ const EnvSchema = z.object({
 	EMAIL_PROVIDER: z.enum(['mock', 'brevo', 'off']).optional(),
 	BREVO_API_KEY: z.string().optional(),
 	EMAIL_FROM: z.string().optional(),
+	// Team inbox for partner leads (C14); unset = leads are stored and listed in the admin console only.
+	LEADS_NOTIFY_EMAIL: z.email().optional(),
 	PUSH_PROVIDER: z.enum(['mock', 'expo', 'off']).optional(),
 	EXPO_ACCESS_TOKEN: z.string().optional(),
 	CAPTCHA_PROVIDER: z.enum(['mock', 'turnstile', 'off']).optional(),

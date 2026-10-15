@@ -2,6 +2,7 @@
 // `gen:api` emits the generated ones. `useAd` is hand-written and stays. Clicks are plain links to `ad.click_url`.
 import type {
 	Ad,
+	AdDeleteInput,
 	AdImageInput,
 	AdImageUploadResponse,
 	AdImpressionInput,
@@ -50,8 +51,9 @@ export const adsApi = api.enhanceEndpoints({ addTagTypes: ['AdminAd', 'AuditLog'
 			query: ({ id, body }) => ({ url: `/v1/admin/ads/${id}/status`, method: 'POST', body }),
 			invalidatesTags: ['AdminAd', 'AuditLog'],
 		}),
-		deleteAd: build.mutation<void, { id: Uuid }>({
-			query: ({ id }) => ({ url: `/v1/admin/ads/${id}`, method: 'DELETE' }),
+		/** Soft delete; the note is required (stored in the audit entry). */
+		deleteAd: build.mutation<void, { id: Uuid; body: AdDeleteInput }>({
+			query: ({ id, body }) => ({ url: `/v1/admin/ads/${id}`, method: 'DELETE', body }),
 			invalidatesTags: ['AdminAd', 'AuditLog'],
 		}),
 		getAdStats: build.query<AdStats, AdStatsQuery & { id: Uuid }>({

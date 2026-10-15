@@ -287,6 +287,24 @@ export async function sendManageLink(
 	return sendAndRecord({ to, user_id: null, type: 'manage_link', locale, ...message }, ctx);
 }
 
+/**
+ * An email to the finder address of an anonymous report (report_contacts), not to an account: the report lifecycle
+ * tells the finder their report expired (C4 "email if given"). Sent directly like the manage link, once, recorded in
+ * email_outbox; `vars` are the type's copy variables (normalised here).
+ */
+export async function emailContact(
+	input: { to: string; type: NotificationType; vars: Vars; locale: Locale },
+	ctx: Ctx
+): Promise<EmailStatus> {
+	const { to, type, locale } = input;
+	const vars = normalize(type, input.vars);
+	const message = renderEmail(type, vars, locale, ctx.now, {
+		url: webUrl(TYPES[type].link(vars), locale),
+		support_email: supportEmail(),
+	});
+	return sendAndRecord({ to, user_id: null, type, locale, ...message }, ctx);
+}
+
 // --- Signed one-click unsubscribe ---
 
 const unsubscribeSignature = (user_id: string, type: string) => hashKey(`unsubscribe:${user_id}:${type}`);
@@ -397,6 +415,7 @@ export default {
 	enqueueNotification,
 	deliver,
 	sendManageLink,
+	emailContact,
 	unsubscribe,
 	unsubscribePage,
 	unsubscribeToken,

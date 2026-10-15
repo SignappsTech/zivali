@@ -2,9 +2,10 @@ import type { Metadata } from 'next';
 import { hasLocale, NextIntlClientProvider } from 'next-intl';
 import { getTranslations } from 'next-intl/server';
 import { Atkinson_Hyperlegible_Next, Bricolage_Grotesque } from 'next/font/google';
-import { headers } from 'next/headers';
+import { cookies, headers } from 'next/headers';
 import { notFound } from 'next/navigation';
 
+import { CONSENT_KEY, isCurrent, parseConsent } from '@zivali/analytics';
 import { Providers } from '@/app/providers';
 import { SiteFooter } from '@/components/shell/footer';
 import { SiteHeader } from '@/components/shell/header';
@@ -49,6 +50,8 @@ export default async function LocaleLayout({ children, params }: LayoutProps<'/[
 	if (!hasLocale(routing.locales, locale)) notFound();
 	const nonce = (await headers()).get('x-nonce') ?? undefined;
 	const viewer = await getViewer();
+	// P17 banner: decided here from the cookie, so its first view paints with the page instead of becoming a late LCP.
+	const consent = parseConsent((await cookies()).get(CONSENT_KEY)?.value ?? null);
 
 	return (
 		<html lang={locale} suppressHydrationWarning>
@@ -57,7 +60,7 @@ export default async function LocaleLayout({ children, params }: LayoutProps<'/[
 			</head>
 			<body className={`${display.variable} ${sans.variable}`}>
 				<NextIntlClientProvider>
-					<Providers signedIn={viewer !== null}>
+					<Providers signedIn={viewer !== null} consent={{ prompt: !isCurrent(consent), stored: consent }}>
 						<SiteHeader viewer={viewer} />
 						{children}
 						<SiteFooter />

@@ -29,6 +29,8 @@ export type AdInput = {
 	/** https only */
 	link_url: string;
 	image_alt: string;
+	/** Key from the image upload; set only after the uploaded file passed the check. null removes it (house ads only). */
+	image?: string | null;
 	locales?: Locale[];
 	slots: AdSlot[];
 	region_ids?: number[] | null;
@@ -68,6 +70,8 @@ export type AdminAd = {
 export type AdminAdQuery = { status?: AdStatus; cursor?: string };
 export type AdminAdList = Page<AdminAd>;
 export type AdStatusInput = { status: AdStatus };
+/** DELETE /v1/admin/ads/:id: the note is stored in the audit entry. */
+export type AdDeleteInput = { note: string };
 /** POST /v1/admin/ads/:id/image: 4:3, at least 1200×900, JPG or PNG under 500 KB. */
 export type AdImageInput = {
 	sha256: string;
@@ -76,7 +80,8 @@ export type AdImageInput = {
 	bytes: number;
 	content_type: 'image/jpeg' | 'image/png';
 };
-export type AdImageUploadResponse = { upload: PresignedUpload };
+/** `image` is the key to send in AdInput.image on the next save; the ad keeps its current image until then. */
+export type AdImageUploadResponse = { upload: PresignedUpload; image: string };
 export type AdStatsQuery = { from: IsoDate; to: IsoDate };
 export type AdStats = {
 	items: {

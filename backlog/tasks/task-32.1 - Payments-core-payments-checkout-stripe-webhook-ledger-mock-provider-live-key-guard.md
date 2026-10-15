@@ -3,11 +3,11 @@ id: TASK-32.1
 title: >-
   Payments core: checkout endpoint, Stripe webhook ledger, mock provider,
   live-key and live-mode gates
-status: To Do
+status: Done
 assignee:
   - '@backend-dev'
 created_date: '2026-10-14 22:13'
-updated_date: '2026-10-14 23:38'
+updated_date: '2026-10-15 21:53'
 labels:
   - be
   - 'est:M'
