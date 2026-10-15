@@ -3,9 +3,10 @@
 import type { z } from 'zod';
 
 import type { Locale, ReportType, Species } from '@zivali/types';
-import { CreateReportResponse, PublicReport, ReportOwnerView } from '@zivali/validation';
+import { CreateReportResponse, MapReport, PublicReport, ReportOwnerView } from '@zivali/validation';
 
 import type { CreatedReport, ReportView } from './reports.domain.ts';
+import type { MapRow } from './search.dao.ts';
 
 export type PublicReportDto = z.infer<typeof PublicReport>;
 export type ReportOwnerViewDto = z.infer<typeof ReportOwnerView>;
@@ -113,4 +114,9 @@ export function toCreated(created: CreatedReport) {
 	return CreateReportResponse.parse(created);
 }
 
-export default { toPublicReport, toOwnerView, toDto, toCreated };
+/** GET /v1/reports/map item: the fuzzed area and the first thumbnail only. */
+export function toMapReport({ lat, lng, radius_m, ...row }: MapRow) {
+	return MapReport.parse({ ...row, area: { lat, lng, radius_m } });
+}
+
+export default { toPublicReport, toOwnerView, toDto, toCreated, toMapReport };

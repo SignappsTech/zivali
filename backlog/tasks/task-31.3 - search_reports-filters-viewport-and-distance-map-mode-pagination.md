@@ -1,11 +1,11 @@
 ---
 id: TASK-31.3
 title: 'Report search API: list and map endpoints through TypedSQL'
-status: To Do
+status: In Progress
 assignee:
   - '@backend-dev'
 created_date: '2026-10-14 22:13'
-updated_date: '2026-10-14 23:38'
+updated_date: '2026-10-15 20:19'
 labels:
   - be
   - 'est:S'
