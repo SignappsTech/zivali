@@ -62,6 +62,8 @@ Root scripts. Until the piece a script needs is merged, it prints which task add
 
 Per package: `pnpm --filter <name> <script>`, for example `pnpm --filter web e2e` or `pnpm --filter @zivali/i18n check`. Supabase CLI directly: `pnpm exec supabase <command>`.
 
+Web: the app refuses to start without `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` in `apps/web/.env.local` and names the missing one. `pnpm --filter web e2e` builds and starts the app on :3000 (or reuses a running `pnpm dev`); before the first run, `pnpm --filter web exec playwright install chromium`.
+
 ## The `pnpm verify` rule
 
 `pnpm verify` runs the same gates CI will run ([ADR-016](docs/tech/adr/016-environments-hosting-cicd.md)); there is no hosted CI until the GitHub repository exists. Every implementer runs it on their branch and it must pass before the task is reported done. Today it runs the Prettier check, lint, typecheck, unit tests and builds; TASK-4.2 extends it to the full pipeline (tokens contrast, i18n parity, API and security tests against the local database, Playwright smoke, quality kit, secretlint, `pnpm audit`).

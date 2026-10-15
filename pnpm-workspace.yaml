@@ -10,3 +10,7 @@ allowBuilds:
   # eslint-plugin-import-x resolver: its postinstall only re-checks the native binding that pnpm already
   # installs from optionalDependencies, so it is skipped.
   unrs-resolver: false
+  # next-intl (web) pulls these in for its message extractor, which we do not use; the prebuilt bindings come from
+  # optionalDependencies, so their build-from-source and binding-check scripts are skipped.
+  '@parcel/watcher': false
+  '@swc/core': false
