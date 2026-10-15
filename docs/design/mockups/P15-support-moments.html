@@ -1,0 +1,644 @@
+<!doctype html>
+<!--
+  P15 Support moments. Static mockup (TASK-33.1). Built from _template.html.
+  Sources: docs/design/pages/P15-support-moments.md, docs/content/pages/P15-support-moments.md (v0.1), docs/design/system.md (v0.10).
+  The contribution row continues P6 M9 / C2; the sign-in gate reuses P16 G1. One copy of the content lives in #src.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Najdimo mockup: P15 Support moments</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:wght@400;500;600;700&family=Bricolage+Grotesque:opsz,wght@12..96,500..800&display=swap" rel="stylesheet">
+<link href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css" rel="stylesheet">
+<link href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/bold/style.css" rel="stylesheet">
+<link href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css" rel="stylesheet">
+<link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet">
+<link href="../tokens.css" rel="stylesheet">
+<link href="../directions/directions.css" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com/3.4.17"></script>
+<script src="../directions/tailwind-config.js"></script>
+<style>
+/* P15 parts used only by this mockup. Token-driven; frontend maps them to SupportTip, ContributionRow, CheckoutReturn and PaymentsList. */
+.scope h1, .scope h2, .scope h3 { text-wrap: balance; }
+/* Type roles (system 4): mobile h1 30/36, h2 24/30, h3 20/28; web h1 48/52, h2 30/36, h3 24/32 */
+.r-h1 { font-family: var(--font-display); font-weight: 700; font-size: 30px; line-height: 36px; letter-spacing: -0.02em; margin: 0; }
+.r-h2 { font-family: var(--font-display); font-weight: 700; font-size: 24px; line-height: 30px; letter-spacing: -0.015em; margin: 0; }
+.r-h3 { font-family: var(--font-display); font-weight: 600; font-size: 20px; line-height: 28px; letter-spacing: -0.01em; margin: 0; }
+.w-h1 { font-family: var(--font-display); font-weight: 700; font-size: 48px; line-height: 52px; letter-spacing: -0.02em; margin: 0; }
+.w-h2 { font-family: var(--font-display); font-weight: 700; font-size: 30px; line-height: 36px; letter-spacing: -0.015em; margin: 0; }
+.w-h3 { font-family: var(--font-display); font-weight: 600; font-size: 24px; line-height: 32px; letter-spacing: -0.01em; margin: 0; }
+[tabindex="-1"]:focus { outline: none; }
+[tabindex="-1"].is-focus { outline: 3px solid hsl(var(--ring)); outline-offset: 2px; border-radius: 8px; }
+
+/* Shell parts, as in P1 and P6 */
+.logo-link { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; border-radius: 12px; color: hsl(var(--foreground)); text-decoration: none; flex: none; }
+.tl { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; font-weight: 700; color: hsl(var(--primary)); text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 4px; border-radius: 8px; }
+.tl:hover { text-decoration-thickness: 3px; }
+
+/* Amount pills: a radiogroup. Selected = primary fill plus check (system 10.1), as the P6 sex pills */
+.pill, .supp { position: relative; } /* keeps the sr-only suffix inside the control */
+.pill[role="radio"][aria-checked="true"] { background: hsl(var(--primary)); color: hsl(var(--primary-foreground)); }
+.pill[role="radio"][aria-checked="true"]:hover { background: color-mix(in srgb, hsl(var(--primary)) 86%, hsl(var(--foreground))); }
+.pill[role="radio"][aria-checked="true"] .tick { display: inline; }
+/* Suggested amount (5 €): a 2 px primary inset line, no fill change and no check, so it never reads as chosen */
+.pill.is-suggested { box-shadow: inset 0 0 0 2px hsl(var(--primary)); }
+.pill.is-suggested[aria-checked="true"] { box-shadow: none; }
+/* Pay and Skip: same variant, same size. Stacked on mobile, two equal columns on web */
+.pair { display: grid; gap: 8px; }
+.pair-w { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.btn[aria-busy="true"] { cursor: progress; }
+
+/* Optional support row (P6 M9): a quiet disclosure, collapsed by default (copied from P6) */
+.supp { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 56px; padding: 0 12px; margin: 0 -12px; box-sizing: content-box; border: 0; border-radius: var(--radius-row); background: transparent; color: hsl(var(--foreground)); font: inherit; font-weight: 600; font-size: 16px; line-height: 24px; text-align: left; cursor: pointer; }
+.supp > i { font-size: 20px; flex: none; color: hsl(var(--muted-foreground)); }
+.supp:hover { background: hsl(var(--foreground) / 0.10); }
+.supp:focus-visible { outline: 3px solid hsl(var(--ring)); outline-offset: 2px; }
+
+/* Meta line with an icon (test label, test note in the row) */
+.meta { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; line-height: 20px; color: hsl(var(--muted-foreground)); }
+.meta i { font-size: 16px; line-height: 1; }
+/* Neutral spot (cancelled) and a spinner spot (pending) */
+.spot.spot-r { background: hsl(var(--status-reunited-subtle)); color: hsl(var(--status-reunited-subtle-foreground)); }
+.spot.spot-n { background: hsl(var(--muted)); color: hsl(var(--muted-foreground)); }
+.spot .spin { width: 36px; height: 36px; border-width: 3.5px; color: hsl(var(--primary)); }
+/* Payments list: no cards, no dividers, 20 px between rows */
+.pl { list-style: none; margin: 0; padding: 0; display: grid; gap: 20px; }
+.pl > li { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 16px; align-items: center; }
+.pl .ln { margin: 0; font-size: 16px; line-height: 24px; }
+.pl .sub { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; margin-top: 2px; }
+
+/* Region crop: mockup scaffolding only (a state that changes one part of a screen), not product UI */
+.tile-section figure { max-width: 100%; min-width: 0; }
+.crop { width: 390px; max-width: 100%; box-sizing: border-box; padding: 24px 20px; border-radius: 28px; background: hsl(var(--background)); outline: 2px dashed hsl(var(--input)); outline-offset: -2px; }
+.crop-w { width: 600px; padding: 40px 48px; }
+/* Sheet crop: the bottom of a phone screen with the scrim above the sheet */
+.crop-sheet { padding: 48px 0 0; overflow: hidden; background: hsl(var(--scrim) / var(--scrim-alpha)); }
+.sheetc { background: hsl(var(--card)); color: hsl(var(--card-foreground)); border-radius: var(--radius-sheet) var(--radius-sheet) 0 0; box-shadow: var(--shadow-lg); padding: 0 20px 34px; }
+@media (max-width: 720px) { .crop-w { padding: 24px 20px; } }
+</style>
+</head>
+<body>
+<a class="sr-only focus:not-sr-only" href="#stage">Skip to content</a>
+
+<!-- Logo symbol, defined once -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <symbol id="nj-mark" viewBox="0 0 48 48">
+    <g fill="currentColor" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round">
+      <path d="M24 45.5 C24 45.5 10.5 33.2 10.5 24.4 A13.5 13.5 0 0 1 37.5 24.4 C37.5 33.2 24 45.5 24 45.5 Z M24 17.9 A6.5 6.5 0 1 0 24 30.9 A6.5 6.5 0 1 0 24 17.9 Z"/>
+      <path d="M12.2 19.6 L11.2 5 L22.6 11.4 Z"/><path d="M35.8 19.6 L25.4 11.4 L36.8 5 Z"/>
+    </g>
+    <circle cx="24" cy="24.4" r="3.6" fill="#F7B32B"/>
+  </symbol>
+</svg>
+
+<header class="chrome">
+  <div class="flex flex-wrap items-center gap-x-5 gap-y-2 px-6 py-2 max-w-[1400px] mx-auto">
+    <span class="flex items-center gap-2 font-display font-bold text-lg"><svg class="logo-mark w-7 h-7" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg>Najdimo</span>
+    <span class="text-muted-foreground text-[15px]">P15 Support moments (mockup)</span>
+    <div class="ml-auto flex items-center gap-2" role="group" aria-label="Colour mode">
+      <button class="mode-btn" data-mode="light" aria-pressed="true">Light</button>
+      <button class="mode-btn" data-mode="dark" aria-pressed="false">Dark</button>
+      <button class="mode-btn" data-mode="both" aria-pressed="false">Side by side</button>
+    </div>
+  </div>
+</header>
+
+<main id="stage"></main>
+
+<div id="src" hidden>
+<section class="tile-section !max-w-[1400px]">
+  <h1 class="tile-title">P15 Support moments</h1>
+  <p class="tile-lede">Two quiet, optional asks: a thank-you contribution on the reunited screen (P14) and a collapsed contribution row at the end of the lost-report confirmation (P6 M9), plus the checkout hand-off, the four return states and My payments. No amount is pre-selected, Pay and Skip are the same variant and size, nothing blocks reporting, matching or alerts, and neither ask is rendered for anonymous finders. Copy from the P15 content slice v0.1.</p>
+
+  <!-- ================= A. MOBILE FRAMES ================= -->
+  <h2 class="tile-title !text-2xl">A. Mobile</h2>
+  <div class="wrap-x"><div class="flex flex-wrap gap-x-10 gap-y-12 items-start">
+
+    <!-- M1 REUNITED + TIP, IDLE -->
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">M1 Reunited screen with the tip block, idle (full length)</figcaption>
+      <div class="phone" style="height:1030px"><div class="phone-screen" style="height:1030px" lang="sl">
+        <div class="statusbar" aria-hidden="true"><span>18:05</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <div class="topbar justify-end"><button type="button" class="iconbtn" aria-label="Zapri"><i class="ph-bold ph-x" aria-hidden="true"></i></button></div>
+        <div class="flex-1 min-h-0 px-5 pt-2">
+          <span class="spot spot-r" aria-hidden="true"><i class="ph-fill ph-heart"></i></span>
+          <p class="st st-lg st-reunited mt-6"><i class="ph-fill ph-heart" aria-hidden="true"></i>Spet doma</p>
+          <h1 class="r-h1 mt-2" data-sample>Medo je spet doma</h1>
+          <p class="text-lg leading-7 mt-3" data-sample>Hvala vsem, ki so pomagali iskati.</p>
+          <button type="button" class="btn btn-primary btn-lg btn-block mt-8" data-sample><i class="ph-bold ph-share-network" aria-hidden="true"></i>Deli dobro novico</button>
+
+          <section class="mt-12" aria-label="Pomagajte, da Najdimo ostane brezplačno">
+            <h2 class="r-h3">Pomagajte, da Najdimo ostane brezplačno</h2>
+            <p class="mt-2">Iskanje je brezplačno za vse in tako bo ostalo. Če želite, lahko s prispevkom v zahvalo pomagate pokriti strežnike, zemljevide in pošiljanje opozoril.</p>
+            <div class="flex flex-wrap gap-2 mt-5" role="radiogroup" aria-label="Znesek prispevka">
+              <button type="button" class="pill tnum" role="radio" aria-checked="false" tabindex="0"><i class="ph-bold ph-check tick" aria-hidden="true"></i>3 €</button>
+              <button type="button" class="pill tnum is-suggested" role="radio" aria-checked="false" tabindex="-1"><i class="ph-bold ph-check tick" aria-hidden="true"></i>5 €<span class="sr-only" data-sample>, predlagano</span></button>
+              <button type="button" class="pill tnum" role="radio" aria-checked="false" tabindex="-1"><i class="ph-bold ph-check tick" aria-hidden="true"></i>10 €</button>
+              <button type="button" class="pill" role="radio" aria-checked="false" tabindex="-1"><i class="ph-bold ph-check tick" aria-hidden="true"></i>Drug znesek</button>
+            </div>
+            <div class="pair mt-6">
+              <button type="button" class="btn btn-secondary btn-block" disabled aria-describedby="m1-payhelp">Plačaj</button>
+              <button type="button" class="btn btn-secondary btn-block">Preskoči</button>
+            </div>
+            <p class="help mt-2" id="m1-payhelp">Najprej izberite znesek.</p>
+            <p class="help mt-4">Prispevek je prostovoljno plačilo za delovanje storitve in ne vpliva na nobeno funkcijo.</p>
+            <div class="note mt-5"><i class="ph-bold ph-flask" aria-hidden="true"></i><p>Testno plačilo: s kartice se ne bremeni denar.</p></div>
+          </section>
+        </div>
+        <div class="pb-11"></div>
+        <span class="home-ind"></span>
+      </div></div>
+      <p class="help mt-4" style="max-width:412px">The reunion comes first; the ask follows after a 48 px group gap. P14 context (h1, lede, its one primary "Deli dobro novico") is sample, TASK-26.2 owns it. Tip heading: h3 role, h2 element under the page h1. Pills 3, 5, 10 € and "Drug znesek" are one <code>radiogroup</code> ("Znesek prispevka"), none checked, arrow keys move. 5 € is the suggested amount: inset line only, never filled or checked. Pay is disabled until an amount is chosen and says why. Test note only outside production. Not rendered for anonymous finders.</p>
+    </figure>
+
+    <!-- M2 HAND-OFF SHEET -->
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">M2 Checkout hand-off sheet (after "Plačaj 5 €")</figcaption>
+      <div class="phone"><div class="phone-screen" lang="sl">
+        <div class="statusbar" aria-hidden="true"><span>18:06</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <div inert aria-hidden="true">
+          <div class="topbar justify-end"><span class="iconbtn"><i class="ph-bold ph-x"></i></span></div>
+          <div class="px-5 pt-2">
+            <p class="st st-lg st-reunited"><i class="ph-fill ph-heart"></i>Spet doma</p>
+            <p class="r-h1 mt-2">Medo je spet doma</p>
+            <p class="r-h3 mt-12">Pomagajte, da Najdimo ostane brezplačno</p>
+            <div class="flex flex-wrap gap-2 mt-5">
+              <span class="pill tnum">3 €</span><span class="pill tnum" style="background:hsl(var(--primary));color:hsl(var(--primary-foreground))"><i class="ph-bold ph-check"></i>5 €</span><span class="pill tnum">10 €</span><span class="pill">Drug znesek</span>
+            </div>
+            <div class="pair mt-6"><span class="btn btn-secondary btn-block">Plačaj 5 €</span><span class="btn btn-secondary btn-block">Preskoči</span></div>
+          </div>
+        </div>
+        <div class="scrim"></div>
+        <div class="sheet" role="dialog" aria-modal="true" aria-label="Plačali boste v brskalniku" style="z-index:8;padding-bottom:34px">
+          <button type="button" class="grab" aria-label="Zapri"></button>
+          <div class="px-5 pt-3">
+            <span class="spot" aria-hidden="true"><i class="ph-bold ph-globe-simple"></i></span>
+            <h2 class="r-h2 mt-6" tabindex="-1">Plačali boste v brskalniku</h2>
+            <p class="text-lg leading-7 mt-3">Odprli bomo varno plačilno stran Stripe. Ko končate, se vrnete v aplikacijo.</p>
+          </div>
+          <div class="grid gap-1 px-5 pt-8">
+            <button type="button" class="btn btn-primary btn-lg btn-block"><i class="ph-bold ph-arrow-square-out" aria-hidden="true"></i>Nadaljuj</button>
+            <button type="button" class="btn btn-text btn-block">Prekliči</button>
+          </div>
+        </div>
+        <span class="home-ind" style="z-index:12"></span>
+      </div></div>
+      <p class="help mt-4" style="max-width:412px">Mobile only: Nadaljuj opens Stripe Checkout (test mode) in an in-app browser and returns to this screen (R-003). Prekliči closes the sheet and keeps the chosen amount. Web skips this sheet and redirects, then returns to the same page.</p>
+    </figure>
+
+    <!-- M3 SUCCESS SHEET -->
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">M3 Return: success (sheet over the reunited screen)</figcaption>
+      <div class="phone"><div class="phone-screen" lang="sl">
+        <div class="statusbar" aria-hidden="true"><span>18:08</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <div inert aria-hidden="true">
+          <div class="topbar justify-end"><span class="iconbtn"><i class="ph-bold ph-x"></i></span></div>
+          <div class="px-5 pt-2">
+            <span class="spot spot-r"><i class="ph-fill ph-heart"></i></span>
+            <p class="st st-lg st-reunited mt-6"><i class="ph-fill ph-heart"></i>Spet doma</p>
+            <p class="r-h1 mt-2">Medo je spet doma</p>
+          </div>
+        </div>
+        <div class="scrim"></div>
+        <div class="sheet" role="dialog" aria-modal="true" aria-label="Hvala za vaš prispevek" style="z-index:8;padding-bottom:34px">
+          <button type="button" class="grab" aria-label="Zapri"></button>
+          <div class="px-5 pt-3">
+            <span class="spot" aria-hidden="true"><i class="ph-bold ph-check"></i></span>
+            <h2 class="r-h2 mt-6" tabindex="-1">Hvala za vaš prispevek</h2>
+            <p class="text-lg leading-7 mt-3">Potrdilo o plačilu smo vam poslali po e-pošti.</p>
+          </div>
+          <div class="px-5 pt-8">
+            <button type="button" class="btn btn-primary btn-lg btn-block">Nazaj na prijavo</button>
+          </div>
+        </div>
+        <span class="home-ind" style="z-index:12"></span>
+      </div></div>
+      <p class="help mt-4" style="max-width:412px">Check in a tonal circle, h2 thanks, receipt sentence, one primary. Focus moves to the sheet heading on return. Afterwards the tip block on this report is replaced by the thanks line (B6). No confetti, no counter.</p>
+    </figure>
+  </div></div>
+
+  <!-- ================= B. TIP BLOCK STATES ================= -->
+  <h2 class="tile-title !text-2xl" style="margin-top:72px">B. Tip block states (mobile, 390 px crops)</h2>
+  <p class="tile-lede">Each crop replaces the tip block of M1 from the pills down; everything above stays as drawn. Web uses the same states with the two buttons side by side (W1).</p>
+  <div class="flex flex-wrap gap-x-10 gap-y-12 items-start">
+
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">B1 Amount chosen (5 €), keyboard focus on Pay</figcaption>
+      <div class="crop" lang="sl">
+        <div class="flex flex-wrap gap-2" role="radiogroup" aria-label="Znesek prispevka">
+          <button type="button" class="pill tnum" role="radio" aria-checked="false" tabindex="-1"><i class="ph-bold ph-check tick" aria-hidden="true"></i>3 €</button>
+          <button type="button" class="pill tnum is-suggested" role="radio" aria-checked="true" tabindex="0"><i class="ph-bold ph-check tick" aria-hidden="true"></i>5 €</button>
+          <button type="button" class="pill tnum" role="radio" aria-checked="false" tabindex="-1"><i class="ph-bold ph-check tick" aria-hidden="true"></i>10 €</button>
+          <button type="button" class="pill" role="radio" aria-checked="false" tabindex="-1"><i class="ph-bold ph-check tick" aria-hidden="true"></i>Drug znesek</button>
+        </div>
+        <div class="pair mt-6">
+          <button type="button" class="btn btn-secondary btn-block is-focus">Plačaj 5 €</button>
+          <button type="button" class="btn btn-secondary btn-block">Preskoči</button>
+        </div>
+      </div>
+      <p class="help mt-4" style="max-width:390px">Selected = <code>primary</code> fill plus check. Pay names the amount once ("Plačaj 5 €", whole euros drop decimals). The disabled help line goes away. Tapping the chosen pill again does not clear it; Preskoči always can.</p>
+    </figure>
+
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">B2 Other amount below the minimum (inline error)</figcaption>
+      <div class="crop" lang="sl">
+        <div class="flex flex-wrap gap-2" role="radiogroup" aria-label="Znesek prispevka">
+          <button type="button" class="pill tnum" role="radio" aria-checked="false" tabindex="-1"><i class="ph-bold ph-check tick" aria-hidden="true"></i>3 €</button>
+          <button type="button" class="pill tnum is-suggested" role="radio" aria-checked="false" tabindex="-1"><i class="ph-bold ph-check tick" aria-hidden="true"></i>5 €</button>
+          <button type="button" class="pill tnum" role="radio" aria-checked="false" tabindex="-1"><i class="ph-bold ph-check tick" aria-hidden="true"></i>10 €</button>
+          <button type="button" class="pill" role="radio" aria-checked="true" tabindex="0"><i class="ph-bold ph-check tick" aria-hidden="true"></i>Drug znesek</button>
+        </div>
+        <div class="field mt-5">
+          <label for="b2-amt">Drug znesek v evrih (najmanj 2 €)</label>
+          <div class="input-wrap has-end">
+            <input id="b2-amt" class="input is-error tnum" type="text" inputmode="decimal" autocomplete="off" value="1,50" aria-invalid="true" aria-describedby="b2-err">
+            <span class="end text-lg text-muted-foreground" aria-hidden="true">€</span>
+          </div>
+          <p class="err" id="b2-err"><i class="ph-fill ph-warning-circle" aria-hidden="true"></i>Najmanjši znesek je 2 €.</p>
+        </div>
+        <div class="pair mt-6">
+          <button type="button" class="btn btn-secondary btn-block" disabled aria-describedby="b2-err">Plačaj</button>
+          <button type="button" class="btn btn-secondary btn-block">Preskoči</button>
+        </div>
+      </div>
+      <p class="help mt-4" style="max-width:390px">"Drug znesek" reveals the line field, label above. Validated on blur and on Pay: under 2 € shows <code>support.amount_min_error</code>, over 500 € shows <code>support.amount_max_error</code> (C13: 200 to 50 000 cents). Accepts "2,5" and "2.5"; Pay reads "Plačaj 2,50 €" once valid. API <code>errors.MIN_AMOUNT</code> lands in the same slot.</p>
+    </figure>
+
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">B3 Loading (creating the checkout)</figcaption>
+      <div class="crop" lang="sl">
+        <div class="flex flex-wrap gap-2" role="radiogroup" aria-label="Znesek prispevka" aria-disabled="true">
+          <button type="button" class="pill tnum" role="radio" aria-checked="false" tabindex="-1"><i class="ph-bold ph-check tick" aria-hidden="true"></i>3 €</button>
+          <button type="button" class="pill tnum is-suggested" role="radio" aria-checked="true" tabindex="0"><i class="ph-bold ph-check tick" aria-hidden="true"></i>5 €</button>
+          <button type="button" class="pill tnum" role="radio" aria-checked="false" tabindex="-1"><i class="ph-bold ph-check tick" aria-hidden="true"></i>10 €</button>
+          <button type="button" class="pill" role="radio" aria-checked="false" tabindex="-1"><i class="ph-bold ph-check tick" aria-hidden="true"></i>Drug znesek</button>
+        </div>
+        <div class="pair mt-6">
+          <button type="button" class="btn btn-secondary btn-block" aria-busy="true" aria-disabled="true"><span class="spin" aria-hidden="true"></span>Plačaj 5 €</button>
+          <button type="button" class="btn btn-secondary btn-block">Preskoči</button>
+        </div>
+      </div>
+      <p class="help mt-4" style="max-width:390px">Spinner before the kept label, <code>aria-busy</code>, presses ignored, no layout shift. Preskoči stays available. Then M2 (mobile) or the Stripe redirect (web).</p>
+    </figure>
+
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">B4 Network error with retry</figcaption>
+      <div class="crop" lang="sl">
+        <div class="flex flex-wrap gap-2" role="radiogroup" aria-label="Znesek prispevka">
+          <button type="button" class="pill tnum" role="radio" aria-checked="false" tabindex="-1"><i class="ph-bold ph-check tick" aria-hidden="true"></i>3 €</button>
+          <button type="button" class="pill tnum is-suggested" role="radio" aria-checked="true" tabindex="0"><i class="ph-bold ph-check tick" aria-hidden="true"></i>5 €</button>
+          <button type="button" class="pill tnum" role="radio" aria-checked="false" tabindex="-1"><i class="ph-bold ph-check tick" aria-hidden="true"></i>10 €</button>
+          <button type="button" class="pill" role="radio" aria-checked="false" tabindex="-1"><i class="ph-bold ph-check tick" aria-hidden="true"></i>Drug znesek</button>
+        </div>
+        <div class="note mt-5" role="alert"><i class="ph-fill ph-warning-circle text-destructive" aria-hidden="true"></i><p data-sample>Povezave ni bilo mogoče vzpostaviti. Preverite internet in poskusite znova.</p></div>
+        <div class="pair mt-4">
+          <button type="button" class="btn btn-secondary btn-block"><i class="ph-bold ph-arrow-clockwise" aria-hidden="true"></i>Poskusi znova</button>
+          <button type="button" class="btn btn-secondary btn-block">Preskoči</button>
+        </div>
+      </div>
+      <p class="help mt-4" style="max-width:390px">Inline region error (system 10.9): the note sits above the pair; "Poskusi znova" takes Pay's slot (same variant and size), so there is no extra button. The amount stays chosen. Sentence is <code>errors.NETWORK</code> (P1), sample here.</p>
+    </figure>
+
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">B5 Signed-out visitor taps Pay: sign-in gate (P16 G1)</figcaption>
+      <div class="crop crop-sheet" lang="sl">
+        <div class="sheetc" role="dialog" aria-modal="true" aria-label="Za prispevek potrebujete račun">
+          <button type="button" class="grab" aria-label="Zapri"></button>
+          <h2 class="r-h2 mt-3" tabindex="-1" data-sample>Za prispevek potrebujete račun</h2>
+          <p class="text-lg leading-7 mt-3">Za prispevek potrebujete račun, da vam lahko pošljemo potrdilo.</p>
+          <div class="grid gap-3 pt-7">
+            <a href="#" class="btn btn-primary btn-lg btn-block">Vpiši se</a>
+            <a href="#" class="btn btn-secondary btn-block">Ustvari račun</a>
+            <button type="button" class="btn btn-text btn-block">Prekliči</button>
+          </div>
+        </div>
+      </div>
+      <p class="help mt-4" style="max-width:390px">As P16 G1 (also "ali" plus the Google and Apple buttons between Ustvari račun and Prekliči, omitted here). Body is <code>support.gate_body</code>; the title is sample (no key yet). After sign-in the chosen amount is kept and B3 follows. Anonymous finders never reach this: the block is not rendered for them.</p>
+    </figure>
+
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">B6 Already paid for this report (block replaced)</figcaption>
+      <div class="crop" lang="sl">
+        <p class="flex gap-3 m-0"><i class="ph-fill ph-check-circle text-primary text-[22px] leading-6 flex-none" aria-hidden="true"></i><span>Hvala, za to prijavo ste že prispevali.</span></p>
+      </div>
+      <p class="help mt-4" style="max-width:390px">Replaces the whole tip block (heading included) and the P6 contribution row once a payment for this report succeeded. One line, no button, no second ask.</p>
+    </figure>
+
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">B7 Flags on (M4): "Kam gre denar" and monthly Podpornik</figcaption>
+      <div class="crop" lang="sl">
+        <div class="flex flex-wrap gap-2" role="radiogroup" aria-label="Znesek prispevka">
+          <button type="button" class="pill tnum" role="radio" aria-checked="false" tabindex="0"><i class="ph-bold ph-check tick" aria-hidden="true"></i>3 €</button>
+          <button type="button" class="pill tnum is-suggested" role="radio" aria-checked="false" tabindex="-1"><i class="ph-bold ph-check tick" aria-hidden="true"></i>5 €</button>
+          <button type="button" class="pill tnum" role="radio" aria-checked="false" tabindex="-1"><i class="ph-bold ph-check tick" aria-hidden="true"></i>10 €</button>
+          <button type="button" class="pill" role="radio" aria-checked="false" tabindex="-1"><i class="ph-bold ph-check tick" aria-hidden="true"></i>Drug znesek</button>
+        </div>
+        <label class="check mt-4"><input type="checkbox"><span class="cbx" aria-hidden="true"><i class="ph-bold ph-check"></i></span><span data-sample>Prispevaj vsak mesec kot Podpornik</span></label>
+        <div class="pair mt-4">
+          <button type="button" class="btn btn-secondary btn-block" disabled aria-describedby="b7-payhelp">Plačaj</button>
+          <button type="button" class="btn btn-secondary btn-block">Preskoči</button>
+        </div>
+        <p class="help mt-2" id="b7-payhelp">Najprej izberite znesek.</p>
+        <a href="#" class="tl mt-2">Kam gre denar</a>
+      </div>
+      <p class="help mt-4" style="max-width:390px">Both hidden until M4. <code>flags.supporter_monthly</code>: one unchecked checkbox (never pre-ticked); when ticked Pay reads "Plačaj 5 € na mesec" (sample, no keys yet). <code>flags.transparency_page</code>: one text link to the Where the money goes page, last line of the block.</p>
+    </figure>
+  </div>
+
+  <!-- ================= C. CONTRIBUTION ROW (P6 M9) ================= -->
+  <h2 class="tile-title !text-2xl" style="margin-top:72px">C. Contribution row at the lost-report confirmation (P6 M9, 390 px crops)</h2>
+  <p class="tile-lede">The last thing on M9, under the poster, share and 24-hour links. Collapsed by default, shown once per report, gone after Skrij or a payment. Replaces the sample strings in P6 M9 and C2.</p>
+  <div class="flex flex-wrap gap-x-10 gap-y-12 items-start">
+
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">C1 Collapsed (default)</figcaption>
+      <div class="crop" lang="sl">
+        <button type="button" class="supp" aria-expanded="false"><i class="ph-bold ph-heart" aria-hidden="true"></i><span class="flex-1 min-w-0">Pomagajte ohraniti Najdimo brezplačno<span class="sr-only">. Pokaži možnost prispevka</span></span><i class="ph-bold ph-caret-down" aria-hidden="true"></i></button>
+      </div>
+      <p class="help mt-4" style="max-width:390px">Text and caret, no badge, no countdown. The accessible name adds <code>support.contribution_expand_a11y</code> after the visible text.</p>
+    </figure>
+
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">C2 Expanded, nothing chosen (pointer on 3 €)</figcaption>
+      <div class="crop" lang="sl">
+        <button type="button" class="supp" aria-expanded="true"><i class="ph-bold ph-heart" aria-hidden="true"></i><span class="flex-1 min-w-0">Pomagajte ohraniti Najdimo brezplačno</span><i class="ph-bold ph-caret-up" aria-hidden="true"></i></button>
+        <p class="mt-2">Prijava, opozorila in iskanje ujemanj so brezplačni in takšni bodo ostali. Če želite, lahko z majhnim prispevkom pomagate pokriti stroške.</p>
+        <div class="flex flex-wrap gap-2 mt-4" role="radiogroup" aria-label="Znesek prispevka">
+          <button type="button" class="pill tnum" role="radio" aria-checked="false" tabindex="0"><i class="ph-bold ph-check tick" aria-hidden="true"></i>2 €</button>
+          <button type="button" class="pill tnum is-hover" role="radio" aria-checked="false" tabindex="-1"><i class="ph-bold ph-check tick" aria-hidden="true"></i>3 €</button>
+          <button type="button" class="pill tnum" role="radio" aria-checked="false" tabindex="-1"><i class="ph-bold ph-check tick" aria-hidden="true"></i>5 €</button>
+        </div>
+        <div class="pair-w mt-5">
+          <button type="button" class="btn btn-secondary" disabled aria-describedby="c2-payhelp">Prispevaj</button>
+          <button type="button" class="btn btn-secondary">Skrij</button>
+        </div>
+        <p class="help mt-2" id="c2-payhelp">Najprej izberite znesek.</p>
+        <p class="meta mt-3"><i class="ph-bold ph-flask" aria-hidden="true"></i>Testno plačilo: s kartice se ne bremeni denar.</p>
+      </div>
+      <p class="help mt-4" style="max-width:390px">Pills 2, 3, 5 €, none chosen, no suggested amount here. Prispevaj and Skrij: same variant, same size, side by side (short labels fit at 320 px). The test note is a meta line, so M9 keeps its one note. Skrij collapses the row and records the skip.</p>
+    </figure>
+
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">C3 Expanded, 3 € chosen</figcaption>
+      <div class="crop" lang="sl">
+        <button type="button" class="supp" aria-expanded="true"><i class="ph-bold ph-heart" aria-hidden="true"></i><span class="flex-1 min-w-0">Pomagajte ohraniti Najdimo brezplačno</span><i class="ph-bold ph-caret-up" aria-hidden="true"></i></button>
+        <p class="mt-2">Prijava, opozorila in iskanje ujemanj so brezplačni in takšni bodo ostali. Če želite, lahko z majhnim prispevkom pomagate pokriti stroške.</p>
+        <div class="flex flex-wrap gap-2 mt-4" role="radiogroup" aria-label="Znesek prispevka">
+          <button type="button" class="pill tnum" role="radio" aria-checked="false" tabindex="-1"><i class="ph-bold ph-check tick" aria-hidden="true"></i>2 €</button>
+          <button type="button" class="pill tnum" role="radio" aria-checked="true" tabindex="0"><i class="ph-bold ph-check tick" aria-hidden="true"></i>3 €</button>
+          <button type="button" class="pill tnum" role="radio" aria-checked="false" tabindex="-1"><i class="ph-bold ph-check tick" aria-hidden="true"></i>5 €</button>
+        </div>
+        <div class="pair-w mt-5">
+          <button type="button" class="btn btn-secondary">Prispevaj 3 €</button>
+          <button type="button" class="btn btn-secondary">Skrij</button>
+        </div>
+        <p class="meta mt-3"><i class="ph-bold ph-flask" aria-hidden="true"></i>Testno plačilo: s kartice se ne bremeni denar.</p>
+      </div>
+      <p class="help mt-4" style="max-width:390px">Prispevaj 3 € runs the same path as the tip: gate (B5) when signed out, loading (B3), hand-off (M2) on mobile, returns (D). Errors and the already-paid line work as B4 and B6.</p>
+    </figure>
+  </div>
+
+  <!-- ================= D. RETURN STATES (MOBILE SHEETS) ================= -->
+  <h2 class="tile-title !text-2xl" style="margin-top:72px">D. Return states (mobile sheets, 390 px crops)</h2>
+  <p class="tile-lede">Each sheet takes the place of the success sheet in M3, over the screen the payment started from. Focus moves to the sheet heading.</p>
+  <div class="flex flex-wrap gap-x-10 gap-y-12 items-start">
+
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">D1 Cancelled</figcaption>
+      <div class="crop crop-sheet" lang="sl">
+        <div class="sheetc" role="dialog" aria-modal="true" aria-label="Plačilo je preklicano">
+          <button type="button" class="grab" aria-label="Zapri"></button>
+          <span class="spot spot-n mt-3" aria-hidden="true"><i class="ph-bold ph-x"></i></span>
+          <h2 class="r-h2 mt-6" tabindex="-1">Plačilo je preklicano</h2>
+          <p class="text-lg leading-7 mt-3">Nič ni bilo zaračunano.</p>
+          <div class="grid gap-1 pt-8">
+            <button type="button" class="btn btn-primary btn-lg btn-block">Nazaj</button>
+            <button type="button" class="btn btn-text btn-block">Poskusi znova</button>
+          </div>
+        </div>
+      </div>
+      <p class="help mt-4" style="max-width:390px">Neutral: <code>muted</code> circle, no error colour. Poskusi znova reopens M2 with the same amount.</p>
+    </figure>
+
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">D2 Failed (declined)</figcaption>
+      <div class="crop crop-sheet" lang="sl">
+        <div class="sheetc" role="dialog" aria-modal="true" aria-label="Plačilo ni uspelo">
+          <button type="button" class="grab" aria-label="Zapri"></button>
+          <h2 class="r-h2 mt-3" tabindex="-1">Plačilo ni uspelo</h2>
+          <div class="note mt-4"><i class="ph-bold ph-credit-card" aria-hidden="true"></i><p>Banka plačila ni odobrila. Nič ni bilo zaračunano.</p></div>
+          <div class="grid gap-1 pt-8">
+            <button type="button" class="btn btn-primary btn-lg btn-block">Poskusi z drugo kartico</button>
+            <button type="button" class="btn btn-text btn-block">Preskoči</button>
+          </div>
+        </div>
+      </div>
+      <p class="help mt-4" style="max-width:390px">Calm note with the reason in plain words, no red. Other decline reasons map to their own plain sentence in the same note.</p>
+    </figure>
+
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">D3 Pending (webhook delay)</figcaption>
+      <div class="crop crop-sheet" lang="sl">
+        <div class="sheetc" role="dialog" aria-modal="true" aria-label="Potrjujemo plačilo …">
+          <button type="button" class="grab" aria-label="Zapri"></button>
+          <div role="status" aria-live="polite" aria-busy="true">
+            <span class="spot mt-3" aria-hidden="true"><span class="spin"></span></span>
+            <h2 class="r-h2 mt-6" tabindex="-1">Potrjujemo plačilo …</h2>
+            <p class="text-lg leading-7 mt-3">To lahko traja nekaj trenutkov. Stran se bo osvežila sama.</p>
+          </div>
+          <div class="grid pt-8">
+            <button type="button" class="btn btn-text btn-block">Nazaj</button>
+          </div>
+        </div>
+      </div>
+      <p class="help mt-4" style="max-width:390px">Polls and swaps to success, failed or cancelled by itself; spinner slows to 2.4 s per turn under reduced motion. No primary: waiting is the only thing to do.</p>
+    </figure>
+
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">D4 Success, e-mail not confirmed (receipt note)</figcaption>
+      <div class="crop crop-sheet" lang="sl">
+        <div class="sheetc" role="dialog" aria-modal="true" aria-label="Hvala za vaš prispevek">
+          <button type="button" class="grab" aria-label="Zapri"></button>
+          <span class="spot mt-3" aria-hidden="true"><i class="ph-bold ph-check"></i></span>
+          <h2 class="r-h2 mt-6" tabindex="-1">Hvala za vaš prispevek</h2>
+          <div class="note mt-4"><i class="ph-bold ph-envelope-simple" aria-hidden="true"></i><p>Potrdilo bomo poslali, ko potrdite svoj e-naslov.</p></div>
+          <div class="pt-8">
+            <button type="button" class="btn btn-primary btn-lg btn-block">Nazaj na prijavo</button>
+          </div>
+        </div>
+      </div>
+      <p class="help mt-4" style="max-width:390px"><code>support.unverified</code> replaces the receipt sentence as the one note. The payment itself is not held back.</p>
+    </figure>
+  </div>
+
+  <!-- ================= W. WEB ================= -->
+  <h2 class="tile-title !text-2xl" style="margin-top:72px">W. Web</h2>
+  <p class="tile-lede">P1 signed-in shell (header links omitted here). The header "Prijavi" is <code>secondary</code> because the page has its own primary. Pay redirects straight to Stripe Checkout (test mode); the return page replaces the view, then "Nazaj na prijavo" brings back the report.</p>
+
+  <p class="tile-h">W1 Reunited page with the tip block (1200 px): pointer on 10 €</p>
+  <div class="wrap-x"><div class="browser" lang="sl">
+    <div class="browser-bar"><span class="dots"><i></i><i></i><i></i></span><span class="url"><i class="ph ph-lock-simple"></i>najdimo.si/moje-zivali/medo</span></div>
+    <header class="flex items-center gap-8 px-12 h-[88px]">
+      <a href="#" class="logo-link" aria-label="Najdimo, na začetno stran"><svg class="logo-mark w-9 h-9" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg><span class="font-display font-bold text-2xl tracking-[-0.03em]" aria-hidden="true">Najdimo</span></a>
+      <div class="ml-auto flex items-center gap-2">
+        <button type="button" class="iconbtn" aria-label="Sporočila"><i class="ph-bold ph-chat-circle" aria-hidden="true"></i></button>
+        <button type="button" class="iconbtn" aria-label="Račun: Ana Novak"><span class="av av-32" aria-hidden="true">AN</span></button>
+        <a href="#" class="btn btn-secondary btn-sm ml-2"><i class="ph-bold ph-plus" aria-hidden="true"></i>Prijavi</a>
+      </div>
+    </header>
+    <main class="px-12 pt-6 pb-24">
+      <div class="max-w-[1120px] mx-auto grid grid-cols-12 gap-8 items-start">
+        <img class="thumb col-span-7 w-full aspect-[4/3] rounded-[32px]" src="../directions/img/dog-aussie.jpg" alt="Rjav, bel in črn pes z rdečo ovratnico" data-sample>
+        <div class="col-span-5">
+          <p class="st st-lg st-reunited m-0"><i class="ph-fill ph-heart" aria-hidden="true"></i>Spet doma</p>
+          <h1 class="w-h1 mt-3" data-sample>Medo je spet doma</h1>
+          <p class="text-xl leading-8 mt-4" data-sample>Hvala vsem, ki so pomagali iskati.</p>
+          <button type="button" class="btn btn-primary btn-lg mt-8" data-sample><i class="ph-bold ph-share-network" aria-hidden="true"></i>Deli dobro novico</button>
+
+          <section class="mt-16" aria-label="Pomagajte, da Najdimo ostane brezplačno">
+            <h2 class="w-h3">Pomagajte, da Najdimo ostane brezplačno</h2>
+            <p class="mt-3 max-w-[58ch]">Iskanje je brezplačno za vse in tako bo ostalo. Če želite, lahko s prispevkom v zahvalo pomagate pokriti strežnike, zemljevide in pošiljanje opozoril.</p>
+            <div class="flex flex-wrap gap-2 mt-6" role="radiogroup" aria-label="Znesek prispevka">
+              <button type="button" class="pill tnum" role="radio" aria-checked="false" tabindex="0"><i class="ph-bold ph-check tick" aria-hidden="true"></i>3 €</button>
+              <button type="button" class="pill tnum is-suggested" role="radio" aria-checked="false" tabindex="-1"><i class="ph-bold ph-check tick" aria-hidden="true"></i>5 €<span class="sr-only" data-sample>, predlagano</span></button>
+              <button type="button" class="pill tnum is-hover" role="radio" aria-checked="false" tabindex="-1"><i class="ph-bold ph-check tick" aria-hidden="true"></i>10 €</button>
+              <button type="button" class="pill" role="radio" aria-checked="false" tabindex="-1"><i class="ph-bold ph-check tick" aria-hidden="true"></i>Drug znesek</button>
+            </div>
+            <div class="pair-w mt-6">
+              <button type="button" class="btn btn-secondary" disabled aria-describedby="w1-payhelp">Plačaj</button>
+              <button type="button" class="btn btn-secondary">Preskoči</button>
+            </div>
+            <p class="help mt-2" id="w1-payhelp">Najprej izberite znesek.</p>
+            <p class="help mt-4">Prispevek je prostovoljno plačilo za delovanje storitve in ne vpliva na nobeno funkcijo.</p>
+            <div class="note mt-5"><i class="ph-bold ph-flask" aria-hidden="true"></i><p>Testno plačilo: s kartice se ne bremeni denar.</p></div>
+          </section>
+        </div>
+      </div>
+    </main>
+  </div></div>
+  <p class="help mt-4" style="max-width:720px">Same block as M1, in the info column under the page's own primary. Pay and Preskoči sit side by side in two equal columns. Hover on a pill mixes 14 % <code>foreground</code> into the fill. B1 to B7 apply unchanged. Below <code>lg</code> it stacks like mobile.</p>
+
+  <p class="tile-h" style="margin-top:56px">W2 Return page: success (1200 px), focus on the heading after the redirect back</p>
+  <div class="wrap-x"><div class="browser" lang="sl">
+    <div class="browser-bar"><span class="dots"><i></i><i></i><i></i></span><span class="url"><i class="ph ph-lock-simple"></i>najdimo.si/placilo/uspesno</span></div>
+    <header class="flex items-center gap-8 px-12 h-[88px]">
+      <a href="#" class="logo-link" aria-label="Najdimo, na začetno stran"><svg class="logo-mark w-9 h-9" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg><span class="font-display font-bold text-2xl tracking-[-0.03em]" aria-hidden="true">Najdimo</span></a>
+    </header>
+    <main class="px-12 pt-16 pb-32">
+      <div class="max-w-[560px] mx-auto">
+        <span class="spot" aria-hidden="true"><i class="ph-bold ph-check"></i></span>
+        <h1 class="w-h2 mt-8 is-focus" tabindex="-1">Hvala za vaš prispevek</h1>
+        <p class="text-xl leading-8 mt-4">Potrdilo o plačilu smo vam poslali po e-pošti.</p>
+        <a href="#" class="btn btn-primary btn-lg mt-10">Nazaj na prijavo</a>
+      </div>
+    </main>
+  </div></div>
+  <p class="help mt-4" style="max-width:720px">Full-screen page in the flow shell (logo only). Heading is the page h1 in the h2 type role and takes focus on load (ring shown). The tip block on the report then shows B6.</p>
+
+  <p class="tile-h" style="margin-top:56px">W2a to W2c Other web returns (the 560 px column of W2)</p>
+  <div class="flex flex-wrap gap-x-10 gap-y-12 items-start">
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">W2a Cancelled</figcaption>
+      <div class="crop crop-w" lang="sl">
+        <span class="spot spot-n" aria-hidden="true"><i class="ph-bold ph-x"></i></span>
+        <h1 class="w-h2 mt-8" tabindex="-1">Plačilo je preklicano</h1>
+        <p class="text-xl leading-8 mt-4">Nič ni bilo zaračunano.</p>
+        <div class="flex flex-wrap items-center gap-3 mt-10">
+          <a href="#" class="btn btn-primary btn-lg">Nazaj</a>
+          <button type="button" class="btn btn-text">Poskusi znova</button>
+        </div>
+      </div>
+    </figure>
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">W2b Failed (declined)</figcaption>
+      <div class="crop crop-w" lang="sl">
+        <h1 class="w-h2" tabindex="-1">Plačilo ni uspelo</h1>
+        <div class="note mt-5"><i class="ph-bold ph-credit-card" aria-hidden="true"></i><p>Banka plačila ni odobrila. Nič ni bilo zaračunano.</p></div>
+        <div class="flex flex-wrap items-center gap-3 mt-10">
+          <a href="#" class="btn btn-primary btn-lg">Poskusi z drugo kartico</a>
+          <button type="button" class="btn btn-text">Preskoči</button>
+        </div>
+      </div>
+    </figure>
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">W2c Pending (webhook delay)</figcaption>
+      <div class="crop crop-w" lang="sl">
+        <div role="status" aria-live="polite" aria-busy="true">
+          <span class="spot" aria-hidden="true"><span class="spin"></span></span>
+          <h1 class="w-h2 mt-8" tabindex="-1">Potrjujemo plačilo …</h1>
+          <p class="text-xl leading-8 mt-4">To lahko traja nekaj trenutkov. Stran se bo osvežila sama.</p>
+        </div>
+        <a href="#" class="btn btn-text mt-8 -ml-3">Nazaj</a>
+      </div>
+    </figure>
+  </div>
+
+  <p class="tile-h" style="margin-top:56px">W3 My payments, /racun/placila (1200 px): pointer on the first Potrdilo</p>
+  <div class="wrap-x"><div class="browser" lang="sl">
+    <div class="browser-bar"><span class="dots"><i></i><i></i><i></i></span><span class="url"><i class="ph ph-lock-simple"></i>najdimo.si/racun/placila</span></div>
+    <header class="flex items-center gap-8 px-12 h-[88px]">
+      <a href="#" class="logo-link" aria-label="Najdimo, na začetno stran"><svg class="logo-mark w-9 h-9" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg><span class="font-display font-bold text-2xl tracking-[-0.03em]" aria-hidden="true">Najdimo</span></a>
+      <div class="ml-auto flex items-center gap-2">
+        <button type="button" class="iconbtn" aria-label="Sporočila"><i class="ph-bold ph-chat-circle" aria-hidden="true"></i></button>
+        <button type="button" class="iconbtn" aria-label="Račun: Ana Novak"><span class="av av-32" aria-hidden="true">AN</span></button>
+        <a href="#" class="btn btn-primary btn-sm ml-2"><i class="ph-bold ph-plus" aria-hidden="true"></i>Prijavi</a>
+      </div>
+    </header>
+    <main class="px-12 pt-8 pb-24">
+      <div class="max-w-[640px] mx-auto">
+        <h1 class="w-h1">Plačila</h1>
+        <ul class="pl mt-10">
+          <li>
+            <div class="min-w-0">
+              <p class="ln tnum">15. 10. 2026 · Prispevek v zahvalo · 5,00 €</p>
+              <div class="sub"><span class="st"><i class="ph-fill ph-check-circle text-primary" aria-hidden="true"></i>Plačano</span><span class="meta"><i class="ph-bold ph-flask" aria-hidden="true"></i>Testno</span></div>
+            </div>
+            <a href="#" class="btn btn-text is-hover" aria-label="Potrdilo, 15. 10. 2026, 5,00 €"><i class="ph-bold ph-receipt" aria-hidden="true"></i>Potrdilo</a>
+          </li>
+          <li>
+            <div class="min-w-0">
+              <p class="ln tnum">2. 10. 2026 · Prispevek ob prijavi · 3,00 €</p>
+              <div class="sub"><span class="st"><i class="ph-fill ph-check-circle text-primary" aria-hidden="true"></i>Plačano</span><span class="meta"><i class="ph-bold ph-flask" aria-hidden="true"></i>Testno</span></div>
+            </div>
+            <a href="#" class="btn btn-text" aria-label="Potrdilo, 2. 10. 2026, 3,00 €"><i class="ph-bold ph-receipt" aria-hidden="true"></i>Potrdilo</a>
+          </li>
+          <li>
+            <div class="min-w-0">
+              <p class="ln tnum">2. 10. 2026 · Prispevek ob prijavi · 3,00 €</p>
+              <div class="sub"><span class="st text-destructive"><i class="ph-fill ph-warning-circle" aria-hidden="true"></i>Neuspešno</span><span class="meta"><i class="ph-bold ph-flask" aria-hidden="true"></i>Testno</span></div>
+            </div>
+            <span></span>
+          </li>
+          <li>
+            <div class="min-w-0">
+              <p class="ln tnum">18. 9. 2026 · Prispevek v zahvalo · 10,00 €</p>
+              <div class="sub"><span class="st text-muted-foreground"><i class="ph-bold ph-arrow-u-up-left" aria-hidden="true"></i>Vrnjeno</span><span class="meta"><i class="ph-bold ph-flask" aria-hidden="true"></i>Testno</span></div>
+            </div>
+            <a href="#" class="btn btn-text" aria-label="Potrdilo, 18. 9. 2026, 10,00 €"><i class="ph-bold ph-receipt" aria-hidden="true"></i>Potrdilo</a>
+          </li>
+        </ul>
+      </div>
+    </main>
+  </div></div>
+  <p class="help mt-4" style="max-width:720px">Plain list, newest first, no cards or dividers, 20 px between rows. Line: <code>payments.row</code> (date · purpose · amount, <code>formatEur</code>, <code>tabular-nums</code>). Status is icon plus word: Plačano (check), Neuspešno (warning, <code>destructive</code>), Vrnjeno (return arrow, muted). "Testno" on every row outside production. Potrdilo is a text button with the date and amount in its name; failed rows have none. The header "Prijavi" stays <code>primary</code> here: the page has no other primary.</p>
+
+  <div class="flex flex-wrap gap-x-10 gap-y-12 items-start mt-12">
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">W3a My payments, empty (the list region of W3)</figcaption>
+      <div class="crop crop-w" lang="sl">
+        <p class="flex gap-3 m-0 text-muted-foreground"><i class="ph-bold ph-receipt text-[22px] leading-6 flex-none" aria-hidden="true"></i><span>Plačil še ni.</span></p>
+      </div>
+      <p class="help mt-4" style="max-width:600px">One sentence under the h1, no button, no prompt to pay.</p>
+    </figure>
+  </div>
+</section>
+<p class="tile-section !py-8 text-sm text-muted-foreground">Placeholder photography from Unsplash (Unsplash License). Copy: docs/content/pages/P15-support-moments.md v0.1; gate buttons from P16 G1. Samples (marked <code>data-sample</code>): the P14 context (h1, lede, "Deli dobro novico", photo alt), the gate title, the <code>errors.NETWORK</code> sentence, the screen-reader "predlagano" on 5 € and the Podpornik checkbox label.</p>
+</div>
+
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<script src="../directions/directions.js"></script>
+</body>
+</html>

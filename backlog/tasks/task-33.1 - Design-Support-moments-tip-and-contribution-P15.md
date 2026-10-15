@@ -1,11 +1,11 @@
 ---
 id: TASK-33.1
 title: 'Design: Support moments: tip and contribution (P15)'
-status: To Do
+status: In Progress
 assignee:
   - '@ui-designer'
 created_date: '2026-10-14 21:50'
-updated_date: '2026-10-14 21:51'
+updated_date: '2026-10-15 02:14'
 labels:
   - design
   - 'est:S'
@@ -31,6 +31,7 @@ Voluntary support must be honest and never block reporting, so its look and word
 ## Packet
 Unblocks on: P1 web shell and P2 mobile shell mockups merged (header, footer, tab bar and sheet patterns)
 Branch: design/P15-support-moments
+Branch: main (direct commit, per lead instruction; no agent branch)
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Acceptance Criteria
