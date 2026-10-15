@@ -1,7 +1,12 @@
 {
 	"ci": {
 		"collect": {
-			"url": ["http://localhost:8080/", "http://localhost:8080/en"],
+			"url": [
+				"http://localhost:8080/",
+				"http://localhost:8080/en",
+				"http://localhost:8080/zavetisca",
+				"http://localhost:8080/zavetisca/zavetisce-ljubljana"
+			],
 			"numberOfRuns": 2,
 			"settings": { "formFactor": "mobile" }
 		},

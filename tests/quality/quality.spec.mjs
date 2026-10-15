@@ -9,7 +9,15 @@ import { expect, test } from '@playwright/test';
 import { expectNoAdSlots, expectNoAnalyticsBeforeConsent } from './guards.mjs';
 
 // Key public pages (docs/03 page inventory). Each story that adds a public route adds it here.
-const PAGES = ['/', '/en'];
+// The shelter pages (TASK-90) read the directory API at NEXT_PUBLIC_API_URL (apps/api, or apps/web/e2e/mock-api.ts).
+const PAGES = [
+	'/',
+	'/en',
+	'/zavetisca',
+	'/en/shelters',
+	'/zavetisca/zavetisce-ljubljana',
+	'/en/shelters/zavetisce-ljubljana',
+];
 // Protected flows (report-lost, report-found, sign-in, chat, payment), SL and EN. Each of those stories adds its routes.
 const PROTECTED = [];
 const VIEWPORTS = { mobile: { width: 390, height: 844 }, desktop: { width: 1440, height: 900 } };
