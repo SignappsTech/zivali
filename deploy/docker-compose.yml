@@ -1,0 +1,76 @@
+# Hetzner VPS stack (ADR-016), copied to /opt/zivali/ by deploy/remote.sh. One compose project per environment
+# (zivali-staging, zivali-production) runs api, worker and web; one Caddy per VPS (project zivali-edge, profile
+# edge) serves every environment over the shared network zivali-edge. Per-environment files, mode 600, never in
+# images or Git:
+#   /opt/zivali/<env>/.env         api and worker (names: .env.example, apps/api block); also APP_ENV and DOMAIN
+#   /opt/zivali/<env>/web.env      web server (APP_ENV, R2_UPLOAD_ORIGIN, GA_* if used)
+#   /opt/zivali/<env>/release.env  API_IMAGE, WEB_IMAGE, APP_VERSION (written by deploy/remote.sh on every deploy)
+# By hand: docker compose -p zivali-staging --env-file staging/.env --env-file staging/release.env ps
+
+x-logging: &logging # Rotated per container: at most 5 x 10 MB.
+  driver: json-file
+  options:
+    max-size: 10m
+    max-file: '5'
+
+services:
+  api:
+    image: ${API_IMAGE:?set in <env>/release.env}
+    restart: unless-stopped
+    env_file: ./${APP_ENV:?set in <env>/.env}/.env
+    environment:
+      APP_VERSION: ${APP_VERSION:-dev}
+    stop_grace_period: 15s
+    logging: *logging
+    networks:
+      edge:
+        aliases: ['${APP_ENV}-api']
+
+  worker:
+    image: ${API_IMAGE:?set in <env>/release.env}
+    command: ['node', 'dist/worker.js']
+    restart: unless-stopped
+    env_file: ./${APP_ENV}/.env
+    environment:
+      APP_VERSION: ${APP_VERSION:-dev}
+    # Active jobs finish on SIGTERM (worker.ts); longer than the API.
+    stop_grace_period: 60s
+    logging: *logging
+
+  web:
+    image: ${WEB_IMAGE:?set in <env>/release.env}
+    restart: unless-stopped
+    env_file: ./${APP_ENV}/web.env
+    environment:
+      APP_VERSION: ${APP_VERSION:-dev}
+    logging: *logging
+    networks:
+      edge:
+        aliases: ['${APP_ENV}-web']
+
+  caddy:
+    image: caddy:2.11-alpine
+    profiles: [edge]
+    restart: unless-stopped
+    ports:
+      - '80:80'
+      - '443:443'
+      - '443:443/udp'
+    environment:
+      DOMAIN: ${DOMAIN:?set in <env>/.env}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    logging: *logging
+    networks: [edge]
+
+volumes:
+  # TLS certificates and ACME account; keep them across redeploys (Let's Encrypt rate limits).
+  caddy_data:
+  caddy_config:
+
+networks:
+  edge:
+    name: zivali-edge
+    external: true

@@ -1,0 +1,44 @@
+# One Caddy per VPS (compose project zivali-edge, ADR-016): automatic HTTPS from Let's Encrypt for every hostname
+# below, HTTP -> HTTPS redirects, zstd/gzip and baseline security headers. Upstreams are the <env>-web and <env>-api
+# aliases on the shared network zivali-edge; an environment that is not deployed yet answers 502.
+# DOMAIN: the registered domain, or <vps-ipv4 with dashes>.sslip.io until one exists (deploy/README.md).
+# No access log: it would hold client IPs and full URLs (docs/05 §Privacy); the apps log route patterns only.
+
+(common) {
+	encode zstd gzip
+	# `?` sets a header only when the app did not: helmet (API) and next.config.ts/proxy.ts (web, with the CSP)
+	# stay authoritative.
+	header {
+		?Strict-Transport-Security "max-age=63072000; includeSubDomains"
+		?X-Content-Type-Options "nosniff"
+		?Referrer-Policy "strict-origin-when-cross-origin"
+		?X-Frame-Options "DENY"
+		-Server
+	}
+}
+
+# Staging (deployed from main)
+staging.{$DOMAIN} {
+	import common
+	reverse_proxy staging-web:3000
+}
+
+api.staging.{$DOMAIN} {
+	import common
+	reverse_proxy staging-api:4000
+}
+
+# Production (deployed from version tags after approval)
+{$DOMAIN} {
+	import common
+	reverse_proxy production-web:3000
+}
+
+www.{$DOMAIN} {
+	redir https://{$DOMAIN}{uri} permanent
+}
+
+api.{$DOMAIN} {
+	import common
+	reverse_proxy production-api:4000
+}

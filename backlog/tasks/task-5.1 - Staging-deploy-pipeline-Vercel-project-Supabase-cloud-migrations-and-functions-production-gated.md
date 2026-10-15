@@ -3,11 +3,11 @@ id: TASK-5.1
 title: >-
   Hetzner deploy: Docker Compose + Caddy, GHCR images, migrations, nightly
   backup to R2
-status: To Do
+status: In Progress
 assignee:
   - '@backend-dev'
 created_date: '2026-10-14 22:12'
-updated_date: '2026-10-15 04:23'
+updated_date: '2026-10-15 11:52'
 labels:
   - tech
   - 'est:M'
