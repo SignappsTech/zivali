@@ -1,6 +1,6 @@
 // C11 abuse reports and moderation flags.
 import { IsoDateTime, limit, page, text, Uuid } from './common.schema.ts';
-import { AbuseReason, AbuseStatus, AbuseTargetType, ModerationFlagKind } from './enums.ts';
+import { AbuseReason, AbuseStatus, AbuseTargetType, ModerationFlagKind, ModerationFlagTargetType } from './enums.ts';
 import { z } from './zod.ts';
 
 export const AbuseReportInput = z
@@ -32,7 +32,7 @@ export const ModerationFlag = z
 	.object({
 		id: Uuid,
 		kind: ModerationFlagKind,
-		target_type: AbuseTargetType,
+		target_type: ModerationFlagTargetType,
 		target_id: Uuid,
 		details: z.record(z.string(), z.unknown()),
 		created_at: IsoDateTime,

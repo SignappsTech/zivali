@@ -1,6 +1,12 @@
 // C11 abuse reports and moderation flags.
 import type { IsoDateTime, Page, Uuid } from './common.ts';
-import type { AbuseReason, AbuseStatus, AbuseTargetType, ModerationFlagKind } from './enums.ts';
+import type {
+	AbuseReason,
+	AbuseStatus,
+	AbuseTargetType,
+	ModerationFlagKind,
+	ModerationFlagTargetType,
+} from './enums.ts';
 
 export type AbuseReportInput = { target_type: AbuseTargetType; target_id: Uuid; reason: AbuseReason; note?: string };
 /** 201 `duplicate: false`, or 200 `duplicate: true` when the caller already reported the target. */
@@ -27,7 +33,7 @@ export type AdminAbuseReportList = Page<AdminAbuseReport>;
 export type ModerationFlag = {
 	id: Uuid;
 	kind: ModerationFlagKind;
-	target_type: AbuseTargetType;
+	target_type: ModerationFlagTargetType;
 	target_id: Uuid;
 	details: Record<string, unknown>;
 	created_at: IsoDateTime;
