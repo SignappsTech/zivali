@@ -16,12 +16,12 @@ Two voluntary, honest ways to help keep the service free: a thank-you tip on the
 ## Reunited tip (inside P14)
 
 - h3 and one sentence. Three amount pills (3, 5, 10 EUR; none selected), "Other amount" line field with the minimum 2.00 EUR validated inline.
-- Two buttons of the **same size**, side by side on web and stacked on mobile: Pay (`primary`, label includes the amount once chosen) and Skip (`secondary`). Skip is exactly as visible as Pay. Disabled Pay explains "Choose an amount".
+- Two buttons of the **same size**, side by side on web and stacked on mobile: Pay (`secondary`, label includes the amount once chosen) and Skip (`secondary`), at equal weight; the page's primary lives in P14. Skip is exactly as visible as Pay. Disabled Pay explains "Choose an amount".
 - A one-line transparency link to the page Where your money goes (M4, hidden until then) and a Stripe test-mode note when not in production (a `note` that no real card is charged).
 
 ## Contribution at lost confirmation (inside P6)
 
-A collapsed row at the end of the confirmation screen: text and a caret. Expanding reveals two to five euro pills (2, 3, 5; none selected) and a button "Support". Not shown again for that report once skipped or paid. No countdown, no badge, no guilt copy.
+A collapsed row at the end of the confirmation screen: text and a caret. Expanding reveals two to five euro pills (2, 3, 5; none selected) and a button "Prispevaj {amount}" (`support.contribution_pay`; amount once chosen). Not shown again for that report once skipped or paid. No countdown, no badge, no guilt copy.
 
 ## Checkout hand-off
 

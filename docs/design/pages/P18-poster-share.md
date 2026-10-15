@@ -26,17 +26,19 @@ Give an owner a printable A4 poster and one-tap sharing so the search reaches ne
 
 | Zone | Content | Size and rule |
 |---|---|---|
-| Top band | the word for "missing" and the species ("Missing dog"), SL or EN | 80 pt bold display, black on white; status by word, not colour |
-| Photo | best photo, 4:3, full width inside margins | at least 40 % of the page height, high contrast crop on the face |
-| Name | pet name | 96 pt bold display |
-| Facts | colour, size, collar, special marks (3 to 5 lines) | 26 pt, regular, black |
-| Where and when | area name, approximate (never an address), date | 26 pt |
-| Reward (optional, lost posters with a reward only) | amount large (32 pt bold, `tabular-nums`), note small (14 pt, one line, max 80 chars), then the `poster.safety_reward` line (12 pt) | Between Where and when and Call to action. Omitted entirely when no reward. Must not shrink the photo (still at least 40 % of the height) or the QR (still at least 55 mm); trim the facts to 3 lines before shrinking either. |
-| Call to action | "If you see this animal, scan the code" | 32 pt bold |
-| QR | large code (at least 55 mm) with the short link printed below it | quiet zone 4 modules, black on white, must scan in greyscale |
+| Top band | the word for "missing" and the species ("Missing dog"), SL or EN | 64 pt bold display (about 26 mm), black on white; status by word, not colour |
+| Photo | best photo, 4:3, left of a CTA and QR column | 114 mm wide (about 86 mm tall), high contrast crop on the face |
+| Name | pet name | 72 pt bold display |
+| Facts | colour, size, collar, special marks (3 to 5 lines) | 22 pt, regular, black |
+| Where and when | area name, approximate (never an address), date | 22 pt |
+| Reward (optional, lost posters with a reward only) | amount large (28 pt bold, `tabular-nums`), note small (14 pt, one line, max 80 chars), then the `poster.safety_reward` line (12 pt) | Between Where and when and the footer. Omitted entirely when no reward. Must not shrink the photo (still 114 mm wide) or the QR (still at least 55 mm); trim the facts to 3 lines before shrinking either. |
+| Call to action | "If you see this animal, scan the code" | 26 pt bold, in the right column above the QR (186 mm text width = 114 mm photo + 8 mm gap + 64 mm column) |
+| QR | large code (56 mm) with the short link printed below it, right column beside the photo | quiet zone 4 modules, `qr-foreground` on `qr` (black on white), must scan in greyscale |
+
+Height budget inside the 273 mm safe height: band 26 + photo row about 92 (CTA, QR and link) + name 28 + facts up to 36 + where and when 18 + reward 22 + footer 8 + gaps 20 = about 250 mm with a reward, 228 mm without. Nothing may overflow the A4 page; verify with the print render.
 | Footer | logo mark and wordmark, small | greyscale-safe, 12 pt |
 
-No phone number, no email, no chip number, no exact address. The poster uses only black, white and one mid-grey; brand colour appears in screen previews only. Closed or reunited reports render "Home again" instead of the appeal (or the download is unavailable).
+No phone number, no email, no chip number, no exact address. The poster uses only the print tokens (system §3.2 Print tokens: paper, ink, one mid-grey); brand colour appears in screen previews only. Closed or reunited reports render "Home again" instead of the appeal (or the download is unavailable).
 
 ## Open Graph and share card
 

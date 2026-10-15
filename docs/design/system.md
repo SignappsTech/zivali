@@ -2,7 +2,7 @@
 doc: design-system
 title: Design system (slice)
 source: 03§Brand and visual language
-version: 0.11
+version: 0.12
 status: Draft, direction A (Lagoon) chosen by the client
 date: 2026-10-15
 owner: Design Lead
@@ -211,6 +211,18 @@ The generated hex values below come from `tokens.json`. "Role" tells you where t
 | `map-road-casing` | Road edges | #D5DEDF | #0F1D20 |
 | `map-label` | Map labels (area names only) | #425458 | #B9C6C8 |
 | `map-label-halo` | Label halo | #E8EEEE | #0F1D20 |
+
+### Print tokens (poster, P18)
+
+The A4 poster is always rendered in the light theme and in greyscale-safe values, whatever the app theme. It uses only three tokens, no brand hue:
+
+| Print role | Token | Value | Use |
+|---|---|---|---|
+| Paper | `qr` | #FFFFFF | Page and QR field (also the 4-module quiet zone) |
+| Ink | `qr-foreground` | #101A1D | All text, QR modules, logo; 7:1 on paper |
+| Mid-grey | `input` (light) | light-theme `input` value | Hairlines, the one mid-grey for note text and dividers; never for required text |
+
+Status is conveyed by words, never by colour. Check the poster in a greyscale render before sign-off; the QR must still scan.
 
 ## 3.3 Contrast
 
@@ -487,7 +499,7 @@ Web = shadcn/ui, mobile = React Native Reusables (NativeWind). Same names, same 
 | Component | Spec |
 |---|---|
 | Choice row | Full width, 64 px minimum, `card` surface on `background`, radius 20, 20 px side padding, icon 24 left, title 17 bold, optional description 14 muted. Selected: `primary` fill, `primary-foreground`, check on the right. Hover: `foreground` at 10 % over the row. Pressed: `accent` fill and `scale(0.98)`. Disabled: `muted` fill, `muted-foreground` text and icon. On a `card` sheet the rows use `background` instead of `card`. Group has `role="radiogroup"`. Used for species, situation, the "Prijavi" menu (there as menu items with a caret on the right instead of a check). |
-| Pill (toggle) | 44 px, `secondary` fill; selected `primary`. For filters in the filter sheet (status, species). |
+| Pill (toggle) | 44 px, `secondary` fill; selected `primary`. For filters in the filter sheet (status, species). **Suggested** state (a pre-highlighted amount, e.g. P15): 2 px `primary` inset line, no fill change, no check; it is not selected (no `aria-checked`) and carries a screen-reader "suggested" text. Choosing it gives the normal selected state. |
 | Segmented control | Track `muted`, selected segment `card`, labels 15 bold (unselected `muted-foreground`). Hover on an unselected segment: `foreground` at 10 % and `foreground` text. Disabled: all labels `muted-foreground`, the selected segment loses its fill and keeps a 2 px `input` inset line. Only for switching between 2 or 3 views of the same content, never for primary navigation. |
 
 ## 10.5 Status
@@ -673,3 +685,4 @@ Each page slice in `docs/design/pages/P<n>-<slug>.md` gets one static mockup at 
 | 0.9 | 2026-10-15 | P9 review (TASK-18.1): header "Prijavi" is `secondary` when the page has its own primary. |
 | 0.10 | 2026-10-15 | CH-30, CH-33 (from TASK-3.4, TASK-30.1): `font-sans-bold` (Atkinson 700, `label-strong` role) and `qr` / `qr-foreground` tokens (fixed light field, dark modules, both themes; contrast pair 7:1). Tokens 0.5.0. |
 | 0.11 | 2026-10-15 | P19 review (TASK-34.1): `sidebar-primary` and `sidebar-ring` become light mist (sun yellow stays out of the console); admin h1 30/36 and h2 24/30 at all widths; added dense table, drawer, tooltip and mixed checkbox specs. |
+| 0.12 | 2026-10-15 | CH-46, CH-59: `suggested` pill state (§10.4); print tokens for the P18 poster documented (`qr`, `qr-foreground`, `input`; no tokens.json change). |

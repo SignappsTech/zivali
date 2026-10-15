@@ -45,7 +45,7 @@ Replaces the sheet content: check icon in a tonal circle, h2 "Thank you", one se
 
 ## Responsive and accessibility
 
-Sheet snap at content height; dialog max 480 px on web. Choice rows are a `radiogroup`; the confirmation is announced politely; focus moves to the heading on open and returns to the trigger on close; no auto-dismiss.
+Sheet snap at content height; dialog max 440 px on web (system §10.9). Choice rows are a `radiogroup`; the confirmation is announced politely; focus moves to the heading on open and returns to the trigger on close; no auto-dismiss.
 
 ## Assets
 
