@@ -27,5 +27,11 @@
 	"report_sighted_title": "Sighted animal",
 	"report_sighted_desc": "You saw an animal that may be lost. No account needed.",
 	"menu_open": "Open menu",
-	"menu_close": "Close menu"
+	"menu_close": "Close menu",
+	"tab_map": "Map",
+	"tab_inbox": "Inbox",
+	"tab_report": "Report",
+	"tab_report_a11y": "Report an animal",
+	"tab_profile": "Profile",
+	"sheet_close": "Close"
 }

@@ -27,5 +27,11 @@
 	"report_sighted_title": "Opažena žival",
 	"report_sighted_desc": "Videli ste žival, ki se je morda izgubila. Brez računa.",
 	"menu_open": "Odpri meni",
-	"menu_close": "Zapri meni"
+	"menu_close": "Zapri meni",
+	"tab_map": "Zemljevid",
+	"tab_inbox": "Sporočila",
+	"tab_report": "Prijavi",
+	"tab_report_a11y": "Prijavi žival",
+	"tab_profile": "Profil",
+	"sheet_close": "Zapri"
 }
