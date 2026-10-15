@@ -7,7 +7,7 @@ status: In Progress
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:13'
-updated_date: '2026-10-15 22:12'
+updated_date: '2026-10-15 22:46'
 labels:
   - fe
   - 'est:M'
@@ -44,7 +44,7 @@ Branch: agent/task-15.4-mapview-mob
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 MapView implements the C6 props on mobile with @maplibre/maplibre-react-native (dev build) and buildMapStyle(mode).
-- [ ] #2 Markers, clusters and areas follow docs/design/system.md §9 with accessible names; attribution is visible.
+- [x] #1 MapView implements the C6 props on mobile with @maplibre/maplibre-react-native (dev build) and buildMapStyle(mode).
+- [x] #2 Markers, clusters and areas follow docs/design/system.md §9 with accessible names; attribution is visible.
 - [ ] #3 The textAlternative is reachable through an accessible list toggle; 500 seeded markers render smoothly on a mid-range Android device (screen recording).
 <!-- AC:END -->
