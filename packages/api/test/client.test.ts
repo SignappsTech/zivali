@@ -182,3 +182,9 @@ test('extra headers pass through; the client headers win', async () => {
 	assert.equal(headers()['Idempotency-Key'], 'outbox-9');
 	assert.equal(headers().Authorization, 'Bearer jwt-1');
 });
+
+test('undefined extra header values are not sent', async () => {
+	const { api, headers } = setup(() => jsonResponse({}));
+	await api.request('POST', '/v1/reports', { body: {}, headers: { 'Idempotency-Key': undefined } });
+	assert.equal('Idempotency-Key' in headers(), false);
+});

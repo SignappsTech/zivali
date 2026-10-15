@@ -21,7 +21,7 @@ export type QueryArgs =
 			method?: HttpMethod;
 			params?: RequestOptions['query'];
 			body?: unknown;
-			headers?: Record<string, string>;
+			headers?: Record<string, string | undefined>;
 	  };
 
 /** Plain data, not the ApiError instance: the Redux state must stay serialisable. */
@@ -76,7 +76,7 @@ export const retryCondition = (
 ): boolean => {
 	const { status } = error as QueryError;
 	return (
-		attempt <= 2 && baseQueryApi.type === 'query' && !baseQueryApi.signal.aborted && (status < 400 || status >= 500)
+		attempt <= 2 && baseQueryApi.type === 'query' && !baseQueryApi.signal.aborted && (status === 0 || status >= 500)
 	);
 };
 

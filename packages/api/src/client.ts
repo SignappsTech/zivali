@@ -93,7 +93,7 @@ export type RequestOptions = {
 	 */
 	idempotent?: true | string;
 	/** Extra headers (header parameters from the OpenAPI spec); the client's own headers win. */
-	headers?: Record<string, string>;
+	headers?: Record<string, string | undefined>;
 	signal?: AbortSignal;
 };
 
@@ -129,7 +129,10 @@ export function createApiClient(options: ApiClientOptions): ApiClient {
 				.join('&');
 			const url = `${baseUrl}${path}${search ? `?${search}` : ''}`;
 
-			const headers: Record<string, string> = { ...extra, 'Accept-Language': options.locale };
+			const headers: Record<string, string> = {
+				...Object.fromEntries(Object.entries(extra ?? {}).filter(([, v]) => v != null)),
+				'Accept-Language': options.locale,
+			};
 			const token = await options.getAccessToken?.();
 			if (token) headers.Authorization = `Bearer ${token}`;
 			if (options.deviceId) headers['x-device-id'] = options.deviceId;

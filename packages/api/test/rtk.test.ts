@@ -84,6 +84,8 @@ test('retryCondition: queries retry network and 5xx twice; never 4xx, mutations 
 
 	assert.equal(retryCondition(network, '/x', at(1)), true);
 	assert.equal(retryCondition({ status: 503 }, '/x', at(2)), true);
+	assert.equal(retryCondition({ status: 200 }, '/x', at(1)), false); // 2xx non-JSON INTERNAL
+	assert.equal(retryCondition({ status: 302 }, '/x', at(1)), false);
 	assert.equal(retryCondition(network, '/x', at(3)), false);
 	for (const status of [400, 401, 404, 410, 429]) assert.equal(retryCondition({ status }, '/x', at(1)), false);
 	assert.equal(retryCondition(network, '/x', at(1, { ...query, type: 'mutation' })), false);
