@@ -25,8 +25,8 @@ model ads {
   // null or empty = every region / municipality / species
   region_ids       Int[]            @db.SmallInt
   municipality_ids Int[]            @db.SmallInt
-  // 'dog' | 'cat' (check in the migration); becomes SPECIES[] once reports.prisma (TASK-6.6) is on main
-  species          String[]
+  // null or empty = every species
+  species          SPECIES[]
   starts_at        DateTime?        @db.Timestamptz(6)
   ends_at          DateTime?        @db.Timestamptz(6)
   // 'draft' | 'active' | 'paused' | 'ended' (check in the migration)

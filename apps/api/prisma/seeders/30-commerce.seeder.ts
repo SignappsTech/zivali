@@ -1,8 +1,11 @@
 // Seeder 30-commerce (TASK-6.8, C14): the house ads in every environment, created once and never overwritten (admins
-// edit them later); locally also two sponsor ads targeted by region and species and one verified shelter. The local
+// edit them later); locally also two sponsor ads targeted by region and species, one verified shelter and its intake
+// FOUND report (needs the reports table and 10-reports' geo data). The local
 // fixtures need the fixture profiles (00-users) and municipality 61 (01-geo); without the profiles they are skipped.
 import type { Prisma } from '../../generated/client.ts';
+import { ReportsDomain } from '../../domains/reports/index.ts';
 import { config } from '../../lib/config.ts';
+import { userCtx } from '../../lib/ctx.ts';
 import { logger } from '../../lib/logger.ts';
 import { prisma } from '../prisma.ts';
 import { fixtureUsers } from './00-users.seeder.ts';
@@ -110,6 +113,7 @@ export const sponsorAds: Prisma.adsCreateManyInput[] = [
 ];
 
 export const SEED_SHELTER_ID = id(301);
+export const SEED_INTAKE_REPORT_ID = id(401);
 
 export default async function seedCommerce(): Promise<void> {
 	await prisma.ads.createMany({ data: houseAds, skipDuplicates: true });
@@ -134,4 +138,31 @@ export default async function seedCommerce(): Promise<void> {
 		},
 		update: {},
 	});
+
+	// The shelter's intake FOUND report (the intake exemption): written by its member as an organisation report.
+	if (!(await prisma.reports.count({ where: { id: SEED_INTAKE_REPORT_ID } }))) {
+		await ReportsDomain.insertReport(
+			{
+				id: SEED_INTAKE_REPORT_ID,
+				type: 'found',
+				species: 'dog',
+				location: { lat: 46.0569, lng: 14.5058 },
+				event_at: new Date(Date.now() - 2 * 24 * 3600 * 1000),
+				circumstances: 'Sprejem v zavetišče: najdenega psa so pripeljali v zavetišče (testni podatek).',
+				source: 'organisation',
+			},
+			userCtx({
+				user_id: shelterMember,
+				role: 'SHELTER_MEMBER',
+				is_anonymous: false,
+				aal: 'aal1',
+				email_verified: true,
+				locale: 'sl',
+			})
+		);
+		await prisma.reports.update({
+			where: { id: SEED_INTAKE_REPORT_ID },
+			data: { organisation_id: SEED_SHELTER_ID },
+		});
+	}
 }

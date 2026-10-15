@@ -8,7 +8,12 @@ import type { Prisma } from '../../generated/client.ts';
 import { AD_SLOT } from '../../generated/enums.ts';
 import { fixtureUsers } from '../../prisma/seeders/00-users.seeder.ts';
 import seedGeo from '../../prisma/seeders/01-geo.seeder.ts';
-import seedCommerce, { houseAds, SEED_SHELTER_ID, sponsorAds } from '../../prisma/seeders/30-commerce.seeder.ts';
+import seedCommerce, {
+	houseAds,
+	SEED_INTAKE_REPORT_ID,
+	SEED_SHELTER_ID,
+	sponsorAds,
+} from '../../prisma/seeders/30-commerce.seeder.ts';
 import { prisma } from '../../prisma/prisma.ts';
 
 const fixture = (email: string) => fixtureUsers.find((user) => user.email === email)!;
@@ -46,7 +51,7 @@ describe('commerce schema checks', () => {
 		['alt text under 5 characters', { image_alt: 'Dog' }, 'ads_image_alt_check'],
 		['alt text over 140 characters', { image_alt: 'a'.repeat(141) }, 'ads_image_alt_check'],
 		['no slot', { slots: [] }, 'ads_slots_check'],
-		['an unknown species', { species: ['rabbit'] }, 'ads_species_check'],
+		['an unknown species', { species: ['rabbit'] as never }, 'species'],
 		['an unknown status', { status: 'blocked' }, 'ads_status_check'],
 	])('rejects an ad with %s', async (_, over, check) => {
 		await expect(prisma.ads.create({ data: ad(over) })).rejects.toThrow(check);
@@ -221,6 +226,9 @@ describe('seeder 30-commerce', () => {
 			members: [{ role: 'ADMIN', user_id: SHELTER_USER }],
 		});
 		expect(shelter.verified_at).toBeInstanceOf(Date);
+
+		const intake = await prisma.reports.findUniqueOrThrow({ where: { id: SEED_INTAKE_REPORT_ID } });
+		expect(intake).toMatchObject({ type: 'found', source: 'organisation', organisation_id: SEED_SHELTER_ID });
 	});
 
 	it('seeds only the house ads without the fixture profiles', async () => {
