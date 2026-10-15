@@ -1,0 +1,9 @@
+{
+	"only_sl": "Samo v slovenščini",
+	"greeting": "Pozdravljeni, {name}!",
+	"results": "{count, plural, one {# prijava} other {# prijav}}",
+	"photos": "{count, plural, one {# fotografija} two {# fotografiji} few {# fotografije} other {# fotografij}}",
+	"blank": "Besedilo",
+	"unclosed": "Odprto {name",
+	"nested": { "fine": "V redu, {name}" }
+}
