@@ -1,11 +1,11 @@
 ---
 id: TASK-6.13
 title: 'Validation: make zod-to-openapi extension opt-in (lean client bundles)'
-status: In Progress
+status: Done
 assignee:
   - '@backend-dev'
 created_date: '2026-10-15 02:07'
-updated_date: '2026-10-15 03:00'
+updated_date: '2026-10-15 03:45'
 labels:
   - be
   - 'est:S'
