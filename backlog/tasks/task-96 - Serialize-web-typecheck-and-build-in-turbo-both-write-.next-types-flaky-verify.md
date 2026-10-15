@@ -3,10 +3,11 @@ id: TASK-96
 title: >-
   Serialize web typecheck and build in turbo (both write .next/types; flaky
   verify)
-status: To Do
+status: Done
 assignee:
   - '@tech-lead'
 created_date: '2026-10-15 03:29'
+updated_date: '2026-10-15 13:22'
 labels:
   - tech
   - trivial
