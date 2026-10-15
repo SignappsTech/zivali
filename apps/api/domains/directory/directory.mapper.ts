@@ -1,9 +1,22 @@
 // Directory rows → C18 DTOs (parsed with the shared schemas, so unknown columns never reach a client).
 import type { z } from 'zod';
 
-import { MunicipalityShelterList, ResponsibleShelter, Shelter, ShelterDetail, ShelterList } from '@zivali/validation';
+import {
+	AdminMunicipalityShelter,
+	AdminMunicipalityShelterList,
+	AdminShelterList,
+	DirectoryChangeList,
+	DirectoryImportResult,
+	MunicipalityShelterList,
+	ResponsibleShelter,
+	Shelter,
+	ShelterDetail,
+	ShelterList,
+} from '@zivali/validation';
 
-import type { shelters } from '../../generated/client.ts';
+import type { directory_changes, shelters } from '../../generated/client.ts';
+import type { ImportResult } from './directory-admin.domain.ts';
+import type { AdminAssignmentRow } from './directory.dao.ts';
 import type { ResponsibleResult, ShelterListItem } from './directory.domain.ts';
 
 const isoDate = (date: Date) => date.toISOString().slice(0, 10);
@@ -56,4 +69,65 @@ export function toResponsibleDto(result: ResponsibleResult): z.infer<typeof Resp
 	);
 }
 
-export default { toShelterDto, toShelterDetailDto, toShelterListDto, toMunicipalityListDto, toResponsibleDto };
+// Admin (C18 §Admin).
+
+export function toAdminShelterListDto(
+	rows: (shelters & { _count: { municipality_shelters: number } })[]
+): z.infer<typeof AdminShelterList> {
+	return AdminShelterList.parse({
+		items: rows.map((row) => ({
+			...shelterFields(row),
+			id: row.id,
+			active: row.active,
+			version: row.version,
+			municipality_count: row._count.municipality_shelters,
+		})),
+	});
+}
+
+const assignmentFields = (row: AdminAssignmentRow) => ({
+	municipality: { slug: row.slug, name: row.name },
+	shelter_slug: row.shelter_slug,
+	status: row.status,
+	source: row.source,
+	verified_at: isoDate(row.verified_at),
+	version: row.version,
+});
+
+export function toAdminAssignmentDto(row: AdminAssignmentRow): z.infer<typeof AdminMunicipalityShelter> {
+	return AdminMunicipalityShelter.parse(assignmentFields(row));
+}
+
+export function toAdminAssignmentListDto(rows: AdminAssignmentRow[]): z.infer<typeof AdminMunicipalityShelterList> {
+	return AdminMunicipalityShelterList.parse({ items: rows.map(assignmentFields) });
+}
+
+export function toDirectoryChangeListDto(rows: directory_changes[]): z.infer<typeof DirectoryChangeList> {
+	return DirectoryChangeList.parse({
+		items: rows.map((row) => ({
+			version: row.version,
+			data: row.data,
+			source: row.source,
+			actor_id: row.actor_id,
+			audit_note: row.audit_note,
+			created_at: row.created_at.toISOString(),
+		})),
+	});
+}
+
+export function toImportResultDto(result: ImportResult): z.infer<typeof DirectoryImportResult> {
+	return DirectoryImportResult.parse(result);
+}
+
+export default {
+	toShelterDto,
+	toShelterDetailDto,
+	toShelterListDto,
+	toMunicipalityListDto,
+	toResponsibleDto,
+	toAdminShelterListDto,
+	toAdminAssignmentDto,
+	toAdminAssignmentListDto,
+	toDirectoryChangeListDto,
+	toImportResultDto,
+};

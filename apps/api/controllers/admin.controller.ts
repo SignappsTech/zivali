@@ -4,6 +4,7 @@ import type { Request, Response } from 'express';
 import type { AdminAdQuery, AdStatsQuery } from '@zivali/types';
 
 import { AdminDomain, AdminMapper } from '../domains/admin/index.ts';
+import { DirectoryAdminDomain, DirectoryMapper } from '../domains/directory/index.ts';
 import { AdsAdminDomain, AdsMapper } from '../domains/ads/index.ts';
 import { userCtx } from '../lib/ctx.ts';
 import { invalidateProfile } from '../middleware/auth.middleware.ts';
@@ -27,6 +28,47 @@ export async function listAuditLog(req: Request, res: Response): Promise<void> {
 
 export async function getQueues(req: Request, res: Response): Promise<void> {
 	res.json(AdminMapper.toAdminQueuesDto(await AdminDomain.getQueues(undefined, userCtx(req))));
+}
+
+// Shelter directory (C18 §Admin).
+
+export async function listShelters(req: Request, res: Response): Promise<void> {
+	res.json(DirectoryMapper.toAdminShelterListDto(await DirectoryAdminDomain.listShelters(undefined, userCtx(req))));
+}
+
+export async function listMunicipalityShelters(req: Request, res: Response): Promise<void> {
+	const rows = await DirectoryAdminDomain.listAssignments(undefined, userCtx(req));
+	res.json(DirectoryMapper.toAdminAssignmentListDto(rows));
+}
+
+export async function listShelterChanges(req: Request, res: Response): Promise<void> {
+	const rows = await DirectoryAdminDomain.listShelterChanges(req.params.slug as string, userCtx(req));
+	res.json(DirectoryMapper.toDirectoryChangeListDto(rows));
+}
+
+export async function createShelter(req: Request, res: Response): Promise<void> {
+	const shelter = await DirectoryAdminDomain.createShelter(req.body, userCtx(req));
+	res.status(201).json(DirectoryMapper.toShelterDto(shelter));
+}
+
+export async function updateShelter(req: Request, res: Response): Promise<void> {
+	const input = { ...req.body, slug: req.params.slug as string };
+	res.json(DirectoryMapper.toShelterDto(await DirectoryAdminDomain.updateShelter(input, userCtx(req))));
+}
+
+export async function deleteShelter(req: Request, res: Response): Promise<void> {
+	await DirectoryAdminDomain.deleteShelter({ ...req.body, slug: req.params.slug as string }, userCtx(req));
+	res.status(204).end();
+}
+
+export async function updateMunicipalityShelter(req: Request, res: Response): Promise<void> {
+	const input = { ...req.body, municipality: req.params.municipality as string };
+	res.json(DirectoryMapper.toAdminAssignmentDto(await DirectoryAdminDomain.updateAssignment(input, userCtx(req))));
+}
+
+export async function importDirectory(req: Request, res: Response): Promise<void> {
+	const input = { ...req.body, dry_run: req.query.dry_run === 'true' };
+	res.json(DirectoryMapper.toImportResultDto(await DirectoryAdminDomain.importDirectory(input, userCtx(req))));
 }
 
 // Ads (C14 §Admin, TASK-37.2)
@@ -69,6 +111,14 @@ export default {
 	setUserRole,
 	listAuditLog,
 	getQueues,
+	listShelters,
+	listMunicipalityShelters,
+	listShelterChanges,
+	createShelter,
+	updateShelter,
+	deleteShelter,
+	updateMunicipalityShelter,
+	importDirectory,
 	listAds,
 	createAd,
 	updateAd,

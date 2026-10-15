@@ -5,6 +5,11 @@ packages:
 # Expo/Metro needs a flat node_modules (ADR-001). pnpm 11 reads this here; .npmrc keeps it for other tools.
 nodeLinker: hoisted
 
+# Never install implicitly before `pnpm exec`/`pnpm run` (the pre-commit hook runs `pnpm exec lint-staged`). Agent worktrees
+# link node_modules to the main checkout, so an implicit install there pruned the shared node_modules and on Windows
+# could delete tracked files (2026-10-16). Install explicitly when the lockfile changes.
+verifyDepsBeforeRun: false
+
 # Install scripts run only when listed here (true) or are skipped on purpose (false).
 allowBuilds:
   # eslint-plugin-import-x resolver: its postinstall only re-checks the native binding that pnpm already

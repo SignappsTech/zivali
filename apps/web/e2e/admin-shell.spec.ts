@@ -18,6 +18,10 @@ async function signIn(page: Page, user: Me, baseURL: string) {
 }
 
 async function expectNoAxeViolations(page: Page) {
+	// A colour-scheme switch restyles on the next frame; only then do the transitions exist to be waited for.
+	await page.evaluate(() =>
+		document.fonts.ready.then(() => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done))))
+	);
 	await page.waitForFunction(() =>
 		document
 			.getAnimations()

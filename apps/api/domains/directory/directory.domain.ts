@@ -5,7 +5,7 @@ import { randomUUID } from 'node:crypto';
 
 import { z } from 'zod';
 
-import { OpeningHours } from '@zivali/validation';
+import { OpeningHours, Slug } from '@zivali/validation';
 
 import { parseCsv } from '../../lib/csv.ts';
 import type { Ctx } from '../../lib/ctx.ts';
@@ -26,7 +26,7 @@ export type ResponsibleResult =
 
 export type ShelterListItem = Omit<ShelterListRow, 'area_sl' | 'area_en'> & { area: string };
 
-const bySlName = <T extends { name: string }>(a: T, b: T) => a.name.localeCompare(b.name, 'sl');
+export const bySlName = <T extends { name: string }>(a: T, b: T) => a.name.localeCompare(b.name, 'sl');
 
 export async function getResponsibleShelter(
 	input: { lat: number; lng: number } | { municipality: string },
@@ -89,52 +89,64 @@ export async function listMunicipalities(_input: void, ctx: Ctx) {
 // Initial load from the CSVs in prisma/seeders/data (README there): creates the rows that do not exist yet, each
 // with version 1 and a directory_changes entry. Existing rows are left alone (later edits go through TASK-89).
 
-const ShelterCsvRow = z.object({
-	slug: z.string().min(1),
+// The CSV row schemas are shared with the admin import (directory-admin.domain.ts).
+/** '' → null, anything else must pass `schema`. */
+const blankOr = <T extends z.ZodType>(schema: T) =>
+	z
+		.literal('')
+		.transform(() => null)
+		.or(schema);
+const csvCoordinate = (max: number) => blankOr(z.coerce.number().min(-max).max(max));
+const jsonText = z.string().transform((value, ctx) => {
+	try {
+		return JSON.parse(value) as unknown;
+	} catch {
+		ctx.addIssue({ code: 'custom', message: 'Invalid JSON' });
+		return z.NEVER;
+	}
+});
+
+/** One shelters.csv row → the shelter's columns. */
+export const ShelterCsvRow = z.object({
+	slug: Slug,
 	name: z.string().min(1),
 	address: z.string().min(1),
 	postal_code: z.string().min(1),
 	city: z.string().min(1),
-	lat: z.string(),
-	lng: z.string(),
+	lat: csvCoordinate(90),
+	lng: csvCoordinate(180),
 	phone: z.string().regex(/^\+\d{8,15}$/),
 	phone_display: z.string().min(1),
-	email: z.string(),
-	website: z.string(),
-	opening_hours: z.string(),
-	registry_id: z.string(),
+	email: blankOr(z.email()),
+	// Rendered as a link on the public page: http(s) only.
+	website: blankOr(z.url({ protocol: /^https?$/ })),
+	opening_hours: jsonText.pipe(z.array(OpeningHours)),
+	registry_id: blankOr(z.string()),
+	species: z.enum(['', 'cat', 'dog']).transform((species) => (species ? [species] : ['dog', 'cat'])),
+	source: z.string().min(1),
+	verified_at: z.iso.date().transform((date) => new Date(date)),
+});
+/** One municipality_shelters.csv row; `species` '' = all animals. */
+export const AssignmentCsvRow = z.object({
+	municipality_slug: z.string().min(1),
 	species: z.enum(['', 'cat', 'dog']),
+	shelter_slug: z.string(),
+	status: z.enum(['CONFIRMED', 'UNCONFIRMED']),
+	suggested_shelter: z.string(),
 	source: z.string().min(1),
 	verified_at: z.iso.date(),
 });
-type AssignmentCsvRow = Record<
-	'municipality_slug' | 'species' | 'shelter_slug' | 'status' | 'suggested_shelter' | 'source' | 'verified_at',
-	string
->;
-
-const orNull = (value: string) => value || null;
+export type AssignmentCsvRow = z.infer<typeof AssignmentCsvRow>;
 
 function toShelterData(raw: Record<string, string>): Prisma.sheltersCreateManyInput {
-	const row = ShelterCsvRow.parse(raw);
-	return {
-		id: randomUUID(),
-		...row,
-		lat: row.lat ? Number(row.lat) : null,
-		lng: row.lng ? Number(row.lng) : null,
-		email: orNull(row.email),
-		website: orNull(row.website),
-		opening_hours: z.array(OpeningHours).parse(JSON.parse(row.opening_hours)),
-		registry_id: orNull(row.registry_id),
-		species: row.species ? [row.species] : ['dog', 'cat'],
-		verified_at: new Date(row.verified_at),
-	};
+	return { id: randomUUID(), ...ShelterCsvRow.parse(raw) };
 }
 
 /**
  * C18 keeps one assignment per municipality, the CSV may split it by species: CONFIRMED only when cats and dogs
  * resolve to the same confirmed shelter, else UNCONFIRMED with the first suggested shelter as the likely one.
  */
-function toAssignment(
+export function toAssignment(
 	rows: AssignmentCsvRow[],
 	municipalityId: number,
 	shelterId: (slug: string) => string

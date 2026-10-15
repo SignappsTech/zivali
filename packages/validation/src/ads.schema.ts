@@ -39,7 +39,11 @@ export const AdInput = z
 		title: text(60),
 		body: text(120),
 		cta: text(24),
-		link_url: z.url({ protocol: /^https$/ }).max(2048),
+		link_url: z
+			.url({ protocol: /^https$/ })
+			.max(2048)
+			// eslint-disable-next-line no-control-regex
+			.refine((s) => !/[\u0000-\u001f\u007f\s]/.test(s), 'No whitespace or control characters'),
 		image_alt: z.string().trim().min(5).max(140),
 		// The key from POST /v1/admin/ads/:id/image, set only once the uploaded file passed the image check; null removes
 		// the image (house ads only). Left out: unchanged. Not accepted on create (the ad has no id to upload to yet).

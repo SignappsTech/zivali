@@ -1,8 +1,9 @@
 // Abuse reports (C11, FR-018). Anyone signed in, anonymous finders included, reports a listing, a message (only as a
-// participant) or a profile; a repeat by the same reporter returns the first report. Reports from accounts younger
-// than 24 h weigh 0.5. When the open weight on a visible listing reaches abuse.auto_hide_threshold (3) the listing is
-// hidden, flagged `auto_hidden`, its photos unpublished (photo.publish) and its managers get report_hidden. Nothing
-// about the reporters (ids, notes, count per reporter) ever goes to the managers: the job carries the report id only.
+// participant) or a profile, never their own listing or profile; a repeat by the same reporter returns the first
+// report. Reports from accounts younger than 24 h weigh 0.5. When the open weight on a visible listing reaches
+// abuse.auto_hide_threshold (3) the listing is hidden, flagged `auto_hidden`, its photos unpublished (photo.publish)
+// and its managers get report_hidden; restoring it dismisses those reports. Nothing about the reporters (ids, notes,
+// count per reporter) ever goes to the managers: the job carries the report id only.
 // Staff (aal2, guarded in the routes) list reports and flags; each list writes an audit entry (C1).
 import { randomUUID } from 'node:crypto';
 
@@ -33,22 +34,28 @@ function pageOf<T extends { id: string }>(rows: T[], limit: number) {
 	return { items, next_cursor: rows.length > limit ? items[items.length - 1]!.id : null };
 }
 
-/** The target must exist (VALIDATION otherwise); a message only for a participant of its conversation (FORBIDDEN). */
+/**
+ * The target must exist (VALIDATION otherwise); a message only for a participant of its conversation, a listing or
+ * profile only when it is not the reporter's own (FORBIDDEN).
+ */
 async function assertTarget(
 	input: AbuseReportInput,
 	reporter_id: string,
 	listing: { moderation_state: string } | null,
 	tx: Prisma.TransactionClient
 ): Promise<void> {
-	if (input.target_type === 'message') {
-		if (!(await AbuseDao.isParticipant(input.target_id, reporter_id, tx)))
+	const { target_type, target_id } = input;
+	if (target_type === 'message') {
+		if (!(await AbuseDao.isParticipant(target_id, reporter_id, tx)))
 			throw new AppError('FORBIDDEN', 'Only participants can report a message');
 		return;
 	}
-	const exists =
-		input.target_type === 'report' ? listing !== null : await AbuseDao.profileExists(input.target_id, tx);
+	const exists = target_type === 'report' ? listing !== null : await AbuseDao.profileExists(target_id, tx);
 	if (!exists)
 		throw new AppError('VALIDATION', 'Unknown target', undefined, [{ path: 'target_id', message: 'Not found' }]);
+	const own =
+		target_type === 'report' ? await AbuseDao.isManager(target_id, reporter_id, tx) : target_id === reporter_id;
+	if (own) throw new AppError('FORBIDDEN', 'You cannot report your own listing or profile');
 }
 
 /** Hides the (locked, visible) listing once its open weight reaches the threshold. */
@@ -93,6 +100,37 @@ export async function reportAbuse(input: AbuseReportInput, ctx: Ctx): Promise<Ab
 
 const actorId = (ctx: Ctx) => ctx.actor?.user_id ?? null;
 
+/**
+ * Moderation restores an auto-hidden listing (hidden → visible; called by the moderation actions with a moderator
+ * or system ctx): its open reports are dismissed and its auto_hidden flag resolved, so the weight starts again from
+ * 0 and the next report does not hide it at once; photo.publish brings its photos back. CONFLICT when not hidden.
+ */
+export async function restoreReport(input: { id: string; note?: string }, ctx: Ctx): Promise<{ dismissed: number }> {
+	if (ctx.actor && ctx.actor.role !== 'MODERATOR' && ctx.actor.role !== 'ADMIN')
+		throw new AppError('FORBIDDEN', 'Not allowed');
+	return inTransaction(ctx, async (tx) => {
+		if (!(await AbuseDao.unhideReport(input.id, tx))) throw new AppError('CONFLICT', 'Report is not hidden');
+		const target = { target_type: 'report', target_id: input.id };
+		const dismissed = await AbuseDao.dismissOpen(target.target_type, target.target_id, tx);
+		await AbuseDao.resolveFlags({ kind: 'auto_hidden', ...target }, ctx.now, tx);
+		await ctx.jobs.send('photo.publish', { report_id: input.id }, { tx });
+		await AuditDao.write(tx, {
+			actor_id: actorId(ctx),
+			action: 'report.restore',
+			...target,
+			diff: { from: 'hidden', to: 'visible', dismissed },
+			note: input.note,
+		});
+		return { dismissed };
+	});
+}
+
+/** Each item with the short code of the listing behind its target (null for profiles and pets), for the links. */
+async function withCodes<T extends { target_type: string; target_id: string }>(items: T[], ctx: Ctx) {
+	const codes = await AbuseDao.targetCodes(items, ctx.tx);
+	return items.map((item) => ({ ...item, target_code: codes.get(item.target_id) ?? null }));
+}
+
 export async function listAbuseReports(input: AdminAbuseReportQuery, ctx: Ctx) {
 	const { cursor, limit = PAGE, ...filters } = input;
 	const rows = await AbuseDao.listReports({ ...filters, cursor, take: limit + 1 }, ctx.tx);
@@ -102,7 +140,8 @@ export async function listAbuseReports(input: AdminAbuseReportQuery, ctx: Ctx) {
 		target_type: 'abuse_report',
 		diff: { filters },
 	});
-	return pageOf(rows, limit);
+	const page = pageOf(rows, limit);
+	return { ...page, items: await withCodes(page.items, ctx) };
 }
 
 export async function listModerationFlags(input: ModerationFlagQuery, ctx: Ctx) {
@@ -113,7 +152,8 @@ export async function listModerationFlags(input: ModerationFlagQuery, ctx: Ctx) 
 		action: 'admin.moderation_flags.list',
 		target_type: 'moderation_flag',
 	});
-	return pageOf(rows, limit);
+	const page = pageOf(rows, limit);
+	return { ...page, items: await withCodes(page.items, ctx) };
 }
 
-export default { reportAbuse, listAbuseReports, listModerationFlags };
+export default { reportAbuse, restoreReport, listAbuseReports, listModerationFlags };

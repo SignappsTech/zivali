@@ -25,7 +25,8 @@ const ADMIN: readonly StaffRole[] = ['ADMIN'];
 
 /** A built page (its own route folder) or a `section` of /admin/[section], which shows "Kmalu" until it is built. */
 export type AdminItem = { key: Extract<AdminKey, `nav_${string}`>; Icon: Icon; roles: readonly StaffRole[] } & (
-	{ href: '/admin' | '/admin/audit-log' | '/admin/shelters'; section?: never } | { section: string; href?: never }
+	| { href: '/admin' | '/admin/abuse-reports' | '/admin/audit-log' | '/admin/shelters'; section?: never }
+	| { section: string; href?: never }
 );
 
 /**
@@ -45,7 +46,7 @@ export const ADMIN_NAV: { key: Extract<AdminKey, `group_${string}`>; items: Admi
 		key: 'group_safety',
 		items: [
 			{ key: 'nav_moderation', Icon: ListChecksIcon, roles: STAFF, section: 'moderation' },
-			{ key: 'nav_abuse', Icon: FlagIcon, roles: STAFF, section: 'abuse-reports' },
+			{ key: 'nav_abuse', Icon: FlagIcon, roles: STAFF, href: '/admin/abuse-reports' },
 		],
 	},
 	{
