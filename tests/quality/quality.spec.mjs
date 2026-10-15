@@ -13,6 +13,17 @@ import { expectNoAdSlots, expectNoAnalyticsBeforeConsent } from './guards.mjs';
 const PAGES = [
 	'/',
 	'/en',
+	// TASK-27.2 P3 content pages
+	'/kako-deluje',
+	'/en/how-it-works',
+	'/varnost',
+	'/en/safety',
+	'/pogosta-vprasanja',
+	'/en/faq',
+	'/za-zavetisca',
+	'/en/for-shelters',
+	'/o-nas',
+	'/en/about',
 	'/zavetisca',
 	'/en/shelters',
 	'/zavetisca/zavetisce-ljubljana',

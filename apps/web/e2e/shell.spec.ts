@@ -22,7 +22,7 @@ async function expectNoAxeViolations(page: Page) {
 }
 
 for (const colorScheme of ['light', 'dark'] as const)
-	test(`home at 1440 in ${colorScheme}: header, skip link, sidebar region and footer, no axe violations`, async ({
+	test(`home at 1440 in ${colorScheme}: header, skip link and footer, no sidebar (P3), no axe violations`, async ({
 		page,
 	}) => {
 		await page.emulateMedia({ colorScheme });
@@ -38,7 +38,7 @@ for (const colorScheme of ['light', 'dark'] as const)
 		]);
 		await expect(header.getByRole('link', { name: 'Vpis' })).toBeVisible();
 		await expect(header.getByRole('group', { name: 'Jezik: Slovenščina' })).toBeVisible();
-		await expect(page.getByRole('complementary', { name: 'Dodatna vsebina' })).toBeVisible();
+		await expect(page.getByRole('complementary')).toHaveCount(0);
 		// Logo, 12 links (Cookie settings is a button), SL and EN.
 		await expect(page.getByRole('contentinfo').getByRole('link')).toHaveCount(15);
 
@@ -109,8 +109,8 @@ for (const path of ['/', '/en', '/zavetisca', '/no/such/page'])
 
 for (const { path, lang, canonical, description } of [
 	// Next.js writes the root URL without the trailing slash.
-	{ path: '/', lang: 'sl', canonical: '', description: /^Prijavite izgubljeno ali najdeno žival\./ },
-	{ path: '/en', lang: 'en', canonical: '/en', description: /^Report a lost or found pet\./ },
+	{ path: '/', lang: 'sl', canonical: '', description: /^Ste izgubili ali našli psa ali mačko\?/ },
+	{ path: '/en', lang: 'en', canonical: '/en', description: /^Lost or found a dog or cat\?/ },
 ])
 	test(`${path}: localised description, canonical on the app URL and the icons`, async ({ page, request }) => {
 		await page.goto(path);
@@ -130,7 +130,7 @@ test('the language switch keeps the page', async ({ page }) => {
 	await page.getByRole('banner').getByRole('link', { name: 'English' }).click();
 
 	await expect(page).toHaveURL(/\/en\/how-it-works$/);
-	await expect(page.getByRole('heading', { level: 1 })).toHaveText('How it works');
+	await expect(page.getByRole('heading', { level: 1 })).toHaveText('How Najdimo works');
 	await expect(page.getByRole('banner').getByRole('link', { name: 'Slovenščina' })).toHaveAttribute(
 		'href',
 		'/kako-deluje'

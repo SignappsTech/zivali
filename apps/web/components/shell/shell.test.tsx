@@ -75,9 +75,10 @@ describe('SiteHeader', () => {
 		expect(within(language).getByRole('link', { name: 'English' }).getAttribute('href')).toBe('/en/how-it-works');
 		expect(within(language).getByRole('link', { name: 'English' }).getAttribute('hreflang')).toBe('en');
 		expect(within(language).getByRole('link', { name: 'Slovenščina' }).getAttribute('aria-current')).toBe('true');
-		// One primary "Prijavi" per breakpoint (popover from md, sheet below); the popover holds the three choices.
+		// One "Prijavi" per breakpoint (popover from md, sheet below); the popover holds the three choices. Secondary
+		// here: the How it works closing row has the page's primary (P3 W5).
 		for (const button of within(header).getAllByRole('button', { name: sl.nav.report }))
-			expect(button.dataset.variant).toBe('default');
+			expect(button.dataset.variant).toBe('secondary');
 		// The closed popover is in the DOM, hidden until its button opens it.
 		const menu = header.querySelector<HTMLElement>('#report-menu')!;
 		expect(menu.getAttribute('popover')).toBe('auto');
