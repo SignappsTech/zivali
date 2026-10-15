@@ -137,8 +137,8 @@ export function AuthNote({
 }
 
 /** Seconds left of a cooldown, shown in steps of 10 so the live text does not chatter (P16 M4). */
-export function useCooldown() {
-	const [left, setLeft] = React.useState(0);
+export function useCooldown(initialSeconds = 0) {
+	const [left, setLeft] = React.useState(initialSeconds);
 	React.useEffect(() => {
 		if (left <= 0) return;
 		const timer = setTimeout(() => setLeft(left - 1), 1000);
@@ -165,17 +165,13 @@ export function ResendButton({
 }) {
 	const t = useTranslations('auth');
 	const errorText = useErrorText();
-	const cooldown = useCooldown();
+	// Cooling down from the start when the email was sent just before this view opened.
+	const cooldown = useCooldown(coolingDown ? 60 : 0);
 	const captcha = useCaptcha();
 	const [sending, setSending] = React.useState(false);
 	const [error, setError] = React.useState<string>();
 	const waitId = React.useId();
 	const { start } = cooldown;
-
-	React.useEffect(() => {
-		// Once, for the email that was sent just before this view opened.
-		if (coolingDown) start();
-	}, [coolingDown, start]);
 
 	const resend = async () => {
 		setSending(true);
