@@ -84,6 +84,7 @@
 	},
 	"jest": {
 		"preset": "jest-expo",
+		"maxWorkers": "25%",
 		"setupFiles": [
 			"./jest.setup.ts"
 		],

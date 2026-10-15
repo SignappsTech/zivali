@@ -1,0 +1,13 @@
+# Cursor AI indexing and context: skip agent worktrees and generated output (each worktree is a full repo copy).
+.claude/
+**/node_modules/
+**/.next/
+**/.expo/
+**/.turbo/
+**/dist/
+**/generated/
+quality-report/
+.lighthouseci/
+playwright-report/
+test-results/
+.secrets/
