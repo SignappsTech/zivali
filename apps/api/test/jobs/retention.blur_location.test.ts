@@ -137,7 +137,10 @@ describe('retention.blur_location', () => {
 		const original = await location(late);
 		await blur(NOW);
 		expect(await location(late)).toEqual(blurredFrom(original));
-		const view = await LifecycleDomain.transitionReport({ code: late.short_code, action: 'reopen' }, userCtx(actor));
+		const view = await LifecycleDomain.transitionReport(
+			{ code: late.short_code, action: 'reopen' },
+			userCtx(actor)
+		);
 		expect(view.report.status).toBe('open');
 		expect(view.exact).toEqual({ lat: original.public_lat, lng: original.public_lng });
 		await blur(daysLater(60));
