@@ -9,10 +9,12 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { Message } from '@zivali/validation';
 
 import { app } from '../../app.ts';
+import { chatMessageVars } from '../../domains/chat/chat.notify.ts';
 import { ChatDomain } from '../../domains/chat/index.ts';
 import { ReportsDomain } from '../../domains/reports/index.ts';
 import { handlers, type JobCtx } from '../../jobs/index.ts';
 import { systemCtx, userCtx, type Actor } from '../../lib/ctx.ts';
+import configStore from '../../lib/config-store.ts';
 import { jobs, startJobs } from '../../lib/jobs.ts';
 import { prisma } from '../../prisma/prisma.ts';
 import { createAuthUser, deleteAuthUsers, signTestToken } from '../helpers/token.ts';
@@ -315,6 +317,30 @@ describe('messages', () => {
 		expect((await notifications(cid)).length).toBe(before);
 	});
 
+	it('derives the chat_message notification variables from ids only', async () => {
+		const sender = await user();
+		const cid = (await open(sender, { about_report_code: lost.short_code })).body.id;
+		const sent = (await send(sender, cid, { body: 'Tajno besedilo' })).body;
+		const ctx = systemCtx();
+		const vars = await chatMessageVars(
+			{ template: 'chat_message', thread_id: cid, message_id: sent.id },
+			{ user_id: owner.id, locale: 'sl' },
+			ctx
+		);
+		expect(vars).toEqual({ conversation_id: cid, preview_alias: 'contact', unread_count: 1 });
+		await prisma.conversation_participants.update({
+			where: { conversation_id_user_id: { conversation_id: cid, user_id: owner.id } },
+			data: { last_read_at: new Date(Date.now() + 1000) },
+		});
+		expect(
+			await chatMessageVars(
+				{ template: 'chat_message', thread_id: cid, message_id: sent.id },
+				{ user_id: owner.id, locale: 'sl' },
+				ctx
+			)
+		).toBeNull();
+	});
+
 	it('marks read: unread drops to 0 and conversation.read is broadcast', async () => {
 		const unread = async () =>
 			(await inbox(owner)).body.items.find((item: { id: string }) => item.id === id).unread as number;
@@ -357,6 +383,27 @@ describe('messages', () => {
 	});
 });
 
+describe('daily message limit', () => {
+	it('refuses sends beyond rate.chat.message_day with 429', async () => {
+		const talker = await user();
+		const cid = (await open(talker, { about_report_code: found.short_code })).body.id;
+		await prisma.app_config.upsert({
+			where: { key: 'rate.chat.message_day' },
+			create: { key: 'rate.chat.message_day', value: { limit: 1, window: 86400 } },
+			update: { value: { limit: 1, window: 86400 } },
+		});
+		configStore.invalidate();
+		try {
+			await send(talker, cid, { body: 'Prvo' }).expect(201);
+			const res = await send(talker, cid, { body: 'Drugo' });
+			expect([res.status, res.body.error.code]).toEqual([429, 'RATE_LIMITED']);
+		} finally {
+			await prisma.app_config.deleteMany({ where: { key: 'rate.chat.message_day' } });
+			configStore.invalidate();
+		}
+	});
+});
+
 describe('GET /v1/conversations', () => {
 	it('lists the own conversations with aliases, preview, unread and keyset pages', async () => {
 		const asker = await user();
@@ -389,6 +436,26 @@ describe('GET /v1/conversations', () => {
 		expect((await request(app).get('/v1/conversations')).status).toBe(401);
 	});
 
+	it('keeps the cursor position when a message arrives between pages (no repeated items)', async () => {
+		const asker = await user();
+		const third = await report(owner, 'lost');
+		const ids: string[] = [];
+		for (const code of [lost.short_code, found.short_code, third.short_code]) {
+			const cid = (await open(asker, { about_report_code: code })).body.id;
+			await send(asker, cid, { body: 'Pozdravljeni' }).expect(201);
+			ids.push(cid);
+		}
+		const [oldest, middle, newest] = ids as [string, string, string];
+		const first = (await inbox(asker, '?limit=2')).body;
+		expect(first.items.map((item: { id: string }) => item.id)).toEqual([newest, middle]);
+		await send(asker, middle, { body: 'Novo sporočilo vmes' }).expect(201);
+		const second = (await inbox(asker, `?limit=2&cursor=${first.next_cursor}`)).body;
+		expect(second.items.map((item: { id: string }) => item.id)).toEqual([oldest]);
+		expect(second.next_cursor).toBeNull();
+		for (const bad of ['abc', Buffer.from('x|y').toString('base64url'), 'a'.repeat(501)])
+			expect((await inbox(asker, `?cursor=${bad}`)).status).toBe(400);
+	});
+
 	it('names a sighting manager sighter', async () => {
 		const sighter = await user({ anonymous: true });
 		const sighting = await report(sighter, 'sighted');
@@ -416,6 +483,28 @@ describe('read-only and retention', () => {
 				event: 'conversation.updated',
 				payload: { conversation_id: cid, status: 'read_only' },
 			});
+	});
+
+	it('makes a match conversation read-only when the other (found) side closes', async () => {
+		const lostSide = await report(owner, 'lost');
+		const foundSide = await report(anonFinder, 'found');
+		const match = await prisma.matches.create({
+			data: {
+				lost_report_id: lostSide.id,
+				other_report_id: foundSide.id,
+				score: 0.9,
+				strength: 'strong',
+				chip_match: false,
+				reasons: {},
+				state: 'confirmed',
+			},
+		});
+		matchIds.push(match.id);
+		const cid = (await open(owner, { about_report_code: lostSide.short_code, match_id: match.id })).body.id;
+		expect(await ChatDomain.closeForReport({ report_id: foundSide.id }, systemCtx())).toBe(1);
+		const res = await send(owner, cid, { body: 'Halo?' });
+		expect([res.status, res.body.error.code]).toEqual([410, 'GONE']);
+		await prisma.conversations.deleteMany({ where: { id: cid } });
 	});
 
 	it('retention.purge deletes conversations 6 months after close with their messages, keeps younger ones', async () => {
