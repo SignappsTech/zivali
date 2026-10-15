@@ -1,8 +1,9 @@
 # One image for the API and the worker (ADR-020). Build from the repo root:
 #   docker build -f apps/api/Dockerfile -t zivali-api .                                  (this machine's platform)
 #   docker buildx build --platform linux/arm64 -f apps/api/Dockerfile -t zivali-api .   (the Hetzner CAX11, Arm64)
-# API: default command. Worker: `node dist/worker.js`. Migrations (one-off, per deploy):
+# API: default command. Worker: `node dist/worker.js`. Migrations, then the seed (one-off each, per deploy):
 #   node node_modules/prisma/build/index.js migrate deploy
+#   node dist/seed/apps/api/prisma/seed.js
 # The JS build runs on the build machine's own platform; only the runtime stage runs as the target platform
 # (emulated by QEMU when they differ).
 FROM --platform=$BUILDPLATFORM node:22-slim AS build
@@ -41,6 +42,11 @@ COPY --from=build /out/node_modules ./node_modules
 COPY --from=build /repo/apps/api/dist ./dist
 COPY --from=build /repo/apps/api/prisma.config.ts ./
 COPY --from=build /repo/apps/api/prisma/schemas ./prisma/schemas
+# The reference data the seed loads in every environment (01-geo, 02-geo-places, 05-directory), where the bundled
+# seeders look for it: dist/seed/ mirrors the repo (tsup.config.ts). The fixture photos (local only) stay out.
+COPY apps/api/prisma/seeders/data/*.csv ./dist/seed/apps/api/prisma/seeders/data/
+COPY scripts/geo-to-sql.mjs ./dist/seed/scripts/
+COPY supabase/seed/geo/ ./dist/seed/supabase/seed/geo/
 # Fetch the schema engine for the target platform (linux-arm64 on the VPS) here, as root: the runtime user cannot
 # write to node_modules.
 RUN node node_modules/prisma/build/index.js version

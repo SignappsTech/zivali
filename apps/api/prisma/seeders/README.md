@@ -2,6 +2,8 @@
 
 `prisma db seed` (`pnpm db:seed`, also part of `pnpm db:reset`) runs `NN-<name>.seeder.ts` in file-name order. Each seeder default-exports an idempotent async function; each task owns its own file (C1).
 
+Every staging and production deploy runs the same seed right after `prisma migrate deploy` (`deploy/remote.sh`, from the bundle in `dist/seed/`), so reference data never needs a manual write to a hosted database. There only the seeders marked "all environments" write; the others check `APP_ENV=local` first. Reruns must change nothing and keep admin edits (`test/seeders/seed.test.ts`). A seeder that reads files does so relative to its own file; the Dockerfile copies that data into `dist/seed/` (add a new data folder there), and other seeders must not import it (`tsup.config.ts`).
+
 ## 00-users: fixture users (local only)
 
 Created in the local Supabase Auth through the Admin API (a `service_role` token signed with the local `SUPABASE_JWT_SECRET`), with confirmed emails, fixed ids and a profile each. The seeder does nothing unless `APP_ENV=local` and `SUPABASE_URL` and `SUPABASE_JWT_SECRET` are set. Other seeders and tests can import `fixtureUsers` for the ids.
@@ -35,9 +37,13 @@ This secret and password exist only in the local stack; staging and production s
 
 Runs the SQL that `scripts/geo-to-sql.mjs` generates from `supabase/seed/geo/regions.geojson` and `municipalities.geojson` (12 regions, 212 municipalities; `on conflict (id) do update`, so reruns are safe). Licence and required attribution: [supabase/seed/geo/LICENSE.md](../../../../supabase/seed/geo/LICENSE.md).
 
+## 02-geo-places: GURS settlements, districts, streets and house numbers (all environments)
+
+Streams the snapshot `supabase/seed/geo/places.ndjson.gz` and `addresses.tsv.gz` (`scripts/geo-places.mjs`; 16,598 places, 580,251 house numbers) into `geo_places` and `geo_addresses` (C6, geocoder). Writes only new or changed rows and rebuilds the `geo_places` indexes only after a write, so a rerun writes nothing; about half a minute either way. Needs 01-geo.
+
 ## 20-collab: matching, chat and notification fixtures (local only)
 
-Does nothing without the fixture users (00-users). Always creates nearby-alert subscriptions for `owner@` (Ljubljana, 5 km, dog and cat), `finder@` (10 km, dog) and `owner2@` (Maribor, 3 km, cat, paused); each centre is coarsened once on insert (C6). With the reports from 10-reports (TASK-6.6) it pairs `owner@`'s lost reports with `finder@`'s found or sighted reports of the same species and adds a suggested match, a confirmed match with the owner's `confirm` feedback, that match's conversation (owner and finder, three messages, the last one unread by the owner) and the notifications `match_suggested` and `chat_message` (owner) and `match_confirmed` (finder). Without reports it seeds the alerts only. Reruns change nothing (natural keys, fixed message ids `…-8000-c…`).
+Does nothing outside `APP_ENV=local` or without the fixture users (00-users). Always creates nearby-alert subscriptions for `owner@` (Ljubljana, 5 km, dog and cat), `finder@` (10 km, dog) and `owner2@` (Maribor, 3 km, cat, paused); each centre is coarsened once on insert (C6). With the reports from 10-reports (TASK-6.6) it pairs `owner@`'s lost reports with `finder@`'s found or sighted reports of the same species and adds a suggested match, a confirmed match with the owner's `confirm` feedback, that match's conversation (owner and finder, three messages, the last one unread by the owner) and the notifications `match_suggested` and `chat_message` (owner) and `match_confirmed` (finder). Without reports it seeds the alerts only. Reruns change nothing (natural keys, fixed message ids `…-8000-c…`).
 
 ## 05-directory: responsible-shelter directory (all environments)
 
