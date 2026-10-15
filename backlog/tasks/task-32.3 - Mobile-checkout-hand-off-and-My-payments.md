@@ -1,11 +1,11 @@
 ---
 id: TASK-32.3
 title: Mobile checkout hand-off and My payments
-status: In Progress
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:14'
-updated_date: '2026-10-15 22:18'
+updated_date: '2026-10-15 22:41'
 labels:
   - fe
   - 'est:S'
