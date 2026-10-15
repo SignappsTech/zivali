@@ -154,13 +154,14 @@ describe('GET /v1/shelters/responsible', () => {
 	});
 
 	it('400 without a point or municipality, for half a point, both, or out of range; 404 for an unknown slug', async () => {
-		for (const query of [
+		const queries: Record<string, string | number>[] = [
 			{},
 			{ lat: 46.05 },
 			{ lat: 46.05, lng: 14.51, municipality: 'ljubljana' },
 			{ lat: 91, lng: 14 },
 			{ lat: 'x', lng: 14 },
-		]) {
+		];
+		for (const query of queries) {
 			const res = await get(query);
 			expect(res.status, JSON.stringify(query)).toBe(400);
 			expect(res.body.error.code).toBe('VALIDATION');
