@@ -21,11 +21,13 @@
 	"row": "{date} · {purpose} · {amount}",
 	"purpose_tip": "Prispevek v zahvalo",
 	"purpose_report_contribution": "Prispevek ob prijavi",
-	"purpose_support": "Prispevek za Najdimo",
+	"purpose_support": "Podpora za Najdimo",
 	"status_paid": "Plačano",
 	"status_refunded": "Vrnjeno",
 	"status_failed": "Neuspešno",
 	"receipt": "Potrdilo",
 	"test_label": "Testno",
-	"empty": "Plačil še ni."
+	"empty": "Plačil še ni.",
+	"pending_slow": "Potrditev še traja. Plačilo lahko preveriš med svojimi plačili, ko bo končano.",
+	"pending_payments": "Moja plačila"
 }

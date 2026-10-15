@@ -1,11 +1,11 @@
 ---
 id: TASK-32.2
 title: 'Web mock checkout, payment return page and My payments'
-status: To Do
+status: In Progress
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:14'
-updated_date: '2026-10-14 22:42'
+updated_date: '2026-10-15 21:52'
 labels:
   - fe
   - 'est:S'

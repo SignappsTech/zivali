@@ -41,6 +41,10 @@ const PROTECTED = [
 	// TASK-17.2 manage link (P7)
 	'/m',
 	'/en/m',
+	// TASK-32.2 payments return (P15; signed out it is the sign-in page) and the mock checkout (404 in production)
+	'/placila/zakljucek',
+	'/en/payments/return',
+	'/dev/checkout',
 ];
 const VIEWPORTS = { mobile: { width: 390, height: 844 }, desktop: { width: 1440, height: 900 } };
 const AXE_TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'];

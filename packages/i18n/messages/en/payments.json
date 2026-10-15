@@ -21,11 +21,13 @@
 	"row": "{date} · {purpose} · {amount}",
 	"purpose_tip": "Thank-you contribution",
 	"purpose_report_contribution": "Contribution when reporting",
-	"purpose_support": "Contribution to Najdimo",
+	"purpose_support": "Support for Najdimo",
 	"status_paid": "Paid",
 	"status_refunded": "Refunded",
 	"status_failed": "Failed",
 	"receipt": "Receipt",
 	"test_label": "Test",
-	"empty": "No payments yet."
+	"empty": "No payments yet.",
+	"pending_slow": "Still processing. You can check the payment under My payments once it is done.",
+	"pending_payments": "My payments"
 }
