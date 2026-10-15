@@ -27,6 +27,9 @@ const PROTECTED = [
 	'/en/sign-up',
 	'/pozabljeno-geslo',
 	'/en/reset-password',
+	// TASK-17.2 manage link (P7)
+	'/m',
+	'/en/m',
 ];
 const VIEWPORTS = { mobile: { width: 390, height: 844 }, desktop: { width: 1440, height: 900 } };
 const AXE_TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'];

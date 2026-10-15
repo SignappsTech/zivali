@@ -1,4 +1,4 @@
-import { createApiClient, type Locale } from '@zivali/api/client';
+import { createApiClient, type Locale, uuid } from '@zivali/api/client';
 import { createApiStore } from '@zivali/api/rtk';
 
 // The store is in every page's bundle, so it imports neither lib/env.ts (zod) nor supabase-js (about 90 KB gz between
@@ -6,11 +6,29 @@ import { createApiStore } from '@zivali/api/rtk';
 // the fallback is env.ts's APP_ENV=local default.
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 
+const DEVICE_KEY = 'device_id';
+
+/**
+ * This browser's uuid for `x-device-id` (C7: the anonymous report limits count per device), made once and kept in
+ * localStorage. Undefined on the server; blocked storage gets a per-tab id, so the API falls back to its IP limits.
+ */
+export function deviceId(): string | undefined {
+	if (typeof window === 'undefined') return undefined;
+	try {
+		let id = localStorage.getItem(DEVICE_KEY);
+		if (!id) localStorage.setItem(DEVICE_KEY, (id = uuid()));
+		return id;
+	} catch {
+		return uuid();
+	}
+}
+
 /** Plain API client with the session token, for the store and for code without one (photo uploads, C5). */
 export function makeApiClient(locale: Locale) {
 	return createApiClient({
 		baseUrl: API_URL,
 		locale,
+		deviceId: deviceId(),
 		// Read on every request, so a refreshed session token is picked up. supabase-js loads with the first request.
 		getAccessToken: async () => {
 			const { createClient } = await import('@/lib/supabase/client');
