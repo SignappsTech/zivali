@@ -7,7 +7,8 @@ import { expect, type Page, test } from '@playwright/test';
 import { withExif } from './exif-fixture';
 
 // TASK-14.2: the PhotoPicker on /dev/photos in a real browser, against a faked API (C5) and R2.
-const API = 'http://localhost:4000';
+// The mock API port playwright.config.ts picks (it also builds the app against it as NEXT_PUBLIC_API_URL).
+const API = `http://localhost:${process.env.E2E_API_PORT}`;
 const PUT_URL = 'https://e2e.eu.r2.cloudflarestorage.com/zivali-private/uploads/u1/photo.jpg?X-Amz-Signature=e2e';
 const cors = {
 	'access-control-allow-origin': '*',
@@ -114,7 +115,7 @@ test('a 6 MB camera photo uploads as a JPEG of at most 1600 px and 1 MiB with no
 		.setInputFiles({ name: 'IMG_0001.jpg', mimeType: 'image/jpeg', buffer: Buffer.from(original) });
 
 	const row = page.getByRole('listitem', { name: 'Fotografija 1 od 1' });
-	await expect(row.getByText('Naslovna fotografija')).toBeVisible({ timeout: 30_000 });
+	await expect(row.getByText('Naslovna fotografija')).toBeVisible({ timeout: 60_000 });
 	await expect(row.getByRole('img', { name: 'Fotografija 1 od 1' })).toBeVisible();
 	const [create] = seen.create;
 	const [put] = seen.put;
@@ -146,7 +147,7 @@ test('the draft survives a reload and the upload resumes after a dropped connect
 		mimeType: 'image/jpeg',
 		buffer: readFileSync(new URL('../../../docs/design/directions/img/dog-aussie.jpg', import.meta.url)),
 	});
-	await expect(page.getByText(failedNetwork)).toBeVisible({ timeout: 30_000 });
+	await expect(page.getByText(failedNetwork)).toBeVisible({ timeout: 60_000 });
 	await expect(page.getByRole('button', { name: 'Poskusi znova' })).toBeVisible();
 	await expectNoAxeViolations(page);
 

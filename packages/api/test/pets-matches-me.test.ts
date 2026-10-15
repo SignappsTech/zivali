@@ -40,11 +40,13 @@ test('admin users: query and cursor, role change with PUT', async () => {
 	const store = createApiStore(client);
 	const list = await store.dispatch(meApi.endpoints.listAdminUsers.initiate({ query: 'ana' }));
 	assert.deepEqual(list.data?.pages[0], adminUsers);
-	await store.dispatch(meApi.endpoints.setUserRole.initiate({ id: me.id, body: { role: 'MODERATOR' } }));
+	await store.dispatch(
+		meApi.endpoints.setUserRole.initiate({ id: me.id, body: { role: 'MODERATOR', note: 'Shelter coordinator' } })
+	);
 	assert.deepEqual(client.calls[0]!.query, { query: 'ana' });
 	assert.deepEqual(
 		[client.calls[1]!.path, client.calls[1]!.body],
-		[`/v1/admin/users/${me.id}/role`, { role: 'MODERATOR' }]
+		[`/v1/admin/users/${me.id}/role`, { role: 'MODERATOR', note: 'Shelter coordinator' }]
 	);
 });
 
