@@ -1,0 +1,19 @@
+{
+	"take": "Fotografiraj",
+	"choose": "Izberi iz galerije",
+	"choose_web": "Izberi fotografije",
+	"drop_web": "ali jih povlecite sem",
+	"thumb_a11y": "Fotografija {n} od {total}",
+	"thumb_alt": "Vaša fotografija {n}",
+	"remove": "Odstrani fotografijo {n}",
+	"move_left": "Premakni fotografijo {n} naprej",
+	"move_right": "Premakni fotografijo {n} nazaj",
+	"cover": "Naslovna fotografija",
+	"uploading": "Nalaganje {percent} %",
+	"progress_a11y": "Nalaganje fotografije {n}",
+	"uploaded": "Fotografija je naložena.",
+	"failed": "Fotografija se ni naložila.",
+	"failed_network": "Fotografija se ni naložila. Preverite povezavo in poskusite znova.",
+	"retry": "Poskusi znova",
+	"limit": "Dodate lahko največ 5 fotografij."
+}
