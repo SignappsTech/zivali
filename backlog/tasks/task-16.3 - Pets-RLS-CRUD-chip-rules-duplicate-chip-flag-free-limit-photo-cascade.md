@@ -3,11 +3,11 @@ id: TASK-16.3
 title: >-
   Pets API: owner CRUD, chip rules incl. CRHŽ question, duplicate-chip flag,
   free limit
-status: To Do
+status: In Progress
 assignee:
   - '@backend-dev'
 created_date: '2026-10-14 22:13'
-updated_date: '2026-10-14 23:38'
+updated_date: '2026-10-15 20:19'
 labels:
   - be
   - 'est:S'
