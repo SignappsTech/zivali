@@ -237,7 +237,8 @@ describe('GET /v1/admin/queues', () => {
 		}
 		const [queue] = await prisma.$queryRaw<{ name: string }[]>`select name from pgboss.queue order by name limit 1`;
 		if (!queue) return;
-		const id = randomUUID();
+		// pg-boss's deterministic job ids are not RFC versions (nibble 0).
+		const id = randomUUID().replace(/^(.{14})./, '$10');
 		await prisma.$executeRaw`
 			insert into pgboss.job (id, name, state, data, output, completed_on)
 			values (${id}::uuid, ${queue.name}, 'failed', ${JSON.stringify({ email: 'private@test.invalid' })}::jsonb,

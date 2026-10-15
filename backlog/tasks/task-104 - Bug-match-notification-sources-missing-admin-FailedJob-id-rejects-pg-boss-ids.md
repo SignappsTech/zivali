@@ -1,10 +1,13 @@
 ---
 id: TASK-104
-title: 'Bug: match_* notification sources missing; admin FailedJob.id rejects pg-boss job ids'
-status: To Do
+title: >-
+  Bug: match_* notification sources missing; admin FailedJob.id rejects pg-boss
+  job ids
+status: Done
 assignee:
   - '@backend-dev'
 created_date: '2026-10-15 20:00'
+updated_date: '2026-10-15 18:05'
 labels:
   - bug
   - be

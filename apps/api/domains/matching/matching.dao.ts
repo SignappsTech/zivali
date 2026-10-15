@@ -131,4 +131,41 @@ export async function managerIds(reportId: string, tx?: Prisma.TransactionClient
 	return rows.map((row) => row.user_id);
 }
 
-export default { candidatePairs, activeMatches, upsertSuggestion, claimNotification, setFirstMatchAt, managerIds };
+/**
+ * What a match notification needs, for one manager of the lost report (null when the match is not open, the manager is
+ * not one, or a report is gone or closed). Codes, type, species and the lost pet's name only: no points, no chip number.
+ */
+export async function notificationData(matchId: string, reportId: string, userId: string) {
+	const match = await prisma.matches.findUnique({
+		where: { id: matchId },
+		select: { lost_report_id: true, other_report_id: true, strength: true, state: true },
+	});
+	if (!match || match.lost_report_id !== reportId || !['suggested', 'confirmed'].includes(match.state)) return null;
+	const [lost, other, manager] = await Promise.all([
+		prisma.reports.findUnique({
+			where: { id: match.lost_report_id },
+			select: { short_code: true, species: true, name: true, status: true },
+		}),
+		prisma.reports.findUnique({
+			where: { id: match.other_report_id },
+			select: { short_code: true, type: true, status: true },
+		}),
+		prisma.report_managers.findFirst({
+			where: { report_id: reportId, user_id: userId },
+			select: { user_id: true },
+		}),
+	]);
+	const live = (r: { status: string } | null) => r && ['open', 'matched'].includes(r.status);
+	if (!live(lost) || !live(other) || !manager) return null;
+	return { match, lost: lost!, other: other! };
+}
+
+export default {
+	notificationData,
+	candidatePairs,
+	activeMatches,
+	upsertSuggestion,
+	claimNotification,
+	setFirstMatchAt,
+	managerIds,
+};
