@@ -99,7 +99,7 @@ describe('PhotoPicker', () => {
 
 		pick(file(1), file(2));
 		const first = await screen.findByRole('listitem', { name: 'Fotografija 1 od 2' });
-		expect(within(first).getByRole('img', { name: 'Vaša fotografija 1' }).getAttribute('src')).toBe(
+		expect(within(first).getByRole('img', { name: 'Fotografija 1 od 2' }).getAttribute('src')).toBe(
 			'blob:preview-1'
 		);
 		await waitFor(() => expect(calls).toHaveLength(1));

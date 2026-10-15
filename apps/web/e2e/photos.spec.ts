@@ -115,7 +115,7 @@ test('a 6 MB camera photo uploads as a JPEG of at most 1600 px and 1 MiB with no
 
 	const row = page.getByRole('listitem', { name: 'Fotografija 1 od 1' });
 	await expect(row.getByText('Naslovna fotografija')).toBeVisible({ timeout: 30_000 });
-	await expect(row.getByRole('img', { name: 'Vaša fotografija 1' })).toBeVisible();
+	await expect(row.getByRole('img', { name: 'Fotografija 1 od 1' })).toBeVisible();
 	const [create] = seen.create;
 	const [put] = seen.put;
 	// Exactly the declared bytes and type (the presigned PUT pins Content-Type and Content-Length).
@@ -153,7 +153,7 @@ test('the draft survives a reload and the upload resumes after a dropped connect
 	// After a reload the photo comes back from IndexedDB and is sent again without picking it.
 	const before = seen.create.length;
 	await page.reload();
-	await expect(page.getByRole('img', { name: 'Vaša fotografija 1' })).toBeVisible();
+	await expect(page.getByRole('img', { name: 'Fotografija 1 od 1' })).toBeVisible();
 	await expect.poll(() => seen.create.length).toBeGreaterThan(before);
 	await expect(page.getByText(failedNetwork)).toBeVisible();
 

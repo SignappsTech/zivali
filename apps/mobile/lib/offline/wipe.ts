@@ -1,7 +1,7 @@
 import * as SecureStore from 'expo-secure-store';
 
 import { deleteDb, getDb } from '@/lib/db';
-import { draftsDir, outboxDir, thumbsDir } from '@/lib/db/files';
+import { draftsDir, outboxDir, pickerCacheDir, thumbsDir } from '@/lib/db/files';
 import { stopGeofencing } from '@/lib/offline/geofence';
 import { manageTokenKey, pendingCount } from '@/lib/offline/outbox';
 import { clearSessionStorage, supabase } from '@/lib/supabase';
@@ -21,7 +21,7 @@ export async function wipeLocalData({
 }): Promise<void> {
 	await stopGeofencing();
 	const deleted = reason === 'account_deleted';
-	const dirs = [thumbsDir, draftsDir];
+	const dirs = [thumbsDir, draftsDir, pickerCacheDir];
 	let tokenKeys: string[] = [];
 	if (deleted) {
 		tokenKeys = await sentTokenKeys();
