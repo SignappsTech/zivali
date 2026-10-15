@@ -1,0 +1,93 @@
+{
+	"openapi": "3.1.0",
+	"info": {
+		"title": "Izgubljene živali API",
+		"version": "v1",
+		"description": "Lost pet finder REST API. Every error body is `Error` with a stable code (contract C1)."
+	},
+	"components": {
+		"schemas": {
+			"HealthReady": {
+				"type": "object",
+				"properties": {
+					"ok": { "type": "boolean" },
+					"version": { "type": "string" },
+					"db": { "type": "string", "enum": ["ok", "down"] },
+					"queue_lag_s": { "type": ["number", "null"] }
+				},
+				"required": ["ok", "version", "db", "queue_lag_s"]
+			},
+			"Error": {
+				"type": "object",
+				"properties": {
+					"error": {
+						"type": "object",
+						"properties": {
+							"code": {
+								"type": "string",
+								"enum": [
+									"VALIDATION",
+									"UNAUTHENTICATED",
+									"FORBIDDEN",
+									"UNVERIFIED_EMAIL",
+									"AAL2_REQUIRED",
+									"NOT_FOUND",
+									"CONFLICT",
+									"DUPLICATE_OPEN_REPORT",
+									"GONE",
+									"MIN_AMOUNT",
+									"LIVE_MODE_FORBIDDEN",
+									"CAPTCHA_FAILED",
+									"RATE_LIMITED",
+									"INTERNAL"
+								]
+							},
+							"message": { "type": "string" },
+							"details": { "type": "object", "additionalProperties": {} },
+							"issues": {
+								"type": "array",
+								"items": {
+									"type": "object",
+									"properties": { "path": { "type": "string" }, "message": { "type": "string" } },
+									"required": ["path", "message"]
+								}
+							}
+						},
+						"required": ["code", "message"]
+					}
+				},
+				"required": ["error"]
+			}
+		},
+		"parameters": {}
+	},
+	"paths": {
+		"/v1/health/ready": {
+			"get": {
+				"operationId": "getHealthReady",
+				"summary": "Readiness check",
+				"description": "Touches the database. 200 when ready, 503 when the database is down; `queue_lag_s` is null until the job queue exists. Liveness without the database: `GET /ping`.",
+				"tags": ["health"],
+				"responses": {
+					"200": {
+						"description": "Ready",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/HealthReady" } } }
+					},
+					"429": {
+						"description": "RATE_LIMITED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
+					},
+					"500": {
+						"description": "INTERNAL",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
+					},
+					"503": {
+						"description": "Not ready (database down)",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/HealthReady" } } }
+					}
+				}
+			}
+		}
+	},
+	"webhooks": {}
+}
