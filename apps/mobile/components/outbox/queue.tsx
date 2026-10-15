@@ -11,9 +11,8 @@ import * as React from 'react';
 import { ActivityIndicator, Image, View } from 'react-native';
 import { useLocale, useTranslations } from 'use-intl';
 
-import { ApiError, type ErrorCode } from '@zivali/api/client';
+import en from '@zivali/i18n/dist/en.json';
 import { formatDate, type Locale } from '@zivali/i18n/format';
-import { useErrorText } from '@/components/auth/parts';
 import {
 	AlertDialog,
 	AlertDialogCancel,
@@ -52,7 +51,7 @@ function OutboxRow({ item, retry, remove }: { item: OutboxItem } & Actions) {
 	const t = useTranslations('report_found');
 	const locale = useLocale() as Locale;
 	const router = useRouter();
-	const errorText = useErrorText();
+	const tErrors = useTranslations('errors');
 	const [token, setToken] = React.useState<string | null>(null);
 	const reportId = item.status === 'sent' ? item.result.report_id : null;
 	React.useEffect(() => {
@@ -67,7 +66,8 @@ function OutboxRow({ item, retry, remove }: { item: OutboxItem } & Actions) {
 	}, [reportId]);
 	const state = shown(item);
 	const look = looks[state];
-	const code = item.last_error_code === 'CAPTCHA_REQUIRED' ? 'CAPTCHA_FAILED' : item.last_error_code;
+	// The C1 code's message (errors.<code>); the cancelled Turnstile sheet reads as the failed check.
+	const code = item.last_error_code === 'CAPTCHA_REQUIRED' ? 'CAPTCHA_FAILED' : (item.last_error_code ?? '');
 	return (
 		<View role="listitem" className={cn('flex-row gap-4', state === 'failed' ? 'items-start' : 'items-center')}>
 			{item.photo ? (
@@ -79,7 +79,7 @@ function OutboxRow({ item, retry, remove }: { item: OutboxItem } & Actions) {
 			)}
 			<View className="min-w-0 flex-1">
 				{/* One stop for the screen reader; a new status word is announced (AC #3). */}
-				<View accessible aria-live="polite">
+				<View accessible role="status" aria-live="polite">
 					<Text className="font-display-semibold text-xl tracking-[-0.2px]">
 						{t(`species_${item.payload.species}`)}
 					</Text>
@@ -100,7 +100,7 @@ function OutboxRow({ item, retry, remove }: { item: OutboxItem } & Actions) {
 					</View>
 					{state === 'failed' ? (
 						<Text className="mt-1 text-sm text-muted-foreground">
-							{errorText(new ApiError((code ?? 'INTERNAL') as ErrorCode, ''))}
+							{tErrors(code in en.errors ? (code as keyof typeof en.errors) : 'INTERNAL')}
 						</Text>
 					) : null}
 				</View>
