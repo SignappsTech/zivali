@@ -73,6 +73,8 @@ tailwind.config = {
         "provider": "hsl(var(--provider) / <alpha-value>)",
         "provider-foreground": "hsl(var(--provider-foreground) / <alpha-value>)",
         "provider-border": "hsl(var(--provider-border) / <alpha-value>)",
+        "qr": "hsl(var(--qr) / <alpha-value>)",
+        "qr-foreground": "hsl(var(--qr-foreground) / <alpha-value>)",
         "scrim": "hsl(var(--scrim) / <alpha-value>)",
         "marker-lost": "hsl(var(--marker-lost) / <alpha-value>)",
         "marker-found": "hsl(var(--marker-found) / <alpha-value>)",

@@ -2,7 +2,7 @@
 doc: design-system
 title: Design system (slice)
 source: 03§Brand and visual language
-version: 0.9
+version: 0.10
 status: Draft, direction A (Lagoon) chosen by the client
 date: 2026-10-15
 owner: Design Lead
@@ -173,6 +173,8 @@ The generated hex values below come from `tokens.json`. "Role" tells you where t
 | `warning-subtle` | Caution notice fill | #FFEDB8 | #4A300F |
 | `warning-subtle-foreground` | Text on warning-subtle | #6A4410 | #FFEDB8 |
 | `warning-border` | Caution notice edge | #E09A12 | #8F5C0C |
+| `qr` | QR code field. Fixed light in both themes so scanners read it | #FFFFFF | #FFFFFF |
+| `qr-foreground` | QR code modules (dark on `qr`, same in both themes; keep a 4-module quiet zone of `qr`) | #101A1D | #101A1D |
 | `scrim` | Overlay behind sheets and dialogs (alpha 0.56 light, 0.72 dark) | #071113 | #071113 |
 
 #### Sign-in providers (brand colours, literal values)
@@ -307,7 +309,7 @@ Both are Google Fonts with Latin Extended, so **Č, Š, Ž** (and Đ, Ć) render
 
 **Loading.** Web: `next/font/google` with `subsets: ['latin', 'latin-ext']`, `display: swap`, variable fonts. Mobile: `expo-font` with `@expo-google-fonts/bricolage-grotesque` (600 SemiBold, 700 Bold) and `@expo-google-fonts/atkinson-hyperlegible-next` (400 Regular, 600 SemiBold, 700 Bold). React Native cannot use variable font axes, so use these static weights only. Static instances use the default optical size, so if mobile headings look loose, tighten tracking by 0.01em. Verify the package names at scaffold time.
 
-React Native family names to register: `BricolageGrotesque_600SemiBold`, `BricolageGrotesque_700Bold`, `AtkinsonHyperlegibleNext_400Regular`, `AtkinsonHyperlegibleNext_600SemiBold`, `AtkinsonHyperlegibleNext_700Bold`. Map them as `font-display` (600/700) and `font-sans` (400/600/700) in the Tailwind preset.
+React Native family names to register: `BricolageGrotesque_600SemiBold`, `BricolageGrotesque_700Bold`, `AtkinsonHyperlegibleNext_400Regular`, `AtkinsonHyperlegibleNext_600SemiBold`, `AtkinsonHyperlegibleNext_700Bold`. Map them as `font-display` (600/700) and `font-sans` (400/600/700) in the Tailwind preset. `font-sans-bold` is Atkinson Hyperlegible Next 700 (`AtkinsonHyperlegibleNext_700Bold`), generated from the `label-strong` role; on mobile use it for labels that need extra weight, since React Native cannot apply `font-bold` to a static family.
 
 ## Scale (px, size/line-height)
 
@@ -476,7 +478,7 @@ Web = shadcn/ui, mobile = React Native Reusables (NativeWind). Same names, same 
 | Textarea | Same line style and states, min 96 px. |
 | Select | Line style with a caret (`caret-down`, `caret-up` when open). On web it opens a listbox popover (radius 20, 8 px padding, 48 px options, hover `foreground` at 10 %, selected option bold with a check on the right). On mobile it opens a bottom sheet of choice rows. |
 | Search | Input with a leading `magnifying-glass` and, once filled, a 44 px clear icon button at the end ("Počisti iskanje"). While results load, a spinner takes the clear button's place and a polite live region says so. |
-| Switch | 56x32, track `input` (off) or `primary` (on), thumb `card`. The whole row (label and switch) is the target. Disabled: `muted` track, `muted-foreground` thumb that keeps its position. |
+| Switch | 56x32, track `input` (off) or `primary` (on), thumb `card`. The whole row (label and switch) is the target. Disabled: `muted` track with a 2 px `input` inset line (the muted track alone vanishes on `popover` in dark), `muted-foreground` thumb that keeps its position; pair it with a text reason such as a lock icon and "Vedno vklopljeno". |
 | Checkbox, radio | 24 px visual in a 44 px hit area (the whole label). Unchecked: 2 px `input` line, no fill; hover turns the line `foreground`. Checked: `primary` fill; the checkbox (radius 6) shows a 16 px bold check, the radio (round) a 10 px `primary-foreground` **dot**, not a check. Disabled: `muted` fill, `muted-foreground` mark, reason in help text. Prefer choice rows for 2 to 4 options; radios are for longer lists. |
 | Placeholder | `muted-foreground`, example format only, never a label. |
 
@@ -665,3 +667,4 @@ Each page slice in `docs/design/pages/P<n>-<slug>.md` gets one static mockup at 
 | 0.7 | 2026-10-15 | FR-044 shelter directory: footer gains the "Shelters" link (13 links). Screens live in P3 (T5, T6), P19 and the P6 and P7 call rows. |
 | 0.8 | 2026-10-15 | P5 review (TASK-15.1): area discs take the status hue (found green, sighted blue, own alert area teal; lost stays `marker-area`), pin marker documented, content dialog (up to 600 px, h2 title) for web flow steps. |
 | 0.9 | 2026-10-15 | P9 review (TASK-18.1): header "Prijavi" is `secondary` when the page has its own primary. |
+| 0.10 | 2026-10-15 | CH-30, CH-33 (from TASK-3.4, TASK-30.1): `font-sans-bold` (Atkinson 700, `label-strong` role) and `qr` / `qr-foreground` tokens (fixed light field, dark modules, both themes; contrast pair 7:1). Tokens 0.5.0. |

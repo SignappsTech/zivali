@@ -72,6 +72,8 @@
   --provider: 0 0% 100%;
   --provider-foreground: 0 0% 12.2%;
   --provider-border: 140 1.3% 46.1%;
+  --qr: 0 0% 100%;
+  --qr-foreground: 193.8 28.9% 8.8%;
   --scrim: 190 46.2% 5.1%;
   --scrim-alpha: 0.56;
   --marker-lost: 17.5 75.2% 41.2%;
@@ -179,6 +181,8 @@
   --provider: 240 2.6% 7.6%;
   --provider-foreground: 0 0% 89%;
   --provider-border: 140 1.3% 56.3%;
+  --qr: 0 0% 100%;
+  --qr-foreground: 193.8 28.9% 8.8%;
   --scrim: 190 46.2% 5.1%;
   --scrim-alpha: 0.72;
   --marker-lost: 16.8 87.3% 59.8%;

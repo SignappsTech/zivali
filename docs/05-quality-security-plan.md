@@ -1,7 +1,7 @@
 ---
 doc_id: DOC-05
 title: Quality and Security Plan
-version: 0.6
+version: 0.7
 status: Draft
 date: 2026-10-15
 owner: Tech Lead
@@ -80,7 +80,7 @@ Run by GitHub Actions once a remote exists; until then `pnpm verify` runs the sa
 - **Data inventory**: `apps/api/prisma/data-inventory.json` lists every model and R2 bucket with category (account, pet, photo, location, chat, payment, ads aggregate, analytics none), personal data flag, lawful basis, retention, export and delete handling. CI fails on a missing entry (FR-034 R-034.3).
 - **Lawful bases** (proposal for legal review): contract (account, reports, chat, payments), legitimate interest (fraud and abuse prevention, aggregate ad counts), consent (analytics, success stories, partner contact), legal obligation (payment records).
 - **Device data** (ADR-019, C17): only public fuzzed report data, thumbnails and the user's own drafts and outbox on the device; no query persister; wiped on sign-out, account deletion and on request; background location only after explicit opt-in (M3) and never uploaded.
-- **Data minimisation**: no camera originals or EXIF stored; exact location private and purged on retention; chip numbers never public; IPs only as keyed hashes for 48 h; analytics events contain enums and slugs only; ad counting cookieless and aggregate (A-016).
+- **Data minimisation**: no camera originals or EXIF stored; exact location never stored in public reads (a coarsened point of 20-30 m is what is shown, the raw point stays private) and the stored point is blurred 30 days after closure (LQ-19, N=30); chip numbers never public; IPs only as keyed hashes for 48 h; analytics events contain enums and slugs only; ad counting cookieless and aggregate (A-016).
 - **Consent**: no analytics script, request or cookie before opt-in (basic Consent Mode v2, ADR-009); choice, version and timestamp stored first-party; withdrawal as easy as giving; re-ask after 12 months or version change.
 - **Retention** (NFR-PRIV): chat 6 months after close; closed-report photos and locations 12 months; payment records as legally required; implemented by `purge_retention`.
 - **Rights**: export and delete (M3, FR-034); anonymous reporters delete via manage link.
@@ -112,3 +112,4 @@ Run by GitHub Actions once a remote exists; until then `pnpm verify` runs the sa
 | 0.4 | 2026-10-15 | Offline mode: cache-privacy and idempotency gates, device-data privacy rules |
 | 0.5 | 2026-10-15 | Brief v1.0: pgTAP replaced by API tests with a permission matrix and the ADR-021 exposure tests; security and processors updated for the Express API, R2 and Hetzner |
 | 0.6 | 2026-10-15 | Own geocoder (ADR-007 revised): MapTiler and Photon removed from CSP and processors, geocoder points never in URLs or logs; R2 in the EU jurisdiction |
+| 0.7 | 2026-10-15 | Data minimisation line aligned with the coarsened point and 30-day post-closure blur; CH-32 handed to a validation task (opt-in OpenAPI extension) |
