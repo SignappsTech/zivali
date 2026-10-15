@@ -50,7 +50,7 @@ export function useCaptcha() {
 	const locale = useLocale();
 	const widget = React.useRef<string | undefined>(undefined);
 	const pending = React.useRef<{ resolve: (token: string) => void; reject: (error: ApiError) => void }>(undefined);
-	// Read directly (inlined at build), not through lib/env, so the captcha does not ship zod.
+	// Read directly: NEXT_PUBLIC_* is inlined at build.
 	const siteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
 
 	// A callback ref: the widget lives exactly as long as its element (a form view may unmount and come back).

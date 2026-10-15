@@ -23,8 +23,9 @@ async function sessionFromLink(code: string | null, tokenHash: string | null) {
  * Supabase Auth sends the browser here (lib/auth.ts callbackUrl) from the confirmation and reset emails and after
  * Google, with a PKCE `code` or an `error`. The code becomes the session cookies on the server, then:
  * - `recovery`: the new-password form (/reset-password checks the session's amr itself); a dead link goes to the
- *   reset form with "Povezava ne deluje več". The PKCE verifier lives only in the browser that asked, so the reset
- *   email links here with a `token_hash` instead (verifyOtp), which works on any device; a `code` still works;
+ *   reset form with "Povezava ne deluje več". The PKCE verifier lives only in the browser that asked, so a `code`
+ *   works only there; a `token_hash` (verifyOtp) works on any device. The recovery template still sends the code
+ *   ({{ .ConfirmationURL }}); its switch to the token hash is tracked in backlog/changes.md (TASK-9.3, C3);
  * - `signup`: the "E-naslov je potrjen" view (P16 M5). GoTrue confirms the address before it issues the code, so a
  *   link opened in another browser (no verifier there, no session) still counts; only an expired or used link fails;
  * - `oauth`: back to `next`; cancelled or failed, to sign-in with a quiet message.
