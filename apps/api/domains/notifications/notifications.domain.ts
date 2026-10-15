@@ -141,10 +141,11 @@ export async function deliver(data: unknown, ctx: Ctx): Promise<void> {
 	}
 
 	if (push) await sendPush(user_id, type, payload, locale, ctx);
-	if (!email) return;
+	// FR-010: only confirmed addresses (auth.users.email_confirmed_at) get email; anonymous finders have none here.
+	if (!email || !recipient.email || !recipient.email_verified) return;
 	if (type === 'chat_message' && !followUp) await scheduleChatEmail(input, ctx);
 	else if (!followUp || Number(vars.unread_count) > 0)
-		await sendNotificationEmail(recipient, type, vars, locale, ctx);
+		await sendNotificationEmail(recipient.id, recipient.email, type, vars, locale, ctx);
 }
 
 async function sendPush(user_id: string, type: NotificationType, payload: Vars, locale: Locale, ctx: Ctx) {
@@ -191,16 +192,15 @@ async function scheduleChatEmail(input: JobInput, ctx: Ctx) {
 }
 
 async function sendNotificationEmail(
-	recipient: RecipientRow,
+	user_id: string,
+	to: string,
 	type: NotificationType,
 	vars: Vars,
 	locale: Locale,
 	ctx: Ctx
 ) {
-	// FR-010: only confirmed addresses (auth.users.email_confirmed_at) get email; anonymous finders have none here.
-	if (!recipient.email || !recipient.email_verified) return;
 	const spec = TYPES[type];
-	const unsubscribe_url = spec.category === 'alert' ? unsubscribeUrl(recipient.id, type) : undefined;
+	const unsubscribe_url = spec.category === 'alert' ? unsubscribeUrl(user_id, type) : undefined;
 	const message = renderEmail(type, vars, locale, ctx.now, {
 		url: webUrl(spec.link(vars), locale),
 		unsubscribe_url,
@@ -208,8 +208,8 @@ async function sendNotificationEmail(
 	});
 	await sendAndRecord(
 		{
-			to: recipient.email,
-			user_id: recipient.id,
+			to,
+			user_id,
 			type,
 			locale,
 			...message,

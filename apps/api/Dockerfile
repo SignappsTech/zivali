@@ -11,6 +11,8 @@ WORKDIR /repo
 COPY . .
 # --ignore-scripts: the root `prepare: husky` fails without dev tooling, so the Prisma client is generated here.
 RUN pnpm install --frozen-lockfile --ignore-scripts --filter api...
+# The worker renders push and email text from the merged i18n catalogues (dist/*.json, bundled by tsup).
+RUN pnpm --filter @zivali/i18n build
 RUN cd apps/api && pnpm exec prisma generate && pnpm build
 RUN pnpm --filter api deploy --prod --ignore-scripts /out
 # Fetch the schema engine for this platform now; the runtime user cannot write to node_modules.
