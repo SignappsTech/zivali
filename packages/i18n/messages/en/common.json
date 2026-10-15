@@ -62,5 +62,9 @@
 	"banner_maintenance": "We will carry out short maintenance at {time}. Reports sent before then are safe.",
 	"banner_dismiss": "Hide notice",
 	"translation_missing": "This page is not translated yet, so it is shown in Slovenian.",
-	"geo_attribution": "Source: Surveying and Mapping Authority of the Republic of Slovenia, Register of Spatial Units, as of {date} (CC BY 4.0). Boundaries simplified."
+	"geo_attribution": "Source: Surveying and Mapping Authority of the Republic of Slovenia, Register of Spatial Units, as of {date} (CC BY 4.0). Boundaries simplified.",
+	"seo_title": "Najdimo – lost and found pets in Slovenia",
+	"seo_description": "Report a lost or found pet. Najdimo connects owners and finders of dogs and cats across Slovenia, free and safe.",
+	"placeholder_body": "We are still preparing this page. It will be available soon.",
+	"portal_title": "Organisation portal"
 }

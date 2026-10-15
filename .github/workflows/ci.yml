@@ -113,7 +113,8 @@ jobs:
         run: find .turbo/cache -type f -mtime +7 -delete 2>/dev/null || true
 
   images:
-    # Docker builds of the api image (also the worker) and, once TASK-5.1 adds apps/web/Dockerfile, the web image.
+    # Docker builds of the api image (also the worker) and the web image, for the runner's platform (amd64); the
+    # deploy builds the same Dockerfiles for linux/arm64.
     runs-on: ubuntu-24.04
     timeout-minutes: 25
     steps:
@@ -124,19 +125,5 @@ jobs:
           node-version-file: package.json
       - run: pnpm images
 
-  # deploy: staging on main, production on tags with manual approval (ADR-016, TASK-5.1, which also adds
-  # scripts/deploy.mjs). Enabled once the client has set the deploy secrets (HETZNER_HOST, HETZNER_SSH_KEY,
-  # GHCR_TOKEN) in GitHub Actions.
-  #
-  # deploy-staging:
-  #   if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-  #   needs: [verify, quality, images]
-  #   runs-on: ubuntu-24.04
-  #   environment: staging
-  #   permissions:
-  #     contents: read
-  #     packages: write
-  #   steps:
-  #     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-  #     - build and push the api and web images to GHCR, then over SSH: docker compose pull, one-off
-  #       `prisma migrate deploy`, docker compose up -d, smoke (/ping, /v1/health/ready, web home, exposure checks)
+  # Deploys live in deploy.yml: staging after this workflow passes on main, production on version tags with manual
+  # approval (ADR-016, TASK-5.1).

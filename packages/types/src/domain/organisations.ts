@@ -9,14 +9,15 @@ import type {
 	OrganisationMemberRole,
 } from './enums.ts';
 
+/** Mirrors app.organisations (TASK-6.8); the link to the directory's shelters (C18) stays open until M3. */
 export type Organisation = {
 	id: Uuid;
 	kind: OrganisationKind;
-	slug: string;
 	name: string;
-	region_id: number | null;
+	municipality_id: number | null;
 	verified_at: IsoDateTime | null;
 	created_at: IsoDateTime;
+	updated_at: IsoDateTime;
 };
 export type OrganisationMember = {
 	organisation_id: Uuid;
