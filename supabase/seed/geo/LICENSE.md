@@ -28,7 +28,8 @@ Show it on the data sources / legal page of the web and mobile apps, and whereve
 - Region of each municipality: the GURS statistical region with the largest overlap (all 212 match exactly one region).
 - Region geometry: dissolved from the simplified municipalities, so region and municipality borders coincide exactly.
 - Simplified with mapshaper 0.7.70: weighted Visvalingam, 12 % of removable vertices kept, `keep-shapes`, shared borders simplified once (no gaps or slivers between neighbours); mean displacement 12 m; coordinates rounded to 0.00001°. Area total 20,273 km²; every polygon is valid in PostGIS (`ST_IsValid`).
-- Attributes: `id` = GURS code (`SIFRA`); `name_sl` = GURS name (`NAZIV`, kept as published, e.g. "Sveti Andraž v Slov. goricah"); `name_en` = `name_sl` for municipalities and the common English name for regions (Mura, Drava, Carinthia, Savinja, Central Sava, Lower Sava, Southeast Slovenia, Central Slovenia, Upper Carniola, Littoral–Inner Carniola, Gorizia, Coastal–Karst); `slug` = `name_sl` without diacritics, lower case, other characters replaced by `-`.
+- Attributes: `id` = GURS code (`SIFRA`); `name_sl` = GURS name (`NAZIV`, kept as published except the one abbreviation below); `name_en` = `name_sl` for municipalities and the common English name for regions (Mura, Drava, Carinthia, Savinja, Central Sava, Lower Sava, Southeast Slovenia, Central Slovenia, Upper Carniola, Littoral–Inner Carniola, Gorizia, Coastal–Karst); `slug` = `name_sl` without diacritics, lower case, other characters replaced by `-`.
+- Municipality 182: GURS publishes the abbreviated "Sveti Andraž v Slov. goricah"; `name_sl` and `name_en` are written out as "Sveti Andraž v Slovenskih goricah" and the slug is `sveti-andraz-v-slovenskih-goricah`, like the other "… v Slovenskih goricah" municipalities (glossary, 2026-10-15).
 - Known source artefact: Ivančna Gorica and Žužemberk overlap by about 330 m² in the GURS data (about 400 m² after simplification). A point there matches both municipalities.
 
 ## Reproduce
@@ -39,9 +40,9 @@ curl -o obcine.json "${WFS}OBCINE"
 curl -o regije.json "${WFS}STATISTICNE_REGIJE"
 npx --yes mapshaper@0.7.70 -i obcine.json regije.json combine-files \
   -join target=obcine source=regije largest-overlap fields=SIFRA prefix=region_ \
-  -each target=obcine 'id=SIFRA, region_id=region_SIFRA, name_sl=NAZIV, name_en=NAZIV' \
+  -each target=obcine 'id=SIFRA, region_id=region_SIFRA, name_sl=NAZIV.replace("Slov. goricah","Slovenskih goricah"), name_en=name_sl' \
   -each target=regije 'id=SIFRA, name_sl=NAZIV, name_en=["Mura","Drava","Carinthia","Savinja","Central Sava","Lower Sava","Southeast Slovenia","Central Slovenia","Upper Carniola","Littoral–Inner Carniola","Gorizia","Coastal–Karst"][SIFRA-1]' \
-  -each target=obcine,regije 'slug=NAZIV.normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")' \
+  -each target=obcine,regije 'slug=name_sl.normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")' \
   -simplify 12% keep-shapes stats \
   -dissolve target=obcine region_id + name=regions \
   -join target=regions source=regije keys=region_id,id fields=slug,name_sl,name_en \

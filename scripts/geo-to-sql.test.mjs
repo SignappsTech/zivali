@@ -94,6 +94,7 @@ test('ids and ASCII lower-case slugs are unique, names are set, every municipali
       assert.ok(Number.isInteger(p.id), `id ${p.id}`);
       assert.match(p.slug, /^[a-z0-9]+(-[a-z0-9]+)*$/);
       assert.ok(p.name_sl && p.name_en, `names of ${p.slug}`);
+      assert.doesNotMatch(p.name_sl, /\bSlov\./, `unabbreviated name of ${p.slug}`);
     }
   }
   const regionIds = new Set(regions.map((f) => f.properties.id));
