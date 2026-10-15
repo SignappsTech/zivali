@@ -9,12 +9,12 @@ export const metadata: Metadata = { robots: { index: false, follow: false } };
 
 /**
  * C15 group `admin`: a verified, non-anonymous session (checked here, on the server), then the P19 shell: staff role
- * and TOTP (aal2) before any page renders, and each page's role from the navigation. The API enforces both (C3).
+ * and TOTP (aal2, also read here from the verified claims) before any page renders, and each page's role from the navigation. The API enforces both (C3).
  */
 export default async function AdminLayout({ children, params }: LayoutProps<'/[locale]'>) {
 	const viewer = await requireViewer((await params).locale);
 	return (
-		<AdminShell env={env.APP_ENV} initials={viewer.initials}>
+		<AdminShell env={env.APP_ENV} initials={viewer.initials} aal2={viewer.aal2}>
 			{children}
 		</AdminShell>
 	);

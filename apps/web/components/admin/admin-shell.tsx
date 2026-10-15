@@ -15,6 +15,7 @@ import { UserIcon } from '@phosphor-icons/react/dist/ssr/User';
 import { UserGearIcon } from '@phosphor-icons/react/dist/ssr/UserGear';
 import { XIcon } from '@phosphor-icons/react/dist/ssr/X';
 import { useLocale, useTranslations } from 'next-intl';
+import { useParams } from 'next/navigation';
 import { DropdownMenu, Tooltip } from 'radix-ui';
 import * as React from 'react';
 
@@ -55,7 +56,18 @@ function useLeave() {
  * or the code screen until the session is aal2. Only then does any admin page render, so none of their API calls
  * run before. Each page's role comes from the navigation (nav.ts); the API enforces both again (C3).
  */
-export function AdminShell({ env, initials, children }: { env: AppEnv; initials: string; children: React.ReactNode }) {
+export function AdminShell({
+	env,
+	initials,
+	aal2,
+	children,
+}: {
+	env: AppEnv;
+	initials: string;
+	/** The verified session's assurance level, read on the server: below aal2 no page renders. */
+	aal2: boolean;
+	children: React.ReactNode;
+}) {
 	const t = useTranslations('admin');
 	const tCommon = useTranslations('common');
 	const router = useRouter();
@@ -85,7 +97,7 @@ export function AdminShell({ env, initials, children }: { env: AppEnv; initials:
 				{tCommon('loading')}
 			</p>
 		);
-	if (gate === 'ok')
+	if (gate === 'ok' && aal2)
 		return (
 			<>
 				{skip}
@@ -98,7 +110,7 @@ export function AdminShell({ env, initials, children }: { env: AppEnv; initials:
 	return (
 		<>
 			{skip}
-			{gate === 'aal2' ? (
+			{gate === 'aal2' || gate === 'ok' ? (
 				<AccessFrame env={env}>
 					<Mfa />
 				</AccessFrame>
@@ -213,7 +225,10 @@ function Console({
 }) {
 	const t = useTranslations('admin');
 	const tNav = useTranslations('nav');
-	const pathname = usePathname();
+	// next-intl reports the template `/admin/[section]` for a section without a page yet: resolve it to the real path.
+	const { section } = useParams<{ section?: string }>();
+	const raw = usePathname();
+	const pathname = raw === '/admin/[section]' && section ? `/admin/${section}` : raw;
 	const item = adminItem(pathname);
 	const [collapsed, setCollapsed] = React.useState(false);
 	const [sheet, setSheet] = React.useState(false);

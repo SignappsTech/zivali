@@ -181,7 +181,7 @@ function FilterPill({
 	return (
 		<Select value={value} onValueChange={onChange}>
 			<SelectPrimitive.Trigger
-				aria-label={label}
+				aria-label={value && current ? `${label}: ${current.label}` : label}
 				className={cn(
 					buttonVariants({ variant: value ? 'default' : 'secondary', size: 'sm' }),
 					'rounded-chip text-control'

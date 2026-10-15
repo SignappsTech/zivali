@@ -16,7 +16,7 @@ import type {
 import { pageParams } from './pagination.ts';
 import { api } from './rtk.ts';
 
-export const meApi = api.enhanceEndpoints({ addTagTypes: ['Me', 'AdminUsers'] }).injectEndpoints({
+export const meApi = api.enhanceEndpoints({ addTagTypes: ['Me', 'AdminUsers', 'AuditLog'] }).injectEndpoints({
 	endpoints: (build) => ({
 		// TASK-9.2
 		getMe: build.query<Me, void>({ query: () => '/v1/me', providesTags: ['Me'] }),
@@ -37,7 +37,7 @@ export const meApi = api.enhanceEndpoints({ addTagTypes: ['Me', 'AdminUsers'] })
 		// TASK-34.2 (admin, aal2)
 		setUserRole: build.mutation<SetRoleResponse, { id: Uuid; body: SetRoleInput }>({
 			query: ({ id, body }) => ({ url: `/v1/admin/users/${id}/role`, method: 'PUT', body }),
-			invalidatesTags: ['AdminUsers'],
+			invalidatesTags: ['AdminUsers', 'AuditLog'],
 		}),
 		// TASK-34.2 (admin, aal2): newest first, exact-match filters.
 		listAuditLog: build.infiniteQuery<AuditLogList, Omit<AuditLogQuery, 'cursor'>, string | null>({
@@ -46,6 +46,7 @@ export const meApi = api.enhanceEndpoints({ addTagTypes: ['Me', 'AdminUsers'] })
 				url: '/v1/admin/audit-log',
 				params: { ...queryArg, cursor: pageParam },
 			}),
+			providesTags: ['AuditLog'],
 		}),
 	}),
 });

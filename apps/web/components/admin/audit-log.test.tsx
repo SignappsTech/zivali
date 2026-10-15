@@ -82,7 +82,7 @@ describe('AuditLog', () => {
 		await screen.findByRole('table', { name: a.audit_title });
 		await choose(a.audit_action, 'user.role.set');
 		await waitFor(() => expect(client.calls.at(-1)?.query).toEqual({ action: 'user.role.set' }));
-		expect(screen.getByRole('combobox', { name: a.audit_action }).textContent).toBe(
+		expect(screen.getByRole('combobox', { name: `${a.audit_action}: user.role.set` }).textContent).toBe(
 			`${a.audit_action}: user.role.set`
 		);
 

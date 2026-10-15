@@ -27,7 +27,13 @@ vi.mock('@zivali/api/auth', () => ({
 	mfa: auth.mfa,
 	signOut: vi.fn(),
 }));
-const route = vi.hoisted(() => ({ pathname: '/admin', replace: vi.fn() }));
+const route = vi.hoisted(() => ({
+	pathname: '/admin',
+	section: undefined as string | undefined,
+	replace: vi.fn(),
+	refresh: vi.fn(),
+}));
+vi.mock('next/navigation', () => ({ useParams: () => ({ section: route.section }) }));
 vi.mock('@/i18n/navigation', () => ({
 	Link: ({ href, children, ...props }: { href: unknown; children: React.ReactNode }) => (
 		<a href={typeof href === 'string' ? href : JSON.stringify(href)} {...props}>
@@ -35,7 +41,7 @@ vi.mock('@/i18n/navigation', () => ({
 		</a>
 	),
 	usePathname: () => route.pathname,
-	useRouter: () => ({ replace: route.replace }),
+	useRouter: () => ({ replace: route.replace, refresh: route.refresh }),
 	getPathname: ({ href }: { href: string }) => href,
 }));
 
@@ -54,13 +60,17 @@ afterEach(() => {
 	auth.factors = { totp: [], all: [] };
 });
 
-function renderShell(gate: AuthGate, { role = 'ADMIN', pathname = '/admin' } = {}) {
+function renderShell(
+	gate: AuthGate,
+	{ role = 'ADMIN', pathname = '/admin', section = undefined as string | undefined, aal2 = true } = {}
+) {
 	auth.gate = gate;
 	auth.role = role;
 	route.pathname = pathname;
+	route.section = section;
 	render(
 		<NextIntlClientProvider locale="sl" messages={sl} timeZone="Europe/Ljubljana">
-			<AdminShell env="staging" initials="MK">
+			<AdminShell env="staging" initials="MK" aal2={aal2}>
 				<p>admin page</p>
 			</AdminShell>
 		</NextIntlClientProvider>
@@ -99,6 +109,29 @@ describe('AdminShell', () => {
 		expect(screen.getByText(a.role_moderator)).toBeTruthy();
 		expect(screen.getByRole('heading', { level: 1 }).textContent).toBe(a.denied_title);
 		expect(screen.queryByText('admin page')).toBeNull();
+	});
+
+	it('resolves the /admin/[section] template: moderators open Moderation, admin-only sections stay refused', () => {
+		renderShell('ok', { role: 'MODERATOR', pathname: '/admin/[section]', section: 'moderation' });
+		expect(screen.getByText('admin page')).toBeTruthy();
+		const link = within(sidebar()).getByRole('link', { name: `${a.nav_moderation}, ${a.coming_badge}` });
+		expect(link.getAttribute('aria-current')).toBe('page');
+		const crumbs = screen.getByRole('navigation', { name: a.breadcrumb_label });
+		expect(within(crumbs).getByText(a.nav_moderation).getAttribute('aria-current')).toBe('page');
+		cleanup();
+		renderShell('ok', { role: 'MODERATOR', pathname: '/admin/[section]', section: 'users' });
+		expect(screen.queryByText('admin page')).toBeNull();
+		expect(screen.getByRole('heading', { level: 1 }).textContent).toBe(a.denied_title);
+	});
+
+	it('shows the code screen when /v1/me says aal2 but the server-verified session is still below it', async () => {
+		auth.factors = { totp: [{ id: 'f-1', status: 'verified' }], all: [{ id: 'f-1' }] };
+		renderShell('ok', { aal2: false });
+		expect(await screen.findByRole('heading', { level: 1, name: a.mfa_title })).toBeTruthy();
+		expect(screen.queryByText('admin page')).toBeNull();
+		fireEvent.change(screen.getByLabelText(a.mfa_label), { target: { value: '482913' } });
+		fireEvent.click(screen.getByRole('button', { name: a.mfa_submit }));
+		await waitFor(() => expect(route.refresh).toHaveBeenCalled());
 	});
 
 	it('refuses non-staff with the plain screen: no menu, no page, no hint of the console', () => {
@@ -147,6 +180,7 @@ describe('AdminShell', () => {
 		fireEvent.click(screen.getByRole('button', { name: a.mfa_submit }));
 		await waitFor(() => expect(auth.mfa.challengeAndVerify).toHaveBeenLastCalledWith('f-1', '482913'));
 		expect(auth.mfa.enroll).not.toHaveBeenCalled();
+		await waitFor(() => expect(route.refresh).toHaveBeenCalled());
 	});
 
 	it('enrols staff without a factor: removes a stale enrolment, shows the QR code and key, confirms the new factor', async () => {

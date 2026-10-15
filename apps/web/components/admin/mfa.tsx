@@ -8,6 +8,7 @@ import { ApiError } from '@zivali/api/client';
 import { Button } from '@/components/ui/button';
 import { FormField } from '@/components/ui/form-field';
 import { Input } from '@/components/ui/input';
+import { useRouter } from '@/i18n/navigation';
 
 import { adminH1Class, ErrorNote } from './directory/parts';
 
@@ -29,6 +30,7 @@ export function Mfa() {
 	const t = useTranslations('admin');
 	const tCommon = useTranslations('common');
 	const tErrors = useTranslations('errors');
+	const router = useRouter();
 	const [attempt, setAttempt] = React.useState(0);
 	const [step, setStep] = React.useState<Step>({ kind: 'loading' });
 	const [code, setCode] = React.useState('');
@@ -110,8 +112,9 @@ export function Mfa() {
 		setBusy(true);
 		setError(undefined);
 		try {
-			// Stays busy on success: the console replaces this screen when the session is aal2.
+			// Stays busy on success: the refresh lets the server see aal2, and the console replaces this screen.
 			await mfa.challengeAndVerify(step.factorId, digits);
+			router.refresh();
 		} catch (failure) {
 			setBusy(false);
 			setError(failure instanceof ApiError && failure.code === 'VALIDATION' ? t('mfa_wrong') : message(failure));

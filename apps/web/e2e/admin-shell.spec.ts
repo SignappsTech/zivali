@@ -117,6 +117,22 @@ test('moderators see Overview and Safety only and are refused the audit log, wit
 	await expectNoAxeViolations(page);
 });
 
+test('a moderator opens Moderation from the menu: the "Kmalu" placeholder, not a refusal', async ({
+	page,
+	baseURL,
+}) => {
+	await signIn(page, { ...adminMe, role: 'MODERATOR' }, baseURL!);
+	await page.goto('/admin');
+	await sidebar(page).getByRole('link', { name: 'Moderacija, Kmalu' }).click();
+	await expect(page.getByRole('heading', { level: 1, name: 'Moderacija' })).toBeVisible();
+	await expect(page.getByText('Ta del konzole še pripravljamo.')).toBeVisible();
+	await expect(sidebar(page).getByRole('link', { name: 'Moderacija, Kmalu' })).toHaveAttribute(
+		'aria-current',
+		'page'
+	);
+	await expect(page.getByRole('heading', { name: 'Dostop ni mogoč' })).toHaveCount(0);
+});
+
 test('signed-in users without a staff role get the plain refusal: no menu, no TOTP, no hint', async ({
 	page,
 	baseURL,
