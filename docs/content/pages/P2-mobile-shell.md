@@ -3,7 +3,7 @@ source: 03§P2; docs/design/pages/P2-mobile-shell.md
 page: P2 Mobile shell
 stories: TASK-12 (FR-037)
 copy-for: docs/design/pages/P2-mobile-shell.md
-version: 0.2
+version: 0.3
 status: Draft, native Slovenian review pending
 date: 2026-10-15
 ---
@@ -63,7 +63,8 @@ Each primer: h2, two sentences, primary, text button. The fallback note appears 
 | Key | SL | EN |
 |---|---|---|
 | inbox.signed_out_title | Tu bodo vaša sporočila | Your messages will appear here |
-| inbox.signed_out_body | Ko se vpišete, tu vidite možna ujemanja, pogovore in opozorila o živalih v bližini. Najdeno ali opaženo žival lahko prijavite tudi brez računa. | Once you sign in, you will see possible matches, conversations and alerts about animals nearby. You can report a found or sighted animal without an account. |
+| inbox.signed_out_body | Ko se vpišete, tu vidite možna ujemanja, pogovore in opozorila o živalih v bližini. | Once you sign in, you will see possible matches, conversations and alerts about animals nearby. |
+| inbox.signed_out_note | Najdeno ali opaženo žival lahko prijavite tudi brez računa. | You can also report a found or sighted animal without an account. |
 | inbox.signed_out_sign_in | Vpis | Sign in |
 | inbox.signed_out_create | Ustvari račun | Create account |
 | profile.signed_out_title | Vpišite se | Sign in |
@@ -123,3 +124,11 @@ N/A: native screens are not indexed. Universal links open web pages that carry t
 # 9. Alt text
 
 No content images in the shell. Icons are decorative (`accessible={false}`) next to labels; the report tab uses `nav.tab_report_a11y`.
+
+# Change log
+
+| Version | Date | Change |
+|---|---|---|
+| 0.3 | 2026-10-15 | CH-143: `inbox.signed_out_body` split into two strings. Lead keeps the sign-in benefit; new key `inbox.signed_out_note` carries the no-account line (own line in the mockup). EN written to match. |
+| 0.2 | 2026-10-15 | Report sheet, permission primers, signed-out tabs, deep-link landing, shared patterns, store strings. |
+| 0.1 | 2026-10-15 | First sample list. |

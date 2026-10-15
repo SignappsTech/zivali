@@ -1,7 +1,7 @@
 import * as SecureStore from 'expo-secure-store';
 
 import { deleteDb, getDb } from '@/lib/db';
-import { draftsDir, outboxDir, thumbsDir } from '@/lib/db/files';
+import { draftsDir, outboxDir, pickerCacheDir, thumbsDir } from '@/lib/db/files';
 import { stopGeofencing } from '@/lib/offline/geofence';
 import { manageTokenKey, pendingCount } from '@/lib/offline/outbox';
 import { syncIdle } from '@/lib/offline/sync';
@@ -24,7 +24,7 @@ export async function wipeLocalData({
 	// A running sync holds a transaction on the same connection; its resumed page then finds the area gone and drops.
 	await syncIdle();
 	const deleted = reason === 'account_deleted';
-	const dirs = [thumbsDir, draftsDir];
+	const dirs = [thumbsDir, draftsDir, pickerCacheDir];
 	let tokenKeys: string[] = [];
 	if (deleted) {
 		tokenKeys = await sentTokenKeys();

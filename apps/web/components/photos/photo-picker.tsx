@@ -131,7 +131,7 @@ export function PhotoPicker({ draft, onChange, onExif, className }: PhotoPickerP
 								{/* eslint-disable-next-line @next/next/no-img-element */}
 								<img
 									src={photo.preview}
-									alt={t('thumb_alt', { n })}
+									alt={t('thumb_alt', { n, total: photos.length })}
 									width={80}
 									height={80}
 									className="size-20 rounded-row bg-muted object-cover"
