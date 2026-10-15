@@ -3,10 +3,11 @@ id: TASK-97
 title: >-
   Bug sweep: .nullable() on .openapi()-named schemas loses null in generated
   spec
-status: To Do
+status: Done
 assignee:
   - '@backend-dev'
 created_date: '2026-10-15 04:11'
+updated_date: '2026-10-15 05:37'
 labels:
   - be
   - 'est:XS'
