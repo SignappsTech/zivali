@@ -13,7 +13,6 @@
 		"e2e": "playwright test"
 	},
 	"dependencies": {
-		"@reduxjs/toolkit": "^2.13.0",
 		"@supabase/ssr": "^0.12.7",
 		"@supabase/supabase-js": "^2.117.3",
 		"@zivali/api": "workspace:*",
