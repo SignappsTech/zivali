@@ -1,11 +1,11 @@
 ---
 id: TASK-18.1
 title: 'Design: Report detail (lost, found, sighted) (P9)'
-status: To Do
+status: In Progress
 assignee:
   - '@ui-designer'
 created_date: '2026-10-14 21:50'
-updated_date: '2026-10-14 21:51'
+updated_date: '2026-10-14 23:29'
 labels:
   - design
   - 'est:M'
@@ -31,6 +31,7 @@ Every other feature acts from the listing page, which is also the Google and Wha
 ## Packet
 Unblocks on: P1 web shell and P2 mobile shell mockups merged (header, footer, tab bar and sheet patterns)
 Branch: design/P9-report-detail
+Branch: agent/TASK-18.1-p9-report-detail
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Acceptance Criteria

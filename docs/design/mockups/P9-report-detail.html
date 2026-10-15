@@ -1,0 +1,1405 @@
+<!doctype html>
+<!--
+  P9 Report detail mockup (TASK-18.1). Built from docs/design/mockups/_template.html.
+  Sources: docs/design/pages/P9-report-detail.md, docs/design/system.md (v0.4), docs/content/pages/P9-report-detail.md (v0.1).
+  Shared strings: P1 (header, footer, 410, common), P4 (row titles, status words), P5 (exact pin), P16 (gate), P18 (share), P21 (ad units).
+  Elements marked data-sample have no copy in any content slice yet (shelter hold, responsible shelter, offline cached line,
+  Vet Partner context line). See the footer note and the CHANGE requests in the task report.
+  Everything in #src is cloned once per colour mode by ../directions/directions.js. Tokens only, no hex (the logo dot excepted, as in the template).
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Najdimo mockup: P9 Report detail</title>
+<meta name="description" content="Report detail for lost, found and sighted animals: web, tablet and app layouts, owner view, shelter hold, status variants, menus, gate, offline and loading states, light and dark.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:wght@400;500;600;700&family=Bricolage+Grotesque:opsz,wght@12..96,500..800&display=swap" rel="stylesheet">
+<link href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css" rel="stylesheet">
+<link href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/bold/style.css" rel="stylesheet">
+<link href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css" rel="stylesheet">
+<link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet">
+<link href="../tokens.css" rel="stylesheet">
+<link href="../directions/directions.css" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com/3.4.17"></script>
+<script src="../directions/tailwind-config.js"></script>
+<style>
+/* Page-local parts only. Header links, language switch, menus (.pop, .mi), avatar (.av), tiles and all button hovers come from directions.css. */
+.scope h1, .scope h2, .scope h3 { text-wrap: balance; }
+.logo-link { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; border-radius: 12px; color: hsl(var(--foreground)); text-decoration: none; flex: none; }
+.iconbtn.is-open { background-color: hsl(var(--foreground) / 0.1); color: hsl(var(--foreground)); }
+.mi-lg { min-height: 56px; font-size: 17px; }
+.sep { height: 1px; margin: 6px 12px; background: hsl(var(--border)); }
+.fl { display: inline-flex; align-items: center; min-height: 44px; min-width: 44px; padding: 0; border: 0; background: none; font: inherit; font-size: 15px; line-height: 22px; color: hsl(var(--muted-foreground)); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 4px; cursor: pointer; white-space: nowrap; }
+.anno { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; font-size: 13px; line-height: 18px; font-weight: 700; background: hsl(var(--foreground)); color: hsl(var(--background)); white-space: nowrap; }
+
+/* ---------- P9 parts ---------- */
+/* Gallery thumbnails: 88 x 72, radius 16, inactive at 55 % (system 10.9). */
+.tb { flex: none; width: 88px; height: 72px; padding: 0; border: 0; border-radius: 16px; background: hsl(var(--muted)); cursor: pointer; }
+.tb img { width: 100%; height: 100%; display: block; object-fit: cover; border-radius: 16px; opacity: 0.55; transition: opacity 150ms var(--ease); }
+.tb:hover img, .tb.is-hover img { opacity: 0.8; }
+.tb[aria-current="true"] img { opacity: 1; }
+/* Facts: label 14 muted above a 16 semibold value. */
+.facts dt { font-size: 14px; line-height: 20px; color: hsl(var(--muted-foreground)); }
+.facts dd { margin: 2px 0 0; font-weight: 600; font-size: 16px; line-height: 24px; }
+.textlink { color: hsl(var(--primary)); font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
+/* Muted status for closed reports (icon plus word, like .st). */
+.st-closed { color: hsl(var(--muted-foreground)); }
+/* Ad unit, P21 Detail slot: muted surface, radius 20, label "Oglas" top-left, 96 px image, title, two text lines, text action. Whole unit is one link. */
+.ad { display: block; min-height: 136px; padding: 14px 16px 12px; border-radius: var(--radius-row); background: hsl(var(--muted)); color: hsl(var(--foreground)); text-decoration: none; box-sizing: border-box; }
+.ad:focus-visible, .ad.is-focus { outline: 3px solid hsl(var(--ring)); outline-offset: 2px; }
+.ad-label { font-size: 13px; line-height: 18px; font-weight: 700; color: hsl(var(--muted-foreground)); }
+.ad-row { display: flex; gap: 16px; margin-top: 6px; }
+.ad-img { position: relative; flex: none; width: 96px; height: 96px; border-radius: var(--radius-row); overflow: hidden; background: hsl(var(--accent)); display: grid; place-items: center; color: hsl(var(--primary)); }
+.ad-img > svg, .ad-img > img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+.ad-img > i { font-size: 36px; }
+.ad-t { display: block; font-weight: 700; font-size: 16px; line-height: 24px; }
+.ad-x { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-size: 14px; line-height: 20px; color: hsl(var(--muted-foreground)); }
+.ad-cta { display: inline-flex; align-items: center; gap: 6px; min-height: 32px; font-size: 14px; font-weight: 700; color: hsl(var(--primary)); }
+.ad:hover .ad-cta, .ad.is-hover .ad-cta { text-decoration: underline; text-underline-offset: 3px; }
+/* Mobile: round buttons floating over the photo (back, share), a soft card circle. */
+.fab { position: absolute; top: 12px; z-index: 3; width: 44px; height: 44px; border-radius: 50%; border: 0; display: grid; place-items: center; background: hsl(var(--card) / 0.88); color: hsl(var(--foreground)); box-shadow: var(--shadow-md); cursor: pointer; text-decoration: none; }
+.fab i { font-size: 22px; line-height: 1; }
+/* Mobile and tablet: sticky bottom action bar (card, 20 px padding, rises from the bottom edge). */
+.actbar { position: absolute; left: 0; right: 0; bottom: 0; z-index: 6; padding: 20px 20px 34px; background: hsl(var(--card)); color: hsl(var(--card-foreground)); box-shadow: var(--shadow-lg); }
+/* Rounded map frames: clip the WebGL canvas to the radius (overflow alone can leave square corners). */
+.clip-card { clip-path: inset(0 round var(--radius-card)); }
+.clip-row { clip-path: inset(0 round var(--radius-row)); }
+/* Area disc to scale in the report's status hue (system 9, v0.8): lost uses .mk-area; found and sighted tint here. */
+.mk-area.found { background: hsl(var(--marker-found) / var(--marker-area-alpha)); }
+.mk-area.sighted { background: hsl(var(--marker-sighted) / var(--marker-area-alpha)); }
+/* Pin (system 9, v0.8), same drawing as P5 .lp-pin: 48 px primary head with a tail, marker-ring halo, paw icon; the tail tip is the point. */
+.lp-pin { position: absolute; width: 54px; height: 66px; margin: -62px 0 0 -27px; pointer-events: none; z-index: 2; }
+.lp-pin svg { display: block; overflow: visible; }
+.lp-pin path { fill: hsl(var(--primary)); stroke: hsl(var(--marker-ring)); stroke-width: 6px; paint-order: stroke; stroke-linejoin: round; }
+.lp-pin i { position: absolute; left: 27px; top: 27px; transform: translate(-50%, -50%); font-size: 24px; line-height: 1; color: hsl(var(--primary-foreground)); }
+.lp-own { position: absolute; z-index: 3; display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px 0 10px; border-radius: 999px; background: hsl(var(--card)); color: hsl(var(--card-foreground)); box-shadow: var(--shadow-md); font-size: 14px; line-height: 20px; font-weight: 700; white-space: nowrap; }
+.lp-own i { font-size: 16px; color: hsl(var(--primary)); }
+/* Provider buttons (system 10.2, v0.6), same as P16: brand-literal field, 1 px inside stroke, official glyphs. */
+.btn-provider { background: hsl(var(--provider)); color: hsl(var(--provider-foreground)); box-shadow: inset 0 0 0 1px hsl(var(--provider-border)); }
+.btn-provider:hover, .btn-provider.is-hover { background: color-mix(in srgb, hsl(var(--provider)) 86%, hsl(var(--provider-foreground))); }
+.btn-provider svg { width: 20px; height: 20px; flex: none; }
+</style>
+</head>
+<body>
+<a class="sr-only focus:not-sr-only" href="#stage">Skip to content</a>
+
+<!-- Symbols, defined once -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <symbol id="nj-mark" viewBox="0 0 48 48">
+    <g fill="currentColor" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round">
+      <path d="M24 45.5 C24 45.5 10.5 33.2 10.5 24.4 A13.5 13.5 0 0 1 37.5 24.4 C37.5 33.2 24 45.5 24 45.5 Z M24 17.9 A6.5 6.5 0 1 0 24 30.9 A6.5 6.5 0 1 0 24 17.9 Z"/>
+      <path d="M12.2 19.6 L11.2 5 L22.6 11.4 Z"/><path d="M35.8 19.6 L25.4 11.4 L36.8 5 Z"/>
+    </g>
+    <circle cx="24" cy="24.4" r="3.6" fill="#F7B32B"/>
+  </symbol>
+  <!-- Token-tinted stand-in under the house-ad images (assets/house-ad-*.png, image tasks pending). status-reunited stands in for sun.400. -->
+  <symbol id="illo-ad" viewBox="0 0 96 96">
+    <rect width="96" height="96" style="fill:hsl(var(--accent))"/>
+    <circle cx="66" cy="30" r="12" style="fill:hsl(var(--status-reunited))"/>
+    <path d="M0 66 C24 52 52 58 96 46 V96 H0Z" style="fill:hsl(var(--secondary))"/>
+    <path d="M0 82 C30 70 62 78 96 70 V96 H0Z" style="fill:hsl(var(--primary))"/>
+  </symbol>
+  <!-- Provider glyphs, same as P16: Google "G" in its brand colours (literal, required by Google), Apple in the label colour. -->
+  <symbol id="g-logo" viewBox="0 0 48 48">
+    <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+    <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+    <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+    <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+  </symbol>
+  <symbol id="apple-logo" viewBox="0 0 24 24">
+    <path fill="currentColor" d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701"/>
+  </symbol>
+  <!-- Stand-in for assets/empty-inbox.png on the 410 page (same as P1/P2). -->
+  <symbol id="illo-spot" viewBox="0 0 320 210">
+    <rect width="320" height="210" style="fill:hsl(var(--accent))"/>
+    <circle cx="232" cy="70" r="32" style="fill:hsl(var(--status-reunited))"/>
+    <path d="M0 150 C60 112 120 120 172 140 C222 160 272 150 320 120 V210 H0Z" style="fill:hsl(var(--secondary))"/>
+    <path d="M0 182 C70 146 130 162 190 180 C240 194 290 186 320 170 V210 H0Z" style="fill:hsl(var(--primary))"/>
+    <path d="M52 198 C96 160 150 182 196 148" fill="none" style="stroke:hsl(var(--status-reunited))" stroke-width="3" stroke-linecap="round" stroke-dasharray="1 9"/>
+  </symbol>
+</svg>
+
+<header class="chrome">
+  <div class="flex flex-wrap items-center gap-x-5 gap-y-2 px-6 py-2 max-w-[1400px] mx-auto">
+    <span class="flex items-center gap-2 font-display font-bold text-lg"><svg class="logo-mark w-7 h-7" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg>Najdimo</span>
+    <span class="text-muted-foreground text-[15px]">P9 Report detail (mockup)</span>
+    <div class="ml-auto flex items-center gap-2" role="group" aria-label="Colour mode">
+      <button class="mode-btn" data-mode="light" aria-pressed="true">Light</button>
+      <button class="mode-btn" data-mode="dark" aria-pressed="false">Dark</button>
+      <button class="mode-btn" data-mode="both" aria-pressed="false">Side by side</button>
+    </div>
+  </div>
+</header>
+
+<main id="stage"></main>
+
+<div id="src" hidden>
+
+<!-- ================= INTRO ================= -->
+<section class="tile-section !max-w-[1400px] !pb-0">
+  <h1 class="tile-title">P9 Report detail</h1>
+  <p class="tile-lede">The page for one listing (lost, found, sighted). Every later feature acts from its named slots: A contact or owner actions, B share and poster, C more (report abuse), the ad slot, and the map. Web at 1200 px, the app at 390 px, the web at 768 px, owner view, shelter hold, status variants, menus, gate, offline and loading. Copy from the P9 content slice; strings with no slice yet are marked "sample".</p>
+  <div class="flex flex-wrap gap-2">
+    <span class="anno">lg: photo 7 / info 5, info sticky</span><span class="anno">Below lg: one column, sticky action bar</span><span class="anno">App: bottom navigation hidden</span><span class="anno">One primary per view</span><span class="anno">One tonal pill per page at most</span><span class="anno">Ad labelled "Oglas", once</span>
+  </div>
+</section>
+
+<!-- ================= 1. WEB ================= -->
+<section class="tile-section !max-w-[1400px]">
+  <h2 class="tile-title">1. Web, 1200 px</h2>
+  <p class="tile-lede">Content variant without the sidebar (the ad slot is inline, once). On this page type the header "Prijavi" is the tonal secondary button (system v0.9), so slot A holds the only primary button in the view.</p>
+
+  <!-- W1 LOST, VISITOR -->
+  <p class="tile-h !mt-0">W1 · Lost, visitor (signed out) · reward set (M4) · keyboard focus on thumbnail 2</p>
+  <div class="wrap-x"><div class="browser" lang="sl">
+    <div class="browser-bar"><span class="dots"><i></i><i></i><i></i></span><span class="url"><i class="ph ph-lock-simple"></i>najdimo.si/r/k7m2qx</span></div>
+    <header class="flex items-center gap-8 px-12 h-[88px]">
+      <a href="#" class="logo-link" aria-label="Najdimo, na začetno stran"><svg class="logo-mark w-9 h-9" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg><span class="font-display font-bold text-2xl tracking-[-0.03em]" aria-hidden="true">Najdimo</span></a>
+      <nav aria-label="Glavni meni"><ul class="flex items-center gap-2">
+        <li><a href="#" class="nl">Zemljevid</a></li><li><a href="#" class="nl">Izgubljene</a></li><li><a href="#" class="nl">Najdene</a></li><li><a href="#" class="nl">Kako deluje</a></li>
+      </ul></nav>
+      <div class="ml-auto flex items-center gap-2">
+        <div class="lang" role="group" aria-label="Jezik: Slovenščina"><a href="#" class="ll" lang="sl" aria-current="true" aria-label="Slovenščina">SL</a><span aria-hidden="true">/</span><a href="#" class="ll" lang="en" hreflang="en" aria-label="English">EN</a></div>
+        <a href="#" class="btn btn-ghost btn-sm">Vpis</a>
+        <button type="button" class="btn btn-secondary btn-sm" aria-haspopup="menu" aria-expanded="false">Prijavi</button>
+      </div>
+    </header>
+    <main class="px-12 pt-2 pb-24">
+      <div class="grid grid-cols-12 gap-8 items-start">
+        <div class="col-span-7 min-w-0">
+          <a href="#" class="btn btn-text btn-sm !px-3 -ml-3"><i class="ph-bold ph-caret-left" aria-hidden="true"></i>Nazaj na zemljevid</a>
+          <section class="mt-3" aria-roledescription="galerija" aria-label="Fotografije">
+            <img class="thumb w-full aspect-[4/3] rounded-3xl" src="../directions/img/dog-beagle.jpg" alt="Rex: pes rjave in bele barve, ovratnica: rdeča z zvončkom, fotografija 1 od 4">
+            <div class="flex items-center gap-3 mt-4">
+              <ul class="flex gap-3">
+                <li><button type="button" class="tb" aria-current="true" aria-label="Pokaži fotografijo 1"><img src="../directions/img/dog-beagle.jpg" alt=""></button></li>
+                <li><button type="button" class="tb is-focus" aria-label="Pokaži fotografijo 2"><img src="../directions/img/dog-beagle.jpg" style="object-position:20% 30%" alt=""></button></li>
+                <li><button type="button" class="tb" aria-label="Pokaži fotografijo 3"><img src="../directions/img/dog-beagle.jpg" style="object-position:80% 60%" alt=""></button></li>
+                <li><button type="button" class="tb" aria-label="Pokaži fotografijo 4"><img src="../directions/img/dog-beagle.jpg" style="object-position:50% 90%" alt=""></button></li>
+              </ul>
+              <div class="ml-auto flex items-center gap-1">
+                <button type="button" class="iconbtn" aria-label="Prejšnja fotografija"><i class="ph-bold ph-caret-left"></i></button>
+                <span class="text-sm text-muted-foreground tnum min-w-10 text-center" aria-live="polite">1 / 4</span>
+                <button type="button" class="iconbtn" aria-label="Naslednja fotografija"><i class="ph-bold ph-caret-right"></i></button>
+              </div>
+            </div>
+          </section>
+          <section class="mt-14">
+            <h2 class="font-display font-bold text-3xl tracking-[-0.015em]">Kaj se je zgodilo</h2>
+            <p class="mt-4 max-w-[58ch]">Rex se je v soboto zvečer ustrašil ognjemeta in skozi odprta vrata zbežal z vrta. Je prijazen, a do neznancev plašen. Prosimo, ne lovite ga. Pokličite ga po imenu, ostanite na mestu in sporočite, kje ste ga videli.</p>
+          </section>
+        </div>
+        <div class="col-span-5 min-w-0 sticky top-6 pt-14">
+          <p class="flex flex-wrap items-center gap-x-3 gap-y-1"><span class="st st-lg st-lost"><i class="ph-fill ph-megaphone" aria-hidden="true"></i>Izgubljena</span><span class="text-muted-foreground">Pogrešana od 12. oktobra</span></p>
+          <h1 class="font-display font-bold text-[64px] leading-[64px] tracking-[-0.02em] mt-3">Rex</h1>
+          <p class="text-xl text-muted-foreground mt-2">Pes · Mešanec · samec</p>
+          <dl class="facts grid grid-cols-2 gap-x-8 gap-y-5 mt-8">
+            <div><dt>Barva</dt><dd>rjava in bela</dd></div>
+            <div><dt>Velikost</dt><dd>srednja</dd></div>
+            <div><dt>Ovratnica</dt><dd>rdeča z zvončkom</dd></div>
+            <div><dt>Čip</dt><dd>Čip vpisan</dd></div>
+            <div><dt>Spol</dt><dd>samec</dd></div>
+            <div><dt>Leto rojstva</dt><dd class="tnum">2019</dd></div>
+          </dl>
+          <div class="flex gap-3 mt-8">
+            <i class="ph-bold ph-map-pin-area text-2xl text-primary mt-0.5" aria-hidden="true"></i>
+            <div><p>Območje: <b>Šiška</b></p><p class="text-sm text-muted-foreground">Prikazano območje je približno.</p></div>
+          </div>
+          <p class="flex items-center gap-2 text-sm text-muted-foreground mt-4"><i class="ph-bold ph-user-circle text-base" aria-hidden="true"></i>Objavlja: Ana</p>
+          <div class="flex flex-wrap items-center gap-x-2 gap-y-1 mt-8">
+            <button type="button" class="btn btn-primary btn-lg"><i class="ph-bold ph-eye" aria-hidden="true"></i>Sporoči opažanje</button>
+            <button type="button" class="btn btn-text btn-lg"><i class="ph-bold ph-chat-circle" aria-hidden="true"></i>Pošlji sporočilo</button>
+          </div>
+          <p class="flex items-center gap-3 mt-6 font-semibold"><i class="ph-fill ph-gift text-[22px]" style="color:hsl(var(--status-reunited))" aria-hidden="true"></i><span class="tnum">Nagrada: 50 €</span></p>
+          <div class="note mt-3" role="note"><i class="ph-fill ph-shield-check text-primary" aria-hidden="true"></i><p>Nikoli nikomur ne plačajte vnaprej. Nagrado lastnik izroči šele, ko je žival spet doma. Najdimo nagrad ne izplačuje. <a href="#" class="textlink">Nasveti za varnost</a></p></div>
+          <div class="flex items-center gap-1 mt-5 -ml-2">
+            <button type="button" class="btn btn-ghost btn-sm" aria-haspopup="menu" aria-expanded="false"><i class="ph-bold ph-share-network" aria-hidden="true"></i>Deli ali natisni plakat</button>
+            <button type="button" class="iconbtn" aria-label="Več možnosti" aria-haspopup="menu" aria-expanded="false"><i class="ph-bold ph-dots-three"></i></button>
+          </div>
+        </div>
+      </div>
+
+      <section class="mt-24" aria-label="Kje je bila videna">
+        <h2 class="font-display font-bold text-3xl tracking-[-0.015em]">Kje je bila videna</h2>
+        <div class="grid grid-cols-12 gap-8 mt-6 items-start">
+          <div class="col-span-7">
+            <div class="map-wrap clip-card h-[400px] rounded-2xl" role="img" aria-label="Območje: Šiška, približno 500 m. Prikazano območje je približno.">
+              <div class="map-canvas" data-center="14.4930,46.0640" data-zoom="13.6"></div>
+              <span class="mk mk-area" style="left:46%;top:38%;width:114px;height:114px" aria-hidden="true"><img class="mk-avatar" src="../directions/img/dog-beagle.jpg" alt=""></span>
+              <span class="mk mk-dot" style="left:62%;top:70%" aria-hidden="true"></span>
+              <span class="mk mk-dot" style="left:38%;top:58%" aria-hidden="true"></span>
+            </div>
+            <div class="flex flex-wrap items-center justify-between gap-x-4 mt-2">
+              <p class="text-sm text-muted-foreground">Območje: Šiška, približno 500 m</p>
+              <a href="#" class="btn btn-text btn-sm !px-3 -mr-3"><i class="ph-bold ph-arrows-out" aria-hidden="true"></i>Odpri zemljevid</a>
+            </div>
+          </div>
+          <div class="col-span-5">
+            <h3 class="font-display font-semibold text-2xl leading-8 tracking-[-0.01em]">Opažanja</h3>
+            <ol class="grid gap-7 mt-5">
+              <li><p class="flex flex-wrap items-center gap-x-2 text-sm"><span class="st st-sighted"><i class="ph-fill ph-eye" aria-hidden="true"></i>Opažena</span><span class="text-muted-foreground tnum">danes 8.15 · Rožna dolina</span></p><p class="mt-1">Tekel je po kolesarski stezi proti Tivoliju. Rdeča ovratnica, brez povodca.</p></li>
+              <li><p class="flex flex-wrap items-center gap-x-2 text-sm"><span class="st st-sighted"><i class="ph-fill ph-eye" aria-hidden="true"></i>Opažena</span><span class="text-muted-foreground tnum">včeraj 21.40 · Šiška</span></p><p class="mt-1">Stal je pri ekološkem otoku na Celovški. Ko sem se približal, je zbežal proti parku.</p></li>
+            </ol>
+          </div>
+        </div>
+      </section>
+
+      <div class="mt-24 grid grid-cols-12 gap-8">
+        <a href="#" class="ad col-span-7" rel="sponsored noopener" aria-label="Oglas: Pomagajte ohraniti iskanje brezplačno">
+          <span class="ad-label">Oglas</span>
+          <span class="ad-row">
+            <span class="ad-img"><svg viewBox="0 0 96 96" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><use href="#illo-ad"/></svg><img src="../../../assets/house-ad-support.png" alt="Ilustracija: sonce nad mehkimi griči in pot, ki vodi do hiše" onerror="this.remove()"></span>
+            <span class="flex-1 min-w-0"><span class="ad-t">Pomagajte ohraniti iskanje brezplačno</span><span class="ad-x">Vsaka vrnitev domov je brezplačna. Prostovoljni prispevki pokrivajo strežnike, zemljevide in opozorila.</span><span class="ad-cta">Kako pomagati<i class="ph-bold ph-arrow-right" aria-hidden="true"></i></span></span>
+          </span>
+        </a>
+      </div>
+
+      <section class="mt-24" aria-label="V bližini">
+        <h2 class="font-display font-bold text-3xl tracking-[-0.015em]">V bližini</h2>
+        <ul class="grid grid-cols-3 gap-8 mt-6">
+          <li><a href="#" class="tile"><img class="thumb w-full aspect-[4/3] rounded-2xl" src="../directions/img/cat-siamese.jpg" alt="Mici: mačka bele in rjave barve"><h3 class="font-display font-semibold text-2xl leading-8 tracking-[-0.01em] mt-4">Mici</h3><p class="mt-1 flex flex-wrap items-center gap-x-2 text-sm"><span class="st st-lost"><i class="ph-fill ph-megaphone" aria-hidden="true"></i>Izgubljena</span><span class="text-muted-foreground tnum">včeraj, 1,4 km</span></p></a></li>
+          <li><a href="#" class="tile"><img class="thumb w-full aspect-[4/3] rounded-2xl" src="../directions/img/dog-aussie.jpg" alt="Maks: pes rjave, bele in črne barve"><h3 class="font-display font-semibold text-2xl leading-8 tracking-[-0.01em] mt-4">Maks</h3><p class="mt-1 flex flex-wrap items-center gap-x-2 text-sm"><span class="st st-lost"><i class="ph-fill ph-megaphone" aria-hidden="true"></i>Izgubljena</span><span class="text-muted-foreground tnum">pred 3 h, 2,1 km</span></p></a></li>
+          <li><a href="#" class="tile"><img class="thumb w-full aspect-[4/3] rounded-2xl" src="../directions/img/cat-bw.jpg" alt="Mačka črne in bele barve"><h3 class="font-display font-semibold text-2xl leading-8 tracking-[-0.01em] mt-4">Najdena mačka</h3><p class="mt-1 flex flex-wrap items-center gap-x-2 text-sm"><span class="st st-found"><i class="ph-fill ph-hand-heart" aria-hidden="true"></i>Najdena</span><span class="text-muted-foreground tnum">danes, 2,6 km</span></p></a></li>
+        </ul>
+      </section>
+    </main>
+    <footer class="px-12 pt-12 pb-10">
+      <p class="flex items-center gap-4"><a href="#" class="logo-link" aria-label="Najdimo, na začetno stran"><svg class="logo-mark w-7 h-7" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg><span class="font-display font-bold text-lg" aria-hidden="true">Najdimo</span></a><span class="text-muted-foreground">Spet doma.</span></p>
+      <nav aria-label="Noga strani" class="mt-4 flex items-end gap-8">
+        <div class="flex-1 min-w-0">
+          <ul class="flex flex-wrap gap-x-6"><li><a href="#" class="fl">Kako deluje</a></li><li><a href="#" class="fl">Nasveti za varnost</a></li><li><a href="#" class="fl">Pogosta vprašanja</a></li><li><a href="#" class="fl">Za zavetišča</a></li><li><a href="#" class="fl">Zavetišča</a></li><li><a href="#" class="fl">Oglašujte pri nas</a></li><li><a href="#" class="fl">O nas</a></li></ul>
+          <ul class="flex flex-wrap gap-x-6"><li><a href="#" class="fl">Zasebnost</a></li><li><a href="#" class="fl">Piškotki</a></li><li><button type="button" class="fl" aria-haspopup="dialog">Nastavitve piškotkov</button></li><li><a href="#" class="fl">Pogoji uporabe</a></li><li><a href="#" class="fl">Impresum</a></li><li><a href="#" class="fl">Dostopnost</a></li></ul>
+        </div>
+        <div class="lang" role="group" aria-label="Jezik: Slovenščina"><a href="#" class="ll" lang="sl" aria-current="true" aria-label="Slovenščina">SL</a><span aria-hidden="true">/</span><a href="#" class="ll" lang="en" hreflang="en" aria-label="English">EN</a></div>
+      </nav>
+      <p class="text-sm text-muted-foreground mt-6">© 2026 Signapps. Najdimo je delovno ime storitve.</p>
+    </footer>
+  </div></div>
+  <p class="help mt-4 max-w-[80ch]">Right column order: status word (<code>st-lg</code>, no pill) with the date, h1 64/64, species line 20 muted, facts in two columns (chip as "Čip vpisan", never the number), area line, posted by, slot A, reward line (M4, lost only, when the owner set one; display only, no payment through the app, gift icon in sun), the one safety <code>note</code> right under it (the reward variant replaces the plain one while a reward is shown), slot B ghost button and slot C "Več možnosti". The column is sticky from lg. Gallery: 4:3 photo radius 32, thumbnails with named prev/next buttons and a live "1 / 4". The map has a text alternative; markers are the lost-area disc and sighting dots only. Ad: P21 Detail unit, once, after the sightings, link with <code>rel="sponsored noopener"</code>.</p>
+
+  <!-- W2 FOUND, VISITOR (anonymous finder) -->
+  <p class="tile-h" style="margin-top:72px">W2 · Found, visitor · anonymous finder's report · no sightings yet (empty) · Vet Partner placement in the ad slot</p>
+  <div class="wrap-x"><div class="browser" lang="sl">
+    <div class="browser-bar"><span class="dots"><i></i><i></i><i></i></span><span class="url"><i class="ph ph-lock-simple"></i>najdimo.si/r/p3d8wa</span></div>
+    <header class="flex items-center gap-8 px-12 h-[88px]">
+      <a href="#" class="logo-link" aria-label="Najdimo, na začetno stran"><svg class="logo-mark w-9 h-9" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg><span class="font-display font-bold text-2xl tracking-[-0.03em]" aria-hidden="true">Najdimo</span></a>
+      <nav aria-label="Glavni meni"><ul class="flex items-center gap-2">
+        <li><a href="#" class="nl">Zemljevid</a></li><li><a href="#" class="nl">Izgubljene</a></li><li><a href="#" class="nl">Najdene</a></li><li><a href="#" class="nl">Kako deluje</a></li>
+      </ul></nav>
+      <div class="ml-auto flex items-center gap-2">
+        <div class="lang" role="group" aria-label="Jezik: Slovenščina"><a href="#" class="ll" lang="sl" aria-current="true" aria-label="Slovenščina">SL</a><span aria-hidden="true">/</span><a href="#" class="ll" lang="en" hreflang="en" aria-label="English">EN</a></div>
+        <a href="#" class="btn btn-ghost btn-sm">Vpis</a>
+        <button type="button" class="btn btn-secondary btn-sm" aria-haspopup="menu" aria-expanded="false">Prijavi</button>
+      </div>
+    </header>
+    <main class="px-12 pt-2 pb-24">
+      <div class="grid grid-cols-12 gap-8 items-start">
+        <div class="col-span-7 min-w-0">
+          <a href="#" class="btn btn-text btn-sm !px-3 -ml-3"><i class="ph-bold ph-caret-left" aria-hidden="true"></i>Nazaj na zemljevid</a>
+          <section class="mt-3" aria-roledescription="galerija" aria-label="Fotografije">
+            <img class="thumb w-full aspect-[4/3] rounded-3xl" src="../directions/img/cat-tabby.jpg" alt="Mačka sive barve, s progastim vzorcem, fotografija 1 od 2">
+            <div class="flex items-center gap-3 mt-4">
+              <ul class="flex gap-3">
+                <li><button type="button" class="tb" aria-current="true" aria-label="Pokaži fotografijo 1"><img src="../directions/img/cat-tabby.jpg" alt=""></button></li>
+                <li><button type="button" class="tb" aria-label="Pokaži fotografijo 2"><img src="../directions/img/cat-tabby.jpg" style="object-position:30% 70%" alt=""></button></li>
+              </ul>
+              <div class="ml-auto flex items-center gap-1">
+                <button type="button" class="iconbtn" aria-label="Prejšnja fotografija"><i class="ph-bold ph-caret-left"></i></button>
+                <span class="text-sm text-muted-foreground tnum min-w-10 text-center" aria-live="polite">1 / 2</span>
+                <button type="button" class="iconbtn" aria-label="Naslednja fotografija"><i class="ph-bold ph-caret-right"></i></button>
+              </div>
+            </div>
+          </section>
+          <section class="mt-14">
+            <h2 class="font-display font-bold text-3xl tracking-[-0.015em]">Opomba</h2>
+            <p class="mt-4 max-w-[58ch]">Mačka je zjutraj sedela na našem balkonu v pritličju. Je mirna in sita, zdaj je pri nas v stanovanju. Ima modro ovratnico brez ploščice.</p>
+          </section>
+        </div>
+        <div class="col-span-5 min-w-0 sticky top-6 pt-14">
+          <p class="flex flex-wrap items-center gap-x-3 gap-y-1"><span class="st st-lg st-found"><i class="ph-fill ph-hand-heart" aria-hidden="true"></i>Najdena</span><span class="text-muted-foreground">Najdena 14. oktobra</span></p>
+          <h1 class="font-display font-bold text-[64px] leading-[64px] tracking-[-0.02em] mt-3">Najdena mačka</h1>
+          <p class="text-xl text-muted-foreground mt-2">Mačka · domača</p>
+          <dl class="facts grid grid-cols-2 gap-x-8 gap-y-5 mt-8">
+            <div><dt>Barva</dt><dd>siva, progasta</dd></div>
+            <div><dt>Velikost</dt><dd>majhna</dd></div>
+            <div><dt>Ovratnica</dt><dd>modra, brez ploščice</dd></div>
+            <div><dt>Čip</dt><dd>Ni podatka</dd></div>
+          </dl>
+          <div class="flex gap-3 mt-8">
+            <i class="ph-bold ph-map-pin-area text-2xl text-primary mt-0.5" aria-hidden="true"></i>
+            <div><p>Območje: <b>Bežigrad</b></p><p class="text-sm text-muted-foreground">Prikazano območje je približno.</p></div>
+          </div>
+          <p class="flex items-center gap-2 text-sm text-muted-foreground mt-4"><i class="ph-bold ph-user-circle text-base" aria-hidden="true"></i>Prijavila oseba, ki je žival našla</p>
+          <div class="flex flex-wrap items-center gap-x-2 gap-y-1 mt-8">
+            <button type="button" class="btn btn-primary btn-lg"><i class="ph-bold ph-heart" aria-hidden="true"></i>To je moja žival</button>
+            <button type="button" class="btn btn-text btn-lg"><i class="ph-bold ph-eye" aria-hidden="true"></i>Sporoči opažanje</button>
+          </div>
+          <div class="note mt-6" role="note"><i class="ph-fill ph-shield-check text-primary" aria-hidden="true"></i><p>Nikoli ne pošiljajte denarja vnaprej. Kdor je žival res našel, denarja ne zahteva. <a href="#" class="textlink">Nasveti za varnost</a></p></div>
+          <div class="flex items-center gap-1 mt-5 -ml-2">
+            <button type="button" class="btn btn-ghost btn-sm" aria-haspopup="menu" aria-expanded="false"><i class="ph-bold ph-share-network" aria-hidden="true"></i>Deli ali natisni plakat</button>
+            <button type="button" class="iconbtn" aria-label="Več možnosti" aria-haspopup="menu" aria-expanded="false"><i class="ph-bold ph-dots-three"></i></button>
+          </div>
+        </div>
+      </div>
+
+      <section class="mt-24" aria-label="Kje je bila videna">
+        <h2 class="font-display font-bold text-3xl tracking-[-0.015em]">Kje je bila videna</h2>
+        <div class="grid grid-cols-12 gap-8 mt-6 items-start">
+          <div class="col-span-7">
+            <div class="map-wrap clip-card h-[400px] rounded-2xl" role="img" aria-label="Območje: Bežigrad, približno 150 m. Prikazano območje je približno.">
+              <div class="map-canvas" data-center="14.5100,46.0720" data-zoom="15" data-roads="all"></div>
+              <span class="mk mk-area found" style="left:50%;top:45%;width:90px;height:90px" aria-hidden="true"><img class="mk-avatar found" src="../directions/img/cat-tabby.jpg" alt=""></span>
+            </div>
+            <div class="flex flex-wrap items-center justify-between gap-x-4 mt-2">
+              <p class="text-sm text-muted-foreground">Območje: Bežigrad, približno 150 m</p>
+              <a href="#" class="btn btn-text btn-sm !px-3 -mr-3"><i class="ph-bold ph-arrows-out" aria-hidden="true"></i>Odpri zemljevid</a>
+            </div>
+          </div>
+          <div class="col-span-5">
+            <h3 class="font-display font-semibold text-2xl leading-8 tracking-[-0.01em]">Opažanja</h3>
+            <p class="mt-5 max-w-[40ch]">Opažanj še ni. Ste žival videli? Sporočite nam.</p>
+            <button type="button" class="btn btn-secondary btn-sm mt-5"><i class="ph-bold ph-eye" aria-hidden="true"></i>Sporoči opažanje</button>
+          </div>
+        </div>
+      </section>
+
+      <div class="mt-24 grid grid-cols-12 gap-8">
+        <a href="#" class="ad col-span-7" rel="sponsored noopener" aria-label="Oglas: Veterinar v vaši regiji, Veterinarska ambulanta Primer">
+          <span class="flex flex-wrap gap-x-1"><span class="ad-label">Oglas</span><span class="ad-label" data-sample>· Veterinar v vaši regiji</span></span>
+          <span class="ad-row">
+            <span class="ad-img"><i class="ph-bold ph-first-aid-kit" aria-hidden="true"></i></span>
+            <span class="flex-1 min-w-0"><span class="ad-t">Veterinarska ambulanta Primer</span><span class="ad-x">Partnerska ambulanta · Bežigrad. Nujna pomoč 24 ur. Pregled čipa in prva pomoč za najdene živali.</span><span class="ad-cta" data-sample><i class="ph-bold ph-phone" aria-hidden="true"></i>Pokliči ali odpri zemljevid</span></span>
+          </span>
+        </a>
+      </div>
+
+      <section class="mt-24" aria-label="V bližini">
+        <h2 class="font-display font-bold text-3xl tracking-[-0.015em]">V bližini</h2>
+        <ul class="grid grid-cols-3 gap-8 mt-6">
+          <li><a href="#" class="tile"><img class="thumb w-full aspect-[4/3] rounded-2xl" src="../directions/img/cat-ginger.jpg" alt="Piki: mačka oranžne barve"><h3 class="font-display font-semibold text-2xl leading-8 tracking-[-0.01em] mt-4">Piki</h3><p class="mt-1 flex flex-wrap items-center gap-x-2 text-sm"><span class="st st-lost"><i class="ph-fill ph-megaphone" aria-hidden="true"></i>Izgubljena</span><span class="text-muted-foreground tnum">pred 2 dnevoma, 0,9 km</span></p></a></li>
+          <li><a href="#" class="tile"><img class="thumb w-full aspect-[4/3] rounded-2xl" src="../directions/img/cat-siamese.jpg" alt="Mici: mačka bele in rjave barve"><h3 class="font-display font-semibold text-2xl leading-8 tracking-[-0.01em] mt-4">Mici</h3><p class="mt-1 flex flex-wrap items-center gap-x-2 text-sm"><span class="st st-lost"><i class="ph-fill ph-megaphone" aria-hidden="true"></i>Izgubljena</span><span class="text-muted-foreground tnum">včeraj, 1,8 km</span></p></a></li>
+          <li><a href="#" class="tile"><img class="thumb w-full aspect-[4/3] rounded-2xl" src="../directions/img/dog-golden.jpg" alt="Pes zlate barve"><h3 class="font-display font-semibold text-2xl leading-8 tracking-[-0.01em] mt-4">Opažen pes</h3><p class="mt-1 flex flex-wrap items-center gap-x-2 text-sm"><span class="st st-sighted"><i class="ph-fill ph-eye" aria-hidden="true"></i>Opažena</span><span class="text-muted-foreground tnum">danes, 2,9 km</span></p></a></li>
+        </ul>
+      </section>
+    </main>
+    <footer class="px-12 pt-12 pb-10">
+      <p class="flex items-center gap-4"><a href="#" class="logo-link" aria-label="Najdimo, na začetno stran"><svg class="logo-mark w-7 h-7" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg><span class="font-display font-bold text-lg" aria-hidden="true">Najdimo</span></a><span class="text-muted-foreground">Spet doma.</span></p>
+      <nav aria-label="Noga strani" class="mt-4 flex items-end gap-8">
+        <div class="flex-1 min-w-0">
+          <ul class="flex flex-wrap gap-x-6"><li><a href="#" class="fl">Kako deluje</a></li><li><a href="#" class="fl">Nasveti za varnost</a></li><li><a href="#" class="fl">Pogosta vprašanja</a></li><li><a href="#" class="fl">Za zavetišča</a></li><li><a href="#" class="fl">Zavetišča</a></li><li><a href="#" class="fl">Oglašujte pri nas</a></li><li><a href="#" class="fl">O nas</a></li></ul>
+          <ul class="flex flex-wrap gap-x-6"><li><a href="#" class="fl">Zasebnost</a></li><li><a href="#" class="fl">Piškotki</a></li><li><button type="button" class="fl" aria-haspopup="dialog">Nastavitve piškotkov</button></li><li><a href="#" class="fl">Pogoji uporabe</a></li><li><a href="#" class="fl">Impresum</a></li><li><a href="#" class="fl">Dostopnost</a></li></ul>
+        </div>
+        <div class="lang" role="group" aria-label="Jezik: Slovenščina"><a href="#" class="ll" lang="sl" aria-current="true" aria-label="Slovenščina">SL</a><span aria-hidden="true">/</span><a href="#" class="ll" lang="en" hreflang="en" aria-label="English">EN</a></div>
+      </nav>
+      <p class="text-sm text-muted-foreground mt-6">© 2026 Signapps. Najdimo je delovno ime storitve.</p>
+    </footer>
+  </div></div>
+  <p class="help mt-4 max-w-[80ch]">No name: h1 is the P4 row title ("Najdena mačka"). Anonymous report: "Prijavila oseba, ki je žival našla" instead of a name. Found map: the avatar with the found ring inside a 150 m area disc to scale in <code>marker-found</code> at <code>--marker-area-alpha</code>, with the area and radius as text under the map (P5 <code>location.area_line</code>). Empty sightings: the slice sentence and a tonal button (one secondary, never a second primary). Vet Partner: the same P21 Detail unit, always labelled "Oglas"; context line "Veterinar v vaši regiji" (sample, never "nearest"); partner mark and 24-hour care as plain text, no badges; image from the clinic profile (placeholder tile here); the action is P21's "Call or open map" (SL sample "Pokliči ali odpri zemljevid"); its behaviour belongs to P21.</p>
+
+  <!-- W3 FOUND, HELD BY A SHELTER -->
+  <p class="tile-h" style="margin-top:72px">W3 · Found, held by a verified shelter (M3) · "in the shelter since" · call the shelter with its number from the shelter directory (FR-044) · upper part (below the columns: as W2)</p>
+  <div class="wrap-x"><div class="browser" lang="sl">
+    <div class="browser-bar"><span class="dots"><i></i><i></i><i></i></span><span class="url"><i class="ph ph-lock-simple"></i>najdimo.si/r/z5t1hc</span></div>
+    <header class="flex items-center gap-8 px-12 h-[88px]">
+      <a href="#" class="logo-link" aria-label="Najdimo, na začetno stran"><svg class="logo-mark w-9 h-9" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg><span class="font-display font-bold text-2xl tracking-[-0.03em]" aria-hidden="true">Najdimo</span></a>
+      <nav aria-label="Glavni meni"><ul class="flex items-center gap-2">
+        <li><a href="#" class="nl">Zemljevid</a></li><li><a href="#" class="nl">Izgubljene</a></li><li><a href="#" class="nl">Najdene</a></li><li><a href="#" class="nl">Kako deluje</a></li>
+      </ul></nav>
+      <div class="ml-auto flex items-center gap-2">
+        <div class="lang" role="group" aria-label="Jezik: Slovenščina"><a href="#" class="ll" lang="sl" aria-current="true" aria-label="Slovenščina">SL</a><span aria-hidden="true">/</span><a href="#" class="ll" lang="en" hreflang="en" aria-label="English">EN</a></div>
+        <a href="#" class="btn btn-ghost btn-sm">Vpis</a>
+        <button type="button" class="btn btn-secondary btn-sm" aria-haspopup="menu" aria-expanded="false">Prijavi</button>
+      </div>
+    </header>
+    <main class="px-12 pt-2 pb-20">
+      <div class="grid grid-cols-12 gap-8 items-start">
+        <div class="col-span-7 min-w-0">
+          <a href="#" class="btn btn-text btn-sm !px-3 -ml-3"><i class="ph-bold ph-caret-left" aria-hidden="true"></i>Nazaj na zemljevid</a>
+          <section class="mt-3" aria-roledescription="galerija" aria-label="Fotografije">
+            <img class="thumb w-full aspect-[4/3] rounded-3xl" src="../directions/img/dog-terrier.jpg" alt="Pes črne, rjave in bele barve, fotografija 1 od 3">
+            <div class="flex items-center gap-3 mt-4">
+              <ul class="flex gap-3">
+                <li><button type="button" class="tb" aria-current="true" aria-label="Pokaži fotografijo 1"><img src="../directions/img/dog-terrier.jpg" alt=""></button></li>
+                <li><button type="button" class="tb is-hover" aria-label="Pokaži fotografijo 2"><img src="../directions/img/dog-terrier.jpg" style="object-position:25% 40%" alt=""></button></li>
+                <li><button type="button" class="tb" aria-label="Pokaži fotografijo 3"><img src="../directions/img/dog-terrier.jpg" style="object-position:75% 70%" alt=""></button></li>
+              </ul>
+              <div class="ml-auto flex items-center gap-1">
+                <button type="button" class="iconbtn" aria-label="Prejšnja fotografija"><i class="ph-bold ph-caret-left"></i></button>
+                <span class="text-sm text-muted-foreground tnum min-w-10 text-center" aria-live="polite">1 / 3</span>
+                <button type="button" class="iconbtn" aria-label="Naslednja fotografija"><i class="ph-bold ph-caret-right"></i></button>
+              </div>
+            </div>
+          </section>
+        </div>
+        <div class="col-span-5 min-w-0 sticky top-6 pt-14">
+          <p class="flex flex-wrap items-center gap-x-3 gap-y-1"><span class="st st-lg st-found"><i class="ph-fill ph-hand-heart" aria-hidden="true"></i>Najdena</span><span class="text-muted-foreground">Najdena 13. oktobra</span></p>
+          <h1 class="font-display font-bold text-[64px] leading-[64px] tracking-[-0.02em] mt-3">Najden pes</h1>
+          <p class="text-xl text-muted-foreground mt-2">Pes · Mešanec · samec</p>
+          <dl class="facts grid grid-cols-2 gap-x-8 gap-y-5 mt-8">
+            <div><dt>Barva</dt><dd>črna, rjava in bela</dd></div>
+            <div><dt>Velikost</dt><dd>majhna</dd></div>
+            <div><dt>Ovratnica</dt><dd>brez</dd></div>
+            <div><dt>Čip</dt><dd>Ni podatka</dd></div>
+          </dl>
+          <div class="flex gap-3 mt-8">
+            <i class="ph-bold ph-map-pin-area text-2xl text-primary mt-0.5" aria-hidden="true"></i>
+            <div><p>Območje: <b>Moste</b></p><p class="text-sm text-muted-foreground">Prikazano območje je približno.</p></div>
+          </div>
+          <div class="card p-6 mt-8" data-sample>
+            <span class="badge b-verified"><i class="ph-fill ph-seal-check" aria-hidden="true"></i>Preverjeno zavetišče</span>
+            <p class="font-display font-semibold text-2xl leading-8 tracking-[-0.01em] mt-4">Zavetišče Sončni hrib</p>
+            <p class="text-muted-foreground">Ljubljana</p>
+            <p class="mt-3">V zavetišču od 13. oktobra</p>
+            <div class="flex flex-wrap items-center gap-x-4 gap-y-2 mt-5">
+              <a href="tel:+38612345678" class="btn btn-secondary"><i class="ph-bold ph-phone" aria-hidden="true"></i>Pokliči zavetišče</a>
+              <span class="font-bold tnum">01 234 56 78</span>
+            </div>
+          </div>
+          <div class="flex flex-wrap items-center gap-x-2 gap-y-1 mt-8">
+            <button type="button" class="btn btn-primary btn-lg"><i class="ph-bold ph-heart" aria-hidden="true"></i>To je moja žival</button>
+          </div>
+          <div class="note mt-6" role="note"><i class="ph-fill ph-shield-check text-primary" aria-hidden="true"></i><p>Nikoli ne pošiljajte denarja vnaprej. Kdor je žival res našel, denarja ne zahteva. <a href="#" class="textlink">Nasveti za varnost</a></p></div>
+          <div class="flex items-center gap-1 mt-5 -ml-2">
+            <button type="button" class="btn btn-ghost btn-sm" aria-haspopup="menu" aria-expanded="false"><i class="ph-bold ph-share-network" aria-hidden="true"></i>Deli ali natisni plakat</button>
+            <button type="button" class="iconbtn" aria-label="Več možnosti" aria-haspopup="menu" aria-expanded="false"><i class="ph-bold ph-dots-three"></i></button>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div></div>
+  <p class="help mt-4 max-w-[80ch]"><span class="anno">Sample copy</span> Shelter card: one <code>card</code> (radius 24, padding 24) with the page's one tonal pill (<code>verified</code>), the shelter name and place from the shelter directory, "V zavetišču od {date}", and the call: a <code>secondary</code> "Pokliči zavetišče" (<code>tel:</code>) with the number beside it in <code>tabular-nums</code>, because a desktop cannot tap to call. No countdown and no days-left count: the app never asserts a legal holding period unless the flag is on (W3b). "To je moja žival" stays the one primary; "Sporoči opažanje" is hidden while the animal is in a shelter. Thumbnail 2 shows hover (80 %).</p>
+
+  <p class="tile-h" style="margin-top:56px">W3b · Same card with the <code>content.legal_timings</code> flag on (Q-006, default off): one holding-period sentence under the date</p>
+  <div class="max-w-[447px]" lang="sl">
+    <div class="card p-6" data-sample>
+      <span class="badge b-verified"><i class="ph-fill ph-seal-check" aria-hidden="true"></i>Preverjeno zavetišče</span>
+      <p class="font-display font-semibold text-2xl leading-8 tracking-[-0.01em] mt-4">Zavetišče Sončni hrib</p>
+      <p class="text-muted-foreground">Ljubljana</p>
+      <p class="mt-3">V zavetišču od 13. oktobra</p>
+      <p class="text-muted-foreground mt-1">[Stavek o roku hrambe po predpisih. Besedilo po pravnem pregledu, Q-006.]</p>
+      <div class="flex flex-wrap items-center gap-x-4 gap-y-2 mt-5">
+        <a href="tel:+38612345678" class="btn btn-secondary"><i class="ph-bold ph-phone" aria-hidden="true"></i>Pokliči zavetišče</a>
+        <span class="font-bold tnum">01 234 56 78</span>
+      </div>
+    </div>
+  </div>
+  <p class="help mt-4 max-w-[80ch]">Shown at the right-column width (447 px). The bracketed line is a placeholder: its wording comes from the legal review (Q-006) through the content slice, and it is never a countdown, a bar or a date the app calculates. Same treatment in the mobile block (M5).</p>
+
+  <!-- W4 SIGHTED -->
+  <p class="tile-h" style="margin-top:72px">W4 · Sighted, visitor · anonymous sighter · house ad "Partner with us" · footer as W1</p>
+  <div class="wrap-x"><div class="browser" lang="sl">
+    <div class="browser-bar"><span class="dots"><i></i><i></i><i></i></span><span class="url"><i class="ph ph-lock-simple"></i>najdimo.si/r/h2w9ve</span></div>
+    <header class="flex items-center gap-8 px-12 h-[88px]">
+      <a href="#" class="logo-link" aria-label="Najdimo, na začetno stran"><svg class="logo-mark w-9 h-9" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg><span class="font-display font-bold text-2xl tracking-[-0.03em]" aria-hidden="true">Najdimo</span></a>
+      <nav aria-label="Glavni meni"><ul class="flex items-center gap-2">
+        <li><a href="#" class="nl">Zemljevid</a></li><li><a href="#" class="nl">Izgubljene</a></li><li><a href="#" class="nl">Najdene</a></li><li><a href="#" class="nl">Kako deluje</a></li>
+      </ul></nav>
+      <div class="ml-auto flex items-center gap-2">
+        <div class="lang" role="group" aria-label="Jezik: Slovenščina"><a href="#" class="ll" lang="sl" aria-current="true" aria-label="Slovenščina">SL</a><span aria-hidden="true">/</span><a href="#" class="ll" lang="en" hreflang="en" aria-label="English">EN</a></div>
+        <a href="#" class="btn btn-ghost btn-sm">Vpis</a>
+        <button type="button" class="btn btn-secondary btn-sm" aria-haspopup="menu" aria-expanded="false">Prijavi</button>
+      </div>
+    </header>
+    <main class="px-12 pt-2 pb-24">
+      <div class="grid grid-cols-12 gap-8 items-start">
+        <div class="col-span-7 min-w-0">
+          <a href="#" class="btn btn-text btn-sm !px-3 -ml-3"><i class="ph-bold ph-caret-left" aria-hidden="true"></i>Nazaj na zemljevid</a>
+          <section class="mt-3" aria-label="Fotografija">
+            <img class="thumb w-full aspect-[4/3] rounded-3xl" src="../directions/img/dog-golden.jpg" alt="Pes zlate barve, ovratnica: črna">
+          </section>
+          <section class="mt-14">
+            <h2 class="font-display font-bold text-3xl tracking-[-0.015em]">Opomba</h2>
+            <p class="mt-4 max-w-[58ch]">Okoli 7. ure je sam hodil ob Ljubljanici pri Trnovskem pristanu. Bil je videti zmeden, a ne poškodovan. Ni hotel priti bliže.</p>
+          </section>
+        </div>
+        <div class="col-span-5 min-w-0 sticky top-6 pt-14">
+          <p class="flex flex-wrap items-center gap-x-3 gap-y-1"><span class="st st-lg st-sighted"><i class="ph-fill ph-eye" aria-hidden="true"></i>Opažena</span><span class="text-muted-foreground">Opažena 14. oktobra</span></p>
+          <h1 class="font-display font-bold text-[64px] leading-[64px] tracking-[-0.02em] mt-3">Opažen pes</h1>
+          <p class="text-xl text-muted-foreground mt-2">Pes</p>
+          <dl class="facts grid grid-cols-2 gap-x-8 gap-y-5 mt-8">
+            <div><dt>Barva</dt><dd>zlata</dd></div>
+            <div><dt>Velikost</dt><dd>velika</dd></div>
+            <div><dt>Ovratnica</dt><dd>črna</dd></div>
+            <div><dt>Čip</dt><dd>Ni podatka</dd></div>
+          </dl>
+          <div class="flex gap-3 mt-8">
+            <i class="ph-bold ph-map-pin-area text-2xl text-primary mt-0.5" aria-hidden="true"></i>
+            <div><p>Območje: <b>Trnovo</b></p><p class="text-sm text-muted-foreground">Prikazano območje je približno.</p></div>
+          </div>
+          <p class="flex items-center gap-2 text-sm text-muted-foreground mt-4"><i class="ph-bold ph-user-circle text-base" aria-hidden="true"></i>Prijavila oseba, ki je žival videla</p>
+          <div class="flex flex-wrap items-center gap-x-2 gap-y-1 mt-8">
+            <button type="button" class="btn btn-primary btn-lg"><i class="ph-bold ph-chat-circle" aria-hidden="true"></i>Pošlji sporočilo</button>
+            <button type="button" class="btn btn-text btn-lg"><i class="ph-bold ph-heart" aria-hidden="true"></i>To je moja žival</button>
+          </div>
+          <div class="note mt-6" role="note"><i class="ph-fill ph-shield-check text-primary" aria-hidden="true"></i><p>Nikoli ne pošiljajte denarja vnaprej. Kdor je žival res našel, denarja ne zahteva. <a href="#" class="textlink">Nasveti za varnost</a></p></div>
+          <div class="flex items-center gap-1 mt-5 -ml-2">
+            <button type="button" class="btn btn-ghost btn-sm" aria-haspopup="menu" aria-expanded="false"><i class="ph-bold ph-share-network" aria-hidden="true"></i>Deli ali natisni plakat</button>
+            <button type="button" class="iconbtn" aria-label="Več možnosti" aria-haspopup="menu" aria-expanded="false"><i class="ph-bold ph-dots-three"></i></button>
+          </div>
+        </div>
+      </div>
+
+      <section class="mt-24" aria-label="Kje je bila videna">
+        <h2 class="font-display font-bold text-3xl tracking-[-0.015em]">Kje je bila videna</h2>
+        <div class="grid grid-cols-12 gap-8 mt-6 items-start">
+          <div class="col-span-7">
+            <div class="map-wrap clip-card h-[400px] rounded-2xl" role="img" aria-label="Območje: Trnovo, približno 150 m. Prikazano območje je približno.">
+              <div class="map-canvas" data-center="14.5020,46.0430" data-zoom="15" data-roads="all"></div>
+              <span class="mk mk-area sighted" style="left:44%;top:50%;width:90px;height:90px" aria-hidden="true"><img class="mk-avatar sighted" src="../directions/img/dog-golden.jpg" alt=""></span>
+              <span class="mk mk-dot" style="left:72%;top:24%" aria-hidden="true"></span>
+            </div>
+            <div class="flex flex-wrap items-center justify-between gap-x-4 mt-2">
+              <p class="text-sm text-muted-foreground">Območje: Trnovo, približno 150 m</p>
+              <a href="#" class="btn btn-text btn-sm !px-3 -mr-3"><i class="ph-bold ph-arrows-out" aria-hidden="true"></i>Odpri zemljevid</a>
+            </div>
+          </div>
+          <div class="col-span-5">
+            <h3 class="font-display font-semibold text-2xl leading-8 tracking-[-0.01em]">Opažanja</h3>
+            <ol class="grid gap-7 mt-5">
+              <li><p class="flex flex-wrap items-center gap-x-2 text-sm"><span class="st st-sighted"><i class="ph-fill ph-eye" aria-hidden="true"></i>Opažena</span><span class="text-muted-foreground tnum">danes 9.05 · Prule</span></p><p class="mt-1">Istega psa sem videla pri mostu na Prulah, tekel je proti centru.</p></li>
+            </ol>
+          </div>
+        </div>
+      </section>
+
+      <div class="mt-24 grid grid-cols-12 gap-8">
+        <a href="#" class="ad col-span-7" rel="sponsored noopener" aria-label="Oglas: Vaša ambulanta ali trgovina na tem mestu?">
+          <span class="ad-label">Oglas</span>
+          <span class="ad-row">
+            <span class="ad-img"><svg viewBox="0 0 96 96" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><use href="#illo-ad"/></svg><img src="../../../assets/house-ad-partner.png" alt="Ilustracija: vrsta lokalnih trgovin in ambulanta ob ulici" onerror="this.remove()"></span>
+            <span class="flex-1 min-w-0"><span class="ad-t">Vaša ambulanta ali trgovina na tem mestu?</span><span class="ad-x">Veterinarji, trgovine in saloni: dosezite lastnike psov in mačk v svoji regiji. Oglasi so vedno jasno označeni.</span><span class="ad-cta">Oglašujte pri nas<i class="ph-bold ph-arrow-right" aria-hidden="true"></i></span></span>
+          </span>
+        </a>
+      </div>
+
+      <section class="mt-24" aria-label="V bližini">
+        <h2 class="font-display font-bold text-3xl tracking-[-0.015em]">V bližini</h2>
+        <ul class="grid grid-cols-3 gap-8 mt-6">
+          <li><a href="#" class="tile"><img class="thumb w-full aspect-[4/3] rounded-2xl" src="../directions/img/dog-golden-tall.jpg" alt="Luna: pes zlate barve"><h3 class="font-display font-semibold text-2xl leading-8 tracking-[-0.01em] mt-4">Luna</h3><p class="mt-1 flex flex-wrap items-center gap-x-2 text-sm"><span class="st st-lost"><i class="ph-fill ph-megaphone" aria-hidden="true"></i>Izgubljena</span><span class="text-muted-foreground tnum">včeraj, 1,1 km</span></p></a></li>
+          <li><a href="#" class="tile"><img class="thumb w-full aspect-[4/3] rounded-2xl" src="../directions/img/dog-aussie-wide.jpg" alt="Pes rjave, bele in črne barve"><h3 class="font-display font-semibold text-2xl leading-8 tracking-[-0.01em] mt-4">Najden pes</h3><p class="mt-1 flex flex-wrap items-center gap-x-2 text-sm"><span class="st st-found"><i class="ph-fill ph-hand-heart" aria-hidden="true"></i>Najdena</span><span class="text-muted-foreground tnum">danes, 2,3 km</span></p></a></li>
+          <li><a href="#" class="tile"><img class="thumb w-full aspect-[4/3] rounded-2xl" src="../directions/img/cat-ginger.jpg" alt="Piki: mačka oranžne barve"><h3 class="font-display font-semibold text-2xl leading-8 tracking-[-0.01em] mt-4">Piki</h3><p class="mt-1 flex flex-wrap items-center gap-x-2 text-sm"><span class="st st-lost"><i class="ph-fill ph-megaphone" aria-hidden="true"></i>Izgubljena</span><span class="text-muted-foreground tnum">pred 2 dnevoma, 3,0 km</span></p></a></li>
+        </ul>
+      </section>
+    </main>
+  </div></div>
+  <p class="help mt-4 max-w-[80ch]">One photo: no thumbnails, no position. Sighted map: avatar with the sighted ring in a 150 m disc to scale in <code>marker-sighted</code> at <code>--marker-area-alpha</code>, later sightings as dots, area and radius as text under the map. Primary "Pošlji sporočilo" opens the gate (P16) when signed out; signed in, it starts the P12 conversation.</p>
+
+  <!-- W5 OWNER VIEW -->
+  <p class="tile-h" style="margin-top:72px">W5 · Own lost report (signed-in owner) · matches note · responsible shelter · owner "Več možnosti" menu open · exact pin on the map</p>
+  <div class="wrap-x"><div class="browser" lang="sl">
+    <div class="browser-bar"><span class="dots"><i></i><i></i><i></i></span><span class="url"><i class="ph ph-lock-simple"></i>najdimo.si/r/k7m2qx</span></div>
+    <header class="flex items-center gap-8 px-12 h-[88px]">
+      <a href="#" class="logo-link" aria-label="Najdimo, na začetno stran"><svg class="logo-mark w-9 h-9" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg><span class="font-display font-bold text-2xl tracking-[-0.03em]" aria-hidden="true">Najdimo</span></a>
+      <nav aria-label="Glavni meni"><ul class="flex items-center gap-2">
+        <li><a href="#" class="nl">Zemljevid</a></li><li><a href="#" class="nl">Izgubljene</a></li><li><a href="#" class="nl">Najdene</a></li><li><a href="#" class="nl">Moje živali</a></li>
+      </ul></nav>
+      <div class="ml-auto flex items-center gap-2">
+        <div class="lang" role="group" aria-label="Jezik: Slovenščina"><a href="#" class="ll" lang="sl" aria-current="true" aria-label="Slovenščina">SL</a><span aria-hidden="true">/</span><a href="#" class="ll" lang="en" hreflang="en" aria-label="English">EN</a></div>
+        <a href="#" class="iconbtn" aria-label="Sporočila in obvestila"><i class="ph-bold ph-tray"></i></a>
+        <button type="button" class="iconbtn" aria-label="Moj račun" aria-haspopup="menu" aria-expanded="false"><span class="av av-32" aria-hidden="true">AN</span></button>
+        <button type="button" class="btn btn-secondary btn-sm ml-2" aria-haspopup="menu" aria-expanded="false">Prijavi</button>
+      </div>
+    </header>
+    <main class="px-12 pt-2 pb-24">
+      <div class="grid grid-cols-12 gap-8 items-start">
+        <div class="col-span-7 min-w-0">
+          <a href="#" class="btn btn-text btn-sm !px-3 -ml-3"><i class="ph-bold ph-caret-left" aria-hidden="true"></i>Nazaj na zemljevid</a>
+          <section class="mt-3" aria-roledescription="galerija" aria-label="Fotografije">
+            <img class="thumb w-full aspect-[4/3] rounded-3xl" src="../directions/img/dog-beagle.jpg" alt="Rex: pes rjave in bele barve, ovratnica: rdeča z zvončkom, fotografija 1 od 4">
+            <div class="flex items-center gap-3 mt-4">
+              <ul class="flex gap-3">
+                <li><button type="button" class="tb" aria-current="true" aria-label="Pokaži fotografijo 1"><img src="../directions/img/dog-beagle.jpg" alt=""></button></li>
+                <li><button type="button" class="tb" aria-label="Pokaži fotografijo 2"><img src="../directions/img/dog-beagle.jpg" style="object-position:20% 30%" alt=""></button></li>
+                <li><button type="button" class="tb" aria-label="Pokaži fotografijo 3"><img src="../directions/img/dog-beagle.jpg" style="object-position:80% 60%" alt=""></button></li>
+                <li><button type="button" class="tb" aria-label="Pokaži fotografijo 4"><img src="../directions/img/dog-beagle.jpg" style="object-position:50% 90%" alt=""></button></li>
+              </ul>
+              <div class="ml-auto flex items-center gap-1">
+                <button type="button" class="iconbtn" aria-label="Prejšnja fotografija"><i class="ph-bold ph-caret-left"></i></button>
+                <span class="text-sm text-muted-foreground tnum min-w-10 text-center" aria-live="polite">1 / 4</span>
+                <button type="button" class="iconbtn" aria-label="Naslednja fotografija"><i class="ph-bold ph-caret-right"></i></button>
+              </div>
+            </div>
+          </section>
+          <section class="mt-14">
+            <h2 class="font-display font-bold text-3xl tracking-[-0.015em]">Kaj se je zgodilo</h2>
+            <p class="mt-4 max-w-[58ch]">Rex se je v soboto zvečer ustrašil ognjemeta in skozi odprta vrata zbežal z vrta. Je prijazen, a do neznancev plašen. Prosimo, ne lovite ga. Pokličite ga po imenu, ostanite na mestu in sporočite, kje ste ga videli.</p>
+          </section>
+        </div>
+        <div class="col-span-5 min-w-0 sticky top-6 pt-14">
+          <div class="note items-center !pr-2 mb-8" role="status"><i class="ph-fill ph-sparkle text-primary" aria-hidden="true"></i><p class="flex-1 font-semibold tnum">2 možni ujemanji</p><a href="#" class="btn btn-text btn-sm">Poglej<i class="ph-bold ph-arrow-right" aria-hidden="true"></i></a></div>
+          <p class="flex flex-wrap items-center gap-x-3 gap-y-1"><span class="st st-lg st-lost"><i class="ph-fill ph-megaphone" aria-hidden="true"></i>Izgubljena</span><span class="text-muted-foreground">Pogrešana od 12. oktobra</span></p>
+          <h1 class="font-display font-bold text-[64px] leading-[64px] tracking-[-0.02em] mt-3">Rex</h1>
+          <p class="text-xl text-muted-foreground mt-2">Pes · Mešanec · samec</p>
+          <dl class="facts grid grid-cols-2 gap-x-8 gap-y-5 mt-8">
+            <div><dt>Barva</dt><dd>rjava in bela</dd></div>
+            <div><dt>Velikost</dt><dd>srednja</dd></div>
+            <div><dt>Ovratnica</dt><dd>rdeča z zvončkom</dd></div>
+            <div><dt>Čip</dt><dd>Čip vpisan</dd></div>
+          </dl>
+          <div class="flex gap-3 mt-8">
+            <i class="ph-bold ph-map-pin-area text-2xl text-primary mt-0.5" aria-hidden="true"></i>
+            <div><p>Območje: <b>Šiška</b></p><p class="text-sm text-muted-foreground">Prikazano območje je približno.</p></div>
+          </div>
+          <a href="#" class="btn btn-primary btn-lg mt-8"><i class="ph-bold ph-heart" aria-hidden="true"></i>Žival je spet doma</a>
+          <div class="flex flex-wrap items-center gap-x-2 mt-2 -ml-3">
+            <a href="#" class="btn btn-text"><i class="ph-bold ph-pencil-simple" aria-hidden="true"></i>Uredi</a>
+            <a href="#" class="btn btn-text"><i class="ph-bold ph-printer" aria-hidden="true"></i>Plakat</a>
+          </div>
+          <p class="flex items-center gap-3 mt-6 font-semibold"><i class="ph-fill ph-gift text-[22px]" style="color:hsl(var(--status-reunited))" aria-hidden="true"></i><span class="tnum">Nagrada: 50 €</span></p>
+          <p class="flex gap-3 mt-3 text-[15px] leading-[22px]"><i class="ph-fill ph-shield-check text-[22px] text-primary" aria-hidden="true"></i><span>Nagrado izročite šele, ko je žival spet pri vas. Nikoli nikomur ne plačajte vnaprej, tudi ne za prevoz ali „stroške“. <a href="#" class="textlink">Nasveti za varnost</a></span></p>
+          <div class="flex gap-3 mt-7" data-sample>
+            <i class="ph-bold ph-phone text-2xl text-primary mt-0.5" aria-hidden="true"></i>
+            <div>
+              <p class="text-sm text-muted-foreground">Pristojno zavetišče za občino Ljubljana</p>
+              <p><b>Zavetišče Sončni hrib</b></p>
+              <div class="flex flex-wrap items-center gap-x-4 gap-y-2 mt-2">
+                <a href="tel:+38612345678" class="btn btn-secondary btn-sm"><i class="ph-bold ph-phone" aria-hidden="true"></i>Pokliči</a>
+                <span class="font-bold tnum">01 234 56 78</span>
+              </div>
+            </div>
+          </div>
+          <div class="flex items-center gap-1 mt-5 -ml-2">
+            <button type="button" class="btn btn-ghost btn-sm" aria-haspopup="menu" aria-expanded="false"><i class="ph-bold ph-share-network" aria-hidden="true"></i>Deli ali natisni plakat</button>
+            <div class="relative">
+              <button type="button" class="iconbtn is-open" aria-label="Več možnosti" aria-haspopup="menu" aria-expanded="true"><i class="ph-bold ph-dots-three"></i></button>
+              <div class="pop absolute right-0 top-[52px] p-2 rounded-xl" style="width:248px" role="menu" aria-label="Več možnosti">
+                <button type="button" role="menuitem" class="mi is-focus"><i class="ph-bold ph-x-circle" aria-hidden="true"></i>Zaključi iskanje</button>
+                <button type="button" role="menuitem" class="mi"><i class="ph-bold ph-link" aria-hidden="true"></i>Kopiraj povezavo</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <section class="mt-24" aria-label="Kje je bila videna">
+        <h2 class="font-display font-bold text-3xl tracking-[-0.015em]">Kje je bila videna</h2>
+        <div class="grid grid-cols-12 gap-8 mt-6 items-start">
+          <div class="col-span-7">
+            <div class="relative">
+              <div class="map-wrap clip-card h-[400px] rounded-2xl" role="img" aria-label="Območje: Šiška, približno 500 m. Prikazano območje je približno.">
+                <div class="map-canvas" data-center="14.4930,46.0640" data-zoom="13.6"></div>
+                <span class="mk mk-area" style="left:46%;top:38%;width:114px;height:114px" aria-hidden="true"><img class="mk-avatar" src="../directions/img/dog-beagle.jpg" alt=""></span>
+                <span class="lp-pin" style="left:57%;top:50%" aria-hidden="true"><svg viewBox="0 0 54 66" width="54" height="66" focusable="false"><path d="M27 62 L15 47.78 A24 24 0 1 1 39 47.78 Z"/></svg><i class="ph-fill ph-paw-print"></i></span>
+                <span class="mk mk-dot" style="left:62%;top:74%" aria-hidden="true"></span>
+                <span class="mk mk-dot" style="left:36%;top:60%" aria-hidden="true"></span>
+              </div>
+              <span class="lp-own" style="left:calc(57% + 30px);top:calc(50% - 52px)"><i class="ph-fill ph-lock-simple" aria-hidden="true"></i>Vidno samo vam</span>
+            </div>
+            <p class="text-sm text-muted-foreground mt-3">Območje: Šiška, približno 500 m</p>
+          </div>
+          <div class="col-span-5">
+            <h3 class="font-display font-semibold text-2xl leading-8 tracking-[-0.01em]">Opažanja</h3>
+            <ol class="grid gap-7 mt-5">
+              <li><p class="flex flex-wrap items-center gap-x-2 text-sm"><span class="st st-sighted"><i class="ph-fill ph-eye" aria-hidden="true"></i>Opažena</span><span class="text-muted-foreground tnum">danes 8.15 · Rožna dolina</span></p><p class="mt-1">Tekel je po kolesarski stezi proti Tivoliju. Rdeča ovratnica, brez povodca.</p></li>
+              <li><p class="flex flex-wrap items-center gap-x-2 text-sm"><span class="st st-sighted"><i class="ph-fill ph-eye" aria-hidden="true"></i>Opažena</span><span class="text-muted-foreground tnum">včeraj 21.40 · Šiška</span></p><p class="mt-1">Stal je pri ekološkem otoku na Celovški. Ko sem se približal, je zbežal proti parku.</p></li>
+            </ol>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div></div>
+  <p class="help mt-4 max-w-[80ch]">Owner view replaces slot A: primary "Žival je spet doma" (P14), text buttons "Uredi" and "Plakat"; the overflow holds "Zaključi iskanje" ("Povečaj doseg" joins it in M4, hidden until then; owners get no "Prijavi zlorabo"). The reward line keeps its place; the owner's reward note (<code>report.owner_reward_note</code>) replaces the public safety note and, because the matches note is the view's one <code>note</code> (sparkle, link to P11), it sits as a plain line. Held, hidden and "finder marked it returned" use the matches-note slot (see S7). Exact point: the system pin (48 px <code>primary</code> head with a tail, <code>marker-ring</code> halo, paw), drawn only for the owner, with "Vidno samo vam" as real text after the map image. The overflow menu opens right-aligned to its button. <span class="anno">Sample copy</span> Responsible shelter (as in P6, FR-044): one row with the phone icon, the municipality sentence, the shelter in bold, a <code>secondary</code> "Pokliči" (<code>tel:</code>) and the number in <code>tabular-nums</code>.</p>
+
+  <!-- W6 REUNITED + W7 CLOSED -->
+  <p class="tile-h" style="margin-top:72px">W6 · Reunited (public view, <code>noindex</code>) · actions removed except share · photo stays</p>
+  <div class="wrap-x"><div class="browser" lang="sl">
+    <div class="browser-bar"><span class="dots"><i></i><i></i><i></i></span><span class="url"><i class="ph ph-lock-simple"></i>najdimo.si/r/k7m2qx</span></div>
+    <header class="flex items-center gap-8 px-12 h-[88px]">
+      <a href="#" class="logo-link" aria-label="Najdimo, na začetno stran"><svg class="logo-mark w-9 h-9" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg><span class="font-display font-bold text-2xl tracking-[-0.03em]" aria-hidden="true">Najdimo</span></a>
+      <nav aria-label="Glavni meni"><ul class="flex items-center gap-2">
+        <li><a href="#" class="nl">Zemljevid</a></li><li><a href="#" class="nl">Izgubljene</a></li><li><a href="#" class="nl">Najdene</a></li><li><a href="#" class="nl">Kako deluje</a></li>
+      </ul></nav>
+      <div class="ml-auto flex items-center gap-2">
+        <div class="lang" role="group" aria-label="Jezik: Slovenščina"><a href="#" class="ll" lang="sl" aria-current="true" aria-label="Slovenščina">SL</a><span aria-hidden="true">/</span><a href="#" class="ll" lang="en" hreflang="en" aria-label="English">EN</a></div>
+        <a href="#" class="btn btn-ghost btn-sm">Vpis</a>
+        <button type="button" class="btn btn-secondary btn-sm" aria-haspopup="menu" aria-expanded="false">Prijavi</button>
+      </div>
+    </header>
+    <main class="px-12 pt-2 pb-20">
+      <div class="grid grid-cols-12 gap-8 items-start">
+        <div class="col-span-7 min-w-0">
+          <a href="#" class="btn btn-text btn-sm !px-3 -ml-3"><i class="ph-bold ph-caret-left" aria-hidden="true"></i>Nazaj na zemljevid</a>
+          <img class="thumb w-full aspect-[4/3] rounded-3xl mt-3" src="../directions/img/dog-beagle.jpg" alt="Rex: pes rjave in bele barve, ovratnica: rdeča z zvončkom">
+        </div>
+        <div class="col-span-5 min-w-0 pt-14">
+          <p><span class="st st-lg st-reunited"><i class="ph-fill ph-heart" aria-hidden="true"></i>Spet doma</span></p>
+          <h1 class="font-display font-bold text-[64px] leading-[64px] tracking-[-0.02em] mt-3">Rex</h1>
+          <p class="text-xl text-muted-foreground mt-2">Pes · Mešanec · samec</p>
+          <p class="text-xl leading-8 mt-8 max-w-[34ch]">Rex je spet doma. Hvala vsem, ki ste pomagali.</p>
+          <dl class="facts grid grid-cols-2 gap-x-8 gap-y-5 mt-8">
+            <div><dt>Barva</dt><dd>rjava in bela</dd></div>
+            <div><dt>Velikost</dt><dd>srednja</dd></div>
+          </dl>
+          <div class="flex items-center gap-1 mt-8 -ml-2">
+            <button type="button" class="btn btn-ghost btn-sm" aria-haspopup="menu" aria-expanded="false"><i class="ph-bold ph-share-network" aria-hidden="true"></i>Deli ali natisni plakat</button>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div></div>
+  <p class="help mt-4 max-w-[80ch]">No slot A, no safety note, no overflow, no area line and no sightings map: the page is a thank-you. The header "Prijavi" stays <code>secondary</code> on every P9 state (system v0.9), so the page type looks the same in all states. Status word "Spet doma" with the filled heart in <code>status-reunited-subtle-foreground</code>; sun yellow stays in the reunited token only. Below the columns: the ad slot and "V bližini" as W1.</p>
+
+  <p class="tile-h" style="margin-top:72px">W7 · Closed (public view, <code>noindex</code>; 410 after 30 days) · muted status word · actions removed</p>
+  <div class="wrap-x"><div class="browser" lang="sl">
+    <div class="browser-bar"><span class="dots"><i></i><i></i><i></i></span><span class="url"><i class="ph ph-lock-simple"></i>najdimo.si/r/m4q6sb</span></div>
+    <header class="flex items-center gap-8 px-12 h-[88px]">
+      <a href="#" class="logo-link" aria-label="Najdimo, na začetno stran"><svg class="logo-mark w-9 h-9" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg><span class="font-display font-bold text-2xl tracking-[-0.03em]" aria-hidden="true">Najdimo</span></a>
+      <nav aria-label="Glavni meni"><ul class="flex items-center gap-2">
+        <li><a href="#" class="nl">Zemljevid</a></li><li><a href="#" class="nl">Izgubljene</a></li><li><a href="#" class="nl">Najdene</a></li><li><a href="#" class="nl">Kako deluje</a></li>
+      </ul></nav>
+      <div class="ml-auto flex items-center gap-2">
+        <div class="lang" role="group" aria-label="Jezik: Slovenščina"><a href="#" class="ll" lang="sl" aria-current="true" aria-label="Slovenščina">SL</a><span aria-hidden="true">/</span><a href="#" class="ll" lang="en" hreflang="en" aria-label="English">EN</a></div>
+        <a href="#" class="btn btn-ghost btn-sm">Vpis</a>
+        <button type="button" class="btn btn-secondary btn-sm" aria-haspopup="menu" aria-expanded="false">Prijavi</button>
+      </div>
+    </header>
+    <main class="px-12 pt-2 pb-20">
+      <div class="grid grid-cols-12 gap-8 items-start">
+        <div class="col-span-7 min-w-0">
+          <a href="#" class="btn btn-text btn-sm !px-3 -ml-3"><i class="ph-bold ph-caret-left" aria-hidden="true"></i>Nazaj na zemljevid</a>
+          <img class="thumb w-full aspect-[4/3] rounded-3xl mt-3" src="../directions/img/cat-siamese.jpg" alt="Mici: mačka bele in rjave barve">
+        </div>
+        <div class="col-span-5 min-w-0 pt-14">
+          <p><span class="st st-lg st-closed"><i class="ph-fill ph-archive" aria-hidden="true"></i>Zaključeno</span></p>
+          <h1 class="font-display font-bold text-[64px] leading-[64px] tracking-[-0.02em] mt-3">Mici</h1>
+          <p class="text-xl text-muted-foreground mt-2">Mačka · siamska</p>
+          <p class="text-xl leading-8 mt-8">Iskanje je zaključeno.</p>
+          <dl class="facts grid grid-cols-2 gap-x-8 gap-y-5 mt-8">
+            <div><dt>Barva</dt><dd>bela in rjava</dd></div>
+            <div><dt>Velikost</dt><dd>majhna</dd></div>
+          </dl>
+          <div class="flex gap-3 mt-8">
+            <i class="ph-bold ph-map-pin-area text-2xl text-muted-foreground mt-0.5" aria-hidden="true"></i>
+            <div><p>Območje: <b>Vič</b></p><p class="text-sm text-muted-foreground">Prikazano območje je približno.</p></div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div></div>
+  <p class="help mt-4 max-w-[80ch]">Status icon plus the word "Zaključeno" in <code>muted-foreground</code> (P4 <code>browse.status_closed</code>), never colour alone. No actions and no share: a closed search is not spread further. Ad slot and "V bližini" remain below the columns.</p>
+
+  <!-- W8 410 -->
+  <p class="tile-h" style="margin-top:72px">W8 · 410: removed, expired, hidden (public) or closed more than 30 days · <code>noindex</code> · P1 error page pattern</p>
+  <div class="wrap-x"><div class="browser" lang="sl">
+    <div class="browser-bar"><span class="dots"><i></i><i></i><i></i></span><span class="url"><i class="ph ph-lock-simple"></i>najdimo.si/r/a1b2c3</span></div>
+    <header class="flex items-center gap-8 px-12 h-[88px]">
+      <a href="#" class="logo-link" aria-label="Najdimo, na začetno stran"><svg class="logo-mark w-9 h-9" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg><span class="font-display font-bold text-2xl tracking-[-0.03em]" aria-hidden="true">Najdimo</span></a>
+      <nav aria-label="Glavni meni"><ul class="flex items-center gap-2">
+        <li><a href="#" class="nl">Zemljevid</a></li><li><a href="#" class="nl">Izgubljene</a></li><li><a href="#" class="nl">Najdene</a></li><li><a href="#" class="nl">Kako deluje</a></li>
+      </ul></nav>
+      <div class="ml-auto flex items-center gap-2">
+        <div class="lang" role="group" aria-label="Jezik: Slovenščina"><a href="#" class="ll" lang="sl" aria-current="true" aria-label="Slovenščina">SL</a><span aria-hidden="true">/</span><a href="#" class="ll" lang="en" hreflang="en" aria-label="English">EN</a></div>
+        <a href="#" class="btn btn-ghost btn-sm">Vpis</a>
+        <button type="button" class="btn btn-secondary btn-sm" aria-haspopup="menu" aria-expanded="false">Prijavi</button>
+      </div>
+    </header>
+    <main class="px-12 pt-8 pb-20 grid gap-16 items-start" style="grid-template-columns:minmax(0,7fr) minmax(0,5fr)">
+      <div>
+        <h1 class="font-display font-bold text-5xl tracking-[-0.02em] max-w-[16ch]">Ta prijava ni več na voljo</h1>
+        <p class="text-xl leading-8 mt-4 max-w-[44ch]">Prijava je zaključena ali odstranjena. Morda je žival že spet doma.</p>
+        <div class="flex flex-wrap items-center gap-3 mt-10">
+          <a href="#" class="btn btn-primary btn-lg"><i class="ph-bold ph-map-trifold" aria-hidden="true"></i>Na zemljevid</a>
+          <a href="#" class="btn btn-text btn-lg">Na začetno stran</a>
+        </div>
+      </div>
+      <div class="spot-art w-full" style="border-radius:32px"><svg viewBox="0 0 320 210" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><use href="#illo-spot"/></svg><img src="../../../assets/empty-inbox.png" alt="" onerror="this.remove()"></div>
+    </main>
+  </div></div>
+  <p class="help mt-4 max-w-[80ch]">Status 410, document title "Prijava ni več na voljo", no ad, no report data, no structured data. Footer as W1.</p>
+
+  <!-- W9 LOADING -->
+  <p class="tile-h" style="margin-top:72px">W9 · Loading: skeleton in the final shape (photo, thumbnails, status, title, facts, main button)</p>
+  <div class="wrap-x"><div class="browser" lang="sl">
+    <div class="browser-bar"><span class="dots"><i></i><i></i><i></i></span><span class="url"><i class="ph ph-lock-simple"></i>najdimo.si/r/k7m2qx</span></div>
+    <header class="flex items-center gap-8 px-12 h-[88px]">
+      <a href="#" class="logo-link" aria-label="Najdimo, na začetno stran"><svg class="logo-mark w-9 h-9" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg><span class="font-display font-bold text-2xl tracking-[-0.03em]" aria-hidden="true">Najdimo</span></a>
+      <nav aria-label="Glavni meni"><ul class="flex items-center gap-2">
+        <li><a href="#" class="nl">Zemljevid</a></li><li><a href="#" class="nl">Izgubljene</a></li><li><a href="#" class="nl">Najdene</a></li><li><a href="#" class="nl">Kako deluje</a></li>
+      </ul></nav>
+      <div class="ml-auto flex items-center gap-2">
+        <div class="lang" role="group" aria-label="Jezik: Slovenščina"><a href="#" class="ll" lang="sl" aria-current="true" aria-label="Slovenščina">SL</a><span aria-hidden="true">/</span><a href="#" class="ll" lang="en" hreflang="en" aria-label="English">EN</a></div>
+        <a href="#" class="btn btn-ghost btn-sm">Vpis</a>
+        <button type="button" class="btn btn-secondary btn-sm" aria-haspopup="menu" aria-expanded="false">Prijavi</button>
+      </div>
+    </header>
+    <main class="px-12 pt-2 pb-20" aria-busy="true">
+      <p class="sr-only" role="status">Nalaganje …</p>
+      <div class="grid grid-cols-12 gap-8 items-start" aria-hidden="true">
+        <div class="col-span-7 min-w-0">
+          <div class="skel h-11 w-48 !rounded-full"></div>
+          <div class="skel w-full aspect-[4/3] mt-3 !rounded-3xl"></div>
+          <div class="flex gap-3 mt-4"><div class="skel !rounded-lg" style="width:88px;height:72px"></div><div class="skel !rounded-lg" style="width:88px;height:72px"></div><div class="skel !rounded-lg" style="width:88px;height:72px"></div></div>
+        </div>
+        <div class="col-span-5 min-w-0 pt-14">
+          <div class="skel h-6 w-56"></div>
+          <div class="skel h-16 w-48 mt-4"></div>
+          <div class="skel h-6 w-52 mt-3"></div>
+          <div class="grid grid-cols-2 gap-x-8 gap-y-5 mt-8">
+            <div><div class="skel h-4 w-16"></div><div class="skel h-5 w-32 mt-2"></div></div>
+            <div><div class="skel h-4 w-20"></div><div class="skel h-5 w-24 mt-2"></div></div>
+            <div><div class="skel h-4 w-20"></div><div class="skel h-5 w-36 mt-2"></div></div>
+            <div><div class="skel h-4 w-10"></div><div class="skel h-5 w-28 mt-2"></div></div>
+          </div>
+          <div class="skel h-12 w-64 mt-8"></div>
+          <div class="skel h-14 w-60 mt-8 !rounded-full"></div>
+        </div>
+      </div>
+    </main>
+  </div></div>
+  <p class="help mt-4 max-w-[80ch]">Server-rendered pages rarely show this; it appears on client navigation from the map. "Nalaganje …" is announced politely; the shimmer stops under reduced motion. No spinner, nothing shifts when content arrives.</p>
+</section>
+
+<!-- ================= 2. STATES AND MENUS ================= -->
+<section class="tile-section !max-w-[1400px] !pt-0">
+  <h2 class="tile-title">2. States and menus at real width (web)</h2>
+  <p class="tile-lede">Slot B and slot C menus, the failure states from the slice, owner note variants and the interaction states of the page's controls.</p>
+
+  <div class="grid gap-x-14 gap-y-14 items-start" style="grid-template-columns:repeat(3,minmax(0,1fr))" lang="sl">
+    <div>
+      <p class="tile-h !mt-0">S1 · Slot B open: "Deli ali natisni plakat"</p>
+      <div class="relative h-[300px]">
+        <button type="button" class="btn btn-ghost btn-sm is-hover" aria-haspopup="menu" aria-expanded="true"><i class="ph-bold ph-share-network" aria-hidden="true"></i>Deli ali natisni plakat</button>
+        <div class="pop absolute left-0 top-[52px] p-2 rounded-xl" style="width:272px" role="menu" aria-label="Deli ali natisni plakat">
+          <button type="button" role="menuitem" class="mi is-hover"><i class="ph-bold ph-link" aria-hidden="true"></i>Kopiraj povezavo</button>
+          <a href="#" role="menuitem" class="mi"><i class="ph-bold ph-whatsapp-logo" aria-hidden="true"></i>WhatsApp</a>
+          <a href="#" role="menuitem" class="mi"><i class="ph-bold ph-facebook-logo" aria-hidden="true"></i>Facebook</a>
+          <div class="sep" role="separator"></div>
+          <a href="#" role="menuitem" class="mi"><i class="ph-bold ph-printer" aria-hidden="true"></i>Plakat s QR kodo</a>
+        </div>
+      </div>
+    </div>
+    <div>
+      <p class="tile-h !mt-0">S2 · Slot C open (visitor): "Več možnosti", right edge aligned to the button, focus on the first item</p>
+      <div class="relative h-[300px] max-w-[300px] flex justify-end items-start">
+        <button type="button" class="iconbtn is-open" aria-label="Več možnosti" aria-haspopup="menu" aria-expanded="true"><i class="ph-bold ph-dots-three"></i></button>
+        <div class="pop absolute right-0 top-[52px] p-2 rounded-xl" style="width:248px" role="menu" aria-label="Več možnosti">
+          <button type="button" role="menuitem" class="mi is-focus"><i class="ph-bold ph-flag" aria-hidden="true"></i>Prijavi zlorabo</button>
+          <button type="button" role="menuitem" class="mi"><i class="ph-bold ph-link" aria-hidden="true"></i>Kopiraj povezavo</button>
+        </div>
+      </div>
+    </div>
+    <div>
+      <p class="tile-h !mt-0">S3 · After "Kopiraj povezavo": toast, 5 s, polite</p>
+      <div class="toast" role="status" aria-live="polite"><i class="ph-fill ph-check-circle" aria-hidden="true"></i><p>Povezava je kopirana.</p><button type="button" class="iconbtn" aria-label="Zapri"><i class="ph-bold ph-x"></i></button></div>
+    </div>
+
+    <div>
+      <p class="tile-h !mt-0">S4 · Image failure: placeholder tile in the photo frame</p>
+      <div class="w-full aspect-[4/3] rounded-3xl bg-muted text-muted-foreground grid place-items-center text-center px-6" role="img" aria-label="Fotografije ni mogoče naložiti.">
+        <div><i class="ph-bold ph-image-broken text-[40px]" aria-hidden="true"></i><p class="mt-2">Fotografije ni mogoče naložiti.</p></div>
+      </div>
+    </div>
+    <div>
+      <p class="tile-h !mt-0">S5 · Map offline or failed: text-only area line, no grey box</p>
+      <div class="flex gap-3">
+        <i class="ph-bold ph-map-pin-area text-2xl text-primary mt-0.5" aria-hidden="true"></i>
+        <div><p>Območje: <b>Šiška</b></p><p class="text-sm text-muted-foreground">Prikazano območje je približno.</p></div>
+      </div>
+      <p class="help mt-4">The map region collapses; "Odpri zemljevid" is hidden until tiles load.</p>
+    </div>
+    <div>
+      <p class="tile-h !mt-0">S6 · Network error in a region, retry, then retry loading</p>
+      <div class="note items-center !pr-2" role="alert"><i class="ph-fill ph-warning-circle" style="color:hsl(var(--destructive))" aria-hidden="true"></i><p class="flex-1">Tega trenutno ne moremo naložiti.</p><button type="button" class="btn btn-text btn-sm"><i class="ph-bold ph-arrow-clockwise" aria-hidden="true"></i>Poskusi znova</button></div>
+      <div class="note items-center !pr-2 mt-4"><i class="ph-fill ph-warning-circle" style="color:hsl(var(--destructive))" aria-hidden="true"></i><p class="flex-1">Tega trenutno ne moremo naložiti.</p><button type="button" class="btn btn-text btn-sm" aria-busy="true"><span class="spin" aria-hidden="true"></span>Poskusi znova</button></div>
+    </div>
+
+    <div style="grid-column:1 / -1">
+      <p class="tile-h !mt-0">S7 · Owner note variants (one at a time, in the matches-note slot at the top of the right column)</p>
+      <div class="grid gap-6" style="grid-template-columns:repeat(3,minmax(0,1fr))">
+        <div class="note" role="status"><i class="ph-fill ph-hourglass-medium text-primary" aria-hidden="true"></i><p>Prijava je v pregledu, zato je drugi še ne vidijo. Pregledamo jo čim prej.</p></div>
+        <div class="note" role="status"><i class="ph-fill ph-eye-slash text-primary" aria-hidden="true"></i><p>Več ljudi je prijavo označilo kot sporno, zato je skrita, dokler je ne pregleda naša ekipa. <a href="#" class="textlink">Pišite podpori</a></p></div>
+        <div class="note" role="status"><i class="ph-fill ph-question text-primary" aria-hidden="true"></i><div><p>Oseba, ki je žival našla, jo je označila kot vrnjeno. Če žival ni doma, iskanje v 7 dneh ponovno odprite.</p><button type="button" class="btn btn-text btn-sm !px-3 -ml-3 mt-1"><i class="ph-bold ph-arrow-counter-clockwise" aria-hidden="true"></i>Ponovno odpri</button></div></div>
+      </div>
+    </div>
+
+    <div style="grid-column:1 / -1">
+      <p class="tile-h !mt-0">S8 · Interaction states: default, hover, focus-visible, pressed, loading (labels stay, no layout shift)</p>
+      <div class="flex flex-wrap items-center gap-x-6 gap-y-6">
+        <button type="button" class="btn btn-primary btn-lg"><i class="ph-bold ph-eye" aria-hidden="true"></i>Sporoči opažanje</button>
+        <button type="button" class="btn btn-primary btn-lg is-hover"><i class="ph-bold ph-eye" aria-hidden="true"></i>Sporoči opažanje</button>
+        <button type="button" class="btn btn-primary btn-lg is-focus"><i class="ph-bold ph-eye" aria-hidden="true"></i>Sporoči opažanje</button>
+        <button type="button" class="btn btn-primary btn-lg is-pressed is-hover"><i class="ph-bold ph-eye" aria-hidden="true"></i>Sporoči opažanje</button>
+        <button type="button" class="btn btn-primary btn-lg" aria-busy="true"><span class="spin" aria-hidden="true"></span>Sporoči opažanje</button>
+      </div>
+      <div class="flex flex-wrap items-center gap-x-6 gap-y-6 mt-6">
+        <button type="button" class="btn btn-text btn-lg"><i class="ph-bold ph-chat-circle" aria-hidden="true"></i>Pošlji sporočilo</button>
+        <button type="button" class="btn btn-text btn-lg is-hover"><i class="ph-bold ph-chat-circle" aria-hidden="true"></i>Pošlji sporočilo</button>
+        <button type="button" class="btn btn-text btn-lg is-focus"><i class="ph-bold ph-chat-circle" aria-hidden="true"></i>Pošlji sporočilo</button>
+        <button type="button" class="btn btn-ghost btn-sm is-hover"><i class="ph-bold ph-share-network" aria-hidden="true"></i>Deli ali natisni plakat</button>
+        <button type="button" class="iconbtn is-focus" aria-label="Več možnosti"><i class="ph-bold ph-dots-three"></i></button>
+        <button type="button" class="tb is-hover" aria-label="Pokaži fotografijo 2"><img src="../directions/img/dog-beagle.jpg" alt=""></button>
+        <button type="button" class="tb is-focus" aria-label="Pokaži fotografijo 3"><img src="../directions/img/dog-beagle.jpg" style="object-position:80% 60%" alt=""></button>
+      </div>
+      <div class="grid gap-8 mt-8 items-start" style="grid-template-columns:repeat(2,minmax(0,1fr));max-width:960px">
+        <a href="#" class="ad is-hover is-focus" rel="sponsored noopener" aria-label="Oglas: Pomagajte ohraniti iskanje brezplačno">
+          <span class="ad-label">Oglas</span>
+          <span class="ad-row">
+            <span class="ad-img"><svg viewBox="0 0 96 96" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><use href="#illo-ad"/></svg><img src="../../../assets/house-ad-support.png" alt="" onerror="this.remove()"></span>
+            <span class="flex-1 min-w-0"><span class="ad-t">Pomagajte ohraniti iskanje brezplačno</span><span class="ad-x">Vsaka vrnitev domov je brezplačna. Prostovoljni prispevki pokrivajo strežnike, zemljevide in opozorila.</span><span class="ad-cta">Kako pomagati<i class="ph-bold ph-arrow-right" aria-hidden="true"></i></span></span>
+          </span>
+        </a>
+        <div>
+          <div class="ad" aria-hidden="true"></div>
+          <p class="help mt-2">Left: ad hover (action underlined) with keyboard focus. Right: the loading reserve, a plain 136 px <code>muted</code> box, <code>aria-hidden</code>, no shimmer. Failed or blocked: the slot collapses with no gap and no message.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 3. MOBILE APP ================= -->
+<section class="tile-section !max-w-[1400px] !pt-0">
+  <h2 class="tile-title">3. Mobile app, 390 px</h2>
+  <p class="tile-lede">Photo full-bleed under the status bar, back and share float over it, the position is text below it. Bottom navigation hides on this screen; a sticky action bar carries slot A and the overflow. Sheets for the map, "Več možnosti" and the sign-in gate.</p>
+
+  <div class="flex flex-wrap gap-x-10 gap-y-14 items-start">
+
+    <!-- M1 LOST, VISITOR -->
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">M1 · Lost, visitor: top of the page, sticky action bar</figcaption>
+      <div class="phone"><div class="phone-screen" lang="sl">
+        <div class="statusbar" aria-hidden="true"><span>14:20</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <div class="flex-1 min-h-0 overflow-hidden">
+          <div class="relative">
+            <img class="thumb w-full h-[340px] rounded-b-[32px]" src="../directions/img/dog-beagle.jpg" alt="Rex: pes rjave in bele barve, ovratnica: rdeča z zvončkom, fotografija 1 od 4">
+            <a href="#" class="fab" style="left:16px" aria-label="Nazaj"><i class="ph-bold ph-caret-left"></i></a>
+            <button type="button" class="fab" style="right:16px" aria-label="Deli"><i class="ph-bold ph-share-network"></i></button>
+          </div>
+          <div class="flex items-center justify-center gap-1 mt-1">
+            <button type="button" class="iconbtn" aria-label="Prejšnja fotografija"><i class="ph-bold ph-caret-left !text-xl"></i></button>
+            <span class="text-sm text-muted-foreground tnum min-w-10 text-center" aria-live="polite">1 / 4</span>
+            <button type="button" class="iconbtn" aria-label="Naslednja fotografija"><i class="ph-bold ph-caret-right !text-xl"></i></button>
+          </div>
+          <div class="px-5 pt-1">
+            <p class="flex flex-wrap items-center gap-x-3"><span class="st st-lg st-lost"><i class="ph-fill ph-megaphone" aria-hidden="true"></i>Izgubljena</span><span class="text-sm text-muted-foreground">Pogrešana od 12. oktobra</span></p>
+            <h1 class="font-display font-bold text-[34px] leading-[40px] tracking-[-0.02em] mt-2">Rex</h1>
+            <p class="text-lg text-muted-foreground mt-1">Pes · Mešanec · samec</p>
+            <dl class="facts grid grid-cols-2 gap-x-6 gap-y-4 mt-6">
+              <div><dt>Barva</dt><dd>rjava in bela</dd></div>
+              <div><dt>Velikost</dt><dd>srednja</dd></div>
+              <div><dt>Ovratnica</dt><dd>rdeča z zvončkom</dd></div>
+              <div><dt>Čip</dt><dd>Čip vpisan</dd></div>
+            </dl>
+          </div>
+        </div>
+        <div class="actbar">
+          <div class="flex items-center gap-2">
+            <button type="button" class="btn btn-primary btn-lg flex-1 !px-5"><i class="ph-bold ph-eye" aria-hidden="true"></i>Sporoči opažanje</button>
+            <button type="button" class="iconbtn flex-none" aria-label="Več možnosti" aria-haspopup="menu" aria-expanded="false"><i class="ph-bold ph-dots-three"></i></button>
+          </div>
+          <button type="button" class="btn btn-text btn-block mt-1"><i class="ph-bold ph-chat-circle" aria-hidden="true"></i>Pošlji sporočilo</button>
+        </div>
+        <span class="home-ind" style="z-index:9"></span>
+      </div></div>
+      <p class="help mt-4" style="max-width:412px">Photo 390 × 340, bottom radius 32, swipe or the named prev/next buttons; "1 / 4" below it, never on it. Back and share: 44 px <code>card</code> circles with <code>shadow-md</code>. Status, h1 34/40, species line 18 muted, facts. Action bar: <code>card</code>, 20 px padding, <code>shadow-lg</code>, primary <code>lg</code>, overflow "Več možnosti", text button under it. It never covers focused content (the page scrolls focus above it).</p>
+    </figure>
+
+    <!-- M2 LOST, SCROLLED -->
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">M2 · Lost, scrolled: compact top bar, map thumbnail, safety note, "About", sightings, ad</figcaption>
+      <div class="phone"><div class="phone-screen" lang="sl">
+        <div class="statusbar" aria-hidden="true"><span>14:21</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <div class="topbar">
+          <a href="#" class="iconbtn" aria-label="Nazaj"><i class="ph-bold ph-caret-left"></i></a>
+          <p class="flex-1 font-display font-semibold text-lg leading-7 truncate">Rex</p>
+          <button type="button" class="iconbtn" aria-label="Deli"><i class="ph-bold ph-share-network"></i></button>
+        </div>
+        <div class="flex-1 min-h-0 overflow-hidden px-5">
+          <div class="flex gap-3 mt-2">
+            <i class="ph-bold ph-map-pin-area text-2xl text-primary mt-0.5" aria-hidden="true"></i>
+            <div><p>Območje: <b>Šiška</b>, približno 500 m</p><p class="text-sm text-muted-foreground">Prikazano območje je približno.</p></div>
+          </div>
+          <button type="button" class="relative block w-full h-[160px] mt-4 p-0 border-0 bg-transparent cursor-pointer" style="border-radius:var(--radius-row);color:inherit;font:inherit" aria-label="Odpri zemljevid. Območje: Šiška, približno 500 m. Prikazano območje je približno.">
+            <span class="map-wrap clip-row absolute inset-0" aria-hidden="true">
+              <span class="map-canvas" data-center="14.4930,46.0660" data-zoom="13.2"></span>
+              <span class="mk mk-area" style="left:44%;top:46%;width:84px;height:84px"><img class="mk-avatar" style="width:36px;height:36px" src="../directions/img/dog-beagle.jpg" alt=""></span>
+              <span class="mk mk-dot" style="left:70%;top:70%"></span>
+              <span class="float absolute right-3 bottom-3 rounded-full h-11 px-4 flex items-center gap-2 font-bold text-[15px]"><i class="ph-bold ph-arrows-out text-lg"></i>Odpri zemljevid</span>
+            </span>
+          </button>
+          <p class="flex items-center gap-3 mt-6 font-semibold"><i class="ph-fill ph-gift text-[22px]" style="color:hsl(var(--status-reunited))" aria-hidden="true"></i><span class="tnum">Nagrada: 50 €</span></p>
+          <div class="note mt-3" role="note"><i class="ph-fill ph-shield-check text-primary" aria-hidden="true"></i><p>Nikoli nikomur ne plačajte vnaprej. Nagrado lastnik izroči šele, ko je žival spet doma. Najdimo nagrad ne izplačuje. <a href="#" class="textlink">Nasveti za varnost</a></p></div>
+          <h2 class="font-display font-bold text-2xl tracking-[-0.015em] mt-10">Kaj se je zgodilo</h2>
+          <p class="mt-3">Rex se je v soboto zvečer ustrašil ognjemeta in skozi odprta vrata zbežal z vrta. Je prijazen, a do neznancev plašen. Prosimo, ne lovite ga.</p>
+          <h2 class="font-display font-bold text-2xl tracking-[-0.015em] mt-10">Opažanja</h2>
+          <ol class="grid gap-7 mt-4">
+            <li><p class="flex flex-wrap items-center gap-x-2 text-sm"><span class="st st-sighted"><i class="ph-fill ph-eye" aria-hidden="true"></i>Opažena</span><span class="text-muted-foreground tnum">danes 8.15 · Rožna dolina</span></p><p class="mt-1">Tekel je po kolesarski stezi proti Tivoliju.</p></li>
+          </ol>
+          <a href="#" class="ad mt-10" rel="sponsored noopener" aria-label="Oglas: Pomagajte ohraniti iskanje brezplačno">
+            <span class="ad-label">Oglas</span>
+            <span class="ad-row">
+              <span class="ad-img"><svg viewBox="0 0 96 96" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><use href="#illo-ad"/></svg><img src="../../../assets/house-ad-support.png" alt="Ilustracija: sonce nad mehkimi griči in pot, ki vodi do hiše" onerror="this.remove()"></span>
+              <span class="flex-1 min-w-0"><span class="ad-t">Pomagajte ohraniti iskanje brezplačno</span><span class="ad-x">Vsaka vrnitev domov je brezplačna. Prostovoljni prispevki pokrivajo strežnike, zemljevide in opozorila.</span><span class="ad-cta">Kako pomagati</span></span>
+            </span>
+          </a>
+        </div>
+        <div class="actbar">
+          <div class="flex items-center gap-2">
+            <button type="button" class="btn btn-primary btn-lg flex-1 !px-5"><i class="ph-bold ph-eye" aria-hidden="true"></i>Sporoči opažanje</button>
+            <button type="button" class="iconbtn flex-none" aria-label="Več možnosti" aria-haspopup="menu" aria-expanded="false"><i class="ph-bold ph-dots-three"></i></button>
+          </div>
+          <button type="button" class="btn btn-text btn-block mt-1"><i class="ph-bold ph-chat-circle" aria-hidden="true"></i>Pošlji sporočilo</button>
+        </div>
+        <span class="home-ind" style="z-index:9"></span>
+      </div></div>
+      <p class="help mt-4" style="max-width:412px">When the photo scrolls away, a 56 px top bar (back, name, share) appears on <code>background</code>. Map thumbnail 160 px, radius 20, the whole tile is one button that opens the map sheet (M6). Order below: reward (when set), safety note, "Kaj se je zgodilo", "Opažanja", the ad (once per screen), "V bližini" as two-column tiles.</p>
+    </figure>
+
+    <!-- M3 OWNER VIEW -->
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">M3 · Owner view with the matches note</figcaption>
+      <div class="phone"><div class="phone-screen" lang="sl">
+        <div class="statusbar" aria-hidden="true"><span>14:22</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <div class="flex-1 min-h-0 overflow-hidden">
+          <div class="relative">
+            <img class="thumb w-full h-[260px] rounded-b-[32px]" src="../directions/img/dog-beagle.jpg" alt="Rex: pes rjave in bele barve, ovratnica: rdeča z zvončkom, fotografija 1 od 4">
+            <a href="#" class="fab" style="left:16px" aria-label="Nazaj"><i class="ph-bold ph-caret-left"></i></a>
+            <button type="button" class="fab" style="right:16px" aria-label="Deli"><i class="ph-bold ph-share-network"></i></button>
+          </div>
+          <div class="flex items-center justify-center gap-1 mt-1">
+            <button type="button" class="iconbtn" aria-label="Prejšnja fotografija"><i class="ph-bold ph-caret-left !text-xl"></i></button>
+            <span class="text-sm text-muted-foreground tnum min-w-10 text-center">1 / 4</span>
+            <button type="button" class="iconbtn" aria-label="Naslednja fotografija"><i class="ph-bold ph-caret-right !text-xl"></i></button>
+          </div>
+          <div class="px-5 pt-1">
+            <div class="note items-center !pr-1.5" role="status"><i class="ph-fill ph-sparkle text-primary" aria-hidden="true"></i><p class="flex-1 font-semibold tnum">2 možni ujemanji</p><a href="#" class="btn btn-text btn-sm">Poglej<i class="ph-bold ph-arrow-right" aria-hidden="true"></i></a></div>
+            <p class="flex flex-wrap items-center gap-x-3 mt-6"><span class="st st-lg st-lost"><i class="ph-fill ph-megaphone" aria-hidden="true"></i>Izgubljena</span><span class="text-sm text-muted-foreground">Pogrešana od 12. oktobra</span></p>
+            <h1 class="font-display font-bold text-[34px] leading-[40px] tracking-[-0.02em] mt-2">Rex</h1>
+            <p class="text-lg text-muted-foreground mt-1">Pes · Mešanec · samec</p>
+            <div class="flex gap-3 mt-5" data-sample>
+              <i class="ph-bold ph-phone text-2xl text-primary mt-0.5" aria-hidden="true"></i>
+              <div><p class="text-sm text-muted-foreground">Pristojno zavetišče za občino Ljubljana</p><p class="font-semibold">Zavetišče Sončni hrib</p><a href="#" class="btn btn-text btn-sm !px-3 -ml-3"><i class="ph-bold ph-phone" aria-hidden="true"></i>Pokliči zavetišče</a></div>
+            </div>
+          </div>
+        </div>
+        <div class="actbar">
+          <div class="flex items-center gap-2">
+            <a href="#" class="btn btn-primary btn-lg flex-1 !px-5"><i class="ph-bold ph-heart" aria-hidden="true"></i>Žival je spet doma</a>
+            <button type="button" class="iconbtn flex-none" aria-label="Več možnosti" aria-haspopup="menu" aria-expanded="false"><i class="ph-bold ph-dots-three"></i></button>
+          </div>
+          <div class="grid grid-cols-2 mt-1">
+            <a href="#" class="btn btn-text"><i class="ph-bold ph-pencil-simple" aria-hidden="true"></i>Uredi</a>
+            <a href="#" class="btn btn-text"><i class="ph-bold ph-printer" aria-hidden="true"></i>Plakat</a>
+          </div>
+        </div>
+        <span class="home-ind" style="z-index:9"></span>
+      </div></div>
+      <p class="help mt-4" style="max-width:412px">The matches note sits first under the photo (sparkle, "Poglej" opens P11); held, hidden and "returned" variants use the same slot (S7). Owner bar: primary "Žival je spet doma", two text buttons, overflow with "Zaključi iskanje" (and "Povečaj doseg" from M4). <span class="anno">Sample copy</span> responsible shelter line.</p>
+    </figure>
+
+    <!-- M4 FOUND -->
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">M4 · Found, visitor (anonymous finder), scrolled past the photo</figcaption>
+      <div class="phone"><div class="phone-screen" lang="sl">
+        <div class="statusbar" aria-hidden="true"><span>14:24</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <div class="topbar">
+          <a href="#" class="iconbtn" aria-label="Nazaj"><i class="ph-bold ph-caret-left"></i></a>
+          <span class="flex-1"></span>
+          <button type="button" class="iconbtn" aria-label="Deli"><i class="ph-bold ph-share-network"></i></button>
+        </div>
+        <div class="flex-1 min-h-0 overflow-hidden">
+          <div class="px-5">
+            <p class="flex flex-wrap items-center gap-x-3"><span class="st st-lg st-found"><i class="ph-fill ph-hand-heart" aria-hidden="true"></i>Najdena</span><span class="text-sm text-muted-foreground">Najdena 14. oktobra</span></p>
+            <h1 class="font-display font-bold text-[34px] leading-[40px] tracking-[-0.02em] mt-2">Najdena mačka</h1>
+            <p class="text-lg text-muted-foreground mt-1">Mačka · domača</p>
+            <p class="flex items-center gap-2 text-sm text-muted-foreground mt-3"><i class="ph-bold ph-user-circle text-base" aria-hidden="true"></i>Prijavila oseba, ki je žival našla</p>
+            <dl class="facts grid grid-cols-2 gap-x-6 gap-y-4 mt-6">
+              <div><dt>Barva</dt><dd>siva, progasta</dd></div>
+              <div><dt>Velikost</dt><dd>majhna</dd></div>
+              <div><dt>Ovratnica</dt><dd>modra, brez ploščice</dd></div>
+              <div><dt>Čip</dt><dd>Ni podatka</dd></div>
+            </dl>
+            <div class="flex gap-3 mt-5">
+              <i class="ph-bold ph-map-pin-area text-2xl text-primary mt-0.5" aria-hidden="true"></i>
+              <div><p>Območje: <b>Bežigrad</b>, približno 150 m</p><p class="text-sm text-muted-foreground">Prikazano območje je približno.</p></div>
+            </div>
+            <button type="button" class="relative block w-full h-[160px] mt-4 p-0 border-0 bg-transparent cursor-pointer" style="border-radius:var(--radius-row);color:inherit;font:inherit" aria-label="Odpri zemljevid. Območje: Bežigrad, približno 150 m. Prikazano območje je približno.">
+              <span class="map-wrap clip-row absolute inset-0" aria-hidden="true">
+                <span class="map-canvas" data-center="14.5100,46.0725" data-zoom="15" data-roads="all"></span>
+                <span class="mk mk-area found" style="left:40%;top:50%;width:90px;height:90px"><img class="mk-avatar found" style="width:36px;height:36px" src="../directions/img/cat-tabby.jpg" alt=""></span>
+                <span class="float absolute right-3 bottom-3 rounded-full h-11 px-4 flex items-center gap-2 font-bold text-[15px]"><i class="ph-bold ph-arrows-out text-lg"></i>Odpri zemljevid</span>
+              </span>
+            </button>
+          </div>
+        </div>
+        <div class="actbar">
+          <div class="flex items-center gap-2">
+            <button type="button" class="btn btn-primary btn-lg flex-1 !px-5"><i class="ph-bold ph-heart" aria-hidden="true"></i>To je moja žival</button>
+            <button type="button" class="iconbtn flex-none" aria-label="Več možnosti" aria-haspopup="menu" aria-expanded="false"><i class="ph-bold ph-dots-three"></i></button>
+          </div>
+          <button type="button" class="btn btn-text btn-block mt-1"><i class="ph-bold ph-eye" aria-hidden="true"></i>Sporoči opažanje</button>
+        </div>
+        <span class="home-ind" style="z-index:9"></span>
+      </div></div>
+      <p class="help mt-4" style="max-width:412px">The photo (as M1) has scrolled away; the top bar keeps back and share, and the name fades into it once the h1 leaves the screen. Map thumbnail: found avatar in a 150 m disc to scale in <code>marker-found</code> at <code>--marker-area-alpha</code>; on mobile the area line carries the radius (P5 <code>location.area_line</code>) because the map sits right under it. "To je moja žival" starts contact (P12, gate first when signed out). Sighted reports use the same frame with a <code>marker-sighted</code> disc, "Pošlji sporočilo" as primary and "To je moja žival" as the text button.</p>
+    </figure>
+
+    <!-- M5 FOUND, SHELTER HOLD -->
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">M5 · Found, held by a shelter: "in the shelter since", call the shelter</figcaption>
+      <div class="phone"><div class="phone-screen" lang="sl">
+        <div class="statusbar" aria-hidden="true"><span>14:25</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <div class="flex-1 min-h-0 overflow-hidden">
+          <div class="relative">
+            <img class="thumb w-full h-[240px] rounded-b-[32px]" src="../directions/img/dog-terrier.jpg" alt="Pes črne, rjave in bele barve, fotografija 1 od 3">
+            <a href="#" class="fab" style="left:16px" aria-label="Nazaj"><i class="ph-bold ph-caret-left"></i></a>
+            <button type="button" class="fab" style="right:16px" aria-label="Deli"><i class="ph-bold ph-share-network"></i></button>
+          </div>
+          <div class="flex items-center justify-center gap-1 mt-1">
+            <button type="button" class="iconbtn" aria-label="Prejšnja fotografija"><i class="ph-bold ph-caret-left !text-xl"></i></button>
+            <span class="text-sm text-muted-foreground tnum min-w-10 text-center">1 / 3</span>
+            <button type="button" class="iconbtn" aria-label="Naslednja fotografija"><i class="ph-bold ph-caret-right !text-xl"></i></button>
+          </div>
+          <div class="px-5 pt-1">
+            <p class="flex flex-wrap items-center gap-x-3"><span class="st st-lg st-found"><i class="ph-fill ph-hand-heart" aria-hidden="true"></i>Najdena</span><span class="text-sm text-muted-foreground">Najdena 13. oktobra</span></p>
+            <h1 class="font-display font-bold text-[34px] leading-[40px] tracking-[-0.02em] mt-2">Najden pes</h1>
+            <p class="text-lg text-muted-foreground mt-1">Pes · Mešanec · samec</p>
+            <div class="mt-6" data-sample>
+              <span class="badge b-verified"><i class="ph-fill ph-seal-check" aria-hidden="true"></i>Preverjeno zavetišče</span>
+              <p class="font-display font-semibold text-xl leading-7 tracking-[-0.01em] mt-3">Zavetišče Sončni hrib</p>
+              <p class="text-muted-foreground">Ljubljana</p>
+              <p class="mt-2">V zavetišču od 13. oktobra</p>
+            </div>
+          </div>
+        </div>
+        <div class="actbar">
+          <div class="flex items-center gap-2">
+            <button type="button" class="btn btn-primary btn-lg flex-1 !px-5"><i class="ph-bold ph-heart" aria-hidden="true"></i>To je moja žival</button>
+            <button type="button" class="iconbtn flex-none" aria-label="Več možnosti" aria-haspopup="menu" aria-expanded="false"><i class="ph-bold ph-dots-three"></i></button>
+          </div>
+          <a href="#" class="btn btn-text btn-block mt-1"><i class="ph-bold ph-phone" aria-hidden="true"></i>Pokliči zavetišče</a>
+        </div>
+        <span class="home-ind" style="z-index:9"></span>
+      </div></div>
+      <p class="help mt-4" style="max-width:412px"><span class="anno">Sample copy</span> On mobile the shelter is a plain block (no card): the one tonal pill, shelter name, place and "V zavetišču od {date}". The call is the action bar's text button (<code>tel:</code>), so no number is printed. No countdown; with <code>content.legal_timings</code> on, the one holding-period sentence goes under the date as in W3b.</p>
+    </figure>
+
+    <!-- M6 MAP SHEET -->
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">M6 · Map sheet (from the map thumbnail), full snap</figcaption>
+      <div class="phone"><div class="phone-screen" lang="sl">
+        <div class="statusbar" aria-hidden="true"><span>14:26</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <div aria-hidden="true"><img class="thumb w-full h-[340px] rounded-b-[32px]" src="../directions/img/dog-beagle.jpg" alt=""></div>
+        <div class="scrim"></div>
+        <div class="sheet flex flex-col" role="dialog" aria-modal="true" aria-label="Kje je bila videna" style="top:60px;z-index:8;padding-bottom:34px">
+          <button type="button" class="grab" aria-label="Zapri"></button>
+          <div class="flex items-center gap-2 pl-5 pr-3 pt-2">
+            <h2 class="flex-1 font-display font-bold text-2xl tracking-[-0.015em]">Kje je bila videna</h2>
+            <button type="button" class="iconbtn is-focus" aria-label="Zapri"><i class="ph-bold ph-x"></i></button>
+          </div>
+          <div class="map-wrap clip-card mx-5 mt-4 h-[430px] flex-none" style="border-radius:var(--radius-card)" role="img" aria-label="Območje: Šiška, približno 500 m. Prikazano območje je približno.">
+            <div class="map-canvas" data-center="14.4930,46.0640" data-zoom="13.8"></div>
+            <span class="mk mk-area" style="left:46%;top:36%" aria-hidden="true"><img class="mk-avatar" src="../directions/img/dog-beagle.jpg" alt=""></span>
+            <span class="mk mk-dot" style="left:66%;top:74%" aria-hidden="true"></span>
+            <span class="mk mk-dot" style="left:34%;top:56%" aria-hidden="true"></span>
+          </div>
+          <div class="flex gap-3 px-5 mt-5">
+            <i class="ph-bold ph-map-pin-area text-2xl text-primary mt-0.5" aria-hidden="true"></i>
+            <div><p>Območje: <b>Šiška</b>, približno 500 m</p><p class="text-sm text-muted-foreground">Prikazano območje je približno.</p></div>
+          </div>
+          <p class="flex flex-wrap items-center gap-x-2 text-sm px-5 mt-5"><span class="st st-sighted"><i class="ph-fill ph-eye" aria-hidden="true"></i>Opažena</span><span class="text-muted-foreground tnum">danes 8.15 · Rožna dolina</span></p>
+          <p class="flex flex-wrap items-center gap-x-2 text-sm px-5 mt-2"><span class="st st-sighted"><i class="ph-fill ph-eye" aria-hidden="true"></i>Opažena</span><span class="text-muted-foreground tnum">včeraj 21.40 · Šiška</span></p>
+        </div>
+        <span class="home-ind" style="z-index:12"></span>
+      </div></div>
+      <p class="help mt-4" style="max-width:412px">Sheet at the 92 % snap over <code>scrim</code>, radius 28, <code>shadow-lg</code>. Map pans and zooms here (the thumbnail does not). Markers: lost-area disc and sighting dots only. The area line and the sightings stay as text under the map, so the map is never the only way to the information. Focus starts on "Zapri".</p>
+    </figure>
+
+    <!-- M7 MORE MENU -->
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">M7 · "Več možnosti" sheet (visitor), focus on the first row</figcaption>
+      <div class="phone"><div class="phone-screen" lang="sl">
+        <div class="statusbar" aria-hidden="true"><span>14:27</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <div class="flex-1 min-h-0 overflow-hidden" aria-hidden="true">
+          <img class="thumb w-full h-[340px] rounded-b-[32px]" src="../directions/img/dog-beagle.jpg" alt="">
+          <div class="px-5 pt-12">
+            <p><span class="st st-lg st-lost"><i class="ph-fill ph-megaphone"></i>Izgubljena</span></p>
+            <p class="font-display font-bold text-[34px] leading-[40px] tracking-[-0.02em] mt-2">Rex</p>
+            <p class="text-lg text-muted-foreground mt-1">Pes · Mešanec · samec</p>
+          </div>
+        </div>
+        <div class="scrim"></div>
+        <div class="sheet" role="dialog" aria-modal="true" aria-label="Več možnosti" style="z-index:8;padding-bottom:34px">
+          <button type="button" class="grab" aria-label="Zapri"></button>
+          <h2 class="font-display font-bold text-2xl tracking-[-0.015em] px-5 pt-3">Več možnosti</h2>
+          <div class="grid gap-1 px-3 pt-3" role="menu" aria-label="Več možnosti">
+            <button type="button" role="menuitem" class="mi mi-lg is-focus"><i class="ph-bold ph-flag" aria-hidden="true"></i>Prijavi zlorabo</button>
+            <button type="button" role="menuitem" class="mi mi-lg"><i class="ph-bold ph-link" aria-hidden="true"></i>Kopiraj povezavo</button>
+          </div>
+          <div class="px-5 pt-3"><button type="button" class="btn btn-text btn-block">Prekliči</button></div>
+        </div>
+        <span class="home-ind" style="z-index:12"></span>
+      </div></div>
+      <p class="help mt-4" style="max-width:412px">Slot C: rows of 56 px (icon 20, label 17 semibold), hover and pressed with <code>foreground</code> at 10 %. "Prijavi zlorabo" opens P10. Owners see "Zaključi iskanje" instead. The share sheet (P18) opens from the share button on the photo.</p>
+    </figure>
+
+    <!-- M8 GATE -->
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">M8 · Contact needs an account: P16 gate sheet</figcaption>
+      <div class="phone"><div class="phone-screen" lang="sl">
+        <div class="statusbar" aria-hidden="true"><span>14:28</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <div class="flex-1 min-h-0 overflow-hidden" aria-hidden="true">
+          <img class="thumb w-full h-[340px] rounded-b-[32px]" src="../directions/img/dog-golden.jpg" alt="">
+        </div>
+        <div class="scrim"></div>
+        <div class="sheet" role="dialog" aria-modal="true" aria-label="Za pogovor potrebujete račun" style="z-index:8;padding-bottom:34px">
+          <button type="button" class="grab" aria-label="Zapri"></button>
+          <div class="px-5 pt-3">
+            <h2 class="font-display font-bold text-2xl tracking-[-0.015em]">Za pogovor potrebujete račun</h2>
+            <p class="mt-3">Tako vaša telefonska številka ostane skrita, sporočila pa na varnem. Najdeno ali opaženo žival lahko prijavite tudi brez računa.</p>
+            <div class="grid gap-3 mt-6">
+              <button type="button" class="btn btn-primary btn-lg btn-block is-focus">Vpiši se</button>
+              <button type="button" class="btn btn-secondary btn-block">Ustvari račun</button>
+              <button type="button" class="btn btn-provider btn-block"><svg viewBox="0 0 48 48" aria-hidden="true" focusable="false"><use href="#g-logo"/></svg>Nadaljuj z Googlom</button>
+              <button type="button" class="btn btn-provider btn-block"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#apple-logo"/></svg>Nadaljuj z Applom</button>
+              <button type="button" class="btn btn-text btn-block">Prekliči</button>
+            </div>
+          </div>
+        </div>
+        <span class="home-ind" style="z-index:12"></span>
+      </div></div>
+      <p class="help mt-4" style="max-width:412px">Opened by "Pošlji sporočilo" or "To je moja žival" when signed out. After sign-in the user returns to this report and the conversation opens. Buttons per P16: Google and Apple are <code>provider</code> buttons (brand-literal field with a 1 px stroke, full-colour "G", Apple glyph in the label colour), the same in sheets, dialogs and pages. Web: the same content in a dialog.</p>
+    </figure>
+
+    <!-- M9 GATE UNVERIFIED -->
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">M9 · Gate, unverified e-mail variant</figcaption>
+      <div class="phone"><div class="phone-screen" lang="sl">
+        <div class="statusbar" aria-hidden="true"><span>14:29</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <div class="flex-1 min-h-0 overflow-hidden" aria-hidden="true">
+          <img class="thumb w-full h-[340px] rounded-b-[32px]" src="../directions/img/dog-golden.jpg" alt="">
+        </div>
+        <div class="scrim"></div>
+        <div class="sheet" role="dialog" aria-modal="true" aria-label="Potrdite svoj e-naslov" style="z-index:8;padding-bottom:34px">
+          <button type="button" class="grab" aria-label="Zapri"></button>
+          <div class="px-5 pt-3">
+            <h2 class="font-display font-bold text-2xl tracking-[-0.015em]" tabindex="-1">Potrdite svoj e-naslov</h2>
+            <p class="text-lg leading-7 mt-3">Za pogovor najprej potrdite svoj e-naslov.</p>
+            <p class="mt-2">Povezavo smo poslali na <b class="break-words">ana.novak@primer.si</b>. Osnutki medtem delujejo.</p>
+          </div>
+          <div class="grid gap-1 px-5 pt-7">
+            <a href="#" class="btn btn-primary btn-lg btn-block"><i class="ph-bold ph-envelope-open" aria-hidden="true"></i>Odpri e-pošto</a>
+            <button type="button" class="btn btn-text btn-block">Pošlji znova</button>
+            <button type="button" class="btn btn-text btn-block">Prekliči</button>
+          </div>
+        </div>
+        <span class="home-ind" style="z-index:12"></span>
+      </div></div>
+      <p class="help mt-4" style="max-width:412px">Not an error, no destructive colour; layout as P16 G2. Primary "Odpri e-pošto" opens the mail app (mobile only); "Pošlji znova" is a text button (after a send it is disabled with the countdown as text, per P16). The P9 line "Za pogovor najprej potrdite svoj e-naslov." leads; the address is a sample.</p>
+    </figure>
+
+    <!-- M10 OFFLINE / CACHED -->
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">M10 · Offline: cached copy of the report</figcaption>
+      <div class="phone"><div class="phone-screen" lang="sl">
+        <div class="statusbar" aria-hidden="true"><span>14:31</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-battery-high"></i></span></div>
+        <div class="flex-1 min-h-0 overflow-hidden">
+          <div class="relative">
+            <img class="thumb w-full h-[280px] rounded-b-[32px]" src="../directions/img/dog-beagle.jpg" alt="Rex: pes rjave in bele barve, ovratnica: rdeča z zvončkom, fotografija 1 od 4">
+            <a href="#" class="fab" style="left:16px" aria-label="Nazaj"><i class="ph-bold ph-caret-left"></i></a>
+            <button type="button" class="fab" style="right:16px" aria-label="Deli"><i class="ph-bold ph-share-network"></i></button>
+          </div>
+          <div class="flex items-center justify-center gap-1 mt-1">
+            <button type="button" class="iconbtn" aria-label="Prejšnja fotografija"><i class="ph-bold ph-caret-left !text-xl"></i></button>
+            <span class="text-sm text-muted-foreground tnum min-w-10 text-center">1 / 4</span>
+            <button type="button" class="iconbtn" aria-label="Naslednja fotografija"><i class="ph-bold ph-caret-right !text-xl"></i></button>
+          </div>
+          <div class="px-5 pt-1">
+            <div class="note" role="status" data-sample><i class="ph-bold ph-wifi-slash" aria-hidden="true"></i><p>Brez povezave. Prikazujemo shranjeno različico (14.05).</p></div>
+            <p class="flex flex-wrap items-center gap-x-3 mt-6"><span class="st st-lg st-lost"><i class="ph-fill ph-megaphone" aria-hidden="true"></i>Izgubljena</span><span class="text-sm text-muted-foreground">Pogrešana od 12. oktobra</span></p>
+            <h1 class="font-display font-bold text-[34px] leading-[40px] tracking-[-0.02em] mt-2">Rex</h1>
+            <p class="text-lg text-muted-foreground mt-1">Pes · Mešanec · samec</p>
+            <div class="flex gap-3 mt-5">
+              <i class="ph-bold ph-map-pin-area text-2xl text-primary mt-0.5" aria-hidden="true"></i>
+              <div><p>Območje: <b>Šiška</b></p><p class="text-sm text-muted-foreground">Prikazano območje je približno.</p></div>
+            </div>
+          </div>
+        </div>
+        <div class="actbar">
+          <div class="flex items-center gap-2">
+            <button type="button" class="btn btn-primary btn-lg flex-1 !px-5"><i class="ph-bold ph-eye" aria-hidden="true"></i>Sporoči opažanje</button>
+            <button type="button" class="iconbtn flex-none" aria-label="Več možnosti" aria-haspopup="menu" aria-expanded="false"><i class="ph-bold ph-dots-three"></i></button>
+          </div>
+          <button type="button" class="btn btn-text btn-block mt-1"><i class="ph-bold ph-chat-circle" aria-hidden="true"></i>Pošlji sporočilo</button>
+        </div>
+        <span class="home-ind" style="z-index:9"></span>
+      </div></div>
+      <p class="help mt-4" style="max-width:412px"><span class="anno">Sample copy</span> One <code>note</code> under the photo with the time of the saved copy (P2 offline pattern). Map thumbnail replaced by the text-only area line; the ad slot collapses silently; uncached photos show the S4 tile. Actions stay enabled: a sighting goes to the outbox (TASK-86), a message is queued (P12 "Brez povezave. Sporočila pošljemo, ko boste spet povezani."). Back online: the P2 toast "Spet ste povezani." and a silent refresh.</p>
+    </figure>
+
+  </div>
+</section>
+
+<!-- ================= 4. TABLET ================= -->
+<section class="tile-section !max-w-[1400px] !pt-0">
+  <h2 class="tile-title">4. Web, 768 px (tablet, lost page)</h2>
+  <p class="tile-lede">Below lg: one column, the info before "Kaj se je zgodilo", the thumbnails stay a row, type uses the mobile scale, and slot A moves into the sticky action bar in one row.</p>
+  <div class="wrap-x">
+    <p class="tile-h !mt-0">T1 · Lost, visitor, 768 px, sticky action bar</p>
+    <div class="browser relative" style="width:768px;height:1240px;overflow:hidden" lang="sl">
+      <div class="browser-bar"><span class="dots"><i></i><i></i><i></i></span><span class="url"><i class="ph ph-lock-simple"></i>najdimo.si/r/k7m2qx</span></div>
+      <header class="flex items-center gap-2 px-12 h-[88px]">
+        <a href="#" class="logo-link mr-auto" aria-label="Najdimo, na začetno stran"><svg class="logo-mark w-9 h-9" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg><span class="font-display font-bold text-2xl tracking-[-0.03em]" aria-hidden="true">Najdimo</span></a>
+        <div class="lang" role="group" aria-label="Jezik: Slovenščina"><a href="#" class="ll" lang="sl" aria-current="true" aria-label="Slovenščina">SL</a><span aria-hidden="true">/</span><a href="#" class="ll" lang="en" hreflang="en" aria-label="English">EN</a></div>
+        <button type="button" class="btn btn-secondary btn-sm" aria-haspopup="menu" aria-expanded="false"><i class="ph-bold ph-plus" aria-hidden="true"></i>Prijavi</button>
+        <button type="button" class="iconbtn" aria-label="Odpri meni" aria-expanded="false"><i class="ph-bold ph-list"></i></button>
+      </header>
+      <main class="px-12 pt-2">
+        <a href="#" class="btn btn-text btn-sm !px-3 -ml-3"><i class="ph-bold ph-caret-left" aria-hidden="true"></i>Nazaj na zemljevid</a>
+        <img class="thumb w-full aspect-[4/3] rounded-3xl mt-3" src="../directions/img/dog-beagle.jpg" alt="Rex: pes rjave in bele barve, ovratnica: rdeča z zvončkom, fotografija 1 od 4">
+        <div class="flex items-center gap-3 mt-4">
+          <ul class="flex gap-3">
+            <li><button type="button" class="tb" aria-current="true" aria-label="Pokaži fotografijo 1"><img src="../directions/img/dog-beagle.jpg" alt=""></button></li>
+            <li><button type="button" class="tb" aria-label="Pokaži fotografijo 2"><img src="../directions/img/dog-beagle.jpg" style="object-position:20% 30%" alt=""></button></li>
+            <li><button type="button" class="tb" aria-label="Pokaži fotografijo 3"><img src="../directions/img/dog-beagle.jpg" style="object-position:80% 60%" alt=""></button></li>
+            <li><button type="button" class="tb" aria-label="Pokaži fotografijo 4"><img src="../directions/img/dog-beagle.jpg" style="object-position:50% 90%" alt=""></button></li>
+          </ul>
+          <div class="ml-auto flex items-center gap-1">
+            <button type="button" class="iconbtn" aria-label="Prejšnja fotografija"><i class="ph-bold ph-caret-left"></i></button>
+            <span class="text-sm text-muted-foreground tnum min-w-10 text-center">1 / 4</span>
+            <button type="button" class="iconbtn" aria-label="Naslednja fotografija"><i class="ph-bold ph-caret-right"></i></button>
+          </div>
+        </div>
+        <p class="flex flex-wrap items-center gap-x-3 mt-10"><span class="st st-lg st-lost"><i class="ph-fill ph-megaphone" aria-hidden="true"></i>Izgubljena</span><span class="text-muted-foreground">Pogrešana od 12. oktobra</span></p>
+        <h1 class="font-display font-bold text-[34px] leading-[40px] tracking-[-0.02em] mt-2">Rex</h1>
+        <p class="text-lg text-muted-foreground mt-1">Pes · Mešanec · samec</p>
+        <dl class="facts grid grid-cols-3 gap-x-8 gap-y-5 mt-6">
+          <div><dt>Barva</dt><dd>rjava in bela</dd></div>
+          <div><dt>Velikost</dt><dd>srednja</dd></div>
+          <div><dt>Ovratnica</dt><dd>rdeča z zvončkom</dd></div>
+          <div><dt>Čip</dt><dd>Čip vpisan</dd></div>
+          <div><dt>Spol</dt><dd>samec</dd></div>
+          <div><dt>Leto rojstva</dt><dd class="tnum">2019</dd></div>
+        </dl>
+        <div class="flex gap-3 mt-8">
+          <i class="ph-bold ph-map-pin-area text-2xl text-primary mt-0.5" aria-hidden="true"></i>
+          <div><p>Območje: <b>Šiška</b></p><p class="text-sm text-muted-foreground">Prikazano območje je približno.</p></div>
+        </div>
+        <p class="flex items-center gap-3 mt-8 font-semibold"><i class="ph-fill ph-gift text-[22px]" style="color:hsl(var(--status-reunited))" aria-hidden="true"></i><span class="tnum">Nagrada: 50 €</span></p>
+        <div class="note mt-3 max-w-[58ch]" role="note"><i class="ph-fill ph-shield-check text-primary" aria-hidden="true"></i><p>Nikoli nikomur ne plačajte vnaprej. Nagrado lastnik izroči šele, ko je žival spet doma. Najdimo nagrad ne izplačuje. <a href="#" class="textlink">Nasveti za varnost</a></p></div>
+        <h2 class="font-display font-bold text-2xl tracking-[-0.015em] mt-12">Kaj se je zgodilo</h2>
+        <p class="mt-3 max-w-[58ch]">Rex se je v soboto zvečer ustrašil ognjemeta in skozi odprta vrata zbežal z vrta. Je prijazen, a do neznancev plašen.</p>
+      </main>
+      <div class="actbar !pb-5">
+        <div class="flex items-center gap-2 px-7">
+          <button type="button" class="btn btn-primary btn-lg"><i class="ph-bold ph-eye" aria-hidden="true"></i>Sporoči opažanje</button>
+          <button type="button" class="btn btn-text btn-lg"><i class="ph-bold ph-chat-circle" aria-hidden="true"></i>Pošlji sporočilo</button>
+          <button type="button" class="btn btn-ghost btn-sm ml-auto" aria-haspopup="menu" aria-expanded="false"><i class="ph-bold ph-share-network" aria-hidden="true"></i>Deli</button>
+          <button type="button" class="iconbtn flex-none" aria-label="Več možnosti" aria-haspopup="menu" aria-expanded="false"><i class="ph-bold ph-dots-three"></i></button>
+        </div>
+      </div>
+    </div>
+    <p class="help mt-4" style="max-width:768px">Bar content aligns to the 48 px gutters; the web bar has no safe area. Share sits in the bar as a ghost "Deli" (opens the slot B menu). The page reserves bottom padding equal to the bar height so the footer and focused controls are never covered.</p>
+  </div>
+</section>
+
+<p class="tile-section !max-w-[1400px] !py-8 text-sm text-muted-foreground">Copy: docs/content/pages/P9-report-detail.md (v0.2, native review pending; display-only reward line and reward safety notes); shared strings from P1, P2, P4, P5, P16, P18 and P21. Report contents (names, stories, sightings, facts, areas, reward amount, the e-mail address) are samples. Marked "Sample copy" because no slice has them yet: the shelter card line "V zavetišču od {date}" (from the design review) and the bracketed legal-timings placeholder (Q-006), the responsible-shelter sentence, "Pokliči zavetišče" and "Pokliči", the shelter name "Zavetišče Sončni hrib" and its number, the offline cached-copy line, the Vet Partner context "Veterinar v vaši regiji" (P21 slice says "Veterinar v bližini") and its action "Pokliči ali odpri zemljevid" (P21 content still says "Odpri profil ambulante"), and the clinic "Veterinarska ambulanta Primer". Placeholder photography from Unsplash (Unsplash License). House-ad and 410 illustrations: token placeholders under assets/house-ad-support.png, assets/house-ad-partner.png and assets/empty-inbox.png (image tasks). Icons: Phosphor.</p>
+
+</div><!-- /#src -->
+
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<script src="../directions/directions.js"></script>
+</body>
+</html>
