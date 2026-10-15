@@ -161,7 +161,7 @@
 		},
 		"payment_events": {
 			"category": "payments",
-			"personal_data": ["summary"],
+			"personal_data": ["payload"],
 			"basis": "legal obligation (GDPR art. 6(1)(c)): accounting records (C13); a redacted summary of provider ids, amount and status, never the raw event or card data",
 			"retention": "10 years (ZDDV-1 invoice retention)",
 			"export": false,

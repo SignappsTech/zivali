@@ -103,7 +103,7 @@ describe('commerce schema checks', () => {
 			status: 'complete',
 			livemode: false,
 		};
-		const event = { provider: 'stripe', provider_event_id, type: summary.type, summary };
+		const event = { provider: 'stripe', provider_event_id, type: summary.type, payload: summary };
 		await prisma.payment_events.create({ data: event });
 		await expect(prisma.payment_events.create({ data: event })).rejects.toThrow('provider_event_id');
 		const raw = {
@@ -113,9 +113,9 @@ describe('commerce schema checks', () => {
 		};
 		await expect(
 			prisma.payment_events.create({
-				data: { ...event, provider_event_id: `${provider_event_id}_raw`, summary: raw },
+				data: { ...event, provider_event_id: `${provider_event_id}_raw`, payload: raw },
 			})
-		).rejects.toThrow('payment_events_summary_keys_check');
+		).rejects.toThrow('payment_events_payload_keys_check');
 		await prisma.payment_events.deleteMany({ where: { provider_event_id } });
 	});
 });

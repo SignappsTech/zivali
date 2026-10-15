@@ -164,7 +164,7 @@ CREATE TABLE "payment_events" (
     "provider" TEXT NOT NULL,
     "provider_event_id" TEXT NOT NULL,
     "type" TEXT NOT NULL,
-    "summary" JSONB NOT NULL,
+    "payload" JSONB NOT NULL,
     "received_at" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "payment_events_pkey" PRIMARY KEY ("id")
@@ -227,8 +227,8 @@ alter table app.payments
     add constraint payments_provider_check check (provider in ('stripe', 'mock'));
 -- Never the raw provider event: only these top-level keys (no customer details, no card brand/last4/expiry).
 alter table app.payment_events
-    add constraint payment_events_summary_keys_check check (
-        summary - array['id', 'type', 'object_id', 'payment_intent', 'amount', 'currency', 'status', 'livemode'] = '{}'::jsonb
+    add constraint payment_events_payload_keys_check check (
+        payload - array['id', 'type', 'object_id', 'payment_intent', 'amount', 'currency', 'status', 'livemode'] = '{}'::jsonb
     );
 alter table app.ads
     add constraint ads_link_url_check check (link_url ~ '^https://'),

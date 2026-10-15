@@ -52,9 +52,9 @@ model payment_events {
   provider          String
   provider_event_id String   @unique
   type              String
-  // Redacted summary, NEVER the raw provider event (it carries customer details and card brand/last4/expiry):
+  // A redacted summary (C13), NEVER the raw provider event (it carries customer details and card brand/last4/expiry):
   // only the keys id, type, object_id, payment_intent, amount, currency, status, livemode (check in the migration).
-  summary           Json
+  payload           Json
   received_at       DateTime @default(now()) @db.Timestamptz(6)
 
   @@schema("app")
