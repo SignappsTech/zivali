@@ -1,22 +1,8 @@
-// Stable error codes and their HTTP status (C1). Domains throw AppError; the error middleware renders it.
-export const ERROR_STATUS = {
-	VALIDATION: 400,
-	UNAUTHENTICATED: 401,
-	FORBIDDEN: 403,
-	UNVERIFIED_EMAIL: 403,
-	AAL2_REQUIRED: 403,
-	NOT_FOUND: 404,
-	CONFLICT: 409,
-	DUPLICATE_OPEN_REPORT: 409,
-	GONE: 410,
-	MIN_AMOUNT: 422,
-	LIVE_MODE_FORBIDDEN: 422,
-	CAPTCHA_FAILED: 422,
-	RATE_LIMITED: 429,
-	INTERNAL: 500,
-} as const;
+// Domains throw AppError with a stable C1 code; the error middleware renders it with the code's HTTP status.
+// Codes and statuses are the shared C1 table in @zivali/types (also used by the clients).
+import { ERROR_HTTP_STATUS, type ErrorCode } from '@zivali/types';
 
-export type ErrorCode = keyof typeof ERROR_STATUS;
+export { ERROR_HTTP_STATUS, type ErrorCode };
 
 export class AppError extends Error {
 	readonly code: ErrorCode;
@@ -30,6 +16,6 @@ export class AppError extends Error {
 	}
 
 	get status(): number {
-		return ERROR_STATUS[this.code];
+		return ERROR_HTTP_STATUS[this.code];
 	}
 }

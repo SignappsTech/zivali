@@ -1,31 +1,20 @@
-// OpenAPI 3.1 from the zod schemas (@asteasolutions/zod-to-openapi registry). Each routes/<area>.routes.ts declares
-// its routes with apiRoutes(): one call wires validate() for params, query and body into Express and registers the
-// same schemas, plus the C1 error responses, in the registry, so docs and validation cannot drift.
+// OpenAPI 3.1 from the zod schemas: the shared registry of @zivali/validation (C1) already holds the DTO components;
+// each routes/<area>.routes.ts adds its paths with apiRoutes(): one call wires validate() for params, query and body
+// into Express and registers the same schemas, plus the C1 error responses, so docs and validation cannot drift.
 // `pnpm --filter api gen:openapi` writes the committed openapi.json, the input of the RTK Query codegen
 // (@rtk-query/codegen-openapi), which names endpoints and hooks after operationId and groups them by tag.
-// Schemas with `.meta({ id })` become named components, and so named generated types.
-import { OpenAPIRegistry, OpenApiGeneratorV31 } from '@asteasolutions/zod-to-openapi';
+// Schemas with a ref id (`.openapi('Name')` in @zivali/validation, `.meta({ id })`) become named components.
+import { OpenApiGeneratorV31 } from '@asteasolutions/zod-to-openapi';
 import type { RequestHandler, Router } from 'express';
-import { z, type ZodObject, type ZodType } from 'zod';
+import type { ZodObject, ZodType } from 'zod';
+
+import { ApiErrorBody } from '@zivali/validation';
+import { registry } from '@zivali/validation/openapi';
 
 import { validate } from '../middleware/validate.middleware.ts';
-import { ERROR_STATUS, type ErrorCode } from './errors.ts';
+import { ERROR_HTTP_STATUS, type ErrorCode } from './errors.ts';
 
-// ponytail: own registry until TASK-6.5 merges; then import the shared `registry` from @zivali/validation (C1),
-// which already holds the DTO components, and drop this line.
-export const registry = new OpenAPIRegistry();
-
-// The one error body of every endpoint (C1).
-export const ErrorSchema = z
-	.object({
-		error: z.object({
-			code: z.enum(Object.keys(ERROR_STATUS) as [ErrorCode, ...ErrorCode[]]),
-			message: z.string(),
-			details: z.record(z.string(), z.unknown()).optional(),
-			issues: z.array(z.object({ path: z.string(), message: z.string() })).optional(),
-		}),
-	})
-	.meta({ id: 'ErrorResponse' }); // not 'Error': the generated client would shadow the global Error type
+export { registry };
 
 export type ApiRouteSpec = {
 	method: 'get' | 'post' | 'put' | 'patch' | 'delete';
@@ -52,11 +41,11 @@ const json = (schema: ZodType) => ({ content: { 'application/json': { schema } }
 // C1 codes grouped by HTTP status: { 403: ['FORBIDDEN', 'AAL2_REQUIRED'], … }.
 function errorResponses(codes: ErrorCode[]) {
 	const byStatus: Record<number, ErrorCode[]> = {};
-	for (const code of new Set(codes)) (byStatus[ERROR_STATUS[code]] ??= []).push(code);
+	for (const code of new Set(codes)) (byStatus[ERROR_HTTP_STATUS[code]] ??= []).push(code);
 	return Object.fromEntries(
 		Object.entries(byStatus).map(([status, list]) => [
 			status,
-			{ description: list.join(', '), ...json(ErrorSchema) },
+			{ description: list.join(', '), ...json(ApiErrorBody) },
 		])
 	);
 }
@@ -109,14 +98,19 @@ export function apiRoutes(router: Router, basePath: string) {
 }
 
 export function buildOpenApiDocument() {
-	return new OpenApiGeneratorV31(registry.definitions).generateDocument({
+	const document = new OpenApiGeneratorV31(registry.definitions).generateDocument({
 		openapi: '3.1.0',
 		// Fixed, so the committed openapi.json only changes when the API does.
 		info: {
 			title: 'Izgubljene živali API',
 			version: 'v1',
 			description:
-				'Lost pet finder REST API. Every error body is `ErrorResponse` with a stable code (contract C1).',
+				'Lost pet finder REST API. Every error body is `ApiErrorBody` with a stable code (contract C1).',
 		},
 	});
+	// Components sorted by name: registration order follows module-namespace key order, which Node and Vitest differ on.
+	const schemas = document.components?.schemas;
+	if (schemas)
+		document.components!.schemas = Object.fromEntries(Object.entries(schemas).sort(([a], [b]) => (a < b ? -1 : 1)));
+	return document;
 }

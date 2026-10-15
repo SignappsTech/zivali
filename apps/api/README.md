@@ -20,7 +20,7 @@ domains/<area>/             all business logic, HTTP-agnostic
   index.ts                    the area's public functions (the DAO stays private)
 middleware/<name>.middleware.ts    requestId, validate (body, query, params), error (+ auth, rateLimit, … later)
 lib/                        config.ts (zod env, read once), logger.ts (pino), errors.ts (AppError + C1 codes),
-                            ctx.ts (requestCtx, systemCtx), openapi.ts (registry, apiRoutes, ErrorSchema)
+                            ctx.ts (requestCtx, systemCtx), openapi.ts (apiRoutes over the @zivali/validation registry)
 scripts/gen-openapi.ts      writes openapi.json; `--check` fails when it is stale (part of `lint`)
 prisma/                     prisma.ts (client singleton), schemas/*.prisma + schemas/migrations/, sql/ (TypedSQL),
                             seed.ts (runs seeders/NN-<name>.seeder.ts in order)
@@ -56,8 +56,8 @@ route(
 
 - `operationId`: stable, unique (checked at startup), camelCase verb + noun (`getReport`, `createLostReport`, `listNearbyReports`). The RTK Query codegen (`@rtk-query/codegen-openapi`) turns it into the endpoint and hook name (`useGetReportQuery`); renaming it renames the client hook.
 - Tag: the area (`reports`), from the base path; the codegen groups endpoints by it.
-- Errors: list the C1 codes the route can return besides the automatic `VALIDATION` (when it has request schemas), `RATE_LIMITED` and `INTERNAL`; they are documented per HTTP status with the `ErrorResponse` schema.
-- Named types: give request and response schemas `.meta({ id: 'ReportDetail' })` so they become components (generated type names) instead of inline shapes.
+- Errors: list the C1 codes the route can return besides the automatic `VALIDATION` (when it has request schemas), `RATE_LIMITED` and `INTERNAL`; they are documented per HTTP status with the `ApiErrorBody` schema from `@zivali/validation`.
+- Named types: shared request and response schemas live in `@zivali/validation` with `.openapi('ReportDetail')` and are registered as components automatically; an API-only schema gets `.meta({ id: 'HealthReady' })`. Unnamed schemas end up as inline shapes in the generated client.
 - After changing a route or schema, run `pnpm --filter api gen:openapi` and commit `openapi.json`; `pnpm verify` fails while it is stale.
 
 ## Where does logic go
@@ -76,6 +76,8 @@ route(
 A domain function never imports Express, never reads `req`/`res`, and never catches an error just to rethrow it. Catch locally only where you handle it (retry, fallback, mapping a unique violation to a domain error); `getReadiness` is the example.
 
 Errors: throw `new AppError(code, message?, details?)`. The error middleware renders `{ error: { code, message, details?, issues? } }` with the C1 status; `ZodError` → `VALIDATION` with dotted-path `issues`, Prisma `P2002` → `CONFLICT`, `P2025` → `NOT_FOUND`, anything else → `INTERNAL` (logged with `req_id`, nothing leaked).
+
+Logs (pino, `lib/logger.ts`): one line per request with `req_id`, `route` (method and pattern, e.g. `GET /v1/reports/:id`), `status` and `duration_ms`. URLs, query strings, headers and bodies are never logged, and the keys `lat`, `lng`, `point`, `near`, `location`, `body` and `query` are removed from any log line (C1, C6). Log through `ctx.logger` or `req.log`; `console.*` is a lint error.
 
 ## Database (ADR-021)
 

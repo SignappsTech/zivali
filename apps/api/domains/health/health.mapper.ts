@@ -1,5 +1,5 @@
 // Domain result → response DTO, parsed with the DTO schema so nothing unlisted leaves the API.
-// ponytail: the schema moves to @zivali/validation (health.schema.ts) once that package exists (TASK-6.5).
+// An ops-only DTO, so its schema stays here; DTOs shared with web and mobile live in @zivali/validation.
 import { z } from 'zod';
 
 import type { Readiness } from './health.domain.ts';

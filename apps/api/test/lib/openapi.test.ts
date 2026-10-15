@@ -64,7 +64,7 @@ describe('apiRoutes', () => {
 		});
 	});
 
-	it('documents the C1 error responses grouped by status, all with the ErrorResponse schema', () => {
+	it('documents the C1 error responses grouped by status, all with the ApiErrorBody schema', () => {
 		const responses = buildOpenApiDocument().paths?.['/v1/matches/{id}/confirm']?.post?.responses ?? {};
 		const errors = Object.fromEntries(
 			Object.entries(responses)
@@ -79,7 +79,7 @@ describe('apiRoutes', () => {
 			500: 'INTERNAL',
 		});
 		expect(responses['403']).toMatchObject({
-			content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } },
+			content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiErrorBody' } } },
 		});
 	});
 });
