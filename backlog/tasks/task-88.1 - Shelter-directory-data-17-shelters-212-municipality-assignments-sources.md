@@ -1,11 +1,11 @@
 ---
 id: TASK-88.1
 title: 'Shelter directory data: 17 shelters, 212 municipality assignments, sources'
-status: In Review
+status: Done
 assignee:
   - '@backend-dev'
 created_date: '2026-10-14 23:36'
-updated_date: '2026-10-15 00:32'
+updated_date: '2026-10-15 00:36'
 labels:
   - be
   - 'est:M'
