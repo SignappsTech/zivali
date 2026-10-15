@@ -3,11 +3,11 @@ id: TASK-34.2
 title: >-
   Admin API: aal2 enforcement, users and roles, audit log, queues, admin
   bootstrap script
-status: To Do
+status: In Progress
 assignee:
   - '@backend-dev'
 created_date: '2026-10-14 22:13'
-updated_date: '2026-10-14 23:38'
+updated_date: '2026-10-15 10:35'
 labels:
   - be
   - 'est:S'
@@ -40,8 +40,15 @@ Branch: agent/task-34.2-admin-be
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 requireAal2 protects every staff route; a moderator or admin without a verified TOTP factor gets AAL2_REQUIRED.
-- [ ] #2 scripts/admin-create.mjs (`pnpm admin:create <email>`) promotes an existing account to admin through the Supabase Admin API and the profile role; there is no public path to admin.
-- [ ] #3 GET /v1/admin/audit-log (admins, filters, cursor), GET /v1/admin/users and PUT /v1/admin/users/:id/role (audited, last admin protected) work per C3; every staff domain call writes an audit entry.
-- [ ] #4 GET /v1/admin/queues shows pg-boss queue counts and failed jobs for admins.
+- [x] #1 requireAal2 protects every staff route; a moderator or admin without a verified TOTP factor gets AAL2_REQUIRED.
+- [x] #2 scripts/admin-create.mjs (`pnpm admin:create <email>`) promotes an existing account to admin through the Supabase Admin API and the profile role; there is no public path to admin.
+- [x] #3 GET /v1/admin/audit-log (admins, filters, cursor), GET /v1/admin/users and PUT /v1/admin/users/:id/role (audited, last admin protected) work per C3; every staff domain call writes an audit entry.
+- [x] #4 GET /v1/admin/queues shows pg-boss queue counts and failed jobs for admins.
 <!-- AC:END -->
+
+## Review fixes
+- Users search: display_name substring; email exact match only (lower), full-email test + partial-email-returns-nothing test.
+- Failed jobs: error = left(output->>message, 500) in SQL, no stack fetched; mapper errorMessage removed.
+- lockAdminIds: order by id before for update.
+- Test: two parallel demotions of last 2 admins give exactly one CONFLICT.
+- TASK-9.6 not on main yet: admin-create.ts still reads SUPABASE_SERVICE_ROLE_KEY.
