@@ -1,11 +1,11 @@
 ---
 id: TASK-5.2
 title: 'EAS build profiles, mobile env per environment, Firebase config as secrets'
-status: In Progress
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:12'
-updated_date: '2026-10-15 05:13'
+updated_date: '2026-10-15 05:43'
 labels:
   - tech
   - 'est:S'
