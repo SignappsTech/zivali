@@ -594,8 +594,8 @@ th[aria-sort="ascending"] .sortbtn, th[aria-sort="descending"] .sortbtn { color:
     <div class="dialog" role="alertdialog" aria-modal="true" aria-label="Izbriši: Trgovina Repek?" aria-describedby="dd-f6">
       <h2 class="dtitle">Izbriši: Trgovina Repek?</h2>
       <p id="dd-f6" class="mt-2">Dejanje bo zabeleženo v revizijski sledi.</p>
-      <div class="field mt-5"><label for="an-f6">Opomba za revizijsko sled (neobvezno)</label><textarea id="an-f6" class="input" rows="2"></textarea></div>
-      <div class="grid gap-2 mt-6"><button type="button" class="btn btn-destructive btn-block">Izbriši</button><button type="button" class="btn btn-text btn-block is-focus">Prekliči</button></div>
+      <div class="field mt-5"><label for="an-f6">Opomba za revizijsko sled</label><textarea id="an-f6" class="input" rows="2" required aria-describedby="an-f6-h"></textarea><p id="an-f6-h" class="mt-2 text-sm text-muted-foreground">Za izbris je obvezna opomba za revizijsko sled.</p></div>
+      <div class="grid gap-2 mt-6"><button type="button" class="btn btn-destructive btn-block" disabled aria-disabled="true">Izbriši</button><button type="button" class="btn btn-text btn-block is-focus">Prekliči</button></div>
     </div>
   </div>
   </div></div>
