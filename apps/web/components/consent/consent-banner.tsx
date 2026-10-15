@@ -41,12 +41,12 @@ export function ConsentBanner() {
 		if (needsConsentPrompt()) {
 			// eslint-disable-next-line react-hooks/set-state-in-effect
 			setView('first');
-			if (stored)
-				setReask(
-					stored.v !== CONSENT_VERSION && t.has(key)
-						? t('reask_changed', { change: t(key) })
-						: t('reask_year')
-				);
+			if (stored) {
+				// Version bump: only a documented change_<v> is worth saying; otherwise the choice expired by age.
+				if (stored.v !== CONSENT_VERSION) {
+					if (t.has(key)) setReask(t('reask_changed', { change: t(key) }));
+				} else setReask(t('reask_year'));
+			}
 		}
 		const open = () => {
 			opener.current = document.activeElement as HTMLElement | null;

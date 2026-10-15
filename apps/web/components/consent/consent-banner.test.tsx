@@ -18,14 +18,16 @@ vi.mock('next/navigation', async (actual) => ({
 let stored: string | null;
 const storage = { get: () => stored, set: (value: string) => (stored = value) };
 
-function mount(locale: 'sl' | 'en' = 'sl') {
+function mount(locale: 'sl' | 'en' = 'sl', extra: Record<string, string> = {}) {
 	initAnalytics({ provider: 'mock', storage });
 	return render(
-		<NextIntlClientProvider locale={locale} messages={locale === 'sl' ? sl : en}>
+		<NextIntlClientProvider locale={locale} messages={withChange(locale === 'sl' ? sl : en, extra)}>
 			<ConsentBanner />
 		</NextIntlClientProvider>
 	);
 }
+const withChange = (m: typeof en, extra: Record<string, string>) =>
+	({ ...m, consent: { ...m.consent, ...extra } }) as typeof en;
 const record = (analytics: boolean, v = CONSENT_VERSION, ts = new Date().toISOString()) =>
 	JSON.stringify({ v, analytics, ts });
 const button = (name: string) => screen.getByRole('button', { name });
@@ -114,5 +116,17 @@ describe('ConsentBanner', () => {
 		stored = record(true, CONSENT_VERSION, new Date(Date.now() - 400 * 24 * 3600 * 1000).toISOString());
 		mount('en');
 		expect(screen.getByText(/It has been a year since your last choice/)).toBeTruthy();
+	});
+
+	it('version bump without a documented change shows no re-ask line; with change_<v> it names the change', () => {
+		stored = record(true, CONSENT_VERSION - 1);
+		mount('en');
+		expect(screen.getByRole('dialog')).toBeTruthy();
+		expect(screen.queryByText(/since your last choice/)).toBeNull();
+		cleanup();
+
+		stored = record(true, CONSENT_VERSION - 1);
+		mount('en', { [`change_${CONSENT_VERSION}`]: 'we added maps' });
+		expect(screen.getByText(/Something has changed since your last choice: we added maps/)).toBeTruthy();
 	});
 });
