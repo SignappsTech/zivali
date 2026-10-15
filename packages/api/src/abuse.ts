@@ -5,10 +5,11 @@ import type {
 	AbuseReportResponse,
 	AdminAbuseReportList,
 	AdminAbuseReportQuery,
-	CursorQuery,
 	ModerationFlagList,
+	ModerationFlagQuery,
 } from '@zivali/types';
 
+import { pageParams } from './pagination.ts';
 import { api } from './rtk.ts';
 
 export const abuseApi = api.enhanceEndpoints({ addTagTypes: ['AbuseReport'] }).injectEndpoints({
@@ -18,14 +19,32 @@ export const abuseApi = api.enhanceEndpoints({ addTagTypes: ['AbuseReport'] }).i
 			query: (body) => ({ url: '/v1/abuse-reports', method: 'POST', body }),
 			invalidatesTags: ['AbuseReport'],
 		}),
-		listAdminAbuseReports: build.query<AdminAbuseReportList, AdminAbuseReportQuery | void>({
-			query: (params) => ({ url: '/v1/admin/abuse-reports', params: params ?? undefined }),
+		// Staff (aal2), newest first, keyset "Load more" (P19 table pattern).
+		listAdminAbuseReports: build.infiniteQuery<
+			AdminAbuseReportList,
+			Omit<AdminAbuseReportQuery, 'cursor'>,
+			string | null
+		>({
+			infiniteQueryOptions: pageParams,
+			query: ({ queryArg, pageParam }) => ({
+				url: '/v1/admin/abuse-reports',
+				params: { ...queryArg, cursor: pageParam },
+			}),
 			providesTags: ['AbuseReport'],
 		}),
-		listModerationFlags: build.query<ModerationFlagList, CursorQuery | void>({
-			query: (params) => ({ url: '/v1/admin/moderation-flags', params: params ?? undefined }),
+		listModerationFlags: build.infiniteQuery<
+			ModerationFlagList,
+			Omit<ModerationFlagQuery, 'cursor'>,
+			string | null
+		>({
+			infiniteQueryOptions: pageParams,
+			query: ({ queryArg, pageParam }) => ({
+				url: '/v1/admin/moderation-flags',
+				params: { ...queryArg, cursor: pageParam },
+			}),
 		}),
 	}),
 });
 
-export const { useReportAbuseMutation, useListAdminAbuseReportsQuery, useListModerationFlagsQuery } = abuseApi;
+export const { useReportAbuseMutation, useListAdminAbuseReportsInfiniteQuery, useListModerationFlagsInfiniteQuery } =
+	abuseApi;

@@ -13,6 +13,7 @@ describe('admin navigation rules', () => {
 	it('opens Overview and Safety to moderators, everything to admins, unlisted pages to admins only', () => {
 		expect(canOpen('/admin', 'MODERATOR')).toBe(true);
 		expect(canOpen('/admin/moderation', 'MODERATOR')).toBe(true);
+		expect(canOpen('/admin/abuse-reports', 'MODERATOR')).toBe(true);
 		expect(canOpen('/admin/audit-log', 'MODERATOR')).toBe(false);
 		expect(canOpen('/admin/shelters', 'MODERATOR')).toBe(false);
 		expect(canOpen('/admin/unknown', 'MODERATOR')).toBe(false);
@@ -23,5 +24,6 @@ describe('admin navigation rules', () => {
 		expect(itemHref(adminItem('/admin/audit-log')!)).toBe('/admin/audit-log');
 		expect(itemHref(comingSection('ads')!)).toEqual({ pathname: '/admin/[section]', params: { section: 'ads' } });
 		expect(comingSection('shelters')).toBeUndefined();
+		expect(comingSection('abuse-reports')).toBeUndefined();
 	});
 });
