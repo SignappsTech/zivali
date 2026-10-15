@@ -78,7 +78,7 @@ export function PermissionPrimer({
 						<Button size="lg" loading={asking} onPress={allow}>
 							{t(`${kind}_allow`)}
 						</Button>
-						<Button variant="text" disabled={asking} onPress={() => onResult(false)}>
+						<Button variant="text" onPress={() => onResult(false)}>
 							{t('not_now')}
 						</Button>
 					</View>

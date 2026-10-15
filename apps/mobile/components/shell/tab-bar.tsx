@@ -6,11 +6,12 @@ import { MapTrifoldIcon } from 'phosphor-react-native/src/icons/MapTrifold';
 import { PlusIcon } from 'phosphor-react-native/src/icons/Plus';
 import { UserCircleIcon } from 'phosphor-react-native/src/icons/UserCircle';
 import * as React from 'react';
-import { Keyboard, Pressable, View } from 'react-native';
+import { Keyboard, Pressable, type StyleProp, View, type ViewStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslations } from 'use-intl';
 
 import { MenuRow } from '@/components/shell/parts';
+import { useFocusRing } from '@/components/ui/focus-ring';
 import { Icon } from '@/components/ui/icon';
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { statusIcons, type Status } from '@/components/ui/status-label';
@@ -53,6 +54,25 @@ export function ReportChoices({ onChoose, rowClassName }: { onChoose?: () => voi
 	);
 }
 
+/** One bottom-navigation item: icon above the label, at least 44 px, with the focus ring for keyboard and D-pad. */
+function NavItem({
+	style,
+	onFocus,
+	onBlur,
+	...props
+}: Omit<React.ComponentProps<typeof Pressable>, 'style'> & { style?: StyleProp<ViewStyle> }) {
+	const focus = useFocusRing(onFocus, onBlur);
+	return (
+		<Pressable
+			className="min-h-11 flex-1 items-center gap-[3px] rounded-row"
+			style={[focus.ringStyle, style]}
+			onFocus={focus.onFocus}
+			onBlur={focus.onBlur}
+			{...props}
+		/>
+	);
+}
+
 function useKeyboardShown() {
 	const [shown, setShown] = React.useState(false);
 	React.useEffect(() => {
@@ -88,16 +108,15 @@ export function TabBar({ state, navigation }: Pick<BottomTabBarProps, 'state' | 
 				if (route.name === 'report') {
 					return (
 						<Sheet key={route.key} open={reportOpen} onOpenChange={setReportOpen}>
-							<SheetTrigger
-								aria-label={t('tab_report_a11y')}
-								className="min-h-11 flex-1 items-center gap-[3px]"
-							>
-								<View className="size-12 items-center justify-center rounded-full bg-primary">
-									<Icon as={PlusIcon} size={24} className="text-primary-foreground" />
-								</View>
-								<NavLabel className="font-sans-bold text-[13px] leading-4 text-foreground">
-									{t('tab_report')}
-								</NavLabel>
+							<SheetTrigger asChild>
+								<NavItem aria-label={t('tab_report_a11y')}>
+									<View className="size-12 items-center justify-center rounded-full bg-primary">
+										<Icon as={PlusIcon} size={24} className="text-primary-foreground" />
+									</View>
+									<NavLabel className="font-sans-bold text-[13px] leading-4 text-foreground">
+										{t('tab_report')}
+									</NavLabel>
+								</NavItem>
 							</SheetTrigger>
 							<SheetContent closeLabel={t('sheet_close')}>
 								<SheetTitle>{t('report_menu_title')}</SheetTitle>
@@ -110,7 +129,7 @@ export function TabBar({ state, navigation }: Pick<BottomTabBarProps, 'state' | 
 				if (!tab) return null;
 				const focused = state.index === index;
 				return (
-					<Pressable
+					<NavItem
 						key={route.key}
 						role="tab"
 						aria-selected={focused}
@@ -123,7 +142,6 @@ export function TabBar({ state, navigation }: Pick<BottomTabBarProps, 'state' | 
 							});
 							if (!focused && !event.defaultPrevented) navigation.navigate(route.name, route.params);
 						}}
-						className="min-h-11 flex-1 items-center gap-[3px]"
 					>
 						<Icon
 							as={tab.icon}
@@ -139,7 +157,7 @@ export function TabBar({ state, navigation }: Pick<BottomTabBarProps, 'state' | 
 						>
 							{t(tab.label)}
 						</NavLabel>
-					</Pressable>
+					</NavItem>
 				);
 			})}
 		</View>
