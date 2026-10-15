@@ -80,30 +80,28 @@ export async function claimManage(
 /**
  * POST /v1/reports/:code/manage-link/resend (managers): a new token replaces the old one (only its hash is stored,
  * so the old link stops working) and goes to the finder email on file. No email → CONFLICT; 3 per report per day.
- * The email goes out inside the transaction: when it fails the new token rolls back (5xx) and the old link still works.
+ * The new token is emailed first, outside any transaction, and its hash is written only after a successful send: a
+ * failed send changes nothing (5xx) and the old link keeps working.
  */
 export async function resendManageLink(input: { code: string }, ctx: Ctx): Promise<void> {
 	const actor = ctx.actor;
 	if (!actor) throw new AppError('UNAUTHENTICATED', 'Sign in required');
-	const run = async (tx: NonNullable<Ctx['tx']>): Promise<void> => {
-		const found = await ReportsDao.findWithRole(input.code, actor.user_id, tx);
-		if (!found) throw new AppError('NOT_FOUND', 'Report not found');
-		if (!found.role) throw new AppError('FORBIDDEN', 'Not a manager of this report');
-		const { report } = found;
-		assertManageable(report, ctx.now);
-		const to = await ReportsDao.getContactEmail(report.id, tx);
-		if (!to) throw new AppError('CONFLICT', 'No finder email on file');
-		await consumeRateLimit(
-			{ name: 'manage_link.resend', key: report.id, limit: RESEND_PER_DAY, window_s: 86_400 },
-			ctx.now
-		);
-		const { token, hash } = newManageToken();
-		await ReportsDao.updateReport(report.id, { manage_token_hash: hash }, tx);
-		const link = { to, short_code: report.short_code, type: report.type, species: report.species, token };
-		if ((await sendLink(link, ctx)) === 'failed') throw new Error('manage link email failed');
-	};
-	// Longer than the email adapter's own 10 s timeout.
-	await (ctx.tx ? run(ctx.tx) : prisma.$transaction(run, { timeout: 15_000 }));
+	const db = ctx.tx ?? prisma;
+	const found = await ReportsDao.findWithRole(input.code, actor.user_id, db);
+	if (!found) throw new AppError('NOT_FOUND', 'Report not found');
+	if (!found.role) throw new AppError('FORBIDDEN', 'Not a manager of this report');
+	const { report } = found;
+	assertManageable(report, ctx.now);
+	const to = await ReportsDao.getContactEmail(report.id, db);
+	if (!to) throw new AppError('CONFLICT', 'No finder email on file');
+	await consumeRateLimit(
+		{ name: 'manage_link.resend', key: report.id, limit: RESEND_PER_DAY, window_s: 86_400 },
+		ctx.now
+	);
+	const { token, hash } = newManageToken();
+	const link = { to, short_code: report.short_code, type: report.type, species: report.species, token };
+	if ((await sendLink(link, ctx)) === 'failed') throw new Error('manage link email failed');
+	await ReportsDao.updateReport(report.id, { manage_token_hash: hash }, ctx.tx);
 }
 
 export default { hashManageToken, newManageToken, mailManageLink, claimManage, resendManageLink };

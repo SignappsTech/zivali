@@ -3243,7 +3243,7 @@
 			"post": {
 				"operationId": "resendManageLink",
 				"summary": "Email the manage link again (managers)",
-				"description": "Sends a new manage link to the finder email on file; the old link stops working (only the token hash is stored); if the email cannot be sent nothing changes (500). 3 per report per day. No email on file: CONFLICT; removed or closed more than 7 days ago: GONE.",
+				"description": "Sends a new manage link to the finder email on file; the old link stops working (only the token hash is stored; it is written only after the email went out); if the email cannot be sent nothing changes (500). 3 per report per day. No email on file: CONFLICT; removed or closed more than 7 days ago: GONE.",
 				"tags": ["reports"],
 				"parameters": [
 					{

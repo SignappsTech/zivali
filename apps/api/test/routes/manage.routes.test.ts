@@ -423,7 +423,7 @@ describe('POST /v1/reports/:code/manage-link/resend (C7)', () => {
 		expect((await resend(await anon(), 'zzzzzzzz')).status).toBe(404);
 	});
 
-	it('a failed email rolls the new token back (5xx); the old link keeps working', async () => {
+	it('a failed email changes nothing (5xx): the old link keeps working', async () => {
 		const finder = await anon();
 		const created = await anonReport(finder, email());
 		const send = vi.spyOn(adapters.email, 'send').mockRejectedValueOnce(new Error('provider down'));
@@ -435,6 +435,23 @@ describe('POST /v1/reports/:code/manage-link/resend (C7)', () => {
 		const row = await prisma.reports.findUniqueOrThrow({ where: { id: created.id } });
 		expect(Buffer.from(row.manage_token_hash!)).toEqual(sha256(created.manage_token));
 		expect((await claim(await anon(), created.manage_token)).status).toBe(200);
+	});
+
+	it('after a successful resend the emailed token claims and the stored hash is its SHA-256', async () => {
+		const to = email();
+		const finder = await anon();
+		const created = await anonReport(finder, to);
+		expect((await resend(finder, created.short_code)).status).toBe(204);
+		const fresh = tokenIn(mailsTo(to).at(-1)!.html)!;
+		const row = await prisma.reports.findUniqueOrThrow({ where: { id: created.id } });
+		expect(Buffer.from(row.manage_token_hash!)).toEqual(sha256(fresh));
+		const claimant = await anon();
+		expect((await claim(claimant, fresh)).body).toEqual({ report_id: created.id, short_code: created.short_code });
+		expect(
+			await prisma.report_managers.findUnique({
+				where: { report_id_user_id: { report_id: created.id, user_id: claimant.id } },
+			})
+		).toMatchObject({ role: 'finder' });
 	});
 
 	it('no email on file: CONFLICT; at most 3 per report per day (RATE_LIMITED)', async () => {
