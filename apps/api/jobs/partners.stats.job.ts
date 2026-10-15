@@ -1,6 +1,8 @@
-// partners.stats stub (TASK-6.3): logs and completes; the partner stats task (TASK-38.2) replaces it.
+// partners.stats (hourly, C14): masked counts into partner_stats_snapshot, DB-only (GA enrichment flag off).
+import { PartnersDomain } from '../domains/partners/index.ts';
 import type { JobCtx } from './index.ts';
 
 export async function handle(_data: unknown, ctx: JobCtx): Promise<void> {
-	ctx.logger.info('job stub: no handler yet');
+	const stats = await PartnersDomain.computeStats(undefined, ctx);
+	ctx.logger.info({ regions: stats.by_region.length, pilot: stats.pilot }, 'partner stats snapshot stored');
 }
