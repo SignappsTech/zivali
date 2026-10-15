@@ -3,11 +3,11 @@ id: TASK-10.3
 title: >-
   Mobile i18n: use-intl with shared catalogues, SL plural support, persisted
   choice
-status: In Progress
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:12'
-updated_date: '2026-10-15 05:52'
+updated_date: '2026-10-15 06:37'
 labels:
   - fe
   - 'est:S'
