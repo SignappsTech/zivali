@@ -3,7 +3,15 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { ApiError } from '@zivali/api/client';
 
-import { callbackUrl, requestPasswordReset, signIn, signInWithProvider, signUp, updatePassword } from './auth';
+import {
+	callbackUrl,
+	ensureSession,
+	requestPasswordReset,
+	signIn,
+	signInWithProvider,
+	signUp,
+	updatePassword,
+} from './auth';
 
 const supabase = vi.hoisted(() => ({
 	signInWithPassword: vi.fn(),
@@ -11,6 +19,8 @@ const supabase = vi.hoisted(() => ({
 	resetPasswordForEmail: vi.fn(),
 	signInWithOAuth: vi.fn(),
 	updateUser: vi.fn(),
+	getSession: vi.fn(),
+	signInAnonymously: vi.fn(),
 }));
 vi.mock('@/lib/supabase/client', () => ({ createClient: () => ({ auth: supabase }) }));
 
@@ -24,6 +34,25 @@ describe('Supabase calls', () => {
 			`${origin}/en/auth/callback?type=oauth&next=%2Fen%2Faccount`
 		);
 		expect(callbackUrl('recovery', 'sl')).toBe(`${origin}/auth/callback?type=recovery`);
+	});
+
+	it('signs in anonymously with a captcha token only when the browser has no session (C7)', async () => {
+		const token = vi.fn(async () => 'cf-token');
+		supabase.getSession.mockResolvedValue({ data: { session: { access_token: 'a' } }, error: null });
+		await ensureSession(token);
+		expect(token).not.toHaveBeenCalled();
+		expect(supabase.signInAnonymously).not.toHaveBeenCalled();
+
+		supabase.getSession.mockResolvedValue({ data: { session: null }, error: null });
+		supabase.signInAnonymously.mockResolvedValue({ data: {}, error: null });
+		await ensureSession(token);
+		expect(supabase.signInAnonymously).toHaveBeenCalledWith({ options: { captchaToken: 'cf-token' } });
+
+		supabase.signInAnonymously.mockResolvedValue({
+			data: {},
+			error: new AuthError('captcha protection: request disallowed', 400, 'captcha_failed'),
+		});
+		await expect(ensureSession(token)).rejects.toMatchObject({ code: 'CAPTCHA_FAILED' });
 	});
 
 	it('sends the captcha token and maps a wrong pair to UNAUTHENTICATED', async () => {

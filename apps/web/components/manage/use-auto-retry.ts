@@ -22,24 +22,31 @@ type State<T> =
  */
 export function useAutoRetry<T>(task: () => Promise<T>) {
 	const [state, setState] = React.useState<State<T>>({ status: 'idle' });
+	// One attempt at a time: a click, the timer and `online` can coincide.
+	const inFlight = React.useRef(false);
 
 	const run = React.useCallback(async () => {
+		if (inFlight.current) return;
+		inFlight.current = true;
 		setState((previous) => ({ status: 'running', error: previous.error }));
 		try {
 			const result = await task();
 			setState({ status: 'done', result });
 		} catch (error) {
 			setState({ status: isTransient(error) ? 'waiting' : 'failed', error });
+		} finally {
+			inFlight.current = false;
 		}
 	}, [task]);
 
 	const waiting = state.status === 'waiting';
 	React.useEffect(() => {
 		if (!waiting) return;
-		const timer = setTimeout(run, RETRY_MS);
+		// An interval, not a timeout: a retry that fails at once may never commit `running`, so this effect stays.
+		const timer = setInterval(run, RETRY_MS);
 		window.addEventListener('online', run);
 		return () => {
-			clearTimeout(timer);
+			clearInterval(timer);
 			window.removeEventListener('online', run);
 		};
 	}, [waiting, run]);
