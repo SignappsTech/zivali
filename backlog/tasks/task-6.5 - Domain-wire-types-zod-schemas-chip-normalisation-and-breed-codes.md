@@ -7,7 +7,7 @@ status: To Do
 assignee:
   - '@backend-dev'
 created_date: '2026-10-14 22:12'
-updated_date: '2026-10-14 23:39'
+updated_date: '2026-10-15 00:12'
 labels:
   - be
   - 'est:M'
@@ -44,4 +44,5 @@ Branch: agent/task-6.5-domain
 - [ ] #2 normalizeChip implements the C4 rules with unit tests (separators, 9–15 digits, 15-digit ISO 11784, invalid → null with status).
 - [ ] #3 Breed code lists (about 60 dog and 20 cat breeds plus mixed and unknown) and the colour, pattern and size enums match C4; label keys are listed for the breeds and attributes i18n namespaces.
 - [ ] #4 Both packages depend only on zod (validation also on the zod-to-openapi extension) and are consumed by the API and both apps.
+- [ ] #5 The C6 geocoder schemas (search and reverse requests, Place) with normalisePlace(), the C4 display-only reward fields (reward_eur, reward_note; lost only) and containsContactData() are included, with unit tests for both helpers.
 <!-- AC:END -->

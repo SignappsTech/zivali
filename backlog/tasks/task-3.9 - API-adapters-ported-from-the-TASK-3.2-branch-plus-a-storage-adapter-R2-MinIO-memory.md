@@ -7,6 +7,7 @@ status: To Do
 assignee:
   - '@backend-dev'
 created_date: '2026-10-14 23:35'
+updated_date: '2026-10-15 00:13'
 labels:
   - tech
   - 'est:S'
@@ -39,4 +40,5 @@ Branch: agent/task-3.9-adapters
 - [ ] #1 apps/api/adapters/{ai,embedder,payments,email,push,captcha} are ported from the branch to Node ESM with the same interfaces, mock implementations and provider selection (mock when credentials are missing outside production).
 - [ ] #2 A storage adapter (minio, r2, memory) offers presigned PUT and GET, copy, delete and head for the private, media and backups buckets.
 - [ ] #3 Unit tests cover provider selection and the storage adapter against MinIO and the memory implementation; adapters are reachable as ctx.adapters in domains and jobs.
+- [ ] #4 The r2 provider uses the EU jurisdiction endpoint https://<R2_ACCOUNT_ID>.eu.r2.cloudflarestorage.com for every call and presigned URL (ADR-014); a unit test asserts it.
 <!-- AC:END -->

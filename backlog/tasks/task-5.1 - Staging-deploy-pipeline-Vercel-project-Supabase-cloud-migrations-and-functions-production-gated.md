@@ -7,7 +7,7 @@ status: To Do
 assignee:
   - '@backend-dev'
 created_date: '2026-10-14 22:12'
-updated_date: '2026-10-14 23:38'
+updated_date: '2026-10-15 00:14'
 labels:
   - tech
   - 'est:M'
@@ -20,6 +20,7 @@ references:
   - docs/tech/backend.md
   - docs/tech/adr/016-environments-hosting-cicd.md
   - docs/tech/frontend.md
+  - docs/tech/adr/014-photo-pipeline-and-storage.md
 parent_task_id: TASK-5
 priority: medium
 ordinal: 119000
@@ -44,4 +45,5 @@ Branch: agent/task-5.1-deploy
 - [ ] #3 scripts/deploy.mjs <staging|production> performs the same steps from a workstation and, when Hetzner, R2, DNS or GitHub secrets are missing, prints NEEDS-INPUT with the variable names (never values), runs the dry-run path (image builds, migrate diff against a fresh local database, tests) and exits 0.
 - [ ] #4 The db.backup job writes a nightly compressed pg_dump of the app data to the R2 backups bucket with a 30-day lifecycle rule; the db.keepalive job and the uptime check keep Supabase Free awake; restore steps are written down.
 - [ ] #5 The README section Environments and credentials lists the credentials, who provides them, the monthly cost and what stays blocked without them.
+- [ ] #6 The runbook creates zivali-private, zivali-media and zivali-backups in the R2 EU jurisdiction (CORS rule on zivali-private, 30-day lifecycle on zivali-backups, public access for zivali-media) per ADR-014; scripts/deploy.mjs checks each bucket with HeadBucket on the EU endpoint and prints NEEDS-INPUT when one is missing.
 <!-- AC:END -->

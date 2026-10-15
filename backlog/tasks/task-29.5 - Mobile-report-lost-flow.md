@@ -5,7 +5,7 @@ status: To Do
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:14'
-updated_date: '2026-10-14 22:42'
+updated_date: '2026-10-15 00:12'
 labels:
   - fe
   - 'est:M'
@@ -48,4 +48,5 @@ Branch: agent/task-29.5-lost-mob
 - [ ] #2 Submitting calls create_report; errors are specific, localised and keep the input; DUPLICATE_OPEN_REPORT offers to update the open report.
 - [ ] #3 report_lost_start and report_lost_submit fire with consent only; no ad component in the flow.
 - [ ] #4 Screen-reader labels and focus order verified on every step.
+- [ ] #5 The lost flow offers the optional display-only reward (amount and/or short note) per P6 with the inline contact-data error from containsContactData(); nothing is charged.
 <!-- AC:END -->

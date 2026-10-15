@@ -5,7 +5,7 @@ status: To Do
 assignee:
   - '@qa'
 created_date: '2026-10-14 22:15'
-updated_date: '2026-10-14 23:38'
+updated_date: '2026-10-15 00:12'
 labels:
   - qa
   - 'est:XS'
@@ -48,4 +48,5 @@ Branch: - (verify on main)
 - [ ] #6 Given incomplete data, when the user submits, then errors are specific and localised and the form keeps their input.
 - [ ] #7 Given a submitted lost report, when the confirmation shows, then a checklist offers a one-tap call to the responsible shelter from the directory and states the owner reporting duty (escape reported to a vet or the responsible shelter within 3 days; the nearest shelter within 72 h), never claiming the app replaces it; the legal timings appear only when the legal-content flag is on.
 - [ ] #8 Story gates pass on main: `pnpm verify`, plus `pnpm quality` for the pages this story touches; results recorded in the QA notes.
+- [ ] #9 Given a lost report with a reward, when it is created and viewed, then the reward shows only as a display line with the scam warning, contact data in the note is refused, and no payment step appears.
 <!-- AC:END -->

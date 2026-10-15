@@ -7,7 +7,7 @@ status: To Do
 assignee:
   - '@backend-dev'
 created_date: '2026-10-14 22:13'
-updated_date: '2026-10-14 23:38'
+updated_date: '2026-10-15 00:12'
 labels:
   - be
   - 'est:M'
@@ -46,4 +46,5 @@ Branch: agent/task-29.2-report-write-be
 - [ ] #3 The creator is added to report_managers; the domain calls the submission guard first (stub here, rules from the anonymous-reporter task); lost reports need a non-anonymous account.
 - [ ] #4 Creation applies the fuzz and geo lookup and, in the same transaction, queues photo.publish, match.report and, for visible lost reports, alerts.fanout; GET /v1/me/reports lists the caller's reports; the new report is returned by GET /v1/reports/:code within one minute after `pnpm jobs:drain`.
 - [ ] #5 Supertest covers every validation, the permission matrix and the queued jobs.
+- [ ] #6 Reward fields are accepted on create and PATCH for lost reports only (found or sighted with a reward → VALIDATION) and reward_note with contact data → VALIDATION issue CONTACT_DATA, per C4; no payment is created.
 <!-- AC:END -->

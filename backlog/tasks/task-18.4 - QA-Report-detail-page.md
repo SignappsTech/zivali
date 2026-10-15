@@ -5,6 +5,7 @@ status: To Do
 assignee:
   - '@qa'
 created_date: '2026-10-14 22:15'
+updated_date: '2026-10-15 00:13'
 labels:
   - qa
   - 'est:XS'
@@ -41,4 +42,5 @@ Branch: - (verify on main)
 - [ ] #4 Given a hidden or removed report, when its URL is opened, then a clear message explains it is no longer available.
 - [ ] #5 Given SL and EN, when the language is switched, then page content and meta are localised.
 - [ ] #6 Story gates pass on main: `pnpm verify`, plus `pnpm quality` for the pages this story touches; results recorded in the QA notes.
+- [ ] #7 Given a lost report with a reward, when its detail page opens on web and mobile, then the 'Nagrada' line and the scam warning are shown, and reports without a reward show neither.
 <!-- AC:END -->

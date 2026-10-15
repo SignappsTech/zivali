@@ -5,7 +5,7 @@ status: To Do
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:12'
-updated_date: '2026-10-14 23:38'
+updated_date: '2026-10-15 00:13'
 labels:
   - fe
   - 'est:M'
@@ -42,7 +42,7 @@ Branch: agent/task-6.9-api-core
 <!-- AC:BEGIN -->
 - [ ] #1 @zivali/api/auth (Supabase Auth helpers), me, pets, reports, photos (POST /v1/photos, presigned PUT with progress, /complete), geocode and matches implement every client function in C3, C4, C5, C6 and C8 over REST with the contract paths and types.
 - [ ] #2 useSession() and useRequireAuth() (C3) combine the Supabase session with GET /v1/me on web and mobile.
-- [ ] #3 The geocoder supports maptiler, photon and mock providers selected by env, prefers Slovenia, debounces input and returns at most 5 places; unit tests use the mock.
-- [ ] #4 Fixtures from the contract examples exist for each domain; unit tests cover argument and error mapping with createMockApi().
-- [ ] #5 Functions whose endpoint is not merged yet name the owning backend task in a code comment and still type-check.
+- [ ] #3 Fixtures from the contract examples exist for each domain; unit tests cover argument and error mapping with createMockApi().
+- [ ] #4 Functions whose endpoint is not merged yet name the owning backend task in a code comment and still type-check.
+- [ ] #5 geocode implements searchPlaces and reversePlace over POST /v1/geo/search and /v1/geo/reverse (C6) with no third-party provider and no key; the debounce (300 ms, minimum 3 characters, abort previous) lives in a shared hook; unit tests use createMockApi().
 <!-- AC:END -->

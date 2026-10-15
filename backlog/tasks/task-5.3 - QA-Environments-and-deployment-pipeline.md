@@ -5,7 +5,7 @@ status: To Do
 assignee:
   - '@qa'
 created_date: '2026-10-14 22:15'
-updated_date: '2026-10-14 23:38'
+updated_date: '2026-10-15 00:14'
 labels:
   - qa
   - 'est:XS'
@@ -40,4 +40,5 @@ Branch: - (verify on main)
 - [ ] #4 Given EAS, when a developer runs a build profile, then development and preview profiles exist (no store submission).
 - [ ] #5 Given the environments, when documented, then a runbook lists required credentials, who provides them, the monthly cost and which features stay blocked without them.
 - [ ] #6 Story gates pass on main: `pnpm verify`, plus `pnpm quality` for the pages this story touches; results recorded in the QA notes.
+- [ ] #7 Given staging storage, when the R2 buckets are checked, then zivali-private, zivali-media and zivali-backups exist in the EU jurisdiction (HeadBucket on the EU endpoint succeeds) and a web photo upload works through the CORS rule.
 <!-- AC:END -->

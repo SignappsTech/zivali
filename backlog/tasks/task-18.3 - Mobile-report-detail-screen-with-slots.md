@@ -5,7 +5,7 @@ status: To Do
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:13'
-updated_date: '2026-10-14 22:42'
+updated_date: '2026-10-15 00:12'
 labels:
   - fe
   - 'est:M'
@@ -46,4 +46,5 @@ Branch: agent/task-18.3-detail-mob
 - [ ] #2 The same named slots exist as components so later tasks fill them without layout changes.
 - [ ] #3 Gone and not-found states are clear; the screen opens from deep links (C15).
 - [ ] #4 Screen-reader order and labels are verified on Android; photos have alt text.
+- [ ] #5 A lost report with a reward shows the 'Nagrada' line together with the scam warning, per P9 and its content slice.
 <!-- AC:END -->

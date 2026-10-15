@@ -5,7 +5,7 @@ status: To Do
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:13'
-updated_date: '2026-10-14 22:42'
+updated_date: '2026-10-15 00:12'
 labels:
   - fe
   - 'est:M'
@@ -46,4 +46,5 @@ Branch: agent/task-18.2-detail-web
 - [ ] #2 Named ReportSlot placeholders (contact, share, poster, report-abuse, owner-actions, ad, matches-link, sighting) render from components/report/slots/<name>.tsx so later tasks fill them without layout changes.
 - [ ] #3 Title, description, Open Graph image (photo and type label, no location) and JSON-LD are present; hidden, removed and long-closed reports return the 410 page with noindex.
 - [ ] #4 Content and meta are localised in SL and EN; Lighthouse performance ≥ 90 and SEO ≥ 95 on a seeded detail page; axe 0 violations.
+- [ ] #5 A lost report with a reward shows the 'Nagrada' line together with the scam warning, per P9 and its content slice.
 <!-- AC:END -->

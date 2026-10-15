@@ -5,16 +5,19 @@ status: To Do
 assignee:
   - '@qa'
 created_date: '2026-10-14 22:15'
+updated_date: '2026-10-15 00:13'
 labels:
   - qa
   - 'est:XS'
 milestone: m-1
 dependencies:
+  - TASK-15.1
   - TASK-15.2
   - TASK-15.3
   - TASK-15.4
   - TASK-15.5
-  - TASK-15.1
+  - TASK-15.7
+  - TASK-15.8
 references:
   - docs/tech/frontend.md
   - docs/design/pages/P5-location-picker.md
@@ -30,7 +33,7 @@ Verify story TASK-15 (Location picker and privacy-preserving map display) on mai
 
 ## Packet
 
-Unblocks on: all tasks of TASK-15 merged to main (TASK-15.2, TASK-15.3, TASK-15.4, TASK-15.5, TASK-15.1); leads add any later TASK-15 task to this task's dependencies.
+Unblocks on: all tasks of TASK-15 merged to main (TASK-15.1, TASK-15.2, TASK-15.3, TASK-15.4, TASK-15.5, TASK-15.7, TASK-15.8); leads add any later TASK-15 task to this task's dependencies.
 Review: n/a (QA)
 Branch: - (verify on main)
 <!-- SECTION:DESCRIPTION:END -->
@@ -43,4 +46,5 @@ Branch: - (verify on main)
 - [ ] #4 Given other stories, when they use the component, then a documented API exists (LocationPicker, MapView with markers, clusters, circles and paths, fuzz utility) with keyboard operation and a text alternative.
 - [ ] #5 Given place search, when used in Slovenia, then the geocoder choice and limits are documented in the TDD and results default to Slovenia.
 - [ ] #6 Story gates pass on main: `pnpm verify`, plus `pnpm quality` for the pages this story touches; results recorded in the QA notes.
+- [ ] #7 Given place search on web and mobile, when searching a settlement, a district, a street and a street with a house number, then matching places come first, the picker shows the reverse area label (for example 'Šiška, Ljubljana'), the GURS attribution sits under the results, and the network panel shows no request to a third-party geocoder.
 <!-- AC:END -->

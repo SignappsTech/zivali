@@ -5,7 +5,7 @@ status: To Do
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:14'
-updated_date: '2026-10-14 22:42'
+updated_date: '2026-10-15 00:12'
 labels:
   - fe
   - 'est:M'
@@ -48,4 +48,5 @@ Branch: agent/task-29.3-lost-web
 - [ ] #2 Submitting calls create_report; errors are specific and localised and keep the input; DUPLICATE_OPEN_REPORT offers to update the open report; old dates warn.
 - [ ] #3 report_lost_start and report_lost_submit fire with report_type, species, region and municipality only, with consent.
 - [ ] #4 No ad slot anywhere in the flow (quality-kit helper); axe 0 violations on every step.
+- [ ] #5 The lost flow offers the optional display-only reward (amount and/or short note) per P6 with the inline contact-data error from containsContactData(); nothing is charged.
 <!-- AC:END -->
