@@ -1,6 +1,6 @@
 // C14 ads (serving, admin), partner stats and leads. The "no animal sale or rehoming" rule needs the
 // app_config blocklist, so it runs in the API domain, not here.
-import { Cursor, IsoDate, IsoDateTime, page, text, Uuid } from './common.schema.ts';
+import { Cursor, IsoDate, IsoDateTime, nullOr, page, text, Uuid } from './common.schema.ts';
 import { AdHouseKind, AdLabel, AdSlot, AdStatus, LeadInterest, Locale, Species } from './enums.ts';
 import { PresignedUpload, Sha256 } from './photos.schema.ts';
 import { z } from './zod.ts';
@@ -49,7 +49,7 @@ export const AdInput = z
 		ends_at: IsoDateTime.nullable().optional(),
 		status: AdStatus.optional(),
 		is_house: z.boolean().optional(),
-		house_kind: AdHouseKind.nullable().optional(),
+		house_kind: nullOr(AdHouseKind).optional(),
 		exclusive: z.boolean().optional(),
 		weight: z.number().int().min(1).max(100).optional(),
 	})
@@ -76,7 +76,7 @@ export const AdminAd = z
 		ends_at: IsoDateTime.nullable(),
 		status: AdStatus,
 		is_house: z.boolean(),
-		house_kind: AdHouseKind.nullable(),
+		house_kind: nullOr(AdHouseKind),
 		exclusive: z.boolean(),
 		weight: z.number().int(),
 		created_at: IsoDateTime,

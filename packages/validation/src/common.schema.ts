@@ -2,6 +2,9 @@
 import { ErrorCode } from './enums.ts';
 import { z } from './zod.ts';
 
+// `.nullable()` on an `.openapi()`-named schema inherits its refId (null lost, component made nullable). Use this instead.
+export const nullOr = <T extends z.ZodType>(s: T) => z.union([s, z.null()]);
+
 export const Uuid = z.uuid();
 export const IsoDateTime = z.iso.datetime({ offset: true });
 export const IsoDate = z.iso.date();

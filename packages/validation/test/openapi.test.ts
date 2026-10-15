@@ -84,6 +84,31 @@ test('wrong import order (stub installed before the extension) throws', async ()
 	}
 });
 
+test('no named component is itself nullable (use nullOr, not .nullable(), on named schemas)', () => {
+	const intentional = new Set<string>(); // declare a component nullable on purpose by listing it here
+	const bad = Object.entries(generate(registry).components?.schemas ?? {}).filter(([name, s]) => {
+		const o = s as { type?: unknown; anyOf?: { type?: unknown }[]; oneOf?: { type?: unknown }[] };
+		const isNull = (t: unknown) => t === 'null' || (Array.isArray(t) && t.includes('null'));
+		return (
+			!intentional.has(name) &&
+			(isNull(o.type) || [...(o.anyOf ?? []), ...(o.oneOf ?? [])].some((x) => isNull(x.type)))
+		);
+	});
+	expect(bad.map(([name]) => name)).toEqual([]);
+});
+
+test('.nullable()/.nullish() is never applied to an .openapi()-named schema (the refId leaks, null is lost)', () => {
+	const files = import.meta.glob('../src/*.ts', { query: '?raw', import: 'default', eager: true }) as Record<
+		string,
+		string
+	>;
+	const src = Object.values(files).join('\n');
+	const named = [...src.matchAll(/export const (\w+)\s*=[^;]*?\.openapi\('/gs)].map((m) => m[1]);
+	expect(named.length).toBeGreaterThan(50);
+	const bad = named.filter((n) => new RegExp(`\\b${n}\\.(nullable|nullish)\\(`).test(src));
+	expect(bad).toEqual([]);
+});
+
 test('GeoReverseResponse.place is nullable and Place stays a plain object, whatever the registration order', () => {
 	const modules = Object.values(geo);
 	for (const order of [modules, [...modules].reverse()]) {
