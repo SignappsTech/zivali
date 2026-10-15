@@ -1,6 +1,6 @@
 // notify.send delivery (C10, TASK-22.3) against the local database with the mock push and email adapters: inbox rows
 // (deduped) with their user:<id> broadcast, per-type prefs, quiet hours, push and email text from @zivali/i18n in the
-// recipient's locale, email_outbox rows, DeviceNotRegistered, one nearby alert per report, the chat email follow-up.
+// recipient's locale, email_outbox rows, DeviceNotRegistered, the chat email follow-up.
 import { randomUUID } from 'node:crypto';
 
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
@@ -427,18 +427,13 @@ describe('prefs, verification, dedupe', () => {
 		expect(t.push).toEqual([]);
 	});
 
-	it('pushes a nearby alert at most once per report per user (alert_deliveries)', async () => {
+	it('does not write alert_deliveries for nearby_lost (the alerts fan-out owns that row)', async () => {
 		const user = await recipient();
 		sources.nearby_lost = source(SAMPLES.nearby_lost);
-		const report_id = randomUUID();
 		const t = testCtx();
-		await NotificationsDomain.deliver(job(user.id, 'nearby_lost', { report_id }), t.ctx);
-		await NotificationsDomain.deliver(job(user.id, 'nearby_lost', { report_id }), t.ctx);
+		await NotificationsDomain.deliver(job(user.id, 'nearby_lost', { report_id: randomUUID() }), t.ctx);
 		expect(t.push).toHaveLength(1);
-		expect(await inbox(user.id)).toHaveLength(1);
-		expect(await prisma.alert_deliveries.findMany({ where: { user_id: user.id } })).toEqual([
-			expect.objectContaining({ report_id, channel: 'push' }),
-		]);
+		expect(await prisma.alert_deliveries.count({ where: { user_id: user.id } })).toBe(0);
 	});
 
 	it('deletes a token the push service reports as DeviceNotRegistered', async () => {

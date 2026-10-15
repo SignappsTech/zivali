@@ -9,6 +9,7 @@ import type { z } from 'zod';
 import type { Locale, NotificationType } from '@zivali/types';
 import type { NotificationJobPayload } from '@zivali/validation';
 
+import { AlertsDomain } from '../alerts/index.ts';
 import type { Ctx } from '../../lib/ctx.ts';
 import { chatMessageVars } from '../chat/chat.notify.ts';
 
@@ -19,6 +20,10 @@ export type Source = (
 	ctx: Ctx
 ) => Promise<Record<string, unknown> | null>;
 
-export const sources: Partial<Record<NotificationType, Source>> = { chat_message: chatMessageVars };
+export const sources: Partial<Record<NotificationType, Source>> = {
+	chat_message: chatMessageVars,
+	// The alerts fan-out already recorded alert_deliveries; null when the report or subscription is gone.
+	nearby_lost: ({ report_id }, { user_id }, ctx) => AlertsDomain.nearbyAlert({ user_id, report_id }, ctx),
+};
 
 export default sources;

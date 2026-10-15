@@ -2,6 +2,7 @@
 import { Router } from 'express';
 
 import adminRoutes from './admin.routes.ts';
+import alertSubscriptionRoutes from './alert-subscription.routes.ts';
 import configRoutes from './config.routes.ts';
 import conversationsRoutes from './conversations.routes.ts';
 import geoRoutes from './geo.routes.ts';
@@ -23,6 +24,7 @@ router.use('/notifications', notificationsRoutes);
 router.use('/notification-prefs', prefsRouter);
 router.use('/push-tokens', pushTokensRouter);
 router.use('/reports', reportsRoutes);
+router.use('/alert-subscription', alertSubscriptionRoutes);
 router.use('/conversations', conversationsRoutes);
 
 export default router;
