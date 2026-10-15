@@ -1,5 +1,6 @@
 import type { MetadataRoute } from 'next';
 
+import { ApiError } from '@zivali/api/client';
 import { routing } from '@/i18n/routing';
 import { getShelters } from '@/lib/directory';
 import { absoluteUrl } from '@/lib/seo';
@@ -11,7 +12,13 @@ type Href = Parameters<typeof absoluteUrl>[1];
 
 /** Every page in both locales with its hreflang alternates, on the app URL (C15). The SEO story adds the rest. */
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-	const shelters = (await getShelters(routing.defaultLocale)).items;
+	// The static pages still go out when the directory API is down.
+	const shelters = await getShelters(routing.defaultLocale)
+		.then((list) => list.items)
+		.catch((error) => {
+			if (error instanceof ApiError) return [];
+			throw error;
+		});
 	const pages: Href[] = [
 		'/',
 		'/shelters',

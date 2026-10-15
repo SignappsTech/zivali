@@ -16,6 +16,11 @@ import { freePort } from './free-port.mjs';
 const PORT = Number(process.env.QUALITY_PORT || freePort());
 const BASE = `http://localhost:${PORT}`;
 process.env.BASE_URL = BASE; // read by tests/quality/playwright.config.mjs
+// The shelter pages read the C18 directory API; e2e/mock-api.ts stands in for it, on its own free port.
+const API_PORT = freePort();
+process.env.NEXT_PUBLIC_API_URL = `http://localhost:${API_PORT}`;
+process.env.APP_ENV ||= 'local';
+process.env.NEXT_PUBLIC_APP_URL ||= BASE;
 const REPORT = 'quality-report';
 const WEB = resolve('apps/web');
 
@@ -60,6 +65,10 @@ if (!run('turbo run build --filter=web')) process.exit(1);
 
 const next = createRequire(`${WEB}/package.json`).resolve('next/dist/bin/next');
 const server = spawn(process.execPath, [next, 'start', '-p', String(PORT)], { cwd: WEB, stdio: 'inherit' });
+const mockApi = spawn(process.execPath, [`${WEB}/e2e/mock-api.ts`], {
+	env: { ...process.env, PORT: String(API_PORT) },
+	stdio: 'inherit',
+});
 const results = {};
 try {
 	await waitForServer(server);
@@ -69,9 +78,11 @@ try {
 	results.lighthouse = run(['lhci autorun', ...urlFlags].join(' '));
 	results.links = await checkLinks();
 } finally {
-	if (process.platform === 'win32')
-		spawnSync('taskkill', ['/pid', String(server.pid), '/t', '/f'], { stdio: 'ignore' });
-	else server.kill();
+	for (const child of [server, mockApi]) {
+		if (process.platform === 'win32')
+			spawnSync('taskkill', ['/pid', String(child.pid), '/t', '/f'], { stdio: 'ignore' });
+		else child.kill();
+	}
 }
 
 console.log(

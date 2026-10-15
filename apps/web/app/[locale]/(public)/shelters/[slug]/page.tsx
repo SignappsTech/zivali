@@ -68,6 +68,7 @@ export default async function ShelterPage({ params }: PageProps<'/[locale]/shelt
 
 	const url = absoluteUrl(locale, { pathname: '/shelters/[slug]', params: { slug: shelter.slug } });
 	const website = safeWebsite(shelter.website);
+	const spec = openingHoursSpecification(shelter.opening_hours);
 	const count = shelter.municipalities.length;
 	const municipalities = [...shelter.municipalities].sort((a, b) => a.name.localeCompare(b.name, locale));
 	const mapUrl = `https://www.openstreetmap.org/search?query=${encodeURIComponent(
@@ -245,7 +246,7 @@ export default async function ShelterPage({ params }: PageProps<'/[locale]/shelt
 									addressLocality: shelter.city,
 									addressCountry: 'SI',
 								},
-								openingHoursSpecification: openingHoursSpecification(shelter.opening_hours),
+								...(spec.length > 0 && { openingHoursSpecification: spec }),
 								areaServed: municipalities.map((municipality) => municipality.name),
 								...(website && { sameAs: website }),
 							},

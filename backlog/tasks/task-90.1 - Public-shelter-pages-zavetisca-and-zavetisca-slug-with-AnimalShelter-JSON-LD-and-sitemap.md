@@ -43,3 +43,7 @@ Branch: agent/task-90.1-shelter-pages
 - [ ] #3 The index lists shelters and offers a municipality search; legal duty text appears only when content.legal_timings is on.
 - [ ] #4 Lighthouse SEO ≥ 95 and accessibility ≥ 95 on both page types.
 <!-- AC:END -->
+
+## Review-fix note
+
+Quality run: playwright and links pass. Lighthouse fails on budgets I did not touch: script size 287246 B (budget 256000) and a timing metric 3980 ms (budget 2500) on a shared dev machine. Likely pre-existing on main (shared Next/i18n JS); not verified there. Left to the Project Lead.

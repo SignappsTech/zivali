@@ -2,7 +2,7 @@ import AxeBuilder from '@axe-core/playwright';
 import { expect, type Page, test } from '@playwright/test';
 
 // TASK-90.1: T5 /zavetisca and T6 /zavetisca/[slug] server-rendered from the directory API (e2e/mock-api.ts).
-const appUrl = (process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000').replace(/\/$/, '');
+const appUrl = `http://localhost:${process.env.PLAYWRIGHT_PORT}`;
 const AXE_TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'];
 
 async function expectNoAxeViolations(page: Page) {

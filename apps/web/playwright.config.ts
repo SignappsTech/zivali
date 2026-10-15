@@ -45,6 +45,7 @@ export default defineConfig({
 				NEXT_PUBLIC_ANALYTICS_PROVIDER: 'ga4',
 				NEXT_PUBLIC_GA_MEASUREMENT_ID: 'G-E2ETEST',
 				NEXT_PUBLIC_API_URL: api,
+				NEXT_PUBLIC_APP_URL: origin,
 			},
 		},
 	],
