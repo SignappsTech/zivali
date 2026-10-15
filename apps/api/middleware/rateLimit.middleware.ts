@@ -5,10 +5,9 @@
 import type { Request, RequestHandler } from 'express';
 import { z } from 'zod';
 
-import { PlatformDao } from '../domains/platform/index.ts';
+import { consumeRateLimit } from '../domains/platform/index.ts';
 import configStore from '../lib/config-store.ts';
 import { requestHashes } from '../lib/ctx.ts';
-import { AppError } from '../lib/errors.ts';
 
 export type RateLimitOptions = {
 	limit: number;
@@ -38,18 +37,7 @@ function rateKey(req: Request, kind: RateLimitOptions['key']): string {
 export function rateLimit(name: string, options: RateLimitOptions): RequestHandler {
 	return async (req, _res, next) => {
 		const { limit, window } = Override.safeParse(await configStore.get(`rate.${name}`)).data ?? options;
-		const now = Date.now();
-		const windowMs = window * 1000;
-		const windowStart = Math.floor(now / windowMs) * windowMs;
-		const count = await PlatformDao.hitRateLimit({
-			name,
-			key: rateKey(req, options.key),
-			window_start: new Date(windowStart),
-		});
-		if (count > limit) {
-			const retryAfter = Math.max(1, Math.ceil((windowStart + windowMs - now) / 1000));
-			throw new AppError('RATE_LIMITED', 'Too many requests', { retry_after_s: retryAfter });
-		}
+		await consumeRateLimit({ name, key: rateKey(req, options.key), limit, window_s: window }, new Date());
 		next();
 	};
 }

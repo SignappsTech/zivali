@@ -8,8 +8,8 @@ import type { Ctx } from '../../lib/ctx.ts';
 import { AppError } from '../../lib/errors.ts';
 import { prisma } from '../../prisma/prisma.ts';
 import { NotificationsDomain } from '../notifications/index.ts';
+import { consumeRateLimit } from '../platform/index.ts';
 import ReportsDao from './reports.dao.ts';
-import { consumeRateLimit } from './submission-guard.ts';
 
 /** reunited and closed reports can be reopened this long (C4 status machine); later a manage link is GONE. */
 const REOPEN_WINDOW_MS = 7 * 24 * 3600 * 1000;
@@ -34,26 +34,28 @@ function assertManageable(
 		throw new AppError('GONE', 'Report is closed', { reason: 'closed' });
 }
 
+type Link = { to: string; short_code: string; type: ReportType; species: Species; token: string };
+
+/** Sends the manage link (recorded in email_outbox). Anonymous reports are found or sighted, never lost. */
+const sendLink = (link: Link, ctx: Ctx) =>
+	NotificationsDomain.sendManageLink(
+		{
+			to: link.to,
+			report_code: link.short_code,
+			report_type: link.type as 'found' | 'sighted',
+			species: link.species,
+			manage_token: link.token,
+		},
+		ctx
+	);
+
 /**
- * Emails the manage link. Callers send it after their write committed and a failed email never fails the request
- * (the outbox row records it): for createReport a 5xx would free the Idempotency-Key and a retry would duplicate the
- * report. Anonymous reports are found or sighted, never lost (FORBIDDEN in createReport).
+ * createReport: emails the manage link after the report committed; a failed email never fails the request (the
+ * outbox row records it), since a 5xx would free the Idempotency-Key and a retry would duplicate the report.
  */
-export async function mailManageLink(
-	input: { to: string; short_code: string; type: ReportType; species: Species; token: string },
-	ctx: Ctx
-): Promise<void> {
+export async function mailManageLink(link: Link, ctx: Ctx): Promise<void> {
 	try {
-		await NotificationsDomain.sendManageLink(
-			{
-				to: input.to,
-				report_code: input.short_code,
-				report_type: input.type as 'found' | 'sighted',
-				species: input.species,
-				manage_token: input.token,
-			},
-			ctx
-		);
+		await sendLink(link, ctx);
 	} catch (err) {
 		ctx.logger.warn({ err }, 'manage link email failed');
 	}
@@ -78,11 +80,12 @@ export async function claimManage(
 /**
  * POST /v1/reports/:code/manage-link/resend (managers): a new token replaces the old one (only its hash is stored,
  * so the old link stops working) and goes to the finder email on file. No email → CONFLICT; 3 per report per day.
+ * The email goes out inside the transaction: when it fails the new token rolls back (5xx) and the old link still works.
  */
 export async function resendManageLink(input: { code: string }, ctx: Ctx): Promise<void> {
 	const actor = ctx.actor;
 	if (!actor) throw new AppError('UNAUTHENTICATED', 'Sign in required');
-	const run = async (tx: NonNullable<Ctx['tx']>) => {
+	const run = async (tx: NonNullable<Ctx['tx']>): Promise<void> => {
 		const found = await ReportsDao.findWithRole(input.code, actor.user_id, tx);
 		if (!found) throw new AppError('NOT_FOUND', 'Report not found');
 		if (!found.role) throw new AppError('FORBIDDEN', 'Not a manager of this report');
@@ -96,10 +99,11 @@ export async function resendManageLink(input: { code: string }, ctx: Ctx): Promi
 		);
 		const { token, hash } = newManageToken();
 		await ReportsDao.updateReport(report.id, { manage_token_hash: hash }, tx);
-		return { to, short_code: report.short_code, type: report.type, species: report.species, token };
+		const link = { to, short_code: report.short_code, type: report.type, species: report.species, token };
+		if ((await sendLink(link, ctx)) === 'failed') throw new Error('manage link email failed');
 	};
-	const link = await (ctx.tx ? run(ctx.tx) : prisma.$transaction(run));
-	await mailManageLink(link, ctx);
+	// Longer than the email adapter's own 10 s timeout.
+	await (ctx.tx ? run(ctx.tx) : prisma.$transaction(run, { timeout: 15_000 }));
 }
 
 export default { hashManageToken, newManageToken, mailManageLink, claimManage, resendManageLink };

@@ -227,7 +227,9 @@ async function sendNotificationEmail(
 	);
 }
 
-/** Sends through the email adapter and records the attempt in email_outbox (address hashed only). */
+type EmailStatus = 'sent' | 'failed' | 'mocked';
+
+/** Sends through the email adapter and records the attempt in email_outbox (address hashed only); returns its status. */
 async function sendAndRecord(
 	message: {
 		to: string;
@@ -240,9 +242,9 @@ async function sendAndRecord(
 		headers?: Record<string, string>;
 	},
 	ctx: Ctx
-) {
+): Promise<EmailStatus> {
 	const { user_id, type, locale, ...email } = message;
-	const outcome: { status: 'sent' | 'failed' | 'mocked'; provider_id?: string; error?: string } = {
+	const outcome: { status: EmailStatus; provider_id?: string; error?: string } = {
 		status: 'failed',
 	};
 	try {
@@ -259,12 +261,14 @@ async function sendAndRecord(
 		to_address_hash: emailHash(email.to),
 		...outcome,
 	});
+	return outcome.status;
 }
 
 /**
  * manage_link (C10): email only, to the finder's report_contacts address, transactional (no prefs, no quiet hours).
  * Sent directly, not through notify.send: the URL carries the secret manage token, which is never stored (pgboss.job
  * included). The caller passes only an address the finder confirmed (FR-010). Locale: the request's (ctx.locale).
+ * Returns the recorded status ('failed' when the provider refused or timed out).
  */
 export async function sendManageLink(
 	input: {
@@ -275,12 +279,12 @@ export async function sendManageLink(
 		manage_token: string;
 	},
 	ctx: Ctx
-): Promise<void> {
+): Promise<EmailStatus> {
 	const { to, manage_token, ...vars } = input;
 	const locale = ctx.locale;
 	const url = `${webUrl('/m', locale)}#${manage_token}`;
 	const message = renderEmail('manage_link', vars, locale, ctx.now, { url, support_email: supportEmail() });
-	await sendAndRecord({ to, user_id: null, type: 'manage_link', locale, ...message }, ctx);
+	return sendAndRecord({ to, user_id: null, type: 'manage_link', locale, ...message }, ctx);
 }
 
 // --- Signed one-click unsubscribe ---

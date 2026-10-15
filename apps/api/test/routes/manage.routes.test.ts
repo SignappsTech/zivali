@@ -5,7 +5,7 @@ import { createHash, randomBytes, randomInt, randomUUID } from 'node:crypto';
 
 import { decodeJwt, SignJWT } from 'jose';
 import request from 'supertest';
-import { afterAll, describe, expect, it } from 'vitest';
+import { afterAll, describe, expect, it, vi } from 'vitest';
 
 import { adapters } from '../../adapters/index.ts';
 import { app } from '../../app.ts';
@@ -81,6 +81,11 @@ async function anonReport(who: Who, finder_email?: string) {
 	expect(res.status).toBe(201);
 	return res.body as { id: string; short_code: string; moderation_state: string; manage_token: string };
 }
+/** Stubs app_config values read through configStore; the shared rows and the 60 s cache stay untouched. */
+const stubConfig = (values: Record<string, unknown>) => {
+	const get = configStore.get;
+	return vi.spyOn(configStore, 'get').mockImplementation(async (key) => (key in values ? values[key] : get(key)));
+};
 const mailsTo = (to: string) => (adapters.email.sent ?? []).filter((m) => m.to === to);
 const tokenIn = (html: string) => /\/m#([A-Za-z0-9_-]{43})/.exec(html)?.[1];
 const sha256 = (token: string) => createHash('sha256').update(token).digest();
@@ -134,16 +139,34 @@ describe('submission guard (C7)', () => {
 			['rate.anon_report_per_day', 20],
 			['rate.anon_report_per_hour', 5],
 		]);
-		await prisma.app_config.update({ where: { key: 'rate.anon_report_per_hour' }, data: { value: 2 } });
-		configStore.invalidate();
+		const config = stubConfig({ 'rate.anon_report_per_hour': 2 });
 		try {
 			const finder = await anon();
 			const device = randomUUID();
 			for (let i = 0; i < 2; i++) expect((await post(finder, sighted(), { device })).status).toBe(201);
 			expect((await post(finder, sighted(), { device })).status).toBe(429);
 		} finally {
-			await prisma.app_config.update({ where: { key: 'rate.anon_report_per_hour' }, data: { value: 5 } });
-			configStore.invalidate();
+			config.mockRestore();
+		}
+	});
+
+	it('refuses reports over the day limit per device (RATE_LIMITED, Retry-After)', async () => {
+		const config = stubConfig({ 'rate.anon_report_per_day': 2 });
+		try {
+			const finder = await anon();
+			const device = randomUUID();
+			for (let i = 0; i < 2; i++) expect((await post(finder, sighted(), { device })).status).toBe(201);
+			const third = await post(finder, sighted(), { device });
+			expect(third.status).toBe(429);
+			expect(Number(third.headers['retry-after'])).toBeGreaterThan(0);
+			expect(Number(third.headers['retry-after'])).toBeLessThanOrEqual(86_400);
+			// The day counter of the device refused it (each post came from a new IP, under the hour limit of 5).
+			const day = await prisma.rate_limits.findFirstOrThrow({
+				where: { name: 'anon_report.day', key: hashKey(`device:${device}`) },
+			});
+			expect(day.count).toBe(3);
+		} finally {
+			config.mockRestore();
 		}
 	});
 
@@ -398,6 +421,20 @@ describe('POST /v1/reports/:code/manage-link/resend (C7)', () => {
 		}
 		expect((await resend(null, created.short_code)).status).toBe(401);
 		expect((await resend(await anon(), 'zzzzzzzz')).status).toBe(404);
+	});
+
+	it('a failed email rolls the new token back (5xx); the old link keeps working', async () => {
+		const finder = await anon();
+		const created = await anonReport(finder, email());
+		const send = vi.spyOn(adapters.email, 'send').mockRejectedValueOnce(new Error('provider down'));
+		try {
+			expect((await resend(finder, created.short_code)).status).toBe(500);
+		} finally {
+			send.mockRestore();
+		}
+		const row = await prisma.reports.findUniqueOrThrow({ where: { id: created.id } });
+		expect(Buffer.from(row.manage_token_hash!)).toEqual(sha256(created.manage_token));
+		expect((await claim(await anon(), created.manage_token)).status).toBe(200);
 	});
 
 	it('no email on file: CONFLICT; at most 3 per report per day (RATE_LIMITED)', async () => {

@@ -8,8 +8,7 @@ import type { CreateReportInput } from '@zivali/validation';
 
 import configStore from '../../lib/config-store.ts';
 import type { Ctx } from '../../lib/ctx.ts';
-import { AppError } from '../../lib/errors.ts';
-import { PlatformDao } from '../platform/index.ts';
+import { consumeRateLimit } from '../platform/index.ts';
 import ReportsDao from './reports.dao.ts';
 
 export type HoldReason = 'device_volume' | 'photo_match';
@@ -24,27 +23,6 @@ const DAY_S = 86_400;
 const HOLD_DEVICE_REPORTS = 10;
 export const HOLD_WINDOW_MS = 7 * DAY_S * 1000;
 const Limit = z.number().int().positive();
-
-/**
- * One hit on a fixed-window counter in app.rate_limits (the table behind the rateLimit middleware, C1); over the
- * limit → RATE_LIMITED with details.retry_after_s (the error middleware sets Retry-After). `key` is a hash or an id.
- */
-export async function consumeRateLimit(
-	input: { name: string; key: string; limit: number; window_s: number },
-	now: Date
-): Promise<void> {
-	const windowMs = input.window_s * 1000;
-	const windowStart = Math.floor(now.getTime() / windowMs) * windowMs;
-	const count = await PlatformDao.hitRateLimit({
-		name: input.name,
-		key: input.key,
-		window_start: new Date(windowStart),
-	});
-	if (count > input.limit) {
-		const retry_after_s = Math.max(1, Math.ceil((windowStart + windowMs - now.getTime()) / 1000));
-		throw new AppError('RATE_LIMITED', 'Too many requests', { retry_after_s });
-	}
-}
 
 export async function submissionGuard(input: z.infer<typeof CreateReportInput>, ctx: Ctx): Promise<SubmissionVerdict> {
 	if (!ctx.actor?.is_anonymous) return { moderation_state: 'visible', hold_reasons: [] };
@@ -65,4 +43,4 @@ export async function submissionGuard(input: z.infer<typeof CreateReportInput>, 
 	return { moderation_state: hold_reasons.length ? 'held' : 'visible', hold_reasons };
 }
 
-export default { submissionGuard, consumeRateLimit };
+export default { submissionGuard };
