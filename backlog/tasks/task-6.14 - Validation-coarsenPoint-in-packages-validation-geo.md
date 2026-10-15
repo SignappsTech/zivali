@@ -1,10 +1,11 @@
 ---
 id: TASK-6.14
 title: 'Validation: coarsenPoint() in packages/validation/geo'
-status: To Do
+status: In Progress
 assignee:
   - '@backend-dev'
 created_date: '2026-10-15 02:50'
+updated_date: '2026-10-15 02:56'
 labels:
   - be
   - 'est:XS'
@@ -20,3 +21,6 @@ ordinal: 303000
 <!-- AC:BEGIN -->
 - [ ] #1 coarsenPoint(point) exported from @zivali/validation/geo: random 20-30 m offset, applied once at write (C6), unit tests for distance bounds
 <!-- AC:END -->
+
+## Packet
+Branch: agent/6.14-coarsen

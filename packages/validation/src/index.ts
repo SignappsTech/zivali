@@ -16,3 +16,4 @@ export * from './payments.schema.ts';
 export * from './ads.schema.ts';
 export * from './shelters.schema.ts';
 // The OpenAPI registry is server-only: import it from '@zivali/validation/openapi' (keeps it out of app bundles).
+export * from './geo.ts';
