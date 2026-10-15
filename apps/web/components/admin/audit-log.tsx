@@ -48,7 +48,7 @@ function useEntryText() {
 	};
 }
 
-const tableClass =
+export const tableClass =
 	'w-full border-collapse text-control leading-[22px] max-lg:hidden [&_tbody_tr:last-child>td]:border-b-0';
 
 /** The dense table from lg, stacked rows below (P19 T2); read only, newest first. */
@@ -127,7 +127,7 @@ function Entries({
 }
 
 /** Loading, error and empty states of a region (P19 T1). */
-function Region({
+export function Region({
 	query,
 	empty,
 	children,
@@ -166,7 +166,7 @@ function Region({
 }
 
 /** A filter pill (system §10.4) over a select; set, it turns primary with a check and names the value. */
-function FilterPill({
+export function FilterPill({
 	label,
 	value,
 	options,
@@ -201,6 +201,52 @@ function FilterPill({
 				))}
 			</SelectContent>
 		</Select>
+	);
+}
+
+/** Keyset "Load more" under a list (P19 T1); a failed page keeps the loaded rows and offers a retry. */
+export function Paging({
+	query,
+}: {
+	query: {
+		hasNextPage: boolean;
+		isFetchingNextPage: boolean;
+		isFetchNextPageError: boolean;
+		fetchNextPage: () => unknown;
+	};
+}) {
+	const t = useTranslations('admin');
+	if (query.isFetchNextPageError)
+		return (
+			<div className="mt-4">
+				<ErrorNote
+					action={
+						<Button
+							variant="text"
+							size="sm"
+							className="mt-1 -ml-3"
+							onClick={() => void query.fetchNextPage()}
+						>
+							{t('retry')}
+						</Button>
+					}
+				>
+					{t('error')}
+				</ErrorNote>
+			</div>
+		);
+	if (!query.hasNextPage) return null;
+	return (
+		<div className="mt-6 flex justify-center">
+			<Button
+				variant="secondary"
+				size="sm"
+				loading={query.isFetchingNextPage}
+				onClick={() => void query.fetchNextPage()}
+			>
+				{t('load_more')}
+			</Button>
+		</div>
 	);
 }
 
@@ -271,36 +317,7 @@ export function AuditLog() {
 					}
 				>
 					<Entries entries={entries} caption={t('audit_title')} change />
-					{query.isFetchNextPageError && (
-						<div className="mt-4">
-							<ErrorNote
-								action={
-									<Button
-										variant="text"
-										size="sm"
-										className="mt-1 -ml-3"
-										onClick={() => void query.fetchNextPage()}
-									>
-										{t('retry')}
-									</Button>
-								}
-							>
-								{t('error')}
-							</ErrorNote>
-						</div>
-					)}
-					{query.hasNextPage && !query.isFetchNextPageError && (
-						<div className="mt-6 flex justify-center">
-							<Button
-								variant="secondary"
-								size="sm"
-								loading={query.isFetchingNextPage}
-								onClick={() => void query.fetchNextPage()}
-							>
-								{t('load_more')}
-							</Button>
-						</div>
-					)}
+					<Paging query={query} />
 				</Region>
 			</div>
 		</>

@@ -32,15 +32,17 @@ export const abuseApi = api.enhanceEndpoints({ addTagTypes: ['AbuseReport'] }).i
 			}),
 			providesTags: ['AbuseReport'],
 		}),
-		listModerationFlags: build.infiniteQuery<ModerationFlagList, Omit<ModerationFlagQuery, 'cursor'>, string | null>(
-			{
-				infiniteQueryOptions: pageParams,
-				query: ({ queryArg, pageParam }) => ({
-					url: '/v1/admin/moderation-flags',
-					params: { ...queryArg, cursor: pageParam },
-				}),
-			}
-		),
+		listModerationFlags: build.infiniteQuery<
+			ModerationFlagList,
+			Omit<ModerationFlagQuery, 'cursor'>,
+			string | null
+		>({
+			infiniteQueryOptions: pageParams,
+			query: ({ queryArg, pageParam }) => ({
+				url: '/v1/admin/moderation-flags',
+				params: { ...queryArg, cursor: pageParam },
+			}),
+		}),
 	}),
 });
 
