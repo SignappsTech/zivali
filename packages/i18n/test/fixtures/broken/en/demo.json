@@ -1,0 +1,9 @@
+{
+	"greeting": "Hello, {nam}!",
+	"results": "{count, plural, one {# report} other {# reports}}",
+	"photos": "{count, plural, other {# photos}}",
+	"blank": " ",
+	"unclosed": "Open {name}",
+	"nested": { "fine": "Fine, {name}" },
+	"only_en": "English only"
+}
