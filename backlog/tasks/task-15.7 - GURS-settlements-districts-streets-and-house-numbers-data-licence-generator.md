@@ -3,11 +3,11 @@ id: TASK-15.7
 title: >-
   GURS settlements, districts, streets and house numbers: data, licence,
   generator
-status: To Do
+status: In Progress
 assignee:
   - '@backend-dev'
 created_date: '2026-10-15 00:11'
-updated_date: '2026-10-15 00:36'
+updated_date: '2026-10-15 01:49'
 labels:
   - be
   - 'est:S'
