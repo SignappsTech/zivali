@@ -6,13 +6,13 @@
 //      settings of ADR-021/ADR-023 (Management API GETs), the VPS files and TLS certificate (`remote.sh check` over SSH);
 //   2. only with --deploy and nothing missing: build the linux/arm64 api (also the worker) and web images here, copy
 //      deploy/ to /opt/zivali, write cloudflare.ini (certbot's token, mode 600), stream the images to the VPS
-//      (docker save | zstd | ssh docker load; no registry), `remote.sh deploy` (one-off `prisma migrate deploy`, up and
-//      healthy within 180 s, else back to the running release; nginx and certbot up, nginx reload);
+//      (docker save | zstd | ssh docker load; no registry), `remote.sh deploy` (one-off `prisma migrate deploy`, then
+//      the seed; up and healthy within 180 s, else back to the running release; nginx and certbot up, nginx reload);
 //   3. smoke checks (GETs): /ping, /v1/health/ready, the web reports the new version, web home, ADR-021 exposure; then
 //      `remote.sh promote` (release.env moves), or `remote.sh rollback` and exit 1.
 // Without --deploy nothing is written anywhere (no firewall rule, no file on the VPS, no image transfer): the checks,
-// then the dry run: image builds, migrations from zero on a scratch database on the local Supabase server + `prisma
-// migrate diff`, the ADR-021 security tests on it; exit 0 when it passes. Anything missing prints NEEDS-INPUT with
+// then the dry run: image builds, migrations from zero on a scratch database on the local Supabase server, the seed as
+// staging, `prisma migrate diff`, the ADR-021 security tests on it; exit 0 when it passes. Anything missing prints NEEDS-INPUT with
 // variable names (never values) and runs the dry run too; --strict (CI) exits 1 on NEEDS-INPUT instead. --skip-images
 // skips the dry run's image builds; --yes confirms a production deploy from a workstation; --close-ssh removes every
 // temporary SSH rule from the Hetzner firewall (the workflow's always() step).
@@ -422,9 +422,13 @@ async function dryRun(target, { skipImages, dropped }) {
 			return missing.length ? `ok (built without ${missing.join(', ')})` : 'ok';
 		});
 	}
-	await step('migrations from zero on a scratch local database, migrate diff, ADR-021 security tests', () =>
+	await step('migrations from zero on a scratch local database, the seed, migrate diff, ADR-021 security tests', () =>
 		withScratchDb(dropped, (env, name) => {
 			run(process.execPath, [prismaCli, 'migrate', 'deploy'], { cwd: apiDir, env });
+			// After the migrations, as remote.sh does, and as staging: reference data only, the fixture seeders skip
+			// themselves. MEDIA_BASE_URL is required outside APP_ENV=local; the seed never uses it.
+			const seedEnv = { ...env, APP_ENV: 'staging', MEDIA_BASE_URL: 'https://media.example.invalid' };
+			run(process.execPath, [prismaCli, 'db', 'seed'], { cwd: apiDir, env: seedEnv });
 			const drift = run(
 				process.execPath,
 				[
@@ -532,7 +536,8 @@ async function deploy(target, env, io) {
 	console.log('\nImages to the VPS (docker save | zstd | docker load)');
 	await transferImages(ssh, [images.api, images.web]);
 	try {
-		// Migrations, then up and healthy within 180 s (else remote.sh starts the running release again), nginx reload.
+		// Migrations, the seed, then up and healthy within 180 s (else remote.sh starts the running release again),
+		// nginx reload.
 		ssh.run(`sh /opt/zivali/remote.sh deploy ${target} ${images.api} ${images.web} ${tag}`);
 		console.log('\nSmoke checks');
 		await smoke(env, tag, io.fetch);

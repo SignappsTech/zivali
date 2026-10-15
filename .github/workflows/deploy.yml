@@ -1,8 +1,8 @@
 # Deploy (ADR-016, TASK-5.1): staging after CI passes on main, production on version tags (vX.Y.Z) after a reviewer
 # approves the `production` environment. Both run scripts/deploy.mjs --deploy, the same steps as a workstation deploy:
 # build the linux/arm64 images (Hetzner CAX11) on the runner and stream them to the VPS over SSH (docker save | zstd |
-# docker load; no registry), one-off `prisma migrate deploy`, up and healthy, smoke checks (/ping, /v1/health/ready,
-# the web's version, web home, ADR-021 exposure), else back to the running release.
+# docker load; no registry), one-off `prisma migrate deploy` and the seed (reference data), up and healthy, smoke checks
+# (/ping, /v1/health/ready, the web's version, web home, ADR-021 exposure), else back to the running release.
 # Off until the repository variable DEPLOY_ENABLED is 'true'. Secrets per GitHub environment (staging, production):
 # README "Environments and credentials". Missing ones fail the job with NEEDS-INPUT and their names (--strict).
 name: deploy

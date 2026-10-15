@@ -1,5 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
 
 import {
 	exposureRootOk,
@@ -97,6 +98,19 @@ test('exposureRootOk: no app table in the PostgREST OpenAPI paths, or no access 
 	assert.equal(exposureRootOk(401), true);
 	assert.equal(exposureRootOk(200, { paths: { '/': {}, '/profiles': {} } }), false);
 	assert.equal(exposureRootOk(500), false);
+});
+
+test('remote.sh deploy: migrations, then the seed, then api, worker and web up; a failed step stops it (set -e)', () => {
+	const lines = fs.readFileSync(new URL('../deploy/remote.sh', import.meta.url), 'utf8').split('\n');
+	assert.ok(lines.includes('set -eu'));
+	// Top-level commands (no `|| true`, not inside a condition), in this order, with nothing run in between.
+	const start = lines.findIndex((line) => line.startsWith('$stack run '));
+	const commands = lines.slice(start).filter((line) => line && !line.startsWith('#'));
+	assert.deepEqual(commands.slice(0, 3), [
+		'$stack run --rm --no-deps api node node_modules/prisma/build/index.js migrate deploy',
+		'$stack run --rm --no-deps api node dist/seed/apps/api/prisma/seed.js',
+		'if ! up "$next"; then',
+	]);
 });
 
 /** A fake outside world for main(): records every call; only GETs, HeadBucket and `remote.sh check` are reads. */

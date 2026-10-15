@@ -5,11 +5,12 @@
 #   sh /opt/zivali/remote.sh promote <staging|production>
 #   sh /opt/zivali/remote.sh rollback <staging|production>
 # deploy (after deploy.mjs copied docker-compose.yml, nginx/ and this file, wrote cloudflare.ini and loaded the images
-# with docker load): the same checks, one-off `prisma migrate deploy` in an api container, api, worker and web up and
-# healthy within 180 s (compose healthchecks), else the running release (release.env) up again and exit 1; nginx and
-# certbot up, nginx re-rendered and reloaded. The new release stays in release.env.next until deploy.mjs's smoke checks
-# pass: then promote (release.env -> release.env.prev, release.env.next -> release.env, old images removed), else
-# rollback (release.env up again). A migration is never rolled back. By hand: deploy/README.md, Rollback.
+# with docker load): the same checks, one-off `prisma migrate deploy` and then the seed (reference data, idempotent) in
+# api containers, api, worker and web up and healthy within 180 s (compose healthchecks), else the running release
+# (release.env) up again and exit 1; nginx and certbot up, nginx re-rendered and reloaded. A failed migration or seed
+# stops here (set -e) and the running release stays up. The new release stays in release.env.next until deploy.mjs's
+# smoke checks pass: then promote (release.env -> release.env.prev, release.env.next -> release.env, old images
+# removed), else rollback (release.env up again). A migration is never rolled back. By hand: deploy/README.md, Rollback.
 set -eu
 
 mode="${1:-}" target="${2:-}"
@@ -108,6 +109,9 @@ edge="docker compose -p zivali-edge --env-file $target/.env --env-file $next"
 
 docker network inspect zivali-edge >/dev/null 2>&1 || docker network create zivali-edge >/dev/null
 $stack run --rm --no-deps api node node_modules/prisma/build/index.js migrate deploy
+# Regions, municipalities, geocoder places, shelter directory, house ads: idempotent, and reruns keep admin edits
+# (directory, house ads); the fixture seeders skip themselves outside APP_ENV=local.
+$stack run --rm --no-deps api node dist/seed/apps/api/prisma/seed.js
 if ! up "$next"; then
 	echo "remote.sh: $target $version did not become healthy within 180 s; starting the running release again" >&2
 	rollback || true
