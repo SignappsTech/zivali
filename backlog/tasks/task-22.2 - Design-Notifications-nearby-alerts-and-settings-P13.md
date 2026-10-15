@@ -1,11 +1,11 @@
 ---
 id: TASK-22.2
 title: 'Design: Notifications, nearby alerts and settings (P13)'
-status: To Do
+status: Done
 assignee:
   - '@ui-designer'
 created_date: '2026-10-14 21:50'
-updated_date: '2026-10-14 21:51'
+updated_date: '2026-10-15 22:10'
 labels:
   - design
   - 'est:M'
