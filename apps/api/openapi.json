@@ -2020,6 +2020,56 @@
 				}
 			}
 		},
+		"/v1/admin/leads": {
+			"get": {
+				"operationId": "listAdminLeads",
+				"summary": "Partner leads",
+				"description": "Admins (aal2). Enquiries from the partners page, newest first, with contact data (C14). Audited.",
+				"tags": ["admin"],
+				"parameters": [
+					{
+						"schema": { "type": "string", "minLength": 1, "maxLength": 500 },
+						"required": false,
+						"name": "cursor",
+						"in": "query"
+					},
+					{
+						"schema": { "type": "integer", "minimum": 1, "maximum": 50 },
+						"required": false,
+						"name": "limit",
+						"in": "query"
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "One page of leads",
+						"content": {
+							"application/json": { "schema": { "$ref": "#/components/schemas/AdminLeadList" } }
+						}
+					},
+					"400": {
+						"description": "VALIDATION",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"401": {
+						"description": "UNAUTHENTICATED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"403": {
+						"description": "FORBIDDEN, AAL2_REQUIRED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"429": {
+						"description": "RATE_LIMITED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"500": {
+						"description": "INTERNAL",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					}
+				}
+			}
+		},
 		"/v1/ads/slot/{slot}": {
 			"get": {
 				"operationId": "getAdForSlot",
@@ -2593,6 +2643,40 @@
 				}
 			}
 		},
+		"/v1/leads": {
+			"post": {
+				"operationId": "createLead",
+				"summary": "Send a partner enquiry",
+				"description": "Ad or Vet Partner enquiry with explicit consent (stored with its time). The captcha token is verified first; 3 per hour per IP. The lead is emailed to the team.",
+				"tags": ["leads"],
+				"requestBody": {
+					"required": true,
+					"content": { "application/json": { "schema": { "$ref": "#/components/schemas/LeadInput" } } }
+				},
+				"responses": {
+					"201": {
+						"description": "Stored",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/IdResponse" } } }
+					},
+					"400": {
+						"description": "VALIDATION",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"422": {
+						"description": "CAPTCHA_FAILED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"429": {
+						"description": "RATE_LIMITED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"500": {
+						"description": "INTERNAL",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					}
+				}
+			}
+		},
 		"/v1/manage/claim": {
 			"post": {
 				"operationId": "claimManageLink",
@@ -3161,6 +3245,28 @@
 					"401": {
 						"description": "UNAUTHENTICATED",
 						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"429": {
+						"description": "RATE_LIMITED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"500": {
+						"description": "INTERNAL",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					}
+				}
+			}
+		},
+		"/v1/partners/stats": {
+			"get": {
+				"operationId": "getPartnerStats",
+				"summary": "Partner stats",
+				"description": "Totals and per statistical region: registered users, active reports and reunions in the last 90 days, from the newest hourly snapshot (database only). Any value from 1 to 4 is \"<5\"; 0 stays 0. `Cache-Control: public, max-age=3600`.",
+				"tags": ["partners"],
+				"responses": {
+					"200": {
+						"description": "The newest snapshot",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/PartnerStats" } } }
 					},
 					"429": {
 						"description": "RATE_LIMITED",

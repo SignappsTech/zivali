@@ -3,16 +3,19 @@ import { Router } from 'express';
 
 import {
 	AdminQueues,
+	AdminLeadList,
 	AdminUserList,
 	AdminUserQuery,
 	AuditLogList,
 	AuditLogQuery,
+	CursorQuery,
 	IdParams,
 	SetRoleInput,
 	SetRoleResponse,
 } from '@zivali/validation';
 
 import AdminController from '../controllers/admin.controller.ts';
+import PartnersController from '../controllers/partners.controller.ts';
 import { apiRoutes } from '../lib/openapi.ts';
 import { authMiddleware } from '../middleware/auth.middleware.ts';
 import { requireAal2, requireRole } from '../middleware/permission.middleware.ts';
@@ -88,6 +91,21 @@ route(
 	},
 	adminOnly,
 	AdminController.getQueues
+);
+
+route(
+	{
+		method: 'get',
+		path: '/leads',
+		operationId: 'listAdminLeads',
+		summary: 'Partner leads',
+		description: 'Admins (aal2). Enquiries from the partners page, newest first, with contact data (C14). Audited.',
+		request: { query: CursorQuery },
+		responses: { 200: { description: 'One page of leads', schema: AdminLeadList } },
+		errors: [...staffErrors],
+	},
+	adminOnly,
+	PartnersController.listLeads
 );
 
 export default router;
