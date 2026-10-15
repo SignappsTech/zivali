@@ -1,11 +1,11 @@
 ---
 id: TASK-22.2
 title: 'Design: Notifications, nearby alerts and settings (P13)'
-status: To Do
+status: In Progress
 assignee:
   - '@ui-designer'
 created_date: '2026-10-14 21:50'
-updated_date: '2026-10-14 21:51'
+updated_date: '2026-10-15 21:52'
 labels:
   - design
   - 'est:M'
@@ -33,6 +33,7 @@ Users must see what happened and control how they are told, without missing a ch
 ## Packet
 Unblocks on: P1 web shell and P2 mobile shell mockups merged (header, footer, tab bar and sheet patterns); P5 location picker mockup merged; assets/empty-inbox.png generated
 Branch: design/P13-alerts-inbox-settings
+Branch: agent/TASK-22.2-notification-settings
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Acceptance Criteria
