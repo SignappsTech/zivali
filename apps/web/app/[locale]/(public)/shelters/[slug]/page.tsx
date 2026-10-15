@@ -42,7 +42,7 @@ export async function generateMetadata({ params }: PageProps<'/[locale]/shelters
 		t('seo_page_title_short', { shelter: shelter.name }),
 	];
 	return {
-		title: titles.find((title) => title.length <= TITLE_MAX) ?? shelter.name,
+		title: { absolute: titles.find((title) => title.length <= TITLE_MAX) ?? shelter.name },
 		description: t('seo_page_description', {
 			shelter: shelter.name,
 			place: shelter.city,
@@ -78,7 +78,7 @@ export default async function ShelterPage({ params }: PageProps<'/[locale]/shelt
 	const h2Class = 'font-display text-2xl font-bold tracking-[-0.015em] text-balance lg:text-3xl';
 
 	return (
-		<main className="mx-auto box-content max-w-[1120px] px-5 pt-2 pb-12 lg:px-12 lg:pt-4 lg:pb-24">
+		<main id="main" className="mx-auto box-content max-w-[1120px] px-5 pt-2 pb-12 lg:px-12 lg:pt-4 lg:pb-24">
 			<Button asChild variant="text" className="-ml-3">
 				<Link href="/shelters">
 					<ArrowLeftIcon weight="bold" aria-hidden="true" />

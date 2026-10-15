@@ -78,7 +78,7 @@ describe('T5 /zavetisca', () => {
 
 	it('has a unique title, a description with the count and a canonical on the app URL', async () => {
 		expect(await sheltersMetadata(sheltersParams('en'))).toEqual({
-			title: 'Animal shelters by municipality · Najdimo',
+			title: { absolute: 'Animal shelters by municipality · Najdimo' },
 			description:
 				'Find the shelter responsible for your municipality: phone, address and opening hours of all 1 dog and cat shelters in Slovenia.',
 			alternates: { canonical: 'https://najdimo.si/en/shelters' },
@@ -176,14 +176,14 @@ describe('T6 /zavetisca/[slug]', () => {
 
 	it('has a unique title and description, shortened to 60 characters', async () => {
 		expect(await shelterMetadata(shelterParams('sl'))).toEqual({
-			title: 'Zavetišče Ljubljana – zavetišče za živali · Najdimo',
+			title: { absolute: 'Zavetišče Ljubljana – zavetišče za živali · Najdimo' },
 			description: 'Zavetišče Ljubljana, Ljubljana: telefon, naslov in delovni čas. Pristojno za 1 občino.',
 			alternates: { canonical: 'https://najdimo.si/zavetisca/zavetisce-ljubljana' },
 		});
 		directory.getShelter.mockResolvedValue({ ...shelterPage, name: 'Obalno zavetišče za zapuščene živali' });
-		expect((await shelterMetadata(shelterParams('sl'))).title).toBe(
-			'Obalno zavetišče za zapuščene živali – zavetišče za živali'
-		);
+		expect((await shelterMetadata(shelterParams('sl'))).title).toEqual({
+			absolute: 'Obalno zavetišče za zapuščene živali – zavetišče za živali',
+		});
 	});
 
 	it('answers 404 for an unknown slug', async () => {
