@@ -3,11 +3,11 @@ id: TASK-9.2
 title: >-
   Auth configuration and /v1/me: localised emails, providers, verified-email
   gate
-status: To Do
+status: In Progress
 assignee:
   - '@backend-dev'
 created_date: '2026-10-14 22:12'
-updated_date: '2026-10-14 23:38'
+updated_date: '2026-10-15 08:03'
 labels:
   - be
   - 'est:S'
