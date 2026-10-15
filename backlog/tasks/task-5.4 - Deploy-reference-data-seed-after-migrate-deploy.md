@@ -1,10 +1,11 @@
 ---
 id: TASK-5.4
 title: 'Deploy: reference-data seed after migrate deploy'
-status: To Do
+status: In Progress
 assignee:
   - '@backend-dev'
 created_date: '2026-10-15 20:50'
+updated_date: '2026-10-15 18:42'
 labels:
   - be
   - 'est:S'

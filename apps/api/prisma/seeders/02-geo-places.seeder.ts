@@ -18,8 +18,8 @@ const lines = (file: string) =>
 // Upserts skip unchanged rows (`where … is distinct from`), so a re-run writes nothing and leaves no dead tuples.
 // The snapshot is our own generated file (scripts/geo-places.mjs), so lines go in without parsing in JS.
 // One jsonb parameter per batch: the ndjson lines go in as they are (ids stay decimal strings, beyond 2^53).
-async function upsertPlaces(batch: string[]): Promise<void> {
-	await prisma.$executeRaw`
+async function upsertPlaces(batch: string[]): Promise<number> {
+	return prisma.$executeRaw`
 		insert into app.geo_places
 			(id, kind, name, alt_name, search, search_alt, municipality_id, settlement_id, weight, point, geom)
 		select r.id::bigint, r.kind, r.name, r.alt_name, r.search, r.search_alt, r.municipality_id,
@@ -62,8 +62,10 @@ async function* batches(file: string, size: number, header = false): AsyncGenera
 }
 
 export default async function seedGeoPlaces(): Promise<void> {
-	for await (const batch of batches('places.ndjson.gz', PLACES_BATCH)) await upsertPlaces(batch);
+	let written = 0;
+	for await (const batch of batches('places.ndjson.gz', PLACES_BATCH)) written += await upsertPlaces(batch);
 	// Trigram GIN indexes filled row by row end up about 5 times their bulk-built size (4.9 MB instead of 0.9 MB).
-	await prisma.$executeRaw`reindex table app.geo_places`;
+	// Only after writes: a rerun (every deploy) leaves the indexes, and the geocoder reads they would block, alone.
+	if (written) await prisma.$executeRaw`reindex table app.geo_places`;
 	for await (const batch of batches('addresses.tsv.gz', ADDRESSES_BATCH, true)) await upsertAddresses(batch);
 }

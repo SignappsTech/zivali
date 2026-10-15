@@ -1,9 +1,11 @@
 // Matching, chat and notification fixtures (C8-C10), local only: nearby-alert subscriptions for the fixture users
 // and, on top of the reports from 10-reports (TASK-6.6), a suggested and a confirmed match, the confirmed match's
 // conversation with messages, and the notifications both sides would have received. Idempotent (natural keys and
-// fixed message ids); without the fixture profiles (00-users) it does nothing, without reports it seeds alerts only.
+// fixed message ids); outside APP_ENV=local or without the fixture profiles (00-users) it does nothing, without
+// reports it seeds alerts only.
 import { coarsenPoint } from '@zivali/validation/geo';
 
+import { config } from '../../lib/config.ts';
 import { logger } from '../../lib/logger.ts';
 import { prisma } from '../prisma.ts';
 import { fixtureUsers } from './00-users.seeder.ts';
@@ -168,6 +170,10 @@ async function seedMatches(suggested: { lost: Report; other: Report }, confirmed
 }
 
 export default async function seedCollab(): Promise<void> {
+	if (config.APP_ENV !== 'local') {
+		logger.warn('collab fixtures skipped: local only');
+		return;
+	}
 	const users = [OWNER, OWNER2, FINDER];
 	if ((await prisma.profiles.count({ where: { id: { in: users } } })) < users.length) {
 		logger.warn('collab fixtures skipped: needs the fixture users (00-users)');
