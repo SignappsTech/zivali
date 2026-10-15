@@ -4,6 +4,7 @@ import { Linking } from 'react-native';
 import { IntlProvider } from 'use-intl';
 
 import sl from '@zivali/i18n/dist/sl.json';
+import DevPickerScreen from '@/app/dev/picker';
 import { LocationPicker, type LocationPickerProps } from '@/components/location/location-picker';
 import { distanceKm } from '@/lib/geo';
 
@@ -26,7 +27,13 @@ jest.mock('expo-network', () => ({
 }));
 
 type Place = { label: string; lat: number; lng: number; kind: string; municipality_slug: string };
-const SISKA: Place = { label: 'Šiška, Ljubljana', lat: 46.0739, lng: 14.4851, kind: 'district', municipality_slug: 'x' };
+const SISKA: Place = {
+	label: 'Šiška, Ljubljana',
+	lat: 46.0739,
+	lng: 14.4851,
+	kind: 'district',
+	municipality_slug: 'x',
+};
 const TRUBARJEVA: Place = {
 	label: 'Trubarjeva cesta 5, Ljubljana',
 	lat: 46.05169,
@@ -35,7 +42,9 @@ const TRUBARJEVA: Place = {
 	municipality_slug: 'ljubljana',
 };
 let mockSearch = { places: [] as Place[], isFetching: false, searched: false, error: undefined as unknown };
-const mockReverse = jest.fn((_arg: unknown): { data?: Place | null; isError?: boolean } => ({ data: SISKA }));
+const mockReverse = jest.fn((_arg: unknown): { currentData?: Place | null; isError?: boolean } => ({
+	currentData: SISKA,
+}));
 jest.mock('@zivali/api/geocode', () => ({
 	PLACE_SEARCH_MIN_CHARS: 3,
 	usePlaceSearch: (q: string) => (q.trim().length >= 3 ? mockSearch : { places: [], isFetching: false }),
@@ -63,15 +72,19 @@ const panTo = async (point: { lat: number; lng: number }, zoom?: number) => {
 	await act(async () => native().props.onRegionDidChange(region(point, zoom)));
 };
 const press = (name: string) => fireEvent.press(screen.getByRole('button', { name }));
-const confirmed = (onChange: jest.Mock) => onChange.mock.calls.at(-1)![0] as Parameters<LocationPickerProps['onChange']>[0];
+const confirmed = (onChange: jest.Mock) =>
+	onChange.mock.calls.at(-1)![0] as Parameters<LocationPickerProps['onChange']>[0];
 const metres = (a: { lat: number; lng: number }, b: { lat: number; lng: number }) => distanceKm(a, b) * 1000;
 
 beforeEach(() => {
 	jest.clearAllMocks();
 	mockNetwork = {};
 	mockSearch = { places: [], isFetching: false, searched: false, error: undefined };
-	mockReverse.mockImplementation(() => ({ data: SISKA }));
-	jest.mocked(Location.getForegroundPermissionsAsync).mockResolvedValue({ granted: true, canAskAgain: true } as never);
+	mockReverse.mockImplementation(() => ({ currentData: SISKA }));
+	jest.mocked(Location.getForegroundPermissionsAsync).mockResolvedValue({
+		granted: true,
+		canAskAgain: true,
+	} as never);
 	jest.mocked(Location.getCurrentPositionAsync).mockResolvedValue({
 		coords: { latitude: 46.0551, longitude: 14.5122 },
 	} as never);
@@ -81,7 +94,10 @@ describe('LocationPicker', () => {
 	it('shows the lost question, search, the centre pin over the map, the radius and the privacy line', async () => {
 		await render(ui());
 		expect(screen.getByRole('heading', { name: sl.location.title_lost })).toBeOnTheScreen();
-		expect(screen.getByLabelText(sl.location.search_label)).toHaveProp('placeholder', sl.location.search_placeholder);
+		expect(screen.getByLabelText(sl.location.search_label)).toHaveProp(
+			'placeholder',
+			sl.location.search_placeholder
+		);
 		const map = screen.getByRole('button', { name: sl.location.pin_a11y });
 		expect(map.props.accessibilityHint).toBe(sl.location.nudge_show);
 		expect(hidden('picker-pin')).toBeTruthy();
@@ -137,8 +153,7 @@ describe('LocationPicker', () => {
 		// The raw point never reaches onChange: every call carried a coarsened one.
 		expect(onChange).toHaveBeenCalledTimes(4);
 		for (const raw of [RAW, fix, TRUBARJEVA, EXIF])
-			for (const [value] of onChange.mock.calls)
-				expect(value.point).not.toEqual({ lat: raw.lat, lng: raw.lng });
+			for (const [value] of onChange.mock.calls) expect(value.point).not.toEqual({ lat: raw.lat, lng: raw.lng });
 	});
 
 	it('lifts the pin and says it is looking up the place while the map moves, then names it', async () => {
@@ -153,7 +168,7 @@ describe('LocationPicker', () => {
 	});
 
 	it('shows the non-blocking outside-Slovenia note when the reverse lookup finds no municipality', async () => {
-		mockReverse.mockImplementation(() => ({ data: null }));
+		mockReverse.mockImplementation(() => ({ currentData: null }));
 		await render(ui({ mode: 'sighted' }));
 		await panTo({ lat: 45.9405, lng: 13.618 });
 		expect(screen.getByText(sl.location.outside_si)).toBeOnTheScreen();
@@ -209,6 +224,17 @@ describe('LocationPicker', () => {
 		expect(screen.getByText(sl.location.gps_denied)).toBeOnTheScreen();
 		expect(screen.getByRole('button', { name: sl.permissions.open_settings })).toBeOnTheScreen();
 		expect(Location.getCurrentPositionAsync).not.toHaveBeenCalled();
+	});
+
+	it('says so when no fix comes, and keeps "Uporabi mojo lokacijo" to try again', async () => {
+		jest.mocked(Location.getCurrentPositionAsync).mockRejectedValueOnce(new Error('unavailable'));
+		await render(ui({ mode: 'sighted' }));
+		await press(sl.location.use_my_location);
+		expect(screen.getByText(sl.location.gps_denied)).toBeOnTheScreen();
+		expect(screen.queryByRole('button', { name: sl.permissions.open_settings })).toBeNull();
+		await press(sl.location.use_my_location);
+		expect(screen.queryByText(sl.location.gps_denied)).toBeNull();
+		expect(refs.camera.easeTo).toHaveBeenCalledTimes(1);
 	});
 
 	it('lists results while searching (map hidden), and says so when nothing matches', async () => {
@@ -304,6 +330,29 @@ describe('LocationPicker', () => {
 		expect(String(screen.getByRole('button', { name: sl.location.search_clear }).props.className)).toMatch(target);
 	});
 
+	it('on a short screen folds the privacy line into a "Kdo vidi ta kraj?" button, and back when there is room', async () => {
+		await render(ui({ mode: 'found' }));
+		const layout = (height: number) =>
+			act(async () =>
+				fireEvent(hidden('picker-map'), 'layout', { nativeEvent: { layout: { width: 375, height } } })
+			);
+		await act(async () =>
+			fireEvent(screen.getByTestId('picker-privacy'), 'layout', { nativeEvent: { layout: { height: 40 } } })
+		);
+		await layout(400);
+		expect(screen.queryByRole('button', { name: sl.location.privacy_info_button })).toBeNull();
+
+		await layout(190);
+		expect(screen.getByRole('button', { name: sl.location.privacy_info_button })).toBeOnTheScreen();
+		// The sheet carries the same sentence as real text.
+		expect(screen.getByText(sl.location.privacy_found)).toBeOnTheScreen();
+		// The map grew by the line it gave up: still too small to take it back.
+		await layout(242);
+		expect(screen.getByRole('button', { name: sl.location.privacy_info_button })).toBeOnTheScreen();
+		await layout(300);
+		expect(screen.queryByRole('button', { name: sl.location.privacy_info_button })).toBeNull();
+	});
+
 	it('offline, lost waits for the map: one note with "Poskusi znova", confirm disabled', async () => {
 		mockNetwork = { isConnected: false };
 		await render(ui());
@@ -327,10 +376,22 @@ describe('LocationPicker', () => {
 
 		await press(sl.location.use_my_location);
 		expect(screen.getByText(sl.location.offline_gps_set)).toBeOnTheScreen();
-			// No reverse lookup goes out offline.
+		// No reverse lookup goes out offline.
 		expect(mockReverse.mock.calls.every(([arg]) => typeof arg === 'symbol')).toBe(true);
 		await press(sl.location.confirm);
 		expect(confirmed(onChange).source).toBe('gps');
 		expect(metres(confirmed(onChange).point, { lat: 46.0551, lng: 14.5122 })).toBeGreaterThanOrEqual(19.9);
 	});
+});
+
+test('the dev picker (/dev/picker) switches modes and shows what Confirm handed over', async () => {
+	await render(
+		<IntlProvider locale="sl" messages={sl}>
+			<DevPickerScreen />
+		</IntlProvider>
+	);
+	await press('alert');
+	expect(screen.getByRole('heading', { name: sl.location.title_alert })).toBeOnTheScreen();
+	await press(sl.location.save_area);
+	expect(screen.getByText(/"radiusM":5000,"source":"pin"/)).toBeOnTheScreen();
 });

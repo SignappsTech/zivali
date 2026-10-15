@@ -110,7 +110,11 @@ function useOnline() {
 	const live = useNetworkState();
 	const [checked, setChecked] = React.useState<{ live: NetworkState; state: NetworkState }>();
 	const online = isOnline(checked?.live === live ? checked.state : live);
-	const retry = () => void getNetworkStateAsync().then((state) => setChecked({ live, state }), () => undefined);
+	const retry = () =>
+		void getNetworkStateAsync().then(
+			(state) => setChecked({ live, state }),
+			() => undefined
+		);
 	return { online, retry };
 }
 
@@ -159,8 +163,7 @@ export function LocationPicker({ value, mode, suggested, onChange, permissionDen
 
 	const onCameraChange = ({ center, zoom, moving }: CameraState) => {
 		setCamera((prev) => (prev.moving === moving && Math.abs(prev.zoom - zoom) < 0.01 ? prev : { zoom, moving }));
-		if (!moving)
-			setPick((prev) => (metres(prev.point, center) < SAME_M ? prev : { point: center, source: 'pin' }));
+		if (!moving) setPick((prev) => (metres(prev.point, center) < SAME_M ? prev : { point: center, source: 'pin' }));
 	};
 	const choose = (next: Pick) => {
 		setPick(next);
@@ -216,13 +219,14 @@ export function LocationPicker({ value, mode, suggested, onChange, permissionDen
 	// Reverse lookup once the map stops (search results bring their own label); null means outside Slovenia.
 	const lookup = online && !camera.moving && !pick.label;
 	const reverse = useReversePlaceQuery(lookup ? pick.point : skipToken);
-	const outside = lookup && reverse.data === null;
-	const addressLoading = online && (camera.moving || (lookup && reverse.data === undefined && !reverse.isError));
+	const outside = lookup && reverse.currentData === null;
+	const addressLoading =
+		online && (camera.moving || (lookup && reverse.currentData === undefined && !reverse.isError));
 	const address = !online
 		? pick.source === 'gps'
 			? t('offline_gps_set')
 			: t('address_unknown')
-		: (pick.label ?? reverse.data?.label ?? t('address_unknown'));
+		: (pick.label ?? reverse.currentData?.label ?? t('address_unknown'));
 
 	// Offline: lost and alert wait for the map; found and sighted can still confirm a GPS point (FR-042).
 	const confirmable = online || (!area && (pick.source === 'gps' || value !== undefined));
@@ -308,7 +312,11 @@ export function LocationPicker({ value, mode, suggested, onChange, permissionDen
 				<Icon as={CrosshairIcon} />
 				{locating ? t('locating') : t('use_my_location')}
 			</Button>
-			{gps === 'failed' && <Note icon={GpsSlashIcon}>{t('gps_denied')}</Note>}
+			{gps === 'failed' && (
+				<Note icon={GpsSlashIcon} className="mt-1">
+					{t('gps_denied')}
+				</Note>
+			)}
 		</>
 	);
 
@@ -338,7 +346,12 @@ export function LocationPicker({ value, mode, suggested, onChange, permissionDen
 								<Spinner className="text-primary" />
 							</View>
 						) : query ? (
-							<Button variant="ghost" size="icon" aria-label={t('search_clear')} onPress={() => setQuery('')}>
+							<Button
+								variant="ghost"
+								size="icon"
+								aria-label={t('search_clear')}
+								onPress={() => setQuery('')}
+							>
 								<Icon as={XCircleIcon} weight="fill" size={22} className="text-muted-foreground" />
 							</Button>
 						) : null}
@@ -372,8 +385,11 @@ export function LocationPicker({ value, mode, suggested, onChange, permissionDen
 					importantForAccessibility={listing ? 'no-hide-descendants' : 'auto'}
 				>
 					<View
+						testID="picker-map"
 						className="flex-1"
-						onLayout={(event) => onMapLayout(event.nativeEvent.layout.width, event.nativeEvent.layout.height)}
+						onLayout={(event) =>
+							onMapLayout(event.nativeEvent.layout.width, event.nativeEvent.layout.height)
+						}
 					>
 						{online ? (
 							<MapView
@@ -419,7 +435,9 @@ export function LocationPicker({ value, mode, suggested, onChange, permissionDen
 										aria-live="polite"
 										className={cn(
 											'min-w-0 flex-1',
-											addressLoading ? 'font-sans-semibold text-muted-foreground' : 'font-sans-bold'
+											addressLoading
+												? 'font-sans-semibold text-muted-foreground'
+												: 'font-sans-bold'
 										)}
 									>
 										{addressLoading ? t('address_loading') : address}
@@ -432,7 +450,10 @@ export function LocationPicker({ value, mode, suggested, onChange, permissionDen
 										variant="text"
 										className="-ml-3 self-start"
 										onPress={() =>
-											choose({ point: { lat: suggested.lat, lng: suggested.lng }, source: 'exif' })
+											choose({
+												point: { lat: suggested.lat, lng: suggested.lng },
+												source: 'exif',
+											})
 										}
 									>
 										<Icon as={ImageSquareIcon} />
@@ -459,7 +480,11 @@ export function LocationPicker({ value, mode, suggested, onChange, permissionDen
 								<RadiusSlider
 									label={t(mode === 'alert' ? 'alert_radius_label' : 'radius_label')}
 									valueText={radiusText(radiusM)}
-									hint={large ? t('radius_large_warning') : t(mode === 'alert' ? 'alert_radius_help' : 'radius_help')}
+									hint={
+										large
+											? t('radius_large_warning')
+											: t(mode === 'alert' ? 'alert_radius_help' : 'radius_help')
+									}
 									count={area.stops.length}
 									index={radiusIndex}
 									onChange={changeRadius}
@@ -480,6 +505,7 @@ export function LocationPicker({ value, mode, suggested, onChange, permissionDen
 						) : null}
 						{!compact && (
 							<View
+								testID="picker-privacy"
 								className="mt-3 flex-row gap-2"
 								onLayout={(event) => (privacyHeight.current = event.nativeEvent.layout.height + 12)}
 							>
@@ -644,24 +670,29 @@ function ResultRow({ place, onPress }: { place: Place; onPress: (place: Place) =
 function Attribution({ className }: { className?: string }) {
 	const t = useTranslations('location');
 	const locale = useLocale() as Locale;
-	const link = (url: string) => (chunks: React.ReactNode) => (
-		<Text
-			role="link"
-			className="text-sm text-muted-foreground underline"
-			onPress={() => void Linking.openURL(url).catch(() => undefined)}
-		>
-			{chunks}
-		</Text>
-	);
 	const en = locale === 'en';
+	const imprint = `${env.EXPO_PUBLIC_APP_URL}${en ? '/en/imprint' : '/impresum'}`;
+	const licence = `https://creativecommons.org/licenses/by/4.0/${en ? '' : 'deed.sl'}`;
 	return (
 		<Text className={cn('text-sm text-muted-foreground', className)}>
 			{t.rich('search_attribution', {
 				// Content P5: "15. 10. 2026" in SL, "15 October 2026" in EN.
 				data_date: formatDate(GEO_DATA_DATE, locale, en ? 'long' : 'short'),
-				source: link(`${env.EXPO_PUBLIC_APP_URL}${en ? '/en/imprint' : '/impresum'}`),
-				licence: link(`https://creativecommons.org/licenses/by/4.0/${en ? '' : 'deed.sl'}`),
+				source: (chunks) => <InlineLink url={imprint}>{chunks}</InlineLink>,
+				licence: (chunks) => <InlineLink url={licence}>{chunks}</InlineLink>,
 			})}
+		</Text>
+	);
+}
+
+function InlineLink({ url, children }: { url: string; children: React.ReactNode }) {
+	return (
+		<Text
+			role="link"
+			className="text-sm text-muted-foreground underline"
+			onPress={() => void Linking.openURL(url).catch(() => undefined)}
+		>
+			{children}
 		</Text>
 	);
 }
