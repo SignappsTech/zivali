@@ -3,11 +3,11 @@ id: TASK-6.3
 title: >-
   Worker and jobs: pg-boss, queue registry with stubs, schedules, keep-alive,
   drain
-status: In Progress
+status: Done
 assignee:
   - '@backend-dev'
 created_date: '2026-10-14 22:12'
-updated_date: '2026-10-15 10:15'
+updated_date: '2026-10-15 11:03'
 labels:
   - be
   - 'est:S'
