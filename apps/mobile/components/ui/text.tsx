@@ -10,7 +10,7 @@ const TextClassContext = React.createContext<string | undefined>(undefined);
  * Body text by default (16/24, foreground). OS text scaling is honoured up to 200 % (system §11), so labels wrap and
  * grow instead of clipping; never give a Text a fixed height.
  */
-function Text({ className, maxFontSizeMultiplier = 2, ...props }: React.ComponentProps<typeof RNText>) {
+function Text({ className, maxFontSizeMultiplier = 2, ...props }: React.ComponentPropsWithRef<typeof RNText>) {
 	const textClass = React.useContext(TextClassContext);
 	return (
 		<RNText

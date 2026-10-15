@@ -97,17 +97,29 @@ export async function openConversation(input: CreateConversationInput, ctx: Ctx)
 	});
 }
 
+// Opaque inbox cursor: base64url of "<activity_at as text, microseconds kept>|<id>", a position that stays valid
+// when messages arrive between pages.
+const CURSOR_TS = /^\d{4}-\d\d-\d\d \d\d:\d\d:\d\d(\.\d{1,6})?[+-]\d\d(:\d\d)?$/;
+const encodeCursor = (row: { activity_text: string; id: string }) =>
+	Buffer.from(`${row.activity_text}|${row.id}`).toString('base64url');
+function decodeCursor(cursor: string): { activity_at: string; id: string } | null {
+	const [activity_at, id, extra] = Buffer.from(cursor, 'base64url').toString().split('|');
+	if (extra !== undefined || !activity_at || !id || !CURSOR_TS.test(activity_at) || !Uuid.safeParse(id).success)
+		return null;
+	return { activity_at, id };
+}
+
 export async function listConversations(
 	input: { cursor?: string; limit?: number },
 	ctx: Ctx
 ): Promise<{ rows: ConversationListRow[]; next_cursor: string | null }> {
 	const user_id = actorId(ctx);
-	const cursor = input.cursor ?? null;
-	if (cursor !== null && !Uuid.safeParse(cursor).success) throw invalid('cursor', 'Invalid cursor');
+	const cursor = input.cursor === undefined ? null : decodeCursor(input.cursor);
+	if (input.cursor !== undefined && !cursor) throw invalid('cursor', 'Invalid cursor');
 	const limit = input.limit ?? DEFAULT_LIMIT;
 	const rows = await ChatDao.listConversations(user_id, cursor, limit + 1, ctx.tx);
 	const page = rows.slice(0, limit);
-	return { rows: page, next_cursor: rows.length > limit ? page.at(-1)!.id : null };
+	return { rows: page, next_cursor: rows.length > limit ? encodeCursor(page.at(-1)!) : null };
 }
 
 /** The conversation with the caller's participant row; FORBIDDEN for non-participants and unknown ids alike. */
@@ -175,6 +187,8 @@ export async function sendMessage(
 ): Promise<MessageDto> {
 	const user_id = actorId(ctx);
 	return inTransaction(ctx, async (tx) => {
+		// Lock first, read after: a close that commits meanwhile is seen, a later close waits for this send.
+		await ChatDao.lockConversation(input.conversation_id, tx);
 		const { conversation } = await participantOf(input.conversation_id, ctx, tx);
 		if (conversation.status === 'read_only') throw new AppError('GONE', 'This conversation is read-only');
 		const others = conversation.participants.filter((participant) => participant.user_id !== user_id);
@@ -204,7 +218,7 @@ export async function sendMessage(
 		);
 		const sender = (await sendersOf(conversation, tx)).get(user_id)!;
 		const message = ChatMapper.toMessageDto(row, sender);
-		await broadcast(tx, `conversation:${conversation.id}`, 'message.created', message);
+		await broadcast(`conversation:${conversation.id}`, 'message.created', message, tx);
 
 		const updated = {
 			conversation_id: conversation.id,
@@ -213,7 +227,7 @@ export async function sendMessage(
 		};
 		const window = Math.floor(ctx.now.getTime() / NOTIFY_WINDOW_MS);
 		for (const other of others) {
-			await broadcast(tx, `user:${other.user_id}`, 'conversation.updated', updated);
+			await broadcast(`user:${other.user_id}`, 'conversation.updated', updated, tx);
 			const online = other.last_read_at && ctx.now.getTime() - other.last_read_at.getTime() < ONLINE_MS;
 			if (other.muted || online) continue;
 			// Ids only, never the body (C10, TASK-6.17): notify.send derives preview_alias and unread_count.
@@ -238,12 +252,17 @@ export async function markRead(input: { conversation_id: string }, ctx: Ctx): Pr
 		const { conversation } = await participantOf(input.conversation_id, ctx, tx);
 		const last_read_message_id = await ChatDao.latestMessageId(conversation.id, tx);
 		await ChatDao.setLastRead(conversation.id, user_id, ctx.now, tx);
-		await broadcast(tx, `conversation:${conversation.id}`, 'conversation.read', {
-			conversation_id: conversation.id,
-			reader_id: user_id,
-			last_read_message_id,
-			read_at: ctx.now.toISOString(),
-		});
+		await broadcast(
+			`conversation:${conversation.id}`,
+			'conversation.read',
+			{
+				conversation_id: conversation.id,
+				reader_id: user_id,
+				last_read_message_id,
+				read_at: ctx.now.toISOString(),
+			},
+			tx
+		);
 	});
 }
 
@@ -270,11 +289,12 @@ export async function closeForReport(input: { report_id: string }, ctx: Ctx): Pr
 		const updated_at = ctx.now.toISOString();
 		for (const row of rows)
 			for (const participant of row.participants)
-				await broadcast(tx, `user:${participant.user_id}`, 'conversation.updated', {
-					conversation_id: row.id,
-					status: 'read_only',
-					updated_at,
-				});
+				await broadcast(
+					`user:${participant.user_id}`,
+					'conversation.updated',
+					{ conversation_id: row.id, status: 'read_only', updated_at },
+					tx
+				);
 		return rows.length;
 	});
 }

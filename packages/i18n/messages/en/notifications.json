@@ -1,0 +1,50 @@
+{
+	"match_chip": {
+		"title": "Chip number matches · {has_name, select, yes {{pet_name}} other {{species, select, dog {your dog} cat {your cat} other {your pet}}}}",
+		"body": "{other_type, select, sighted {A sighted animal has the same chip number, but it may have moved on. Open the match.} other {A found animal has the same chip number. Open the match.}}"
+	},
+	"match_suggested": {
+		"title": "{strength, select, strong {Very likely match} other {Likely match}} · {has_name, select, yes {{pet_name}} other {{species, select, dog {your dog} cat {your cat} other {your pet}}}}",
+		"body": "A {other_type, select, sighted {sighted {species, select, dog {dog} cat {cat} other {animal}}} other {found {species, select, dog {dog} cat {cat} other {animal}}}} may match your search. Look at the photos and decide for yourself."
+	},
+	"match_confirmed": {
+		"title": "Match confirmed",
+		"body": "The person looking for the animal believes it is theirs. Open the conversation."
+	},
+	"chat_message": {
+		"title": "New message · {preview_alias}",
+		"body": "Open the conversation to read it."
+	},
+	"nearby_lost": {
+		"title": "{species, select, dog {Lost dog} cat {Lost cat} other {Lost animal}} near you",
+		"body": "{has_area, select, yes {{area_name}, } other {}}{distance_band, select, lt1 {under 1 km} 1to3 {1–3 km} 3to10 {3–10 km} gt10 {over 10 km} other {nearby}} from your area. Have you seen {species, select, other {it}}?"
+	},
+	"report_reminder": {
+		"title": "Still looking for your pet?",
+		"body": "{has_name, select, yes {{pet_name}} other {{species, select, dog {Your dog} cat {Your cat} other {Your pet}}}}: your search is {day, plural, one {# day} other {# days}} old. Keep searching or close it.",
+		"action_keep": "Keep searching",
+		"action_close": "Close search"
+	},
+	"report_expiring": {
+		"title": "{report_type, select, lost {Your search will close soon} other {Your report will expire soon}}",
+		"body": "{report_type, select, lost {{has_name, select, yes {{pet_name}} other {{species, select, dog {Your dog} cat {Your cat} other {Your pet}}}}: your search closes in {days_left, plural, one {# day} other {# days}}. Keep it going with one tap.} other {Your report expires in {days_left, plural, one {# day} other {# days}} because it has had no updates. Extend it.}}",
+		"action": "{report_type, select, lost {Keep searching} other {Keep for 30 more days}}"
+	},
+	"report_closed": {
+		"title": "{report_type, select, lost {Your search is closed} other {Your report is closed}}",
+		"body": "{report_type, select, lost {{has_name, select, yes {{pet_name}} other {{species, select, dog {Your dog} cat {Your cat} other {Your pet}}}}: the search was closed because it had no updates. You can reopen it within {reopen_days, plural, one {# day} other {# days}}.} other {The report was closed because it had no updates. You can reopen it within {reopen_days, plural, one {# day} other {# days}}.}}",
+		"action": "Reopen"
+	},
+	"report_hidden": {
+		"title": "Your report is under review",
+		"body": "Our team has taken your report off the map for now. Open it to read more."
+	},
+	"report_reunited": {
+		"title": "{species, select, dog {Dog} cat {Cat} other {Animal}} is home again",
+		"body": "The animal you reported is home again. Thank you for helping."
+	},
+	"payment_receipt": {
+		"title": "Payment receipt",
+		"body": "{amount}, {purpose, select, tip {thank-you contribution} other {contribution}}. Thank you.{is_test, select, yes { Test payment.} other {}}"
+	}
+}

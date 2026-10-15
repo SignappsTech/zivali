@@ -135,7 +135,7 @@ export async function insertMessage(
 export async function findMessage(conversation_id: string, id: string, tx?: Tx) {
 	return (tx ?? prisma).messages.findFirst({
 		where: { conversation_id, id },
-		select: { id: true, created_at: true },
+		select: { id: true, created_at: true, sender_id: true },
 	});
 }
 
@@ -179,6 +179,27 @@ export async function latestMessageId(conversation_id: string, tx?: Tx): Promise
 	return row?.id ?? null;
 }
 
+/** Row lock (shared) on the conversation: a send holds it so closeForReport's update waits and cannot interleave. */
+export async function lockConversation(id: string, tx: Tx): Promise<void> {
+	await tx.$executeRaw`select 1 from app.conversations where id = ${id}::uuid for share`;
+}
+
+/** Messages from others the user has not read, for the notification preview. */
+export async function countUnread(conversation_id: string, user_id: string, tx?: Tx): Promise<number> {
+	const me = await (tx ?? prisma).conversation_participants.findUnique({
+		where: { conversation_id_user_id: { conversation_id, user_id } },
+		select: { last_read_at: true },
+	});
+	if (!me) return 0;
+	return (tx ?? prisma).messages.count({
+		where: {
+			conversation_id,
+			sender_id: { not: user_id },
+			...(me.last_read_at && { created_at: { gt: me.last_read_at } }),
+		},
+	});
+}
+
 export async function setLastRead(conversation_id: string, user_id: string, at: Date, tx?: Tx): Promise<void> {
 	await (tx ?? prisma).conversation_participants.update({
 		where: { conversation_id_user_id: { conversation_id, user_id } },
@@ -187,9 +208,13 @@ export async function setLastRead(conversation_id: string, user_id: string, at: 
 }
 
 /** Active conversations about the report become read-only; returns them with their participants. */
-export async function markReadOnly(about_report_id: string, at: Date, tx: Tx) {
+export async function markReadOnly(report_id: string, at: Date, tx: Tx) {
 	const rows = await tx.conversations.findMany({
-		where: { about_report_id, status: 'active' },
+		where: {
+			status: 'active',
+			// A match conversation is about whichever report its first opener passed, so either side closing counts.
+			OR: [{ about_report_id: report_id }, { lost_report_id: report_id }, { other_report_id: report_id }],
+		},
 		select: { id: true, participants: { select: { user_id: true } } },
 	});
 	await tx.conversations.updateMany({
@@ -209,6 +234,7 @@ export async function deleteClosedBefore(cutoff: Date, tx?: Tx): Promise<number>
 
 export type ConversationListRow = {
 	id: string;
+	activity_text: string;
 	status: string;
 	other_report_id: string | null;
 	my_role: ParticipantRole;
@@ -228,9 +254,14 @@ export type ConversationListRow = {
 
 /**
  * The caller's conversations, latest activity (last message, else creation) first; keyset on (activity_at, id)
- * after the `cursor` conversation. The other participant is preferably one with a different role than the caller.
+ * after the `cursor` position (a snapshot of activity_at and id, so new messages never shift the page). The other participant is preferably one with a different role than the caller.
  */
-export async function listConversations(user_id: string, cursor: string | null, take: number, tx?: Tx) {
+export async function listConversations(
+	user_id: string,
+	cursor: { activity_at: string; id: string } | null,
+	take: number,
+	tx?: Tx
+) {
 	return (tx ?? prisma).$queryRaw<ConversationListRow[]>`
 		with mine as (
 			select c.id, c.status, c.about_report_id, c.other_report_id, p.role as my_role, p.last_read_at,
@@ -244,6 +275,7 @@ export async function listConversations(user_id: string, cursor: string | null, 
 			where p.user_id = ${user_id}::uuid
 		)
 		select mine.id, mine.status, mine.other_report_id, mine.my_role, mine.activity_at, mine.last_body,
+			mine.activity_at::text as activity_text,
 			r.short_code, r.type::text as type, r.species::text as species, r.source::text as source,
 			o.type::text as other_type, o.source::text as other_source,
 			(select ph.public_thumb_url from app.photos ph
@@ -261,8 +293,8 @@ export async function listConversations(user_id: string, cursor: string | null, 
 			where q.conversation_id = mine.id and q.user_id <> ${user_id}::uuid
 			order by (q.role = mine.my_role), q.user_id limit 1
 		) op on true
-		where ${cursor}::uuid is null
-			or (mine.activity_at, mine.id) < (select x.activity_at, x.id from mine x where x.id = ${cursor}::uuid)
+		where ${cursor?.id ?? null}::uuid is null
+			or (mine.activity_at, mine.id) < (${cursor?.activity_at ?? null}::timestamptz, ${cursor?.id ?? null}::uuid)
 		order by mine.activity_at desc, mine.id desc
 		limit ${take}`;
 }
@@ -286,6 +318,8 @@ export default {
 	latestMessageId,
 	setLastRead,
 	markReadOnly,
+	lockConversation,
+	countUnread,
 	deleteClosedBefore,
 	listConversations,
 };

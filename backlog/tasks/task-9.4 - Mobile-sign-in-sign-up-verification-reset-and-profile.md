@@ -1,11 +1,11 @@
 ---
 id: TASK-9.4
 title: 'Mobile sign-in, sign-up, verification, reset and profile'
-status: To Do
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:12'
-updated_date: '2026-10-14 22:41'
+updated_date: '2026-10-15 16:02'
 labels:
   - fe
   - 'est:M'
@@ -42,10 +42,16 @@ Branch: agent/task-9.4-auth-mob
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Sign up, sign in, verify-email prompt, password reset and sign-out work in the app in SL and EN per P16; the session persists across restarts.
-- [ ] #2 Google (native ID token) and Apple (iOS) sign-in use signInWithIdToken when client ids are configured, otherwise the buttons are hidden; email confirmation and reset links deep-link back into the app.
-- [ ] #3 The contextual sign-in gate (bottom sheet) keeps the user's draft and returns them to the flow.
-- [ ] #4 The profile screen edits name, language, home area, alert radius and optional phone.
+- [x] #1 Sign up, sign in, verify-email prompt, password reset and sign-out work in the app in SL and EN per P16; the session persists across restarts.
+- [x] #2 Google (native ID token) and Apple (iOS) sign-in use signInWithIdToken when client ids are configured, otherwise the buttons are hidden; email confirmation and reset links deep-link back into the app.
+- [x] #3 The contextual sign-in gate (bottom sheet) keeps the user's draft and returns them to the flow.
+- [x] #4 The profile screen edits name, language, home area, alert radius and optional phone.
 - [ ] #5 TalkBack labels, focus order and 44 px targets are verified on Android (screenshots).
 - [ ] #6 Sign-out (and account deletion) call signOutAndWipe() from the local data layer (C17): pending outbox items are offered first, then cache, drafts and geofences are wiped.
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+Branch agent/task-9.4-auth-mob. Mobile auth: app/auth/{sign-in,sign-up,check-email,forgot-password,new-password,callback}, AuthGate sheet (components/auth/gate.tsx), account + home-area settings. AC5 (TalkBack screenshots on an Android device) and the AC6 pending-outbox prompt (TASK-86.2) / account deletion (M3, FR-034) remain; sign-out already calls signOutAndWipe(). Google needs a dev build with the new native module and EXPO_PUBLIC_GOOGLE_* set; Apple behind EXPO_PUBLIC_APPLE_SIGN_IN=false.
+<!-- SECTION:NOTES:END -->

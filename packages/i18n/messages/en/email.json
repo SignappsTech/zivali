@@ -1,0 +1,107 @@
+{
+	"layout": {
+		"tagline": "Home again.",
+		"reason": "{category, select, search {You received this email because you have a search, a report or a conversation on Najdimo.} alert {You received this email because you turned on nearby alerts.} finder {You received this email because you gave this address when you made a report.} payment {You received this email because you made a payment on Najdimo.} other {You received this email because you have a Najdimo account.}}",
+		"settings": "Notification settings",
+		"unsubscribe": "Turn off these alerts",
+		"support": "Questions? Reply to this email or write to {support_email}.",
+		"company": "Najdimo"
+	},
+	"unsubscribe": {
+		"title": "Emails turned off",
+		"body": "We will not send you these emails any more. You can change your notification settings in the app at any time."
+	},
+	"match_chip": {
+		"subject": "Chip number matches: {has_name, select, yes {{pet_name}} other {{species, select, dog {your dog} cat {your cat} other {your pet}}}}",
+		"preheader": "Look at the photos and decide for yourself.",
+		"button": "Open match",
+		"p1": "{other_type, select, sighted {A sighted animal has the same chip number as {has_name, select, yes {{pet_name}} other {{species, select, dog {your dog} cat {your cat} other {your pet}}}}. The sighting may be a little old, so the animal could have moved.} other {A found animal has the same chip number as {has_name, select, yes {{pet_name}} other {{species, select, dog {your dog} cat {your cat} other {your pet}}}}.}}",
+		"p2": "Look at the photos and details, then decide for yourself. We do not share contact details until you confirm the match.",
+		"p3": "Never send money in advance."
+	},
+	"match_suggested": {
+		"subject": "We may have found the animal you are looking for",
+		"preheader": "{strength, select, strong {Very likely} other {Likely}} match for the search: {has_name, select, yes {{pet_name}} other {{species, select, dog {your dog} cat {your cat} other {your pet}}}}. Look at the photos.",
+		"button": "View match",
+		"p1": "We may have found the animal you are looking for. Search: {has_name, select, yes {{pet_name}} other {{species, select, dog {your dog} cat {your cat} other {your pet}}}}.",
+		"p2": "We rate the match as {strength, select, strong {very likely} other {likely}}. Open it, read why we think so, and decide for yourself.",
+		"p3": "We do not share contact details until you confirm the match."
+	},
+	"match_confirmed": {
+		"subject": "Match confirmed – open the conversation",
+		"preheader": "Your phone number stays hidden. You write to each other in the app.",
+		"button": "Open conversation",
+		"p1": "The person looking for the animal has confirmed that your report matches their search. Thank you for helping.",
+		"p2": "The conversation is open. Your phone number stays hidden; you write to each other in the app.",
+		"p3": "Hand the animal over in a public place, in daylight, with someone you trust. Never send money in advance."
+	},
+	"chat_message": {
+		"subject": "{unread_count, plural, one {You have an unread message} other {You have # unread messages}}",
+		"preheader": "The message is in your conversation with {preview_alias}.",
+		"button": "Open conversation",
+		"p1": "You have {unread_count, plural, one {# unread message} other {# unread messages}} in your conversation: {preview_alias}.",
+		"p2": "We leave the message out of this email to keep it private. Open the conversation to read it in the app.",
+		"p3": "Never send money in advance."
+	},
+	"nearby_lost": {
+		"subject": "{species, select, dog {Lost dog} cat {Lost cat} other {Lost animal}} near you",
+		"preheader": "{when}{has_area, select, yes {, {area_name}} other {}}. Have you seen {species, select, other {it}}?",
+		"button": "Open report",
+		"p1": "A lost {species, select, dog {dog} cat {cat} other {animal}} has been reported, about {distance_band, select, lt1 {under 1 km} 1to3 {1–3 km} 3to10 {3–10 km} gt10 {over 10 km} other {nearby}} from your area{has_area, select, yes { ({area_name})} other {}}.",
+		"p2": "Have you seen {species, select, other {it}}? If so, open the report and tell us about the sighting. If not, there is nothing you need to do.",
+		"p3": "We only show the approximate area publicly.",
+		"ad": "Ad · Need a vet? Nearest practice: <link>{clinic_name}</link>, {clinic_area}"
+	},
+	"report_reminder": {
+		"subject": "Still looking for your pet?",
+		"preheader": "Keep searching or close it, whichever suits you.",
+		"button": "Keep searching",
+		"link_close": "Close search",
+		"p1": "{has_name, select, yes {{pet_name}} other {{species, select, dog {Your dog} cat {Your cat} other {Your pet}}}}: your search is {day, plural, one {# day} other {# days}} old.",
+		"p2": "If the search is still going, keep it open and we will take care of the rest. If your pet is no longer missing, close it.",
+		"p3": "If your pet is home again, open the report and mark it as home again."
+	},
+	"report_expiring": {
+		"subject": "{report_type, select, lost {Your search closes in {days_left, plural, one {# day} other {# days}}} other {Your report expires in {days_left, plural, one {# day} other {# days}}}}",
+		"preheader": "{report_type, select, lost {Keep it going with one tap, or let it close.} other {If it is still relevant, keep it for 30 more days.}}",
+		"button": "{report_type, select, lost {Keep searching} other {Keep for 30 more days}}",
+		"p1": "{report_type, select, lost {{has_name, select, yes {{pet_name}} other {{species, select, dog {Your dog} cat {Your cat} other {Your pet}}}}: your search has had no updates for a long time, so it will close automatically in {days_left, plural, one {# day} other {# days}}.} other {Your report of a {report_type, select, sighted {sighted} other {found}} animal expires in {days_left, plural, one {# day} other {# days}} because it has had no updates.}}",
+		"p2": "{report_type, select, lost {If you are still looking, keep it going with one tap. If not, there is nothing you need to do.} other {If the animal is still there or someone is still looking, keep the report for 30 more days. If not, there is nothing you need to do.}}"
+	},
+	"report_closed": {
+		"subject": "{report_type, select, lost {Your search is closed} other {Your report is closed}}",
+		"preheader": "{report_type, select, lost {If you are still looking, you can reopen it.} other {You can reopen it if you need to.}}",
+		"button": "Reopen",
+		"p1": "{report_type, select, lost {{has_name, select, yes {{pet_name}} other {{species, select, dog {Your dog} cat {Your cat} other {Your pet}}}}: after {idle_days, plural, one {# day} other {# days}} without updates we closed the search and took it off the map.} other {After {idle_days, plural, one {# day} other {# days}} without updates we closed your report of a {report_type, select, sighted {sighted} other {found}} animal and took it off the map.}}",
+		"p2": "{report_type, select, lost {If you are still looking, you can reopen it within {reopen_days, plural, one {# day} other {# days}} and everything stays as it was. If you have found your pet, we are glad for you.} other {If it is still relevant, you can reopen it within {reopen_days, plural, one {# day} other {# days}}. Thank you for helping.}}"
+	},
+	"report_hidden": {
+		"subject": "Your report is under review",
+		"preheader": "It is not publicly visible for now. Here is what you can do.",
+		"button": "Open report",
+		"p1": "Your report of a {report_type, select, lost {lost} found {found} other {sighted}} animal is being reviewed by our team and is not publicly visible for now.",
+		"p2": "We check some reports now and then to keep the map reliable. A review does not usually take long. There is nothing you need to do.",
+		"p3": "If you have questions or want to add something to the report, reply to this email or write to {support_email}."
+	},
+	"manage_link": {
+		"subject": "Your private link to your report",
+		"preheader": "Keep it safe. Without it you cannot manage your report.",
+		"button": "Open my report",
+		"p1": "Thank you for reporting a {report_type, select, sighted {sighted} other {found}} animal. Your report is live.",
+		"p2": "The button below lets you edit it, read messages or close it at any time, with no account and no sign-in.",
+		"p3": "The link is private. Anyone who has it can manage the report, so do not share it. If you lose it we cannot recover it, so keep this email.",
+		"p4": "If you want to keep the report on another device too, create an account."
+	},
+	"payment_receipt": {
+		"subject": "{is_test, select, yes {Test · } other {}}Payment receipt: {amount}",
+		"preheader": "Thank you. Contributions cover servers, maps and sending alerts.",
+		"button": "Open my payments",
+		"p1": "{purpose, select, tip {We received your thank-you contribution} other {We received your contribution for publishing your search}} of {amount}. Thank you.",
+		"p2": "Contributions cover servers, maps and sending alerts. Najdimo stays free for everyone.",
+		"date": "Date: {paid_at}",
+		"amount": "Amount: {amount}",
+		"reference": "Reference: {receipt_ref}",
+		"test_note": "{is_test, select, yes {Test payment – your card was not charged.} other {}}",
+		"not_donation": "This is a payment receipt, not a donation receipt."
+	}
+}
