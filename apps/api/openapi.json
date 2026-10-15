@@ -1609,7 +1609,8 @@
 					"quiet_from": { "type": ["string", "null"], "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$" },
 					"quiet_to": { "type": ["string", "null"], "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$" },
 					"supporter_badge_visible": { "type": "boolean" }
-				}
+				},
+				"additionalProperties": false
 			},
 			"UpdatePetInput": {
 				"type": "object",

@@ -2,9 +2,10 @@
 // home coarsened once (C6). The guards (requireVerified, requireVerifiedOrAnonymous) are covered with every actor
 // type in test/middleware/auth.middleware.test.ts.
 import request from 'supertest';
-import { afterAll, describe, expect, it } from 'vitest';
+import { afterAll, describe, expect, it, vi } from 'vitest';
 
 import { app } from '../../app.ts';
+import { config } from '../../lib/config.ts';
 import { prisma } from '../../prisma/prisma.ts';
 import { createAuthUser, deleteAuthUsers, signTestToken, type TestTokenClaims } from '../helpers/token.ts';
 
@@ -89,6 +90,28 @@ describe('PATCH /v1/me', () => {
 		expect((await request(app).get('/v1/me').set('Authorization', auth)).body.locale).toBe('en');
 	});
 
+	it('copies a locale change to Auth user_metadata via the Admin API with the service key', async () => {
+		const { id, auth } = await user();
+		const mutable = config as { SUPABASE_SERVICE_ROLE_KEY?: string };
+		mutable.SUPABASE_SERVICE_ROLE_KEY = 'service-key';
+		const spy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response('{}', { status: 200 }));
+		try {
+			const res = await request(app).patch('/v1/me').set('Authorization', auth).send({ locale: 'en' });
+			expect(res.status).toBe(200);
+			expect(spy).toHaveBeenCalledTimes(1);
+			const [url, init] = spy.mock.calls[0]!;
+			expect(url).toBe(`${config.SUPABASE_URL}/auth/v1/admin/users/${id}`);
+			expect(init).toMatchObject({ method: 'PUT', body: JSON.stringify({ user_metadata: { locale: 'en' } }) });
+			expect((init!.headers as Record<string, string>).Authorization).toBe('Bearer service-key');
+			spy.mockClear();
+			await request(app).patch('/v1/me').set('Authorization', auth).send({ display_name: 'x' });
+			expect(spy).not.toHaveBeenCalled();
+		} finally {
+			spy.mockRestore();
+			delete mutable.SUPABASE_SERVICE_ROLE_KEY;
+		}
+	});
+
 	it('rejects invalid values with VALIDATION', async () => {
 		const { auth } = await user();
 		for (const body of [
@@ -109,12 +132,18 @@ describe('PATCH /v1/me', () => {
 
 	it('never changes the role, email or is_anonymous', async () => {
 		const { id, auth } = await user();
-		const res = await request(app)
-			.patch('/v1/me')
-			.set('Authorization', auth)
-			.send({ role: 'ADMIN', is_anonymous: true, email: 'evil@example.com', display_name: 'Mallory' });
+		const res = await request(app).patch('/v1/me').set('Authorization', auth).send({ display_name: 'Mallory' });
 		expect(res.status).toBe(200);
-		expect(res.body).toMatchObject({ role: 'USER', is_anonymous: false, display_name: 'Mallory' });
+		for (const body of [
+			{ role: 'ADMIN' },
+			{ is_anonymous: true },
+			{ email: 'evil@example.com' },
+			{ email_verified: true },
+		]) {
+			const bad = await request(app).patch('/v1/me').set('Authorization', auth).send(body);
+			expect(bad.status, JSON.stringify(body)).toBe(400);
+			expect(bad.body.error.code).toBe('VALIDATION');
+		}
 		expect(await prisma.profiles.findUnique({ where: { id }, select: { role: true, is_anonymous: true } })).toEqual(
 			{ role: 'USER', is_anonymous: false }
 		);

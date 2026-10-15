@@ -2,9 +2,11 @@
 import { LOCALES, type Locale, type UpdateMeInput } from '@zivali/types';
 import { coarsenPoint } from '@zivali/validation/geo';
 
+import { config } from '../../lib/config.ts';
 import type { Ctx } from '../../lib/ctx.ts';
 import { AppError } from '../../lib/errors.ts';
-import { prisma } from '../../prisma/prisma.ts';
+import { logger } from '../../lib/logger.ts';
+import { prisma, type Prisma } from '../../prisma/prisma.ts';
 import UsersDao, { type AuthProfile, type MeRow } from './users.dao.ts';
 
 export type { AuthProfile, MeRow };
@@ -46,7 +48,7 @@ export async function getMe(_input: void, ctx: Ctx): Promise<MeRow> {
 export async function updateMe(input: UpdateMeInput, ctx: Ctx): Promise<MeRow> {
 	const id = actorId(ctx);
 	const { home, ...fields } = input;
-	return prisma.$transaction(async (tx) => {
+	const run = async (tx: Prisma.TransactionClient) => {
 		const current = await UsersDao.getMe(id, tx);
 		if (!current) throw new AppError('NOT_FOUND', 'Profile not found');
 		if (home !== undefined) {
@@ -55,7 +57,26 @@ export async function updateMe(input: UpdateMeInput, ctx: Ctx): Promise<MeRow> {
 		}
 		if (Object.keys(fields).length) await UsersDao.updateProfile(id, fields, tx);
 		return (await UsersDao.getMe(id, tx))!;
-	});
+	};
+	const row = await (ctx.tx ? run(ctx.tx) : prisma.$transaction(run));
+	if (fields.locale) await syncAuthLocale(id, fields.locale);
+	return row;
+}
+
+/** Auth emails read user_metadata.locale: keep it in step with the profile (best effort, the profile is the truth). */
+async function syncAuthLocale(id: string, locale: Locale): Promise<void> {
+	const key = config.SUPABASE_SERVICE_ROLE_KEY;
+	if (!key) return;
+	try {
+		const res = await fetch(`${config.SUPABASE_URL}/auth/v1/admin/users/${id}`, {
+			method: 'PUT',
+			headers: { apikey: key, Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
+			body: JSON.stringify({ user_metadata: { locale } }),
+		});
+		if (!res.ok) logger.warn({ status: res.status }, 'auth locale sync failed');
+	} catch {
+		logger.warn('auth locale sync failed');
+	}
 }
 
 export default { ensureProfile, getMe, updateMe };

@@ -35,7 +35,7 @@ Staging and production mirror these settings in the Supabase dashboard (Authenti
 
 `templates/*.html` with the copy of `docs/content/notifications-and-emails.md` §3: `confirmation`, `recovery`, `magic_link`, `email_change`, `reauthentication` and the `identity_linked` security notice. Language comes from `user_metadata.locale` (set by the clients at sign-up): `"en"` is English, anything else Slovenian (formal). Subjects are Go templates as well. Locally every email lands in the mail catcher. The magic-link copy is not in the content doc yet (derived from §3.1/§3.2, pending content review). The support and company addresses are still the client markers.
 
-Changing the locale in `PATCH /v1/me` updates `app.profiles` only; for Auth emails to follow, the client must also call `supabase.auth.updateUser({ data: { locale } })`.
+Changing the locale in `PATCH /v1/me` also updates `user_metadata.locale` in Auth (API, Admin API with the server-only `SUPABASE_SERVICE_ROLE_KEY`), so Auth emails follow; clients do nothing extra.
 
 ### Sign-in providers
 
@@ -48,7 +48,7 @@ SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET=…
 # Apple: the same with APPLE; CLIENT_ID is comma-separated (web Services ID, iOS bundle id)
 ```
 
-`_ENABLED` overrides `enabled = false` in `config.toml`; the CLI refuses to start a provider that is enabled without a client id. Redirect URLs allowed after sign-in: `http://127.0.0.1:3000/**`, `http://localhost:3000/**` (APP_URL locally), `zivali://**` (the app) and `exp://**` (Expo dev); cloud uses the deployed `APP_URL/**` instead of the local ones. Provider callback: `<SUPABASE_URL>/auth/v1/callback`.
+`_ENABLED` overrides `enabled = false` in `config.toml`; the CLI refuses to start a provider that is enabled without a client id. Redirect URLs allowed after sign-in: `http://127.0.0.1:3000/**`, `http://localhost:3000/**` (APP_URL locally), `zivali://**` (the app) and `exp://**` (Expo dev). `exp://**` is local and staging only: production allows just `https://<APP_URL>/**` and `zivali://**`. Provider callback: `<SUPABASE_URL>/auth/v1/callback`.
 
 ### Rate limits
 
