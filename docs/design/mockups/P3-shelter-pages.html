@@ -68,7 +68,7 @@
 .hours dd { white-space: nowrap; }
 
 /* Static shelter map: 4:3, radius 24, decorative (the address is its text). P5 pin, buildings icon, tail tip on the address. */
-.sh-map { position: relative; overflow: hidden; aspect-ratio: 4 / 3; border-radius: var(--radius-card); background: hsl(var(--map-land)); }
+.sh-map { position: relative; overflow: hidden; box-shadow: inset 0 0 0 1px hsl(var(--map-road-casing)); aspect-ratio: 4 / 3; border-radius: var(--radius-card); background: hsl(var(--map-land)); }
 .sh-pin { position: absolute; left: 50%; top: 50%; width: 54px; height: 66px; margin: -62px 0 0 -27px; pointer-events: none; z-index: 2; }
 .sh-pin svg { display: block; overflow: visible; }
 .sh-pin path { fill: hsl(var(--primary)); stroke: hsl(var(--marker-ring)); stroke-width: 6px; paint-order: stroke; stroke-linejoin: round; }
@@ -336,15 +336,32 @@
           <div class="input-wrap has-end"><i class="ph-bold ph-map-pin-area" aria-hidden="true"></i><input id="mu-w5" class="input" type="text" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="lb-w5" autocomplete="off" placeholder="Na primer: Škofja Loka" value="Osilnica"><span class="end"><button type="button" class="iconbtn" aria-label="Počisti iskanje"><i class="ph-bold ph-x" aria-hidden="true"></i></button></span></div>
           <ul id="lb-w5" class="listbox pop combo-pop" role="listbox" aria-label="Vaša občina" hidden></ul>
         </div>
-        <div class="mt-8" aria-live="polite">
-          <div class="note">
-            <i class="ph-fill ph-info" style="color:hsl(var(--primary))" aria-hidden="true"></i>
-            <div>
-              <p>Za občino Osilnica še nimamo potrjenega zavetišča. Pokličite občino, povedali vam bodo, s katerim zavetiščem sodeluje.</p>
-              <a href="#all-w5" class="btn btn-text -ml-3 mt-1">Vsa zavetišča<i class="ph-bold ph-arrow-down" aria-hidden="true"></i></a>
+        <div class="mt-8" aria-live="polite" data-sample>
+            <p class="text-sm font-bold text-muted-foreground mb-2">Različica A · verjetno pristojno zavetišče znano</p>
+            <div class="card p-6">
+              <span class="badge b-muted"><i class="ph-bold ph-seal-question" aria-hidden="true"></i>Ni potrjeno</span>
+              <h2 class="font-display font-bold text-3xl tracking-[-0.015em] mt-3">Morda pristojno zavetišče</h2>
+              <p class="text-lg leading-7 mt-1"><a href="#" class="title-link">Zavetišče Kolpa</a></p>
+              <p class="text-sm text-muted-foreground mt-3">Za občino Osilnica pristojnosti še nismo potrdili. Pred obiskom pokličite občino in preverite, ali res sprejemajo živali iz vaše občine.</p>
+              <div class="flex flex-wrap items-center gap-x-4 gap-y-2 mt-5">
+                <a href="tel:+38673551290" class="btn btn-secondary" aria-label="Pokliči Zavetišče Kolpa (ni potrjeno)"><i class="ph-bold ph-phone" aria-hidden="true"></i>Pokliči (ni potrjeno)</a>
+                <a href="#" class="btn btn-text">Stran zavetišča<i class="ph-bold ph-arrow-right" aria-hidden="true"></i></a>
+              </div>
+            </div>
+            <p class="text-sm font-bold text-muted-foreground mt-8 mb-2">Različica B · zavetišča ni, dve najbližji</p>
+            <div class="note">
+              <i class="ph-fill ph-info" style="color:hsl(var(--primary))" aria-hidden="true"></i>
+              <div>
+                <p>Za občino Osilnica še nimamo potrjenega zavetišča. Pokličite občino, povedali vam bodo, s katerim zavetiščem sodeluje.</p>
+                <p class="font-bold mt-3">Najbližja zavetišča</p>
+                <ul class="mt-1">
+                  <li class="flex flex-wrap items-baseline justify-between gap-x-4"><a href="#" class="title-link">Zavetišče Kolpa</a><span class="text-sm text-muted-foreground">17 km</span></li>
+                  <li class="flex flex-wrap items-baseline justify-between gap-x-4"><a href="#" class="title-link">Zavetišče Gorski kotar</a><span class="text-sm text-muted-foreground">32 km</span></li>
+                </ul>
+                <a href="#all-w5" class="btn btn-text -ml-3 mt-1">Vsa zavetišča<i class="ph-bold ph-arrow-down" aria-hidden="true"></i></a>
+              </div>
             </div>
           </div>
-        </div>
       </div>
       <section class="mt-24" id="all-w5">
         <h2 class="font-display font-bold text-3xl tracking-[-0.015em]">Vsa zavetišča (17)</h2>
@@ -587,11 +604,28 @@
             <div class="input-wrap has-end"><i class="ph-bold ph-map-pin-area" aria-hidden="true"></i><input id="mu-m5" class="input" type="text" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="lb-m5" autocomplete="off" placeholder="Na primer: Škofja Loka" value="Osilnica"><span class="end"><button type="button" class="iconbtn" aria-label="Počisti iskanje"><i class="ph-bold ph-x" aria-hidden="true"></i></button></span></div>
             <ul id="lb-m5" class="listbox pop combo-pop" role="listbox" aria-label="Vaša občina" hidden></ul>
           </div>
-          <div class="mt-6" aria-live="polite">
+          <div class="mt-6" aria-live="polite" data-sample>
+            <p class="text-sm font-bold text-muted-foreground mb-2">Različica A · verjetno pristojno zavetišče znano</p>
+            <div class="card p-6">
+              <span class="badge b-muted"><i class="ph-bold ph-seal-question" aria-hidden="true"></i>Ni potrjeno</span>
+              <h2 class="font-display font-bold text-2xl tracking-[-0.015em] mt-3">Morda pristojno zavetišče</h2>
+              <p class="text-lg leading-7 mt-1"><a href="#" class="title-link">Zavetišče Kolpa</a></p>
+              <p class="text-sm text-muted-foreground mt-3">Za občino Osilnica pristojnosti še nismo potrdili. Pred obiskom pokličite občino in preverite, ali res sprejemajo živali iz vaše občine.</p>
+              <div class="grid gap-1 mt-5">
+                <a href="tel:+38673551290" class="btn btn-secondary btn-block" aria-label="Pokliči Zavetišče Kolpa (ni potrjeno)"><i class="ph-bold ph-phone" aria-hidden="true"></i>Pokliči (ni potrjeno)</a>
+                <a href="#" class="btn btn-text btn-block">Stran zavetišča<i class="ph-bold ph-arrow-right" aria-hidden="true"></i></a>
+              </div>
+            </div>
+            <p class="text-sm font-bold text-muted-foreground mt-8 mb-2">Različica B · zavetišča ni, dve najbližji</p>
             <div class="note">
               <i class="ph-fill ph-info" style="color:hsl(var(--primary))" aria-hidden="true"></i>
               <div>
                 <p>Za občino Osilnica še nimamo potrjenega zavetišča. Pokličite občino, povedali vam bodo, s katerim zavetiščem sodeluje.</p>
+                <p class="font-bold mt-3">Najbližja zavetišča</p>
+                <ul class="mt-1">
+                  <li class="flex flex-wrap items-baseline justify-between gap-x-4"><a href="#" class="title-link">Zavetišče Kolpa</a><span class="text-sm text-muted-foreground">17 km</span></li>
+                  <li class="flex flex-wrap items-baseline justify-between gap-x-4"><a href="#" class="title-link">Zavetišče Gorski kotar</a><span class="text-sm text-muted-foreground">32 km</span></li>
+                </ul>
                 <a href="#all-m5" class="btn btn-text -ml-3 mt-1">Vsa zavetišča<i class="ph-bold ph-arrow-down" aria-hidden="true"></i></a>
               </div>
             </div>
