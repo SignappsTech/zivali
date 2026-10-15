@@ -484,15 +484,14 @@ function SidebarNav({
 										{collapsed ? (
 											<Tooltip.Root>
 												<Tooltip.Trigger asChild>{link}</Tooltip.Trigger>
-												<Tooltip.Portal>
-													<Tooltip.Content
-														side="right"
-														sideOffset={12}
-														className="z-50 rounded-sm bg-popover px-3 py-2 text-sm font-bold text-popover-foreground shadow-pop"
-													>
-														{label}
-													</Tooltip.Content>
-												</Tooltip.Portal>
+												{/* No portal: it stays in the nav landmark; fixed positioning clears the rail's scroll. */}
+												<Tooltip.Content
+													side="right"
+													sideOffset={12}
+													className="z-50 rounded-sm bg-popover px-3 py-2 text-sm font-bold text-popover-foreground shadow-pop"
+												>
+													{label}
+												</Tooltip.Content>
 											</Tooltip.Root>
 										) : (
 											link
