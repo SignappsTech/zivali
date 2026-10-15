@@ -1,11 +1,11 @@
 ---
 id: TASK-8.2
 title: 'Web UI kit: shadcn primitives styled to the design system, /dev/kit gallery'
-status: In Progress
+status: In Review
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:12'
-updated_date: '2026-10-15 01:39'
+updated_date: '2026-10-15 03:10'
 labels:
   - fe
   - 'est:M'
@@ -40,8 +40,14 @@ Branch: agent/task-8.2-kit-web
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 components/ui provides Button, Input, Textarea, Select, Checkbox, RadioGroup and ChoiceRow, Switch, FormField (label, hint, error), Card, Badge, StatusLabel, Dialog, Sheet, AlertDialog, Toast (sonner), Tabs (segmented), Skeleton, EmptyState, Avatar and Progress, styled to docs/design/system.md §10 with semantic tokens only and Phosphor icons.
-- [ ] #2 /dev/kit shows every component in default, focus, disabled, error and loading states, in SL and EN and in light and dark, matching the P23 mockup.
-- [ ] #3 Playwright with axe reports 0 violations on /dev/kit; interactive targets are at least 44 px and focus rings follow the tokens.
-- [ ] #4 Component tests cover FormField error wiring (aria-describedby, announced on submit) and the Button loading state.
+- [x] #1 components/ui provides Button, Input, Textarea, Select, Checkbox, RadioGroup and ChoiceRow, Switch, FormField (label, hint, error), Card, Badge, StatusLabel, Dialog, Sheet, AlertDialog, Toast (sonner), Tabs (segmented), Skeleton, EmptyState, Avatar and Progress, styled to docs/design/system.md §10 with semantic tokens only and Phosphor icons.
+- [x] #2 /dev/kit shows every component in default, focus, disabled, error and loading states, in SL and EN and in light and dark, matching the P23 mockup.
+- [x] #3 Playwright with axe reports 0 violations on /dev/kit; interactive targets are at least 44 px and focus rings follow the tokens.
+- [x] #4 Component tests cover FormField error wiring (aria-describedby, announced on submit) and the Button loading state.
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+Done on agent/task-8.2-kit-web: components/ui (shadcn + FormField, StatusLabel, EmptyState, ChoiceRow) styled to system §10 with tokens and Phosphor; gallery at app/[locale]/dev/kit (SL /dev/kit, EN /en/dev/kit; 404 when APP_ENV=production); e2e/kit.spec.ts (axe light/dark x SL/EN incl. open overlays, 44 px targets, ring 3/2 px); FormField and Button unit tests. pnpm verify green. CHANGE CH-78..80.
+<!-- SECTION:NOTES:END -->
