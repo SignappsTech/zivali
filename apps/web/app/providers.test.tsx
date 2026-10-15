@@ -34,7 +34,7 @@ function Ping() {
 afterEach(cleanup);
 
 describe('Providers', () => {
-	it.each(['sl', 'en'])('serves RTK Query hooks with the %s locale', async (locale) => {
+	it.each(['sl', 'en'] as const)('serves RTK Query hooks with the %s locale', async (locale) => {
 		render(
 			<NextIntlClientProvider locale={locale} messages={{}}>
 				<Providers>

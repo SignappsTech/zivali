@@ -150,6 +150,9 @@ importers:
       '@zivali/api':
         specifier: workspace:*
         version: link:../../packages/api
+      '@zivali/i18n':
+        specifier: workspace:*
+        version: link:../../packages/i18n
       '@zivali/tokens':
         specifier: workspace:*
         version: link:../../packages/tokens

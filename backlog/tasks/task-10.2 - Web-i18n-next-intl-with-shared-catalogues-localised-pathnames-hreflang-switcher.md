@@ -3,10 +3,11 @@ id: TASK-10.2
 title: >-
   Web i18n: next-intl with shared catalogues, localised pathnames, hreflang,
   switcher
-status: To Do
+status: In Progress
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:12'
+updated_date: '2026-10-15 03:32'
 labels:
   - fe
   - 'est:S'

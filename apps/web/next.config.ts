@@ -16,8 +16,8 @@ const nextConfig: NextConfig = {
 	// Own container on the Hetzner VPS (ADR-016).
 	output: 'standalone',
 	poweredByHeader: false,
-	// @zivali/api and @zivali/analytics ship TypeScript source.
-	transpilePackages: ['@zivali/api', '@zivali/analytics'],
+	// Ship TypeScript source (@zivali/i18n/format).
+	transpilePackages: ['@zivali/api', '@zivali/analytics', '@zivali/i18n'],
 	headers: async () => [{ source: '/:path*', headers: securityHeaders }],
 };
 
