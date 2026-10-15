@@ -14,6 +14,11 @@ const firebaseFile = (envName: string, fallback: string) => {
 const googleServicesFile = firebaseFile('GOOGLE_SERVICES_JSON', 'google-services.json');
 const googleServiceInfoPlist = firebaseFile('GOOGLE_SERVICE_INFO_PLIST', 'GoogleService-Info.plist');
 
+// Native sign-in (P16): Google on iOS needs its reversed client id as a URL scheme (Android needs no config); Apple is
+// off until the Apple Developer account exists (EXPO_PUBLIC_APPLE_SIGN_IN, as in lib/env.ts).
+const googleIosClientId = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID;
+const appleSignIn = process.env.EXPO_PUBLIC_APPLE_SIGN_IN === 'true';
+
 // Working name until Q-001 is decided (design system §14). Splash marks are docs/design/brand/najdimo-mark*.svg as PNG.
 const config: ExpoConfig = {
 	name: 'Najdimo',
@@ -24,7 +29,12 @@ const config: ExpoConfig = {
 	orientation: 'portrait',
 	userInterfaceStyle: 'automatic',
 	locales: { en: './locales/en.json', sl: './locales/sl.json' },
-	ios: { bundleIdentifier: 'si.signapps.zivali', supportsTablet: false, googleServicesFile: googleServiceInfoPlist },
+	ios: {
+		bundleIdentifier: 'si.signapps.zivali',
+		supportsTablet: false,
+		googleServicesFile: googleServiceInfoPlist,
+		usesAppleSignIn: appleSignIn,
+	},
 	android: { package: 'si.signapps.zivali', allowBackup: false, googleServicesFile },
 	plugins: [
 		'expo-router',
@@ -50,6 +60,14 @@ const config: ExpoConfig = {
 				microphonePermission: false,
 			},
 		],
+		...(googleIosClientId
+			? [
+					[
+						'@react-native-google-signin/google-signin',
+						{ iosUrlScheme: googleIosClientId.split('.').reverse().join('.') },
+					] as [string, object],
+				]
+			: []),
 	],
 	experiments: { typedRoutes: true },
 	// EXPO_PUBLIC_* (API and app URLs, Supabase) come from the eas.json profile env; only the environment name is surfaced here.
