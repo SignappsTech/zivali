@@ -62,5 +62,9 @@
 	"banner_maintenance": "Ob {time} bomo za kratek čas izvajali vzdrževanje. Prijave, oddane prej, so varne.",
 	"banner_dismiss": "Skrij obvestilo",
 	"translation_missing": "Ta stran še ni prevedena, zato je prikazana v slovenščini.",
-	"geo_attribution": "Vir: Geodetska uprava Republike Slovenije, Register prostorskih enot, stanje {date} (licenca CC BY 4.0). Meje so poenostavljene."
+	"geo_attribution": "Vir: Geodetska uprava Republike Slovenije, Register prostorskih enot, stanje {date} (licenca CC BY 4.0). Meje so poenostavljene.",
+	"seo_title": "Najdimo – izgubljene in najdene živali v Sloveniji",
+	"seo_description": "Prijavite izgubljeno ali najdeno žival. Najdimo poveže lastnike in najditelje psov in mačk po vsej Sloveniji, brezplačno in varno.",
+	"placeholder_body": "To stran še pripravljamo. Kmalu bo na voljo.",
+	"portal_title": "Portal za organizacije"
 }

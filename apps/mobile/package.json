@@ -7,7 +7,7 @@
 		"start": "expo start",
 		"android": "expo run:android",
 		"build": "expo export --platform android",
-		"lint": "eslint --max-warnings=0 .",
+		"lint": "eslint --cache --cache-strategy content --cache-location node_modules/.cache/eslint/ --max-warnings=0 .",
 		"typecheck": "tsc",
 		"test": "jest",
 		"postinstall": "pnpm --filter @zivali/tokens --filter @zivali/i18n build"
@@ -84,6 +84,7 @@
 	},
 	"jest": {
 		"preset": "jest-expo",
+		"maxWorkers": "25%",
 		"setupFiles": [
 			"./jest.setup.ts"
 		],
