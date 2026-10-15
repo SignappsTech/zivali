@@ -45,10 +45,25 @@ test('result states; an unconfirmed municipality never exposes a phone', async (
 		status: 'unconfirmed',
 		shelter: null,
 		municipality: { slug: 'osilnica', name: 'Osilnica' },
+		nearest: fx.responsibleUnconfirmed.nearest,
 	});
 	assert.ok(!JSON.stringify(result).includes('phone'));
 	// a misbehaving response with a shelter attached is still stripped
-	assert.equal(toResult({ status: 'unconfirmed', shelter: fx.ljubljanaShelter } as never, false).shelter, null);
+	const leaked = toResult({ status: 'unconfirmed', shelter: fx.ljubljanaShelter } as never, false);
+	assert.equal(leaked.shelter, null);
+	assert.ok(!JSON.stringify(leaked).includes('phone'));
+	// at most 2 nearest
+	const three = {
+		...fx.responsibleUnconfirmed,
+		nearest: [...fx.responsibleUnconfirmed.nearest, { slug: 'x', name: 'X', distance_km: 99 }],
+	};
+	assert.equal((toResult(three as never, false) as { nearest: unknown[] }).nearest.length, 2);
+	// likely: phone only inside likely_shelter, never as the confirmed shelter
+	const likely = toResult(fx.responsibleLikely as never, false);
+	assert.equal(likely.status, 'likely');
+	assert.equal(likely.shelter, null);
+	assert.equal(likely.municipality?.slug, 'kocevje');
+	assert.equal((likely as { likely_shelter: { phone: string } }).likely_shelter.phone, '+38612345678');
 	assert.equal(toResult(fx.responsibleConfirmed as never, false).shelter?.phone, '+38612345678');
 	assert.equal(toResult(undefined, false).status, 'loading');
 	assert.equal(toResult(undefined, true).status, 'error');
