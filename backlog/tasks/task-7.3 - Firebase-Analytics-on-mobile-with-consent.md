@@ -1,11 +1,11 @@
 ---
 id: TASK-7.3
 title: Firebase Analytics on mobile with consent
-status: In Progress
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:12'
-updated_date: '2026-10-15 14:04'
+updated_date: '2026-10-15 15:39'
 labels:
   - fe
   - 'est:S'
