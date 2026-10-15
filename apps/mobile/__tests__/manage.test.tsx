@@ -17,7 +17,7 @@ import { type ApiStore, createApiStore } from '@zivali/api/rtk';
 import type { ReportOwnerView } from '@zivali/types';
 import ManageScreen from '@/app/m';
 import { CaptchaSheet } from '@/components/anonymous/captcha-sheet';
-import { ensureSession } from '@/lib/anonymous';
+import { answerCaptcha, ensureSession } from '@/lib/anonymous';
 import { env } from '@/lib/env';
 import { I18nProvider } from '@/lib/i18n';
 
@@ -36,6 +36,7 @@ jest.mock('expo-secure-store', () => {
 	return {
 		data,
 		getItem: (key: string) => data.get(key) ?? null,
+		getItemAsync: jest.fn(async (key: string) => data.get(key) ?? null),
 		setItem: (key: string, value: string) => void data.set(key, value),
 		setItemAsync: jest.fn(async (key: string, value: string) => void data.set(key, value)),
 	};
@@ -278,6 +279,49 @@ describe('anonymous session (C7)', () => {
 		expect(screen.queryByTestId('captcha-sheet', { includeHiddenElements: true })).toBeNull();
 	});
 
+	test('the WebView refuses other URLs and opens no windows or files', async () => {
+		mockEnv.EXPO_PUBLIC_CAPTCHA = true;
+		await startSignIn();
+		const props = mockWebView.props as unknown as {
+			onShouldStartLoadWithRequest: (request: { url: string }) => boolean;
+		} & Record<string, unknown>;
+		for (const url of [
+			'https://najdimo.test/captcha?lang=sl',
+			'https://challenges.cloudflare.com/cdn-cgi/challenge-platform/x',
+			'about:blank',
+		]) {
+			expect(props.onShouldStartLoadWithRequest({ url })).toBe(true);
+		}
+		for (const url of ['https://evil.test/captcha', 'https://najdimo.test/other', 'file:///etc/passwd']) {
+			expect(props.onShouldStartLoadWithRequest({ url })).toBe(false);
+		}
+		expect(props).toMatchObject({
+			setSupportMultipleWindows: false,
+			allowFileAccess: false,
+			javaScriptCanOpenWindowsAutomatically: false,
+		});
+	});
+
+	test('a sheet nobody answers fails with CAPTCHA_FAILED after 60 s', async () => {
+		jest.useFakeTimers();
+		mockEnv.EXPO_PUBLIC_CAPTCHA = true;
+		const { session } = await startSignIn();
+		await act(async () => void jest.advanceTimersByTime(60_000));
+		expect(await session).toMatchObject({ code: 'CAPTCHA_FAILED' });
+	});
+
+	test('an answer from an older sheet does not resolve the newer request', async () => {
+		mockEnv.EXPO_PUBLIC_CAPTCHA = true;
+		const { session } = await startSignIn();
+		answerCaptcha.token(-1, 'stale');
+		answerCaptcha.fail(-1);
+		await act(async () => {});
+		expect(mockSignIn).not.toHaveBeenCalled();
+		await fromPage({ type: 'captcha', token: 'turnstile-ok' });
+		await session;
+		expect(mockSignIn).toHaveBeenCalledWith('turnstile-ok');
+	});
+
 	test('captcha on, but off on the web (token null): signs in without a token', async () => {
 		mockEnv.EXPO_PUBLIC_CAPTCHA = true;
 		const { session } = await startSignIn();
@@ -322,6 +366,7 @@ describe('manage link screen (P7)', () => {
 		expect(claim.headers.Authorization).toBe('Bearer anon-jwt');
 		expect(mockApi.calls.every((call) => call.headers['x-device-id'] === 'install-id')).toBe(true);
 		expect(SecureStore.setItemAsync).toHaveBeenCalledWith(`manage_token.${ownerReport.id}`, TOKEN);
+		expect(JSON.parse(secure.get('manage_tokens')!)).toEqual([ownerReport.id]);
 
 		expect(screen.getByText('Najdena')).toBeOnTheScreen();
 		expect(screen.getByText('Pes')).toBeOnTheScreen();

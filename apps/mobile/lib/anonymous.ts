@@ -1,5 +1,4 @@
 import type { Session } from '@supabase/supabase-js';
-import * as SecureStore from 'expo-secure-store';
 import { useSyncExternalStore } from 'react';
 
 import { signInAnonymously } from '@zivali/api/auth';
@@ -7,7 +6,7 @@ import { ApiError } from '@zivali/api/client';
 import { reportsApi } from '@zivali/api/reports';
 import type { ManageClaimResponse } from '@zivali/types';
 import { env } from '@/lib/env';
-import { manageTokenKey } from '@/lib/offline/outbox';
+import { saveManageToken } from '@/lib/offline/outbox';
 import { apiClient, store } from '@/lib/store';
 import { supabase } from '@/lib/supabase';
 
@@ -46,8 +45,13 @@ export const useCaptchaRequest = () =>
 
 /** What the /captcha page answered. */
 export const answerCaptcha = {
-	token: (token: CaptchaToken) => captcha?.resolve(token),
-	fail: () => captcha?.reject(new ApiError('CAPTCHA_FAILED', 'CAPTCHA_FAILED')),
+	/** `id` is the request the sheet was mounted for: a late call from an older sheet is ignored. */
+	token: (id: number, token: CaptchaToken) => {
+		if (captcha?.id === id) captcha.resolve(token);
+	},
+	fail: (id: number) => {
+		if (captcha?.id === id) captcha.reject(new ApiError('CAPTCHA_FAILED', 'CAPTCHA_FAILED'));
+	},
 };
 
 let signingIn: Promise<Session | null> | null = null;
@@ -68,10 +72,6 @@ export function ensureSession(): Promise<Session | null> {
 	});
 	return signingIn;
 }
-
-/** Manage tokens live only in the secure store (C7, C17), under the key the outbox and the wipe use. */
-export const saveManageToken = (reportId: string, token: string) =>
-	SecureStore.setItemAsync(manageTokenKey(reportId), token);
 
 /** A manage link opened on this device (C7 step 5): session, claim (this uid becomes a manager), token stored. */
 export async function claimManageLink(token: string): Promise<ManageClaimResponse> {

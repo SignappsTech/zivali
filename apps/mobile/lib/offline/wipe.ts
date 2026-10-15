@@ -3,7 +3,7 @@ import * as SecureStore from 'expo-secure-store';
 import { deleteDb, getDb } from '@/lib/db';
 import { draftsDir, outboxDir, pickerCacheDir, thumbsDir } from '@/lib/db/files';
 import { stopGeofencing } from '@/lib/offline/geofence';
-import { manageTokenKey, pendingCount } from '@/lib/offline/outbox';
+import { MANAGE_TOKENS_INDEX, listManageTokenIds, manageTokenKey, pendingCount } from '@/lib/offline/outbox';
 import { syncIdle } from '@/lib/offline/sync';
 import { clearSessionStorage, supabase } from '@/lib/supabase';
 
@@ -46,6 +46,10 @@ export async function wipeLocalData({
 		} else {
 			await db.withTransactionAsync(() => db.execAsync(sql));
 		}
+	}
+	if (removeManageLinks || deleted) {
+		// Claimed links have no outbox row: the index names them.
+		tokenKeys.push(...(await listManageTokenIds()).map(manageTokenKey), MANAGE_TOKENS_INDEX);
 	}
 	for (const dir of dirs) if (dir.exists) dir.delete();
 	// Best effort: one failing keychain delete must not leave the rest behind.

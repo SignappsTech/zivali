@@ -9,7 +9,7 @@ import * as SecureStore from 'expo-secure-store';
 import { DB_NAME, getDb, migrate, migrations } from '@/lib/db';
 import { bytesUsed, draftsDir, outboxDir, pickerCacheDir, thumbsDir } from '@/lib/db/files';
 import { stopGeofencing } from '@/lib/offline/geofence';
-import { manageTokenKey } from '@/lib/offline/outbox';
+import { manageTokenKey, saveManageToken } from '@/lib/offline/outbox';
 import { signOutAndWipe, wipeLocalData } from '@/lib/offline/wipe';
 import { supabase } from '@/lib/supabase';
 
@@ -23,6 +23,8 @@ jest.mock('expo-file-system', () =>
 const mockKeychain = new Map<string, string>();
 const mockSession = jest.fn(async () => {});
 jest.mock('expo-secure-store', () => ({
+	getItemAsync: jest.fn(async (name: string) => mockKeychain.get(name) ?? null),
+	setItemAsync: jest.fn(async (name: string, value: string) => void mockKeychain.set(name, value)),
 	deleteItemAsync: jest.fn(async (name: string) => void mockKeychain.delete(name)),
 }));
 jest.mock('@/lib/supabase', () => ({
@@ -174,6 +176,25 @@ describe('file budget', () => {
 
 describe('wipeLocalData', () => {
 	beforeEach(seed);
+
+	// A claimed link (C7 step 5) has a token but no outbox row; the index names it.
+	const claim = () => saveManageToken('rep-claimed', 'claimed-token');
+
+	test('sign_out keeps claimed manage tokens and their index (C17)', async () => {
+		await claim();
+		await wipeLocalData({ reason: 'sign_out' });
+		expect(mockKeychain.has(manageTokenKey('rep-claimed'))).toBe(true);
+		expect(mockKeychain.has('manage_tokens')).toBe(true);
+	});
+
+	test('removeManageLinks also deletes claimed tokens and the index', async () => {
+		await claim();
+		await claim(); // saving twice lists the id once
+		expect(JSON.parse(mockKeychain.get('manage_tokens')!)).toEqual(['rep-claimed']);
+		await wipeLocalData({ reason: 'sign_out', removeManageLinks: true });
+		expect(mockKeychain.has(manageTokenKey('rep-claimed'))).toBe(false);
+		expect(mockKeychain.has('manage_tokens')).toBe(false);
+	});
 
 	test.each(['sign_out', 'user_request'] as const)(
 		'%s clears cache, areas, drafts, geofences and files but keeps the outbox and tokens',
