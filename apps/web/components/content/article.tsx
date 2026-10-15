@@ -249,8 +249,9 @@ export function ArticlePage({
 										asChild
 										size="lg"
 										variant={primary ? 'default' : 'text'}
+										// A lone text button sits flush with the text; otherwise full width below lg (system 10.2).
 										className={
-											content.actions!.length > 1
+											primary || content.actions!.length > 1
 												? 'w-full lg:w-auto'
 												: '-ml-3 justify-self-start'
 										}
