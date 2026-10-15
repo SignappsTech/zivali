@@ -7,7 +7,7 @@ status: In Progress
 assignee:
   - '@backend-dev'
 created_date: '2026-10-14 23:36'
-updated_date: '2026-10-15 22:40'
+updated_date: '2026-10-15 23:23'
 labels:
   - be
   - 'est:M'
@@ -38,8 +38,8 @@ Branch: agent/task-92.1-fiscal-be
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 A fiscal adapter (mock with deterministic ZOI and EOR, and one FURS-certified provider API chosen with the client; credentials are needs-input) issues fiscally verified invoices.
-- [ ] #2 payment.effects creates an invoice for every succeeded payment (number per business premises and device, VAT 22 % breakdown), verifies it through the adapter with retries and backoff, and the receipt email and the PDF (GET /v1/payments/:id/invoice.pdf, rendered in the worker with pdfkit) show ZOI and EOR.
-- [ ] #3 app_config payments.live_allowed stays false and live keys stay refused until fiscal invoicing is enabled or the accountant's decision says it is not required; a test proves the gate.
-- [ ] #4 The runbook notes the premises and device registration steps with FURS and the provider.
+- [x] #1 A fiscal adapter (mock with deterministic ZOI and EOR, and one FURS-certified provider API chosen with the client; credentials are needs-input) issues fiscally verified invoices.
+- [x] #2 payment.effects creates an invoice for every succeeded payment (number per business premises and device, VAT 22 % breakdown), verifies it through the adapter with retries and backoff, and the receipt email and the PDF (GET /v1/payments/:id/invoice.pdf, rendered in the worker with pdfkit) show ZOI and EOR.
+- [x] #3 app_config payments.live_allowed stays false and live keys stay refused until fiscal invoicing is enabled or the accountant's decision says it is not required; a test proves the gate.
+- [x] #4 The runbook notes the premises and device registration steps with FURS and the provider.
 <!-- AC:END -->

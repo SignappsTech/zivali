@@ -5,7 +5,7 @@ status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:14'
-updated_date: '2026-10-15 23:21'
+updated_date: '2026-10-15 23:34'
 labels:
   - fe
   - 'est:M'
@@ -45,6 +45,7 @@ Branch: agent/task-22.5-notify-mob
 - [x] #1 The Inbox tab shows notifications with unread counts in real time and mark-as-read, per P13.
 - [x] #2 After the notifications primer the device registers its push token on sign-in and unregisters on sign-out; denial falls back to in-app and email.
 - [x] #3 Tapping a push opens the target screen through the deep-link routes; settings control types, channels and quiet hours.
+- [x] #4 From the TASK-22.4 build: @zivali/api unregisterPushToken sends the push token in the request body, never the URL (C10 §1.2), client and API route, with a test.
 <!-- AC:END -->
 
 ## Implementation Notes
