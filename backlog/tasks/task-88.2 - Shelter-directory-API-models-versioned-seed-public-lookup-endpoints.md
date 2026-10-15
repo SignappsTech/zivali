@@ -1,11 +1,11 @@
 ---
 id: TASK-88.2
 title: 'Shelter directory API: models, versioned seed, public lookup endpoints'
-status: In Progress
+status: Done
 assignee:
   - '@backend-dev'
 created_date: '2026-10-14 23:36'
-updated_date: '2026-10-15 10:07'
+updated_date: '2026-10-15 10:23'
 labels:
   - be
   - 'est:S'
