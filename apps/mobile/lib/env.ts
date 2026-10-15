@@ -17,11 +17,8 @@ const optional = <T extends z.ZodType>(schema: T) => z.preprocess((v) => (v === 
 
 const schema = z.object({
 	EXPO_PUBLIC_SUPABASE_URL: z.url(),
-	// A secret key bypasses RLS and anything in the bundle is public, so it must never ship in the app.
-	EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY: z
-		.string()
-		.min(1)
-		.refine((key) => !key.startsWith('sb_secret_')),
+	// Anything in the bundle is public: only a publishable key may ship (secret and legacy service_role keys bypass RLS).
+	EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY: z.string().refine((key) => key.startsWith('sb_publishable_')),
 	EXPO_PUBLIC_APP_URL: z.url(),
 	EXPO_PUBLIC_API_URL: z.url(),
 	EXPO_PUBLIC_APP_ENV: z.enum(['local', 'staging', 'production']),

@@ -23,8 +23,11 @@ test('fails fast with the names of missing or invalid variables', () => {
 	);
 });
 
-test('rejects a Supabase secret key', () => {
-	expect(() => parseEnv({ ...valid, EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY: 'sb_secret_test' })).toThrow(
-		'EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY'
-	);
-});
+test.each(['sb_secret_test', 'eyJhbGciOiJIUzI1NiJ9.service_role.sig', ''])(
+	'rejects a non-publishable Supabase key (%s)',
+	(key) => {
+		expect(() => parseEnv({ ...valid, EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY: key })).toThrow(
+			'EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY'
+		);
+	}
+);
