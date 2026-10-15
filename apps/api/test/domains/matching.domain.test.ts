@@ -35,7 +35,7 @@ const HOUR = 3600_000;
 // Wider than the 30-day window plus the 60-day chip case; consecutive per file, random per run.
 let slot = randomInt(0, 900);
 const month = () => new Date(Date.UTC(1800, 0, 1) + slot++ * 70 * 24 * HOUR);
-const chip = () => String(randomInt(1e14, 1e15 - 1));
+const chip = () => `941${String(randomInt(0, 1e12)).padStart(12, '0')}`;
 
 const lostReport = (at: Date, overrides: Partial<NewReport> = {}) =>
 	ReportsDomain.insertReport(
