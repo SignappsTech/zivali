@@ -27,8 +27,8 @@ const display = Bricolage_Grotesque({
 const sans = Atkinson_Hyperlegible_Next({ subsets: ['latin', 'latin-ext'], variable: '--font-sans', display: 'swap' });
 
 // The namespaces that client components on public pages read; only these go into every page's HTML, the rest of the
-// catalogue (emails, notifications, page copy, admin, ...) stays on the server (TASK-90.5). The (app) and (admin)
-// layouts pass the whole catalogue. A new client namespace on a public page goes here.
+// catalogue (emails, notifications, page copy, admin, ...) stays on the server (TASK-90.5). The (app), (admin) and dev
+// layouts and the header's inbox dot pass their own. A new client namespace on a public page goes here.
 const CLIENT_NAMESPACES = [
 	'auth',
 	'common',
@@ -36,7 +36,6 @@ const CLIENT_NAMESPACES = [
 	'errors',
 	'lifecycle',
 	'nav',
-	'photos',
 	'report_found',
 	'shelters',
 ] as const;

@@ -12,9 +12,11 @@ import { TrayIcon } from '@phosphor-icons/react/dist/ssr/Tray';
 import { UserIcon } from '@phosphor-icons/react/dist/ssr/User';
 import { UserCircleIcon } from '@phosphor-icons/react/dist/ssr/UserCircle';
 import { XIcon } from '@phosphor-icons/react/dist/ssr/X';
-import { useLocale, useTranslations } from 'next-intl';
+import { NextIntlClientProvider, useLocale, useMessages, useTranslations } from 'next-intl';
+import type { ComponentProps } from 'react';
 
 import { UnreadDot } from '@/components/notifications/unread-dot';
+import { StoreProvider } from '@/components/store-provider';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { getPathname, Link } from '@/i18n/navigation';
 import { cn } from '@/lib/utils';
@@ -51,6 +53,18 @@ const separatorClass = 'mx-3 my-1.5 h-px bg-border';
 // Native modal dialogs with the kit sheet look (system 10.7, 10.9): card surface, scrim backdrop.
 const dialogClass =
 	'm-0 overflow-y-auto overscroll-contain border-0 bg-card p-0 text-card-foreground backdrop:bg-scrim';
+
+/** Signed in only: the unread dot with the store and the messages it needs, which public pages do not load (TASK-90.5). */
+function InboxDot(props: ComponentProps<typeof UnreadDot>) {
+	const { notifications } = useMessages();
+	return (
+		<NextIntlClientProvider locale={useLocale()} messages={{ notifications }}>
+			<StoreProvider>
+				<UnreadDot {...props} />
+			</StoreProvider>
+		</NextIntlClientProvider>
+	);
+}
 
 /**
  * P1 web header, a server component: 88 px (64 below md), no border, on `background`. Content variant: logo, four links
@@ -138,7 +152,7 @@ export function SiteHeader({ viewer }: { viewer: Viewer | null }) {
 								<Button asChild variant="ghost" size="icon" className="relative">
 									<Link href="/inbox">
 										<TrayIcon weight="bold" aria-hidden="true" />
-										<UnreadDot label={t('inbox')} live className="absolute top-1.5 right-1.5" />
+										<InboxDot label={t('inbox')} live className="absolute top-1.5 right-1.5" />
 									</Link>
 								</Button>
 								<Button
@@ -246,7 +260,7 @@ export function SiteHeader({ viewer }: { viewer: Viewer | null }) {
 									<div role="group" aria-label={t('account_menu')} className="-mx-3 mt-7">
 										<Link href="/inbox" className={menuRowClass}>
 											<TrayIcon weight="bold" aria-hidden="true" />
-											<UnreadDot label={t('inbox')} visible className="ml-auto" />
+											<InboxDot label={t('inbox')} visible className="ml-auto" />
 										</Link>
 										{accountRows}
 										{signOut}
