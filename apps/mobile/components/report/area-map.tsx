@@ -35,7 +35,8 @@ function mapParts(report: DetailReport, label: string, ownLabel: string) {
 	const center = { lat: area.lat, lng: area.lng };
 	const markers: Marker[] = [{ id: report.id, position: center, kind: report.type, label }];
 	// The owner's stored (coarsened) point, only in their own view (C6 §Storage, P5 `location.exact_own`).
-	if (report.location) markers.push({ id: 'own', position: report.location, kind: 'me', label: ownLabel });
+	if (report.is_mine && report.location)
+		markers.push({ id: 'own', position: report.location, kind: 'me', label: ownLabel });
 	const circles: Circle[] =
 		report.type === 'lost' ? [] : [{ id: 'area', center, radiusM: area.radius_m, kind: 'area' }];
 	return { markers, circles, initialView: { bbox: areaBBox(area) } };
@@ -78,7 +79,9 @@ function MapSheet({
 				onPress={onClose}
 			/>
 			<View
+				role="dialog"
 				aria-modal
+				aria-label={t('where_title')}
 				className="mt-auto h-[92%] rounded-t-sheet bg-card"
 				style={[shadow('lg'), { paddingBottom: Math.max(32, insets.bottom) }]}
 			>
@@ -133,7 +136,7 @@ export function AreaMap({
 	const [before, after] = tl('area_line', { area: NAME, radius }).split(NAME);
 	const line = place ? `${before}${place}${after}` : undefined;
 	const note = t('area_note');
-	const own = report.location ? <OwnPoint /> : null;
+	const own = report.is_mine && report.location ? <OwnPoint /> : null;
 
 	const text = (
 		<View className="flex-row gap-3">

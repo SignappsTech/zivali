@@ -153,7 +153,7 @@ function Facts({ report }: { report: DetailReport }) {
 		colour.length ? [t('fact_colour'), lower(colour.join(', '))] : null,
 		report.size ? [t('fact_size'), lower(ta(`size.${report.size}`))] : null,
 		// The collar text is a manager field; the public view only knows that one was described.
-		report.collar ? [t('fact_collar'), report.collar] : null,
+		report.is_mine && report.collar ? [t('fact_collar'), report.collar] : null,
 		[t('fact_chip'), report.has_chip ? t('chip_on_file') : t('chip_unknown')],
 	].filter((fact): fact is [string, string] => fact !== null);
 	return (

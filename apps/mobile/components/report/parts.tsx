@@ -59,7 +59,10 @@ export function Note({
 }) {
 	return (
 		<View
+			// A state note is one element read with its role and announced on change; its action stays its own target.
+			accessible={!!role && !action}
 			role={role}
+			aria-live={role === 'alert' ? 'assertive' : role && 'polite'}
 			className={cn(
 				'flex-row gap-3 rounded-row bg-muted px-[18px] py-4',
 				action && 'items-center pr-2',
