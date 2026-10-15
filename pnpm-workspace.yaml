@@ -14,3 +14,6 @@ allowBuilds:
   # optionalDependencies, so their build-from-source and binding-check scripts are skipped.
   '@parcel/watcher': false
   '@swc/core': false
+  # tsx, tsup and vitest (apps/api): esbuild's binary comes from the @esbuild/<platform> optional dependency, so its
+  # postinstall check is skipped.
+  esbuild: false

@@ -1,0 +1,53 @@
+{
+	"name": "api",
+	"version": "0.0.0",
+	"private": true,
+	"description": "Express 5 + Prisma 7 API and pg-boss worker (ADR-020)",
+	"type": "module",
+	"scripts": {
+		"postinstall": "node -e \"fs.existsSync('.env.local') || fs.copyFileSync('.env.example', '.env.local')\" && prisma generate",
+		"dev": "tsx watch server.ts",
+		"dev:worker": "tsx watch worker.ts",
+		"build": "tsup",
+		"start": "node dist/server.js",
+		"start:worker": "node dist/worker.js",
+		"lint": "eslint --max-warnings=0 . && tsx scripts/gen-openapi.ts --check",
+		"gen:openapi": "tsx scripts/gen-openapi.ts",
+		"typecheck": "tsc",
+		"test": "vitest run",
+		"test:security": "vitest run test/security"
+	},
+	"engines": {
+		"node": "22.x"
+	},
+	"dependencies": {
+		"@asteasolutions/zod-to-openapi": "^9.1.0",
+		"@prisma/adapter-pg": "7.10.0",
+		"@prisma/client": "7.10.0",
+		"compression": "^1.8.2",
+		"cors": "^2.8.6",
+		"express": "^5.3.0",
+		"express-rate-limit": "^8.7.1",
+		"helmet": "^8.3.0",
+		"pg": "^8.23.1",
+		"pino": "^10.4.0",
+		"pino-http": "^11.0.0",
+		"prisma": "7.10.0",
+		"zod": "^4.6.7"
+	},
+	"devDependencies": {
+		"@types/compression": "^1.8.1",
+		"@types/cors": "^2.8.19",
+		"@types/express": "^5.0.6",
+		"@types/node": "^22.20.5",
+		"@types/pg": "^8.23.1",
+		"@types/supertest": "^7.2.1",
+		"jose": "^6.2.12",
+		"pino-pretty": "^13.2.0",
+		"prettier": "^3.9.10",
+		"supertest": "^7.3.1",
+		"tsup": "^8.5.1",
+		"tsx": "^4.23.15",
+		"vitest": "^5.0.4"
+	}
+}
