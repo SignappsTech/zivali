@@ -1,11 +1,11 @@
 ---
 id: TASK-18.1
 title: 'Design: Report detail (lost, found, sighted) (P9)'
-status: In Progress
+status: Done
 assignee:
   - '@ui-designer'
 created_date: '2026-10-14 21:50'
-updated_date: '2026-10-14 23:29'
+updated_date: '2026-10-15 00:13'
 labels:
   - design
   - 'est:M'
