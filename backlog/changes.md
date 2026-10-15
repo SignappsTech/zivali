@@ -52,7 +52,7 @@ Agents append requested changes to documents they don't own. The lead sends each
 | CH-46 | design-lead | docs/design/system.md§10.4 Pills | Add a 'suggested' pill state: 2 px primary inset line, no fill, no check, not selected (P15 uses local .is-suggested) | TASK-33.1 | done |
 | CH-47 | content-strategist | docs/content/pages/P15-support-moments.md§Keys | Add missing keys drawn as data-sample: sign-in gate title, screen-reader 'predlagano' on the suggested amount, Podpornik monthly checkbox label, monthly Pay label, errors.NETWORK sentence | TASK-33.1 | done |
 | CH-48 | tech-lead | docs/tech/contracts (feature flags) | Confirm flag names flags.supporter_monthly and flags.transparency_page (used in P15 mockup) | TASK-33.1 | done |
-| CH-49 | ui-designer | docs/design/mockups/P6-*.html§M9,C2 | Contribution row copy: 'Pomagajte ohraniti Najdimo brezplačno' and 'Skrij' (replace sample label and 'Ne zdaj') on P6's next touch | TASK-33.1 | open |
+| CH-49 | ui-designer | docs/design/mockups/P6-*.html§M9,C2 | Contribution row copy: 'Pomagajte ohraniti Najdimo brezplačno' and 'Skrij' (replace sample label and 'Ne zdaj') on P6's next touch | TASK-33.1 | done |
 | CH-50 | design-lead | docs/design/pages/P10-report-abuse.md§Responsive | Web dialog max 440 px (system §10.9), not 480 (CH-42 withdrawn) | TASK-25.1 | done |
 | CH-51 | design-lead | docs/design/pages/P15-support-moments.md§Reunited tip | Pay is secondary at equal weight with Skip, not primary (P14 already has the page primary; equal weight is the client rule) | TASK-33.1 | done |
 | CH-52 | design-lead | docs/design/pages/P15-support-moments.md§Contribution | Button label is 'Prispevaj {amount}' (support.contribution_pay), not 'Support' | TASK-33.1 | done |

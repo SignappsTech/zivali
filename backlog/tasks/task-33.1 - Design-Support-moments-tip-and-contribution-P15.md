@@ -1,11 +1,11 @@
 ---
 id: TASK-33.1
 title: 'Design: Support moments: tip and contribution (P15)'
-status: In Progress
+status: Done
 assignee:
   - '@ui-designer'
 created_date: '2026-10-14 21:50'
-updated_date: '2026-10-15 02:14'
+updated_date: '2026-10-15 02:52'
 labels:
   - design
   - 'est:S'

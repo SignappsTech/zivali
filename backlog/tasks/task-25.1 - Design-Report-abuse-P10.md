@@ -1,11 +1,11 @@
 ---
 id: TASK-25.1
 title: 'Design: Report abuse (P10)'
-status: In Progress
+status: Done
 assignee:
   - '@ui-designer'
 created_date: '2026-10-14 21:50'
-updated_date: '2026-10-15 02:14'
+updated_date: '2026-10-15 02:52'
 labels:
   - design
   - 'est:XS'
