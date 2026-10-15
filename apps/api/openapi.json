@@ -135,6 +135,7 @@
 					"reporter_id": { "type": "string", "format": "uuid" },
 					"target_type": { "$ref": "#/components/schemas/AbuseTargetType" },
 					"target_id": { "type": "string", "format": "uuid" },
+					"target_code": { "type": ["string", "null"], "pattern": "^[1-9A-HJ-NP-Za-km-z]{8}$" },
 					"reason": { "$ref": "#/components/schemas/AbuseReason" },
 					"note": { "type": ["string", "null"] },
 					"weight": { "type": "number" },
@@ -146,6 +147,7 @@
 					"reporter_id",
 					"target_type",
 					"target_id",
+					"target_code",
 					"reason",
 					"note",
 					"weight",
@@ -1008,11 +1010,21 @@
 					"kind": { "$ref": "#/components/schemas/ModerationFlagKind" },
 					"target_type": { "$ref": "#/components/schemas/ModerationFlagTargetType" },
 					"target_id": { "type": "string", "format": "uuid" },
+					"target_code": { "type": ["string", "null"], "pattern": "^[1-9A-HJ-NP-Za-km-z]{8}$" },
 					"details": { "type": "object", "additionalProperties": {} },
 					"created_at": { "type": "string", "format": "date-time" },
 					"resolved_at": { "type": ["string", "null"], "format": "date-time" }
 				},
-				"required": ["id", "kind", "target_type", "target_id", "details", "created_at", "resolved_at"]
+				"required": [
+					"id",
+					"kind",
+					"target_type",
+					"target_id",
+					"target_code",
+					"details",
+					"created_at",
+					"resolved_at"
+				]
 			},
 			"ModerationFlagKind": { "type": "string", "enum": ["duplicate_chip", "anon_hold", "auto_hidden"] },
 			"ModerationFlagList": {
