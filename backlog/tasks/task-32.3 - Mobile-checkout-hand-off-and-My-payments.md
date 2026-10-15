@@ -1,11 +1,11 @@
 ---
 id: TASK-32.3
 title: Mobile checkout hand-off and My payments
-status: To Do
+status: In Progress
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:14'
-updated_date: '2026-10-14 22:42'
+updated_date: '2026-10-15 22:18'
 labels:
   - fe
   - 'est:S'
@@ -42,7 +42,7 @@ Branch: agent/task-32.3-payments-mob
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Starting a payment opens web checkout with expo-web-browser openAuthSessionAsync and returns through zivali://payments/return to a result screen.
-- [ ] #2 Settings → Payments lists the user's payments.
+- [x] #1 Starting a payment opens web checkout with expo-web-browser openAuthSessionAsync and returns through zivali://payments/return to a result screen.
+- [x] #2 Settings → Payments lists the user's payments.
 - [ ] #3 No native purchase UI exists; the mock provider works end to end on an Android dev build.
 <!-- AC:END -->

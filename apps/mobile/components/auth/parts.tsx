@@ -12,6 +12,7 @@ import { useTranslations } from 'use-intl';
 import { useAccessibilityFocus } from '@rn-primitives/hooks';
 
 import { ApiError } from '@zivali/api/client';
+import type { QueryError } from '@zivali/api/rtk';
 import en from '@zivali/i18n/dist/en.json';
 import { Button } from '@/components/ui/button';
 import { FormField } from '@/components/ui/form-field';
@@ -34,11 +35,12 @@ export function useLeaveAuth() {
 	}, [navigation, router]);
 }
 
-/** ApiError code → its errors.* sentence (C1); anything else is the generic one. */
+/** ApiError code (or an RTK Query `QueryError` from `unwrap()`) → its errors.* sentence (C1); else the generic one. */
 export function useErrorText() {
 	const t = useTranslations('errors');
 	return (error: unknown) => {
-		const code = error instanceof ApiError ? error.code : 'INTERNAL';
+		const code =
+			error instanceof ApiError ? error.code : ((error as Partial<QueryError> | null)?.data?.code ?? 'INTERNAL');
 		if (code === 'RATE_LIMITED') return t('RATE_LIMITED_generic');
 		return t(code in en.errors ? (code as keyof typeof en.errors) : 'INTERNAL');
 	};
