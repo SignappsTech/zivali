@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:12'
-updated_date: '2026-10-15 01:08'
+updated_date: '2026-10-15 01:23'
 labels:
   - fe
   - 'est:S'
@@ -39,8 +39,8 @@ Branch: agent/task-10.1-i18n-pkg
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 packages/i18n has messages/{sl,en}/<namespace>.json with common, errors (one key per C1 code), nav and footer seeded, and a build that merges them into dist/sl.json and dist/en.json.
-- [ ] #2 `pnpm --filter @zivali/i18n check` fails on missing keys, placeholder mismatches, SL plurals without one/two/few/other, EN plurals without one/other and empty strings; tests use failing fixtures.
-- [ ] #3 Format helpers (date, relative time, EUR, distance band, count) use Intl with Europe/Ljubljana; tests include '1 prijava', '2 prijavi', '3 prijave', '5 prijav' and '5,00 €'.
-- [ ] #4 The README shows server use from Edge Functions (createTranslator from use-intl/core with the merged catalogue).
+- [x] #1 packages/i18n has messages/{sl,en}/<namespace>.json with common, errors (one key per C1 code), nav and footer seeded, and a build that merges them into dist/sl.json and dist/en.json.
+- [x] #2 `pnpm --filter @zivali/i18n check` fails on missing keys, placeholder mismatches, SL plurals without one/two/few/other, EN plurals without one/other and empty strings; tests use failing fixtures.
+- [x] #3 Format helpers (date, relative time, EUR, distance band, count) use Intl with Europe/Ljubljana; tests include '1 prijava', '2 prijavi', '3 prijave', '5 prijav' and '5,00 €'.
+- [x] #4 The README shows server use from Edge Functions (createTranslator from use-intl/core with the merged catalogue).
 <!-- AC:END -->
