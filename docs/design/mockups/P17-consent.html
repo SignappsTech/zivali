@@ -1,0 +1,521 @@
+<!doctype html>
+<!--
+  P17 Consent banner and preferences mockup (TASK-13.1). Built from docs/design/mockups/_template.html.
+  Sources: docs/design/pages/P17-consent.md, docs/design/system.md v0.9, docs/content/pages/P17-consent.md v0.1.
+  Shell parts follow P1 (web header, footer, toast) and P2 (tab bar, sheet, profile rows); states follow P23.
+  Everything in #src is cloned once per colour mode by ../directions/directions.js.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Najdimo mockup: P17 Consent</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:wght@400;500;600;700&family=Bricolage+Grotesque:opsz,wght@12..96,500..800&display=swap" rel="stylesheet">
+<link href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css" rel="stylesheet">
+<link href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/bold/style.css" rel="stylesheet">
+<link href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css" rel="stylesheet">
+<link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet">
+<link href="../tokens.css" rel="stylesheet">
+<link href="../directions/directions.css" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com/3.4.17"></script>
+<script src="../directions/tailwind-config.js"></script>
+<style>
+/* Mockup-local parts. Token-driven only. Shell classes copied from P1 (header, footer, language) and P23 (switch row). */
+.scope h1, .scope h2, .scope h3 { text-wrap: balance; }
+.logo-link { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; border-radius: 12px; color: hsl(var(--foreground)); text-decoration: none; flex: none; }
+.nl { display: inline-flex; align-items: center; min-height: 44px; padding: 0 12px; border-radius: 999px; font-weight: 600; font-size: 16px; line-height: 24px; color: hsl(var(--muted-foreground)); text-decoration: none; white-space: nowrap; }
+.nl:hover, .btn-ghost:hover, .iconbtn:hover { background-color: hsl(var(--foreground) / 0.1); color: hsl(var(--foreground)); }
+.lang { display: inline-flex; align-items: center; font-weight: 600; font-size: 15px; color: hsl(var(--muted-foreground)); }
+.ll { display: inline-flex; align-items: center; justify-content: center; min-width: 44px; min-height: 44px; padding: 0 6px; border-radius: 999px; color: hsl(var(--muted-foreground)); text-decoration: none; }
+.ll[aria-current="true"] { color: hsl(var(--foreground)); text-decoration: underline; text-decoration-color: hsl(var(--primary)); text-decoration-thickness: 2px; text-underline-offset: 6px; }
+.fl { display: inline-flex; align-items: center; min-height: 44px; min-width: 44px; padding: 0; border: 0; background: none; font: inherit; font-size: 15px; line-height: 22px; color: hsl(var(--muted-foreground)); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 4px; cursor: pointer; white-space: nowrap; border-radius: 6px; }
+.fl:hover { color: hsl(var(--foreground)); }
+.mweb { flex: none; height: 44px; display: flex; align-items: center; padding: 0 16px; }
+.mweb span { flex: 1; height: 32px; border-radius: 999px; background: hsl(var(--muted)); display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 13px; color: hsl(var(--muted-foreground)); }
+.anno { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; font-size: 13px; line-height: 18px; font-weight: 700; background: hsl(var(--foreground)); color: hsl(var(--background)); white-space: nowrap; }
+
+/* Browser viewport of a fixed height, so the floating panel sits where it will in the product */
+.vp { position: relative; height: 760px; overflow: hidden; display: flex; flex-direction: column; }
+
+/* Consent surface, web: popover, radius 24, shadow-lg, bottom-left from lg, max 560. Below lg: full width, top radius 28 (see M4). */
+.cpanel { position: absolute; left: 24px; bottom: 24px; width: min(560px, calc(100% - 48px)); max-height: calc(100% - 136px); display: flex; flex-direction: column; background: hsl(var(--popover)); color: hsl(var(--popover-foreground)); border-radius: var(--radius-card); box-shadow: var(--shadow-lg); z-index: 6; }
+.cpanel.is-static { position: relative; left: auto; bottom: auto; width: 100%; max-width: 560px; }
+.cp-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: 28px 24px 0; }
+.cp-actions { flex: none; display: grid; gap: 12px; padding: 20px 24px 24px; }
+.cp-actions.row3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.cp-actions .btn { padding-left: 12px; padding-right: 12px; }
+
+/* Consent surface, native: the bottom sheet docks on top of the tab bar, so "Prijavi" stays reachable. No scrim, no grabber. */
+.csheet { position: absolute; left: 0; right: 0; bottom: 88px; display: flex; flex-direction: column; background: hsl(var(--card)); color: hsl(var(--card-foreground)); border-radius: var(--radius-sheet) var(--radius-sheet) 0 0; box-shadow: var(--shadow-lg); z-index: 5; }
+.csheet.web { bottom: 0; background: hsl(var(--popover)); color: hsl(var(--popover-foreground)); }
+.cs-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: 24px 20px 0; }
+.cs-actions { flex: none; display: grid; gap: 12px; padding: 16px 20px 20px; }
+
+/* Category row: label + switch is one target; description below (15/22, muted, 7:1+) */
+.swrow { display: flex; align-items: center; gap: 12px; min-height: 48px; cursor: pointer; }
+.swrow.locked { cursor: default; }
+.cat-t { flex: 1; min-width: 0; font-family: var(--font-display); font-weight: 600; font-size: 18px; line-height: 28px; letter-spacing: -0.005em; }
+.cdesc { margin-top: 2px; font-size: 15px; line-height: 22px; color: hsl(var(--muted-foreground)); max-width: 62ch; }
+.cdesc a { color: hsl(var(--primary)); text-decoration: underline; text-underline-offset: 3px; }
+.lock { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; line-height: 20px; font-weight: 700; color: hsl(var(--muted-foreground)); white-space: nowrap; }
+.lock i { font-size: 16px; }
+/* Locked switch: the muted track alone disappears on popover (dark) and is 1.3:1 on card (light), so it keeps a 2 px input inset line, as the disabled segmented control does. CHANGE request filed. */
+.switch.is-disabled { box-shadow: inset 0 0 0 2px hsl(var(--input)); cursor: default; }
+.adnote { display: flex; gap: 8px; margin-top: 24px; font-size: 14px; line-height: 20px; color: hsl(var(--muted-foreground)); max-width: 62ch; }
+.adnote i { font-size: 18px; flex: none; margin-top: 1px; }
+
+/* Text link (policy): primary, underlined, 44 px tall target */
+.tlink { display: inline-flex; align-items: center; min-height: 44px; font-weight: 700; color: hsl(var(--primary)); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 4px; border-radius: 6px; }
+.tlink:hover, .tlink.is-hover { text-decoration-thickness: 2px; }
+.tlink:focus-visible, .fl:focus-visible, .ll:focus-visible, .nl:focus-visible, .swrow:focus-within .switch:focus-visible { outline: 3px solid hsl(var(--ring)); outline-offset: 2px; }
+.reask { font-weight: 700; }
+
+/* Static state strip */
+.spec { margin: 0; display: grid; gap: 10px; justify-items: start; align-content: start; }
+.cap { font-size: 13px; font-weight: 700; color: hsl(var(--muted-foreground)); }
+@media (prefers-reduced-motion: reduce) { .switch::after { transition: none; } }
+</style>
+</head>
+<body>
+<a class="sr-only focus:not-sr-only" href="#stage">Skip to content</a>
+
+<!-- Logo symbol, defined once -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <symbol id="nj-mark" viewBox="0 0 48 48">
+    <g fill="currentColor" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round">
+      <path d="M24 45.5 C24 45.5 10.5 33.2 10.5 24.4 A13.5 13.5 0 0 1 37.5 24.4 C37.5 33.2 24 45.5 24 45.5 Z M24 17.9 A6.5 6.5 0 1 0 24 30.9 A6.5 6.5 0 1 0 24 17.9 Z"/>
+      <path d="M12.2 19.6 L11.2 5 L22.6 11.4 Z"/><path d="M35.8 19.6 L25.4 11.4 L36.8 5 Z"/>
+    </g>
+    <circle cx="24" cy="24.4" r="3.6" fill="#F7B32B"/>
+  </symbol>
+</svg>
+
+<header class="chrome">
+  <div class="flex flex-wrap items-center gap-x-5 gap-y-2 px-6 py-2 max-w-[1400px] mx-auto">
+    <span class="flex items-center gap-2 font-display font-bold text-lg"><svg class="logo-mark w-7 h-7" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg>Najdimo</span>
+    <span class="text-muted-foreground text-[15px]">P17 Consent (mockup)</span>
+    <div class="ml-auto flex items-center gap-2" role="group" aria-label="Colour mode">
+      <button class="mode-btn" data-mode="light" aria-pressed="true">Light</button>
+      <button class="mode-btn" data-mode="dark" aria-pressed="false">Dark</button>
+      <button class="mode-btn" data-mode="both" aria-pressed="false">Side by side</button>
+    </div>
+  </div>
+</header>
+
+<main id="stage"></main>
+
+<div id="src" hidden>
+
+<!-- ================= INTRO ================= -->
+<section class="tile-section !max-w-[1400px] !pb-0">
+  <h1 class="tile-title">P17 Consent banner and preferences</h1>
+  <p class="tile-lede">Basic Consent Mode v2: nothing goes to Google before a choice, and everything starts denied. Reject, Accept and Customise look exactly the same. Nothing is switched on in advance. Changing your mind later takes one switch and Save. The banner never covers the header, the page's main action or the "Prijavi" tab. Eight frames: four web frames at 1200 px and four mobile frames (390 px app, 320 px web), then the re-ask banner and every control state.</p>
+  <div class="flex flex-wrap gap-2">
+    <span class="anno">3 × secondary md, equal width</span><span class="anno">No primary inside the banner</span><span class="anno">Nothing pre-selected</span><span class="anno">Non-modal, no scrim</span><span class="anno">Escape or ignore = all denied</span>
+  </div>
+</section>
+
+<!-- ================= 1. WEB ================= -->
+<section class="tile-section !max-w-[1400px]">
+  <h2 class="tile-title">1. Web at 1200 px</h2>
+  <p class="tile-lede">Bottom-left from <code>lg</code>, 24 px from the edges, at most 560 px wide. The panel keeps one size and one place; Customise only swaps what is inside it.</p>
+
+  <!-- W1: first visit -->
+  <p class="tile-h !mt-0">W1 · First visit on the home page: banner bottom-left, focus moved to its heading; the header and the hero's main action stay clear and usable</p>
+  <div class="wrap-x"><div class="browser" lang="sl">
+    <div class="browser-bar"><span class="dots"><i></i><i></i><i></i></span><span class="url"><i class="ph ph-lock-simple"></i>najdimo.si</span></div>
+    <div class="vp">
+      <header class="flex items-center gap-8 px-12 h-[88px] flex-none">
+        <a href="#" class="logo-link" aria-label="Najdimo, na začetno stran"><svg class="logo-mark w-9 h-9" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg><span class="font-display font-bold text-2xl tracking-[-0.03em]" aria-hidden="true">Najdimo</span></a>
+        <nav aria-label="Glavni meni"><ul class="flex items-center gap-2">
+          <li><a href="#" class="nl">Zemljevid</a></li><li><a href="#" class="nl">Izgubljene</a></li><li><a href="#" class="nl">Najdene</a></li><li><a href="#" class="nl">Kako deluje</a></li>
+        </ul></nav>
+        <div class="ml-auto flex items-center gap-2">
+          <div class="lang" role="group" aria-label="Jezik: Slovenščina"><a href="#" class="ll" lang="sl" aria-current="true" aria-label="Slovenščina">SL</a><span aria-hidden="true">/</span><a href="#" class="ll" lang="en" hreflang="en" aria-label="English">EN</a></div>
+          <a href="#" class="btn btn-ghost btn-sm">Vpis</a>
+          <button type="button" class="btn btn-secondary btn-sm" aria-haspopup="menu" aria-expanded="false">Prijavi</button>
+        </div>
+      </header>
+      <main class="px-12 pt-8">
+        <h1 class="font-display font-bold text-[60px] leading-[64px] tracking-[-0.025em]" data-sample>Pomagajmo jim domov.</h1>
+        <p class="text-xl leading-8 mt-4 max-w-[640px]" data-sample>Prijavite izgubljeno, najdeno ali opaženo žival. Ujemanja iščemo mi.</p>
+        <a href="#" class="btn btn-primary btn-lg mt-8" data-sample><i class="ph-bold ph-plus" aria-hidden="true"></i>Prijavi izgubljeno žival</a>
+        <h2 class="font-display font-bold text-3xl tracking-[-0.015em] mt-16" data-sample>V bližini</h2>
+        <ul class="grid grid-cols-3 gap-8 mt-6 list-none p-0" data-sample>
+          <li><a href="#" class="tile"><img src="../directions/img/dog-aussie.jpg" alt="Rjav in bel pes z modrimi očmi"><h3 class="font-display font-semibold text-2xl leading-8 mt-4">Maks</h3><p class="mt-1 flex items-center gap-2 text-sm"><span class="st st-lost"><i class="ph-fill ph-megaphone" aria-hidden="true"></i>Izgubljena</span><span class="text-muted-foreground tnum">pred 3 h, 1,2 km</span></p></a></li>
+          <li><a href="#" class="tile"><img src="../directions/img/cat-siamese.jpg" alt="Sijamska mačka s temnim obrazom"><h3 class="font-display font-semibold text-2xl leading-8 mt-4">Mici</h3><p class="mt-1 flex items-center gap-2 text-sm"><span class="st st-lost"><i class="ph-fill ph-megaphone" aria-hidden="true"></i>Izgubljena</span><span class="text-muted-foreground tnum">včeraj, 2,1 km</span></p></a></li>
+          <li><a href="#" class="tile"><img src="../directions/img/cat-tabby.jpg" alt="Tigrasta mačka z belimi tačkami"><h3 class="font-display font-semibold text-2xl leading-8 mt-4">Tigrasta mačka</h3><p class="mt-1 flex items-center gap-2 text-sm"><span class="st st-found"><i class="ph-fill ph-hand-heart" aria-hidden="true"></i>Najdena</span><span class="text-muted-foreground tnum">danes, 2,8 km</span></p></a></li>
+        </ul>
+      </main>
+      <!-- CONSENT: first view -->
+      <section class="cpanel" role="dialog" aria-modal="false" aria-label="Izbira piškotkov" data-check="banner">
+        <div class="cp-body">
+          <h2 tabindex="-1" class="font-display font-bold text-[30px] leading-9 tracking-[-0.015em]">Piškotki in vaša zasebnost</h2>
+          <p class="mt-3">Nujne piškotke potrebujemo, da stran deluje, na primer za vpis. Če dovolite, z orodjem Google Analytics merimo tudi, kako se stran uporablja, brez imen, točnih lokacij in številk čipov; pred vašo odločitvijo Googlu ne pošljemo ničesar.</p>
+          <a href="#" class="tlink mt-1">Politika piškotkov</a>
+        </div>
+        <div class="cp-actions row3">
+          <button type="button" class="btn btn-secondary">Zavrni vse</button>
+          <button type="button" class="btn btn-secondary">Sprejmi vse</button>
+          <button type="button" class="btn btn-secondary" aria-expanded="false">Prilagodi</button>
+        </div>
+      </section>
+    </div>
+  </div></div>
+  <p class="help mt-4 max-w-[760px]"><code>role="dialog"</code>, non-modal, named "Izbira piškotkov", announced politely once. On appear, focus goes to the h2 (<code>tabindex="-1"</code>, no ring because it is set by script); Tab continues into the link and the buttons. Order: Zavrni vse, Sprejmi vse, Prilagodi, three equal grid columns, <code>secondary</code> md 48. Surface <code>popover</code>, radius 24, <code>shadow-lg</code>, padding 28/24/24. h2 30/36, body 16/24 <code>popover-foreground</code>. The header "Prijavi" is <code>secondary</code> because the hero has the page's one primary. Escape closes the banner and leaves everything denied. No analytics script loads until the visitor chooses.</p>
+
+  <!-- W2: customise from banner -->
+  <p class="tile-h" style="margin-top:64px">W2 · Customise opened from the banner: same panel, content replaced, "Nazaj" returns to the first view, analytics off by default</p>
+  <div class="wrap-x"><div class="browser" lang="sl">
+    <div class="browser-bar"><span class="dots"><i></i><i></i><i></i></span><span class="url"><i class="ph ph-lock-simple"></i>najdimo.si</span></div>
+    <div class="vp">
+      <header class="flex items-center gap-8 px-12 h-[88px] flex-none">
+        <a href="#" class="logo-link" aria-label="Najdimo, na začetno stran"><svg class="logo-mark w-9 h-9" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg><span class="font-display font-bold text-2xl tracking-[-0.03em]" aria-hidden="true">Najdimo</span></a>
+        <nav aria-label="Glavni meni"><ul class="flex items-center gap-2">
+          <li><a href="#" class="nl">Zemljevid</a></li><li><a href="#" class="nl">Izgubljene</a></li><li><a href="#" class="nl">Najdene</a></li><li><a href="#" class="nl">Kako deluje</a></li>
+        </ul></nav>
+        <div class="ml-auto flex items-center gap-2">
+          <div class="lang" role="group" aria-label="Jezik: Slovenščina"><a href="#" class="ll" lang="sl" aria-current="true" aria-label="Slovenščina">SL</a><span aria-hidden="true">/</span><a href="#" class="ll" lang="en" hreflang="en" aria-label="English">EN</a></div>
+          <a href="#" class="btn btn-ghost btn-sm">Vpis</a>
+          <button type="button" class="btn btn-secondary btn-sm" aria-haspopup="menu" aria-expanded="false">Prijavi</button>
+        </div>
+      </header>
+      <main class="px-12 pt-8">
+        <h1 class="font-display font-bold text-[60px] leading-[64px] tracking-[-0.025em]" data-sample>Pomagajmo jim domov.</h1>
+        <p class="text-xl leading-8 mt-4 max-w-[640px]" data-sample>Prijavite izgubljeno, najdeno ali opaženo žival. Ujemanja iščemo mi.</p>
+        <a href="#" class="btn btn-primary btn-lg mt-8" data-sample><i class="ph-bold ph-plus" aria-hidden="true"></i>Prijavi izgubljeno žival</a>
+        <h2 class="font-display font-bold text-3xl tracking-[-0.015em] mt-16" data-sample>V bližini</h2>
+        <ul class="grid grid-cols-3 gap-8 mt-6 list-none p-0" data-sample>
+          <li><a href="#" class="tile"><img src="../directions/img/dog-aussie.jpg" alt="Rjav in bel pes z modrimi očmi"><h3 class="font-display font-semibold text-2xl leading-8 mt-4">Maks</h3></a></li>
+          <li><a href="#" class="tile"><img src="../directions/img/cat-siamese.jpg" alt="Sijamska mačka s temnim obrazom"><h3 class="font-display font-semibold text-2xl leading-8 mt-4">Mici</h3></a></li>
+          <li><a href="#" class="tile"><img src="../directions/img/cat-tabby.jpg" alt="Tigrasta mačka z belimi tačkami"><h3 class="font-display font-semibold text-2xl leading-8 mt-4">Tigrasta mačka</h3></a></li>
+        </ul>
+      </main>
+      <!-- CONSENT: customise -->
+      <section class="cpanel" role="dialog" aria-modal="false" aria-label="Nastavitve piškotkov" data-check="banner">
+        <div class="cp-body">
+          <button type="button" class="btn btn-text btn-sm -ml-3"><i class="ph-bold ph-caret-left" aria-hidden="true"></i>Nazaj</button>
+          <h2 tabindex="-1" class="font-display font-bold text-[30px] leading-9 tracking-[-0.015em] mt-1">Nastavitve piškotkov</h2>
+          <div class="grid gap-6 mt-5">
+            <div>
+              <div class="swrow locked"><span class="cat-t">Nujni</span><span class="lock"><i class="ph-bold ph-lock-simple" aria-hidden="true"></i>Vedno vklopljeno</span><button type="button" class="switch is-disabled" role="switch" aria-checked="true" aria-disabled="true" aria-label="Nujni, vedno vklopljeno"></button></div>
+              <p class="cdesc">Omogočajo vpis, si zapomnijo jezik, izbiro glede piškotkov in osnutke prijav ter ščitijo pred zlorabami. Ponudnika: Najdimo in Cloudflare (preverjanje, da niste robot). Trajanje je navedeno v <a href="#">politiki piškotkov</a>.</p>
+            </div>
+            <div>
+              <label class="swrow"><span class="cat-t">Analitični</span><button type="button" class="switch" role="switch" aria-checked="false" aria-label="Analitični piškotki"></button></label>
+              <p class="cdesc">Pomagajo nam razumeti, katere strani in koraki se uporabljajo, da iskanje izboljšamo. Ponudnik: Google (Google Analytics 4). Piškotka _ga in _ga_* se hranita 2 leti, podatki v Google Analytics 14 mesecev. Oglaševalskih piškotkov ne uporabljamo.</p>
+            </div>
+          </div>
+          <p class="adnote"><i class="ph-bold ph-info" aria-hidden="true"></i><span>Oglase štejemo brez piškotkov in brez podatkov o vas, zato za to ne potrebujemo vašega soglasja.</span></p>
+        </div>
+        <div class="cp-actions row3">
+          <button type="button" class="btn btn-secondary">Shrani izbiro</button>
+          <button type="button" class="btn btn-secondary">Sprejmi vse</button>
+          <button type="button" class="btn btn-secondary">Zavrni vse</button>
+        </div>
+      </section>
+    </div>
+  </div></div>
+  <p class="help mt-4 max-w-[760px]">"Nazaj" is a <code>text</code> sm button (44 px) and returns to W1 with the switches as left. Focus moves to the h2. Rows have no box: title 20/28 (Display 600; 18/28 on mobile), switch 56×32, and the whole label row is the 48 px target. Description 15/22 <code>muted-foreground</code> (7.8:1 light, 8.1:1 dark on <code>popover</code>). "Nujni" is locked on: <code>aria-disabled</code>, so it stays focusable and reads "vedno vklopljeno"; lock icon and word, not colour alone. Buttons: Shrani izbiro, Sprejmi vse, Zavrni vse, equal size. With nothing changed, "Shrani izbiro" saves analytics as denied. Customise is taller than the first view and may overlap page content, but its top never rises above the header (max height = viewport − 136 px: header 88 plus 24 above and below), so the header "Prijavi" always stays reachable. When the body does not fit (smaller windows, 200 % text), it scrolls and the button row stays put.</p>
+
+  <!-- W3: reopened from footer -->
+  <p class="tile-h" style="margin-top:64px">W3 · Footer "Nastavitve piškotkov" reopens the settings with the stored choice (analytics on); keyboard focus on the analytics switch, about to withdraw</p>
+  <div class="wrap-x"><div class="browser" lang="sl">
+    <div class="browser-bar"><span class="dots"><i></i><i></i><i></i></span><span class="url"><i class="ph ph-lock-simple"></i>najdimo.si/kako-deluje</span></div>
+    <div class="vp justify-end">
+      <main class="px-12">
+        <section>
+          <h2 class="font-display font-bold text-3xl tracking-[-0.015em]">Če ste izgubili žival</h2>
+          <ol class="grid gap-5 mt-6 max-w-[640px]">
+            <li class="flex gap-4"><span class="font-display font-bold text-xl leading-6 text-primary tnum w-5 flex-none" aria-hidden="true">1</span><p>Prijavite izgubljeno žival: dodajte fotografijo, opis ter kraj in čas, ko ste jo nazadnje videli.</p></li>
+            <li class="flex gap-4"><span class="font-display font-bold text-xl leading-6 text-primary tnum w-5 flex-none" aria-hidden="true">2</span><p>Iskanje objavimo v nekaj minutah. Ljudje v bližini, ki imajo vklopljena opozorila, prejmejo obvestilo.</p></li>
+            <li class="flex gap-4"><span class="font-display font-bold text-xl leading-6 text-primary tnum w-5 flex-none" aria-hidden="true">3</span><p>Ko kdo prijavi najdeno ali opaženo žival, ki je podobna vaši, vam sporočimo možno ujemanje.</p></li>
+          </ol>
+        </section>
+      </main>
+      <footer class="px-12 pt-12 pb-10 mt-24 flex-none">
+        <p class="flex items-center gap-4"><a href="#" class="logo-link" aria-label="Najdimo, na začetno stran"><svg class="logo-mark w-7 h-7" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg><span class="font-display font-bold text-lg" aria-hidden="true">Najdimo</span></a><span class="text-muted-foreground">Spet doma.</span></p>
+        <nav aria-label="Noga strani" class="mt-4 flex items-end gap-8">
+          <div class="flex-1 min-w-0">
+            <ul class="flex flex-wrap gap-x-6">
+              <li><a href="#" class="fl">Kako deluje</a></li><li><a href="#" class="fl">Nasveti za varnost</a></li><li><a href="#" class="fl">Pogosta vprašanja</a></li><li><a href="#" class="fl">Za zavetišča</a></li><li><a href="#" class="fl">Zavetišča</a></li><li><a href="#" class="fl">Oglašujte pri nas</a></li><li><a href="#" class="fl">O nas</a></li>
+            </ul>
+            <ul class="flex flex-wrap gap-x-6">
+              <li><a href="#" class="fl">Zasebnost</a></li><li><a href="#" class="fl">Piškotki</a></li><li><button type="button" class="fl" aria-haspopup="dialog" aria-expanded="true">Nastavitve piškotkov</button></li><li><a href="#" class="fl">Pogoji uporabe</a></li><li><a href="#" class="fl">Impresum</a></li><li><a href="#" class="fl">Dostopnost</a></li>
+            </ul>
+          </div>
+          <div class="lang" role="group" aria-label="Jezik: Slovenščina"><a href="#" class="ll" lang="sl" aria-current="true" aria-label="Slovenščina">SL</a><span aria-hidden="true">/</span><a href="#" class="ll" lang="en" hreflang="en" aria-label="English">EN</a></div>
+        </nav>
+        <p class="text-sm text-muted-foreground mt-6">© 2026 Signapps. Najdimo je delovno ime storitve.</p>
+      </footer>
+      <!-- CONSENT: settings (stored choice) -->
+      <section class="cpanel" role="dialog" aria-modal="false" aria-label="Nastavitve piškotkov" data-check="banner">
+        <div class="cp-body">
+          <div class="flex items-start gap-3">
+            <h2 tabindex="-1" class="flex-1 font-display font-bold text-[30px] leading-9 tracking-[-0.015em] pt-1">Nastavitve piškotkov</h2>
+            <button type="button" class="iconbtn -mr-2" aria-label="Zapri"><i class="ph-bold ph-x"></i></button>
+          </div>
+          <div class="grid gap-6 mt-5">
+            <div>
+              <div class="swrow locked"><span class="cat-t">Nujni</span><span class="lock"><i class="ph-bold ph-lock-simple" aria-hidden="true"></i>Vedno vklopljeno</span><button type="button" class="switch is-disabled" role="switch" aria-checked="true" aria-disabled="true" aria-label="Nujni, vedno vklopljeno"></button></div>
+              <p class="cdesc">Omogočajo vpis, si zapomnijo jezik, izbiro glede piškotkov in osnutke prijav ter ščitijo pred zlorabami. Ponudnika: Najdimo in Cloudflare (preverjanje, da niste robot). Trajanje je navedeno v <a href="#">politiki piškotkov</a>.</p>
+            </div>
+            <div>
+              <label class="swrow"><span class="cat-t">Analitični</span><button type="button" class="switch is-focus" role="switch" aria-checked="true" aria-label="Analitični piškotki"></button></label>
+              <p class="cdesc">Pomagajo nam razumeti, katere strani in koraki se uporabljajo, da iskanje izboljšamo. Ponudnik: Google (Google Analytics 4). Piškotka _ga in _ga_* se hranita 2 leti, podatki v Google Analytics 14 mesecev. Oglaševalskih piškotkov ne uporabljamo.</p>
+            </div>
+          </div>
+          <p class="adnote"><i class="ph-bold ph-info" aria-hidden="true"></i><span>Oglase štejemo brez piškotkov in brez podatkov o vas, zato za to ne potrebujemo vašega soglasja.</span></p>
+        </div>
+        <div class="cp-actions row3">
+          <button type="button" class="btn btn-secondary">Shrani izbiro</button>
+          <button type="button" class="btn btn-secondary">Sprejmi vse</button>
+          <button type="button" class="btn btn-secondary">Zavrni vse</button>
+        </div>
+      </section>
+    </div>
+  </div></div>
+  <p class="help mt-4 max-w-[760px]">Opened from the footer button (P1, <code>aria-haspopup="dialog"</code>, <code>aria-expanded="true"</code> while open; it sits under the panel here, W4 shows it) or from the profile row on mobile (M3). The settings open straight on this view, so there is no "Nazaj". Instead a 44 px "Zapri" icon button sits top right and closes without changes, as Escape does. The switches show what is stored. Withdrawing takes one switch and "Shrani izbiro", the same effort as accepting; the <code>_ga</code> cookies are deleted at once. Focus ring: 3 px <code>ring</code>, 2 px offset.</p>
+
+  <!-- W4: saved -->
+  <p class="tile-h" style="margin-top:64px">W4 · Choice saved from the settings: the panel closes without a reload, the toast confirms, and focus returns to the footer button</p>
+  <div class="wrap-x"><div class="browser" lang="sl">
+    <div class="browser-bar"><span class="dots"><i></i><i></i><i></i></span><span class="url"><i class="ph ph-lock-simple"></i>najdimo.si/kako-deluje</span></div>
+    <div class="vp justify-end">
+      <main class="px-12">
+        <section>
+          <h2 class="font-display font-bold text-3xl tracking-[-0.015em]">Če ste izgubili žival</h2>
+          <ol class="grid gap-5 mt-6 max-w-[640px]">
+            <li class="flex gap-4"><span class="font-display font-bold text-xl leading-6 text-primary tnum w-5 flex-none" aria-hidden="true">1</span><p>Prijavite izgubljeno žival: dodajte fotografijo, opis ter kraj in čas, ko ste jo nazadnje videli.</p></li>
+            <li class="flex gap-4"><span class="font-display font-bold text-xl leading-6 text-primary tnum w-5 flex-none" aria-hidden="true">2</span><p>Iskanje objavimo v nekaj minutah. Ljudje v bližini, ki imajo vklopljena opozorila, prejmejo obvestilo.</p></li>
+            <li class="flex gap-4"><span class="font-display font-bold text-xl leading-6 text-primary tnum w-5 flex-none" aria-hidden="true">3</span><p>Ko kdo prijavi najdeno ali opaženo žival, ki je podobna vaši, vam sporočimo možno ujemanje.</p></li>
+          </ol>
+        </section>
+      </main>
+      <footer class="px-12 pt-12 pb-10 mt-24 flex-none">
+        <p class="flex items-center gap-4"><a href="#" class="logo-link" aria-label="Najdimo, na začetno stran"><svg class="logo-mark w-7 h-7" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg><span class="font-display font-bold text-lg" aria-hidden="true">Najdimo</span></a><span class="text-muted-foreground">Spet doma.</span></p>
+        <nav aria-label="Noga strani" class="mt-4 flex items-end gap-8">
+          <div class="flex-1 min-w-0">
+            <ul class="flex flex-wrap gap-x-6">
+              <li><a href="#" class="fl">Kako deluje</a></li><li><a href="#" class="fl">Nasveti za varnost</a></li><li><a href="#" class="fl">Pogosta vprašanja</a></li><li><a href="#" class="fl">Za zavetišča</a></li><li><a href="#" class="fl">Zavetišča</a></li><li><a href="#" class="fl">Oglašujte pri nas</a></li><li><a href="#" class="fl">O nas</a></li>
+            </ul>
+            <ul class="flex flex-wrap gap-x-6">
+              <li><a href="#" class="fl">Zasebnost</a></li><li><a href="#" class="fl">Piškotki</a></li><li><button type="button" class="fl is-focus" aria-haspopup="dialog" aria-expanded="false">Nastavitve piškotkov</button></li><li><a href="#" class="fl">Pogoji uporabe</a></li><li><a href="#" class="fl">Impresum</a></li><li><a href="#" class="fl">Dostopnost</a></li>
+            </ul>
+          </div>
+          <div class="lang" role="group" aria-label="Jezik: Slovenščina"><a href="#" class="ll" lang="sl" aria-current="true" aria-label="Slovenščina">SL</a><span aria-hidden="true">/</span><a href="#" class="ll" lang="en" hreflang="en" aria-label="English">EN</a></div>
+        </nav>
+        <p class="text-sm text-muted-foreground mt-6">© 2026 Signapps. Najdimo je delovno ime storitve.</p>
+      </footer>
+      <div class="toast absolute left-1/2 -translate-x-1/2 w-[420px]" style="bottom:24px;z-index:8" role="status" aria-live="polite">
+        <i class="ph-fill ph-check-circle" aria-hidden="true"></i>
+        <p>Izbira je shranjena.</p>
+        <button type="button" class="iconbtn" aria-label="Zapri"><i class="ph-bold ph-x"></i></button>
+      </div>
+    </div>
+  </div></div>
+  <p class="help mt-4 max-w-[760px]">Toast: <code>popover</code>, radius 20, <code>shadow-pop</code>, 15/22, check icon, 5 s, dismissible, polite. It shows only when the choice was changed from the settings. A first choice from the banner just closes the banner, with no toast and no reload. Analytics starts or stops in the same page view.</p>
+
+  <!-- Re-ask specimen and states -->
+  <div class="grid gap-14 items-start mt-16" style="grid-template-columns:minmax(0,560px) minmax(0,1fr)" lang="sl">
+    <div>
+      <p class="tile-h !mt-0">Re-ask at 1200 after a consent version change: same banner, in W1's place, with the change as its first sentence</p>
+      <section class="cpanel is-static" role="dialog" aria-modal="false" aria-label="Izbira piškotkov" data-check="banner">
+        <div class="cp-body">
+          <h2 tabindex="-1" class="font-display font-bold text-[30px] leading-9 tracking-[-0.015em]">Piškotki in vaša zasebnost</h2>
+          <p class="mt-3 reask">Od vaše zadnje izbire se je nekaj spremenilo: dodali smo novega ponudnika analitike. Prosimo, izberite znova.</p>
+          <p class="mt-2">Nujne piškotke potrebujemo, da stran deluje, na primer za vpis. Če dovolite, z orodjem Google Analytics merimo tudi, kako se stran uporablja, brez imen, točnih lokacij in številk čipov; pred vašo odločitvijo Googlu ne pošljemo ničesar.</p>
+          <a href="#" class="tlink mt-1">Politika piškotkov</a>
+        </div>
+        <div class="cp-actions row3">
+          <button type="button" class="btn btn-secondary">Zavrni vse</button>
+          <button type="button" class="btn btn-secondary">Sprejmi vse</button>
+          <button type="button" class="btn btn-secondary">Prilagodi</button>
+        </div>
+      </section>
+      <p class="help mt-4">The banner comes back after 12 months (<code>consent.reask_year</code>, see M4) or when the consent version changes (<code>consent.reask_changed</code> with <code>{change}</code>, the example phrase from the content slice). That sentence is bold, so the change reads first. Until the visitor chooses again, everything is denied; the old choice does not carry over. Customise opens with the switches off.</p>
+    </div>
+    <div>
+      <p class="tile-h !mt-0">States: the three buttons share every state (shown on one)</p>
+      <div class="flex flex-wrap gap-6">
+        <figure class="spec"><figcaption class="cap">Default</figcaption><button type="button" class="btn btn-secondary">Zavrni vse</button></figure>
+        <figure class="spec"><figcaption class="cap">Hover (14 % foreground mixed in)</figcaption><button type="button" class="btn btn-secondary is-hover">Zavrni vse</button></figure>
+        <figure class="spec"><figcaption class="cap">Pressed (scale 0.98)</figcaption><button type="button" class="btn btn-secondary is-hover is-pressed">Zavrni vse</button></figure>
+        <figure class="spec"><figcaption class="cap">Focus</figcaption><button type="button" class="btn btn-secondary is-focus">Zavrni vse</button></figure>
+        <figure class="spec"><figcaption class="cap">Loading (storing takes long)</figcaption><button type="button" class="btn btn-secondary" aria-busy="true"><span class="spin" aria-hidden="true"></span>Shrani izbiro</button></figure>
+      </div>
+      <p class="tile-h">Switch and link</p>
+      <div class="flex flex-wrap gap-6">
+        <figure class="spec"><figcaption class="cap">Off (default)</figcaption><button type="button" class="switch" role="switch" aria-checked="false" aria-label="Analitični piškotki"></button></figure>
+        <figure class="spec"><figcaption class="cap">On</figcaption><button type="button" class="switch" role="switch" aria-checked="true" aria-label="Analitični piškotki"></button></figure>
+        <figure class="spec"><figcaption class="cap">Focus</figcaption><button type="button" class="switch is-focus" role="switch" aria-checked="false" aria-label="Analitični piškotki"></button></figure>
+        <figure class="spec"><figcaption class="cap">Locked on (Nujni)</figcaption><button type="button" class="switch is-disabled" role="switch" aria-checked="true" aria-disabled="true" aria-label="Nujni, vedno vklopljeno"></button></figure>
+        <figure class="spec"><figcaption class="cap">Link hover</figcaption><a href="#" class="tlink is-hover">Politika piškotkov</a></figure>
+        <figure class="spec"><figcaption class="cap">Link focus</figcaption><a href="#" class="tlink is-focus">Politika piškotkov</a></figure>
+      </div>
+      <p class="help mt-6 max-w-[56ch]">No empty or error state: the choice is stored on the device (a first-party cookie on web, local storage in the app), so there is nothing to load and nothing to fail. If storage is blocked, everything stays denied and the banner shows again on the next visit. Reduced motion: the panel and sheet fade in over 80 ms instead of sliding, and the switch thumb jumps instead of sliding.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 2. MOBILE ================= -->
+<section class="tile-section !max-w-[1400px] !pt-0">
+  <h2 class="tile-title">2. Mobile</h2>
+  <p class="tile-lede">App at 390 px: a sheet at content height that docks on top of the tab bar, so the "Prijavi" tab is never covered. Web below <code>lg</code>: the same content as a full-width bottom sheet (M4, 320 px). The buttons stack at equal width below <code>sm</code>, and from <code>sm</code> to <code>lg</code> they sit in one row.</p>
+
+  <div class="flex flex-wrap gap-x-10 gap-y-14 items-start">
+
+    <!-- M1 -->
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">M1 · App, first launch: sheet over the map, above the tab bar</figcaption>
+      <div class="phone"><div class="phone-screen" lang="sl">
+        <h1 class="sr-only">Zemljevid</h1>
+        <div class="map-wrap" style="position:absolute;inset:0 0 88px 0">
+          <div class="map-canvas" data-center="14.4935,46.0690" data-zoom="13.5"></div>
+          <div class="mk mk-area" style="left:128px;top:196px"><img class="mk-avatar" src="../directions/img/dog-aussie.jpg" alt="Maks, izgubljena žival"></div>
+          <div class="mk" style="left:292px;top:150px"><img class="mk-avatar found" src="../directions/img/cat-tabby.jpg" alt="Najdena tigrasta mačka"></div>
+          <button class="float absolute flex items-center gap-2 rounded-full pl-4 pr-2" style="left:20px;top:60px;height:48px;border:0;font:inherit;font-weight:700;color:inherit" aria-label="Območje in filtri: Ljubljana, 10 km" data-sample><i class="ph-bold ph-map-pin text-lg" aria-hidden="true"></i><span class="tnum">Ljubljana, 10 km</span><span class="grid place-items-center w-8 h-8 rounded-full ml-1 bg-secondary text-secondary-foreground" aria-hidden="true"><i class="ph-bold ph-sliders-horizontal text-base"></i></span></button>
+        </div>
+        <div class="statusbar" style="position:absolute;left:0;right:0;top:0" aria-hidden="true"><span>14:20</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <section class="csheet" role="dialog" aria-modal="false" aria-label="Izbira piškotkov" data-check="banner">
+          <div class="cs-body">
+            <h2 tabindex="-1" class="font-display font-bold text-[24px] leading-[30px] tracking-[-0.015em]">Piškotki in vaša zasebnost</h2>
+            <p class="mt-3">Nekaj podatkov na napravi potrebujemo, da aplikacija deluje, na primer za vpis. Če dovolite, z orodjem Google Analytics for Firebase merimo tudi, kako se aplikacija uporablja, brez imen, točnih lokacij in številk čipov; pred vašo odločitvijo Googlu ne pošljemo ničesar.</p>
+            <a href="#" class="tlink">Politika piškotkov</a>
+          </div>
+          <div class="cs-actions !pt-3">
+            <button type="button" class="btn btn-secondary btn-block">Zavrni vse</button>
+            <button type="button" class="btn btn-secondary btn-block">Sprejmi vse</button>
+            <button type="button" class="btn btn-secondary btn-block">Prilagodi</button>
+          </div>
+        </section>
+        <nav class="bottomnav" style="position:absolute;left:0;right:0;bottom:0" aria-label="Glavna navigacija">
+          <a href="#" aria-current="page"><i class="ph-fill ph-map-trifold" aria-hidden="true"></i>Zemljevid</a>
+          <a href="#"><i class="ph ph-chat-circle" aria-hidden="true"></i>Sporočila</a>
+          <a href="#" class="go" role="button" aria-haspopup="dialog" aria-label="Prijavi žival"><span class="act" aria-hidden="true"><i class="ph-bold ph-plus"></i></span>Prijavi</a>
+          <a href="#"><i class="ph ph-user-circle" aria-hidden="true"></i>Profil</a>
+        </nav>
+        <span class="home-ind"></span>
+      </div></div>
+      <p class="help mt-4" style="max-width:412px">Sheet: <code>card</code>, top radius 28, <code>shadow-lg</code>, 20 px sides, content height, non-modal, no scrim. There is no grabber because it does not swipe away; the Android back gesture leaves everything denied. The tab bar and the map stay usable. It appears after the permission primers (P2 B) or on first idle, never over the camera. Buttons <code>secondary</code> md 48, full width, 12 px apart. Firebase Analytics collection is off until the user chooses (Consent Mode default denied).</p>
+    </figure>
+
+    <!-- M2 -->
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">M2 · App, Customise: text scrolls inside the sheet and the three buttons stay pinned</figcaption>
+      <div class="phone"><div class="phone-screen" lang="sl">
+        <div class="map-wrap" style="position:absolute;inset:0 0 88px 0" aria-hidden="true">
+          <div class="map-canvas" data-center="14.4935,46.0690" data-zoom="13.5"></div>
+        </div>
+        <div class="statusbar" style="position:absolute;left:0;right:0;top:0" aria-hidden="true"><span>14:20</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <section class="csheet" style="top:60px" role="dialog" aria-modal="false" aria-label="Nastavitve piškotkov" data-check="banner">
+          <div class="cs-body scrollfade !pt-3">
+            <button type="button" class="btn btn-text btn-sm -ml-3"><i class="ph-bold ph-caret-left" aria-hidden="true"></i>Nazaj</button>
+            <h2 tabindex="-1" class="font-display font-bold text-[24px] leading-[30px] tracking-[-0.015em] mt-1">Nastavitve piškotkov</h2>
+            <div class="grid gap-5 mt-4">
+              <div>
+                <div class="swrow locked"><span class="cat-t">Nujni</span><span class="lock"><i class="ph-bold ph-lock-simple" aria-hidden="true"></i>Vedno vklopljeno</span><button type="button" class="switch is-disabled" role="switch" aria-checked="true" aria-disabled="true" aria-label="Nujni, vedno vklopljeno"></button></div>
+                <p class="cdesc">Omogočajo vpis, si zapomnijo jezik, izbiro glede piškotkov in osnutke prijav ter ščitijo pred zlorabami. Ponudnika: Najdimo in Cloudflare (preverjanje, da niste robot). Trajanje je navedeno v <a href="#">politiki piškotkov</a>.</p>
+              </div>
+              <div>
+                <label class="swrow"><span class="cat-t">Analitični</span><button type="button" class="switch" role="switch" aria-checked="false" aria-label="Analitični piškotki"></button></label>
+                <p class="cdesc">Pomagajo nam razumeti, kateri zasloni in koraki se uporabljajo, da iskanje izboljšamo. Ponudnik: Google (Google Analytics for Firebase). Podatki se v Google Analytics hranijo 14 mesecev. Oglaševalskih identifikatorjev ne uporabljamo.</p>
+              </div>
+            </div>
+            <p class="adnote pb-6"><i class="ph-bold ph-info" aria-hidden="true"></i><span>Oglase štejemo brez piškotkov in brez podatkov o vas, zato za to ne potrebujemo vašega soglasja.</span></p>
+          </div>
+          <div class="cs-actions">
+            <button type="button" class="btn btn-secondary btn-block">Shrani izbiro</button>
+            <button type="button" class="btn btn-secondary btn-block">Sprejmi vse</button>
+            <button type="button" class="btn btn-secondary btn-block">Zavrni vse</button>
+          </div>
+        </section>
+        <nav class="bottomnav" style="position:absolute;left:0;right:0;bottom:0" aria-label="Glavna navigacija">
+          <a href="#" aria-current="page"><i class="ph-fill ph-map-trifold" aria-hidden="true"></i>Zemljevid</a>
+          <a href="#"><i class="ph ph-chat-circle" aria-hidden="true"></i>Sporočila</a>
+          <a href="#" class="go" role="button" aria-haspopup="dialog" aria-label="Prijavi žival"><span class="act" aria-hidden="true"><i class="ph-bold ph-plus"></i></span>Prijavi</a>
+          <a href="#"><i class="ph ph-user-circle" aria-hidden="true"></i>Profil</a>
+        </nav>
+        <span class="home-ind"></span>
+      </div></div>
+      <p class="help mt-4" style="max-width:412px">The sheet grows to the full snap (top 60 px) and stays above the tab bar. The body scrolls with a 32 px fade at the cut; the buttons never scroll away. The same holds at 200 % text. In the app the copy says "zasloni" and "identifikatorjev" (the <code>_app</code> keys). Title 18/28 on mobile.</p>
+    </figure>
+
+    <!-- M3 -->
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">M3 · App, Profil → "Nastavitve piškotkov" after "Shrani izbiro": sheet closed, toast, focus back on the row</figcaption>
+      <div class="phone"><div class="phone-screen" lang="sl">
+        <div class="statusbar" aria-hidden="true"><span>14:22</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <div class="flex-1 min-h-0 px-5 pt-6">
+          <h1 class="font-display font-bold text-[30px] leading-9 tracking-[-0.02em]">Vpišite se</h1>
+          <p class="text-lg leading-7 mt-3">Z računom shranite profile svojih živali, prejemate opozorila in se pogovarjate z ljudmi, ki so žival videli.</p>
+          <div class="grid gap-1 mt-7">
+            <a href="#" class="btn btn-primary btn-lg btn-block">Vpis</a>
+            <a href="#" class="btn btn-text btn-block">Ustvari račun</a>
+          </div>
+          <ul class="grid gap-3 mt-10 p-0 list-none">
+            <li><a href="#" class="choice no-underline"><i class="ph-bold ph-translate" aria-hidden="true"></i><span class="flex-1 min-w-0"><span class="t">Jezik</span><span class="d">Slovenščina</span></span><i class="ph-bold ph-caret-right text-muted-foreground !text-[20px]" aria-hidden="true"></i></a></li>
+            <li><a href="#" class="choice is-focus no-underline" aria-haspopup="dialog"><i class="ph-bold ph-cookie" aria-hidden="true"></i><span class="flex-1 min-w-0"><span class="t">Nastavitve piškotkov</span></span><i class="ph-bold ph-caret-right text-muted-foreground !text-[20px]" aria-hidden="true"></i></a></li>
+            <li><a href="#" class="choice no-underline"><i class="ph-bold ph-question" aria-hidden="true"></i><span class="flex-1 min-w-0"><span class="t">Pomoč in nasveti za varnost</span></span><i class="ph-bold ph-caret-right text-muted-foreground !text-[20px]" aria-hidden="true"></i></a></li>
+          </ul>
+        </div>
+        <div class="toast absolute left-5 right-5" style="bottom:104px;z-index:8" role="status" aria-live="polite">
+          <i class="ph-fill ph-check-circle" aria-hidden="true"></i>
+          <p>Izbira je shranjena.</p>
+          <button type="button" class="iconbtn" aria-label="Zapri"><i class="ph-bold ph-x"></i></button>
+        </div>
+        <nav class="bottomnav" aria-label="Glavna navigacija">
+          <a href="#"><i class="ph ph-map-trifold" aria-hidden="true"></i>Zemljevid</a>
+          <a href="#"><i class="ph ph-chat-circle" aria-hidden="true"></i>Sporočila</a>
+          <a href="#" class="go" role="button" aria-haspopup="dialog" aria-label="Prijavi žival"><span class="act" aria-hidden="true"><i class="ph-bold ph-plus"></i></span>Prijavi</a>
+          <a href="#" aria-current="page"><i class="ph-fill ph-user-circle" aria-hidden="true"></i>Profil</a>
+        </nav>
+        <span class="home-ind"></span>
+      </div></div>
+      <p class="help mt-4" style="max-width:412px">The row (P2 A4, the same for signed-in users in P13) opens the M2 sheet straight away with the stored choice; it has a "Zapri" icon button instead of "Nazaj", as in W3. After saving, the toast sits 16 px above the tab bar for 5 s, announced politely, and focus returns to the row. Withdrawing stops Firebase Analytics collection at once.</p>
+    </figure>
+
+    <!-- M4 -->
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">M4 · Web at 320 px, below lg: full-width bottom sheet, re-ask after 12 months, buttons stacked</figcaption>
+      <div class="phone" style="width:320px;height:640px"><div class="phone-screen" style="width:320px;height:640px" lang="sl">
+        <div class="statusbar !px-6" aria-hidden="true"><span>14:20</span><span class="isl" style="width:90px;margin-left:-45px"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <div class="mweb"><span><i class="ph ph-lock-simple"></i>najdimo.si/kako-deluje</span></div>
+        <header class="flex items-center gap-2 px-5 h-16 flex-none">
+          <a href="#" class="logo-link mr-auto" aria-label="Najdimo, na začetno stran"><svg class="logo-mark w-8 h-8" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg><span class="font-display font-bold text-xl tracking-[-0.03em]" aria-hidden="true">Najdimo</span></a>
+          <button type="button" class="btn btn-primary btn-sm !px-4" aria-haspopup="menu" aria-expanded="false">Prijavi</button>
+          <button type="button" class="iconbtn" aria-label="Odpri meni" aria-expanded="false"><i class="ph-bold ph-list"></i></button>
+        </header>
+        <main class="flex-1 px-5 pt-6 overflow-hidden">
+          <h1 class="font-display font-bold text-3xl tracking-[-0.02em]">Kako deluje Najdimo</h1>
+          <p class="text-lg leading-7 mt-3">Najdimo poveže ljudi, ki pogrešajo žival, s tistimi, ki so jo našli ali videli.</p>
+        </main>
+        <section class="csheet web" style="top:164px" role="dialog" aria-modal="false" aria-label="Izbira piškotkov" data-check="banner">
+          <div class="cs-body scrollfade">
+            <h2 tabindex="-1" class="font-display font-bold text-[24px] leading-[30px] tracking-[-0.015em]">Piškotki in vaša zasebnost</h2>
+            <p class="mt-3 reask">Od vaše zadnje izbire je minilo leto dni. Prosimo, izberite znova.</p>
+            <p class="mt-2">Nujne piškotke potrebujemo, da stran deluje, na primer za vpis. Če dovolite, z orodjem Google Analytics merimo tudi, kako se stran uporablja, brez imen, točnih lokacij in številk čipov; pred vašo odločitvijo Googlu ne pošljemo ničesar.</p>
+            <a href="#" class="tlink mb-4">Politika piškotkov</a>
+          </div>
+          <div class="cs-actions !pb-8">
+            <button type="button" class="btn btn-secondary btn-block">Zavrni vse</button>
+            <button type="button" class="btn btn-secondary btn-block">Sprejmi vse</button>
+            <button type="button" class="btn btn-secondary btn-block">Prilagodi</button>
+          </div>
+        </section>
+        <span class="home-ind" style="z-index:12"></span>
+      </div></div>
+      <p class="help mt-4" style="max-width:342px">Below <code>lg</code> the web panel becomes a full-width bottom sheet: <code>popover</code>, top radius 28, <code>shadow-lg</code>, 20 px sides, safe-area bottom padding. It takes at most the height under the header, so the header and its "Prijavi" stay visible. The text scrolls and the buttons stay pinned. In a flow (P6, P7), the page gets bottom padding equal to the sheet's height, so the step's main button can scroll clear of it.</p>
+    </figure>
+
+  </div>
+</section>
+<p class="tile-section !py-8 text-sm text-muted-foreground">Copy: docs/content/pages/P17-consent.md v0.1 (draft; native and legal review pending). The home hero, the "V bližini" tiles and the map pill are sample copy owned by P3 and P4, marked <code>data-sample</code>. Shell copy comes from P1 and P2. Placeholder photography from Unsplash (Unsplash License). No images are planned for this page.</p>
+</div>
+
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<script src="../directions/directions.js"></script>
+</body>
+</html>

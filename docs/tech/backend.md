@@ -1,4 +1,4 @@
-source: docs/04-technical-design.md (v0.7) §Architecture, §Data model, §Authentication, §Environments, §CI/CD, §Observability; docs/05-quality-security-plan.md (v0.6) §Security, §Privacy, §Definition of Done; ADR-020 (API, klikni conventions), ADR-021, ADR-022, ADR-023
+source: docs/04-technical-design.md (v0.9) §Architecture, §Data model, §Authentication, §Environments, §CI/CD, §Observability; docs/05-quality-security-plan.md (v0.6) §Security, §Privacy, §Definition of Done; ADR-020 (API, klikni conventions), ADR-021, ADR-022, ADR-023
 
 # Backend slice (apps/api: Express + Prisma, worker; supabase/ local stack; scripts/)
 
@@ -77,6 +77,7 @@ A domain function never imports Express, never reads `req`/`res`, and never catc
 - Ownership checks in domains (`assertCanManageReport`, `assertParticipant`, …); never trust ids from the client for ownership.
 - Responses are mapped DTOs, never raw Prisma rows: public serializers must never include `exact_point`, `chip_number`, `manage_token_hash`, emails, phone numbers or `created_by` (C4).
 - Geo and vector queries only in TypedSQL files (`prisma/sql/*.sql`) or parameterised `$queryRaw`; never string-concatenated SQL.
+- **Never store a raw point (ADR-006, C6 §Storage)**: `coarsenPoint()` from `@zivali/validation/geo` runs in `ReportsDomain.createReport/updateReport` and the alert-subscription service on every location write (once; unchanged location = keep the stored point; random, never seeded from the raw point), before insert; `public_point` derives from the coarsened point; request bodies with points are never logged (route pattern only). Tests required: stored point differs from the received one by 20–30 m, no raw value in any column or job payload, repeated reads/PATCH-without-location return the same point, no coordinates in captured logs. Job `retention.blur_location` (daily): `exact_point = public_point` for reports closed more than `retention.exact_point_blur_days` (30) ago.
 - Locations sent for lookups (geocoder, C6) travel in POST bodies, never in URLs; the request logger logs the route pattern only, never bodies or query strings.
 - Jobs idempotent (unique keys, upserts); fan-outs in chunks of ≤ 500; no external calls inside DB transactions.
 - Logs: pino JSON (`level, msg, req_id, user_id?, route, status, duration_ms`, job logs with `queue, job_id`); no PII or secrets; `console.*` is a lint error.

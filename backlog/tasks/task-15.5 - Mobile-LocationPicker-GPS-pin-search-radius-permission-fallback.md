@@ -5,7 +5,7 @@ status: To Do
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:13'
-updated_date: '2026-10-14 22:41'
+updated_date: '2026-10-15 01:54'
 labels:
   - fe
   - 'est:S'
@@ -42,4 +42,5 @@ Branch: agent/task-15.5-picker-mob
 - [ ] #1 LocationPicker (mobile) supports GPS after the location primer, drop or drag pin, place search and the radius control for lost and alert modes, per P5.
 - [ ] #2 With permission denied, pin and search work with an explanation; the EXIF suggestion is offered; the outside-Slovenia notice is shown.
 - [ ] #3 Screen-reader labels and 44 px targets are verified on Android.
+- [ ] #4 The mobile picker coarsens the confirmed point once on the device (coarsenPoint, 20–30 m) before onChange, for GPS, pin, search and EXIF alike; drafts and the offline outbox store only the coarsened point; the owner's pin is labelled 'Približna lokacija · vidno samo vam'; a jest-expo test proves onChange never receives the raw value.
 <!-- AC:END -->

@@ -7,7 +7,7 @@ status: To Do
 assignee:
   - '@backend-dev'
 created_date: '2026-10-14 22:13'
-updated_date: '2026-10-15 00:12'
+updated_date: '2026-10-15 01:54'
 labels:
   - be
   - 'est:M'
@@ -47,4 +47,5 @@ Branch: agent/task-29.2-report-write-be
 - [ ] #4 Creation applies the fuzz and geo lookup and, in the same transaction, queues photo.publish, match.report and, for visible lost reports, alerts.fanout; GET /v1/me/reports lists the caller's reports; the new report is returned by GET /v1/reports/:code within one minute after `pnpm jobs:drain`.
 - [ ] #5 Supertest covers every validation, the permission matrix and the queued jobs.
 - [ ] #6 Reward fields are accepted on create and PATCH for lost reports only (found or sighted with a reward → VALIDATION) and reward_note with contact data → VALIDATION issue CONTACT_DATA, per C4; no payment is created.
+- [ ] #7 Locations are coarsened once on the server (coarsenPoint, 20–30 m) after the client's own coarsening; PATCH without a location change keeps the stored point; bodies with points are never logged; Supertest asserts no raw point persisted and a repeated GET returns the same point (C6 §Storage).
 <!-- AC:END -->

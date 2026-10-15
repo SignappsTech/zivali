@@ -1,7 +1,7 @@
 ---
 doc_id: DOC-04
 title: Technical Design
-version: 0.8
+version: 0.9
 status: Draft
 date: 2026-10-15
 owner: Tech Lead
@@ -117,7 +117,7 @@ All tables in schema `app` as Prisma models (snake_case plural names, `id uuid`,
 | profiles | id = Supabase auth user id, display_name, locale (sl/en), role, home_point, home_radius_km, phone (never public), is_anonymous, supporter_badge_visible, quiet_from/to | role enum; GiST(home_point) | Yes (phone, home) |
 | pets | owner_id, species, name, breed_codes[], colours[], pattern, size, sex, birth_year, chip_number, chip_status, chip_registered_crhz, ear_tip, lifestyle, collar, notes, archived_at | chip normalised; index(chip_number) | Yes (chip) |
 | photos | owner_id, pet_id / report_id, position, sha256, width, height, bytes, status, public URLs | unique(owner_id, sha256); max 5 per parent | Medium (images) |
-| reports | short_code, type, status, close_reason, moderation_state, pet_id, species, attributes, chip_number, exact_point, requested_radius_m, public_point, public_radius_m, municipality_id, region_id, in_slovenia, event_at, circumstances, contact_pref, linked_report_id, source, organisation_id, boosted_until, manage_token_hash, first_match_at, reunited_at | short_code unique; GiST(public_point), GiST(exact_point); index(status, type, species, event_at) | Yes (exact point, chip, token hash) |
+| reports | short_code, type, status, close_reason, moderation_state, pet_id, species, attributes, chip_number, ear_tip, lifestyle, exact_point (the coarsened private point, never the raw one: ADR-006), requested_radius_m, public_point, public_radius_m, municipality_id, region_id, in_slovenia, event_at, circumstances, contact_pref, linked_report_id, source, organisation_id, boosted_until, manage_token_hash, first_match_at, reunited_at | short_code unique; GiST(public_point), GiST(exact_point); index(status, type, species, event_at) | Yes (exact point, chip, token hash) |
 | report_managers, report_contacts | report_id, user_id, role; report_id, email | pk | Low / Yes (email) |
 | matches, match_feedback | lost_report_id, other_report_id, score, strength, chip_match, reasons, state; verdicts | unique(lost_report_id, other_report_id) | Medium |
 | conversations, conversation_participants, messages, blocks | report ids, match_id; participant role, last_read_at; body, kind, has_link | index(conversation_id, created_at) | Yes (chat) |
@@ -134,7 +134,7 @@ All tables in schema `app` as Prisma models (snake_case plural names, `id uuid`,
 | pgboss.* | pg-boss tables (jobs, schedules, archive) | managed by pg-boss | Low |
 | Planned M3–M4 | photo_embeddings, ai_results, ai_calls, intake_batches, chip_lookups (hash only), subscriptions and entitlements (owners: Premium, Podpornik; vets: Vet Partner), moderation_actions | wire types in `packages/types` from M1; models with their stories | - |
 
-**Deletion and retention** (NFR-PRIV, proposals for legal review, A-012): chat deleted 6 months after report close; closed-report photos and exact locations deleted or nulled 12 months after close; payment records kept as legally required; IP and device hashes 48 h; idempotency rows 24 h; anonymous auth users without a live report 30 days (Supabase Admin API); orphan uploads 24 h. All by the `retention.purge` job. Device data (mobile, C17): public cache ≤ 50 MB / 7 days, own drafts and outbox; wiped on sign-out, account deletion and on request. Account deletion (M3, FR-034) is one domain function that deletes or anonymises rows per `apps/api/prisma/data-inventory.json` and deletes the Supabase user; a test fails when a model is missing from the inventory.
+**Deletion and retention** (NFR-PRIV, proposals for legal review, A-012): chat deleted 6 months after report close; closed-report photos and stored locations deleted or nulled 12 months after close, and the stored point replaced by the blurred public point `retention.exact_point_blur_days` (30, lawyer to confirm) after close (`retention.blur_location` job, ADR-006); raw points are never stored (coarsened 20–30 m at write, device and server); payment records kept as legally required; IP and device hashes 48 h; idempotency rows 24 h; anonymous auth users without a live report 30 days (Supabase Admin API); orphan uploads 24 h. All by the `retention.purge` job. Device data (mobile, C17): public cache ≤ 50 MB / 7 days, own drafts and outbox; wiped on sign-out, account deletion and on request. Account deletion (M3, FR-034) is one domain function that deletes or anonymises rows per `apps/api/prisma/data-inventory.json` and deletes the Supabase user; a test fails when a model is missing from the inventory.
 
 # Interfaces and contracts
 
@@ -253,7 +253,7 @@ Configuration through environment variables only (names in `frontend.md` / `back
 | ADR-003 | Supabase as the API (RLS + RPC + Edge Functions) | **Superseded by ADR-020** |
 | ADR-004 | Async jobs with pgmq + Edge Function worker | **Superseded by ADR-022** |
 | ADR-005 | Anonymous finders: Supabase anonymous sign-in, manage token, Turnstile; captcha outage fails closed (amended: guard in the API) | Accepted |
-| ADR-006 | Location privacy: deterministic fuzz on write; GURS boundaries in PostGIS (amended: fuzz in the API, TypedSQL) | Accepted |
+| ADR-006 | Location privacy: raw point never stored (20–30 m coarsening at write, device and server); deterministic public blur from the coarsened point; blur 30 days after closure; GURS boundaries in PostGIS | Accepted |
 | ADR-007 | MapLibre + OpenFreeMap; own geocoder on GURS address data in Postgres | Accepted (revised) |
 | ADR-008 | i18n: next-intl / use-intl with shared ICU catalogues | Accepted |
 | ADR-009 | Analytics: typed `track()`, GA4 + Firebase adapters, basic Consent Mode v2 | Accepted |
@@ -286,3 +286,4 @@ Full records: `docs/tech/adr/NNN-*.md` (context, decision, alternatives, consequ
 | 0.6 | 2026-10-15 | TASK-3.8: formatting tools (import-x, eslint-config-prettier, husky + lint-staged; ADR-017), root scripts for Prisma and jobs, no Edge Functions in the workspace |
 | 0.7 | 2026-10-15 | Own geocoder on GURS data in Postgres replaces MapTiler/Photon (ADR-007 revised: MapTiler Free is non-commercial, LQ-21 privacy; about 60 MB), `MAPTILER_API_KEY` no longer needed; R2 buckets in the EU jurisdiction (ADR-014); reward escrow dropped (brief v1.1): no Stripe Connect, payouts or platform fee, display-only reward on lost reports (C4) |
 | 0.8 | 2026-10-15 | Client decision: klikni API toolchain (zod-to-openapi spec, RTK Query + codegen replace TanStack Query; Swagger UI deferred); Next 16 proxy.ts, APP_VERSION, x-request-id (C1), proxy matcher (C15); ADR-008 server text via Node worker; ADR-017 rows |
+| 0.9 | 2026-10-15 | Client decision (CH-25, CH-24): raw GPS never stored, 20–30 m coarsening once at write on device and server, public blur from the coarsened point, post-closure blur job (ADR-006, C6); C4 models/DTOs/limits/query encoding confirmed from TASK-6.5; ADR-017 rows (CH-15, CH-28) |

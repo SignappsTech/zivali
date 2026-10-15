@@ -5,7 +5,7 @@ status: To Do
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:12'
-updated_date: '2026-10-14 22:41'
+updated_date: '2026-10-15 01:54'
 labels:
   - fe
   - 'est:S'
@@ -43,4 +43,5 @@ Branch: agent/task-15.3-picker-web
 - [ ] #2 With location permission denied, pin and search still work and the screen explains why location helps.
 - [ ] #3 An EXIF suggestion is offered as 'Use photo location'; points outside Slovenia show a notice but are accepted.
 - [ ] #4 Search, radius and confirm are keyboard and screen-reader operable; axe 0 violations.
+- [ ] #5 The picker coarsens the confirmed point once on the device (coarsenPoint, 20–30 m) before onChange, for GPS, pin, search and EXIF alike; the owner's pin is labelled 'Približna lokacija · vidno samo vam' and a unit test proves onChange never receives the raw value.
 <!-- AC:END -->

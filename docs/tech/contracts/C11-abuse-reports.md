@@ -23,6 +23,8 @@ Access only through the API (RLS deny-all): reporters create and see their own r
 | `GET /v1/admin/abuse-reports` | moderator, aal2 | `?status&target_type&cursor` | `{ items, next_cursor }` | `AAL2_REQUIRED` |
 | `GET /v1/admin/moderation-flags` | moderator, aal2 | `?cursor` | `{ items, next_cursor }` | `AAL2_REQUIRED` |
 
+`AdminAbuseReport` and `ModerationFlag` (admin list items) = the table columns above (ids, reason/kind, target, `note`/`details`, status, timestamps; reporter shown as id only), defined in `packages/types/src/domain/` (TASK-6.5).
+
 Service rules: reports from accounts younger than 24 h weigh 0.5; when the weighted sum of open reports on a `report` target reaches `abuse.auto_hide_threshold` (3) the report becomes `hidden`, a `moderation_flags` row `auto_hidden` is written, `photo.publish` unpublishes its photos and the managers get `report_hidden` (C10).
 
 ## Example

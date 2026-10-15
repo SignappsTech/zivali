@@ -20,7 +20,7 @@ All three R2 buckets are created in the **EU jurisdiction**; the adapter and pre
 
 | Method and path | Auth | Request | Response | Errors |
 |---|---|---|---|---|
-| `POST /v1/photos` | user or anonymous | `{ sha256, width, height, bytes }` (≤ 1 MB, long edge ≤ 1600, short edge ≥ 320) | `201 { photo_id, upload: { url, method: 'PUT', headers: { 'Content-Type': 'image/jpeg' }, expires_at } }`, or `200 { photo_id, existing: true }` for the same owner and hash | `VALIDATION`, `RATE_LIMITED` (60/hour) |
+| `POST /v1/photos` | user or anonymous | `{ sha256, width, height, bytes }` (`bytes` ≤ 1 MB = 1 048 576 bytes, `MAX_PHOTO_BYTES` in `@zivali/validation`; long edge ≤ 1600, short edge ≥ 320) | `201 { photo_id, upload: { url, method: 'PUT', headers: { 'Content-Type': 'image/jpeg' }, expires_at } }`, or `200 { photo_id, existing: true }` for the same owner and hash | `VALIDATION`, `RATE_LIMITED` (60/hour) |
 | `POST /v1/photos/:id/complete` | owner | - | `202 { status: 'uploaded' }` and job `photo.process` | `NOT_FOUND`, `CONFLICT` (object missing in R2) |
 | `GET /v1/photos/:id` | owner | - | `{ id, status, reject_reason?, thumb_url }` (`thumb_url` is a 10-minute presigned GET while private, the public URL once published) | `NOT_FOUND` |
 | `DELETE /v1/photos/:id` | owner | - | `204`; objects deleted by the worker | `CONFLICT` if attached to a published report |

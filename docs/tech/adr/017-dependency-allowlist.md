@@ -1,6 +1,6 @@
 # ADR-017: Dependency allowlist
 
-- Status: Accepted (revised 2026-10-15 for the Express + Prisma API, ADR-020, and the RTK Query toolchain) · Date: 2026-10-14 · Owner: Tech Lead
+- Status: Accepted (revised 2026-10-15 for the Express + Prisma API, ADR-020, and the RTK Query toolchain; rows added 2026-10-15 from TASK-3.4 and TASK-6.5) · Date: 2026-10-14 · Owner: Tech Lead
 - Source: lean-architecture rule "every new dependency needs an ADR"
 
 ## Decision
@@ -12,7 +12,7 @@ Runtime dependencies outside this list (and outside what the Expo SDK 57 templat
 | `@supabase/supabase-js`, `@supabase/ssr` | web, mobile (auth and Realtime only), api (Admin API only) | Supabase Auth sessions, Realtime Broadcast (ADR-023) |
 | `@reduxjs/toolkit` ^2.13 | `@zivali/api` (dependency) | RTK Query slice and store: cache, retry, hooks for client fetching over the REST API (ADR-020 §Client); replaces TanStack Query |
 | `react-redux` ^9.3 | `@zivali/api` (peer + dev); web, mobile (`<Provider>`) | Store provider and hooks |
-| Dev: `@rtk-query/codegen-openapi` ^2.2 | `@zivali/api` | Generates endpoints and hooks from `apps/api/openapi.json` (`gen:api`) |
+| Dev: `@rtk-query/codegen-openapi` ^2.2 | `@zivali/api` (task owner: the client package, TASK-3.5; web wiring TASK-3.10, mobile wiring: follow-up of TASK-3.4) | Generates the client (endpoints and hooks) from `apps/api/openapi.json` (`gen:api`) |
 | `zod` 4 | validation (all) | Request schemas and DTOs shared by the API and the clients |
 | `react-hook-form`, `@hookform/resolvers` | web, mobile | Forms with zod; RN Reusables and shadcn form patterns |
 | `next-intl` / `use-intl` | web / mobile | ADR-008 |
@@ -37,13 +37,15 @@ Runtime dependencies outside this list (and outside what the Expo SDK 57 templat
 | `pino`, `pino-http` (`pino-pretty` dev only) | api | Structured logs with request ids |
 | `@aws-sdk/client-s3`, `@aws-sdk/s3-request-presigner` | api | Cloudflare R2 (and MinIO locally) with presigned URLs (ADR-014) |
 | `sharp` | api (worker) | Photo re-encoding and variants (ADR-014) |
-| `@asteasolutions/zod-to-openapi` | api, validation (registry) | OpenAPI spec from the zod schemas (`apps/api/openapi.json`) feeding the RTK codegen. Swagger UI (`swagger-ui-express` or equivalent) gets its row when its deferred task is picked up |
+| `@asteasolutions/zod-to-openapi` | validation, api (client decision, TASK-6.5: the zod schemas in `@zivali/validation` are the single OpenAPI source; the package exports the registry and `registerSchemas()`, the API builds the spec from it) | OpenAPI spec from the zod schemas (`apps/api/openapi.json`) feeding the RTK codegen. Swagger UI (`swagger-ui-express` or equivalent) gets its row when its deferred task is picked up |
 | `stripe` | api | ADR-011 |
 | `pdfkit` | api (worker) | Receipt and fiscal invoice PDFs (klikni uses it; TASK-92) |
 | `@anthropic-ai/sdk` | api worker (M3) | ADR-012 |
 | `@sentry/nextjs`, `@sentry/react-native` | web, mobile (M5, TASK-70) | Error tracking, EU region, PII scrubbing |
 | Dev: `vitest`, `@testing-library/*`, `jsdom`, `@playwright/test`, `@axe-core/playwright`, `@lhci/cli`, `linkinator`, `jest-expo`, `secretlint`, `supabase` (CLI), `turbo`, `eslint`, `prettier`, `typescript` | repo | ADR-001, ADR-015 |
 | Dev: `@eslint/js`, `typescript-eslint`, `globals` | repo | Root ESLint base config: JS recommended rules, TypeScript parsing and rules, Node globals for scripts (TASK-3.1) |
+| Dev: `jest`, `@types/jest`, `react-test-renderer`, `react-dom` 19.2.3 | mobile | `jest-expo` runner and types; `react-test-renderer` is the RNTL 14 peer; `react-dom` pinned to the Expo template version (TASK-3.4) |
+| `class-variance-authority` | mobile | Installed by the RN Reusables CLI for component variants (TASK-3.4); web already gets it from shadcn |
 | Dev: `tsx`, `tsup`, `supertest` | api | Dev runner, build, HTTP tests (klikni toolchain, ADR-020) |
 | Dev: `husky`, `lint-staged` | repo | Pre-commit lint and format (klikni practice) |
 | Dev: `eslint-plugin-import-x` | repo | `import-x/order` with klikni's groups (builtin, external, internal; blank line between). Replaces klikni's `eslint-plugin-import`, which does not support ESLint 10; resolver-free for this rule (TASK-3.8) |

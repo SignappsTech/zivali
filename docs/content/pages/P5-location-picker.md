@@ -3,7 +3,7 @@ source: 03§P5; docs/design/pages/P5-location-picker.md
 page: P5 Location picker and privacy-preserving area
 stories: TASK-15 (FR-004)
 copy-for: docs/design/pages/P5-location-picker.md
-version: 0.3
+version: 0.4
 status: Draft, native Slovenian review pending
 date: 2026-10-15
 ---
@@ -109,7 +109,8 @@ Offline (v0.3): lost reports and the alert area use `location.offline` (confirm 
 | location.area_line | Območje: {area}, približno {radius} | Area: {area}, about {radius} | "Območje: Šiška, približno 500 m" |
 | location.area_note | Prikazano območje je približno. | The area shown is approximate. | One sentence under the area line |
 | location.area_map_alt | Približno območje okoli kraja {area}, polmer približno {radius} | Approximate area around {area}, radius about {radius} | Text alternative of the small map |
-| location.exact_own | Vidno samo vam | Visible only to you | Label on the owner's or reporter's exact pin |
+| location.exact_own | Približna lokacija · vidno samo vam | Approximate location · visible only to you | Label on the owner's or reporter's own pin. The stored point is moved by 20–30 m, so it is never called "exact" (v0.4) |
+| location.exact_own_help | Točko smo pred shranjevanjem premaknili za 20 do 30 m. Javno prikažemo samo širše območje okoli nje. | We moved the point by 20–30 m before saving it. The public sees only a wider area around it. | Help text (info popover or line under the label); same on P9 (v0.4) |
 
 # 8. SEO and alt text
 

@@ -5,7 +5,7 @@ status: To Do
 assignee:
   - '@qa'
 created_date: '2026-10-14 22:14'
-updated_date: '2026-10-14 23:38'
+updated_date: '2026-10-15 01:54'
 labels:
   - qa
   - 'est:XS'
@@ -19,6 +19,8 @@ dependencies:
   - TASK-3.7
   - TASK-3.8
   - TASK-3.9
+  - TASK-3.13
+  - TASK-3.14
 references:
   - docs/tech/frontend.md
 parent_task_id: TASK-3

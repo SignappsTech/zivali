@@ -2,7 +2,7 @@
 doc: design-system
 title: Design system (slice)
 source: 03§Brand and visual language
-version: 0.9
+version: 0.11
 status: Draft, direction A (Lagoon) chosen by the client
 date: 2026-10-15
 owner: Design Lead
@@ -123,12 +123,12 @@ The generated hex values below come from `tokens.json`. "Role" tells you where t
 |---|---|---|---|
 | `sidebar` | Shelter portal and admin sidebar background | #0D343D | #071113 |
 | `sidebar-foreground` | Sidebar text | #EBF6F7 | #E8EEEE |
-| `sidebar-primary` | Active item in the sidebar | #F7B32B | #F7B32B |
-| `sidebar-primary-foreground` | Text on sidebar-primary | #101A1D | #101A1D |
+| `sidebar-primary` | Active item in the sidebar (calm light mist, not sun yellow) | #EBF6F7 | #E8EEEE |
+| `sidebar-primary-foreground` | Text on sidebar-primary | #0D343D | #101A1D |
 | `sidebar-accent` | Sidebar hover and selected fill | #10424D | #182E33 |
 | `sidebar-accent-foreground` | Text on sidebar-accent | #EBF6F7 | #F3F6F6 |
 | `sidebar-border` | Sidebar dividers | #10424D | #182E33 |
-| `sidebar-ring` | Focus ring on the sidebar | #F7B32B | #F7B32B |
+| `sidebar-ring` | Focus ring on the sidebar | #EBF6F7 | #E8EEEE |
 
 #### Pet status
 
@@ -173,6 +173,8 @@ The generated hex values below come from `tokens.json`. "Role" tells you where t
 | `warning-subtle` | Caution notice fill | #FFEDB8 | #4A300F |
 | `warning-subtle-foreground` | Text on warning-subtle | #6A4410 | #FFEDB8 |
 | `warning-border` | Caution notice edge | #E09A12 | #8F5C0C |
+| `qr` | QR code field. Fixed light in both themes so scanners read it | #FFFFFF | #FFFFFF |
+| `qr-foreground` | QR code modules (dark on `qr`, same in both themes; keep a 4-module quiet zone of `qr`) | #101A1D | #101A1D |
 | `scrim` | Overlay behind sheets and dialogs (alpha 0.56 light, 0.72 dark) | #071113 | #071113 |
 
 #### Sign-in providers (brand colours, literal values)
@@ -256,7 +258,7 @@ Floors: 4.5:1 text, 3:1 UI and graphics. Targets: 7:1 for body text and primary 
 | `provider-border` on `background` | 3.9:1 | 5.8:1 | 3:1 |
 | `provider-border` on `card` | 4.4:1 | 5.3:1 | 3:1 |
 | `sidebar-foreground` on `sidebar` | 12.1:1 | 16.3:1 | 7:1 |
-| `sidebar-primary-foreground` on `sidebar-primary` | 9.6:1 | 9.6:1 | 7:1 |
+| `sidebar-primary-foreground` on `sidebar-primary` | about 11:1 | about 15:1 | 7:1 (value set by the build) |
 | `sidebar-accent-foreground` on `sidebar-accent` | 10.0:1 | 13.1:1 | 7:1 |
 | `marker-lost` on `map-land` | 4.5:1 | 5.9:1 | 3:1 |
 | `marker-found` on `map-land` | 7.0:1 | 5.9:1 | 3:1 |
@@ -307,7 +309,7 @@ Both are Google Fonts with Latin Extended, so **Č, Š, Ž** (and Đ, Ć) render
 
 **Loading.** Web: `next/font/google` with `subsets: ['latin', 'latin-ext']`, `display: swap`, variable fonts. Mobile: `expo-font` with `@expo-google-fonts/bricolage-grotesque` (600 SemiBold, 700 Bold) and `@expo-google-fonts/atkinson-hyperlegible-next` (400 Regular, 600 SemiBold, 700 Bold). React Native cannot use variable font axes, so use these static weights only. Static instances use the default optical size, so if mobile headings look loose, tighten tracking by 0.01em. Verify the package names at scaffold time.
 
-React Native family names to register: `BricolageGrotesque_600SemiBold`, `BricolageGrotesque_700Bold`, `AtkinsonHyperlegibleNext_400Regular`, `AtkinsonHyperlegibleNext_600SemiBold`, `AtkinsonHyperlegibleNext_700Bold`. Map them as `font-display` (600/700) and `font-sans` (400/600/700) in the Tailwind preset.
+React Native family names to register: `BricolageGrotesque_600SemiBold`, `BricolageGrotesque_700Bold`, `AtkinsonHyperlegibleNext_400Regular`, `AtkinsonHyperlegibleNext_600SemiBold`, `AtkinsonHyperlegibleNext_700Bold`. Map them as `font-display` (600/700) and `font-sans` (400/600/700) in the Tailwind preset. `font-sans-bold` is Atkinson Hyperlegible Next 700 (`AtkinsonHyperlegibleNext_700Bold`), generated from the `label-strong` role; on mobile use it for labels that need extra weight, since React Native cannot apply `font-bold` to a static family.
 
 ## Scale (px, size/line-height)
 
@@ -316,8 +318,8 @@ Mobile first. Desktop applies from `lg` (1024 px).
 | Role | Family, weight | Mobile | Desktop | Tracking | Use |
 |---|---|---|---|---|---|
 | display | Display 700 | 36/42 | 60/64 | -0.025em | Hero headline only |
-| h1 | Display 700 | 30/36 (flow screens 34/40) | 48/52 (pet name 64) | -0.02em | One per view |
-| h2 | Display 700 | 24/30 | 30/36 | -0.015em | Section heading, sheet title |
+| h1 | Display 700 | 30/36 (flow screens 34/40) | 48/52 (pet name 64; **admin console 30/36 at all widths**) | -0.02em | One per view |
+| h2 | Display 700 | 24/30 | 30/36 (**admin console 24/30 at all widths**) | -0.015em | Section heading, sheet title |
 | h3 / row title | Display 600 | 20/28 | 24/32 | -0.01em | Row and tile titles |
 | title | Display 600 | 18/28 | 20/28 | -0.005em | Dialog title |
 | body-lg | Text 400 | 18/28 (flow answer 22/32) | 20/32 | 0 | Lead text, the answer in a flow |
@@ -476,7 +478,7 @@ Web = shadcn/ui, mobile = React Native Reusables (NativeWind). Same names, same 
 | Textarea | Same line style and states, min 96 px. |
 | Select | Line style with a caret (`caret-down`, `caret-up` when open). On web it opens a listbox popover (radius 20, 8 px padding, 48 px options, hover `foreground` at 10 %, selected option bold with a check on the right). On mobile it opens a bottom sheet of choice rows. |
 | Search | Input with a leading `magnifying-glass` and, once filled, a 44 px clear icon button at the end ("Počisti iskanje"). While results load, a spinner takes the clear button's place and a polite live region says so. |
-| Switch | 56x32, track `input` (off) or `primary` (on), thumb `card`. The whole row (label and switch) is the target. Disabled: `muted` track, `muted-foreground` thumb that keeps its position. |
+| Switch | 56x32, track `input` (off) or `primary` (on), thumb `card`. The whole row (label and switch) is the target. Disabled: `muted` track with a 2 px `input` inset line (the muted track alone vanishes on `popover` in dark), `muted-foreground` thumb that keeps its position; pair it with a text reason such as a lock icon and "Vedno vklopljeno". |
 | Checkbox, radio | 24 px visual in a 44 px hit area (the whole label). Unchecked: 2 px `input` line, no fill; hover turns the line `foreground`. Checked: `primary` fill; the checkbox (radius 6) shows a 16 px bold check, the radio (round) a 10 px `primary-foreground` **dot**, not a check. Disabled: `muted` fill, `muted-foreground` mark, reason in help text. Prefer choice rows for 2 to 4 options; radios are for longer lists. |
 | Placeholder | `muted-foreground`, example format only, never a label. |
 
@@ -537,7 +539,11 @@ Top bar, then (optional) a photo, an h1 question (34/40), the answer or control 
 | Progress | The step bars above, or a 4 px `primary` bar on `muted` for uploads, with the label and percentage above it. Done: full bar plus a check-circle and a sentence. Failed: the bar turns `destructive`, an error line with icon and a `text` retry button follow. Never colour alone. |
 | Premium and verified marks | Tonal pill with fill icon, for example "Povečan doseg" (`premium`) and "Preverjeno zavetišče" (`verified`). Boost buttons are normal secondary buttons. |
 | Chart (shelter portal) | `chart-1` to `chart-5`, direct labels, no legend boxes, grid lines `border`. |
-| Sidebar (shelter portal) | shadcn sidebar with the `sidebar-*` tokens: dark teal, `sidebar-primary` for the active item. |
+| Sidebar (shelter portal, admin) | shadcn sidebar with the `sidebar-*` tokens: dark teal. 280 px, 72 px collapsed to icons, sheet below `lg`. Items 44 px, radius 12, icon 20, label 16 semibold. Hover `sidebar-accent`; active item `sidebar-primary` fill (light mist, never sun yellow) with `sidebar-primary-foreground`, bold label, fill icon and `aria-current="page"`; focus 3 px `sidebar-ring`, 2 px offset. |
+| Dense table (admin) | `card` surface, radius 24, padding 4/16/8. Sticky header 52 px (14 bold, `muted-foreground`; sorted column `foreground` with an arrow icon and `aria-sort`), rows 56 px, text 15/22, 1 px `border` hairlines between rows (allowed here only). Row hover `accent` at 60 %, selected row `accent`; the row title is a 44 px link that underlines on row hover. Checkbox column 44 px, action column 52 px. Selecting rows shows a bulk bar (60 px, count, actions; delete is a ghost action in `destructive`). Below `lg` rows stack: title and status first, then meta; checkbox and menu stay 44 px. States: skeleton rows, empty result, inline error (10.9). |
+| Drawer (right sheet, admin) | 480 px wide, full height under the top bar, `card`, leading corners 24, `shadow-pop`, scrim, modal with focus trapped, Escape closes, focus returns to the row. Head: title in the 20/28 dialog-title role and a 44 px close button (24/16/8/24 padding); body 24 px side padding, 32 px between groups; sticky footer with the one primary then a `text` cancel. Below 640 px it is full width. |
+| Tooltip (collapsed sidebar and icon buttons) | `popover`, radius 8, 8/12 padding, 14/20 semibold, `shadow-pop`, 12 px from the target, shows on hover and keyboard focus, hides on Escape, never holds interactive content. The name is also the control's accessible name. |
+| Checkbox, mixed (indeterminate) | Same 24 px box and 44 px hit as 10.3, `primary` fill with a 16 px bold minus icon instead of the check; `aria-checked="mixed"`. Used on the header checkbox when some rows are selected; pressing selects all, pressing again clears. |
 
 ## 10.10 shadcn and React Native Reusables mapping
 
@@ -665,3 +671,5 @@ Each page slice in `docs/design/pages/P<n>-<slug>.md` gets one static mockup at 
 | 0.7 | 2026-10-15 | FR-044 shelter directory: footer gains the "Shelters" link (13 links). Screens live in P3 (T5, T6), P19 and the P6 and P7 call rows. |
 | 0.8 | 2026-10-15 | P5 review (TASK-15.1): area discs take the status hue (found green, sighted blue, own alert area teal; lost stays `marker-area`), pin marker documented, content dialog (up to 600 px, h2 title) for web flow steps. |
 | 0.9 | 2026-10-15 | P9 review (TASK-18.1): header "Prijavi" is `secondary` when the page has its own primary. |
+| 0.10 | 2026-10-15 | CH-30, CH-33 (from TASK-3.4, TASK-30.1): `font-sans-bold` (Atkinson 700, `label-strong` role) and `qr` / `qr-foreground` tokens (fixed light field, dark modules, both themes; contrast pair 7:1). Tokens 0.5.0. |
+| 0.11 | 2026-10-15 | P19 review (TASK-34.1): `sidebar-primary` and `sidebar-ring` become light mist (sun yellow stays out of the console); admin h1 30/36 and h2 24/30 at all widths; added dense table, drawer, tooltip and mixed checkbox specs. |

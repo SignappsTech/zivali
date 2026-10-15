@@ -56,7 +56,7 @@ Neither side sees contact data before confirmation (FR-008 R-008.5); after confi
 ## Example
 
 ```json
-{ "match_id": "m1…", "score": 0.78, "strength": "good", "chip_match": false,
+{ "id": "m1…", "score": 0.78, "strength": "good", "chip_match": false,
   "reasons": [{ "code": "distance", "band": "1to3" }, { "code": "time", "hours_band": "lt24" }, { "code": "colour", "overlap": 1 }],
   "other": { "short_code": "Hk3vT9qP", "type": "found", "species": "dog", "photos": [ … ] } }
 ```
