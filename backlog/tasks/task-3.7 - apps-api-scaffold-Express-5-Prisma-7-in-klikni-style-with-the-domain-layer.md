@@ -5,7 +5,7 @@ status: To Do
 assignee:
   - '@backend-dev'
 created_date: '2026-10-14 23:35'
-updated_date: '2026-10-14 23:45'
+updated_date: '2026-10-15 00:24'
 labels:
   - tech
   - 'est:M'
@@ -42,4 +42,11 @@ Branch: agent/task-3.7-api-scaffold
 - [ ] #5 A Vitest + Supertest harness runs against the local database with a locally signed test JWT helper; tsx watch for dev, tsup build, a multi-stage Dockerfile producing one image for api and worker; docker-compose.dev.yml starts MinIO with the three buckets.
 - [ ] #6 apps/api/README.md documents the layout, the where-does-logic-go rules from backend.md and the commands.
 - [ ] #7 Routes are split per area into routes/<area>.routes.ts (one Router each) mounted by routes/index.ts under /v1; file suffixes follow backend.md Naming
+- [ ] #8 DATABASE_URL uses ?schema=app; the first Prisma migration creates schemas app and pgboss and the postgis and vector extensions (in the existing extensions schema) without touching public; no grants to anon/authenticated on app; prisma migrate reset never drops Supabase's public schema
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+Review note from TASK-3.2: the RLS policy on realtime.messages (private Broadcast channels, ADR-023) must ship as a Prisma migration with the chat backend task, otherwise private channels deny everything.
+<!-- SECTION:NOTES:END -->
