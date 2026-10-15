@@ -1,11 +1,11 @@
 ---
 id: TASK-11.2
 title: 'Web shell: header, footer, layout, route groups and guards, shared states'
-status: To Do
+status: In Progress
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:12'
-updated_date: '2026-10-15 04:40'
+updated_date: '2026-10-15 08:20'
 labels:
   - fe
   - 'est:M'
@@ -48,6 +48,6 @@ Branch: agent/task-11.2-shell-web
 - [ ] #5 axe reports 0 violations and Lighthouse SEO ≥ 95 on the home placeholder.
 - [ ] #6 Every page has a localised meta description (SL and EN); Lighthouse SEO ≥ 0.95
 - [ ] #7 favicon.ico and app icons are served (no 404 in the console)
-- [ ] #8 Mobile LCP ≤ 2.5 s in pnpm quality (font preload/fallback checked)
+- [ ] #8 Mobile LCP ≤ 2.5 s in pnpm quality (font preload/fallback checked) (moved to TASK-90.4: the mobile LCP/script budget work lives there)
 - [ ] #9 Pages set alternates.canonical built from APP_URL, never from request headers (hreflang already comes from proxy.ts via APP_URL, TASK-10.2)
 <!-- AC:END -->
