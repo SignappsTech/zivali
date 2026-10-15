@@ -462,8 +462,8 @@ Web = shadcn/ui, mobile = React Native Reusables (NativeWind). Same names, same 
 | State | Rule |
 |---|---|
 | Default | Token fill and text as specified. |
-| Hover (web) | Filled buttons: mix 14 % of `foreground` into the fill. Ghost, text and icon buttons and menu rows: fill `foreground` at 10 % over the surface (the `accent` token is too close to `background` to show). Pointer cursor. |
-| Pressed | Hover colour plus `scale(0.98)` for 80 ms. Light haptic on the primary action on mobile. |
+| Hover (web) | Filled buttons: the `<variant>-hover` token (`primary-hover`, `secondary-hover`, `destructive-hover`; one calm step along the same scale, darker in light mode, lighter in dark; no colour-mix in code). Ghost, text and icon buttons and menu rows: fill `foreground` at 10 % over the surface (the `accent` token is too close to `background` to show). Pointer cursor. |
+| Pressed | Filled buttons: the `<variant>-pressed` token (one more step) plus `scale(0.98)` for 80 ms. Light haptic on the primary action on mobile. |
 | Focus-visible | 3 px `ring`, 2 px offset. Fill unchanged. |
 | Disabled | `muted` fill, `muted-foreground` text, no opacity trick. Say why in help text. Still 4.5:1. |
 | Loading | Keep the label, put a spinner before it, `aria-busy`, ignore presses, no layout shift. |
@@ -690,3 +690,4 @@ Each page slice in `docs/design/pages/P<n>-<slug>.md` gets one static mockup at 
 | 0.12 | 2026-10-15 | CH-46, CH-59: `suggested` pill state (§10.4); print tokens for the P18 poster documented (`qr`, `qr-foreground`, `input`; no tokens.json change). |
 | 0.13 | 2026-10-15 | CH-67, CH-68, CH-72: legal note slot exempt from one note per view; checklist "at most one primary" and header "Prijavi" secondary on P3 T5/T6; Accordion row and On this page list components (§10.9). |
 | 0.14 | 2026-10-15 | CH-85, CH-90: drawer stays full width only below 640 px (480 px at 768); chip example fixed to 15 digits. |
+| 0.15 | 2026-10-15 | CH-95 (from TASK-8.2): type steps `control` 15/20 and `control-lg` 17/24 (control labels, tabs, radio rows, toast text, large button); button state tokens `primary-hover`, `primary-pressed`, `secondary-hover`, `secondary-pressed`, `destructive-hover`, `destructive-pressed` in light and dark (replace the 14 % mix; text on every state 10.0:1 or better light and 7.0:1 or better dark, except `secondary-pressed` at 6.4:1 light and 7.0:1 dark, floor 6:1 for the transient state); new primitives `crimson.200`, `crimson.800`. Tokens 0.5.2. |

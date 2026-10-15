@@ -20,6 +20,12 @@ tailwind.config = {
         "accent-foreground": "hsl(var(--accent-foreground) / <alpha-value>)",
         "destructive": "hsl(var(--destructive) / <alpha-value>)",
         "destructive-foreground": "hsl(var(--destructive-foreground) / <alpha-value>)",
+        "primary-hover": "hsl(var(--primary-hover) / <alpha-value>)",
+        "primary-pressed": "hsl(var(--primary-pressed) / <alpha-value>)",
+        "secondary-hover": "hsl(var(--secondary-hover) / <alpha-value>)",
+        "secondary-pressed": "hsl(var(--secondary-pressed) / <alpha-value>)",
+        "destructive-hover": "hsl(var(--destructive-hover) / <alpha-value>)",
+        "destructive-pressed": "hsl(var(--destructive-pressed) / <alpha-value>)",
         "border": "hsl(var(--border) / <alpha-value>)",
         "input": "hsl(var(--input) / <alpha-value>)",
         "ring": "hsl(var(--ring) / <alpha-value>)",
@@ -125,8 +131,16 @@ tailwind.config = {
           "0.875rem",
           "1.25rem"
         ],
+        "control": [
+          "0.9375rem",
+          "1.25rem"
+        ],
         "base": [
           "1rem",
+          "1.5rem"
+        ],
+        "control-lg": [
+          "1.0625rem",
           "1.5rem"
         ],
         "lg": [
