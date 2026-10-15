@@ -1,11 +1,11 @@
 ---
 id: TASK-6.14
 title: 'Validation: coarsenPoint() in packages/validation/geo'
-status: In Progress
+status: Done
 assignee:
   - '@backend-dev'
 created_date: '2026-10-15 02:50'
-updated_date: '2026-10-15 02:56'
+updated_date: '2026-10-15 03:10'
 labels:
   - be
   - 'est:XS'
