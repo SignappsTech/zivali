@@ -3,11 +3,11 @@ id: TASK-6.17
 title: >-
   API follow-ups from the 6.3 and 3.12 reviews: typed notification payload,
   stopJobs on shutdown, no /docs in production
-status: In Progress
+status: Done
 assignee:
   - '@backend-dev'
 created_date: '2026-10-15 13:30'
-updated_date: '2026-10-15 12:30'
+updated_date: '2026-10-15 14:45'
 labels:
   - be
   - 'est:XS'
