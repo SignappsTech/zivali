@@ -1,11 +1,11 @@
 ---
 id: TASK-22.4
 title: 'Web notifications view, unread badge and notification settings'
-status: In Progress
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:14'
-updated_date: '2026-10-15 22:19'
+updated_date: '2026-10-15 23:21'
 labels:
   - fe
   - 'est:M'
