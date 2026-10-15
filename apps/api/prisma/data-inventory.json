@@ -281,6 +281,129 @@
 			"export": false,
 			"delete": "keep",
 			"other_columns": ["place_id", "number", "suffix", "point"]
+		},
+		"abuse_reports": {
+			"category": "moderation",
+			"personal_data": ["reporter_id", "target_id", "note"],
+			"basis": "legitimate interest (GDPR art. 6(1)(f)): abuse prevention (C11)",
+			"retention": "12 months after resolution",
+			"export": true,
+			"delete": "delete (cascades with the reporter profile)",
+			"other_columns": ["id", "target_type", "reason", "weight", "status", "created_at"]
+		},
+		"moderation_flags": {
+			"category": "moderation",
+			"personal_data": ["target_id", "details"],
+			"basis": "legitimate interest (GDPR art. 6(1)(f)): abuse prevention (C11)",
+			"retention": "12 months after resolution",
+			"export": false,
+			"delete": "delete with the target",
+			"other_columns": ["id", "kind", "target_type", "created_at", "resolved_at"]
+		},
+		"payments": {
+			"category": "payments",
+			"personal_data": ["user_id", "provider_session_id", "provider_payment_id", "refs"],
+			"basis": "contract (GDPR art. 6(1)(b)) and legal obligation (art. 6(1)(c)): accounting records (C13); provider ids only, never card data",
+			"retention": "10 years (ZDDV-1 invoice retention)",
+			"export": true,
+			"delete": "anonymise (user_id set null; accounting records are kept)",
+			"other_columns": [
+				"id",
+				"purpose",
+				"amount_cents",
+				"currency",
+				"status",
+				"provider",
+				"receipt_sent_at",
+				"created_at",
+				"updated_at"
+			]
+		},
+		"payment_events": {
+			"category": "payments",
+			"personal_data": ["payload"],
+			"basis": "legal obligation (GDPR art. 6(1)(c)): accounting records (C13); a redacted summary of provider ids, amount and status, never the raw event or card data",
+			"retention": "10 years (ZDDV-1 invoice retention)",
+			"export": false,
+			"delete": "keep",
+			"other_columns": ["id", "provider", "provider_event_id", "type", "received_at"]
+		},
+		"ads": {
+			"category": "ads",
+			"personal_data": ["created_by"],
+			"basis": "legitimate interest (GDPR art. 6(1)(f)): accountability of staff actions",
+			"retention": "kept (soft delete)",
+			"export": false,
+			"delete": "keep (created_by set null)",
+			"other_columns": [
+				"id",
+				"title",
+				"body",
+				"cta",
+				"link_url",
+				"image_path",
+				"image_alt",
+				"locales",
+				"slots",
+				"region_ids",
+				"municipality_ids",
+				"species",
+				"starts_at",
+				"ends_at",
+				"status",
+				"is_house",
+				"house_kind",
+				"exclusive",
+				"weight",
+				"deleted_at",
+				"created_at",
+				"updated_at"
+			]
+		},
+		"ad_stats_daily": {
+			"category": "ads",
+			"personal_data": [],
+			"basis": "none (aggregates; no user ids, no cookies)",
+			"retention": "kept",
+			"export": false,
+			"delete": "keep",
+			"other_columns": ["day", "ad_id", "slot", "region_id", "impressions", "clicks"]
+		},
+		"partner_stats_snapshot": {
+			"category": "ads",
+			"personal_data": [],
+			"basis": "none (aggregates; counts 1–4 shown as <5)",
+			"retention": "90 days",
+			"export": false,
+			"delete": "keep",
+			"other_columns": ["id", "generated_at", "data"]
+		},
+		"leads": {
+			"category": "sales",
+			"personal_data": ["contact_name", "email", "phone", "message"],
+			"basis": "consent (GDPR art. 6(1)(a)), recorded in consent_at (C14)",
+			"retention": "24 months, or until deleted on request",
+			"export": false,
+			"delete": "delete on request",
+			"other_columns": ["id", "company", "region_interest", "interest", "consent_at", "status", "created_at"]
+		},
+		"organisations": {
+			"category": "account",
+			"personal_data": [],
+			"basis": "contract (GDPR art. 6(1)(b)); organisation data, no personal data",
+			"retention": "while the organisation uses the service",
+			"export": false,
+			"delete": "keep",
+			"other_columns": ["id", "kind", "name", "municipality_id", "verified_at", "created_at", "updated_at"]
+		},
+		"organisation_members": {
+			"category": "account",
+			"personal_data": ["user_id"],
+			"basis": "contract (GDPR art. 6(1)(b))",
+			"retention": "until the member leaves or the account is deleted",
+			"export": true,
+			"delete": "delete (cascades with the profile)",
+			"other_columns": ["organisation_id", "role", "created_at"]
 		}
 	},
 	"buckets": {

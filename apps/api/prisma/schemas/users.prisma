@@ -36,6 +36,11 @@ model profiles {
   alert_subscription      alert_subscriptions?
   alert_deliveries        alert_deliveries[]
   email_outbox            email_outbox[]
+  // Abuse, payments, ads and organisations (C11, C13, C14)
+  abuse_reports           abuse_reports[]
+  payments                payments[]
+  ads_created             ads[]
+  organisation_members    organisation_members[]
   created_at              DateTime                                         @default(now()) @db.Timestamptz(6)
   updated_at              DateTime                                         @updatedAt @db.Timestamptz(6)
 

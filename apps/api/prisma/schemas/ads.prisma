@@ -1,0 +1,91 @@
+// Ads, daily ad stats, partner stats and leads (C14). Ads are admin-managed (TASK-37.2) and served by TASK-35.1
+// with house ads as the fallback; clicks are counted by the API before its 302. RLS deny-all (ADR-021).
+
+enum AD_SLOT {
+  FEED
+  DETAIL
+  REUNITED
+  SIDEBAR
+
+  @@schema("app")
+}
+
+model ads {
+  id               String           @id @default(uuid()) @db.Uuid
+  title            String           @db.VarChar(60)
+  body             String           @db.VarChar(120)
+  cta              String           @db.VarChar(24)
+  // https only (check in the migration)
+  link_url         String
+  image_path       String?
+  // 5–140 characters (check in the migration)
+  image_alt        String
+  locales          String[]         @default(["sl", "en"])
+  slots            AD_SLOT[]
+  // null or empty = every region / municipality / species
+  region_ids       Int[]            @db.SmallInt
+  municipality_ids Int[]            @db.SmallInt
+  // 'dog' | 'cat' (check in the migration); becomes SPECIES[] once reports.prisma (TASK-6.6) is on main
+  species          String[]
+  starts_at        DateTime?        @db.Timestamptz(6)
+  ends_at          DateTime?        @db.Timestamptz(6)
+  // 'draft' | 'active' | 'paused' | 'ended' (check in the migration)
+  status           String           @default("draft")
+  is_house         Boolean          @default(false)
+  // 'supporter' | 'partner' | 'adopt' (check in the migration)
+  house_kind       String?
+  exclusive        Boolean          @default(false)
+  weight           Int              @default(1)
+  deleted_at       DateTime?        @db.Timestamptz(6)
+  // null once the staff account is deleted
+  created_by       String?          @db.Uuid
+  creator          profiles?        @relation(fields: [created_by], references: [id], onDelete: SetNull)
+  created_at       DateTime         @default(now()) @db.Timestamptz(6)
+  updated_at       DateTime         @updatedAt @db.Timestamptz(6)
+  stats            ad_stats_daily[]
+
+  @@schema("app")
+}
+
+// Aggregates only: no user ids, no cookies. day in Europe/Ljubljana; region_id 0 = unknown.
+model ad_stats_daily {
+  day         DateTime @db.Date
+  ad_id       String   @db.Uuid
+  slot        AD_SLOT
+  region_id   Int      @default(0) @db.SmallInt
+  impressions Int      @default(0)
+  clicks      Int      @default(0)
+  ad          ads      @relation(fields: [ad_id], references: [id], onDelete: Cascade)
+
+  @@id([day, ad_id, slot, region_id])
+  @@schema("app")
+}
+
+// Written hourly by the partners.stats job (TASK-38.2); GET /v1/partners/stats serves the newest row.
+model partner_stats_snapshot {
+  id           String   @id @default(uuid()) @db.Uuid
+  generated_at DateTime @default(now()) @db.Timestamptz(6)
+  // PartnerStats (C14); counts 1–4 are already '<5'
+  data         Json
+
+  @@index([generated_at])
+  @@schema("app")
+}
+
+// "Oglašujte pri nas" form (POST /v1/leads).
+model leads {
+  id              String   @id @default(uuid()) @db.Uuid
+  company         String
+  contact_name    String
+  email           String
+  phone           String?
+  region_interest String?
+  // 'ad' | 'vet_partner' | 'unsure' (check in the migration)
+  interest        String   @default("unsure")
+  message         String   @db.VarChar(2000)
+  consent_at      DateTime @db.Timestamptz(6)
+  status          String   @default("new")
+  created_at      DateTime @default(now()) @db.Timestamptz(6)
+
+  @@schema("app")
+}
