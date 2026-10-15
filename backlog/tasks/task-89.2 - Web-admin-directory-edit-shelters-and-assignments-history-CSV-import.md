@@ -1,11 +1,11 @@
 ---
 id: TASK-89.2
 title: 'Web admin directory: edit shelters and assignments, history, CSV import'
-status: In Progress
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 23:36'
-updated_date: '2026-10-15 05:18'
+updated_date: '2026-10-15 07:41'
 labels:
   - fe
   - 'est:M'
