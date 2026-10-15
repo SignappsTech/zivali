@@ -5,6 +5,17 @@
 /* tokens.css switches on the .dark class, which the theme script in the root layout sets from the OS. */
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* Skeleton shimmer (system §10.9); components/ui/skeleton.tsx stops it under reduced motion. */
+@theme {
+	--animate-shimmer: shimmer 1.6s linear infinite;
+
+	@keyframes shimmer {
+		to {
+			background-position: -200% 0;
+		}
+	}
+}
+
 @layer base {
 	:root {
 		color-scheme: light;
