@@ -3,11 +3,11 @@ id: TASK-3.5
 title: >-
   packages/api foundation: REST client, ApiError, idempotency and query helpers,
   fixtures
-status: In Review
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:12'
-updated_date: '2026-10-15 01:35'
+updated_date: '2026-10-15 01:36'
 labels:
   - fe
   - 'est:S'
