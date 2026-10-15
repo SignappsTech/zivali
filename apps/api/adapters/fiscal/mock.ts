@@ -21,7 +21,7 @@ export function mockFiscal(seller: { tax_number: string; premise_id: string; dev
 		...seller,
 		zoi,
 		async issue(invoice) {
-			const code = zoi(invoice);
+			const code = invoice.zoi;
 			return {
 				zoi: code,
 				eor: asUuid(createHash('sha256').update(`eor:${code}`).digest('hex')),

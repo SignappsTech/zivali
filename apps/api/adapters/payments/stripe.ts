@@ -116,7 +116,8 @@ export function stripePayments(secretKey: string, webhookSecret: string): Paymen
 			}
 			if (!res.ok) throw new Error(`stripe: HTTP ${res.status}`);
 			const json = (await res.json()) as { id: string; url: string; livemode?: boolean };
-			if (json.livemode && !live) throw new AppError('LIVE_MODE_FORBIDDEN', 'Live mode is refused (test mode only)');
+			if (json.livemode && !live)
+				throw new AppError('LIVE_MODE_FORBIDDEN', 'Live mode is refused (test mode only)');
 			return { id: json.id, url: json.url };
 		},
 		parseWebhook: (rawBody, signature) => verifyEvent(rawBody, signature, webhookSecret),

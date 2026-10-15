@@ -1,5 +1,6 @@
 // /v1/payments (C13): checkout and own payment reads; GET /v1/me/payments is in me.routes.ts. Wiring only.
 import { Router } from 'express';
+import { z } from 'zod';
 
 import { CheckoutInput, CheckoutResponse, IdParams, Payment } from '@zivali/validation';
 
@@ -63,7 +64,13 @@ route(
 			'breakdown, ZOI and EOR), rendered by the worker after the payment succeeded. 404 for anyone else’s payment ' +
 			'and until the invoice exists (or when fiscal invoicing is off for its purpose).',
 		request: { params: IdParams },
-		responses: { 200: { description: 'The invoice PDF (application/pdf)' } },
+		responses: {
+			200: {
+				description: 'The invoice PDF',
+				schema: z.string().meta({ format: 'binary' }),
+				contentType: 'application/pdf',
+			},
+		},
 		errors: ['UNAUTHENTICATED', 'NOT_FOUND'],
 	},
 	authMiddleware,

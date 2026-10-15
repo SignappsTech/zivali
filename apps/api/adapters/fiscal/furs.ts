@@ -39,7 +39,8 @@ function decode(body: string): z.infer<typeof FursResponse> | null {
 	try {
 		const { token } = JSON.parse(body) as { token?: string };
 		const payload = token?.split('.')[1];
-		const parsed = payload && FursResponse.safeParse(JSON.parse(Buffer.from(payload, 'base64url').toString('utf8')));
+		const parsed =
+			payload && FursResponse.safeParse(JSON.parse(Buffer.from(payload, 'base64url').toString('utf8')));
 		return parsed && parsed.success ? parsed.data : null;
 	} catch {
 		return null;
@@ -64,7 +65,6 @@ export function fursFiscal(o: FursOptions): FiscalAdapter {
 		device_id: o.device_id,
 		zoi,
 		async issue(invoice) {
-			const protectedId = zoi(invoice);
 			const payload = JSON.stringify({
 				InvoiceRequest: {
 					Header: { MessageID: randomUUID(), DateTime: fursDateTime(new Date()) },
@@ -91,7 +91,7 @@ export function fursFiscal(o: FursOptions): FiscalAdapter {
 								],
 							},
 						],
-						ProtectedID: protectedId,
+						ProtectedID: invoice.zoi,
 						SubsequentSubmit: invoice.subsequent,
 					},
 				},
@@ -101,9 +101,10 @@ export function fursFiscal(o: FursOptions): FiscalAdapter {
 			const res = await transport(`${o.url.replace(/\/+$/, '')}/invoices`, JSON.stringify({ token }), o.tls);
 			if (res.status !== 200) throw new Error(`furs: HTTP ${res.status}`);
 			const answer = decode(res.body)?.InvoiceResponse;
-			if (answer?.Error) throw new Error(`furs: error ${answer.Error.ErrorCode} ${answer.Error.ErrorMessage ?? ''}`);
+			if (answer?.Error)
+				throw new Error(`furs: error ${answer.Error.ErrorCode} ${answer.Error.ErrorMessage ?? ''}`);
 			if (!answer?.UniqueInvoiceID) throw new Error('furs: no EOR in the response');
-			return { zoi: protectedId, eor: answer.UniqueInvoiceID, issued_at: invoice.issued_at };
+			return { zoi: invoice.zoi, eor: answer.UniqueInvoiceID, issued_at: invoice.issued_at };
 		},
 	};
 }
@@ -116,13 +117,18 @@ const httpsTransport: FursTransport = (url, body, tls) =>
 			{
 				method: 'POST',
 				...tls,
-				headers: { 'content-type': 'application/json; charset=UTF-8', 'content-length': Buffer.byteLength(body) },
+				headers: {
+					'content-type': 'application/json; charset=UTF-8',
+					'content-length': Buffer.byteLength(body),
+				},
 				timeout: 10_000,
 			},
 			(res) => {
 				const chunks: Buffer[] = [];
 				res.on('data', (chunk: Buffer) => chunks.push(chunk));
-				res.on('end', () => resolve({ status: res.statusCode ?? 0, body: Buffer.concat(chunks).toString('utf8') }));
+				res.on('end', () =>
+					resolve({ status: res.statusCode ?? 0, body: Buffer.concat(chunks).toString('utf8') })
+				);
 				res.on('error', reject);
 			}
 		);

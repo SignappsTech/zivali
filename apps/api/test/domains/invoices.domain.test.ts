@@ -79,9 +79,15 @@ describe('issueInvoice', () => {
 			vat_rate: 22,
 			vat_cents: 180,
 		};
-		const expected = await fiscal.issue({ ...data, subsequent: false });
-		expect(row).toMatchObject({
+		const { issued_at: _ctxNow, ...fixed } = data;
+		const expected = await fiscal.issue({
 			...data,
+			issued_at: row.issued_at,
+			zoi: fiscal.zoi({ ...data, issued_at: row.issued_at, subsequent: false }),
+			subsequent: false,
+		});
+		expect(row).toMatchObject({
+			...fixed,
 			number: `${premise_id}-D1-1`,
 			provider: 'mock',
 			zoi: expected.zoi,
@@ -136,6 +142,8 @@ describe('issueInvoice', () => {
 		const failed = await issue(payment, 'Zahvala', ctx);
 		expect(failed).toMatchObject({ status: 'FAILED', attempts: MAX_ATTEMPTS, eor: null });
 		expect(failed!.zoi).toBe(fiscal.zoi({ ...failed!, subsequent: false }));
+		// FURS gets the stored, printed ZOI on every attempt.
+		expect(failing.mock.calls.every(([sent]) => sent.zoi === failed!.zoi)).toBe(true);
 		expect(failed!.pdf_key).toBe(`invoices/${failed!.id}.pdf`);
 
 		expect(failing).toHaveBeenCalledTimes(MAX_ATTEMPTS);
@@ -159,6 +167,38 @@ describe('issueInvoice', () => {
 		const verified = await issue(payment, 'Zahvala', ctx);
 		expect(verified).toMatchObject({ status: 'VERIFIED', attempts: 2, eor: expect.any(String) });
 		expect(flaky.mock.calls[1]![0].subsequent).toBe(true);
+	});
+
+	it('never verifies a row another provider created, and takes issued_at after the sequence lock', async () => {
+		const { ctx, premise_id } = fiscalCtx();
+		const before = new Date();
+		const payment = await succeeded();
+		await issue(payment, 'Zahvala', ctx);
+		const row = await invoiceOf(payment.id);
+		expect(row.issued_at.getTime()).toBeGreaterThanOrEqual(before.getTime());
+		// A mock row seen by the furs provider (and the other way round) is refused before any call.
+		const send = vi.fn<FiscalAdapter['issue']>();
+		const { ctx: furs } = fiscalCtx({ provider: 'furs', issue: send });
+		const other = await succeeded();
+		const pending = await prisma.invoices.create({
+			data: {
+				payment_id: other.id,
+				premise_id,
+				device_id: 'D1',
+				sequence: 900,
+				number: `${premise_id}-D1-900`,
+				issued_at: new Date(),
+				net_cents: 410,
+				vat_rate: 22,
+				vat_cents: 90,
+				gross_cents: 500,
+				provider: 'mock',
+				zoi: 'a'.repeat(32),
+			},
+		});
+		await expect(issue(other, 'Zahvala', furs)).rejects.toThrow(/belongs to provider mock, not furs/);
+		expect(send).not.toHaveBeenCalled();
+		expect(await invoiceOf(other.id)).toMatchObject({ id: pending.id, status: 'PENDING', attempts: 0 });
 	});
 
 	it('invoices only the purposes in fiscal.invoiced_purposes, and nothing when the provider is off', async () => {

@@ -1,6 +1,6 @@
 // Fiscal verification of invoices (C13 §Fiscal invoices, TASK-92; ZDavPR: card payments count as cash). Provider:
 // FISCAL_PROVIDER mock (default everywhere: payments are test-only, and a test payment must never reach FURS
-// production) | furs (FURS test environment only; the production endpoint is refused) | off (no invoices). The ZOI is
+// production) | furs (FURS test host only; every other host is refused) | off (no invoices). The ZOI is
 // ours (MD5 of our RSA-SHA256 signature over the FURS string), the EOR comes back from FURS.
 import { createPrivateKey, X509Certificate } from 'node:crypto';
 import { readFileSync } from 'node:fs';
@@ -20,6 +20,8 @@ export type FiscalInvoice = {
 	/** Percent, e.g. 22. */
 	vat_rate: number;
 	vat_cents: number;
+	/** ZOI as stored and printed at creation; FURS gets this value (ProtectedID), never a recomputed one. */
+	zoi: string;
 	/** A retry after a failed submission (FURS SubsequentSubmit). */
 	subsequent: boolean;
 };
@@ -33,7 +35,7 @@ export type FiscalAdapter = {
 	premise_id: string;
 	device_id: string;
 	/** ZOI (zaščitna oznaka izdajatelja): deterministic, so it is stored at creation and printed even without an EOR. */
-	zoi(invoice: FiscalInvoice): string;
+	zoi(invoice: Omit<FiscalInvoice, 'zoi'>): string;
 	/** Fiscal verification; throws when the provider fails, so the job retries with backoff. */
 	issue(invoice: FiscalInvoice): Promise<FiscalResult>;
 };
@@ -61,14 +63,14 @@ export function fursDateTime(date: Date): string {
 }
 
 /** The string the ZOI signs (FURS spec): tax number, dd.MM.yyyy HH:mm:ss, sequence, premise, device, total. */
-export function zoiInput(taxNumber: string, invoice: FiscalInvoice): string {
+export function zoiInput(taxNumber: string, invoice: Omit<FiscalInvoice, 'zoi'>): string {
 	const t = local(invoice.issued_at);
 	const issued = `${t.day}.${t.month}.${t.year} ${t.hour}:${t.minute}:${t.second}`;
 	const total = (invoice.gross_cents / 100).toFixed(2);
 	return `${taxNumber}${issued}${invoice.sequence}${invoice.premise_id}${invoice.device_id}${total}`;
 }
 
-const FURS_PRODUCTION_HOST = 'blagajne.fu.gov.si';
+const FURS_TEST_HOST = 'blagajne-test.fu.gov.si';
 
 export function createFiscal(cfg: Config): FiscalAdapter {
 	const seller = {
@@ -83,10 +85,12 @@ export function createFiscal(cfg: Config): FiscalAdapter {
 		};
 		return { provider: 'off', live: false, ...seller, zoi: fail, issue: fail };
 	}
-	// Never FURS production from this build: a live fiscal provider opens the live gate (C13), which waits for Q-012.
-	if (new URL(cfg.FURS_URL).hostname === FURS_PRODUCTION_HOST)
-		throw new Error('FURS_URL: the FURS production endpoint is refused (test environment only, C13 live gate)');
-	const missing = (['FISCAL_TAX_NUMBER', 'FURS_CERT_PATH', 'FURS_KEY_PATH'] as const).filter((name) => !cfg[name]);
+	// Only the FURS test host (allowlist): a live fiscal provider opens the live gate (C13), which waits for Q-012.
+	if (new URL(cfg.FURS_URL).hostname !== FURS_TEST_HOST)
+		throw new Error(`FURS_URL: only ${FURS_TEST_HOST} is allowed (test environment only, C13 live gate)`);
+	const missing = (['FISCAL_TAX_NUMBER', 'FURS_CERT_PATH', 'FURS_KEY_PATH', 'FURS_CA_PATH'] as const).filter(
+		(name) => !cfg[name]
+	);
 	if (missing.length) throw new Error(`FISCAL_PROVIDER=furs needs ${missing.join(', ')}`);
 	// The files live outside the repo (.secrets/ or the VPS); their contents and the passphrase are never logged.
 	const certPem = readFileSync(cfg.FURS_CERT_PATH!, 'utf8');
@@ -101,7 +105,7 @@ export function createFiscal(cfg: Config): FiscalAdapter {
 			cert: certPem,
 			key: keyPem,
 			passphrase: cfg.FURS_KEY_PASSPHRASE,
-			ca: cfg.FURS_CA_PATH ? readFileSync(cfg.FURS_CA_PATH, 'utf8') : undefined,
+			ca: readFileSync(cfg.FURS_CA_PATH!, 'utf8'),
 		},
 	});
 }

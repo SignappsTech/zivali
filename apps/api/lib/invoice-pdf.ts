@@ -4,8 +4,6 @@
 // app root, where the image copies assets/ (Dockerfile).
 import { fileURLToPath } from 'node:url';
 
-import PDFDocument from 'pdfkit';
-
 import { formatEur } from '@zivali/i18n/format';
 
 const font = (file: string) => fileURLToPath(new URL(`../assets/fonts/${file}`, import.meta.url));
@@ -74,7 +72,9 @@ const STYLE = {
 	body: { font: 'regular', size: 11, gap: 0.4 },
 } as const;
 
-export function renderInvoicePdf(input: InvoicePdfInput): Promise<Buffer> {
+export async function renderInvoicePdf(input: InvoicePdfInput): Promise<Buffer> {
+	// Loaded on the first invoice, so the API process does not load pdfkit at boot.
+	const { default: PDFDocument } = await import('pdfkit');
 	const doc = new PDFDocument({
 		size: 'A4',
 		margin: 56,

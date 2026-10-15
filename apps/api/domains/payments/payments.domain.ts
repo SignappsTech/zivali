@@ -195,7 +195,7 @@ export async function handleWebhook(
 			'payments: webhook'
 		);
 		if (moved && move.to === 'SUCCEEDED')
-			await ctx.jobs.send('payment.effects', { payment_id: payment.id }, { tx });
+			await ctx.jobs.send('payment.effects', { payment_id: payment.id }, { tx, singletonKey: payment.id });
 		return { duplicate: false };
 	});
 }

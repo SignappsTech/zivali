@@ -36,6 +36,7 @@ const toFiscal = (invoice: InvoiceRow, subsequent: boolean): FiscalInvoice => ({
 	device_id: invoice.device_id,
 	sequence: invoice.sequence,
 	issued_at: invoice.issued_at,
+	zoi: invoice.zoi,
 	gross_cents: invoice.gross_cents,
 	net_cents: invoice.net_cents,
 	vat_rate: invoice.vat_rate,
@@ -50,7 +51,8 @@ async function createInvoice(payment: PaymentRow, ctx: Ctx): Promise<InvoiceRow>
 	try {
 		return await prisma.$transaction(async (tx) => {
 			const sequence = await PaymentsDao.nextInvoiceSequence(premise_id, device_id, tx);
-			const draft = { premise_id, device_id, sequence, issued_at: ctx.now, ...amounts };
+			// After the sequence lock (held to commit), so number order and time order cannot invert.
+			const draft = { premise_id, device_id, sequence, issued_at: new Date(), ...amounts };
 			return PaymentsDao.insertInvoice(
 				{
 					...draft,
@@ -73,13 +75,24 @@ async function createInvoice(payment: PaymentRow, ctx: Ctx): Promise<InvoiceRow>
 }
 
 async function verify(invoice: InvoiceRow, ctx: Ctx): Promise<InvoiceRow> {
+	const { fiscal } = ctx.adapters;
 	const attempt = invoice.attempts + 1;
+	// A row made by another provider (mock vs furs) is never sent on: its ZOI and number belong to that series.
+	if (invoice.provider !== fiscal.provider) {
+		ctx.logger.error(
+			{ invoice_id: invoice.id, row_provider: invoice.provider, provider: fiscal.provider },
+			'fiscal: invoice was created by another provider, not verifying'
+		);
+		throw new Error(
+			`fiscal: invoice ${invoice.id} belongs to provider ${invoice.provider}, not ${fiscal.provider}`
+		);
+	}
 	// The claim counts the attempt before the call, so a crash mid-call still counts; a concurrent run loses and retries.
 	if (!(await PaymentsDao.claimInvoiceAttempt(invoice.id, invoice.attempts)))
 		throw new Error('fiscal: invoice verification already in progress');
 	const log = { invoice_id: invoice.id, attempt };
 	try {
-		const { eor } = await ctx.adapters.fiscal.issue(toFiscal(invoice, attempt > 1));
+		const { eor } = await fiscal.issue(toFiscal(invoice, attempt > 1));
 		ctx.logger.info(log, 'fiscal: invoice verified');
 		return await PaymentsDao.updateInvoice(invoice.id, { status: 'VERIFIED', eor, verified_at: ctx.now });
 	} catch (err) {

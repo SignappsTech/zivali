@@ -20,8 +20,11 @@ const invoice: FiscalInvoice = {
 	net_cents: 410,
 	vat_rate: 22,
 	vat_cents: 90,
+	zoi: '0123456789abcdef0123456789abcdef',
 	subsequent: false,
 };
+/** The invoice without the stored ZOI, as zoi() takes it. */
+const { zoi: _stored, ...unsigned } = invoice;
 const seller = { tax_number: '12345678', premise_id: 'SPLET', device_id: 'API1' };
 const cfg = (patch: Partial<Config>): Config => ({ ...config, ...patch });
 const fromB64 = (part: string) => JSON.parse(Buffer.from(part, 'base64url').toString('utf8'));
@@ -37,15 +40,16 @@ describe('FURS formats', () => {
 });
 
 describe('mock provider', () => {
-	it('issues the same 32-hex ZOI and UUID-shaped EOR for the same invoice, others for another number', async () => {
+	it('derives a 32-hex ZOI and issues a UUID-shaped EOR from the stored ZOI, others for another number', async () => {
 		const fiscal = mockFiscal(seller);
-		const first = await fiscal.issue(invoice);
-		expect(first).toEqual(await mockFiscal(seller).issue(invoice));
-		expect(first.zoi).toMatch(/^[0-9a-f]{32}$/);
-		expect(first.zoi).toBe(fiscal.zoi(invoice));
+		const zoi = fiscal.zoi(unsigned);
+		expect(zoi).toMatch(/^[0-9a-f]{32}$/);
+		const first = await fiscal.issue({ ...invoice, zoi });
+		expect(first).toEqual(await mockFiscal(seller).issue({ ...invoice, zoi }));
+		expect(first.zoi).toBe(zoi);
 		expect(first.eor).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/);
 		expect(first.issued_at).toEqual(invoice.issued_at);
-		const next = await fiscal.issue({ ...invoice, sequence: 43 });
+		const next = await fiscal.issue({ ...invoice, sequence: 43, zoi: fiscal.zoi({ ...unsigned, sequence: 43 }) });
 		expect(next.zoi).not.toBe(first.zoi);
 		expect(next.eor).not.toBe(first.eor);
 		expect(fiscal).toMatchObject({ provider: 'mock', live: false, ...seller });
@@ -65,18 +69,37 @@ describe('provider switch', () => {
 	it('off issues nothing', () => {
 		const off = createFiscal(cfg({ FISCAL_PROVIDER: 'off' }));
 		expect(off).toMatchObject({ provider: 'off', live: false });
-		expect(() => off.zoi(invoice)).toThrow(/off/);
+		expect(() => off.zoi(unsigned)).toThrow(/off/);
 	});
 
-	it('furs refuses the FURS production endpoint and names missing settings, before reading any file', () => {
+	it('furs allows only the FURS test host: production (also with a trailing dot or in capitals), IPs and aliases are refused', () => {
+		for (const FURS_URL of [
+			'https://blagajne.fu.gov.si:9003/v1/cash_registers',
+			'https://blagajne.fu.gov.si.:9003/v1/cash_registers',
+			'https://BLAGAJNE.fu.gov.si/v1/cash_registers',
+			'https://blagajne-test.fu.gov.si.:9002/v1/cash_registers',
+			'https://127.0.0.1:9002/v1/cash_registers',
+			'https://example.com/v1/cash_registers',
+		])
+			expect(() => createFiscal(cfg({ FISCAL_PROVIDER: 'furs', FURS_URL }))).toThrow(
+				/only blagajne-test.fu.gov.si/
+			);
+	});
+
+	it('furs names missing settings (the FURS CA included), before reading any file', () => {
+		const test = 'https://blagajne-test.fu.gov.si:9002/v1/cash_registers';
 		expect(() =>
 			createFiscal(
-				cfg({ FISCAL_PROVIDER: 'furs', FURS_URL: 'https://blagajne.fu.gov.si:9003/v1/cash_registers' })
+				cfg({
+					FISCAL_PROVIDER: 'furs',
+					FURS_URL: test,
+					FISCAL_TAX_NUMBER: undefined,
+					FURS_CERT_PATH: undefined,
+					FURS_KEY_PATH: undefined,
+					FURS_CA_PATH: undefined,
+				})
 			)
-		).toThrow(/production endpoint is refused/);
-		expect(() =>
-			createFiscal(cfg({ FISCAL_PROVIDER: 'furs', FISCAL_TAX_NUMBER: undefined, FURS_CERT_PATH: undefined }))
-		).toThrow(/FISCAL_TAX_NUMBER, FURS_CERT_PATH, FURS_KEY_PATH/);
+		).toThrow(/FISCAL_TAX_NUMBER, FURS_CERT_PATH, FURS_KEY_PATH, FURS_CA_PATH/);
 	});
 });
 
@@ -108,13 +131,18 @@ describe('furs provider (injected transport)', () => {
 				return answer({ InvoiceResponse: { UniqueInvoiceID: 'a1b2c3d4-0000-4000-8000-000000000001' } });
 			},
 		});
+		// The ZOI sent is the stored one, never recomputed from the current key.
 		const result = await fiscal.issue({ ...invoice, subsequent: true });
 		// ZOI: MD5 of our RSA-SHA256 signature over the FURS string.
 		const zoi = createHash('md5')
 			.update(sign('sha256', Buffer.from('1234567816.10.2026 14:05:0942SPLETAPI15.00'), privateKey))
 			.digest('hex');
-		expect(result).toEqual({ zoi, eor: 'a1b2c3d4-0000-4000-8000-000000000001', issued_at: invoice.issued_at });
-		expect(fiscal.zoi(invoice)).toBe(zoi);
+		expect(result).toEqual({
+			zoi: invoice.zoi,
+			eor: 'a1b2c3d4-0000-4000-8000-000000000001',
+			issued_at: invoice.issued_at,
+		});
+		expect(fiscal.zoi(unsigned)).toBe(zoi);
 
 		expect(calls).toHaveLength(1);
 		const [url, body, sentTls] = calls[0]!;
@@ -148,7 +176,7 @@ describe('furs provider (injected transport)', () => {
 			InvoiceAmount: 5,
 			PaymentAmount: 5,
 			TaxesPerSeller: [{ VAT: [{ TaxRate: 22, TaxableAmount: 4.1, TaxAmount: 0.9 }] }],
-			ProtectedID: zoi,
+			ProtectedID: invoice.zoi,
 			SubsequentSubmit: true,
 		});
 	});

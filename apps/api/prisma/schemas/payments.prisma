@@ -69,7 +69,7 @@ model invoices {
   number      String         @unique
   // Fixed at creation (ZOI input): a retry sends the same data
   issued_at   DateTime       @db.Timestamptz(6)
-  // integer cents; net + vat = gross = payments.amount_cents (check in the migration)
+  // integer cents; net + vat = gross (check in the migration); gross is payments.amount_cents (set by the domain)
   net_cents   Int
   // percent
   vat_rate    Int
