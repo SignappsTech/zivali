@@ -17,6 +17,20 @@ export const ringClass = 'focus-visible:outline-3 focus-visible:outline-offset-2
 
 export const h1Class = 'font-display text-3xl font-bold tracking-[-0.02em] text-balance lg:text-5xl';
 
+/** The logo mark, decorative; `tone` paints it (primary here, the sidebar foreground in the admin console). */
+export function LogoMark({ className, tone = 'fill-primary stroke-primary' }: { className?: string; tone?: string }) {
+	return (
+		<svg viewBox="0 0 48 48" aria-hidden="true" className={className}>
+			<g className={tone} strokeWidth="1.6" strokeLinejoin="round">
+				<path d="M24 45.5 C24 45.5 10.5 33.2 10.5 24.4 A13.5 13.5 0 0 1 37.5 24.4 C37.5 33.2 24 45.5 24 45.5 Z M24 17.9 A6.5 6.5 0 1 0 24 30.9 A6.5 6.5 0 1 0 24 17.9 Z" />
+				<path d="M12.2 19.6 L11.2 5 L22.6 11.4 Z" />
+				<path d="M35.8 19.6 L25.4 11.4 L36.8 5 Z" />
+			</g>
+			<circle cx="24" cy="24.4" r="3.6" className="fill-status-reunited" />
+		</svg>
+	);
+}
+
 /** Logo mark and wordmark, a link home named by `nav.home_label`. Below 360 px only the mark shows. */
 export function Logo({ small = false, className }: { small?: boolean; className?: string }) {
 	const t = useTranslations('nav');
@@ -31,14 +45,7 @@ export function Logo({ small = false, className }: { small?: boolean; className?
 				className
 			)}
 		>
-			<svg viewBox="0 0 48 48" aria-hidden="true" className={small ? 'size-7' : 'size-8 md:size-9'}>
-				<g className="fill-primary stroke-primary" strokeWidth="1.6" strokeLinejoin="round">
-					<path d="M24 45.5 C24 45.5 10.5 33.2 10.5 24.4 A13.5 13.5 0 0 1 37.5 24.4 C37.5 33.2 24 45.5 24 45.5 Z M24 17.9 A6.5 6.5 0 1 0 24 30.9 A6.5 6.5 0 1 0 24 17.9 Z" />
-					<path d="M12.2 19.6 L11.2 5 L22.6 11.4 Z" />
-					<path d="M35.8 19.6 L25.4 11.4 L36.8 5 Z" />
-				</g>
-				<circle cx="24" cy="24.4" r="3.6" className="fill-status-reunited" />
-			</svg>
+			<LogoMark className={small ? 'size-7' : 'size-8 md:size-9'} />
 			<span
 				aria-hidden="true"
 				className={cn(

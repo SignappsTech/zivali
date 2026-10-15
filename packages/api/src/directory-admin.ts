@@ -57,7 +57,7 @@ export type DirectoryImportResult = {
 const historyUrl = (entity: DirectoryEntity, key: string) =>
 	`/v1/admin/${entity === 'shelter' ? 'shelters' : 'municipality-shelters'}/${encodeURIComponent(key)}/changes`;
 
-export const directoryAdminApi = api.enhanceEndpoints({ addTagTypes: ['Directory'] }).injectEndpoints({
+export const directoryAdminApi = api.enhanceEndpoints({ addTagTypes: ['Directory', 'AuditLog'] }).injectEndpoints({
 	endpoints: (build) => ({
 		listAdminShelters: build.query<{ items: AdminShelter[] }, void>({
 			query: () => '/v1/admin/shelters',
@@ -69,11 +69,11 @@ export const directoryAdminApi = api.enhanceEndpoints({ addTagTypes: ['Directory
 		}),
 		createShelter: build.mutation<AdminShelter, ShelterInput>({
 			query: (body) => ({ url: '/v1/admin/shelters', method: 'POST', body }),
-			invalidatesTags: ['Directory'],
+			invalidatesTags: ['Directory', 'AuditLog'],
 		}),
 		updateShelter: build.mutation<AdminShelter, { slug: string; body: ShelterInput }>({
 			query: ({ slug, body }) => ({ url: `/v1/admin/shelters/${encodeURIComponent(slug)}`, method: 'PUT', body }),
-			invalidatesTags: ['Directory'],
+			invalidatesTags: ['Directory', 'AuditLog'],
 		}),
 		/** 409 CONFLICT with `details.code: 'HAS_ASSIGNMENTS'` while municipalities are assigned; the note is required. */
 		deleteShelter: build.mutation<void, { slug: string; audit_note: string }>({
@@ -82,7 +82,7 @@ export const directoryAdminApi = api.enhanceEndpoints({ addTagTypes: ['Directory
 				method: 'DELETE',
 				body: { audit_note },
 			}),
-			invalidatesTags: ['Directory'],
+			invalidatesTags: ['Directory', 'AuditLog'],
 		}),
 		updateMunicipalityShelter: build.mutation<AdminMunicipality, { slug: string; body: MunicipalityShelterInput }>({
 			query: ({ slug, body }) => ({
@@ -90,7 +90,7 @@ export const directoryAdminApi = api.enhanceEndpoints({ addTagTypes: ['Directory
 				method: 'PUT',
 				body,
 			}),
-			invalidatesTags: ['Directory'],
+			invalidatesTags: ['Directory', 'AuditLog'],
 		}),
 		getDirectoryHistory: build.query<{ items: DirectoryChange[] }, { entity: DirectoryEntity; key: string }>({
 			query: ({ entity, key }) => historyUrl(entity, key),
@@ -104,7 +104,7 @@ export const directoryAdminApi = api.enhanceEndpoints({ addTagTypes: ['Directory
 				params: { dry_run: dryRun || undefined },
 				body: { csv },
 			}),
-			invalidatesTags: (_result, _error, { dryRun }) => (dryRun ? [] : ['Directory']),
+			invalidatesTags: (_result, _error, { dryRun }) => (dryRun ? [] : ['Directory', 'AuditLog']),
 		}),
 	}),
 });

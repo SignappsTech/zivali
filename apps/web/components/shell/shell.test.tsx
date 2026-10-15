@@ -99,7 +99,7 @@ describe('SiteHeader', () => {
 	});
 
 	it('signed in: My pets and reports, inbox and the account menu instead of Sign in (EN)', () => {
-		renderAt('/en/my-pets', <SiteHeader viewer={{ initials: 'AN' }} />, 'en');
+		renderAt('/en/my-pets', <SiteHeader viewer={{ initials: 'AN', aal2: false }} />, 'en');
 		const header = screen.getByRole('banner');
 
 		const main = within(header).getByRole('navigation', { name: en.nav.main_label });
@@ -152,7 +152,7 @@ describe('SiteHeader', () => {
 	});
 
 	it('leaves admin pages to their own shell', () => {
-		const { container } = renderAt('/admin/zavetisca', <SiteHeader viewer={{ initials: 'AN' }} />);
+		const { container } = renderAt('/admin/zavetisca', <SiteHeader viewer={{ initials: 'AN', aal2: false }} />);
 
 		expect(container.innerHTML).toBe('');
 	});

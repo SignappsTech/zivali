@@ -7,6 +7,7 @@ import * as fx from '@zivali/api/__fixtures__/directory-admin';
 import { createMockApi, type MockRoutes, mockError } from '@zivali/api/mock';
 import { createApiStore } from '@zivali/api/rtk';
 import sl from '@zivali/i18n/dist/sl.json';
+import { Toaster } from '@/components/ui/sonner';
 
 import { DirectoryAdmin } from './directory-admin';
 
@@ -35,6 +36,8 @@ function renderDirectory(routes: MockRoutes = {}) {
 		<NextIntlClientProvider locale="sl" messages={sl} timeZone="Europe/Ljubljana">
 			<Provider store={createApiStore(client)}>
 				<DirectoryAdmin />
+				{/* Mounted once by the admin shell. */}
+				<Toaster closeLabel={sl.common.close} label={sl.common.toasts_label} />
 			</Provider>
 		</NextIntlClientProvider>
 	);
