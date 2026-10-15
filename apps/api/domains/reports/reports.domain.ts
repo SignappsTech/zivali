@@ -35,8 +35,9 @@ import type { QueueName } from '../../lib/jobs.ts';
 import { prisma, type Prisma } from '../../prisma/prisma.ts';
 import { GeoDomain } from '../geo/index.ts';
 import { publicObjects } from '../photos/photo-objects.ts';
+import { mailManageLink, newManageToken } from './manage.domain.ts';
 import ReportsDao, { type LocationColumns, type ReportRow, type StoredLocation } from './reports.dao.ts';
-import { submissionGuard } from './submission-guard.ts';
+import { HOLD_WINDOW_MS, submissionGuard } from './submission-guard.ts';
 
 const BASE58 = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
 const SHORT_CODE_ATTEMPTS = 5;
@@ -114,6 +115,9 @@ export type NewReport = {
 	linked_report_id?: string | null;
 	source?: ReportSource;
 	moderation_state?: ModerationState;
+	/** Anonymous reports (C7): SHA-256 of the manage token and the HMAC of x-device-id. */
+	manage_token_hash?: Uint8Array<ArrayBuffer> | null;
+	device_hash?: string | null;
 };
 
 /**
@@ -266,6 +270,8 @@ export type CreatedReport = {
 	id: string;
 	short_code: string;
 	moderation_state: ModerationState;
+	/** Anonymous callers only (C7), shown once. */
+	manage_token?: string;
 	warnings: ReportWarning[];
 };
 
@@ -273,19 +279,21 @@ export type CreatedReport = {
  * POST /v1/reports (C4). Lost reports need a real account; the submission guard runs before the other rules and may
  * hold the report. With pet_id the pet's attributes fill what the input leaves out. One transaction: the report
  * (coarsened point, fuzz, geo lookup), its manager, its photos and the jobs photo.publish, match.report and, for
- * visible lost reports, alerts.fanout.
+ * visible lost reports, alerts.fanout. Anonymous callers (C7) get a manage token (only its hash is stored) and, with
+ * finder_email, the manage link by email after the commit.
  */
 export async function createReport(input: CreateInput, ctx: Ctx): Promise<CreatedReport> {
 	const actor = signedIn(ctx);
 	if (input.type === 'lost' && actor.is_anonymous) throw new AppError('FORBIDDEN', 'Lost reports need an account');
-	const { moderation_state } = await submissionGuard(input, ctx);
+	if (input.finder_email && !actor.is_anonymous) throw invalid('finder_email', 'Anonymous reports only');
+	const { moderation_state, hold_reasons } = await submissionGuard(input, ctx);
 	checkFields(input.type, input.species, input, ctx.now);
 	const event_at = new Date(input.event_at);
 	const warnings: ReportWarning[] = ctx.now.getTime() - event_at.getTime() > OLD_EVENT_MS ? ['OLD_EVENT'] : [];
-	// finder_email (anonymous manage link) is stored by the submission rules of TASK-17.1.
-	const { photo_ids, finder_email: _finderEmail, ...fields } = input;
+	const { photo_ids, finder_email, ...fields } = input;
+	const manage = actor.is_anonymous ? newManageToken() : null;
 
-	return inTransaction(ctx, async (tx) => {
+	const created = await inTransaction(ctx, async (tx) => {
 		if (fields.linked_report_id) await checkLinked(fields.type, fields.linked_report_id, tx);
 		const pet = fields.pet_id
 			? await checkPet({ pet_id: fields.pet_id, species: fields.species }, actor, tx)
@@ -305,15 +313,31 @@ export async function createReport(input: CreateInput, ctx: Ctx): Promise<Create
 				}
 			: {};
 		const source: ReportSource = actor.is_anonymous ? 'anonymous' : 'user';
+		const anonymous = manage && { manage_token_hash: manage.hash, device_hash: ctx.device_hash ?? null };
 		const { id, short_code } = await insertReport(
-			{ ...fromPet, ...fields, event_at, moderation_state, source },
+			{ ...fromPet, ...fields, event_at, moderation_state, source, ...anonymous },
 			{ ...ctx, tx }
 		);
+		if (finder_email) await ReportsDao.addContact({ report_id: id, email: finder_email }, tx);
+		if (hold_reasons.length) await ReportsDao.flagHeld(id, hold_reasons, tx);
 		const report = { id, type: fields.type, moderation_state };
 		await setPhotos(report, photo_ids, actor, ctx, tx);
 		await sendJobs(report, ['photo.publish', 'match.report', 'alerts.fanout'], ctx, tx);
-		return { id, short_code, moderation_state, warnings };
+		return { id, short_code, moderation_state, ...(manage && { manage_token: manage.token }), warnings };
 	});
+	if (manage && finder_email) {
+		const { short_code } = created;
+		await mailManageLink(
+			{ to: finder_email, short_code, type: input.type, species: input.species, token: manage.token },
+			ctx
+		);
+	}
+	return created;
+}
+
+/** retention.purge: device hashes only serve the 7-day hold rule of the submission guard (C7). */
+export async function purgeDeviceHashes(_input: void, ctx: Ctx): Promise<number> {
+	return ReportsDao.clearDeviceHashes(new Date(ctx.now.getTime() - HOLD_WINDOW_MS), ctx.tx);
 }
 
 export type ManagerView = ReportView & { manager_role: ReportManagerRole };
@@ -456,6 +480,7 @@ export default {
 	createReport,
 	updateReport,
 	releaseReport,
+	purgeDeviceHashes,
 	notPublicReason,
 	getReport,
 	listMyReports,

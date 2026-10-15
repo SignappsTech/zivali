@@ -46,6 +46,8 @@ model photos {
   updated_at         DateTime             @default(now()) @updatedAt @db.Timestamptz(6)
 
   @@unique([owner_id, sha256])
+  // The anonymous hold rule looks up the same image across owners (C7).
+  @@index([sha256])
   @@index([report_id])
   @@index([pet_id])
   @@schema("app")

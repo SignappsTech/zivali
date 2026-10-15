@@ -193,7 +193,11 @@ model reports {
   // organisations arrive with TASK-6.8
   organisation_id      String?                                         @db.Uuid
   boosted_until        DateTime?                                       @db.Timestamptz(6)
-  manage_token_hash    Bytes?
+  // SHA-256 of the manage token (C7); POST /v1/manage/claim looks it up.
+  manage_token_hash    Bytes?                                          @unique
+  // Anonymous reports: HMAC (RATE_SALT) of x-device-id for the hold rule (C7, > 10 reports in 7 days); cleared
+  // after 7 days by retention.purge.
+  device_hash          String?
   first_match_at       DateTime?                                       @db.Timestamptz(6)
   reunited_at          DateTime?                                       @db.Timestamptz(6)
   closed_at            DateTime?                                       @db.Timestamptz(6)
@@ -215,6 +219,7 @@ model reports {
   @@index([exact_point], type: Gist)
   @@index([public_point], type: Gist)
   @@index([pet_id])
+  @@index([device_hash, created_at])
   @@schema("app")
 }
 
