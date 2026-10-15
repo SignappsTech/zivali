@@ -1,6 +1,6 @@
 // C14 ads (serving, admin), partner stats and leads. The "no animal sale or rehoming" rule needs the
 // app_config blocklist, so it runs in the API domain, not here.
-import { Cursor, IsoDate, IsoDateTime, nullOr, page, queryNumber, text, Uuid } from './common.schema.ts';
+import { IsoDate, IsoDateTime, nullOr, page, queryNumber, text, Uuid } from './common.schema.ts';
 import { AdHouseKind, AdLabel, AdSlot, AdStatus, LeadInterest, Locale, Species } from './enums.ts';
 import { PresignedUpload, Sha256 } from './photos.schema.ts';
 import { z } from './zod.ts';
@@ -84,9 +84,11 @@ export const AdminAd = z
 		updated_at: IsoDateTime,
 	})
 	.openapi('AdminAd');
-export const AdminAdQuery = z.object({ status: AdStatus.optional(), cursor: Cursor.optional() });
+export const AdminAdQuery = z.object({ status: AdStatus.optional(), cursor: Uuid.optional() });
 export const AdminAdList = page(AdminAd).openapi('AdminAdList');
 export const AdStatusInput = z.object({ status: AdStatus }).openapi('AdStatusInput');
+// Destructive (backend.md): the note is required and stored in the audit entry.
+export const AdDeleteInput = z.object({ note: text(500) }).openapi('AdDeleteInput');
 export const AdImageInput = z
 	.object({
 		sha256: Sha256,

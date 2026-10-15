@@ -68,6 +68,8 @@ export type AdminAd = {
 export type AdminAdQuery = { status?: AdStatus; cursor?: string };
 export type AdminAdList = Page<AdminAd>;
 export type AdStatusInput = { status: AdStatus };
+/** DELETE /v1/admin/ads/:id: the note is stored in the audit entry. */
+export type AdDeleteInput = { note: string };
 /** POST /v1/admin/ads/:id/image: 4:3, at least 1200×900, JPG or PNG under 500 KB. */
 export type AdImageInput = {
 	sha256: string;

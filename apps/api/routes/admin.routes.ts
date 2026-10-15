@@ -2,6 +2,16 @@
 import { Router } from 'express';
 
 import {
+	AdDeleteInput,
+	AdImageInput,
+	AdImageUploadResponse,
+	AdInput,
+	AdminAd,
+	AdminAdList,
+	AdminAdQuery,
+	AdStats,
+	AdStatsQuery,
+	AdStatusInput,
 	AdminQueues,
 	AdminUserList,
 	AdminUserQuery,
@@ -88,6 +98,129 @@ route(
 	},
 	adminOnly,
 	AdminController.getQueues
+);
+
+// Ads (C14 §Admin, TASK-37.2): admins (aal2) only; every write is audited.
+const adWrites = rateLimit('admin.ads', { limit: 300, window: 3600, key: 'user' });
+const adErrors = [...staffErrors, 'NOT_FOUND'] as const;
+const saveRules =
+	'Rejected with VALIDATION (one issue per field): alt text 5–140, https link, title ≤ 60, body ≤ 120, CTA ≤ 24, ' +
+	'selling, giving away or rehoming animals (category and ads.blocked_terms keywords, SL and EN), an exclusive ad ' +
+	'overlapping another exclusive ad in dates for a shared slot and region (a missing starts_at counts as now), and ' +
+	'an uploaded image (path image) that is not a 4:3 JPG or PNG of at least 1200×900 px under 500 KB.';
+
+route(
+	{
+		method: 'get',
+		path: '/ads',
+		operationId: 'listAdminAds',
+		summary: 'Ads',
+		description:
+			'Admins (aal2). Newest first, without deleted ads; null targeting = every region, municipality or species.',
+		request: { query: AdminAdQuery },
+		responses: { 200: { description: 'One page of ads', schema: AdminAdList } },
+		errors: [...staffErrors],
+	},
+	adminOnly,
+	AdminController.listAds
+);
+
+route(
+	{
+		method: 'post',
+		path: '/ads',
+		operationId: 'createAd',
+		summary: 'Create an ad',
+		description: `Admins (aal2). Audited. ${saveRules}`,
+		request: { body: AdInput },
+		responses: { 201: { description: 'The new ad', schema: AdminAd } },
+		errors: [...staffErrors],
+	},
+	adminOnly,
+	adWrites,
+	AdminController.createAd
+);
+
+route(
+	{
+		method: 'put',
+		path: '/ads/:id',
+		operationId: 'updateAd',
+		summary: 'Edit an ad',
+		description: `Admins (aal2). Fields left out keep their value, null clears one. Audited. ${saveRules}`,
+		request: { params: IdParams, body: AdInput },
+		responses: { 200: { description: 'The saved ad', schema: AdminAd } },
+		errors: [...adErrors],
+	},
+	adminOnly,
+	adWrites,
+	AdminController.updateAd
+);
+
+route(
+	{
+		method: 'post',
+		path: '/ads/:id/image',
+		operationId: 'requestAdImageUpload',
+		summary: 'Upload an ad image',
+		description:
+			'Admins (aal2). A 5-minute presigned PUT to the media bucket (ads/<id>/…) pinned to the declared type and size: 4:3, at least 1200×900 px, JPG or PNG under 500 KB. The ad shows the new image at once; the next save checks the uploaded file. Audited.',
+		request: { params: IdParams, body: AdImageInput },
+		responses: { 200: { description: 'Where to PUT the file', schema: AdImageUploadResponse } },
+		errors: [...adErrors],
+	},
+	adminOnly,
+	adWrites,
+	AdminController.requestAdImageUpload
+);
+
+route(
+	{
+		method: 'post',
+		path: '/ads/:id/status',
+		operationId: 'setAdStatus',
+		summary: "Change an ad's status",
+		description: `Admins (aal2). Pausing or ending is always allowed; any other status runs the save checks. Stats are kept. Audited. ${saveRules}`,
+		request: { params: IdParams, body: AdStatusInput },
+		responses: { 200: { description: 'The saved ad', schema: AdminAd } },
+		errors: [...adErrors],
+	},
+	adminOnly,
+	adWrites,
+	AdminController.setAdStatus
+);
+
+route(
+	{
+		method: 'delete',
+		path: '/ads/:id',
+		operationId: 'deleteAd',
+		summary: 'Delete an ad',
+		description:
+			'Admins (aal2). Soft delete: no longer listed or served; stats are kept. The note is required and stored in the audit entry.',
+		request: { params: IdParams, body: AdDeleteInput },
+		responses: { 204: { description: 'Deleted' } },
+		errors: [...adErrors],
+	},
+	adminOnly,
+	adWrites,
+	AdminController.deleteAd
+);
+
+route(
+	{
+		method: 'get',
+		path: '/ads/:id/stats',
+		operationId: 'getAdStats',
+		summary: 'Ad stats',
+		description:
+			'Admins (aal2). Impressions, clicks and CTR (clicks / impressions) per day (Europe/Ljubljana), slot and region (null = unknown), from and to inclusive, at most 366 days.',
+		request: { params: IdParams, query: AdStatsQuery },
+		responses: { 200: { description: 'Daily rows', schema: AdStats } },
+		errors: [...adErrors],
+	},
+	adminOnly,
+	AdminController.getAdStats
 );
 
 export default router;

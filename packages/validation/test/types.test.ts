@@ -105,6 +105,7 @@ test('wire types in @zivali/types match the zod schemas', () => {
 	expectTypeOf<Out<typeof V.AdminAdQuery>>().toEqualTypeOf<Flat<T.AdminAdQuery>>();
 	expectTypeOf<Out<typeof V.AdminAdList>>().toEqualTypeOf<Flat<T.AdminAdList>>();
 	expectTypeOf<Out<typeof V.AdStatusInput>>().toEqualTypeOf<Flat<T.AdStatusInput>>();
+	expectTypeOf<Out<typeof V.AdDeleteInput>>().toEqualTypeOf<Flat<T.AdDeleteInput>>();
 	expectTypeOf<Out<typeof V.AdImageInput>>().toEqualTypeOf<Flat<T.AdImageInput>>();
 	expectTypeOf<Out<typeof V.AdImageUploadResponse>>().toEqualTypeOf<Flat<T.AdImageUploadResponse>>();
 	expectTypeOf<Out<typeof V.AdStatsQuery>>().toEqualTypeOf<Flat<T.AdStatsQuery>>();
