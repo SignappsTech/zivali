@@ -1,11 +1,11 @@
 ---
 id: TASK-6.4
 title: 'Geo reference models, GURS seeder and TypedSQL geo lookup'
-status: In Progress
+status: Done
 assignee:
   - '@backend-dev'
 created_date: '2026-10-14 22:12'
-updated_date: '2026-10-15 05:46'
+updated_date: '2026-10-15 07:12'
 labels:
   - be
   - 'est:S'
