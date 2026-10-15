@@ -1,0 +1,670 @@
+<!doctype html>
+<!--
+  P18 Poster and sharing (TASK-24.1). Static mockup: Tailwind CDN + tokens, rendered in light, dark or side by side by directions.js.
+  Copy: docs/content/pages/P18-poster-share.md v0.3. Facebook kit strings have no keys yet: marked "Vzorec" (sample).
+  The A4 posters are real print HTML: print this page (A4, 100 %, no margins) and only the four posters come out, one per page.
+  QR codes are generated in the page (qrcode-generator) for https://najdimo.si/r/<code>, so they scan; the product generates its own.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Najdimo mockup: P18 Poster and sharing</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:wght@400;500;600;700&family=Bricolage+Grotesque:opsz,wght@12..96,500..800&display=swap" rel="stylesheet">
+<link href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css" rel="stylesheet">
+<link href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/bold/style.css" rel="stylesheet">
+<link href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css" rel="stylesheet">
+<link href="../tokens.css" rel="stylesheet">
+<link href="../directions/directions.css" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com/3.4.17"></script>
+<script src="../directions/tailwind-config.js"></script>
+<style>
+/* Page-local parts only. Buttons, pills, switch, notes, toasts, sheets, frames come from directions.css. */
+.scope h1, .scope h2, .scope h3 { text-wrap: balance; }
+.logo-link { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; border-radius: 12px; color: hsl(var(--foreground)); text-decoration: none; flex: none; }
+.anno { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; font-size: 13px; line-height: 18px; font-weight: 700; background: hsl(var(--foreground)); color: hsl(var(--background)); white-space: nowrap; }
+.textlink { color: hsl(var(--primary)); font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
+.h-top { font-family: var(--font-display); font-weight: 600; font-size: 18px; line-height: 28px; letter-spacing: -0.005em; margin: 0; }
+
+/* ---------- P18 screen parts ---------- */
+/* Vet ad toggle: the whole row is the switch (system 10.3); the hint sits below and is tied with aria-describedby. */
+.vrow { display: flex; align-items: center; gap: 16px; width: 100%; min-height: 48px; padding: 6px 0; border: 0; background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer; border-radius: 12px; }
+.vrow:focus-visible, .vrow.is-focus { outline: 3px solid hsl(var(--ring)); outline-offset: 2px; }
+.vrow .sw { position: relative; width: 56px; height: 32px; flex: none; border-radius: 999px; background: hsl(var(--input)); transition: background-color 150ms var(--ease); }
+.vrow .sw::after { content: ""; position: absolute; top: 4px; left: 4px; width: 24px; height: 24px; border-radius: 50%; background: hsl(var(--card)); transition: transform 180ms var(--ease-enter); }
+.vrow[aria-checked="true"] .sw { background: hsl(var(--primary)); }
+.vrow[aria-checked="true"] .sw::after { transform: translateX(24px); }
+/* Poster preview: card frame, the page on it with radius 12 corners, no border (slice: Screen 2). */
+.pv { display: flex; justify-content: center; padding: 20px; border-radius: var(--radius-card); background: hsl(var(--card)); }
+.pv-page { width: max-content; border-radius: 12px; overflow: hidden; line-height: 0; }
+.pv-page .a4 { zoom: var(--pz, 0.24); }
+.pv-skel { width: calc(210mm * var(--pz, 0.24)); aspect-ratio: 210 / 297; border-radius: 12px; }
+/* Share rows: a list of buttons (choice-row look). */
+.shares { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.shares .choice > i:first-child { color: hsl(var(--primary)); }
+.shares .choice[aria-checked] > i:first-child { color: inherit; }
+/* Link card preview: the OG image scaled, then title and host. */
+.lc-img { border-radius: var(--radius-row); overflow: hidden; line-height: 0; width: max-content; max-width: 100%; }
+.lc-img .og { zoom: var(--oz, 0.29); }
+/* Facebook kit: read-only text block (line style), group links. */
+.kit-text { width: 100%; min-height: 120px; padding: 10px 2px; font: inherit; font-size: 16px; line-height: 24px; color: hsl(var(--foreground)); background: transparent; border: 0; border-bottom: 2px solid hsl(var(--input)); border-radius: 0; resize: none; box-sizing: border-box; }
+.kit-text:focus { outline: none; border-bottom-color: hsl(var(--ring)); box-shadow: 0 2px 0 0 hsl(var(--ring)); }
+.sq-thumb { flex: none; border-radius: 16px; overflow: hidden; line-height: 0; }
+.sq-thumb .sq { zoom: var(--qz, 0.09); }
+.grp { display: flex; align-items: center; gap: 14px; min-height: 64px; padding: 10px 16px 10px 18px; border-radius: var(--radius-row); background: hsl(var(--background)); color: hsl(var(--foreground)); text-decoration: none; box-sizing: border-box; }
+.grp:hover, .grp.is-hover { background-image: linear-gradient(hsl(var(--foreground) / 0.10), hsl(var(--foreground) / 0.10)); }
+.grp:focus-visible, .grp.is-focus { outline: 3px solid hsl(var(--ring)); outline-offset: 2px; }
+.grp > i { font-size: 24px; flex: none; }
+.grp > i:first-child { color: hsl(var(--primary)); }
+.grp .t { display: block; font-weight: 700; font-size: 16px; line-height: 22px; }
+.grp .d { display: block; font-size: 14px; line-height: 20px; color: hsl(var(--muted-foreground)); }
+.on-bg .grp { background: hsl(var(--card)); }
+.content-dialog { max-width: 600px; padding: 28px; }
+.sr { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+
+/* ---------- A4 poster (print) ----------
+   Always black on white in both themes: qr / qr-foreground tokens (fixed light field, dark ink) plus one mid-grey (input, the same in both themes).
+   Units are print units. Photo flexes between 40 % of the page height (119 mm) and full-width 4:3 (139.5 mm). */
+.a4 { box-sizing: border-box; width: 210mm; height: 297mm; padding: 12mm; display: flex; flex-direction: column; overflow: hidden; background: hsl(var(--qr)); color: hsl(var(--qr-foreground)); font-family: var(--font-sans); font-size: 20pt; line-height: 1.2; text-align: left; }
+.a4 p, .a4 ul { margin: 0; padding: 0; }
+.a4 .pb { flex: none; font-family: var(--font-display); font-weight: 800; font-size: 80pt; line-height: 0.9; letter-spacing: -0.03em; white-space: nowrap; }
+/* Top zone: photo (at least 119 mm = 40 % of the page, grows into spare space up to 3:4) beside the action column (call to action, QR, short link). */
+.a4 .ptop { flex: 1 1 0; min-height: 119mm; max-height: 152mm; margin-top: 5mm; display: grid; grid-template-columns: minmax(0, 1fr) 64mm; column-gap: 8mm; }
+.a4 .ptop.solo { grid-template-columns: minmax(0, 1fr); max-height: 139.5mm; }
+.a4 .pp { min-height: 0; border-radius: 5mm; overflow: hidden; background: hsl(var(--input)); }
+.a4 .pp img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.a4 .pside { display: flex; flex-direction: column; justify-content: flex-end; min-width: 0; min-height: 0; }
+.a4 .pn { flex: none; margin-top: 6mm; font-family: var(--font-display); font-weight: 700; font-size: 72pt; line-height: 0.92; letter-spacing: -0.025em; overflow-wrap: anywhere; }
+.a4 .pdet { flex: none; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: 8mm; margin-top: 4mm; font-size: 22pt; line-height: 1.2; }
+.a4 .pf { list-style: none; }
+.a4 .pqr { position: relative; width: 56mm; height: 56mm; margin: 8mm auto 0; flex: none; color: hsl(var(--qr-foreground)); }
+.a4 .pqr svg { position: absolute; display: block; }
+.a4 .pqr .qr-field, .qr-field { fill: hsl(var(--qr)); }
+.a4 .pqr path, .qrbox path { fill: currentColor; }
+.a4 .pqr .fallback { position: absolute; inset: 0; display: grid; place-items: center; font-size: 56mm; line-height: 1; }
+.a4 .plink { flex: none; margin-top: 8.5mm; font-size: 14pt; line-height: 1.2; font-weight: 700; letter-spacing: -0.01em; white-space: nowrap; text-align: center; }
+.a4 .prew { flex: none; margin-top: 5mm; display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 3mm; }
+.a4 .prew b { font-size: 28pt; line-height: 1.1; font-weight: 700; font-variant-numeric: tabular-nums; }
+.a4 .prew span { font-size: 14pt; line-height: 1.3; }
+.a4 .psafe { flex: none; margin-top: 3mm; font-size: 12pt; line-height: 1.3; }
+.a4 .pc { font-family: var(--font-display); font-weight: 700; font-size: 26pt; line-height: 1.04; letter-spacing: -0.015em; }
+.a4 .pthanks { flex: none; margin-top: 4mm; font-size: 26pt; line-height: 1.2; }
+.a4 .pfoot { flex: none; margin-top: auto; padding-top: 3mm; border-top: 0.4mm solid hsl(var(--input)); display: flex; justify-content: space-between; align-items: flex-start; gap: 8mm; font-size: 12pt; line-height: 1.3; }
+.a4 > :nth-last-child(2) { margin-bottom: 5mm; }
+.a4 .pbrand { display: inline-flex; align-items: center; gap: 2mm; white-space: nowrap; font-weight: 700; }
+.a4 .pbrand svg { width: 6mm; height: 6mm; flex: none; }
+.a4 .pvet { text-align: right; max-width: 110mm; }
+.a4.is-grey { filter: grayscale(1); }
+.a4.no-photo .pp img { visibility: hidden; }
+
+/* Open Graph card 1200 x 630 and the Facebook square 1080 x 1080: rendered once, in light tokens (class .light), never themed. */
+.og { box-sizing: border-box; width: 1200px; height: 630px; padding: 48px; display: grid; grid-template-columns: 534px minmax(0, 1fr); column-gap: 56px; background: hsl(var(--background)); color: hsl(var(--foreground)); font-family: var(--font-sans); }
+.og > img { width: 534px; height: 534px; object-fit: cover; border-radius: 24px; display: block; }
+.og .tx { display: flex; flex-direction: column; min-width: 0; padding: 20px 0 8px; }
+.og .ty { display: flex; align-items: center; gap: 14px; font-family: var(--font-display); font-weight: 700; font-size: 52px; line-height: 60px; letter-spacing: -0.02em; color: hsl(var(--status-lost-subtle-foreground)); margin: 0; }
+.og .ty i { font-size: 48px; }
+.og .nm { font-family: var(--font-display); font-weight: 700; font-size: 150px; line-height: 150px; letter-spacing: -0.03em; margin: 12px 0 0; overflow-wrap: anywhere; }
+.og .ar { display: flex; align-items: center; gap: 12px; font-size: 34px; line-height: 44px; margin: 24px 0 0; }
+.og .ar i { font-size: 38px; color: hsl(var(--primary)); }
+.og .lg { margin-top: auto; display: flex; align-items: center; gap: 12px; font-family: var(--font-display); font-weight: 700; font-size: 40px; letter-spacing: -0.03em; }
+.og .lg svg { width: 52px; height: 52px; }
+.sq { box-sizing: border-box; width: 1080px; height: 1080px; padding: 56px; display: flex; flex-direction: column; background: hsl(var(--background)); color: hsl(var(--foreground)); font-family: var(--font-sans); }
+.sq > img { width: 100%; height: 600px; object-fit: cover; border-radius: 32px; display: block; }
+.sq .ty { display: flex; align-items: center; gap: 14px; margin: 40px 0 0; font-family: var(--font-display); font-weight: 700; font-size: 56px; line-height: 64px; letter-spacing: -0.02em; color: hsl(var(--status-lost-subtle-foreground)); }
+.sq .ty i { font-size: 52px; }
+.sq .nm { margin: 4px 0 0; font-family: var(--font-display); font-weight: 700; font-size: 132px; line-height: 132px; letter-spacing: -0.03em; }
+.sq .ft { margin-top: auto; display: flex; align-items: center; justify-content: space-between; gap: 24px; font-size: 32px; line-height: 40px; }
+.sq .lg { display: flex; align-items: center; gap: 12px; font-family: var(--font-display); font-weight: 700; font-size: 40px; letter-spacing: -0.03em; }
+.sq .lg svg { width: 52px; height: 52px; }
+
+/* ---------- artboard scaling: wide frames shrink so the mockup page never scrolls sideways ---------- */
+.sheets { display: flex; flex-wrap: wrap; gap: 40px 24px; align-items: flex-start; }
+.sheets > figure { max-width: 400px; }
+.sheet-view { zoom: 0.5; width: max-content; border-radius: 8px; box-shadow: 0 0 0 1px hsl(var(--border)); }
+.og-view { zoom: 0.75; border-radius: 24px; overflow: hidden; width: max-content; box-shadow: 0 0 0 2px hsl(var(--border)); }
+.sq-view { zoom: 0.5; border-radius: 24px; overflow: hidden; width: max-content; box-shadow: 0 0 0 2px hsl(var(--border)); }
+@media (min-width: 1400px) { .og-view { zoom: 1; } }
+@media (max-width: 1247px) { .browser { zoom: 0.94; } }
+@media (max-width: 1175px) { .browser { zoom: 0.8; } .og-view { zoom: 0.62; } }
+@media (max-width: 1007px) { .browser { zoom: 0.6; } }
+@media (max-width: 767px) { .browser { zoom: 0.45; } .og-view { zoom: 0.45; } }
+@media (max-width: 571px) { .browser { zoom: 0.29; } .og-view { zoom: 0.29; } .sq-view { zoom: 0.32; } .sheet-view { zoom: 0.44; } }
+@media (max-width: 379px) { .browser { zoom: 0.24; } .og-view { zoom: 0.24; } .sq-view { zoom: 0.26; } .sheet-view { zoom: 0.36; } }
+
+/* ---------- print: only the A4 posters, one per page, at 100 % ---------- */
+@page { size: A4 portrait; margin: 0; }
+@media print {
+  html, body, #stage, .scope { background: hsl(var(--qr)) !important; }
+  .chrome, .print-hide, .scope-label, .scope + .scope, .sheet-cap, .skip { display: none !important; }
+  .print-sheets { padding: 0 !important; margin: 0 !important; max-width: none !important; }
+  .print-sheets .sheets { display: block; }
+  .sheet-view { zoom: 1 !important; box-shadow: none !important; border-radius: 0 !important; }
+  .print-sheets .a4 { break-after: page; break-inside: avoid; }
+  .a4 .logo-mark { color: hsl(var(--qr-foreground)); }
+  .a4 img { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
+</style>
+</head>
+<body>
+<a class="sr-only focus:not-sr-only skip" href="#stage">Skip to content</a>
+
+<!-- Logo symbol, defined once -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <symbol id="nj-mark" viewBox="0 0 48 48">
+    <g fill="currentColor" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round">
+      <path d="M24 45.5 C24 45.5 10.5 33.2 10.5 24.4 A13.5 13.5 0 0 1 37.5 24.4 C37.5 33.2 24 45.5 24 45.5 Z M24 17.9 A6.5 6.5 0 1 0 24 30.9 A6.5 6.5 0 1 0 24 17.9 Z"/>
+      <path d="M12.2 19.6 L11.2 5 L22.6 11.4 Z"/><path d="M35.8 19.6 L25.4 11.4 L36.8 5 Z"/>
+    </g>
+    <circle cx="24" cy="24.4" r="3.6" fill="#F7B32B"/>
+  </symbol>
+</svg>
+
+<header class="chrome">
+  <div class="flex flex-wrap items-center gap-x-5 gap-y-2 px-6 py-2 max-w-[1400px] mx-auto">
+    <span class="flex items-center gap-2 font-display font-bold text-lg"><svg class="logo-mark w-7 h-7" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg>Najdimo</span>
+    <span class="text-muted-foreground text-[15px]">P18 Poster and sharing (mockup)</span>
+    <div class="ml-auto flex items-center gap-2" role="group" aria-label="Colour mode">
+      <button class="mode-btn" data-mode="light" aria-pressed="true">Light</button>
+      <button class="mode-btn" data-mode="dark" aria-pressed="false">Dark</button>
+      <button class="mode-btn" data-mode="both" aria-pressed="false">Side by side</button>
+    </div>
+  </div>
+</header>
+
+<main id="stage"></main>
+
+<div id="src" hidden>
+
+<!-- ======================================================= 1. MOBILE ======================================================= -->
+<section class="tile-section !max-w-[1400px] print-hide" lang="sl">
+  <h1 class="tile-title">P18 Poster and sharing</h1>
+  <p class="tile-lede">The owner's poster and share screen (from the detail page or the confirmation): poster language and the labelled vet ad switch, the A4 preview, "Prenesi PDF", share rows and the link card. Then the A4 posters as print HTML (lost SL and EN, found, home again, greyscale), the 1200 × 630 link card and the Facebook kit with its square image.</p>
+
+  <h2 class="tile-title !text-2xl">1. App, 390 px</h2>
+  <div class="wrap-x"><div class="flex flex-wrap gap-x-10 gap-y-12 items-start">
+
+    <!-- M1 READY -->
+    <div>
+      <p class="tile-h !mt-0">M1 · Ready (lost, SL) · top of the screen</p>
+      <div class="phone"><div class="phone-screen">
+        <div class="statusbar"><span>14:20</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <div class="topbar"><button type="button" class="iconbtn" aria-label="Nazaj"><i class="ph-bold ph-caret-left" aria-hidden="true"></i></button><h1 class="h-top">Plakat in deljenje</h1></div>
+        <div class="flex-1 px-5 pt-2 overflow-hidden">
+          <p class="label">Jezik plakata</p>
+          <div class="flex gap-2 mt-2" role="group" aria-label="Jezik plakata">
+            <button type="button" class="pill" aria-pressed="true"><i class="ph-bold ph-check tick" aria-hidden="true"></i>Slovenščina</button>
+            <button type="button" class="pill" aria-pressed="false" lang="en">English</button>
+          </div>
+          <button type="button" class="vrow mt-4" role="switch" aria-checked="true" aria-describedby="m1-vet"><span class="flex-1 font-bold text-[16px] leading-6">Prikaži oglas veterinarske ambulante</span><span class="sw" aria-hidden="true"></span></button>
+          <p class="help" id="m1-vet">Plačan oglas lokalnega veterinarskega partnerja. Na svojem plakatu ga lahko skrijete.</p>
+          <div class="pv mt-5" style="--pz:0.23">
+            <div class="pv-page" role="img" aria-label="Predogled plakata: Pogrešan pes Rex, s fotografijo in kodo QR" data-clone="sl-lost"></div>
+          </div>
+          <div class="flex justify-center mt-1"><button type="button" class="btn btn-text"><i class="ph-bold ph-arrows-out" aria-hidden="true"></i>Pokaži v polni velikosti</button></div>
+          <button type="button" class="btn btn-primary btn-lg btn-block mt-4"><i class="ph-bold ph-download-simple" aria-hidden="true"></i>Prenesi PDF</button>
+          <p class="help text-center mt-2 tnum">Datoteka: najdimo-k7m2qx.pdf</p>
+          <button type="button" class="btn btn-text btn-block mt-1"><i class="ph-bold ph-printer" aria-hidden="true"></i>Natisni</button>
+        </div>
+        <span class="home-ind"></span>
+      </div></div>
+    </div>
+
+    <!-- M2 READY, SCROLLED TO SHARE + COPIED TOAST -->
+    <div>
+      <p class="tile-h !mt-0">M2 · Ready, scrolled to "Deli" · after "Kopiraj povezavo"</p>
+      <div class="phone"><div class="phone-screen">
+        <div class="statusbar"><span>14:21</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <div class="topbar"><button type="button" class="iconbtn" aria-label="Nazaj"><i class="ph-bold ph-caret-left" aria-hidden="true"></i></button><h1 class="h-top">Plakat in deljenje</h1></div>
+        <div class="flex-1 px-5 pt-4 overflow-hidden">
+          <h2 class="font-display font-bold text-[24px] leading-[30px] tracking-[-0.015em]">Deli</h2>
+          <ul class="shares mt-4">
+            <li><button type="button" class="choice"><i class="ph-bold ph-whatsapp-logo" aria-hidden="true"></i><span class="t flex-1">WhatsApp</span></button></li>
+            <li><button type="button" class="choice"><i class="ph-bold ph-facebook-logo" aria-hidden="true"></i><span class="flex-1"><span class="t">Facebook</span><span class="d">Besedilo, slika in skupine</span></span><i class="ph-bold ph-caret-right text-[20px]" aria-hidden="true"></i></button></li>
+            <li><button type="button" class="choice is-pressed"><i class="ph-bold ph-link" aria-hidden="true"></i><span class="t flex-1">Kopiraj povezavo</span></button></li>
+            <li><button type="button" class="choice"><i class="ph-bold ph-share-network" aria-hidden="true"></i><span class="t flex-1">Več …</span></button></li>
+          </ul>
+          <figure class="mt-6 m-0">
+            <div class="lc-img" style="--oz:0.29" role="img" aria-label="Kartica povezave: Pogrešan pes Rex, območje Šiška" data-clone="og"></div>
+            <figcaption class="mt-3"><span class="block font-bold">Pogrešan pes Rex – Najdimo</span><span class="help block">najdimo.si</span></figcaption>
+          </figure>
+          <p class="flex gap-2 mt-5 help"><i class="ph-bold ph-qr-code text-[18px] mt-px" aria-hidden="true"></i><span>Plakat ima kodo QR, ki odpre to prijavo.</span></p>
+        </div>
+        <div class="absolute left-4 right-4 bottom-[34px] z-10"><div class="toast" role="status" aria-live="polite"><i class="ph-fill ph-check-circle" aria-hidden="true"></i><p>Povezava je kopirana.</p><button type="button" class="iconbtn" aria-label="Zapri"><i class="ph-bold ph-x"></i></button></div></div>
+        <span class="home-ind"></span>
+      </div></div>
+    </div>
+
+    <!-- M3 GENERATING -->
+    <div>
+      <p class="tile-h !mt-0">M3 · Generating (under 5 s) · skeleton preview, busy primary</p>
+      <div class="phone"><div class="phone-screen">
+        <div class="statusbar"><span>14:20</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <div class="topbar"><button type="button" class="iconbtn" aria-label="Nazaj"><i class="ph-bold ph-caret-left" aria-hidden="true"></i></button><h1 class="h-top">Plakat in deljenje</h1></div>
+        <div class="flex-1 px-5 pt-2 overflow-hidden">
+          <p class="label">Jezik plakata</p>
+          <div class="flex gap-2 mt-2" role="group" aria-label="Jezik plakata">
+            <button type="button" class="pill" aria-pressed="true"><i class="ph-bold ph-check tick" aria-hidden="true"></i>Slovenščina</button>
+            <button type="button" class="pill" aria-pressed="false" lang="en">English</button>
+          </div>
+          <button type="button" class="vrow mt-4" role="switch" aria-checked="true" aria-describedby="m3-vet"><span class="flex-1 font-bold text-[16px] leading-6">Prikaži oglas veterinarske ambulante</span><span class="sw" aria-hidden="true"></span></button>
+          <p class="help" id="m3-vet">Plačan oglas lokalnega veterinarskega partnerja. Na svojem plakatu ga lahko skrijete.</p>
+          <div class="pv mt-5" style="--pz:0.23"><div class="pv-skel skel" aria-hidden="true"></div></div>
+          <div class="h-11 mt-1" aria-hidden="true"></div>
+          <button type="button" class="btn btn-primary btn-lg btn-block mt-4" aria-busy="true" aria-live="polite"><span class="spin" aria-hidden="true"></span>Pripravljamo …</button>
+          <p class="help text-center mt-2" aria-hidden="true">&nbsp;</p>
+          <button type="button" class="btn btn-text btn-block mt-1 is-disabled" aria-disabled="true"><i class="ph-bold ph-printer" aria-hidden="true"></i>Natisni</button>
+        </div>
+        <span class="home-ind"></span>
+      </div></div>
+    </div>
+
+    <!-- M4 FAILURE -->
+    <div>
+      <p class="tile-h !mt-0">M4 · Failure · inline error in the preview's place, retry</p>
+      <div class="phone"><div class="phone-screen">
+        <div class="statusbar"><span>14:20</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <div class="topbar"><button type="button" class="iconbtn" aria-label="Nazaj"><i class="ph-bold ph-caret-left" aria-hidden="true"></i></button><h1 class="h-top">Plakat in deljenje</h1></div>
+        <div class="flex-1 px-5 pt-2 overflow-hidden">
+          <p class="label">Jezik plakata</p>
+          <div class="flex gap-2 mt-2" role="group" aria-label="Jezik plakata">
+            <button type="button" class="pill" aria-pressed="true"><i class="ph-bold ph-check tick" aria-hidden="true"></i>Slovenščina</button>
+            <button type="button" class="pill" aria-pressed="false" lang="en">English</button>
+          </div>
+          <button type="button" class="vrow mt-4" role="switch" aria-checked="true" aria-describedby="m4-vet"><span class="flex-1 font-bold text-[16px] leading-6">Prikaži oglas veterinarske ambulante</span><span class="sw" aria-hidden="true"></span></button>
+          <p class="help" id="m4-vet">Plačan oglas lokalnega veterinarskega partnerja. Na svojem plakatu ga lahko skrijete.</p>
+          <div class="mt-5" role="alert">
+            <div class="note"><i class="ph-fill ph-warning-circle text-destructive" aria-hidden="true"></i><p class="m-0">Plakata ni bilo mogoče pripraviti. Poskusite znova.</p></div>
+            <button type="button" class="btn btn-text mt-2"><i class="ph-bold ph-arrow-clockwise" aria-hidden="true"></i>Poskusi znova</button>
+          </div>
+          <button type="button" class="btn btn-primary btn-lg btn-block mt-8 is-disabled" aria-disabled="true"><i class="ph-bold ph-download-simple" aria-hidden="true"></i>Prenesi PDF</button>
+          <button type="button" class="btn btn-text btn-block mt-1 is-disabled" aria-disabled="true"><i class="ph-bold ph-printer" aria-hidden="true"></i>Natisni</button>
+        </div>
+        <span class="home-ind"></span>
+      </div></div>
+    </div>
+
+    <!-- M5 NO GOOD PHOTO -->
+    <div>
+      <p class="tile-h !mt-0">M5 · No good photo · download blocked, primary "Dodaj fotografijo"</p>
+      <div class="phone"><div class="phone-screen">
+        <div class="statusbar"><span>14:20</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <div class="topbar"><button type="button" class="iconbtn" aria-label="Nazaj"><i class="ph-bold ph-caret-left" aria-hidden="true"></i></button><h1 class="h-top">Plakat in deljenje</h1></div>
+        <div class="flex-1 px-5 pt-2 overflow-hidden">
+          <p class="label">Jezik plakata</p>
+          <div class="flex gap-2 mt-2" role="group" aria-label="Jezik plakata">
+            <button type="button" class="pill" aria-pressed="true"><i class="ph-bold ph-check tick" aria-hidden="true"></i>Slovenščina</button>
+            <button type="button" class="pill" aria-pressed="false" lang="en">English</button>
+          </div>
+          <div class="pv mt-5" style="--pz:0.23">
+            <div class="pv-page" role="img" aria-label="Predogled plakata: Pogrešan pes Rex, brez fotografije" data-clone="sl-lost" data-mod="no-photo"></div>
+          </div>
+          <div class="note mt-5"><i class="ph-fill ph-image text-primary" aria-hidden="true"></i><p class="m-0">Za plakat potrebujemo fotografijo, na kateri je žival dobro vidna.</p></div>
+          <button type="button" class="btn btn-primary btn-lg btn-block mt-6"><i class="ph-bold ph-camera-plus" aria-hidden="true"></i>Dodaj fotografijo</button>
+        </div>
+        <span class="home-ind"></span>
+      </div></div>
+    </div>
+
+    <!-- M6 FACEBOOK KIT SHEET -->
+    <div>
+      <p class="tile-h !mt-0">M6 · Facebook kit (sheet from the Facebook row) · <span class="anno">Vzorec</span> kit copy</p>
+      <div class="phone"><div class="phone-screen">
+        <div class="statusbar"><span>14:22</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <div class="topbar" aria-hidden="true"><span class="iconbtn"><i class="ph-bold ph-caret-left"></i></span><span class="h-top">Plakat in deljenje</span></div>
+        <div class="px-5 pt-4" aria-hidden="true"><p class="font-display font-bold text-[24px] leading-[30px]">Deli</p></div>
+        <div class="scrim"></div>
+        <div class="sheet" style="top:72px" role="dialog" aria-modal="true" aria-label="Objava na Facebooku">
+          <button type="button" class="grab" aria-label="Zapri ploščo"></button>
+          <div class="px-5 pt-4 pb-10 h-full overflow-hidden scrollfade">
+            <h2 class="font-display font-bold text-[24px] leading-[30px] tracking-[-0.015em]">Objava na Facebooku</h2>
+            <p class="mt-2">Kopirajte besedilo, shranite sliko in ju objavite v skupinah za izgubljene živali.</p>
+            <div class="field mt-5">
+              <label for="m6-text">Besedilo objave</label>
+              <textarea id="m6-text" class="kit-text" readonly rows="4">Pomagajte najti psa: Rex. Nazadnje viden 12. 10., območje Šiška. Ste ga videli? https://najdimo.si/r/k7m2qx</textarea>
+            </div>
+            <button type="button" class="btn btn-primary btn-lg btn-block mt-4"><i class="ph-bold ph-copy" aria-hidden="true"></i>Kopiraj besedilo</button>
+            <div class="flex items-center gap-4 mt-6">
+              <div class="sq-thumb" style="--qz:0.083" role="img" aria-label="Kvadratna slika za objavo: Pogrešan pes Rex, območje Šiška" data-clone="sq"></div>
+              <div class="min-w-0"><p class="font-bold">Kvadratna slika</p><p class="help tnum">1080 × 1080</p><button type="button" class="btn btn-secondary btn-sm mt-2"><i class="ph-bold ph-download-simple" aria-hidden="true"></i>Shrani sliko</button></div>
+            </div>
+            <h3 class="font-display font-semibold text-[20px] leading-7 tracking-[-0.01em] mt-7">Skupine za izgubljene živali</h3>
+            <ul class="grid gap-2 mt-3 list-none p-0 m-0 on-card">
+              <li><a href="#" class="grp" target="_blank" rel="noopener"><i class="ph-bold ph-facebook-logo" aria-hidden="true"></i><span class="flex-1 min-w-0"><span class="t">Izgubljene živali – Osrednja Slovenija</span><span class="d">Osrednjeslovenska</span></span><i class="ph-bold ph-arrow-square-out text-[20px]" aria-hidden="true"></i><span class="sr">(odpre Facebook)</span></a></li>
+              <li><a href="#" class="grp" target="_blank" rel="noopener"><i class="ph-bold ph-facebook-logo" aria-hidden="true"></i><span class="flex-1 min-w-0"><span class="t">Izgubljene živali – Gorenjska</span><span class="d">Gorenjska</span></span><i class="ph-bold ph-arrow-square-out text-[20px]" aria-hidden="true"></i><span class="sr">(odpre Facebook)</span></a></li>
+              <li><a href="#" class="grp" target="_blank" rel="noopener"><i class="ph-bold ph-facebook-logo" aria-hidden="true"></i><span class="flex-1 min-w-0"><span class="t">Izgubljene živali – Štajerska</span><span class="d">Podravska in Savinjska</span></span><i class="ph-bold ph-arrow-square-out text-[20px]" aria-hidden="true"></i><span class="sr">(odpre Facebook)</span></a></li>
+            </ul>
+          </div>
+        </div>
+        <span class="home-ind"></span>
+      </div></div>
+    </div>
+
+  </div></div>
+  <p class="help mt-6" style="max-width:80ch">Order follows the slice: options (language pills, then the vet ad switch, on by default for the owner's own poster), the preview (a thumbnail on a <code>card</code> frame, page corners 12 px, "Pokaži v polni velikosti" opens the zoomable full page), the one <code>lg</code> primary with the file name under it and the <code>text</code> "Natisni". Share rows are a list of buttons; "Več …" opens the native share sheet with <code>share.text_lost</code>. Facebook opens the kit (M6): text, square image, then the regional groups and the Radio Aktual row further down the sheet (full list in W2). Group names are supplied by the client (<code>share.facebook_groups</code> from the public config); the ones shown are placeholders.</p>
+</section>
+
+<!-- ======================================================= 2. WEB ======================================================= -->
+<section class="tile-section !max-w-[1400px] !pt-0 print-hide" lang="sl">
+  <h2 class="tile-title !text-2xl">2. Web, 1200 px</h2>
+  <p class="tile-lede">Signed-in owner. The page has its own primary, so the header "Prijavi" is <code>secondary</code> (system v0.9).</p>
+
+  <!-- W1 READY -->
+  <p class="tile-h !mt-0">W1 · Ready (lost, SL) · hover on WhatsApp · keyboard focus on "Več …" · share unsupported, so the link was copied</p>
+  <div class="wrap-x"><div class="browser relative">
+    <div class="browser-bar"><span class="dots"><i></i><i></i><i></i></span><span class="url"><i class="ph ph-lock-simple"></i>najdimo.si/r/k7m2qx/plakat</span></div>
+    <header class="flex items-center gap-8 px-12 h-[88px]">
+      <a href="#" class="logo-link" aria-label="Najdimo, na začetno stran"><svg class="logo-mark w-9 h-9" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg><span class="font-display font-bold text-2xl tracking-[-0.03em]" aria-hidden="true">Najdimo</span></a>
+      <nav aria-label="Glavni meni"><ul class="flex items-center gap-2">
+        <li><a href="#" class="nl">Zemljevid</a></li><li><a href="#" class="nl">Izgubljene</a></li><li><a href="#" class="nl">Najdene</a></li><li><a href="#" class="nl" aria-current="page">Moje živali</a></li>
+      </ul></nav>
+      <div class="ml-auto flex items-center gap-2">
+        <div class="lang" role="group" aria-label="Jezik: Slovenščina"><a href="#" class="ll" lang="sl" aria-current="true" aria-label="Slovenščina">SL</a><span aria-hidden="true">/</span><a href="#" class="ll" lang="en" hreflang="en" aria-label="English">EN</a></div>
+        <a href="#" class="iconbtn" aria-label="Sporočila in obvestila"><i class="ph-bold ph-tray"></i></a>
+        <button type="button" class="iconbtn" aria-label="Moj račun" aria-haspopup="menu" aria-expanded="false"><span class="av av-32" aria-hidden="true">AN</span></button>
+        <button type="button" class="btn btn-secondary btn-sm ml-2" aria-haspopup="menu" aria-expanded="false">Prijavi</button>
+      </div>
+    </header>
+    <main class="px-12 pt-2 pb-24">
+      <a href="#" class="btn btn-text btn-sm !px-3 -ml-3"><i class="ph-bold ph-caret-left" aria-hidden="true"></i>Nazaj</a>
+      <h1 class="font-display font-bold text-[48px] leading-[52px] tracking-[-0.02em] mt-2">Plakat in deljenje</h1>
+      <div class="grid grid-cols-12 gap-8 items-start mt-10">
+        <div class="col-span-7 min-w-0">
+          <div class="pv !p-10" style="--pz:0.62">
+            <div class="pv-page" role="img" aria-label="Predogled plakata: Pogrešan pes Rex, s fotografijo in kodo QR" data-clone="sl-lost"></div>
+          </div>
+          <div class="flex justify-center mt-2"><button type="button" class="btn btn-text"><i class="ph-bold ph-arrows-out" aria-hidden="true"></i>Pokaži v polni velikosti</button></div>
+        </div>
+        <div class="col-span-5 min-w-0">
+          <p class="label">Jezik plakata</p>
+          <div class="flex gap-2 mt-2" role="group" aria-label="Jezik plakata">
+            <button type="button" class="pill" aria-pressed="true"><i class="ph-bold ph-check tick" aria-hidden="true"></i>Slovenščina</button>
+            <button type="button" class="pill is-hover" aria-pressed="false" lang="en">English</button>
+          </div>
+          <button type="button" class="vrow mt-5" role="switch" aria-checked="true" aria-describedby="w1-vet"><span class="flex-1 font-bold text-[16px] leading-6">Prikaži oglas veterinarske ambulante</span><span class="sw" aria-hidden="true"></span></button>
+          <p class="help" id="w1-vet">Plačan oglas lokalnega veterinarskega partnerja. Na svojem plakatu ga lahko skrijete.</p>
+          <div class="flex flex-wrap items-center gap-x-2 gap-y-1 mt-8">
+            <button type="button" class="btn btn-primary btn-lg"><i class="ph-bold ph-download-simple" aria-hidden="true"></i>Prenesi PDF</button>
+            <button type="button" class="btn btn-text btn-lg"><i class="ph-bold ph-printer" aria-hidden="true"></i>Natisni</button>
+          </div>
+          <p class="help mt-2 tnum">Datoteka: najdimo-k7m2qx.pdf</p>
+          <h2 class="font-display font-bold text-[30px] leading-9 tracking-[-0.015em] mt-12">Deli</h2>
+          <ul class="shares mt-4">
+            <li><button type="button" class="choice is-hover"><i class="ph-bold ph-whatsapp-logo" aria-hidden="true"></i><span class="t flex-1">WhatsApp</span></button></li>
+            <li><button type="button" class="choice"><i class="ph-bold ph-facebook-logo" aria-hidden="true"></i><span class="flex-1"><span class="t">Facebook</span><span class="d">Besedilo, slika in skupine</span></span><i class="ph-bold ph-caret-right text-[20px]" aria-hidden="true"></i></button></li>
+            <li><button type="button" class="choice"><i class="ph-bold ph-link" aria-hidden="true"></i><span class="t flex-1">Kopiraj povezavo</span></button></li>
+            <li><button type="button" class="choice is-focus"><i class="ph-bold ph-share-network" aria-hidden="true"></i><span class="t flex-1">Več …</span></button></li>
+          </ul>
+          <figure class="mt-8 m-0">
+            <div class="lc-img" style="--oz:0.34" role="img" aria-label="Kartica povezave: Pogrešan pes Rex, območje Šiška" data-clone="og"></div>
+            <figcaption class="mt-3"><span class="block font-bold">Pogrešan pes Rex – Najdimo</span><span class="help block">najdimo.si</span></figcaption>
+          </figure>
+          <p class="flex gap-2 mt-6 help"><i class="ph-bold ph-qr-code text-[18px] mt-px" aria-hidden="true"></i><span>Plakat ima kodo QR, ki odpre to prijavo.</span></p>
+        </div>
+      </div>
+    </main>
+    <div class="absolute left-12 bottom-8 z-10" style="width:420px"><div class="toast" role="status" aria-live="polite"><i class="ph-fill ph-check-circle" aria-hidden="true"></i><p>Deljenje ni na voljo, zato smo povezavo kopirali.</p><button type="button" class="iconbtn" aria-label="Zapri"><i class="ph-bold ph-x"></i></button></div></div>
+  </div></div>
+  <p class="help mt-4" style="max-width:80ch">Preview 7 columns: the page at 62 % on the <code>card</code> frame (40 px padding). Options column 5: label above the pills, the vet switch row (whole row is the target, hint tied by <code>aria-describedby</code>), primary <code>lg</code> plus <code>text</code> "Natisni" (opens the browser print dialog on the PDF), file name in meta. Share rows as in the app; on the web "Več …" calls the Web Share API and falls back to copying with <code>share.unsupported</code>. Row hover: <code>foreground</code> at 10 %; focus: 3 px ring, 2 px offset.</p>
+
+  <!-- W2 FACEBOOK KIT DIALOG -->
+  <p class="tile-h" style="margin-top:64px">W2 · Facebook kit (content dialog from the Facebook row) · hover on a group · <span class="anno">Vzorec</span> kit copy and group names</p>
+  <div class="wrap-x"><div class="browser relative">
+    <div class="browser-bar"><span class="dots"><i></i><i></i><i></i></span><span class="url"><i class="ph ph-lock-simple"></i>najdimo.si/r/k7m2qx/plakat</span></div>
+    <div aria-hidden="true">
+      <header class="flex items-center gap-8 px-12 h-[88px]">
+        <span class="logo-link"><svg class="logo-mark w-9 h-9" viewBox="0 0 48 48"><use href="#nj-mark"/></svg><span class="font-display font-bold text-2xl tracking-[-0.03em]">Najdimo</span></span>
+      </header>
+      <div class="px-12 pb-16">
+        <p class="font-display font-bold text-[48px] leading-[52px] tracking-[-0.02em] mt-14">Plakat in deljenje</p>
+        <div class="grid grid-cols-12 gap-8 mt-10"><div class="col-span-7"><div class="pv !p-10" style="--pz:0.62"><div class="pv-page" data-clone="sl-lost"></div></div></div></div>
+      </div>
+    </div>
+    <div class="scrim" style="top:44px"></div>
+    <div class="absolute inset-x-0 top-[124px] z-10 flex justify-center px-6">
+      <div class="dialog content-dialog" role="dialog" aria-modal="true" aria-label="Objava na Facebooku">
+        <div class="flex items-start justify-between gap-4">
+          <h2 class="font-display font-bold text-[30px] leading-9 tracking-[-0.015em]">Objava na Facebooku</h2>
+          <button type="button" class="iconbtn -mr-2 -mt-1" aria-label="Zapri"><i class="ph-bold ph-x"></i></button>
+        </div>
+        <p class="mt-2">Kopirajte besedilo, shranite sliko in ju objavite v skupinah za izgubljene živali.</p>
+        <div class="field mt-6">
+          <label for="w2-text">Besedilo objave</label>
+          <textarea id="w2-text" class="kit-text !min-h-[80px]" readonly rows="3">Pomagajte najti psa: Rex. Nazadnje viden 12. 10., območje Šiška. Ste ga videli? https://najdimo.si/r/k7m2qx</textarea>
+        </div>
+        <div class="flex flex-wrap items-center gap-x-2 gap-y-2 mt-4">
+          <button type="button" class="btn btn-primary btn-lg"><i class="ph-bold ph-copy" aria-hidden="true"></i>Kopiraj besedilo</button>
+        </div>
+        <div class="flex items-center gap-5 mt-7">
+          <div class="sq-thumb" style="--qz:0.1" role="img" aria-label="Kvadratna slika za objavo: Pogrešan pes Rex, območje Šiška" data-clone="sq"></div>
+          <div class="min-w-0"><p class="font-bold">Kvadratna slika</p><p class="help tnum">1080 × 1080</p><button type="button" class="btn btn-secondary btn-sm mt-2"><i class="ph-bold ph-download-simple" aria-hidden="true"></i>Shrani sliko</button></div>
+        </div>
+        <h3 class="font-display font-semibold text-[24px] leading-8 tracking-[-0.01em] mt-8">Skupine za izgubljene živali</h3>
+        <ul class="grid grid-cols-2 gap-2 mt-3 list-none p-0 m-0">
+          <li><a href="#" class="grp is-hover" target="_blank" rel="noopener"><i class="ph-bold ph-facebook-logo" aria-hidden="true"></i><span class="flex-1 min-w-0"><span class="t">Izgubljene živali – Osrednja Slovenija</span><span class="d">Osrednjeslovenska</span></span><i class="ph-bold ph-arrow-square-out text-[20px]" aria-hidden="true"></i><span class="sr">(odpre Facebook)</span></a></li>
+          <li><a href="#" class="grp" target="_blank" rel="noopener"><i class="ph-bold ph-facebook-logo" aria-hidden="true"></i><span class="flex-1 min-w-0"><span class="t">Izgubljene živali – Gorenjska</span><span class="d">Gorenjska</span></span><i class="ph-bold ph-arrow-square-out text-[20px]" aria-hidden="true"></i><span class="sr">(odpre Facebook)</span></a></li>
+          <li><a href="#" class="grp" target="_blank" rel="noopener"><i class="ph-bold ph-facebook-logo" aria-hidden="true"></i><span class="flex-1 min-w-0"><span class="t">Izgubljene živali – Štajerska</span><span class="d">Podravska in Savinjska</span></span><i class="ph-bold ph-arrow-square-out text-[20px]" aria-hidden="true"></i><span class="sr">(odpre Facebook)</span></a></li>
+          <li><a href="#" class="grp" target="_blank" rel="noopener"><i class="ph-bold ph-facebook-logo" aria-hidden="true"></i><span class="flex-1 min-w-0"><span class="t">Izgubljene živali – Primorska</span><span class="d">Obalno-kraška in Goriška</span></span><i class="ph-bold ph-arrow-square-out text-[20px]" aria-hidden="true"></i><span class="sr">(odpre Facebook)</span></a></li>
+          <li><a href="#" class="grp" target="_blank" rel="noopener"><i class="ph-bold ph-facebook-logo" aria-hidden="true"></i><span class="flex-1 min-w-0"><span class="t">Izgubljene živali – Dolenjska</span><span class="d">Jugovzhodna Slovenija</span></span><i class="ph-bold ph-arrow-square-out text-[20px]" aria-hidden="true"></i><span class="sr">(odpre Facebook)</span></a></li>
+          <li><a href="#" class="grp" target="_blank" rel="noopener"><i class="ph-bold ph-facebook-logo" aria-hidden="true"></i><span class="flex-1 min-w-0"><span class="t">Izgubljene živali – Pomurje</span><span class="d">Pomurska</span></span><i class="ph-bold ph-arrow-square-out text-[20px]" aria-hidden="true"></i><span class="sr">(odpre Facebook)</span></a></li>
+        </ul>
+        <a href="#" class="grp mt-2" target="_blank" rel="noopener"><i class="ph-bold ph-radio" aria-hidden="true"></i><span class="flex-1 min-w-0"><span class="t">Radio Aktual: obrazec za obvestila</span><span class="d">Obvestilo o izgubljeni živali preberejo v programu</span></span><i class="ph-bold ph-arrow-square-out text-[20px]" aria-hidden="true"></i><span class="sr">(odpre spletno stran Radia Aktual)</span></a>
+      </div>
+    </div>
+    <div style="height:520px" aria-hidden="true"></div>
+  </div></div>
+  <p class="help mt-4" style="max-width:80ch">Content dialog (system 10.9): 600 px, padding 28, h2 title, close top right, one primary. Text is <code>share.text_lost</code> (or <code>text_found</code>, <code>text_sighted</code>, <code>text_home</code>), read-only and selectable. The square image is the 1080 × 1080 render (section 4). Group rows are links on <code>background</code> (on the <code>popover</code> dialog), 64 px, external icon plus a hidden "(odpre Facebook)"; the report's region comes first. The Radio Aktual row links to the station's submission form.</p>
+
+  <!-- WEB STATE PANELS -->
+  <h2 class="tile-title !text-2xl" style="margin-top:72px">3. Web states (options column and preview, real width)</h2>
+  <div class="grid gap-x-14 gap-y-14 items-start mt-8" style="grid-template-columns:repeat(3,minmax(0,1fr))">
+    <div class="max-w-[452px]">
+      <p class="tile-h !mt-0">S1 · Generating</p>
+      <div class="flex flex-wrap gap-5 items-start">
+        <div class="pv !p-3" style="--pz:0.16"><div class="pv-skel skel" aria-hidden="true"></div></div>
+        <div class="min-w-0 pt-1">
+          <button type="button" class="btn btn-primary btn-lg" aria-busy="true"><span class="spin" aria-hidden="true"></span>Pripravljamo …</button>
+          <p class="help mt-2">Nalaganje …</p>
+        </div>
+      </div>
+    </div>
+    <div class="max-w-[452px]">
+      <p class="tile-h !mt-0">S2 · Failure · primary unavailable until the retry works</p>
+      <div role="alert">
+        <div class="note"><i class="ph-fill ph-warning-circle text-destructive" aria-hidden="true"></i><p class="m-0">Plakata ni bilo mogoče pripraviti. Poskusite znova.</p></div>
+        <button type="button" class="btn btn-text mt-2 is-hover"><i class="ph-bold ph-arrow-clockwise" aria-hidden="true"></i>Poskusi znova</button>
+      </div>
+      <button type="button" class="btn btn-primary btn-lg mt-5 is-disabled" aria-disabled="true"><i class="ph-bold ph-download-simple" aria-hidden="true"></i>Prenesi PDF</button>
+    </div>
+    <div class="max-w-[452px]">
+      <p class="tile-h !mt-0">S3 · No good photo</p>
+      <div class="flex flex-wrap gap-5 items-start">
+        <div class="pv !p-3" style="--pz:0.16"><div class="pv-page" role="img" aria-label="Predogled plakata: Pogrešan pes Rex, brez fotografije" data-clone="sl-lost" data-mod="no-photo"></div></div>
+        <div class="min-w-0">
+          <div class="note"><i class="ph-fill ph-image text-primary" aria-hidden="true"></i><p class="m-0">Za plakat potrebujemo fotografijo, na kateri je žival dobro vidna.</p></div>
+          <button type="button" class="btn btn-primary btn-lg mt-4"><i class="ph-bold ph-camera-plus" aria-hidden="true"></i>Dodaj fotografijo</button>
+        </div>
+      </div>
+    </div>
+    <div class="max-w-[452px]">
+      <p class="tile-h !mt-0">S4 · Reunited · "Spet doma" poster instead of the appeal</p>
+      <div class="flex flex-wrap gap-5 items-start">
+        <div class="pv !p-3" style="--pz:0.16"><div class="pv-page" role="img" aria-label="Predogled plakata: Spet doma, Rex je spet doma, s fotografijo" data-clone="sl-home"></div></div>
+        <div class="min-w-0 pt-1">
+          <p class="st st-lg st-reunited"><i class="ph-fill ph-heart" aria-hidden="true"></i>Spet doma</p>
+          <button type="button" class="btn btn-primary btn-lg mt-4"><i class="ph-bold ph-download-simple" aria-hidden="true"></i>Prenesi PDF</button>
+          <p class="help mt-2 tnum">Datoteka: najdimo-k7m2qx.pdf</p>
+          <p class="help mt-3">Deli uporabi <code>share.text_home</code>.</p>
+        </div>
+      </div>
+    </div>
+    <div class="max-w-[452px]">
+      <p class="tile-h !mt-0">S5 · Search closed · poster unavailable, no share</p>
+      <div class="note"><i class="ph-fill ph-info text-primary" aria-hidden="true"></i><p class="m-0">Iskanje je zaključeno, zato plakat ni na voljo.</p></div>
+    </div>
+    <div class="max-w-[452px]">
+      <p class="tile-h !mt-0">S6 · Vet ad switched off · keyboard focus on the row</p>
+      <button type="button" class="vrow is-focus" role="switch" aria-checked="false" aria-describedby="s6-vet"><span class="flex-1 font-bold text-[16px] leading-6">Prikaži oglas veterinarske ambulante</span><span class="sw" aria-hidden="true"></span></button>
+      <p class="help" id="s6-vet">Plačan oglas lokalnega veterinarskega partnerja. Na svojem plakatu ga lahko skrijete.</p>
+      <p class="help mt-3">The "Oglas · …" line leaves the poster; the footer closes up with no gap (poster EN below).</p>
+    </div>
+  </div>
+</section>
+
+<!-- ======================================================= 4. POSTERS (PRINT) ======================================================= -->
+<section class="tile-section !max-w-[1400px] !pt-0 print-sheets">
+  <h2 class="tile-title !text-2xl print-hide">4. A4 posters (print HTML, 210 × 297 mm, safe margin 12 mm)</h2>
+  <p class="tile-lede print-hide">Always black on white, with one mid-grey (photo well, footer rule); brand colour only in the screen preview's logo. Status is the top-band word. No phone, email, chip number, exact address or holding place. QR: 56 mm code with a 4-module white quiet zone, short link printed under it. Shown here at 50 %; print the page (A4, 100 %, no margins) to get the four posters, one per page.</p>
+  <div class="sheets">
+
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0 sheet-cap">A1 · Lost, SL · reward with owner note · vet ad on</figcaption>
+      <div class="sheet-view">
+        <article class="a4 light" data-sheet="sl-lost" lang="sl" aria-label="Plakat A4: Pogrešan pes Rex">
+          <p class="pb">Pogrešan pes</p>
+          <div class="ptop">
+            <div class="pp"><img src="../directions/img/dog-beagle.jpg" alt="Rex: pes rjave in bele barve, ovratnica: rdeča z zvončkom"></div>
+            <div class="pside">
+              <p class="pc">Ste ga videli? Skenirajte kodo in nam sporočite.</p>
+              <div><div class="pqr" data-qr="https://najdimo.si/r/k7m2qx" role="img" aria-label="Koda QR za prijavo na najdimo.si/r/k7m2qx"></div><p class="plink tnum">najdimo.si/r/k7m2qx</p></div>
+            </div>
+          </div>
+          <p class="pn">Rex</p>
+          <div class="pdet"><ul class="pf"><li>Barva: rjava in bela</li><li>Velikost: srednja</li><li>Ovratnica: rdeča z zvončkom</li></ul><p class="pw">Pogrešan od 12. 10.<br>Območje: Šiška, Ljubljana (približno)</p></div>
+          <p class="prew"><b>Nagrada: 50 €</b><span>· za informacijo, ki pripelje Rexa domov</span></p>
+          <p class="psafe">Stik samo prek Najdimo. Nagrado lastnik izroči šele, ko je žival spet doma. Nikoli nikomur ne plačajte vnaprej.</p>
+          <div class="pfoot"><span class="pbrand"><svg class="logo-mark" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg>Najdimo · Spet doma.</span><span class="pvet">Oglas · Potrebujete veterinarja? Ambulanta za male živali, Šiška</span></div>
+        </article>
+      </div>
+    </figure>
+
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0 sheet-cap">A2 · Lost, EN · no reward · vet ad off (reflows, photo takes the space)</figcaption>
+      <div class="sheet-view">
+        <article class="a4 light" data-sheet="en-lost" lang="en" aria-label="A4 poster: Missing dog Rex">
+          <p class="pb">Missing dog</p>
+          <div class="ptop">
+            <div class="pp"><img src="../directions/img/dog-beagle.jpg" alt="Rex: brown and white dog, collar: red with a bell"></div>
+            <div class="pside">
+              <p class="pc">Seen this dog? Scan the code and let us know.</p>
+              <div><div class="pqr" data-qr="https://najdimo.si/r/k7m2qx" role="img" aria-label="QR code for the report at najdimo.si/r/k7m2qx"></div><p class="plink tnum">najdimo.si/r/k7m2qx</p></div>
+            </div>
+          </div>
+          <p class="pn">Rex</p>
+          <div class="pdet"><ul class="pf"><li>Colour: brown and white</li><li>Size: medium</li><li>Collar: red with a bell</li></ul><p class="pw">Missing since 12 Oct<br>Area: Šiška, Ljubljana (approximate)</p></div>
+          <p class="psafe">Contact only through Najdimo. Never pay in advance.</p>
+          <div class="pfoot"><span class="pbrand"><svg class="logo-mark" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg>Najdimo · Home again.</span></div>
+        </article>
+      </div>
+    </figure>
+
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0 sheet-cap">A3 · Found, SL · no name, no reward, never where it is kept</figcaption>
+      <div class="sheet-view">
+        <article class="a4 light" data-sheet="sl-found" lang="sl" aria-label="Plakat A4: Najdena mačka">
+          <p class="pb">Najdena mačka</p>
+          <div class="ptop">
+            <div class="pp"><img src="../directions/img/cat-tabby.jpg" alt="Mačka sive in rjave barve, ovratnica: modra, brez ploščice"></div>
+            <div class="pside">
+              <p class="pc">Je to vaša mačka? Skenirajte kodo.</p>
+              <div><div class="pqr" data-qr="https://najdimo.si/r/p3w8hd" role="img" aria-label="Koda QR za prijavo na najdimo.si/r/p3w8hd"></div><p class="plink tnum">najdimo.si/r/p3w8hd</p></div>
+            </div>
+          </div>
+          <div class="pdet !mt-[6mm]"><ul class="pf"><li>Barva: siva in rjava</li><li>Velikost: majhna</li><li>Ovratnica: modra, brez ploščice</li></ul><p class="pw">Najdena 14. 10.<br>Območje: Bežigrad, Ljubljana (približno)</p></div>
+          <p class="psafe">Stik samo prek Najdimo. Nikoli ne plačajte vnaprej.</p>
+          <div class="pfoot"><span class="pbrand"><svg class="logo-mark" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg>Najdimo · Spet doma.</span><span class="pvet">Oglas · Potrebujete veterinarja? Ambulanta za male živali, Bežigrad</span></div>
+        </article>
+      </div>
+    </figure>
+
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0 sheet-cap">A4 · Reunited, SL · "Spet doma" replaces the appeal (no QR, no ad)</figcaption>
+      <div class="sheet-view">
+        <article class="a4 light" data-sheet="sl-home" lang="sl" aria-label="Plakat A4: Spet doma, Rex je spet doma">
+          <p class="pb">Spet doma</p>
+          <div class="ptop solo"><div class="pp"><img src="../directions/img/dog-beagle.jpg" alt="Rex: pes rjave in bele barve, ovratnica: rdeča z zvončkom"></div></div>
+          <p class="pn">Rex je spet doma.</p>
+          <p class="pthanks">Hvala vsem, ki ste pomagali. Plakat lahko odstranite.</p>
+          <div class="pfoot"><span class="pbrand"><svg class="logo-mark" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg>Najdimo · Spet doma.</span></div>
+        </article>
+      </div>
+    </figure>
+
+    <figure class="m-0 print-hide">
+      <figcaption class="tile-h !mt-0 sheet-cap">A5 · A1 as printed in greyscale · words carry the status, QR still has full contrast</figcaption>
+      <div class="sheet-view"><div role="img" aria-label="Plakat A4 v sivinah: Pogrešan pes Rex" data-clone="sl-lost" data-mod="is-grey" style="line-height:0"></div></div>
+    </figure>
+
+  </div>
+  <p class="help mt-6 print-hide" style="max-width:84ch">Zones: top band 80 pt, one line. Top zone: photo 114 mm wide, at least 119 mm high (40 % of the page), growing into spare space up to 3:4 (152 mm), cover crop on the face; beside it the 64 mm action column: call to action 26 pt display, then the QR (56 mm code; the 8 mm gap, the margin and the link spacing keep the 4-module quiet zone white) and the short link 14 pt bold under it. Then name 72 pt; facts and "where and when" 22 pt in two columns; reward (lost only: amount 28 pt tabular, owner note 14 pt after " · "); safety line 12 pt (<code>poster.safety_reward</code> with a reward); footer 12 pt on the bottom edge (logo, <code>poster.footer</code>, the labelled vet line when the switch is on). Facts: 3 lines; 4 or 5 only while the photo keeps 119 mm. Worst case (A1: reward, note, vet line) measures a 122.7 mm photo (41 %). Omitted zones close up; the photo takes the space. PDF title "Pogrešan pes Rex – Najdimo", <code>lang</code> per poster.</p>
+</section>
+
+<!-- ======================================================= 5. LINK CARD + FB SQUARE ======================================================= -->
+<section class="tile-section !max-w-[1400px] !pt-0 print-hide" lang="sl">
+  <h2 class="tile-title !text-2xl">5. Link card 1200 × 630 and Facebook square 1080 × 1080</h2>
+  <p class="tile-lede">Rendered once in light tokens (never themed). Only the approximate area name, never an address or holding place. Text localised; sighted reports use the P4 row title.</p>
+  <p class="tile-h !mt-0">O1 · Open Graph card (WhatsApp, Facebook, page metadata)</p>
+  <div class="og-view">
+    <div class="og light" data-sheet="og" role="img" aria-label="Kartica povezave: Pogrešan pes Rex, območje Šiška">
+      <img src="../directions/img/dog-beagle.jpg" alt="">
+      <div class="tx">
+        <p class="ty"><i class="ph-fill ph-megaphone" aria-hidden="true"></i>Pogrešan pes</p>
+        <p class="nm">Rex</p>
+        <p class="ar"><i class="ph-bold ph-map-pin-area" aria-hidden="true"></i>Območje: Šiška</p>
+        <p class="lg"><svg class="logo-mark" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg>Najdimo</p>
+      </div>
+    </div>
+  </div>
+  <p class="tile-h" style="margin-top:48px">O2 · Facebook kit square (saved by "Shrani sliko"), shown at 50 %</p>
+  <div class="sq-view">
+    <div class="sq light" data-sheet="sq" role="img" aria-label="Kvadratna slika za objavo: Pogrešan pes Rex, območje Šiška">
+      <img src="../directions/img/dog-beagle.jpg" alt="">
+      <p class="ty"><i class="ph-fill ph-megaphone" aria-hidden="true"></i>Pogrešan pes</p>
+      <p class="nm">Rex</p>
+      <div class="ft"><span class="lg"><svg class="logo-mark" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg>Najdimo</span><span>Območje: Šiška · <b class="tnum">najdimo.si/r/k7m2qx</b></span></div>
+    </div>
+  </div>
+  <p class="help mt-4" style="max-width:80ch">OG: 48 px padding, photo square 534 px radius 24, type line in the lost status word colour with its icon (icon, word and colour), name 150 px display, area 34 px, logo at the bottom. The square repeats the hierarchy and adds the short link as text (a QR on a phone screen is not scannable from the same phone).</p>
+</section>
+
+<p class="tile-section !py-8 text-sm text-muted-foreground print-hide">Placeholder photography from Unsplash (Unsplash License). Copy: docs/content/pages/P18-poster-share.md v0.3; Facebook kit labels and group names are samples (marked "Vzorec"). QR codes generated in the page with qrcode-generator 1.4.4.</p>
+</div>
+
+<script src="https://unpkg.com/qrcode-generator@1.4.4/qrcode.js"></script>
+<script src="../directions/directions.js"></script>
+<script>
+/* P18 helpers: draw real QR codes (4-module quiet zone outside the 56 mm code box) and fill the scaled previews
+   with copies of the A4 / OG / square artboards. Re-runs whenever directions.js re-renders the stage. */
+(function () {
+  var stage = document.getElementById('stage');
+  function drawQr(el) {
+    if (el.firstChild) return;
+    if (!window.qrcode) { el.innerHTML = '<i class="ph ph-qr-code fallback" aria-hidden="true"></i>'; return; }
+    var q = window.qrcode(0, 'M'); q.addData(el.getAttribute('data-qr')); q.make();
+    var n = q.getModuleCount(), s = n + 8, d = '';
+    for (var r = 0; r < n; r++) for (var c = 0; c < n; c++) if (q.isDark(r, c)) d += 'M' + (c + 4) + ' ' + (r + 4) + 'h1v1h-1z';
+    el.innerHTML = '<svg viewBox="0 0 ' + s + ' ' + s + '" shape-rendering="crispEdges" aria-hidden="true" focusable="false"><rect class="qr-field" width="' + s + '" height="' + s + '"/><path d="' + d + '"/></svg>';
+    var qz = 400 / n, st = el.firstChild.style;
+    st.left = st.top = (-qz) + '%'; st.width = st.height = (100 + 2 * qz) + '%';
+    el.setAttribute('data-modules', n);
+  }
+  function paint(root) {
+    root.querySelectorAll('[data-qr]').forEach(drawQr);
+    root.querySelectorAll('[data-clone]').forEach(function (t) {
+      var src = root.querySelector('[data-sheet="' + t.getAttribute('data-clone') + '"]');
+      if (!src) return;
+      var c = src.cloneNode(true);
+      ['data-sheet', 'role', 'aria-label'].forEach(function (a) { c.removeAttribute(a); });
+      c.setAttribute('aria-hidden', 'true');
+      c.querySelectorAll('[role],[aria-label]').forEach(function (n) { n.removeAttribute('role'); n.removeAttribute('aria-label'); });
+      (t.getAttribute('data-mod') || '').split(' ').forEach(function (m) { if (m) c.classList.add(m); });
+      t.innerHTML = ''; t.appendChild(c);
+    });
+  }
+  paint(stage);
+  new MutationObserver(function () { paint(stage); }).observe(stage, { childList: true });
+})();
+</script>
+</body>
+</html>
