@@ -1,5 +1,6 @@
 import '../global.css';
 import '@/lib/env';
+import '@/lib/plural-rules';
 
 import { AtkinsonHyperlegibleNext_400Regular } from '@expo-google-fonts/atkinson-hyperlegible-next/400Regular';
 import { AtkinsonHyperlegibleNext_600SemiBold } from '@expo-google-fonts/atkinson-hyperlegible-next/600SemiBold';
@@ -13,9 +14,8 @@ import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useColorScheme } from 'nativewind';
 import { useEffect } from 'react';
-import { IntlProvider } from 'use-intl';
 
-import { locale, messages } from '@/lib/messages';
+import { I18nProvider } from '@/lib/i18n';
 import { NAV_THEME } from '@/lib/theme';
 
 export { ErrorBoundary } from 'expo-router';
@@ -42,12 +42,15 @@ export default function RootLayout() {
 	// TODO: data fetching is RTK Query with endpoints generated from OpenAPI (@rtk-query/codegen-openapi) in packages/api;
 	// its Redux store Provider wraps this tree once that client exists. No hand-written fetch hooks.
 	return (
-		<IntlProvider locale={locale} messages={messages} timeZone="Europe/Ljubljana">
+		// i18n (TASK-10.3). When TASK-3.13 lands, a small <ProfileI18n> child under the Redux Provider calls useGetMe and
+		// renders <I18nProvider profile={{ locale: me.locale, save: (l) => updateMe({ locale: l }) }}> (lib/i18n.tsx).
+		// Order stays Provider -> I18nProvider -> Theme.
+		<I18nProvider>
 			<ThemeProvider value={NAV_THEME[colorScheme ?? 'light']}>
 				<StatusBar style="auto" />
 				<Stack screenOptions={{ headerShown: false }} />
 				<PortalHost />
 			</ThemeProvider>
-		</IntlProvider>
+		</I18nProvider>
 	);
 }

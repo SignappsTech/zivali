@@ -42,6 +42,8 @@ t('results', { count: 2 }); // "2 prijavi"
 
 Web: `apps/web/i18n/request.ts` loads `dist/<locale>.json`, and message keys are type-checked against `dist/sl.json`. Links and route folders use the internal (EN) paths of the C15 table in `apps/web/i18n/routing.ts`, so `<Link href="/map">` from `@/i18n/navigation` renders `/zemljevid` or `/en/map`. The language toggle calls `useLocaleSwitch()` (`apps/web/i18n/use-locale-switch.ts`).
 
+Mobile: `<I18nProvider>` (`apps/mobile/lib/i18n.tsx`) wraps the root layout with use-intl and `dist/<locale>.json`; keys are type-checked the same way (`apps/mobile/global.d.ts`). The locale is the profile's, else the choice stored on the device, else the device language (`en*` → en, otherwise sl). The language setting calls `setLocale(l)` from `useLocaleSwitch()`: the UI switches at once, the choice is stored locally and, when signed in, saved to the profile. `lib/plural-rules.ts` loads `@formatjs/intl-pluralrules` only when Hermes has no `sl` plural rules.
+
 Server text (emails, push) is rendered by the API worker (Node, ADR-020 amending ADR-008) with `use-intl/core` and the merged catalogue in the recipient's `profiles.locale`:
 
 ```ts

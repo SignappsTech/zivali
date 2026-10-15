@@ -12,14 +12,14 @@ Expo SDK 57 app (Expo Router, New Architecture, development builds). Repo map, s
 
 ## Scripts
 
-| Script              | What                                                                                       |
-| ------------------- | ------------------------------------------------------------------------------------------ |
-| `start`             | Metro dev server for the development build                                                 |
-| `android`           | local prebuild, Gradle build and install (`expo run:android`)                              |
-| `test`              | jest-expo with Testing Library (`__tests__/`)                                              |
-| `typecheck`, `lint` | `tsc`, ESLint (root base + `eslint-config-expo`)                                           |
-| `build`             | `expo export --platform android` (bundle check, used by CI)                                |
-| `postinstall`       | builds `@zivali/tokens` (`dist/` is not committed; `app.config.ts`, Metro and EAS need it) |
+| Script              | What                                                                                                          |
+| ------------------- | ------------------------------------------------------------------------------------------------------------- |
+| `start`             | Metro dev server for the development build                                                                    |
+| `android`           | local prebuild, Gradle build and install (`expo run:android`)                                                 |
+| `test`              | jest-expo with Testing Library (`__tests__/`)                                                                 |
+| `typecheck`, `lint` | `tsc`, ESLint (root base + `eslint-config-expo`)                                                              |
+| `build`             | `expo export --platform android` (bundle check, used by CI)                                                   |
+| `postinstall`       | builds `@zivali/tokens` and `@zivali/i18n` (`dist/` is not committed; `app.config.ts`, Metro and EAS need it) |
 
 ## Local data
 

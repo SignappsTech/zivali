@@ -3,10 +3,11 @@ id: TASK-10.3
 title: >-
   Mobile i18n: use-intl with shared catalogues, SL plural support, persisted
   choice
-status: To Do
+status: In Progress
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:12'
+updated_date: '2026-10-15 05:52'
 labels:
   - fe
   - 'est:S'
@@ -39,7 +40,13 @@ Branch: agent/task-10.3-i18n-mob
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 use-intl loads the @zivali/i18n catalogues; the default is SL unless the stored choice, the profile or an en* device language says otherwise.
-- [ ] #2 Intl.PluralRules support for 'sl' is checked at startup and the @formatjs polyfill loads only if missing; a test renders the 1, 2, 3 and 5 forms correctly.
-- [ ] #3 setLocale() switches the UI immediately and persists locally and, when signed in, to the profile.
+- [x] #1 use-intl loads the @zivali/i18n catalogues; the default is SL unless the stored choice, the profile or an en* device language says otherwise.
+- [x] #2 Intl.PluralRules support for 'sl' is checked at startup and the @formatjs polyfill loads only if missing; a test renders the 1, 2, 3 and 5 forms correctly.
+- [x] #3 setLocale() switches the UI immediately and persists locally and, when signed in, to the profile.
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+Profile wiring: I18nProvider takes profile={ locale: me.locale, save: (l) => updateMe({ locale: l }) } for a signed-in, non-anonymous user. It needs the Redux store Provider (TASK-3.13) and configureAuth (mobile auth, TASK-9.4), so the root layout passes none yet (marked comment). Device language comes from Intl.DateTimeFormat().resolvedOptions().locale (Hermes reports the OS locale; expo-localization is not in ADR-017). Stored choice: key 'locale' in the expo-sqlite localStorage.
+<!-- SECTION:NOTES:END -->
