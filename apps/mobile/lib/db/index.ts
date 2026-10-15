@@ -2,12 +2,13 @@ import { deleteDatabaseAsync, openDatabaseAsync, type SQLiteDatabase } from 'exp
 
 import init from './migrations/001_init';
 import areaShelter from './migrations/002_area_shelter';
+import outboxPhotoSize from './migrations/003_outbox_photo_size';
 
 // The on-device store (C17, ADR-019). The Supabase session lives in expo-sqlite localStorage, a separate database file.
 export const DB_NAME = 'zivali.db';
 
 /** In order; migration i brings the database to `PRAGMA user_version` i + 1. Append only. */
-export const migrations: string[] = [init, areaShelter];
+export const migrations: string[] = [init, areaShelter, outboxPhotoSize];
 
 /** Runs the migrations above the stored version, each in its own transaction with its version bump. */
 export async function migrate(db: SQLiteDatabase, list = migrations): Promise<void> {

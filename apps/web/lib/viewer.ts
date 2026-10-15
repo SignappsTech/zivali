@@ -5,15 +5,20 @@ import { cache } from 'react';
 import { redirect } from '@/i18n/navigation';
 import { createClient } from '@/lib/supabase/server';
 
-export type Viewer = { initials: string };
+export type Viewer = { initials: string; aal2: boolean };
 
-const toViewer = (claims: { email?: string; user_metadata?: { full_name?: string; name?: string } }): Viewer => {
+const toViewer = (claims: {
+	aal?: string;
+	email?: string;
+	user_metadata?: { full_name?: string; name?: string };
+}): Viewer => {
 	// The user's own name or email, shown only to them as avatar initials: "ana.novak@…" → "AN".
 	const { full_name, name } = claims.user_metadata ?? {};
 	const words = String(full_name || name || claims.email?.split('@')[0] || '')
 		.split(/[\s._-]+/)
 		.filter(Boolean);
 	return {
+		aal2: claims.aal === 'aal2',
 		initials: words
 			.slice(0, 2)
 			.map((word) => word[0]!.toUpperCase())

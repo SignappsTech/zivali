@@ -1,0 +1,112 @@
+// Prisma access for payments and the webhook ledger (C13). Every function takes tx?: Prisma.TransactionClient.
+import type { Prisma } from '../../generated/client.ts';
+import type { PAYMENT_PURPOSE, PAYMENT_STATUS } from '../../generated/enums.ts';
+import { prisma } from '../../prisma/prisma.ts';
+
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+export type PaymentRow = NonNullable<Awaited<ReturnType<typeof getPayment>>>;
+
+export async function insertPayment(
+	data: {
+		id: string;
+		user_id: string;
+		purpose: PAYMENT_PURPOSE;
+		amount_cents: number;
+		provider: 'stripe' | 'mock';
+		provider_session_id: string;
+		refs?: { report_id: string };
+	},
+	tx?: Prisma.TransactionClient
+) {
+	const db = tx ?? prisma;
+	return db.payments.create({ data });
+}
+
+export async function getPayment(id: string, tx?: Prisma.TransactionClient) {
+	const db = tx ?? prisma;
+	return db.payments.findUnique({ where: { id } });
+}
+
+/** Newest first, keyset on (created_at, id); `cursor` is the last id of the previous page. */
+export async function listByUser(
+	input: { user_id: string; cursor?: string; take: number },
+	tx?: Prisma.TransactionClient
+) {
+	const db = tx ?? prisma;
+	const { user_id, cursor, take } = input;
+	const after = cursor
+		? await db.payments.findFirst({ where: { id: cursor, user_id }, select: { id: true, created_at: true } })
+		: null;
+	if (cursor && !after) return [];
+	return db.payments.findMany({
+		where: {
+			user_id,
+			...(after && {
+				OR: [{ created_at: { lt: after.created_at } }, { created_at: after.created_at, id: { lt: after.id } }],
+			}),
+		},
+		orderBy: [{ created_at: 'desc' }, { id: 'desc' }],
+		take,
+	});
+}
+
+export async function isReportManager(report_id: string, user_id: string, tx?: Prisma.TransactionClient) {
+	const db = tx ?? prisma;
+	return (await db.report_managers.count({ where: { report_id, user_id } })) > 0;
+}
+
+/** The ledger row; false when the provider event id is already stored (duplicate delivery). */
+export async function insertEvent(
+	data: { provider: string; provider_event_id: string; type: string; payload: Prisma.InputJsonObject },
+	tx?: Prisma.TransactionClient
+): Promise<boolean> {
+	const db = tx ?? prisma;
+	const { count } = await db.payment_events.createMany({ data: [data], skipDuplicates: true });
+	return count === 1;
+}
+
+/** The payment an event is about: metadata.payment_id first, then the session id, then the payment intent. */
+export async function findForEvent(
+	ref: { payment_id?: string; object_id: string; payment_intent?: string | null },
+	tx?: Prisma.TransactionClient
+) {
+	const db = tx ?? prisma;
+	const or: Prisma.paymentsWhereInput[] = [{ provider_session_id: ref.object_id }];
+	if (ref.payment_id && UUID.test(ref.payment_id)) or.unshift({ id: ref.payment_id });
+	if (ref.payment_intent) or.push({ provider_payment_id: ref.payment_intent });
+	return db.payments.findFirst({ where: { OR: or } });
+}
+
+/** Moves the status only from one of `from` (a late or repeated event never moves it back); true when moved. */
+export async function moveStatus(
+	id: string,
+	from: PAYMENT_STATUS[],
+	data: { status: PAYMENT_STATUS; provider_payment_id?: string },
+	tx?: Prisma.TransactionClient
+): Promise<boolean> {
+	const db = tx ?? prisma;
+	const { count } = await db.payments.updateMany({ where: { id, status: { in: from } }, data });
+	return count === 1;
+}
+
+/** Claims the receipt once per succeeded payment; true for the caller that set it. */
+export async function markReceiptSent(id: string, at: Date, tx?: Prisma.TransactionClient): Promise<boolean> {
+	const db = tx ?? prisma;
+	const { count } = await db.payments.updateMany({
+		where: { id, status: 'SUCCEEDED', receipt_sent_at: null },
+		data: { receipt_sent_at: at },
+	});
+	return count === 1;
+}
+
+export default {
+	insertPayment,
+	getPayment,
+	listByUser,
+	isReportManager,
+	insertEvent,
+	findForEvent,
+	moveStatus,
+	markReceiptSent,
+};

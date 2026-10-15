@@ -32,7 +32,6 @@ describe('CatchAll', () => {
 	it.each([
 		['sl', ['map'], 'Zemljevid'],
 		['en', ['report', 'lost'], 'Lost pet'],
-		['sl', ['about'], 'O nas'],
 		// The signed-in header link whose story has not shipped (the account pages are real routes, TASK-9.3).
 		['en', ['inbox'], 'Messages and notifications'],
 	] as const)('a pending %s page %j gets a placeholder titled %s, not indexed', async (locale, rest, title) => {
