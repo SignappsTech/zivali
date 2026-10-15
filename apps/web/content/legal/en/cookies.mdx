@@ -1,0 +1,316 @@
+export const meta = {
+	title: 'Cookie policy · Najdimo',
+	description:
+		'Which cookies and similar storage Najdimo uses, what they are for, how long they last and how to change or withdraw your choice.',
+	updated: '2026-10-15',
+	headings: [
+		{ id: 's1', text: '1. In short' },
+		{ id: 's2', text: '2. What cookies and similar storage are' },
+		{ id: 's3', text: '3. Items on the website' },
+		{ id: 's4', text: '4. Items in the mobile app' },
+		{ id: 's5', text: '5. What we do not use' },
+		{ id: 's6', text: '6. Third-party services' },
+		{ id: 's7', text: '7. How your choice works' },
+		{ id: 's8', text: '8. How to change or withdraw your choice' },
+		{ id: 's9', text: '9. Changes' },
+		{ id: 's10', text: '10. Contact' },
+	],
+};
+
+<h2 id="s1">1. In short</h2>
+
+<p>
+	Najdimo uses only a few cookies and similar storage items. Most are necessary for the service to work at all. We
+	switch on analytics only with your consent.
+</p>
+
+<ul>
+	<li>
+		Necessary items work without consent: your cookie choice, sign-in, language, report drafts and the private link
+		to a report.
+	</li>
+	<li>
+		Google Analytics sets the cookies <code>_ga</code> and <code>_ga_PKY4SCX3RL</code> only if you accept.
+	</li>
+	<li>
+		There are no advertising or tracking cookies. We count ad impressions and clicks in aggregate and without
+		cookies.
+	</li>
+	<li>
+		You can change or withdraw your choice at any time through "Cookie settings" in the page footer or in the app
+		settings.
+	</li>
+</ul>
+
+<h2 id="s2">2. What cookies and similar storage are</h2>
+
+<p>
+	A cookie is a small file that a website saves in your browser. We treat similar items (the browser's local storage,
+	secure storage in the app) the same way. In this text we call them all "items".
+</p>
+
+<p>We split items into two kinds:</p>
+
+<ul>
+	<li>
+		<strong>necessary</strong>: without them the service does not work or cannot do what you asked for. We do not
+		need consent for them;
+	</li>
+	<li>
+		<strong>analytics</strong>: they measure how the service is used. We set them only with your consent.
+	</li>
+</ul>
+
+<h2 id="s3">3. Items on the website</h2>
+
+<div className="overflow-x-auto">
+	<table>
+		<thead>
+			<tr>
+				<th>Name</th>
+				<th>Provider</th>
+				<th>Purpose</th>
+				<th>Category</th>
+				<th>Duration</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr>
+				<td>
+					<code>zz_consent</code> (cookie)
+				</td>
+				<td>Najdimo</td>
+				<td>Stores your cookie choice, the text version and the time of the choice.</td>
+				<td>necessary</td>
+				<td>12 months</td>
+			</tr>
+			<tr>
+				<td>
+					<code>sb-&lt;project&gt;-auth-token</code> (cookie; may be split into <code>.0</code>,{' '}
+					<code>.1</code>)
+				</td>
+				<td>Najdimo (Supabase)</td>
+				<td>Keeps you signed in.</td>
+				<td>necessary</td>
+				<td>up to 400 days or until you sign out [client: verify actual duration]</td>
+			</tr>
+			<tr>
+				<td>
+					<code>NEXT_LOCALE</code> (cookie)
+				</td>
+				<td>Najdimo</td>
+				<td>Remembers the language you chose.</td>
+				<td>necessary</td>
+				<td>[client: verify duration, likely session]</td>
+			</tr>
+			<tr>
+				<td>Report draft (local storage)</td>
+				<td>Najdimo</td>
+				<td>Saves an unfinished report so you do not lose it.</td>
+				<td>necessary</td>
+				<td>until you submit the report or discard the draft</td>
+			</tr>
+			<tr>
+				<td>
+					<code>manage:&lt;report id&gt;</code> (local storage)
+				</td>
+				<td>Najdimo</td>
+				<td>Holds the private-link token that lets you manage a report without an account.</td>
+				<td>necessary</td>
+				<td>until the report closes or storage is cleared</td>
+			</tr>
+			<tr>
+				<td>Device identifier (local storage)</td>
+				<td>Najdimo</td>
+				<td>Random identifier for abuse limits (rate limiting).</td>
+				<td>necessary</td>
+				<td>until storage is cleared</td>
+			</tr>
+			<tr>
+				<td>"Not a robot" check (Turnstile)</td>
+				<td>Cloudflare, Inc.</td>
+				<td>
+					Tells people from bots using technical device and browser signals. Not used for advertising.
+					[client: verify whether it sets cookies]
+				</td>
+				<td>necessary</td>
+				<td>per the provider's rules</td>
+			</tr>
+			<tr>
+				<td>
+					<code>_ga</code> (cookie)
+				</td>
+				<td>Google Ireland Limited</td>
+				<td>Distinguishes users for visit statistics.</td>
+				<td>analytics</td>
+				<td>2 years</td>
+			</tr>
+			<tr>
+				<td>
+					<code>_ga_PKY4SCX3RL</code> (cookie)
+				</td>
+				<td>Google Ireland Limited</td>
+				<td>Keeps session state in Google Analytics 4.</td>
+				<td>analytics</td>
+				<td>2 years</td>
+			</tr>
+		</tbody>
+	</table>
+</div>
+
+<p>We set the two analytics cookies only if you accept. We keep data in Google Analytics for 14 months.</p>
+
+<h2 id="s4">4. Items in the mobile app</h2>
+
+<div className="overflow-x-auto">
+	<table>
+		<thead>
+			<tr>
+				<th>Name</th>
+				<th>Provider</th>
+				<th>Purpose</th>
+				<th>Category</th>
+				<th>Duration</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr>
+				<td>Cookie choice (device secure storage)</td>
+				<td>Najdimo</td>
+				<td>Stores your choice, the text version and the time.</td>
+				<td>necessary</td>
+				<td>12 months</td>
+			</tr>
+			<tr>
+				<td>Sign-in session (app storage)</td>
+				<td>Najdimo (Supabase)</td>
+				<td>Keeps you signed in.</td>
+				<td>necessary</td>
+				<td>until you sign out [client: verify duration]</td>
+			</tr>
+			<tr>
+				<td>Push notification token</td>
+				<td>Najdimo; Apple and Google carry the notifications</td>
+				<td>Sends notifications once you allow them on your device.</td>
+				<td>necessary</td>
+				<td>until you turn notifications off or remove the app</td>
+			</tr>
+			<tr>
+				<td>Private-link token (secure storage)</td>
+				<td>Najdimo</td>
+				<td>Manages a report without an account.</td>
+				<td>necessary</td>
+				<td>until the report closes or the app is removed</td>
+			</tr>
+			<tr>
+				<td>Device identifier</td>
+				<td>Najdimo</td>
+				<td>Abuse limits.</td>
+				<td>necessary</td>
+				<td>until the app is removed</td>
+			</tr>
+			<tr>
+				<td>Drafts and reports waiting to be sent</td>
+				<td>Najdimo</td>
+				<td>Keeps an unfinished report, and a found-animal report made offline until we send it.</td>
+				<td>necessary</td>
+				<td>until the report is sent or the draft discarded; deleted on sign-out</td>
+			</tr>
+			<tr>
+				<td>Copy of public reports nearby</td>
+				<td>Najdimo</td>
+				<td>Lets the map and list work offline. Approximate areas and small photos only.</td>
+				<td>necessary</td>
+				<td>at most 7 days and 50 MB; deleted on sign-out</td>
+			</tr>
+			<tr>
+				<td>Areas for alerts when you are nearby</td>
+				<td>Najdimo (checked by the phone's operating system)</td>
+				<td>
+					Your phone alerts you when you enter the approximate area of a lost pet. Only if you turn the
+					feature on.
+				</td>
+				<td>necessary</td>
+				<td>until the search closes or you turn the feature off</td>
+			</tr>
+			<tr>
+				<td>App-instance identifier (Firebase Analytics)</td>
+				<td>Google Ireland Limited</td>
+				<td>Tells installations apart for usage statistics.</td>
+				<td>analytics</td>
+				<td>per the provider's rules; we keep data in Google for 14 months [client: verify]</td>
+			</tr>
+		</tbody>
+	</table>
+</div>
+
+<p>We create the Firebase Analytics identifier only after you consent.</p>
+
+<h2 id="s5">5. What we do not use</h2>
+
+<ul>
+	<li>
+		There are no advertising or tracking cookies. All four Google consent settings are denied by default. If you
+		accept, we grant only <code>analytics_storage</code>.
+	</li>
+	<li>
+		We count ad impressions and clicks in our own database, in aggregate and without cookies. We store nothing on
+		your device for it.
+	</li>
+</ul>
+
+<h2 id="s6">6. Third-party services</h2>
+
+<ul>
+	<li>
+		<strong>Stripe.</strong> Payment takes place on Stripe's page (Stripe Checkout). Stripe's cookie and privacy
+		policies apply there.
+	</li>
+	<li>
+		<strong>Map and place search.</strong> Map tiles (OpenFreeMap) set no cookies, but they can see your IP address.
+		Place search runs on our servers and sets no cookies.
+	</li>
+	<li>
+		<strong>Sign-in with Google or Apple.</strong> The rules of the provider you choose apply at sign-in.
+	</li>
+</ul>
+
+<p>
+	More about these providers is in the <a href="/en/privacy">privacy policy</a>.
+</p>
+
+<h2 id="s7">7. How your choice works</h2>
+
+<ul>
+	<li>
+		Until you decide, we load no Google script, send no request to Google and set no Google cookie (basic Consent
+		Mode v2).
+	</li>
+	<li>If you decline or choose nothing, the service works the same. Nothing is locked.</li>
+	<li>
+		If you accept, we grant only <code>analytics_storage</code>.
+	</li>
+	<li>We ask you again after 12 months or when providers or purposes change.</li>
+</ul>
+
+<h2 id="s8">8. How to change or withdraw your choice</h2>
+
+<p>
+	At any time, open "Cookie settings" in the page footer or in the app settings and change your choice. Withdrawal
+	takes effect at once, and we delete the <code>_ga</code> cookies at that moment. You can also delete cookies in your
+	browser settings; necessary items are created again when the service needs them, but drafts are lost.
+</p>
+
+<h2 id="s9">9. Changes</h2>
+
+<p>
+	We update this text when we add or remove an item or a provider. The date of the last update is at the top of the
+	page. For an important change we ask for your choice again.
+</p>
+
+<h2 id="s10">10. Contact</h2>
+
+<p>
+	Questions: [client: privacy contact email]. General information about data processing:{' '}
+	<a href="/en/privacy">privacy policy</a>.
+</p>
