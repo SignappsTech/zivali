@@ -1,11 +1,11 @@
 ---
 id: TASK-30.1
 title: 'Design: Report found or sighted (no account) and manage page (P7)'
-status: To Do
+status: In Progress
 assignee:
   - '@ui-designer'
 created_date: '2026-10-14 21:50'
-updated_date: '2026-10-14 21:51'
+updated_date: '2026-10-15 01:39'
 labels:
   - design
   - 'est:M'
@@ -32,6 +32,7 @@ Finders will not sign up, so the whole report fits a minute and ends with a priv
 ## Packet
 Unblocks on: P1 web shell and P2 mobile shell mockups merged (header, footer, tab bar and sheet patterns); P5 location picker mockup merged
 Branch: design/P7-report-found
+Branch: agent/TASK-30.1-p7-report-found-mockup
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Acceptance Criteria
