@@ -9,6 +9,7 @@ import type { z } from 'zod';
 import type { Locale, NotificationType } from '@zivali/types';
 import type { NotificationJobPayload } from '@zivali/validation';
 
+import { reportHiddenVars } from '../abuse/abuse.notify.ts';
 import { AlertsDomain } from '../alerts/index.ts';
 import type { Ctx } from '../../lib/ctx.ts';
 import { chatMessageVars } from '../chat/chat.notify.ts';
@@ -28,6 +29,7 @@ export const sources: Partial<Record<NotificationType, Source>> = {
 	match_confirmed: matchConfirmedVars,
 	// The alerts fan-out already recorded alert_deliveries; null when the report or subscription is gone.
 	nearby_lost: ({ report_id }, { user_id }, ctx) => AlertsDomain.nearbyAlert({ user_id, report_id }, ctx),
+	report_hidden: reportHiddenVars,
 };
 
 export default sources;

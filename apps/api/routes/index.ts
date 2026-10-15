@@ -1,6 +1,7 @@
 // The /v1 router: one mount line per area router (routes/<area>.routes.ts, declared with apiRoutes(router, '/v1/<area>')).
 import { Router } from 'express';
 
+import abuseReportsRoutes from './abuse-reports.routes.ts';
 import adminRoutes from './admin.routes.ts';
 import adsRoutes from './ads.routes.ts';
 import alertSubscriptionRoutes from './alert-subscription.routes.ts';
@@ -35,5 +36,6 @@ router.use('/photos', photosRoutes);
 router.use('/ads', adsRoutes);
 router.use('/reports', reportMatchesRouter);
 router.use('/matches', matchesRoutes);
+router.use('/abuse-reports', abuseReportsRoutes);
 
 export default router;

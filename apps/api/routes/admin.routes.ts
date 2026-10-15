@@ -2,16 +2,21 @@
 import { Router } from 'express';
 
 import {
+	AdminAbuseReportList,
+	AdminAbuseReportQuery,
 	AdminQueues,
 	AdminUserList,
 	AdminUserQuery,
 	AuditLogList,
 	AuditLogQuery,
 	IdParams,
+	ModerationFlagList,
+	ModerationFlagQuery,
 	SetRoleInput,
 	SetRoleResponse,
 } from '@zivali/validation';
 
+import AbuseReportsController from '../controllers/abuse-reports.controller.ts';
 import AdminController from '../controllers/admin.controller.ts';
 import { apiRoutes } from '../lib/openapi.ts';
 import { authMiddleware } from '../middleware/auth.middleware.ts';
@@ -88,6 +93,36 @@ route(
 	},
 	adminOnly,
 	AdminController.getQueues
+);
+
+route(
+	{
+		method: 'get',
+		path: '/abuse-reports',
+		operationId: 'listAdminAbuseReports',
+		summary: 'Abuse reports',
+		description:
+			'Moderators and admins (aal2). Newest first, filtered by status and target type; the reporter as an id only (C11). Audited.',
+		request: { query: AdminAbuseReportQuery },
+		responses: { 200: { description: 'One page of abuse reports', schema: AdminAbuseReportList } },
+		errors: [...staffErrors],
+	},
+	AbuseReportsController.listAdmin
+);
+
+route(
+	{
+		method: 'get',
+		path: '/moderation-flags',
+		operationId: 'listModerationFlags',
+		summary: 'Moderation flags',
+		description:
+			'Moderators and admins (aal2). Duplicate chips, anonymous holds and auto-hidden listings, newest first (C11). Audited.',
+		request: { query: ModerationFlagQuery },
+		responses: { 200: { description: 'One page of moderation flags', schema: ModerationFlagList } },
+		errors: [...staffErrors],
+	},
+	AbuseReportsController.listFlags
 );
 
 export default router;

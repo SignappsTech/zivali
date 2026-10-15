@@ -14,6 +14,7 @@ export const adminAbuseReports: AdminAbuseReportList = {
 	items: [
 		{
 			id: abuseCreated.id,
+			reporter_id: 'c0ffee00-0000-4000-8000-000000000001',
 			target_type: 'report',
 			target_id: abuseInput.target_id,
 			reason: 'scam',
