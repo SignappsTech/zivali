@@ -1,11 +1,11 @@
 ---
 id: TASK-90.3
 title: 'Design: Shelter directory and shelter pages (P3 T5, T6)'
-status: In Progress
+status: Done
 assignee:
   - '@ui-designer'
 created_date: '2026-10-14 23:48'
-updated_date: '2026-10-15 02:30'
+updated_date: '2026-10-15 03:30'
 labels:
   - design
   - 'est:S'
