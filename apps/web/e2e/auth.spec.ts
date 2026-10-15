@@ -3,10 +3,12 @@ import { expect, type Page, test } from '@playwright/test';
 
 import { CONSENT_VERSION } from '@zivali/analytics';
 
+import { api } from './session';
+
 // TASK-9.3: P16 sign-in, sign-up and reset on web (flow variant), SL and EN, 390 and 1440 px, light and dark; the
-// server guards' `next`. Supabase Auth is answered here (the run has no Supabase): the browser calls it directly.
+// server guards' `next`. The browser calls Supabase Auth directly; the build's Supabase URL is the mock API
+// (playwright.config.ts), and these GoTrue endpoints are answered here before they reach it.
 const AXE_TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'];
-const SUPABASE = process.env.NEXT_PUBLIC_SUPABASE_URL || 'http://127.0.0.1:54321';
 
 /** Protected flow (C15): no ad slot renders (as tests/quality/guards.mjs expectNoAdSlots, which has no types). */
 const expectNoAdSlots = (page: Page) => expect(page.locator('[data-ad-slot]')).toHaveCount(0);
@@ -30,7 +32,7 @@ async function expectNoAxeViolations(page: Page) {
 async function answerAuth(page: Page, endpoint: string, ...answers: { status: number; body: object }[]) {
 	let call = 0;
 	await page.route(
-		(url) => url.href.startsWith(SUPABASE) && url.pathname === `/auth/v1/${endpoint}`,
+		(url) => url.origin === api() && url.pathname === `/auth/v1/${endpoint}`,
 		(route) => {
 			const cors = {
 				'Access-Control-Allow-Origin': '*',

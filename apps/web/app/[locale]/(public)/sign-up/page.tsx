@@ -6,7 +6,7 @@ import { redirect } from 'next/navigation';
 import { AuthMain } from '@/components/auth/parts';
 import { SignUpForm } from '@/components/auth/sign-up';
 import { getPathname } from '@/i18n/navigation';
-import { getViewer, safeNext } from '@/lib/viewer';
+import { getVerifiedViewer, safeNext } from '@/lib/viewer';
 
 const one = (value: string | string[] | undefined) => (typeof value === 'string' ? value : undefined);
 
@@ -20,7 +20,7 @@ export default async function SignUpPage({ params, searchParams }: PageProps<'/[
 	const locale = (await params).locale as Locale;
 	const query = await searchParams;
 	const next = safeNext(one(query.next));
-	if (await getViewer()) redirect(next ?? getPathname({ locale, href: '/' }));
+	if (await getVerifiedViewer()) redirect(next ?? getPathname({ locale, href: '/' }));
 
 	return (
 		<AuthMain>

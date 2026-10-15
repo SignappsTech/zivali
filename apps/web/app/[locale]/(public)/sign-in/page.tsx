@@ -9,7 +9,7 @@ import { AuthHeading, AuthMain, Spot } from '@/components/auth/parts';
 import { SignInForm, type SignInNotice } from '@/components/auth/sign-in';
 import { Button } from '@/components/ui/button';
 import { getPathname, Link } from '@/i18n/navigation';
-import { getViewer, safeNext } from '@/lib/viewer';
+import { getVerifiedViewer, safeNext } from '@/lib/viewer';
 
 const NOTICES: readonly string[] = ['expired', 'cancelled', 'failed'] satisfies SignInNotice[];
 const one = (value: string | string[] | undefined) => (typeof value === 'string' ? value : undefined);
@@ -28,7 +28,7 @@ export default async function SignInPage({ params, searchParams }: PageProps<'/[
 	const locale = (await params).locale as Locale;
 	const query = await searchParams;
 	const next = safeNext(one(query.next));
-	const viewer = await getViewer();
+	const viewer = await getVerifiedViewer();
 	const confirmed = one(query.confirmed) === '1';
 	if (viewer && !confirmed) redirect(next ?? getPathname({ locale, href: '/' }));
 

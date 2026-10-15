@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { getViewer, recoveryEmail, requireViewer, safeNext } from './viewer';
+import { getVerifiedViewer, getViewer, recoveryEmail, requireViewer, safeNext } from './viewer';
 
 const auth = vi.hoisted(() => ({ token: undefined as string | undefined, path: null as string | null }));
 vi.mock('next/headers', () => ({ headers: async () => new Headers(auth.path ? { 'x-next-path': auth.path } : {}) }));
@@ -47,6 +47,19 @@ describe('getViewer', () => {
 		expect(await getViewer()).toBeNull();
 		auth.token = 'not-a-jwt';
 		expect(await getViewer()).toBeNull();
+	});
+});
+
+describe('getVerifiedViewer', () => {
+	it('is the user only for a session the guards accept, never for a forged or anonymous one', async () => {
+		auth.token = jwt({ email: 'ana@example.si' });
+		expect(await getVerifiedViewer()).toEqual({ initials: 'A' });
+		auth.token = jwt({ email: 'ana@example.si' }, 'forged');
+		expect(await getVerifiedViewer()).toBeNull();
+		auth.token = jwt({ is_anonymous: true });
+		expect(await getVerifiedViewer()).toBeNull();
+		auth.token = undefined;
+		expect(await getVerifiedViewer()).toBeNull();
 	});
 });
 

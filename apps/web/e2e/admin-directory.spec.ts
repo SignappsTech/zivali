@@ -139,7 +139,12 @@ test('a forged session cookie is redirected to sign-in', async ({ page, baseURL 
 	});
 	await signInForged(page, baseURL!);
 	await page.goto('/admin/zavetisca');
-	await expect(page).toHaveURL(/\/vpis/);
+	// The sign-in form (no redirect back: it checks the session as the guard does), and the forged token is dropped.
+	// Next.js re-sends the proxy's deletion on the guard's redirect without Max-Age, so an empty cookie may stay.
+	await expect(page).toHaveURL(/\/vpis\?next=%2Fadmin%2Fzavetisca$/);
+	await expect(page.getByRole('heading', { level: 1, name: 'Vpišite se' })).toBeVisible();
 	await expect(page.getByRole('heading', { level: 1, name: 'Imenik zavetišč' })).toHaveCount(0);
+	const cookies = await page.context().cookies();
+	expect(cookies.filter(({ name, value }) => name.includes('-auth-token') && value)).toEqual([]);
 	expect(requests).toEqual([]);
 });
