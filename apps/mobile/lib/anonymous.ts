@@ -13,7 +13,9 @@ import { supabase } from '@/lib/supabase';
 
 // C7 on mobile: the anonymous finder session (Turnstile through the web /captcha page in a WebView) and the manage link.
 
-type CaptchaRequest = { id: number; resolve: (token: string) => void; reject: (error: ApiError) => void };
+/** `undefined`: the web build has no Turnstile key (captcha off there), so the sign-in goes without a token. */
+type CaptchaToken = string | undefined;
+type CaptchaRequest = { id: number; resolve: (token: CaptchaToken) => void; reject: (error: ApiError) => void };
 let captcha: CaptchaRequest | null = null;
 let lastId = 0;
 const listeners = new Set<() => void>();
@@ -24,8 +26,8 @@ const subscribe = (listener: () => void) => {
 };
 
 /** A Turnstile token from <CaptchaSheet /> (root layout); rejects with CAPTCHA_FAILED (page error, cancel). */
-function requestCaptchaToken(): Promise<string> {
-	return new Promise<string>((resolve, reject) => {
+function requestCaptchaToken(): Promise<CaptchaToken> {
+	return new Promise<CaptchaToken>((resolve, reject) => {
 		captcha = { id: ++lastId, resolve, reject };
 		notify();
 	}).finally(() => {
@@ -44,7 +46,7 @@ export const useCaptchaRequest = () =>
 
 /** What the /captcha page answered. */
 export const answerCaptcha = {
-	token: (token: string) => captcha?.resolve(token),
+	token: (token: CaptchaToken) => captcha?.resolve(token),
 	fail: () => captcha?.reject(new ApiError('CAPTCHA_FAILED', 'CAPTCHA_FAILED')),
 };
 

@@ -5,6 +5,7 @@ import { CaretLeftIcon } from 'phosphor-react-native/src/icons/CaretLeft';
 import { ChatCircleIcon } from 'phosphor-react-native/src/icons/ChatCircle';
 import { CheckCircleIcon } from 'phosphor-react-native/src/icons/CheckCircle';
 import { ClockIcon } from 'phosphor-react-native/src/icons/Clock';
+import { HeartIcon } from 'phosphor-react-native/src/icons/Heart';
 import { HourglassMediumIcon } from 'phosphor-react-native/src/icons/HourglassMedium';
 import { LinkBreakIcon } from 'phosphor-react-native/src/icons/LinkBreak';
 import { LockSimpleIcon } from 'phosphor-react-native/src/icons/LockSimple';
@@ -22,6 +23,15 @@ import type { QueryError } from '@zivali/api/rtk';
 import type { ReportOwnerView, ReportTransitionAction } from '@zivali/types';
 import { useErrorText } from '@/components/auth/parts';
 import { Spot } from '@/components/shell/parts';
+import {
+	AlertDialog,
+	AlertDialogAction,
+	AlertDialogCancel,
+	AlertDialogContent,
+	AlertDialogDescription,
+	AlertDialogFooter,
+	AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useFocusRing } from '@/components/ui/focus-ring';
@@ -230,16 +240,30 @@ const asApiError = (error: unknown) =>
 
 function ManageView({ report }: { report: ReportOwnerView }) {
 	const t = useTranslations('report_found');
+	const tl = useTranslations('lifecycle');
+	const tc = useTranslations('common');
 	const router = useRouter();
 	const errorText = useErrorText();
 	const [transition, { isLoading: busy }] = useTransitionReportMutation();
 	const { data: conversations } = useListConversationsQuery();
 	const { data: place } = useReversePlaceQuery({ lat: report.area.lat, lng: report.area.lng });
+	const [confirmReturned, setConfirmReturned] = React.useState(false);
+	const [thanked, setThanked] = React.useState(false);
 
+	/** Resolves whether it worked; a failure is a toast and the page stays as it was. */
 	const act = (action: ReportTransitionAction) =>
 		transition({ code: report.short_code, body: { action } })
 			.unwrap()
-			.catch((error: unknown) => toast.error(errorText(asApiError(error))));
+			.then(
+				() => true,
+				(error: unknown) => {
+					toast.error(errorText(asApiError(error)));
+					return false;
+				}
+			);
+	const markReturned = async () => {
+		if (await act('mark_reunited')) setThanked(true);
+	};
 
 	const threads = conversations?.items.filter((c) => c.about_report.short_code === report.short_code) ?? [];
 	const unread = threads.reduce((sum, c) => sum + c.unread, 0);
@@ -257,6 +281,21 @@ function ManageView({ report }: { report: ReportOwnerView }) {
 	const expiring = !closed && daysLeft >= 1 && daysLeft <= NOTICE_DAYS;
 	const photo = report.photos[0];
 
+	// P14 §5: the finder's thank-you after "Žival je spet doma".
+	if (thanked)
+		return (
+			<Message
+				icon={HeartIcon}
+				title={tl('finder_thanks_title')}
+				body={tl('finder_thanks_body')}
+				action={
+					<Button size="lg" onPress={() => router.replace('/')}>
+						{tc('go_to_map')}
+					</Button>
+				}
+			/>
+		);
+
 	return (
 		<ScrollView contentContainerClassName="px-5 pb-11 pt-2">
 			{photo ? (
@@ -268,7 +307,7 @@ function ManageView({ report }: { report: ReportOwnerView }) {
 			) : null}
 			<Badge variant={report.type} className="mt-5">
 				<Icon as={statusIcons[report.type]} weight="fill" size={17} />
-				{t('type_label', { type: report.type })}
+				{t(report.type === 'sighted' ? 'status_sighted' : 'status_found')}
 			</Badge>
 			<Text role="heading" className="mt-3 font-display text-3xl tracking-[-0.6px]">
 				{t('manage_title')}
@@ -329,15 +368,36 @@ function ManageView({ report }: { report: ReportOwnerView }) {
 						<ActionRow icon={ChatCircleIcon} label={t('manage_messages')} onPress={openMessages} />
 					) : null}
 					{!closed ? (
-						<ActionRow
-							icon={CheckCircleIcon}
-							label={t('manage_close')}
-							disabled={busy}
-							onPress={() => void act('close')}
-						/>
+						<>
+							<ActionRow
+								icon={CheckCircleIcon}
+								label={t('manage_close')}
+								disabled={busy}
+								onPress={() => void act('close')}
+							/>
+							<ActionRow
+								icon={HeartIcon}
+								label={t('manage_returned')}
+								disabled={busy}
+								onPress={() => setConfirmReturned(true)}
+							/>
+						</>
 					) : null}
 				</View>
 			) : null}
+
+			<AlertDialog open={confirmReturned} onOpenChange={setConfirmReturned}>
+				<AlertDialogContent>
+					<AlertDialogTitle>{tl('finder_confirm_title')}</AlertDialogTitle>
+					<AlertDialogDescription>{tl('finder_confirm_body')}</AlertDialogDescription>
+					<AlertDialogFooter>
+						<AlertDialogAction variant="default" onPress={() => void markReturned()}>
+							{tl('finder_confirm_yes')}
+						</AlertDialogAction>
+						<AlertDialogCancel>{tl('finder_confirm_no')}</AlertDialogCancel>
+					</AlertDialogFooter>
+				</AlertDialogContent>
+			</AlertDialog>
 		</ScrollView>
 	);
 }
