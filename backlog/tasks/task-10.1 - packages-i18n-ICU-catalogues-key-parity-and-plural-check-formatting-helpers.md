@@ -1,11 +1,11 @@
 ---
 id: TASK-10.1
 title: 'packages/i18n: ICU catalogues, key-parity and plural check, formatting helpers'
-status: In Progress
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:12'
-updated_date: '2026-10-15 01:23'
+updated_date: '2026-10-15 01:28'
 labels:
   - fe
   - 'est:S'
