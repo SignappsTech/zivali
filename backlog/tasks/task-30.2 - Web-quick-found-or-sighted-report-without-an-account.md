@@ -51,4 +51,6 @@ Branch: agent/task-30.2-found-web
 - [ ] #4 Rate-limit and hold responses show friendly messages; report_found_start and report_found_submit fire with consent only; no ad slot in the flow.
 - [ ] #5 A scripted Playwright run completes the flow in under 60 s on a mobile viewport; axe 0 violations.
 - [ ] #6 After submit (so the 60 s target is unaffected) a notice says the find should be reported to the responsible shelter, with call buttons from the directory (C18), and that any vet or shelter can read the chip; the legal timing appears only when content.legal_timings is on.
+- [ ] #7 From TASK-17.2: on Publish, store the returned manage token with saveManageToken (lib/manage-link.ts) and wrap the submit in useAutoRetry (components/manage/use-auto-retry.ts), so a captcha or network failure keeps the draft and retries every 60 s and on reconnect; the success screen shows and copies the manage link (C7) with a QR code from TASK-24.2's encoder, and offers "Create an account".
+- [ ] #8 From TASK-17.2: the manage page (/m) shows the "Kraj" (place) fact once this task provides the public place label.
 <!-- AC:END -->

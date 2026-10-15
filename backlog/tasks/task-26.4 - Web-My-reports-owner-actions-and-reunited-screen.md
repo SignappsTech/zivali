@@ -48,4 +48,5 @@ Branch: agent/task-26.4-lifecycle-web
 - [ ] #2 The reunited screen celebrates calmly, shows next steps and an opt-in success-story consent checkbox, and reserves the tip slot and one labelled ad slot.
 - [ ] #3 reunited fires with species, region and municipality only, with consent; a finder marking 'returned' and an owner reopening within 7 days both work.
 - [ ] #4 axe 0 violations; Playwright covers close, reopen and mark reunited.
+- [ ] #5 From TASK-17.2: the anonymous manage page (/m, components/manage/manage-page.tsx) gets the expiry-extend and manage-link resend rows from P7, using the same owner actions.
 <!-- AC:END -->
