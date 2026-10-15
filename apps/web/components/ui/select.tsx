@@ -1,6 +1,7 @@
 'use client';
 
-import { CaretDownIcon, CheckIcon } from '@phosphor-icons/react/ssr';
+import { CaretDownIcon } from '@phosphor-icons/react/dist/ssr/CaretDown';
+import { CheckIcon } from '@phosphor-icons/react/dist/ssr/Check';
 import { Select as SelectPrimitive } from 'radix-ui';
 import * as React from 'react';
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { CheckIcon } from '@phosphor-icons/react/ssr';
+import { CheckIcon } from '@phosphor-icons/react/dist/ssr/Check';
 import { RadioGroup as RadioGroupPrimitive } from 'radix-ui';
 import * as React from 'react';
 
@@ -19,7 +19,7 @@ function RadioGroupItem({ className, ...props }: React.ComponentProps<typeof Rad
 		<RadioGroupPrimitive.Item
 			data-slot="radio-group-item"
 			className={cn(
-				'grid size-6 shrink-0 cursor-pointer place-items-center rounded-full border-2 border-input text-primary-foreground transition-colors duration-150 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ring data-[state=checked]:border-primary data-[state=checked]:bg-primary data-[state=unchecked]:enabled:in-[label:hover]:border-foreground disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground disabled:data-[state=checked]:border-input disabled:data-[state=checked]:bg-muted motion-reduce:transition-none',
+				'grid size-6 shrink-0 cursor-pointer place-items-center rounded-full border-2 border-input text-primary-foreground transition-[background-color,border-color] duration-150 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ring data-[state=checked]:border-primary data-[state=checked]:bg-primary data-[state=unchecked]:enabled:in-[label:hover]:border-foreground disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground disabled:data-[state=checked]:border-input disabled:data-[state=checked]:bg-muted motion-reduce:transition-none',
 				className
 			)}
 			{...props}

@@ -1,6 +1,8 @@
 'use client';
 
-import { CheckCircleIcon, InfoIcon, WarningCircleIcon } from '@phosphor-icons/react/ssr';
+import { CheckCircleIcon } from '@phosphor-icons/react/dist/ssr/CheckCircle';
+import { InfoIcon } from '@phosphor-icons/react/dist/ssr/Info';
+import { WarningCircleIcon } from '@phosphor-icons/react/dist/ssr/WarningCircle';
 import { Toaster as Sonner, type ToasterProps } from 'sonner';
 
 const iconClass = 'size-[22px] shrink-0';

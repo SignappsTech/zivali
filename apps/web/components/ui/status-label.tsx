@@ -1,5 +1,8 @@
-import type { Icon } from '@phosphor-icons/react';
-import { EyeIcon, HandHeartIcon, HeartIcon, MegaphoneIcon } from '@phosphor-icons/react/ssr';
+import type { Icon } from '@phosphor-icons/react/dist/lib/types';
+import { EyeIcon } from '@phosphor-icons/react/dist/ssr/Eye';
+import { HandHeartIcon } from '@phosphor-icons/react/dist/ssr/HandHeart';
+import { HeartIcon } from '@phosphor-icons/react/dist/ssr/Heart';
+import { MegaphoneIcon } from '@phosphor-icons/react/dist/ssr/Megaphone';
 import * as React from 'react';
 
 import { cn } from '@/lib/utils';

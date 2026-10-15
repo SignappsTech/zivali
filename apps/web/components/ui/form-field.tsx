@@ -1,6 +1,6 @@
 'use client';
 
-import { WarningCircleIcon } from '@phosphor-icons/react/ssr';
+import { WarningCircleIcon } from '@phosphor-icons/react/dist/ssr/WarningCircle';
 import * as React from 'react';
 
 import { Label } from '@/components/ui/label';

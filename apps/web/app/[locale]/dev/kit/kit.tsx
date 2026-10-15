@@ -1,21 +1,19 @@
 'use client';
 
-import {
-	CheckCircleIcon,
-	EyeIcon,
-	HandHeartIcon,
-	HeartIcon,
-	LinkIcon,
-	MagnifyingGlassIcon,
-	MegaphoneIcon,
-	RocketLaunchIcon,
-	SealCheckIcon,
-	ShareNetworkIcon,
-	ShieldCheckIcon,
-	WarningCircleIcon,
-	XCircleIcon,
-	XIcon,
-} from '@phosphor-icons/react/ssr';
+import { CheckCircleIcon } from '@phosphor-icons/react/dist/ssr/CheckCircle';
+import { EyeIcon } from '@phosphor-icons/react/dist/ssr/Eye';
+import { HandHeartIcon } from '@phosphor-icons/react/dist/ssr/HandHeart';
+import { HeartIcon } from '@phosphor-icons/react/dist/ssr/Heart';
+import { LinkIcon } from '@phosphor-icons/react/dist/ssr/Link';
+import { MagnifyingGlassIcon } from '@phosphor-icons/react/dist/ssr/MagnifyingGlass';
+import { MegaphoneIcon } from '@phosphor-icons/react/dist/ssr/Megaphone';
+import { RocketLaunchIcon } from '@phosphor-icons/react/dist/ssr/RocketLaunch';
+import { SealCheckIcon } from '@phosphor-icons/react/dist/ssr/SealCheck';
+import { ShareNetworkIcon } from '@phosphor-icons/react/dist/ssr/ShareNetwork';
+import { ShieldCheckIcon } from '@phosphor-icons/react/dist/ssr/ShieldCheck';
+import { WarningCircleIcon } from '@phosphor-icons/react/dist/ssr/WarningCircle';
+import { XCircleIcon } from '@phosphor-icons/react/dist/ssr/XCircle';
+import { XIcon } from '@phosphor-icons/react/dist/ssr/X';
 import Link from 'next/link';
 import * as React from 'react';
 import { toast } from 'sonner';
