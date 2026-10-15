@@ -34,7 +34,7 @@ Read this, your task packet and the contract(s) it references. Conventions for e
       package.json scripts: dev (tsx watch server.ts), dev:worker (tsx watch worker.ts), build, lint, typecheck, test, test:security
       Dockerfile (multi-stage; one image for api and worker), tsup.config.ts, prisma.config.ts (loads the env file, schema folder, migrations.seed), vitest.config.ts, .env.example
     supabase/        config.toml (local Postgres, Auth, Realtime, mail catcher), templates/*.html (Auth emails), seed/geo/ (GURS data), README.md
-    scripts/         deploy.mjs, geo-to-sql.mjs, admin-create.mjs
+    scripts/         deploy.mjs, geo-to-sql.mjs, geo-places.mjs, geo-shapes.mjs, admin-create.mjs
     deploy/          docker-compose.yml, Caddyfile, backup notes (TASK-5.1)
     docker-compose.dev.yml   MinIO for local R2
 
@@ -149,3 +149,9 @@ Branch `agent/<task-id>-<slug>` from `main`; commits `<task-id>: <what>`; never 
 - [ ] No PII in logs; IPs and device ids hashed; secrets only from config
 - [ ] Mocks keep everything working offline; missing credentials reported as `needs-input`, not failures
 - [ ] No new dependency outside ADR-017; no unrelated changes; README updated where behaviour or commands changed
+
+## Change log
+
+| Version | Date | Change |
+|---|---|---|
+| 1.1 | 2026-10-15 | CH-40: repo map adds scripts/geo-places.mjs and scripts/geo-shapes.mjs |
