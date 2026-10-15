@@ -1,11 +1,11 @@
 ---
 id: TASK-86.1
 title: 'Mobile outbox engine: queued found and sighting submissions sent once'
-status: To Do
+status: In Progress
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:39'
-updated_date: '2026-10-14 23:38'
+updated_date: '2026-10-15 20:01'
 labels:
   - fe
   - 'est:M'
