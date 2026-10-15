@@ -1,0 +1,51 @@
+// Platform tables (C1): runtime config, staff audit trail, rate-limit counters, idempotent write responses.
+
+// Defaults are inserted by each feature's migration or seeder (`on conflict do nothing`); read via lib/config-store.ts.
+model app_config {
+  key         String   @id
+  value       Json
+  is_public   Boolean  @default(false)
+  description String?
+  updated_at  DateTime @updatedAt @db.Timestamptz(6)
+
+  @@schema("app")
+}
+
+// Written by AuditDao.write(tx, …) in every staff service call. actor_id is null for system actions.
+model audit_log {
+  id          String   @id @default(uuid()) @db.Uuid
+  actor_id    String?  @db.Uuid
+  action      String
+  target_type String
+  target_id   String?
+  diff        Json?
+  created_at  DateTime @default(now()) @db.Timestamptz(6)
+
+  @@schema("app")
+}
+
+// Fixed-window counters. `key` is the user id or an HMAC (RATE_SALT) of the IP or device id; purged after 48 h.
+model rate_limits {
+  name         String
+  key          String
+  window_start DateTime @db.Timestamptz(6)
+  count        Int      @default(0)
+
+  @@id([name, key, window_start])
+  @@index([window_start])
+  @@schema("app")
+}
+
+// Idempotency-Key responses, kept 24 h. status and body stay null while the first request is in flight.
+model idempotency_keys {
+  key        String   @id @db.Uuid
+  user_id    String   @db.Uuid
+  route      String
+  status     Int?
+  // Encrypted when the response contains a secret (C1).
+  body       Json?
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+
+  @@index([created_at])
+  @@schema("app")
+}
