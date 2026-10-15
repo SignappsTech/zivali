@@ -1,0 +1,50 @@
+{
+	"species": {
+		"dog": "Pes",
+		"cat": "Mačka"
+	},
+	"sex": {
+		"male": "Samec",
+		"female": "Samica",
+		"unknown": "Ne vem"
+	},
+	"size": {
+		"xs": "Zelo majhna",
+		"s": "Majhna",
+		"m": "Srednja",
+		"l": "Velika",
+		"xl": "Zelo velika"
+	},
+	"size_help_dog": "Zelo majhna do 5 kg, majhna do 10 kg, srednja do 25 kg, velika do 40 kg, zelo velika nad 40 kg.",
+	"colour": {
+		"black": "Črna",
+		"white": "Bela",
+		"grey": "Siva",
+		"brown": "Rjava",
+		"chocolate": "Čokoladna",
+		"red": "Rdečkasta",
+		"cream": "Kremna",
+		"golden": "Zlata",
+		"tan": "Svetlo rjava",
+		"blue_grey": "Modrosiva"
+	},
+	"pattern_dog": {
+		"solid": "Enobarvna",
+		"bicolour": "Dvobarvna",
+		"tricolour": "Tribarvna",
+		"brindle": "Tigrasta",
+		"merle": "Marmorirana (merle)",
+		"spotted": "Pegasta",
+		"other": "Drugo"
+	},
+	"pattern_cat": {
+		"solid": "Enobarvna",
+		"bicolour": "Dvobarvna",
+		"tabby": "Tigrasta",
+		"tortoiseshell": "Želvovinasta",
+		"calico": "Tribarvna (bela, rdečkasta, črna)",
+		"spotted": "Pegasta",
+		"pointed": "Siamski vzorec",
+		"other": "Drugo"
+	}
+}

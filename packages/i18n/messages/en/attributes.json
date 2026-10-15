@@ -1,0 +1,50 @@
+{
+	"species": {
+		"dog": "Dog",
+		"cat": "Cat"
+	},
+	"sex": {
+		"male": "Male",
+		"female": "Female",
+		"unknown": "Not sure"
+	},
+	"size": {
+		"xs": "Very small",
+		"s": "Small",
+		"m": "Medium",
+		"l": "Large",
+		"xl": "Very large"
+	},
+	"size_help_dog": "Very small up to 5 kg, small up to 10 kg, medium up to 25 kg, large up to 40 kg, very large over 40 kg.",
+	"colour": {
+		"black": "Black",
+		"white": "White",
+		"grey": "Grey",
+		"brown": "Brown",
+		"chocolate": "Chocolate",
+		"red": "Red, ginger",
+		"cream": "Cream",
+		"golden": "Golden",
+		"tan": "Tan",
+		"blue_grey": "Blue-grey"
+	},
+	"pattern_dog": {
+		"solid": "Solid",
+		"bicolour": "Two-coloured",
+		"tricolour": "Tricolour",
+		"brindle": "Brindle",
+		"merle": "Merle",
+		"spotted": "Spotted",
+		"other": "Other"
+	},
+	"pattern_cat": {
+		"solid": "Solid",
+		"bicolour": "Two-coloured",
+		"tabby": "Tabby",
+		"tortoiseshell": "Tortoiseshell",
+		"calico": "Calico",
+		"spotted": "Spotted",
+		"pointed": "Colourpoint",
+		"other": "Other"
+	}
+}
