@@ -1,5 +1,6 @@
 'use server';
 
+import { notFound } from 'next/navigation';
 import { getLocale } from 'next-intl/server';
 
 import { redirect } from '@/i18n/navigation';
@@ -18,7 +19,7 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
  * action is a public endpoint, so it checks APP_ENV itself, as the page does.
  */
 export async function sendMockEvent(_prev: MockCheckoutState, form: FormData): Promise<MockCheckoutState> {
-	if (env.APP_ENV === 'production') throw new Error('The mock checkout is not available in production');
+	if (env.APP_ENV !== 'local' || !env.MOCK_WEBHOOK_SECRET) notFound();
 	const outcome = String(form.get('outcome'));
 	const paymentId = String(form.get('payment_id'));
 	if (!Object.hasOwn(MOCK_OUTCOMES, outcome) || !UUID.test(paymentId)) return { failed: true };

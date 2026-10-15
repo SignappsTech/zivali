@@ -11,10 +11,10 @@ export const metadata: Metadata = { title: 'Mock checkout', robots: { index: fal
 /**
  * C13 mock provider (TASK-32.2): the API's checkout_url is APP_URL/dev/checkout?payment_id=…, which shows that
  * session with Success, Fail and Cancel. Without a payment it starts one (amount and purpose), so the hand-off runs
- * end to end before any Stripe key exists. Not in production.
+ * end to end before any Stripe key exists. Local only (APP_ENV=local).
  */
 export default async function CheckoutDevPage({ searchParams }: PageProps<'/[locale]/dev/checkout'>) {
-	if (env.APP_ENV === 'production') notFound();
+	if (env.APP_ENV !== 'local') notFound();
 	const { payment_id, return_to } = await searchParams;
 
 	return (

@@ -31,8 +31,8 @@ const schema = z
 			.string()
 			.regex(/^[0-9A-F]{2}(:[0-9A-F]{2}){31}(\s*,\s*[0-9A-F]{2}(:[0-9A-F]{2}){31})*$/i)
 			.optional(),
-		// Signs the /dev/checkout mock events (C13): the API's MOCK_WEBHOOK_SECRET, which also defaults to this value.
-		MOCK_WEBHOOK_SECRET: z.string().default('mock-webhook-secret'),
+		// Signs the /dev/checkout mock events (C13): the API's MOCK_WEBHOOK_SECRET. Defaults to its local value only when APP_ENV=local; unset elsewhere.
+		MOCK_WEBHOOK_SECRET: z.string().optional(),
 	})
 	.refine(
 		(v) => {
@@ -59,6 +59,7 @@ export function parseEnv(source: Record<string, string | undefined>): Env {
 		values.NEXT_PUBLIC_API_URL ??= 'http://localhost:4000';
 		values.NEXT_PUBLIC_APP_URL ??= 'http://localhost:3000';
 		values.R2_UPLOAD_ORIGIN ??= 'http://127.0.0.1:9000';
+		values.MOCK_WEBHOOK_SECRET ??= 'mock-webhook-secret';
 	}
 	const result = schema.safeParse(values);
 	if (!result.success) {

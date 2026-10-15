@@ -12,7 +12,8 @@ import { useDispatch } from 'react-redux';
 import { useRequireAuth } from '@zivali/api/auth';
 import { redirectToCheckout, startCheckout, useGetPaymentQuery } from '@zivali/api/payments';
 import type { ApiStore } from '@zivali/api/rtk';
-import type { PaymentStatus, Uuid } from '@zivali/types';
+import { type PaymentStatus, USER_AMOUNT_PURPOSES, type Uuid } from '@zivali/types';
+import { Link } from '@/i18n/navigation';
 import { Spot, useErrorText } from '@/components/auth/parts';
 import { InlineError } from '@/components/shell/page';
 import { noteClass } from '@/components/shelters/classes';
@@ -30,6 +31,8 @@ const VIEW: Record<PaymentStatus, View> = {
 	refunded: 'canceled',
 };
 const POLL_MS = 3000;
+// The webhook normally lands within seconds; after this the page stops asking and points to My payments.
+const POLL_LIMIT_MS = 90_000;
 
 const headingClass = 'font-display text-2xl font-bold tracking-[-0.015em] text-balance outline-none lg:text-3xl';
 const bodyClass = 'mt-3 text-lg leading-7 lg:mt-4 lg:text-xl lg:leading-8';
@@ -78,16 +81,24 @@ export function PaymentReturn({ paymentId, returnTo, canceled }: Props) {
 	const dispatch = useDispatch<ApiStore['dispatch']>();
 	const errorText = useErrorText();
 	const { gate } = useRequireAuth({ verified: true });
-	const [settled, setSettled] = React.useState(canceled);
+	const [settled, setSettled] = React.useState(false);
+	const [timedOut, setTimedOut] = React.useState(false);
 	const [retrying, setRetrying] = React.useState(false);
 	const [retryError, setRetryError] = React.useState<string>();
 	const query = useGetPaymentQuery(
 		{ id: paymentId },
-		{ pollingInterval: settled ? 0 : POLL_MS, skipPollingIfUnfocused: true }
+		{ pollingInterval: settled || timedOut ? 0 : POLL_MS, skipPollingIfUnfocused: true }
 	);
 	const payment = query.data;
-	const view: View = canceled ? 'canceled' : payment ? VIEW[payment.status] : 'pending';
+	// The server status wins; the cancel URL hint only covers the time the payment is still pending.
+	const status = payment ? VIEW[payment.status] : 'pending';
+	const view: View = status === 'pending' && canceled ? 'canceled' : status;
 	if (!settled && view !== 'pending') setSettled(true);
+	React.useEffect(() => {
+		if (settled) return;
+		const timer = setTimeout(() => setTimedOut(true), POLL_LIMIT_MS);
+		return () => clearTimeout(timer);
+	}, [settled]);
 
 	async function retry() {
 		if (!payment) return;
@@ -112,17 +123,13 @@ export function PaymentReturn({ paymentId, returnTo, canceled }: Props) {
 			<NextLink href={returnTo}>{label}</NextLink>
 		</Button>
 	);
+	// Only purposes with a user-chosen amount can start again; boost and subscription have no checkout until M4.
 	const retryButton = (label: string, primary: boolean) =>
-		payment?.purpose === 'report_contribution' ? (
+		!payment || !(USER_AMOUNT_PURPOSES as readonly string[]).includes(payment.purpose) ? null : payment.purpose ===
+		  'report_contribution' ? (
 			back(label, primary)
 		) : (
-			<Button
-				size="lg"
-				variant={primary ? 'default' : 'text'}
-				loading={retrying}
-				disabled={!payment}
-				onClick={retry}
-			>
+			<Button size="lg" variant={primary ? 'default' : 'text'} loading={retrying} onClick={retry}>
 				{label}
 			</Button>
 		);
@@ -181,6 +188,7 @@ export function PaymentReturn({ paymentId, returnTo, canceled }: Props) {
 						</Spot>
 						<Heading>{t('pending_title')}</Heading>
 						<p className={bodyClass}>{t('pending_body')}</p>
+						{timedOut && <p className={bodyClass}>{t('pending_slow')}</p>}
 					</div>
 					{query.isError && (
 						<div className="mt-6">
@@ -190,6 +198,11 @@ export function PaymentReturn({ paymentId, returnTo, canceled }: Props) {
 					<Button asChild variant="text" className="mt-8 -ml-3">
 						<NextLink href={returnTo}>{t('pending_back')}</NextLink>
 					</Button>
+					{timedOut && (
+						<Button asChild variant="text" className="mt-2 -ml-3 block">
+							<Link href="/account/payments">{t('pending_payments')}</Link>
+						</Button>
+					)}
 				</>
 			)}
 		</main>

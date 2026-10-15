@@ -1,5 +1,6 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { NextIntlClientProvider } from 'next-intl';
+import { act } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { payment } from '@zivali/api/__fixtures__/payments';
@@ -25,6 +26,9 @@ vi.mock('@zivali/api/payments', () => ({
 	redirectToCheckout: state.redirectToCheckout,
 }));
 vi.mock('@zivali/api/auth', () => ({ useRequireAuth: () => ({ gate: state.gate }) }));
+vi.mock('@/i18n/navigation', () => ({
+	Link: ({ href, children }: { href: string; children: React.ReactNode }) => <a href={href}>{children}</a>,
+}));
 vi.mock('react-redux', () => ({ useDispatch: () => 'dispatch' }));
 
 const RETURN_TO = '/r/Hk3vT9qP/spet-doma';
@@ -117,5 +121,45 @@ describe('PaymentReturn', () => {
 	it('sends a report contribution back to its report to try again (the read has no report id)', () => {
 		show({ status: 'failed', purpose: 'report_contribution' });
 		expect(screen.getByRole('link', { name: sl.payments.failed_retry }).getAttribute('href')).toBe(RETURN_TO);
+	});
+
+	it('lets the server status win over the cancel hint, which only covers a pending payment', () => {
+		show({ status: 'succeeded' }, { canceled: true });
+		expect(heading().textContent).toBe(sl.payments.success_title);
+		cleanup();
+		show({ status: 'failed' }, { canceled: true });
+		expect(heading().textContent).toBe(sl.payments.failed_title);
+	});
+
+	it('offers retry only for user-amount purposes', () => {
+		show({ status: 'failed', purpose: 'boost' });
+		expect(screen.queryByRole('button', { name: sl.payments.failed_retry })).toBeNull();
+		expect(screen.queryByRole('link', { name: sl.payments.failed_retry })).toBeNull();
+		cleanup();
+		show({ status: 'canceled', purpose: 'subscription' });
+		expect(screen.queryByRole('button', { name: sl.payments.cancel_retry })).toBeNull();
+		cleanup();
+		show({ status: 'failed', purpose: 'support' });
+		expect(screen.getByRole('button', { name: sl.payments.failed_retry })).toBeTruthy();
+	});
+
+	it('stops polling after 90 s and points to My payments', () => {
+		vi.useFakeTimers();
+		try {
+			show({ status: 'pending' });
+			expect(state.options).toMatchObject({ pollingInterval: 3000 });
+			expect(screen.queryByText(sl.payments.pending_slow)).toBeNull();
+			act(() => {
+				vi.advanceTimersByTime(90_000);
+			});
+			expect(state.options).toMatchObject({ pollingInterval: 0 });
+			expect(heading().textContent).toBe(sl.payments.pending_title);
+			expect(screen.getByText(sl.payments.pending_slow)).toBeTruthy();
+			expect(screen.getByRole('link', { name: sl.payments.pending_payments }).getAttribute('href')).toBe(
+				'/account/payments'
+			);
+		} finally {
+			vi.useRealTimers();
+		}
 	});
 });
