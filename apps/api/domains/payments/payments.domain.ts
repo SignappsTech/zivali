@@ -9,10 +9,12 @@ import type { CheckoutInput } from '@zivali/validation';
 
 import type { PAYMENT_PURPOSE, PAYMENT_STATUS } from '../../generated/enums.ts';
 import { config } from '../../lib/config.ts';
+import configStore from '../../lib/config-store.ts';
 import type { Actor, Ctx } from '../../lib/ctx.ts';
 import { AppError } from '../../lib/errors.ts';
 import { prisma } from '../../prisma/prisma.ts';
 import { NotificationsDomain } from '../notifications/index.ts';
+import InvoicesDomain from './invoices.domain.ts';
 import PaymentsDao, { type PaymentRow } from './payments.dao.ts';
 
 /** Card minimum (C13 MIN_AMOUNT); the payments_amount_cents_check constraint holds the same floor. */
@@ -41,6 +43,20 @@ const PRODUCT: Record<Locale, Record<PaymentPurpose, string>> = {
 // C15 paymentsReturn: /placila/zakljucek (sl), /en/payments/return (en); the app returns through its scheme.
 const RETURN_PATH: Record<Locale, string> = { sl: '/placila/zakljucek', en: '/en/payments/return' };
 export const APP_RETURN_URL = 'zivali://payments/return';
+
+/**
+ * C13 live gate (FR-046, Q-012): new live checkouts only once app_config payments.live_allowed is true and either
+ * fiscal invoicing runs against FURS production or the accountant recorded fiscal.required = false with the fiscal
+ * adapter off (no mock ZOI or EOR may reach a real receipt). Closed today: no fiscal provider is live.
+ */
+export async function liveGateOpen(ctx: Ctx): Promise<boolean> {
+	const [allowed, required] = await Promise.all([
+		configStore.get('payments.live_allowed'),
+		configStore.get('fiscal.required'),
+	]);
+	const { fiscal } = ctx.adapters;
+	return allowed === true && (fiscal.live || (required === false && fiscal.provider === 'off'));
+}
 
 function signedIn(ctx: Ctx): Actor {
 	if (!ctx.actor || ctx.actor.is_anonymous) throw new AppError('UNAUTHENTICATED', 'Sign in required');
@@ -87,6 +103,8 @@ export async function createCheckout(
 
 	const id = randomUUID();
 	const { payments } = ctx.adapters;
+	if (payments.live === true && !(await liveGateOpen(ctx)))
+		throw new AppError('LIVE_MODE_FORBIDDEN', 'Live payments are not enabled yet');
 	const session = await payments.createCheckout({
 		paymentId: id,
 		amountCents: amount,
@@ -131,7 +149,9 @@ export async function handleWebhook(
 ): Promise<{ duplicate: boolean }> {
 	const { payments } = ctx.adapters;
 	const event = payments.parseWebhook(input.rawBody, input.signature);
-	if (event.livemode) throw new AppError('LIVE_MODE_FORBIDDEN', 'Live mode events are refused (test mode only)');
+	// Live events only with a live key: money a live checkout already took is always recorded, whatever the gate says.
+	if (event.livemode && payments.live !== true)
+		throw new AppError('LIVE_MODE_FORBIDDEN', 'Live mode events are refused (test mode only)');
 	const o = event.object;
 	return prisma.$transaction(async (tx) => {
 		const fresh = await PaymentsDao.insertEvent(
@@ -183,8 +203,9 @@ export async function handleWebhook(
 const EffectsInput = z.object({ payment_id: z.uuid() });
 
 /**
- * payment.effects: the payment_receipt notification (email in the recipient's locale and in-app, C10) once per
- * succeeded payment; receipt_sent_at and the notify.send job commit together. Boosts and entitlements: M4.
+ * payment.effects: the fiscal invoice (TASK-92), then the payment_receipt notification (email in the recipient's locale
+ * and in-app, C10) once per succeeded payment; receipt_sent_at and the notify.send job commit together. Boosts and
+ * entitlements: M4.
  */
 export async function paymentEffects(data: unknown, ctx: Ctx): Promise<void> {
 	const parsed = EffectsInput.safeParse(data);
@@ -193,7 +214,11 @@ export async function paymentEffects(data: unknown, ctx: Ctx): Promise<void> {
 		return;
 	}
 	const payment = await PaymentsDao.getPayment(parsed.data.payment_id);
-	if (!payment?.user_id || payment.status !== 'SUCCEEDED' || payment.receipt_sent_at) return;
+	if (payment?.status !== 'SUCCEEDED') return;
+	// The fiscal invoice first (TASK-92): the receipt carries its number, ZOI and EOR. Throws while FURS keeps failing.
+	const purpose = payment.purpose.toLowerCase() as PaymentPurpose;
+	await InvoicesDomain.issueInvoice(payment, PRODUCT.sl[purpose], ctx);
+	if (!payment.user_id || payment.receipt_sent_at) return;
 	const user_id = payment.user_id;
 	await prisma.$transaction(async (tx) => {
 		if (!(await PaymentsDao.markReceiptSent(payment.id, ctx.now, tx))) return;
@@ -217,6 +242,15 @@ export async function getPayment(input: { id: string }, ctx: Ctx): Promise<Payme
 	return payment;
 }
 
+/** GET /v1/payments/:id/invoice.pdf: the caller's own invoice, once the worker has rendered it; else NOT_FOUND. */
+export async function getInvoicePdf(input: { id: string }, ctx: Ctx): Promise<{ number: string; pdf: Buffer }> {
+	const payment = await getPayment(input, ctx);
+	const invoice = await PaymentsDao.getInvoiceByPayment(payment.id, ctx.tx);
+	if (!invoice?.pdf_key) throw new AppError('NOT_FOUND', 'No invoice for this payment yet');
+	const pdf = await ctx.adapters.storage.get({ bucket: 'private', key: invoice.pdf_key });
+	return { number: invoice.number, pdf };
+}
+
 /** GET /v1/me/payments: own payments, newest first, keyset-paginated. */
 export async function listMyPayments(
 	input: { cursor?: string; limit?: number },
@@ -229,4 +263,12 @@ export async function listMyPayments(
 	return { items, next_cursor: rows.length > limit ? items[items.length - 1]!.id : null };
 }
 
-export default { createCheckout, handleWebhook, paymentEffects, getPayment, listMyPayments };
+export default {
+	createCheckout,
+	liveGateOpen,
+	handleWebhook,
+	paymentEffects,
+	getPayment,
+	getInvoicePdf,
+	listMyPayments,
+};

@@ -52,4 +52,24 @@ route(
 	PaymentsController.get
 );
 
+route(
+	{
+		method: 'get',
+		path: '/:id/invoice.pdf',
+		operationId: 'getInvoicePdf',
+		summary: 'Own fiscal invoice (PDF)',
+		description:
+			'The fiscal invoice of one of the caller’s payments as `application/pdf` (download; number, VAT 22 % ' +
+			'breakdown, ZOI and EOR), rendered by the worker after the payment succeeded. 404 for anyone else’s payment ' +
+			'and until the invoice exists (or when fiscal invoicing is off for its purpose).',
+		request: { params: IdParams },
+		responses: { 200: { description: 'The invoice PDF (application/pdf)' } },
+		errors: ['UNAUTHENTICATED', 'NOT_FOUND'],
+	},
+	authMiddleware,
+	rejectAnonymous,
+	rateLimit('payments.invoice_pdf', { limit: 60, window: 3600, key: 'user' }),
+	PaymentsController.invoicePdf
+);
+
 export default router;

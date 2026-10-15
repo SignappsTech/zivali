@@ -1,0 +1,95 @@
+// Fiscal invoice PDF (C13), rendered by the worker in payment.effects with pdfkit. Slovenian (the invoice is issued in
+// Slovenia); the brand font Atkinson Hyperlegible Next (OFL, assets/fonts) carries č, š and ž, which the PDF standard
+// fonts lack. The fonts are found relative to this file: lib/ here and the bundled dist/ both sit one level below the
+// app root, where the image copies assets/ (Dockerfile).
+import { fileURLToPath } from 'node:url';
+
+import PDFDocument from 'pdfkit';
+
+import { formatEur } from '@zivali/i18n/format';
+
+const font = (file: string) => fileURLToPath(new URL(`../assets/fonts/${file}`, import.meta.url));
+const FONTS = {
+	regular: font('AtkinsonHyperlegibleNext_400Regular.ttf'),
+	bold: font('AtkinsonHyperlegibleNext_700Bold.ttf'),
+};
+
+export type InvoicePdfInput = {
+	number: string;
+	issued_at: Date;
+	/** Line item, e.g. "Zahvala za Najdimo". */
+	item: string;
+	tax_number: string;
+	premise_id: string;
+	device_id: string;
+	net_cents: number;
+	vat_rate: number;
+	vat_cents: number;
+	gross_cents: number;
+	zoi: string;
+	/** Null while FURS has not confirmed the invoice (FAILED: subsequent submission). */
+	eor: string | null;
+	/** Mock or FURS test environment: not a valid fiscal invoice. */
+	test: boolean;
+};
+export type PdfLine = { text: string; style?: 'title' | 'heading' | 'strong' | 'note' };
+
+const issuedAt = new Intl.DateTimeFormat('sl', {
+	day: 'numeric',
+	month: 'numeric',
+	year: 'numeric',
+	hour: '2-digit',
+	minute: '2-digit',
+	second: '2-digit',
+	timeZone: 'Europe/Ljubljana',
+});
+
+/** What the invoice says, top to bottom (tests read this; the PDF content stream is glyph ids). */
+export function invoiceLines(i: InvoicePdfInput): PdfLine[] {
+	const eur = (cents: number) => formatEur(cents, 'sl');
+	return [
+		{ text: 'Najdimo', style: 'title' },
+		{ text: `Račun št. ${i.number}`, style: 'heading' },
+		...(i.test ? [{ text: 'Testni račun: plačilo ni bilo izvedeno in račun ni davčno veljaven.', style: 'note' } as const] : []),
+		{ text: `Izdajatelj: Najdimo, davčna številka ${i.tax_number}` },
+		{ text: `Datum in čas izdaje: ${issuedAt.format(i.issued_at)}` },
+		{ text: `Poslovni prostor: ${i.premise_id}, elektronska naprava: ${i.device_id}` },
+		{ text: `Postavka: ${i.item}` },
+		{ text: `Znesek brez DDV: ${eur(i.net_cents)}` },
+		{ text: `DDV ${i.vat_rate} %: ${eur(i.vat_cents)}` },
+		{ text: `Skupaj: ${eur(i.gross_cents)}`, style: 'strong' },
+		{ text: 'Način plačila: plačilna kartica' },
+		{ text: `ZOI: ${i.zoi}` },
+		{ text: i.eor ? `EOR: ${i.eor}` : 'EOR: račun bo naknadno potrjen pri FURS.' },
+	];
+}
+
+const STYLE = {
+	title: { font: 'bold', size: 22, gap: 0.2 },
+	heading: { font: 'bold', size: 15, gap: 0.8 },
+	strong: { font: 'bold', size: 11, gap: 0.4 },
+	note: { font: 'regular', size: 10, gap: 0.8 },
+	body: { font: 'regular', size: 11, gap: 0.4 },
+} as const;
+
+export function renderInvoicePdf(input: InvoicePdfInput): Promise<Buffer> {
+	const doc = new PDFDocument({
+		size: 'A4',
+		margin: 56,
+		info: { Title: `Račun ${input.number}`, Author: 'Najdimo' },
+	});
+	doc.registerFont('regular', FONTS.regular);
+	doc.registerFont('bold', FONTS.bold);
+	const chunks: Buffer[] = [];
+	doc.on('data', (chunk: Buffer) => chunks.push(chunk));
+	const done = new Promise<Buffer>((resolve, reject) => {
+		doc.on('end', () => resolve(Buffer.concat(chunks)));
+		doc.on('error', reject);
+	});
+	for (const line of invoiceLines(input)) {
+		const style = STYLE[line.style ?? 'body'];
+		doc.font(style.font).fontSize(style.size).text(line.text).moveDown(style.gap);
+	}
+	doc.end();
+	return done;
+}
