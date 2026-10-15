@@ -1,10 +1,11 @@
 ---
 id: TASK-7.2
 title: GA4 on web with basic Consent Mode v2
-status: To Do
+status: In Progress
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:12'
+updated_date: '2026-10-15 03:29'
 labels:
   - fe
   - 'est:S'
@@ -38,7 +39,7 @@ Branch: agent/task-7.2-analytics-web
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
 - [ ] #1 Before consent no request reaches Google and no _ga cookie exists (Playwright with network interception).
-- [ ] #2 On grant: consent default (all four signals denied), then update analytics_storage granted, gtag.js loaded with the CSP nonce, and page_view sent on each route change through instrumentation-client using the route template (no ids).
+- [ ] #2 On grant: consent default (all four signals denied), then update analytics_storage granted, gtag.js loaded with the CSP nonce, and page_view sent on each route change through the ScreenViews component (usePathname/useParams) using the route template (no ids).
 - [ ] #3 On withdraw: consent update denied, the ga-disable flag set and _ga cookies deleted at once; a test proves it.
 - [ ] #4 The mock adapter is used locally; ga4 runs only when NEXT_PUBLIC_ANALYTICS_PROVIDER=ga4 and the measurement id is set.
 <!-- AC:END -->

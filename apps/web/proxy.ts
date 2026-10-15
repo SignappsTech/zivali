@@ -16,6 +16,11 @@ function contentSecurityPolicy(nonce: string): string {
 	const realtime = supabase.origin.replace(/^http/, 'ws');
 	const api = new URL(env.NEXT_PUBLIC_API_URL).origin;
 	const dev = process.env.NODE_ENV === 'development';
+	// GA4 hits and pixel after consent (C12); gtag.js itself is trusted through the nonce.
+	const ga =
+		env.NEXT_PUBLIC_ANALYTICS_PROVIDER === 'ga4'
+			? ' https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com'
+			: '';
 
 	return [
 		"default-src 'self'",
@@ -23,9 +28,9 @@ function contentSecurityPolicy(nonce: string): string {
 		`script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${dev ? " 'unsafe-eval'" : ''}`,
 		// React writes style attributes (Radix positioning); a nonce in this list would switch 'unsafe-inline' off.
 		"style-src 'self' 'unsafe-inline'",
-		"img-src 'self' blob: data:",
+		`img-src 'self' blob: data:${ga}`,
 		"font-src 'self'",
-		`connect-src 'self' ${api} ${supabase.origin} ${realtime}`,
+		`connect-src 'self' ${api} ${supabase.origin} ${realtime}${ga}`,
 		"object-src 'none'",
 		"base-uri 'self'",
 		"form-action 'self'",

@@ -23,6 +23,9 @@ export default defineConfig({
 			HOSTNAME: 'localhost',
 			NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL || 'http://127.0.0.1:54321',
 			NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || 'e2e-placeholder',
+			// e2e/analytics.spec.ts: ga4 with a test id; the spec answers every Google request itself.
+			NEXT_PUBLIC_ANALYTICS_PROVIDER: 'ga4',
+			NEXT_PUBLIC_GA_MEASUREMENT_ID: 'G-E2ETEST',
 		},
 	},
 });

@@ -39,4 +39,16 @@ describe('parseEnv', () => {
 	it('names an invalid variable', () => {
 		expect(() => parseEnv({ ...valid, APP_ENV: 'prod' })).toThrow(/APP_ENV/);
 	});
+
+	it('requires a measurement id for ga4 and keeps mock without one', () => {
+		const ga4 = { ...valid, NEXT_PUBLIC_ANALYTICS_PROVIDER: 'ga4' };
+		expect(() => parseEnv(ga4)).toThrow(/NEXT_PUBLIC_GA_MEASUREMENT_ID/);
+		expect(() => parseEnv({ ...ga4, NEXT_PUBLIC_GA_MEASUREMENT_ID: 'UA-1' })).toThrow(
+			/NEXT_PUBLIC_GA_MEASUREMENT_ID/
+		);
+		expect(parseEnv({ ...ga4, NEXT_PUBLIC_GA_MEASUREMENT_ID: 'G-E2ETEST' }).NEXT_PUBLIC_ANALYTICS_PROVIDER).toBe(
+			'ga4'
+		);
+		expect(parseEnv(valid).NEXT_PUBLIC_ANALYTICS_PROVIDER).toBe('mock');
+	});
 });
