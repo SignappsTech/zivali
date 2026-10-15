@@ -1,5 +1,4 @@
 import { Redirect, Stack } from 'expo-router';
-import type { Icon as PhosphorIcon } from 'phosphor-react-native';
 import { ArrowUUpLeftIcon } from 'phosphor-react-native/src/icons/ArrowUUpLeft';
 import { CheckCircleIcon } from 'phosphor-react-native/src/icons/CheckCircle';
 import { FlaskIcon } from 'phosphor-react-native/src/icons/Flask';
@@ -50,10 +49,7 @@ const STATUSES = {
 		iconClass: 'text-muted-foreground',
 		textClass: 'text-muted-foreground',
 	},
-} as const satisfies Record<
-	string,
-	{ label: string; icon: PhosphorIcon; weight: 'fill' | 'bold'; iconClass: string; textClass: string }
->;
+} as const;
 
 type Shown = Payment & { purpose: keyof typeof PURPOSES; status: keyof typeof STATUSES };
 const shown = (payment: Payment): payment is Shown => payment.purpose in PURPOSES && payment.status in STATUSES;
