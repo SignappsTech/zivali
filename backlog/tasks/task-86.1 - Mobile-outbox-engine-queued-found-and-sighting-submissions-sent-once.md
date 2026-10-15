@@ -1,11 +1,11 @@
 ---
 id: TASK-86.1
 title: 'Mobile outbox engine: queued found and sighting submissions sent once'
-status: To Do
+status: In Progress
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:39'
-updated_date: '2026-10-14 23:38'
+updated_date: '2026-10-15 20:36'
 labels:
   - fe
   - 'est:M'
@@ -40,8 +40,8 @@ Branch: agent/task-86.1-outbox
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 submitReport() writes an outbox row (id = client request id, payload, captured_at, photos copied to documentDirectory/outbox/<id>/) and returns immediately; online it is sent at once.
-- [ ] #2 The single-flight sender runs on launch, resume and reconnect in the foreground: anonymous session (Turnstile WebView when enabled, needs_action if interaction is required), register_photo and upload, then create_report with p_client_request_id and event_at = captured_at; the result and manage token are stored (token in secure store).
-- [ ] #3 Errors are classified per C17 (network → backoff 1/5/15/60 min, RATE_LIMITED → wait retry_after, CAPTCHA and VALIDATION → needs_action or failed with the reason); nothing is deleted without the user.
-- [ ] #4 jest tests with the mock client prove: offline submit → queued; app kill and restart → still queued and sent; a lost response then retry → one report and the same manage token; rate limit → waits and shows the reason.
+- [x] #1 submitReport() writes an outbox row (id = client request id, payload, captured_at, photos copied to documentDirectory/outbox/<id>/) and returns immediately; online it is sent at once.
+- [x] #2 The single-flight sender runs on launch, resume and reconnect in the foreground: anonymous session (Turnstile WebView when enabled, needs_action if interaction is required), register_photo and upload, then create_report with p_client_request_id and event_at = captured_at; the result and manage token are stored (token in secure store).
+- [x] #3 Errors are classified per C17 (network → backoff 1/5/15/60 min, RATE_LIMITED → wait retry_after, CAPTCHA and VALIDATION → needs_action or failed with the reason); nothing is deleted without the user.
+- [x] #4 jest tests with the mock client prove: offline submit → queued; app kill and restart → still queued and sent; a lost response then retry → one report and the same manage token; rate limit → waits and shows the reason.
 <!-- AC:END -->
