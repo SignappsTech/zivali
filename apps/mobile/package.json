@@ -10,13 +10,15 @@
 		"lint": "eslint --max-warnings=0 .",
 		"typecheck": "tsc",
 		"test": "jest",
-		"postinstall": "pnpm --filter @zivali/tokens build"
+		"postinstall": "pnpm --filter @zivali/tokens --filter @zivali/i18n build"
 	},
 	"dependencies": {
 		"@expo-google-fonts/atkinson-hyperlegible-next": "^0.4.1",
 		"@expo-google-fonts/bricolage-grotesque": "^0.4.1",
+		"@formatjs/intl-pluralrules": "^6.3.15",
 		"@rn-primitives/portal": "^1.5.3",
 		"@supabase/supabase-js": "^2.117.3",
+		"@zivali/i18n": "workspace:*",
 		"@zivali/tokens": "workspace:*",
 		"class-variance-authority": "^0.7.1",
 		"clsx": "^2.1.1",
