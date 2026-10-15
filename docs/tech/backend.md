@@ -69,7 +69,7 @@ A domain function never imports Express, never reads `req`/`res`, and never catc
 - **Seeders**: own file `prisma/seeders/NN-<name>.seeder.ts`; fixture users from TASK-6.2.
 - **app_config** keys: insert defaults in your migration or seeder (`on conflict do nothing`).
 - **Workspace packages** (TASK-107): `@zivali/*` source resolves from the checkout's own `packages/*/src` through `tsconfig.base.json` `paths` (tsc, vitest `resolve.tsconfigPaths`, tsx, tsup), never through the `node_modules/@zivali` links, which in a worktree point at the main checkout; a change to packages/types or packages/validation is checked and tested in the same worktree.
-- A new `@zivali` export (or subpath) gets a `paths` entry in `tsconfig.base.json` and its copies in `apps/web/tsconfig.json`, `apps/mobile/tsconfig.json` and mobile jest `moduleNameMapper`; built outputs (`@zivali/tokens`, `@zivali/i18n/dist`) still come through node_modules.
+- A new `@zivali` export (or subpath) gets a `paths` entry in `tsconfig.base.json` and its copies in `apps/web/tsconfig.json`, `apps/mobile/tsconfig.json` and mobile jest `moduleNameMapper`; tokens `values`/`map-style` and `i18n/dist` resolve to `dist/` the same way; only the CSS, tailwind-preset and `app.config.ts` still go through node_modules. After a paths-only change, touch the vitest configs or run `vitest --clearCache` (vitest 5's cache keys only on the config file).
 
 ## Standards
 
