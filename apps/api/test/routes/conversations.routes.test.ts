@@ -68,6 +68,8 @@ let found: { id: string; short_code: string };
 
 beforeAll(async () => {
 	await startJobs();
+	// Anonymous callers are counted per IP (all 127.0.0.1 here): start every run with fresh chat windows.
+	await prisma.rate_limits.deleteMany({ where: { name: { in: ['contact', 'chat.message', 'chat.message_day'] } } });
 	[owner, stranger, anonFinder, anonOther, unverified, mod, admin] = await Promise.all([
 		user(),
 		user(),
