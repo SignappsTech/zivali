@@ -1,7 +1,7 @@
 // C18 directory endpoints for the Playwright run (playwright.config.ts starts it), until apps/api serves them.
 // Server components and the browser both call it, so it answers CORS. Run on its own: PORT=4010 node e2e/mock-api.ts
-import { generateKeyPairSync, sign } from 'node:crypto';
-import { createServer } from 'node:http';
+import { createHmac, generateKeyPairSync, sign } from 'node:crypto';
+import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
 
 import {
 	ljubljanaShelter,
@@ -80,8 +80,27 @@ function token(query: URLSearchParams) {
 	return `${input}.${signature.toString('base64url')}`;
 }
 
+// C13 webhook as the mock provider's /dev/checkout posts it (server side, so no page.route sees it): 200 only for an
+// event signed like Stripe with the default MOCK_WEBHOOK_SECRET, as apps/api verifies it.
+function webhook(request: IncomingMessage, response: ServerResponse) {
+	let body = '';
+	request.on('data', (chunk) => (body += chunk));
+	request.on('end', () => {
+		const parts = Object.fromEntries(
+			String(request.headers['stripe-signature'] ?? '')
+				.split(',')
+				.map((part) => part.split('='))
+		);
+		const signed = createHmac('sha256', 'mock-webhook-secret').update(`${parts.t}.${body}`).digest('hex');
+		const ok = parts.v1 === signed && Boolean(JSON.parse(body).data?.object?.metadata?.payment_id);
+		response.writeHead(ok ? 200 : 400, { 'Content-Type': 'application/json' });
+		response.end(JSON.stringify(ok ? { received: true } : { error: { code: 'VALIDATION', message: 'Bad event' } }));
+	});
+}
+
 createServer((request, response) => {
 	const url = new URL(request.url ?? '', 'http://mock');
+	if (request.method === 'POST' && url.pathname === '/v1/webhooks/stripe') return webhook(request, response);
 	if (url.pathname === '/e2e/token') {
 		response.writeHead(200, { 'Content-Type': 'text/plain', 'Access-Control-Allow-Origin': '*' });
 		return void response.end(token(url.searchParams));
