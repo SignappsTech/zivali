@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:13'
-updated_date: '2026-10-15 18:19'
+updated_date: '2026-10-15 19:26'
 labels:
   - fe
   - 'est:M'
@@ -42,8 +42,8 @@ Branch: agent/task-17.3-anon-mob
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Anonymous sign-in obtains a Turnstile token through a WebView of the web /captcha page when captcha is enabled, and skips it otherwise.
-- [ ] #2 Opening a manage link (universal link or zivali://m#token) signs in anonymously, claims the report and shows the manage screen from P7; unknown or expired links show clear errors.
-- [ ] #3 Manage tokens are stored in expo-secure-store; failures keep the draft and retry automatically when online.
-- [ ] #4 Every request carries x-device-id; no ad component on the manage screen.
+- [x] #1 Anonymous sign-in obtains a Turnstile token through a WebView of the web /captcha page when captcha is enabled, and skips it otherwise.
+- [x] #2 Opening a manage link (universal link or zivali://m#token) signs in anonymously, claims the report and shows the manage screen from P7; unknown or expired links show clear errors.
+- [x] #3 Manage tokens are stored in expo-secure-store; failures keep the draft and retry automatically when online.
+- [x] #4 Every request carries x-device-id; no ad component on the manage screen.
 <!-- AC:END -->
