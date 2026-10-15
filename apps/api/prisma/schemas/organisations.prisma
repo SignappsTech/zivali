@@ -1,0 +1,45 @@
+// Organisations: shelters, vets, municipalities (ADR-018: organisation-level roles live in organisation_members.role).
+// Shelters and municipalities never pay; vets may buy Vet Partner visibility (C13, M4). Reports posted by an
+// organisation carry reports.organisation_id (C4). RLS deny-all (ADR-021).
+
+enum ORGANISATION_KIND {
+  SHELTER
+  VET
+  MUNICIPALITY
+
+  @@schema("app")
+}
+
+enum ORGANISATION_ROLE {
+  ADMIN
+  MEMBER
+
+  @@schema("app")
+}
+
+model organisations {
+  id              String                 @id @default(uuid()) @db.Uuid
+  kind            ORGANISATION_KIND
+  name            String
+  // app.municipalities.id (C6)
+  municipality_id Int?                   @db.SmallInt
+  // set by staff once the organisation is checked; null = unverified
+  verified_at     DateTime?              @db.Timestamptz(6)
+  created_at      DateTime               @default(now()) @db.Timestamptz(6)
+  updated_at      DateTime               @updatedAt @db.Timestamptz(6)
+  members         organisation_members[]
+
+  @@schema("app")
+}
+
+model organisation_members {
+  organisation_id String            @db.Uuid
+  user_id         String            @db.Uuid
+  role            ORGANISATION_ROLE @default(MEMBER)
+  created_at      DateTime          @default(now()) @db.Timestamptz(6)
+  organisation    organisations     @relation(fields: [organisation_id], references: [id], onDelete: Cascade)
+
+  @@id([organisation_id, user_id])
+  @@index([user_id])
+  @@schema("app")
+}

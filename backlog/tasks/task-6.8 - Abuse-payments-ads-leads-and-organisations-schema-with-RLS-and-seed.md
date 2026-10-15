@@ -1,11 +1,11 @@
 ---
 id: TASK-6.8
 title: 'Abuse, payments, ads, leads and organisations models with seed'
-status: To Do
+status: In Progress
 assignee:
   - '@backend-dev'
 created_date: '2026-10-14 22:12'
-updated_date: '2026-10-14 23:38'
+updated_date: '2026-10-15 09:01'
 labels:
   - be
   - 'est:S'
