@@ -3,11 +3,11 @@ id: TASK-19.1
 title: >-
   Matching engine v1: match.report job, TypedSQL candidates, scoring, idempotent
   suggestions
-status: To Do
+status: In Progress
 assignee:
   - '@backend-dev'
 created_date: '2026-10-14 22:13'
-updated_date: '2026-10-14 23:38'
+updated_date: '2026-10-15 15:46'
 labels:
   - be
   - 'est:M'
@@ -41,9 +41,15 @@ Branch: agent/task-19.1-matching-be
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Publishing a report or a relevant update queues match.report; MatchingDomain stores suggestions idempotently (unique pair, never resurrecting rejected pairs) within 2 minutes p95 on the local stack.
-- [ ] #2 Equal normalised chips on opposite sides score 1.0 with chip_match and strength strong and immediately queue a match_chip notification that ignores quiet hours; a chip on a sighting adds the chip_sighting reason.
-- [ ] #3 Without a chip, species must match, sex conflicts are excluded, and the C8 score (distance decay, time proximity, attribute overlap) with weights, threshold 0.5 and top 10 from app_config applies; reasons use bands only (no exact distance).
-- [ ] #4 scoreMatch lives in @zivali/validation/matching; candidates come from TypedSQL prisma/sql/matchCandidates.sql using spatial indexes; first_match_at is recorded.
-- [ ] #5 New suggestions with strength good or better notify the lost report's managers once; neither side sees the other's contact data.
+- [x] #1 Publishing a report or a relevant update queues match.report; MatchingDomain stores suggestions idempotently (unique pair, never resurrecting rejected pairs) within 2 minutes p95 on the local stack.
+- [x] #2 Equal normalised chips on opposite sides score 1.0 with chip_match and strength strong and immediately queue a match_chip notification that ignores quiet hours; a chip on a sighting adds the chip_sighting reason.
+- [x] #3 Without a chip, species must match, sex conflicts are excluded, and the C8 score (distance decay, time proximity, attribute overlap) with weights, threshold 0.5 and top 10 from app_config applies; reasons use bands only (no exact distance).
+- [x] #4 scoreMatch lives in @zivali/validation/matching; candidates come from TypedSQL prisma/sql/matchCandidates.sql using spatial indexes; first_match_at is recorded.
+- [x] #5 New suggestions with strength good or better notify the lost report's managers once; neither side sees the other's contact data.
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+match.report handler + MatchingDomain.matchReport; candidates via $queryRaw (CH-154: no TypedSQL, lost exact_point to other public_point, GiST used both directions); scoreMatch in @zivali/validation/matching; migration 20261015151957_task_19_1_matching_config (matching.* defaults). Producers of match.report on create/PATCH are TASK-29.2. Reasons/top N/first_match_at choices in CH-155. Tests: test/domains/matching.domain.test.ts, packages/validation/test/matching.test.ts.
+<!-- SECTION:NOTES:END -->
