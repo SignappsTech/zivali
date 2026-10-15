@@ -236,7 +236,6 @@ beforeEach(() => {
 afterEach(() => store?.dispatch(api.util.resetApiState()));
 
 describe('inbox rows (lib/notifications)', () => {
-
 	test('every type with in-app copy renders in both languages from its allowlisted variables', () => {
 		const payloads: Record<string, Record<string, unknown>> = {
 			match_chip: chip.payload,
