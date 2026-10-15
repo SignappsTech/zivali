@@ -1,11 +1,11 @@
 ---
 id: TASK-9.1
 title: 'Design: Sign in, account creation and gates (P16)'
-status: To Do
+status: In Progress
 assignee:
   - '@ui-designer'
 created_date: '2026-10-14 21:50'
-updated_date: '2026-10-14 21:51'
+updated_date: '2026-10-14 23:11'
 labels:
   - design
   - 'est:S'
@@ -31,6 +31,7 @@ Account creation must be quick and never lose what the user entered, and other f
 ## Packet
 Unblocks on: P1 web shell and P2 mobile shell mockups merged (header, footer, tab bar and sheet patterns)
 Branch: design/P16-auth
+Branch: agent/TASK-9.1-p16-auth
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Acceptance Criteria
