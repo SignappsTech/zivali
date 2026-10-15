@@ -26,3 +26,4 @@ From CH-110 (origin TASK-6.2). Today new env vars (SUPABASE_URL in TASK-6.2) nev
 - [ ] #3 postinstall prints the names of the keys it added
 - [ ] #4 Existing keys in .env.local are never overwritten or removed
 <!-- AC:END -->
+Branch: agent/TASK-99-env-sync

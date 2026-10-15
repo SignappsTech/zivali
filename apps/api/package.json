@@ -5,7 +5,7 @@
 	"description": "Express 5 + Prisma 7 API and pg-boss worker (ADR-020)",
 	"type": "module",
 	"scripts": {
-		"postinstall": "node -e \"fs.existsSync('.env.local') || fs.copyFileSync('.env.example', '.env.local')\" && prisma generate",
+		"postinstall": "node ../../scripts/env-sync.mjs && prisma generate",
 		"dev": "tsx watch server.ts",
 		"dev:worker": "tsx watch worker.ts",
 		"build": "tsup",
