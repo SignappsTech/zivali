@@ -29,7 +29,11 @@ vi.mock('../../lib/realtime.ts', async (original) => {
 beforeAll(() => startJobs(), 30_000);
 
 const ids: string[] = [];
-afterAll(() => deleteAuthUsers(ids));
+const conversations: string[] = [];
+afterAll(async () => {
+	await prisma.conversations.deleteMany({ where: { id: { in: conversations } } });
+	await deleteAuthUsers(ids);
+});
 
 const saved = { ...sources };
 afterEach(() => {
@@ -471,6 +475,7 @@ describe('quiet hours (Europe/Ljubljana)', () => {
 describe('chat_message email after 30 minutes unread', () => {
 	async function conversation(user_id: string, last_read_at: Date | null) {
 		const conv = await prisma.conversations.create({ data: { about_report_id: randomUUID() } });
+		conversations.push(conv.id);
 		await prisma.conversation_participants.create({
 			data: { conversation_id: conv.id, user_id, role: 'owner', last_read_at },
 		});
