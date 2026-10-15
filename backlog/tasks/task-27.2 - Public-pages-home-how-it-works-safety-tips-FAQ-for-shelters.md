@@ -1,11 +1,11 @@
 ---
 id: TASK-27.2
 title: 'Public pages: home, how it works, safety tips, FAQ, for shelters'
-status: In Progress
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:14'
-updated_date: '2026-10-15 20:19'
+updated_date: '2026-10-15 21:25'
 labels:
   - fe
   - 'est:M'
