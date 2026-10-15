@@ -3,9 +3,10 @@
 import type { z } from 'zod';
 
 import type { Locale, ReportType, Species } from '@zivali/types';
-import { CreateReportResponse, PublicReport, ReportOwnerView } from '@zivali/validation';
+import { CreateReportResponse, PublicReport, ReportOwnerView, SyncReportsResponse } from '@zivali/validation';
 
 import type { CreatedReport, ReportView } from './reports.domain.ts';
+import type { SyncFeed } from './sync.domain.ts';
 
 export type PublicReportDto = z.infer<typeof PublicReport>;
 export type ReportOwnerViewDto = z.infer<typeof ReportOwnerView>;
@@ -113,4 +114,15 @@ export function toCreated(created: CreatedReport) {
 	return CreateReportResponse.parse(created);
 }
 
-export default { toPublicReport, toOwnerView, toDto, toCreated };
+/** GET /v1/sync/reports: CachedReport keeps only the C17 cache fields of the public read model plus `thumb_url`. */
+export function toSyncFeed(feed: SyncFeed, locale: Locale) {
+	return SyncReportsResponse.parse({
+		...feed,
+		upserts: feed.upserts.map((view) => {
+			const report = toPublicReport(view, locale);
+			return { ...report, thumb_url: report.photos[0]?.thumb_url ?? null };
+		}),
+	});
+}
+
+export default { toPublicReport, toOwnerView, toDto, toCreated, toSyncFeed };

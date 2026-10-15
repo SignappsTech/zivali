@@ -15,6 +15,7 @@ import notificationsRoutes, { prefsRouter, pushTokensRouter } from './notificati
 import photosRoutes from './photos.routes.ts';
 import reportsRoutes from './reports.routes.ts';
 import sheltersRoutes from './shelters.routes.ts';
+import syncRoutes from './sync.routes.ts';
 
 const router = Router();
 
@@ -35,5 +36,6 @@ router.use('/photos', photosRoutes);
 router.use('/ads', adsRoutes);
 router.use('/reports', reportMatchesRouter);
 router.use('/matches', matchesRoutes);
+router.use('/sync', syncRoutes);
 
 export default router;

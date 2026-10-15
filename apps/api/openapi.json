@@ -1731,7 +1731,7 @@
 				"properties": {
 					"upserts": { "type": "array", "items": { "$ref": "#/components/schemas/CachedReport" } },
 					"removed_ids": { "type": "array", "items": { "type": "string", "format": "uuid" } },
-					"server_time": { "type": "string", "format": "date-time" },
+					"server_time": { "type": "string", "minLength": 1, "maxLength": 500 },
 					"has_more": { "type": "boolean" }
 				},
 				"required": ["upserts", "removed_ids", "server_time", "has_more"]
@@ -3654,6 +3654,49 @@
 					},
 					"404": {
 						"description": "NOT_FOUND",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"429": {
+						"description": "RATE_LIMITED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"500": {
+						"description": "INTERNAL",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					}
+				}
+			}
+		},
+		"/v1/sync/reports": {
+			"get": {
+				"operationId": "syncReports",
+				"summary": "Offline cache feed of the reports in up to 3 areas",
+				"description": "`areas` = JSON `[{lat,lng,radius_km}]` (1–3 circles of ≤ 25 km, centres rounded to 2 decimals). `upserts`: open (or matched) visible reports whose public circle meets an area, as CachedReport (the public whitelist; never the stored point, chip number or contact data). `removed_ids`: reports there that were closed, reunited, expired, hidden or removed since `since`. `server_time` is an opaque cursor: send it back unchanged as `since` (first sync without it) and keep paging while `has_more`. Works without a session; 60 calls per hour per `x-device-id` (else per IP).",
+				"tags": ["sync"],
+				"parameters": [
+					{ "schema": { "type": "string" }, "required": true, "name": "areas", "in": "query" },
+					{
+						"schema": { "type": "string", "minLength": 1, "maxLength": 500 },
+						"required": false,
+						"name": "since",
+						"in": "query"
+					},
+					{
+						"schema": { "type": "integer", "minimum": 1, "maximum": 1000 },
+						"required": false,
+						"name": "limit",
+						"in": "query"
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "One page of the feed",
+						"content": {
+							"application/json": { "schema": { "$ref": "#/components/schemas/SyncReportsResponse" } }
+						}
+					},
+					"400": {
+						"description": "VALIDATION",
 						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
 					},
 					"429": {
