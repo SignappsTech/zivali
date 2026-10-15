@@ -62,7 +62,7 @@ Detail page SEO: open, visible reports are indexable with `Article`-like JSON-LD
 
 ## Mobile (Expo Router)
 
-`app/(tabs)/index` (map + list), `(tabs)/report` (choose lost/found), `(tabs)/inbox` (notifications + messages), `(tabs)/profile`; stacks: `r/[code]`, `r/[code]/matches`, `r/[code]/reunited`, `m` (manage link), `report/lost`, `report/found`, `pets/*`, `inbox/[id]` (conversation), `settings/*` (language, notifications, alerts, consent, payments, account), `auth/*`, `payments/return`.
+`app/(tabs)/index` (map + list), `(tabs)/report` (choose lost/found), `(tabs)/inbox` (notifications + messages), `(tabs)/profile`; stacks: `r/[code]`, `r/[code]/matches`, `r/[code]/reunited`, `m` (manage link), `report/lost`, `report/found` (the sighted flow is `report/found?type=sighted`), `pets/*`, `inbox/[id]` (conversation), `settings/*` (language, notifications, alerts, consent, payments, account), `auth/*`, `payments/return`.
 
 ## Deep links
 
@@ -78,3 +78,4 @@ Detail page SEO: open, visible reports are indexable with `Article`-like JSON-LD
 | Version | Date | Change |
 |---|---|---|
 | 1.1 | 2026-10-15 | CH-101: SEO hub folder param `[lokacija]` renamed `[location]` (internal EN) |
+| 1.2 | 2026-10-15 | CH-144: sighted route is /report/found?type=sighted |

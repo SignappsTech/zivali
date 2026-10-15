@@ -1,11 +1,11 @@
 ---
 id: TASK-14.3
 title: 'Mobile PhotoPicker: camera/gallery, resize, EXIF, drafts, upload with retry'
-status: In Progress
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:12'
-updated_date: '2026-10-15 10:24'
+updated_date: '2026-10-15 11:53'
 labels:
   - fe
   - 'est:M'
