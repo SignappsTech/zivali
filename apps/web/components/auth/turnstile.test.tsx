@@ -66,10 +66,63 @@ describe('useCaptcha', () => {
 		await vi.waitFor(() => expect(turnstile.execute).toHaveBeenCalledTimes(2));
 		act(() => options['error-callback']!());
 		await expect(failed).rejects.toMatchObject({ code: 'CAPTCHA_FAILED' });
+		// An expired token and an interactive challenge left unsolved settle too, so a retry can run.
+		for (const [n, event] of [
+			[3, 'expired-callback'],
+			[4, 'timeout-callback'],
+		] as const) {
+			const attempt = captcha.getToken();
+			await vi.waitFor(() => expect(turnstile.execute).toHaveBeenCalledTimes(n));
+			act(() => options[event]!());
+			await expect(attempt).rejects.toMatchObject({ code: 'CAPTCHA_FAILED' });
+		}
 		expect(append).toHaveBeenCalledOnce();
 		// The widget goes with its form.
 		unmount();
 		expect(turnstile.remove).toHaveBeenCalledWith('w1');
+	});
+});
+
+describe('useCaptcha after a failed api.js load', () => {
+	it('loads and renders the widget on the next getToken(), then yields a token', async () => {
+		vi.stubEnv('NEXT_PUBLIC_TURNSTILE_SITE_KEY', '1x00000000000000000000AA');
+		let options: Record<string, (value?: string) => void> = {};
+		const turnstile = {
+			render: vi.fn(
+				(_element: HTMLElement, given: Record<string, unknown>) => ((options = given as typeof options), 'w1')
+			),
+			reset: vi.fn(),
+			execute: vi.fn(),
+			remove: vi.fn(),
+		};
+		// Offline at mount (the error event comes later, as in a browser), then the script loads.
+		const append = vi
+			.spyOn(document.head, 'append')
+			.mockImplementationOnce((script) => {
+				setTimeout(() => (script as HTMLScriptElement).onerror?.(new Event('error')));
+			})
+			.mockImplementation((script) => {
+				window.turnstile = turnstile;
+				(script as HTMLScriptElement).onload?.(new Event('load'));
+			});
+		const { useCaptcha } = await import('./turnstile');
+		let captcha!: ReturnType<typeof useCaptcha>;
+		function Form() {
+			captcha = useCaptcha();
+			return <form>{captcha.widget}</form>;
+		}
+		render(<Form />, { wrapper });
+		await vi.waitFor(() => expect(append).toHaveBeenCalledOnce());
+		// Let the error event fire: no widget.
+		await act(() => new Promise((resolve) => setTimeout(resolve, 10)));
+		expect(turnstile.render).not.toHaveBeenCalled();
+
+		const token = captcha.getToken();
+		await vi.waitFor(() => expect(turnstile.execute).toHaveBeenCalledWith('w1'));
+		expect(append).toHaveBeenCalledTimes(2);
+		expect(turnstile.render.mock.calls[0]![0]).toBeInstanceOf(HTMLDivElement);
+		act(() => options.callback!('token-2'));
+		expect(await token).toBe('token-2');
 	});
 });
 

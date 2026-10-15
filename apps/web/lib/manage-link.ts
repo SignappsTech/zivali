@@ -19,5 +19,26 @@ export function saveManageToken(reportId: string, token: string): boolean {
 export const manageLink = (token: string, locale: Locale) =>
 	`${window.location.origin}${getPathname({ locale, href: '/m' })}#${token}`;
 
-/** The token from the current URL's fragment (`/m#<token>`), or null. */
-export const fragmentToken = (): string | null => window.location.hash.slice(1).trim() || null;
+const STASH = 'manage_token';
+
+/**
+ * The token of `/m#<token>`, or null. It leaves the address bar and the (synced) history at once and waits in this
+ * tab's sessionStorage, so a reload or a retry still finds it; a new fragment (another link) replaces it.
+ */
+export function takeManageToken(): string | null {
+	const token = window.location.hash.slice(1).trim();
+	if (!token) {
+		try {
+			return sessionStorage.getItem(STASH);
+		} catch {
+			return null;
+		}
+	}
+	try {
+		sessionStorage.setItem(STASH, token);
+	} catch {
+		// Blocked storage: the claim still runs now; a reload needs the link again.
+	}
+	history.replaceState(null, '', window.location.pathname + window.location.search);
+	return token;
+}

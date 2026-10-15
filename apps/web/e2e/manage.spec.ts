@@ -95,12 +95,18 @@ for (const viewport of [
 		// Every API request carries this browser's device id (C7).
 		const ids = new Set(seen.map((request) => request.headers()['x-device-id']));
 		expect([...ids]).toEqual([expect.stringMatching(/^[0-9a-f-]{36}$/)]);
-		// The token stays in the fragment: never in a request URL or Referer.
+		// The token never goes into a request URL or Referer, and leaves the address bar and history at once.
 		expect(seen.every((request) => !request.url().includes('good-token'))).toBe(true);
+		await expect(page).toHaveURL(/\/m$/);
 
 		// Protected flow (C15): no ad slot.
 		await expect(page.locator('[data-ad-slot]')).toHaveCount(0);
 		await expectNoAxeViolations(page);
+
+		// A reload in the same tab claims again from the tab's stash.
+		await page.reload();
+		await expect(page.getByRole('heading', { level: 1, name: 'Vaša prijava' })).toBeVisible();
+		expect(seen.filter((request) => new URL(request.url()).pathname === '/v1/manage/claim')).toHaveLength(2);
 	});
 }
 

@@ -1,10 +1,11 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { fragmentToken, manageLink, saveManageToken } from './manage-link';
+import { manageLink, saveManageToken, takeManageToken } from './manage-link';
 
 afterEach(() => {
 	localStorage.clear();
-	window.location.hash = '';
+	sessionStorage.clear();
+	history.replaceState(null, '', '/');
 });
 
 describe('manage link (C7)', () => {
@@ -24,9 +25,16 @@ describe('manage link (C7)', () => {
 		expect(manageLink('q7Vt-token', 'en')).toBe(`${origin}/en/m#q7Vt-token`);
 	});
 
-	it('reads the token from the fragment', () => {
-		expect(fragmentToken()).toBeNull();
-		window.location.hash = '#q7Vt-token';
-		expect(fragmentToken()).toBe('q7Vt-token');
+	it('takes the token out of the address bar and keeps it for a reload in this tab', () => {
+		history.replaceState(null, '', '/m');
+		expect(takeManageToken()).toBeNull();
+		history.replaceState(null, '', '/en/m?x=1#q7Vt-token');
+		expect(takeManageToken()).toBe('q7Vt-token');
+		expect(window.location.href).toBe(`${window.location.origin}/en/m?x=1`);
+		expect(takeManageToken()).toBe('q7Vt-token');
+		// Another link opened in the tab wins.
+		history.replaceState(null, '', '/m#other');
+		expect(takeManageToken()).toBe('other');
+		expect(sessionStorage.getItem('manage_token')).toBe('other');
 	});
 });

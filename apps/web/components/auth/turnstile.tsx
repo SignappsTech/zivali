@@ -48,54 +48,69 @@ const captchaFailed = () => new ApiError('CAPTCHA_FAILED', 'CAPTCHA_FAILED');
  */
 export function useCaptcha() {
 	const locale = useLocale();
-	const widget = React.useRef<string | undefined>(undefined);
+	const element = React.useRef<HTMLDivElement | null>(null);
+	const widget = React.useRef<{ turnstile: Turnstile; id: string } | undefined>(undefined);
 	const pending = React.useRef<{ resolve: (token: string) => void; reject: (error: ApiError) => void }>(undefined);
 	// Read directly: NEXT_PUBLIC_* is inlined at build.
 	const siteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
 
+	// One render for the mount and for a getToken() that finds no widget (api.js failed to load at mount).
+	const render = React.useCallback(
+		(target: HTMLElement, turnstile: Turnstile) => {
+			const fail = () => pending.current?.reject(captchaFailed());
+			const id = turnstile.render(target, {
+				sitekey: siteKey,
+				execution: 'execute',
+				appearance: 'interaction-only',
+				language: locale,
+				callback: (token: string) => pending.current?.resolve(token),
+				'error-callback': fail,
+				'expired-callback': fail,
+				// An interactive challenge left unsolved: settle, so the caller can retry.
+				'timeout-callback': fail,
+			});
+			widget.current = { turnstile, id };
+		},
+		[siteKey, locale]
+	);
+
 	// A callback ref: the widget lives exactly as long as its element (a form view may unmount and come back).
 	const mount = React.useCallback(
-		(element: HTMLDivElement | null) => {
-			if (!element || !siteKey) return;
-			let turnstile: Turnstile | undefined;
-			let id: string | undefined;
+		(node: HTMLDivElement | null) => {
+			if (!node || !siteKey) return;
+			element.current = node;
 			let cancelled = false;
 			loadTurnstile().then(
 				(loaded) => {
-					if (cancelled) return;
-					turnstile = loaded;
-					id = widget.current = loaded.render(element, {
-						sitekey: siteKey,
-						execution: 'execute',
-						appearance: 'interaction-only',
-						language: locale,
-						callback: (token: string) => pending.current?.resolve(token),
-						'error-callback': () => pending.current?.reject(captchaFailed()),
-						'expired-callback': () => pending.current?.reject(captchaFailed()),
-					});
+					if (!cancelled && !widget.current) render(node, loaded);
 				},
+				// Offline or a Cloudflare outage: getToken() loads and renders it on the next attempt.
 				() => undefined
 			);
 			return () => {
 				cancelled = true;
-				if (turnstile && id) turnstile.remove(id);
-				if (widget.current === id) widget.current = undefined;
+				if (element.current === node) element.current = null;
+				widget.current?.turnstile.remove(widget.current.id);
+				widget.current = undefined;
 			};
 		},
-		[siteKey, locale]
+		[siteKey, render]
 	);
 
 	const getToken = React.useCallback(async (): Promise<string | undefined> => {
 		if (!siteKey) return undefined;
 		const turnstile = await loadTurnstile().catch(() => undefined);
-		const id = widget.current;
-		if (!turnstile || !id) throw captchaFailed();
+		if (turnstile && !widget.current && element.current) render(element.current, turnstile);
+		const current = widget.current;
+		if (!turnstile || !current) throw captchaFailed();
+		// A challenge still open from an earlier call is settled first, so no caller waits forever.
+		pending.current?.reject(captchaFailed());
 		return new Promise<string>((resolve, reject) => {
 			pending.current = { resolve, reject };
-			turnstile.reset(id);
-			turnstile.execute(id);
+			current.turnstile.reset(current.id);
+			current.turnstile.execute(current.id);
 		});
-	}, [siteKey]);
+	}, [siteKey, render]);
 
 	return { getToken, widget: siteKey ? <div ref={mount} className="empty:hidden" /> : null };
 }

@@ -38,7 +38,7 @@ import { Toaster } from '@/components/ui/sonner';
 import { statusIcons } from '@/components/ui/status-label';
 import { Link } from '@/i18n/navigation';
 import { ensureSession } from '@/lib/auth';
-import { fragmentToken } from '@/lib/manage-link';
+import { takeManageToken } from '@/lib/manage-link';
 import { cn } from '@/lib/utils';
 
 import { useAutoRetry } from './use-auto-retry';
@@ -48,7 +48,7 @@ const REOPEN_DAYS = 7;
 const INVALID = ['NOT_FOUND', 'GONE', 'VALIDATION'];
 
 /**
- * P7 manage page (`/m#<token>`, `/en/m#<token>`, C7): reads the token from the fragment, signs in anonymously unless
+ * P7 manage page (`/m#<token>`, `/en/m#<token>`, C7): takes the token out of the URL (takeManageToken), signs in anonymously unless
  * this browser has a session (captcha when enabled), claims the report and shows it. A failed captcha or a lost
  * connection retries every 60 s and on reconnect; an unknown or expired link says so. No ad slot (C15 protected).
  */
@@ -62,7 +62,7 @@ export function ManagePage() {
 	const { getToken } = captcha;
 
 	const task = React.useCallback(async () => {
-		const token = fragmentToken();
+		const token = takeManageToken();
 		if (!token) throw new ApiError('NOT_FOUND', 'NOT_FOUND');
 		await ensureSession(getToken);
 		return claim({ token }).unwrap();
@@ -131,15 +131,27 @@ function ManageView({ code }: { code: string }) {
 	const [thanked, setThanked] = React.useState(false);
 	// The reopen window is checked against the time the view opened; the API has the last word (GONE).
 	const [now] = React.useState(() => Date.now());
+	const closed = data?.status === 'closed' || data?.status === 'reunited';
+	// After close or reopen the pressed control is gone: focus moves to what replaced it, the note or the h1.
+	const refocus = React.useRef(false);
+	const noteRef = React.useRef<HTMLDivElement>(null);
+	const headingRef = React.useRef<HTMLHeadingElement>(null);
+	React.useEffect(() => {
+		if (!refocus.current) return;
+		refocus.current = false;
+		(closed ? noteRef : headingRef).current?.focus();
+	}, [closed]);
 
 	if (!data) return isError ? <InlineError onRetry={refetch} retrying={isFetching} /> : <PageSkeleton />;
 	const report = data as ReportOwnerView;
 
 	const act = async (action: ReportTransitionAction) => {
+		refocus.current = action === 'close' || action === 'reopen';
 		try {
 			await transition({ code, body: { action } }).unwrap();
 			if (action === 'mark_reunited') setThanked(true);
 		} catch (error) {
+			refocus.current = false;
 			toast.error(errorText(error));
 		}
 	};
@@ -159,7 +171,6 @@ function ManageView({ code }: { code: string }) {
 	const StatusIcon = statusIcons[type];
 	const photo = report.photos[0];
 	const closedAt = report.closed_at ?? report.reunited_at;
-	const closed = report.status === 'closed' || report.status === 'reunited';
 	const canReopen = closed && !!closedAt && now - Date.parse(closedAt) < REOPEN_DAYS * 86_400_000;
 	const threads = (conversations.data?.items ?? []).filter((item) => item.about_report.short_code === code);
 	const unread = threads.reduce((sum, item) => sum + item.unread, 0);
@@ -182,7 +193,9 @@ function ManageView({ code }: { code: string }) {
 				<StatusIcon weight="fill" aria-hidden="true" />
 				{t(`status_${type}`)}
 			</Badge>
-			<h1 className={cn(h1Class, 'mt-3')}>{t('manage_title')}</h1>
+			<h1 ref={headingRef} tabIndex={-1} className={cn(h1Class, 'mt-3 outline-none')}>
+				{t('manage_title')}
+			</h1>
 			<dl className="mt-6 grid gap-5">
 				<Fact label={t('summary_animal')}>{t(`species_${report.species}`)}</Fact>
 				<Fact label={t('summary_situation')}>
@@ -219,7 +232,11 @@ function ManageView({ code }: { code: string }) {
 			)}
 
 			{closed ? (
-				<div className="mt-10 flex gap-3 rounded-row bg-muted py-4 pr-4 pl-[18px] text-control leading-[22px]">
+				<div
+					ref={noteRef}
+					tabIndex={-1}
+					className="mt-10 flex gap-3 rounded-row bg-muted py-4 pr-4 pl-[18px] text-control leading-[22px] outline-none"
+				>
 					<CheckCircleIcon weight="bold" aria-hidden="true" className="mt-px size-[22px] shrink-0" />
 					<div>
 						<p>{t('closed_note')}</p>

@@ -55,6 +55,7 @@ afterEach(() => {
 	vi.clearAllMocks();
 	vi.useRealTimers();
 	open('');
+	sessionStorage.clear();
 });
 
 describe('ManagePage (P7, C7)', () => {
@@ -77,6 +78,20 @@ describe('ManagePage (P7, C7)', () => {
 		expect(screen.getByRole('button', { name: 'Zaključi prijavo' })).toBeTruthy();
 		expect(screen.getByRole('button', { name: 'Žival je spet doma' })).toBeTruthy();
 		expect(document.querySelector('[data-ad-slot]')).toBeNull();
+	});
+
+	it('takes the token out of the address bar; a reload in the tab still claims', async () => {
+		open('good');
+		const first = show(<ManagePage />);
+		await screen.findByRole('heading', { level: 1, name: 'Vaša prijava' });
+		expect(window.location.hash).toBe('');
+		expect(window.location.pathname).toBe('/m');
+		expect(first.calls.find((call) => call.path === '/v1/manage/claim')?.body).toEqual({ token: 'good' });
+
+		cleanup();
+		const reloaded = show(<ManagePage />);
+		await screen.findByRole('heading', { level: 1, name: 'Vaša prijava' });
+		expect(reloaded.calls.find((call) => call.path === '/v1/manage/claim')?.body).toEqual({ token: 'good' });
 	});
 
 	it('shows the messages with the unread count and "Odpri sporočila" when there are conversations', async () => {
@@ -138,6 +153,32 @@ describe('ManagePage (P7, C7)', () => {
 		fireEvent.click(within(dialog).getByRole('button', { name: sl.lifecycle.finder_confirm_yes }));
 		expect(await screen.findByRole('heading', { level: 1, name: sl.lifecycle.finder_thanks_title })).toBeTruthy();
 		expect(actions(api)).toEqual([{ action: 'close' }, { action: 'mark_reunited' }]);
+	});
+
+	it('moves focus to the closed note after close and to the h1 after reopen', async () => {
+		open('good');
+		let report = { ...ownerReport };
+		show(<ManagePage />, {
+			'GET /v1/reports/:code': () => report,
+			'POST /v1/reports/:code/transitions': ({ body }) => {
+				const closed = (body as { action: string }).action === 'close';
+				report = {
+					...report,
+					status: closed ? 'closed' : 'open',
+					closed_at: closed ? new Date().toISOString() : null,
+				};
+				return report;
+			},
+		});
+		fireEvent.click(await screen.findByRole('button', { name: 'Zaključi prijavo' }));
+		const note = (await screen.findByText(sl.report_found.closed_note)).parentElement!.parentElement!;
+		await vi.waitFor(() => expect(document.activeElement).toBe(note));
+
+		fireEvent.click(screen.getByRole('button', { name: 'Ponovno odpri' }));
+		await screen.findByRole('button', { name: 'Zaključi prijavo' });
+		await vi.waitFor(() =>
+			expect(document.activeElement).toBe(screen.getByRole('heading', { level: 1, name: 'Vaša prijava' }))
+		);
 	});
 
 	it('shows a closed report read-only with "Ponovno odpri" within 7 days', async () => {
