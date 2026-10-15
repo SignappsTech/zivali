@@ -62,5 +62,16 @@
 	"payment_receipt": {
 		"title": "Potrdilo o plačilu",
 		"body": "{amount}, {purpose, select, tip {prispevek v zahvalo} other {prispevek}}. Hvala.{is_test, select, yes { Testno plačilo.} other {}}"
-	}
+	},
+	"title": "Obvestila",
+	"mark_all": "Označi vse kot prebrano",
+	"group_today": "Danes",
+	"group_week": "Ta teden",
+	"group_earlier": "Prej",
+	"row_unread_a11y": "{title}, neprebrano",
+	"reminder_keep": "Nadaljuj iskanje",
+	"reminder_close": "Zaključi iskanje",
+	"empty_title": "Obvestil še ni",
+	"empty_body": "Tu bodo možna ujemanja, sporočila in opozorila o izgubljenih živalih v bližini.",
+	"empty_action": "Nastavi opozorila"
 }
