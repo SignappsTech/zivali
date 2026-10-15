@@ -26,5 +26,5 @@
 	"git.autoRepositoryDetection": "openEditors",
 	"git.detectWorktrees": false,
 	// One TypeScript server for this repo, not for files opened from worktrees.
-	"typescript.tsserver.maxTsServerMemory": 4096
+	"typescript.tsserver.maxTsServerMemory": 2048
 }
