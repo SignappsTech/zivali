@@ -3,11 +3,11 @@ id: TASK-86.2
 title: >-
   Mobile queue UI: waiting to send, sent, failed with retry or delete, sign-out
   prompt
-status: In Progress
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:39'
-updated_date: '2026-10-15 22:18'
+updated_date: '2026-10-15 22:54'
 labels:
   - fe
   - 'est:S'
