@@ -2,18 +2,30 @@
 	"name": "@zivali/api",
 	"version": "0.0.0",
 	"private": true,
-	"description": "Typed fetch client for the REST API (contract C1): headers, ApiError, query helpers, mock and fixtures",
+	"description": "Typed REST client (contract C1) with an RTK Query slice, OpenAPI codegen, mock and fixtures",
 	"type": "module",
 	"exports": {
 		"./*": "./src/*.ts"
 	},
 	"scripts": {
+		"gen:api": "node gen-api.ts",
 		"lint": "eslint --max-warnings=0 .",
 		"typecheck": "tsc",
 		"test": "node --test \"test/*.test.ts\""
 	},
+	"dependencies": {
+		"@reduxjs/toolkit": "^2.13.0"
+	},
+	"peerDependencies": {
+		"react": "^19.0.0",
+		"react-redux": "^9.0.0"
+	},
 	"devDependencies": {
-		"@types/node": "^22.19.0"
+		"@rtk-query/codegen-openapi": "^2.2.0",
+		"@types/node": "^22.19.0",
+		"@types/react": "^19.3.0",
+		"react": "~19.3.0",
+		"react-redux": "^9.3.0"
 	},
 	"engines": {
 		"node": ">=22"

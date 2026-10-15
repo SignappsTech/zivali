@@ -48,16 +48,25 @@ export function createMockApi(
 	});
 
 	const mockFetch: typeof fetch = async (input, init = {}) => {
-		const url = new URL(String(input));
+		// No URL / URLSearchParams: React Native's polyfill is incomplete.
+		const [path = '', search = ''] = String(input)
+			.replace(/^[a-z]+:\/\/[^/]+/i, '')
+			.split('?');
+		const query = Object.fromEntries(
+			search
+				.split('&')
+				.filter(Boolean)
+				.map((pair) => pair.split('=', 2).map(decodeURIComponent) as [string, string])
+		);
 		const method = init.method ?? 'GET';
 		for (const route of table) {
-			const params = route.method === method ? matchPath(route.pattern, url.pathname) : null;
+			const params = route.method === method ? matchPath(route.pattern, path) : null;
 			if (!params) continue;
 			const request: MockRequest = {
 				method,
-				path: url.pathname,
+				path,
 				params,
-				query: Object.fromEntries(url.searchParams),
+				query,
 				headers: init.headers as Record<string, string>,
 				body: typeof init.body === 'string' ? JSON.parse(init.body) : undefined,
 			};
@@ -67,7 +76,7 @@ export function createMockApi(
 			if (result instanceof Response) return result;
 			return result === undefined ? new Response(null, { status: 204 }) : json(result);
 		}
-		return mockError('NOT_FOUND', `No mock for ${method} ${url.pathname}`);
+		return mockError('NOT_FOUND', `No mock for ${method} ${path}`);
 	};
 
 	const client = createApiClient({

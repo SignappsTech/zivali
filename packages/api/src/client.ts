@@ -1,5 +1,5 @@
-// Thin fetch client over the REST API (contract C1). Domain files (`src/<domain>.ts`) take the client as their
-// first argument: `getReport(api, code) => api.request<Report>('GET', `/v1/reports/${code}`)`.
+// Thin fetch client over the REST API (contract C1): the transport under the RTK Query slice (`rtk.ts`), and
+// usable on its own where there is no store (server components, the mobile outbox).
 
 /** Error codes from C1 with their HTTP status; `NETWORK` is client-side only (no response). */
 export const ERROR_STATUS = {
@@ -58,7 +58,10 @@ export class ApiError extends Error {
 /** Builds an ApiError from a non-2xx response body; unknown or unreadable bodies become `INTERNAL`. */
 export function parseApiError(status: number, body: unknown, requestId?: string): ApiError {
 	const error = (body as Partial<ApiErrorBody> | null)?.error;
-	const code = error?.code && error.code in ERROR_STATUS ? (error.code as ErrorCode) : 'INTERNAL';
+	const code =
+		error?.code && Object.hasOwn(ERROR_STATUS, error.code) && error.code !== 'NETWORK'
+			? (error.code as ErrorCode)
+			: 'INTERNAL';
 	return new ApiError(code, error?.message ?? `HTTP ${status}`, {
 		status,
 		details: error?.details,
@@ -89,6 +92,8 @@ export type RequestOptions = {
 	 * repeated; `true` makes a fresh key for this call only.
 	 */
 	idempotent?: true | string;
+	/** Extra headers (header parameters from the OpenAPI spec); the client's own headers win. */
+	headers?: Record<string, string>;
 	signal?: AbortSignal;
 };
 
@@ -110,7 +115,13 @@ export function createApiClient(options: ApiClientOptions): ApiClient {
 	const doFetch = options.fetch ?? ((input, init) => fetch(input, init));
 
 	return {
-		async request<T>(method: HttpMethod, path: string, { query, body, idempotent, signal }: RequestOptions = {}) {
+		async request<T>(
+			method: HttpMethod,
+			path: string,
+			{ query, body, idempotent, headers: extra, signal }: RequestOptions = {}
+		) {
+			// A relative path could point the Bearer token at another host (`.evil.com/x`).
+			if (!path.startsWith('/')) throw new Error(`API path must start with "/": ${path}`);
 			// Built by hand: React Native's URLSearchParams is incomplete.
 			const search = Object.entries(query ?? {})
 				.filter(([, value]) => value != null)
@@ -118,7 +129,7 @@ export function createApiClient(options: ApiClientOptions): ApiClient {
 				.join('&');
 			const url = `${baseUrl}${path}${search ? `?${search}` : ''}`;
 
-			const headers: Record<string, string> = { 'Accept-Language': options.locale };
+			const headers: Record<string, string> = { ...extra, 'Accept-Language': options.locale };
 			const token = await options.getAccessToken?.();
 			if (token) headers.Authorization = `Bearer ${token}`;
 			if (options.deviceId) headers['x-device-id'] = options.deviceId;
@@ -126,6 +137,7 @@ export function createApiClient(options: ApiClientOptions): ApiClient {
 			if (body !== undefined) headers['Content-Type'] = 'application/json';
 
 			let res: Response;
+			let text: string;
 			try {
 				res = await doFetch(url, {
 					method,
@@ -133,21 +145,23 @@ export function createApiClient(options: ApiClientOptions): ApiClient {
 					body: body === undefined ? undefined : JSON.stringify(body),
 					signal,
 				});
+				text = await res.text();
 			} catch (cause) {
-				if (signal?.aborted) throw cause;
+				if (signal?.aborted || (cause as Error | null)?.name === 'AbortError') throw cause;
 				throw new ApiError('NETWORK', 'Network request failed', { cause });
 			}
+			const requestId = res.headers.get('x-request-id') ?? undefined;
 
-			const text = await res.text();
-			if (res.ok) return (text ? JSON.parse(text) : undefined) as T;
-
-			let errorBody: unknown = null;
+			let json: unknown = undefined;
 			try {
-				errorBody = JSON.parse(text);
-			} catch {
-				// Not JSON (proxy error page); parseApiError falls back to INTERNAL.
+				if (text) json = JSON.parse(text);
+			} catch (cause) {
+				// A 2xx that is not JSON is a server fault; an error page (proxy) falls back to INTERNAL below.
+				if (res.ok)
+					throw new ApiError('INTERNAL', 'Invalid JSON response', { status: res.status, requestId, cause });
 			}
-			throw parseApiError(res.status, errorBody, res.headers.get('x-request-id') ?? undefined);
+			if (res.ok) return json as T;
+			throw parseApiError(res.status, json, requestId);
 		},
 	};
 }

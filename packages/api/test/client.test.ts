@@ -113,6 +113,12 @@ test('unknown codes and non-JSON bodies become INTERNAL with the real status', a
 	assert.equal(unknownError.code, 'INTERNAL');
 	assert.equal(unknownError.status, 418);
 
+	// Client-only and inherited names are not server codes.
+	for (const code of ['NETWORK', 'toString', '__proto__']) {
+		const { api } = setup(() => jsonResponse({ error: { code, message: 'x' } }, 400));
+		assert.equal(((await rejection(api.request('GET', '/v1/x'))) as ApiError).code, 'INTERNAL');
+	}
+
 	const proxy = setup(() => new Response('<html>Bad Gateway</html>', { status: 502 }));
 	const proxyError = (await rejection(proxy.api.request('GET', '/v1/x'))) as ApiError;
 	assert.equal(proxyError.code, 'INTERNAL');
@@ -131,10 +137,48 @@ test('a failed fetch becomes a NETWORK client error', async () => {
 	assert.equal(error.cause, cause);
 });
 
+test('a body that fails to arrive is NETWORK too', async () => {
+	const { api } = setup(() => {
+		const res = new Response('{}');
+		res.text = () => Promise.reject(new TypeError('terminated'));
+		return res;
+	});
+	assert.equal(((await rejection(api.request('GET', '/v1/reports'))) as ApiError).code, 'NETWORK');
+});
+
 test('an aborted request rethrows the abort error untouched', async () => {
 	const controller = new AbortController();
 	controller.abort();
 	const { api } = setup(() => Promise.reject(controller.signal.reason));
 	const error = await rejection(api.request('GET', '/v1/reports', { signal: controller.signal }));
 	assert.equal(error, controller.signal.reason);
+
+	// An AbortError without our signal (a timeout signal inside fetch) is not a network failure either.
+	const timeout = new DOMException('The operation was aborted', 'AbortError');
+	const other = setup(() => Promise.reject(timeout));
+	assert.equal(await rejection(other.api.request('GET', '/v1/reports')), timeout);
+});
+
+test('a 2xx that is not JSON is INTERNAL with status and request id', async () => {
+	const { api } = setup(() => new Response('<html>', { status: 200, headers: { 'x-request-id': 'req-2' } }));
+	const error = (await rejection(api.request('GET', '/v1/reports'))) as ApiError;
+	assert.equal(error.code, 'INTERNAL');
+	assert.equal(error.status, 200);
+	assert.equal(error.requestId, 'req-2');
+});
+
+test('rejects a path without a leading slash, before any token is read or sent', async () => {
+	const { api, calls } = setup(() => jsonResponse({}));
+	await assert.rejects(api.request('GET', '.evil.example/steal'), /must start with "\/"/);
+	assert.equal(calls.length, 0);
+});
+
+test('extra headers pass through; the client headers win', async () => {
+	const { api, headers } = setup(() => jsonResponse({}));
+	await api.request('POST', '/v1/reports', {
+		body: {},
+		headers: { 'Idempotency-Key': 'outbox-9', Authorization: 'Bearer forged' },
+	});
+	assert.equal(headers()['Idempotency-Key'], 'outbox-9');
+	assert.equal(headers().Authorization, 'Bearer jwt-1');
 });
