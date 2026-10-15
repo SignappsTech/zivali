@@ -48,19 +48,45 @@
     });
   }
 
+  // Browsers keep only about 16 WebGL contexts per page, so pages with many maps (and "side by side") lost
+  // the first ones. Maps are drawn a few at a time, then frozen to an image and removed to free the context.
+  var queue = [], active = 0, gen = 0, MAX_ACTIVE = 3;
+  function pump(style) {
+    while (active < MAX_ACTIVE && queue.length) {
+      var el = queue.shift();
+      if (el.isConnected) { active++; drawMap(el, style); }
+    }
+  }
+  function drawMap(el, style) {
+    var finished = false, g = gen;
+    var center = (el.getAttribute('data-center') || '14.4985,46.0655').split(',').map(Number);
+    var map = new window.maplibregl.Map({
+      container: el, style: JSON.parse(JSON.stringify(style)), center: center,
+      zoom: Number(el.getAttribute('data-zoom') || 13.4), interactive: false, attributionControl: false, fadeDuration: 0,
+      preserveDrawingBuffer: true
+    });
+    var done = function (freeze) {
+      if (finished) return; finished = true;
+      if (freeze) {
+        try {
+          var img = new Image(); img.alt = ''; img.src = map.getCanvas().toDataURL('image/png');
+          img.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;display:block';
+          map.remove(); el.appendChild(img);
+        } catch (e) { /* keep the live map */ }
+      }
+      el.setAttribute('data-ready', '1');
+      if (g === gen) { active--; pump(style); }
+    };
+    map.on('load', function () { paintMap(map, el); map.once('idle', function () { done(true); }); });
+    setTimeout(function () { done(false); }, 20000);
+  }
   function initMaps(root) {
     var els = root.querySelectorAll('.map-canvas');
     if (!els.length || !window.maplibregl) return;
     if (!stylePromise) stylePromise = fetch(STYLE_URL).then(function (r) { return r.json(); });
     stylePromise.then(function (style) {
-      els.forEach(function (el) {
-        var center = (el.getAttribute('data-center') || '14.4985,46.0655').split(',').map(Number);
-        var map = new window.maplibregl.Map({
-          container: el, style: JSON.parse(JSON.stringify(style)), center: center,
-          zoom: Number(el.getAttribute('data-zoom') || 13.4), interactive: false, attributionControl: false, fadeDuration: 0
-        });
-        map.on('load', function () { paintMap(map, el); el.setAttribute('data-ready', '1'); });
-      });
+      els.forEach(function (el) { queue.push(el); });
+      pump(style);
     }).catch(function () { /* offline: the tinted land colour stays visible behind the markers */ });
   }
 
@@ -106,6 +132,7 @@
 
   function render(mode) {
     stage.innerHTML = '';
+    gen++; queue.length = 0; active = 0;
     var both = mode === 'both';
     (both ? ['light', 'dark'] : [mode]).forEach(function (t) { var s = scope(t, both); stage.appendChild(s); wire(s); initMaps(s); });
     document.documentElement.classList.toggle('dark', mode === 'dark');

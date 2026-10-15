@@ -1,11 +1,11 @@
 ---
 id: TASK-15.1
 title: 'Design: Location picker and fuzzed area (P5)'
-status: To Do
+status: In Progress
 assignee:
   - '@ui-designer'
 created_date: '2026-10-14 21:50'
-updated_date: '2026-10-14 21:51'
+updated_date: '2026-10-14 23:24'
 labels:
   - design
   - 'est:S'
@@ -31,6 +31,7 @@ Every flow needs where-questions and one consistent way to show an approximate p
 ## Packet
 Unblocks on: P1 web shell and P2 mobile shell mockups merged (header, footer, tab bar and sheet patterns)
 Branch: design/P5-location-picker
+Branch: agent/TASK-15.1-location-picker
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Acceptance Criteria
