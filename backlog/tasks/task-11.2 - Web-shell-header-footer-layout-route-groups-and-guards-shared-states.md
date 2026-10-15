@@ -5,6 +5,7 @@ status: To Do
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:12'
+updated_date: '2026-10-15 03:35'
 labels:
   - fe
   - 'est:M'
@@ -45,4 +46,7 @@ Branch: agent/task-11.2-shell-web
 - [ ] #3 Shared loading, empty and error patterns, a not-found page and the 410 'no longer available' page exist with calm copy.
 - [ ] #4 Route groups (public), (app), (portal) and (admin) exist with server-side guards; empty placeholder pages are fine.
 - [ ] #5 axe reports 0 violations and Lighthouse SEO ≥ 95 on the home placeholder.
+- [ ] #6 Every page has a localised meta description (SL and EN); Lighthouse SEO ≥ 0.95
+- [ ] #7 favicon.ico and app icons are served (no 404 in the console)
+- [ ] #8 Mobile LCP ≤ 2.5 s in pnpm quality (font preload/fallback checked)
 <!-- AC:END -->
