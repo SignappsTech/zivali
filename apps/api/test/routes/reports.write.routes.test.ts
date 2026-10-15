@@ -311,11 +311,24 @@ describe('POST /v1/reports', () => {
 	});
 
 	it('is readable by everyone through GET /v1/reports/:code after the jobs are drained', async () => {
-		const { short_code } = await lostReport();
+		// The drain runs the real matching engine: only this file's new report goes through it, a sighted cat in
+		// Vienna with no candidate nearby, so the run creates no matches or notifications for the fixtures.
+		await prisma.$executeRaw`
+			delete from pgboss.job where data->>'report_id' in (
+				select id::text from app.reports where created_by = any(${Object.values(ids)}::uuid[]))`;
+		const sighting = await post(
+			tokens.finder,
+			body({ type: 'sighted', species: 'cat', location: { lat: 48.2082, lng: 16.3738 } })
+		);
+		expect(await queued(sighting.body.id)).toEqual(['match.report', 'photo.publish']);
 		await drain(runJob);
-		const res = await get(`/v1/reports/${short_code}`);
+		expect(await queued(sighting.body.id)).toEqual(['match.report', 'photo.publish']);
+		const states = await prisma.$queryRaw<{ state: string }[]>`
+			select state::text as state from pgboss.job where data->>'report_id' = ${sighting.body.id}`;
+		expect(states.map((s) => s.state)).toEqual(['completed', 'completed']);
+		const res = await get(`/v1/reports/${sighting.body.short_code}`);
 		expect(res.status).toBe(200);
-		expect(res.body).toMatchObject({ short_code, is_mine: false });
+		expect(res.body).toMatchObject({ short_code: sighting.body.short_code, in_slovenia: false, is_mine: false });
 		expect(res.body).not.toHaveProperty('location');
 	});
 });
