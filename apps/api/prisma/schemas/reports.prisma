@@ -227,6 +227,7 @@ model report_managers {
 }
 
 // The optional finder email of an anonymous report (manage link, C7). Never returned to the public.
+// TODO(TASK-26.3): delete this row and clear reports.manage_token_hash on close and on expiry (data-inventory).
 model report_contacts {
   report_id String  @id @db.Uuid
   report    reports @relation(fields: [report_id], references: [id], onDelete: Cascade)

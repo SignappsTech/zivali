@@ -117,7 +117,7 @@ export const REPORT_SORTS = ['recent', 'distance'] as const;
 export type ReportSort = Values<typeof REPORT_SORTS>;
 
 // C5 photos
-export const PHOTO_STATUSES = ['uploaded', 'accepted', 'rejected', 'published', 'unpublished'] as const;
+export const PHOTO_STATUSES = ['pending', 'uploaded', 'accepted', 'rejected', 'published', 'unpublished'] as const;
 export type PhotoStatus = Values<typeof PHOTO_STATUSES>;
 export const PHOTO_REJECT_REASONS = ['not_jpeg', 'too_large', 'hash_mismatch', 'decode_failed'] as const;
 export type PhotoRejectReason = Values<typeof PHOTO_REJECT_REASONS>;

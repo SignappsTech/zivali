@@ -160,7 +160,7 @@
 				"manage_token_hash"
 			],
 			"basis": "contract (GDPR art. 6(1)(b)); public reports show the fuzzed area only (C6)",
-			"retention": "exact_point (already coarsened 20–30 m at write, the raw point is never stored) is replaced by public_point 30 days after closing (retention.blur_location); manage token cleared on close",
+			"retention": "exact_point (already coarsened 20–30 m at write, the raw point is never stored) is replaced by public_point 30 days after closing (retention.blur_location); manage_token_hash cleared and report_contacts deleted on close or expiry (TODO TASK-26.3)",
 			"export": true,
 			"delete": "anonymise (created_by set null)",
 			"other_columns": [
@@ -213,7 +213,7 @@
 			"category": "reports",
 			"personal_data": ["email"],
 			"basis": "contract (GDPR art. 6(1)(b)): manage link of an anonymous report (C7)",
-			"retention": "while the report exists",
+			"retention": "deleted on close or expiry, together with reports.manage_token_hash (TODO TASK-26.3: the transitions endpoint and the expiry job delete it); cascades with the report",
 			"export": false,
 			"delete": "delete",
 			"other_columns": ["report_id"]

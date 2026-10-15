@@ -16,11 +16,43 @@ const ljubljana = { lat: 46.051234, lng: 14.505678 };
 const types = ['lost', 'found', 'sighted'] as const;
 
 describe('fuzzArea (C6)', () => {
-	it('is deterministic per report id and stored point, and differs between reports', () => {
+	it('is deterministic per report id and stored point, and differs between reports and locations', () => {
 		const input = { report_id: randomUUID(), type: 'lost' as const, point: ljubljana };
 		expect(fuzzArea(input)).toEqual(fuzzArea({ ...input }));
 		expect(fuzzArea(input)).not.toEqual(fuzzArea({ ...input, report_id: randomUUID() }));
 		expect(fuzzArea(input, FUZZ_DEFAULTS, 'another-secret-0123456789abcdef0123')).not.toEqual(fuzzArea(input));
+		// A new stored point gets its own offset: the old offset vector cannot be read off the new circle.
+		const offset = (point: typeof ljubljana) => {
+			const area = fuzzArea({ ...input, point });
+			return [area.lat - point.lat, area.lng - point.lng].map((n) => Math.round(n * 1e4));
+		};
+		const moved = { lat: ljubljana.lat + 0.01, lng: ljubljana.lng + 0.01 };
+		const offsets = Array.from({ length: 20 }, (_, i) => offset({ lat: moved.lat + i * 1e-5, lng: moved.lng }));
+		expect(new Set([offset(ljubljana), ...offsets].map(String)).size).toBeGreaterThan(15);
+	});
+
+	it('keeps the centre when only the radius changes (offset from the minimum radius only)', () => {
+		for (let i = 0; i < 500; i++) {
+			const input = { report_id: randomUUID(), type: types[i % 3]!, point: ljubljana };
+			const base = fuzzArea(input);
+			for (const requested_radius_m of [1000, 3000, 20_000]) {
+				const area = fuzzArea({ ...input, requested_radius_m });
+				expect({ lat: area.lat, lng: area.lng }).toEqual({ lat: base.lat, lng: base.lng });
+			}
+		}
+	});
+
+	it('never puts the centre closer than 0.4 D (D = 0.75 × minimum radius) and keeps the stored point inside', () => {
+		for (let i = 0; i < 20_000; i++) {
+			const point = { lat: 45.4 + Math.random() * 1.5, lng: 13.4 + Math.random() * 3 };
+			const type = types[i % 3]!;
+			const d = 0.75 * (type === 'lost' ? 500 : 150);
+			const area = fuzzArea({ report_id: randomUUID(), type, point });
+			const distance = metres(point, area);
+			// 0.2 % margin: lib/fuzz.ts converts with 111 320 m per degree, the haversine here with 111 195.
+			expect(distance).toBeGreaterThanOrEqual(0.4 * d * 0.998);
+			expect(distance).toBeLessThanOrEqual(area.radius_m);
+		}
 	});
 
 	it('keeps the stored point inside the circle (5000 random reports, all types and radii)', () => {

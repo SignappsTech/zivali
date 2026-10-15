@@ -1,6 +1,8 @@
 // Photos of a report or a pet (C5). Objects live in R2 (MinIO locally); public URLs are set by photo.publish.
 
+// pending: POST /v1/photos created the row, no upload confirmed yet; POST /v1/photos/:id/complete sets uploaded (C5).
 enum PHOTO_STATUS {
+  pending
   uploaded
   accepted
   rejected
@@ -34,7 +36,7 @@ model photos {
   width              Int
   height             Int
   bytes              Int
-  status             PHOTO_STATUS         @default(uploaded)
+  status             PHOTO_STATUS         @default(pending)
   reject_reason      PHOTO_REJECT_REASON?
   public_display_url String?
   public_thumb_url   String?

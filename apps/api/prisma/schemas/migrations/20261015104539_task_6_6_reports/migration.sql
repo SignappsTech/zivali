@@ -4,7 +4,7 @@
 -- ADR-021: RLS enabled, no policies.
 
 -- CreateEnum
-CREATE TYPE "PHOTO_STATUS" AS ENUM ('uploaded', 'accepted', 'rejected', 'published', 'unpublished');
+CREATE TYPE "PHOTO_STATUS" AS ENUM ('pending', 'uploaded', 'accepted', 'rejected', 'published', 'unpublished');
 
 -- CreateEnum
 CREATE TYPE "PHOTO_REJECT_REASON" AS ENUM ('not_jpeg', 'too_large', 'hash_mismatch', 'decode_failed');
@@ -53,7 +53,7 @@ CREATE TABLE "photos" (
     "width" INTEGER NOT NULL,
     "height" INTEGER NOT NULL,
     "bytes" INTEGER NOT NULL,
-    "status" "PHOTO_STATUS" NOT NULL DEFAULT 'uploaded',
+    "status" "PHOTO_STATUS" NOT NULL DEFAULT 'pending',
     "reject_reason" "PHOTO_REJECT_REASON",
     "public_display_url" TEXT,
     "public_thumb_url" TEXT,

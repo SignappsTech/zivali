@@ -5,6 +5,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { ShortCode } from '@zivali/validation';
 
+import { GeoDomain } from '../../domains/geo/index.ts';
 import { ReportsDomain, type NewReport } from '../../domains/reports/index.ts';
 import { userCtx, type Actor } from '../../lib/ctx.ts';
 import { prisma } from '../../prisma/prisma.ts';
@@ -76,6 +77,9 @@ describe('insertReport', () => {
 			created_by: actor.user_id,
 		});
 		expect(manager_role).toBe('owner');
+		// Municipality and region are public, so they come from the circle's centre, not the stored point.
+		const geo = await GeoDomain.lookup(area, ctx());
+		expect(report).toMatchObject({ municipality_id: geo.municipality_id, region_id: geo.region_id });
 
 		// No column (geography as text included) holds the received coordinates or lies within 19 m of them.
 		const [row] = await prisma.$queryRaw<{ dump: string; near: number }[]>`
@@ -143,6 +147,11 @@ describe('location on reads and updates', () => {
 		await ReportsDomain.updateReportLocation({ id, requested_radius_m: 3000 }, ctx());
 		const afterRadius = await view(short_code);
 		expect(afterRadius.exact).toEqual(afterMove.exact);
+		// Same centre, larger circle: two circles of one stored point never differ in their centre.
+		expect({ lat: afterRadius.area.lat, lng: afterRadius.area.lng }).toEqual({
+			lat: afterMove.area.lat,
+			lng: afterMove.area.lng,
+		});
 		expect(afterRadius.area.radius_m).toBe(3000);
 		expect(afterRadius.report.requested_radius_m).toBe(3000);
 		expect(metres(afterRadius.exact, afterRadius.area)).toBeLessThanOrEqual(3000);

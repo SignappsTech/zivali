@@ -205,6 +205,7 @@ describe('GET /v1/reports/:code, permission matrix', () => {
 			const res = await get(codes.lost, auth);
 			expect(res.status).toBe(200);
 			expect(res.body.is_mine).toBe(false);
+			expect(res.headers['cache-control'] ?? '').not.toContain('no-store');
 			expect(res.body).not.toHaveProperty('chip_number');
 			expect(res.body).not.toHaveProperty('location');
 			expect((await get(codes.hidden, auth)).status).toBe(410);
@@ -214,6 +215,7 @@ describe('GET /v1/reports/:code, permission matrix', () => {
 	it('owner: ReportOwnerView with the stored coarsened point, chip and reward fields', async () => {
 		const res = await get(codes.lost, await signTestToken({ sub: ids.owner }));
 		expect(res.status).toBe(200);
+		expect(res.headers['cache-control']).toBe('private, no-store');
 		expect(ReportOwnerView.safeParse(res.body).success).toBe(true);
 		expect(res.body).toMatchObject({
 			is_mine: true,

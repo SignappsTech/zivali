@@ -18,7 +18,7 @@ import { coarsenPoint, LatLng, normalizeChip } from '@zivali/validation';
 
 import type { Ctx } from '../../lib/ctx.ts';
 import { AppError } from '../../lib/errors.ts';
-import { fuzzArea, fuzzSettings, type Point } from '../../lib/fuzz.ts';
+import { fuzzArea, fuzzSettings, publicRadius, type Point } from '../../lib/fuzz.ts';
 import { prisma, type Prisma } from '../../prisma/prisma.ts';
 import { GeoDomain } from '../geo/index.ts';
 import ReportsDao, { type LocationColumns, type ReportRow } from './reports.dao.ts';
@@ -41,7 +41,10 @@ function inTransaction<T>(ctx: Ctx, fn: (tx: Prisma.TransactionClient) => Promis
 	return ctx.tx ? fn(ctx.tx) : prisma.$transaction(fn);
 }
 
-/** Public circle and geo reference for a stored (already coarsened) point. */
+/**
+ * Public circle and geo reference for a stored (already coarsened) point. Municipality, region and in_slovenia are
+ * public (PublicReport), so they come from the circle's centre: the stored point's municipality could narrow it down.
+ */
 async function locationColumns(
 	report: { id: string; type: ReportType; requested_radius_m: number | null },
 	exact: Point,
@@ -49,7 +52,7 @@ async function locationColumns(
 ): Promise<LocationColumns> {
 	const { id: report_id, type, requested_radius_m } = report;
 	const area = fuzzArea({ report_id, type, point: exact, requested_radius_m }, await fuzzSettings());
-	const geo = await GeoDomain.lookup(exact, ctx, ctx.tx);
+	const geo = await GeoDomain.lookup(area, ctx, ctx.tx);
 	return {
 		exact,
 		area,
@@ -121,8 +124,9 @@ const samePoint = (a: Point, b: Point) => Math.abs(a.lat - b.lat) < 5e-7 && Math
 
 /**
  * Location part of a report update. No location, or the stored point sent back unchanged, keeps the stored point
- * (never re-randomised); a different point is coarsened anew. The public circle is recomputed when the point or the
- * requested radius changes. Ownership is checked by the caller (TASK-29.2 PATCH).
+ * (never re-randomised); a different point is coarsened anew with a new public circle. A radius-only change keeps
+ * public_point and sets public_radius_m only, so two circles never share a stored point with different centres.
+ * Ownership is checked by the caller (TASK-29.2 PATCH).
  */
 export async function updateReportLocation(
 	input: { id: string; location?: Point; requested_radius_m?: number | null },
@@ -133,8 +137,13 @@ export async function updateReportLocation(
 	const moved = input.location !== undefined && !samePoint(input.location, stored.exact);
 	const requested_radius_m =
 		input.requested_radius_m === undefined ? stored.requested_radius_m : input.requested_radius_m;
-	if (!moved && requested_radius_m === stored.requested_radius_m) return;
-	const exact = moved ? coarsenPoint(LatLng.parse(input.location)) : stored.exact;
+	if (!moved) {
+		if (requested_radius_m === stored.requested_radius_m) return;
+		const public_radius_m = publicRadius(stored.type, requested_radius_m, await fuzzSettings());
+		await ReportsDao.updateReport(input.id, { requested_radius_m, public_radius_m }, ctx.tx);
+		return;
+	}
+	const exact = coarsenPoint(LatLng.parse(input.location));
 	const cols = await locationColumns({ id: input.id, type: stored.type, requested_radius_m }, exact, ctx);
 	await ReportsDao.setLocation(input.id, cols, ctx.tx);
 }
