@@ -3,11 +3,11 @@ id: TASK-3.3
 title: >-
   Web app scaffold: Next.js 16, Tailwind 4 + shadcn, tokens, locale routing,
   Supabase helpers
-status: To Do
+status: In Progress
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:11'
-updated_date: '2026-10-14 23:39'
+updated_date: '2026-10-15 00:14'
 labels:
   - tech
   - 'est:M'
