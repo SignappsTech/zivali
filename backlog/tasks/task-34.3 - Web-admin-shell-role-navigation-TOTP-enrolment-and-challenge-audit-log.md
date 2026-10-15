@@ -1,11 +1,11 @@
 ---
 id: TASK-34.3
 title: 'Web admin shell: role navigation, TOTP enrolment and challenge, audit log'
-status: In Progress
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:13'
-updated_date: '2026-10-15 21:07'
+updated_date: '2026-10-15 21:26'
 labels:
   - fe
   - 'est:M'
