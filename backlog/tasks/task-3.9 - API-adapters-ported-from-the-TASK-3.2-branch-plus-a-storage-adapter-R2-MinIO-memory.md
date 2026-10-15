@@ -3,11 +3,11 @@ id: TASK-3.9
 title: >-
   API adapters ported from the TASK-3.2 branch, plus a storage adapter (R2,
   MinIO, memory)
-status: To Do
+status: In Progress
 assignee:
   - '@backend-dev'
 created_date: '2026-10-14 23:35'
-updated_date: '2026-10-15 00:13'
+updated_date: '2026-10-15 03:44'
 labels:
   - tech
   - 'est:S'

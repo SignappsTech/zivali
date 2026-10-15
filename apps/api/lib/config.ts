@@ -27,6 +27,32 @@ const EnvSchema = z.object({
 		),
 	// Local HS256 fallback for JWT verification; also signs test tokens.
 	SUPABASE_JWT_SECRET: z.string().min(32).optional(),
+	// Adapters (backend.md): unset provider = mock (memory for storage) outside production.
+	STORAGE_PROVIDER: z.enum(['minio', 'r2', 'memory']).optional(),
+	R2_ACCOUNT_ID: z.string().optional(),
+	R2_ACCESS_KEY_ID: z.string().optional(),
+	R2_SECRET_ACCESS_KEY: z.string().optional(),
+	R2_BUCKET_PRIVATE: z.string().default('zivali-private'),
+	R2_BUCKET_MEDIA: z.string().default('zivali-media'),
+	R2_BUCKET_BACKUPS: z.string().default('zivali-backups'),
+	MEDIA_BASE_URL: z.string().optional(),
+	S3_ENDPOINT: z.string().default('http://127.0.0.1:9000'),
+	PAYMENTS_PROVIDER: z.enum(['mock', 'stripe']).optional(),
+	STRIPE_SECRET_KEY: z.string().optional(),
+	STRIPE_WEBHOOK_SECRET: z.string().optional(),
+	MOCK_WEBHOOK_SECRET: z.string().optional(),
+	EMAIL_PROVIDER: z.enum(['mock', 'brevo']).optional(),
+	BREVO_API_KEY: z.string().optional(),
+	EMAIL_FROM: z.string().optional(),
+	PUSH_PROVIDER: z.enum(['mock', 'expo']).optional(),
+	EXPO_ACCESS_TOKEN: z.string().optional(),
+	CAPTCHA_PROVIDER: z.enum(['mock', 'turnstile']).optional(),
+	TURNSTILE_SECRET_KEY: z.string().optional(),
+	AI_PROVIDER: z.enum(['mock', 'anthropic']).optional(),
+	ANTHROPIC_API_KEY: z.string().optional(),
+	AI_VISION_MODEL: z.string().default('claude-sonnet-5-5'),
+	EMBEDDER_PROVIDER: z.enum(['mock', 'voyage']).optional(),
+	VOYAGE_API_KEY: z.string().optional(),
 });
 
 // Empty values from a copied .env.example count as unset, so defaults apply.
