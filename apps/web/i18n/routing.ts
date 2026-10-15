@@ -35,6 +35,8 @@ export const routing = defineRouting({
 		'/sign-in': { sl: '/vpis', en: '/sign-in' },
 		'/sign-up': { sl: '/registracija', en: '/sign-up' },
 		'/reset-password': { sl: '/pozabljeno-geslo', en: '/reset-password' },
+		// Route handler for the Supabase Auth redirects (email links, Google): app/[locale]/auth/callback/route.ts.
+		'/auth/callback': '/auth/callback',
 		'/payments/return': { sl: '/placila/zakljucek', en: '/payments/return' },
 		'/advertise': { sl: '/oglasevanje', en: '/advertise' },
 		'/about': { sl: '/o-nas', en: '/about' },

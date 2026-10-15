@@ -1,4 +1,5 @@
 import type { Locale } from 'next-intl';
+import { headers } from 'next/headers';
 import { cache } from 'react';
 
 import { redirect } from '@/i18n/navigation';
@@ -38,7 +39,8 @@ export const getViewer = cache(async (): Promise<Viewer | null> => {
 });
 
 /**
- * Server guard of the (app), (admin) and (portal) layouts: visitors without a verified session go to sign-in.
+ * Server guard of the (app), (admin) and (portal) layouts and the account pages: visitors without a verified session
+ * go to sign-in, with the page they asked for as `next` (the proxy's x-next-path), so they come back to it.
  * `getClaims()` checks the signature (against the project JWKS, or via getUser for HS256), unlike getViewer.
  * Anonymous sessions (C7, C15 report managers coming in through /m) pass only with `allowAnonymous`.
  */
@@ -46,6 +48,48 @@ export async function requireViewer(locale: string, { allowAnonymous = false } =
 	const { data } = await (await createClient()).auth.getClaims();
 	const claims = data?.claims;
 	if (claims && (allowAnonymous || !claims.is_anonymous)) return toViewer(claims);
-	// TODO(TASK-9.3): send the page along as `next`, as AdminGate does.
-	return redirect({ href: '/sign-in', locale: locale as Locale });
+	const next = (await headers()).get('x-next-path');
+	return redirect({
+		href: next ? { pathname: '/sign-in', query: { next } } : '/sign-in',
+		locale: locale as Locale,
+	});
+}
+
+/**
+ * A same-site path to return to after sign-in, or undefined: the `next` query param is user input, so only a path on
+ * this origin passes (no `//host` or `/\host`, no scheme). Returns the normalised pathname and search, which is what
+ * the redirects use: dot segments resolve (`/..//host`, `/%2e%2e//host` → `//host`), so the result is checked too.
+ */
+export function safeNext(next: unknown): string | undefined {
+	// Browsers read `\` as `/` and drop tabs and newlines, so neither may reach the parser.
+	if (typeof next !== 'string' || !next.startsWith('/') || /[\\\p{Cc}]/u.test(next)) return undefined;
+	const base = new URL('https://next.invalid');
+	try {
+		const url = new URL(next, base);
+		return url.origin === base.origin && !url.pathname.startsWith('//') ? url.pathname + url.search : undefined;
+	} catch {
+		return undefined;
+	}
+}
+
+/** How long a reset link's session may set a new password without the old one. */
+const RECOVERY_SECONDS = 3600;
+
+/**
+ * The email of a password-recovery session, else null: GoTrue marks the session a reset link signed in with the
+ * `recovery` amr (PKCE code) or `otp` (token hash, verifyOtp), both checked against local Supabase, so the
+ * new-password form needs that link, not a client flag. Web has no other email-code sign-in, and either proves control
+ * of the address, which is all a reset asks. Read from the signature-checked claims.
+ */
+export async function recoveryEmail(): Promise<string | null> {
+	const { data } = await (await createClient()).auth.getClaims();
+	const claims = data?.claims;
+	const now = Date.now() / 1000;
+	const recovered = claims?.amr?.some(
+		(entry) =>
+			typeof entry === 'object' &&
+			(entry.method === 'recovery' || entry.method === 'otp') &&
+			now - entry.timestamp < RECOVERY_SECONDS
+	);
+	return recovered ? (claims?.email ?? '') : null;
 }

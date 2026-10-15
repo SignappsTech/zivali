@@ -96,6 +96,9 @@ export function webBuildEnv(env) {
 		NEXT_PUBLIC_ANALYTICS_PROVIDER: env.NEXT_PUBLIC_ANALYTICS_PROVIDER,
 		NEXT_PUBLIC_GA_MEASUREMENT_ID: env.NEXT_PUBLIC_GA_MEASUREMENT_ID,
 		NEXT_PUBLIC_TURNSTILE_SITE_KEY: env.NEXT_PUBLIC_TURNSTILE_SITE_KEY,
+		// Sign-in provider buttons (P16): 'true' once the provider is enabled in that environment's Supabase Auth.
+		NEXT_PUBLIC_GOOGLE_SIGN_IN: env.NEXT_PUBLIC_GOOGLE_SIGN_IN,
+		NEXT_PUBLIC_APPLE_SIGN_IN: env.NEXT_PUBLIC_APPLE_SIGN_IN,
 		// Test keys only (C13): a live key is never baked into an image.
 		NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: stripe?.startsWith('pk_test_') ? stripe : undefined,
 	};

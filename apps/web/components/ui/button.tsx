@@ -20,6 +20,9 @@ const buttonVariants = cva(
 				text: 'bg-transparent text-primary hover:bg-foreground/10',
 				destructive:
 					'bg-destructive text-destructive-foreground hover:bg-destructive-hover active:bg-destructive-pressed',
+				// Google and Apple sign-in only (§10.2): brand-literal fill, 1 px inside stroke, hover mixes in 14 % label.
+				provider:
+					'bg-provider text-provider-foreground shadow-[inset_0_0_0_1px_hsl(var(--provider-border))] hover:bg-[color-mix(in_srgb,hsl(var(--provider))_86%,hsl(var(--provider-foreground)))]',
 			},
 			size: {
 				sm: 'min-h-11 px-4.5',

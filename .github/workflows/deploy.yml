@@ -74,6 +74,8 @@ jobs:
           NEXT_PUBLIC_GA_MEASUREMENT_ID: ${{ vars.NEXT_PUBLIC_GA_MEASUREMENT_ID }}
           NEXT_PUBLIC_TURNSTILE_SITE_KEY: ${{ vars.NEXT_PUBLIC_TURNSTILE_SITE_KEY }}
           NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${{ vars.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY }}
+          NEXT_PUBLIC_GOOGLE_SIGN_IN: ${{ vars.NEXT_PUBLIC_GOOGLE_SIGN_IN }}
+          NEXT_PUBLIC_APPLE_SIGN_IN: ${{ vars.NEXT_PUBLIC_APPLE_SIGN_IN }}
       # Port 22 back to admin-only even when the deploy failed, was cancelled or never reached its own cleanup.
       - if: always()
         run: node scripts/deploy.mjs staging --close-ssh
@@ -126,6 +128,8 @@ jobs:
           NEXT_PUBLIC_GA_MEASUREMENT_ID: ${{ vars.NEXT_PUBLIC_GA_MEASUREMENT_ID }}
           NEXT_PUBLIC_TURNSTILE_SITE_KEY: ${{ vars.NEXT_PUBLIC_TURNSTILE_SITE_KEY }}
           NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${{ vars.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY }}
+          NEXT_PUBLIC_GOOGLE_SIGN_IN: ${{ vars.NEXT_PUBLIC_GOOGLE_SIGN_IN }}
+          NEXT_PUBLIC_APPLE_SIGN_IN: ${{ vars.NEXT_PUBLIC_APPLE_SIGN_IN }}
       # Port 22 back to admin-only even when the deploy failed, was cancelled or never reached its own cleanup.
       - if: always()
         run: node scripts/deploy.mjs production --close-ssh

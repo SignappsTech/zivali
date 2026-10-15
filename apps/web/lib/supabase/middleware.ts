@@ -6,6 +6,7 @@ import { env } from '@/lib/env';
 /**
  * Refreshes an expired Supabase session before the request is routed. Refreshed cookies go onto the request first,
  * so `next` (next-intl, which copies the request headers) hands them to server components, then onto the response.
+ * The cookies are Secure on an https app URL (SameSite=Lax stays from @supabase/ssr).
  */
 export async function updateSession(
 	request: NextRequest,
@@ -14,6 +15,7 @@ export async function updateSession(
 	let written: Parameters<SetAllCookies> = [[], {}];
 
 	const supabase = createServerClient(env.NEXT_PUBLIC_SUPABASE_URL, env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY, {
+		cookieOptions: { secure: env.NEXT_PUBLIC_APP_URL.startsWith('https:') },
 		cookies: {
 			getAll: () => request.cookies.getAll(),
 			setAll: (cookiesToSet, headers) => {

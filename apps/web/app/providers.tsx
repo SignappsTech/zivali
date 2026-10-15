@@ -7,6 +7,7 @@ import { Provider } from 'react-redux';
 
 import type { Locale } from '@zivali/api/client';
 import { ScreenViews } from '@/components/analytics/screen-views';
+import { SessionSync } from '@/components/auth/session-sync';
 import { makeStore } from '@/lib/store';
 
 // Client-only and after the first paint: the banner never sits on the LCP path (P17).
@@ -14,8 +15,12 @@ const ConsentBanner = dynamic(() => import('@/components/consent/consent-banner'
 	ssr: false,
 });
 
-/** Client-side providers. RTK Query hooks (@zivali/api) are for client components; server components call the API. */
-export function Providers({ children }: { children: React.ReactNode }) {
+/**
+ * Client-side providers. RTK Query hooks (@zivali/api) are for client components; server components call the API.
+ * `signedIn` (the layout's viewer) connects the Supabase session on signed-in pages only, so signed-out pages do not
+ * load supabase-js.
+ */
+export function Providers({ children, signedIn = false }: { children: React.ReactNode; signedIn?: boolean }) {
 	const locale = useLocale() as Locale;
 	// One store per browser session (per request on the server), never shared between users; a new one per locale,
 	// since responses are localised (Accept-Language).
@@ -24,6 +29,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
 	return (
 		<Provider store={store}>
 			<ScreenViews />
+			{signedIn && <SessionSync />}
 			{children}
 			<ConsentBanner />
 		</Provider>

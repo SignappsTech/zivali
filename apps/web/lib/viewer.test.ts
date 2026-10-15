@@ -1,8 +1,9 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { getViewer, requireViewer } from './viewer';
+import { getViewer, recoveryEmail, requireViewer, safeNext } from './viewer';
 
-const auth = vi.hoisted(() => ({ token: undefined as string | undefined }));
+const auth = vi.hoisted(() => ({ token: undefined as string | undefined, path: null as string | null }));
+vi.mock('next/headers', () => ({ headers: async () => new Headers(auth.path ? { 'x-next-path': auth.path } : {}) }));
 // Stands in for the signature check of getClaims(): only tokens signed with 'good' verify.
 vi.mock('@/lib/supabase/server', () => ({
 	createClient: async () => ({
@@ -18,8 +19,10 @@ vi.mock('@/lib/supabase/server', () => ({
 	}),
 }));
 vi.mock('@/i18n/navigation', () => ({
-	redirect: ({ href, locale }: { href: string; locale: string }) => {
-		throw new Error(`NEXT_REDIRECT ${locale} ${href}`);
+	redirect: ({ href, locale }: { href: string | { pathname: string; query: { next: string } }; locale: string }) => {
+		throw new Error(
+			`NEXT_REDIRECT ${locale} ${typeof href === 'string' ? href : `${href.pathname}?next=${href.query.next}`}`
+		);
 	},
 }));
 
@@ -55,6 +58,13 @@ describe('requireViewer', () => {
 		await expect(requireViewer('en')).resolves.toEqual({ initials: 'A' });
 	});
 
+	it('sends the page that was asked for along as next', async () => {
+		auth.token = undefined;
+		auth.path = '/en/account?tab=1';
+		await expect(requireViewer('en')).rejects.toThrow('NEXT_REDIRECT en /sign-in?next=/en/account?tab=1');
+		auth.path = null;
+	});
+
 	it('rejects a forged cookie whose payload looks valid but whose signature does not verify', async () => {
 		auth.token = jwt({ email: 'ana@example.si' }, 'forged');
 		await expect(requireViewer('en')).rejects.toThrow('NEXT_REDIRECT en /sign-in');
@@ -65,4 +75,58 @@ describe('requireViewer', () => {
 		await expect(requireViewer('sl')).rejects.toThrow('NEXT_REDIRECT sl /sign-in');
 		await expect(requireViewer('sl', { allowAnonymous: true })).resolves.toEqual({ initials: '' });
 	});
+});
+
+describe('recoveryEmail', () => {
+	const now = Math.floor(Date.now() / 1000);
+
+	it('is the address of a session from a reset link of the last hour, by code or by token hash', async () => {
+		auth.token = jwt({ email: 'ana@example.si', amr: [{ method: 'recovery', timestamp: now - 60 }] });
+		expect(await recoveryEmail()).toBe('ana@example.si');
+		auth.token = jwt({ email: 'ana@example.si', amr: [{ method: 'otp', timestamp: now - 60 }] });
+		expect(await recoveryEmail()).toBe('ana@example.si');
+	});
+
+	it('is null for a password session, an old recovery, signed out and a forged token', async () => {
+		auth.token = jwt({ email: 'ana@example.si', amr: [{ method: 'password', timestamp: now }] });
+		expect(await recoveryEmail()).toBeNull();
+		auth.token = jwt({ email: 'ana@example.si', amr: [{ method: 'recovery', timestamp: now - 7200 }] });
+		expect(await recoveryEmail()).toBeNull();
+		auth.token = undefined;
+		expect(await recoveryEmail()).toBeNull();
+		auth.token = jwt({ email: 'ana@example.si', amr: [{ method: 'recovery', timestamp: now }] }, 'forged');
+		expect(await recoveryEmail()).toBeNull();
+	});
+});
+
+describe('safeNext', () => {
+	it.each([
+		['/racun', '/racun'],
+		['/en/account?tab=alerts#x', '/en/account?tab=alerts'],
+		['/r/Hk3vT9qP', '/r/Hk3vT9qP'],
+		['/en/../racun', '/racun'],
+		['/%5cevil.example', '/%5cevil.example'],
+	])('keeps the same-site path %s', (next, kept) => expect(safeNext(next)).toBe(kept));
+
+	it.each([
+		'https://evil.example/',
+		'https:evil.example',
+		'//evil.example/x',
+		'//%5cevil.example',
+		'/\\evil.example',
+		'\\\\evil.example',
+		'/..//evil.example',
+		'/.//evil.example',
+		'/a/..//evil.example',
+		'/%2e%2e//evil.example',
+		'/%2E%2E//evil.example',
+		'/\t/evil.example',
+		'/\n/evil.example',
+		'javascript:alert(1)',
+		'javascript:',
+		'racun',
+		'',
+		null,
+		7,
+	])('drops %j', (next) => expect(safeNext(next)).toBeUndefined());
 });

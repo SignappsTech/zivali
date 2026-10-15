@@ -11,6 +11,11 @@ const schema = z
 		// @zivali/analytics reads it (and NEXT_PUBLIC_GA_MEASUREMENT_ID) itself; the proxy opens the CSP for ga4.
 		NEXT_PUBLIC_ANALYTICS_PROVIDER: z.enum(['mock', 'ga4']).default('mock'),
 		NEXT_PUBLIC_GA_MEASUREMENT_ID: z.string().regex(/^G-/).optional(),
+		// Turnstile (C7): empty = captcha off. The hosted Supabase project requires it for email sign-up, sign-in and reset.
+		NEXT_PUBLIC_TURNSTILE_SITE_KEY: z.string().optional(),
+		// Sign-in providers (P16): the buttons show only when the provider is enabled in Supabase Auth; Apple waits for its account.
+		NEXT_PUBLIC_GOOGLE_SIGN_IN: z.enum(['true', 'false']).optional(),
+		NEXT_PUBLIC_APPLE_SIGN_IN: z.enum(['true', 'false']).optional(),
 		// Server only: undefined in the browser, so read them on the server.
 		APP_ENV: z.enum(['local', 'staging', 'production']),
 		APP_VERSION: z.string().default('dev'),
@@ -71,6 +76,9 @@ const source = {
 	NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
 	NEXT_PUBLIC_ANALYTICS_PROVIDER: process.env.NEXT_PUBLIC_ANALYTICS_PROVIDER,
 	NEXT_PUBLIC_GA_MEASUREMENT_ID: process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID,
+	NEXT_PUBLIC_TURNSTILE_SITE_KEY: process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY,
+	NEXT_PUBLIC_GOOGLE_SIGN_IN: process.env.NEXT_PUBLIC_GOOGLE_SIGN_IN,
+	NEXT_PUBLIC_APPLE_SIGN_IN: process.env.NEXT_PUBLIC_APPLE_SIGN_IN,
 	APP_ENV: process.env.APP_ENV,
 	// Server only like APP_ENV: the browser cannot tell, and the server has already failed fast by then.
 	NODE_ENV: typeof window === 'undefined' ? process.env.NODE_ENV : undefined,
