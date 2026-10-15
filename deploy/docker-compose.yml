@@ -1,0 +1,112 @@
+# Hetzner VPS stack (ADR-016), copied to /opt/zivali/ by scripts/deploy.mjs. One compose project per environment
+# (zivali-staging, zivali-production) runs api, worker and web; one nginx and one certbot per VPS (project zivali-edge,
+# profile edge) serve every environment over the shared network zivali-edge. Files on the VPS, mode 600, never in
+# images or Git:
+#   /opt/zivali/<env>/.env         api and worker (names: .env.example, apps/api block), with APP_ENV
+#   /opt/zivali/<env>/web.env      web server (APP_ENV, R2_UPLOAD_ORIGIN, GA_* if used)
+#   /opt/zivali/<env>/release.env  API_IMAGE, WEB_IMAGE, APP_VERSION of the running release (deploy/remote.sh)
+#   /opt/zivali/edge.env           hostnames and CERT_NAME for nginx (deploy/README.md)
+#   /opt/zivali/cloudflare.ini     CERTBOT_CLOUDFLARE_TOKEN for the DNS-01 challenge (deploy/README.md, TLS)
+# By hand: docker compose -p zivali-staging --env-file staging/.env --env-file staging/release.env ps
+
+x-logging: &logging # Rotated per container: at most 5 x 10 MB.
+  driver: json-file
+  options:
+    max-size: 10m
+    max-file: '5'
+
+# remote.sh waits for healthy (up --wait) before a release counts; checked every 2 s while starting.
+x-health: &health
+  interval: 30s
+  timeout: 5s
+  retries: 3
+  start_period: 60s
+  start_interval: 2s
+
+services:
+  api:
+    image: ${API_IMAGE:?set in <env>/release.env}
+    # Images arrive with docker load (scripts/deploy.mjs), never from a registry.
+    pull_policy: never
+    restart: unless-stopped
+    env_file: ./${APP_ENV:?set in <env>/.env}/.env
+    environment:
+      APP_VERSION: ${APP_VERSION:-dev}
+    stop_grace_period: 15s
+    healthcheck:
+      <<: *health
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://127.0.0.1:4000/v1/health/ready').then((r) => process.exit(r.ok ? 0 : 1), () => process.exit(1))"
+    logging: *logging
+    networks:
+      edge:
+        aliases: ['${APP_ENV}-api']
+
+  worker:
+    image: ${API_IMAGE:?set in <env>/release.env}
+    pull_policy: never
+    command: ['node', 'dist/worker.js']
+    restart: unless-stopped
+    env_file: ./${APP_ENV}/.env
+    environment:
+      APP_VERSION: ${APP_VERSION:-dev}
+    # Active jobs finish on SIGTERM (worker.ts); longer than the API.
+    stop_grace_period: 60s
+    logging: *logging
+
+  web:
+    image: ${WEB_IMAGE:?set in <env>/release.env}
+    pull_policy: never
+    restart: unless-stopped
+    env_file: ./${APP_ENV}/web.env
+    environment:
+      APP_VERSION: ${APP_VERSION:-dev}
+    healthcheck:
+      <<: *health
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://127.0.0.1:3000/api/health').then((r) => process.exit(r.ok ? 0 : 1), () => process.exit(1))"
+    logging: *logging
+    networks:
+      edge:
+        aliases: ['${APP_ENV}-web']
+
+  # TLS, redirects, headers and the proxy for every environment (nginx/templates/zivali.conf.template). Waits for the
+  # first certificate instead of crash-looping, reloads twice a day for renewed certificates (nginx/start.sh).
+  nginx:
+    image: nginx:1.30-alpine
+    profiles: [edge]
+    restart: unless-stopped
+    ports:
+      - '80:80'
+      - '443:443'
+    env_file: ./edge.env
+    entrypoint: ['/bin/sh', '/opt/zivali-nginx/start.sh']
+    volumes:
+      - ./nginx:/opt/zivali-nginx:ro
+      - ./nginx/templates:/etc/nginx/templates:ro
+      - ./letsencrypt:/etc/letsencrypt:ro
+    logging: *logging
+    networks: [edge]
+
+  # Renews the certificate twice a day (DNS-01 through Cloudflare; Cloudflare proxies the hostnames, so HTTP-01 is not
+  # reliable). The first issuance is a one-off command (deploy/README.md, TLS).
+  certbot:
+    image: certbot/dns-cloudflare:v5.8.0
+    profiles: [edge]
+    restart: unless-stopped
+    entrypoint: ['/bin/sh', '-c', 'trap exit TERM; while :; do certbot renew --quiet; sleep 12h & wait $${!}; done']
+    volumes:
+      - ./letsencrypt:/etc/letsencrypt
+      - ./cloudflare.ini:/etc/cloudflare.ini:ro
+    logging: *logging
+
+networks:
+  edge:
+    name: zivali-edge
+    external: true

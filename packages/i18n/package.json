@@ -16,7 +16,7 @@
 	"scripts": {
 		"build": "node build.mjs",
 		"check": "node check.mjs",
-		"lint": "eslint --max-warnings=0 .",
+		"lint": "eslint --cache --cache-strategy content --cache-location node_modules/.cache/eslint/ --max-warnings=0 .",
 		"typecheck": "tsc --noEmit",
 		"test": "node check.mjs && node --test"
 	},
