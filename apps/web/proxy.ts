@@ -22,6 +22,8 @@ function contentSecurityPolicy(nonce: string): string {
 		env.NEXT_PUBLIC_ANALYTICS_PROVIDER === 'ga4'
 			? ' https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com'
 			: '';
+	// Presigned photo PUTs (C5): the one origin the API presigns with (R2 in the EU jurisdiction, MinIO locally).
+	const uploads = ` ${new URL(env.R2_UPLOAD_ORIGIN).origin}`;
 
 	return [
 		"default-src 'self'",
@@ -31,7 +33,7 @@ function contentSecurityPolicy(nonce: string): string {
 		"style-src 'self' 'unsafe-inline'",
 		`img-src 'self' blob: data:${ga}`,
 		"font-src 'self'",
-		`connect-src 'self' ${api} ${supabase.origin} ${realtime}${ga}`,
+		`connect-src 'self' ${api} ${supabase.origin} ${realtime}${uploads}${ga}`,
 		"object-src 'none'",
 		"base-uri 'self'",
 		"form-action 'self'",
