@@ -1,4 +1,5 @@
-// enqueueNotification stub (C10, TASK-6.3): sends notify.send, inside the caller's transaction when ctx.tx is set.
+// enqueueNotification (C10, TASK-6.3, TASK-6.17): sends notify.send with a typed ids-only payload, inside the caller's
+// transaction when ctx.tx is set.
 import { randomUUID } from 'node:crypto';
 
 import { beforeAll, describe, expect, it } from 'vitest';
@@ -18,8 +19,8 @@ describe('NotificationsDomain.enqueueNotification', () => {
 	it('sends notify.send with the input as payload', async () => {
 		const input = {
 			user_id: randomUUID(),
-			type: 'match_found',
-			payload: { report_code: 'AB12' },
+			type: 'match_chip' as const,
+			payload: { template: 'match_chip' as const, report_id: randomUUID() },
 			dedupe_key: randomUUID(),
 		};
 		await NotificationsDomain.enqueueNotification(input, systemCtx());
@@ -27,11 +28,28 @@ describe('NotificationsDomain.enqueueNotification', () => {
 		await prisma.$executeRaw`delete from pgboss.job where data->>'dedupe_key' = ${input.dedupe_key}`;
 	});
 
+	it.each([
+		['free-form keys', { template: 'match_chip', report_code: 'AB12' }],
+		['personal data', { template: 'match_chip', email: 'a@b.si' }],
+		['non-uuid ids', { template: 'match_chip', report_id: 'not-a-uuid' }],
+		['unknown template', { template: 'free text' }],
+	])('rejects a payload with %s and stores nothing', async (_name, payload) => {
+		const dedupe_key = randomUUID();
+		const input = { user_id: randomUUID(), type: 'match_chip', payload, dedupe_key };
+		await expect(NotificationsDomain.enqueueNotification(input as never, systemCtx())).rejects.toThrow();
+		expect(await queued(dedupe_key)).toEqual([]);
+	});
+
 	it('rolls back with the caller transaction', async () => {
 		const dedupe_key = randomUUID();
 		await expect(
 			prisma.$transaction(async (tx) => {
-				const input = { user_id: randomUUID(), type: 'match_found', payload: {}, dedupe_key };
+				const input = {
+					user_id: randomUUID(),
+					type: 'match_chip' as const,
+					payload: { template: 'match_chip' as const },
+					dedupe_key,
+				};
 				await NotificationsDomain.enqueueNotification(input, systemCtx({ tx }));
 				throw new Error('rollback');
 			})
