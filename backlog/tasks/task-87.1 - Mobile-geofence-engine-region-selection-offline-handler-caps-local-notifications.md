@@ -3,11 +3,11 @@ id: TASK-87.1
 title: >-
   Mobile geofence engine: region selection, offline handler, caps, local
   notifications
-status: To Do
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:39'
-updated_date: '2026-10-14 23:38'
+updated_date: '2026-10-15 21:55'
 labels:
   - fe
   - 'est:M'
