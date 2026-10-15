@@ -7,7 +7,7 @@ status: In Progress
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-15 10:24'
-updated_date: '2026-10-15 20:35'
+updated_date: '2026-10-15 21:32'
 labels:
   - bug
   - fe
@@ -26,8 +26,12 @@ Steps: pnpm quality on main with the e2e mock API. Expected: resource-summary.sc
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 pnpm quality Lighthouse passes for /zavetisca (script transfer size <= 256000 B)
+- [x] #1 pnpm quality Lighthouse passes for /zavetisca (script transfer size <= 256000 B)
 - [ ] #2 Mobile LCP ≤ 2.5 s and performance ≥ 0.9 in pnpm quality on /, /en, /zavetisca and a shelter page (moved from TASK-11.2 AC#8). First try font subsetting (latin + latin-ext only), font-display and preloading only the LCP weight; dropping the Bricolage opsz axis (−48 KB) needs design-lead sign-off via a CHANGE row. Lighthouse settings in lighthouserc may be adjusted only if documented (e.g. median of 3 runs), never by loosening the budgets.
-- [ ] #3 Script transfer ≤ 256 KB on every public page, not only /zavetisca
+- [x] #3 Script transfer ≤ 256 KB on every public page, not only /zavetisca
 - [ ] #4 Remove `continue-on-error: true` from the quality job in .github/workflows/ci.yml so Lighthouse budgets block CI (and staging deploys) again
 <!-- AC:END -->
+
+## Packet
+
+Branch: agent/task-90.4-js-budget
