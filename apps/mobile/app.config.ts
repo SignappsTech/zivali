@@ -29,6 +29,8 @@ const config: ExpoConfig = {
 	plugins: [
 		'expo-router',
 		'expo-dev-client',
+		// iOS BGTaskScheduler identifier and the `processing` background mode for the offline cache refresh (C17).
+		'expo-background-task',
 		[
 			'expo-splash-screen',
 			{
