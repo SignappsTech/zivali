@@ -1,0 +1,451 @@
+<!doctype html>
+<!--
+  P10 Report abuse mockup (TASK-25.1). Built from docs/design/mockups/_template.html.
+  Sources: docs/design/pages/P10-report-abuse.md, docs/design/system.md (v0.10), docs/content/pages/P10-report-abuse.md (v0.1).
+  Reused: P9 mockup (detail page, "Več možnosti" entry, owner "hidden" note = report.owner_hidden), P23 kit (sheet, dialog, choice row, switch, field).
+  Elements marked data-sample have no copy in a slice (chat names and messages, the typed note, pet names).
+  Everything in #src is cloned once per colour mode by ../directions/directions.js. Tokens only, no hex (the logo dot excepted, as in the template).
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Najdimo mockup: P10 Report abuse</title>
+<meta name="description" content="Report abuse sheet and dialog for a listing and a chat message: reasons, optional note, block switch, disabled send, sending, error, rate limited, already reported, confirmation, folded message and the owner's under-review note, light and dark.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:wght@400;500;600;700&family=Bricolage+Grotesque:opsz,wght@12..96,500..800&display=swap" rel="stylesheet">
+<link href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css" rel="stylesheet">
+<link href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/bold/style.css" rel="stylesheet">
+<link href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css" rel="stylesheet">
+<link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet">
+<link href="../tokens.css" rel="stylesheet">
+<link href="../directions/directions.css" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com/3.4.17"></script>
+<script src="../directions/tailwind-config.js"></script>
+<style>
+/* Page-local parts only. Buttons, choice rows, switch, fields, note, sheet, dialog, scrim come from directions.css. */
+.scope h1, .scope h2, .scope h3 { text-wrap: balance; }
+.logo-link { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; color: hsl(var(--foreground)); text-decoration: none; flex: none; }
+.anno { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; font-size: 13px; line-height: 18px; font-weight: 700; background: hsl(var(--foreground)); color: hsl(var(--background)); white-space: nowrap; }
+/* Switch row (same as the P23 kit): the label and the switch are one target. */
+.swrow { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 56px; font-weight: 700; cursor: pointer; }
+/* Sheet body that scrolls between the pinned title and the pinned actions; the fade says "more below/above". */
+.sh-body { flex: 1 1 auto; min-height: 0; overflow: hidden; }
+.sh-body.can-scroll { overflow-y: auto; }
+.fade-b { -webkit-mask-image: linear-gradient(to bottom, black calc(100% - 28px), transparent); mask-image: linear-gradient(to bottom, black calc(100% - 28px), transparent); }
+.fade-t { -webkit-mask-image: linear-gradient(to bottom, transparent, black 16px); mask-image: linear-gradient(to bottom, transparent, black 16px); }
+/* Privacy line: 14/20 muted with a 16 px shield. */
+.privacy { display: flex; gap: 8px; font-size: 14px; line-height: 20px; color: hsl(var(--muted-foreground)); }
+.privacy i { font-size: 16px; line-height: 20px; flex: none; color: hsl(var(--primary)); }
+/* Confirmation mark: check in a tonal circle. */
+.done-mark { display: grid; place-items: center; width: 72px; height: 72px; border-radius: 50%; background: hsl(var(--secondary)); color: hsl(var(--secondary-foreground)); }
+.done-mark i { font-size: 36px; line-height: 1; }
+/* Chat stand-in (P12 owns the thread): bubbles radius 20, incoming on card, own on secondary; folded reported message on muted. */
+.bub { max-width: 82%; padding: 10px 16px; border-radius: var(--radius-row); background: hsl(var(--card)); color: hsl(var(--card-foreground)); font-size: 16px; line-height: 24px; }
+.bub-out { margin-left: auto; background: hsl(var(--secondary)); color: hsl(var(--secondary-foreground)); }
+.bub-meta { font-size: 14px; line-height: 20px; color: hsl(var(--muted-foreground)); }
+.fold { display: flex; align-items: center; gap: 10px; max-width: 82%; padding: 4px 4px 4px 16px; border-radius: var(--radius-row); background: hsl(var(--muted)); color: hsl(var(--foreground)); font-size: 15px; line-height: 22px; }
+.fold > i { font-size: 18px; flex: none; color: hsl(var(--muted-foreground)); }
+.initials { display: inline-grid; place-items: center; flex: none; border-radius: 50%; background: hsl(var(--secondary)); color: hsl(var(--secondary-foreground)); font-weight: 700; }
+/* Sheet excerpt panels for the extra states (same surface, radius and padding as the sheet). */
+.frag { width: 100%; box-sizing: border-box; padding: 24px 20px; border-radius: var(--radius-sheet); background: hsl(var(--card)); color: hsl(var(--card-foreground)); }
+.textlink { color: hsl(var(--primary)); font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
+</style>
+</head>
+<body>
+<a class="sr-only focus:not-sr-only" href="#stage">Skip to content</a>
+
+<!-- Logo symbol, defined once -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <symbol id="nj-mark" viewBox="0 0 48 48">
+    <g fill="currentColor" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round">
+      <path d="M24 45.5 C24 45.5 10.5 33.2 10.5 24.4 A13.5 13.5 0 0 1 37.5 24.4 C37.5 33.2 24 45.5 24 45.5 Z M24 17.9 A6.5 6.5 0 1 0 24 30.9 A6.5 6.5 0 1 0 24 17.9 Z"/>
+      <path d="M12.2 19.6 L11.2 5 L22.6 11.4 Z"/><path d="M35.8 19.6 L25.4 11.4 L36.8 5 Z"/>
+    </g>
+    <circle cx="24" cy="24.4" r="3.6" fill="#F7B32B"/>
+  </symbol>
+</svg>
+
+<header class="chrome">
+  <div class="flex flex-wrap items-center gap-x-5 gap-y-2 px-6 py-2 max-w-[1400px] mx-auto">
+    <span class="flex items-center gap-2 font-display font-bold text-lg"><svg class="logo-mark w-7 h-7" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg>Najdimo</span>
+    <span class="text-muted-foreground text-[15px]">P10 Report abuse (mockup)</span>
+    <div class="ml-auto flex items-center gap-2" role="group" aria-label="Colour mode">
+      <button class="mode-btn" data-mode="light" aria-pressed="true">Light</button>
+      <button class="mode-btn" data-mode="dark" aria-pressed="false">Dark</button>
+      <button class="mode-btn" data-mode="both" aria-pressed="false">Side by side</button>
+    </div>
+  </div>
+</header>
+
+<main id="stage"></main>
+
+<div id="src" hidden>
+<section class="tile-section scope !max-w-[1400px]">
+  <h1 class="tile-title">P10 Report abuse</h1>
+  <p class="tile-lede">Flag a listing or a chat message in two taps: pick a reason, send. Calm and blame-free: the sheet asks what is wrong, not who is guilty. Mobile sheet at 390 px (listing, message with the block switch, disabled send, confirmation, rate limited), web dialog at 1200 px (listing, message), then the extra states: sending, network error, already reported, the folded message and the owner's "under review" note. Copy from the P10 content slice.</p>
+
+  <!-- ================= MOBILE ================= -->
+  <h2 class="tile-h" style="margin-top:40px">Mobile · bottom sheet over the screen it was opened from</h2>
+  <div class="wrap-x"><div class="flex flex-wrap gap-x-10 gap-y-12 items-start">
+
+    <!-- M1 LISTING, NOTHING CHOSEN -->
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">M1 · Listing, just opened · no reason yet: "Pošlji" disabled with the reason</figcaption>
+      <div class="phone"><div class="phone-screen" lang="sl">
+        <div class="statusbar" aria-hidden="true"><span>14:27</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <div class="flex-1 min-h-0 overflow-hidden" aria-hidden="true" inert>
+          <img class="thumb w-full h-[340px] rounded-b-[32px]" src="../directions/img/dog-beagle.jpg" alt="">
+          <div class="px-5 pt-12">
+            <p><span class="st st-lg st-lost"><i class="ph-fill ph-megaphone"></i>Izgubljena</span></p>
+            <p class="font-display font-bold text-[34px] leading-[40px] tracking-[-0.02em] mt-2">Rex</p>
+          </div>
+        </div>
+        <div class="scrim"></div>
+        <div class="sheet flex flex-col" role="dialog" aria-modal="true" aria-label="Kaj je narobe?" style="top:68px;z-index:8;padding-bottom:34px">
+          <button type="button" class="grab flex-none" aria-label="Zapri"></button>
+          <div class="px-5 pt-3 flex-none">
+            <h2 id="m1-t" tabindex="-1" class="font-display font-bold text-2xl tracking-[-0.015em]">Kaj je narobe?</h2>
+            <p class="text-muted-foreground mt-1">Glede objave: <span class="font-semibold text-foreground">Rex</span></p>
+          </div>
+          <form class="flex flex-col flex-1 min-h-0" action="#">
+            <div class="sh-body can-scroll fade-b">
+              <div class="px-5 pt-5 pb-6">
+                <p id="m1-rl" class="label">Razlog</p>
+                <div class="grid gap-2 mt-2" role="radiogroup" aria-label="Razlog" aria-required="true">
+                  <div class="choice choice-tone" role="radio" aria-checked="false" tabindex="0"><i class="ph-bold ph-hand-coins" aria-hidden="true"></i><span class="t flex-1 min-w-0">Prevara ali zahteva po denarju</span><i class="ph-bold ph-check tick" aria-hidden="true"></i></div>
+                  <div class="choice choice-tone" role="radio" aria-checked="false" tabindex="-1"><i class="ph-bold ph-seal-warning" aria-hidden="true"></i><span class="t flex-1 min-w-0">Lažna prijava</span><i class="ph-bold ph-check tick" aria-hidden="true"></i></div>
+                  <div class="choice choice-tone" role="radio" aria-checked="false" tabindex="-1"><i class="ph-bold ph-envelope-simple" aria-hidden="true"></i><span class="t flex-1 min-w-0">Neželena vsebina</span><i class="ph-bold ph-check tick" aria-hidden="true"></i></div>
+                  <div class="choice choice-tone" role="radio" aria-checked="false" tabindex="-1"><i class="ph-bold ph-image" aria-hidden="true"></i><span class="t flex-1 min-w-0">Neprimerna fotografija</span><i class="ph-bold ph-check tick" aria-hidden="true"></i></div>
+                  <div class="choice choice-tone" role="radio" aria-checked="false" tabindex="-1"><i class="ph-bold ph-dots-three-circle" aria-hidden="true"></i><span class="t flex-1 min-w-0">Drugo</span><i class="ph-bold ph-check tick" aria-hidden="true"></i></div>
+                </div>
+                <div class="field mt-6"><label for="m1-n">Kaj ste opazili? (neobvezno)</label><textarea id="m1-n" class="input" rows="3" maxlength="500"></textarea></div>
+              </div>
+            </div>
+            <div class="px-5 pt-4 flex-none">
+              <p id="m1-h" class="help text-center mb-2">Najprej izberite razlog.</p>
+              <button type="submit" class="btn btn-primary btn-lg btn-block is-disabled" aria-disabled="true" aria-describedby="m1-h">Pošlji</button>
+              <button type="button" class="btn btn-text btn-block mt-1">Prekliči</button>
+              <p class="privacy mt-3"><i class="ph-fill ph-shield-check" aria-hidden="true"></i><span>Prijavo pregleda naša ekipa. Druga oseba ne izve, kdo jo je prijavil.</span></p>
+            </div>
+          </form>
+        </div>
+        <span class="home-ind" style="z-index:12"></span>
+      </div></div>
+      <p class="help mt-4" style="max-width:412px">Opened from "Več možnosti" → "Prijavi zlorabo" on P9 (never on the owner's own listing). Sheet snaps to its content, at most 92 %; when taller, the title and the actions stay pinned and only the middle scrolls (fade at the edge). Focus moves to the h2 on open and back to the trigger on close; no auto-dismiss. Reasons are one <code>radiogroup</code> of choice rows on <code>background</code> (arrow keys move, roving tabindex). "Pošlji" uses <code>aria-disabled</code>, not <code>disabled</code>, so it stays focusable and reads the reason "Najprej izberite razlog.".</p>
+    </figure>
+
+    <!-- M2 MESSAGE, BLOCK SWITCH -->
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">M2 · Chat message · reason chosen · "Blokiraj tudi to osebo" on · scrolled to the end · keyboard focus on "Pošlji"</figcaption>
+      <div class="phone"><div class="phone-screen" lang="sl">
+        <div class="statusbar" aria-hidden="true"><span>21:04</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <div class="flex-1 min-h-0 overflow-hidden" aria-hidden="true" inert>
+          <div class="topbar"><span class="iconbtn"><i class="ph-bold ph-caret-left"></i></span><span class="initials w-10 h-10" data-sample>MK</span><span class="font-bold" data-sample>Marko K.</span></div>
+          <div class="grid gap-3 px-5 pt-4">
+            <p class="bub bub-out" data-sample>Ali je pes rjav z belo liso na prsih?</p>
+            <p class="bub" data-sample>Ja, to je on. Najprej nakažite 200 € na moj račun, potem ga pripeljem.</p>
+          </div>
+        </div>
+        <div class="scrim"></div>
+        <div class="sheet flex flex-col" role="dialog" aria-modal="true" aria-label="Kaj je narobe?" style="top:68px;z-index:8;padding-bottom:34px">
+          <button type="button" class="grab flex-none" aria-label="Zapri"></button>
+          <div class="px-5 pt-3 flex-none">
+            <h2 id="m2-t" tabindex="-1" class="font-display font-bold text-2xl tracking-[-0.015em]">Kaj je narobe?</h2>
+            <p class="text-muted-foreground mt-1">Glede tega sporočila</p>
+          </div>
+          <form class="flex flex-col flex-1 min-h-0" action="#">
+            <div class="sh-body fade-t">
+              <div class="px-5 pt-5 pb-2" style="margin-top:-184px">
+                <p id="m2-rl" class="label">Razlog</p>
+                <div class="grid gap-2 mt-2" role="radiogroup" aria-label="Razlog" aria-required="true">
+                  <div class="choice choice-tone" role="radio" aria-checked="false" tabindex="-1"><i class="ph-bold ph-hand-coins" aria-hidden="true"></i><span class="t flex-1 min-w-0">Prevara ali zahteva po denarju</span><i class="ph-bold ph-check tick" aria-hidden="true"></i></div>
+                  <div class="choice choice-tone" role="radio" aria-checked="false" tabindex="-1"><i class="ph-bold ph-seal-warning" aria-hidden="true"></i><span class="t flex-1 min-w-0">Lažna prijava</span><i class="ph-bold ph-check tick" aria-hidden="true"></i></div>
+                  <div class="choice choice-tone" role="radio" aria-checked="true" tabindex="0"><i class="ph-bold ph-envelope-simple" aria-hidden="true"></i><span class="t flex-1 min-w-0">Neželena vsebina</span><i class="ph-bold ph-check tick" aria-hidden="true"></i></div>
+                  <div class="choice choice-tone" role="radio" aria-checked="false" tabindex="-1"><i class="ph-bold ph-image" aria-hidden="true"></i><span class="t flex-1 min-w-0">Neprimerna fotografija</span><i class="ph-bold ph-check tick" aria-hidden="true"></i></div>
+                  <div class="choice choice-tone" role="radio" aria-checked="false" tabindex="-1"><i class="ph-bold ph-dots-three-circle" aria-hidden="true"></i><span class="t flex-1 min-w-0">Drugo</span><i class="ph-bold ph-check tick" aria-hidden="true"></i></div>
+                </div>
+                <div class="field mt-6"><label for="m2-n">Kaj ste opazili? (neobvezno)</label><textarea id="m2-n" class="input" rows="3" maxlength="500" data-sample>Isto sporočilo s povezavo mi je poslal že trikrat.</textarea></div>
+                <div class="mt-5">
+                  <label class="swrow" for="m2-b"><span>Blokiraj tudi to osebo</span><button id="m2-b" type="button" class="switch" role="switch" aria-checked="true" aria-describedby="m2-bh"></button></label>
+                  <p id="m2-bh" class="help">Ne bo vam mogla več pisati.</p>
+                </div>
+              </div>
+            </div>
+            <div class="px-5 pt-4 flex-none">
+              <button type="submit" class="btn btn-primary btn-lg btn-block is-focus">Pošlji</button>
+              <button type="button" class="btn btn-text btn-block mt-1">Prekliči</button>
+              <p class="privacy mt-3"><i class="ph-fill ph-shield-check" aria-hidden="true"></i><span>Prijavo pregleda naša ekipa. Druga oseba ne izve, kdo jo je prijavil.</span></p>
+            </div>
+          </form>
+        </div>
+        <span class="home-ind" style="z-index:12"></span>
+      </div></div>
+      <p class="help mt-4" style="max-width:412px">From a long press or the message menu on P12 ("Prijavi zlorabo"), or "Prijavi in blokiraj" in the chat header menu, which opens this sheet with the switch already on. The block switch shows only for messages and users. The help text under "Pošlji" is gone once a reason is chosen; nothing else moves. The note counter appears only in the last 50 characters (see W2).</p>
+    </figure>
+
+    <!-- M3 CONFIRMATION -->
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">M3 · Confirmation (message, person blocked) · replaces the sheet content, announced politely</figcaption>
+      <div class="phone"><div class="phone-screen" lang="sl">
+        <div class="statusbar" aria-hidden="true"><span>21:05</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <div class="flex-1 min-h-0 overflow-hidden" aria-hidden="true" inert>
+          <div class="topbar"><span class="iconbtn"><i class="ph-bold ph-caret-left"></i></span><span class="initials w-10 h-10" data-sample>MK</span><span class="font-bold" data-sample>Marko K.</span></div>
+          <div class="grid gap-3 px-5 pt-4">
+            <p class="bub bub-out" data-sample>Ali je pes rjav z belo liso na prsih?</p>
+            <p class="bub" data-sample>Ja, to je on. Najprej nakažite 200 € na moj račun, potem ga pripeljem.</p>
+          </div>
+        </div>
+        <div class="scrim"></div>
+        <div class="sheet" role="dialog" aria-modal="true" aria-label="Hvala" style="z-index:8;padding-bottom:34px">
+          <button type="button" class="grab" aria-label="Zapri"></button>
+          <div class="px-5 pt-5" role="status" aria-live="polite">
+            <span class="done-mark"><i class="ph-bold ph-check" aria-hidden="true"></i></span>
+            <h2 id="m3-t" tabindex="-1" class="font-display font-bold text-2xl tracking-[-0.015em] mt-5">Hvala</h2>
+            <p class="mt-2 max-w-[58ch]">Prijavo bomo pregledali čim prej. Če bo treba ukrepati, bomo to storili brez vašega imena.</p>
+            <p class="mt-2">Oseba je blokirana.</p>
+          </div>
+          <div class="px-5 pt-6"><button type="button" class="btn btn-text btn-block">Končano</button></div>
+        </div>
+        <span class="home-ind" style="z-index:12"></span>
+      </div></div>
+      <p class="help mt-4" style="max-width:412px">Check in a <code>secondary</code> circle (72 px, icon 36), h2 "Hvala", the review sentence, and "Oseba je blokirana." only when the switch was on. One quiet "Končano" (text button): this view has no primary. The sheet shrinks to the new content; focus moves to "Hvala". For a listing the second line is left out. After "Končano" the thread folds the message (S4).</p>
+    </figure>
+
+    <!-- M4 RATE LIMITED -->
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">M4 · Rate limited (signed out) · after "Pošlji" · choice kept, calm note, nothing lost</figcaption>
+      <div class="phone"><div class="phone-screen" lang="sl">
+        <div class="statusbar" aria-hidden="true"><span>14:40</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <div class="flex-1 min-h-0 overflow-hidden" aria-hidden="true" inert>
+          <img class="thumb w-full h-[340px] rounded-b-[32px]" src="../directions/img/cat-tabby.jpg" alt="">
+          <div class="px-5 pt-12">
+            <p><span class="st st-lg st-lost"><i class="ph-fill ph-megaphone"></i>Izgubljena</span></p>
+            <p class="font-display font-bold text-[34px] leading-[40px] tracking-[-0.02em] mt-2" data-sample>Luna</p>
+          </div>
+        </div>
+        <div class="scrim"></div>
+        <div class="sheet flex flex-col" role="dialog" aria-modal="true" aria-label="Kaj je narobe?" style="top:68px;z-index:8;padding-bottom:34px">
+          <button type="button" class="grab flex-none" aria-label="Zapri"></button>
+          <div class="px-5 pt-3 flex-none">
+            <h2 id="m4-t" tabindex="-1" class="font-display font-bold text-2xl tracking-[-0.015em]">Kaj je narobe?</h2>
+            <p class="text-muted-foreground mt-1">Glede objave: <span class="font-semibold text-foreground" data-sample>Luna</span></p>
+          </div>
+          <form class="flex flex-col flex-1 min-h-0" action="#">
+            <div class="sh-body can-scroll fade-b">
+              <div class="px-5 pt-5 pb-6">
+                <p id="m4-rl" class="label">Razlog</p>
+                <div class="grid gap-2 mt-2" role="radiogroup" aria-label="Razlog" aria-required="true">
+                  <div class="choice choice-tone" role="radio" aria-checked="false" tabindex="-1"><i class="ph-bold ph-hand-coins" aria-hidden="true"></i><span class="t flex-1 min-w-0">Prevara ali zahteva po denarju</span><i class="ph-bold ph-check tick" aria-hidden="true"></i></div>
+                  <div class="choice choice-tone" role="radio" aria-checked="true" tabindex="0"><i class="ph-bold ph-seal-warning" aria-hidden="true"></i><span class="t flex-1 min-w-0">Lažna prijava</span><i class="ph-bold ph-check tick" aria-hidden="true"></i></div>
+                  <div class="choice choice-tone" role="radio" aria-checked="false" tabindex="-1"><i class="ph-bold ph-envelope-simple" aria-hidden="true"></i><span class="t flex-1 min-w-0">Neželena vsebina</span><i class="ph-bold ph-check tick" aria-hidden="true"></i></div>
+                  <div class="choice choice-tone" role="radio" aria-checked="false" tabindex="-1"><i class="ph-bold ph-image" aria-hidden="true"></i><span class="t flex-1 min-w-0">Neprimerna fotografija</span><i class="ph-bold ph-check tick" aria-hidden="true"></i></div>
+                  <div class="choice choice-tone" role="radio" aria-checked="false" tabindex="-1"><i class="ph-bold ph-dots-three-circle" aria-hidden="true"></i><span class="t flex-1 min-w-0">Drugo</span><i class="ph-bold ph-check tick" aria-hidden="true"></i></div>
+                </div>
+                <div class="field mt-6"><label for="m4-n">Kaj ste opazili? (neobvezno)</label><textarea id="m4-n" class="input" rows="3" maxlength="500"></textarea></div>
+              </div>
+            </div>
+            <div class="px-5 pt-4 flex-none">
+              <div id="m4-r" class="note mb-3" role="status"><i class="ph-fill ph-clock text-primary" aria-hidden="true"></i><p>Ta trenutek ne morete poslati nove prijave zlorabe. Poskusite znova pozneje.</p></div>
+              <button type="submit" class="btn btn-primary btn-lg btn-block is-disabled" aria-disabled="true" aria-describedby="m4-r">Pošlji</button>
+              <button type="button" class="btn btn-text btn-block mt-1">Prekliči</button>
+              <p class="privacy mt-3"><i class="ph-fill ph-shield-check" aria-hidden="true"></i><span>Prijavo pregleda naša ekipa. Druga oseba ne izve, kdo jo je prijavil.</span></p>
+            </div>
+          </form>
+        </div>
+        <span class="home-ind" style="z-index:12"></span>
+      </div></div>
+      <p class="help mt-4" style="max-width:412px">Not an error: <code>clock</code> icon in <code>primary</code> on the <code>note</code>, no destructive colour, polite status. The chosen reason and the note stay. "Pošlji" is disabled while the limit lasts (the note is its reason); "Prekliči" closes. Signed-out visitors can report; this is the only extra they meet.</p>
+    </figure>
+  </div></div>
+
+  <!-- ================= WEB ================= -->
+  <h2 class="tile-h" style="margin-top:72px">W1 · Web dialog, listing · reason chosen with the keyboard (focus on the selected row) · pointer over "Prevara ali zahteva po denarju"</h2>
+  <div class="wrap-x"><div class="browser" lang="sl">
+    <div class="browser-bar"><span class="dots"><i></i><i></i><i></i></span><span class="url"><i class="ph ph-lock-simple"></i>najdimo.si/r/k7m2qx</span></div>
+    <div class="relative" style="height:968px">
+      <div aria-hidden="true" inert>
+        <header class="flex items-center gap-8 px-12 h-[88px]">
+          <span class="logo-link"><svg class="logo-mark w-9 h-9" viewBox="0 0 48 48"><use href="#nj-mark"/></svg><span class="font-display font-bold text-2xl tracking-[-0.03em]">Najdimo</span></span>
+          <ul class="flex items-center gap-2"><li><span class="nl">Zemljevid</span></li><li><span class="nl">Izgubljene</span></li><li><span class="nl">Najdene</span></li><li><span class="nl">Kako deluje</span></li></ul>
+          <div class="ml-auto flex items-center gap-2"><span class="btn btn-ghost btn-sm">Vpis</span><span class="btn btn-secondary btn-sm">Prijavi</span></div>
+        </header>
+        <div class="px-12 pt-2 grid grid-cols-12 gap-8 items-start">
+          <div class="col-span-7"><img class="thumb w-full aspect-[4/3] rounded-3xl mt-14" src="../directions/img/dog-beagle.jpg" alt=""></div>
+          <div class="col-span-5 pt-14">
+            <p><span class="st st-lg st-lost"><i class="ph-fill ph-megaphone"></i>Izgubljena</span></p>
+            <p class="font-display font-bold text-[64px] leading-[64px] tracking-[-0.02em] mt-3">Rex</p>
+            <p class="text-xl text-muted-foreground mt-2">Pes · Mešanec · samec</p>
+          </div>
+        </div>
+      </div>
+      <div class="scrim"></div>
+      <div class="absolute inset-0 grid place-items-center p-6" style="z-index:4">
+        <div class="dialog" style="max-width:480px" role="dialog" aria-modal="true" aria-label="Kaj je narobe?">
+          <h2 id="w1-t" tabindex="-1" class="font-display font-semibold text-xl leading-7 tracking-[-0.005em]">Kaj je narobe?</h2>
+          <p class="text-muted-foreground mt-1">Glede objave: <span class="font-semibold text-foreground">Rex</span></p>
+          <form action="#">
+            <p id="w1-rl" class="label mt-5">Razlog</p>
+            <div class="grid gap-2 mt-2" role="radiogroup" aria-label="Razlog" aria-required="true">
+              <div class="choice choice-tone is-hover" role="radio" aria-checked="false" tabindex="-1"><i class="ph-bold ph-hand-coins" aria-hidden="true"></i><span class="t flex-1 min-w-0">Prevara ali zahteva po denarju</span><i class="ph-bold ph-check tick" aria-hidden="true"></i></div>
+              <div class="choice choice-tone is-focus" role="radio" aria-checked="true" tabindex="0"><i class="ph-bold ph-seal-warning" aria-hidden="true"></i><span class="t flex-1 min-w-0">Lažna prijava</span><i class="ph-bold ph-check tick" aria-hidden="true"></i></div>
+              <div class="choice choice-tone" role="radio" aria-checked="false" tabindex="-1"><i class="ph-bold ph-envelope-simple" aria-hidden="true"></i><span class="t flex-1 min-w-0">Neželena vsebina</span><i class="ph-bold ph-check tick" aria-hidden="true"></i></div>
+              <div class="choice choice-tone" role="radio" aria-checked="false" tabindex="-1"><i class="ph-bold ph-image" aria-hidden="true"></i><span class="t flex-1 min-w-0">Neprimerna fotografija</span><i class="ph-bold ph-check tick" aria-hidden="true"></i></div>
+              <div class="choice choice-tone" role="radio" aria-checked="false" tabindex="-1"><i class="ph-bold ph-dots-three-circle" aria-hidden="true"></i><span class="t flex-1 min-w-0">Drugo</span><i class="ph-bold ph-check tick" aria-hidden="true"></i></div>
+            </div>
+            <div class="field mt-6"><label for="w1-n">Kaj ste opazili? (neobvezno)</label><textarea id="w1-n" class="input" rows="3" maxlength="500"></textarea></div>
+            <div class="grid gap-1 mt-6">
+              <button type="submit" class="btn btn-primary btn-lg btn-block">Pošlji</button>
+              <button type="button" class="btn btn-text btn-block">Prekliči</button>
+            </div>
+            <p class="privacy mt-3"><i class="ph-fill ph-shield-check" aria-hidden="true"></i><span>Prijavo pregleda naša ekipa. Druga oseba ne izve, kdo jo je prijavil.</span></p>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div></div>
+  <p class="help mt-4 max-w-[80ch]">Same content as the sheet in a <code>dialog</code>: <code>popover</code>, radius 24, max 480 px (page slice), padding 28/24/20, title role 20/28 as the h2, <code>scrim</code>, buttons stacked (primary <code>lg</code>, then text). Focus is trapped; Escape and "Prekliči" close and return focus to "Več možnosti". Choice rows use <code>background</code> on the popover; hover adds <code>foreground</code> at 10 %, focus is the 3 px <code>ring</code> with 2 px offset (also on the selected row). The header "Prijavi" stays <code>secondary</code> as on P9.</p>
+
+  <h2 class="tile-h" style="margin-top:72px">W2 · Web dialog, chat message · scam reason · long note near the limit (counter) · block switch on · pointer over "Pošlji"</h2>
+  <div class="wrap-x"><div class="browser" lang="sl">
+    <div class="browser-bar"><span class="dots"><i></i><i></i><i></i></span><span class="url"><i class="ph ph-lock-simple"></i>najdimo.si/sporocila/c/8f2a</span></div>
+    <div class="relative" style="height:1088px">
+      <div aria-hidden="true" inert>
+        <header class="flex items-center gap-8 px-12 h-[88px]">
+          <span class="logo-link"><svg class="logo-mark w-9 h-9" viewBox="0 0 48 48"><use href="#nj-mark"/></svg><span class="font-display font-bold text-2xl tracking-[-0.03em]">Najdimo</span></span>
+          <ul class="flex items-center gap-2"><li><span class="nl">Zemljevid</span></li><li><span class="nl">Izgubljene</span></li><li><span class="nl">Najdene</span></li><li><span class="nl">Moje živali</span></li></ul>
+          <div class="ml-auto flex items-center gap-2"><span class="iconbtn"><i class="ph-fill ph-chat-circle text-primary"></i></span><span class="btn btn-primary btn-sm">Prijavi</span><span class="initials w-12 h-12" data-sample>AN</span></div>
+        </header>
+        <div class="px-12 grid grid-cols-12 gap-8">
+          <div class="col-span-4 grid gap-5 content-start pt-6">
+            <p class="font-display font-bold text-3xl tracking-[-0.015em]">Sporočila</p>
+            <div class="flex items-center gap-4"><span class="initials w-12 h-12" data-sample>MK</span><div><p class="font-bold" data-sample>Marko K.</p><p class="bub-meta" data-sample>Rex · pred 2 min</p></div></div>
+            <div class="flex items-center gap-4"><span class="initials w-12 h-12" data-sample>TS</span><div><p class="font-bold" data-sample>Tina S.</p><p class="bub-meta" data-sample>Rex · včeraj</p></div></div>
+          </div>
+          <div class="col-span-8 pt-6">
+            <p class="font-display font-semibold text-2xl" data-sample>Marko K.</p>
+            <div class="grid gap-3 mt-6 max-w-[620px]">
+              <p class="bub bub-out" data-sample>Ali je pes rjav z belo liso na prsih?</p>
+              <p class="bub" data-sample>Ja, to je on. Najprej nakažite 200 € na moj račun, potem ga pripeljem.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="scrim"></div>
+      <div class="absolute inset-0 grid place-items-center p-6" style="z-index:4">
+        <div class="dialog" style="max-width:480px" role="dialog" aria-modal="true" aria-label="Kaj je narobe?">
+          <h2 id="w2-t" tabindex="-1" class="font-display font-semibold text-xl leading-7 tracking-[-0.005em]">Kaj je narobe?</h2>
+          <p class="text-muted-foreground mt-1">Glede tega sporočila</p>
+          <form action="#">
+            <p id="w2-rl" class="label mt-5">Razlog</p>
+            <div class="grid gap-2 mt-2" role="radiogroup" aria-label="Razlog" aria-required="true">
+              <div class="choice choice-tone" role="radio" aria-checked="true" tabindex="0"><i class="ph-bold ph-hand-coins" aria-hidden="true"></i><span class="t flex-1 min-w-0">Prevara ali zahteva po denarju</span><i class="ph-bold ph-check tick" aria-hidden="true"></i></div>
+              <div class="choice choice-tone" role="radio" aria-checked="false" tabindex="-1"><i class="ph-bold ph-seal-warning" aria-hidden="true"></i><span class="t flex-1 min-w-0">Lažna prijava</span><i class="ph-bold ph-check tick" aria-hidden="true"></i></div>
+              <div class="choice choice-tone" role="radio" aria-checked="false" tabindex="-1"><i class="ph-bold ph-envelope-simple" aria-hidden="true"></i><span class="t flex-1 min-w-0">Neželena vsebina</span><i class="ph-bold ph-check tick" aria-hidden="true"></i></div>
+              <div class="choice choice-tone" role="radio" aria-checked="false" tabindex="-1"><i class="ph-bold ph-image" aria-hidden="true"></i><span class="t flex-1 min-w-0">Neprimerna fotografija</span><i class="ph-bold ph-check tick" aria-hidden="true"></i></div>
+              <div class="choice choice-tone" role="radio" aria-checked="false" tabindex="-1"><i class="ph-bold ph-dots-three-circle" aria-hidden="true"></i><span class="t flex-1 min-w-0">Drugo</span><i class="ph-bold ph-check tick" aria-hidden="true"></i></div>
+            </div>
+            <div class="field mt-6"><label for="w2-n">Kaj ste opazili? (neobvezno)</label><textarea id="w2-n" class="input is-focus" rows="5" maxlength="500" aria-describedby="w2-c" data-sample>Piše, da ima Rexa pri sebi in da ga vrne šele, ko mu nakažem 200 evrov na tuj račun. Fotografije noče poslati, na vprašanja o ovratnici in o tem, kje točno ga je našel, ne odgovori. Srečanja v živo pri veterinarju v Šiški ne želi, ker da nima časa in mora denar dobiti še danes, sicer psa odda naprej. Sporočila so prišla v pol ure eno za drugim, vsa z isto številko računa in s prošnjo, naj o tem ne govorim z nikomer. Prosim, preverite tudi njegove druge pogovore.</textarea><p id="w2-c" class="help text-right tnum" aria-live="polite">Še 34 znakov</p></div>
+            <div class="mt-4">
+              <label class="swrow" for="w2-b"><span>Blokiraj tudi to osebo</span><button id="w2-b" type="button" class="switch" role="switch" aria-checked="true" aria-describedby="w2-bh"></button></label>
+              <p id="w2-bh" class="help">Ne bo vam mogla več pisati.</p>
+            </div>
+            <div class="grid gap-1 mt-6">
+              <button type="submit" class="btn btn-primary btn-lg btn-block is-hover">Pošlji</button>
+              <button type="button" class="btn btn-text btn-block">Prekliči</button>
+            </div>
+            <p class="privacy mt-3"><i class="ph-fill ph-shield-check" aria-hidden="true"></i><span>Prijavo pregleda naša ekipa. Druga oseba ne izve, kdo jo je prijavil.</span></p>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div></div>
+  <p class="help mt-4 max-w-[80ch]">Entry: the message menu or "Prijavi in blokiraj" in the conversation header (P12). The note field is the line textarea (2 px <code>input</code> underline, focus = <code>ring</code> underline plus 2 px); it grows to 5 lines, then scrolls. The counter shows only in the last 50 of 500 characters, right-aligned, tabular figures, polite (announce at 50, 20 and 0, not every keystroke); at 0 typing stops, no error. On web the confirmation, error, rate-limit and already-reported states replace the dialog content exactly as in M3, M4, S2 and S3.</p>
+
+  <!-- ================= STATES AND PARTS ================= -->
+  <h2 class="tile-h" style="margin-top:72px">States and parts · sheet excerpts at 390 px (the web dialog uses the same blocks)</h2>
+  <div class="flex flex-wrap gap-x-10 gap-y-12 items-start" lang="sl">
+
+    <figure class="m-0 w-[390px] max-w-full">
+      <figcaption class="tile-h !mt-0">S1 · Sending · label stays, spinner before it, presses ignored</figcaption>
+      <div class="frag">
+        <div class="choice choice-tone" role="radio" aria-checked="true" aria-disabled="false"><i class="ph-bold ph-hand-coins" aria-hidden="true"></i><span class="t flex-1 min-w-0">Prevara ali zahteva po denarju</span><i class="ph-bold ph-check tick" aria-hidden="true"></i></div>
+        <div class="mt-6"><button type="button" class="btn btn-primary btn-lg btn-block" aria-busy="true"><span class="spin" aria-hidden="true"></span>Pošlji</button>
+        <button type="button" class="btn btn-text btn-block mt-1">Prekliči</button></div>
+      </div>
+      <p class="help mt-4" style="max-width:390px">Spinner 18 px, <code>aria-busy</code>, no layout shift. Under reduced motion the spinner slows to 2.4 s per turn.</p>
+    </figure>
+
+    <figure class="m-0 w-[390px] max-w-full">
+      <figcaption class="tile-h !mt-0">S2 · Network error · inline, selection and note kept, "Pošlji" sends again</figcaption>
+      <div class="frag">
+        <div class="choice choice-tone" role="radio" aria-checked="true"><i class="ph-bold ph-hand-coins" aria-hidden="true"></i><span class="t flex-1 min-w-0">Prevara ali zahteva po denarju</span><i class="ph-bold ph-check tick" aria-hidden="true"></i></div>
+        <div class="mt-6">
+          <div id="s2-e" class="note mb-3" role="alert"><i class="ph-fill ph-warning-circle" style="color:hsl(var(--destructive))" aria-hidden="true"></i><p>Prijave ni bilo mogoče poslati. Vaša izbira je shranjena, poskusite znova.</p></div>
+          <button type="button" class="btn btn-primary btn-lg btn-block" aria-describedby="s2-e">Pošlji</button>
+          <button type="button" class="btn btn-text btn-block mt-1">Prekliči</button>
+        </div>
+      </div>
+      <p class="help mt-4" style="max-width:390px">Region error pattern (system 10.9): <code>note</code> with the fill <code>warning-circle</code> in <code>destructive</code>, sentence in <code>foreground</code>. It sits in the note slot above the actions (the rate-limit note's place). The retry is "Pošlji" itself, so there is still one action to press; the note clears on the next send.</p>
+    </figure>
+
+    <figure class="m-0 w-[390px] max-w-full">
+      <figcaption class="tile-h !mt-0">S3 · Already reported · no second submit</figcaption>
+      <div class="frag">
+        <h3 class="font-display font-bold text-2xl tracking-[-0.015em]" tabindex="-1">Kaj je narobe?</h3>
+        <p class="text-muted-foreground mt-1">Glede objave: <span class="font-semibold text-foreground">Rex</span></p>
+        <div class="note mt-5" role="status"><i class="ph-fill ph-check-circle text-primary" aria-hidden="true"></i><p>To ste že prijavili. Hvala.</p></div>
+        <button type="button" class="btn btn-text btn-block mt-5">Končano</button>
+      </div>
+      <p class="help mt-4" style="max-width:390px">When the same person (or device, signed out) opens the entry again. The reasons, the note field and "Pošlji" are not drawn; one text button closes. Heading drawn as h3 here only because this is an excerpt; in the sheet it is the h2.</p>
+    </figure>
+
+    <figure class="m-0 w-[390px] max-w-full">
+      <figcaption class="tile-h !mt-0">S4 · Thread after "Končano" (P12) · the reported message folds</figcaption>
+      <div class="frag !bg-background !px-0" style="max-width:390px">
+        <div class="grid gap-3">
+          <p class="bub bub-out" data-sample>Ali je pes rjav z belo liso na prsih?</p>
+          <div class="fold"><i class="ph-bold ph-flag" aria-hidden="true"></i><p class="flex-1">To sporočilo ste prijavili.</p><button type="button" class="btn btn-text btn-sm" aria-expanded="false">Pokaži</button></div>
+          <p class="bub-meta text-center"><i class="ph-bold ph-prohibit" aria-hidden="true"></i> Oseba je blokirana.</p>
+        </div>
+      </div>
+      <p class="help mt-4" style="max-width:390px">The fold takes the bubble's place and shape on <code>muted</code>, <code>flag</code> icon; "Pokaži" opens it in place (<code>aria-expanded</code>). The blocked line is shown only when the person was blocked; P12 owns the composer and the unblock path.</p>
+    </figure>
+
+    <figure class="m-0 w-[390px] max-w-full">
+      <figcaption class="tile-h !mt-0">S5 · Owner: listing hidden after three reports (P9 note slot, inbox notification)</figcaption>
+      <div class="frag !bg-background !px-0" style="max-width:390px">
+        <p><span class="st st-lg st-lost"><i class="ph-fill ph-megaphone" aria-hidden="true"></i>Izgubljena</span></p>
+        <p class="font-display font-bold text-[34px] leading-[40px] tracking-[-0.02em] mt-2">Rex</p>
+        <div class="note mt-5" role="status"><i class="ph-fill ph-eye-slash text-primary" aria-hidden="true"></i><div><p>Več ljudi je prijavo označilo kot sporno, zato je skrita, dokler je ne pregleda naša ekipa.</p><button type="button" class="btn btn-text btn-sm !px-3 -ml-3 mt-1"><i class="ph-bold ph-lifebuoy" aria-hidden="true"></i>Pišite podpori</button></div></div>
+      </div>
+      <p class="help mt-4" style="max-width:390px">Strings <code>report.owner_hidden</code> and <code>report.owner_hidden_contact</code> as in the P9 mockup (S7), here as the slice's text button. Calm: no warning colour, no count of reports, no reporter. The inbox shows the <code>report_hidden</code> notification (P12). The public sees the 410 page (P9 W8).</p>
+    </figure>
+
+    <figure class="m-0 w-[390px] max-w-full">
+      <figcaption class="tile-h !mt-0">S6 · Interaction states of the sheet's controls</figcaption>
+      <div class="frag">
+        <div class="grid gap-2" role="radiogroup" aria-label="Stanja vrstice">
+          <div class="choice choice-tone is-hover" role="radio" aria-checked="false"><i class="ph-bold ph-envelope-simple" aria-hidden="true"></i><span class="t flex-1 min-w-0">Hover · Neželena vsebina</span><i class="ph-bold ph-check tick" aria-hidden="true"></i></div>
+          <div class="choice choice-tone is-pressed" role="radio" aria-checked="false"><i class="ph-bold ph-image" aria-hidden="true"></i><span class="t flex-1 min-w-0">Pressed · Neprimerna fotografija</span><i class="ph-bold ph-check tick" aria-hidden="true"></i></div>
+          <div class="choice choice-tone is-focus" role="radio" aria-checked="false"><i class="ph-bold ph-dots-three-circle" aria-hidden="true"></i><span class="t flex-1 min-w-0">Focus · Drugo</span><i class="ph-bold ph-check tick" aria-hidden="true"></i></div>
+        </div>
+        <div class="mt-5"><label class="swrow" for="s6-b"><span>Blokiraj tudi to osebo</span><button id="s6-b" type="button" class="switch is-focus" role="switch" aria-checked="false"></button></label></div>
+        <div class="grid gap-1 mt-4">
+          <button type="button" class="btn btn-primary btn-lg btn-block is-pressed" style="transform:scale(0.98)">Pošlji · pressed</button>
+          <button type="button" class="btn btn-text btn-block is-hover">Prekliči · hover</button>
+          <button type="button" class="btn btn-text btn-block is-focus">Prekliči · focus</button>
+        </div>
+      </div>
+      <p class="help mt-4" style="max-width:390px">Row hover: <code>foreground</code> at 10 %; pressed: <code>accent</code> and scale 0.98 (light haptic on mobile for "Pošlji"); focus: 3 px <code>ring</code>, 2 px offset. Switch off with focus (the row is the target). Labels with "·" are state captions, not copy.</p>
+    </figure>
+  </div>
+</section>
+<p class="tile-section !py-8 text-sm text-muted-foreground">Copy: docs/content/pages/P10-report-abuse.md v0.1 (namespace <code>abuse</code>); the owner note from the P9 mockup (<code>report.owner_hidden</code>, <code>report.owner_hidden_contact</code>). <span class="anno">Sample</span> chat names, messages, the typed notes and the pet names (marked <code>data-sample</code>). Placeholder photography from Unsplash (Unsplash License). Icons: Phosphor.</p>
+</div>
+
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<script src="../directions/directions.js"></script>
+</body>
+</html>

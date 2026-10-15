@@ -1,11 +1,11 @@
 ---
 id: TASK-25.1
 title: 'Design: Report abuse (P10)'
-status: To Do
+status: In Progress
 assignee:
   - '@ui-designer'
 created_date: '2026-10-14 21:50'
-updated_date: '2026-10-14 21:51'
+updated_date: '2026-10-15 02:14'
 labels:
   - design
   - 'est:XS'
@@ -31,6 +31,7 @@ Scams are a real risk, so flagging a listing or message has to be two taps and f
 ## Packet
 Unblocks on: P1 web shell and P2 mobile shell mockups merged (header, footer, tab bar and sheet patterns)
 Branch: design/P10-report-abuse
+Branch: main (worked directly on main per Project Lead; mockup docs/design/mockups/P10-report-abuse.html)
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Acceptance Criteria

@@ -1,11 +1,11 @@
 ---
 id: TASK-27.1
 title: 'Design: Public pages: home and content templates (P3)'
-status: To Do
+status: In Progress
 assignee:
   - '@ui-designer'
 created_date: '2026-10-14 21:50'
-updated_date: '2026-10-14 21:51'
+updated_date: '2026-10-15 02:30'
 labels:
   - design
   - 'est:M'
