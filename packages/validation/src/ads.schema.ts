@@ -14,7 +14,8 @@ export const Ad = z
 		title: z.string(),
 		body: z.string(),
 		cta: z.string(),
-		image_url: z.string(),
+		// null: no image uploaded yet (the seeded house ads)
+		image_url: z.string().nullable(),
 		image_alt: z.string(),
 		click_url: z.string(),
 		is_house: z.boolean(),

@@ -9,7 +9,8 @@ export type Ad = {
 	title: string;
 	body: string;
 	cta: string;
-	image_url: string;
+	/** null: no image uploaded yet (the seeded house ads) */
+	image_url: string | null;
 	image_alt: string;
 	/** API_URL/v1/ads/<id>/click?s=<slot>&r=<region_id> */
 	click_url: string;
