@@ -1,0 +1,13 @@
+{
+	"title_home": "Izberite domače območje",
+	"search_label": "Iskanje kraja",
+	"search_placeholder": "Ulica s hišno številko ali kraj",
+	"searching": "Iščemo …",
+	"no_results": "Tega kraja ne najdemo. Poskusite z drugim imenom ali premaknite zemljevid na pravo mesto.",
+	"address_unknown": "Kraj brez imena",
+	"alert_radius_label": "Polmer opozoril",
+	"alert_radius_value": "{km} km",
+	"alert_radius_help": "Obvestimo vas o izgubljenih živalih znotraj tega območja.",
+	"privacy_alert": "Vaše domače območje vidite samo vi.",
+	"save_area": "Shrani območje"
+}

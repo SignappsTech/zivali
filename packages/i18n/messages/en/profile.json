@@ -1,11 +1,20 @@
 {
 	"title": "Profile",
 	"nav_account": "Account",
+	"email_verified": "Verified",
+	"email_unverified": "Not verified",
+	"email_send_link": "Send link",
+	"name_label": "Display name",
+	"name_help": "People you talk to see this name. A nickname is fine.",
 	"signed_out_title": "Sign in",
 	"signed_out_body": "With an account you can save your pets' profiles, get alerts and talk to people who have seen your pet.",
 	"signed_out_sign_in": "Sign in",
 	"signed_out_create": "Create account",
 	"row_language": "Language",
+	"row_home_area": "Home area",
+	"row_phone": "Phone (optional)",
+	"phone_help": "We never show your number publicly. We only show it in a confirmed conversation, if you choose that when reporting.",
+	"phone_invalid": "Enter a phone number, for example 041 123 456.",
 	"row_payments": "Payments",
 	"row_alerts": "Nearby alerts",
 	"row_cookie_settings": "Cookie settings",
@@ -15,5 +24,6 @@
 	"sign_out_body": "Reports you made on this device stay manageable from it.",
 	"sign_out_remove_links": "Also remove the links for managing reports from this device",
 	"sign_out_confirm": "Sign out",
-	"sign_out_cancel": "Cancel"
+	"sign_out_cancel": "Cancel",
+	"saved": "Saved."
 }

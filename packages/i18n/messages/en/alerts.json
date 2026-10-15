@@ -1,4 +1,6 @@
 {
 	"title": "Nearby alerts",
-	"channels_title": "How we tell you"
+	"channels_title": "How we tell you",
+	"area_value": "{place}, {radius} km",
+	"area_none": "No area chosen yet"
 }

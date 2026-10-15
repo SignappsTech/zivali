@@ -1,0 +1,13 @@
+{
+	"title_home": "Choose your home area",
+	"search_label": "Search for a place",
+	"search_placeholder": "Street and house number, or town",
+	"searching": "Searching …",
+	"no_results": "We cannot find that place. Try another name or move the map to the right spot.",
+	"address_unknown": "Unnamed place",
+	"alert_radius_label": "Alert radius",
+	"alert_radius_value": "{km} km",
+	"alert_radius_help": "We will tell you about lost pets within this area.",
+	"privacy_alert": "Only you can see your home area.",
+	"save_area": "Save area"
+}
