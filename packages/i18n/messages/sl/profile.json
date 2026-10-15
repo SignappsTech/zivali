@@ -1,0 +1,19 @@
+{
+	"title": "Profil",
+	"nav_account": "Račun",
+	"signed_out_title": "Vpišite se",
+	"signed_out_body": "Z računom shranite profile svojih živali, prejemate opozorila in se pogovarjate z ljudmi, ki so žival videli.",
+	"signed_out_sign_in": "Vpis",
+	"signed_out_create": "Ustvari račun",
+	"row_language": "Jezik",
+	"row_payments": "Plačila",
+	"row_alerts": "Opozorila v bližini",
+	"row_cookie_settings": "Nastavitve piškotkov",
+	"row_help": "Pomoč in nasveti za varnost",
+	"sign_out": "Odjava",
+	"sign_out_title": "Se želite odjaviti?",
+	"sign_out_body": "Prijave, ki ste jih oddali s te naprave, boste še vedno lahko urejali z nje.",
+	"sign_out_remove_links": "Odstrani tudi povezave za urejanje prijav s te naprave",
+	"sign_out_confirm": "Odjava",
+	"sign_out_cancel": "Prekliči"
+}

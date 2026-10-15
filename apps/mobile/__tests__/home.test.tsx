@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react-native';
 import { IntlProvider } from 'use-intl';
 
 import sl from '@zivali/i18n/dist/sl.json';
-import Home from '@/app/index';
+import Home from '@/app/(tabs)/index';
 
 test('home screen shows the hero title as the heading and the lede', async () => {
 	await render(

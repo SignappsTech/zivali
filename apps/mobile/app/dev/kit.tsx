@@ -1,4 +1,3 @@
-import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { Redirect } from 'expo-router';
 import { useColorScheme } from 'nativewind';
 import { CheckCircleIcon } from 'phosphor-react-native/src/icons/CheckCircle';
@@ -17,7 +16,6 @@ import { XIcon } from 'phosphor-react-native/src/icons/X';
 import { XCircleIcon } from 'phosphor-react-native/src/icons/XCircle';
 import * as React from 'react';
 import { ScrollView, View } from 'react-native';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Circle, Path, Rect } from 'react-native-svg';
 
@@ -48,7 +46,7 @@ import { ChoiceRow, RadioGroup, RadioGroupItem } from '@/components/ui/radio-gro
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
-import { toast, Toaster } from '@/components/ui/sonner';
+import { toast } from '@/components/ui/sonner';
 import { StatusLabel } from '@/components/ui/status-label';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -825,25 +823,19 @@ function Gallery() {
 					</Stack>
 				</Section>
 			</ScrollView>
-			<Toaster closeLabel={s.close} />
 		</>
 	);
 }
 
 /**
  * P23 UI kit gallery (TASK-8.3): every components/ui primitive in its states, SL and EN, light and dark. Dev route
- * `/dev/kit`, never in production. It mounts the gesture, sheet and toast roots itself until the mobile shell
- * (TASK-12.2) moves them into the root layout.
+ * `/dev/kit`, never in production. The gesture, sheet and toast roots are in the root layout (app/_layout.tsx).
  */
 export default function KitScreen() {
 	if (env.EXPO_PUBLIC_APP_ENV === 'production') return <Redirect href="/" />;
 	return (
-		<GestureHandlerRootView style={{ flex: 1 }}>
-			<BottomSheetModalProvider>
-				<SafeAreaView className="flex-1 bg-background">
-					<Gallery />
-				</SafeAreaView>
-			</BottomSheetModalProvider>
-		</GestureHandlerRootView>
+		<SafeAreaView className="flex-1 bg-background">
+			<Gallery />
+		</SafeAreaView>
 	);
 }
