@@ -22,6 +22,8 @@ middleware/<name>.middleware.ts    requestId, validate, error, auth, permission,
 lib/                        config.ts (zod env, read once), logger.ts (pino), errors.ts (AppError + C1 codes),
                             ctx.ts (userCtx, systemCtx), config-store.ts (app_config, 60 s), crypto.ts, openapi.ts (apiRoutes over the @zivali/validation registry)
 scripts/gen-openapi.ts      writes openapi.json; `--check` fails when it is stale (part of `lint`)
+scripts/admin-create.ts     `pnpm admin:create <email>`: promotes a confirmed account to ADMIN (local stack only, else
+                            `--i-know-this-is-production` + typing the email again); never an HTTP endpoint (ADR-018)
 prisma/                     prisma.ts (client singleton), schemas/*.prisma + schemas/migrations/,
                             seed.ts (runs seeders/NN-<name>.seeder.ts in order)
 generated/                  Prisma client output (gitignored, never edited; `prisma generate` rebuilds it)
