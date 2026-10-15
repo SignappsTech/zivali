@@ -4,6 +4,7 @@ import '@zivali/validation/openapi';
 import { app } from './app.ts';
 import { config } from './lib/config.ts';
 import { logger } from './lib/logger.ts';
+import { lockDownPgboss } from './lib/pgboss-lockdown.ts';
 import { prisma } from './prisma/prisma.ts';
 
 const SHUTDOWN_TIMEOUT_MS = 10_000;
@@ -11,6 +12,9 @@ const SHUTDOWN_TIMEOUT_MS = 10_000;
 const server = app.listen(config.PORT, () => {
 	logger.info({ port: config.PORT, app_env: config.APP_ENV }, 'api listening');
 });
+
+// CH-106: RLS on the tables pg-boss creates at runtime. TASK-6.3 runs this after boss.start() and createQueue().
+lockDownPgboss().catch((err: unknown) => logger.error({ err }, 'pgboss lockdown failed'));
 
 function shutdown(signal: NodeJS.Signals): void {
 	logger.info({ signal }, 'api shutting down');
