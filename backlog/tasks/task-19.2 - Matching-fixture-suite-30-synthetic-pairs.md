@@ -1,11 +1,11 @@
 ---
 id: TASK-19.2
 title: 'Matching fixture suite: 30+ synthetic pairs'
-status: To Do
+status: Done
 assignee:
   - '@backend-dev'
 created_date: '2026-10-14 22:13'
-updated_date: '2026-10-15 21:18'
+updated_date: '2026-10-15 21:27'
 labels:
   - be
   - 'est:S'
