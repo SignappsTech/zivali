@@ -17,7 +17,8 @@ import v1Routes from './routes/index.ts';
 
 export const app = express();
 
-// Behind Caddy (one proxy hop), so req.ip is the client address for rate limits.
+// Behind nginx (one proxy hop; it sets X-Forwarded-For to the client address, taken from Cloudflare's
+// CF-Connecting-IP), so req.ip is the client address for rate limits.
 app.set('trust proxy', 1);
 app.disable('x-powered-by');
 

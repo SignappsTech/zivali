@@ -16,15 +16,16 @@ model regions {
 }
 
 model municipalities {
-  id         Int                                                    @id @db.SmallInt
-  slug       String                                                 @unique
-  name_sl    String
-  name_en    String
-  region_id  Int                                                    @db.SmallInt
-  region     regions                                                @relation(fields: [region_id], references: [id])
-  geom       Unsupported("extensions.geography(MultiPolygon,4326)")
-  geo_places geo_places[]
-  reports    reports[]
+  id            Int                                                    @id @db.SmallInt
+  slug          String                                                 @unique
+  name_sl       String
+  name_en       String
+  region_id     Int                                                    @db.SmallInt
+  region        regions                                                @relation(fields: [region_id], references: [id])
+  geom          Unsupported("extensions.geography(MultiPolygon,4326)")
+  geo_places    geo_places[]
+  organisations organisations[]
+  reports       reports[]
 
   @@index([geom], type: Gist)
   @@schema("app")
