@@ -8,17 +8,18 @@ Put keys into `.env.local` (gitignored) unless noted. Never paste secrets into c
 Status 2026-10-15 15:15: tokens checked read-only. Hetzner, Turnstile, Brevo, Google OAuth, GitHub and the Cloudflare zone token work.
 
 ### Open now
-- [ ] **Nameservers for najdimo.si**: the Cloudflare zone is still `pending`. At the registrar, set the nameservers to `courtney.ns.cloudflare.com` and `nikon.ns.cloudflare.com`. Once Cloudflare shows the zone as **Active**, we add the DNS records (server, email SPF/DKIM/DMARC).
-- [ ] **R2 buckets**: your R2 token can't list or create buckets (`AccessDenied`). That's expected for an "Object Read & Write" token, and my earlier note was wrong. Pick one:
-  - **(a)** Create a second R2 token with **Admin Read & Write**, put it in `R2_ADMIN_ACCESS_KEY_ID` and `R2_ADMIN_SECRET_ACCESS_KEY`, and we create the 3 buckets in the EU jurisdiction with their CORS and lifecycle rules. You can revoke it afterwards; the app keeps using the Object token.
-  - **(b)** Create the buckets yourself in the dashboard, each with **Location → Specify jurisdiction → European Union**: `zivali-private`, `zivali-media`, `zivali-backups`. Then scope your existing token to these 3 buckets. We still set CORS and lifecycle rules, and that needs (a) or a few dashboard clicks we'd describe.
-- [ ] **GitHub repo visibility**: `pbozic/zivali` is **public**. Make it **private** before we push anything (Settings → General → Danger zone → Change visibility). The code, docs and business notes would otherwise be public.
-- [ ] **Push decision**: may we push `main` to GitHub once the repo is private? It's needed for CI and deploys, and it's your off-site backup.
-- [ ] **Supabase Google provider**: may we enable Google sign-in on the hosted Supabase project `najdimo` with your OAuth client? So far nothing has been changed on the hosted project. The redirect URI is `https://omtpppzrugibquukhnyl.supabase.co/auth/v1/callback`.
-- [ ] **Turnstile hostnames**: add `najdimo.si`, `staging.najdimo.si` and `localhost` to the widget.
-- [ ] **Brevo sender**: once DNS is active, add `najdimo.si` as a sender domain. We add its DNS records.
+- [ ] **Repo visibility**: make `pbozic/zivali` private when convenient. `main` is already pushed (you said go ahead).
 
 ### Done ✅
+- 2026-10-15 (with your OK):
+  - Nameservers active on Cloudflare (zone najdimo.si, SSL mode Full; it goes to Full (strict) once the server has its certificate).
+  - `main` pushed to GitHub.
+  - Google sign-in enabled on the hosted Supabase project najdimo. The site URL and redirect list get the staging domain at the first deploy.
+  - R2 buckets created in the EU jurisdiction: `zivali-private` (CORS PUT/GET from najdimo.si, www and staging), `zivali-media`, `zivali-backups` (30-day expiry).
+  - Brevo sender domain najdimo.si added; its DKIM, verification and DMARC records are in Cloudflare (authentication requested).
+  - Turnstile: the najdimo.si widget covers all subdomains.
+  - `CERTBOT_CLOUDFLARE_TOKEN` saved (DNS edit, najdimo.si only) for certificate renewal.
+  - `media.najdimo.si` serves the public `zivali-media` bucket (custom domain on the EU bucket works).
 - Domain **najdimo.si** bought and added to Cloudflare.
 - Hetzner: server `ubuntu-4gb-fsn1-2`, CAX11 arm64, Falkenstein, Ubuntu 24.04, running. `HETZNER_API_TOKEN` and `HETZNER_SERVER_IP` are set.
   - No Cloud Firewall yet. With the first deploy we create one: 80 and 443 open, 22 open with key-only SSH, because GitHub's deploy runners use changing IPs.

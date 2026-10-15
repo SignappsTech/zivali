@@ -30,15 +30,18 @@ export type UpdateMeInput = {
 	supporter_badge_visible?: boolean;
 };
 
+/** No phone; the email is masked (`a***@example.si`). */
 export type AdminUser = {
 	id: Uuid;
 	display_name: string | null;
-	email: string | null;
+	email_masked: string | null;
 	role: UserRole;
 	is_anonymous: boolean;
 	created_at: IsoDateTime;
 };
-export type AdminUserQuery = { query?: string; cursor?: string };
+/** `query` matches the display name or the email; `cursor` is the last item's id. */
+export type AdminUserQuery = { query?: string; cursor?: string; limit?: number };
 export type AdminUserList = Page<AdminUser>;
-export type SetRoleInput = { role: UserRole };
+/** A role change is destructive: the note is required and stored in the audit entry. */
+export type SetRoleInput = { role: UserRole; note: string };
 export type SetRoleResponse = { id: Uuid; role: UserRole };

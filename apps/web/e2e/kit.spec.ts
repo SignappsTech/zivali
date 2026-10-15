@@ -13,7 +13,9 @@ const pages = [
 	},
 ];
 
-async function expectNoAxeViolations(page: Page) {
+// `scope` limits the pass to an overlay: the rest of the page is inert or aria-hidden while it is open, and a
+// whole-page scan of the long gallery is what made this spec slow.
+async function expectNoAxeViolations(page: Page, scope?: string) {
 	// Let enter fades finish (dialogs, sheet, toast), so contrast is measured on the settled colours. The skeleton
 	// shimmer and spinners are CSS animations, not transitions, and keep running.
 	await page.waitForFunction(() =>
@@ -21,7 +23,8 @@ async function expectNoAxeViolations(page: Page) {
 			.getAnimations()
 			.every((animation) => !(animation instanceof CSSTransition) || animation.playState === 'finished')
 	);
-	const { violations } = await new AxeBuilder({ page }).analyze();
+	const builder = new AxeBuilder({ page });
+	const { violations } = await (scope ? builder.include(scope) : builder).analyze();
 	expect(
 		violations.map(({ id, nodes }) => `${id}: ${nodes.map((node) => node.target.join(' ')).join(', ')}`)
 	).toEqual([]);
@@ -30,6 +33,7 @@ async function expectNoAxeViolations(page: Page) {
 for (const { path, lang, menu, close, remove } of pages) {
 	for (const colorScheme of ['light', 'dark'] as const) {
 		test(`${path} in ${colorScheme} has no axe violations, closed and with each overlay open`, async ({ page }) => {
+			test.setTimeout(90_000); // guard only; the scoped passes keep it well under
 			const errors: string[] = [];
 			page.on('console', (message) => {
 				if (message.type() === 'error') errors.push(message.text());
@@ -48,7 +52,7 @@ for (const { path, lang, menu, close, remove } of pages) {
 				const dialog = page.getByRole('dialog', { name: menu });
 				await expect(dialog).toBeVisible();
 				await expect(dialog.getByRole('button', { name: close })).toBeVisible();
-				await expectNoAxeViolations(page);
+				await expectNoAxeViolations(page, '[role=dialog]');
 				await page.keyboard.press('Escape');
 				await expect(dialog).toBeHidden();
 				await expect(trigger).toBeFocused();
@@ -59,7 +63,7 @@ for (const { path, lang, menu, close, remove } of pages) {
 			const alert = page.getByRole('alertdialog');
 			await expect(alert).toBeVisible();
 			await expect(alert.getByRole('button', { name: lang === 'sl' ? 'Prekliči' : 'Cancel' })).toBeFocused();
-			await expectNoAxeViolations(page);
+			await expectNoAxeViolations(page, '[role=alertdialog]');
 			await page.keyboard.press('Escape');
 
 			// Toast: announced in the polite region, dismissible.
@@ -76,7 +80,7 @@ for (const { path, lang, menu, close, remove } of pages) {
 			// axe can take longer than the 5 s the toast stays, so it checks a fresh one.
 			await copy.click();
 			await expect(toast).toBeVisible();
-			await expectNoAxeViolations(page);
+			await expectNoAxeViolations(page, 'section[aria-live=polite]');
 
 			expect(errors).toEqual([]);
 		});
