@@ -59,7 +59,8 @@ export default defineConfig({
 				PORT: port,
 				APP_ENV: 'local',
 				HOSTNAME: 'localhost',
-				NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL || 'http://127.0.0.1:54321',
+				// The mock API doubles as Supabase Auth (JWKS) for the signed-in specs, see e2e/session.ts.
+				NEXT_PUBLIC_SUPABASE_URL: api,
 				NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY:
 					process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || 'e2e-placeholder',
 				// Origin of PUT_URL in e2e/photos.spec.ts.
