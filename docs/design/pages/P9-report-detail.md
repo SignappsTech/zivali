@@ -28,7 +28,7 @@ Right column (no card, plain on `background`, sticky from `lg`):
    - Found: primary `lg` "This is my animal" (starts contact, P12); text button "Report a sighting".
    - Sighted: primary `lg` "Message the person who saw it"; text button "This is my animal".
    - Own report: see "Owner view".
-6. Reward line (M4) as a quiet sentence with the gift icon, only when set.
+6. Reward line as a quiet, display-only sentence with the gift icon, only when the owner set one. No payment through the app and no escrow (brief v1.1): the line never mentions Stripe or holding money, and the safety note below covers "never pay before the animal is back".
 7. Safety `note` (one, shield icon): never send money first.
 8. **Slot B:** share and poster as one ghost button "Share or print poster" (menu: Share link, WhatsApp, Facebook, Poster with QR code) (P18).
 9. **Slot C:** report abuse as a quiet text link in an overflow menu ("More": Report abuse, Copy link).
@@ -40,6 +40,8 @@ Below the columns, in order: **Where it was seen** (map left with area disc, sig
 Photo carousel full-bleed under the status bar (swipe, page position shown as small text below the photo, not on it), floating round icon buttons for back and share over the photo with a soft scrim circle. Then status word, h1, facts, area line and a map thumbnail (opens a full map sheet), "About", sightings, ad slot, nearby tiles. **Sticky bottom action bar** (`card`, 20 px padding): primary `lg` action from slot A and a text button for the secondary; overflow icon opens More. Bottom navigation hides on this screen.
 
 ## Owner view (the signed-in owner or the manage-link holder)
+
+The owner of a lost report also sees the **responsible shelter** row (as in P6): name for the municipality, the number on web, and a call action (FR-044).
 
 Replaces slot A with: primary `lg` "Animal is home again" (P14), text buttons "Edit", "Poster", and an overflow with "Close search", "Boost" (M4, hidden until then). A calm `note` appears when there are new match suggestions ("2 possible matches", link to P11) and when the report is held or hidden. The owner also sees their exact pin with "visible only to you" on the map.
 
@@ -54,7 +56,7 @@ Replaces slot A with: primary `lg` "Animal is home again" (P14), text buttons "E
 | Held or hidden | owner sees why (note); everyone else gets the 410 page |
 | Removed or expired | 410 page from P1 with a link to the map; not indexable |
 | Anonymous finder's report | status and facts the same; shows "Reported by a finder" instead of a name |
-| Shelter report (M3) | `verified` pill "Verified shelter" with the shelter name |
+| Shelter report (M3) | A `card` (web; plain block on mobile) with the page's one tonal pill `verified` "Verified shelter", the shelter name and place, "in the shelter since {date}", and a call action: on web the phone number in `tabular-nums` next to a `secondary` call button (desktop cannot tap to call), on mobile the call is the text button in the action bar. No countdown bar or days-left count: the holding period sentence appears only when the `content.legal_timings` flag is on (Q-006, the app never asserts legal duties). "Report a sighting" is hidden while the animal is in a shelter. |
 
 ## States
 

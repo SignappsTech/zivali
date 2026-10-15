@@ -2,7 +2,7 @@
 doc: design-system
 title: Design system (slice)
 source: 03§Brand and visual language
-version: 0.8
+version: 0.9
 status: Draft, direction A (Lagoon) chosen by the client
 date: 2026-10-15
 owner: Design Lead
@@ -514,7 +514,7 @@ Web = shadcn/ui, mobile = React Native Reusables (NativeWind). Same names, same 
 | Floating area control | `card` pill, 48 high, `shadow-md`: map-pin, "Ljubljana, 10 km", and a 32 px `secondary` circle with the filters icon. It is the only control on the map; it opens the filter sheet (status pills, species, radius). No locate button. |
 | Bottom sheet | `card`, top radius 28, grabber 40x5, `shadow-lg`, 20 px side padding. Snap points: peek about 40 % of the screen, full 92 %. Scrim behind modals. |
 | Flow top bar | 56 px: back (icon button), **one bar per step** (the count comes from the flow's page slice, for example 7 for the lost flow; 4 px high, gap 6, equal widths, `primary` for done steps and the current one, `muted` for the rest), close. No title. The bars are one `role="progressbar"` with `aria-valuenow` and `aria-valuemax` and the name "Korak {current} od {total}" from the content slice. Flows keep to 8 steps or fewer so the bars stay readable at 320 px. |
-| Web header | 88 px, no border, on `background`. Logo left, at most 4 text links (16 semibold; the current page is `foreground` **and underlined**, others `muted-foreground`, so it is not colour only), right: language switch, ghost "Vpis" (EN "Sign in") and a `sm` primary "Prijavi". Signed in: the fourth link is the short label "Moje živali" (EN "My pets"; reports are inside), inbox icon button and avatar menu. The header must fit without overflow from 1024 px; if it does not, the language switch moves into the account menu below `xl`. |
+| Web header | 88 px, no border, on `background`. Logo left, at most 4 text links (16 semibold; the current page is `foreground` **and underlined**, others `muted-foreground`, so it is not colour only), right: language switch, ghost "Vpis" (EN "Sign in") and a `sm` "Prijavi": `primary` by default, `secondary` on pages whose content has its own primary action (P3 home hero, P9 detail, P22 form), so a view never shows two primaries. Same place, label and menu either way. Signed in: the fourth link is the short label "Moje živali" (EN "My pets"; reports are inside), inbox icon button and avatar menu. The header must fit without overflow from 1024 px; if it does not, the language switch moves into the account menu below `xl`. |
 | Web footer | Content variant: logo with tagline, wrapped rows of the 13 links (How it works, Safety tips, FAQ, For shelters, Shelters (the public directory), Partners, About, Privacy, Cookies, Cookie settings, Terms, Imprint, Accessibility), language, copyright line; no panel. **Flow variant: minimal** single quiet row (Privacy, Terms, Cookie settings, Accessibility), no logo block, no copyright. |
 
 ## 10.8 Flow screen ("one question per screen")
@@ -664,3 +664,4 @@ Each page slice in `docs/design/pages/P<n>-<slug>.md` gets one static mockup at 
 | 0.6 | 2026-10-15 | P16 review (TASK-9.1): `provider` button variant and `provider`, `provider-foreground`, `provider-border` tokens (brand-literal white and near-black with a 1 px stroke, same on every surface; tokens 0.4.0). |
 | 0.7 | 2026-10-15 | FR-044 shelter directory: footer gains the "Shelters" link (13 links). Screens live in P3 (T5, T6), P19 and the P6 and P7 call rows. |
 | 0.8 | 2026-10-15 | P5 review (TASK-15.1): area discs take the status hue (found green, sighted blue, own alert area teal; lost stays `marker-area`), pin marker documented, content dialog (up to 600 px, h2 title) for web flow steps. |
+| 0.9 | 2026-10-15 | P9 review (TASK-18.1): header "Prijavi" is `secondary` when the page has its own primary. |
