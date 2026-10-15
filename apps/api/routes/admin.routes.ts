@@ -15,10 +15,12 @@ import {
 	AdminAbuseReportList,
 	AdminAbuseReportQuery,
 	AdminQueues,
+	AdminLeadList,
 	AdminUserList,
 	AdminUserQuery,
 	AuditLogList,
 	AuditLogQuery,
+	CursorQuery,
 	IdParams,
 	ModerationFlagList,
 	ModerationFlagQuery,
@@ -28,6 +30,7 @@ import {
 
 import AbuseReportsController from '../controllers/abuse-reports.controller.ts';
 import AdminController from '../controllers/admin.controller.ts';
+import PartnersController from '../controllers/partners.controller.ts';
 import { apiRoutes } from '../lib/openapi.ts';
 import { authMiddleware } from '../middleware/auth.middleware.ts';
 import { requireAal2, requireRole } from '../middleware/permission.middleware.ts';
@@ -103,6 +106,21 @@ route(
 	},
 	adminOnly,
 	AdminController.getQueues
+);
+
+route(
+	{
+		method: 'get',
+		path: '/leads',
+		operationId: 'listAdminLeads',
+		summary: 'Partner leads',
+		description: 'Admins (aal2). Enquiries from the partners page, newest first, with contact data (C14). Audited.',
+		request: { query: CursorQuery },
+		responses: { 200: { description: 'One page of leads', schema: AdminLeadList } },
+		errors: [...staffErrors],
+	},
+	adminOnly,
+	PartnersController.listLeads
 );
 
 // Ads (C14 §Admin, TASK-37.2): admins (aal2) only; every write is audited.
