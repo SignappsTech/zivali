@@ -7,7 +7,7 @@ status: In Progress
 assignee:
   - '@backend-dev'
 created_date: '2026-10-14 23:35'
-updated_date: '2026-10-15 05:43'
+updated_date: '2026-10-15 06:47'
 labels:
   - be
   - 'est:M'
@@ -37,9 +37,9 @@ Branch: agent/task-6.12-api-auth
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 authMiddleware verifies Supabase access tokens with jose against the JWKS (HS256 secret fallback locally), returns UNAUTHENTICATED for invalid or expired tokens and builds the actor { user_id, role, is_anonymous, aal, email_verified, locale }; optionalAuth never blocks; ensureProfile creates missing profiles.
-- [ ] #2 Guards requireVerified, requireRole, requireAal2 and rejectAnonymous return the C1 codes; tests use locally signed tokens for every actor type.
-- [ ] #3 rateLimit (Postgres fixed window, HMAC-hashed IP and device keys, Retry-After) and the idempotency middleware (24 h replay for the same user, CONFLICT for another user, secrets encrypted) work per C1 with tests.
-- [ ] #4 Context helpers userCtx(req) and systemCtx() expose actor, locale, hashes, now, jobs, logger and adapters; AuditDao.write and a 60 s config store exist; GET /v1/config/public returns the public app_config flags.
-- [ ] #5 pg-boss tables created at runtime (pgboss schema) have RLS enabled by a startup hook after creation, covered in test/security (same as CH-103 for TASK-6.3)
+- [x] #1 authMiddleware verifies Supabase access tokens with jose against the JWKS (HS256 secret fallback locally), returns UNAUTHENTICATED for invalid or expired tokens and builds the actor { user_id, role, is_anonymous, aal, email_verified, locale }; optionalAuth never blocks; ensureProfile creates missing profiles.
+- [x] #2 Guards requireVerified, requireRole, requireAal2 and rejectAnonymous return the C1 codes; tests use locally signed tokens for every actor type.
+- [x] #3 rateLimit (Postgres fixed window, HMAC-hashed IP and device keys, Retry-After) and the idempotency middleware (24 h replay for the same user, CONFLICT for another user, secrets encrypted) work per C1 with tests.
+- [x] #4 Context helpers userCtx(req) and systemCtx() expose actor, locale, hashes, now, jobs, logger and adapters; AuditDao.write and a 60 s config store exist; GET /v1/config/public returns the public app_config flags.
+- [x] #5 pg-boss tables created at runtime (pgboss schema) have RLS enabled by a startup hook after creation, covered in test/security (same as CH-103 for TASK-6.3)
 <!-- AC:END -->
