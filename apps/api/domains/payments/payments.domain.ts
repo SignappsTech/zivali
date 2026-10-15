@@ -8,7 +8,6 @@ import { USER_AMOUNT_PURPOSES, type Locale, type PaymentPurpose } from '@zivali/
 import type { CheckoutInput } from '@zivali/validation';
 
 import type { PAYMENT_PURPOSE, PAYMENT_STATUS } from '../../generated/enums.ts';
-import configStore from '../../lib/config-store.ts';
 import { config } from '../../lib/config.ts';
 import type { Actor, Ctx } from '../../lib/ctx.ts';
 import { AppError } from '../../lib/errors.ts';
@@ -39,9 +38,6 @@ const PRODUCT: Record<Locale, Record<PaymentPurpose, string>> = {
 	},
 };
 
-// app_config payments.prices (C13): only the keys used so far are read.
-const Prices = z.object({ boost_cents: z.number().int().min(MIN_CENTS) });
-
 // C15 paymentsReturn: /placila/zakljucek (sl), /en/payments/return (en); the app returns through its scheme.
 const RETURN_PATH: Record<Locale, string> = { sl: '/placila/zakljucek', en: '/en/payments/return' };
 export const APP_RETURN_URL = 'zivali://payments/return';
@@ -49,14 +45,6 @@ export const APP_RETURN_URL = 'zivali://payments/return';
 function signedIn(ctx: Ctx): Actor {
 	if (!ctx.actor || ctx.actor.is_anonymous) throw new AppError('UNAUTHENTICATED', 'Sign in required');
 	return ctx.actor;
-}
-
-async function fixedPrice(purpose: PaymentPurpose): Promise<number> {
-	// Subscriptions (Premium, Podpornik, Vet Partner) need a plan and Stripe Billing: M4.
-	if (purpose === 'subscription') throw new AppError('SERVICE_UNAVAILABLE', 'Subscriptions are not available yet');
-	const prices = Prices.safeParse(await configStore.get('payments.prices'));
-	if (!prices.success) throw new Error('app_config payments.prices is missing or invalid');
-	return prices.data.boost_cents;
 }
 
 function returnUrls(paymentId: string, input: z.infer<typeof CheckoutInput>) {
@@ -81,12 +69,21 @@ export async function createCheckout(
 	ctx: Ctx
 ): Promise<{ payment_id: string; checkout_url: string }> {
 	const actor = signedIn(ctx);
-	const amount = USER_AMOUNT.includes(input.purpose) ? input.amount_cents! : await fixedPrice(input.purpose);
+	// Boosts and subscriptions have no effect before M4 (Premium/Podpornik, boost placement): C13 answers 503
+	// rather than taking money for nothing.
+	if (!USER_AMOUNT.includes(input.purpose))
+		throw new AppError('SERVICE_UNAVAILABLE', `${input.purpose} payments are not available yet`);
+	const amount = input.amount_cents!;
 	if (amount < MIN_CENTS)
 		throw new AppError('MIN_AMOUNT', 'Minimum card amount is EUR 2.00', { min_cents: MIN_CENTS });
-	const report_id = input.refs?.report_id;
-	if (input.purpose === 'report_contribution' && !(await PaymentsDao.isReportManager(report_id!, actor.user_id)))
-		throw new AppError('FORBIDDEN', 'Not a manager of this report');
+	let report_id = input.refs?.report_id;
+	if (report_id) {
+		const manager = await PaymentsDao.isReportManager(report_id, actor.user_id);
+		// report_contribution is for the report's managers; a tip or support link to someone else's report is dropped.
+		if (!manager && input.purpose === 'report_contribution')
+			throw new AppError('FORBIDDEN', 'Not a manager of this report');
+		if (!manager) report_id = undefined;
+	}
 
 	const id = randomUUID();
 	const { payments } = ctx.adapters;

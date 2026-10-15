@@ -5,6 +5,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createPayments } from '../../adapters/payments/index.ts';
 import { mockEvent, mockPayments, signWebhook } from '../../adapters/payments/mock.ts';
 import { stripePayments } from '../../adapters/payments/stripe.ts';
+import { STRIPE_API_VERSION } from '../../adapters/payments/stripe-version.ts';
 import { config, type Config } from '../../lib/config.ts';
 
 const blank: Config = {
@@ -157,7 +158,12 @@ describe('stripe createCheckout', () => {
 		expect(result).toEqual({ id: 'cs_test_9', url: 'https://checkout.stripe.com/c/pay/cs_test_9' });
 		const [url, init] = fetch.mock.calls[0]!;
 		expect(url).toBe('https://api.stripe.com/v1/checkout/sessions');
-		expect(init?.headers).toMatchObject({ authorization: 'Bearer sk_test_secret', 'idempotency-key': 'p9' });
+		expect(init?.headers).toMatchObject({
+			authorization: 'Bearer sk_test_secret',
+			'idempotency-key': 'p9',
+			'stripe-version': STRIPE_API_VERSION,
+		});
+		expect(init?.signal).toBeInstanceOf(AbortSignal);
 		const form = Object.fromEntries(init?.body as URLSearchParams);
 		expect(form).toMatchObject({
 			mode: 'payment',
@@ -190,6 +196,22 @@ describe('stripe createCheckout', () => {
 			new Response(JSON.stringify({ id: 'cs_live_1', url: 'https://x', livemode: true }), { status: 200 })
 		);
 		await expect(adapter.createCheckout(input)).rejects.toMatchObject({ code: 'LIVE_MODE_FORBIDDEN' });
+	});
+
+	it('maps a timeout or network failure to SERVICE_UNAVAILABLE', async () => {
+		const adapter = stripePayments('sk_test_secret', 'whsec_x');
+		vi.spyOn(globalThis, 'fetch').mockRejectedValueOnce(new DOMException('timed out', 'TimeoutError'));
+		await expect(
+			adapter.createCheckout({
+				paymentId: 'p9',
+				amountCents: 500,
+				currency: 'eur',
+				description: 'x',
+				locale: 'en',
+				successUrl: 'https://a.si/s',
+				cancelUrl: 'https://a.si/c',
+			})
+		).rejects.toMatchObject({ code: 'SERVICE_UNAVAILABLE' });
 	});
 });
 

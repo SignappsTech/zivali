@@ -148,21 +148,15 @@ describe('POST /v1/payments/checkout amounts', () => {
 		expect((await checkout(auth, { ...tip, amount_cents: 50_000 })).status).toBe(200);
 	});
 
-	it('prices boost from app_config payments.prices, never from the client; subscriptions wait for M4', async () => {
+	it('answers 503 for boost and subscription until M4 and writes no payment row', async () => {
 		const { id, auth } = await user();
-		const prices = await prisma.app_config.findUniqueOrThrow({ where: { key: 'payments.prices' } });
-		const res = await checkout(auth, { purpose: 'boost', locale: 'en', return_to: '/my-reports' });
-		expect(res.status).toBe(200);
-		const row = await prisma.payments.findUniqueOrThrow({ where: { id: res.body.payment_id } });
-		expect(row).toMatchObject({
-			purpose: 'BOOST',
-			amount_cents: (prices.value as { boost_cents: number }).boost_cents,
-		});
-		expect(row.amount_cents).toBe(499);
-		const sub = await checkout(auth, { purpose: 'subscription', locale: 'en', return_to: '/account' });
-		expect(sub.status).toBe(503);
-		expect(sub.body.error.code).toBe('SERVICE_UNAVAILABLE');
-		expect(await prisma.payments.count({ where: { user_id: id } })).toBe(1);
+		for (const purpose of ['boost', 'subscription'])
+			for (const refs of [undefined, { report_id: await ownReport(id) }]) {
+				const res = await checkout(auth, { purpose, locale: 'en', return_to: '/my-reports', refs });
+				expect(res.status).toBe(503);
+				expect(res.body.error.code).toBe('SERVICE_UNAVAILABLE');
+			}
+		expect(await prisma.payments.count({ where: { user_id: id } })).toBe(0);
 	});
 
 	it('keeps payments.live_allowed false and private (live gate, C13)', async () => {
@@ -191,6 +185,22 @@ describe('POST /v1/payments/checkout refs and return URLs', () => {
 			refs: { report_id },
 		});
 		expect(await prisma.payments.count({ where: { user_id: other.id } })).toBe(0);
+	});
+
+	it('stores a tip or support report ref only for a report the caller manages', async () => {
+		const owner = await user();
+		const other = await user();
+		const report_id = await ownReport(owner.id);
+		const mine = await checkout(owner.auth, { ...tip, refs: { report_id } });
+		expect(await prisma.payments.findUniqueOrThrow({ where: { id: mine.body.payment_id } })).toMatchObject({
+			refs: { report_id },
+		});
+		for (const refs of [{ report_id }, { report_id: randomUUID() }]) {
+			const res = await checkout(other.auth, { ...tip, purpose: 'support', refs });
+			expect(res.status).toBe(200);
+			const row = await prisma.payments.findUniqueOrThrow({ where: { id: res.body.payment_id } });
+			expect(row.refs).toBeNull();
+		}
 	});
 
 	it('returns to the localised web page, or through zivali://payments/return for the app', async () => {

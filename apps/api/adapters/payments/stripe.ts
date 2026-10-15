@@ -5,6 +5,7 @@ import { z } from 'zod';
 
 import { AppError } from '../../lib/errors.ts';
 import type { PaymentEvent, PaymentsAdapter } from './index.ts';
+import { STRIPE_API_VERSION } from './stripe-version.ts';
 
 const TOLERANCE_S = 300;
 
@@ -94,12 +95,23 @@ export function stripePayments(secretKey: string, webhookSecret: string): Paymen
 				'line_items[0][price_data][unit_amount]': String(input.amountCents),
 				'line_items[0][price_data][product_data][name]': input.description,
 			});
-			const res = await fetch('https://api.stripe.com/v1/checkout/sessions', {
-				method: 'POST',
-				// One session per payment row: a retried request reuses it.
-				headers: { authorization: `Bearer ${secretKey}`, 'idempotency-key': input.paymentId },
-				body: form,
-			});
+			let res: Response;
+			try {
+				res = await fetch('https://api.stripe.com/v1/checkout/sessions', {
+					method: 'POST',
+					// One session per payment row: a retried request reuses it.
+					headers: {
+						authorization: `Bearer ${secretKey}`,
+						'idempotency-key': input.paymentId,
+						'stripe-version': STRIPE_API_VERSION,
+					},
+					body: form,
+					signal: AbortSignal.timeout(10_000),
+				});
+			} catch {
+				// Timeout or network failure: the provider is unavailable (C1/C13), no payment row is written.
+				throw new AppError('SERVICE_UNAVAILABLE', 'Payment provider unavailable');
+			}
 			if (!res.ok) throw new Error(`stripe: HTTP ${res.status}`);
 			const json = (await res.json()) as { id: string; url: string; livemode?: boolean };
 			if (json.livemode) throw new AppError('LIVE_MODE_FORBIDDEN', 'Live mode is refused (test mode only)');
