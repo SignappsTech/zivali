@@ -1,13 +1,14 @@
 ---
 id: TASK-1.2
 title: 'QA: Design system: brand direction and design tokens'
-status: To Do
+status: Done
 assignee:
   - '@qa'
 created_date: '2026-10-14 22:14'
+updated_date: '2026-10-15 01:59'
 labels:
   - qa
-  - 'est:XS'
+  - 'qa:pass'
 milestone: m-0
 dependencies:
   - TASK-1.1
