@@ -19,10 +19,14 @@ export type Shelter = {
 };
 export type ShelterPage = Shelter & { municipalities: { slug: string; name: string }[] };
 export type MunicipalityRef = { slug: string; name: string };
-/** Unconfirmed and outside_slovenia carry no shelter, so no phone number (R-044.5). */
+export type LikelyShelter = { slug: string; name: string; phone: string; distance_km: number };
+export type NearestShelter = { slug: string; name: string; distance_km: number };
+/** Phone only in confirmed and likely; likely is unconfirmed (secondary call button, "Ni potrjeno"). */
 export type ResponsibleShelterResponse =
 	| { status: 'confirmed'; municipality: MunicipalityRef; shelter: Shelter }
-	| { status: 'unconfirmed' | 'outside_slovenia'; municipality?: MunicipalityRef };
+	| { status: 'likely'; municipality: MunicipalityRef; likely_shelter: LikelyShelter }
+	| { status: 'unconfirmed'; municipality: MunicipalityRef; nearest: NearestShelter[] }
+	| { status: 'outside_slovenia'; municipality?: MunicipalityRef };
 export type ResponsibleShelterArg = { lat: number; lng: number } | { municipality: string };
 
 /** Points are rounded to 2 decimals before leaving the device (C4 §REST privacy). */
@@ -52,10 +56,12 @@ export const { useGetResponsibleShelterQuery, useListSheltersQuery, useGetShelte
 
 export type ResponsibleShelterResult =
 	| { status: 'loading' | 'error'; shelter: null; municipality?: undefined }
-	| { status: 'unconfirmed' | 'outside_slovenia'; shelter: null; municipality?: MunicipalityRef }
+	| { status: 'outside_slovenia'; shelter: null; municipality?: MunicipalityRef }
+	| { status: 'unconfirmed'; shelter: null; municipality?: MunicipalityRef; nearest: NearestShelter[] }
+	| { status: 'likely'; shelter: null; municipality?: MunicipalityRef; likely_shelter: LikelyShelter }
 	| { status: 'confirmed'; shelter: Shelter; municipality?: MunicipalityRef };
 
-/** Pure mapping, shared by the hook and tests. The shelter (and its phone) is only returned when confirmed. */
+/** Pure mapping, shared by the hook and tests. `shelter` (the confirmed one) is only set when confirmed; a likely phone lives in `likely_shelter`. */
 export function toResult(
 	data: ResponsibleShelterResponse | undefined,
 	isError: boolean,
@@ -67,9 +73,17 @@ export function toResult(
 	if (data.status === 'confirmed') {
 		return data.shelter
 			? { status: 'confirmed', shelter: data.shelter, municipality }
-			: { status: 'unconfirmed', shelter: null, municipality };
+			: { status: 'unconfirmed', shelter: null, municipality, nearest: [] };
 	}
-	return { status: data.status, shelter: null, municipality };
+	if (data.status === 'likely') {
+		return data.likely_shelter
+			? { status: 'likely', shelter: null, municipality, likely_shelter: data.likely_shelter }
+			: { status: 'unconfirmed', shelter: null, municipality, nearest: [] };
+	}
+	if (data.status === 'unconfirmed') {
+		return { status: 'unconfirmed', shelter: null, municipality, nearest: (data.nearest ?? []).slice(0, 2) };
+	}
+	return { status: 'outside_slovenia', shelter: null, municipality };
 }
 
 /** `useResponsibleShelter({ lat, lng })` or `useResponsibleShelter({ municipality })`; `null` skips the request. */

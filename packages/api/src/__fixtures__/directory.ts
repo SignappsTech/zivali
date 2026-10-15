@@ -18,7 +18,25 @@ export const responsibleConfirmed = {
 	shelter: ljubljanaShelter,
 };
 
-export const responsibleUnconfirmed = { status: 'unconfirmed', municipality: { slug: 'osilnica', name: 'Osilnica' } };
+export const responsibleLikely = {
+	status: 'likely',
+	municipality: { slug: 'kocevje', name: 'Kočevje' },
+	likely_shelter: {
+		slug: 'zavetisce-ljubljana',
+		name: 'Zavetišče Ljubljana',
+		phone: '+38612345678',
+		distance_km: 62.4,
+	},
+};
+
+export const responsibleUnconfirmed = {
+	status: 'unconfirmed',
+	municipality: { slug: 'osilnica', name: 'Osilnica' },
+	nearest: [
+		{ slug: 'zavetisce-ljubljana', name: 'Zavetišče Ljubljana', distance_km: 71.2 },
+		{ slug: 'zavetisce-kocevje', name: 'Zavetišče Kočevje', distance_km: 18.9 },
+	],
+};
 
 export const responsibleOutside = { status: 'outside_slovenia' };
 
