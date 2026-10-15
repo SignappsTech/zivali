@@ -101,6 +101,9 @@
 		"date": "Date: {paid_at}",
 		"amount": "Amount: {amount}",
 		"reference": "Reference: {receipt_ref}",
+		"invoice": "{has_invoice, select, yes {Invoice no. {invoice_number}} other {}}",
+		"zoi": "{has_invoice, select, yes {ZOI: {zoi}} other {}}",
+		"eor": "{has_eor, select, yes {EOR: {eor}} other {}}",
 		"test_note": "{is_test, select, yes {Test payment – your card was not charged.} other {}}",
 		"not_donation": "This is a payment receipt, not a donation receipt."
 	}

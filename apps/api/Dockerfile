@@ -40,6 +40,8 @@ WORKDIR /app
 COPY --from=build /out/package.json ./
 COPY --from=build /out/node_modules ./node_modules
 COPY --from=build /repo/apps/api/dist ./dist
+# The invoice PDF fonts (lib/invoice-pdf.ts finds them at ../assets from dist/).
+COPY apps/api/assets ./assets
 COPY --from=build /repo/apps/api/prisma.config.ts ./
 COPY --from=build /repo/apps/api/prisma/schemas ./prisma/schemas
 # The reference data the seed loads in every environment (01-geo, 02-geo-places, 05-directory), where the bundled

@@ -28,7 +28,8 @@ export type ApiRouteSpec = {
 	summary: string;
 	description?: string;
 	request?: { params?: ZodObject; query?: ZodObject; body?: ZodType };
-	responses: Record<number, { description: string; schema?: ZodType }>;
+	/** `contentType` for a non-JSON body, e.g. 'application/pdf' with a binary string schema. */
+	responses: Record<number, { description: string; schema?: ZodType; contentType?: string }>;
 	/**
 	 * C1 codes this route can answer with besides the automatic ones (VALIDATION when the request has a schema,
 	 * RATE_LIMITED, INTERNAL), e.g. ['UNAUTHENTICATED', 'FORBIDDEN', 'NOT_FOUND'].
@@ -36,7 +37,7 @@ export type ApiRouteSpec = {
 	errors?: ErrorCode[];
 };
 
-const json = (schema: ZodType) => ({ content: { 'application/json': { schema } } });
+const json = (schema: ZodType, type = 'application/json') => ({ content: { [type]: { schema } } });
 
 // C1 codes grouped by HTTP status: { 403: ['FORBIDDEN', 'AAL2_REQUIRED'], … }.
 function errorResponses(codes: ErrorCode[]) {
@@ -76,9 +77,9 @@ export function apiRoutes(router: Router, basePath: string) {
 			},
 			responses: {
 				...Object.fromEntries(
-					Object.entries(responses).map(([status, { description: text, schema }]) => [
+					Object.entries(responses).map(([status, { description: text, schema, contentType }]) => [
 						status,
-						{ description: text, ...(schema && json(schema)) },
+						{ description: text, ...(schema && json(schema, contentType)) },
 					])
 				),
 				...errorResponses([

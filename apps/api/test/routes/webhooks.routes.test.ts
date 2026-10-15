@@ -9,8 +9,10 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { adapters } from '../../adapters/index.ts';
 import { mockEvent, signWebhook } from '../../adapters/payments/mock.ts';
 import { app } from '../../app.ts';
+import { PaymentsDomain } from '../../domains/payments/index.ts';
 import { runJob } from '../../jobs/index.ts';
 import { config } from '../../lib/config.ts';
+import { systemCtx } from '../../lib/ctx.ts';
 import { drain, startJobs } from '../../lib/jobs.ts';
 import { prisma } from '../../prisma/prisma.ts';
 import { createAuthUser, deleteAuthUsers, signTestToken } from '../helpers/token.ts';
@@ -25,6 +27,7 @@ beforeAll(() => startJobs(), 30_000);
 afterAll(async () => {
 	await prisma.payment_events.deleteMany({ where: { provider_event_id: { in: eventIds } } });
 	await prisma.notifications.deleteMany({ where: { user_id: { in: ids } } });
+	await prisma.invoices.deleteMany({ where: { payment: { user_id: { in: ids } } } });
 	await prisma.payments.deleteMany({ where: { user_id: { in: ids } } });
 	await deleteAuthUsers(ids);
 });
@@ -96,6 +99,16 @@ describe('signature and live mode', () => {
 		expect(res.body.error.code).toBe('LIVE_MODE_FORBIDDEN');
 		expect(await prisma.payment_events.count({ where: { provider_event_id: JSON.parse(raw).id } })).toBe(0);
 		expect(await status(payment_id)).toBe('PENDING');
+	});
+
+	it('records livemode events only with a live key: money a live checkout took is never dropped', async () => {
+		const { auth } = await user();
+		const payment_id = await pay(auth);
+		const rawBody = JSON.stringify({ ...JSON.parse(mockEvent('success', payment_id)), livemode: true });
+		eventIds.push(JSON.parse(rawBody).id);
+		const live = systemCtx({ adapters: { ...adapters, payments: { ...adapters.payments, live: true } } });
+		await PaymentsDomain.handleWebhook({ rawBody, signature: signWebhook(rawBody, SECRET) }, live);
+		expect(await status(payment_id)).toBe('SUCCEEDED');
 	});
 });
 
@@ -210,6 +223,20 @@ describe('mock provider end to end', () => {
 		expect(mail(en.email)[0]!.text).toContain(`Reference: ${paid.en.slice(0, 8).toUpperCase()}`);
 		expect(mail(sl.email)).toHaveLength(1);
 		expect(mail(sl.email)[0]!.subject).toBe('Test · Potrdilo o plačilu: 5,00 €');
+
+		// The fiscal invoice (TASK-92, mock provider) came first: its number, ZOI and EOR are on the receipt.
+		for (const [who, payment_id, label, gross] of [
+			[en, paid.en, 'Invoice no.', 700],
+			[sl, paid.sl, 'Račun št.', 500],
+		] as const) {
+			const invoice = await prisma.invoices.findUniqueOrThrow({ where: { payment_id } });
+			expect(invoice).toMatchObject({ status: 'VERIFIED', gross_cents: gross, vat_rate: 22 });
+			const { text, html } = mail(who.email)[0]!;
+			for (const line of [`${label} ${invoice.number}`, `ZOI: ${invoice.zoi}`, `EOR: ${invoice.eor}`]) {
+				expect(text).toContain(line);
+				expect(html).toContain(line);
+			}
+		}
 
 		for (const [who, payment_id] of [
 			[en, paid.en],

@@ -34,6 +34,7 @@ export function mockEvent(outcome: keyof typeof MOCK_OUTCOMES, paymentId: string
 export function mockPayments(appUrl: string, secret: string): PaymentsAdapter {
 	return {
 		provider: 'mock',
+		live: false,
 		async createCheckout({ paymentId }) {
 			const url = new URL('/dev/checkout', appUrl);
 			url.searchParams.set('payment_id', paymentId);

@@ -328,6 +328,43 @@
 			"delete": "keep",
 			"other_columns": ["id", "provider", "provider_event_id", "type", "received_at"]
 		},
+		"invoices": {
+			"category": "payments",
+			"personal_data": ["payment_id", "pdf_key"],
+			"basis": "legal obligation (GDPR art. 6(1)(c)): fiscally verified invoices of card payments (ZDavPR, ZDDV-1; C13); linked to a person only through payments.user_id, no name or contact on the invoice",
+			"retention": "10 years after the end of the year of issue (ZDDV-1 art. 88 invoice retention; the accountant confirms, Q-012)",
+			"export": true,
+			"delete": "keep (the payment is anonymised: user_id set null)",
+			"other_columns": [
+				"id",
+				"premise_id",
+				"device_id",
+				"sequence",
+				"number",
+				"issued_at",
+				"net_cents",
+				"vat_rate",
+				"vat_cents",
+				"gross_cents",
+				"provider",
+				"zoi",
+				"eor",
+				"status",
+				"attempts",
+				"verified_at",
+				"created_at",
+				"updated_at"
+			]
+		},
+		"invoice_sequences": {
+			"category": "payments",
+			"personal_data": [],
+			"basis": "legal obligation (GDPR art. 6(1)(c)): gapless invoice numbering per premise and device (ZDavPR)",
+			"retention": "kept while the premise and device are registered with FURS",
+			"export": false,
+			"delete": "keep",
+			"other_columns": ["premise_id", "device_id", "last_sequence"]
+		},
 		"ads": {
 			"category": "ads",
 			"personal_data": ["created_by"],
@@ -532,11 +569,15 @@
 	"buckets": {
 		"zivali-private": {
 			"category": "media",
-			"personal_data": ["uploaded photos (originals and variants)", "owner_id in object keys"],
-			"basis": "contract (GDPR art. 6(1)(b))",
-			"retention": "unattached uploads 24 h; report photos 12 months after close; pet photos until the pet is deleted (C5)",
+			"personal_data": [
+				"uploaded photos (originals and variants)",
+				"owner_id in object keys",
+				"fiscal invoice PDFs (invoices/<invoice id>.pdf, linked to a person through the payment)"
+			],
+			"basis": "contract (GDPR art. 6(1)(b)); invoice PDFs: legal obligation (art. 6(1)(c), ZDDV-1)",
+			"retention": "unattached uploads 24 h; report photos 12 months after close; pet photos until the pet is deleted (C5); invoice PDFs 10 years like invoices",
 			"export": true,
-			"delete": "delete"
+			"delete": "delete (invoice PDFs are kept with their invoice)"
 		},
 		"zivali-media": {
 			"category": "media",
