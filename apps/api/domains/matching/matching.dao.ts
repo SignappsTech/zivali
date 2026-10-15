@@ -1,6 +1,7 @@
-// Prisma access for matching (C8). Candidate pairs are parameterised $queryRaw (TypedSQL needs a live database at build
-// time, CH-117) over the GiST indexes on reports.exact_point and reports.public_point.
+// Prisma access for matching (C8): the engine and the managers' review. Candidate pairs are parameterised $queryRaw
+// (TypedSQL needs a live database at build time, CH-117) over the GiST indexes on reports.exact_point and public_point.
 import { Prisma } from '../../generated/client.ts';
+import type { MATCH_STATE } from '../../generated/enums.ts';
 import { prisma } from '../../prisma/prisma.ts';
 
 /** One lost report and one found or sighted report, with what scoreMatch needs. */
@@ -160,8 +161,121 @@ export async function notificationData(matchId: string, reportId: string, userId
 	return { match, lost: lost!, other: other! };
 }
 
+/**
+ * What match_confirmed needs, for one manager of the other report (null unless the match is confirmed with this
+ * conversation, the recipient manages the other report and it is still open or matched).
+ */
+export async function confirmedData(matchId: string, conversationId: string, userId: string) {
+	const match = await prisma.matches.findUnique({
+		where: { id: matchId },
+		select: {
+			state: true,
+			conversation: { select: { id: true } },
+			other_report: {
+				select: {
+					short_code: true,
+					type: true,
+					species: true,
+					status: true,
+					managers: { where: { user_id: userId }, select: { user_id: true } },
+				},
+			},
+		},
+	});
+	if (match?.state !== 'confirmed' || match.conversation?.id !== conversationId) return null;
+	const other = match.other_report;
+	if (!other.managers.length || !['open', 'matched'].includes(other.status)) return null;
+	return other;
+}
+
+// --- Review (GET /v1/reports/:code/matches, confirm, reject) ---
+
+/** The report and whether the user manages it (null for an unknown code). */
+export async function findReportForManager(short_code: string, user_id: string, tx?: Prisma.TransactionClient) {
+	return (tx ?? prisma).reports.findUnique({
+		where: { short_code },
+		select: { id: true, managers: { where: { user_id }, select: { user_id: true } } },
+	});
+}
+
+/** Matches of one lost report in these states, best score first (ties: oldest first). */
+export async function listForLost(lost_report_id: string, states: MATCH_STATE[], tx?: Prisma.TransactionClient) {
+	return (tx ?? prisma).matches.findMany({
+		where: { lost_report_id, state: { in: states } },
+		orderBy: [{ score: 'desc' }, { created_at: 'asc' }, { id: 'asc' }],
+		select: {
+			id: true,
+			score: true,
+			strength: true,
+			chip_match: true,
+			reasons: true,
+			state: true,
+			other_report_id: true,
+		},
+	});
+}
+export type MatchRow = Awaited<ReturnType<typeof listForLost>>[number];
+
+/** The match row-locked until the transaction ends (one verdict at a time), with the lost report's code. */
+export async function lockMatch(id: string, tx: Prisma.TransactionClient) {
+	await tx.$executeRaw`select 1 from app.matches where id = ${id}::uuid for update`;
+	return tx.matches.findUnique({
+		where: { id },
+		select: {
+			id: true,
+			state: true,
+			lost_report_id: true,
+			other_report_id: true,
+			lost_report: { select: { short_code: true } },
+		},
+	});
+}
+
+export async function isManager(report_id: string, user_id: string, tx?: Prisma.TransactionClient): Promise<boolean> {
+	const row = await (tx ?? prisma).report_managers.findUnique({
+		where: { report_id_user_id: { report_id, user_id } },
+		select: { user_id: true },
+	});
+	return row !== null;
+}
+
+export async function setState(
+	id: string,
+	data: { state: 'confirmed' } | { state: 'rejected'; rejected_reason: string | null },
+	tx?: Prisma.TransactionClient
+): Promise<void> {
+	await (tx ?? prisma).matches.update({ where: { id }, data, select: { id: true } });
+}
+
+/** One verdict per manager per match (the latest wins). */
+export async function saveFeedback(
+	row: { match_id: string; user_id: string; verdict: 'confirm' | 'reject'; reason: string | null },
+	tx?: Prisma.TransactionClient
+): Promise<void> {
+	const { match_id, user_id, verdict, reason } = row;
+	await (tx ?? prisma).match_feedback.upsert({
+		where: { match_id_user_id: { match_id, user_id } },
+		create: row,
+		update: { verdict, reason },
+		select: { match_id: true },
+	});
+}
+
+/** open → matched (a lost report already matched, closed or reunited keeps its status). */
+export async function markMatched(report_id: string, tx?: Prisma.TransactionClient): Promise<void> {
+	await (tx ?? prisma).reports.updateMany({ where: { id: report_id, status: 'open' }, data: { status: 'matched' } });
+}
+
 export default {
 	notificationData,
+	confirmedData,
+	findReportForManager,
+	listForLost,
+	lockMatch,
+	isManager,
+	setState,
+	saveFeedback,
+	markMatched,
 	candidatePairs,
 	activeMatches,
 	upsertSuggestion,
