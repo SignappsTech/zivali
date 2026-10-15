@@ -7,7 +7,7 @@ status: In Progress
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:39'
-updated_date: '2026-10-15 21:52'
+updated_date: '2026-10-15 22:18'
 labels:
   - fe
   - 'est:S'
@@ -41,7 +41,7 @@ Branch: agent/task-86.2-outbox-ui
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Queued reports appear as "Waiting to send" (Profile → My reports and a small banner on the Map tab), switch to "Sent" with the manage link when delivered, and show the failure reason with Retry and Delete when stuck.
+- [x] #1 Queued reports appear as "Waiting to send" (Profile → My reports and a small banner on the Map tab), switch to "Sent" with the manage link when delivered, and show the failure reason with Retry and Delete when stuck.
 - [ ] #2 Sign-out and account deletion first offer "Send now", "Delete" or "Cancel" when items are pending (C17 wipe), per FR-042 AC#4.
 - [ ] #3 States are announced to screen readers; Android screenshots for queued, sent and failed are attached.
 <!-- AC:END -->

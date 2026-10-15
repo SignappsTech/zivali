@@ -80,7 +80,11 @@ let stop = () => {};
 async function insert(
 	id: string,
 	status: outbox.OutboxStatus,
-	{ code = null, created = Date.now(), updated = Date.now() }: { code?: string | null; created?: number; updated?: number } = {}
+	{
+		code = null,
+		created = Date.now(),
+		updated = Date.now(),
+	}: { code?: string | null; created?: number; updated?: number } = {}
 ) {
 	const db = await getDb();
 	const sent = status === 'sent';
@@ -90,7 +94,9 @@ async function insert(
 		id,
 		JSON.stringify(
 			// A sent row keeps only type and species (TASK-86.1).
-			sent ? { type: 'found', species: 'dog' } : { type: 'found', species: 'cat', location: { lat: 46.05, lng: 14.5 } }
+			sent
+				? { type: 'found', species: 'dog' }
+				: { type: 'found', species: 'cat', location: { lat: 46.05, lng: 14.5 } }
 		),
 		CAPTURED_AT,
 		status,
@@ -254,9 +260,7 @@ describe('pending prompt (sign-out, account deletion)', () => {
 	const ask = async () => {
 		await open('/prompt');
 		await fireEvent.press(screen.getByRole('button', { name: 'ask' }));
-		expect(
-			await screen.findByRole('heading', { name: '2 prijavi še nista poslani' })
-		).toBeOnTheScreen();
+		expect(await screen.findByRole('heading', { name: '2 prijavi še nista poslani' })).toBeOnTheScreen();
 	};
 	beforeEach(async () => {
 		await insert('q1', 'queued');
