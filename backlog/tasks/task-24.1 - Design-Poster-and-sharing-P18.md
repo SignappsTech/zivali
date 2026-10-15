@@ -1,11 +1,11 @@
 ---
 id: TASK-24.1
 title: 'Design: Poster and sharing (P18)'
-status: To Do
+status: In Progress
 assignee:
   - '@ui-designer'
 created_date: '2026-10-14 21:50'
-updated_date: '2026-10-14 21:51'
+updated_date: '2026-10-15 02:09'
 labels:
   - design
   - 'est:M'
@@ -31,6 +31,7 @@ Owners reach neighbours and Facebook groups with a printable poster and one-tap 
 ## Packet
 Unblocks on: P1 web shell and P2 mobile shell mockups merged (header, footer, tab bar and sheet patterns)
 Branch: design/P18-poster-share
+Branch: agent/TASK-24.1-poster-share
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Acceptance Criteria
