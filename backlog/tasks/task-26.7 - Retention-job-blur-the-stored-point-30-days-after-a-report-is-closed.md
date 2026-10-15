@@ -1,11 +1,11 @@
 ---
 id: TASK-26.7
 title: 'Retention job: blur the stored point 30 days after a report is closed'
-status: In Progress
+status: Done
 assignee:
   - '@backend-dev'
 created_date: '2026-10-15 01:53'
-updated_date: '2026-10-15 22:25'
+updated_date: '2026-10-15 23:22'
 labels:
   - be
   - 'est:S'
