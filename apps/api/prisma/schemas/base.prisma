@@ -1,0 +1,14 @@
+// Generator and datasource for the multi-file schema. Models live in one file per domain next to this one
+// (C1), each with @@schema("app") (ADR-021). The database URL comes from prisma.config.ts.
+
+generator client {
+  provider        = "prisma-client"
+  output          = "../../generated"
+  previewFeatures = ["typedSql"]
+  moduleFormat    = "esm"
+}
+
+datasource db {
+  provider = "postgresql"
+  schemas  = ["app"]
+}
