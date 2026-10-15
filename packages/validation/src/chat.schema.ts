@@ -1,6 +1,6 @@
 // C9 chat: conversations, messages (also the Realtime Broadcast payload), blocks.
 import { IsoDateTime, LatLng, limit, page, ShortCode, text, Uuid } from './common.schema.ts';
-import { AliasKey, ConversationStatus, MessageKind, ReportType, SenderAliasKey, Species } from './enums.ts';
+import { AliasKey, ConversationStatus, MessageKind, ReportType, Species } from './enums.ts';
 import { z } from './zod.ts';
 
 export const CreateConversationInput = z
@@ -10,7 +10,7 @@ export const Message = z
 	.object({
 		id: Uuid,
 		conversation_id: Uuid,
-		sender_alias_key: SenderAliasKey,
+		sender_alias_key: AliasKey,
 		sender_display_name: z.string().optional(),
 		kind: MessageKind,
 		body: z.string(),
@@ -38,6 +38,7 @@ export const ConversationSummary = z
 			species: Species,
 			thumb_url: z.string().nullable(),
 		}),
+		my_alias_key: AliasKey,
 		other_alias_key: AliasKey,
 		other_display_name: z.string().optional(),
 		last_message_preview: z.string().nullable(),

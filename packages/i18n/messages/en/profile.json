@@ -1,0 +1,19 @@
+{
+	"title": "Profile",
+	"nav_account": "Account",
+	"signed_out_title": "Sign in",
+	"signed_out_body": "With an account you can save your pets' profiles, get alerts and talk to people who have seen your pet.",
+	"signed_out_sign_in": "Sign in",
+	"signed_out_create": "Create account",
+	"row_language": "Language",
+	"row_payments": "Payments",
+	"row_alerts": "Nearby alerts",
+	"row_cookie_settings": "Cookie settings",
+	"row_help": "Help and safety tips",
+	"sign_out": "Sign out",
+	"sign_out_title": "Sign out?",
+	"sign_out_body": "Reports you made on this device stay manageable from it.",
+	"sign_out_remove_links": "Also remove the links for managing reports from this device",
+	"sign_out_confirm": "Sign out",
+	"sign_out_cancel": "Cancel"
+}

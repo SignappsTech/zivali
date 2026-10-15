@@ -35,7 +35,6 @@ export const MatchReasonCode = z.enum(E.MATCH_REASON_CODES).openapi('MatchReason
 export const ConversationStatus = z.enum(E.CONVERSATION_STATUSES).openapi('ConversationStatus');
 export const MessageKind = z.enum(E.MESSAGE_KINDS).openapi('MessageKind');
 export const AliasKey = z.enum(E.ALIAS_KEYS).openapi('AliasKey');
-export const SenderAliasKey = z.enum(E.SENDER_ALIAS_KEYS).openapi('SenderAliasKey');
 export const NotificationType = z.enum(E.NOTIFICATION_TYPES).openapi('NotificationType');
 export const PushPlatform = z.enum(E.PUSH_PLATFORMS).openapi('PushPlatform');
 export const AbuseReason = z.enum(E.ABUSE_REASONS).openapi('AbuseReason');

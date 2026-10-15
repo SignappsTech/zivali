@@ -3,6 +3,7 @@ import { describe, expect, test } from 'vitest';
 import { COLOURS, PATTERNS, SIZES } from '@zivali/types';
 
 import {
+	AdClickQuery,
 	AdSlotParams,
 	ATTRIBUTE_LABEL_KEYS,
 	BREED_LABEL_KEYS,
@@ -17,6 +18,7 @@ import {
 	PetInput,
 	PublicReport,
 	ReportSearch,
+	ResponsibleShelterQuery,
 	SendMessageInput,
 	SyncReportsQuery,
 	UpdateReportInput,
@@ -150,6 +152,13 @@ test('PetInput carries chip_registered_crhz, ear_tip and lifestyle', () => {
 });
 
 describe('query strings', () => {
+	test('empty or blank numbers are rejected, not coerced to 0', () => {
+		expect(ResponsibleShelterQuery.safeParse({ lat: '', lng: '' }).success).toBe(false);
+		expect(ResponsibleShelterQuery.safeParse({ lat: ' ', lng: '14.5' }).success).toBe(false);
+		expect(ResponsibleShelterQuery.safeParse({ lat: '46.05', lng: '14.5' }).success).toBe(true);
+		expect(AdClickQuery.safeParse({ s: 'detail', r: '' }).success).toBe(false);
+		expect(AdClickQuery.safeParse({ s: 'detail', r: '0' }).success).toBe(true);
+	});
 	test('ReportSearch splits lists and parses bbox and near', () => {
 		expect(
 			ReportSearch.parse({

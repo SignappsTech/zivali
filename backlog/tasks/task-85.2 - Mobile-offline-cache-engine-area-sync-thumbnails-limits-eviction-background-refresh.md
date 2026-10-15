@@ -3,11 +3,11 @@ id: TASK-85.2
 title: >-
   Mobile offline cache engine: area sync, thumbnails, limits, eviction,
   background refresh
-status: To Do
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:39'
-updated_date: '2026-10-14 23:38'
+updated_date: '2026-10-15 13:39'
 labels:
   - fe
   - 'est:M'
@@ -41,10 +41,13 @@ Branch: agent/task-85.2-cache-sync
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 @zivali/api/sync wraps sync_public_reports; the engine syncs the home area (profile, capped at 10 km) and the current area (last foreground location, 10 km), applies upserts and removed_ids and stores server_time as the next cursor.
-- [ ] #2 Refresh runs on foreground resume when the last sync is older than 15 minutes, on regaining an unmetered connection and through expo-background-task on unmetered networks only; thumbnails download on Wi-Fi unless the user allowed mobile data.
-- [ ] #3 Limits from settings (default 50 MB, 7 days) are enforced after each sync: stale rows first, then farthest and oldest, thumbnails included in the size budget.
-- [ ] #4 lib/data/reports.ts serves map and list queries from the network when online (upserting the cache) and from SQLite when offline or on network errors, returning source and lastSyncAt.
-- [ ] #5 A jest test dumps the database after a sync and proves it holds only C17 public columns, with every coordinate equal to a fuzzed area from the server fixture (no exact points, chips, contacts or chat).
-- [ ] #6 The responsible shelter (C18) for the home and current areas is cached with the reports so the call button works offline.
+- [x] #1 @zivali/api/sync wraps sync_public_reports; the engine syncs the home area (profile, capped at 10 km) and the current area (last foreground location, 10 km), applies upserts and removed_ids and stores server_time as the next cursor.
+- [x] #2 Refresh runs on foreground resume when the last sync is older than 15 minutes, on regaining an unmetered connection and through expo-background-task on unmetered networks only; thumbnails download on Wi-Fi unless the user allowed mobile data.
+- [x] #3 Limits from settings (default 50 MB, 7 days) are enforced after each sync: stale rows first, then farthest and oldest, thumbnails included in the size budget.
+- [x] #4 lib/data/reports.ts serves map and list queries from the network when online (upserting the cache) and from SQLite when offline or on network errors, returning source and lastSyncAt.
+- [x] #5 A jest test dumps the database after a sync and proves it holds only C17 public columns, with every coordinate equal to a fuzzed area from the server fixture (no exact points, chips, contacts or chat).
+- [x] #6 The responsible shelter (C18) for the home and current areas is cached with the reports so the call button works offline.
 <!-- AC:END -->
+
+## Implementation Notes
+Review fix round: (1) server_time is the opaque cursor on every page (CH-142), has_more is the only continue signal; (2) C18 shelter refreshed after every completed area sync, old value kept on failure; (3) wipeLocalData awaits syncIdle() before its transactions, a resumed page is dropped by the existing area check (tested); (4) useOfflineCache() in lib/offline/use-offline-cache.ts, not mounted (TASK-85.3 AC#5; current area: TASK-31.5 AC#5).

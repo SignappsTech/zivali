@@ -24,6 +24,23 @@ model profiles {
   // "22:00", Europe/Ljubljana
   quiet_from              String?
   quiet_to                String?
+  // Matching, chat and notifications (C8-C10)
+  match_feedback          match_feedback[]
+  chat_participations     conversation_participants[]
+  messages                messages[]
+  blocks_made             blocks[]                                         @relation("blocker")
+  blocked_by              blocks[]                                         @relation("blocked")
+  notifications           notifications[]
+  notification_prefs      notification_prefs[]
+  push_tokens             push_tokens[]
+  alert_subscription      alert_subscriptions?
+  alert_deliveries        alert_deliveries[]
+  email_outbox            email_outbox[]
+  // Abuse, payments, ads and organisations (C11, C13, C14)
+  abuse_reports           abuse_reports[]
+  payments                payments[]
+  ads_created             ads[]
+  organisation_members    organisation_members[]
   created_at              DateTime                                         @default(now()) @db.Timestamptz(6)
   updated_at              DateTime                                         @updatedAt @db.Timestamptz(6)
   pets                    pets[]

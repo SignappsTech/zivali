@@ -14,3 +14,4 @@ export type * from './domain/payments.ts';
 export type * from './domain/ads.ts';
 export type * from './domain/shelters.ts';
 export type * from './domain/organisations.ts';
+export type * from './domain/admin.ts';

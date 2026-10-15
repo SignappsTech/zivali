@@ -1,5 +1,5 @@
 // C3 profiles and roles: GET/PATCH /v1/me, GET /v1/admin/users, PUT /v1/admin/users/:id/role.
-import { ClockTime, Cursor, IsoDateTime, LatLng, nullOr, page, text, Uuid } from './common.schema.ts';
+import { ClockTime, IsoDateTime, LatLng, limit, nullOr, page, text, Uuid } from './common.schema.ts';
 import { Aal, Locale, UserRole } from './enums.ts';
 import { z } from './zod.ts';
 
@@ -43,13 +43,21 @@ export const AdminUser = z
 	.object({
 		id: Uuid,
 		display_name: z.string().nullable(),
-		email: z.string().nullable(),
+		email_masked: z.string().nullable(),
 		role: UserRole,
 		is_anonymous: z.boolean(),
 		created_at: IsoDateTime,
 	})
-	.openapi('AdminUser');
-export const AdminUserQuery = z.object({ query: z.string().trim().max(100).optional(), cursor: Cursor.optional() });
+	.openapi('AdminUser', { description: 'No phone; the email is masked (a***@example.si).' });
+export const AdminUserQuery = z.object({
+	query: z.string().trim().max(100).optional(),
+	cursor: Uuid.optional(),
+	limit: limit(50),
+});
 export const AdminUserList = page(AdminUser).openapi('AdminUserList');
-export const SetRoleInput = z.object({ role: UserRole }).openapi('SetRoleInput');
+// Destructive (backend.md): the note is required and stored in the audit entry.
+export const SetRoleInput = z
+	.object({ role: UserRole, note: text(500) })
+	.strict()
+	.openapi('SetRoleInput');
 export const SetRoleResponse = z.object({ id: Uuid, role: UserRole }).openapi('SetRoleResponse');

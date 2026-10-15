@@ -1,10 +1,11 @@
 ---
 id: TASK-6.15
 title: 'API rate limits: key anonymous actors by ip_hash, never device_hash alone'
-status: To Do
+status: Done
 assignee:
   - '@backend-dev'
 created_date: '2026-10-15 09:34'
+updated_date: '2026-10-15 12:41'
 labels:
   - be
   - 'est:XS'
@@ -27,3 +28,4 @@ CH-126. x-device-id is client-chosen and can be rotated, so anonymous actors are
 - [ ] #1 Anonymous rate-limit key is ip_hash or ip_hash+device_hash, never device_hash alone
 - [ ] #2 Test: rotating x-device-id from one IP does not reset the limit
 <!-- AC:END -->
+Branch: agent/TASK-6.15-ratelimit-ip

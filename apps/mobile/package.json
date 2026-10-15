@@ -7,7 +7,7 @@
 		"start": "expo start",
 		"android": "expo run:android",
 		"build": "expo export --platform android",
-		"lint": "eslint --max-warnings=0 .",
+		"lint": "eslint --cache --cache-strategy content --cache-location node_modules/.cache/eslint/ --max-warnings=0 .",
 		"typecheck": "tsc",
 		"test": "jest",
 		"postinstall": "pnpm --filter @zivali/tokens --filter @zivali/i18n build"
@@ -35,6 +35,7 @@
 		"class-variance-authority": "^0.7.1",
 		"clsx": "^2.1.1",
 		"expo": "~57.0.29",
+		"expo-background-task": "~57.0.21",
 		"expo-constants": "~57.0.22",
 		"expo-crypto": "~57.0.4",
 		"expo-dev-client": "~57.0.20",
@@ -50,6 +51,7 @@
 		"expo-sqlite": "~57.0.4",
 		"expo-status-bar": "~57.0.1",
 		"expo-system-ui": "~57.0.4",
+		"expo-task-manager": "~57.0.21",
 		"nativewind": "^4.2.7",
 		"phosphor-react-native": "3.0.6",
 		"react": "19.2.3",
@@ -82,6 +84,7 @@
 	},
 	"jest": {
 		"preset": "jest-expo",
+		"maxWorkers": "25%",
 		"setupFiles": [
 			"./jest.setup.ts"
 		],

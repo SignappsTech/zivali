@@ -28,6 +28,10 @@
 			"dependsOn": ["^build"],
 			"outputs": []
 		},
+		"web#typecheck": {
+			"dependsOn": ["^build", "web#build"],
+			"outputs": []
+		},
 		"test": {
 			"dependsOn": ["^build"],
 			"passThroughEnv": ["SUPABASE_*", "DATABASE_URL", "DIRECT_URL"],

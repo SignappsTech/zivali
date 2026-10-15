@@ -22,3 +22,4 @@
 
 - The worker must be running for matching, notifications and lifecycle; Docker Compose restarts it and the health endpoint reports queue lag.
 - pg-boss holds a few connections; with Supabase Free's connection limit the API and worker use small pools (API 5, worker 3) through the session pooler.
+- Amended (TASK-6.17): if `persistQueueStats` is enabled, rerun `lockDownPgboss` after the daily partitions are created, so the new tables get RLS too.
