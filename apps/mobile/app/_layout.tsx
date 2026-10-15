@@ -7,7 +7,6 @@ import { AtkinsonHyperlegibleNext_700Bold } from '@expo-google-fonts/atkinson-hy
 import { BricolageGrotesque_600SemiBold } from '@expo-google-fonts/bricolage-grotesque/600SemiBold';
 import { BricolageGrotesque_700Bold } from '@expo-google-fonts/bricolage-grotesque/700Bold';
 import { PortalHost } from '@rn-primitives/portal';
-import { QueryClientProvider } from '@tanstack/react-query';
 import { useFonts } from 'expo-font';
 import { Stack, ThemeProvider } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
@@ -17,7 +16,6 @@ import { useEffect } from 'react';
 import { IntlProvider } from 'use-intl';
 
 import { locale, messages } from '@/lib/messages';
-import { queryClient } from '@/lib/query';
 import { NAV_THEME } from '@/lib/theme';
 
 export { ErrorBoundary } from 'expo-router';
@@ -41,15 +39,15 @@ export default function RootLayout() {
 
 	if (!ready) return null;
 
+	// TODO: data fetching is RTK Query with endpoints generated from OpenAPI (@rtk-query/codegen-openapi) in packages/api;
+	// its Redux store Provider wraps this tree once that client exists. No hand-written fetch hooks.
 	return (
-		<QueryClientProvider client={queryClient}>
-			<IntlProvider locale={locale} messages={messages} timeZone="Europe/Ljubljana">
-				<ThemeProvider value={NAV_THEME[colorScheme ?? 'light']}>
-					<StatusBar style="auto" />
-					<Stack screenOptions={{ headerShown: false }} />
-					<PortalHost />
-				</ThemeProvider>
-			</IntlProvider>
-		</QueryClientProvider>
+		<IntlProvider locale={locale} messages={messages} timeZone="Europe/Ljubljana">
+			<ThemeProvider value={NAV_THEME[colorScheme ?? 'light']}>
+				<StatusBar style="auto" />
+				<Stack screenOptions={{ headerShown: false }} />
+				<PortalHost />
+			</ThemeProvider>
+		</IntlProvider>
 	);
 }
