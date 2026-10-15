@@ -3,11 +3,11 @@ id: TASK-17.1
 title: >-
   Anonymous safeguards: submission guard, holds, manage token, claim and resend
   endpoints
-status: In Progress
+status: Done
 assignee:
   - '@backend-dev'
 created_date: '2026-10-14 22:13'
-updated_date: '2026-10-15 18:55'
+updated_date: '2026-10-15 19:19'
 labels:
   - be
   - 'est:M'
