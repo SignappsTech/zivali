@@ -37,6 +37,7 @@ Copy: docs/content/pages/P16-auth.md
 Contracts: C3, C15 (in references); conventions in C1
 Review: tech-lead code review (full mode); run `pnpm verify` before reporting done.
 Branch: agent/task-9.3-auth-web
+Branch: agent/task-9.3-e2e-main
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Acceptance Criteria

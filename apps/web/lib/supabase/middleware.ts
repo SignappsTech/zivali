@@ -25,7 +25,10 @@ export async function updateSession(
 		},
 	});
 	// Keep this right after createServerClient (Supabase SSR guide): it loads the session and refreshes it if needed.
-	await supabase.auth.getClaims();
+	const { error } = await supabase.auth.getClaims();
+	// A token that does not verify (forged, tampered, a retired key) is dropped, so the browser stops sending it.
+	// An outage (network, 5xx, rate limit) keeps the session.
+	if (error?.code === 'invalid_jwt' || error?.code === 'bad_jwt') await supabase.auth.signOut({ scope: 'local' });
 
 	const response = next(request);
 	const [cookiesToSet, headers] = written;
