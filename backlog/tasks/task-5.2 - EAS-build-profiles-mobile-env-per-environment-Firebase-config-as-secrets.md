@@ -1,10 +1,11 @@
 ---
 id: TASK-5.2
 title: 'EAS build profiles, mobile env per environment, Firebase config as secrets'
-status: To Do
+status: In Progress
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:12'
+updated_date: '2026-10-15 05:13'
 labels:
   - tech
   - 'est:S'
@@ -28,7 +29,7 @@ Mobile builds need development, preview and production profiles; the Expo token 
 
 Unblocks on: Mobile app scaffold: Expo SDK 57, Expo Router, NativeWind + RN Reusables, tokens, dev build merged (TASK-3.4)
 Review: tech-lead code review (full mode); run `pnpm verify` before reporting done.
-Branch: agent/task-5.2-eas
+Branch: agent/TASK-5.2-eas-profiles
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Acceptance Criteria
@@ -38,3 +39,9 @@ Branch: agent/task-5.2-eas
 - [ ] #3 An Android preview build pointing at the staging Supabase project succeeds with the existing EXPO_TOKEN and installs on a device or emulator; iOS builds are documented as blocked by Q-007.
 - [ ] #4 EAS Update channels per profile are configured or explicitly documented as off.
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+Branch: agent/TASK-5.2-eas-profiles
+<!-- SECTION:NOTES:END -->
