@@ -3,11 +3,11 @@ id: TASK-3.11
 title: >-
   Web scaffold hardening from the TASK-3.3 review: env default, 404 nonce,
   Playwright standalone, nonce e2e
-status: In Progress
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-15 01:35'
-updated_date: '2026-10-15 03:00'
+updated_date: '2026-10-15 03:30'
 labels:
   - fe
   - 'est:S'
