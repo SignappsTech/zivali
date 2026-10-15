@@ -1,6 +1,6 @@
 // Transactional email (C10, C14 leads). Provider: EMAIL_PROVIDER mock | brevo (EU, ADR-010).
 import type { Config } from '../../lib/config.ts';
-import { pickProvider } from '../select.ts';
+import { offAdapter, pickProvider } from '../select.ts';
 import { brevoEmail } from './brevo.ts';
 import { mockEmail } from './mock.ts';
 
@@ -10,5 +10,6 @@ export type EmailAdapter = { send(message: EmailMessage): Promise<{ id: string }
 export function createEmail(cfg: Config): EmailAdapter {
 	const creds = !!(cfg.BREVO_API_KEY && cfg.EMAIL_FROM);
 	const p = pickProvider('EMAIL_PROVIDER', cfg.EMAIL_PROVIDER, creds, cfg.NODE_ENV === 'production');
+	if (p === 'off') return offAdapter<EmailAdapter>('EMAIL_PROVIDER');
 	return p === 'mock' ? mockEmail() : brevoEmail(cfg.BREVO_API_KEY!, cfg.EMAIL_FROM!);
 }

@@ -1,6 +1,6 @@
 // Embedding adapter (M3 photo.embed). Provider: EMBEDDER_PROVIDER mock | voyage. Vectors have EMBED_DIM entries.
 import type { Config } from '../../lib/config.ts';
-import { pickProvider } from '../select.ts';
+import { offAdapter, pickProvider } from '../select.ts';
 import { mockEmbedder } from './mock.ts';
 import { voyageEmbedder } from './voyage.ts';
 
@@ -14,5 +14,6 @@ export function createEmbedder(cfg: Config): EmbedderAdapter {
 		!!cfg.VOYAGE_API_KEY,
 		cfg.NODE_ENV === 'production'
 	);
+	if (p === 'off') return offAdapter<EmbedderAdapter>('EMBEDDER_PROVIDER');
 	return p === 'mock' ? mockEmbedder() : voyageEmbedder(cfg.VOYAGE_API_KEY!);
 }

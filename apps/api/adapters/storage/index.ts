@@ -1,17 +1,30 @@
-// Object storage (ADR-014, C5). STORAGE_PROVIDER r2 | minio | memory; unset = memory outside production.
+// Object storage (ADR-014, C5). STORAGE_PROVIDER r2 | minio | memory | off; unset = memory outside production.
 // Keys are always chosen by the server (C5), never from user file names.
 import type { Config } from '../../lib/config.ts';
-import { pickProvider } from '../select.ts';
+import { offAdapter, pickProvider } from '../select.ts';
 import { memoryStorage } from './memory.ts';
 import { s3Storage } from './s3.ts';
 
 export type BucketName = 'private' | 'media' | 'backups';
 export type ObjectRef = { bucket: BucketName; key: string };
+/** Presigned uploads are photos: 1 MB max (C5 MAX_PHOTO_BYTES). */
+export const MAX_UPLOAD_BYTES = 1_048_576;
+const SAFE_KEY = /^[\w][\w/.-]*$/;
+/** Keys are server-chosen (C5); refuse anything that could escape a prefix. */
+export function assertSafeKey(key: string): void {
+	if (!SAFE_KEY.test(key) || key.includes('..')) throw new Error('storage: unsafe object key');
+}
+export function assertUploadLength(n: number): void {
+	if (!Number.isInteger(n) || n < 1 || n > MAX_UPLOAD_BYTES) throw new Error('storage: invalid content length');
+}
 export type ObjectHead = { size: number; contentType?: string };
 export type PresignedPut = { url: string; method: 'PUT'; headers: Record<string, string>; expiresAt: Date };
 
 export type StorageAdapter = {
-	presignPut(ref: ObjectRef, opts: { contentType: string; expiresInS?: number }): Promise<PresignedPut>;
+	presignPut(
+		ref: ObjectRef,
+		opts: { contentType: string; contentLength: number; expiresInS?: number }
+	): Promise<PresignedPut>;
 	presignGet(ref: ObjectRef, opts?: { expiresInS?: number }): Promise<string>;
 	put(ref: ObjectRef, body: Buffer, contentType: string): Promise<void>;
 	get(ref: ObjectRef): Promise<Buffer>;
@@ -32,7 +45,10 @@ export function createStorage(cfg: Config): StorageAdapter {
 	const production = cfg.NODE_ENV === 'production';
 	const wanted = cfg.STORAGE_PROVIDER === 'memory' ? 'mock' : cfg.STORAGE_PROVIDER;
 	const r2Creds = !!(cfg.R2_ACCOUNT_ID && cfg.R2_ACCESS_KEY_ID && cfg.R2_SECRET_ACCESS_KEY);
-	const p = pickProvider<'r2' | 'minio'>('STORAGE_PROVIDER', wanted, wanted === 'r2' ? r2Creds : true, production);
+	// minio ships built-in dev credentials, so it never counts as configured in production.
+	const hasCredentials = wanted === 'r2' ? r2Creds : !production;
+	const p = pickProvider<'r2' | 'minio'>('STORAGE_PROVIDER', wanted, hasCredentials, production);
+	if (p === 'off') return offAdapter<StorageAdapter>('STORAGE_PROVIDER');
 	if (p === 'mock') return memoryStorage();
 	const credentials = {
 		accessKeyId: cfg.R2_ACCESS_KEY_ID ?? 'zivali',

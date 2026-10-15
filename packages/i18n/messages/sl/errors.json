@@ -25,6 +25,7 @@
 	"MIN_AMOUNT": "Najmanjši znesek je 2 €.",
 	"LIVE_MODE_FORBIDDEN": "Plačila so v tej različici samo preizkusna.",
 	"INTERNAL": "Nekaj je šlo narobe pri nas. Poskusite znova čez nekaj minut.",
+	"SERVICE_UNAVAILABLE": "Ta funkcija trenutno ni na voljo.",
 	"NETWORK": "Povezava se je prekinila. Preverite internet in poskusite znova.",
 	"UPLOAD_TYPE": "Ta datoteka ni fotografija. Izberite sliko JPG, PNG ali HEIC.",
 	"UPLOAD_SIZE": "Fotografija je prevelika. Izberite drugo ali jo pred nalaganjem zmanjšajte."

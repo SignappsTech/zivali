@@ -1,3 +1,5 @@
+import { createHmac } from 'node:crypto';
+
 import { describe, expect, it } from 'vitest';
 
 import { createAdapters } from '../../adapters/index.ts';
@@ -53,6 +55,71 @@ describe('adapter provider selection', () => {
 
 	it('refuses mocks and missing credentials in production', () => {
 		expect(() => createAdapters({ ...blank, NODE_ENV: 'production' })).toThrow(/production/);
+	});
+
+	const prodFull: Config = {
+		...blank,
+		NODE_ENV: 'production',
+		STORAGE_PROVIDER: 'r2',
+		R2_ACCOUNT_ID: 'a',
+		R2_ACCESS_KEY_ID: 'k',
+		R2_SECRET_ACCESS_KEY: 's',
+		PAYMENTS_PROVIDER: 'stripe',
+		STRIPE_SECRET_KEY: 'sk_test_x',
+		STRIPE_WEBHOOK_SECRET: 'whsec_x',
+		EMAIL_PROVIDER: 'brevo',
+		BREVO_API_KEY: 'b',
+		EMAIL_FROM: 'a@b.si',
+		PUSH_PROVIDER: 'expo',
+		CAPTCHA_PROVIDER: 'turnstile',
+		TURNSTILE_SECRET_KEY: 't',
+		AI_PROVIDER: 'anthropic',
+		ANTHROPIC_API_KEY: 'a',
+		EMBEDDER_PROVIDER: 'voyage',
+		VOYAGE_API_KEY: 'v',
+	};
+
+	it('production boots with every provider configured', () => {
+		expect(() => createAdapters(prodFull)).not.toThrow();
+	});
+
+	it('minio never passes on built-in credentials in production', () => {
+		expect(() => createAdapters({ ...prodFull, STORAGE_PROVIDER: 'minio' })).toThrow(/STORAGE_PROVIDER/);
+	});
+
+	it('production accepts an explicit off and the adapter throws SERVICE_UNAVAILABLE', async () => {
+		const off: Config = { ...blank, NODE_ENV: 'production' };
+		for (const k of ['STORAGE', 'PAYMENTS', 'EMAIL', 'PUSH', 'CAPTCHA', 'AI', 'EMBEDDER'] as const) {
+			(off as Record<string, unknown>)[`${k}_PROVIDER`] = 'off';
+		}
+		const a = createAdapters(off);
+		expect(() => a.ai.vision({ prompt: 'x', images: [] })).toThrowError(
+			expect.objectContaining({ name: 'AppError', code: 'SERVICE_UNAVAILABLE' })
+		);
+		expect(() => a.embedder.embed([])).toThrow(/not enabled/);
+		expect(() => a.payments.parseWebhook('{}', undefined)).toThrow(/not enabled/);
+		expect(() => a.storage.head({ bucket: 'private', key: 'k' })).toThrow(/not enabled/);
+		// Unconfigured and not off still fails at boot.
+		expect(() => createAdapters({ ...off, AI_PROVIDER: undefined })).toThrow(/AI_PROVIDER/);
+	});
+
+	it('stripe accepts any matching v1 signature (secret rotation)', () => {
+		const { payments } = createAdapters({
+			...blank,
+			PAYMENTS_PROVIDER: 'stripe',
+			STRIPE_SECRET_KEY: 'sk_test_x',
+			STRIPE_WEBHOOK_SECRET: 'whsec_x',
+		});
+		const body = JSON.stringify({
+			id: 'e1',
+			type: 'checkout.session.async_payment_failed',
+			data: { object: { id: 'cs_1' } },
+		});
+		const t = Math.floor(Date.now() / 1000);
+		const sig = createHmac('sha256', 'whsec_x').update(`${t}.${body}`).digest('hex');
+		const ok = `t=${t},v1=${'0'.repeat(64)},v1=${sig}`;
+		expect(payments.parseWebhook(body, ok)).toMatchObject({ id: 'e1', type: 'payment.failed', checkoutId: 'cs_1' });
+		expect(() => payments.parseWebhook(body, `t=${t},v1=${'0'.repeat(64)}`)).toThrow(/signature/);
 	});
 
 	it('refuses Stripe live keys even outside production', () => {

@@ -1,6 +1,6 @@
 // Push notifications (C10). Provider: PUSH_PROVIDER mock | expo. `DeviceNotRegistered` tells the caller to drop the token.
 import type { Config } from '../../lib/config.ts';
-import { pickProvider } from '../select.ts';
+import { offAdapter, pickProvider } from '../select.ts';
 import { expoPush } from './expo.ts';
 import { mockPush } from './mock.ts';
 
@@ -16,5 +16,6 @@ export function createPush(cfg: Config): PushAdapter {
 		cfg.PUSH_PROVIDER === 'expo',
 		cfg.NODE_ENV === 'production'
 	);
+	if (p === 'off') return offAdapter<PushAdapter>('PUSH_PROVIDER');
 	return p === 'mock' ? mockPush() : expoPush(cfg.EXPO_ACCESS_TOKEN);
 }

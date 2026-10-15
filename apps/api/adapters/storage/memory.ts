@@ -1,11 +1,15 @@
-import type { ObjectRef, StorageAdapter } from './index.ts';
+import { assertSafeKey, assertUploadLength, type ObjectRef, type StorageAdapter } from './index.ts';
 
 // In-memory storage for tests. Presigned URLs are memory:// placeholders; tests call put() directly.
 export function memoryStorage(): StorageAdapter {
 	const objects = new Map<string, { body: Buffer; contentType: string }>();
-	const id = (r: ObjectRef) => `${r.bucket}/${r.key}`;
+	const id = (r: ObjectRef) => {
+		assertSafeKey(r.key);
+		return `${r.bucket}/${r.key}`;
+	};
 	return {
-		async presignPut(ref, { contentType, expiresInS = 300 }) {
+		async presignPut(ref, { contentType, contentLength, expiresInS = 300 }) {
+			assertUploadLength(contentLength);
 			return {
 				url: `memory://${id(ref)}`,
 				method: 'PUT',

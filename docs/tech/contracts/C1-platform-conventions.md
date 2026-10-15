@@ -26,6 +26,7 @@ Applies to every endpoint, Prisma model, migration, job and seed in `apps/api`. 
   | `MIN_AMOUNT`, `LIVE_MODE_FORBIDDEN`, `CAPTCHA_FAILED` | 422 |
   | `RATE_LIMITED` (+ `Retry-After` header, `details.retry_after_s`) | 429 |
   | `INTERNAL` | 500 (no details, logged with the request id) |
+  | `SERVICE_UNAVAILABLE` | 503 (adapter explicitly switched off: `*_PROVIDER=off`) |
 
   Thrown as `new AppError(code, message?, details?)` from domain functions (`domains/<area>`); zod failures become `VALIDATION` with `issues`. No stack traces or SQL to clients. Clients map `code` to `errors.<code>` i18n keys.
 - **Idempotency**: write endpoints that may be retried accept `Idempotency-Key: <uuid>` (required on `POST /v1/reports`, `POST /v1/payments/checkout`). The `idempotency` middleware stores `{ key, user_id, route, status, body (encrypted when it contains a secret), created_at }` in `app.idempotency_keys` for 24 h; a repeat by the same user returns the stored response; another user → `409 CONFLICT`. The mobile outbox (C17) relies on it.

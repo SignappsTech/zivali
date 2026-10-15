@@ -1,6 +1,6 @@
-// Payments (C13). Provider: PAYMENTS_PROVIDER mock | stripe. Live keys are refused everywhere (test mode only).
+// Payments (C13). Provider: PAYMENTS_PROVIDER mock | stripe | off. Live keys are refused everywhere (test mode only).
 import type { Config } from '../../lib/config.ts';
-import { pickProvider } from '../select.ts';
+import { offAdapter, pickProvider } from '../select.ts';
 import { mockPayments } from './mock.ts';
 import { stripePayments } from './stripe.ts';
 
@@ -33,6 +33,7 @@ export function createPayments(cfg: Config): PaymentsAdapter {
 	}
 	const creds = !!(cfg.STRIPE_SECRET_KEY && cfg.STRIPE_WEBHOOK_SECRET);
 	const p = pickProvider('PAYMENTS_PROVIDER', cfg.PAYMENTS_PROVIDER, creds, cfg.NODE_ENV === 'production');
+	if (p === 'off') return offAdapter<PaymentsAdapter>('PAYMENTS_PROVIDER');
 	return p === 'mock'
 		? mockPayments(cfg.MOCK_WEBHOOK_SECRET ?? 'mock-webhook-secret')
 		: stripePayments(cfg.STRIPE_SECRET_KEY!, cfg.STRIPE_WEBHOOK_SECRET!);

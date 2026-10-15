@@ -10,7 +10,7 @@ import {
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
-import type { BucketName, StorageAdapter } from './index.ts';
+import { assertSafeKey, assertUploadLength, type BucketName, type StorageAdapter } from './index.ts';
 
 export type S3StorageOptions = {
 	endpoint: string;
@@ -20,13 +20,28 @@ export type S3StorageOptions = {
 };
 
 export function s3Storage({ endpoint, region, credentials, buckets }: S3StorageOptions): StorageAdapter {
-	const client = new S3Client({ endpoint, region, credentials, forcePathStyle: true });
-	const loc = (r: { bucket: BucketName; key: string }) => ({ Bucket: buckets[r.bucket], Key: r.key });
+	// WHEN_REQUIRED: no x-amz-checksum-* params in presigned URLs (browsers and R2 cannot send them).
+	const client = new S3Client({
+		endpoint,
+		region,
+		credentials,
+		forcePathStyle: true,
+		requestChecksumCalculation: 'WHEN_REQUIRED',
+		responseChecksumValidation: 'WHEN_REQUIRED',
+	});
+	const loc = (r: { bucket: BucketName; key: string }) => {
+		assertSafeKey(r.key);
+		return { Bucket: buckets[r.bucket], Key: r.key };
+	};
 	return {
-		async presignPut(ref, { contentType, expiresInS = 300 }) {
-			const url = await getSignedUrl(client, new PutObjectCommand({ ...loc(ref), ContentType: contentType }), {
-				expiresIn: expiresInS,
-			});
+		async presignPut(ref, { contentType, contentLength, expiresInS = 300 }) {
+			assertUploadLength(contentLength);
+			// Pin type and length into the signature: a PUT with other values is rejected (403).
+			const url = await getSignedUrl(
+				client,
+				new PutObjectCommand({ ...loc(ref), ContentType: contentType, ContentLength: contentLength }),
+				{ expiresIn: expiresInS, signableHeaders: new Set(['content-type', 'content-length']) }
+			);
 			return {
 				url,
 				method: 'PUT',
@@ -45,7 +60,7 @@ export function s3Storage({ endpoint, region, credentials, buckets }: S3StorageO
 		},
 		async copy(from, to) {
 			await client.send(
-				new CopyObjectCommand({ ...loc(to), CopySource: encodeURI(`${buckets[from.bucket]}/${from.key}`) })
+				new CopyObjectCommand({ ...loc(to), CopySource: encodeURI(`${buckets[from.bucket]}/${loc(from).Key}`) })
 			);
 		},
 		async delete(ref) {

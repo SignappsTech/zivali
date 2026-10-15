@@ -7,7 +7,7 @@ const TOLERANCE_S = 300;
 const TYPES: Record<string, PaymentEvent['type']> = {
 	'checkout.session.completed': 'checkout.completed',
 	'checkout.session.expired': 'checkout.expired',
-	'payment_intent.payment_failed': 'payment.failed',
+	'checkout.session.async_payment_failed': 'payment.failed',
 };
 
 export function stripePayments(secretKey: string, webhookSecret: string): PaymentsAdapter {
@@ -33,17 +33,16 @@ export function stripePayments(secretKey: string, webhookSecret: string): Paymen
 			return { id: json.id, url: json.url };
 		},
 		parseWebhook(rawBody, signature) {
-			const parts = Object.fromEntries((signature ?? '').split(',').map((p) => p.split('=') as [string, string]));
-			const t = Number(parts.t);
-			const expected = createHmac('sha256', webhookSecret).update(`${parts.t}.${rawBody}`).digest('hex');
-			const a = Buffer.from(expected);
-			const b = Buffer.from(parts.v1 ?? '');
-			if (
-				!t ||
-				Math.abs(Date.now() / 1000 - t) > TOLERANCE_S ||
-				a.length !== b.length ||
-				!timingSafeEqual(a, b)
-			) {
+			// The header may hold several v1 signatures during secret rotation: any one matching is enough.
+			const pairs = (signature ?? '').split(',').map((p) => p.split('=') as [string, string]);
+			const ts = pairs.find(([k]) => k === 't')?.[1] ?? '';
+			const t = Number(ts);
+			const expected = Buffer.from(createHmac('sha256', webhookSecret).update(`${ts}.${rawBody}`).digest('hex'));
+			const matches = pairs.some(([k, v]) => {
+				const given = Buffer.from(v ?? '');
+				return k === 'v1' && given.length === expected.length && timingSafeEqual(expected, given);
+			});
+			if (!t || Math.abs(Date.now() / 1000 - t) > TOLERANCE_S || !matches) {
 				throw new Error('invalid webhook signature');
 			}
 			const event = JSON.parse(rawBody) as {
