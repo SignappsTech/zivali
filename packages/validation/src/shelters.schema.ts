@@ -1,5 +1,5 @@
 // C18 responsible-shelter directory (public, cacheable).
-import { IsoDate, Lat, Lng, Slug } from './common.schema.ts';
+import { IsoDate, Lat, Lng, queryNumber, Slug } from './common.schema.ts';
 import { Species } from './enums.ts';
 import { z } from './zod.ts';
 
@@ -52,8 +52,8 @@ export const ShelterSlugParams = z.object({ slug: Slug });
 /** `?lat=&lng=` (rounded to 2 decimals by the client) or `?municipality=<slug>`. */
 export const ResponsibleShelterQuery = z
 	.object({
-		lat: z.coerce.number().pipe(Lat).optional(),
-		lng: z.coerce.number().pipe(Lng).optional(),
+		lat: queryNumber(z.coerce.number().pipe(Lat)).optional(),
+		lng: queryNumber(z.coerce.number().pipe(Lng)).optional(),
 		municipality: Slug.optional(),
 	})
 	.refine((q) => (q.municipality === undefined) !== (q.lat === undefined && q.lng === undefined), {

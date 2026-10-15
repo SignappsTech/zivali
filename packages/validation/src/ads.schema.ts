@@ -1,12 +1,12 @@
 // C14 ads (serving, admin), partner stats and leads. The "no animal sale or rehoming" rule needs the
 // app_config blocklist, so it runs in the API domain, not here.
-import { Cursor, IsoDate, IsoDateTime, nullOr, page, text, Uuid } from './common.schema.ts';
+import { Cursor, IsoDate, IsoDateTime, nullOr, page, queryNumber, text, Uuid } from './common.schema.ts';
 import { AdHouseKind, AdLabel, AdSlot, AdStatus, LeadInterest, Locale, Species } from './enums.ts';
 import { PresignedUpload, Sha256 } from './photos.schema.ts';
 import { z } from './zod.ts';
 
 const SmallIntId = z.number().int().min(1).max(32_767);
-const queryId = z.coerce.number().int().min(0).max(32_767).optional();
+const queryId = queryNumber(z.coerce.number().int().min(0).max(32_767)).optional();
 
 export const Ad = z
 	.object({
