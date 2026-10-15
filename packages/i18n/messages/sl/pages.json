@@ -1,6 +1,29 @@
 {
 	"home": {
+		"seo_title": "Izgubljene živali v Sloveniji: psi in mačke · Najdimo",
+		"seo_description": "Ste izgubili ali našli psa ali mačko? Prijavite brezplačno. Najdimo poišče ujemanja po čipu in opisu ter obvesti ljudi v bližini.",
 		"hero_title": "Izgubljena žival? Skupaj jo pripeljemo domov.",
-		"hero_lede": "Prijavite izgubljeno ali najdeno žival. Mi poiščemo možna ujemanja in obvestimo ljudi v bližini. Brezplačno."
+		"hero_lede": "Prijavite izgubljeno ali najdeno žival. Mi poiščemo možna ujemanja in obvestimo ljudi v bližini. Brezplačno.",
+		"hero_primary": "Prijavi izgubljeno žival",
+		"hero_secondary": "Prijavi najdeno žival",
+		"hero_alt": "Pes rjave in bele barve z dolgo dlako in privzdignjenim ušesom",
+		"how_title": "Kako deluje",
+		"how_1_title": "Prijavite",
+		"how_1_body": "Prijava izgubljene živali vzame nekaj minut, najdene pa manj kot minuto in brez računa.",
+		"how_2_title": "Poiščemo ujemanja",
+		"how_2_body": "Primerjamo številko čipa, območje, čas in opis ter vam sporočimo, ko najdemo možno ujemanje.",
+		"how_3_title": "Pogovorite se varno",
+		"how_3_body": "Pišete si v aplikaciji. Telefonska številka in točen naslov ostaneta skrita.",
+		"how_more": "Več o tem, kako deluje",
+		"how_alt": "Tigrasta mačka z modro ovratnico in obeskom sedi na stopnicah",
+		"safe_title": "Zasnovano za vašo varnost",
+		"safe_body": "Ko se žival izgubi, se žal oglasijo tudi tisti, ki želijo izkoristiti stisko. Zato vaši podatki ostanejo pri vas.",
+		"safe_1": "Telefonska številka ni nikoli javna.",
+		"safe_2": "Javno prikažemo le približno območje, nikoli naslova.",
+		"safe_3": "Pogovor poteka v aplikaciji, z jasnim opozorilom pred prevarami.",
+		"safe_action": "Preberite nasvete za varnost",
+		"shelters_title": "Za zavetišča, veterinarje in občine",
+		"shelters_body": "Najdene živali objavite hitro, mi pa jih primerjamo z vsemi prijavami izgubljenih živali. Za zavetišča in občine je vse brezplačno, za vedno.",
+		"shelters_action": "Več za zavetišča"
 	}
 }

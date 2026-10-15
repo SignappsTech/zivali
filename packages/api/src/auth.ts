@@ -115,6 +115,10 @@ export async function signOut(cleanup?: () => Promise<unknown>): Promise<void> {
 export const mfa = {
 	enroll: () => run(auth().mfa.enroll({ factorType: 'totp' })),
 	challengeAndVerify: (factorId: string, code: string) => run(auth().mfa.challengeAndVerify({ factorId, code })),
+	/** The user's factors (`totp` holds the verified ones only, `all` also the unverified). Reads the user from Auth. */
+	listFactors: () => run(auth().mfa.listFactors()),
+	/** At aal1 only an unverified factor can be removed: the leftover of an enrolment that was never confirmed. */
+	unenroll: (factorId: string) => run(auth().mfa.unenroll({ factorId })),
 };
 
 export type SessionState = {

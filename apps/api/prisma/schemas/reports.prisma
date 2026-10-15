@@ -140,6 +140,8 @@ model pets {
   photos               photos[]
 
   @@index([owner_id])
+  // The duplicate-chip check on every chip write (C11 moderation_flags).
+  @@index([chip_number])
   @@schema("app")
 }
 

@@ -41,6 +41,7 @@ export const AbuseReason = z.enum(E.ABUSE_REASONS).openapi('AbuseReason');
 export const AbuseTargetType = z.enum(E.ABUSE_TARGET_TYPES).openapi('AbuseTargetType');
 export const AbuseStatus = z.enum(E.ABUSE_STATUSES).openapi('AbuseStatus');
 export const ModerationFlagKind = z.enum(E.MODERATION_FLAG_KINDS).openapi('ModerationFlagKind');
+export const ModerationFlagTargetType = z.enum(E.MODERATION_FLAG_TARGET_TYPES).openapi('ModerationFlagTargetType');
 export const PaymentPurpose = z.enum(E.PAYMENT_PURPOSES).openapi('PaymentPurpose');
 export const PaymentStatus = z.enum(E.PAYMENT_STATUSES).openapi('PaymentStatus');
 export const AdSlot = z.enum(E.AD_SLOTS).openapi('AdSlot');

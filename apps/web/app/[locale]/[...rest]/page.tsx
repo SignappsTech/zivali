@@ -13,12 +13,7 @@ const PENDING = {
 	'/report/lost': 'nav.report_lost_title',
 	'/report/found': 'nav.report_found_title',
 	'/inbox': 'nav.inbox',
-	'/how-it-works': 'footer.how_it_works',
-	'/safety': 'footer.safety',
-	'/faq': 'footer.faq',
-	'/for-shelters': 'footer.for_shelters',
 	'/advertise': 'footer.partners',
-	'/about': 'footer.about',
 } as const;
 
 async function pendingTitle({ params }: PageProps<'/[locale]/[...rest]'>) {

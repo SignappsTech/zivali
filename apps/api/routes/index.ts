@@ -1,6 +1,7 @@
 // The /v1 router: one mount line per area router (routes/<area>.routes.ts, declared with apiRoutes(router, '/v1/<area>')).
 import { Router } from 'express';
 
+import abuseReportsRoutes from './abuse-reports.routes.ts';
 import adminRoutes from './admin.routes.ts';
 import adsRoutes from './ads.routes.ts';
 import alertSubscriptionRoutes from './alert-subscription.routes.ts';
@@ -12,9 +13,11 @@ import manageRoutes from './manage.routes.ts';
 import matchesRoutes, { reportMatchesRouter } from './matches.routes.ts';
 import meRoutes from './me.routes.ts';
 import notificationsRoutes, { prefsRouter, pushTokensRouter } from './notifications.routes.ts';
+import petsRoutes from './pets.routes.ts';
 import photosRoutes from './photos.routes.ts';
 import reportsRoutes from './reports.routes.ts';
 import sheltersRoutes from './shelters.routes.ts';
+import syncRoutes from './sync.routes.ts';
 
 const router = Router();
 
@@ -32,8 +35,11 @@ router.use('/manage', manageRoutes);
 router.use('/alert-subscription', alertSubscriptionRoutes);
 router.use('/conversations', conversationsRoutes);
 router.use('/photos', photosRoutes);
+router.use('/pets', petsRoutes);
 router.use('/ads', adsRoutes);
 router.use('/reports', reportMatchesRouter);
 router.use('/matches', matchesRoutes);
+router.use('/sync', syncRoutes);
+router.use('/abuse-reports', abuseReportsRoutes);
 
 export default router;

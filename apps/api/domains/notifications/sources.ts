@@ -9,6 +9,7 @@ import type { z } from 'zod';
 import type { Locale, NotificationType } from '@zivali/types';
 import type { NotificationJobPayload } from '@zivali/validation';
 
+import { reportHiddenVars } from '../abuse/abuse.notify.ts';
 import { AlertsDomain } from '../alerts/index.ts';
 import type { Ctx } from '../../lib/ctx.ts';
 import { chatMessageVars } from '../chat/chat.notify.ts';
@@ -34,6 +35,7 @@ export const sources: Partial<Record<NotificationType, Source>> = {
 	report_expiring: (...args) => lifecycle.expiringVars(...args),
 	report_closed: (...args) => lifecycle.closedVars(...args),
 	report_reunited: (...args) => lifecycle.reunitedVars(...args),
+	report_hidden: reportHiddenVars,
 };
 
 export default sources;

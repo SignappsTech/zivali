@@ -8,6 +8,7 @@ import {
 	authError,
 	authGate,
 	configureAuth,
+	mfa,
 	sessionState,
 	signInWithEmail,
 	signInWithGoogle,
@@ -37,6 +38,12 @@ function fakeSupabase(result: { data: unknown; error: AuthError | null } = { dat
 		signInWithOAuth: method('signInWithOAuth'),
 		signInWithIdToken: method('signInWithIdToken'),
 		signOut: method('signOut'),
+		mfa: {
+			enroll: method('mfa.enroll'),
+			challengeAndVerify: method('mfa.challengeAndVerify'),
+			listFactors: method('mfa.listFactors'),
+			unenroll: method('mfa.unenroll'),
+		},
 	};
 	return {
 		client: { auth } as unknown as SupabaseClient,
@@ -91,6 +98,25 @@ test('helpers pass the contract arguments to supabase-js and throw ApiError', as
 	const failing = fakeSupabase({ data: { user: null, session: null }, error: authFailure('invalid_credentials') });
 	configureAuth(failing.client, createApiStore(createMockApi()));
 	await assert.rejects(signInWithEmail('ana@example.si', 'narobe'), { name: 'ApiError', code: 'UNAUTHENTICATED' });
+});
+
+test('mfa: TOTP enrolment, challenge, factor list and unenrol; a wrong code is VALIDATION', async () => {
+	const ok = fakeSupabase();
+	configureAuth(ok.client, createApiStore(createMockApi()));
+	await mfa.listFactors();
+	await mfa.unenroll('f-old');
+	await mfa.enroll();
+	await mfa.challengeAndVerify('f-new', '123456');
+	assert.deepEqual(ok.calls, [
+		['mfa.listFactors', undefined],
+		['mfa.unenroll', { factorId: 'f-old' }],
+		['mfa.enroll', { factorType: 'totp' }],
+		['mfa.challengeAndVerify', { factorId: 'f-new', code: '123456' }],
+	]);
+
+	const wrong = fakeSupabase({ data: null, error: authFailure('mfa_verification_failed', 422) });
+	configureAuth(wrong.client, createApiStore(createMockApi()));
+	await assert.rejects(mfa.challengeAndVerify('f-new', '000000'), { name: 'ApiError', code: 'VALIDATION' });
 });
 
 test('signOut runs the app cleanup first and still ends the session when it fails', async () => {

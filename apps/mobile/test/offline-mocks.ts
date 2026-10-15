@@ -65,6 +65,9 @@ export function fileSystem() {
 		get size() {
 			return this.exists ? fs.statSync(this.uri).size : null;
 		}
+		async copy(to: File) {
+			fs.copyFileSync(this.uri, to.uri);
+		}
 		/** Writes 1000 bytes; a test overrides it (mockImplementationOnce) for failures. */
 		static downloadFileAsync = jest.fn(async (_url: string, to: File) => {
 			fs.writeFileSync(to.uri, Buffer.alloc(1000));
