@@ -68,6 +68,7 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-	// Pages only: not API routes, Next.js internals or files with an extension (next-intl matcher).
-	matcher: '/((?!api|_next|.*\\..*).*)',
+	// Pages only: not API routes, Next.js internals or files with an extension (next-intl matcher), nor the
+	// unlocalised /captcha page for the mobile WebView (C15; its CSP is in next.config.ts).
+	matcher: '/((?!api|captcha|_next|.*\\..*).*)',
 };

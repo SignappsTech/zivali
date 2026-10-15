@@ -40,6 +40,15 @@ const auth = () => createClient().auth;
 export const signIn = (email: string, password: string, captchaToken?: string) =>
 	check(auth().signInWithPassword({ email, password, options: { captchaToken } }));
 
+/**
+ * The finder's anonymous session (C7), unless this browser already has a session (anonymous or an account, which
+ * the manage claim binds the same way). The captcha token is only asked for when a sign-in is needed.
+ */
+export async function ensureSession(getCaptchaToken: () => Promise<string | undefined>) {
+	if ((await auth().getSession()).data.session) return;
+	await check(auth().signInAnonymously({ options: { captchaToken: await getCaptchaToken() } }));
+}
+
 /** The name waits in user_metadata until the first session saves it to the profile (components/auth/session-sync.tsx). */
 export const signUp = ({
 	name,

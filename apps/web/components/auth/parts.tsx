@@ -6,7 +6,8 @@ import { EyeSlashIcon } from '@phosphor-icons/react/dist/ssr/EyeSlash';
 import { useLocale, useTranslations } from 'next-intl';
 import * as React from 'react';
 
-import { ApiError } from '@zivali/api/client';
+import { ApiError, type ErrorCode } from '@zivali/api/client';
+import type { QueryError } from '@zivali/api/rtk';
 import { h1Class } from '@/components/shell/page';
 import { Button } from '@/components/ui/button';
 import { FieldError, FormField } from '@/components/ui/form-field';
@@ -59,11 +60,15 @@ export function Spot({ children }: { children: React.ReactNode }) {
 	);
 }
 
-/** ApiError code → its errors.* sentence (C1); anything else is the generic one. */
+/** The C1 code of a thrown ApiError or of an RTK Query error (`{ status, data: { code } }`); else INTERNAL. */
+export const errorCode = (error: unknown): ErrorCode =>
+	error instanceof ApiError ? error.code : ((error as Partial<QueryError> | undefined)?.data?.code ?? 'INTERNAL');
+
+/** ApiError or RTK Query error code → its errors.* sentence (C1); anything else is the generic one. */
 export function useErrorText() {
 	const t = useTranslations('errors');
 	return (error: unknown) => {
-		const code = error instanceof ApiError ? error.code : 'INTERNAL';
+		const code = errorCode(error);
 		if (code === 'RATE_LIMITED') return t('RATE_LIMITED_generic');
 		return t.has(code) ? t(code) : t('INTERNAL');
 	};
