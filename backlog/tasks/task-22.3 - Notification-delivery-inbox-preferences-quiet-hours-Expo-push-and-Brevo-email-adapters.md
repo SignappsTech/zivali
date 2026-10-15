@@ -3,11 +3,11 @@ id: TASK-22.3
 title: >-
   Notifications: notify.send job, inbox and preferences API, push tokens, Expo
   and Brevo adapters
-status: In Progress
+status: Done
 assignee:
   - '@backend-dev'
 created_date: '2026-10-14 22:13'
-updated_date: '2026-10-15 15:30'
+updated_date: '2026-10-15 15:57'
 labels:
   - be
   - 'est:M'
