@@ -12,7 +12,7 @@ const catalogues = { sl, en };
 const STORAGE_KEY = 'locale';
 
 /** The OS language, which Hermes reports as the default Intl locale: en* is English, anything else Slovenian (C16). */
-export const deviceLocale = (): Locale =>
+const deviceLocale = (): Locale =>
 	Intl.DateTimeFormat().resolvedOptions().locale.toLowerCase().startsWith('en') ? 'en' : 'sl';
 
 function storedLocale(): Locale | null {
@@ -20,7 +20,7 @@ function storedLocale(): Locale | null {
 	return value === 'sl' || value === 'en' ? value : null;
 }
 
-/** A signed-in user's profile locale and how to save it, e.g. `{ locale: me.locale, save: (l) => updateMe({ locale: l }) }`. */
+/** A signed-in user's profile locale and its save: `{ locale: me.locale, save: (l) => updateMe({ locale: l }) }`. */
 export type ProfileLocale = { locale: Locale; save: (locale: Locale) => Promise<unknown> };
 
 type LocaleSwitch = { locale: Locale; setLocale: (locale: Locale) => Promise<unknown> };
@@ -68,7 +68,7 @@ export function I18nProvider({ profile, children }: { profile?: ProfileLocale | 
 	);
 }
 
-/** `setLocale(l)` switches the UI at once, keeps the choice on this device and, when signed in, saves it to the profile. */
+/** `setLocale(l)` switches the UI at once, stores the choice on the device and, signed in, saves it to the profile. */
 export function useLocaleSwitch(): LocaleSwitch {
 	const value = useContext(LocaleContext);
 	if (!value) throw new Error('useLocaleSwitch() needs <I18nProvider>');

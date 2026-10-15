@@ -42,7 +42,8 @@ export default function RootLayout() {
 	// TODO: data fetching is RTK Query with endpoints generated from OpenAPI (@rtk-query/codegen-openapi) in packages/api;
 	// its Redux store Provider wraps this tree once that client exists. No hand-written fetch hooks.
 	return (
-		// i18n (TASK-10.3). Signed in, under the store Provider: profile={{ locale: me.locale, save: (l) => updateMe({ locale: l }) }}.
+		// i18n (TASK-10.3). Signed in, below the store Provider, pass
+		// profile={{ locale: me.locale, save: (l) => updateMe({ locale: l }) }} (lib/i18n.tsx).
 		<I18nProvider>
 			<ThemeProvider value={NAV_THEME[colorScheme ?? 'light']}>
 				<StatusBar style="auto" />
