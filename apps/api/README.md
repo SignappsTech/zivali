@@ -23,6 +23,8 @@ middleware/<name>.middleware.ts    requestId, validate, error, auth, permission,
 lib/                        config.ts (zod env, read once), logger.ts (pino), errors.ts (AppError + C1 codes),
                             ctx.ts (userCtx, systemCtx), jobs.ts (pg-boss: QUEUES, SCHEDULES, jobs.send, drain), config-store.ts (app_config, 60 s), crypto.ts, openapi.ts (apiRoutes over the @zivali/validation registry)
 scripts/gen-openapi.ts      writes openapi.json; `--check` fails when it is stale (part of `lint`)
+scripts/admin-create.ts     `pnpm admin:create <email>`: promotes a confirmed account to ADMIN (local stack only, else
+                            `--i-know-this-is-production` + typing the email again); never an HTTP endpoint (ADR-018)
 scripts/jobs-drain.ts       `pnpm jobs:drain`: runs queued jobs through the registry until the queues are empty
 prisma/                     prisma.ts (client singleton), schemas/*.prisma + schemas/migrations/,
                             seed.ts (runs seeders/NN-<name>.seeder.ts in order)
@@ -141,5 +143,7 @@ route(spec, authMiddleware, requireRole('moderator'), requireAal2, AdminControll
 - `startJobs()` (API and worker) starts pg-boss, creates the queues, then `lockDownPgboss()` (`lib/pgboss-lockdown.ts`) enables RLS on the tables pg-boss created (CH-106); if it fails, the API and the worker log `fatal` and exit 1.
 
 ## Tests
+
+**Scratch DB for migration work (TASK-101).** From a worktree (path contains `.claude/worktrees/`), `test/global-setup.ts` refuses to migrate the shared DB (`127.0.0.1:55322/postgres`) when your branch has migration folders missing from `app._prisma_migrations`, and names them. Use a scratch DB: `psql postgresql://postgres:postgres@127.0.0.1:55322/postgres -c "create database task_<id>"`, then `TEST_DATABASE_URL="postgresql://postgres:postgres@127.0.0.1:55322/task_<id>?schema=app" pnpm --filter api test` (it overrides DATABASE_URL and DIRECT_URL and migrates that DB). The base checkout (merge verify) and worktrees with nothing pending still use the shared DB. Humans can bypass with `ALLOW_SHARED_DB_MIGRATE=1`.
 
 `test/helpers/token.ts` signs Supabase-style access tokens with the local `SUPABASE_JWT_SECRET` (HS256, audience `authenticated`): `await signTestToken({ sub, aal: 'aal2', is_anonymous })`. A verified email needs a real `auth.users` row: `sub = await createAuthUser({ email_verified, is_anonymous })`, cleaned up with `deleteAuthUsers(ids)`. Test files run one at a time against the shared local database; `test/global-setup.ts` applies pending migrations (never resets). `test/security` and `test/seeders` also call the local Supabase at `SUPABASE_URL` (PostgREST, Auth): an `.env.local` copied before TASK-6.2 needs that line from `.env.example`, and one copied before TASK-6.12 needs `RATE_SALT` and `IDEMPOTENCY_KEY`.
