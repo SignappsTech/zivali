@@ -23,6 +23,12 @@ test('keeps Sign in with Apple off unless the flag is "true"', () => {
 	expect(() => parseEnv({ ...valid, EXPO_PUBLIC_APPLE_SIGN_IN: 'yes' })).toThrow('EXPO_PUBLIC_APPLE_SIGN_IN');
 });
 
+test('keeps the captcha (Turnstile WebView before anonymous sign-in) off unless the flag is "true"', () => {
+	expect(parseEnv(valid).EXPO_PUBLIC_CAPTCHA).toBe(false);
+	expect(parseEnv({ ...valid, EXPO_PUBLIC_CAPTCHA: 'true' }).EXPO_PUBLIC_CAPTCHA).toBe(true);
+	expect(() => parseEnv({ ...valid, EXPO_PUBLIC_CAPTCHA: 'on' })).toThrow('EXPO_PUBLIC_CAPTCHA');
+});
+
 test('fails fast with the names of missing or invalid variables', () => {
 	expect(() => parseEnv({ ...valid, EXPO_PUBLIC_API_URL: undefined, EXPO_PUBLIC_APP_ENV: 'dev' })).toThrow(
 		'EXPO_PUBLIC_API_URL, EXPO_PUBLIC_APP_ENV'

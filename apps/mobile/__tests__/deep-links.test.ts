@@ -33,6 +33,7 @@ describe('deep link paths', () => {
 		['https://najdimo.si/r/Hk3vT9qP', '/r/Hk3vT9qP'],
 		['https://najdimo.si/en/r/Hk3vT9qP', '/r/Hk3vT9qP'],
 		['https://staging.najdimo.si/en/m#token', '/m#token'],
+		['zivali://m#token', '/m#token'],
 		['https://najdimo.si/payments/return?x=1', '/payments/return?x=1'],
 		['/en/r/abc', '/r/abc'],
 		['/r/abc', '/r/abc'],

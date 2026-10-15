@@ -19,6 +19,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Provider } from 'react-redux';
 import { useTranslations } from 'use-intl';
 
+import { CaptchaSheet } from '@/components/anonymous/captcha-sheet';
 import { ConsentSheet } from '@/components/shell/consent';
 import { Toaster } from '@/components/ui/sonner';
 import { setupAnalytics, useScreenTracking } from '@/lib/analytics';
@@ -60,6 +61,7 @@ export default function RootLayout() {
 							<StatusBar style="auto" />
 							<Stack screenOptions={{ headerShown: false }} />
 							<ConsentSheet />
+							<CaptchaSheet />
 							<AppToaster />
 							<PortalHost />
 						</BottomSheetModalProvider>
