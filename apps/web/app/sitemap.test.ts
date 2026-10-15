@@ -8,7 +8,7 @@ import sitemap from './sitemap';
 vi.mock('@/lib/directory', () => ({ getShelters: async () => shelterList }));
 
 describe('sitemap.xml', () => {
-	it('lists home, the P3 content pages, the directory and every shelter page in both locales on the app URL', async () => {
+	it('lists home, the P3 content pages, the directory, the legal pages and every shelter page in both locales on the app URL', async () => {
 		const entries = await sitemap();
 
 		expect(entries.map((entry) => entry.url)).toEqual([
@@ -26,6 +26,16 @@ describe('sitemap.xml', () => {
 			'https://najdimo.si/en/about',
 			'https://najdimo.si/zavetisca',
 			'https://najdimo.si/en/shelters',
+			'https://najdimo.si/zasebnost',
+			'https://najdimo.si/en/privacy',
+			'https://najdimo.si/piskotki',
+			'https://najdimo.si/en/cookies',
+			'https://najdimo.si/pogoji-uporabe',
+			'https://najdimo.si/en/terms',
+			'https://najdimo.si/impresum',
+			'https://najdimo.si/en/imprint',
+			'https://najdimo.si/dostopnost',
+			'https://najdimo.si/en/accessibility',
 			'https://najdimo.si/zavetisca/zavetisce-ljubljana',
 			'https://najdimo.si/en/shelters/zavetisce-ljubljana',
 		]);

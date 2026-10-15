@@ -1,0 +1,316 @@
+export const meta = {
+	title: 'Politika piškotkov · Najdimo',
+	description:
+		'Kateri piškotki in podobni zapisi so v Najdimo, čemu služijo, kako dolgo trajajo in kako izbiro spremenite ali prekličete.',
+	updated: '2026-10-15',
+	headings: [
+		{ id: 's1', text: '1. Na kratko' },
+		{ id: 's2', text: '2. Kaj so piškotki in podobni zapisi' },
+		{ id: 's3', text: '3. Zapisi na spletni strani' },
+		{ id: 's4', text: '4. Zapisi v mobilni aplikaciji' },
+		{ id: 's5', text: '5. Česa ne uporabljamo' },
+		{ id: 's6', text: '6. Storitve tretjih oseb' },
+		{ id: 's7', text: '7. Kako deluje vaša izbira' },
+		{ id: 's8', text: '8. Kako izbiro spremenite ali prekličete' },
+		{ id: 's9', text: '9. Spremembe' },
+		{ id: 's10', text: '10. Kontakt' },
+	],
+};
+
+<h2 id="s1">1. Na kratko</h2>
+
+<p>
+	Najdimo uporablja le nekaj piškotkov in podobnih zapisov. Večina jih je nujnih, da storitev sploh deluje. Analitiko
+	vklopimo samo z vašo privolitvijo.
+</p>
+
+<ul>
+	<li>
+		Nujni zapisi delujejo brez privolitve: vaša izbira glede piškotkov, vpis, jezik, osnutki prijav in zasebna
+		povezava do prijave.
+	</li>
+	<li>
+		Google Analytics nastavi piškotka <code>_ga</code> in <code>_ga_PKY4SCX3RL</code> samo, če sprejmete.
+	</li>
+	<li>Oglaševalskih in sledilnih piškotkov ni. Prikaze in klike oglasov štejemo združeno in brez piškotkov.</li>
+	<li>
+		Izbiro lahko kadar koli spremenite ali prekličete prek povezave „Nastavitve piškotkov“ v nogi strani ali v
+		nastavitvah aplikacije.
+	</li>
+</ul>
+
+<h2 id="s2">2. Kaj so piškotki in podobni zapisi</h2>
+
+<p>
+	Piškotek je majhna datoteka, ki jo spletna stran shrani v vaš brskalnik. Podobne zapise (lokalna shramba brskalnika,
+	varna shramba v aplikaciji) obravnavamo enako. V tem besedilu jim skupaj rečemo „zapisi“.
+</p>
+
+<p>Zapise delimo na dve vrsti:</p>
+
+<ul>
+	<li>
+		<strong>nujni</strong>: brez njih storitev ne deluje ali ne more izpolniti tega, kar ste zahtevali. Zanje ne
+		potrebujemo privolitve;
+	</li>
+	<li>
+		<strong>analitični</strong>: merijo uporabo storitve. Nastavimo jih samo z vašo privolitvijo.
+	</li>
+</ul>
+
+<h2 id="s3">3. Zapisi na spletni strani</h2>
+
+<div className="overflow-x-auto">
+	<table>
+		<thead>
+			<tr>
+				<th>Ime</th>
+				<th>Ponudnik</th>
+				<th>Čemu služi</th>
+				<th>Vrsta</th>
+				<th>Trajanje</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr>
+				<td>
+					<code>zz_consent</code> (piškotek)
+				</td>
+				<td>Najdimo</td>
+				<td>Shrani vašo izbiro glede piškotkov, različico besedila in čas izbire.</td>
+				<td>nujni</td>
+				<td>12 mesecev</td>
+			</tr>
+			<tr>
+				<td>
+					<code>sb-&lt;projekt&gt;-auth-token</code> (piškotek; lahko je razdeljen na <code>.0</code>,{' '}
+					<code>.1</code>)
+				</td>
+				<td>Najdimo (Supabase)</td>
+				<td>Ohrani vpis, ko ste vpisani.</td>
+				<td>nujni</td>
+				<td>do 400 dni ali do odjave [naročnik: preveriti dejansko trajanje]</td>
+			</tr>
+			<tr>
+				<td>
+					<code>NEXT_LOCALE</code> (piškotek)
+				</td>
+				<td>Najdimo</td>
+				<td>Si zapomni izbran jezik.</td>
+				<td>nujni</td>
+				<td>[naročnik: preveriti trajanje, verjetno do konca seje]</td>
+			</tr>
+			<tr>
+				<td>Osnutek prijave (lokalna shramba)</td>
+				<td>Najdimo</td>
+				<td>Shrani nedokončano prijavo, da je ne izgubite.</td>
+				<td>nujni</td>
+				<td>dokler prijave ne oddate ali osnutka ne zavržete</td>
+			</tr>
+			<tr>
+				<td>
+					<code>manage:&lt;ID prijave&gt;</code> (lokalna shramba)
+				</td>
+				<td>Najdimo</td>
+				<td>Hrani žeton zasebne povezave, prek katere upravljate prijavo brez računa.</td>
+				<td>nujni</td>
+				<td>do zaključka prijave ali do izbrisa shrambe</td>
+			</tr>
+			<tr>
+				<td>Identifikator naprave (lokalna shramba)</td>
+				<td>Najdimo</td>
+				<td>Naključna oznaka za omejevanje zlorab (število zahtev).</td>
+				<td>nujni</td>
+				<td>do izbrisa shrambe</td>
+			</tr>
+			<tr>
+				<td>Preverjanje „nisem robot“ (Turnstile)</td>
+				<td>Cloudflare, Inc.</td>
+				<td>
+					Loči ljudi od botov s tehničnimi signali naprave in brskalnika. Ne služi oglaševanju. [naročnik:
+					preveriti, ali nastavi piškotke]
+				</td>
+				<td>nujni</td>
+				<td>po pravilih ponudnika</td>
+			</tr>
+			<tr>
+				<td>
+					<code>_ga</code> (piškotek)
+				</td>
+				<td>Google Ireland Limited</td>
+				<td>Loči uporabnike za statistiko obiska.</td>
+				<td>analitični</td>
+				<td>2 leti</td>
+			</tr>
+			<tr>
+				<td>
+					<code>_ga_PKY4SCX3RL</code> (piškotek)
+				</td>
+				<td>Google Ireland Limited</td>
+				<td>Hrani stanje seje v Google Analytics 4.</td>
+				<td>analitični</td>
+				<td>2 leti</td>
+			</tr>
+		</tbody>
+	</table>
+</div>
+
+<p>Analitična piškotka nastavimo samo, če sprejmete. Podatke v Google Analytics hranimo 14 mesecev.</p>
+
+<h2 id="s4">4. Zapisi v mobilni aplikaciji</h2>
+
+<div className="overflow-x-auto">
+	<table>
+		<thead>
+			<tr>
+				<th>Ime</th>
+				<th>Ponudnik</th>
+				<th>Čemu služi</th>
+				<th>Vrsta</th>
+				<th>Trajanje</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr>
+				<td>Izbira glede piškotkov (varna shramba naprave)</td>
+				<td>Najdimo</td>
+				<td>Shrani vašo izbiro, različico besedila in čas.</td>
+				<td>nujni</td>
+				<td>12 mesecev</td>
+			</tr>
+			<tr>
+				<td>Seja vpisa (shramba aplikacije)</td>
+				<td>Najdimo (Supabase)</td>
+				<td>Ohrani vpis.</td>
+				<td>nujni</td>
+				<td>do odjave [naročnik: preveriti trajanje]</td>
+			</tr>
+			<tr>
+				<td>Žeton za potisna obvestila</td>
+				<td>Najdimo; Apple in Google prenašata obvestila</td>
+				<td>Pošiljanje obvestil, ko jih dovolite v napravi.</td>
+				<td>nujni</td>
+				<td>dokler obvestil ne izklopite ali aplikacije ne odstranite</td>
+			</tr>
+			<tr>
+				<td>Žeton zasebne povezave (varna shramba)</td>
+				<td>Najdimo</td>
+				<td>Upravljanje prijave brez računa.</td>
+				<td>nujni</td>
+				<td>do zaključka prijave ali do odstranitve aplikacije</td>
+			</tr>
+			<tr>
+				<td>Identifikator naprave</td>
+				<td>Najdimo</td>
+				<td>Omejevanje zlorab.</td>
+				<td>nujni</td>
+				<td>do odstranitve aplikacije</td>
+			</tr>
+			<tr>
+				<td>Osnutki in prijave, ki čakajo na pošiljanje</td>
+				<td>Najdimo</td>
+				<td>
+					Shrani nedokončano prijavo in prijavo najdene živali, oddano brez povezave, dokler je ne pošljemo.
+				</td>
+				<td>nujni</td>
+				<td>dokler prijave ne pošljemo ali osnutka ne zavržete; izbrišemo ob odjavi</td>
+			</tr>
+			<tr>
+				<td>Kopija javnih prijav v okolici</td>
+				<td>Najdimo</td>
+				<td>
+					Zemljevid in seznam delujeta tudi brez povezave. Samo približna območja in pomanjšane fotografije.
+				</td>
+				<td>nujni</td>
+				<td>največ 7 dni in 50 MB; izbrišemo ob odjavi</td>
+			</tr>
+			<tr>
+				<td>Območja za opozorila, ko ste blizu</td>
+				<td>Najdimo (preverja jih operacijski sistem telefona)</td>
+				<td>
+					Telefon vas opozori, ko vstopite v približno območje izgubljene živali. Samo če funkcijo vklopite.
+				</td>
+				<td>nujni</td>
+				<td>dokler se iskanje ne zaključi ali funkcije ne izklopite</td>
+			</tr>
+			<tr>
+				<td>Identifikator namestitve aplikacije (Firebase Analytics)</td>
+				<td>Google Ireland Limited</td>
+				<td>Loči namestitve za statistiko uporabe.</td>
+				<td>analitični</td>
+				<td>po pravilih ponudnika; podatke v Googlu hranimo 14 mesecev [naročnik: preveriti]</td>
+			</tr>
+		</tbody>
+	</table>
+</div>
+
+<p>Identifikator Firebase Analytics ustvarimo šele po vaši privolitvi.</p>
+
+<h2 id="s5">5. Česa ne uporabljamo</h2>
+
+<ul>
+	<li>
+		Oglaševalskih in sledilnih piškotkov ni. Vse štiri Googlove nastavitve privolitve so privzeto zavrnjene. Če
+		sprejmete, odobrimo samo <code>analytics_storage</code>.
+	</li>
+	<li>
+		Prikaze in klike oglasov štejemo v svoji zbirki, združeno in brez piškotkov. Pri tem ničesar ne shranimo v vaši
+		napravi.
+	</li>
+</ul>
+
+<h2 id="s6">6. Storitve tretjih oseb</h2>
+
+<ul>
+	<li>
+		<strong>Stripe.</strong> Plačilo poteka na Stripovi strani (Stripe Checkout). Tam veljata Stripova politika
+		piškotkov in zasebnosti.
+	</li>
+	<li>
+		<strong>Zemljevid in iskanje krajev.</strong> Zemljevidne ploščice (OpenFreeMap) ne nastavljajo piškotkov,
+		vidijo pa vaš IP naslov. Iskanje krajev teče na naših strežnikih in ne nastavlja piškotkov.
+	</li>
+	<li>
+		<strong>Vpis z Googlom ali Applom.</strong> Ob vpisu veljajo pravila izbranega ponudnika.
+	</li>
+</ul>
+
+<p>
+	Več o teh ponudnikih je v <a href="/zasebnost">politiki zasebnosti</a>.
+</p>
+
+<h2 id="s7">7. Kako deluje vaša izbira</h2>
+
+<ul>
+	<li>
+		Dokler se ne odločite, ne naložimo nobene Googlove skripte, ne pošljemo nobene zahteve Googlu in ne nastavimo
+		nobenega Googlovega piškotka (osnovni način Consent Mode v2).
+	</li>
+	<li>Če zavrnete ali ne izberete ničesar, storitev deluje enako. Nič ni zaklenjeno.</li>
+	<li>
+		Če sprejmete, odobrimo samo <code>analytics_storage</code>.
+	</li>
+	<li>Vprašamo vas znova po 12 mesecih ali ko se spremenijo ponudniki ali nameni.</li>
+</ul>
+
+<h2 id="s8">8. Kako izbiro spremenite ali prekličete</h2>
+
+<p>
+	Kadar koli odprite „Nastavitve piškotkov“ v nogi strani ali v nastavitvah aplikacije in spremenite izbiro. Preklic
+	velja takoj, piškotke <code>_ga</code> pa izbrišemo še isti trenutek. Piškotke lahko izbrišete tudi v nastavitvah
+	brskalnika; nujni zapisi se nato ustvarijo znova, ko jih storitev potrebuje, osnutki pa se izgubijo.
+</p>
+
+<h2 id="s9">9. Spremembe</h2>
+
+<p>
+	Besedilo posodobimo, ko dodamo ali odstranimo zapis ali ponudnika. Datum zadnje posodobitve je na vrhu strani. Pri
+	pomembni spremembi vas znova vprašamo za izbiro.
+</p>
+
+<h2 id="s10">10. Kontakt</h2>
+
+<p>
+	Vprašanja: [naročnik: e-naslov za zasebnost]. Splošno o obdelavi podatkov:{' '}
+	<a href="/zasebnost">politika zasebnosti</a>.
+</p>

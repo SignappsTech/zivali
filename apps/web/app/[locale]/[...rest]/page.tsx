@@ -14,11 +14,6 @@ const PENDING = {
 	'/report/found': 'nav.report_found_title',
 	'/inbox': 'nav.inbox',
 	'/advertise': 'footer.partners',
-	'/privacy': 'footer.privacy',
-	'/cookies': 'footer.cookies',
-	'/terms': 'footer.terms',
-	'/imprint': 'footer.imprint',
-	'/accessibility': 'footer.accessibility',
 } as const;
 
 async function pendingTitle({ params }: PageProps<'/[locale]/[...rest]'>) {
