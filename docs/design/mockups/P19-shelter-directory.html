@@ -1,0 +1,946 @@
+<!doctype html>
+<!--
+  P19 Shelter directory mockup (TASK-89.4, FR-044). Built from docs/design/mockups/_template.html and the P19 shell mockup (P19-admin-shell.html).
+  Sources: docs/design/pages/P19-admin-shell.md (Shelter directory section), docs/design/system.md (v0.12), docs/content/pages/P19-admin-shell.md (v0.2, section 8).
+  Static HTML. Everything in #src is cloned once per colour mode by ../directions/directions.js. All shelter, municipality, phone and person data is SAMPLE.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Najdimo mockup: P19 Shelter directory</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:wght@400;500;600;700&family=Bricolage+Grotesque:opsz,wght@12..96,500..800&display=swap" rel="stylesheet">
+<link href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css" rel="stylesheet">
+<link href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/bold/style.css" rel="stylesheet">
+<link href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css" rel="stylesheet">
+<link href="../tokens.css" rel="stylesheet">
+<link href="../directions/directions.css" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com/3.4.17"></script>
+<script src="../directions/tailwind-config.js"></script>
+<style>
+/* Shell parts copied from P19-admin-shell.html (same values), then the directory-only parts. Token-driven. */
+.scope h1, .scope h2, .scope h3 { text-wrap: balance; }
+.nowrap { white-space: nowrap; }
+.anno { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; font-size: 13px; line-height: 18px; font-weight: 700; background: hsl(var(--foreground)); color: hsl(var(--background)); white-space: nowrap; }
+.part { border-radius: var(--radius-card); background: hsl(var(--background)); box-shadow: 0 0 0 1px hsl(var(--input) / 0.45); }
+.h1c { margin: 0; font-family: var(--font-display); font-weight: 700; font-size: 30px; line-height: 36px; letter-spacing: -0.02em; }
+.dtitle { margin: 0; font-family: var(--font-display); font-weight: 600; font-size: 20px; line-height: 28px; letter-spacing: -0.005em; }
+.h3c { margin: 0; padding: 0; font-size: 16px; line-height: 24px; font-weight: 700; }
+.meta { font-size: 14px; line-height: 20px; color: hsl(var(--muted-foreground)); }
+
+.adm { display: flex; align-items: stretch; }
+.adm-col { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.adm-main { width: 100%; max-width: 1280px; box-sizing: border-box; padding: 4px 48px 64px; display: flex; flex-direction: column; gap: 40px; }
+.sb { width: 280px; flex: none; box-sizing: border-box; display: flex; flex-direction: column; background: hsl(var(--sidebar)); color: hsl(var(--sidebar-foreground)); }
+.sb-head { height: 72px; flex: none; display: flex; align-items: center; gap: 8px; padding: 0 12px; }
+.sb-home { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 8px; border-radius: calc(var(--radius) - 4px); color: inherit; text-decoration: none; }
+.sb-home svg { width: 32px; height: 32px; flex: none; color: hsl(var(--sidebar-foreground)); }
+.sb-name { font-family: var(--font-display); font-weight: 700; font-size: 20px; line-height: 24px; letter-spacing: -0.02em; }
+.sb-sub, .sb-label, .sb-soon { color: hsl(var(--sidebar-foreground) / 0.72); }
+.sb-sub { font-size: 14px; line-height: 20px; font-weight: 600; }
+.sb-nav { flex: 1; padding: 4px 12px 20px; }
+.sb-group + .sb-group { margin-top: 16px; }
+.sb-label { margin: 0 0 4px; padding: 0 12px; font-size: 14px; line-height: 20px; font-weight: 600; }
+.sb-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+.sb-item { display: flex; align-items: center; gap: 12px; width: 100%; box-sizing: border-box; min-height: 44px; padding: 10px 12px; border: 0; border-radius: calc(var(--radius) - 4px); background: transparent; color: inherit; font: inherit; font-weight: 600; font-size: 16px; line-height: 20px; text-align: left; text-decoration: none; cursor: pointer; transition: background-color 150ms var(--ease); }
+.sb-item > i { font-size: 20px; line-height: 1; flex: none; }
+.sb-t { min-width: 0; }
+.sb-soon { margin-left: auto; padding-left: 8px; font-size: 14px; line-height: 20px; font-weight: 400; white-space: nowrap; }
+.sb-item:hover, .sb-item.is-hover { background: hsl(var(--sidebar-accent)); color: hsl(var(--sidebar-accent-foreground)); }
+.sb-item[aria-current="page"] { background: hsl(var(--sidebar-primary)); color: hsl(var(--sidebar-primary-foreground)); font-weight: 700; }
+.sb a:focus-visible, .sb button:focus-visible, .sb .is-focus { outline: 3px solid hsl(var(--sidebar-ring)); outline-offset: 2px; }
+.sb-foot { padding: 12px; border-top: 1px solid hsl(var(--sidebar-border)); }
+.sb.is-collapsed { width: 72px; }
+.sb.is-collapsed .sb-head { justify-content: center; padding: 0; }
+.sb.is-collapsed .sb-nav { padding: 4px 14px 20px; }
+.sb.is-collapsed .sb-item { width: 44px; padding: 0; justify-content: center; }
+.sb.is-collapsed .sb-group + .sb-group { margin-top: 8px; padding-top: 8px; border-top: 1px solid hsl(var(--sidebar-border)); }
+.sb.is-collapsed .sb-foot { padding: 12px 14px; }
+
+.tb { height: 72px; flex: none; display: flex; align-items: center; gap: 12px; padding: 0 48px; box-sizing: border-box; }
+.crumbs { display: flex; align-items: center; gap: 2px; list-style: none; margin: 0; padding: 0; font-size: 15px; line-height: 20px; font-weight: 600; }
+.crumbs a { display: inline-flex; align-items: center; min-height: 44px; padding: 0 6px; margin-left: -6px; border-radius: 8px; color: hsl(var(--primary)); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 4px; }
+.crumbs a:hover { text-decoration-thickness: 2px; }
+.crumbs li { display: flex; align-items: center; }
+.crumbs .sep { color: hsl(var(--muted-foreground)); font-size: 14px; }
+.crumbs .sep i { display: block; }
+.crumbs [aria-current] { padding: 0 6px; color: hsl(var(--foreground)); }
+.tb-meta { margin-left: auto; display: flex; align-items: center; gap: 16px; }
+.envw { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; line-height: 20px; font-weight: 700; white-space: nowrap; }
+.envw i { font-size: 16px; }
+.vr { width: 1px; height: 20px; background: hsl(var(--input) / 0.5); }
+.acct { display: inline-flex; align-items: center; gap: 4px; min-height: 44px; padding: 0 10px 0 6px; border: 0; border-radius: 999px; background: transparent; color: inherit; font: inherit; cursor: pointer; }
+.acct:hover { background: hsl(var(--foreground) / 0.10); }
+.acct i { font-size: 16px; }
+/* page head (not .ph: that is the Phosphor icon class) */
+.phead { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px 24px; }
+
+.tcard { background: hsl(var(--card)); color: hsl(var(--card-foreground)); border-radius: var(--radius-card); padding: 4px 16px 8px; }
+.tbl { width: 100%; border-collapse: collapse; font-size: 15px; line-height: 22px; }
+.tbl th { position: sticky; top: 0; z-index: 1; height: 52px; padding: 0 12px; background: hsl(var(--card)); border-bottom: 1px solid hsl(var(--border)); text-align: left; vertical-align: middle; font-size: 14px; line-height: 20px; font-weight: 700; color: hsl(var(--muted-foreground)); white-space: nowrap; }
+.tbl td { height: 56px; box-sizing: border-box; padding: 6px 12px; border-bottom: 1px solid hsl(var(--border)); vertical-align: middle; }
+.tbl tbody tr:last-child td, .tbl tbody tr:last-child th { border-bottom: 0; }
+.tbl tbody tr { transition: background-color 150ms var(--ease); }
+.tbl tbody tr:not(.no-hover):hover, .tbl tbody tr.is-hover { background: hsl(var(--accent) / 0.6); }
+.tbl tbody tr.is-selected { background: hsl(var(--accent)); }
+.tbl .c-act { width: 52px; padding: 0 4px; text-align: right; }
+.tbl .num { text-align: right; }
+.tbl th.num .sortbtn { margin-left: auto; }
+.tmuted { color: hsl(var(--muted-foreground)); }
+.rowlink { display: inline-flex; align-items: center; min-height: 44px; padding: 0; border: 0; border-radius: 8px; background: transparent; color: inherit; font: inherit; font-weight: 700; text-align: left; text-decoration: none; cursor: pointer; }
+.rowlink:hover, .tbl tbody tr:hover .rowlink, .tbl tr.is-hover .rowlink { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 4px; }
+.sortbtn { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; margin: 0 -8px; padding: 0 8px; border: 0; border-radius: calc(var(--radius) - 4px); background: transparent; color: inherit; font: inherit; font-weight: 700; white-space: nowrap; cursor: pointer; }
+.sortbtn i { font-size: 16px; }
+.sortbtn:hover, .sortbtn.is-hover { background: hsl(var(--foreground) / 0.10); color: hsl(var(--foreground)); }
+th[aria-sort="ascending"] .sortbtn, th[aria-sort="descending"] .sortbtn { color: hsl(var(--foreground)); }
+.lst { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; line-height: 20px; font-weight: 700; white-space: nowrap; }
+.lst i { font-size: 16px; }
+.frow { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px 24px; }
+.f-search { width: 320px; max-width: 100%; }
+.pill i.ph-caret-down { font-size: 16px; }
+.iconbtn.is-open { background: hsl(var(--foreground) / 0.10); }
+.rmenu { position: absolute; right: 0; top: calc(100% + 4px); width: 208px; padding: 8px; border-radius: var(--radius-row); text-align: left; }
+.sep { height: 1px; margin: 6px 12px; background: hsl(var(--border)); }
+.mi-danger, .mi-danger:hover { color: hsl(var(--destructive)); }
+.srows { list-style: none; margin: 0; padding: 0; }
+.srow { display: flex; align-items: flex-start; gap: 8px; padding: 8px 0; border-bottom: 1px solid hsl(var(--border)); }
+.srow:last-child { border-bottom: 0; }
+.srow-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 16px; margin: 0 0 6px; font-size: 14px; line-height: 20px; color: hsl(var(--muted-foreground)); }
+
+.drawer { position: absolute; top: 44px; right: 0; bottom: 0; z-index: 5; width: 480px; display: flex; flex-direction: column; background: hsl(var(--card)); color: hsl(var(--card-foreground)); border-radius: var(--radius-card) 0 0 var(--radius-card); box-shadow: var(--shadow-pop); }
+.drawer.full { width: 100%; border-radius: 0; }
+.drawer-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 24px 16px 8px 24px; }
+.drawer-body { flex: 1; margin: 0; padding: 8px 24px 24px; display: flex; flex-direction: column; gap: 32px; }
+.drawer-foot { display: flex; align-items: center; gap: 8px; padding: 16px 24px 24px; }
+.tst { position: absolute; bottom: 24px; left: 150px; width: 420px; z-index: 6; }
+.tst-c { left: 120px; }
+
+/* ---- Directory only ---- */
+/* "Live at once" line under the title: quiet body text, not a notice */
+.live { margin: 8px 0 0; font-size: 16px; line-height: 24px; color: hsl(var(--muted-foreground)); max-width: 62ch; }
+/* Read-only line in place of the buttons (moderator) */
+.ro { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; margin: 0; font-size: 16px; line-height: 24px; font-weight: 700; color: hsl(var(--muted-foreground)); }
+.ro i { font-size: 20px; }
+.seg-fit { width: fit-content; }
+.seg-fit button { flex: none; min-width: 136px; }
+/* Stale marker: clock icon + bold word next to the date; same colour as the text (icon and word, never colour) */
+.dcol { display: inline-block; min-width: 6.6em; }
+.srow-meta .dcol { min-width: 0; }
+.stale { display: inline-flex; align-items: center; gap: 4px; margin-left: 4px; font-weight: 700; white-space: nowrap; }
+.stale i { font-size: 16px; }
+/* Municipality status words: confirmed is quiet, not confirmed stands out by weight, icon and foreground */
+.lst-ok { color: hsl(var(--muted-foreground)); }
+.lst-no { color: hsl(var(--foreground)); }
+/* Drawer form groups: legend in the label-strong role, rows separated by space only */
+.grp { margin: 0; padding: 0; border: 0; min-width: 0; }
+.grp > legend { margin-bottom: 12px; }
+.hlist { list-style: none; margin: 0; padding: 0; display: grid; gap: 16px; }
+.hrow + .hrow { padding-top: 16px; border-top: 1px solid hsl(var(--border)); }
+.hgrid { display: grid; grid-template-columns: minmax(0, 1fr) 104px 104px; gap: 12px; align-items: end; }
+.hfoot { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 4px; }
+.swrow { display: inline-flex; align-items: center; gap: 12px; min-height: 44px; font-size: 16px; line-height: 24px; font-weight: 600; cursor: pointer; }
+.plist { list-style: none; margin: 12px 0 0; padding: 0; }
+.plist li { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 44px; padding-left: 2px; font-size: 16px; line-height: 24px; }
+.plist li + li { border-top: 1px solid hsl(var(--border)); }
+.drawer.full .hgrid { grid-template-columns: minmax(0, 1fr) 160px 160px; }
+/* Tables inside a drawer or dialog sit on the surface itself (no inner card) */
+.tbl-in th { background: inherit; }
+.tbl-in .rh { position: static; height: auto; font-size: 15px; line-height: 22px; font-weight: 700; color: hsl(var(--foreground)); white-space: normal; border-bottom: 1px solid hsl(var(--border)); }
+.drawer .tbl-in th:first-child, .drawer .tbl-in td:first-child, .dialog .tbl-in th:first-child, .dialog .tbl-in td:first-child { padding-left: 0; }
+.dialog .tbl-in th { background: hsl(var(--popover)); }
+/* CSV import: wide dialog for its one table, file row, drop area, scrolling changes region, error list */
+.dialog-wide { max-width: 640px; }
+.filerow { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; min-height: 64px; padding: 10px 10px 10px 16px; border-radius: var(--radius-row); background: hsl(var(--background)); }
+.filerow > i { font-size: 24px; color: hsl(var(--primary)); }
+.pick, .drop { cursor: pointer; }
+.pick:focus-within, .drop:focus-within .btn { outline: 3px solid hsl(var(--ring)); outline-offset: 2px; }
+.drop { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; min-height: 176px; padding: 24px; border-radius: var(--radius-row); background: hsl(var(--background)); text-align: center; font-size: 16px; line-height: 24px; }
+.drop > i { font-size: 32px; color: hsl(var(--primary)); }
+.drop.is-over, .drop:hover { box-shadow: inset 0 0 0 2px hsl(var(--primary)); }
+.summary { margin-bottom: 0; font-size: 16px; line-height: 24px; font-weight: 700; }
+.errlist { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.errlist li { display: flex; gap: 10px; align-items: flex-start; font-size: 15px; line-height: 22px; }
+.errlist li > i { font-size: 20px; margin-top: 1px; flex: none; color: hsl(var(--destructive)); }
+.errlist p { margin: 0; }
+.tbl-fixed { table-layout: fixed; }
+.tbl-fixed td { height: 48px; overflow-wrap: break-word; }
+.tbl-fixed th { height: 44px; white-space: normal; }
+/* Combobox popup */
+.cbx-list { position: absolute; left: 0; right: 0; top: calc(100% + 6px); }
+.part-card { padding: 24px; }
+
+.fit-1200 { width: 1200px; } .fit-768 { width: 768px; }
+@media (max-width: 1263px) { .fit-1200 { zoom: 0.88; } }
+@media (max-width: 1118px) { .fit-1200 { zoom: 0.75; } }
+@media (max-width: 962px) { .fit-1200 { zoom: 0.6; } }
+@media (max-width: 830px) { .fit-768 { zoom: 0.9; } }
+@media (max-width: 782px) { .fit-1200 { zoom: 0.48; } }
+@media (max-width: 753px) { .fit-768 { zoom: 0.8; } }
+@media (max-width: 660px) { .fit-768 { zoom: 0.6; } }
+@media (max-width: 638px) { .fit-1200 { zoom: 0.38; } }
+@media (max-width: 507px) { .fit-768 { zoom: 0.44; } }
+@media (max-width: 502px) { .fit-1200 { zoom: 0.28; } }
+@media (max-width: 389px) { .fit-1200 { zoom: 0.24; } .fit-768 { zoom: 0.38; } }
+@media (max-width: 359px) { .fit-1200 { zoom: 0.21; } .fit-768 { zoom: 0.33; } }
+</style>
+</head>
+<body>
+<a class="sr-only focus:not-sr-only" href="#stage">Skip to content</a>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <symbol id="nj-mark" viewBox="0 0 48 48">
+    <g fill="currentColor" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round">
+      <path d="M24 45.5 C24 45.5 10.5 33.2 10.5 24.4 A13.5 13.5 0 0 1 37.5 24.4 C37.5 33.2 24 45.5 24 45.5 Z M24 17.9 A6.5 6.5 0 1 0 24 30.9 A6.5 6.5 0 1 0 24 17.9 Z"/>
+      <path d="M12.2 19.6 L11.2 5 L22.6 11.4 Z"/><path d="M35.8 19.6 L25.4 11.4 L36.8 5 Z"/>
+    </g>
+    <circle cx="24" cy="24.4" r="3.6" fill="#F7B32B"/>
+  </symbol>
+  <symbol id="illo-spot" viewBox="0 0 320 210">
+    <rect width="320" height="210" style="fill:hsl(var(--accent))"/>
+    <circle cx="232" cy="70" r="32" style="fill:hsl(var(--status-reunited))"/>
+    <path d="M0 150 C60 112 120 120 172 140 C222 160 272 150 320 120 V210 H0Z" style="fill:hsl(var(--secondary))"/>
+    <path d="M0 182 C70 146 130 162 190 180 C240 194 290 186 320 170 V210 H0Z" style="fill:hsl(var(--primary))"/>
+    <path d="M52 198 C96 160 150 182 196 148" fill="none" style="stroke:hsl(var(--status-reunited))" stroke-width="3" stroke-linecap="round" stroke-dasharray="1 9"/>
+  </symbol>
+</svg>
+
+<header class="chrome">
+  <div class="flex flex-wrap items-center gap-x-5 gap-y-2 px-6 py-2 max-w-[1400px] mx-auto">
+    <span class="flex items-center gap-2 font-display font-bold text-lg"><svg class="logo-mark w-7 h-7" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg>Najdimo</span>
+    <span class="text-muted-foreground text-[15px]">P19 Shelter directory (mockup)</span>
+    <div class="ml-auto flex items-center gap-2" role="group" aria-label="Colour mode">
+      <button class="mode-btn" data-mode="light" aria-pressed="true">Light</button>
+      <button class="mode-btn" data-mode="dark" aria-pressed="false">Dark</button>
+      <button class="mode-btn" data-mode="both" aria-pressed="false">Side by side</button>
+    </div>
+  </div>
+</header>
+
+<main id="stage"></main>
+
+<div id="src" hidden>
+
+<section class="tile-section !max-w-[1400px] !pb-0">
+  <h1 class="tile-title">P19 Shelter directory</h1>
+  <p class="tile-lede">Admins keep the municipality-to-shelter directory (17 shelters, 212 municipalities) correct without developer help, and every save is live at once on the public shelter pages (P3 T5, T6) and the P6, P7 and P9 call rows. Two views of the same data (shelters, municipalities) in the shared dense table, an edit drawer, history with before and after, a CSV import with a dry run, and the delete guard. Copy is from the P19 content slice (section 8); all shelter, municipality, phone and person data is sample.</p>
+  <div class="flex flex-wrap gap-2">
+    <span class="anno">Shell from P19-admin-shell.html</span><span class="anno">Table header 52 · rows 56 · text 15</span><span class="anno">Drawer 480 · full width below lg</span><span class="anno">Import dialog 640</span><span class="anno">Stale = clock icon + bold "zastarelo"</span><span class="anno">No sun yellow, no warning fills</span>
+  </div>
+</section>
+
+<section class="tile-section !max-w-[1400px]">
+  <h2 class="tile-title">1. Shelter directory at 1200 px</h2>
+  <p class="tile-lede">Admin view, sidebar item "Imenik zavetišč" current. The yearly reminder is the only notice on the page; the "live at once" sentence is a quiet line under the title, not a second notice. One primary per view: "Dodaj zavetišče" on the page, "Shrani" in a drawer, "Uveljavi spremembe" in the import dialog, the destructive button in a delete dialog.</p>
+  
+  <p class="tile-h">F1 · Zavetišča view · yearly reminder (23 entries) · no filter, sorted by Ime · stale rows carry the clock icon and the bold word "zastarelo" · row hover on "Zavetišče Lipa" · keyboard focus on "Pokaži" · sample data</p>
+  <div class="fit-1200"><div class="browser relative" style="width:1200px" lang="sl">
+    <div class="browser-bar"><span class="dots"><i></i><i></i><i></i></span><span class="url"><i class="ph ph-lock-simple"></i>najdimo.si/admin/zavetisca</span></div>
+    <div class="adm" style="min-height:1480px">
+    <div class="sb">
+    <div class="sb-head"><a href="#" class="sb-home"><svg viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg><span class="flex flex-col"><span class="sb-name">Najdimo</span><span class="sb-sub">Konzola</span></span></a></div>
+    <nav class="sb-nav" aria-label="Konzola">
+      <div class="sb-group"><p class="sb-label">Pregled</p><ul class="sb-list"><li class="relative"><a href="#" class="sb-item"><i class="ph ph-squares-four" aria-hidden="true"></i><span class="sb-t">Nadzorna plošča</span></a></li></ul></div>
+      <div class="sb-group"><p class="sb-label">Vsebina</p><ul class="sb-list"><li class="relative"><a href="#" class="sb-item"><i class="ph ph-image-square" aria-hidden="true"></i><span class="sb-t">Oglasi</span></a></li><li class="relative"><a href="#" class="sb-item"><i class="ph ph-paw-print" aria-hidden="true"></i><span class="sb-t">Lastni oglasi</span></a></li></ul></div>
+      <div class="sb-group"><p class="sb-label">Varnost</p><ul class="sb-list"><li class="relative"><a href="#" class="sb-item"><i class="ph ph-list-checks" aria-hidden="true"></i><span class="sb-t">Moderacija</span><span class="sb-soon">Kmalu</span></a></li><li class="relative"><a href="#" class="sb-item"><i class="ph ph-flag" aria-hidden="true"></i><span class="sb-t">Prijave zlorab</span><span class="sb-soon">Kmalu</span></a></li></ul></div>
+      <div class="sb-group"><p class="sb-label">Organizacije</p><ul class="sb-list"><li class="relative"><a href="#" class="sb-item"><i class="ph ph-seal-check" aria-hidden="true"></i><span class="sb-t">Preverjanje</span></a></li><li class="relative"><a href="#" class="sb-item"><i class="ph ph-buildings" aria-hidden="true"></i><span class="sb-t">Organizacije</span></a></li><li class="relative"><a href="#" class="sb-item" aria-current="page"><i class="ph-fill ph-address-book" aria-hidden="true"></i><span class="sb-t">Imenik zavetišč</span></a></li></ul></div>
+      <div class="sb-group"><p class="sb-label">Ljudje</p><ul class="sb-list"><li class="relative"><a href="#" class="sb-item"><i class="ph ph-users" aria-hidden="true"></i><span class="sb-t">Uporabniki</span></a></li></ul></div>
+      <div class="sb-group"><p class="sb-label">Posel</p><ul class="sb-list"><li class="relative"><a href="#" class="sb-item"><i class="ph ph-tray" aria-hidden="true"></i><span class="sb-t">Povpraševanja</span></a></li><li class="relative"><a href="#" class="sb-item"><i class="ph ph-stethoscope" aria-hidden="true"></i><span class="sb-t">Veterinarski partnerji</span><span class="sb-soon">Kmalu</span></a></li></ul></div>
+      <div class="sb-group"><p class="sb-label">Sistem</p><ul class="sb-list"><li class="relative"><a href="#" class="sb-item"><i class="ph ph-clock-counter-clockwise" aria-hidden="true"></i><span class="sb-t">Revizijska sled</span></a></li><li class="relative"><a href="#" class="sb-item"><i class="ph ph-gear-six" aria-hidden="true"></i><span class="sb-t">Nastavitve</span></a></li></ul></div>
+    </nav>
+    <div class="sb-foot"><button type="button" class="sb-item sb-toggle"><i class="ph-bold ph-caret-double-left" aria-hidden="true"></i><span>Skrči meni</span></button></div>
+  </div>
+    <div class="adm-col">
+    <header class="tb">
+      <nav aria-label="Drobtine"><ol class="crumbs"><li><a href="#">Konzola</a></li><li class="sep" aria-hidden="true"><i class="ph-bold ph-caret-right" aria-hidden="true"></i></li><li><span aria-current="page">Imenik zavetišč</span></li></ol></nav>
+      <div class="tb-meta">
+        <span class="envw"><i class="ph-bold ph-globe-simple" aria-hidden="true"></i>Produkcija</span><span class="vr" aria-hidden="true"></span>
+        <span class="envw text-muted-foreground"><i class="ph-bold ph-user-gear" aria-hidden="true"></i>Skrbnik</span>
+        <button type="button" class="acct" aria-label="Moj račun" aria-haspopup="menu" aria-expanded="false"><span class="av av-32" aria-hidden="true">MK</span><i class="ph-bold ph-caret-down" aria-hidden="true"></i></button>
+      </div>
+    </header>
+    <main class="adm-main">
+      <div><div class="phead"><h1 class="h1c">Imenik zavetišč</h1><div class="flex flex-wrap items-center gap-3"><button type="button" class="btn btn-secondary btn-sm"><i class="ph-bold ph-upload-simple" aria-hidden="true"></i>Uvozi CSV</button><button type="button" class="btn btn-primary btn-sm"><i class="ph-bold ph-plus" aria-hidden="true"></i>Dodaj zavetišče</button></div></div><p class="live">Spremembe so na javnih straneh in v aplikaciji vidne takoj po shranjevanju.</p></div>
+      <div class="note items-center !pr-2"><i class="ph-fill ph-clock" aria-hidden="true"></i><p class="flex-1">Letno preverjanje: <b class="tnum">23</b> vnosov ni bilo preverjenih več kot 12 mesecev.</p><button type="button" class="btn btn-text btn-sm is-focus">Pokaži</button></div>
+      <div class="grid gap-6"><div class="seg seg-fit" role="tablist" aria-label="Imenik zavetišč"><button type="button" role="tab" aria-selected="true">Zavetišča</button><button type="button" role="tab" aria-selected="false">Občine</button></div>
+      <div class="frow">
+        <div class="field f-search"><label for="q-f1">Išči zavetišče</label><div class="input-wrap"><i class="ph-bold ph-magnifying-glass" aria-hidden="true"></i><input id="q-f1" type="search" class="input" autocomplete="off"></div></div>
+        <div class="flex flex-wrap items-center gap-2" role="group" aria-label="Filtri"><button type="button" class="pill" data-toggle aria-pressed="false"><i class="ph-bold ph-check tick" aria-hidden="true"></i>Starejše od 12 mesecev</button></div>
+      </div></div>
+      <div role="tabpanel" aria-label="Zavetišča"><div class="tcard"><table class="tbl"><caption class="sr-only">Zavetišča</caption><thead><tr><th scope="col" aria-sort="ascending"><button type="button" class="sortbtn" aria-label="Razvrsti po: Ime">Ime<i class="ph-bold ph-arrow-up" aria-hidden="true"></i></button></th><th scope="col" class="num"><button type="button" class="sortbtn" aria-label="Razvrsti po: Občine">Občine<i class="ph-bold ph-caret-up-down" aria-hidden="true"></i></button></th><th scope="col">Telefon</th><th scope="col"><button type="button" class="sortbtn" aria-label="Razvrsti po: Nazadnje preverjeno">Nazadnje preverjeno<i class="ph-bold ph-caret-up-down" aria-hidden="true"></i></button></th><th scope="col">Vir</th><th class="c-act" scope="col"><span class="sr-only">Dejanja</span></th></tr></thead><tbody>
+<tr class=""><td><a href="#" class="rowlink">Zavetišče Bohor</a></td><td class="num tnum">14</td><td class="tnum nowrap">07 490 31 12</td><td class="nowrap"><span class="tnum dcol">12. 3. 2026</span></td><td>Spletna stran</td><td class="c-act"><div class="relative inline-block"><button type="button" class="iconbtn" aria-label="Dejanja: Zavetišče Bohor" aria-haspopup="menu" aria-expanded="false"><i class="ph-bold ph-dots-three" aria-hidden="true"></i></button></div></td></tr>
+<tr class=""><td><a href="#" class="rowlink">Zavetišče Breg</a></td><td class="num tnum">16</td><td class="tnum nowrap">02 790 11 48</td><td class="nowrap"><span class="tnum dcol">28. 4. 2026</span></td><td>Klic</td><td class="c-act"><div class="relative inline-block"><button type="button" class="iconbtn" aria-label="Dejanja: Zavetišče Breg" aria-haspopup="menu" aria-expanded="false"><i class="ph-bold ph-dots-three" aria-hidden="true"></i></button></div></td></tr>
+<tr class=""><td><a href="#" class="rowlink">Zavetišče Brin</a></td><td class="num tnum">18</td><td class="tnum nowrap">04 512 36 70</td><td class="nowrap"><span class="tnum dcol">9. 9. 2025</span><span class="stale"><i class="ph-fill ph-clock" aria-hidden="true"></i>zastarelo</span></td><td>Uvoz CSV</td><td class="c-act"><div class="relative inline-block"><button type="button" class="iconbtn" aria-label="Dejanja: Zavetišče Brin" aria-haspopup="menu" aria-expanded="false"><i class="ph-bold ph-dots-three" aria-hidden="true"></i></button></div></td></tr>
+<tr class=""><td><a href="#" class="rowlink">Zavetišče Gorjanci</a></td><td class="num tnum">15</td><td class="tnum nowrap">07 332 18 05</td><td class="nowrap"><span class="tnum dcol">2. 6. 2026</span></td><td>Klic</td><td class="c-act"><div class="relative inline-block"><button type="button" class="iconbtn" aria-label="Dejanja: Zavetišče Gorjanci" aria-haspopup="menu" aria-expanded="false"><i class="ph-bold ph-dots-three" aria-hidden="true"></i></button></div></td></tr>
+<tr class=""><td><a href="#" class="rowlink">Zavetišče Kraški Rob</a></td><td class="num tnum">9</td><td class="tnum nowrap">05 610 27 90</td><td class="nowrap"><span class="tnum dcol">14. 8. 2025</span><span class="stale"><i class="ph-fill ph-clock" aria-hidden="true"></i>zastarelo</span></td><td>E-pošta</td><td class="c-act"><div class="relative inline-block"><button type="button" class="iconbtn" aria-label="Dejanja: Zavetišče Kraški Rob" aria-haspopup="menu" aria-expanded="false"><i class="ph-bold ph-dots-three" aria-hidden="true"></i></button></div></td></tr>
+<tr class="is-hover"><td><a href="#" class="rowlink">Zavetišče Lipa</a></td><td class="num tnum">20</td><td class="tnum nowrap">01 234 56 78</td><td class="nowrap"><span class="tnum dcol">3. 2. 2025</span><span class="stale"><i class="ph-fill ph-clock" aria-hidden="true"></i>zastarelo</span></td><td>Spletna stran</td><td class="c-act"><div class="relative inline-block"><button type="button" class="iconbtn" aria-label="Dejanja: Zavetišče Lipa" aria-haspopup="menu" aria-expanded="false"><i class="ph-bold ph-dots-three" aria-hidden="true"></i></button></div></td></tr>
+<tr class=""><td><a href="#" class="rowlink">Zavetišče Ob Dravinji</a></td><td class="num tnum">10</td><td class="tnum nowrap">03 580 22 41</td><td class="nowrap"><span class="tnum dcol">21. 5. 2026</span></td><td>Klic</td><td class="c-act"><div class="relative inline-block"><button type="button" class="iconbtn" aria-label="Dejanja: Zavetišče Ob Dravinji" aria-haspopup="menu" aria-expanded="false"><i class="ph-bold ph-dots-three" aria-hidden="true"></i></button></div></td></tr>
+<tr class=""><td><a href="#" class="rowlink">Zavetišče Ob Kolpi</a></td><td class="num tnum">6</td><td class="tnum nowrap">07 305 62 41</td><td class="nowrap"><span class="tnum dcol">30. 9. 2025</span><span class="stale"><i class="ph-fill ph-clock" aria-hidden="true"></i>zastarelo</span></td><td>Klic</td><td class="c-act"><div class="relative inline-block"><button type="button" class="iconbtn" aria-label="Dejanja: Zavetišče Ob Kolpi" aria-haspopup="menu" aria-expanded="false"><i class="ph-bold ph-dots-three" aria-hidden="true"></i></button></div></td></tr>
+<tr class=""><td><a href="#" class="rowlink">Zavetišče Ob Muri</a></td><td class="num tnum">20</td><td class="tnum nowrap">02 530 40 26</td><td class="nowrap"><span class="tnum dcol">11. 11. 2025</span></td><td>Uvoz CSV</td><td class="c-act"><div class="relative inline-block"><button type="button" class="iconbtn" aria-label="Dejanja: Zavetišče Ob Muri" aria-haspopup="menu" aria-expanded="false"><i class="ph-bold ph-dots-three" aria-hidden="true"></i></button></div></td></tr>
+<tr class=""><td><a href="#" class="rowlink">Zavetišče Ob Savi</a></td><td class="num tnum">7</td><td class="tnum nowrap">03 566 70 82</td><td class="nowrap"><span class="tnum dcol">7. 7. 2026</span></td><td>Spletna stran</td><td class="c-act"><div class="relative inline-block"><button type="button" class="iconbtn" aria-label="Dejanja: Zavetišče Ob Savi" aria-haspopup="menu" aria-expanded="false"><i class="ph-bold ph-dots-three" aria-hidden="true"></i></button></div></td></tr>
+<tr class=""><td><a href="#" class="rowlink">Zavetišče Ob Sori</a></td><td class="num tnum">5</td><td class="tnum nowrap">04 506 22 18</td><td class="nowrap"><span class="tnum dcol">6. 10. 2026</span></td><td>Klic</td><td class="c-act"><div class="relative inline-block"><button type="button" class="iconbtn" aria-label="Dejanja: Zavetišče Ob Sori" aria-haspopup="menu" aria-expanded="false"><i class="ph-bold ph-dots-three" aria-hidden="true"></i></button></div></td></tr>
+<tr class=""><td><a href="#" class="rowlink">Zavetišče Pod Pohorjem</a></td><td class="num tnum">18</td><td class="tnum nowrap">02 620 14 30</td><td class="nowrap"><span class="tnum dcol">18. 3. 2026</span></td><td>Spletna stran</td><td class="c-act"><div class="relative inline-block"><button type="button" class="iconbtn" aria-label="Dejanja: Zavetišče Pod Pohorjem" aria-haspopup="menu" aria-expanded="false"><i class="ph-bold ph-dots-three" aria-hidden="true"></i></button></div></td></tr>
+<tr class=""><td><a href="#" class="rowlink">Zavetišče Pod Snežnikom</a></td><td class="num tnum">8</td><td class="tnum nowrap">05 720 38 64</td><td class="nowrap"><span class="tnum dcol">1. 4. 2026</span></td><td>Klic</td><td class="c-act"><div class="relative inline-block"><button type="button" class="iconbtn" aria-label="Dejanja: Zavetišče Pod Snežnikom" aria-haspopup="menu" aria-expanded="false"><i class="ph-bold ph-dots-three" aria-hidden="true"></i></button></div></td></tr>
+<tr class=""><td><a href="#" class="rowlink">Zavetišče Posočje</a></td><td class="num tnum">13</td><td class="tnum nowrap">05 330 19 56</td><td class="nowrap"><span class="tnum dcol">26. 1. 2026</span></td><td>E-pošta</td><td class="c-act"><div class="relative inline-block"><button type="button" class="iconbtn" aria-label="Dejanja: Zavetišče Posočje" aria-haspopup="menu" aria-expanded="false"><i class="ph-bold ph-dots-three" aria-hidden="true"></i></button></div></td></tr>
+<tr class=""><td><a href="#" class="rowlink">Zavetišče Savinja</a></td><td class="num tnum">19</td><td class="tnum nowrap">03 428 61 09</td><td class="nowrap"><span class="tnum dcol">14. 4. 2026</span></td><td>Spletna stran</td><td class="c-act"><div class="relative inline-block"><button type="button" class="iconbtn" aria-label="Dejanja: Zavetišče Savinja" aria-haspopup="menu" aria-expanded="false"><i class="ph-bold ph-dots-three" aria-hidden="true"></i></button></div></td></tr>
+<tr class=""><td><a href="#" class="rowlink">Zavetišče Sončni Log</a></td><td class="num tnum">0</td><td class="tnum nowrap">02 870 45 60</td><td class="nowrap"><span class="tnum dcol">4. 5. 2026</span></td><td>Klic</td><td class="c-act"><div class="relative inline-block"><button type="button" class="iconbtn" aria-label="Dejanja: Zavetišče Sončni Log" aria-haspopup="menu" aria-expanded="false"><i class="ph-bold ph-dots-three" aria-hidden="true"></i></button></div></td></tr>
+<tr class=""><td><a href="#" class="rowlink">Zavetišče Šalek</a></td><td class="num tnum">11</td><td class="tnum nowrap">03 891 25 33</td><td class="nowrap"><span class="tnum dcol">9. 10. 2026</span></td><td>Klic</td><td class="c-act"><div class="relative inline-block"><button type="button" class="iconbtn" aria-label="Dejanja: Zavetišče Šalek" aria-haspopup="menu" aria-expanded="false"><i class="ph-bold ph-dots-three" aria-hidden="true"></i></button></div></td></tr>
+</tbody></table></div></div>
+    </main>
+    </div>
+  </div>
+  </div></div>
+  <p class="tile-h" style="margin-top:64px">F2 · After "Pokaži": pill "Starejše od 12 mesecev" on, sorted by Nazadnje preverjeno (oldest first, aria-sort) · the reminder stays until no entry is older than 12 months · row menu open on "Zavetišče Ob Kolpi", focus on "Uredi" · hover on "Uvozi CSV" · sample data</p>
+  <div class="fit-1200"><div class="browser relative" style="width:1200px" lang="sl">
+    <div class="browser-bar"><span class="dots"><i></i><i></i><i></i></span><span class="url"><i class="ph ph-lock-simple"></i>najdimo.si/admin/zavetisca?zastarelo=1</span></div>
+    <div class="adm" style="min-height:980px">
+    <div class="sb">
+    <div class="sb-head"><a href="#" class="sb-home"><svg viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg><span class="flex flex-col"><span class="sb-name">Najdimo</span><span class="sb-sub">Konzola</span></span></a></div>
+    <nav class="sb-nav" aria-label="Konzola">
+      <div class="sb-group"><p class="sb-label">Pregled</p><ul class="sb-list"><li class="relative"><a href="#" class="sb-item"><i class="ph ph-squares-four" aria-hidden="true"></i><span class="sb-t">Nadzorna plošča</span></a></li></ul></div>
+      <div class="sb-group"><p class="sb-label">Vsebina</p><ul class="sb-list"><li class="relative"><a href="#" class="sb-item"><i class="ph ph-image-square" aria-hidden="true"></i><span class="sb-t">Oglasi</span></a></li><li class="relative"><a href="#" class="sb-item"><i class="ph ph-paw-print" aria-hidden="true"></i><span class="sb-t">Lastni oglasi</span></a></li></ul></div>
+      <div class="sb-group"><p class="sb-label">Varnost</p><ul class="sb-list"><li class="relative"><a href="#" class="sb-item"><i class="ph ph-list-checks" aria-hidden="true"></i><span class="sb-t">Moderacija</span><span class="sb-soon">Kmalu</span></a></li><li class="relative"><a href="#" class="sb-item"><i class="ph ph-flag" aria-hidden="true"></i><span class="sb-t">Prijave zlorab</span><span class="sb-soon">Kmalu</span></a></li></ul></div>
+      <div class="sb-group"><p class="sb-label">Organizacije</p><ul class="sb-list"><li class="relative"><a href="#" class="sb-item"><i class="ph ph-seal-check" aria-hidden="true"></i><span class="sb-t">Preverjanje</span></a></li><li class="relative"><a href="#" class="sb-item"><i class="ph ph-buildings" aria-hidden="true"></i><span class="sb-t">Organizacije</span></a></li><li class="relative"><a href="#" class="sb-item" aria-current="page"><i class="ph-fill ph-address-book" aria-hidden="true"></i><span class="sb-t">Imenik zavetišč</span></a></li></ul></div>
+      <div class="sb-group"><p class="sb-label">Ljudje</p><ul class="sb-list"><li class="relative"><a href="#" class="sb-item"><i class="ph ph-users" aria-hidden="true"></i><span class="sb-t">Uporabniki</span></a></li></ul></div>
+      <div class="sb-group"><p class="sb-label">Posel</p><ul class="sb-list"><li class="relative"><a href="#" class="sb-item"><i class="ph ph-tray" aria-hidden="true"></i><span class="sb-t">Povpraševanja</span></a></li><li class="relative"><a href="#" class="sb-item"><i class="ph ph-stethoscope" aria-hidden="true"></i><span class="sb-t">Veterinarski partnerji</span><span class="sb-soon">Kmalu</span></a></li></ul></div>
+      <div class="sb-group"><p class="sb-label">Sistem</p><ul class="sb-list"><li class="relative"><a href="#" class="sb-item"><i class="ph ph-clock-counter-clockwise" aria-hidden="true"></i><span class="sb-t">Revizijska sled</span></a></li><li class="relative"><a href="#" class="sb-item"><i class="ph ph-gear-six" aria-hidden="true"></i><span class="sb-t">Nastavitve</span></a></li></ul></div>
+    </nav>
+    <div class="sb-foot"><button type="button" class="sb-item sb-toggle"><i class="ph-bold ph-caret-double-left" aria-hidden="true"></i><span>Skrči meni</span></button></div>
+  </div>
+    <div class="adm-col">
+    <header class="tb">
+      <nav aria-label="Drobtine"><ol class="crumbs"><li><a href="#">Konzola</a></li><li class="sep" aria-hidden="true"><i class="ph-bold ph-caret-right" aria-hidden="true"></i></li><li><span aria-current="page">Imenik zavetišč</span></li></ol></nav>
+      <div class="tb-meta">
+        <span class="envw"><i class="ph-bold ph-globe-simple" aria-hidden="true"></i>Produkcija</span><span class="vr" aria-hidden="true"></span>
+        <span class="envw text-muted-foreground"><i class="ph-bold ph-user-gear" aria-hidden="true"></i>Skrbnik</span>
+        <button type="button" class="acct" aria-label="Moj račun" aria-haspopup="menu" aria-expanded="false"><span class="av av-32" aria-hidden="true">MK</span><i class="ph-bold ph-caret-down" aria-hidden="true"></i></button>
+      </div>
+    </header>
+    <main class="adm-main">
+      <div><div class="phead"><h1 class="h1c">Imenik zavetišč</h1><div class="flex flex-wrap items-center gap-3"><button type="button" class="btn btn-secondary btn-sm is-hover"><i class="ph-bold ph-upload-simple" aria-hidden="true"></i>Uvozi CSV</button><button type="button" class="btn btn-primary btn-sm"><i class="ph-bold ph-plus" aria-hidden="true"></i>Dodaj zavetišče</button></div></div><p class="live">Spremembe so na javnih straneh in v aplikaciji vidne takoj po shranjevanju.</p></div>
+      <div class="note items-center !pr-2"><i class="ph-fill ph-clock" aria-hidden="true"></i><p class="flex-1">Letno preverjanje: <b class="tnum">23</b> vnosov ni bilo preverjenih več kot 12 mesecev.</p><button type="button" class="btn btn-text btn-sm">Pokaži</button></div>
+      <div class="grid gap-6"><div class="seg seg-fit" role="tablist" aria-label="Imenik zavetišč"><button type="button" role="tab" aria-selected="true">Zavetišča</button><button type="button" role="tab" aria-selected="false">Občine</button></div>
+      <div class="frow">
+        <div class="field f-search"><label for="q-f2">Išči zavetišče</label><div class="input-wrap"><i class="ph-bold ph-magnifying-glass" aria-hidden="true"></i><input id="q-f2" type="search" class="input" autocomplete="off"></div></div>
+        <div class="flex flex-wrap items-center gap-2" role="group" aria-label="Filtri"><button type="button" class="pill" data-toggle aria-pressed="true"><i class="ph-bold ph-check tick" aria-hidden="true"></i>Starejše od 12 mesecev</button><button type="button" class="btn btn-text btn-sm">Počisti filtre</button></div>
+      </div></div>
+      <div role="tabpanel" aria-label="Zavetišča"><div class="tcard"><table class="tbl"><caption class="sr-only">Zavetišča</caption><thead><tr><th scope="col"><button type="button" class="sortbtn" aria-label="Razvrsti po: Ime">Ime<i class="ph-bold ph-caret-up-down" aria-hidden="true"></i></button></th><th scope="col" class="num"><button type="button" class="sortbtn" aria-label="Razvrsti po: Občine">Občine<i class="ph-bold ph-caret-up-down" aria-hidden="true"></i></button></th><th scope="col">Telefon</th><th scope="col" aria-sort="ascending"><button type="button" class="sortbtn" aria-label="Razvrsti po: Nazadnje preverjeno">Nazadnje preverjeno<i class="ph-bold ph-arrow-up" aria-hidden="true"></i></button></th><th scope="col">Vir</th><th class="c-act" scope="col"><span class="sr-only">Dejanja</span></th></tr></thead><tbody>
+<tr class=""><td><a href="#" class="rowlink">Zavetišče Lipa</a></td><td class="num tnum">20</td><td class="tnum nowrap">01 234 56 78</td><td class="nowrap"><span class="tnum dcol">3. 2. 2025</span><span class="stale"><i class="ph-fill ph-clock" aria-hidden="true"></i>zastarelo</span></td><td>Spletna stran</td><td class="c-act"><div class="relative inline-block"><button type="button" class="iconbtn" aria-label="Dejanja: Zavetišče Lipa" aria-haspopup="menu" aria-expanded="false"><i class="ph-bold ph-dots-three" aria-hidden="true"></i></button></div></td></tr>
+<tr class=""><td><a href="#" class="rowlink">Zavetišče Kraški Rob</a></td><td class="num tnum">9</td><td class="tnum nowrap">05 610 27 90</td><td class="nowrap"><span class="tnum dcol">14. 8. 2025</span><span class="stale"><i class="ph-fill ph-clock" aria-hidden="true"></i>zastarelo</span></td><td>E-pošta</td><td class="c-act"><div class="relative inline-block"><button type="button" class="iconbtn" aria-label="Dejanja: Zavetišče Kraški Rob" aria-haspopup="menu" aria-expanded="false"><i class="ph-bold ph-dots-three" aria-hidden="true"></i></button></div></td></tr>
+<tr class=""><td><a href="#" class="rowlink">Zavetišče Brin</a></td><td class="num tnum">18</td><td class="tnum nowrap">04 512 36 70</td><td class="nowrap"><span class="tnum dcol">9. 9. 2025</span><span class="stale"><i class="ph-fill ph-clock" aria-hidden="true"></i>zastarelo</span></td><td>Uvoz CSV</td><td class="c-act"><div class="relative inline-block"><button type="button" class="iconbtn" aria-label="Dejanja: Zavetišče Brin" aria-haspopup="menu" aria-expanded="false"><i class="ph-bold ph-dots-three" aria-hidden="true"></i></button></div></td></tr>
+<tr class=""><td><a href="#" class="rowlink">Zavetišče Ob Kolpi</a></td><td class="num tnum">6</td><td class="tnum nowrap">07 305 62 41</td><td class="nowrap"><span class="tnum dcol">30. 9. 2025</span><span class="stale"><i class="ph-fill ph-clock" aria-hidden="true"></i>zastarelo</span></td><td>Klic</td><td class="c-act"><div class="relative inline-block"><button type="button" class="iconbtn is-open" aria-label="Dejanja: Zavetišče Ob Kolpi" aria-haspopup="menu" aria-expanded="true"><i class="ph-bold ph-dots-three" aria-hidden="true"></i></button><div class="pop rmenu" role="menu" aria-label="Dejanja: Zavetišče Ob Kolpi">
+          <button type="button" role="menuitem" class="mi is-focus"><i class="ph-bold ph-pencil-simple" aria-hidden="true"></i>Uredi</button>
+          <button type="button" role="menuitem" class="mi"><i class="ph-bold ph-clock-counter-clockwise" aria-hidden="true"></i>Zgodovina</button>
+          <div class="sep" role="separator"></div>
+          <button type="button" role="menuitem" class="mi mi-danger"><i class="ph-bold ph-trash" aria-hidden="true"></i>Izbriši</button>
+        </div></div></td></tr>
+</tbody></table></div></div>
+    </main>
+    </div>
+  </div>
+  </div></div>
+  <p class="tile-h" style="margin-top:64px">F3 · Občine view (212 municipalities, first page) · "Bistrica ob Sotli" has no confirmed shelter ("Ni potrjeno" with the info icon), "Bloke" has a shelter but is not confirmed · sidebar collapsed · toast after saving a municipality, focus back on its row · hover on the shelter select pill · sample data</p>
+  <div class="fit-1200"><div class="browser relative" style="width:1200px" lang="sl">
+    <div class="browser-bar"><span class="dots"><i></i><i></i><i></i></span><span class="url"><i class="ph ph-lock-simple"></i>najdimo.si/admin/zavetisca/obcine</span></div>
+    <div class="adm" style="min-height:1280px">
+    <div class="sb is-collapsed">
+    <div class="sb-head"><a href="#" class="sb-home" aria-label="Najdimo, Konzola"><svg viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg></a></div>
+    <nav class="sb-nav" aria-label="Konzola">
+      <div class="sb-group"><ul class="sb-list" aria-label="Pregled"><li class="relative"><a href="#" class="sb-item"><i class="ph ph-squares-four" aria-hidden="true"></i><span class="sr-only">Nadzorna plošča</span></a></li></ul></div>
+      <div class="sb-group"><ul class="sb-list" aria-label="Vsebina"><li class="relative"><a href="#" class="sb-item"><i class="ph ph-image-square" aria-hidden="true"></i><span class="sr-only">Oglasi</span></a></li><li class="relative"><a href="#" class="sb-item"><i class="ph ph-paw-print" aria-hidden="true"></i><span class="sr-only">Lastni oglasi</span></a></li></ul></div>
+      <div class="sb-group"><ul class="sb-list" aria-label="Varnost"><li class="relative"><a href="#" class="sb-item"><i class="ph ph-list-checks" aria-hidden="true"></i><span class="sr-only">Moderacija, Kmalu</span></a></li><li class="relative"><a href="#" class="sb-item"><i class="ph ph-flag" aria-hidden="true"></i><span class="sr-only">Prijave zlorab, Kmalu</span></a></li></ul></div>
+      <div class="sb-group"><ul class="sb-list" aria-label="Organizacije"><li class="relative"><a href="#" class="sb-item"><i class="ph ph-seal-check" aria-hidden="true"></i><span class="sr-only">Preverjanje</span></a></li><li class="relative"><a href="#" class="sb-item"><i class="ph ph-buildings" aria-hidden="true"></i><span class="sr-only">Organizacije</span></a></li><li class="relative"><a href="#" class="sb-item" aria-current="page"><i class="ph-fill ph-address-book" aria-hidden="true"></i><span class="sr-only">Imenik zavetišč</span></a></li></ul></div>
+      <div class="sb-group"><ul class="sb-list" aria-label="Ljudje"><li class="relative"><a href="#" class="sb-item"><i class="ph ph-users" aria-hidden="true"></i><span class="sr-only">Uporabniki</span></a></li></ul></div>
+      <div class="sb-group"><ul class="sb-list" aria-label="Posel"><li class="relative"><a href="#" class="sb-item"><i class="ph ph-tray" aria-hidden="true"></i><span class="sr-only">Povpraševanja</span></a></li><li class="relative"><a href="#" class="sb-item"><i class="ph ph-stethoscope" aria-hidden="true"></i><span class="sr-only">Veterinarski partnerji, Kmalu</span></a></li></ul></div>
+      <div class="sb-group"><ul class="sb-list" aria-label="Sistem"><li class="relative"><a href="#" class="sb-item"><i class="ph ph-clock-counter-clockwise" aria-hidden="true"></i><span class="sr-only">Revizijska sled</span></a></li><li class="relative"><a href="#" class="sb-item"><i class="ph ph-gear-six" aria-hidden="true"></i><span class="sr-only">Nastavitve</span></a></li></ul></div>
+    </nav>
+    <div class="sb-foot"><button type="button" class="sb-item sb-toggle" aria-label="Razširi meni"><i class="ph-bold ph-caret-double-right" aria-hidden="true"></i></button></div>
+  </div>
+    <div class="adm-col">
+    <header class="tb">
+      <nav aria-label="Drobtine"><ol class="crumbs"><li><a href="#">Konzola</a></li><li class="sep" aria-hidden="true"><i class="ph-bold ph-caret-right" aria-hidden="true"></i></li><li><span aria-current="page">Imenik zavetišč</span></li></ol></nav>
+      <div class="tb-meta">
+        <span class="envw"><i class="ph-bold ph-globe-simple" aria-hidden="true"></i>Produkcija</span><span class="vr" aria-hidden="true"></span>
+        <span class="envw text-muted-foreground"><i class="ph-bold ph-user-gear" aria-hidden="true"></i>Skrbnik</span>
+        <button type="button" class="acct" aria-label="Moj račun" aria-haspopup="menu" aria-expanded="false"><span class="av av-32" aria-hidden="true">MK</span><i class="ph-bold ph-caret-down" aria-hidden="true"></i></button>
+      </div>
+    </header>
+    <main class="adm-main">
+      <div><div class="phead"><h1 class="h1c">Imenik zavetišč</h1><div class="flex flex-wrap items-center gap-3"><button type="button" class="btn btn-secondary btn-sm"><i class="ph-bold ph-upload-simple" aria-hidden="true"></i>Uvozi CSV</button><button type="button" class="btn btn-primary btn-sm"><i class="ph-bold ph-plus" aria-hidden="true"></i>Dodaj zavetišče</button></div></div><p class="live">Spremembe so na javnih straneh in v aplikaciji vidne takoj po shranjevanju.</p></div>
+      <div class="note items-center !pr-2"><i class="ph-fill ph-clock" aria-hidden="true"></i><p class="flex-1">Letno preverjanje: <b class="tnum">23</b> vnosov ni bilo preverjenih več kot 12 mesecev.</p><button type="button" class="btn btn-text btn-sm">Pokaži</button></div>
+      <div class="grid gap-6"><div class="seg seg-fit" role="tablist" aria-label="Imenik zavetišč"><button type="button" role="tab" aria-selected="false">Zavetišča</button><button type="button" role="tab" aria-selected="true">Občine</button></div>
+      <div class="frow">
+        <div class="field f-search"><label for="q-f3">Išči občino</label><div class="input-wrap"><i class="ph-bold ph-magnifying-glass" aria-hidden="true"></i><input id="q-f3" type="search" class="input" autocomplete="off"></div></div>
+        <div class="flex flex-wrap items-center gap-2" role="group" aria-label="Filtri"><button type="button" class="pill is-hover" aria-haspopup="listbox" aria-expanded="false">Vsa zavetišča<i class="ph-bold ph-caret-down" aria-hidden="true"></i></button><button type="button" class="pill" data-toggle aria-pressed="false"><i class="ph-bold ph-check tick" aria-hidden="true"></i>Brez zavetišča</button><button type="button" class="pill" data-toggle aria-pressed="false"><i class="ph-bold ph-check tick" aria-hidden="true"></i>Starejše od 12 mesecev</button></div>
+      </div></div>
+      <div role="tabpanel" aria-label="Občine"><div class="tcard"><table class="tbl"><caption class="sr-only">Občine</caption><thead><tr><th scope="col" aria-sort="ascending"><button type="button" class="sortbtn" aria-label="Razvrsti po: Občina">Občina<i class="ph-bold ph-arrow-up" aria-hidden="true"></i></button></th><th scope="col"><button type="button" class="sortbtn" aria-label="Razvrsti po: Pristojno zavetišče">Pristojno zavetišče<i class="ph-bold ph-caret-up-down" aria-hidden="true"></i></button></th><th scope="col">Stanje</th><th scope="col"><button type="button" class="sortbtn" aria-label="Razvrsti po: Nazadnje preverjeno">Nazadnje preverjeno<i class="ph-bold ph-caret-up-down" aria-hidden="true"></i></button></th><th scope="col">Vir</th><th class="c-act" scope="col"><span class="sr-only">Dejanja</span></th></tr></thead><tbody>
+<tr class=""><td><a href="#" class="rowlink">Ajdovščina</a></td><td>Zavetišče Posočje</td><td><span class="lst lst-ok"><i class="ph-fill ph-check-circle" aria-hidden="true"></i>Potrjeno</span></td><td class="nowrap"><span class="tnum dcol">26. 1. 2026</span></td><td>E-pošta</td><td class="c-act"><div class="relative inline-block"><button type="button" class="iconbtn" aria-label="Dejanja: Ajdovščina" aria-haspopup="menu" aria-expanded="false"><i class="ph-bold ph-dots-three" aria-hidden="true"></i></button></div></td></tr>
+<tr class=""><td><a href="#" class="rowlink">Ankaran</a></td><td>Zavetišče Kraški Rob</td><td><span class="lst lst-ok"><i class="ph-fill ph-check-circle" aria-hidden="true"></i>Potrjeno</span></td><td class="nowrap"><span class="tnum dcol">14. 8. 2025</span><span class="stale"><i class="ph-fill ph-clock" aria-hidden="true"></i>zastarelo</span></td><td>E-pošta</td><td class="c-act"><div class="relative inline-block"><button type="button" class="iconbtn" aria-label="Dejanja: Ankaran" aria-haspopup="menu" aria-expanded="false"><i class="ph-bold ph-dots-three" aria-hidden="true"></i></button></div></td></tr>
+<tr class=""><td><a href="#" class="rowlink">Apače</a></td><td>Zavetišče Ob Muri</td><td><span class="lst lst-ok"><i class="ph-fill ph-check-circle" aria-hidden="true"></i>Potrjeno</span></td><td class="nowrap"><span class="tnum dcol">11. 11. 2025</span></td><td>Uvoz CSV</td><td class="c-act"><div class="relative inline-block"><button type="button" class="iconbtn" aria-label="Dejanja: Apače" aria-haspopup="menu" aria-expanded="false"><i class="ph-bold ph-dots-three" aria-hidden="true"></i></button></div></td></tr>
+<tr class=""><td><a href="#" class="rowlink">Beltinci</a></td><td>Zavetišče Ob Muri</td><td><span class="lst lst-ok"><i class="ph-fill ph-check-circle" aria-hidden="true"></i>Potrjeno</span></td><td class="nowrap"><span class="tnum dcol">11. 11. 2025</span></td><td>Uvoz CSV</td><td class="c-act"><div class="relative inline-block"><button type="button" class="iconbtn" aria-label="Dejanja: Beltinci" aria-haspopup="menu" aria-expanded="false"><i class="ph-bold ph-dots-three" aria-hidden="true"></i></button></div></td></tr>
+<tr class=""><td><a href="#" class="rowlink">Benedikt</a></td><td>Zavetišče Pod Pohorjem</td><td><span class="lst lst-ok"><i class="ph-fill ph-check-circle" aria-hidden="true"></i>Potrjeno</span></td><td class="nowrap"><span class="tnum dcol">18. 3. 2026</span></td><td>Spletna stran</td><td class="c-act"><div class="relative inline-block"><button type="button" class="iconbtn" aria-label="Dejanja: Benedikt" aria-haspopup="menu" aria-expanded="false"><i class="ph-bold ph-dots-three" aria-hidden="true"></i></button></div></td></tr>
+<tr class=""><td><a href="#" class="rowlink is-focus">Bistrica ob Sotli</a></td><td><span class="lst lst-no"><i class="ph-fill ph-info" aria-hidden="true"></i>Ni potrjeno</span></td><td><span class="lst lst-no"><i class="ph-fill ph-info" aria-hidden="true"></i>Ni potrjeno</span></td><td class="nowrap"><span class="tnum dcol">2. 6. 2026</span></td><td>Klic</td><td class="c-act"><div class="relative inline-block"><button type="button" class="iconbtn" aria-label="Dejanja: Bistrica ob Sotli" aria-haspopup="menu" aria-expanded="false"><i class="ph-bold ph-dots-three" aria-hidden="true"></i></button></div></td></tr>
+<tr class=""><td><a href="#" class="rowlink">Bled</a></td><td>Zavetišče Brin</td><td><span class="lst lst-ok"><i class="ph-fill ph-check-circle" aria-hidden="true"></i>Potrjeno</span></td><td class="nowrap"><span class="tnum dcol">9. 9. 2025</span><span class="stale"><i class="ph-fill ph-clock" aria-hidden="true"></i>zastarelo</span></td><td>Uvoz CSV</td><td class="c-act"><div class="relative inline-block"><button type="button" class="iconbtn" aria-label="Dejanja: Bled" aria-haspopup="menu" aria-expanded="false"><i class="ph-bold ph-dots-three" aria-hidden="true"></i></button></div></td></tr>
+<tr class="is-hover"><td><a href="#" class="rowlink">Bloke</a></td><td>Zavetišče Pod Snežnikom</td><td><span class="lst lst-no"><i class="ph-fill ph-info" aria-hidden="true"></i>Ni potrjeno</span></td><td class="nowrap"><span class="tnum dcol">1. 4. 2026</span></td><td>Klic</td><td class="c-act"><div class="relative inline-block"><button type="button" class="iconbtn" aria-label="Dejanja: Bloke" aria-haspopup="menu" aria-expanded="false"><i class="ph-bold ph-dots-three" aria-hidden="true"></i></button></div></td></tr>
+<tr class=""><td><a href="#" class="rowlink">Bohinj</a></td><td>Zavetišče Brin</td><td><span class="lst lst-ok"><i class="ph-fill ph-check-circle" aria-hidden="true"></i>Potrjeno</span></td><td class="nowrap"><span class="tnum dcol">9. 9. 2025</span><span class="stale"><i class="ph-fill ph-clock" aria-hidden="true"></i>zastarelo</span></td><td>Uvoz CSV</td><td class="c-act"><div class="relative inline-block"><button type="button" class="iconbtn" aria-label="Dejanja: Bohinj" aria-haspopup="menu" aria-expanded="false"><i class="ph-bold ph-dots-three" aria-hidden="true"></i></button></div></td></tr>
+<tr class=""><td><a href="#" class="rowlink">Borovnica</a></td><td>Zavetišče Lipa</td><td><span class="lst lst-ok"><i class="ph-fill ph-check-circle" aria-hidden="true"></i>Potrjeno</span></td><td class="nowrap"><span class="tnum dcol">3. 2. 2025</span><span class="stale"><i class="ph-fill ph-clock" aria-hidden="true"></i>zastarelo</span></td><td>Spletna stran</td><td class="c-act"><div class="relative inline-block"><button type="button" class="iconbtn" aria-label="Dejanja: Borovnica" aria-haspopup="menu" aria-expanded="false"><i class="ph-bold ph-dots-three" aria-hidden="true"></i></button></div></td></tr>
+</tbody></table></div>
+      <div class="flex justify-center mt-6"><button type="button" class="btn btn-secondary btn-sm">Naloži več</button></div></div>
+    </main>
+    </div>
+  </div><div class="pop toast tst tst-c" role="status" aria-live="polite"><i class="ph-fill ph-check-circle" aria-hidden="true"></i><p>Shranjeno, zabeleženo. Že vidno v aplikaciji.</p><button type="button" class="iconbtn" aria-label="Zapri"><i class="ph-bold ph-x" aria-hidden="true"></i></button></div>
+  </div></div>
+  <p class="tile-h" style="margin-top:64px">F4 · "Uredi" opens the edit drawer (480 px, modal, focus trapped; the body scrolls under a sticky footer, drawn here at full length) · opening hours as rows with a "Zaprto" switch · municipalities served as a plain list with 44 px remove buttons · phone field error after "Shrani" · sample data</p>
+  <div class="fit-1200"><div class="browser relative" style="width:1200px" lang="sl">
+    <div class="browser-bar"><span class="dots"><i></i><i></i><i></i></span><span class="url"><i class="ph ph-lock-simple"></i>najdimo.si/admin/zavetisca?zastarelo=1</span></div>
+    <div class="adm" style="min-height:2380px" aria-hidden="true" inert>
+    <div class="sb is-collapsed">
+    <div class="sb-head"><a href="#" class="sb-home" aria-label="Najdimo, Konzola"><svg viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg></a></div>
+    <nav class="sb-nav" aria-label="Konzola">
+      <div class="sb-group"><ul class="sb-list" aria-label="Pregled"><li class="relative"><a href="#" class="sb-item"><i class="ph ph-squares-four" aria-hidden="true"></i><span class="sr-only">Nadzorna plošča</span></a></li></ul></div>
+      <div class="sb-group"><ul class="sb-list" aria-label="Vsebina"><li class="relative"><a href="#" class="sb-item"><i class="ph ph-image-square" aria-hidden="true"></i><span class="sr-only">Oglasi</span></a></li><li class="relative"><a href="#" class="sb-item"><i class="ph ph-paw-print" aria-hidden="true"></i><span class="sr-only">Lastni oglasi</span></a></li></ul></div>
+      <div class="sb-group"><ul class="sb-list" aria-label="Varnost"><li class="relative"><a href="#" class="sb-item"><i class="ph ph-list-checks" aria-hidden="true"></i><span class="sr-only">Moderacija, Kmalu</span></a></li><li class="relative"><a href="#" class="sb-item"><i class="ph ph-flag" aria-hidden="true"></i><span class="sr-only">Prijave zlorab, Kmalu</span></a></li></ul></div>
+      <div class="sb-group"><ul class="sb-list" aria-label="Organizacije"><li class="relative"><a href="#" class="sb-item"><i class="ph ph-seal-check" aria-hidden="true"></i><span class="sr-only">Preverjanje</span></a></li><li class="relative"><a href="#" class="sb-item"><i class="ph ph-buildings" aria-hidden="true"></i><span class="sr-only">Organizacije</span></a></li><li class="relative"><a href="#" class="sb-item" aria-current="page"><i class="ph-fill ph-address-book" aria-hidden="true"></i><span class="sr-only">Imenik zavetišč</span></a></li></ul></div>
+      <div class="sb-group"><ul class="sb-list" aria-label="Ljudje"><li class="relative"><a href="#" class="sb-item"><i class="ph ph-users" aria-hidden="true"></i><span class="sr-only">Uporabniki</span></a></li></ul></div>
+      <div class="sb-group"><ul class="sb-list" aria-label="Posel"><li class="relative"><a href="#" class="sb-item"><i class="ph ph-tray" aria-hidden="true"></i><span class="sr-only">Povpraševanja</span></a></li><li class="relative"><a href="#" class="sb-item"><i class="ph ph-stethoscope" aria-hidden="true"></i><span class="sr-only">Veterinarski partnerji, Kmalu</span></a></li></ul></div>
+      <div class="sb-group"><ul class="sb-list" aria-label="Sistem"><li class="relative"><a href="#" class="sb-item"><i class="ph ph-clock-counter-clockwise" aria-hidden="true"></i><span class="sr-only">Revizijska sled</span></a></li><li class="relative"><a href="#" class="sb-item"><i class="ph ph-gear-six" aria-hidden="true"></i><span class="sr-only">Nastavitve</span></a></li></ul></div>
+    </nav>
+    <div class="sb-foot"><button type="button" class="sb-item sb-toggle" aria-label="Razširi meni"><i class="ph-bold ph-caret-double-right" aria-hidden="true"></i></button></div>
+  </div>
+    <div class="adm-col">
+    <header class="tb">
+      <nav aria-label="Drobtine"><ol class="crumbs"><li><a href="#">Konzola</a></li><li class="sep" aria-hidden="true"><i class="ph-bold ph-caret-right" aria-hidden="true"></i></li><li><span aria-current="page">Imenik zavetišč</span></li></ol></nav>
+      <div class="tb-meta">
+        <span class="envw"><i class="ph-bold ph-globe-simple" aria-hidden="true"></i>Produkcija</span><span class="vr" aria-hidden="true"></span>
+        <span class="envw text-muted-foreground"><i class="ph-bold ph-user-gear" aria-hidden="true"></i>Skrbnik</span>
+        <button type="button" class="acct" aria-label="Moj račun" aria-haspopup="menu" aria-expanded="false"><span class="av av-32" aria-hidden="true">MK</span><i class="ph-bold ph-caret-down" aria-hidden="true"></i></button>
+      </div>
+    </header>
+    <main class="adm-main">
+      <div><div class="phead"><h1 class="h1c">Imenik zavetišč</h1><div class="flex flex-wrap items-center gap-3"><button type="button" class="btn btn-secondary btn-sm"><i class="ph-bold ph-upload-simple" aria-hidden="true"></i>Uvozi CSV</button><button type="button" class="btn btn-primary btn-sm"><i class="ph-bold ph-plus" aria-hidden="true"></i>Dodaj zavetišče</button></div></div><p class="live">Spremembe so na javnih straneh in v aplikaciji vidne takoj po shranjevanju.</p></div>
+      <div class="note items-center !pr-2"><i class="ph-fill ph-clock" aria-hidden="true"></i><p class="flex-1">Letno preverjanje: <b class="tnum">23</b> vnosov ni bilo preverjenih več kot 12 mesecev.</p><button type="button" class="btn btn-text btn-sm">Pokaži</button></div>
+      <div class="grid gap-6"><div class="seg seg-fit" role="tablist" aria-label="Imenik zavetišč"><button type="button" role="tab" aria-selected="true">Zavetišča</button><button type="button" role="tab" aria-selected="false">Občine</button></div>
+      <div class="frow">
+        <div class="field f-search"><label for="q-f4">Išči zavetišče</label><div class="input-wrap"><i class="ph-bold ph-magnifying-glass" aria-hidden="true"></i><input id="q-f4" type="search" class="input" autocomplete="off"></div></div>
+        <div class="flex flex-wrap items-center gap-2" role="group" aria-label="Filtri"><button type="button" class="pill" data-toggle aria-pressed="true"><i class="ph-bold ph-check tick" aria-hidden="true"></i>Starejše od 12 mesecev</button><button type="button" class="btn btn-text btn-sm">Počisti filtre</button></div>
+      </div></div>
+      <div class="tcard"><table class="tbl"><caption class="sr-only">Zavetišča</caption><thead><tr><th scope="col"><button type="button" class="sortbtn" aria-label="Razvrsti po: Ime">Ime<i class="ph-bold ph-caret-up-down" aria-hidden="true"></i></button></th><th scope="col" class="num"><button type="button" class="sortbtn" aria-label="Razvrsti po: Občine">Občine<i class="ph-bold ph-caret-up-down" aria-hidden="true"></i></button></th><th scope="col">Telefon</th><th scope="col" aria-sort="ascending"><button type="button" class="sortbtn" aria-label="Razvrsti po: Nazadnje preverjeno">Nazadnje preverjeno<i class="ph-bold ph-arrow-up" aria-hidden="true"></i></button></th><th scope="col">Vir</th><th class="c-act" scope="col"><span class="sr-only">Dejanja</span></th></tr></thead><tbody>
+<tr class=""><td><a href="#" class="rowlink">Zavetišče Lipa</a></td><td class="num tnum">20</td><td class="tnum nowrap">01 234 56 78</td><td class="nowrap"><span class="tnum dcol">3. 2. 2025</span><span class="stale"><i class="ph-fill ph-clock" aria-hidden="true"></i>zastarelo</span></td><td>Spletna stran</td><td class="c-act"><div class="relative inline-block"><button type="button" class="iconbtn" aria-label="Dejanja: Zavetišče Lipa" aria-haspopup="menu" aria-expanded="false"><i class="ph-bold ph-dots-three" aria-hidden="true"></i></button></div></td></tr>
+<tr class=""><td><a href="#" class="rowlink">Zavetišče Kraški Rob</a></td><td class="num tnum">9</td><td class="tnum nowrap">05 610 27 90</td><td class="nowrap"><span class="tnum dcol">14. 8. 2025</span><span class="stale"><i class="ph-fill ph-clock" aria-hidden="true"></i>zastarelo</span></td><td>E-pošta</td><td class="c-act"><div class="relative inline-block"><button type="button" class="iconbtn" aria-label="Dejanja: Zavetišče Kraški Rob" aria-haspopup="menu" aria-expanded="false"><i class="ph-bold ph-dots-three" aria-hidden="true"></i></button></div></td></tr>
+<tr class=""><td><a href="#" class="rowlink">Zavetišče Brin</a></td><td class="num tnum">18</td><td class="tnum nowrap">04 512 36 70</td><td class="nowrap"><span class="tnum dcol">9. 9. 2025</span><span class="stale"><i class="ph-fill ph-clock" aria-hidden="true"></i>zastarelo</span></td><td>Uvoz CSV</td><td class="c-act"><div class="relative inline-block"><button type="button" class="iconbtn" aria-label="Dejanja: Zavetišče Brin" aria-haspopup="menu" aria-expanded="false"><i class="ph-bold ph-dots-three" aria-hidden="true"></i></button></div></td></tr>
+<tr class=""><td><a href="#" class="rowlink">Zavetišče Ob Kolpi</a></td><td class="num tnum">6</td><td class="tnum nowrap">07 305 62 41</td><td class="nowrap"><span class="tnum dcol">30. 9. 2025</span><span class="stale"><i class="ph-fill ph-clock" aria-hidden="true"></i>zastarelo</span></td><td>Klic</td><td class="c-act"><div class="relative inline-block"><button type="button" class="iconbtn" aria-label="Dejanja: Zavetišče Ob Kolpi" aria-haspopup="menu" aria-expanded="false"><i class="ph-bold ph-dots-three" aria-hidden="true"></i></button></div></td></tr>
+</tbody></table></div>
+    </main>
+    </div>
+  </div>
+  <div class="scrim" style="top:44px"></div>
+  <aside class="drawer" role="dialog" aria-modal="true" aria-label="Uredi zavetišče: Zavetišče Ob Kolpi">
+    <div class="drawer-head">
+      <div class="min-w-0"><h2 class="dtitle">Uredi zavetišče</h2><p class="meta mt-1">Zavetišče Ob Kolpi</p></div>
+      <div class="flex items-center gap-1 -mr-1"><button type="button" class="btn btn-text btn-sm"><i class="ph-bold ph-clock-counter-clockwise" aria-hidden="true"></i>Zgodovina</button><button type="button" class="iconbtn" aria-label="Zapri podrobnosti"><i class="ph-bold ph-x" aria-hidden="true"></i></button></div>
+    </div>
+    <form class="drawer-body" novalidate>
+      <div class="grid gap-6">
+        <div class="field"><label for="ed4-name">Ime</label><input id="ed4-name" class="input" type="text" value="Zavetišče Ob Kolpi" required></div>
+        <div class="field"><label for="ed4-street">Ulica in hišna številka</label><input id="ed4-street" class="input" type="text" value="Kolpska cesta 12" autocomplete="street-address"></div>
+        <div class="grid grid-cols-[136px_minmax(0,1fr)] gap-4"><div class="field"><label for="ed4-pc">Poštna številka</label><input id="ed4-pc" class="input tnum" type="text" value="8340" inputmode="numeric" autocomplete="postal-code"></div><div class="field"><label for="ed4-place">Kraj</label><input id="ed4-place" class="input" type="text" value="Črnomelj"></div></div>
+        <div class="field"><label for="ed4-phone">Telefon</label><input id="ed4-phone" class="input is-error tnum" type="tel" value="07 305 62" aria-invalid="true" aria-describedby="ed4-phone-d"><div id="ed4-phone-d" class="grid gap-1"><p class="help">Na primer 01 234 56 78 ali +386 1 234 56 78.</p><p class="err"><i class="ph-fill ph-warning-circle" aria-hidden="true"></i>Telefonska številka ni veljavna. Vpišite jo na primer kot 01 234 56 78.</p></div></div>
+        <div class="field"><label for="ed4-web">Spletna stran</label><input id="ed4-web" class="input" type="url" value="https://obkolpi.example"></div>
+        <div class="field"><label for="ed4-mail">E-naslov</label><input id="ed4-mail" class="input" type="email" value="info@obkolpi.example"></div>
+      </div>
+      <fieldset class="grp"><legend class="h3c">Delovni čas</legend>
+        <ul class="hlist">
+          <li class="hrow">
+            <div class="hgrid">
+              <div class="field"><label for="ed4-d1">Dnevi</label><button id="ed4-d1" type="button" class="input select" aria-haspopup="listbox" aria-expanded="false"><span>pon–pet</span><i class="ph-bold ph-caret-down" aria-hidden="true"></i></button></div>
+              <div class="field"><label for="ed4-f1">Od</label><input id="ed4-f1" class="input tnum" type="text" inputmode="numeric" value="08:00"></div>
+              <div class="field"><label for="ed4-t1">Do</label><input id="ed4-t1" class="input tnum" type="text" inputmode="numeric" value="16:00"></div>
+            </div>
+            
+            <div class="hfoot"><label class="swrow"><span>Zaprto</span><button type="button" class="switch" role="switch" aria-checked="false"></button></label><button type="button" class="iconbtn" aria-label="Odstrani vrstico"><i class="ph-bold ph-trash" aria-hidden="true"></i></button></div>
+          </li>
+          <li class="hrow">
+            <div class="hgrid">
+              <div class="field"><label for="ed4-d2">Dnevi</label><button id="ed4-d2" type="button" class="input select" aria-haspopup="listbox" aria-expanded="false"><span>sob</span><i class="ph-bold ph-caret-down" aria-hidden="true"></i></button></div>
+              <div class="field"><label for="ed4-f2">Od</label><input id="ed4-f2" class="input tnum" type="text" inputmode="numeric" value="09:00"></div>
+              <div class="field"><label for="ed4-t2">Do</label><input id="ed4-t2" class="input tnum" type="text" inputmode="numeric" value="12:00"></div>
+            </div>
+            
+            <div class="hfoot"><label class="swrow"><span>Zaprto</span><button type="button" class="switch" role="switch" aria-checked="false"></button></label><button type="button" class="iconbtn" aria-label="Odstrani vrstico"><i class="ph-bold ph-trash" aria-hidden="true"></i></button></div>
+          </li>
+          <li class="hrow">
+            <div class="hgrid">
+              <div class="field"><label for="ed4-d3">Dnevi</label><button id="ed4-d3" type="button" class="input select" aria-haspopup="listbox" aria-expanded="false"><span>ned</span><i class="ph-bold ph-caret-down" aria-hidden="true"></i></button></div>
+              <div class="field is-disabled"><label for="ed4-f3">Od</label><input id="ed4-f3" class="input tnum" type="text" inputmode="numeric" value="" disabled></div>
+              <div class="field is-disabled"><label for="ed4-t3">Do</label><input id="ed4-t3" class="input tnum" type="text" inputmode="numeric" value="" disabled></div>
+            </div>
+            
+            <div class="hfoot"><label class="swrow"><span>Zaprto</span><button type="button" class="switch" role="switch" aria-checked="true"></button></label><button type="button" class="iconbtn" aria-label="Odstrani vrstico"><i class="ph-bold ph-trash" aria-hidden="true"></i></button></div>
+          </li>
+        </ul>
+        <button type="button" class="btn btn-text btn-sm -ml-3 mt-2"><i class="ph-bold ph-plus" aria-hidden="true"></i>Dodaj vrstico</button>
+      </fieldset>
+      <fieldset class="grp"><legend class="h3c">Občine, za katere je pristojno</legend>
+        <div class="field"><label for="ed4-add">Dodaj občino</label><div class="input-wrap"><i class="ph-bold ph-magnifying-glass" aria-hidden="true"></i><input id="ed4-add" class="input" type="text" role="combobox" aria-autocomplete="list" aria-expanded="false" autocomplete="off"></div></div>
+        <ul class="plist" aria-label="Občine, za katere je pristojno"><li><span>Črnomelj</span><button type="button" class="iconbtn" aria-label="Odstrani Črnomelj"><i class="ph-bold ph-x" aria-hidden="true"></i></button></li><li><span>Kočevje</span><button type="button" class="iconbtn" aria-label="Odstrani Kočevje"><i class="ph-bold ph-x" aria-hidden="true"></i></button></li><li><span>Kostel</span><button type="button" class="iconbtn" aria-label="Odstrani Kostel"><i class="ph-bold ph-x" aria-hidden="true"></i></button></li><li><span>Metlika</span><button type="button" class="iconbtn" aria-label="Odstrani Metlika"><i class="ph-bold ph-x" aria-hidden="true"></i></button></li><li><span>Osilnica</span><button type="button" class="iconbtn" aria-label="Odstrani Osilnica"><i class="ph-bold ph-x" aria-hidden="true"></i></button></li><li><span>Semič</span><button type="button" class="iconbtn" aria-label="Odstrani Semič"><i class="ph-bold ph-x" aria-hidden="true"></i></button></li></ul>
+      </fieldset>
+      <div class="grid gap-6">
+        <div class="field"><label for="ed4-src">Vir</label><input id="ed4-src" class="input" type="text" value="Klic v zavetišče" required aria-describedby="ed4-src-d"><div id="ed4-src-d" class="grid gap-1"><p class="help">Od kod so podatki, na primer »spletna stran zavetišča« ali »klic v zavetišče«.</p></div></div>
+        <div class="field"><label for="ed4-chk">Preverjeno dne</label><div class="input-wrap"><i class="ph-bold ph-calendar-blank" aria-hidden="true"></i><input id="ed4-chk" class="input tnum" type="text" value="15. 10. 2026"></div></div>
+        <div class="field"><label for="ed4-note">Opomba za revizijsko sled (neobvezno)</label><textarea id="ed4-note" class="input" rows="3">Nova številka po klicu.</textarea></div>
+      </div>
+    </form>
+    <div class="drawer-foot"><button type="button" class="btn btn-primary">Shrani</button><button type="button" class="btn btn-text">Prekliči</button></div>
+  </aside>
+  </div></div>
+  <p class="tile-h" style="margin-top:64px">F5 · "Zgodovina" (row menu or drawer head): versions newest first · the selected version shows a plain before and after list ("prej", "zdaj") · read only, so no primary; restoring is secondary and creates a new version · sample data</p>
+  <div class="fit-1200"><div class="browser relative" style="width:1200px" lang="sl">
+    <div class="browser-bar"><span class="dots"><i></i><i></i><i></i></span><span class="url"><i class="ph ph-lock-simple"></i>najdimo.si/admin/zavetisca?zastarelo=1</span></div>
+    <div class="adm" style="min-height:900px" aria-hidden="true" inert>
+    <div class="sb is-collapsed">
+    <div class="sb-head"><a href="#" class="sb-home" aria-label="Najdimo, Konzola"><svg viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg></a></div>
+    <nav class="sb-nav" aria-label="Konzola">
+      <div class="sb-group"><ul class="sb-list" aria-label="Pregled"><li class="relative"><a href="#" class="sb-item"><i class="ph ph-squares-four" aria-hidden="true"></i><span class="sr-only">Nadzorna plošča</span></a></li></ul></div>
+      <div class="sb-group"><ul class="sb-list" aria-label="Vsebina"><li class="relative"><a href="#" class="sb-item"><i class="ph ph-image-square" aria-hidden="true"></i><span class="sr-only">Oglasi</span></a></li><li class="relative"><a href="#" class="sb-item"><i class="ph ph-paw-print" aria-hidden="true"></i><span class="sr-only">Lastni oglasi</span></a></li></ul></div>
+      <div class="sb-group"><ul class="sb-list" aria-label="Varnost"><li class="relative"><a href="#" class="sb-item"><i class="ph ph-list-checks" aria-hidden="true"></i><span class="sr-only">Moderacija, Kmalu</span></a></li><li class="relative"><a href="#" class="sb-item"><i class="ph ph-flag" aria-hidden="true"></i><span class="sr-only">Prijave zlorab, Kmalu</span></a></li></ul></div>
+      <div class="sb-group"><ul class="sb-list" aria-label="Organizacije"><li class="relative"><a href="#" class="sb-item"><i class="ph ph-seal-check" aria-hidden="true"></i><span class="sr-only">Preverjanje</span></a></li><li class="relative"><a href="#" class="sb-item"><i class="ph ph-buildings" aria-hidden="true"></i><span class="sr-only">Organizacije</span></a></li><li class="relative"><a href="#" class="sb-item" aria-current="page"><i class="ph-fill ph-address-book" aria-hidden="true"></i><span class="sr-only">Imenik zavetišč</span></a></li></ul></div>
+      <div class="sb-group"><ul class="sb-list" aria-label="Ljudje"><li class="relative"><a href="#" class="sb-item"><i class="ph ph-users" aria-hidden="true"></i><span class="sr-only">Uporabniki</span></a></li></ul></div>
+      <div class="sb-group"><ul class="sb-list" aria-label="Posel"><li class="relative"><a href="#" class="sb-item"><i class="ph ph-tray" aria-hidden="true"></i><span class="sr-only">Povpraševanja</span></a></li><li class="relative"><a href="#" class="sb-item"><i class="ph ph-stethoscope" aria-hidden="true"></i><span class="sr-only">Veterinarski partnerji, Kmalu</span></a></li></ul></div>
+      <div class="sb-group"><ul class="sb-list" aria-label="Sistem"><li class="relative"><a href="#" class="sb-item"><i class="ph ph-clock-counter-clockwise" aria-hidden="true"></i><span class="sr-only">Revizijska sled</span></a></li><li class="relative"><a href="#" class="sb-item"><i class="ph ph-gear-six" aria-hidden="true"></i><span class="sr-only">Nastavitve</span></a></li></ul></div>
+    </nav>
+    <div class="sb-foot"><button type="button" class="sb-item sb-toggle" aria-label="Razširi meni"><i class="ph-bold ph-caret-double-right" aria-hidden="true"></i></button></div>
+  </div>
+    <div class="adm-col">
+    <header class="tb">
+      <nav aria-label="Drobtine"><ol class="crumbs"><li><a href="#">Konzola</a></li><li class="sep" aria-hidden="true"><i class="ph-bold ph-caret-right" aria-hidden="true"></i></li><li><span aria-current="page">Imenik zavetišč</span></li></ol></nav>
+      <div class="tb-meta">
+        <span class="envw"><i class="ph-bold ph-globe-simple" aria-hidden="true"></i>Produkcija</span><span class="vr" aria-hidden="true"></span>
+        <span class="envw text-muted-foreground"><i class="ph-bold ph-user-gear" aria-hidden="true"></i>Skrbnik</span>
+        <button type="button" class="acct" aria-label="Moj račun" aria-haspopup="menu" aria-expanded="false"><span class="av av-32" aria-hidden="true">MK</span><i class="ph-bold ph-caret-down" aria-hidden="true"></i></button>
+      </div>
+    </header>
+    <main class="adm-main">
+      <div><div class="phead"><h1 class="h1c">Imenik zavetišč</h1><div class="flex flex-wrap items-center gap-3"><button type="button" class="btn btn-secondary btn-sm"><i class="ph-bold ph-upload-simple" aria-hidden="true"></i>Uvozi CSV</button><button type="button" class="btn btn-primary btn-sm"><i class="ph-bold ph-plus" aria-hidden="true"></i>Dodaj zavetišče</button></div></div><p class="live">Spremembe so na javnih straneh in v aplikaciji vidne takoj po shranjevanju.</p></div>
+      <div class="note items-center !pr-2"><i class="ph-fill ph-clock" aria-hidden="true"></i><p class="flex-1">Letno preverjanje: <b class="tnum">23</b> vnosov ni bilo preverjenih več kot 12 mesecev.</p><button type="button" class="btn btn-text btn-sm">Pokaži</button></div>
+      <div class="grid gap-6"><div class="seg seg-fit" role="tablist" aria-label="Imenik zavetišč"><button type="button" role="tab" aria-selected="true">Zavetišča</button><button type="button" role="tab" aria-selected="false">Občine</button></div>
+      <div class="frow">
+        <div class="field f-search"><label for="q-f5">Išči zavetišče</label><div class="input-wrap"><i class="ph-bold ph-magnifying-glass" aria-hidden="true"></i><input id="q-f5" type="search" class="input" autocomplete="off"></div></div>
+        <div class="flex flex-wrap items-center gap-2" role="group" aria-label="Filtri"><button type="button" class="pill" data-toggle aria-pressed="true"><i class="ph-bold ph-check tick" aria-hidden="true"></i>Starejše od 12 mesecev</button><button type="button" class="btn btn-text btn-sm">Počisti filtre</button></div>
+      </div></div>
+      <div class="tcard"><table class="tbl"><caption class="sr-only">Zavetišča</caption><thead><tr><th scope="col"><button type="button" class="sortbtn" aria-label="Razvrsti po: Ime">Ime<i class="ph-bold ph-caret-up-down" aria-hidden="true"></i></button></th><th scope="col" class="num"><button type="button" class="sortbtn" aria-label="Razvrsti po: Občine">Občine<i class="ph-bold ph-caret-up-down" aria-hidden="true"></i></button></th><th scope="col">Telefon</th><th scope="col" aria-sort="ascending"><button type="button" class="sortbtn" aria-label="Razvrsti po: Nazadnje preverjeno">Nazadnje preverjeno<i class="ph-bold ph-arrow-up" aria-hidden="true"></i></button></th><th scope="col">Vir</th><th class="c-act" scope="col"><span class="sr-only">Dejanja</span></th></tr></thead><tbody>
+<tr class=""><td><a href="#" class="rowlink">Zavetišče Lipa</a></td><td class="num tnum">20</td><td class="tnum nowrap">01 234 56 78</td><td class="nowrap"><span class="tnum dcol">3. 2. 2025</span><span class="stale"><i class="ph-fill ph-clock" aria-hidden="true"></i>zastarelo</span></td><td>Spletna stran</td><td class="c-act"><div class="relative inline-block"><button type="button" class="iconbtn" aria-label="Dejanja: Zavetišče Lipa" aria-haspopup="menu" aria-expanded="false"><i class="ph-bold ph-dots-three" aria-hidden="true"></i></button></div></td></tr>
+<tr class=""><td><a href="#" class="rowlink">Zavetišče Kraški Rob</a></td><td class="num tnum">9</td><td class="tnum nowrap">05 610 27 90</td><td class="nowrap"><span class="tnum dcol">14. 8. 2025</span><span class="stale"><i class="ph-fill ph-clock" aria-hidden="true"></i>zastarelo</span></td><td>E-pošta</td><td class="c-act"><div class="relative inline-block"><button type="button" class="iconbtn" aria-label="Dejanja: Zavetišče Kraški Rob" aria-haspopup="menu" aria-expanded="false"><i class="ph-bold ph-dots-three" aria-hidden="true"></i></button></div></td></tr>
+<tr class=""><td><a href="#" class="rowlink">Zavetišče Brin</a></td><td class="num tnum">18</td><td class="tnum nowrap">04 512 36 70</td><td class="nowrap"><span class="tnum dcol">9. 9. 2025</span><span class="stale"><i class="ph-fill ph-clock" aria-hidden="true"></i>zastarelo</span></td><td>Uvoz CSV</td><td class="c-act"><div class="relative inline-block"><button type="button" class="iconbtn" aria-label="Dejanja: Zavetišče Brin" aria-haspopup="menu" aria-expanded="false"><i class="ph-bold ph-dots-three" aria-hidden="true"></i></button></div></td></tr>
+<tr class=""><td><a href="#" class="rowlink">Zavetišče Ob Kolpi</a></td><td class="num tnum">6</td><td class="tnum nowrap">07 305 62 41</td><td class="nowrap"><span class="tnum dcol">30. 9. 2025</span><span class="stale"><i class="ph-fill ph-clock" aria-hidden="true"></i>zastarelo</span></td><td>Klic</td><td class="c-act"><div class="relative inline-block"><button type="button" class="iconbtn" aria-label="Dejanja: Zavetišče Ob Kolpi" aria-haspopup="menu" aria-expanded="false"><i class="ph-bold ph-dots-three" aria-hidden="true"></i></button></div></td></tr>
+</tbody></table></div>
+    </main>
+    </div>
+  </div>
+  <div class="scrim" style="top:44px"></div>
+  <aside class="drawer" role="dialog" aria-modal="true" aria-label="Zgodovina: Zavetišče Ob Kolpi">
+    <div class="drawer-head">
+      <div class="min-w-0"><h2 class="dtitle">Zgodovina</h2><p class="meta mt-1">Zavetišče Ob Kolpi</p></div>
+      <button type="button" class="iconbtn -mr-1" aria-label="Zapri podrobnosti"><i class="ph-bold ph-x" aria-hidden="true"></i></button>
+    </div>
+    <div class="drawer-body">
+      <table class="tbl tbl-in tbl-fixed"><caption class="sr-only">Zgodovina</caption><colgroup><col style="width:40%"><col style="width:24%"><col style="width:36%"></colgroup><thead><tr><th scope="col" aria-sort="descending">Čas</th><th scope="col">Kdo</th><th scope="col">Sprememba</th></tr></thead><tbody>
+<tr class=""><td class="nowrap"><button type="button" class="rowlink tnum">30. 9. 2025 10:14</button></td><td class="nowrap">Rok Bizjak</td><td>Telefon, vir, preverjeno</td></tr>
+<tr class=""><td class="nowrap"><button type="button" class="rowlink tnum">12. 3. 2025 09:02</button></td><td class="nowrap">Maja Kovač</td><td>Občine: dodana Osilnica</td></tr>
+<tr class="is-selected"><td class="nowrap"><button type="button" class="rowlink tnum" aria-current="true">13. 10. 2024 09:40</button></td><td class="nowrap">Maja Kovač</td><td>Uvoz CSV: delovni čas, e-naslov</td></tr>
+<tr class=""><td class="nowrap"><button type="button" class="rowlink tnum">2. 9. 2024 08:30</button></td><td class="nowrap tmuted">Sistem</td><td>Začetni uvoz imenika</td></tr>
+      </tbody></table>
+      <section aria-label="13. 10. 2024 09:40">
+        <h3 class="h3c">13. 10. 2024 09:40 · Maja Kovač</h3>
+        <table class="tbl tbl-in tbl-fixed mt-2"><caption class="sr-only">13. 10. 2024 09:40</caption><colgroup><col style="width:38%"><col style="width:28%"><col style="width:34%"></colgroup><thead><tr><th scope="col">Polje</th><th scope="col">prej</th><th scope="col">zdaj</th></tr></thead><tbody>
+          <tr class="no-hover"><th scope="row" class="rh">Delovni čas, pon–pet</th><td class="tnum nowrap">08:00–15:00</td><td class="tnum nowrap font-bold">08:00–16:00</td></tr>
+          <tr class="no-hover"><th scope="row" class="rh">Delovni čas, sob</th><td>Zaprto</td><td class="tnum nowrap font-bold">09:00–12:00</td></tr>
+          <tr class="no-hover"><th scope="row" class="rh">E-naslov</th><td class="tmuted">–</td><td class="font-bold">info@<wbr>obkolpi.example</td></tr>
+        </tbody></table>
+        <button type="button" class="btn btn-secondary btn-sm mt-5"><i class="ph-bold ph-arrow-u-up-left" aria-hidden="true"></i>Obnovi to različico</button>
+      </section>
+    </div>
+  </aside>
+  </div></div>
+  <p class="tile-h" style="margin-top:64px">F6 · "Uvozi CSV" dialog (640 px), dry run with errors: summary line, errors with the CSV row number first, then the changes (entity, field, prej, zdaj); with a long list the dialog body scrolls while the title and buttons stay · "Uveljavi spremembe" disabled, the reason in help text below it · sample data</p>
+  <div class="fit-1200"><div class="browser relative" style="width:1200px" lang="sl">
+    <div class="browser-bar"><span class="dots"><i></i><i></i><i></i></span><span class="url"><i class="ph ph-lock-simple"></i>najdimo.si/admin/zavetisca?zastarelo=1</span></div>
+    <div class="adm" style="min-height:1060px" aria-hidden="true" inert>
+    <div class="sb is-collapsed">
+    <div class="sb-head"><a href="#" class="sb-home" aria-label="Najdimo, Konzola"><svg viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg></a></div>
+    <nav class="sb-nav" aria-label="Konzola">
+      <div class="sb-group"><ul class="sb-list" aria-label="Pregled"><li class="relative"><a href="#" class="sb-item"><i class="ph ph-squares-four" aria-hidden="true"></i><span class="sr-only">Nadzorna plošča</span></a></li></ul></div>
+      <div class="sb-group"><ul class="sb-list" aria-label="Vsebina"><li class="relative"><a href="#" class="sb-item"><i class="ph ph-image-square" aria-hidden="true"></i><span class="sr-only">Oglasi</span></a></li><li class="relative"><a href="#" class="sb-item"><i class="ph ph-paw-print" aria-hidden="true"></i><span class="sr-only">Lastni oglasi</span></a></li></ul></div>
+      <div class="sb-group"><ul class="sb-list" aria-label="Varnost"><li class="relative"><a href="#" class="sb-item"><i class="ph ph-list-checks" aria-hidden="true"></i><span class="sr-only">Moderacija, Kmalu</span></a></li><li class="relative"><a href="#" class="sb-item"><i class="ph ph-flag" aria-hidden="true"></i><span class="sr-only">Prijave zlorab, Kmalu</span></a></li></ul></div>
+      <div class="sb-group"><ul class="sb-list" aria-label="Organizacije"><li class="relative"><a href="#" class="sb-item"><i class="ph ph-seal-check" aria-hidden="true"></i><span class="sr-only">Preverjanje</span></a></li><li class="relative"><a href="#" class="sb-item"><i class="ph ph-buildings" aria-hidden="true"></i><span class="sr-only">Organizacije</span></a></li><li class="relative"><a href="#" class="sb-item" aria-current="page"><i class="ph-fill ph-address-book" aria-hidden="true"></i><span class="sr-only">Imenik zavetišč</span></a></li></ul></div>
+      <div class="sb-group"><ul class="sb-list" aria-label="Ljudje"><li class="relative"><a href="#" class="sb-item"><i class="ph ph-users" aria-hidden="true"></i><span class="sr-only">Uporabniki</span></a></li></ul></div>
+      <div class="sb-group"><ul class="sb-list" aria-label="Posel"><li class="relative"><a href="#" class="sb-item"><i class="ph ph-tray" aria-hidden="true"></i><span class="sr-only">Povpraševanja</span></a></li><li class="relative"><a href="#" class="sb-item"><i class="ph ph-stethoscope" aria-hidden="true"></i><span class="sr-only">Veterinarski partnerji, Kmalu</span></a></li></ul></div>
+      <div class="sb-group"><ul class="sb-list" aria-label="Sistem"><li class="relative"><a href="#" class="sb-item"><i class="ph ph-clock-counter-clockwise" aria-hidden="true"></i><span class="sr-only">Revizijska sled</span></a></li><li class="relative"><a href="#" class="sb-item"><i class="ph ph-gear-six" aria-hidden="true"></i><span class="sr-only">Nastavitve</span></a></li></ul></div>
+    </nav>
+    <div class="sb-foot"><button type="button" class="sb-item sb-toggle" aria-label="Razširi meni"><i class="ph-bold ph-caret-double-right" aria-hidden="true"></i></button></div>
+  </div>
+    <div class="adm-col">
+    <header class="tb">
+      <nav aria-label="Drobtine"><ol class="crumbs"><li><a href="#">Konzola</a></li><li class="sep" aria-hidden="true"><i class="ph-bold ph-caret-right" aria-hidden="true"></i></li><li><span aria-current="page">Imenik zavetišč</span></li></ol></nav>
+      <div class="tb-meta">
+        <span class="envw"><i class="ph-bold ph-globe-simple" aria-hidden="true"></i>Produkcija</span><span class="vr" aria-hidden="true"></span>
+        <span class="envw text-muted-foreground"><i class="ph-bold ph-user-gear" aria-hidden="true"></i>Skrbnik</span>
+        <button type="button" class="acct" aria-label="Moj račun" aria-haspopup="menu" aria-expanded="false"><span class="av av-32" aria-hidden="true">MK</span><i class="ph-bold ph-caret-down" aria-hidden="true"></i></button>
+      </div>
+    </header>
+    <main class="adm-main">
+      <div><div class="phead"><h1 class="h1c">Imenik zavetišč</h1><div class="flex flex-wrap items-center gap-3"><button type="button" class="btn btn-secondary btn-sm"><i class="ph-bold ph-upload-simple" aria-hidden="true"></i>Uvozi CSV</button><button type="button" class="btn btn-primary btn-sm"><i class="ph-bold ph-plus" aria-hidden="true"></i>Dodaj zavetišče</button></div></div><p class="live">Spremembe so na javnih straneh in v aplikaciji vidne takoj po shranjevanju.</p></div>
+      <div class="note items-center !pr-2"><i class="ph-fill ph-clock" aria-hidden="true"></i><p class="flex-1">Letno preverjanje: <b class="tnum">23</b> vnosov ni bilo preverjenih več kot 12 mesecev.</p><button type="button" class="btn btn-text btn-sm">Pokaži</button></div>
+      <div class="grid gap-6"><div class="seg seg-fit" role="tablist" aria-label="Imenik zavetišč"><button type="button" role="tab" aria-selected="true">Zavetišča</button><button type="button" role="tab" aria-selected="false">Občine</button></div>
+      <div class="frow">
+        <div class="field f-search"><label for="q-f6">Išči zavetišče</label><div class="input-wrap"><i class="ph-bold ph-magnifying-glass" aria-hidden="true"></i><input id="q-f6" type="search" class="input" autocomplete="off"></div></div>
+        <div class="flex flex-wrap items-center gap-2" role="group" aria-label="Filtri"><button type="button" class="pill" data-toggle aria-pressed="true"><i class="ph-bold ph-check tick" aria-hidden="true"></i>Starejše od 12 mesecev</button><button type="button" class="btn btn-text btn-sm">Počisti filtre</button></div>
+      </div></div>
+      <div class="tcard"><table class="tbl"><caption class="sr-only">Zavetišča</caption><thead><tr><th scope="col"><button type="button" class="sortbtn" aria-label="Razvrsti po: Ime">Ime<i class="ph-bold ph-caret-up-down" aria-hidden="true"></i></button></th><th scope="col" class="num"><button type="button" class="sortbtn" aria-label="Razvrsti po: Občine">Občine<i class="ph-bold ph-caret-up-down" aria-hidden="true"></i></button></th><th scope="col">Telefon</th><th scope="col" aria-sort="ascending"><button type="button" class="sortbtn" aria-label="Razvrsti po: Nazadnje preverjeno">Nazadnje preverjeno<i class="ph-bold ph-arrow-up" aria-hidden="true"></i></button></th><th scope="col">Vir</th><th class="c-act" scope="col"><span class="sr-only">Dejanja</span></th></tr></thead><tbody>
+<tr class=""><td><a href="#" class="rowlink">Zavetišče Lipa</a></td><td class="num tnum">20</td><td class="tnum nowrap">01 234 56 78</td><td class="nowrap"><span class="tnum dcol">3. 2. 2025</span><span class="stale"><i class="ph-fill ph-clock" aria-hidden="true"></i>zastarelo</span></td><td>Spletna stran</td><td class="c-act"><div class="relative inline-block"><button type="button" class="iconbtn" aria-label="Dejanja: Zavetišče Lipa" aria-haspopup="menu" aria-expanded="false"><i class="ph-bold ph-dots-three" aria-hidden="true"></i></button></div></td></tr>
+<tr class=""><td><a href="#" class="rowlink">Zavetišče Kraški Rob</a></td><td class="num tnum">9</td><td class="tnum nowrap">05 610 27 90</td><td class="nowrap"><span class="tnum dcol">14. 8. 2025</span><span class="stale"><i class="ph-fill ph-clock" aria-hidden="true"></i>zastarelo</span></td><td>E-pošta</td><td class="c-act"><div class="relative inline-block"><button type="button" class="iconbtn" aria-label="Dejanja: Zavetišče Kraški Rob" aria-haspopup="menu" aria-expanded="false"><i class="ph-bold ph-dots-three" aria-hidden="true"></i></button></div></td></tr>
+<tr class=""><td><a href="#" class="rowlink">Zavetišče Brin</a></td><td class="num tnum">18</td><td class="tnum nowrap">04 512 36 70</td><td class="nowrap"><span class="tnum dcol">9. 9. 2025</span><span class="stale"><i class="ph-fill ph-clock" aria-hidden="true"></i>zastarelo</span></td><td>Uvoz CSV</td><td class="c-act"><div class="relative inline-block"><button type="button" class="iconbtn" aria-label="Dejanja: Zavetišče Brin" aria-haspopup="menu" aria-expanded="false"><i class="ph-bold ph-dots-three" aria-hidden="true"></i></button></div></td></tr>
+<tr class=""><td><a href="#" class="rowlink">Zavetišče Ob Kolpi</a></td><td class="num tnum">6</td><td class="tnum nowrap">07 305 62 41</td><td class="nowrap"><span class="tnum dcol">30. 9. 2025</span><span class="stale"><i class="ph-fill ph-clock" aria-hidden="true"></i>zastarelo</span></td><td>Klic</td><td class="c-act"><div class="relative inline-block"><button type="button" class="iconbtn" aria-label="Dejanja: Zavetišče Ob Kolpi" aria-haspopup="menu" aria-expanded="false"><i class="ph-bold ph-dots-three" aria-hidden="true"></i></button></div></td></tr>
+</tbody></table></div>
+    </main>
+    </div>
+  </div>
+  <div class="scrim" style="top:44px"></div>
+  <div class="absolute inset-x-0 bottom-0 grid place-items-center p-6" style="top:44px;z-index:4">
+    <div class="dialog dialog-wide" role="dialog" aria-modal="true" aria-label="Uvoz CSV">
+      <div class="flex items-start justify-between gap-4"><h2 class="dtitle pt-2">Uvoz CSV</h2><button type="button" class="iconbtn -mr-2 -mt-1" aria-label="Zapri"><i class="ph-bold ph-x" aria-hidden="true"></i></button></div>
+      <div class="mt-4"><div class="filerow"><i class="ph-fill ph-file-csv" aria-hidden="true"></i><span class="min-w-0 flex-1 font-bold break-all">imenik-zavetisc-oktober.csv</span><label class="btn btn-secondary btn-sm pick"><input id="im6-file" type="file" accept=".csv,text/csv" class="sr-only">Izberi datoteko</label></div></div>
+      <p class="summary tnum mt-5" role="status">2 nova vnosa, 6 spremenjenih, 0 odstranjenih, 2 napaki</p>
+      <div class="grid gap-6 mt-5"><div><h3 class="h3c">Napake</h3><ul class="errlist mt-2">
+          <li><i class="ph-fill ph-warning-circle" aria-hidden="true"></i><p><b class="tnum">Vrstica 14:</b> Telefonska številka ni veljavna. Vpišite jo na primer kot 01 234 56 78.</p></li>
+          <li><i class="ph-fill ph-warning-circle" aria-hidden="true"></i><p><b class="tnum">Vrstica 31:</b> Vpišite vir podatkov.</p></li>
+        </ul></div>
+        <div><h3 class="h3c">Spremembe</h3><div class="mt-2"><table class="tbl tbl-in tbl-fixed"><caption class="sr-only">Spremembe</caption><colgroup><col style="width:29%"><col style="width:21%"><col style="width:23%"><col style="width:27%"></colgroup><thead><tr><th scope="col">Vnos</th><th scope="col">Polje</th><th scope="col">prej</th><th scope="col">zdaj</th></tr></thead><tbody>
+<tr class="no-hover"><td class="font-bold">Zavetišče Ob Krki</td><td>Ime</td><td class="tnum tmuted">–</td><td class="tnum">Zavetišče Ob Krki</td></tr>
+<tr class="no-hover"><td class="font-bold">Zavetišče Ob Reki</td><td>Ime</td><td class="tnum tmuted">–</td><td class="tnum">Zavetišče Ob Reki</td></tr>
+<tr class="no-hover"><td class="font-bold">Zavetišče Lipa</td><td>Telefon</td><td class="tnum nowrap">01 234 56 70</td><td class="tnum nowrap">01 234 56 78</td></tr>
+<tr class="no-hover"><td class="font-bold">Zavetišče Brin</td><td>Delovni čas, sob</td><td class="tnum nowrap">09:00–12:00</td><td class="tnum nowrap">09:00–13:00</td></tr>
+<tr class="no-hover"><td class="font-bold">Kostel</td><td>Pristojno zavetišče</td><td class="tnum tmuted">–</td><td class="tnum">Zavetišče Ob Kolpi</td></tr>
+<tr class="no-hover"><td class="font-bold">Bloke</td><td>Stanje</td><td class="tnum">Ni potrjeno</td><td class="tnum">Potrjeno</td></tr>
+<tr class="no-hover"><td class="font-bold">Zavetišče Savinja</td><td>Telefon</td><td class="tnum nowrap">03 428 61 90</td><td class="tnum nowrap">03 428 61 09</td></tr>
+<tr class="no-hover"><td class="font-bold">Zavetišče Posočje</td><td>Preverjeno dne</td><td class="tnum nowrap">26. 1. 2026</td><td class="tnum nowrap">13. 10. 2026</td></tr>
+  </tbody></table></div></div>
+      </div>
+      <div class="grid gap-2 mt-6"><button type="button" class="btn btn-primary btn-block" disabled aria-describedby="im6-why">Uveljavi spremembe</button><p id="im6-why" class="help text-center">Najprej popravite napake v datoteki in jo naložite znova.</p><button type="button" class="btn btn-text btn-block">Prekliči</button></div>
+    </div>
+  </div>
+  </div></div>
+  <p class="tile-h" style="margin-top:64px">F7 · "Izbriši" on a shelter that still serves municipalities: refused. The delete button is disabled and the note names the count (like the last-admin guard); focus on "Prekliči" · sample data</p>
+  <div class="fit-1200"><div class="browser relative" style="width:1200px" lang="sl">
+    <div class="browser-bar"><span class="dots"><i></i><i></i><i></i></span><span class="url"><i class="ph ph-lock-simple"></i>najdimo.si/admin/zavetisca?zastarelo=1</span></div>
+    <div class="adm" style="min-height:900px" aria-hidden="true" inert>
+    <div class="sb is-collapsed">
+    <div class="sb-head"><a href="#" class="sb-home" aria-label="Najdimo, Konzola"><svg viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg></a></div>
+    <nav class="sb-nav" aria-label="Konzola">
+      <div class="sb-group"><ul class="sb-list" aria-label="Pregled"><li class="relative"><a href="#" class="sb-item"><i class="ph ph-squares-four" aria-hidden="true"></i><span class="sr-only">Nadzorna plošča</span></a></li></ul></div>
+      <div class="sb-group"><ul class="sb-list" aria-label="Vsebina"><li class="relative"><a href="#" class="sb-item"><i class="ph ph-image-square" aria-hidden="true"></i><span class="sr-only">Oglasi</span></a></li><li class="relative"><a href="#" class="sb-item"><i class="ph ph-paw-print" aria-hidden="true"></i><span class="sr-only">Lastni oglasi</span></a></li></ul></div>
+      <div class="sb-group"><ul class="sb-list" aria-label="Varnost"><li class="relative"><a href="#" class="sb-item"><i class="ph ph-list-checks" aria-hidden="true"></i><span class="sr-only">Moderacija, Kmalu</span></a></li><li class="relative"><a href="#" class="sb-item"><i class="ph ph-flag" aria-hidden="true"></i><span class="sr-only">Prijave zlorab, Kmalu</span></a></li></ul></div>
+      <div class="sb-group"><ul class="sb-list" aria-label="Organizacije"><li class="relative"><a href="#" class="sb-item"><i class="ph ph-seal-check" aria-hidden="true"></i><span class="sr-only">Preverjanje</span></a></li><li class="relative"><a href="#" class="sb-item"><i class="ph ph-buildings" aria-hidden="true"></i><span class="sr-only">Organizacije</span></a></li><li class="relative"><a href="#" class="sb-item" aria-current="page"><i class="ph-fill ph-address-book" aria-hidden="true"></i><span class="sr-only">Imenik zavetišč</span></a></li></ul></div>
+      <div class="sb-group"><ul class="sb-list" aria-label="Ljudje"><li class="relative"><a href="#" class="sb-item"><i class="ph ph-users" aria-hidden="true"></i><span class="sr-only">Uporabniki</span></a></li></ul></div>
+      <div class="sb-group"><ul class="sb-list" aria-label="Posel"><li class="relative"><a href="#" class="sb-item"><i class="ph ph-tray" aria-hidden="true"></i><span class="sr-only">Povpraševanja</span></a></li><li class="relative"><a href="#" class="sb-item"><i class="ph ph-stethoscope" aria-hidden="true"></i><span class="sr-only">Veterinarski partnerji, Kmalu</span></a></li></ul></div>
+      <div class="sb-group"><ul class="sb-list" aria-label="Sistem"><li class="relative"><a href="#" class="sb-item"><i class="ph ph-clock-counter-clockwise" aria-hidden="true"></i><span class="sr-only">Revizijska sled</span></a></li><li class="relative"><a href="#" class="sb-item"><i class="ph ph-gear-six" aria-hidden="true"></i><span class="sr-only">Nastavitve</span></a></li></ul></div>
+    </nav>
+    <div class="sb-foot"><button type="button" class="sb-item sb-toggle" aria-label="Razširi meni"><i class="ph-bold ph-caret-double-right" aria-hidden="true"></i></button></div>
+  </div>
+    <div class="adm-col">
+    <header class="tb">
+      <nav aria-label="Drobtine"><ol class="crumbs"><li><a href="#">Konzola</a></li><li class="sep" aria-hidden="true"><i class="ph-bold ph-caret-right" aria-hidden="true"></i></li><li><span aria-current="page">Imenik zavetišč</span></li></ol></nav>
+      <div class="tb-meta">
+        <span class="envw"><i class="ph-bold ph-globe-simple" aria-hidden="true"></i>Produkcija</span><span class="vr" aria-hidden="true"></span>
+        <span class="envw text-muted-foreground"><i class="ph-bold ph-user-gear" aria-hidden="true"></i>Skrbnik</span>
+        <button type="button" class="acct" aria-label="Moj račun" aria-haspopup="menu" aria-expanded="false"><span class="av av-32" aria-hidden="true">MK</span><i class="ph-bold ph-caret-down" aria-hidden="true"></i></button>
+      </div>
+    </header>
+    <main class="adm-main">
+      <div><div class="phead"><h1 class="h1c">Imenik zavetišč</h1><div class="flex flex-wrap items-center gap-3"><button type="button" class="btn btn-secondary btn-sm"><i class="ph-bold ph-upload-simple" aria-hidden="true"></i>Uvozi CSV</button><button type="button" class="btn btn-primary btn-sm"><i class="ph-bold ph-plus" aria-hidden="true"></i>Dodaj zavetišče</button></div></div><p class="live">Spremembe so na javnih straneh in v aplikaciji vidne takoj po shranjevanju.</p></div>
+      <div class="note items-center !pr-2"><i class="ph-fill ph-clock" aria-hidden="true"></i><p class="flex-1">Letno preverjanje: <b class="tnum">23</b> vnosov ni bilo preverjenih več kot 12 mesecev.</p><button type="button" class="btn btn-text btn-sm">Pokaži</button></div>
+      <div class="grid gap-6"><div class="seg seg-fit" role="tablist" aria-label="Imenik zavetišč"><button type="button" role="tab" aria-selected="true">Zavetišča</button><button type="button" role="tab" aria-selected="false">Občine</button></div>
+      <div class="frow">
+        <div class="field f-search"><label for="q-f7">Išči zavetišče</label><div class="input-wrap"><i class="ph-bold ph-magnifying-glass" aria-hidden="true"></i><input id="q-f7" type="search" class="input" autocomplete="off"></div></div>
+        <div class="flex flex-wrap items-center gap-2" role="group" aria-label="Filtri"><button type="button" class="pill" data-toggle aria-pressed="true"><i class="ph-bold ph-check tick" aria-hidden="true"></i>Starejše od 12 mesecev</button><button type="button" class="btn btn-text btn-sm">Počisti filtre</button></div>
+      </div></div>
+      <div class="tcard"><table class="tbl"><caption class="sr-only">Zavetišča</caption><thead><tr><th scope="col"><button type="button" class="sortbtn" aria-label="Razvrsti po: Ime">Ime<i class="ph-bold ph-caret-up-down" aria-hidden="true"></i></button></th><th scope="col" class="num"><button type="button" class="sortbtn" aria-label="Razvrsti po: Občine">Občine<i class="ph-bold ph-caret-up-down" aria-hidden="true"></i></button></th><th scope="col">Telefon</th><th scope="col" aria-sort="ascending"><button type="button" class="sortbtn" aria-label="Razvrsti po: Nazadnje preverjeno">Nazadnje preverjeno<i class="ph-bold ph-arrow-up" aria-hidden="true"></i></button></th><th scope="col">Vir</th><th class="c-act" scope="col"><span class="sr-only">Dejanja</span></th></tr></thead><tbody>
+<tr class=""><td><a href="#" class="rowlink">Zavetišče Lipa</a></td><td class="num tnum">20</td><td class="tnum nowrap">01 234 56 78</td><td class="nowrap"><span class="tnum dcol">3. 2. 2025</span><span class="stale"><i class="ph-fill ph-clock" aria-hidden="true"></i>zastarelo</span></td><td>Spletna stran</td><td class="c-act"><div class="relative inline-block"><button type="button" class="iconbtn" aria-label="Dejanja: Zavetišče Lipa" aria-haspopup="menu" aria-expanded="false"><i class="ph-bold ph-dots-three" aria-hidden="true"></i></button></div></td></tr>
+<tr class=""><td><a href="#" class="rowlink">Zavetišče Kraški Rob</a></td><td class="num tnum">9</td><td class="tnum nowrap">05 610 27 90</td><td class="nowrap"><span class="tnum dcol">14. 8. 2025</span><span class="stale"><i class="ph-fill ph-clock" aria-hidden="true"></i>zastarelo</span></td><td>E-pošta</td><td class="c-act"><div class="relative inline-block"><button type="button" class="iconbtn" aria-label="Dejanja: Zavetišče Kraški Rob" aria-haspopup="menu" aria-expanded="false"><i class="ph-bold ph-dots-three" aria-hidden="true"></i></button></div></td></tr>
+<tr class=""><td><a href="#" class="rowlink">Zavetišče Brin</a></td><td class="num tnum">18</td><td class="tnum nowrap">04 512 36 70</td><td class="nowrap"><span class="tnum dcol">9. 9. 2025</span><span class="stale"><i class="ph-fill ph-clock" aria-hidden="true"></i>zastarelo</span></td><td>Uvoz CSV</td><td class="c-act"><div class="relative inline-block"><button type="button" class="iconbtn" aria-label="Dejanja: Zavetišče Brin" aria-haspopup="menu" aria-expanded="false"><i class="ph-bold ph-dots-three" aria-hidden="true"></i></button></div></td></tr>
+<tr class=""><td><a href="#" class="rowlink">Zavetišče Ob Kolpi</a></td><td class="num tnum">6</td><td class="tnum nowrap">07 305 62 41</td><td class="nowrap"><span class="tnum dcol">30. 9. 2025</span><span class="stale"><i class="ph-fill ph-clock" aria-hidden="true"></i>zastarelo</span></td><td>Klic</td><td class="c-act"><div class="relative inline-block"><button type="button" class="iconbtn" aria-label="Dejanja: Zavetišče Ob Kolpi" aria-haspopup="menu" aria-expanded="false"><i class="ph-bold ph-dots-three" aria-hidden="true"></i></button></div></td></tr>
+</tbody></table></div>
+    </main>
+    </div>
+  </div>
+  <div class="scrim" style="top:44px"></div>
+  <div class="absolute inset-x-0 bottom-0 grid place-items-center p-6" style="top:44px;z-index:4">
+    <div class="dialog" role="alertdialog" aria-modal="true" aria-label="Izbriši: Zavetišče Ob Kolpi?" aria-describedby="dr7-n">
+      <h2 class="dtitle">Izbriši: Zavetišče Ob Kolpi?</h2>
+      <div class="note mt-4" id="dr7-n"><i class="ph-fill ph-info" aria-hidden="true"></i><p>Zavetišča ne morete izbrisati, ker je pristojno za <b class="tnum">6</b> občin. Najprej jih dodelite drugemu zavetišču.</p></div>
+      <div class="grid gap-2 mt-6"><button type="button" class="btn btn-destructive btn-block" disabled aria-describedby="dr7-n">Izbriši</button><button type="button" class="btn btn-text btn-block is-focus">Prekliči</button></div>
+    </div>
+  </div>
+  </div></div>
+</section>
+
+<section class="tile-section !max-w-[1400px] !pt-0">
+  <h2 class="tile-title">2. Parts and states at real size</h2>
+  <p class="tile-lede">States the frames reference, drawn once on the page canvas or on the drawer surface. The thin outline marks the region and is not product UI.</p>
+
+  <div class="flex flex-wrap gap-x-10 gap-y-10 items-start">
+    <div class="w-[480px] max-w-full">
+      <p class="tile-h !mt-0">P1 · Opening-hours rows on the drawer: closing time before opening time (error), and a closed day (time fields disabled with the dashed line, the switch is the reason)</p>
+      <div class="card part-card w-[480px] max-w-full" lang="sl">
+        <fieldset class="grp"><legend class="h3c">Delovni čas</legend>
+          <ul class="hlist">
+            <li class="hrow">
+            <div class="hgrid">
+              <div class="field"><label for="p1-d1">Dnevi</label><button id="p1-d1" type="button" class="input select" aria-haspopup="listbox" aria-expanded="false"><span>pon–pet</span><i class="ph-bold ph-caret-down" aria-hidden="true"></i></button></div>
+              <div class="field"><label for="p1-f1">Od</label><input id="p1-f1" class="input tnum" type="text" inputmode="numeric" value="16:00"></div>
+              <div class="field"><label for="p1-t1">Do</label><input id="p1-t1" class="input tnum is-error" type="text" inputmode="numeric" value="08:00" aria-invalid="true" aria-describedby="p1-e1"></div>
+            </div>
+            <p id="p1-e1" class="err mt-2"><i class="ph-fill ph-warning-circle" aria-hidden="true"></i>Ura »do« mora biti za uro »od«.</p>
+            <div class="hfoot"><label class="swrow"><span>Zaprto</span><button type="button" class="switch" role="switch" aria-checked="false"></button></label><button type="button" class="iconbtn" aria-label="Odstrani vrstico"><i class="ph-bold ph-trash" aria-hidden="true"></i></button></div>
+          </li>
+            <li class="hrow">
+            <div class="hgrid">
+              <div class="field"><label for="p1-d2">Dnevi</label><button id="p1-d2" type="button" class="input select" aria-haspopup="listbox" aria-expanded="false"><span>prazniki</span><i class="ph-bold ph-caret-down" aria-hidden="true"></i></button></div>
+              <div class="field is-disabled"><label for="p1-f2">Od</label><input id="p1-f2" class="input tnum" type="text" inputmode="numeric" value="" disabled></div>
+              <div class="field is-disabled"><label for="p1-t2">Do</label><input id="p1-t2" class="input tnum" type="text" inputmode="numeric" value="" disabled></div>
+            </div>
+            
+            <div class="hfoot"><label class="swrow"><span>Zaprto</span><button type="button" class="switch" role="switch" aria-checked="true"></button></label><button type="button" class="iconbtn" aria-label="Odstrani vrstico"><i class="ph-bold ph-trash" aria-hidden="true"></i></button></div>
+          </li>
+          </ul>
+          <button type="button" class="btn btn-text btn-sm -ml-3 mt-2 is-hover"><i class="ph-bold ph-plus" aria-hidden="true"></i>Dodaj vrstico</button>
+        </fieldset>
+      </div>
+    </div>
+    <div class="w-[480px] max-w-full">
+      <p class="tile-h !mt-0">P2 · "Dodaj občino" combobox open: the typed part is bold, the active option has the 10 % fill; choosing one adds it to the plain list below</p>
+      <div class="card part-card w-[480px] max-w-full" lang="sl" style="min-height:420px">
+        <div class="field relative"><label for="p2-add">Dodaj občino</label><div class="input-wrap"><i class="ph-bold ph-magnifying-glass" aria-hidden="true"></i><input id="p2-add" class="input is-focus" type="text" role="combobox" aria-autocomplete="list" aria-expanded="true" autocomplete="off" value="Lo"></div>
+          <ul class="pop listbox cbx-list" role="listbox" aria-label="Dodaj občino">
+            <li role="option" aria-selected="false" class="is-hover"><span><b>Lo</b>ška dolina</span><i class="ph-bold ph-check" aria-hidden="true"></i></li>
+            <li role="option" aria-selected="false"><span><b>Lo</b>ški Potok</span><i class="ph-bold ph-check" aria-hidden="true"></i></li>
+            <li role="option" aria-selected="false"><span><b>Lo</b>g - Dragomer</span><i class="ph-bold ph-check" aria-hidden="true"></i></li>
+            <li role="option" aria-selected="false"><span><b>Lo</b>gatec</span><i class="ph-bold ph-check" aria-hidden="true"></i></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="flex flex-wrap gap-x-10 gap-y-10 items-start mt-12">
+    <div class="w-[480px] max-w-full">
+      <p class="tile-h !mt-0">P3 · Save conflict: another admin saved first. A note at the top of the drawer body with "Osveži"; the form keeps the typed values</p>
+      <div class="card part-card w-[480px] max-w-full" lang="sl">
+        <div class="note !pr-2" role="alert"><i class="ph-fill ph-warning-circle" style="color:hsl(var(--destructive))" aria-hidden="true"></i><div class="flex-1"><p>Medtem je to zavetišče uredil nekdo drug. Osvežite in spremembe vnesite znova.</p><button type="button" class="btn btn-text btn-sm -ml-3 mt-1"><i class="ph-bold ph-arrow-clockwise" aria-hidden="true"></i>Osveži</button></div></div>
+        <div class="mt-6"><div class="field"><label for="p3-name">Ime</label><input id="p3-name" class="input" type="text" value="Zavetišče Ob Kolpi"></div></div>
+      </div>
+    </div>
+    <div class="w-[520px] max-w-full">
+      <p class="tile-h !mt-0">P4 · Delete allowed (no municipalities assigned): shelter named, audit note required, "Izbriši" disabled until it is filled; focus starts on "Prekliči"</p>
+      <div class="part relative overflow-hidden w-[520px] max-w-full grid place-items-center p-6" style="min-height:420px" lang="sl">
+        <div class="scrim" style="border-radius:inherit"></div>
+        <div class="dialog" role="alertdialog" aria-modal="true" aria-label="Izbriši: Zavetišče Sončni Log?" aria-describedby="p4-b">
+          <h2 class="dtitle">Izbriši: Zavetišče Sončni Log?</h2>
+          <p id="p4-b" class="mt-2">Zavetišče izgine z javnih strani in iz gumbov za klic. Izbris bo zabeležen v revizijski sledi.</p>
+          <div class="field mt-5"><label for="p4-n">Opomba za revizijsko sled</label><textarea id="p4-n" class="input" rows="2" required aria-describedby="p4-h"></textarea><p id="p4-h" class="help mt-1">Za izbris je obvezna opomba za revizijsko sled.</p></div>
+          <div class="grid gap-2 mt-6"><button type="button" class="btn btn-destructive btn-block" disabled>Izbriši</button><button type="button" class="btn btn-text btn-block is-focus">Prekliči</button></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <p class="tile-h" style="margin-top:56px">P5 · CSV import: before a file is chosen (a file dragged over the drop area: 2 px primary inset line), dry run without errors (apply enabled), applying (progress line, button loading)</p>
+  <div class="flex flex-wrap gap-x-8 gap-y-8 items-start" lang="sl">
+    <div class="dialog dialog-wide" role="dialog" aria-modal="true" aria-label="Uvoz CSV">
+      <div class="flex items-start justify-between gap-4"><h2 class="dtitle pt-2">Uvoz CSV</h2><button type="button" class="iconbtn -mr-2 -mt-1" aria-label="Zapri"><i class="ph-bold ph-x" aria-hidden="true"></i></button></div>
+      <label class="drop is-over mt-4"><input id="p5-file" type="file" accept=".csv,text/csv" class="sr-only"><i class="ph-bold ph-upload-simple" aria-hidden="true"></i><span>Datoteko CSV povlecite sem ali</span><span class="btn btn-secondary btn-sm">Izberi datoteko</span></label>
+      <div class="grid gap-2 mt-6"><button type="button" class="btn btn-primary btn-block" disabled>Uveljavi spremembe</button><button type="button" class="btn btn-text btn-block">Prekliči</button></div>
+    </div>
+    <div class="dialog dialog-wide" role="dialog" aria-modal="true" aria-label="Uvoz CSV">
+      <div class="flex items-start justify-between gap-4"><h2 class="dtitle pt-2">Uvoz CSV</h2><button type="button" class="iconbtn -mr-2 -mt-1" aria-label="Zapri"><i class="ph-bold ph-x" aria-hidden="true"></i></button></div>
+      <div class="mt-4"><div class="filerow"><i class="ph-fill ph-file-csv" aria-hidden="true"></i><span class="min-w-0 flex-1 font-bold break-all">imenik-zavetisc-oktober.csv</span><label class="btn btn-secondary btn-sm pick"><input id="p5b-file" type="file" accept=".csv,text/csv" class="sr-only">Izberi datoteko</label></div></div>
+      <p class="summary tnum mt-5" role="status">2 nova vnosa, 6 spremenjenih, 0 odstranjenih, 0 napak</p>
+      <div class="grid gap-6 mt-5">
+        <div><h3 class="h3c">Spremembe</h3><div class="mt-2"><table class="tbl tbl-in tbl-fixed"><caption class="sr-only">Spremembe</caption><colgroup><col style="width:29%"><col style="width:21%"><col style="width:23%"><col style="width:27%"></colgroup><thead><tr><th scope="col">Vnos</th><th scope="col">Polje</th><th scope="col">prej</th><th scope="col">zdaj</th></tr></thead><tbody>
+<tr class="no-hover"><td class="font-bold">Zavetišče Ob Krki</td><td>Ime</td><td class="tnum tmuted">–</td><td class="tnum">Zavetišče Ob Krki</td></tr>
+<tr class="no-hover"><td class="font-bold">Zavetišče Ob Reki</td><td>Ime</td><td class="tnum tmuted">–</td><td class="tnum">Zavetišče Ob Reki</td></tr>
+<tr class="no-hover"><td class="font-bold">Zavetišče Lipa</td><td>Telefon</td><td class="tnum nowrap">01 234 56 70</td><td class="tnum nowrap">01 234 56 78</td></tr>
+<tr class="no-hover"><td class="font-bold">Zavetišče Brin</td><td>Delovni čas, sob</td><td class="tnum nowrap">09:00–12:00</td><td class="tnum nowrap">09:00–13:00</td></tr>
+<tr class="no-hover"><td class="font-bold">Kostel</td><td>Pristojno zavetišče</td><td class="tnum tmuted">–</td><td class="tnum">Zavetišče Ob Kolpi</td></tr>
+<tr class="no-hover"><td class="font-bold">Bloke</td><td>Stanje</td><td class="tnum">Ni potrjeno</td><td class="tnum">Potrjeno</td></tr>
+<tr class="no-hover"><td class="font-bold">Zavetišče Savinja</td><td>Telefon</td><td class="tnum nowrap">03 428 61 90</td><td class="tnum nowrap">03 428 61 09</td></tr>
+<tr class="no-hover"><td class="font-bold">Zavetišče Posočje</td><td>Preverjeno dne</td><td class="tnum nowrap">26. 1. 2026</td><td class="tnum nowrap">13. 10. 2026</td></tr>
+  </tbody></table></div></div>
+      </div>
+      <div class="grid gap-2 mt-6"><button type="button" class="btn btn-primary btn-block">Uveljavi spremembe</button><button type="button" class="btn btn-text btn-block">Prekliči</button></div>
+    </div>
+    <div class="dialog dialog-wide" role="dialog" aria-modal="true" aria-label="Uvoz CSV">
+      <div class="flex items-start justify-between gap-4"><h2 class="dtitle pt-2">Uvoz CSV</h2><button type="button" class="iconbtn -mr-2 -mt-1" aria-label="Zapri"><i class="ph-bold ph-x" aria-hidden="true"></i></button></div>
+      <div class="mt-4"><div class="filerow"><i class="ph-fill ph-file-csv" aria-hidden="true"></i><span class="min-w-0 flex-1 font-bold break-all">imenik-zavetisc-oktober.csv</span><label class="btn btn-secondary btn-sm pick"><input id="p5c-file" type="file" accept=".csv,text/csv" class="sr-only">Izberi datoteko</label></div></div>
+      <p class="summary tnum mt-5" role="status">2 nova vnosa, 6 spremenjenih, 0 odstranjenih, 0 napak</p>
+      <div class="grid gap-6 mt-5">
+        <div><h3 class="h3c">Spremembe</h3><div class="mt-2"><table class="tbl tbl-in tbl-fixed"><caption class="sr-only">Spremembe</caption><colgroup><col style="width:29%"><col style="width:21%"><col style="width:23%"><col style="width:27%"></colgroup><thead><tr><th scope="col">Vnos</th><th scope="col">Polje</th><th scope="col">prej</th><th scope="col">zdaj</th></tr></thead><tbody>
+<tr class="no-hover"><td class="font-bold">Zavetišče Ob Krki</td><td>Ime</td><td class="tnum tmuted">–</td><td class="tnum">Zavetišče Ob Krki</td></tr>
+<tr class="no-hover"><td class="font-bold">Zavetišče Ob Reki</td><td>Ime</td><td class="tnum tmuted">–</td><td class="tnum">Zavetišče Ob Reki</td></tr>
+<tr class="no-hover"><td class="font-bold">Zavetišče Lipa</td><td>Telefon</td><td class="tnum nowrap">01 234 56 70</td><td class="tnum nowrap">01 234 56 78</td></tr>
+<tr class="no-hover"><td class="font-bold">Zavetišče Brin</td><td>Delovni čas, sob</td><td class="tnum nowrap">09:00–12:00</td><td class="tnum nowrap">09:00–13:00</td></tr>
+<tr class="no-hover"><td class="font-bold">Kostel</td><td>Pristojno zavetišče</td><td class="tnum tmuted">–</td><td class="tnum">Zavetišče Ob Kolpi</td></tr>
+<tr class="no-hover"><td class="font-bold">Bloke</td><td>Stanje</td><td class="tnum">Ni potrjeno</td><td class="tnum">Potrjeno</td></tr>
+<tr class="no-hover"><td class="font-bold">Zavetišče Savinja</td><td>Telefon</td><td class="tnum nowrap">03 428 61 90</td><td class="tnum nowrap">03 428 61 09</td></tr>
+<tr class="no-hover"><td class="font-bold">Zavetišče Posočje</td><td>Preverjeno dne</td><td class="tnum nowrap">26. 1. 2026</td><td class="tnum nowrap">13. 10. 2026</td></tr>
+  </tbody></table></div></div>
+      </div>
+      <div class="mt-6"><div class="flex items-baseline justify-between gap-4"><p class="label" id="p5c-pl">Uveljavljamo spremembe …</p><p class="meta tnum" aria-hidden="true">60 %</p></div><div class="progress mt-2" role="progressbar" aria-label="Uveljavljamo spremembe …" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100"><span style="width:60%"></span></div>
+        <div class="grid gap-2 mt-6"><button type="button" class="btn btn-primary btn-block" aria-busy="true"><span class="spin" aria-hidden="true"></span>Uveljavi spremembe</button><button type="button" class="btn btn-text btn-block" disabled>Prekliči</button></div></div>
+    </div>
+  </div>
+
+  <p class="tile-h" style="margin-top:56px">P6 · Table states: loading (skeleton rows, one polite "Nalaganje …"), empty search result, error with retry</p>
+  <div class="grid grid-cols-1 gap-8 xl:grid-cols-3 items-start" lang="sl">
+    <div class="tcard"><table class="tbl" aria-busy="true"><caption class="sr-only">Zavetišča</caption><thead><tr><th scope="col" aria-sort="ascending"><button type="button" class="sortbtn" aria-label="Razvrsti po: Ime">Ime<i class="ph-bold ph-arrow-up" aria-hidden="true"></i></button></th><th scope="col">Telefon</th><th scope="col">Nazadnje preverjeno</th></tr></thead><tbody aria-hidden="true">
+      <tr class="no-hover"><td><div class="skel h-4 w-4/5"></div></td><td><div class="skel h-4 w-3/5"></div></td><td><div class="skel h-4 w-full"></div></td></tr><tr class="no-hover"><td><div class="skel h-4 w-4/5"></div></td><td><div class="skel h-4 w-3/5"></div></td><td><div class="skel h-4 w-full"></div></td></tr><tr class="no-hover"><td><div class="skel h-4 w-4/5"></div></td><td><div class="skel h-4 w-3/5"></div></td><td><div class="skel h-4 w-full"></div></td></tr><tr class="no-hover"><td><div class="skel h-4 w-4/5"></div></td><td><div class="skel h-4 w-3/5"></div></td><td><div class="skel h-4 w-full"></div></td></tr>
+    </tbody></table><p class="sr-only" role="status">Nalaganje …</p></div>
+    <div class="grid gap-6">
+      <div class="frow">
+        <div class="field f-search"><label for="p6-q">Išči zavetišče</label><div class="input-wrap has-end"><i class="ph-bold ph-magnifying-glass" aria-hidden="true"></i><input id="p6-q" type="search" class="input" autocomplete="off" value="Kamnik"><span class="end"><button type="button" class="iconbtn" aria-label="Počisti iskanje"><i class="ph-bold ph-x-circle" aria-hidden="true"></i></button></span></div></div>
+      </div>
+      <div class="tcard"><table class="tbl"><caption class="sr-only">Zavetišča</caption><thead><tr><th scope="col" aria-sort="ascending"><button type="button" class="sortbtn" aria-label="Razvrsti po: Ime">Ime<i class="ph-bold ph-arrow-up" aria-hidden="true"></i></button></th><th scope="col">Telefon</th><th scope="col">Nazadnje preverjeno</th></tr></thead><tbody><tr class="no-hover"><td colspan="3" class="!h-auto !py-10 text-center">
+        <svg class="mx-auto w-full max-w-[200px] h-auto" style="border-radius:var(--radius-row)" viewBox="0 0 320 210" aria-hidden="true"><use href="#illo-spot"/></svg>
+        <p class="font-display font-semibold text-xl mt-5" role="status">Ni zadetkov.</p>
+        <button type="button" class="btn btn-secondary btn-sm mt-4">Počisti filtre</button>
+      </td></tr></tbody></table></div>
+    </div>
+    <div class="tcard"><table class="tbl"><caption class="sr-only">Zavetišča</caption><thead><tr><th scope="col" aria-sort="ascending"><button type="button" class="sortbtn" aria-label="Razvrsti po: Ime">Ime<i class="ph-bold ph-arrow-up" aria-hidden="true"></i></button></th><th scope="col">Telefon</th><th scope="col">Nazadnje preverjeno</th></tr></thead><tbody><tr class="no-hover"><td colspan="3" class="!h-auto !py-4">
+      <div class="note items-center !pr-2" role="alert"><i class="ph-fill ph-warning-circle" style="color:hsl(var(--destructive))" aria-hidden="true"></i><p class="flex-1">Podatkov ni bilo mogoče naložiti.</p><button type="button" class="btn btn-text btn-sm"><i class="ph-bold ph-arrow-clockwise" aria-hidden="true"></i>Poskusi znova</button></div>
+    </td></tr></tbody></table></div>
+  </div>
+
+  <div class="flex flex-wrap gap-x-10 gap-y-10 items-start" style="margin-top:56px">
+    <div class="w-full">
+      <p class="tile-h !mt-0">P7 · Read only (moderator): no primary, no import, no row actions; the quiet line "Samo za ogled" takes the buttons' place; rows open the drawer with every field disabled · sample data</p>
+      <div class="part px-8 py-8 grid gap-8" lang="sl">
+        <div><div class="phead"><h1 class="h1c">Imenik zavetišč</h1><p class="ro"><i class="ph-bold ph-eye" aria-hidden="true"></i>Samo za ogled</p></div><p class="live">Spremembe so na javnih straneh in v aplikaciji vidne takoj po shranjevanju.</p></div>
+        <div class="tcard"><table class="tbl"><caption class="sr-only">Zavetišča</caption><thead><tr><th scope="col" aria-sort="ascending"><button type="button" class="sortbtn" aria-label="Razvrsti po: Ime">Ime<i class="ph-bold ph-arrow-up" aria-hidden="true"></i></button></th><th scope="col" class="num"><button type="button" class="sortbtn" aria-label="Razvrsti po: Občine">Občine<i class="ph-bold ph-caret-up-down" aria-hidden="true"></i></button></th><th scope="col">Telefon</th><th scope="col"><button type="button" class="sortbtn" aria-label="Razvrsti po: Nazadnje preverjeno">Nazadnje preverjeno<i class="ph-bold ph-caret-up-down" aria-hidden="true"></i></button></th><th scope="col">Vir</th></tr></thead><tbody>
+<tr class=""><td><a href="#" class="rowlink">Zavetišče Bohor</a></td><td class="num tnum">14</td><td class="tnum nowrap">07 490 31 12</td><td class="nowrap"><span class="tnum dcol">12. 3. 2026</span></td><td>Spletna stran</td></tr>
+<tr class=""><td><a href="#" class="rowlink">Zavetišče Breg</a></td><td class="num tnum">16</td><td class="tnum nowrap">02 790 11 48</td><td class="nowrap"><span class="tnum dcol">28. 4. 2026</span></td><td>Klic</td></tr>
+<tr class=""><td><a href="#" class="rowlink">Zavetišče Brin</a></td><td class="num tnum">18</td><td class="tnum nowrap">04 512 36 70</td><td class="nowrap"><span class="tnum dcol">9. 9. 2025</span><span class="stale"><i class="ph-fill ph-clock" aria-hidden="true"></i>zastarelo</span></td><td>Uvoz CSV</td></tr>
+<tr class=""><td><a href="#" class="rowlink">Zavetišče Gorjanci</a></td><td class="num tnum">15</td><td class="tnum nowrap">07 332 18 05</td><td class="nowrap"><span class="tnum dcol">2. 6. 2026</span></td><td>Klic</td></tr>
+</tbody></table></div>
+      </div>
+    </div>
+    <div class="w-[480px] max-w-full">
+      <p class="tile-h !mt-0">P8 · Toast after "Obnovi to različico"</p>
+      <div class="pop toast w-[420px] max-w-full" role="status" aria-live="polite"><i class="ph-fill ph-check-circle" aria-hidden="true"></i><p>Različica je obnovljena kot nova sprememba.</p><button type="button" class="iconbtn" aria-label="Zapri"><i class="ph-bold ph-x" aria-hidden="true"></i></button></div>
+    </div>
+  </div>
+</section>
+
+<section class="tile-section !max-w-[1400px] !pt-0">
+  <h2 class="tile-title">3. Tablet, 768 px</h2>
+  <p class="tile-lede">Below lg the sidebar is the sheet from the P19 shell ("Odpri meni"), tables become stacked rows with the key columns first, and the drawer takes the full width. Usable on phones down to 360 px, not optimised.</p>
+
+  <p class="tile-h !mt-0">F8 · 768 px · Zavetišča as stacked rows: name, then last checked (with "zastarelo"), phone, municipality count and source; row menu stays 44 px · sample data</p>
+  <div class="fit-768"><div class="browser relative" style="width:768px" lang="sl">
+    <div class="browser-bar"><span class="dots"><i></i><i></i><i></i></span><span class="url"><i class="ph ph-lock-simple"></i>najdimo.si/admin/zavetisca</span></div>
+    <div class="adm" style="min-height:1360px">
+    
+    <div class="adm-col">
+    <header class="tb">
+      <button type="button" class="iconbtn -ml-3" aria-label="Odpri meni" aria-expanded="false"><i class="ph-bold ph-list" aria-hidden="true"></i></button><nav aria-label="Drobtine"><ol class="crumbs"><li><a href="#">Konzola</a></li><li class="sep" aria-hidden="true"><i class="ph-bold ph-caret-right" aria-hidden="true"></i></li><li><span aria-current="page">Imenik zavetišč</span></li></ol></nav>
+      <div class="tb-meta">
+        <span class="envw"><i class="ph-bold ph-globe-simple" aria-hidden="true"></i>Produkcija</span><span class="vr" aria-hidden="true"></span>
+        <span class="envw text-muted-foreground"><i class="ph-bold ph-user-gear" aria-hidden="true"></i>Skrbnik</span>
+        <button type="button" class="acct" aria-label="Moj račun" aria-haspopup="menu" aria-expanded="false"><span class="av av-32" aria-hidden="true">MK</span><i class="ph-bold ph-caret-down" aria-hidden="true"></i></button>
+      </div>
+    </header>
+    <main class="adm-main">
+      <div><div class="phead"><h1 class="h1c">Imenik zavetišč</h1><div class="flex flex-wrap items-center gap-3"><button type="button" class="btn btn-secondary btn-sm"><i class="ph-bold ph-upload-simple" aria-hidden="true"></i>Uvozi CSV</button><button type="button" class="btn btn-primary btn-sm"><i class="ph-bold ph-plus" aria-hidden="true"></i>Dodaj zavetišče</button></div></div><p class="live">Spremembe so na javnih straneh in v aplikaciji vidne takoj po shranjevanju.</p></div>
+      <div class="note items-center !pr-2"><i class="ph-fill ph-clock" aria-hidden="true"></i><p class="flex-1">Letno preverjanje: <b class="tnum">23</b> vnosov ni bilo preverjenih več kot 12 mesecev.</p><button type="button" class="btn btn-text btn-sm">Pokaži</button></div>
+      <div class="grid gap-6"><div class="seg seg-fit" role="tablist" aria-label="Imenik zavetišč"><button type="button" role="tab" aria-selected="true">Zavetišča</button><button type="button" role="tab" aria-selected="false">Občine</button></div>
+      <div class="frow">
+        <div class="field f-search"><label for="q-f8">Išči zavetišče</label><div class="input-wrap"><i class="ph-bold ph-magnifying-glass" aria-hidden="true"></i><input id="q-f8" type="search" class="input" autocomplete="off"></div></div>
+        <div class="flex flex-wrap items-center gap-2" role="group" aria-label="Filtri"><button type="button" class="pill" data-toggle aria-pressed="false"><i class="ph-bold ph-check tick" aria-hidden="true"></i>Starejše od 12 mesecev</button></div>
+      </div></div>
+      <div class="tcard" role="tabpanel" aria-label="Zavetišča"><ul class="srows" aria-label="Zavetišča"><li class="srow"><div class="flex-1 min-w-0 pt-1"><a href="#" class="rowlink">Zavetišče Bohor</a><p class="srow-meta"><span><span class="tnum dcol">12. 3. 2026</span></span><span class="tnum">07 490 31 12</span><span>Občine: <span class="tnum">14</span></span><span>Vir: Spletna stran</span></p></div><button type="button" class="iconbtn" aria-label="Dejanja: Zavetišče Bohor" aria-haspopup="menu" aria-expanded="false"><i class="ph-bold ph-dots-three" aria-hidden="true"></i></button></li>
+<li class="srow"><div class="flex-1 min-w-0 pt-1"><a href="#" class="rowlink">Zavetišče Breg</a><p class="srow-meta"><span><span class="tnum dcol">28. 4. 2026</span></span><span class="tnum">02 790 11 48</span><span>Občine: <span class="tnum">16</span></span><span>Vir: Klic</span></p></div><button type="button" class="iconbtn" aria-label="Dejanja: Zavetišče Breg" aria-haspopup="menu" aria-expanded="false"><i class="ph-bold ph-dots-three" aria-hidden="true"></i></button></li>
+<li class="srow"><div class="flex-1 min-w-0 pt-1"><a href="#" class="rowlink">Zavetišče Brin</a><p class="srow-meta"><span><span class="tnum dcol">9. 9. 2025</span><span class="stale"><i class="ph-fill ph-clock" aria-hidden="true"></i>zastarelo</span></span><span class="tnum">04 512 36 70</span><span>Občine: <span class="tnum">18</span></span><span>Vir: Uvoz CSV</span></p></div><button type="button" class="iconbtn" aria-label="Dejanja: Zavetišče Brin" aria-haspopup="menu" aria-expanded="false"><i class="ph-bold ph-dots-three" aria-hidden="true"></i></button></li>
+<li class="srow"><div class="flex-1 min-w-0 pt-1"><a href="#" class="rowlink">Zavetišče Gorjanci</a><p class="srow-meta"><span><span class="tnum dcol">2. 6. 2026</span></span><span class="tnum">07 332 18 05</span><span>Občine: <span class="tnum">15</span></span><span>Vir: Klic</span></p></div><button type="button" class="iconbtn" aria-label="Dejanja: Zavetišče Gorjanci" aria-haspopup="menu" aria-expanded="false"><i class="ph-bold ph-dots-three" aria-hidden="true"></i></button></li>
+<li class="srow"><div class="flex-1 min-w-0 pt-1"><a href="#" class="rowlink">Zavetišče Kraški Rob</a><p class="srow-meta"><span><span class="tnum dcol">14. 8. 2025</span><span class="stale"><i class="ph-fill ph-clock" aria-hidden="true"></i>zastarelo</span></span><span class="tnum">05 610 27 90</span><span>Občine: <span class="tnum">9</span></span><span>Vir: E-pošta</span></p></div><button type="button" class="iconbtn" aria-label="Dejanja: Zavetišče Kraški Rob" aria-haspopup="menu" aria-expanded="false"><i class="ph-bold ph-dots-three" aria-hidden="true"></i></button></li>
+<li class="srow"><div class="flex-1 min-w-0 pt-1"><a href="#" class="rowlink">Zavetišče Lipa</a><p class="srow-meta"><span><span class="tnum dcol">3. 2. 2025</span><span class="stale"><i class="ph-fill ph-clock" aria-hidden="true"></i>zastarelo</span></span><span class="tnum">01 234 56 78</span><span>Občine: <span class="tnum">20</span></span><span>Vir: Spletna stran</span></p></div><button type="button" class="iconbtn" aria-label="Dejanja: Zavetišče Lipa" aria-haspopup="menu" aria-expanded="false"><i class="ph-bold ph-dots-three" aria-hidden="true"></i></button></li>
+<li class="srow"><div class="flex-1 min-w-0 pt-1"><a href="#" class="rowlink">Zavetišče Ob Dravinji</a><p class="srow-meta"><span><span class="tnum dcol">21. 5. 2026</span></span><span class="tnum">03 580 22 41</span><span>Občine: <span class="tnum">10</span></span><span>Vir: Klic</span></p></div><button type="button" class="iconbtn" aria-label="Dejanja: Zavetišče Ob Dravinji" aria-haspopup="menu" aria-expanded="false"><i class="ph-bold ph-dots-three" aria-hidden="true"></i></button></li>
+<li class="srow"><div class="flex-1 min-w-0 pt-1"><a href="#" class="rowlink">Zavetišče Ob Kolpi</a><p class="srow-meta"><span><span class="tnum dcol">30. 9. 2025</span><span class="stale"><i class="ph-fill ph-clock" aria-hidden="true"></i>zastarelo</span></span><span class="tnum">07 305 62 41</span><span>Občine: <span class="tnum">6</span></span><span>Vir: Klic</span></p></div><button type="button" class="iconbtn" aria-label="Dejanja: Zavetišče Ob Kolpi" aria-haspopup="menu" aria-expanded="false"><i class="ph-bold ph-dots-three" aria-hidden="true"></i></button></li></ul></div>
+      <div class="flex justify-center mt-6"><button type="button" class="btn btn-secondary btn-sm">Naloži več</button></div>
+    </main>
+    </div>
+  </div>
+  </div></div>
+
+  <p class="tile-h" style="margin-top:64px">F9 · 768 px · municipality drawer at full width: responsible shelter empty means "Ni potrjeno" (help text says what the public pages show), status radios, source, checked on, audit note · keyboard focus on the shelter select · sample data</p>
+  <div class="fit-768"><div class="browser relative" style="width:768px" lang="sl">
+    <div class="browser-bar"><span class="dots"><i></i><i></i><i></i></span><span class="url"><i class="ph ph-lock-simple"></i>najdimo.si/admin/zavetisca/obcine</span></div>
+    <div class="adm" style="min-height:960px" aria-hidden="true" inert>
+    
+    <div class="adm-col">
+    <header class="tb">
+      <button type="button" class="iconbtn -ml-3" aria-label="Odpri meni" aria-expanded="false"><i class="ph-bold ph-list" aria-hidden="true"></i></button><nav aria-label="Drobtine"><ol class="crumbs"><li><a href="#">Konzola</a></li><li class="sep" aria-hidden="true"><i class="ph-bold ph-caret-right" aria-hidden="true"></i></li><li><span aria-current="page">Imenik zavetišč</span></li></ol></nav>
+      <div class="tb-meta">
+        <span class="envw"><i class="ph-bold ph-globe-simple" aria-hidden="true"></i>Produkcija</span><span class="vr" aria-hidden="true"></span>
+        <span class="envw text-muted-foreground"><i class="ph-bold ph-user-gear" aria-hidden="true"></i>Skrbnik</span>
+        <button type="button" class="acct" aria-label="Moj račun" aria-haspopup="menu" aria-expanded="false"><span class="av av-32" aria-hidden="true">MK</span><i class="ph-bold ph-caret-down" aria-hidden="true"></i></button>
+      </div>
+    </header>
+    <main class="adm-main">
+      <div><div class="phead"><h1 class="h1c">Imenik zavetišč</h1><div class="flex flex-wrap items-center gap-3"><button type="button" class="btn btn-secondary btn-sm"><i class="ph-bold ph-upload-simple" aria-hidden="true"></i>Uvozi CSV</button><button type="button" class="btn btn-primary btn-sm"><i class="ph-bold ph-plus" aria-hidden="true"></i>Dodaj zavetišče</button></div></div><p class="live">Spremembe so na javnih straneh in v aplikaciji vidne takoj po shranjevanju.</p></div>
+      <div class="note items-center !pr-2"><i class="ph-fill ph-clock" aria-hidden="true"></i><p class="flex-1">Letno preverjanje: <b class="tnum">23</b> vnosov ni bilo preverjenih več kot 12 mesecev.</p><button type="button" class="btn btn-text btn-sm">Pokaži</button></div>
+      <div class="grid gap-6"><div class="seg seg-fit" role="tablist" aria-label="Imenik zavetišč"><button type="button" role="tab" aria-selected="false">Zavetišča</button><button type="button" role="tab" aria-selected="true">Občine</button></div>
+      <div class="frow">
+        <div class="field f-search"><label for="q-f9">Išči občino</label><div class="input-wrap"><i class="ph-bold ph-magnifying-glass" aria-hidden="true"></i><input id="q-f9" type="search" class="input" autocomplete="off"></div></div>
+        <div class="flex flex-wrap items-center gap-2" role="group" aria-label="Filtri"><button type="button" class="pill" aria-haspopup="listbox" aria-expanded="false">Vsa zavetišča<i class="ph-bold ph-caret-down" aria-hidden="true"></i></button><button type="button" class="pill" data-toggle aria-pressed="false"><i class="ph-bold ph-check tick" aria-hidden="true"></i>Brez zavetišča</button><button type="button" class="pill" data-toggle aria-pressed="false"><i class="ph-bold ph-check tick" aria-hidden="true"></i>Starejše od 12 mesecev</button></div>
+      </div></div>
+      <div class="tcard" role="tabpanel" aria-label="Občine"><ul class="srows" aria-label="Občine"><li class="srow"><div class="flex-1 min-w-0 pt-1"><a href="#" class="rowlink">Ajdovščina</a><p class="srow-meta"><span class="lst lst-ok"><i class="ph-fill ph-check-circle" aria-hidden="true"></i>Potrjeno</span><span>Zavetišče Posočje</span><span><span class="tnum dcol">26. 1. 2026</span></span></p></div><button type="button" class="iconbtn" aria-label="Dejanja: Ajdovščina" aria-haspopup="menu" aria-expanded="false"><i class="ph-bold ph-dots-three" aria-hidden="true"></i></button></li>
+<li class="srow"><div class="flex-1 min-w-0 pt-1"><a href="#" class="rowlink">Ankaran</a><p class="srow-meta"><span class="lst lst-ok"><i class="ph-fill ph-check-circle" aria-hidden="true"></i>Potrjeno</span><span>Zavetišče Kraški Rob</span><span><span class="tnum dcol">14. 8. 2025</span><span class="stale"><i class="ph-fill ph-clock" aria-hidden="true"></i>zastarelo</span></span></p></div><button type="button" class="iconbtn" aria-label="Dejanja: Ankaran" aria-haspopup="menu" aria-expanded="false"><i class="ph-bold ph-dots-three" aria-hidden="true"></i></button></li>
+<li class="srow"><div class="flex-1 min-w-0 pt-1"><a href="#" class="rowlink">Apače</a><p class="srow-meta"><span class="lst lst-ok"><i class="ph-fill ph-check-circle" aria-hidden="true"></i>Potrjeno</span><span>Zavetišče Ob Muri</span><span><span class="tnum dcol">11. 11. 2025</span></span></p></div><button type="button" class="iconbtn" aria-label="Dejanja: Apače" aria-haspopup="menu" aria-expanded="false"><i class="ph-bold ph-dots-three" aria-hidden="true"></i></button></li>
+<li class="srow"><div class="flex-1 min-w-0 pt-1"><a href="#" class="rowlink">Beltinci</a><p class="srow-meta"><span class="lst lst-ok"><i class="ph-fill ph-check-circle" aria-hidden="true"></i>Potrjeno</span><span>Zavetišče Ob Muri</span><span><span class="tnum dcol">11. 11. 2025</span></span></p></div><button type="button" class="iconbtn" aria-label="Dejanja: Beltinci" aria-haspopup="menu" aria-expanded="false"><i class="ph-bold ph-dots-three" aria-hidden="true"></i></button></li>
+<li class="srow"><div class="flex-1 min-w-0 pt-1"><a href="#" class="rowlink">Benedikt</a><p class="srow-meta"><span class="lst lst-ok"><i class="ph-fill ph-check-circle" aria-hidden="true"></i>Potrjeno</span><span>Zavetišče Pod Pohorjem</span><span><span class="tnum dcol">18. 3. 2026</span></span></p></div><button type="button" class="iconbtn" aria-label="Dejanja: Benedikt" aria-haspopup="menu" aria-expanded="false"><i class="ph-bold ph-dots-three" aria-hidden="true"></i></button></li>
+<li class="srow"><div class="flex-1 min-w-0 pt-1"><a href="#" class="rowlink">Bistrica ob Sotli</a><p class="srow-meta"><span class="lst lst-no"><i class="ph-fill ph-info" aria-hidden="true"></i>Ni potrjeno</span><span></span><span><span class="tnum dcol">2. 6. 2026</span></span></p></div><button type="button" class="iconbtn" aria-label="Dejanja: Bistrica ob Sotli" aria-haspopup="menu" aria-expanded="false"><i class="ph-bold ph-dots-three" aria-hidden="true"></i></button></li>
+<li class="srow"><div class="flex-1 min-w-0 pt-1"><a href="#" class="rowlink">Bled</a><p class="srow-meta"><span class="lst lst-ok"><i class="ph-fill ph-check-circle" aria-hidden="true"></i>Potrjeno</span><span>Zavetišče Brin</span><span><span class="tnum dcol">9. 9. 2025</span><span class="stale"><i class="ph-fill ph-clock" aria-hidden="true"></i>zastarelo</span></span></p></div><button type="button" class="iconbtn" aria-label="Dejanja: Bled" aria-haspopup="menu" aria-expanded="false"><i class="ph-bold ph-dots-three" aria-hidden="true"></i></button></li></ul></div>
+    </main>
+    </div>
+  </div>
+  <div class="scrim" style="top:44px"></div>
+  <aside class="drawer full" role="dialog" aria-modal="true" aria-label="Bistrica ob Sotli">
+    <div class="drawer-head">
+      <div class="min-w-0"><h2 class="dtitle">Bistrica ob Sotli</h2><p class="meta mt-1 tnum">Nazadnje preverjeno 2. 6. 2026</p></div>
+      <div class="flex items-center gap-1 -mr-1"><button type="button" class="btn btn-text btn-sm"><i class="ph-bold ph-clock-counter-clockwise" aria-hidden="true"></i>Zgodovina</button><button type="button" class="iconbtn" aria-label="Zapri podrobnosti"><i class="ph-bold ph-x" aria-hidden="true"></i></button></div>
+    </div>
+    <form class="drawer-body" novalidate>
+      <div class="grid gap-6">
+        <div class="field"><label for="md9-sh">Pristojno zavetišče</label><button id="md9-sh" type="button" class="input select is-focus" aria-haspopup="listbox" aria-expanded="false" aria-describedby="md9-sh-d"><span class="is-placeholder">Ni potrjeno</span><i class="ph-bold ph-caret-down" aria-hidden="true"></i></button><p id="md9-sh-d" class="help">Če zavetišče ni potrjeno, javne strani ljudem svetujejo, naj pokličejo občino.</p></div>
+        <fieldset><legend class="label">Stanje</legend>
+          <div class="flex flex-wrap gap-x-8">
+            <label class="check"><input type="radio" name="md9-st"><span class="rad" aria-hidden="true"></span>Potrjeno</label>
+            <label class="check"><input type="radio" name="md9-st" checked><span class="rad" aria-hidden="true"></span>Ni potrjeno</label>
+          </div>
+        </fieldset>
+        <div class="field"><label for="md9-src">Vir</label><input id="md9-src" class="input" type="text" value="Klic na občino" required aria-describedby="md9-src-d"><div id="md9-src-d" class="grid gap-1"><p class="help">Od kod so podatki, na primer »spletna stran zavetišča« ali »klic v zavetišče«.</p></div></div>
+        <div class="field"><label for="md9-chk">Preverjeno dne</label><div class="input-wrap"><i class="ph-bold ph-calendar-blank" aria-hidden="true"></i><input id="md9-chk" class="input tnum" type="text" value="15. 10. 2026"></div></div>
+        <div class="field"><label for="md9-note">Opomba za revizijsko sled (neobvezno)</label><textarea id="md9-note" class="input" rows="3"></textarea></div>
+      </div>
+    </form>
+    <div class="drawer-foot"><button type="button" class="btn btn-primary">Shrani</button><button type="button" class="btn btn-text">Prekliči</button></div>
+  </aside>
+  </div></div>
+</section>
+
+<p class="tile-section !max-w-[1400px] !py-8 text-sm text-muted-foreground">Copy: docs/content/pages/P19-admin-shell.md (v0.2, section 8, native review pending); shell strings from section 1 to 3 and from P1 ("Odpri meni", "Zapri", "Počisti iskanje", "Nalaganje …"). Sample, not final: every shelter, municipality, address, phone number, e-mail, date, source value, person name, version summary, CSV file name, row number and count (23, 6, 2 new and 6 changed, 60 %). Not yet in the content slice, sample here: the headings "Napake" and "Spremembe" in the import dialog, the stacked-row labels "Občine:" and "Vir:", the history field names with a day range ("Delovni čas, pon–pet"), the summary "Začetni uvoz imenika", and the tablist name. Time fields show 24-hour "08:00"; the public pages may format them as "8.00".</p>
+
+</div><!-- /#src -->
+
+<script src="../directions/directions.js"></script>
+</body>
+</html>
