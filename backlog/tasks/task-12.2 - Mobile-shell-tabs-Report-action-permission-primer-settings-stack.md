@@ -1,11 +1,11 @@
 ---
 id: TASK-12.2
 title: 'Mobile shell: tabs, Report action, permission primer, settings stack'
-status: In Progress
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:12'
-updated_date: '2026-10-15 08:29'
+updated_date: '2026-10-15 13:49'
 labels:
   - fe
   - 'est:M'
