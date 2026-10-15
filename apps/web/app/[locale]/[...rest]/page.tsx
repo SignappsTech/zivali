@@ -19,11 +19,6 @@ const PENDING = {
 	'/for-shelters': 'footer.for_shelters',
 	'/advertise': 'footer.partners',
 	'/about': 'footer.about',
-	'/privacy': 'footer.privacy',
-	'/cookies': 'footer.cookies',
-	'/terms': 'footer.terms',
-	'/imprint': 'footer.imprint',
-	'/accessibility': 'footer.accessibility',
 } as const;
 
 async function pendingTitle({ params }: PageProps<'/[locale]/[...rest]'>) {

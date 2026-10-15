@@ -1,11 +1,11 @@
 ---
 id: TASK-28.1
 title: Legal pages from MDX with review notice
-status: To Do
+status: In Progress
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:14'
-updated_date: '2026-10-14 22:43'
+updated_date: '2026-10-15 20:01'
 labels:
   - fe
   - 'est:S'
