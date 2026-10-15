@@ -1,10 +1,11 @@
 ---
 id: TASK-94
 title: 'Bug: packages/api gen:api must mkdir src/generated before writing'
-status: To Do
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-15 02:57'
+updated_date: '2026-10-15 03:48'
 labels:
   - fe
   - bug
