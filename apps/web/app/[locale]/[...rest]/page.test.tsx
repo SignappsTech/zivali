@@ -33,11 +33,8 @@ describe('CatchAll', () => {
 		['sl', ['map'], 'Zemljevid'],
 		['en', ['report', 'lost'], 'Lost pet'],
 		['sl', ['accessibility'], 'Dostopnost'],
-		// The signed-in header links.
+		// The signed-in header link whose story has not shipped (the account pages are real routes, TASK-9.3).
 		['en', ['inbox'], 'Messages and notifications'],
-		['en', ['account'], 'Profile'],
-		['en', ['account', 'alerts'], 'Nearby alerts'],
-		['sl', ['account', 'payments'], 'Plačila'],
 	] as const)('a pending %s page %j gets a placeholder titled %s, not indexed', async (locale, rest, title) => {
 		render(
 			<NextIntlClientProvider locale={locale} messages={catalogues[locale]}>
@@ -53,5 +50,6 @@ describe('CatchAll', () => {
 	it('answers 404 for every other path', async () => {
 		await expect(CatchAll(props('sl', 'no', 'such', 'page'))).rejects.toThrow('NEXT_NOT_FOUND');
 		await expect(CatchAll(props('sl', 'map', 'x'))).rejects.toThrow('NEXT_NOT_FOUND');
+		await expect(CatchAll(props('en', 'account', 'security'))).rejects.toThrow('NEXT_NOT_FOUND');
 	});
 });

@@ -149,7 +149,11 @@ export function ShellDialog(props: ComponentProps<'dialog'>) {
 	);
 }
 
-/** Signs out on this device, then loads home, so no state of the signed-out user stays in memory (C3). */
+/**
+ * Signs out on this device: GoTrue revokes this session on the server (`/logout`, scope local) and supabase-js
+ * deletes the session cookies, so the server pages see a visitor; then home loads afresh, so no state of the
+ * signed-out user stays in memory (C3).
+ */
 export function SignOutButton(props: ComponentProps<'button'>) {
 	const locale = useLocale();
 
@@ -158,7 +162,6 @@ export function SignOutButton(props: ComponentProps<'button'>) {
 			type="button"
 			{...props}
 			onClick={async () => {
-				// TODO(TASK-9.3): @zivali/api/auth signOut() with the push-token cleanup once configureAuth runs app-wide.
 				const { createClient } = await import('@/lib/supabase/client');
 				await createClient().auth.signOut({ scope: 'local' });
 				window.location.assign(getPathname({ locale, href: '/' }));

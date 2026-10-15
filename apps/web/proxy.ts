@@ -24,16 +24,20 @@ function contentSecurityPolicy(nonce: string): string {
 			: '';
 	// Presigned photo PUTs (C5): the one origin the API presigns with (R2 in the EU jurisdiction, MinIO locally).
 	const uploads = ` ${new URL(env.R2_UPLOAD_ORIGIN).origin}`;
+	// Turnstile (C7, components/auth/turnstile.tsx): its script (trusted through 'strict-dynamic'; the host is the
+	// fallback for browsers without it) and its challenge iframe.
+	const captcha = env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ? ' https://challenges.cloudflare.com' : '';
 
 	return [
 		"default-src 'self'",
 		// React needs eval in development only, for its error overlays.
-		`script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${dev ? " 'unsafe-eval'" : ''}`,
+		`script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${captcha}${dev ? " 'unsafe-eval'" : ''}`,
 		// React writes style attributes (Radix positioning); a nonce in this list would switch 'unsafe-inline' off.
 		"style-src 'self' 'unsafe-inline'",
 		`img-src 'self' blob: data:${ga}`,
 		"font-src 'self'",
 		`connect-src 'self' ${api} ${supabase.origin} ${realtime}${uploads}${ga}`,
+		...(captcha ? [`frame-src${captcha}`] : []),
 		"object-src 'none'",
 		"base-uri 'self'",
 		"form-action 'self'",
@@ -48,6 +52,8 @@ export async function proxy(request: NextRequest) {
 	// next-intl copies the request headers into its rewrite, so the layout and Next.js see both.
 	request.headers.set('x-nonce', nonce);
 	request.headers.set('content-security-policy', csp);
+	// The page as requested, for the guards' `next` (lib/viewer.ts requireViewer); set here, so never the client's.
+	request.headers.set('x-next-path', request.nextUrl.pathname + request.nextUrl.search);
 
 	const response = await updateSession(request, handleI18nRouting);
 	response.headers.set('content-security-policy', csp);
