@@ -19,3 +19,6 @@ allowBuilds:
   esbuild: false
   # Prisma CLI (apps/api): its preinstall only checks the Node version; engines are fetched on first use.
   prisma: false
+  # @prisma/engines (apps/api): its postinstall pre-downloads the engines; prisma generate and migrate fetch them on
+  # first use, so the script is skipped (without this entry pnpm 11 exits with ERR_PNPM_IGNORED_BUILDS).
+  '@prisma/engines': false
