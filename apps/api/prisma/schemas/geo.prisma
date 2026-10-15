@@ -1,0 +1,27 @@
+// Geo reference (C6, ADR-006): GURS statistical regions and municipalities, loaded by seeder 01-geo.
+// Static reference data, no personal data. geom is read only through TypedSQL (prisma/sql/geoLookup.sql).
+
+model regions {
+  id             Int                                                    @id @db.SmallInt
+  slug           String                                                 @unique
+  name_sl        String
+  name_en        String
+  geom           Unsupported("extensions.geography(MultiPolygon,4326)")
+  municipalities municipalities[]
+
+  @@index([geom], type: Gist)
+  @@schema("app")
+}
+
+model municipalities {
+  id        Int                                                    @id @db.SmallInt
+  slug      String                                                 @unique
+  name_sl   String
+  name_en   String
+  region_id Int                                                    @db.SmallInt
+  region    regions                                                @relation(fields: [region_id], references: [id])
+  geom      Unsupported("extensions.geography(MultiPolygon,4326)")
+
+  @@index([geom], type: Gist)
+  @@schema("app")
+}

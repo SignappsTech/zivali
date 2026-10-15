@@ -30,3 +30,7 @@ Add it to an authenticator app as a manual key (time-based, 6 digits, 30 s), or 
 API tests do not need real TOTP: `signTestToken({ sub, aal: 'aal2' })` signs an aal2 token directly.
 
 This secret and password exist only in the local stack; staging and production skip the seeder (`APP_ENV`).
+
+## 01-geo: GURS regions and municipalities (all environments)
+
+Runs the SQL that `scripts/geo-to-sql.mjs` generates from `supabase/seed/geo/regions.geojson` and `municipalities.geojson` (12 regions, 212 municipalities; `on conflict (id) do update`, so reruns are safe). Licence and required attribution: [supabase/seed/geo/LICENSE.md](../../../../supabase/seed/geo/LICENSE.md).

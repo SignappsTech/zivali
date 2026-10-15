@@ -89,7 +89,8 @@ Logs (pino, `lib/logger.ts`): one line per request with `req_id`, `route` (metho
 - Every new model gets an entry in `prisma/data-inventory.json` (with each R2 bucket); `test/security/data-inventory.test.ts` fails otherwise.
 - Seed: fixture users, password and the local TOTP secret for mod and admin are in [prisma/seeders/README.md](prisma/seeders/README.md).
 - Prisma 7 no longer generates on `migrate dev`: run `pnpm --filter api exec prisma generate` after schema changes (`pnpm install` also does).
-- TypedSQL is enabled (`prisma/sql/`); `prisma generate --sql` needs the database running.
+- Geo reference (`TASK-6.4`, `geo.prisma`): `regions` and `municipalities` (GURS, GiST on `geom`), loaded by seeder `01-geo` in every environment. `GeoDomain.lookup({ lat, lng }, ctx)` (`lib/geo.ts`, TypedSQL `geoLookup.sql`) returns the municipality and region ids and slugs, or `in_slovenia: false`.
+- TypedSQL is enabled (`prisma/sql/`); its typed functions (`generated/sql`) come from `prisma generate --sql`, which needs the migrated database running. `pnpm install` tries it and falls back to `prisma generate`; after new migrations or SQL files run `pnpm --filter api exec prisma generate --sql`.
 
 ## Commands
 
