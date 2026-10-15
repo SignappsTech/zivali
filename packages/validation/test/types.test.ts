@@ -28,6 +28,10 @@ test('wire types in @zivali/types match the zod schemas', () => {
 	expectTypeOf<Out<typeof V.AdminUserQuery>>().toEqualTypeOf<Flat<T.AdminUserQuery>>();
 	expectTypeOf<Out<typeof V.SetRoleInput>>().toEqualTypeOf<Flat<T.SetRoleInput>>();
 	expectTypeOf<Out<typeof V.SetRoleResponse>>().toEqualTypeOf<Flat<T.SetRoleResponse>>();
+	// admin console (TASK-34.2)
+	expectTypeOf<Out<typeof V.AuditLogQuery>>().toEqualTypeOf<Flat<T.AuditLogQuery>>();
+	expectTypeOf<Out<typeof V.AuditLogList>>().toEqualTypeOf<Flat<T.AuditLogList>>();
+	expectTypeOf<Out<typeof V.AdminQueues>>().toEqualTypeOf<Flat<T.AdminQueues>>();
 	// C4 + C7
 	expectTypeOf<Out<typeof V.CreateReportInput>>().toEqualTypeOf<Flat<T.CreateReportInput>>();
 	expectTypeOf<Out<typeof V.UpdateReportInput>>().toEqualTypeOf<Flat<T.UpdateReportInput>>();
