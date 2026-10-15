@@ -1,7 +1,7 @@
 // GET /v1/reports and GET /v1/reports/map (C4 ReportSearch, TASK-31.3): filters, visibility, boosted first, keyset
 // pages, public fields only (public_point, never the stored point or contact data), permission matrix, 500 reports
 // in a viewport under 300 ms with the GiST index.
-import { randomBytes, randomUUID } from 'node:crypto';
+import { randomBytes, randomInt, randomUUID } from 'node:crypto';
 
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
@@ -12,6 +12,7 @@ import { app } from '../../app.ts';
 import { ReportsDomain, type NewReport } from '../../domains/reports/index.ts';
 import { searchWhere } from '../../domains/reports/search.dao.ts';
 import type { USER_ROLE } from '../../generated/enums.ts';
+import configStore from '../../lib/config-store.ts';
 import { userCtx, type Actor } from '../../lib/ctx.ts';
 import { prisma } from '../../prisma/prisma.ts';
 import { signTestToken } from '../helpers/token.ts';
@@ -322,6 +323,10 @@ describe('GET /v1/reports', () => {
 		}
 		const unknown = await list(`bbox=${BBOX}&cursor=${randomUUID()}`);
 		expect(unknown.body).toMatchObject({ items: [], next_cursor: null, total_estimate: 5 });
+		// A cursor naming a hidden report is as good as unknown.
+		const hidden = await prisma.reports.findFirstOrThrow({ where: { short_code: codes.hidden } });
+		const gone = await list(`bbox=${BBOX}&cursor=${hidden.id}`);
+		expect(gone.body).toMatchObject({ items: [], next_cursor: null });
 	});
 
 	it('answers VALIDATION for bad queries', async () => {
@@ -471,5 +476,30 @@ describe('500 reports in a viewport', () => {
 				explain select r.id from app.reports r where ${searchWhere(filters, new Date(Date.now() - 30 * DAY))}`;
 			expect(plan.map((row) => row['QUERY PLAN']).join('\n')).toContain('reports_public_point_idx');
 		}
+	});
+});
+
+describe('search rate limits', () => {
+	const names = ['reports.search', 'reports.map'];
+	afterAll(async () => {
+		await prisma.app_config.deleteMany({ where: { key: { in: names.map((name) => `rate.${name}`) } } });
+		configStore.invalidate();
+	});
+
+	it.each([
+		['list', 'reports.search', `/v1/reports?bbox=${BBOX}`],
+		['map', 'reports.map', `/v1/reports/map?bbox=${BBOX}`],
+	])('answers 429 RATE_LIMITED with Retry-After over the %s limit per IP', async (_n, name, url) => {
+		// Same code path as the 120/min default, stubbed low (rate.<name> in app_config).
+		await prisma.app_config.create({ data: { key: `rate.${name}`, value: { limit: 2, window: 60 } } });
+		configStore.invalidate();
+		const client = `10.${randomInt(256)}.${randomInt(256)}.${randomInt(1, 255)}`;
+		const get = () => request(app).get(url).set('x-forwarded-for', client);
+		expect((await get()).status).toBe(200);
+		expect((await get()).status).toBe(200);
+		const res = await get();
+		expect(res.status).toBe(429);
+		expect(res.body.error.code).toBe('RATE_LIMITED');
+		expect(Number(res.headers['retry-after'])).toBeGreaterThanOrEqual(1);
 	});
 });

@@ -40,3 +40,7 @@ Branch: agent/task-31.3-search-be
 - [ ] #2 Boosted reports sort first; closed, expired and non-visible reports are excluded by default; no exact location, chip or contact data is returned.
 - [ ] #3 With 500 seeded reports in a viewport the endpoints answer in under 300 ms locally (EXPLAIN shows the GiST index).
 <!-- AC:END -->
+
+## Implementation Notes
+
+AC #1 "TypedSQL" was met with `$queryRaw` + `Prisma.sql` (search.dao.ts) per the CH-117/154 precedent; review accepted.

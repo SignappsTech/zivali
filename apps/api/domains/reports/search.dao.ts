@@ -96,10 +96,10 @@ export async function searchIds(
 		sort === 'distance'
 			? Prisma.sql`not ${boosted(R, now)}, ${dist(R)}, r.id`
 			: Prisma.sql`${boosted(R, now)} desc, r.event_at desc, r.id desc`;
-	// An unknown cursor id makes the subquery empty, so the page is empty.
+	// An unknown or not visible cursor id makes the subquery empty, so the page is empty.
 	const after = cursor
 		? Prisma.sql`and (${key(R)}) ${Prisma.raw(sort === 'distance' ? '>' : '<')}
-			(select ${key(C)} from app.reports c where c.id = ${cursor}::uuid)`
+			(select ${key(C)} from app.reports c where c.id = ${cursor}::uuid and c.moderation_state = 'visible')`
 		: Prisma.empty;
 	const rows = await db.$queryRaw<{ id: string }[]>`
 		select r.id::text as id from app.reports r

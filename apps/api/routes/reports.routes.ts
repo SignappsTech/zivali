@@ -104,6 +104,7 @@ route(
 		responses: { 200: { description: 'One page of reports', schema: ReportList } },
 	},
 	optionalAuth,
+	rateLimit('reports.search', { limit: 120, window: 60, key: 'ip' }),
 	ReportsController.searchReports
 );
 
@@ -121,6 +122,7 @@ route(
 		responses: { 200: { description: 'Map items', schema: MapReportList } },
 	},
 	optionalAuth,
+	rateLimit('reports.map', { limit: 120, window: 60, key: 'ip' }),
 	ReportsController.mapReports
 );
 
