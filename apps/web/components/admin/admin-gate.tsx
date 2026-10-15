@@ -11,6 +11,8 @@ import { Link, usePathname, useRouter } from '@/i18n/navigation';
 import { createClient } from '@/lib/supabase/client';
 
 /**
+ * The gate only hides UI: the API enforces role ADMIN and aal2 on every admin call (TASK-6.12).
+ *
  * TODO(TASK-34.3): the admin shell owns this guard (route group layout, TOTP challenge and enrolment, role
  * navigation). Until it lands this is the minimum the directory page needs, never a bypass: children render only for
  * the required role with an aal2 session; everyone else gets sign-in, the access-denied screen or the aal2 notice.

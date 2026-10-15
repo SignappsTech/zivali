@@ -142,6 +142,23 @@ describe('DirectoryAdmin', () => {
 		);
 	});
 
+	it('tells a delete refusal from the server apart from a version conflict', async () => {
+		renderDirectory({
+			'DELETE /v1/admin/shelters/:slug': () =>
+				mockError('CONFLICT', 'Has assignments', { code: 'HAS_ASSIGNMENTS' }),
+		});
+		await table(d.tab_shelters);
+		openMenu('Zavetišče Sončni Log');
+		fireEvent.click(await screen.findByRole('menuitem', { name: d.action_delete }));
+		const dialog = await screen.findByRole('alertdialog', { name: 'Izbriši: Zavetišče Sončni Log?' });
+		fireEvent.change(within(dialog).getByLabelText(sl.admin.audit_note_required_label), {
+			target: { value: 'Zaprto.' },
+		});
+		fireEvent.click(within(dialog).getByRole('button', { name: d.action_delete }));
+		await waitFor(() => expect(dialog.textContent).toContain('Zavetišča ne morete izbrisati'));
+		expect(dialog.textContent).not.toContain(sl.errors.CONFLICT);
+	});
+
 	it('runs the CSV import as a dry run, lists errors and keeps apply disabled until the file is clean', async () => {
 		let errors = true;
 		const client = renderDirectory({

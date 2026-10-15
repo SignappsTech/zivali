@@ -23,7 +23,7 @@ export type AdminMunicipality = {
 	version: number;
 };
 type Audited = { audit_note?: string };
-/** `version` is the one the form loaded: a newer one on the server answers 409 CONFLICT. */
+/** `version` is the one the form loaded: a newer one on the server answers 409 CONFLICT (no `details.code`). */
 export type ShelterInput = Omit<AdminShelter, 'slug' | 'version'> &
 	Audited & {
 		version?: number;
@@ -75,7 +75,7 @@ export const directoryAdminApi = api.enhanceEndpoints({ addTagTypes: ['Directory
 			query: ({ slug, body }) => ({ url: `/v1/admin/shelters/${encodeURIComponent(slug)}`, method: 'PUT', body }),
 			invalidatesTags: ['Directory'],
 		}),
-		/** 409 CONFLICT while municipalities are assigned; the note is required. */
+		/** 409 CONFLICT with `details.code: 'HAS_ASSIGNMENTS'` while municipalities are assigned; the note is required. */
 		deleteShelter: build.mutation<void, { slug: string; audit_note: string }>({
 			query: ({ slug, audit_note }) => ({
 				url: `/v1/admin/shelters/${encodeURIComponent(slug)}`,

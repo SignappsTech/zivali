@@ -218,4 +218,9 @@ export function useErrorText() {
 	};
 }
 
+/** A version conflict on save; not the delete refusal (`hasAssignments`). */
 export const isConflict = (error: unknown) => (error as Partial<QueryError> | undefined)?.data?.code === 'CONFLICT';
+
+/** Deleting a shelter that still serves municipalities: CONFLICT with `details.code: 'HAS_ASSIGNMENTS'` (not a version conflict). */
+export const hasAssignments = (error: unknown) =>
+	isConflict(error) && (error as QueryError).data.details?.code === 'HAS_ASSIGNMENTS';

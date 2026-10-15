@@ -19,7 +19,7 @@ import { FormField } from '@/components/ui/form-field';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 
-import { ErrorNote, noteClass, noteIconClass, useErrorText } from './parts';
+import { ErrorNote, hasAssignments, noteClass, noteIconClass, useErrorText } from './parts';
 
 /** P19 §9: refused while municipalities are assigned; otherwise the shelter is named and the audit note is required. */
 export function DeleteDialog({
@@ -37,6 +37,8 @@ export function DeleteDialog({
 	const [remove, removing] = useDeleteShelterMutation();
 	const [note, setNote] = React.useState('');
 	const [failure, setFailure] = React.useState<string>();
+	// The server refused though the page counted none (assignments changed since it loaded).
+	const [serverRefused, setServerRefused] = React.useState(false);
 
 	async function confirm() {
 		setFailure(undefined);
@@ -45,7 +47,8 @@ export function DeleteDialog({
 			toast.success(tCommon('toast_deleted'));
 			onClose();
 		} catch (error) {
-			setFailure(errorText(error));
+			if (hasAssignments(error)) setServerRefused(true);
+			else setFailure(errorText(error));
 		}
 	}
 
@@ -55,12 +58,12 @@ export function DeleteDialog({
 				<AlertDialogTitle>
 					{t('destructive_title', { action: t('directory.action_delete'), target: shelter.name })}
 				</AlertDialogTitle>
-				{assigned > 0 ? (
+				{assigned > 0 || serverRefused ? (
 					<div className={cn(noteClass, 'mt-4')}>
 						<InfoIcon weight="fill" aria-hidden="true" className={noteIconClass} />
 						<AlertDialogDescription className="mt-0">
 							{t.rich('directory.delete_refused', {
-								count: assigned,
+								count: Math.max(assigned, 1),
 								b: (chunks) => <b className="tabular-nums">{chunks}</b>,
 							})}
 						</AlertDialogDescription>
@@ -90,7 +93,7 @@ export function DeleteDialog({
 				<AlertDialogFooter>
 					<Button
 						variant="destructive"
-						disabled={assigned > 0 || !note.trim()}
+						disabled={assigned > 0 || serverRefused || !note.trim()}
 						loading={removing.isLoading}
 						onClick={confirm}
 					>

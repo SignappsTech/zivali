@@ -1,18 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
-import { diffRows, formatDays, formatTime, isReminderSeason, isStale, parseTime, toE164, todayIso } from './format';
+import { diffRows, formatDays, formatTime, isStale, parseTime, toE164, todayIso } from './format';
 
 describe('directory format helpers', () => {
 	it('marks entries checked more than 12 months ago as stale', () => {
 		expect(isStale('2025-10-14', '2026-10-15')).toBe(true);
 		expect(isStale('2025-10-15', '2026-10-15')).toBe(false);
 		expect(isStale('2026-06-02', '2026-10-15')).toBe(false);
-	});
-
-	it('runs the yearly reminder from 1 April', () => {
-		expect(isReminderSeason('2026-03-31')).toBe(false);
-		expect(isReminderSeason('2026-04-01')).toBe(true);
-		expect(isReminderSeason('2026-12-31')).toBe(true);
 	});
 
 	it("uses Ljubljana's date", () => {

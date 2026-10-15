@@ -9,9 +9,6 @@ export const todayIso = (now = new Date()) => new Intl.DateTimeFormat('sv-SE', {
 export const isStale = (verifiedAt: string, today: string) =>
 	verifiedAt < `${Number(today.slice(0, 4)) - 1}${today.slice(4)}`;
 
-/** The yearly check starts on 1 April (the directory.reminder job) and runs to the end of the year. */
-export const isReminderSeason = (today: string) => today.slice(5) >= '04-01';
-
 /** Slovenian numbers as typed ("01 234 56 78", "+386 1 234 56 78", "00386 41 …") to E.164, or null if not valid. */
 export function toE164(input: string): string | null {
 	const digits = input.replace(/[\s()./-]/g, '');

@@ -34,7 +34,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
 
 import { DeleteDialog } from './delete-dialog';
-import { isReminderSeason, isStale, todayIso } from './format';
+import { isStale, todayIso } from './format';
 import { History } from './history';
 import { ImportDialog } from './import-dialog';
 import { MunicipalityForm } from './municipality-form';
@@ -314,7 +314,8 @@ export function DirectoryAdmin() {
 				<p className="mt-2 max-w-[62ch] text-muted-foreground">{t('directory.live_note')}</p>
 			</div>
 
-			{isReminderSeason(today) && staleCount > 0 && (
+			{/* Stale = checked over 12 months ago (P19); the reminder shows whenever there are any. */}
+			{staleCount > 0 && (
 				<div className={cn(noteClass, 'items-center pr-2')}>
 					<ClockIcon weight="fill" aria-hidden="true" className={noteIconClass} />
 					<p className="flex-1">
