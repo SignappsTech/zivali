@@ -1,0 +1,53 @@
+// Matching v1 (C8): suggestions between a lost report and a found or sighted report, plus the managers' verdicts.
+// Only the API reads these (ADR-021); reasons hold bands and overlaps, never exact data.
+// lost_report_id and other_report_id get their foreign keys to reports in a follow-up migration once
+// TASK-6.6 (reports) is merged.
+
+enum MATCH_STATE {
+  suggested
+  confirmed
+  rejected
+  closed
+
+  @@schema("app")
+}
+
+model matches {
+  id              String           @id @default(uuid()) @db.Uuid
+  lost_report_id  String           @db.Uuid
+  // The found or sighted side.
+  other_report_id String           @db.Uuid
+  score           Decimal          @db.Decimal(4, 3)
+  // 'strong' | 'good' | 'possible' (check constraint in the migration)
+  strength        String
+  chip_match      Boolean
+  reasons         Json
+  state           MATCH_STATE      @default(suggested)
+  algo_version    String           @default("v1")
+  rejected_reason String?
+  notified_at     DateTime?        @db.Timestamptz(6)
+  created_at      DateTime         @default(now()) @db.Timestamptz(6)
+  updated_at      DateTime         @updatedAt @db.Timestamptz(6)
+  feedback        match_feedback[]
+  conversation    conversations?
+
+  @@unique([lost_report_id, other_report_id])
+  @@index([other_report_id])
+  @@schema("app")
+}
+
+// One verdict per manager per match; rejecting never resurrects the pair.
+model match_feedback {
+  match_id   String   @db.Uuid
+  user_id    String   @db.Uuid
+  // 'confirm' | 'reject' (check constraint in the migration)
+  verdict    String
+  reason     String?
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+  match      matches  @relation(fields: [match_id], references: [id], onDelete: Cascade)
+  user       profiles @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@id([match_id, user_id])
+  @@index([user_id])
+  @@schema("app")
+}

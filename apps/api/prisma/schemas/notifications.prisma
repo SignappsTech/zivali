@@ -1,0 +1,96 @@
+// Notifications and nearby alerts (C10): inbox rows, per-type channel prefs, Expo push tokens, alert
+// subscriptions with their deliveries, and the email outbox. Only the API and the worker read these (ADR-021).
+
+// Inbox row; payload holds the type's variables (C10 §Types), never a chat body.
+model notifications {
+  id         String    @id @default(uuid()) @db.Uuid
+  user_id    String    @db.Uuid
+  type       String
+  payload    Json
+  read_at    DateTime? @db.Timestamptz(6)
+  dedupe_key String?
+  created_at DateTime  @default(now()) @db.Timestamptz(6)
+  user       profiles  @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, dedupe_key])
+  @@index([user_id, created_at])
+  @@schema("app")
+}
+
+// No row = the type's default channels (C10 §Types).
+model notification_prefs {
+  user_id String   @db.Uuid
+  type    String
+  in_app  Boolean  @default(true)
+  push    Boolean  @default(true)
+  email   Boolean  @default(true)
+  user    profiles @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@id([user_id, type])
+  @@schema("app")
+}
+
+model push_tokens {
+  id           String   @id @default(uuid()) @db.Uuid
+  user_id      String   @db.Uuid
+  token        String   @unique
+  // 'ios' | 'android' (check constraint in the migration)
+  platform     String
+  last_seen_at DateTime @default(now()) @db.Timestamptz(6)
+  user         profiles @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id])
+  @@schema("app")
+}
+
+// One per user. center_point is the coarsened centre (C6 §Storage), written only through $executeRaw.
+// species becomes SPECIES[] in a follow-up migration once TASK-6.6 (which owns the enum) is merged.
+model alert_subscriptions {
+  id           String                                          @id @default(uuid()) @db.Uuid
+  user_id      String                                          @unique @db.Uuid
+  center_point Unsupported("extensions.geography(Point,4326)")
+  // 1-25 (check constraint in the migration)
+  radius_km    Int
+  // subset of {dog, cat} (check constraint in the migration)
+  species      String[]                                        @default(["dog", "cat"])
+  paused       Boolean                                         @default(false)
+  daily_cap    Int                                             @default(5)
+  created_at   DateTime                                        @default(now()) @db.Timestamptz(6)
+  updated_at   DateTime                                        @updatedAt @db.Timestamptz(6)
+  user         profiles                                        @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([center_point], type: Gist)
+  @@schema("app")
+}
+
+// At most one alert per report per user; also counts towards the daily cap.
+// report_id gets its foreign key to reports in a follow-up migration once TASK-6.6 is merged.
+model alert_deliveries {
+  report_id String   @db.Uuid
+  user_id   String   @db.Uuid
+  sent_at   DateTime @default(now()) @db.Timestamptz(6)
+  channel   String
+  user      profiles @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@id([report_id, user_id])
+  @@index([user_id, sent_at])
+  @@schema("app")
+}
+
+// Email attempts (Brevo). The address is stored only as a hash; user_id is null for report_contacts emails.
+model email_outbox {
+  id              String    @id @default(uuid()) @db.Uuid
+  user_id         String?   @db.Uuid
+  template        String
+  locale          String
+  to_address_hash String
+  // 'queued' | 'sent' | 'failed' | 'mocked' (check constraint in the migration)
+  status          String    @default("queued")
+  provider_id     String?
+  error           String?
+  created_at      DateTime  @default(now()) @db.Timestamptz(6)
+  user            profiles? @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id])
+  @@schema("app")
+}
