@@ -3,9 +3,9 @@ source: 03§P1; docs/design/pages/P1-web-shell.md
 page: P1 Web shell
 stories: TASK-11 (FR-035, FR-036)
 copy-for: docs/design/pages/P1-web-shell.md
-version: 0.2
+version: 0.3
 status: Draft, native Slovenian review pending
-date: 2026-10-14
+date: 2026-10-15
 ---
 
 # P1 Web shell: copy
@@ -204,6 +204,8 @@ Shown in notes and toasts. Pages may override with a more specific message (for 
 | errors.VALIDATION | Nekaj podatkov manjka ali ni pravilnih. Preverite označena polja. | Some details are missing or not quite right. Please check the highlighted fields. |
 | errors.NOT_FOUND | Tega ne najdemo več. Morda je bilo odstranjeno. | We cannot find this any more. It may have been removed. |
 | errors.GONE | Ta prijava je zaključena, zato je ni več mogoče urejati. | This report is closed, so it can no longer be changed. |
+| errors.UNAUTHENTICATED | Za nadaljevanje se vpišite. | Please sign in to continue. |
+| errors.AAL2_REQUIRED | Za to potrebujete dvostopenjsko preverjanje. Vnesite kodo iz aplikacije za preverjanje. | This needs two-step verification. Enter the code from your authenticator app. |
 | errors.FORBIDDEN | Za to nimate dovoljenja. Če mislite, da je to napaka, se vpišite z drugim računom. | You do not have permission for this. If you think this is a mistake, sign in with another account. |
 | errors.UNVERIFIED_EMAIL | Najprej potrdite svoj e-naslov. Povezavo smo vam poslali po e-pošti. | Please confirm your email address first. We have emailed you a link. |
 | errors.RATE_LIMITED | V kratkem času je bilo poslanih več zahtev. Poskusite znova čez {minutes, plural, one {# minuto} two {# minuti} few {# minute} other {# minut}}. | Several requests were sent in a short time. Please try again in {minutes, plural, one {# minute} other {# minutes}}. |

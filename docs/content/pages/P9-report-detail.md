@@ -3,7 +3,7 @@ source: 03§P9; docs/design/pages/P9-report-detail.md; 02§FR-007 R-007.4, §Con
 page: P9 Report detail (lost, found, sighted)
 stories: TASK-18, TASK-72 (FR-007, FR-004, FR-011, FR-012)
 copy-for: docs/design/pages/P9-report-detail.md
-version: 0.3
+version: 0.4
 status: Draft, native Slovenian review pending
 date: 2026-10-15
 ---
@@ -112,7 +112,7 @@ The ad slot between "Kje je bila videna" and "V bližini" uses P21 copy.
 
 Responsible shelter row in the owner view of a lost report (FR-044, v0.3): `shelter_row.title` (P6) as the label, the shelter name in bold and the call. Web: the number (`tabular-nums`) with `shelter_row.call`; mobile: `report.shelter_call`, no number printed. No municipality or no confirmed shelter: `shelter_row.unknown_municipality` or `shelter_row.unconfirmed` with `shelter_row.directory_link`.
 
-`report.owner_boost` is hidden until M4. Exact pin label: `location.exact_own` (P5). In the owner view the reward line keeps its place and `report.owner_reward_note` replaces the public safety note; the owner changes or removes the reward with "Uredi" (P6 step 6). This follows the design slice §Web layout 6–7 (display-only reward line, one safety note below it).
+`report.owner_boost` is hidden until M4. Owner pin label: `location.exact_own` ("Približna lokacija · vidno samo vam") with help text `location.exact_own_help` (P5; the stored point is coarsened by 20–30 m). In the owner view the reward line keeps its place and `report.owner_reward_note` replaces the public safety note; the owner changes or removes the reward with "Uredi" (P6 step 6). This follows the design slice §Web layout 6–7 (display-only reward line, one safety note below it).
 
 # 6. Status variants
 

@@ -3,13 +3,15 @@ source: 02§Content, SEO and legal requirements (Legal); FR-034; FR-035; FR-038;
 
 | Field | Value |
 |---|---|
-| Version | 0.4 |
+| Version | 0.5 |
 | Date | 2026-10-15 |
 | Route SL | `/zasebnost` |
 | Route EN | `/en/privacy` |
 | Slug SL / EN | `zasebnost` / `privacy` |
 | Structured data | WebPage |
 | Template | T4 Legal (numbered h2 sections, "On this page" list, draft note) |
+
+Change in 0.5: location minimisation (chapter 6): the raw GPS point is never stored; it is moved by 20–30 m before it is saved; the exact point is blurred 30 days after a report closes (proposal, lawyer to confirm).
 
 Change in 0.4: reward escrow removed (brief v1.1): no reward is paid through Najdimo and Stripe Connect is no longer used; an owner's optional reward line is part of the report data (chapter 3) and is explained in chapter 9. Place search and the area name for a point run on our own servers from GURS open data (ADR-007): MapTiler and Photon are removed from chapters 6 and 12, and the Swiss adequacy sentence from chapter 13.
 
@@ -122,9 +124,9 @@ V prosto besedilo (opis okoliščin, opombe) ne vpisujte osebnih podatkov drugih
 
 **Fotografije.** Fotografije lahko vsebujejo metapodatke (EXIF), na primer čas in položaj snemanja. V vaši napravi vam lahko iz njih predlagamo kraj in čas za obrazec. V kopijah, ki jih prikažemo javno, metapodatke odstranimo. Izvirniki so zasebni.
 
-**Točna lokacija.** Točno točko, ki jo označite, vidite samo vi. Javno prikažemo približno območje. Pri izgubljeni živali je polmer območja najmanj 500 m, pri najdeni in opaženi najmanj 150 m.
+**Lokacija prijave.** Natančne (surove) točke GPS ne shranjujemo. Točko, ki jo označite, ob shranjevanju naključno premaknemo za 20 do 30 m: najprej v vaši napravi, še enkrat pa na našem strežniku. Premik se naredi samo enkrat in se pri ogledih ne spreminja. Shranjena točka je zato približna in jo vidite samo vi (označeno »Približna lokacija · vidno samo vam«). Javno prikažemo še širše območje, izračunano iz te točke: pri izgubljeni živali s polmerom najmanj 500 m, pri najdeni in opaženi najmanj 150 m. Koordinat ne zapisujemo v dnevnike. 30 dni po zaključku prijave shranjeno točko dodatno zameglimo, tako da ostaneta le zamegljena točka in ime območja.
 
-**Lokacija naprave.** Lokacijo naprave uporabimo samo takrat, ko to izberete, na primer za določitev kraja prijave. Lokacije naprave ne spremljamo in je ne shranjujemo; shranimo le točko prijave, ki jo potrdite.
+**Lokacija naprave.** Lokacijo naprave uporabimo samo takrat, ko to izberete, na primer za določitev kraja prijave. Lokacije naprave ne spremljamo in je ne shranjujemo; shranimo le premaknjeno točko prijave, ki jo potrdite.
 
 **Opozorilo, ko ste blizu (mobilna aplikacija).** Če to funkcijo izrecno vklopite in aplikaciji dovolite lokacijo tudi v ozadju, telefon sam preverja, ali ste vstopili v približno območje, kjer je bila nazadnje videna izgubljena žival. Ta območja so javna in približna. Preverjanje poteka samo v telefonu: vaše lokacije ne pošljemo nam ali komur koli drugemu. Funkcijo kadar koli izklopite v nastavitvah aplikacije in takrat iz telefona odstranimo vsa območja.
 
@@ -393,9 +395,9 @@ Please do not enter other people's personal data in free text (circumstances, no
 
 **Photos.** Photos can contain metadata (EXIF), for example the time and position of the shot. On your device we can use it to suggest a place and time for the form. We remove the metadata from the copies we show publicly. The originals are private.
 
-**Exact location.** Only you can see the exact point you mark. We show the public an approximate area. For a lost animal the radius of the area is at least 500 m; for a found or sighted animal it is at least 150 m.
+**Report location.** We never store the raw GPS point. When you save, we randomly move the point you mark by 20 to 30 m: first on your device, and again on our server. The shift is made once and does not change between views. The stored point is therefore approximate and only you can see it (labelled "Approximate location · visible only to you"). The public sees a wider area calculated from that point: at least 500 m radius for a lost animal, at least 150 m for a found or sighted one. We do not write coordinates to logs. 30 days after a report closes, we blur the stored point further, so only the blurred point and the area name remain.
 
-**Device location.** We use your device location only when you choose to, for example to set the place of a report. We do not track or store your device location; we store only the report point you confirm.
+**Device location.** We use your device location only when you choose to, for example to set the place of a report. We do not track or store your device location; we store only the shifted report point you confirm.
 
 **Alerts when you are nearby (mobile app).** If you turn this feature on and allow the app to use your location in the background, your phone itself checks whether you have entered an approximate area where a lost pet was last seen. These areas are public and approximate. The check happens only on your phone: your location is never sent to us or to anyone else. You can turn the feature off at any time in the app settings, and we then remove all areas from your phone.
 
