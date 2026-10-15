@@ -1,11 +1,11 @@
 ---
 id: TASK-7.1
 title: 'packages/analytics: typed track(), event registry, consent store, adapters'
-status: In Progress
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:12'
-updated_date: '2026-10-15 02:05'
+updated_date: '2026-10-15 02:27'
 labels:
   - fe
   - 'est:M'
