@@ -121,6 +121,36 @@
 			"export": false,
 			"delete": "anonymise",
 			"other_columns": ["id", "entity", "entity_id", "version", "data", "source", "created_at"]
+		},
+		"geo_places": {
+			"category": "reference",
+			"personal_data": [],
+			"basis": "none (no personal data; GURS open data, CC BY 4.0)",
+			"retention": "kept; replaced on a data refresh",
+			"export": false,
+			"delete": "keep",
+			"other_columns": [
+				"id",
+				"kind",
+				"name",
+				"alt_name",
+				"search",
+				"search_alt",
+				"municipality_id",
+				"settlement_id",
+				"weight",
+				"point",
+				"geom"
+			]
+		},
+		"geo_addresses": {
+			"category": "reference",
+			"personal_data": [],
+			"basis": "none (no personal data; GURS open data, CC BY 4.0: house number points, no owners or residents)",
+			"retention": "kept; replaced on a data refresh",
+			"export": false,
+			"delete": "keep",
+			"other_columns": ["place_id", "number", "suffix", "point"]
 		}
 	},
 	"buckets": {
