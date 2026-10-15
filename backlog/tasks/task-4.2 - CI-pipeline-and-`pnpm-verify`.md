@@ -5,7 +5,7 @@ status: To Do
 assignee:
   - '@tech-lead'
 created_date: '2026-10-14 22:12'
-updated_date: '2026-10-14 23:38'
+updated_date: '2026-10-15 03:32'
 labels:
   - tech
   - 'est:S'
@@ -41,4 +41,5 @@ Branch: agent/task-4.2-ci
 - [ ] #2 secretlint and `pnpm audit --audit-level high` fail the build on findings (shown with a planted fake secret on a throwaway branch that is then deleted).
 - [ ] #3 `pnpm verify` runs the same sequence locally on Windows and Linux and is documented as mandatory before an implementer reports done.
 - [ ] #4 Branch protection for main (required checks) is documented for the GitHub repository pbozic/zivali.
+- [ ] #5 CI runs `pnpm exec playwright install chromium` before `pnpm quality`; QUALITY_PORT may override the 8080 default
 <!-- AC:END -->

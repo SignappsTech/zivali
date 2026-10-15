@@ -5,7 +5,7 @@ status: Done
 assignee:
   - '@ui-designer'
 created_date: '2026-10-14 21:50'
-updated_date: '2026-10-14 22:29'
+updated_date: '2026-10-15 03:32'
 labels:
   - design
   - 'est:S'
@@ -38,4 +38,7 @@ Branch: agent/TASK-11.1-p1-web-shell
 - [ ] #3 Given accessibility, when the mockup is checked, then text meets 4.5:1 (7:1 for body text and the main action), targets are at least 44 px, a visible focus state is shown, and labels sit above fields.
 - [ ] #4 Given the Flow variant, when rendered, then there is no sidebar region and no ad slot, and the header is reduced.
 - [ ] #5 Given the header at 1200 and 390 px, when viewed, then it has at most four text links, one primary "Report" action, a language switcher and no count badges.
+- [ ] #6 Every page has a localised meta description (SL and EN); Lighthouse SEO ≥ 0.95
+- [ ] #7 favicon.ico and app icons are served (no 404 in the console)
+- [ ] #8 Mobile LCP ≤ 2.5 s in pnpm quality (font preload/fallback checked)
 <!-- AC:END -->
