@@ -178,7 +178,11 @@ export type EmailOptions = { url: string; unsubscribe_url?: string; support_emai
 export function renderEmail(type: NotificationType, vars: Vars, locale: Locale, now: Date, options: EmailOptions) {
 	const t = translator(locale, 'email');
 	const spec = TYPES[type];
-	const values = { ...icuValues(vars, locale, now), support_email: options.support_email, category: spec.category };
+	const values: Values = {
+		...icuValues(vars, locale, now),
+		support_email: options.support_email,
+		category: spec.category,
+	};
 	const keys = Object.keys((catalogues[locale].email as Record<string, Record<string, string>>)[type]);
 	const lines = keys.filter((k) => !NOT_BODY.has(k)).map((k) => t(`${type}.${k}`, values));
 	const body = lines.filter((line) => line.trim());
