@@ -3,11 +3,11 @@ id: TASK-34.2
 title: >-
   Admin API: aal2 enforcement, users and roles, audit log, queues, admin
   bootstrap script
-status: In Progress
+status: Done
 assignee:
   - '@backend-dev'
 created_date: '2026-10-14 22:13'
-updated_date: '2026-10-15 10:35'
+updated_date: '2026-10-15 14:20'
 labels:
   - be
   - 'est:S'
