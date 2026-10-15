@@ -129,7 +129,7 @@ function ManageView({ code }: { code: string }) {
 	const [transition, { isLoading: saving, originalArgs }] = useTransitionReportMutation();
 	const [confirmHome, setConfirmHome] = React.useState(false);
 	const [thanked, setThanked] = React.useState(false);
-	// Read once per render for the reopen window; a page left open past it still gets GONE from the API.
+	// The reopen window is checked against the time the view opened; the API has the last word (GONE).
 	const [now] = React.useState(() => Date.now());
 
 	if (!data) return isError ? <InlineError onRetry={refetch} retrying={isFetching} /> : <PageSkeleton />;

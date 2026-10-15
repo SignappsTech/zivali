@@ -17,8 +17,8 @@ type State<T> =
 /**
  * Runs `task` (keep it stable with useCallback) when `run()` is called. After a transient failure it is `waiting`
  * and runs again every 60 s and as soon as the browser is back online, until it succeeds or fails for another
- * reason (`failed`). The caller keeps its input (the draft) and shows a calm note while `error` is transient; the
- * error stays set during the retry, so the note does not flicker.
+ * reason (`failed`). The caller keeps its input (the draft) and shows a calm note while `error` is transient; a
+ * transient error stays set during the retry, so the note does not flicker.
  */
 export function useAutoRetry<T>(task: () => Promise<T>) {
 	const [state, setState] = React.useState<State<T>>({ status: 'idle' });
@@ -28,7 +28,10 @@ export function useAutoRetry<T>(task: () => Promise<T>) {
 	const run = React.useCallback(async () => {
 		if (inFlight.current) return;
 		inFlight.current = true;
-		setState((previous) => ({ status: 'running', error: previous.error }));
+		setState((previous) => ({
+			status: 'running',
+			error: isTransient(previous.error) ? previous.error : undefined,
+		}));
 		try {
 			const result = await task();
 			setState({ status: 'done', result });
