@@ -145,7 +145,7 @@ afterAll(() => fs.rmSync(path.resolve(thumbsDir.uri, '../..'), { recursive: true
 describe('getDb', () => {
 	test('a failed migration is not cached', async () => {
 		jest.resetModules();
-		const fresh = await import('@/lib/db');
+		const fresh = jest.requireActual<typeof import('@/lib/db')>('@/lib/db');
 		fresh.migrations.push('not sql;');
 		await expect(fresh.getDb()).rejects.toThrow();
 		fresh.migrations.pop();
