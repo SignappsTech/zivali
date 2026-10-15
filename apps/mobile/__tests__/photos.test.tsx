@@ -15,6 +15,7 @@ import { uploadPhoto } from '@zivali/api/photos';
 import sl from '@zivali/i18n/dist/sl.json';
 import { PhotoPicker } from '@/components/photos/photo-picker';
 import * as Pipeline from '@/components/photos/prepare-photo';
+import { clearPhotoDraft } from '@/components/photos/use-photo-uploads';
 import { getDb } from '@/lib/db';
 import { draftsDir } from '@/lib/db/files';
 
@@ -626,5 +627,17 @@ describe('PhotoPicker', () => {
 		const row = (await draftRow())!.photo_paths;
 		expect(Object.keys(JSON.parse(row)[0]).sort()).toEqual(['bytes', 'height', 'key', 'sha256', 'width']);
 		expect(row).not.toMatch(/46\.05|14\.50|IMG_|HEIC|2026/);
+	});
+
+	it('clears the draft photos and their files once the report is sent', async () => {
+		pendingUploads();
+		await renderPicker();
+		await press('Izberi iz galerije');
+		await waitFor(async () => expect(await storedPhotos()).toHaveLength(1));
+
+		await clearPhotoDraft('draft-1');
+
+		expect(await storedPhotos()).toEqual([]);
+		expect(fs.existsSync(path.join(draftsDir.uri, 'draft-1'))).toBe(false);
 	});
 });
