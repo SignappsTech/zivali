@@ -23,6 +23,8 @@ export default defineConfig({
 	forbidOnly: !!process.env.CI,
 	use: {
 		baseURL: origin,
+		// Axe must not sample mid-transition (a colour-scheme switch fades button fills); the app honours motion-reduce.
+		reducedMotion: 'reduce',
 		storageState: {
 			cookies: [
 				{
