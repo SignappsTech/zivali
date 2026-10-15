@@ -15,26 +15,29 @@ import { userCtx } from '../../lib/ctx.ts';
 import { prisma } from '../../prisma/prisma.ts';
 import { createAuthUser, deleteAuthUsers, signTestToken } from '../helpers/token.ts';
 
-const attached = (
-	await prisma.$queryRaw<{ ok: boolean }[]>`select to_regnamespace('_realtime') is not null as ok`
-)[0]!.ok;
+const attached = (await prisma.$queryRaw<{ ok: boolean }[]>`select to_regnamespace('_realtime') is not null as ok`)[0]!
+	.ok;
 const BASE = (process.env.REALTIME_URL ?? `${config.SUPABASE_URL}/realtime/v1`).replace(/^http/, 'ws');
 const MESSAGES = 20;
 
-type Frame = { topic: string; event: string; payload: Record<string, any>; ref: string | null };
+type Reply = { status: 'ok' | 'error'; response: object };
+type Broadcast = { event: string; payload: { body?: string } };
+type Frame = { topic: string; event: string; payload: Reply | Broadcast; ref: string | null };
 
 /** Minimal Phoenix v1 client: join a private channel with an access token, collect broadcasts with arrival times. */
 class RealtimeClient {
 	private ref = 0;
-	private replies = new Map<string, (payload: Record<string, any>) => void>();
-	readonly received: { event: string; payload: Record<string, any>; at: number }[] = [];
+	private replies = new Map<string, (reply: Reply) => void>();
+	readonly received: (Broadcast & { at: number })[] = [];
 
 	private constructor(private ws: WebSocket) {
 		ws.addEventListener('message', (message) => {
 			const frame = JSON.parse(String(message.data)) as Frame;
-			if (frame.event === 'phx_reply' && frame.ref) this.replies.get(frame.ref)?.(frame.payload);
-			if (frame.event === 'broadcast')
-				this.received.push({ event: frame.payload.event, payload: frame.payload.payload, at: performance.now() });
+			if (frame.event === 'phx_reply' && frame.ref) this.replies.get(frame.ref)?.(frame.payload as Reply);
+			if (frame.event === 'broadcast') {
+				const { event, payload } = frame.payload as Broadcast;
+				this.received.push({ event, payload, at: performance.now() });
+			}
 		});
 	}
 
@@ -48,24 +51,28 @@ class RealtimeClient {
 		return new RealtimeClient(ws);
 	}
 
-	private push(topic: string, event: string, payload: object): Promise<Record<string, any>> {
+	private push(topic: string, event: string, payload: object): Promise<Reply> {
 		const ref = String(++this.ref);
-		const reply = new Promise<Record<string, any>>((resolve) => this.replies.set(ref, resolve));
+		const reply = new Promise<Reply>((resolve) => this.replies.set(ref, resolve));
 		this.ws.send(JSON.stringify({ topic: `realtime:${topic}`, event, payload, ref, join_ref: ref }));
 		return reply;
 	}
 
 	/** Resolves with the join status: 'ok', or 'error' when the policy refuses the topic. */
-	async join(topic: string, access_token: string): Promise<string> {
+	async join(topic: string, access_token: string): Promise<Reply['status']> {
 		const config = { broadcast: { ack: false, self: false }, presence: { enabled: false }, private: true };
-		const reply = await this.push(topic, 'phx_join', { config, access_token });
-		return reply.status as string;
+		return (await this.push(topic, 'phx_join', { config, access_token })).status;
 	}
 
 	broadcast(topic: string, event: string, payload: object): void {
 		const ref = String(++this.ref);
 		this.ws.send(
-			JSON.stringify({ topic: `realtime:${topic}`, event: 'broadcast', payload: { type: 'broadcast', event, payload }, ref })
+			JSON.stringify({
+				topic: `realtime:${topic}`,
+				event: 'broadcast',
+				payload: { type: 'broadcast', event, payload },
+				ref,
+			})
 		);
 	}
 
@@ -93,7 +100,14 @@ describe.skipIf(!attached)('Realtime chat delivery (two clients)', () => {
 		const receiver = userIds[1]!;
 		const report = await ReportsDomain.insertReport(
 			{ type: 'lost', species: 'cat', location: { lat: 46.0569, lng: 14.5058 }, event_at: new Date() },
-			userCtx({ user_id: receiver, role: 'USER', is_anonymous: false, aal: 'aal1', email_verified: true, locale: 'sl' })
+			userCtx({
+				user_id: receiver,
+				role: 'USER',
+				is_anonymous: false,
+				aal: 'aal1',
+				email_verified: true,
+				locale: 'sl',
+			})
 		);
 		reportId = report.id;
 		const res = await request(app)
@@ -128,7 +142,10 @@ describe.skipIf(!attached)('Realtime chat delivery (two clients)', () => {
 				.send({ body })
 				.expect(201);
 			await expect
-				.poll(() => receiver.received.find((event) => event.payload.body === body), { timeout: 5_000, interval: 10 })
+				.poll(() => receiver.received.find((event) => event.payload.body === body), {
+					timeout: 5_000,
+					interval: 10,
+				})
 				.toBeTruthy();
 			latencies.push(receiver.received.find((event) => event.payload.body === body)!.at - start);
 		}

@@ -59,7 +59,7 @@ const broadcasts = (topic: string) =>
 const notifications = (conversation_id: string) =>
 	prisma.$queryRaw<{ data: { user_id: string; type: string; payload: object; dedupe_key: string } }[]>`
 		select data from pgboss.job
-		where name = 'notify.send' and data->>'type' = 'chat_message' and data->'payload'->>'conversation_id' = ${conversation_id}
+		where name = 'notify.send' and data->>'type' = 'chat_message' and data->'payload'->>'thread_id' = ${conversation_id}
 		order by created_on`;
 
 let owner: User, stranger: User, anonFinder: User, anonOther: User, unverified: User, mod: User, admin: User;
@@ -182,7 +182,8 @@ describe('POST /v1/conversations', () => {
 
 	it('rate-limits contact to 10 per day', async () => {
 		const caller = await user();
-		for (let i = 0; i < 10; i++) expect((await open(caller, { about_report_code: lost.short_code })).status).toBe(200);
+		for (let i = 0; i < 10; i++)
+			expect((await open(caller, { about_report_code: lost.short_code })).status).toBe(200);
 		const res = await open(caller, { about_report_code: lost.short_code });
 		expect([res.status, res.body.error.code]).toEqual([429, 'RATE_LIMITED']);
 	});
@@ -292,7 +293,7 @@ describe('messages', () => {
 	it('queues one chat_message notification per window for offline participants, without the body', async () => {
 		const quiet = await user();
 		const cid = (await open(quiet, { about_report_code: found.short_code })).body.id;
-		await send(quiet, cid, { body: 'Prvo sporočilo' });
+		const first = (await send(quiet, cid, { body: 'Prvo sporočilo' })).body;
 		await send(quiet, cid, { body: 'Drugo sporočilo' });
 		const queued = await notifications(cid);
 		const window = Math.floor(Date.now() / 300_000);
@@ -300,7 +301,7 @@ describe('messages', () => {
 		expect(queued[0]!.data).toEqual({
 			user_id: anonFinder.id,
 			type: 'chat_message',
-			payload: { conversation_id: cid, preview_alias: 'contact', unread_count: 1 },
+			payload: { template: 'chat_message', thread_id: cid, message_id: first.id },
 			dedupe_key: expect.stringMatching(new RegExp(`^chat:${cid}:(${window}|${window - 1})$`)),
 		});
 		expect(new Set(queued.map((job) => job.data.dedupe_key)).size).toBeLessThanOrEqual(2);
@@ -330,7 +331,10 @@ describe('messages', () => {
 		const target = await user();
 		const cid = (await open(target, { about_report_code: lost.short_code })).body.id;
 		const block = (participant_id: string) =>
-			request(app).post(`/v1/conversations/${cid}/block`).set('Authorization', owner.auth).send({ participant_id });
+			request(app)
+				.post(`/v1/conversations/${cid}/block`)
+				.set('Authorization', owner.auth)
+				.send({ participant_id });
 		expect((await block(owner.id)).status).toBe(400);
 		expect((await block(stranger.id)).status).toBe(400);
 		expect((await block('not-a-uuid')).status).toBe(400);

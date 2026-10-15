@@ -21,7 +21,6 @@ const DEFAULT_LIMIT = 30;
 const NOTIFY_WINDOW_MS = 5 * 60_000;
 /** Clients mark a conversation read while it is open; a read this recent counts as online (no notification). */
 const ONLINE_MS = 2 * 60_000;
-const PREVIEW_ALIAS_MAX = 24;
 const OPEN_STATUSES = new Set(['open', 'matched']);
 /** Links get a caution in clients and are never linkified: schemes, www. and bare domains on common TLDs. */
 const LINK =
@@ -148,7 +147,11 @@ export async function listMessages(
 	const forward = Boolean(input.after);
 	const rows = await ChatDao.listMessages(
 		conversation.id,
-		{ after: forward ? position! : undefined, before: forward ? undefined : (position ?? undefined), take: limit + 1 },
+		{
+			after: forward ? position! : undefined,
+			before: forward ? undefined : (position ?? undefined),
+			take: limit + 1,
+		},
 		ctx.tx
 	);
 	const page = rows.slice(0, limit);
@@ -172,7 +175,7 @@ export async function sendMessage(
 ): Promise<MessageDto> {
 	const user_id = actorId(ctx);
 	return inTransaction(ctx, async (tx) => {
-		const { conversation, me } = await participantOf(input.conversation_id, ctx, tx);
+		const { conversation } = await participantOf(input.conversation_id, ctx, tx);
 		if (conversation.status === 'read_only') throw new AppError('GONE', 'This conversation is read-only');
 		const others = conversation.participants.filter((participant) => participant.user_id !== user_id);
 		if (
@@ -186,7 +189,13 @@ export async function sendMessage(
 		const kind = input.kind ?? 'text';
 		if (kind === 'location') {
 			const reports = [conversation.about_report_id, conversation.lost_report_id, conversation.other_report_id];
-			if (!(await ChatDao.isManager(user_id, reports.filter((id) => id !== null), tx)))
+			if (
+				!(await ChatDao.isManager(
+					user_id,
+					reports.filter((id) => id !== null),
+					tx
+				))
+			)
 				throw new AppError('FORBIDDEN', 'Only a manager of the report can share a location');
 		}
 		const row = await ChatDao.insertMessage(
@@ -204,23 +213,22 @@ export async function sendMessage(
 		const message = ChatMapper.toMessageDto(row, sender);
 		await broadcast(tx, `conversation:${conversation.id}`, 'message.created', message);
 
-		const updated = { conversation_id: conversation.id, status: conversation.status, updated_at: message.created_at };
+		const updated = {
+			conversation_id: conversation.id,
+			status: conversation.status,
+			updated_at: message.created_at,
+		};
 		const window = Math.floor(ctx.now.getTime() / NOTIFY_WINDOW_MS);
 		for (const other of others) {
 			await broadcast(tx, `user:${other.user_id}`, 'conversation.updated', updated);
 			const online = other.last_read_at && ctx.now.getTime() - other.last_read_at.getTime() < ONLINE_MS;
 			if (other.muted || online) continue;
-			const unread_count = await ChatDao.unreadCount(conversation.id, other.user_id, other.last_read_at, tx);
+			// Ids only, never the body (C10, TASK-6.17): notify.send derives preview_alias and unread_count.
 			await NotificationsDomain.enqueueNotification(
 				{
 					user_id: other.user_id,
 					type: 'chat_message',
-					// No body (C10): who wrote and how many are unread.
-					payload: {
-						conversation_id: conversation.id,
-						preview_alias: (me.alias ?? sender.alias_key).slice(0, PREVIEW_ALIAS_MAX),
-						unread_count,
-					},
+					payload: { template: 'chat_message', thread_id: conversation.id, message_id: row.id },
 					dedupe_key: `chat:${conversation.id}:${window}`,
 				},
 				{ ...ctx, tx }

@@ -5,9 +5,11 @@ import { randomUUID } from 'node:crypto';
 
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
+import { ReportsDomain } from '../../domains/reports/index.ts';
+import { userCtx } from '../../lib/ctx.ts';
 import { prisma } from '../../prisma/prisma.ts';
 
-const ids = { member: randomUUID(), outsider: randomUUID(), conversation: randomUUID() };
+const ids = { member: randomUUID(), outsider: randomUUID(), conversation: randomUUID(), report: '' };
 
 const hasRealtime = async () =>
 	(await prisma.$queryRaw<{ ok: boolean }[]>`select to_regclass('realtime.messages') is not null as ok`)[0]!.ok;
@@ -34,10 +36,23 @@ async function receives(uid: string, topic: string): Promise<boolean> {
 
 beforeAll(async () => {
 	await prisma.profiles.createMany({ data: [{ id: ids.member }, { id: ids.outsider }] });
+	const actor = {
+		user_id: ids.outsider,
+		role: 'USER',
+		is_anonymous: false,
+		aal: 'aal1',
+		email_verified: true,
+	} as const;
+	ids.report = (
+		await ReportsDomain.insertReport(
+			{ type: 'lost', species: 'dog', location: { lat: 46.05, lng: 14.5 }, event_at: new Date() },
+			userCtx({ ...actor, locale: 'sl' })
+		)
+	).id;
 	await prisma.conversations.create({
 		data: {
 			id: ids.conversation,
-			about_report_id: randomUUID(),
+			about_report_id: ids.report,
 			participants: { create: { user_id: ids.member, role: 'contact' } },
 		},
 	});
@@ -45,6 +60,7 @@ beforeAll(async () => {
 
 afterAll(async () => {
 	await prisma.conversations.delete({ where: { id: ids.conversation } });
+	await prisma.reports.delete({ where: { id: ids.report } });
 	await prisma.profiles.deleteMany({ where: { id: { in: [ids.member, ids.outsider] } } });
 });
 

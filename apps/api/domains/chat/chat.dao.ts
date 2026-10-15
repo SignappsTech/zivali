@@ -24,7 +24,10 @@ export async function findReportByCode(short_code: string, tx?: Tx) {
 }
 
 export async function findReportSides(ids: string[], tx?: Tx): Promise<ReportSide[]> {
-	return (tx ?? prisma).reports.findMany({ where: { id: { in: ids } }, select: { id: true, type: true, source: true } });
+	return (tx ?? prisma).reports.findMany({
+		where: { id: { in: ids } },
+		select: { id: true, type: true, source: true },
+	});
 }
 
 export async function findManagers(report_ids: string[], tx?: Tx) {
@@ -176,17 +179,6 @@ export async function latestMessageId(conversation_id: string, tx?: Tx): Promise
 	return row?.id ?? null;
 }
 
-/** Messages from others since the participant last read the conversation. */
-export async function unreadCount(conversation_id: string, user_id: string, since: Date | null, tx?: Tx) {
-	return (tx ?? prisma).messages.count({
-		where: {
-			conversation_id,
-			OR: [{ sender_id: null }, { sender_id: { not: user_id } }],
-			...(since && { created_at: { gt: since } }),
-		},
-	});
-}
-
 export async function setLastRead(conversation_id: string, user_id: string, at: Date, tx?: Tx): Promise<void> {
 	await (tx ?? prisma).conversation_participants.update({
 		where: { conversation_id_user_id: { conversation_id, user_id } },
@@ -292,7 +284,6 @@ export default {
 	findMessage,
 	listMessages,
 	latestMessageId,
-	unreadCount,
 	setLastRead,
 	markReadOnly,
 	deleteClosedBefore,

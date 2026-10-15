@@ -49,7 +49,12 @@ export function toConversationListDto(rows: ConversationListRow[], next_cursor: 
 				: { type: row.type, source: row.source };
 			return {
 				id: row.id,
-				about_report: { short_code: row.short_code, type: row.type, species: row.species, thumb_url: row.thumb_url },
+				about_report: {
+					short_code: row.short_code,
+					type: row.type,
+					species: row.species,
+					thumb_url: row.thumb_url,
+				},
 				my_alias_key: aliasKey(row.my_role, finderSide),
 				other_alias_key: aliasKey(row.other_role ?? 'contact', finderSide),
 				other_display_name: row.other_alias ?? undefined,
