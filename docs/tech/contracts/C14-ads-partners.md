@@ -36,7 +36,7 @@ Access only through the API (RLS deny-all); models in `prisma/schemas/ads.prisma
 
 Ad-free users: when the caller has an active Premium entitlement (M4) the response is `null` (no sponsor ad and no house ad) and the slot collapses; until entitlements exist nobody is ad-free; Podpornik supporters are not ad-free.
 
-Matching: `status = 'ACTIVE'`, now within dates, slot in `slots`, locale in `locales`, region or municipality null or containing the context, species null or containing it. Several matches → weighted random. None → a house ad for the locale (`supporter`, `partner`, `adopt`, rotated). Exclusive ads cannot overlap in dates for the same slot and region (service check + exclusion constraint). Links carry `rel="sponsored noopener"` and `target="_blank"`. Impression = the client posts once when the ad first renders (rendered count, A-016).
+Matching: `status = 'active'` (lowercase literal; the DB enum `AD_SLOT` is uppercase while the API values are lowercase), now within dates, slot in `slots`, locale in `locales`, region or municipality null or containing the context, species null or containing it. Several matches → weighted random. None → a house ad for the locale (`supporter`, `partner`, `adopt`, rotated). Exclusive ads cannot overlap in dates for the same slot and region (service check only: an exclusion constraint cannot be built on arrays). Links carry `rel="sponsored noopener"` and `target="_blank"`. Impression = the client posts once when the ad first renders (rendered count, A-016).
 
 Client hook (`@zivali/api/ads`): `useAd(slot, ctx): { ad, loading, error }` (errors collapse the slot silently).
 
@@ -69,7 +69,7 @@ type PartnerStats = { generated_at, pilot: boolean,
   by_region: { region_slug, users: CountValue, active_reports: CountValue, reunions_90d: CountValue }[] }
 type CountValue = number | '<5'          // any value 1–4 is returned as '<5'; 0 stays 0
 ```
-Computed by the `partners.stats` job (hourly) into `partner_stats_snapshot`; optional GA Data API enrichment only behind `partners.ga_enrichment` (off). Errors: `VALIDATION`, `CAPTCHA_FAILED`, `RATE_LIMITED`.
+Computed by the `partners.stats` job (hourly) into `partner_stats_snapshot(id uuid, generated_at timestamptz default now(), data jsonb)` (`data` = `PartnerStats`; the newest row is served); optional GA Data API enrichment only behind `partners.ga_enrichment` (off). Errors: `VALIDATION`, `CAPTCHA_FAILED`, `RATE_LIMITED`.
 
 ## Example
 
@@ -78,3 +78,9 @@ Computed by the `partners.stats` job (hourly) into `partner_stats_snapshot`; opt
 { "id": "ad7…", "title": "Dežurni veterinar 24/7", "body": "…", "cta": "Pokliči", "image_url": "https://…/ad-images/ad7/1.webp",
   "image_alt": "Veterinarka pregleduje psa", "click_url": "https://api.…/v1/ads/ad7…/click?s=detail&r=8", "is_house": false, "label": "Oglas" }
 ```
+
+## Change log
+
+| Version | Date | Change |
+|---|---|---|
+| 1.1 | 2026-10-15 | CH-137: status literal 'active', AD_SLOT case note, partner_stats_snapshot columns, slot exclusivity is a service check only |

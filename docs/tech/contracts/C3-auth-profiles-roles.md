@@ -46,10 +46,14 @@ model profiles {
 |---|---|---|---|
 | `GET /v1/me` | auth | - | `Profile` (own, incl. private fields) + `{ email, email_verified, is_anonymous, role, aal }` |
 | `PATCH /v1/me` | auth | `{ display_name?, locale?, home?: { lat, lng } \| null, home_radius_km?, phone?, quiet_from?, quiet_to?, supporter_badge_visible? }` | `Profile` |
-| `GET /v1/admin/users?query=&cursor=` | moderator, aal2 | - | `{ items: AdminUser[], next_cursor }` (`AdminUser` = profile columns for moderation: id, display_name, role, banned_at, created_at, `email_masked`; no phone; defined in `packages/types/src/domain/`, TASK-6.5) |
-| `PUT /v1/admin/users/:id/role` | admin, aal2 | `{ role }` | `{ id, role }` (audited; last admin protected) |
+| `GET /v1/admin/users?query=&cursor=&limit=` | moderator, aal2 | `query` = display_name substring or exact email | `{ items: AdminUser[], next_cursor }` (`AdminUser` = profile columns for moderation: id, display_name, role, created_at, `email_masked`, `is_anonymous`; no phone, no `banned_at` until a ban column lands; defined in `packages/types/src/domain/`, TASK-6.5) |
+| `PUT /v1/admin/users/:id/role` | admin, aal2 | `{ role, note }` (strict; `note` trimmed, 1–500 chars) | `{ id, role }` (audited; last admin protected) |
+| `GET /v1/admin/audit-log?actor_id&action&target_type&target_id&cursor&limit` | admin, aal2 | - | `AuditLogList` = `{ items, next_cursor }` |
+| `GET /v1/admin/queues` | admin, aal2 | - | `AdminQueues` (job queue state) |
 
-Errors: `UNAUTHENTICATED`, `VALIDATION` (radius 1–25, locale sl/en), `FORBIDDEN`, `AAL2_REQUIRED`, `CONFLICT` (last admin).
+Admin lists take `limit`; `cursor` is the last returned item's `id`.
+
+Errors: `UNAUTHENTICATED`, `VALIDATION` (radius 1–25, locale sl/en), `FORBIDDEN`, `AAL2_REQUIRED`, `CONFLICT` (last admin), `NOT_FOUND`, `RATE_LIMITED`.
 
 ## Client (`@zivali/api/auth` + `@zivali/api/me`)
 
@@ -90,3 +94,4 @@ Clients keep report drafts locally (C4 §Drafts, C17). When a signed-out visitor
 | 1.3 | 2026-10-15 | CH-102: `home_point` typed `extensions.geography(Point,4326)` |
 | 1.4 | 2026-10-15 | CH-121: `email_verified` from `auth.users.email_confirmed_at`, never `user_metadata` |
 | 1.5 | 2026-10-15 | CH-129: email copy reference §5 → §3; production redirect allow-list (`https://<APP_URL>/**`, `zivali://**`; `exp://` local/staging only); `secure_password_change = true`; locale reaches auth emails via the Admin API |
+| 1.6 | 2026-10-15 | CH-145: GET /v1/admin/audit-log and /v1/admin/queues, role body {role, note}, AdminUser email_masked + is_anonymous (no banned_at yet), limit/cursor, users query, errors NOT_FOUND and RATE_LIMITED |
