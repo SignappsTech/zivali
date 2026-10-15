@@ -34,6 +34,8 @@ allowBuilds:
 overrides:
   tmp: ^0.2.6
   mysql2: ^3.22.0
+  # GHSA-m9gg-hp2v-232j: firebase (via @react-native-firebase, TASK-7.3) pins an older grpc-js; Firestore is unused.
+  '@grpc/grpc-js': ^1.13.6
 
 # `pnpm audit --audit-level high` (CI) skips these advisories, accepted 2026-10-15 (docs/05 §Security). Each has no
 # fix or its fix is a major bump outside the parent's declared range, and none is reachable with untrusted input.

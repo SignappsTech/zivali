@@ -1,7 +1,6 @@
 // Matching v1 (C8): suggestions between a lost report and a found or sighted report, plus the managers' verdicts.
 // Only the API reads these (ADR-021); reasons hold bands and overlaps, never exact data.
-// lost_report_id and other_report_id get their foreign keys to reports in a follow-up migration once
-// TASK-6.6 (reports) is merged.
+// Both report ids reference reports (ON DELETE CASCADE, TASK-6.16).
 
 enum MATCH_STATE {
   suggested
@@ -15,8 +14,10 @@ enum MATCH_STATE {
 model matches {
   id              String           @id @default(uuid()) @db.Uuid
   lost_report_id  String           @db.Uuid
+  lost_report     reports          @relation("matches_lost", fields: [lost_report_id], references: [id], onDelete: Cascade)
   // The found or sighted side.
   other_report_id String           @db.Uuid
+  other_report    reports          @relation("matches_other", fields: [other_report_id], references: [id], onDelete: Cascade)
   score           Decimal          @db.Decimal(4, 3)
   // 'strong' | 'good' | 'possible' (check constraint in the migration)
   strength        String

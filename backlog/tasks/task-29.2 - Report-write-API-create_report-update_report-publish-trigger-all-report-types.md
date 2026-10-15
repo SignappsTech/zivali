@@ -3,11 +3,11 @@ id: TASK-29.2
 title: >-
   Report write API: POST and PATCH /v1/reports with idempotency, guard hook and
   jobs
-status: To Do
+status: In Progress
 assignee:
   - '@backend-dev'
 created_date: '2026-10-14 22:13'
-updated_date: '2026-10-15 01:54'
+updated_date: '2026-10-15 16:04'
 labels:
   - be
   - 'est:M'
@@ -48,4 +48,5 @@ Branch: agent/task-29.2-report-write-be
 - [ ] #5 Supertest covers every validation, the permission matrix and the queued jobs.
 - [ ] #6 Reward fields are accepted on create and PATCH for lost reports only (found or sighted with a reward → VALIDATION) and reward_note with contact data → VALIDATION issue CONTACT_DATA, per C4; no payment is created.
 - [ ] #7 Locations are coarsened once on the server (coarsenPoint, 20–30 m) after the client's own coarsening; PATCH without a location change keeps the stored point; bodies with points are never logged; Supertest asserts no raw point persisted and a repeated GET returns the same point (C6 §Storage).
+- [ ] #8 Besides creation, alerts.fanout (lost reports) and match.report are queued when a report is released from held to visible and when its location changes (PATCH); both jobs are idempotent, so a re-run is safe (from the TASK-19.1 and TASK-23.1 reviews)
 <!-- AC:END -->

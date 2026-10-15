@@ -2020,6 +2020,99 @@
 				}
 			}
 		},
+		"/v1/alert-subscription": {
+			"get": {
+				"operationId": "getAlertSubscription",
+				"summary": "Own nearby-alert subscription",
+				"description": "The caller’s subscription, or null when there is none. Real accounts only (C10).",
+				"tags": ["alert-subscription"],
+				"responses": {
+					"200": {
+						"description": "The subscription or null",
+						"content": {
+							"application/json": {
+								"schema": {
+									"anyOf": [{ "$ref": "#/components/schemas/AlertSubscription" }, { "type": "null" }]
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "UNAUTHENTICATED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"429": {
+						"description": "RATE_LIMITED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"500": {
+						"description": "INTERNAL",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					}
+				}
+			},
+			"put": {
+				"operationId": "saveAlertSubscription",
+				"summary": "Create or replace the own nearby-alert subscription",
+				"description": "Needs a confirmed email. center is stored coarsened by 20-30 m (C6); sending the stored centre back keeps it. radius_km 1-25; paused keeps the subscription without alerts.",
+				"tags": ["alert-subscription"],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": { "schema": { "$ref": "#/components/schemas/AlertSubscriptionInput" } }
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "The saved subscription",
+						"content": {
+							"application/json": { "schema": { "$ref": "#/components/schemas/AlertSubscription" } }
+						}
+					},
+					"400": {
+						"description": "VALIDATION",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"401": {
+						"description": "UNAUTHENTICATED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"403": {
+						"description": "UNVERIFIED_EMAIL",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"429": {
+						"description": "RATE_LIMITED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"500": {
+						"description": "INTERNAL",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					}
+				}
+			},
+			"delete": {
+				"operationId": "deleteAlertSubscription",
+				"summary": "Delete the own nearby-alert subscription",
+				"description": "Stops all nearby alerts; 204 also when there was none.",
+				"tags": ["alert-subscription"],
+				"responses": {
+					"204": { "description": "Deleted" },
+					"401": {
+						"description": "UNAUTHENTICATED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"429": {
+						"description": "RATE_LIMITED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"500": {
+						"description": "INTERNAL",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					}
+				}
+			}
+		},
 		"/v1/config/public": {
 			"get": {
 				"operationId": "getPublicConfig",
@@ -2030,6 +2123,276 @@
 					"200": {
 						"description": "Public flags by key",
 						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/PublicConfig" } } }
+					},
+					"429": {
+						"description": "RATE_LIMITED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"500": {
+						"description": "INTERNAL",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					}
+				}
+			}
+		},
+		"/v1/conversations": {
+			"post": {
+				"operationId": "createConversation",
+				"summary": "Open a conversation about a report",
+				"description": "Idempotent per report and caller (or per confirmed match). Participants: the caller and the report managers (with a match: the managers of both reports). Anonymous callers must manage a report themselves.",
+				"tags": ["conversations"],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": { "schema": { "$ref": "#/components/schemas/CreateConversationInput" } }
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "Conversation id",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/IdResponse" } } }
+					},
+					"400": {
+						"description": "VALIDATION",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"401": {
+						"description": "UNAUTHENTICATED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"403": {
+						"description": "UNVERIFIED_EMAIL, FORBIDDEN",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"404": {
+						"description": "NOT_FOUND",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"409": {
+						"description": "CONFLICT",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"410": {
+						"description": "GONE",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"429": {
+						"description": "RATE_LIMITED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"500": {
+						"description": "INTERNAL",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					}
+				}
+			},
+			"get": {
+				"operationId": "listConversations",
+				"summary": "Own conversations",
+				"description": "Latest activity first; aliases or chosen display names only, never contact data.",
+				"tags": ["conversations"],
+				"parameters": [
+					{
+						"schema": { "type": "string", "minLength": 1, "maxLength": 500 },
+						"required": false,
+						"name": "cursor",
+						"in": "query"
+					},
+					{
+						"schema": { "type": "integer", "minimum": 1, "maximum": 50 },
+						"required": false,
+						"name": "limit",
+						"in": "query"
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Conversations",
+						"content": {
+							"application/json": { "schema": { "$ref": "#/components/schemas/ConversationList" } }
+						}
+					},
+					"400": {
+						"description": "VALIDATION",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"401": {
+						"description": "UNAUTHENTICATED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"429": {
+						"description": "RATE_LIMITED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"500": {
+						"description": "INTERNAL",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					}
+				}
+			}
+		},
+		"/v1/conversations/{id}/messages": {
+			"get": {
+				"operationId": "listMessages",
+				"summary": "Messages of a conversation",
+				"description": "Oldest-first in every mode. `after` (exclusive, forward: catch-up after reconnect) or `before` (exclusive, backward); neither returns the latest `limit`. `next_cursor` goes into the same parameter, null at the end.",
+				"tags": ["conversations"],
+				"parameters": [
+					{ "schema": { "type": "string", "format": "uuid" }, "required": true, "name": "id", "in": "path" },
+					{
+						"schema": { "type": "string", "format": "uuid" },
+						"required": false,
+						"name": "after",
+						"in": "query"
+					},
+					{
+						"schema": { "type": "string", "format": "uuid" },
+						"required": false,
+						"name": "before",
+						"in": "query"
+					},
+					{
+						"schema": { "type": "integer", "minimum": 1, "maximum": 50 },
+						"required": false,
+						"name": "limit",
+						"in": "query"
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Messages",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/MessageList" } } }
+					},
+					"400": {
+						"description": "VALIDATION",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"401": {
+						"description": "UNAUTHENTICATED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"403": {
+						"description": "FORBIDDEN",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"429": {
+						"description": "RATE_LIMITED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"500": {
+						"description": "INTERNAL",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					}
+				}
+			},
+			"post": {
+				"operationId": "sendMessage",
+				"summary": "Send a message",
+				"description": "Broadcast as message.created on conversation:<id>. Location messages only from a manager of the related report. Optional Idempotency-Key.",
+				"tags": ["conversations"],
+				"parameters": [
+					{ "schema": { "type": "string", "format": "uuid" }, "required": true, "name": "id", "in": "path" }
+				],
+				"requestBody": {
+					"required": true,
+					"content": { "application/json": { "schema": { "$ref": "#/components/schemas/SendMessageInput" } } }
+				},
+				"responses": {
+					"201": {
+						"description": "The stored message",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/Message" } } }
+					},
+					"400": {
+						"description": "VALIDATION",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"401": {
+						"description": "UNAUTHENTICATED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"403": {
+						"description": "FORBIDDEN",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"409": {
+						"description": "CONFLICT",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"410": {
+						"description": "GONE",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"429": {
+						"description": "RATE_LIMITED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"500": {
+						"description": "INTERNAL",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					}
+				}
+			}
+		},
+		"/v1/conversations/{id}/read": {
+			"post": {
+				"operationId": "markConversationRead",
+				"summary": "Mark a conversation read",
+				"description": "Broadcasts conversation.read on conversation:<id>.",
+				"tags": ["conversations"],
+				"parameters": [
+					{ "schema": { "type": "string", "format": "uuid" }, "required": true, "name": "id", "in": "path" }
+				],
+				"responses": {
+					"204": { "description": "Marked read" },
+					"400": {
+						"description": "VALIDATION",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"401": {
+						"description": "UNAUTHENTICATED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"403": {
+						"description": "FORBIDDEN",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"429": {
+						"description": "RATE_LIMITED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"500": {
+						"description": "INTERNAL",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					}
+				}
+			}
+		},
+		"/v1/conversations/{id}/block": {
+			"post": {
+				"operationId": "blockParticipant",
+				"summary": "Block another participant",
+				"description": "Their further messages to you are refused.",
+				"tags": ["conversations"],
+				"parameters": [
+					{ "schema": { "type": "string", "format": "uuid" }, "required": true, "name": "id", "in": "path" }
+				],
+				"requestBody": {
+					"required": true,
+					"content": { "application/json": { "schema": { "$ref": "#/components/schemas/BlockInput" } } }
+				},
+				"responses": {
+					"204": { "description": "Blocked" },
+					"400": {
+						"description": "VALIDATION",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"401": {
+						"description": "UNAUTHENTICATED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"403": {
+						"description": "FORBIDDEN",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
 					},
 					"429": {
 						"description": "RATE_LIMITED",

@@ -149,6 +149,18 @@ export function ShellDialog(props: ComponentProps<'dialog'>) {
 	);
 }
 
+/** Footer "Cookie settings": reopens the P17 consent banner in its Customise view (withdrawal as easy as giving). */
+export function CookieSettingsButton(props: ComponentProps<'button'>) {
+	return (
+		<button
+			type="button"
+			aria-haspopup="dialog"
+			{...props}
+			onClick={() => window.dispatchEvent(new Event('zz:cookie-settings'))}
+		/>
+	);
+}
+
 /**
  * Signs out on this device: GoTrue revokes this session on the server (`/logout`, scope local) and supabase-js
  * deletes the session cookies, so the server pages see a visitor; then home loads afresh, so no state of the
