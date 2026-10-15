@@ -23,6 +23,6 @@ CH-89: web#typecheck and web#build both write .next/types in parallel, so pnpm v
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 web#typecheck dependsOn web#build, or typecheck uses next typegen into its own dir
-- [ ] #2 pnpm verify passes 3 times in a row
+- [x] #1 web#typecheck dependsOn web#build, or typecheck uses next typegen into its own dir (turbo.json: `web#typecheck` dependsOn `["^build", "web#build"]`; dry-run graph confirms)
+- [x] #2 pnpm verify passes 3 times in a row (3 runs in this worktree, all exit 0: 30/30 successful; runs 1 and 2 had web#typecheck re-executed after web#build, run 3 a full cache replay)
 <!-- AC:END -->
