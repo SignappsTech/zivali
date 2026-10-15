@@ -132,6 +132,7 @@
 				"type": "object",
 				"properties": {
 					"id": { "type": "string", "format": "uuid" },
+					"reporter_id": { "type": "string", "format": "uuid" },
 					"target_type": { "$ref": "#/components/schemas/AbuseTargetType" },
 					"target_id": { "type": "string", "format": "uuid" },
 					"reason": { "$ref": "#/components/schemas/AbuseReason" },
@@ -140,7 +141,17 @@
 					"status": { "$ref": "#/components/schemas/AbuseStatus" },
 					"created_at": { "type": "string", "format": "date-time" }
 				},
-				"required": ["id", "target_type", "target_id", "reason", "note", "weight", "status", "created_at"]
+				"required": [
+					"id",
+					"reporter_id",
+					"target_type",
+					"target_id",
+					"reason",
+					"note",
+					"weight",
+					"status",
+					"created_at"
+				]
 			},
 			"AdminAbuseReportList": {
 				"type": "object",
@@ -1811,6 +1822,52 @@
 		"parameters": {}
 	},
 	"paths": {
+		"/v1/abuse-reports": {
+			"post": {
+				"operationId": "reportAbuse",
+				"summary": "Report a listing, a message or a profile",
+				"description": "Signed-in and anonymous users (anonymous visitors sign in anonymously with captcha first). Messages only by a participant of the conversation. A repeat by the same reporter returns the first report (200, duplicate: true). Reports from accounts younger than 24 h weigh 0.5; enough open weight hides a listing.",
+				"tags": ["abuse-reports"],
+				"requestBody": {
+					"required": true,
+					"content": { "application/json": { "schema": { "$ref": "#/components/schemas/AbuseReportInput" } } }
+				},
+				"responses": {
+					"200": {
+						"description": "Already reported by the caller",
+						"content": {
+							"application/json": { "schema": { "$ref": "#/components/schemas/AbuseReportResponse" } }
+						}
+					},
+					"201": {
+						"description": "Reported",
+						"content": {
+							"application/json": { "schema": { "$ref": "#/components/schemas/AbuseReportResponse" } }
+						}
+					},
+					"400": {
+						"description": "VALIDATION",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"401": {
+						"description": "UNAUTHENTICATED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"403": {
+						"description": "FORBIDDEN",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"429": {
+						"description": "RATE_LIMITED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"500": {
+						"description": "INTERNAL",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					}
+				}
+			}
+		},
 		"/v1/admin/users": {
 			"get": {
 				"operationId": "listAdminUsers",
@@ -2000,6 +2057,118 @@
 					"200": {
 						"description": "Queue state",
 						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/AdminQueues" } } }
+					},
+					"401": {
+						"description": "UNAUTHENTICATED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"403": {
+						"description": "FORBIDDEN, AAL2_REQUIRED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"429": {
+						"description": "RATE_LIMITED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"500": {
+						"description": "INTERNAL",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					}
+				}
+			}
+		},
+		"/v1/admin/abuse-reports": {
+			"get": {
+				"operationId": "listAdminAbuseReports",
+				"summary": "Abuse reports",
+				"description": "Moderators and admins (aal2). Newest first, filtered by status and target type; the reporter as an id only (C11). Audited.",
+				"tags": ["admin"],
+				"parameters": [
+					{
+						"schema": { "$ref": "#/components/schemas/AbuseStatus" },
+						"required": false,
+						"name": "status",
+						"in": "query"
+					},
+					{
+						"schema": { "$ref": "#/components/schemas/AbuseTargetType" },
+						"required": false,
+						"name": "target_type",
+						"in": "query"
+					},
+					{
+						"schema": { "type": "string", "format": "uuid" },
+						"required": false,
+						"name": "cursor",
+						"in": "query"
+					},
+					{
+						"schema": { "type": "integer", "minimum": 1, "maximum": 50 },
+						"required": false,
+						"name": "limit",
+						"in": "query"
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "One page of abuse reports",
+						"content": {
+							"application/json": { "schema": { "$ref": "#/components/schemas/AdminAbuseReportList" } }
+						}
+					},
+					"400": {
+						"description": "VALIDATION",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"401": {
+						"description": "UNAUTHENTICATED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"403": {
+						"description": "FORBIDDEN, AAL2_REQUIRED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"429": {
+						"description": "RATE_LIMITED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"500": {
+						"description": "INTERNAL",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					}
+				}
+			}
+		},
+		"/v1/admin/moderation-flags": {
+			"get": {
+				"operationId": "listModerationFlags",
+				"summary": "Moderation flags",
+				"description": "Moderators and admins (aal2). Duplicate chips, anonymous holds and auto-hidden listings, newest first (C11). Audited.",
+				"tags": ["admin"],
+				"parameters": [
+					{
+						"schema": { "type": "string", "format": "uuid" },
+						"required": false,
+						"name": "cursor",
+						"in": "query"
+					},
+					{
+						"schema": { "type": "integer", "minimum": 1, "maximum": 50 },
+						"required": false,
+						"name": "limit",
+						"in": "query"
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "One page of moderation flags",
+						"content": {
+							"application/json": { "schema": { "$ref": "#/components/schemas/ModerationFlagList" } }
+						}
+					},
+					"400": {
+						"description": "VALIDATION",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
 					},
 					"401": {
 						"description": "UNAUTHENTICATED",
