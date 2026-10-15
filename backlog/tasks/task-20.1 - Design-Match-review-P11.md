@@ -1,11 +1,11 @@
 ---
 id: TASK-20.1
 title: 'Design: Match review (P11)'
-status: To Do
+status: In Progress
 assignee:
   - '@ui-designer'
 created_date: '2026-10-14 21:50'
-updated_date: '2026-10-14 21:51'
+updated_date: '2026-10-15 21:52'
 labels:
   - design
   - 'est:M'
@@ -32,6 +32,7 @@ Confirming a match is the emotional peak, so it must be honest, readable and cal
 ## Packet
 Unblocks on: P1 web shell and P2 mobile shell mockups merged (header, footer, tab bar and sheet patterns); assets/empty-no-reports.png generated
 Branch: design/P11-match-review
+Branch: agent/TASK-20.1-match-review
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Acceptance Criteria
