@@ -61,10 +61,12 @@ export function authError(error: AuthError): ApiError {
 	return new ApiError(code, error.message, { details: { auth_code: error.code }, cause: error });
 }
 
-async function run<T>(result: Promise<{ data: T; error: AuthError | null }>): Promise<NonNullable<T>> {
+/** supabase-js results are `{ data, error: null } | { data: null…, error }`: returns the success `data` or throws. */
+type Success<R> = Extract<R, { error: null }> extends { data: infer D } ? D : never;
+async function run<R extends { data: unknown; error: AuthError | null }>(result: Promise<R>): Promise<Success<R>> {
 	const { data, error } = await result;
 	if (error) throw authError(error);
-	return data as NonNullable<T>;
+	return data as Success<R>;
 }
 
 type Redirect = { redirectTo?: string };
@@ -100,11 +102,13 @@ export const requestPasswordReset = (email: string, options: Redirect & { captch
  * even if it fails; its error is rethrown afterwards. The API cache is cleared by configureAuth.
  */
 export async function signOut(cleanup?: () => Promise<unknown>): Promise<void> {
-	try {
-		await cleanup?.();
-	} finally {
-		await run(auth().signOut());
-	}
+	const failed = await cleanup?.().then(
+		() => undefined,
+		(error: unknown) => ({ error })
+	);
+	const { error } = await auth().signOut();
+	if (error) throw authError(error);
+	if (failed) throw failed.error;
 }
 
 export const mfa = {
