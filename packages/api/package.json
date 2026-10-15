@@ -1,0 +1,21 @@
+{
+	"name": "@zivali/api",
+	"version": "0.0.0",
+	"private": true,
+	"description": "Typed fetch client for the REST API (contract C1): headers, ApiError, query helpers, mock and fixtures",
+	"type": "module",
+	"exports": {
+		"./*": "./src/*.ts"
+	},
+	"scripts": {
+		"lint": "eslint --max-warnings=0 .",
+		"typecheck": "tsc",
+		"test": "node --test \"test/*.test.ts\""
+	},
+	"devDependencies": {
+		"@types/node": "^22.19.0"
+	},
+	"engines": {
+		"node": ">=22"
+	}
+}
