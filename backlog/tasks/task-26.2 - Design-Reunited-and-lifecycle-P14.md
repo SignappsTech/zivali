@@ -1,11 +1,11 @@
 ---
 id: TASK-26.2
 title: 'Design: Reunited and lifecycle (P14)'
-status: In Progress
+status: Done
 assignee:
   - '@ui-designer'
 created_date: '2026-10-14 21:50'
-updated_date: '2026-10-15 22:11'
+updated_date: '2026-10-15 22:55'
 labels:
   - design
   - 'est:S'
