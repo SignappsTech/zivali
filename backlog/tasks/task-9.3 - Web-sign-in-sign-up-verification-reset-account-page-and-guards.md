@@ -1,11 +1,11 @@
 ---
 id: TASK-9.3
 title: 'Web sign-in, sign-up, verification, reset, account page and guards'
-status: In Progress
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:12'
-updated_date: '2026-10-15 16:04'
+updated_date: '2026-10-15 18:27'
 labels:
   - fe
   - 'est:M'
