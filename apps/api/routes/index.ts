@@ -2,6 +2,7 @@
 import { Router } from 'express';
 
 import adminRoutes from './admin.routes.ts';
+import alertSubscriptionRoutes from './alert-subscription.routes.ts';
 import configRoutes from './config.routes.ts';
 import geoRoutes from './geo.routes.ts';
 import healthRoutes from './health.routes.ts';
@@ -16,5 +17,6 @@ router.use('/me', meRoutes);
 router.use('/admin', adminRoutes);
 router.use('/shelters', sheltersRoutes);
 router.use('/geo', geoRoutes);
+router.use('/alert-subscription', alertSubscriptionRoutes);
 
 export default router;
