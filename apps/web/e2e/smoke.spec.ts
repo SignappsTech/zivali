@@ -3,9 +3,6 @@ import { expect, test } from '@playwright/test';
 import en from '@zivali/i18n/dist/en.json' with { type: 'json' };
 import sl from '@zivali/i18n/dist/sl.json' with { type: 'json' };
 
-const hreflang =
-	'<http://localhost:3000/>; rel="alternate"; hreflang="sl", <http://localhost:3000/en>; rel="alternate"; hreflang="en", <http://localhost:3000/>; rel="alternate"; hreflang="x-default"';
-
 for (const { path, lang, messages } of [
 	{ path: '/', lang: 'sl', messages: sl },
 	{ path: '/en', lang: 'en', messages: en },
@@ -23,7 +20,11 @@ for (const { path, lang, messages } of [
 			/(?:^|; )script-src 'self' 'nonce-[^']+' 'strict-dynamic'(?:;|$)/
 		);
 		expect(response?.headers()['x-content-type-options']).toBe('nosniff');
-		expect(response?.headers()['link']).toBe(hreflang);
+		// hreflang alternates (C15) from the proxy; Next.js appends its font preloads to the same Link header.
+		const origin = new URL(page.url()).origin;
+		expect(response?.headers()['link']).toContain(
+			`<${origin}/>; rel="alternate"; hreflang="sl", <${origin}/en>; rel="alternate"; hreflang="en", <${origin}/>; rel="alternate"; hreflang="x-default"`
+		);
 		await expect(page.locator('html')).toHaveAttribute('lang', lang);
 		await expect(page.getByRole('heading', { level: 1 })).toHaveText(messages.pages.home.hero_title);
 		expect(errors).toEqual([]);

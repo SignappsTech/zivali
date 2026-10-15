@@ -7,7 +7,7 @@ status: In Progress
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:12'
-updated_date: '2026-10-15 03:32'
+updated_date: '2026-10-15 04:08'
 labels:
   - fe
   - 'est:S'
@@ -41,7 +41,7 @@ Branch: agent/task-10.2-i18n-web
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 next-intl loads the @zivali/i18n catalogues and the pathnames table from C15 (SL unprefixed, EN under /en); every public page emits hreflang alternates.
-- [ ] #2 useLocaleSwitch() moves to the same page in the other language and persists NEXT_LOCALE; for signed-in users the profile locale is updated and wins after sign-in.
-- [ ] #3 Pages format dates, numbers and EUR through @zivali/i18n/format; a test renders the SL dual plural on a page.
+- [x] #1 next-intl loads the @zivali/i18n catalogues and the pathnames table from C15 (SL unprefixed, EN under /en); every public page emits hreflang alternates.
+- [x] #2 useLocaleSwitch() moves to the same page in the other language and persists NEXT_LOCALE; for signed-in users the profile locale is updated and wins after sign-in.
+- [x] #3 Pages format dates, numbers and EUR through @zivali/i18n/format; a test renders the SL dual plural on a page.
 <!-- AC:END -->
