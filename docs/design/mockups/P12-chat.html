@@ -1,0 +1,221 @@
+<!doctype html>
+<!--
+  P12 Chat mockup (TASK-21.1). Built from docs/design/mockups/_template.html.
+  Sources: docs/design/pages/P12-chat.md, docs/design/system.md, docs/content/pages/P12-chat.md (v0.1, SL; native review pending).
+  Sample (not in the content slice): message bodies, times, pet names, "Prekliči". Illustration is a labelled placeholder (assets/empty-inbox.png, TASK-22.1).
+  Everything in #src is cloned once per colour mode by ../directions/directions.js.
+-->
+<html lang="sl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Najdimo mockup: P12 Chat</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:wght@400;500;600;700&family=Bricolage+Grotesque:opsz,wght@12..96,500..800&display=swap" rel="stylesheet">
+<link href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css" rel="stylesheet">
+<link href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/bold/style.css" rel="stylesheet">
+<link href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css" rel="stylesheet">
+<link href="../tokens.css" rel="stylesheet">
+<link href="../directions/directions.css" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com/3.4.17"></script>
+<script src="../directions/tailwind-config.js"></script>
+<style>
+.scope h1,.scope h2,.scope h3{text-wrap:balance}
+.logo-link{display:inline-flex;align-items:center;gap:8px;min-height:44px;border-radius:12px;color:hsl(var(--foreground));text-decoration:none;flex:none}
+.nl{display:inline-flex;align-items:center;min-height:44px;padding:0 12px;border-radius:999px;font-weight:600;font-size:16px;line-height:24px;color:hsl(var(--muted-foreground));text-decoration:none;white-space:nowrap}
+.nl:hover{background:hsl(var(--foreground)/.1);color:hsl(var(--foreground))}
+.lang{display:flex;align-items:center;gap:2px;color:hsl(var(--muted-foreground))}.ll{display:inline-flex;align-items:center;min-height:44px;padding:0 8px;font-weight:700;font-size:14px;color:hsl(var(--muted-foreground));text-decoration:none}.ll[aria-current]{color:hsl(var(--foreground))}
+.avatar{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;background:hsl(var(--secondary));color:hsl(var(--secondary-foreground));font-size:14px;font-weight:700}
+.iconbtn.is-open{background-color:hsl(var(--foreground)/.1)}
+.iconbtn[aria-current="page"]{color:hsl(var(--primary))}
+.thread{flex:1;min-height:0;display:flex;flex-direction:column}
+.safety{flex:none;display:flex;align-items:center;gap:8px;min-height:48px;padding:0 6px 0 16px;background:hsl(var(--secondary));color:hsl(var(--secondary-foreground));font-size:14px;line-height:20px;font-weight:600}
+.safety>i{font-size:20px;flex:none;color:hsl(var(--primary))}.safety .tx{flex:1;min-width:0;margin:0;white-space:nowrap}
+.safety a{display:inline-flex;align-items:center;min-height:44px;padding:0 8px;font-weight:700;color:hsl(var(--secondary-foreground));text-decoration:underline;text-underline-offset:3px;border-radius:12px;flex:none}
+.safety a:hover{background:hsl(var(--foreground)/.1)}
+.msgs{flex:1;min-height:0;overflow:hidden;display:flex;flex-direction:column;gap:6px;padding:12px 16px;justify-content:flex-end}
+.g{display:flex;flex-direction:column;align-items:flex-start;align-self:flex-start;gap:4px;max-width:80%}.g.own{align-items:flex-end;align-self:flex-end}
+.mb{margin:0;padding:10px 16px;border-radius:20px 20px 20px 6px;background:hsl(var(--card));color:hsl(var(--card-foreground));font-size:16px;line-height:24px;overflow-wrap:anywhere}.mb p{margin:0}
+.mb-own{border-radius:20px 20px 6px 20px;background:hsl(var(--primary));color:hsl(var(--primary-foreground))}
+.mb-fail{border-radius:20px 20px 6px 20px;background:hsl(var(--muted));color:hsl(var(--foreground))}
+.mt{margin:0;font-size:13px;line-height:16px;color:hsl(var(--muted-foreground));display:inline-flex;align-items:center;gap:5px}.mt i{font-size:14px}
+.st-ok i{color:hsl(var(--primary))}
+.sys,.day{margin:10px auto;text-align:center;font-size:14px;line-height:20px;color:hsl(var(--muted-foreground));max-width:85%}.day{margin:6px auto;font-weight:700}
+.caut{margin:0;display:flex;gap:6px;font-size:13px;line-height:18px;color:hsl(var(--muted-foreground))}.caut i{font-size:15px;margin-top:1px;flex:none}
+.fl{margin:0;display:flex;align-items:center;gap:4px;font-size:14px;line-height:20px;color:hsl(var(--foreground))}.fl i{font-size:18px;color:hsl(var(--destructive))}.fl .btn{padding:0 8px;min-height:44px}
+.fold{display:flex;align-items:center;gap:10px;padding:10px 16px;border-radius:20px;background:hsl(var(--muted));font-size:15px;line-height:22px}.fold p{margin:0}.fold i{font-size:18px;color:hsl(var(--muted-foreground))}
+.older{margin:0 auto 4px;display:flex;align-items:center;gap:8px;font-size:14px;line-height:20px;color:hsl(var(--muted-foreground))}
+.spin-sm{width:12px;height:12px;border-width:2px}
+.empty-prompt{margin:8px 0 0;display:flex;gap:10px;font-size:16px;line-height:24px}.empty-prompt i{font-size:22px;flex:none;color:hsl(var(--primary));margin-top:1px}
+.comp{flex:none;padding:8px 12px 34px 16px;background:hsl(var(--background))}
+.comp .input{min-height:48px;font-size:17px;line-height:24px;resize:none;padding:11px 2px 9px;display:block}
+.comp-near{padding-top:4px}
+.cnt{margin:0 60px 0 0;text-align:right;font-size:13px;line-height:16px;color:hsl(var(--muted-foreground))}
+.send{flex:none;width:48px;height:48px;border-radius:50%;border:0;background:hsl(var(--primary));color:hsl(var(--primary-foreground));display:grid;place-items:center;cursor:pointer}
+.send i{font-size:22px}.send:hover:not(:disabled){background:hsl(var(--primary-hover))}.send.is-focus{outline:3px solid hsl(var(--ring));outline-offset:2px}
+.send:disabled{background:hsl(var(--muted));color:hsl(var(--muted-foreground));cursor:not-allowed}
+.comp-dis .input{border-bottom-style:dashed}
+.strip{background:hsl(var(--background));border-radius:20px;padding-top:12px;overflow:hidden;outline:1px dashed hsl(var(--input))}
+.strip .comp{padding-bottom:16px}
+ul.grid{grid-template-columns:minmax(0,1fr)}
+.crow{display:flex;align-items:center;gap:16px;min-height:80px;padding:8px 12px;border-radius:var(--radius-row);color:inherit;text-decoration:none}
+.crow .thumb{width:64px;height:64px;border-radius:var(--radius-row);flex:none}
+.crow:hover,.crow.is-hover{background:hsl(var(--foreground)/.1)}
+.crow.is-sel{background:hsl(var(--secondary))}
+.rn{display:block;font-size:18px;line-height:24px;font-family:var(--font-display);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rs{display:flex;align-items:center;gap:5px;font-size:14px;line-height:20px;font-weight:700;color:hsl(var(--muted-foreground))}.rs i{font-size:16px}
+.rl{display:block;font-size:15px;line-height:22px;color:hsl(var(--muted-foreground));white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rt{display:flex;flex-direction:column;align-items:flex-end;gap:8px;align-self:flex-start;padding-top:6px;font-size:13px;line-height:16px;color:hsl(var(--muted-foreground));flex:none}
+.dot{width:10px;height:10px;border-radius:50%;background:hsl(var(--primary))}
+.ph-art{width:280px;aspect-ratio:32/21;border-radius:var(--radius-card);background:hsl(var(--accent));color:hsl(var(--accent-foreground));display:grid;place-items:center;text-align:center;font-size:13px;line-height:18px;font-weight:700;outline:2px dashed hsl(var(--input));outline-offset:-8px}
+.av i{font-size:18px}
+.wpanes{display:grid;grid-template-columns:360px minmax(0,1fr);gap:24px;padding:0 48px 48px;height:760px;box-sizing:border-box}
+.wlist{min-height:0;overflow:hidden}
+.wthread{min-width:0;min-height:0;display:flex;flex-direction:column;position:relative}
+.wtop{display:flex;align-items:center;gap:12px;padding:8px 8px 8px 16px;min-height:60px;position:relative}
+.wmenu{position:absolute;right:8px;top:56px;width:240px;padding:8px;border-radius:16px}
+.wlog{padding:16px 24px}.wlog .g{max-width:62%}
+.wthread .comp{padding:8px 16px 16px 16px}
+.wthread .safety{border-radius:16px}
+</style>
+</head>
+<body>
+<a class="sr-only focus:not-sr-only" href="#stage">Skip to content</a>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <symbol id="nj-mark" viewBox="0 0 48 48">
+    <g fill="currentColor" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round">
+      <path d="M24 45.5 C24 45.5 10.5 33.2 10.5 24.4 A13.5 13.5 0 0 1 37.5 24.4 C37.5 33.2 24 45.5 24 45.5 Z M24 17.9 A6.5 6.5 0 1 0 24 30.9 A6.5 6.5 0 1 0 24 17.9 Z"/>
+      <path d="M12.2 19.6 L11.2 5 L22.6 11.4 Z"/><path d="M35.8 19.6 L25.4 11.4 L36.8 5 Z"/>
+    </g>
+    <circle cx="24" cy="24.4" r="3.6" fill="#F7B32B"/>
+  </symbol>
+</svg>
+<header class="chrome">
+  <div class="flex flex-wrap items-center gap-x-5 gap-y-2 px-6 py-2 max-w-[1400px] mx-auto">
+    <span class="flex items-center gap-2 font-display font-bold text-lg"><svg class="logo-mark w-7 h-7" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg>Najdimo</span>
+    <span class="text-muted-foreground text-[15px]">P12 Chat (mockup)</span>
+    <div class="ml-auto flex items-center gap-2" role="group" aria-label="Colour mode">
+      <button class="mode-btn" data-mode="light" aria-pressed="true">Light</button>
+      <button class="mode-btn" data-mode="dark" aria-pressed="false">Dark</button>
+      <button class="mode-btn" data-mode="both" aria-pressed="false">Side by side</button>
+    </div>
+  </div>
+</header>
+<main id="stage"></main>
+<div id="src" hidden>
+<section class="tile-section !max-w-[1400px]">
+  <h1 class="tile-title">P12 Chat</h1>
+  <p class="tile-lede">Inbox list and thread for owner and finder: persistent safety banner, plain-text links with a caution line, centred system messages, and every state (empty, sending, failed, offline, read-only, blocked, anonymous, reported). No ads, no payment prompts. Slovenian copy from the content slice.</p>
+  <div class="wrap-x"><div class="flex flex-wrap gap-x-10 gap-y-14 items-start">
+
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">M1 · Inbox, Conversations view (two unread)</figcaption>
+      <div class="phone"><div class="phone-screen" lang="sl"><div class="statusbar" aria-hidden="true"><span>14:20</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+  <div class="flex-1 min-h-0 flex flex-col"><div class="px-5 pt-3"><h1 class="font-display font-bold text-[30px] leading-9 tracking-[-0.02em]">Sporočila</h1><div class="mt-4"><div class="seg" role="tablist" aria-label="Sporočila"><button role="tab" aria-selected="true">Pogovori</button><button role="tab" aria-selected="false">Obvestila</button></div></div></div>
+  <div class="px-3 pt-4 flex-1 min-h-0 overflow-hidden" role="tabpanel" aria-label="Pogovori"><ul class="grid gap-1 list-none p-0 m-0"><li><a href="#" class="crow "><img class="thumb" src="../directions/img/dog-aussie.jpg" alt="" width="64" height="64"><span class="flex-1 min-w-0"><span class="rn font-bold">Maks<span class="sr-only">, neprebrano</span></span><span class="rs"><i class="ph-fill ph-seal-check" aria-hidden="true"></i>Ujemanje potrjeno</span><span class="rl">Lahko se dobiva jutri ob osmih pri parku?</span></span><span class="rt"><time class="tnum">14:02</time><span class="dot" aria-hidden="true"></span></span></a></li><li><a href="#" class="crow "><img class="thumb" src="../directions/img/cat-tabby.jpg" alt="" width="64" height="64"><span class="flex-1 min-w-0"><span class="rn font-bold">Najdena žival<span class="sr-only">, neprebrano</span></span><span class="rs"><i class="ph-fill ph-seal-check" aria-hidden="true"></i>Ujemanje potrjeno</span><span class="rl">Hvala, pošljem še eno fotografijo.</span></span><span class="rt"><time class="tnum">12:40</time><span class="dot" aria-hidden="true"></span></span></a></li><li><a href="#" class="crow "><img class="thumb" src="../directions/img/cat-siamese.jpg" alt="" width="64" height="64"><span class="flex-1 min-w-0"><span class="rn font-semibold">Mici</span><span class="rs"><i class="ph-fill ph-house-line" aria-hidden="true"></i>Spet doma</span><span class="rl">Žival je spet doma. Hvala za pomoč.</span></span><span class="rt"><time class="tnum">Včeraj</time></span></a></li><li><a href="#" class="crow "><img class="thumb" src="../directions/img/dog-golden.jpg" alt="" width="64" height="64"><span class="flex-1 min-w-0"><span class="rn font-semibold">Izgubljena žival</span><span class="rs"><i class="ph-fill ph-lock-simple" aria-hidden="true"></i>Prijava zaključena</span><span class="rl">Prijava je zaključena.</span></span><span class="rt"><time class="tnum">12. 10.</time></span></a></li></ul></div></div><nav class="bottomnav" aria-label="Glavna navigacija">
+  <a href="#"><i class="ph ph-map-trifold" aria-hidden="true"></i>Zemljevid</a>
+  <a href="#" aria-current="page"><i class="ph-fill ph-chat-circle" aria-hidden="true"></i>Sporočila</a>
+  <a href="#" class="go" role="button" aria-haspopup="dialog" aria-label="Prijavi žival"><span class="act" aria-hidden="true"><i class="ph-bold ph-plus"></i></span>Prijavi</a>
+  <a href="#"><i class="ph ph-user-circle" aria-hidden="true"></i>Profil</a></nav><span class="home-ind"></span></div></div>
+      <p class="help mt-4" style="max-width:412px">Row 80 px, no dividers: photo 64 (radius-row), name 18 (bold when unread), status icon + word, last line one line muted, time right, 10 px <code>primary</code> dot under the time. Hover/pressed: 10 % foreground overlay. Same segment control as Notifications (P13).</p>
+    </figure>
+
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">M2 · Inbox, empty</figcaption>
+      <div class="phone"><div class="phone-screen" lang="sl"><div class="statusbar" aria-hidden="true"><span>14:20</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+  <div class="flex-1 min-h-0 flex flex-col"><div class="px-5 pt-3"><h1 class="font-display font-bold text-[30px] leading-9 tracking-[-0.02em]">Sporočila</h1><div class="mt-4"><div class="seg" role="tablist" aria-label="Sporočila"><button role="tab" aria-selected="true">Pogovori</button><button role="tab" aria-selected="false">Obvestila</button></div></div></div>
+  <div class="flex-1 flex flex-col items-center justify-center px-8 text-center" role="tabpanel" aria-label="Pogovori">
+    <div class="ph-art" aria-hidden="true"><span>PLACEHOLDER<br>assets/empty-inbox.png<br>32 : 21</span></div>
+    <h2 class="font-display font-bold text-[24px] leading-[30px] tracking-[-0.015em] mt-6">Pogovorov še ni</h2>
+    <p class="text-lg leading-7 mt-2">Pogovor se začne, ko potrdite ujemanje ali nekomu pišete pri prijavi.</p></div></div><nav class="bottomnav" aria-label="Glavna navigacija">
+  <a href="#"><i class="ph ph-map-trifold" aria-hidden="true"></i>Zemljevid</a>
+  <a href="#" aria-current="page"><i class="ph-fill ph-chat-circle" aria-hidden="true"></i>Sporočila</a>
+  <a href="#" class="go" role="button" aria-haspopup="dialog" aria-label="Prijavi žival"><span class="act" aria-hidden="true"><i class="ph-bold ph-plus"></i></span>Prijavi</a>
+  <a href="#"><i class="ph ph-user-circle" aria-hidden="true"></i>Profil</a></nav><span class="home-ind"></span></div></div>
+      <p class="help mt-4" style="max-width:412px">Spot illustration 280 px wide at 32:21 (placeholder until TASK-22.1), h2 24/30, one sentence 18/28. No button: chats start from a match or a listing.</p>
+    </figure>
+
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">M3 · Thread after a confirmed match: own, other, link, system, sent, sending, loading older</figcaption>
+      <div class="phone"><div class="phone-screen" lang="sl"><div class="statusbar" aria-hidden="true"><span>14:20</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div><div class="thread"><div class="topbar" style="gap:4px"><a href="#" class="iconbtn" aria-label="Nazaj"><i class="ph-bold ph-caret-left" aria-hidden="true"></i></a><img class="thumb av av-32" src="../directions/img/dog-aussie.jpg" alt="" width="32" height="32"><div class="flex-1 min-w-0 ml-1"><h1 class="font-display font-bold text-[18px] leading-6 truncate">Maks</h1><p class="rs !mt-0"><i class="ph-fill ph-seal-check" aria-hidden="true"></i>Ujemanje potrjeno</p></div><button class="iconbtn" aria-label="Možnosti pogovora" aria-haspopup="menu" aria-expanded="false"><i class="ph-bold ph-dots-three-vertical" aria-hidden="true"></i></button></div><aside class="safety" aria-label="Varnost"><i class="ph-fill ph-shield-check" aria-hidden="true"></i><p class="tx">Nikoli ne pošiljajte denarja vnaprej.</p><a href="#">Nasveti</a></aside><div class="msgs" role="log" aria-live="polite" aria-label="Sporočila"><p class="older" role="status"><span class="spin" aria-hidden="true"></span>Nalagamo starejša sporočila …</p><p class="sys">Ujemanje je potrjeno. Pogovor je odprt.</p><p class="day">Danes</p><div class="g"><article class="mb" aria-label="Oseba, ki je žival našla, 13:58: Pozdravljeni, mislim, da imam vašega psa. Je na levem ušesu bela lisa?"><p>Pozdravljeni, mislim, da imam vašega psa. Je na levem ušesu bela lisa?</p></article><time class="mt tnum">13:58</time></div><div class="g own"><article class="mb mb-own" aria-label="Vi, 14:00: Ja, to je on! Hvala, da ste se oglasili."><p>Ja, to je on! Hvala, da ste se oglasili.</p></article><time class="mt tnum">14:00</time></div><div class="g"><article class="mb" aria-label="Oseba, ki je žival našla, 14:02: Kraj, kjer sem ga našel: https://example.org/maks"><p>Kraj, kjer sem ga našel: https://example.org/maks</p></article><p class="caut"><i class="ph-bold ph-warning" aria-hidden="true"></i>Pri povezavah bodite previdni.</p><time class="mt tnum">14:02</time></div><div class="g own"><article class="mb mb-own" aria-label="Vi, 14:03: Super, prihajam."><p>Super, prihajam.</p></article><p class="mt st-ok"><i class="ph-bold ph-check" aria-hidden="true"></i>Poslano</p></div><div class="g own"><article class="mb mb-own" aria-label="Vi, 14:04: Sem pri parku čez 10 minut."><p>Sem pri parku čez 10 minut.</p></article><p class="mt"><span class="spin spin-sm" aria-hidden="true"></span>Pošiljanje …</p></div></div><form class="comp" onsubmit="return false"><div class="flex items-end gap-2"><div class="field flex-1 min-w-0"><label class="sr-only" for="c3">Sporočilo</label><textarea id="c3" class="input is-focus" rows="1" placeholder="Napišite sporočilo …"></textarea></div><button class="send" type="submit" aria-label="Pošlji" disabled><i class="ph-fill ph-paper-plane-tilt" aria-hidden="true"></i></button></div></form></div><span class="home-ind"></span></div></div>
+      <p class="help mt-4" style="max-width:412px">Banner pinned, 48 px, one line: shield, sentence, "Nasveti" text button (44 px target). Own: <code>primary</code>, radius 20, tail corner 6. Other: <code>card</code>. Link stays plain text with a caution line. System message centred, no bubble. Sent = check + word; sending = spinner + word. New messages land in the <code>log</code> live region; focus stays in the composer (focused, as after a new match). Composer rides above the keyboard.</p>
+    </figure>
+
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">M4 · Offline: failed message, queued message, character counter</figcaption>
+      <div class="phone"><div class="phone-screen" lang="sl"><div class="statusbar" aria-hidden="true"><span>14:20</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div><div class="thread"><div class="topbar" style="gap:4px"><a href="#" class="iconbtn" aria-label="Nazaj"><i class="ph-bold ph-caret-left" aria-hidden="true"></i></a><img class="thumb av av-32" src="../directions/img/dog-aussie.jpg" alt="" width="32" height="32"><div class="flex-1 min-w-0 ml-1"><h1 class="font-display font-bold text-[18px] leading-6 truncate">Maks</h1><p class="rs !mt-0"><i class="ph-fill ph-seal-check" aria-hidden="true"></i>Ujemanje potrjeno</p></div><button class="iconbtn" aria-label="Možnosti pogovora" aria-haspopup="menu" aria-expanded="false"><i class="ph-bold ph-dots-three-vertical" aria-hidden="true"></i></button></div><aside class="safety" aria-label="Varnost"><i class="ph-fill ph-shield-check" aria-hidden="true"></i><p class="tx">Nikoli ne pošiljajte denarja vnaprej.</p><a href="#">Nasveti</a></aside><div class="msgs" role="log" aria-live="polite" aria-label="Sporočila"><p class="day">Danes</p><div class="g"><article class="mb" aria-label="Oseba, ki je žival našla, 14:02: Ali lahko pridete ob osmih?"><p>Ali lahko pridete ob osmih?</p></article><time class="mt tnum">14:02</time></div><div class="g own"><article class="mb mb-fail" aria-label="Vi, 14:05, ni poslano: Ja, ob osmih sem tam."><p>Ja, ob osmih sem tam.</p></article><p class="fl" role="alert"><i class="ph-fill ph-warning-circle" aria-hidden="true"></i>Ni poslano.<button class="btn btn-text btn-sm" type="button">Poskusi znova</button></p></div><div class="g own"><article class="mb mb-own" aria-label="Vi, 14:06, čaka na pošiljanje: Sporočim, če se zamudim."><p>Sporočim, če se zamudim.</p></article><p class="mt"><i class="ph-bold ph-clock" aria-hidden="true"></i>Čaka na pošiljanje</p></div></div><div class="note mx-4 mb-3" role="status"><i class="ph-bold ph-wifi-slash" aria-hidden="true"></i><p>Brez povezave. Sporočila pošljemo, ko boste spet povezani.</p></div><form class="comp comp-near" onsubmit="return false"><p class="cnt tnum" aria-live="polite">Še 37 znakov</p><div class="flex items-end gap-2"><div class="field flex-1 min-w-0"><label class="sr-only" for="c4">Sporočilo</label><textarea id="c4" class="input" rows="2" placeholder="Napišite sporočilo …">Pridem s psom na povodcu, ker se rad zaleti.</textarea></div><button class="send" type="submit" aria-label="Pošlji"><i class="ph-fill ph-paper-plane-tilt" aria-hidden="true"></i></button></div></form></div><span class="home-ind"></span></div></div>
+      <p class="help mt-4" style="max-width:412px">Offline note sits above the composer. Failed: muted bubble, error icon + "Ni poslano." + text button. Queued: clock icon + word, bubble stays <code>primary</code>. Counter appears only in the last 100 of 2000 characters. Textarea auto-grows to 4 lines.</p>
+    </figure>
+
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">M5 · Read-only: report closed, a reported message folded</figcaption>
+      <div class="phone"><div class="phone-screen" lang="sl"><div class="statusbar" aria-hidden="true"><span>14:20</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div><div class="thread"><div class="topbar" style="gap:4px"><a href="#" class="iconbtn" aria-label="Nazaj"><i class="ph-bold ph-caret-left" aria-hidden="true"></i></a><img class="thumb av av-32" src="../directions/img/cat-siamese.jpg" alt="" width="32" height="32"><div class="flex-1 min-w-0 ml-1"><h1 class="font-display font-bold text-[18px] leading-6 truncate">Mici</h1><p class="rs !mt-0"><i class="ph-fill ph-house-line" aria-hidden="true"></i>Spet doma</p></div><button class="iconbtn" aria-label="Možnosti pogovora" aria-haspopup="menu" aria-expanded="false"><i class="ph-bold ph-dots-three-vertical" aria-hidden="true"></i></button></div><aside class="safety" aria-label="Varnost"><i class="ph-fill ph-shield-check" aria-hidden="true"></i><p class="tx">Nikoli ne pošiljajte denarja vnaprej.</p><a href="#">Nasveti</a></aside><div class="msgs" role="log" aria-live="polite" aria-label="Sporočila"><p class="day">Včeraj</p><div class="g"><article class="mb" aria-label="Oseba, ki je žival našla, 16:10: Mici je pri meni, zdrava je."><p>Mici je pri meni, zdrava je.</p></article><time class="mt tnum">16:10</time></div><div class="g"><div class="fold" role="status"><i class="ph-bold ph-flag" aria-hidden="true"></i><p>To sporočilo ste prijavili.</p></div></div><div class="g own"><article class="mb mb-own" aria-label="Vi, 16:12: Pridem takoj, hvala!"><p>Pridem takoj, hvala!</p></article><time class="mt tnum">16:12</time></div><p class="sys">Žival je spet doma. Hvala za pomoč.</p><p class="sys">Prijava je zaključena.</p></div><div class="note mx-4 mb-9" role="status"><i class="ph-fill ph-lock-simple" aria-hidden="true"></i><p>Pogovor je zaprt, ker je prijava zaključena. Sporočila lahko še berete.</p></div></div><span class="home-ind"></span></div></div>
+      <p class="help mt-4" style="max-width:412px">Composer replaced by a <code>note</code> (muted fill, lock icon + sentence). Thread, banner and scrolling stay. A reported message folds to one muted row (P10 <code>abuse.message_folded</code>).</p>
+    </figure>
+
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">M6 · Blocked by you: composer disabled with explanation</figcaption>
+      <div class="phone"><div class="phone-screen" lang="sl"><div class="statusbar" aria-hidden="true"><span>14:20</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div><div class="thread"><div class="topbar" style="gap:4px"><a href="#" class="iconbtn" aria-label="Nazaj"><i class="ph-bold ph-caret-left" aria-hidden="true"></i></a><img class="thumb av av-32" src="../directions/img/dog-aussie.jpg" alt="" width="32" height="32"><div class="flex-1 min-w-0 ml-1"><h1 class="font-display font-bold text-[18px] leading-6 truncate">Maks</h1><p class="rs !mt-0"><i class="ph-fill ph-seal-check" aria-hidden="true"></i>Ujemanje potrjeno</p></div><button class="iconbtn" aria-label="Možnosti pogovora" aria-haspopup="menu" aria-expanded="false"><i class="ph-bold ph-dots-three-vertical" aria-hidden="true"></i></button></div><aside class="safety" aria-label="Varnost"><i class="ph-fill ph-shield-check" aria-hidden="true"></i><p class="tx">Nikoli ne pošiljajte denarja vnaprej.</p><a href="#">Nasveti</a></aside><div class="msgs" role="log" aria-live="polite" aria-label="Sporočila"><p class="day">Danes</p><p class="sys">Ujemanje je potrjeno. Pogovor je odprt.</p><div class="g"><article class="mb" aria-label="Oseba, ki je žival našla, 14:02: Pošljite mi vašo telefonsko številko in denar za prevoz."><p>Pošljite mi vašo telefonsko številko in denar za prevoz.</p></article><time class="mt tnum">14:02</time></div></div><div class="note mx-4 mb-3" role="status"><i class="ph-fill ph-prohibit" aria-hidden="true"></i><p>To osebo ste blokirali.</p></div><form class="comp comp-dis" onsubmit="return false"><div class="flex items-end gap-2"><div class="field flex-1 min-w-0"><label class="sr-only" for="c6">Sporočilo</label><textarea id="c6" class="input is-disabled" rows="1" placeholder="Napišite sporočilo …" disabled></textarea></div><button class="send" type="submit" aria-label="Pošlji" disabled><i class="ph-fill ph-paper-plane-tilt" aria-hidden="true"></i></button></div></form></div><span class="home-ind"></span></div></div>
+      <p class="help mt-4" style="max-width:412px">Thread stays readable. A <code>note</code> (prohibit icon + sentence) over a disabled composer (dashed line, muted, send disabled). The reason is real text, not a tooltip. The blocked side sees another sentence (M9).</p>
+    </figure>
+
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">M7 · Anonymous finder (private session), empty thread</figcaption>
+      <div class="phone"><div class="phone-screen" lang="sl"><div class="statusbar" aria-hidden="true"><span>14:20</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div><div class="thread"><div class="topbar" style="gap:4px"><a href="#" class="iconbtn" aria-label="Nazaj na prijavo"><i class="ph-bold ph-caret-left" aria-hidden="true"></i></a><span class="av av-32" aria-hidden="true"><i class="ph-fill ph-user"></i></span><div class="flex-1 min-w-0 ml-1"><h1 class="font-display font-bold text-[18px] leading-6 truncate">Oseba, ki išče žival</h1><p class="rs !mt-0"><i class="ph-fill ph-seal-check" aria-hidden="true"></i>Ujemanje potrjeno</p></div><button class="iconbtn" aria-label="Možnosti pogovora" aria-haspopup="menu" aria-expanded="false"><i class="ph-bold ph-dots-three-vertical" aria-hidden="true"></i></button></div><aside class="safety" aria-label="Varnost"><i class="ph-fill ph-shield-check" aria-hidden="true"></i><p class="tx">Nikoli ne pošiljajte denarja vnaprej.</p><a href="#">Nasveti</a></aside><div class="msgs" role="log" aria-live="polite" aria-label="Sporočila"><div class="note mb-2" role="status"><i class="ph-bold ph-key" aria-hidden="true"></i><p>To je vaša zasebna seja. Pogovor odprete s svojo zasebno povezavo.</p></div><p class="sys">Pogovor se je začel pri prijavi.</p><p class="empty-prompt"><i class="ph-bold ph-chat-teardrop-text" aria-hidden="true"></i>Dogovorite se za prevzem na javnem kraju. Telefonske številke ni treba deliti.</p></div><form class="comp" onsubmit="return false"><div class="flex items-end gap-2"><div class="field flex-1 min-w-0"><label class="sr-only" for="c7">Sporočilo</label><textarea id="c7" class="input is-focus" rows="1" placeholder="Napišite sporočilo …"></textarea></div><button class="send" type="submit" aria-label="Pošlji" disabled><i class="ph-fill ph-paper-plane-tilt" aria-hidden="true"></i></button></div></form></div><span class="home-ind"></span></div></div>
+      <p class="help mt-4" style="max-width:412px">Same thread, no account prompt. The private-session note shows once at the top and is real text. The empty-thread prompt suggests what to say. With no pet photo, the header uses the role alias (<code>chat.alias_owner</code>) and a neutral avatar.</p>
+    </figure>
+
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">M8 · Overflow menu → block confirmation sheet</figcaption>
+      <div class="phone"><div class="phone-screen" lang="sl"><div class="statusbar" aria-hidden="true"><span>14:20</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+  <div class="flex-1 min-h-0 flex flex-col" aria-hidden="true"><div class="topbar" style="gap:4px"><a href="#" class="iconbtn" aria-label="Nazaj"><i class="ph-bold ph-caret-left" aria-hidden="true"></i></a><img class="thumb av av-32" src="../directions/img/dog-aussie.jpg" alt="" width="32" height="32"><div class="flex-1 min-w-0 ml-1"><p class="font-display font-bold text-[18px] leading-6 truncate">Maks</p><p class="rs !mt-0"><i class="ph-fill ph-seal-check" aria-hidden="true"></i>Ujemanje potrjeno</p></div><button class="iconbtn" aria-label="Možnosti pogovora" aria-haspopup="menu" aria-expanded="false"><i class="ph-bold ph-dots-three-vertical" aria-hidden="true"></i></button></div><aside class="safety" aria-label="Varnost"><i class="ph-fill ph-shield-check" aria-hidden="true"></i><p class="tx">Nikoli ne pošiljajte denarja vnaprej.</p><a href="#">Nasveti</a></aside><div class="msgs" role="log" aria-live="polite" aria-label="Sporočila"><p class="day">Danes</p><div class="g"><article class="mb" aria-label="Oseba, ki je žival našla, 14:02: Pošljite mi vašo telefonsko številko in denar za prevoz."><p>Pošljite mi vašo telefonsko številko in denar za prevoz.</p></article><time class="mt tnum">14:02</time></div></div></div>
+  <div class="scrim"></div>
+  <div class="sheet" role="alertdialog" aria-modal="true" aria-labelledby="blk-t" aria-describedby="blk-d" style="z-index:8;padding-bottom:44px">
+    <button class="grab" aria-label="Zapri"></button>
+    <div class="px-5 pt-3"><h2 id="blk-t" class="font-display font-bold text-[24px] leading-[30px] tracking-[-0.015em]">Blokirate to osebo?</h2>
+    <p id="blk-d" class="text-lg leading-7 mt-2">Ne bo vam mogla več pisati. Pogovor ostane shranjen.</p>
+    <div class="grid gap-1 mt-6"><button class="btn btn-destructive btn-lg btn-block">Blokiraj</button><button class="btn btn-text btn-block">Prekliči</button></div></div></div><span class="home-ind"></span></div></div>
+      <p class="help mt-4" style="max-width:412px">Menu items: Odpri prijavo, Prijavi zlorabo (opens P10), Blokiraj (popover on web, W1; sheet rows on mobile). The confirm is the only filled button and is destructive. On confirm: toast "Oseba je blokirana." and M6. "Prekliči" is common copy (sample).</p>
+    </figure>
+<figure class="m-0"><figcaption class="tile-h !mt-0">M9 · Composer-area variants at 390 px (excerpts)</figcaption><div class="grid gap-8" style="width:390px" lang="sl">
+<div><p class="tile-h !mt-0 !text-[14px]">Blocked you</p><div class="strip"><div class="note mx-4 mb-3" role="status"><i class="ph-fill ph-prohibit" aria-hidden="true"></i><p>Tej osebi ne morete več pisati.</p></div><form class="comp comp-dis" onsubmit="return false"><div class="flex items-end gap-2"><div class="field flex-1 min-w-0"><label class="sr-only" for="c9a">Sporočilo</label><textarea id="c9a" class="input is-disabled" rows="1" placeholder="Napišite sporočilo …" disabled></textarea></div><button class="send" type="submit" aria-label="Pošlji" disabled><i class="ph-fill ph-paper-plane-tilt" aria-hidden="true"></i></button></div></form></div></div>
+<div><p class="tile-h !mt-0 !text-[14px]">Email not confirmed</p><div class="strip"><div class="note mx-4 mb-3" role="status"><i class="ph-fill ph-envelope-simple" aria-hidden="true"></i><p>Za pogovor najprej potrdite svoj e-naslov.</p></div><form class="comp comp-dis" onsubmit="return false"><div class="flex items-end gap-2"><div class="field flex-1 min-w-0"><label class="sr-only" for="c9b">Sporočilo</label><textarea id="c9b" class="input is-disabled" rows="1" placeholder="Napišite sporočilo …" disabled></textarea></div><button class="send" type="submit" aria-label="Pošlji" disabled><i class="ph-fill ph-paper-plane-tilt" aria-hidden="true"></i></button></div></form></div></div>
+<div><p class="tile-h !mt-0 !text-[14px]">Typing, 3 lines, no counter yet</p><div class="strip"><form class="comp" onsubmit="return false"><div class="flex items-end gap-2"><div class="field flex-1 min-w-0"><label class="sr-only" for="c9c">Sporočilo</label><textarea id="c9c" class="input" rows="3" placeholder="Napišite sporočilo …">Hvala za vse. Pridem s kartico psa, da vidite čip, in se dogovorimo za vrnitev.</textarea></div><button class="send" type="submit" aria-label="Pošlji"><i class="ph-fill ph-paper-plane-tilt" aria-hidden="true"></i></button></div></form></div></div>
+<div><p class="tile-h !mt-0 !text-[14px]">Send button keyboard focus</p><div class="strip"><form class="comp" onsubmit="return false"><div class="flex items-end gap-2"><div class="field flex-1 min-w-0"><label class="sr-only" for="c9d">Sporočilo</label><textarea id="c9d" class="input" rows="1" placeholder="Napišite sporočilo …">Prihajam.</textarea></div><button class="send is-focus" type="submit" aria-label="Pošlji"><i class="ph-fill ph-paper-plane-tilt" aria-hidden="true"></i></button></div></form></div></div>
+</div><p class="help mt-4" style="max-width:412px">Same width and padding as the phone. Disabled composer: dashed line, muted, send disabled, reason as a <code>note</code> above. Send is 48 px and disabled while the field is empty.</p></figure>
+  </div></div>
+
+<p class="tile-h" style="margin-top:64px">W1 · Web 1200 px, two panes (list 360 + thread) · Maks selected · hover on the second row · overflow menu open · focus on the composer</p>
+<div class="wrap-x"><div class="browser" lang="sl">
+ <div class="browser-bar"><span class="dots"><i></i><i></i><i></i></span><span class="url"><i class="ph ph-lock-simple"></i>najdimo.si/sporocila/maks</span></div>
+ <header class="flex items-center gap-8 px-12 h-[88px]">
+  <a href="#" class="logo-link" aria-label="Najdimo, na začetno stran"><svg class="logo-mark w-9 h-9" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg><span class="font-display font-bold text-2xl tracking-[-0.03em]" aria-hidden="true">Najdimo</span></a>
+  <nav aria-label="Glavni meni"><ul class="flex items-center gap-2"><li><a href="#" class="nl">Zemljevid</a></li><li><a href="#" class="nl">Izgubljene</a></li><li><a href="#" class="nl">Najdene</a></li><li><a href="#" class="nl">Moje živali</a></li></ul></nav>
+  <div class="ml-auto flex items-center gap-2">
+   <div class="lang" role="group" aria-label="Jezik: Slovenščina"><a href="#" class="ll" lang="sl" aria-current="true" aria-label="Slovenščina">SL</a><span aria-hidden="true">/</span><a href="#" class="ll" lang="en" hreflang="en" aria-label="English">EN</a></div>
+   <a href="#" class="iconbtn" aria-label="Sporočila in obvestila" aria-current="page"><i class="ph-fill ph-tray"></i></a>
+   <button type="button" class="iconbtn" aria-label="Moj račun" aria-haspopup="menu" aria-expanded="false"><span class="avatar" aria-hidden="true">AN</span></button>
+   <button type="button" class="btn btn-primary btn-sm ml-2" aria-haspopup="menu" aria-expanded="false">Prijavi</button>
+  </div></header>
+ <div class="wpanes">
+  <section class="wlist" aria-label="Pogovori"><h1 class="font-display font-bold text-[30px] leading-9 tracking-[-0.02em]">Sporočila</h1><div class="mt-4 mb-4"><div class="seg" role="tablist" aria-label="Sporočila"><button role="tab" aria-selected="true">Pogovori</button><button role="tab" aria-selected="false">Obvestila</button></div></div>
+   <ul class="grid gap-1 list-none p-0 m-0">
+   <li><a href="#" class="crow is-sel" aria-current="true"><img class="thumb" src="../directions/img/dog-aussie.jpg" alt="" width="64" height="64"><span class="flex-1 min-w-0"><span class="rn font-semibold">Maks</span><span class="rs"><i class="ph-fill ph-seal-check" aria-hidden="true"></i>Ujemanje potrjeno</span><span class="rl">Pridem s psom na povodcu.</span></span><span class="rt"><time class="tnum">14:06</time></span></a></li>
+   <li><a href="#" class="crow is-hover"><img class="thumb" src="../directions/img/cat-tabby.jpg" alt="" width="64" height="64"><span class="flex-1 min-w-0"><span class="rn font-bold">Najdena žival<span class="sr-only">, neprebrano</span></span><span class="rs"><i class="ph-fill ph-seal-check" aria-hidden="true"></i>Ujemanje potrjeno</span><span class="rl">Hvala, pošljem še eno fotografijo.</span></span><span class="rt"><time class="tnum">12:40</time><span class="dot" aria-hidden="true"></span></span></a></li>
+   <li><a href="#" class="crow "><img class="thumb" src="../directions/img/cat-siamese.jpg" alt="" width="64" height="64"><span class="flex-1 min-w-0"><span class="rn font-semibold">Mici</span><span class="rs"><i class="ph-fill ph-house-line" aria-hidden="true"></i>Spet doma</span><span class="rl">Žival je spet doma. Hvala za pomoč.</span></span><span class="rt"><time class="tnum">Včeraj</time></span></a></li>
+   <li><a href="#" class="crow "><img class="thumb" src="../directions/img/dog-golden.jpg" alt="" width="64" height="64"><span class="flex-1 min-w-0"><span class="rn font-semibold">Izgubljena žival</span><span class="rs"><i class="ph-fill ph-lock-simple" aria-hidden="true"></i>Prijava zaključena</span><span class="rl">Prijava je zaključena.</span></span><span class="rt"><time class="tnum">12. 10.</time></span></a></li></ul></section>
+  <section class="wthread" aria-label="Pogovor: Maks">
+   <div class="wtop"><img class="thumb av av-32" src="../directions/img/dog-aussie.jpg" alt="" width="32" height="32"><div class="flex-1 min-w-0"><h2 class="font-display font-bold text-[20px] leading-7">Maks</h2><p class="rs !mt-0"><i class="ph-fill ph-seal-check" aria-hidden="true"></i>Ujemanje potrjeno</p></div>
+    <button class="iconbtn is-open" aria-label="Možnosti pogovora" aria-haspopup="menu" aria-expanded="true"><i class="ph-bold ph-dots-three-vertical" aria-hidden="true"></i></button>
+    <div class="pop wmenu" role="menu" aria-label="Možnosti pogovora"><a href="#" role="menuitem" class="mi"><i class="ph-bold ph-paw-print" aria-hidden="true"></i>Odpri prijavo</a><button type="button" role="menuitem" class="mi"><i class="ph-bold ph-flag" aria-hidden="true"></i>Prijavi zlorabo</button><button type="button" role="menuitem" class="mi"><i class="ph-bold ph-prohibit" aria-hidden="true"></i>Blokiraj</button></div></div>
+   <aside class="safety" aria-label="Varnost"><i class="ph-fill ph-shield-check" aria-hidden="true"></i><p class="tx">Nikoli ne pošiljajte denarja vnaprej.</p><a href="#">Nasveti</a></aside>
+   <div class="msgs wlog" role="log" aria-live="polite" aria-label="Sporočila"><p class="sys">Ujemanje je potrjeno. Pogovor je odprt.</p><p class="day">Danes</p><div class="g"><article class="mb" aria-label="Oseba, ki je žival našla, 13:58: Pozdravljeni, mislim, da imam vašega psa. Je na levem ušesu bela lisa?"><p>Pozdravljeni, mislim, da imam vašega psa. Je na levem ušesu bela lisa?</p></article><time class="mt tnum">13:58</time></div><div class="g own"><article class="mb mb-own" aria-label="Vi, 14:00: Ja, to je on! Hvala, da ste se oglasili."><p>Ja, to je on! Hvala, da ste se oglasili.</p></article><time class="mt tnum">14:00</time></div><div class="g"><article class="mb" aria-label="Oseba, ki je žival našla, 14:02: Kraj, kjer sem ga našel: https://example.org/maks"><p>Kraj, kjer sem ga našel: https://example.org/maks</p></article><p class="caut"><i class="ph-bold ph-warning" aria-hidden="true"></i>Pri povezavah bodite previdni.</p><time class="mt tnum">14:02</time></div><div class="g own"><article class="mb mb-own" aria-label="Vi, 14:03: Super, prihajam."><p>Super, prihajam.</p></article><p class="mt st-ok"><i class="ph-bold ph-check" aria-hidden="true"></i>Poslano</p></div><div class="g own"><article class="mb mb-own" aria-label="Vi, 14:06: Pridem s psom na povodcu."><p>Pridem s psom na povodcu.</p></article><p class="mt"><span class="spin spin-sm" aria-hidden="true"></span>Pošiljanje …</p></div></div>
+   <form class="comp" onsubmit="return false"><div class="flex items-end gap-2"><div class="field flex-1 min-w-0"><label class="sr-only" for="cw">Sporočilo</label><textarea id="cw" class="input is-focus" rows="1" placeholder="Napišite sporočilo …"></textarea></div><button class="send" type="submit" aria-label="Pošlji" disabled><i class="ph-fill ph-paper-plane-tilt" aria-hidden="true"></i></button></div></form>
+  </section></div></div>
+</section>
+<p class="tile-section !py-8 text-sm text-muted-foreground">Placeholder photography from Unsplash (Unsplash License). Copy source: docs/content/pages/P12-chat.md. Reward escrow (M4) adds one 56 px row under the safety banner; the thread column keeps that room (one more flex child). The composer label is visually hidden: the placeholder carries the prompt and the thread is the context.</p>
+</div>
+<script src="../directions/directions.js"></script>
+</body>
+</html>
