@@ -29,6 +29,7 @@
 		"@rn-primitives/switch": "^1.5.2",
 		"@rn-primitives/tabs": "^1.5.2",
 		"@supabase/supabase-js": "^2.117.3",
+		"@zivali/api": "workspace:*",
 		"@zivali/i18n": "workspace:*",
 		"@zivali/tokens": "workspace:*",
 		"class-variance-authority": "^0.7.1",
@@ -53,6 +54,7 @@
 		"react-dom": "19.2.3",
 		"react-native": "0.86.3",
 		"react-native-gesture-handler": "~2.32.0",
+		"react-redux": "^9.3.0",
 		"react-native-reanimated": "4.5.1",
 		"react-native-safe-area-context": "~5.7.0",
 		"react-native-screens": "~4.26.0",
@@ -82,7 +84,7 @@
 			"./jest.setup.ts"
 		],
 		"transformIgnorePatterns": [
-			"/node_modules/(?!(.pnpm|react-native|@react-native|@react-native-community|expo|@expo|@expo-google-fonts|react-navigation|@react-navigation|@sentry/react-native|native-base|standard-navigation|use-intl|icu-minify|intl-messageformat|@formatjs|immer|@rn-primitives|phosphor-react-native|sonner-native|@gorhom))",
+			"/node_modules/(?!(.pnpm|react-native|@react-native|@react-native-community|expo|@expo|@expo-google-fonts|react-navigation|@react-navigation|@sentry/react-native|native-base|standard-navigation|use-intl|icu-minify|intl-messageformat|@formatjs|immer|@rn-primitives|phosphor-react-native|sonner-native|@gorhom|react-redux|@reduxjs|redux|redux-thunk|reselect))",
 			"/node_modules/react-native-reanimated/plugin/",
 			"/node_modules/@react-native/babel-preset/"
 		],

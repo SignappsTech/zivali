@@ -80,7 +80,8 @@ export type ApiClientOptions = {
 	getAccessToken?: () => Token | Promise<Token>;
 	/** Install/browser uuid (C7); sent as `x-device-id` when set. */
 	deviceId?: string;
-	locale: Locale;
+	/** A getter is read on every request, so a language switch reaches the next call. */
+	locale: Locale | (() => Locale);
 	fetch?: typeof fetch;
 };
 
@@ -132,7 +133,7 @@ export function createApiClient(options: ApiClientOptions): ApiClient {
 
 			const headers: Record<string, string> = {
 				...Object.fromEntries(Object.entries(extra ?? {}).filter(([, v]) => v != null)),
-				'Accept-Language': options.locale,
+				'Accept-Language': typeof options.locale === 'function' ? options.locale() : options.locale,
 			};
 			const token = await options.getAccessToken?.();
 			if (token) headers.Authorization = `Bearer ${token}`;

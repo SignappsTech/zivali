@@ -20,6 +20,13 @@ function storedLocale(): Locale | null {
 	return value === 'sl' || value === 'en' ? value : null;
 }
 
+/** The locale before any profile is known (store start-up): the stored choice, else the device language. */
+export const initialLocale = (): Locale => storedLocale() ?? deviceLocale();
+
+let currentLocale: Locale | null = null;
+/** The locale the UI shows now (kept by I18nProvider); the API client reads it per request. */
+export const getCurrentLocale = (): Locale => currentLocale ?? initialLocale();
+
 /** A signed-in user's profile locale and its save: `{ locale: me.locale, save: (l) => updateMe({ locale: l }) }`. */
 export type ProfileLocale = { locale: Locale; save: (locale: Locale) => Promise<unknown> };
 
@@ -48,6 +55,8 @@ export function I18nProvider({ profile, children }: { profile?: ProfileLocale | 
 	useEffect(() => {
 		if (profileLocale) localStorage.setItem(STORAGE_KEY, profileLocale);
 	}, [profileLocale]);
+
+	currentLocale = locale;
 
 	const setLocale = useCallback(
 		async (next: Locale) => {
