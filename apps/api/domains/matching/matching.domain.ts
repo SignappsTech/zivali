@@ -1,9 +1,10 @@
 // Matching engine v1 (C8), run by the match.report job for every new or relevantly changed report: chip pairs and
 // geo/time/attribute candidates, scored with scoreMatch, stored idempotently as suggestions for the lost report's
 // managers, who are notified once per suggestion that is good or better (match_chip for chips, any hour).
+import { z } from 'zod';
+
 import { MATCH_STRENGTHS, type Colour, type MatchStrength, type Pattern, type Sex, type Size } from '@zivali/types';
 import { scoreMatch, type MatchScore } from '@zivali/validation/matching';
-import { z } from 'zod';
 
 import configStore from '../../lib/config-store.ts';
 import type { Ctx } from '../../lib/ctx.ts';
@@ -42,7 +43,7 @@ const attributes = (size: string | null, sex: string | null, colours: string[], 
 	pattern: pattern as Pattern | null,
 });
 
-function score(pair: PairRow, config: MatchingConfig): MatchScore {
+function scorePair(pair: PairRow, config: MatchingConfig): MatchScore {
 	return scoreMatch(
 		{
 			chip_match: pair.chip_match,
@@ -58,13 +59,20 @@ function score(pair: PairRow, config: MatchingConfig): MatchScore {
 
 /** match_chip or match_suggested to every manager of the lost report; codes and the pet's own name only (C10). */
 async function notifyManagers(matchId: string, pair: PairRow, strength: MatchStrength, ctx: Ctx): Promise<void> {
-	const named = { has_name: pair.pet_name ? 'yes' : 'no', pet_name: pair.pet_name ?? undefined, species: pair.species };
+	const named = {
+		has_name: pair.pet_name ? 'yes' : 'no',
+		pet_name: pair.pet_name ?? undefined,
+		species: pair.species,
+	};
 	const common = { match_id: matchId, lost_code: pair.lost_code, other_type: pair.other_type, ...named };
 	const notification = pair.chip_match
 		? { type: 'match_chip', payload: { ...common, other_code: pair.other_code } }
 		: { type: 'match_suggested', payload: { ...common, strength } };
 	for (const user_id of await MatchingDao.managerIds(pair.lost_id, ctx.tx)) {
-		await NotificationsDomain.enqueueNotification({ user_id, ...notification, dedupe_key: `match:${matchId}` }, ctx);
+		await NotificationsDomain.enqueueNotification(
+			{ user_id, ...notification, dedupe_key: `match:${matchId}` },
+			ctx
+		);
 	}
 }
 
@@ -77,7 +85,7 @@ export async function matchReport(input: { report_id: string }, ctx: Ctx): Promi
 	const config = await matchingConfig();
 	const pairs = await MatchingDao.candidatePairs(input.report_id, config, ctx.tx);
 	const scored = pairs
-		.map((pair) => ({ pair, ...score(pair, config) }))
+		.map((pair) => ({ pair, ...scorePair(pair, config) }))
 		.filter(({ pair, score }) => pair.chip_match || score >= config.threshold)
 		.sort((a, b) => b.score - a.score);
 	if (!scored.length) return { stored: 0 };
