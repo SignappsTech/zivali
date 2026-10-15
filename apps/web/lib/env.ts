@@ -1,20 +1,22 @@
 import { z } from 'zod';
 
 // Add a variable here when the first code reads it (names: docs/tech/frontend.md, .env.example).
-const schema = z.object({
-	NEXT_PUBLIC_SUPABASE_URL: z.url(),
-	NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: z.string().min(1),
-	NEXT_PUBLIC_API_URL: z.url(),
-	// @zivali/analytics reads it (and NEXT_PUBLIC_GA_MEASUREMENT_ID) itself; the proxy opens the CSP for ga4.
-	NEXT_PUBLIC_ANALYTICS_PROVIDER: z.enum(['mock', 'ga4']).default('mock'),
-	NEXT_PUBLIC_GA_MEASUREMENT_ID: z.string().regex(/^G-/).optional(),
-	// Server only: undefined in the browser, so read them on the server.
-	APP_ENV: z.enum(['local', 'staging', 'production']),
-	APP_VERSION: z.string().default('dev'),
-}).refine((v) => v.NEXT_PUBLIC_ANALYTICS_PROVIDER !== 'ga4' || v.NEXT_PUBLIC_GA_MEASUREMENT_ID, {
-	path: ['NEXT_PUBLIC_GA_MEASUREMENT_ID'],
-	message: 'required when NEXT_PUBLIC_ANALYTICS_PROVIDER=ga4',
-});
+const schema = z
+	.object({
+		NEXT_PUBLIC_SUPABASE_URL: z.url(),
+		NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: z.string().min(1),
+		NEXT_PUBLIC_API_URL: z.url(),
+		// @zivali/analytics reads it (and NEXT_PUBLIC_GA_MEASUREMENT_ID) itself; the proxy opens the CSP for ga4.
+		NEXT_PUBLIC_ANALYTICS_PROVIDER: z.enum(['mock', 'ga4']).default('mock'),
+		NEXT_PUBLIC_GA_MEASUREMENT_ID: z.string().regex(/^G-/).optional(),
+		// Server only: undefined in the browser, so read them on the server.
+		APP_ENV: z.enum(['local', 'staging', 'production']),
+		APP_VERSION: z.string().default('dev'),
+	})
+	.refine((v) => v.NEXT_PUBLIC_ANALYTICS_PROVIDER !== 'ga4' || v.NEXT_PUBLIC_GA_MEASUREMENT_ID, {
+		path: ['NEXT_PUBLIC_GA_MEASUREMENT_ID'],
+		message: 'required when NEXT_PUBLIC_ANALYTICS_PROVIDER=ga4',
+	});
 
 export type Env = z.infer<typeof schema>;
 
