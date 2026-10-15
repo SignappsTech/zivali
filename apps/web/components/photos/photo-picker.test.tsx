@@ -145,6 +145,18 @@ describe('PhotoPicker', () => {
 		expect(await screen.findByText('Ta datoteka ni fotografija. Izberite sliko JPG, PNG ali HEIC.')).toBeTruthy();
 	});
 
+	it('says why a photo cannot be used: too small, or HEIC the browser cannot open', async () => {
+		renderPicker();
+
+		prepare.mockRejectedValueOnce(new PhotoFileError('TOO_SMALL'));
+		pick(file(1));
+		expect(await screen.findByText(sl.photos.too_small)).toBeTruthy();
+
+		prepare.mockRejectedValueOnce(new PhotoFileError('HEIC'));
+		pick(file(2));
+		expect(await screen.findByText(sl.photos.heic_unsupported)).toBeTruthy();
+	});
+
 	it('maps server rejections to localised errors without retrying them', async () => {
 		upload
 			.mockRejectedValueOnce(new ApiError('VALIDATION', 'Long edge > 1600 px'))
@@ -153,9 +165,7 @@ describe('PhotoPicker', () => {
 
 		pick(file(1), file(2));
 
-		expect(
-			await screen.findByText('Fotografija je prevelika. Izberite drugo ali jo pred nalaganjem zmanjšajte.')
-		).toBeTruthy();
+		expect(await screen.findByText('Fotografija se ni naložila.')).toBeTruthy();
 		expect(
 			await screen.findByText('V kratkem času je bilo poslanih več zahtev. Poskusite znova malo pozneje.')
 		).toBeTruthy();
@@ -206,7 +216,7 @@ describe('PhotoPicker', () => {
 
 	it('restores the draft after a reload and resumes the upload without picking again', async () => {
 		idb.set('photos:lost', [
-			{ key: 'a', ...photo(1), photoId: 'photo-1' },
+			{ key: 'a', ...photo(1), photoId: 'photo-1', uploadedAt: Date.now() },
 			{ key: 'b', ...photo(2) },
 		]);
 		upload.mockResolvedValue({ photoId: 'photo-2' });
@@ -221,6 +231,46 @@ describe('PhotoPicker', () => {
 				'photo-2',
 			])
 		);
+	});
+
+	it('uploads a restored photo again when its photo id is about to be purged (C5, 24 h)', async () => {
+		const hour = 60 * 60 * 1000;
+		idb.set('photos:lost', [
+			{ key: 'a', ...photo(1), photoId: 'photo-1', uploadedAt: Date.now() - 2 * hour },
+			{ key: 'b', ...photo(2), photoId: 'photo-2', uploadedAt: Date.now() - 24 * hour },
+			{ key: 'c', ...photo(3), photoId: 'photo-3' },
+		]);
+		upload.mockResolvedValueOnce({ photoId: 'new-2' }).mockResolvedValueOnce({ photoId: 'new-3' });
+		renderPicker();
+
+		await waitFor(() => expect(upload).toHaveBeenCalledTimes(2));
+		expect(upload.mock.calls.map((call) => call[1].sha256)).toEqual([photo(2).sha256, photo(3).sha256]);
+		await waitFor(() =>
+			expect((idb.get('photos:lost') as { photoId?: string }[]).map((p) => p.photoId)).toEqual([
+				'photo-1',
+				'new-2',
+				'new-3',
+			])
+		);
+	});
+
+	it('never queues a photo twice, so repeated retries cannot multiply uploads', async () => {
+		const calls = pendingUploads();
+		renderPicker();
+
+		pick(file(1));
+		await waitFor(() => expect(calls).toHaveLength(1));
+		await act(async () => calls[0].reject(new ApiError('NETWORK', 'Upload failed')));
+		await screen.findByRole('button', { name: 'Poskusi znova' });
+
+		// Going back online five times and a click: one upload is running, the rest are ignored.
+		act(() => {
+			for (let i = 0; i < 5; i++) window.dispatchEvent(new Event('online'));
+		});
+		fireEvent.click(screen.getByRole('button', { name: 'Poskusi znova' }));
+		await waitFor(() => expect(calls).toHaveLength(2));
+		await new Promise((resolve) => setTimeout(resolve, 100));
+		expect(calls).toHaveLength(2);
 	});
 
 	it('hands EXIF place and time to the page and never puts them or the file name in the draft', async () => {
@@ -242,6 +292,7 @@ describe('PhotoPicker', () => {
 			'photoId',
 			'sha256',
 			'thumb',
+			'uploadedAt',
 			'width',
 		]);
 	});

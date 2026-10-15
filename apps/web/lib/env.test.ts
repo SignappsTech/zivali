@@ -24,6 +24,7 @@ describe('parseEnv', () => {
 				APP_ENV: 'staging',
 				NEXT_PUBLIC_API_URL: 'https://api.example.com',
 				NEXT_PUBLIC_APP_URL: 'https://najdimo.si',
+				R2_UPLOAD_ORIGIN: 'https://acct.eu.r2.cloudflarestorage.com',
 			}).APP_ENV
 		).toBe('staging');
 	});
@@ -55,5 +56,25 @@ describe('parseEnv', () => {
 			'ga4'
 		);
 		expect(parseEnv(valid).NEXT_PUBLIC_ANALYTICS_PROVIDER).toBe('mock');
+	});
+
+	it('defaults the upload origin to MinIO locally and pins it to R2 elsewhere', () => {
+		expect(parseEnv(valid).R2_UPLOAD_ORIGIN).toBe('http://127.0.0.1:9000');
+		const staging = {
+			...valid,
+			APP_ENV: 'staging',
+			NEXT_PUBLIC_API_URL: 'https://api.example.com',
+			NEXT_PUBLIC_APP_URL: 'https://najdimo.si',
+		};
+		expect(() => parseEnv(staging)).toThrow(/R2_UPLOAD_ORIGIN/);
+		for (const bad of [
+			'http://acct.eu.r2.cloudflarestorage.com',
+			'https://evil.example.com',
+			'https://a.b.eu.r2.cloudflarestorage.com',
+		])
+			expect(() => parseEnv({ ...staging, R2_UPLOAD_ORIGIN: bad })).toThrow(/R2_UPLOAD_ORIGIN/);
+		expect(parseEnv({ ...staging, R2_UPLOAD_ORIGIN: 'https://acct.eu.r2.cloudflarestorage.com' }).APP_ENV).toBe(
+			'staging'
+		);
 	});
 });

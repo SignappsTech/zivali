@@ -14,7 +14,17 @@ const schema = z
 		// Server only: undefined in the browser, so read them on the server.
 		APP_ENV: z.enum(['local', 'staging', 'production']),
 		APP_VERSION: z.string().default('dev'),
+		// Origin the API presigns photo PUTs with (C5): the CSP connect-src opens exactly this.
+		R2_UPLOAD_ORIGIN: z.url(),
 	})
+	.refine(
+		(v) => {
+			if (v.APP_ENV === 'local') return true;
+			const url = new URL(v.R2_UPLOAD_ORIGIN);
+			return url.protocol === 'https:' && /^[^.]+.eu.r2.cloudflarestorage.com$/.test(url.hostname);
+		},
+		{ path: ['R2_UPLOAD_ORIGIN'], message: 'must be https://<account>.eu.r2.cloudflarestorage.com outside local' }
+	)
 	.refine((v) => v.NEXT_PUBLIC_ANALYTICS_PROVIDER !== 'ga4' || v.NEXT_PUBLIC_GA_MEASUREMENT_ID, {
 		path: ['NEXT_PUBLIC_GA_MEASUREMENT_ID'],
 		message: 'required when NEXT_PUBLIC_ANALYTICS_PROVIDER=ga4',
@@ -31,6 +41,7 @@ export function parseEnv(source: Record<string, string | undefined>): Env {
 	if (values.APP_ENV === 'local') {
 		values.NEXT_PUBLIC_API_URL ??= 'http://localhost:4000';
 		values.NEXT_PUBLIC_APP_URL ??= 'http://localhost:3000';
+		values.R2_UPLOAD_ORIGIN ??= 'http://127.0.0.1:9000';
 	}
 	const result = schema.safeParse(values);
 	if (!result.success) {
@@ -54,6 +65,7 @@ const source = {
 	// Server only like APP_ENV: the browser cannot tell, and the server has already failed fast by then.
 	NODE_ENV: typeof window === 'undefined' ? process.env.NODE_ENV : undefined,
 	APP_VERSION: process.env.APP_VERSION,
+	R2_UPLOAD_ORIGIN: process.env.R2_UPLOAD_ORIGIN,
 };
 
 // `next build` loads route modules without reading them (every page renders per request for the CSP nonce), so a

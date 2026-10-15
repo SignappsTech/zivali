@@ -15,5 +15,7 @@
 	"failed": "The photo did not upload.",
 	"failed_network": "The photo did not upload. Check your connection and try again.",
 	"retry": "Try again",
-	"limit": "You can add up to 5 photos."
+	"limit": "You can add up to 5 photos.",
+	"too_small": "This photo is too small. Choose one that is at least 320 px on its shorter side.",
+	"heic_unsupported": "This browser cannot open HEIC photos. Choose a JPG or PNG, or change the camera format to \"Most compatible\"."
 }

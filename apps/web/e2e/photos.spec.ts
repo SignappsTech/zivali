@@ -126,9 +126,13 @@ test('a 6 MB camera photo uploads as a JPEG of at most 1600 px and 1 MiB with no
 	expect(create).toMatchObject({ width: 1600, height: 1200 });
 	const uploaded = jpegInfo(put.body);
 	expect(uploaded.size).toEqual({ width: 1600, height: 1200 });
-	// No APP1 (EXIF, XMP) or any other metadata segment the camera wrote.
-	expect(uploaded.markers).not.toContain(0xe1);
+	// Only APP0 (JFIF) and APP2 (Chrome's sRGB ICC colour profile, no personal data) may remain: no APP1 (EXIF, XMP),
+	// APP3-APP15 or comment segment.
+	expect(
+		uploaded.markers.filter((marker) => (marker >= 0xe3 && marker <= 0xef) || marker === 0xfe || marker === 0xe1)
+	).toEqual([]);
 	expect(put.body.includes('Exif')).toBe(false);
+	expect(put.body.includes('ns.adobe.com/xap')).toBe(false);
 	expect(seen.complete).toBe(1);
 	await expectNoAxeViolations(page);
 });

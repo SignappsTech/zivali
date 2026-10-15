@@ -22,8 +22,8 @@ function contentSecurityPolicy(nonce: string): string {
 		env.NEXT_PUBLIC_ANALYTICS_PROVIDER === 'ga4'
 			? ' https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com'
 			: '';
-	// Presigned photo PUTs (C5): R2 in the EU jurisdiction, MinIO locally (docker-compose.dev.yml).
-	const uploads = ` https://*.eu.r2.cloudflarestorage.com${env.APP_ENV === 'local' ? ' http://127.0.0.1:9000' : ''}`;
+	// Presigned photo PUTs (C5): the one origin the API presigns with (R2 in the EU jurisdiction, MinIO locally).
+	const uploads = ` ${new URL(env.R2_UPLOAD_ORIGIN).origin}`;
 
 	return [
 		"default-src 'self'",

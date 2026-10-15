@@ -15,5 +15,7 @@
 	"failed": "Fotografija se ni naložila.",
 	"failed_network": "Fotografija se ni naložila. Preverite povezavo in poskusite znova.",
 	"retry": "Poskusi znova",
-	"limit": "Dodate lahko največ 5 fotografij."
+	"limit": "Dodate lahko največ 5 fotografij.",
+	"too_small": "Ta fotografija je premajhna. Izberite takšno, ki je krajša stranica široka vsaj 320 px.",
+	"heic_unsupported": "Ta brskalnik ne more odpreti fotografij HEIC. Izberite sliko JPG ali PNG ali nastavite kamero na »Najbolj združljivo«."
 }

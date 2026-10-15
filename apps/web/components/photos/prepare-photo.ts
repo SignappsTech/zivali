@@ -6,15 +6,20 @@ import type { PreparedPhoto } from '@zivali/api/photos';
 const MAX_BYTES = 1024 * 1024;
 const LONG_EDGE = 1600;
 const THUMB_EDGE = 480;
+/** MIN_PHOTO_EDGE in @zivali/validation: the short side must be at least this many pixels. */
+const MIN_EDGE = 320;
 const QUALITIES = [0.85, 0.75, 0.65, 0.5];
 
 /** Read from the original file only to offer the place and time; never stored, logged or uploaded raw. */
 export type PhotoExif = { lat?: number; lng?: number; takenAt?: Date };
 export type WebPreparedPhoto = PreparedPhoto & { file: Blob; thumb: Blob };
 
-/** Not a decodable image, or too large even after re-encoding: `errors.UPLOAD_TYPE` / `errors.UPLOAD_SIZE`. */
+/**
+ * Not a decodable image (`UPLOAD_TYPE`), a HEIC this browser cannot open (`HEIC`), too large even after re-encoding
+ * (`UPLOAD_SIZE`) or under 320 px on the short side (`TOO_SMALL`).
+ */
 export class PhotoFileError extends Error {
-	constructor(readonly code: 'UPLOAD_TYPE' | 'UPLOAD_SIZE') {
+	constructor(readonly code: 'UPLOAD_TYPE' | 'UPLOAD_SIZE' | 'TOO_SMALL' | 'HEIC') {
 		super(code);
 	}
 }
@@ -52,13 +57,15 @@ async function encode(image: ImageBitmap, longEdge: number, quality: number) {
 
 /** EXIF first, then a JPEG with a long edge ≤ 1600 px and ≤ 1 MiB, a 480 px thumbnail and its SHA-256. */
 export async function preparePhoto(file: File): Promise<{ photo: WebPreparedPhoto; exif: PhotoExif }> {
-	if (!file.type.startsWith('image/')) throw new PhotoFileError('UPLOAD_TYPE');
 	const exif = await readExif(file);
 	// Upright per the EXIF orientation, which the re-encoded file no longer carries.
+	// The decoder decides what is an image (no MIME pre-check: phones often leave the type empty).
 	const image = await createImageBitmap(file, { imageOrientation: 'from-image' }).catch(() => {
-		throw new PhotoFileError('UPLOAD_TYPE');
+		const heic = /\.hei[cf]$/i.test(file.name) || /^image\/hei[cf]$/i.test(file.type);
+		throw new PhotoFileError(heic ? 'HEIC' : 'UPLOAD_TYPE');
 	});
 	try {
+		if (Math.min(image.width, image.height) < MIN_EDGE) throw new PhotoFileError('TOO_SMALL');
 		let jpeg: Awaited<ReturnType<typeof encode>> | undefined;
 		for (const quality of QUALITIES) {
 			jpeg = await encode(image, LONG_EDGE, quality);
