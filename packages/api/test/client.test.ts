@@ -188,3 +188,24 @@ test('undefined extra header values are not sent', async () => {
 	await api.request('POST', '/v1/reports', { body: {}, headers: { 'Idempotency-Key': undefined } });
 	assert.equal('Idempotency-Key' in headers(), false);
 });
+
+test('a locale getter is read on every request', async () => {
+	let locale: 'sl' | 'en' = 'sl';
+	const calls: Record<string, string>[] = [];
+	const api = createApiClient({
+		baseUrl: 'http://localhost:4000',
+		locale: () => locale,
+		fetch: async (_url, init = {}) => {
+			calls.push(init.headers as Record<string, string>);
+			return jsonResponse({});
+		},
+	});
+	await api.request('GET', '/v1/me');
+	locale = 'en';
+	await api.request('GET', '/v1/me');
+
+	assert.deepEqual(
+		calls.map((h) => h['Accept-Language']),
+		['sl', 'en']
+	);
+});

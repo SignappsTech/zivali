@@ -1,5 +1,7 @@
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 import { useTranslations } from 'use-intl';
+
+import { Text } from '@/lib/font-scale';
 
 // Placeholder start screen; the mobile shell (TASK-12.2) replaces it with the tabs.
 export default function Home() {

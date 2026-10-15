@@ -14,8 +14,10 @@ import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useColorScheme } from 'nativewind';
 import { useEffect } from 'react';
+import { Provider } from 'react-redux';
 
-import { I18nProvider } from '@/lib/i18n';
+import { ProfileI18n } from '@/lib/profile-i18n';
+import { store } from '@/lib/store';
 import { NAV_THEME } from '@/lib/theme';
 
 export { ErrorBoundary } from 'expo-router';
@@ -39,18 +41,16 @@ export default function RootLayout() {
 
 	if (!ready) return null;
 
-	// TODO: data fetching is RTK Query with endpoints generated from OpenAPI (@rtk-query/codegen-openapi) in packages/api;
-	// its Redux store Provider wraps this tree once that client exists. No hand-written fetch hooks.
+	// Data fetching is RTK Query (@zivali/api). Order: Redux Provider -> ProfileI18n (profile locale) -> Theme.
 	return (
-		// i18n (TASK-10.3). When TASK-3.13 lands, a small <ProfileI18n> child under the Redux Provider calls useGetMe and
-		// renders <I18nProvider profile={{ locale: me.locale, save: (l) => updateMe({ locale: l }) }}> (lib/i18n.tsx).
-		// Order stays Provider -> I18nProvider -> Theme.
-		<I18nProvider>
-			<ThemeProvider value={NAV_THEME[colorScheme ?? 'light']}>
-				<StatusBar style="auto" />
-				<Stack screenOptions={{ headerShown: false }} />
-				<PortalHost />
-			</ThemeProvider>
-		</I18nProvider>
+		<Provider store={store}>
+			<ProfileI18n>
+				<ThemeProvider value={NAV_THEME[colorScheme ?? 'light']}>
+					<StatusBar style="auto" />
+					<Stack screenOptions={{ headerShown: false }} />
+					<PortalHost />
+				</ThemeProvider>
+			</ProfileI18n>
+		</Provider>
 	);
 }

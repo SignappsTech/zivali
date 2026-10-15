@@ -3,10 +3,11 @@ id: TASK-3.13
 title: >-
   Mobile: Redux store Provider and generated RTK Query api, font-scale caps, URL
   polyfill
-status: To Do
+status: In Progress
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-15 01:52'
+updated_date: '2026-10-15 06:41'
 labels:
   - fe
   - no-design
@@ -43,3 +44,7 @@ Scope: Provider with createApiStore from @zivali/api/rtk in the root layout; gen
 - [ ] #3 A URL polyfill is added only if Supabase auth fails without it on a development build; otherwise the task notes record that none was needed. Any new dependency has a row in ADR-017.
 - [ ] #4 tsc, jest-expo and expo export --platform android pass; pnpm verify passes.
 <!-- AC:END -->
+
+Branch: agent/TASK-3.13-store-provider
+
+Notes: AC#3 no URL polyfill needed (Expo SDK 57 winter runtime provides URL/URLSearchParams on Hermes; supabase-js 2.x works). Re-check on the first dev build.
