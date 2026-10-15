@@ -1,11 +1,11 @@
 ---
 id: TASK-4.2
 title: CI pipeline and `pnpm verify`
-status: To Do
+status: Done
 assignee:
   - '@tech-lead'
 created_date: '2026-10-14 22:12'
-updated_date: '2026-10-15 03:32'
+updated_date: '2026-10-15 07:27'
 labels:
   - tech
   - 'est:S'
