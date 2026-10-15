@@ -3,9 +3,10 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-import { openDatabaseAsync, type SQLiteDatabase } from 'expo-sqlite';
+import { deleteDatabaseAsync, openDatabaseAsync, type SQLiteDatabase } from 'expo-sqlite';
+import * as SecureStore from 'expo-secure-store';
 
-import { getDb, migrate, migrations } from '@/lib/db';
+import { DB_NAME, getDb, migrate, migrations } from '@/lib/db';
 import { bytesUsed, draftsDir, outboxDir, thumbsDir } from '@/lib/db/files';
 import { stopGeofencing } from '@/lib/offline/geofence';
 import { manageTokenKey } from '@/lib/offline/outbox';
@@ -32,8 +33,22 @@ jest.mock('expo-sqlite', () => {
 						throw error;
 					}
 				},
+				withExclusiveTransactionAsync: async (task: (txn: unknown) => Promise<void>) => {
+					db.exec('begin');
+					try {
+						await task({ execAsync: async (sql: string) => db.exec(sql) });
+						db.exec('commit');
+					} catch (error) {
+						db.exec('rollback');
+						throw error;
+					}
+				},
+				closeAsync: async () => {
+					db.close();
+				},
 			};
 		},
+		deleteDatabaseAsync: jest.fn(async () => {}),
 	};
 });
 // Real files in a temp folder stand in for the app's cache and document directories.
@@ -63,10 +78,14 @@ jest.mock('expo-file-system', () => {
 	return { Directory, Paths: { cache: new Directory(root, 'cache'), document: new Directory(root, 'document') } };
 });
 const mockKeychain = new Map<string, string>();
+const mockSession = jest.fn(async () => {});
 jest.mock('expo-secure-store', () => ({
 	deleteItemAsync: jest.fn(async (name: string) => void mockKeychain.delete(name)),
 }));
-jest.mock('@/lib/supabase', () => ({ supabase: { auth: { signOut: jest.fn(async () => ({ error: null })) } } }));
+jest.mock('@/lib/supabase', () => ({
+	clearSessionStorage: () => mockSession(),
+	supabase: { auth: { signOut: jest.fn(async () => ({ error: null })) } },
+}));
 jest.mock('@/lib/offline/geofence', () => ({ stopGeofencing: jest.fn(async () => {}) }));
 
 const C17_TABLES = [
@@ -122,6 +141,17 @@ const writeFile = (dir: { uri: string }, name: string, bytes: number) => {
 };
 
 afterAll(() => fs.rmSync(path.resolve(thumbsDir.uri, '../..'), { recursive: true }));
+
+describe('getDb', () => {
+	test('a failed migration is not cached', async () => {
+		jest.resetModules();
+		const fresh = await import('@/lib/db');
+		fresh.migrations.push('not sql;');
+		await expect(fresh.getDb()).rejects.toThrow();
+		fresh.migrations.pop();
+		await expect(fresh.getDb()).resolves.toBeDefined();
+	});
+});
 
 describe('migrations', () => {
 	test('from empty create exactly the C17 tables and set user_version', async () => {
@@ -216,9 +246,34 @@ describe('wipeLocalData', () => {
 	test('account_deleted also clears the outbox, its photos and the manage tokens', async () => {
 		await wipeLocalData({ reason: 'account_deleted' });
 
-		for (const table of C17_TABLES) expect(await count(table)).toBe(0);
+		expect(deleteDatabaseAsync).toHaveBeenCalledWith(DB_NAME);
+		for (const table of C17_TABLES) expect(await count(table)).toBe(0); // a fresh database
 		expect(outboxDir.exists).toBe(false);
 		expect(mockKeychain.size).toBe(0);
+		expect(mockSession).toHaveBeenCalled();
+	});
+
+	test('a corrupt result row does not stop the wipe', async () => {
+		await (
+			await getDb()
+		).execAsync(
+			`insert into outbox (id, kind, payload, captured_at, status, result, created_at, updated_at)
+			 values ('o3', 'found', '{}', 'x', 'sent', 'not json', 1, 1)`
+		);
+		jest.mocked(SecureStore.deleteItemAsync).mockRejectedValueOnce(new Error('keychain'));
+
+		await wipeLocalData({ reason: 'account_deleted' });
+
+		expect(await count('outbox')).toBe(0);
+		expect(mockSession).toHaveBeenCalled();
+	});
+
+	test('removeManageLinks on sign_out also drops sent rows and tokens, keeps unsent', async () => {
+		await wipeLocalData({ reason: 'sign_out', removeManageLinks: true });
+
+		expect(await count('outbox')).toBe(1);
+		expect(await count('outbox_photos')).toBe(1);
+		expect(mockKeychain.has(manageTokenKey('rep-1'))).toBe(false);
 	});
 });
 

@@ -37,6 +37,14 @@ export const encryptedStorage = {
 	},
 };
 
+/** Account deletion: drops the stored session ciphertext (SQLite localStorage) and its keychain key. */
+export async function clearSessionStorage(): Promise<void> {
+	const names = Array.from({ length: localStorage.length }, (_, i) => localStorage.key(i)).filter(
+		(name): name is string => name !== null && name.startsWith('sb-')
+	);
+	await Promise.allSettled(names.map((name) => encryptedStorage.removeItem(name)));
+}
+
 // Auth session and Realtime only; data goes through the REST API (@zivali/api).
 export const supabase = createClient(env.EXPO_PUBLIC_SUPABASE_URL, env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY, {
 	auth: {

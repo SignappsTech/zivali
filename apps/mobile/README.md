@@ -23,7 +23,7 @@ Expo SDK 57 app (Expo Router, New Architecture, development builds). Repo map, s
 
 ## Local data
 
-One expo-sqlite database, `zivali.db` (contract C17, ADR-019): `getDb()` from `lib/db` opens it and runs the migrations in `lib/db/migrations/` (`PRAGMA user_version`). Schema changes add the next `NNN_<slug>.ts` and never edit a released one. Photo folders and `bytesUsed()` are in `lib/db/files.ts`, network state in `lib/net.ts` (call `setupNetworkListeners(store.dispatch)` once with the store), and sign-out goes through `signOutAndWipe()` in `lib/offline/wipe.ts`. The Supabase session is in a separate database (expo-sqlite localStorage) and the wipe leaves it alone.
+One expo-sqlite database, `zivali.db` (contract C17, ADR-019): `getDb()` from `lib/db` opens it and runs the migrations in `lib/db/migrations/` (`PRAGMA user_version`). Schema changes add the next `NNN_<slug>.ts` and never edit a released one. Photo folders and `bytesUsed()` are in `lib/db/files.ts`, network state in `lib/net.ts` (call `setupNetworkListeners(store.dispatch)` once with the store), and sign-out goes through `signOutAndWipe()` in `lib/offline/wipe.ts`. The Supabase session is in a separate database (expo-sqlite localStorage): sign-out leaves it to `supabase.auth.signOut`, and `account_deleted` also deletes `zivali.db`, all app files, the session ciphertext and its key (`clearSessionStorage()`). `signOutAndWipe({ removeManageLinks: true })` also drops manage tokens and sent rows.
 
 ## Styling
 

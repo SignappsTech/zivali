@@ -1,4 +1,4 @@
-import { openDatabaseAsync, type SQLiteDatabase } from 'expo-sqlite';
+import { deleteDatabaseAsync, openDatabaseAsync, type SQLiteDatabase } from 'expo-sqlite';
 
 import init from './migrations/001_init';
 
@@ -12,7 +12,9 @@ export const migrations: string[] = [init];
 export async function migrate(db: SQLiteDatabase, list = migrations): Promise<void> {
 	const { user_version: from } = (await db.getFirstAsync<{ user_version: number }>('PRAGMA user_version'))!;
 	for (let version = from + 1; version <= list.length; version++) {
-		await db.withTransactionAsync(() => db.execAsync(`${list[version - 1]}\nPRAGMA user_version = ${version};`));
+		await db.withExclusiveTransactionAsync((txn) =>
+			txn.execAsync(`${list[version - 1]}\nPRAGMA user_version = ${version};`)
+		);
 	}
 }
 
@@ -26,6 +28,18 @@ export function getDb(): Promise<SQLiteDatabase> {
 		await opened.execAsync('PRAGMA foreign_keys = ON;');
 		await migrate(opened);
 		return opened;
-	})();
+	})().catch((error) => {
+		// A failed open or migration must not stick until the app restarts.
+		db = undefined;
+		throw error;
+	});
 	return db;
+}
+
+/** Closes and deletes the database file (account deletion); the next getDb() starts empty. */
+export async function deleteDb(): Promise<void> {
+	const opened = await db?.catch(() => undefined);
+	db = undefined;
+	await opened?.closeAsync();
+	await deleteDatabaseAsync(DB_NAME);
 }
