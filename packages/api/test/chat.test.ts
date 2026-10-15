@@ -12,7 +12,7 @@ import {
 } from '../src/__fixtures__/chat.ts';
 import { chatApi, subscribeConversation } from '../src/chat.ts';
 import { mockError } from '../src/mock.ts';
-import { fakeRealtime, mockStore, settle } from './helpers.ts';
+import { failure, fakeRealtime, mockStore, settle } from './helpers.ts';
 
 const e = chatApi.endpoints;
 
@@ -57,10 +57,9 @@ test('chat errors arrive as { status, data.code }', async (t) => {
 		'POST /v1/conversations/:id/messages': () => mockError('GONE', 'Read-only'),
 	});
 	const created = await store.dispatch(e.createConversation.initiate({ about_report_code: 'Hk3vT9qP' }));
-	assert.equal(created.error?.status, 403);
-	assert.equal(created.error?.data.code, 'UNVERIFIED_EMAIL');
+	assert.deepEqual(failure(created), [403, 'UNVERIFIED_EMAIL']);
 	const sent = await store.dispatch(e.sendMessage.initiate({ id, body: { body: 'Hvala!' } }));
-	assert.deepEqual([sent.error?.status, sent.error?.data.code], [410, 'GONE']);
+	assert.deepEqual(failure(sent), [410, 'GONE']);
 });
 
 test('subscribeConversation: private channel, live messages deduped, catch-up after every (re)subscribe', async (t) => {

@@ -3,7 +3,7 @@ import type { TestContext } from 'node:test';
 
 import type { BroadcastChannel, RealtimeClient } from '../src/broadcast.ts';
 import { createMockApi, type MockRoutes } from '../src/mock.ts';
-import { api, createApiStore } from '../src/rtk.ts';
+import { api, createApiStore, type QueryError } from '../src/rtk.ts';
 
 /** A store over createMockApi(routes); its cache timers are cleared after the test so the process can exit. */
 export function mockStore(t: TestContext, routes: MockRoutes) {
@@ -40,3 +40,9 @@ export function fakeRealtime() {
 
 /** Lets pending dispatches and mock fetches settle. */
 export const settle = () => new Promise((resolve) => setTimeout(resolve, 10));
+
+/** `[status, code]` of a failed query or mutation result. */
+export const failure = ({ error }: { error?: unknown }) => {
+	const { status, data } = error as QueryError;
+	return [status, data.code];
+};
