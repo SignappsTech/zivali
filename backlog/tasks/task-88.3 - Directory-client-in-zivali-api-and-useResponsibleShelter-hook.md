@@ -1,11 +1,11 @@
 ---
 id: TASK-88.3
 title: Directory endpoints in @zivali/api (RTK Query) and useResponsibleShelter hook
-status: In Progress
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 23:36'
-updated_date: '2026-10-15 02:42'
+updated_date: '2026-10-15 02:59'
 labels:
   - fe
   - 'est:S'
