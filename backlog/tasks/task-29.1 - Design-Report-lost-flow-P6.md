@@ -1,11 +1,11 @@
 ---
 id: TASK-29.1
 title: 'Design: Report lost flow (P6)'
-status: To Do
+status: In Progress
 assignee:
   - '@ui-designer'
 created_date: '2026-10-14 21:50'
-updated_date: '2026-10-14 21:51'
+updated_date: '2026-10-15 00:40'
 labels:
   - design
   - 'est:M'
@@ -33,6 +33,7 @@ An owner under stress reports a loss in minutes; one question per screen and no 
 ## Packet
 Unblocks on: P1 web shell and P2 mobile shell mockups merged (header, footer, tab bar and sheet patterns); P5 location picker and P16 auth (gate sheet) mockups merged
 Branch: design/P6-report-lost
+Branch: agent/TASK-29.1-p6-report-lost
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Acceptance Criteria
