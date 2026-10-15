@@ -1,11 +1,11 @@
 ---
 id: TASK-10.5
 title: 'Web analytics: ScreenViews reports the next-intl internal route template'
-status: In Progress
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-15 04:10'
-updated_date: '2026-10-15 05:17'
+updated_date: '2026-10-15 05:56'
 labels:
   - fe
   - 'est:XS'
