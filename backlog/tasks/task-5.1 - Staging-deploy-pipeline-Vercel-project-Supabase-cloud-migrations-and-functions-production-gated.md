@@ -3,11 +3,11 @@ id: TASK-5.1
 title: >-
   Hetzner deploy: Docker Compose + nginx/certbot, direct image transfer (no
   registry), migrations, rollback, nightly backup to R2
-status: In Progress
+status: Done
 assignee:
   - '@backend-dev'
 created_date: '2026-10-14 22:12'
-updated_date: '2026-10-15 14:39'
+updated_date: '2026-10-15 15:35'
 labels:
   - tech
   - 'est:M'
