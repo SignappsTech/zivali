@@ -27,3 +27,4 @@ CH-126. x-device-id is client-chosen and can be rotated, so anonymous actors are
 - [ ] #1 Anonymous rate-limit key is ip_hash or ip_hash+device_hash, never device_hash alone
 - [ ] #2 Test: rotating x-device-id from one IP does not reset the limit
 <!-- AC:END -->
+Branch: agent/TASK-6.15-ratelimit-ip
