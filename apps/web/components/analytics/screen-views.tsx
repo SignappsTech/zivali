@@ -13,6 +13,10 @@ const decode = (segment: string) => {
 	}
 };
 
+// Literal segments of real routes; anything else unmatched is a 404 and must not reach GA.
+const STATIC_SEGMENTS = new Set(['r', 'report', 'info']);
+const CATCH_ALL = '/[...rest]';
+
 /** `/en/r/AB12CD` with `{ locale: 'en', code: 'AB12CD' }` → `/r/[code]`: param values become their names, no locale. */
 export function routeTemplate(pathname: string, params: Record<string, string | string[] | undefined>): string {
 	const names = new Map<string, string>();
@@ -23,6 +27,7 @@ export function routeTemplate(pathname: string, params: Record<string, string | 
 		.filter(Boolean)
 		.map((segment) => names.get(segment) ?? names.get(decode(segment)) ?? segment)
 		.filter((segment, i, all) => segment !== '[locale]' && !(segment.startsWith('[...') && segment === all[i - 1]));
+	if (segments.some((segment) => !segment.startsWith('[') && !STATIC_SEGMENTS.has(segment))) return CATCH_ALL;
 	return `/${segments.join('/')}`;
 }
 

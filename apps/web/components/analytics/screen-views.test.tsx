@@ -18,6 +18,11 @@ describe('routeTemplate', () => {
 		['/en/r/AB12CD', { locale: 'en', code: 'AB12CD' }, '/r/[code]'],
 		['/r/%C5%A1apa', { locale: 'sl', code: 'šapa' }, '/r/[code]'],
 		['/en/info/help/chips', { locale: 'en', slug: ['help', 'chips'] }, '/info/[...slug]'],
+		['/en/r/abc/x', { locale: 'en' }, '/[...rest]'],
+		['/en/foo', { locale: 'en', rest: ['foo'] }, '/[...rest]'],
+		['/en/r/AB12CD/x9', { locale: 'en' }, '/[...rest]'],
+		['/sl/R/abc', { locale: 'sl' }, '/[...rest]'],
+		['/en/r/123', { locale: 'en' }, '/[...rest]'],
 		['/report/re', { locale: 'sl', code: 're' }, '/report/[code]'],
 	])('%s → %s', (pathname, params, template) => {
 		expect(routeTemplate(pathname, params)).toBe(template);
