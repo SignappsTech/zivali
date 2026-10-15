@@ -3,11 +3,11 @@ id: TASK-12.5
 title: >-
   Mobile local data layer: expo-sqlite store, local migrations, network state,
   wipe
-status: In Progress
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:39'
-updated_date: '2026-10-15 05:43'
+updated_date: '2026-10-15 06:25'
 labels:
   - fe
   - 'est:M'
