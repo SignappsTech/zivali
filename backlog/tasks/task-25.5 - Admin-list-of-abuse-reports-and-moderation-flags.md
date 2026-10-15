@@ -1,11 +1,11 @@
 ---
 id: TASK-25.5
 title: Admin list of abuse reports and moderation flags
-status: In Progress
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:13'
-updated_date: '2026-10-15 21:58'
+updated_date: '2026-10-15 22:39'
 labels:
   - fe
   - 'est:S'
