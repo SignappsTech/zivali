@@ -1,0 +1,20 @@
+@import 'tailwindcss';
+@import '@zivali/tokens/tokens.css';
+@import '@zivali/tokens/web.css';
+
+/* tokens.css switches on the .dark class, which the theme script in the root layout sets from the OS. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+@layer base {
+	:root {
+		color-scheme: light;
+	}
+
+	.dark {
+		color-scheme: dark;
+	}
+
+	body {
+		@apply bg-background font-sans text-foreground;
+	}
+}
