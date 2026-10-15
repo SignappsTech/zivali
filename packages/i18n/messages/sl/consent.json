@@ -1,0 +1,21 @@
+{
+	"title": "Piškotki in vaša zasebnost",
+	"body_app": "Nekaj podatkov na napravi potrebujemo, da aplikacija deluje, na primer za vpis. Če dovolite, z orodjem Google Analytics for Firebase merimo tudi, kako se aplikacija uporablja, brez imen, točnih lokacij in številk čipov; pred vašo odločitvijo Googlu ne pošljemo ničesar.",
+	"policy_link": "Politika piškotkov",
+	"reject_all": "Zavrni vse",
+	"accept_all": "Sprejmi vse",
+	"customise": "Prilagodi",
+	"dialog_label": "Izbira piškotkov",
+	"back": "Nazaj",
+	"settings_title": "Nastavitve piškotkov",
+	"necessary_title": "Nujni",
+	"necessary_body": "Omogočajo vpis, si zapomnijo jezik, izbiro glede piškotkov in osnutke prijav ter ščitijo pred zlorabami. Ponudnika: Najdimo in Cloudflare (preverjanje, da niste robot). Trajanje je navedeno v politiki piškotkov.",
+	"necessary_locked": "Vedno vklopljeno",
+	"analytics_title": "Analitični",
+	"analytics_body_app": "Pomagajo nam razumeti, kateri zasloni in koraki se uporabljajo, da iskanje izboljšamo. Ponudnik: Google (Google Analytics for Firebase). Podatki se v Google Analytics hranijo 14 mesecev. Oglaševalskih identifikatorjev ne uporabljamo.",
+	"analytics_switch_a11y": "Analitični piškotki",
+	"save": "Shrani izbiro",
+	"saved_toast": "Izbira je shranjena.",
+	"reask_changed": "Od vaše zadnje izbire se je nekaj spremenilo: {change}. Prosimo, izberite znova.",
+	"reask_year": "Od vaše zadnje izbire je minilo leto dni. Prosimo, izberite znova."
+}

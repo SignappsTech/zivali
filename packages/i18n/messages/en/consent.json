@@ -1,0 +1,21 @@
+{
+	"title": "Cookies and your privacy",
+	"body_app": "The app needs to store a little data on your device to work, for example to keep you signed in. If you allow it, we also use Google Analytics for Firebase to see how the app is used, without names, exact locations or chip numbers; nothing is sent to Google before you decide.",
+	"policy_link": "Cookie policy",
+	"reject_all": "Reject all",
+	"accept_all": "Accept all",
+	"customise": "Customise",
+	"dialog_label": "Cookie choice",
+	"back": "Back",
+	"settings_title": "Cookie settings",
+	"necessary_title": "Essential",
+	"necessary_body": "They keep you signed in, remember your language, your cookie choice and report drafts, and protect against abuse. Providers: Najdimo and Cloudflare (bot check). Durations are listed in the cookie policy.",
+	"necessary_locked": "Always on",
+	"analytics_title": "Analytics",
+	"analytics_body_app": "They help us understand which screens and steps are used, so we can improve searching. Provider: Google (Google Analytics for Firebase). Data is kept in Google Analytics for 14 months. We do not use advertising identifiers.",
+	"analytics_switch_a11y": "Analytics cookies",
+	"save": "Save choice",
+	"saved_toast": "Choice saved.",
+	"reask_changed": "Something has changed since your last choice: {change}. Please choose again.",
+	"reask_year": "It has been a year since your last choice. Please choose again."
+}

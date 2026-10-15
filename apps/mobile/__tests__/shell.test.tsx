@@ -16,6 +16,7 @@ import MapTab from '@/app/(tabs)/index';
 import ProfileTab from '@/app/(tabs)/profile';
 import ReportTab from '@/app/(tabs)/report';
 import SettingsPlaceholder from '@/app/settings/[section]';
+import ConsentSettings from '@/app/settings/consent';
 import SettingsLayout from '@/app/settings/_layout';
 import LanguageSettings from '@/app/settings/language';
 import { PermissionNote, PermissionPrimer } from '@/components/shell/permission-primer';
@@ -61,6 +62,7 @@ const routes = {
 	'(tabs)/report': ReportTab,
 	'(tabs)/profile': ProfileTab,
 	'settings/_layout': SettingsLayout,
+	'settings/consent': ConsentSettings,
 	'settings/language': LanguageSettings,
 	'settings/[section]': SettingsPlaceholder,
 	// Stand-ins for the flow and auth screens that later stories add.
@@ -154,7 +156,7 @@ describe('signed-out tabs', () => {
 
 		await fireEvent.press(screen.getByRole('button', { name: en.profile.row_cookie_settings }));
 		expect(result.getPathname()).toBe('/settings/consent');
-		expect(screen.getByText(en.common.empty_title)).toBeOnTheScreen();
+		expect(screen.getByText(en.consent.necessary_locked)).toBeOnTheScreen();
 	});
 });
 

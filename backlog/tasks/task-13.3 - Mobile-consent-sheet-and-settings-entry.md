@@ -1,11 +1,11 @@
 ---
 id: TASK-13.3
 title: Mobile consent sheet and settings entry
-status: To Do
+status: In Progress
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:12'
-updated_date: '2026-10-14 22:41'
+updated_date: '2026-10-15 16:06'
 labels:
   - fe
   - 'est:S'
