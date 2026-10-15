@@ -36,6 +36,17 @@ const config: ExpoConfig = {
 				dark: { image: './assets/splash-dark.png', backgroundColor: colors.dark.background },
 			},
 		],
+		// Camera for the photo step (P2 primer first, permissions.camera_body); the gallery is the system picker, which
+		// needs no photo library permission, and photos only (no microphone).
+		[
+			'expo-image-picker',
+			{
+				cameraPermission:
+					'Kamero uporabimo samo, ko fotografirate žival. Fotografijo lahko izberete tudi iz galerije.',
+				photosPermission: false,
+				microphonePermission: false,
+			},
+		],
 	],
 	experiments: { typedRoutes: true },
 	// EXPO_PUBLIC_* (API and app URLs, Supabase) come from the eas.json profile env; only the environment name is surfaced here.
