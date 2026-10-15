@@ -12,7 +12,7 @@
 			"distribution": "internal",
 			"channel": "development",
 			"android": { "buildType": "apk" },
-			"env": { "EXPO_PUBLIC_APP_ENV": "local" }
+			"env": { "EXPO_PUBLIC_APP_ENV": "local", "EXPO_PUBLIC_PUSH_PROVIDER": "mock" }
 		},
 		"preview": {
 			"extends": "base",
@@ -21,6 +21,8 @@
 			"android": { "buildType": "apk" },
 			"env": {
 				"EXPO_PUBLIC_APP_ENV": "staging",
+				"EXPO_PUBLIC_PUSH_PROVIDER": "expo",
+				"EXPO_PUBLIC_APP_URL": "https://staging.najdimo.si",
 				"EXPO_PUBLIC_SUPABASE_URL": "https://omtpppzrugibquukhnyl.supabase.co"
 			}
 		},
@@ -30,7 +32,11 @@
 			"channel": "production",
 			"autoIncrement": true,
 			"android": { "buildType": "app-bundle" },
-			"env": { "EXPO_PUBLIC_APP_ENV": "production" }
+			"env": {
+				"EXPO_PUBLIC_APP_ENV": "production",
+				"EXPO_PUBLIC_PUSH_PROVIDER": "expo",
+				"EXPO_PUBLIC_APP_URL": "https://najdimo.si"
+			}
 		}
 	},
 	"submit": {}

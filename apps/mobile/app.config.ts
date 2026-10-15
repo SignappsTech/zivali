@@ -19,6 +19,18 @@ const googleServiceInfoPlist = firebaseFile('GOOGLE_SERVICE_INFO_PLIST', 'Google
 const googleIosClientId = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID;
 const appleSignIn = process.env.EXPO_PUBLIC_APPLE_SIGN_IN === 'true';
 
+// Deep links (C15): the host of the web app this build belongs to (eas.json profile: staging or production). Unset
+// (local dev builds): no associated domains and no https intent filter; the zivali:// scheme still works. The scheme is
+// the dev and fallback path; no exp:// redirects. Verification files: apps/web /.well-known (APPLE_TEAM_ID, ANDROID_CERT_SHA256).
+const appHost = process.env.EXPO_PUBLIC_APP_URL ? new URL(process.env.EXPO_PUBLIC_APP_URL).host : undefined;
+const linkPaths = [
+	{ pathPrefix: '/r/' },
+	{ pathPrefix: '/en/r/' },
+	{ path: '/m' },
+	{ path: '/en/m' },
+	{ pathPrefix: '/payments/' },
+];
+
 // Working name until Q-001 is decided (design system §14). Splash marks are docs/design/brand/najdimo-mark*.svg as PNG.
 const config: ExpoConfig = {
 	name: 'Najdimo',
@@ -34,8 +46,23 @@ const config: ExpoConfig = {
 		supportsTablet: false,
 		googleServicesFile: googleServiceInfoPlist,
 		usesAppleSignIn: appleSignIn,
+		associatedDomains: appHost ? [`applinks:${appHost}`] : undefined,
 	},
-	android: { package: 'si.signapps.zivali', allowBackup: false, googleServicesFile },
+	android: {
+		package: 'si.signapps.zivali',
+		allowBackup: false,
+		googleServicesFile,
+		intentFilters: appHost
+			? [
+					{
+						action: 'VIEW',
+						autoVerify: true,
+						data: linkPaths.map((path) => ({ scheme: 'https', host: appHost, ...path })),
+						category: ['BROWSABLE', 'DEFAULT'],
+					},
+				]
+			: undefined,
+	},
 	plugins: [
 		'expo-router',
 		'expo-dev-client',
@@ -48,6 +75,8 @@ const config: ExpoConfig = {
 			: []),
 		// iOS BGTaskScheduler identifier and the `processing` background mode for the offline cache refresh (C17).
 		'expo-background-task',
+		// Push token + notification permission (primer first, lib/push.ts); the token needs FCM/APNs credentials (Q-007).
+		'expo-notifications',
 		[
 			'expo-splash-screen',
 			{
