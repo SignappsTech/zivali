@@ -1,11 +1,11 @@
 ---
 id: TASK-35.2
 title: 'Ad click endpoint GET /v1/ads/:id/click (counting redirect, no open redirect)'
-status: To Do
+status: Done
 assignee:
   - '@backend-dev'
 created_date: '2026-10-14 22:13'
-updated_date: '2026-10-14 23:38'
+updated_date: '2026-10-15 22:13'
 labels:
   - be
   - 'est:S'

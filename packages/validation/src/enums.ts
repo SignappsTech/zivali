@@ -49,6 +49,7 @@ export const AdStatus = z.enum(E.AD_STATUSES).openapi('AdStatus');
 export const AdHouseKind = z.enum(E.AD_HOUSE_KINDS).openapi('AdHouseKind');
 export const AdLabel = z.enum(E.AD_LABELS).openapi('AdLabel');
 export const LeadInterest = z.enum(E.LEAD_INTERESTS).openapi('LeadInterest');
+export const DirectoryStatus = z.enum(E.DIRECTORY_STATUSES).openapi('DirectoryStatus');
 
 /** Label keys of the `attributes` i18n namespace (C16): `attributes.<group>.<value>`. */
 export const ATTRIBUTE_LABEL_KEYS = [

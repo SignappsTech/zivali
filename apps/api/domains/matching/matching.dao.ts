@@ -266,7 +266,23 @@ export async function markMatched(report_id: string, tx?: Prisma.TransactionClie
 	await (tx ?? prisma).reports.updateMany({ where: { id: report_id, status: 'open' }, data: { status: 'matched' } });
 }
 
+/** Closes the report's suggested and confirmed matches (either side); returns the other report of each confirmed one. */
+export async function closeForReport(report_id: string, tx?: Prisma.TransactionClient): Promise<string[]> {
+	const db = tx ?? prisma;
+	const either = { OR: [{ lost_report_id: report_id }, { other_report_id: report_id }] };
+	const confirmed = await db.matches.findMany({
+		where: { ...either, state: 'confirmed' },
+		select: { lost_report_id: true, other_report_id: true },
+	});
+	await db.matches.updateMany({
+		where: { ...either, state: { in: ['suggested', 'confirmed'] } },
+		data: { state: 'closed' },
+	});
+	return confirmed.map((m) => (m.lost_report_id === report_id ? m.other_report_id : m.lost_report_id));
+}
+
 export default {
+	closeForReport,
 	notificationData,
 	confirmedData,
 	findReportForManager,

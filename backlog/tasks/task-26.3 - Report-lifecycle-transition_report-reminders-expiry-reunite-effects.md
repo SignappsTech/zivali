@@ -3,11 +3,11 @@ id: TASK-26.3
 title: >-
   Report lifecycle: transitions endpoint, reminders and expiry job, reunite
   effects
-status: To Do
+status: Done
 assignee:
   - '@backend-dev'
 created_date: '2026-10-14 22:13'
-updated_date: '2026-10-14 23:38'
+updated_date: '2026-10-15 21:53'
 labels:
   - be
   - 'est:M'

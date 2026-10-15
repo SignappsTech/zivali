@@ -161,7 +161,8 @@ export type ReportTransitionInput = { action: ReportTransitionAction; reason?: C
 
 /** GET /v1/sync/reports (C4, C17): ≤ 3 circles of ≤ 25 km. */
 export type SyncArea = { lat: number; lng: number; radius_km: number };
-export type SyncReportsQuery = { areas: SyncArea[]; since?: IsoDateTime; limit?: number };
+/** `since` = the previous response's `server_time` (an opaque cursor, C4 CH-142); none on the first sync. */
+export type SyncReportsQuery = { areas: SyncArea[]; since?: string; limit?: number };
 /** The PublicReport fields the mobile cache keeps (C17 reports_cache) plus `thumb_url`. */
 export type CachedReport = Pick<
 	PublicReport,
@@ -187,7 +188,8 @@ export type CachedReport = Pick<
 export type SyncReportsResponse = {
 	upserts: CachedReport[];
 	removed_ids: Uuid[];
-	server_time: IsoDateTime;
+	/** Opaque cursor: stored and sent back as `since`, never parsed by the client. */
+	server_time: string;
 	has_more: boolean;
 };
 

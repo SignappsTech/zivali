@@ -1,11 +1,11 @@
 ---
 id: TASK-16.2
 title: 'Design: Pet profiles (P8)'
-status: To Do
+status: Done
 assignee:
   - '@ui-designer'
 created_date: '2026-10-14 21:50'
-updated_date: '2026-10-14 21:51'
+updated_date: '2026-10-15 22:10'
 labels:
   - design
   - 'est:S'
@@ -30,7 +30,7 @@ Owners register pets in advance so a loss report takes seconds; the form must no
 
 ## Packet
 Unblocks on: P1 web shell and P2 mobile shell mockups merged (header, footer, tab bar and sheet patterns); assets/empty-no-pets.png generated
-Branch: design/P8-pet-profiles
+Branch: agent/TASK-16.2-pets-ui
 
 Unblocked from the image task(s) TASK-16.1 (2026-10-16): the Codex CLI is not installed yet, so use a labelled placeholder of the final size and aspect ratio where the illustration goes; the image task swaps the real art in later.
 <!-- SECTION:DESCRIPTION:END -->

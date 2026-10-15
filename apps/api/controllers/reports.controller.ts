@@ -2,6 +2,7 @@
 import type { Request, Response } from 'express';
 
 import {
+	LifecycleDomain,
 	ManageDomain,
 	ReportsDomain,
 	ReportsMapper,
@@ -30,6 +31,12 @@ export async function createReport(req: Request, res: Response): Promise<void> {
 export async function updateReport(req: Request, res: Response): Promise<void> {
 	const ctx = userCtx(req);
 	const view = await ReportsDomain.updateReport({ ...req.body, code: String(req.params.code) }, ctx);
+	res.set('Cache-Control', PRIVATE).json(ReportsMapper.toOwnerView(view, ctx.locale));
+}
+
+export async function transitionReport(req: Request, res: Response): Promise<void> {
+	const ctx = userCtx(req);
+	const view = await LifecycleDomain.transitionReport({ ...req.body, code: String(req.params.code) }, ctx);
 	res.set('Cache-Control', PRIVATE).json(ReportsMapper.toOwnerView(view, ctx.locale));
 }
 
@@ -70,6 +77,7 @@ export default {
 	getReport,
 	createReport,
 	updateReport,
+	transitionReport,
 	claimManage,
 	resendManageLink,
 	listMyReports,

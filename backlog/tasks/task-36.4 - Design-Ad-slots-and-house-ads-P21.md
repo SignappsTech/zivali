@@ -1,11 +1,11 @@
 ---
 id: TASK-36.4
 title: 'Design: Ad slots and house ads (P21)'
-status: To Do
+status: Done
 assignee:
   - '@ui-designer'
 created_date: '2026-10-14 21:50'
-updated_date: '2026-10-14 21:51'
+updated_date: '2026-10-15 22:10'
 labels:
   - design
   - 'est:S'
@@ -31,6 +31,7 @@ Sponsor placements earn revenue but can erode trust, so four calm labelled slots
 ## Packet
 Unblocks on: P1 web shell and P2 mobile shell mockups merged (header, footer, tab bar and sheet patterns); assets/house-ad-support.png, house-ad-partner.png and house-ad-adopt.png generated
 Branch: design/P21-ad-slots
+Branch: agent/TASK-36.4-house-ad-mockup
 
 Unblocked from the image task(s) TASK-36.1, TASK-36.2, TASK-36.3 (2026-10-16): the Codex CLI is not installed yet, so use a labelled placeholder of the final size and aspect ratio where the illustration goes; the image task swaps the real art in later.
 <!-- SECTION:DESCRIPTION:END -->

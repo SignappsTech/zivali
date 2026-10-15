@@ -1,11 +1,11 @@
 ---
 id: TASK-31.2
 title: 'Design: Map and list (browse) (P4)'
-status: To Do
+status: Done
 assignee:
   - '@ui-designer'
 created_date: '2026-10-14 21:50'
-updated_date: '2026-10-14 21:51'
+updated_date: '2026-10-15 22:10'
 labels:
   - design
   - 'est:M'
@@ -30,7 +30,7 @@ Browsing nearby reports is the home screen on mobile and must stay calm while ca
 
 ## Packet
 Unblocks on: P1 web shell and P2 mobile shell mockups merged (header, footer, tab bar and sheet patterns); assets/empty-no-reports.png generated
-Branch: design/P4-map-list
+Branch: agent/TASK-31.2-map-list
 
 Unblocked from the image task(s) TASK-31.1 (2026-10-16): the Codex CLI is not installed yet, so use a labelled placeholder of the final size and aspect ratio where the illustration goes; the image task swaps the real art in later.
 <!-- SECTION:DESCRIPTION:END -->

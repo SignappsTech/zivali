@@ -9,7 +9,7 @@ import type { AdInput } from '@zivali/validation';
 
 import type { AD_SLOT } from '../../generated/enums.ts';
 import configStore from '../../lib/config-store.ts';
-import type { Ctx } from '../../lib/ctx.ts';
+import type { Actor, Ctx } from '../../lib/ctx.ts';
 import { AppError } from '../../lib/errors.ts';
 import AdsDao, { type AdRow } from './ads.dao.ts';
 
@@ -67,7 +67,7 @@ const LJUBLJANA_DAY = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Ljubl
 /** The stats day (YYYY-MM-DD) of an instant in Europe/Ljubljana. */
 export const statsDay = (now: Date): string => LJUBLJANA_DAY.format(now);
 
-const dbSlot = (slot: AdSlot) => slot.toUpperCase() as AD_SLOT;
+export const dbSlot = (slot: AdSlot) => slot.toUpperCase() as AD_SLOT;
 
 export type AdContext = {
 	slot: AdSlot;
@@ -122,28 +122,56 @@ export async function recordImpression(
 	if (!count) throw new AppError('NOT_FOUND', 'Ad not found');
 }
 
-type AdWrite = z.infer<typeof AdInput> & { id?: string };
+/**
+ * GET /v1/ads/:id/click: +1 click for (day in Europe/Ljubljana, ad, slot, region), then the ad's stored link, the
+ * only redirect target (never a URL from the request). NOT_FOUND: unknown, deleted or inactive ad, or a slot the ad
+ * does not run in.
+ */
+export async function recordClick(
+	input: { ad_id: string; slot: AdSlot; region_id?: number },
+	ctx: Ctx
+): Promise<string> {
+	const link = await AdsDao.addClick(
+		{ day: statsDay(ctx.now), ad_id: input.ad_id, slot: dbSlot(input.slot), region_id: input.region_id ?? 0 },
+		ctx.tx
+	);
+	// https only (validated on save, checked by the database); re-checked here because this is a redirect.
+	if (!link?.startsWith('https://')) throw new AppError('NOT_FOUND', 'Ad not found');
+	return link;
+}
+
+export type AdWrite = z.infer<typeof AdInput> & { id?: string };
+
+/** Ad administration (TASK-37.2): admins with aal2 only. */
+export function assertAdAdmin(ctx: Ctx): asserts ctx is Ctx & { actor: Actor } {
+	if (!ctx.actor || ctx.actor.is_anonymous) throw new AppError('UNAUTHENTICATED', 'Sign in required');
+	if (ctx.actor.role !== 'ADMIN') throw new AppError('FORBIDDEN', 'Not allowed');
+	if (ctx.actor.aal !== 'aal2') throw new AppError('AAL2_REQUIRED', 'Two-factor verification required');
+}
 
 /**
  * Every ad save (TASK-37.2): admins with aal2 only; no animal sale, giveaway or rehoming; an exclusive ad may not
  * overlap another exclusive ad in dates for a shared slot and region. Throws VALIDATION with one issue per field.
+ * An exclusive ad is checked inside the save transaction (ctx.tx) under per-slot advisory locks held until it
+ * commits, so two concurrent saves cannot both pass. A missing starts_at counts as now: an exclusive ad that ran out
+ * without being marked ended does not block a new one.
  */
 export async function assertAdWritable(ad: AdWrite, ctx: Ctx): Promise<void> {
-	if (!ctx.actor || ctx.actor.is_anonymous) throw new AppError('UNAUTHENTICATED', 'Sign in required');
-	if (ctx.actor.role !== 'ADMIN') throw new AppError('FORBIDDEN', 'Not allowed');
-	if (ctx.actor.aal !== 'aal2') throw new AppError('AAL2_REQUIRED', 'Two-factor verification required');
-
+	assertAdAdmin(ctx);
 	const issues: { path: string; message: string }[] = blockedFields(ad, await blockedTerms()).map((path) => ({
 		path,
 		message: 'Ads may not sell, give away or rehome animals',
 	}));
 	if (ad.exclusive) {
+		if (!ctx.tx) throw new Error('assertAdWritable: exclusive ads are checked inside the save transaction');
+		const slots = ad.slots.map(dbSlot);
+		await AdsDao.lockSlots(slots, ctx.tx);
 		const other = await AdsDao.findExclusiveOverlap(
 			{
 				id: ad.id,
-				slots: ad.slots.map(dbSlot),
+				slots,
 				region_ids: ad.region_ids,
-				starts_at: ad.starts_at ? new Date(ad.starts_at) : null,
+				starts_at: ad.starts_at ? new Date(ad.starts_at) : ctx.now,
 				ends_at: ad.ends_at ? new Date(ad.ends_at) : null,
 			},
 			ctx.tx
@@ -160,6 +188,8 @@ export async function assertAdWritable(ad: AdWrite, ctx: Ctx): Promise<void> {
 export default {
 	getAdForSlot,
 	recordImpression,
+	recordClick,
+	assertAdAdmin,
 	assertAdWritable,
 	blockedTerms,
 	blockedFields,

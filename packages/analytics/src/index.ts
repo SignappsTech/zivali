@@ -4,6 +4,7 @@ import { createFirebaseAdapter, type FirebaseAnalytics } from './adapters/fireba
 import { createGa4Adapter } from './adapters/ga4.ts';
 import { mockAdapter } from './adapters/mock.ts';
 import {
+	CONSENT_KEY,
 	CONSENT_VERSION,
 	cookieStorage,
 	isCurrent,
@@ -21,7 +22,8 @@ import {
 	type UserRole,
 } from './registry.ts';
 
-export { CONSENT_VERSION };
+// Pure, so the web server reads the cookie with them too (the consent banner's first view, apps/web layout).
+export { CONSENT_KEY, CONSENT_VERSION, isCurrent, parseConsent };
 export { getMockEvents, resetMockEvents, type MockEvent } from './adapters/mock.ts';
 export type { ConsentChoice, ConsentState, ConsentStorage, EventName, EventParams, FirebaseAnalytics, UserRole };
 

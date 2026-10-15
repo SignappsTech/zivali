@@ -1,0 +1,786 @@
+<!doctype html>
+<!--
+  P8 Pet profiles mockup. Copy: docs/content/pages/P8-pet-profiles.md v0.2 (SL). Where the copy slice has no key the text is marked SAMPLE in the notes.
+  One copy of the content lives in #src; directions.js clones it per colour mode.
+  Frames (10): M1 list, M2 add 1 photos, M3 add 2 basics, M4 add 3 looks, M5 add 4 chip (invalid warning), M6 add 5 notes, M7 detail, W1 list + reports, W2 edit form, W3 detail.
+  Smaller states are region crops (dashed outline), not frames: empty, loading, breed search, delete dialog, discard dialog, toasts, limit reached.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Najdimo mockup: P8 Pet profiles</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:wght@400;500;600;700&family=Bricolage+Grotesque:opsz,wght@12..96,500..800&display=swap" rel="stylesheet">
+<link href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css" rel="stylesheet">
+<link href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/bold/style.css" rel="stylesheet">
+<link href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css" rel="stylesheet">
+<link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet">
+<link href="../tokens.css" rel="stylesheet">
+<link href="../directions/directions.css" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com/3.4.17"></script>
+<script src="../directions/tailwind-config.js"></script>
+<style>
+/* P8 parts used only by this mockup. Token-driven; frontend maps them to PetRow, PetForm sections, PetFacts and the chip row. */
+.scope h1, .scope h2, .scope h3 { text-wrap: balance; }
+.q { font-family: var(--font-display); font-weight: 700; font-size: 34px; line-height: 40px; letter-spacing: -0.02em; margin: 0; }
+.q:focus { outline: none; }
+.h1m { font-family: var(--font-display); font-weight: 700; font-size: 30px; line-height: 36px; letter-spacing: -0.02em; margin: 0; }
+.gh { font-family: var(--font-display); font-weight: 600; font-size: 20px; line-height: 28px; letter-spacing: -0.01em; margin: 0 0 12px; }
+.logo-link { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; border-radius: 12px; color: hsl(var(--foreground)); text-decoration: none; flex: none; }
+.avatar { width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; background: hsl(var(--secondary)); color: hsl(var(--secondary-foreground)); font-size: 14px; font-weight: 700; }
+.tl { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; font-weight: 700; color: hsl(var(--primary)); text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 4px; border-radius: 8px; }
+.tl:hover, .tl.is-hover { text-decoration-thickness: 3px; }
+.tl:focus-visible, .tl.is-focus { outline: 3px solid hsl(var(--ring)); outline-offset: 2px; }
+.err { display: flex; gap: 6px; align-items: flex-start; font-size: 14px; line-height: 20px; font-weight: 700; color: hsl(var(--destructive)); margin: 0; }
+.err i { font-size: 18px; line-height: 20px; flex: none; }
+.input.is-focus { outline: none; }
+textarea.input { min-height: 96px; resize: vertical; line-height: 24px; }
+
+/* Pet row: 64 photo, radius 20 (row), no card, no border. The link is photo + text; the report line sits under it, never nested in the link. */
+.pet { display: grid; gap: 4px; }
+.pet-link { display: grid; grid-template-columns: 64px minmax(0, 1fr) 24px; gap: 16px; align-items: center; margin: -8px; padding: 8px; border-radius: var(--radius-row); color: inherit; text-decoration: none; }
+.pet-link:hover, .pet-link.is-hover { background: hsl(var(--foreground) / 0.10); }
+.pet-link:focus-visible, .pet-link.is-focus { outline: 3px solid hsl(var(--ring)); outline-offset: 2px; }
+.pet-link > img { width: 64px; height: 64px; border-radius: var(--radius-row); object-fit: cover; background: hsl(var(--muted)); }
+.pet-link > i { font-size: 22px; color: hsl(var(--muted-foreground)); }
+.pet-name { font-weight: 700; font-size: 18px; line-height: 24px; margin: 0; }
+.pet-meta { font-size: 15px; line-height: 22px; color: hsl(var(--muted-foreground)); margin: 0; }
+.chipst { display: inline-flex; align-items: center; gap: 5px; font-size: 14px; line-height: 20px; font-weight: 700; margin-top: 2px; }
+.chipst i { font-size: 16px; }
+.chipst.on { color: hsl(var(--foreground)); } .chipst.on i { color: hsl(var(--primary)); }
+.chipst.off { color: hsl(var(--muted-foreground)); }
+.pet-rep { display: flex; align-items: center; flex-wrap: wrap; gap: 0 16px; padding-left: 80px; }
+.row-link { display: flex; align-items: center; gap: 14px; min-height: 56px; margin: 0 -12px; padding: 0 12px; border-radius: var(--radius-row); color: inherit; text-decoration: none; font-weight: 700; font-size: 17px; }
+.row-link > i:first-child { font-size: 24px; color: hsl(var(--primary)); }
+.row-link > i:last-child { margin-left: auto; font-size: 20px; color: hsl(var(--muted-foreground)); }
+.row-link:hover, .row-link.is-hover { background: hsl(var(--foreground) / 0.10); }
+.row-link:focus-visible { outline: 3px solid hsl(var(--ring)); outline-offset: 2px; }
+.rep { display: grid; grid-template-columns: 48px minmax(0, 1fr) auto; gap: 16px; align-items: center; min-height: 64px; }
+.rep > img { width: 48px; height: 48px; border-radius: 16px; object-fit: cover; }
+
+/* Photo rows and slots */
+.ptile { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 96px; padding: 12px; border: 0; border-radius: var(--radius-row); background: hsl(var(--card)); color: hsl(var(--foreground)); font: inherit; font-weight: 700; font-size: 15px; line-height: 20px; text-align: center; cursor: pointer; }
+.ptile i { font-size: 32px; line-height: 1; color: hsl(var(--primary)); }
+.ptile:hover, .ptile.is-hover { background-image: linear-gradient(hsl(var(--foreground) / 0.10), hsl(var(--foreground) / 0.10)); }
+.ptile:focus-visible, .ptile.is-focus { outline: 3px solid hsl(var(--ring)); outline-offset: 2px; }
+.ph-row { display: grid; grid-template-columns: 80px minmax(0, 1fr); gap: 16px; align-items: start; }
+.ph-row > img { width: 80px; height: 80px; border-radius: var(--radius-row); object-fit: cover; }
+.ph-acts { display: flex; gap: 4px; margin-left: -10px; }
+.slot > img { width: 100%; aspect-ratio: 1; border-radius: var(--radius-row); object-fit: cover; display: block; }
+.slot .ph-acts { margin-left: -6px; }
+
+/* Pills as radios (sex, size): selected = primary plus check */
+.pill[role="radio"][aria-checked="true"] { background: hsl(var(--primary)); color: hsl(var(--primary-foreground)); }
+.pill[role="radio"][aria-checked="true"] .tick { display: inline; }
+.pill:focus-visible, .pill.is-focus, .choice.is-focus, .btn.is-focus { outline: 3px solid hsl(var(--ring)); outline-offset: 2px; }
+
+/* Web form: h2 label per section, 40 px between sections, line fields only */
+.sec { margin-top: 40px; display: grid; gap: 24px; }
+.sec > h2 { margin: 0; }
+.sec2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+
+/* Facts: plain two-column list */
+.facts { display: grid; gap: 16px 24px; margin: 0; grid-template-columns: 1fr 1fr; }
+.facts dt { font-size: 14px; line-height: 20px; font-weight: 700; color: hsl(var(--muted-foreground)); }
+.facts dd { margin: 2px 0 0; font-size: 16px; line-height: 24px; }
+.chipno { font-size: 20px; line-height: 28px; font-weight: 700; letter-spacing: 0.02em; font-variant-numeric: tabular-nums; margin: 0; }
+
+/* Sticky summary on lg (edit form) */
+.sum { position: sticky; top: 24px; display: grid; gap: 16px; }
+.sum > img { width: 100%; aspect-ratio: 4/3; object-fit: cover; border-radius: var(--radius-card); }
+.sum ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; font-size: 15px; line-height: 22px; }
+.sum li { display: flex; gap: 8px; align-items: center; }
+.sum li i { font-size: 18px; color: hsl(var(--primary)); }
+.sum li.todo i { color: hsl(var(--muted-foreground)); }
+
+/* Empty-state illustration placeholder: final size 260 x 171 (aspect 32:21), asset assets/empty-no-pets.png (image task TASK-16.1, not done yet) */
+.ill { position: relative; overflow: hidden; border-radius: var(--radius-card); aspect-ratio: 32 / 21; background: hsl(var(--accent)); display: grid; place-items: center; text-align: center; color: hsl(var(--accent-foreground)); font-size: 13px; line-height: 18px; }
+.ill > img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.ill > span { position: relative; padding: 8px; }
+
+/* Region crop: mockup scaffolding only (a state that changes one part of a screen), not product UI */
+.tile-section figure { max-width: 100%; min-width: 0; }
+.crop { width: 390px; max-width: 100%; box-sizing: border-box; padding: 24px 20px; border-radius: 28px; background: hsl(var(--background)); outline: 2px dashed hsl(var(--input)); outline-offset: -2px; position: relative; overflow: hidden; }
+.crop.dlg { padding: 0; height: 400px; display: grid; place-items: center; }
+.crop.dlg > .scrim { position: absolute; inset: 0; }
+.crop.dlg > .dialog { margin: 0 16px; width: calc(100% - 32px); }
+.dgt { font-family: var(--font-display); font-weight: 600; font-size: 20px; line-height: 28px; letter-spacing: -0.005em; margin: 0; }
+</style>
+</head>
+<body>
+<a class="sr-only focus:not-sr-only" href="#stage">Skip to content</a>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <symbol id="nj-mark" viewBox="0 0 48 48">
+    <g fill="currentColor" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round">
+      <path d="M24 45.5 C24 45.5 10.5 33.2 10.5 24.4 A13.5 13.5 0 0 1 37.5 24.4 C37.5 33.2 24 45.5 24 45.5 Z M24 17.9 A6.5 6.5 0 1 0 24 30.9 A6.5 6.5 0 1 0 24 17.9 Z"/>
+      <path d="M12.2 19.6 L11.2 5 L22.6 11.4 Z"/><path d="M35.8 19.6 L25.4 11.4 L36.8 5 Z"/>
+    </g>
+    <circle cx="24" cy="24.4" r="3.6" fill="#F7B32B"/>
+  </symbol>
+</svg>
+
+<header class="chrome">
+  <div class="flex flex-wrap items-center gap-x-5 gap-y-2 px-6 py-2 max-w-[1400px] mx-auto">
+    <span class="flex items-center gap-2 font-display font-bold text-lg"><svg class="logo-mark w-7 h-7" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg>Najdimo</span>
+    <span class="text-muted-foreground text-[15px]">P8 Pet profiles (mockup)</span>
+    <div class="ml-auto flex items-center gap-2" role="group" aria-label="Colour mode">
+      <button class="mode-btn" data-mode="light" aria-pressed="true">Light</button>
+      <button class="mode-btn" data-mode="dark" aria-pressed="false">Dark</button>
+      <button class="mode-btn" data-mode="both" aria-pressed="false">Side by side</button>
+    </div>
+  </div>
+</header>
+
+<main id="stage"></main>
+
+<div id="src" hidden>
+<section class="tile-section !max-w-[1400px]">
+  <h1 class="tile-title">P8 Pet profiles</h1>
+  <p class="tile-lede">Owners register pets ahead of time so a loss report takes seconds. The list leads with one primary action ("Dodaj žival"); the form is line fields in sections, one section per screen on mobile, one page with a sticky summary on web. The chip number is never shown publicly; an invalid chip only warns. Free limit: 2 pets (<code>app_config pets.free_limit</code>), the API answers <code>PET_LIMIT</code>. Copy from the P8 content slice v0.2.</p>
+
+  <h2 class="tile-title !text-2xl !mt-4">A. Mobile (390 px)</h2>
+  <p class="tile-lede">Lives under the Profil tab. Add and edit run as a five-section flow: back, five bars, close; focus goes to the h1 on each section; sticky bottom bar with 44 px bottom padding.</p>
+
+  <div class="flex flex-wrap gap-x-10 gap-y-14 items-start">
+
+    <!-- M1 LIST (limit reached) -->
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">M1 List · two pets, free limit reached, Rex has an open search · hover on Luna, focus on "Dodaj žival"</figcaption>
+      <div class="phone"><div class="phone-screen" lang="sl">
+        <div class="statusbar" aria-hidden="true"><span>14:20</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <div class="flex-1 min-h-0 px-5 pt-3">
+          <h1 class="h1m">Moje živali</h1>
+          <p class="text-muted-foreground mt-1">2 živali</p>
+          <button type="button" class="btn btn-primary btn-lg btn-block mt-5 is-focus"><i class="ph-bold ph-plus" aria-hidden="true"></i>Dodaj žival</button>
+          <div class="note mt-4" role="status"><i class="ph-bold ph-info" aria-hidden="true"></i><p>Za zdaj lahko shranite dva profila živali. Izgubljeno žival lahko vedno prijavite tudi brez profila.</p></div>
+          <ul class="grid gap-6 mt-8" aria-label="Moje živali">
+            <li class="pet">
+              <a href="#" class="pet-link is-hover"><img src="../directions/img/cat-tabby.jpg" alt="Luna"><span><span class="pet-name block">Luna</span><span class="pet-meta block">Mačka · Evropska kratkodlaka</span><span class="chipst on"><i class="ph-fill ph-shield-check" aria-hidden="true"></i>Čip vpisan</span></span><i class="ph-bold ph-caret-right" aria-hidden="true"></i></a>
+            </li>
+            <li class="pet">
+              <a href="#" class="pet-link"><img src="../directions/img/dog-beagle.jpg" alt="Rex"><span><span class="pet-name block">Rex</span><span class="pet-meta block">Pes · Beagle</span><span class="chipst off"><i class="ph ph-shield-slash" aria-hidden="true"></i>Brez čipa</span></span><i class="ph-bold ph-caret-right" aria-hidden="true"></i></a>
+              <div class="pet-rep"><span class="st st-lost"><i class="ph-fill ph-megaphone" aria-hidden="true"></i>Izgubljena</span><a href="#" class="tl">Odpri iskanje</a></div>
+            </li>
+          </ul>
+          <div class="mt-6"><a href="#" class="row-link"><i class="ph ph-clipboard-text" aria-hidden="true"></i>Moje prijave<i class="ph-bold ph-caret-right" aria-hidden="true"></i></a></div>
+        </div>
+        <nav class="bottomnav" aria-label="Glavna navigacija">
+          <a href="#"><i class="ph ph-map-trifold" aria-hidden="true"></i>Zemljevid</a>
+          <a href="#"><i class="ph ph-chat-circle" aria-hidden="true"></i>Sporočila</a>
+          <a href="#" class="go" role="button" aria-haspopup="dialog" aria-label="Prijavi žival"><span class="act" aria-hidden="true"><i class="ph-bold ph-plus"></i></span>Prijavi</a>
+          <a href="#" aria-current="page"><i class="ph-fill ph-user-circle" aria-hidden="true"></i>Profil</a>
+        </nav>
+        <span class="home-ind"></span>
+      </div></div>
+      <p class="help mt-4" style="max-width:412px">Row: 64 px photo (radius 20), name 18/24 bold, species and breed 15 muted, chip status as icon plus word ("Čip vpisan" with shield-check, "Brez čipa" muted with shield-slash, or "Čip ni znan"). An open search adds <code>st-lost</code> "Izgubljena" with the text link "Odpri iskanje" under the row, never nested in the row link. "Dodaj žival" stays active at the limit; the quiet note is always shown at the limit and the server's <code>PET_LIMIT</code> answer shows the same note, no modal. SAMPLE: the limit note says "dva" (slice v0.2 still says "en", see CHANGE).</p>
+    </figure>
+
+    <!-- M2 ADD 1 PHOTOS -->
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">M2 Add 1 of 5 · Photos: cover, uploading, failed with retry</figcaption>
+      <div class="phone"><div class="phone-screen" lang="sl">
+        <div class="statusbar" aria-hidden="true"><span>14:21</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <div class="topbar">
+          <button type="button" class="iconbtn" aria-label="Nazaj"><i class="ph-bold ph-caret-left" aria-hidden="true"></i></button>
+          <div class="steps flex-1" role="progressbar" aria-valuemin="1" aria-valuemax="5" aria-valuenow="1" aria-label="Korak 1 od 5"><span class="on"></span><span></span><span></span><span></span><span></span></div>
+          <button type="button" class="iconbtn" aria-label="Zapri"><i class="ph-bold ph-x" aria-hidden="true"></i></button>
+        </div>
+        <div class="flex-1 min-h-0 px-5 pt-2">
+          <h1 class="q" tabindex="-1">Fotografije</h1>
+          <p class="mt-3">Dodate lahko do 5 fotografij. Prva je naslovna.</p>
+          <div class="grid grid-cols-2 gap-3 mt-6">
+            <button type="button" class="ptile"><i class="ph-bold ph-camera" aria-hidden="true"></i>Fotografiraj</button>
+            <button type="button" class="ptile is-focus"><i class="ph-bold ph-images" aria-hidden="true"></i>Izberi iz galerije</button>
+          </div>
+          <ul class="grid gap-5 mt-7" aria-label="Fotografije">
+            <li class="ph-row" aria-label="Fotografija 1 od 3">
+              <img src="../directions/img/cat-tabby.jpg" alt="Luna, fotografija 1">
+              <div>
+                <p class="text-sm font-bold">Naslovna fotografija</p>
+                <div class="ph-acts mt-2">
+                  <button type="button" class="iconbtn" aria-label="Premakni fotografijo 1 nazaj"><i class="ph-bold ph-arrow-down" aria-hidden="true"></i></button>
+                  <button type="button" class="iconbtn" aria-label="Odstrani fotografijo 1"><i class="ph-bold ph-trash" aria-hidden="true"></i></button>
+                </div>
+              </div>
+            </li>
+            <li class="ph-row" aria-label="Fotografija 2 od 3">
+              <img src="../directions/img/cat-ginger.jpg" alt="Luna, fotografija 2">
+              <div>
+                <p class="flex justify-between gap-3 text-sm"><span>Nalaganje 64 %</span></p>
+                <div class="progress mt-2" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="64" aria-label="Nalaganje fotografije 2"><span style="width:64%"></span></div>
+                <div class="ph-acts mt-1">
+                  <button type="button" class="iconbtn" aria-label="Premakni fotografijo 2 naprej"><i class="ph-bold ph-arrow-up" aria-hidden="true"></i></button>
+                  <button type="button" class="iconbtn" aria-label="Premakni fotografijo 2 nazaj"><i class="ph-bold ph-arrow-down" aria-hidden="true"></i></button>
+                  <button type="button" class="iconbtn" aria-label="Odstrani fotografijo 2"><i class="ph-bold ph-trash" aria-hidden="true"></i></button>
+                </div>
+              </div>
+            </li>
+            <li class="ph-row" aria-label="Fotografija 3 od 3">
+              <img src="../directions/img/cat-siamese.jpg" alt="Luna, fotografija 3">
+              <div>
+                <div class="progress is-error" aria-hidden="true"><span style="width:38%"></span></div>
+                <p class="err mt-2"><i class="ph-fill ph-warning-circle" aria-hidden="true"></i><span>Fotografija se ni naložila. Preverite povezavo in poskusite znova.</span></p>
+                <div class="ph-acts mt-1">
+                  <button type="button" class="btn btn-text"><i class="ph-bold ph-arrow-clockwise" aria-hidden="true"></i>Poskusi znova</button>
+                  <button type="button" class="iconbtn" aria-label="Odstrani fotografijo 3"><i class="ph-bold ph-trash" aria-hidden="true"></i></button>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+        <div class="px-5 pb-11">
+          <button type="button" class="btn btn-primary btn-lg btn-block">Naprej</button>
+        </div>
+        <span class="home-ind"></span>
+      </div></div>
+      <p class="help mt-4" style="max-width:412px">Same photo pattern as P6: tiles are buttons, rows sit beside the thumbnail, never on the photo. Reorder has a non-drag alternative (up and down buttons, 44 px). Removing a photo asks first (dialog below). "Naprej" is the sticky primary on sections 1 to 4.</p>
+    </figure>
+
+    <!-- M3 ADD 2 BASICS -->
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">M3 Add 2 of 5 · Basics: required-field errors on Naprej</figcaption>
+      <div class="phone"><div class="phone-screen" lang="sl">
+        <div class="statusbar" aria-hidden="true"><span>14:22</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <div class="topbar">
+          <button type="button" class="iconbtn" aria-label="Nazaj"><i class="ph-bold ph-caret-left" aria-hidden="true"></i></button>
+          <div class="steps flex-1" role="progressbar" aria-valuemin="1" aria-valuemax="5" aria-valuenow="2" aria-label="Korak 2 od 5"><span class="on"></span><span class="on"></span><span></span><span></span><span></span></div>
+          <button type="button" class="iconbtn" aria-label="Zapri"><i class="ph-bold ph-x" aria-hidden="true"></i></button>
+        </div>
+        <div class="flex-1 min-h-0 px-5 pt-2">
+          <h1 class="q" tabindex="-1">Osnovno</h1>
+          <h2 class="gh mt-8" id="m3-sp">Vrsta</h2>
+          <div class="grid gap-3" role="radiogroup" aria-labelledby="m3-sp" aria-describedby="m3-sp-e">
+            <button type="button" class="choice" role="radio" aria-checked="false"><i class="ph-bold ph-dog" aria-hidden="true"></i><span class="flex-1 min-w-0"><span class="t">Pes</span></span><i class="ph-bold ph-check tick" aria-hidden="true"></i></button>
+            <button type="button" class="choice" role="radio" aria-checked="false"><i class="ph-bold ph-cat" aria-hidden="true"></i><span class="flex-1 min-w-0"><span class="t">Mačka</span></span><i class="ph-bold ph-check tick" aria-hidden="true"></i></button>
+          </div>
+          <p id="m3-sp-e" class="err mt-3"><i class="ph-fill ph-warning-circle" aria-hidden="true"></i><span>Izberite, ali je pes ali mačka.</span></p>
+
+          <div class="field mt-8">
+            <label for="m3-name">Ime</label>
+            <input id="m3-name" class="input is-error" autocomplete="off" aria-invalid="true" aria-describedby="m3-name-e">
+            <p id="m3-name-e" class="err"><i class="ph-fill ph-warning-circle" aria-hidden="true"></i><span>Vpišite ime.</span></p>
+          </div>
+
+          <h2 class="gh mt-8 !mb-2" id="m3-sex">Spol</h2>
+          <div class="flex flex-wrap gap-2" role="radiogroup" aria-labelledby="m3-sex">
+            <button type="button" class="pill" role="radio" aria-checked="false"><i class="ph-bold ph-check tick" aria-hidden="true"></i>Samec</button>
+            <button type="button" class="pill" role="radio" aria-checked="true"><i class="ph-bold ph-check tick" aria-hidden="true"></i>Samica</button>
+            <button type="button" class="pill" role="radio" aria-checked="false"><i class="ph-bold ph-check tick" aria-hidden="true"></i>Ne vem</button>
+          </div>
+
+          <div class="field mt-8">
+            <label for="m3-year">Leto rojstva</label>
+            <button id="m3-year" type="button" class="input select" aria-haspopup="listbox"><span class="is-placeholder">Izberite leto</span><i class="ph-bold ph-caret-down" aria-hidden="true"></i></button>
+          </div>
+        </div>
+        <div class="px-5 pb-11">
+          <button type="button" class="btn btn-primary btn-lg btn-block">Naprej</button>
+        </div>
+        <span class="home-ind"></span>
+      </div></div>
+      <p class="help mt-4" style="max-width:412px">Species is two choice rows (primary fill plus check when chosen), sex three pills (sex is optional, birth year too). Errors: icon plus text under the field, the line turns <code>destructive</code>; the first error gets focus. Labels sit above fields.</p>
+    </figure>
+
+    <!-- M4 ADD 3 LOOKS -->
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">M4 Add 3 of 5 · Looks (full length)</figcaption>
+      <div class="phone" style="height:1180px"><div class="phone-screen" style="height:1180px" lang="sl">
+        <div class="statusbar" aria-hidden="true"><span>14:23</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <div class="topbar">
+          <button type="button" class="iconbtn" aria-label="Nazaj"><i class="ph-bold ph-caret-left" aria-hidden="true"></i></button>
+          <div class="steps flex-1" role="progressbar" aria-valuemin="1" aria-valuemax="5" aria-valuenow="3" aria-label="Korak 3 od 5"><span class="on"></span><span class="on"></span><span class="on"></span><span></span><span></span></div>
+          <button type="button" class="iconbtn" aria-label="Zapri"><i class="ph-bold ph-x" aria-hidden="true"></i></button>
+        </div>
+        <div class="flex-1 min-h-0 px-5 pt-2">
+          <h1 class="q" tabindex="-1">Videz</h1>
+          <div class="field mt-8">
+            <label for="m4-breed">Pasma</label>
+            <button id="m4-breed" type="button" class="input select" aria-haspopup="listbox"><span>Evropska kratkodlaka</span><i class="ph-bold ph-caret-down" aria-hidden="true"></i></button>
+          </div>
+          <h2 class="gh mt-8">Barva</h2>
+          <div class="flex flex-wrap gap-2" role="group" aria-label="Barva">
+            <button type="button" class="pill" aria-pressed="false"><i class="ph-bold ph-check tick" aria-hidden="true"></i>Črna</button>
+            <button type="button" class="pill" aria-pressed="false"><i class="ph-bold ph-check tick" aria-hidden="true"></i>Bela</button>
+            <button type="button" class="pill" aria-pressed="true"><i class="ph-bold ph-check tick" aria-hidden="true"></i>Siva</button>
+            <button type="button" class="pill" aria-pressed="true"><i class="ph-bold ph-check tick" aria-hidden="true"></i>Rjava</button>
+            <button type="button" class="pill" aria-pressed="false"><i class="ph-bold ph-check tick" aria-hidden="true"></i>Rdečkasta</button>
+            <button type="button" class="pill" aria-pressed="false"><i class="ph-bold ph-check tick" aria-hidden="true"></i>Kremna</button>
+            <button type="button" class="pill" aria-pressed="false"><i class="ph-bold ph-check tick" aria-hidden="true"></i>Zlata</button>
+            <button type="button" class="pill" aria-pressed="false"><i class="ph-bold ph-plus" aria-hidden="true"></i>Drugo</button>
+          </div>
+          <div class="field mt-8">
+            <label for="m4-pat">Vzorec</label>
+            <button id="m4-pat" type="button" class="input select" aria-haspopup="listbox"><span>Progast</span><i class="ph-bold ph-caret-down" aria-hidden="true"></i></button>
+          </div>
+          <h2 class="gh mt-8" id="m4-size">Velikost</h2>
+          <div class="flex flex-wrap gap-2" role="radiogroup" aria-labelledby="m4-size">
+            <button type="button" class="pill" role="radio" aria-checked="true"><i class="ph-bold ph-check tick" aria-hidden="true"></i>Majhna</button>
+            <button type="button" class="pill" role="radio" aria-checked="false"><i class="ph-bold ph-check tick" aria-hidden="true"></i>Srednja</button>
+            <button type="button" class="pill" role="radio" aria-checked="false"><i class="ph-bold ph-check tick" aria-hidden="true"></i>Velika</button>
+          </div>
+        </div>
+        <div class="px-5 pb-11">
+          <button type="button" class="btn btn-primary btn-lg btn-block">Naprej</button>
+        </div>
+        <span class="home-ind"></span>
+      </div></div>
+      <p class="help mt-4" style="max-width:412px">Breed is a searchable select (crop C4 below), colours toggle pills (several allowed, check plus fill), pattern a select, size three pills. Every field is optional here; the lost flow asks for what matching needs. SAMPLE option labels: "Progast", "Majhna/Srednja/Velika" (the P6 slice has the full lists).</p>
+    </figure>
+
+    <!-- M5 ADD 4 CHIP (invalid) -->
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">M5 Add 4 of 5 · Chip: short number, warning not blocking</figcaption>
+      <div class="phone"><div class="phone-screen" lang="sl">
+        <div class="statusbar" aria-hidden="true"><span>14:24</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <div class="topbar">
+          <button type="button" class="iconbtn" aria-label="Nazaj"><i class="ph-bold ph-caret-left" aria-hidden="true"></i></button>
+          <div class="steps flex-1" role="progressbar" aria-valuemin="1" aria-valuemax="5" aria-valuenow="4" aria-label="Korak 4 od 5"><span class="on"></span><span class="on"></span><span class="on"></span><span class="on"></span><span></span></div>
+          <button type="button" class="iconbtn" aria-label="Zapri"><i class="ph-bold ph-x" aria-hidden="true"></i></button>
+        </div>
+        <div class="flex-1 min-h-0 px-5 pt-2">
+          <h1 class="q" tabindex="-1">Čip</h1>
+          <div class="field mt-8">
+            <label for="m5-chip">Številka čipa</label>
+            <input id="m5-chip" class="input tnum is-focus" inputmode="numeric" autocomplete="off" value="705 1234 5678" aria-describedby="m5-chip-d">
+            <div id="m5-chip-d" class="grid gap-3 mt-1">
+              <p class="help">Običajno ima 15 števk, na primer 705 1234 5678 9012. Vidite jo samo vi.</p>
+              <div class="note" role="status"><i class="ph-bold ph-warning" aria-hidden="true"></i><p>Številka čipa je običajno dolga 15 števk. Shranili jo bomo kot neznano, preverite jo, ko boste lahko.</p></div>
+            </div>
+          </div>
+          <p class="help mt-6">Čip prebere veterinar ali pristojno zavetišče in podatke o lastniku poišče v Centralnem registru hišnih živali (CRHŽ), ki ni javen. Ali so vaši podatki v registru pravilni, preverite pri svojem veterinarju.</p>
+        </div>
+        <div class="px-5 pb-11">
+          <button type="button" class="btn btn-primary btn-lg btn-block">Naprej</button>
+        </div>
+        <span class="home-ind"></span>
+      </div></div>
+      <p class="help mt-4" style="max-width:412px">Digits only, grouped as typed (numeric keypad). A short or invalid number shows the <code>note</code> with a warning icon and the "Naprej" button stays active: the chip is saved as unknown. The register line is plain text with no link. Duplicates are flagged to moderators silently and never shown here. The number is never shown publicly.</p>
+    </figure>
+
+    <!-- M6 ADD 5 NOTES -->
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">M6 Add 5 of 5 · Collar and notes: final section, primary is "Shrani"</figcaption>
+      <div class="phone"><div class="phone-screen" lang="sl">
+        <div class="statusbar" aria-hidden="true"><span>14:25</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <div class="topbar">
+          <button type="button" class="iconbtn" aria-label="Nazaj"><i class="ph-bold ph-caret-left" aria-hidden="true"></i></button>
+          <div class="steps flex-1" role="progressbar" aria-valuemin="1" aria-valuemax="5" aria-valuenow="5" aria-label="Korak 5 od 5"><span class="on"></span><span class="on"></span><span class="on"></span><span class="on"></span><span class="on"></span></div>
+          <button type="button" class="iconbtn" aria-label="Zapri"><i class="ph-bold ph-x" aria-hidden="true"></i></button>
+        </div>
+        <div class="flex-1 min-h-0 px-5 pt-2">
+          <h1 class="q" tabindex="-1">Ovratnica in opombe</h1>
+          <div class="field mt-8">
+            <label for="m6-collar">Ovratnica</label>
+            <textarea id="m6-collar" class="input" rows="2" placeholder="Na primer: rdeča ovratnica z zvončkom"></textarea>
+          </div>
+          <div class="field mt-6">
+            <label for="m6-med">Zdravila</label>
+            <textarea id="m6-med" class="input" rows="2"></textarea>
+          </div>
+          <div class="field mt-6">
+            <label for="m6-temp">Značaj</label>
+            <textarea id="m6-temp" class="input" rows="2" placeholder="Na primer: plašna, k sebi pusti le znane ljudi"></textarea>
+          </div>
+          <p class="quiet mt-6 !justify-start"><i class="ph-bold ph-lock-simple" aria-hidden="true"></i>Opombe so zasebne in niso del javne prijave.</p>
+        </div>
+        <div class="px-5 pb-11">
+          <button type="button" class="btn btn-primary btn-lg btn-block">Shrani</button>
+        </div>
+        <span class="home-ind"></span>
+      </div></div>
+      <p class="help mt-4" style="max-width:412px">Textareas as line fields with placeholders from the copy. The private line has a lock icon. "Shrani" is the single sticky primary; saving shows the toast "Profil je shranjen." (crop C7) and returns to the detail.</p>
+    </figure>
+
+    <!-- M7 DETAIL -->
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">M7 Detail · chip number hidden (owner view) · full length</figcaption>
+      <div class="phone" style="height:1280px"><div class="phone-screen" style="height:1280px" lang="sl">
+        <div class="statusbar" aria-hidden="true"><span>14:26</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <div class="topbar">
+          <button type="button" class="iconbtn" aria-label="Nazaj"><i class="ph-bold ph-caret-left" aria-hidden="true"></i></button>
+        </div>
+        <div class="flex-1 min-h-0 px-5 pt-1">
+          <img class="thumb w-full" style="aspect-ratio:4/3;border-radius:32px" src="../directions/img/cat-tabby.jpg" alt="Luna, fotografija 1">
+          <h1 class="h1m mt-6">Luna</h1>
+          <p class="text-muted-foreground mt-1">Mačka · Evropska kratkodlaka</p>
+          <button type="button" class="btn btn-primary btn-lg btn-block mt-5">Prijavi izgubljeno žival</button>
+          <dl class="facts mt-8">
+            <div><dt>Vrsta</dt><dd>Mačka</dd></div>
+            <div><dt>Spol</dt><dd>Samica</dd></div>
+            <div><dt>Pasma</dt><dd>Evropska kratkodlaka</dd></div>
+            <div><dt>Leto rojstva</dt><dd>2021</dd></div>
+            <div><dt>Barva</dt><dd>Siva, rjava</dd></div>
+            <div><dt>Vzorec</dt><dd>Progast</dd></div>
+            <div><dt>Velikost</dt><dd>Majhna</dd></div>
+            <div><dt>Ovratnica</dt><dd>Rdeča z zvončkom</dd></div>
+          </dl>
+          <section class="mt-8" aria-labelledby="m7-chip">
+            <h2 class="gh !mb-2" id="m7-chip">Čip</h2>
+            <p class="chipno" aria-label="Številka čipa skrita">•••• •••• •••• •••</p>
+            <button type="button" class="btn btn-text !px-0 mt-1" aria-pressed="false"><i class="ph-bold ph-eye" aria-hidden="true"></i>Pokaži številko</button>
+            <p class="help flex gap-2 items-center"><i class="ph-bold ph-lock-simple" aria-hidden="true"></i>Številko vidite samo vi.</p>
+          </section>
+          <div class="mt-8 grid grid-cols-2 gap-2">
+            <button type="button" class="btn btn-text"><i class="ph-bold ph-pencil-simple" aria-hidden="true"></i>Uredi</button>
+            <button type="button" class="btn btn-text text-destructive"><i class="ph-bold ph-trash" aria-hidden="true"></i>Izbriši</button>
+          </div>
+        </div>
+        <span class="home-ind"></span>
+      </div></div>
+      <p class="help mt-4" style="max-width:412px">Cover photo radius 32, name h1, then the one primary "Prijavi izgubljeno žival" (opens P6 with this pet prefilled). Facts are a plain two-column list. The chip row hides the number behind a toggle with an accessible name ("Pokaži številko" / "Skrij številko"); it is never shown to anyone but the owner. "Uredi" and "Izbriši" are text buttons; Izbriši is a destructive word plus a trash icon.</p>
+    </figure>
+  </div>
+
+  <h2 class="tile-title !text-2xl !mt-16">B. Mobile and web region crops</h2>
+  <p class="tile-lede">Dashed outline = a state that changes one part of a screen. Same tokens and components as the frames.</p>
+  <div class="flex flex-wrap gap-x-10 gap-y-12 items-start">
+
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">C1 Empty (list, no pets)</figcaption>
+      <div class="crop" lang="sl">
+        <h2 class="h1m">Moje živali</h2>
+        <div class="flex flex-col items-center text-center mt-8 pb-2">
+          <div class="ill" style="width:260px"><img src="../../../assets/empty-no-pets.png" alt="" onerror="this.remove()"><span>PLACEHOLDER<br>empty-no-pets.png<br>260 × 171, aspect 32:21</span></div>
+          <h3 class="font-display font-semibold text-[20px] leading-7 tracking-[-0.01em] mt-6">Še nimate shranjenih živali</h3>
+          <p class="text-muted-foreground mt-1">Shranite fotografije in številko čipa že zdaj. Če se žival kdaj izgubi, je prijava oddana v nekaj sekundah.</p>
+          <button type="button" class="btn btn-primary btn-lg btn-block mt-6"><i class="ph-bold ph-plus" aria-hidden="true"></i>Dodaj žival</button>
+        </div>
+      </div>
+      <p class="help mt-4" style="max-width:412px">Illustration is decorative (<code>alt=""</code>); the placeholder is the final size and aspect and is removed when the asset exists.</p>
+    </figure>
+
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">C2 Loading (row skeletons)</figcaption>
+      <div class="crop" lang="sl" role="status" aria-busy="true">
+        <h2 class="h1m">Moje živali</h2>
+        <p class="sr-only">Nalaganje …</p>
+        <div class="grid gap-6 mt-8" aria-hidden="true">
+          <div class="flex gap-4 items-center"><div class="skel flex-none" style="width:64px;height:64px;border-radius:20px"></div><div class="grid gap-2 flex-1"><div class="skel h-5 w-28"></div><div class="skel h-4 w-48"></div><div class="skel h-4 w-24"></div></div></div>
+          <div class="flex gap-4 items-center"><div class="skel flex-none" style="width:64px;height:64px;border-radius:20px"></div><div class="grid gap-2 flex-1"><div class="skel h-5 w-20"></div><div class="skel h-4 w-40"></div><div class="skel h-4 w-24"></div></div></div>
+        </div>
+      </div>
+      <p class="help mt-4" style="max-width:412px">Same row geometry, so nothing shifts when data arrives. Live region text "Nalaganje …" (<code>common.loading</code>).</p>
+    </figure>
+
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">C3 Delete a photo (confirmation)</figcaption>
+      <div class="crop dlg" lang="sl">
+        <div class="scrim"></div>
+        <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="c3-t">
+          <h2 id="c3-t" class="dgt" tabindex="-1">Odstranim fotografijo?</h2>
+          <p class="text-muted-foreground mt-1">Fotografija bo izbrisana tudi iz shrambe. SAMPLE copy (key to add: <code>pets.photo_delete_*</code>).</p>
+          <div class="grid gap-1 mt-6">
+            <button type="button" class="btn btn-destructive btn-lg btn-block">Odstrani</button>
+            <button type="button" class="btn btn-text btn-block">Prekliči</button>
+          </div>
+        </div>
+      </div>
+    </figure>
+
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">C4 Breed: searchable select, results and no match</figcaption>
+      <div class="crop" lang="sl">
+        <div class="field">
+          <label for="c4-b">Pasma</label>
+          <div class="input-wrap"><i class="ph-bold ph-magnifying-glass" aria-hidden="true"></i><input id="c4-b" class="input is-focus" role="combobox" aria-expanded="true" aria-controls="c4-l" placeholder="Poiščite pasmo" value="evrop"></div>
+        </div>
+        <ul id="c4-l" class="listbox surface mt-2" role="listbox" aria-label="Pasma">
+          <li role="option" aria-selected="false" class="is-hover">Evropska kratkodlaka<i class="ph-bold ph-check" aria-hidden="true"></i></li>
+          <li role="option" aria-selected="false">Evropska dolgodlaka<i class="ph-bold ph-check" aria-hidden="true"></i></li>
+          <li role="option" aria-selected="true">Mešanec / Ne vem<i class="ph-bold ph-check" aria-hidden="true"></i></li>
+        </ul>
+        <div class="field mt-8">
+          <label for="c4-b2">Pasma</label>
+          <div class="input-wrap"><i class="ph-bold ph-magnifying-glass" aria-hidden="true"></i><input id="c4-b2" class="input" role="combobox" aria-expanded="false" value="zzq" aria-describedby="c4-n"></div>
+          <p id="c4-n" class="help flex gap-2"><i class="ph-bold ph-info" aria-hidden="true"></i>Te pasme ne najdemo. Izberite Mešanec ali Ne vem.</p>
+        </div>
+      </div>
+    </figure>
+
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">C5 Delete profile (dialog)</figcaption>
+      <div class="crop dlg" lang="sl">
+        <div class="scrim"></div>
+        <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="c5-t">
+          <h2 id="c5-t" class="dgt" tabindex="-1">Izbrišete ta profil?</h2>
+          <p class="text-muted-foreground mt-1">Izbrisali bomo tudi vse fotografije profila. Odprte prijave ostanejo.</p>
+          <div class="grid gap-1 mt-6">
+            <button type="button" class="btn btn-destructive btn-lg btn-block">Izbriši profil</button>
+            <button type="button" class="btn btn-text btn-block">Prekliči</button>
+          </div>
+        </div>
+      </div>
+      <p class="help mt-4" style="max-width:412px">Focus starts on the title, "Prekliči" is the safe exit. After deleting: toast C7 and back to the list.</p>
+    </figure>
+
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">C6 Unsaved changes (dialog)</figcaption>
+      <div class="crop dlg" lang="sl">
+        <div class="scrim"></div>
+        <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="c6-t">
+          <h2 id="c6-t" class="dgt" tabindex="-1">Zavržem spremembe?</h2>
+          <p class="text-muted-foreground mt-1">Če zdaj odidete, se neshranjene spremembe izgubijo.</p>
+          <div class="grid gap-1 mt-6">
+            <button type="button" class="btn btn-primary btn-lg btn-block">Nadaljuj z urejanjem</button>
+            <button type="button" class="btn btn-text btn-block">Zavrzi</button>
+          </div>
+        </div>
+      </div>
+      <p class="help mt-4" style="max-width:412px">Shown on back, close or leaving the page with edits. The safe choice is the primary.</p>
+    </figure>
+
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">C7 Toasts (saved, deleted)</figcaption>
+      <div class="crop" lang="sl" style="display:grid;gap:16px">
+        <div class="toast" role="status"><i class="ph-fill ph-check-circle" aria-hidden="true"></i><p>Profil je shranjen.</p><button type="button" class="iconbtn" aria-label="Zapri"><i class="ph-bold ph-x" aria-hidden="true"></i></button></div>
+        <div class="toast" role="status"><i class="ph-fill ph-check-circle" aria-hidden="true"></i><p>Profil je izbrisan.</p><button type="button" class="iconbtn" aria-label="Zapri"><i class="ph-bold ph-x" aria-hidden="true"></i></button></div>
+      </div>
+    </figure>
+
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">C8 Limit reached on add (PET_LIMIT)</figcaption>
+      <div class="crop" lang="sl">
+        <div class="note" role="status"><i class="ph-bold ph-info" aria-hidden="true"></i><p>Za zdaj lahko shranite dva profila živali. Izgubljeno žival lahko vedno prijavite tudi brez profila.</p></div>
+        <p class="help mt-4">Replaces nothing and opens no modal: when the server answers <code>PET_LIMIT</code> the form is not opened (or, if the second add came from another device, the save returns here) and this note appears under the heading. Data already typed is kept.</p>
+      </div>
+    </figure>
+  </div>
+
+  <h2 class="tile-title !text-2xl !mt-24">C. Web (1200 px)</h2>
+  <p class="tile-lede">Signed-in header from P1 with "Moje živali" current. Single column list; edit is one page with a sticky summary; detail is two columns.</p>
+
+  <!-- W1 LIST + REPORTS -->
+  <p class="tile-h" style="margin-top:32px">W1 · List with the "Moje prijave" section · hover on Luna, limit reached</p>
+  <div class="wrap-x"><div class="browser" lang="sl">
+    <div class="browser-bar"><span class="dots"><i></i><i></i><i></i></span><span class="url"><i class="ph ph-lock-simple"></i>najdimo.si/moje-zivali</span></div>
+    <header class="flex items-center gap-8 px-12 h-[88px]">
+      <a href="#" class="logo-link" aria-label="Najdimo, na začetno stran"><svg class="logo-mark w-9 h-9" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg><span class="font-display font-bold text-2xl tracking-[-0.03em]" aria-hidden="true">Najdimo</span></a>
+      <nav aria-label="Glavni meni"><ul class="flex items-center gap-2">
+        <li><a href="#" class="nl">Zemljevid</a></li><li><a href="#" class="nl">Izgubljene</a></li><li><a href="#" class="nl">Najdene</a></li><li><a href="#" class="nl" aria-current="page">Moje živali</a></li>
+      </ul></nav>
+      <div class="ml-auto flex items-center gap-2">
+        <div class="lang" role="group" aria-label="Jezik: Slovenščina"><a href="#" class="ll" lang="sl" aria-current="true" aria-label="Slovenščina">SL</a><span aria-hidden="true">/</span><a href="#" class="ll" lang="en" hreflang="en" aria-label="English">EN</a></div>
+        <a href="#" class="iconbtn" aria-label="Sporočila in obvestila"><i class="ph-bold ph-tray"></i></a>
+        <button type="button" class="iconbtn" aria-label="Moj račun" aria-haspopup="menu" aria-expanded="false"><span class="avatar" aria-hidden="true">AN</span></button>
+        <button type="button" class="btn btn-primary btn-sm ml-2" aria-haspopup="menu" aria-expanded="false">Prijavi</button>
+      </div>
+    </header>
+    <main class="px-12 pt-8 pb-24">
+      <div class="max-w-[720px]">
+        <div class="flex items-end justify-between gap-6">
+          <div>
+            <h1 class="font-display font-bold text-5xl tracking-[-0.02em]">Moje živali</h1>
+            <p class="text-muted-foreground text-lg mt-2">2 živali</p>
+          </div>
+          <button type="button" class="btn btn-primary btn-lg"><i class="ph-bold ph-plus" aria-hidden="true"></i>Dodaj žival</button>
+        </div>
+        <div class="note mt-6" role="status"><i class="ph-bold ph-info" aria-hidden="true"></i><p>Za zdaj lahko shranite dva profila živali. Izgubljeno žival lahko vedno prijavite tudi brez profila.</p></div>
+        <ul class="grid gap-8 mt-10" aria-label="Moje živali">
+          <li class="pet">
+            <a href="#" class="pet-link is-hover"><img src="../directions/img/cat-tabby.jpg" alt="Luna"><span><span class="pet-name block">Luna</span><span class="pet-meta block">Mačka · Evropska kratkodlaka</span><span class="chipst on"><i class="ph-fill ph-shield-check" aria-hidden="true"></i>Čip vpisan</span></span><i class="ph-bold ph-caret-right" aria-hidden="true"></i></a>
+          </li>
+          <li class="pet">
+            <a href="#" class="pet-link"><img src="../directions/img/dog-beagle.jpg" alt="Rex"><span><span class="pet-name block">Rex</span><span class="pet-meta block">Pes · Beagle</span><span class="chipst off"><i class="ph ph-shield-slash" aria-hidden="true"></i>Brez čipa</span></span><i class="ph-bold ph-caret-right" aria-hidden="true"></i></a>
+            <div class="pet-rep"><span class="st st-lost"><i class="ph-fill ph-megaphone" aria-hidden="true"></i>Izgubljena</span><a href="#" class="tl">Odpri iskanje</a></div>
+          </li>
+        </ul>
+        <section class="mt-20" aria-labelledby="w1-rep">
+          <h2 id="w1-rep" class="font-display font-bold text-3xl tracking-[-0.015em]">Moje prijave</h2>
+          <ul class="grid gap-2 mt-4">
+            <li class="rep"><img src="../directions/img/dog-beagle.jpg" alt=""><div><p class="font-bold">Rex</p><p class="pet-meta">Prijavljena 12. 10. 2026</p></div><span class="st st-lost st-lg"><i class="ph-fill ph-megaphone" aria-hidden="true"></i>Izgubljena</span></li>
+            <li class="rep"><img src="../directions/img/cat-ginger.jpg" alt=""><div><p class="font-bold">Mica</p><p class="pet-meta">Prijavljena 3. 6. 2026</p></div><span class="st st-reunited st-lg"><i class="ph-fill ph-house-line" aria-hidden="true"></i>Spet doma</span></li>
+          </ul>
+          <p class="help mt-4">Empty: "Nimate še nobene prijave."</p>
+        </section>
+      </div>
+    </main>
+  </div></div>
+  <p class="help mt-4" style="max-width:720px">Heading, count line and the one primary "Dodaj žival" on one row; the quiet limit note sits under it and the button stays active. Past report statuses use the shared words (Izgubljena, Spet doma = SAMPLE word for reunited, owner: P4/P9). Phone: "Moje prijave" is a separate row (M1).</p>
+
+  <!-- W2 EDIT FORM -->
+  <p class="tile-h" style="margin-top:64px">W2 · Edit profile · sticky summary on lg · focus on "Ime", chip valid</p>
+  <div class="wrap-x"><div class="browser" lang="sl">
+    <div class="browser-bar"><span class="dots"><i></i><i></i><i></i></span><span class="url"><i class="ph ph-lock-simple"></i>najdimo.si/moje-zivali/luna/uredi</span></div>
+    <header class="flex items-center gap-8 px-12 h-[88px]">
+      <a href="#" class="logo-link" aria-label="Najdimo, na začetno stran"><svg class="logo-mark w-9 h-9" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg><span class="font-display font-bold text-2xl tracking-[-0.03em]" aria-hidden="true">Najdimo</span></a>
+      <nav aria-label="Glavni meni"><ul class="flex items-center gap-2">
+        <li><a href="#" class="nl">Zemljevid</a></li><li><a href="#" class="nl">Izgubljene</a></li><li><a href="#" class="nl">Najdene</a></li><li><a href="#" class="nl" aria-current="page">Moje živali</a></li>
+      </ul></nav>
+      <div class="ml-auto flex items-center gap-2">
+        <div class="lang" role="group" aria-label="Jezik: Slovenščina"><a href="#" class="ll" lang="sl" aria-current="true" aria-label="Slovenščina">SL</a><span aria-hidden="true">/</span><a href="#" class="ll" lang="en" hreflang="en" aria-label="English">EN</a></div>
+        <a href="#" class="iconbtn" aria-label="Sporočila in obvestila"><i class="ph-bold ph-tray"></i></a>
+        <button type="button" class="iconbtn" aria-label="Moj račun" aria-haspopup="menu" aria-expanded="false"><span class="avatar" aria-hidden="true">AN</span></button>
+        <button type="button" class="btn btn-primary btn-sm ml-2" aria-haspopup="menu" aria-expanded="false">Prijavi</button>
+      </div>
+    </header>
+    <main class="px-12 pt-8 pb-24 grid gap-16 items-start" style="grid-template-columns:minmax(0,640px) 320px">
+      <form action="#" class="min-w-0">
+        <a href="#" class="tl !ml-0"><i class="ph-bold ph-caret-left" aria-hidden="true"></i>Moje živali</a>
+        <h1 class="font-display font-bold text-5xl tracking-[-0.02em] mt-2">Uredi profil</h1>
+
+        <section class="sec" aria-labelledby="w2-s1">
+          <h2 id="w2-s1" class="gh">Fotografije</h2>
+          <p class="help -mt-4">Dodate lahko do 5 fotografij. Prva je naslovna.</p>
+          <ul class="grid grid-cols-4 gap-4" aria-label="Fotografije">
+            <li class="slot"><img src="../directions/img/cat-tabby.jpg" alt="Luna, fotografija 1"><p class="text-sm font-bold mt-2">Naslovna</p>
+              <div class="ph-acts"><button type="button" class="iconbtn" aria-label="Premakni fotografijo 1 naprej"><i class="ph-bold ph-arrow-right" aria-hidden="true"></i></button><button type="button" class="iconbtn" aria-label="Odstrani fotografijo 1"><i class="ph-bold ph-trash" aria-hidden="true"></i></button><span class="iconbtn" style="cursor:grab" aria-hidden="true"><i class="ph-bold ph-dots-six-vertical"></i></span></div></li>
+            <li class="slot"><img src="../directions/img/cat-ginger.jpg" alt="Luna, fotografija 2"><p class="text-sm mt-2">Fotografija 2</p>
+              <div class="ph-acts"><button type="button" class="iconbtn" aria-label="Premakni fotografijo 2 nazaj"><i class="ph-bold ph-arrow-left" aria-hidden="true"></i></button><button type="button" class="iconbtn" aria-label="Premakni fotografijo 2 naprej"><i class="ph-bold ph-arrow-right" aria-hidden="true"></i></button><button type="button" class="iconbtn" aria-label="Odstrani fotografijo 2"><i class="ph-bold ph-trash" aria-hidden="true"></i></button></div></li>
+            <li class="slot"><img src="../directions/img/cat-siamese.jpg" alt="Luna, fotografija 3"><p class="text-sm mt-2" role="status">Nalaganje 64 %</p>
+              <div class="progress mt-1" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="64" aria-label="Nalaganje fotografije 3"><span style="width:64%"></span></div></li>
+            <li><button type="button" class="ptile is-hover" style="aspect-ratio:1;height:auto"><i class="ph-bold ph-plus" aria-hidden="true"></i>Dodaj fotografijo</button></li>
+          </ul>
+        </section>
+
+        <section class="sec" aria-labelledby="w2-s2">
+          <h2 id="w2-s2" class="gh">Osnovno</h2>
+          <div class="grid gap-3" role="radiogroup" aria-label="Vrsta">
+            <div class="grid grid-cols-2 gap-3">
+              <button type="button" class="choice" role="radio" aria-checked="false"><i class="ph-bold ph-dog" aria-hidden="true"></i><span class="flex-1 min-w-0"><span class="t">Pes</span></span><i class="ph-bold ph-check tick" aria-hidden="true"></i></button>
+              <button type="button" class="choice" role="radio" aria-checked="true"><i class="ph-bold ph-cat" aria-hidden="true"></i><span class="flex-1 min-w-0"><span class="t">Mačka</span></span><i class="ph-bold ph-check tick" aria-hidden="true"></i></button>
+            </div>
+          </div>
+          <div class="field"><label for="w2-name">Ime</label><input id="w2-name" class="input is-focus" value="Luna" autocomplete="off"></div>
+          <div class="sec2">
+            <div>
+              <p class="label mb-2" id="w2-sex">Spol</p>
+              <div class="flex flex-wrap gap-2" role="radiogroup" aria-labelledby="w2-sex">
+                <button type="button" class="pill" role="radio" aria-checked="false"><i class="ph-bold ph-check tick" aria-hidden="true"></i>Samec</button>
+                <button type="button" class="pill" role="radio" aria-checked="true"><i class="ph-bold ph-check tick" aria-hidden="true"></i>Samica</button>
+                <button type="button" class="pill" role="radio" aria-checked="false"><i class="ph-bold ph-check tick" aria-hidden="true"></i>Ne vem</button>
+              </div>
+            </div>
+            <div class="field"><label for="w2-year">Leto rojstva</label><button id="w2-year" type="button" class="input select" aria-haspopup="listbox"><span>2021</span><i class="ph-bold ph-caret-down" aria-hidden="true"></i></button></div>
+          </div>
+        </section>
+
+        <section class="sec" aria-labelledby="w2-s3">
+          <h2 id="w2-s3" class="gh">Videz</h2>
+          <div class="sec2">
+            <div class="field"><label for="w2-breed">Pasma</label><button id="w2-breed" type="button" class="input select" aria-haspopup="listbox"><span>Evropska kratkodlaka</span><i class="ph-bold ph-caret-down" aria-hidden="true"></i></button></div>
+            <div class="field"><label for="w2-pat">Vzorec</label><button id="w2-pat" type="button" class="input select" aria-haspopup="listbox"><span>Progast</span><i class="ph-bold ph-caret-down" aria-hidden="true"></i></button></div>
+          </div>
+          <div>
+            <p class="label mb-2">Barva</p>
+            <div class="flex flex-wrap gap-2" role="group" aria-label="Barva">
+              <button type="button" class="pill" aria-pressed="false"><i class="ph-bold ph-check tick" aria-hidden="true"></i>Črna</button>
+              <button type="button" class="pill" aria-pressed="false"><i class="ph-bold ph-check tick" aria-hidden="true"></i>Bela</button>
+              <button type="button" class="pill" aria-pressed="true"><i class="ph-bold ph-check tick" aria-hidden="true"></i>Siva</button>
+              <button type="button" class="pill" aria-pressed="true"><i class="ph-bold ph-check tick" aria-hidden="true"></i>Rjava</button>
+              <button type="button" class="pill" aria-pressed="false"><i class="ph-bold ph-check tick" aria-hidden="true"></i>Rdečkasta</button>
+              <button type="button" class="pill" aria-pressed="false"><i class="ph-bold ph-check tick" aria-hidden="true"></i>Kremna</button>
+              <button type="button" class="pill" aria-pressed="false"><i class="ph-bold ph-plus" aria-hidden="true"></i>Drugo</button>
+            </div>
+          </div>
+          <div>
+            <p class="label mb-2" id="w2-size">Velikost</p>
+            <div class="flex flex-wrap gap-2" role="radiogroup" aria-labelledby="w2-size">
+              <button type="button" class="pill" role="radio" aria-checked="true"><i class="ph-bold ph-check tick" aria-hidden="true"></i>Majhna</button>
+              <button type="button" class="pill" role="radio" aria-checked="false"><i class="ph-bold ph-check tick" aria-hidden="true"></i>Srednja</button>
+              <button type="button" class="pill" role="radio" aria-checked="false"><i class="ph-bold ph-check tick" aria-hidden="true"></i>Velika</button>
+            </div>
+          </div>
+        </section>
+
+        <section class="sec" aria-labelledby="w2-s4">
+          <h2 id="w2-s4" class="gh">Čip</h2>
+          <div class="field">
+            <label for="w2-chip">Številka čipa</label>
+            <input id="w2-chip" class="input tnum" inputmode="numeric" autocomplete="off" value="705 1234 5678 9012" aria-describedby="w2-chip-d">
+            <p id="w2-chip-d" class="help">Običajno ima 15 števk, na primer 705 1234 5678 9012. Vidite jo samo vi.</p>
+          </div>
+          <p class="help">Čip prebere veterinar ali pristojno zavetišče in podatke o lastniku poišče v Centralnem registru hišnih živali (CRHŽ), ki ni javen. Ali so vaši podatki v registru pravilni, preverite pri svojem veterinarju.</p>
+        </section>
+
+        <section class="sec" aria-labelledby="w2-s5">
+          <h2 id="w2-s5" class="gh">Ovratnica in opombe</h2>
+          <div class="field"><label for="w2-collar">Ovratnica</label><textarea id="w2-collar" class="input" rows="2" placeholder="Na primer: rdeča ovratnica z zvončkom">Rdeča ovratnica z zvončkom</textarea></div>
+          <div class="field"><label for="w2-med">Zdravila</label><textarea id="w2-med" class="input" rows="2"></textarea></div>
+          <div class="field"><label for="w2-temp">Značaj</label><textarea id="w2-temp" class="input" rows="2" placeholder="Na primer: plašna, k sebi pusti le znane ljudi">Plašna, k sebi pusti le znane ljudi</textarea></div>
+          <p class="help flex gap-2 items-center"><i class="ph-bold ph-lock-simple" aria-hidden="true"></i>Opombe so zasebne in niso del javne prijave.</p>
+        </section>
+        <div class="mt-10 lg:hidden"><button type="submit" class="btn btn-primary btn-lg">Shrani</button></div>
+      </form>
+
+      <aside class="sum" aria-label="Povzetek">
+        <img src="../directions/img/cat-tabby.jpg" alt="">
+        <div><p class="font-display font-bold text-2xl tracking-[-0.01em]">Luna</p><p class="pet-meta">Mačka · Evropska kratkodlaka</p></div>
+        <ul>
+          <li><i class="ph-fill ph-check-circle" aria-hidden="true"></i>Fotografije: 3 od 5</li>
+          <li><i class="ph-fill ph-check-circle" aria-hidden="true"></i>Osnovno</li>
+          <li><i class="ph-fill ph-check-circle" aria-hidden="true"></i>Čip vpisan</li>
+          <li class="todo"><i class="ph ph-circle" aria-hidden="true"></i>Zdravila: neobvezno</li>
+        </ul>
+        <button type="submit" class="btn btn-primary btn-lg btn-block">Shrani</button>
+        <a href="#" class="btn btn-text btn-block">Prekliči</a>
+      </aside>
+    </main>
+  </div></div>
+  <p class="help mt-4" style="max-width:820px">One column of line fields, <code>h2</code> section labels, 40 px between sections, no cards or boxed fields. From <code>lg</code> a sticky summary holds the single primary "Shrani"; below <code>lg</code> the summary drops away and "Shrani" sits at the end of the page (<code>lg:hidden</code>). Reorder: drag handle plus left and right buttons. The AI pre-fill sentence (milestone M3) is not drawn: it adds one sentence with a sparkle icon under the photo grid.</p>
+
+  <!-- W3 DETAIL -->
+  <p class="tile-h" style="margin-top:64px">W3 · Detail · chip number revealed (owner) · focus on "Skrij številko"</p>
+  <div class="wrap-x"><div class="browser" lang="sl">
+    <div class="browser-bar"><span class="dots"><i></i><i></i><i></i></span><span class="url"><i class="ph ph-lock-simple"></i>najdimo.si/moje-zivali/luna</span></div>
+    <header class="flex items-center gap-8 px-12 h-[88px]">
+      <a href="#" class="logo-link" aria-label="Najdimo, na začetno stran"><svg class="logo-mark w-9 h-9" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg><span class="font-display font-bold text-2xl tracking-[-0.03em]" aria-hidden="true">Najdimo</span></a>
+      <nav aria-label="Glavni meni"><ul class="flex items-center gap-2">
+        <li><a href="#" class="nl">Zemljevid</a></li><li><a href="#" class="nl">Izgubljene</a></li><li><a href="#" class="nl">Najdene</a></li><li><a href="#" class="nl" aria-current="page">Moje živali</a></li>
+      </ul></nav>
+      <div class="ml-auto flex items-center gap-2">
+        <div class="lang" role="group" aria-label="Jezik: Slovenščina"><a href="#" class="ll" lang="sl" aria-current="true" aria-label="Slovenščina">SL</a><span aria-hidden="true">/</span><a href="#" class="ll" lang="en" hreflang="en" aria-label="English">EN</a></div>
+        <a href="#" class="iconbtn" aria-label="Sporočila in obvestila"><i class="ph-bold ph-tray"></i></a>
+        <button type="button" class="iconbtn" aria-label="Moj račun" aria-haspopup="menu" aria-expanded="false"><span class="avatar" aria-hidden="true">AN</span></button>
+        <button type="button" class="btn btn-primary btn-sm ml-2" aria-haspopup="menu" aria-expanded="false">Prijavi</button>
+      </div>
+    </header>
+    <main class="px-12 pt-6 pb-24">
+      <a href="#" class="tl"><i class="ph-bold ph-caret-left" aria-hidden="true"></i>Moje živali</a>
+      <div class="grid gap-12 items-start mt-4" style="grid-template-columns:minmax(0,1fr) minmax(0,1fr)">
+        <div>
+          <img class="thumb w-full" style="aspect-ratio:4/3;border-radius:32px" src="../directions/img/cat-tabby.jpg" alt="Luna, fotografija 1">
+          <ul class="flex gap-3 mt-4" aria-label="Fotografije">
+            <li><img class="thumb" style="width:96px;height:96px;border-radius:20px" src="../directions/img/cat-tabby.jpg" alt="Luna, fotografija 1"></li>
+            <li><img class="thumb" style="width:96px;height:96px;border-radius:20px" src="../directions/img/cat-ginger.jpg" alt="Luna, fotografija 2"></li>
+            <li><img class="thumb" style="width:96px;height:96px;border-radius:20px" src="../directions/img/cat-siamese.jpg" alt="Luna, fotografija 3"></li>
+          </ul>
+        </div>
+        <div>
+          <h1 class="font-display font-bold text-5xl tracking-[-0.02em]">Luna</h1>
+          <p class="text-xl leading-8 text-muted-foreground mt-2">Mačka · Evropska kratkodlaka</p>
+          <button type="button" class="btn btn-primary btn-lg mt-6">Prijavi izgubljeno žival</button>
+          <dl class="facts mt-10">
+            <div><dt>Vrsta</dt><dd>Mačka</dd></div>
+            <div><dt>Spol</dt><dd>Samica</dd></div>
+            <div><dt>Pasma</dt><dd>Evropska kratkodlaka</dd></div>
+            <div><dt>Leto rojstva</dt><dd>2021</dd></div>
+            <div><dt>Barva</dt><dd>Siva, rjava</dd></div>
+            <div><dt>Vzorec</dt><dd>Progast</dd></div>
+            <div><dt>Velikost</dt><dd>Majhna</dd></div>
+            <div><dt>Ovratnica</dt><dd>Rdeča z zvončkom</dd></div>
+          </dl>
+          <section class="mt-10" aria-labelledby="w3-chip">
+            <h2 class="gh !mb-2" id="w3-chip">Čip</h2>
+            <p class="chipno">705 1234 5678 9012</p>
+            <button type="button" class="btn btn-text !px-0 mt-1 is-focus" aria-pressed="true"><i class="ph-bold ph-eye-slash" aria-hidden="true"></i>Skrij številko</button>
+            <p class="help flex gap-2 items-center"><i class="ph-bold ph-lock-simple" aria-hidden="true"></i>Številko vidite samo vi.</p>
+          </section>
+          <div class="mt-10 flex gap-2 -ml-4">
+            <button type="button" class="btn btn-text"><i class="ph-bold ph-pencil-simple" aria-hidden="true"></i>Uredi</button>
+            <button type="button" class="btn btn-text text-destructive"><i class="ph-bold ph-trash" aria-hidden="true"></i>Izbriši</button>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div></div>
+  <p class="help mt-4" style="max-width:820px">Two columns from <code>lg</code>: photos left (cover radius 32, 96 px thumbnails), facts right. Notes (medication, temperament) appear as two more facts when filled. The revealed number has the toggle "Skrij številko" and the line "Številko vidite samo vi."; the public pet and report pages never show it.</p>
+</section>
+<p class="tile-section !py-8 text-sm text-muted-foreground">Placeholder photography from Unsplash (Unsplash License). Copy source: docs/content/pages/P8-pet-profiles.md v0.2 (SL). SAMPLE copy, not in the slice: the photo-delete dialog (C3), "Spet doma" and report dates (W1), option labels for pattern, size and breed, and "dva profila" in the limit note (slice says one; the free limit is now 2). Illustration is a placeholder until TASK-16.1 is done.</p>
+</div>
+
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<script src="../directions/directions.js"></script>
+</body>
+</html>

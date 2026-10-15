@@ -1,5 +1,268 @@
-// Local proximity alerts (C17, TASK-87.1, M3).
+import 'expo-sqlite/localStorage/install';
+import '@/lib/plural-rules';
 
-/** Cleanup hook for the wipe, the off switch and a permission downgrade. Nothing is registered before TASK-87.1,
- * which adds `Location.stopGeofencingAsync('zivali-geofence')` here. */
-export async function stopGeofencing(): Promise<void> {}
+import * as Location from 'expo-location';
+import * as Notifications from 'expo-notifications';
+import * as TaskManager from 'expo-task-manager';
+import { Platform } from 'react-native';
+import { createTranslator } from 'use-intl';
+
+import en from '@zivali/i18n/dist/en.json';
+import sl from '@zivali/i18n/dist/sl.json';
+import { formatRelative, timeZone } from '@zivali/i18n/format';
+import { getDb } from '@/lib/db';
+import { distanceKm, type Point } from '@/lib/geo';
+import { getCurrentLocale } from '@/lib/i18n';
+
+// Local proximity alerts (C17 §Geofences, C10, ADR-019): OS geofences around the public, fuzzed areas of cached open
+// lost reports. Everything runs on the device: the position is read only to pick the nearest areas and to centre the
+// boundary region, and it is never sent anywhere. The handler makes no network call.
+
+export const GEOFENCE_TASK = 'zivali-geofence';
+/** Local alerts per day (C10); the server's nearby_lost cap is separate. */
+export const DAILY_CAP = 3;
+const BOUNDARY = 'boundary';
+const BOUNDARY_M = 2000;
+const MIN_RADIUS_M = 200;
+const FIX_MAX_AGE_MS = 5 * 60_000;
+const CHANNEL = 'nearby_local';
+// The profile's quiet hours, cached for the offline handler (C17 §Device storage).
+const QUIET_KEY = 'geofence.quiet_hours';
+/** One alert per pet per area: a moved or resized area is a new one. */
+const AREA_KEY = `area_lat || ',' || area_lng || ',' || area_radius_m`;
+
+type Region = { region_id: string; short_code: string | null; lat: number; lng: number; radius_m: number };
+type GeofenceEvent = { eventType: Location.GeofencingEventType; region: Location.LocationRegion };
+export type QuietHours = { quiet_from: string | null; quiet_to: string | null };
+/** `permission_lost`: Always location was revoked, so the regions were removed (TASK-87.2 explains it). */
+export type GeofenceState = 'off' | 'on' | 'permission_lost';
+
+/** iOS allows 20 regions per app (18 plus the boundary leaves headroom); Android 100. */
+const maxRegions = () => (Platform.OS === 'ios' ? 18 : 50);
+// About 100 m: the boundary centre is the only device position kept, on the device only, until the next selection.
+const round3 = (n: number) => Math.round(n * 1000) / 1000;
+
+/** Open lost areas nearest to the device (whole km), then the most recent; areas that already alerted are left out. */
+async function selectRegions(device: Point): Promise<Region[]> {
+	const db = await getDb();
+	const rows = await db.getAllAsync<{
+		id: string;
+		short_code: string;
+		event_at: string;
+		area_lat: number;
+		area_lng: number;
+		area_radius_m: number;
+	}>(
+		`select id, short_code, event_at, area_lat, area_lng, area_radius_m from reports_cache
+		 where type = 'lost' and status = 'open' and not exists
+			(select 1 from geofence_events where report_id = reports_cache.id and area_key = ${AREA_KEY})`
+	);
+	return rows
+		.map((r) => ({ ...r, km: Math.round(distanceKm(device, { lat: r.area_lat, lng: r.area_lng })) }))
+		.sort((a, b) => a.km - b.km || b.event_at.localeCompare(a.event_at))
+		.slice(0, maxRegions())
+		.map((r) => ({
+			region_id: r.id,
+			short_code: r.short_code,
+			lat: r.area_lat,
+			lng: r.area_lng,
+			radius_m: Math.max(r.area_radius_m, MIN_RADIUS_M),
+		}));
+}
+
+/** A recent OS fix if there is one (no GPS wake-up), else one balanced (Wi-Fi and cell) fix. Never continuous. */
+async function devicePoint(): Promise<Point> {
+	const fix =
+		(await Location.getLastKnownPositionAsync({ maxAge: FIX_MAX_AGE_MS })) ??
+		(await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced }));
+	return { lat: fix.coords.latitude, lng: fix.coords.longitude };
+}
+
+/** Replaces the registered regions with a fresh selection plus the 2 km boundary, whose exit re-runs it. */
+async function register(): Promise<void> {
+	const device = await devicePoint();
+	const regions: Region[] = [
+		...(await selectRegions(device)),
+		{
+			region_id: BOUNDARY,
+			short_code: null,
+			lat: round3(device.lat),
+			lng: round3(device.lng),
+			radius_m: BOUNDARY_M,
+		},
+	];
+	await Location.startGeofencingAsync(
+		GEOFENCE_TASK,
+		regions.map((r) => ({
+			identifier: r.region_id,
+			latitude: r.lat,
+			longitude: r.lng,
+			radius: r.radius_m,
+			notifyOnEnter: r.region_id !== BOUNDARY,
+			notifyOnExit: r.region_id === BOUNDARY,
+		}))
+	);
+	// No transaction of its own: a boundary exit may arrive while a cache sync holds one on the same connection.
+	const db = await getDb();
+	await db.runAsync('delete from geofences');
+	await db.runAsync(
+		`insert into geofences (region_id, short_code, lat, lng, radius_m, registered_at)
+		 select json_extract(value, '$.region_id'), json_extract(value, '$.short_code'), json_extract(value, '$.lat'),
+			json_extract(value, '$.lng'), json_extract(value, '$.radius_m'), ? from json_each(?)`,
+		Date.now(),
+		JSON.stringify(regions)
+	);
+}
+
+async function clear(): Promise<void> {
+	if (await Location.hasStartedGeofencingAsync(GEOFENCE_TASK)) await Location.stopGeofencingAsync(GEOFENCE_TASK);
+	await (await getDb()).runAsync('delete from geofences');
+}
+
+// Selections, the opt-in and the stop run one at a time, so a stop is never undone by a selection in flight and the
+// geofences table always matches the OS.
+let queue: Promise<unknown> = Promise.resolve();
+function serial<T>(task: () => Promise<T>): Promise<T> {
+	const run = queue.then(task);
+	queue = run.catch(() => {});
+	return run;
+}
+
+let refreshing: Promise<GeofenceState> | undefined;
+
+/**
+ * Re-picks the regions while the feature is on (after each cache sync, on resume, on leaving the boundary).
+ * Single-flight; a revoked Always permission stops geofencing instead. Rejects when no position is available,
+ * keeping the regions as they are.
+ */
+export function refreshGeofences(): Promise<GeofenceState> {
+	refreshing ??= serial(async (): Promise<GeofenceState> => {
+		if (!(await Location.hasStartedGeofencingAsync(GEOFENCE_TASK))) return 'off';
+		if (!(await Location.getBackgroundPermissionsAsync()).granted) {
+			await clear();
+			return 'permission_lost';
+		}
+		await register();
+		return 'on';
+	}).finally(() => {
+		refreshing = undefined;
+	});
+	return refreshing;
+}
+
+/**
+ * The opt-in, after the TASK-87.2 primer: asks for location while in use, then Always, and registers the regions.
+ * Resolves false when either is declined (nothing is registered).
+ */
+export async function enableGeofencing(): Promise<boolean> {
+	if (!(await Location.requestForegroundPermissionsAsync()).granted) return false;
+	if (!(await Location.requestBackgroundPermissionsAsync()).granted) return false;
+	await serial(register);
+	return true;
+}
+
+/** The off switch, sign-out and account deletion (wipe): no regions stay registered with the OS or on disk. */
+export function stopGeofencing(): Promise<void> {
+	return serial(clear);
+}
+
+/** Keeps the profile's quiet hours on the device for the offline handler; null forgets them (sign-out). */
+export function cacheQuietHours(quiet: QuietHours | null): void {
+	if (quiet)
+		localStorage.setItem(QUIET_KEY, JSON.stringify({ quiet_from: quiet.quiet_from, quiet_to: quiet.quiet_to }));
+	else localStorage.removeItem(QUIET_KEY);
+}
+
+const ljubljanaClock = new Intl.DateTimeFormat('en-GB', {
+	timeZone,
+	hour: '2-digit',
+	minute: '2-digit',
+	hourCycle: 'h23',
+});
+const minutes = (hhmm: string) => Number(hhmm.slice(0, 2)) * 60 + Number(hhmm.slice(3, 5));
+
+/** As on the server (C10): [from, to) on the Europe/Ljubljana wall clock, possibly across midnight. */
+function isQuiet(now: number): boolean {
+	let quiet: QuietHours | null = null;
+	try {
+		quiet = JSON.parse(localStorage.getItem(QUIET_KEY) ?? 'null');
+	} catch {
+		// A corrupt value counts as none.
+	}
+	const from = quiet?.quiet_from;
+	const to = quiet?.quiet_to;
+	if (!from || !to || from === to) return false;
+	const current = minutes(ljubljanaClock.format(now));
+	const [start, end] = [minutes(from), minutes(to)];
+	return start < end ? current >= start && current < end : current >= start || current < end;
+}
+
+const catalogues = { sl, en };
+
+/**
+ * Entering a report region (C17 handler, offline): the report must still be open in the cache, outside quiet hours,
+ * under the daily cap and not yet alerted for this area; then a local notification opens its listing.
+ */
+async function alertNear(reportId: string): Promise<void> {
+	const now = Date.now();
+	const db = await getDb();
+	const report = await db.getFirstAsync<{
+		short_code: string;
+		species: string;
+		name: string | null;
+		event_at: string;
+		area_key: string;
+	}>(
+		`select short_code, species, name, event_at, ${AREA_KEY} as area_key from reports_cache
+		 where id = ? and type = 'lost' and status = 'open'`,
+		reportId
+	);
+	if (!report || isQuiet(now) || !(await Notifications.getPermissionsAsync()).granted) return;
+	// Local midnight: the cap follows the user's day.
+	const today = await db.getFirstAsync<{ n: number }>(
+		'select count(*) as n from geofence_events where fired_at >= ?',
+		new Date(now).setHours(0, 0, 0, 0)
+	);
+	if ((today?.n ?? 0) >= DAILY_CAP) return;
+	// Claimed before showing, so two quick entries never alert twice.
+	const claim = await db.runAsync(
+		'insert or ignore into geofence_events (report_id, area_key, fired_at) values (?, ?, ?)',
+		reportId,
+		report.area_key,
+		now
+	);
+	if (claim.changes === 0) return;
+
+	const locale = getCurrentLocale();
+	const t = createTranslator({ locale, messages: catalogues[locale], namespace: 'notifications.nearby_local' });
+	const values = {
+		species: report.species,
+		has_name: report.name ? 'yes' : 'no',
+		pet_name: report.name?.slice(0, 18) ?? '',
+		when: formatRelative(report.event_at, locale, now),
+	};
+	// Android channel (iOS ignores it), so these reminders can be muted on their own.
+	await Notifications.setNotificationChannelAsync(CHANNEL, {
+		name: t('channel'),
+		importance: Notifications.AndroidImportance.DEFAULT,
+	});
+	await Notifications.scheduleNotificationAsync({
+		content: {
+			title: t('title', values),
+			body: t('body', values),
+			data: { url: `zivali://r/${report.short_code}`, category: CHANNEL },
+		},
+		trigger: { channelId: CHANNEL },
+	});
+}
+
+// Module scope, so a headless background launch finds the task (index.ts imports this module before the router).
+TaskManager.defineTask<GeofenceEvent>(GEOFENCE_TASK, async ({ data, error }) => {
+	const id = data?.region.identifier;
+	if (error || !id) return;
+	if (id === BOUNDARY) {
+		if (data.eventType === Location.GeofencingEventType.Exit) await refreshGeofences().catch(() => {});
+	} else if (data.eventType === Location.GeofencingEventType.Enter) {
+		await alertNear(id);
+	}
+});

@@ -3,11 +3,11 @@ id: TASK-89.1
 title: >-
   Directory admin API: edits with versions, CSV import with dry run, yearly
   reminder job
-status: To Do
+status: Done
 assignee:
   - '@backend-dev'
 created_date: '2026-10-14 23:36'
-updated_date: '2026-10-14 23:38'
+updated_date: '2026-10-15 22:13'
 labels:
   - be
   - 'est:S'
@@ -37,7 +37,13 @@ Branch: agent/task-89.1-dir-admin-be
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 POST and PUT /v1/admin/shelters and PUT /v1/admin/municipality-shelters/:municipality (admins, aal2) validate input, write a directory_changes version and an audit entry, and the public endpoints show the change at once.
-- [ ] #2 POST /v1/admin/directory/import?dry_run=true returns the diff for an uploaded CSV without writing; without dry_run it applies the same diff in one transaction.
-- [ ] #3 The directory.reminder job runs on 1 April 08:00 Europe/Ljubljana and notifies admins with the entries older than 12 months.
+- [x] #1 POST and PUT /v1/admin/shelters and PUT /v1/admin/municipality-shelters/:municipality (admins, aal2) validate input, write a directory_changes version and an audit entry, and the public endpoints show the change at once.
+- [x] #2 POST /v1/admin/directory/import?dry_run=true returns the diff for an uploaded CSV without writing; without dry_run it applies the same diff in one transaction.
+- [x] #3 The directory.reminder job runs on 1 April 08:00 Europe/Ljubljana and notifies admins with the entries older than 12 months.
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+3 CHANGE rows moved to backlog/changes.md (C18 import/data, TASK-89.2 stubs). Review fixes: CSV header must match a seed format exactly; the reminder is idempotent per year (audit entry `directory.reminder` with `diff.year`, claimed under an advisory lock before sending; released if no email could be sent).
+<!-- SECTION:NOTES:END -->
