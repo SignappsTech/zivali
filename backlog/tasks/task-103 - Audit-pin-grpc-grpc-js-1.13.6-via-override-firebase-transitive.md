@@ -1,10 +1,11 @@
 ---
 id: TASK-103
 title: 'Audit: pin @grpc/grpc-js >= 1.13.6 via override (firebase transitive)'
-status: To Do
+status: Done
 assignee:
   - '@tech-lead'
 created_date: '2026-10-15 19:50'
+updated_date: '2026-10-15 17:37'
 labels:
   - tech
   - 'est:XS'
