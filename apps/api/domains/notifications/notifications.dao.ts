@@ -136,16 +136,6 @@ export async function deletePushTokens(input: { tokens: string[]; user_id?: stri
 	return count;
 }
 
-/** One alert per report per user (C10): false when this user already got this report. */
-export async function insertAlertDelivery(
-	input: { report_id: string; user_id: string; channel: string },
-	tx?: Tx
-): Promise<boolean> {
-	const db = tx ?? prisma;
-	const { count } = await db.alert_deliveries.createMany({ data: [input], skipDuplicates: true });
-	return count === 1;
-}
-
 export async function insertOutbox(
 	row: {
 		user_id: string | null;
@@ -185,7 +175,6 @@ export default {
 	listPushTokens,
 	upsertPushToken,
 	deletePushTokens,
-	insertAlertDelivery,
 	insertOutbox,
 	getLastReadAt,
 };

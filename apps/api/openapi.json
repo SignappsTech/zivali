@@ -2020,6 +2020,99 @@
 				}
 			}
 		},
+		"/v1/alert-subscription": {
+			"get": {
+				"operationId": "getAlertSubscription",
+				"summary": "Own nearby-alert subscription",
+				"description": "The caller’s subscription, or null when there is none. Real accounts only (C10).",
+				"tags": ["alert-subscription"],
+				"responses": {
+					"200": {
+						"description": "The subscription or null",
+						"content": {
+							"application/json": {
+								"schema": {
+									"anyOf": [{ "$ref": "#/components/schemas/AlertSubscription" }, { "type": "null" }]
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "UNAUTHENTICATED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"429": {
+						"description": "RATE_LIMITED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"500": {
+						"description": "INTERNAL",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					}
+				}
+			},
+			"put": {
+				"operationId": "saveAlertSubscription",
+				"summary": "Create or replace the own nearby-alert subscription",
+				"description": "Needs a confirmed email. center is stored coarsened by 20-30 m (C6); sending the stored centre back keeps it. radius_km 1-25; paused keeps the subscription without alerts.",
+				"tags": ["alert-subscription"],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": { "schema": { "$ref": "#/components/schemas/AlertSubscriptionInput" } }
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "The saved subscription",
+						"content": {
+							"application/json": { "schema": { "$ref": "#/components/schemas/AlertSubscription" } }
+						}
+					},
+					"400": {
+						"description": "VALIDATION",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"401": {
+						"description": "UNAUTHENTICATED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"403": {
+						"description": "UNVERIFIED_EMAIL",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"429": {
+						"description": "RATE_LIMITED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"500": {
+						"description": "INTERNAL",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					}
+				}
+			},
+			"delete": {
+				"operationId": "deleteAlertSubscription",
+				"summary": "Delete the own nearby-alert subscription",
+				"description": "Stops all nearby alerts; 204 also when there was none.",
+				"tags": ["alert-subscription"],
+				"responses": {
+					"204": { "description": "Deleted" },
+					"401": {
+						"description": "UNAUTHENTICATED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"429": {
+						"description": "RATE_LIMITED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"500": {
+						"description": "INTERNAL",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					}
+				}
+			}
+		},
 		"/v1/config/public": {
 			"get": {
 				"operationId": "getPublicConfig",
