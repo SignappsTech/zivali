@@ -54,8 +54,17 @@ export function toAdminAdDto(ad: AdRow): z.infer<typeof AdminAd> {
 	});
 }
 
-export function toAdImageUploadDto({ url, method, headers, expiresAt }: PresignedPut) {
-	return AdImageUploadResponse.parse({ upload: { url, method, headers, expires_at: expiresAt.toISOString() } });
+export function toAdImageUploadDto({
+	upload: { url, method, headers, expiresAt },
+	image,
+}: {
+	upload: PresignedPut;
+	image: string;
+}) {
+	return AdImageUploadResponse.parse({
+		upload: { url, method, headers, expires_at: expiresAt.toISOString() },
+		image,
+	});
 }
 
 /** CTR = clicks / impressions (0 without impressions). */

@@ -164,7 +164,7 @@ route(
 		operationId: 'requestAdImageUpload',
 		summary: 'Upload an ad image',
 		description:
-			'Admins (aal2). A 5-minute presigned PUT to the media bucket (ads/<id>/…) pinned to the declared type and size: 4:3, at least 1200×900 px, JPG or PNG under 500 KB. The ad shows the new image at once; the next save checks the uploaded file. Audited.',
+			'Admins (aal2). A 5-minute presigned PUT to the media bucket (ads/<id>/…) pinned to the declared type and size: 4:3, at least 1200×900 px, JPG or PNG under 500 KB. The ad keeps its current image: send the returned key as `image` on the next save, which checks the uploaded file and only then switches the image.',
 		request: { params: IdParams, body: AdImageInput },
 		responses: { 200: { description: 'Where to PUT the file', schema: AdImageUploadResponse } },
 		errors: [...adErrors],

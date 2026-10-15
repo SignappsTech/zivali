@@ -29,6 +29,8 @@ export type AdInput = {
 	/** https only */
 	link_url: string;
 	image_alt: string;
+	/** Key from the image upload; set only after the uploaded file passed the check. null removes it (house ads only). */
+	image?: string | null;
 	locales?: Locale[];
 	slots: AdSlot[];
 	region_ids?: number[] | null;
@@ -78,7 +80,8 @@ export type AdImageInput = {
 	bytes: number;
 	content_type: 'image/jpeg' | 'image/png';
 };
-export type AdImageUploadResponse = { upload: PresignedUpload };
+/** `image` is the key to send in AdInput.image on the next save; the ad keeps its current image until then. */
+export type AdImageUploadResponse = { upload: PresignedUpload; image: string };
 export type AdStatsQuery = { from: IsoDate; to: IsoDate };
 export type AdStats = {
 	items: {

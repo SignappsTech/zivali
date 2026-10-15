@@ -120,6 +120,11 @@ export async function findById(id: string, tx?: Tx) {
 	return (tx ?? prisma).ads.findFirst({ where: { id, deleted_at: null } });
 }
 
+/** An ad including a soft-deleted one (admin stats stay readable). */
+export async function findAnyById(id: string, tx?: Tx) {
+	return (tx ?? prisma).ads.findUnique({ where: { id } });
+}
+
 /** Admin list, newest first, keyset-paginated on (created_at desc, id desc); the cursor is the last item's id. */
 export async function listAdmin({ status, cursor, take }: { status?: string; cursor?: string; take: number }, tx?: Tx) {
 	return (tx ?? prisma).ads.findMany({
@@ -157,6 +162,7 @@ export default {
 	addImpression,
 	lockSlots,
 	findById,
+	findAnyById,
 	listAdmin,
 	create,
 	update,

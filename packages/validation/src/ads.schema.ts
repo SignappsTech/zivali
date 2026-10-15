@@ -41,6 +41,13 @@ export const AdInput = z
 		cta: text(24),
 		link_url: z.url({ protocol: /^https$/ }).max(2048),
 		image_alt: z.string().trim().min(5).max(140),
+		// The key from POST /v1/admin/ads/:id/image, set only once the uploaded file passed the image check; null removes
+		// the image (house ads only). Left out: unchanged. Not accepted on create (the ad has no id to upload to yet).
+		image: z
+			.string()
+			.regex(/^ads\/[0-9a-f-]{36}\/[a-f0-9]{64}\.(jpg|png)$/)
+			.nullable()
+			.optional(),
 		locales: z.array(Locale).min(1).optional(),
 		slots: z.array(AdSlot).min(1),
 		region_ids: z.array(SmallIntId).nullable().optional(),
@@ -103,7 +110,9 @@ export const AdImageInput = z
 	})
 	.refine((i) => Math.abs(i.width / i.height - 4 / 3) <= 0.01, { message: 'Expected 4:3', path: ['width'] })
 	.openapi('AdImageInput');
-export const AdImageUploadResponse = z.object({ upload: PresignedUpload }).openapi('AdImageUploadResponse');
+export const AdImageUploadResponse = z
+	.object({ upload: PresignedUpload, image: z.string() })
+	.openapi('AdImageUploadResponse');
 export const AdStatsQuery = z.object({ from: IsoDate, to: IsoDate });
 export const AdStats = z
 	.object({

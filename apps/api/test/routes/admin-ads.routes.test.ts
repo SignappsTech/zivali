@@ -216,7 +216,7 @@ describe('POST /v1/admin/ads/:id/image', () => {
 		expect([res.status, res.body.error.code]).toEqual([400, 'VALIDATION']);
 	});
 
-	it('presigns a PUT to the media bucket; the next save checks the uploaded file itself', async () => {
+	it('presigns a PUT and leaves the ad alone; a save switches the image only after checking the uploaded file', async () => {
 		const { id } = await createAd();
 		const res = await as().post(`/v1/admin/ads/${id}/image`, imageMeta);
 		expect(res.status).toBe(200);
@@ -228,14 +228,16 @@ describe('POST /v1/admin/ads/:id/image', () => {
 				headers: { 'Content-Type': 'image/jpeg' },
 				expires_at: expect.any(String),
 			},
+			image: key,
 		});
-		expect(await prisma.audit_log.findFirst({ where: { target_id: id, action: 'ad.image' } })).toMatchObject({
-			diff: { from: null, to: key },
-		});
-		const listed = await as().get('/v1/admin/ads');
-		expect(listed.body.items.find((ad: { id: string }) => ad.id === id).image_url).toMatch(new RegExp(`/${key}$`));
+		// The live ad keeps serving what it served.
+		expect((await prisma.ads.findUniqueOrThrow({ where: { id } })).image_path).toBeNull();
+		expect(await prisma.audit_log.count({ where: { target_id: id, action: 'ad.image' } })).toBe(0);
 
-		const save = () => as().put(`/v1/admin/ads/${id}`, valid());
+		const old = `ads/${id}/${'cd'.repeat(32)}.jpg`;
+		await prisma.ads.update({ where: { id }, data: { image_path: old } });
+		const save = (image: string | null = key) => as().put(`/v1/admin/ads/${id}`, valid({ image }));
+		const served = async () => (await prisma.ads.findUniqueOrThrow({ where: { id } })).image_path;
 		const notUploaded = await save();
 		expect([notUploaded.status, issuePaths(notUploaded)]).toEqual([400, ['image']]);
 
@@ -244,10 +246,33 @@ describe('POST /v1/admin/ads/:id/image', () => {
 		expect(issuePaths(await save())).toEqual(['image']);
 		await adapters.storage.put(ref, Buffer.from('not an image'), 'image/jpeg');
 		expect(issuePaths(await save())).toEqual(['image']);
+		expect(await served()).toBe(old);
+
+		// Another ad's key, a malformed key and removing a sponsor ad's image are all rejected.
+		expect(issuePaths(await save(`ads/${randomUUID()}/${imageMeta.sha256}.jpg`))).toEqual(['image']);
+		expect((await save('ads/x/y.jpg')).status).toBe(400);
+		expect(issuePaths(await save(null))).toEqual(['image']);
+		expect(await served()).toBe(old);
+
 		await adapters.storage.put(ref, await image(1600, 1200, 'jpeg'), 'image/jpeg');
-		expect((await save()).status).toBe(200);
+		const ok = await save();
+		expect(ok.status).toBe(200);
+		expect(ok.body.image_url).toMatch(new RegExp(`/${key}$`));
+		expect(await served()).toBe(key);
+		expect(await prisma.audit_log.findFirst({ where: { target_id: id, action: 'ad.update' } })).toMatchObject({
+			diff: { from: { image: old }, to: { image: key } },
+		});
+
+		await prisma.ads.update({ where: { id }, data: { is_house: true, house_kind: 'adopt' } });
+		const removed = await as().put(`/v1/admin/ads/${id}`, { ...valid({ image: null }), is_house: true });
+		expect([removed.status, removed.body.image_url]).toEqual([200, null]);
 
 		expect((await as().post(`/v1/admin/ads/${randomUUID()}/image`, imageMeta)).status).toBe(404);
+	});
+
+	it('does not take an image on create', async () => {
+		const res = await as().post('/v1/admin/ads', valid({ image: `ads/${randomUUID()}/${imageMeta.sha256}.jpg` }));
+		expect([res.status, issuePaths(res)]).toEqual([400, ['image']]);
 	});
 });
 
@@ -316,6 +341,9 @@ describe('DELETE /v1/admin/ads/:id', () => {
 		expect(listed.body.items.map((ad: { id: string }) => ad.id)).not.toContain(id);
 		expect((await as().put(`/v1/admin/ads/${id}`, valid())).status).toBe(404);
 		expect((await as().delete(`/v1/admin/ads/${id}`, { note: 'again' })).status).toBe(404);
+		// Its stats stay readable for admins.
+		const stats = await as().get(`/v1/admin/ads/${id}/stats?from=2026-10-14&to=2026-10-14`);
+		expect([stats.status, stats.body.items.map((i: { impressions: number }) => i.impressions)]).toEqual([200, [5]]);
 	});
 });
 
