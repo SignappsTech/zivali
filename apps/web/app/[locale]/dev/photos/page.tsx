@@ -4,7 +4,7 @@ import { notFound } from 'next/navigation';
 import { PhotoPicker } from '@/components/photos/photo-picker';
 import { env } from '@/lib/env';
 
-export const metadata: Metadata = { title: 'PhotoPicker · Najdimo', robots: { index: false, follow: false } };
+export const metadata: Metadata = { title: 'PhotoPicker', robots: { index: false, follow: false } };
 
 /** TASK-14.2: the PhotoPicker against the configured API, for e2e and review (SL /dev/photos, EN /en/dev/photos). */
 export default function PhotosDevPage() {
