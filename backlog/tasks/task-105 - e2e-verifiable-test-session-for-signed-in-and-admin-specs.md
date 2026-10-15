@@ -1,10 +1,11 @@
 ---
 id: TASK-105
 title: 'e2e: verifiable test session for signed-in and admin specs'
-status: To Do
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-15 20:10'
+updated_date: '2026-10-15 18:12'
 labels:
   - bug
   - web
