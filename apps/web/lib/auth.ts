@@ -21,17 +21,6 @@ export const providers = {
 	apple: env.NEXT_PUBLIC_APPLE_SIGN_IN === 'true',
 };
 
-/**
- * A same-site path to return to after sign-in, or undefined: the `next` query param is user input, so only a path on
- * this origin passes (no `//host` or `/\host`, no scheme). Returns pathname and search.
- */
-export function safeNext(next: unknown): string | undefined {
-	if (typeof next !== 'string' || !next.startsWith('/')) return undefined;
-	const base = 'https://next.invalid';
-	const url = new URL(next, base);
-	return url.origin === base ? url.pathname + url.search : undefined;
-}
-
 export type CallbackType = 'signup' | 'recovery' | 'oauth';
 
 /** Where Supabase sends the browser back to (allow-listed `<APP_URL>/**`, C3); `next` is the page to return to. */

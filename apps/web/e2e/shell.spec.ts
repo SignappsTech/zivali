@@ -142,7 +142,7 @@ test('every header and footer link answers (placeholders until their stories shi
 	for (const href of hrefs) expect(`${href} ${(await request.get(href)).status()}`).toBe(`${href} 200`);
 });
 
-test('the signed-in header links answer too (placeholders until their stories ship)', async ({ request }) => {
+test('the signed-in header links answer too (signed out, through sign-in)', async ({ request }) => {
 	for (const href of [
 		'/nabiralnik',
 		'/racun',
@@ -167,10 +167,11 @@ test('an unknown path gets the calm 404 inside the shell', async ({ page }) => {
 	await expect(page.getByRole('banner')).toBeVisible();
 });
 
+// The page asked for goes along as `next` (TASK-9.3), so sign-in returns to it.
 for (const [path, target] of [
-	['/moje-zivali', '/vpis'],
-	['/en/portal', '/en/sign-in'],
-	['/admin/zavetisca', '/vpis'],
+	['/moje-zivali', '/vpis?next=%2Fmoje-zivali'],
+	['/en/portal', '/en/sign-in?next=%2Fen%2Fportal'],
+	['/admin/zavetisca', '/vpis?next=%2Fadmin%2Fzavetisca'],
 ])
 	test(`signed out, ${path} is guarded on the server`, async ({ request }) => {
 		const response = await request.get(path, { maxRedirects: 0 });

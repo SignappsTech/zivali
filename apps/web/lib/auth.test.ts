@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { ApiError } from '@zivali/api/client';
 
-import { callbackUrl, requestPasswordReset, safeNext, signIn, signInWithProvider, signUp } from './auth';
+import { callbackUrl, requestPasswordReset, signIn, signInWithProvider, signUp } from './auth';
 
 const supabase = vi.hoisted(() => ({
 	signInWithPassword: vi.fn(),
@@ -14,25 +14,6 @@ const supabase = vi.hoisted(() => ({
 vi.mock('@/lib/supabase/client', () => ({ createClient: () => ({ auth: supabase }) }));
 
 afterEach(() => vi.clearAllMocks());
-
-describe('safeNext', () => {
-	it.each([
-		['/racun', '/racun'],
-		['/en/account?tab=alerts#x', '/en/account?tab=alerts'],
-		['/r/Hk3vT9qP', '/r/Hk3vT9qP'],
-	])('keeps the same-site path %s', (next, kept) => expect(safeNext(next)).toBe(kept));
-
-	it.each([
-		'https://evil.example/',
-		'//evil.example/x',
-		'/\\evil.example',
-		'javascript:alert(1)',
-		'racun',
-		'',
-		null,
-		7,
-	])('drops %j', (next) => expect(safeNext(next)).toBeUndefined());
-});
 
 describe('Supabase calls', () => {
 	const origin = window.location.origin;

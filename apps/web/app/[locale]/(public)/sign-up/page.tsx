@@ -6,8 +6,7 @@ import { redirect } from 'next/navigation';
 import { AuthMain } from '@/components/auth/parts';
 import { SignUpForm } from '@/components/auth/sign-up';
 import { getPathname } from '@/i18n/navigation';
-import { safeNext } from '@/lib/auth';
-import { getViewer } from '@/lib/viewer';
+import { getViewer, safeNext } from '@/lib/viewer';
 
 const one = (value: string | string[] | undefined) => (typeof value === 'string' ? value : undefined);
 

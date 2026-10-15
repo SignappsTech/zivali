@@ -49,37 +49,41 @@ const captchaFailed = () => new ApiError('CAPTCHA_FAILED', 'CAPTCHA_FAILED');
  */
 export function useCaptcha() {
 	const locale = useLocale();
-	const element = React.useRef<HTMLDivElement>(null);
 	const widget = React.useRef<string | undefined>(undefined);
 	const pending = React.useRef<{ resolve: (token: string) => void; reject: (error: ApiError) => void }>(undefined);
 	const siteKey = env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
 
-	React.useEffect(() => {
-		if (!siteKey) return;
-		let turnstile: Turnstile | undefined;
-		let cancelled = false;
-		loadTurnstile().then(
-			(loaded) => {
-				if (cancelled || !element.current) return;
-				turnstile = loaded;
-				widget.current = loaded.render(element.current, {
-					sitekey: siteKey,
-					execution: 'execute',
-					appearance: 'interaction-only',
-					language: locale,
-					callback: (token: string) => pending.current?.resolve(token),
-					'error-callback': () => pending.current?.reject(captchaFailed()),
-					'expired-callback': () => pending.current?.reject(captchaFailed()),
-				});
-			},
-			() => undefined
-		);
-		return () => {
-			cancelled = true;
-			if (turnstile && widget.current) turnstile.remove(widget.current);
-			widget.current = undefined;
-		};
-	}, [siteKey, locale]);
+	// A callback ref: the widget lives exactly as long as its element (a form view may unmount and come back).
+	const mount = React.useCallback(
+		(element: HTMLDivElement | null) => {
+			if (!element || !siteKey) return;
+			let turnstile: Turnstile | undefined;
+			let id: string | undefined;
+			let cancelled = false;
+			loadTurnstile().then(
+				(loaded) => {
+					if (cancelled) return;
+					turnstile = loaded;
+					id = widget.current = loaded.render(element, {
+						sitekey: siteKey,
+						execution: 'execute',
+						appearance: 'interaction-only',
+						language: locale,
+						callback: (token: string) => pending.current?.resolve(token),
+						'error-callback': () => pending.current?.reject(captchaFailed()),
+						'expired-callback': () => pending.current?.reject(captchaFailed()),
+					});
+				},
+				() => undefined
+			);
+			return () => {
+				cancelled = true;
+				if (turnstile && id) turnstile.remove(id);
+				if (widget.current === id) widget.current = undefined;
+			};
+		},
+		[siteKey, locale]
+	);
 
 	const getToken = React.useCallback(async (): Promise<string | undefined> => {
 		if (!siteKey) return undefined;
@@ -93,5 +97,5 @@ export function useCaptcha() {
 		});
 	}, [siteKey]);
 
-	return { getToken, widget: siteKey ? <div ref={element} className="empty:hidden" /> : null };
+	return { getToken, widget: siteKey ? <div ref={mount} className="empty:hidden" /> : null };
 }

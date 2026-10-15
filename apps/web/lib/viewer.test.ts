@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { getViewer, recoveryEmail, requireViewer } from './viewer';
+import { getViewer, recoveryEmail, requireViewer, safeNext } from './viewer';
 
 const auth = vi.hoisted(() => ({ token: undefined as string | undefined, path: null as string | null }));
 vi.mock('next/headers', () => ({ headers: async () => new Headers(auth.path ? { 'x-next-path': auth.path } : {}) }));
@@ -95,4 +95,23 @@ describe('recoveryEmail', () => {
 		auth.token = jwt({ email: 'ana@example.si', amr: [{ method: 'recovery', timestamp: now }] }, 'forged');
 		expect(await recoveryEmail()).toBeNull();
 	});
+});
+
+describe('safeNext', () => {
+	it.each([
+		['/racun', '/racun'],
+		['/en/account?tab=alerts#x', '/en/account?tab=alerts'],
+		['/r/Hk3vT9qP', '/r/Hk3vT9qP'],
+	])('keeps the same-site path %s', (next, kept) => expect(safeNext(next)).toBe(kept));
+
+	it.each([
+		'https://evil.example/',
+		'//evil.example/x',
+		'/\\evil.example',
+		'javascript:alert(1)',
+		'racun',
+		'',
+		null,
+		7,
+	])('drops %j', (next) => expect(safeNext(next)).toBeUndefined());
 });

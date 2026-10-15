@@ -25,11 +25,13 @@ describe('useCaptcha', () => {
 		expect(document.querySelector('script[src*="turnstile"]')).toBeNull();
 	});
 
-	it('loads Turnstile once and runs a fresh challenge per submit', async () => {
+	it('loads Turnstile once, runs a fresh challenge per submit and removes the widget with its form', async () => {
 		vi.stubEnv('NEXT_PUBLIC_TURNSTILE_SITE_KEY', '1x00000000000000000000AA');
 		let options: Record<string, (value?: string) => void> = {};
 		const turnstile = {
-			render: vi.fn((_element: HTMLElement, given: typeof options) => ((options = given), 'w1')),
+			render: vi.fn(
+				(_element: HTMLElement, given: Record<string, unknown>) => ((options = given as typeof options), 'w1')
+			),
 			reset: vi.fn(),
 			execute: vi.fn(),
 			remove: vi.fn(),
@@ -45,7 +47,7 @@ describe('useCaptcha', () => {
 			captcha = useCaptcha();
 			return <form>{captcha.widget}</form>;
 		}
-		render(<Form />, { wrapper });
+		const { unmount } = render(<Form />, { wrapper });
 		await vi.waitFor(() => expect(turnstile.render).toHaveBeenCalledOnce());
 		expect(turnstile.render.mock.calls[0]![1]).toMatchObject({
 			sitekey: '1x00000000000000000000AA',
@@ -65,5 +67,8 @@ describe('useCaptcha', () => {
 		act(() => options['error-callback']!());
 		await expect(failed).rejects.toMatchObject({ code: 'CAPTCHA_FAILED' });
 		expect(append).toHaveBeenCalledOnce();
+		// The widget goes with its form.
+		unmount();
+		expect(turnstile.remove).toHaveBeenCalledWith('w1');
 	});
 });

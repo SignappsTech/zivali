@@ -3,9 +3,9 @@ import { type NextRequest, NextResponse } from 'next/server';
 
 import { getPathname } from '@/i18n/navigation';
 import { routing } from '@/i18n/routing';
-import { safeNext } from '@/lib/auth';
 import { env } from '@/lib/env';
 import { createClient } from '@/lib/supabase/server';
+import { safeNext } from '@/lib/viewer';
 
 type Href = Parameters<typeof getPathname>[0]['href'];
 

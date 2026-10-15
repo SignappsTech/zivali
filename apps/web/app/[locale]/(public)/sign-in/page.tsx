@@ -9,8 +9,7 @@ import { AuthHeading, AuthMain, Spot } from '@/components/auth/parts';
 import { SignInForm, type SignInNotice } from '@/components/auth/sign-in';
 import { Button } from '@/components/ui/button';
 import { getPathname, Link } from '@/i18n/navigation';
-import { safeNext } from '@/lib/auth';
-import { getViewer } from '@/lib/viewer';
+import { getViewer, safeNext } from '@/lib/viewer';
 
 const NOTICES: readonly string[] = ['expired', 'cancelled', 'failed'] satisfies SignInNotice[];
 const one = (value: string | string[] | undefined) => (typeof value === 'string' ? value : undefined);
