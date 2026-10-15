@@ -3,11 +3,11 @@ id: TASK-29.2
 title: >-
   Report write API: POST and PATCH /v1/reports with idempotency, guard hook and
   jobs
-status: In Progress
+status: Done
 assignee:
   - '@backend-dev'
 created_date: '2026-10-14 22:13'
-updated_date: '2026-10-15 16:04'
+updated_date: '2026-10-15 18:00'
 labels:
   - be
   - 'est:M'

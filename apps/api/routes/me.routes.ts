@@ -1,9 +1,10 @@
-// /v1/me (C3): the caller's own profile. Wiring only.
+// /v1/me (C3): the caller's own profile, and the reports they manage (C4). Wiring only.
 import { Router } from 'express';
 
-import { Me, Profile, UpdateMeInput } from '@zivali/validation';
+import { CursorQuery, Me, MyReportList, Profile, UpdateMeInput, Uuid } from '@zivali/validation';
 
 import MeController from '../controllers/me.controller.ts';
+import ReportsController from '../controllers/reports.controller.ts';
 import { apiRoutes } from '../lib/openapi.ts';
 import { authMiddleware } from '../middleware/auth.middleware.ts';
 import { rateLimit } from '../middleware/rateLimit.middleware.ts';
@@ -41,6 +42,23 @@ route(
 	authMiddleware,
 	rateLimit('me.update', { limit: 60, window: 3600, key: 'user' }),
 	MeController.updateMe
+);
+
+route(
+	{
+		method: 'get',
+		path: '/reports',
+		operationId: 'listMyReports',
+		summary: 'Reports I manage',
+		description:
+			'ReportOwnerView of every report the caller manages (held, hidden and closed included), newest first, ' +
+			'keyset-paginated (`cursor` = the last item id, `limit` ≤ 50).',
+		request: { query: CursorQuery.extend({ cursor: Uuid.optional() }) },
+		responses: { 200: { description: 'One page of own reports', schema: MyReportList } },
+		errors: ['UNAUTHENTICATED'],
+	},
+	authMiddleware,
+	ReportsController.listMyReports
 );
 
 export default router;

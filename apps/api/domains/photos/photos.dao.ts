@@ -97,9 +97,45 @@ export async function listPurgeable(cutoffs: { unattachedBefore: Date; endedBefo
 	});
 }
 
-export async function removeMany(ids: string[], tx?: Tx): Promise<number> {
-	const db = tx ?? prisma;
-	return (await db.photos.deleteMany({ where: { id: { in: ids } } })).count;
+/**
+ * Deletes the given photos that still match the purge predicate (listPurgeable's) and returns them, so a photo
+ * touched or attached after the listing survives. The returned rows carry what photoObjects needs.
+ */
+export async function removePurgeable(ids: string[], cutoffs: { unattachedBefore: Date; endedBefore: Date }, tx: Tx) {
+	return tx.$queryRaw<
+		{
+			id: string;
+			owner_id: string;
+			report_id: string | null;
+			public_display_url: string | null;
+			public_thumb_url: string | null;
+		}[]
+	>`
+		delete from app.photos p
+		where p.id = any(${ids}::uuid[]) and (
+			(p.pet_id is null and p.report_id is null and p.updated_at < ${cutoffs.unattachedBefore})
+			or exists (
+				select 1 from app.reports r where r.id = p.report_id and (
+					(r.status = 'closed' and r.closed_at < ${cutoffs.endedBefore})
+					or (r.status = 'reunited' and r.reunited_at < ${cutoffs.endedBefore})))
+		)
+		returning p.id, p.owner_id, p.report_id, p.public_display_url, p.public_thumb_url`;
 }
 
-export default { upsertByHash, findById, update, markUploaded, remove, findReportPhotos, listPurgeable, removeMany };
+/** The result of photo.process on an `uploaded` row; false when the row is gone (a DELETE raced the job). */
+export async function settle(id: string, data: Prisma.photosUncheckedUpdateManyInput, tx?: Tx): Promise<boolean> {
+	const db = tx ?? prisma;
+	return (await db.photos.updateMany({ where: { id, status: 'uploaded' }, data })).count === 1;
+}
+
+export default {
+	upsertByHash,
+	findById,
+	update,
+	markUploaded,
+	remove,
+	findReportPhotos,
+	listPurgeable,
+	removePurgeable,
+	settle,
+};

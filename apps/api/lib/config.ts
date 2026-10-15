@@ -81,6 +81,9 @@ if (!parsed.success) {
 	throw new Error(`Invalid environment: ${problems}`);
 }
 
+if (parsed.data.APP_ENV !== 'local' && !parsed.data.MEDIA_BASE_URL)
+	throw new Error('Invalid environment: MEDIA_BASE_URL: required when APP_ENV is staging or production');
+
 export const config = parsed.data;
 if (!config.SUPABASE_SECRET_KEY && config.SUPABASE_SERVICE_ROLE_KEY) {
 	// logger imports config, so plain console here. Never print the value.

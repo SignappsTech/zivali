@@ -3,9 +3,9 @@
 import type { z } from 'zod';
 
 import type { Locale, ReportType, Species } from '@zivali/types';
-import { PublicReport, ReportOwnerView } from '@zivali/validation';
+import { CreateReportResponse, PublicReport, ReportOwnerView } from '@zivali/validation';
 
-import type { ReportView } from './reports.domain.ts';
+import type { CreatedReport, ReportView } from './reports.domain.ts';
 
 export type PublicReportDto = z.infer<typeof PublicReport>;
 export type ReportOwnerViewDto = z.infer<typeof ReportOwnerView>;
@@ -108,4 +108,9 @@ export function toDto(view: ReportView, locale: Locale): PublicReportDto | Repor
 		: toPublicReport(view, locale);
 }
 
-export default { toPublicReport, toOwnerView, toDto };
+/** POST /v1/reports → 201. */
+export function toCreated(created: CreatedReport) {
+	return CreateReportResponse.parse(created);
+}
+
+export default { toPublicReport, toOwnerView, toDto, toCreated };

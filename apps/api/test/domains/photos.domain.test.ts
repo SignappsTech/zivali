@@ -3,14 +3,17 @@
 import { createHash, randomBytes, randomUUID } from 'node:crypto';
 
 import sharp from 'sharp';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { MAX_PHOTO_BYTES } from '@zivali/validation';
 
 import { adapters } from '../../adapters/index.ts';
 import type { ObjectRef } from '../../adapters/storage/index.ts';
 import { PHOTO_HOOKS, PhotosDomain } from '../../domains/photos/index.ts';
+import PhotosDao from '../../domains/photos/photos.dao.ts';
+import { publicObjects } from '../../domains/photos/photo-objects.ts';
 import { ReportsDomain } from '../../domains/reports/index.ts';
+import ReportsDao from '../../domains/reports/reports.dao.ts';
 import { handlers } from '../../jobs/index.ts';
 import { systemCtx, userCtx, type Actor } from '../../lib/ctx.ts';
 import { jobs } from '../../lib/jobs.ts';
@@ -257,6 +260,14 @@ describe('retention.purge', () => {
 	const age = (id: string, hours: number) =>
 		prisma.photos.update({ where: { id }, data: { updated_at: new Date(Date.now() - hours * HOUR) } });
 	const exists = async (id: string) => (await row(id)) !== null;
+	/** purgePhotos queues the object deletes; run those jobs now, as the worker would. */
+	const purge = async () => {
+		const n = await PhotosDomain.purgePhotos(ctx());
+		const jobsQueued = await prisma.$queryRaw<{ data: { objects: ObjectRef[] } }[]>`
+			delete from pgboss.job where name = 'retention.purge' and data ? 'objects' returning data`;
+		for (const j of jobsQueued) await PhotosDomain.deleteObjects(j.data.objects, ctx());
+		return n;
+	};
 
 	it('removes photos unattached for 24 h with their objects, keeps recent and attached ones', async () => {
 		const old = await uploaded(await jpeg());
@@ -268,7 +279,7 @@ describe('retention.purge', () => {
 		const petPhoto = await uploaded(await jpeg(), { pet_id: pet.id });
 		await age(petPhoto.id, 48);
 
-		await PhotosDomain.purgePhotos(ctx());
+		await purge();
 		expect(await exists(old.id)).toBe(false);
 		for (const v of VARIANTS) expect(await storage.head(variantRef(old.id, v))).toBeNull();
 		expect(await exists(recent.id)).toBe(true);
@@ -277,7 +288,7 @@ describe('retention.purge', () => {
 
 		// Deleting the pet detaches its photos (foreign key), so the next run removes them.
 		await prisma.pets.delete({ where: { id: pet.id } });
-		await PhotosDomain.purgePhotos(ctx());
+		await purge();
 		expect(await exists(petPhoto.id)).toBe(false);
 		expect(await storage.head(uploadRef(petPhoto.id))).toBeNull();
 	});
@@ -291,7 +302,7 @@ describe('retention.purge', () => {
 			userCtx(owner)
 		);
 		expect(again).toEqual({ photo_id: photo.id, existing: true });
-		await PhotosDomain.purgePhotos(ctx());
+		await purge();
 		expect(await exists(photo.id)).toBe(true);
 	});
 
@@ -311,11 +322,44 @@ describe('retention.purge', () => {
 		await prisma.reports.update({ where: { id: longAgo.id }, data: closed(370) });
 		await prisma.reports.update({ where: { id: recently.id }, data: closed(30) });
 
-		await PhotosDomain.purgePhotos(ctx());
+		await purge();
 		expect(await exists(oldPhoto.id)).toBe(false);
 		expect(await storage.head(mediaRef(longAgo.id, oldPhoto.id, 'display.jpg'))).toBeNull();
 		expect(await storage.head(variantRef(oldPhoto.id, 'display.webp'))).toBeNull();
 		expect(await exists(keptPhoto.id)).toBe(true);
+	});
+
+	it('keeps a photo touched or attached after the purge listing, objects included (race)', async () => {
+		const body = await jpeg();
+		const touched = await uploaded(body);
+		await PhotosDomain.processPhoto({ photo_id: touched.id }, ctx());
+		await age(touched.id, 25);
+		const report = await newReport();
+		const attached = await uploaded(await jpeg());
+		await PhotosDomain.processPhoto({ photo_id: attached.id }, ctx());
+		await age(attached.id, 25);
+		const doomed = await uploaded(await jpeg());
+		await age(doomed.id, 25);
+
+		const list = PhotosDao.listPurgeable;
+		const spy = vi.spyOn(PhotosDao, 'listPurgeable').mockImplementation(async (...args) => {
+			const rows = await list(...args);
+			// Between the listing and the delete: POST /v1/photos answers `existing`, and a report attaches a photo.
+			await prisma.photos.update({ where: { id: touched.id }, data: { updated_at: new Date() } });
+			await prisma.photos.update({ where: { id: attached.id }, data: { report_id: report.id } });
+			return rows;
+		});
+		try {
+			await purge();
+		} finally {
+			spy.mockRestore();
+		}
+		expect(await exists(touched.id)).toBe(true);
+		expect(await exists(attached.id)).toBe(true);
+		for (const id of [touched.id, attached.id])
+			expect(await storage.head(variantRef(id, 'display.webp'))).not.toBeNull();
+		expect(await exists(doomed.id)).toBe(false);
+		expect(await storage.head(uploadRef(doomed.id))).toBeNull();
 	});
 
 	it('with `{ objects }` deletes just those objects (DELETE /v1/photos/:id)', async () => {
@@ -326,5 +370,63 @@ describe('retention.purge', () => {
 		await handlers['retention.purge']({ objects: [ref] }, { ...ctx(), prisma, send: jobs.send });
 		expect(await storage.head(ref)).toBeNull();
 		expect(await storage.head(other)).not.toBeNull();
+	});
+});
+
+describe('detaching a published photo', () => {
+	it('unpublishes it and lists its public copies for deletion; DELETE is then allowed', async () => {
+		const report = await newReport();
+		const photo = await uploaded(await jpeg(), { report_id: report.id });
+		await PhotosDomain.processPhoto({ photo_id: photo.id }, ctx());
+		await PhotosDomain.publishReportPhotos({ report_id: report.id }, ctx());
+		expect(await storage.head(mediaRef(report.id, photo.id, 'display.jpg'))).not.toBeNull();
+
+		// What PATCH photo_ids [] does to it.
+		const { unpublished } = await prisma.$transaction((tx) =>
+			ReportsDao.setPhotos({ report_id: report.id, owner_id: owner.user_id, photo_ids: [] }, tx)
+		);
+		expect(await row(photo.id)).toMatchObject({
+			report_id: null,
+			status: 'unpublished',
+			public_display_url: null,
+			public_thumb_url: null,
+		});
+		const objects = unpublished.flatMap(publicObjects);
+		expect(objects).toEqual(VARIANTS.map((v) => mediaRef(report.id, photo.id, v)));
+		await PhotosDomain.deleteObjects(objects, ctx());
+		expect(await storage.head(mediaRef(report.id, photo.id, 'display.jpg'))).toBeNull();
+
+		await PhotosDomain.deletePhoto({ id: photo.id }, userCtx(owner));
+		expect(await row(photo.id)).toBeNull();
+	});
+
+	it('photoObjects finds public copies by URL when the report id is gone', async () => {
+		const [rid, pid] = [randomUUID(), randomUUID()];
+		const refs = publicObjects({
+			id: pid,
+			report_id: null,
+			public_display_url: `https://media.example/r/${rid}/${pid}/display.jpg`,
+			public_thumb_url: `https://media.example/r/${rid}/${pid}/thumb.webp`,
+		});
+		expect(refs).toEqual(VARIANTS.map((v) => mediaRef(rid, pid, v)));
+	});
+});
+
+describe('photo.process races', () => {
+	it('a DELETE during processing leaves no variants behind', async () => {
+		const photo = await uploaded(await jpeg());
+		const find = PhotosDao.findById;
+		const spy = vi.spyOn(PhotosDao, 'findById').mockImplementationOnce(async (...args) => {
+			const found = await find(...args);
+			await prisma.photos.delete({ where: { id: photo.id } });
+			return found;
+		});
+		try {
+			await PhotosDomain.processPhoto({ photo_id: photo.id }, ctx());
+		} finally {
+			spy.mockRestore();
+		}
+		for (const v of VARIANTS) expect(await storage.head(variantRef(photo.id, v))).toBeNull();
+		expect(await storage.head(uploadRef(photo.id))).toBeNull();
 	});
 });

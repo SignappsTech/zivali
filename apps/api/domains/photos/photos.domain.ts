@@ -16,6 +16,15 @@ import { AppError } from '../../lib/errors.ts';
 import type { QueueName } from '../../lib/jobs.ts';
 import { prisma, type Prisma } from '../../prisma/prisma.ts';
 import { ReportsDomain } from '../reports/index.ts';
+import {
+	VARIANTS,
+	VARIANT_NAMES,
+	type Variant,
+	mediaRef,
+	photoObjects,
+	uploadRef,
+	variantRef,
+} from './photo-objects.ts';
 import PhotosDao, { type PhotoRow } from './photos.dao.ts';
 
 const UPLOAD_TTL_S = 300;
@@ -27,33 +36,11 @@ const PURGE_CHUNK = 500;
 const DISPLAY_PX = 1600;
 const THUMB_PX = 480;
 // Inputs are ≤ 1600 px by contract; refuse to decode anything far larger (decompression bombs).
-const MAX_INPUT_PIXELS = 4096 * 4096;
-
-const VARIANTS = { 'display.webp': 'image/webp', 'display.jpg': 'image/jpeg', 'thumb.webp': 'image/webp' } as const;
-type Variant = keyof typeof VARIANTS;
-const VARIANT_NAMES = Object.keys(VARIANTS) as Variant[];
+const MAX_INPUT_PIXELS = 2048 * 2048;
+const SHARP_TIMEOUT_S = 30;
 
 /** Queues sent { photo_id } for every accepted photo: empty in M2; M3 adds ai.extract and photo.embed. */
 export const PHOTO_HOOKS: readonly QueueName[] = [];
-
-const uploadRef = (p: { id: string; owner_id: string }): ObjectRef => ({
-	bucket: 'private',
-	key: `uploads/${p.owner_id}/${p.id}.jpg`,
-});
-const variantRef = (photoId: string, v: Variant): ObjectRef => ({ bucket: 'private', key: `variants/${photoId}/${v}` });
-const mediaRef = (reportId: string, photoId: string, v: Variant): ObjectRef => ({
-	bucket: 'media',
-	key: `r/${reportId}/${photoId}/${v}`,
-});
-
-/** Every object a photo can have; deleting a missing object is a no-op. */
-export function photoObjects(p: { id: string; owner_id: string; report_id: string | null }): ObjectRef[] {
-	return [
-		uploadRef(p),
-		...VARIANT_NAMES.map((v) => variantRef(p.id, v)),
-		...(p.report_id ? VARIANT_NAMES.map((v) => mediaRef(p.report_id!, p.id, v)) : []),
-	];
-}
 
 function mediaUrl(ref: ObjectRef): string {
 	const base =
@@ -131,7 +118,7 @@ export async function getPhoto(input: { id: string }, ctx: Ctx): Promise<{ photo
 /** DELETE /v1/photos/:id: refused while public on a report; the row goes now, its objects in retention.purge. */
 export async function deletePhoto(input: { id: string }, ctx: Ctx): Promise<void> {
 	const photo = await getOwned(input.id, ctx);
-	if (photo.status === 'published' || (photo.report && isPublishable(photo.report, ctx.now)))
+	if (photo.report && (photo.status === 'published' || isPublishable(photo.report, ctx.now)))
 		throw new AppError('CONFLICT', 'Photo is on a published report');
 	await inTransaction(ctx, async (tx) => {
 		await PhotosDao.remove(photo.id, tx);
@@ -146,6 +133,7 @@ const sha256Hex = (b: Buffer) => createHash('sha256').update(b).digest('hex');
 async function renderVariants(body: Buffer) {
 	const resized = (px: number) =>
 		sharp(body, { limitInputPixels: MAX_INPUT_PIXELS })
+			.timeout({ seconds: SHARP_TIMEOUT_S })
 			.rotate()
 			.resize(px, px, { fit: 'inside', withoutEnlargement: true });
 	const [displayWebp, displayJpg, thumb] = await Promise.all([
@@ -194,13 +182,23 @@ export async function processPhoto(input: { photo_id: string }, ctx: Ctx): Promi
 	if (rendered) {
 		for (const v of VARIANT_NAMES) await storage.put(variantRef(photo.id, v), rendered.files[v], VARIANTS[v]);
 		const { width, height } = rendered;
-		await inTransaction(ctx, async (tx) => {
-			await PhotosDao.update(photo.id, { status: 'accepted', width, height }, tx);
+		const accepted = await inTransaction(ctx, async (tx) => {
+			// Conditional: a DELETE that raced this job removed the row, and its variants are ours to remove.
+			if (!(await PhotosDao.settle(photo.id, { status: 'accepted', width, height }, tx))) return false;
 			for (const queue of PHOTO_HOOKS) await ctx.jobs.send(queue, { photo_id: photo.id }, { tx });
 			if (photo.report_id) await ctx.jobs.send('photo.publish', { report_id: photo.report_id }, { tx });
+			return true;
 		});
+		if (!accepted) {
+			await deleteObjects(
+				VARIANT_NAMES.map((v) => variantRef(photo.id, v)),
+				ctx
+			);
+			await storage.delete(upload);
+			return;
+		}
 	} else {
-		await PhotosDao.update(photo.id, { status: 'rejected', reject_reason: reason }, ctx.tx);
+		await PhotosDao.settle(photo.id, { status: 'rejected', reject_reason: reason }, ctx.tx);
 		ctx.logger.info({ photo_id: photo.id, reason }, 'photo rejected');
 	}
 	await storage.delete(upload);
@@ -216,17 +214,12 @@ export async function publishReportPhotos(input: { report_id: string }, ctx: Ctx
 	const storage = ctx.adapters.storage;
 	if (isPublishable(report, ctx.now)) {
 		for (const photo of report.photos.filter((p) => p.status !== 'published')) {
+			// Both URLs first: a missing MEDIA_BASE_URL must fail before any copy exists.
+			const public_display_url = mediaUrl(mediaRef(report.id, photo.id, 'display.jpg'));
+			const public_thumb_url = mediaUrl(mediaRef(report.id, photo.id, 'thumb.webp'));
 			for (const v of VARIANT_NAMES)
 				await storage.copy(variantRef(photo.id, v), mediaRef(report.id, photo.id, v));
-			await PhotosDao.update(
-				photo.id,
-				{
-					status: 'published',
-					public_display_url: mediaUrl(mediaRef(report.id, photo.id, 'display.jpg')),
-					public_thumb_url: mediaUrl(mediaRef(report.id, photo.id, 'thumb.webp')),
-				},
-				ctx.tx
-			);
+			await PhotosDao.update(photo.id, { status: 'published', public_display_url, public_thumb_url }, ctx.tx);
 		}
 		return;
 	}
@@ -240,7 +233,11 @@ export async function publishReportPhotos(input: { report_id: string }, ctx: Ctx
 	}
 }
 
-/** retention.purge for photos (C5): objects first, then the rows, in chunks of 500. Returns the rows deleted. */
+/**
+ * retention.purge for photos (C5), in chunks of 500: the rows go first, with the purge predicate re-applied (a photo
+ * touched or attached since the listing stays), and their objects are queued in the same transaction.
+ * Returns the rows deleted.
+ */
 export async function purgePhotos(ctx: Ctx): Promise<number> {
 	const cutoffs = {
 		unattachedBefore: new Date(ctx.now.getTime() - UNATTACHED_MS),
@@ -250,11 +247,17 @@ export async function purgePhotos(ctx: Ctx): Promise<number> {
 	for (;;) {
 		const photos = await PhotosDao.listPurgeable(cutoffs, PURGE_CHUNK, ctx.tx);
 		if (!photos.length) return purged;
-		await deleteObjects(photos.flatMap(photoObjects), ctx);
-		purged += await PhotosDao.removeMany(
-			photos.map((p) => p.id),
-			ctx.tx
-		);
+		const removed = await inTransaction(ctx, async (tx) => {
+			const rows = await PhotosDao.removePurgeable(
+				photos.map((p) => p.id),
+				cutoffs,
+				tx
+			);
+			if (rows.length) await ctx.jobs.send('retention.purge', { objects: rows.flatMap(photoObjects) }, { tx });
+			return rows.length;
+		});
+		purged += removed;
+		if (!removed) return purged;
 	}
 }
 

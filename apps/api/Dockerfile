@@ -44,6 +44,8 @@ COPY --from=build /repo/apps/api/prisma/schemas ./prisma/schemas
 # Fetch the schema engine for the target platform (linux-arm64 on the VPS) here, as root: the runtime user cannot
 # write to node_modules.
 RUN node node_modules/prisma/build/index.js version
+# sharp loads its platform binary at require time: fail the build here, not at the first photo.process.
+RUN node -e "require('sharp')"
 USER node
 EXPOSE 4000
 CMD ["node", "dist/server.js"]
