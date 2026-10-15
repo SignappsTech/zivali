@@ -8,19 +8,20 @@ export type ConsentState = { v: number; analytics: boolean; ts: string };
 /** Where the record lives. Web default: the `zz_consent` cookie; mobile injects expo-secure-store (key `zz_consent`). */
 export type ConsentStorage = { get(): string | null; set(value: string): void };
 
-const KEY = 'zz_consent';
+/** The web cookie; the server reads it too, so the banner's first view is in the HTML (apps/web layout). */
+export const CONSENT_KEY = 'zz_consent';
 const YEAR_S = 365 * 24 * 60 * 60;
 
 export const cookieStorage: ConsentStorage = {
 	get() {
 		if (typeof document === 'undefined') return null;
-		const hit = document.cookie.split('; ').find((c) => c.startsWith(`${KEY}=`));
-		return hit ? hit.slice(KEY.length + 1) : null;
+		const hit = document.cookie.split('; ').find((c) => c.startsWith(`${CONSENT_KEY}=`));
+		return hit ? hit.slice(CONSENT_KEY.length + 1) : null;
 	},
 	set(value) {
 		if (typeof document === 'undefined') return;
 		const secure = location.protocol === 'https:' ? '; Secure' : '';
-		document.cookie = `${KEY}=${encodeURIComponent(value)}; Max-Age=${YEAR_S}; Path=/; SameSite=Lax${secure}`;
+		document.cookie = `${CONSENT_KEY}=${encodeURIComponent(value)}; Max-Age=${YEAR_S}; Path=/; SameSite=Lax${secure}`;
 	},
 };
 

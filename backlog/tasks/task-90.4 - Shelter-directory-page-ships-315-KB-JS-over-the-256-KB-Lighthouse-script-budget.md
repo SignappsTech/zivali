@@ -3,10 +3,11 @@ id: TASK-90.4
 title: >-
   Shelter directory page ships 315 KB JS, over the 256 KB Lighthouse script
   budget
-status: To Do
+status: In Progress
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-15 10:24'
+updated_date: '2026-10-15 20:35'
 labels:
   - bug
   - fe
