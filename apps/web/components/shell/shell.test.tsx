@@ -22,7 +22,9 @@ vi.mock('next/navigation', async (actual) => ({
 vi.mock('@zivali/api/auth', () => ({ useSession: () => ({ session: null, me: null, loading: false }) }));
 vi.mock('@zivali/api/me', () => ({ useUpdateMeMutation: () => [vi.fn()] }));
 // The inbox link's unread state has its own test (components/notifications/unread-dot.test.tsx).
-vi.mock('@/components/notifications/unread-dot', () => ({ UnreadDot: () => null }));
+vi.mock('@/components/notifications/unread-dot', () => ({
+	UnreadDot: ({ label }: { label: string }) => <span>{label}</span>,
+}));
 
 const catalogues = { sl, en };
 

@@ -138,8 +138,7 @@ export function SiteHeader({ viewer }: { viewer: Viewer | null }) {
 								<Button asChild variant="ghost" size="icon" className="relative">
 									<Link href="/inbox">
 										<TrayIcon weight="bold" aria-hidden="true" />
-										<span className="sr-only">{t('inbox')}</span>
-										<UnreadDot live className="absolute top-1.5 right-1.5" />
+										<UnreadDot label={t('inbox')} live className="absolute top-1.5 right-1.5" />
 									</Link>
 								</Button>
 								<Button
@@ -247,8 +246,7 @@ export function SiteHeader({ viewer }: { viewer: Viewer | null }) {
 									<div role="group" aria-label={t('account_menu')} className="-mx-3 mt-7">
 										<Link href="/inbox" className={menuRowClass}>
 											<TrayIcon weight="bold" aria-hidden="true" />
-											{t('inbox')}
-											<UnreadDot className="ml-auto" />
+											<UnreadDot label={t('inbox')} visible className="ml-auto" />
 										</Link>
 										{accountRows}
 										{signOut}

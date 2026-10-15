@@ -25,12 +25,11 @@ vi.mock('@zivali/api/auth', () => ({
 vi.mock('react-redux', async (actual) => ({ ...(await actual()), useStore: () => ({ dispatch: state.dispatch }) }));
 vi.mock('@/lib/supabase/client', () => ({ createClient: () => state.supabase }));
 
-function show(live = false) {
+function show(live = false, visible = false) {
 	return render(
 		<NextIntlClientProvider locale="en" messages={en}>
 			<Link href="/inbox">
-				{en.nav.inbox}
-				<UnreadDot live={live} />
+				<UnreadDot label={en.nav.inbox} live={live} visible={visible} />
 			</Link>
 		</NextIntlClientProvider>
 	);
@@ -44,17 +43,24 @@ afterEach(() => {
 });
 
 describe('UnreadDot', () => {
-	it('adds the dot and "unread" to the inbox link while unread notifications exist, never a count', () => {
-		state.unread = 3;
-		show();
+	it.each([false, true])(
+		'adds the dot and ", unread" to the link name while unread notifications exist, never a count (visible %s)',
+		(visible) => {
+			state.unread = 3;
+			const { container } = show(false, visible);
 
-		const link = screen.getByRole('link', { name: `${en.nav.inbox}, ${en.common.unread}` });
-		expect(link.textContent).not.toContain('3');
-	});
+			// One text node, so no browser puts a space before the comma.
+			const name = 'Messages and notifications, unread';
+			expect(screen.getByRole('link', { name }).textContent).not.toContain('3');
+			expect(screen.getByText(name).className).toBe('sr-only');
+			expect(container.querySelector('.bg-primary')).toBeTruthy();
+		}
+	);
 
-	it('shows nothing when everything is read', () => {
-		show();
-		expect(screen.getByRole('link', { name: en.nav.inbox })).toBeTruthy();
+	it('shows the plain label when everything is read', () => {
+		const { container } = show(false, true);
+		expect(screen.getByRole('link', { name: en.nav.inbox }).textContent).toBe(en.nav.inbox);
+		expect(container.querySelector('.bg-primary')).toBeNull();
 	});
 
 	it('live: joins the user channel once signed in and leaves it on unmount', async () => {

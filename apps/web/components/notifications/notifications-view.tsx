@@ -24,7 +24,7 @@ import { cn } from '@/lib/utils';
 import { type Group, type InboxRow, inboxGroups, type Kind, timeLabel } from './model';
 
 /** One page: the API's maximum (C10); older notifications stay in the API. */
-export const PAGE = { limit: 50 };
+const PAGE = { limit: 50 };
 
 const ICONS: Record<Kind, { Icon: Icon; weight: 'fill' | 'bold' | 'regular'; tone?: string }> = {
 	chip: { Icon: ShieldCheckIcon, weight: 'fill', tone: 'text-status-found-subtle-foreground' },
