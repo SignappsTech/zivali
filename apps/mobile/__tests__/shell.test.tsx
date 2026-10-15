@@ -47,6 +47,10 @@ jest.mock('@zivali/api/auth', () => ({ useSession: () => mockSession }));
 const mockSignOutAndWipe = jest.fn();
 jest.mock('@/lib/offline/wipe', () => ({ signOutAndWipe: (options: unknown) => mockSignOutAndWipe(options) }));
 
+// The sign-out deletes the push token first (C10).
+const mockUnregisterPush = jest.fn();
+jest.mock('@/lib/push', () => ({ unregisterPush: () => mockUnregisterPush() }));
+
 const mockSignOutProviders = jest.fn();
 jest.mock('@/lib/auth', () => ({
 	...jest.requireActual('@/lib/auth'),
@@ -65,6 +69,7 @@ const routes = {
 	'settings/consent': ConsentSettings,
 	'settings/language': LanguageSettings,
 	'settings/[section]': SettingsPlaceholder,
+	'settings/notifications': () => null,
 	'settings/payments': () => null,
 	// Stand-ins for the flow and auth screens that later stories add.
 	'report/lost': () => null,
@@ -172,13 +177,13 @@ describe('signed in', () => {
 		await fireEvent.press(screen.getByRole('tab', { name: sl.nav.tab_profile }));
 
 		expect(screen.getByRole('heading', { name: sl.profile.title })).toBeOnTheScreen();
-		for (const [name, path] of [
-			[sl.profile.row_alerts, '/settings/alerts'],
-			[sl.alerts.channels_title, '/settings/notifications'],
-		]) {
+		for (const [name, path, placeholder] of [
+			[sl.profile.row_alerts, '/settings/alerts', true],
+			[sl.alerts.channels_title, '/settings/notifications', false],
+		] as const) {
 			await fireEvent.press(screen.getByRole('button', { name }));
 			expect(result.getPathname()).toBe(path);
-			expect(screen.getByText(sl.common.empty_title)).toBeOnTheScreen();
+			if (placeholder) expect(screen.getByText(sl.common.empty_title)).toBeOnTheScreen();
 			// The settings stack sits above the tabs, so the bottom navigation is gone until back.
 			expect(screen.queryByRole('tab')).toBeNull();
 			await act(() => router.back());
@@ -219,8 +224,13 @@ describe('signed in', () => {
 		const buttons = screen.getAllByRole('button', { name: sl.profile.sign_out_confirm });
 		await fireEvent.press(buttons[buttons.length - 1]);
 
-		expect(mockSignOutAndWipe).toHaveBeenCalledWith(expect.objectContaining({ removeManageLinks: true }));
+		expect(mockSignOutAndWipe).toHaveBeenCalledWith(
+			expect.objectContaining({ removeManageLinks: true, beforeSignOut: expect.any(Function) })
+		);
 		expect(mockSignOutProviders).toHaveBeenCalled();
+		// The push token is deleted before the session ends (C10).
+		await mockSignOutAndWipe.mock.calls[0][0].beforeSignOut();
+		expect(mockUnregisterPush).toHaveBeenCalled();
 	});
 
 	test('unsent reports: sign-out first offers Send now, Delete or Cancel; Cancel keeps the session', async () => {

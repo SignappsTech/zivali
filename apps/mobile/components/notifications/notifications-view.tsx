@@ -21,6 +21,7 @@ import { useErrorText } from '@/components/auth/parts';
 import { PermissionNote } from '@/components/shell/permission-primer';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
+import { useFocusRing } from '@/components/ui/focus-ring';
 import { Icon } from '@/components/ui/icon';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from '@/components/ui/sonner';
@@ -75,6 +76,7 @@ function NotificationRow({ row, group, onOpen }: { row: InboxRow; group: InboxGr
 	const tn = t as unknown as Translate;
 	const locale = useLocale() as 'sl' | 'en';
 	const reduceMotion = useReducedMotion();
+	const focus = useFocusRing();
 	const { notification: n, unread } = row;
 	const values = notificationValues(n, locale);
 	const title = tn(`${n.type}.title`, values);
@@ -87,6 +89,9 @@ function NotificationRow({ row, group, onOpen }: { row: InboxRow; group: InboxGr
 			aria-label={[unread ? t('row_unread_a11y', { title }) : title, body, time].join(', ')}
 			disabled={!notificationTarget(n)}
 			onPress={onOpen}
+			onFocus={focus.onFocus}
+			onBlur={focus.onBlur}
+			style={focus.ringStyle}
 			className={cn(
 				'flex-row items-start gap-3.5 rounded-row px-5 py-2 active:bg-accent',
 				!reduceMotion && 'active:scale-[0.98]'
