@@ -16,6 +16,16 @@ const schema = z
 		APP_VERSION: z.string().default('dev'),
 		// Origin the API presigns photo PUTs with (C5): the CSP connect-src opens exactly this.
 		R2_UPLOAD_ORIGIN: z.url(),
+		// Universal / App Links (TASK-12.3): a platform's entry is left out of its .well-known file while unset (Q-007).
+		APPLE_TEAM_ID: z
+			.string()
+			.regex(/^[A-Z0-9]{10}$/)
+			.optional(),
+		// Comma-separated SHA-256 fingerprints of the signing certificates (EAS release keystore, Play app signing).
+		ANDROID_CERT_SHA256: z
+			.string()
+			.regex(/^[0-9A-F]{2}(:[0-9A-F]{2}){31}(\s*,\s*[0-9A-F]{2}(:[0-9A-F]{2}){31})*$/i)
+			.optional(),
 	})
 	.refine(
 		(v) => {
@@ -66,6 +76,8 @@ const source = {
 	NODE_ENV: typeof window === 'undefined' ? process.env.NODE_ENV : undefined,
 	APP_VERSION: process.env.APP_VERSION,
 	R2_UPLOAD_ORIGIN: process.env.R2_UPLOAD_ORIGIN,
+	APPLE_TEAM_ID: process.env.APPLE_TEAM_ID,
+	ANDROID_CERT_SHA256: process.env.ANDROID_CERT_SHA256,
 };
 
 // `next build` loads route modules without reading them (every page renders per request for the CSP nonce), so a
