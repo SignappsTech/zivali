@@ -3,9 +3,18 @@ import { describe, expect, it, vi } from 'vitest';
 import { getViewer, requireViewer } from './viewer';
 
 const auth = vi.hoisted(() => ({ token: undefined as string | undefined }));
+// Stands in for the signature check of getClaims(): only tokens signed with 'good' verify.
 vi.mock('@/lib/supabase/server', () => ({
 	createClient: async () => ({
-		auth: { getSession: async () => ({ data: { session: auth.token ? { access_token: auth.token } : null } }) },
+		auth: {
+			getSession: async () => ({ data: { session: auth.token ? { access_token: auth.token } : null } }),
+			getClaims: async () => {
+				const [, payload, signature] = auth.token?.split('.') ?? [];
+				return signature === 'good'
+					? { data: { claims: JSON.parse(Buffer.from(payload!, 'base64url').toString()) }, error: null }
+					: { data: null, error: new Error('invalid JWT') };
+			},
+		},
 	}),
 }));
 vi.mock('@/i18n/navigation', () => ({
@@ -14,8 +23,8 @@ vi.mock('@/i18n/navigation', () => ({
 	},
 }));
 
-const jwt = (claims: object) =>
-	['e30', Buffer.from(JSON.stringify(claims)).toString('base64url'), 'signature'].join('.');
+const jwt = (claims: object, signature = 'good') =>
+	['e30', Buffer.from(JSON.stringify(claims)).toString('base64url'), signature].join('.');
 
 describe('getViewer', () => {
 	it.each([
@@ -44,5 +53,16 @@ describe('requireViewer', () => {
 		await expect(requireViewer('en')).rejects.toThrow('NEXT_REDIRECT en /sign-in');
 		auth.token = jwt({ email: 'ana@example.si' });
 		await expect(requireViewer('en')).resolves.toEqual({ initials: 'A' });
+	});
+
+	it('rejects a forged cookie whose payload looks valid but whose signature does not verify', async () => {
+		auth.token = jwt({ email: 'ana@example.si' }, 'forged');
+		await expect(requireViewer('en')).rejects.toThrow('NEXT_REDIRECT en /sign-in');
+	});
+
+	it('lets an anonymous session through only for allowAnonymous (C15 /m report managers)', async () => {
+		auth.token = jwt({ is_anonymous: true });
+		await expect(requireViewer('sl')).rejects.toThrow('NEXT_REDIRECT sl /sign-in');
+		await expect(requireViewer('sl', { allowAnonymous: true })).resolves.toEqual({ initials: '' });
 	});
 });

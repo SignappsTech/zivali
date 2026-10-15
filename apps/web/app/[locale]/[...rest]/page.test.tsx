@@ -33,6 +33,11 @@ describe('CatchAll', () => {
 		['sl', ['map'], 'Zemljevid'],
 		['en', ['report', 'lost'], 'Lost pet'],
 		['sl', ['accessibility'], 'Dostopnost'],
+		// The signed-in header links.
+		['en', ['inbox'], 'Messages and notifications'],
+		['en', ['account'], 'Profile'],
+		['en', ['account', 'alerts'], 'Nearby alerts'],
+		['sl', ['account', 'payments'], 'Plačila'],
 	] as const)('a pending %s page %j gets a placeholder titled %s, not indexed', async (locale, rest, title) => {
 		render(
 			<NextIntlClientProvider locale={locale} messages={catalogues[locale]}>

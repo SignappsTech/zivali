@@ -114,6 +114,7 @@ export function HeaderPopover({ id, ...props }: ComponentProps<'div'> & { id: st
 		<div
 			{...props}
 			id={id}
+			role="group"
 			popover="auto"
 			onBeforeToggle={(event) => {
 				const rect = document.querySelector(`[popovertarget="${id}"]`)?.getBoundingClientRect();

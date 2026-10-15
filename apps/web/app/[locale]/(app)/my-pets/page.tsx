@@ -3,6 +3,7 @@ import type { Locale } from 'next-intl';
 import { getTranslations } from 'next-intl/server';
 
 import { ContentPage, Placeholder } from '@/components/shell/page';
+import { requireViewer } from '@/lib/viewer';
 
 export async function generateMetadata({ params }: PageProps<'/[locale]/my-pets'>): Promise<Metadata> {
 	const t = await getTranslations({ locale: (await params).locale as Locale, namespace: 'nav' });
@@ -11,7 +12,9 @@ export async function generateMetadata({ params }: PageProps<'/[locale]/my-pets'
 
 /** Target of the signed-in header link "Moje živali in prijave". TODO(TASK-16.6): the My pets list. */
 export default async function MyPetsPage({ params }: PageProps<'/[locale]/my-pets'>) {
-	const t = await getTranslations({ locale: (await params).locale as Locale, namespace: 'nav' });
+	const { locale } = await params;
+	await requireViewer(locale);
+	const t = await getTranslations({ locale: locale as Locale, namespace: 'nav' });
 
 	return (
 		<ContentPage>

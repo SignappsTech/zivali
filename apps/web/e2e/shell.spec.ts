@@ -142,6 +142,18 @@ test('every header and footer link answers (placeholders until their stories shi
 	for (const href of hrefs) expect(`${href} ${(await request.get(href)).status()}`).toBe(`${href} 200`);
 });
 
+test('the signed-in header links answer too (placeholders until their stories ship)', async ({ request }) => {
+	for (const href of [
+		'/nabiralnik',
+		'/racun',
+		'/racun/opozorila',
+		'/racun/placila',
+		'/en/inbox',
+		'/en/account/alerts',
+	])
+		expect(`${href} ${(await request.get(href)).status()}`).toBe(`${href} 200`);
+});
+
 test('an unknown path gets the calm 404 inside the shell', async ({ page }) => {
 	const response = await page.goto('/no/such/page');
 
