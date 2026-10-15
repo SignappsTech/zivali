@@ -1,11 +1,11 @@
 ---
 id: TASK-13.1
 title: 'Design: Consent banner and preferences (P17)'
-status: To Do
+status: In Progress
 assignee:
   - '@ui-designer'
 created_date: '2026-10-14 21:50'
-updated_date: '2026-10-14 21:51'
+updated_date: '2026-10-15 01:49'
 labels:
   - design
   - 'est:S'
@@ -31,6 +31,7 @@ EU rules require equal weight and an easy change of choice, and the banner must 
 ## Packet
 Unblocks on: P1 web shell and P2 mobile shell mockups merged (header, footer, tab bar and sheet patterns)
 Branch: design/P17-consent
+Branch: agent/TASK-13.1-consent
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Acceptance Criteria
