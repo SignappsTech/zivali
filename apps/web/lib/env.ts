@@ -31,6 +31,8 @@ const schema = z
 			.string()
 			.regex(/^[0-9A-F]{2}(:[0-9A-F]{2}){31}(\s*,\s*[0-9A-F]{2}(:[0-9A-F]{2}){31})*$/i)
 			.optional(),
+		// Signs the /dev/checkout mock events (C13): the API's MOCK_WEBHOOK_SECRET, which also defaults to this value.
+		MOCK_WEBHOOK_SECRET: z.string().default('mock-webhook-secret'),
 	})
 	.refine(
 		(v) => {
@@ -86,6 +88,7 @@ const source = {
 	R2_UPLOAD_ORIGIN: process.env.R2_UPLOAD_ORIGIN,
 	APPLE_TEAM_ID: process.env.APPLE_TEAM_ID,
 	ANDROID_CERT_SHA256: process.env.ANDROID_CERT_SHA256,
+	MOCK_WEBHOOK_SECRET: process.env.MOCK_WEBHOOK_SECRET,
 };
 
 // `next build` loads route modules without reading them (every page renders per request for the CSP nonce), so a
