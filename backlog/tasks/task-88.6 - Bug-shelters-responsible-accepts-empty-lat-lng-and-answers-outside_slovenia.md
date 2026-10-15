@@ -29,6 +29,6 @@ Branch: agent/TASK-88.4-tests (QA's branch with apps/api/test/routes/shelters.qa
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 ResponsibleShelterQuery in @zivali/validation rejects empty strings for lat and lng (400 VALIDATION); other coerced-number queries checked for the same pattern
-- [ ] #2 The it.fails in shelters.qa.test.ts becomes a passing it; the QA test file merges with the fix
+- [x] #1 ResponsibleShelterQuery in @zivali/validation rejects empty strings for lat and lng (400 VALIDATION); other coerced-number queries checked for the same pattern
+- [x] #2 The it.fails in shelters.qa.test.ts becomes a passing it; the QA test file merges with the fix
 <!-- AC:END -->
