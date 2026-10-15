@@ -1,12 +1,12 @@
 // C9 chat: conversations, messages, blocks; Realtime Broadcast payloads are the Message DTO.
 import type { IsoDateTime, LatLng, Page, Uuid } from './common.ts';
-import type { AliasKey, ConversationStatus, MessageKind, ReportType, SenderAliasKey, Species } from './enums.ts';
+import type { AliasKey, ConversationStatus, MessageKind, ReportType, Species } from './enums.ts';
 
 export type CreateConversationInput = { about_report_code: string; match_id?: Uuid };
 export type Message = {
 	id: Uuid;
 	conversation_id: Uuid;
-	sender_alias_key: SenderAliasKey;
+	sender_alias_key: AliasKey;
 	sender_display_name?: string;
 	kind: MessageKind;
 	body: string;
@@ -22,6 +22,7 @@ export type BlockInput = { participant_id: Uuid };
 export type ConversationSummary = {
 	id: Uuid;
 	about_report: { short_code: string; type: ReportType; species: Species; thumb_url: string | null };
+	my_alias_key: AliasKey;
 	other_alias_key: AliasKey;
 	other_display_name?: string;
 	last_message_preview: string | null;

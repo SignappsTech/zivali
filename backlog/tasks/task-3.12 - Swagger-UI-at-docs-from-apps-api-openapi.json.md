@@ -1,10 +1,11 @@
 ---
 id: TASK-3.12
 title: Swagger UI at /docs from apps/api/openapi.json
-status: To Do
+status: Done
 assignee:
   - '@backend-dev'
 created_date: '2026-10-15 01:35'
+updated_date: '2026-10-15 11:22'
 labels:
   - be
   - 'est:S'

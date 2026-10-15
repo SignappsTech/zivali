@@ -8,8 +8,11 @@ assignee:
   - '@frontend-dev'
 created_date: '2026-10-15 10:24'
 labels:
-  - 'bug fe est:S'
-dependencies: []
+  - bug
+  - fe
+  - 'est:S'
+dependencies:
+  - TASK-11.2
 parent_task_id: TASK-90
 ordinal: 317000
 ---
@@ -23,4 +26,6 @@ Steps: pnpm quality on main with the e2e mock API. Expected: resource-summary.sc
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
 - [ ] #1 pnpm quality Lighthouse passes for /zavetisca (script transfer size <= 256000 B)
+- [ ] #2 Mobile LCP ≤ 2.5 s and performance ≥ 0.9 in pnpm quality on /, /en, /zavetisca and a shelter page (moved from TASK-11.2 AC#8). First try font subsetting (latin + latin-ext only), font-display and preloading only the LCP weight; dropping the Bricolage opsz axis (−48 KB) needs design-lead sign-off via a CHANGE row. Lighthouse settings in lighthouserc may be adjusted only if documented (e.g. median of 3 runs), never by loosening the budgets.
+- [ ] #3 Script transfer ≤ 256 KB on every public page, not only /zavetisca
 <!-- AC:END -->

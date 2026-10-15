@@ -3,10 +3,11 @@ id: TASK-9.6
 title: >-
   API: rename SUPABASE_SERVICE_ROLE_KEY to SUPABASE_SECRET_KEY; raise api vitest
   default timeout
-status: To Do
+status: Done
 assignee:
   - '@backend-dev'
 created_date: '2026-10-15 09:39'
+updated_date: '2026-10-15 12:36'
 labels:
   - be
   - 'est:XS'

@@ -1,5 +1,6 @@
-// Geo reference (C6, ADR-006): GURS statistical regions and municipalities, loaded by seeder 01-geo.
-// Static reference data, no personal data. geom is read only through TypedSQL (prisma/sql/geoLookup.sql).
+// Geo reference (C6, ADR-006): GURS statistical regions and municipalities, loaded by seeder 01-geo; geocoder places
+// and house numbers (C6 §Geocoder, ADR-007), loaded by seeder 02-geo-places.
+// Static reference data, no personal data. Geography columns are read only through $queryRaw in lib/geo.ts.
 
 model regions {
   id             Int                                                    @id @db.SmallInt
@@ -14,14 +15,50 @@ model regions {
 }
 
 model municipalities {
-  id        Int                                                    @id @db.SmallInt
-  slug      String                                                 @unique
-  name_sl   String
-  name_en   String
-  region_id Int                                                    @db.SmallInt
-  region    regions                                                @relation(fields: [region_id], references: [id])
-  geom      Unsupported("extensions.geography(MultiPolygon,4326)")
+  id         Int                                                    @id @db.SmallInt
+  slug       String                                                 @unique
+  name_sl    String
+  name_en    String
+  region_id  Int                                                    @db.SmallInt
+  region     regions                                                @relation(fields: [region_id], references: [id])
+  geom       Unsupported("extensions.geography(MultiPolygon,4326)")
+  geo_places geo_places[]
 
   @@index([geom], type: Gist)
+  @@schema("app")
+}
+
+/// Geocoder places: GURS EID of a settlement (kind 1), city district (2) or street (3). search and search_alt are
+/// normalisePlace(name) and normalisePlace(alt_name), matched by prefix and trigram (pg_trgm in schema extensions).
+/// The migration writes the opclass as extensions.gin_trgm_ops; introspection reads it back unqualified, as here.
+model geo_places {
+  id              BigInt                                                  @id
+  kind            Int                                                     @db.SmallInt
+  name            String
+  alt_name        String?
+  search          String
+  search_alt      String?
+  municipality_id Int                                                     @db.SmallInt
+  municipality    municipalities                                          @relation(fields: [municipality_id], references: [id])
+  settlement_id   BigInt?
+  weight          Int                                                     @default(0)
+  point           Unsupported("extensions.geography(Point,4326)")
+  geom            Unsupported("extensions.geography(MultiPolygon,4326)")?
+
+  @@index([search(ops: raw("gin_trgm_ops"))], type: Gin)
+  @@index([search_alt(ops: raw("gin_trgm_ops"))], type: Gin)
+  @@index([geom], type: Gist)
+  @@schema("app")
+}
+
+/// House numbers: place_id is the street, or the settlement for villages without streets. No spatial index: reverse
+/// lookups never return house numbers.
+model geo_addresses {
+  place_id BigInt
+  number   Int                                             @db.SmallInt
+  suffix   String                                          @default("")
+  point    Unsupported("extensions.geography(Point,4326)")
+
+  @@id([place_id, number, suffix])
   @@schema("app")
 }

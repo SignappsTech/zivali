@@ -1,0 +1,16 @@
+{
+	"camera_title": "A photo helps people recognise the animal",
+	"camera_body": "We only use the camera when you take a photo of the animal. You can also choose a photo from your gallery.",
+	"camera_allow": "Allow camera",
+	"camera_denied": "Camera access is off. Choose a photo from your gallery or add one later.",
+	"location_title": "Where did it happen?",
+	"location_body": "We use your location to mark the place faster. We only show an approximate area in public.",
+	"location_allow": "Allow location",
+	"location_denied": "Location access is off. Search for the place or mark it on the map.",
+	"notifications_title": "Shall we tell you when something happens?",
+	"notifications_body": "We let you know about possible matches, new messages and lost animals nearby. You choose what you get in settings.",
+	"notifications_allow": "Allow notifications",
+	"notifications_denied": "Phone notifications are off. You will find everything in your inbox and email.",
+	"open_settings": "Open phone settings",
+	"not_now": "Not now"
+}

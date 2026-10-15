@@ -1,4 +1,4 @@
-// rateLimit (C1): Postgres fixed window, HMAC-hashed IP and device keys, 429 with Retry-After, app_config override.
+// rateLimit (C1): Postgres fixed window, HMAC-hashed IP (and opt-in device) keys, 429 with Retry-After, app_config override.
 import { randomUUID } from 'node:crypto';
 
 import request from 'supertest';
@@ -73,7 +73,7 @@ describe('rateLimit', () => {
 		expect((await prisma.rate_limits.findFirst({ where: { name, key: sub } }))?.count).toBe(2);
 	});
 
-	it('keys anonymous finders by device, else IP, never by their throwaway user id', async () => {
+	it('keys anonymous finders by IP, so rotating x-device-id or the throwaway user id does not evade the limit', async () => {
 		const { name, app } = limited({ key: 'user', limit: 1 });
 		const asNewAnonymous = async (device?: string) => {
 			const sub = randomUUID();
@@ -83,15 +83,12 @@ describe('rateLimit', () => {
 				.set('Authorization', `Bearer ${await signTestToken({ sub, is_anonymous: true })}`);
 			return (device ? req.set('x-device-id', device) : req).then((res) => res.status);
 		};
-		const device = randomUUID();
-		expect(await asNewAnonymous(device)).toBe(200);
-		expect(await asNewAnonymous(device)).toBe(429);
 		expect(await asNewAnonymous(randomUUID())).toBe(200);
-		expect(await asNewAnonymous()).toBe(200);
+		expect(await asNewAnonymous(randomUUID())).toBe(429);
 		expect(await asNewAnonymous()).toBe(429);
 		const rows = await prisma.rate_limits.findMany({ where: { name } });
-		expect(rows).toHaveLength(3);
-		for (const row of rows) expect(users).not.toContain(row.key);
+		expect(rows).toHaveLength(1);
+		expect(users).not.toContain(rows[0]!.key);
 	});
 
 	it('takes limit and window from app_config rate.<name> when set', async () => {

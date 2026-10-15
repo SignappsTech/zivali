@@ -2,7 +2,8 @@
 id: TASK-100
 title: 'Bug: web unit tests flaky on first run under load'
 status: Done
-assignee: []
+assignee:
+  - '@frontend-dev'
 created_date: '2026-10-15 08:20'
 updated_date: '2026-10-15 08:51'
 labels:
