@@ -549,13 +549,22 @@
 						},
 						"required": ["short_code", "type", "species", "thumb_url"]
 					},
+					"my_alias_key": { "$ref": "#/components/schemas/AliasKey" },
 					"other_alias_key": { "$ref": "#/components/schemas/AliasKey" },
 					"other_display_name": { "type": "string" },
 					"last_message_preview": { "type": ["string", "null"] },
 					"unread": { "type": "integer", "minimum": 0 },
 					"status": { "$ref": "#/components/schemas/ConversationStatus" }
 				},
-				"required": ["id", "about_report", "other_alias_key", "last_message_preview", "unread", "status"]
+				"required": [
+					"id",
+					"about_report",
+					"my_alias_key",
+					"other_alias_key",
+					"last_message_preview",
+					"unread",
+					"status"
+				]
 			},
 			"CountValue": {
 				"anyOf": [
@@ -915,7 +924,7 @@
 				"properties": {
 					"id": { "type": "string", "format": "uuid" },
 					"conversation_id": { "type": "string", "format": "uuid" },
-					"sender_alias_key": { "$ref": "#/components/schemas/SenderAliasKey" },
+					"sender_alias_key": { "$ref": "#/components/schemas/AliasKey" },
 					"sender_display_name": { "type": "string" },
 					"kind": { "$ref": "#/components/schemas/MessageKind" },
 					"body": { "type": "string" },
@@ -1537,7 +1546,6 @@
 				},
 				"required": ["body"]
 			},
-			"SenderAliasKey": { "type": "string", "enum": ["you", "owner", "finder", "sighter", "contact", "shelter"] },
 			"SetPhotosInput": {
 				"type": "object",
 				"properties": {

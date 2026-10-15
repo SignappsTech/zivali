@@ -1,0 +1,74 @@
+// Chat (C9): conversations about a report, their participants, messages and blocks. Only the API reads these
+// (ADR-021); clients get messages over Realtime Broadcast (ADR-023), never from a published table.
+// Participants appear by alias or chosen display name only: no emails or phone numbers in chat rows.
+// The *_report_id columns get their foreign keys to reports in a follow-up migration once TASK-6.6 is merged.
+
+model conversations {
+  id              String                      @id @default(uuid()) @db.Uuid
+  lost_report_id  String?                     @db.Uuid
+  other_report_id String?                     @db.Uuid
+  about_report_id String                      @db.Uuid
+  // One conversation per confirmed match (confirm is idempotent, C8).
+  match_id        String?                     @unique @db.Uuid
+  // 'active' | 'read_only' (check constraint in the migration)
+  status          String                      @default("active")
+  created_at      DateTime                    @default(now()) @db.Timestamptz(6)
+  closed_at       DateTime?                   @db.Timestamptz(6)
+  match           matches?                    @relation(fields: [match_id], references: [id], onDelete: SetNull)
+  participants    conversation_participants[]
+  messages        messages[]
+
+  @@index([about_report_id])
+  @@schema("app")
+}
+
+model conversation_participants {
+  conversation_id String        @db.Uuid
+  user_id         String        @db.Uuid
+  // 'owner' | 'finder' | 'contact' (check constraint in the migration)
+  role            String
+  // Chosen display name for this conversation; null = the role alias (chat.alias_*).
+  alias           String?
+  last_read_at    DateTime?     @db.Timestamptz(6)
+  muted           Boolean       @default(false)
+  conversation    conversations @relation(fields: [conversation_id], references: [id], onDelete: Cascade)
+  user            profiles      @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@id([conversation_id, user_id])
+  @@index([user_id])
+  @@schema("app")
+}
+
+// Read oldest-first by (created_at, id) with exclusive after/before cursors (C9).
+model messages {
+  id              String        @id @default(uuid()) @db.Uuid
+  conversation_id String        @db.Uuid
+  // null for kind 'system'
+  sender_id       String?       @db.Uuid
+  // 'text' | 'location' | 'system' (check constraint in the migration)
+  kind            String
+  // 1-2000 characters (check constraint in the migration)
+  body            String
+  // { lat, lng }: an explicit exact-point share by a manager of the related report (R-004.3)
+  location        Json?
+  has_link        Boolean       @default(false)
+  created_at      DateTime      @default(now()) @db.Timestamptz(6)
+  conversation    conversations @relation(fields: [conversation_id], references: [id], onDelete: Cascade)
+  sender          profiles?     @relation(fields: [sender_id], references: [id], onDelete: Cascade)
+
+  @@index([conversation_id, created_at, id])
+  @@index([sender_id])
+  @@schema("app")
+}
+
+model blocks {
+  blocker_id String   @db.Uuid
+  blocked_id String   @db.Uuid
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+  blocker    profiles @relation("blocker", fields: [blocker_id], references: [id], onDelete: Cascade)
+  blocked    profiles @relation("blocked", fields: [blocked_id], references: [id], onDelete: Cascade)
+
+  @@id([blocker_id, blocked_id])
+  @@index([blocked_id])
+  @@schema("app")
+}
