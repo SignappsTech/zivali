@@ -28,3 +28,16 @@ One expo-sqlite database, `zivali.db` (contract C17, ADR-019): `getDb()` from `l
 ## Styling
 
 NativeWind 4 with Tailwind 3.4: `tailwind.config.js` uses the `@zivali/tokens/tailwind-preset`, `global.css` imports the token variables (`native.css`). React Native Reusables is set up (`components.json`, `lib/utils.ts`, `PortalHost` in `app/_layout.tsx`); add components with `npx @react-native-reusables/cli add <name>` and edit them to the design system. Light and dark follow the OS.
+
+## UI kit
+
+`components/ui` has the same components, names and props as the web kit (`apps/web/components/ui`), on `@rn-primitives/*`, styled to `docs/design/system.md` §10. Mobile differences:
+
+- Strings inside `Button`, `Badge` and `TabsTrigger` become the label `Text`; use `Text` (`components/ui/text`) for other text, it caps OS scaling at 200 %.
+- Icons: `<Icon as={XIcon} />` (`components/ui/icon`) takes its parent's text colour; import Phosphor icons by path, `phosphor-react-native/src/icons/X`.
+- `Checkbox`, `Switch` and `RadioGroupItem` take a `label`, which makes the whole row the target (the web `label` row).
+- `Select` opens a bottom sheet of choice rows; `SelectContent` and `SheetContent` need a `closeLabel` for the grabber close button.
+- `toast` comes from `components/ui/sonner` (not `sonner-native`), so every toast gets a named close button.
+- `Sheet`, `Select` and `Toaster` need `GestureHandlerRootView`, `BottomSheetModalProvider` and one `<Toaster closeLabel>` above them; the dev gallery mounts them itself until the shell (TASK-12.2) puts them in `app/_layout.tsx`.
+
+Gallery: `/dev/kit` (redirects to `/` when `EXPO_PUBLIC_APP_ENV=production`). `react-native-svg` and `react-native-gesture-handler` are native modules, so install a new development build after pulling them.
