@@ -41,4 +41,6 @@ Branch: agent/task-87.2-geofence-ui
 - [ ] #1 Settings → Alerts has a "Nearby reminders" switch; turning it on shows a plain-language primer (what is monitored, nothing uploaded, how to turn off) before the OS asks for Always location; declining leaves everything else working.
 - [ ] #2 Turning it off removes all geofences at once; a permission downgraded by the OS disables the feature with an explanation.
 - [ ] #3 The daily cap and quiet hours are shown; screen-reader labels verified on Android.
+- [ ] #4 From the TASK-87.1 review: the geofence engine (apps/mobile/lib/offline/geofence.ts alertNear) never alerts users about their own reports. Skip report ids with a local manage token (outbox listManageTokenIds) or that appear in the user's own reports, with a test.
+- [ ] #5 From the TASK-87.1 review: alertNear claims the geofence_events row before scheduleNotificationAsync. If scheduling throws, delete the claim, so that pet and area can still alert and the daily cap isn't spent. Test it.
 <!-- AC:END -->

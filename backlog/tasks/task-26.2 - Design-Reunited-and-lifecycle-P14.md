@@ -15,7 +15,6 @@ dependencies:
   - TASK-12.1
   - TASK-33.1
   - TASK-36.4
-  - TASK-26.1
 references:
   - docs/design/system.md
   - docs/design/pages/P14-reunited.md
@@ -34,6 +33,8 @@ The reunited screen is the warmest moment in the product and holds two optional 
 ## Packet
 Unblocks on: P1 web shell and P2 mobile shell mockups merged (header, footer, tab bar and sheet patterns); P15 support block and P21 ad slot mockups merged; assets/reunited-celebration.png generated
 Branch: design/P14-reunited
+
+Unblocked from the image task(s) TASK-26.1 (2026-10-16): the Codex CLI is not installed yet, so use a labelled placeholder of the final size and aspect ratio where the illustration goes; the image task swaps the real art in later.
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Acceptance Criteria
