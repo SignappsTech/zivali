@@ -1,11 +1,11 @@
 ---
 id: TASK-25.2
 title: 'Abuse reports API: report, weighting, auto-hide, staff lists'
-status: To Do
+status: Done
 assignee:
   - '@backend-dev'
 created_date: '2026-10-14 22:13'
-updated_date: '2026-10-14 23:38'
+updated_date: '2026-10-15 21:28'
 labels:
   - be
   - 'est:S'

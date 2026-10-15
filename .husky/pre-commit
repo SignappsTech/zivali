@@ -1,1 +1,4 @@
-pnpm exec lint-staged
+# --no-stash: lint-staged must not back files up in the git stash. Every worktree shares one stash list, so with
+# parallel agent commits one checkout could restore another's backup (2026-10-15: files moved between main and a
+# worktree). Commit whole files; a failed hook leaves the formatter's changes in place.
+pnpm exec lint-staged --no-stash

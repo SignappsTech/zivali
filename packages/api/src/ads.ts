@@ -2,6 +2,7 @@
 // `gen:api` emits the generated ones. `useAd` is hand-written and stays. Clicks are plain links to `ad.click_url`.
 import type {
 	Ad,
+	AdDeleteInput,
 	AdImageInput,
 	AdImageUploadResponse,
 	AdImpressionInput,
@@ -19,7 +20,7 @@ import type {
 
 import { api, type QueryError } from './rtk.ts';
 
-export const adsApi = api.enhanceEndpoints({ addTagTypes: ['AdminAd'] }).injectEndpoints({
+export const adsApi = api.enhanceEndpoints({ addTagTypes: ['AdminAd', 'AuditLog'] }).injectEndpoints({
 	endpoints: (build) => ({
 		/** `null` when nothing (not even a house ad) fits, or for ad-free users. */
 		getAdForSlot: build.query<Ad | null, AdSlotQuery & { slot: AdSlot }>({
@@ -35,24 +36,25 @@ export const adsApi = api.enhanceEndpoints({ addTagTypes: ['AdminAd'] }).injectE
 		}),
 		createAd: build.mutation<AdminAd, AdInput>({
 			query: (body) => ({ url: '/v1/admin/ads', method: 'POST', body }),
-			invalidatesTags: ['AdminAd'],
+			invalidatesTags: ['AdminAd', 'AuditLog'],
 		}),
 		updateAd: build.mutation<AdminAd, { id: Uuid; body: AdInput }>({
 			query: ({ id, body }) => ({ url: `/v1/admin/ads/${id}`, method: 'PUT', body }),
-			invalidatesTags: ['AdminAd'],
+			invalidatesTags: ['AdminAd', 'AuditLog'],
 		}),
 		/** Presigned PUT for the ad image (C5 pattern); upload the file, then reload the ad. */
 		requestAdImageUpload: build.mutation<AdImageUploadResponse, { id: Uuid; body: AdImageInput }>({
 			query: ({ id, body }) => ({ url: `/v1/admin/ads/${id}/image`, method: 'POST', body }),
-			invalidatesTags: ['AdminAd'],
+			invalidatesTags: ['AdminAd', 'AuditLog'],
 		}),
 		setAdStatus: build.mutation<AdminAd, { id: Uuid; body: AdStatusInput }>({
 			query: ({ id, body }) => ({ url: `/v1/admin/ads/${id}/status`, method: 'POST', body }),
-			invalidatesTags: ['AdminAd'],
+			invalidatesTags: ['AdminAd', 'AuditLog'],
 		}),
-		deleteAd: build.mutation<void, { id: Uuid }>({
-			query: ({ id }) => ({ url: `/v1/admin/ads/${id}`, method: 'DELETE' }),
-			invalidatesTags: ['AdminAd'],
+		/** Soft delete; the note is required (stored in the audit entry). */
+		deleteAd: build.mutation<void, { id: Uuid; body: AdDeleteInput }>({
+			query: ({ id, body }) => ({ url: `/v1/admin/ads/${id}`, method: 'DELETE', body }),
+			invalidatesTags: ['AdminAd', 'AuditLog'],
 		}),
 		getAdStats: build.query<AdStats, AdStatsQuery & { id: Uuid }>({
 			query: ({ id, ...params }) => ({ url: `/v1/admin/ads/${id}/stats`, params }),
