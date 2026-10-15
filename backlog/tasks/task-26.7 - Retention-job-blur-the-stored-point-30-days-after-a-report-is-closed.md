@@ -33,6 +33,7 @@ Unblocks on: Reports schema and fuzz merged (TASK-6.6); Worker and jobs merged (
 Contracts: C4, C6 (in references); ADR-006
 Review: tech-lead code review (full mode); run `pnpm verify` before reporting done.
 Scope: pg-boss schedule retention.blur_location (daily) registered in the queue registry; the existing 12-month retention.purge still nulls what remains.
+Branch: agent/TASK-26.7-blur-location
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Acceptance Criteria
