@@ -39,7 +39,9 @@ The `payments` adapter refuses to initialise with keys starting `sk_live_`, `rk_
 ## Client (`@zivali/api/payments`)
 
 ```ts
-startCheckout(api, input: { purpose; amountCents; refs?; returnTo }): Promise<{ paymentId; checkoutUrl }>
+startCheckout(dispatch, input: { purpose; amountCents; refs?; returnTo; locale; returnScheme?: boolean; idempotencyKey?: string }): Promise<{ paymentId; checkoutUrl }>
+// locale: 'sl'|'en'; returnScheme: true on mobile (zivali:// URLs); idempotencyKey defaults to a generated uuid, reuse it on retry.
+// Backend sets operationIds in the OpenAPI document to the client stub names (startCheckout, getPayment, listMyPayments) so generated hooks keep them.
 // web: window.location.assign(checkoutUrl); mobile: WebBrowser.openAuthSessionAsync(checkoutUrl, 'zivali://payments/return')
 getPayment(api, id) (`GET /v1/payments/:id`) / listMyPayments(api, { cursor? }) (`GET /v1/me/payments`)
 ```
@@ -65,3 +67,9 @@ Card payments may need fiscally verified invoices (ZDavPR: payment cards count a
 // POST /v1/payments/checkout → 422
 { "error": { "code": "MIN_AMOUNT", "message": "Minimum card amount is EUR 2.00", "details": { "min_cents": 200 } } }
 ```
+
+## Change log
+
+| Version | Date | Change |
+|---|---|---|
+| 1.1 | 2026-10-15 | CH-63: startCheckout(dispatch, {…, locale, returnScheme?, idempotencyKey?}); operationIds = stub names |

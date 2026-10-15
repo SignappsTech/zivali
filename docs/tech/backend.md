@@ -61,7 +61,7 @@ A domain function never imports Express, never reads `req`/`res`, and never catc
 ## Ownership and shared files
 
 - **Prisma schema**: one file per domain in `prisma/schemas/`; a task adds models to its domain file or creates one. One migration per task (`prisma migrate dev --name <task-id>-<slug>`); never edit a merged migration. Conflicting migration timestamps on merge: re-run `prisma migrate dev` on the merged schema, never hand-merge `migration.sql`.
-- **Routes**: each feature owns `routes/<feature>.routes.ts`; `routes/index.routes.ts` gets one mount line per feature (small, sequential merges are fine).
+- **Routes**: each feature owns `routes/<feature>.routes.ts`; `routes/index.ts` gets one mount line per feature (small, sequential merges are fine).
 - **Jobs**: each queue owns `jobs/<queue>.job.ts`; the registry in `worker.ts` is created with stubs for all M2 queues by TASK-6.3.
 - **Geo**: `prisma/schemas/geo.prisma`, `prisma/sql/geoLookup.sql` and seeder `01-geo` belong to TASK-6.4; the geocoder task (TASK-15.8) adds `geo_places`, `geo_addresses`, seeder `02-geo-places` and `routes/geo.routes.ts` (C6).
 - **Report creation** belongs to TASK-29.2 (`domains/reports/reports.domain.ts` `createReport`); the anonymous guard is `domains/reports/submission-guard.ts` (stub from TASK-29.2, rules from TASK-17.1).
@@ -144,7 +144,7 @@ Branch `agent/<task-id>-<slug>` from `main`; commits `<task-id>: <what>`; never 
 - [ ] Domain functions tested against the local DB; routes tested with Supertest
 - [ ] Permission tests for every new endpoint (anonymous visitor, anonymous user, owner/manager, other user, moderator aal1 and aal2, admin aal2)
 - [ ] New models: `@@schema("app")`, RLS enabled in the migration, data-inventory entry; `pnpm --filter api test:security` green
-- [ ] `pnpm db:reset` from zero works; migration header has the task id and rollback note
+- [ ] Migrations verified from zero: agents run `prisma migrate dev` (shadow DB) and `migrate deploy` plus seed on a scratch DB (Prisma 7 refuses `migrate reset` under an AI agent without user consent); a person runs `pnpm db:reset`. Migration header has the task id and rollback note
 - [ ] `pnpm verify` passes (lint, typecheck, unit, API tests, build)
 - [ ] No PII in logs; IPs and device ids hashed; secrets only from config
 - [ ] Mocks keep everything working offline; missing credentials reported as `needs-input`, not failures
@@ -155,3 +155,4 @@ Branch `agent/<task-id>-<slug>` from `main`; commits `<task-id>: <what>`; never 
 | Version | Date | Change |
 |---|---|---|
 | 1.1 | 2026-10-15 | CH-40: repo map adds scripts/geo-places.mjs and scripts/geo-shapes.mjs |
+| 1.2 | 2026-10-15 | CH-64: DoD migration check without migrate reset; CH-65: routes/index.ts |

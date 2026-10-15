@@ -22,7 +22,8 @@ Supabase Realtime **Broadcast** on private channels; no table is published.
 - Topics: `conversation:<id>` (events `message.created`, `conversation.read`), `user:<id>` (events `notification.created`, `conversation.updated` for inbox badges).
 - The chat service broadcasts after insert in the same transaction: `select realtime.send(<payload jsonb>, 'message.created', 'conversation:' || <id>, true)` (Prisma `$executeRaw`). Payload = the `Message` DTO below, nothing more.
 - Policy (migration SQL): `create policy "members receive" on realtime.messages for select to authenticated using (app.can_join_topic(auth.uid(), realtime.topic()))`; `app.can_join_topic` is `security definer` and checks `conversation_participants` or `user:<own id>`. No insert policy: clients cannot broadcast.
-- Clients: `supabase.channel(topic, { config: { private: true } })`; on (re)subscribe they fetch `GET /v1/conversations/:id/messages?after=<last id>` so nothing is lost; offline recipients get push (C10).
+- `conversation.read` payload: `{ conversation_id, reader_id, last_read_message_id, read_at }`. `conversation.updated` payload (on `user:<id>`): `{ conversation_id, status: 'active'|'read_only', updated_at }`. Minimal by design: no body, no names; clients refetch `GET /v1/conversations` for badges and previews.
+- Clients: `supabase.channel(topic, { config: { private: true } })`; on (re)subscribe they fetch `GET /v1/conversations/:id/messages?after=<last message id>` so nothing is lost; offline recipients get push (C10).
 
 ## REST (owned by TASK-21.2)
 
@@ -30,7 +31,7 @@ Supabase Realtime **Broadcast** on private channels; no table is published.
 |---|---|---|---|---|
 | `POST /v1/conversations` | auth, verified email or anonymous manager; rate limit `contact` 10/day | `{ about_report_code, match_id? }` | `{ id }` (idempotent per report and caller; participants: caller + report managers) | `FORBIDDEN`, `UNVERIFIED_EMAIL`, `RATE_LIMITED` |
 | `GET /v1/conversations` | auth | `?cursor` | `{ items: ConversationSummary[], next_cursor }` | - |
-| `GET /v1/conversations/:id/messages` | participant | `?after=&before=&limit` | `{ items: Message[], next_cursor }` | `FORBIDDEN` |
+| `GET /v1/conversations/:id/messages` | participant | `?after=&before=&limit` | `{ items: Message[], next_cursor }`; items are ordered **oldest-first** (`created_at`, then `id`) in every mode. `after=<message id>` is an exclusive cursor moving forward (returns messages newer than that id, so catch-up after reconnect); `before=<message id>` is exclusive and pages backwards but still returns each page oldest-first; no cursor returns the latest `limit` messages. `next_cursor` is the id to pass as `after` (forward) or `before` (backward) for the next page, `null` at the end | `FORBIDDEN` |
 | `POST /v1/conversations/:id/messages` | participant, rate limit 30/min and 500/day | `{ body, kind?: 'text' | 'location', location?: { lat, lng } }` | `201 Message` (+ broadcast, + `notify.send` `chat_message` for offline participants, deduped per conversation per 5 min) | `FORBIDDEN` (not participant or blocked), `GONE` (read-only), `VALIDATION`, `RATE_LIMITED` |
 | `POST /v1/conversations/:id/read` | participant | - | `204` (+ broadcast `conversation.read`) | - |
 | `POST /v1/conversations/:id/block` | participant | `{ participant_id }` | `204` (blocks row; further messages from them refused) | - |
@@ -61,3 +62,9 @@ Aliases: conversation lists and messages return alias keys (`owner` | `finder` |
 // broadcast on conversation:c9… (event message.created)
 { "id": "…", "conversation_id": "c9…", "sender_alias_key": "finder", "kind": "text", "body": "Je pri meni, lahko pridete po 17h.", "has_link": false, "created_at": "2026-10-14T16:02:11Z" }
 ```
+
+## Change log
+
+| Version | Date | Change |
+|---|---|---|
+| 1.1 | 2026-10-15 | CH-61: message order oldest-first, after cursor exclusive forward; CH-62: conversation.read and conversation.updated payloads |

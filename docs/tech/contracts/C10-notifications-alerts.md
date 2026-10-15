@@ -55,7 +55,7 @@ Not server notifications: the mobile app raises them locally from OS geofences a
 | `DELETE /v1/push-tokens/:token` | auth | - | `204` |
 | `GET /v1/notifications/unsubscribe?token=` | none (signed one-click token) | - | HTML confirmation; turns that type's email off |
 
-Client (`@zivali/api/notifications`): `listNotifications`, `markRead`, `getPrefs`, `setPref`, `setQuietHours` (`PATCH /v1/me`), `registerPushToken`, `unregisterPushToken`, `subscribeInbox(onEvent)` (Realtime `user:<id>`).
+Client (`@zivali/api/notifications`): `listNotifications`, `markRead`, `getPrefs`, `setPref`, `setQuietHours` (`PATCH /v1/me`), `registerPushToken`, `unregisterPushToken`, `subscribeInbox(onEvent)` (Realtime `user:<id>`; events `notification.created` and `conversation.updated`, payload `{ conversation_id, status, updated_at }`, defined in C9 §Realtime; `conversation.read` is on `conversation:<id>` only, payload `{ conversation_id, reader_id, last_read_message_id, read_at }`).
 
 ## Nearby alerts (owned by TASK-23.1)
 
@@ -74,3 +74,9 @@ Client (`@zivali/api/notifications`): `listNotifications`, `markRead`, `getPrefs
 ```json
 { "id": "n1…", "type": "match_chip", "payload": { "match_id": "m1…", "lost_code": "Pq7…", "other_code": "Hk3…" }, "read_at": null, "created_at": "…" }
 ```
+
+## Change log
+
+| Version | Date | Change |
+|---|---|---|
+| 1.1 | 2026-10-15 | CH-62: conversation.updated payload referenced (defined in C9) |
