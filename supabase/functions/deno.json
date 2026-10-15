@@ -1,9 +1,0 @@
-{
-  "imports": {
-    "@zivali/validation/": "../../packages/validation/src/",
-    "zod": "npm:zod@4",
-    "@supabase/supabase-js": "npm:@supabase/supabase-js@2"
-  },
-  "nodeModulesDir": "none",
-  "exclude": ["**/*.test.ts", "node_modules"]
-}

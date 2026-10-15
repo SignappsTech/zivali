@@ -1,11 +1,11 @@
 ---
 id: TASK-3.2
 title: 'Local Supabase stack for Postgres, Auth and Realtime (no Edge Functions)'
-status: To Do
+status: In Progress
 assignee:
   - '@backend-dev'
 created_date: '2026-10-14 22:11'
-updated_date: '2026-10-14 23:35'
+updated_date: '2026-10-15 00:20'
 labels:
   - tech
   - 'est:S'
@@ -35,8 +35,8 @@ Branch: agent/task-3.2-sb
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 `supabase start` runs Postgres 17 (PostGIS and pgvector available), Auth (email confirmations, anonymous sign-ins, TOTP MFA, Turnstile off locally), Realtime with private channels and the mail catcher, with no cloud credentials; storage buckets are removed from config.toml (photos live in R2/MinIO).
-- [ ] #2 PostgREST exposes only the `public` schema (`[api] schemas = ["public"]`), and config.toml comments that app tables live in the non-exposed `app` schema (ADR-021).
-- [ ] #3 supabase/functions/, supabase/migrations/ and supabase/tests/ from the branch are removed; nothing else in the repo depends on them.
-- [ ] #4 supabase/README.md documents local endpoints, the mail catcher, port overrides for Hyper-V reserved ranges on Windows, and that Supabase holds only the database, Auth and Realtime.
+- [x] #1 `supabase start` runs Postgres 17 (PostGIS and pgvector available), Auth (email confirmations, anonymous sign-ins, TOTP MFA, Turnstile off locally), Realtime with private channels and the mail catcher, with no cloud credentials; storage buckets are removed from config.toml (photos live in R2/MinIO).
+- [x] #2 PostgREST exposes only the `public` schema (`[api] schemas = ["public"]`), and config.toml comments that app tables live in the non-exposed `app` schema (ADR-021).
+- [x] #3 supabase/functions/, supabase/migrations/ and supabase/tests/ from the branch are removed; nothing else in the repo depends on them.
+- [x] #4 supabase/README.md documents local endpoints, the mail catcher, port overrides for Hyper-V reserved ranges on Windows, and that Supabase holds only the database, Auth and Realtime.
 <!-- AC:END -->

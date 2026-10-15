@@ -10,7 +10,9 @@ enabled = true
 port = 54321
 # Schemas to expose in your API. Tables, views and stored procedures in this schema will get API
 # endpoints. `public` and `graphql_public` schemas are included by default.
-schemas = ["public", "graphql_public"]
+# ADR-021: only `public` (kept empty). App tables live in schema `app` and pg-boss in `pgboss`; neither is
+# exposed, and both are reached only by the Express API as the postgres role. Never add them here.
+schemas = ["public"]
 # Extra schemas to add to the search_path of every request.
 extra_search_path = ["public", "extensions"]
 # The maximum number of rows returns from a view, table, or stored procedure. Limits payload size
@@ -57,6 +59,7 @@ max_client_conn = 100
 # [db.vault]
 # secret_key = "env(SECRET_VALUE)"
 
+# Prisma owns the schema and migrations (apps/api/prisma, `pnpm db:migrate` / `pnpm db:reset`).
 [db.migrations]
 # If disabled, migrations will be skipped during a db push or reset.
 enabled = true
@@ -66,11 +69,11 @@ schema_paths = []
 
 [db.seed]
 # If enabled, seeds the database after migrations during a db reset.
-enabled = true
+# Off: Prisma seeds (`pnpm db:seed`); supabase/seed/geo/ holds source GeoJSON, not SQL.
+enabled = false
 # Specifies an ordered list of seed files to load during db reset.
 # Supports glob patterns relative to supabase directory: "./seeds/*.sql"
-# Each task owns one file: seed/NN-<task-id>-<slug>.sql (C1 §Seed).
-sql_paths = ["./seed/*.sql"]
+sql_paths = []
 
 [db.network_restrictions]
 # Enable management of network restrictions.
@@ -86,6 +89,8 @@ allowed_cidrs_v6 = ["::/0"]
 # [db.ssl_enforcement]
 # enabled = true
 
+# Chat and inbox use Broadcast on private channels (`{ config: { private: true } }`), authorised by the RLS
+# policy on realtime.messages (ADR-023). Postgres Changes are not used (app tables are not granted).
 [realtime]
 enabled = true
 # Bind realtime via either IPv4 or IPv6. (default: IPv4)
@@ -114,24 +119,11 @@ port = 54324
 # admin_email = "admin@email.com"
 # sender_name = "Admin"
 
+# Off: photos and media live in Cloudflare R2 (MinIO locally, docker-compose.dev.yml), ADR-014.
 [storage]
-enabled = true
+enabled = false
 # The maximum file size allowed (e.g. "5MB", "500KB").
 file_size_limit = "50MiB"
-
-# Buckets and limits from C5 (storage.objects policies come with the photo tasks).
-[storage.buckets.photos]
-public = false
-file_size_limit = "1MB"
-allowed_mime_types = ["image/jpeg"]
-
-[storage.buckets.public-photos]
-public = true
-
-[storage.buckets.ad-images]
-public = true
-file_size_limit = "300KB"
-allowed_mime_types = ["image/jpeg", "image/png", "image/webp"]
 
 # Allow connections via S3 compatible clients
 [storage.s3_protocol]
@@ -307,7 +299,7 @@ auth_token = "env(SUPABASE_AUTH_SMS_TWILIO_AUTH_TOKEN)"
 # Control how many MFA factors can be enrolled at once per user.
 max_enrolled_factors = 10
 
-# Control MFA via App Authenticator (TOTP)
+# Control MFA via App Authenticator (TOTP). Required (aal2) for moderators and admins, enforced by the API (ADR-018).
 [auth.mfa.totp]
 enroll_enabled = true
 verify_enabled = true
@@ -380,8 +372,9 @@ authorization_url_path = "/oauth/consent"
 # Allow dynamic client registration
 allow_dynamic_registration = false
 
+# Off: no Edge Functions; the API is Express in apps/api (ADR-020).
 [edge_runtime]
-enabled = true
+enabled = false
 # Supported request policies: `oneshot`, `per_worker`.
 # `per_worker` (default) — enables hot reload during local development.
 # `oneshot` — fallback mode if hot reload causes issues (e.g. in large repos or with symlinks).
@@ -394,12 +387,10 @@ deno_version = 2
 # [edge_runtime.secrets]
 # secret_key = "env(SECRET_VALUE)"
 
-# Public health probe (deploy smoke, uptime); returns no data beyond { ok, version, env }.
-[functions.health]
-verify_jwt = false
-
+# Off: its log collector (vector) needs the Docker daemon on tcp://localhost:2375 on Windows and crash-loops
+# without it; API logs come from pino (ADR-020), not Supabase.
 [analytics]
-enabled = true
+enabled = false
 port = 54327
 # Configure one of the supported backends: `postgres`, `bigquery`.
 backend = "postgres"
