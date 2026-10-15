@@ -122,6 +122,34 @@ describe('partner counts (database)', () => {
 	});
 });
 
+describe('maskStats: complementary suppression', () => {
+	const row = (region_slug: string, users: number) => ({ region_slug, users, active_reports: 0, reunions_90d: 0 });
+	const totalFor = (xs: number[], others: number[], unlocated = 3) => {
+		const regions = [...xs, ...others].map((n, i) => row(`r${i}`, n));
+		return PartnersDomain.maskStats(
+			{ users: regions.reduce((a, r) => a + r.users, unlocated), active_reports: 0, reunions_90d: 0 },
+			regions
+		).totals.users;
+	};
+
+	it('one masked region: the total is the same for every hidden value 1..4, so subtraction recovers nothing', () => {
+		for (const others of [[0], [11], [14], [26, 7]])
+			expect(new Set([1, 2, 3, 4].map((x) => totalFor([x], others))).size).toBe(1);
+	});
+
+	it('two masked regions: the total is the same for every hidden pair', () => {
+		for (const others of [[0], [11], [14], [26, 7]])
+			expect(new Set([1, 2, 3, 4].flatMap((x) => [1, 2, 3, 4].map((y) => totalFor([x, y], others)))).size).toBe(
+				1
+			);
+	});
+
+	it('the total is exact when no region is masked, and rounded to 10 when one is', () => {
+		expect(totalFor([], [20, 30])).toBe(53);
+		expect(totalFor([2], [20, 30])).toBe(60);
+	});
+});
+
 describe('computeStats and getStats', () => {
 	const raw = (users: number, active_reports: number, reunions_90d: number) => ({
 		users,
@@ -130,7 +158,7 @@ describe('computeStats and getStats', () => {
 	});
 
 	it('stores a masked snapshot (pilot from app_config) that getStats then serves; snapshots expire after 90 days', async () => {
-		vi.spyOn(PartnersDao, 'countTotals').mockResolvedValue(raw(120, 4, 0));
+		vi.spyOn(PartnersDao, 'countTotals').mockResolvedValue(raw(120, 12, 3));
 		vi.spyOn(PartnersDao, 'countByRegion').mockResolvedValue([
 			{ region_slug: 'gorenjska', ...raw(1, 5, 3) },
 			{ region_slug: 'pomurska', ...raw(0, 0, 0) },
@@ -146,7 +174,7 @@ describe('computeStats and getStats', () => {
 		expect(stats).toEqual({
 			generated_at: now.toISOString(),
 			pilot: false,
-			totals: { users: 120, active_reports: '<5', reunions_90d: 0 },
+			totals: { users: 120, active_reports: 12, reunions_90d: '<5' },
 			by_region: [
 				{ region_slug: 'gorenjska', users: '<5', active_reports: 5, reunions_90d: '<5' },
 				{ region_slug: 'pomurska', users: 0, active_reports: 0, reunions_90d: 0 },
@@ -157,6 +185,15 @@ describe('computeStats and getStats', () => {
 		expect(stored.data).toEqual(stats);
 		expect(await PartnersDomain.getStats(undefined, systemCtx())).toEqual(stats);
 		expect(await prisma.partner_stats_snapshot.findUnique({ where: { id: old.id } })).toBeNull();
+	});
+
+	it('getStats on a cold start (no snapshot) computes without writing one', async () => {
+		vi.spyOn(PartnersDao, 'latestSnapshot').mockResolvedValue(null);
+		vi.spyOn(PartnersDao, 'countTotals').mockResolvedValue(raw(10, 10, 10));
+		vi.spyOn(PartnersDao, 'countByRegion').mockResolvedValue([]);
+		const insert = vi.spyOn(PartnersDao, 'insertSnapshot');
+		expect(await PartnersDomain.getStats(undefined, systemCtx())).toMatchObject({ totals: { users: 10 } });
+		expect(insert).not.toHaveBeenCalled();
 	});
 
 	it('the hourly job stays DB-only with partners.ga_enrichment on; pilot is true by default', async () => {

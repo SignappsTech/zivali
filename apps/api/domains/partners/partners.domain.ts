@@ -24,14 +24,43 @@ export function maskCount(n: number): CountValue {
 	return n >= 1 && n <= 4 ? '<5' : n;
 }
 
-const masked = (c: RawCounts) => ({
-	users: maskCount(c.users),
-	active_reports: maskCount(c.active_reports),
-	reunions_90d: maskCount(c.reunions_90d),
-});
+const METRICS = ['users', 'active_reports', 'reunions_90d'] as const;
 
-/** The partners.stats job: counts from the database only, masked, stored as the newest snapshot. */
-export async function computeStats(_input: void, ctx: Ctx): Promise<PartnerStats> {
+/**
+ * Complementary suppression: an exact total next to a '<5' region would give the masked value by subtraction. So per
+ * metric, when any region is masked the total shown is (true total - the masked regions' counts + 3 per masked
+ * region) rounded to the nearest 10. That equals unmasked regions + unlocated rows + a constant, so it does not
+ * depend on any masked value (one masked region or several) and nothing can be derived. Otherwise it is exact.
+ */
+function maskTotal(total: number, regions: number[]): CountValue {
+	const hidden = regions.filter((n) => n >= 1 && n <= 4);
+	if (!hidden.length) return maskCount(total);
+	const sum = hidden.reduce((a, b) => a + b, 0);
+	return Math.round((total - sum + 3 * hidden.length) / 10) * 10 || '<5';
+}
+
+export function maskStats(totals: RawCounts, regions: (RawCounts & { region_slug: string })[]) {
+	return {
+		totals: Object.fromEntries(
+			METRICS.map((m) => [
+				m,
+				maskTotal(
+					totals[m],
+					regions.map((r) => r[m])
+				),
+			])
+		) as PartnerStats['totals'],
+		by_region: regions.map(({ region_slug, ...c }) => ({
+			region_slug,
+			users: maskCount(c.users),
+			active_reports: maskCount(c.active_reports),
+			reunions_90d: maskCount(c.reunions_90d),
+		})),
+	};
+}
+
+/** Counts from the database only, masked (not stored). */
+async function buildStats(ctx: Ctx): Promise<PartnerStats> {
 	// Optional GA Data API enrichment (C14) is off; PartnerStats has no GA figures yet, so the stats stay DB-only.
 	if (Flag.catch(false).parse(await configStore.get('partners.ga_enrichment')))
 		ctx.logger.warn('partners.ga_enrichment is on but not available: stats stay DB-only');
@@ -40,21 +69,25 @@ export async function computeStats(_input: void, ctx: Ctx): Promise<PartnerStats
 		PartnersDao.countTotals(since, ctx.tx),
 		PartnersDao.countByRegion(since, ctx.tx),
 	]);
-	const stats: PartnerStats = {
+	return {
 		generated_at: ctx.now.toISOString(),
 		pilot: Flag.catch(true).parse(await configStore.get('partners.pilot')),
-		totals: masked(totals),
-		by_region: regions.map(({ region_slug, ...counts }) => ({ region_slug, ...masked(counts) })),
+		...maskStats(totals, regions),
 	};
+}
+
+/** The partners.stats job: the masked counts, stored as the newest snapshot. */
+export async function computeStats(_input: void, ctx: Ctx): Promise<PartnerStats> {
+	const stats = await buildStats(ctx);
 	await PartnersDao.insertSnapshot({ generated_at: ctx.now, data: stats }, ctx.tx);
 	await PartnersDao.deleteSnapshotsBefore(new Date(ctx.now.getTime() - SNAPSHOT_RETENTION_DAYS * DAY_MS), ctx.tx);
 	return stats;
 }
 
-/** The newest snapshot; before the job's first run (fresh database) it computes one. */
+/** The newest snapshot; before the job's first run (fresh database) it computes one without storing it (no racing writes). */
 export async function getStats(_input: void, ctx: Ctx): Promise<unknown> {
 	const latest = await PartnersDao.latestSnapshot(ctx.tx);
-	return latest ? latest.data : computeStats(undefined, ctx);
+	return latest ? latest.data : buildStats(ctx);
 }
 
 const escapeHtml = (text: string) =>
@@ -126,4 +159,4 @@ export async function listLeads(input: CursorQuery, ctx: Ctx) {
 	return { items, next_cursor: rows.length > limit ? items[items.length - 1]!.id : null };
 }
 
-export default { maskCount, computeStats, getStats, createLead, listLeads };
+export default { maskCount, maskStats, computeStats, getStats, createLead, listLeads };
