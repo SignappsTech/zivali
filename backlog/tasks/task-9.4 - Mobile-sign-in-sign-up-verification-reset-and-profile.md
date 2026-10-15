@@ -1,11 +1,11 @@
 ---
 id: TASK-9.4
 title: 'Mobile sign-in, sign-up, verification, reset and profile'
-status: In Progress
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:12'
-updated_date: '2026-10-15 15:37'
+updated_date: '2026-10-15 16:02'
 labels:
   - fe
   - 'est:M'
