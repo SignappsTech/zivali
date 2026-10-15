@@ -178,24 +178,17 @@ export async function sendMessage(
 		const { conversation } = await participantOf(input.conversation_id, ctx, tx);
 		if (conversation.status === 'read_only') throw new AppError('GONE', 'This conversation is read-only');
 		const others = conversation.participants.filter((participant) => participant.user_id !== user_id);
-		if (
-			await ChatDao.isBlockedBy(
-				user_id,
-				others.map((participant) => participant.user_id),
-				tx
-			)
-		)
-			throw new AppError('FORBIDDEN', 'You cannot send messages in this conversation');
+		const blocked = await ChatDao.isBlockedBy(
+			user_id,
+			others.map((other) => other.user_id),
+			tx
+		);
+		if (blocked) throw new AppError('FORBIDDEN', 'You cannot send messages in this conversation');
 		const kind = input.kind ?? 'text';
 		if (kind === 'location') {
-			const reports = [conversation.about_report_id, conversation.lost_report_id, conversation.other_report_id];
-			if (
-				!(await ChatDao.isManager(
-					user_id,
-					reports.filter((id) => id !== null),
-					tx
-				))
-			)
+			const { about_report_id, lost_report_id, other_report_id } = conversation;
+			const reports = [about_report_id, lost_report_id, other_report_id].filter((id) => id !== null);
+			if (!(await ChatDao.isManager(user_id, reports, tx)))
 				throw new AppError('FORBIDDEN', 'Only a manager of the report can share a location');
 		}
 		const row = await ChatDao.insertMessage(
