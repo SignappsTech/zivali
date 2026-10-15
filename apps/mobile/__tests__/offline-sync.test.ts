@@ -13,6 +13,7 @@ import * as fx from '@zivali/api/__fixtures__/reports';
 import { createMockApi, mockError } from '@zivali/api/mock';
 import type { CachedReport, SyncReportsResponse } from '@zivali/api/sync';
 import { getDb } from '@/lib/db';
+import { refreshGeofences } from '@/lib/offline/geofence';
 import { wipeLocalData } from '@/lib/offline/wipe';
 import { thumbsDir } from '@/lib/db/files';
 import {
@@ -57,7 +58,11 @@ jest.mock('expo-background-task', () => ({
 }));
 jest.mock('expo-secure-store', () => ({ deleteItemAsync: jest.fn(async () => {}) }));
 jest.mock('@/lib/supabase', () => ({ clearSessionStorage: jest.fn(async () => {}), supabase: { auth: {} } }));
-jest.mock('@/lib/offline/geofence', () => ({ stopGeofencing: jest.fn(async () => {}) }));
+jest.mock('@/lib/offline/geofence', () => ({
+	cacheQuietHours: jest.fn(),
+	refreshGeofences: jest.fn(async () => 'off'),
+	stopGeofencing: jest.fn(async () => {}),
+}));
 jest.mock('@/lib/env', () => ({ env: { EXPO_PUBLIC_API_URL: 'http://api.default' } }));
 
 const WIFI = { isConnected: true, isInternetReachable: true, type: NetworkStateType.WIFI };
@@ -456,18 +461,24 @@ describe('triggers', () => {
 
 	test('foreground resume syncs only when the last sync is older than 15 minutes', async () => {
 		const client = api(fx.syncSnapshot);
+		jest.mocked(refreshGeofences).mockClear();
 		stop = startCacheSync(client);
 		await flush();
+		// Every sync re-picks the geofences (C17).
+		expect(refreshGeofences).toHaveBeenCalledTimes(1);
 
 		jest.mocked(Date.now).mockReturnValue(NOW + 10 * MINUTE);
 		onAppState('active');
 		await flush();
 		expect(syncCalls(client)).toBe(1);
+		// A fresh cache still re-picks them, which notices a revoked Always permission.
+		expect(refreshGeofences).toHaveBeenCalledTimes(2);
 
 		jest.mocked(Date.now).mockReturnValue(NOW + 16 * MINUTE);
 		onAppState('active');
 		await flush();
 		expect(syncCalls(client)).toBe(2);
+		expect(refreshGeofences).toHaveBeenCalledTimes(3);
 	});
 
 	test('regaining an unmetered connection syncs; mobile data does not', async () => {

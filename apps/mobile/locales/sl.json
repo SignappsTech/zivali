@@ -1,4 +1,6 @@
 {
 	"NSCameraUsageDescription": "Kamero uporabimo samo, ko fotografirate žival. Fotografijo lahko izberete tudi iz galerije.",
-	"NSPhotoLibraryUsageDescription": "Fotografije dostopamo samo, ko izberete sliko živali. Ostalih fotografij ne beremo."
+	"NSPhotoLibraryUsageDescription": "Fotografije dostopamo samo, ko izberete sliko živali. Ostalih fotografij ne beremo.",
+	"NSLocationWhenInUseUsageDescription": "Lokacijo uporabimo, da hitreje označite kraj in vidite prijave v bližini. Javno prikažemo le približno območje.",
+	"NSLocationAlwaysAndWhenInUseUsageDescription": "Če vklopite opomnike v bližini, telefon v ozadju preveri, ali ste blizu območja, kjer je bila nazadnje videna izgubljena žival. Vaša lokacija ne zapusti telefona."
 }
