@@ -3,6 +3,7 @@ import { Router } from 'express';
 
 import adminRoutes from './admin.routes.ts';
 import configRoutes from './config.routes.ts';
+import conversationsRoutes from './conversations.routes.ts';
 import geoRoutes from './geo.routes.ts';
 import healthRoutes from './health.routes.ts';
 import meRoutes from './me.routes.ts';
@@ -16,5 +17,6 @@ router.use('/me', meRoutes);
 router.use('/admin', adminRoutes);
 router.use('/shelters', sheltersRoutes);
 router.use('/geo', geoRoutes);
+router.use('/conversations', conversationsRoutes);
 
 export default router;
