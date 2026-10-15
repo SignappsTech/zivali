@@ -7,7 +7,7 @@ status: In Progress
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:12'
-updated_date: '2026-10-15 02:15'
+updated_date: '2026-10-15 02:47'
 labels:
   - fe
   - 'est:M'
@@ -43,8 +43,8 @@ Branch: agent/task-6.10-api-collab
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 @zivali/api/chat, notifications, alerts, abuse, payments, ads and partners implement every client function in C9, C10, C11, C13 and C14 as RTK Query endpoints and hooks over REST, Endpoints are RTK Query endpoints: generated from apps/api/openapi.json by `gen:api` (never edited by hand) once the backend task has merged them into the spec; until then `api.injectEndpoints` stubs in src/<domain>.ts follow the contract paths and types, naming the owning backend task, and are deleted when the generated ones land (@zivali/api/rtk, TASK-3.5). Also Realtime Broadcast subscriptions for conversation:<id> and user:<id> (private channels) that re-fetch on resubscribe.
-- [ ] #2 useAd(slot, ctx) returns { ad, loading, error } and never throws to the caller (errors collapse the slot).
-- [ ] #3 startCheckout returns the checkout URL; the web helper redirects and mobile opens it with expo-web-browser.
-- [ ] #4 Fixtures from the contract examples exist for each domain; unit tests cover argument and error mapping with a mock baseQuery.
+- [x] #1 @zivali/api/chat, notifications, alerts, abuse, payments, ads and partners implement every client function in C9, C10, C11, C13 and C14 as RTK Query endpoints and hooks over REST, Endpoints are RTK Query endpoints: generated from apps/api/openapi.json by `gen:api` (never edited by hand) once the backend task has merged them into the spec; until then `api.injectEndpoints` stubs in src/<domain>.ts follow the contract paths and types, naming the owning backend task, and are deleted when the generated ones land (@zivali/api/rtk, TASK-3.5). Also Realtime Broadcast subscriptions for conversation:<id> and user:<id> (private channels) that re-fetch on resubscribe.
+- [x] #2 useAd(slot, ctx) returns { ad, loading, error } and never throws to the caller (errors collapse the slot).
+- [x] #3 startCheckout returns the checkout URL; the web helper redirects and mobile opens it with expo-web-browser.
+- [x] #4 Fixtures from the contract examples exist for each domain; unit tests cover argument and error mapping with a mock baseQuery.
 <!-- AC:END -->
