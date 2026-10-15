@@ -7,7 +7,7 @@ import { deleteDatabaseAsync, openDatabaseAsync, type SQLiteDatabase } from 'exp
 import * as SecureStore from 'expo-secure-store';
 
 import { DB_NAME, getDb, migrate, migrations } from '@/lib/db';
-import { bytesUsed, draftsDir, outboxDir, thumbsDir } from '@/lib/db/files';
+import { bytesUsed, draftsDir, outboxDir, pickerCacheDir, thumbsDir } from '@/lib/db/files';
 import { stopGeofencing } from '@/lib/offline/geofence';
 import { manageTokenKey } from '@/lib/offline/outbox';
 import { signOutAndWipe, wipeLocalData } from '@/lib/offline/wipe';
@@ -207,6 +207,7 @@ async function seed() {
 		insert into outbox_photos (outbox_id, position, path, sha256) values ('o2', 0, 'outbox/o2/0.jpg', 'abc');
 	`);
 	writeFile(thumbsDir, 'r1.jpg', 3);
+	writeFile(pickerCacheDir, 'orig.jpg', 3);
 	writeFile(draftsDir, 'd1/0.jpg', 4);
 	writeFile(outboxDir, 'o2/0.jpg', 5);
 	mockKeychain.set(manageTokenKey('rep-1'), 'token');
@@ -236,6 +237,7 @@ describe('wipeLocalData', () => {
 			expect(stopGeofencing).toHaveBeenCalled();
 			expect(thumbsDir.exists).toBe(false);
 			expect(draftsDir.exists).toBe(false);
+			expect(pickerCacheDir.exists).toBe(false);
 			expect(await count('outbox')).toBe(2);
 			expect(await count('outbox_photos')).toBe(1);
 			expect(outboxDir.exists).toBe(true);

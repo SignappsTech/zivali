@@ -23,6 +23,7 @@ const config: ExpoConfig = {
 	version: '0.1.0',
 	orientation: 'portrait',
 	userInterfaceStyle: 'automatic',
+	locales: { en: './locales/en.json', sl: './locales/sl.json' },
 	ios: { bundleIdentifier: 'si.signapps.zivali', supportsTablet: false, googleServicesFile: googleServiceInfoPlist },
 	android: { package: 'si.signapps.zivali', allowBackup: false, googleServicesFile },
 	plugins: [
@@ -43,7 +44,7 @@ const config: ExpoConfig = {
 			{
 				cameraPermission:
 					'Kamero uporabimo samo, ko fotografirate žival. Fotografijo lahko izberete tudi iz galerije.',
-				photosPermission: false,
+				photosPermission: 'Fotografije dostopamo samo, ko izberete sliko živali. Ostalih fotografij ne beremo.',
 				microphonePermission: false,
 			},
 		],

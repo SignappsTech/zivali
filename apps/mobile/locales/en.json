@@ -1,0 +1,4 @@
+{
+	"NSCameraUsageDescription": "We use the camera only when you photograph an animal. You can also pick a photo from your gallery.",
+	"NSPhotoLibraryUsageDescription": "We access photos only when you pick a picture of an animal. We do not read your other photos."
+}

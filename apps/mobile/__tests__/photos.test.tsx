@@ -234,6 +234,23 @@ describe('preparePhoto', () => {
 		expect(cacheFiles().sort()).toEqual([path.basename(photo.file.uri), path.basename(photo.thumb.uri)].sort());
 	});
 
+	it('deletes the picker copy of the original from the cache, and only a file under the cache', async () => {
+		const copy = new File(Paths.cache, 'ImagePicker', 'orig.jpg');
+		fs.mkdirSync(path.dirname(copy.uri), { recursive: true });
+		fs.writeFileSync(copy.uri, 'original with GPS');
+		mockSources.set(copy.uri, { width: 1600, height: 1200 });
+		const outside = path.join(path.dirname(Paths.cache.uri), 'outside.jpg');
+		fs.writeFileSync(outside, 'x');
+		mockSources.set(outside, { width: 1600, height: 1200 });
+
+		await preparePhoto({ uri: copy.uri });
+		await preparePhoto({ uri: outside });
+
+		expect(fs.existsSync(copy.uri)).toBe(false);
+		expect(fs.existsSync(outside)).toBe(true);
+		fs.rmSync(path.dirname(copy.uri), { recursive: true });
+	});
+
 	it('lowers the quality until the photo fits in 1 MiB and keeps no rejected attempt on disk', async () => {
 		mockSources.set('big.jpg', { width: 1600, height: 1200 });
 		// 0.85 and 0.75 are over 1 MiB, 0.65 fits.
@@ -272,6 +289,8 @@ describe('preparePhoto', () => {
 		expect(readExif(android)).toEqual({ lat: -33.8688, lng: -70.6693 });
 		expect(readExif({ Make: 'Apple' })).toEqual({});
 		expect(readExif(null)).toEqual({});
+		// 0,0 is a camera without a fix.
+		expect(readExif({ GPSLatitude: 0, GPSLatitudeRef: 'N', GPSLongitude: 0, GPSLongitudeRef: 'E' })).toEqual({});
 	});
 
 	it('hands the photo to the presigned PUT with exactly its method, headers and declared length', async () => {
@@ -318,6 +337,22 @@ describe('stripJpegMetadata', () => {
 		const clean = jpegWith([JFIF]);
 		expect(stripJpegMetadata(clean)).toBe(clean);
 		expect(() => stripJpegMetadata(Uint8Array.from(ascii('%PDF-1.7')))).toThrow(PhotoFileError);
+	});
+
+	it('drops the MPF index, the trailing gain-map image and its hdrgm XMP; rejects a file with no scan or no EOI', () => {
+		const mpf = segment(0xe2, ascii('MPF MM *'));
+		const xmp = segment(0xe1, ascii('http://ns.adobe.com/xap/1.0/ <x:xmpmeta hdrgm:Version="1.0"/>'));
+		const gainMap = jpegWith([JFIF, EXIF]);
+		const ultraHdr = new Uint8Array([...jpegWith([JFIF, xmp, mpf, ICC]), ...gainMap]);
+
+		expect(stripJpegMetadata(ultraHdr)).toEqual(jpegWith([JFIF, ICC]));
+
+		const noScan = Uint8Array.from([0xff, 0xd8, ...JFIF, 0xff, 0xe1, 0xff]);
+		expect(() => stripJpegMetadata(noScan)).toThrow(PhotoFileError);
+		expect(() => stripJpegMetadata(Uint8Array.from([0xff, 0xd8, ...JFIF, 1, 2, 3, 4]))).toThrow(PhotoFileError);
+		expect(() => stripJpegMetadata(jpegWith([JFIF]).subarray(0, 30) as Uint8Array<ArrayBuffer>)).toThrow(
+			PhotoFileError
+		);
 	});
 });
 
