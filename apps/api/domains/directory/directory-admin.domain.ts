@@ -365,6 +365,17 @@ async function planAssignments(rows: Record<string, string>[], tx: Tx): Promise<
 	return plan;
 }
 
+const CSV_COLUMNS: Record<Entity, string[]> = {
+	shelter:
+		'slug,name,address,postal_code,city,lat,lng,phone,phone_display,email,website,opening_hours,registry_id,source,verified_at,species'.split(
+			','
+		),
+	municipality_shelter:
+		'municipality_slug,municipality_name,species,shelter_slug,status,suggested_shelter,source,verified_at'.split(
+			','
+		),
+};
+
 /**
  * Imports one seed-format CSV (shelters.csv or municipality_shelters.csv, told apart by the header) and returns the
  * diff. `dry_run` writes nothing; otherwise, when there are no errors, every changed row is versioned (actor_id null,
@@ -377,9 +388,11 @@ export async function importDirectory(
 	const note = input.audit_note;
 	if (!input.dry_run && !note) throw invalid('audit_note', 'Required to apply an import');
 	const rows = parseCsv(input.csv);
-	const header = rows[0] ?? {};
-	const entity: Entity | null =
-		'municipality_slug' in header ? 'municipality_shelter' : 'slug' in header ? 'shelter' : null;
+	// The header must be exactly one of the two seed formats: an extra, missing or misspelled column fails the import.
+	const columns = Object.keys(rows[0] ?? {});
+	const entity = (Object.keys(CSV_COLUMNS) as Entity[]).find(
+		(e) => columns.length === CSV_COLUMNS[e].length && CSV_COLUMNS[e].every((c) => columns.includes(c))
+	);
 	if (!entity) return { changes: [], errors: [{ row: 1, field: 'header' }] };
 	return inTx(ctx, async (tx) => {
 		const { writes, ...result } = await (entity === 'shelter' ? planShelters : planAssignments)(rows, tx);
@@ -434,6 +447,31 @@ export async function sendReminder(_input: void, ctx: Ctx) {
 		html: lines.map((line) => `<p style="margin:0 0 8px">${escapeHtml(line)}</p>`).join(''),
 	};
 	const admins = await DirectoryDao.listAdminEmails(ctx.tx);
+	// Claim the year first: the audit entry (diff.year) is written before any email, under a lock, in one transaction,
+	// so a second run (retry, double fire) finds it and sends nothing.
+	const year = ctx.now.getUTCFullYear();
+	const claim = await inTx(ctx, async (tx) => {
+		await tx.$executeRaw`select pg_advisory_xact_lock(hashtext('directory.reminder'))`;
+		const done = await tx.audit_log.findFirst({
+			where: { action: 'directory.reminder', diff: { path: ['year'], equals: year } },
+			select: { id: true },
+		});
+		if (done) return null;
+		return tx.audit_log.create({
+			data: {
+				actor_id: null,
+				action: 'directory.reminder',
+				target_type: 'directory',
+				diff: { ...counts, admins: admins.length, year, sent: 0 },
+			},
+			select: { id: true },
+		});
+	});
+	if (!claim) {
+		ctx.logger.info({ year }, 'directory.reminder: already sent this year');
+		return { ...counts, sent: 0 };
+	}
+	const db = ctx.tx ?? prisma;
 	let sent = 0;
 	for (const to of admins) {
 		try {
@@ -443,12 +481,13 @@ export async function sendReminder(_input: void, ctx: Ctx) {
 			ctx.logger.warn({ err }, 'directory.reminder: email failed');
 		}
 	}
-	if (admins.length && !sent) throw new Error('directory.reminder: no email could be sent');
-	await AuditDao.write(ctx.tx, {
-		actor_id: null,
-		action: 'directory.reminder',
-		target_type: 'directory',
-		diff: { ...counts, admins: admins.length, sent },
+	if (admins.length && !sent) {
+		await db.audit_log.delete({ where: { id: claim.id } }); // release the year so the retry can send
+		throw new Error('directory.reminder: no email could be sent');
+	}
+	await db.audit_log.update({
+		where: { id: claim.id },
+		data: { diff: { ...counts, admins: admins.length, year, sent } },
 	});
 	ctx.logger.info({ ...counts, admins: admins.length, sent }, 'directory.reminder sent');
 	return { ...counts, sent };

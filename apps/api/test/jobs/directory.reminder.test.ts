@@ -95,6 +95,23 @@ describe('directory.reminder', () => {
 		expect(mail.text).toContain('- Ljubljana, 2026-10-15');
 	});
 
+	it('is idempotent per year: a second run in the same year sends nothing, the next year sends again', async () => {
+		await prisma.audit_log.deleteMany({ where: { action: 'directory.reminder', created_at: { gte: started } } });
+		expect((await run('2028-04-01T06:00:00Z')).length).toBeGreaterThan(0);
+		expect(await run('2028-04-01T06:05:00Z')).toEqual([]);
+		expect(await run('2028-12-31T06:00:00Z')).toEqual([]);
+		expect(
+			await prisma.audit_log.count({
+				where: {
+					action: 'directory.reminder',
+					created_at: { gte: started },
+					diff: { path: ['year'], equals: 2028 },
+				},
+			})
+		).toBe(1);
+		expect((await run('2029-04-01T06:00:00Z')).length).toBeGreaterThan(0);
+	});
+
 	it('sends nothing when every entry is younger than 12 months', async () => {
 		await prisma.shelters.update({ where: { slug: STALE }, data: { active: false } });
 		expect(await run('2026-10-15T06:00:00Z')).toEqual([]);

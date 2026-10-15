@@ -496,6 +496,21 @@ describe('POST /v1/admin/directory/import', () => {
 		expect(unknown.body).toEqual({ changes: [], errors: [{ row: 1, field: 'header' }] });
 	});
 
+	it('the header must match a seed format exactly: extra, missing and misspelled columns fail', async () => {
+		const row = line(`${PREFIX}import-h`);
+		const mHeader = seedCsv('municipality_shelters').split('\n')[0]!.trim();
+		const bad = [
+			`${header},extra\n${row},x`,
+			`${header.replace(',phone,', ',')}\n${row}`,
+			`${header.replace(',phone,', ',phon,')}\n${row}`,
+			`${mHeader},extra\nkostel,Kostel,cat,macji-dol,CONFIRMED,,x,2026-10-04,y`,
+		];
+		for (const csv of bad) {
+			const res = await importAs('?dry_run=true', { csv });
+			expect(res.body).toEqual({ changes: [], errors: [{ row: 1, field: 'header' }] });
+		}
+	});
+
 	it('municipality_shelters.csv: rows collapse per municipality like the seed; diffs by shelter slug', async () => {
 		const rows = [
 			'municipality_slug,municipality_name,species,shelter_slug,status,suggested_shelter,source,verified_at',
