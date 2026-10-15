@@ -12,14 +12,15 @@ const CACHE = 'public, max-age=3600';
 const INACTIVE = 'test-inactive-shelter';
 
 beforeAll(async () => {
-	await seedGeo();
+	if (!(await prisma.municipalities.count())) await seedGeo();
 	await seedDirectory();
 	const ljubljana = await prisma.shelters.findUniqueOrThrow({ where: { slug: 'zavetisce-ljubljana' } });
 	const { id: _id, created_at: _c, updated_at: _u, ...copy } = ljubljana;
+	await prisma.shelters.deleteMany({ where: { slug: INACTIVE } }); // left over by an aborted run
 	await prisma.shelters.create({
 		data: { ...copy, opening_hours: [], slug: INACTIVE, name: 'Neaktivno', active: false },
 	});
-});
+}, 60_000);
 
 afterAll(async () => {
 	await prisma.shelters.deleteMany({ where: { slug: INACTIVE } });

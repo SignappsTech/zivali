@@ -19,10 +19,11 @@ const assignment = async (slug: string) => {
 	});
 };
 
+// The geo seed is slow (212 polygons): only when the database has none yet.
 beforeAll(async () => {
-	await seedGeo();
+	if (!(await prisma.municipalities.count())) await seedGeo();
 	await seedDirectory();
-});
+}, 60_000);
 
 describe('parseCsv', () => {
 	it('reads quoted commas, doubled quotes, line breaks and CRLF', () => {
