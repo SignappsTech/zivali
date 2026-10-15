@@ -1,10 +1,11 @@
 ---
 id: TASK-7.3
 title: Firebase Analytics on mobile with consent
-status: To Do
+status: In Progress
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:12'
+updated_date: '2026-10-15 14:04'
 labels:
   - fe
   - 'est:S'
@@ -33,7 +34,7 @@ Unblocks on: packages/analytics: typed track(), event registry, consent store, a
 Design: none (no UI of its own)
 Contracts: C12 (in references); conventions in C1
 Review: tech-lead code review (full mode); run `pnpm verify` before reporting done.
-Branch: agent/task-7.3-analytics-mob
+Branch: agent/task-7.3-firebase-mob
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Acceptance Criteria
