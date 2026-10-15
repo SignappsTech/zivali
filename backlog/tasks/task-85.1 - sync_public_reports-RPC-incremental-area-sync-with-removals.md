@@ -37,4 +37,5 @@ Branch: agent/task-85.1-sync-be
 - [ ] #1 GET /v1/sync/reports (areas ≤ 3 circles of ≤ 25 km, since, limit ≤ 1000) returns upserts with only the C4 CachedReport fields, removed_ids for reports in those areas that are no longer open and visible since `since`, server_time and has_more, through TypedSQL.
 - [ ] #2 It never returns exact locations, chip numbers, tokens or contact data, works without a session and is rate limited to 60 calls per hour per device id.
 - [ ] #3 Supertest covers the first sync (since empty), incremental changes, removal on close, reunite, expiry and hide, and the area filter; 1000 reports in an area return in under 500 ms locally.
+- [ ] #4 The has_more cursor follows C4§sync (CH from the TASK-85.2 review): server_time is an opaque cursor the client always sends back as since; with has_more it encodes (updated_at, id) of the page's last row with upserts and removals in one order; the final value overlaps in-flight transactions slightly (upserts are idempotent). Test: rows sharing one updated_at across a page boundary are all delivered.
 <!-- AC:END -->
