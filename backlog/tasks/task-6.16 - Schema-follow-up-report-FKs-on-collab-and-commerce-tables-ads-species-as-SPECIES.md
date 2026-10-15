@@ -1,10 +1,13 @@
 ---
 id: TASK-6.16
-title: 'Schema follow-up: report FKs on collab and commerce tables, ads.species as SPECIES[]'
-status: To Do
+title: >-
+  Schema follow-up: report FKs on collab and commerce tables, ads.species as
+  SPECIES[]
+status: Done
 assignee:
   - '@backend-dev'
 created_date: '2026-10-15 12:55'
+updated_date: '2026-10-15 17:52'
 labels:
   - be
   - 'est:XS'
@@ -32,3 +35,9 @@ From the TASK-6.7/6.8 review. 6.7 and 6.8 were built before the reports table (6
 - [ ] #3 The intake FOUND report from TASK-6.8 AC#3 is seeded; seeders stay safe when 00-users is skipped
 - [ ] #4 prisma migrate diff --from-migrations --to-schema is empty; migration verified on a scratch DB only
 <!-- AC:END -->
+
+## Packet
+
+Branch: agent/task-6.16-report-fks
+
+AC#2 deviation (accepted by the lead): ads.species is app."SPECIES"[] with no non-null check. House ads store NULL (= every species), so a not-null check fails the migration; the enum is the only constraint. The non-null, non-empty check belongs to alert_subscriptions.species, which stays text[] (not part of this task). The migration also adds the matches.lost_report_id / other_report_id FKs promised in the 6.7 migration header.

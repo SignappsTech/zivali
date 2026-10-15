@@ -205,6 +205,12 @@ model reports {
   managers             report_managers[]
   contact              report_contacts?
   photos               photos[]
+  matches_as_lost      matches[]                                       @relation("matches_lost")
+  matches_as_other     matches[]                                       @relation("matches_other")
+  conversations_lost   conversations[]                                 @relation("conversations_lost")
+  conversations_other  conversations[]                                 @relation("conversations_other")
+  conversations_about  conversations[]                                 @relation("conversations_about")
+  alert_deliveries     alert_deliveries[]
 
   @@index([exact_point], type: Gist)
   @@index([public_point], type: Gist)

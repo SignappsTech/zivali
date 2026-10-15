@@ -11,11 +11,12 @@ import { adapters } from '../../adapters/index.ts';
 import { mockEmail } from '../../adapters/email/mock.ts';
 import { mockPush } from '../../adapters/push/mock.ts';
 import { NotificationsDomain } from '../../domains/notifications/index.ts';
+import { ReportsDomain } from '../../domains/reports/index.ts';
 import { quietMinutesLeft } from '../../domains/notifications/notifications.domain.ts';
 import { sources, type Source } from '../../domains/notifications/sources.ts';
 import { runJob } from '../../jobs/index.ts';
 import { hashKey } from '../../lib/crypto.ts';
-import { systemCtx, type Ctx } from '../../lib/ctx.ts';
+import { systemCtx, userCtx, type Ctx } from '../../lib/ctx.ts';
 import { drain, startJobs, type Jobs } from '../../lib/jobs.ts';
 import { broadcast } from '../../lib/realtime.ts';
 import { prisma } from '../../prisma/prisma.ts';
@@ -30,8 +31,10 @@ beforeAll(() => startJobs(), 30_000);
 
 const ids: string[] = [];
 const conversations: string[] = [];
+const reportIds: string[] = [];
 afterAll(async () => {
 	await prisma.conversations.deleteMany({ where: { id: { in: conversations } } });
+	await prisma.reports.deleteMany({ where: { id: { in: reportIds } } });
 	await deleteAuthUsers(ids);
 });
 
@@ -57,6 +60,16 @@ async function recipient(
 	await prisma.profiles.create({ data: { id, locale, is_anonymous } });
 	await prisma.push_tokens.create({ data: { user_id: id, token, platform: 'ios' } });
 	return { id, email: `${id}@test.invalid`, token };
+}
+
+/** A real report (alert_deliveries and conversations reference reports, TASK-6.16), managed by the user. */
+async function report(user_id: string) {
+	const { id } = await ReportsDomain.insertReport(
+		{ type: 'lost', species: 'dog', location: { lat: 46.0569, lng: 14.5058 }, event_at: new Date() },
+		userCtx({ user_id, role: 'USER', is_anonymous: false, aal: 'aal1', email_verified: true, locale: 'sl' })
+	);
+	reportIds.push(id);
+	return id;
 }
 
 type Sent = { jobs: { queue: string; data: object; options?: object }[] };
@@ -199,7 +212,7 @@ describe('notify.send per C10 type (SL recipient, mock adapters)', () => {
 		sources[type] = source(SAMPLES[type]);
 		const expected = EXPECTED[type];
 		const t = testCtx();
-		await NotificationsDomain.deliver(job(user.id, type, { report_id: randomUUID() }), t.ctx);
+		await NotificationsDomain.deliver(job(user.id, type, { report_id: await report(user.id) }), t.ctx);
 
 		const rows = await inbox(user.id);
 		expect(rows).toHaveLength(expected.in_app ? 1 : 0);
@@ -333,7 +346,7 @@ describe('payload and text', () => {
 			clinic_url: 'https://example.test/c?id=1',
 		});
 		const t = testCtx();
-		await NotificationsDomain.deliver(job(user.id, 'nearby_lost', { report_id: randomUUID() }), t.ctx);
+		await NotificationsDomain.deliver(job(user.id, 'nearby_lost', { report_id: await report(user.id) }), t.ctx);
 		const [row] = await inbox(user.id);
 		expect(Object.keys(row!.payload as object).sort()).toEqual(
 			['area_name', 'distance_band', 'has_area', 'report_code', 'reported_at', 'species'].sort()
@@ -504,7 +517,7 @@ describe('quiet hours (Europe/Ljubljana)', () => {
 
 describe('chat_message email after 30 minutes unread', () => {
 	async function conversation(user_id: string, last_read_at: Date | null) {
-		const conv = await prisma.conversations.create({ data: { about_report_id: randomUUID() } });
+		const conv = await prisma.conversations.create({ data: { about_report_id: await report(user_id) } });
 		conversations.push(conv.id);
 		await prisma.conversation_participants.create({
 			data: { conversation_id: conv.id, user_id, role: 'owner', last_read_at },

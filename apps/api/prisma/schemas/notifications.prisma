@@ -64,9 +64,10 @@ model alert_subscriptions {
 }
 
 // At most one alert per report per user; also counts towards the daily cap.
-// report_id gets its foreign key to reports in a follow-up migration once TASK-6.6 is merged.
+// report_id references reports (ON DELETE CASCADE, TASK-6.16).
 model alert_deliveries {
   report_id String   @db.Uuid
+  report    reports  @relation(fields: [report_id], references: [id], onDelete: Cascade)
   user_id   String   @db.Uuid
   sent_at   DateTime @default(now()) @db.Timestamptz(6)
   channel   String
