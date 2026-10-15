@@ -38,7 +38,7 @@ const C = Prisma.raw('c');
 
 /**
  * Visible reports only; open and matched, plus with include_closed those closed or reunited after `closedSince`
- * (closed â‰¤ 30 days, as GET /v1/reports/:code). Expired reports are closed, so they follow the same rule.
+ * (closed ≤ 30 days, as GET /v1/reports/:code). Expired reports are closed, so they follow the same rule.
  */
 export function searchWhere(f: SearchFilters, closedSince: Date): Prisma.Sql {
 	const conds = [
