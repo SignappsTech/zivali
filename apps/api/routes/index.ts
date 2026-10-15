@@ -3,10 +3,12 @@ import { Router } from 'express';
 
 import configRoutes from './config.routes.ts';
 import healthRoutes from './health.routes.ts';
+import sheltersRoutes from './shelters.routes.ts';
 
 const router = Router();
 
 router.use('/health', healthRoutes);
 router.use('/config', configRoutes);
+router.use('/shelters', sheltersRoutes);
 
 export default router;
