@@ -1,0 +1,15 @@
+{
+	"name": "@zivali/types",
+	"version": "0.0.0",
+	"private": true,
+	"description": "Domain enums and wire types for contracts C3-C18 (TypeScript source, no runtime dependencies)",
+	"type": "module",
+	"exports": {
+		".": "./src/index.ts",
+		"./domain/*": "./src/domain/*.ts"
+	},
+	"scripts": {
+		"lint": "eslint --max-warnings=0 .",
+		"typecheck": "tsc --noEmit"
+	}
+}
