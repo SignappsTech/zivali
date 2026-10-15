@@ -47,7 +47,7 @@ const FUTURE_SKEW_MS = 10 * 60 * 1000;
 const OLD_EVENT_MS = 30 * DAY_MS;
 const PAGE = 20;
 /** Fields only lost reports carry (C4, C6); found and sighted reports with a value → VALIDATION. */
-const LOST_ONLY = ['pet_id', 'requested_radius_m', 'reward_eur', 'reward_note'] as const;
+const LOST_ONLY = ['name', 'pet_id', 'requested_radius_m', 'reward_eur', 'reward_note'] as const;
 /** Report columns the matching engine reads (C8): a PATCH that changes one re-runs match.report. */
 const MATCH_INPUTS = ['event_at', 'species', 'sex', 'size', 'colours', 'pattern', 'chip_number'] as const;
 
@@ -319,9 +319,10 @@ export async function updateReport(input: UpdateInput, ctx: Ctx): Promise<Manage
 	const actor = signedIn(ctx);
 	const { code, photo_ids, location, requested_radius_m, chip, finder_email: _finderEmail, ...fields } = input;
 	await inTransaction(ctx, async (tx) => {
-		const report = await ReportsDao.findByCode(code, actor.user_id, tx);
-		if (!report) throw new AppError('NOT_FOUND', 'Report not found');
-		if (!report.managers.length) throw new AppError('FORBIDDEN', 'Not a manager of this report');
+		const found = await ReportsDao.findWithRole(code, actor.user_id, tx);
+		if (!found) throw new AppError('NOT_FOUND', 'Report not found');
+		if (!found.role) throw new AppError('FORBIDDEN', 'Not a manager of this report');
+		const { report } = found;
 		if (report.moderation_state === 'removed')
 			throw new AppError('GONE', 'Report is no longer available', { reason: 'removed' });
 		if (report.status === 'closed' || report.status === 'reunited')

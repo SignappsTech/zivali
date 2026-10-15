@@ -120,6 +120,20 @@ export async function findByCode(short_code: string, userId: string | undefined,
 	return db.reports.findUnique({ where: { short_code }, include: readInclude(userId) });
 }
 
+/**
+ * The report's columns and the user's manager role (null when not a manager), without relation includes: Prisma runs
+ * those concurrently, which one transaction connection does not allow.
+ */
+export async function findWithRole(short_code: string, user_id: string, tx: Prisma.TransactionClient) {
+	const report = await tx.reports.findUnique({ where: { short_code } });
+	if (!report) return null;
+	const manager = await tx.report_managers.findUnique({
+		where: { report_id_user_id: { report_id: report.id, user_id } },
+		select: { role: true },
+	});
+	return { report, role: manager?.role ?? null };
+}
+
 /** Reports the user manages, newest first, keyset on (created_at, id); the cursor is the last item's id. */
 export async function listByManager(
 	input: { user_id: string; cursor?: string; take: number },
@@ -211,6 +225,7 @@ export default {
 	updateReport,
 	addManager,
 	findByCode,
+	findWithRole,
 	listByManager,
 	lockOwnPet,
 	findOpenLostByPet,
