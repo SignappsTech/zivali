@@ -52,7 +52,7 @@ Not server notifications: the mobile app raises them locally from OS geofences a
 | `GET /v1/notification-prefs` | auth | - | `{ items: { type, in_app, push, email }[], quiet_from, quiet_to }` |
 | `PUT /v1/notification-prefs/:type` | auth | `{ in_app?, push?, email? }` | the pref |
 | `POST /v1/push-tokens` | auth (incl. anonymous managers) | `{ token, platform: 'ios' | 'android' }` | `204` (upsert, `last_seen_at`) |
-| `DELETE /v1/push-tokens/:token` | auth | - | `204` |
+| `DELETE /v1/push-tokens` | auth | `{ token }` (body, so the token stays out of URLs and access logs) | `204` |
 | `GET /v1/notifications/unsubscribe?token=` | none (signed one-click token) | - | HTML confirmation; turns that type's email off |
 
 Client (`@zivali/api/notifications`): `listNotifications`, `markRead`, `getPrefs`, `setPref`, `setQuietHours` (`PATCH /v1/me`), `registerPushToken`, `unregisterPushToken`, `subscribeInbox(onEvent)` (Realtime `user:<id>`; events `notification.created` and `conversation.updated`, payload `{ conversation_id, status, updated_at }`, defined in C9 §Realtime; `conversation.read` is on `conversation:<id>` only, payload `{ conversation_id, reader_id, last_read_message_id, read_at }`).
@@ -80,3 +80,4 @@ Client (`@zivali/api/notifications`): `listNotifications`, `markRead`, `getPrefs
 | Version | Date | Change |
 |---|---|---|
 | 1.1 | 2026-10-15 | CH-62: conversation.updated payload referenced (defined in C9) |
+| 1.2 | 2026-10-15 | CH-76: DELETE /v1/push-tokens takes { token } in the body, not the path |

@@ -5,7 +5,7 @@ status: To Do
 assignee:
   - '@backend-dev'
 created_date: '2026-10-14 23:36'
-updated_date: '2026-10-14 23:38'
+updated_date: '2026-10-15 03:22'
 labels:
   - be
   - 'est:S'
@@ -40,4 +40,5 @@ Branch: agent/task-88.2-dir-api
 - [ ] #1 Prisma models shelters, municipality_shelters and directory_changes per C18 (RLS enabled, data-inventory entries) are loaded by seeder 05-directory from the CSVs, writing an initial version per row.
 - [ ] #2 GET /v1/shelters, /v1/shelters/:slug, /v1/shelters/municipalities and /v1/shelters/responsible (point or municipality) respond per C18 with public caching; an unconfirmed municipality never returns a phone number and a point outside Slovenia returns outside_slovenia.
 - [ ] #3 DirectoryDomain.getResponsibleShelter is reusable by other domains and the worker; Supertest covers confirmed, unconfirmed, outside-Slovenia and the Ivančna Gorica/Žužemberk overlap.
+- [ ] #4 responsible endpoint returns status 'likely' with likely_shelter {slug,name,phone,distance_km} when a likely shelter is known, else 'unconfirmed' with nearest (up to 2 {slug,name,distance_km}, no phone); municipality always included (C18 CH-81)
 <!-- AC:END -->

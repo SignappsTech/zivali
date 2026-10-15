@@ -30,13 +30,13 @@ Only dependencies listed in `docs/tech/adr/017-dependency-allowlist.md` (or inst
       app/[locale]/(app)/…         signed-in areas (my pets, my reports, inbox, account)
       app/[locale]/(admin)/admin/… admin console (aal2)
       app/r/[code]/opengraph-image.tsx, app/r/[code]/poster.pdf/route.ts, app/api/health/route.ts (web only; ad clicks go to the API, C14)
-      app/captcha/page.tsx, app/dev/{kit,checkout}/page.tsx (dev only), public/.well-known/*
+      app/captcha/page.tsx, public/.well-known/*; dev pages live under app/[locale]/dev/{kit,checkout}/page.tsx (SL /dev/kit, EN /en/dev/kit; CSP and fonts from the locale layout; notFound when APP_ENV=production)
       components/ui/               shadcn components, edited to the design system (§10)
       components/<feature>/        feature components; components/report/slots/<slot>.tsx (C15)
       lib/supabase/{server,client,middleware}.ts (Auth session and Realtime only), lib/api.ts (API client with the session token), lib/env.ts, lib/store.ts (Redux store from `createApiStore`)
       content/legal/{sl,en}/*.mdx  legal pages
       e2e/                         Playwright specs (smoke + flows)
-      proxy.ts                     Next 16 (was middleware.ts): CSP nonce, Supabase session refresh, next-intl; matcher excludes /api, /captcha, /dev/*, static files (C15)
+      proxy.ts                     Next 16 (was middleware.ts): CSP nonce, Supabase session refresh, next-intl; matcher excludes /api, _next and files with an extension; /dev/* is not excluded (C15)
     apps/mobile/
       app/_layout.tsx, app/(tabs)/{index,report,inbox,profile}.tsx, app/r/[code]/…, app/m.tsx,
       app/report/{lost,found}/…, app/pets/…, app/inbox/[id].tsx, app/settings/…, app/auth/…, app/payments/return.tsx
@@ -135,3 +135,4 @@ Branch `agent/<task-id>-<slug>` from `main`; commits `<task-id>: <what>`; never 
 | Version | Date | Change |
 |---|---|---|
 | 1.1 | 2026-10-15 | CH-44/45/56: mobile session encryption at rest, single React version, bbox rounding and coarsenPoint ownership |
+| 1.2 | 2026-10-15 | CH-78: repo map matches proxy.ts and the /dev pages under [locale] |

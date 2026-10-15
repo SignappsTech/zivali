@@ -20,7 +20,7 @@ Access only through the API (RLS deny-all, ADR-021). Moderators (aal2) read mess
 
 Supabase Realtime **Broadcast** on private channels; no table is published.
 - Topics: `conversation:<id>` (events `message.created`, `conversation.read`), `user:<id>` (events `notification.created`, `conversation.updated` for inbox badges).
-- The chat service broadcasts after insert in the same transaction: `select realtime.send(<payload jsonb>, 'message.created', 'conversation:' || <id>, true)` (Prisma `$executeRaw`). Payload = the `Message` DTO below, nothing more.
+- The chat service broadcasts after insert in the same transaction: `select realtime.send(<payload jsonb>, 'message.created', 'conversation:' || <id>, true)` (Prisma `$executeRaw`). Payload = the `Message` DTO below, nothing more. One broadcast reaches every participant, so `sender_alias_key` is always the sender's role alias (never `you`); a client recognises its own messages by comparing it with `my_alias_key` from `ConversationSummary`.
 - Policy (migration SQL): `create policy "members receive" on realtime.messages for select to authenticated using (app.can_join_topic(auth.uid(), realtime.topic()))`; `app.can_join_topic` is `security definer` and checks `conversation_participants` or `user:<own id>`. No insert policy: clients cannot broadcast.
 - `conversation.read` payload: `{ conversation_id, reader_id, last_read_message_id, read_at }`. `conversation.updated` payload (on `user:<id>`): `{ conversation_id, status: 'active'|'read_only', updated_at }`. Minimal by design: no body, no names; clients refetch `GET /v1/conversations` for badges and previews.
 - Clients: `supabase.channel(topic, { config: { private: true } })`; on (re)subscribe they fetch `GET /v1/conversations/:id/messages?after=<last message id>` so nothing is lost; offline recipients get push (C10).
@@ -37,9 +37,9 @@ Supabase Realtime **Broadcast** on private channels; no table is published.
 | `POST /v1/conversations/:id/block` | participant | `{ participant_id }` | `204` (blocks row; further messages from them refused) | - |
 
 ```ts
-type Message = { id; conversation_id; sender_alias_key: 'you'|'owner'|'finder'|'sighter'|'contact'|'shelter'; sender_display_name?: string;
+type Message = { id; conversation_id; sender_alias_key: 'owner'|'finder'|'sighter'|'contact'|'shelter'; sender_display_name?: string;
                  kind: 'text'|'location'|'system'; body; has_link: boolean; location?: { lat; lng }; created_at }
-type ConversationSummary = { id; about_report: { short_code, type, species, thumb_url }; other_alias_key; other_display_name?;
+type ConversationSummary = { id; about_report: { short_code, type, species, thumb_url }; my_alias_key; other_alias_key; other_display_name?;
                              last_message_preview; unread: number; status: 'active'|'read_only' }
 ```
 `has_link` is set by the service (URL regex). Location messages only from a manager of the related report (explicit exact-point share, R-004.3).
@@ -68,3 +68,4 @@ Aliases: conversation lists and messages return alias keys (`owner` | `finder` |
 | Version | Date | Change |
 |---|---|---|
 | 1.1 | 2026-10-15 | CH-61: message order oldest-first, after cursor exclusive forward; CH-62: conversation.read and conversation.updated payloads |
+| 1.2 | 2026-10-15 | CH-75: sender_alias_key is the role alias (no 'you'); ConversationSummary gets my_alias_key |

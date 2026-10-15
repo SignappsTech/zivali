@@ -62,10 +62,10 @@ Seed (TASK-88): `apps/api/prisma/seeders/data/shelters.csv` and `municipality_sh
 |---|---|---|
 | `GET /v1/shelters` | index (TASK-90) | `{ items: ShelterSummary[] }` sorted by name |
 | `GET /v1/shelters/:slug` | shelter page | `Shelter & { municipalities: { slug, name }[] }`, 404 if unknown or inactive |
-| `GET /v1/shelters/responsible?lat=&lng=` (client rounds to 2 decimals, C4 §REST privacy; exact points are not needed) or `?municipality=<slug>` | checklist and call button | `{ status: 'confirmed', municipality: { slug, name }, shelter: Shelter } \| { status: 'unconfirmed' \| 'outside_slovenia', municipality?: { slug, name } }` |
+| `GET /v1/shelters/responsible?lat=&lng=` (client rounds to 2 decimals, C4 §REST privacy; exact points are not needed) or `?municipality=<slug>` | checklist and call button | `{ status: 'confirmed', municipality: { slug, name }, shelter: Shelter } \| { status: 'likely', municipality: { slug, name }, likely_shelter: { slug, name, phone, distance_km } } \| { status: 'unconfirmed', municipality: { slug, name }, nearest: { slug, name, distance_km }[] } \| { status: 'outside_slovenia', municipality?: { slug, name } }` |
 | `GET /v1/shelters/municipalities` | municipality search on the index page | `{ items: { slug, name, shelter_slug \| null }[] }` |
 
-`ShelterSummary = { slug, name, city, phone_display }`. `Shelter = { slug, name, address, postal_code, city, phone, phone_display, website?, opening_hours, source, verified_at }`. An unconfirmed municipality never returns a phone number (R-044.5). Lookups by point use `geo_lookup` (C6).
+`ShelterSummary = { slug, name, city, phone_display }`. `Shelter = { slug, name, address, postal_code, city, phone, phone_display, website?, opening_hours, source, verified_at }`. Client rule (brief): for an unconfirmed municipality, `status: 'likely'` is returned when a likely shelter is known (UI: "Morda pristojno zavetišče" + "Ni potrjeno", the call button is secondary and labelled unconfirmed); otherwise `status: 'unconfirmed'` with `nearest`: up to 2 shelters `{ slug, name, distance_km }` (no phone). `municipality` is always included. A `confirmed` response is the only one with a primary call button; `phone` appears only in `confirmed` and `likely`. Lookups by point use `geo_lookup` (C6).
 
 ## Admin (TASK-89, M3)
 
@@ -87,3 +87,9 @@ Legal timings (3 days / 72 h owner duty, 24 h find notice, 8-day holding) render
   "shelter": { "slug": "zavetisce-ljubljana", "name": "Zavetišče …", "phone": "+386…", "phone_display": "01 …",
                "opening_hours": [{ "days": "mon-sun", "from": "10:00", "to": "18:00" }], "source": "UVHVVR 2026-09", "verified_at": "2026-10-01" } }
 ```
+
+## Change log
+
+| Version | Date | Change |
+|---|---|---|
+| 1.1 | 2026-10-15 | CH-81: responsible-shelter returns status 'likely' (likely_shelter) or 'unconfirmed' with nearest (up to 2); municipality always included |
