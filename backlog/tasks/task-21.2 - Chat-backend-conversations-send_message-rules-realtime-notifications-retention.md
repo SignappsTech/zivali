@@ -3,11 +3,11 @@ id: TASK-21.2
 title: >-
   Chat API: conversations and messages endpoints, Realtime Broadcast with
   membership policy, retention
-status: In Progress
+status: Done
 assignee:
   - '@backend-dev'
 created_date: '2026-10-14 22:13'
-updated_date: '2026-10-15 15:28'
+updated_date: '2026-10-15 17:40'
 labels:
   - be
   - 'est:M'
