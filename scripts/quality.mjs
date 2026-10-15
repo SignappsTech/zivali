@@ -10,8 +10,10 @@ import { resolve } from 'node:path';
 import { chromium } from '@playwright/test';
 import { LinkChecker } from 'linkinator';
 
-// :8080 as in lighthouserc.json; QUALITY_PORT moves it when 8080 is taken (e.g. by another project's container).
-const PORT = Number(process.env.QUALITY_PORT || 8080);
+import { freePort } from './free-port.mjs';
+
+// A free port per run (parallel worktrees); QUALITY_PORT pins it. lighthouserc.json's :8080 is rewritten to it below.
+const PORT = Number(process.env.QUALITY_PORT || freePort());
 const BASE = `http://localhost:${PORT}`;
 process.env.BASE_URL = BASE; // read by tests/quality/playwright.config.mjs
 const REPORT = 'quality-report';

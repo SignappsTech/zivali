@@ -1,10 +1,11 @@
 ---
 id: TASK-98
 title: 'e2e and quality runs: free port per run, no foreign server reuse'
-status: To Do
+status: In Progress
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-15 04:40'
+updated_date: '2026-10-15 04:48'
 labels:
   - fe
   - 'est:XS'
@@ -25,3 +26,7 @@ Playwright and quality runs must never test another worktree's server (seen: EAD
 - [ ] #2 reuseExistingServer is true only when PW_REUSE=1
 - [ ] #3 All web e2e re-run once and green
 <!-- AC:END -->
+
+## Packet
+
+Branch: agent/TASK-98-pw-free-port
