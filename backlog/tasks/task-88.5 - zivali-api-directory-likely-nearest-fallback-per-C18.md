@@ -1,11 +1,11 @@
 ---
 id: TASK-88.5
 title: '@zivali/api/directory: likely/nearest fallback per C18'
-status: In Progress
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-15 03:21'
-updated_date: '2026-10-15 03:36'
+updated_date: '2026-10-15 03:51'
 labels:
   - fe
   - 'est:S'
