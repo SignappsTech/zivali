@@ -38,7 +38,8 @@ export const QueueCounts = z
 	.openapi('QueueCounts');
 export const FailedJob = z
 	.object({
-		id: Uuid,
+		// pg-boss ids are deterministic uuids whose version nibble z.uuid() rejects.
+		id: z.guid(),
 		queue: z.string(),
 		error: z.string().nullable(),
 		retry_count: z.number().int(),
