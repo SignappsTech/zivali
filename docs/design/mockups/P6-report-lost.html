@@ -321,7 +321,7 @@
             <input id="m3-chip" class="input tnum" inputmode="numeric" value="705 1234 5678" autocomplete="off" aria-describedby="m3-chip-d">
             <div id="m3-chip-d" class="grid gap-1.5">
               <p class="help">Običajno ima 15 števk, na primer 705 1234 5678 901. Nikoli je ne prikažemo javno.</p>
-              <p class="err"><i class="ph-fill ph-warning-circle" aria-hidden="true"></i><span>Številka čipa je običajno dolga 15 števk. Shranili jo bomo kot neznano, preverite jo, ko boste lahko.</span></p>
+              <div class="note"><i class="ph-bold ph-warning" aria-hidden="true"></i><p>Številka čipa je običajno dolga 15 števk. Shranili jo bomo kot neznano, preverite jo, ko boste lahko.</p></div>
               <p class="help">Ko žival najdejo, čip prebere veterinar ali pristojno zavetišče in vaše podatke poišče v Centralnem registru hišnih živali (CRHŽ). Pri svojem veterinarju preverite, ali je vaša telefonska številka v registru pravilna.</p>
             </div>
           </div>
@@ -609,10 +609,10 @@
         </div>
         <div class="flex flex-wrap items-center gap-2 mt-4">
           <button type="button" class="btn btn-secondary" data-sample>Prispevaj</button>
-          <button type="button" class="btn btn-text" data-sample>Ne zdaj</button>
+          <button type="button" class="btn btn-secondary" data-sample>Ne zdaj</button>
         </div>
       </div>
-      <p class="help mt-4" style="max-width:390px">Pills 2, 3, 5 € with none selected (3 € shown on hover); the button stays <code>secondary</code> because the poster is the view's primary. "Ne zdaj" hides the row for this report. Strings come from <code>support.contribution_*</code> (P15); the labels here are samples.</p>
+      <p class="help mt-4" style="max-width:390px">Pills 2, 3, 5 € with none selected (3 € shown on hover); Pay and Skip have equal weight (both <code>secondary</code>). "Ne zdaj" hides the row for this report. Strings come from <code>support.contribution_*</code> (P15); the labels here are samples.</p>
     </figure>
 
     <figure class="m-0">
