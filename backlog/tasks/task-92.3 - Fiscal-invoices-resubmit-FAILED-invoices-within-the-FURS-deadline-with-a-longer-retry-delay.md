@@ -7,6 +7,7 @@ status: To Do
 assignee:
   - '@tech-lead'
 created_date: '2026-10-15 23:40'
+updated_date: '2026-10-15 23:54'
 labels:
   - be
   - 'est:S'
@@ -35,4 +36,5 @@ Branch: agent/task-92.3-fiscal-resubmit
 - [ ] #1 FURS verify retries use a retryDelay with backoff measured in minutes, not seconds, set in app_config.
 - [ ] #2 A scheduled job (cron, Europe/Ljubljana) resubmits FAILED and stale PENDING invoices as SubsequentSubmit with the stored ZOI, well inside 2 working days, and alerts the admin (Sentry or ops email) on any invoice still unverified after 24 h.
 - [ ] #3 Tests cover the resubmit selection, one claim per invoice, and that no new number or ZOI is created.
+- [ ] #4 From the TASK-92.1 fix round: a verify attempt can't run while another is in flight for the same invoice (a lease column with expiry, or a pg-boss queue with a singleton policy; singletonKey alone may not dedupe on a standard queue), with a test.
 <!-- AC:END -->
