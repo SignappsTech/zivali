@@ -2,6 +2,7 @@
 import { Router } from 'express';
 
 import adminRoutes from './admin.routes.ts';
+import adsRoutes from './ads.routes.ts';
 import alertSubscriptionRoutes from './alert-subscription.routes.ts';
 import configRoutes from './config.routes.ts';
 import conversationsRoutes from './conversations.routes.ts';
@@ -28,5 +29,6 @@ router.use('/reports', reportsRoutes);
 router.use('/alert-subscription', alertSubscriptionRoutes);
 router.use('/conversations', conversationsRoutes);
 router.use('/photos', photosRoutes);
+router.use('/ads', adsRoutes);
 
 export default router;

@@ -42,6 +42,7 @@ const SHARP_TIMEOUT_S = 30;
 /** Queues sent { photo_id } for every accepted photo: empty in M2; M3 adds ai.extract and photo.embed. */
 export const PHOTO_HOOKS: readonly QueueName[] = [];
 
+/** Public URL of an object in the media bucket (MEDIA_BASE_URL; MinIO locally). */
 function mediaUrl(ref: ObjectRef): string {
 	const base =
 		config.MEDIA_BASE_URL ??
@@ -266,6 +267,7 @@ export async function deleteObjects(objects: ObjectRef[], ctx: Ctx): Promise<voi
 }
 
 export default {
+	mediaUrl,
 	createPhoto,
 	completePhoto,
 	getPhoto,
