@@ -2,10 +2,21 @@
 // schema-exposure.test.ts then checks that every table in pgboss has RLS and no policies.
 import { describe, expect, it } from 'vitest';
 
+import { startJobs } from '../../lib/jobs.ts';
 import { lockDownPgboss } from '../../lib/pgboss-lockdown.ts';
 import { prisma } from '../../prisma/prisma.ts';
 
 describe('pg-boss lockdown hook (CH-106)', () => {
+	it('leaves every table and partition pg-boss created at start with RLS (CH-103)', async () => {
+		await startJobs();
+		const rows = await prisma.$queryRaw<{ name: string; partition: boolean; rls: boolean }[]>`
+			select relname as name, relispartition as partition, relrowsecurity as rls from pg_class
+			where relnamespace = 'pgboss'::regnamespace and relkind in ('r', 'p')`;
+		expect(rows.map((row) => row.name)).toEqual(expect.arrayContaining(['job', 'queue', 'schedule', 'version']));
+		expect(rows.some((row) => row.partition)).toBe(true);
+		expect(rows.filter((row) => !row.rls)).toEqual([]);
+	}, 30_000);
+
 	it('enables RLS on tables and partitions created in pgboss after the migrations ran', async () => {
 		// Same shape as pg-boss: a partitioned job table with one partition per queue.
 		await prisma.$executeRaw`create table pgboss.rls_probe (name text not null) partition by list (name)`;

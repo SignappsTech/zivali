@@ -1,4 +1,5 @@
-// Readiness: the database answers. Knows nothing about Express; the controller picks the HTTP status.
+// Readiness: the database answers, plus how far the job queue is behind. Knows nothing about Express; the
+// controller picks the HTTP status.
 import { config } from '../../lib/config.ts';
 import type { Ctx } from '../../lib/ctx.ts';
 import HealthDao from './health.dao.ts';
@@ -19,8 +20,16 @@ export async function getReadiness(_input: void, ctx: Ctx): Promise<Readiness> {
 		ctx.logger.warn({ err }, 'readiness: database check failed');
 		db = 'down';
 	}
-	// queue_lag_s comes from pg-boss once the worker task (TASK-6.3) adds it.
-	return { ok: db === 'ok', version: config.APP_VERSION, db, queue_lag_s: null };
+	// Lag = the worker is down or behind (ADR-022); unknown (null) when it cannot be read, never a failed check.
+	let queue_lag_s: number | null = null;
+	if (db === 'ok') {
+		try {
+			queue_lag_s = await HealthDao.queueLagSeconds();
+		} catch (err) {
+			ctx.logger.warn({ err }, 'readiness: queue lag check failed');
+		}
+	}
+	return { ok: db === 'ok', version: config.APP_VERSION, db, queue_lag_s };
 }
 
 export default { getReadiness };

@@ -6,4 +6,13 @@ export async function pingDatabase(tx?: Prisma.TransactionClient): Promise<void>
 	await db.$queryRaw`select 1`;
 }
 
-export default { pingDatabase };
+/** Seconds the oldest job that is due has waited (0 when none); rejects while pg-boss is not installed. */
+export async function queueLagSeconds(tx?: Prisma.TransactionClient): Promise<number> {
+	const db = tx ?? prisma;
+	const [row] = await db.$queryRaw<{ lag: number }[]>`
+		select coalesce(floor(extract(epoch from now() - min(start_after))), 0)::int as lag
+		from pgboss.job where state < 'active' and start_after <= now()`;
+	return row.lag;
+}
+
+export default { pingDatabase, queueLagSeconds };

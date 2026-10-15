@@ -8,7 +8,8 @@ Express 5 + Prisma 7 REST API and the pg-boss worker, in the client's klikni lay
 app.ts                      Express app, middleware in ADR-020 order (request id → pino-http → helmet → cors →
                             compression → json 1 MB → global rate limit → /ping, /v1 → 404 → error middleware)
 server.ts                   HTTP entry; SIGTERM/SIGINT: stop accepting, finish requests, disconnect Prisma
-worker.ts                   worker entry, same image (`node dist/worker.js`); pg-boss arrives with TASK-6.3
+worker.ts                   worker entry, same image (`node dist/worker.js`): pg-boss, schedules, the jobs/ handlers
+jobs/<queue>.job.ts         one handler per queue, `handle(data, ctx)`; jobs/index.ts is the queue registry (runJob)
 routes/index.ts             the /v1 router: one mount line per area
 routes/<area>.routes.ts     one Router per area, routes declared with apiRoutes() (validation + OpenAPI, below)
 openapi.json                generated, committed OpenAPI 3.1 document (`gen:openapi`); RTK Query codegen input
@@ -20,12 +21,13 @@ domains/<area>/             all business logic, HTTP-agnostic
   index.ts                    the area's public functions (the DAO stays private)
 middleware/<name>.middleware.ts    requestId, validate, error, auth, permission, rateLimit, idempotency (below)
 lib/                        config.ts (zod env, read once), logger.ts (pino), errors.ts (AppError + C1 codes),
-                            ctx.ts (userCtx, systemCtx), config-store.ts (app_config, 60 s), crypto.ts, openapi.ts (apiRoutes over the @zivali/validation registry)
+                            ctx.ts (userCtx, systemCtx), jobs.ts (pg-boss: QUEUES, SCHEDULES, jobs.send, drain), config-store.ts (app_config, 60 s), crypto.ts, openapi.ts (apiRoutes over the @zivali/validation registry)
 scripts/gen-openapi.ts      writes openapi.json; `--check` fails when it is stale (part of `lint`)
+scripts/jobs-drain.ts       `pnpm jobs:drain`: runs queued jobs through the registry until the queues are empty
 prisma/                     prisma.ts (client singleton), schemas/*.prisma + schemas/migrations/,
                             seed.ts (runs seeders/NN-<name>.seeder.ts in order)
 generated/                  Prisma client output (gitignored, never edited; `prisma generate` rebuilds it)
-test/                       routes/, middleware/, lib/, security/, helpers/ (signTestToken), setup.ts, global-setup.ts
+test/                       routes/, middleware/, lib/, jobs/, security/, helpers/ (signTestToken), setup.ts, global-setup.ts
 ```
 
 `domains/health` is the sample area: `GET /v1/health/ready` → `HealthController.ready` → `HealthDomain.getReadiness` → `HealthDao.pingDatabase` → `HealthMapper.toReadyDto`.
@@ -111,7 +113,7 @@ Logs (pino, `lib/logger.ts`): one line per request with `req_id`, `route` (metho
 | `docker run --rm -e DATABASE_URL=… zivali-api npx prisma migrate deploy` | migrations, one-off per deploy                                                                        |
 | `docker compose -f docker-compose.dev.yml up -d`                         | MinIO (S3 :9000, console :9001) with `zivali-private`, `zivali-media` (public read), `zivali-backups` |
 
-Endpoints: `GET /ping` → `{ "message": "pong" }`; `GET /v1/health/ready` → `{ ok, version, db, queue_lag_s }` (503 when the database is down; `queue_lag_s` is `null` until pg-boss, TASK-6.3); `GET /v1/config/public` → public `app_config` flags as `{ key: value }` (`Cache-Control: public, max-age=300`). Every response, errors included, carries `x-request-id`. The OpenAPI document is the committed `openapi.json` (Swagger UI at `/docs` is a later task).
+Endpoints: `GET /ping` → `{ "message": "pong" }`; `GET /v1/health/ready` → `{ ok, version, db, queue_lag_s }` (503 when the database is down; `queue_lag_s`: seconds the oldest due job has waited, `null` when unreadable); `GET /v1/config/public` → public `app_config` flags as `{ key: value }` (`Cache-Control: public, max-age=300`). Every response, errors included, carries `x-request-id`. The OpenAPI document is the committed `openapi.json` (Swagger UI at `/docs` is a later task).
 
 Moved Supabase ports (Windows Hyper-V, [supabase/README.md](../../supabase/README.md)): change the port in `DATABASE_URL` and `DIRECT_URL` in `.env.local` too.
 
@@ -136,7 +138,8 @@ route(spec, authMiddleware, requireRole('moderator'), requireAal2, AdminControll
 - `rateLimit(name, { limit, window (s), key: 'user' | 'ip' | 'device' })`: fixed window in `app.rate_limits`, IPs and `x-device-id` stored as HMAC (`RATE_SALT`); `key: 'user'` counts anonymous finders per device (else IP), signed-out callers per IP; `app_config` `rate.<name>` = `{ limit, window }` overrides the code values (positive integers, window ≤ 172 800 s, else ignored); 429 with `Retry-After`.
 - `idempotency({ required })` last, right before the controller (after auth and guards): same user + key + route + body (canonical JSON, SHA-256) within 24 h replays the stored response (`Idempotent-Replayed: true`); another user, route or body, or a running first request → 409 `CONFLICT`; bodies stored encrypted (`IDEMPOTENCY_KEY`); 5xx, 429, 401 and 403 are not stored.
 - Staff and destructive services write `AuditDao.write(tx, { actor_id, action, target_type, target_id, diff, note })` (`domains/platform`). `PlatformDao.purgeExpired(now)` is for the retention job.
-- pg-boss tables get RLS from `lockDownPgboss()` (`lib/pgboss-lockdown.ts`) at startup, after pg-boss created them (CH-106); if it fails, the API and the worker log `fatal` and exit 1.
+- Jobs (ADR-022): `ctx.jobs.send(queue, data, { tx?, singletonKey?, startAfter? })`, with `tx` the job exists only if the transaction commits; every queue retries 5 times with backoff, then `failed`. Schedules (Europe/Ljubljana) are created by the worker. Tests call `drain(runJob)` (retries and deferred jobs run at once). `NotificationsDomain.enqueueNotification` is a stub that sends `notify.send` until TASK-22.3.
+- `startJobs()` (API and worker) starts pg-boss, creates the queues, then `lockDownPgboss()` (`lib/pgboss-lockdown.ts`) enables RLS on the tables pg-boss created (CH-106); if it fails, the API and the worker log `fatal` and exit 1.
 
 ## Tests
 
