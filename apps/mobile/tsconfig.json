@@ -1,0 +1,10 @@
+{
+	"extends": ["expo/tsconfig.base", "../../tsconfig.base.json"],
+	"compilerOptions": {
+		"lib": ["DOM", "ESNext"],
+		"module": "preserve",
+		"types": ["jest"],
+		"paths": { "@/*": ["./*"] }
+	},
+	"include": ["**/*.ts", "**/*.tsx", ".expo/types/**/*.ts", "nativewind-env.d.ts"]
+}
