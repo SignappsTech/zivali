@@ -3,7 +3,7 @@ source: 03§P1; docs/design/pages/P1-web-shell.md
 page: P1 Web shell
 stories: TASK-11 (FR-035, FR-036)
 copy-for: docs/design/pages/P1-web-shell.md
-version: 0.1
+version: 0.2
 status: Draft, native Slovenian review pending
 date: 2026-10-14
 ---
@@ -61,6 +61,7 @@ Final SL and EN strings for the header, footer, shared patterns and the two shar
 | footer.cookie_settings | Nastavitve piškotkov | Cookie settings | opens P17 Customise |
 | footer.how_it_works | Kako deluje | How it works | `/kako-deluje` |
 | footer.for_shelters | Za zavetišča | For shelters | `/za-zavetisca` |
+| footer.shelters | Zavetišča | Shelters | `/zavetisca` (`/en/shelters`), the public shelter directory (P3 T5); v0.2. Kept distinct from "Za zavetišča", which is the page for shelter staff |
 | footer.faq | Pogosta vprašanja | FAQ | `/pogosta-vprasanja` |
 | footer.nav_label | Noga strani | Footer | `nav` landmark name |
 | footer.tagline | Spet doma. | Home again. | Next to the logo |

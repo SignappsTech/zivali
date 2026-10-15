@@ -3,7 +3,7 @@ source: 03§P6; docs/design/pages/P6-report-lost.md
 page: P6 Report lost
 stories: TASK-29 (FR-005, FR-003, FR-002)
 copy-for: docs/design/pages/P6-report-lost.md
-version: 0.3
+version: 0.4
 status: Draft, native Slovenian review pending
 date: 2026-10-15
 ---
@@ -189,6 +189,29 @@ Buttons: P16 gate (Vpis, Ustvari račun, Google, Apple, Prekliči).
 | report_lost.first_24h | Kaj storiti v prvih 24 urah | What to do in the first 24 hours |
 
 `report_lost.first_24h` links to `/varnost#prvih-24-ur` (`/en/safety#first-24-hours`). The collapsed support row at the end uses `support.contribution_*` from P15. No ad.
+
+## Responsible shelter row (shared, namespace `shelter_row`)
+
+Used here (lost), on the P7 success screens (found and sighted) and in the P9 owner view. FR-044, R-005.3, R-006.1. A `phone` icon row under "Kaj se zgodi zdaj", no card.
+
+| Key | SL | EN |
+|---|---|---|
+| shelter_row.title | Pristojno zavetišče za občino {municipality} | Responsible shelter for {municipality} |
+| shelter_row.lost_body | Pobeg čim prej sporočite veterinarju ali zavetišču, pristojnemu za občino {municipality}. | As soon as you can, report the escape to a vet or to the shelter responsible for {municipality}. |
+| shelter_row.found_body | Najdbo čim prej sporočite zavetišču, pristojnemu za občino {municipality}. | As soon as you can, report the find to the shelter responsible for {municipality}. |
+| shelter_row.sighted_body | Če žival ujamete ali jo kdo vzame k sebi, pokličite zavetišče, pristojno za občino {municipality}. | If you catch the animal or someone takes it in, call the shelter responsible for {municipality}. |
+| shelter_row.not_replace | Prijava na Najdimo tega ne nadomesti. | A report on Najdimo does not replace this. |
+| shelter_row.chip_line | Čip lahko prebere katero koli zavetišče ali veterinar. | Any shelter or vet can read the chip. |
+| shelter_row.call | Pokliči | Call |
+| shelter_row.call_a11y | Pokliči {shelter} | Call {shelter} |
+| shelter_row.details_link | Delovni čas in naslov | Opening hours and address |
+| shelter_row.unconfirmed | Za občino {municipality} še nimamo potrjenega zavetišča. Pokličite občino ali poglejte imenik zavetišč. | We do not have a confirmed shelter for {municipality} yet. Call the municipality or see the shelter directory. |
+| shelter_row.unknown_municipality | Občine nismo mogli določiti. Pristojno zavetišče poiščite v imeniku zavetišč. | We could not tell the municipality. Find the responsible shelter in the shelter directory. |
+| shelter_row.directory_link | Imenik zavetišč | Shelter directory |
+| shelter_row.cached | Iz shranjenega imenika z dne {date}. | From the saved directory of {date}. |
+
+Order in the row: the body sentence (`shelter_row.lost_body` here), `shelter_row.not_replace`, the shelter name in bold, the number (`tabular-nums`), `secondary` `shelter_row.call` (`tel:`, accessible name `shelter_row.call_a11y`) and the text link `shelter_row.details_link` to the shelter page (P3 T6). `shelter_row.title` is the compact label used in the P9 owner view. No municipality: `shelter_row.unknown_municipality`; no confirmed shelter: `shelter_row.unconfirmed`; both as a `note` with `shelter_row.directory_link` to P3 T5, never a guessed number. `shelter_row.cached` shows only when the row comes from the cached directory while offline. A statutory deadline appears only when `content.legal_timings` is on, with the wording the lawyer confirms (lawyer pack LQ-06); there is no string for it until then. With two shelters for the municipality, the row shows the one for the reported species.
+
 
 # 11. States
 

@@ -3,7 +3,7 @@ source: 03§P3; docs/design/pages/P3-public-pages.md; 02§FR-035, §Content, SEO
 page: P3 Public pages (home and content templates)
 stories: TASK-27, TASK-72 (FR-035)
 copy-for: docs/design/pages/P3-public-pages.md
-version: 0.3
+version: 0.4
 status: Draft, native Slovenian review and client approval pending (TASK-27 AC#4)
 date: 2026-10-15
 ---
@@ -642,6 +642,101 @@ FAQ row button accessible state: `pages.faq.expand` "Pokaži odgovor" / "Show an
 | legal.title_accessibility | Izjava o dostopnosti | Accessibility statement |
 
 Body texts, meta titles and descriptions: `docs/content/legal/*.md`.
+
+---
+
+# T5 Shelter directory (`/zavetisca`, `/en/shelters`)
+
+Namespace `shelters`. One question, one answer, then the full list. Shelter names, numbers, hours and areas come from the directory (P19); the strings here are the frame. Municipality names are inserted in the nominative after "občina" (glossary §3a).
+
+| Key | SL | EN |
+|---|---|---|
+| shelters.h1 | Zavetišča za živali po občinah | Animal shelters by municipality |
+| shelters.lede | Najdene pse in mačke sprejme zavetišče, s katerim sodeluje vaša občina. Vpišite občino in videli boste, koga pokličete. | Found dogs and cats go to the shelter your municipality works with. Enter your municipality to see whom to call. |
+| shelters.search_label | Vaša občina | Your municipality |
+| shelters.search_placeholder | Na primer: Škofja Loka | For example: Škofja Loka |
+| shelters.suggestions_a11y | {count, plural, one {# občina ustreza vnosu} two {# občini ustrezata vnosu} few {# občine ustrezajo vnosu} other {# občin ustreza vnosu}} | {count, plural, one {# municipality matches} other {# municipalities match}} |
+| shelters.answer_meta | Za občino {municipality} je pristojno | Responsible for {municipality} |
+| shelters.answer_meta_dogs | Za pse iz občine {municipality} je pristojno | Responsible for dogs from {municipality} |
+| shelters.answer_meta_cats | Za mačke iz občine {municipality} je pristojno | Responsible for cats from {municipality} |
+| shelters.call | Pokliči | Call |
+| shelters.call_a11y | Pokliči {shelter} | Call {shelter} |
+| shelters.details_link | Delovni čas in naslov | Opening hours and address |
+| shelters.unconfirmed | Za občino {municipality} še nimamo potrjenega zavetišča. Pokličite občino, povedali vam bodo, s katerim zavetiščem sodeluje. | We do not have a confirmed shelter for {municipality} yet. Call the municipality and they will tell you which shelter it works with. |
+| shelters.unconfirmed_link | Vsa zavetišča | All shelters |
+| shelters.no_match | Občine »{text}« ne najdemo. Preverite zapis ali jo poiščite na seznamu spodaj. | We cannot find a municipality called "{text}". Check the spelling or look for it in the list below. |
+| shelters.all_title | Vsa zavetišča ({count}) | All shelters ({count}) |
+| shelters.row_meta | {area} · {count, plural, one {# občina} two {# občini} few {# občine} other {# občin}} | {area} · {count, plural, one {# municipality} other {# municipalities}} |
+| shelters.verified_line | Podatki preverjeni {date}. Vir: {source}. | Details checked on {date}. Source: {source}. |
+| shelters.report_error | Sporočite napako | Report a mistake |
+| shelters.error | Imenika zavetišč ta trenutek ne moremo naložiti. | We cannot load the shelter directory right now. |
+
+Notes:
+
+- The answer appears under the field and is announced politely. With two shelters for one municipality (for example one for dogs and one for cats) each answer uses `shelters.answer_meta_dogs` or `shelters.answer_meta_cats`, and both call buttons are `secondary`.
+- `shelters.unconfirmed` replaces the answer when the municipality has no confirmed shelter (R-044.5); it never shows a guessed name or number. `shelters.unconfirmed_link` scrolls to the list.
+- `{area}` in `shelters.row_meta` is the directory's area label ("Ljubljana z okolico"). `{date}` is a long date ("15. 10. 2026" / "15 October 2026"); `{source}` is the directory source text.
+- `shelters.report_error` opens the contact page with the subject "Napaka v imeniku zavetišč" / "Mistake in the shelter directory".
+- Legal note slot: rendered only when `content.legal_timings` is on, with the wording the lawyer confirms (lawyer pack LQ-06). No string until then.
+- Loading: `common.loading` (P1); error: `shelters.error` with `common.try_again`; offline: P1 offline note, the list stays when cached.
+
+## SEO (T5)
+
+| Field | SL | EN |
+|---|---|---|
+| Meta title | Zavetišča za živali po občinah · Najdimo | Animal shelters by municipality · Najdimo |
+| Meta description | Poiščite zavetišče, pristojno za vašo občino: telefon, naslov in delovni čas vseh {count} zavetišč za pse in mačke v Sloveniji. | Find the shelter responsible for your municipality: phone, address and opening hours of all {count} dog and cat shelters in Slovenia. |
+| Focus keyword | zavetišče za živali | animal shelter Slovenia |
+| Slug | `/zavetisca` | `/en/shelters` |
+| Structured data | `CollectionPage` with an `ItemList` of `AnimalShelter` (name, url, telephone) + `BreadcrumbList` | same |
+
+Alt text: none (no images; icons are decorative).
+
+# T6 Shelter page (`/zavetisca/{slug}`, `/en/shelters/{slug}`)
+
+| Key | SL | EN |
+|---|---|---|
+| shelters.back | Vsa zavetišča | All shelters |
+| shelters.page_meta | Pristojno za {count, plural, one {# občino} two {# občini} few {# občine} other {# občin}} | Serves {count, plural, one {# municipality} other {# municipalities}} |
+| shelters.phone_title | Telefon | Phone |
+| shelters.no_phone | Telefonska številka ni objavljena. Stik najdete na spletni strani zavetišča. | No phone number is published. You will find contact details on the shelter's website. |
+| shelters.website_button | Spletna stran zavetišča | Shelter website |
+| shelters.address_title | Naslov | Address |
+| shelters.open_map | Odpri v zemljevidu | Open in maps |
+| shelters.hours_title | Delovni čas | Opening hours |
+| shelters.hours_closed | zaprto | closed |
+| shelters.hours_none | Delovni čas ni objavljen. | Opening hours are not published. |
+| shelters.website_label | Spletna stran | Website |
+| shelters.email_label | E-pošta | Email |
+| shelters.served_title | Občine, za katere je pristojno ({count}) | Municipalities served ({count}) |
+| shelters.what_title | Kaj storiti | What to do |
+| shelters.what_lost | Ste izgubili žival? Prijavite jo na Najdimo in pokličite zavetišče. | Lost your pet? Report it on Najdimo and call the shelter. |
+| shelters.what_lost_button | Prijavi izgubljeno žival | Report a lost pet |
+| shelters.what_found | Ste našli žival? Pokličite zavetišče in jo prijavite na Najdimo, da jo lastnik hitreje najde. | Found an animal? Call the shelter and report it on Najdimo so the owner finds it sooner. |
+| shelters.what_found_button | Prijavi najdeno žival | Report a found animal |
+| shelters.stale | Podatki so bili nazadnje preverjeni {date}. Pred obiskom pokličite. | These details were last checked on {date}. Please call before you visit. |
+
+Notes:
+
+- Call button: `shelters.call` with `shelters.call_a11y` as its accessible name (T5 keys). `shelters.open_map` opens a new tab and adds `common.opens_new_tab` to its accessible name.
+- Opening hours rows: day ranges use short day names joined with an en dash, SL "pon–pet", "sob", "ned in prazniki"; EN "Mon–Fri", "Sat", "Sun and public holidays". Times: SL "8.00–16.00", EN "8:00–16:00". A closed row shows `shelters.hours_closed`. No "open now" claim.
+- `shelters.what_lost_button` opens P6, `shelters.what_found_button` opens P7 (text buttons, not a second primary).
+- Stale data (last checked more than 12 months ago): `shelters.stale` above the contact block, the data stays visible.
+- The verified line and the legal note slot are the T5 keys. Unknown slug: the P1 404 page with a link to T5.
+
+## SEO (T6)
+
+| Field | SL | EN |
+|---|---|---|
+| Meta title | {shelter} – zavetišče za živali · Najdimo | {shelter} – animal shelter · Najdimo |
+| Meta description | {shelter}, {place}: telefon, naslov in delovni čas. Pristojno za {count, plural, one {# občino} two {# občini} few {# občine} other {# občin}}. | {shelter}, {place}: phone number, address and opening hours. Serves {count, plural, one {# municipality} other {# municipalities}}. |
+| Focus keyword | `{shelter}`, for example "Zavetišče Gmajnice" | `{shelter}` |
+| Slug | `/zavetisca/{slug}` | `/en/shelters/{slug}` |
+| Structured data | `AnimalShelter` (name, address, telephone, openingHoursSpecification, areaServed as the municipality names, url) + `BreadcrumbList` (Najdimo › Zavetišča › name) | same |
+
+Length rule (60): if the title is longer, drop " · Najdimo"; if still longer, drop " – zavetišče za živali" / " – animal shelter".
+
+Alt text: the static map is decorative (`alt=""`), because the address is text.
 
 ---
 

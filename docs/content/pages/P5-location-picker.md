@@ -3,7 +3,7 @@ source: 03§P5; docs/design/pages/P5-location-picker.md
 page: P5 Location picker and privacy-preserving area
 stories: TASK-15 (FR-004)
 copy-for: docs/design/pages/P5-location-picker.md
-version: 0.2
+version: 0.3
 status: Draft, native Slovenian review pending
 date: 2026-10-15
 ---
@@ -97,6 +97,10 @@ Alert area (1 to 25 km, default 5 km):
 | location.outside_si | Ta kraj je zunaj Slovenije. Prijavo lahko oddate, vendar Najdimo zdaj deluje le v Sloveniji, zato jo bo videlo manj ljudi. | This place is outside Slovenia. You can still send the report, but Najdimo only works in Slovenia for now, so fewer people will see it. |
 | location.offline | Zemljevida ni mogoče naložiti. Kraj lahko izberete, ko boste spet povezani. Osnutek je shranjen. | The map cannot load. You can choose the place once you are back online. Your draft is saved. |
 | location.offline_retry | Poskusi znova | Try again |
+| location.offline_gps_set | Točka je določena po GPS. Ime kraja dodamo, ko boste spet povezani. | The point is set from GPS. We will add the place name when you are back online. |
+| location.search_offline | Iskanje krajev deluje samo s povezavo. Uporabite svojo lokacijo. | Place search needs a connection. Use your location instead. |
+
+Offline (v0.3): lost reports and the alert area use `location.offline` (confirm disabled). Found and sighted reports (FR-042) can still use "Use my location": the address line shows `location.offline_gps_set`, confirm stays enabled and the report joins the offline queue (P7 `report_found.offline_queued`); the search field shows `location.search_offline` instead of results.
 
 # 7. Fuzzed public area (display component)
 

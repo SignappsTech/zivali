@@ -3,7 +3,7 @@ source: 03§P7; docs/design/pages/P7-report-found.md
 page: P7 Report found or sighted (no account) and manage page
 stories: TASK-30, TASK-17 (FR-006, FR-003, FR-004)
 copy-for: docs/design/pages/P7-report-found.md
-version: 0.2
+version: 0.3
 status: Draft, native Slovenian review pending
 date: 2026-10-15
 ---
@@ -158,6 +158,14 @@ The SL placeholder describes a female animal on purpose (example only).
 | report_found.create_account | Ustvari račun in obdrži prijavo | Create an account to keep it |
 | report_found.share | Deli | Share |
 | report_found.held_note | Prijavo še pregledujemo. Ko jo preverimo, bo vidna vsem. Zasebna povezava že deluje. | We are still checking your report. Once checked, everyone will see it. Your private link already works. |
+
+Responsible shelter row (v0.3, FR-044, R-006.1), under the link block: the shared `shelter_row.*` keys from P6.
+
+- "Da, žival je pri meni": `shelter_row.found_body`, `shelter_row.not_replace`, the shelter, `shelter_row.call`, `shelter_row.details_link`, then `shelter_row.chip_line`.
+- "Ne, žival ni pri meni" (decided: shown, softer): `shelter_row.sighted_body`, the shelter, `shelter_row.call`, `shelter_row.details_link`; no `shelter_row.not_replace` and no chip line, because the person has no animal to report yet.
+- Short sighting flow from a listing (§7): no row; the owner is already notified.
+- Queued offline report: the same row on the "sent" screen after `report_found.offline_queued`, from the cached directory with `shelter_row.cached`.
+- No municipality or no confirmed shelter: `shelter_row.unknown_municipality` or `shelter_row.unconfirmed` with `shelter_row.directory_link`.
 
 # 9. Manage page (`/m`)
 
