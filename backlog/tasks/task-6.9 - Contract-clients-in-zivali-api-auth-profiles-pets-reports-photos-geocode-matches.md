@@ -1,11 +1,11 @@
 ---
 id: TASK-6.9
 title: 'REST clients in @zivali/api: auth, me, pets, reports, photos, geocode, matches'
-status: In Progress
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:12'
-updated_date: '2026-10-15 02:36'
+updated_date: '2026-10-15 03:07'
 labels:
   - fe
   - 'est:M'
