@@ -1006,7 +1006,7 @@
 				"properties": {
 					"id": { "type": "string", "format": "uuid" },
 					"kind": { "$ref": "#/components/schemas/ModerationFlagKind" },
-					"target_type": { "$ref": "#/components/schemas/AbuseTargetType" },
+					"target_type": { "$ref": "#/components/schemas/ModerationFlagTargetType" },
 					"target_id": { "type": "string", "format": "uuid" },
 					"details": { "type": "object", "additionalProperties": {} },
 					"created_at": { "type": "string", "format": "date-time" },
@@ -1023,6 +1023,7 @@
 				},
 				"required": ["items", "next_cursor"]
 			},
+			"ModerationFlagTargetType": { "type": "string", "enum": ["report", "message", "profile", "pet"] },
 			"ModerationState": { "type": "string", "enum": ["visible", "held", "hidden", "removed"] },
 			"MunicipalityRef": {
 				"type": "object",
