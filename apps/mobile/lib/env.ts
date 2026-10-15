@@ -11,6 +11,7 @@ const raw = {
 	EXPO_PUBLIC_PUSH_PROVIDER: process.env.EXPO_PUBLIC_PUSH_PROVIDER,
 	EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
 	EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
+	EXPO_PUBLIC_APPLE_SIGN_IN: process.env.EXPO_PUBLIC_APPLE_SIGN_IN,
 };
 
 // An empty value in .env.local counts as unset.
@@ -29,6 +30,8 @@ const schema = z
 		EXPO_PUBLIC_PUSH_PROVIDER: optional(z.enum(['mock', 'expo'])).transform((v) => v ?? 'mock'),
 		EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID: optional(z.string()),
 		EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID: optional(z.string()),
+		// Sign in with Apple waits for the Apple Developer account (Q-007): off unless "true" (also sets usesAppleSignIn).
+		EXPO_PUBLIC_APPLE_SIGN_IN: optional(z.enum(['true', 'false'])).transform((v) => v === 'true'),
 	})
 	.refine((e) => !(e.EXPO_PUBLIC_APP_ENV === 'production' && e.EXPO_PUBLIC_PUSH_PROVIDER === 'mock'), {
 		// Real users must never register the placeholder token.
