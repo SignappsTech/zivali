@@ -38,6 +38,12 @@ describe('containsContactData (C4 reward note)', () => {
 		'+386 41 123-456',
 		'IBAN SI56 1910 0000 0123 438',
 		'4111 1111 1111 1111',
+		'kličite 041.123.456',
+		'kličite 041  123  456',
+		'kličite (041) 123-456',
+		'kličite 041 123 456',
+		'kličite ０４１ １２３ ４５６',
+		'Velja do 15.10.2026, tel. 041 123 456',
 	])('%j contains contact data', (text) => {
 		expect(containsContactData(text)).toBe(true);
 	});
@@ -47,10 +53,27 @@ describe('containsContactData (C4 reward note)', () => {
 		'500 € za informacije',
 		'10 000 € nagrade',
 		'Velja do 15.10.2026',
+		'Velja od 1. 10. 2026 do 15. 10. 2026',
 		'Hvala vsem. Lep pozdrav',
 		'Pes je star 12 let',
 	])('%j is clean', (text) => {
 		expect(containsContactData(text)).toBe(false);
+	});
+
+	// Inputs that made the old URL / e-mail / digit regexes backtrack quadratically.
+	test.each([
+		['url', 'a.'.repeat(50_000)],
+		['url', 'a-'.repeat(50_000)],
+		['email', 'a'.repeat(100_000)],
+		['email', 'a@' + 'b'.repeat(99_998)],
+		['digits', '12345x'.repeat(16_667)],
+		['digits', '1' + ' '.repeat(99_998) + '1'],
+		['date', '11.11.1x'.repeat(12_500)],
+	])('100k chars of adversarial %s input finish in < 50 ms', (_, input) => {
+		containsContactData('warm-up 041');
+		const t0 = Date.now();
+		containsContactData(input);
+		expect(Date.now() - t0).toBeLessThan(50);
 	});
 });
 
@@ -61,5 +84,11 @@ describe('normalisePlace (C6)', () => {
 		expect(normalisePlace('  Cankarjeva ulica 5a, Kranj ')).toBe('cankarjeva ulica 5a kranj');
 		expect(normalisePlace('Ivančna Gorica')).toBe('ivancna gorica');
 		expect(normalisePlace('Lendava/Lendva')).toBe('lendava lendva');
+	});
+
+	test('maps letters NFD keeps (Đ, Ł, ß) to ASCII', () => {
+		expect(normalisePlace('Đurđevac')).toBe('durdevac');
+		expect(normalisePlace('ŁÓDŹ')).toBe('lodz');
+		expect(normalisePlace('Hauptstraße')).toBe('hauptstrasse');
 	});
 });

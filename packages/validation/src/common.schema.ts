@@ -14,8 +14,8 @@ export const Slug = z
 	.regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'Invalid slug');
 export const Lat = z.number().min(-90).max(90);
 export const Lng = z.number().min(-180).max(180);
-/** Trimmed, non-empty text of at most `max` characters. */
-export const text = (max: number) => z.string().trim().min(1).max(max);
+/** Trimmed, non-empty text of at most `max` characters. Too long aborts, so later refines never see huge input. */
+export const text = (max: number) => z.string().trim().min(1).max(max, { abort: true });
 /** "HH:MM", Europe/Ljubljana (quiet hours). */
 export const ClockTime = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'Expected HH:MM');
 

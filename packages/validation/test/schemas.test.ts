@@ -76,6 +76,16 @@ describe('CreateReportInput (C4)', () => {
 		expect(CreateReportInput.safeParse({ ...lost, reward_note: 'x'.repeat(81) }).success).toBe(false);
 	});
 
+	test('a 1 MB reward_note fails fast on length alone (refines never see it)', () => {
+		CreateReportInput.safeParse(lost); // warm-up
+		const huge = 'Kličite 041 123 456, ana@x.si\n'.repeat(35_000); // ~1 MB of contact data and newlines
+		const t0 = Date.now();
+		const r = CreateReportInput.safeParse({ ...lost, reward_note: huge });
+		const ms = Date.now() - t0;
+		expect(r.error?.issues.map((i) => `${i.path.join('.')}: ${i.code}`)).toEqual(['reward_note: too_big']);
+		expect(ms).toBeLessThan(50);
+	});
+
 	test('found and sighted reports reject reward fields', () => {
 		const r = CreateReportInput.safeParse({ ...lost, type: 'found', reward_eur: 50, reward_note: 'Hvala' });
 		expect(issues(r)).toEqual(['reward_eur: Lost reports only', 'reward_note: Lost reports only']);

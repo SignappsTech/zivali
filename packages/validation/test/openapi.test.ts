@@ -1,7 +1,9 @@
 import { OpenApiGeneratorV31, OpenAPIRegistry } from '@asteasolutions/zod-to-openapi';
 import { expect, test } from 'vitest';
 
-import { registerSchemas, registry, ReportList, ReportSearch, SyncReportsQuery } from '../src/index.ts';
+import * as root from '../src/index.ts';
+import { ReportList, ReportSearch, SyncReportsQuery } from '../src/index.ts';
+import { registerSchemas, registry } from '../src/openapi.ts';
 
 const generate = (r: OpenAPIRegistry) =>
 	new OpenApiGeneratorV31(r.definitions).generateDocument({
@@ -52,4 +54,9 @@ test('registerSchemas fills any registry (the API can keep its own)', () => {
 	expect(Object.keys(generate(own).components?.schemas ?? {})).toEqual(
 		Object.keys(generate(registry).components?.schemas ?? {})
 	);
+});
+
+test('the registry is not exported from the package root (keeps it out of app bundles)', () => {
+	expect(root).not.toHaveProperty('registry');
+	expect(root).not.toHaveProperty('registerSchemas');
 });
