@@ -6,7 +6,7 @@ Expo SDK 57 app (Expo Router, New Architecture, development builds). Repo map, s
 
 1. Copy the `apps/mobile/.env.local` block from [.env.example](../../.env.example) to `apps/mobile/.env.local` and fill it. `lib/env.ts` stops the app at startup and names any missing or invalid variable. On a device or emulator, use the LAN IP (or `10.0.2.2` in the Android emulator) instead of `localhost`.
 2. Install a development build once (it is needed because of native modules such as MapLibre and Firebase):
-    - cloud: `pnpm --filter mobile exec eas build --profile development --platform android` (`EXPO_TOKEN` from the root `.env.local`), or
+    - cloud: `npx eas-cli build --profile development --platform android` in `apps/mobile` (`EXPO_TOKEN` from the root `.env.local`), or
     - local: `pnpm --filter mobile android` (Android SDK and a running emulator or device).
 3. `pnpm --filter mobile start` starts Metro; open the app on the device and pick the server.
 
