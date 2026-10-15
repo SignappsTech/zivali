@@ -3,11 +3,11 @@ id: TASK-6.2
 title: >-
   DB foundation and lockdown: schema app, extensions, deny-all RLS, security
   tests, platform models, fixture users
-status: To Do
+status: In Progress
 assignee:
   - '@backend-dev'
 created_date: '2026-10-14 22:12'
-updated_date: '2026-10-14 23:35'
+updated_date: '2026-10-15 04:21'
 labels:
   - be
   - 'est:M'
@@ -39,9 +39,9 @@ Branch: agent/task-6.2-platform
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 The first Prisma migration creates schema app, enables postgis, vector and pgcrypto in schema extensions, revokes all on app and pgboss from anon, authenticated and public, and sets default privileges so new tables get no grants.
-- [ ] #2 Models profiles (USER_ROLE enum), app_config, audit_log, rate_limits and idempotency_keys exist per C1 and C3 with RLS enabled and no policies.
-- [ ] #3 Security tests (test/security) prove that every table in app and pgboss has RLS on and no policies, that anon and authenticated have no usage or table privileges there, and that PostgREST with the anon key exposes no app table (GET and POST).
-- [ ] #4 prisma/data-inventory.json lists every model and R2 bucket; a test fails when a model is missing.
-- [ ] #5 Seeder 00-users creates the fixture users in local Supabase Auth through the Admin API with profiles (roles user, shelter member, moderator, admin); local TOTP setup for mod and admin is documented.
+- [x] #1 The first Prisma migration creates schema app, enables postgis, vector and pgcrypto in schema extensions, revokes all on app and pgboss from anon, authenticated and public, and sets default privileges so new tables get no grants.
+- [x] #2 Models profiles (USER_ROLE enum), app_config, audit_log, rate_limits and idempotency_keys exist per C1 and C3 with RLS enabled and no policies.
+- [x] #3 Security tests (test/security) prove that every table in app and pgboss has RLS on and no policies, that anon and authenticated have no usage or table privileges there, and that PostgREST with the anon key exposes no app table (GET and POST).
+- [x] #4 prisma/data-inventory.json lists every model and R2 bucket; a test fails when a model is missing.
+- [x] #5 Seeder 00-users creates the fixture users in local Supabase Auth through the Admin API with profiles (roles user, shelter member, moderator, admin); local TOTP setup for mod and admin is documented.
 <!-- AC:END -->
