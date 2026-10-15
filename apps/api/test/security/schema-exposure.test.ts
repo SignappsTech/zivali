@@ -103,11 +103,11 @@ describe.each(['anon', 'authenticated'] as const)('PostgREST as %s exposes no ap
 		});
 	};
 
-	it('lists no app table in the OpenAPI root', async () => {
+	it('exposes nothing in the OpenAPI root', async () => {
 		const res = await rest('/');
 		expect(res.status).toBe(200);
 		const { paths } = (await res.json()) as { paths: Record<string, unknown> };
-		expect(Object.keys(paths).filter((path) => models.some((model) => path === `/${model}`))).toEqual([]);
+		expect(Object.keys(paths)).toEqual(['/']);
 	});
 
 	it.each(models)('refuses GET and POST on %s, also with the app profile', async (model) => {

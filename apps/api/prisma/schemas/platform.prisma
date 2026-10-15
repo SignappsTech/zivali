@@ -6,7 +6,7 @@ model app_config {
   value       Json
   is_public   Boolean  @default(false)
   description String?
-  updated_at  DateTime @updatedAt @db.Timestamptz(6)
+  updated_at  DateTime @default(now()) @updatedAt @db.Timestamptz(6)
 
   @@schema("app")
 }

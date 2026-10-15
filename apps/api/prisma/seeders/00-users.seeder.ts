@@ -38,10 +38,24 @@ export const fixtureUsers: FixtureUser[] = [
 	},
 ];
 
+const LOCAL_HOSTS = ['127.0.0.1', 'localhost', '[::1]', '::1'];
+
+// Seeding creates users with a known password: refuse unless both Supabase and the database are on this machine.
+export const isLocalStack = (...urls: (string | undefined)[]): boolean =>
+	urls.every((url) => {
+		try {
+			return !!url && LOCAL_HOSTS.includes(new URL(url).hostname);
+		} catch {
+			return false;
+		}
+	});
+
 export default async function seedUsers(): Promise<void> {
-	const { APP_ENV, SUPABASE_URL, SUPABASE_JWT_SECRET } = config;
-	if (APP_ENV !== 'local' || !SUPABASE_URL || !SUPABASE_JWT_SECRET) {
-		logger.warn('fixture users skipped: local only, needs SUPABASE_URL and SUPABASE_JWT_SECRET');
+	const { APP_ENV, SUPABASE_URL, SUPABASE_JWT_SECRET, DATABASE_URL } = config;
+	if (APP_ENV !== 'local' || !SUPABASE_JWT_SECRET || !isLocalStack(SUPABASE_URL, DATABASE_URL)) {
+		logger.warn(
+			'fixture users skipped: local only, needs SUPABASE_JWT_SECRET and SUPABASE_URL and DATABASE_URL on localhost'
+		);
 		return;
 	}
 

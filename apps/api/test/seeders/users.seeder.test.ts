@@ -1,12 +1,21 @@
 // Seeder 00-users against the local Supabase Auth (C1 §Seed): fixed ids, confirmed emails, roles, TOTP for staff.
 import { describe, expect, it } from 'vitest';
 
-import seedUsers, { fixtureUsers } from '../../prisma/seeders/00-users.seeder.ts';
+import seedUsers, { fixtureUsers, isLocalStack } from '../../prisma/seeders/00-users.seeder.ts';
 import { prisma } from '../../prisma/prisma.ts';
 
 const ids = fixtureUsers.map((user) => user.id);
 
 describe('seeder 00-users', () => {
+	it('refuses unless both URLs are local', () => {
+		const db = 'postgresql://postgres:x@127.0.0.1:55322/postgres?schema=app';
+		expect(isLocalStack('http://127.0.0.1:55321', db)).toBe(true);
+		expect(isLocalStack('http://localhost:55321', 'postgresql://u:p@[::1]:5432/db')).toBe(true);
+		expect(isLocalStack('https://abc.supabase.co', db)).toBe(false);
+		expect(isLocalStack('http://127.0.0.1:55321', 'postgresql://u:p@db.abc.supabase.co:5432/postgres')).toBe(false);
+		expect(isLocalStack(undefined, db)).toBe(false);
+	});
+
 	it('creates the fixture users in Auth with profiles and roles, idempotently', async () => {
 		await seedUsers();
 		await seedUsers();
