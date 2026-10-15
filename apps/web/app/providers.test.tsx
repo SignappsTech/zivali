@@ -6,6 +6,9 @@ import { api } from '@zivali/api/rtk';
 
 import { Providers } from './providers';
 
+// Page views need the App Router (components/analytics/screen-views.test.tsx).
+vi.mock('@/components/analytics/screen-views', () => ({ ScreenViews: () => null }));
+
 // The real baseQuery and store over the in-memory API instead of the network.
 vi.mock('@/lib/store', async () => {
 	const { createMockApi } = await import('@zivali/api/mock');
