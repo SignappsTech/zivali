@@ -6,6 +6,7 @@ import type { SessionState } from '@zivali/api/auth';
 import type { Me } from '@zivali/types';
 
 import { useLocaleSwitch } from './use-locale-switch';
+import { useProfileLocale } from './use-profile-locale';
 
 const nav = vi.hoisted(() => ({ replace: vi.fn(), pathname: '/', params: {} as Record<string, string> }));
 vi.mock('next/navigation', async (actual) => ({
@@ -34,17 +35,24 @@ const signedIn = (locale: 'sl' | 'en'): SessionState => ({
 	me: { id: 'u1', locale, is_anonymous: false } as Me,
 });
 
-function setup(locale: 'sl' | 'en', pathname: string, state: SessionState) {
+// A signed-in page runs useProfileLocale in SessionSync next to the switch; a public page runs the switch alone.
+function setup(locale: 'sl' | 'en', pathname: string, state: SessionState, profile = true) {
 	nav.pathname = pathname;
 	nav.params = { locale, ...(pathname.startsWith('/r/') && { code: 'Hk3vT9qP' }) };
 	auth.state = state;
-	return renderHook(() => useLocaleSwitch(), {
-		wrapper: ({ children }) => (
-			<NextIntlClientProvider locale={locale} messages={{}}>
-				{children}
-			</NextIntlClientProvider>
-		),
-	});
+	return renderHook(
+		() => {
+			if (profile) useProfileLocale();
+			return useLocaleSwitch();
+		},
+		{
+			wrapper: ({ children }) => (
+				<NextIntlClientProvider locale={locale} messages={{}}>
+					{children}
+				</NextIntlClientProvider>
+			),
+		}
+	);
 }
 
 afterEach(() => {
@@ -85,6 +93,15 @@ describe('useLocaleSwitch', () => {
 
 		auth.state = signedIn('en');
 		rerender();
+
+		expect(nav.replace).toHaveBeenCalledWith('/en/map');
+		expect(auth.updateMe).not.toHaveBeenCalled();
+	});
+
+	it('switches on a public page without the store, where SessionSync and the profile side do not run', async () => {
+		const { result } = setup('sl', '/zemljevid', signedIn('sl'), false);
+
+		await act(() => result.current.switchLocale('en'));
 
 		expect(nav.replace).toHaveBeenCalledWith('/en/map');
 		expect(auth.updateMe).not.toHaveBeenCalled();
