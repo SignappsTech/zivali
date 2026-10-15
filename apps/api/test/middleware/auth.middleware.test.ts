@@ -1,5 +1,6 @@
-// authMiddleware, optionalAuth and the guards (C1, C3) with locally signed tokens for every actor type, plus one real
-// ES256 token from the local Supabase Auth (JWKS path).
+// authMiddleware, optionalAuth and the guards (C1, C3) with locally signed tokens for every actor type over real
+// auth.users rows (email_verified comes from email_confirmed_at), plus one real ES256 token from the local Supabase
+// Auth (JWKS path).
 import { randomUUID } from 'node:crypto';
 
 import { SignJWT } from 'jose';
@@ -24,7 +25,7 @@ import {
 } from '../../middleware/permission.middleware.ts';
 import { prisma } from '../../prisma/prisma.ts';
 import { testApp } from '../helpers/app.ts';
-import { signTestToken, type TestTokenClaims } from '../helpers/token.ts';
+import { createAuthUser, deleteAuthUsers, signTestToken, type TestTokenClaims } from '../helpers/token.ts';
 
 const app = testApp((a) => {
 	const echo = (req: { user?: unknown }, res: { json: (v: unknown) => void }) => res.json(req.user ?? null);
@@ -43,18 +44,22 @@ const newId = () => {
 	ids.push(id);
 	return id;
 };
-const staff = { MODERATOR: newId(), ADMIN: newId(), SHELTER_MEMBER: newId() } satisfies Partial<
-	Record<USER_ROLE, string>
->;
+const newUser = async (options?: Parameters<typeof createAuthUser>[0]) => {
+	const id = await createAuthUser(options);
+	ids.push(id);
+	return id;
+};
+const staff = {} as Record<Extract<USER_ROLE, 'MODERATOR' | 'ADMIN' | 'SHELTER_MEMBER'>, string>;
 
 beforeAll(async () => {
+	for (const role of ['MODERATOR', 'ADMIN', 'SHELTER_MEMBER'] as const) staff[role] = await newUser();
 	await prisma.profiles.createMany({
 		data: Object.entries(staff).map(([role, id]) => ({ id, role: role as USER_ROLE })),
 	});
 });
 
 afterAll(async () => {
-	await prisma.profiles.deleteMany({ where: { id: { in: ids } } });
+	await deleteAuthUsers(ids);
 });
 
 const get = async (path: string, claims?: TestTokenClaims | string) => {
@@ -73,7 +78,7 @@ describe('authMiddleware', () => {
 	});
 
 	it('builds the actor and creates the missing profile with the token locale (ensureProfile)', async () => {
-		const sub = newId();
+		const sub = await newUser();
 		const res = await get('/auth', { sub, locale: 'en' });
 		expect(res.status).toBe(200);
 		expect(res.body).toEqual({
@@ -90,10 +95,29 @@ describe('authMiddleware', () => {
 		});
 	});
 
-	it('reads email_verified leniently (provider string "true") and never fails on odd optional claims', async () => {
-		const claims = { user_metadata: { email_verified: 'true' }, aal: 'aal9' } as unknown as TestTokenClaims;
-		const res = await get('/auth', { sub: newId(), ...claims });
-		expect(res.body).toMatchObject({ email_verified: true, aal: 'aal1' });
+	it('ignores email_verified forged into user_metadata (updateUser) on an unconfirmed account', async () => {
+		const sub = await newUser({ email_verified: false });
+		for (const email_verified of [true, 'true']) {
+			const forged = { sub, user_metadata: { email_verified } } as unknown as TestTokenClaims;
+			expect((await get('/auth', forged)).body).toMatchObject({ user_id: sub, email_verified: false });
+			const res = await get('/verified', forged);
+			expect(res.status).toBe(403);
+			expect(res.body.error.code).toBe('UNVERIFIED_EMAIL');
+		}
+	});
+
+	it('reads email_verified from auth.users.email_confirmed_at, cached with the profile for 60 s', async () => {
+		const sub = await newUser({ email_verified: false });
+		expect((await get('/verified', { sub })).status).toBe(403);
+		await prisma.$executeRaw`update auth.users set email_confirmed_at = now() where id = ${sub}::uuid`;
+		expect((await get('/verified', { sub })).status).toBe(403);
+		invalidateProfile(sub);
+		expect((await get('/verified', { sub })).status).toBe(200);
+	});
+
+	it('never fails on odd optional claims (unknown aal = aal1)', async () => {
+		const res = await get('/auth', { sub: newId(), aal: 'aal9' } as unknown as TestTokenClaims);
+		expect(res.body).toMatchObject({ aal: 'aal1', email_verified: false });
 	});
 
 	it.each([
@@ -137,12 +161,15 @@ describe('authMiddleware', () => {
 	});
 
 	it('flips is_anonymous on the first request after an anonymous finder converts (same id)', async () => {
-		const sub = newId();
+		const sub = await newUser({ is_anonymous: true });
 		expect((await get('/auth', { sub, is_anonymous: true })).body).toMatchObject({
 			is_anonymous: true,
 			email_verified: false,
 		});
 		expect((await prisma.profiles.findUnique({ where: { id: sub } }))?.is_anonymous).toBe(true);
+		await prisma.$executeRaw`
+			update auth.users set is_anonymous = false, email = ${`${sub}@test.invalid`}, email_confirmed_at = now()
+			where id = ${sub}::uuid`;
 		expect((await get('/auth', { sub })).body).toMatchObject({ is_anonymous: false, email_verified: true });
 		expect((await prisma.profiles.findUnique({ where: { id: sub } }))?.is_anonymous).toBe(false);
 	});
@@ -160,14 +187,10 @@ describe('authMiddleware', () => {
 		});
 		const { access_token, user } = (await signup.json()) as { access_token: string; user: { id: string } };
 		ids.push(user.id);
-		try {
-			expect(JSON.parse(Buffer.from(access_token.split('.')[0], 'base64url').toString()).alg).not.toBe('HS256');
-			const res = await get('/auth', access_token);
-			expect(res.status).toBe(200);
-			expect(res.body).toMatchObject({ user_id: user.id, is_anonymous: true, role: 'USER', aal: 'aal1' });
-		} finally {
-			await prisma.$executeRaw`delete from auth.users where id = ${user.id}::uuid`;
-		}
+		expect(JSON.parse(Buffer.from(access_token.split('.')[0], 'base64url').toString()).alg).not.toBe('HS256');
+		const res = await get('/auth', access_token);
+		expect(res.status).toBe(200);
+		expect(res.body).toMatchObject({ user_id: user.id, is_anonymous: true, role: 'USER', aal: 'aal1' });
 	});
 });
 
@@ -182,15 +205,15 @@ describe('optionalAuth', () => {
 });
 
 describe('guards (C1 codes)', () => {
-	const actors: Record<string, () => TestTokenClaims> = {
-		'anonymous finder': () => ({ sub: newId(), is_anonymous: true }),
-		'unverified user': () => ({ sub: newId(), email_verified: false }),
-		'verified user': () => ({ sub: newId() }),
-		'shelter member': () => ({ sub: staff.SHELTER_MEMBER, aal: 'aal2' }),
-		'moderator aal1': () => ({ sub: staff.MODERATOR }),
-		'moderator aal2': () => ({ sub: staff.MODERATOR, aal: 'aal2' }),
-		'admin aal1': () => ({ sub: staff.ADMIN }),
-		'admin aal2': () => ({ sub: staff.ADMIN, aal: 'aal2' }),
+	const actors: Record<string, () => Promise<TestTokenClaims>> = {
+		'anonymous finder': async () => ({ sub: await newUser({ is_anonymous: true }), is_anonymous: true }),
+		'unverified user': async () => ({ sub: await newUser({ email_verified: false }) }),
+		'verified user': async () => ({ sub: await newUser() }),
+		'shelter member': async () => ({ sub: staff.SHELTER_MEMBER, aal: 'aal2' }),
+		'moderator aal1': async () => ({ sub: staff.MODERATOR }),
+		'moderator aal2': async () => ({ sub: staff.MODERATOR, aal: 'aal2' }),
+		'admin aal1': async () => ({ sub: staff.ADMIN }),
+		'admin aal2': async () => ({ sub: staff.ADMIN, aal: 'aal2' }),
 	};
 	const OK = 200;
 	// Expected per route: 200 or the error code.
@@ -230,7 +253,7 @@ describe('guards (C1 codes)', () => {
 	);
 
 	it.each(cases)('%s as %s → %s', async (path, actor, expected) => {
-		const res = await get(path, actors[actor]());
+		const res = await get(path, await actors[actor]());
 		if (expected === OK) expect(res.status).toBe(200);
 		else {
 			expect(res.status).toBe(status[expected as keyof typeof status]);

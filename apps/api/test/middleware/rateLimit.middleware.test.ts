@@ -73,6 +73,27 @@ describe('rateLimit', () => {
 		expect((await prisma.rate_limits.findFirst({ where: { name, key: sub } }))?.count).toBe(2);
 	});
 
+	it('keys anonymous finders by device, else IP, never by their throwaway user id', async () => {
+		const { name, app } = limited({ key: 'user', limit: 1 });
+		const asNewAnonymous = async (device?: string) => {
+			const sub = randomUUID();
+			users.push(sub);
+			const req = request(app)
+				.post('/x')
+				.set('Authorization', `Bearer ${await signTestToken({ sub, is_anonymous: true })}`);
+			return (device ? req.set('x-device-id', device) : req).then((res) => res.status);
+		};
+		const device = randomUUID();
+		expect(await asNewAnonymous(device)).toBe(200);
+		expect(await asNewAnonymous(device)).toBe(429);
+		expect(await asNewAnonymous(randomUUID())).toBe(200);
+		expect(await asNewAnonymous()).toBe(200);
+		expect(await asNewAnonymous()).toBe(429);
+		const rows = await prisma.rate_limits.findMany({ where: { name } });
+		expect(rows).toHaveLength(3);
+		for (const row of rows) expect(users).not.toContain(row.key);
+	});
+
 	it('takes limit and window from app_config rate.<name> when set', async () => {
 		const { name, app } = limited({ key: 'ip', limit: 100 });
 		await prisma.app_config.create({ data: { key: `rate.${name}`, value: { limit: 1, window: 60 } } });
@@ -81,5 +102,20 @@ describe('rateLimit', () => {
 		const res = await request(app).post('/x');
 		expect(res.status).toBe(429);
 		expect(Number(res.headers['retry-after'])).toBeLessThanOrEqual(60);
+	});
+
+	it.each([
+		['a zero limit', { limit: 0, window: 60 }],
+		['a negative limit', { limit: -1, window: 60 }],
+		['a zero window', { limit: 1, window: 0 }],
+		['a negative window', { limit: 1, window: -60 }],
+		['a window over 48 h', { limit: 1, window: 172_801 }],
+	])('ignores an app_config override with %s (code defaults apply)', async (_name, value) => {
+		const { name, app } = limited({ key: 'ip' });
+		await prisma.app_config.create({ data: { key: `rate.${name}`, value } });
+		configStore.invalidate();
+		expect((await request(app).post('/x')).status).toBe(200);
+		expect((await request(app).post('/x')).status).toBe(200);
+		expect((await request(app).post('/x')).status).toBe(429);
 	});
 });

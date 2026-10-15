@@ -6,7 +6,11 @@ import { lockDownPgboss } from './lib/pgboss-lockdown.ts';
 logger.info('worker started; no queues registered yet');
 
 // CH-106: RLS on the tables pg-boss creates at runtime; TASK-6.3 moves this after boss.start() and createQueue().
-lockDownPgboss().catch((err: unknown) => logger.error({ err }, 'pgboss lockdown failed'));
+lockDownPgboss().catch((err: unknown) => {
+	// Without RLS on pgboss the database is exposed; refuse to run (CH-106).
+	logger.fatal({ err }, 'pgboss lockdown failed');
+	process.exit(1);
+});
 
 // ponytail: an idle timer keeps the process up until pg-boss (TASK-6.3) holds it open.
 const idle = setInterval(() => {}, 1 << 30);

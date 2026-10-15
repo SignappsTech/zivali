@@ -14,7 +14,11 @@ const server = app.listen(config.PORT, () => {
 });
 
 // CH-106: RLS on the tables pg-boss creates at runtime. TASK-6.3 runs this after boss.start() and createQueue().
-lockDownPgboss().catch((err: unknown) => logger.error({ err }, 'pgboss lockdown failed'));
+lockDownPgboss().catch((err: unknown) => {
+	// Without RLS on pgboss the database is exposed; refuse to run (CH-106).
+	logger.fatal({ err }, 'pgboss lockdown failed');
+	process.exit(1);
+});
 
 function shutdown(signal: NodeJS.Signals): void {
 	logger.info({ signal }, 'api shutting down');

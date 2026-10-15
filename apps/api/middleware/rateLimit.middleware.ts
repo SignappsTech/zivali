@@ -1,6 +1,7 @@
 // rateLimit(name, { limit, window, key }) (C1): fixed window counters in app.rate_limits. The key is the user id,
 // or an HMAC (RATE_SALT) of the IP or x-device-id. app_config `rate.<name>` = { limit, window } overrides the code
-// defaults without a deploy. Over the limit: 429 RATE_LIMITED with Retry-After and details.retry_after_s.
+// defaults without a deploy (a window over 48 h or any non-positive value is ignored). Over the limit: 429
+// RATE_LIMITED with Retry-After and details.retry_after_s.
 import type { Request, RequestHandler } from 'express';
 import { z } from 'zod';
 
@@ -13,16 +14,23 @@ export type RateLimitOptions = {
 	limit: number;
 	/** Window length in seconds. */
 	window: number;
-	/** 'user' falls back to the IP when signed out; 'device' falls back to the IP without x-device-id. */
+	/**
+	 * 'user' counts anonymous finders per device (else IP), since each anonymous sign-in mints a new user id, and falls
+	 * back to the IP when signed out; 'device' falls back to the IP without x-device-id.
+	 */
 	key: 'user' | 'ip' | 'device';
 };
 
-const Override = z.object({ limit: z.number().int().positive(), window: z.number().int().positive() });
+const MAX_WINDOW_S = 172_800;
+const Override = z.object({
+	limit: z.number().int().positive(),
+	window: z.number().int().positive().max(MAX_WINDOW_S),
+});
 
 function rateKey(req: Request, kind: RateLimitOptions['key']): string {
-	if (kind === 'user' && req.user) return req.user.user_id;
+	if (kind === 'user' && req.user && !req.user.is_anonymous) return req.user.user_id;
 	const { ip_hash, device_hash } = requestHashes(req);
-	if (kind === 'device' && device_hash) return device_hash;
+	if ((kind === 'device' || (kind === 'user' && req.user?.is_anonymous)) && device_hash) return device_hash;
 	return ip_hash ?? 'unknown-ip';
 }
 

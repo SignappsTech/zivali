@@ -1,6 +1,6 @@
-// idempotency (C1): 24 h replay for the same user, CONFLICT for another user or while in flight, encrypted bodies,
-// failures not stored.
-import { randomUUID } from 'node:crypto';
+// idempotency (C1): 24 h replay for the same user and body, CONFLICT for another user or body or while in flight,
+// encrypted bodies, failures (5xx, 429, 401, 403) not stored.
+import { createHash, randomUUID } from 'node:crypto';
 
 import request from 'supertest';
 import { afterAll, describe, expect, it, vi } from 'vitest';
@@ -21,11 +21,13 @@ const newKey = () => {
 };
 
 let runs = 0;
+let deny: 'UNAUTHENTICATED' | 'FORBIDDEN' | undefined;
 const app = testApp((a) => {
 	a.post('/reports', authMiddleware, idempotency({ required: true }), (req, res) => {
 		runs++;
 		if (req.body.fail === 'crash') throw new Error('boom');
 		if (req.body.fail === 'duplicate') throw new AppError('DUPLICATE_OPEN_REPORT');
+		if (deny) throw new AppError(deny);
 		res.status(201).json({ run: runs, manage_token: 'secret-manage-token' });
 	});
 	a.post('/optional', authMiddleware, idempotency(), (_req, res) => res.json({ run: ++runs }));
@@ -41,6 +43,8 @@ afterAll(async () => {
 });
 
 const tokens = await Promise.all(users.map((sub) => signTestToken({ sub })));
+// What the route column holds for POST /reports with the default body {}.
+const reportsRoute = `POST /reports ${createHash('sha256').update('{}').digest('hex')}`;
 const post = (key: string | undefined, body: object = {}, user = 0, path = '/reports') => {
 	const req = request(app).post(path).set('Authorization', `Bearer ${tokens[user]}`);
 	return (key ? req.set('Idempotency-Key', key) : req).send(body);
@@ -72,7 +76,7 @@ describe('idempotency', () => {
 		const key = newKey();
 		await post(key);
 		const row = await prisma.idempotency_keys.findUnique({ where: { key } });
-		expect(row).toMatchObject({ user_id: users[0], route: 'POST /reports', status: 201 });
+		expect(row).toMatchObject({ user_id: users[0], route: reportsRoute, status: 201 });
 		expect(typeof row?.body).toBe('string');
 		expect(JSON.stringify(row?.body)).not.toContain('secret-manage-token');
 	});
@@ -85,9 +89,19 @@ describe('idempotency', () => {
 		expect(res.body.error.code).toBe('CONFLICT');
 	});
 
+	it('answers 409 CONFLICT when the same key comes with another body; key order does not matter', async () => {
+		const key = newKey();
+		expect((await post(key, { a: 1, b: [1, { c: 2, d: 3 }] })).status).toBe(201);
+		const reordered = await post(key, { b: [1, { d: 3, c: 2 }], a: 1 });
+		expect(reordered.headers['idempotent-replayed']).toBe('true');
+		const res = await post(key, { a: 2, b: [1, { c: 2, d: 3 }] });
+		expect(res.status).toBe(409);
+		expect(res.body.error).toMatchObject({ code: 'CONFLICT', message: expect.stringMatching(/another request/) });
+	});
+
 	it('answers 409 CONFLICT while the first request is still running', async () => {
 		const key = newKey();
-		await prisma.idempotency_keys.create({ data: { key, user_id: users[0], route: 'POST /reports' } });
+		await prisma.idempotency_keys.create({ data: { key, user_id: users[0], route: reportsRoute } });
 		const res = await post(key);
 		expect(res.status).toBe(409);
 		expect(res.body.error.message).toMatch(/in progress/);
@@ -106,6 +120,20 @@ describe('idempotency', () => {
 		expect(replayed.body.error.code).toBe('DUPLICATE_OPEN_REPORT');
 		expect(replayed.headers['idempotent-replayed']).toBe('true');
 		expect(runs).toBe(before);
+	});
+
+	it.each(['UNAUTHENTICATED', 'FORBIDDEN'] as const)('never stores a %s answer: the retry runs', async (code) => {
+		const key = newKey();
+		deny = code;
+		try {
+			expect((await post(key)).body.error.code).toBe(code);
+		} finally {
+			deny = undefined;
+		}
+		expect(await prisma.idempotency_keys.findUnique({ where: { key } })).toBeNull();
+		const before = runs;
+		expect((await post(key)).status).toBe(201);
+		expect(runs).toBe(before + 1);
 	});
 
 	it('treats a key older than 24 h, or one stuck in flight for over a minute, as new', async () => {

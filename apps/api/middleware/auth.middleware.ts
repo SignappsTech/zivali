@@ -1,7 +1,8 @@
 // Supabase access tokens (C3): verified with jose against the project JWKS (asymmetric keys), audience
 // `authenticated`, issuer `${SUPABASE_URL}/auth/v1`, exp checked. The HS256 shared secret is accepted only when
-// APP_ENV=local. req.user = { user_id, role, is_anonymous, aal, email_verified, locale }; role and locale come from
-// app.profiles (cached 60 s), never from token claims. Tokens are never logged.
+// APP_ENV=local. req.user = { user_id, role, is_anonymous, aal, email_verified, locale }; role, locale and
+// email_verified (auth.users.email_confirmed_at) come from the database (cached 60 s), never from token claims: the
+// user can write user_metadata (updateUser). Tokens are never logged.
 import type { Request, RequestHandler } from 'express';
 import { createRemoteJWKSet, errors, jwtVerify, type JWTVerifyGetKey } from 'jose';
 import { z } from 'zod';
@@ -16,7 +17,8 @@ const Claims = z.object({
 	is_anonymous: z.boolean().default(false),
 	// Lenient on the rest: an odd value must never lock a user out, nor grant more (unknown aal = aal1).
 	aal: z.enum(['aal1', 'aal2']).catch('aal1'),
-	user_metadata: z.object({ email_verified: z.unknown(), locale: z.unknown() }).partial().nullish().catch(null),
+	// Only the initial profile locale; nothing that grants anything.
+	user_metadata: z.object({ locale: z.unknown() }).partial().nullish().catch(null),
 });
 export type Claims = z.infer<typeof Claims>;
 
@@ -87,9 +89,7 @@ async function authenticate(token: string): Promise<Actor> {
 		role: profile.role,
 		is_anonymous: claims.is_anonymous,
 		aal: claims.aal,
-		// Supabase sets user_metadata.email_verified once the address is confirmed (email) or the provider says so
-		// (some providers send the string "true").
-		email_verified: !claims.is_anonymous && String(claims.user_metadata?.email_verified) === 'true',
+		email_verified: !claims.is_anonymous && profile.email_verified,
 		locale: profile.locale === 'en' ? 'en' : 'sl',
 	};
 }

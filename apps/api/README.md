@@ -122,20 +122,20 @@ route(
 	spec,
 	authMiddleware,
 	rateLimit('reports.create', { limit: 10, window: 3600, key: 'user' }),
-	idempotency({ required: true }),
 	requireVerifiedOrAnonymous,
+	idempotency({ required: true }), // last, right before the controller
 	ReportsController.create
 );
 route(spec, authMiddleware, requireRole('moderator'), requireAal2, AdminController.list);
 ```
 
-- `authMiddleware` verifies the Supabase access token with `jose` against `${SUPABASE_URL}/auth/v1/.well-known/jwks.json` (audience `authenticated`, issuer, exp); the HS256 `SUPABASE_JWT_SECRET` is accepted only when `APP_ENV=local`. It sets `req.user = { user_id, role, is_anonymous, aal, email_verified, locale }` with role and locale from `app.profiles` (cached 60 s; `invalidateProfile(id)` after a role change) and creates a missing profile (`ensureProfile`). `optionalAuth` never answers 401.
+- `authMiddleware` verifies the Supabase access token with `jose` against `${SUPABASE_URL}/auth/v1/.well-known/jwks.json` (audience `authenticated`, issuer, exp); the HS256 `SUPABASE_JWT_SECRET` is accepted only when `APP_ENV=local`. It sets `req.user = { user_id, role, is_anonymous, aal, email_verified, locale }` with role and locale from `app.profiles` and `email_verified` from `auth.users.email_confirmed_at` (never from `user_metadata`, which users can write), cached 60 s (`invalidateProfile(id)` after a role change), and creates a missing profile (`ensureProfile`). `optionalAuth` never answers 401.
 - Guards (`permission.middleware.ts`): anonymous finders count as signed out (`UNAUTHENTICATED`) except in `requireVerifiedOrAnonymous`; `requireVerified` → `UNVERIFIED_EMAIL`, `requireRole('moderator' | 'admin')` → `FORBIDDEN`, `requireAal2` → `AAL2_REQUIRED`, `rejectAnonymous`.
-- `rateLimit(name, { limit, window (s), key: 'user' | 'ip' | 'device' })`: fixed window in `app.rate_limits`, IPs and `x-device-id` stored as HMAC (`RATE_SALT`); `app_config` `rate.<name>` = `{ limit, window }` overrides the code values; 429 with `Retry-After`.
-- `idempotency({ required })` after `authMiddleware`: same user + same key within 24 h replays the stored response (`Idempotent-Replayed: true`), another user or a running first request → 409 `CONFLICT`; bodies stored encrypted (`IDEMPOTENCY_KEY`); 5xx and 429 are not stored.
+- `rateLimit(name, { limit, window (s), key: 'user' | 'ip' | 'device' })`: fixed window in `app.rate_limits`, IPs and `x-device-id` stored as HMAC (`RATE_SALT`); `key: 'user'` counts anonymous finders per device (else IP), signed-out callers per IP; `app_config` `rate.<name>` = `{ limit, window }` overrides the code values (positive integers, window ≤ 172 800 s, else ignored); 429 with `Retry-After`.
+- `idempotency({ required })` last, right before the controller (after auth and guards): same user + key + route + body (canonical JSON, SHA-256) within 24 h replays the stored response (`Idempotent-Replayed: true`); another user, route or body, or a running first request → 409 `CONFLICT`; bodies stored encrypted (`IDEMPOTENCY_KEY`); 5xx, 429, 401 and 403 are not stored.
 - Staff and destructive services write `AuditDao.write(tx, { actor_id, action, target_type, target_id, diff, note })` (`domains/platform`). `PlatformDao.purgeExpired(now)` is for the retention job.
-- pg-boss tables get RLS from `lockDownPgboss()` (`lib/pgboss-lockdown.ts`) at startup, after pg-boss created them (CH-106).
+- pg-boss tables get RLS from `lockDownPgboss()` (`lib/pgboss-lockdown.ts`) at startup, after pg-boss created them (CH-106); if it fails, the API and the worker log `fatal` and exit 1.
 
 ## Tests
 
-`test/helpers/token.ts` signs Supabase-style access tokens with the local `SUPABASE_JWT_SECRET` (HS256, audience `authenticated`): `await signTestToken({ sub, aal: 'aal2', is_anonymous })`. Test files run one at a time against the shared local database; `test/global-setup.ts` applies pending migrations (never resets). `test/security` and `test/seeders` also call the local Supabase at `SUPABASE_URL` (PostgREST, Auth): an `.env.local` copied before TASK-6.2 needs that line from `.env.example`, and one copied before TASK-6.12 needs `RATE_SALT` and `IDEMPOTENCY_KEY`.
+`test/helpers/token.ts` signs Supabase-style access tokens with the local `SUPABASE_JWT_SECRET` (HS256, audience `authenticated`): `await signTestToken({ sub, aal: 'aal2', is_anonymous })`. A verified email needs a real `auth.users` row: `sub = await createAuthUser({ email_verified, is_anonymous })`, cleaned up with `deleteAuthUsers(ids)`. Test files run one at a time against the shared local database; `test/global-setup.ts` applies pending migrations (never resets). `test/security` and `test/seeders` also call the local Supabase at `SUPABASE_URL` (PostgREST, Auth): an `.env.local` copied before TASK-6.2 needs that line from `.env.example`, and one copied before TASK-6.12 needs `RATE_SALT` and `IDEMPOTENCY_KEY`.
