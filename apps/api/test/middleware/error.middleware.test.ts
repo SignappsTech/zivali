@@ -35,6 +35,9 @@ app.get('/p2025', async () => {
 app.get('/boom', async () => {
 	throw new Error('secret internals');
 });
+app.get('/bad-mapper', () => {
+	z.object({ id: z.uuid() }).parse({ id: 'nope' }); // a .parse outside validate(): our bug, not bad input
+});
 app.post(
 	'/items/:id',
 	validate(z.object({ id: z.uuid() }), 'params'),
@@ -84,6 +87,12 @@ describe('error middleware', () => {
 		expect(res.status).toBe(500);
 		expect(res.body).toEqual({ error: { code: 'INTERNAL', message: 'Internal server error' } });
 		expect(JSON.stringify(res.body)).not.toContain('secret');
+	});
+
+	it('maps a ZodError thrown outside validate() to 500 INTERNAL', async () => {
+		const res = await request(app).get('/bad-mapper');
+		expect(res.status).toBe(500);
+		expect(res.body).toEqual({ error: { code: 'INTERNAL', message: 'Internal server error' } });
 	});
 
 	it('maps malformed JSON to VALIDATION', async () => {

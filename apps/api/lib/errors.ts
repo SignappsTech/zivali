@@ -7,12 +7,20 @@ export { ERROR_HTTP_STATUS, type ErrorCode };
 export class AppError extends Error {
 	readonly code: ErrorCode;
 	readonly details?: Record<string, unknown>;
+	/** VALIDATION only: one entry per failed field, `path` is dotted ('location.lat'). */
+	readonly issues?: { path: string; message: string }[];
 
-	constructor(code: ErrorCode, message: string = code, details?: Record<string, unknown>) {
+	constructor(
+		code: ErrorCode,
+		message: string = code,
+		details?: Record<string, unknown>,
+		issues?: { path: string; message: string }[]
+	) {
 		super(message);
 		this.name = 'AppError';
 		this.code = code;
 		this.details = details;
+		this.issues = issues;
 	}
 
 	get status(): number {

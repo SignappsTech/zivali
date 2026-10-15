@@ -1,5 +1,7 @@
 // `pnpm --filter api gen:openapi`: writes apps/api/openapi.json from the route declarations (input for the RTK Query
 // codegen). With --check it only compares and fails when the committed file is stale (run by `lint`, so by verify).
+// Must stay the first import: it installs the zod-to-openapi extension before any schema module loads.
+import '@zivali/validation/openapi';
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 

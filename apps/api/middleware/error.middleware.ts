@@ -1,7 +1,6 @@
 // Central error middleware (C1): every failure leaves as { error: { code, message, details?, issues? } }.
 // Express 5 forwards thrown errors and rejected promises here, so controllers and domains never catch to rethrow.
 import type { ErrorRequestHandler, RequestHandler } from 'express';
-import { ZodError } from 'zod';
 
 import { Prisma } from '../generated/client.ts';
 import { AppError } from '../lib/errors.ts';
@@ -25,20 +24,8 @@ export const errorHandler: ErrorRequestHandler = (err, req, res, next) => {
 	// A response already streaming cannot change status; Express closes the connection.
 	if (res.headersSent) return next(err);
 
-	if (err instanceof ZodError) {
-		res.status(400).json({
-			error: {
-				code: 'VALIDATION',
-				message: 'Validation failed',
-				issues: err.issues.map((issue) => ({
-					path: issue.path.length ? issue.path.map(String).join('.') : '(root)',
-					message: issue.message,
-				})),
-			},
-		});
-		return;
-	}
-
+	// Only validate() produces VALIDATION from Zod. Any other ZodError (e.g. a failed .parse in a mapper) is our
+	// bug, not bad input: it falls through to INTERNAL and is logged.
 	const known = toAppError(err);
 	if (!known) {
 		req.log.error({ err }, 'unhandled error');
@@ -50,7 +37,12 @@ export const errorHandler: ErrorRequestHandler = (err, req, res, next) => {
 	if (known.code === 'RATE_LIMITED' && typeof retryAfter === 'number') res.set('Retry-After', String(retryAfter));
 
 	res.status(known.status).json({
-		error: { code: known.code, message: known.message, ...(known.details && { details: known.details }) },
+		error: {
+			code: known.code,
+			message: known.message,
+			...(known.details && { details: known.details }),
+			...(known.issues && { issues: known.issues }),
+		},
 	});
 };
 

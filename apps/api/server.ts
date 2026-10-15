@@ -1,4 +1,6 @@
 // HTTP entry. SIGTERM/SIGINT: stop accepting, let in-flight requests finish, disconnect Prisma, exit.
+// Must stay the first import: it installs the zod-to-openapi extension before any schema module loads.
+import '@zivali/validation/openapi';
 import { app } from './app.ts';
 import { config } from './lib/config.ts';
 import { logger } from './lib/logger.ts';

@@ -11,7 +11,11 @@ const adapter = new PrismaPg(
 	{ schema: 'app' }
 );
 
-export const prisma = new PrismaClient({ adapter });
+export const prisma = new PrismaClient({
+	adapter,
+	// Unmapped Prisma errors must not print query args (they will include lat/lng).
+	errorFormat: 'minimal',
+});
 
 export type { Prisma } from '../generated/client.ts';
 export default prisma;

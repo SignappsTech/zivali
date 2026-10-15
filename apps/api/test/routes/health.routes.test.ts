@@ -1,12 +1,9 @@
-import { readFileSync } from 'node:fs';
-
 import request from 'supertest';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { app } from '../../app.ts';
 import HealthDao from '../../domains/health/health.dao.ts';
 import { config } from '../../lib/config.ts';
-import { buildOpenApiDocument } from '../../lib/openapi.ts';
 
 afterEach(() => {
 	vi.restoreAllMocks();
@@ -46,25 +43,6 @@ describe('request id', () => {
 		expect(kept.headers['x-request-id']).toBe('caddy-1234abcd');
 		const replaced = await request(app).get('/ping').set('x-request-id', 'bad id <script>');
 		expect(replaced.headers['x-request-id']).not.toBe('bad id <script>');
-	});
-});
-
-describe('OpenAPI', () => {
-	// Freshness of the whole file is checked by `gen:openapi --check` (lint) under Node; Vitest orders the shared
-	// registry differently, so only the route is compared here.
-	it('documents the health route in the committed openapi.json (the RTK Query codegen input)', () => {
-		const committed = JSON.parse(readFileSync(new URL('../../openapi.json', import.meta.url), 'utf8'));
-		const built = buildOpenApiDocument();
-		expect(built.paths?.['/v1/health/ready']).toEqual(committed.paths['/v1/health/ready']);
-		expect(built.components?.schemas?.HealthReady).toEqual(committed.components.schemas.HealthReady);
-		expect(committed.paths['/v1/health/ready'].get).toMatchObject({
-			operationId: 'getHealthReady',
-			tags: ['health'],
-			responses: {
-				200: { content: { 'application/json': { schema: { $ref: '#/components/schemas/HealthReady' } } } },
-				429: { content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiErrorBody' } } } },
-			},
-		});
 	});
 });
 

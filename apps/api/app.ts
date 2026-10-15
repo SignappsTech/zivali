@@ -1,8 +1,10 @@
 // Builds the Express app in the ADR-020 middleware order; server.ts listens, tests use it with Supertest.
+// Must stay the first import: it installs the zod-to-openapi extension before any schema module loads.
+import '@zivali/validation/openapi';
 import compression from 'compression';
 import cors from 'cors';
-import express from 'express';
-import { rateLimit } from 'express-rate-limit';
+import express, { type Request } from 'express';
+import { rateLimit, type RateLimitInfo } from 'express-rate-limit';
 import helmet from 'helmet';
 
 import { config } from './lib/config.ts';
@@ -33,8 +35,14 @@ app.use(
 		limit: 600,
 		standardHeaders: 'draft-8',
 		legacyHeaders: false,
-		handler: (_req, _res, next) => {
-			next(new AppError('RATE_LIMITED', 'Too many requests', { retry_after_s: 60 }));
+		handler: (req, _res, next) => {
+			const retryAfter = Math.ceil(
+				(((req as Request & { rateLimit: RateLimitInfo }).rateLimit.resetTime?.getTime() ??
+					Date.now() + 60_000) -
+					Date.now()) /
+					1000
+			);
+			next(new AppError('RATE_LIMITED', 'Too many requests', { retry_after_s: Math.max(1, retryAfter) }));
 		},
 	})
 );

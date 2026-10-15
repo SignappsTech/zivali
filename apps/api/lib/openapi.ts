@@ -93,7 +93,13 @@ export function apiRoutes(router: Router, basePath: string) {
 			const schema = request[source];
 			return schema ? [validate(schema, source)] : [];
 		});
-		router[method](path, ...validators, ...handlers);
+		// First handler: record the route pattern for the request logger (see lib/logger.ts).
+		const route = `${method.toUpperCase()} ${basePath}${path === '/' ? '' : path}`;
+		const setRoute: RequestHandler = (_req, res, next) => {
+			res.locals.route = route;
+			next();
+		};
+		router[method](path, setRoute, ...validators, ...handlers);
 	};
 }
 

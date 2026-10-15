@@ -1,6 +1,6 @@
 // pino: JSON in staging and production, pretty locally, silent in tests. Never log PII, tokens, request bodies,
 // query strings or locations (C1, C6): request logs carry the route pattern only.
-import type { Request } from 'express';
+import type { Request, Response } from 'express';
 import { pino, type Logger, type LoggerOptions } from 'pino';
 import { pinoHttp } from 'pino-http';
 
@@ -43,8 +43,11 @@ export function requestLogger(base: Logger = logger) {
 		// Called for the child logger at the start (nothing matched yet: no props) and for the completion line.
 		customProps: (req, res) => {
 			if (!res.writableEnded) return {};
+			// apiRoutes() stores the pattern in res.locals.route: Express restores req.baseUrl on next(err), so
+			// building it from req would log errored requests as e.g. `GET /ready`.
 			const { method, baseUrl, route } = req as Request;
-			return { route: `${method} ${route ? `${baseUrl}${route.path}` : '(no route)'}` };
+			const pattern = (res as Response).locals.route as string | undefined;
+			return { route: pattern ?? `${method} ${route ? `${baseUrl}${route.path}` : '(no route)'}` };
 		},
 	});
 }
