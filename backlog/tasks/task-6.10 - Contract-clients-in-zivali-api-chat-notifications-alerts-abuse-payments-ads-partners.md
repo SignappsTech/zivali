@@ -3,11 +3,11 @@ id: TASK-6.10
 title: >-
   REST and Realtime clients in @zivali/api: chat, notifications, alerts, abuse,
   payments, ads, partners
-status: In Progress
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:12'
-updated_date: '2026-10-15 02:47'
+updated_date: '2026-10-15 03:23'
 labels:
   - fe
   - 'est:M'
