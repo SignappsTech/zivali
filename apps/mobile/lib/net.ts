@@ -16,9 +16,12 @@ export { useNetworkState };
 export const isOnline = (state: NetworkState): boolean =>
 	state.isConnected !== false && state.isInternetReachable !== false;
 
-/** Wi-Fi or Ethernet: background sync and offline thumbnails run only here unless the user allows mobile data. */
-export async function isUnmetered(): Promise<boolean> {
-	const state = await getNetworkStateAsync();
+/**
+ * Wi-Fi or Ethernet (the given state, or the current one): background sync and offline thumbnails run only here
+ * unless the user allows mobile data.
+ */
+export async function isUnmetered(state?: NetworkState): Promise<boolean> {
+	state ??= await getNetworkStateAsync();
 	return isOnline(state) && (state.type === NetworkStateType.WIFI || state.type === NetworkStateType.ETHERNET);
 }
 
