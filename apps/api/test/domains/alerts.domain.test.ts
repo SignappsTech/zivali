@@ -32,6 +32,8 @@ const at = (from: Point, north_m: number, east_m: number): Point => ({
 	lat: from.lat + north_m / 111_320,
 	lng: from.lng + east_m / (111_320 * Math.cos((from.lat * Math.PI) / 180)),
 });
+/** A spot 60 km north of P per step, out of reach (max radius 25 km) of the other tests' subscribers. */
+const away = (step: number) => at(P, step * 60_000, 0);
 const geography = ({ lat, lng }: Point) =>
 	Prisma.sql`extensions.st_setsrid(extensions.st_makepoint(${lng}, ${lat}), 4326)::extensions.geography`;
 
@@ -164,8 +166,9 @@ describe('AlertsDomain.fanout', () => {
 	});
 
 	it('sends one alert per report per user: a second run queues nothing new', async () => {
-		const user = await subscribe(P);
-		const id = await report({ species: 'cat' });
+		const here = away(1);
+		const user = await subscribe(here);
+		const id = await report({ exact: here, pub: here, species: 'cat' });
 		await AlertsDomain.fanout({ report_id: id }, systemCtx());
 		await AlertsDomain.fanout({ report_id: id }, systemCtx());
 		expect(await recipients(id)).toEqual([user]);
@@ -173,11 +176,12 @@ describe('AlertsDomain.fanout', () => {
 	});
 
 	it('skips users with 5 alerts in the last 24 h (daily cap), not those whose alerts are older', async () => {
-		const capped = await subscribe(P);
-		const yesterday = await subscribe(P);
+		const here = away(2);
+		const capped = await subscribe(here);
+		const yesterday = await subscribe(here);
 		await pastAlerts(capped, 5, 1);
 		await pastAlerts(yesterday, 5, 25);
-		const id = await report();
+		const id = await report({ exact: here, pub: here });
 		await AlertsDomain.fanout({ report_id: id }, systemCtx());
 		expect(await recipients(id)).toEqual([yesterday]);
 	});
