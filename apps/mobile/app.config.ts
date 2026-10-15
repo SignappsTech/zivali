@@ -12,7 +12,7 @@ const config: ExpoConfig = {
 	orientation: 'portrait',
 	userInterfaceStyle: 'automatic',
 	ios: { bundleIdentifier: 'si.signapps.zivali', supportsTablet: false },
-	android: { package: 'si.signapps.zivali' },
+	android: { package: 'si.signapps.zivali', allowBackup: false },
 	plugins: [
 		'expo-router',
 		'expo-dev-client',

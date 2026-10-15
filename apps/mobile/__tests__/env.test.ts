@@ -22,3 +22,9 @@ test('fails fast with the names of missing or invalid variables', () => {
 		'EXPO_PUBLIC_API_URL, EXPO_PUBLIC_APP_ENV'
 	);
 });
+
+test('rejects a Supabase secret key', () => {
+	expect(() => parseEnv({ ...valid, EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY: 'sb_secret_test' })).toThrow(
+		'EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY'
+	);
+});
