@@ -3,13 +3,15 @@ source: 02§Content, SEO and legal requirements (Legal); FR-038; FR-039; NFR-PRI
 
 | Field | Value |
 |---|---|
-| Version | 0.2 |
+| Version | 0.3 |
 | Date | 2026-10-15 |
 | Route SL | `/piskotki` |
 | Route EN | `/en/cookies` |
 | Slug SL / EN | `piskotki` / `cookies` |
 | Structured data | WebPage |
 | Template | T4 Legal (numbered h2 sections, "On this page" list, draft note) |
+
+Change in 0.3: place search runs on our own servers (GURS data, ADR-007); MapTiler and Photon removed from chapter 6.
 
 Change in 0.2: mobile items for drafts and queued reports, the offline copy of public reports and the proximity-alert areas (FR-041 to FR-043).
 
@@ -91,7 +93,7 @@ Identifikator Firebase Analytics ustvarimo šele po vaši privolitvi.
 ## 6. Storitve tretjih oseb
 
 - **Stripe.** Plačilo poteka na Stripovi strani (Stripe Checkout). Tam veljata Stripova politika piškotkov in zasebnosti.
-- **Zemljevid in iskanje krajev.** Zemljevidne ploščice (OpenFreeMap) in iskanje krajev (MapTiler, nadomestno Photon) ne nastavljajo piškotkov, vidijo pa vaš IP naslov.
+- **Zemljevid in iskanje krajev.** Zemljevidne ploščice (OpenFreeMap) ne nastavljajo piškotkov, vidijo pa vaš IP naslov. Iskanje krajev teče na naših strežnikih in ne nastavlja piškotkov.
 - **Vpis z Googlom ali Applom.** Ob vpisu veljajo pravila izbranega ponudnika.
 
 Več o teh ponudnikih je v [politiki zasebnosti](/zasebnost).
@@ -181,7 +183,7 @@ We create the Firebase Analytics identifier only after you consent.
 ## 6. Third-party services
 
 - **Stripe.** Payment takes place on Stripe's page (Stripe Checkout). Stripe's cookie and privacy policies apply there.
-- **Map and place search.** Map tiles (OpenFreeMap) and place search (MapTiler, with Photon as fallback) set no cookies, but they can see your IP address.
+- **Map and place search.** Map tiles (OpenFreeMap) set no cookies, but they can see your IP address. Place search runs on our servers and sets no cookies.
 - **Sign-in with Google or Apple.** The rules of the provider you choose apply at sign-in.
 
 More about these providers is in the [privacy policy](/en/privacy).

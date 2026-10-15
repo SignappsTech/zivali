@@ -3,7 +3,7 @@ source: 03§P4; docs/design/pages/P4-map-list.md
 page: P4 Map and list
 stories: TASK-31 (FR-007, FR-004)
 copy-for: docs/design/pages/P4-map-list.md
-version: 0.1
+version: 0.2
 status: Draft, native Slovenian review pending
 date: 2026-10-15
 ---
@@ -125,7 +125,7 @@ Live region when the count changes (polite):
 | map.loading | Nalagamo zemljevid … | Loading the map … |
 | map.tiles_error | Zemljevida ta trenutek ni mogoče naložiti. Prijave so v seznamu. | The map cannot load right now. Reports are in the list. |
 
-Attribution text: confirm the exact wording required by OpenFreeMap and MapTiler at build time (P5 shows MapTiler for search).
+Attribution text: confirm the exact wording required by OpenFreeMap at build time. Place search is our own geocoder on GURS data (ADR-007), so its attribution is the GURS line `location.search_attribution` (P5), not MapTiler.
 
 # 6. States
 

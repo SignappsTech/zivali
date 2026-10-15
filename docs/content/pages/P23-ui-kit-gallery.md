@@ -3,7 +3,7 @@ source: 03§P23; docs/design/pages/P23-ui-kit-gallery.md
 page: P23 UI kit gallery (components and states)
 stories: TASK-8 (NFR-A11Y)
 copy-for: docs/design/pages/P23-ui-kit-gallery.md
-version: 0.2
+version: 0.3
 status: Draft (internal page, minimal copy)
 date: 2026-10-15
 ---
@@ -31,10 +31,10 @@ Internal reference page, not public, not translated for users. It uses real prod
 | Field 3: default value | Vsa Slovenija | All of Slovenia | `partners.region_all` (P22) |
 | Field 3: options (listbox or sheet) | Osrednjeslovenska · Gorenjska · Jugovzhodna Slovenija · Primorsko-notranjska | Central Slovenia · Upper Carniola · Southeast Slovenia · Littoral–Inner Carniola | Region names, glossary §3a (the two longest in each language) |
 | Field 4: search, label | Iskanje kraja | Search for a place | `location.search_label` (P5) |
-| Field 4: placeholder | Ulica, kraj ali znamenitost | Street, town or landmark | `location.search_placeholder` (P5) |
+| Field 4: placeholder | Ulica s hišno številko ali kraj | Street and house number, or town | `location.search_placeholder` (P5) |
 | Field 4: clear button (accessible name) | Počisti iskanje | Clear search | `location.search_clear` (P5) |
 | Field 4: loading (live region) | Iščemo … | Searching … | `location.searching` (P5) |
-| Field 4: attribution under results | Iskanje: © MapTiler © sodelavci OpenStreetMap | Search: © MapTiler © OpenStreetMap contributors | `location.search_attribution` (P5) |
+| Field 4: attribution under results | Vir: Geodetska uprava Republike Slovenije, prostorske enote in hišne številke, stanje 15. 10. 2026 (CC BY 4.0) | Source: Surveying and Mapping Authority of the Republic of Slovenia, spatial units and house numbers, as of 15 October 2026 (CC BY 4.0) | `location.search_attribution` (P5), sample date |
 | Choice row | Opažena žival · Videli ste žival, ki se je morda izgubila. Brez računa. | Sighted animal · You saw an animal that may be lost. No account needed. | `nav.report_sighted_*` (P1) |
 | Segmented control | Pogovori · Obvestila | Conversations · Notifications | `chat.view_conversations`, `chat.view_notifications` (P12); the real two-view switch in the Inbox |
 | Switch, disabled with reason | Opozorila v bližini · Obvestila na telefonu so izklopljena. Vse boste našli med sporočili in v e-pošti. | Nearby alerts · Phone notifications are off. You will find everything in your inbox and email. | `alerts.type_nearby` (P13), `permissions.notifications_denied` (P2) |

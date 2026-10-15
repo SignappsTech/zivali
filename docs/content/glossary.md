@@ -181,7 +181,7 @@ Rules:
 | Monthly supporter (M4) | Podpornik (plan name); badge text "Podpira Najdimo" | Supporter; badge "Supports Najdimo" | Badge text is gender-neutral. |
 | Boost (M4) | Povečan doseg | Boost | Pill "Povečan doseg"; action "Povečaj doseg". |
 | Premium (M4) | Premium Zaščita | Premium Protect | |
-| Reward (M4) | nagrada; line "Nagrada" or "Nagrada: {amount}" | reward; line "Reward offered" or "Reward offered: {amount}" | Display only: the owner's own offer, arranged with the finder outside the app (brief v1.1). Najdimo never holds or pays it, so never "varno hrani Stripe", "izplačilo" or "provizija". Always shown with the warning "Nikoli nikomur ne plačajte vnaprej. …" (P9). |
+| Reward (M4) | nagrada; line "Nagrada" or "Nagrada: {amount}", the owner's note after " · " | reward; line "Reward offered" or "Reward offered: {amount}" | Display only: the owner's own offer, arranged with the finder outside the app (brief v1.1). Najdimo never holds or pays it, so never "varno hrani Stripe", "izplačilo" or "provizija". Always shown with the warning that starts "Nikoli nikomur ne plačajte vnaprej." (P6, P9, P18). |
 | Vet Partner (paid clinic visibility) | Veterinarski partner (plan name); profile mark "Partnerska ambulanta" | Vet Partner; profile mark "Partner clinic" | B2B subscription for vet clinics. Its placements in ad slots, alerts and posters are paid and always carry the "Oglas" label. |
 | 24h emergency (clinic badge) | Nujna pomoč 24 ur | 24-hour emergency care | Clinic profile badge. |
 | Ad label | Oglas | Ad | On every ad and every paid placement, no exceptions. |

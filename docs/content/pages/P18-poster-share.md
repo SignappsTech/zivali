@@ -58,10 +58,10 @@ File name: `najdimo-{code}.pdf` (no pet name, so the file is safe to forward).
 | Reward, lost only | poster.reward | Nagrada | Reward offered |
 | Reward with amount | poster.reward_amount | Nagrada: {amount} | Reward offered: {amount} |
 | Safety line | poster.safety | Stik samo prek Najdimo. Nikoli ne plačujte vnaprej. | Contact only through Najdimo. Never pay in advance. |
-| Safety line, with a reward | poster.safety_reward | Stik samo prek Najdimo. Nagrado lastnik izroči ob vrnitvi živali. Nikoli ne plačujte vnaprej. | Contact only through Najdimo. The owner hands over the reward when the animal is returned. Never pay in advance. |
+| Safety line, with a reward | poster.safety_reward | Stik samo prek Najdimo. Nagrado lastnik izroči šele, ko je žival spet doma. Nikoli nikomur ne plačajte vnaprej. | Contact only through Najdimo. The owner hands over the reward only once the animal is home. Never pay anyone in advance. |
 | Footer | poster.footer | Najdimo · Spet doma. | Najdimo · Home again. |
 
-Reward (v0.3, brief v1.1: display only): only on lost posters whose report has a reward. `poster.reward` or `poster.reward_amount` sits between the area line and the call to action; `{amount}` is formatted as currency in the poster language ("50 €" / "€50"). With a reward, `poster.safety_reward` replaces `poster.safety`. Without a reward both reward keys are left out and the poster reflows without a gap.
+Reward (v0.3, brief v1.1: display only): only on lost posters whose report has a reward. `poster.reward` or `poster.reward_amount` sits between the area line and the call to action, followed by the owner's note after " · " when there is one (as in P9); `{amount}` is formatted as currency in the poster language ("50 €" / "€50"). With a reward, `poster.safety_reward` replaces `poster.safety`. Without a reward both reward keys are left out and the poster reflows without a gap.
 
 `CHANGE docs/design/pages/P18-poster-share.md§Poster layout: add an optional "Reward" zone (lost only) between "Where and when" and "Call to action", 32 pt bold, black on white; the safety line uses poster.safety_reward when a reward is shown.`
 

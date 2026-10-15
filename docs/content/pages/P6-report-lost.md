@@ -132,12 +132,17 @@ Location picker (P5) with `location.title_lost` and the radius control.
 | report_lost.reward_label | Nagrada (neobvezno) | Reward (optional) |
 | report_lost.reward_toggle | Ponujam nagrado za vrnitev | I am offering a reward for the return |
 | report_lost.reward_amount_label | Znesek v evrih (neobvezno) | Amount in euros (optional) |
-| report_lost.reward_amount_help | Če znesek pustite prazen, v prijavi piše samo „Nagrada“. | If you leave the amount empty, the report only says "Reward offered". |
 | report_lost.reward_amount_invalid | Vpišite znesek v celih evrih, na primer 50. | Enter the amount in whole euros, for example 50. |
 | report_lost.reward_amount_max | Vpišite znesek do {max}. | Enter an amount of up to {max}. |
-| report_lost.reward_note | Za nagrado se z najditeljem dogovorite sami. Najdimo je ne hrani in ne izplača. Nikoli nikomur ne plačajte vnaprej: nagrado izročite šele, ko je žival spet pri vas. | You arrange the reward with the finder yourself. Najdimo does not hold or pay it. Never pay anyone in advance: hand over the reward only once your pet is back with you. |
+| report_lost.reward_note_label | Opomba (neobvezno) | Note (optional) |
+| report_lost.reward_note_placeholder | Na primer: tudi za podatek, ki pomaga pri iskanju | For example: also for information that helps the search |
+| report_lost.reward_note_help | Največ 80 znakov. Brez telefonske številke, e-naslova in povezav: ljudje vam pišejo prek sporočil v aplikaciji. | Up to 80 characters. No phone number, email address or links: people reach you through messages in the app. |
+| report_lost.reward_note_contact_data | Odstranite telefonsko številko, e-naslov, povezavo ali številko računa. Ljudje vam pišejo prek sporočil v aplikaciji. | Remove the phone number, email address, link or account number. People reach you through messages in the app. |
+| report_lost.reward_note_too_long | Opomba je predolga. Skrajšajte jo na največ 80 znakov. | The note is too long. Please shorten it to 80 characters or fewer. |
+| report_lost.reward_empty | Vpišite znesek ali opombo ali pa nagrado izklopite. | Enter an amount or a note, or turn the reward off. |
+| report_lost.reward_warning | Za nagrado se z najditeljem dogovorite sami. Najdimo je ne hrani in ne izplača. Nikoli nikomur ne plačajte vnaprej: nagrado izročite šele, ko je žival spet pri vas. | You arrange the reward with the finder yourself. Najdimo does not hold or pay it. Never pay anyone in advance: hand over the reward only once your pet is back with you. |
 
-Reward (v0.3, brief v1.1: display only, no escrow): an optional switch row under the contact choice. When it is on, the amount field and `report_lost.reward_note` (shield icon, always visible while the switch is on) appear below it. The amount takes whole euros only; `{max}` is the configured limit, formatted as currency in the page language ("500 €" / "€500"). Nothing else about the reward is asked: no conditions, no payment.
+Reward (v0.3, brief v1.1: display only, no escrow; fields `reward_eur` and `reward_note`, contract C4): an optional switch row under the contact choice. When it is on, the amount field, the note field and `report_lost.reward_warning` (shield icon, always visible while the switch is on) appear below it. The amount takes whole euros (1 to {max}; `{max}` is 10 000 per C4, formatted as currency in the page language: "10.000 €" / "€10,000"). The note is one line of up to 80 characters. With the switch on, at least one of the two is needed (`report_lost.reward_empty`). Errors: a non-integer amount → `report_lost.reward_amount_invalid`; above the limit → `report_lost.reward_amount_max`; API issue `CONTACT_DATA` on `reward_note` (URL, email address or a run of 6 or more digits, checked by `containsContactData()` on the client too) → `report_lost.reward_note_contact_data`; too long → `report_lost.reward_note_too_long`. Nothing else about the reward is asked: no conditions, no payment.
 
 # 8. Step 7: Review
 
@@ -220,7 +225,7 @@ The flow start page is public and indexable; the steps are client-side.
 
 # 14. CHANGE requests
 
-- `CHANGE docs/design/pages/P6-report-lost.md§Flow: step 6 adds an optional reward row after the contact preference (switch "Ponujam nagrado za vrnitev", whole-euro amount field and the shield note `report_lost.reward_note`); step 7 adds a "Nagrada" summary row (value `report.reward_line_amount`, `report.reward_line` or `report_lost.review_reward_none`). Brief v1.1.`
-- `CHANGE docs/02-product-requirements.md§FR-023: replace reward escrow with a display-only reward line (optional flag plus amount in whole euros up to a configured limit, shown on P9 and the lost poster, always with the scam warning; no payment, fee or payout). Brief v1.1.`
+- `CHANGE docs/design/pages/P6-report-lost.md§Flow: step 6 adds an optional reward row after the contact preference (switch "Ponujam nagrado za vrnitev", whole-euro amount field, one-line note field of up to 80 characters and the shield note `report_lost.reward_warning`); step 7 adds a "Nagrada" summary row (value: the P9 reward line with the note, or `report_lost.review_reward_none`). The fields are `reward_eur` and `reward_note` (C4). Brief v1.1.`
+- `CHANGE docs/02-product-requirements.md§FR-023 R-023.1: the numeric range says EUR 0–500, contract C4 says reward_eur 1–10 000; align one with the other (copy uses {max} from config).`
 
 - `CHANGE docs/tech/contracts/C15-routes-deeplinks.md§Web routes: reportLost SL /prijava/izgubljen → /prijava/izgubljena-zival and reportFound /prijava/najden → /prijava/najdena-zival (agree with "žival", clearer for search).`

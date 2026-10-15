@@ -3,13 +3,15 @@ source: 02§Content, SEO and legal requirements (Legal); 03§Content strategy / 
 
 | Field | Value |
 |---|---|
-| Version | 0.3 |
+| Version | 0.4 |
 | Date | 2026-10-15 |
 | Route SL | `/impresum` |
 | Route EN | `/en/imprint` |
 | Slug SL / EN | `impresum` / `imprint` |
 | Structured data | WebPage |
 | Template | T4 Legal (numbered h2 sections, "On this page" list, draft note) |
+
+Change in 0.4: place search runs on our own geocoder on GURS data (ADR-007); the MapTiler line in chapter 7 is replaced by the GURS attribution for the settlement, street and house-number data.
 
 Change in 0.3: new chapter 7 "Data sources and maps" with the GURS (CC BY 4.0), OpenStreetMap/OpenFreeMap and MapTiler attributions; "Rules of use" is now chapter 8.
 
@@ -79,7 +81,7 @@ Fotografije živali v prijavah so last njihovih avtorjev, ki so nam dovolili pri
 
 - **Meje občin in statističnih regij.** Vir: Geodetska uprava Republike Slovenije, Register prostorskih enot, stanje 15. 10. 2026 (licenca [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/deed.sl)). Meje so poenostavljene. Z njimi prijavi določimo občino in regijo, pripravimo statistiko po regijah in izberemo oglase za regijo.
 - **Zemljevid.** Ploščice [OpenFreeMap](https://openfreemap.org), © [OpenMapTiles](https://www.openmaptiles.org), podatki © [sodelavci OpenStreetMap](https://www.openstreetmap.org/copyright) (licenca ODbL).
-- **Iskanje krajev in naslovov.** © [MapTiler](https://www.maptiler.com/copyright/), podatki © [sodelavci OpenStreetMap](https://www.openstreetmap.org/copyright).
+- **Iskanje krajev in naslovov.** Vir: Geodetska uprava Republike Slovenije, Register prostorskih enot (naselja, ulice, četrtne skupnosti) in hišne številke, stanje {data_date} (licenca [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/deed.sl)). Podatke smo za iskanje preoblikovali, iskanje pa teče na naših strežnikih.
 
 ## 8. Pravila uporabe
 
@@ -137,7 +139,7 @@ Photos of animals in reports belong to their authors, who allowed us to display 
 
 - **Municipal and statistical region boundaries.** Source: Surveying and Mapping Authority of the Republic of Slovenia, Register of Spatial Units, as of 15 October 2026 ([CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)). Boundaries simplified. We use them to set the municipality and region of a report, for statistics by region and to choose ads for a region.
 - **Map.** Tiles by [OpenFreeMap](https://openfreemap.org), © [OpenMapTiles](https://www.openmaptiles.org), data © [OpenStreetMap contributors](https://www.openstreetmap.org/copyright) (ODbL licence).
-- **Place and address search.** © [MapTiler](https://www.maptiler.com/copyright/), data © [OpenStreetMap contributors](https://www.openstreetmap.org/copyright).
+- **Place and address search.** Source: Surveying and Mapping Authority of the Republic of Slovenia, Register of Spatial Units (settlements, streets, city districts) and house numbers, as of {data_date} ([CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)). We converted the data for search, which runs on our own servers.
 
 ## 8. Rules of use
 
@@ -153,4 +155,4 @@ The rules of use are in the [terms of use](/en/terms). Read about cookies in the
 4. **Image credits.** Confirm the licence of any stock photos, fonts or icon sets used on the site and list them here.
 5. **Working name.** The line "Najdimo is a working name" must be removed or updated when the client picks the final name (Q-001); the legal pages then change with the name.
 6. **Quality.** The Slovenian text needs a native review.
-7. **Data sources (new in 0.3).** The GURS lines are the attribution required by the GURS terms and CC BY 4.0 (`supabase/seed/geo/LICENSE.md`): source, data type, data state date, licence link and the note that the data were changed. Update the date whenever the geodata are refreshed; the same line is the shared key `common.geo_attribution` (P1) for every page that shows boundaries or figures by municipality or region (P22 statistics, SEO location pages, municipality reports). The map line matches `map.attribution` (P4) and the search line `location.search_attribution` (P5). Check MapTiler's attribution terms for geocoding-only use and the OpenFreeMap wording at build time (lawyer briefing LQ-63, LQ-64).
+7. **Data sources (new in 0.3).** The GURS lines are the attribution required by the GURS terms and CC BY 4.0 (`supabase/seed/geo/LICENSE.md`): source, data type, data state date, licence link and the note that the data were changed. Update the date whenever the geodata are refreshed; the same line is the shared key `common.geo_attribution` (P1) for every page that shows boundaries or figures by municipality or region (P22 statistics, SEO location pages, municipality reports). The map line matches `map.attribution` (P4) and the search line `location.search_attribution` (P5). Check the OpenFreeMap wording at build time (lawyer briefing LQ-63). (Changed in 0.4) The search line names the GURS geocoder data; `{data_date}` is the data-state date of the geocoder snapshot in `supabase/seed/geo/LICENSE.md` (TASK-15.7), and the data-type names must match that file once it is written. MapTiler is no longer used (ADR-007; LQ-64 N/A).

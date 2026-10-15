@@ -46,7 +46,7 @@ H1 without a name: `browse.row_title_lost|found|sighted` (P4).
 | report.action_sighting | Sporoči opažanje | Report a sighting | Lost (primary), found (text) |
 | report.action_message | Pošlji sporočilo | Send a message | Lost (text), sighted (primary) |
 | report.action_mine | To je moja žival | This is my animal | Found (primary), sighted (text) |
-| report.reward_line | Nagrada | Reward offered | M4, lost reports only, when the owner set a reward without an amount; gift icon |
+| report.reward_line | Nagrada | Reward offered | M4, lost reports only, when the owner set a note but no amount; gift icon |
 | report.reward_line_amount | Nagrada: {amount} | Reward offered: {amount} | Same, with an amount; `{amount}` as currency in the page language ("50 €" / "€50") |
 
 # 3. Safety note, share and more
@@ -65,7 +65,7 @@ H1 without a name: `browse.row_title_lost|found|sighted` (P4).
 | report.more_abuse | Prijavi zlorabo | Report abuse |
 | report.more_copy | Kopiraj povezavo | Copy link |
 
-Reward (v0.2, brief v1.1: display only, no escrow). When a reward line is shown, `report.safety_note_reward` replaces `report.safety_note`, so the page still has one safety note, placed right under the reward line. Without a reward the note stays `report.safety_note`.
+Reward (v0.2, brief v1.1: display only, no escrow). The owner's note (`reward_note`, up to 80 characters, C4) follows the line after " · ", as typed: "Nagrada: 100 € · tudi za podatek, ki pomaga pri iskanju". It is user text: never translated, never a link. When a reward line is shown, `report.safety_note_reward` replaces `report.safety_note`, so the page still has one safety note, placed right under the reward line. Without a reward the note stays `report.safety_note`.
 
 # 4. Sections below
 

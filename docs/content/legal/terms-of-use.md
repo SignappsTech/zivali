@@ -99,7 +99,7 @@ Točne lokacije, številke čipa, telefonske številke in e-naslova ne objavljaj
 - Pri Najdimo vas v pogovoru nikoli ne prosimo za plačilo.
 - Sumljivo ravnanje prijavite z možnostjo „Prijavi zlorabo“ ali na [naročnik: kontaktni e-naslov].
 
-**Nagrada.** Lastnik lahko v prijavi izgubljene živali navede, da ponuja nagrado, in neobvezno njen znesek. To je izjava lastnika, ne naša. Najdimo nagrad ne hrani, ne izplačuje in zanje ne jamči. Lastnik in najditelj se o nagradi dogovorita sama, zunaj Najdimo. Nikoli nikomur ne plačajte ničesar vnaprej: nagrada se izroči šele, ko je žival spet doma.
+**Nagrada.** Lastnik lahko v prijavi izgubljene živali navede, da ponuja nagrado, z zneskom ali kratko opombo. Navedba ne sme vsebovati kontaktnih podatkov ali zahteve za plačilo vnaprej; take navedbe odstranimo. To je izjava lastnika, ne naša. Najdimo nagrad ne hrani, ne izplačuje in zanje ne jamči. Lastnik in najditelj se o nagradi dogovorita sama, zunaj Najdimo. Nikoli nikomur ne plačajte ničesar vnaprej: nagrada se izroči šele, ko je žival spet doma.
 
 ## 7. Najditelji
 
@@ -253,7 +253,7 @@ Do not publish exact locations, chip numbers, phone numbers or email addresses i
 - Najdimo never asks you for a payment in a chat.
 - Report suspicious behaviour with "Report abuse" or at [client: contact email].
 
-**Reward.** In a report of a lost animal, the owner may state that they offer a reward and, optionally, its amount. This is the owner's statement, not ours. Najdimo does not hold, pay or guarantee rewards. The owner and the finder arrange any reward between themselves, outside Najdimo. Never pay anyone anything in advance: a reward is handed over only once the animal is home.
+**Reward.** In a report of a lost animal, the owner may state that they offer a reward, with an amount or a short note. The line may not contain contact details or ask for any payment in advance; we remove such lines. This is the owner's statement, not ours. Najdimo does not hold, pay or guarantee rewards. The owner and the finder arrange any reward between themselves, outside Najdimo. Never pay anyone anything in advance: a reward is handed over only once the animal is home.
 
 ## 7. Finders
 

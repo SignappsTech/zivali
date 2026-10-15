@@ -11,7 +11,7 @@ source: 02§Content, SEO and legal requirements (Legal); FR-034; FR-035; FR-038;
 | Structured data | WebPage |
 | Template | T4 Legal (numbered h2 sections, "On this page" list, draft note) |
 
-Change in 0.4: reward escrow removed (brief v1.1): no reward is paid through Najdimo and Stripe Connect is no longer used; an owner's optional reward line is part of the report data (chapter 3) and is explained in chapter 9.
+Change in 0.4: reward escrow removed (brief v1.1): no reward is paid through Najdimo and Stripe Connect is no longer used; an owner's optional reward line is part of the report data (chapter 3) and is explained in chapter 9. Place search and the area name for a point run on our own servers from GURS open data (ADR-007): MapTiler and Photon are removed from chapters 6 and 12, and the Swiss adequacy sentence from chapter 13.
 
 Change in 0.3: processors and hosting per brief v1.0 (Hetzner and Cloudflare R2; Vercel and Supabase file storage removed); exact location shared in a chat; on-device proximity alerts and offline data (chapter 6); database reachable only through our API (chapter 16). Open points are consolidated in `docs/legal/lawyer-briefing.md`.
 
@@ -67,7 +67,7 @@ Večino podatkov nam daste sami: ko ustvarite račun, objavite prijavo ali piše
 |---|---|
 | Račun in nastavitve | prikazno ime, e-naslov, zgoščeno geslo ali identiteta pri Googlu oziroma Applu, jezik, vloga (na primer lastnik, najditelj ali zavetišče), domače območje, privzeti polmer opozoril, neobvezna telefonska številka (nikoli javna), tihi čas, nastavitve obvestil, žetoni za potisna obvestila |
 | Profili živali | vrsta, ime, pasma, barve, vzorec, velikost, spol, leto rojstva, številka čipa (nikoli javna), stanje čipa, ovratnica, opombe (tudi o zdravilih in vedenju), od ene do pet fotografij; pozneje tudi veterinarski zapisi |
-| Prijave (izgubljena, najdena, opažena žival) | vrsta prijave, fotografije, točna točka (vidna samo avtorju prijave), javno približno območje, občina in regija, datum in čas, opis okoliščin, izbira načina stika, pri izgubljeni živali neobvezna navedba nagrade in njen znesek |
+| Prijave (izgubljena, najdena, opažena žival) | vrsta prijave, fotografije, točna točka (vidna samo avtorju prijave), javno približno območje, občina in regija, datum in čas, opis okoliščin, izbira načina stika, pri izgubljeni živali neobvezna navedba nagrade (znesek, kratka opomba) |
 | Prijave brez računa | anonimna seja, zasebna povezava (hranimo samo njeno zgoščeno vrednost), neobvezen e-naslov, na katerega pošljemo povezavo, identifikator naprave, zgoščen IP naslov za omejevanje zlorab |
 | Pogovori | sporočila, vzdevki, stanje prebranosti, blokade |
 | Obvestila in opozorila | nabiralnik obvestil, naročnina na opozorila v bližini (domača točka in polmer) |
@@ -130,7 +130,7 @@ V prosto besedilo (opis okoliščin, opombe) ne vpisujte osebnih podatkov drugih
 
 **Podatki v telefonu.** Da aplikacija deluje tudi brez povezave, v telefonu hrani javne prijave iz vaše okolice: približna območja in pomanjšane fotografije, največ 7 dni. Točnih lokacij, številk čipa, kontaktnih podatkov in pogovorov ne hrani. Ob odjavi te podatke izbrišemo.
 
-**Zemljevid in iskanje krajev.** Zemljevidne ploščice naloži vaš brskalnik ali aplikacija neposredno pri strežnikih OpenFreeMap. Ti vidijo vaš IP naslov, piškotkov pa ne uporabljajo. Za iskanje krajev in za določitev naslova iz točke na zemljevidu vaš brskalnik ali aplikacija pošlje poizvedbo ponudniku MapTiler AG (Švica), nadomestno pa ponudniku Photon (komoot GmbH, Nemčija). Teh poizvedb mi ne shranjujemo.
+**Zemljevid in iskanje krajev.** Zemljevidne ploščice naloži vaš brskalnik ali aplikacija neposredno pri strežnikih OpenFreeMap. Ti vidijo vaš IP naslov, piškotkov pa ne uporabljajo. Iskanje krajev in ime območja za točko na zemljevidu pripravimo na svojih strežnikih iz odprtih podatkov Geodetske uprave Republike Slovenije. Iskalnega niza in točke ne pošljemo nikomur drugemu in ju ne shranjujemo.
 
 ## 7. Prijave brez računa
 
@@ -215,7 +215,6 @@ Podatkov ne prodajamo. Ponudniki, ki jih potrebujemo za delovanje storitve, so:
 | Expo Push Service (650 Industries, Inc.), ZDA (obdelovalec); obvestila gredo prek Apple Push Notification service in Google Firebase Cloud Messaging | potisna obvestila | žeton naprave in besedilo obvestila, ki ne vsebuje osebnih podatkov | ZDA |
 | Cloudflare Turnstile (Cloudflare, Inc.), ZDA (obdelovalec) | preverjanje „nisem robot“ ob ustvarjanju računa, anonimnih prijavah in obrazcu za partnerje | podatki o napravi in brskalniku, IP naslov | ZDA |
 | OpenFreeMap (samostojni upravljavec) | zemljevidne ploščice | IP naslov (ploščice naloži vaš brskalnik ali aplikacija neposredno); brez piškotkov | javni strežniki ploščic |
-| MapTiler AG, Švica; nadomestno Photon (komoot GmbH), Nemčija | iskanje krajev in določitev naslova iz točke | iskalni niz ali koordinate izbrane točke, IP naslov; mi poizvedb ne shranjujemo | Švica; Nemčija |
 | Google Ireland Limited (obdelovalec), samo z vašo privolitvijo | Google Analytics 4 in Google Analytics for Firebase | analitični dogodki iz poglavja 10 | EU, možna obdelava tudi v ZDA |
 | Google in Apple (vsak kot samostojni upravljavec) | vpis z Googlom ali Applom, če ga izberete | podatki, ki jih ponudnik pošlje ob vpisu (e-naslov, ime, identifikator) | po pravilih ponudnika |
 | Stripe Payments Europe, Limited, Irska (obdelovalec; za del obdelave samostojni upravljavec) | plačila in naročnine Veterinarski partner (ko so omogočeni), računi z DDV | podatki za plačilo, ki jih vnesete na Stripovi strani | EU, možna obdelava tudi v ZDA |
@@ -235,7 +234,7 @@ Glavna zbirka podatkov je v EU. Nekateri ponudniki iz poglavja 12 imajo sedež v
 - okvir EU–ZDA za varstvo podatkov (Data Privacy Framework), kadar je ponudnik vanj vpisan;
 - sicer standardne pogodbene klavzule Evropske komisije.
 
-Švica ima sklep Evropske komisije o ustreznosti ravni varstva podatkov (MapTiler AG). Kopijo zaščitnih ukrepov lahko zahtevate na e-naslovu iz poglavja 2.
+Kopijo zaščitnih ukrepov lahko zahtevate na e-naslovu iz poglavja 2.
 
 ## 14. Kako dolgo podatke hranimo
 
@@ -339,7 +338,7 @@ You give us most of the data yourself: when you create an account, publish a rep
 |---|---|
 | Account and settings | display name, email address, password hash or Google/Apple identity, language, role (for example owner, finder or shelter), home area, default alert radius, optional phone number (never public), quiet hours, notification settings, push notification tokens |
 | Pet profiles | species, name, breed, colours, pattern, size, sex, birth year, chip number (never public), chip status, collar, notes (including medication and temperament), one to five photos; later also vet records |
-| Reports (lost, found, sighted animal) | report type, photos, exact point (visible only to the person who made the report), public approximate area, municipality and region, date and time, description of the circumstances, contact preference, and for a lost animal an optional reward line with its amount |
+| Reports (lost, found, sighted animal) | report type, photos, exact point (visible only to the person who made the report), public approximate area, municipality and region, date and time, description of the circumstances, contact preference, and for a lost animal an optional reward line (amount, short note) |
 | Reports without an account | anonymous session, private link (we store only its hash), optional email address to which we send the link, device identifier, hashed IP address for abuse limits |
 | Chat | messages, aliases, read state, blocks |
 | Notifications and alerts | notification inbox, nearby-alert subscription (home point and radius) |
@@ -402,7 +401,7 @@ Please do not enter other people's personal data in free text (circumstances, no
 
 **Data on your phone.** So that the app also works offline, it keeps public reports from your area on your phone: approximate areas and small photos, for at most 7 days. It never keeps exact locations, chip numbers, contact details or chats. When you sign out, we delete this data.
 
-**Map and place search.** Your browser or app loads map tiles directly from OpenFreeMap servers. They can see your IP address and use no cookies. For place search and for finding an address from a point on the map, your browser or app sends a query to MapTiler AG (Switzerland) and, as a fallback, to Photon (komoot GmbH, Germany). We do not store these queries.
+**Map and place search.** Your browser or app loads map tiles directly from OpenFreeMap servers. They can see your IP address and use no cookies. Place search and the area name for a point on the map run on our own servers, using open data from the Surveying and Mapping Authority of the Republic of Slovenia. We send the search text and the point to no one else and do not store them.
 
 ## 7. Reports without an account
 
@@ -487,7 +486,6 @@ We do not sell data. The providers we need to run the service are:
 | Expo Push Service (650 Industries, Inc.), USA (processor); notifications travel through Apple Push Notification service and Google Firebase Cloud Messaging | push notifications | device token and notification text, which contains no personal data | USA |
 | Cloudflare Turnstile (Cloudflare, Inc.), USA (processor) | "not a robot" check at account creation, anonymous reports and the partner form | device and browser signals, IP address | USA |
 | OpenFreeMap (independent controller) | map tiles | IP address (your browser or app loads the tiles directly); no cookies | public tile servers |
-| MapTiler AG, Switzerland; fallback Photon (komoot GmbH), Germany | place search and finding an address from a point | search text or coordinates of the chosen point, IP address; we do not store the queries | Switzerland; Germany |
 | Google Ireland Limited (processor), only with your consent | Google Analytics 4 and Google Analytics for Firebase | analytics events from chapter 10 | EU, processing in the USA is also possible |
 | Google and Apple (each an independent controller) | sign-in with Google or Apple, if you choose it | data the provider sends at sign-in (email, name, identifier) | under the provider's rules |
 | Stripe Payments Europe, Limited, Ireland (processor; for part of the processing an independent controller) | payments and Vet Partner subscriptions (once enabled), VAT invoices | payment data you enter on Stripe's page | EU, processing in the USA is also possible |
@@ -507,7 +505,7 @@ The main database is in the EU. Some providers in chapter 12 are based in the Un
 - the EU–US Data Privacy Framework, where the provider is certified under it;
 - otherwise, the European Commission's standard contractual clauses.
 
-Switzerland has a European Commission adequacy decision (MapTiler AG). You can ask for a copy of the safeguards at the email address in chapter 2.
+You can ask for a copy of the safeguards at the email address in chapter 2.
 
 ## 14. How long we keep data
 
@@ -584,9 +582,9 @@ We may change this policy, for example when we add a new feature or provider. We
 5. **Article 22 GDPR.** Automatic temporary hiding after three independent abuse reports could be seen as a decision with significant effect for the poster. I described human review and a contest route by email. Please confirm this is sufficient.
 6. **Minimum age 15.** Proposal based on the age of digital consent under ZVOP-2; I did not verify the article number. Contract capacity of minors under 18 under Slovenian civil law is limited, so I wrote that paid options are for adults (same line in the terms). This is a proposal, not a brief requirement.
 7. **Retention values are proposals** (A-012). Items I had to propose beyond the brief: "abuse reports and audit log: up to 24 months"; "consent record 12 months" (the cookie lifetime; evidence of consent may need to be kept longer). Open: what remains of a closed report after the photos and exact location are removed at 12 months (text, municipality, dates, species)? Payment records "up to 10 years" is a likely Slovenian requirement and must be confirmed by the accountant. Sentry retention is not stated in the text; confirm and add if needed.
-8. **International transfers.** Verify the Data Privacy Framework certification of each US provider at go-live (Supabase Inc., Cloudflare, Stripe, 650 Industries/Expo, Anthropic, Voyage AI (part of MongoDB, Inc. since 2025), Sentry, Google). Where not certified, standard contractual clauses and a transfer impact assessment are needed. Data processing agreements are needed with every processor in chapter 12 (the Google Analytics data processing terms must be accepted in GA4). The Swiss adequacy decision is cited as given in the brief.
+8. **International transfers.** Verify the Data Privacy Framework certification of each US provider at go-live (Supabase Inc., Cloudflare, Stripe, 650 Industries/Expo, Anthropic, Voyage AI (part of MongoDB, Inc. since 2025), Sentry, Google). Where not certified, standard contractual clauses and a transfer impact assessment are needed. Data processing agreements are needed with every processor in chapter 12 (the Google Analytics data processing terms must be accepted in GA4).
 9. **Hosting and backups (updated in 0.3).** Brief v1.0: a Hetzner server in the EU runs the website, API and job worker; photos and nightly database backups are on Cloudflare R2; Vercel and Supabase file storage are no longer used. The text says R2 storage is in the EU, which holds only if the buckets are created with EU jurisdiction (requested from the tech lead). The Hetzner location (Germany or Finland) is a client decision.
-10. **Map providers.** The exact point a user selects (not fuzzed) is sent from the client to MapTiler for reverse geocoding. Check the MapTiler data processing terms and whether the point should be rounded first. OpenFreeMap is listed as an independent controller because we cannot control it.
+10. **Map providers (changed in 0.4).** Place search and the area name for a point run on our own geocoder in the API, on GURS data (ADR-007, contract C6): queries and points travel only in POST bodies to our server, are never logged or stored, and reach no third party, so the rounding question is moot (lawyer pack LQ-21 and LQ-64 N/A). OpenFreeMap stays listed as an independent controller for map tiles (IP address) because we cannot instruct it.
 11. **AI providers.** The text does not claim that Anthropic or Voyage AI do not train on submitted images, because I could not verify the contract terms. Confirm the terms (no training, retention) and add the statement if true. Check whether any AI Act transparency duty applies.
 12. **Ads.** Confirm that ad selection uses only context (region, species) and never a user profile; the "by context" sentence in chapter 11 depends on it. Confirm that sponsors only get aggregate reports.
 13. **Background location (updated in 0.3).** Chapter 6 now explains the opt-in proximity alerts (FR-043): the operating system checks geofences on the phone and no location leaves the device. Confirm with the mobile developers before publishing.
@@ -598,4 +596,4 @@ We may change this policy, for example when we add a new feature or provider. We
 19. **Vet Partner (new in 0.2).** (a) Controller/processor: the clinic is a business customer; the contact person is a natural person, so GDPR applies to their data. Confirm the legal basis (contract) and retention (30 days after the subscription ends; invoices per tax law, proposed up to 10 years, accountant to confirm). (b) Stripe Billing and VAT invoicing: confirm Stripe's role, the VAT ID collection and the invoice rules with the accountant. (c) The monthly report is aggregate only; confirm no personal data enters it. (d) Paid mentions in alerts and on posters must be labelled "Ad" (consumer-protection and ad-labelling rules). (e) Removed with this version: QR/NFC tags (order, delivery address, 90-day retention) and Shelter Pro (brief v0.7).
 20. **Quality.** The Slovenian text needs a native legal review of terminology (upravljavec, obdelovalec, zakoniti interes, pogodbene klavzule). Contributions are described as voluntary payments to a company, never donations (Q-008); no dohodnina text.
 21. **Version 0.3.** Processors per brief v1.0, exact location shared in a chat (FR-004 R-004.3), on-device proximity alerts and offline cache (FR-041, FR-043), API-only database access (ADR-021). Every open point of this draft is consolidated, with a proposed answer, in `docs/legal/lawyer-briefing.md` (§6).
-22. **Version 0.4.** Reward escrow is out of scope (brief v1.1, Q-011 closed): the Stripe Connect payout, the 5 % platform fee and the finder's identity and bank data (Stripe KYC) are gone from chapters 9 and 12. The owner's optional, display-only reward line is report data; no payment data about rewards exists. Lawyer pack: LQ-48, LQ-49, LQ-53 N/A; the reward line is LQ-67.
+22. **Version 0.4.** Reward escrow is out of scope (brief v1.1, Q-011 closed): the Stripe Connect payout, the 5 % platform fee and the finder's identity and bank data (Stripe KYC) are gone from chapters 9 and 12. The owner's optional, display-only reward line is report data; no payment data about rewards exists. Lawyer pack: LQ-48, LQ-49, LQ-53 N/A; the reward line is LQ-67. Also in 0.4: own geocoder on GURS data (note 10); the processor table and chapter 13 no longer name MapTiler, Photon or Switzerland.
