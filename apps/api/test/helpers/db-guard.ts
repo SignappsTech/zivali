@@ -20,13 +20,19 @@ export function isWorktree(cwd: string): boolean {
 	return cwd.replaceAll('\\', '/').includes('/.claude/worktrees/');
 }
 
-/** Returns an error message when migrating must be refused, else null. */
+/**
+ * Returns an error message when a test run must be refused, else null. A worktree never runs the API tests on the
+ * shared database: the base checkout's merge verify runs there, and two concurrent runs take each other's pg-boss
+ * jobs and connections (main went red that way on 2026-10-15). With unmerged migrations the message names them.
+ */
 export function guardMessage({ databaseUrl, cwd, pending, allowOverride }: GuardInput): string | null {
-	if (allowOverride || pending.length === 0 || !isSharedDb(databaseUrl) || !isWorktree(cwd)) return null;
+	if (allowOverride || !isSharedDb(databaseUrl) || !isWorktree(cwd)) return null;
 	return [
-		`Refusing to migrate the shared database from a worktree: ${pending.length} migration(s) not yet applied there:`,
+		pending.length
+			? `Refusing to migrate the shared database from a worktree: ${pending.length} migration(s) not yet applied there:`
+			: 'Refusing to run the API tests on the shared database from a worktree (the merge verify runs there).',
 		...pending.map((m) => `  - ${m}`),
-		'Use a scratch database for migration work (TEST_DATABASE_URL, or point DATABASE_URL/DIRECT_URL at task_<id>):',
+		'Use a scratch database (TEST_DATABASE_URL, or point DATABASE_URL/DIRECT_URL at task_<id>), set on the same command line:',
 		'  psql postgresql://postgres:postgres@127.0.0.1:55322/postgres -c "create database task_<id>" && export TEST_DATABASE_URL="postgresql://postgres:postgres@127.0.0.1:55322/task_<id>?schema=app"',
 		'Override (humans only): ALLOW_SHARED_DB_MIGRATE=1',
 	].join('\n');
