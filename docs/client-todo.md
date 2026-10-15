@@ -65,6 +65,7 @@ Put keys into `.env.local` (gitignored) unless noted. Never paste secrets into c
 - [ ] **Firebase**: add Firebase to project `zivali-511620`, link GA4 property "zivali", and add the Android and iOS apps `si.signapps.zivali`.
   - Download `google-services.json` and `GoogleService-Info.plist` into `.secrets/`.
   - Give the `zivali-analytics` service account the role "Firebase Cloud Messaging API Admin".
+- [ ] **EAS env** (once the domain exists): set the mobile API URL, app URL and Supabase publishable key per environment with `eas env:create` (development, preview, production). The EAS profiles are ready (TASK-5.2); no build has been run yet.
 - [ ] **Voyage AI** key (photo matching, M3): voyageai.com → `VOYAGE_API_KEY`. The free tier covers about 150k photos.
 - [ ] **GA4**: change the web stream URL from `https://test.com` to the real domain; add an internal-traffic filter.
 
