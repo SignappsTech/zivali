@@ -19,9 +19,11 @@ RUN pnpm --filter api deploy --prod --ignore-scripts /out
 FROM node:22-slim
 # OpenSSL for Prisma's schema engine (migrations). pg_dump for the worker's db.backup job (ADR-016): Debian's client
 # is older than Supabase's Postgres 17 and pg_dump refuses newer servers, so postgresql-client-17 comes from PGDG.
-RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates curl \
+# Retries: a flaky network (or DNS under emulation) should not fail the image.
+RUN echo 'Acquire::Retries "5";' > /etc/apt/apt.conf.d/80retries \
+	&& apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates curl \
 	&& install -d /usr/share/postgresql-common/pgdg \
-	&& curl -fsSo /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc https://www.postgresql.org/media/keys/ACCC4CF8.asc \
+	&& curl -fsSo /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc --retry 5 https://www.postgresql.org/media/keys/ACCC4CF8.asc \
 	&& echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt $(. /etc/os-release && echo "$VERSION_CODENAME")-pgdg main" > /etc/apt/sources.list.d/pgdg.list \
 	&& apt-get update && apt-get install -y --no-install-recommends postgresql-client-17 \
 	&& apt-get purge -y curl && apt-get autoremove -y && rm -rf /var/lib/apt/lists/*

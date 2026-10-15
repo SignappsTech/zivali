@@ -90,6 +90,8 @@ Names only; values never go into Git. [`.env.example`](.env.example) lists every
 | staging     | Hetzner CAX11 (Arm64) with Docker Compose + Caddy; Supabase `najdimo` (Free); R2; `staging.<domain>` | every push to `main` that passes CI (`deploy.yml`) |
 | production  | the same VPS under its own Compose project and its own Supabase project; `<domain>`                  | a version tag `vX.Y.Z` after manual approval       |
 
+Images are `linux/arm64` (the CAX11 is an Ampere server): the workflow builds them on `ubuntu-24.04` with Buildx, where only the api image's runtime stage runs under QEMU; GitHub's `ubuntu-24.04-arm` runner is an alternative that builds natively without QEMU. A workstation needs Docker with Arm64 emulation (Docker Desktop; if a build fails with `exec format error`, register it once with `docker run --privileged --rm tonistiigi/binfmt --install arm64`).
+
 `node scripts/deploy.mjs <staging|production>` deploys from a workstation and is what the workflow runs. Without a credential it prints `NEEDS-INPUT` with the variable names (never values) and runs the dry run (arm64 image builds, migrations from zero on a scratch local database with `prisma migrate diff`, the ADR-021 security tests) instead. Runbook (VPS setup, firewall, R2 buckets, Supabase settings, rollback, restore): [`deploy/README.md`](deploy/README.md).
 
 | Credential (names only)                                                                                                              | Who provides it                                                          | Monthly cost                                                                                                        | Blocked without it                                                                     |
