@@ -7,7 +7,7 @@ status: To Do
 assignee:
   - '@backend-dev'
 created_date: '2026-10-14 22:12'
-updated_date: '2026-10-15 00:12'
+updated_date: '2026-10-15 01:53'
 labels:
   - be
   - 'est:M'
@@ -47,4 +47,5 @@ Branch: agent/task-6.6-reports-schema
 - [ ] #4 GET /v1/reports/:code returns the C4 PublicReport through the report mapper with no exact point, chip, token or contact data (owner fields only for managers), GONE for hidden or removed and long-closed reports and NOT_FOUND otherwise; Supertest covers each case and the permission matrix.
 - [ ] #5 Seeder 10-reports creates at least 30 Slovenian fixture reports (lost, found, sighted; two chip pairs) and pets for fixture users; licensed fixture photos are uploaded to MinIO with licences listed.
 - [ ] #6 reports has reward_eur (1–10 000) and reward_note (≤ 80) per C4, null for found and sighted; PublicReport returns reward only for lost reports that have one.
+- [ ] #7 Location privacy (ADR-006, C6): coarsenPoint() in @zivali/validation/geo offsets a point randomly by 20–30 m (crypto random, not seeded); the reports service coarsens once on create and on a changed location, never on a PATCH without location change, and derives public_point from the stored coarsened point; tests prove: stored point is 20–30 m from the received one, no column or job payload holds the received value, repeated reads return the same stored point and public circle, and 10 000 samples stay within 20–30 m.
 <!-- AC:END -->

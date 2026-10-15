@@ -65,6 +65,8 @@ Client (`@zivali/api/notifications`): `listNotifications`, `markRead`, `getPrefs
 | `PUT /v1/alert-subscription` | auth, verified email | `{ center: { lat, lng }, radius_km (1–25), species: ('dog'|'cat')[], paused }` | `AlertSubscription` |
 | `DELETE /v1/alert-subscription` | auth | - | `204` |
 
+`AlertSubscription` = the request fields plus `daily_cap`, `created_at`, `updated_at`. The centre is stored coarsened (20–30 m, C6 §Storage) like every user location.
+
 `alerts.fanout { report_id }` on a visible LOST report: TypedSQL `prisma/sql/alertRecipients.sql` finds subscriptions not paused, species match, `ST_DWithin(center_point, report.public_point, radius_km*1000)` (GiST), excluding the report's managers, users already in `alert_deliveries` for this report and users at their daily cap (default 5); chunks of 500 → `notify.send` type `nearby_lost` (dedupe `nearby:<report_id>`). At most 1 push per report per user. Pending deliveries for a report closed or reunited are dropped by the handler (status check). Target: 1000 recipients < 60 s.
 
 ## Example

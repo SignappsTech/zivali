@@ -1,4 +1,4 @@
-source: docs/04-technical-design.md (v0.8) §Architecture, §Technology stack, §Repository structure; docs/05-quality-security-plan.md (v0.6); amended 2026-10-15: proxy.ts, APP_VERSION, RTK Query §Quality gates, §Definition of Done
+source: docs/04-technical-design.md (v0.9) §Architecture, §Technology stack, §Repository structure; docs/05-quality-security-plan.md (v0.6); amended 2026-10-15: proxy.ts, APP_VERSION, RTK Query §Quality gates, §Definition of Done
 
 # Frontend slice (apps/web, apps/mobile, packages/{tokens,api,i18n,analytics})
 
@@ -63,6 +63,7 @@ Only dependencies listed in `docs/tech/adr/017-dependency-allowlist.md` (or inst
 - Same component names and props on web and mobile (`Button`, `Input`, `FormField`, `StatusLabel`, `MapView`, `LocationPicker`, `ReportSlot`, `AdSlot`, …).
 - Web: server components by default; `"use client"` only where needed; MapLibre, PDF and heavy code via dynamic import; images with explicit width/height; no layout shift (reserved sizes for photos and ad slots).
 - Mobile: safe areas, OS font scaling up to 200 % (`maxFontSizeMultiplier` 2), permission primer before every OS prompt (camera, location, notifications) with a working fallback on denial.
+- Location privacy (ADR-006, C6 §Storage): call `coarsenPoint()` (`@zivali/validation/geo`) once when the user picks or confirms a point (GPS, pin, search, EXIF) and hand only the coarsened point to forms, drafts, the offline outbox and requests; the raw value stays in component state. Show the owner's stored point labelled "približno" (`location.approximate_label`). Lookup URLs (`near`, shelters) use coordinates rounded to 2 decimals (C4 §REST).
 - Privacy: never render or log exact coordinates, chip numbers, emails or phone numbers of other users; `track()` only with registered params (C12); no PII in `console` output.
 - Device storage (mobile): only the C17 tables (own drafts and outbox, public report cache) and secure-store tokens; never persist chat, matches, notifications or other private queries (no redux-persist or other query persistence); screens read report lists only through `lib/data/reports.ts`; sign-out calls `wipeLocalData()`.
 - Accessibility first: every map has a list alternative; every icon-only button has an accessible name; dialogs and sheets trap and restore focus.

@@ -5,6 +5,7 @@ status: To Do
 assignee:
   - '@qa'
 created_date: '2026-10-14 22:15'
+updated_date: '2026-10-15 01:54'
 labels:
   - qa
   - 'est:XS'
@@ -15,6 +16,7 @@ dependencies:
   - TASK-26.5
   - TASK-26.1
   - TASK-26.2
+  - TASK-26.7
 references:
   - docs/tech/frontend.md
   - docs/design/pages/P14-reunited.md

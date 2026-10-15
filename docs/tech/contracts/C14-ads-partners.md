@@ -50,7 +50,7 @@ A verified Vet Partner clinic (organisation kind `vet` with an active Vet Partne
 |---|---|---|---|
 | `GET /v1/admin/ads` | admin, aal2 | `?status&cursor` | `{ items: AdminAd[], next_cursor }` |
 | `POST /v1/admin/ads`, `PUT /v1/admin/ads/:id` | admin, aal2 | `AdInput` | `AdminAd` (validation: alt 5–140, https link, image 4:3 at least 1200×900 px JPG or PNG under 500 KB, title ≤ 60, body ≤ 120, no animal sale or rehoming, no exclusive overlap; audited) |
-| `POST /v1/admin/ads/:id/image` | admin, aal2 | `{ sha256, width, height, bytes, content_type }` | presigned PUT to the media bucket `ads/<id>/…` (C5 pattern) |
+| `POST /v1/admin/ads/:id/image` | admin, aal2 | `{ sha256, width, height, bytes, content_type }` | `AdImageUploadResponse = { upload: { url, method: 'PUT', headers, expires_at } }`: presigned PUT to the media bucket `ads/<id>/…` (C5 pattern) |
 | `POST /v1/admin/ads/:id/status` | admin, aal2 | `{ status }` | `AdminAd` (audited) |
 | `DELETE /v1/admin/ads/:id` | admin, aal2 | - | `204` (soft delete, audited) |
 | `GET /v1/admin/ads/:id/stats` | admin, aal2 | `?from&to` | `{ items: { day, slot, region_slug, impressions, clicks, ctr }[] }` (CSV export client-side) |

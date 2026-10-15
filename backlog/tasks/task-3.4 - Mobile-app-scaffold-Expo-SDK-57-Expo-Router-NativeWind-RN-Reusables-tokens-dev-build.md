@@ -44,6 +44,6 @@ Branch: agent/task-3.4-mob
 - [ ] #1 apps/mobile (Expo SDK 57, Expo Router, TypeScript strict, New Architecture) starts with `pnpm --filter mobile start` and an Android development build installs and opens (EAS cloud with the existing EXPO_TOKEN, or a local build).
 - [ ] #2 NativeWind 4.2 with Tailwind 3.4 uses the @zivali/tokens tailwind preset and native.css; React Native Reusables is initialised; brand fonts load through @expo-google-fonts; light and dark follow the OS.
 - [ ] #3 app.config.ts sets the working app name, bundle id and Android package si.signapps.zivali, scheme zivali and expo-dev-client; eas.json has development and preview profiles with no submit.
-- [ ] #4 lib/supabase uses supabase-js with expo-sqlite localStorage, lib/env validates EXPO_PUBLIC_* variables with zod, and the root layout provides the Redux store Provider (createApiStore from @zivali/api/rtk) and use-intl with a placeholder catalogue.
+- [ ] #4 lib/supabase uses supabase-js with expo-sqlite localStorage, lib/env validates EXPO_PUBLIC_* variables with zod, and the root layout provides use-intl with a placeholder catalogue; TanStack Query is not used (RTK Query is the client, ADR-020): the Redux store Provider and generated api come with the mobile RTK follow-up (TASK-3.13) and the scaffold leaves a TODO where the Provider goes.
 - [ ] #5 jest-expo with Testing Library runs one component test; `tsc` and `expo export --platform android` pass; Metro resolves @zivali/* workspace packages.
 <!-- AC:END -->

@@ -35,7 +35,8 @@ reports(id, short_code text unique,            -- 8 chars base58, public identif
         type, status default 'open', close_reason, moderation_state default 'visible',
         pet_id → pets null, species, name text null (lost only), breed_codes, colours, pattern, size, sex,
         chip_number, chip_status, collar,
-        exact_point geography(Point) not null, requested_radius_m int null (lost: 200–20000),
+        ear_tip boolean null, lifestyle text null check (lifestyle in ('indoor','outdoor','both')),   -- cats; copied from the pet or entered inline (CH-17)
+        exact_point geography(Point) not null,   -- the COARSENED private point (20–30 m offset applied once at write, device and server; never the raw point; C6 §Storage, ADR-006) requested_radius_m int null (lost: 200–20000),
         public_point geography(Point), public_radius_m int,          -- set by the API fuzz service on write (C6)
         municipality_id, region_id, in_slovenia bool,                -- set by the API from geo_lookup (C6)
         event_at timestamptz not null,       -- lost: last seen; found/sighted: when seen (offline queue: original capture time, C17); matching uses event_at, never created_at
@@ -78,6 +79,10 @@ Reminders for LOST at 7, 14, 30 days after `created_at` (`lifecycle_tick`, hourl
 | `GET /v1/sync/reports` (TASK-85.1) | optionalAuth, rate limit 60/h per device | query `areas` (JSON, ≤ 3 circles ≤ 25 km), `since`, `limit` ≤ 1000 | `{ upserts: CachedReport[], removed_ids: uuid[], server_time, has_more }` | `VALIDATION`, `RATE_LIMITED` |
 | `GET/POST /v1/pets`, `GET/PATCH/DELETE /v1/pets/:id`, `POST /v1/pets/:id/archive` (TASK-16.3) | auth (not anonymous), owner | `PetInput` | `Pet` / `{ items: Pet[] }` | `VALIDATION`, `FORBIDDEN`, `CONFLICT` (`code: PET_LIMIT` in details; free limit 2, app_config `pets.free_limit`) |
 
+Limits (implemented, confirmed): `name` ≤ 60, `collar` ≤ 200, pet `notes` ≤ 1000, `breed_codes` ≤ 5; `mixed` and `unknown` are species-scoped (`dog.mixed`, `cat.unknown`); `PetInput.name` required (1–60). `location` in the request is the point already coarsened by the client; the API coarsens again (C6 §Storage).
+
+**Query encoding (implemented, confirmed)**: lists as a comma list or repeated keys (`types=lost,found`); `bbox=w,s,e,n`; `near=lat,lng,km`; sync `areas` = JSON `[{lat,lng,radius_km}]` (1–3, radius ≤ 25). **Location in URLs (decision, CH-19)**: accepted for these read endpoints (`near`, sync `areas`, C18 `shelters/responsible`) because they must stay cacheable-friendly GETs and are used for public reads, under three rules: the client rounds the coordinates to 2 decimals (about 1 km) before putting them in a URL; the API and Caddy access logs record the route pattern only, never the query string; responses with a location query are `Cache-Control: private, no-store`. Anything that carries a precise point (report create/update, alert subscription, geocoder search/reverse) stays POST/PUT body only (C6).
+
 ```ts
 type CreateReportInput = {
   type: 'lost'|'found'|'sighted'; pet_id?: uuid;                 // lost: either pet_id or inline attributes
@@ -92,7 +97,7 @@ type CreateReportInput = {
 ```
 Rules (domain `ReportsDomain.createReport(input, ctx)`): `event_at` not in the future (+10 min) → `VALIDATION`; older than 30 days → accepted with `warnings: ['OLD_EVENT']`; lost with a `pet_id` that has an open lost report → `DUPLICATE_OPEN_REPORT`; chip normalised; fuzz and geo lookup computed (C6); creator added to `report_managers`; anonymous callers pass the submission guard and get a manage token (C7); in one transaction with jobs `photo.publish`, `match.report` and, for visible lost reports, `alerts.fanout`. Lost reports need a non-anonymous account (`FORBIDDEN` for anonymous).
 
-**Reward (display only, brief v1.1)**: lost reports may carry `reward_eur` (integer 1–10 000) and/or `reward_note` (single line, ≤ 80 characters). Found and sighted reports with either field → `VALIDATION`. `reward_note` is rejected (`VALIDATION`, issue `CONTACT_DATA`) when it contains a URL, an e-mail address or a run of 6 or more digits (phone, IBAN, card); the check is `containsContactData()` in `@zivali/validation`, shared with the clients. The app never collects, holds or transfers reward money (no escrow); clients show the reward line together with the scam warning from the content slice. Editable with `PATCH` like other fields; not used in matching.
+**Reward (display only, brief v1.1)**: lost reports may carry `reward_eur` (integer 1–10 000) and/or `reward_note` (single line, ≤ 80 characters). Found and sighted reports with either field → `VALIDATION`. `reward_note` is rejected (`VALIDATION`, issue `CONTACT_DATA`) when it contains a URL, an e-mail address or 6 or more digits, optionally split by single spaces, dashes or slashes (so `041 123 456`, `SI56 0510 …` and `4111-1111-1111` are caught; dots are not separators, so dates such as `15.10.2026` pass); URL = a scheme, `www.`, or `label.<common TLD>`. The check is `containsContactData()` in `@zivali/validation`, shared with the clients. The app never collects, holds or transfers reward money (no escrow); clients show the reward line together with the scam warning from the content slice. Editable with `PATCH` like other fields; not used in matching.
 
 ## Public read model (API serializers, `mappers/report.mappers.ts`)
 
@@ -113,7 +118,24 @@ type ReportSearch = {
   sort?: 'recent'|'distance'; cursor?: string; limit?: number /* ≤ 50 list, ≤ 1000 map */
 }
 ```
-Never returned: `exact_point`, `chip_number`, `manage_token_hash`, `created_by`, finder email, phone. Boosted (`boosted_until > now()`) sort first.
+```ts
+type ReportOwnerView = PublicReport & {            // returned to managers (GET /v1/reports/:code, /v1/me/reports, PATCH, transitions)
+  manager_role: 'owner'|'finder'|'staff'; moderation_state; close_reason: closeReason | null;
+  pet_id: uuid | null; chip_number: string | null; chip_status: 'valid'|'invalid'|'none'; collar: string | null;
+  location: { lat: number; lng: number };         // the stored COARSENED point labelled "približno" (C6 §Storage), never a raw point
+  requested_radius_m: number | null; contact_pref; reward_eur: number | null; reward_note: string | null;
+  first_match_at: string | null; reunited_at: string | null; closed_at: string | null; last_owner_update_at: string
+}
+type Pet = {                                       // owner only
+  id; species; name; breed_codes; colours; pattern: pattern | null; size: size | null; sex: sex | null; birth_year: number | null;
+  chip_number: string | null; chip_status; chip_registered_crhz: 'yes'|'no'|'unknown' | null; ear_tip: boolean | null;
+  lifestyle: 'indoor'|'outdoor'|'both' | null; collar: string | null; notes: string | null; archived_at: string | null;
+  created_at; updated_at; photos: { id: uuid; thumb_url: string }[]
+}
+```
+(Confirmed from `packages/types/src/domain/{reports,pets}.ts`, TASK-6.5; `PetInput` = the editable columns, `name` required 1–60.)
+
+Never returned to the public: `exact_point`, `chip_number`, `manage_token_hash`, `created_by`, finder email, phone. Boosted (`boosted_until > now()`) sort first.
 
 Sync feed (`GET /v1/sync/reports`, TASK-85.1): Offline cache feed for mobile (C17): open, visible reports whose public area intersects an area and `updated_at > p_since` (all when null); `removed_ids` = reports in those areas changed since `p_since` that are no longer open and visible (closed, reunited, expired, hidden, removed). Callable without a session; rate limited 60/hour per device id. `CachedReport` = the PublicReport fields used by the cache (C17) plus `thumb_url`. Never returns more than the public whitelist.
 

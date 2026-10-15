@@ -62,10 +62,10 @@ Seed (TASK-88): `apps/api/prisma/seeders/data/shelters.csv` and `municipality_sh
 |---|---|---|
 | `GET /v1/shelters` | index (TASK-90) | `{ items: ShelterSummary[] }` sorted by name |
 | `GET /v1/shelters/:slug` | shelter page | `Shelter & { municipalities: { slug, name }[] }`, 404 if unknown or inactive |
-| `GET /v1/shelters/responsible?lat=&lng=` or `?municipality=<slug>` | checklist and call button | `{ status: 'confirmed', municipality: { slug, name }, shelter: Shelter } \| { status: 'unconfirmed' \| 'outside_slovenia', municipality?: { slug, name } }` |
+| `GET /v1/shelters/responsible?lat=&lng=` (client rounds to 2 decimals, C4 §REST privacy; exact points are not needed) or `?municipality=<slug>` | checklist and call button | `{ status: 'confirmed', municipality: { slug, name }, shelter: Shelter } \| { status: 'unconfirmed' \| 'outside_slovenia', municipality?: { slug, name } }` |
 | `GET /v1/shelters/municipalities` | municipality search on the index page | `{ items: { slug, name, shelter_slug \| null }[] }` |
 
-`Shelter = { slug, name, address, postal_code, city, phone, phone_display, website?, opening_hours, source, verified_at }`. An unconfirmed municipality never returns a phone number (R-044.5). Lookups by point use `geo_lookup` (C6).
+`ShelterSummary = { slug, name, city, phone_display }`. `Shelter = { slug, name, address, postal_code, city, phone, phone_display, website?, opening_hours, source, verified_at }`. An unconfirmed municipality never returns a phone number (R-044.5). Lookups by point use `geo_lookup` (C6).
 
 ## Admin (TASK-89, M3)
 

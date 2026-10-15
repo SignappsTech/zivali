@@ -46,7 +46,7 @@ model profiles {
 |---|---|---|---|
 | `GET /v1/me` | auth | - | `Profile` (own, incl. private fields) + `{ email, email_verified, is_anonymous, role, aal }` |
 | `PATCH /v1/me` | auth | `{ display_name?, locale?, home?: { lat, lng } \| null, home_radius_km?, phone?, quiet_from?, quiet_to?, supporter_badge_visible? }` | `Profile` |
-| `GET /v1/admin/users?query=&cursor=` | moderator, aal2 | - | `{ items: AdminUser[], next_cursor }` |
+| `GET /v1/admin/users?query=&cursor=` | moderator, aal2 | - | `{ items: AdminUser[], next_cursor }` (`AdminUser` = profile columns for moderation: id, display_name, role, banned_at, created_at, `email_masked`; no phone; defined in `packages/types/src/domain/`, TASK-6.5) |
 | `PUT /v1/admin/users/:id/role` | admin, aal2 | `{ role }` | `{ id, role }` (audited; last admin protected) |
 
 Errors: `UNAUTHENTICATED`, `VALIDATION` (radius 1–25, locale sl/en), `FORBIDDEN`, `AAL2_REQUIRED`, `CONFLICT` (last admin).

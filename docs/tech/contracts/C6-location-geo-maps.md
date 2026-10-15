@@ -6,7 +6,15 @@ source: docs/04-technical-design.md§Data model, ADR-006, ADR-007; FR-004, FR-00
 
 `{ lat: number; lng: number; accuracy_m?: number }` (WGS84). Lost reports add `requested_radius_m` (200–20000, default 1000). The place where a found animal is kept is never collected (FR-004 R-004.4).
 
-## Fuzzing (API, `lib/fuzz.ts`, applied by the report service whenever a location is written)
+## Storage: the raw point is never stored (ADR-006 amended, CH-25)
+
+`coarsenPoint({lat, lng}) → {lat, lng}` in `@zivali/validation/geo`: random offset of 20–30 m (`privacy.coarsen_min_m`/`coarsen_max_m`), bearing uniform, `crypto.getRandomValues`, result rounded to 6 decimals. Applied **once per write**, twice in the chain:
+1. Client (LocationPicker `onChange` and the report/alert form): the value handed to the form, draft, offline outbox (C17) and request is already coarsened; the raw GPS/pin/EXIF value lives only in component state.
+2. API (`ReportsDomain.createReport/updateReport`, alert subscription create/update): coarsens again before the insert; never trusts that the client did. An update that carries the stored point unchanged (or no `location`) keeps it; a different point is coarsened anew. Never re-randomised on read.
+
+`reports.exact_point` stores the coarsened private point; `public_point` derives from it (below). The owner sees the stored point on the map labelled "približno" (`location.approximate_label`, P5/P9); chat location messages (R-004.3) send the coarsened stored point too. After `retention.exact_point_blur_days` (30) from closure the stored point is replaced by `public_point` (ADR-006, job `retention.blur_location`). Request bodies containing points are never logged.
+
+## Public blur (API, `lib/fuzz.ts`, applied by the report service whenever a location is written, from the coarsened stored point)
 
 | Config key | Default |
 |---|---|
@@ -14,7 +22,7 @@ source: docs/04-technical-design.md§Data model, ADR-006, ADR-007; FR-004, FR-00
 | `fuzz.found_min_radius_m` | 150 |
 | `fuzz.grid_m` | 50 |
 
-`public_radius_m = greatest(min_radius(type), coalesce(requested_radius_m, 0))`; seed = `HMAC-SHA256(report_id, FUZZ_SECRET)` (Node `crypto`; u1, u2 from the first 8 bytes); offset distance `0.8 × public_radius_m × sqrt(u1)`, bearing `360° × u2`; snapped to `fuzz.grid_m`. Deterministic per report and location; the exact point is always inside the circle. Distances shown to users are bands only: `lt1`, `1to3`, `3to10`, `gt10` km.
+`public_radius_m = greatest(min_radius(type), coalesce(requested_radius_m, 0))`; seed = `HMAC-SHA256(report_id, FUZZ_SECRET)` (Node `crypto`; u1, u2 from the first 8 bytes); offset distance `0.8 × public_radius_m × sqrt(u1)`, bearing `360° × u2`; snapped to `fuzz.grid_m`. Deterministic per report and stored point; the stored point is always inside the circle. Distances shown to users are bands only: `lt1`, `1to3`, `3to10`, `gt10` km.
 
 Exact point sharing (R-004.3): only inside a chat as a `location` message the manager sends explicitly (C9).
 
@@ -102,7 +110,8 @@ UI: debounce 300 ms, minimum 3 characters, abort the previous request; labels ar
 
 - Queries and points only in POST bodies (never in URLs, so never in Caddy or API access logs); the request logger logs the route pattern only, never bodies; responses `Cache-Control: no-store`.
 - Nothing from a search or reverse lookup is stored; labels are display hints and never saved with a report (the report keeps only `municipality_id`, `region_id`, `in_slovenia`).
-- No external geocoder, so the exact point is never sent to a third party and is not rounded.
+- No external geocoder, so the point is never sent to a third party. Search and reverse accept the client's raw or coarsened point (lookups are not stored); the point saved with a report is always the coarsened one (above).
+- Read endpoints that take a location (`GET /v1/reports?near=`, `GET /v1/shelters/responsible`, C4/C18) are the one exception to "POST only": see C4 §REST (client rounds to 2 decimals, about 1 km; access logs keep route patterns only).
 
 ## Shared map components (same names and props on web and mobile)
 
@@ -149,5 +158,5 @@ useFuzzedArea(report: PublicReport): Circle                      // convenience 
 // POST /v1/geo/reverse  { "lat": 46.0702, "lng": 14.4875 } → 200
 { "place": { "label": "Šiška, Ljubljana", "lat": 46.0739, "lng": 14.4851, "kind": "district", "municipality_slug": "ljubljana" } }
 // POST /v1/geo/search  { "q": "x" } → 400
-{ "error": { "code": "VALIDATION", "message": "Invalid request", "issues": [{ "path": ["q"], "message": "Too short" }] } }
+{ "error": { "code": "VALIDATION", "message": "Invalid request", "issues": [{ "path": "q", "message": "Too short" }] } }
 ```
