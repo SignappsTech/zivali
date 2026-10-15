@@ -23,7 +23,10 @@ type JobInput = z.infer<typeof NotificationJobInput>;
 
 export async function enqueueNotification(input: NotificationInput, ctx: Ctx): Promise<void> {
 	// The payload lands in pgboss.job: ids and a template key only; anything else throws before it is stored.
-	await ctx.jobs.send('notify.send', NotificationJobInput.parse(input), { tx: ctx.tx });
+	const job = NotificationJobInput.parse(input);
+	// A deterministic id makes pg-boss refuse a duplicate (same user and dedupe_key) even with the inbox switched off.
+	const id = job.dedupe_key ? uuidFrom(`notify:${job.user_id}:${job.dedupe_key}`) : undefined;
+	await ctx.jobs.send('notify.send', job, { tx: ctx.tx, ...(id && { id }) });
 }
 
 // --- Delivery (notify.send) ---
@@ -82,6 +85,11 @@ export async function deliver(data: unknown, ctx: Ctx): Promise<void> {
 	const input = parsed.data;
 	const { type, user_id } = input;
 	const spec = TYPES[type];
+	if (type === 'nearby_lost' && !input.payload.report_id) {
+		// Without the report id the one-per-report limit (alert_deliveries) cannot hold.
+		ctx.logger.error({ type }, 'notify.send: nearby_lost without report_id dropped');
+		return;
+	}
 	const recipient = await NotificationsDao.getRecipient(user_id);
 	if (!recipient) {
 		ctx.logger.info({ type }, 'notify.send: recipient has no profile, dropped');
@@ -213,7 +221,12 @@ async function sendNotificationEmail(
 			type,
 			locale,
 			...message,
-			...(unsubscribe_url && { headers: { 'List-Unsubscribe': `<${unsubscribe_url}>` } }),
+			...(unsubscribe_url && {
+				headers: {
+					'List-Unsubscribe': `<${unsubscribe_url}>`,
+					'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+				},
+			}),
 		},
 		ctx
 	);
@@ -288,8 +301,8 @@ function unsubscribeUrl(user_id: string, type: NotificationType): string {
 	return `${config.API_URL.replace(/\/+$/, '')}/v1/notifications/unsubscribe?token=${token}`;
 }
 
-/** Turns the email channel of the token's type off, without sign-in; returns the profile locale for the page. */
-export async function unsubscribe(input: { token: string }, _ctx: Ctx): Promise<{ locale: Locale }> {
+/** Verifies the signed token (no write); returns the user, type and profile locale. */
+export async function unsubscribePage(input: { token: string }, _ctx: Ctx) {
 	const [user_id = '', type = '', signature = '', ...rest] = input.token.split('.');
 	const expected = Buffer.from(unsubscribeSignature(user_id, type));
 	const valid =
@@ -302,13 +315,14 @@ export async function unsubscribe(input: { token: string }, _ctx: Ctx): Promise<
 	if (!valid) throw new AppError('VALIDATION', 'Invalid unsubscribe link');
 	const recipient = await NotificationsDao.getRecipient(user_id);
 	if (!recipient) throw new AppError('NOT_FOUND', 'Account not found');
-	await NotificationsDao.upsertPref({
-		user_id,
-		type,
-		defaults: defaults(type as NotificationType),
-		changes: { email: false },
-	});
-	return { locale: localeOf(recipient) };
+	return { user_id, type: type as NotificationType, locale: localeOf(recipient) };
+}
+
+/** POST (the confirm form or an RFC 8058 one-click): turns the email channel of the token's type off. */
+export async function unsubscribe(input: { token: string }, ctx: Ctx): Promise<{ locale: Locale }> {
+	const { user_id, type, locale } = await unsubscribePage(input, ctx);
+	await NotificationsDao.upsertPref({ user_id, type, defaults: defaults(type), changes: { email: false } });
+	return { locale };
 }
 
 // --- Inbox, prefs, push tokens (/v1, the signed-in actor) ---
@@ -385,6 +399,7 @@ export default {
 	deliver,
 	sendManageLink,
 	unsubscribe,
+	unsubscribePage,
 	unsubscribeToken,
 	listNotifications,
 	markRead,

@@ -20,6 +20,7 @@ import { Provider } from 'react-redux';
 import { useTranslations } from 'use-intl';
 
 import { Toaster } from '@/components/ui/sonner';
+import { setupAnalytics, useScreenTracking } from '@/lib/analytics';
 import { ProfileI18n } from '@/lib/profile-i18n';
 import { store } from '@/lib/store';
 import { NAV_THEME } from '@/lib/theme';
@@ -27,6 +28,7 @@ import { NAV_THEME } from '@/lib/theme';
 export { ErrorBoundary } from 'expo-router';
 
 SplashScreen.preventAutoHideAsync();
+setupAnalytics();
 
 export default function RootLayout() {
 	const { colorScheme } = useColorScheme();
@@ -38,6 +40,7 @@ export default function RootLayout() {
 		AtkinsonHyperlegibleNext_700Bold,
 	});
 	const ready = fontsLoaded || fontError;
+	useScreenTracking();
 
 	useEffect(() => {
 		if (ready) SplashScreen.hideAsync();

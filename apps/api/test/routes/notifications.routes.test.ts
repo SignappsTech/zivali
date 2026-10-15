@@ -4,7 +4,7 @@
 import { randomUUID } from 'node:crypto';
 
 import request from 'supertest';
-import { afterAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 
 import type { USER_ROLE } from '../../generated/enums.ts';
 import { app } from '../../app.ts';
@@ -120,6 +120,9 @@ describe('GET /v1/notifications', () => {
 		const [theirs] = await notify(other.id, 1);
 		const res = await request(app).get(`/v1/notifications?cursor=${theirs!.id}`).set('Authorization', me.auth);
 		expect(res.body.items).toEqual([]);
+		expect((await request(app).get('/v1/notifications?cursor=nope').set('Authorization', me.auth)).status).toBe(
+			400
+		);
 		const tooMany = await request(app).get('/v1/notifications?limit=51').set('Authorization', me.auth);
 		expect(tooMany.status).toBe(400);
 	});
@@ -251,20 +254,37 @@ describe('/v1/push-tokens', () => {
 	});
 });
 
-describe('GET /v1/notifications/unsubscribe', () => {
-	it('turns the type’s email off without sign-in and answers an HTML page in the profile language', async () => {
+describe('/v1/notifications/unsubscribe', () => {
+	// The shared limiter keeps counts across runs on a reused database.
+	beforeEach(() => prisma.rate_limits.deleteMany({ where: { name: 'notifications.unsubscribe' } }));
+
+	const prefOf = (user_id: string) =>
+		prisma.notification_prefs.findUnique({ where: { user_id_type: { user_id, type: 'nearby_lost' } } });
+
+	it('GET only shows a confirm form and leaves the prefs unchanged', async () => {
 		const me = await actor({ locale: 'en' });
 		const token = NotificationsDomain.unsubscribeToken(me.id, 'nearby_lost');
 		const res = await request(app).get('/v1/notifications/unsubscribe').query({ token });
 		expect(res.status).toBe(200);
 		expect(res.type).toBe('text/html');
+		expect(res.text).toContain('<form method="post"');
+		expect(res.text).toContain(encodeURIComponent(token));
+		expect(await prefOf(me.id)).toBeNull();
+	});
+
+	it('POST turns the type’s email off without sign-in and answers an HTML page in the profile language', async () => {
+		const me = await actor({ locale: 'en' });
+		const token = NotificationsDomain.unsubscribeToken(me.id, 'nearby_lost');
+		const res = await request(app)
+			.post('/v1/notifications/unsubscribe')
+			.query({ token })
+			.type('form')
+			.send({ 'List-Unsubscribe': 'One-Click' });
+		expect(res.status).toBe(200);
+		expect(res.type).toBe('text/html');
 		expect(res.text).toContain('Emails turned off');
 		expect(res.headers['cache-control']).toBe('no-store');
-		expect(
-			await prisma.notification_prefs.findUnique({
-				where: { user_id_type: { user_id: me.id, type: 'nearby_lost' } },
-			})
-		).toMatchObject({ in_app: true, push: true, email: false });
+		expect(await prefOf(me.id)).toMatchObject({ in_app: true, push: true, email: false });
 	});
 
 	it('rejects a tampered or foreign token and answers 404 for a deleted account', async () => {
@@ -273,11 +293,11 @@ describe('GET /v1/notifications/unsubscribe', () => {
 		const other = await actor();
 		const forged = valid.replace(me.id, other.id);
 		for (const token of [forged, valid.replace('nearby_lost', 'match_chip'), `${valid}x`, 'x', `${valid}.extra`]) {
-			const res = await request(app).get('/v1/notifications/unsubscribe').query({ token });
-			expect(res.status).toBe(400);
+			expect((await request(app).post('/v1/notifications/unsubscribe').query({ token })).status).toBe(400);
 		}
+		expect((await request(app).get('/v1/notifications/unsubscribe').query({ token: forged })).status).toBe(400);
 		expect(await prisma.notification_prefs.count({ where: { user_id: { in: [me.id, other.id] } } })).toBe(0);
 		const gone = NotificationsDomain.unsubscribeToken(randomUUID(), 'nearby_lost');
-		expect((await request(app).get('/v1/notifications/unsubscribe').query({ token: gone })).status).toBe(404);
+		expect((await request(app).post('/v1/notifications/unsubscribe').query({ token: gone })).status).toBe(404);
 	});
 });

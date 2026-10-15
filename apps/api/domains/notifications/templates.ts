@@ -26,6 +26,8 @@ export type TypeSpec = {
 	email_default?: boolean;
 	/** Deep link (internal path, C15) from the payload; the email button and the push tap open it. */
 	link: (v: Vars) => string;
+	/** Allowlist of payload keys (C10 §Types) that survive normalize; anything else a source returns is dropped. */
+	fields: string[];
 };
 
 const all: Channel[] = ['in_app', 'push', 'email'];
@@ -33,19 +35,59 @@ const toMatches = (v: Vars) => `/r/${v.lost_code}/matches`;
 const toConversation = (v: Vars) => `/inbox/${v.conversation_id}`;
 const toReport = (v: Vars) => `/r/${v.report_code}`;
 
+/** Fields that only the email may carry (C10: Vet Partner and unsubscribe never reach push or the inbox). */
+export const EMAIL_ONLY = ['has_vet_partner', 'clinic_name', 'clinic_area', 'clinic_url', 'ad_id', 'unsubscribe_url'];
+
 export const TYPES: Record<NotificationType, TypeSpec> = {
-	match_chip: { channels: all, quiet: false, category: 'search', prefs: true, link: toMatches },
-	match_suggested: { channels: all, quiet: true, category: 'search', prefs: true, link: toMatches },
-	match_confirmed: { channels: all, quiet: true, category: 'search', prefs: true, link: toConversation },
+	match_chip: {
+		channels: all,
+		quiet: false,
+		category: 'search',
+		prefs: true,
+		link: toMatches,
+		fields: ['match_id', 'lost_code', 'other_code', 'other_type', 'has_name', 'pet_name', 'species'],
+	},
+	match_suggested: {
+		channels: all,
+		quiet: true,
+		category: 'search',
+		prefs: true,
+		link: toMatches,
+		fields: ['match_id', 'lost_code', 'strength', 'other_type', 'has_name', 'pet_name', 'species'],
+	},
+	match_confirmed: {
+		channels: all,
+		quiet: true,
+		category: 'search',
+		prefs: true,
+		link: toConversation,
+		fields: ['conversation_id', 'report_code', 'species', 'report_type'],
+	},
 	// Email only after 30 minutes unread (domain: chat email follow-up).
-	chat_message: { channels: all, quiet: false, category: 'search', prefs: true, link: toConversation },
-	nearby_lost: { channels: all, quiet: true, category: 'alert', prefs: true, email_default: false, link: toReport },
+	chat_message: {
+		channels: all,
+		quiet: false,
+		category: 'search',
+		prefs: true,
+		link: toConversation,
+		fields: ['conversation_id', 'preview_alias', 'unread_count'],
+	},
+	nearby_lost: {
+		channels: all,
+		quiet: true,
+		category: 'alert',
+		prefs: true,
+		email_default: false,
+		link: toReport,
+		fields: ['report_code', 'species', 'distance_band', 'has_area', 'area_name', 'reported_at', ...EMAIL_ONLY],
+	},
 	report_reminder: {
 		channels: all,
 		quiet: true,
 		category: 'search',
 		prefs: true,
 		link: (v) => `/my-reports?r=${v.report_code}&action=keep`,
+		fields: ['report_code', 'day', 'has_name', 'pet_name', 'species'],
 	},
 	report_expiring: {
 		channels: ['in_app', 'email'],
@@ -53,6 +95,7 @@ export const TYPES: Record<NotificationType, TypeSpec> = {
 		category: 'search',
 		prefs: true,
 		link: (v) => `/my-reports?r=${v.report_code}&action=${v.report_type === 'lost' ? 'keep' : 'extend'}`,
+		fields: ['report_code', 'report_type', 'days_left', 'has_name', 'pet_name', 'species'],
 	},
 	report_closed: {
 		channels: ['in_app', 'email'],
@@ -60,6 +103,7 @@ export const TYPES: Record<NotificationType, TypeSpec> = {
 		category: 'search',
 		prefs: true,
 		link: () => '/my-reports',
+		fields: ['report_code', 'report_type', 'idle_days', 'reopen_days', 'has_name', 'pet_name', 'species'],
 	},
 	report_hidden: {
 		channels: ['in_app', 'email'],
@@ -67,14 +111,23 @@ export const TYPES: Record<NotificationType, TypeSpec> = {
 		category: 'search',
 		prefs: true,
 		link: () => '/my-reports',
+		fields: ['report_code', 'report_type', 'support_email'],
 	},
-	report_reunited: { channels: ['in_app', 'push'], quiet: true, category: 'search', prefs: true, link: toReport },
+	report_reunited: {
+		channels: ['in_app', 'push'],
+		quiet: true,
+		category: 'search',
+		prefs: true,
+		link: toReport,
+		fields: ['report_code', 'species'],
+	},
 	manage_link: {
 		channels: ['email'],
 		quiet: false,
 		category: 'finder',
 		prefs: false,
 		link: (v) => String(v.manage_url),
+		fields: ['report_code', 'report_type', 'species', 'manage_url'],
 	},
 	payment_receipt: {
 		channels: ['in_app', 'email'],
@@ -82,11 +135,9 @@ export const TYPES: Record<NotificationType, TypeSpec> = {
 		category: 'payment',
 		prefs: false,
 		link: () => '/account/payments',
+		fields: ['payment_id', 'amount_cents', 'purpose', 'paid_at', 'receipt_ref', 'is_test'],
 	},
 };
-
-/** Fields that only the email may carry (C10: Vet Partner and unsubscribe never reach push or the inbox). */
-export const EMAIL_ONLY = ['has_vet_partner', 'clinic_name', 'clinic_area', 'clinic_url', 'ad_id', 'unsubscribe_url'];
 
 const truncate = (value: unknown, max: number) => {
 	const text = String(value ?? '').trim();
@@ -104,7 +155,8 @@ const NAMED = new Set<NotificationType>([
 
 /** C10: the handler derives has_name and cuts pet_name to 18 and preview_alias to 24 characters. */
 export function normalize(type: NotificationType, raw: Vars): Vars {
-	const { pet_name, ...v } = raw;
+	const { pet_name, ...rest } = raw;
+	const v = Object.fromEntries(Object.entries(rest).filter(([key]) => TYPES[type].fields.includes(key)));
 	if (NAMED.has(type)) {
 		const name = truncate(pet_name, 18);
 		v.has_name = name ? 'yes' : 'no';
@@ -274,5 +326,34 @@ export function renderUnsubscribed(locale: Locale): string {
 		`<p style="line-height:1.5">${escapeHtml(t('unsubscribe.body'))}</p>`,
 		`<p><a href="${escapeHtml(settings)}" style="color:#1f6f5c">${escapeHtml(t('layout.settings'))}</a></p>`,
 		'</main></body></html>',
+	].join('');
+}
+
+const CONFIRM = {
+	sl: {
+		title: 'Odjava od e-poštnih obvestil',
+		body: 'Želite prenehati prejemati to vrsto obvestil po e-pošti?',
+		button: 'Odjava',
+	},
+	en: {
+		title: 'Unsubscribe from email alerts',
+		body: 'Stop receiving this kind of notification by email?',
+		button: 'Unsubscribe',
+	},
+} as const;
+
+/** Confirm page of the unsubscribe link (GET): a POST form, so only a deliberate click changes the pref. */
+export function renderUnsubscribeConfirm(locale: Locale, token: string): string {
+	const c = CONFIRM[locale];
+	return [
+		`<!doctype html><html lang="${locale}"><head><meta charset="utf-8">`,
+		`<meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeHtml(c.title)}</title></head>`,
+		'<body style="margin:0;background:#f7f5f0;color:#1f2933;font-family:Arial,Helvetica,sans-serif">',
+		'<main style="max-width:560px;margin:0 auto;padding:48px 16px">',
+		`<h1 style="font-size:24px">${escapeHtml(c.title)}</h1>`,
+		`<p style="line-height:1.5">${escapeHtml(c.body)}</p>`,
+		`<form method="post" action="?token=${encodeURIComponent(token)}">`,
+		`<button type="submit" style="padding:12px 20px;border:0;border-radius:6px;background:#1f6f5c;color:#fff;font-weight:bold">${escapeHtml(c.button)}</button>`,
+		'</form></main></body></html>',
 	].join('');
 }

@@ -1299,7 +1299,7 @@
 			},
 			"PhotoStatus": {
 				"type": "string",
-				"enum": ["uploaded", "accepted", "rejected", "published", "unpublished"]
+				"enum": ["pending", "uploaded", "accepted", "rejected", "published", "unpublished"]
 			},
 			"PhotoView": {
 				"type": "object",
@@ -2198,7 +2198,7 @@
 				"tags": ["notifications"],
 				"parameters": [
 					{
-						"schema": { "type": "string", "minLength": 1, "maxLength": 500 },
+						"schema": { "type": "string", "format": "uuid" },
 						"required": false,
 						"name": "cursor",
 						"in": "query"
@@ -2271,9 +2271,42 @@
 		},
 		"/v1/notifications/unsubscribe": {
 			"get": {
+				"operationId": "unsubscribeEmailPage",
+				"summary": "Email unsubscribe confirmation page",
+				"description": "No sign-in. Verifies the signed token from an alert email and shows a confirm form (HTML, profile language); it writes nothing, so link scanners cannot turn alerts off.",
+				"tags": ["notifications"],
+				"parameters": [
+					{
+						"schema": { "type": "string", "minLength": 1, "maxLength": 1024 },
+						"required": true,
+						"name": "token",
+						"in": "query"
+					}
+				],
+				"responses": {
+					"200": { "description": "HTML confirm page" },
+					"400": {
+						"description": "VALIDATION",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"404": {
+						"description": "NOT_FOUND",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"429": {
+						"description": "RATE_LIMITED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"500": {
+						"description": "INTERNAL",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					}
+				}
+			},
+			"post": {
 				"operationId": "unsubscribeEmail",
 				"summary": "One-click email unsubscribe",
-				"description": "No sign-in: the signed token from an alert email turns that type’s email channel off and returns an HTML confirmation in the profile language.",
+				"description": "No sign-in: the signed token (query) from an alert email turns that type email channel off (the confirm form, or an RFC 8058 `List-Unsubscribe=One-Click` POST; the body is ignored) and returns an HTML confirmation in the profile language.",
 				"tags": ["notifications"],
 				"parameters": [
 					{
@@ -2427,6 +2460,57 @@
 					},
 					"401": {
 						"description": "UNAUTHENTICATED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"429": {
+						"description": "RATE_LIMITED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"500": {
+						"description": "INTERNAL",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					}
+				}
+			}
+		},
+		"/v1/reports/{code}": {
+			"get": {
+				"operationId": "getReport",
+				"summary": "One report by its short code",
+				"description": "PublicReport (fuzzed area; no chip number, contact data or exact point). A manager of the report gets ReportOwnerView. Hidden, removed and reports closed more than 30 days ago answer GONE with `details.reason`.",
+				"tags": ["reports"],
+				"parameters": [
+					{
+						"schema": { "type": "string", "pattern": "^[1-9A-HJ-NP-Za-km-z]{8}$" },
+						"required": true,
+						"name": "code",
+						"in": "path"
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "The report",
+						"content": {
+							"application/json": {
+								"schema": {
+									"anyOf": [
+										{ "$ref": "#/components/schemas/ReportOwnerView" },
+										{ "$ref": "#/components/schemas/PublicReport" }
+									]
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "VALIDATION",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"404": {
+						"description": "NOT_FOUND",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"410": {
+						"description": "GONE",
 						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
 					},
 					"429": {

@@ -1,7 +1,12 @@
 // Thin: request → ctx → domain → mapper → response. No try/catch (Express 5 forwards rejections).
 import type { Request, Response } from 'express';
 
-import { NotificationsDomain, NotificationsMapper, renderUnsubscribed } from '../domains/notifications/index.ts';
+import {
+	NotificationsDomain,
+	NotificationsMapper,
+	renderUnsubscribeConfirm,
+	renderUnsubscribed,
+} from '../domains/notifications/index.ts';
 import { userCtx } from '../lib/ctx.ts';
 
 export async function list(req: Request, res: Response): Promise<void> {
@@ -13,6 +18,12 @@ export async function list(req: Request, res: Response): Promise<void> {
 export async function markRead(req: Request, res: Response): Promise<void> {
 	await NotificationsDomain.markRead(req.body, userCtx(req));
 	res.status(204).end();
+}
+
+export async function unsubscribePage(req: Request, res: Response): Promise<void> {
+	const query = req.query as { token: string };
+	const { locale } = await NotificationsDomain.unsubscribePage(query, userCtx(req));
+	res.type('html').set('Cache-Control', 'no-store').send(renderUnsubscribeConfirm(locale, query.token));
 }
 
 export async function unsubscribe(req: Request, res: Response): Promise<void> {
@@ -40,4 +51,13 @@ export async function unregisterPushToken(req: Request, res: Response): Promise<
 	res.status(204).end();
 }
 
-export default { list, markRead, unsubscribe, getPrefs, setPref, registerPushToken, unregisterPushToken };
+export default {
+	list,
+	markRead,
+	unsubscribePage,
+	unsubscribe,
+	getPrefs,
+	setPref,
+	registerPushToken,
+	unregisterPushToken,
+};

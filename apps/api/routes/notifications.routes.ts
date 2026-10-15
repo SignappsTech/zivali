@@ -4,6 +4,7 @@ import { Router } from 'express';
 
 import {
 	CursorQuery,
+	Uuid,
 	MarkNotificationsReadInput,
 	NotificationList,
 	NotificationPref,
@@ -31,7 +32,7 @@ route(
 		summary: 'Own inbox',
 		description:
 			'Newest first, keyset-paginated (`cursor` = the last item id, `limit` ≤ 50); `unread` counts all unread rows.',
-		request: { query: CursorQuery },
+		request: { query: CursorQuery.extend({ cursor: Uuid.optional() }) },
 		responses: { 200: { description: 'One page of notifications', schema: NotificationList } },
 		errors: ['UNAUTHENTICATED'],
 	},
@@ -59,13 +60,29 @@ route(
 	{
 		method: 'get',
 		path: '/unsubscribe',
+		operationId: 'unsubscribeEmailPage',
+		summary: 'Email unsubscribe confirmation page',
+		description:
+			'No sign-in. Verifies the signed token from an alert email and shows a confirm form (HTML, profile language); it writes nothing, so link scanners cannot turn alerts off.',
+		request: { query: UnsubscribeQuery },
+		responses: { 200: { description: 'HTML confirm page' } },
+		errors: ['VALIDATION', 'NOT_FOUND'],
+	},
+	rateLimit('notifications.unsubscribe', { limit: 30, window: 3600, key: 'ip' }),
+	NotificationsController.unsubscribePage
+);
+
+route(
+	{
+		method: 'post',
+		path: '/unsubscribe',
 		operationId: 'unsubscribeEmail',
 		summary: 'One-click email unsubscribe',
 		description:
-			'No sign-in: the signed token from an alert email turns that type’s email channel off and returns an HTML confirmation in the profile language.',
+			'No sign-in: the signed token (query) from an alert email turns that type email channel off (the confirm form, or an RFC 8058 `List-Unsubscribe=One-Click` POST; the body is ignored) and returns an HTML confirmation in the profile language.',
 		request: { query: UnsubscribeQuery },
 		responses: { 200: { description: 'HTML confirmation page' } },
-		errors: ['NOT_FOUND'],
+		errors: ['VALIDATION', 'NOT_FOUND'],
 	},
 	rateLimit('notifications.unsubscribe', { limit: 30, window: 3600, key: 'ip' }),
 	NotificationsController.unsubscribe

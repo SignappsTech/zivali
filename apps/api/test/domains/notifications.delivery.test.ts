@@ -349,6 +349,7 @@ describe('payload and text', () => {
 		expect(t.email[0]!.headers?.['List-Unsubscribe']).toMatch(
 			/^<http:\/\/localhost:4000\/v1\/notifications\/unsubscribe\?token=.+>$/
 		);
+		expect(t.email[0]!.headers?.['List-Unsubscribe-Post']).toBe('List-Unsubscribe=One-Click');
 		expect(t.email[0]!.subject).toBe('Izgubljen pes v vaši bližini');
 	});
 });
@@ -390,6 +391,40 @@ describe('prefs, verification, dedupe', () => {
 		expect(await inbox(user.id)).toHaveLength(1);
 		expect(t.push).toHaveLength(1);
 		expect(t.email).toHaveLength(1);
+	});
+
+	it('enqueues with a deterministic job id per user and dedupe_key, so pg-boss refuses a duplicate', async () => {
+		const user = await recipient();
+		const t = testCtx();
+		const input = job(user.id, 'match_chip');
+		await NotificationsDomain.enqueueNotification(input, t.ctx);
+		await NotificationsDomain.enqueueNotification(input, t.ctx);
+		await NotificationsDomain.enqueueNotification({ ...input, dedupe_key: randomUUID() }, t.ctx);
+		const [a, b, c] = t.jobs.map((j) => (j.options as { id?: string }).id);
+		expect(a).toMatch(/^[0-9a-f-]{36}$/);
+		expect(b).toBe(a);
+		expect(c).not.toBe(a);
+	});
+
+	it('drops payload keys outside the type’s allowlist from inbox, broadcast and push', async () => {
+		const user = await recipient();
+		sources.report_reunited = source({ ...SAMPLES.report_reunited, point: [14.5, 46.05], chip_number: '941000' });
+		const t = testCtx();
+		await NotificationsDomain.deliver(job(user.id, 'report_reunited'), t.ctx);
+		const [row] = await inbox(user.id);
+		expect(Object.keys(row!.payload as object).sort()).toEqual(['report_code', 'species']);
+		expect(JSON.stringify(vi.mocked(broadcast).mock.calls.map((call) => call[2]))).not.toContain('941000');
+		expect(JSON.stringify(t.push)).not.toContain('941000');
+		expect(JSON.stringify(t.push)).not.toContain('46.05');
+	});
+
+	it('drops a nearby_lost job without report_id', async () => {
+		const user = await recipient();
+		sources.nearby_lost = source(SAMPLES.nearby_lost);
+		const t = testCtx();
+		await NotificationsDomain.deliver(job(user.id, 'nearby_lost'), t.ctx);
+		expect(await inbox(user.id)).toEqual([]);
+		expect(t.push).toEqual([]);
 	});
 
 	it('pushes a nearby alert at most once per report per user (alert_deliveries)', async () => {
