@@ -37,7 +37,9 @@ model ads {
   exclusive        Boolean          @default(false)
   weight           Int              @default(1)
   deleted_at       DateTime?        @db.Timestamptz(6)
+  // null once the staff account is deleted
   created_by       String?          @db.Uuid
+  creator          profiles?        @relation(fields: [created_by], references: [id], onDelete: SetNull)
   created_at       DateTime         @default(now()) @db.Timestamptz(6)
   updated_at       DateTime         @updatedAt @db.Timestamptz(6)
   stats            ad_stats_daily[]

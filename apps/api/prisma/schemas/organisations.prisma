@@ -21,8 +21,9 @@ model organisations {
   id              String                 @id @default(uuid()) @db.Uuid
   kind            ORGANISATION_KIND
   name            String
-  // app.municipalities.id (C6)
+  // app.municipalities.id (C6); the link to the directory's shelters (C18) is open until M3
   municipality_id Int?                   @db.SmallInt
+  municipality    municipalities?        @relation(fields: [municipality_id], references: [id])
   // set by staff once the organisation is checked; null = unverified
   verified_at     DateTime?              @db.Timestamptz(6)
   created_at      DateTime               @default(now()) @db.Timestamptz(6)
@@ -38,6 +39,7 @@ model organisation_members {
   role            ORGANISATION_ROLE @default(MEMBER)
   created_at      DateTime          @default(now()) @db.Timestamptz(6)
   organisation    organisations     @relation(fields: [organisation_id], references: [id], onDelete: Cascade)
+  user            profiles          @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
   @@id([organisation_id, user_id])
   @@index([user_id])

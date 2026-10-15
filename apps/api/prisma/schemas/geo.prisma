@@ -14,13 +14,14 @@ model regions {
 }
 
 model municipalities {
-  id        Int                                                    @id @db.SmallInt
-  slug      String                                                 @unique
-  name_sl   String
-  name_en   String
-  region_id Int                                                    @db.SmallInt
-  region    regions                                                @relation(fields: [region_id], references: [id])
-  geom      Unsupported("extensions.geography(MultiPolygon,4326)")
+  id            Int                                                    @id @db.SmallInt
+  slug          String                                                 @unique
+  name_sl       String
+  name_en       String
+  region_id     Int                                                    @db.SmallInt
+  region        regions                                                @relation(fields: [region_id], references: [id])
+  geom          Unsupported("extensions.geography(MultiPolygon,4326)")
+  organisations organisations[]
 
   @@index([geom], type: Gist)
   @@schema("app")

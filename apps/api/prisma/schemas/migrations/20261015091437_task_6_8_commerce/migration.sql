@@ -59,7 +59,7 @@ CREATE TABLE "ads" (
     "image_path" TEXT,
     "image_alt" TEXT NOT NULL,
     "locales" TEXT[] DEFAULT ARRAY['sl', 'en']::TEXT[],
-    "slots" "AD_SLOT"[],
+    "slots" "AD_SLOT"[] NOT NULL,
     "region_ids" SMALLINT[],
     "municipality_ids" SMALLINT[],
     "species" TEXT[],
@@ -142,7 +142,7 @@ CREATE TABLE "organisation_members" (
 -- CreateTable
 CREATE TABLE "payments" (
     "id" UUID NOT NULL,
-    "user_id" UUID NOT NULL,
+    "user_id" UUID,
     "purpose" "PAYMENT_PURPOSE" NOT NULL,
     "amount_cents" INTEGER NOT NULL,
     "currency" TEXT NOT NULL DEFAULT 'EUR',
@@ -164,7 +164,7 @@ CREATE TABLE "payment_events" (
     "provider" TEXT NOT NULL,
     "provider_event_id" TEXT NOT NULL,
     "type" TEXT NOT NULL,
-    "payload" JSONB NOT NULL,
+    "summary" JSONB NOT NULL,
     "received_at" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "payment_events_pkey" PRIMARY KEY ("id")
@@ -200,6 +200,21 @@ ALTER TABLE "ad_stats_daily" ADD CONSTRAINT "ad_stats_daily_ad_id_fkey" FOREIGN 
 -- AddForeignKey
 ALTER TABLE "organisation_members" ADD CONSTRAINT "organisation_members_organisation_id_fkey" FOREIGN KEY ("organisation_id") REFERENCES "organisations"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
+-- AddForeignKey
+ALTER TABLE "organisation_members" ADD CONSTRAINT "organisation_members_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "profiles"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "abuse_reports" ADD CONSTRAINT "abuse_reports_reporter_id_fkey" FOREIGN KEY ("reporter_id") REFERENCES "profiles"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "payments" ADD CONSTRAINT "payments_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "profiles"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ads" ADD CONSTRAINT "ads_created_by_fkey" FOREIGN KEY ("created_by") REFERENCES "profiles"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "organisations" ADD CONSTRAINT "organisations_municipality_id_fkey" FOREIGN KEY ("municipality_id") REFERENCES "municipalities"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
 -- Checks (C11, C13, C14)
 alter table app.abuse_reports
     add constraint abuse_reports_target_type_check check (target_type in ('report', 'message', 'profile')),
@@ -210,10 +225,15 @@ alter table app.payments
     add constraint payments_amount_cents_check check (amount_cents >= 200),
     add constraint payments_currency_check check (currency = 'EUR'),
     add constraint payments_provider_check check (provider in ('stripe', 'mock'));
+-- Never the raw provider event: only these top-level keys (no customer details, no card brand/last4/expiry).
+alter table app.payment_events
+    add constraint payment_events_summary_keys_check check (
+        summary - array['id', 'type', 'object_id', 'payment_intent', 'amount', 'currency', 'status', 'livemode'] = '{}'::jsonb
+    );
 alter table app.ads
     add constraint ads_link_url_check check (link_url ~ '^https://'),
     add constraint ads_image_alt_check check (char_length(image_alt) between 5 and 140),
-    add constraint ads_slots_check check (cardinality(slots) > 0),
+    add constraint ads_slots_check check (slots is not null and cardinality(slots) > 0),
     add constraint ads_species_check check (species <@ array['dog', 'cat']),
     add constraint ads_status_check check (status in ('draft', 'active', 'paused', 'ended')),
     add constraint ads_house_kind_check check (house_kind in ('supporter', 'partner', 'adopt'));

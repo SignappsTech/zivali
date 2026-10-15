@@ -1,7 +1,9 @@
 // Seeder 30-commerce (TASK-6.8, C14): the house ads in every environment, created once and never overwritten (admins
-// edit them later); locally also two sponsor ads targeted by region and species and one verified shelter.
+// edit them later); locally also two sponsor ads targeted by region and species and one verified shelter. The local
+// fixtures need the fixture profiles (00-users) and municipality 61 (01-geo); without the profiles they are skipped.
 import type { Prisma } from '../../generated/client.ts';
 import { config } from '../../lib/config.ts';
+import { logger } from '../../lib/logger.ts';
 import { prisma } from '../prisma.ts';
 import { fixtureUsers } from './00-users.seeder.ts';
 
@@ -110,9 +112,14 @@ export const sponsorAds: Prisma.adsCreateManyInput[] = [
 export const SEED_SHELTER_ID = id(301);
 
 export default async function seedCommerce(): Promise<void> {
-	const local = config.APP_ENV === 'local';
-	await prisma.ads.createMany({ data: local ? [...houseAds, ...sponsorAds] : houseAds, skipDuplicates: true });
-	if (!local) return;
+	await prisma.ads.createMany({ data: houseAds, skipDuplicates: true });
+	if (config.APP_ENV !== 'local') return;
+	const users = [admin, shelterMember];
+	if ((await prisma.profiles.count({ where: { id: { in: users } } })) < users.length) {
+		logger.warn('commerce fixtures skipped: needs the fixture users (00-users)');
+		return;
+	}
+	await prisma.ads.createMany({ data: sponsorAds, skipDuplicates: true });
 
 	// Municipality 61 = Ljubljana (seeder 01-geo).
 	await prisma.organisations.upsert({

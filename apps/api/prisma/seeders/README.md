@@ -42,4 +42,4 @@ Loads `data/shelters.csv` and `data/municipality_shelters.csv` (17 shelters, 212
 ## 30-commerce: house ads (all environments) and commerce fixtures (local only)
 
 - House ads (C14), ids `00000000-0000-4000-a000-000000000101`…`106`: `supporter`, `partner` and `adopt`, each in SL and EN, active in every slot. Created once and never overwritten, so admin edits survive a rerun. The copy is a **placeholder for the content strategist**.
-- Local only (`APP_ENV=local`): two made-up sponsor ads, `…201` (dogs, region 8 osrednjeslovenska, `detail` and `feed`) and `…202` (cats, region 2 podravska, `feed` and `sidebar`); a verified shelter organisation `…301` in Ljubljana with `shelter@zivali.test` as its admin.
+- Local only (`APP_ENV=local`): two made-up sponsor ads, `…201` (dogs, region 8 osrednjeslovenska, `detail` and `feed`) and `…202` (cats, region 2 podravska, `feed` and `sidebar`); a verified shelter organisation `…301` in Ljubljana with `shelter@zivali.test` as its admin. These need the fixture profiles (00-users; skipped with a warning without them) and municipality 61 (01-geo).
