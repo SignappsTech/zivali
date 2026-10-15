@@ -41,6 +41,9 @@ model photos {
   public_display_url String?
   public_thumb_url   String?
   created_at         DateTime             @default(now()) @db.Timestamptz(6)
+  // The 24 h purge clock of an unattached photo: retention.purge deletes it 24 h after the last write; POST /v1/photos
+  // answering `existing: true` touches it (CH-134).
+  updated_at         DateTime             @default(now()) @updatedAt @db.Timestamptz(6)
 
   @@unique([owner_id, sha256])
   @@index([report_id])

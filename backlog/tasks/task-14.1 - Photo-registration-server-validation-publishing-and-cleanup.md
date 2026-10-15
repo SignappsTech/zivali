@@ -1,11 +1,11 @@
 ---
 id: TASK-14.1
 title: 'Photos: R2 presigned uploads, sharp processing, publishing and cleanup'
-status: To Do
+status: In Progress
 assignee:
   - '@backend-dev'
 created_date: '2026-10-14 22:12'
-updated_date: '2026-10-14 23:38'
+updated_date: '2026-10-15 17:08'
 labels:
   - be
   - 'est:M'

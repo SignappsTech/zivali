@@ -160,15 +160,25 @@ export type ReportView = {
 	now: Date;
 };
 
-/** Signed-out callers and non-managers: held reads as unknown, hidden/removed and long-closed as gone. */
-function assertPublic(report: ReportRow, now: Date): void {
-	if (report.moderation_state === 'held') throw new AppError('NOT_FOUND', 'Report not found');
-	if (report.moderation_state === 'hidden' || report.moderation_state === 'removed')
-		throw new AppError('GONE', 'Report is no longer available', { reason: report.moderation_state });
+/** Why a report is not public right now (held, hidden, removed, closed > 30 days), or null while it is. */
+export function notPublicReason(
+	report: Pick<ReportRow, 'moderation_state' | 'status' | 'closed_at' | 'reunited_at'>,
+	now: Date
+): 'held' | 'hidden' | 'removed' | 'closed' | null {
+	if (report.moderation_state !== 'visible') return report.moderation_state;
 	const endedAt =
 		report.status === 'closed' ? report.closed_at : report.status === 'reunited' ? report.reunited_at : null;
-	if (endedAt && now.getTime() - endedAt.getTime() > CLOSED_PUBLIC_MS)
-		throw new AppError('GONE', 'Report is closed', { reason: 'closed' });
+	return endedAt && now.getTime() - endedAt.getTime() > CLOSED_PUBLIC_MS ? 'closed' : null;
+}
+
+/** Signed-out callers and non-managers: held reads as unknown, hidden/removed and long-closed as gone. */
+function assertPublic(report: ReportRow, now: Date): void {
+	const reason = notPublicReason(report, now);
+	if (reason === 'held') throw new AppError('NOT_FOUND', 'Report not found');
+	if (reason)
+		throw new AppError('GONE', reason === 'closed' ? 'Report is closed' : 'Report is no longer available', {
+			reason,
+		});
 }
 
 /** GET /v1/reports/:code. Managers always see their report; everyone else only while it is public. */
@@ -187,4 +197,4 @@ export async function getReport(input: { code: string }, ctx: Ctx): Promise<Repo
 	};
 }
 
-export default { newShortCode, insertReport, updateReportLocation, getReport };
+export default { newShortCode, insertReport, updateReportLocation, notPublicReason, getReport };

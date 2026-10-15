@@ -51,7 +51,8 @@ const EnvSchema = z.object({
 	R2_BUCKET_PRIVATE: z.string().default('zivali-private'),
 	R2_BUCKET_MEDIA: z.string().default('zivali-media'),
 	R2_BUCKET_BACKUPS: z.string().default('zivali-backups'),
-	MEDIA_BASE_URL: z.string().optional(),
+	// Public base of the media bucket (https://media.<domain>); required in production. Unset locally = the MinIO URL.
+	MEDIA_BASE_URL: z.url().optional(),
 	S3_ENDPOINT: z.string().default('http://127.0.0.1:9000'),
 	PAYMENTS_PROVIDER: z.enum(['mock', 'stripe', 'off']).optional(),
 	STRIPE_SECRET_KEY: z.string().optional(),
