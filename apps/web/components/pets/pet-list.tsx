@@ -11,6 +11,7 @@ import { ShieldWarningIcon } from '@phosphor-icons/react/dist/ssr/ShieldWarning'
 import { useTranslations } from 'next-intl';
 
 import { useListPetsQuery } from '@zivali/api/pets';
+import type { QueryError } from '@zivali/api/rtk';
 import type { Pet } from '@zivali/types';
 import { InlineError, ringClass, SpotIllustration, h1Class } from '@/components/shell/page';
 import { noteClass } from '@/components/shelters/classes';
@@ -28,6 +29,16 @@ export const backLinkClass = cn(
 	'-ml-1 inline-flex min-h-11 items-center gap-1.5 rounded-lg font-bold text-primary underline decoration-2 underline-offset-4 hover:decoration-3',
 	ringClass
 );
+
+/** A failed call's message (C1 code → `errors.<code>`, else the generic one); auth/parts' twin without supabase-js. */
+export function useErrorText() {
+	const t = useTranslations('errors');
+	return (failure: unknown) => {
+		const code = (failure as Partial<QueryError>).data?.code;
+		if (code === 'RATE_LIMITED') return t('RATE_LIMITED_generic');
+		return code && t.has(code) ? t(code) : t('INTERNAL');
+	};
+}
 
 /** "Pes · Beagle": species and the first breed, localised. */
 export function usePetMeta() {
@@ -85,9 +96,8 @@ function RowPhoto({ pet }: { pet: Pet }) {
 				<PawPrintIcon weight="bold" aria-hidden="true" className="size-7" />
 			</span>
 		);
-	// A 10-minute presigned thumb (C5): nothing for next/image to cache.
-	// eslint-disable-next-line @next/next/no-img-element
 	return (
+		// eslint-disable-next-line @next/next/no-img-element -- a 10-minute presigned thumb (C5), nothing to cache
 		<img
 			src={cover.thumb_url}
 			alt={pet.name}

@@ -12,10 +12,9 @@ import { useCreatePetMutation, useSetPetPhotosMutation, useUpdatePetMutation } f
 import type { QueryError } from '@zivali/api/rtk';
 import type { Pet } from '@zivali/types';
 import { PetInput } from '@zivali/validation/pets.schema';
-import { useErrorText } from '@/components/auth/parts';
 import { PetLoader } from '@/components/pets/pet-detail';
 import { emptyPetFields, groupChip, PetFields, type PetFieldValues } from '@/components/pets/pet-fields';
-import { backLinkClass, FREE_PET_LIMIT, LimitNote, usePetMeta } from '@/components/pets/pet-list';
+import { backLinkClass, FREE_PET_LIMIT, LimitNote, useErrorText, usePetMeta } from '@/components/pets/pet-list';
 import { PhotoPicker } from '@/components/photos/photo-picker';
 import { clearPhotoDraft, type PickedPhoto } from '@/components/photos/use-photo-uploads';
 import { h1Class } from '@/components/shell/page';

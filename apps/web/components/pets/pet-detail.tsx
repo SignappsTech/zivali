@@ -14,9 +14,8 @@ import { toast } from 'sonner';
 import { useArchivePetMutation, useDeletePetMutation, useGetPetQuery } from '@zivali/api/pets';
 import type { QueryError } from '@zivali/api/rtk';
 import type { Pet } from '@zivali/types';
-import { useErrorText } from '@/components/auth/parts';
 import { groupChip } from '@/components/pets/pet-fields';
-import { ArchivedLabel, backLinkClass, ChipStatus, usePetMeta } from '@/components/pets/pet-list';
+import { ArchivedLabel, backLinkClass, ChipStatus, useErrorText, usePetMeta } from '@/components/pets/pet-list';
 import { ErrorPage, h1Class, InlineError, PageSkeleton } from '@/components/shell/page';
 import {
 	AlertDialog,
