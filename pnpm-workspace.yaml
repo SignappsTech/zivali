@@ -24,6 +24,10 @@ allowBuilds:
   '@prisma/engines': false
   # swagger-ui-dist (apps/api /docs, TASK-3.12): its postinstall is Scarf install telemetry, so it never runs.
   '@scarf/scarf': false
+  # @react-native-firebase (mobile analytics, TASK-7.3): @firebase/util's postinstall writes web SDK defaults and
+  # protobufjs's only checks its version scheme; neither is needed for the native SDK.
+  '@firebase/util': false
+  protobufjs: false
 
 # Fixed versions forced over the pinned or too-narrow ranges of tooling parents (tmp via @lhci/cli > inquirer >
 # external-editor, mysql2 via the prisma CLI).
