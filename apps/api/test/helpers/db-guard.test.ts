@@ -22,8 +22,14 @@ describe('db guard (TASK-101)', () => {
 		expect(msg).toContain('TEST_DATABASE_URL');
 	});
 
+	it('refuses any test run on the shared db from a worktree, even with nothing pending', () => {
+		const msg = guardMessage({ databaseUrl: shared, cwd: wt, pending: [] });
+		expect(msg).toContain('Refusing to run the API tests on the shared database');
+		expect(msg).toContain('TEST_DATABASE_URL');
+	});
+
 	it('allows every other combination', () => {
-		expect(guardMessage({ databaseUrl: shared, cwd: wt, pending: [] })).toBeNull();
+		expect(guardMessage({ databaseUrl: shared, cwd: base, pending: [] })).toBeNull();
 		expect(guardMessage({ databaseUrl: shared, cwd: base, pending: ['x'] })).toBeNull();
 		expect(guardMessage({ databaseUrl: scratch, cwd: wt, pending: ['x'] })).toBeNull();
 		expect(guardMessage({ databaseUrl: shared, cwd: wt, pending: ['x'], allowOverride: true })).toBeNull();
