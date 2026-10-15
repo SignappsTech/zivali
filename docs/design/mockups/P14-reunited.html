@@ -151,7 +151,7 @@
         </div>
         <span class="home-ind" style="z-index:12"></span>
       </div></div>
-      <p class="help mt-4" style="max-width:412px">Shown only with several confirmed matches or sightings. One radio row selected (fill + check), "I found it myself" is the last row. Candidate rows carry photo, status word, area and time only. Focus starts on the heading. One primary.</p>
+      <p class="help mt-4" style="max-width:412px">Shown only with several confirmed matches or sightings. With exactly one confirmed match this step is skipped: reunite propagates to it and the finder gets the short Reunited note; with several matches only the chosen counterpart is notified. One radio row selected (fill + check), "I found it myself" is the last row. Candidate rows carry photo, status word, area and time only. Focus starts on the heading. One primary.</p>
     </figure>
 
     <!-- M2 CONFIRM -->
@@ -240,7 +240,7 @@
           <button type="button" class="grab" aria-label="Zapri"></button>
           <div class="px-5 pt-3">
             <h2 class="r-h2" id="m4-t" tabindex="-1">Zaključite iskanje?</h2>
-            <p class="text-lg leading-7 mt-3">Opozorila in opomniki se ustavijo. Iskanje lahko v 7 dneh ponovno odprete.</p>
+            <p class="text-lg leading-7 mt-3">Opozorila in opomniki se ustavijo. Iskanje lahko v <span data-sample title="Configurable, default 7">7</span> dneh ponovno odprete.</p>
             <p class="label mt-8 font-bold text-[15px] leading-5" id="m4-r">Razlog</p>
             <div class="grid gap-3 mt-3" role="radiogroup" aria-labelledby="m4-r">
               <button type="button" class="choice choice-tone" role="radio" aria-checked="false" tabindex="-1"><i class="ph-bold ph-house" aria-hidden="true"></i><span class="grow"><span class="t">Žival je doma po drugi poti</span></span><i class="ph-bold ph-check tick" aria-hidden="true"></i></button>
@@ -260,7 +260,7 @@
         </div>
         <span class="home-ind" style="z-index:12"></span>
       </div></div>
-      <p class="help mt-4" style="max-width:412px">Reason is a radio group of choice rows; the note is a line field with its label above. The one primary is "Zaključi iskanje" (not destructive: the report can be reopened for 7 days, which the body says). Closing cancels alerts, boosts and pending reminders.</p>
+      <p class="help mt-4" style="max-width:412px">Reason is a radio group of choice rows; the note is a line field with its label above. The one primary is "Zaključi iskanje" (not destructive: the report can be reopened within the configurable window (default 7 days), which the body says; the number is a sample). Closing cancels alerts, boosts and pending reminders.</p>
     </figure>
 
     <!-- M5 REMINDER -->
@@ -336,7 +336,7 @@
 
   <!-- ================= S. STATE CROPS ================= -->
   <h2 class="tile-title !text-2xl" style="margin-top:72px">S. States (region crops)</h2>
-  <p class="tile-lede">Crops show one changed region of a frame above, at 390 px. Dashed outline is mockup scaffolding only.</p>
+  <p class="tile-lede">Crops show one changed region of a frame above, at 390 px. Dashed outline is mockup scaffolding only. Phone frames are scaled down (zoom) when the viewport is narrower than 390 px.</p>
   <div class="wrap-x"><div class="flex flex-wrap gap-x-10 gap-y-12 items-start">
 
     <figure class="m-0" lang="sl">
@@ -426,24 +426,49 @@
       <p class="help mt-3" style="max-width:390px">Owner's detail page after auto-close. One-tap extension also on the notification. The closed status is icon + word, never colour only.</p>
     </figure>
 
+
     <figure class="m-0" lang="sl">
-      <figcaption class="tile-h !mt-0">S7 Closed by the owner: reopen within 7 days, then the toast</figcaption>
+      <figcaption class="tile-h !mt-0">S6b Matched report auto-closed at day 90</figcaption>
+      <div class="crop">
+        <p class="st st-lg" style="color:hsl(var(--muted-foreground))"><i class="ph-fill ph-x-circle" aria-hidden="true"></i>Ujemanje</p>
+        <h2 class="r-h2 mt-1" data-sample>Medo</h2>
+        <div class="note mt-5"><i class="ph-fill ph-info" aria-hidden="true"></i><p>Iskanje smo zaključili, ker ga 90 dni niste posodobili. Če žival še iščete, ga lahko takoj znova odprete.</p></div>
+        <button type="button" class="btn btn-primary btn-lg btn-block mt-6">Nadaljuj iskanje</button>
+      </div>
+      <p class="help mt-3" style="max-width:390px">Matched reports also expire at day 90. Status word "Ujemanje" (icon + word) plus the same closed note and the one primary as S6.</p>
+    </figure>
+
+    <figure class="m-0" lang="sl">
+      <figcaption class="tile-h !mt-0">S7 Closed by the owner: reopen within the window (setting, default 7 days), then the toast</figcaption>
       <div class="crop">
         <p class="st st-lg" style="color:hsl(var(--muted-foreground))"><i class="ph-fill ph-x-circle" aria-hidden="true"></i>Zaključeno</p>
         <h2 class="r-h2 mt-1" data-sample>Medo</h2>
         <button type="button" class="btn btn-primary btn-lg btn-block mt-6">Ponovno odpri</button>
         <div class="toast mt-6" role="status" aria-live="polite"><i class="ph-fill ph-check-circle" aria-hidden="true"></i><p>Iskanje je spet odprto.</p><button type="button" class="iconbtn" aria-label="Zapri"><i class="ph-bold ph-x" aria-hidden="true"></i></button></div>
       </div>
-      <p class="help mt-3" style="max-width:390px">"Ponovno odpri" shows for 7 days after closing. After tapping, the toast confirms; the screen returns to the open report.</p>
+      <p class="help mt-3" style="max-width:390px">"Ponovno odpri" shows for the reopen window after closing (configurable, default 7 days; not hardcoded in the UI). After tapping, the toast confirms; the screen returns to the open report.</p>
+    </figure>
+
+
+    <figure class="m-0" lang="sl">
+      <figcaption class="tile-h !mt-0">S7b Closed by the owner: reopen window over</figcaption>
+      <div class="crop">
+        <p class="st st-lg" style="color:hsl(var(--muted-foreground))"><i class="ph-fill ph-x-circle" aria-hidden="true"></i>Zaključeno</p>
+        <h2 class="r-h2 mt-1" data-sample>Medo</h2>
+        <div class="note mt-5"><i class="ph-fill ph-info" aria-hidden="true"></i><p data-sample>Iskanje je zaključeno in ga ni več mogoče znova odpreti.</p></div>
+        <a class="tl mt-3" href="#" data-sample>Ustvari novo prijavo</a>
+        <div class="meta mt-5"><i class="ph ph-chat-circle-slash" aria-hidden="true"></i><span data-sample>Pogovor je zaprt, ker je žival doma</span></div>
+      </div>
+      <p class="help mt-3" style="max-width:390px">The server answers GONE once the window has passed: no "Ponovno odpri", a plain closed note and a text link to create a new report. No primary on this view. Note and link copy are samples for the content slice.</p>
     </figure>
 
     <figure class="m-0" lang="sl">
       <figcaption class="tile-h !mt-0">S8 Finder marked "returned": owner disagrees</figcaption>
       <div class="crop">
-        <div class="note"><i class="ph-fill ph-info" aria-hidden="true"></i><p>Oseba, ki je žival našla, jo je označila kot vrnjeno. Če žival ni doma, iskanje v 7 dneh ponovno odprite.</p></div>
+        <div class="note"><i class="ph-fill ph-info" aria-hidden="true"></i><p>Oseba, ki je žival našla, jo je označila kot vrnjeno. Če žival ni doma, iskanje v <span data-sample title="Configurable, default 7">7</span> dneh ponovno odprite.</p></div>
         <button type="button" class="btn btn-primary btn-lg btn-block mt-6">Ponovno odpri</button>
       </div>
-      <p class="help mt-3" style="max-width:390px">Note on the owner's detail page (copy key <code>report.owner_disagree</code>, P9) with the one primary "Ponovno odpri".</p>
+      <p class="help mt-3" style="max-width:390px">Note on the owner's detail page (copy key <code>report.owner_disagree</code>, P9) with the one primary "Ponovno odpri" (S8 has exactly one primary); the "7" in the note is the same configurable window.</p>
     </figure>
 
     <figure class="m-0" lang="sl">
@@ -453,6 +478,27 @@
         <button type="button" class="btn btn-primary btn-lg btn-block mt-6">Podaljšaj za 30 dni</button>
       </div>
       <p class="help mt-3" style="max-width:390px">Copy from P7 (<code>report_found.expiry_note</code>, <code>report_found.extend</code>). Shelter intakes are exempt.</p>
+    </figure>
+
+    <figure class="m-0" lang="sl">
+      <figcaption class="tile-h !mt-0">S10 Chat entry point after reunite or close (owner detail view)</figcaption>
+      <div class="crop">
+        <p class="st st-lg st-reunited"><i class="ph-fill ph-heart" aria-hidden="true"></i>Spet doma</p>
+        <h2 class="r-h2 mt-1" data-sample>Medo</h2>
+        <div class="card p-4 mt-5 flex items-center gap-3"><i class="ph ph-chat-circle-slash text-[24px] text-muted-foreground" aria-hidden="true"></i><p class="m-0 text-[15px] leading-[22px] text-muted-foreground" data-sample>Pogovor je zaprt, ker je žival doma</p></div>
+      </div>
+      <p class="help mt-3" style="max-width:390px">Chats go read-only after reunite or close (TASK-26.3). The entry point becomes a quiet, non-interactive line: muted text with a struck chat icon, no button. The same line sits on the finder manage view (S11). Copy is a sample.</p>
+    </figure>
+
+    <figure class="m-0" lang="sl">
+      <figcaption class="tile-h !mt-0">S11 Finder manage page after reunite (anonymous report)</figcaption>
+      <div class="crop">
+        <p class="st st-lg st-reunited"><i class="ph-fill ph-heart" aria-hidden="true"></i>Spet doma</p>
+        <h2 class="r-h2 mt-1">Vaša prijava</h2>
+        <div class="note mt-5"><i class="ph-fill ph-shield-check" aria-hidden="true"></i><p data-sample>Vaši kontaktni podatki so odstranjeni.</p></div>
+        <div class="meta mt-5"><i class="ph ph-chat-circle-slash" aria-hidden="true"></i><span data-sample>Pogovor je zaprt, ker je žival doma</span></div>
+      </div>
+      <p class="help mt-3" style="max-width:390px">A reunited anonymous report drops the finder's contact details; the manage page confirms it and shows no contact fields. Closed chat line as S10. Both lines are samples for the content slice.</p>
     </figure>
   </div></div>
 
@@ -529,7 +575,7 @@
           <h2 class="w-h2 flex-1" id="w2-t" tabindex="-1">Zaključite iskanje?</h2>
           <button type="button" class="iconbtn -mt-1 -mr-2" aria-label="Zapri"><i class="ph-bold ph-x" aria-hidden="true"></i></button>
         </div>
-        <p class="text-lg leading-7 mt-3">Opozorila in opomniki se ustavijo. Iskanje lahko v 7 dneh ponovno odprete.</p>
+        <p class="text-lg leading-7 mt-3">Opozorila in opomniki se ustavijo. Iskanje lahko v <span data-sample title="Configurable, default 7">7</span> dneh ponovno odprete.</p>
         <p class="font-bold text-[15px] leading-5 mt-6" id="w2-r">Razlog</p>
         <div class="grid gap-3 mt-3" role="radiogroup" aria-labelledby="w2-r">
           <button type="button" class="choice choice-tone" role="radio" aria-checked="false" tabindex="-1"><i class="ph-bold ph-house" aria-hidden="true"></i><span class="grow"><span class="t">Žival je doma po drugi poti</span></span><i class="ph-bold ph-check tick" aria-hidden="true"></i></button>
