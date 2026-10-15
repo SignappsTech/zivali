@@ -1,8 +1,9 @@
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { NextIntlClientProvider } from 'next-intl';
+import { renderToString } from 'react-dom/server';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { CONSENT_VERSION, getConsent, initAnalytics } from '@zivali/analytics';
+import { CONSENT_VERSION, getConsent, initAnalytics, isCurrent, parseConsent } from '@zivali/analytics';
 import en from '@zivali/i18n/dist/en.json';
 import sl from '@zivali/i18n/dist/sl.json';
 
@@ -18,13 +19,18 @@ vi.mock('next/navigation', async (actual) => ({
 let stored: string | null;
 const storage = { get: () => stored, set: (value: string) => (stored = value) };
 
-function mount(locale: 'sl' | 'en' = 'sl', extra: Record<string, string> = {}) {
-	initAnalytics({ provider: 'mock', storage });
-	return render(
+// As app/[locale]/layout.tsx does on the server: the cookie decides the first view.
+function banner(locale: 'sl' | 'en' = 'sl', extra: Record<string, string> = {}) {
+	const consent = parseConsent(stored);
+	return (
 		<NextIntlClientProvider locale={locale} messages={withChange(locale === 'sl' ? sl : en, extra)}>
-			<ConsentBanner />
+			<ConsentBanner prompt={!isCurrent(consent)} stored={consent} />
 		</NextIntlClientProvider>
 	);
+}
+function mount(...args: Parameters<typeof banner>) {
+	initAnalytics({ provider: 'mock', storage });
+	return render(banner(...args));
 }
 const withChange = (m: typeof en, extra: Record<string, string>) =>
 	({ ...m, consent: { ...m.consent, ...extra } }) as typeof en;
@@ -38,6 +44,14 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe('ConsentBanner', () => {
+	it('is in the server HTML on a first visit or re-ask, so it paints with the page (TASK-90.4: no late LCP)', () => {
+		expect(renderToString(banner('en'))).toContain('Cookies and your privacy');
+		stored = record(true, CONSENT_VERSION, new Date(Date.now() - 400 * 24 * 3600 * 1000).toISOString());
+		expect(renderToString(banner('en'))).toContain('It has been a year since your last choice');
+		stored = record(false);
+		expect(renderToString(banner('en'))).not.toContain('role="dialog"');
+	});
+
 	it('first visit: labelled dialog in the page language, focus on the heading, three equal buttons', () => {
 		mount('en');
 

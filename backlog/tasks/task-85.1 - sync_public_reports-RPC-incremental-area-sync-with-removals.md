@@ -1,11 +1,11 @@
 ---
 id: TASK-85.1
 title: 'Sync feed API: GET /v1/sync/reports, incremental area sync with removals'
-status: To Do
+status: Done
 assignee:
   - '@backend-dev'
 created_date: '2026-10-14 22:39'
-updated_date: '2026-10-14 23:38'
+updated_date: '2026-10-15 21:52'
 labels:
   - be
   - 'est:S'

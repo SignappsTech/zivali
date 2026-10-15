@@ -52,7 +52,7 @@ test('ad endpoints map their arguments to the C14 routes', async (t) => {
 	await store.dispatch(e.updateAd.initiate({ id, body: adInput }));
 	await store.dispatch(e.requestAdImageUpload.initiate({ id, body: image }));
 	await store.dispatch(e.setAdStatus.initiate({ id, body: { status: 'paused' } }));
-	await store.dispatch(e.deleteAd.initiate({ id }));
+	await store.dispatch(e.deleteAd.initiate({ id, body: { note: 'Campaign cancelled' } }));
 	await store.dispatch(e.getAdStats.initiate({ id, from: '2026-10-01', to: '2026-10-14' }, { subscribe: false }));
 
 	assert.deepEqual(calls(), [
@@ -68,7 +68,7 @@ test('ad endpoints map their arguments to the C14 routes', async (t) => {
 		{ method: 'PUT', path: `/v1/admin/ads/${id}`, query: {}, body: adInput },
 		{ method: 'POST', path: `/v1/admin/ads/${id}/image`, query: {}, body: image },
 		{ method: 'POST', path: `/v1/admin/ads/${id}/status`, query: {}, body: { status: 'paused' } },
-		{ method: 'DELETE', path: `/v1/admin/ads/${id}`, query: {}, body: undefined },
+		{ method: 'DELETE', path: `/v1/admin/ads/${id}`, query: {}, body: { note: 'Campaign cancelled' } },
 		{
 			method: 'GET',
 			path: `/v1/admin/ads/${id}/stats`,

@@ -3,11 +3,11 @@ id: TASK-37.2
 title: >-
   Ad administration API: validated create and edit, image upload, status, soft
   delete, stats
-status: To Do
+status: Done
 assignee:
   - '@backend-dev'
 created_date: '2026-10-14 22:13'
-updated_date: '2026-10-14 23:38'
+updated_date: '2026-10-15 21:54'
 labels:
   - be
   - 'est:S'

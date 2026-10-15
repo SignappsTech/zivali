@@ -19,6 +19,11 @@
 		"title": "{species, select, dog {Lost dog} cat {Lost cat} other {Lost animal}} near you",
 		"body": "{has_area, select, yes {{area_name}, } other {}}{distance_band, select, lt1 {under 1 km} 1to3 {1–3 km} 3to10 {3–10 km} gt10 {over 10 km} other {nearby}} from your area. Have you seen {species, select, other {it}}?"
 	},
+	"nearby_local": {
+		"title": "{species, select, dog {Lost dog} cat {Lost cat} other {Lost animal}} nearby",
+		"body": "You are near where {has_name, select, yes {{pet_name}} other {{species, select, dog {a lost dog} cat {a lost cat} other {a lost animal}}}} was last seen {when}, keep an eye out.",
+		"channel": "Nearby reminders"
+	},
 	"report_reminder": {
 		"title": "Still looking for your pet?",
 		"body": "{has_name, select, yes {{pet_name}} other {{species, select, dog {Your dog} cat {Your cat} other {Your pet}}}}: your search is {day, plural, one {# day} other {# days}} old. Keep searching or close it.",
