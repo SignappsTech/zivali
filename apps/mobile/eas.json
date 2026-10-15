@@ -1,40 +1,29 @@
 {
-	"cli": {
-		"version": ">= 16.0.0",
-		"appVersionSource": "remote"
-	},
+	"cli": { "version": ">= 16.0.0", "appVersionSource": "remote" },
 	"build": {
 		"base": {
 			"node": "22.22.3",
 			"pnpm": "11.28.5",
-			"env": {
-				"EXPO_PUBLIC_ANALYTICS_PROVIDER": "mock",
-				"EXPO_PUBLIC_PUSH_PROVIDER": "mock"
-			}
+			"env": { "EXPO_PUBLIC_ANALYTICS_PROVIDER": "mock" }
 		},
 		"development": {
 			"extends": "base",
 			"developmentClient": true,
 			"distribution": "internal",
 			"channel": "development",
-			"android": {
-				"buildType": "apk"
-			},
-			"env": {
-				"EXPO_PUBLIC_APP_ENV": "local"
-			}
+			"android": { "buildType": "apk" },
+			"env": { "EXPO_PUBLIC_APP_ENV": "local", "EXPO_PUBLIC_PUSH_PROVIDER": "mock" }
 		},
 		"preview": {
 			"extends": "base",
 			"distribution": "internal",
 			"channel": "preview",
-			"android": {
-				"buildType": "apk"
-			},
+			"android": { "buildType": "apk" },
 			"env": {
 				"EXPO_PUBLIC_APP_ENV": "staging",
-				"EXPO_PUBLIC_SUPABASE_URL": "https://omtpppzrugibquukhnyl.supabase.co",
-				"EXPO_PUBLIC_APP_URL": "https://staging.najdimo.si"
+				"EXPO_PUBLIC_PUSH_PROVIDER": "expo",
+				"EXPO_PUBLIC_APP_URL": "https://staging.najdimo.si",
+				"EXPO_PUBLIC_SUPABASE_URL": "https://omtpppzrugibquukhnyl.supabase.co"
 			}
 		},
 		"production": {
@@ -42,11 +31,10 @@
 			"distribution": "store",
 			"channel": "production",
 			"autoIncrement": true,
-			"android": {
-				"buildType": "app-bundle"
-			},
+			"android": { "buildType": "app-bundle" },
 			"env": {
 				"EXPO_PUBLIC_APP_ENV": "production",
+				"EXPO_PUBLIC_PUSH_PROVIDER": "expo",
 				"EXPO_PUBLIC_APP_URL": "https://najdimo.si"
 			}
 		}

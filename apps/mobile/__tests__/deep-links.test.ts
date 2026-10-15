@@ -36,7 +36,11 @@ describe('deep link paths', () => {
 		['https://najdimo.si/payments/return?x=1', '/payments/return?x=1'],
 		['/en/r/abc', '/r/abc'],
 		['/r/abc', '/r/abc'],
-		['/energy', '/energy'],
+		['/energy', '/'],
+		['zivali://settings/x', '/'],
+		['/dev/kit', '/'],
+		['https://najdimo.si/en/r/ABC', '/r/ABC'],
+		['https://najdimo.si/m?t=1', '/m?t=1'],
 		['https://najdimo.si', '/'],
 	])('%s -> %s', (url, path) => {
 		expect(toAppPath(url)).toBe(path);

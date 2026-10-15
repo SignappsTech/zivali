@@ -27,8 +27,9 @@ export async function requestPushPermission(register: Register, provider = env.E
 						})
 					).data;
 		await register({ token, platform });
-	} catch {
-		// Offline or no backend yet: the token is registered again on the next request.
+	} catch (e) {
+		// Offline or no backend yet: the token is registered again on the next request. Never log the token.
+		if (__DEV__) console.warn('push token registration failed', e);
 	}
 	return true;
 }
