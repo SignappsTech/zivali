@@ -1,5 +1,6 @@
 // /v1/alert-subscription (C10 §Nearby alerts): the caller's own nearby-alert subscription. Wiring only.
 import { Router } from 'express';
+import { z } from 'zod';
 
 import { AlertSubscription, AlertSubscriptionInput } from '@zivali/validation';
 
@@ -19,7 +20,7 @@ route(
 		operationId: 'getAlertSubscription',
 		summary: 'Own nearby-alert subscription',
 		description: 'The caller’s subscription, or null when there is none. Real accounts only (C10).',
-		responses: { 200: { description: 'The subscription or null', schema: AlertSubscription.nullable() } },
+		responses: { 200: { description: 'The subscription or null', schema: z.union([AlertSubscription, z.null()]) } },
 		errors: ['UNAUTHENTICATED'],
 	},
 	authMiddleware,
