@@ -3,11 +3,11 @@ id: TASK-8.3
 title: >-
   Mobile UI kit: RN Reusables primitives styled to the design system, gallery
   screen
-status: In Progress
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:12'
-updated_date: '2026-10-15 06:48'
+updated_date: '2026-10-15 07:05'
 labels:
   - fe
   - 'est:M'
