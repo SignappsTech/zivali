@@ -28,4 +28,5 @@ Steps: pnpm quality on main with the e2e mock API. Expected: resource-summary.sc
 - [ ] #1 pnpm quality Lighthouse passes for /zavetisca (script transfer size <= 256000 B)
 - [ ] #2 Mobile LCP ≤ 2.5 s and performance ≥ 0.9 in pnpm quality on /, /en, /zavetisca and a shelter page (moved from TASK-11.2 AC#8). First try font subsetting (latin + latin-ext only), font-display and preloading only the LCP weight; dropping the Bricolage opsz axis (−48 KB) needs design-lead sign-off via a CHANGE row. Lighthouse settings in lighthouserc may be adjusted only if documented (e.g. median of 3 runs), never by loosening the budgets.
 - [ ] #3 Script transfer ≤ 256 KB on every public page, not only /zavetisca
+- [ ] #4 Remove `continue-on-error: true` from the quality job in .github/workflows/ci.yml so Lighthouse budgets block CI (and staging deploys) again
 <!-- AC:END -->
