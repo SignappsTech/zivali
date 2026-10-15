@@ -7,6 +7,7 @@ import { ShortCode } from '@zivali/validation';
 
 import { GeoDomain } from '../../domains/geo/index.ts';
 import { ReportsDomain, type NewReport } from '../../domains/reports/index.ts';
+import configStore from '../../lib/config-store.ts';
 import { userCtx, type Actor } from '../../lib/ctx.ts';
 import { prisma } from '../../prisma/prisma.ts';
 
@@ -155,5 +156,32 @@ describe('location on reads and updates', () => {
 		expect(afterRadius.area.radius_m).toBe(3000);
 		expect(afterRadius.report.requested_radius_m).toBe(3000);
 		expect(metres(afterRadius.exact, afterRadius.area)).toBeLessThanOrEqual(3000);
+	});
+
+	it('never shrinks the circle below the kept centre when the admin lowered the minimum radius', async () => {
+		// A report whose centre is more than 200 m from the stored point, so the lowered floor (200) would cut it off.
+		let created = await ReportsDomain.insertReport(lost(), ctx());
+		let before = await view(created.short_code);
+		for (let i = 0; i < 30 && metres(before.exact, before.area) <= 200; i++) {
+			created = await ReportsDomain.insertReport(lost(), ctx());
+			before = await view(created.short_code);
+		}
+		expect(metres(before.exact, before.area)).toBeGreaterThan(200);
+		const { id, short_code } = created;
+		await prisma.app_config.update({ where: { key: 'fuzz.lost_min_radius_m' }, data: { value: 100 } });
+		configStore.invalidate();
+		try {
+			await ReportsDomain.updateReportLocation({ id, requested_radius_m: 200 }, ctx());
+			const after = await view(short_code);
+			expect({ lat: after.area.lat, lng: after.area.lng }).toEqual({
+				lat: before.area.lat,
+				lng: before.area.lng,
+			});
+			expect(after.area.radius_m).toBeGreaterThanOrEqual(Math.ceil(metres(after.exact, after.area)));
+			expect(after.area.radius_m).toBeGreaterThan(200);
+		} finally {
+			await prisma.app_config.update({ where: { key: 'fuzz.lost_min_radius_m' }, data: { value: 500 } });
+			configStore.invalidate();
+		}
 	});
 });

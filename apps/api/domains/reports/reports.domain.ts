@@ -18,7 +18,7 @@ import { coarsenPoint, LatLng, normalizeChip } from '@zivali/validation';
 
 import type { Ctx } from '../../lib/ctx.ts';
 import { AppError } from '../../lib/errors.ts';
-import { fuzzArea, fuzzSettings, publicRadius, type Point } from '../../lib/fuzz.ts';
+import { distanceM, fuzzArea, fuzzSettings, publicRadius, type Point } from '../../lib/fuzz.ts';
 import { prisma, type Prisma } from '../../prisma/prisma.ts';
 import { GeoDomain } from '../geo/index.ts';
 import ReportsDao, { type LocationColumns, type ReportRow } from './reports.dao.ts';
@@ -139,7 +139,11 @@ export async function updateReportLocation(
 		input.requested_radius_m === undefined ? stored.requested_radius_m : input.requested_radius_m;
 	if (!moved) {
 		if (requested_radius_m === stored.requested_radius_m) return;
-		const public_radius_m = publicRadius(stored.type, requested_radius_m, await fuzzSettings());
+		// The kept centre stays put, so the radius never drops below it (admin may have lowered fuzz.*_min_radius_m).
+		const public_radius_m = Math.max(
+			publicRadius(stored.type, requested_radius_m, await fuzzSettings()),
+			Math.ceil(distanceM(stored.exact, stored.public))
+		);
 		await ReportsDao.updateReport(input.id, { requested_radius_m, public_radius_m }, ctx.tx);
 		return;
 	}

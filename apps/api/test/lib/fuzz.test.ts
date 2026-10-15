@@ -19,8 +19,12 @@ describe('fuzzArea (C6)', () => {
 	it('is deterministic per report id and stored point, and differs between reports and locations', () => {
 		const input = { report_id: randomUUID(), type: 'lost' as const, point: ljubljana };
 		expect(fuzzArea(input)).toEqual(fuzzArea({ ...input }));
-		expect(fuzzArea(input)).not.toEqual(fuzzArea({ ...input, report_id: randomUUID() }));
-		expect(fuzzArea(input, FUZZ_DEFAULTS, 'another-secret-0123456789abcdef0123')).not.toEqual(fuzzArea(input));
+		// Sets of 8, not pairs: two draws share a 50 m grid node ~0.6% of the time.
+		const centres = (areas: { lat: number; lng: number }[]) => new Set(areas.map((a) => `${a.lat},${a.lng}`));
+		const ids = Array.from({ length: 8 }, () => randomUUID());
+		expect(centres(ids.map((report_id) => fuzzArea({ ...input, report_id }))).size).toBeGreaterThan(1);
+		const secrets = Array.from({ length: 8 }, (_, i) => `another-secret-${i}-0123456789abcdef0123`);
+		expect(centres(secrets.map((s) => fuzzArea(input, FUZZ_DEFAULTS, s))).size).toBeGreaterThan(1);
 		// A new stored point gets its own offset: the old offset vector cannot be read off the new circle.
 		const offset = (point: typeof ljubljana) => {
 			const area = fuzzArea({ ...input, point });

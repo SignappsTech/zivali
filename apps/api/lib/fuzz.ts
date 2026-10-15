@@ -40,6 +40,10 @@ export function publicRadius(type: ReportType, requested_radius_m: number | null
 	return Math.max(minRadius(type, settings), requested_radius_m ?? 0);
 }
 
+/** Flat-earth distance in metres; fine at the 50 m to 20 km scale of the public circles. */
+export const distanceM = (a: Point, b: Point) =>
+	Math.hypot((a.lat - b.lat) * M_PER_DEG_LAT, (a.lng - b.lng) * mPerDegLng(a.lat));
+
 export function fuzzArea(
 	input: { report_id: string; type: ReportType; point: Point; requested_radius_m?: number | null },
 	settings: FuzzSettings = FUZZ_DEFAULTS,
@@ -58,8 +62,7 @@ export function fuzzArea(
 		lat: lat + (distance * Math.cos(bearing)) / M_PER_DEG_LAT,
 		lng: lng + (distance * Math.sin(bearing)) / mPerDegLng(lat),
 	};
-	const metres = (a: Point, b: Point) =>
-		Math.hypot((a.lat - b.lat) * M_PER_DEG_LAT, (a.lng - b.lng) * mPerDegLng(lat));
+	const metres = distanceM;
 
 	// The grid nodes around the target; the lng step comes from the node's (public) latitude, so it reveals nothing
 	// about the stored one. They surround the target, so the farthest from the stored point always keeps the floor.
