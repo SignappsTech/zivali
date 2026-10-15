@@ -1,0 +1,579 @@
+<!doctype html>
+<!--
+  P14 Reunited and lifecycle. TASK-26.2.
+  Copy: docs/content/pages/P14-reunited.md (namespace lifecycle), P15 for the tip block, P21 for the ad unit.
+  Samples (marked data-sample): the pet name "Medo", the sample ad, the candidate rows.
+  Illustration: assets/reunited-celebration.png is not made yet. Placeholder of the final size and ratio (640 x 420, 32:21), see .art-ph.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Najdimo mockup: P14 Reunited and lifecycle</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:wght@400;500;600;700&family=Bricolage+Grotesque:opsz,wght@12..96,500..800&display=swap" rel="stylesheet">
+<link href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css" rel="stylesheet">
+<link href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/bold/style.css" rel="stylesheet">
+<link href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css" rel="stylesheet">
+<link href="../tokens.css" rel="stylesheet">
+<link href="../directions/directions.css" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com/3.4.17"></script>
+<script src="../directions/tailwind-config.js"></script>
+<style>
+/* P14 parts used only by this mockup. Token-driven. Frontend maps them to ReunitedScreen, StoryConsent, AdUnit(reunited) and the lifecycle sheets. */
+.scope h1, .scope h2, .scope h3 { text-wrap: balance; }
+.r-h1 { font-family: var(--font-display); font-weight: 700; font-size: 30px; line-height: 36px; letter-spacing: -0.02em; margin: 0; }
+.r-h2 { font-family: var(--font-display); font-weight: 700; font-size: 24px; line-height: 30px; letter-spacing: -0.015em; margin: 0; }
+.r-h3 { font-family: var(--font-display); font-weight: 600; font-size: 20px; line-height: 28px; letter-spacing: -0.01em; margin: 0; }
+.w-h1 { font-family: var(--font-display); font-weight: 700; font-size: 48px; line-height: 52px; letter-spacing: -0.02em; margin: 0; }
+.w-h2 { font-family: var(--font-display); font-weight: 700; font-size: 30px; line-height: 36px; letter-spacing: -0.015em; margin: 0; }
+.w-h3 { font-family: var(--font-display); font-weight: 600; font-size: 24px; line-height: 32px; letter-spacing: -0.01em; margin: 0; }
+.w-title { font-family: var(--font-display); font-weight: 600; font-size: 20px; line-height: 28px; letter-spacing: -0.005em; margin: 0; }
+[tabindex="-1"]:focus { outline: none; }
+[tabindex="-1"].is-focus { outline: 3px solid hsl(var(--ring)); outline-offset: 2px; border-radius: 8px; }
+.logo-link { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; border-radius: 12px; color: hsl(var(--foreground)); text-decoration: none; flex: none; }
+.tl { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; font-weight: 700; color: hsl(var(--primary)); text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 4px; border-radius: 8px; }
+.tnum { font-variant-numeric: tabular-nums; }
+
+/* Illustration placeholder: final size 640 x 420 (32:21). Mockup scaffolding only. The real PNG replaces it, decorative, alt="". */
+.art-ph { position: relative; width: 100%; aspect-ratio: 32 / 21; border-radius: var(--radius-card); background: hsl(var(--accent)); outline: 2px dashed hsl(var(--input)); outline-offset: -2px; display: grid; place-items: center; text-align: center; padding: 16px; box-sizing: border-box; color: hsl(var(--muted-foreground)); font-size: 14px; line-height: 20px; }
+.art-ph i { font-size: 32px; display: block; margin: 0 auto 6px; }
+.art-ph b { color: hsl(var(--foreground)); }
+
+/* Amount pills (P15): a radiogroup. Selected = primary fill + check. Suggested = inset line */
+.pill, .supp { position: relative; }
+.pill[role="radio"][aria-checked="true"] { background: hsl(var(--primary)); color: hsl(var(--primary-foreground)); }
+.pill[role="radio"][aria-checked="true"]:hover { background: color-mix(in srgb, hsl(var(--primary)) 86%, hsl(var(--foreground))); }
+.pill[role="radio"][aria-checked="true"] .tick { display: inline; }
+.pill.is-suggested { box-shadow: inset 0 0 0 2px hsl(var(--primary)); }
+.pill.is-suggested[aria-checked="true"] { box-shadow: none; }
+.pair { display: grid; gap: 8px; }
+.pair-w { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.btn[aria-busy="true"] { cursor: progress; }
+.btn:focus-visible, .pill:focus-visible, .choice:focus-visible, .iconbtn:focus-visible, .tl:focus-visible, .adu:focus-visible, .swrow:focus-within .switch:focus-visible { outline: 3px solid hsl(var(--ring)); outline-offset: 2px; }
+
+/* Story consent: a switch row on the card surface, off by default (A-023). The whole row is the target. */
+.story { background: hsl(var(--card)); border-radius: var(--radius-row); padding: 20px; }
+.swrow { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 56px; cursor: pointer; }
+.swrow .t { font-weight: 700; font-size: 17px; line-height: 24px; }
+.story .help { margin: 8px 0 0; }
+
+/* Ad unit, reunited slot (P21): muted surface, radius 20, no border, no shadow, label top-left. Reserved 200 px on mobile, 176 px on web. */
+.adu { display: flex; flex-direction: column; box-sizing: border-box; height: 200px; padding: 16px 16px 4px; border-radius: var(--radius-row); background: hsl(var(--muted)); color: hsl(var(--foreground)); text-decoration: none; }
+.adu .lab { font-size: 13px; line-height: 16px; font-weight: 700; color: hsl(var(--muted-foreground)); }
+.adu .row { display: flex; gap: 16px; margin-top: 8px; min-height: 0; }
+.adu img { width: 96px; height: 96px; flex: none; border-radius: var(--radius-row); object-fit: cover; display: block; }
+.adu .ti { font-weight: 700; font-size: 17px; line-height: 24px; margin: 0; }
+.adu .tx { font-size: 15px; line-height: 22px; margin: 2px 0 0; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.adu .more { margin-top: auto; align-self: flex-start; display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 12px; margin-left: -12px; font-weight: 700; color: hsl(var(--primary)); border-radius: 999px; }
+.adu:hover .more, .adu.is-hover .more { background: hsl(var(--foreground) / 0.10); }
+.adu.adu-w { height: 176px; padding: 20px 20px 12px; }
+.adu.adu-w .row { margin-top: 8px; }
+.adu.adu-w .col { display: flex; flex-direction: column; min-width: 0; }
+.adu.adu-w .more { margin-top: 0; }
+
+/* Candidate row (which one): photo + status word + area and time. On the selected row the status word follows the row colour. */
+.choice .ph { width: 48px; height: 48px; border-radius: 16px; object-fit: cover; flex: none; }
+.choice[aria-checked="true"] .st { color: inherit; }
+.choice .grow { flex: 1; min-width: 0; }
+
+.meta { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; line-height: 20px; color: hsl(var(--muted-foreground)); }
+
+/* Region crop: mockup scaffolding only (a state that changes one part of a screen), not product UI */
+.tile-section figure { max-width: 100%; min-width: 0; }
+.crop { width: 390px; max-width: 100%; box-sizing: border-box; padding: 24px 20px; border-radius: 28px; background: hsl(var(--background)); outline: 2px dashed hsl(var(--input)); outline-offset: -2px; }
+.crop-w { width: 560px; padding: 32px 40px; }
+.crop-sheet { padding: 48px 0 0; overflow: hidden; background: hsl(var(--scrim) / var(--scrim-alpha)); }
+.sheetc { background: hsl(var(--card)); color: hsl(var(--card-foreground)); border-radius: var(--radius-sheet) var(--radius-sheet) 0 0; box-shadow: var(--shadow-lg); padding: 0 20px 34px; }
+.sheetc .grab { margin-bottom: 0; }
+.dim { position: absolute; inset: 0; }
+.rel { position: relative; }
+@media (max-width: 720px) { .crop-w { padding: 24px 20px; } }
+</style>
+</head>
+<body>
+<a class="sr-only focus:not-sr-only" href="#stage">Skip to content</a>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <symbol id="nj-mark" viewBox="0 0 48 48">
+    <g fill="currentColor" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round">
+      <path d="M24 45.5 C24 45.5 10.5 33.2 10.5 24.4 A13.5 13.5 0 0 1 37.5 24.4 C37.5 33.2 24 45.5 24 45.5 Z M24 17.9 A6.5 6.5 0 1 0 24 30.9 A6.5 6.5 0 1 0 24 17.9 Z"/>
+      <path d="M12.2 19.6 L11.2 5 L22.6 11.4 Z"/><path d="M35.8 19.6 L25.4 11.4 L36.8 5 Z"/>
+    </g>
+    <circle cx="24" cy="24.4" r="3.6" fill="#F7B32B"/>
+  </symbol>
+</svg>
+
+<header class="chrome">
+  <div class="flex flex-wrap items-center gap-x-5 gap-y-2 px-6 py-2 max-w-[1400px] mx-auto">
+    <span class="flex items-center gap-2 font-display font-bold text-lg"><svg class="logo-mark w-7 h-7" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg>Najdimo</span>
+    <span class="text-muted-foreground text-[15px]">P14 Reunited and lifecycle (mockup)</span>
+    <div class="ml-auto flex items-center gap-2" role="group" aria-label="Colour mode">
+      <button class="mode-btn" data-mode="light" aria-pressed="true">Light</button>
+      <button class="mode-btn" data-mode="dark" aria-pressed="false">Dark</button>
+      <button class="mode-btn" data-mode="both" aria-pressed="false">Side by side</button>
+    </div>
+  </div>
+</header>
+
+<main id="stage"></main>
+
+<div id="src" hidden>
+<section class="tile-section !max-w-[1400px]">
+  <h1 class="tile-title">P14 Reunited and lifecycle</h1>
+  <p class="tile-lede">Mark reunited, the reunited screen (story consent, thank-you tip, one labelled ad), close without reunion, reminders and expiry, and the finder's "returned" flow. Mobile 390 and web 1200, light and dark. Copy from the P14 content slice v0.1; the tip block is P15, the ad unit P21. Sample: pet name "Medo", the sample ad and the candidate rows. The illustration is a labelled placeholder of the final size (640 x 420) until the image task lands.</p>
+
+  <!-- ================= A. MOBILE ================= -->
+  <h2 class="tile-title !text-2xl">A. Mobile</h2>
+  <div class="wrap-x"><div class="flex flex-wrap gap-x-10 gap-y-12 items-start">
+
+    <!-- M1 WHICH ONE -->
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">M1 Which report was the right one (several confirmed matches)</figcaption>
+      <div class="phone"><div class="phone-screen" lang="sl">
+        <div class="statusbar" aria-hidden="true"><span>18:02</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <div aria-hidden="true"><img class="thumb w-full h-[340px] rounded-b-[32px]" src="../directions/img/dog-aussie.jpg" alt=""></div>
+        <div class="scrim"></div>
+        <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="m1-t" style="z-index:8;padding-bottom:34px">
+          <button type="button" class="grab" aria-label="Zapri"></button>
+          <div class="px-5 pt-3">
+            <h2 class="r-h2" id="m1-t" tabindex="-1">Katera prijava je bila prava?</h2>
+            <div class="grid gap-3 mt-6" role="radiogroup" aria-labelledby="m1-t">
+              <button type="button" class="choice choice-tone" role="radio" aria-checked="true" tabindex="0"><img class="ph" src="../directions/img/dog-aussie-wide.jpg" alt="Rjav, bel in črn pes z rdečo ovratnico" data-sample><span class="grow"><span class="t"><span class="st st-found"><i class="ph-fill ph-hand-heart" aria-hidden="true"></i>Najdena</span></span><span class="d tnum" data-sample>Šiška, pred 2 urama</span></span><i class="ph-bold ph-check tick" aria-hidden="true"></i></button>
+              <button type="button" class="choice choice-tone" role="radio" aria-checked="false" tabindex="-1"><img class="ph" src="../directions/img/dog-beagle.jpg" alt="Rjav in bel pes, videti podoben" data-sample><span class="grow"><span class="t"><span class="st st-sighted"><i class="ph-fill ph-eye" aria-hidden="true"></i>Opažena</span></span><span class="d tnum" data-sample>Rožna dolina, včeraj</span></span><i class="ph-bold ph-check tick" aria-hidden="true"></i></button>
+              <button type="button" class="choice choice-tone" role="radio" aria-checked="false" tabindex="-1"><i class="ph-bold ph-house" aria-hidden="true"></i><span class="grow"><span class="t">Nobena, žival je doma po drugi poti</span></span><i class="ph-bold ph-check tick" aria-hidden="true"></i></button>
+            </div>
+          </div>
+          <div class="grid gap-1 px-5 pt-8">
+            <button type="button" class="btn btn-primary btn-lg btn-block">Nadaljuj</button>
+          </div>
+        </div>
+        <span class="home-ind" style="z-index:12"></span>
+      </div></div>
+      <p class="help mt-4" style="max-width:412px">Shown only with several confirmed matches or sightings. One radio row selected (fill + check), "I found it myself" is the last row. Candidate rows carry photo, status word, area and time only. Focus starts on the heading. One primary.</p>
+    </figure>
+
+    <!-- M2 CONFIRM -->
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">M2 Confirm sheet, focus on the primary</figcaption>
+      <div class="phone"><div class="phone-screen" lang="sl">
+        <div class="statusbar" aria-hidden="true"><span>18:03</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <div aria-hidden="true"><img class="thumb w-full h-[340px] rounded-b-[32px]" src="../directions/img/dog-aussie.jpg" alt=""></div>
+        <div class="scrim"></div>
+        <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="m2-t" style="z-index:8;padding-bottom:34px">
+          <button type="button" class="grab" aria-label="Zapri"></button>
+          <div class="px-5 pt-3">
+            <h2 class="r-h2" id="m2-t" tabindex="-1"><span data-sample>Je Medo res spet doma?</span></h2>
+            <p class="text-lg leading-7 mt-3">Iskanje bomo zaključili, opozorila pa ustavili. Prijava bo pokazala, da je žival doma.</p>
+          </div>
+          <div class="grid gap-1 px-5 pt-8">
+            <button type="button" class="btn btn-primary btn-lg btn-block is-focus"><i class="ph-fill ph-heart" aria-hidden="true"></i>Da, spet je doma</button>
+            <button type="button" class="btn btn-text btn-block">Še ne</button>
+          </div>
+        </div>
+        <span class="home-ind" style="z-index:12"></span>
+      </div></div>
+      <p class="help mt-4" style="max-width:412px">Bottom sheet, 28 px top radius, <code>shadow-lg</code>. One sentence of what happens. Without a pet name the title is "Je žival res spet doma?". Loading, error and already-closed are in the state crops (S1 to S3).</p>
+    </figure>
+
+    <!-- M3 REUNITED SCREEN -->
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">M3 Reunited screen, full length (story off, tip expanded, one ad)</figcaption>
+      <div class="phone" id="m3-phone" style="height:1920px"><div class="phone-screen" style="height:1920px" lang="sl">
+        <div class="statusbar" aria-hidden="true"><span>18:05</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <div class="topbar justify-end"><button type="button" class="iconbtn" aria-label="Zapri"><i class="ph-bold ph-x" aria-hidden="true"></i></button></div>
+        <div class="flex-1 min-h-0 px-5 pt-2">
+          <div class="art-ph" aria-hidden="true"><span><i class="ph ph-image"></i><b>Placeholder</b><br>assets/reunited-celebration.png<br>640 x 420, decorative, alt=""</span></div>
+          <img class="thumb w-full aspect-[4/3] rounded-[24px] mt-4" src="../directions/img/dog-aussie.jpg" alt="Medo" data-sample>
+          <h1 class="r-h1 mt-8 is-focus" tabindex="-1"><span data-sample>Medo je spet doma</span></h1>
+          <p class="text-lg leading-7 mt-3">Veselimo se z vami. Hvala vsem, ki ste pomagali.</p>
+
+          <div class="story mt-8">
+            <label class="swrow"><span class="t" id="m3-st">Delite svojo zgodbo</span><button type="button" class="switch" role="switch" aria-checked="false" aria-labelledby="m3-st" aria-describedby="m3-sh"></button></label>
+            <p class="help" id="m3-sh">Če dovolite, lahko zgodbo in fotografijo po pregledu objavimo med zgodbami o vrnitvah domov. Soglasje lahko kadar koli prekličete v profilu.</p>
+          </div>
+
+          <section class="mt-12" aria-labelledby="m3-tip">
+            <h2 class="r-h3" id="m3-tip">Pomagajte, da Najdimo ostane brezplačno</h2>
+            <p class="mt-2">Iskanje je brezplačno za vse in tako bo ostalo. Če želite, lahko s prispevkom v zahvalo pomagate pokriti strežnike, zemljevide in pošiljanje opozoril.</p>
+            <div class="flex flex-wrap gap-2 mt-5" role="radiogroup" aria-label="Znesek prispevka">
+              <button type="button" class="pill tnum" role="radio" aria-checked="false" tabindex="-1"><i class="ph-bold ph-check tick" aria-hidden="true"></i>3 €</button>
+              <button type="button" class="pill tnum is-suggested" role="radio" aria-checked="true" tabindex="0"><i class="ph-bold ph-check tick" aria-hidden="true"></i>5 €<span class="sr-only">, predlagano</span></button>
+              <button type="button" class="pill tnum" role="radio" aria-checked="false" tabindex="-1"><i class="ph-bold ph-check tick" aria-hidden="true"></i>10 €</button>
+              <button type="button" class="pill" role="radio" aria-checked="false" tabindex="-1"><i class="ph-bold ph-check tick" aria-hidden="true"></i>Drug znesek</button>
+            </div>
+            <div class="pair mt-6">
+              <button type="button" class="btn btn-secondary btn-block">Plačaj 5 €</button>
+              <button type="button" class="btn btn-secondary btn-block">Preskoči</button>
+            </div>
+            <p class="help mt-4">Prispevek je prostovoljno plačilo za delovanje storitve in ne vpliva na nobeno funkcijo.</p>
+          </section>
+
+          <aside class="mt-12" aria-label="Oglas">
+            <a class="adu" href="#" rel="sponsored noopener" aria-label="Oglas: Veterinarska ambulanta Šiška" data-sample>
+              <span class="lab">Oglas</span>
+              <span class="row"><img src="../directions/img/dog-terrier.jpg" alt="Terier pri veterinarju"><span><p class="ti">Veterinarska ambulanta Šiška</p><p class="tx">Pregledi, cepljenja in čipiranje. Naročanje po telefonu.</p></span></span>
+              <span class="more">Več o tem<i class="ph-bold ph-arrow-right" aria-hidden="true"></i></span>
+            </a>
+          </aside>
+
+          <div class="grid gap-1 mt-12">
+            <button type="button" class="btn btn-primary btn-lg btn-block">Končano</button>
+            <button type="button" class="btn btn-text btn-block"><i class="ph-bold ph-share-network" aria-hidden="true"></i>Delite veselo novico</button>
+          </div>
+        </div>
+        <div class="pb-11"></div>
+        <span class="home-ind"></span>
+      </div></div>
+      <p class="help mt-4" style="max-width:412px">Order: illustration, then the pet photo as its own 4:3 frame (they never overlap), h1 with the name (takes focus on arrival, ring shown), one warm sentence, story switch (off), tip (P15, 5 € chosen here; Pay and Preskoči the same size, both <code>secondary</code>), one ad below the tip (200 px reserved), then the one primary "Končano" to the map and the text "Delite veselo novico". No confetti; nothing moves under reduced motion.</p>
+    </figure>
+
+    <!-- M4 CLOSE WITHOUT REUNION -->
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">M4 Close without reunion (owner menu "Zaključi iskanje")</figcaption>
+      <div class="phone" style="height:960px"><div class="phone-screen" style="height:960px" lang="sl">
+        <div class="statusbar" aria-hidden="true"><span>18:09</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <div aria-hidden="true"><img class="thumb w-full h-[200px] rounded-b-[32px]" src="../directions/img/dog-aussie.jpg" alt=""></div>
+        <div class="scrim"></div>
+        <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="m4-t" style="z-index:8;padding-bottom:34px">
+          <button type="button" class="grab" aria-label="Zapri"></button>
+          <div class="px-5 pt-3">
+            <h2 class="r-h2" id="m4-t" tabindex="-1">Zaključite iskanje?</h2>
+            <p class="text-lg leading-7 mt-3">Opozorila in opomniki se ustavijo. Iskanje lahko v 7 dneh ponovno odprete.</p>
+            <p class="label mt-8 font-bold text-[15px] leading-5" id="m4-r">Razlog</p>
+            <div class="grid gap-3 mt-3" role="radiogroup" aria-labelledby="m4-r">
+              <button type="button" class="choice choice-tone" role="radio" aria-checked="false" tabindex="-1"><i class="ph-bold ph-house" aria-hidden="true"></i><span class="grow"><span class="t">Žival je doma po drugi poti</span></span><i class="ph-bold ph-check tick" aria-hidden="true"></i></button>
+              <button type="button" class="choice choice-tone" role="radio" aria-checked="true" tabindex="0"><i class="ph-bold ph-magnifying-glass" aria-hidden="true"></i><span class="grow"><span class="t">Ne iščem več</span></span><i class="ph-bold ph-check tick" aria-hidden="true"></i></button>
+              <button type="button" class="choice choice-tone" role="radio" aria-checked="false" tabindex="-1"><i class="ph-bold ph-warning-circle" aria-hidden="true"></i><span class="grow"><span class="t">Prijava je bila pomota</span></span><i class="ph-bold ph-check tick" aria-hidden="true"></i></button>
+              <button type="button" class="choice choice-tone" role="radio" aria-checked="false" tabindex="-1"><i class="ph-bold ph-dots-three-circle" aria-hidden="true"></i><span class="grow"><span class="t">Drugo</span></span><i class="ph-bold ph-check tick" aria-hidden="true"></i></button>
+            </div>
+            <div class="field mt-6">
+              <label for="m4-n">Opomba (neobvezno)</label>
+              <textarea class="input" id="m4-n" rows="2"></textarea>
+            </div>
+          </div>
+          <div class="grid gap-1 px-5 pt-8">
+            <button type="button" class="btn btn-primary btn-lg btn-block">Zaključi iskanje</button>
+            <button type="button" class="btn btn-text btn-block">Pusti odprto</button>
+          </div>
+        </div>
+        <span class="home-ind" style="z-index:12"></span>
+      </div></div>
+      <p class="help mt-4" style="max-width:412px">Reason is a radio group of choice rows; the note is a line field with its label above. The one primary is "Zaključi iskanje" (not destructive: the report can be reopened for 7 days, which the body says). Closing cancels alerts, boosts and pending reminders.</p>
+    </figure>
+
+    <!-- M5 REMINDER -->
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">M5 Reminder card on the owner's detail page (day 14)</figcaption>
+      <div class="phone"><div class="phone-screen" lang="sl">
+        <div class="statusbar" aria-hidden="true"><span>9:12</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <div class="flex-1 min-h-0 px-5 pt-3">
+          <img class="thumb w-full h-[220px] rounded-[32px]" src="../directions/img/dog-aussie.jpg" alt="Rjav, bel in črn pes z rdečo ovratnico" data-sample>
+          <p class="st st-lg st-lost mt-5"><i class="ph-fill ph-megaphone" aria-hidden="true"></i>Izgubljena</p>
+          <h1 class="r-h1 mt-1" data-sample>Medo</h1>
+          <section class="card p-6 mt-8" aria-labelledby="m5-t">
+            <h2 class="r-h3" id="m5-t">Še iščete?</h2>
+            <p class="mt-2">Iskanje je odprto <span class="tnum">14</span> dni. Če je žival doma, nam sporočite, da obvestimo vse, ki pomagajo.</p>
+            <div class="grid gap-1 mt-6">
+              <button type="button" class="btn btn-primary btn-lg btn-block">Nadaljuj iskanje</button>
+              <button type="button" class="btn btn-text btn-block"><i class="ph-fill ph-heart" aria-hidden="true"></i>Žival je spet doma</button>
+              <button type="button" class="btn btn-text btn-block">Zaključi iskanje</button>
+            </div>
+          </section>
+        </div>
+        <div class="pb-11"></div>
+        <span class="home-ind"></span>
+      </div></div>
+      <p class="help mt-4" style="max-width:412px">Lost reports at day 7, 14 and 30. A plain question; the primary keeps the search going, the two quiet actions are text buttons. Day count is plural-aware (1 dan, 2 dneva, 3 dni, 5 dni). Same copy in the push, e-mail and this card.</p>
+    </figure>
+
+    <!-- M6 FINDER RETURNED -->
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">M6 Finder marks "returned" (manage page): confirm dialog</figcaption>
+      <div class="phone"><div class="phone-screen" lang="sl">
+        <div class="statusbar" aria-hidden="true"><span>12:40</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <div class="px-5 pt-6" aria-hidden="true">
+          <img class="thumb w-full h-[220px] rounded-[32px]" src="../directions/img/dog-beagle.jpg" alt="">
+          <p class="st st-lg st-found mt-5"><i class="ph-fill ph-hand-heart"></i>Najdena</p>
+          <p class="r-h1 mt-1">Vaša prijava</p>
+        </div>
+        <div class="scrim"></div>
+        <div class="absolute inset-0 grid place-items-center px-5" style="z-index:8">
+          <div class="dialog" role="alertdialog" aria-modal="true" aria-labelledby="m6-t" aria-describedby="m6-d">
+            <h2 class="w-title" id="m6-t" tabindex="-1">Je žival spet doma?</h2>
+            <p class="mt-3" id="m6-d">Prijavo bomo zaključili in obvestili osebo, ki žival išče.</p>
+            <div class="grid gap-1 mt-6">
+              <button type="button" class="btn btn-primary btn-lg btn-block">Da, žival je doma</button>
+              <button type="button" class="btn btn-text btn-block is-focus">Še ne</button>
+            </div>
+          </div>
+        </div>
+        <span class="home-ind" style="z-index:12"></span>
+      </div></div>
+      <p class="help mt-4" style="max-width:412px">Dialog, 24 px radius, <code>shadow-pop</code>, stacked full-width buttons, one primary. Focus starts on the cancel text button (a closing action that is hard to undo for someone else). Next: M7.</p>
+    </figure>
+
+    <!-- M7 FINDER THANKS -->
+    <figure class="m-0">
+      <figcaption class="tile-h !mt-0">M7 Finder thank-you (no tip, no ad, no illustration)</figcaption>
+      <div class="phone"><div class="phone-screen" lang="sl">
+        <div class="statusbar" aria-hidden="true"><span>12:41</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <div class="topbar justify-end"><button type="button" class="iconbtn" aria-label="Zapri"><i class="ph-bold ph-x" aria-hidden="true"></i></button></div>
+        <div class="flex-1 min-h-0 px-5 pt-16">
+          <p class="st st-lg st-reunited"><i class="ph-fill ph-heart" aria-hidden="true"></i>Spet doma</p>
+          <h1 class="r-h1 mt-2 is-focus" tabindex="-1">Hvala, ker ste pomagali</h1>
+          <p class="text-lg leading-7 mt-3">Žival je spet doma tudi zaradi vas.</p>
+        </div>
+        <div class="px-5 pb-11 grid gap-1">
+          <button type="button" class="btn btn-text btn-block">Ustvari račun in obdrži svoje prijave</button>
+        </div>
+        <span class="home-ind"></span>
+      </div></div>
+      <p class="help mt-4" style="max-width:412px">One line of thanks and one text button: the view has no primary, on purpose. The account offer is quiet and optional. The heading takes focus on arrival. The owner's version of this reunion is M3.</p>
+    </figure>
+  </div></div>
+
+  <!-- ================= S. STATE CROPS ================= -->
+  <h2 class="tile-title !text-2xl" style="margin-top:72px">S. States (region crops)</h2>
+  <p class="tile-lede">Crops show one changed region of a frame above, at 390 px. Dashed outline is mockup scaffolding only.</p>
+  <div class="wrap-x"><div class="flex flex-wrap gap-x-10 gap-y-12 items-start">
+
+    <figure class="m-0" lang="sl">
+      <figcaption class="tile-h !mt-0">S1 Confirm: saving (loading)</figcaption>
+      <div class="crop crop-sheet"><div class="sheetc">
+        <button type="button" class="grab" aria-label="Zapri"></button>
+        <div class="pt-3">
+          <h2 class="r-h2"><span data-sample>Je Medo res spet doma?</span></h2>
+          <p class="text-lg leading-7 mt-3">Iskanje bomo zaključili, opozorila pa ustavili. Prijava bo pokazala, da je žival doma.</p>
+        </div>
+        <div class="grid gap-1 pt-8">
+          <button type="button" class="btn btn-primary btn-lg btn-block" aria-busy="true"><span class="spin" aria-hidden="true"></span>Shranjujemo …</button>
+          <button type="button" class="btn btn-text btn-block" disabled>Še ne</button>
+        </div>
+      </div></div>
+      <p class="help mt-3" style="max-width:390px">Label kept, spinner before it, <code>aria-busy</code>, presses ignored, no layout shift. Polite live region says "Shranjujemo …".</p>
+    </figure>
+
+    <figure class="m-0" lang="sl">
+      <figcaption class="tile-h !mt-0">S2 Confirm: network error</figcaption>
+      <div class="crop crop-sheet"><div class="sheetc">
+        <button type="button" class="grab" aria-label="Zapri"></button>
+        <div class="pt-3">
+          <h2 class="r-h2"><span data-sample>Je Medo res spet doma?</span></h2>
+          <div class="note mt-4" role="alert"><i class="ph-fill ph-warning-circle text-destructive" aria-hidden="true"></i><p>Povezava se je prekinila. Preverite internet in poskusite znova.</p></div>
+        </div>
+        <div class="grid gap-1 pt-6">
+          <button type="button" class="btn btn-primary btn-lg btn-block">Poskusi znova</button>
+          <button type="button" class="btn btn-text btn-block">Še ne</button>
+        </div>
+      </div></div>
+      <p class="help mt-3" style="max-width:390px">The note replaces the explanation; the primary becomes the retry. The report stays open until a save succeeds. "Poskusi znova" is the system's inline-error retry label.</p>
+    </figure>
+
+    <figure class="m-0" lang="sl">
+      <figcaption class="tile-h !mt-0">S3 Already closed</figcaption>
+      <div class="crop crop-sheet"><div class="sheetc">
+        <button type="button" class="grab" aria-label="Zapri"></button>
+        <div class="pt-3">
+          <h2 class="r-h2">Zaključite iskanje?</h2>
+          <div class="note mt-4" role="status"><i class="ph-fill ph-info" aria-hidden="true"></i><p>Iskanje je že zaključeno.</p></div>
+        </div>
+        <div class="grid gap-1 pt-6">
+          <button type="button" class="btn btn-secondary btn-lg btn-block">Zapri</button>
+        </div>
+      </div></div>
+      <p class="help mt-3" style="max-width:390px">Opened from a stale screen (another device or the finder closed it). No primary: nothing left to do. "Zapri" is the shell's close label.</p>
+    </figure>
+
+    <figure class="m-0" lang="sl">
+      <figcaption class="tile-h !mt-0">S4 Which one: no matches ("I found it myself" only)</figcaption>
+      <div class="crop crop-sheet"><div class="sheetc">
+        <button type="button" class="grab" aria-label="Zapri"></button>
+        <div class="pt-3">
+          <h2 class="r-h2">Katera prijava je bila prava?</h2>
+          <div class="grid gap-3 mt-6" role="radiogroup" aria-label="Katera prijava je bila prava?">
+            <button type="button" class="choice choice-tone" role="radio" aria-checked="true" tabindex="0"><i class="ph-bold ph-house" aria-hidden="true"></i><span class="grow"><span class="t">Nobena, žival je doma po drugi poti</span></span><i class="ph-bold ph-check tick" aria-hidden="true"></i></button>
+          </div>
+        </div>
+        <div class="grid gap-1 pt-8">
+          <button type="button" class="btn btn-primary btn-lg btn-block">Nadaljuj</button>
+        </div>
+      </div></div>
+      <p class="help mt-3" style="max-width:390px">With no confirmed candidate the single row is preselected. Still one primary.</p>
+    </figure>
+
+    <figure class="m-0" lang="sl">
+      <figcaption class="tile-h !mt-0">S5 Story consent switched on, toast</figcaption>
+      <div class="crop" style="padding-bottom:28px">
+        <div class="story">
+          <label class="swrow"><span class="t" id="s5-st">Delite svojo zgodbo</span><button type="button" class="switch" role="switch" aria-checked="true" aria-labelledby="s5-st" aria-describedby="s5-sh"></button></label>
+          <p class="help" id="s5-sh">Če dovolite, lahko zgodbo in fotografijo po pregledu objavimo med zgodbami o vrnitvah domov. Soglasje lahko kadar koli prekličete v profilu.</p>
+        </div>
+        <div class="toast mt-6" role="status" aria-live="polite"><i class="ph-fill ph-check-circle" aria-hidden="true"></i><p>Hvala. Zgodbo bomo pregledali, preden jo objavimo.</p><button type="button" class="iconbtn" aria-label="Zapri"><i class="ph-bold ph-x" aria-hidden="true"></i></button></div>
+      </div>
+      <p class="help mt-3" style="max-width:390px">On state is track fill, thumb position and the toast text. Turning it off again withdraws the consent with no extra dialog.</p>
+    </figure>
+
+    <figure class="m-0" lang="sl">
+      <figcaption class="tile-h !mt-0">S6 Lost report auto-closed at day 90</figcaption>
+      <div class="crop">
+        <p class="st st-lg" style="color:hsl(var(--muted-foreground))"><i class="ph-fill ph-x-circle" aria-hidden="true"></i>Zaključeno</p>
+        <h2 class="r-h2 mt-1" data-sample>Medo</h2>
+        <div class="note mt-5"><i class="ph-fill ph-info" aria-hidden="true"></i><p>Iskanje smo zaključili, ker ga 90 dni niste posodobili. Če žival še iščete, ga lahko takoj znova odprete.</p></div>
+        <button type="button" class="btn btn-primary btn-lg btn-block mt-6">Nadaljuj iskanje</button>
+      </div>
+      <p class="help mt-3" style="max-width:390px">Owner's detail page after auto-close. One-tap extension also on the notification. The closed status is icon + word, never colour only.</p>
+    </figure>
+
+    <figure class="m-0" lang="sl">
+      <figcaption class="tile-h !mt-0">S7 Closed by the owner: reopen within 7 days, then the toast</figcaption>
+      <div class="crop">
+        <p class="st st-lg" style="color:hsl(var(--muted-foreground))"><i class="ph-fill ph-x-circle" aria-hidden="true"></i>Zaključeno</p>
+        <h2 class="r-h2 mt-1" data-sample>Medo</h2>
+        <button type="button" class="btn btn-primary btn-lg btn-block mt-6">Ponovno odpri</button>
+        <div class="toast mt-6" role="status" aria-live="polite"><i class="ph-fill ph-check-circle" aria-hidden="true"></i><p>Iskanje je spet odprto.</p><button type="button" class="iconbtn" aria-label="Zapri"><i class="ph-bold ph-x" aria-hidden="true"></i></button></div>
+      </div>
+      <p class="help mt-3" style="max-width:390px">"Ponovno odpri" shows for 7 days after closing. After tapping, the toast confirms; the screen returns to the open report.</p>
+    </figure>
+
+    <figure class="m-0" lang="sl">
+      <figcaption class="tile-h !mt-0">S8 Finder marked "returned": owner disagrees</figcaption>
+      <div class="crop">
+        <div class="note"><i class="ph-fill ph-info" aria-hidden="true"></i><p>Oseba, ki je žival našla, jo je označila kot vrnjeno. Če žival ni doma, iskanje v 7 dneh ponovno odprite.</p></div>
+        <button type="button" class="btn btn-primary btn-lg btn-block mt-6">Ponovno odpri</button>
+      </div>
+      <p class="help mt-3" style="max-width:390px">Note on the owner's detail page (copy key <code>report.owner_disagree</code>, P9) with the one primary "Ponovno odpri".</p>
+    </figure>
+
+    <figure class="m-0" lang="sl">
+      <figcaption class="tile-h !mt-0">S9 Found or sighted report, day 30 without update (manage page)</figcaption>
+      <div class="crop">
+        <div class="note"><i class="ph-fill ph-clock" aria-hidden="true"></i><p>Prijava bo potekla čez <span class="tnum">3</span> dni. Če je žival še pri vas ali jo še vedno vidite, prijavo podaljšajte.</p></div>
+        <button type="button" class="btn btn-primary btn-lg btn-block mt-6">Podaljšaj za 30 dni</button>
+      </div>
+      <p class="help mt-3" style="max-width:390px">Copy from P7 (<code>report_found.expiry_note</code>, <code>report_found.extend</code>). Shelter intakes are exempt.</p>
+    </figure>
+  </div></div>
+
+  <!-- ================= W. WEB ================= -->
+  <h2 class="tile-title !text-2xl" style="margin-top:72px">W. Web</h2>
+
+  <p class="tile-h">W1 Reunited page (1200 px): pointer on 10 €, heading focused</p>
+  <div class="wrap-x"><div class="browser" lang="sl">
+    <div class="browser-bar"><span class="dots"><i></i><i></i><i></i></span><span class="url"><i class="ph ph-lock-simple"></i>najdimo.si/r/XK4P7Q/spet-doma</span></div>
+    <header class="flex items-center gap-8 px-12 h-[88px]">
+      <a href="#" class="logo-link" aria-label="Najdimo, na začetno stran"><svg class="logo-mark w-9 h-9" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg><span class="font-display font-bold text-2xl tracking-[-0.03em]" aria-hidden="true">Najdimo</span></a>
+      <div class="ml-auto flex items-center gap-2">
+        <button type="button" class="iconbtn" aria-label="Sporočila"><i class="ph-bold ph-chat-circle" aria-hidden="true"></i></button>
+        <button type="button" class="iconbtn" aria-label="Račun: Ana Novak"><span class="av av-32" aria-hidden="true">AN</span></button>
+        <a href="#" class="btn btn-secondary btn-sm ml-2"><i class="ph-bold ph-plus" aria-hidden="true"></i>Prijavi</a>
+      </div>
+    </header>
+    <main class="px-12 pt-6 pb-24">
+      <div class="max-w-[640px] mx-auto">
+        <div class="art-ph" aria-hidden="true"><span><i class="ph ph-image"></i><b>Placeholder</b><br>assets/reunited-celebration.png<br>640 x 420, decorative, alt=""</span></div>
+        <img class="thumb w-full aspect-[4/3] rounded-[24px] mt-6" src="../directions/img/dog-aussie.jpg" alt="Medo" data-sample>
+        <h1 class="w-h1 mt-10 is-focus" tabindex="-1" style="display:inline-block"><span data-sample>Medo je spet doma</span></h1>
+        <p class="text-xl leading-8 mt-4 max-w-[58ch]">Veselimo se z vami. Hvala vsem, ki ste pomagali.</p>
+
+        <div class="story mt-10">
+          <label class="swrow"><span class="t" id="w1-st">Delite svojo zgodbo</span><button type="button" class="switch" role="switch" aria-checked="false" aria-labelledby="w1-st" aria-describedby="w1-sh"></button></label>
+          <p class="help max-w-[58ch]" id="w1-sh">Če dovolite, lahko zgodbo in fotografijo po pregledu objavimo med zgodbami o vrnitvah domov. Soglasje lahko kadar koli prekličete v profilu.</p>
+        </div>
+
+        <section class="mt-16" aria-labelledby="w1-tip">
+          <h2 class="w-h3" id="w1-tip">Pomagajte, da Najdimo ostane brezplačno</h2>
+          <p class="mt-3 max-w-[58ch]">Iskanje je brezplačno za vse in tako bo ostalo. Če želite, lahko s prispevkom v zahvalo pomagate pokriti strežnike, zemljevide in pošiljanje opozoril.</p>
+          <div class="flex flex-wrap gap-2 mt-6" role="radiogroup" aria-label="Znesek prispevka">
+            <button type="button" class="pill tnum" role="radio" aria-checked="false" tabindex="0"><i class="ph-bold ph-check tick" aria-hidden="true"></i>3 €</button>
+            <button type="button" class="pill tnum is-suggested" role="radio" aria-checked="false" tabindex="-1"><i class="ph-bold ph-check tick" aria-hidden="true"></i>5 €<span class="sr-only">, predlagano</span></button>
+            <button type="button" class="pill tnum is-hover" role="radio" aria-checked="false" tabindex="-1"><i class="ph-bold ph-check tick" aria-hidden="true"></i>10 €</button>
+            <button type="button" class="pill" role="radio" aria-checked="false" tabindex="-1"><i class="ph-bold ph-check tick" aria-hidden="true"></i>Drug znesek</button>
+          </div>
+          <div class="pair-w mt-6">
+            <button type="button" class="btn btn-secondary" disabled aria-describedby="w1-payhelp">Plačaj</button>
+            <button type="button" class="btn btn-secondary">Preskoči</button>
+          </div>
+          <p class="help mt-2" id="w1-payhelp">Najprej izberite znesek.</p>
+          <p class="help mt-4 max-w-[58ch]">Prispevek je prostovoljno plačilo za delovanje storitve in ne vpliva na nobeno funkcijo.</p>
+        </section>
+
+        <aside class="mt-16" aria-label="Oglas">
+          <a class="adu adu-w is-hover" href="#" rel="sponsored noopener" aria-label="Oglas: Veterinarska ambulanta Šiška" data-sample>
+            <span class="lab">Oglas</span>
+            <span class="row"><img src="../directions/img/dog-terrier.jpg" alt="Terier pri veterinarju"><span class="col"><p class="ti">Veterinarska ambulanta Šiška</p><p class="tx">Pregledi, cepljenja in čipiranje. Naročanje po telefonu.</p><span class="more">Več o tem<i class="ph-bold ph-arrow-right" aria-hidden="true"></i></span></span></span>
+          </a>
+        </aside>
+
+        <div class="mt-16 flex flex-wrap items-center gap-x-4 gap-y-2">
+          <a href="#" class="btn btn-primary btn-lg">Končano</a>
+          <button type="button" class="btn btn-text"><i class="ph-bold ph-share-network" aria-hidden="true"></i>Delite veselo novico</button>
+        </div>
+      </div>
+    </main>
+  </div></div>
+  <p class="help mt-4" style="max-width:760px">Single column, 640 px, so the illustration is shown at its final size. Pay stays disabled until an amount is chosen and says why; Pay and Preskoči are two equal columns. The ad is 176 px reserved and shows its hover state (the text button gets the 10 % overlay). Below <code>lg</code> it is the mobile layout of M3.</p>
+
+  <p class="tile-h" style="margin-top:56px">W2 Close without reunion dialog (1200 px)</p>
+  <div class="wrap-x"><div class="browser rel" lang="sl" style="height:900px">
+    <div class="browser-bar"><span class="dots"><i></i><i></i><i></i></span><span class="url"><i class="ph ph-lock-simple"></i>najdimo.si/r/XK4P7Q</span></div>
+    <div aria-hidden="true">
+      <header class="flex items-center gap-8 px-12 h-[88px]"><span class="inline-flex items-center gap-2"><svg class="logo-mark w-9 h-9" viewBox="0 0 48 48"><use href="#nj-mark"/></svg><span class="font-display font-bold text-2xl tracking-[-0.03em]">Najdimo</span></span></header>
+      <div class="px-12 pt-6"><div class="max-w-[1120px] mx-auto grid grid-cols-12 gap-8"><img class="thumb col-span-7 w-full aspect-[4/3] rounded-[32px]" src="../directions/img/dog-aussie.jpg" alt=""><div class="col-span-5"><p class="st st-lg st-lost"><i class="ph-fill ph-megaphone"></i>Izgubljena</p><p class="w-h1 mt-3">Medo</p></div></div></div>
+    </div>
+    <div class="scrim"></div>
+    <div class="absolute inset-0 grid place-items-center" style="z-index:8;padding-top:44px">
+      <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="w2-t" style="max-width:560px;padding:28px">
+        <div class="flex items-start gap-2">
+          <h2 class="w-h2 flex-1" id="w2-t" tabindex="-1">Zaključite iskanje?</h2>
+          <button type="button" class="iconbtn -mt-1 -mr-2" aria-label="Zapri"><i class="ph-bold ph-x" aria-hidden="true"></i></button>
+        </div>
+        <p class="text-lg leading-7 mt-3">Opozorila in opomniki se ustavijo. Iskanje lahko v 7 dneh ponovno odprete.</p>
+        <p class="font-bold text-[15px] leading-5 mt-6" id="w2-r">Razlog</p>
+        <div class="grid gap-3 mt-3" role="radiogroup" aria-labelledby="w2-r">
+          <button type="button" class="choice choice-tone" role="radio" aria-checked="false" tabindex="-1"><i class="ph-bold ph-house" aria-hidden="true"></i><span class="grow"><span class="t">Žival je doma po drugi poti</span></span><i class="ph-bold ph-check tick" aria-hidden="true"></i></button>
+          <button type="button" class="choice choice-tone" role="radio" aria-checked="true" tabindex="0"><i class="ph-bold ph-magnifying-glass" aria-hidden="true"></i><span class="grow"><span class="t">Ne iščem več</span></span><i class="ph-bold ph-check tick" aria-hidden="true"></i></button>
+          <button type="button" class="choice choice-tone is-hover" role="radio" aria-checked="false" tabindex="-1"><i class="ph-bold ph-warning-circle" aria-hidden="true"></i><span class="grow"><span class="t">Prijava je bila pomota</span></span><i class="ph-bold ph-check tick" aria-hidden="true"></i></button>
+          <button type="button" class="choice choice-tone" role="radio" aria-checked="false" tabindex="-1"><i class="ph-bold ph-dots-three-circle" aria-hidden="true"></i><span class="grow"><span class="t">Drugo</span></span><i class="ph-bold ph-check tick" aria-hidden="true"></i></button>
+        </div>
+        <div class="field mt-6">
+          <label for="w2-n">Opomba (neobvezno)</label>
+          <textarea class="input" id="w2-n" rows="2"></textarea>
+        </div>
+        <div class="grid gap-1 mt-8">
+          <button type="button" class="btn btn-primary btn-lg btn-block">Zaključi iskanje</button>
+          <button type="button" class="btn btn-text btn-block">Pusti odprto</button>
+        </div>
+      </div>
+    </div>
+  </div></div>
+  <p class="help mt-4" style="max-width:760px">Content dialog, 560 px, h2 role, close icon button top right, hover on a row shown. Same single primary as M4. The which-one and confirm steps use the same dialog shell on web (confirm at the 440 px dialog width).</p>
+
+  <p class="tile-h" style="margin-top:56px">W3 Manage page notice (1200 px): found report, day 30</p>
+  <div class="wrap-x"><div class="browser" lang="sl">
+    <div class="browser-bar"><span class="dots"><i></i><i></i><i></i></span><span class="url"><i class="ph ph-lock-simple"></i>najdimo.si/r/XK4P7Q/upravljanje</span></div>
+    <header class="flex items-center gap-8 px-12 h-[88px]">
+      <a href="#" class="logo-link" aria-label="Najdimo, na začetno stran"><svg class="logo-mark w-9 h-9" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg><span class="font-display font-bold text-2xl tracking-[-0.03em]" aria-hidden="true">Najdimo</span></a>
+    </header>
+    <main class="px-12 pt-6 pb-24">
+      <div class="max-w-[1120px] mx-auto grid grid-cols-12 gap-8 items-start">
+        <img class="thumb col-span-7 w-full aspect-[4/3] rounded-[32px]" src="../directions/img/dog-beagle.jpg" alt="Rjav in bel pes, videti podoben" data-sample>
+        <div class="col-span-5">
+          <p class="st st-lg st-found m-0"><i class="ph-fill ph-hand-heart" aria-hidden="true"></i>Najdena</p>
+          <h1 class="w-h1 mt-3">Vaša prijava</h1>
+          <div class="note mt-8"><i class="ph-fill ph-clock" aria-hidden="true"></i><p>Prijava bo potekla čez <span class="tnum">3</span> dni. Če je žival še pri vas ali jo še vedno vidite, prijavo podaljšajte.</p></div>
+          <button type="button" class="btn btn-primary btn-lg mt-6">Podaljšaj za 30 dni</button>
+          <button type="button" class="btn btn-text mt-2"><i class="ph-bold ph-heart" aria-hidden="true"></i>Žival je spet doma</button>
+        </div>
+      </div>
+    </main>
+  </div></div>
+  <p class="help mt-4" style="max-width:760px">The one note on the view, then the one primary. "Žival je spet doma" is the quiet text action that opens M6's dialog (width 440). Lost-report equivalents (reminder, auto-closed, reopen, owner disagrees) are M5 and S6 to S8; web uses the same blocks in the info column.</p>
+</section>
+<p class="tile-section !py-8 text-sm text-muted-foreground">Placeholder photography from Unsplash (Unsplash License). Copy source: docs/content/pages/P14-reunited.md (v0.1, draft), P15 tip block, P21 ad unit. The pet name, the sample ad and the candidate rows are samples. The illustration is a placeholder until assets/reunited-celebration.png exists.</p>
+</div>
+
+<script src="../directions/directions.js"></script>
+</body>
+</html>
