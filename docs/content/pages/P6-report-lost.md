@@ -250,6 +250,16 @@ The flow start page is public and indexable; the steps are client-side.
 | Saved pet row photo | {name} | {name} |
 | Confirmation illustration (if used) | decorative, `alt=""` | |
 
+Photo keys (CH-114, CH-118; namespace `photos`, used by PhotoPicker on web and mobile):
+
+| Key | SL | EN |
+|---|---|---|
+| photos.thumb_alt | Fotografija {n} od {total} | Photo {n} of {total} |
+| photos.too_small | Fotografija je premajhna. Izberite večjo, ki je na krajši stranici široka vsaj 320 slikovnih pik. | The photo is too small. Please choose a larger one, at least 320 pixels on its shorter side. |
+| photos.heic_unsupported | Ta brskalnik ne more odpreti fotografij HEIC. Izberite fotografijo JPG ali poskusite z drugim brskalnikom. | This browser can't open HEIC photos. Please choose a JPG photo or try another browser. |
+
+`photos.thumb_alt` is the thumbnail alt text and replaces the older `photos.thumb_a11y` and "Vaša fotografija {n}" (same position wording, adds the total). Show `photos.too_small` and `photos.heic_unsupported` inline under the picker, with the same placement as `photos.failed`. The i18n strings in `packages/i18n/messages/*/photos.json` follow from this slice when TASK-14.2 merges (its drafts are superseded by the copy above).
+
 # 14. CHANGE requests
 
 - `CHANGE docs/design/pages/P6-report-lost.md§Flow: step 6 adds an optional reward row after the contact preference (switch "Ponujam nagrado za vrnitev", whole-euro amount field, one-line note field of up to 80 characters and the shield note `report_lost.reward_warning`); step 7 adds a "Nagrada" summary row (value: the P9 reward line with the note, or `report_lost.review_reward_none`). The fields are `reward_eur` and `reward_note` (C4). Brief v1.1.`
@@ -262,3 +272,4 @@ The flow start page is public and indexable; the steps are client-side.
 | Date | Change |
 |---|---|
 | 2026-10-15 | CH-79: `chip_help` example is now 15 digits, 705 1234 5678 9012. |
+| 2026-10-15 | CH-114, CH-118: added `photos.thumb_alt`, `photos.too_small`, `photos.heic_unsupported` (§13). |
