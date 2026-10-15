@@ -1,10 +1,23 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { initAnalytics, setConsent, setUserRole, track, trackScreen, type FirebaseAnalytics } from '../src/index.ts';
+import {
+	CONSENT_VERSION,
+	initAnalytics,
+	setConsent,
+	setUserRole,
+	track,
+	trackScreen,
+	type FirebaseAnalytics,
+} from '../src/index.ts';
 
 const ID = 'G-PKY4SCX3RL';
 const lost = { report_type: 'lost', species: 'dog', region: 'osrednjeslovenska', municipality: 'ljubljana' } as const;
+const expired = {
+	v: CONSENT_VERSION,
+	analytics: true,
+	ts: new Date(Date.now() - 400 * 24 * 60 * 60 * 1000).toISOString(),
+};
 
 // Just enough DOM for the ga4 adapter and the zz_consent cookie: a cookie jar that records every write.
 function fakeBrowser() {
@@ -21,6 +34,7 @@ function fakeBrowser() {
 			search: '?debug_mode=1&utm_source=facebook&q=Max',
 		},
 		document: {
+			referrer: 'https://www.google.com/search?q=izgubljen+pes+Max',
 			head: { appendChild: (el: object) => scripts.push(el) },
 			createElement: () => ({}),
 			querySelector: () => ({ nonce: 'csp-nonce' }),
@@ -68,9 +82,17 @@ test('ga4: nothing loads before consent; grant follows basic Consent Mode v2 ord
 	assert.deepEqual(update, ['consent', 'update', { analytics_storage: 'granted' }]);
 	assert.equal(js![0], 'js');
 	assert.deepEqual(config, ['config', ID, { send_page_view: false, debug_mode: true }]);
-	// The current screen goes out as a template; the real query (q=Max) does not, campaign params do.
+	// The current screen goes out as a template; the real query (q=Max) does not, campaign params do;
+	// the referrer is cut to its origin (no search text).
 	assert.deepEqual(rest, [
-		['set', { page_location: 'https://www.najdimo.si/r/[code]?utm_source=facebook', page_title: '/r/[code]' }],
+		[
+			'set',
+			{
+				page_location: 'https://www.najdimo.si/r/[code]?utm_source=facebook',
+				page_referrer: 'https://www.google.com',
+				page_title: '/r/[code]',
+			},
+		],
 		['event', 'page_view'],
 	]);
 
@@ -100,7 +122,7 @@ test('ga4: nothing loads before consent; grant follows basic Consent Mode v2 ord
 	assert.deepEqual(b.layer()[before], ['consent', 'update', { analytics_storage: 'granted' }]);
 });
 
-test('firebase: injected instance, consent defaults kept denied until granted, reset on withdraw', async () => {
+function fakeFirebase() {
 	const calls: unknown[][] = [];
 	const rec =
 		(name: string) =>
@@ -116,12 +138,23 @@ test('firebase: injected instance, consent defaults kept denied until granted, r
 			throw new Error('native module missing'); // swallowed: analytics never breaks the app
 		},
 	};
+	return { calls, firebase };
+}
+
+const denied = { ad_storage: false, ad_user_data: false, ad_personalization: false };
+const withdrawn = [
+	['setConsent', { analytics_storage: false, ...denied }],
+	['setAnalyticsCollectionEnabled', false],
+];
+
+test('firebase: injected instance, consent defaults kept denied until granted, reset on withdraw', async () => {
+	const { calls, firebase } = fakeFirebase();
 	let saved: string | null = null;
 	initAnalytics({ provider: 'firebase', firebase, storage: { get: () => saved, set: (v) => void (saved = v) } });
 
 	track('alert_opt_in', { species: 'cat' });
 	setUserRole('shelter');
-	assert.deepEqual(calls, []);
+	assert.deepEqual(calls, withdrawn); // not asked yet: start applies the denied state
 
 	setConsent({ analytics: true });
 	trackScreen('/r/[code]');
@@ -130,14 +163,42 @@ test('firebase: injected instance, consent defaults kept denied until granted, r
 	track('alert_opt_in', { species: 'cat' });
 	await new Promise((resolve) => setImmediate(resolve));
 
-	const denied = { ad_storage: false, ad_user_data: false, ad_personalization: false };
 	assert.deepEqual(calls, [
+		...withdrawn,
 		['setConsent', { analytics_storage: true, ...denied }],
 		['setAnalyticsCollectionEnabled', true],
 		['setUserProperty', 'user_role', 'shelter'],
 		['logScreenView', { screen_name: '/r/[code]', screen_class: '/r/[code]' }],
 		['logEvent', 'alert_opt_in', { species: 'cat' }],
-		['setConsent', { analytics_storage: false, ...denied }],
-		['setAnalyticsCollectionEnabled', false],
+		...withdrawn,
 	]);
+});
+
+test('an expired grant is withdrawn at start: ga4 cookies deleted, firebase collection off', () => {
+	const b = fakeBrowser();
+	process.env.NEXT_PUBLIC_ANALYTICS_PROVIDER = 'ga4';
+	process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID = ID;
+	b.jar.set('zz_consent', encodeURIComponent(JSON.stringify(expired)));
+	b.jar.set('_ga', 'GA1.1.123');
+	b.jar.set('_ga_PKY4SCX3RL', 'GS1.1.456');
+	initAnalytics();
+	assert.deepEqual([...b.jar.keys()], ['zz_consent']);
+	assert.equal(b.win[`ga-disable-${ID}`], true);
+	assert.deepEqual(b.scripts, []);
+
+	const { calls, firebase } = fakeFirebase();
+	const stored = JSON.stringify(expired);
+	initAnalytics({ provider: 'firebase', firebase, storage: { get: () => stored, set: () => {} } });
+	assert.deepEqual(calls, withdrawn);
+});
+
+test('ga4 on the server: start does not touch window, document or cookies', () => {
+	const globals = globalThis as Record<string, unknown>;
+	delete globals.window;
+	delete globals.document;
+	delete globals.location;
+	process.env.NEXT_PUBLIC_ANALYTICS_PROVIDER = 'ga4';
+	process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID = ID;
+	assert.doesNotThrow(() => initAnalytics());
+	assert.doesNotThrow(() => track('report_lost_submit', lost));
 });

@@ -27,13 +27,13 @@ track('report_found_start');
 
 - **Registry** (`src/registry.ts`): the 16 taxonomy events and their parameters under the exact GA4 names (`municipality`, `region`, `species`, `report_type`, `ad_slot`, `ad_id`, `match_source`, `value`, `currency`, `amount_bucket`, `method`, `purpose`). Values are enums, C6 slugs (lowercase words and hyphens), an ad uuid, or EUR with two decimals (max 10 000). Names, emails, phone and chip numbers, coordinates, report codes, user ids and free text cannot pass.
 - **Violations** (unknown event, unknown param, bad value, missing param, non-template screen path) throw in development and tests; in production the event is dropped (unknown event) or the bad parameter stripped. Messages name keys, never values.
-- **Consent**: checked on every call. Grant: the adapter is enabled, then the remembered role and current screen are sent. Withdraw, decline, version bump or expiry: the adapter is disabled. Storage: web cookie `zz_consent` (strictly necessary, 12 months, `SameSite=Lax`, URI-encoded JSON); mobile injects secure storage under the same key.
+- **Consent**: checked on every call. Grant: the adapter is enabled, then the remembered role and current screen are sent. Withdraw, decline, version bump or expiry: the adapter is disabled, also at start (`initAnalytics` or the first call), so a stale grant's `_ga` cookies are deleted on the next visit. Storage: web cookie `zz_consent` (strictly necessary, 12 months, `SameSite=Lax`, URI-encoded JSON); mobile injects secure storage under the same key.
 
 ## Adapters
 
 Chosen by `NEXT_PUBLIC_ANALYTICS_PROVIDER` / `EXPO_PUBLIC_ANALYTICS_PROVIDER` (or `initAnalytics({ provider })`); `mock` unless set. A provider that cannot start (missing `NEXT_PUBLIC_GA_MEASUREMENT_ID`, or `firebase` without an injected instance) throws outside production and falls back to `mock` in production.
 
-- **`ga4`** (web): on grant pushes `consent default` (all four signals denied), `consent update { analytics_storage: 'granted' }`, then loads gtag.js with the CSP nonce (`initAnalytics({ nonce })`, else the first `script[nonce]` on the page) and `config { send_page_view: false }`. `trackScreen` sets `page_location` to origin + template (only `utm_*` query params kept) and `page_title` to the template, so short codes, search text and pet names in the real URL or title never reach GA. On withdraw: `consent update` denied, `window['ga-disable-<id>'] = true`, `_ga` and `_ga_*` cookies deleted on the host and its parent domains.
+- **`ga4`** (web): on grant pushes `consent default` (all four signals denied), `consent update { analytics_storage: 'granted' }`, then loads gtag.js with the CSP nonce (`initAnalytics({ nonce })`, else the first `script[nonce]` on the page) and `config { send_page_view: false }`. `trackScreen` sets `page_location` to origin + template (only `utm_*` query params kept), `page_referrer` to the referrer's origin and `page_title` to the template, so short codes, search text and pet names in the real URL, referrer or title never reach GA. On withdraw (a no-op during SSR): `consent update` denied, `window['ga-disable-<id>'] = true`, `_ga` and `_ga_*` cookies deleted on the host and its parent domains.
 - **`firebase`** (mobile): inject the `@react-native-firebase/analytics` instance. On grant `setConsent({ analytics_storage: true, ad_*: false })` and `setAnalyticsCollectionEnabled(true)`; on withdraw consent denied, collection off and `resetAnalyticsData()`. Errors from the native module are swallowed. `firebase.json` keeps auto collection off and all consent defaults denied (C12 §Mobile wiring).
 - **`mock`** (default locally and in tests): records events in memory, no network.
 
@@ -58,7 +58,7 @@ Verify in GA4 Admin for property `559038055` (web stream `G-PKY4SCX3RL`) before 
 - [ ] Custom dimensions, event scope: `municipality`, `region`, `species`, `report_type`, `ad_slot`, `ad_id`, `match_source`
 - [ ] Custom dimension, user scope: `user_role`
 - [ ] Key events: `report_lost_submit`, `report_found_submit`, `match_confirmed`, `reunited`, `boost_purchase`, `donation`, `supporter_subscribe`, `ad_click`
-- [ ] Enhanced measurement off for the web stream (recommended): its history page views, site search, outbound clicks and file downloads send real URLs and query text; our `page_view`, `share` and `poster_download` cover them
+- [ ] **Enhanced measurement off** for the web stream (**required**): its page views on history changes, site search, outbound clicks and file downloads send real URLs, site-search text and outbound links, bypassing the template-only `page_location`; our `page_view`, `share` and `poster_download` cover them
 - [ ] Firebase app `si.signapps.zivali` (project `zivali-bb123`) linked as the second data stream (Q-009; until then mobile uses `mock`)
 
 ## DebugView

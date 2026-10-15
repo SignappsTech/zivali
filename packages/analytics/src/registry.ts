@@ -1,6 +1,7 @@
 // Event taxonomy (contract C12): the only events and parameters that may reach GA4 or Firebase.
-// Parameter names are the custom dimensions configured on GA4 property 559038055; values are enums or slugs only,
-// so names, emails, phone and chip numbers, coordinates, ids and free text cannot pass.
+// Parameter names are the custom dimensions configured on GA4 property 559038055; values are enums (`region` is one of
+// the 12 C6 statistical regions) or C6 municipality slugs, so names, emails, phone and chip numbers, coordinates, ids
+// and free text cannot pass.
 
 type Check<T> = ((value: unknown) => value is T) & { optional?: true };
 
@@ -17,7 +18,7 @@ const pattern =
 const opt = <T>(check: Check<T>) =>
 	Object.assign((value: unknown): value is T => check(value), { optional: true as const });
 
-// C6 slugs: lowercase ASCII words joined by hyphens, no digits, no spaces, no dots or commas.
+// C6 municipality slug: lowercase ASCII words joined by hyphens, no digits, no spaces, no dots or commas.
 const slug = pattern(/^(?=.{2,64}$)[a-z]+(?:-[a-z]+)*$/);
 
 // EUR with at most two decimals and a sane cap, so a chip number, coordinate or timestamp cannot pass as `value`.
@@ -43,7 +44,21 @@ export type ParamName =
 	| 'purpose';
 
 const municipality = slug;
-const region = slug;
+// C6 `regions.slug`: the 12 statistical regions.
+const region = oneOf(
+	'pomurska',
+	'podravska',
+	'koroska',
+	'savinjska',
+	'zasavska',
+	'posavska',
+	'jugovzhodna-slovenija',
+	'osrednjeslovenska',
+	'gorenjska',
+	'primorsko-notranjska',
+	'goriska',
+	'obalno-kraska'
+);
 const species = oneOf('dog', 'cat');
 const report_type = oneOf('lost', 'found', 'sighted');
 const ad_slot = oneOf('feed', 'detail', 'reunited', 'sidebar');

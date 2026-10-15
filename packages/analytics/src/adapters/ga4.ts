@@ -41,6 +41,7 @@ export function createGa4Adapter(id: string, nonce?: string): Adapter {
 			gtag('config', id, debug ? { send_page_view: false, debug_mode: true } : { send_page_view: false });
 		},
 		disable() {
+			if (typeof document === 'undefined') return; // SSR: no cookies or gtag to clear
 			gtag('consent', 'update', { analytics_storage: 'denied' });
 			win()[`ga-disable-${id}`] = true;
 			// `_ga` and `_ga_<stream>` sit on the host or a parent domain (cookie_domain: auto).
@@ -53,11 +54,15 @@ export function createGa4Adapter(id: string, nonce?: string): Adapter {
 		},
 		event: (name, params) => gtag('event', name, params),
 		screen(path) {
-			// The real URL and document.title can carry short codes, search text or pet names: send the template,
-			// keep only campaign (utm_*) parameters for attribution.
+			// The real URL, referrer and document.title can carry short codes, search text or pet names: send the
+			// template, keep only campaign (utm_*) parameters for attribution and only the referrer's origin.
 			const utm = [...new URLSearchParams(location.search)].filter(([key]) => key.startsWith('utm_'));
 			const query = new URLSearchParams(utm).toString();
-			gtag('set', { page_location: `${location.origin}${path}${query ? `?${query}` : ''}`, page_title: path });
+			gtag('set', {
+				page_location: `${location.origin}${path}${query ? `?${query}` : ''}`,
+				page_referrer: document.referrer && new URL(document.referrer).origin,
+				page_title: path,
+			});
 			gtag('event', 'page_view');
 		},
 		userRole: (role) => gtag('set', 'user_properties', { user_role: role }),

@@ -46,7 +46,7 @@ export type AnalyticsOptions = {
 
 let options: AnalyticsOptions = {};
 let adapter: Adapter | undefined;
-let enabled = false;
+let enabled: boolean | undefined; // undefined = not applied yet, so a stale grant is disabled on first use
 let consent: ConsentState | null | undefined; // undefined = not read yet
 let role: UserRole | undefined;
 let lastPath: string | undefined;
@@ -89,11 +89,12 @@ function active(): Adapter | null {
 	return granted ? adapter : null;
 }
 
-/** Optional before first use; mobile passes `firebase` and `storage`. Resets all state (also used by tests). */
+/** Optional before first use; mobile passes `firebase` and `storage`. Resets all state (also used by tests) and applies
+ * the stored consent at once, so an expired or outdated grant is withdrawn (cookies deleted) without waiting for a call. */
 export function initAnalytics(opts: AnalyticsOptions = {}): void {
 	options = opts;
-	adapter = consent = role = lastPath = undefined;
-	enabled = false;
+	adapter = consent = role = lastPath = enabled = undefined;
+	active();
 }
 
 type Args<P> = Partial<P> extends P ? [params?: P] : [params: P];

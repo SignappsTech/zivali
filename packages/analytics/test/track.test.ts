@@ -95,6 +95,8 @@ test('names, emails, chip-like numbers, coordinates and free text are rejected',
 		['chip number as value', { value: 985112345678901 }],
 		['chip number as ad id', { ad_id: '985112345678901' }],
 		['coordinates as value', { region: '46.0569,14.5058' }],
+		['municipality as region', { region: 'ljubljana' }],
+		['name slug as region', { region: 'janez-novak' }],
 		['coordinates as params', { lat: 46.0569, lng: 14.5058 }],
 		['coordinate as money', { value: 46.056912 }],
 		['free text as enum', { species: 'black dog with white paws' }],
@@ -116,6 +118,9 @@ test('type-level: values outside the enums do not compile', () => {
 	setConsent({ analytics: true });
 	// @ts-expect-error report_found_submit only takes found | sighted
 	assert.throws(() => track('report_found_submit', lost), /invalid value for "report_type"/);
+	// @ts-expect-error region is one of the 12 statistical regions, not a municipality
+	const municipalityAsRegion = () => track('poster_download', { species: 'dog', region: 'ljubljana' });
+	assert.throws(municipalityAsRegion, /invalid value for "region"/);
 	// @ts-expect-error currency is EUR only
 	assert.throws(() => track('supporter_subscribe', { value: 3, currency: 'USD' }), /invalid value for "currency"/);
 	track('ad_click', { ad_slot: 'feed', ad_id: '0b9e6a4c-3f1d-4c2e-9a7b-5d8e1f2a3b4c' });
@@ -143,13 +148,11 @@ test('provider comes from the environment: mock by default, misconfiguration fai
 	track('poster_download', { species: 'cat', region: 'podravska' });
 	assert.equal(getMockEvents().length, 1);
 
-	initAnalytics({ storage: memory(), provider: 'firebase' });
-	assert.throws(() => setConsent({ analytics: true }), /provider "firebase"/);
+	assert.throws(() => initAnalytics({ storage: memory(), provider: 'firebase' }), /provider "firebase"/);
 
 	process.env.NEXT_PUBLIC_ANALYTICS_PROVIDER = 'ga4';
 	try {
-		initAnalytics({ storage: memory() });
-		assert.throws(() => setConsent({ analytics: true }), /provider "ga4"/);
+		assert.throws(() => initAnalytics({ storage: memory() }), /provider "ga4"/);
 	} finally {
 		delete process.env.NEXT_PUBLIC_ANALYTICS_PROVIDER;
 	}
