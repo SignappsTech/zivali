@@ -15,6 +15,8 @@ export default defineConfig({
 		exclude: [...configDefaults.exclude, 'e2e/**'],
 		// Through Vite, so its `next/*` imports resolve and vi.mock('next/navigation') reaches them.
 		server: { deps: { inline: ['next-intl'] } },
+		// Agents run tests in parallel worktrees: a quarter of the cores each instead of one worker per core.
+		maxWorkers: '25%',
 		// jsdom start-up takes over 5 s when many agents share the machine.
 		testTimeout: 30_000,
 		hookTimeout: 30_000,
