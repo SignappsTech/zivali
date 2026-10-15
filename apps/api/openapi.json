@@ -2118,6 +2118,48 @@
 				}
 			}
 		},
+		"/v1/ads/{id}/click": {
+			"get": {
+				"operationId": "followAdClick",
+				"summary": "Count a click and redirect to the sponsor link",
+				"description": "The `click_url` of a served ad (`?s=<slot>&r=<region_id>`). Counts one click per ad, slot, day (Europe/Ljubljana) and region (no user ids, no cookies), then 302 to the https link stored with the ad; the target never comes from the request. NOT_FOUND: unknown, deleted or inactive ad, or a slot the ad does not run in.",
+				"tags": ["ads"],
+				"parameters": [
+					{ "schema": { "type": "string", "format": "uuid" }, "required": true, "name": "id", "in": "path" },
+					{
+						"schema": { "$ref": "#/components/schemas/AdSlot" },
+						"required": true,
+						"name": "s",
+						"in": "query"
+					},
+					{
+						"schema": { "type": ["integer", "null"], "minimum": 0, "maximum": 32767 },
+						"required": false,
+						"name": "r",
+						"in": "query"
+					}
+				],
+				"responses": {
+					"302": { "description": "Redirect to the stored link (Location header)" },
+					"400": {
+						"description": "VALIDATION",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"404": {
+						"description": "NOT_FOUND",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"429": {
+						"description": "RATE_LIMITED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"500": {
+						"description": "INTERNAL",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					}
+				}
+			}
+		},
 		"/v1/alert-subscription": {
 			"get": {
 				"operationId": "getAlertSubscription",

@@ -109,4 +109,28 @@ export async function addImpression(
 		on conflict (day, ad_id, slot, region_id) do update set impressions = app.ad_stats_daily.impressions + 1`;
 }
 
-export default { listLive, regionOfMunicipality, findExclusiveOverlap, addImpression };
+/**
+ * +1 click in ad_stats_daily and the ad's stored link in one statement. Only an active, not deleted ad that runs in
+ * the slot counts; otherwise nothing is written and undefined is returned. An unknown region id is stored as 0.
+ */
+export async function addClick(
+	{ day, ad_id, slot, region_id }: { day: string; ad_id: string; slot: AD_SLOT; region_id: number },
+	tx?: Tx
+): Promise<string | undefined> {
+	const rows = await (tx ?? prisma).$queryRaw<{ link_url: string }[]>`
+		with ad as (
+			select a.id, a.link_url from app.ads a
+			where a.id = ${ad_id}::uuid and a.deleted_at is null and a.status = 'active'
+				and ${slot}::app."AD_SLOT" = any(a.slots)
+		), counted as (
+			insert into app.ad_stats_daily (day, ad_id, slot, region_id, clicks)
+			select ${day}::date, ad.id, ${slot}::app."AD_SLOT",
+				coalesce((select r.id from app.regions r where r.id = ${region_id}::int), 0), 1
+			from ad
+			on conflict (day, ad_id, slot, region_id) do update set clicks = app.ad_stats_daily.clicks + 1
+		)
+		select link_url from ad`;
+	return rows[0]?.link_url;
+}
+
+export default { listLive, regionOfMunicipality, findExclusiveOverlap, addImpression, addClick };

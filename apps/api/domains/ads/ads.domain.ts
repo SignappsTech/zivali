@@ -122,6 +122,24 @@ export async function recordImpression(
 	if (!count) throw new AppError('NOT_FOUND', 'Ad not found');
 }
 
+/**
+ * GET /v1/ads/:id/click: +1 click for (day in Europe/Ljubljana, ad, slot, region), then the ad's stored link, the
+ * only redirect target (never a URL from the request). NOT_FOUND: unknown, deleted or inactive ad, or a slot the ad
+ * does not run in.
+ */
+export async function recordClick(
+	input: { ad_id: string; slot: AdSlot; region_id?: number },
+	ctx: Ctx
+): Promise<string> {
+	const link = await AdsDao.addClick(
+		{ day: statsDay(ctx.now), ad_id: input.ad_id, slot: dbSlot(input.slot), region_id: input.region_id ?? 0 },
+		ctx.tx
+	);
+	// https only (validated on save, checked by the database); re-checked here because this is a redirect.
+	if (!link?.startsWith('https://')) throw new AppError('NOT_FOUND', 'Ad not found');
+	return link;
+}
+
 type AdWrite = z.infer<typeof AdInput> & { id?: string };
 
 /**
@@ -160,6 +178,7 @@ export async function assertAdWritable(ad: AdWrite, ctx: Ctx): Promise<void> {
 export default {
 	getAdForSlot,
 	recordImpression,
+	recordClick,
 	assertAdWritable,
 	blockedTerms,
 	blockedFields,
