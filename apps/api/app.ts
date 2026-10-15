@@ -14,6 +14,7 @@ import { errorHandler, notFound } from './middleware/error.middleware.ts';
 import { requestId } from './middleware/requestId.middleware.ts';
 import docsRoutes from './routes/docs.routes.ts';
 import v1Routes from './routes/index.ts';
+import webhooksRoutes from './routes/webhooks.routes.ts';
 
 export const app = express();
 
@@ -28,8 +29,6 @@ app.use(helmet());
 // Allowlisted web origins; requests without Origin (mobile, server to server) pass.
 app.use(cors({ origin: config.WEB_ORIGINS }));
 app.use(compression());
-// The Stripe webhook route mounts its own raw body parser above this line when it arrives (C13).
-app.use(express.json({ limit: '1mb' }));
 // Global soft limit per IP; per-route limits use the rateLimit middleware backed by Postgres (C1).
 app.use(
 	rateLimit({
@@ -48,6 +47,9 @@ app.use(
 		},
 	})
 );
+// Before express.json: the Stripe signature covers the raw body, so the webhook router parses it itself (C13).
+app.use('/v1/webhooks', webhooksRoutes);
+app.use(express.json({ limit: '1mb' }));
 
 app.get('/ping', (_req, res) => {
 	res.json({ message: 'pong' });
