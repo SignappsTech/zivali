@@ -158,7 +158,8 @@ export async function upsertReports(reports: CachedReport[], now = Date.now()): 
 
 const deleteIds = (db: SQLiteDatabase, ids: string[]) =>
 	db.runAsync('delete from reports_cache where id in (select value from json_each(?))', JSON.stringify(ids));
-// The update applies only while the area is the one that was synced (setCacheArea may move it meanwhile).
+// A response is applied only while its area is still the one requested: a wipe (sign-out) or setCacheArea may
+// have removed or moved it meanwhile.
 const SAME_AREA = 'id = ? and lat = ? and lng = ? and radius_km = ?';
 const sameArea = (area: Area) => [area.id, area.lat, area.lng, area.radius_km];
 
@@ -171,18 +172,21 @@ async function syncArea(api: ApiClient, db: SQLiteDatabase, area: Area, now: num
 		since = done
 			? feed.server_time
 			: feed.upserts.reduce((max, r) => (r.updated_at > max ? r.updated_at : max), since ?? '');
+		let current = true;
 		await db.withTransactionAsync(async () => {
+			current = !!(await db.getFirstAsync(`select 1 from cache_areas where ${SAME_AREA}`, ...sameArea(area)));
+			if (!current) return;
 			await upsertReports(feed.upserts, now);
 			await deleteIds(db, feed.removed_ids);
 			if (done) await confirmArea(db, area, now);
 			await db.runAsync(
-				`update cache_areas set since = ?, last_sync_at = coalesce(?, last_sync_at) where ${SAME_AREA}`,
+				'update cache_areas set since = ?, last_sync_at = coalesce(?, last_sync_at) where id = ?',
 				since,
 				done ? now : null,
-				...sameArea(area)
+				area.id
 			);
 		});
-		if (done) return;
+		if (done || !current) return;
 	}
 }
 

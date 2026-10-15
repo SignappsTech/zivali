@@ -241,6 +241,20 @@ describe('area sync', () => {
 		expect(await all('select * from cache_areas')).toEqual([]);
 	});
 
+	test('a response for an area wiped meanwhile (sign-out) is not written', async () => {
+		await setCacheArea('home', LJUBLJANA);
+		const client = createMockApi({
+			'GET /v1/sync/reports': async () => {
+				await (await getDb()).execAsync('delete from cache_areas');
+				return fx.syncSnapshot;
+			},
+		});
+
+		await syncNow(client);
+
+		expect(await ids()).toEqual([]);
+	});
+
 	test('a failed sync keeps the cache and rejects; concurrent calls share one run', async () => {
 		await setCacheArea('home', LJUBLJANA);
 		await syncNow(api(fx.syncSnapshot));
