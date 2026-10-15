@@ -1,11 +1,11 @@
 ---
 id: TASK-36.4
 title: 'Design: Ad slots and house ads (P21)'
-status: In Progress
+status: Done
 assignee:
   - '@ui-designer'
 created_date: '2026-10-14 21:50'
-updated_date: '2026-10-15 21:58'
+updated_date: '2026-10-15 22:10'
 labels:
   - design
   - 'est:S'
