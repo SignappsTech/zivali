@@ -141,6 +141,17 @@ test('municipality_shelters.csv: all 212 GURS municipalities, each confirmed row
         `${a.municipality_slug}: suggested_shelter only on unconfirmed rows, an existing shelter`,
       );
     assert.ok(a.source?.trim(), `${a.municipality_slug}: source is set`);
+    if (a.status === 'UNCONFIRMED')
+      assert.ok(
+        a.source.startsWith('ni potrjeno:'),
+        `${a.municipality_slug}: unconfirmed source starts with "ni potrjeno:"`,
+      );
+    else
+      assert.match(
+        a.source,
+        /https?:\/\/|[a-z0-9]\.[a-z]{2,}(?![a-z])/,
+        `${a.municipality_slug}: confirmed source cites a URL or domain`,
+      );
     assert.ok(isPastDate(a.verified_at), `${a.municipality_slug}: verified_at`);
   }
   assert.deepEqual(

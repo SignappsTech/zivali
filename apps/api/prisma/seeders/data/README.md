@@ -42,6 +42,8 @@ addition to C18 (reported as a CHANGE).
 
 ## Sources and method
 
+The data comes from public-sector and public sources (the UVHVVR register on gov.si, shelter and municipality websites, Uradni list RS), cited per row by URL and access date.
+
 1. **Shelters:** the UVHVVR register "Seznam zavetišč za zapuščene živali", last updated 23 Feb 2026:
    https://www.gov.si/assets/organi-v-sestavi/UVHVVR/Bolezni-zivali/Seznam-obratov/Seznam-obratov-splosni/REG-zavetisc-2026-02-23.docx.
    Each shelter's website was then checked for its address, phone, hours and e-mail (URL in `source`).
