@@ -238,7 +238,13 @@ Namespace `admin.directory`. Every save is live at once on the public shelter pa
 | admin.directory.import_applying | Uveljavljamo spremembe … | Applying changes … |
 | admin.directory.delete_refused | Zavetišča ne morete izbrisati, ker je pristojno za {count, plural, one {# občino} two {# občini} few {# občine} other {# občin}}. Najprej jih dodelite drugemu zavetišču. | You cannot delete this shelter because it serves {count, plural, one {# municipality} other {# municipalities}}. Assign them to another shelter first. |
 | admin.directory.delete_body | Zavetišče izgine z javnih strani in iz gumbov za klic. Izbris bo zabeležen v revizijski sledi. | The shelter disappears from the public pages and the call buttons. The deletion will be recorded in the audit log. |
-| admin.directory.read_only | Samo za ogled | View only |
+| admin.directory.import_errors | Napake | Errors |
+| admin.directory.import_changes | Spremembe | Changes |
+| admin.directory.row_municipalities | Občine: {n} | Municipalities: {n} |
+| admin.directory.row_source | Vir: {source} | Source: {source} |
+| admin.directory.history_field_hours | Delovni čas, {days} | Opening hours, {days} |
+| admin.directory.history_initial | Začetni uvoz imenika | Initial directory import |
+| admin.directory.tablist_label | Pogled imenika | Directory view |
 
 Notes:
 
@@ -246,6 +252,8 @@ Notes:
 - A stale row shows the `clock` icon and `admin.directory.stale` in bold next to the date.
 - Day-range options in the hours rows: SL "pon–pet", "pon–sob", "pon", "tor", "sre", "čet", "pet", "sob", "ned", "prazniki"; EN "Mon–Fri", "Mon–Sat", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun", "Public holidays".
 - Delete dialog: `admin.destructive_title` with the action `admin.directory.action_delete` and the shelter name, body `admin.directory.delete_body`, audit note REQUIRED (`admin.audit_note_required_label`, help `admin.audit_note_required_help`; the delete button stays disabled until it is filled). Cancel: `admin.cancel`. Municipality drawer audit note and source use the same keys as the shelter form.
+- Time format in the hours fields and history: SL "8.00" and ranges "8.00–15.00" (like the public pages); EN 24 h "08:00" and "08:00–15:00".
+- The directory is admin only; moderators get the access-denied screen, so there is no view-only copy.
 - Empty search, error and retry: §3 keys.
 
 # 9. SEO and alt text

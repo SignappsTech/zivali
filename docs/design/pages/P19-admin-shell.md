@@ -68,7 +68,7 @@ Top bar: h1 "Imenik zavetišč", right: `secondary` "Uvozi CSV" and the one prim
 8. **CSV import** (dialog, max 640 px for this one table): file field (drop area with a button), then a **dry run**: summary line ("3 nova, 12 spremenjenih, 0 odstranjenih, 2 napaki"), a table of changes (entity, field, prej, zdaj) and a list of errors with the CSV row number and the reason. Primary "Uveljavi spremembe" is disabled while there are errors (help text says why); `text` "Prekliči". Applying shows a progress line, then the toast.
 9. **Delete a shelter**: refused while municipalities are assigned (a `note` like the last-admin guard, naming the count); otherwise the destructive dialog with the shelter named and an audit-note field.
 
-States: loading skeleton rows, empty search result, error note with retry, read-only for moderators (no primary, no row actions, a quiet line "Samo za ogled").
+States: loading skeleton rows, empty search result, error note with retry, the directory is admin only: moderators (Pregled + Varnost) get the access-denied screen.
 
 ## Responsive
 
@@ -92,5 +92,5 @@ None.
 ## Mockup scope (`P19-shelter-directory.html`, TASK-89 design task)
 
 1. Browser 1200 px: shelters table with the yearly reminder and the stale filter on, municipalities table with an unconfirmed row, edit drawer (opening hours rows, municipalities list, a field error), history with a before and after view, CSV import dry run with errors (apply disabled) and without errors, delete refused note, toast after save.
-2. 768 px: table as stacked rows, drawer full width.
+2. 768 px: table as stacked rows, drawer stays 480 px (full width only below 640).
 3. Light and dark. Shelter data is marked sample data.

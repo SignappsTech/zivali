@@ -344,7 +344,7 @@ Rules
 
 - Body 16 px minimum. Meta 14 px minimum. Only bottom-nav labels go down to 13 px.
 - Line length at most 65 characters (`max-w-[58ch]` to `62ch`).
-- Use `tabular-nums` for distances, times, counts and chip numbers. Chip numbers are grouped `705 1234 5678 901`.
+- Use `tabular-nums` for distances, times, counts and chip numbers. Chip numbers are grouped `705 1234 5678 9012`.
 - Headings use `text-wrap: balance` on web. No all-caps, no italics for emphasis, no underline except links.
 - Slovenian runs about 15 to 20 % longer than English: no fixed-width buttons, let labels grow, test at 200 % text size.
 - Status labels agree with the noun "žival": "Izgubljena", "Najdena", "Opažena", "Spet doma". Copy is gender-neutral (nouns and imperatives). Final strings come from the content slices.
@@ -689,3 +689,4 @@ Each page slice in `docs/design/pages/P<n>-<slug>.md` gets one static mockup at 
 | 0.11 | 2026-10-15 | P19 review (TASK-34.1): `sidebar-primary` and `sidebar-ring` become light mist (sun yellow stays out of the console); admin h1 30/36 and h2 24/30 at all widths; added dense table, drawer, tooltip and mixed checkbox specs. |
 | 0.12 | 2026-10-15 | CH-46, CH-59: `suggested` pill state (§10.4); print tokens for the P18 poster documented (`qr`, `qr-foreground`, `input`; no tokens.json change). |
 | 0.13 | 2026-10-15 | CH-67, CH-68, CH-72: legal note slot exempt from one note per view; checklist "at most one primary" and header "Prijavi" secondary on P3 T5/T6; Accordion row and On this page list components (§10.9). |
+| 0.14 | 2026-10-15 | CH-85, CH-90: drawer stays full width only below 640 px (480 px at 768); chip example fixed to 15 digits. |

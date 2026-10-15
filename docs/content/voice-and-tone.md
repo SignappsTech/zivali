@@ -98,7 +98,7 @@ Pet names, area names and people's display names are inserted by software, which
 | Quotes | „…“ | “…” |
 | Dash | spaced en dash: "Najdimo – spet doma" | spaced en dash |
 | Ellipsis | one character … | … |
-| Chip numbers | grouped `705 1234 5678 901`, tabular figures | same |
+| Chip numbers | grouped `705 1234 5678 9012`, tabular figures | same |
 | Days, months | lowercase: "v ponedeljek", "oktober" | capitalised |
 
 Headings use sentence case in both languages. No full stop after headings and button labels; full stop after sentences in notes, toasts and body.
@@ -233,4 +233,5 @@ English is a translation for residents and visitors who do not read Slovenian. S
 | Version | Date | Change |
 |---|---|---|
 | 0.2 | 2026-10-15 | Brief v0.7: mission-first principle (§2). |
+| 0.3 | 2026-10-15 | CH-91: chip example fixed to 15 digits. |
 | 0.1 | 2026-10-14 | First draft: voice, address form (vikanje, imperative buttons), gender-neutral rules, plural rules, tone by moment, do and do not for headings, errors, notifications and scam warnings. |

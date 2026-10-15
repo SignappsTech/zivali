@@ -60,7 +60,7 @@ signUpWithEmail(email, password, { locale, captchaToken?, redirectTo? }), signIn
 signInWithGoogle({ redirectTo? } | { idToken, nonce? }), signInWithApple({ redirectTo? } | { idToken, nonce? }),   // idToken = native sign-in
 signInAnonymously(captchaToken?),
 requestPasswordReset(email, { redirectTo?, captchaToken? }),   // no locale: the recovery email is localised from user_metadata.locale
-signOut(cleanup?)               // runs DELETE /v1/push-tokens/:token (C10) and the mobile wipe (C17)
+signOut(cleanup?)               // runs DELETE /v1/push-tokens with body { token } (C10) and the mobile wipe (C17)
 mfa.enroll(), mfa.challengeAndVerify(factorId, code)
 // API:
 getMe(api): Promise<Me>, updateMe(api, patch): Promise<Me>
@@ -86,3 +86,4 @@ Clients keep report drafts locally (C4 §Drafts, C17). When a signed-out visitor
 | Version | Date | Change |
 |---|---|---|
 | 1.1 | 2026-10-15 | CH-54: client block updated to the implemented @zivali/api/auth (configureAuth, redirectTo, native idToken, signOut cleanup, gate states, ApiError mapping) |
+| 1.2 | 2026-10-15 | CH-92: signOut cleanup runs DELETE /v1/push-tokens with body { token } |
