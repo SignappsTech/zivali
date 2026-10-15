@@ -43,7 +43,11 @@ function DialogContent({
 				{closeLabel && (
 					<DialogPrimitive.Close
 						aria-label={closeLabel}
-						className={buttonVariants({ variant: 'ghost', size: 'icon', className: 'absolute top-3 right-3' })}
+						className={buttonVariants({
+							variant: 'ghost',
+							size: 'icon',
+							className: 'absolute top-3 right-3',
+						})}
 					>
 						<XIcon weight="bold" aria-hidden="true" />
 					</DialogPrimitive.Close>

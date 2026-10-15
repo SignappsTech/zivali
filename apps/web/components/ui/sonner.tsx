@@ -21,8 +21,12 @@ function Toaster({ closeLabel, label, ...props }: ToasterProps & { closeLabel: s
 			icons={{
 				success: <CheckCircleIcon weight="fill" aria-hidden="true" className={`${iconClass} text-primary`} />,
 				info: <InfoIcon weight="fill" aria-hidden="true" className={`${iconClass} text-primary`} />,
-				warning: <WarningCircleIcon weight="fill" aria-hidden="true" className={`${iconClass} text-destructive`} />,
-				error: <WarningCircleIcon weight="fill" aria-hidden="true" className={`${iconClass} text-destructive`} />,
+				warning: (
+					<WarningCircleIcon weight="fill" aria-hidden="true" className={`${iconClass} text-destructive`} />
+				),
+				error: (
+					<WarningCircleIcon weight="fill" aria-hidden="true" className={`${iconClass} text-destructive`} />
+				),
 			}}
 			style={{ '--width': '400px' } as React.CSSProperties}
 			toastOptions={{

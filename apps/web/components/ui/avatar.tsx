@@ -26,7 +26,13 @@ function Avatar({
 }
 
 function AvatarImage({ className, ...props }: React.ComponentProps<typeof AvatarPrimitive.Image>) {
-	return <AvatarPrimitive.Image data-slot="avatar-image" className={cn('size-full object-cover', className)} {...props} />;
+	return (
+		<AvatarPrimitive.Image
+			data-slot="avatar-image"
+			className={cn('size-full object-cover', className)}
+			{...props}
+		/>
+	);
 }
 
 /** Initials; `label` is the person's name, so the initials avatar has an accessible name. */

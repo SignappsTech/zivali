@@ -32,7 +32,11 @@ function AlertDialogContent({ className, ...props }: React.ComponentProps<typeof
 
 function AlertDialogTitle({ className, ...props }: React.ComponentProps<typeof AlertDialogPrimitive.Title>) {
 	return (
-		<AlertDialogPrimitive.Title data-slot="alert-dialog-title" className={cn(dialogTitleClass, className)} {...props} />
+		<AlertDialogPrimitive.Title
+			data-slot="alert-dialog-title"
+			className={cn(dialogTitleClass, className)}
+			{...props}
+		/>
 	);
 }
 

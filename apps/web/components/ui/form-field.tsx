@@ -47,7 +47,9 @@ function FormField({ label, hint, error, disabled, id, className, children }: Fo
 			<Label htmlFor={fieldId} className={cn(disabled && 'text-muted-foreground')}>
 				{label}
 			</Label>
-			<FieldContext value={{ id: fieldId, describedBy, invalid: Boolean(error), disabled }}>{children}</FieldContext>
+			<FieldContext value={{ id: fieldId, describedBy, invalid: Boolean(error), disabled }}>
+				{children}
+			</FieldContext>
 			{hint && (
 				<p id={hintId} className="text-sm text-muted-foreground">
 					{hint}

@@ -5,7 +5,9 @@ import { cn } from '@/lib/utils';
 
 /** Flat card (system §10.6): card surface, radius 24, padding 24, no border, no shadow, never nested. */
 function Card({ className, ...props }: React.ComponentProps<'div'>) {
-	return <div data-slot="card" className={cn('rounded-card bg-card p-6 text-card-foreground', className)} {...props} />;
+	return (
+		<div data-slot="card" className={cn('rounded-card bg-card p-6 text-card-foreground', className)} {...props} />
+	);
 }
 
 /** h3 by default; pass `asChild` with another heading level when the outline needs it. */
