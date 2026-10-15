@@ -1,11 +1,11 @@
 ---
 id: TASK-9.1
 title: 'Design: Sign in, account creation and gates (P16)'
-status: In Progress
+status: Done
 assignee:
   - '@ui-designer'
 created_date: '2026-10-14 21:50'
-updated_date: '2026-10-14 23:11'
+updated_date: '2026-10-15 00:01'
 labels:
   - design
   - 'est:S'
