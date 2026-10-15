@@ -7,6 +7,8 @@ export type AbuseReportInput = { target_type: AbuseTargetType; target_id: Uuid; 
 export type AbuseReportResponse = { id: Uuid; duplicate: boolean };
 export type AdminAbuseReport = {
 	id: Uuid;
+	/** Staff only: never returned to the reported user. */
+	reporter_id: Uuid;
 	target_type: AbuseTargetType;
 	target_id: Uuid;
 	reason: AbuseReason;
@@ -15,7 +17,12 @@ export type AdminAbuseReport = {
 	status: AbuseStatus;
 	created_at: IsoDateTime;
 };
-export type AdminAbuseReportQuery = { status?: AbuseStatus; target_type?: AbuseTargetType; cursor?: string };
+export type AdminAbuseReportQuery = {
+	status?: AbuseStatus;
+	target_type?: AbuseTargetType;
+	cursor?: Uuid;
+	limit?: number;
+};
 export type AdminAbuseReportList = Page<AdminAbuseReport>;
 export type ModerationFlag = {
 	id: Uuid;
@@ -26,4 +33,5 @@ export type ModerationFlag = {
 	created_at: IsoDateTime;
 	resolved_at: IsoDateTime | null;
 };
+export type ModerationFlagQuery = { cursor?: Uuid; limit?: number };
 export type ModerationFlagList = Page<ModerationFlag>;

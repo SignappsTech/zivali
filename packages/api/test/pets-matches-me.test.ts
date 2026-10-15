@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
 import { confirmedMatch, matches } from '../src/__fixtures__/matches.ts';
-import { adminUsers, me } from '../src/__fixtures__/me.ts';
+import { adminUsers, auditLog, me } from '../src/__fixtures__/me.ts';
 import { pet, petLimit, pets } from '../src/__fixtures__/pets.ts';
 import { matchesApi } from '../src/matches.ts';
 import { meApi } from '../src/me.ts';
@@ -48,6 +48,17 @@ test('admin users: query and cursor, role change with PUT', async () => {
 		[client.calls[1]!.path, client.calls[1]!.body],
 		[`/v1/admin/users/${me.id}/role`, { role: 'MODERATOR', note: 'Shelter coordinator' }]
 	);
+});
+
+test('audit log: exact-match filters and the cursor of the last page', async () => {
+	const client = createMockApi({ 'GET /v1/admin/audit-log': { ...auditLog, next_cursor: auditLog.items[2]!.id } });
+	const store = createApiStore(client);
+	const filters = { action: 'user.role.set', actor_id: auditLog.items[0]!.actor_id! };
+	const first = await store.dispatch(meApi.endpoints.listAuditLog.initiate(filters));
+	assert.deepEqual(first.data?.pages[0]?.items, auditLog.items);
+	await store.dispatch(meApi.endpoints.listAuditLog.initiate(filters, { direction: 'forward' }));
+	assert.deepEqual(client.calls[0]!.query, filters);
+	assert.deepEqual(client.calls[1]!.query, { ...filters, cursor: auditLog.items[2]!.id });
 });
 
 test('pets: CRUD paths and the PET_LIMIT conflict', async () => {

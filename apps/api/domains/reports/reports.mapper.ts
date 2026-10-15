@@ -3,9 +3,16 @@
 import type { z } from 'zod';
 
 import type { Locale, ReportType, Species } from '@zivali/types';
-import { CreateReportResponse, PublicReport, ReportOwnerView, SyncReportsResponse } from '@zivali/validation';
+import {
+	CreateReportResponse,
+	MapReport,
+	PublicReport,
+	ReportOwnerView,
+	SyncReportsResponse,
+} from '@zivali/validation';
 
 import type { CreatedReport, ReportView } from './reports.domain.ts';
+import type { MapRow } from './search.dao.ts';
 import type { SyncFeed } from './sync.domain.ts';
 
 export type PublicReportDto = z.infer<typeof PublicReport>;
@@ -125,4 +132,9 @@ export function toSyncFeed(feed: SyncFeed, locale: Locale) {
 	});
 }
 
-export default { toPublicReport, toOwnerView, toDto, toCreated, toSyncFeed };
+/** GET /v1/reports/map item: the fuzzed area and the first thumbnail only. */
+export function toMapReport({ lat, lng, radius_m, ...row }: MapRow) {
+	return MapReport.parse({ ...row, area: { lat, lng, radius_m } });
+}
+
+export default { toPublicReport, toOwnerView, toDto, toCreated, toSyncFeed, toMapReport };

@@ -1,7 +1,14 @@
 // Thin: request → ctx → domain → mapper → response. No try/catch (Express 5 forwards rejections).
 import type { Request, Response } from 'express';
 
-import { ManageDomain, ReportsDomain, ReportsMapper } from '../domains/reports/index.ts';
+import {
+	ManageDomain,
+	ReportsDomain,
+	ReportsMapper,
+	SearchDomain,
+	type MapInput,
+	type SearchInput,
+} from '../domains/reports/index.ts';
 import { userCtx } from '../lib/ctx.ts';
 
 // Owner views hold the stored point, chip and contact settings: no browser or shared cache may keep them.
@@ -44,4 +51,28 @@ export async function listMyReports(req: Request, res: Response): Promise<void> 
 	});
 }
 
-export default { getReport, createReport, updateReport, claimManage, resendManageLink, listMyReports };
+// Search answers depend on a location query and on the caller (is_mine): never cached (C4 §Query encoding).
+export async function searchReports(req: Request, res: Response): Promise<void> {
+	const ctx = userCtx(req);
+	const page = await SearchDomain.searchReports(req.query as unknown as SearchInput, ctx);
+	res.set('Cache-Control', PRIVATE).json({
+		...page,
+		items: page.items.map((view) => ReportsMapper.toPublicReport(view, ctx.locale)),
+	});
+}
+
+export async function mapReports(req: Request, res: Response): Promise<void> {
+	const rows = await SearchDomain.mapReports(req.query as unknown as MapInput, userCtx(req));
+	res.set('Cache-Control', PRIVATE).json({ items: rows.map(ReportsMapper.toMapReport) });
+}
+
+export default {
+	getReport,
+	createReport,
+	updateReport,
+	claimManage,
+	resendManageLink,
+	listMyReports,
+	searchReports,
+	mapReports,
+};

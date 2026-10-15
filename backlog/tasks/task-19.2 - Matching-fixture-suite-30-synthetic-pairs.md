@@ -1,10 +1,11 @@
 ---
 id: TASK-19.2
 title: 'Matching fixture suite: 30+ synthetic pairs'
-status: To Do
+status: Done
 assignee:
   - '@backend-dev'
 created_date: '2026-10-14 22:13'
+updated_date: '2026-10-15 21:27'
 labels:
   - be
   - 'est:S'
@@ -34,7 +35,13 @@ Branch: agent/task-19.2-matching-fixtures
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 A fixture set of at least 30 synthetic pairs (chip, near and far, early and late, species mismatch, sex conflict, colour and size overlaps, a rejected pair) runs locally without cloud services.
-- [ ] #2 Tests assert expected inclusion, order and strength for each fixture, and that a rejected pair never reappears after a rerun.
-- [ ] #3 Results print as a small table so thresholds can be tuned later.
+- [x] #1 A fixture set of at least 30 synthetic pairs (chip, near and far, early and late, species mismatch, sex conflict, colour and size overlaps, a rejected pair) runs locally without cloud services.
+- [x] #2 Tests assert expected inclusion, order and strength for each fixture, and that a rejected pair never reappears after a rerun.
+- [x] #3 Results print as a small table so thresholds can be tuned later.
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+apps/api/test/domains/matching.fixtures.test.ts: 36 synthetic pairs in 8 groups (chip, chip-sighting, distance, time, species-sex, colour, size, rejected), hand-labelled with inclusion, rank and strength for the C8 defaults; points pinned after insert, so scores repeat exactly. Runs on the local DB only (mocks, no cloud). Prints a table (group, fixture, km, Δh, expected, got, score, rank) plus the matching.* config in use; to tune: change app_config, rerun, relabel. Rejected pair: rejectMatch, then match.report for every report from both sides; it stays rejected with its score and never returns. Mutation check: a mislabelled fixture fails its group test. Verified on scratch DB task_19_2.
+<!-- SECTION:NOTES:END -->
