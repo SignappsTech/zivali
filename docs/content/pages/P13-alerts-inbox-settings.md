@@ -135,6 +135,11 @@ Namespaces `notifications` (inbox view), `alerts`, `profile`. The title and body
 | profile.row_export | Izvozi moje podatke | Export my data |
 | profile.row_delete | Izbriši račun | Delete account |
 | profile.sign_out | Odjava | Sign out |
+| profile.sign_out_title | Se želite odjaviti? | Sign out? |
+| profile.sign_out_body | Prijave, ki ste jih oddali s te naprave, boste še vedno lahko urejali z nje. | Reports you made on this device stay manageable from it. |
+| profile.sign_out_remove_links | Odstrani tudi povezave za urejanje prijav s te naprave | Also remove the links for managing reports from this device |
+| profile.sign_out_confirm | Odjava | Sign out |
+| profile.sign_out_cancel | Prekliči | Cancel |
 | profile.saved | Shranjeno. | Saved. |
 | profile.offline_queued | Brez povezave. Spremembe shranimo, ko boste spet povezani. | Offline. We will save your changes when you are back online. |
 

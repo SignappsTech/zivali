@@ -68,7 +68,7 @@ Send order per item: ensure session (anonymous sign-in with Turnstile token when
 
 ## Wipe
 
-`wipeLocalData({ reason: 'sign_out' | 'account_deleted' | 'user_request' })`: if `pendingCount() > 0` the caller first shows "Send now / Delete / Cancel"; then delete `reports_cache`, `cache_areas`, `drafts`, `geofences`, `geofence_events`, thumbnails and draft files, stop geofencing; on `account_deleted` also the outbox and secure-store manage tokens. Sign-out calls it after `supabase.auth.signOut()`.
+`wipeLocalData({ reason: 'sign_out' | 'account_deleted' | 'user_request' })`: if `pendingCount() > 0` the caller first shows "Send now / Delete / Cancel"; then delete `reports_cache`, `cache_areas`, `drafts`, `geofences`, `geofence_events`, thumbnails and draft files, stop geofencing; on `account_deleted` wipes everything: the local db file, app files, all SecureStore keys including manage tokens, the TASK-3.4 session ciphertext and its key, and the outbox. Sign-out calls it after `supabase.auth.signOut()` via `signOutAndWipe({ removeManageLinks })`: by default it keeps manage tokens and sent rows (reports made on this device stay manageable from it); only when the user picks "Odstrani tudi povezave za urejanje prijav s te naprave" (remove my report links from this device) are manage tokens and sent rows removed too.
 
 ## Example
 
@@ -76,3 +76,9 @@ Send order per item: ensure session (anonymous sign-in with Turnstile token when
 // outbox row after a lost response, before retry
 { "id": "6f1c…", "kind": "found", "status": "queued", "attempts": 1, "last_error_code": "NETWORK", "captured_at": "2026-10-15T07:42:10Z" }
 ```
+
+## Change log
+
+| Version | Date | Change |
+|---|---|---|
+| 1.1 | 2026-10-15 | CH-111: Wipe: `account_deleted` wipes everything (db file, app files, SecureStore incl. manage tokens, session ciphertext + key); sign-out keeps manage tokens and sent rows unless the user picks removal (`signOutAndWipe({removeManageLinks})`) |
