@@ -4,7 +4,7 @@ import type { ComponentProps } from 'react';
 import { Link } from '@/i18n/navigation';
 
 import { Logo, ringClass } from './page';
-import { LanguageSwitch, ShellSlot } from './parts';
+import { CookieSettingsButton, LanguageSwitch, ShellSlot } from './parts';
 
 type Href = ComponentProps<typeof Link>['href'];
 
@@ -21,8 +21,7 @@ const INFO = [
 const LEGAL = [
 	['/privacy', 'privacy'],
 	['/cookies', 'cookies'],
-	// TODO(TASK-13.2): a button (aria-haspopup="dialog") that reopens the P17 consent preferences.
-	['/cookies', 'cookie_settings'],
+	[null, 'cookie_settings'],
 	['/terms', 'terms'],
 	['/imprint', 'imprint'],
 	['/accessibility', 'accessibility'],
@@ -34,14 +33,21 @@ const linkClass = `inline-flex min-h-11 min-w-11 items-center rounded-sm text-co
 /** P1 footer, a server component: logo with tagline, the link rows, language and copyright; flows get one quiet row. */
 export function SiteFooter() {
 	const t = useTranslations('footer');
-	const list = (links: readonly (readonly [Href, (typeof INFO | typeof LEGAL)[number][1]])[], className = '') => (
+	const list = (
+		links: readonly (readonly [Href | null, (typeof INFO | typeof LEGAL)[number][1]])[],
+		className = ''
+	) => (
 		<ul className={`flex flex-wrap gap-x-5 lg:gap-x-6 ${className}`}>
 			{links.map(([href, key]) => (
 				<li key={key}>
-					{/* Thirteen links on every page: no prefetch, so a page view stays one request. */}
-					<Link href={href} prefetch={false} className={linkClass}>
-						{t(key)}
-					</Link>
+					{href ? (
+						// Thirteen links on every page: no prefetch, so a page view stays one request.
+						<Link href={href} prefetch={false} className={linkClass}>
+							{t(key)}
+						</Link>
+					) : (
+						<CookieSettingsButton className={`cursor-pointer ${linkClass}`}>{t(key)}</CookieSettingsButton>
+					)}
 				</li>
 			))}
 		</ul>

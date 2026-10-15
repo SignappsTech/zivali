@@ -1,6 +1,14 @@
-// match.report stub (TASK-6.3): logs and completes; the matching engine (TASK-19.1) replaces it.
+// match.report { report_id } (C8): runs the matching engine for one new or changed report (ids-only payload).
+import { z } from 'zod';
+
+import { MatchingDomain } from '../domains/matching/index.ts';
 import type { JobCtx } from './index.ts';
 
-export async function handle(_data: unknown, ctx: JobCtx): Promise<void> {
-	ctx.logger.info('job stub: no handler yet');
+const Payload = z.object({ report_id: z.uuid() });
+
+export async function handle(data: unknown, ctx: JobCtx): Promise<void> {
+	const payload = Payload.safeParse(data);
+	// A malformed payload never succeeds on retry: drop it.
+	if (!payload.success) return ctx.logger.warn('match.report: invalid payload, dropped');
+	await MatchingDomain.matchReport(payload.data, ctx);
 }

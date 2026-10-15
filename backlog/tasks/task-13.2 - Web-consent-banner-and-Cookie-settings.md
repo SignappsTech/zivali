@@ -1,11 +1,11 @@
 ---
 id: TASK-13.2
 title: Web consent banner and Cookie settings
-status: To Do
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:12'
-updated_date: '2026-10-14 22:41'
+updated_date: '2026-10-15 17:46'
 labels:
   - fe
   - 'est:S'
