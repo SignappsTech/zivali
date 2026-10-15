@@ -1,11 +1,11 @@
 ---
 id: TASK-16.2
 title: 'Design: Pet profiles (P8)'
-status: To Do
+status: Done
 assignee:
   - '@ui-designer'
 created_date: '2026-10-14 21:50'
-updated_date: '2026-10-14 21:51'
+updated_date: '2026-10-15 22:10'
 labels:
   - design
   - 'est:S'
