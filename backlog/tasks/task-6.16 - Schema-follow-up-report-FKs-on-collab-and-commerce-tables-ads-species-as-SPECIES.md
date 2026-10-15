@@ -1,10 +1,13 @@
 ---
 id: TASK-6.16
-title: 'Schema follow-up: report FKs on collab and commerce tables, ads.species as SPECIES[]'
-status: To Do
+title: >-
+  Schema follow-up: report FKs on collab and commerce tables, ads.species as
+  SPECIES[]
+status: Done
 assignee:
   - '@backend-dev'
 created_date: '2026-10-15 12:55'
+updated_date: '2026-10-15 17:52'
 labels:
   - be
   - 'est:XS'
