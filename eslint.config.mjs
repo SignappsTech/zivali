@@ -33,6 +33,8 @@ export default defineConfig(
 	},
 	{
 		plugins: { 'import-x': importX },
+		// Workspace packages and the shadcn / RN Reusables `@/` alias sort into the internal group.
+		settings: { 'import-x/internal-regex': '^(@zivali/|@/)' },
 		rules: {
 			'@typescript-eslint/no-unused-vars': [
 				'error',

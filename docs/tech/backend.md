@@ -28,6 +28,7 @@ Read this, your task packet and the contract(s) it references. Conventions for e
       lib/ config.ts (zod env, once), logger.ts, errors.ts (AppError), prisma-tx.ts, jobs.ts, s3.ts, realtime.ts, fuzz.ts, geo.ts, config-store.ts
       adapters/{ai,embedder,payments,email,push,captcha,storage}/{index,mock,<provider>}.ts
       prisma/ prisma.ts (singleton), schemas/*.prisma + migrations/, sql/*.sql (TypedSQL), includes/*.ts, seed.ts, seeders/, data-inventory.json
+      generated/                          Prisma client output (`prisma-client` generator `output`), gitignored, never edited
       test/ setup.ts, helpers/ (token factory, db reset, factories), routes/, domains/, jobs/, security/
       scripts/jobs-drain.ts               CLI for `pnpm jobs:drain`: calls drain() from lib/jobs.ts (TASK-6.3)
       package.json scripts: dev (tsx watch server.ts), dev:worker (tsx watch worker.ts), build, lint, typecheck, test, test:security
@@ -77,7 +78,7 @@ A domain function never imports Express, never reads `req`/`res`, and never catc
 - Geo and vector queries only in TypedSQL files (`prisma/sql/*.sql`) or parameterised `$queryRaw`; never string-concatenated SQL.
 - Jobs idempotent (unique keys, upserts); fan-outs in chunks of ≤ 500; no external calls inside DB transactions.
 - Logs: pino JSON (`level, msg, req_id, user_id?, route, status, duration_ms`, job logs with `queue, job_id`); no PII or secrets; `console.*` is a lint error.
-- Prettier and ESLint as configured at the root (klikni settings: tabs, width 120, single quotes; imports grouped builtin / external / internal with a blank line between, `import-x/order`). husky + lint-staged run `eslint --fix` and `prettier --write` on staged files; Docker installs set `HUSKY=0` or use `--ignore-scripts`.
+- Prettier and ESLint as configured at the root (klikni settings: tabs, width 120, single quotes; imports grouped builtin / external / internal with a blank line between, `import-x/order`). husky + lint-staged run `eslint --fix` and `prettier --write` on staged files; Docker installs use `pnpm install --ignore-scripts` or `pnpm deploy` (the root `prepare: husky` fails where dev dependencies are missing; `HUSKY=0` does not help there).
 - Every new model: `@@schema("app")`, RLS-enable line in the migration, an entry in `prisma/data-inventory.json`, permission tests for its endpoints.
 
 ## Error handling
