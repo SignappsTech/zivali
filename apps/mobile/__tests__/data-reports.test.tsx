@@ -1,5 +1,5 @@
 /// <reference types="node" />
-import { renderHook, waitFor } from '@testing-library/react-native';
+import { cleanup, renderHook, waitFor } from '@testing-library/react-native';
 import { useNetworkState } from 'expo-network';
 import type { ReactNode } from 'react';
 import { Provider } from 'react-redux';
@@ -53,10 +53,14 @@ beforeEach(async () => {
 	await setCacheArea('home', lost.area);
 	await (await getDb()).runAsync('update cache_areas set last_sync_at = ?', SYNCED_AT);
 });
-afterEach(() => {
+// Unmount, let RTK Query's batched subscription sync (500 ms) run, then reset: no cache timer outlives the file.
+afterEach(async () => {
+	await cleanup();
+	await new Promise((resolve) => setTimeout(resolve, 600));
 	for (const store of stores) store.dispatch(api.util.resetApiState());
 	stores.length = 0;
 });
+afterAll(() => new Promise((resolve) => setTimeout(resolve, 150)));
 
 describe('offline', () => {
 	beforeEach(() => jest.mocked(useNetworkState).mockReturnValue(OFFLINE));
