@@ -113,6 +113,118 @@ export async function createChanges(data: Prisma.directory_changesCreateManyInpu
 	return (tx ?? prisma).directory_changes.createMany({ data });
 }
 
+// Admin edits (TASK-89, C18 §Admin). Updates bump `version`; with an expected version they are optimistic (null or
+// false when another write came first).
+
+/** Every shelter, inactive ones too, with the number of confirmed municipalities. */
+export async function listAllShelters(tx?: Prisma.TransactionClient) {
+	return (tx ?? prisma).shelters.findMany({
+		include: { _count: { select: { municipality_shelters: { where: { status: 'CONFIRMED' } } } } },
+	});
+}
+
+export async function createShelter(data: Prisma.sheltersUncheckedCreateInput, tx?: Prisma.TransactionClient) {
+	return (tx ?? prisma).shelters.create({ data });
+}
+
+export async function updateShelter(
+	id: string,
+	expectedVersion: number | undefined,
+	data: Prisma.sheltersUpdateManyMutationInput,
+	tx?: Prisma.TransactionClient
+) {
+	const db = tx ?? prisma;
+	const where = expectedVersion === undefined ? { id } : { id, version: expectedVersion };
+	const { count } = await db.shelters.updateMany({ where, data: { ...data, version: { increment: 1 } } });
+	return count ? db.shelters.findUniqueOrThrow({ where: { id } }) : null;
+}
+
+export async function listConfirmedMunicipalityIds(shelter_id: string, tx?: Prisma.TransactionClient) {
+	const rows = await (tx ?? prisma).municipality_shelters.findMany({
+		where: { shelter_id, status: 'CONFIRMED' },
+		select: { municipality_id: true },
+	});
+	return rows.map((row) => row.municipality_id);
+}
+
+export async function listAllAssignments(tx?: Prisma.TransactionClient) {
+	return (tx ?? prisma).municipality_shelters.findMany();
+}
+
+export type AdminAssignmentRow = {
+	slug: string;
+	name: string;
+	shelter_slug: string | null;
+	status: 'CONFIRMED' | 'UNCONFIRMED';
+	source: string;
+	verified_at: Date;
+	version: number;
+};
+
+/** Assignments with the municipality and the shelter slug (confirmed or likely); one municipality when given. */
+export async function listAdminAssignments(municipality_id?: number, tx?: Prisma.TransactionClient) {
+	return (tx ?? prisma).$queryRaw<AdminAssignmentRow[]>`
+		select m.slug, m.name_sl as name, s.slug as shelter_slug, ms.status::text as status, ms.source, ms.verified_at,
+			ms.version
+		from app.municipality_shelters ms
+		join app.municipalities m on m.id = ms.municipality_id
+		left join app.shelters s on s.id = ms.shelter_id
+		${municipality_id === undefined ? Prisma.empty : Prisma.sql`where ms.municipality_id = ${municipality_id}`}`;
+}
+
+type AssignmentData = Omit<Prisma.municipality_sheltersUncheckedCreateInput, 'version'>;
+
+/** Creates the assignment (version 1) or overwrites it (version bumped). */
+export async function saveAssignment(data: AssignmentData, tx?: Prisma.TransactionClient) {
+	const { municipality_id, ...fields } = data;
+	return (tx ?? prisma).municipality_shelters.upsert({
+		where: { municipality_id },
+		create: data,
+		update: { ...fields, version: { increment: 1 } },
+	});
+}
+
+export async function updateAssignment(
+	municipality_id: number,
+	expectedVersion: number,
+	data: Omit<AssignmentData, 'municipality_id'>,
+	tx?: Prisma.TransactionClient
+) {
+	const db = tx ?? prisma;
+	const { count } = await db.municipality_shelters.updateMany({
+		where: { municipality_id, version: expectedVersion },
+		data: { ...data, version: { increment: 1 } },
+	});
+	return count ? db.municipality_shelters.findUniqueOrThrow({ where: { municipality_id } }) : null;
+}
+
+export async function listChanges(entity: string, entity_id: string, tx?: Prisma.TransactionClient) {
+	return (tx ?? prisma).directory_changes.findMany({ where: { entity, entity_id }, orderBy: { version: 'desc' } });
+}
+
+/** Active shelters and assignments last verified before `before`, by name. */
+export async function listStaleEntries(before: Date, tx?: Prisma.TransactionClient) {
+	const db = tx ?? prisma;
+	const shelters = await db.shelters.findMany({
+		where: { active: true, verified_at: { lt: before } },
+		select: { name: true, verified_at: true },
+	});
+	const municipalities = await db.$queryRaw<{ name: string; verified_at: Date }[]>`
+		select m.name_sl as name, ms.verified_at
+		from app.municipality_shelters ms join app.municipalities m on m.id = ms.municipality_id
+		where ms.verified_at < ${before}`;
+	return { shelters, municipalities };
+}
+
+/** Email addresses of the admins whose address is confirmed (auth.users, never user_metadata). */
+export async function listAdminEmails(tx?: Prisma.TransactionClient): Promise<string[]> {
+	const rows = await (tx ?? prisma).$queryRaw<{ email: string }[]>`
+		select u.email
+		from app.profiles p join auth.users u on u.id = p.id
+		where p.role = 'ADMIN' and u.email is not null and u.email_confirmed_at is not null`;
+	return rows.map((row) => row.email);
+}
+
 export default {
 	listActiveShelters,
 	findShelterBySlug,
@@ -127,4 +239,15 @@ export default {
 	createShelters,
 	createAssignments,
 	createChanges,
+	listAllShelters,
+	createShelter,
+	updateShelter,
+	listConfirmedMunicipalityIds,
+	listAllAssignments,
+	listAdminAssignments,
+	saveAssignment,
+	updateAssignment,
+	listChanges,
+	listStaleEntries,
+	listAdminEmails,
 };

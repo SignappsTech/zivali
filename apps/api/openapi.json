@@ -267,6 +267,25 @@
 				},
 				"required": ["items", "next_cursor"]
 			},
+			"AdminMunicipalityShelter": {
+				"type": "object",
+				"properties": {
+					"municipality": { "$ref": "#/components/schemas/MunicipalityRef" },
+					"shelter_slug": { "type": ["string", "null"] },
+					"status": { "$ref": "#/components/schemas/DirectoryStatus" },
+					"source": { "type": "string" },
+					"verified_at": { "type": "string", "format": "date" },
+					"version": { "type": "integer" }
+				},
+				"required": ["municipality", "shelter_slug", "status", "source", "verified_at", "version"]
+			},
+			"AdminMunicipalityShelterList": {
+				"type": "object",
+				"properties": {
+					"items": { "type": "array", "items": { "$ref": "#/components/schemas/AdminMunicipalityShelter" } }
+				},
+				"required": ["items"]
+			},
 			"AdminQueues": {
 				"type": "object",
 				"properties": {
@@ -276,6 +295,28 @@
 				},
 				"required": ["available", "queues", "failed_jobs"],
 				"description": "available is false while pg-boss has not created its tables yet."
+			},
+			"AdminShelter": {
+				"allOf": [
+					{ "$ref": "#/components/schemas/Shelter" },
+					{
+						"type": "object",
+						"properties": {
+							"id": { "type": "string", "format": "uuid" },
+							"active": { "type": "boolean" },
+							"version": { "type": "integer" },
+							"municipality_count": { "type": "integer" }
+						},
+						"required": ["id", "active", "version", "municipality_count"]
+					}
+				]
+			},
+			"AdminShelterList": {
+				"type": "object",
+				"properties": {
+					"items": { "type": "array", "items": { "$ref": "#/components/schemas/AdminShelter" } }
+				},
+				"required": ["items"]
 			},
 			"AdminUser": {
 				"type": "object",
@@ -723,6 +764,113 @@
 					"warnings": []
 				}
 			},
+			"CreateShelterInput": {
+				"type": "object",
+				"properties": {
+					"name": { "type": "string", "minLength": 1, "maxLength": 200 },
+					"address": { "type": "string", "minLength": 1, "maxLength": 200 },
+					"postal_code": { "type": "string", "pattern": "^\\d{4}$" },
+					"city": { "type": "string", "minLength": 1, "maxLength": 100 },
+					"lat": { "type": ["number", "null"], "minimum": -90, "maximum": 90 },
+					"lng": { "type": ["number", "null"], "minimum": -180, "maximum": 180 },
+					"phone": { "type": "string", "pattern": "^\\+\\d{8,15}$" },
+					"phone_display": { "type": "string", "minLength": 1, "maxLength": 50 },
+					"email": { "type": ["string", "null"], "maxLength": 254, "format": "email" },
+					"website": { "type": ["string", "null"], "maxLength": 500, "format": "uri" },
+					"opening_hours": {
+						"type": "array",
+						"items": { "$ref": "#/components/schemas/OpeningHours" },
+						"maxItems": 50
+					},
+					"source": { "type": "string", "minLength": 1, "maxLength": 2000 },
+					"verified_at": { "type": "string", "format": "date" },
+					"municipalities": {
+						"type": "array",
+						"items": { "type": "string", "maxLength": 100, "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$" },
+						"maxItems": 250
+					},
+					"audit_note": { "type": "string", "minLength": 1, "maxLength": 500 },
+					"slug": { "type": "string", "maxLength": 100, "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$" }
+				},
+				"required": [
+					"name",
+					"address",
+					"postal_code",
+					"city",
+					"phone",
+					"phone_display",
+					"opening_hours",
+					"source",
+					"verified_at",
+					"municipalities",
+					"audit_note"
+				]
+			},
+			"DeleteShelterInput": {
+				"type": "object",
+				"properties": { "audit_note": { "type": "string", "minLength": 1, "maxLength": 500 } },
+				"required": ["audit_note"]
+			},
+			"DirectoryChange": {
+				"type": "object",
+				"properties": {
+					"version": { "type": "integer" },
+					"data": { "type": "object", "additionalProperties": {} },
+					"source": { "type": "string" },
+					"actor_id": { "type": ["string", "null"], "format": "uuid" },
+					"audit_note": { "type": ["string", "null"] },
+					"created_at": { "type": "string", "format": "date-time" }
+				},
+				"required": ["version", "data", "source", "actor_id", "audit_note", "created_at"],
+				"description": "actor_id is null for the seed and imports."
+			},
+			"DirectoryChangeList": {
+				"type": "object",
+				"properties": {
+					"items": { "type": "array", "items": { "$ref": "#/components/schemas/DirectoryChange" } }
+				},
+				"required": ["items"]
+			},
+			"DirectoryImportInput": {
+				"type": "object",
+				"properties": {
+					"csv": { "type": "string", "minLength": 1, "maxLength": 900000 },
+					"audit_note": { "type": "string", "minLength": 1, "maxLength": 500 }
+				},
+				"required": ["csv"],
+				"description": "audit_note is required unless dry_run=true."
+			},
+			"DirectoryImportResult": {
+				"type": "object",
+				"properties": {
+					"changes": {
+						"type": "array",
+						"items": {
+							"type": "object",
+							"properties": {
+								"entity": { "type": "string", "enum": ["shelter", "municipality_shelter"] },
+								"id": { "type": "string" },
+								"action": { "type": "string", "enum": ["create", "update", "none"] },
+								"diff": {
+									"type": "object",
+									"additionalProperties": { "type": "object", "properties": { "from": {}, "to": {} } }
+								}
+							},
+							"required": ["entity", "id", "action", "diff"]
+						}
+					},
+					"errors": {
+						"type": "array",
+						"items": {
+							"type": "object",
+							"properties": { "row": { "type": "integer" }, "field": { "type": "string" } },
+							"required": ["row", "field"]
+						}
+					}
+				},
+				"required": ["changes", "errors"]
+			},
+			"DirectoryStatus": { "type": "string", "enum": ["CONFIRMED", "UNCONFIRMED"] },
 			"DistanceBand": { "type": "string", "enum": ["lt1", "1to3", "3to10", "gt10"] },
 			"ErrorCode": {
 				"type": "string",
@@ -1041,6 +1189,22 @@
 				"type": "object",
 				"properties": { "slug": { "type": "string" }, "name": { "type": "string" } },
 				"required": ["slug", "name"]
+			},
+			"MunicipalityShelterInput": {
+				"type": "object",
+				"properties": {
+					"shelter_slug": {
+						"type": ["string", "null"],
+						"maxLength": 100,
+						"pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+					},
+					"status": { "$ref": "#/components/schemas/DirectoryStatus" },
+					"source": { "type": "string", "minLength": 1, "maxLength": 2000 },
+					"verified_at": { "type": "string", "format": "date" },
+					"version": { "type": "integer", "minimum": 1 },
+					"audit_note": { "type": "string", "minLength": 1, "maxLength": 500 }
+				},
+				"required": ["shelter_slug", "status", "source", "verified_at", "version", "audit_note"]
 			},
 			"MunicipalityShelterList": {
 				"type": "object",
@@ -1830,6 +1994,49 @@
 					"finder_email": { "type": "string", "maxLength": 254, "format": "email" }
 				}
 			},
+			"UpdateShelterInput": {
+				"type": "object",
+				"properties": {
+					"name": { "type": "string", "minLength": 1, "maxLength": 200 },
+					"address": { "type": "string", "minLength": 1, "maxLength": 200 },
+					"postal_code": { "type": "string", "pattern": "^\\d{4}$" },
+					"city": { "type": "string", "minLength": 1, "maxLength": 100 },
+					"lat": { "type": ["number", "null"], "minimum": -90, "maximum": 90 },
+					"lng": { "type": ["number", "null"], "minimum": -180, "maximum": 180 },
+					"phone": { "type": "string", "pattern": "^\\+\\d{8,15}$" },
+					"phone_display": { "type": "string", "minLength": 1, "maxLength": 50 },
+					"email": { "type": ["string", "null"], "maxLength": 254, "format": "email" },
+					"website": { "type": ["string", "null"], "maxLength": 500, "format": "uri" },
+					"opening_hours": {
+						"type": "array",
+						"items": { "$ref": "#/components/schemas/OpeningHours" },
+						"maxItems": 50
+					},
+					"source": { "type": "string", "minLength": 1, "maxLength": 2000 },
+					"verified_at": { "type": "string", "format": "date" },
+					"municipalities": {
+						"type": "array",
+						"items": { "type": "string", "maxLength": 100, "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$" },
+						"maxItems": 250
+					},
+					"audit_note": { "type": "string", "minLength": 1, "maxLength": 500 },
+					"version": { "type": "integer", "minimum": 1 }
+				},
+				"required": [
+					"name",
+					"address",
+					"postal_code",
+					"city",
+					"phone",
+					"phone_display",
+					"opening_hours",
+					"source",
+					"verified_at",
+					"municipalities",
+					"audit_note",
+					"version"
+				]
+			},
 			"UserRole": { "type": "string", "enum": ["USER", "SHELTER_MEMBER", "MODERATOR", "ADMIN"] }
 		},
 		"parameters": {}
@@ -2536,6 +2743,375 @@
 						"description": "One page of moderation flags",
 						"content": {
 							"application/json": { "schema": { "$ref": "#/components/schemas/ModerationFlagList" } }
+						}
+					},
+					"400": {
+						"description": "VALIDATION",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"401": {
+						"description": "UNAUTHENTICATED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"403": {
+						"description": "FORBIDDEN, AAL2_REQUIRED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"429": {
+						"description": "RATE_LIMITED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"500": {
+						"description": "INTERNAL",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					}
+				}
+			}
+		},
+		"/v1/admin/shelters": {
+			"get": {
+				"operationId": "listAdminShelters",
+				"summary": "All shelters for editing",
+				"description": "Admins (aal2). Inactive shelters included; municipality_count = confirmed municipalities.",
+				"tags": ["admin"],
+				"responses": {
+					"200": {
+						"description": "Shelters by name",
+						"content": {
+							"application/json": { "schema": { "$ref": "#/components/schemas/AdminShelterList" } }
+						}
+					},
+					"401": {
+						"description": "UNAUTHENTICATED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"403": {
+						"description": "FORBIDDEN, AAL2_REQUIRED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"429": {
+						"description": "RATE_LIMITED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"500": {
+						"description": "INTERNAL",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					}
+				}
+			},
+			"post": {
+				"operationId": "createShelter",
+				"summary": "Add a shelter",
+				"description": "Admins (aal2). The slug is derived from the name unless sent; a taken slug is VALIDATION. municipalities become CONFIRMED for it.",
+				"tags": ["admin"],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": { "schema": { "$ref": "#/components/schemas/CreateShelterInput" } }
+					}
+				},
+				"responses": {
+					"201": {
+						"description": "The shelter",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/Shelter" } } }
+					},
+					"400": {
+						"description": "VALIDATION",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"401": {
+						"description": "UNAUTHENTICATED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"403": {
+						"description": "FORBIDDEN, AAL2_REQUIRED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"429": {
+						"description": "RATE_LIMITED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"500": {
+						"description": "INTERNAL",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					}
+				}
+			}
+		},
+		"/v1/admin/municipality-shelters": {
+			"get": {
+				"operationId": "listAdminMunicipalityShelters",
+				"summary": "All municipality assignments",
+				"description": "Admins (aal2). shelter_slug is the confirmed shelter, or the likely one of an UNCONFIRMED row.",
+				"tags": ["admin"],
+				"responses": {
+					"200": {
+						"description": "Assignments by municipality name",
+						"content": {
+							"application/json": {
+								"schema": { "$ref": "#/components/schemas/AdminMunicipalityShelterList" }
+							}
+						}
+					},
+					"401": {
+						"description": "UNAUTHENTICATED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"403": {
+						"description": "FORBIDDEN, AAL2_REQUIRED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"429": {
+						"description": "RATE_LIMITED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"500": {
+						"description": "INTERNAL",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					}
+				}
+			}
+		},
+		"/v1/admin/shelters/{slug}/changes": {
+			"get": {
+				"operationId": "listShelterChanges",
+				"summary": "A shelter's versions",
+				"description": "Admins (aal2). Newest first; data is the full row after each change.",
+				"tags": ["admin"],
+				"parameters": [
+					{
+						"schema": { "type": "string", "maxLength": 100, "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$" },
+						"required": true,
+						"name": "slug",
+						"in": "path"
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Versions",
+						"content": {
+							"application/json": { "schema": { "$ref": "#/components/schemas/DirectoryChangeList" } }
+						}
+					},
+					"400": {
+						"description": "VALIDATION",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"401": {
+						"description": "UNAUTHENTICATED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"403": {
+						"description": "FORBIDDEN, AAL2_REQUIRED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"404": {
+						"description": "NOT_FOUND",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"429": {
+						"description": "RATE_LIMITED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"500": {
+						"description": "INTERNAL",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					}
+				}
+			}
+		},
+		"/v1/admin/shelters/{slug}": {
+			"put": {
+				"operationId": "updateShelter",
+				"summary": "Edit a shelter",
+				"description": "Admins (aal2). Replaces the fields and the confirmed municipalities (dropped ones become UNCONFIRMED without a shelter); the slug never changes. CONFLICT when `version` is stale (details.version = the current one).",
+				"tags": ["admin"],
+				"parameters": [
+					{
+						"schema": { "type": "string", "maxLength": 100, "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$" },
+						"required": true,
+						"name": "slug",
+						"in": "path"
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": { "schema": { "$ref": "#/components/schemas/UpdateShelterInput" } }
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "The shelter",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/Shelter" } } }
+					},
+					"400": {
+						"description": "VALIDATION",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"401": {
+						"description": "UNAUTHENTICATED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"403": {
+						"description": "FORBIDDEN, AAL2_REQUIRED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"404": {
+						"description": "NOT_FOUND",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"409": {
+						"description": "CONFLICT",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"429": {
+						"description": "RATE_LIMITED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"500": {
+						"description": "INTERNAL",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					}
+				}
+			},
+			"delete": {
+				"operationId": "deleteShelter",
+				"summary": "Remove a shelter",
+				"description": "Admins (aal2). Deactivates the shelter (it has history; the slug stays taken). CONFLICT with details.code HAS_ASSIGNMENTS (and count) while municipalities are confirmed to it.",
+				"tags": ["admin"],
+				"parameters": [
+					{
+						"schema": { "type": "string", "maxLength": 100, "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$" },
+						"required": true,
+						"name": "slug",
+						"in": "path"
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": { "schema": { "$ref": "#/components/schemas/DeleteShelterInput" } }
+					}
+				},
+				"responses": {
+					"204": { "description": "Deactivated" },
+					"400": {
+						"description": "VALIDATION",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"401": {
+						"description": "UNAUTHENTICATED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"403": {
+						"description": "FORBIDDEN, AAL2_REQUIRED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"404": {
+						"description": "NOT_FOUND",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"409": {
+						"description": "CONFLICT",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"429": {
+						"description": "RATE_LIMITED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"500": {
+						"description": "INTERNAL",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					}
+				}
+			}
+		},
+		"/v1/admin/municipality-shelters/{municipality}": {
+			"put": {
+				"operationId": "updateMunicipalityShelter",
+				"summary": "Reassign a municipality",
+				"description": "Admins (aal2). CONFIRMED needs an active shelter. CONFLICT when `version` is stale (details.version = the current one).",
+				"tags": ["admin"],
+				"parameters": [
+					{
+						"schema": { "type": "string", "maxLength": 100, "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$" },
+						"required": true,
+						"name": "municipality",
+						"in": "path"
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": { "schema": { "$ref": "#/components/schemas/MunicipalityShelterInput" } }
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "The assignment",
+						"content": {
+							"application/json": {
+								"schema": { "$ref": "#/components/schemas/AdminMunicipalityShelter" }
+							}
+						}
+					},
+					"400": {
+						"description": "VALIDATION",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"401": {
+						"description": "UNAUTHENTICATED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"403": {
+						"description": "FORBIDDEN, AAL2_REQUIRED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"404": {
+						"description": "NOT_FOUND",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"409": {
+						"description": "CONFLICT",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"429": {
+						"description": "RATE_LIMITED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"500": {
+						"description": "INTERNAL",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					}
+				}
+			}
+		},
+		"/v1/admin/directory/import": {
+			"post": {
+				"operationId": "importDirectory",
+				"summary": "Import a directory CSV",
+				"description": "Admins (aal2). shelters.csv or municipality_shelters.csv (seed format, told apart by the header). dry_run=true returns the diff and writes nothing; otherwise the diff is applied in one transaction, only when errors is empty, and audit_note is required.",
+				"tags": ["admin"],
+				"parameters": [
+					{
+						"schema": { "type": "string", "enum": ["true", "false"] },
+						"required": false,
+						"name": "dry_run",
+						"in": "query"
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": { "schema": { "$ref": "#/components/schemas/DirectoryImportInput" } }
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "Diff and row errors",
+						"content": {
+							"application/json": { "schema": { "$ref": "#/components/schemas/DirectoryImportResult" } }
 						}
 					},
 					"400": {
