@@ -1,6 +1,7 @@
 // Nearby-alert fan-out (C10) against the local database: who gets a nearby_lost alert, matching on public_point only
-// (CH-148), one alert per report per user, the daily cap, the notify.send gate, and 1000 recipients in under 60 s.
-// Assertions only look at this file's users: other worktrees may share the database.
+// (CH-148), one alert per report per user, the daily cap, ids-only jobs resolved (or dropped) by nearbyAlert in
+// notify.send, and 1000 recipients in under 60 s. Assertions only look at this file's users: other worktrees may share
+// the database.
 import { randomUUID } from 'node:crypto';
 
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
@@ -18,7 +19,12 @@ import { prisma } from '../../prisma/prisma.ts';
 import seedGeo from '../../prisma/seeders/01-geo.seeder.ts';
 
 type Point = { lat: number; lng: number };
-type QueuedAlert = { user_id: string; type: string; payload: Record<string, unknown>; dedupe_key: string };
+type QueuedAlert = {
+	user_id: string;
+	type: 'nearby_lost';
+	payload: { template: 'nearby_lost'; report_id: string };
+	dedupe_key: string;
+};
 
 // Novo mesto: far from the 20-collab fixture subscriptions (Ljubljana, Maribor).
 const P: Point = { lat: 45.804, lng: 15.169 };
@@ -112,7 +118,7 @@ afterAll(async () => {
 });
 
 describe('AlertsDomain.fanout', () => {
-	it('queues nearby_lost for subscribers covering the public point, with the public area and a distance band only', async () => {
+	it('queues ids-only nearby_lost jobs for subscribers covering the public point; nearbyAlert adds area and band', async () => {
 		const near = await subscribe(at(P, 300, 0));
 		const far = await subscribe(at(P, 0, 4_000), { radius_km: 5 });
 		const outside = await subscribe(at(P, 0, 6_000), { radius_km: 5 });
@@ -128,22 +134,27 @@ describe('AlertsDomain.fanout', () => {
 		expect(await AlertsDomain.fanout({ report_id: id }, systemCtx())).toBeGreaterThanOrEqual(2);
 		const [{ short_code, created_at }] = await prisma.$queryRaw<{ short_code: string; created_at: Date }[]>`
 			select short_code, created_at from app.reports where id = ${id}::uuid`;
-		const alert = (user_id: string, distance_band: string): QueuedAlert => ({
+		const job = (user_id: string): QueuedAlert => ({
 			user_id,
 			type: 'nearby_lost',
-			payload: {
-				report_code: short_code,
-				species: 'dog',
-				distance_band,
-				has_area: true,
-				area_name: area.name_sl,
-				reported_at: created_at.toISOString(),
-			},
+			payload: { template: 'nearby_lost', report_id: id },
 			dedupe_key: `nearby:${id}`,
 		});
 		const sorted = (list: QueuedAlert[]) => list.sort((a, b) => a.user_id.localeCompare(b.user_id));
-		expect(sorted(await queued(id))).toEqual(sorted([alert(near, 'lt1'), alert(far, '3to10')]));
+		expect(sorted(await queued(id))).toEqual(sorted([job(near), job(far)]));
 		for (const skipped of [outside, paused, catsOnly, manager]) expect(await recipients(id)).not.toContain(skipped);
+		const variables = (distance_band: string) => ({
+			report_code: short_code,
+			species: 'dog',
+			distance_band,
+			has_area: true,
+			area_name: area.name_sl,
+			reported_at: created_at.toISOString(),
+		});
+		expect(await AlertsDomain.nearbyAlert({ user_id: near, report_id: id }, systemCtx())).toEqual(variables('lt1'));
+		expect(await AlertsDomain.nearbyAlert({ user_id: far, report_id: id }, systemCtx())).toEqual(
+			variables('3to10')
+		);
 		expect(
 			await prisma.alert_deliveries.findMany({
 				where: { report_id: id },
@@ -206,8 +217,8 @@ describe('AlertsDomain.fanout', () => {
 				select s.user_id::text as user_id from app.alert_subscriptions s join app.reports r on r.id = ${report_id}::uuid
 				where extensions.st_dwithin(s.center_point, r.${Prisma.raw(column)}, s.radius_km * 1000)`);
 
-		const firstAlerts = (await AlertsDao.findRecipients(first, 10_000)).map((row) => row.user_id);
-		const secondAlerts = (await AlertsDao.findRecipients(second, 10_000)).map((row) => row.user_id);
+		const firstAlerts = await AlertsDao.findRecipients(first, 10_000);
+		const secondAlerts = await AlertsDao.findRecipients(second, 10_000);
 		const firstReached = grid.filter((id) => firstAlerts.includes(id)).sort();
 		expect(firstReached).toEqual(grid.filter((id) => secondAlerts.includes(id)).sort());
 		expect(firstReached).toEqual(await within(first, 'public_point'));
@@ -252,17 +263,24 @@ describe('jobs', () => {
 		const id = await report();
 		await AlertsDomain.fanout({ report_id: id }, systemCtx());
 		const [input] = (await queued(id)).filter((data) => data.user_id === user);
-		const deliverable = () => AlertsDomain.shouldDeliver(input!, systemCtx());
+		const deliverable = async () =>
+			(await AlertsDomain.nearbyAlert({ user_id: user, ...input!.payload }, systemCtx())) !== null;
 		const setReport = (status: string) =>
 			prisma.$executeRaw`update app.reports set status = ${status}::app."REPORT_STATUS" where id = ${id}::uuid`;
+		const send = async () => {
+			const ctx = jobCtx();
+			const info = vi.spyOn(ctx.logger, 'info');
+			await notifySendJob(input, ctx);
+			const messages = info.mock.calls.map(([message]) => message);
+			info.mockRestore();
+			return messages;
+		};
 
 		expect(await deliverable()).toBe(true);
+		expect(await send()).toEqual(['job stub: no handler yet']);
 		await setReport('closed');
 		expect(await deliverable()).toBe(false);
-		const ctx = jobCtx();
-		const info = vi.spyOn(ctx.logger, 'info');
-		await notifySendJob(input, ctx);
-		expect(info).toHaveBeenCalledWith('alert dropped');
+		expect(await send()).toEqual(['alert dropped']);
 		await setReport('reunited');
 		expect(await deliverable()).toBe(false);
 		await setReport('matched');
@@ -271,6 +289,5 @@ describe('jobs', () => {
 		expect(await deliverable()).toBe(false);
 		await prisma.alert_subscriptions.deleteMany({ where: { user_id: user } });
 		expect(await deliverable()).toBe(false);
-		expect(await AlertsDomain.shouldDeliver({ ...input!, type: 'match_chip' }, systemCtx())).toBe(true);
 	});
 });

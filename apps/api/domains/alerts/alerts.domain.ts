@@ -1,12 +1,12 @@
 // Nearby lost-pet alerts (C10, FR-010): the caller's own subscription, the spatial fan-out of a visible lost report
-// and the gate notify.send asks before delivering a queued alert.
+// and what notify.send resolves (or drops) for a queued alert.
 import type { AlertSubscriptionInput, DistanceBand, NotificationPayloads, Species } from '@zivali/types';
 import { coarsenPoint } from '@zivali/validation/geo';
 
 import type { Ctx } from '../../lib/ctx.ts';
 import { AppError } from '../../lib/errors.ts';
 import { prisma, type Prisma } from '../../prisma/prisma.ts';
-import { NotificationsDomain, type NotificationInput } from '../notifications/index.ts';
+import { NotificationsDomain } from '../notifications/index.ts';
 import AlertsDao, { type AlertReport, type SubscriptionRow } from './alerts.dao.ts';
 
 export type { SubscriptionRow };
@@ -65,44 +65,31 @@ export async function deleteSubscription(_input: void, ctx: Ctx): Promise<void> 
 
 /**
  * alerts.fanout: one nearby_lost notification per matching subscriber, recorded in alert_deliveries in the same
- * transaction as its notify.send job, FANOUT_CHUNK recipients at a time. Idempotent: a retry skips users already
- * recorded. Returns the number of alerts queued.
+ * transaction as its notify.send job, FANOUT_CHUNK recipients at a time. The job holds ids only; notify.send resolves
+ * the text variables with nearbyAlert(). Idempotent: a retry skips users already recorded. Returns the alerts queued.
  */
 export async function fanout({ report_id }: { report_id: string }, ctx: Ctx): Promise<number> {
-	const report = await AlertsDao.getAlertReport({ id: report_id }, ctx.tx);
+	const report = await AlertsDao.getAlertReport(report_id, ctx.tx);
 	if (!report || !isAlertable(report)) return 0;
-	const common = {
-		report_code: report.short_code,
-		species: report.species as Species,
-		has_area: report.area_name !== null,
-		...(report.area_name !== null && { area_name: report.area_name }),
-		reported_at: report.created_at.toISOString(),
-	};
 	let queued = 0;
 	for (;;) {
 		const batch = await AlertsDao.findRecipients(report_id, FANOUT_CHUNK, ctx.tx);
 		if (!batch.length) return queued;
 		await prisma.$transaction(
 			async (tx) => {
-				const fresh = new Set(
-					await AlertsDao.insertDeliveries(
-						report_id,
-						batch.map((r) => r.user_id),
-						tx
-					)
-				);
-				for (const { user_id, distance_m } of batch) {
-					if (!fresh.has(user_id)) continue;
-					const payload: NotificationPayloads['nearby_lost'] = {
-						...common,
-						distance_band: distanceBand(distance_m),
-					};
+				const fresh = await AlertsDao.insertDeliveries(report_id, batch, tx);
+				for (const user_id of fresh) {
 					await NotificationsDomain.enqueueNotification(
-						{ user_id, type: 'nearby_lost', payload, dedupe_key: `nearby:${report_id}` },
+						{
+							user_id,
+							type: 'nearby_lost',
+							payload: { template: 'nearby_lost', report_id },
+							dedupe_key: `nearby:${report_id}`,
+						},
 						{ ...ctx, tx }
 					);
 				}
-				queued += fresh.size;
+				queued += fresh.length;
 			},
 			// One notify.send insert per recipient: well over the 5 s default on a loaded machine.
 			{ timeout: 60_000 }
@@ -111,15 +98,27 @@ export async function fanout({ report_id }: { report_id: string }, ctx: Ctx): Pr
 }
 
 /**
- * notify.send asks this before delivering (C10): a queued nearby_lost alert is dropped once its report is closed,
- * reunited, hidden or gone, or the recipient's subscription is paused or deleted. Other types always pass.
+ * notify.send calls this for a queued nearby_lost alert (C10): the text variables for that user, or null when the
+ * alert must be dropped because the report was closed, reunited, hidden or removed since the fan-out, or the user's
+ * subscription is paused or deleted. The distance band is from the user's centre to the public point only (C6).
  */
-export async function shouldDeliver(input: NotificationInput, ctx: Ctx): Promise<boolean> {
-	if (input.type !== 'nearby_lost') return true;
-	const { report_code } = input.payload as { report_code?: unknown };
-	if (typeof report_code !== 'string') return false;
-	const report = await AlertsDao.getAlertReport({ short_code: report_code }, ctx.tx);
-	return Boolean(report && isAlertable(report)) && (await AlertsDao.hasActiveSubscription(input.user_id, ctx.tx));
+export async function nearbyAlert(
+	{ user_id, report_id }: { user_id: string; report_id?: string },
+	ctx: Ctx
+): Promise<NotificationPayloads['nearby_lost'] | null> {
+	if (!report_id) return null;
+	const report = await AlertsDao.getAlertReport(report_id, ctx.tx);
+	if (!report || !isAlertable(report)) return null;
+	const distance_m = await AlertsDao.subscriberDistance(user_id, report_id, ctx.tx);
+	if (distance_m === null) return null;
+	return {
+		report_code: report.short_code,
+		species: report.species as Species,
+		distance_band: distanceBand(distance_m),
+		has_area: report.area_name !== null,
+		...(report.area_name !== null && { area_name: report.area_name }),
+		reported_at: report.created_at.toISOString(),
+	};
 }
 
-export default { getSubscription, saveSubscription, deleteSubscription, fanout, shouldDeliver };
+export default { getSubscription, saveSubscription, deleteSubscription, fanout, nearbyAlert };

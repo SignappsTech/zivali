@@ -22,9 +22,8 @@ export type SubscriptionFields = {
 	paused: boolean;
 };
 
-/** What the fan-out and the notify.send gate need of a report; area_name from the public municipality (C6). */
+/** What the fan-out and notify.send need of a report; area_name is the public municipality (from public_point, C6). */
 export type AlertReport = {
-	id: string;
 	short_code: string;
 	type: string;
 	status: string;
@@ -33,8 +32,6 @@ export type AlertReport = {
 	area_name: string | null;
 	created_at: Date;
 };
-
-export type Recipient = { user_id: string; distance_m: number };
 
 /** The largest radius_km (check constraint): a constant bound lets the GiST index on center_point prefilter. */
 const MAX_RADIUS_M = 25_000;
@@ -71,22 +68,27 @@ export async function deleteSubscription(user_id: string, tx?: Prisma.Transactio
 	await db.alert_subscriptions.deleteMany({ where: { user_id } });
 }
 
-export async function hasActiveSubscription(user_id: string, tx?: Prisma.TransactionClient): Promise<boolean> {
+/** Metres from the user's active (not paused) centre to the report's public point; null without one. */
+export async function subscriberDistance(
+	user_id: string,
+	report_id: string,
+	tx?: Prisma.TransactionClient
+): Promise<number | null> {
 	const db = tx ?? prisma;
-	return (await db.alert_subscriptions.count({ where: { user_id, paused: false } })) > 0;
+	const [row] = await db.$queryRaw<{ distance_m: number }[]>`
+		select extensions.st_distance(s.center_point, r.public_point) as distance_m
+		from app.alert_subscriptions s join app.reports r on r.id = ${report_id}::uuid
+		where s.user_id = ${user_id}::uuid and not s.paused`;
+	return row?.distance_m ?? null;
 }
 
-export async function getAlertReport(
-	key: { id: string } | { short_code: string },
-	tx?: Prisma.TransactionClient
-): Promise<AlertReport | null> {
+export async function getAlertReport(id: string, tx?: Prisma.TransactionClient): Promise<AlertReport | null> {
 	const db = tx ?? prisma;
-	const where = 'id' in key ? Prisma.sql`r.id = ${key.id}::uuid` : Prisma.sql`r.short_code = ${key.short_code}`;
 	const [row] = await db.$queryRaw<AlertReport[]>`
-		select r.id::text as id, r.short_code, r.type::text as type, r.status::text as status,
+		select r.short_code, r.type::text as type, r.status::text as status,
 			r.moderation_state::text as moderation_state, r.species::text as species, m.name_sl as area_name, r.created_at
 		from app.reports r left join app.municipalities m on m.id = r.municipality_id
-		where ${where}`;
+		where r.id = ${id}::uuid`;
 	return row ?? null;
 }
 
@@ -94,10 +96,14 @@ export async function getAlertReport(
  * Up to `limit` subscribers whose circle covers the report's public point (C10): not paused, species match, not a
  * manager of the report, no alert for it yet and under their daily cap (alerts in the last 24 h).
  */
-export async function findRecipients(report_id: string, limit: number, tx?: Prisma.TransactionClient) {
+export async function findRecipients(
+	report_id: string,
+	limit: number,
+	tx?: Prisma.TransactionClient
+): Promise<string[]> {
 	const db = tx ?? prisma;
-	return db.$queryRaw<Recipient[]>`
-		select s.user_id::text as user_id, extensions.st_distance(s.center_point, r.public_point) as distance_m
+	const rows = await db.$queryRaw<{ user_id: string }[]>`
+		select s.user_id::text as user_id
 		from app.reports r
 		join app.alert_subscriptions s
 			on extensions.st_dwithin(s.center_point, r.public_point, ${MAX_RADIUS_M})
@@ -111,6 +117,7 @@ export async function findRecipients(report_id: string, limit: number, tx?: Pris
 				where d.user_id = s.user_id and d.sent_at > now() - interval '24 hours') < s.daily_cap
 		order by s.user_id
 		limit ${limit}`;
+	return rows.map((row) => row.user_id);
 }
 
 /** One row per report and user (the pk keeps it at one alert); returns the users newly recorded. */
@@ -132,7 +139,7 @@ export default {
 	getSubscription,
 	upsertSubscription,
 	deleteSubscription,
-	hasActiveSubscription,
+	subscriberDistance,
 	getAlertReport,
 	findRecipients,
 	insertDeliveries,
