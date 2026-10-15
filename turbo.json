@@ -34,7 +34,7 @@
 		},
 		"test": {
 			"dependsOn": ["^build"],
-			"passThroughEnv": ["SUPABASE_*", "DATABASE_URL", "DIRECT_URL"],
+			"passThroughEnv": ["SUPABASE_*", "DATABASE_URL", "DIRECT_URL", "REALTIME_URL"],
 			"outputs": ["coverage/**"]
 		}
 	}
