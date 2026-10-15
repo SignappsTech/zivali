@@ -4,41 +4,19 @@ import { expect, type Page, test } from '@playwright/test';
 import * as fx from '@zivali/api/__fixtures__/directory-admin';
 import { adminMe } from '@zivali/api/__fixtures__/me';
 
-// TASK-89.2: the P19 shelter directory for admins (aal2), access denied for moderators, axe in light and dark.
-// The API is answered here from the @zivali/api fixtures and the session is a cookie for @supabase/ssr, so the spec
-// needs neither apps/api nor Supabase.
+import { dismissConsent, signInAs, signInForged } from './session';
 
-const supabaseRef = new URL(process.env.NEXT_PUBLIC_SUPABASE_URL || 'http://127.0.0.1:54321').hostname.split('.')[0];
-const base64url = (value: object) => Buffer.from(JSON.stringify(value)).toString('base64url');
+// TASK-89.2: the P19 shelter directory for admins (aal2), access denied for moderators, axe in light and dark.
+// The API is answered here from the @zivali/api fixtures and the session is signed by the e2e mock (e2e/session.ts),
+// so the spec needs neither apps/api nor Supabase.
 
 // The page runs on a fixed date, so the stale entries and the yearly reminder (from 1 April) do not depend on the
-// day of the run; the session must outlive both that date (browser) and the real one (proxy).
+// day of the run.
 const today = new Date('2026-10-15T10:00:00+02:00');
 
 async function signIn(page: Page, me: typeof adminMe, baseURL: string) {
-	const exp = Math.floor(Math.max(Date.now(), today.getTime()) / 1000) + 86_400;
-	const session = {
-		access_token: [
-			base64url({ alg: 'HS256', typ: 'JWT' }),
-			base64url({ sub: me.id, aal: me.aal, exp }),
-			'e2e',
-		].join('.'),
-		token_type: 'bearer',
-		expires_in: 86_400,
-		expires_at: exp,
-		refresh_token: 'e2e',
-		user: {
-			id: me.id,
-			aud: 'authenticated',
-			role: 'authenticated',
-			app_metadata: {},
-			user_metadata: {},
-			created_at: '2026-01-01T00:00:00Z',
-		},
-	};
-	await page
-		.context()
-		.addCookies([{ name: `sb-${supabaseRef}-auth-token`, value: `base64-${base64url(session)}`, url: baseURL }]);
+	await signInAs(page, me, baseURL);
+	await dismissConsent(page);
 	await page.route(/\/v1\/me$/, (route) => route.fulfill({ json: me }));
 	await page.route(/\/v1\/admin\/shelters$/, (route) => route.fulfill({ json: fx.adminShelters }));
 	await page.route(/\/v1\/admin\/municipality-shelters$/, (route) => route.fulfill({ json: fx.adminMunicipalities }));
@@ -60,9 +38,7 @@ async function expectNoAxeViolations(page: Page) {
 }
 
 for (const colorScheme of ['light', 'dark'] as const) {
-	// TASK-105: the (admin) layout verifies the session signature since TASK-11.2; this spec still fakes an unsigned
-	// cookie. Re-enable with a verifiable test session.
-	test.fixme(`admin directory in ${colorScheme}: tables, drawer, import dry run and delete guard have no axe violations`, async ({
+	test(`admin directory in ${colorScheme}: tables, drawer, import dry run and delete guard have no axe violations`, async ({
 		page,
 		baseURL,
 	}) => {
@@ -126,7 +102,7 @@ for (const colorScheme of ['light', 'dark'] as const) {
 	});
 }
 
-test.fixme('below lg the tables become stacked rows and the drawer goes full width below 640 px', async ({
+test('below lg the tables become stacked rows and the drawer goes full width below 640 px', async ({
 	page,
 	baseURL,
 }) => {
@@ -142,7 +118,7 @@ test.fixme('below lg the tables become stacked rows and the drawer goes full wid
 	expect((await page.getByRole('dialog', { name: 'Edit shelter' }).boundingBox())?.width).toBe(390);
 });
 
-test.fixme('moderators get the access-denied screen and no directory data', async ({ page, baseURL }) => {
+test('moderators get the access-denied screen and no directory data', async ({ page, baseURL }) => {
 	const requests: string[] = [];
 	page.on('request', (request) => {
 		if (request.url().includes('/v1/admin/')) requests.push(request.url());
@@ -154,4 +130,16 @@ test.fixme('moderators get the access-denied screen and no directory data', asyn
 	await expect(page.locator('main').getByText('Imenik zavetišč')).toHaveCount(0);
 	expect(requests).toEqual([]);
 	await expectNoAxeViolations(page);
+});
+
+test('a forged session cookie is redirected to sign-in', async ({ page, baseURL }) => {
+	const requests: string[] = [];
+	page.on('request', (request) => {
+		if (request.url().includes('/v1/admin/')) requests.push(request.url());
+	});
+	await signInForged(page, baseURL!);
+	await page.goto('/admin/zavetisca');
+	await expect(page).toHaveURL(/\/vpis/);
+	await expect(page.getByRole('heading', { level: 1, name: 'Imenik zavetišč' })).toHaveCount(0);
+	expect(requests).toEqual([]);
 });
