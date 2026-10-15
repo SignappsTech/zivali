@@ -1,7 +1,7 @@
 // Thin: request → ctx → domain → mapper → response. No try/catch (Express 5 forwards rejections).
 import type { Request, Response } from 'express';
 
-import { ManageDomain, ReportsDomain, ReportsMapper } from '../domains/reports/index.ts';
+import { LifecycleDomain, ManageDomain, ReportsDomain, ReportsMapper } from '../domains/reports/index.ts';
 import { userCtx } from '../lib/ctx.ts';
 
 // Owner views hold the stored point, chip and contact settings: no browser or shared cache may keep them.
@@ -26,6 +26,12 @@ export async function updateReport(req: Request, res: Response): Promise<void> {
 	res.set('Cache-Control', PRIVATE).json(ReportsMapper.toOwnerView(view, ctx.locale));
 }
 
+export async function transitionReport(req: Request, res: Response): Promise<void> {
+	const ctx = userCtx(req);
+	const view = await LifecycleDomain.transitionReport({ ...req.body, code: String(req.params.code) }, ctx);
+	res.set('Cache-Control', PRIVATE).json(ReportsMapper.toOwnerView(view, ctx.locale));
+}
+
 export async function claimManage(req: Request, res: Response): Promise<void> {
 	res.set('Cache-Control', PRIVATE).json(await ManageDomain.claimManage(req.body, userCtx(req)));
 }
@@ -44,4 +50,12 @@ export async function listMyReports(req: Request, res: Response): Promise<void> 
 	});
 }
 
-export default { getReport, createReport, updateReport, claimManage, resendManageLink, listMyReports };
+export default {
+	getReport,
+	createReport,
+	updateReport,
+	transitionReport,
+	claimManage,
+	resendManageLink,
+	listMyReports,
+};

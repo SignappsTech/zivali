@@ -93,6 +93,126 @@ export async function updateReport(
 	await db.reports.update({ where: { id }, data, select: { id: true } });
 }
 
+// --- Lifecycle (C4 status machine and the report.lifecycle job, domains/reports/lifecycle.domain.ts) ---
+
+/** findWithRole with the report row locked until the transaction ends: one status change at a time. */
+export async function lockWithRole(short_code: string, user_id: string, tx: Prisma.TransactionClient) {
+	await tx.$queryRaw`select 1 from app.reports where short_code = ${short_code} for update`;
+	return findWithRole(short_code, user_id, tx);
+}
+
+/** The report row, locked until the transaction ends (the other side of a reunite). */
+export async function lockById(id: string, tx: Prisma.TransactionClient) {
+	await tx.$queryRaw`select 1 from app.reports where id = ${id}::uuid for update`;
+	return tx.reports.findUnique({ where: { id } });
+}
+
+export async function listManagers(report_ids: string[], tx?: Prisma.TransactionClient) {
+	const db = tx ?? prisma;
+	return db.report_managers.findMany({
+		where: { report_id: { in: report_ids } },
+		select: { report_id: true, user_id: true },
+	});
+}
+
+/** Closing ends the manage link (C7): the finder email goes with it. */
+export async function deleteContacts(report_ids: string[], tx?: Prisma.TransactionClient): Promise<void> {
+	const db = tx ?? prisma;
+	await db.report_contacts.deleteMany({ where: { report_id: { in: report_ids } } });
+}
+
+/** The report when the user manages it (notify.send variables of the report_* notifications). */
+export async function findManaged(id: string, user_id: string, tx?: Prisma.TransactionClient) {
+	const db = tx ?? prisma;
+	return db.reports.findFirst({
+		where: { id, managers: { some: { user_id } } },
+		select: {
+			short_code: true,
+			type: true,
+			status: true,
+			close_reason: true,
+			moderation_state: true,
+			species: true,
+			name: true,
+			reminder_day: true,
+			last_owner_update_at: true,
+			closed_at: true,
+		},
+	});
+}
+
+/**
+ * Up to `take` searching LOST reports created before `createdBefore` that have not had the reminder for `day` (or a
+ * later one) yet: marks them reminded (claimed once, skip locked) and returns their ids.
+ */
+export async function claimReminders(
+	input: { day: number; createdBefore: Date; take: number },
+	tx: Prisma.TransactionClient
+): Promise<{ id: string }[]> {
+	const { day, createdBefore, take } = input;
+	return tx.$queryRaw`
+		update app.reports set reminder_day = ${day}
+		where id in (
+			select id from app.reports
+			where type = 'lost' and status in ('open', 'matched') and moderation_state <> 'removed'
+				and created_at <= ${createdBefore} and coalesce(reminder_day, 0) < ${day}
+			limit ${take} for update skip locked)
+		returning id::text as id`;
+}
+
+/** Open reports idle since before the cut-off of their type; organisation intakes never expire (C4). */
+const idleSince = (lostBefore: Date, foundBefore: Date) => Prisma.sql`
+	status = 'open' and moderation_state <> 'removed' and (
+		(type = 'lost' and last_owner_update_at <= ${lostBefore})
+		or (type <> 'lost' and source <> 'organisation' and last_owner_update_at <= ${foundBefore}))`;
+
+type IdleCutoffs = { lostBefore: Date; foundBefore: Date; now: Date; take: number };
+
+/** Up to `take` idle reports not yet warned in their current idle period: marks them warned and returns their ids. */
+export async function claimExpiryWarnings(input: IdleCutoffs, tx: Prisma.TransactionClient): Promise<{ id: string }[]> {
+	const { lostBefore, foundBefore, now, take } = input;
+	return tx.$queryRaw`
+		update app.reports set expiry_warned_at = ${now}
+		where id in (
+			select id from app.reports
+			where ${idleSince(lostBefore, foundBefore)}
+				and (expiry_warned_at is null or expiry_warned_at < last_owner_update_at)
+			limit ${take} for update skip locked)
+		returning id::text as id`;
+}
+
+export type ExpiredRow = {
+	id: string;
+	short_code: string;
+	type: REPORT_TYPE;
+	species: string;
+	name: string | null;
+	last_owner_update_at: Date;
+	closed_at: Date;
+	/** The finder email of an anonymous report (deleted by the caller in the same transaction). */
+	email: string | null;
+	/** The creator's profile locale, for that email. */
+	locale: string | null;
+};
+
+/** Up to `take` idle reports closed as expired, manage token cleared (C4 `expire`). */
+export async function expireIdle(input: IdleCutoffs, tx: Prisma.TransactionClient): Promise<ExpiredRow[]> {
+	const { lostBefore, foundBefore, now, take } = input;
+	return tx.$queryRaw`
+		with expired as (
+			update app.reports set status = 'closed', close_reason = 'expired', closed_at = ${now},
+				manage_token_hash = null, updated_at = now()
+			where id in (
+				select id from app.reports where ${idleSince(lostBefore, foundBefore)}
+				limit ${take} for update skip locked)
+			returning id, short_code, type, species, name, last_owner_update_at, closed_at, created_by)
+		select e.id::text as id, e.short_code, e.type::text as type, e.species::text as species, e.name,
+			e.last_owner_update_at, e.closed_at, c.email, p.locale
+		from expired e
+		left join app.report_contacts c on c.report_id = e.id
+		left join app.profiles p on p.id = e.created_by`;
+}
+
 /** Adds the manager; an existing manager row stays as it is (a repeated manage-link claim). */
 export async function addManager(
 	data: { report_id: string; user_id: string; role: 'owner' | 'finder' | 'staff' },
@@ -325,6 +445,14 @@ export default {
 	getLocations,
 	getLocation,
 	updateReport,
+	lockWithRole,
+	lockById,
+	listManagers,
+	deleteContacts,
+	findManaged,
+	claimReminders,
+	claimExpiryWarnings,
+	expireIdle,
 	addManager,
 	addContact,
 	getContactEmail,

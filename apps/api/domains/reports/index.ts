@@ -7,4 +7,5 @@ export {
 	type ReportView,
 } from './reports.domain.ts';
 export { default as ManageDomain } from './manage.domain.ts';
+export { default as LifecycleDomain } from './lifecycle.domain.ts';
 export { default as ReportsMapper } from './reports.mapper.ts';

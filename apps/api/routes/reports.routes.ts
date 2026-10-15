@@ -1,4 +1,4 @@
-// /v1/reports: wiring only (manage-link resend: C7). Search and transitions arrive with TASK-31.3 and TASK-26.3.
+// /v1/reports: wiring only (manage-link resend: C7; transitions: the C4 status machine). Search arrives with TASK-31.3.
 import { Router } from 'express';
 import { z } from 'zod';
 
@@ -8,6 +8,7 @@ import {
 	CreateReportResponse,
 	PublicReport,
 	ReportOwnerView,
+	ReportTransitionInput,
 	UpdateReportInput,
 } from '@zivali/validation';
 
@@ -79,6 +80,28 @@ route(
 	},
 	authMiddleware,
 	ReportsController.resendManageLink
+);
+
+route(
+	{
+		method: 'post',
+		path: '/:code/transitions',
+		operationId: 'transitionReport',
+		summary: 'Change the status of a report (managers)',
+		description:
+			'C4 status machine. `mark_reunited` (open or matched → reunited): its matches close, nearby alerts stop, ' +
+			'the boost ends, conversations become read-only, and the report on the other side of each confirmed ' +
+			'match is reunited too and its managers notified. `close` (open or matched → closed) needs `reason` ' +
+			'(found_elsewhere, gave_up, returned_to_owner, other) and ends the manage link. `reopen` (reunited or ' +
+			'closed → open) within 7 days (`lifecycle.reopen_days`), later GONE. `extend` keeps the status and ' +
+			'restarts the idle timer of the automatic expiry. A transition the status does not allow: CONFLICT.',
+		request: { params: CodeParams, body: ReportTransitionInput },
+		responses: { 200: { description: 'The report after the transition', schema: ReportOwnerView } },
+		errors: ['UNAUTHENTICATED', 'FORBIDDEN', 'NOT_FOUND', 'CONFLICT', 'GONE', 'DUPLICATE_OPEN_REPORT'],
+	},
+	authMiddleware,
+	rateLimit('reports.transition', { limit: 60, window: 3600, key: 'user' }),
+	ReportsController.transitionReport
 );
 
 route(

@@ -3539,6 +3539,68 @@
 				}
 			}
 		},
+		"/v1/reports/{code}/transitions": {
+			"post": {
+				"operationId": "transitionReport",
+				"summary": "Change the status of a report (managers)",
+				"description": "C4 status machine. `mark_reunited` (open or matched → reunited): its matches close, nearby alerts stop, the boost ends, conversations become read-only, and the report on the other side of each confirmed match is reunited too and its managers notified. `close` (open or matched → closed) needs `reason` (found_elsewhere, gave_up, returned_to_owner, other) and ends the manage link. `reopen` (reunited or closed → open) within 7 days (`lifecycle.reopen_days`), later GONE. `extend` keeps the status and restarts the idle timer of the automatic expiry. A transition the status does not allow: CONFLICT.",
+				"tags": ["reports"],
+				"parameters": [
+					{
+						"schema": { "type": "string", "pattern": "^[1-9A-HJ-NP-Za-km-z]{8}$" },
+						"required": true,
+						"name": "code",
+						"in": "path"
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": { "schema": { "$ref": "#/components/schemas/ReportTransitionInput" } }
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "The report after the transition",
+						"content": {
+							"application/json": { "schema": { "$ref": "#/components/schemas/ReportOwnerView" } }
+						}
+					},
+					"400": {
+						"description": "VALIDATION",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"401": {
+						"description": "UNAUTHENTICATED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"403": {
+						"description": "FORBIDDEN",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"404": {
+						"description": "NOT_FOUND",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"409": {
+						"description": "CONFLICT, DUPLICATE_OPEN_REPORT",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"410": {
+						"description": "GONE",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"429": {
+						"description": "RATE_LIMITED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"500": {
+						"description": "INTERNAL",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					}
+				}
+			}
+		},
 		"/v1/shelters": {
 			"get": {
 				"operationId": "listShelters",
