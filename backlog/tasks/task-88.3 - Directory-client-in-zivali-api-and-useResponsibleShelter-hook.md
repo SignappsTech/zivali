@@ -1,11 +1,11 @@
 ---
 id: TASK-88.3
 title: Directory endpoints in @zivali/api (RTK Query) and useResponsibleShelter hook
-status: To Do
+status: In Progress
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 23:36'
-updated_date: '2026-10-14 23:38'
+updated_date: '2026-10-15 02:42'
 labels:
   - fe
   - 'est:S'
@@ -37,6 +37,6 @@ Branch: agent/task-88.3-dir-client
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 @zivali/api/directory implements getResponsibleShelter, listShelters, getShelter and listMunicipalities per C18 as RTK Query endpoints (generated from apps/api/openapi.json by gen:api once merged into the spec, else api.injectEndpoints stubs per the contract, replaced later) with fixtures.
-- [ ] #2 useResponsibleShelter(point or municipality) returns { status, shelter } on web and mobile and never exposes a phone number for unconfirmed municipalities.
+- [x] #1 @zivali/api/directory implements getResponsibleShelter, listShelters, getShelter and listMunicipalities per C18 as RTK Query endpoints (generated from apps/api/openapi.json by gen:api once merged into the spec, else api.injectEndpoints stubs per the contract, replaced later) with fixtures.
+- [x] #2 useResponsibleShelter(point or municipality) returns { status, shelter } on web and mobile and never exposes a phone number for unconfirmed municipalities.
 <!-- AC:END -->
