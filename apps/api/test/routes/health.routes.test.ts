@@ -1,9 +1,14 @@
 import request from 'supertest';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { app } from '../../app.ts';
 import HealthDao from '../../domains/health/health.dao.ts';
 import { config } from '../../lib/config.ts';
+import { jobs, startJobs } from '../../lib/jobs.ts';
+import { prisma } from '../../prisma/prisma.ts';
+
+// As in server.ts: the API starts pg-boss, so its tables exist for the queue lag.
+beforeAll(() => startJobs(), 30_000);
 
 afterEach(() => {
 	vi.restoreAllMocks();
@@ -18,7 +23,25 @@ describe('GET /ping', () => {
 });
 
 describe('GET /v1/health/ready', () => {
-	it('checks the local database and returns the version (C1 shape)', async () => {
+	it('checks the local database and returns the version and queue lag (C1 shape)', async () => {
+		const res = await request(app).get('/v1/health/ready');
+		expect(res.status).toBe(200);
+		expect(res.body).toEqual({ ok: true, version: config.APP_VERSION, db: 'ok', queue_lag_s: expect.any(Number) });
+	});
+
+	it('reports how long the oldest due job has waited', async () => {
+		const id = (await jobs.send('db.keepalive', {}))!;
+		try {
+			await prisma.$executeRaw`update pgboss.job set start_after = now() - interval '90 seconds' where id = ${id}::uuid`;
+			const res = await request(app).get('/v1/health/ready');
+			expect(res.body.queue_lag_s).toBeGreaterThanOrEqual(90);
+		} finally {
+			await prisma.$executeRaw`delete from pgboss.job where id = ${id}::uuid`;
+		}
+	});
+
+	it('answers ok with an unknown queue lag when the lag cannot be read', async () => {
+		vi.spyOn(HealthDao, 'queueLagSeconds').mockRejectedValue(new Error('relation "pgboss.job" does not exist'));
 		const res = await request(app).get('/v1/health/ready');
 		expect(res.status).toBe(200);
 		expect(res.body).toEqual({ ok: true, version: config.APP_VERSION, db: 'ok', queue_lag_s: null });
