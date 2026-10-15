@@ -105,7 +105,14 @@
 			"/node_modules/@react-native/babel-preset/"
 		],
 		"moduleNameMapper": {
-			"^@/(.*)$": "<rootDir>/$1"
+			"^@/(.*)$": "<rootDir>/$1",
+			"^@zivali/analytics$": "<rootDir>/../../packages/analytics/src/index.ts",
+			"^@zivali/api/(.*)$": "<rootDir>/../../packages/api/src/$1.ts",
+			"^@zivali/i18n/format$": "<rootDir>/../../packages/i18n/src/format.ts",
+			"^@zivali/types$": "<rootDir>/../../packages/types/src/index.ts",
+			"^@zivali/types/domain/(.*)$": "<rootDir>/../../packages/types/src/domain/$1.ts",
+			"^@zivali/validation$": "<rootDir>/../../packages/validation/src/index.ts",
+			"^@zivali/validation/(.*)$": "<rootDir>/../../packages/validation/src/$1.ts"
 		}
 	}
 }

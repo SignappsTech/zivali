@@ -68,6 +68,8 @@ A domain function never imports Express, never reads `req`/`res`, and never catc
 - **Notifications**: `domains/notifications` `enqueueNotification(input, ctx)` exists as a stub from TASK-6.3 (sends `notify.send`, logged by the stub handler) so feature tasks can call it before TASK-22.3 merges.
 - **Seeders**: own file `prisma/seeders/NN-<name>.seeder.ts`; fixture users from TASK-6.2.
 - **app_config** keys: insert defaults in your migration or seeder (`on conflict do nothing`).
+- **Workspace packages** (TASK-107): `@zivali/*` source resolves from the checkout's own `packages/*/src` through `tsconfig.base.json` `paths` (tsc, vitest `resolve.tsconfigPaths`, tsx, tsup), never through the `node_modules/@zivali` links, which in a worktree point at the main checkout; a change to packages/types or packages/validation is checked and tested in the same worktree.
+- A new `@zivali` export (or subpath) gets a `paths` entry in `tsconfig.base.json` and its copies in `apps/web/tsconfig.json`, `apps/mobile/tsconfig.json` and mobile jest `moduleNameMapper`; built outputs (`@zivali/tokens`, `@zivali/i18n/dist`) still come through node_modules.
 
 ## Standards
 
@@ -161,3 +163,4 @@ Branch `agent/<task-id>-<slug>` from `main`; commits `<task-id>: <what>`; never 
 | 1.3 | 2026-10-15 | CH-99: Stripe over fetch; mock email in-memory sent list; staging/production adapters configured or off, never mock; CH-97: adapters are new code |
 | 1.4 | 2026-10-15 | CH-107: profiles.home_point writes must call coarsenPoint |
 | 1.5 | 2026-10-15 | CH-121: destructive admin actions require a trimmed non-empty note; role changes call invalidateProfile(id) |
+| 1.6 | 2026-10-16 | TASK-107: @zivali/* resolve from the checkout (tsconfig.base.json paths), not node_modules links |

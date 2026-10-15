@@ -3,7 +3,18 @@
 	"compilerOptions": {
 		"lib": ["DOM", "ESNext"],
 		"types": ["jest"],
-		"paths": { "@/*": ["./*"] }
+		// Replaces the base's paths: the @zivali/* entries repeat tsconfig.base.json (keep them in step, and jest's
+		// moduleNameMapper in package.json).
+		"paths": {
+			"@/*": ["./*"],
+			"@zivali/analytics": ["../../packages/analytics/src/index.ts"],
+			"@zivali/api/*": ["../../packages/api/src/*.ts"],
+			"@zivali/i18n/format": ["../../packages/i18n/src/format.ts"],
+			"@zivali/types": ["../../packages/types/src/index.ts"],
+			"@zivali/types/domain/*": ["../../packages/types/src/domain/*.ts"],
+			"@zivali/validation": ["../../packages/validation/src/index.ts"],
+			"@zivali/validation/*": ["../../packages/validation/src/*.ts"]
+		}
 	},
 	"include": ["**/*.ts", "**/*.tsx", ".expo/types/**/*.ts", "nativewind-env.d.ts"]
 }
