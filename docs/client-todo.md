@@ -76,7 +76,7 @@ Put keys into `.env.local` (gitignored) unless noted. Never paste secrets into c
 
 ## E. Housekeeping
 
-- [ ] ⚠️ **Rotate the database password in klikni-be.** It's hard-coded in `apps/api/pool/pool.js` and committed to git.
+- [ ] Delete the obsolete `klikni-be/apps/api/pool/pool.js` (its password is about 2 years out of date, so nothing to rotate).
 - [ ] Review and commit the **devteam plugin** changes in `C:\Users\Primzy\Documents\www\claude-devteam` (new scripts merge/next/review-brief/changes/runs, plus the token-economy rules; all uncommitted).
 - [ ] Delete `MAPTILER_API_KEY` from `.env.local` (no longer used; our own geocoder replaced it).
 - [ ] Delete leftover folders in `.claude/worktrees/` that Windows kept locked (git no longer tracks them).
