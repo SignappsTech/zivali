@@ -1,0 +1,30 @@
+{
+	// Agent worktrees in .claude/ are full repo copies with their own node_modules: never watch, search or scan them.
+	"files.watcherExclude": {
+		"**/.claude/**": true,
+		"**/node_modules/**": true,
+		"**/.next/**": true,
+		"**/.expo/**": true,
+		"**/.turbo/**": true,
+		"**/dist/**": true,
+		"**/generated/**": true,
+		"**/quality-report/**": true,
+		"**/.lighthouseci/**": true
+	},
+	"search.exclude": {
+		"**/.claude/**": true,
+		"**/.next/**": true,
+		"**/.expo/**": true,
+		"**/.turbo/**": true,
+		"**/dist/**": true,
+		"**/generated/**": true,
+		"pnpm-lock.yaml": true
+	},
+	"search.followSymlinks": false,
+	// Source Control: each worktree is a git repo; don't detect them as extra repositories.
+	"git.repositoryScanIgnoredFolders": [".claude", "node_modules"],
+	"git.autoRepositoryDetection": "openEditors",
+	"git.detectWorktrees": false,
+	// One TypeScript server for this repo, not for files opened from worktrees.
+	"typescript.tsserver.maxTsServerMemory": 4096
+}
