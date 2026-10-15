@@ -26,6 +26,9 @@ export const initialLocale = (): Locale => storedLocale() ?? deviceLocale();
 let currentLocale: Locale | null = null;
 /** The locale the UI shows now (kept by I18nProvider); the API client reads it per request. */
 export const getCurrentLocale = (): Locale => currentLocale ?? initialLocale();
+const setCurrentLocale = (locale: Locale) => {
+	currentLocale = locale;
+};
 
 /** A signed-in user's profile locale and its save: `{ locale: me.locale, save: (l) => updateMe({ locale: l }) }`. */
 export type ProfileLocale = { locale: Locale; save: (locale: Locale) => Promise<unknown> };
@@ -56,7 +59,8 @@ export function I18nProvider({ profile, children }: { profile?: ProfileLocale | 
 		if (profileLocale) localStorage.setItem(STORAGE_KEY, profileLocale);
 	}, [profileLocale]);
 
-	currentLocale = locale;
+	// Kept in sync after each render (writing module state during render breaks the React Compiler rules).
+	useEffect(() => setCurrentLocale(locale), [locale]);
 
 	const setLocale = useCallback(
 		async (next: Locale) => {
