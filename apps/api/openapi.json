@@ -2553,6 +2553,50 @@
 				}
 			}
 		},
+		"/v1/me/reports": {
+			"get": {
+				"operationId": "listMyReports",
+				"summary": "Reports I manage",
+				"description": "ReportOwnerView of every report the caller manages (held, hidden and closed included), newest first, keyset-paginated (`cursor` = the last item id, `limit` ≤ 50).",
+				"tags": ["me"],
+				"parameters": [
+					{
+						"schema": { "type": "string", "format": "uuid" },
+						"required": false,
+						"name": "cursor",
+						"in": "query"
+					},
+					{
+						"schema": { "type": "integer", "minimum": 1, "maximum": 50 },
+						"required": false,
+						"name": "limit",
+						"in": "query"
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "One page of own reports",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/MyReportList" } } }
+					},
+					"400": {
+						"description": "VALIDATION",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"401": {
+						"description": "UNAUTHENTICATED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"429": {
+						"description": "RATE_LIMITED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"500": {
+						"description": "INTERNAL",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					}
+				}
+			}
+		},
 		"/v1/notifications": {
 			"get": {
 				"operationId": "listNotifications",
@@ -2836,7 +2880,113 @@
 				}
 			}
 		},
+		"/v1/reports": {
+			"post": {
+				"operationId": "createReport",
+				"summary": "Create a lost, found or sighted report",
+				"description": "Requires `Idempotency-Key: <uuid>` (a replay from the same user returns the stored response for 24 h). `location` is the point the client already coarsened; the API coarsens it again by 20–30 m and never stores or returns the received point. Lost reports need a real account. `warnings` may hold OLD_EVENT (event older than 30 days). Starts photo publishing, matching and, for visible lost reports, nearby alerts.",
+				"tags": ["reports"],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": { "schema": { "$ref": "#/components/schemas/CreateReportInput" } }
+					}
+				},
+				"responses": {
+					"201": {
+						"description": "Created",
+						"content": {
+							"application/json": { "schema": { "$ref": "#/components/schemas/CreateReportResponse" } }
+						}
+					},
+					"400": {
+						"description": "VALIDATION",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"401": {
+						"description": "UNAUTHENTICATED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"403": {
+						"description": "FORBIDDEN",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"409": {
+						"description": "CONFLICT, DUPLICATE_OPEN_REPORT",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"429": {
+						"description": "RATE_LIMITED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"500": {
+						"description": "INTERNAL",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					}
+				}
+			}
+		},
 		"/v1/reports/{code}": {
+			"patch": {
+				"operationId": "updateReport",
+				"summary": "Update a report (managers)",
+				"description": "Partial CreateReportInput without `type`. No `location`, or the stored point sent back, keeps the stored point; a new point is coarsened anew. `photo_ids` replaces the photos in order. Removed, closed and reunited reports answer GONE.",
+				"tags": ["reports"],
+				"parameters": [
+					{
+						"schema": { "type": "string", "pattern": "^[1-9A-HJ-NP-Za-km-z]{8}$" },
+						"required": true,
+						"name": "code",
+						"in": "path"
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": { "schema": { "$ref": "#/components/schemas/UpdateReportInput" } }
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "The updated report",
+						"content": {
+							"application/json": { "schema": { "$ref": "#/components/schemas/ReportOwnerView" } }
+						}
+					},
+					"400": {
+						"description": "VALIDATION",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"401": {
+						"description": "UNAUTHENTICATED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"403": {
+						"description": "FORBIDDEN",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"404": {
+						"description": "NOT_FOUND",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"409": {
+						"description": "DUPLICATE_OPEN_REPORT",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"410": {
+						"description": "GONE",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"429": {
+						"description": "RATE_LIMITED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"500": {
+						"description": "INTERNAL",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					}
+				}
+			},
 			"get": {
 				"operationId": "getReport",
 				"summary": "One report by its short code",
