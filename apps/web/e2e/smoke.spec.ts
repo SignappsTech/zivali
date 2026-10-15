@@ -1,7 +1,10 @@
 import { expect, test } from '@playwright/test';
 
-import en from '../messages/en.json' with { type: 'json' };
-import sl from '../messages/sl.json' with { type: 'json' };
+import en from '@zivali/i18n/dist/en.json' with { type: 'json' };
+import sl from '@zivali/i18n/dist/sl.json' with { type: 'json' };
+
+const hreflang =
+	'<http://localhost:3000/>; rel="alternate"; hreflang="sl", <http://localhost:3000/en>; rel="alternate"; hreflang="en", <http://localhost:3000/>; rel="alternate"; hreflang="x-default"';
 
 for (const { path, lang, messages } of [
 	{ path: '/', lang: 'sl', messages: sl },
@@ -20,6 +23,7 @@ for (const { path, lang, messages } of [
 			/(?:^|; )script-src 'self' 'nonce-[^']+' 'strict-dynamic'(?:;|$)/
 		);
 		expect(response?.headers()['x-content-type-options']).toBe('nosniff');
+		expect(response?.headers()['link']).toBe(hreflang);
 		await expect(page.locator('html')).toHaveAttribute('lang', lang);
 		await expect(page.getByRole('heading', { level: 1 })).toHaveText(messages.pages.home.hero_title);
 		expect(errors).toEqual([]);
