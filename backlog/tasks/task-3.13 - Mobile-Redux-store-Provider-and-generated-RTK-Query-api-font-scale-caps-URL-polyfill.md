@@ -3,11 +3,11 @@ id: TASK-3.13
 title: >-
   Mobile: Redux store Provider and generated RTK Query api, font-scale caps, URL
   polyfill
-status: In Progress
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-15 01:52'
-updated_date: '2026-10-15 06:41'
+updated_date: '2026-10-15 07:48'
 labels:
   - fe
   - no-design
