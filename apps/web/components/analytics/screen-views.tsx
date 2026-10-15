@@ -18,6 +18,9 @@ export function routeTemplate(pathname: string): string {
 	return TEMPLATES.find(([, pattern]) => pattern.test(pathname))?.[0] ?? CATCH_ALL;
 }
 
+/** The staff console (P19, FR-019): no page_view, and no gtag config either, since nothing else starts GA there. */
+export const isAdminPath = (pathname: string) => /^\/admin(\/|$)/.test(pathname);
+
 /** A page_view per route change (C12), sent as the route template: no short codes, ids or query text. */
 export function ScreenViews() {
 	const pathname = usePathname();
@@ -26,7 +29,7 @@ export function ScreenViews() {
 	useEffect(() => {
 		if (sent.current === pathname) return; // StrictMode runs effects twice in development
 		sent.current = pathname;
-		trackScreen(routeTemplate(pathname));
+		if (!isAdminPath(pathname)) trackScreen(routeTemplate(pathname));
 	}, [pathname]);
 
 	return null;
