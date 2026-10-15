@@ -1,10 +1,11 @@
 ---
 id: TASK-6.15
 title: 'API rate limits: key anonymous actors by ip_hash, never device_hash alone'
-status: To Do
+status: Done
 assignee:
   - '@backend-dev'
 created_date: '2026-10-15 09:34'
+updated_date: '2026-10-15 12:41'
 labels:
   - be
   - 'est:XS'
