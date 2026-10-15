@@ -681,7 +681,8 @@
 					"LIVE_MODE_FORBIDDEN",
 					"CAPTCHA_FAILED",
 					"RATE_LIMITED",
-					"INTERNAL"
+					"INTERNAL",
+					"SERVICE_UNAVAILABLE"
 				]
 			},
 			"GeoReverseInput": {

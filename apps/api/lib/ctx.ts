@@ -1,17 +1,19 @@
 // The ctx every domain function receives (ADR-020). Controllers build it from the request; jobs, seeders,
-// scripts and tests use systemCtx(). Tasks add the fields they introduce (actor from auth, jobs, adapters, tx).
+// scripts and tests use systemCtx(). Tasks add the fields they introduce (actor from auth, jobs, tx).
 import type { Request } from 'express';
 
+import { adapters, type Adapters } from '../adapters/index.ts';
 import { logger, type Logger } from './logger.ts';
 
 export type Ctx = {
 	logger: Logger;
+	adapters: Adapters;
 };
 
 export function requestCtx(req: Request): Ctx {
-	return { logger: req.log };
+	return { logger: req.log, adapters };
 }
 
 export function systemCtx(): Ctx {
-	return { logger };
+	return { logger, adapters };
 }

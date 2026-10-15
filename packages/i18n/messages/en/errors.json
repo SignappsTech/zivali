@@ -25,6 +25,7 @@
 	"MIN_AMOUNT": "The minimum amount is €2.",
 	"LIVE_MODE_FORBIDDEN": "Payments in this version are test payments only.",
 	"INTERNAL": "Something went wrong on our side. Please try again in a few minutes.",
+	"SERVICE_UNAVAILABLE": "This feature is not available right now.",
 	"NETWORK": "The connection dropped. Check your internet and try again.",
 	"UPLOAD_TYPE": "This file is not a photo. Please choose a JPG, PNG or HEIC image.",
 	"UPLOAD_SIZE": "The photo is too large. Choose another one or make it smaller first."

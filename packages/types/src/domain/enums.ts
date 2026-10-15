@@ -19,6 +19,7 @@ export const ERROR_CODES = [
 	'CAPTCHA_FAILED',
 	'RATE_LIMITED',
 	'INTERNAL',
+	'SERVICE_UNAVAILABLE',
 ] as const;
 export type ErrorCode = Values<typeof ERROR_CODES>;
 export const ERROR_HTTP_STATUS: Record<ErrorCode, number> = {
@@ -36,6 +37,7 @@ export const ERROR_HTTP_STATUS: Record<ErrorCode, number> = {
 	CAPTCHA_FAILED: 422,
 	RATE_LIMITED: 429,
 	INTERNAL: 500,
+	SERVICE_UNAVAILABLE: 503,
 };
 
 // C3 auth, profiles, roles; C16 locales
