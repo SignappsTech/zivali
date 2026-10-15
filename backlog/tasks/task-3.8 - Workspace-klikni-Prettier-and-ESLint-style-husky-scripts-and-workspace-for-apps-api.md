@@ -3,11 +3,11 @@ id: TASK-3.8
 title: >-
   Workspace: klikni Prettier and ESLint style, husky, scripts and workspace for
   apps/api
-status: In Review
+status: Done
 assignee:
   - '@tech-lead'
 created_date: '2026-10-14 23:35'
-updated_date: '2026-10-14 23:59'
+updated_date: '2026-10-15 00:07'
 labels:
   - tech
   - 'est:S'
