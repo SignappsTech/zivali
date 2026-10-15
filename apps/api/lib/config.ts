@@ -35,6 +35,8 @@ const EnvSchema = z.object({
 	// Random 32-byte secrets per environment (C1): HMAC salt for IP and device ids, idempotency body encryption.
 	RATE_SALT: z.string().min(32),
 	IDEMPOTENCY_KEY: z.string().min(32),
+	// HMAC key of the deterministic public blur (lib/fuzz.ts, C6). Changing it moves every public circle.
+	FUZZ_SECRET: z.string().min(32),
 	// Adapters (backend.md): unset provider = mock (memory for storage) outside production.
 	STORAGE_PROVIDER: z.enum(['minio', 'r2', 'memory', 'off']).optional(),
 	R2_ACCOUNT_ID: z.string().optional(),
