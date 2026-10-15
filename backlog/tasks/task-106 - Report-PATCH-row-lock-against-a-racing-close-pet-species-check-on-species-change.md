@@ -3,11 +3,11 @@ id: TASK-106
 title: >-
   Report PATCH: row lock against a racing close; pet species check on species
   change
-status: In Progress
+status: Done
 assignee:
   - '@backend-dev'
 created_date: '2026-10-15 20:25'
-updated_date: '2026-10-15 22:20'
+updated_date: '2026-10-15 22:41'
 labels:
   - be
   - 'est:XS'
