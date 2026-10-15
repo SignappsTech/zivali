@@ -1,0 +1,107 @@
+{
+	"layout": {
+		"tagline": "Spet doma.",
+		"reason": "{category, select, search {Prejeli ste to e-sporočilo, ker imate v Najdimo iskanje, prijavo ali pogovor.} alert {Prejeli ste to e-sporočilo, ker ste vklopili opozorila v bližini.} finder {Prejeli ste to e-sporočilo, ker ste ob prijavi navedli ta e-naslov.} payment {Prejeli ste to e-sporočilo, ker ste opravili plačilo v Najdimo.} other {Prejeli ste to e-sporočilo, ker imate račun v Najdimo.}}",
+		"settings": "Nastavitve obvestil",
+		"unsubscribe": "Izklopi ta opozorila",
+		"support": "Vprašanja? Odgovorite na to sporočilo ali pišite na {support_email}.",
+		"company": "Najdimo"
+	},
+	"unsubscribe": {
+		"title": "E-sporočila so izklopljena",
+		"body": "Tovrstnih e-sporočil vam ne bomo več pošiljali. Nastavitve obvestil lahko kadar koli spremenite v aplikaciji."
+	},
+	"match_chip": {
+		"subject": "Številka čipa se ujema: {has_name, select, yes {{pet_name}} other {{species, select, dog {vaš pes} cat {vaša mačka} other {vaša žival}}}}",
+		"preheader": "Poglejte fotografije in presodite sami.",
+		"button": "Odpri ujemanje",
+		"p1": "{other_type, select, sighted {Opažena žival ima enako številko čipa kot {has_name, select, yes {{pet_name}} other {{species, select, dog {vaš pes} cat {vaša mačka} other {vaša žival}}}}. Opažanje je morda starejše, zato se je žival lahko že premaknila.} other {Najdena žival ima enako številko čipa kot {has_name, select, yes {{pet_name}} other {{species, select, dog {vaš pes} cat {vaša mačka} other {vaša žival}}}}.}}",
+		"p2": "Poglejte fotografije in podrobnosti ter presodite sami. Kontaktnih podatkov ne razkrijemo, dokler ujemanja ne potrdite.",
+		"p3": "Nikoli ne pošiljajte denarja vnaprej."
+	},
+	"match_suggested": {
+		"subject": "Morda smo našli žival, ki jo iščete",
+		"preheader": "{strength, select, strong {Zelo verjetno} other {Verjetno}} ujemanje za iskanje: {has_name, select, yes {{pet_name}} other {{species, select, dog {vaš pes} cat {vaša mačka} other {vaša žival}}}}. Poglejte fotografije.",
+		"button": "Poglej ujemanje",
+		"p1": "Morda smo našli žival, ki jo iščete. Iskanje: {has_name, select, yes {{pet_name}} other {{species, select, dog {vaš pes} cat {vaša mačka} other {vaša žival}}}}.",
+		"p2": "Ujemanje je ocenjeno kot {strength, select, strong {zelo verjetno} other {verjetno}}. Odprite ga, preberite, zakaj tako mislimo, in presodite sami.",
+		"p3": "Kontaktnih podatkov ne razkrijemo, dokler ujemanja ne potrdite."
+	},
+	"match_confirmed": {
+		"subject": "Ujemanje je potrjeno – odprite pogovor",
+		"preheader": "Telefonska številka ostane skrita. Pišete si v aplikaciji.",
+		"button": "Odpri pogovor",
+		"p1": "Oseba, ki išče žival, je potrdila, da se vaša prijava ujema z njenim iskanjem. Hvala, da pomagate.",
+		"p2": "Pogovor je odprt. Vaša telefonska številka ostane skrita, pišete si v aplikaciji.",
+		"p3": "Žival predajte na javnem kraju, podnevi in v spremstvu. Nikoli ne pošiljajte denarja vnaprej."
+	},
+	"chat_message": {
+		"subject": "{unread_count, plural, one {Imate neprebrano sporočilo} two {Imate # neprebrani sporočili} few {Imate # neprebrana sporočila} other {Imate # neprebranih sporočil}}",
+		"preheader": "Sporočilo je v pogovoru {preview_alias}.",
+		"button": "Odpri pogovor",
+		"p1": "Imate {unread_count, plural, one {# neprebrano sporočilo} two {# neprebrani sporočili} few {# neprebrana sporočila} other {# neprebranih sporočil}} v pogovoru: {preview_alias}.",
+		"p2": "Sporočila ne vključimo v e-sporočilo, da ostane zasebno. Odprite pogovor in preberite ga v aplikaciji.",
+		"p3": "Nikoli ne pošiljajte denarja vnaprej."
+	},
+	"nearby_lost": {
+		"subject": "{species, select, dog {Izgubljen pes} cat {Izgubljena mačka} other {Izgubljena žival}} v vaši bližini",
+		"preheader": "{when}{has_area, select, yes {, {area_name}} other {}}. Ste {species, select, dog {ga} other {jo}} morda videli?",
+		"button": "Odpri prijavo",
+		"p1": "Prijavljen je izgubljen {species, select, dog {pes} cat {mačka} other {žival}}, približno {distance_band, select, lt1 {manj kot 1 km} 1to3 {1–3 km} 3to10 {3–10 km} gt10 {več kot 10 km} other {v bližini}} od vašega območja{has_area, select, yes { ({area_name})} other {}}.",
+		"p2": "Ste {species, select, dog {ga} other {jo}} morda videli? Če ste, odprite prijavo in sporočite opažanje. Če ne, vam ni treba storiti ničesar.",
+		"p3": "Javno prikažemo le približno območje.",
+		"ad": "Oglas · Potrebujete veterinarja? Najbližja ambulanta: <link>{clinic_name}</link>, {clinic_area}"
+	},
+	"report_reminder": {
+		"subject": "Še iščete žival?",
+		"preheader": "Nadaljujte iskanje ali ga zaključite, kakor vam ustreza.",
+		"button": "Nadaljuj iskanje",
+		"link_close": "Zaključi iskanje",
+		"p1": "{has_name, select, yes {{pet_name}} other {{species, select, dog {Vaš pes} cat {Vaša mačka} other {Vaša žival}}}}: iščete že {day, plural, one {# dan} two {# dneva} few {# dni} other {# dni}}.",
+		"p2": "Če iskanje še teče, ga nadaljujte in ostalo bomo uredili mi. Če žival ni več pogrešana, ga zaključite.",
+		"p3": "Če je žival spet doma, odprite prijavo in jo označite kot spet doma."
+	},
+	"report_expiring": {
+		"subject": "{report_type, select, lost {Iskanje se bo čez {days_left, plural, one {# dan} two {# dneva} few {# dni} other {# dni}} zaključilo} other {Prijava poteče čez {days_left, plural, one {# dan} two {# dneva} few {# dni} other {# dni}}}}",
+		"preheader": "{report_type, select, lost {Nadaljujte ga z enim dotikom ali pustite, da se zaključi.} other {Če je še aktualna, jo podaljšajte za 30 dni.}}",
+		"button": "{report_type, select, lost {Nadaljuj iskanje} other {Podaljšaj za 30 dni}}",
+		"p1": "{report_type, select, lost {{has_name, select, yes {{pet_name}} other {{species, select, dog {Vaš pes} cat {Vaša mačka} other {Vaša žival}}}}: iskanje je brez posodobitev že dolgo, zato se bo čez {days_left, plural, one {# dan} two {# dneva} few {# dni} other {# dni}} samodejno zaključilo.} other {Vaša prijava {report_type, select, sighted {opažene} other {najdene}} živali bo čez {days_left, plural, one {# dan} two {# dneva} few {# dni} other {# dni}} potekla, ker ni bilo posodobitev.}}",
+		"p2": "{report_type, select, lost {Če žival še iščete, ga nadaljujte z enim dotikom. Če ne, vam ni treba storiti ničesar.} other {Če je žival še tam ali jo še iščejo, prijavo podaljšajte za 30 dni. Če ne, vam ni treba storiti ničesar.}}"
+	},
+	"report_closed": {
+		"subject": "{report_type, select, lost {Iskanje je zaključeno} other {Prijava je zaključena}}",
+		"preheader": "{report_type, select, lost {Če žival še iščete, ga lahko znova odprete.} other {Po potrebi jo lahko znova odprete.}}",
+		"button": "Odpri znova",
+		"p1": "{report_type, select, lost {{has_name, select, yes {{pet_name}} other {{species, select, dog {Vaš pes} cat {Vaša mačka} other {Vaša žival}}}}: iskanje smo po {idle_days, plural, one {# dnevu} two {# dneh} few {# dneh} other {# dneh}} brez posodobitev zaključili in ga umaknili z zemljevida.} other {Prijavo {report_type, select, sighted {opažene} other {najdene}} živali smo po {idle_days, plural, one {# dnevu} two {# dneh} few {# dneh} other {# dneh}} brez posodobitev zaključili in jo umaknili z zemljevida.}}",
+		"p2": "{report_type, select, lost {Če žival še iščete, ga lahko v {reopen_days, plural, one {# dnevu} two {# dneh} few {# dneh} other {# dneh}} znova odprete, vse ostane, kot je bilo. Če ste žival že našli, se veselimo z vami.} other {Če je prijava še aktualna, jo lahko v {reopen_days, plural, one {# dnevu} two {# dneh} few {# dneh} other {# dneh}} znova odprete. Hvala, da ste pomagali.}}"
+	},
+	"report_hidden": {
+		"subject": "Prijava je v pregledu",
+		"preheader": "Zaenkrat ni javno vidna. Tukaj je, kaj lahko storite.",
+		"button": "Odpri prijavo",
+		"p1": "Vaša prijava {report_type, select, lost {izgubljene} found {najdene} other {opažene}} živali je v pregledu naše ekipe in zaenkrat ni javno vidna.",
+		"p2": "Prijave občasno pregledamo, da zemljevid ostane zanesljiv. Običajno pregled ne traja dolgo. Vam ni treba storiti ničesar.",
+		"p3": "Če imate vprašanja ali želite k prijavi kaj dodati, nam odgovorite na to sporočilo ali pišite na {support_email}."
+	},
+	"manage_link": {
+		"subject": "Zasebna povezava do vaše prijave",
+		"preheader": "Shranite jo. Brez nje prijave ne morete upravljati.",
+		"button": "Odpri mojo prijavo",
+		"p1": "Hvala, da ste prijavili {report_type, select, sighted {opaženo} other {najdeno}} žival. Prijava je objavljena.",
+		"p2": "S spodnjim gumbom jo lahko kadar koli uredite, preberete sporočila ali jo zaključite, brez računa in brez vpisa.",
+		"p3": "Povezava je zasebna. Kdor jo ima, lahko upravlja prijavo, zato je ne delite. Če jo izgubite, je ne moremo obnoviti, zato to e-sporočilo shranite.",
+		"p4": "Če želite prijavo obdržati tudi na drugi napravi, ustvarite račun."
+	},
+	"payment_receipt": {
+		"subject": "{is_test, select, yes {Test · } other {}}Potrdilo o plačilu: {amount}",
+		"preheader": "Hvala. Prispevki pokrivajo strežnike, zemljevide in pošiljanje opozoril.",
+		"button": "Odpri moja plačila",
+		"p1": "{purpose, select, tip {Prejeli smo vaš prispevek v zahvalo} other {Prejeli smo vaš prispevek ob objavi iskanja}} v višini {amount}. Hvala.",
+		"p2": "Prispevki pokrivajo strežnike, zemljevide in pošiljanje opozoril. Najdimo ostaja brezplačno za vse.",
+		"date": "Datum: {paid_at}",
+		"amount": "Znesek: {amount}",
+		"reference": "Referenca: {receipt_ref}",
+		"test_note": "{is_test, select, yes {Testno plačilo – kartica ni bila bremenjena.} other {}}",
+		"not_donation": "To je potrdilo o plačilu, ne potrdilo o donaciji."
+	}
+}

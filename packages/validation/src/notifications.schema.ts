@@ -31,7 +31,8 @@ export const NotificationPrefInput = z
 export const PushTokenInput = z
 	.object({ token: z.string().min(1).max(512), platform: PushPlatform })
 	.openapi('PushTokenInput');
-export const PushTokenParams = z.object({ token: z.string().min(1).max(512) });
+// DELETE /v1/push-tokens takes the token in the body, so it stays out of URLs and access logs (C10, CH-76).
+export const PushTokenDeleteInput = PushTokenInput.pick({ token: true }).openapi('PushTokenDeleteInput');
 export const UnsubscribeQuery = z.object({ token: z.string().min(1).max(1024) });
 
 export const AlertSubscriptionInput = z
@@ -47,3 +48,23 @@ export const AlertSubscription = AlertSubscriptionInput.extend({
 	created_at: IsoDateTime,
 	updated_at: IsoDateTime,
 }).openapi('AlertSubscription');
+
+// notify.send job input (C10). Stored in pgboss.job, so ids and a template key only: no free-form or personal data.
+export const NotificationJobPayload = z
+	.object({
+		template: NotificationType,
+		report_id: Uuid.optional(),
+		match_id: Uuid.optional(),
+		pet_id: Uuid.optional(),
+		thread_id: Uuid.optional(),
+		message_id: Uuid.optional(),
+	})
+	.strict();
+export const NotificationJobInput = z
+	.object({
+		user_id: Uuid,
+		type: NotificationType,
+		payload: NotificationJobPayload,
+		dedupe_key: z.string().min(1).max(128).optional(),
+	})
+	.strict();
