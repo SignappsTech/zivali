@@ -54,15 +54,20 @@ Errors: `UNAUTHENTICATED`, `VALIDATION` (radius 1–25, locale sl/en), `FORBIDDE
 ## Client (`@zivali/api/auth` + `@zivali/api/me`)
 
 ```ts
+// Start-up: configureAuth(supabase, store) resets the API cache on user change and refetches `me` after MFA / USER_UPDATED.
 // Supabase Auth directly (session handling stays in supabase-js):
-signUpWithEmail(email, password, { locale, captchaToken? }), signInWithEmail(email, password),
-signInWithGoogle(), signInWithApple(), signInAnonymously(captchaToken?), requestPasswordReset(email, locale),
-signOut()                       // also DELETE /v1/push-tokens/:token (C10) and the mobile wipe (C17)
+signUpWithEmail(email, password, { locale, captchaToken?, redirectTo? }), signInWithEmail(email, password),
+signInWithGoogle({ redirectTo? } | { idToken, nonce? }), signInWithApple({ redirectTo? } | { idToken, nonce? }),   // idToken = native sign-in
+signInAnonymously(captchaToken?),
+requestPasswordReset(email, { redirectTo?, captchaToken? }),   // no locale: the recovery email is localised from user_metadata.locale
+signOut(cleanup?)               // runs DELETE /v1/push-tokens/:token (C10) and the mobile wipe (C17)
 mfa.enroll(), mfa.challengeAndVerify(factorId, code)
 // API:
 getMe(api): Promise<Me>, updateMe(api, patch): Promise<Me>
 ```
-Hooks (same names on web and mobile): `useSession(): { session, me, isAnonymous, isVerified, role, aal, loading }`, `useRequireAuth({ verified?, role?, aal2? })`.
+Hooks (same names on web and mobile): `useSession(): { session, me, isAnonymous, isVerified, role, aal, loading }`, `useRequireAuth({ verified?, role?, aal2? })` returns `gate`: `ok | loading | signin | verify | forbidden | aal2 | error` (anonymous counts as signed out; `forbidden` = role is not MODERATOR or ADMIN, as in `requireRole`).
+
+Supabase errors become `ApiError` with C1 codes (`details.auth_code` keeps the original).
 
 ## Draft hand-off (FR-005 R-005.2)
 
@@ -75,3 +80,9 @@ Clients keep report drafts locally (C4 §Drafts, C17). When a signed-out visitor
 { "id": "1b9c…", "display_name": "Ana", "locale": "sl", "role": "USER", "email": "ana@example.si", "email_verified": true,
   "is_anonymous": false, "aal": "aal1", "home": { "lat": 46.06, "lng": 14.51 }, "home_radius_km": 5, "phone": null }
 ```
+
+## Change log
+
+| Version | Date | Change |
+|---|---|---|
+| 1.1 | 2026-10-15 | CH-54: client block updated to the implemented @zivali/api/auth (configureAuth, redirectTo, native idToken, signOut cleanup, gate states, ApiError mapping) |

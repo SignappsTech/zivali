@@ -81,7 +81,7 @@ Reminders for LOST at 7, 14, 30 days after `created_at` (`lifecycle_tick`, hourl
 
 Limits (implemented, confirmed): `name` ≤ 60, `collar` ≤ 200, pet `notes` ≤ 1000, `breed_codes` ≤ 5; `mixed` and `unknown` are species-scoped (`dog.mixed`, `cat.unknown`); `PetInput.name` required (1–60). `location` in the request is the point already coarsened by the client; the API coarsens again (C6 §Storage).
 
-**Query encoding (implemented, confirmed)**: lists as a comma list or repeated keys (`types=lost,found`); `bbox=w,s,e,n`; `near=lat,lng,km`; sync `areas` = JSON `[{lat,lng,radius_km}]` (1–3, radius ≤ 25). **Location in URLs (decision, CH-19)**: accepted for these read endpoints (`near`, sync `areas`, C18 `shelters/responsible`) because they must stay cacheable-friendly GETs and are used for public reads, under three rules: the client rounds the coordinates to 2 decimals (about 1 km) before putting them in a URL; the API and Caddy access logs record the route pattern only, never the query string; responses with a location query are `Cache-Control: private, no-store`. Anything that carries a precise point (report create/update, alert subscription, geocoder search/reverse) stays POST/PUT body only (C6).
+**Query encoding (implemented, confirmed)**: lists as a comma list or repeated keys (`types=lost,found`); `bbox=w,s,e,n`; `near=lat,lng,km`; sync `areas` = JSON `[{lat,lng,radius_km}]` (1–3, radius ≤ 25). **Location in URLs (decision, CH-19)**: accepted for these read endpoints (`near`, sync `areas`, C18 `shelters/responsible`) because they must stay cacheable-friendly GETs and are used for public reads, under three rules: the client rounds the coordinates to 2 decimals (about 1 km) before putting them in a URL (`near`, sync `areas`; `bbox` on `GET /v1/reports` and `/map` is rounded outwards: west and south down, east and north up); the API and Caddy access logs record the route pattern only, never the query string; responses with a location query are `Cache-Control: private, no-store`. Anything that carries a precise point (report create/update, alert subscription, geocoder search/reverse) stays POST/PUT body only (C6).
 
 ```ts
 type CreateReportInput = {
@@ -151,3 +151,9 @@ Drafts live only on the device until submit: web `idb-keyval` key `draft:<kind>:
 // POST /v1/reports (same pet) → 409
 { "error": { "code": "DUPLICATE_OPEN_REPORT", "message": "This pet already has an open lost report", "details": { "report_id": "51aa…", "short_code": "Pq7…" } } }
 ```
+
+## Change log
+
+| Version | Date | Change |
+|---|---|---|
+| 1.1 | 2026-10-15 | CH-56: bbox rounded outwards to 2 decimals like near and areas |

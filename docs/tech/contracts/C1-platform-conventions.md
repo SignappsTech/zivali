@@ -53,7 +53,7 @@ Ownership ("owner of pet", "manager of report", "participant of conversation") i
 - PostGIS and pgvector columns are `Unsupported("geography(Point,4326)")` / `Unsupported("vector(1024)")` and read or written only through TypedSQL (`prisma/sql/*.sql`) or `$queryRaw` with parameters.
 - **Lockdown (ADR-021)**: the first migration creates schema `app`, enables `postgis`, `vector`, `pgcrypto` in schema `extensions`, revokes all on `app` and `pgboss` from `anon`, `authenticated`, `public`; every migration that creates a table also runs `alter table app.<t> enable row level security;` (no policies). A test fails otherwise (`test/security/schema-exposure.test.ts`).
 - Migrations: `prisma migrate dev` locally; one migration per task (`<timestamp>_<task-id>_<slug>`), never edit a merged migration; hand-written SQL inside Prisma migrations for RLS, extensions, check constraints and the `realtime.messages` policy (ADR-023). Header comment in `migration.sql`: `-- task: TASK-x.y` and `-- rollback: …`.
-- `app_config` (`key`, `value Json`, `is_public`, `description`): defaults inserted by each feature's migration or seeder (`on conflict do nothing`); read through `lib/config-store.ts` (cached 60 s); admin writes are audited. `GET /v1/config/public` returns the keys with `is_public = true` (feature and content flags such as `content.legal_timings`, `vet_partner.enabled`, `podpornik.enabled`, `share.facebook_groups`), `Cache-Control: public, max-age=300`.
+- `app_config` (`key`, `value Json`, `is_public`, `description`): defaults inserted by each feature's migration or seeder (`on conflict do nothing`); read through `lib/config-store.ts` (cached 60 s); admin writes are audited. `GET /v1/config/public` returns the keys with `is_public = true` (feature and content flags such as `content.legal_timings`, `vet_partner.enabled`, `podpornik.enabled`, `share.facebook_groups`, `flags.supporter_monthly`, `flags.transparency_page`), `Cache-Control: public, max-age=300`.
 - `audit_log` (`actor_id`, `action`, `target_type`, `target_id`, `diff`, `created_at`): written by `AuditDao.write(tx, …)` in every staff service call.
 - Users: `profiles.id` equals the Supabase `auth.users.id` (no foreign key into `auth`); a profile is created on first authenticated request (`ensureProfile`). Deleting an account calls the Supabase Admin API and deletes or anonymises our rows in one service (M3).
 - **Data inventory**: `apps/api/prisma/data-inventory.json` lists every model and R2 bucket (category, personal data, basis, retention, export, delete); a test fails when a model is missing.
@@ -80,3 +80,9 @@ x-device-id: 0b2a…
 HTTP/1.1 429
 { "error": { "code": "RATE_LIMITED", "message": "Too many reports", "details": { "retry_after_s": 1800 } } }
 ```
+
+## Change log
+
+| Version | Date | Change |
+|---|---|---|
+| 1.1 | 2026-10-15 | CH-48: feature flags `flags.supporter_monthly` and `flags.transparency_page` accepted as public `app_config` keys (default off; P15) |

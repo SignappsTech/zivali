@@ -11,13 +11,15 @@ Read this, your task packet, the contract(s) it references, the design page slic
 | Framework | Next.js 16 App Router, React 19, TypeScript strict | Expo SDK 57, Expo Router, React Native 0.86.3 as pinned by the SDK 57 template (New Architecture), development builds (`expo-dev-client`) |
 | UI | shadcn/ui (Radix) + Tailwind 4, themed by `@zivali/tokens/{tokens,web}.css` | React Native Reusables + NativeWind 4.2 / Tailwind 3.4, `@zivali/tokens/native.css` + `tailwind-preset` |
 | Icons, toasts, sheets | `@phosphor-icons/react`, `sonner`, shadcn `sheet` | `phosphor-react-native`, `sonner-native`, `@gorhom/bottom-sheet` |
-| Data | REST API (`apps/api`, Express) through `@zivali/api`: server components call it with the user's access token from the `@supabase/ssr` cookie session; client components use RTK Query (generated hooks from `@zivali/api`, Redux `<Provider>` in `providers.tsx`; `transpilePackages: ['@zivali/api']` in `next.config`) | RTK Query over `@zivali/api` (Redux `<Provider>` in the root layout); `supabase-js` only for the Auth session (in `expo-sqlite` localStorage) and Realtime |
+| Data | REST API (`apps/api`, Express) through `@zivali/api`: server components call it with the user's access token from the `@supabase/ssr` cookie session; client components use RTK Query (generated hooks from `@zivali/api`, Redux `<Provider>` in `providers.tsx`; `transpilePackages: ['@zivali/api']` in `next.config`) | RTK Query over `@zivali/api` (Redux `<Provider>` in the root layout); `supabase-js` only for the Auth session and Realtime. The session is encrypted at rest (Supabase LargeSecureStore pattern): AES-256-GCM via `expo-crypto`, a fresh random key per write in `expo-secure-store` (`WHEN_UNLOCKED_THIS_DEVICE_ONLY`), ciphertext in `expo-sqlite` localStorage; a failed decrypt means signed out. Auth uses `flowType: 'pkce'` and `processLock`; Android `allowBackup` is false |
 | Forms | react-hook-form + zod (`@zivali/validation`) | same |
 | i18n | next-intl (SL unprefixed, EN `/en`) | use-intl with the same catalogues |
 | Maps | `maplibre-gl` (dynamic import, client only) | `@maplibre/maplibre-react-native` (dev build) |
 | Place search | `@zivali/api/geocode` → our API (`POST /v1/geo/search`, `/v1/geo/reverse`, C6); no third-party geocoder, no key | same |
 | Analytics | `@zivali/analytics` (`ga4` adapter after consent) | `@zivali/analytics` (`firebase` adapter after consent) |
 | Tests | Vitest + Testing Library (jsdom); Playwright + axe (`apps/web/e2e`) | jest-expo + Testing Library RN; Maestro flows (`apps/mobile/e2e`) |
+
+One React version across the workspace: `react`/`react-dom` 19.2.3 (the Expo SDK 57 pin; web and `packages/api` aligned). With `nodeLinker: hoisted`, pnpm keeps one copy per name@version and nests the other React under shared packages (`use-intl`, `@testing-library/react`), which broke web and mobile tests with duplicate React. Bump React only together with the Expo SDK.
 
 Only dependencies listed in `docs/tech/adr/017-dependency-allowlist.md` (or installed by the Next/Expo/shadcn/RNR templates) may be added. Need another one: report `needs-input` with the reason.
 
@@ -63,7 +65,7 @@ Only dependencies listed in `docs/tech/adr/017-dependency-allowlist.md` (or inst
 - Same component names and props on web and mobile (`Button`, `Input`, `FormField`, `StatusLabel`, `MapView`, `LocationPicker`, `ReportSlot`, `AdSlot`, …).
 - Web: server components by default; `"use client"` only where needed; MapLibre, PDF and heavy code via dynamic import; images with explicit width/height; no layout shift (reserved sizes for photos and ad slots).
 - Mobile: safe areas, OS font scaling up to 200 % (`maxFontSizeMultiplier` 2), permission primer before every OS prompt (camera, location, notifications) with a working fallback on denial.
-- Location privacy (ADR-006, C6 §Storage): call `coarsenPoint()` (`@zivali/validation/geo`) once when the user picks or confirms a point (GPS, pin, search, EXIF) and hand only the coarsened point to forms, drafts, the offline outbox and requests; the raw value stays in component state. Show the owner's stored point labelled "približno" (`location.approximate_label`). Lookup URLs (`near`, shelters) use coordinates rounded to 2 decimals (C4 §REST).
+- Location privacy (ADR-006, C6 §Storage): call `coarsenPoint()` (`@zivali/validation/geo`) once when the user picks or confirms a point (GPS, pin, search, EXIF) and hand only the coarsened point to forms, drafts, the offline outbox and requests; the raw value stays in component state. Show the owner's stored point labelled "približno" (`location.approximate_label`). Lookup URLs (`near`, `bbox`, sync `areas`, shelters) use coordinates rounded to 2 decimals, `bbox` rounded outwards (C4 §REST). `coarsenPoint()` is built by the packages/validation task (20–30 m random coarsening once at write, C6); LocationPicker tasks depend on it.
 - Privacy: never render or log exact coordinates, chip numbers, emails or phone numbers of other users; `track()` only with registered params (C12); no PII in `console` output.
 - Device storage (mobile): only the C17 tables (own drafts and outbox, public report cache) and secure-store tokens; never persist chat, matches, notifications or other private queries (no redux-persist or other query persistence); screens read report lists only through `lib/data/reports.ts`; sign-out calls `wipeLocalData()`.
 - Accessibility first: every map has a list alternative; every icon-only button has an accessible name; dialogs and sheets trap and restore focus.
@@ -127,3 +129,9 @@ Branch `agent/<task-id>-<slug>` from `main`; commits `<task-id>: <what>`; never 
 - [ ] No PII in logs or analytics; no secrets in code; no new dependency outside ADR-017
 - [ ] Mobile: nothing private written to device storage beyond C17; offline and error states explicit; no background location without opt-in
 - [ ] No unrelated changes; README or package README updated if behaviour or commands changed
+
+## Change log
+
+| Version | Date | Change |
+|---|---|---|
+| 1.1 | 2026-10-15 | CH-44/45/56: mobile session encryption at rest, single React version, bbox rounding and coarsenPoint ownership |

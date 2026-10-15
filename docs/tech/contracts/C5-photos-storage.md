@@ -36,9 +36,10 @@ All three R2 buckets are created in the **EU jurisdiction**; the adapter and pre
 
 ```ts
 preparePhoto(file | asset): Promise<PreparedPhoto>        // platform code in each app: EXIF read → resize ≤ 1600, < 1 MB → sha256
-uploadPhoto(api, p: PreparedPhoto, opts?: { onProgress?, signal? }): Promise<{ photoId }>
-// POST /v1/photos → PUT to the presigned URL (XHR on web for progress; FileSystem.uploadAsync on mobile) → POST /complete
-photoAlt(r, locale): string
+uploadPhoto(client, photo: PreparedPhoto, { onProgress(fraction), signal, put }): Promise<{ photoId }>   // plain ApiClient (works from the outbox)
+// POST /v1/photos → PUT to the presigned URL via `put` (default xhrPut; mobile passes FileSystem.uploadAsync) → POST /complete
+// PreparedPhoto = CreatePhotoInput & { file: Blob | { uri } }
+// No photoAlt(): alt text comes from the API (PublicReport.photos[].alt); labels live in i18n.
 ```
 Offline (C17): the mobile outbox keeps `PreparedPhoto` files and calls `uploadPhoto` when it sends; the `(owner, sha256)` dedupe makes repeats safe.
 
@@ -49,3 +50,9 @@ Offline (C17): the mobile outbox keeps `PreparedPhoto` files and calls `uploadPh
 { "photo_id": "9b0e…", "upload": { "url": "https://<account>.eu.r2.cloudflarestorage.com/zivali-private/uploads/u1/9b0e….jpg?X-Amz-…", "method": "PUT",
   "headers": { "Content-Type": "image/jpeg" }, "expires_at": "2026-10-15T10:05:00Z" } }
 ```
+
+## Change log
+
+| Version | Date | Change |
+|---|---|---|
+| 1.1 | 2026-10-15 | CH-55: uploadPhoto signature (client, onProgress fraction, put), PreparedPhoto type; photoAlt dropped (alt from the API) |

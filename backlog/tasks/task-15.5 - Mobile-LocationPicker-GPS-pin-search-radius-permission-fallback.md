@@ -5,7 +5,7 @@ status: To Do
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:13'
-updated_date: '2026-10-15 01:54'
+updated_date: '2026-10-15 02:51'
 labels:
   - fe
   - 'est:S'
@@ -13,6 +13,7 @@ milestone: m-1
 dependencies:
   - TASK-15.4
   - TASK-15.1
+  - TASK-6.14
 references:
   - docs/tech/frontend.md
   - docs/tech/contracts/C6-location-geo-maps.md

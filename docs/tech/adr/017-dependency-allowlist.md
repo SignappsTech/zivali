@@ -1,6 +1,6 @@
 # ADR-017: Dependency allowlist
 
-- Status: Accepted (revised 2026-10-15 for the Express + Prisma API, ADR-020, and the RTK Query toolchain; rows added 2026-10-15 from TASK-3.4 and TASK-6.5) · Date: 2026-10-14 · Owner: Tech Lead
+- Status: Accepted (revised 2026-10-15 for the Express + Prisma API, ADR-020, and the RTK Query toolchain; rows added 2026-10-15 from TASK-3.4 and TASK-6.5; `expo-crypto` added by CH-43) · Date: 2026-10-14 · Owner: Tech Lead
 - Source: lean-architecture rule "every new dependency needs an ADR"
 
 ## Decision
@@ -21,7 +21,7 @@ Runtime dependencies outside this list (and outside what the Expo SDK 57 templat
 | `exifr` | web | EXIF GPS/time read before re-encode (ADR-014) |
 | `idb-keyval` | web | IndexedDB drafts (≈ 600 B) |
 | `@react-native-firebase/app`, `@react-native-firebase/analytics` | mobile | ADR-009 |
-| `expo-image-picker`, `expo-image-manipulator`, `expo-location`, `expo-notifications`, `expo-web-browser`, `expo-secure-store`, `expo-sqlite`, `expo-file-system`, `expo-sharing`, `expo-apple-authentication`, `expo-dev-client`, `react-native-webview`, `expo-network`, `expo-background-task`, `expo-task-manager` | mobile | Expo-native capabilities (offline data layer and geofencing: ADR-019) |
+| `expo-image-picker`, `expo-image-manipulator`, `expo-location`, `expo-notifications`, `expo-web-browser`, `expo-secure-store`, `expo-crypto`, `expo-sqlite`, `expo-file-system`, `expo-sharing`, `expo-apple-authentication`, `expo-dev-client`, `react-native-webview`, `expo-network`, `expo-background-task`, `expo-task-manager` | mobile | Expo-native capabilities (offline data layer and geofencing: ADR-019) |
 | `@react-native-google-signin/google-signin` | mobile | Native Google ID token for `signInWithIdToken` |
 | `@react-pdf/renderer` | web (server route only) | A4 poster PDF with embedded fonts (š, č, ž) |
 | `qrcode` | web (server) | QR on posters |
@@ -59,3 +59,9 @@ Not used, on purpose: `eslint-plugin-prettier` and `eslint-plugin-import` (above
 ## Consequences
 
 - Reviewers reject unlisted runtime dependencies; adding one is a one-row PR to this ADR.
+
+## Change log
+
+| Version | Date | Change |
+|---|---|---|
+| 1.1 | 2026-10-15 | CH-43: `expo-crypto` (mobile) for AES-256-GCM encryption of the Supabase session at rest (with `expo-secure-store`) |
