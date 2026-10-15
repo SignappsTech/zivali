@@ -1,11 +1,11 @@
 ---
 id: TASK-34.1
 title: 'Design: Admin console shell (P19)'
-status: In Progress
+status: Done
 assignee:
   - '@ui-designer'
 created_date: '2026-10-14 21:50'
-updated_date: '2026-10-15 01:49'
+updated_date: '2026-10-15 02:41'
 labels:
   - design
   - 'est:S'
