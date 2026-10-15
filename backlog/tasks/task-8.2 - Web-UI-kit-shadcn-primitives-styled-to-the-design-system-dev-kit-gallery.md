@@ -1,11 +1,11 @@
 ---
 id: TASK-8.2
 title: 'Web UI kit: shadcn primitives styled to the design system, /dev/kit gallery'
-status: In Review
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:12'
-updated_date: '2026-10-15 03:10'
+updated_date: '2026-10-15 04:04'
 labels:
   - fe
   - 'est:M'
