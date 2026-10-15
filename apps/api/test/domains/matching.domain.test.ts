@@ -7,7 +7,11 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { scoreMatch } from '@zivali/validation/matching';
 
+import { adapters } from '../../adapters/index.ts';
+import { mockEmail } from '../../adapters/email/mock.ts';
+import { mockPush } from '../../adapters/push/mock.ts';
 import { MatchingDomain } from '../../domains/matching/index.ts';
+import { NotificationsDomain } from '../../domains/notifications/index.ts';
 import { ReportsDomain, type NewReport } from '../../domains/reports/index.ts';
 import { runJob } from '../../jobs/index.ts';
 import configStore from '../../lib/config-store.ts';
@@ -352,5 +356,53 @@ describe('idempotent suggestions and notifications (AC#1, AC#5)', () => {
 			select count(*)::int as count from pgboss.job where name = 'match.report' and state = 'failed'
 				and data->>'report' = 'nope'`;
 		expect(failed[0]!.count).toBe(0);
+	});
+});
+
+describe('match notifications delivered (TASK-104)', () => {
+	it('match.report -> notify.send gives each lost-report manager one inbox row and one push in their locale, the finder nothing', async () => {
+		const at = month();
+		const number = chip();
+		const lost = await lostReport(at, { chip: number });
+		await prisma.report_managers.create({ data: { report_id: lost.id, user_id: coOwner.user_id, role: 'owner' } });
+		const found = await foundReport(new Date(at.getTime() + HOUR), { chip: number });
+		await prisma.profiles.update({ where: { id: coOwner.user_id }, data: { locale: 'en' } });
+		const tokens = [owner, coOwner, finder].map(({ user_id }) => ({
+			user_id,
+			token: `ExponentPushToken[${randomUUID()}]`,
+			platform: 'ios',
+		}));
+		await prisma.push_tokens.createMany({ data: tokens });
+
+		await run(found.id);
+		const [match] = await matchesOf(lost.id);
+		const push = mockPush();
+		const ctx = systemCtx({ adapters: { ...adapters, push, email: mockEmail() } });
+		for (const job of await notifications(match!.id)) await NotificationsDomain.deliver(job as never, ctx);
+
+		for (const user of [owner, coOwner]) {
+			const rows = await prisma.notifications.findMany({ where: { user_id: user.user_id } });
+			expect(rows.filter((row) => (row.payload as { match_id?: string }).match_id === match!.id)).toHaveLength(1);
+		}
+		expect(await prisma.notifications.count({ where: { user_id: finder.user_id, type: 'match_chip' } })).toBe(0);
+		const to = (user_id: string) => tokens.find((t) => t.user_id === user_id)!.token;
+		expect(push.sent!.map((m) => m.to).sort()).toEqual([to(owner.user_id), to(coOwner.user_id)].sort());
+		expect(push.sent!.find((m) => m.to === to(owner.user_id))!.title).toBe('Številka čipa se ujema · Piki');
+		expect(push.sent!.find((m) => m.to === to(coOwner.user_id))!.title).toBe('Chip number matches · Piki');
+		expect(JSON.stringify(push.sent)).not.toContain(number);
+
+		// A rejected match is moot: dropped, nothing more delivered.
+		await prisma.matches.update({ where: { id: match!.id }, data: { state: 'rejected' } });
+		const again = mockPush();
+		await NotificationsDomain.deliver(
+			{
+				user_id: owner.user_id,
+				type: 'match_chip',
+				payload: { template: 'match_chip', match_id: match!.id, report_id: lost.id },
+				dedupe_key: randomUUID(),
+			} as never,
+			systemCtx({ adapters: { ...adapters, push: again, email: mockEmail() } })
+		);
+		expect(again.sent).toEqual([]);
 	});
 });
