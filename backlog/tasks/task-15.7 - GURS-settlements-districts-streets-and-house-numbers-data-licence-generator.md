@@ -3,11 +3,11 @@ id: TASK-15.7
 title: >-
   GURS settlements, districts, streets and house numbers: data, licence,
   generator
-status: To Do
+status: In Progress
 assignee:
   - '@backend-dev'
 created_date: '2026-10-15 00:11'
-updated_date: '2026-10-15 00:36'
+updated_date: '2026-10-15 02:08'
 labels:
   - be
   - 'est:S'
@@ -40,13 +40,15 @@ Branch: agent/task-15.7-gurs-places
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Settlements, city districts, streets and house numbers are downloaded from the GURS WFS layers in the description; supabase/seed/geo/LICENSE.md gains their source, data type, data-state date, licence (CC BY 4.0), the changes made and SL/EN attribution lines for place search, and the reproduce steps.
-- [ ] #2 scripts/geo-places.mjs writes a deterministic gzipped snapshot to supabase/seed/geo/ with the C6 fields: places (GURS EID as id, kind, name with district prefixes such as 'Četrtna skupnost' stripped and all-caps or lower-case names normalised, alt_name from NAZIV_DJ, normalisePlace search text, municipality id = GURS SIFRA, settlement id for streets, weight = house-number count, inner point or a point on the street, settlement and district polygons simplified to about 5 %) and addresses (place id, number, suffix, point); committed files total at most 8 MB; Node stdlib only (node:zlib), mapshaper one-off through npx as in TASK-6.1.
-- [ ] #3 node --test checks counts against the numbers recorded in LICENSE.md, unique ids, valid polygons, that every street and address links to an existing place and municipality, that normalisePlace matches the C6 definition, and that 'Trubarjeva cesta 5' in Ljubljana, the district 'Šiška' and one village address without streets resolve to the expected points.
+- [x] #1 Settlements, city districts, streets and house numbers are downloaded from the GURS WFS layers in the description; supabase/seed/geo/LICENSE.md gains their source, data type, data-state date, licence (CC BY 4.0), the changes made and SL/EN attribution lines for place search, and the reproduce steps.
+- [x] #2 scripts/geo-places.mjs writes a deterministic gzipped snapshot to supabase/seed/geo/ with the C6 fields: places (GURS EID as id, kind, name with district prefixes such as 'Četrtna skupnost' stripped and all-caps or lower-case names normalised, alt_name from NAZIV_DJ, normalisePlace search text, municipality id = GURS SIFRA, settlement id for streets, weight = house-number count, inner point or a point on the street, settlement and district polygons simplified to about 5 %) and addresses (place id, number, suffix, point); committed files total at most 8 MB; Node stdlib only (node:zlib), mapshaper one-off through npx as in TASK-6.1.
+- [x] #3 node --test checks counts against the numbers recorded in LICENSE.md, unique ids, valid polygons, that every street and address links to an existing place and municipality, that normalisePlace matches the C6 definition, and that 'Trubarjeva cesta 5' in Ljubljana, the district 'Šiška' and one village address without streets resolve to the expected points.
 <!-- AC:END -->
 
 ## Implementation Notes
 
 <!-- SECTION:NOTES:BEGIN -->
 CHANGE from content (TASK-91): supabase/seed/geo/LICENSE.md must include SL/EN search-attribution lines that match content key location.search_attribution (P5).
+
+Snapshot: supabase/seed/geo/places.ndjson.gz (1.1 MB) + addresses.tsv.gz (4.6 MB), format in LICENSE.md. Regenerated twice, byte-identical. Generator: node scripts/geo-places.mjs <work-dir>.
 <!-- SECTION:NOTES:END -->
