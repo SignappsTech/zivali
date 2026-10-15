@@ -52,7 +52,7 @@ Root scripts. Until the piece a script needs is merged, it prints which task add
 | `pnpm test`                 | `turbo run test` (Vitest, jest-expo)                                                                              | now                                    |
 | `pnpm format`               | Prettier write; `pnpm format:check` checks only                                                                   | now                                    |
 | `pnpm verify`               | every gate, required before reporting a task done (see below)                                                     | now                                    |
-| `pnpm quality`              | quality kit: axe, console errors, visual, Lighthouse CI, links → quality-report                                   | TASK-4.1                               |
+| `pnpm quality`              | build + serve web on :8080 (`QUALITY_PORT`): axe, console, consent, visual, Lighthouse CI, links → quality-report | now                                    |
 | `pnpm db:start` / `db:stop` | local Supabase stack lifecycle                                                                                    | TASK-3.2                               |
 | `pnpm db:migrate`           | `prisma migrate dev` in apps/api (new migration from schema changes)                                              | TASK-3.7                               |
 | `pnpm db:reset`             | `prisma migrate reset --force`, then `prisma db seed`                                                             | TASK-3.7                               |

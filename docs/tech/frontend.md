@@ -1,4 +1,4 @@
-source: docs/04-technical-design.md (v0.9) §Architecture, §Technology stack, §Repository structure; docs/05-quality-security-plan.md (v0.6); amended 2026-10-15: proxy.ts, APP_VERSION, RTK Query §Quality gates, §Definition of Done
+source: docs/04-technical-design.md (v0.9) §Architecture, §Technology stack, §Repository structure; docs/05-quality-security-plan.md (v0.8); amended 2026-10-15: proxy.ts, APP_VERSION, RTK Query §Quality gates, §Definition of Done
 
 # Frontend slice (apps/web, apps/mobile, packages/{tokens,api,i18n,analytics})
 
@@ -103,7 +103,7 @@ Only dependencies listed in `docs/tech/adr/017-dependency-allowlist.md` (or inst
 | `pnpm --filter web e2e` | Playwright against the local stack (starts the web app) |
 | `pnpm --filter @zivali/i18n check` | key parity and SL plurals |
 | `pnpm --filter @zivali/tokens build` | tokens + contrast lint |
-| `pnpm quality` | quality kit: axe + console errors + visual + Lighthouse CI + links |
+| `pnpm quality` | quality kit on a production build at :8080 (`QUALITY_PORT` if taken): axe + console errors + consent guard + visual (`tests/quality/`), Lighthouse CI (`lighthouserc.json`), links; reports in `quality-report/`. A story with a new public route adds it to `PAGES` in `tests/quality/quality.spec.mjs` and `lighthouserc.json`; a protected flow (report, sign-in, chat, payment) adds its routes to `PROTECTED`. In other Playwright specs use `expectNoAdSlots(page)` / `expectNoAnalyticsBeforeConsent(page)` from `tests/quality/guards.mjs`. Visual baselines: `pnpm quality --update-snapshots` after the design lead approves, then commit them |
 | `pnpm verify` | everything CI runs (required before reporting done) |
 | `pnpm jobs:drain` | run queued jobs once (matching, notifications) when testing flows |
 | `eas build --profile development --platform android` | Android dev client (cloud; `EXPO_TOKEN` set). iOS waits for the Apple account |

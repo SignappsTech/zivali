@@ -1,7 +1,7 @@
 ---
 doc_id: DOC-05
 title: Quality and Security Plan
-version: 0.7
+version: 0.8
 status: Draft
 date: 2026-10-15
 owner: Tech Lead
@@ -14,7 +14,7 @@ approvals:
 
 # Quality gates (automated, on every PR)
 
-Run by GitHub Actions once a remote exists; until then `pnpm verify` runs the same list locally and is part of the DoD (ADR-016).
+Run by GitHub Actions once a remote exists; until then `pnpm verify` runs the same list locally and is part of the DoD (ADR-016). The web gates (performance, accessibility, SEO, links, ads, consent, visual) live in the quality kit, `lighthouserc.json` and `tests/quality/`, which `pnpm quality` runs against a production build on :8080 (TASK-4.1).
 
 | Gate | Tool | Threshold | Blocks merge |
 |---|---|---|---|
@@ -26,17 +26,17 @@ Run by GitHub Actions once a remote exists; until then `pnpm verify` runs the sa
 | i18n completeness | `@zivali/i18n` check | 0 missing keys, SL plurals complete | Yes |
 | Token contrast | `@zivali/tokens` build | every declared pair ≥ its minimum (body 7:1 target, AA floor 4.5:1, UI 3:1) | Yes |
 | End-to-end smoke | Playwright against local stack (SL and EN) | all pass | Yes |
-| Performance | Lighthouse CI, mobile preset | perf ≥ 90 (map page ≥ 80), LCP < 2.5 s, CLS < 0.1, initial JS < 250 KB gz (map route excluded), total page weight warn > 1 MB | Yes |
+| Performance | Lighthouse CI, mobile preset | perf ≥ 90 (map page ≥ 80), LCP < 2.5 s, CLS < 0.1, initial JS < 250 KB gz (map route excluded), total page weight warn > 1 MB, best practices ≥ 90 | Yes |
 | Accessibility | axe (Playwright, WCAG 2.0/2.1/2.2 A+AA tags) + Lighthouse | 0 violations, Lighthouse a11y ≥ 95 | Yes |
 | SEO | Lighthouse | ≥ 95 on public pages (home, detail, partners, legal) | Yes |
-| HTML validity | N/A — server-rendered React; covered by axe, Lighthouse and React's own checks | - | - |
+| HTML validity | N/A — server-rendered React; covered by axe, Lighthouse and React's own checks (html-validate dropped from the quality kit) | - | - |
 | Links | linkinator on the running web app | 0 broken internal links | Yes |
-| No ads in protected flows | Playwright route test: report-lost, report-found, sign-in, chat, payment routes contain no `[data-ad-slot]` | 0 | Yes |
-| Analytics without consent | Playwright: no request to `*.google-analytics.com` / `googletagmanager.com`, no `_ga` cookie before consent | 0 | Yes |
+| No ads in protected flows | Playwright `expectNoAdSlots(page)` (`tests/quality/guards.mjs`): report-lost, report-found, sign-in, chat, payment routes contain no `[data-ad-slot]` | 0 | Yes |
+| Analytics without consent | Playwright `expectNoAnalyticsBeforeConsent(page)`: no request to `*.google-analytics.com` / `googletagmanager.com` / `analytics.google.com`, no `_ga*` cookie before consent | 0 | Yes |
 | Mobile build health | `expo export` (web + native bundles) and `tsc` | success | Yes |
 | Offline cache privacy (NFR-OFFLINE) | jest test dumps the local SQLite schema and rows | only C17 public columns; 0 exact coordinates, chips, contacts, chat | Yes |
 | Offline queue idempotency | jest (outbox) + API test (`Idempotency-Key` replay) | a replayed submission yields 1 report and the same manage token | Yes |
-| Visual | Playwright screenshots vs approved mockups | ≤ 2 % pixel diff | Review (design lead) |
+| Visual | Playwright screenshots (390 and 1440 px) vs baselines committed once the design lead approves the build against the mockup | ≤ 2 % pixel diff | Review (design lead) |
 | Security | secretlint, `pnpm audit --audit-level high`, tech-lead security review on est:M/L PRs | no high/critical, no secrets | Yes |
 
 # Testing strategy
@@ -113,3 +113,4 @@ Run by GitHub Actions once a remote exists; until then `pnpm verify` runs the sa
 | 0.5 | 2026-10-15 | Brief v1.0: pgTAP replaced by API tests with a permission matrix and the ADR-021 exposure tests; security and processors updated for the Express API, R2 and Hetzner |
 | 0.6 | 2026-10-15 | Own geocoder (ADR-007 revised): MapTiler and Photon removed from CSP and processors, geocoder points never in URLs or logs; R2 in the EU jurisdiction |
 | 0.7 | 2026-10-15 | Data minimisation line aligned with the coarsened point and 30-day post-closure blur; CH-32 handed to a validation task (opt-in OpenAPI extension) |
+| 0.8 | 2026-10-15 | Quality kit in place (TASK-4.1): where the web gates live, best-practices threshold, guard helpers named, visual baselines approved by the design lead, html-validate dropped |
