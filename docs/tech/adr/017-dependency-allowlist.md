@@ -1,6 +1,6 @@
 # ADR-017: Dependency allowlist
 
-- Status: Accepted (revised 2026-10-15 for the Express + Prisma API, ADR-020) · Date: 2026-10-14 · Owner: Tech Lead
+- Status: Accepted (revised 2026-10-15 for the Express + Prisma API, ADR-020, and the RTK Query toolchain) · Date: 2026-10-14 · Owner: Tech Lead
 - Source: lean-architecture rule "every new dependency needs an ADR"
 
 ## Decision
@@ -10,7 +10,9 @@ Runtime dependencies outside this list (and outside what the Expo SDK 57 templat
 | Package | Where | Why (and what it replaces) |
 |---|---|---|
 | `@supabase/supabase-js`, `@supabase/ssr` | web, mobile (auth and Realtime only), api (Admin API only) | Supabase Auth sessions, Realtime Broadcast (ADR-023) |
-| `@tanstack/react-query` | web (client components), mobile | Cache, retry, offline for client fetching over the REST API |
+| `@reduxjs/toolkit` ^2.13 | `@zivali/api` (dependency) | RTK Query slice and store: cache, retry, hooks for client fetching over the REST API (ADR-020 §Client); replaces TanStack Query |
+| `react-redux` ^9.3 | `@zivali/api` (peer + dev); web, mobile (`<Provider>`) | Store provider and hooks |
+| Dev: `@rtk-query/codegen-openapi` ^2.2 | `@zivali/api` | Generates endpoints and hooks from `apps/api/openapi.json` (`gen:api`) |
 | `zod` 4 | validation (all) | Request schemas and DTOs shared by the API and the clients |
 | `react-hook-form`, `@hookform/resolvers` | web, mobile | Forms with zod; RN Reusables and shadcn form patterns |
 | `next-intl` / `use-intl` | web / mobile | ADR-008 |
@@ -35,7 +37,7 @@ Runtime dependencies outside this list (and outside what the Expo SDK 57 templat
 | `pino`, `pino-http` (`pino-pretty` dev only) | api | Structured logs with request ids |
 | `@aws-sdk/client-s3`, `@aws-sdk/s3-request-presigner` | api | Cloudflare R2 (and MinIO locally) with presigned URLs (ADR-014) |
 | `sharp` | api (worker) | Photo re-encoding and variants (ADR-014) |
-| `@asteasolutions/zod-to-openapi` | api | OpenAPI from the zod schemas (docs outside production) |
+| `@asteasolutions/zod-to-openapi` | api, validation (registry) | OpenAPI spec from the zod schemas (`apps/api/openapi.json`) feeding the RTK codegen. Swagger UI (`swagger-ui-express` or equivalent) gets its row when its deferred task is picked up |
 | `stripe` | api | ADR-011 |
 | `pdfkit` | api (worker) | Receipt and fiscal invoice PDFs (klikni uses it; TASK-92) |
 | `@anthropic-ai/sdk` | api worker (M3) | ADR-012 |
@@ -50,7 +52,7 @@ Runtime dependencies outside this list (and outside what the Expo SDK 57 templat
 
 Prettier runs as its own step (`prettier --check .` in `pnpm verify`, `prettier --write` in lint-staged after `eslint --fix`), not as an ESLint rule. klikni's lint-staged already runs both tools in that order, so its `eslint-plugin-prettier` only repeats Prettier inside ESLint, slower and with noisier reports; the formatting result is the same (decision 2026-10-15, TASK-3.8).
 
-Not used, on purpose: `eslint-plugin-prettier` and `eslint-plugin-import` (above), commitlint (commit format stays `<task-id>: <what>`, ADR-020), Redis, BullMQ, Socket.IO, node-cron, multer, morgan, nodemailer/pug, jsonwebtoken (klikni items replaced, ADR-020), MMKV, WatermelonDB/RxDB, TanStack query persisters (ADR-019), date libraries (use `Intl`), lodash, axios, state managers (React state + TanStack Query), CSS-in-JS, Redux, UUID packages (`crypto.randomUUID`), HEIC converters, TUS clients, Mapbox/Google SDKs, i18next.
+Not used, on purpose: `eslint-plugin-prettier` and `eslint-plugin-import` (above), commitlint (commit format stays `<task-id>: <what>`, ADR-020), Redis, BullMQ, Socket.IO, node-cron, multer, morgan, nodemailer/pug, jsonwebtoken (klikni items replaced, ADR-020), MMKV, WatermelonDB/RxDB, query persisters such as redux-persist (ADR-019), date libraries (use `Intl`), lodash, axios, state managers beyond the RTK Query store (no extra Redux slices without an ADR), CSS-in-JS, UUID packages (`crypto.randomUUID`), HEIC converters, TUS clients, Mapbox/Google SDKs, i18next.
 
 ## Consequences
 

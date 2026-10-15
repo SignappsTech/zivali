@@ -15,7 +15,7 @@ Web and mobile need the same backend behaviour. The client fixed Supabase (Postg
 - **Edge Functions (Deno)** only where a secret or an external call is needed: `worker` (async jobs, ADR-004), `payments-checkout`, `stripe-webhook`, `submit-lead`, and later AI and imports. Shared pure logic (zod schemas, chip normalisation, matching score) lives in `packages/validation` and is imported by Edge Functions through `supabase/functions/deno.json` import map.
 - **Next.js route handlers** only for web-specific concerns: Open Graph images, poster PDF, ad click redirect, `.well-known` files, health. No business logic duplicated in Next.
 - **Realtime**: Postgres Changes on `messages` and `notifications` with RLS for the pilot scale (5k MAU). Upgrade path: Broadcast from Database with private channels if connection or change volume grows.
-- **Client data fetching**: web server components read with the cookie session (`@supabase/ssr`); client components and the whole mobile app use TanStack Query over `@zivali/api` functions (cache, retry, offline-friendly).
+- **Client data fetching**: web server components read with the cookie session (`@supabase/ssr`); client components and the whole mobile app use RTK Query over `@zivali/api` (ADR-020 §Client: cache, retry, generated hooks).
 
 ## Alternatives
 

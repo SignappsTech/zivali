@@ -39,7 +39,7 @@ Branch: agent/task-12.5-mob-data
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
 - [ ] #1 apps/mobile/lib/db opens zivali.db with expo-sqlite and runs versioned local migrations (PRAGMA user_version) that create every C17 table: drafts, outbox, outbox_photos, reports_cache, cache_areas, geofences, geofence_events.
-- [ ] #2 lib/net.ts exposes useNetworkState() and isUnmetered() from expo-network and drives TanStack onlineManager; no TanStack query persister is installed.
+- [ ] #2 lib/net.ts exposes useNetworkState() and isUnmetered() from expo-network and drives RTK Query setupListeners (refetch on reconnect); no query-cache persister (redux-persist) is installed.
 - [ ] #3 lib/offline/wipe.ts implements wipeLocalData({ reason }) per C17 (cache, areas, drafts, thumbnails and draft files, geofence cleanup hook; outbox and manage tokens only on account deletion) and signOutAndWipe() that asks the caller to resolve pending outbox items first.
 - [ ] #4 File-budget helpers report bytes used by thumbnails and queued photos; jest tests cover migrations from empty and from version n-1, wipe, and that no table outside C17 exists.
 <!-- AC:END -->

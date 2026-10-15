@@ -36,14 +36,15 @@ UI tasks code against these functions while backend tasks implement the RPCs and
 Unblocks on: packages/api foundation: REST client, ApiError, idempotency and query helpers, fixtures merged (TASK-3.5); Domain wire types and DTOs, zod request schemas, chip normalisation and breed codes merged (TASK-6.5)
 Design: none (no UI of its own)
 Contracts: C9, C10, C14 (in references); conventions in C1
+Client toolchain: RTK Query + codegen (docs/tech/adr/020-api-architecture.md §Client; frontend.md `@zivali/api`).
 Review: tech-lead code review (full mode); run `pnpm verify` before reporting done.
 Branch: agent/task-6.10-api-collab
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 @zivali/api/chat, notifications, alerts, abuse, payments, ads and partners implement every client function in C9, C10, C11, C13 and C14 over REST, plus Realtime Broadcast subscriptions for conversation:<id> and user:<id> (private channels) that re-fetch on resubscribe.
+- [ ] #1 @zivali/api/chat, notifications, alerts, abuse, payments, ads and partners implement every client function in C9, C10, C11, C13 and C14 as RTK Query endpoints and hooks over REST, Endpoints are RTK Query endpoints: generated from apps/api/openapi.json by `gen:api` (never edited by hand) once the backend task has merged them into the spec; until then `api.injectEndpoints` stubs in src/<domain>.ts follow the contract paths and types, naming the owning backend task, and are deleted when the generated ones land (@zivali/api/rtk, TASK-3.5). Also Realtime Broadcast subscriptions for conversation:<id> and user:<id> (private channels) that re-fetch on resubscribe.
 - [ ] #2 useAd(slot, ctx) returns { ad, loading, error } and never throws to the caller (errors collapse the slot).
 - [ ] #3 startCheckout returns the checkout URL; the web helper redirects and mobile opens it with expo-web-browser.
-- [ ] #4 Fixtures from the contract examples exist for each domain; unit tests cover argument and error mapping.
+- [ ] #4 Fixtures from the contract examples exist for each domain; unit tests cover argument and error mapping with a mock baseQuery.
 <!-- AC:END -->

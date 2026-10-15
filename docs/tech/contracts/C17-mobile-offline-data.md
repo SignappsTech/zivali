@@ -38,8 +38,8 @@ create table geofence_events (report_id text not null, area_key text not null, f
 ## Data seam
 
 - `lib/data/reports.ts` exports `useReportSearch(filters)`, `useReport(code)` and `useMapReports(bbox)`. Screens (map, list, detail) read reports only through these hooks. Online they call `@zivali/api/reports` and upsert the cache; offline (or on network error) they read `reports_cache` and return `{ data, source: 'network' | 'cache', lastSyncAt }`.
-- `lib/net.ts`: `useNetworkState()` from `expo-network`, wired to TanStack `onlineManager`; `isUnmetered()`.
-- No TanStack query persister. Private queries stay in memory.
+- `lib/net.ts`: `useNetworkState()` from `expo-network`, wired to RTK Query `setupListeners` (refetch on reconnect); `isUnmetered()`.
+- No query-cache persister (no redux-persist). Private queries stay in memory.
 
 ## Sync (TASK-85)
 

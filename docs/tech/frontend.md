@@ -1,4 +1,4 @@
-source: docs/04-technical-design.md (v0.7) §Architecture, §Technology stack, §Repository structure; docs/05-quality-security-plan.md (v0.6) §Quality gates, §Definition of Done
+source: docs/04-technical-design.md (v0.8) §Architecture, §Technology stack, §Repository structure; docs/05-quality-security-plan.md (v0.6); amended 2026-10-15: proxy.ts, APP_VERSION, RTK Query §Quality gates, §Definition of Done
 
 # Frontend slice (apps/web, apps/mobile, packages/{tokens,api,i18n,analytics})
 
@@ -11,7 +11,7 @@ Read this, your task packet, the contract(s) it references, the design page slic
 | Framework | Next.js 16 App Router, React 19, TypeScript strict | Expo SDK 57, Expo Router, React Native 0.86.3 as pinned by the SDK 57 template (New Architecture), development builds (`expo-dev-client`) |
 | UI | shadcn/ui (Radix) + Tailwind 4, themed by `@zivali/tokens/{tokens,web}.css` | React Native Reusables + NativeWind 4.2 / Tailwind 3.4, `@zivali/tokens/native.css` + `tailwind-preset` |
 | Icons, toasts, sheets | `@phosphor-icons/react`, `sonner`, shadcn `sheet` | `phosphor-react-native`, `sonner-native`, `@gorhom/bottom-sheet` |
-| Data | REST API (`apps/api`, Express) through `@zivali/api`: server components call it with the user's access token from the `@supabase/ssr` cookie session; client components use TanStack Query | TanStack Query over `@zivali/api`; `supabase-js` only for the Auth session (in `expo-sqlite` localStorage) and Realtime |
+| Data | REST API (`apps/api`, Express) through `@zivali/api`: server components call it with the user's access token from the `@supabase/ssr` cookie session; client components use RTK Query (generated hooks from `@zivali/api`, Redux `<Provider>` in `providers.tsx`; `transpilePackages: ['@zivali/api']` in `next.config`) | RTK Query over `@zivali/api` (Redux `<Provider>` in the root layout); `supabase-js` only for the Auth session (in `expo-sqlite` localStorage) and Realtime |
 | Forms | react-hook-form + zod (`@zivali/validation`) | same |
 | i18n | next-intl (SL unprefixed, EN `/en`) | use-intl with the same catalogues |
 | Maps | `maplibre-gl` (dynamic import, client only) | `@maplibre/maplibre-react-native` (dev build) |
@@ -31,27 +31,27 @@ Only dependencies listed in `docs/tech/adr/017-dependency-allowlist.md` (or inst
       app/captcha/page.tsx, app/dev/{kit,checkout}/page.tsx (dev only), public/.well-known/*
       components/ui/               shadcn components, edited to the design system (§10)
       components/<feature>/        feature components; components/report/slots/<slot>.tsx (C15)
-      lib/supabase/{server,client,middleware}.ts (Auth session and Realtime only), lib/api.ts (API client with the session token), lib/env.ts, lib/query.ts
+      lib/supabase/{server,client,middleware}.ts (Auth session and Realtime only), lib/api.ts (API client with the session token), lib/env.ts, lib/store.ts (Redux store from `createApiStore`)
       content/legal/{sl,en}/*.mdx  legal pages
       e2e/                         Playwright specs (smoke + flows)
-      middleware.ts                next-intl + Supabase session refresh
+      proxy.ts                     Next 16 (was middleware.ts): CSP nonce, Supabase session refresh, next-intl; matcher excludes /api, /captcha, /dev/*, static files (C15)
     apps/mobile/
       app/_layout.tsx, app/(tabs)/{index,report,inbox,profile}.tsx, app/r/[code]/…, app/m.tsx,
       app/report/{lost,found}/…, app/pets/…, app/inbox/[id].tsx, app/settings/…, app/auth/…, app/payments/return.tsx
       components/ui/               RN Reusables components, edited to the design system
-      components/<feature>/, lib/{supabase,env,query,net}.ts, e2e/*.yaml (Maestro)
+      components/<feature>/, lib/{supabase,env,store,net}.ts, e2e/*.yaml (Maestro)
       lib/db/ (expo-sqlite store + local migrations), lib/data/reports.ts (only path for report lists: network or offline cache),
       lib/offline/{sync,outbox,geofence,wipe}.ts (C17)
       app.config.ts (bundle id si.signapps.zivali, scheme zivali), eas.json, firebase.json
-    packages/tokens/   build.mjs → dist/ (C2)                packages/api/  src/<domain>.ts (C3–C14), geocode.ts
+    packages/tokens/   build.mjs → dist/ (C2)                packages/api/  src/rtk.ts, src/pagination.ts, src/generated/endpoints.ts (gen:api), openapi-config.ts, geocode.ts
     packages/i18n/     messages/{sl,en}/<ns>.json (C16)      packages/analytics/ src/ (C12)
     packages/types/src/domain/*  (read-only for you)       packages/validation/src/* (read-only for you)
 
 ## Ownership and shared files
 
-- **Root layouts and providers** are owned in this order, each later task depends on the earlier: web `app/[locale]/layout.tsx`, `providers.tsx`, `middleware.ts`: scaffold → i18n web → tokens/theme binding → web shell → auth web / analytics web / consent web. Mobile `app/_layout.tsx`: scaffold → i18n mobile → tokens/theme binding → mobile shell → analytics mobile / auth mobile / consent mobile. Touch them only if your task is in that chain.
+- **Root layouts and providers** are owned in this order, each later task depends on the earlier: web `app/[locale]/layout.tsx`, `providers.tsx`, `proxy.ts`: scaffold → i18n web → tokens/theme binding → web shell → auth web / analytics web / consent web. Mobile `app/_layout.tsx`: scaffold → i18n mobile → tokens/theme binding → mobile shell → analytics mobile / auth mobile / consent mobile. Touch them only if your task is in that chain.
 - **i18n**: add keys only in your feature's namespace files (`packages/i18n/messages/{sl,en}/<ns>.json`); both locales in the same commit. Copy comes from the content slice; if missing, use a clear SL+EN draft and list the keys in your report (`CHANGE docs/content/...` request).
-- **`@zivali/api`**: a thin fetch client over the REST API (C1): `createApiClient({ baseUrl, getAccessToken, deviceId, locale })` adds `Authorization`, `x-device-id`, `Accept-Language` and `Idempotency-Key` where the contract requires it, parses `{ error }` bodies into `ApiError`. One file per domain (`src/reports.ts`, `src/chat.ts`, …), exported by subpath (`@zivali/api/reports`); no barrel edits. Functions take the client as first argument (`getReport(api, code)`). The backend task implements the endpoint; until it is merged, tests use `createMockApi()` with fixtures from the contract example (`src/__fixtures__/<domain>.ts`). Never wait for the backend. Never call Supabase tables from the apps: `supabase-js` is only for Auth and Realtime channels.
+- **`@zivali/api`** (ADR-020 §Client): `createApiClient({ baseUrl, getAccessToken, deviceId, locale })` adds `Authorization`, `x-device-id`, `Accept-Language` and `Idempotency-Key` where the contract requires it and parses `{ error }` bodies into `ApiError` (`x-request-id` response header → `ApiError.requestId`, C1). `src/rtk.ts` turns it into the RTK Query `baseQuery` and exports `createApiStore`; endpoints and hooks are **generated** from `apps/api/openapi.json` by `@rtk-query/codegen-openapi` (`openapi-config.ts`, `pnpm --filter @zivali/api gen:api` → `src/generated/endpoints.ts`, never edited by hand); keyset helpers in `src/pagination.ts`. Hand-written code is limited to what codegen cannot express (`geocode.ts`, photo upload with progress, Realtime, hooks such as `useSession`) and is exported by subpath (`@zivali/api/<name>`); no barrel edits. Until a backend endpoint is merged and in the spec, UI tasks use `createMockApi()` and fixtures (`src/__fixtures__/<domain>.ts`); never wait for the backend. Never call Supabase tables from the apps: `supabase-js` is only for Auth and Realtime channels.
 - **Report detail slots**: fill your slot in `components/report/slots/<name>.tsx`; do not edit the detail page layout unless your task owns it.
 - Generated files (`packages/tokens/dist`, `packages/i18n/dist`) are never edited by hand.
 - **Root config** (`package.json`, `turbo.json`, `tsconfig.base.json`, `eslint.config.mjs`, `.prettierrc.json`, `.editorconfig`, `.husky/`, `pnpm-workspace.yaml`) is owned by the workspace tasks (TASK-3.1, TASK-3.8; TASK-4.1 and TASK-4.2 finish the `quality` and `verify` scripts); do not edit it otherwise. App package names are unscoped: `web`, `mobile` (and `api`), so `pnpm --filter web …` works; shared packages are `@zivali/*`. Each app adds its framework ESLint preset in its own `apps/<app>/eslint.config.mjs` that spreads the root base, and its own `tsconfig.json` that extends `../../tsconfig.base.json`. Add app dependencies to the app's `package.json`. The one exception to the rule above: a dependency with an install script fails `pnpm install` until it is listed under `allowBuilds` in `pnpm-workspace.yaml`; add one line (`<name>: true`) only if the script is really needed, and name it in your report.
@@ -64,14 +64,14 @@ Only dependencies listed in `docs/tech/adr/017-dependency-allowlist.md` (or inst
 - Web: server components by default; `"use client"` only where needed; MapLibre, PDF and heavy code via dynamic import; images with explicit width/height; no layout shift (reserved sizes for photos and ad slots).
 - Mobile: safe areas, OS font scaling up to 200 % (`maxFontSizeMultiplier` 2), permission primer before every OS prompt (camera, location, notifications) with a working fallback on denial.
 - Privacy: never render or log exact coordinates, chip numbers, emails or phone numbers of other users; `track()` only with registered params (C12); no PII in `console` output.
-- Device storage (mobile): only the C17 tables (own drafts and outbox, public report cache) and secure-store tokens; never persist chat, matches, notifications or other private queries (no TanStack persister); screens read report lists only through `lib/data/reports.ts`; sign-out calls `wipeLocalData()`.
+- Device storage (mobile): only the C17 tables (own drafts and outbox, public report cache) and secure-store tokens; never persist chat, matches, notifications or other private queries (no redux-persist or other query persistence); screens read report lists only through `lib/data/reports.ts`; sign-out calls `wipeLocalData()`.
 - Accessibility first: every map has a list alternative; every icon-only button has an accessible name; dialogs and sheets trap and restore focus.
 - No ad component in protected flows (C15): report-lost, report-found, manage, inbox and conversations, sign-in/up/reset, payments return.
 
 ## Error handling
 
 - `@zivali/api` throws `ApiError { code, message, details }` (codes in C1). Map `code` to `t('errors.<code>')`; show inline for forms, toast for background actions, an error state component for pages.
-- Network errors: TanStack Query retries 2× (not for 4xx); forms keep user input; drafts persist (C4 §Drafts).
+- Network errors: RTK Query (`@zivali/api/rtk` `createApiStore`; hooks generated by `pnpm --filter @zivali/api gen:api`) retries 2× for network/5xx errors on queries only, never for 4xx or mutations; forms keep user input; drafts persist (C4 §Drafts).
 - Unknown errors: generic localised message + `request id` if available; never raw messages or stack traces.
 - Next: `error.tsx` per route group, `not-found.tsx`, and the 410 "no longer available" page for `GONE`.
 
@@ -80,7 +80,7 @@ Only dependencies listed in `docs/tech/adr/017-dependency-allowlist.md` (or inst
 | Web | Mobile | Purpose |
 |---|---|---|
 | `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | `EXPO_PUBLIC_SUPABASE_URL`, `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Supabase (local values printed by `supabase status`; staging = project `najdimo`, new-style publishable key) |
-| `NEXT_PUBLIC_APP_URL`, `APP_ENV` (`local`/`staging`/`production`) | `EXPO_PUBLIC_APP_URL`, `EXPO_PUBLIC_APP_ENV` | links, guards for dev pages |
+| `NEXT_PUBLIC_APP_URL`, `APP_ENV` (`local`/`staging`/`production`), `APP_VERSION` (default `dev`; returned by `/api/health`; also in `.env.example`) | `EXPO_PUBLIC_APP_URL`, `EXPO_PUBLIC_APP_ENV` | links, guards for dev pages |
 | `NEXT_PUBLIC_ANALYTICS_PROVIDER` (`mock`/`ga4`), `NEXT_PUBLIC_GA_MEASUREMENT_ID`; server-only `GA_PROPERTY_ID`, `GA_SERVICE_ACCOUNT_KEY_FILE` (GA Data API for partner stats behind a flag, admin scripts; the key file stays in `.secrets/`) | `EXPO_PUBLIC_ANALYTICS_PROVIDER` (`mock`/`firebase`) | C12 |
 | `NEXT_PUBLIC_TURNSTILE_SITE_KEY` (empty = captcha off) | uses web `/captcha` page | C7 |
 | `NEXT_PUBLIC_API_URL` (local `http://localhost:4000`) | `EXPO_PUBLIC_API_URL` (on a device use the LAN IP or a tunnel) | REST API base URL (C1) |
@@ -88,7 +88,7 @@ Only dependencies listed in `docs/tech/adr/017-dependency-allowlist.md` (or inst
 | - | `GOOGLE_SERVICES_JSON`, `GOOGLE_SERVICE_INFO_PLIST` (EAS file secrets; locally from `.secrets/`) | Firebase config |
 | - | `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID`, `EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID` | native Google sign-in (credential-gated) |
 
-`lib/env.ts` validates with zod at startup and fails fast with the variable name.
+`lib/env.ts` validates with zod at startup and fails fast with the variable name. `NEXT_PUBLIC_API_URL` has no default outside `APP_ENV=local` (a missing value must fail, not fall back to localhost).
 
 ## Commands
 

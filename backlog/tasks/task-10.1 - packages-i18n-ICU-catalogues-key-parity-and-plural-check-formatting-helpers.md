@@ -42,5 +42,5 @@ Branch: agent/task-10.1-i18n-pkg
 - [x] #1 packages/i18n has messages/{sl,en}/<namespace>.json with common, errors (one key per C1 code), nav and footer seeded, and a build that merges them into dist/sl.json and dist/en.json.
 - [x] #2 `pnpm --filter @zivali/i18n check` fails on missing keys, placeholder mismatches, SL plurals without one/two/few/other, EN plurals without one/other and empty strings; tests use failing fixtures.
 - [x] #3 Format helpers (date, relative time, EUR, distance band, count) use Intl with Europe/Ljubljana; tests include '1 prijava', '2 prijavi', '3 prijave', '5 prijav' and '5,00 €'.
-- [x] #4 The README shows server use from Edge Functions (createTranslator from use-intl/core with the merged catalogue).
+- [x] #4 The README shows server use from the Node API worker (createTranslator from use-intl/core with the merged catalogue), plus a one-line Deno note.
 <!-- AC:END -->

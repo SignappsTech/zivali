@@ -6,7 +6,7 @@ Read this, your task packet and the contract(s) it references. Conventions for e
 
 ## Stack
 
-- **apps/api**: Node 22, TypeScript (repo version), ESM, **Express 5**, **Prisma 7** (`prisma-client` generator, `@prisma/adapter-pg`, `prisma.config.ts`, multi-file schema in `prisma/schemas/`, TypedSQL in `prisma/sql/`), zod (`@zivali/validation`), pino + pino-http, helmet, cors, compression, express-rate-limit, `jose` (JWKS), **pg-boss** (jobs, ADR-022), `@aws-sdk/client-s3` + presigner (Cloudflare R2 / MinIO, ADR-014), sharp (worker), Stripe SDK, zod-to-openapi. Dev `tsx watch`, build `tsup`, tests **Vitest + Supertest** against the real local database.
+- **apps/api**: Node 22, TypeScript (repo version), ESM, **Express 5**, **Prisma 7** (`prisma-client` generator, `@prisma/adapter-pg`, `prisma.config.ts`, multi-file schema in `prisma/schemas/`, TypedSQL in `prisma/sql/`), zod (`@zivali/validation`), pino + pino-http, helmet, cors, compression, express-rate-limit, `jose` (JWKS), **pg-boss** (jobs, ADR-022), `@aws-sdk/client-s3` + presigner (Cloudflare R2 / MinIO, ADR-014), sharp (worker), Stripe SDK, zod-to-openapi (spec written to `apps/api/openapi.json`, consumed by the RTK codegen in `@zivali/api`; Swagger UI deferred). Dev `tsx watch`, build `tsup`, tests **Vitest + Supertest** against the real local database.
 - **Supabase** provides only Postgres 17 (PostGIS, pgvector), Auth (email, Google, Apple, anonymous, TOTP, Turnstile) and Realtime Broadcast (chat and inbox, ADR-023). No Edge Functions, no RPC-as-API, no Supabase Storage.
 - **Database lockdown (ADR-021)**: all app tables in schema `app` (not exposed by PostgREST), no grants for `anon`/`authenticated`, RLS enabled with no policies on every table. Only `realtime.messages` has a policy (chat membership).
 - Shared pure TypeScript (zod schemas and DTOs, chip normalisation, matching score) lives in `packages/validation` and is imported by the API and both apps.
@@ -126,7 +126,7 @@ Domains throw `AppError`; unknown errors become `INTERNAL` (500) with the reques
 | `node scripts/deploy.mjs staging [--dry-run]` | build, push, migrate, deploy to the VPS (ADR-016) |
 | `pnpm verify` | everything CI runs (required before reporting done) |
 
-Local endpoints: API http://localhost:4000 (docs at /v1/docs), Supabase http://127.0.0.1:54321 (Auth, Realtime), Studio http://127.0.0.1:54323, mail catcher http://127.0.0.1:54324, DB `postgresql://postgres:postgres@127.0.0.1:54322/postgres`, MinIO http://127.0.0.1:9000 (console :9001). Docker Desktop must be running (Windows).
+Local endpoints: API http://localhost:4000 (OpenAPI spec in apps/api/openapi.json; Swagger UI deferred), Supabase http://127.0.0.1:54321 (Auth, Realtime), Studio http://127.0.0.1:54323, mail catcher http://127.0.0.1:54324, DB `postgresql://postgres:postgres@127.0.0.1:54322/postgres`, MinIO http://127.0.0.1:9000 (console :9001). Docker Desktop must be running (Windows).
 
 Windows port clash: on some machines Hyper-V reserves TCP ports 54243–54342 (check with `netsh interface ipv4 show excludedportrange protocol=tcp`), so the default local Supabase ports fail to start. Override them with the `SUPABASE_*_PORT` variables described in `supabase/README.md`.
 

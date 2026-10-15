@@ -34,15 +34,16 @@ UI tasks code against these functions while backend tasks implement the RPCs, so
 Unblocks on: packages/api foundation: REST client, ApiError, idempotency and query helpers, fixtures merged (TASK-3.5); Domain wire types and DTOs, zod request schemas, chip normalisation and breed codes merged (TASK-6.5)
 Design: none (no UI of its own)
 Contracts: C3, C4, C6 (in references); conventions in C1
+Client toolchain: RTK Query + codegen (docs/tech/adr/020-api-architecture.md §Client; frontend.md `@zivali/api`).
 Review: tech-lead code review (full mode); run `pnpm verify` before reporting done.
 Branch: agent/task-6.9-api-core
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 @zivali/api/auth (Supabase Auth helpers), me, pets, reports, photos (POST /v1/photos, presigned PUT with progress, /complete), geocode and matches implement every client function in C3, C4, C5, C6 and C8 over REST with the contract paths and types.
+- [ ] #1 @zivali/api/auth (Supabase Auth helpers), me, pets, reports, photos (POST /v1/photos, presigned PUT with progress, /complete), geocode and matches implement every client function in C3, C4, C5, C6 and C8 as RTK Query endpoints and hooks over REST with the contract paths and types. Endpoints are RTK Query endpoints: generated from apps/api/openapi.json by `gen:api` (never edited by hand) once the backend task has merged them into the spec; until then `api.injectEndpoints` stubs in src/<domain>.ts follow the contract paths and types, naming the owning backend task, and are deleted when the generated ones land (@zivali/api/rtk, TASK-3.5).
 - [ ] #2 useSession() and useRequireAuth() (C3) combine the Supabase session with GET /v1/me on web and mobile.
-- [ ] #3 Fixtures from the contract examples exist for each domain; unit tests cover argument and error mapping with createMockApi().
-- [ ] #4 Functions whose endpoint is not merged yet name the owning backend task in a code comment and still type-check.
-- [ ] #5 geocode implements searchPlaces and reversePlace over POST /v1/geo/search and /v1/geo/reverse (C6) with no third-party provider and no key; the debounce (300 ms, minimum 3 characters, abort previous) lives in a shared hook; unit tests use createMockApi().
+- [ ] #3 Fixtures from the contract examples exist for each domain; unit tests cover argument and error mapping (store + mock baseQuery or createMockApi()).
+- [ ] #4 Endpoints whose backend task is not merged yet name the owning backend task in a code comment and still type-check; no TanStack Query is used (ADR-020 §Client).
+- [ ] #5 geocode implements searchPlaces and reversePlace over POST /v1/geo/search and /v1/geo/reverse (C6) with no third-party provider and no key; the debounce (300 ms, minimum 3 characters, abort previous) lives in a shared hook over the RTK Query lazy query; unit tests use a mock baseQuery.
 <!-- AC:END -->

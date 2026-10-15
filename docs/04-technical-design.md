@@ -1,7 +1,7 @@
 ---
 doc_id: DOC-04
 title: Technical Design
-version: 0.7
+version: 0.8
 status: Draft
 date: 2026-10-15
 owner: Tech Lead
@@ -56,10 +56,10 @@ approvals:
 | Mobile offline store | expo-sqlite (drafts, outbox, public report cache), expo-network, expo-background-task, expo-task-manager + expo-location geofencing (M3) | SDK 57 | ADR-019, C17 |
 | Tokens | `packages/tokens` generator from `docs/design/tokens.json` | - | CSS vars, TW4 theme, TW3 preset, TS values, map style, contrast lint |
 | Validation and DTOs | zod in `@zivali/validation` | 4.x | shared by the API and both apps |
-| Client data | `@zivali/api` (fetch over REST), TanStack Query 5; supabase-js / `@supabase/ssr` for Auth sessions and Realtime only | - | ADR-020, ADR-023 |
+| Client data | `@zivali/api` (RTK Query + `@rtk-query/codegen-openapi` over REST, Redux store); supabase-js / `@supabase/ssr` for Auth sessions and Realtime only | - | ADR-020, ADR-023 |
 | Forms | react-hook-form + zod resolver | - | both platforms |
 | i18n | next-intl (web), use-intl (mobile and worker), ICU catalogues | next-intl 4 | ADR-008 |
-| API | Express 5, Prisma 7 (`prisma-client`, adapter-pg, TypedSQL), pino, helmet, `jose`, zod-to-openapi; tsx (dev), tsup (build) | - | ADR-020, klikni conventions |
+| API | Express 5, Prisma 7 (`prisma-client`, adapter-pg, TypedSQL), pino, helmet, `jose`, zod-to-openapi (spec to `apps/api/openapi.json`); tsx (dev), tsup (build) | - | ADR-020, klikni conventions |
 | Jobs | pg-boss in schema `pgboss` | 12.x | ADR-022 |
 | Database and auth | Supabase Free: Postgres 17, PostGIS, pgvector, Auth, Realtime | CLI 2.x | EU Frankfurt; DB lockdown ADR-021 |
 | Realtime | Supabase Realtime Broadcast on private channels | - | ADR-023 |
@@ -160,7 +160,7 @@ All tables in schema `app` as Prisma models (snake_case plural names, `id uuid`,
 | C18 | Responsible-shelter directory | API / data | docs/tech/contracts/C18-shelter-directory.md |
 | C19+ | M3–M6 (AI extraction, embeddings, organisations, intake/CSV, chip lookup, export/delete, owner and Vet Partner subscriptions, moderation, sponsor invoices, fiscal invoices) | - | written at each milestone's breakdown |
 
-**API standards**: see C1: `API_URL/v1`, Bearer Supabase token, `x-device-id`, JSON snake_case, no envelope, lists `{ items, next_cursor }`, errors `{ error: { code, message, details?, issues? } }` with stable codes, `Idempotency-Key` on retryable writes, OpenAPI at `/v1/docs` outside production. Webhooks dedupe by provider event id.
+**API standards**: see C1: `API_URL/v1`, Bearer Supabase token, `x-device-id`, JSON snake_case, no envelope, lists `{ items, next_cursor }`, errors `{ error: { code, message, details?, issues? } }` with stable codes, `Idempotency-Key` on retryable writes, OpenAPI spec at `apps/api/openapi.json` (Swagger UI deferred). Webhooks dedupe by provider event id.
 
 # Authentication and authorization
 
@@ -285,3 +285,4 @@ Full records: `docs/tech/adr/NNN-*.md` (context, decision, alternatives, consequ
 | 0.5 | 2026-10-15 | Brief v1.0 architecture: Express + Prisma API with a domain layer (ADR-020, klikni conventions), DB lockdown (ADR-021), pg-boss (ADR-022), Realtime Broadcast chat (ADR-023), R2 photos (ADR-014), Hetzner + Docker Compose + Caddy (ADR-016); ADR-003/004 superseded; contracts rewritten from RPC to REST; C18 shelter directory (FR-044); CRHŽ instead of CRPsi; SEO hub routes |
 | 0.6 | 2026-10-15 | TASK-3.8: formatting tools (import-x, eslint-config-prettier, husky + lint-staged; ADR-017), root scripts for Prisma and jobs, no Edge Functions in the workspace |
 | 0.7 | 2026-10-15 | Own geocoder on GURS data in Postgres replaces MapTiler/Photon (ADR-007 revised: MapTiler Free is non-commercial, LQ-21 privacy; about 60 MB), `MAPTILER_API_KEY` no longer needed; R2 buckets in the EU jurisdiction (ADR-014); reward escrow dropped (brief v1.1): no Stripe Connect, payouts or platform fee, display-only reward on lost reports (C4) |
+| 0.8 | 2026-10-15 | Client decision: klikni API toolchain (zod-to-openapi spec, RTK Query + codegen replace TanStack Query; Swagger UI deferred); Next 16 proxy.ts, APP_VERSION, x-request-id (C1), proxy matcher (C15); ADR-008 server text via Node worker; ADR-017 rows |

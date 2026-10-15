@@ -48,6 +48,8 @@ Route groups: `app/[locale]/(public)`, `(app)`, `(admin)`, `(portal)`; guards in
 | `/captcha` | Turnstile host page for the mobile WebView (posts token via `postMessage`) |
 | `/.well-known/apple-app-site-association`, `/.well-known/assetlinks.json` | universal / app links (TASK-12) |
 | `/dev/kit`, `/dev/checkout` | dev only (`APP_ENV !== 'production'`) |
+
+`apps/web/proxy.ts` (Next 16 successor of middleware.ts: CSP nonce, session refresh, next-intl) must exclude `/api`, `/captcha`, `/dev/*`, `/.well-known/*`, `/r/*/opengraph-image`, `/r/*/poster.pdf` and static files from its matcher; the task that adds `/captcha` or `/dev/*` extends the matcher in the same commit.
 | `/sitemap.xml`, `/robots.txt` | M5 (TASK-72); until then robots disallow staging |
 
 Hub index rules (TASK-72): national, the 12 regional and the 12 city hubs are indexable; other locations only with at least 3 open listings, otherwise `noindex`. `/r/[code]` stays the listing URL.

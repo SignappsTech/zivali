@@ -44,7 +44,7 @@ The client wants to own the backend in a stack they know: Express + Prisma, the 
 - **HTTP**: base path `/v1`, kebab-case plural nouns, no verb routes except clear actions as sub-resources (`POST /v1/matches/:id/confirm`). Responses without an envelope (klikni style): single resources as objects, lists as `{ items, next_cursor }` (keyset). Errors always `{ error: { code, message, details?, issues? } }` with stable codes (C1).
 - Config read once from `lib/config.ts` (zod-validated, fails at start with the variable name); no `dotenv` calls in modules.
 - Logging with pino (JSON in production, pretty locally), request id per request, no PII; `console.*` is a lint error in `apps/api`.
-- OpenAPI from the zod schemas with `@asteasolutions/zod-to-openapi` (the registry part of klikni's pipeline only), served at `/v1/docs` outside production.
+- OpenAPI from the zod schemas with `@asteasolutions/zod-to-openapi` (registry in `@zivali/validation`), written to `apps/api/openapi.json`; see §Client for the consumer. Swagger UI at `/docs` is deferred (low-priority task).
 - Middleware order in `app.ts`: request id → pino-http → helmet → cors (allowlist: web origins; requests without Origin allowed for mobile) → compression → `express.json({ limit: '1mb' })` (raw body kept only on the Stripe webhook route) → rate limit (global soft limit) → `/ping` and `/v1` routers → 404 → error middleware.
 - Auth: Supabase access token in `Authorization: Bearer`; verified with `jose.jwtVerify` against `${SUPABASE_URL}/auth/v1/.well-known/jwks.json` (asymmetric keys; locally `SUPABASE_JWT_SECRET` HS256 fallback), audience `authenticated`. `req.user = { user_id, role, is_anonymous, aal, email_verified }`; role read from `app.profiles` (cached 60 s).
 
@@ -77,7 +77,7 @@ The client wants to own the backend in a stack they know: Express + Prisma, the 
 | Payment provider adapter + Stripe adapter + webhook handler | Adopt | Same shape; domain-event dispatcher skipped (single flow) |
 | Socket.IO + Redis adapter | Skip | Supabase Realtime Broadcast (ADR-023), no Redis |
 | Jest + ts-jest + Supertest with Prisma fully mocked, generated test suites | Simplify | Supertest kept; Vitest (repo standard) against the real local Postgres; no generated mock suites |
-| zod-to-openapi registry + JSDoc comment parser + RTK codegen + Insomnia + Docusaurus | Simplify | zod-to-openapi registry only, docs at `/v1/docs`; thin hand-written client in `packages/api` |
+| zod-to-openapi registry + JSDoc comment parser + RTK codegen + Insomnia + Docusaurus | Adopt (client decision 2026-10-15), simplify | zod-to-openapi registry (no JSDoc parser) + `@rtk-query/codegen-openapi`; Swagger UI deferred; no Insomnia or Docusaurus |
 | No response envelope; keyset `next_cursor` pagination | Adopt | Lists as `{ items, next_cursor }` everywhere |
 | Mixed URL casing and verb routes, `/api` without version | Skip | `/v1`, kebab-case plural nouns |
 | tsx for dev, tsup for build | Adopt | Same toolchain (tsx watch instead of nodemon) |
@@ -86,6 +86,10 @@ The client wants to own the backend in a stack they know: Express + Prisma, the 
 | CI without lint, types or tests; pm2 + rsync deploy | Skip | Full gates in CI; Docker Compose + Caddy on Hetzner (client decision) |
 | Path aliases in tsconfig, tsup, jest and shell profiles | Skip | Package subpath exports and relative imports |
 | `.github/copilot-instructions.md` style conventions file | Simplify | `docs/tech/backend.md` is the conventions file for agents |
+
+### Client (amendment 2026-10-15, client decision)
+
+klikni-style API toolchain end to end: OpenAPI generated from the zod schemas via `@asteasolutions/zod-to-openapi` (registry in `@zivali/validation`, spec at `apps/api/openapi.json`); **RTK Query + `@rtk-query/codegen-openapi`** generate the client in `packages/api` (`openapi-config.ts`, `gen:api`, `src/generated/endpoints.ts`) with our `createApiClient` as the `baseQuery` (`src/rtk.ts`, `createApiStore`, ApiError mapping, retry only network/5xx on queries); Redux `<Provider>` in web and mobile. **Replaces TanStack Query everywhere** (and the hand-written per-domain client). Swagger UI at `/docs` (local/staging; prod admin-only or off) is deferred to a later low-priority task.
 
 Security note for the client: klikni's `apps/api/pool/pool.js` contains hard-coded database credentials in git; rotate that password.
 
@@ -98,4 +102,4 @@ Security note for the client: klikni's `apps/api/pool/pool.js` contains hard-cod
 
 - Every endpoint enforces permissions in code; the database is locked down (ADR-021) and tests cover both.
 - One more deployable (api + worker image); the VPS hosts it (ADR-016).
-- `packages/api` becomes a thin fetch client over REST; `@zivali/validation` holds the request schemas and response DTOs shared with the API.
+- `packages/api` is the RTK Query client generated from the OpenAPI spec over a thin fetch `baseQuery`; `@zivali/validation` holds the request schemas and response DTOs shared with the API.
