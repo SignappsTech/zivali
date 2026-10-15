@@ -138,6 +138,11 @@ const SAMPLES: Record<Exclude<NotificationType, 'manage_link'>, Record<string, u
 		paid_at: iso,
 		receipt_ref: 'R-2026-0001',
 		is_test: true,
+		has_invoice: true,
+		invoice_number: 'SPLET-API1-7',
+		zoi: 'a7e5f55e1dbb48b799268e1a6d8618a3',
+		has_eor: true,
+		eor: 'eb6fbd57-2aa9-4c4b-9b93-a9d8d6d4c7b1',
 	},
 };
 

@@ -50,7 +50,9 @@ export function invoiceLines(i: InvoicePdfInput): PdfLine[] {
 	return [
 		{ text: 'Najdimo', style: 'title' },
 		{ text: `Račun št. ${i.number}`, style: 'heading' },
-		...(i.test ? [{ text: 'Testni račun: plačilo ni bilo izvedeno in račun ni davčno veljaven.', style: 'note' } as const] : []),
+		...(i.test
+			? [{ text: 'Testni račun: kartica ni bila bremenjena, račun ni davčno veljaven.', style: 'note' } as const]
+			: []),
 		{ text: `Izdajatelj: Najdimo, davčna številka ${i.tax_number}` },
 		{ text: `Datum in čas izdaje: ${issuedAt.format(i.issued_at)}` },
 		{ text: `Poslovni prostor: ${i.premise_id}, elektronska naprava: ${i.device_id}` },
