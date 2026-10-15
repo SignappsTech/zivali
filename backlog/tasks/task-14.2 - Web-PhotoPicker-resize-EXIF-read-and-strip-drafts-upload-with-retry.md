@@ -1,11 +1,11 @@
 ---
 id: TASK-14.2
 title: 'Web PhotoPicker: resize, EXIF read and strip, drafts, upload with retry'
-status: In Progress
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:12'
-updated_date: '2026-10-15 05:18'
+updated_date: '2026-10-15 07:35'
 labels:
   - fe
   - 'est:M'
