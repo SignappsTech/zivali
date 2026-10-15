@@ -1,11 +1,11 @@
 ---
 id: TASK-23.1
 title: 'Nearby alerts: subscription API and spatial fan-out job'
-status: In Progress
+status: Done
 assignee:
   - '@backend-dev'
 created_date: '2026-10-14 22:13'
-updated_date: '2026-10-15 15:54'
+updated_date: '2026-10-15 17:31'
 labels:
   - be
   - 'est:M'
