@@ -3,11 +3,11 @@ id: TASK-6.12
 title: >-
   API auth and platform middleware: JWKS verification, guards, rate limits,
   idempotency, ctx, audit, public config
-status: To Do
+status: In Progress
 assignee:
   - '@backend-dev'
 created_date: '2026-10-14 23:35'
-updated_date: '2026-10-15 04:40'
+updated_date: '2026-10-15 05:43'
 labels:
   - be
   - 'est:M'

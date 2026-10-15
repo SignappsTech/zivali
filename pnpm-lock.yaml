@@ -95,6 +95,9 @@ importers:
       helmet:
         specifier: ^8.3.0
         version: 8.3.0
+      jose:
+        specifier: ^6.2.12
+        version: 6.2.12
       pg:
         specifier: ^8.23.1
         version: 8.23.1
@@ -129,9 +132,6 @@ importers:
       '@types/supertest':
         specifier: ^7.2.1
         version: 7.2.1
-      jose:
-        specifier: ^6.2.12
-        version: 6.2.12
       pino-pretty:
         specifier: ^13.2.0
         version: 13.2.0
