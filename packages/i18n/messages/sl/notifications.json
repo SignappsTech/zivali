@@ -1,4 +1,15 @@
 {
+	"title": "Obvestila",
+	"mark_all": "Označi vse kot prebrano",
+	"group_today": "Danes",
+	"group_week": "Ta teden",
+	"group_earlier": "Prej",
+	"row_unread_a11y": "{title}, neprebrano",
+	"reminder_keep": "Nadaljuj iskanje",
+	"reminder_close": "Zaključi iskanje",
+	"empty_title": "Obvestil še ni",
+	"empty_body": "Tu bodo možna ujemanja, sporočila in opozorila o izgubljenih živalih v bližini.",
+	"empty_action": "Nastavi opozorila",
 	"match_chip": {
 		"title": "Številka čipa se ujema · {has_name, select, yes {{pet_name}} other {{species, select, dog {vaš pes} cat {vaša mačka} other {vaša žival}}}}",
 		"body": "{other_type, select, sighted {Opažena žival ima enako številko čipa, a se je morda že premaknila. Odprite ujemanje.} other {Najdena žival ima enako številko čipa. Odprite ujemanje.}}"
