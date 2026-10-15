@@ -13,6 +13,8 @@ COPY . .
 # The production dependencies are plain JS (Prisma 7 query compiler is wasm, pg is pure JS), so they are the same
 # for every platform.
 RUN pnpm install --frozen-lockfile --ignore-scripts --filter api...
+# The worker renders push and email text from the merged i18n catalogues (dist/*.json, bundled by tsup).
+RUN pnpm --filter @zivali/i18n build
 RUN cd apps/api && pnpm exec prisma generate && pnpm build
 RUN pnpm --filter api deploy --prod --ignore-scripts /out
 

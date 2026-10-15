@@ -4,7 +4,14 @@ import { offAdapter, pickProvider } from '../select.ts';
 import { brevoEmail } from './brevo.ts';
 import { mockEmail } from './mock.ts';
 
-export type EmailMessage = { to: string; subject: string; html: string; text?: string };
+export type EmailMessage = {
+	to: string;
+	subject: string;
+	html: string;
+	text?: string;
+	/** Extra headers, e.g. List-Unsubscribe on alert emails. */
+	headers?: Record<string, string>;
+};
 export type EmailAdapter = { send(message: EmailMessage): Promise<{ id: string }>; sent?: EmailMessage[] };
 
 export function createEmail(cfg: Config): EmailAdapter {

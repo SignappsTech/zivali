@@ -1,0 +1,50 @@
+{
+	"match_chip": {
+		"title": "Številka čipa se ujema · {has_name, select, yes {{pet_name}} other {{species, select, dog {vaš pes} cat {vaša mačka} other {vaša žival}}}}",
+		"body": "{other_type, select, sighted {Opažena žival ima enako številko čipa, a se je morda že premaknila. Odprite ujemanje.} other {Najdena žival ima enako številko čipa. Odprite ujemanje.}}"
+	},
+	"match_suggested": {
+		"title": "{strength, select, strong {Zelo verjetno ujemanje} other {Verjetno ujemanje}} · {has_name, select, yes {{pet_name}} other {{species, select, dog {vaš pes} cat {vaša mačka} other {vaša žival}}}}",
+		"body": "Morda se z iskanjem ujema {other_type, select, sighted {{species, select, dog {opažen pes} cat {opažena mačka} other {opažena žival}}} other {{species, select, dog {najden pes} cat {najdena mačka} other {najdena žival}}}}. Poglejte fotografije in presodite sami."
+	},
+	"match_confirmed": {
+		"title": "Ujemanje je potrjeno",
+		"body": "Oseba, ki žival išče, meni, da je to njena žival. Odprite pogovor."
+	},
+	"chat_message": {
+		"title": "Novo sporočilo · {preview_alias}",
+		"body": "Odprite pogovor in preberite sporočilo."
+	},
+	"nearby_lost": {
+		"title": "{species, select, dog {Izgubljen pes} cat {Izgubljena mačka} other {Izgubljena žival}} v vaši bližini",
+		"body": "{has_area, select, yes {{area_name}, } other {}}{distance_band, select, lt1 {manj kot 1 km} 1to3 {1–3 km} 3to10 {3–10 km} gt10 {več kot 10 km} other {v bližini}} od vašega območja. Ste {species, select, dog {ga} other {jo}} morda videli?"
+	},
+	"report_reminder": {
+		"title": "Še iščete žival?",
+		"body": "{has_name, select, yes {{pet_name}} other {{species, select, dog {Vaš pes} cat {Vaša mačka} other {Vaša žival}}}}: iščete že {day, plural, one {# dan} two {# dneva} few {# dni} other {# dni}}. Nadaljujte iskanje ali ga zaključite.",
+		"action_keep": "Nadaljuj iskanje",
+		"action_close": "Zaključi iskanje"
+	},
+	"report_expiring": {
+		"title": "{report_type, select, lost {Iskanje se bo kmalu zaključilo} other {Prijava bo kmalu potekla}}",
+		"body": "{report_type, select, lost {{has_name, select, yes {{pet_name}} other {{species, select, dog {Vaš pes} cat {Vaša mačka} other {Vaša žival}}}}: iskanje se čez {days_left, plural, one {# dan} two {# dneva} few {# dni} other {# dni}} zaključi. Nadaljujte ga z enim dotikom.} other {Prijava poteče čez {days_left, plural, one {# dan} two {# dneva} few {# dni} other {# dni}}, ker ni bilo posodobitev. Podaljšajte jo.}}",
+		"action": "{report_type, select, lost {Nadaljuj iskanje} other {Podaljšaj za 30 dni}}"
+	},
+	"report_closed": {
+		"title": "{report_type, select, lost {Iskanje je zaključeno} other {Prijava je zaključena}}",
+		"body": "{report_type, select, lost {{has_name, select, yes {{pet_name}} other {{species, select, dog {Vaš pes} cat {Vaša mačka} other {Vaša žival}}}}: iskanje je zaključeno, ker ni bilo posodobitev. Znova ga odprete v {reopen_days, plural, one {# dnevu} two {# dneh} few {# dneh} other {# dneh}}.} other {Prijava je zaključena, ker ni bilo posodobitev. Znova jo odprete v {reopen_days, plural, one {# dnevu} two {# dneh} few {# dneh} other {# dneh}}.}}",
+		"action": "Odpri znova"
+	},
+	"report_hidden": {
+		"title": "Prijava je v pregledu",
+		"body": "Prijavo je začasno umaknila naša ekipa in zaenkrat ni javno vidna. Odprite jo za več."
+	},
+	"report_reunited": {
+		"title": "{species, select, dog {Pes} cat {Mačka} other {Žival}} je spet doma",
+		"body": "Žival, ki ste jo prijavili, je spet doma. Hvala, da ste pomagali."
+	},
+	"payment_receipt": {
+		"title": "Potrdilo o plačilu",
+		"body": "{amount}, {purpose, select, tip {prispevek v zahvalo} other {prispevek}}. Hvala.{is_test, select, yes { Testno plačilo.} other {}}"
+	}
+}

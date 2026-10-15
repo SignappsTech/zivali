@@ -12,6 +12,9 @@ const EnvSchema = z.object({
 	APP_ENV: z.enum(['local', 'staging', 'production']).default('local'),
 	APP_VERSION: z.string().default('dev'),
 	PORT: z.coerce.number().int().positive().default(4000),
+	// Public base URLs: links in emails (web app) and the signed one-click unsubscribe link (API).
+	API_URL: z.url().default('http://localhost:4000'),
+	APP_URL: z.url().default('http://localhost:3000'),
 	DATABASE_URL: z.url().refine((url) => new URL(url).searchParams.get('schema') === 'app', {
 		message: 'must end with ?schema=app (ADR-021)',
 	}),

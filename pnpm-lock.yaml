@@ -84,6 +84,9 @@ importers:
       '@prisma/client':
         specifier: 7.10.0
         version: 7.10.0(prisma@7.10.0(@types/node@22.20.5)(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@6.0.3))(typescript@6.0.3)
+      '@zivali/i18n':
+        specifier: workspace:*
+        version: link:../../packages/i18n
       '@zivali/types':
         specifier: workspace:*
         version: link:../../packages/types
@@ -126,6 +129,9 @@ importers:
       swagger-ui-express:
         specifier: ^5.0.1
         version: 5.0.1(express@5.3.0(supports-color@10.2.2))
+      use-intl:
+        specifier: ^4.14.9
+        version: 4.14.9(@types/react@19.3.0)(react@19.2.3)
       zod:
         specifier: ^4.6.7
         version: 4.6.7

@@ -1,6 +1,7 @@
-// notify.send stub (TASK-6.3): logs and completes; the notifications task (TASK-22.3) replaces it.
+// notify.send (C10): one notification to one user; NotificationsDomain.deliver parses the job and does the work.
+import { NotificationsDomain } from '../domains/notifications/index.ts';
 import type { JobCtx } from './index.ts';
 
-export async function handle(_data: unknown, ctx: JobCtx): Promise<void> {
-	ctx.logger.info('job stub: no handler yet');
+export async function handle(data: unknown, ctx: JobCtx): Promise<void> {
+	await NotificationsDomain.deliver(data, ctx);
 }
