@@ -58,7 +58,8 @@ export const baseQuery: BaseQueryFn<QueryArgs, unknown, QueryError, QueryExtraOp
 			signal,
 			idempotent: extraOptions?.idempotent,
 		});
-		return { data };
+		// A 204 resolves to undefined, which RTK Query's development check reports as "neither data nor error".
+		return { data: data ?? null };
 	} catch (cause) {
 		if (!(cause instanceof ApiError) && !signal.aborted) throw cause;
 		// RTK drops the result of an aborted call; it only has to be an error.

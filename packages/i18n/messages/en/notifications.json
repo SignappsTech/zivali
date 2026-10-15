@@ -1,4 +1,15 @@
 {
+	"title": "Notifications",
+	"mark_all": "Mark all as read",
+	"group_today": "Today",
+	"group_week": "This week",
+	"group_earlier": "Earlier",
+	"row_unread_a11y": "{title}, unread",
+	"reminder_keep": "Keep searching",
+	"reminder_close": "Close search",
+	"empty_title": "No notifications yet",
+	"empty_body": "Possible matches, messages and alerts about lost pets nearby will appear here.",
+	"empty_action": "Set up alerts",
 	"match_chip": {
 		"title": "Chip number matches · {has_name, select, yes {{pet_name}} other {{species, select, dog {your dog} cat {your cat} other {your pet}}}}",
 		"body": "{other_type, select, sighted {A sighted animal has the same chip number, but it may have moved on. Open the match.} other {A found animal has the same chip number. Open the match.}}"
