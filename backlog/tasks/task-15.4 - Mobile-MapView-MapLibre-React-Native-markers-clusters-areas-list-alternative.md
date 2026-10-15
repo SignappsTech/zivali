@@ -3,11 +3,11 @@ id: TASK-15.4
 title: >-
   Mobile MapView: MapLibre React Native, markers, clusters, areas, list
   alternative
-status: To Do
+status: In Progress
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:13'
-updated_date: '2026-10-14 22:41'
+updated_date: '2026-10-15 22:12'
 labels:
   - fe
   - 'est:M'

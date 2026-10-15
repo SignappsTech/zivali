@@ -92,6 +92,8 @@ const config: ExpoConfig = {
 				isAndroidBackgroundLocationEnabled: true,
 			},
 		],
+		// MapLibre Native for MapView (components/map); it never shows or reads the device location itself.
+		'@maplibre/maplibre-react-native',
 		[
 			'expo-splash-screen',
 			{
