@@ -1,7 +1,7 @@
 ---
 doc_id: DOC-04
 title: Technical Design
-version: 0.9
+version: 0.10
 status: Draft
 date: 2026-10-15
 owner: Tech Lead
@@ -177,6 +177,8 @@ All tables in schema `app` as Prisma models (snake_case plural names, `id uuid`,
 | Staging | Hetzner VPS (Compose: caddy, web, api, worker) at `staging.<domain>` / `api.staging.<domain>` (sslip.io name until a domain exists); Supabase project `najdimo` (ref `omtpppzrugibquukhnyl`, eu-central-1, Free); R2 buckets `zivali-*` (EU jurisdiction); EAS profile `preview` | client preview, QA, pilot alpha | GitHub Actions on merge to `main` |
 | Production | same VPS, separate Compose project and hostnames; a second Supabase project in eu-central-1 before public launch; EAS profile `production` (no store submission) | live pilot | tagged release `vX.Y.Z` + manual approval |
 
+**Shared Supabase project (until launch):** staging and production share Supabase project `najdimo` until a separate production project exists. Create that project before public launch (client to-do) and set its URL and keys in the EAS `production` environment.
+
 Configuration through environment variables only (names in `frontend.md` / `backend.md`; values never committed; `.env.local` and `.secrets/` are gitignored; on the VPS `/opt/zivali/<env>/.env`, mode 600). Cache: HTTP caching (Caddy, `Cache-Control` on public endpoints); no Redis. CDN: Cloudflare in front of the R2 media bucket.
 
 **Credentials matrix** (R-001, Q-002, Q-007, Q-009)
@@ -287,3 +289,4 @@ Full records: `docs/tech/adr/NNN-*.md` (context, decision, alternatives, consequ
 | 0.7 | 2026-10-15 | Own geocoder on GURS data in Postgres replaces MapTiler/Photon (ADR-007 revised: MapTiler Free is non-commercial, LQ-21 privacy; about 60 MB), `MAPTILER_API_KEY` no longer needed; R2 buckets in the EU jurisdiction (ADR-014); reward escrow dropped (brief v1.1): no Stripe Connect, payouts or platform fee, display-only reward on lost reports (C4) |
 | 0.8 | 2026-10-15 | Client decision: klikni API toolchain (zod-to-openapi spec, RTK Query + codegen replace TanStack Query; Swagger UI deferred); Next 16 proxy.ts, APP_VERSION, x-request-id (C1), proxy matcher (C15); ADR-008 server text via Node worker; ADR-017 rows |
 | 0.9 | 2026-10-15 | Client decision (CH-25, CH-24): raw GPS never stored, 20–30 m coarsening once at write on device and server, public blur from the coarsened point, post-closure blur job (ADR-006, C6); C4 models/DTOs/limits/query encoding confirmed from TASK-6.5; ADR-017 rows (CH-15, CH-28) |
+| 0.10 | 2026-10-15 | CH-109: §Environments notes that staging and production share Supabase project `najdimo` until a separate production project exists |
