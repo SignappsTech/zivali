@@ -366,12 +366,13 @@ describe('send', () => {
 		const { api, state, reply, reportCalls } = server();
 		state.offline = true;
 		start(api);
-		const { result } = await renderHook(() => outbox.useOutbox());
-		const first = await act(() => outbox.submitReport(input(), { capturedAt: CAPTURED_AT }));
-		const second = await act(() =>
-			outbox.submitReport({ ...input(), type: 'sighted' }, { capturedAt: CAPTURED_AT })
-		);
-		await act(() => outbox.send());
+		// The queue UI's delete, without a mounted screen re-rendering during the send.
+		const { result, unmount } = await renderHook(() => outbox.useOutbox());
+		const { remove } = result.current;
+		await unmount();
+		const first = await outbox.submitReport(input(), { capturedAt: CAPTURED_AT });
+		const second = await outbox.submitReport({ ...input(), type: 'sighted' }, { capturedAt: CAPTURED_AT });
+		await outbox.send();
 
 		state.offline = false;
 		now = T0 + 2 * MINUTE;
@@ -381,9 +382,9 @@ describe('send', () => {
 			await answered;
 			return reply(request);
 		});
-		const sending = act(() => outbox.send());
+		const sending = outbox.send();
 		await waitFor(() => expect(reportCalls()).toHaveLength(1));
-		await act(() => result.current.remove(second.outboxId));
+		await remove(second.outboxId);
 		answer();
 		await sending;
 
