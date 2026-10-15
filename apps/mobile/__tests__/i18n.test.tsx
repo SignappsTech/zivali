@@ -113,3 +113,28 @@ test('after sign-in the profile locale wins over a choice made while signed out'
 	expect(screen.getByText(SL)).toBeOnTheScreen();
 	expect(mockStorage.get('locale')).toBe('sl');
 });
+
+test('a failed profile save resolves { ok: false } and the UI stays switched', async () => {
+	device('sl-SI');
+	const save = jest.fn(() => Promise.reject(new Error('offline')));
+	let result: unknown;
+	function Probe() {
+		const { setLocale } = useLocaleSwitch();
+		const t = useTranslations('nav');
+		return (
+			<Pressable onPress={() => void setLocale('en').then((r) => (result = r))}>
+				<Text>{t('home_label')}</Text>
+			</Pressable>
+		);
+	}
+	await render(
+		<I18nProvider profile={{ locale: 'sl', save }}>
+			<Probe />
+		</I18nProvider>
+	);
+
+	await fireEvent.press(screen.getByText(SL));
+	await act(async () => {});
+	expect(result).toEqual({ ok: false });
+	expect(screen.getByText(EN)).toBeOnTheScreen();
+});

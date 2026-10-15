@@ -23,7 +23,10 @@ function storedLocale(): Locale | null {
 /** A signed-in user's profile locale and its save: `{ locale: me.locale, save: (l) => updateMe({ locale: l }) }`. */
 export type ProfileLocale = { locale: Locale; save: (locale: Locale) => Promise<unknown> };
 
-type LocaleSwitch = { locale: Locale; setLocale: (locale: Locale) => Promise<unknown> };
+type LocaleSwitch = {
+	locale: Locale; /** Resolves `{ ok: false }` when the profile save failed; the UI has switched anyway. */
+	setLocale: (locale: Locale) => Promise<{ ok: boolean }>;
+};
 
 const LocaleContext = createContext<LocaleSwitch | null>(null);
 
@@ -48,11 +51,17 @@ export function I18nProvider({ profile, children }: { profile?: ProfileLocale | 
 
 	const setLocale = useCallback(
 		async (next: Locale) => {
-			if (next === locale) return;
+			if (next === locale) return { ok: true };
 			setCurrent(next);
 			localStorage.setItem(STORAGE_KEY, next);
-			// The UI has switched already; a failed save leaves the profile as it was.
-			if (profile) await profile.save(next);
+			// The UI has switched already; a failed save leaves the profile as it was and is reported, not thrown.
+			if (!profile) return { ok: true };
+			try {
+				await profile.save(next);
+				return { ok: true };
+			} catch {
+				return { ok: false };
+			}
 		},
 		[locale, profile]
 	);
