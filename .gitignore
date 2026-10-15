@@ -36,3 +36,6 @@ supabase/.branches/
 *.log
 .DS_Store
 docs/out/
+
+# devteam run log (local)
+.devteam/
