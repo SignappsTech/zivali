@@ -14,13 +14,16 @@
 		"test": "node --test \"test/*.test.ts\""
 	},
 	"dependencies": {
-		"@reduxjs/toolkit": "^2.13.0"
+		"@reduxjs/toolkit": "^2.13.0",
+		"@zivali/types": "workspace:*"
 	},
 	"peerDependencies": {
+		"@supabase/supabase-js": "^2.117.3",
 		"react": "^19.0.0",
 		"react-redux": "^9.0.0"
 	},
 	"devDependencies": {
+		"@supabase/supabase-js": "^2.117.3",
 		"@rtk-query/codegen-openapi": "^2.2.0",
 		"@types/node": "^22.19.0",
 		"@types/react": "^19.3.0",
