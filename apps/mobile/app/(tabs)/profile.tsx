@@ -1,6 +1,7 @@
 import { useRouter } from 'expo-router';
 import { BellIcon } from 'phosphor-react-native/src/icons/Bell';
 import { BellRingingIcon } from 'phosphor-react-native/src/icons/BellRinging';
+import { CheckIcon } from 'phosphor-react-native/src/icons/Check';
 import { CookieIcon } from 'phosphor-react-native/src/icons/Cookie';
 import { CreditCardIcon } from 'phosphor-react-native/src/icons/CreditCard';
 import { QuestionIcon } from 'phosphor-react-native/src/icons/Question';
@@ -12,6 +13,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocale, useTranslations } from 'use-intl';
 
 import { useSession } from '@zivali/api/auth';
+import type { Me } from '@zivali/types';
+import { useErrorText } from '@/components/auth/parts';
 import { LanguageRow } from '@/components/shell/language';
 import { MenuRow, SignInButtons } from '@/components/shell/parts';
 import {
@@ -24,10 +27,13 @@ import {
 	AlertDialogTitle,
 	AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Icon } from '@/components/ui/icon';
 import { toast } from '@/components/ui/sonner';
 import { Text } from '@/components/ui/text';
+import { resendConfirmation } from '@/lib/auth';
 import { env } from '@/lib/env';
 import { signOutAndWipe } from '@/lib/offline/wipe';
 
@@ -68,12 +74,59 @@ function SignOutRow() {
 	);
 }
 
-// Profile tab (P2 A4 signed out; the rows lead to the settings stack). TASK-9.4 adds the account header and rows.
+/** P13 account header: avatar, name, email with its status word; "Pošlji povezavo" while the address is unconfirmed. */
+function AccountHeader({ me }: { me: Me }) {
+	const t = useTranslations('profile');
+	const router = useRouter();
+	const errorText = useErrorText();
+	const [sending, setSending] = React.useState(false);
+	const name = me.display_name || me.email || '';
+	const sendLink = async () => {
+		if (!me.email) return;
+		setSending(true);
+		try {
+			await resendConfirmation(me.email);
+			router.push({ pathname: '/auth/check-email', params: { email: me.email, sent: '1' } });
+		} catch (failure) {
+			toast.error(errorText(failure));
+		} finally {
+			setSending(false);
+		}
+	};
+	return (
+		<View className="mt-7 flex-row items-center gap-4">
+			<Avatar size={72}>
+				<AvatarFallback label={name}>{name.slice(0, 1).toUpperCase()}</AvatarFallback>
+			</Avatar>
+			<View className="min-w-0 flex-1 items-start">
+				{me.display_name ? <Text className="font-sans-bold text-xl">{me.display_name}</Text> : null}
+				{me.email ? <Text className="text-muted-foreground">{me.email}</Text> : null}
+				{me.email_verified ? (
+					<View accessible className="mt-1 flex-row items-center gap-1.5">
+						<Icon as={CheckIcon} size={16} />
+						<Text className="font-sans-bold text-sm">{t('email_verified')}</Text>
+					</View>
+				) : (
+					<>
+						<Text className="mt-1 font-sans-bold text-sm text-muted-foreground">
+							{t('email_unverified')}
+						</Text>
+						<Button variant="text" className="-ml-3" loading={sending} onPress={sendLink}>
+							{t('email_send_link')}
+						</Button>
+					</>
+				)}
+			</View>
+		</View>
+	);
+}
+
+// Profile tab (P2 A4 signed out; P13 signed in: the account header, then rows into the settings stack).
 export default function ProfileTab() {
 	const t = useTranslations();
 	const locale = useLocale();
 	const router = useRouter();
-	const { session, isAnonymous, loading } = useSession();
+	const { session, me, isAnonymous, loading } = useSession();
 	if (loading) return <View className="flex-1 bg-background" />;
 	const signedIn = Boolean(session) && !isAnonymous;
 
@@ -98,6 +151,7 @@ export default function ProfileTab() {
 				<Text role="heading" className="font-display text-3xl tracking-[-0.6px]">
 					{t(signedIn ? 'profile.title' : 'profile.signed_out_title')}
 				</Text>
+				{signedIn && me ? <AccountHeader me={me} /> : null}
 				{signedIn ? (
 					<View className="mt-7 gap-3">
 						<LanguageRow />
