@@ -114,10 +114,19 @@ export const buildSnapshot = ({ municipalities, settlements, districts, streets,
 	for (const f of districts) {
 		const id = f.properties.EID_CETRTNA_SKUPNOST;
 		const ring = (f.geometry.type === 'Polygon' ? [f.geometry.coordinates] : f.geometry.coordinates).flat(2);
-		const [x0, x1, y0, y1] = [0, 1].flatMap((c) => [Math.min(...ring.map((p) => p[c])), Math.max(...ring.map((p) => p[c]))]);
-		const inside = houseNumbers.filter(({ geometry: { coordinates: [x, y] } }) => {
-			return x >= x0 && x <= x1 && y >= y0 && y <= y1 && contains(f.geometry, [x, y]);
-		}).length;
+		const [x0, x1, y0, y1] = [0, 1].flatMap((c) => [
+			Math.min(...ring.map((p) => p[c])),
+			Math.max(...ring.map((p) => p[c])),
+		]);
+		const inside = houseNumbers.filter(
+			({
+				geometry: {
+					coordinates: [x, y],
+				},
+			}) => {
+				return x >= x0 && x <= x1 && y >= y0 && y <= y1 && contains(f.geometry, [x, y]);
+			}
+		).length;
 		places.push(area(f, id, KIND.district, inside));
 	}
 	const dropped = [];
@@ -150,11 +159,19 @@ export const buildSnapshot = ({ municipalities, settlements, districts, streets,
 			fail(`house number ${p.EID_HISNA_STEVILKA}: number ${p.HS_STEVILKA}`);
 		}
 		const [lng, lat] = geometry.coordinates;
-		return { place_id: placeId, number: p.HS_STEVILKA, suffix: p.HS_DODATEK ?? '', lng: round(lng), lat: round(lat) };
+		return {
+			place_id: placeId,
+			number: p.HS_STEVILKA,
+			suffix: p.HS_DODATEK ?? '',
+			lng: round(lng),
+			lat: round(lat),
+		};
 	});
 	addresses.sort(
 		(a, b) =>
-			byId(a.place_id, b.place_id) || a.number - b.number || (a.suffix < b.suffix ? -1 : a.suffix > b.suffix ? 1 : 0)
+			byId(a.place_id, b.place_id) ||
+			a.number - b.number ||
+			(a.suffix < b.suffix ? -1 : a.suffix > b.suffix ? 1 : 0)
 	);
 	for (let i = 1; i < addresses.length; i++) {
 		const [a, b] = [addresses[i - 1], addresses[i]];
@@ -168,8 +185,9 @@ export const buildSnapshot = ({ municipalities, settlements, districts, streets,
 export const serialise = ({ places, addresses }) => ({
 	'places.ndjson': places.map((p) => JSON.stringify(p)).join('\n') + '\n',
 	'addresses.tsv':
-		[ADDRESS_HEADER, ...addresses.map((a) => [a.place_id, a.number, a.suffix, a.lng, a.lat].join('\t'))].join('\n') +
-		'\n',
+		[ADDRESS_HEADER, ...addresses.map((a) => [a.place_id, a.number, a.suffix, a.lng, a.lat].join('\t'))].join(
+			'\n'
+		) + '\n',
 });
 
 export const loadSnapshot = () => {
