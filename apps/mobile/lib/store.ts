@@ -6,15 +6,17 @@ import { getCurrentLocale } from '@/lib/i18n';
 import { setupNetworkListeners } from '@/lib/net';
 import { supabase } from '@/lib/supabase';
 
-// The one Redux store (RTK Query over the REST API, ADR-020). Accept-Language follows the UI locale per request.
-export const store = createApiStore(
-	createApiClient({
-		baseUrl: env.EXPO_PUBLIC_API_URL,
-		locale: getCurrentLocale,
-		// Read on every request, so a refreshed session token is picked up.
-		getAccessToken: async () => (await supabase.auth.getSession()).data.session?.access_token,
-	})
-);
+// The REST API client (ADR-020), also used without the store (photo uploads, outbox). Accept-Language follows the UI
+// locale per request.
+export const apiClient = createApiClient({
+	baseUrl: env.EXPO_PUBLIC_API_URL,
+	locale: getCurrentLocale,
+	// Read on every request, so a refreshed session token is picked up.
+	getAccessToken: async () => (await supabase.auth.getSession()).data.session?.access_token,
+});
+
+// The one Redux store (RTK Query over the API client).
+export const store = createApiStore(apiClient);
 
 // Once, at start-up: refetchOnReconnect/Focus, and the cache follows the Supabase session.
 setupNetworkListeners(store.dispatch);

@@ -1,11 +1,11 @@
 ---
 id: TASK-14.3
 title: 'Mobile PhotoPicker: camera/gallery, resize, EXIF, drafts, upload with retry'
-status: To Do
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:12'
-updated_date: '2026-10-14 22:41'
+updated_date: '2026-10-15 11:53'
 labels:
   - fe
   - 'est:M'
@@ -43,8 +43,8 @@ Branch: agent/task-14.3-photos-mob
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 PhotoPicker (expo-image-picker) takes or picks 1–5 photos after the camera primer, with previews, progress and retry, per P6 and P7.
-- [ ] #2 preparePhoto (mobile) reads EXIF GPS and time, re-encodes with expo-image-manipulator (≤ 1600 px, < 1 MB, 480 px thumbnail) and computes SHA-256; uploaded files carry no EXIF.
-- [ ] #3 Drafts use the C17 store (drafts table, files in documentDirectory/drafts/<id>/) and resume after a failed upload or an app restart; preparePhoto output is reusable by the outbox (C17).
-- [ ] #4 Denied camera permission falls back to the gallery; every photo has alt text from photoAlt().
+- [x] #1 PhotoPicker (expo-image-picker) takes or picks 1–5 photos after the camera primer, with previews, progress and retry, per P6 and P7.
+- [x] #2 preparePhoto (mobile) reads EXIF GPS and time, re-encodes with expo-image-manipulator (≤ 1600 px, < 1 MB, 480 px thumbnail) and computes SHA-256; uploaded files carry no EXIF.
+- [x] #3 Drafts use the C17 store (drafts table, files in documentDirectory/drafts/<id>/) and resume after a failed upload or an app restart; preparePhoto output is reusable by the outbox (C17).
+- [x] #4 Denied camera permission falls back to the gallery; every photo has alt text from photoAlt().
 <!-- AC:END -->
