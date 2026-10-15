@@ -8,6 +8,7 @@ assignee:
   - '@tech-lead'
 created_date: '2026-10-15 03:20'
 labels:
+  - tech
   - chore
   - trivial
   - 'est:XS'

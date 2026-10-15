@@ -758,6 +758,16 @@
 			},
 			"LeadInterest": { "type": "string", "enum": ["ad", "vet_partner", "unsure"] },
 			"Lifestyle": { "type": "string", "enum": ["indoor", "outdoor", "both"] },
+			"LikelyShelter": {
+				"type": "object",
+				"properties": {
+					"slug": { "type": "string" },
+					"name": { "type": "string" },
+					"phone": { "type": "string" },
+					"distance_km": { "type": "number" }
+				},
+				"required": ["slug", "name", "phone", "distance_km"]
+			},
 			"Locale": { "type": "string", "enum": ["sl", "en"] },
 			"Location": {
 				"type": "object",
@@ -980,6 +990,15 @@
 				},
 				"required": ["items", "next_cursor"]
 			},
+			"NearestShelter": {
+				"type": "object",
+				"properties": {
+					"slug": { "type": "string" },
+					"name": { "type": "string" },
+					"distance_km": { "type": "number" }
+				},
+				"required": ["slug", "name", "distance_km"]
+			},
 			"Notification": {
 				"type": "object",
 				"properties": {
@@ -1050,6 +1069,7 @@
 					"days": { "type": "string" },
 					"from": { "type": "string" },
 					"to": { "type": "string" },
+					"closed": { "type": "boolean" },
 					"note_sl": { "type": "string" },
 					"note_en": { "type": "string" }
 				},
@@ -1466,7 +1486,7 @@
 			"ReportType": { "type": "string", "enum": ["lost", "found", "sighted"] },
 			"ReportWarning": { "type": "string", "enum": ["OLD_EVENT"] },
 			"ResponsibleShelter": {
-				"anyOf": [
+				"oneOf": [
 					{
 						"type": "object",
 						"properties": {
@@ -1479,7 +1499,29 @@
 					{
 						"type": "object",
 						"properties": {
-							"status": { "type": "string", "enum": ["unconfirmed", "outside_slovenia"] },
+							"status": { "type": "string", "enum": ["likely"] },
+							"municipality": { "$ref": "#/components/schemas/MunicipalityRef" },
+							"likely_shelter": { "$ref": "#/components/schemas/LikelyShelter" }
+						},
+						"required": ["status", "municipality", "likely_shelter"]
+					},
+					{
+						"type": "object",
+						"properties": {
+							"status": { "type": "string", "enum": ["unconfirmed"] },
+							"municipality": { "$ref": "#/components/schemas/MunicipalityRef" },
+							"nearest": {
+								"type": "array",
+								"items": { "$ref": "#/components/schemas/NearestShelter" },
+								"maxItems": 2
+							}
+						},
+						"required": ["status", "municipality", "nearest"]
+					},
+					{
+						"type": "object",
+						"properties": {
+							"status": { "type": "string", "enum": ["outside_slovenia"] },
 							"municipality": { "$ref": "#/components/schemas/MunicipalityRef" }
 						},
 						"required": ["status"]
@@ -1525,8 +1567,11 @@
 					"address": { "type": "string" },
 					"postal_code": { "type": "string" },
 					"city": { "type": "string" },
+					"lat": { "type": "number" },
+					"lng": { "type": "number" },
 					"phone": { "type": "string" },
 					"phone_display": { "type": "string" },
+					"email": { "type": "string" },
 					"website": { "type": "string" },
 					"opening_hours": { "type": "array", "items": { "$ref": "#/components/schemas/OpeningHours" } },
 					"source": { "type": "string" },
@@ -1573,9 +1618,26 @@
 					"slug": { "type": "string" },
 					"name": { "type": "string" },
 					"city": { "type": "string" },
-					"phone_display": { "type": "string" }
+					"phone_display": { "type": "string" },
+					"phone": { "type": "string" },
+					"verified_at": { "type": "string", "format": "date" },
+					"source": { "type": "string" },
+					"area": { "type": "string" },
+					"municipality_count": { "type": "integer" },
+					"species": { "type": "array", "items": { "$ref": "#/components/schemas/Species" } }
 				},
-				"required": ["slug", "name", "city", "phone_display"]
+				"required": [
+					"slug",
+					"name",
+					"city",
+					"phone_display",
+					"phone",
+					"verified_at",
+					"source",
+					"area",
+					"municipality_count",
+					"species"
+				]
 			},
 			"Size": { "type": "string", "enum": ["xs", "s", "m", "l", "xl"] },
 			"Species": { "type": "string", "enum": ["dog", "cat"] },
@@ -1609,7 +1671,8 @@
 					"quiet_from": { "type": ["string", "null"], "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$" },
 					"quiet_to": { "type": ["string", "null"], "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$" },
 					"supporter_badge_visible": { "type": "boolean" }
-				}
+				},
+				"additionalProperties": false
 			},
 			"UpdatePetInput": {
 				"type": "object",
@@ -1716,6 +1779,192 @@
 					"503": {
 						"description": "Not ready (database down)",
 						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/HealthReady" } } }
+					}
+				}
+			}
+		},
+		"/v1/me": {
+			"get": {
+				"operationId": "getMe",
+				"summary": "Own profile",
+				"description": "The own profile including private fields, plus email, email_verified (auth.users.email_confirmed_at), is_anonymous, role and aal (C3).",
+				"tags": ["me"],
+				"responses": {
+					"200": {
+						"description": "Own profile",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/Me" } } }
+					},
+					"401": {
+						"description": "UNAUTHENTICATED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"429": {
+						"description": "RATE_LIMITED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"500": {
+						"description": "INTERNAL",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					}
+				}
+			},
+			"patch": {
+				"operationId": "updateMe",
+				"summary": "Update own profile",
+				"description": "Partial update of the own profile. home is stored coarsened by 20-30 m (C6); sending the stored point back keeps it. The role cannot be changed here.",
+				"tags": ["me"],
+				"requestBody": {
+					"required": true,
+					"content": { "application/json": { "schema": { "$ref": "#/components/schemas/UpdateMeInput" } } }
+				},
+				"responses": {
+					"200": {
+						"description": "Updated profile",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/Profile" } } }
+					},
+					"400": {
+						"description": "VALIDATION",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"401": {
+						"description": "UNAUTHENTICATED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"429": {
+						"description": "RATE_LIMITED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"500": {
+						"description": "INTERNAL",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					}
+				}
+			}
+		},
+		"/v1/shelters": {
+			"get": {
+				"operationId": "listShelters",
+				"summary": "Registered shelters",
+				"description": "Active shelters sorted by name; `area` is the statistical region in the request language.",
+				"tags": ["shelters"],
+				"responses": {
+					"200": {
+						"description": "Shelters",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ShelterList" } } }
+					},
+					"429": {
+						"description": "RATE_LIMITED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"500": {
+						"description": "INTERNAL",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					}
+				}
+			}
+		},
+		"/v1/shelters/municipalities": {
+			"get": {
+				"operationId": "listMunicipalities",
+				"summary": "Municipalities with their confirmed shelter",
+				"description": "All 212 municipalities sorted by name; `shelter_slug` is null unless the shelter is confirmed.",
+				"tags": ["shelters"],
+				"responses": {
+					"200": {
+						"description": "Municipalities",
+						"content": {
+							"application/json": { "schema": { "$ref": "#/components/schemas/MunicipalityShelterList" } }
+						}
+					},
+					"429": {
+						"description": "RATE_LIMITED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"500": {
+						"description": "INTERNAL",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					}
+				}
+			}
+		},
+		"/v1/shelters/responsible": {
+			"get": {
+				"operationId": "getResponsibleShelter",
+				"summary": "Responsible shelter for a point or a municipality",
+				"description": "`?lat=&lng=` (rounded to 2 decimals by the client) or `?municipality=<slug>`. Only `confirmed` names the responsible shelter; `likely` is unconfirmed; `unconfirmed` lists up to 2 nearest shelters without a phone.",
+				"tags": ["shelters"],
+				"parameters": [
+					{ "schema": { "type": ["number", "null"] }, "required": false, "name": "lat", "in": "query" },
+					{ "schema": { "type": ["number", "null"] }, "required": false, "name": "lng", "in": "query" },
+					{
+						"schema": { "type": "string", "maxLength": 100, "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$" },
+						"required": false,
+						"name": "municipality",
+						"in": "query"
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Lookup result",
+						"content": {
+							"application/json": { "schema": { "$ref": "#/components/schemas/ResponsibleShelter" } }
+						}
+					},
+					"400": {
+						"description": "VALIDATION",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"404": {
+						"description": "NOT_FOUND",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"429": {
+						"description": "RATE_LIMITED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"500": {
+						"description": "INTERNAL",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					}
+				}
+			}
+		},
+		"/v1/shelters/{slug}": {
+			"get": {
+				"operationId": "getShelter",
+				"summary": "Shelter page",
+				"description": "An active shelter with its confirmed municipalities; 404 for an unknown or inactive slug.",
+				"tags": ["shelters"],
+				"parameters": [
+					{
+						"schema": { "type": "string", "maxLength": 100, "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$" },
+						"required": true,
+						"name": "slug",
+						"in": "path"
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Shelter",
+						"content": {
+							"application/json": { "schema": { "$ref": "#/components/schemas/ShelterDetail" } }
+						}
+					},
+					"400": {
+						"description": "VALIDATION",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"404": {
+						"description": "NOT_FOUND",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"429": {
+						"description": "RATE_LIMITED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"500": {
+						"description": "INTERNAL",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
 					}
 				}
 			}

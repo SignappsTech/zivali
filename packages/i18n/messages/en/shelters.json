@@ -44,13 +44,13 @@
 	"what_found_button": "Report a found animal",
 	"stale": "These details were last checked on {date}. Please call before you visit.",
 	"days": {
-		"mon": "Mon",
-		"tue": "Tue",
-		"wed": "Wed",
-		"thu": "Thu",
-		"fri": "Fri",
-		"sat": "Sat",
-		"sun": "Sun"
+		"mon": "Monday",
+		"tue": "Tuesday",
+		"wed": "Wednesday",
+		"thu": "Thursday",
+		"fri": "Friday",
+		"sat": "Saturday",
+		"sun": "Sunday"
 	},
 	"seo_title": "Animal shelters by municipality · Najdimo",
 	"seo_description": "Find the shelter responsible for your municipality: phone, address and opening hours of all {count} dog and cat shelters in Slovenia.",

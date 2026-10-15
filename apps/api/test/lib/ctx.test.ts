@@ -6,6 +6,7 @@ import { afterAll, describe, expect, it } from 'vitest';
 
 import { hashKey } from '../../lib/crypto.ts';
 import { systemCtx, userCtx, type Actor } from '../../lib/ctx.ts';
+import { jobs } from '../../lib/jobs.ts';
 import { optionalAuth } from '../../middleware/auth.middleware.ts';
 import { prisma } from '../../prisma/prisma.ts';
 import { testApp } from '../helpers/app.ts';
@@ -24,14 +25,12 @@ const app = testApp((a) => {
 });
 
 describe('systemCtx', () => {
-	it('has no actor, the default locale, a clock, logger, adapters and the job sender', async () => {
+	it('has no actor, the default locale, a clock, logger, adapters and the job sender', () => {
 		const ctx = systemCtx();
-		expect(ctx).toMatchObject({ actor: null, locale: 'sl' });
+		expect(ctx).toMatchObject({ actor: null, locale: 'sl', jobs });
 		expect(ctx.now).toBeInstanceOf(Date);
 		expect(ctx.logger.info).toBeTypeOf('function');
 		expect(ctx.adapters.storage).toBeDefined();
-		// Until TASK-6.3 wires pg-boss, sending fails loudly instead of dropping the job.
-		await expect(ctx.jobs.send('notify.send', {})).rejects.toThrow(/TASK-6.3/);
 	});
 });
 

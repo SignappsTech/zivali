@@ -657,6 +657,32 @@ EN body:
 2. `If this was you, there is nothing you need to do.`
 3. `If it was not you, change your password and write to us at [client: support email address] right away.`
 
+## 3.6 Sign-in link (`magic_link`)
+
+Passwordless sign-in. Formal address (vikanje). Link validity is not stated in the copy (see Q8).
+
+| | SL | EN |
+|---|---|---|
+| Subject | `Povezava za vpis` | `Your sign-in link` |
+| Preheader | `Povezava za vpis v Najdimo.` | `A link to sign in to Najdimo.` |
+| Button | `Vpiši se` | `Sign in` |
+
+SL body:
+
+1. `Prejeli smo zahtevo za vpis v Najdimo z {{ .Email }}.`
+2. `Z gumbom spodaj se vpišite. Povezava velja omejen čas.`
+3. `Če vpisa niste zahtevali vi, tega e-sporočila ne upoštevajte.`
+4. Fallback: `Gumb ne deluje? Kopirajte to povezavo v brskalnik: {{ .ConfirmationURL }}`
+
+EN body:
+
+1. `We received a request to sign in to Najdimo with {{ .Email }}.`
+2. `Use the button below to sign in. The link is valid for a limited time.`
+3. `If you did not ask for this, you can ignore this email.`
+4. Fallback: `Button not working? Copy this link into your browser: {{ .ConfirmationURL }}`
+
+Button target: `{{ .ConfirmationURL }}`.
+
 # 4. Internal email: new partner enquiry (lead)
 
 SL only. Sent by `submit-lead` to `LEADS_NOTIFY_EMAIL` (the client). No footer reason line, internal layout only. Sender "Najdimo".
@@ -732,7 +758,7 @@ Replies go to the support address (`Reply-To`), never to a no-reply mailbox. The
 
 # 7. Template count
 
-12 notification types (of which `match_chip` with a sighting variant, `report_expiring` and `report_closed` with lost and found/sighted variants, and `nearby_lost` with an optional Vet Partner line), 5 auth emails, 1 internal lead email. Total 18 templates plus the shared layout footer.
+12 notification types (of which `match_chip` with a sighting variant, `report_expiring` and `report_closed` with lost and found/sighted variants, and `nearby_lost` with an optional Vet Partner line), 6 auth emails, 1 internal lead email. Total 19 templates plus the shared layout footer.
 
 # CHANGE requests
 
