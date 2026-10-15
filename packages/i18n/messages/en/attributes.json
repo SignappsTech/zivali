@@ -16,7 +16,7 @@
 		"xl": "Very large"
 	},
 	"size_help_dog": "Very small up to 5 kg, small up to 10 kg, medium up to 25 kg, large up to 40 kg, very large over 40 kg.",
-	"colour": {
+	"colours": {
 		"black": "Black",
 		"white": "White",
 		"grey": "Grey",
@@ -28,21 +28,15 @@
 		"tan": "Tan",
 		"blue_grey": "Blue-grey"
 	},
-	"pattern_dog": {
+	"patterns": {
 		"solid": "Solid",
 		"bicolour": "Two-coloured",
 		"tricolour": "Tricolour",
-		"brindle": "Brindle",
-		"merle": "Merle",
-		"spotted": "Spotted",
-		"other": "Other"
-	},
-	"pattern_cat": {
-		"solid": "Solid",
-		"bicolour": "Two-coloured",
 		"tabby": "Tabby",
 		"tortoiseshell": "Tortoiseshell",
 		"calico": "Calico",
+		"brindle": "Brindle",
+		"merle": "Merle",
 		"spotted": "Spotted",
 		"pointed": "Colourpoint",
 		"other": "Other"
