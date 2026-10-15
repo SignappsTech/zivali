@@ -17,8 +17,8 @@ const seq =
 
 describe('coarsenPoint', () => {
 	const p = { lat: 46.05, lng: 14.51 };
-	it('moves 20-30 m for random inputs', () => {
-		for (let i = 0; i < 2000; i++) {
+	it('moves 20-30 m for 10 000 random samples (crypto random, not seeded)', () => {
+		for (let i = 0; i < 10_000; i++) {
 			const d = dist(p, coarsenPoint(p));
 			expect(d).toBeGreaterThanOrEqual(19.7);
 			expect(d).toBeLessThanOrEqual(30.3);

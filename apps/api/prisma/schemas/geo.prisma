@@ -9,6 +9,7 @@ model regions {
   name_en        String
   geom           Unsupported("extensions.geography(MultiPolygon,4326)")
   municipalities municipalities[]
+  reports        reports[]
 
   @@index([geom], type: Gist)
   @@schema("app")
@@ -23,6 +24,7 @@ model municipalities {
   region     regions                                                @relation(fields: [region_id], references: [id])
   geom       Unsupported("extensions.geography(MultiPolygon,4326)")
   geo_places geo_places[]
+  reports    reports[]
 
   @@index([geom], type: Gist)
   @@schema("app")
