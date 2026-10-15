@@ -83,7 +83,7 @@ Upload states (v0.2): the progress bar carries `photos.progress_a11y` as its acc
 | report_lost.name_label | Ime | Name |
 | report_lost.name_help | Ime, na katero se odziva. | The name your pet answers to. |
 | report_lost.chip_label | Številka čipa (neobvezno) | Chip number (optional) |
-| report_lost.chip_help | Običajno ima 15 števk, na primer 705 1234 5678 901. Nikoli je ne prikažemo javno. | It usually has 15 digits, for example 705 1234 5678 901. We never show it publicly. |
+| report_lost.chip_help | Običajno ima 15 števk, na primer 705 1234 5678 9012. Nikoli je ne prikažemo javno. | It usually has 15 digits, for example 705 1234 5678 9012. We never show it publicly. |
 | report_lost.chip_warning | Številka čipa je običajno dolga 15 števk. Shranili jo bomo kot neznano, preverite jo, ko boste lahko. | Chip numbers usually have 15 digits. We will save it as unknown; please check it when you can. |
 | report_lost.collar_label | Ovratnica (neobvezno) | Collar (optional) |
 | report_lost.collar_placeholder | Na primer: rdeča ovratnica z zvončkom | For example: red collar with a bell |
@@ -256,3 +256,9 @@ The flow start page is public and indexable; the steps are client-side.
 - `CHANGE docs/02-product-requirements.md§FR-023 R-023.1: the numeric range says EUR 0–500, contract C4 says reward_eur 1–10 000; align one with the other (copy uses {max} from config).`
 
 - `CHANGE docs/tech/contracts/C15-routes-deeplinks.md§Web routes: reportLost SL /prijava/izgubljen → /prijava/izgubljena-zival and reportFound /prijava/najden → /prijava/najdena-zival (agree with "žival", clearer for search).`
+
+# Change log
+
+| Date | Change |
+|---|---|
+| 2026-10-15 | CH-79: `chip_help` example is now 15 digits, 705 1234 5678 9012. |

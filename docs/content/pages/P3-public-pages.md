@@ -245,6 +245,8 @@ We only need money to keep the service running: servers, maps and sending alerts
 | Slug | `/kako-deluje` | `/en/how-it-works` |
 | Structured data | `WebPage` + `BreadcrumbList` (Najdimo › Kako deluje) | same |
 
+Breadcrumb back link on T2 and T3 pages: `common.breadcrumb_back` with `{page}` = `common.breadcrumb_home` ("Nazaj na začetno stran" / "Back to the home page").
+
 Alt text: no images on this page.
 
 ---
@@ -664,9 +666,17 @@ Namespace `shelters`. One question, one answer, then the full list. Shelter name
 | shelters.details_link | Delovni čas in naslov | Opening hours and address |
 | shelters.unconfirmed | Za občino {municipality} še nimamo potrjenega zavetišča. Pokličite občino, povedali vam bodo, s katerim zavetiščem sodeluje. | We do not have a confirmed shelter for {municipality} yet. Call the municipality and they will tell you which shelter it works with. |
 | shelters.unconfirmed_link | Vsa zavetišča | All shelters |
+| shelters.maybe_responsible | Morda pristojno zavetišče | Possibly responsible shelter |
+| shelters.not_confirmed | Ni potrjeno | Not confirmed |
+| shelters.not_confirmed_help | Za občino {municipality} pristojnega zavetišča nismo mogli potrditi. To zavetišče je najbližje in verjetno sprejema živali iz vaše okolice. Preden greste, se na občini prepričajte, da je pristojno. | We could not confirm the responsible shelter for {municipality}. This is the nearest one and probably takes animals from your area. Before you go, check with the municipality that it is the right one. |
+| shelters.call_unconfirmed | Pokliči (ni potrjeno) | Call (not confirmed) |
+| shelters.call_unconfirmed_a11y | Pokliči {shelter}. Pristojnost ni potrjena. | Call {shelter}. Responsibility is not confirmed. |
+| shelters.nearest_title | Najbližji zavetišči | The two nearest shelters |
+| shelters.nearest_meta | {distance} km od središča občine | {distance} km from the municipality centre |
 | shelters.no_match | Občine »{text}« ne najdemo. Preverite zapis ali jo poiščite na seznamu spodaj. | We cannot find a municipality called "{text}". Check the spelling or look for it in the list below. |
 | shelters.all_title | Vsa zavetišča ({count}) | All shelters ({count}) |
 | shelters.row_meta | {area} · {count, plural, one {# občina} two {# občini} few {# občine} other {# občin}} | {area} · {count, plural, one {# municipality} other {# municipalities}} |
+| shelters.row_no_phone | Telefon ni objavljen | No phone published |
 | shelters.verified_line | Podatki preverjeni {date}. Vir: {source}. | Details checked on {date}. Source: {source}. |
 | shelters.report_error | Sporočite napako | Report a mistake |
 | shelters.error | Imenika zavetišč ta trenutek ne moremo naložiti. | We cannot load the shelter directory right now. |
@@ -676,6 +686,8 @@ Notes:
 - The answer appears under the field and is announced politely. With two shelters for one municipality (for example one for dogs and one for cats) each answer uses `shelters.answer_meta_dogs` or `shelters.answer_meta_cats`, and both call buttons are `secondary`.
 - `shelters.unconfirmed` replaces the answer when the municipality has no confirmed shelter (R-044.5); it never shows a guessed name or number. `shelters.unconfirmed_link` scrolls to the list.
 - `{area}` in `shelters.row_meta` is the directory's area label ("Ljubljana z okolico"). `{date}` is a long date ("15. 10. 2026" / "15 October 2026"); `{source}` is the directory source text.
+- Unconfirmed municipality (client rule, CH-82): when a likely shelter is known, show a card with `shelters.maybe_responsible` as its title and a badge `shelters.not_confirmed` (icon plus word, never colour alone), then `shelters.not_confirmed_help`. There is no primary call button; the only phone action is a secondary button `shelters.call_unconfirmed` (accessible name `shelters.call_unconfirmed_a11y`) and a link to the shelter page. When no likely shelter is known, show `shelters.unconfirmed` followed by `shelters.nearest_title` and up to two shelters with `shelters.nearest_meta`, each linking to its page. Never present an unconfirmed shelter with the wording of a confirmed answer.
+- `shelters.row_no_phone` (CH-71; CH-82 called it `no_phone_row`, one key) shows on the right of a directory row without a published phone, in muted text, with no call button. `{source}` in `shelters.verified_line` is the source label stored on the directory row; fallback when a row has none: "Register zavetišč UVHVVR in občine" / "UVHVVR shelter register and municipalities".
 - `shelters.report_error` opens the contact page with the subject "Napaka v imeniku zavetišč" / "Mistake in the shelter directory".
 - Legal note slot: rendered only when `content.legal_timings` is on, with the wording the lawyer confirms (lawyer pack LQ-06). No string until then.
 - Loading: `common.loading` (P1); error: `shelters.error` with `common.try_again`; offline: P1 offline note, the list stays when cached.
@@ -754,3 +766,9 @@ Alt text: the static map is decorative (`alt=""`), because the address is text.
 2. Final photography for the home page: licensed photos of real (non-lost) pets, or the image tasks. Placeholders are Unsplash files from the direction phase; record source and credit before launch.
 3. Legal review lines: finder duties and municipal shelter duties (Q-006).
 4. `CHANGE docs/tech/contracts/C15-routes-deeplinks.md§Web routes: add about /o-nas, /en/about (T2 page).`
+
+# Change log
+
+| Version | Date | Change |
+|---|---|---|
+| 0.5 | 2026-10-15 | CH-71: `shelters.row_no_phone`, `{source}` fallback text. CH-74: breadcrumb home value `common.breadcrumb_home` (P1) for "Nazaj na začetno stran" on T2/T3. CH-82: `shelters.maybe_responsible`, `not_confirmed`, `not_confirmed_help`, `call_unconfirmed` (+ a11y), `nearest_title`, `nearest_meta`. Shelter keys live in this file (no separate P3-shelter-pages slice exists). |

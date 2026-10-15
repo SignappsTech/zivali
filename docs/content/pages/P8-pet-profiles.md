@@ -62,7 +62,7 @@ Empty state:
 | pets.size_label | Velikost | Size |
 | pets.section_chip | Čip | Microchip |
 | pets.chip_label | Številka čipa | Chip number |
-| pets.chip_help | Običajno ima 15 števk, na primer 705 1234 5678 901. Vidite jo samo vi. | It usually has 15 digits, for example 705 1234 5678 901. Only you can see it. |
+| pets.chip_help | Običajno ima 15 števk, na primer 705 1234 5678 9012. Vidite jo samo vi. | It usually has 15 digits, for example 705 1234 5678 9012. Only you can see it. |
 | pets.chip_warning | Številka čipa je običajno dolga 15 števk. Shranili jo bomo kot neznano, preverite jo, ko boste lahko. | Chip numbers usually have 15 digits. We will save it as unknown; please check it when you can. |
 | pets.chip_register_note | Čip prebere veterinar ali pristojno zavetišče in podatke o lastniku poišče v Centralnem registru hišnih živali (CRHŽ), ki ni javen. Ali so vaši podatki v registru pravilni, preverite pri svojem veterinarju. | A vet or the responsible shelter reads the chip and looks up the owner's details in the Central Register of Pets (CRHŽ), which is not public. Ask your vet to check that your details in the register are correct. |
 | pets.section_notes | Ovratnica in opombe | Collar and notes |
@@ -132,3 +132,9 @@ N/A: signed-in pages, `noindex`. Document titles: "Moje živali · Najdimo" / "M
 
 - `CHANGE docs/design/pages/P8-pet-profiles.md§Pet detail: remove the "Order a tag" text button (QR tags are out of scope, brief v0.7).`
 - `CHANGE docs/tech/contracts/C15-routes-deeplinks.md§Web routes: myPets SL /moji-ljubljenci → /moje-zivali (glossary: "žival" in UI labels).`
+
+# Change log
+
+| Date | Change |
+|---|---|
+| 2026-10-15 | CH-79: `chip_help` example is now 15 digits, 705 1234 5678 9012. |

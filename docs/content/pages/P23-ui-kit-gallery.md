@@ -20,7 +20,7 @@ Internal reference page, not public, not translated for users. It uses real prod
 | Secondary button | Vklopi opozorila | Turn on alerts | `pages.home.near_empty_action` (P3) |
 | Text button | Ustvari račun in obdrži prijavo | Create an account to keep it | `report_found.create_account` (P7) |
 | Destructive | Izbriši profil | Delete profile | `pets.delete_confirm` (P8) |
-| Field 1: input, label and help | Številka čipa (neobvezno) · Običajno ima 15 števk, na primer 705 1234 5678 901. | Chip number (optional) · It usually has 15 digits, for example 705 1234 5678 901. | `report_lost.chip_label`, `report_lost.chip_help` (P6) |
+| Field 1: input, label and help | Številka čipa (neobvezno) · Običajno ima 15 števk, na primer 705 1234 5678 9012. | Chip number (optional) · It usually has 15 digits, for example 705 1234 5678 9012. | `report_lost.chip_label`, `report_lost.chip_help` (P6) |
 | Field 1: error | Številka čipa je običajno dolga 15 števk. Shranili jo bomo kot neznano, preverite jo, ko boste lahko. | Chip numbers usually have 15 digits. We will save it as unknown; please check it when you can. | `report_lost.chip_warning` (P6) |
 | Field 1: disabled, with reason | Ta prijava je zaključena, zato je ni več mogoče urejati. | This report is closed, so it can no longer be changed. | `errors.GONE` (P1); fields of a closed report are read-only |
 | Field 2: textarea, label | Opis okoliščin (neobvezno) | What happened (optional) | `report_lost.circumstances_label` (P6) |
@@ -103,5 +103,6 @@ SEO: N/A (`noindex`, dev only). Alt text: sample pet photos use the P9 §11 rule
 
 | Version | Date | Change |
 |---|---|---|
+| 0.3 | 2026-10-15 | CH-79: chip example is now 15 digits, 705 1234 5678 9012 (field 1 help). CH-80: toast live region uses `common.toasts_label` (P1), close uses `common.close`. |
 | 0.2 | 2026-10-15 | Product strings for every mockup sample: fields 2–4 (textarea, select, search), disabled reasons, checkbox and radio groups, segmented control, "Prekliči", the share menu, upload progress and failure; new keys `photos.uploaded`, `photos.failed_network`, `photos.progress_a11y`, `report_lost.circumstances_too_long` (P6), `report_found.note_too_long` (P7), `share.poster` (P18). |
 | 0.1 | 2026-10-15 | First sample list. |

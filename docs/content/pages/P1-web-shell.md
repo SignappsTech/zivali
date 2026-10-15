@@ -83,6 +83,7 @@ Final SL and EN strings for the header, footer, shared patterns and the two shar
 | common.unread | neprebrano | unread |
 | common.breadcrumb_back | Nazaj na {page} | Back to {page} |
 | common.on_this_page | Na tej strani | On this page |
+| common.breadcrumb_home | začetno stran | the home page |
 
 # 4. Shared buttons and words (`common`)
 
@@ -92,6 +93,7 @@ Final SL and EN strings for the header, footer, shared patterns and the two shar
 | common.next | Naprej | Next |
 | common.back | Nazaj | Back |
 | common.close | Zapri | Close |
+| common.toasts_label | Obvestila | Notifications |
 | common.cancel | Prekliči | Cancel |
 | common.save | Shrani | Save |
 | common.saved | Shranjeno | Saved |
@@ -242,3 +244,9 @@ The shell has no content images. Logo: `alt=""` inside the link, the link carrie
 - `CHANGE docs/tech/contracts/C15-routes-deeplinks.md§Web routes: add "about" /o-nas, /en/about (footer link "O nas", copy in P3).`
 - `CHANGE docs/tech/contracts/C15-routes-deeplinks.md§Web routes: signIn SL slug /prijava-v-racun → /vpis ("Prijava" is the report in this product; glossary §5).`
 - `CHANGE docs/design/pages/P1-web-shell.md§Header: the SL label for "Sign in" is "Vpis" (not "Prijava").`
+
+# Change log
+
+| Version | Date | Change |
+|---|---|---|
+| +CH | 2026-10-15 | CH-74: `common.breadcrumb_home` ("začetno stran" / "the home page"), the `{page}` value of `common.breadcrumb_back`. CH-80: `common.toasts_label` ("Obvestila" / "Notifications") is the accessible name of the toast live region (sonner `containerAriaLabel`); the toast close button uses `common.close`. |
