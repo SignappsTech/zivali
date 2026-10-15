@@ -1,4 +1,4 @@
-source: docs/04-technical-design.md (v0.6) §Architecture, §Data model, §Authentication, §Environments, §CI/CD, §Observability; docs/05-quality-security-plan.md (v0.5) §Security, §Privacy, §Definition of Done; ADR-020 (API, klikni conventions), ADR-021, ADR-022, ADR-023
+source: docs/04-technical-design.md (v0.7) §Architecture, §Data model, §Authentication, §Environments, §CI/CD, §Observability; docs/05-quality-security-plan.md (v0.6) §Security, §Privacy, §Definition of Done; ADR-020 (API, klikni conventions), ADR-021, ADR-022, ADR-023
 
 # Backend slice (apps/api: Express + Prisma, worker; supabase/ local stack; scripts/)
 
@@ -63,6 +63,7 @@ A domain function never imports Express, never reads `req`/`res`, and never catc
 - **Prisma schema**: one file per domain in `prisma/schemas/`; a task adds models to its domain file or creates one. One migration per task (`prisma migrate dev --name <task-id>-<slug>`); never edit a merged migration. Conflicting migration timestamps on merge: re-run `prisma migrate dev` on the merged schema, never hand-merge `migration.sql`.
 - **Routes**: each feature owns `routes/<feature>.routes.ts`; `routes/index.routes.ts` gets one mount line per feature (small, sequential merges are fine).
 - **Jobs**: each queue owns `jobs/<queue>.job.ts`; the registry in `worker.ts` is created with stubs for all M2 queues by TASK-6.3.
+- **Geo**: `prisma/schemas/geo.prisma`, `prisma/sql/geoLookup.sql` and seeder `01-geo` belong to TASK-6.4; the geocoder task (TASK-15.8) adds `geo_places`, `geo_addresses`, seeder `02-geo-places` and `routes/geo.routes.ts` (C6).
 - **Report creation** belongs to TASK-29.2 (`domains/reports/reports.domain.ts` `createReport`); the anonymous guard is `domains/reports/submission-guard.ts` (stub from TASK-29.2, rules from TASK-17.1).
 - **Notifications**: `domains/notifications` `enqueueNotification(input, ctx)` exists as a stub from TASK-6.3 (sends `notify.send`, logged by the stub handler) so feature tasks can call it before TASK-22.3 merges.
 - **Seeders**: own file `prisma/seeders/NN-<name>.seeder.ts`; fixture users from TASK-6.2.
@@ -76,6 +77,7 @@ A domain function never imports Express, never reads `req`/`res`, and never catc
 - Ownership checks in domains (`assertCanManageReport`, `assertParticipant`, …); never trust ids from the client for ownership.
 - Responses are mapped DTOs, never raw Prisma rows: public serializers must never include `exact_point`, `chip_number`, `manage_token_hash`, emails, phone numbers or `created_by` (C4).
 - Geo and vector queries only in TypedSQL files (`prisma/sql/*.sql`) or parameterised `$queryRaw`; never string-concatenated SQL.
+- Locations sent for lookups (geocoder, C6) travel in POST bodies, never in URLs; the request logger logs the route pattern only, never bodies or query strings.
 - Jobs idempotent (unique keys, upserts); fan-outs in chunks of ≤ 500; no external calls inside DB transactions.
 - Logs: pino JSON (`level, msg, req_id, user_id?, route, status, duration_ms`, job logs with `queue, job_id`); no PII or secrets; `console.*` is a lint error.
 - Prettier and ESLint as configured at the root (klikni settings: tabs, width 120, single quotes; imports grouped builtin / external / internal with a blank line between, `import-x/order`). husky + lint-staged run `eslint --fix` and `prettier --write` on staged files; Docker installs use `pnpm install --ignore-scripts` or `pnpm deploy` (the root `prepare: husky` fails where dev dependencies are missing; `HUSKY=0` does not help there).
@@ -93,7 +95,7 @@ Domains throw `AppError`; unknown errors become `INTERNAL` (500) with the reques
 | `DATABASE_URL` (session pooler or direct, `?schema=app`), `DIRECT_URL` (migrations) | local: `postgresql://postgres:postgres@127.0.0.1:54322/postgres` |
 | `SUPABASE_URL`, `SUPABASE_SECRET_KEY` (Admin API only), `SUPABASE_JWT_SECRET` (local HS256 fallback) | JWKS at `${SUPABASE_URL}/auth/v1/.well-known/jwks.json` |
 | `FUZZ_SECRET`, `RATE_SALT`, `IDEMPOTENCY_KEY` | random 32-byte secrets per environment |
-| `STORAGE_PROVIDER` (`minio`/`r2`/`memory`), `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_PRIVATE`, `R2_BUCKET_MEDIA`, `R2_BUCKET_BACKUPS`, `MEDIA_BASE_URL`, `S3_ENDPOINT` (MinIO locally) | ADR-014 |
+| `STORAGE_PROVIDER` (`minio`/`r2`/`memory`), `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_PRIVATE`, `R2_BUCKET_MEDIA`, `R2_BUCKET_BACKUPS`, `MEDIA_BASE_URL`, `S3_ENDPOINT` (MinIO locally) | ADR-014; buckets are in the R2 **EU jurisdiction**, so the r2 adapter always uses `https://<R2_ACCOUNT_ID>.eu.r2.cloudflarestorage.com` (also for presigned URLs) |
 | `PAYMENTS_PROVIDER` (`mock`/`stripe`), `STRIPE_SECRET_KEY` (sk_test only), `STRIPE_WEBHOOK_SECRET`, `MOCK_WEBHOOK_SECRET` | live keys rejected (C13) |
 | `EMAIL_PROVIDER` (`mock`/`brevo`), `BREVO_API_KEY`, `EMAIL_FROM`, `LEADS_NOTIFY_EMAIL` | mock writes `email_outbox` |
 | `PUSH_PROVIDER` (`mock`/`expo`), `EXPO_ACCESS_TOKEN` | |

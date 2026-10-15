@@ -1,7 +1,7 @@
 ---
 doc_id: DOC-05
 title: Quality and Security Plan
-version: 0.5
+version: 0.6
 status: Draft
 date: 2026-10-15
 owner: Tech Lead
@@ -53,11 +53,11 @@ Run by GitHub Actions once a remote exists; until then `pnpm verify` runs the sa
 
 # Security
 
-- **Threats in scope**: XSS (chat, listings, ads), CSRF (cookie session on web), SQL injection (TypedSQL and raw queries), SSRF (CSV photo URLs in M3, geocoder proxying: none), open redirect (ad click endpoint), insecure uploads (type, size, EXIF), spam and abuse on anonymous endpoints, **scams in chat** (R-007), **location leakage** (fuzz bypass, averaging, distance triangulation; R-011), **chip enumeration** (lookup throttling M3; chip never in public read model), account takeover, privilege escalation via missing API checks or an exposed table, webhook forgery, secret leakage, API key misuse (M4).
+- **Threats in scope**: XSS (chat, listings, ads), CSRF (cookie session on web), SQL injection (TypedSQL and raw queries), SSRF (CSV photo URLs in M3; the geocoder makes no outbound calls), open redirect (ad click endpoint), insecure uploads (type, size, EXIF), spam and abuse on anonymous endpoints, **scams in chat** (R-007), **location leakage** (fuzz bypass, averaging, distance triangulation, points in URLs or logs: geocoder points travel only in POST bodies and are never logged or stored; R-011), **chip enumeration** (lookup throttling M3; chip never in public read model), account takeover, privilege escalation via missing API checks or an exposed table, webhook forgery, secret leakage, API key misuse (M4).
 - **Input**: zod at every client boundary and again in the API (`validate()` on body, query and params); SQL only through Prisma, TypedSQL parameters or `$queryRaw` tagged templates (never string concatenation); chat and listing text rendered as text (React escaping), URLs in chat not linkified (FR-009); ad links must be `https://` and are only reachable through `GET /v1/ads/:id/click` which redirects to the stored URL (no user-supplied redirect targets).
 - **AuthZ**: every endpoint has explicit guards and every rule lives in a domain function (ADR-020), covered by the permission matrix; the database is unreachable for clients (schema `app` not exposed, no grants, deny-all RLS, ADR-021); the only policy is the Realtime membership policy (ADR-023); the Supabase secret key is used only by the API for Admin API calls, never in clients.
 - **Secrets**: env vars only (VPS `.env` files mode 600, GitHub Actions secrets); `.env.local` and `.secrets/` gitignored; secretlint in CI; keys rotatable (documented in the runbook); Stripe live keys rejected by code.
-- **Headers** (Next config for web, helmet + Caddy for the API): CSP with nonces (`script-src 'self' 'nonce-…'` + `https://www.googletagmanager.com` only after consent, `https://challenges.cloudflare.com`; `connect-src` the API origin, Supabase (Auth, Realtime websocket), OpenFreeMap, MapTiler, Photon, GA endpoints; `img-src` self, the R2 media domain, tiles, data:, blob:; `worker-src blob:` for MapLibre; `frame-src https://challenges.cloudflare.com`; `frame-ancestors 'none'`), HSTS (preload), `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Policy` (camera, geolocation self only).
+- **Headers** (Next config for web, helmet + Caddy for the API): CSP with nonces (`script-src 'self' 'nonce-…'` + `https://www.googletagmanager.com` only after consent, `https://challenges.cloudflare.com`; `connect-src` the API origin, Supabase (Auth, Realtime websocket), OpenFreeMap, GA endpoints, the R2 upload endpoint `https://<R2_ACCOUNT_ID>.eu.r2.cloudflarestorage.com` (presigned PUT); no geocoder origin (our API); `img-src` self, the R2 media domain, the R2 EU endpoint (presigned GET of private photos), tiles, data:, blob:; `worker-src blob:` for MapLibre; `frame-src https://challenges.cloudflare.com`; `frame-ancestors 'none'`), HSTS (preload), `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Policy` (camera, geolocation self only).
 - **Rate limiting / anti-spam** (defaults in `app_config`):
 
 | Action | Limit | Key |
@@ -84,7 +84,7 @@ Run by GitHub Actions once a remote exists; until then `pnpm verify` runs the sa
 - **Consent**: no analytics script, request or cookie before opt-in (basic Consent Mode v2, ADR-009); choice, version and timestamp stored first-party; withdrawal as easy as giving; re-ask after 12 months or version change.
 - **Retention** (NFR-PRIV): chat 6 months after close; closed-report photos and locations 12 months; payment records as legally required; implemented by `purge_retention`.
 - **Rights**: export and delete (M3, FR-034); anonymous reporters delete via manage link.
-- **Processors and transfers** (for the privacy policy, TASK-28): Supabase (EU, Frankfurt), Hetzner (EU, hosting), Cloudflare (R2 storage, Turnstile), Stripe, Brevo (EU), Expo (push), Google (GA4, Firebase), MapTiler (EU) or komoot Photon, Anthropic (M3), Voyage AI (M3), Sentry (EU, M5). DPAs to be signed by the client before production.
+- **Processors and transfers** (for the privacy policy, TASK-28): Supabase (EU, Frankfurt), Hetzner (EU, hosting), Cloudflare (R2 storage in the EU jurisdiction, Turnstile), Stripe, Brevo (EU), Expo (push), Google (GA4, Firebase), Anthropic (M3), Voyage AI (M3), Sentry (EU, M5). DPAs to be signed by the client before production.
 - **Accessibility**: WCAG 2.2 AA (EAA); axe in CI from M1; formal audit in M5 before the accessibility statement is finalised.
 - **Cookies**: strictly necessary (`sb-*` auth, `NEXT_LOCALE`, `zz_consent`, device id in localStorage); analytics `_ga`, `_ga_<id>` only after consent; cookie policy drafted in TASK-28.
 
@@ -111,3 +111,4 @@ Run by GitHub Actions once a remote exists; until then `pnpm verify` runs the sa
 | 0.3 | 2026-10-15 | Tag-address retention removed (tags out of scope, brief v0.7); protected flows include inbox and conversations |
 | 0.4 | 2026-10-15 | Offline mode: cache-privacy and idempotency gates, device-data privacy rules |
 | 0.5 | 2026-10-15 | Brief v1.0: pgTAP replaced by API tests with a permission matrix and the ADR-021 exposure tests; security and processors updated for the Express API, R2 and Hetzner |
+| 0.6 | 2026-10-15 | Own geocoder (ADR-007 revised): MapTiler and Photon removed from CSP and processors, geocoder points never in URLs or logs; R2 in the EU jurisdiction |

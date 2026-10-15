@@ -2,6 +2,7 @@
 
 - Status: Accepted · Date: 2026-10-14 · Owner: Tech Lead
 - Amended 2026-10-15 (ADR-020): checkout and the webhook are Express routes (`POST /v1/payments/checkout`, `POST /v1/webhooks/stripe` with the raw body), using the Node Stripe SDK; effects run in the `payment.effects` job.
+- Amended 2026-10-15 (brief v1.1): **reward escrow is out of scope**. No Stripe Connect, no payouts to finders, no platform fee. Owners arrange rewards outside the app; a lost report may show a display-only reward line with a scam warning (C4), which involves no payment.
 - Source: FR-020, FR-021, P-6, R-003, A-014
 
 ## Decision
@@ -15,5 +16,5 @@
 
 ## Consequences
 
-- One ledger for tips, contributions, boosts, tags and subscriptions (M4 adds `subscriptions` and `entitlements`).
+- One ledger for tips, contributions, boosts and subscriptions (M4 adds `subscriptions` and `entitlements`). Money only ever flows from a user to Najdimo; never between users.
 - Stripe test keys (Q-002) are needed only for staging; everything else runs on the mock.

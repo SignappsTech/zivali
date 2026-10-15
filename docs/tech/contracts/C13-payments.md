@@ -49,7 +49,7 @@ Analytics: `donation` fires on the return page when status is `succeeded` (conse
 
 - M2 (this contract): one-off owner payments for `tip`, `report_contribution` and `support` (profile card "Pomagajte nam izboljšati Najdimo"; suggested EUR 3 / 5 / 10, custom ≥ EUR 2).
 - M4 extends the same ledger, provider interface and webhook: owner one-time payments (`boost`), owner subscriptions (Premium, Podpornik) and one organisation subscription, **Vet Partner** (vet organisations only, Stripe Billing with VAT invoices, indicative EUR 39/month). Entitlements are keyed by `user_id` or `organisation_id` (vet). Shelters and municipalities never pay; all reunite features stay free for every organisation. QR/NFC tags are out of scope (brief v0.7).
-- M4 (legal-gated, Q-011): Stripe Connect for reward escrow. M6: Stripe invoices for ad sponsors.
+- Reward escrow is out of scope (brief v1.1): no Stripe Connect, payouts or platform fee; money never flows between users. Owners arrange rewards outside the app; a lost report may carry a display-only reward (C4). M6: Stripe invoices for ad sponsors.
 - A Stripe implementation plan from the client is pending; it may refine this contract (tech lead updates C13 and dependent tasks).
 
 ## Fiscal invoices (TASK-92, FR-046, Q-012)

@@ -4,6 +4,8 @@ source: docs/04-technical-design.md§Data model (photos), ADR-014 (R2), ADR-022 
 
 ## Buckets (R2; MinIO locally; in-memory adapter in tests)
 
+All three R2 buckets are created in the **EU jurisdiction**; the adapter and presigned URLs use `https://<R2_ACCOUNT_ID>.eu.r2.cloudflarestorage.com` (ADR-014). `zivali-private` has a CORS rule for `PUT` and `GET` from `WEB_ORIGINS` (header `Content-Type`); MinIO locally gets the same rule.
+
 | Bucket (env) | Public | Keys | Written by |
 |---|---|---|---|
 | `R2_BUCKET_PRIVATE` (`zivali-private`) | no | `uploads/<owner_id>/<photo_id>.jpg` (client upload), `variants/<photo_id>/{display.webp,display.jpg,thumb.webp}` | client via presigned PUT; worker |
@@ -44,6 +46,6 @@ Offline (C17): the mobile outbox keeps `PreparedPhoto` files and calls `uploadPh
 
 ```json
 // POST /v1/photos → 201
-{ "photo_id": "9b0e…", "upload": { "url": "https://<account>.r2.cloudflarestorage.com/zivali-private/uploads/u1/9b0e….jpg?X-Amz-…", "method": "PUT",
+{ "photo_id": "9b0e…", "upload": { "url": "https://<account>.eu.r2.cloudflarestorage.com/zivali-private/uploads/u1/9b0e….jpg?X-Amz-…", "method": "PUT",
   "headers": { "Content-Type": "image/jpeg" }, "expires_at": "2026-10-15T10:05:00Z" } }
 ```

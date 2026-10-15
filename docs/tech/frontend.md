@@ -1,4 +1,4 @@
-source: docs/04-technical-design.md (v0.6) §Architecture, §Technology stack, §Repository structure; docs/05-quality-security-plan.md (v0.5) §Quality gates, §Definition of Done
+source: docs/04-technical-design.md (v0.7) §Architecture, §Technology stack, §Repository structure; docs/05-quality-security-plan.md (v0.6) §Quality gates, §Definition of Done
 
 # Frontend slice (apps/web, apps/mobile, packages/{tokens,api,i18n,analytics})
 
@@ -15,6 +15,7 @@ Read this, your task packet, the contract(s) it references, the design page slic
 | Forms | react-hook-form + zod (`@zivali/validation`) | same |
 | i18n | next-intl (SL unprefixed, EN `/en`) | use-intl with the same catalogues |
 | Maps | `maplibre-gl` (dynamic import, client only) | `@maplibre/maplibre-react-native` (dev build) |
+| Place search | `@zivali/api/geocode` → our API (`POST /v1/geo/search`, `/v1/geo/reverse`, C6); no third-party geocoder, no key | same |
 | Analytics | `@zivali/analytics` (`ga4` adapter after consent) | `@zivali/analytics` (`firebase` adapter after consent) |
 | Tests | Vitest + Testing Library (jsdom); Playwright + axe (`apps/web/e2e`) | jest-expo + Testing Library RN; Maestro flows (`apps/mobile/e2e`) |
 
@@ -81,7 +82,6 @@ Only dependencies listed in `docs/tech/adr/017-dependency-allowlist.md` (or inst
 | `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | `EXPO_PUBLIC_SUPABASE_URL`, `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Supabase (local values printed by `supabase status`; staging = project `najdimo`, new-style publishable key) |
 | `NEXT_PUBLIC_APP_URL`, `APP_ENV` (`local`/`staging`/`production`) | `EXPO_PUBLIC_APP_URL`, `EXPO_PUBLIC_APP_ENV` | links, guards for dev pages |
 | `NEXT_PUBLIC_ANALYTICS_PROVIDER` (`mock`/`ga4`), `NEXT_PUBLIC_GA_MEASUREMENT_ID`; server-only `GA_PROPERTY_ID`, `GA_SERVICE_ACCOUNT_KEY_FILE` (GA Data API for partner stats behind a flag, admin scripts; the key file stays in `.secrets/`) | `EXPO_PUBLIC_ANALYTICS_PROVIDER` (`mock`/`firebase`) | C12 |
-| `NEXT_PUBLIC_GEOCODER` (`maptiler`/`photon`/`mock`), `NEXT_PUBLIC_MAPTILER_KEY` (value of the team's `MAPTILER_API_KEY`, a public domain-restricted key) | `EXPO_PUBLIC_GEOCODER`, `EXPO_PUBLIC_MAPTILER_KEY` | C6 |
 | `NEXT_PUBLIC_TURNSTILE_SITE_KEY` (empty = captcha off) | uses web `/captcha` page | C7 |
 | `NEXT_PUBLIC_API_URL` (local `http://localhost:4000`) | `EXPO_PUBLIC_API_URL` (on a device use the LAN IP or a tunnel) | REST API base URL (C1) |
 | `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` (value of the team's `STRIPE_PUBLISHABLE_KEY`, pk_test only; optional, Checkout is server-created) | - | payments (C13) |

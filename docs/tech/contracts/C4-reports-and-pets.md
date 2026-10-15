@@ -40,6 +40,7 @@ reports(id, short_code text unique,            -- 8 chars base58, public identif
         municipality_id, region_id, in_slovenia bool,                -- set by the API from geo_lookup (C6)
         event_at timestamptz not null,       -- lost: last seen; found/sighted: when seen (offline queue: original capture time, C17); matching uses event_at, never created_at
         circumstances text (≤ 1000), contact_pref default 'chat_only',
+        reward_eur int null check (reward_eur between 1 and 10000), reward_note text null (≤ 80),   -- lost only, display only (no payment, brief v1.1)
         linked_report_id → reports null,     -- a sighting of a lost report
         source, organisation_id null, boosted_until timestamptz null,
         manage_token_hash bytea null,   -- report_contacts(report_id, email) holds the optional finder email
@@ -83,6 +84,7 @@ type CreateReportInput = {
   species; name?; breed_codes?; colours?; pattern?; size?; sex?; chip?: string; collar?; ear_tip?; lifestyle?;
   location: { lat: number; lng: number; accuracy_m?: number }; requested_radius_m?: number;
   event_at: string /* ISO; offline queue: original capture time */; circumstances?: string; contact_pref?;
+  reward_eur?: number | null; reward_note?: string | null;      // lost only; display only
   linked_report_id?: uuid;                                       // "I saw this pet"
   photo_ids: uuid[];                                             // 1–5 for lost and found, 0–5 sighted
   finder_email?: string                                          // anonymous only, for the manage link
@@ -90,12 +92,15 @@ type CreateReportInput = {
 ```
 Rules (domain `ReportsDomain.createReport(input, ctx)`): `event_at` not in the future (+10 min) → `VALIDATION`; older than 30 days → accepted with `warnings: ['OLD_EVENT']`; lost with a `pet_id` that has an open lost report → `DUPLICATE_OPEN_REPORT`; chip normalised; fuzz and geo lookup computed (C6); creator added to `report_managers`; anonymous callers pass the submission guard and get a manage token (C7); in one transaction with jobs `photo.publish`, `match.report` and, for visible lost reports, `alerts.fanout`. Lost reports need a non-anonymous account (`FORBIDDEN` for anonymous).
 
+**Reward (display only, brief v1.1)**: lost reports may carry `reward_eur` (integer 1–10 000) and/or `reward_note` (single line, ≤ 80 characters). Found and sighted reports with either field → `VALIDATION`. `reward_note` is rejected (`VALIDATION`, issue `CONTACT_DATA`) when it contains a URL, an e-mail address or a run of 6 or more digits (phone, IBAN, card); the check is `containsContactData()` in `@zivali/validation`, shared with the clients. The app never collects, holds or transfers reward money (no escrow); clients show the reward line together with the scam warning from the content slice. Editable with `PATCH` like other fields; not used in matching.
+
 ## Public read model (API serializers, `mappers/report.mappers.ts`)
 
 ```ts
 type PublicReport = {
   id; short_code; type; status; species; name?: string /* lost only */; breed_codes; colours; pattern; size; sex;
   has_chip: boolean; collar_described: boolean; event_at; circumstances?: string;
+  reward?: { eur: number | null; note: string | null };         // lost only, when either field is set
   area: { lat: number; lng: number; radius_m: number };       // fuzzed
   municipality_slug?: string; region_slug?: string; in_slovenia: boolean;
   photos: { url: string; thumb_url: string; alt: string; width: number; height: number }[];

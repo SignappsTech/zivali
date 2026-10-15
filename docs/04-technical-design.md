@@ -1,7 +1,7 @@
 ---
 doc_id: DOC-04
 title: Technical Design
-version: 0.6
+version: 0.7
 status: Draft
 date: 2026-10-15
 owner: Tech Lead
@@ -33,13 +33,13 @@ approvals:
      Cloudflare R2   Adapters (mock by default): Stripe (test), Brevo email, Expo push,
      photos, backups Turnstile, Anthropic + Voyage (M3)
     Hosting: one Hetzner VPS, Docker Compose: caddy (TLS) → web, api; worker. EAS for mobile builds.
-    Web: GA4 after consent · Mobile: Firebase Analytics after consent · Tiles: OpenFreeMap · Geocoding: MapTiler/Photon (client)
+    Web: GA4 after consent · Mobile: Firebase Analytics after consent · Tiles: OpenFreeMap · Geocoding: own, GURS data in Postgres (API)
 
 - **One API**: an Express + Prisma service (`apps/api`, ADR-020) holds all business logic and permission checks in an HTTP-agnostic **domain layer** (`domains/<area>/`), reused by controllers, worker jobs, scripts and tests. Web and mobile call it over REST with the Supabase access token.
 - **Supabase for what it is good at**: Postgres (PostGIS, pgvector), Auth, Realtime Broadcast. The database is locked down: app tables live in schema `app`, not exposed by PostgREST, with no grants and deny-all RLS (ADR-021).
 - **Async work** in a pg-boss worker process in the same Postgres (ADR-022): matching, notifications, alert fan-out, photo processing, lifecycle, retention, backups, keep-alive.
 - **Contracts first**: M1 publishes zod schemas and DTOs, Prisma models, REST endpoint contracts and seed data (TASK-6), so M2 stories build in parallel; the frontend codes against `@zivali/api` with fixtures until an endpoint lands.
-- **Local-first**: `supabase start` (Postgres, Auth, Realtime) + MinIO + mock adapters (AI, embeddings, payments, email, push, captcha, analytics, geocoding); no cloud credentials needed (P-6).
+- **Local-first**: `supabase start` (Postgres, Auth, Realtime) + MinIO + mock adapters (AI, embeddings, payments, email, push, captcha, analytics); no cloud credentials needed (P-6).
 - **Budget**: about €5–10/month at start (Hetzner VPS ~€4–5, Supabase Free, R2 free tier, EAS free tier).
 
 # Technology stack
@@ -65,7 +65,7 @@ approvals:
 | Realtime | Supabase Realtime Broadcast on private channels | - | ADR-023 |
 | Files | Cloudflare R2 (S3 API, presigned URLs), sharp in the worker; MinIO locally | - | ADR-014 |
 | Maps | MapLibre GL / MapLibre React Native, OpenFreeMap tiles | 6.x / 11.x | ADR-007 |
-| Geocoding | MapTiler Geocoding, Photon fallback | - | client-side, display only |
+| Geocoding | own: GURS settlements, districts, streets and house numbers in Postgres (`pg_trgm`, PostGIS), `POST /v1/geo/search` and `/v1/geo/reverse` | - | ADR-007 (revised), C6; no third party, display only |
 | Geo reference | GURS municipalities and statistical regions in PostGIS (TypedSQL lookups) | - | ADR-006 |
 | Shelter directory | 212 municipalities → 17 registered shelters, versioned | - | C18 (FR-044) |
 | Payments | Stripe Checkout, test mode only (Node SDK in the API) | - | ADR-011, C13 |
@@ -127,11 +127,12 @@ All tables in schema `app` as Prisma models (snake_case plural names, `id uuid`,
 | payments, payment_events | user_id, purpose, amount_cents, status, provider ids; provider_event_id | unique(provider_event_id) | Yes (payment metadata) |
 | ads, ad_stats_daily, leads, partner_stats_snapshot | ad content and targeting; aggregates; enquiries (interest) | pk(day, ad_id, slot, region_id) | No / Yes (lead contact) |
 | regions, municipalities | id, slug, names, geom | GiST(geom) | No |
+| geo_places, geo_addresses | GURS settlements, districts, streets (name, normalised search text, point, simplified polygon); house numbers (place, number, suffix, point); about 60 MB | GIN trigram(search), GiST(geom), pk(place_id, number, suffix) | No |
 | shelters, municipality_shelters, directory_changes | responsible-shelter directory (C18) | unique(slug); one row per municipality | No (public data) |
 | organisations, organisation_members | minimal in M2 (seed, intake exemption), full in M3 | - | Low |
 | app_config, rate_limits, idempotency_keys, audit_log | config; hashed counters (48 h); stored responses (24 h, secrets encrypted); staff actions | - | Low / Medium |
 | pgboss.* | pg-boss tables (jobs, schedules, archive) | managed by pg-boss | Low |
-| Planned M3–M4 | photo_embeddings, ai_results, ai_calls, intake_batches, chip_lookups (hash only), subscriptions and entitlements (owners: Premium, Podpornik; vets: Vet Partner), rewards (Connect escrow), moderation_actions | wire types in `packages/types` from M1; models with their stories | - |
+| Planned M3–M4 | photo_embeddings, ai_results, ai_calls, intake_batches, chip_lookups (hash only), subscriptions and entitlements (owners: Premium, Podpornik; vets: Vet Partner), moderation_actions | wire types in `packages/types` from M1; models with their stories | - |
 
 **Deletion and retention** (NFR-PRIV, proposals for legal review, A-012): chat deleted 6 months after report close; closed-report photos and exact locations deleted or nulled 12 months after close; payment records kept as legally required; IP and device hashes 48 h; idempotency rows 24 h; anonymous auth users without a live report 30 days (Supabase Admin API); orphan uploads 24 h. All by the `retention.purge` job. Device data (mobile, C17): public cache ≤ 50 MB / 7 days, own drafts and outbox; wiped on sign-out, account deletion and on request. Account deletion (M3, FR-034) is one domain function that deletes or anonymises rows per `apps/api/prisma/data-inventory.json` and deletes the Supabase user; a test fails when a model is missing from the inventory.
 
@@ -157,7 +158,7 @@ All tables in schema `app` as Prisma models (snake_case plural names, `id uuid`,
 | C16 | i18n catalogues and formatting | data / library | docs/tech/contracts/C16-i18n.md |
 | C17 | Mobile offline data layer | data (device) | docs/tech/contracts/C17-mobile-offline-data.md |
 | C18 | Responsible-shelter directory | API / data | docs/tech/contracts/C18-shelter-directory.md |
-| C19+ | M3–M6 (AI extraction, embeddings, organisations, intake/CSV, chip lookup, export/delete, owner and Vet Partner subscriptions, escrow, moderation, sponsor invoices, fiscal invoices) | - | written at each milestone's breakdown |
+| C19+ | M3–M6 (AI extraction, embeddings, organisations, intake/CSV, chip lookup, export/delete, owner and Vet Partner subscriptions, moderation, sponsor invoices, fiscal invoices) | - | written at each milestone's breakdown |
 
 **API standards**: see C1: `API_URL/v1`, Bearer Supabase token, `x-device-id`, JSON snake_case, no envelope, lists `{ items, next_cursor }`, errors `{ error: { code, message, details?, issues? } }` with stable codes, `Idempotency-Key` on retryable writes, OpenAPI at `/v1/docs` outside production. Webhooks dedupe by provider event id.
 
@@ -173,7 +174,7 @@ All tables in schema `app` as Prisma models (snake_case plural names, `id uuid`,
 | Env | URL | Purpose | Deploy |
 |---|---|---|---|
 | Local | web http://localhost:3000, API http://localhost:4000, Supabase http://127.0.0.1:54321 (Studio :54323, mail :54324), MinIO :9000, Expo dev client | development, tests, CI | `pnpm bootstrap` / `pnpm dev` |
-| Staging | Hetzner VPS (Compose: caddy, web, api, worker) at `staging.<domain>` / `api.staging.<domain>` (sslip.io name until a domain exists); Supabase project `najdimo` (ref `omtpppzrugibquukhnyl`, eu-central-1, Free); R2 buckets `zivali-*`; EAS profile `preview` | client preview, QA, pilot alpha | GitHub Actions on merge to `main` |
+| Staging | Hetzner VPS (Compose: caddy, web, api, worker) at `staging.<domain>` / `api.staging.<domain>` (sslip.io name until a domain exists); Supabase project `najdimo` (ref `omtpppzrugibquukhnyl`, eu-central-1, Free); R2 buckets `zivali-*` (EU jurisdiction); EAS profile `preview` | client preview, QA, pilot alpha | GitHub Actions on merge to `main` |
 | Production | same VPS, separate Compose project and hostnames; a second Supabase project in eu-central-1 before public launch; EAS profile `production` (no store submission) | live pilot | tagged release `vX.Y.Z` + manual approval |
 
 Configuration through environment variables only (names in `frontend.md` / `backend.md`; values never committed; `.env.local` and `.secrets/` are gitignored; on the VPS `/opt/zivali/<env>/.env`, mode 600). Cache: HTTP caching (Caddy, `Cache-Control` on public endpoints); no Redis. CDN: Cloudflare in front of the R2 media bucket.
@@ -184,7 +185,7 @@ Configuration through environment variables only (names in `frontend.md` / `back
 |---|---|---|---|
 | Supabase project `najdimo`: URL, publishable and secret keys, JWT settings, DB password, access token | Client | **set** | - (production project later) |
 | Hetzner project + API token (or SSH to a provisioned VPS) | Client | missing (new) | staging and production deploy (dry-run until then) |
-| Cloudflare R2: account id, access key id and secret, buckets, media domain | Client | missing (new) | photos on staging, nightly backups (MinIO locally) |
+| Cloudflare R2: account id, access key id and secret, the three buckets created with **EU jurisdiction** (ADR-014), media domain | Client | missing (new) | photos on staging, nightly backups (MinIO locally) |
 | Domain + DNS (Cloudflare) | Client (Q-001) | missing | real hostnames, universal links, email sender domain |
 | GitHub repository `pbozic/zivali` (SSH) + Actions secrets | Client | repo **set**; secrets missing | hosted CI and deploy (local `pnpm verify` always) |
 | Stripe test sandbox "Najdimo sandbox" (SI) | Client | **set** | - (webhook endpoint created by the payments task) |
@@ -193,7 +194,7 @@ Configuration through environment variables only (names in `frontend.md` / `back
 | FCM credentials in EAS | Client | Firebase project exists; key not uploaded | Android push delivery |
 | Firebase config files | Client | **present in `.secrets/`** | - |
 | GA4 measurement id, property, service account | Client | **set** | - |
-| MapTiler key | Client | **set** | - |
+| MapTiler key | Client | set but **no longer used** (ADR-007 revised: own geocoder) | - |
 | Anthropic API key | Client | **set** | - (M3) |
 | Voyage AI key | Client | missing | M3 embeddings on staging |
 | Brevo API key + SMTP | Client | missing | real email on staging |
@@ -229,11 +230,9 @@ Configuration through environment variables only (names in `frontend.md` / `back
 |---|---|---|---|---|---|
 | Supabase Auth (+ Google, Apple) | sign-in | project keys; OAuth client ids | Free tier MAU limits | error message, email sign-in still works | auth users |
 | Supabase Realtime | chat and inbox live updates | user JWT, private channels | Free: 200 concurrent, 2M messages/month | clients re-fetch on reconnect; push covers offline | none (transient) |
-| Cloudflare R2 | photos, backups | access keys | free tier 10 GB, 1M writes, 10M reads/month | uploads retry; detail pages show placeholders | images, dumps |
+| Cloudflare R2 (EU jurisdiction) | photos, backups | access keys; endpoint `<account>.eu.r2.cloudflarestorage.com` | free tier 10 GB, 1M writes, 10M reads/month | uploads retry; detail pages show placeholders | images, dumps |
 | Cloudflare Turnstile | captcha | site key / secret | free | fail closed, local draft auto-retry (ADR-005) | none |
 | OpenFreeMap | map tiles | none | fair use | map error state, list view remains | none |
-| MapTiler Geocoding | place search | public key (domain-restricted) | free tier | fall back to Photon | none |
-| Photon (komoot) | geocoding fallback | none | fair use | manual pin still works | none |
 | Expo Push | push delivery | Expo access token, FCM/APNs in EAS | Expo limits | in-app + email still delivered | push tokens |
 | Brevo | transactional email + Auth SMTP | API key / SMTP creds | 300/day free | job retries 5×; in-app remains | email_outbox rows |
 | Stripe | checkout, webhooks | secret key, webhook secret | test mode only | user sees retry; webhook retries idempotent | payment ids, amounts |
@@ -241,7 +240,7 @@ Configuration through environment variables only (names in `frontend.md` / `back
 | GA Data API (optional) | partner page enrichment | service account | quotas | DB-only stats | cached aggregates |
 | Anthropic (M3) | attribute extraction | API key | budget caps | manual form | AI results per photo hash |
 | Voyage AI (M3) | image embeddings | API key | budget caps | v1 matching only | vectors |
-| GURS open data | municipalities and regions | none | - | static seed | boundaries |
+| GURS open data (CC BY 4.0) | municipalities and regions; settlements, districts, streets and house numbers for our geocoder | none | - | static seed, refreshed by the generators | boundaries, names, points |
 | UVHVVR register + municipal reports | shelter directory sources | none | yearly refresh | admin edits | directory rows with source |
 | Hetzner Cloud | VPS | API token / SSH | one VPS | Compose restart policies; uptime alert | - |
 
@@ -255,14 +254,14 @@ Configuration through environment variables only (names in `frontend.md` / `back
 | ADR-004 | Async jobs with pgmq + Edge Function worker | **Superseded by ADR-022** |
 | ADR-005 | Anonymous finders: Supabase anonymous sign-in, manage token, Turnstile; captcha outage fails closed (amended: guard in the API) | Accepted |
 | ADR-006 | Location privacy: deterministic fuzz on write; GURS boundaries in PostGIS (amended: fuzz in the API, TypedSQL) | Accepted |
-| ADR-007 | MapLibre + OpenFreeMap; MapTiler geocoding with Photon fallback | Accepted |
+| ADR-007 | MapLibre + OpenFreeMap; own geocoder on GURS address data in Postgres | Accepted (revised) |
 | ADR-008 | i18n: next-intl / use-intl with shared ICU catalogues | Accepted |
 | ADR-009 | Analytics: typed `track()`, GA4 + Firebase adapters, basic Consent Mode v2 | Accepted |
 | ADR-010 | Notifications: inbox + Expo Push + Brevo email (amended: worker job) | Accepted |
-| ADR-011 | Payments: Stripe Checkout, webhook ledger, mock provider, live-mode guard (amended: Express routes) | Accepted |
+| ADR-011 | Payments: Stripe Checkout, webhook ledger, mock provider, live-mode guard (amended: Express routes; reward escrow dropped) | Accepted |
 | ADR-012 | AI extraction: Claude `claude-opus-5-5`, structured outputs, caps (worker) | Accepted (M3) |
 | ADR-013 | Image embeddings: Voyage multimodal behind adapter, pgvector HNSW (worker) | Accepted (M3) |
-| ADR-014 | Photos on R2: client resize, presigned uploads, sharp re-encode, public copies on publish | Accepted (revised) |
+| ADR-014 | Photos on R2 (EU jurisdiction): client resize, presigned uploads, sharp re-encode, public copies on publish | Accepted (revised) |
 | ADR-015 | Test toolchain: Vitest + Supertest, Playwright + axe + LHCI, jest-expo, Maestro | Accepted (amended) |
 | ADR-016 | Hetzner VPS with Docker Compose + Caddy; Supabase Free; R2; GitHub Actions | Accepted (revised) |
 | ADR-017 | Dependency allowlist | Accepted (revised) |
@@ -285,3 +284,4 @@ Full records: `docs/tech/adr/NNN-*.md` (context, decision, alternatives, consequ
 | 0.4 | 2026-10-15 | Offline mode (FR-041..043): ADR-019, C17; content CHANGEs to C3, C9, C10, C14, C15 |
 | 0.5 | 2026-10-15 | Brief v1.0 architecture: Express + Prisma API with a domain layer (ADR-020, klikni conventions), DB lockdown (ADR-021), pg-boss (ADR-022), Realtime Broadcast chat (ADR-023), R2 photos (ADR-014), Hetzner + Docker Compose + Caddy (ADR-016); ADR-003/004 superseded; contracts rewritten from RPC to REST; C18 shelter directory (FR-044); CRHŽ instead of CRPsi; SEO hub routes |
 | 0.6 | 2026-10-15 | TASK-3.8: formatting tools (import-x, eslint-config-prettier, husky + lint-staged; ADR-017), root scripts for Prisma and jobs, no Edge Functions in the workspace |
+| 0.7 | 2026-10-15 | Own geocoder on GURS data in Postgres replaces MapTiler/Photon (ADR-007 revised: MapTiler Free is non-commercial, LQ-21 privacy; about 60 MB), `MAPTILER_API_KEY` no longer needed; R2 buckets in the EU jurisdiction (ADR-014); reward escrow dropped (brief v1.1): no Stripe Connect, payouts or platform fee, display-only reward on lost reports (C4) |
