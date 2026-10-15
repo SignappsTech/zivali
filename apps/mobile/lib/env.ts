@@ -8,6 +8,7 @@ const raw = {
 	EXPO_PUBLIC_API_URL: process.env.EXPO_PUBLIC_API_URL,
 	EXPO_PUBLIC_APP_ENV: process.env.EXPO_PUBLIC_APP_ENV,
 	EXPO_PUBLIC_ANALYTICS_PROVIDER: process.env.EXPO_PUBLIC_ANALYTICS_PROVIDER,
+	EXPO_PUBLIC_PUSH_PROVIDER: process.env.EXPO_PUBLIC_PUSH_PROVIDER,
 	EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
 	EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
 };
@@ -23,6 +24,8 @@ const schema = z.object({
 	EXPO_PUBLIC_API_URL: z.url(),
 	EXPO_PUBLIC_APP_ENV: z.enum(['local', 'staging', 'production']),
 	EXPO_PUBLIC_ANALYTICS_PROVIDER: optional(z.enum(['mock', 'firebase'])).transform((v) => v ?? 'mock'),
+	// Q-007: the real Expo push token needs FCM/APNs credentials; until then the mock token goes through the same path.
+	EXPO_PUBLIC_PUSH_PROVIDER: optional(z.enum(['mock', 'expo'])).transform((v) => v ?? 'mock'),
 	EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID: optional(z.string()),
 	EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID: optional(z.string()),
 });

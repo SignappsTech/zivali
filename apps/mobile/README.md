@@ -48,3 +48,10 @@ Gallery: `/dev/kit` (redirects to `/` when `EXPO_PUBLIC_APP_ENV=production`). `r
 - `app/settings`: a stack above the tabs. `language` works; `[section]` is the placeholder for `notifications`, `alerts`, `consent`, `payments` and `account` until a story adds `app/settings/<section>.tsx`.
 - Permissions: show `PermissionPrimer` (`components/shell/permission-primer.tsx`) before every OS prompt while the OS can still ask, passing the prompt as `request`; on `onResult(false)` show `PermissionNote` where the permission was needed.
 - Sign-out (Profil) calls `signOutAndWipe({ removeManageLinks })` after a confirmation with the "remove links" choice.
+
+## Deep links and push token (C15, C10)
+
+- `app.config.ts` takes the host from `EXPO_PUBLIC_APP_URL` (eas.json: staging `staging.najdimo.si`, production `najdimo.si`; unset in dev builds): iOS `associatedDomains`, Android `autoVerify` intent filter for `/r/`, `/en/r/`, `/m`, `/en/m`, `/payments/`. `zivali://` stays for dev; `app/+native-intent.ts` drops the `/en` prefix (`lib/deep-link.ts`).
+- The verification files are served by apps/web: `/.well-known/apple-app-site-association` (env `APPLE_TEAM_ID`) and `/.well-known/assetlinks.json` (env `ANDROID_CERT_SHA256`, comma-separated). A platform whose value is unset gets an empty file, so links open the web page.
+- Client steps (Q-007): (1) Apple Developer Team ID into `APPLE_TEAM_ID` on both web hosts, then rebuild iOS with the Associated Domains capability; (2) after the first EAS build run `eas credentials` (and Play Console, app signing) for the SHA-256 fingerprint(s) into `ANDROID_CERT_SHA256`; (3) check `https://<host>/.well-known/assetlinks.json` and `adb shell pm get-app-links si.signapps.zivali` (`verified`); (4) FCM/APNs credentials in EAS, then `EXPO_PUBLIC_PUSH_PROVIDER=expo`.
+- Push: `usePushPermission().request` (`lib/push.ts`) is the `request` of the notifications `PermissionPrimer`; after the OS grant it passes the token to `registerPushToken`. `EXPO_PUBLIC_PUSH_PROVIDER=mock` (default) uses a placeholder token. TASK-22.5 mounts the primer.

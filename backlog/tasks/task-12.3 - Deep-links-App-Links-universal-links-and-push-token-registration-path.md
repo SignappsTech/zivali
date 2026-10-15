@@ -1,10 +1,11 @@
 ---
 id: TASK-12.3
 title: 'Deep links (App Links, universal links) and push token registration path'
-status: To Do
+status: In Progress
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:12'
+updated_date: '2026-10-15 14:04'
 labels:
   - fe
   - 'est:S'
