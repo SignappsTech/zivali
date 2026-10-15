@@ -25,6 +25,7 @@ jest.mock('expo-network', () => ({
 	useNetworkState: jest.fn(),
 }));
 jest.mock('expo-task-manager', () => ({ defineTask: jest.fn() }));
+jest.mock('@/lib/offline/geofence', () => ({ refreshGeofences: jest.fn(async () => 'off') }));
 jest.mock('expo-background-task', () => ({ BackgroundTaskResult: { Success: 1, Failed: 2 } }));
 jest.mock('@/lib/env', () => ({ env: { EXPO_PUBLIC_API_URL: 'http://api.default' } }));
 

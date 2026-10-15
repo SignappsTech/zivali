@@ -1,5 +1,5 @@
-// Prisma access for ad serving and impressions (C14). Every function takes an optional transaction client (ADR-020).
-// Targeting arrays (region_ids, municipality_ids, species) that are NULL or empty mean "every".
+// Prisma access for ad serving, impressions and administration (C14). Every function takes an optional transaction
+// client (ADR-020). Targeting arrays (region_ids, municipality_ids, species) that are NULL or empty mean "every".
 import type { Prisma } from '../../generated/client.ts';
 import type { AD_SLOT, SPECIES } from '../../generated/enums.ts';
 import { prisma } from '../../prisma/prisma.ts';
@@ -109,4 +109,62 @@ export async function addImpression(
 		on conflict (day, ad_id, slot, region_id) do update set impressions = app.ad_stats_daily.impressions + 1`;
 }
 
-export default { listLive, regionOfMunicipality, findExclusiveOverlap, addImpression };
+/** Per-slot advisory locks until the transaction ends (sorted, so two saves never wait on each other in a cycle). */
+export async function lockSlots(slots: AD_SLOT[], tx: Tx): Promise<void> {
+	for (const slot of [...new Set(slots)].sort())
+		await tx.$executeRaw`select pg_advisory_xact_lock(hashtext(${`app.ads.exclusive:${slot}`}))`;
+}
+
+/** An ad that is not soft-deleted. */
+export async function findById(id: string, tx?: Tx) {
+	return (tx ?? prisma).ads.findFirst({ where: { id, deleted_at: null } });
+}
+
+/** An ad including a soft-deleted one (admin stats stay readable). */
+export async function findAnyById(id: string, tx?: Tx) {
+	return (tx ?? prisma).ads.findUnique({ where: { id } });
+}
+
+/** Admin list, newest first, keyset-paginated on (created_at desc, id desc); the cursor is the last item's id. */
+export async function listAdmin({ status, cursor, take }: { status?: string; cursor?: string; take: number }, tx?: Tx) {
+	return (tx ?? prisma).ads.findMany({
+		where: { deleted_at: null, ...(status && { status }) },
+		orderBy: [{ created_at: 'desc' }, { id: 'desc' }],
+		take,
+		...(cursor && { cursor: { id: cursor }, skip: 1 }),
+	});
+}
+
+export async function create(data: Prisma.adsUncheckedCreateInput, tx?: Tx) {
+	return (tx ?? prisma).ads.create({ data });
+}
+
+export async function update(id: string, data: Prisma.adsUncheckedUpdateInput, tx?: Tx) {
+	return (tx ?? prisma).ads.update({ where: { id }, data });
+}
+
+export type AdStatsRow = { day: string; slot: string; region_slug: string | null; impressions: number; clicks: number };
+
+/** Daily rows of one ad between two days (inclusive); region 0 (unknown) has no slug. */
+export async function stats({ ad_id, from, to }: { ad_id: string; from: string; to: string }, tx?: Tx) {
+	return (tx ?? prisma).$queryRaw<AdStatsRow[]>`
+		select to_char(s.day, 'YYYY-MM-DD') as day, lower(s.slot::text) as slot, r.slug as region_slug,
+			s.impressions, s.clicks
+		from app.ad_stats_daily s left join app.regions r on r.id = s.region_id
+		where s.ad_id = ${ad_id}::uuid and s.day between ${from}::date and ${to}::date
+		order by s.day, s.slot, r.slug nulls first`;
+}
+
+export default {
+	listLive,
+	regionOfMunicipality,
+	findExclusiveOverlap,
+	addImpression,
+	lockSlots,
+	findById,
+	findAnyById,
+	listAdmin,
+	create,
+	update,
+	stats,
+};

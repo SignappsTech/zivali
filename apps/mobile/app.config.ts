@@ -77,6 +77,21 @@ const config: ExpoConfig = {
 		'expo-background-task',
 		// Push token + notification permission (primer first, lib/push.ts); the token needs FCM/APNs credentials (Q-007).
 		'expo-notifications',
+		// Location while in use, and Always for the opt-in local proximity alerts (lib/offline/geofence.ts, TASK-87.2
+		// primer first): OS geofencing only, which expo-location runs under the iOS `location` background mode. The
+		// Play background-location declaration and Apple's review of Always must match this copy (TASK-75).
+		[
+			'expo-location',
+			{
+				locationWhenInUsePermission:
+					'Lokacijo uporabimo, da hitreje označite kraj in vidite prijave v bližini. Javno prikažemo le približno območje.',
+				locationAlwaysAndWhenInUsePermission:
+					'Če vklopite opomnike v bližini, telefon v ozadju preveri, ali ste blizu območja, kjer je bila nazadnje videna izgubljena žival. Vaša lokacija ne zapusti telefona.',
+				locationAlwaysPermission: false,
+				isIosBackgroundLocationEnabled: true,
+				isAndroidBackgroundLocationEnabled: true,
+			},
+		],
 		[
 			'expo-splash-screen',
 			{
