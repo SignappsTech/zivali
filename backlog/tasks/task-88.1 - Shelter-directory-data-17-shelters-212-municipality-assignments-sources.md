@@ -44,7 +44,7 @@ Branch: agent/task-88.1-dir-data
 <!-- SECTION:NOTES:BEGIN -->
 Data: apps/api/prisma/seeders/data/{shelters,municipality_shelters}.csv + README (sources, rules, yearly refresh). Test: scripts/shelter-directory.test.mjs (runs in pnpm test/verify; prints the open list).
 Counts: 74/212 municipalities confirmed for cats and dogs, 138 open (215 rows; species rows for Škofja Loka, Gorenja vas-Poljane, Rogaška Slatina).
-Open because: Horjul 2024 list (21) predates its 2026 cuts; Pomurje list (26, Mala hiša) undated 2015 with 2 unnamed exceptions; Koroška has no shelter; re-tenders or no bidders (Dolenjska, Savinjska, Zasavje); no source found for the rest. 64 open rows carry a suggested_shelter.
+Open because: Horjul 2024 list (21) predates its 2026 cuts; Pomurje list (26, Mala hiša) undated 2015 with 2 unnamed exceptions; Koroška has no shelter; re-tenders or no bidders (Dolenjska, Savinjska, Zasavje); no source found for the rest. 54 open rows carry a suggested_shelter.
 Register fixes: registry_id = edition#position (no official number); malformed phones normalised (Zonzani, Ljubljana); personal e-mail dropped (Obalno); Mačja hiša address/phone and Muri phone from their websites.
 CHANGE docs/tech/contracts/C18-shelter-directory.md: municipality_shelters needs species (null|cat|dog), PK (municipality_id, species), lookup prefers the species row; plus optional suggested_shelter (CSV only or column).
 <!-- SECTION:NOTES:END -->
