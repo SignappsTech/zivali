@@ -1,6 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { NextIntlClientProvider } from 'next-intl';
+import { Dialog } from 'radix-ui';
 import { FormProvider, useForm } from 'react-hook-form';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { z } from 'zod';
@@ -185,14 +186,61 @@ describe('PetFields species rules', () => {
 		expect(await saved()).toMatchObject({ species: 'dog', ear_tip: null, lifestyle: null });
 	});
 
-	it('keeps breed and pattern disabled until the species is chosen', () => {
-		setup();
+	it('keeps breed, pattern and size disabled until the species is chosen', () => {
+		const { group, chooseSpecies } = setup();
 		const breed = screen.getByRole('combobox', { name: 'Pasma' }) as HTMLInputElement;
 		expect(breed.disabled).toBe(true);
 		expect(breed.getAttribute('aria-describedby')).toBeTruthy();
 		expect(document.getElementById(breed.getAttribute('aria-describedby')!)?.textContent).toBe(
 			'Najprej izberite vrsto.'
 		);
+
+		// No cat sizes by default: every size, none choosable, with the same reason.
+		const sizes = () => within(group('Velikost')).getAllByRole('radio') as HTMLButtonElement[];
+		expect(sizes()).toHaveLength(5);
+		expect(sizes().every((radio) => radio.disabled)).toBe(true);
+		expect(document.getElementById(group('Velikost').getAttribute('aria-describedby')!)?.textContent).toBe(
+			'Najprej izberite vrsto.'
+		);
+		chooseSpecies('Mačka');
+		expect(sizes().map((radio) => [radio.textContent, radio.disabled])).toEqual([
+			['Majhna', false],
+			['Srednja', false],
+			['Velika', false],
+		]);
+		expect(group('Velikost').getAttribute('aria-describedby')).toBeNull();
+	});
+
+	it('closes the open breed list on Escape without closing a surrounding dialog', () => {
+		const onOpenChange = vi.fn();
+		function InDialog() {
+			const form = useForm<PetFieldValues>({ defaultValues: { ...emptyPetFields, species: 'dog' } });
+			return (
+				<NextIntlClientProvider locale="sl" messages={sl} timeZone={timeZone}>
+					<Dialog.Root open onOpenChange={onOpenChange}>
+						<Dialog.Portal>
+							<Dialog.Content aria-describedby={undefined}>
+								<Dialog.Title>Pes</Dialog.Title>
+								<FormProvider {...form}>
+									<PetFields />
+								</FormProvider>
+							</Dialog.Content>
+						</Dialog.Portal>
+					</Dialog.Root>
+				</NextIntlClientProvider>
+			);
+		}
+		render(<InDialog />);
+		const breed = screen.getByRole('combobox', { name: 'Pasma' });
+		fireEvent.change(breed, { target: { value: 'sarp' } });
+		expect(breed.getAttribute('aria-expanded')).toBe('true');
+
+		fireEvent.keyDown(breed, { key: 'Escape' });
+		expect(breed.getAttribute('aria-expanded')).toBe('false');
+		expect(onOpenChange).not.toHaveBeenCalled();
+
+		fireEvent.keyDown(breed, { key: 'Escape' });
+		expect(onOpenChange).toHaveBeenCalledWith(false);
 	});
 
 	it('finds breeds by localised name, keeps Mixed and Not sure listed, and drops a breed of the other species', async () => {
