@@ -1,11 +1,11 @@
 ---
 id: TASK-20.2
 title: 'Match review API: suggestions, confirm (opens chat), reject with feedback'
-status: In Progress
+status: Done
 assignee:
   - '@backend-dev'
 created_date: '2026-10-14 22:13'
-updated_date: '2026-10-15 18:57'
+updated_date: '2026-10-15 19:36'
 labels:
   - be
   - 'est:S'
