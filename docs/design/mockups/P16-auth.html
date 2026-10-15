@@ -39,15 +39,18 @@
 /* Popover surface (dialogs, toasts): shadow-pop casts downward (system section 6) */
 .pop { background: hsl(var(--popover)); color: hsl(var(--popover-foreground)); box-shadow: var(--shadow-pop); }
 
-/* Provider buttons (Google, Apple). Same sizes as secondary, but a neutral surface tone, never the teal tint:
-   brand rules want a white, black or grey field behind the logos. card on the page background, background inside sheets and dialogs. */
-.btn-provider { background: hsl(var(--card)); color: hsl(var(--card-foreground)); }
-.btn-provider:hover, .btn-provider.is-hover { background: color-mix(in srgb, hsl(var(--card)) 86%, hsl(var(--foreground))); }
-.sheet .btn-provider, .pop .btn-provider, .card .btn-provider { background: hsl(var(--background)); color: hsl(var(--foreground)); }
-.sheet .btn-provider:hover, .pop .btn-provider:hover, .card .btn-provider:hover,
-.sheet .btn-provider.is-hover, .pop .btn-provider.is-hover, .card .btn-provider.is-hover { background: color-mix(in srgb, hsl(var(--background)) 86%, hsl(var(--foreground))); }
-.btn-provider svg { width: 20px; height: 20px; flex: none; }
-.btn-text.is-hover { text-decoration: underline; text-underline-offset: 4px; }
+/* Provider buttons (Google, Apple), system 10.2: provider fill, provider-foreground label, 1 px inside provider-border stroke,
+   the same on every surface (page, sheet, dialog). Hover mixes 14 % of the label colour into the fill. Loading: spinner in the glyph's place. */
+.btn-provider { background: hsl(var(--provider)); color: hsl(var(--provider-foreground)); box-shadow: inset 0 0 0 1px hsl(var(--provider-border)); }
+.btn-provider:hover, .btn-provider.is-hover { background: color-mix(in srgb, hsl(var(--provider)) 86%, hsl(var(--provider-foreground))); }
+.btn-provider svg, .btn-provider .spin { width: 20px; height: 20px; flex: none; }
+
+/* Text button hover (system 10.1): foreground at 10 % over the surface, no underline. Overrides the underline in directions.css. */
+.btn-text:not(:disabled):hover, .btn-text.is-hover { text-decoration: none; background: hsl(var(--foreground) / 0.1); }
+
+/* Dialog title role (system 4 and 10.9): Display 600, 18/28 on mobile, 20/28 on web */
+.dlg-title { font-family: var(--font-display); font-weight: 600; font-size: 18px; line-height: 28px; letter-spacing: -0.005em; }
+.dlg-title.web { font-size: 20px; }
 
 /* Fields: the generic .is-focus outline must not box a line field */
 .input.is-focus { outline: none; }
@@ -116,7 +119,7 @@
   <h1 class="tile-title">P16 Sign in and account creation</h1>
   <p class="tile-lede">Quick, calm sign-in and sign-up with e-mail, Google or Apple; e-mail confirmation and password reset; the account gate that other flows open, which never loses a draft; account linking; and every error state. App frames are 390 px, web frames 1200 px. Copy is final from the P16 content slice (v0.1, native review pending). Finders reporting without an account never see these screens.</p>
   <div class="flex flex-wrap gap-2">
-    <span class="anno">One primary per view</span><span class="anno">Labels above line fields</span><span class="anno">Google and Apple: equal size, neutral tone, brand glyphs</span><span class="anno">Web: flow variant, 440 px column, no ads, no sidebar</span><span class="anno">Gate: "Vse, kar ste vnesli, ostane."</span>
+    <span class="anno">One primary per view</span><span class="anno">Labels above line fields</span><span class="anno">Google and Apple: provider buttons, equal size, same on every surface</span><span class="anno">Web: flow variant, 440 px column, no ads, no sidebar</span><span class="anno">Gate: "Vse, kar ste vnesli, ostane."</span>
   </div>
 </section>
 
@@ -152,7 +155,7 @@
         </div>
         <span class="home-ind"></span>
       </div></div>
-      <p class="help mt-4" style="max-width:412px">h1 34/40, fields 24 apart, primary <code>lg</code> 56. E-naslov: <code>type=email</code>, <code>autocomplete=email</code>, no auto-capitals. Geslo: <code>autocomplete=current-password</code>; the eye button is named "Pokaži geslo", then "Skrij geslo". Return on Geslo submits. Google and Apple: 48 px like secondary, full width, neutral tone (<code>card</code> on <code>background</code>), glyph 20.</p>
+      <p class="help mt-4" style="max-width:412px">h1 34/40, fields 24 apart, primary <code>lg</code> 56. E-naslov: <code>type=email</code>, <code>autocomplete=email</code>, no auto-capitals. Geslo: <code>autocomplete=current-password</code>; the eye button is named "Pokaži geslo", then "Skrij geslo". Return on Geslo submits. Google and Apple: <code>provider</code> variant, 48 px, full width, 12 apart, Google first; <code>provider</code> fill, <code>provider-foreground</code> label, 1 px inside <code>provider-border</code> stroke; glyph 20.</p>
     </figure>
 
     <!-- M2 CREATE ACCOUNT (FULL LENGTH) -->
@@ -237,7 +240,7 @@
         </div>
         <span class="home-ind"></span>
       </div></div>
-      <p class="help mt-4" style="max-width:412px">The label stays, a spinner goes before it, <code>aria-busy</code>, presses are ignored and the fields are read-only. Nothing moves. Google and Apple show the same spinner in their own button while the provider window opens.</p>
+      <p class="help mt-4" style="max-width:412px">The label stays, a spinner goes before it, <code>aria-busy</code>, presses are ignored and the fields are read-only. Nothing moves. When Google or Apple is pressed, that button shows the spinner in the glyph's place while the provider window opens.</p>
     </figure>
 
   </div>
@@ -376,11 +379,10 @@
       <div class="phone"><div class="phone-screen" lang="sl">
         <div class="statusbar" aria-hidden="true"><span>14:31</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
         <div inert aria-hidden="true" data-sample>
-          <div class="topbar"><span class="iconbtn"><i class="ph-bold ph-caret-left"></i></span><div class="steps flex-1"><span class="on"></span><span class="on"></span><span class="on"></span><span class="on"></span></div><span class="iconbtn"><i class="ph-bold ph-x"></i></span></div>
+          <div class="topbar"><span class="iconbtn"><i class="ph-bold ph-caret-left"></i></span><div class="steps flex-1" role="progressbar" aria-valuemin="1" aria-valuemax="7" aria-valuenow="7" aria-label="Korak 7 od 7"><span class="on"></span><span class="on"></span><span class="on"></span><span class="on"></span><span class="on"></span><span class="on"></span><span class="on"></span></div><span class="iconbtn"><i class="ph-bold ph-x"></i></span></div>
           <div class="px-5 pt-3">
-            <img class="thumb w-full h-[220px]" style="border-radius:32px" src="../directions/img/dog-aussie.jpg" alt="">
-            <p class="font-display font-bold text-[34px] leading-[40px] tracking-[-0.02em] mt-6">Maks</p>
-            <p class="st st-lost st-lg mt-2"><i class="ph-fill ph-megaphone"></i>Izgubljena</p>
+            <p class="font-display font-bold text-[34px] leading-[40px] tracking-[-0.02em]">Preverite in objavite</p>
+            <img class="thumb w-full h-[220px] mt-6" style="border-radius:32px" src="../directions/img/dog-aussie.jpg" alt="">
           </div>
         </div>
         <div class="scrim"></div>
@@ -388,7 +390,7 @@
           <button type="button" class="grab" aria-label="Zapri"></button>
           <div class="px-5 pt-3">
             <h2 class="font-display font-bold text-[24px] leading-[30px] tracking-[-0.015em]" tabindex="-1">Za objavo potrebujete račun</h2>
-            <p class="flex gap-2 text-lg leading-7 mt-3"><i class="ph-fill ph-shield-check text-primary text-[22px] leading-7 flex-none" aria-hidden="true"></i><span>Vse, kar ste vnesli, ostane.</span></p>
+            <p class="text-lg leading-7 mt-3">Tako vas obvestimo o ujemanjih, ljudje pa vam lahko pišejo, ne da bi videli vašo številko. Vse, kar ste vnesli, ostane.</p>
           </div>
           <div class="grid gap-3 px-5 pt-7">
             <a href="#" class="btn btn-primary btn-lg btn-block">Vpiši se</a>
@@ -401,7 +403,7 @@
         </div>
         <span class="home-ind" style="z-index:12"></span>
       </div></div>
-      <p class="help mt-4" style="max-width:412px">The h2 names the reason, one per source: objava (report lost), pogovor (contact), opozorila, prispevek (tip), shranjevanje živali (My pets). Sheet: <code>card</code>, top radius 28, <code>shadow-lg</code>, <code>scrim</code>. Inside the sheet Google and Apple take the <code>background</code> tone. Grabber (44 px "Zapri"), scrim tap, swipe and "Prekliči" all close it with the draft untouched. Draft behind the scrim is a P6 sample.</p>
+      <p class="help mt-4" style="max-width:412px">Opened at Publish (step 7 of 7). Title and body are P6's own (<code>report_lost.gate_title</code>, <code>report_lost.gate_body</code>); other sources use the P16 titles (pogovor, opozorila, prispevek, shranjevanje živali) with <code>auth.gate_kept</code>, as in W3. Sheet: <code>card</code>, top radius 28, <code>shadow-lg</code>, <code>scrim</code>. Google and Apple keep the <code>provider</code> look in the sheet. Grabber (44 px "Zapri"), scrim tap, swipe and "Prekliči" all close it with the draft untouched. The review step behind the scrim is a P6 sample.</p>
     </figure>
 
     <!-- G2 GATE UNVERIFIED -->
@@ -410,11 +412,10 @@
       <div class="phone"><div class="phone-screen" lang="sl">
         <div class="statusbar" aria-hidden="true"><span>14:33</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
         <div inert aria-hidden="true" data-sample>
-          <div class="topbar"><span class="iconbtn"><i class="ph-bold ph-caret-left"></i></span><div class="steps flex-1"><span class="on"></span><span class="on"></span><span class="on"></span><span class="on"></span></div><span class="iconbtn"><i class="ph-bold ph-x"></i></span></div>
+          <div class="topbar"><span class="iconbtn"><i class="ph-bold ph-caret-left"></i></span><div class="steps flex-1" role="progressbar" aria-valuemin="1" aria-valuemax="7" aria-valuenow="7" aria-label="Korak 7 od 7"><span class="on"></span><span class="on"></span><span class="on"></span><span class="on"></span><span class="on"></span><span class="on"></span><span class="on"></span></div><span class="iconbtn"><i class="ph-bold ph-x"></i></span></div>
           <div class="px-5 pt-3">
-            <img class="thumb w-full h-[220px]" style="border-radius:32px" src="../directions/img/dog-aussie.jpg" alt="">
-            <p class="font-display font-bold text-[34px] leading-[40px] tracking-[-0.02em] mt-6">Maks</p>
-            <p class="st st-lost st-lg mt-2"><i class="ph-fill ph-megaphone"></i>Izgubljena</p>
+            <p class="font-display font-bold text-[34px] leading-[40px] tracking-[-0.02em]">Preverite in objavite</p>
+            <img class="thumb w-full h-[220px] mt-6" style="border-radius:32px" src="../directions/img/dog-aussie.jpg" alt="">
           </div>
         </div>
         <div class="scrim"></div>
@@ -453,9 +454,9 @@
           </div>
         </div>
         <div class="scrim"></div>
-        <div class="pop absolute left-5 right-5 p-6" role="alertdialog" aria-modal="true" aria-label="Povežete ta način vpisa z računom?" style="top:50%;transform:translateY(-50%);z-index:8;border-radius:var(--radius-card)">
-          <h2 class="font-display font-bold text-[24px] leading-[30px] tracking-[-0.015em]" tabindex="-1">Povežete ta način vpisa z računom?</h2>
-          <p class="mt-3">Račun z e-naslovom <b class="break-words" data-sample>ana.novak@gmail.com</b> že obstaja. Če ju povežete, se lahko vpisujete na oba načina.</p>
+        <div class="pop absolute left-5 right-5" role="alertdialog" aria-modal="true" aria-label="Povežete ta način vpisa z računom?" style="top:50%;transform:translateY(-50%);z-index:8;max-width:440px;padding:28px 24px 20px;border-radius:var(--radius-card)">
+          <h2 class="dlg-title" tabindex="-1">Povežete ta način vpisa z računom?</h2>
+          <p class="mt-2">Račun z e-naslovom <b class="break-words" data-sample>ana.novak@gmail.com</b> že obstaja. Če ju povežete, se lahko vpisujete na oba načina.</p>
           <div class="grid gap-1 mt-6">
             <button type="button" class="btn btn-primary btn-lg btn-block">Poveži</button>
             <button type="button" class="btn btn-text btn-block">Prekliči</button>
@@ -463,7 +464,7 @@
         </div>
         <span class="home-ind" style="z-index:12"></span>
       </div></div>
-      <p class="help mt-4" style="max-width:412px">Dialog: <code>popover</code>, radius 24, padding 24, <code>shadow-pop</code>, <code>scrim</code>; h2, text, primary then text button. Focus trapped, Escape (web) and "Prekliči" cancel this sign-in and leave the account as it was. An Apple relay address is never shown; it reads "e-naslov skriva Apple" (section F).</p>
+      <p class="help mt-4" style="max-width:412px">Dialog: <code>popover</code>, max 440 px, radius 24, padding 28/24/20, <code>shadow-pop</code>, <code>scrim</code>; title role (18/28, Display 600), text 16/24, primary then text button. Focus trapped, Escape (web) and "Prekliči" cancel this sign-in and leave the account as it was. An Apple relay address is never shown; it reads "e-naslov skriva Apple" (section F).</p>
     </figure>
 
     <!-- E5 SESSION EXPIRED -->
@@ -472,9 +473,10 @@
       <div class="phone"><div class="phone-screen" lang="sl">
         <div class="statusbar" aria-hidden="true"><span>14:40</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
         <div inert aria-hidden="true" data-sample>
-          <div class="topbar"><span class="iconbtn"><i class="ph-bold ph-caret-left"></i></span><div class="steps flex-1"><span class="on"></span><span class="on"></span><span class="on"></span><span class="on"></span></div><span class="iconbtn"><i class="ph-bold ph-x"></i></span></div>
+          <div class="topbar"><span class="iconbtn"><i class="ph-bold ph-caret-left"></i></span><div class="steps flex-1" role="progressbar" aria-valuemin="1" aria-valuemax="7" aria-valuenow="7" aria-label="Korak 7 od 7"><span class="on"></span><span class="on"></span><span class="on"></span><span class="on"></span><span class="on"></span><span class="on"></span><span class="on"></span></div><span class="iconbtn"><i class="ph-bold ph-x"></i></span></div>
           <div class="px-5 pt-3">
-            <img class="thumb w-full h-[220px]" style="border-radius:32px" src="../directions/img/dog-aussie.jpg" alt="">
+            <p class="font-display font-bold text-[34px] leading-[40px] tracking-[-0.02em]">Preverite in objavite</p>
+            <img class="thumb w-full h-[220px] mt-6" style="border-radius:32px" src="../directions/img/dog-aussie.jpg" alt="">
           </div>
         </div>
         <div class="scrim"></div>
@@ -743,10 +745,10 @@
       </div>
     </div>
     <div class="scrim" style="top:44px"></div>
-    <div class="pop absolute p-8" role="dialog" aria-modal="true" aria-label="Za pogovor potrebujete račun" style="left:50%;top:124px;width:480px;margin-left:-240px;z-index:5;border-radius:var(--radius-card)">
-      <h2 class="font-display font-bold text-3xl tracking-[-0.015em]" tabindex="-1">Za pogovor potrebujete račun</h2>
-      <p class="flex gap-3 text-xl leading-8 mt-3"><i class="ph-fill ph-shield-check text-primary text-[24px] leading-8 flex-none" aria-hidden="true"></i><span>Vse, kar ste vnesli, ostane.</span></p>
-      <div class="grid gap-3 mt-8">
+    <div class="pop absolute" role="dialog" aria-modal="true" aria-label="Za pogovor potrebujete račun" style="left:50%;top:124px;width:440px;margin-left:-220px;padding:28px 24px 20px;z-index:5;border-radius:var(--radius-card)">
+      <h2 class="dlg-title web" tabindex="-1">Za pogovor potrebujete račun</h2>
+      <p class="flex gap-2 mt-2"><i class="ph-fill ph-shield-check text-primary text-[20px] leading-6 flex-none" aria-hidden="true"></i><span>Vse, kar ste vnesli, ostane.</span></p>
+      <div class="grid gap-3 mt-6">
         <a href="#" class="btn btn-primary btn-lg btn-block is-focus">Vpiši se</a>
         <a href="#" class="btn btn-secondary btn-block">Ustvari račun</a>
         <p class="text-center text-muted-foreground">ali</p>
@@ -756,7 +758,7 @@
       </div>
     </div>
   </div></div>
-  <p class="help mt-4" style="max-width:640px">Dialog: <code>popover</code>, 480 px, radius 24, padding 32, <code>shadow-pop</code>, <code>scrim</code>. Focus starts on the h2, Tab reaches the primary (ring shown), focus is trapped, Escape and "Prekliči" close it and return focus to "Pošlji sporočilo". "Vpiši se" and "Ustvari račun" open <code>/vpis</code> and <code>/registracija</code> with a return address; Google and Apple sign in from here and the user stays on the listing. Listing behind the scrim is a P9 sample.</p>
+  <p class="help mt-4" style="max-width:640px">Dialog: <code>popover</code>, max 440 px, radius 24, padding 28/24/20, <code>shadow-pop</code>, <code>scrim</code>; title role 20/28 (Display 600), text 16/24. Focus starts on the title, Tab reaches the primary (ring shown), focus is trapped, Escape and "Prekliči" close it and return focus to "Pošlji sporočilo". "Vpiši se" and "Ustvari račun" open <code>/vpis</code> and <code>/registracija</code> with a return address; Google and Apple sign in from here and the user stays on the listing. Listing behind the scrim is a P9 sample.</p>
 </section>
 
 <!-- ================= F. PARTS AND STATES ================= -->
@@ -793,19 +795,19 @@
         <div class="flex flex-wrap items-center gap-x-4 gap-y-1"><span class="help w-24 flex-none">Loading</span><button type="button" class="btn btn-primary btn-lg flex-1" aria-busy="true"><span class="spin" aria-hidden="true"></span>Vpiši se</button></div>
         <div class="flex flex-wrap items-center gap-x-4 gap-y-1"><span class="help w-24 flex-none">Disabled</span><button type="button" class="btn btn-primary btn-lg flex-1" disabled>Vpiši se</button></div>
       </div>
-      <p class="tile-h">Google and Apple on the page (<code>card</code> tone)</p>
+      <p class="tile-h"><code>provider</code> on the page (also when e-mail sign-in is rate limited)</p>
       <div class="grid gap-3">
         <div class="flex flex-wrap items-center gap-x-4 gap-y-1"><span class="help w-24 flex-none">Default</span><button type="button" class="btn btn-provider flex-1"><svg viewBox="0 0 48 48" aria-hidden="true" focusable="false"><use href="#g-logo"/></svg>Nadaljuj z Googlom</button></div>
         <div class="flex flex-wrap items-center gap-x-4 gap-y-1"><span class="help w-24 flex-none">Hover</span><button type="button" class="btn btn-provider flex-1 is-hover"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#apple-logo"/></svg>Nadaljuj z Applom</button></div>
         <div class="flex flex-wrap items-center gap-x-4 gap-y-1"><span class="help w-24 flex-none">Focus</span><button type="button" class="btn btn-provider flex-1 is-focus"><svg viewBox="0 0 48 48" aria-hidden="true" focusable="false"><use href="#g-logo"/></svg>Nadaljuj z Googlom</button></div>
         <div class="flex flex-wrap items-center gap-x-4 gap-y-1"><span class="help w-24 flex-none">Loading</span><button type="button" class="btn btn-provider flex-1" aria-busy="true"><span class="spin" aria-hidden="true"></span>Nadaljuj z Applom</button></div>
       </div>
-      <p class="tile-h">In a sheet or dialog (<code>background</code> tone)</p>
+      <p class="tile-h">The same in a sheet or dialog (default, hover)</p>
       <div class="card p-5 grid gap-3">
         <button type="button" class="btn btn-provider btn-block"><svg viewBox="0 0 48 48" aria-hidden="true" focusable="false"><use href="#g-logo"/></svg>Nadaljuj z Googlom</button>
         <button type="button" class="btn btn-provider btn-block is-hover"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#apple-logo"/></svg>Nadaljuj z Applom</button>
       </div>
-      <p class="tile-h">Text button: default · hover · disabled during the cooldown</p>
+      <p class="tile-h">Text button: default · hover (<code>foreground</code> at 10 %) · disabled during the cooldown</p>
       <div class="grid gap-2 justify-items-start">
         <a href="#" class="btn btn-text">Pozabljeno geslo?</a>
         <a href="#" class="btn btn-text is-hover">Pozabljeno geslo?</a>
