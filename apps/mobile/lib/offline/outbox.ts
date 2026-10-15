@@ -156,7 +156,13 @@ function outcome(error: unknown, attempts: number, now: number) {
 
 async function deliver(transport: OutboxTransport, item: Row): Promise<void> {
 	const db = await getDb();
-	await db.runAsync(`update outbox set status = 'sending', updated_at = ? where id = ?`, Date.now(), item.id);
+	const { changes } = await db.runAsync(
+		`update outbox set status = 'sending', updated_at = ? where id = ? and status = 'queued'`,
+		Date.now(),
+		item.id
+	);
+	// Deleted by the person while earlier items were sending.
+	if (changes === 0) return;
 	changed();
 	try {
 		await transport.ensureSession();
