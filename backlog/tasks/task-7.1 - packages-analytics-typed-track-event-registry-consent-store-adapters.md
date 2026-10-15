@@ -1,11 +1,11 @@
 ---
 id: TASK-7.1
 title: 'packages/analytics: typed track(), event registry, consent store, adapters'
-status: To Do
+status: In Progress
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:12'
-updated_date: '2026-10-14 23:39'
+updated_date: '2026-10-15 02:05'
 labels:
   - fe
   - 'est:M'
@@ -39,9 +39,9 @@ Branch: agent/task-7.1-analytics-pkg
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 @zivali/analytics exports track(), setUserRole(), trackScreen() and the consent API (getConsent, setConsent, subscribeConsent, needsConsentPrompt, CONSENT_VERSION) exactly as in C12.
-- [ ] #2 A typed registry holds the 16 taxonomy events with allowlisted parameters using the exact GA4 names (municipality, region, species, report_type, ad_slot, ad_id, match_source, value, currency …); a non-allowlisted event or parameter throws in development and tests and is dropped in production.
-- [ ] #3 Unit tests prove that names, emails, chip-like numbers, coordinates and free text are rejected and that track() is a no-op without consent.
-- [ ] #4 Adapters ga4 (web), firebase (mobile, injected) and mock (default, records events, no network) are selected by environment.
-- [ ] #5 The package README contains the GA4 property checklist (custom dimensions, user property, key events, 14-month retention, Google signals off, data sharing off) and DebugView steps for web and Android.
+- [x] #1 @zivali/analytics exports track(), setUserRole(), trackScreen() and the consent API (getConsent, setConsent, subscribeConsent, needsConsentPrompt, CONSENT_VERSION) exactly as in C12.
+- [x] #2 A typed registry holds the 16 taxonomy events with allowlisted parameters using the exact GA4 names (municipality, region, species, report_type, ad_slot, ad_id, match_source, value, currency …); a non-allowlisted event or parameter throws in development and tests and is dropped in production.
+- [x] #3 Unit tests prove that names, emails, chip-like numbers, coordinates and free text are rejected and that track() is a no-op without consent.
+- [x] #4 Adapters ga4 (web), firebase (mobile, injected) and mock (default, records events, no network) are selected by environment.
+- [x] #5 The package README contains the GA4 property checklist (custom dimensions, user property, key events, 14-month retention, Google signals off, data sharing off) and DebugView steps for web and Android.
 <!-- AC:END -->

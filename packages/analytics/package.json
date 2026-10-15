@@ -1,0 +1,21 @@
+{
+	"name": "@zivali/analytics",
+	"version": "0.0.0",
+	"private": true,
+	"description": "One typed track() for GA4 (web) and Firebase Analytics (mobile) with basic Consent Mode v2 (contract C12, ADR-009)",
+	"type": "module",
+	"exports": {
+		".": "./src/index.ts"
+	},
+	"scripts": {
+		"lint": "eslint --max-warnings=0 .",
+		"typecheck": "tsc",
+		"test": "node --test \"test/*.test.ts\""
+	},
+	"devDependencies": {
+		"@types/node": "^22.19.0"
+	},
+	"engines": {
+		"node": ">=22"
+	}
+}
