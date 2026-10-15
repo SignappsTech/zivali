@@ -13,6 +13,16 @@ Typed client for the REST API (`apps/api`, contract C1), shared by web and mobil
 | `me`, `pets`, `reports`, `matches` | endpoint stubs and hooks (C3, C4, C8) until codegen has them; each names its backend task                           |
 | `photos`                           | `uploadPhoto(client, photo, { onProgress, signal, put })`, `xhrPut`, photo status/delete hooks (C5)                 |
 | `geocode`                          | `searchPlaces` / `reversePlace` (POST, C6) and `usePlaceSearch(q, near)` (300 ms, ≥ 3 chars, aborts)                |
+| `chat`                | C9 endpoints and hooks; `subscribeConversation(supabase, store, id)` (Realtime, catch-up on resubscribe)  |
+| `notifications`       | C10 inbox, prefs, quiet hours, push tokens; `subscribeInbox(supabase, dispatch, userId, onEvent)`         |
+| `alerts`              | C10 nearby-alert subscription                                                                             |
+| `abuse`               | C11 abuse reports, admin queue and moderation flags                                                       |
+| `payments`            | C13 checkout, payments; `startCheckout`, `redirectToCheckout` (web), `openCheckout` (mobile)              |
+| `ads`                 | C14 ad serving and admin; `useAd(slot, ctx)` → `{ ad, loading, error }` (never throws)                    |
+| `partners`            | C14 partner stats and leads                                                                               |
+| `broadcast`           | `subscribeBroadcast` (private Supabase Broadcast channel, typed without supabase-js)                      |
+
+Until `gen:api` covers a domain, its file holds `injectEndpoints` stubs that follow the contract (paths, types, the owning backend task in the header); delete them when the generated endpoints land and keep the hand-written helpers.
 
 ```ts
 const store = createApiStore(createApiClient({ baseUrl: env.API_URL, getAccessToken, deviceId, locale: 'sl' }));
