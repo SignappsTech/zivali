@@ -5,6 +5,7 @@ status: To Do
 assignee:
   - '@design-lead'
 created_date: '2026-10-14 21:02'
+updated_date: '2026-10-15 00:38'
 labels:
   - story
   - 'req:FR-007'
@@ -29,6 +30,7 @@ Every other story links to or acts from one listing page (matches, chat, share, 
 - [ ] #3 Given a crawler or link preview, when the web page is fetched, then it is server-rendered with title, description, Open Graph image and structured data, and closed or hidden reports are not indexable.
 - [ ] #4 Given a hidden or removed report, when its URL is opened, then a clear message explains it is no longer available.
 - [ ] #5 Given SL and EN, when the language is switched, then page content and meta are localised.
+- [ ] #6 Given the shelter row or call in the checklist, when the municipality is unconfirmed, then a suggested shelter shows as "Morda pristojno zavetišče" with a small "Ni potrjeno" note, else the nearest registered shelters by distance (max 2) with the same note; confirmed entries show normally (FR-044).
 <!-- AC:END -->
 
 ## Packet

@@ -5,7 +5,7 @@ status: To Do
 assignee:
   - '@design-lead'
 created_date: '2026-10-14 21:03'
-updated_date: '2026-10-14 23:08'
+updated_date: '2026-10-15 00:38'
 labels:
   - story
   - 'req:FR-005'
@@ -36,6 +36,7 @@ This is the entry point of the core loop; owners are panicked, so it must take m
 - [ ] #5 Given the flow, when it starts and when it is submitted, then report_lost_start and report_lost_submit fire with region and species only, and only with consent.
 - [ ] #6 Given incomplete data, when the user submits, then errors are specific and localised and the form keeps their input.
 - [ ] #7 Given a submitted lost report, when the confirmation shows, then a checklist offers a one-tap call to the responsible shelter from the directory and states the owner reporting duty (escape reported to a vet or the responsible shelter within 3 days; the nearest shelter within 72 h), never claiming the app replaces it; the legal timings appear only when the legal-content flag is on.
+- [ ] #8 Given the shelter row or call in the checklist, when the municipality is unconfirmed, then a suggested shelter shows as "Morda pristojno zavetišče" with a small "Ni potrjeno" note, else the nearest registered shelters by distance (max 2) with the same note; confirmed entries show normally (FR-044).
 <!-- AC:END -->
 
 ## Packet

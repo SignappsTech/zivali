@@ -5,7 +5,7 @@ status: To Do
 assignee:
   - '@design-lead'
 created_date: '2026-10-14 21:03'
-updated_date: '2026-10-14 23:08'
+updated_date: '2026-10-15 00:38'
 labels:
   - story
   - 'req:FR-006'
@@ -35,6 +35,7 @@ Finders will not register; conversion depends on a found report taking under 60 
 - [ ] #5 Given anonymous submissions over the limits, when received, then the safeguards from the anonymous-reporter story apply and the user sees a friendly message.
 - [ ] #6 Given the flow, when it starts and when it is submitted, then report_found_start and report_found_submit fire (consent only) and no ad appears anywhere in the flow.
 - [ ] #7 Given a submitted found report, when the confirmation shows (after submit, so the 60 s target is unaffected), then a notice says the find should be reported to the responsible shelter within 24 hours with call buttons from the directory and that any vet or shelter can read the chip; the legal timing appears only when the legal-content flag is on, and the notice also shows once a queued offline report is sent.
+- [ ] #8 Given the shelter row or call in the checklist, when the municipality is unconfirmed, then a suggested shelter shows as "Morda pristojno zavetišče" with a small "Ni potrjeno" note, else the nearest registered shelters by distance (max 2) with the same note; confirmed entries show normally (FR-044).
 <!-- AC:END -->
 
 ## Packet

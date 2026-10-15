@@ -1,7 +1,7 @@
 ---
 doc_id: DOC-02
 title: Product Requirements
-version: 0.8
+version: 0.9
 status: Draft
 date: 2026-10-14
 owner: Product Manager
@@ -455,7 +455,7 @@ approvals:
 - **Priority:** Should · **Milestone:** M4
 - **User story:** As an owner, I want to mention a reward on my listing so that finders know one is offered, while any payment stays between us outside the app.
 - **Requirements**
-  - R-023.1 A lost listing has an optional free-text or amount reward line (display only, EUR 0–500 if numeric); the app never holds, moves or intermediates money for rewards: no escrow, no fee, no Stripe Connect, no DAC7 reporting.
+  - R-023.1 A lost listing has an optional free-text or amount reward line (display only, EUR 1–10 000 if numeric, matching reward_eur); the app never holds, moves or intermediates money for rewards: no escrow, no fee, no Stripe Connect, no DAC7 reporting.
   - R-023.2 Every listing with a reward line and the chat show a scam warning: never pay first, never send money to claim a found pet, arrange any reward in person after seeing the animal.
   - R-023.3 Reward text is moderated like other listing text; scam patterns can be reported (FR-014).
   - R-023.4 Terms state that rewards are arranged between the parties and outside the app (FR-035).
@@ -801,9 +801,14 @@ approvals:
   - R-044.2 Powers the post-submit checklists and call buttons in FR-005 and FR-006.
   - R-044.3 Editable in the admin console, versioned and audit-logged; reminder to refresh yearly after 31 March.
   - R-044.4 Public pages /zavetisca/{slug} and an index with municipality search, AnimalShelter structured data, SL/EN (the strongest SEO asset).
-  - R-044.5 Unknown or unconfirmed municipality: say so, never show a wrong number.
+  - R-044.5 Unknown or unconfirmed municipality: say so, never show a wrong number as fact.
+  - R-044.6 Fallback (directory has 74 of 212 municipalities confirmed): confirmed entry shows normally; unconfirmed with a suggested_shelter shows it labelled "Morda pristojno zavetišče" with a small "Ni potrjeno" note; otherwise the nearest registered shelters by distance (max 2) with the same note. Applies wherever the shelter row or call button appears (FR-005, FR-006, FR-007 detail, owner shelter row).
+  - R-044.7 Admins (TASK-89) can confirm entries; shelters and municipalities can later request corrections.
 - **Acceptance criteria**
   - [ ] Given a municipality, when the directory is queried, then the responsible shelter and its phone are returned.
+  - [ ] Given an unconfirmed municipality with a suggested_shelter, when shown, then it is labelled "Morda pristojno zavetišče" with a "Ni potrjeno" note.
+  - [ ] Given an unconfirmed municipality without a suggestion, when shown, then the nearest registered shelters by distance (max 2) appear with the same note.
+  - [ ] Given a confirmed municipality, when shown, then no unconfirmed note appears.
   - [ ] Given an admin edit, when saved, then it is versioned and visible in the app at once.
   - [ ] Given /zavetisca/{slug}, when crawled, then valid AnimalShelter JSON-LD is present.
 - **Edge cases**
@@ -929,7 +934,6 @@ approvals:
     Boost: lost report → Boost → Checkout → wider alerts + top of list
     Premium / Podpornik: plan page → Checkout → entitlement → manage in Stripe portal
     Vet Partner: verified vet org → plan page → Billing Checkout (VAT invoice) → clinic profile, featured slot, alert/poster line, monthly report
-    Reward: confirmed chat → fund reward → reunion confirmed → release (fee) → finder paid via Connect
 
     Ads
     Admin creates ad (region, species, dates) → slot request with context → sponsor ad or house ad → DB counts impression/click
@@ -1018,3 +1022,4 @@ approvals:
 | 0.6 | 2026-10-15 | Discovery changes: CRPsi lookup closed, now CRHŽ (FR-002, FR-016, A-003); cats first (FR-002); post-submit checklists (FR-005, FR-006); new FR-044 shelter directory; holding period 8 days and found location/time capture (FR-015, A-004); dohodnina deferred (FR-024, A-018); no animal sale ads (FR-018, FR-029, FR-031); Vet Partner labelling (FR-028, FR-030); SEO routes (FR-035); share kit (FR-011); marketing partners (FR-040); backend wording per brief v1.0 (A-005) |
 | 0.7 | 2026-10-15 | New FR-045 lawyer briefing pack (Q-013) and FR-046 fiscal invoices for card payments (Q-012) |
 | 0.8 | 2026-10-15 | Brief v1.1: reward escrow dropped, FR-023 now display-only reward line with scam warning (A-019, glossary, summary, A-007, FR-024 cleaned); processor list updated (Hetzner, Supabase Frankfurt, Cloudflare R2 EU/Turnstile, Brevo, Expo, Stripe, Anthropic, Voyage, Google), MapTiler removed (own GURS geocoder, ADR-007); open question OQ-001 on VAT for voluntary contributions linked to Q-012 |
+| 0.9 | 2026-10-15 | FR-023 reward range aligned to 1–10 000; stale escrow flow line removed; FR-044 unconfirmed-municipality fallback (R-044.6, R-044.7) |
