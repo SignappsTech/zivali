@@ -8,6 +8,8 @@ export type GuardInput = {
 	databaseUrl: string;
 	cwd: string;
 	pending: string[];
+	/** Applied on the database but absent from this checkout's migration folder (TASK-102). */
+	unknown?: string[];
 	allowOverride?: boolean;
 };
 
@@ -25,8 +27,16 @@ export function isWorktree(cwd: string): boolean {
  * shared database: the base checkout's merge verify runs there, and two concurrent runs take each other's pg-boss
  * jobs and connections (main went red that way on 2026-10-15). With unmerged migrations the message names them.
  */
-export function guardMessage({ databaseUrl, cwd, pending, allowOverride }: GuardInput): string | null {
-	if (allowOverride || !isSharedDb(databaseUrl) || !isWorktree(cwd)) return null;
+export function guardMessage({ databaseUrl, cwd, pending, unknown = [], allowOverride }: GuardInput): string | null {
+	if (allowOverride || !isSharedDb(databaseUrl)) return null;
+	if (unknown.length)
+		return [
+			`The shared database has ${unknown.length} migration(s) applied that are not in prisma/schemas/migrations here (an unmerged branch migrated it):`,
+			...unknown.map((m) => `  - ${m}`),
+			'Fix: revert them on the shared database (undo their changes, then delete their rows from app._prisma_migrations), or merge the branch that owns them.',
+			'Override (humans only): ALLOW_SHARED_DB_MIGRATE=1',
+		].join('\n');
+	if (!isWorktree(cwd)) return null;
 	return [
 		pending.length
 			? `Refusing to migrate the shared database from a worktree: ${pending.length} migration(s) not yet applied there:`
@@ -46,23 +56,35 @@ export function localMigrations(dir = 'prisma/schemas/migrations'): string[] {
 		.sort();
 }
 
-/** Migration folders missing from app._prisma_migrations. A missing table means all are pending. */
-export async function pendingMigrations(databaseUrl: string, local = localMigrations()): Promise<string[]> {
+/** Migration folders missing from app._prisma_migrations (pending) and applied names without a folder (unknown). A missing table means all are pending. */
+export async function migrationDrift(
+	databaseUrl: string,
+	local = localMigrations()
+): Promise<{ pending: string[]; unknown: string[] }> {
 	const url = new URL(databaseUrl);
 	url.searchParams.delete('schema');
 	const client = new pg.Client({ connectionString: url.toString() });
 	await client.connect();
 	try {
 		const { rows } = await client.query<{ migration_name: string }>(
-			'select migration_name from app._prisma_migrations'
+			'select migration_name from app._prisma_migrations where rolled_back_at is null'
 		);
-		const applied = new Set(rows.map((r) => r.migration_name));
-		return local.filter((m) => !applied.has(m));
+		return diffMigrations(
+			local,
+			rows.map((r) => r.migration_name)
+		);
 	} catch (e) {
 		const code = (e as { code?: string }).code;
-		if (code === '42P01' || code === '3F000') return local;
+		if (code === '42P01' || code === '3F000') return { pending: local, unknown: [] };
 		throw e;
 	} finally {
 		await client.end();
 	}
+}
+
+export function diffMigrations(local: string[], applied: string[]): { pending: string[]; unknown: string[] } {
+	return {
+		pending: local.filter((m) => !applied.includes(m)),
+		unknown: applied.filter((m) => !local.includes(m)).sort(),
+	};
 }

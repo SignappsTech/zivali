@@ -60,6 +60,7 @@ export const routing = defineRouting({
 		'/imprint': { sl: '/impresum', en: '/imprint' },
 		'/accessibility': { sl: '/dostopnost', en: '/accessibility' },
 		'/admin': '/admin',
+		'/admin/abuse-reports': { sl: '/admin/prijave-zlorab', en: '/admin/abuse-reports' },
 		'/admin/audit-log': { sl: '/admin/revizijska-sled', en: '/admin/audit-log' },
 		'/admin/shelters': { sl: '/admin/zavetisca', en: '/admin/shelters' },
 		// P19 sections not built yet ("Kmalu"); after the static admin paths, so those match first (routeTemplate).

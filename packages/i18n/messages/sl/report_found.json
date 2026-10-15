@@ -30,5 +30,18 @@
 	"link_invalid_body": "Prijava je morda zaključena ali izbrisana. Če ste navedli e-naslov, vam lahko povezavo pošljemo znova.",
 	"summary_place": "Kraj",
 	"expiry_note": "{days, plural, one {Prijava bo potekla čez # dan.} two {Prijava bo potekla čez # dneva.} few {Prijava bo potekla čez # dni.} other {Prijava bo potekla čez # dni.}} Če je žival še pri vas ali jo še vedno vidite, prijavo podaljšajte.",
-	"extend": "Podaljšaj za 30 dni"
+	"extend": "Podaljšaj za 30 dni",
+	"open_report": "Odpri mojo prijavo",
+	"outbox_title": "Čaka na pošiljanje",
+	"outbox_waiting": "Čaka",
+	"outbox_sending": "Pošiljamo …",
+	"outbox_sent": "Poslano",
+	"outbox_failed": "Ni uspelo",
+	"outbox_retry": "Poskusi znova",
+	"outbox_delete": "Izbriši",
+	"my_reports": "Moje prijave",
+	"outbox_pending_title": "{count, plural, one {# prijava še ni poslana} two {# prijavi še nista poslani} few {# prijave še niso poslane} other {# prijav še ni poslanih}}",
+	"outbox_pending_body": "Pošljite jih zdaj ali jih izbrišite s te naprave. Izbrisanih prijav ni mogoče obnoviti.",
+	"outbox_send_now": "Pošlji zdaj",
+	"outbox_send_failed": "Prijav ni bilo mogoče poslati. Poskusite znova, ko boste povezani, ali jih izbrišite."
 }

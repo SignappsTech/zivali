@@ -46,4 +46,5 @@ Branch: agent/task-16.7-pets-mob
 - [ ] #2 The chip is never shown outside the owner's own pet screens.
 - [ ] #3 A free account adding a third pet sees the Premium option and can still report that pet lost with inline details (free limit 2).
 - [ ] #4 Works in SL and EN; component tests cover the list and form states.
+- [ ] #5 From the TASK-16.5 review (mobile PetFields): the breed search text is cleared on blur without a pick and when the species changes, so the input never shows an unsaved breed; breed rows are confirmed at 44pt (min-h-11).
 <!-- AC:END -->

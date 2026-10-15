@@ -65,6 +65,7 @@ const routes = {
 	'settings/consent': ConsentSettings,
 	'settings/language': LanguageSettings,
 	'settings/[section]': SettingsPlaceholder,
+	'settings/payments': () => null,
 	// Stand-ins for the flow and auth screens that later stories add.
 	'report/lost': () => null,
 	'report/found': () => null,
@@ -96,6 +97,7 @@ beforeEach(() => {
 	mockStorage.set('locale', 'sl');
 	mockSession = { session: null, me: null, isAnonymous: false, loading: false };
 	mockSignOutAndWipe.mockReset().mockResolvedValue(true);
+	mockSignOutProviders.mockClear();
 });
 
 describe('bottom navigation', () => {
@@ -173,7 +175,6 @@ describe('signed in', () => {
 		for (const [name, path] of [
 			[sl.profile.row_alerts, '/settings/alerts'],
 			[sl.alerts.channels_title, '/settings/notifications'],
-			[sl.profile.row_payments, '/settings/payments'],
 		]) {
 			await fireEvent.press(screen.getByRole('button', { name }));
 			expect(result.getPathname()).toBe(path);
@@ -184,6 +185,9 @@ describe('signed in', () => {
 			expect(screen.getByRole('tab', { name: sl.nav.tab_profile, selected: true })).toBeOnTheScreen();
 			expect(result.getPathname()).toBe('/profile');
 		}
+		// Plačila is its own screen (payments.test.tsx).
+		await fireEvent.press(screen.getByRole('button', { name: sl.profile.row_payments }));
+		expect(result.getPathname()).toBe('/settings/payments');
 	});
 
 	test('Profile shows the account header; an unconfirmed address can get a new link', async () => {
@@ -217,6 +221,24 @@ describe('signed in', () => {
 
 		expect(mockSignOutAndWipe).toHaveBeenCalledWith(expect.objectContaining({ removeManageLinks: true }));
 		expect(mockSignOutProviders).toHaveBeenCalled();
+	});
+
+	test('unsent reports: sign-out first offers Send now, Delete or Cancel; Cancel keeps the session', async () => {
+		mockSignOutAndWipe.mockImplementation(
+			({ resolvePending }: { resolvePending: (count: number) => Promise<boolean> }) => resolvePending(2)
+		);
+		await shell('/profile');
+
+		await fireEvent.press(screen.getByRole('button', { name: sl.profile.sign_out }));
+		const buttons = screen.getAllByRole('button', { name: sl.profile.sign_out_confirm });
+		await fireEvent.press(buttons[buttons.length - 1]);
+		expect(await screen.findByRole('heading', { name: '2 prijavi še nista poslani' })).toBeOnTheScreen();
+		expect(screen.getByRole('button', { name: sl.report_found.outbox_send_now })).toBeOnTheScreen();
+		expect(screen.getByRole('button', { name: sl.report_found.outbox_delete })).toBeOnTheScreen();
+
+		await fireEvent.press(screen.getByRole('button', { name: sl.common.cancel }));
+		expect(screen.queryByRole('heading', { name: '2 prijavi še nista poslani' })).toBeNull();
+		expect(mockSignOutProviders).not.toHaveBeenCalled();
 	});
 
 	test('the settings language screen switches the language', async () => {

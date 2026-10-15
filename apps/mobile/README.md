@@ -42,10 +42,16 @@ NativeWind 4 with Tailwind 3.4: `tailwind.config.js` uses the `@zivali/tokens/ta
 
 Gallery: `/dev/kit` (redirects to `/` when `EXPO_PUBLIC_APP_ENV=production`). `react-native-svg` and `react-native-gesture-handler` are native modules, so install a new development build after pulling them.
 
+## Map (C6, TASK-15.4)
+
+- `MapView` (`components/map/map-view.tsx`) takes the C6 props plus `bottomInset` (the px a list sheet covers, so the attribution stays above it). Markers, clusters, areas and paths are native MapLibre layers on `buildMapStyle(mode)`; it draws only the points it is given and never reads the device location.
+- The map is one accessible element ("Zemljevid: 12 prijav"); activating it with a screen reader or switch control shows `textAlternative` in its place. Jest mocks MapLibre in `jest.setup.ts` (parts carry testID `<Component>:<id>`; they are hidden from the accessibility tree, so query them with `includeHiddenElements`).
+- `@maplibre/maplibre-react-native` 11.4.1 (pinned; not in the Expo SDK 57 `bundledNativeModules.json`) is a native module with a config plugin: install a new development build after pulling it. `/dev/map` renders 500 seeded markers for the smoothness check (redirects to `/` in production).
+
 ## Shell (P2)
 
 - `app/(tabs)`: Zemljevid (`index`), Sporočila (`inbox`), Prijavi (`report`) and Profil (`profile`) with the bottom navigation in `components/shell/tab-bar.tsx`. The Prijavi button opens the Report sheet (lost → `/report/lost`, found → `/report/found`, sighted → `/report/found?type=sighted`); the `report` route shows the same choice for a link.
-- `app/settings`: a stack above the tabs. `language` works; `[section]` is the placeholder for `notifications`, `alerts`, `consent`, `payments` and `account` until a story adds `app/settings/<section>.tsx`.
+- `app/settings`: a stack above the tabs. `language` works; `[section]` is the placeholder for `notifications`, `alerts`, `consent` and `account` until a story adds `app/settings/<section>.tsx`.
 - Permissions: show `PermissionPrimer` (`components/shell/permission-primer.tsx`) before every OS prompt while the OS can still ask, passing the prompt as `request`; on `onResult(false)` show `PermissionNote` where the permission was needed.
 - Sign-out (Profil) calls `signOutAndWipe({ removeManageLinks })` after a confirmation with the "remove links" choice.
 
@@ -62,6 +68,12 @@ Gallery: `/dev/kit` (redirects to `/` when `EXPO_PUBLIC_APP_ENV=production`). `r
 - `app/m.tsx` opens `/m#<token>` (universal link or `zivali://m#<token>`; Expo Router passes the fragment as the `#` param): `claimManageLink()` signs in, calls `POST /v1/manage/claim`, stores the token in expo-secure-store (`manage_token.<report_id>`, as the outbox) and shows the P7 manage page. Offline, captcha or server failures retry every 60 s and on reconnect.
 - Every API request carries `x-device-id`: one random id per install in expo-secure-store (`device_id`, `lib/store.ts`).
 - `react-native-webview` is a native module: install a new development build after pulling it.
+
+## Payments (C13, TASK-32.3)
+
+- Web checkout only (A-014). `<CheckoutSheet open onOpenChange checkout={{ purpose, amountCents, refs, returnTo }} />` (`components/payments/checkout.tsx`) shows the P15 hand-off sheet; Nadaljuj calls `startCheckout` with `returnScheme: true`, opens the URL with `WebBrowser.openAuthSessionAsync(url, 'zivali://payments/return')` (`lib/checkout.ts`) and then shows the return state in the same sheet (polls `GET /v1/payments/:id` while pending).
+- Android also hands that return link to the router; `app/+native-intent.ts` drops it while the browser is open. Opened later (the app was closed meanwhile), it lands on `app/payments/return.tsx`. Only `canceled=1` is read from the link, so an https page that bounces to `zivali://payments/return` works the same.
+- Settings → Plačila (`app/settings/payments.tsx`) lists settled payments. Dev builds: `/dev/pay` starts a 5 € `support` payment (mock provider locally). `expo-web-browser` is a native module: install a new development build after pulling it.
 
 ## Analytics (TASK-7.3)
 

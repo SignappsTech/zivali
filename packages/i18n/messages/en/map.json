@@ -1,0 +1,13 @@
+{
+	"text_alternative": "Map of reports around {place}. All reports are listed in the list.",
+	"marker_a11y": "{title}, {status}",
+	"cluster_a11y": "{count, plural, one {# report in this area} other {# reports in this area}}. Zoom in",
+	"lost_area_a11y": "Approximate area where the pet was last seen",
+	"preview_open": "Open",
+	"attribution": "© OpenFreeMap © OpenMapTiles, data © OpenStreetMap contributors",
+	"loading": "Loading the map …",
+	"tiles_error": "The map cannot load right now. Reports are in the list.",
+	"a11y_label": "Map: {count, plural, one {# report} other {# reports}}",
+	"list_show": "Show list",
+	"list_hide": "Show map"
+}
