@@ -64,6 +64,16 @@ SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET=…
 
 Cloud with Brevo SMTP: set `email_sent` in the dashboard (Authentication > Rate Limits) to the Brevo plan's hourly budget.
 
+### Captcha (Turnstile, cloud only)
+
+Locally `[auth.captcha] enabled = false`: no widget, and a `captchaToken` the clients send is ignored (tests and offline work need no Cloudflare). Staging and production protect sign-up, sign-in, anonymous sign-in and password reset with Cloudflare Turnstile (C7, ADR-005):
+
+1. Cloudflare dashboard > Turnstile: one widget per environment (Managed mode), hostnames = the web app domain (the mobile app solves it in a WebView on the web `/captcha` page, so no app hostname is needed).
+2. Supabase dashboard > Authentication > Attack Protection: enable Captcha protection, provider Turnstile, paste the widget's **secret key**. Supabase then rejects auth requests without a valid token.
+3. Web env (Vercel): `NEXT_PUBLIC_TURNSTILE_SITE_KEY` = the widget's **site key** (empty = captcha off, as locally). Clients pass the token as `options.captchaToken` to `signUp`, `signInWithPassword`, `signInAnonymously` and `resetPasswordForEmail`.
+
+The API's own captcha (`CAPTCHA_PROVIDER`, `TURNSTILE_SECRET_KEY`) is separate: it guards API forms (leads), not Auth. Anonymous reports are also limited by the API (5 per hour, 20 per day per IP and per device, app_config `rate.anon_report_per_*`).
+
 ### Account linking
 
 Automatic identity linking (Supabase default): when someone signs in with Google or Apple and the provider's verified email equals the confirmed email of an existing account, the new identity joins that account (same user id, same `app.profiles` row) and the `identity_linked` notice tells the owner. An unconfirmed email is never trusted for linking: Supabase removes the unverified identity when a verified one with the same address signs in, so nobody can pre-register someone else's address. Manual linking (`linkIdentity`) stays off (`enable_manual_linking = false`).
