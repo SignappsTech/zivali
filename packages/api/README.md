@@ -20,6 +20,7 @@ Typed client for the REST API (`apps/api`, contract C1), shared by web and mobil
 | `payments`                         | C13 checkout, payments; `startCheckout`, `redirectToCheckout` (web), `openCheckout` (mobile)                        |
 | `ads`                              | C14 ad serving and admin; `useAd(slot, ctx)` → `{ ad, loading, error }` (never throws)                              |
 | `partners`                         | C14 partner stats and leads                                                                                         |
+| `directory-admin`                  | C18 §Admin directory editing (admin, aal2): lists, shelter and municipality writes, history, CSV import dry run     |
 | `broadcast`                        | `subscribeBroadcast` (private Supabase Broadcast channel, typed without supabase-js)                                |
 
 Until `gen:api` covers a domain, its file holds `injectEndpoints` stubs that follow the contract (paths, types, the owning backend task in the header); delete them when the generated endpoints land and keep the hand-written helpers.

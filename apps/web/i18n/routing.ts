@@ -13,7 +13,7 @@ export const routing = defineRouting({
 	localeDetection: false,
 	// next-intl would build the hreflang links from the request URL (Host); proxy.ts builds them from NEXT_PUBLIC_APP_URL.
 	alternateLinks: false,
-	// The C15 route table. Paths not listed here (admin pages, /dev/*) are the same in both locales.
+	// The C15 route table. Paths not listed here (/dev/*, admin pages without an SL URL in their slice) are the same in both locales.
 	pathnames: {
 		'/': '/',
 		'/map': { sl: '/zemljevid', en: '/map' },
@@ -58,6 +58,7 @@ export const routing = defineRouting({
 		'/imprint': { sl: '/impresum', en: '/imprint' },
 		'/accessibility': { sl: '/dostopnost', en: '/accessibility' },
 		'/admin': '/admin',
+		'/admin/shelters': { sl: '/admin/zavetisca', en: '/admin/shelters' },
 		'/portal': '/portal',
 	},
 });
