@@ -37,9 +37,9 @@ Branch: agent/task-4.2-ci
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 .github/workflows/ci.yml runs on pull requests and main: pnpm install with cache, format check, lint, typecheck, tokens build, unit tests (Vitest, jest-expo), i18n check, supabase start + prisma migrate reset, API tests and the ADR-021 security tests, web build + Playwright smoke + quality kit + Lighthouse CI against the local API, mobile expo export + tsc, and Docker builds of the api and web images.
-- [ ] #2 secretlint and `pnpm audit --audit-level high` fail the build on findings (shown with a planted fake secret on a throwaway branch that is then deleted).
-- [ ] #3 `pnpm verify` runs the same sequence locally on Windows and Linux and is documented as mandatory before an implementer reports done.
+- [ ] #1 .github/workflows/ci.yml runs on pull requests and main: pnpm install with cache, format check, lint, typecheck, tokens build, unit tests (Vitest, jest-expo), i18n check, supabase start + prisma migrate reset, API tests and the ADR-021 security tests, web build + Playwright smoke + quality kit + Lighthouse CI against the local API, mobile expo export + tsc, and Docker builds of the api and web images. (Deferred: "quality against the API" waits for the first story whose page reads the API; the commented step in ci.yml starts it. Web image waits for TASK-5.1.)
+- [ ] #2 secretlint and `pnpm audit --audit-level high` fail the build on findings (shown with a planted fake secret on a throwaway branch that is then deleted). (Unchecked: proven on first CI run (needs the GitHub push).)
+- [ ] #3 `pnpm verify` runs the same sequence locally on Windows and Linux and is documented as mandatory before an implementer reports done. (Unchecked: proven on first CI run (needs the GitHub push). `pnpm verify` now excludes audit and e2e, which are separate CI steps.)
 - [ ] #4 Branch protection for main (required checks) is documented for the GitHub repository pbozic/zivali.
 - [ ] #5 CI runs `pnpm exec playwright install chromium` before `pnpm quality`; QUALITY_PORT may override the 8080 default
 <!-- AC:END -->

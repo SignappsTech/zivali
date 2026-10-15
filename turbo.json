@@ -3,6 +3,7 @@
 	"ui": "stream",
 	"globalDependencies": ["tsconfig.base.json", "eslint.config.mjs"],
 	"globalEnv": ["APP_ENV"],
+	"globalPassThroughEnv": ["DATABASE_URL", "DIRECT_URL"],
 	"tasks": {
 		"build": {
 			"dependsOn": ["^build"],
