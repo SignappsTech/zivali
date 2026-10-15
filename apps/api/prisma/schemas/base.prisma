@@ -4,7 +4,6 @@
 generator client {
   provider        = "prisma-client"
   output          = "../../generated"
-  previewFeatures = ["typedSql"]
   moduleFormat    = "esm"
 }
 
