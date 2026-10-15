@@ -1,11 +1,11 @@
 ---
 id: TASK-29.1
 title: 'Design: Report lost flow (P6)'
-status: In Progress
+status: Done
 assignee:
   - '@ui-designer'
 created_date: '2026-10-14 21:50'
-updated_date: '2026-10-15 00:40'
+updated_date: '2026-10-15 01:04'
 labels:
   - design
   - 'est:M'
