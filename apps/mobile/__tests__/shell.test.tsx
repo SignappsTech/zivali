@@ -65,6 +65,7 @@ const routes = {
 	'settings/consent': ConsentSettings,
 	'settings/language': LanguageSettings,
 	'settings/[section]': SettingsPlaceholder,
+	'settings/payments': () => null,
 	// Stand-ins for the flow and auth screens that later stories add.
 	'report/lost': () => null,
 	'report/found': () => null,
@@ -173,7 +174,6 @@ describe('signed in', () => {
 		for (const [name, path] of [
 			[sl.profile.row_alerts, '/settings/alerts'],
 			[sl.alerts.channels_title, '/settings/notifications'],
-			[sl.profile.row_payments, '/settings/payments'],
 		]) {
 			await fireEvent.press(screen.getByRole('button', { name }));
 			expect(result.getPathname()).toBe(path);
@@ -184,6 +184,9 @@ describe('signed in', () => {
 			expect(screen.getByRole('tab', { name: sl.nav.tab_profile, selected: true })).toBeOnTheScreen();
 			expect(result.getPathname()).toBe('/profile');
 		}
+		// Plačila is its own screen (payments.test.tsx).
+		await fireEvent.press(screen.getByRole('button', { name: sl.profile.row_payments }));
+		expect(result.getPathname()).toBe('/settings/payments');
 	});
 
 	test('Profile shows the account header; an unconfirmed address can get a new link', async () => {
