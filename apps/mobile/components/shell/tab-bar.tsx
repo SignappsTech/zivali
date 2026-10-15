@@ -93,6 +93,7 @@ function useKeyboardShown() {
  */
 export function TabBar({ state, navigation }: Pick<BottomTabBarProps, 'state' | 'navigation'>) {
 	const t = useTranslations('nav');
+	const tCommon = useTranslations('common');
 	const insets = useSafeAreaInsets();
 	const [reportOpen, setReportOpen] = React.useState(false);
 	const keyboardShown = useKeyboardShown();
@@ -118,7 +119,7 @@ export function TabBar({ state, navigation }: Pick<BottomTabBarProps, 'state' | 
 									</NavLabel>
 								</NavItem>
 							</SheetTrigger>
-							<SheetContent closeLabel={t('sheet_close')}>
+							<SheetContent closeLabel={tCommon('close')}>
 								<SheetTitle>{t('report_menu_title')}</SheetTitle>
 								<ReportChoices rowClassName="bg-background" onChoose={() => setReportOpen(false)} />
 							</SheetContent>

@@ -57,7 +57,7 @@ export function LanguageRow() {
 					description={t(`nav.language_${locale}_full`)}
 				/>
 			</SheetTrigger>
-			<SheetContent closeLabel={t('nav.sheet_close')}>
+			<SheetContent closeLabel={t('common.close')}>
 				<SheetTitle>{t('profile.row_language')}</SheetTitle>
 				<LanguageChoice className="pt-5" rowClassName="bg-background" onChoose={() => setOpen(false)} />
 			</SheetContent>
