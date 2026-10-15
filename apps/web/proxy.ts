@@ -22,6 +22,8 @@ function contentSecurityPolicy(nonce: string): string {
 		env.NEXT_PUBLIC_ANALYTICS_PROVIDER === 'ga4'
 			? ' https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com'
 			: '';
+	// Presigned photo PUTs (C5): R2 in the EU jurisdiction, MinIO locally (docker-compose.dev.yml).
+	const uploads = ` https://*.eu.r2.cloudflarestorage.com${env.APP_ENV === 'local' ? ' http://127.0.0.1:9000' : ''}`;
 
 	return [
 		"default-src 'self'",
@@ -31,7 +33,7 @@ function contentSecurityPolicy(nonce: string): string {
 		"style-src 'self' 'unsafe-inline'",
 		`img-src 'self' blob: data:${ga}`,
 		"font-src 'self'",
-		`connect-src 'self' ${api} ${supabase.origin} ${realtime}${ga}`,
+		`connect-src 'self' ${api} ${supabase.origin} ${realtime}${uploads}${ga}`,
 		"object-src 'none'",
 		"base-uri 'self'",
 		"form-action 'self'",
