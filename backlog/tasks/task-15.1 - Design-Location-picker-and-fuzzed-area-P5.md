@@ -1,11 +1,11 @@
 ---
 id: TASK-15.1
 title: 'Design: Location picker and fuzzed area (P5)'
-status: In Progress
+status: Done
 assignee:
   - '@ui-designer'
 created_date: '2026-10-14 21:50'
-updated_date: '2026-10-14 23:24'
+updated_date: '2026-10-15 00:00'
 labels:
   - design
   - 'est:S'
