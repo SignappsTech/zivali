@@ -40,6 +40,8 @@ const t = useTranslations('browse');
 t('results', { count: 2 }); // "2 prijavi"
 ```
 
+Web: `apps/web/i18n/request.ts` loads `dist/<locale>.json`, and message keys are type-checked against `dist/sl.json`. Links and route folders use the internal (EN) paths of the C15 table in `apps/web/i18n/routing.ts`, so `<Link href="/map">` from `@/i18n/navigation` renders `/zemljevid` or `/en/map`. The language toggle calls `useLocaleSwitch()` (`apps/web/i18n/use-locale-switch.ts`).
+
 Server text (emails, push) is rendered by the API worker (Node, ADR-020 amending ADR-008) with `use-intl/core` and the merged catalogue in the recipient's `profiles.locale`:
 
 ```ts

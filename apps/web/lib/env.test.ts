@@ -18,9 +18,14 @@ describe('parseEnv', () => {
 
 	it('fails fast on a missing API URL outside local', () => {
 		expect(() => parseEnv({ ...valid, APP_ENV: 'staging' })).toThrow(/NEXT_PUBLIC_API_URL/);
-		expect(parseEnv({ ...valid, APP_ENV: 'staging', NEXT_PUBLIC_API_URL: 'https://api.example.com' }).APP_ENV).toBe(
-			'staging'
-		);
+		expect(
+			parseEnv({
+				...valid,
+				APP_ENV: 'staging',
+				NEXT_PUBLIC_API_URL: 'https://api.example.com',
+				NEXT_PUBLIC_APP_URL: 'https://najdimo.si',
+			}).APP_ENV
+		).toBe('staging');
 	});
 
 	it('does not treat an unset APP_ENV as local in production', () => {
