@@ -3,7 +3,7 @@ source: 03§P3; docs/design/pages/P3-public-pages.md; 02§FR-035, §Content, SEO
 page: P3 Public pages (home and content templates)
 stories: TASK-27, TASK-72 (FR-035)
 copy-for: docs/design/pages/P3-public-pages.md
-version: 0.4
+version: 0.6
 status: Draft, native Slovenian review and client approval pending (TASK-27 AC#4)
 date: 2026-10-15
 ---
@@ -657,6 +657,7 @@ Namespace `shelters`. One question, one answer, then the full list. Shelter name
 | shelters.lede | Najdene pse in mačke sprejme zavetišče, s katerim sodeluje vaša občina. Vpišite občino in videli boste, koga pokličete. | Found dogs and cats go to the shelter your municipality works with. Enter your municipality to see whom to call. |
 | shelters.search_label | Vaša občina | Your municipality |
 | shelters.search_placeholder | Na primer: Škofja Loka | For example: Škofja Loka |
+| shelters.search_clear | Počisti iskanje | Clear search |
 | shelters.suggestions_a11y | {count, plural, one {# občina ustreza vnosu} two {# občini ustrezata vnosu} few {# občine ustrezajo vnosu} other {# občin ustreza vnosu}} | {count, plural, one {# municipality matches} other {# municipalities match}} |
 | shelters.answer_meta | Za občino {municipality} je pristojno | Responsible for {municipality} |
 | shelters.answer_meta_dogs | Za pse iz občine {municipality} je pristojno | Responsible for dogs from {municipality} |
@@ -718,6 +719,14 @@ Alt text: none (no images; icons are decorative).
 | shelters.hours_title | Delovni čas | Opening hours |
 | shelters.hours_closed | zaprto | closed |
 | shelters.hours_none | Delovni čas ni objavljen. | Opening hours are not published. |
+| shelters.days.mon | ponedeljek | Monday |
+| shelters.days.tue | torek | Tuesday |
+| shelters.days.wed | sreda | Wednesday |
+| shelters.days.thu | četrtek | Thursday |
+| shelters.days.fri | petek | Friday |
+| shelters.days.sat | sobota | Saturday |
+| shelters.days.sun | nedelja | Sunday |
+| shelters.days.holidays | prazniki | Public holidays |
 | shelters.website_label | Spletna stran | Website |
 | shelters.email_label | E-pošta | Email |
 | shelters.served_title | Občine, za katere je pristojno ({count}) | Municipalities served ({count}) |
@@ -731,7 +740,7 @@ Alt text: none (no images; icons are decorative).
 Notes:
 
 - Call button: `shelters.call` with `shelters.call_a11y` as its accessible name (T5 keys). `shelters.open_map` opens a new tab and adds `common.opens_new_tab` to its accessible name.
-- Opening hours rows: day ranges use short day names joined with an en dash, SL "pon–pet", "sob", "ned in prazniki"; EN "Mon–Fri", "Sat", "Sun and public holidays". Times: SL "8.00–16.00", EN "8:00–16:00". A closed row shows `shelters.hours_closed`. No "open now" claim.
+- Opening hours rows: day ranges use full day names (`shelters.days.*`) joined with an en dash, SL "ponedeljek–petek", "sobota", "nedelja in prazniki"; EN "Monday–Friday", "Saturday", "Sunday and public holidays". Short forms are not used on the public pages. Times: SL "8.00–16.00", EN "8:00–16:00". A closed row shows `shelters.hours_closed`. No "open now" claim.
 - `shelters.what_lost_button` opens P6, `shelters.what_found_button` opens P7 (text buttons, not a second primary).
 - Stale data (last checked more than 12 months ago): `shelters.stale` above the contact block, the data stays visible.
 - The verified line and the legal note slot are the T5 keys. Unknown slug: the P1 404 page with a link to T5.
@@ -771,4 +780,5 @@ Alt text: the static map is decorative (`alt=""`), because the address is text.
 
 | Version | Date | Change |
 |---|---|---|
+| 0.6 | 2026-10-15 | CH-124: `shelters.search_clear` (T5 search field); `shelters.days.mon`…`sun` plus `shelters.days.holidays` (T6 opening hours, full day names replace the short forms; holidays key added because the T6 note uses "prazniki"). Draft values on branches `agent/task-90.1-shelter-pages` (catalogue) follow this slice; update the catalogue on merge. Front matter version aligned to the log (was 0.4). |
 | 0.5 | 2026-10-15 | CH-71: `shelters.row_no_phone`, `{source}` fallback text. CH-74: breadcrumb home value `common.breadcrumb_home` (P1) for "Nazaj na začetno stran" on T2/T3. CH-82: `shelters.maybe_responsible`, `not_confirmed`, `not_confirmed_help`, `call_unconfirmed` (+ a11y), `nearest_title`, `nearest_meta`. Shelter keys live in this file (no separate P3-shelter-pages slice exists). |

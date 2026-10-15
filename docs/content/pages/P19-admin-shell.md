@@ -3,7 +3,7 @@ source: 03§P19; docs/design/pages/P19-admin-shell.md
 page: P19 Admin console shell
 stories: TASK-34 (FR-019), TASK-89 (FR-044, shelter directory)
 copy-for: docs/design/pages/P19-admin-shell.md
-version: 0.2
+version: 0.3
 status: Draft, native Slovenian review pending
 date: 2026-10-15
 ---
@@ -245,12 +245,24 @@ Namespace `admin.directory`. Every save is live at once on the public shelter pa
 | admin.directory.history_field_hours | Delovni čas, {days} | Opening hours, {days} |
 | admin.directory.history_initial | Začetni uvoz imenika | Initial directory import |
 | admin.directory.tablist_label | Pogled imenika | Directory view |
+| admin.directory.history_system | Sistem | System |
+| admin.directory.error_time | Vpišite uro, na primer 8.00. | Enter a time, for example 08:00. |
+| admin.directory.day_mon | ponedeljek | Monday |
+| admin.directory.day_tue | torek | Tuesday |
+| admin.directory.day_wed | sreda | Wednesday |
+| admin.directory.day_thu | četrtek | Thursday |
+| admin.directory.day_fri | petek | Friday |
+| admin.directory.day_sat | sobota | Saturday |
+| admin.directory.day_sun | nedelja | Sunday |
+| admin.directory.day_holidays | prazniki | Public holidays |
+| admin.doc_title | {page} · Konzola Najdimo | {page} · Najdimo console |
 
 Notes:
 
 - `admin.directory.reminder` shows from 1 April until no entry is older than 12 months; the count is bold (marked `**#**`), `admin.directory.reminder_show` applies `admin.directory.filter_stale`. Not dismissible.
 - A stale row shows the `clock` icon and `admin.directory.stale` in bold next to the date.
-- Day-range options in the hours rows: SL "pon–pet", "pon–sob", "pon", "tor", "sre", "čet", "pet", "sob", "ned", "prazniki"; EN "Mon–Fri", "Mon–Sat", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun", "Public holidays".
+- Day names in the hours rows and history use the full names of `admin.directory.day_*` (never the short forms). Day-range presets: SL "ponedeljek–petek", "ponedeljek–sobota", then single days "ponedeljek" … "nedelja" and "prazniki"; EN "Monday–Friday", "Monday–Saturday", then "Monday" … "Sunday" and "Public holidays".
+- `admin.doc_title` is the shared admin title pattern (lives at the root of the admin namespace, used by every console page; §9 gives the same pattern).
 - Delete dialog: `admin.destructive_title` with the action `admin.directory.action_delete` and the shelter name, body `admin.directory.delete_body`, audit note REQUIRED (`admin.audit_note_required_label`, help `admin.audit_note_required_help`; the delete button stays disabled until it is filled). Cancel: `admin.cancel`. Municipality drawer audit note and source use the same keys as the shelter form.
 - Time format in the hours fields and history: SL "8.00" and ranges "8.00–15.00" (like the public pages); EN 24 h "08:00" and "08:00–15:00".
 - The directory is admin only; moderators get the access-denied screen, so there is no view-only copy.
@@ -264,3 +276,9 @@ SEO: N/A, the console is `noindex, nofollow` and requires sign-in. Document titl
 
 - `CHANGE docs/design/pages/P19-admin-shell.md§Layout: remove "Orders" from the Commerce group (QR tags out of scope, brief v0.7); add "Vet Partners" (later) next to Enquiries.`
 - `CHANGE docs/tech/contracts/C14-ads-partners.md§Tables (leads): add interest ('ad' | 'vet_partner' | 'unsure') for the Partners form (P22).`
+
+# Change log
+
+| Version | Date | Change |
+|---|---|---|
+| 0.3 | 2026-10-15 | CH-124: §8 `admin.directory.history_system`, `error_time`, `day_mon`…`day_holidays` (full day names, replacing the short forms in the draft), `admin.doc_title` (root key, shared title pattern). Day-range notes now use full names. Draft values on branch `agent/task-89.2-dir-admin-web` (catalogue) follow this slice; update the catalogue on merge. |
