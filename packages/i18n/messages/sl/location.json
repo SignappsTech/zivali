@@ -10,5 +10,10 @@
 	"alert_radius_value": "{km} km",
 	"alert_radius_help": "Obvestimo vas o izgubljenih živalih znotraj tega območja.",
 	"privacy_alert": "Vaše domače območje vidite samo vi.",
-	"save_area": "Shrani območje"
+	"save_area": "Shrani območje",
+	"area_line": "Območje: {area}, približno {radius}",
+	"area_note": "Prikazano območje je približno.",
+	"area_map_alt": "Približno območje okoli kraja {area}, polmer približno {radius}",
+	"exact_own": "Približna lokacija · vidno samo vam",
+	"exact_own_help": "Točko smo pred shranjevanjem premaknili za 20 do 30 m. Javno prikažemo samo širše območje okoli nje."
 }

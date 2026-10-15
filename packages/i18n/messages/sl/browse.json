@@ -1,0 +1,11 @@
+{
+	"row_title_named": "{name}",
+	"row_title_lost": "{species, select, dog {Izgubljen pes} cat {Izgubljena mačka} other {Izgubljena žival}}",
+	"row_title_found": "{species, select, dog {Najden pes} cat {Najdena mačka} other {Najdena žival}}",
+	"row_title_sighted": "{species, select, dog {Opažen pes} cat {Opažena mačka} other {Opažena žival}}",
+	"status_lost": "Izgubljena",
+	"status_found": "Najdena",
+	"status_sighted": "Opažena",
+	"status_reunited": "Spet doma",
+	"status_closed": "Zaključeno"
+}

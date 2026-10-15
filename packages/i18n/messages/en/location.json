@@ -10,5 +10,10 @@
 	"alert_radius_value": "{km} km",
 	"alert_radius_help": "We will tell you about lost pets within this area.",
 	"privacy_alert": "Only you can see your home area.",
-	"save_area": "Save area"
+	"save_area": "Save area",
+	"area_line": "Area: {area}, about {radius}",
+	"area_note": "The area shown is approximate.",
+	"area_map_alt": "Approximate area around {area}, radius about {radius}",
+	"exact_own": "Approximate location · visible only to you",
+	"exact_own_help": "We moved the point by 20–30 m before saving it. The public sees only a wider area around it."
 }

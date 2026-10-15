@@ -4,7 +4,15 @@ import { test } from 'node:test';
 import { createTranslator } from 'use-intl/core';
 
 import { load } from '../build.mjs';
-import { formatCount, formatDate, formatDistanceBand, formatEur, formatRelative, timeZone } from '../src/format.ts';
+import {
+	formatCount,
+	formatDate,
+	formatDayMonth,
+	formatDistanceBand,
+	formatEur,
+	formatRelative,
+	timeZone,
+} from '../src/format.ts';
 
 test('SL dual plurals through an ICU message (contract C16 example)', () => {
 	const t = createTranslator({
@@ -48,6 +56,16 @@ test('formatDate uses Europe/Ljubljana whatever the machine time zone', () => {
 	assert.equal(formatDate(d, 'en'), '16/10/2026');
 	assert.equal(formatDate(d, 'en', 'long'), '16 October 2026');
 	assert.equal(formatDate('2026-01-15T23:30:00Z', 'en', 'time'), '00:30');
+});
+
+test('formatDayMonth declines the SL month and adds the year only when it is not the current one', () => {
+	const now = new Date('2026-10-16T10:00:00Z');
+	// 22:30 UTC on 11 October is 00:30 on 12 October in Ljubljana.
+	assert.equal(formatDayMonth('2026-10-11T22:30:00Z', 'sl', now), '12. oktobra');
+	assert.equal(formatDayMonth('2026-03-01T10:00:00Z', 'sl', now), '1. marca');
+	assert.equal(formatDayMonth('2025-12-24T10:00:00Z', 'sl', now), '24. decembra 2025');
+	assert.equal(formatDayMonth('2026-10-11T22:30:00Z', 'en', now), '12 October');
+	assert.equal(formatDayMonth('2025-12-24T10:00:00Z', 'en', now), '24 December 2025');
 });
 
 test('formatRelative', () => {
