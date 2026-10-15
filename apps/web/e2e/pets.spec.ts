@@ -148,7 +148,7 @@ test('SL: an owner adds a pet with a photo and a chip; only they can reveal the 
 	);
 	await expectNoAxeViolations(page);
 
-	await page.getByRole('link', { name: 'Moje živali' }).click();
+	await page.getByRole('main').getByRole('link', { name: 'Moje živali', exact: true }).click();
 	await expect(page.getByRole('link', { name: /^Rex/ })).toContainText('Čip vpisan');
 	await expect(page.getByRole('main')).not.toContainText('705');
 });
