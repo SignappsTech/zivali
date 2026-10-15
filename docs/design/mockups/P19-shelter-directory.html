@@ -110,7 +110,6 @@ th[aria-sort="ascending"] .sortbtn, th[aria-sort="descending"] .sortbtn { color:
 .srow-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 16px; margin: 0 0 6px; font-size: 14px; line-height: 20px; color: hsl(var(--muted-foreground)); }
 
 .drawer { position: absolute; top: 44px; right: 0; bottom: 0; z-index: 5; width: 480px; display: flex; flex-direction: column; background: hsl(var(--card)); color: hsl(var(--card-foreground)); border-radius: var(--radius-card) 0 0 var(--radius-card); box-shadow: var(--shadow-pop); }
-.drawer.full { width: 100%; border-radius: 0; }
 .drawer-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 24px 16px 8px 24px; }
 .drawer-body { flex: 1; margin: 0; padding: 8px 24px 24px; display: flex; flex-direction: column; gap: 32px; }
 .drawer-foot { display: flex; align-items: center; gap: 8px; padding: 16px 24px 24px; }
@@ -120,9 +119,6 @@ th[aria-sort="ascending"] .sortbtn, th[aria-sort="descending"] .sortbtn { color:
 /* ---- Directory only ---- */
 /* "Live at once" line under the title: quiet body text, not a notice */
 .live { margin: 8px 0 0; font-size: 16px; line-height: 24px; color: hsl(var(--muted-foreground)); max-width: 62ch; }
-/* Read-only line in place of the buttons (moderator) */
-.ro { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; margin: 0; font-size: 16px; line-height: 24px; font-weight: 700; color: hsl(var(--muted-foreground)); }
-.ro i { font-size: 20px; }
 .seg-fit { width: fit-content; }
 .seg-fit button { flex: none; min-width: 136px; }
 /* Stale marker: clock icon + bold word next to the date; same colour as the text (icon and word, never colour) */
@@ -144,7 +140,6 @@ th[aria-sort="ascending"] .sortbtn, th[aria-sort="descending"] .sortbtn { color:
 .plist { list-style: none; margin: 12px 0 0; padding: 0; }
 .plist li { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 44px; padding-left: 2px; font-size: 16px; line-height: 24px; }
 .plist li + li { border-top: 1px solid hsl(var(--border)); }
-.drawer.full .hgrid { grid-template-columns: minmax(0, 1fr) 160px 160px; }
 /* Tables inside a drawer or dialog sit on the surface itself (no inner card) */
 .tbl-in th { background: inherit; }
 .tbl-in .rh { position: static; height: auto; font-size: 15px; line-height: 22px; font-weight: 700; color: hsl(var(--foreground)); white-space: normal; border-bottom: 1px solid hsl(var(--border)); }
@@ -226,7 +221,7 @@ th[aria-sort="ascending"] .sortbtn, th[aria-sort="descending"] .sortbtn { color:
   <h1 class="tile-title">P19 Shelter directory</h1>
   <p class="tile-lede">Admins keep the municipality-to-shelter directory (17 shelters, 212 municipalities) correct without developer help, and every save is live at once on the public shelter pages (P3 T5, T6) and the P6, P7 and P9 call rows. Two views of the same data (shelters, municipalities) in the shared dense table, an edit drawer, history with before and after, a CSV import with a dry run, and the delete guard. Copy is from the P19 content slice (section 8); all shelter, municipality, phone and person data is sample.</p>
   <div class="flex flex-wrap gap-2">
-    <span class="anno">Shell from P19-admin-shell.html</span><span class="anno">Table header 52 · rows 56 · text 15</span><span class="anno">Drawer 480 · full width below lg</span><span class="anno">Import dialog 640</span><span class="anno">Stale = clock icon + bold "zastarelo"</span><span class="anno">No sun yellow, no warning fills</span>
+    <span class="anno">Shell from P19-admin-shell.html</span><span class="anno">Table header 52 · rows 56 · text 15</span><span class="anno">Drawer 480 · full width below 640</span><span class="anno">Moderators: no access, see "Dostop ni mogoč" in the P19 shell</span><span class="anno">Import dialog 640</span><span class="anno">Stale = clock icon + bold "zastarelo"</span><span class="anno">No sun yellow, no warning fills</span>
   </div>
 </section>
 
@@ -234,7 +229,7 @@ th[aria-sort="ascending"] .sortbtn, th[aria-sort="descending"] .sortbtn { color:
   <h2 class="tile-title">1. Shelter directory at 1200 px</h2>
   <p class="tile-lede">Admin view, sidebar item "Imenik zavetišč" current. The yearly reminder is the only notice on the page; the "live at once" sentence is a quiet line under the title, not a second notice. One primary per view: "Dodaj zavetišče" on the page, "Shrani" in a drawer, "Uveljavi spremembe" in the import dialog, the destructive button in a delete dialog.</p>
   
-  <p class="tile-h">F1 · Zavetišča view · yearly reminder (23 entries) · no filter, sorted by Ime · stale rows carry the clock icon and the bold word "zastarelo" · row hover on "Zavetišče Lipa" · keyboard focus on "Pokaži" · sample data</p>
+  <p class="tile-h">F1 · Zavetišča view · yearly reminder (4 entries) · no filter, sorted by Ime · stale rows carry the clock icon and the bold word "zastarelo" · row hover on "Zavetišče Lipa" · keyboard focus on "Pokaži" · sample data</p>
   <div class="fit-1200"><div class="browser relative" style="width:1200px" lang="sl">
     <div class="browser-bar"><span class="dots"><i></i><i></i><i></i></span><span class="url"><i class="ph ph-lock-simple"></i>najdimo.si/admin/zavetisca</span></div>
     <div class="adm" style="min-height:1480px">
@@ -262,7 +257,7 @@ th[aria-sort="ascending"] .sortbtn, th[aria-sort="descending"] .sortbtn { color:
     </header>
     <main class="adm-main">
       <div><div class="phead"><h1 class="h1c">Imenik zavetišč</h1><div class="flex flex-wrap items-center gap-3"><button type="button" class="btn btn-secondary btn-sm"><i class="ph-bold ph-upload-simple" aria-hidden="true"></i>Uvozi CSV</button><button type="button" class="btn btn-primary btn-sm"><i class="ph-bold ph-plus" aria-hidden="true"></i>Dodaj zavetišče</button></div></div><p class="live">Spremembe so na javnih straneh in v aplikaciji vidne takoj po shranjevanju.</p></div>
-      <div class="note items-center !pr-2"><i class="ph-fill ph-clock" aria-hidden="true"></i><p class="flex-1">Letno preverjanje: <b class="tnum">23</b> vnosov ni bilo preverjenih več kot 12 mesecev.</p><button type="button" class="btn btn-text btn-sm is-focus">Pokaži</button></div>
+      <div class="note items-center !pr-2"><i class="ph-fill ph-clock" aria-hidden="true"></i><p class="flex-1">Letno preverjanje: <b class="tnum">4</b> vnosov ni bilo preverjenih več kot 12 mesecev.</p><button type="button" class="btn btn-text btn-sm is-focus">Pokaži</button></div>
       <div class="grid gap-6"><div class="seg seg-fit" role="tablist" aria-label="Imenik zavetišč"><button type="button" role="tab" aria-selected="true">Zavetišča</button><button type="button" role="tab" aria-selected="false">Občine</button></div>
       <div class="frow">
         <div class="field f-search"><label for="q-f1">Išči zavetišče</label><div class="input-wrap"><i class="ph-bold ph-magnifying-glass" aria-hidden="true"></i><input id="q-f1" type="search" class="input" autocomplete="off"></div></div>
@@ -319,7 +314,7 @@ th[aria-sort="ascending"] .sortbtn, th[aria-sort="descending"] .sortbtn { color:
     </header>
     <main class="adm-main">
       <div><div class="phead"><h1 class="h1c">Imenik zavetišč</h1><div class="flex flex-wrap items-center gap-3"><button type="button" class="btn btn-secondary btn-sm is-hover"><i class="ph-bold ph-upload-simple" aria-hidden="true"></i>Uvozi CSV</button><button type="button" class="btn btn-primary btn-sm"><i class="ph-bold ph-plus" aria-hidden="true"></i>Dodaj zavetišče</button></div></div><p class="live">Spremembe so na javnih straneh in v aplikaciji vidne takoj po shranjevanju.</p></div>
-      <div class="note items-center !pr-2"><i class="ph-fill ph-clock" aria-hidden="true"></i><p class="flex-1">Letno preverjanje: <b class="tnum">23</b> vnosov ni bilo preverjenih več kot 12 mesecev.</p><button type="button" class="btn btn-text btn-sm">Pokaži</button></div>
+      <div class="note items-center !pr-2"><i class="ph-fill ph-clock" aria-hidden="true"></i><p class="flex-1">Letno preverjanje: <b class="tnum">4</b> vnosov ni bilo preverjenih več kot 12 mesecev.</p><button type="button" class="btn btn-text btn-sm">Pokaži</button></div>
       <div class="grid gap-6"><div class="seg seg-fit" role="tablist" aria-label="Imenik zavetišč"><button type="button" role="tab" aria-selected="true">Zavetišča</button><button type="button" role="tab" aria-selected="false">Občine</button></div>
       <div class="frow">
         <div class="field f-search"><label for="q-f2">Išči zavetišče</label><div class="input-wrap"><i class="ph-bold ph-magnifying-glass" aria-hidden="true"></i><input id="q-f2" type="search" class="input" autocomplete="off"></div></div>
@@ -368,7 +363,7 @@ th[aria-sort="ascending"] .sortbtn, th[aria-sort="descending"] .sortbtn { color:
     </header>
     <main class="adm-main">
       <div><div class="phead"><h1 class="h1c">Imenik zavetišč</h1><div class="flex flex-wrap items-center gap-3"><button type="button" class="btn btn-secondary btn-sm"><i class="ph-bold ph-upload-simple" aria-hidden="true"></i>Uvozi CSV</button><button type="button" class="btn btn-primary btn-sm"><i class="ph-bold ph-plus" aria-hidden="true"></i>Dodaj zavetišče</button></div></div><p class="live">Spremembe so na javnih straneh in v aplikaciji vidne takoj po shranjevanju.</p></div>
-      <div class="note items-center !pr-2"><i class="ph-fill ph-clock" aria-hidden="true"></i><p class="flex-1">Letno preverjanje: <b class="tnum">23</b> vnosov ni bilo preverjenih več kot 12 mesecev.</p><button type="button" class="btn btn-text btn-sm">Pokaži</button></div>
+      <div class="note items-center !pr-2"><i class="ph-fill ph-clock" aria-hidden="true"></i><p class="flex-1">Letno preverjanje: <b class="tnum">4</b> vnosov ni bilo preverjenih več kot 12 mesecev.</p><button type="button" class="btn btn-text btn-sm">Pokaži</button></div>
       <div class="grid gap-6"><div class="seg seg-fit" role="tablist" aria-label="Imenik zavetišč"><button type="button" role="tab" aria-selected="false">Zavetišča</button><button type="button" role="tab" aria-selected="true">Občine</button></div>
       <div class="frow">
         <div class="field f-search"><label for="q-f3">Išči občino</label><div class="input-wrap"><i class="ph-bold ph-magnifying-glass" aria-hidden="true"></i><input id="q-f3" type="search" class="input" autocomplete="off"></div></div>
@@ -419,7 +414,7 @@ th[aria-sort="ascending"] .sortbtn, th[aria-sort="descending"] .sortbtn { color:
     </header>
     <main class="adm-main">
       <div><div class="phead"><h1 class="h1c">Imenik zavetišč</h1><div class="flex flex-wrap items-center gap-3"><button type="button" class="btn btn-secondary btn-sm"><i class="ph-bold ph-upload-simple" aria-hidden="true"></i>Uvozi CSV</button><button type="button" class="btn btn-primary btn-sm"><i class="ph-bold ph-plus" aria-hidden="true"></i>Dodaj zavetišče</button></div></div><p class="live">Spremembe so na javnih straneh in v aplikaciji vidne takoj po shranjevanju.</p></div>
-      <div class="note items-center !pr-2"><i class="ph-fill ph-clock" aria-hidden="true"></i><p class="flex-1">Letno preverjanje: <b class="tnum">23</b> vnosov ni bilo preverjenih več kot 12 mesecev.</p><button type="button" class="btn btn-text btn-sm">Pokaži</button></div>
+      <div class="note items-center !pr-2"><i class="ph-fill ph-clock" aria-hidden="true"></i><p class="flex-1">Letno preverjanje: <b class="tnum">4</b> vnosov ni bilo preverjenih več kot 12 mesecev.</p><button type="button" class="btn btn-text btn-sm">Pokaži</button></div>
       <div class="grid gap-6"><div class="seg seg-fit" role="tablist" aria-label="Imenik zavetišč"><button type="button" role="tab" aria-selected="true">Zavetišča</button><button type="button" role="tab" aria-selected="false">Občine</button></div>
       <div class="frow">
         <div class="field f-search"><label for="q-f4">Išči zavetišče</label><div class="input-wrap"><i class="ph-bold ph-magnifying-glass" aria-hidden="true"></i><input id="q-f4" type="search" class="input" autocomplete="off"></div></div>
@@ -454,8 +449,8 @@ th[aria-sort="ascending"] .sortbtn, th[aria-sort="descending"] .sortbtn { color:
           <li class="hrow">
             <div class="hgrid">
               <div class="field"><label for="ed4-d1">Dnevi</label><button id="ed4-d1" type="button" class="input select" aria-haspopup="listbox" aria-expanded="false"><span>pon–pet</span><i class="ph-bold ph-caret-down" aria-hidden="true"></i></button></div>
-              <div class="field"><label for="ed4-f1">Od</label><input id="ed4-f1" class="input tnum" type="text" inputmode="numeric" value="08:00"></div>
-              <div class="field"><label for="ed4-t1">Do</label><input id="ed4-t1" class="input tnum" type="text" inputmode="numeric" value="16:00"></div>
+              <div class="field"><label for="ed4-f1">Od</label><input id="ed4-f1" class="input tnum" type="text" inputmode="numeric" value="8.00"></div>
+              <div class="field"><label for="ed4-t1">Do</label><input id="ed4-t1" class="input tnum" type="text" inputmode="numeric" value="16.00"></div>
             </div>
             
             <div class="hfoot"><label class="swrow"><span>Zaprto</span><button type="button" class="switch" role="switch" aria-checked="false"></button></label><button type="button" class="iconbtn" aria-label="Odstrani vrstico"><i class="ph-bold ph-trash" aria-hidden="true"></i></button></div>
@@ -463,8 +458,8 @@ th[aria-sort="ascending"] .sortbtn, th[aria-sort="descending"] .sortbtn { color:
           <li class="hrow">
             <div class="hgrid">
               <div class="field"><label for="ed4-d2">Dnevi</label><button id="ed4-d2" type="button" class="input select" aria-haspopup="listbox" aria-expanded="false"><span>sob</span><i class="ph-bold ph-caret-down" aria-hidden="true"></i></button></div>
-              <div class="field"><label for="ed4-f2">Od</label><input id="ed4-f2" class="input tnum" type="text" inputmode="numeric" value="09:00"></div>
-              <div class="field"><label for="ed4-t2">Do</label><input id="ed4-t2" class="input tnum" type="text" inputmode="numeric" value="12:00"></div>
+              <div class="field"><label for="ed4-f2">Od</label><input id="ed4-f2" class="input tnum" type="text" inputmode="numeric" value="9.00"></div>
+              <div class="field"><label for="ed4-t2">Do</label><input id="ed4-t2" class="input tnum" type="text" inputmode="numeric" value="12.00"></div>
             </div>
             
             <div class="hfoot"><label class="swrow"><span>Zaprto</span><button type="button" class="switch" role="switch" aria-checked="false"></button></label><button type="button" class="iconbtn" aria-label="Odstrani vrstico"><i class="ph-bold ph-trash" aria-hidden="true"></i></button></div>
@@ -522,7 +517,7 @@ th[aria-sort="ascending"] .sortbtn, th[aria-sort="descending"] .sortbtn { color:
     </header>
     <main class="adm-main">
       <div><div class="phead"><h1 class="h1c">Imenik zavetišč</h1><div class="flex flex-wrap items-center gap-3"><button type="button" class="btn btn-secondary btn-sm"><i class="ph-bold ph-upload-simple" aria-hidden="true"></i>Uvozi CSV</button><button type="button" class="btn btn-primary btn-sm"><i class="ph-bold ph-plus" aria-hidden="true"></i>Dodaj zavetišče</button></div></div><p class="live">Spremembe so na javnih straneh in v aplikaciji vidne takoj po shranjevanju.</p></div>
-      <div class="note items-center !pr-2"><i class="ph-fill ph-clock" aria-hidden="true"></i><p class="flex-1">Letno preverjanje: <b class="tnum">23</b> vnosov ni bilo preverjenih več kot 12 mesecev.</p><button type="button" class="btn btn-text btn-sm">Pokaži</button></div>
+      <div class="note items-center !pr-2"><i class="ph-fill ph-clock" aria-hidden="true"></i><p class="flex-1">Letno preverjanje: <b class="tnum">4</b> vnosov ni bilo preverjenih več kot 12 mesecev.</p><button type="button" class="btn btn-text btn-sm">Pokaži</button></div>
       <div class="grid gap-6"><div class="seg seg-fit" role="tablist" aria-label="Imenik zavetišč"><button type="button" role="tab" aria-selected="true">Zavetišča</button><button type="button" role="tab" aria-selected="false">Občine</button></div>
       <div class="frow">
         <div class="field f-search"><label for="q-f5">Išči zavetišče</label><div class="input-wrap"><i class="ph-bold ph-magnifying-glass" aria-hidden="true"></i><input id="q-f5" type="search" class="input" autocomplete="off"></div></div>
@@ -553,8 +548,8 @@ th[aria-sort="ascending"] .sortbtn, th[aria-sort="descending"] .sortbtn { color:
       <section aria-label="13. 10. 2024 09:40">
         <h3 class="h3c">13. 10. 2024 09:40 · Maja Kovač</h3>
         <table class="tbl tbl-in tbl-fixed mt-2"><caption class="sr-only">13. 10. 2024 09:40</caption><colgroup><col style="width:38%"><col style="width:28%"><col style="width:34%"></colgroup><thead><tr><th scope="col">Polje</th><th scope="col">prej</th><th scope="col">zdaj</th></tr></thead><tbody>
-          <tr class="no-hover"><th scope="row" class="rh">Delovni čas, pon–pet</th><td class="tnum nowrap">08:00–15:00</td><td class="tnum nowrap font-bold">08:00–16:00</td></tr>
-          <tr class="no-hover"><th scope="row" class="rh">Delovni čas, sob</th><td>Zaprto</td><td class="tnum nowrap font-bold">09:00–12:00</td></tr>
+          <tr class="no-hover"><th scope="row" class="rh">Delovni čas, pon–pet</th><td class="tnum nowrap">8.00–15.00</td><td class="tnum nowrap font-bold">8.00–16.00</td></tr>
+          <tr class="no-hover"><th scope="row" class="rh">Delovni čas, sob</th><td>Zaprto</td><td class="tnum nowrap font-bold">9.00–12.00</td></tr>
           <tr class="no-hover"><th scope="row" class="rh">E-naslov</th><td class="tmuted">–</td><td class="font-bold">info@<wbr>obkolpi.example</td></tr>
         </tbody></table>
         <button type="button" class="btn btn-secondary btn-sm mt-5"><i class="ph-bold ph-arrow-u-up-left" aria-hidden="true"></i>Obnovi to različico</button>
@@ -590,7 +585,7 @@ th[aria-sort="ascending"] .sortbtn, th[aria-sort="descending"] .sortbtn { color:
     </header>
     <main class="adm-main">
       <div><div class="phead"><h1 class="h1c">Imenik zavetišč</h1><div class="flex flex-wrap items-center gap-3"><button type="button" class="btn btn-secondary btn-sm"><i class="ph-bold ph-upload-simple" aria-hidden="true"></i>Uvozi CSV</button><button type="button" class="btn btn-primary btn-sm"><i class="ph-bold ph-plus" aria-hidden="true"></i>Dodaj zavetišče</button></div></div><p class="live">Spremembe so na javnih straneh in v aplikaciji vidne takoj po shranjevanju.</p></div>
-      <div class="note items-center !pr-2"><i class="ph-fill ph-clock" aria-hidden="true"></i><p class="flex-1">Letno preverjanje: <b class="tnum">23</b> vnosov ni bilo preverjenih več kot 12 mesecev.</p><button type="button" class="btn btn-text btn-sm">Pokaži</button></div>
+      <div class="note items-center !pr-2"><i class="ph-fill ph-clock" aria-hidden="true"></i><p class="flex-1">Letno preverjanje: <b class="tnum">4</b> vnosov ni bilo preverjenih več kot 12 mesecev.</p><button type="button" class="btn btn-text btn-sm">Pokaži</button></div>
       <div class="grid gap-6"><div class="seg seg-fit" role="tablist" aria-label="Imenik zavetišč"><button type="button" role="tab" aria-selected="true">Zavetišča</button><button type="button" role="tab" aria-selected="false">Občine</button></div>
       <div class="frow">
         <div class="field f-search"><label for="q-f6">Išči zavetišče</label><div class="input-wrap"><i class="ph-bold ph-magnifying-glass" aria-hidden="true"></i><input id="q-f6" type="search" class="input" autocomplete="off"></div></div>
@@ -619,7 +614,7 @@ th[aria-sort="ascending"] .sortbtn, th[aria-sort="descending"] .sortbtn { color:
 <tr class="no-hover"><td class="font-bold">Zavetišče Ob Krki</td><td>Ime</td><td class="tnum tmuted">–</td><td class="tnum">Zavetišče Ob Krki</td></tr>
 <tr class="no-hover"><td class="font-bold">Zavetišče Ob Reki</td><td>Ime</td><td class="tnum tmuted">–</td><td class="tnum">Zavetišče Ob Reki</td></tr>
 <tr class="no-hover"><td class="font-bold">Zavetišče Lipa</td><td>Telefon</td><td class="tnum nowrap">01 234 56 70</td><td class="tnum nowrap">01 234 56 78</td></tr>
-<tr class="no-hover"><td class="font-bold">Zavetišče Brin</td><td>Delovni čas, sob</td><td class="tnum nowrap">09:00–12:00</td><td class="tnum nowrap">09:00–13:00</td></tr>
+<tr class="no-hover"><td class="font-bold">Zavetišče Brin</td><td>Delovni čas, sob</td><td class="tnum nowrap">9.00–12.00</td><td class="tnum nowrap">9.00–13.00</td></tr>
 <tr class="no-hover"><td class="font-bold">Kostel</td><td>Pristojno zavetišče</td><td class="tnum tmuted">–</td><td class="tnum">Zavetišče Ob Kolpi</td></tr>
 <tr class="no-hover"><td class="font-bold">Bloke</td><td>Stanje</td><td class="tnum">Ni potrjeno</td><td class="tnum">Potrjeno</td></tr>
 <tr class="no-hover"><td class="font-bold">Zavetišče Savinja</td><td>Telefon</td><td class="tnum nowrap">03 428 61 90</td><td class="tnum nowrap">03 428 61 09</td></tr>
@@ -658,7 +653,7 @@ th[aria-sort="ascending"] .sortbtn, th[aria-sort="descending"] .sortbtn { color:
     </header>
     <main class="adm-main">
       <div><div class="phead"><h1 class="h1c">Imenik zavetišč</h1><div class="flex flex-wrap items-center gap-3"><button type="button" class="btn btn-secondary btn-sm"><i class="ph-bold ph-upload-simple" aria-hidden="true"></i>Uvozi CSV</button><button type="button" class="btn btn-primary btn-sm"><i class="ph-bold ph-plus" aria-hidden="true"></i>Dodaj zavetišče</button></div></div><p class="live">Spremembe so na javnih straneh in v aplikaciji vidne takoj po shranjevanju.</p></div>
-      <div class="note items-center !pr-2"><i class="ph-fill ph-clock" aria-hidden="true"></i><p class="flex-1">Letno preverjanje: <b class="tnum">23</b> vnosov ni bilo preverjenih več kot 12 mesecev.</p><button type="button" class="btn btn-text btn-sm">Pokaži</button></div>
+      <div class="note items-center !pr-2"><i class="ph-fill ph-clock" aria-hidden="true"></i><p class="flex-1">Letno preverjanje: <b class="tnum">4</b> vnosov ni bilo preverjenih več kot 12 mesecev.</p><button type="button" class="btn btn-text btn-sm">Pokaži</button></div>
       <div class="grid gap-6"><div class="seg seg-fit" role="tablist" aria-label="Imenik zavetišč"><button type="button" role="tab" aria-selected="true">Zavetišča</button><button type="button" role="tab" aria-selected="false">Občine</button></div>
       <div class="frow">
         <div class="field f-search"><label for="q-f7">Išči zavetišče</label><div class="input-wrap"><i class="ph-bold ph-magnifying-glass" aria-hidden="true"></i><input id="q-f7" type="search" class="input" autocomplete="off"></div></div>
@@ -697,8 +692,8 @@ th[aria-sort="ascending"] .sortbtn, th[aria-sort="descending"] .sortbtn { color:
             <li class="hrow">
             <div class="hgrid">
               <div class="field"><label for="p1-d1">Dnevi</label><button id="p1-d1" type="button" class="input select" aria-haspopup="listbox" aria-expanded="false"><span>pon–pet</span><i class="ph-bold ph-caret-down" aria-hidden="true"></i></button></div>
-              <div class="field"><label for="p1-f1">Od</label><input id="p1-f1" class="input tnum" type="text" inputmode="numeric" value="16:00"></div>
-              <div class="field"><label for="p1-t1">Do</label><input id="p1-t1" class="input tnum is-error" type="text" inputmode="numeric" value="08:00" aria-invalid="true" aria-describedby="p1-e1"></div>
+              <div class="field"><label for="p1-f1">Od</label><input id="p1-f1" class="input tnum" type="text" inputmode="numeric" value="16.00"></div>
+              <div class="field"><label for="p1-t1">Do</label><input id="p1-t1" class="input tnum is-error" type="text" inputmode="numeric" value="8.00" aria-invalid="true" aria-describedby="p1-e1"></div>
             </div>
             <p id="p1-e1" class="err mt-2"><i class="ph-fill ph-warning-circle" aria-hidden="true"></i>Ura »do« mora biti za uro »od«.</p>
             <div class="hfoot"><label class="swrow"><span>Zaprto</span><button type="button" class="switch" role="switch" aria-checked="false"></button></label><button type="button" class="iconbtn" aria-label="Odstrani vrstico"><i class="ph-bold ph-trash" aria-hidden="true"></i></button></div>
@@ -770,7 +765,7 @@ th[aria-sort="ascending"] .sortbtn, th[aria-sort="descending"] .sortbtn { color:
 <tr class="no-hover"><td class="font-bold">Zavetišče Ob Krki</td><td>Ime</td><td class="tnum tmuted">–</td><td class="tnum">Zavetišče Ob Krki</td></tr>
 <tr class="no-hover"><td class="font-bold">Zavetišče Ob Reki</td><td>Ime</td><td class="tnum tmuted">–</td><td class="tnum">Zavetišče Ob Reki</td></tr>
 <tr class="no-hover"><td class="font-bold">Zavetišče Lipa</td><td>Telefon</td><td class="tnum nowrap">01 234 56 70</td><td class="tnum nowrap">01 234 56 78</td></tr>
-<tr class="no-hover"><td class="font-bold">Zavetišče Brin</td><td>Delovni čas, sob</td><td class="tnum nowrap">09:00–12:00</td><td class="tnum nowrap">09:00–13:00</td></tr>
+<tr class="no-hover"><td class="font-bold">Zavetišče Brin</td><td>Delovni čas, sob</td><td class="tnum nowrap">9.00–12.00</td><td class="tnum nowrap">9.00–13.00</td></tr>
 <tr class="no-hover"><td class="font-bold">Kostel</td><td>Pristojno zavetišče</td><td class="tnum tmuted">–</td><td class="tnum">Zavetišče Ob Kolpi</td></tr>
 <tr class="no-hover"><td class="font-bold">Bloke</td><td>Stanje</td><td class="tnum">Ni potrjeno</td><td class="tnum">Potrjeno</td></tr>
 <tr class="no-hover"><td class="font-bold">Zavetišče Savinja</td><td>Telefon</td><td class="tnum nowrap">03 428 61 90</td><td class="tnum nowrap">03 428 61 09</td></tr>
@@ -788,7 +783,7 @@ th[aria-sort="ascending"] .sortbtn, th[aria-sort="descending"] .sortbtn { color:
 <tr class="no-hover"><td class="font-bold">Zavetišče Ob Krki</td><td>Ime</td><td class="tnum tmuted">–</td><td class="tnum">Zavetišče Ob Krki</td></tr>
 <tr class="no-hover"><td class="font-bold">Zavetišče Ob Reki</td><td>Ime</td><td class="tnum tmuted">–</td><td class="tnum">Zavetišče Ob Reki</td></tr>
 <tr class="no-hover"><td class="font-bold">Zavetišče Lipa</td><td>Telefon</td><td class="tnum nowrap">01 234 56 70</td><td class="tnum nowrap">01 234 56 78</td></tr>
-<tr class="no-hover"><td class="font-bold">Zavetišče Brin</td><td>Delovni čas, sob</td><td class="tnum nowrap">09:00–12:00</td><td class="tnum nowrap">09:00–13:00</td></tr>
+<tr class="no-hover"><td class="font-bold">Zavetišče Brin</td><td>Delovni čas, sob</td><td class="tnum nowrap">9.00–12.00</td><td class="tnum nowrap">9.00–13.00</td></tr>
 <tr class="no-hover"><td class="font-bold">Kostel</td><td>Pristojno zavetišče</td><td class="tnum tmuted">–</td><td class="tnum">Zavetišče Ob Kolpi</td></tr>
 <tr class="no-hover"><td class="font-bold">Bloke</td><td>Stanje</td><td class="tnum">Ni potrjeno</td><td class="tnum">Potrjeno</td></tr>
 <tr class="no-hover"><td class="font-bold">Zavetišče Savinja</td><td>Telefon</td><td class="tnum nowrap">03 428 61 90</td><td class="tnum nowrap">03 428 61 09</td></tr>
@@ -821,18 +816,6 @@ th[aria-sort="ascending"] .sortbtn, th[aria-sort="descending"] .sortbtn { color:
   </div>
 
   <div class="flex flex-wrap gap-x-10 gap-y-10 items-start" style="margin-top:56px">
-    <div class="w-full">
-      <p class="tile-h !mt-0">P7 · Read only (moderator): no primary, no import, no row actions; the quiet line "Samo za ogled" takes the buttons' place; rows open the drawer with every field disabled · sample data</p>
-      <div class="part px-8 py-8 grid gap-8" lang="sl">
-        <div><div class="phead"><h1 class="h1c">Imenik zavetišč</h1><p class="ro"><i class="ph-bold ph-eye" aria-hidden="true"></i>Samo za ogled</p></div><p class="live">Spremembe so na javnih straneh in v aplikaciji vidne takoj po shranjevanju.</p></div>
-        <div class="tcard"><table class="tbl"><caption class="sr-only">Zavetišča</caption><thead><tr><th scope="col" aria-sort="ascending"><button type="button" class="sortbtn" aria-label="Razvrsti po: Ime">Ime<i class="ph-bold ph-arrow-up" aria-hidden="true"></i></button></th><th scope="col" class="num"><button type="button" class="sortbtn" aria-label="Razvrsti po: Občine">Občine<i class="ph-bold ph-caret-up-down" aria-hidden="true"></i></button></th><th scope="col">Telefon</th><th scope="col"><button type="button" class="sortbtn" aria-label="Razvrsti po: Nazadnje preverjeno">Nazadnje preverjeno<i class="ph-bold ph-caret-up-down" aria-hidden="true"></i></button></th><th scope="col">Vir</th></tr></thead><tbody>
-<tr class=""><td><a href="#" class="rowlink">Zavetišče Bohor</a></td><td class="num tnum">14</td><td class="tnum nowrap">07 490 31 12</td><td class="nowrap"><span class="tnum dcol">12. 3. 2026</span></td><td>Spletna stran</td></tr>
-<tr class=""><td><a href="#" class="rowlink">Zavetišče Breg</a></td><td class="num tnum">16</td><td class="tnum nowrap">02 790 11 48</td><td class="nowrap"><span class="tnum dcol">28. 4. 2026</span></td><td>Klic</td></tr>
-<tr class=""><td><a href="#" class="rowlink">Zavetišče Brin</a></td><td class="num tnum">18</td><td class="tnum nowrap">04 512 36 70</td><td class="nowrap"><span class="tnum dcol">9. 9. 2025</span><span class="stale"><i class="ph-fill ph-clock" aria-hidden="true"></i>zastarelo</span></td><td>Uvoz CSV</td></tr>
-<tr class=""><td><a href="#" class="rowlink">Zavetišče Gorjanci</a></td><td class="num tnum">15</td><td class="tnum nowrap">07 332 18 05</td><td class="nowrap"><span class="tnum dcol">2. 6. 2026</span></td><td>Klic</td></tr>
-</tbody></table></div>
-      </div>
-    </div>
     <div class="w-[480px] max-w-full">
       <p class="tile-h !mt-0">P8 · Toast after "Obnovi to različico"</p>
       <div class="pop toast w-[420px] max-w-full" role="status" aria-live="polite"><i class="ph-fill ph-check-circle" aria-hidden="true"></i><p>Različica je obnovljena kot nova sprememba.</p><button type="button" class="iconbtn" aria-label="Zapri"><i class="ph-bold ph-x" aria-hidden="true"></i></button></div>
@@ -842,7 +825,7 @@ th[aria-sort="ascending"] .sortbtn, th[aria-sort="descending"] .sortbtn { color:
 
 <section class="tile-section !max-w-[1400px] !pt-0">
   <h2 class="tile-title">3. Tablet, 768 px</h2>
-  <p class="tile-lede">Below lg the sidebar is the sheet from the P19 shell ("Odpri meni"), tables become stacked rows with the key columns first, and the drawer takes the full width. Usable on phones down to 360 px, not optimised.</p>
+  <p class="tile-lede">Below lg the sidebar is the sheet from the P19 shell ("Odpri meni"), tables become stacked rows with the key columns first, and the drawer stays 480 px wide (full width only below 640 px). Usable on phones down to 360 px, not optimised.</p>
 
   <p class="tile-h !mt-0">F8 · 768 px · Zavetišča as stacked rows: name, then last checked (with "zastarelo"), phone, municipality count and source; row menu stays 44 px · sample data</p>
   <div class="fit-768"><div class="browser relative" style="width:768px" lang="sl">
@@ -860,7 +843,7 @@ th[aria-sort="ascending"] .sortbtn, th[aria-sort="descending"] .sortbtn { color:
     </header>
     <main class="adm-main">
       <div><div class="phead"><h1 class="h1c">Imenik zavetišč</h1><div class="flex flex-wrap items-center gap-3"><button type="button" class="btn btn-secondary btn-sm"><i class="ph-bold ph-upload-simple" aria-hidden="true"></i>Uvozi CSV</button><button type="button" class="btn btn-primary btn-sm"><i class="ph-bold ph-plus" aria-hidden="true"></i>Dodaj zavetišče</button></div></div><p class="live">Spremembe so na javnih straneh in v aplikaciji vidne takoj po shranjevanju.</p></div>
-      <div class="note items-center !pr-2"><i class="ph-fill ph-clock" aria-hidden="true"></i><p class="flex-1">Letno preverjanje: <b class="tnum">23</b> vnosov ni bilo preverjenih več kot 12 mesecev.</p><button type="button" class="btn btn-text btn-sm">Pokaži</button></div>
+      <div class="note items-center !pr-2"><i class="ph-fill ph-clock" aria-hidden="true"></i><p class="flex-1">Letno preverjanje: <b class="tnum">4</b> vnosov ni bilo preverjenih več kot 12 mesecev.</p><button type="button" class="btn btn-text btn-sm">Pokaži</button></div>
       <div class="grid gap-6"><div class="seg seg-fit" role="tablist" aria-label="Imenik zavetišč"><button type="button" role="tab" aria-selected="true">Zavetišča</button><button type="button" role="tab" aria-selected="false">Občine</button></div>
       <div class="frow">
         <div class="field f-search"><label for="q-f8">Išči zavetišče</label><div class="input-wrap"><i class="ph-bold ph-magnifying-glass" aria-hidden="true"></i><input id="q-f8" type="search" class="input" autocomplete="off"></div></div>
@@ -880,7 +863,7 @@ th[aria-sort="ascending"] .sortbtn, th[aria-sort="descending"] .sortbtn { color:
   </div>
   </div></div>
 
-  <p class="tile-h" style="margin-top:64px">F9 · 768 px · municipality drawer at full width: responsible shelter empty means "Ni potrjeno" (help text says what the public pages show), status radios, source, checked on, audit note · keyboard focus on the shelter select · sample data</p>
+  <p class="tile-h" style="margin-top:64px">F9 · 768 px · municipality drawer at 480 px: responsible shelter empty means "Ni potrjeno" (help text says what the public pages show), status radios, source, checked on, audit note · keyboard focus on the shelter select · sample data</p>
   <div class="fit-768"><div class="browser relative" style="width:768px" lang="sl">
     <div class="browser-bar"><span class="dots"><i></i><i></i><i></i></span><span class="url"><i class="ph ph-lock-simple"></i>najdimo.si/admin/zavetisca/obcine</span></div>
     <div class="adm" style="min-height:960px" aria-hidden="true" inert>
@@ -896,7 +879,7 @@ th[aria-sort="ascending"] .sortbtn, th[aria-sort="descending"] .sortbtn { color:
     </header>
     <main class="adm-main">
       <div><div class="phead"><h1 class="h1c">Imenik zavetišč</h1><div class="flex flex-wrap items-center gap-3"><button type="button" class="btn btn-secondary btn-sm"><i class="ph-bold ph-upload-simple" aria-hidden="true"></i>Uvozi CSV</button><button type="button" class="btn btn-primary btn-sm"><i class="ph-bold ph-plus" aria-hidden="true"></i>Dodaj zavetišče</button></div></div><p class="live">Spremembe so na javnih straneh in v aplikaciji vidne takoj po shranjevanju.</p></div>
-      <div class="note items-center !pr-2"><i class="ph-fill ph-clock" aria-hidden="true"></i><p class="flex-1">Letno preverjanje: <b class="tnum">23</b> vnosov ni bilo preverjenih več kot 12 mesecev.</p><button type="button" class="btn btn-text btn-sm">Pokaži</button></div>
+      <div class="note items-center !pr-2"><i class="ph-fill ph-clock" aria-hidden="true"></i><p class="flex-1">Letno preverjanje: <b class="tnum">4</b> vnosov ni bilo preverjenih več kot 12 mesecev.</p><button type="button" class="btn btn-text btn-sm">Pokaži</button></div>
       <div class="grid gap-6"><div class="seg seg-fit" role="tablist" aria-label="Imenik zavetišč"><button type="button" role="tab" aria-selected="false">Zavetišča</button><button type="button" role="tab" aria-selected="true">Občine</button></div>
       <div class="frow">
         <div class="field f-search"><label for="q-f9">Išči občino</label><div class="input-wrap"><i class="ph-bold ph-magnifying-glass" aria-hidden="true"></i><input id="q-f9" type="search" class="input" autocomplete="off"></div></div>
@@ -913,7 +896,7 @@ th[aria-sort="ascending"] .sortbtn, th[aria-sort="descending"] .sortbtn { color:
     </div>
   </div>
   <div class="scrim" style="top:44px"></div>
-  <aside class="drawer full" role="dialog" aria-modal="true" aria-label="Bistrica ob Sotli">
+  <aside class="drawer" role="dialog" aria-modal="true" aria-label="Bistrica ob Sotli">
     <div class="drawer-head">
       <div class="min-w-0"><h2 class="dtitle">Bistrica ob Sotli</h2><p class="meta mt-1 tnum">Nazadnje preverjeno 2. 6. 2026</p></div>
       <div class="flex items-center gap-1 -mr-1"><button type="button" class="btn btn-text btn-sm"><i class="ph-bold ph-clock-counter-clockwise" aria-hidden="true"></i>Zgodovina</button><button type="button" class="iconbtn" aria-label="Zapri podrobnosti"><i class="ph-bold ph-x" aria-hidden="true"></i></button></div>
@@ -937,7 +920,7 @@ th[aria-sort="ascending"] .sortbtn, th[aria-sort="descending"] .sortbtn { color:
   </div></div>
 </section>
 
-<p class="tile-section !max-w-[1400px] !py-8 text-sm text-muted-foreground">Copy: docs/content/pages/P19-admin-shell.md (v0.2, section 8, native review pending); shell strings from section 1 to 3 and from P1 ("Odpri meni", "Zapri", "Počisti iskanje", "Nalaganje …"). Sample, not final: every shelter, municipality, address, phone number, e-mail, date, source value, person name, version summary, CSV file name, row number and count (23, 6, 2 new and 6 changed, 60 %). Not yet in the content slice, sample here: the headings "Napake" and "Spremembe" in the import dialog, the stacked-row labels "Občine:" and "Vir:", the history field names with a day range ("Delovni čas, pon–pet"), the summary "Začetni uvoz imenika", and the tablist name. Time fields show 24-hour "08:00"; the public pages may format them as "8.00".</p>
+<p class="tile-section !max-w-[1400px] !py-8 text-sm text-muted-foreground">Copy: docs/content/pages/P19-admin-shell.md (v0.2, section 8, native review pending); shell strings from section 1 to 3 and from P1 ("Odpri meni", "Zapri", "Počisti iskanje", "Nalaganje …"). Sample, not final: every shelter, municipality, address, phone number, e-mail, date, source value, person name, version summary, CSV file name, row number and count (4, 6, 2 new and 6 changed, 60 %). Not yet in the content slice, sample here: the headings "Napake" and "Spremembe" in the import dialog, the stacked-row labels "Občine:" and "Vir:", the history field names with a day range ("Delovni čas, pon–pet"), the summary "Začetni uvoz imenika", and the tablist name. Time fields use the Slovenian format "8.00".</p>
 
 </div><!-- /#src -->
 

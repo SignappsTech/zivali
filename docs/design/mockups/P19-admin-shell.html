@@ -89,7 +89,7 @@
 .acct { display: inline-flex; align-items: center; gap: 4px; min-height: 44px; padding: 0 10px 0 6px; border: 0; border-radius: 999px; background: transparent; color: inherit; font: inherit; cursor: pointer; }
 .acct:hover { background: hsl(var(--foreground) / 0.10); }
 .acct i { font-size: 16px; }
-.ph { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px 24px; }
+.phead { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px 24px; }
 
 /* Dashboard number blocks: no cards, number 48/52 */
 .kpi { display: flex; flex-direction: column-reverse; margin: 0; }
@@ -257,7 +257,7 @@ th[aria-sort="ascending"] .sortbtn, th[aria-sort="descending"] .sortbtn { color:
       </div>
     </header>
     <main class="adm-main">
-      <div class="ph"><h1 class="h1c">Nadzorna plošča</h1></div>
+      <div class="phead"><h1 class="h1c">Nadzorna plošča</h1></div>
       <div class="grid grid-cols-4 gap-8"><div><dl class="kpi"><dt>Odprte prijave</dt><dd class="kpi-n tnum">7</dd></dl><a href="#" class="btn btn-text btn-sm kpi-link" aria-label="Odpri: Odprte prijave">Odpri<i class="ph-bold ph-arrow-right" aria-hidden="true"></i></a></div><div><dl class="kpi"><dt>Aktivni oglasi</dt><dd class="kpi-n tnum">12</dd></dl><a href="#" class="btn btn-text btn-sm kpi-link" aria-label="Odpri: Aktivni oglasi">Odpri<i class="ph-bold ph-arrow-right" aria-hidden="true"></i></a></div><div><dl class="kpi"><dt>Nova povpraševanja</dt><dd class="kpi-n tnum">3</dd></dl><a href="#" class="btn btn-text btn-sm kpi-link" aria-label="Odpri: Nova povpraševanja">Odpri<i class="ph-bold ph-arrow-right" aria-hidden="true"></i></a></div><div><dl class="kpi"><dt>Prijave v pregledu</dt><dd class="kpi-n tnum">2</dd></dl><a href="#" class="btn btn-text btn-sm kpi-link" aria-label="Odpri: Prijave v pregledu">Odpri<i class="ph-bold ph-arrow-right" aria-hidden="true"></i></a></div></div>
       <section>
         <div class="flex items-center justify-between gap-4 mb-4"><h2 class="h2c">Zadnje spremembe</h2><a href="#" class="btn btn-text btn-sm" aria-label="Odpri: Revizijska sled">Odpri<i class="ph-bold ph-arrow-right" aria-hidden="true"></i></a></div>
@@ -297,7 +297,7 @@ th[aria-sort="ascending"] .sortbtn, th[aria-sort="descending"] .sortbtn { color:
     </header>
     <main class="adm-main">
       <div class="note items-center" role="status"><i class="ph-fill ph-wrench" aria-hidden="true"></i><p>Vzdrževanje: konzola je trenutno samo za branje.</p></div>
-      <div class="ph"><h1 class="h1c">Nadzorna plošča</h1></div>
+      <div class="phead"><h1 class="h1c">Nadzorna plošča</h1></div>
       <div class="grid grid-cols-4 gap-8"><div><dl class="kpi"><dt>Odprte prijave</dt><dd class="kpi-n tnum">0</dd></dl><a href="#" class="btn btn-text btn-sm kpi-link" aria-label="Odpri: Odprte prijave">Odpri<i class="ph-bold ph-arrow-right" aria-hidden="true"></i></a></div><div><dl class="kpi"><dt>Prijave v pregledu</dt><dd class="kpi-n tnum">0</dd></dl><a href="#" class="btn btn-text btn-sm kpi-link" aria-label="Odpri: Prijave v pregledu">Odpri<i class="ph-bold ph-arrow-right" aria-hidden="true"></i></a></div></div>
     </main>
     </div>
@@ -331,7 +331,7 @@ th[aria-sort="ascending"] .sortbtn, th[aria-sort="descending"] .sortbtn { color:
       </div>
     </header>
     <main class="adm-main">
-      <div class="ph"><h1 class="h1c">Povpraševanja</h1></div>
+      <div class="phead"><h1 class="h1c">Povpraševanja</h1></div>
       <div class="frow">
         <div class="field f-search"><label for="q-f3">Iskanje</label><div class="input-wrap"><i class="ph-bold ph-magnifying-glass" aria-hidden="true"></i><input id="q-f3" type="search" class="input" autocomplete="off"></div></div>
         <div class="flex flex-wrap items-center gap-2" role="group" aria-label="Filtri"><button type="button" class="pill" aria-haspopup="listbox" aria-expanded="false">Stanje<i class="ph-bold ph-caret-down" aria-hidden="true"></i></button><button type="button" class="pill is-hover" aria-haspopup="listbox" aria-expanded="false">Zanimanje<i class="ph-bold ph-caret-down" aria-hidden="true"></i></button><button type="button" class="pill" aria-haspopup="listbox" aria-expanded="false">Regija<i class="ph-bold ph-caret-down" aria-hidden="true"></i></button></div>
@@ -408,7 +408,7 @@ th[aria-sort="ascending"] .sortbtn, th[aria-sort="descending"] .sortbtn { color:
       </div>
     </header>
     <main class="adm-main">
-      <div class="ph"><h1 class="h1c">Povpraševanja</h1></div>
+      <div class="phead"><h1 class="h1c">Povpraševanja</h1></div>
       <div class="frow">
         <div class="field f-search"><label for="q-f4">Iskanje</label><div class="input-wrap"><i class="ph-bold ph-magnifying-glass" aria-hidden="true"></i><input id="q-f4" type="search" class="input" autocomplete="off"></div></div>
         <div class="flex flex-wrap items-center gap-2" role="group" aria-label="Filtri"><button type="button" class="pill" aria-haspopup="listbox" aria-expanded="false">Stanje<i class="ph-bold ph-caret-down" aria-hidden="true"></i></button><button type="button" class="pill" aria-haspopup="listbox" aria-expanded="false">Zanimanje<i class="ph-bold ph-caret-down" aria-hidden="true"></i></button><button type="button" class="pill" aria-haspopup="listbox" aria-expanded="false">Regija<i class="ph-bold ph-caret-down" aria-hidden="true"></i></button></div>
@@ -502,7 +502,7 @@ th[aria-sort="ascending"] .sortbtn, th[aria-sort="descending"] .sortbtn { color:
       </div>
     </header>
     <main class="adm-main">
-      <div class="ph"><h1 class="h1c">Revizijska sled</h1><button type="button" class="btn btn-secondary btn-sm"><i class="ph-bold ph-download-simple" aria-hidden="true"></i>Izvozi CSV</button></div>
+      <div class="phead"><h1 class="h1c">Revizijska sled</h1><button type="button" class="btn btn-secondary btn-sm"><i class="ph-bold ph-download-simple" aria-hidden="true"></i>Izvozi CSV</button></div>
       <div class="flex flex-wrap items-center gap-2" role="group" aria-label="Filtri"><button type="button" class="pill is-hover" aria-haspopup="listbox" aria-expanded="false">Kdo<i class="ph-bold ph-caret-down" aria-hidden="true"></i></button><button type="button" class="pill" aria-haspopup="listbox" aria-expanded="false">Dejanje<i class="ph-bold ph-caret-down" aria-hidden="true"></i></button></div>
       <div>
       <div class="tcard"><table class="tbl"><caption class="sr-only">Revizijska sled</caption><thead><tr><th scope="col" aria-sort="descending"><button type="button" class="sortbtn" aria-label="Razvrsti po: Čas">Čas<i class="ph-bold ph-arrow-down" aria-hidden="true"></i></button></th><th scope="col">Kdo</th><th scope="col">Dejanje</th><th scope="col">Cilj</th><th scope="col">Sprememba</th></tr></thead><tbody>
@@ -549,7 +549,7 @@ th[aria-sort="ascending"] .sortbtn, th[aria-sort="descending"] .sortbtn { color:
       </div>
     </header>
     <main class="adm-main">
-      <div class="ph"><h1 class="h1c">Povpraševanja</h1></div>
+      <div class="phead"><h1 class="h1c">Povpraševanja</h1></div>
       <div class="frow">
         <div class="field f-search"><label for="q-f6">Iskanje</label><div class="input-wrap"><i class="ph-bold ph-magnifying-glass" aria-hidden="true"></i><input id="q-f6" type="search" class="input" autocomplete="off"></div></div>
         <div class="flex flex-wrap items-center gap-2" role="group" aria-label="Filtri"><button type="button" class="pill" aria-haspopup="listbox" aria-expanded="false">Stanje<i class="ph-bold ph-caret-down" aria-hidden="true"></i></button><button type="button" class="pill" aria-haspopup="listbox" aria-expanded="false">Zanimanje<i class="ph-bold ph-caret-down" aria-hidden="true"></i></button><button type="button" class="pill" aria-haspopup="listbox" aria-expanded="false">Regija<i class="ph-bold ph-caret-down" aria-hidden="true"></i></button></div>
@@ -746,7 +746,7 @@ th[aria-sort="ascending"] .sortbtn, th[aria-sort="descending"] .sortbtn { color:
       </div>
     </header>
     <main class="adm-main">
-      <div class="ph"><h1 class="h1c">Povpraševanja</h1></div>
+      <div class="phead"><h1 class="h1c">Povpraševanja</h1></div>
       <div class="frow">
         <div class="field f-search"><label for="q-f8">Iskanje</label><div class="input-wrap"><i class="ph-bold ph-magnifying-glass" aria-hidden="true"></i><input id="q-f8" type="search" class="input" autocomplete="off"></div></div>
         <div class="flex flex-wrap items-center gap-2" role="group" aria-label="Filtri"><button type="button" class="pill" aria-haspopup="listbox" aria-expanded="false">Stanje<i class="ph-bold ph-caret-down" aria-hidden="true"></i></button><button type="button" class="pill" aria-haspopup="listbox" aria-expanded="false">Zanimanje<i class="ph-bold ph-caret-down" aria-hidden="true"></i></button><button type="button" class="pill" aria-haspopup="listbox" aria-expanded="false">Regija<i class="ph-bold ph-caret-down" aria-hidden="true"></i></button></div>
