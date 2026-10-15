@@ -3,11 +3,11 @@ id: TASK-6.2
 title: >-
   DB foundation and lockdown: schema app, extensions, deny-all RLS, security
   tests, platform models, fixture users
-status: In Progress
+status: Done
 assignee:
   - '@backend-dev'
 created_date: '2026-10-14 22:12'
-updated_date: '2026-10-15 04:21'
+updated_date: '2026-10-15 05:08'
 labels:
   - be
   - 'est:M'
