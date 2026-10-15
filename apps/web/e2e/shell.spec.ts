@@ -35,8 +35,8 @@ for (const colorScheme of ['light', 'dark'] as const)
 		await expect(header.getByRole('link', { name: 'Vpis' })).toBeVisible();
 		await expect(header.getByRole('group', { name: 'Jezik: Slovenščina' })).toBeVisible();
 		await expect(page.getByRole('complementary', { name: 'Dodatna vsebina' })).toBeVisible();
-		// Logo, 13 links, SL and EN.
-		await expect(page.getByRole('contentinfo').getByRole('link')).toHaveCount(16);
+		// Logo, 12 links, SL and EN; Cookie settings is a button.
+		await expect(page.getByRole('contentinfo').getByRole('link')).toHaveCount(15);
 
 		await page.keyboard.press('Tab');
 		const skip = page.getByRole('link', { name: 'Preskoči na vsebino' });
@@ -45,6 +45,10 @@ for (const colorScheme of ['light', 'dark'] as const)
 		await page.keyboard.press('Enter');
 		await expect(page).toHaveURL(/#main$/);
 		await expectNoAxeViolations(page);
+		// Hydrated by now: the footer's Cookie settings button opens the banner.
+		await page.getByRole('contentinfo').getByRole('button', { name: 'Nastavitve piškotkov' }).click();
+		await expect(page.getByRole('dialog')).toBeVisible();
+		await page.keyboard.press('Escape');
 	});
 
 test('"Prijavi" opens its popover from the keyboard, arrows move, Escape returns focus', async ({ page }) => {

@@ -14,10 +14,31 @@ const api = `http://localhost:${apiPort}`;
 const port = (process.env.PLAYWRIGHT_PORT ||= String(freePort()));
 const origin = `http://localhost:${port}`;
 
+// Every spec but consent.spec.ts and analytics.spec.ts starts with a stored Reject-all, so the banner (it takes focus
+// on a first visit) stays out of the way. Those two reset it with test.use({ storageState: NO_CONSENT }).
+const consent = encodeURIComponent(JSON.stringify({ v: 1, analytics: false, ts: new Date().toISOString() }));
+
 export default defineConfig({
 	testDir: './e2e',
 	forbidOnly: !!process.env.CI,
-	use: { baseURL: origin },
+	use: {
+		baseURL: origin,
+		storageState: {
+			cookies: [
+				{
+					name: 'zz_consent',
+					value: consent,
+					domain: 'localhost',
+					path: '/',
+					expires: -1,
+					httpOnly: false,
+					secure: false,
+					sameSite: 'Lax',
+				},
+			],
+			origins: [],
+		},
+	},
 	projects: [{ name: 'chromium', use: devices['Desktop Chrome'] }],
 	webServer: [
 		{

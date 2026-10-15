@@ -2,6 +2,8 @@ import { expect, test, type BrowserContext, type Page } from '@playwright/test';
 
 import { CONSENT_VERSION } from '@zivali/analytics';
 
+test.use({ storageState: { cookies: [], origins: [] } }); // no stored choice: the banner is under test
+
 // playwright.config.ts builds with the ga4 provider and this test id. Every request off localhost is answered here,
 // so nothing leaves the machine and the test sees each one.
 const ID = 'G-E2ETEST';

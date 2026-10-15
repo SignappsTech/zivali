@@ -1,6 +1,8 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
 
+test.use({ storageState: { cookies: [], origins: [] } }); // no stored choice: the banner is under test
+
 // TASK-13.2 / P17: the banner on a first visit, Reject and Accept against the ga4 build (see analytics.spec.ts: every
 // request off localhost is answered here), Cookie settings from the footer, withdrawal.
 async function visit(page: Page, path = '/en') {
