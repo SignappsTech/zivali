@@ -19,6 +19,7 @@ export default defineConfig({
 		timeout: 300_000,
 		env: {
 			PORT: '3000',
+			APP_ENV: 'local',
 			HOSTNAME: 'localhost',
 			NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL || 'http://127.0.0.1:54321',
 			NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || 'e2e-placeholder',

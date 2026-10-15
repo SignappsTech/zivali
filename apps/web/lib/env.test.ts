@@ -23,6 +23,13 @@ describe('parseEnv', () => {
 		);
 	});
 
+	it('does not treat an unset APP_ENV as local in production', () => {
+		expect(() => parseEnv({ ...valid, NODE_ENV: 'production' })).toThrow(/NEXT_PUBLIC_API_URL/);
+		expect(parseEnv({ ...valid, NODE_ENV: 'production', APP_ENV: 'local' }).NEXT_PUBLIC_API_URL).toBe(
+			'http://localhost:4000'
+		);
+	});
+
 	it('names a missing variable, treating an empty value as missing', () => {
 		expect(() => parseEnv({ ...valid, NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: '' })).toThrow(
 			/NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY/
