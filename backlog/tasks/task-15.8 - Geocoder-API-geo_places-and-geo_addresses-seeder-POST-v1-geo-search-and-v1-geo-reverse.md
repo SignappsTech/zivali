@@ -3,11 +3,11 @@ id: TASK-15.8
 title: >-
   Geocoder API: geo_places and geo_addresses, seeder, POST /v1/geo/search and
   /v1/geo/reverse
-status: In Progress
+status: Done
 assignee:
   - '@backend-dev'
 created_date: '2026-10-15 00:12'
-updated_date: '2026-10-15 10:16'
+updated_date: '2026-10-15 12:47'
 labels:
   - be
   - 'est:M'
