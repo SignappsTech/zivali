@@ -28,7 +28,7 @@ SL slugs are proposals; the content strategist may change them through a `CHANGE
 | howItWorks, safety, faq, forShelters | `/kako-deluje`, `/varnost`, `/pogosta-vprasanja`, `/za-zavetisca` | `/en/how-it-works`, `/en/safety`, `/en/faq`, `/en/for-shelters` | public | - | sidebar |
 | shelters (FR-044, TASK-90) | `/zavetisca`, `/zavetisca/[slug]` | `/en/shelters`, `/en/shelters/[slug]` | public | - | sidebar |
 | guides (TASK-72) | `/nasveti/[slug]` (e.g. `/nasveti/cipiranje-mack`) | `/en/guides/[slug]` | public | - | sidebar |
-| SEO hubs (TASK-72, M5) | `/izgubljene-zivali/[lokacija]`, `/izgubljeni-psi/[lokacija]`, `/izgubljene-macke/[lokacija]`, `/najdene-zivali/[lokacija]`, `/najdeni-psi/[lokacija]`, `/najdene-macke/[lokacija]` | `/en/lost-pets/[location]`, `/en/lost-dogs/[location]`, `/en/lost-cats/[location]`, `/en/found-pets/[location]`, `/en/found-dogs/[location]`, `/en/found-cats/[location]` | public | - | sidebar |
+| SEO hubs (TASK-72, M5; folder param is the internal EN `[location]`, the SL pathname stays localised) | `/izgubljene-zivali/[location]`, `/izgubljeni-psi/[location]`, `/izgubljene-macke/[location]`, `/najdene-zivali/[location]`, `/najdeni-psi/[location]`, `/najdene-macke/[location]` | `/en/lost-pets/[location]`, `/en/lost-dogs/[location]`, `/en/lost-cats/[location]`, `/en/found-pets/[location]`, `/en/found-dogs/[location]`, `/en/found-cats/[location]` | public | - | sidebar |
 | privacy, cookies, terms, imprint, accessibility | `/zasebnost`, `/piskotki`, `/pogoji-uporabe`, `/impresum`, `/dostopnost` | `/en/privacy`, `/en/cookies`, `/en/terms`, `/en/imprint`, `/en/accessibility` | public | - | none |
 | admin | `/admin/*` | `/en/admin/*` | admin | moderator/admin + aal2 | none |
 | portal (M3) | `/portal/*` | `/en/portal/*` | portal | org member | none |
@@ -72,3 +72,9 @@ Detail page SEO: open, visible reports are indexable with `Article`-like JSON-LD
 ## Example
 
 `https://zivali.example/r/Hk3vT9qP` → web detail (SL) · same link on a phone with the app → `app/r/[code]` with `code = Hk3vT9qP`.
+
+## Change log
+
+| Version | Date | Change |
+|---|---|---|
+| 1.1 | 2026-10-15 | CH-101: SEO hub folder param `[lokacija]` renamed `[location]` (internal EN) |

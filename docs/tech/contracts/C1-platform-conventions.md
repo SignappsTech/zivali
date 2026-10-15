@@ -50,7 +50,7 @@ Ownership ("owner of pet", "manager of report", "participant of conversation") i
 ## Database (Prisma, schema `app`)
 
 - Prisma 7 multi-file schema `apps/api/prisma/schemas/<domain>.prisma` (`base`, `users`, `reports`, `photos`, `matching`, `chat`, `notifications`, `abuse`, `payments`, `ads`, `geo`, `directory`, `platform`), `@@schema("app")` on every model, `datasource` with `schemas = ["app"]`. Naming per ADR-020: snake_case plural models without `@@map`, snake_case fields, `id String @id @default(uuid()) @db.Uuid`, `created_at DateTime @default(now()) @db.Timestamptz(6)`, `updated_at DateTime @updatedAt @db.Timestamptz(6)`, enums SCREAMING_SNAKE.
-- PostGIS and pgvector columns are `Unsupported("geography(Point,4326)")` / `Unsupported("vector(1024)")` and read or written only through TypedSQL (`prisma/sql/*.sql`) or `$queryRaw` with parameters.
+- PostGIS and pgvector columns are `Unsupported("extensions.geography(Point,4326)")` (schema-qualified, because `?schema=app` leaves `extensions` off the search path) / `Unsupported("vector(1024)")` / `Unsupported("vector(1024)")` and read or written only through TypedSQL (`prisma/sql/*.sql`) or `$queryRaw` with parameters.
 - **Lockdown (ADR-021)**: the first migration creates schema `app`, enables `postgis`, `vector`, `pgcrypto` in schema `extensions`, revokes all on `app` and `pgboss` from `anon`, `authenticated`, `public`; every migration that creates a table also runs `alter table app.<t> enable row level security;` (no policies). A test fails otherwise (`test/security/schema-exposure.test.ts`).
 - Migrations: `prisma migrate dev` locally; one migration per task (`<timestamp>_<task-id>_<slug>`), never edit a merged migration; hand-written SQL inside Prisma migrations for RLS, extensions, check constraints and the `realtime.messages` policy (ADR-023). Header comment in `migration.sql`: `-- task: TASK-x.y` and `-- rollback: …`.
 - `app_config` (`key`, `value Json`, `is_public`, `description`): defaults inserted by each feature's migration or seeder (`on conflict do nothing`); read through `lib/config-store.ts` (cached 60 s); admin writes are audited. `GET /v1/config/public` returns the keys with `is_public = true` (feature and content flags such as `content.legal_timings`, `vet_partner.enabled`, `podpornik.enabled`, `share.facebook_groups`, `flags.supporter_monthly`, `flags.transparency_page`), `Cache-Control: public, max-age=300`.
@@ -88,3 +88,4 @@ HTTP/1.1 429
 | Version | Date | Change |
 |---|---|---|
 | 1.1 | 2026-10-15 | CH-48: feature flags `flags.supporter_monthly` and `flags.transparency_page` accepted as public `app_config` keys (default off; P15) |
+| 1.2 | 2026-10-15 | CH-102: geography columns typed `Unsupported("extensions.geography(Point,4326)")` |

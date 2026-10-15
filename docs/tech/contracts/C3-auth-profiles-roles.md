@@ -13,7 +13,7 @@ model profiles {
   display_name            String?   @db.VarChar(60)
   locale                  String    @default("sl")           // 'sl' | 'en'
   role                    USER_ROLE @default(USER)
-  home_point              Unsupported("geography(Point,4326)")?   // private
+  home_point              Unsupported("extensions.geography(Point,4326)")?   // private; schema-qualified (C1 §Database)
   home_radius_km          Int       @default(5)              // 1–25
   phone                   String?                            // private, never public, never in analytics
   is_anonymous            Boolean   @default(false)
@@ -87,3 +87,4 @@ Clients keep report drafts locally (C4 §Drafts, C17). When a signed-out visitor
 |---|---|---|
 | 1.1 | 2026-10-15 | CH-54: client block updated to the implemented @zivali/api/auth (configureAuth, redirectTo, native idToken, signOut cleanup, gate states, ApiError mapping) |
 | 1.2 | 2026-10-15 | CH-92: signOut cleanup runs DELETE /v1/push-tokens with body { token } |
+| 1.3 | 2026-10-15 | CH-102: `home_point` typed `extensions.geography(Point,4326)` |

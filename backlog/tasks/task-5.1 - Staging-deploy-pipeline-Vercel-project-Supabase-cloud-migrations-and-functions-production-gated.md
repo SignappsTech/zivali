@@ -7,7 +7,7 @@ status: To Do
 assignee:
   - '@backend-dev'
 created_date: '2026-10-14 22:12'
-updated_date: '2026-10-15 00:21'
+updated_date: '2026-10-15 04:23'
 labels:
   - tech
   - 'est:M'
@@ -47,4 +47,5 @@ Branch: agent/task-5.1-deploy
 - [ ] #5 The README section Environments and credentials lists the credentials, who provides them, the monthly cost and what stays blocked without them.
 - [ ] #6 The runbook creates zivali-private, zivali-media and zivali-backups in the R2 EU jurisdiction (CORS rule on zivali-private, 30-day lifecycle on zivali-backups, public access for zivali-media) per ADR-014; scripts/deploy.mjs checks each bucket with HeadBucket on the EU endpoint and prints NEEDS-INPUT when one is missing.
 - [ ] #7 Supabase cloud: Realtime 'Allow public access' is turned off (private Broadcast channels only, ADR-023); the API's exposed schemas list contains only public (ADR-021)
+- [ ] #8 Retention proposal, confirm with the lawyer pack LQ list: audit_log kept 12 months then deleted, zivali-backups 30 days rolling; recorded in data-inventory.json (CH-104)
 <!-- AC:END -->

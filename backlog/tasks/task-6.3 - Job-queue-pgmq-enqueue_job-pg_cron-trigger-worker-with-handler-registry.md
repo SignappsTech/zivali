@@ -7,7 +7,7 @@ status: To Do
 assignee:
   - '@backend-dev'
 created_date: '2026-10-14 22:12'
-updated_date: '2026-10-14 23:38'
+updated_date: '2026-10-15 04:23'
 labels:
   - be
   - 'est:S'
@@ -43,4 +43,5 @@ Branch: agent/task-6.3-queue
 - [ ] #2 lib/jobs.ts sends jobs (optionally inside a Prisma transaction) with retryLimit 5 and backoff; schedules (lifecycle hourly, retention daily, partners hourly, keep-alive every 6 h) are created idempotently in Europe/Ljubljana.
 - [ ] #3 domains/notifications exposes enqueueNotification(input, ctx) as a stub that sends notify.send, so feature tasks can call it before the notifications task merges.
 - [ ] #4 drain() processes queues to empty for tests and `pnpm jobs:drain`; an integration test proves send → handler → completion and failure → retry → failed state; /v1/health/ready reports queue lag.
+- [ ] #5 pg-boss tables (including per-queue partitions) have RLS enabled; test/security fails otherwise (CH-103)
 <!-- AC:END -->
