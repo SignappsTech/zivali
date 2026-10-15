@@ -1,7 +1,8 @@
 # Deploy (ADR-016, TASK-5.1): staging after CI passes on main, production on version tags (vX.Y.Z) after a reviewer
-# approves the `production` environment. Both run scripts/deploy.mjs, the same steps as a workstation deploy: build
-# and push the linux/arm64 images (Hetzner CAX11) to GHCR, then over SSH pull, one-off `prisma migrate deploy`,
-# restart, and the smoke checks (/ping, /v1/health/ready, web home, ADR-021 exposure).
+# approves the `production` environment. Both run scripts/deploy.mjs --deploy, the same steps as a workstation deploy:
+# build the linux/arm64 images (Hetzner CAX11) on the runner and stream them to the VPS over SSH (docker save | zstd |
+# docker load; no registry), one-off `prisma migrate deploy`, up and healthy, smoke checks (/ping, /v1/health/ready,
+# the web's version, web home, ADR-021 exposure), else back to the running release.
 # Off until the repository variable DEPLOY_ENABLED is 'true'. Secrets per GitHub environment (staging, production):
 # README "Environments and credentials". Missing ones fail the job with NEEDS-INPUT and their names (--strict).
 name: deploy
@@ -37,7 +38,6 @@ jobs:
       url: https://${{ vars.WEB_HOST }}
     permissions:
       contents: read
-      packages: write
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -53,11 +53,8 @@ jobs:
           platforms: arm64
       # deploy.mjs needs @aws-sdk/client-s3 (bucket checks) from apps/api.
       - run: pnpm install --frozen-lockfile --ignore-scripts --filter api...
-      - run: node scripts/deploy.mjs staging --strict
+      - run: node scripts/deploy.mjs staging --deploy --strict
         env:
-          GHCR_OWNER: ${{ github.repository_owner }}
-          GHCR_USER: ${{ github.actor }}
-          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           HETZNER_HOST: ${{ secrets.HETZNER_HOST }}
           HETZNER_SSH_KEY: ${{ secrets.HETZNER_SSH_KEY }}
           HETZNER_KNOWN_HOSTS: ${{ secrets.HETZNER_KNOWN_HOSTS }}
@@ -66,7 +63,6 @@ jobs:
           WEB_HOST: ${{ vars.WEB_HOST }}
           API_HOST: ${{ vars.API_HOST }}
           CERTBOT_CLOUDFLARE_TOKEN: ${{ secrets.CERTBOT_CLOUDFLARE_TOKEN }}
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
           R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
           R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
@@ -78,6 +74,12 @@ jobs:
           NEXT_PUBLIC_GA_MEASUREMENT_ID: ${{ vars.NEXT_PUBLIC_GA_MEASUREMENT_ID }}
           NEXT_PUBLIC_TURNSTILE_SITE_KEY: ${{ vars.NEXT_PUBLIC_TURNSTILE_SITE_KEY }}
           NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${{ vars.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY }}
+      # Port 22 back to admin-only even when the deploy failed, was cancelled or never reached its own cleanup.
+      - if: always()
+        run: node scripts/deploy.mjs staging --close-ssh
+        env:
+          HETZNER_API_TOKEN: ${{ secrets.HETZNER_API_TOKEN }}
+          HETZNER_FIREWALL_ID: ${{ vars.HETZNER_FIREWALL_ID }}
 
   production:
     if: vars.DEPLOY_ENABLED == 'true' && github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
@@ -89,7 +91,6 @@ jobs:
       url: https://${{ vars.WEB_HOST }}
     permissions:
       contents: read
-      packages: write
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -104,11 +105,8 @@ jobs:
         with:
           platforms: arm64
       - run: pnpm install --frozen-lockfile --ignore-scripts --filter api...
-      - run: node scripts/deploy.mjs production --strict
+      - run: node scripts/deploy.mjs production --deploy --strict
         env:
-          GHCR_OWNER: ${{ github.repository_owner }}
-          GHCR_USER: ${{ github.actor }}
-          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           HETZNER_HOST: ${{ secrets.HETZNER_HOST }}
           HETZNER_SSH_KEY: ${{ secrets.HETZNER_SSH_KEY }}
           HETZNER_KNOWN_HOSTS: ${{ secrets.HETZNER_KNOWN_HOSTS }}
@@ -117,7 +115,6 @@ jobs:
           WEB_HOST: ${{ vars.WEB_HOST }}
           API_HOST: ${{ vars.API_HOST }}
           CERTBOT_CLOUDFLARE_TOKEN: ${{ secrets.CERTBOT_CLOUDFLARE_TOKEN }}
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
           R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
           R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
@@ -129,3 +126,9 @@ jobs:
           NEXT_PUBLIC_GA_MEASUREMENT_ID: ${{ vars.NEXT_PUBLIC_GA_MEASUREMENT_ID }}
           NEXT_PUBLIC_TURNSTILE_SITE_KEY: ${{ vars.NEXT_PUBLIC_TURNSTILE_SITE_KEY }}
           NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${{ vars.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY }}
+      # Port 22 back to admin-only even when the deploy failed, was cancelled or never reached its own cleanup.
+      - if: always()
+        run: node scripts/deploy.mjs production --close-ssh
+        env:
+          HETZNER_API_TOKEN: ${{ secrets.HETZNER_API_TOKEN }}
+          HETZNER_FIREWALL_ID: ${{ vars.HETZNER_FIREWALL_ID }}

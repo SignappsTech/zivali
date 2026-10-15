@@ -8,7 +8,7 @@ One Hetzner Cloud **CAX11** (Arm64 Ampere, 2 vCPU, 4 GB, 40 GB disk, Ubuntu 24.0
 | `zivali-production` | api, worker, web                                 | `najdimo.si` + `www.najdimo.si` (web), `api.najdimo.si`    |
 | `zivali-edge`       | nginx (TLS, proxy, headers) and certbot, one VPS | all of the above                                           |
 
-Single-level names only: Cloudflare proxies the hostnames, and its free Universal SSL covers `najdimo.si` and `*.najdimo.si`, not `*.staging.najdimo.si`. Public photos: `https://media.najdimo.si` (R2 custom domain on `zivali-media`, served by Cloudflare, no nginx block). Database and Auth: Supabase project `najdimo` (staging, Free). Images: GHCR (`ghcr.io/pbozic/zivali-api`, `ghcr.io/pbozic/zivali-web`), built for `linux/arm64`.
+Single-level names only: Cloudflare proxies the hostnames, and its free Universal SSL covers `najdimo.si` and `*.najdimo.si`, not `*.staging.najdimo.si`. Public photos: `https://media.najdimo.si` (R2 custom domain on `zivali-media`, served by Cloudflare, no nginx block). Database and Auth: Supabase project `najdimo` (staging, Free). Images: `zivali-api:<sha or tag>` and `zivali-web:<env>-<sha or tag>`, built for `linux/arm64` on the deploying machine and streamed to the VPS over SSH (`docker save | zstd | docker load`); no registry.
 
 On the VPS everything lives in `/opt/zivali/`:
 
@@ -20,29 +20,41 @@ On the VPS everything lives in `/opt/zivali/`:
     staging/web.env      web server variables (mode 600)
     staging/release.env  API_IMAGE, WEB_IMAGE, APP_VERSION of the running release (written by remote.sh)
     staging/release.env.prev   the release before it (rollback)
+    staging/release.env.next   a release being deployed, until its smoke checks pass (promote) or fail (rollback)
     production/…         the same for production
 
-The deploy itself is `node scripts/deploy.mjs <staging|production>` (workstation) or `.github/workflows/deploy.yml` (CI, which runs the same script). Anything missing prints `NEEDS-INPUT` with the names and runs the dry run instead.
+The deploy itself is `node scripts/deploy.mjs <staging|production> --deploy` (workstation) or `.github/workflows/deploy.yml` (CI, which runs the same script). Without `--deploy` the script only runs its read-only checks and the dry run and writes nothing outside the machine. Anything missing prints `NEEDS-INPUT` with the names and runs the dry run instead.
 
 ## 1. VPS (once)
 
 1. Hetzner Cloud console, project `najdimo`, **Add server**: type **CAX11** (Arm64), image **Ubuntu 24.04**, location Falkenstein, Nuremberg or Helsinki, your SSH key. Networking: keep the **public IPv4** (GitHub runners deploy over IPv4) and IPv6. **Backups: off** (the server is stateless; database dumps go to R2). About €7.31/month incl. VAT with the IPv4. If production needs more room, resize to **CAX21** (4 vCPU, 8 GB) in the console (Rescale; keep the disk size so you can scale back).
 2. **Cloud Firewall** (Firewalls, Create firewall, apply to the server). Inbound: TCP 80 and TCP 443 from any IPv4 and IPv6; TCP 22 from the admin IP only. Outbound: leave open. Optional hardening: allow 80/443 only from Cloudflare's ranges (`deploy/nginx/cloudflare-ips.conf`).
-   CI deploys over SSH from GitHub's runners, whose IPs change. Give the workflow `HETZNER_API_TOKEN` (Security, API tokens, Read & Write) and `HETZNER_FIREWALL_ID` (the number in the firewall's URL): `scripts/deploy.mjs` adds a temporary port 22 rule for the runner's IPv4 and removes it when the deploy ends. Without them, deploy from the admin machine.
-3. As root, once:
+   CI deploys over SSH from GitHub's runners, whose IPs change. Give the workflow `HETZNER_API_TOKEN` (Security, API tokens, Read & Write) and `HETZNER_FIREWALL_ID` (the number in the firewall's URL): `scripts/deploy.mjs --deploy` adds a temporary port 22 rule (description `deploy <ip> (temporary)`) for the runner's IPv4 and removes it when the deploy ends; the workflow's last step (`if: always()`) runs `scripts/deploy.mjs <env> --close-ssh`, which removes every `(temporary)` rule, so a cancelled run leaves none behind. Without them, deploy from the admin machine.
+3. As root (`ssh root@<ipv4>`), once. The user `deploy` runs every deploy; it gets the `docker` group (root-equivalent on this host, so guard its keys) and no sudo: nothing in this runbook needs it.
 
     ```sh
     apt-get update && apt-get -y upgrade            # unattended-upgrades is on by default in Ubuntu 24.04
+    apt-get install -y zstd                          # the images arrive zstd-compressed (docker save | zstd)
     curl -fsSL https://get.docker.com | sh           # Docker Engine and the Compose plugin (arm64)
     adduser --disabled-password --gecos "" deploy && usermod -aG docker deploy
     install -d -o deploy -g deploy -m 700 /home/deploy/.ssh
-    cp ~/.ssh/authorized_keys /home/deploy/.ssh/ && chown deploy: /home/deploy/.ssh/authorized_keys
+    install -o deploy -g deploy -m 600 ~/.ssh/authorized_keys /home/deploy/.ssh/authorized_keys
     install -d -o deploy -g deploy -m 750 /opt/zivali /opt/zivali/staging /opt/zivali/production
-    sed -i 's/^#\?PasswordAuthentication.*/PasswordAuthentication no/' /etc/ssh/sshd_config && systemctl reload ssh
+    ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub   # the host key fingerprint, for step 4
     ```
 
-4. CI deploy key: `ssh-keygen -t ed25519 -f zivali-deploy -C github-actions -N ""`; append `zivali-deploy.pub` to `/home/deploy/.ssh/authorized_keys`; the private key is the secret `HETZNER_SSH_KEY`; `ssh-keyscan -t ed25519 <ipv4>` is `HETZNER_KNOWN_HOSTS`; `HETZNER_HOST=deploy@<ipv4>`. A workstation uses its own key (`HETZNER_SSH_KEY` may be a path to the key file).
-5. Files, as `deploy`, mode 600 (`umask 077` first). Values never go into Git or images.
+    In a second terminal, check that `ssh deploy@<ipv4> docker ps` works. Then, still as root, close root and password logins (the drop-in sorts before Ubuntu's and cloud-init's own files, and sshd keeps the first value it reads):
+
+    ```sh
+    printf 'PermitRootLogin no\nPasswordAuthentication no\nKbdInteractiveAuthentication no\n' > /etc/ssh/sshd_config.d/00-zivali.conf
+    sshd -t && systemctl restart ssh
+    sshd -T | grep -E '^(permitrootlogin|passwordauthentication|kbdinteractiveauthentication) '   # all three "no"
+    ```
+
+    Later root work goes through the Hetzner console (Rescue, Reset root password, then Console), not SSH.
+
+4. CI deploy key: `ssh-keygen -t ed25519 -f zivali-deploy -C github-actions -N ""`; append `zivali-deploy.pub` to `/home/deploy/.ssh/authorized_keys`; the private key is the secret `HETZNER_SSH_KEY`. `HETZNER_KNOWN_HOSTS` (required: the host key is pinned) is the output of `ssh-keyscan -t ed25519 <ipv4>`; check it with `ssh-keyscan -t ed25519 <ipv4> | ssh-keygen -lf -`, which must print the fingerprint from step 3. `HETZNER_HOST=<ipv4>` (the user is `deploy`; `user@<ipv4>` picks another). A workstation uses its own key (`HETZNER_SSH_KEY` may be a path to the key file).
+5. Files, as `deploy`, mode 600 and owned by `deploy` (`umask 077` first; `remote.sh check` reports any other mode or owner). Values never go into Git or images.
     - `/opt/zivali/edge.env` (hostnames are config; change them here and in `WEB_HOST`/`API_HOST`, then reissue the certificate):
 
         ```
@@ -53,7 +65,7 @@ The deploy itself is `node scripts/deploy.mjs <staging|production>` (workstation
         PRODUCTION_API_HOST=api.najdimo.si
         ```
 
-    - `/opt/zivali/staging/.env`: the apps/api block of the root `.env.example`, plus `APP_ENV=staging` (it also picks the env files in Compose). Database: Supabase **Connect, Session pooler** (IPv4; containers have no IPv6 by default) for both `DATABASE_URL` and `DIRECT_URL`, each ending in `?schema=app`. Secrets `RATE_SALT`, `IDEMPOTENCY_KEY`, `FUZZ_SECRET`: `openssl rand -hex 32` each, per environment. `STORAGE_PROVIDER=r2` with the `R2_*` values and `MEDIA_BASE_URL=https://media.najdimo.si`. Every other adapter is configured or explicitly `off` (`PAYMENTS_PROVIDER`, `EMAIL_PROVIDER`, `PUSH_PROVIDER`, `CAPTCHA_PROVIDER`, `AI_PROVIDER`, `EMBEDDER_PROVIDER`); `mock` is refused outside local. `API_URL=https://api-staging.najdimo.si`, `APP_URL` and `WEB_ORIGINS=https://staging.najdimo.si`.
+    - `/opt/zivali/staging/.env`: the apps/api block of the root `.env.example`, plus `APP_ENV=staging` (it also picks the env files in Compose). Database: Supabase **Connect, Session pooler** (IPv4; containers have no IPv6 by default; port **5432**) for both `DATABASE_URL` and `DIRECT_URL`, each ending in `?schema=app`. Not the transaction pooler (port 6543): migrations need a session, and `remote.sh check` reports a missing `DIRECT_URL` or one on port 6543. Secrets `RATE_SALT`, `IDEMPOTENCY_KEY`, `FUZZ_SECRET`: `openssl rand -hex 32` each, per environment. `STORAGE_PROVIDER=r2` with the `R2_*` values and `MEDIA_BASE_URL=https://media.najdimo.si`. Every other adapter is configured or explicitly `off` (`PAYMENTS_PROVIDER`, `EMAIL_PROVIDER`, `PUSH_PROVIDER`, `CAPTCHA_PROVIDER`, `AI_PROVIDER`, `EMBEDDER_PROVIDER`); `mock` is refused outside local. `API_URL=https://api-staging.najdimo.si`, `APP_URL` and `WEB_ORIGINS=https://staging.najdimo.si`.
     - `/opt/zivali/staging/web.env`: `APP_ENV=staging`, `R2_UPLOAD_ORIGIN=https://<R2_ACCOUNT_ID>.eu.r2.cloudflarestorage.com`, and `GA_PROPERTY_ID`/`GA_SERVICE_ACCOUNT_KEY_FILE` only once partner stats are on. `NEXT_PUBLIC_*` values do not go here: they are baked into the web image at build time by `scripts/deploy.mjs` (from `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `WEB_HOST`, `API_HOST` and the optional `NEXT_PUBLIC_*` it is given).
     - Production: the same under `/opt/zivali/production/` with the production Supabase project, `APP_ENV=production` and the production hostnames.
     - Never paste the output of `docker compose config`: it prints the values.
@@ -64,7 +76,7 @@ DNS: A records (and AAAA for the IPv6) for `staging`, `api-staging`, `@`, `www` 
 
 Certificates come from certbot with the **DNS-01** challenge (Cloudflare proxies the hostnames, so HTTP-01 is not reliable). One certificate (`CERT_NAME`) covers all five hostnames.
 
-1. A Cloudflare **API token** with only **Zone, DNS, Edit** on the zone `najdimo.si` (My Profile, API Tokens, Create Token, Edit zone DNS template). It is `CERTBOT_CLOUDFLARE_TOKEN` (or, with the same scope, `CLOUDFLARE_API_TOKEN`) in `.env.local` and the GitHub environments; every deploy writes it to `/opt/zivali/cloudflare.ini` (mode 600). It is never committed.
+1. A Cloudflare **API token** with only **Zone, DNS, Edit** on the zone `najdimo.si` (My Profile, API Tokens, Create Token, Edit zone DNS template). It is `CERTBOT_CLOUDFLARE_TOKEN` in `.env.local` and the GitHub environments; every deploy writes it to `/opt/zivali/cloudflare.ini` (mode 600). It is never committed.
 2. First issuance, once, as `deploy` on the VPS (before the first deploy, so the token file is written by hand here):
 
     ```sh
@@ -80,7 +92,7 @@ Certificates come from certbot with the **DNS-01** challenge (Cloudflare proxies
     Adding or renaming a hostname: the same command with every `-d` and `--expand`, then a deploy (or `docker compose -p zivali-edge … restart nginx`).
 
 3. Renewal: the `certbot` service runs `certbot renew` twice a day with the same token file; the `nginx` service reloads twice a day and so picks up renewed certificates. Until the first certificate exists, nginx waits instead of crash-looping (`nginx/start.sh`), and `scripts/deploy.mjs` reports `NEEDS-INPUT` for it.
-4. nginx (`nginx/templates/zivali.conf.template`, rendered from `edge.env`): HTTP → HTTPS, TLS 1.2/1.3, HSTS, `X-Content-Type-Options`, `Referrer-Policy`, `X-Frame-Options` (only when the app sent none; helmet and the web CSP stay authoritative), gzip, `proxy_pass` to `<env>-web:3000` and `<env>-api:4000` with `X-Forwarded-For`/`X-Forwarded-Proto`, request bodies up to 2 MB on the API (photos go straight to R2), unknown hostnames refused, no access log.
+4. nginx (`nginx/templates/zivali.conf.template`, rendered from `edge.env`): HTTP → HTTPS, TLS 1.2/1.3, HSTS, `X-Content-Type-Options`, `Referrer-Policy`, `X-Frame-Options` (only when the app sent none; helmet and the web CSP stay authoritative), gzip, `proxy_pass` to `<env>-web:3000` and `<env>-api:4000` with `X-Forwarded-For`, `X-Forwarded-Proto` and `X-Forwarded-Host` set by nginx (a client's values and its `Forwarded` header never reach Next.js Server Actions or Express), request bodies up to 2 MB on the API (photos go straight to R2), unknown hostnames refused (unknown SNI: no handshake; known SNI with an unknown `Host`: connection closed, 444), no access log.
 5. Real client IPs: nginx trusts `CF-Connecting-IP` only from Cloudflare's ranges in `nginx/cloudflare-ips.conf`. Refresh it now and then (Cloudflare announces changes) from the repo root, commit, deploy:
 
     ```sh
@@ -115,26 +127,25 @@ For project `najdimo` (and later the production project):
 ## 5. GitHub Actions
 
 - Environments `staging` and `production` (Settings, Environments). `production`: **Required reviewers** (the manual approval) and deployment tags `v*`.
-- Secrets per environment: `HETZNER_HOST`, `HETZNER_SSH_KEY`, `HETZNER_KNOWN_HOSTS`, `HETZNER_API_TOKEN`, `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `SUPABASE_ACCESS_TOKEN`, `CERTBOT_CLOUDFLARE_TOKEN` (or `CLOUDFLARE_API_TOKEN`). Variables per environment: `WEB_HOST`, `API_HOST`, `HETZNER_FIREWALL_ID`, `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_PROJECT_REF`, and optionally `NEXT_PUBLIC_ANALYTICS_PROVIDER`, `NEXT_PUBLIC_GA_MEASUREMENT_ID`, `NEXT_PUBLIC_TURNSTILE_SITE_KEY`, `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` (pk_test only). GHCR uses the workflow's own `GITHUB_TOKEN`.
+- Secrets per environment: `HETZNER_HOST`, `HETZNER_SSH_KEY`, `HETZNER_KNOWN_HOSTS`, `HETZNER_API_TOKEN`, `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `SUPABASE_ACCESS_TOKEN`, `CERTBOT_CLOUDFLARE_TOKEN`. Variables per environment: `WEB_HOST`, `API_HOST`, `HETZNER_FIREWALL_ID`, `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_PROJECT_REF`, and optionally `NEXT_PUBLIC_ANALYTICS_PROVIDER`, `NEXT_PUBLIC_GA_MEASUREMENT_ID`, `NEXT_PUBLIC_TURNSTILE_SITE_KEY`, `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` (pk_test only). No registry, so the jobs need no `packages` permission.
 - Repository variable `DEPLOY_ENABLED=true` switches the workflow on. Until then nothing deploys; with it on and a secret missing, the job fails with `NEEDS-INPUT` and the names.
-- Images are built on `ubuntu-24.04` with Docker Buildx for `linux/arm64`: the JS builds run natively, only the api image's runtime stage (apt-get, Prisma engine) runs under QEMU. Alternative: `runs-on: ubuntu-24.04-arm` builds natively without QEMU (check that Arm runners are available for this private repository's plan first).
+- Images are built on `ubuntu-24.04` with Docker Buildx for `linux/arm64` and streamed to the VPS: the JS builds run natively, only the api image's runtime stage (apt-get, Prisma engine) runs under QEMU. Alternative: `runs-on: ubuntu-24.04-arm` builds natively without QEMU (check that Arm runners are available for this private repository's plan first).
 
 ## 6. Deploy
 
-- **Staging**: every push to `main` that passes `ci` deploys automatically. From a workstation: `node scripts/deploy.mjs staging` (values from the root `.env.local`; a clean working tree).
-- **Production**: `git tag v1.2.3 && git push origin v1.2.3`, then approve the run in the `production` environment. From a workstation: check out the tag, `node scripts/deploy.mjs production --yes` (values from `.env.production.local`).
-- Steps: checks (credentials, R2 buckets, Supabase settings, `remote.sh check` on the VPS: env files, `edge.env`, Docker Compose, the certificate) → build and push `zivali-api:<sha or tag>` and `zivali-web:<env>-<sha or tag>` (`linux/arm64`) → copy `deploy/` to `/opt/zivali`, write `cloudflare.ini` → `remote.sh deploy`: pull, one-off `prisma migrate deploy` in an api container, `up -d` api, worker and web, nginx and certbot up, nginx config re-rendered, tested and reloaded → smoke checks (`/ping`, `/v1/health/ready`, web home, PostgREST with the public key reaches no app table). A failed migration leaves the running release untouched.
-- Dry run without deploying: `node scripts/deploy.mjs staging --dry-run` (add `--skip-images` to skip the two image builds): builds both arm64 images, applies all migrations to a scratch database on the local Supabase server, runs `prisma migrate diff` against `prisma/schemas` and the ADR-021 security tests on it, then drops the scratch database. A workstation needs Arm64 emulation in Docker; if a build fails with `exec format error`, register it once: `docker run --privileged --rm tonistiigi/binfmt --install arm64`.
+- **Staging**: every push to `main` that passes `ci` deploys automatically. From a workstation: `node scripts/deploy.mjs staging --deploy` (values from the root `.env.local`; a clean working tree; `zstd` on the PATH: Linux and macOS from the package manager, Windows from the facebook/zstd GitHub releases).
+- **Production**: `git tag v1.2.3 && git push origin v1.2.3`, then approve the run in the `production` environment. From a workstation: check out the tag, `node scripts/deploy.mjs production --deploy --yes` (values from `.env.production.local`).
+- Steps: checks (credentials, R2 buckets, Supabase settings, `remote.sh check` on the VPS: env files with mode and owner, `DIRECT_URL`, `edge.env`, Docker Compose, `zstd`, the certificate) → build `zivali-api:<sha or tag>` and `zivali-web:<env>-<sha or tag>` (`linux/arm64`) locally → copy `deploy/` to `/opt/zivali`, write `cloudflare.ini` → `docker save | zstd | ssh docker load` → `remote.sh deploy`: one-off `prisma migrate deploy` in an api container, api, worker and web `up --wait` (healthy within 180 s by their compose healthchecks, else the running release is started again and the deploy fails), nginx and certbot up, nginx config re-rendered, tested and reloaded → smoke checks, GETs only (`/ping`, `/v1/health/ready`, `/api/health` reports the new version, web home, PostgREST with the public key reaches no app table) → `remote.sh promote` (`release.env` becomes `release.env.prev`, the new release becomes `release.env`, images no release file names are removed). A failed smoke check runs `remote.sh rollback` (the release in `release.env` up again) and fails the deploy. A failed migration leaves the running release untouched.
+- Dry run (the default without `--deploy`): `node scripts/deploy.mjs staging` (add `--skip-images` to skip the two image builds): the read-only checks, then builds both arm64 images, applies all migrations to a scratch database on the local Supabase server, runs `prisma migrate diff` against `prisma/schemas` and the ADR-021 security tests on it, then drops the scratch database. A workstation needs Arm64 emulation in Docker; if a build fails with `exec format error`, register it once: `docker run --privileged --rm tonistiigi/binfmt --install arm64`.
 
 ## 7. Rollback
 
-Images: the previous release is still on the VPS. As `deploy`:
+A deploy whose containers do not become healthy, or whose smoke checks fail, goes back to the running release by itself (`remote.sh rollback`). To go back one release by hand, as `deploy` (the previous images are still on the VPS):
 
 ```sh
 cd /opt/zivali
 cat staging/release.env.prev                       # API_IMAGE, WEB_IMAGE, APP_VERSION before the last deploy
-docker compose -p zivali-staging --env-file staging/.env --env-file staging/release.env.prev up -d api worker web
-cp staging/release.env.prev staging/release.env
+cp staging/release.env.prev staging/release.env && sh remote.sh rollback staging
 ```
 
 Or redeploy an older commit or tag through the workflow (re-run its job). The database only moves forward: a bad migration is fixed with a new migration, never by rolling back.
@@ -153,9 +164,13 @@ npx wrangler r2 object get zivali-backups/db/staging/2026-10-15.dump --file rest
 # 2. Stop the writers (as deploy on the VPS)
 docker compose -p zivali-staging --env-file staging/.env --env-file staging/release.env stop api worker
 # 3. A new or empty database first gets the extensions and schema: run the migrations (or just deploy once)
-# 4. Replace schema app with the dump; pg_restore 17 ships in the api image. RESTORE_URL is DIRECT_URL without ?schema=app.
-docker run --rm -i -e RESTORE_URL --entrypoint sh <api image> -c \
+# 4. Replace schema app with the dump; pg_restore 17 ships in the api image. RESTORE_URL is DIRECT_URL without the
+#    password and without ?schema=app; the password is typed into PGPASSWORD (not echoed), so neither is on a command line.
+read -rs PGPASSWORD && export PGPASSWORD
+export RESTORE_URL='postgresql://postgres.<project ref>@<pooler host>:5432/postgres'
+docker run --rm -i -e PGPASSWORD -e RESTORE_URL --entrypoint sh <api image> -c \
   'cat > /tmp/r.dump && pg_restore --clean --if-exists --no-owner --no-privileges --schema=app -d "$RESTORE_URL" /tmp/r.dump' < restore.dump
+unset PGPASSWORD
 # 5. Lockdown check (ADR-021) from a checkout: DATABASE_URL=<that URL with ?schema=app> pnpm --filter api test:security
 # 6. Start api and worker again; smoke: /v1/health/ready
 docker compose -p zivali-staging --env-file staging/.env --env-file staging/release.env up -d api worker

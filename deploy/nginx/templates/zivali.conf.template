@@ -52,10 +52,12 @@ server {
 	return 301 https://$host$request_uri;
 }
 
-# Unknown hostnames get no certificate and no content.
+# Unknown hostnames get no certificate and no content: an unknown SNI fails the handshake, a known SNI with an
+# unknown Host header gets the connection closed (444).
 server {
 	listen 443 ssl default_server;
 	ssl_reject_handshake on;
+	return 444;
 }
 
 # Staging (deployed from main)

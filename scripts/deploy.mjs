@@ -1,23 +1,28 @@
 // Deploy to the Hetzner VPS (ADR-016). Usage:
-//   node scripts/deploy.mjs <staging|production> [--dry-run] [--skip-images] [--strict] [--yes]
-// The GitHub Actions workflow (.github/workflows/deploy.yml) runs this same script, so both paths take the same steps:
-//   1. checks: credentials (names only), the three R2 buckets (HeadBucket on the EU endpoint), the Supabase settings
-//      of ADR-021/ADR-023 (Management API, read-only GETs) and the VPS files and TLS certificate (`remote.sh check`
-//      over SSH, read-only);
-//   2. build the linux/arm64 api (also the worker) and web images and push them to GHCR;
-//   3. over SSH: copy deploy/ to /opt/zivali, write cloudflare.ini (certbot's token, mode 600), pull, one-off
-//      `prisma migrate deploy`, restart, nginx and certbot up, nginx reload (deploy/remote.sh);
-//   4. smoke checks: /ping, /v1/health/ready, web home and the ADR-021 exposure checks on Supabase.
-// Anything missing prints NEEDS-INPUT with variable names (never values) and runs the dry run instead: image builds,
-// migrations from zero on a scratch database on the local Supabase server + `prisma migrate diff`, the ADR-021 security
-// tests on it; exit 0 when the dry run passes. --strict (CI) exits 1 on NEEDS-INPUT; --dry-run forces the dry run;
-// --skip-images skips the image builds of the dry run; --yes confirms a production deploy from a workstation.
+//   node scripts/deploy.mjs <staging|production> [--deploy] [--strict] [--skip-images] [--yes]
+//   node scripts/deploy.mjs <staging|production> --close-ssh
+// The GitHub Actions workflow (.github/workflows/deploy.yml) runs this same script with --deploy --strict:
+//   1. checks, read-only: credentials (names only), the three R2 buckets (HeadBucket on the EU endpoint), the Supabase
+//      settings of ADR-021/ADR-023 (Management API GETs), the VPS files and TLS certificate (`remote.sh check` over SSH);
+//   2. only with --deploy and nothing missing: build the linux/arm64 api (also the worker) and web images here, copy
+//      deploy/ to /opt/zivali, write cloudflare.ini (certbot's token, mode 600), stream the images to the VPS
+//      (docker save | zstd | ssh docker load; no registry), `remote.sh deploy` (one-off `prisma migrate deploy`, up and
+//      healthy within 180 s, else back to the running release; nginx and certbot up, nginx reload);
+//   3. smoke checks (GETs): /ping, /v1/health/ready, the web reports the new version, web home, ADR-021 exposure; then
+//      `remote.sh promote` (release.env moves), or `remote.sh rollback` and exit 1.
+// Without --deploy nothing is written anywhere (no firewall rule, no file on the VPS, no image transfer): the checks,
+// then the dry run: image builds, migrations from zero on a scratch database on the local Supabase server + `prisma
+// migrate diff`, the ADR-021 security tests on it; exit 0 when it passes. Anything missing prints NEEDS-INPUT with
+// variable names (never values) and runs the dry run too; --strict (CI) exits 1 on NEEDS-INPUT instead. --skip-images
+// skips the dry run's image builds; --yes confirms a production deploy from a workstation; --close-ssh removes every
+// temporary SSH rule from the Hetzner firewall (the workflow's always() step).
 // Values: staging from the root .env.local, production from .env.production.local; real environment variables win.
-import { spawnSync } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import { createRequire } from 'node:module';
 import os from 'node:os';
 import path from 'node:path';
+import { pipeline } from 'node:stream/promises';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { parseEnv } from 'node:util';
 
@@ -31,12 +36,12 @@ export const TARGETS = ['staging', 'production'];
 export const PLATFORM = 'linux/arm64';
 /** Every credential a real deploy needs, by who provides it (README "Environments and credentials"). */
 export const REQUIRED = {
-	Hetzner: ['HETZNER_HOST', 'HETZNER_SSH_KEY'],
-	GitHub: ['GHCR_TOKEN'],
+	// HETZNER_HOST: the VPS address (user deploy unless `user@host`); HETZNER_KNOWN_HOSTS: its pinned host key.
+	Hetzner: ['HETZNER_HOST', 'HETZNER_SSH_KEY', 'HETZNER_KNOWN_HOSTS'],
 	// This environment's public hostnames (staging: staging.najdimo.si, api-staging.najdimo.si).
 	Hostnames: ['WEB_HOST', 'API_HOST'],
-	// certbot's DNS-01 token (Zone DNS Edit on najdimo.si only); `A|B` = A, else B. Written to /opt/zivali/cloudflare.ini.
-	TLS: ['CERTBOT_CLOUDFLARE_TOKEN|CLOUDFLARE_API_TOKEN'],
+	// certbot's DNS-01 token (Zone DNS Edit on najdimo.si only), written to /opt/zivali/cloudflare.ini.
+	TLS: ['CERTBOT_CLOUDFLARE_TOKEN'],
 	R2: ['R2_ACCOUNT_ID', 'R2_ACCESS_KEY_ID', 'R2_SECRET_ACCESS_KEY'],
 	Supabase: ['SUPABASE_URL', 'SUPABASE_PUBLISHABLE_KEY', 'SUPABASE_ACCESS_TOKEN', 'SUPABASE_PROJECT_REF'],
 };
@@ -54,23 +59,18 @@ const WEB_ARGS_NEEDED = [
 ];
 const PROBE_TABLES = ['profiles', 'audit_log', 'app_config'];
 
-/** Missing credentials by group; empty values count as missing; `A|B` is satisfied by either and shown as "A or B". */
+/** Missing credentials by group; empty values count as missing. */
 export function missingVars(env) {
 	const out = {};
 	for (const [group, names] of Object.entries(REQUIRED)) {
-		const missing = names.filter((name) => !name.split('|').some((alt) => env[alt]));
-		if (missing.length) out[group] = missing.map((name) => name.replace('|', ' or '));
+		const missing = names.filter((name) => !env[name]);
+		if (missing.length) out[group] = missing;
 	}
 	return out;
 }
 
-/** The value of a credential with alternatives (`A|B`). */
-export const credential = (env, name) =>
-	name
-		.split('|')
-		.map((alt) => env[alt])
-		.find(Boolean);
-const ALL_CREDENTIALS = Object.values(REQUIRED).flatMap((names) => names.flatMap((name) => name.split('|')));
+/** Kept out of the dry run's local tools. */
+const ALL_CREDENTIALS = [...Object.values(REQUIRED).flat(), 'HETZNER_API_TOKEN', 'HETZNER_FIREWALL_ID'];
 
 /** Server-side items only an SSH check can see (`remote.sh check`); named up front when SSH is not possible yet. */
 export const VPS_ITEMS = (target) => [
@@ -80,9 +80,9 @@ export const VPS_ITEMS = (target) => [
 	'TLS certificate (first issuance)',
 ];
 
-export function imageNames(owner, target, tag) {
-	const base = `ghcr.io/${owner.toLowerCase()}`;
-	return { api: `${base}/zivali-api:${tag}`, web: `${base}/zivali-web:${target}-${tag}` };
+/** Local image names; they travel to the VPS with docker save/load, no registry. */
+export function imageNames(target, tag) {
+	return { api: `zivali-api:${tag}`, web: `zivali-web:${target}-${tag}` };
 }
 
 /** Build args of the web image: NEXT_PUBLIC_* are inlined at build time (apps/web/Dockerfile). Public values only. */
@@ -127,7 +127,8 @@ export function supabaseFindings(postgrest, realtime) {
 		);
 	}
 	if (realtime?.private_only !== true) {
-		const now = realtime?.private_only === false ? 'on' : 'unknown';
+		// null: never changed in the dashboard, so still the default (public access on).
+		const now = { false: 'on', null: 'on, the default' }[realtime?.private_only] ?? 'unknown';
 		out.push(
 			`Supabase dashboard: Realtime > Settings > turn off "Allow public access" (now: ${now}) (ADR-023, deploy/README.md)`
 		);
@@ -181,66 +182,87 @@ function sshClient(env) {
 		fs.writeFileSync(file, key.endsWith('\n') ? key : `${key}\n`, { mode: 0o600 });
 		key = file;
 	}
-	const opts = ['-i', key, '-o', 'BatchMode=yes', '-o', 'IdentitiesOnly=yes', '-o', 'ConnectTimeout=15'];
-	if (env.HETZNER_KNOWN_HOSTS) {
-		const file = path.join(tmp, 'known_hosts');
-		fs.writeFileSync(file, `${env.HETZNER_KNOWN_HOSTS}\n`);
-		opts.push('-o', `UserKnownHostsFile=${file}`, '-o', 'StrictHostKeyChecking=yes');
-	} else {
-		opts.push('-o', 'StrictHostKeyChecking=accept-new');
-	}
-	const host = env.HETZNER_HOST.includes('@') ? env.HETZNER_HOST : `root@${env.HETZNER_HOST}`;
+	// The host key is pinned (HETZNER_KNOWN_HOSTS): never trust a key on first use.
+	const knownHosts = path.join(tmp, 'known_hosts');
+	fs.writeFileSync(knownHosts, `${env.HETZNER_KNOWN_HOSTS}\n`);
+	const opts = [
+		...['-i', key, '-o', 'BatchMode=yes', '-o', 'IdentitiesOnly=yes', '-o', 'ConnectTimeout=15'],
+		...['-o', `UserKnownHostsFile=${knownHosts}`, '-o', 'StrictHostKeyChecking=yes'],
+	];
+	const host = env.HETZNER_HOST.includes('@') ? env.HETZNER_HOST : `deploy@${env.HETZNER_HOST}`;
 	return {
 		run: (command, input) => run('ssh', [...opts, host, command], { input }),
 		capture: (command, input) =>
 			spawnSync('ssh', [...opts, host, command], { input, encoding: 'utf8', stdio: ['pipe', 'pipe', 'inherit'] }),
 		copy: (files, dest) => run('scp', [...opts, '-r', ...files, `${host}:${dest}`]),
+		/** A remote command reading this side's stream on stdin. */
+		spawn: (command) => spawn('ssh', [...opts, host, command], { stdio: ['pipe', 'inherit', 'inherit'] }),
 	};
 }
 
-/**
- * The Hetzner Cloud Firewall opens port 22 to the admin IP only. With HETZNER_API_TOKEN and HETZNER_FIREWALL_ID (CI),
- * this machine's public IPv4 gets its own temporary rule for the deploy; the returned function removes it again.
- */
-async function openSsh(env) {
-	if (!env.HETZNER_API_TOKEN || !env.HETZNER_FIREWALL_ID) return async () => {};
+/** The description that marks a deploy's port 22 rule; --close-ssh removes every rule carrying it. */
+export const TEMPORARY = '(temporary)';
+
+function hetznerFirewall(env, fetchFn) {
 	const api = async (p, init = {}) => {
-		const res = await fetch(`https://api.hetzner.cloud/v1/firewalls${p}`, {
+		const res = await fetchFn(`https://api.hetzner.cloud/v1/firewalls${p}`, {
 			...init,
 			headers: { Authorization: `Bearer ${env.HETZNER_API_TOKEN}`, 'Content-Type': 'application/json' },
 		});
 		if (!res.ok) throw new Error(`Hetzner firewall API answered ${res.status}`);
 		return res.json();
 	};
-	const ip = (await (await fetch('https://api.ipify.org')).text()).trim();
-	const rule = `deploy ${ip} (temporary)`;
-	const others = async () =>
-		(await api(`/${env.HETZNER_FIREWALL_ID}`)).firewall.rules.filter((r) => r.description !== rule);
-	const setRules = async (rules) => {
-		const { actions } = await api(`/${env.HETZNER_FIREWALL_ID}/actions/set_rules`, {
-			method: 'POST',
-			body: JSON.stringify({ rules }),
-		});
-		for (const { id } of actions) {
-			for (let i = 0; i < 30 && (await api(`/actions/${id}`)).action.status === 'running'; i++) {
-				await new Promise((resolve) => setTimeout(resolve, 1000));
+	return {
+		rules: async () => (await api(`/${env.HETZNER_FIREWALL_ID}`)).firewall.rules,
+		set: async (rules) => {
+			const { actions } = await api(`/${env.HETZNER_FIREWALL_ID}/actions/set_rules`, {
+				method: 'POST',
+				body: JSON.stringify({ rules }),
+			});
+			for (const { id } of actions) {
+				for (let i = 0; i < 30 && (await api(`/actions/${id}`)).action.status === 'running'; i++) {
+					await new Promise((resolve) => setTimeout(resolve, 1000));
+				}
 			}
-		}
+		},
 	};
-	await setRules([
+}
+
+/**
+ * The Hetzner Cloud Firewall opens port 22 to the admin IP only. With HETZNER_API_TOKEN and HETZNER_FIREWALL_ID (CI),
+ * a deploy gives this machine's public IPv4 its own temporary rule; the returned function removes it again (and the
+ * workflow's always() step runs --close-ssh in case this process never gets there).
+ */
+async function openSsh(env, fetchFn) {
+	if (!env.HETZNER_API_TOKEN || !env.HETZNER_FIREWALL_ID) return async () => {};
+	const firewall = hetznerFirewall(env, fetchFn);
+	const ip = (await (await fetchFn('https://api.ipify.org')).text()).trim();
+	const rule = `deploy ${ip} ${TEMPORARY}`;
+	const others = async () => (await firewall.rules()).filter((r) => r.description !== rule);
+	await firewall.set([
 		...(await others()),
 		{ direction: 'in', protocol: 'tcp', port: '22', source_ips: [`${ip}/32`], description: rule },
 	]);
 	console.log('Hetzner firewall: SSH opened for this machine');
 	return async () => {
-		await setRules(await others());
+		await firewall.set(await others());
 		console.log('Hetzner firewall: SSH closed again');
 	};
 }
 
+/** Removes every temporary deploy rule (any IP, any run); returns how many there were. */
+async function closeSsh(env, fetchFn) {
+	const firewall = hetznerFirewall(env, fetchFn);
+	const rules = await firewall.rules();
+	const keep = rules.filter((r) => !String(r.description ?? '').includes(TEMPORARY));
+	if (keep.length < rules.length) await firewall.set(keep);
+	return rules.length - keep.length;
+}
+
 // --- checks ---
 
-async function checkBuckets(env) {
+/** HeadBucket on the EU endpoint (read-only). */
+function r2Head(env) {
 	const { S3Client, HeadBucketCommand } = apiRequire('@aws-sdk/client-s3');
 	const client = new S3Client({
 		region: 'auto',
@@ -248,11 +270,15 @@ async function checkBuckets(env) {
 		credentials: { accessKeyId: env.R2_ACCESS_KEY_ID, secretAccessKey: env.R2_SECRET_ACCESS_KEY },
 		forcePathStyle: true,
 	});
+	return (bucket) => client.send(new HeadBucketCommand({ Bucket: bucket }));
+}
+
+async function checkBuckets(env, head) {
 	const out = [];
 	for (const [name, fallback] of Object.entries(BUCKETS)) {
 		const bucket = env[name] || fallback;
 		try {
-			await client.send(new HeadBucketCommand({ Bucket: bucket }));
+			await head(bucket);
 		} catch (err) {
 			const status = err?.$metadata?.httpStatusCode;
 			out.push(
@@ -265,9 +291,9 @@ async function checkBuckets(env) {
 	return out;
 }
 
-async function checkSupabase(env) {
+async function checkSupabase(env, fetchFn) {
 	const get = (p) =>
-		fetch(`https://api.supabase.com/v1/projects/${env.SUPABASE_PROJECT_REF}${p}`, {
+		fetchFn(`https://api.supabase.com/v1/projects/${env.SUPABASE_PROJECT_REF}${p}`, {
 			headers: { Authorization: `Bearer ${env.SUPABASE_ACCESS_TOKEN}` },
 		});
 	let postgrest, realtime;
@@ -285,9 +311,9 @@ async function checkSupabase(env) {
 }
 
 /** `remote.sh check` over SSH (the script goes on stdin, so it works before the first deploy); read-only. */
-function checkVps(env, target) {
+function checkVps(ssh, target) {
 	const script = fs.readFileSync(path.join(root, 'deploy/remote.sh'), 'utf8');
-	const res = sshClient(env).capture(`sh -s -- check ${target}`, script);
+	const res = ssh.capture(`sh -s -- check ${target}`, script);
 	if (res.status === 0) return [];
 	const lines = (res.stdout ?? '').split('\n').filter((line) => line.startsWith('NEEDS-INPUT: '));
 	if (lines.length) return lines.map((line) => `VPS: ${line.slice('NEEDS-INPUT: '.length)}`);
@@ -296,8 +322,8 @@ function checkVps(env, target) {
 
 // --- steps ---
 
-function buildImage(dockerfile, tag, { push, buildEnv = {} }) {
-	const args = ['buildx', 'build', '--platform', PLATFORM, '-f', dockerfile, '-t', tag, push ? '--push' : '--load'];
+function buildImage(dockerfile, tag, buildEnv = {}) {
+	const args = ['buildx', 'build', '--platform', PLATFORM, '-f', dockerfile, '-t', tag, '--load'];
 	// `--build-arg NAME` without a value: Docker reads it from the environment, so no value is on a command line.
 	for (const name of Object.keys(buildEnv)) args.push('--build-arg', name);
 	run('docker', [...args, '.'], { env: { ...process.env, ...buildEnv } });
@@ -372,7 +398,7 @@ async function dryRun(target, { skipImages, dropped }) {
 		steps.push({ name: `images (${PLATFORM})`, result: 'skipped (--skip-images)', s: 0 });
 	} else {
 		await step(`api image (${PLATFORM}): apps/api/Dockerfile`, () => {
-			buildImage('apps/api/Dockerfile', 'zivali-api:dry-run', { push: false });
+			buildImage('apps/api/Dockerfile', 'zivali-api:dry-run');
 			checkImage('zivali-api:dry-run');
 			const pgDump = output('docker', [
 				'run',
@@ -387,7 +413,7 @@ async function dryRun(target, { skipImages, dropped }) {
 			return `ok (${pgDump})`;
 		});
 		await step(`web image (${PLATFORM}): apps/web/Dockerfile`, () => {
-			buildImage('apps/web/Dockerfile', `zivali-web:${target}-dry-run`, { push: false, buildEnv: webEnv });
+			buildImage('apps/web/Dockerfile', `zivali-web:${target}-dry-run`, webEnv);
 			checkImage(`zivali-web:${target}-dry-run`);
 			const missing = WEB_ARGS_NEEDED.filter((name) => !webEnv[name]);
 			return missing.length ? `ok (built without ${missing.join(', ')})` : 'ok';
@@ -427,7 +453,8 @@ function releaseTag(target) {
 	return tag;
 }
 
-async function smoke(env, { attempts = 12, delayMs = 5000 } = {}) {
+/** GETs only: the public hostnames, the web's version, and ADR-021 (the public key reaches no app table). */
+async function smoke(env, tag, fetchFn, { attempts = 12, delayMs = 5000 } = {}) {
 	const h = { web: env.WEB_HOST, api: env.API_HOST };
 	const retry = async (name, fn) => {
 		for (let i = 1; ; i++) {
@@ -437,70 +464,127 @@ async function smoke(env, { attempts = 12, delayMs = 5000 } = {}) {
 			await new Promise((resolve) => setTimeout(resolve, delayMs));
 		}
 	};
-	await retry('api /ping', async () => (await (await fetch(`https://${h.api}/ping`)).text()).includes('pong'));
-	await retry('api /v1/health/ready', async () => (await fetch(`https://${h.api}/v1/health/ready`)).status === 200);
-	await retry('web home', async () => (await fetch(`https://${h.web}/`)).status === 200);
-	// ADR-021, read-only: the public key reaches no app table through PostgREST.
-	const rest = (p, init = {}) =>
-		fetch(`${env.SUPABASE_URL}/rest/v1${p}`, {
-			...init,
-			headers: { apikey: env.SUPABASE_PUBLISHABLE_KEY, 'Content-Type': 'application/json', ...init.headers },
-		});
+	await retry('api /ping', async () => (await (await fetchFn(`https://${h.api}/ping`)).text()).includes('pong'));
+	await retry('api /v1/health/ready', async () => (await fetchFn(`https://${h.api}/v1/health/ready`)).status === 200);
+	await retry(
+		`web /api/health reports ${tag}`,
+		async () => (await (await fetchFn(`https://${h.web}/api/health`)).json()).version === tag
+	);
+	await retry('web home', async () => (await fetchFn(`https://${h.web}/`)).status === 200);
+	const rest = (p, headers = {}) =>
+		fetchFn(`${env.SUPABASE_URL}/rest/v1${p}`, { headers: { apikey: env.SUPABASE_PUBLISHABLE_KEY, ...headers } });
 	await retry('PostgREST root exposes no app table', async () => {
 		const res = await rest('/');
 		return exposureRootOk(res.status, res.status === 200 ? await res.json() : undefined);
 	});
 	for (const table of PROBE_TABLES) {
-		await retry(`PostgREST refuses ${table} (GET, app profile, POST)`, async () => {
+		await retry(`PostgREST refuses ${table} (public and app profile)`, async () => {
 			const statuses = [
 				(await rest(`/${table}?select=*`)).status,
-				(await rest(`/${table}?select=*`, { headers: { 'Accept-Profile': 'app' } })).status,
-				(await rest(`/${table}`, { method: 'POST', body: '{}' })).status,
+				(await rest(`/${table}?select=*`, { 'Accept-Profile': 'app' })).status,
 			];
 			return statuses.every((status) => status >= 400);
 		});
 	}
 }
 
-async function deploy(target, env) {
+/** docker save | zstd | ssh "zstd -dc | docker load": the images go straight to the VPS, no registry. */
+async function transferImages(ssh, images) {
+	const exited = (child, name) =>
+		new Promise((resolve, reject) => {
+			child.on('error', (err) => reject(new Error(`${name}: ${err.code ?? err.message}`)));
+			child.on('close', (code) => (code === 0 ? resolve() : reject(new Error(`${name} exited with ${code}`))));
+		});
+	const save = spawn('docker', ['save', ...images], { stdio: ['ignore', 'pipe', 'inherit'] });
+	const zstd = spawn('zstd', ['-T0', '-3', '-q', '-c'], { stdio: ['pipe', 'pipe', 'inherit'] });
+	const load = ssh.spawn('zstd -dc | docker load');
+	await Promise.all([
+		pipeline(save.stdout, zstd.stdin),
+		pipeline(zstd.stdout, load.stdin),
+		exited(save, 'docker save'),
+		exited(zstd, 'zstd'),
+		exited(load, 'ssh docker load'),
+	]);
+}
+
+async function deploy(target, env, io) {
 	if (output('git', ['status', '--porcelain'])) throw new Error('uncommitted changes: commit them first');
+	if (spawnSync('zstd', ['--version']).error)
+		throw new Error('zstd is not installed here (deploy/README.md, Deploy)');
 	const tag = releaseTag(target);
-	const owner = env.GHCR_OWNER || 'pbozic';
-	const user = env.GHCR_USER || owner;
-	const images = imageNames(owner, target, tag);
+	const images = imageNames(target, tag);
 	console.log(`\nDeploying ${target} ${tag}: ${images.api}, ${images.web}`);
-	run('docker', ['login', 'ghcr.io', '-u', user, '--password-stdin'], { input: env.GHCR_TOKEN });
-	buildImage('apps/api/Dockerfile', images.api, { push: true });
-	buildImage('apps/web/Dockerfile', images.web, { push: true, buildEnv: webBuildEnv(env) });
-	const ssh = sshClient(env);
+	buildImage('apps/api/Dockerfile', images.api);
+	buildImage('apps/web/Dockerfile', images.web, webBuildEnv(env));
+	checkImage(images.api);
+	checkImage(images.web);
+	const ssh = io.ssh(env);
 	ssh.run('mkdir -p /opt/zivali');
 	ssh.copy(['deploy/docker-compose.yml', 'deploy/remote.sh', 'deploy/nginx'], '/opt/zivali/');
 	// certbot's renewals read the token from here; it arrives on stdin and the file is private to the deploy user.
 	ssh.run(
 		'umask 077 && cat > /opt/zivali/cloudflare.ini && chmod 600 /opt/zivali/cloudflare.ini',
-		`dns_cloudflare_api_token = ${credential(env, 'CERTBOT_CLOUDFLARE_TOKEN|CLOUDFLARE_API_TOKEN')}\n`
+		`dns_cloudflare_api_token = ${env.CERTBOT_CLOUDFLARE_TOKEN}\n`
 	);
-	// The registry login lives only for this pull; the token arrives on stdin.
-	ssh.run(
-		`docker login ghcr.io -u ${user} --password-stdin >/dev/null && sh /opt/zivali/remote.sh deploy ${target} ${images.api} ${images.web} ${tag}; rc=$?; docker logout ghcr.io >/dev/null; exit $rc`,
-		env.GHCR_TOKEN
-	);
-	console.log('\nSmoke checks');
-	await smoke(env);
+	console.log('\nImages to the VPS (docker save | zstd | docker load)');
+	await transferImages(ssh, [images.api, images.web]);
+	try {
+		// Migrations, then up and healthy within 180 s (else remote.sh starts the running release again), nginx reload.
+		ssh.run(`sh /opt/zivali/remote.sh deploy ${target} ${images.api} ${images.web} ${tag}`);
+		console.log('\nSmoke checks');
+		await smoke(env, tag, io.fetch);
+	} catch (err) {
+		// release.env still names the running release; rollback starts it again (a no-op when it never stopped).
+		console.error(`${err.message}: back to the running release`);
+		try {
+			ssh.run(`sh /opt/zivali/remote.sh rollback ${target}`);
+		} catch {
+			console.error('rollback failed: deploy/README.md, Rollback');
+		}
+		throw err;
+	}
+	ssh.run(`sh /opt/zivali/remote.sh promote ${target}`);
 	console.log(`\n${target} ${tag} is live. Rollback: deploy/README.md, Rollback.`);
 }
 
-async function main(argv) {
+/** Everything that reaches outside this process, swappable in tests. */
+const IO = {
+	env: process.env,
+	loadEnv: loadEnvFile,
+	fetch: (...args) => fetch(...args),
+	r2: r2Head,
+	ssh: sshClient,
+	dryRun,
+	deploy,
+};
+
+export async function main(argv, overrides = {}) {
+	const io = { ...IO, ...overrides };
 	const [target, ...flags] = argv;
 	if (!TARGETS.includes(target)) {
 		console.error(
-			'usage: node scripts/deploy.mjs <staging|production> [--dry-run] [--skip-images] [--strict] [--yes]'
+			'usage: node scripts/deploy.mjs <staging|production> [--deploy] [--strict] [--skip-images] [--yes] | --close-ssh'
 		);
 		return 2;
 	}
 	const envFile = target === 'production' ? '.env.production.local' : '.env.local';
-	const dropped = loadEnvFile(envFile);
-	const env = process.env;
+	const dropped = io.loadEnv(envFile);
+	const env = io.env;
+	if (flags.includes('--close-ssh')) {
+		if (!env.HETZNER_API_TOKEN || !env.HETZNER_FIREWALL_ID) {
+			console.log('Hetzner firewall: HETZNER_API_TOKEN or HETZNER_FIREWALL_ID not set, nothing to close');
+			return 0;
+		}
+		console.log(`Hetzner firewall: ${await closeSsh(env, io.fetch)} temporary SSH rule(s) removed`);
+		return 0;
+	}
+	const write = flags.includes('--deploy');
+	if (write && target === 'production' && !env.CI && !flags.includes('--yes')) {
+		console.error(
+			'production from a workstation: add --yes to confirm (CI approves in the production environment)'
+		);
+		return 1;
+	}
 	const missing = missingVars(env);
 	if (Object.keys(missing).length) {
 		console.log(
@@ -510,31 +594,26 @@ async function main(argv) {
 	}
 	if (missing.Hetzner)
 		console.log(`  VPS (checked over SSH once HETZNER_* are set): ${VPS_ITEMS(target).join(', ')}`);
-	const closeSsh = missing.Hetzner ? async () => {} : await openSsh(env);
+	// The firewall changes only for a deploy; a check without --deploy needs the admin IP.
+	const closeOwnSsh = write && !missing.Hetzner ? await openSsh(env, io.fetch) : async () => {};
 	let blocked = Object.keys(missing).length > 0;
 	try {
 		const findings = [];
-		if (!missing.R2) findings.push(...(await checkBuckets(env)));
-		if (!missing.Supabase) findings.push(...(await checkSupabase(env)));
-		if (!missing.Hetzner) findings.push(...checkVps(env, target));
+		if (!missing.R2) findings.push(...(await checkBuckets(env, io.r2(env))));
+		if (!missing.Supabase) findings.push(...(await checkSupabase(env, io.fetch)));
+		if (!missing.Hetzner) findings.push(...checkVps(io.ssh(env), target));
 		for (const finding of findings) console.log(`NEEDS-INPUT (${target}): ${finding}`);
 		blocked ||= findings.length > 0;
-		if (!blocked && !flags.includes('--dry-run')) {
-			if (target === 'production' && !env.CI && !flags.includes('--yes')) {
-				console.error(
-					'production from a workstation: add --yes to confirm (CI approves in the production environment)'
-				);
-				return 1;
-			}
-			await deploy(target, env);
+		if (!blocked && write) {
+			await io.deploy(target, env, io);
 			return 0;
 		}
 	} finally {
-		await closeSsh();
+		await closeOwnSsh();
 	}
 	if (blocked && flags.includes('--strict')) return 1;
-	console.log(`\nDry run for ${target} (nothing is pushed or deployed).`);
-	return (await dryRun(target, { skipImages: flags.includes('--skip-images'), dropped })) ? 0 : 1;
+	console.log(`\nDry run for ${target} (nothing is written outside this machine).`);
+	return (await io.dryRun(target, { skipImages: flags.includes('--skip-images'), dropped })) ? 0 : 1;
 }
 
 if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {

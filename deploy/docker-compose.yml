@@ -4,7 +4,7 @@
 # images or Git:
 #   /opt/zivali/<env>/.env         api and worker (names: .env.example, apps/api block), with APP_ENV
 #   /opt/zivali/<env>/web.env      web server (APP_ENV, R2_UPLOAD_ORIGIN, GA_* if used)
-#   /opt/zivali/<env>/release.env  API_IMAGE, WEB_IMAGE, APP_VERSION (written by deploy/remote.sh on every deploy)
+#   /opt/zivali/<env>/release.env  API_IMAGE, WEB_IMAGE, APP_VERSION of the running release (deploy/remote.sh)
 #   /opt/zivali/edge.env           hostnames and CERT_NAME for nginx (deploy/README.md)
 #   /opt/zivali/cloudflare.ini     CERTBOT_CLOUDFLARE_TOKEN for the DNS-01 challenge (deploy/README.md, TLS)
 # By hand: docker compose -p zivali-staging --env-file staging/.env --env-file staging/release.env ps
@@ -15,14 +15,31 @@ x-logging: &logging # Rotated per container: at most 5 x 10 MB.
     max-size: 10m
     max-file: '5'
 
+# remote.sh waits for healthy (up --wait) before a release counts; checked every 2 s while starting.
+x-health: &health
+  interval: 30s
+  timeout: 5s
+  retries: 3
+  start_period: 60s
+  start_interval: 2s
+
 services:
   api:
     image: ${API_IMAGE:?set in <env>/release.env}
+    # Images arrive with docker load (scripts/deploy.mjs), never from a registry.
+    pull_policy: never
     restart: unless-stopped
     env_file: ./${APP_ENV:?set in <env>/.env}/.env
     environment:
       APP_VERSION: ${APP_VERSION:-dev}
     stop_grace_period: 15s
+    healthcheck:
+      <<: *health
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://127.0.0.1:4000/v1/health/ready').then((r) => process.exit(r.ok ? 0 : 1), () => process.exit(1))"
     logging: *logging
     networks:
       edge:
@@ -30,6 +47,7 @@ services:
 
   worker:
     image: ${API_IMAGE:?set in <env>/release.env}
+    pull_policy: never
     command: ['node', 'dist/worker.js']
     restart: unless-stopped
     env_file: ./${APP_ENV}/.env
@@ -41,10 +59,18 @@ services:
 
   web:
     image: ${WEB_IMAGE:?set in <env>/release.env}
+    pull_policy: never
     restart: unless-stopped
     env_file: ./${APP_ENV}/web.env
     environment:
       APP_VERSION: ${APP_VERSION:-dev}
+    healthcheck:
+      <<: *health
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://127.0.0.1:3000/api/health').then((r) => process.exit(r.ok ? 0 : 1), () => process.exit(1))"
     logging: *logging
     networks:
       edge:
