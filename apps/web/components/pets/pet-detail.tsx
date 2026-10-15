@@ -40,7 +40,7 @@ const MISSING = new Set(['NOT_FOUND', 'FORBIDDEN', 'VALIDATION']);
  */
 export function PetLoader({ id, children }: { id: string; children: (pet: Pet) => React.ReactNode }) {
 	const query = useGetPetQuery({ id });
-	if (query.data) return children(query.data);
+	if (query.currentData) return children(query.currentData);
 	if (query.isError)
 		return MISSING.has((query.error as QueryError).data?.code) ? (
 			<ErrorPage status={404} />
