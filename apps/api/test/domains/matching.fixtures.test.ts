@@ -2,8 +2,8 @@
 // inclusion, rank and strength the C8 defaults must give, run through the real engine on the local database (no
 // cloud services). It prints a table of every pair, so a threshold or weight change shows its effect at once: change
 // app_config `matching.*`, rerun, relabel. Points are pinned after insert, so distances are exact and runs repeat.
-// Each group has its own 70-day slot in the 17th century and its own chips (705098100… test range), so seed data,
-// other test files and other groups never become candidates.
+// Each group has its own 70-day slot before 1800 and chips of its own (705098100… test range), and each run its own
+// meridian, so seed data, other test files, other groups and leftovers of a killed run never become candidates.
 import { randomInt, randomUUID } from 'node:crypto';
 
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
@@ -30,9 +30,10 @@ const users = [owner, finder];
 
 const HOUR = 3600_000;
 const DAY = 24;
-// Prešernov trg, Ljubljana; one degree of latitude here is 111.15 km (WGS84).
-const LJ = { lat: 46.0514, lng: 14.5061 };
-const north = (km: number) => ({ lat: LJ.lat + km / 111.15, lng: LJ.lng });
+// Ljubljana's latitude (one degree is 111.15 km here, WGS84) on a meridian per run, 0.5° (39 km) apart: beyond
+// matching.max_distance_km, and every fixture lies due north of the origin.
+const ORIGIN = { lat: 46.0514, lng: 14.5061 + randomInt(0, 50) / 2 };
+const north = (km: number) => ({ lat: ORIGIN.lat + km / 111.15, lng: ORIGIN.lng });
 const chipBase = randomInt(100_000, 999_000);
 const CHIP_A = `705098100${chipBase}`;
 const CHIP_B = `705098100${chipBase + 1}`;
@@ -136,7 +137,9 @@ const GROUPS: Group[] = [
 const REJECTED = 'rejected-near';
 
 type Created = { group: Group; lostId: string; others: Map<string, Fixture> };
-let created: Created[] = [];
+const created: Created[] = [];
+// About 45 inserts and as many engine runs: well under 30 s alone, more when many worktrees share the database.
+const SLOW = 180_000;
 
 // Both points pinned to the requested place: the engine measures lost.exact_point → other.public_point.
 const pin = (id: string, km: number) => {
@@ -150,7 +153,7 @@ const pin = (id: string, km: number) => {
 async function createGroup(group: Group, slot: number): Promise<Created> {
 	const at = new Date(Date.UTC(1600, 0, 1) + slot * 70 * DAY * HOUR);
 	const lost = await ReportsDomain.insertReport(
-		{ type: 'lost', species: 'dog', name: 'Testni', location: LJ, event_at: at, ...LOST, ...group.lost },
+		{ type: 'lost', species: 'dog', name: 'Testni', location: ORIGIN, event_at: at, ...LOST, ...group.lost },
 		userCtx(owner)
 	);
 	await pin(lost.id, 0);
@@ -174,10 +177,10 @@ async function createGroup(group: Group, slot: number): Promise<Created> {
 	return { group, lostId: lost.id, others };
 }
 
-/** Every report of the suite, lost side first (as match.report runs for each new report). */
-async function runAll(): Promise<void> {
+/** match.report for each lost report, or with `both` for every report of the suite (the reverse direction too). */
+async function runAll(both = false): Promise<void> {
 	for (const { lostId, others } of created) {
-		for (const report_id of [lostId, ...others.keys()])
+		for (const report_id of [lostId, ...(both ? others.keys() : [])])
 			await MatchingDomain.matchReport({ report_id }, systemCtx());
 	}
 }
@@ -200,7 +203,7 @@ async function ranked({ lostId, others }: Created) {
 const labelled = ({ group }: Created, skip: string[] = []) =>
 	group.fixtures
 		.filter((fixture) => fixture.expect && !skip.includes(fixture.name))
-		.map((fixture) => ({ name: fixture.name, strength: fixture.expect }));
+		.map((fixture) => ({ name: fixture.name, strength: fixture.expect, score: expect.any(Number) }));
 
 async function printTable(): Promise<void> {
 	const config = await MatchingDomain.matchingConfig();
@@ -241,14 +244,20 @@ async function printTable(): Promise<void> {
 beforeAll(async () => {
 	await startJobs();
 	await prisma.profiles.createMany({ data: users.map(({ user_id }) => ({ id: user_id })) });
-	const first = randomInt(0, 400);
-	created = await Promise.all(GROUPS.map((group, i) => createGroup(group, first + i)));
+	// One group at a time: the Prisma pool is small and the local database is shared with other worktrees.
+	// 1,000 slots of 70 days from 1600 stay before the 1800s the engine test uses.
+	const first = randomInt(0, 1000);
+	for (const [i, group] of GROUPS.entries()) created.push(await createGroup(group, first + i));
 	await runAll();
 	await printTable();
-});
+}, SLOW);
 
 afterAll(async () => {
-	const ids = created.flatMap(({ lostId, others }) => [lostId, ...others.keys()]);
+	const reports = await prisma.reports.findMany({
+		where: { created_by: { in: users.map((user) => user.user_id) } },
+		select: { id: true },
+	});
+	const ids = reports.map((report) => report.id);
 	await prisma.matches.deleteMany({ where: { lost_report_id: { in: ids } } });
 	await prisma.$executeRaw`delete from pgboss.job where name = 'notify.send' and data->>'user_id' = any(${users.map((user) => user.user_id)})`;
 	await prisma.reports.deleteMany({ where: { id: { in: ids } } });
@@ -262,34 +271,39 @@ describe('matching fixtures (C8 defaults)', () => {
 
 	it.each(GROUPS.map((group) => group.name))('%s: inclusion, order and strength as labelled', async (name) => {
 		const entry = created.find((group) => group.group.name === name)!;
-		const got = (await ranked(entry)).map(({ name, strength }) => ({ name, strength }));
-		expect(got).toEqual(labelled(entry));
+		expect(await ranked(entry)).toEqual(labelled(entry));
 	});
 
 	it('scores a chip pair 1.000 with chip_match, whatever the distance, time or sex', async () => {
-		for (const name of ['chip', 'chip-sighting']) {
+		for (const [name, code] of [
+			['chip', 'chip'],
+			['chip-sighting', 'chip_sighting'],
+		]) {
 			const entry = created.find((group) => group.group.name === name)!;
 			const [best] = await suggested(entry.lostId);
 			expect(best).toMatchObject({ chip_match: true, strength: 'strong' });
 			expect(best!.score.toNumber()).toBe(1);
+			expect(best!.reasons).toContainEqual({ code });
 		}
 	});
 
-	it('never brings back a rejected pair after a rerun from either side', async () => {
-		const entry = created.find((group) => group.group.name === 'rejected')!;
-		const otherId = [...entry.others].find(([, fixture]) => fixture.name === REJECTED)![0];
-		const match = await prisma.matches.findUniqueOrThrow({
-			where: { lost_report_id_other_report_id: { lost_report_id: entry.lostId, other_report_id: otherId } },
-		});
-		await MatchReviewDomain.rejectMatch({ id: match.id, reason: 'not my dog' }, userCtx(owner));
+	it(
+		'never brings back a rejected pair after a rerun from either side',
+		async () => {
+			const entry = created.find((group) => group.group.name === 'rejected')!;
+			const otherId = [...entry.others].find(([, fixture]) => fixture.name === REJECTED)![0];
+			const match = await prisma.matches.findUniqueOrThrow({
+				where: { lost_report_id_other_report_id: { lost_report_id: entry.lostId, other_report_id: otherId } },
+			});
+			await MatchReviewDomain.rejectMatch({ id: match.id, reason: 'not my dog' }, userCtx(owner));
 
-		await runAll();
-		const after = await prisma.matches.findUniqueOrThrow({ where: { id: match.id } });
-		expect(after.state).toBe('rejected');
-		expect(after.score.toNumber()).toBe(match.score.toNumber());
-		for (const other of created) {
-			const got = (await ranked(other)).map(({ name, strength }) => ({ name, strength }));
-			expect(got, other.group.name).toEqual(labelled(other, [REJECTED]));
-		}
-	});
+			await runAll(true);
+			const after = await prisma.matches.findUniqueOrThrow({ where: { id: match.id } });
+			expect(after.state).toBe('rejected');
+			expect(after.score.toNumber()).toBe(match.score.toNumber());
+			for (const other of created)
+				expect(await ranked(other), other.group.name).toEqual(labelled(other, [REJECTED]));
+		},
+		SLOW
+	);
 });
