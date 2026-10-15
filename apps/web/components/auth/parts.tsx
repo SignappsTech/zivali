@@ -7,7 +7,6 @@ import { useLocale, useTranslations } from 'next-intl';
 import * as React from 'react';
 
 import { ApiError } from '@zivali/api/client';
-import en from '@zivali/i18n/dist/en.json';
 import { h1Class } from '@/components/shell/page';
 import { Button } from '@/components/ui/button';
 import { FieldError, FormField } from '@/components/ui/form-field';
@@ -66,7 +65,7 @@ export function useErrorText() {
 	return (error: unknown) => {
 		const code = error instanceof ApiError ? error.code : 'INTERNAL';
 		if (code === 'RATE_LIMITED') return t('RATE_LIMITED_generic');
-		return t(code in en.errors ? (code as keyof typeof en.errors) : 'INTERNAL');
+		return t.has(code) ? t(code) : t('INTERNAL');
 	};
 }
 

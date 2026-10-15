@@ -20,6 +20,8 @@ ARG NEXT_PUBLIC_ANALYTICS_PROVIDER
 ARG NEXT_PUBLIC_GA_MEASUREMENT_ID
 ARG NEXT_PUBLIC_TURNSTILE_SITE_KEY
 ARG NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+ARG NEXT_PUBLIC_GOOGLE_SIGN_IN
+ARG NEXT_PUBLIC_APPLE_SIGN_IN
 ENV NEXT_TELEMETRY_DISABLED=1
 # Tokens and i18n first (web imports their dist), then the standalone build; public/ may not exist yet.
 # The only native module the server traces is sharp (next/image optimisation), built for the build machine. The app

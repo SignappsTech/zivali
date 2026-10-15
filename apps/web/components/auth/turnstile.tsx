@@ -4,7 +4,6 @@ import { useLocale } from 'next-intl';
 import * as React from 'react';
 
 import { ApiError } from '@zivali/api/client';
-import { env } from '@/lib/env';
 
 // Cloudflare Turnstile without an SDK (C7): the hosted Supabase project wants a captcha token on email sign-up,
 // sign-in, reset and resend (CH-175). TASK-17.2 reuses this for anonymous sign-in and the /captcha page.
@@ -51,7 +50,8 @@ export function useCaptcha() {
 	const locale = useLocale();
 	const widget = React.useRef<string | undefined>(undefined);
 	const pending = React.useRef<{ resolve: (token: string) => void; reject: (error: ApiError) => void }>(undefined);
-	const siteKey = env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
+	// Read directly (inlined at build), not through lib/env, so the captcha does not ship zod.
+	const siteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
 
 	// A callback ref: the widget lives exactly as long as its element (a form view may unmount and come back).
 	const mount = React.useCallback(

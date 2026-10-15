@@ -3,13 +3,15 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { ApiError } from '@zivali/api/client';
 
-import { callbackUrl, requestPasswordReset, signIn, signInWithProvider, signUp } from './auth';
+import { callbackUrl, requestPasswordReset, signIn, signInWithProvider, signUp, updatePassword } from './auth';
 
 const supabase = vi.hoisted(() => ({
 	signInWithPassword: vi.fn(),
 	signUp: vi.fn(),
 	resetPasswordForEmail: vi.fn(),
 	signInWithOAuth: vi.fn(),
+	updateUser: vi.fn(),
+	signOut: vi.fn(),
 }));
 vi.mock('@/lib/supabase/client', () => ({ createClient: () => ({ auth: supabase }) }));
 
@@ -72,6 +74,22 @@ describe('Supabase calls', () => {
 			redirectTo: `${origin}/en/auth/callback?type=recovery`,
 			captchaToken: 'cf',
 		});
+	});
+
+	it('signs the other sessions out after a new password, and only after it was saved', async () => {
+		supabase.updateUser.mockResolvedValue({ data: {}, error: null });
+		supabase.signOut.mockResolvedValue({ error: null });
+		await updatePassword('nova mačka 2');
+		expect(supabase.updateUser).toHaveBeenCalledWith({ password: 'nova mačka 2' });
+		expect(supabase.signOut).toHaveBeenCalledWith({ scope: 'others' });
+
+		supabase.signOut.mockClear();
+		supabase.updateUser.mockResolvedValue({
+			data: {},
+			error: new AuthError('New password should be different', 422, 'same_password'),
+		});
+		await expect(updatePassword('nova mačka 2')).rejects.toBeInstanceOf(ApiError);
+		expect(supabase.signOut).not.toHaveBeenCalled();
 	});
 
 	it('starts Google over OAuth with the callback as redirect', async () => {

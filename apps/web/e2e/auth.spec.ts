@@ -1,6 +1,8 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, type Page, test } from '@playwright/test';
 
+import { CONSENT_VERSION } from '@zivali/analytics';
+
 // TASK-9.3: P16 sign-in, sign-up and reset on web (flow variant), SL and EN, 390 and 1440 px, light and dark; the
 // server guards' `next`. Supabase Auth is answered here (the run has no Supabase): the browser calls it directly.
 const AXE_TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'];
@@ -41,6 +43,20 @@ async function answerAuth(page: Page, endpoint: string, ...answers: { status: nu
 		}
 	);
 }
+
+// A cookie choice already made (P17), so the consent banner does not cover the forms at 390 px.
+test.beforeEach(({ context }) =>
+	context.addCookies([
+		{
+			name: 'zz_consent',
+			value: encodeURIComponent(
+				JSON.stringify({ v: CONSENT_VERSION, analytics: false, ts: new Date().toISOString() })
+			),
+			domain: 'localhost',
+			path: '/',
+		},
+	])
+);
 
 for (const [width, colorScheme] of [
 	[1440, 'light'],

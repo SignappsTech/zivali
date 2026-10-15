@@ -74,10 +74,16 @@ describe('SignInForm (P16 W1)', () => {
 		type('Geslo', 'napacno-geslo');
 		fireEvent.click(screen.getByRole('button', { name: 'Vpiši se' }));
 
-		expect((await screen.findByRole('alert')).textContent).toBe(sl.auth.error_credentials);
+		const alert = await screen.findByRole('alert');
+		expect(alert.textContent).toBe(sl.auth.error_credentials);
 		expect(auth.signIn).toHaveBeenCalledWith('ana@example.si', 'napacno-geslo', undefined);
 		expect(screen.getByLabelText<HTMLInputElement>('E-naslov').value).toBe('ana@example.si');
-		expect(screen.getByLabelText<HTMLInputElement>('E-naslov').getAttribute('aria-invalid')).toBeNull();
+		// Both fields carry the one message.
+		for (const label of ['E-naslov', 'Geslo']) {
+			const field = screen.getByLabelText(label);
+			expect(field.getAttribute('aria-invalid')).toBe('true');
+			expect(field.getAttribute('aria-describedby')).toBe(alert.id);
+		}
 		// Cleared when a field changes.
 		type('Geslo', 'drugo');
 		expect(screen.queryByRole('alert')).toBeNull();
@@ -237,13 +243,13 @@ describe('NewPasswordForm (P16 M8)', () => {
 });
 
 describe('AuthGate (P16 W3)', () => {
-	it('asks a signed-out visitor to sign in or sign up, both returning to this page', () => {
+	it('asks a signed-out visitor to sign in or sign up, both returning to this page', async () => {
 		window.history.pushState({}, '', '/r/Hk3vT9qP?pogled=1');
 		session.gate = 'signin';
 		const onOpenChange = vi.fn();
 		show(<AuthGate reason="contact" open onOpenChange={onOpenChange} />);
 
-		const dialog = screen.getByRole('dialog', { name: sl.auth.gate_title_contact });
+		const dialog = await screen.findByRole('dialog', { name: sl.auth.gate_title_contact });
 		expect(within(dialog).getByText(sl.auth.gate_kept)).toBeTruthy();
 		expect(within(dialog).getByRole('link', { name: sl.auth.gate_signin }).getAttribute('href')).toBe(
 			'/vpis?next=%2Fr%2FHk3vT9qP%3Fpogled%3D1'
@@ -261,7 +267,7 @@ describe('AuthGate (P16 W3)', () => {
 		auth.resendConfirmation.mockResolvedValue({});
 		show(<AuthGate reason="alerts" open onOpenChange={vi.fn()} />);
 
-		const dialog = screen.getByRole('dialog', { name: sl.auth.gate_unverified_title });
+		const dialog = await screen.findByRole('dialog', { name: sl.auth.gate_unverified_title });
 		expect(
 			within(dialog).getByText(sl.auth.gate_unverified_body.replace('{email}', 'ana@example.si'))
 		).toBeTruthy();
@@ -281,11 +287,11 @@ describe('AuthGate (P16 W3)', () => {
 });
 
 describe('VerifiedOnly', () => {
-	it('shows alerts and chat to a confirmed account, the prompt to an unconfirmed one', () => {
+	it('shows alerts and chat to a confirmed account, the prompt to an unconfirmed one', async () => {
 		session.me = { email: 'ana@example.si', display_name: 'Ana', is_anonymous: false };
 		session.gate = 'verify';
 		show(<VerifiedOnly>alert settings</VerifiedOnly>, 'en');
-		expect(screen.getByRole('heading', { level: 1 }).textContent).toBe(en.auth.gate_unverified_title);
+		expect((await screen.findByRole('heading', { level: 1 })).textContent).toBe(en.auth.gate_unverified_title);
 		expect(screen.queryByText('alert settings')).toBeNull();
 		cleanup();
 

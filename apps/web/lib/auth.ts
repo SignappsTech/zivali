@@ -81,7 +81,12 @@ export const resendConfirmation = (email: string, locale: Locale, captchaToken?:
 export const requestPasswordReset = (email: string, locale: Locale, captchaToken?: string) =>
 	check(auth().resetPasswordForEmail(email, { redirectTo: callbackUrl('recovery', locale), captchaToken }));
 
-export const updatePassword = (password: string) => check(auth().updateUser({ password }));
+/** A new password signs out every other session (a stolen one included); this device stays signed in. */
+export async function updatePassword(password: string) {
+	const result = await check(auth().updateUser({ password }));
+	await check(auth().signOut({ scope: 'others' }));
+	return result;
+}
 
 /** Leaves the page for the provider; Supabase brings the browser back to the callback with a PKCE code. */
 export const signInWithProvider = (provider: 'google' | 'apple', locale: Locale, next?: string) =>

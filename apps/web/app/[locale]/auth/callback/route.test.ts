@@ -4,8 +4,9 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { GET } from './route';
 
 const exchange = vi.hoisted(() => vi.fn());
+const verifyOtp = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/supabase/server', () => ({
-	createClient: async () => ({ auth: { exchangeCodeForSession: exchange } }),
+	createClient: async () => ({ auth: { exchangeCodeForSession: exchange, verifyOtp } }),
 }));
 
 afterEach(() => vi.clearAllMocks());
@@ -30,6 +31,22 @@ describe('auth callback', () => {
 		);
 	});
 
+	it('opens the new-password form from a reset link with a token hash, on any device (no PKCE verifier)', async () => {
+		verifyOtp.mockResolvedValue({ error: null });
+		expect(await callback('en', 'type=recovery&token_hash=pkce_h1')).toBe('https://najdimo.si/en/reset-password');
+		expect(verifyOtp).toHaveBeenCalledWith({ type: 'recovery', token_hash: 'pkce_h1' });
+		expect(exchange).not.toHaveBeenCalled();
+
+		verifyOtp.mockResolvedValue({ error: new Error('Email link is invalid or has expired') });
+		expect(await callback('sl', 'type=recovery&token_hash=pkce_h2')).toBe(
+			'https://najdimo.si/pozabljeno-geslo?link=expired'
+		);
+		// Only reset links sign in by token hash.
+		verifyOtp.mockClear();
+		expect(await callback('sl', 'type=oauth&token_hash=pkce_h3')).toBe('https://najdimo.si/vpis?error=failed');
+		expect(verifyOtp).not.toHaveBeenCalled();
+	});
+
 	it('shows "confirmed" for a confirmation link, also from another browser, and "expired" for a dead one', async () => {
 		exchange.mockResolvedValue({ error: new Error('code verifier not found') });
 		expect(await callback('sl', 'type=signup&code=c3&next=%2Fracun')).toBe(
@@ -45,7 +62,21 @@ describe('auth callback', () => {
 		expect(await callback('en', 'type=oauth&code=c4&next=%2Fen%2Fr%2FHk3vT9qP')).toBe(
 			'https://najdimo.si/en/r/Hk3vT9qP'
 		);
-		expect(await callback('sl', 'type=oauth&code=c5&next=%2F%2Fevil.example')).toBe('https://najdimo.si/');
+		for (const next of [
+			'//evil.example',
+			'/..//evil.example',
+			'/.//evil.example',
+			'/a/..//evil.example',
+			'/%2e%2e//evil.example',
+			'\\\\evil.example',
+			'/\\evil.example',
+			'https:evil.example',
+			'javascript:alert(1)',
+			'//%5cevil.example',
+		])
+			expect(await callback('sl', `type=oauth&code=c5&next=${encodeURIComponent(next)}`)).toBe(
+				'https://najdimo.si/'
+			);
 		expect(await callback('sl', 'type=oauth&error=access_denied&next=%2Fracun')).toBe(
 			'https://najdimo.si/vpis?error=cancelled&next=%2Fracun'
 		);

@@ -80,8 +80,10 @@ describe('requireViewer', () => {
 describe('recoveryEmail', () => {
 	const now = Math.floor(Date.now() / 1000);
 
-	it('is the address of a session from a reset link of the last hour', async () => {
+	it('is the address of a session from a reset link of the last hour, by code or by token hash', async () => {
 		auth.token = jwt({ email: 'ana@example.si', amr: [{ method: 'recovery', timestamp: now - 60 }] });
+		expect(await recoveryEmail()).toBe('ana@example.si');
+		auth.token = jwt({ email: 'ana@example.si', amr: [{ method: 'otp', timestamp: now - 60 }] });
 		expect(await recoveryEmail()).toBe('ana@example.si');
 	});
 
@@ -102,13 +104,26 @@ describe('safeNext', () => {
 		['/racun', '/racun'],
 		['/en/account?tab=alerts#x', '/en/account?tab=alerts'],
 		['/r/Hk3vT9qP', '/r/Hk3vT9qP'],
+		['/en/../racun', '/racun'],
+		['/%5cevil.example', '/%5cevil.example'],
 	])('keeps the same-site path %s', (next, kept) => expect(safeNext(next)).toBe(kept));
 
 	it.each([
 		'https://evil.example/',
+		'https:evil.example',
 		'//evil.example/x',
+		'//%5cevil.example',
 		'/\\evil.example',
+		'\\\\evil.example',
+		'/..//evil.example',
+		'/.//evil.example',
+		'/a/..//evil.example',
+		'/%2e%2e//evil.example',
+		'/%2E%2E//evil.example',
+		'/\t/evil.example',
+		'/\n/evil.example',
 		'javascript:alert(1)',
+		'javascript:',
 		'racun',
 		'',
 		null,

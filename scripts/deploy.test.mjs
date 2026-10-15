@@ -66,6 +66,10 @@ test('webBuildEnv derives the public URLs from the hostnames and never passes a 
 		webBuildEnv({ ...env, STRIPE_PUBLISHABLE_KEY: 'pk_live_1' }).NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY,
 		undefined
 	);
+	assert.deepEqual(webBuildEnv({ NEXT_PUBLIC_GOOGLE_SIGN_IN: 'true', NEXT_PUBLIC_APPLE_SIGN_IN: 'false' }), {
+		NEXT_PUBLIC_GOOGLE_SIGN_IN: 'true',
+		NEXT_PUBLIC_APPLE_SIGN_IN: 'false',
+	});
 	assert.deepEqual(webBuildEnv({}), {});
 });
 

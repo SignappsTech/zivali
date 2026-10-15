@@ -102,6 +102,8 @@ export function SignInForm({
 		);
 
 	const query = { ...(email.trim() && { email: email.trim() }), ...(next && { next }) };
+	// The one message is about the pair, so both fields carry it (screen readers do not read a form's description).
+	const pairError = error && !error.captcha ? { 'aria-invalid': true, 'aria-describedby': errorId } : {};
 
 	return (
 		<>
@@ -111,12 +113,7 @@ export function SignInForm({
 					<b>{t('link_failed_title')}</b> {t('link_failed_body')}
 				</AuthNote>
 			)}
-			<form
-				noValidate
-				onSubmit={submit}
-				aria-describedby={error && !error.captcha ? errorId : undefined}
-				className="mt-10"
-			>
+			<form noValidate onSubmit={submit} className="mt-10">
 				<div className="grid gap-6">
 					<FormField label={t('email_label')}>
 						<Input
@@ -129,6 +126,7 @@ export function SignInForm({
 							spellCheck={false}
 							value={email}
 							onChange={edit(setEmail)}
+							{...pairError}
 						/>
 					</FormField>
 					<PasswordField
@@ -137,6 +135,7 @@ export function SignInForm({
 						autoComplete="current-password"
 						value={password}
 						onChange={edit(setPassword)}
+						{...pairError}
 					/>
 				</div>
 				{error && !error.captcha && (

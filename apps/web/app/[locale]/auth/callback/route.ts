@@ -9,11 +9,22 @@ import { safeNext } from '@/lib/viewer';
 
 type Href = Parameters<typeof getPathname>[0]['href'];
 
+/** The link's PKCE code, else a reset link's token hash, becomes the session cookies; false when neither works. */
+async function sessionFromLink(code: string | null, tokenHash: string | null) {
+	if (!code && !tokenHash) return false;
+	const { auth } = await createClient();
+	const { error } = code
+		? await auth.exchangeCodeForSession(code)
+		: await auth.verifyOtp({ type: 'recovery', token_hash: tokenHash! });
+	return !error;
+}
+
 /**
  * Supabase Auth sends the browser here (lib/auth.ts callbackUrl) from the confirmation and reset emails and after
  * Google, with a PKCE `code` or an `error`. The code becomes the session cookies on the server, then:
- * - `recovery`: the new-password form (/reset-password checks the session's `recovery` amr itself); a dead link goes
- *   to the reset form with "Povezava ne deluje več";
+ * - `recovery`: the new-password form (/reset-password checks the session's amr itself); a dead link goes to the
+ *   reset form with "Povezava ne deluje več". The PKCE verifier lives only in the browser that asked, so the reset
+ *   email links here with a `token_hash` instead (verifyOtp), which works on any device; a `code` still works;
  * - `signup`: the "E-naslov je potrjen" view (P16 M5). GoTrue confirms the address before it issues the code, so a
  *   link opened in another browser (no verifier there, no session) still counts; only an expired or used link fails;
  * - `oauth`: back to `next`; cancelled or failed, to sign-in with a quiet message.
@@ -22,14 +33,17 @@ export async function GET(request: NextRequest, { params }: RouteContext<'/[loca
 	const requested = (await params).locale;
 	const locale = hasLocale(routing.locales, requested) ? requested : routing.defaultLocale;
 	const query = request.nextUrl.searchParams;
-	const code = query.get('error') ? null : query.get('code');
+	const type = query.get('type');
+	const failed = Boolean(query.get('error'));
+	const code = failed ? null : query.get('code');
+	const tokenHash = failed || type !== 'recovery' ? null : query.get('token_hash');
 	const next = safeNext(query.get('next'));
-	const exchanged = code ? !(await (await createClient()).auth.exchangeCodeForSession(code)).error : false;
+	const exchanged = await sessionFromLink(code, tokenHash);
 	// Redirects resolve on the validated app URL, never on the request Host.
 	const go = (path: string) => NextResponse.redirect(new URL(path, env.NEXT_PUBLIC_APP_URL));
 	const to = (href: Href) => go(getPathname({ locale, href }));
 
-	switch (query.get('type')) {
+	switch (type) {
 		case 'recovery':
 			return to(exchanged ? '/reset-password' : { pathname: '/reset-password', query: { link: 'expired' } });
 		case 'signup':
