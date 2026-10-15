@@ -4,29 +4,27 @@ import * as React from 'react';
 
 import { cn } from '@/lib/utils';
 
-// System §10.1 and §10.2: full pill, no border, no shadow; hover mixes 14 % foreground into filled buttons and
+// System §10.1 and §10.2: full pill, no border, no shadow; hover and pressed use the -hover and -pressed tokens on filled buttons and
 // lays foreground at 10 % under ghost and text buttons; disabled is the muted fill, never an opacity trick.
 const buttonVariants = cva(
 	'inline-flex shrink-0 cursor-pointer items-center justify-center gap-2 rounded-button text-center font-sans text-base font-bold whitespace-nowrap no-underline transition-[transform,background-color] duration-150 ease-[cubic-bezier(0.2,0,0,1)] select-none focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ring active:scale-[0.98] disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground disabled:active:scale-100 aria-busy:cursor-progress aria-busy:active:scale-100 motion-reduce:transition-none motion-reduce:active:scale-100 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*=size-])]:size-5 aria-busy:[&>svg]:hidden',
 	{
 		variants: {
 			variant: {
-				default:
-					'bg-primary text-primary-foreground hover:bg-[color-mix(in_srgb,hsl(var(--primary))_86%,hsl(var(--foreground)))]',
+				default: 'bg-primary text-primary-foreground hover:bg-primary-hover active:bg-primary-pressed',
 				secondary:
-					'bg-secondary text-secondary-foreground hover:bg-[color-mix(in_srgb,hsl(var(--secondary))_86%,hsl(var(--foreground)))]',
+					'bg-secondary text-secondary-foreground hover:bg-secondary-hover active:bg-secondary-pressed',
 				// shadcn's outline variant is not part of the system; it maps to secondary (§10.2).
-				outline:
-					'bg-secondary text-secondary-foreground hover:bg-[color-mix(in_srgb,hsl(var(--secondary))_86%,hsl(var(--foreground)))]',
+				outline: 'bg-secondary text-secondary-foreground hover:bg-secondary-hover active:bg-secondary-pressed',
 				ghost: 'bg-transparent text-foreground hover:bg-foreground/10',
 				text: 'bg-transparent text-primary hover:bg-foreground/10',
 				destructive:
-					'bg-destructive text-destructive-foreground hover:bg-[color-mix(in_srgb,hsl(var(--destructive))_86%,hsl(var(--foreground)))]',
+					'bg-destructive text-destructive-foreground hover:bg-destructive-hover active:bg-destructive-pressed',
 			},
 			size: {
 				sm: 'min-h-11 px-4.5',
 				default: 'min-h-12 px-6',
-				lg: 'min-h-14 px-8 text-[17px]',
+				lg: 'min-h-14 px-8 text-control-lg',
 				icon: 'size-11 [&_svg:not([class*=size-])]:size-6',
 			},
 		},

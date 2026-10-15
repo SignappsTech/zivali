@@ -61,7 +61,7 @@ const checkRow =
 	'flex min-h-11 cursor-pointer items-start gap-3 py-2.5 has-[:disabled]:cursor-not-allowed has-[:disabled]:text-muted-foreground';
 const switchRow =
 	'flex min-h-14 max-w-[360px] cursor-pointer items-center justify-between gap-4 font-bold has-[:disabled]:cursor-not-allowed has-[:disabled]:text-muted-foreground';
-const noteClass = 'flex gap-3 rounded-row bg-muted px-[18px] py-4 text-[15px] leading-[22px]';
+const noteClass = 'flex gap-3 rounded-row bg-muted px-[18px] py-4 text-control leading-[22px]';
 
 function Section({ title, lede, children }: { title: string; lede: string; children: React.ReactNode }) {
 	return (
@@ -591,7 +591,7 @@ export function Kit({ s, locale }: { s: Samples; locale: string }) {
 					<div className={gridSpecs}>
 						<Spec caption="Checkbox group: checked · focus · disabled with reasons">
 							<fieldset className="m-0 grid border-0 p-0">
-								<legend className="mb-1 text-[15px] leading-5 font-bold">{s.channels_title}</legend>
+								<legend className="mb-1 text-control font-bold">{s.channels_title}</legend>
 								<label className={checkRow}>
 									<Checkbox defaultChecked className={focusRing} />
 									<span>{s.channel_push}</span>
@@ -634,7 +634,7 @@ export function Kit({ s, locale }: { s: Samples; locale: string }) {
 						</Spec>
 						<Spec caption="Radio: selected · focus">
 							<fieldset className="m-0 border-0 p-0">
-								<legend className="mb-1 text-[15px] leading-5 font-bold">{s.reason_label}</legend>
+								<legend className="mb-1 text-control font-bold">{s.reason_label}</legend>
 								<RadioGroup defaultValue={s.reasons[0]}>
 									{s.reasons.map((reason, index) => (
 										<label key={reason} className={checkRow}>
@@ -647,7 +647,7 @@ export function Kit({ s, locale }: { s: Samples; locale: string }) {
 						</Spec>
 						<Spec caption="Radio: whole group disabled while sending">
 							<fieldset className="m-0 border-0 p-0">
-								<legend className="mb-1 text-[15px] leading-5 font-bold text-muted-foreground">
+								<legend className="mb-1 text-control font-bold text-muted-foreground">
 									{s.reason_label}
 								</legend>
 								<RadioGroup defaultValue={s.reasons[0]} disabled>
