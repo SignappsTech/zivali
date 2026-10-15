@@ -15,6 +15,7 @@
 	"dependencies": {
 		"@supabase/ssr": "^0.12.7",
 		"@supabase/supabase-js": "^2.117.3",
+		"@zivali/analytics": "workspace:*",
 		"@zivali/api": "workspace:*",
 		"@zivali/tokens": "workspace:*",
 		"clsx": "^2.1.1",

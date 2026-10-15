@@ -1,10 +1,11 @@
 ---
 id: TASK-7.2
 title: GA4 on web with basic Consent Mode v2
-status: To Do
+status: In Progress
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:12'
+updated_date: '2026-10-15 03:29'
 labels:
   - fe
   - 'est:S'

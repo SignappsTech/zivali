@@ -141,6 +141,9 @@ importers:
       '@supabase/supabase-js':
         specifier: ^2.117.3
         version: 2.117.3
+      '@zivali/analytics':
+        specifier: workspace:*
+        version: link:../../packages/analytics
       '@zivali/api':
         specifier: workspace:*
         version: link:../../packages/api
