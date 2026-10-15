@@ -1,10 +1,11 @@
 ---
 id: TASK-90.3
 title: 'Design: Shelter directory and shelter pages (P3 T5, T6)'
-status: To Do
+status: In Progress
 assignee:
   - '@ui-designer'
 created_date: '2026-10-14 23:48'
+updated_date: '2026-10-15 02:30'
 labels:
   - design
   - 'est:S'
@@ -30,6 +31,7 @@ Owners and finders need the shelter responsible for their municipality in one st
 ## Packet
 Unblocks on: P1 web shell mockup merged (TASK-11.1, done)
 Branch: design/P3-shelter-pages
+Branch: main (no worktree per lead; mockup docs/design/mockups/P3-shelter-pages.html committed directly)
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Acceptance Criteria

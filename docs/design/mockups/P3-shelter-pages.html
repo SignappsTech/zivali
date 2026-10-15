@@ -1,0 +1,1188 @@
+<!doctype html>
+<!--
+  P3 T5 Shelter directory (/zavetisca) and T6 Shelter page (/zavetisca/{slug}). TASK-90.3.
+  Slice: docs/design/pages/P3-public-pages.md (T5, T6). Copy: docs/content/pages/P3-public-pages.md (shelters.*), P1 shell strings.
+  Shelter names, numbers, addresses, hours, websites and counts are SAMPLE data (data-sample), fictional until the directory provides them.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Najdimo mockup: P3 Shelter pages</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:wght@400;500;600;700&family=Bricolage+Grotesque:opsz,wght@12..96,500..800&display=swap" rel="stylesheet">
+<link href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css" rel="stylesheet">
+<link href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/bold/style.css" rel="stylesheet">
+<link href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css" rel="stylesheet">
+<link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet">
+<link href="../tokens.css" rel="stylesheet">
+<link href="../directions/directions.css" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com/3.4.17"></script>
+<script src="../directions/tailwind-config.js"></script>
+<style>
+/* P3 T5/T6 parts used only by this mockup. Token-driven; frontend maps them to ShelterSearch (combobox), ShelterAnswer, ShelterRow, HoursList and the static shelter map. */
+.scope h1, .scope h2, .scope h3 { text-wrap: balance; }
+
+/* Shell parts copied from P1 (logo link, footer links, mobile-web address bar) */
+.logo-link { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; border-radius: 12px; color: hsl(var(--foreground)); text-decoration: none; flex: none; }
+.fl { display: inline-flex; align-items: center; min-height: 44px; min-width: 44px; padding: 0; border: 0; background: none; font: inherit; font-size: 15px; line-height: 22px; color: hsl(var(--muted-foreground)); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 4px; cursor: pointer; white-space: nowrap; }
+.fl:hover { color: hsl(var(--foreground)); }
+.fl[aria-current="page"] { color: hsl(var(--foreground)); font-weight: 700; }
+.mweb { flex: none; height: 44px; display: flex; align-items: center; padding: 0 16px; }
+.mweb span { flex: 1; height: 32px; border-radius: 999px; background: hsl(var(--muted)); display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 13px; color: hsl(var(--muted-foreground)); }
+
+/* Mockup frames: tall phone for full-page views; web viewport crops fade at the bottom (scrollfade) */
+.phone.tall { height: auto; }
+.phone.tall > .phone-screen { height: auto; min-height: 844px; padding-bottom: 28px; }
+
+/* Municipality combobox: line field (10.3) with the web Select listbox as its popup. The active option gets the 10 % fill, the typed part is bold. */
+.combo { position: relative; }
+.combo-pop { position: absolute; left: 0; right: 0; top: calc(100% + 8px); z-index: 10; }
+.combo-pop [role="option"][aria-selected="true"] { font-weight: 400; background: hsl(var(--foreground) / 0.10); }
+.combo-pop b { font-weight: 700; }
+
+/* Phone numbers: the hyperlegible text face (distinct digits, slashed zero), bold, tabular, never wrapped mid-number */
+.tel { font-family: var(--font-sans); font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+/* Title links (answer name, row name): foreground, underline on hover like the pet tile */
+.title-link, .srow-link { color: inherit; text-decoration: none; border-radius: 8px; }
+.title-link, .srow-link { display: inline-flex; align-items: center; min-height: 44px; }
+.title-link:hover, .title-link.is-hover, .srow-link:hover, .srow-link.is-hover { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 4px; }
+.title-link:focus-visible, .srow-link:focus-visible, .tl:focus-visible { outline: 3px solid hsl(var(--ring)); outline-offset: 2px; }
+
+/* Directory row: plain, no card, 20 px apart. lg: name and meta left, phone right. Mobile: stacked. */
+.srow { display: flex; align-items: center; justify-content: space-between; gap: 16px; break-inside: avoid; margin-bottom: 20px; }
+.srow.m { display: block; }
+
+/* Contact group label (h2 role, label size so the number leads) */
+.lh { font-weight: 700; font-size: 15px; line-height: 20px; color: hsl(var(--muted-foreground)); }
+
+/* Plain text link (website, e-mail) */
+.tl { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; color: hsl(var(--primary)); font-weight: 600; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 4px; overflow-wrap: anywhere; }
+.tl:hover, .tl.is-hover { text-decoration-thickness: 2px; }
+.tl i { font-size: 18px; line-height: 1; }
+
+/* Opening hours: description list, day range | hours, tabular, no "open now" */
+.hours { display: grid; grid-template-columns: max-content 1fr; column-gap: 32px; row-gap: 6px; font-variant-numeric: tabular-nums; }
+.hours dd { white-space: nowrap; }
+
+/* Static shelter map: 4:3, radius 24, decorative (the address is its text). P5 pin, buildings icon, tail tip on the address. */
+.sh-map { position: relative; overflow: hidden; aspect-ratio: 4 / 3; border-radius: var(--radius-card); background: hsl(var(--map-land)); }
+.sh-pin { position: absolute; left: 50%; top: 50%; width: 54px; height: 66px; margin: -62px 0 0 -27px; pointer-events: none; z-index: 2; }
+.sh-pin svg { display: block; overflow: visible; }
+.sh-pin path { fill: hsl(var(--primary)); stroke: hsl(var(--marker-ring)); stroke-width: 6px; paint-order: stroke; stroke-linejoin: round; }
+.sh-pin i { position: absolute; left: 27px; top: 27px; transform: translate(-50%, -50%); font-size: 24px; line-height: 1; color: hsl(var(--primary-foreground)); }
+
+@media (prefers-reduced-motion: reduce) { .skel { animation: none; } }
+</style>
+</head>
+<body>
+<a class="sr-only focus:not-sr-only" href="#stage">Skip to content</a>
+
+<!-- Logo symbol, defined once -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <symbol id="nj-mark" viewBox="0 0 48 48">
+    <g fill="currentColor" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round">
+      <path d="M24 45.5 C24 45.5 10.5 33.2 10.5 24.4 A13.5 13.5 0 0 1 37.5 24.4 C37.5 33.2 24 45.5 24 45.5 Z M24 17.9 A6.5 6.5 0 1 0 24 30.9 A6.5 6.5 0 1 0 24 17.9 Z"/>
+      <path d="M12.2 19.6 L11.2 5 L22.6 11.4 Z"/><path d="M35.8 19.6 L25.4 11.4 L36.8 5 Z"/>
+    </g>
+    <circle cx="24" cy="24.4" r="3.6" fill="#F7B32B"/>
+  </symbol>
+</svg>
+
+<header class="chrome">
+  <div class="flex flex-wrap items-center gap-x-5 gap-y-2 px-6 py-2 max-w-[1400px] mx-auto">
+    <span class="flex items-center gap-2 font-display font-bold text-lg"><svg class="logo-mark w-7 h-7" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg>Najdimo</span>
+    <span class="text-muted-foreground text-[15px]">P3 Shelter pages, T5 and T6 (mockup)</span>
+    <div class="ml-auto flex items-center gap-2" role="group" aria-label="Colour mode">
+      <button class="mode-btn" data-mode="light" aria-pressed="true">Light</button>
+      <button class="mode-btn" data-mode="dark" aria-pressed="false">Dark</button>
+      <button class="mode-btn" data-mode="both" aria-pressed="false">Side by side</button>
+    </div>
+  </div>
+</header>
+
+<main id="stage"></main>
+
+<div id="src" hidden>
+<section class="tile-section !max-w-[1400px]">
+  <h1 class="tile-title">P3 T5 Shelter directory · /zavetisca</h1>
+  <p class="tile-lede">One question, one answer, then the full list. States: before search, suggestions open ("skof"), answer with the call button, two answers (dogs and cats), unknown municipality, no match, loading, error, and the page end with the legal note slot (flag <code>content.legal_timings</code> on). Header "Prijavi" is <code>secondary</code> on T5 and T6 because "Pokliči" is the page's primary (system 10.7). Shelter data is SAMPLE.</p>
+
+  <!-- ============ T5 WEB ============ -->
+
+  <!-- W1 -->
+  <p class="tile-h !mt-0">W1 · Before search · full page at 1200 · flag off, so no legal note and no empty space · hover on the "Zavetišče Lipa" title and on the Gorjanci number</p>
+  <div class="wrap-x"><div class="browser" lang="sl">
+    <div class="browser-bar"><span class="dots"><i></i><i></i><i></i></span><span class="url"><i class="ph ph-lock-simple"></i>najdimo.si/zavetisca</span></div>
+    <header class="flex items-center gap-8 px-12 h-[88px]">
+      <a href="#" class="logo-link" aria-label="Najdimo, na začetno stran"><svg class="logo-mark w-9 h-9" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg><span class="font-display font-bold text-2xl tracking-[-0.03em]" aria-hidden="true">Najdimo</span></a>
+      <nav aria-label="Glavni meni"><ul class="flex items-center gap-2">
+        <li><a href="#" class="nl">Zemljevid</a></li><li><a href="#" class="nl">Izgubljene</a></li><li><a href="#" class="nl">Najdene</a></li><li><a href="#" class="nl">Kako deluje</a></li>
+      </ul></nav>
+      <div class="ml-auto flex items-center gap-2">
+        <div class="lang" role="group" aria-label="Jezik: Slovenščina"><a href="#" class="ll" lang="sl" aria-current="true" aria-label="Slovenščina">SL</a><span aria-hidden="true">/</span><a href="#" class="ll" lang="en" hreflang="en" aria-label="English">EN</a></div>
+        <a href="#" class="btn btn-ghost btn-sm">Vpis</a>
+        <button type="button" class="btn btn-secondary btn-sm" aria-haspopup="menu" aria-expanded="false">Prijavi</button>
+      </div>
+    </header>
+    <main class="px-12 pt-8">
+      <div class="max-w-[640px]">
+        <h1 class="font-display font-bold text-5xl tracking-[-0.02em]">Zavetišča za živali po občinah</h1>
+        <p class="text-xl leading-8 mt-4">Najdene pse in mačke sprejme zavetišče, s katerim sodeluje vaša občina. Vpišite občino in videli boste, koga pokličete.</p>
+        <div class="field combo mt-10">
+          <label for="mu-w1">Vaša občina</label>
+          <div class="input-wrap"><i class="ph-bold ph-map-pin-area" aria-hidden="true"></i><input id="mu-w1" class="input" type="text" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="lb-w1" autocomplete="off" placeholder="Na primer: Škofja Loka"></div>
+          <ul id="lb-w1" class="listbox pop combo-pop" role="listbox" aria-label="Vaša občina" hidden></ul>
+        </div>
+        <div aria-live="polite"></div>
+      </div>
+      <section class="mt-24" id="all-w1">
+        <h2 class="font-display font-bold text-3xl tracking-[-0.015em]">Vsa zavetišča (17)</h2>
+        <ul class="columns-2 gap-x-8 mt-8" data-sample>
+          <li class="srow"><div class="min-w-0"><h3 class="font-display font-semibold text-2xl leading-8 tracking-[-0.01em]"><a href="#" class="srow-link">Mačje zavetišče Drava</a></h3><p class="text-sm text-muted-foreground">Podravje, mačke · 6 občin</p></div><a href="tel:+38626201430" class="btn btn-text tnum flex-none"><i class="ph-bold ph-phone" aria-hidden="true"></i>02 620 14 30</a></li>
+          <li class="srow"><div class="min-w-0"><h3 class="font-display font-semibold text-2xl leading-8 tracking-[-0.01em]"><a href="#" class="srow-link">Zavetišče Bohor</a></h3><p class="text-sm text-muted-foreground">Kozjansko · 7 občin</p></div><a href="tel:+38635802241" class="btn btn-text tnum flex-none"><i class="ph-bold ph-phone" aria-hidden="true"></i>03 580 22 41</a></li>
+          <li class="srow"><div class="min-w-0"><h3 class="font-display font-semibold text-2xl leading-8 tracking-[-0.01em]"><a href="#" class="srow-link">Zavetišče Breg</a></h3><p class="text-sm text-muted-foreground">Posavje · 6 občin</p></div><a href="tel:+38674903112" class="btn btn-text tnum flex-none"><i class="ph-bold ph-phone" aria-hidden="true"></i>07 490 31 12</a></li>
+          <li class="srow"><div class="min-w-0"><h3 class="font-display font-semibold text-2xl leading-8 tracking-[-0.01em]"><a href="#" class="srow-link">Zavetišče Brin</a></h3><p class="text-sm text-muted-foreground">Koroška · 12 občin</p></div><a href="tel:+38628704560" class="btn btn-text tnum flex-none"><i class="ph-bold ph-phone" aria-hidden="true"></i>02 870 45 60</a></li>
+          <li class="srow"><div class="min-w-0"><h3 class="font-display font-semibold text-2xl leading-8 tracking-[-0.01em]"><a href="#" class="srow-link">Zavetišče Gorjanci</a></h3><p class="text-sm text-muted-foreground">Dolenjska · 17 občin</p></div><a href="tel:+38673321805" class="btn btn-text tnum flex-none is-hover"><i class="ph-bold ph-phone" aria-hidden="true"></i>07 332 18 05</a></li>
+          <li class="srow"><div class="min-w-0"><h3 class="font-display font-semibold text-2xl leading-8 tracking-[-0.01em]"><a href="#" class="srow-link">Zavetišče Kraški Rob</a></h3><p class="text-sm text-muted-foreground">Obala in Kras · 9 občin</p></div><a href="tel:+38656102790" class="btn btn-text tnum flex-none"><i class="ph-bold ph-phone" aria-hidden="true"></i>05 610 27 90</a></li>
+          <li class="srow"><div class="min-w-0"><h3 class="font-display font-semibold text-2xl leading-8 tracking-[-0.01em]"><a href="#" class="srow-link is-hover">Zavetišče Lipa</a></h3><p class="text-sm text-muted-foreground">Gorenjska · 18 občin</p></div><a href="tel:+38645123670" class="btn btn-text tnum flex-none"><i class="ph-bold ph-phone" aria-hidden="true"></i>04 512 36 70</a></li>
+          <li class="srow"><div class="min-w-0"><h3 class="font-display font-semibold text-2xl leading-8 tracking-[-0.01em]"><a href="#" class="srow-link">Zavetišče Ob Dravinji</a></h3><p class="text-sm text-muted-foreground">Spodnje Podravje · 16 občin</p></div><a href="tel:+38627901148" class="btn btn-text tnum flex-none"><i class="ph-bold ph-phone" aria-hidden="true"></i>02 790 11 48</a></li>
+          <li class="srow"><div class="min-w-0"><h3 class="font-display font-semibold text-2xl leading-8 tracking-[-0.01em]"><a href="#" class="srow-link">Zavetišče Ob Kolpi</a></h3><p class="text-sm text-muted-foreground">Bela krajina · 3 občine</p></div></li>
+          <li class="srow"><div class="min-w-0"><h3 class="font-display font-semibold text-2xl leading-8 tracking-[-0.01em]"><a href="#" class="srow-link">Zavetišče Ob Muri</a></h3><p class="text-sm text-muted-foreground">Pomurje · 27 občin</p></div><a href="tel:+38625304026" class="btn btn-text tnum flex-none"><i class="ph-bold ph-phone" aria-hidden="true"></i>02 530 40 26</a></li>
+          <li class="srow"><div class="min-w-0"><h3 class="font-display font-semibold text-2xl leading-8 tracking-[-0.01em]"><a href="#" class="srow-link">Zavetišče Ob Savi</a></h3><p class="text-sm text-muted-foreground">Zasavje · 4 občine</p></div><a href="tel:+38635667082" class="btn btn-text tnum flex-none"><i class="ph-bold ph-phone" aria-hidden="true"></i>03 566 70 82</a></li>
+          <li class="srow"><div class="min-w-0"><h3 class="font-display font-semibold text-2xl leading-8 tracking-[-0.01em]"><a href="#" class="srow-link">Zavetišče Pod Pohorjem</a></h3><p class="text-sm text-muted-foreground">Podravje, psi · 22 občin</p></div><a href="tel:+38624805217" class="btn btn-text tnum flex-none"><i class="ph-bold ph-phone" aria-hidden="true"></i>02 480 52 17</a></li>
+          <li class="srow"><div class="min-w-0"><h3 class="font-display font-semibold text-2xl leading-8 tracking-[-0.01em]"><a href="#" class="srow-link">Zavetišče Pod Snežnikom</a></h3><p class="text-sm text-muted-foreground">Primorsko-notranjska · 6 občin</p></div><a href="tel:+38657203864" class="btn btn-text tnum flex-none"><i class="ph-bold ph-phone" aria-hidden="true"></i>05 720 38 64</a></li>
+          <li class="srow"><div class="min-w-0"><h3 class="font-display font-semibold text-2xl leading-8 tracking-[-0.01em]"><a href="#" class="srow-link">Zavetišče Posočje</a></h3><p class="text-sm text-muted-foreground">Goriška · 13 občin</p></div><a href="tel:+38653301956" class="btn btn-text tnum flex-none"><i class="ph-bold ph-phone" aria-hidden="true"></i>05 330 19 56</a></li>
+          <li class="srow"><div class="min-w-0"><h3 class="font-display font-semibold text-2xl leading-8 tracking-[-0.01em]"><a href="#" class="srow-link">Zavetišče Savinja</a></h3><p class="text-sm text-muted-foreground">Savinjska · 20 občin</p></div><a href="tel:+38634286109" class="btn btn-text tnum flex-none"><i class="ph-bold ph-phone" aria-hidden="true"></i>03 428 61 09</a></li>
+          <li class="srow"><div class="min-w-0"><h3 class="font-display font-semibold text-2xl leading-8 tracking-[-0.01em]"><a href="#" class="srow-link">Zavetišče Sončni Log</a></h3><p class="text-sm text-muted-foreground">Ljubljana z okolico · 24 občin</p></div><a href="tel:+38612345678" class="btn btn-text tnum flex-none"><i class="ph-bold ph-phone" aria-hidden="true"></i>01 234 56 78</a></li>
+          <li class="srow"><div class="min-w-0"><h3 class="font-display font-semibold text-2xl leading-8 tracking-[-0.01em]"><a href="#" class="srow-link">Zavetišče Šalek</a></h3><p class="text-sm text-muted-foreground">Šaleška dolina · 5 občin</p></div><a href="tel:+38638912533" class="btn btn-text tnum flex-none"><i class="ph-bold ph-phone" aria-hidden="true"></i>03 891 25 33</a></li>
+        </ul>
+      </section>
+      <div class="flex flex-wrap items-center gap-x-2 mt-12"><p class="text-sm text-muted-foreground" data-sample>Podatki preverjeni 15. 10. 2026. Vir: [vir imenika].</p><a href="#" class="btn btn-text">Sporočite napako</a></div>
+    </main>
+    <footer class="px-12 pt-12 pb-10 mt-24">
+      <p class="flex items-center gap-4"><a href="#" class="logo-link" aria-label="Najdimo, na začetno stran"><svg class="logo-mark w-7 h-7" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg><span class="font-display font-bold text-lg" aria-hidden="true">Najdimo</span></a><span class="text-muted-foreground">Spet doma.</span></p>
+      <nav aria-label="Noga strani" class="mt-4 flex items-end gap-8">
+        <div class="flex-1 min-w-0">
+          <ul class="flex flex-wrap gap-x-6">
+            <li><a href="#" class="fl">Kako deluje</a></li><li><a href="#" class="fl">Nasveti za varnost</a></li><li><a href="#" class="fl">Pogosta vprašanja</a></li><li><a href="#" class="fl">Za zavetišča</a></li><li><a href="#" class="fl" aria-current="page">Zavetišča</a></li><li><a href="#" class="fl">Oglašujte pri nas</a></li><li><a href="#" class="fl">O nas</a></li>
+          </ul>
+          <ul class="flex flex-wrap gap-x-6">
+            <li><a href="#" class="fl">Zasebnost</a></li><li><a href="#" class="fl">Piškotki</a></li><li><button type="button" class="fl" aria-haspopup="dialog">Nastavitve piškotkov</button></li><li><a href="#" class="fl">Pogoji uporabe</a></li><li><a href="#" class="fl">Impresum</a></li><li><a href="#" class="fl">Dostopnost</a></li>
+          </ul>
+        </div>
+        <div class="lang" role="group" aria-label="Jezik: Slovenščina"><a href="#" class="ll" lang="sl" aria-current="true" aria-label="Slovenščina">SL</a><span aria-hidden="true">/</span><a href="#" class="ll" lang="en" hreflang="en" aria-label="English">EN</a></div>
+      </nav>
+      <p class="text-sm text-muted-foreground mt-6">© 2026 Signapps. Najdimo je delovno ime storitve.</p>
+    </footer>
+  </div></div>
+
+  <!-- W2 -->
+  <p class="tile-h" style="margin-top:64px">W2 · Suggestions open: typed "skof" (diacritics and case ignored), 2 matches, keyboard focus on the field, "Škofja Loka" is the active option · viewport 1200 × 760</p>
+  <div class="wrap-x"><div class="browser scrollfade" lang="sl" style="height:760px">
+    <div class="browser-bar"><span class="dots"><i></i><i></i><i></i></span><span class="url"><i class="ph ph-lock-simple"></i>najdimo.si/zavetisca</span></div>
+    <header class="flex items-center gap-8 px-12 h-[88px]">
+      <a href="#" class="logo-link" aria-label="Najdimo, na začetno stran"><svg class="logo-mark w-9 h-9" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg><span class="font-display font-bold text-2xl tracking-[-0.03em]" aria-hidden="true">Najdimo</span></a>
+      <nav aria-label="Glavni meni"><ul class="flex items-center gap-2">
+        <li><a href="#" class="nl">Zemljevid</a></li><li><a href="#" class="nl">Izgubljene</a></li><li><a href="#" class="nl">Najdene</a></li><li><a href="#" class="nl">Kako deluje</a></li>
+      </ul></nav>
+      <div class="ml-auto flex items-center gap-2">
+        <div class="lang" role="group" aria-label="Jezik: Slovenščina"><a href="#" class="ll" lang="sl" aria-current="true" aria-label="Slovenščina">SL</a><span aria-hidden="true">/</span><a href="#" class="ll" lang="en" hreflang="en" aria-label="English">EN</a></div>
+        <a href="#" class="btn btn-ghost btn-sm">Vpis</a>
+        <button type="button" class="btn btn-secondary btn-sm" aria-haspopup="menu" aria-expanded="false">Prijavi</button>
+      </div>
+    </header>
+    <main class="px-12 pt-8">
+      <div class="max-w-[640px]">
+        <h1 class="font-display font-bold text-5xl tracking-[-0.02em]">Zavetišča za živali po občinah</h1>
+        <p class="text-xl leading-8 mt-4">Najdene pse in mačke sprejme zavetišče, s katerim sodeluje vaša občina. Vpišite občino in videli boste, koga pokličete.</p>
+        <div class="field combo mt-10">
+          <label for="mu-w2">Vaša občina</label>
+          <div class="input-wrap has-end"><i class="ph-bold ph-map-pin-area" aria-hidden="true"></i><input id="mu-w2" class="input is-focus" type="text" role="combobox" aria-autocomplete="list" aria-expanded="true" aria-controls="lb-w2" aria-activedescendant="op-w2-1" autocomplete="off" placeholder="Na primer: Škofja Loka" value="skof"><span class="end"><button type="button" class="iconbtn" aria-label="Počisti iskanje"><i class="ph-bold ph-x" aria-hidden="true"></i></button></span></div>
+          <ul id="lb-w2" class="listbox pop combo-pop" role="listbox" aria-label="Vaša občina">
+            <li id="op-w2-1" role="option" aria-selected="true"><span><b>Škof</b>ja Loka</span></li>
+            <li id="op-w2-2" role="option" aria-selected="false"><span><b>Škof</b>ljica</span></li>
+          </ul>
+          <p class="sr-only" role="status">2 občini ustrezata vnosu</p>
+        </div>
+        <div aria-live="polite"></div>
+      </div>
+      <section class="mt-24">
+        <h2 class="font-display font-bold text-3xl tracking-[-0.015em]">Vsa zavetišča (17)</h2>
+        <ul class="columns-2 gap-x-8 mt-8" data-sample>
+          <li class="srow"><div class="min-w-0"><h3 class="font-display font-semibold text-2xl leading-8 tracking-[-0.01em]"><a href="#" class="srow-link">Mačje zavetišče Drava</a></h3><p class="text-sm text-muted-foreground">Podravje, mačke · 6 občin</p></div><a href="tel:+38626201430" class="btn btn-text tnum flex-none"><i class="ph-bold ph-phone" aria-hidden="true"></i>02 620 14 30</a></li>
+          <li class="srow"><div class="min-w-0"><h3 class="font-display font-semibold text-2xl leading-8 tracking-[-0.01em]"><a href="#" class="srow-link">Zavetišče Ob Muri</a></h3><p class="text-sm text-muted-foreground">Pomurje · 27 občin</p></div><a href="tel:+38625304026" class="btn btn-text tnum flex-none"><i class="ph-bold ph-phone" aria-hidden="true"></i>02 530 40 26</a></li>
+        </ul>
+      </section>
+    </main>
+  </div></div>
+
+  <!-- W3 -->
+  <p class="tile-h" style="margin-top:64px">W3 · Answer: "Škofja Loka" chosen, the answer card appears under the field (polite live region) with the page's one primary, hover on "Pokliči" · viewport 1200 × 800</p>
+  <div class="wrap-x"><div class="browser scrollfade" lang="sl" style="height:800px">
+    <div class="browser-bar"><span class="dots"><i></i><i></i><i></i></span><span class="url"><i class="ph ph-lock-simple"></i>najdimo.si/zavetisca</span></div>
+    <header class="flex items-center gap-8 px-12 h-[88px]">
+      <a href="#" class="logo-link" aria-label="Najdimo, na začetno stran"><svg class="logo-mark w-9 h-9" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg><span class="font-display font-bold text-2xl tracking-[-0.03em]" aria-hidden="true">Najdimo</span></a>
+      <nav aria-label="Glavni meni"><ul class="flex items-center gap-2">
+        <li><a href="#" class="nl">Zemljevid</a></li><li><a href="#" class="nl">Izgubljene</a></li><li><a href="#" class="nl">Najdene</a></li><li><a href="#" class="nl">Kako deluje</a></li>
+      </ul></nav>
+      <div class="ml-auto flex items-center gap-2">
+        <div class="lang" role="group" aria-label="Jezik: Slovenščina"><a href="#" class="ll" lang="sl" aria-current="true" aria-label="Slovenščina">SL</a><span aria-hidden="true">/</span><a href="#" class="ll" lang="en" hreflang="en" aria-label="English">EN</a></div>
+        <a href="#" class="btn btn-ghost btn-sm">Vpis</a>
+        <button type="button" class="btn btn-secondary btn-sm" aria-haspopup="menu" aria-expanded="false">Prijavi</button>
+      </div>
+    </header>
+    <main class="px-12 pt-8">
+      <div class="max-w-[640px]">
+        <h1 class="font-display font-bold text-5xl tracking-[-0.02em]">Zavetišča za živali po občinah</h1>
+        <p class="text-xl leading-8 mt-4">Najdene pse in mačke sprejme zavetišče, s katerim sodeluje vaša občina. Vpišite občino in videli boste, koga pokličete.</p>
+        <div class="field combo mt-10">
+          <label for="mu-w3">Vaša občina</label>
+          <div class="input-wrap has-end"><i class="ph-bold ph-map-pin-area" aria-hidden="true"></i><input id="mu-w3" class="input" type="text" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="lb-w3" autocomplete="off" placeholder="Na primer: Škofja Loka" value="Škofja Loka"><span class="end"><button type="button" class="iconbtn" aria-label="Počisti iskanje"><i class="ph-bold ph-x" aria-hidden="true"></i></button></span></div>
+          <ul id="lb-w3" class="listbox pop combo-pop" role="listbox" aria-label="Vaša občina" hidden></ul>
+        </div>
+        <div class="mt-8" aria-live="polite">
+          <div class="card p-6" data-sample>
+            <p class="text-sm text-muted-foreground">Za občino Škofja Loka je pristojno</p>
+            <h2 class="font-display font-bold text-3xl tracking-[-0.015em] mt-1"><a href="#" class="title-link">Zavetišče Lipa</a></h2>
+            <p class="tel text-2xl leading-8 mt-4">04 512 36 70</p>
+            <div class="flex flex-wrap items-center gap-x-4 gap-y-2 mt-5">
+              <a href="tel:+38645123670" class="btn btn-primary btn-lg is-hover" aria-label="Pokliči Zavetišče Lipa"><i class="ph-bold ph-phone" aria-hidden="true"></i>Pokliči</a>
+              <a href="#" class="btn btn-text">Delovni čas in naslov<i class="ph-bold ph-arrow-right" aria-hidden="true"></i></a>
+            </div>
+          </div>
+        </div>
+      </div>
+      <section class="mt-24">
+        <h2 class="font-display font-bold text-3xl tracking-[-0.015em]">Vsa zavetišča (17)</h2>
+      </section>
+    </main>
+  </div></div>
+
+  <!-- W4 -->
+  <p class="tile-h" style="margin-top:64px">W4 · Two answers: "Maribor" has one shelter for dogs and one for cats. Two cards stacked, each call button <code>secondary</code>, no primary in the view; the species is a word plus an icon · viewport 1200 × 1100</p>
+  <div class="wrap-x"><div class="browser scrollfade" lang="sl" style="height:1100px">
+    <div class="browser-bar"><span class="dots"><i></i><i></i><i></i></span><span class="url"><i class="ph ph-lock-simple"></i>najdimo.si/zavetisca</span></div>
+    <header class="flex items-center gap-8 px-12 h-[88px]">
+      <a href="#" class="logo-link" aria-label="Najdimo, na začetno stran"><svg class="logo-mark w-9 h-9" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg><span class="font-display font-bold text-2xl tracking-[-0.03em]" aria-hidden="true">Najdimo</span></a>
+      <nav aria-label="Glavni meni"><ul class="flex items-center gap-2">
+        <li><a href="#" class="nl">Zemljevid</a></li><li><a href="#" class="nl">Izgubljene</a></li><li><a href="#" class="nl">Najdene</a></li><li><a href="#" class="nl">Kako deluje</a></li>
+      </ul></nav>
+      <div class="ml-auto flex items-center gap-2">
+        <div class="lang" role="group" aria-label="Jezik: Slovenščina"><a href="#" class="ll" lang="sl" aria-current="true" aria-label="Slovenščina">SL</a><span aria-hidden="true">/</span><a href="#" class="ll" lang="en" hreflang="en" aria-label="English">EN</a></div>
+        <a href="#" class="btn btn-ghost btn-sm">Vpis</a>
+        <button type="button" class="btn btn-secondary btn-sm" aria-haspopup="menu" aria-expanded="false">Prijavi</button>
+      </div>
+    </header>
+    <main class="px-12 pt-8">
+      <div class="max-w-[640px]">
+        <h1 class="font-display font-bold text-5xl tracking-[-0.02em]">Zavetišča za živali po občinah</h1>
+        <p class="text-xl leading-8 mt-4">Najdene pse in mačke sprejme zavetišče, s katerim sodeluje vaša občina. Vpišite občino in videli boste, koga pokličete.</p>
+        <div class="field combo mt-10">
+          <label for="mu-w4">Vaša občina</label>
+          <div class="input-wrap has-end"><i class="ph-bold ph-map-pin-area" aria-hidden="true"></i><input id="mu-w4" class="input" type="text" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="lb-w4" autocomplete="off" placeholder="Na primer: Škofja Loka" value="Maribor"><span class="end"><button type="button" class="iconbtn" aria-label="Počisti iskanje"><i class="ph-bold ph-x" aria-hidden="true"></i></button></span></div>
+          <ul id="lb-w4" class="listbox pop combo-pop" role="listbox" aria-label="Vaša občina" hidden></ul>
+        </div>
+        <div class="grid gap-5 mt-8" aria-live="polite" data-sample>
+          <div class="card p-6">
+            <p class="flex items-center gap-1.5 text-sm text-muted-foreground"><i class="ph-bold ph-dog text-base" aria-hidden="true"></i>Za pse iz občine Maribor je pristojno</p>
+            <h2 class="font-display font-bold text-3xl tracking-[-0.015em] mt-1"><a href="#" class="title-link">Zavetišče Pod Pohorjem</a></h2>
+            <p class="tel text-2xl leading-8 mt-4">02 480 52 17</p>
+            <div class="flex flex-wrap items-center gap-x-4 gap-y-2 mt-5">
+              <a href="tel:+38624805217" class="btn btn-secondary btn-lg" aria-label="Pokliči Zavetišče Pod Pohorjem"><i class="ph-bold ph-phone" aria-hidden="true"></i>Pokliči</a>
+              <a href="#" class="btn btn-text">Delovni čas in naslov<i class="ph-bold ph-arrow-right" aria-hidden="true"></i></a>
+            </div>
+          </div>
+          <div class="card p-6">
+            <p class="flex items-center gap-1.5 text-sm text-muted-foreground"><i class="ph-bold ph-cat text-base" aria-hidden="true"></i>Za mačke iz občine Maribor je pristojno</p>
+            <h2 class="font-display font-bold text-3xl tracking-[-0.015em] mt-1"><a href="#" class="title-link">Mačje zavetišče Drava</a></h2>
+            <p class="tel text-2xl leading-8 mt-4">02 620 14 30</p>
+            <div class="flex flex-wrap items-center gap-x-4 gap-y-2 mt-5">
+              <a href="tel:+38626201430" class="btn btn-secondary btn-lg is-hover" aria-label="Pokliči Mačje zavetišče Drava"><i class="ph-bold ph-phone" aria-hidden="true"></i>Pokliči</a>
+              <a href="#" class="btn btn-text">Delovni čas in naslov<i class="ph-bold ph-arrow-right" aria-hidden="true"></i></a>
+            </div>
+          </div>
+        </div>
+      </div>
+      <section class="mt-24">
+        <h2 class="font-display font-bold text-3xl tracking-[-0.015em]">Vsa zavetišča (17)</h2>
+      </section>
+    </main>
+  </div></div>
+
+  <!-- W5 -->
+  <p class="tile-h" style="margin-top:64px">W5 · Unknown or unconfirmed municipality (R-044.5): a note instead of the answer, with a link to the list. No shelter name, no number · viewport 1200 × 760</p>
+  <div class="wrap-x"><div class="browser scrollfade" lang="sl" style="height:760px">
+    <div class="browser-bar"><span class="dots"><i></i><i></i><i></i></span><span class="url"><i class="ph ph-lock-simple"></i>najdimo.si/zavetisca</span></div>
+    <header class="flex items-center gap-8 px-12 h-[88px]">
+      <a href="#" class="logo-link" aria-label="Najdimo, na začetno stran"><svg class="logo-mark w-9 h-9" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg><span class="font-display font-bold text-2xl tracking-[-0.03em]" aria-hidden="true">Najdimo</span></a>
+      <nav aria-label="Glavni meni"><ul class="flex items-center gap-2">
+        <li><a href="#" class="nl">Zemljevid</a></li><li><a href="#" class="nl">Izgubljene</a></li><li><a href="#" class="nl">Najdene</a></li><li><a href="#" class="nl">Kako deluje</a></li>
+      </ul></nav>
+      <div class="ml-auto flex items-center gap-2">
+        <div class="lang" role="group" aria-label="Jezik: Slovenščina"><a href="#" class="ll" lang="sl" aria-current="true" aria-label="Slovenščina">SL</a><span aria-hidden="true">/</span><a href="#" class="ll" lang="en" hreflang="en" aria-label="English">EN</a></div>
+        <a href="#" class="btn btn-ghost btn-sm">Vpis</a>
+        <button type="button" class="btn btn-secondary btn-sm" aria-haspopup="menu" aria-expanded="false">Prijavi</button>
+      </div>
+    </header>
+    <main class="px-12 pt-8">
+      <div class="max-w-[640px]">
+        <h1 class="font-display font-bold text-5xl tracking-[-0.02em]">Zavetišča za živali po občinah</h1>
+        <p class="text-xl leading-8 mt-4">Najdene pse in mačke sprejme zavetišče, s katerim sodeluje vaša občina. Vpišite občino in videli boste, koga pokličete.</p>
+        <div class="field combo mt-10">
+          <label for="mu-w5">Vaša občina</label>
+          <div class="input-wrap has-end"><i class="ph-bold ph-map-pin-area" aria-hidden="true"></i><input id="mu-w5" class="input" type="text" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="lb-w5" autocomplete="off" placeholder="Na primer: Škofja Loka" value="Osilnica"><span class="end"><button type="button" class="iconbtn" aria-label="Počisti iskanje"><i class="ph-bold ph-x" aria-hidden="true"></i></button></span></div>
+          <ul id="lb-w5" class="listbox pop combo-pop" role="listbox" aria-label="Vaša občina" hidden></ul>
+        </div>
+        <div class="mt-8" aria-live="polite">
+          <div class="note">
+            <i class="ph-fill ph-info" style="color:hsl(var(--primary))" aria-hidden="true"></i>
+            <div>
+              <p>Za občino Osilnica še nimamo potrjenega zavetišča. Pokličite občino, povedali vam bodo, s katerim zavetiščem sodeluje.</p>
+              <a href="#all-w5" class="btn btn-text -ml-3 mt-1">Vsa zavetišča<i class="ph-bold ph-arrow-down" aria-hidden="true"></i></a>
+            </div>
+          </div>
+        </div>
+      </div>
+      <section class="mt-24" id="all-w5">
+        <h2 class="font-display font-bold text-3xl tracking-[-0.015em]">Vsa zavetišča (17)</h2>
+      </section>
+    </main>
+  </div></div>
+
+  <!-- W6 -->
+  <p class="tile-h" style="margin-top:64px">W6 · No match for the typed text: one plain sentence under the field (not an error underline), the list stays below · viewport 1200 × 860</p>
+  <div class="wrap-x"><div class="browser scrollfade" lang="sl" style="height:860px">
+    <div class="browser-bar"><span class="dots"><i></i><i></i><i></i></span><span class="url"><i class="ph ph-lock-simple"></i>najdimo.si/zavetisca</span></div>
+    <header class="flex items-center gap-8 px-12 h-[88px]">
+      <a href="#" class="logo-link" aria-label="Najdimo, na začetno stran"><svg class="logo-mark w-9 h-9" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg><span class="font-display font-bold text-2xl tracking-[-0.03em]" aria-hidden="true">Najdimo</span></a>
+      <nav aria-label="Glavni meni"><ul class="flex items-center gap-2">
+        <li><a href="#" class="nl">Zemljevid</a></li><li><a href="#" class="nl">Izgubljene</a></li><li><a href="#" class="nl">Najdene</a></li><li><a href="#" class="nl">Kako deluje</a></li>
+      </ul></nav>
+      <div class="ml-auto flex items-center gap-2">
+        <div class="lang" role="group" aria-label="Jezik: Slovenščina"><a href="#" class="ll" lang="sl" aria-current="true" aria-label="Slovenščina">SL</a><span aria-hidden="true">/</span><a href="#" class="ll" lang="en" hreflang="en" aria-label="English">EN</a></div>
+        <a href="#" class="btn btn-ghost btn-sm">Vpis</a>
+        <button type="button" class="btn btn-secondary btn-sm" aria-haspopup="menu" aria-expanded="false">Prijavi</button>
+      </div>
+    </header>
+    <main class="px-12 pt-8">
+      <div class="max-w-[640px]">
+        <h1 class="font-display font-bold text-5xl tracking-[-0.02em]">Zavetišča za živali po občinah</h1>
+        <p class="text-xl leading-8 mt-4">Najdene pse in mačke sprejme zavetišče, s katerim sodeluje vaša občina. Vpišite občino in videli boste, koga pokličete.</p>
+        <div class="field combo mt-10">
+          <label for="mu-w6">Vaša občina</label>
+          <div class="input-wrap has-end"><i class="ph-bold ph-map-pin-area" aria-hidden="true"></i><input id="mu-w6" class="input" type="text" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="lb-w6" autocomplete="off" placeholder="Na primer: Škofja Loka" value="Kamnk"><span class="end"><button type="button" class="iconbtn" aria-label="Počisti iskanje"><i class="ph-bold ph-x" aria-hidden="true"></i></button></span></div>
+          <ul id="lb-w6" class="listbox pop combo-pop" role="listbox" aria-label="Vaša občina" hidden></ul>
+        </div>
+        <div class="mt-6" aria-live="polite">
+          <p class="flex gap-3"><i class="ph-bold ph-magnifying-glass text-[22px] leading-6 flex-none text-muted-foreground" aria-hidden="true"></i><span>Občine »Kamnk« ne najdemo. Preverite zapis ali jo poiščite na seznamu spodaj.</span></p>
+        </div>
+      </div>
+      <section class="mt-24">
+        <h2 class="font-display font-bold text-3xl tracking-[-0.015em]">Vsa zavetišča (17)</h2>
+        <ul class="columns-2 gap-x-8 mt-8" data-sample>
+          <li class="srow"><div class="min-w-0"><h3 class="font-display font-semibold text-2xl leading-8 tracking-[-0.01em]"><a href="#" class="srow-link">Mačje zavetišče Drava</a></h3><p class="text-sm text-muted-foreground">Podravje, mačke · 6 občin</p></div><a href="tel:+38626201430" class="btn btn-text tnum flex-none"><i class="ph-bold ph-phone" aria-hidden="true"></i>02 620 14 30</a></li>
+          <li class="srow"><div class="min-w-0"><h3 class="font-display font-semibold text-2xl leading-8 tracking-[-0.01em]"><a href="#" class="srow-link">Zavetišče Bohor</a></h3><p class="text-sm text-muted-foreground">Kozjansko · 7 občin</p></div><a href="tel:+38635802241" class="btn btn-text tnum flex-none"><i class="ph-bold ph-phone" aria-hidden="true"></i>03 580 22 41</a></li>
+          <li class="srow"><div class="min-w-0"><h3 class="font-display font-semibold text-2xl leading-8 tracking-[-0.01em]"><a href="#" class="srow-link">Zavetišče Ob Muri</a></h3><p class="text-sm text-muted-foreground">Pomurje · 27 občin</p></div><a href="tel:+38625304026" class="btn btn-text tnum flex-none"><i class="ph-bold ph-phone" aria-hidden="true"></i>02 530 40 26</a></li>
+          <li class="srow"><div class="min-w-0"><h3 class="font-display font-semibold text-2xl leading-8 tracking-[-0.01em]"><a href="#" class="srow-link">Zavetišče Ob Savi</a></h3><p class="text-sm text-muted-foreground">Zasavje · 4 občine</p></div><a href="tel:+38635667082" class="btn btn-text tnum flex-none"><i class="ph-bold ph-phone" aria-hidden="true"></i>03 566 70 82</a></li>
+        </ul>
+      </section>
+    </main>
+  </div></div>
+
+  <!-- W7 -->
+  <p class="tile-h" style="margin-top:64px">W7 · Page end, flag <code>content.legal_timings</code> on: the legal note slot after the list, then the quiet verified line and the footer · scrolled to the end at 1200</p>
+  <div class="wrap-x"><div class="browser" lang="sl">
+    <div class="browser-bar"><span class="dots"><i></i><i></i><i></i></span><span class="url"><i class="ph ph-lock-simple"></i>najdimo.si/zavetisca</span></div>
+    <main class="px-12 pt-8">
+      <ul class="columns-2 gap-x-8" data-sample>
+        <li class="srow"><div class="min-w-0"><h3 class="font-display font-semibold text-2xl leading-8 tracking-[-0.01em]"><a href="#" class="srow-link">Zavetišče Kraški Rob</a></h3><p class="text-sm text-muted-foreground">Obala in Kras · 9 občin</p></div><a href="tel:+38656102790" class="btn btn-text tnum flex-none"><i class="ph-bold ph-phone" aria-hidden="true"></i>05 610 27 90</a></li>
+        <li class="srow"><div class="min-w-0"><h3 class="font-display font-semibold text-2xl leading-8 tracking-[-0.01em]"><a href="#" class="srow-link">Zavetišče Lipa</a></h3><p class="text-sm text-muted-foreground">Gorenjska · 18 občin</p></div><a href="tel:+38645123670" class="btn btn-text tnum flex-none"><i class="ph-bold ph-phone" aria-hidden="true"></i>04 512 36 70</a></li>
+        <li class="srow"><div class="min-w-0"><h3 class="font-display font-semibold text-2xl leading-8 tracking-[-0.01em]"><a href="#" class="srow-link">Zavetišče Ob Dravinji</a></h3><p class="text-sm text-muted-foreground">Spodnje Podravje · 16 občin</p></div><a href="tel:+38627901148" class="btn btn-text tnum flex-none"><i class="ph-bold ph-phone" aria-hidden="true"></i>02 790 11 48</a></li>
+        <li class="srow"><div class="min-w-0"><h3 class="font-display font-semibold text-2xl leading-8 tracking-[-0.01em]"><a href="#" class="srow-link">Zavetišče Ob Kolpi</a></h3><p class="text-sm text-muted-foreground">Bela krajina · 3 občine</p></div></li>
+        <li class="srow"><div class="min-w-0"><h3 class="font-display font-semibold text-2xl leading-8 tracking-[-0.01em]"><a href="#" class="srow-link">Zavetišče Posočje</a></h3><p class="text-sm text-muted-foreground">Goriška · 13 občin</p></div><a href="tel:+38653301956" class="btn btn-text tnum flex-none"><i class="ph-bold ph-phone" aria-hidden="true"></i>05 330 19 56</a></li>
+        <li class="srow"><div class="min-w-0"><h3 class="font-display font-semibold text-2xl leading-8 tracking-[-0.01em]"><a href="#" class="srow-link">Zavetišče Savinja</a></h3><p class="text-sm text-muted-foreground">Savinjska · 20 občin</p></div><a href="tel:+38634286109" class="btn btn-text tnum flex-none"><i class="ph-bold ph-phone" aria-hidden="true"></i>03 428 61 09</a></li>
+        <li class="srow"><div class="min-w-0"><h3 class="font-display font-semibold text-2xl leading-8 tracking-[-0.01em]"><a href="#" class="srow-link">Zavetišče Sončni Log</a></h3><p class="text-sm text-muted-foreground">Ljubljana z okolico · 24 občin</p></div><a href="tel:+38612345678" class="btn btn-text tnum flex-none"><i class="ph-bold ph-phone" aria-hidden="true"></i>01 234 56 78</a></li>
+        <li class="srow"><div class="min-w-0"><h3 class="font-display font-semibold text-2xl leading-8 tracking-[-0.01em]"><a href="#" class="srow-link">Zavetišče Šalek</a></h3><p class="text-sm text-muted-foreground">Šaleška dolina · 5 občin</p></div><a href="tel:+38638912533" class="btn btn-text tnum flex-none"><i class="ph-bold ph-phone" aria-hidden="true"></i>03 891 25 33</a></li>
+      </ul>
+      <!-- Legal note slot: rendered only with content.legal_timings on; wording from the lawyer (LQ-06). Placeholder text below, not product copy. -->
+      <div class="note mt-12 max-w-[640px]" data-sample><i class="ph-fill ph-scales" aria-hidden="true"></i><p>[Pravno obvestilo o dolžnosti in rokih za prijavo najdene živali. Besedilo potrdi pravnik, LQ-06.]</p></div>
+      <div class="flex flex-wrap items-center gap-x-2 mt-12"><p class="text-sm text-muted-foreground" data-sample>Podatki preverjeni 15. 10. 2026. Vir: [vir imenika].</p><a href="#" class="btn btn-text">Sporočite napako</a></div>
+    </main>
+    <footer class="px-12 pt-12 pb-10 mt-24">
+      <p class="flex items-center gap-4"><a href="#" class="logo-link" aria-label="Najdimo, na začetno stran"><svg class="logo-mark w-7 h-7" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg><span class="font-display font-bold text-lg" aria-hidden="true">Najdimo</span></a><span class="text-muted-foreground">Spet doma.</span></p>
+      <nav aria-label="Noga strani" class="mt-4 flex items-end gap-8">
+        <div class="flex-1 min-w-0">
+          <ul class="flex flex-wrap gap-x-6">
+            <li><a href="#" class="fl">Kako deluje</a></li><li><a href="#" class="fl">Nasveti za varnost</a></li><li><a href="#" class="fl">Pogosta vprašanja</a></li><li><a href="#" class="fl">Za zavetišča</a></li><li><a href="#" class="fl" aria-current="page">Zavetišča</a></li><li><a href="#" class="fl">Oglašujte pri nas</a></li><li><a href="#" class="fl">O nas</a></li>
+          </ul>
+          <ul class="flex flex-wrap gap-x-6">
+            <li><a href="#" class="fl">Zasebnost</a></li><li><a href="#" class="fl">Piškotki</a></li><li><button type="button" class="fl" aria-haspopup="dialog">Nastavitve piškotkov</button></li><li><a href="#" class="fl">Pogoji uporabe</a></li><li><a href="#" class="fl">Impresum</a></li><li><a href="#" class="fl">Dostopnost</a></li>
+          </ul>
+        </div>
+        <div class="lang" role="group" aria-label="Jezik: Slovenščina"><a href="#" class="ll" lang="sl" aria-current="true" aria-label="Slovenščina">SL</a><span aria-hidden="true">/</span><a href="#" class="ll" lang="en" hreflang="en" aria-label="English">EN</a></div>
+      </nav>
+      <p class="text-sm text-muted-foreground mt-6">© 2026 Signapps. Najdimo je delovno ime storitve.</p>
+    </footer>
+  </div></div>
+
+  <!-- ============ T5 MOBILE ============ -->
+  <h2 class="tile-title" style="margin-top:96px">T5 at 390 px (mobile web)</h2>
+  <p class="tile-lede">Single column, 20 px gutters. The call button is full width <code>lg</code> in the page flow, never floating, with the text button under it. Rows stack: name, meta, number.</p>
+  <div class="wrap-x"><div class="flex flex-wrap gap-x-10 gap-y-12 items-start">
+
+    <!-- M1 -->
+    <div>
+      <p class="tile-h !mt-0">M1 · Before search</p>
+      <div class="phone"><div class="phone-screen" lang="sl">
+        <div class="statusbar"><span>14:20</span><span class="isl"></span><span class="ic" aria-hidden="true"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <div class="mweb" aria-hidden="true"><span><i class="ph ph-lock-simple"></i>najdimo.si/zavetisca</span></div>
+        <header class="flex items-center gap-2 px-5 h-16 flex-none">
+          <a href="#" class="logo-link mr-auto" aria-label="Najdimo, na začetno stran"><svg class="logo-mark w-8 h-8" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg><span class="font-display font-bold text-xl tracking-[-0.03em]" aria-hidden="true">Najdimo</span></a>
+          <button type="button" class="btn btn-secondary btn-sm !px-4" aria-haspopup="menu" aria-expanded="false"><i class="ph-bold ph-plus" aria-hidden="true"></i>Prijavi</button>
+          <button type="button" class="iconbtn" aria-label="Odpri meni" aria-expanded="false"><i class="ph-bold ph-list" aria-hidden="true"></i></button>
+        </header>
+        <main class="flex-1 px-5 pt-6 overflow-hidden">
+          <h1 class="font-display font-bold text-3xl tracking-[-0.02em]">Zavetišča za živali po občinah</h1>
+          <p class="text-lg leading-7 mt-3">Najdene pse in mačke sprejme zavetišče, s katerim sodeluje vaša občina. Vpišite občino in videli boste, koga pokličete.</p>
+          <div class="field combo mt-8">
+            <label for="mu-m1">Vaša občina</label>
+            <div class="input-wrap"><i class="ph-bold ph-map-pin-area" aria-hidden="true"></i><input id="mu-m1" class="input" type="text" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="lb-m1" autocomplete="off" placeholder="Na primer: Škofja Loka"></div>
+            <ul id="lb-m1" class="listbox pop combo-pop" role="listbox" aria-label="Vaša občina" hidden></ul>
+          </div>
+          <div aria-live="polite"></div>
+          <section class="mt-12">
+            <h2 class="font-display font-bold text-2xl tracking-[-0.015em]">Vsa zavetišča (17)</h2>
+            <ul class="mt-6" data-sample>
+              <li class="srow m"><h3 class="font-display font-semibold text-xl leading-7 tracking-[-0.01em]"><a href="#" class="srow-link">Mačje zavetišče Drava</a></h3><p class="text-sm text-muted-foreground">Podravje, mačke · 6 občin</p><a href="tel:+38626201430" class="btn btn-text tnum -ml-3"><i class="ph-bold ph-phone" aria-hidden="true"></i>02 620 14 30</a></li>
+              <li class="srow m"><h3 class="font-display font-semibold text-xl leading-7 tracking-[-0.01em]"><a href="#" class="srow-link">Zavetišče Bohor</a></h3><p class="text-sm text-muted-foreground">Kozjansko · 7 občin</p><a href="tel:+38635802241" class="btn btn-text tnum -ml-3"><i class="ph-bold ph-phone" aria-hidden="true"></i>03 580 22 41</a></li>
+            </ul>
+          </section>
+        </main>
+        <span class="home-ind"></span>
+      </div></div>
+    </div>
+
+    <!-- M2 -->
+    <div>
+      <p class="tile-h !mt-0">M2 · Suggestions open, "skof", focus on the field</p>
+      <div class="phone"><div class="phone-screen" lang="sl">
+        <div class="statusbar"><span>14:20</span><span class="isl"></span><span class="ic" aria-hidden="true"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <div class="mweb" aria-hidden="true"><span><i class="ph ph-lock-simple"></i>najdimo.si/zavetisca</span></div>
+        <header class="flex items-center gap-2 px-5 h-16 flex-none">
+          <a href="#" class="logo-link mr-auto" aria-label="Najdimo, na začetno stran"><svg class="logo-mark w-8 h-8" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg><span class="font-display font-bold text-xl tracking-[-0.03em]" aria-hidden="true">Najdimo</span></a>
+          <button type="button" class="btn btn-secondary btn-sm !px-4" aria-haspopup="menu" aria-expanded="false"><i class="ph-bold ph-plus" aria-hidden="true"></i>Prijavi</button>
+          <button type="button" class="iconbtn" aria-label="Odpri meni" aria-expanded="false"><i class="ph-bold ph-list" aria-hidden="true"></i></button>
+        </header>
+        <main class="flex-1 px-5 pt-6 overflow-hidden">
+          <h1 class="font-display font-bold text-3xl tracking-[-0.02em]">Zavetišča za živali po občinah</h1>
+          <p class="text-lg leading-7 mt-3">Najdene pse in mačke sprejme zavetišče, s katerim sodeluje vaša občina. Vpišite občino in videli boste, koga pokličete.</p>
+          <div class="field combo mt-8">
+            <label for="mu-m2">Vaša občina</label>
+            <div class="input-wrap has-end"><i class="ph-bold ph-map-pin-area" aria-hidden="true"></i><input id="mu-m2" class="input is-focus" type="text" role="combobox" aria-autocomplete="list" aria-expanded="true" aria-controls="lb-m2" aria-activedescendant="op-m2-1" autocomplete="off" placeholder="Na primer: Škofja Loka" value="skof"><span class="end"><button type="button" class="iconbtn" aria-label="Počisti iskanje"><i class="ph-bold ph-x" aria-hidden="true"></i></button></span></div>
+            <ul id="lb-m2" class="listbox pop combo-pop" role="listbox" aria-label="Vaša občina">
+              <li id="op-m2-1" role="option" aria-selected="true"><span><b>Škof</b>ja Loka</span></li>
+              <li id="op-m2-2" role="option" aria-selected="false"><span><b>Škof</b>ljica</span></li>
+            </ul>
+            <p class="sr-only" role="status">2 občini ustrezata vnosu</p>
+          </div>
+          <section class="mt-12">
+            <h2 class="font-display font-bold text-2xl tracking-[-0.015em]">Vsa zavetišča (17)</h2>
+          </section>
+        </main>
+        <span class="home-ind"></span>
+      </div></div>
+    </div>
+
+    <!-- M3 -->
+    <div>
+      <p class="tile-h !mt-0">M3 · Answer, keyboard focus on "Pokliči"</p>
+      <div class="phone"><div class="phone-screen" lang="sl">
+        <div class="statusbar"><span>14:21</span><span class="isl"></span><span class="ic" aria-hidden="true"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <div class="mweb" aria-hidden="true"><span><i class="ph ph-lock-simple"></i>najdimo.si/zavetisca</span></div>
+        <header class="flex items-center gap-2 px-5 h-16 flex-none">
+          <a href="#" class="logo-link mr-auto" aria-label="Najdimo, na začetno stran"><svg class="logo-mark w-8 h-8" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg><span class="font-display font-bold text-xl tracking-[-0.03em]" aria-hidden="true">Najdimo</span></a>
+          <button type="button" class="btn btn-secondary btn-sm !px-4" aria-haspopup="menu" aria-expanded="false"><i class="ph-bold ph-plus" aria-hidden="true"></i>Prijavi</button>
+          <button type="button" class="iconbtn" aria-label="Odpri meni" aria-expanded="false"><i class="ph-bold ph-list" aria-hidden="true"></i></button>
+        </header>
+        <main class="flex-1 px-5 pt-6 overflow-hidden">
+          <h1 class="font-display font-bold text-3xl tracking-[-0.02em]">Zavetišča za živali po občinah</h1>
+          <p class="text-lg leading-7 mt-3">Najdene pse in mačke sprejme zavetišče, s katerim sodeluje vaša občina. Vpišite občino in videli boste, koga pokličete.</p>
+          <div class="field combo mt-8">
+            <label for="mu-m3">Vaša občina</label>
+            <div class="input-wrap has-end"><i class="ph-bold ph-map-pin-area" aria-hidden="true"></i><input id="mu-m3" class="input" type="text" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="lb-m3" autocomplete="off" placeholder="Na primer: Škofja Loka" value="Škofja Loka"><span class="end"><button type="button" class="iconbtn" aria-label="Počisti iskanje"><i class="ph-bold ph-x" aria-hidden="true"></i></button></span></div>
+            <ul id="lb-m3" class="listbox pop combo-pop" role="listbox" aria-label="Vaša občina" hidden></ul>
+          </div>
+          <div class="mt-6" aria-live="polite">
+            <div class="card p-6" data-sample>
+              <p class="text-sm text-muted-foreground">Za občino Škofja Loka je pristojno</p>
+              <h2 class="font-display font-bold text-2xl tracking-[-0.015em] mt-1"><a href="#" class="title-link">Zavetišče Lipa</a></h2>
+              <p class="tel text-xl leading-7 mt-3">04 512 36 70</p>
+              <div class="grid gap-1 mt-5">
+                <a href="tel:+38645123670" class="btn btn-primary btn-lg btn-block is-focus" aria-label="Pokliči Zavetišče Lipa"><i class="ph-bold ph-phone" aria-hidden="true"></i>Pokliči</a>
+                <a href="#" class="btn btn-text btn-block">Delovni čas in naslov<i class="ph-bold ph-arrow-right" aria-hidden="true"></i></a>
+              </div>
+            </div>
+          </div>
+        </main>
+        <span class="home-ind"></span>
+      </div></div>
+    </div>
+
+    <!-- M4 -->
+    <div>
+      <p class="tile-h !mt-0">M4 · Two answers (scrolled to the field)</p>
+      <div class="phone"><div class="phone-screen" lang="sl">
+        <div class="statusbar"><span>14:21</span><span class="isl"></span><span class="ic" aria-hidden="true"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <div class="mweb" aria-hidden="true"><span><i class="ph ph-lock-simple"></i>najdimo.si/zavetisca</span></div>
+        <main class="flex-1 px-5 pt-4 overflow-hidden">
+          <div class="field combo">
+            <label for="mu-m4">Vaša občina</label>
+            <div class="input-wrap has-end"><i class="ph-bold ph-map-pin-area" aria-hidden="true"></i><input id="mu-m4" class="input" type="text" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="lb-m4" autocomplete="off" placeholder="Na primer: Škofja Loka" value="Maribor"><span class="end"><button type="button" class="iconbtn" aria-label="Počisti iskanje"><i class="ph-bold ph-x" aria-hidden="true"></i></button></span></div>
+            <ul id="lb-m4" class="listbox pop combo-pop" role="listbox" aria-label="Vaša občina" hidden></ul>
+          </div>
+          <div class="grid gap-5 mt-6" aria-live="polite" data-sample>
+            <div class="card p-6">
+              <p class="flex items-center gap-1.5 text-sm text-muted-foreground"><i class="ph-bold ph-dog text-base" aria-hidden="true"></i>Za pse iz občine Maribor je pristojno</p>
+              <h2 class="font-display font-bold text-2xl tracking-[-0.015em] mt-1"><a href="#" class="title-link">Zavetišče Pod Pohorjem</a></h2>
+              <p class="tel text-xl leading-7 mt-3">02 480 52 17</p>
+              <div class="grid gap-1 mt-5">
+                <a href="tel:+38624805217" class="btn btn-secondary btn-lg btn-block" aria-label="Pokliči Zavetišče Pod Pohorjem"><i class="ph-bold ph-phone" aria-hidden="true"></i>Pokliči</a>
+                <a href="#" class="btn btn-text btn-block">Delovni čas in naslov<i class="ph-bold ph-arrow-right" aria-hidden="true"></i></a>
+              </div>
+            </div>
+            <div class="card p-6">
+              <p class="flex items-center gap-1.5 text-sm text-muted-foreground"><i class="ph-bold ph-cat text-base" aria-hidden="true"></i>Za mačke iz občine Maribor je pristojno</p>
+              <h2 class="font-display font-bold text-2xl tracking-[-0.015em] mt-1"><a href="#" class="title-link">Mačje zavetišče Drava</a></h2>
+              <p class="tel text-xl leading-7 mt-3">02 620 14 30</p>
+              <div class="grid gap-1 mt-5">
+                <a href="tel:+38626201430" class="btn btn-secondary btn-lg btn-block" aria-label="Pokliči Mačje zavetišče Drava"><i class="ph-bold ph-phone" aria-hidden="true"></i>Pokliči</a>
+                <a href="#" class="btn btn-text btn-block">Delovni čas in naslov<i class="ph-bold ph-arrow-right" aria-hidden="true"></i></a>
+              </div>
+            </div>
+          </div>
+        </main>
+        <span class="home-ind"></span>
+      </div></div>
+    </div>
+
+    <!-- M5 -->
+    <div>
+      <p class="tile-h !mt-0">M5 · Unknown municipality</p>
+      <div class="phone"><div class="phone-screen" lang="sl">
+        <div class="statusbar"><span>14:22</span><span class="isl"></span><span class="ic" aria-hidden="true"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <div class="mweb" aria-hidden="true"><span><i class="ph ph-lock-simple"></i>najdimo.si/zavetisca</span></div>
+        <header class="flex items-center gap-2 px-5 h-16 flex-none">
+          <a href="#" class="logo-link mr-auto" aria-label="Najdimo, na začetno stran"><svg class="logo-mark w-8 h-8" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg><span class="font-display font-bold text-xl tracking-[-0.03em]" aria-hidden="true">Najdimo</span></a>
+          <button type="button" class="btn btn-secondary btn-sm !px-4" aria-haspopup="menu" aria-expanded="false"><i class="ph-bold ph-plus" aria-hidden="true"></i>Prijavi</button>
+          <button type="button" class="iconbtn" aria-label="Odpri meni" aria-expanded="false"><i class="ph-bold ph-list" aria-hidden="true"></i></button>
+        </header>
+        <main class="flex-1 px-5 pt-6 overflow-hidden">
+          <h1 class="font-display font-bold text-3xl tracking-[-0.02em]">Zavetišča za živali po občinah</h1>
+          <p class="text-lg leading-7 mt-3">Najdene pse in mačke sprejme zavetišče, s katerim sodeluje vaša občina. Vpišite občino in videli boste, koga pokličete.</p>
+          <div class="field combo mt-8">
+            <label for="mu-m5">Vaša občina</label>
+            <div class="input-wrap has-end"><i class="ph-bold ph-map-pin-area" aria-hidden="true"></i><input id="mu-m5" class="input" type="text" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="lb-m5" autocomplete="off" placeholder="Na primer: Škofja Loka" value="Osilnica"><span class="end"><button type="button" class="iconbtn" aria-label="Počisti iskanje"><i class="ph-bold ph-x" aria-hidden="true"></i></button></span></div>
+            <ul id="lb-m5" class="listbox pop combo-pop" role="listbox" aria-label="Vaša občina" hidden></ul>
+          </div>
+          <div class="mt-6" aria-live="polite">
+            <div class="note">
+              <i class="ph-fill ph-info" style="color:hsl(var(--primary))" aria-hidden="true"></i>
+              <div>
+                <p>Za občino Osilnica še nimamo potrjenega zavetišča. Pokličite občino, povedali vam bodo, s katerim zavetiščem sodeluje.</p>
+                <a href="#all-m5" class="btn btn-text -ml-3 mt-1">Vsa zavetišča<i class="ph-bold ph-arrow-down" aria-hidden="true"></i></a>
+              </div>
+            </div>
+          </div>
+          <section class="mt-12" id="all-m5">
+            <h2 class="font-display font-bold text-2xl tracking-[-0.015em]">Vsa zavetišča (17)</h2>
+          </section>
+        </main>
+        <span class="home-ind"></span>
+      </div></div>
+    </div>
+
+    <!-- M6 -->
+    <div>
+      <p class="tile-h !mt-0">M6 · No match, list stays below</p>
+      <div class="phone"><div class="phone-screen" lang="sl">
+        <div class="statusbar"><span>14:22</span><span class="isl"></span><span class="ic" aria-hidden="true"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <div class="mweb" aria-hidden="true"><span><i class="ph ph-lock-simple"></i>najdimo.si/zavetisca</span></div>
+        <main class="flex-1 px-5 pt-4 overflow-hidden">
+          <div class="field combo">
+            <label for="mu-m6">Vaša občina</label>
+            <div class="input-wrap has-end"><i class="ph-bold ph-map-pin-area" aria-hidden="true"></i><input id="mu-m6" class="input" type="text" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="lb-m6" autocomplete="off" placeholder="Na primer: Škofja Loka" value="Kamnk"><span class="end"><button type="button" class="iconbtn" aria-label="Počisti iskanje"><i class="ph-bold ph-x" aria-hidden="true"></i></button></span></div>
+            <ul id="lb-m6" class="listbox pop combo-pop" role="listbox" aria-label="Vaša občina" hidden></ul>
+          </div>
+          <div class="mt-5" aria-live="polite">
+            <p class="flex gap-3"><i class="ph-bold ph-magnifying-glass text-[22px] leading-6 flex-none text-muted-foreground" aria-hidden="true"></i><span>Občine »Kamnk« ne najdemo. Preverite zapis ali jo poiščite na seznamu spodaj.</span></p>
+          </div>
+          <section class="mt-12">
+            <h2 class="font-display font-bold text-2xl tracking-[-0.015em]">Vsa zavetišča (17)</h2>
+            <ul class="mt-6" data-sample>
+              <li class="srow m"><h3 class="font-display font-semibold text-xl leading-7 tracking-[-0.01em]"><a href="#" class="srow-link">Mačje zavetišče Drava</a></h3><p class="text-sm text-muted-foreground">Podravje, mačke · 6 občin</p><a href="tel:+38626201430" class="btn btn-text tnum -ml-3"><i class="ph-bold ph-phone" aria-hidden="true"></i>02 620 14 30</a></li>
+              <li class="srow m"><h3 class="font-display font-semibold text-xl leading-7 tracking-[-0.01em]"><a href="#" class="srow-link">Zavetišče Bohor</a></h3><p class="text-sm text-muted-foreground">Kozjansko · 7 občin</p><a href="tel:+38635802241" class="btn btn-text tnum -ml-3"><i class="ph-bold ph-phone" aria-hidden="true"></i>03 580 22 41</a></li>
+              <li class="srow m"><h3 class="font-display font-semibold text-xl leading-7 tracking-[-0.01em]"><a href="#" class="srow-link">Zavetišče Breg</a></h3><p class="text-sm text-muted-foreground">Posavje · 6 občin</p><a href="tel:+38674903112" class="btn btn-text tnum -ml-3"><i class="ph-bold ph-phone" aria-hidden="true"></i>07 490 31 12</a></li>
+              <li class="srow m"><h3 class="font-display font-semibold text-xl leading-7 tracking-[-0.01em]"><a href="#" class="srow-link">Zavetišče Brin</a></h3><p class="text-sm text-muted-foreground">Koroška · 12 občin</p><a href="tel:+38628704560" class="btn btn-text tnum -ml-3"><i class="ph-bold ph-phone" aria-hidden="true"></i>02 870 45 60</a></li>
+            </ul>
+          </section>
+        </main>
+        <span class="home-ind"></span>
+      </div></div>
+    </div>
+
+    <!-- M7 -->
+    <div>
+      <p class="tile-h !mt-0">M7 · Loading: skeleton in the answer card shape</p>
+      <div class="phone"><div class="phone-screen" lang="sl">
+        <div class="statusbar"><span>14:21</span><span class="isl"></span><span class="ic" aria-hidden="true"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <div class="mweb" aria-hidden="true"><span><i class="ph ph-lock-simple"></i>najdimo.si/zavetisca</span></div>
+        <header class="flex items-center gap-2 px-5 h-16 flex-none">
+          <a href="#" class="logo-link mr-auto" aria-label="Najdimo, na začetno stran"><svg class="logo-mark w-8 h-8" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg><span class="font-display font-bold text-xl tracking-[-0.03em]" aria-hidden="true">Najdimo</span></a>
+          <button type="button" class="btn btn-secondary btn-sm !px-4" aria-haspopup="menu" aria-expanded="false"><i class="ph-bold ph-plus" aria-hidden="true"></i>Prijavi</button>
+          <button type="button" class="iconbtn" aria-label="Odpri meni" aria-expanded="false"><i class="ph-bold ph-list" aria-hidden="true"></i></button>
+        </header>
+        <main class="flex-1 px-5 pt-6 overflow-hidden">
+          <h1 class="font-display font-bold text-3xl tracking-[-0.02em]">Zavetišča za živali po občinah</h1>
+          <p class="text-lg leading-7 mt-3">Najdene pse in mačke sprejme zavetišče, s katerim sodeluje vaša občina. Vpišite občino in videli boste, koga pokličete.</p>
+          <div class="field combo mt-8">
+            <label for="mu-m7">Vaša občina</label>
+            <div class="input-wrap has-end"><i class="ph-bold ph-map-pin-area" aria-hidden="true"></i><input id="mu-m7" class="input" type="text" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="lb-m7" autocomplete="off" placeholder="Na primer: Škofja Loka" value="Škofja Loka"><span class="end"><button type="button" class="iconbtn" aria-label="Počisti iskanje"><i class="ph-bold ph-x" aria-hidden="true"></i></button></span></div>
+            <ul id="lb-m7" class="listbox pop combo-pop" role="listbox" aria-label="Vaša občina" hidden></ul>
+          </div>
+          <div class="mt-6" aria-live="polite" aria-busy="true">
+            <p class="sr-only">Nalaganje …</p>
+            <div class="card p-6" aria-hidden="true">
+              <div class="skel h-4" style="width:72%"></div>
+              <div class="skel h-[30px] mt-3" style="width:58%"></div>
+              <div class="skel h-6 mt-4" style="width:44%"></div>
+              <div class="skel h-14 mt-5 !rounded-full"></div>
+              <div class="skel h-5 mt-5 mx-auto" style="width:52%"></div>
+            </div>
+          </div>
+        </main>
+        <span class="home-ind"></span>
+      </div></div>
+    </div>
+
+    <!-- M8 -->
+    <div>
+      <p class="tile-h !mt-0">M8 · Error: the directory did not load, retry</p>
+      <div class="phone"><div class="phone-screen" lang="sl">
+        <div class="statusbar"><span>14:21</span><span class="isl"></span><span class="ic" aria-hidden="true"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <div class="mweb" aria-hidden="true"><span><i class="ph ph-lock-simple"></i>najdimo.si/zavetisca</span></div>
+        <header class="flex items-center gap-2 px-5 h-16 flex-none">
+          <a href="#" class="logo-link mr-auto" aria-label="Najdimo, na začetno stran"><svg class="logo-mark w-8 h-8" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg><span class="font-display font-bold text-xl tracking-[-0.03em]" aria-hidden="true">Najdimo</span></a>
+          <button type="button" class="btn btn-secondary btn-sm !px-4" aria-haspopup="menu" aria-expanded="false"><i class="ph-bold ph-plus" aria-hidden="true"></i>Prijavi</button>
+          <button type="button" class="iconbtn" aria-label="Odpri meni" aria-expanded="false"><i class="ph-bold ph-list" aria-hidden="true"></i></button>
+        </header>
+        <main class="flex-1 px-5 pt-6 overflow-hidden">
+          <h1 class="font-display font-bold text-3xl tracking-[-0.02em]">Zavetišča za živali po občinah</h1>
+          <p class="text-lg leading-7 mt-3">Najdene pse in mačke sprejme zavetišče, s katerim sodeluje vaša občina. Vpišite občino in videli boste, koga pokličete.</p>
+          <div class="field combo mt-8">
+            <label for="mu-m8">Vaša občina</label>
+            <div class="input-wrap"><i class="ph-bold ph-map-pin-area" aria-hidden="true"></i><input id="mu-m8" class="input" type="text" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="lb-m8" autocomplete="off" placeholder="Na primer: Škofja Loka"></div>
+            <ul id="lb-m8" class="listbox pop combo-pop" role="listbox" aria-label="Vaša občina" hidden></ul>
+          </div>
+          <div class="note mt-6" role="alert">
+            <i class="ph-fill ph-warning-circle" style="color:hsl(var(--destructive))" aria-hidden="true"></i>
+            <div>
+              <p>Imenika zavetišč ta trenutek ne moremo naložiti.</p>
+              <button type="button" class="btn btn-text -ml-3 mt-1"><i class="ph-bold ph-arrow-clockwise" aria-hidden="true"></i>Poskusi znova</button>
+            </div>
+          </div>
+        </main>
+        <span class="home-ind"></span>
+      </div></div>
+    </div>
+
+    <!-- M9 -->
+    <div>
+      <p class="tile-h !mt-0">M9 · Page end, flag on: legal note slot, verified line, footer (scrolled)</p>
+      <div class="phone tall"><div class="phone-screen" lang="sl">
+        <div class="statusbar"><span>14:23</span><span class="isl"></span><span class="ic" aria-hidden="true"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <div class="mweb" aria-hidden="true"><span><i class="ph ph-lock-simple"></i>najdimo.si/zavetisca</span></div>
+        <main class="px-5 pt-4">
+          <ul data-sample>
+            <li class="srow m"><h3 class="font-display font-semibold text-xl leading-7 tracking-[-0.01em]"><a href="#" class="srow-link">Zavetišče Pod Snežnikom</a></h3><p class="text-sm text-muted-foreground">Primorsko-notranjska · 6 občin</p><a href="tel:+38657203864" class="btn btn-text tnum -ml-3"><i class="ph-bold ph-phone" aria-hidden="true"></i>05 720 38 64</a></li>
+            <li class="srow m"><h3 class="font-display font-semibold text-xl leading-7 tracking-[-0.01em]"><a href="#" class="srow-link">Zavetišče Posočje</a></h3><p class="text-sm text-muted-foreground">Goriška · 13 občin</p><a href="tel:+38653301956" class="btn btn-text tnum -ml-3"><i class="ph-bold ph-phone" aria-hidden="true"></i>05 330 19 56</a></li>
+            <li class="srow m"><h3 class="font-display font-semibold text-xl leading-7 tracking-[-0.01em]"><a href="#" class="srow-link">Zavetišče Savinja</a></h3><p class="text-sm text-muted-foreground">Savinjska · 20 občin</p><a href="tel:+38634286109" class="btn btn-text tnum -ml-3"><i class="ph-bold ph-phone" aria-hidden="true"></i>03 428 61 09</a></li>
+            <li class="srow m"><h3 class="font-display font-semibold text-xl leading-7 tracking-[-0.01em]"><a href="#" class="srow-link">Zavetišče Sončni Log</a></h3><p class="text-sm text-muted-foreground">Ljubljana z okolico · 24 občin</p><a href="tel:+38612345678" class="btn btn-text tnum -ml-3"><i class="ph-bold ph-phone" aria-hidden="true"></i>01 234 56 78</a></li>
+            <li class="srow m"><h3 class="font-display font-semibold text-xl leading-7 tracking-[-0.01em]"><a href="#" class="srow-link">Zavetišče Šalek</a></h3><p class="text-sm text-muted-foreground">Šaleška dolina · 5 občin</p><a href="tel:+38638912533" class="btn btn-text tnum -ml-3"><i class="ph-bold ph-phone" aria-hidden="true"></i>03 891 25 33</a></li>
+          </ul>
+          <div class="note mt-8" data-sample><i class="ph-fill ph-scales" aria-hidden="true"></i><p>[Pravno obvestilo o dolžnosti in rokih za prijavo najdene živali. Besedilo potrdi pravnik, LQ-06.]</p></div>
+          <div class="mt-8"><p class="text-sm text-muted-foreground" data-sample>Podatki preverjeni 15. 10. 2026. Vir: [vir imenika].</p><a href="#" class="btn btn-text -ml-3">Sporočite napako</a></div>
+          <footer class="mt-12">
+            <p class="flex items-center gap-3"><a href="#" class="logo-link" aria-label="Najdimo, na začetno stran"><svg class="logo-mark w-7 h-7" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg><span class="font-display font-bold text-lg" aria-hidden="true">Najdimo</span></a><span class="text-muted-foreground">Spet doma.</span></p>
+            <nav aria-label="Noga strani" class="mt-3">
+              <ul class="flex flex-wrap gap-x-5">
+                <li><a href="#" class="fl">Kako deluje</a></li><li><a href="#" class="fl">Nasveti za varnost</a></li><li><a href="#" class="fl">Pogosta vprašanja</a></li><li><a href="#" class="fl">Za zavetišča</a></li><li><a href="#" class="fl" aria-current="page">Zavetišča</a></li><li><a href="#" class="fl">Oglašujte pri nas</a></li><li><a href="#" class="fl">O nas</a></li>
+              </ul>
+              <ul class="flex flex-wrap gap-x-5 mt-3">
+                <li><a href="#" class="fl">Zasebnost</a></li><li><a href="#" class="fl">Piškotki</a></li><li><button type="button" class="fl" aria-haspopup="dialog">Nastavitve piškotkov</button></li><li><a href="#" class="fl">Pogoji uporabe</a></li><li><a href="#" class="fl">Impresum</a></li><li><a href="#" class="fl">Dostopnost</a></li>
+              </ul>
+            </nav>
+            <div class="lang mt-3 -ml-1.5" role="group" aria-label="Jezik: Slovenščina"><a href="#" class="ll" lang="sl" aria-current="true" aria-label="Slovenščina">SL</a><span aria-hidden="true">/</span><a href="#" class="ll" lang="en" hreflang="en" aria-label="English">EN</a></div>
+            <p class="text-sm text-muted-foreground mt-3">© 2026 Signapps. Najdimo je delovno ime storitve.</p>
+          </footer>
+        </main>
+        <span class="home-ind"></span>
+      </div></div>
+    </div>
+
+  </div></div>
+</section>
+
+<section class="tile-section !max-w-[1400px]">
+  <h1 class="tile-title">P3 T6 Shelter page · /zavetisca/{slug}</h1>
+  <p class="tile-lede">Everything needed to reach one shelter, on one calm page. The number leads, "Pokliči" is the one primary, the map is the only exact pin outside the owner view. States: full page, stale data, no phone, missing hours with the map offline, loading. Unknown slug is the P1 404 page with a link to T5. Structured data: <code>AnimalShelter</code> + <code>BreadcrumbList</code> (content slice). Shelter data is SAMPLE.</p>
+
+  <!-- ============ T6 WEB ============ -->
+
+  <!-- B-W1 -->
+  <p class="tile-h !mt-0">B-W1 · Full page at 1200: contact 7 / map 5, municipalities in three columns, two "what to do" rows (text buttons, not a second primary) · hover on "Prijavi najdeno žival"</p>
+  <div class="wrap-x"><div class="browser" lang="sl">
+    <div class="browser-bar"><span class="dots"><i></i><i></i><i></i></span><span class="url"><i class="ph ph-lock-simple"></i>najdimo.si/zavetisca/soncni-log</span></div>
+    <header class="flex items-center gap-8 px-12 h-[88px]">
+      <a href="#" class="logo-link" aria-label="Najdimo, na začetno stran"><svg class="logo-mark w-9 h-9" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg><span class="font-display font-bold text-2xl tracking-[-0.03em]" aria-hidden="true">Najdimo</span></a>
+      <nav aria-label="Glavni meni"><ul class="flex items-center gap-2">
+        <li><a href="#" class="nl">Zemljevid</a></li><li><a href="#" class="nl">Izgubljene</a></li><li><a href="#" class="nl">Najdene</a></li><li><a href="#" class="nl">Kako deluje</a></li>
+      </ul></nav>
+      <div class="ml-auto flex items-center gap-2">
+        <div class="lang" role="group" aria-label="Jezik: Slovenščina"><a href="#" class="ll" lang="sl" aria-current="true" aria-label="Slovenščina">SL</a><span aria-hidden="true">/</span><a href="#" class="ll" lang="en" hreflang="en" aria-label="English">EN</a></div>
+        <a href="#" class="btn btn-ghost btn-sm">Vpis</a>
+        <button type="button" class="btn btn-secondary btn-sm" aria-haspopup="menu" aria-expanded="false">Prijavi</button>
+      </div>
+    </header>
+    <main class="px-12 pt-4" data-sample>
+      <a href="#" class="btn btn-text -ml-3"><i class="ph-bold ph-arrow-left" aria-hidden="true"></i>Vsa zavetišča</a>
+      <h1 class="font-display font-bold text-5xl tracking-[-0.02em] mt-4">Zavetišče Sončni Log</h1>
+      <p class="text-sm text-muted-foreground mt-3">Pristojno za 24 občin</p>
+      <div class="grid grid-cols-12 gap-8 items-start mt-12">
+        <div class="col-span-7 grid gap-10">
+          <div>
+            <h2 class="lh">Telefon</h2>
+            <p class="tel text-3xl leading-9 mt-2">01 234 56 78</p>
+            <a href="tel:+38612345678" class="btn btn-primary btn-lg mt-5" aria-label="Pokliči Zavetišče Sončni Log"><i class="ph-bold ph-phone" aria-hidden="true"></i>Pokliči</a>
+          </div>
+          <div>
+            <h2 class="lh">Naslov</h2>
+            <address class="not-italic mt-2">Sončni log 12<br>1000 Ljubljana</address>
+            <a href="https://www.openstreetmap.org/?mlat=46.0505&amp;mlon=14.5605#map=17/46.0505/14.5605" target="_blank" rel="noopener" class="btn btn-text -ml-3 mt-1">Odpri v zemljevidu<i class="ph-bold ph-arrow-square-out" aria-hidden="true"></i><span class="sr-only"> (odpre se v novem zavihku)</span></a>
+          </div>
+          <div>
+            <h2 class="lh">Delovni čas</h2>
+            <dl class="hours mt-2"><dt>pon–pet</dt><dd>8.00–16.00</dd><dt>sob</dt><dd>9.00–12.00</dd><dt>ned in prazniki</dt><dd>zaprto</dd></dl>
+          </div>
+          <dl class="grid gap-4">
+            <div><dt class="lh">Spletna stran</dt><dd class="mt-1"><a href="https://www.soncni-log.si" target="_blank" rel="noopener" class="tl">www.soncni-log.si<i class="ph-bold ph-arrow-square-out" aria-hidden="true"></i><span class="sr-only"> (odpre se v novem zavihku)</span></a></dd></div>
+            <div><dt class="lh">E-pošta</dt><dd class="mt-1"><a href="mailto:info@soncni-log.si" class="tl">info@soncni-log.si</a></dd></div>
+          </dl>
+        </div>
+        <div class="col-span-5">
+          <div class="sh-map" aria-hidden="true"><div class="map-canvas" data-center="14.5605,46.0505" data-zoom="15" data-roads="all"></div><span class="sh-pin"><svg viewBox="0 0 54 66" width="54" height="66" focusable="false"><path d="M27 62 L15 47.78 A24 24 0 1 1 39 47.78 Z"/></svg><i class="ph-fill ph-buildings"></i></span></div>
+        </div>
+      </div>
+      <section class="mt-24">
+        <h2 class="font-display font-bold text-3xl tracking-[-0.015em]">Občine, za katere je pristojno (24)</h2>
+        <ul class="columns-3 gap-x-8 mt-8">
+          <li class="py-1">Borovnica</li><li class="py-1">Brezovica</li><li class="py-1">Dobrova - Polhov Gradec</li><li class="py-1">Dol pri Ljubljani</li><li class="py-1">Domžale</li><li class="py-1">Grosuplje</li><li class="py-1">Horjul</li><li class="py-1">Ig</li>
+          <li class="py-1">Ivančna Gorica</li><li class="py-1">Komenda</li><li class="py-1">Litija</li><li class="py-1">Ljubljana</li><li class="py-1">Log - Dragomer</li><li class="py-1">Logatec</li><li class="py-1">Lukovica</li><li class="py-1">Medvode</li>
+          <li class="py-1">Mengeš</li><li class="py-1">Moravče</li><li class="py-1">Škofljica</li><li class="py-1">Šmartno pri Litiji</li><li class="py-1">Trzin</li><li class="py-1">Velike Lašče</li><li class="py-1">Vodice</li><li class="py-1">Vrhnika</li>
+        </ul>
+      </section>
+      <section class="mt-24 max-w-[640px]">
+        <h2 class="font-display font-bold text-3xl tracking-[-0.015em]">Kaj storiti</h2>
+        <ul class="grid gap-6 mt-8">
+          <li class="flex gap-4"><i class="ph-fill ph-megaphone text-[32px] leading-none text-primary flex-none" aria-hidden="true"></i><div><p>Ste izgubili žival? Prijavite jo na Najdimo in pokličite zavetišče.</p><a href="#" class="btn btn-text -ml-3 mt-1">Prijavi izgubljeno žival<i class="ph-bold ph-arrow-right" aria-hidden="true"></i></a></div></li>
+          <li class="flex gap-4"><i class="ph-fill ph-hand-heart text-[32px] leading-none text-primary flex-none" aria-hidden="true"></i><div><p>Ste našli žival? Pokličite zavetišče in jo prijavite na Najdimo, da jo lastnik hitreje najde.</p><a href="#" class="btn btn-text -ml-3 mt-1 is-hover">Prijavi najdeno žival<i class="ph-bold ph-arrow-right" aria-hidden="true"></i></a></div></li>
+        </ul>
+      </section>
+      <div class="flex flex-wrap items-center gap-x-2 mt-16"><p class="text-sm text-muted-foreground">Podatki preverjeni 15. 10. 2026. Vir: [vir imenika].</p><a href="#" class="btn btn-text">Sporočite napako</a></div>
+    </main>
+    <footer class="px-12 pt-12 pb-10 mt-24">
+      <p class="flex items-center gap-4"><a href="#" class="logo-link" aria-label="Najdimo, na začetno stran"><svg class="logo-mark w-7 h-7" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg><span class="font-display font-bold text-lg" aria-hidden="true">Najdimo</span></a><span class="text-muted-foreground">Spet doma.</span></p>
+      <nav aria-label="Noga strani" class="mt-4 flex items-end gap-8">
+        <div class="flex-1 min-w-0">
+          <ul class="flex flex-wrap gap-x-6">
+            <li><a href="#" class="fl">Kako deluje</a></li><li><a href="#" class="fl">Nasveti za varnost</a></li><li><a href="#" class="fl">Pogosta vprašanja</a></li><li><a href="#" class="fl">Za zavetišča</a></li><li><a href="#" class="fl">Zavetišča</a></li><li><a href="#" class="fl">Oglašujte pri nas</a></li><li><a href="#" class="fl">O nas</a></li>
+          </ul>
+          <ul class="flex flex-wrap gap-x-6">
+            <li><a href="#" class="fl">Zasebnost</a></li><li><a href="#" class="fl">Piškotki</a></li><li><button type="button" class="fl" aria-haspopup="dialog">Nastavitve piškotkov</button></li><li><a href="#" class="fl">Pogoji uporabe</a></li><li><a href="#" class="fl">Impresum</a></li><li><a href="#" class="fl">Dostopnost</a></li>
+          </ul>
+        </div>
+        <div class="lang" role="group" aria-label="Jezik: Slovenščina"><a href="#" class="ll" lang="sl" aria-current="true" aria-label="Slovenščina">SL</a><span aria-hidden="true">/</span><a href="#" class="ll" lang="en" hreflang="en" aria-label="English">EN</a></div>
+      </nav>
+      <p class="text-sm text-muted-foreground mt-6">© 2026 Signapps. Najdimo je delovno ime storitve.</p>
+    </footer>
+  </div></div>
+
+  <!-- B-W2 -->
+  <p class="tile-h" style="margin-top:64px">B-W2 · Stale data (last checked more than 12 months ago): a note with a clock icon above the contact block; the data stays visible · viewport 1200 × 900</p>
+  <div class="wrap-x"><div class="browser scrollfade" lang="sl" style="height:900px">
+    <div class="browser-bar"><span class="dots"><i></i><i></i><i></i></span><span class="url"><i class="ph ph-lock-simple"></i>najdimo.si/zavetisca/lipa</span></div>
+    <header class="flex items-center gap-8 px-12 h-[88px]">
+      <a href="#" class="logo-link" aria-label="Najdimo, na začetno stran"><svg class="logo-mark w-9 h-9" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg><span class="font-display font-bold text-2xl tracking-[-0.03em]" aria-hidden="true">Najdimo</span></a>
+      <nav aria-label="Glavni meni"><ul class="flex items-center gap-2">
+        <li><a href="#" class="nl">Zemljevid</a></li><li><a href="#" class="nl">Izgubljene</a></li><li><a href="#" class="nl">Najdene</a></li><li><a href="#" class="nl">Kako deluje</a></li>
+      </ul></nav>
+      <div class="ml-auto flex items-center gap-2">
+        <div class="lang" role="group" aria-label="Jezik: Slovenščina"><a href="#" class="ll" lang="sl" aria-current="true" aria-label="Slovenščina">SL</a><span aria-hidden="true">/</span><a href="#" class="ll" lang="en" hreflang="en" aria-label="English">EN</a></div>
+        <a href="#" class="btn btn-ghost btn-sm">Vpis</a>
+        <button type="button" class="btn btn-secondary btn-sm" aria-haspopup="menu" aria-expanded="false">Prijavi</button>
+      </div>
+    </header>
+    <main class="px-12 pt-4" data-sample>
+      <a href="#" class="btn btn-text -ml-3"><i class="ph-bold ph-arrow-left" aria-hidden="true"></i>Vsa zavetišča</a>
+      <h1 class="font-display font-bold text-5xl tracking-[-0.02em] mt-4">Zavetišče Lipa</h1>
+      <p class="text-sm text-muted-foreground mt-3">Pristojno za 18 občin</p>
+      <div class="note mt-8 max-w-[640px]"><i class="ph-fill ph-clock" aria-hidden="true"></i><p>Podatki so bili nazadnje preverjeni 3. 8. 2025. Pred obiskom pokličite.</p></div>
+      <div class="grid grid-cols-12 gap-8 items-start mt-10">
+        <div class="col-span-7 grid gap-10">
+          <div>
+            <h2 class="lh">Telefon</h2>
+            <p class="tel text-3xl leading-9 mt-2">04 512 36 70</p>
+            <a href="tel:+38645123670" class="btn btn-primary btn-lg mt-5" aria-label="Pokliči Zavetišče Lipa"><i class="ph-bold ph-phone" aria-hidden="true"></i>Pokliči</a>
+          </div>
+          <div>
+            <h2 class="lh">Naslov</h2>
+            <address class="not-italic mt-2">Lipova pot 3<br>4220 Škofja Loka</address>
+            <a href="https://www.openstreetmap.org/?mlat=46.1655&amp;mlon=14.3069#map=17/46.1655/14.3069" target="_blank" rel="noopener" class="btn btn-text -ml-3 mt-1">Odpri v zemljevidu<i class="ph-bold ph-arrow-square-out" aria-hidden="true"></i><span class="sr-only"> (odpre se v novem zavihku)</span></a>
+          </div>
+          <div>
+            <h2 class="lh">Delovni čas</h2>
+            <dl class="hours mt-2"><dt>pon–pet</dt><dd>8.00–15.00</dd><dt>sob</dt><dd>9.00–12.00</dd><dt>ned in prazniki</dt><dd>zaprto</dd></dl>
+          </div>
+        </div>
+        <div class="col-span-5">
+          <div class="sh-map" aria-hidden="true"><div class="map-canvas" data-center="14.3069,46.1655" data-zoom="15" data-roads="all"></div><span class="sh-pin"><svg viewBox="0 0 54 66" width="54" height="66" focusable="false"><path d="M27 62 L15 47.78 A24 24 0 1 1 39 47.78 Z"/></svg><i class="ph-fill ph-buildings"></i></span></div>
+        </div>
+      </div>
+    </main>
+  </div></div>
+
+  <!-- B-W3 -->
+  <p class="tile-h" style="margin-top:64px">B-W3 · No phone published: a sentence says so and the website takes the call button's place as <code>secondary</code>; no primary in the view · viewport 1200 × 900</p>
+  <div class="wrap-x"><div class="browser scrollfade" lang="sl" style="height:900px">
+    <div class="browser-bar"><span class="dots"><i></i><i></i><i></i></span><span class="url"><i class="ph ph-lock-simple"></i>najdimo.si/zavetisca/ob-kolpi</span></div>
+    <header class="flex items-center gap-8 px-12 h-[88px]">
+      <a href="#" class="logo-link" aria-label="Najdimo, na začetno stran"><svg class="logo-mark w-9 h-9" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg><span class="font-display font-bold text-2xl tracking-[-0.03em]" aria-hidden="true">Najdimo</span></a>
+      <nav aria-label="Glavni meni"><ul class="flex items-center gap-2">
+        <li><a href="#" class="nl">Zemljevid</a></li><li><a href="#" class="nl">Izgubljene</a></li><li><a href="#" class="nl">Najdene</a></li><li><a href="#" class="nl">Kako deluje</a></li>
+      </ul></nav>
+      <div class="ml-auto flex items-center gap-2">
+        <div class="lang" role="group" aria-label="Jezik: Slovenščina"><a href="#" class="ll" lang="sl" aria-current="true" aria-label="Slovenščina">SL</a><span aria-hidden="true">/</span><a href="#" class="ll" lang="en" hreflang="en" aria-label="English">EN</a></div>
+        <a href="#" class="btn btn-ghost btn-sm">Vpis</a>
+        <button type="button" class="btn btn-secondary btn-sm" aria-haspopup="menu" aria-expanded="false">Prijavi</button>
+      </div>
+    </header>
+    <main class="px-12 pt-4" data-sample>
+      <a href="#" class="btn btn-text -ml-3"><i class="ph-bold ph-arrow-left" aria-hidden="true"></i>Vsa zavetišča</a>
+      <h1 class="font-display font-bold text-5xl tracking-[-0.02em] mt-4">Zavetišče Ob Kolpi</h1>
+      <p class="text-sm text-muted-foreground mt-3">Pristojno za 3 občine</p>
+      <div class="grid grid-cols-12 gap-8 items-start mt-12">
+        <div class="col-span-7 grid gap-10">
+          <div>
+            <h2 class="lh">Telefon</h2>
+            <p class="mt-2 max-w-[48ch]">Telefonska številka ni objavljena. Stik najdete na spletni strani zavetišča.</p>
+            <a href="https://www.obkolpi.si" target="_blank" rel="noopener" class="btn btn-secondary btn-lg mt-5">Spletna stran zavetišča<i class="ph-bold ph-arrow-square-out" aria-hidden="true"></i><span class="sr-only"> (odpre se v novem zavihku)</span></a>
+          </div>
+          <div>
+            <h2 class="lh">Naslov</h2>
+            <address class="not-italic mt-2">Ob Kolpi 5<br>8330 Metlika</address>
+            <a href="https://www.openstreetmap.org/?mlat=45.6480&amp;mlon=15.3140#map=17/45.6480/15.3140" target="_blank" rel="noopener" class="btn btn-text -ml-3 mt-1">Odpri v zemljevidu<i class="ph-bold ph-arrow-square-out" aria-hidden="true"></i><span class="sr-only"> (odpre se v novem zavihku)</span></a>
+          </div>
+          <div>
+            <h2 class="lh">Delovni čas</h2>
+            <dl class="hours mt-2"><dt>pon–pet</dt><dd>9.00–15.00</dd><dt>sob</dt><dd>zaprto</dd><dt>ned in prazniki</dt><dd>zaprto</dd></dl>
+          </div>
+          <dl class="grid gap-4">
+            <div><dt class="lh">E-pošta</dt><dd class="mt-1"><a href="mailto:info@obkolpi.si" class="tl">info@obkolpi.si</a></dd></div>
+          </dl>
+        </div>
+        <div class="col-span-5">
+          <div class="sh-map" aria-hidden="true"><div class="map-canvas" data-center="15.3140,45.6480" data-zoom="15" data-roads="all"></div><span class="sh-pin"><svg viewBox="0 0 54 66" width="54" height="66" focusable="false"><path d="M27 62 L15 47.78 A24 24 0 1 1 39 47.78 Z"/></svg><i class="ph-fill ph-buildings"></i></span></div>
+        </div>
+      </div>
+    </main>
+  </div></div>
+
+  <!-- B-W4 -->
+  <p class="tile-h" style="margin-top:64px">B-W4 · Loading: skeleton for h1, phone, hours lines and the map block; one polite "Stran se nalaga." for the page · viewport 1200 × 760</p>
+  <div class="wrap-x"><div class="browser scrollfade" lang="sl" style="height:760px">
+    <div class="browser-bar"><span class="dots"><i></i><i></i><i></i></span><span class="url"><i class="ph ph-lock-simple"></i>najdimo.si/zavetisca/soncni-log</span></div>
+    <header class="flex items-center gap-8 px-12 h-[88px]">
+      <a href="#" class="logo-link" aria-label="Najdimo, na začetno stran"><svg class="logo-mark w-9 h-9" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg><span class="font-display font-bold text-2xl tracking-[-0.03em]" aria-hidden="true">Najdimo</span></a>
+      <nav aria-label="Glavni meni"><ul class="flex items-center gap-2">
+        <li><a href="#" class="nl">Zemljevid</a></li><li><a href="#" class="nl">Izgubljene</a></li><li><a href="#" class="nl">Najdene</a></li><li><a href="#" class="nl">Kako deluje</a></li>
+      </ul></nav>
+      <div class="ml-auto flex items-center gap-2">
+        <div class="lang" role="group" aria-label="Jezik: Slovenščina"><a href="#" class="ll" lang="sl" aria-current="true" aria-label="Slovenščina">SL</a><span aria-hidden="true">/</span><a href="#" class="ll" lang="en" hreflang="en" aria-label="English">EN</a></div>
+        <a href="#" class="btn btn-ghost btn-sm">Vpis</a>
+        <button type="button" class="btn btn-secondary btn-sm" aria-haspopup="menu" aria-expanded="false">Prijavi</button>
+      </div>
+    </header>
+    <main class="px-12 pt-4" aria-busy="true">
+      <p class="sr-only" role="status">Stran se nalaga.</p>
+      <a href="#" class="btn btn-text -ml-3"><i class="ph-bold ph-arrow-left" aria-hidden="true"></i>Vsa zavetišča</a>
+      <div aria-hidden="true">
+        <div class="skel h-[52px] mt-4" style="width:46%"></div>
+        <div class="skel h-4 mt-4" style="width:16%"></div>
+        <div class="grid grid-cols-12 gap-8 items-start mt-12">
+          <div class="col-span-7">
+            <div class="skel h-4" style="width:14%"></div>
+            <div class="skel h-9 mt-3" style="width:40%"></div>
+            <div class="skel h-14 mt-5 !rounded-full" style="width:168px"></div>
+            <div class="skel h-4 mt-10" style="width:18%"></div>
+            <div class="skel h-5 mt-3" style="width:44%"></div>
+            <div class="skel h-5 mt-2" style="width:38%"></div>
+            <div class="skel h-5 mt-2" style="width:50%"></div>
+          </div>
+          <div class="col-span-5"><div class="skel !rounded-[24px]" style="aspect-ratio:4/3"></div></div>
+        </div>
+      </div>
+    </main>
+  </div></div>
+
+  <!-- ============ T6 MOBILE ============ -->
+  <h2 class="tile-title" style="margin-top:96px">T6 at 390 px (mobile web)</h2>
+  <p class="tile-lede">Contact first, map under it (full width, 4:3), municipalities in one column. Numbers and hours never wrap mid-number.</p>
+  <div class="wrap-x"><div class="flex flex-wrap gap-x-10 gap-y-12 items-start">
+
+    <!-- B-M1 -->
+    <div>
+      <p class="tile-h !mt-0">B-M1 · Full page</p>
+      <div class="phone tall"><div class="phone-screen" lang="sl">
+        <div class="statusbar"><span>14:24</span><span class="isl"></span><span class="ic" aria-hidden="true"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <div class="mweb" aria-hidden="true"><span><i class="ph ph-lock-simple"></i>najdimo.si/zavetisca/soncni-log</span></div>
+        <header class="flex items-center gap-2 px-5 h-16 flex-none">
+          <a href="#" class="logo-link mr-auto" aria-label="Najdimo, na začetno stran"><svg class="logo-mark w-8 h-8" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg><span class="font-display font-bold text-xl tracking-[-0.03em]" aria-hidden="true">Najdimo</span></a>
+          <button type="button" class="btn btn-secondary btn-sm !px-4" aria-haspopup="menu" aria-expanded="false"><i class="ph-bold ph-plus" aria-hidden="true"></i>Prijavi</button>
+          <button type="button" class="iconbtn" aria-label="Odpri meni" aria-expanded="false"><i class="ph-bold ph-list" aria-hidden="true"></i></button>
+        </header>
+        <main class="px-5 pt-2" data-sample>
+          <a href="#" class="btn btn-text -ml-3"><i class="ph-bold ph-arrow-left" aria-hidden="true"></i>Vsa zavetišča</a>
+          <h1 class="font-display font-bold text-3xl tracking-[-0.02em] mt-3">Zavetišče Sončni Log</h1>
+          <p class="text-sm text-muted-foreground mt-2">Pristojno za 24 občin</p>
+          <div class="grid gap-8 mt-8">
+            <div>
+              <h2 class="lh">Telefon</h2>
+              <p class="tel text-2xl leading-[30px] mt-2">01 234 56 78</p>
+              <a href="tel:+38612345678" class="btn btn-primary btn-lg btn-block mt-5" aria-label="Pokliči Zavetišče Sončni Log"><i class="ph-bold ph-phone" aria-hidden="true"></i>Pokliči</a>
+            </div>
+            <div>
+              <h2 class="lh">Naslov</h2>
+              <address class="not-italic mt-2">Sončni log 12<br>1000 Ljubljana</address>
+              <a href="https://www.openstreetmap.org/?mlat=46.0505&amp;mlon=14.5605#map=17/46.0505/14.5605" target="_blank" rel="noopener" class="btn btn-text -ml-3 mt-1">Odpri v zemljevidu<i class="ph-bold ph-arrow-square-out" aria-hidden="true"></i><span class="sr-only"> (odpre se v novem zavihku)</span></a>
+            </div>
+            <div>
+              <h2 class="lh">Delovni čas</h2>
+              <dl class="hours mt-2"><dt>pon–pet</dt><dd>8.00–16.00</dd><dt>sob</dt><dd>9.00–12.00</dd><dt>ned in prazniki</dt><dd>zaprto</dd></dl>
+            </div>
+            <dl class="grid gap-3">
+              <div><dt class="lh">Spletna stran</dt><dd><a href="https://www.soncni-log.si" target="_blank" rel="noopener" class="tl">www.soncni-log.si<i class="ph-bold ph-arrow-square-out" aria-hidden="true"></i><span class="sr-only"> (odpre se v novem zavihku)</span></a></dd></div>
+              <div><dt class="lh">E-pošta</dt><dd><a href="mailto:info@soncni-log.si" class="tl">info@soncni-log.si</a></dd></div>
+            </dl>
+            <div class="sh-map" aria-hidden="true"><div class="map-canvas" data-center="14.5605,46.0505" data-zoom="14.6" data-roads="all"></div><span class="sh-pin"><svg viewBox="0 0 54 66" width="54" height="66" focusable="false"><path d="M27 62 L15 47.78 A24 24 0 1 1 39 47.78 Z"/></svg><i class="ph-fill ph-buildings"></i></span></div>
+          </div>
+          <section class="mt-12">
+            <h2 class="font-display font-bold text-2xl tracking-[-0.015em]">Občine, za katere je pristojno (24)</h2>
+            <ul class="mt-5">
+              <li class="py-1">Borovnica</li><li class="py-1">Brezovica</li><li class="py-1">Dobrova - Polhov Gradec</li><li class="py-1">Dol pri Ljubljani</li><li class="py-1">Domžale</li><li class="py-1">Grosuplje</li><li class="py-1">Horjul</li><li class="py-1">Ig</li>
+              <li class="py-1">Ivančna Gorica</li><li class="py-1">Komenda</li><li class="py-1">Litija</li><li class="py-1">Ljubljana</li><li class="py-1">Log - Dragomer</li><li class="py-1">Logatec</li><li class="py-1">Lukovica</li><li class="py-1">Medvode</li>
+              <li class="py-1">Mengeš</li><li class="py-1">Moravče</li><li class="py-1">Škofljica</li><li class="py-1">Šmartno pri Litiji</li><li class="py-1">Trzin</li><li class="py-1">Velike Lašče</li><li class="py-1">Vodice</li><li class="py-1">Vrhnika</li>
+            </ul>
+          </section>
+          <section class="mt-12">
+            <h2 class="font-display font-bold text-2xl tracking-[-0.015em]">Kaj storiti</h2>
+            <ul class="grid gap-6 mt-6">
+              <li class="flex gap-4"><i class="ph-fill ph-megaphone text-[32px] leading-none text-primary flex-none" aria-hidden="true"></i><div><p>Ste izgubili žival? Prijavite jo na Najdimo in pokličite zavetišče.</p><a href="#" class="btn btn-text -ml-3 mt-1">Prijavi izgubljeno žival<i class="ph-bold ph-arrow-right" aria-hidden="true"></i></a></div></li>
+              <li class="flex gap-4"><i class="ph-fill ph-hand-heart text-[32px] leading-none text-primary flex-none" aria-hidden="true"></i><div><p>Ste našli žival? Pokličite zavetišče in jo prijavite na Najdimo, da jo lastnik hitreje najde.</p><a href="#" class="btn btn-text -ml-3 mt-1">Prijavi najdeno žival<i class="ph-bold ph-arrow-right" aria-hidden="true"></i></a></div></li>
+            </ul>
+          </section>
+          <div class="mt-12"><p class="text-sm text-muted-foreground">Podatki preverjeni 15. 10. 2026. Vir: [vir imenika].</p><a href="#" class="btn btn-text -ml-3">Sporočite napako</a></div>
+          <footer class="mt-12">
+            <p class="flex items-center gap-3"><a href="#" class="logo-link" aria-label="Najdimo, na začetno stran"><svg class="logo-mark w-7 h-7" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg><span class="font-display font-bold text-lg" aria-hidden="true">Najdimo</span></a><span class="text-muted-foreground">Spet doma.</span></p>
+            <nav aria-label="Noga strani" class="mt-3">
+              <ul class="flex flex-wrap gap-x-5">
+                <li><a href="#" class="fl">Kako deluje</a></li><li><a href="#" class="fl">Nasveti za varnost</a></li><li><a href="#" class="fl">Pogosta vprašanja</a></li><li><a href="#" class="fl">Za zavetišča</a></li><li><a href="#" class="fl">Zavetišča</a></li><li><a href="#" class="fl">Oglašujte pri nas</a></li><li><a href="#" class="fl">O nas</a></li>
+              </ul>
+              <ul class="flex flex-wrap gap-x-5 mt-3">
+                <li><a href="#" class="fl">Zasebnost</a></li><li><a href="#" class="fl">Piškotki</a></li><li><button type="button" class="fl" aria-haspopup="dialog">Nastavitve piškotkov</button></li><li><a href="#" class="fl">Pogoji uporabe</a></li><li><a href="#" class="fl">Impresum</a></li><li><a href="#" class="fl">Dostopnost</a></li>
+              </ul>
+            </nav>
+            <div class="lang mt-3 -ml-1.5" role="group" aria-label="Jezik: Slovenščina"><a href="#" class="ll" lang="sl" aria-current="true" aria-label="Slovenščina">SL</a><span aria-hidden="true">/</span><a href="#" class="ll" lang="en" hreflang="en" aria-label="English">EN</a></div>
+            <p class="text-sm text-muted-foreground mt-3">© 2026 Signapps. Najdimo je delovno ime storitve.</p>
+          </footer>
+        </main>
+        <span class="home-ind"></span>
+      </div></div>
+    </div>
+
+    <!-- B-M2 -->
+    <div>
+      <p class="tile-h !mt-0">B-M2 · Stale data note</p>
+      <div class="phone"><div class="phone-screen" lang="sl">
+        <div class="statusbar"><span>14:24</span><span class="isl"></span><span class="ic" aria-hidden="true"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <div class="mweb" aria-hidden="true"><span><i class="ph ph-lock-simple"></i>najdimo.si/zavetisca/lipa</span></div>
+        <header class="flex items-center gap-2 px-5 h-16 flex-none">
+          <a href="#" class="logo-link mr-auto" aria-label="Najdimo, na začetno stran"><svg class="logo-mark w-8 h-8" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg><span class="font-display font-bold text-xl tracking-[-0.03em]" aria-hidden="true">Najdimo</span></a>
+          <button type="button" class="btn btn-secondary btn-sm !px-4" aria-haspopup="menu" aria-expanded="false"><i class="ph-bold ph-plus" aria-hidden="true"></i>Prijavi</button>
+          <button type="button" class="iconbtn" aria-label="Odpri meni" aria-expanded="false"><i class="ph-bold ph-list" aria-hidden="true"></i></button>
+        </header>
+        <main class="flex-1 px-5 pt-2 overflow-hidden" data-sample>
+          <a href="#" class="btn btn-text -ml-3"><i class="ph-bold ph-arrow-left" aria-hidden="true"></i>Vsa zavetišča</a>
+          <h1 class="font-display font-bold text-3xl tracking-[-0.02em] mt-3">Zavetišče Lipa</h1>
+          <p class="text-sm text-muted-foreground mt-2">Pristojno za 18 občin</p>
+          <div class="note mt-6"><i class="ph-fill ph-clock" aria-hidden="true"></i><p>Podatki so bili nazadnje preverjeni 3. 8. 2025. Pred obiskom pokličite.</p></div>
+          <div class="grid gap-8 mt-8">
+            <div>
+              <h2 class="lh">Telefon</h2>
+              <p class="tel text-2xl leading-[30px] mt-2">04 512 36 70</p>
+              <a href="tel:+38645123670" class="btn btn-primary btn-lg btn-block mt-5" aria-label="Pokliči Zavetišče Lipa"><i class="ph-bold ph-phone" aria-hidden="true"></i>Pokliči</a>
+            </div>
+            <div>
+              <h2 class="lh">Naslov</h2>
+              <address class="not-italic mt-2">Lipova pot 3<br>4220 Škofja Loka</address>
+              <a href="https://www.openstreetmap.org/?mlat=46.1655&amp;mlon=14.3069#map=17/46.1655/14.3069" target="_blank" rel="noopener" class="btn btn-text -ml-3 mt-1">Odpri v zemljevidu<i class="ph-bold ph-arrow-square-out" aria-hidden="true"></i><span class="sr-only"> (odpre se v novem zavihku)</span></a>
+            </div>
+          </div>
+        </main>
+        <span class="home-ind"></span>
+      </div></div>
+    </div>
+
+    <!-- B-M3 -->
+    <div>
+      <p class="tile-h !mt-0">B-M3 · No phone: website as <code>secondary</code></p>
+      <div class="phone"><div class="phone-screen" lang="sl">
+        <div class="statusbar"><span>14:25</span><span class="isl"></span><span class="ic" aria-hidden="true"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <div class="mweb" aria-hidden="true"><span><i class="ph ph-lock-simple"></i>najdimo.si/zavetisca/ob-kolpi</span></div>
+        <header class="flex items-center gap-2 px-5 h-16 flex-none">
+          <a href="#" class="logo-link mr-auto" aria-label="Najdimo, na začetno stran"><svg class="logo-mark w-8 h-8" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg><span class="font-display font-bold text-xl tracking-[-0.03em]" aria-hidden="true">Najdimo</span></a>
+          <button type="button" class="btn btn-secondary btn-sm !px-4" aria-haspopup="menu" aria-expanded="false"><i class="ph-bold ph-plus" aria-hidden="true"></i>Prijavi</button>
+          <button type="button" class="iconbtn" aria-label="Odpri meni" aria-expanded="false"><i class="ph-bold ph-list" aria-hidden="true"></i></button>
+        </header>
+        <main class="flex-1 px-5 pt-2 overflow-hidden" data-sample>
+          <a href="#" class="btn btn-text -ml-3"><i class="ph-bold ph-arrow-left" aria-hidden="true"></i>Vsa zavetišča</a>
+          <h1 class="font-display font-bold text-3xl tracking-[-0.02em] mt-3">Zavetišče Ob Kolpi</h1>
+          <p class="text-sm text-muted-foreground mt-2">Pristojno za 3 občine</p>
+          <div class="grid gap-8 mt-8">
+            <div>
+              <h2 class="lh">Telefon</h2>
+              <p class="mt-2">Telefonska številka ni objavljena. Stik najdete na spletni strani zavetišča.</p>
+              <a href="https://www.obkolpi.si" target="_blank" rel="noopener" class="btn btn-secondary btn-lg btn-block mt-5">Spletna stran zavetišča<i class="ph-bold ph-arrow-square-out" aria-hidden="true"></i><span class="sr-only"> (odpre se v novem zavihku)</span></a>
+            </div>
+            <div>
+              <h2 class="lh">Naslov</h2>
+              <address class="not-italic mt-2">Ob Kolpi 5<br>8330 Metlika</address>
+              <a href="https://www.openstreetmap.org/?mlat=45.6480&amp;mlon=15.3140#map=17/45.6480/15.3140" target="_blank" rel="noopener" class="btn btn-text -ml-3 mt-1">Odpri v zemljevidu<i class="ph-bold ph-arrow-square-out" aria-hidden="true"></i><span class="sr-only"> (odpre se v novem zavihku)</span></a>
+            </div>
+            <div>
+              <h2 class="lh">Delovni čas</h2>
+              <dl class="hours mt-2"><dt>pon–pet</dt><dd>9.00–15.00</dd><dt>sob</dt><dd>zaprto</dd><dt>ned in prazniki</dt><dd>zaprto</dd></dl>
+            </div>
+          </div>
+        </main>
+        <span class="home-ind"></span>
+      </div></div>
+    </div>
+
+    <!-- B-M4 -->
+    <div>
+      <p class="tile-h !mt-0">B-M4 · Hours not published, map offline: no map block, the address stays (scrolled)</p>
+      <div class="phone"><div class="phone-screen" lang="sl">
+        <div class="statusbar"><span>14:25</span><span class="isl"></span><span class="ic" aria-hidden="true"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <div class="mweb" aria-hidden="true"><span><i class="ph ph-lock-simple"></i>najdimo.si/zavetisca/brin</span></div>
+        <main class="flex-1 px-5 pt-4 overflow-hidden" data-sample>
+          <div class="grid gap-8">
+            <div>
+              <h2 class="lh">Telefon</h2>
+              <p class="tel text-2xl leading-[30px] mt-2">02 870 45 60</p>
+              <a href="tel:+38628704560" class="btn btn-primary btn-lg btn-block mt-5" aria-label="Pokliči Zavetišče Brin"><i class="ph-bold ph-phone" aria-hidden="true"></i>Pokliči</a>
+            </div>
+            <div>
+              <h2 class="lh">Naslov</h2>
+              <address class="not-italic mt-2">Brinova ulica 8<br>2380 Slovenj Gradec</address>
+              <a href="https://www.openstreetmap.org/?mlat=46.5100&amp;mlon=15.0800#map=17/46.5100/15.0800" target="_blank" rel="noopener" class="btn btn-text -ml-3 mt-1">Odpri v zemljevidu<i class="ph-bold ph-arrow-square-out" aria-hidden="true"></i><span class="sr-only"> (odpre se v novem zavihku)</span></a>
+            </div>
+            <div>
+              <h2 class="lh">Delovni čas</h2>
+              <p class="mt-2">Delovni čas ni objavljen.</p>
+            </div>
+            <dl class="grid gap-3">
+              <div><dt class="lh">Spletna stran</dt><dd><a href="https://www.zavetisce-brin.si" target="_blank" rel="noopener" class="tl">www.zavetisce-brin.si<i class="ph-bold ph-arrow-square-out" aria-hidden="true"></i><span class="sr-only"> (odpre se v novem zavihku)</span></a></dd></div>
+            </dl>
+          </div>
+          <section class="mt-12">
+            <h2 class="font-display font-bold text-2xl tracking-[-0.015em]">Občine, za katere je pristojno (12)</h2>
+            <ul class="mt-5">
+              <li class="py-1">Črna na Koroškem</li><li class="py-1">Dravograd</li><li class="py-1">Mežica</li><li class="py-1">Mislinja</li><li class="py-1">Muta</li>
+            </ul>
+          </section>
+        </main>
+        <span class="home-ind"></span>
+      </div></div>
+    </div>
+
+    <!-- B-M5 -->
+    <div>
+      <p class="tile-h !mt-0">B-M5 · Loading skeleton</p>
+      <div class="phone"><div class="phone-screen" lang="sl">
+        <div class="statusbar"><span>14:24</span><span class="isl"></span><span class="ic" aria-hidden="true"><i class="ph-fill ph-cell-signal-full"></i><i class="ph-fill ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span></div>
+        <div class="mweb" aria-hidden="true"><span><i class="ph ph-lock-simple"></i>najdimo.si/zavetisca/soncni-log</span></div>
+        <header class="flex items-center gap-2 px-5 h-16 flex-none">
+          <a href="#" class="logo-link mr-auto" aria-label="Najdimo, na začetno stran"><svg class="logo-mark w-8 h-8" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg><span class="font-display font-bold text-xl tracking-[-0.03em]" aria-hidden="true">Najdimo</span></a>
+          <button type="button" class="btn btn-secondary btn-sm !px-4" aria-haspopup="menu" aria-expanded="false"><i class="ph-bold ph-plus" aria-hidden="true"></i>Prijavi</button>
+          <button type="button" class="iconbtn" aria-label="Odpri meni" aria-expanded="false"><i class="ph-bold ph-list" aria-hidden="true"></i></button>
+        </header>
+        <main class="flex-1 px-5 pt-2 overflow-hidden" aria-busy="true">
+          <p class="sr-only" role="status">Stran se nalaga.</p>
+          <a href="#" class="btn btn-text -ml-3"><i class="ph-bold ph-arrow-left" aria-hidden="true"></i>Vsa zavetišča</a>
+          <div aria-hidden="true">
+            <div class="skel h-9 mt-3" style="width:78%"></div>
+            <div class="skel h-4 mt-3" style="width:40%"></div>
+            <div class="skel h-4 mt-8" style="width:24%"></div>
+            <div class="skel h-[30px] mt-3" style="width:56%"></div>
+            <div class="skel h-14 mt-5 !rounded-full"></div>
+            <div class="skel h-4 mt-8" style="width:30%"></div>
+            <div class="skel h-5 mt-3" style="width:70%"></div>
+            <div class="skel h-5 mt-2" style="width:60%"></div>
+            <div class="skel h-5 mt-2" style="width:76%"></div>
+            <div class="skel mt-8 !rounded-[24px]" style="aspect-ratio:4/3"></div>
+          </div>
+        </main>
+        <span class="home-ind"></span>
+      </div></div>
+    </div>
+
+  </div></div>
+</section>
+<p class="tile-section !py-8 text-sm text-muted-foreground">Copy: docs/content/pages/P3-public-pages.md, T5 and T6 (<code>shelters.*</code> keys, SEO and notes), plus P1 shell strings (header, footer with "Zavetišča", "Nalaganje …", "Stran se nalaga.", "Poskusi znova", "(odpre se v novem zavihku)"). SAMPLE data, marked <code>data-sample</code>: all 17 shelter names, phone numbers, addresses, opening hours, websites, e-mails, area labels and counts are fictional until the directory provides them; municipality names are real. Placeholders in brackets are not product copy: the legal note slot (wording from the lawyer, LQ-06) and "[vir imenika]" (directory source text). Phone numbers are set in Atkinson Hyperlegible Next bold with tabular figures (distinct digits, slashed zero). Map: live OpenFreeMap tiles in the calm style; the pin is the P5 pin with the <code>buildings</code> icon. Icons: Phosphor. No ad slot on T5 or T6. Phone and e-mail links are inert in this mockup.</p>
+</div>
+
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<script src="../directions/directions.js"></script>
+<script>
+/* Mockup only: directions.js suffixes ids, for and aria-describedby per theme; do the same for aria-controls,
+   aria-activedescendant and in-page anchors so the combobox references resolve. Placeholder, tel: and mailto: links stay inert. */
+(function () {
+  var stage = document.getElementById('stage');
+  function fix() {
+    stage.querySelectorAll('.scope').forEach(function (s) {
+      var t = s.getAttribute('data-theme');
+      ['aria-controls', 'aria-activedescendant'].forEach(function (a) {
+        s.querySelectorAll('[' + a + ']').forEach(function (n) { n.setAttribute(a, n.getAttribute(a) + '-' + t); });
+      });
+      s.querySelectorAll('a[href^="#"]:not([href="#"])').forEach(function (n) { n.setAttribute('href', n.getAttribute('href') + '-' + t); });
+    });
+  }
+  document.querySelectorAll('[data-mode]').forEach(function (b) { b.addEventListener('click', fix); });
+  stage.addEventListener('click', function (e) { if (e.target.closest('a[href="#"], a[href^="tel:"], a[href^="mailto:"]')) e.preventDefault(); });
+  fix();
+})();
+</script>
+</body>
+</html>
