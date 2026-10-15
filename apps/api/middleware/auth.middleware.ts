@@ -14,8 +14,9 @@ import { AppError } from '../lib/errors.ts';
 const Claims = z.object({
 	sub: z.uuid(),
 	is_anonymous: z.boolean().default(false),
-	aal: z.enum(['aal1', 'aal2']).default('aal1'),
-	user_metadata: z.object({ email_verified: z.boolean().optional(), locale: z.unknown() }).partial().optional(),
+	// Lenient on the rest: an odd value must never lock a user out, nor grant more (unknown aal = aal1).
+	aal: z.enum(['aal1', 'aal2']).catch('aal1'),
+	user_metadata: z.object({ email_verified: z.unknown(), locale: z.unknown() }).partial().nullish().catch(null),
 });
 export type Claims = z.infer<typeof Claims>;
 
@@ -86,8 +87,9 @@ async function authenticate(token: string): Promise<Actor> {
 		role: profile.role,
 		is_anonymous: claims.is_anonymous,
 		aal: claims.aal,
-		// Supabase sets user_metadata.email_verified once the address is confirmed (email) or the provider says so.
-		email_verified: !claims.is_anonymous && claims.user_metadata?.email_verified === true,
+		// Supabase sets user_metadata.email_verified once the address is confirmed (email) or the provider says so
+		// (some providers send the string "true").
+		email_verified: !claims.is_anonymous && String(claims.user_metadata?.email_verified) === 'true',
 		locale: profile.locale === 'en' ? 'en' : 'sl',
 	};
 }

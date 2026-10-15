@@ -90,6 +90,12 @@ describe('authMiddleware', () => {
 		});
 	});
 
+	it('reads email_verified leniently (provider string "true") and never fails on odd optional claims', async () => {
+		const claims = { user_metadata: { email_verified: 'true' }, aal: 'aal9' } as unknown as TestTokenClaims;
+		const res = await get('/auth', { sub: newId(), ...claims });
+		expect(res.body).toMatchObject({ email_verified: true, aal: 'aal1' });
+	});
+
 	it.each([
 		['expired', { expiresIn: Math.floor(Date.now() / 1000) - 60 }],
 		['signed with another secret', { secret: 'another-secret-another-secret-another-secret' }],
