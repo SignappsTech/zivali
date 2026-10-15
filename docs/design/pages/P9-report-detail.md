@@ -41,7 +41,7 @@ Photo carousel full-bleed under the status bar (swipe, page position shown as sm
 
 ## Owner view (the signed-in owner or the manage-link holder)
 
-The owner of a lost report also sees the **responsible shelter** row (as in P6): name for the municipality, the number on web, and a call action (FR-044).
+The owner of a lost report also sees the **responsible shelter** row (as in P6): name for the municipality, the number on web, and a call action (FR-044). The row is the shared `shelter_row` pattern from P6 §Flow, including the unconfirmed states ("Morda pristojno zavetišče" plus muted "Ni potrjeno", or up to 2 nearest shelters).
 
 Replaces slot A with: primary `lg` "Animal is home again" (P14), text buttons "Edit", "Poster", and an overflow with "Close search", "Boost" (M4, hidden until then). A calm `note` appears when there are new match suggestions ("2 possible matches", link to P11) and when the report is held or hidden. The owner also sees their exact pin with "visible only to you" on the map.
 

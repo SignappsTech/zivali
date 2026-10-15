@@ -29,7 +29,7 @@ A single column of line fields grouped by h3 labels with 40 px gaps. No cards, n
 1. **Photos:** up to 5, camera or gallery, drag to reorder on web, first photo is the cover, delete with confirmation (photos removed from storage). Upload progress per photo.
 2. **Basics:** species (choice rows Dog / Cat), name, sex (three pills), birth year (select).
 3. **Looks:** breed (searchable select, localised names, "Mixed / Unknown"), colours (toggle pills), pattern (select), size (three choice pills).
-4. **Chip:** line field (digits, grouped as typed), format hint; below it a link for dogs to the official CRPsi lookup (text button with external-link icon); duplicates are flagged silently to moderators (never shown to the user).
+4. **Chip:** line field (digits, grouped as typed), format hint; below it the `pets.chip_register_note` help text (plain text, no link); duplicates are flagged silently to moderators (never shown to the user).
 5. **Collar and notes:** collar description, medication, temperament (textareas).
 
 Sticky bottom bar on mobile with primary "Save"; web has Save at the end of the page and a sticky summary on `lg`. AI pre-fill (M3) adds the sparkle suggestion sentence on the photos step.

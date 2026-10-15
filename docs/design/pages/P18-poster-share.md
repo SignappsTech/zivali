@@ -31,6 +31,7 @@ Give an owner a printable A4 poster and one-tap sharing so the search reaches ne
 | Name | pet name | 96 pt bold display |
 | Facts | colour, size, collar, special marks (3 to 5 lines) | 26 pt, regular, black |
 | Where and when | area name, approximate (never an address), date | 26 pt |
+| Reward (optional, lost posters with a reward only) | amount large (32 pt bold, `tabular-nums`), note small (14 pt, one line, max 80 chars), then the `poster.safety_reward` line (12 pt) | Between Where and when and Call to action. Omitted entirely when no reward. Must not shrink the photo (still at least 40 % of the height) or the QR (still at least 55 mm); trim the facts to 3 lines before shrinking either. |
 | Call to action | "If you see this animal, scan the code" | 32 pt bold |
 | QR | large code (at least 55 mm) with the short link printed below it | quiet zone 4 modules, black on white, must scan in greyscale |
 | Footer | logo mark and wordmark, small | greyscale-safe, 12 pt |
