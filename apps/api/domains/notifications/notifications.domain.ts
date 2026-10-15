@@ -68,7 +68,7 @@ const uuidFrom = (key: string) =>
 
 /**
  * notify.send (C10): load the recipient, prefs and quiet hours (deferred to their end with startAfter), the type's
- * variables (sources.ts), then, in one transaction, the nearby-alert delivery row (one per report per user) and the
+ * variables (sources.ts), then, in one transaction, the
  * inbox row (unique per user_id and dedupe_key; a duplicate stops here) with its `notification.created` broadcast
  * on `user:<id>`; after the commit push (Expo adapter) and email (Brevo adapter), each recorded, never retried.
  */
@@ -86,7 +86,7 @@ export async function deliver(data: unknown, ctx: Ctx): Promise<void> {
 	const { type, user_id } = input;
 	const spec = TYPES[type];
 	if (type === 'nearby_lost' && !input.payload.report_id) {
-		// Without the report id the one-per-report limit (alert_deliveries) cannot hold.
+		// The alerts fan-out records the one-per-report alert_deliveries row; without the id the source cannot resolve.
 		ctx.logger.error({ type }, 'notify.send: nearby_lost without report_id dropped');
 		return;
 	}
@@ -129,11 +129,6 @@ export async function deliver(data: unknown, ctx: Ctx): Promise<void> {
 	// Inbox and push never carry the email-only fields (Vet Partner line, unsubscribe link).
 	const payload = Object.fromEntries(Object.entries(vars).filter(([key]) => !EMAIL_ONLY.includes(key)));
 	const fresh = await prisma.$transaction(async (tx) => {
-		const report_id = input.payload.report_id;
-		if (type === 'nearby_lost' && report_id) {
-			const channel = push ? 'push' : inApp ? 'in_app' : 'email';
-			if (!(await NotificationsDao.insertAlertDelivery({ report_id, user_id, channel }, tx))) return false;
-		}
 		if (!inApp) return true;
 		const row = await NotificationsDao.insertNotification(
 			{ user_id, type, payload, dedupe_key: input.dedupe_key },
