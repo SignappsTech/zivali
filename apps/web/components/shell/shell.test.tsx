@@ -118,11 +118,17 @@ describe('SiteHeader', () => {
 		expect(within(header).queryByRole('link', { name: en.nav.sign_in })).toBeNull();
 	});
 
-	it('opens the menu sheet with the links and Vpis, and closes it with Escape', () => {
+	it('opens the menu sheet with the links, Vpis and the language; a followed link closes it', () => {
 		renderAt('/', <SiteHeader viewer={null} />);
+		const sheet = document.querySelector<HTMLDialogElement>('#menu-sheet')!;
+		// jsdom has no showModal; the browser behaviour (focus, Escape, backdrop) is in e2e/shell.spec.ts.
+		const showModal = vi.fn(() => sheet.setAttribute('open', ''));
+		sheet.showModal = showModal;
+		sheet.close = () => sheet.removeAttribute('open');
 
 		fireEvent.click(screen.getByRole('button', { name: sl.nav.menu_open }));
-		const sheet = screen.getByRole('dialog', { name: sl.nav.main_label });
+		expect(showModal).toHaveBeenCalledOnce();
+		expect(screen.getByRole('dialog', { name: sl.nav.main_label })).toBe(sheet);
 		expect(
 			within(sheet)
 				.getAllByRole('link')
@@ -131,8 +137,8 @@ describe('SiteHeader', () => {
 		expect(within(sheet).getByRole('link', { name: sl.nav.sign_in }).getAttribute('href')).toBe('/vpis');
 		expect(within(sheet).getByRole('group', { name: 'Jezik: Slovenščina' })).toBeTruthy();
 
-		fireEvent.keyDown(sheet, { key: 'Escape' });
-		expect(screen.queryByRole('dialog')).toBeNull();
+		fireEvent.click(within(sheet).getByRole('link', { name: 'Zemljevid' }));
+		expect(sheet.open).toBe(false);
 	});
 
 	it('flows get the reduced header: logo and close, no links', () => {

@@ -8,16 +8,14 @@ import { notFound } from 'next/navigation';
 import { Providers } from '@/app/providers';
 import { SiteFooter } from '@/components/shell/footer';
 import { SiteHeader } from '@/components/shell/header';
-import { ringClass } from '@/components/shell/page';
-import { Toaster } from '@/components/ui/sonner';
 import { routing } from '@/i18n/routing';
 import { env } from '@/lib/env';
-import { cn } from '@/lib/utils';
 import { getViewer } from '@/lib/viewer';
 
 import '../globals.css';
 
-// The variables override the font stacks from tokens.css (system §4).
+// The variables override the font stacks from tokens.css (system §4). Preloaded (checked in TASK-11.2: without the
+// preload the fonts start after the scripts and the simulated FCP doubles, LCP stays the same).
 const display = Bricolage_Grotesque({
 	subsets: ['latin', 'latin-ext'],
 	axes: ['opsz'],
@@ -45,34 +43,24 @@ export async function generateMetadata({ params }: LayoutProps<'/[locale]'>): Pr
 	};
 }
 
-/** The P1 shell around every page: skip link, header, the page (it renders `main#main`), footer, toasts. */
+/** The P1 shell around every page: header with the skip link, the page (it renders `main#main`), footer. */
 export default async function LocaleLayout({ children, params }: LayoutProps<'/[locale]'>) {
 	const { locale } = await params;
 	if (!hasLocale(routing.locales, locale)) notFound();
 	const nonce = (await headers()).get('x-nonce') ?? undefined;
-	const [t, viewer] = await Promise.all([getTranslations({ locale, namespace: 'common' }), getViewer()]);
+	const viewer = await getViewer();
 
 	return (
 		<html lang={locale} suppressHydrationWarning>
 			<head>
 				<script nonce={nonce} dangerouslySetInnerHTML={{ __html: themeScript }} />
 			</head>
-			<body className={`${display.variable} ${sans.variable} flex min-h-dvh flex-col`}>
+			<body className={`${display.variable} ${sans.variable}`}>
 				<NextIntlClientProvider>
 					<Providers>
-						<a
-							href="#main"
-							className={cn(
-								'sr-only z-[60] items-center rounded-full bg-popover px-5 font-bold text-popover-foreground shadow-pop focus:not-sr-only focus:fixed focus:top-5 focus:left-5 focus:inline-flex focus:min-h-11 md:focus:left-12',
-								ringClass
-							)}
-						>
-							{t('skip_to_content')}
-						</a>
 						<SiteHeader viewer={viewer} />
 						{children}
 						<SiteFooter />
-						<Toaster label={t('toasts_label')} closeLabel={t('close')} />
 					</Providers>
 				</NextIntlClientProvider>
 			</body>

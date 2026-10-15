@@ -1,17 +1,11 @@
 'use client';
 
-import { useTranslations } from 'next-intl';
+import dynamic from 'next/dynamic';
 
-import { ContentPage, ErrorPage } from '@/components/shell/page';
+// Error boundaries load with every page, so the 500 page's UI (kit buttons, icons) loads only when a page fails.
+const ServerErrorPage = dynamic(() => import('@/components/shell/page').then((shell) => shell.ServerErrorPage));
 
 /** P1 500 for a page that failed to render; header and footer stay. "Poskusi znova" renders the page again. */
 export default function PageError({ reset }: { error: Error & { digest?: string }; reset: () => void }) {
-	const t = useTranslations('errors');
-
-	return (
-		<ContentPage>
-			<title>{`${t('page_500_doc_title')} · Najdimo`}</title>
-			<ErrorPage status={500} onRetry={reset} />
-		</ContentPage>
-	);
+	return <ServerErrorPage onRetry={reset} />;
 }

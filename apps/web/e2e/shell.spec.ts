@@ -104,7 +104,8 @@ for (const path of ['/', '/en', '/zavetisca', '/no/such/page'])
 	});
 
 for (const { path, lang, canonical, description } of [
-	{ path: '/', lang: 'sl', canonical: '/', description: /^Prijavite izgubljeno ali najdeno žival\./ },
+	// Next.js writes the root URL without the trailing slash.
+	{ path: '/', lang: 'sl', canonical: '', description: /^Prijavite izgubljeno ali najdeno žival\./ },
 	{ path: '/en', lang: 'en', canonical: '/en', description: /^Report a lost or found pet\./ },
 ])
 	test(`${path}: localised description, canonical on the app URL and the icons`, async ({ page, request }) => {

@@ -7,7 +7,8 @@ import { expect, type Page, test } from '@playwright/test';
 import { withExif } from './exif-fixture';
 
 // TASK-14.2: the PhotoPicker on /dev/photos in a real browser, against a faked API (C5) and R2.
-const API = 'http://localhost:4000';
+// The web app is built against the e2e mock API (playwright.config.ts); its free port is in E2E_API_PORT.
+const API = `http://localhost:${process.env.E2E_API_PORT}`;
 const PUT_URL = 'https://e2e.eu.r2.cloudflarestorage.com/zivali-private/uploads/u1/photo.jpg?X-Amz-Signature=e2e';
 const cors = {
 	'access-control-allow-origin': '*',

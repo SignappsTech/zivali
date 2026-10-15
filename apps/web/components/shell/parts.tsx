@@ -1,16 +1,18 @@
 'use client';
 
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
+import NextLink from 'next/link';
 import { useParams } from 'next/navigation';
-import { Fragment } from 'react';
+import { type ComponentProps, Fragment, type KeyboardEvent, type ReactNode } from 'react';
 
 import { routeTemplate } from '@/components/analytics/screen-views';
-import { getPathname, Link, usePathname } from '@/i18n/navigation';
+import { getPathname, usePathname } from '@/i18n/navigation';
 import { routing } from '@/i18n/routing';
 import { useLocaleSwitch } from '@/i18n/use-locale-switch';
-import { cn } from '@/lib/utils';
 
-import { ringClass } from './page';
+// The client islands of the P1 shell. Header and footer are server components, so their icons, buttons and the
+// tailwind-merge behind `cn` never ship to the browser; these parts need the current route or the browser. Native
+// popovers and dialogs instead of a menu library: top layer, light dismiss, Escape and focus return come with them.
 
 // P1 Flow variant (reduced header, one-row footer, no sidebar): the C15 report, manage, auth, chat and payment flows.
 const FLOW = new Set([
@@ -23,6 +25,9 @@ const FLOW = new Set([
 	'/inbox/[id]',
 	'/payments/return',
 ]);
+// Pages whose content has its own primary action, so "Prijavi" is secondary there (system 10.7): P3 home hero,
+// T5/T6 shelters, P9 report detail, P22 partners.
+const OWN_PRIMARY = new Set(['/', '/shelters', '/shelters/[slug]', '/r/[code]', '/advertise']);
 
 /** P1 layout variant of an internal pathname. Admin and portal (P19) and the dev galleries bring their own shell. */
 export function shellVariant(pathname: string): 'content' | 'flow' | 'none' {
@@ -30,50 +35,143 @@ export function shellVariant(pathname: string): 'content' | 'flow' | 'none' {
 	return FLOW.has(routeTemplate(pathname)) ? 'flow' : 'content';
 }
 
-/** The variant of the current page. */
-export const useShellVariant = () => shellVariant(usePathname());
+/** Renders its children on pages of `variant` only: the layout, and so the shell, stays mounted across navigations. */
+export function ShellSlot({ variant, children }: { variant: 'content' | 'flow'; children: ReactNode }) {
+	return shellVariant(usePathname()) === variant ? children : null;
+}
 
-/** Logo mark and wordmark, a link home named by `nav.home_label`. Below 360 px only the mark shows. */
-export function Logo({ small = false, className }: { small?: boolean; className?: string }) {
-	const t = useTranslations('nav');
+/** Links (localised on the server) with `aria-current="page"` on the current route. */
+export function NavLinks({
+	links,
+	className,
+	linkClassName,
+}: {
+	links: { href: string; label: string; route?: string }[];
+	className?: string;
+	linkClassName: string;
+}) {
+	const route = routeTemplate(usePathname());
 
 	return (
-		<Link
-			href="/"
-			aria-label={t('home_label')}
-			className={cn(
-				'inline-flex min-h-11 shrink-0 items-center gap-2 rounded-xl text-foreground',
-				ringClass,
-				className
-			)}
-		>
-			<svg viewBox="0 0 48 48" aria-hidden="true" className={small ? 'size-7' : 'size-8 md:size-9'}>
-				<g className="fill-primary stroke-primary" strokeWidth="1.6" strokeLinejoin="round">
-					<path d="M24 45.5 C24 45.5 10.5 33.2 10.5 24.4 A13.5 13.5 0 0 1 37.5 24.4 C37.5 33.2 24 45.5 24 45.5 Z M24 17.9 A6.5 6.5 0 1 0 24 30.9 A6.5 6.5 0 1 0 24 17.9 Z" />
-					<path d="M12.2 19.6 L11.2 5 L22.6 11.4 Z" />
-					<path d="M35.8 19.6 L25.4 11.4 L36.8 5 Z" />
-				</g>
-				<circle cx="24" cy="24.4" r="3.6" className="fill-status-reunited" />
-			</svg>
-			<span
-				aria-hidden="true"
-				className={cn(
-					'font-display font-bold',
-					small ? 'text-lg' : 'text-xl tracking-[-0.03em] max-[359px]:hidden md:text-2xl'
-				)}
-			>
-				Najdimo
-			</span>
-		</Link>
+		<ul className={className}>
+			{links.map((link) => (
+				<li key={link.href}>
+					<NextLink
+						href={link.href}
+						aria-current={link.route === route ? 'page' : undefined}
+						className={linkClassName}
+					>
+						{link.label}
+					</NextLink>
+				</li>
+			))}
+		</ul>
 	);
 }
 
 /**
- * Text toggle "SL / EN" (or the full names in the menu sheet), current language underlined. Plain links to the same
- * page in each language (hreflang, works without JS); with JS a click goes through useLocaleSwitch, which saves a
- * signed-in user's profile locale first (FR-036).
+ * A header button. With `looks` ([primary, secondary] classes) it is "Prijavi", secondary on pages with their own
+ * primary action; with `dialog` it opens that native dialog.
  */
-export function LanguageSwitch({ full = false, className }: { full?: boolean; className?: string }) {
+export function ShellButton({
+	looks,
+	dialog,
+	className,
+	...props
+}: ComponentProps<'button'> & { looks?: [string, string]; dialog?: string }) {
+	const secondary = OWN_PRIMARY.has(routeTemplate(usePathname()));
+
+	return (
+		<button
+			type="button"
+			{...props}
+			data-variant={looks && (secondary ? 'secondary' : 'default')}
+			className={looks ? looks[secondary ? 1 : 0] : className}
+			onClick={dialog ? () => document.querySelector<HTMLDialogElement>(`#${dialog}`)?.showModal() : undefined}
+		/>
+	);
+}
+
+const rows = (popover: HTMLElement) =>
+	[...popover.querySelectorAll<HTMLElement>('a[href], button')].filter((row) => row.checkVisibility());
+
+/** Arrow keys, Home and End move between the rows of a popover. */
+function moveFocus(event: KeyboardEvent<HTMLElement>) {
+	const all = rows(event.currentTarget);
+	const index = all.indexOf(document.activeElement as HTMLElement);
+	const next = { ArrowDown: index + 1, ArrowUp: index - 1, Home: 0, End: all.length - 1 }[event.key];
+	if (next === undefined) return;
+	event.preventDefault();
+	all[(next + all.length) % all.length]?.focus();
+}
+
+/**
+ * Header popover (P1 A2, B2) for the button with `popoverTarget={id}`: under the button, aligned to its end, focus on
+ * the first row, arrow keys between rows. A followed link closes it.
+ */
+export function HeaderPopover({ id, ...props }: ComponentProps<'div'> & { id: string }) {
+	return (
+		<div
+			{...props}
+			id={id}
+			popover="auto"
+			onBeforeToggle={(event) => {
+				const rect = document.querySelector(`[popovertarget="${id}"]`)?.getBoundingClientRect();
+				if (event.newState !== 'open' || !rect) return;
+				event.currentTarget.style.top = `${rect.bottom + window.scrollY + 12}px`;
+				event.currentTarget.style.right = `${Math.max(20, document.documentElement.clientWidth - rect.right)}px`;
+			}}
+			onToggle={(event) => {
+				if (event.newState === 'open') rows(event.currentTarget)[0]?.focus();
+			}}
+			onKeyDown={moveFocus}
+			onClick={(event) => {
+				if ((event.target as Element).closest('a')) event.currentTarget.hidePopover();
+			}}
+		/>
+	);
+}
+
+/**
+ * Native modal dialog (the menu and report sheets): focus stays inside, Escape and a `<form method="dialog">` button
+ * close it, focus returns to the opener. A click on the backdrop or a followed link closes it too.
+ */
+export function ShellDialog(props: ComponentProps<'dialog'>) {
+	return (
+		<dialog
+			{...props}
+			onClick={(event) => {
+				if (event.target === event.currentTarget || (event.target as Element).closest('a'))
+					event.currentTarget.close();
+			}}
+		/>
+	);
+}
+
+/** Signs out on this device, then loads home, so no state of the signed-out user stays in memory (C3). */
+export function SignOutButton(props: ComponentProps<'button'>) {
+	const locale = useLocale();
+
+	return (
+		<button
+			type="button"
+			{...props}
+			onClick={async () => {
+				// TODO(TASK-9.3): @zivali/api/auth signOut() with the push-token cleanup once configureAuth runs app-wide.
+				const { createClient } = await import('@/lib/supabase/client');
+				await createClient().auth.signOut({ scope: 'local' });
+				window.location.assign(getPathname({ locale, href: '/' }));
+			}}
+		/>
+	);
+}
+
+/**
+ * Text toggle "SL / EN" (or the full names), current language underlined. Plain links to the same page in each
+ * language (hreflang, works without JS); with JS a click goes through useLocaleSwitch, which saves a signed-in user's
+ * profile locale first (FR-036).
+ */
+export function LanguageSwitch({ full = false, className = '' }: { full?: boolean; className?: string }) {
 	const t = useTranslations('nav');
 	const { locale, switchLocale } = useLocaleSwitch();
 	const pathname = usePathname();
@@ -83,7 +181,7 @@ export function LanguageSwitch({ full = false, className }: { full?: boolean; cl
 		<div
 			role="group"
 			aria-label={t('language_label', { current: t(`language_${locale}_full`) })}
-			className={cn('inline-flex items-center text-control font-semibold text-muted-foreground', className)}
+			className={`inline-flex items-center text-control font-semibold text-muted-foreground ${className}`}
 		>
 			{routing.locales.map((next, index) => (
 				<Fragment key={next}>
@@ -105,10 +203,7 @@ export function LanguageSwitch({ full = false, className }: { full?: boolean; cl
 							event.preventDefault();
 							void switchLocale(next);
 						}}
-						className={cn(
-							'inline-flex min-h-11 min-w-11 items-center justify-center rounded-full px-1.5 whitespace-nowrap hover:text-foreground aria-[current=true]:text-foreground aria-[current=true]:underline aria-[current=true]:decoration-primary aria-[current=true]:decoration-2 aria-[current=true]:underline-offset-6',
-							ringClass
-						)}
+						className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-full px-1.5 whitespace-nowrap hover:text-foreground focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ring aria-[current=true]:text-foreground aria-[current=true]:underline aria-[current=true]:decoration-primary aria-[current=true]:decoration-2 aria-[current=true]:underline-offset-6"
 					>
 						{t(full ? `language_${next}_full` : `language_${next}`)}
 					</a>

@@ -9,13 +9,48 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Link } from '@/i18n/navigation';
 import { cn } from '@/lib/utils';
 
-// P1 page containers and shared patterns. No 'use client' and no server-only API, so server pages and client
-// boundaries (error.tsx) both use them.
+// P1 page containers and shared patterns. No 'use client' and no server-only API, so server pages and the lazily
+// loaded 500 page both use them.
 
 /** The system focus ring (3 px `ring`, 2 px offset). */
 export const ringClass = 'focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ring';
 
 export const h1Class = 'font-display text-3xl font-bold tracking-[-0.02em] text-balance lg:text-5xl';
+
+/** Logo mark and wordmark, a link home named by `nav.home_label`. Below 360 px only the mark shows. */
+export function Logo({ small = false, className }: { small?: boolean; className?: string }) {
+	const t = useTranslations('nav');
+
+	return (
+		<Link
+			href="/"
+			aria-label={t('home_label')}
+			className={cn(
+				'inline-flex min-h-11 shrink-0 items-center gap-2 rounded-xl text-foreground',
+				ringClass,
+				className
+			)}
+		>
+			<svg viewBox="0 0 48 48" aria-hidden="true" className={small ? 'size-7' : 'size-8 md:size-9'}>
+				<g className="fill-primary stroke-primary" strokeWidth="1.6" strokeLinejoin="round">
+					<path d="M24 45.5 C24 45.5 10.5 33.2 10.5 24.4 A13.5 13.5 0 0 1 37.5 24.4 C37.5 33.2 24 45.5 24 45.5 Z M24 17.9 A6.5 6.5 0 1 0 24 30.9 A6.5 6.5 0 1 0 24 17.9 Z" />
+					<path d="M12.2 19.6 L11.2 5 L22.6 11.4 Z" />
+					<path d="M35.8 19.6 L25.4 11.4 L36.8 5 Z" />
+				</g>
+				<circle cx="24" cy="24.4" r="3.6" className="fill-status-reunited" />
+			</svg>
+			<span
+				aria-hidden="true"
+				className={cn(
+					'font-display font-bold',
+					small ? 'text-lg' : 'text-xl tracking-[-0.03em] max-[359px]:hidden md:text-2xl'
+				)}
+			>
+				Najdimo
+			</span>
+		</Link>
+	);
+}
 
 /**
  * P1 Content variant: `main#main` (the skip link target) in the 1120 px column, gutters 20 / 48 px, h1 32 px under
@@ -37,7 +72,7 @@ export function ContentPage({
 	return (
 		<div
 			className={cn(
-				'mx-auto box-content w-full max-w-[1120px] px-5 md:px-12',
+				'mx-auto box-content max-w-[1120px] px-5 md:px-12',
 				aside && 'lg:grid lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start lg:gap-8'
 			)}
 		>
@@ -158,6 +193,18 @@ export function ErrorPage({ status, onRetry }: { status: keyof typeof ERROR_COPY
 				)}
 			</div>
 		</div>
+	);
+}
+
+/** The 500 page for app/[locale]/error.tsx, which loads it only when a page fails. */
+export function ServerErrorPage({ onRetry }: { onRetry: () => void }) {
+	const t = useTranslations('errors');
+
+	return (
+		<ContentPage>
+			<title>{`${t('page_500_doc_title')} · Najdimo`}</title>
+			<ErrorPage status={500} onRetry={onRetry} />
+		</ContentPage>
 	);
 }
 
