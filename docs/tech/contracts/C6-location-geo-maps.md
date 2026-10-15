@@ -22,7 +22,7 @@ source: docs/04-technical-design.md§Data model, ADR-006, ADR-007; FR-004, FR-00
 | `fuzz.found_min_radius_m` | 150 |
 | `fuzz.grid_m` | 50 |
 
-`public_radius_m = greatest(min_radius(type), coalesce(requested_radius_m, 0))`; seed = `HMAC-SHA256(report_id, FUZZ_SECRET)` (Node `crypto`; u1, u2 from the first 8 bytes); offset distance `0.8 × public_radius_m × sqrt(u1)`, bearing `360° × u2`; snapped to `fuzz.grid_m`. Deterministic per report and stored point; the stored point is always inside the circle. Distances shown to users are bands only: `lt1`, `1to3`, `3to10`, `gt10` km.
+`public_radius_m = greatest(min_radius(type), coalesce(requested_radius_m, 0))`. The public circle **centre stays fixed when only the radius changes**: the offset does not depend on `requested_radius_m`. Seed = `HMAC-SHA256(FUZZ_SECRET, report_id + ':' + lat6 + ':' + lng6)` where lat6/lng6 are the stored (coarsened) point rounded to 6 decimals (Node `crypto`; u and the bearing fraction u2 from the first 8 bytes). Offset distance `D = 0.75 × min_radius(type) × sqrt(0.16 + 0.84·u)`, bearing `360° × u2`, snapped to `fuzz.grid_m` (lost reports end up 117–409 m from the stored point). Deterministic per report and stored point; the stored point is always inside the circle. The public `municipality_slug` and `region_slug` derive from `public_point`, never from the stored point. `FUZZ_SECRET` rotation: rotate only on a leak; existing circles stay as stored (not recomputed), only new or moved points use the new secret. Distances shown to users are bands only: `lt1`, `1to3`, `3to10`, `gt10` km.
 
 Exact point sharing (R-004.3): only inside a chat as a `location` message the manager sends explicitly (C9).
 
@@ -166,3 +166,4 @@ useFuzzedArea(report: PublicReport): Circle                      // convenience 
 |---|---|---|
 | 1.1 | 2026-10-15 | CH-39: name the geocoder snapshot files places.ndjson.gz and addresses.tsv.gz |
 | 1.2 | 2026-10-15 | CH-117: seeder upserts; geo lookup via `$queryRaw` + `Prisma.sql` (no TypedSQL), `extensions.geography`, lat/lng validated with `LatLng` first |
+| 1.3 | 2026-10-15 | CH-131: fixed public centre when only the radius changes, seed = HMAC(FUZZ_SECRET, report_id:lat6:lng6), D = 0.75 × min radius × sqrt(0.16 + 0.84u), public slugs from public_point, FUZZ_SECRET rotation note |

@@ -4,7 +4,7 @@
 	"choose_web": "Izberi fotografije",
 	"drop_web": "ali jih povlecite sem",
 	"thumb_a11y": "Fotografija {n} od {total}",
-	"thumb_alt": "Vaša fotografija {n}",
+	"thumb_alt": "Fotografija {n} od {total}",
 	"remove": "Odstrani fotografijo {n}",
 	"move_left": "Premakni fotografijo {n} naprej",
 	"move_right": "Premakni fotografijo {n} nazaj",
@@ -16,6 +16,6 @@
 	"failed_network": "Fotografija se ni naložila. Preverite povezavo in poskusite znova.",
 	"retry": "Poskusi znova",
 	"limit": "Dodate lahko največ 5 fotografij.",
-	"too_small": "Ta fotografija je premajhna. Izberite takšno, ki je krajša stranica široka vsaj 320 px.",
-	"heic_unsupported": "Ta brskalnik ne more odpreti fotografij HEIC. Izberite sliko JPG ali PNG ali nastavite kamero na »Najbolj združljivo«."
+	"too_small": "Fotografija je premajhna. Izberite večjo, ki je na krajši stranici široka vsaj 320 slikovnih pik.",
+	"heic_unsupported": "Ta brskalnik ne more odpreti fotografij HEIC. Izberite fotografijo JPG ali poskusite z drugim brskalnikom."
 }
