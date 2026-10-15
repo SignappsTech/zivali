@@ -45,3 +45,10 @@ Branch: agent/task-34.2-admin-be
 - [x] #3 GET /v1/admin/audit-log (admins, filters, cursor), GET /v1/admin/users and PUT /v1/admin/users/:id/role (audited, last admin protected) work per C3; every staff domain call writes an audit entry.
 - [x] #4 GET /v1/admin/queues shows pg-boss queue counts and failed jobs for admins.
 <!-- AC:END -->
+
+## Review fixes
+- Users search: display_name substring; email exact match only (lower), full-email test + partial-email-returns-nothing test.
+- Failed jobs: error = left(output->>message, 500) in SQL, no stack fetched; mapper errorMessage removed.
+- lockAdminIds: order by id before for update.
+- Test: two parallel demotions of last 2 admins give exactly one CONFLICT.
+- TASK-9.6 not on main yet: admin-create.ts still reads SUPABASE_SERVICE_ROLE_KEY.
