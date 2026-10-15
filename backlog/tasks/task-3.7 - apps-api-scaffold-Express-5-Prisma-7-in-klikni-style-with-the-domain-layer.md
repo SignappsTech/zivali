@@ -1,11 +1,11 @@
 ---
 id: TASK-3.7
 title: 'apps/api scaffold: Express 5 + Prisma 7 in klikni style with the domain layer'
-status: In Progress
+status: Done
 assignee:
   - '@backend-dev'
 created_date: '2026-10-14 23:35'
-updated_date: '2026-10-15 02:48'
+updated_date: '2026-10-15 03:34'
 labels:
   - tech
   - 'est:M'
