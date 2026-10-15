@@ -1,6 +1,20 @@
 import { getRefId, OpenApiGeneratorV31, OpenAPIRegistry } from '@asteasolutions/zod-to-openapi';
 import { expect, test, vi } from 'vitest';
 
+import abuseSrc from '../src/abuse.schema.ts?raw';
+import adsSrc from '../src/ads.schema.ts?raw';
+import chatSrc from '../src/chat.schema.ts?raw';
+import commonSrc from '../src/common.schema.ts?raw';
+import matchesSrc from '../src/matches.schema.ts?raw';
+import meSrc from '../src/me.schema.ts?raw';
+import notificationsSrc from '../src/notifications.schema.ts?raw';
+import paymentsSrc from '../src/payments.schema.ts?raw';
+import petsSrc from '../src/pets.schema.ts?raw';
+import photosSrc from '../src/photos.schema.ts?raw';
+import reportsSrc from '../src/reports.schema.ts?raw';
+import sheltersSrc from '../src/shelters.schema.ts?raw';
+import geoSrc from '../src/geo.schema.ts?raw';
+import enumsSrc from '../src/enums.ts?raw';
 import indexSrc from '../src/index.ts?raw';
 import zodSrc from '../src/zod.ts?raw';
 import * as root from '../src/index.ts';
@@ -98,11 +112,22 @@ test('no named component is itself nullable (use nullOr, not .nullable(), on nam
 });
 
 test('.nullable()/.nullish() is never applied to an .openapi()-named schema (the refId leaks, null is lost)', () => {
-	const files = import.meta.glob('../src/*.ts', { query: '?raw', import: 'default', eager: true }) as Record<
-		string,
-		string
-	>;
-	const src = Object.values(files).join('\n');
+	const src = [
+		abuseSrc,
+		adsSrc,
+		chatSrc,
+		commonSrc,
+		matchesSrc,
+		meSrc,
+		notificationsSrc,
+		paymentsSrc,
+		petsSrc,
+		photosSrc,
+		reportsSrc,
+		sheltersSrc,
+		geoSrc,
+		enumsSrc,
+	].join('\n');
 	const named = [...src.matchAll(/export const (\w+)\s*=[^;]*?\.openapi\('/gs)].map((m) => m[1]);
 	expect(named.length).toBeGreaterThan(50);
 	const bad = named.filter((n) => new RegExp(`\\b${n}\\.(nullable|nullish)\\(`).test(src));
