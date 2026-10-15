@@ -1,8 +1,12 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, type Page, test } from '@playwright/test';
 
+import { dismissConsent } from './session';
+
 // TASK-11.2: the P1 web shell (header, footer, skip link, sidebar region, menus, 404, guards) at 320, 390 and 1440 px.
 const AXE_TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'];
+
+test.beforeEach(({ page }) => dismissConsent(page));
 
 async function expectNoAxeViolations(page: Page) {
 	// Let enter fades finish, so contrast is measured on the settled colours.
@@ -35,8 +39,8 @@ for (const colorScheme of ['light', 'dark'] as const)
 		await expect(header.getByRole('link', { name: 'Vpis' })).toBeVisible();
 		await expect(header.getByRole('group', { name: 'Jezik: Slovenščina' })).toBeVisible();
 		await expect(page.getByRole('complementary', { name: 'Dodatna vsebina' })).toBeVisible();
-		// Logo, 13 links, SL and EN.
-		await expect(page.getByRole('contentinfo').getByRole('link')).toHaveCount(16);
+		// Logo, 12 links (Cookie settings is a button), SL and EN.
+		await expect(page.getByRole('contentinfo').getByRole('link')).toHaveCount(15);
 
 		await page.keyboard.press('Tab');
 		const skip = page.getByRole('link', { name: 'Preskoči na vsebino' });
