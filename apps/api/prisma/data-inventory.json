@@ -32,7 +32,7 @@
 			"category": "security",
 			"personal_data": ["actor_id", "target_id", "diff"],
 			"basis": "legitimate interest (GDPR art. 6(1)(f)): accountability of staff actions",
-			"retention": "not defined yet",
+			"retention": "12 months, then deleted (proposal CH-104, to confirm with the lawyer: LQ-19)",
 			"export": false,
 			"delete": "anonymise",
 			"other_columns": ["id", "action", "target_type", "created_at"]
@@ -425,11 +425,11 @@
 		},
 		"zivali-backups": {
 			"category": "backup",
-			"personal_data": ["full database dumps"],
+			"personal_data": ["nightly pg_dump of schema app (db/<APP_ENV>/<date>.dump, job db.backup)"],
 			"basis": "legitimate interest (GDPR art. 6(1)(f)): disaster recovery",
-			"retention": "backup rotation (TASK-5.1)",
+			"retention": "30 days rolling, R2 lifecycle rule on the bucket (proposal CH-104, to confirm with the lawyer: LQ-19)",
 			"export": false,
-			"delete": "expires with the backup rotation"
+			"delete": "not edited; deleted data leaves the backups when the last dump holding it expires (30 days)"
 		}
 	}
 }
