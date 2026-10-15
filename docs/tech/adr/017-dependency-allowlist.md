@@ -37,7 +37,8 @@ Runtime dependencies outside this list (and outside what the Expo SDK 57 templat
 | `pino`, `pino-http` (`pino-pretty` dev only) | api | Structured logs with request ids |
 | `@aws-sdk/client-s3`, `@aws-sdk/s3-request-presigner` | api | Cloudflare R2 (and MinIO locally) with presigned URLs (ADR-014) |
 | `sharp` | api (worker) | Photo re-encoding and variants (ADR-014) |
-| `@asteasolutions/zod-to-openapi` | validation, api (client decision, TASK-6.5: the zod schemas in `@zivali/validation` are the single OpenAPI source; the package exports the registry and `registerSchemas()`, the API builds the spec from it) | OpenAPI spec from the zod schemas (`apps/api/openapi.json`) feeding the RTK codegen. Swagger UI (`swagger-ui-express` or equivalent) gets its row when its deferred task is picked up |
+| `@asteasolutions/zod-to-openapi` | validation, api (client decision, TASK-6.5: the zod schemas in `@zivali/validation` are the single OpenAPI source; the package exports the registry and `registerSchemas()`, the API builds the spec from it) | OpenAPI spec from the zod schemas (`apps/api/openapi.json`) feeding the RTK codegen. Swagger UI at `/docs` is served by `swagger-ui-express` (next row) |
+| `swagger-ui-express` (+ `@types/swagger-ui-express`, dev) | api (TASK-3.12) | Swagger UI at `/docs` from the committed `openapi.json`: open in local and staging, admin + aal2 only in production. Serves its own bundled assets (no CDN) under a route-scoped CSP |
 | `stripe` | api | ADR-011 |
 | `pdfkit` | api (worker) | Receipt and fiscal invoice PDFs (klikni uses it; TASK-92) |
 | `@anthropic-ai/sdk` | api worker (M3) | ADR-012 |
