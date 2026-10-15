@@ -48,6 +48,7 @@ type Key =
 	| 'outside'
 	| 'hidden'
 	| 'held'
+	| 'removed'
 	| 'closedRecent'
 	| 'closedOld'
 	| 'expired'
@@ -55,6 +56,7 @@ type Key =
 const codes = {} as Record<Key, string>;
 const DEFAULT: Key[] = ['lostDog', 'foundCat', 'sightedDog', 'matched', 'oldEvent'];
 const CLOSED: Key[] = ['closedRecent', 'expired', 'reunitedRecent'];
+const NOT_VISIBLE: Key[] = ['hidden', 'held', 'removed'];
 
 const create = async (key: Key, user: Actor, input: Partial<NewReport>, data?: object) => {
 	const { id, short_code } = await ReportsDomain.insertReport(
@@ -146,6 +148,8 @@ beforeAll(async () => {
 	await create('outside', owner, { location: { lat: 45.75, lng: 14.95 } });
 	await create('hidden', owner, {}, { moderation_state: 'hidden' });
 	await create('held', owner, {}, { moderation_state: 'held' });
+	// Abuse auto-hide (TASK-25.2) sets hidden on an otherwise open report; removed by moderation.
+	await create('removed', owner, {}, { moderation_state: 'removed' });
 	await create(
 		'closedRecent',
 		owner,
@@ -232,6 +236,34 @@ describe('GET /v1/reports', () => {
 		expect(sorted(shortCodes((await list(`bbox=${BBOX}&include_closed=false`)).body))).toEqual(
 			sorted(codesOf(DEFAULT))
 		);
+	});
+
+	it('never returns hidden, held or removed reports (moderation_state visible only), also to their owner', async () => {
+		const owner = await signTestToken({ sub: ids.owner });
+		const hidden = codesOf(NOT_VISIBLE);
+		for (const query of [
+			`bbox=${BBOX}`,
+			`bbox=${BBOX}&include_closed=true`,
+			'near=45.65,14.85,20&sort=distance',
+			`bbox=${BBOX}&types=lost&species=dog`,
+		])
+			for (const token of [undefined, owner]) {
+				const res = await list(query, token);
+				expect(res.status, query).toBe(200);
+				expect(
+					shortCodes(res.body).filter((code) => hidden.includes(code)),
+					query
+				).toEqual([]);
+				const mapped = await map(`bbox=${BBOX}&include_closed=true`, token);
+				expect(shortCodes(mapped.body).filter((code) => hidden.includes(code))).toEqual([]);
+			}
+		// The same open report becomes visible again once moderation sets it back.
+		await prisma.reports.update({ where: { short_code: codes.hidden }, data: { moderation_state: 'visible' } });
+		expect(shortCodes((await list(`bbox=${BBOX}`)).body)).toContain(codes.hidden);
+		expect(shortCodes((await map(`bbox=${BBOX}`)).body)).toContain(codes.hidden);
+		await prisma.reports.update({ where: { short_code: codes.hidden }, data: { moderation_state: 'hidden' } });
+		expect(shortCodes((await list(`bbox=${BBOX}`)).body)).not.toContain(codes.hidden);
+		expect(shortCodes((await map(`bbox=${BBOX}`)).body)).not.toContain(codes.hidden);
 	});
 
 	it('filters by types, species, colours (any of), sizes and the event date range', async () => {
@@ -366,7 +398,7 @@ describe('GET /v1/reports and /map, permission matrix', () => {
 	};
 
 	for (const [name, token] of Object.entries(callers)) {
-		it(`${name}: the same public results, is_mine only on own reports, never held or hidden`, async () => {
+		it(`${name}: the same public results, is_mine only on own reports, never held, hidden or removed`, async () => {
 			const auth = await token();
 			const res = await list(`bbox=${BBOX}&include_closed=true`, auth);
 			expect(res.status).toBe(200);
