@@ -21,6 +21,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 		});
 	const pages: Href[] = [
 		'/',
+		'/how-it-works',
+		'/safety',
+		'/faq',
+		'/for-shelters',
+		'/about',
 		'/shelters',
 		...shelters.map(({ slug }) => ({ pathname: '/shelters/[slug]', params: { slug } }) as const),
 	];
