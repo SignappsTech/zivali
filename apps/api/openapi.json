@@ -2495,6 +2495,50 @@
 				}
 			}
 		},
+		"/v1/manage/claim": {
+			"post": {
+				"operationId": "claimManageLink",
+				"summary": "Claim the manage link of a report",
+				"description": "`token` is the fragment of the manage link (`/m#<token>`). The caller (anonymous or signed in) becomes a manager of the report; claiming again changes nothing. Removed reports and reports closed more than 7 days ago answer GONE. 10 per hour per IP.",
+				"tags": ["manage"],
+				"requestBody": {
+					"required": true,
+					"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ManageClaimInput" } } }
+				},
+				"responses": {
+					"200": {
+						"description": "The claimed report",
+						"content": {
+							"application/json": { "schema": { "$ref": "#/components/schemas/ManageClaimResponse" } }
+						}
+					},
+					"400": {
+						"description": "VALIDATION",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"401": {
+						"description": "UNAUTHENTICATED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"404": {
+						"description": "NOT_FOUND",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"410": {
+						"description": "GONE",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"429": {
+						"description": "RATE_LIMITED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"500": {
+						"description": "INTERNAL",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					}
+				}
+			}
+		},
 		"/v1/me": {
 			"get": {
 				"operationId": "getMe",
@@ -3042,7 +3086,7 @@
 			"post": {
 				"operationId": "createReport",
 				"summary": "Create a lost, found or sighted report",
-				"description": "Requires `Idempotency-Key: <uuid>` (a replay from the same user returns the stored response for 24 h). `location` is the point the client already coarsened; the API coarsens it again by 20–30 m and never stores or returns the received point. Lost reports need a real account. `warnings` may hold OLD_EVENT (event older than 30 days). Starts photo publishing, matching and, for visible lost reports, nearby alerts.",
+				"description": "Requires `Idempotency-Key: <uuid>` (a replay from the same user returns the stored response for 24 h). `location` is the point the client already coarsened; the API coarsens it again by 20–30 m and never stores or returns the received point. Lost reports need a real account. `warnings` may hold OLD_EVENT (event older than 30 days). Starts photo publishing, matching and, for visible lost reports, nearby alerts. Anonymous callers (C7): `manage_token` (shown once; a replay returns the same one), the manage link by email when `finder_email` is given (anonymous only), 5 reports per hour and 20 per day per IP and per `x-device-id`; a report may come back `held` (being checked).",
 				"tags": ["reports"],
 				"requestBody": {
 					"required": true,
@@ -3178,6 +3222,57 @@
 					},
 					"404": {
 						"description": "NOT_FOUND",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"410": {
+						"description": "GONE",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"429": {
+						"description": "RATE_LIMITED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"500": {
+						"description": "INTERNAL",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					}
+				}
+			}
+		},
+		"/v1/reports/{code}/manage-link/resend": {
+			"post": {
+				"operationId": "resendManageLink",
+				"summary": "Email the manage link again (managers)",
+				"description": "Sends a new manage link to the finder email on file; the old link stops working (only the token hash is stored). 3 per report per day. No email on file: CONFLICT; removed or closed more than 7 days ago: GONE.",
+				"tags": ["reports"],
+				"parameters": [
+					{
+						"schema": { "type": "string", "pattern": "^[1-9A-HJ-NP-Za-km-z]{8}$" },
+						"required": true,
+						"name": "code",
+						"in": "path"
+					}
+				],
+				"responses": {
+					"204": { "description": "Sent" },
+					"400": {
+						"description": "VALIDATION",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"401": {
+						"description": "UNAUTHENTICATED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"403": {
+						"description": "FORBIDDEN",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"404": {
+						"description": "NOT_FOUND",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"409": {
+						"description": "CONFLICT",
 						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
 					},
 					"410": {

@@ -1,4 +1,4 @@
-// /v1/reports: wiring only. Search and transitions arrive with TASK-31.3 and TASK-26.3.
+// /v1/reports: wiring only (manage-link resend: C7). Search and transitions arrive with TASK-31.3 and TASK-26.3.
 import { Router } from 'express';
 import { z } from 'zod';
 
@@ -30,7 +30,10 @@ route(
 			'Requires `Idempotency-Key: <uuid>` (a replay from the same user returns the stored response for 24 h). ' +
 			'`location` is the point the client already coarsened; the API coarsens it again by 20–30 m and never ' +
 			'stores or returns the received point. Lost reports need a real account. `warnings` may hold OLD_EVENT ' +
-			'(event older than 30 days). Starts photo publishing, matching and, for visible lost reports, nearby alerts.',
+			'(event older than 30 days). Starts photo publishing, matching and, for visible lost reports, nearby alerts. ' +
+			'Anonymous callers (C7): `manage_token` (shown once; a replay returns the same one), the manage link by ' +
+			'email when `finder_email` is given (anonymous only), 5 reports per hour and 20 per day per IP and per ' +
+			'`x-device-id`; a report may come back `held` (being checked).',
 		request: { body: CreateReportInput },
 		responses: { 201: { description: 'Created', schema: CreateReportResponse } },
 		errors: ['UNAUTHENTICATED', 'FORBIDDEN', 'CONFLICT', 'DUPLICATE_OPEN_REPORT'],
@@ -58,6 +61,23 @@ route(
 	authMiddleware,
 	rateLimit('reports.update', { limit: 120, window: 3600, key: 'user' }),
 	ReportsController.updateReport
+);
+
+route(
+	{
+		method: 'post',
+		path: '/:code/manage-link/resend',
+		operationId: 'resendManageLink',
+		summary: 'Email the manage link again (managers)',
+		description:
+			'Sends a new manage link to the finder email on file; the old link stops working (only the token hash is ' +
+			'stored). 3 per report per day. No email on file: CONFLICT; removed or closed more than 7 days ago: GONE.',
+		request: { params: CodeParams },
+		responses: { 204: { description: 'Sent' } },
+		errors: ['UNAUTHENTICATED', 'FORBIDDEN', 'NOT_FOUND', 'CONFLICT', 'GONE'],
+	},
+	authMiddleware,
+	ReportsController.resendManageLink
 );
 
 route(
