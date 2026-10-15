@@ -3,11 +3,11 @@ id: TASK-90.1
 title: >-
   Public shelter pages /zavetisca and /zavetisca/[slug] with AnimalShelter
   JSON-LD and sitemap
-status: In Progress
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 23:36'
-updated_date: '2026-10-15 05:18'
+updated_date: '2026-10-15 08:01'
 labels:
   - fe
   - 'est:M'
