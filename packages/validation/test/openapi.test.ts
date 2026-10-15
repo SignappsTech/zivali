@@ -1,11 +1,13 @@
-import { OpenApiGeneratorV31, OpenAPIRegistry } from '@asteasolutions/zod-to-openapi';
+import { getRefId, OpenApiGeneratorV31, OpenAPIRegistry } from '@asteasolutions/zod-to-openapi';
 import { expect, test, vi } from 'vitest';
 
 import indexSrc from '../src/index.ts?raw';
 import zodSrc from '../src/zod.ts?raw';
 import * as root from '../src/index.ts';
 import { ReportList, ReportSearch, SyncReportsQuery } from '../src/index.ts';
+import * as geo from '../src/geo.schema.ts';
 import { registerSchemas, registry } from '../src/openapi.ts';
+import { z } from '../src/zod.ts';
 
 const generate = (r: OpenAPIRegistry) =>
 	new OpenApiGeneratorV31(r.definitions).generateDocument({
@@ -79,5 +81,19 @@ test('wrong import order (stub installed before the extension) throws', async ()
 		);
 	} finally {
 		proto.openapi = real;
+	}
+});
+
+test('GeoReverseResponse.place is nullable and Place stays a plain object, whatever the registration order', () => {
+	const modules = Object.values(geo);
+	for (const order of [modules, [...modules].reverse()]) {
+		const r = new OpenAPIRegistry();
+		for (const s of order) {
+			const id = s instanceof z.ZodType ? getRefId(s) : undefined;
+			if (id) r.register(id, s as z.ZodType);
+		}
+		const schemas = generate(r).components?.schemas ?? {};
+		expect(JSON.stringify(schemas.GeoReverseResponse)).toContain('"type":"null"');
+		expect(JSON.stringify(schemas.Place)).not.toContain('"null"');
 	}
 });

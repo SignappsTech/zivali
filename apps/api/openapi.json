@@ -694,7 +694,7 @@
 			},
 			"GeoReverseResponse": {
 				"type": "object",
-				"properties": { "place": { "$ref": "#/components/schemas/Place" } },
+				"properties": { "place": { "anyOf": [{ "$ref": "#/components/schemas/Place" }, { "type": "null" }] } },
 				"required": ["place"]
 			},
 			"GeoSearchInput": {
@@ -1250,7 +1250,7 @@
 				"required": ["id", "status", "thumb_url"]
 			},
 			"Place": {
-				"type": ["object", "null"],
+				"type": "object",
 				"properties": {
 					"label": { "type": "string" },
 					"lat": { "type": "number" },

@@ -19,7 +19,7 @@ export const GeoSearchInput = z
 	.openapi('GeoSearchInput', { example: { q: 'trubarjeva 5, ljubljana', near: { lat: 46.05, lng: 14.51 } } });
 export const GeoSearchResponse = z.object({ items: z.array(Place).max(5) }).openapi('GeoSearchResponse');
 export const GeoReverseInput = z.object({ lat: Lat, lng: Lng }).openapi('GeoReverseInput');
-export const GeoReverseResponse = z.object({ place: Place.nullable() }).openapi('GeoReverseResponse');
+export const GeoReverseResponse = z.object({ place: z.union([Place, z.null()]) }).openapi('GeoReverseResponse');
 /** Fuzzed public circle of a report. */
 export const PublicArea = z
 	.object({ lat: z.number(), lng: z.number(), radius_m: z.number().int().positive() })
