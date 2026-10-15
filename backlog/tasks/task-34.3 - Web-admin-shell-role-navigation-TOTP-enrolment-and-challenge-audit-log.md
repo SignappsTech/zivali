@@ -5,7 +5,7 @@ status: To Do
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:13'
-updated_date: '2026-10-14 22:42'
+updated_date: '2026-10-15 07:13'
 labels:
   - fe
   - 'est:M'
@@ -46,4 +46,5 @@ Branch: agent/task-34.3-admin-web
 - [ ] #2 Staff without TOTP are taken to enrolment (QR code) and staff with a factor to the challenge before any admin page loads.
 - [ ] #3 The audit log page lists who, what, when and target with filters, using the shared dense table pattern.
 - [ ] #4 Admin pages are web-only, in SL and EN, and meet WCAG 2.2 AA (axe 0 violations).
+- [ ] #5 Admin pages send no GA page_views: /admin* routes are excluded from analytics (no gtag config/page_view on them)
 <!-- AC:END -->

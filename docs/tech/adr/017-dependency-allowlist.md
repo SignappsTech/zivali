@@ -21,7 +21,7 @@ Runtime dependencies outside this list (and outside what the Expo SDK 57 templat
 | `exifr` | web | EXIF GPS/time read before re-encode (ADR-014) |
 | `idb-keyval` | web | IndexedDB drafts (≈ 600 B) |
 | `@react-native-firebase/app`, `@react-native-firebase/analytics` | mobile | ADR-009 |
-| `expo-image-picker`, `expo-image-manipulator`, `expo-location`, `expo-notifications`, `expo-web-browser`, `expo-secure-store`, `expo-crypto`, `expo-sqlite`, `expo-file-system`, `expo-sharing`, `expo-apple-authentication`, `expo-dev-client`, `react-native-webview`, `expo-network`, `expo-background-task`, `expo-task-manager` | mobile | Expo-native capabilities (offline data layer and geofencing: ADR-019) |
+| `expo-image-picker`, `expo-image-manipulator`, `expo-location`, `expo-notifications`, `expo-web-browser`, `expo-secure-store`, `expo-crypto`, `expo-sqlite`, `expo-file-system`, `expo-sharing`, `expo-apple-authentication`, `expo-dev-client`, `react-native-webview`, `expo-network`, `expo-background-task`, `expo-task-manager`, `react-native-svg` | mobile | Expo-native capabilities (offline data layer and geofencing: ADR-019); `react-native-svg` is Expo-pinned (`npx expo install`) and a required peer of `phosphor-react-native` (TASK-8.3) |
 | `@react-native-google-signin/google-signin` | mobile | Native Google ID token for `signInWithIdToken` |
 | `@react-pdf/renderer` | web (server route only) | A4 poster PDF with embedded fonts (š, č, ž) |
 | `qrcode` | web (server) | QR on posters |
@@ -65,3 +65,4 @@ Not used, on purpose: `eslint-plugin-prettier` and `eslint-plugin-import` (above
 | Version | Date | Change |
 |---|---|---|
 | 1.1 | 2026-10-15 | CH-43: `expo-crypto` (mobile) for AES-256-GCM encryption of the Supabase session at rest (with `expo-secure-store`) |
+| 1.2 | 2026-10-15 | CH-122: `react-native-svg` (mobile, Expo-pinned; peer of `phosphor-react-native`) |

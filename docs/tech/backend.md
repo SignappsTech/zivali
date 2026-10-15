@@ -74,6 +74,7 @@ A domain function never imports Express, never reads `req`/`res`, and never catc
 - Route = `validate(schema, 'body'|'query'|'params')` → guards (`authMiddleware`/`optionalAuth`, `requireVerified`, `requireRole`, `requireAal2`, `rateLimit`) → controller. Validate body, query **and** params.
 - Controllers stay thin; no try/catch (Express 5 forwards rejections); domains throw `AppError(code, message?, details?)`; the error middleware maps `AppError`, `ZodError` and known Prisma errors to `{ error: { code, message, details?, issues? } }` (C1).
 - Every business rule lives in a domain function; every query goes through a DAO; multi-step writes use `prisma.$transaction(async (tx) => …)` and pass `tx` down; jobs that must exist only if the write commits are sent with the transaction client.
+- Destructive admin actions (delete, deactivate, role change, bulk apply) require a note: request schema `note: z.string().trim().min(1)` (for the directory, `audit_note`), stored in the audit entry. Role changes call `invalidateProfile(id)` so the 60 s role cache does not serve stale roles.
 - Ownership checks in domains (`assertCanManageReport`, `assertParticipant`, …); never trust ids from the client for ownership.
 - Responses are mapped DTOs, never raw Prisma rows: public serializers must never include `exact_point`, `chip_number`, `manage_token_hash`, emails, phone numbers or `created_by` (C4).
 - Geo and vector queries only in TypedSQL files (`prisma/sql/*.sql`) or parameterised `$queryRaw`; never string-concatenated SQL.
@@ -158,3 +159,4 @@ Branch `agent/<task-id>-<slug>` from `main`; commits `<task-id>: <what>`; never 
 | 1.2 | 2026-10-15 | CH-64: DoD migration check without migrate reset; CH-65: routes/index.ts |
 | 1.3 | 2026-10-15 | CH-99: Stripe over fetch; mock email in-memory sent list; staging/production adapters configured or off, never mock; CH-97: adapters are new code |
 | 1.4 | 2026-10-15 | CH-107: profiles.home_point writes must call coarsenPoint |
+| 1.5 | 2026-10-15 | CH-121: destructive admin actions require a trimmed non-empty note; role changes call invalidateProfile(id) |

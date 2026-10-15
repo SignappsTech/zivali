@@ -65,11 +65,24 @@ Seed (TASK-88): `apps/api/prisma/seeders/data/shelters.csv` and `municipality_sh
 | `GET /v1/shelters/responsible?lat=&lng=` (client rounds to 2 decimals, C4 §REST privacy; exact points are not needed) or `?municipality=<slug>` | checklist and call button | `{ status: 'confirmed', municipality: { slug, name }, shelter: Shelter } \| { status: 'likely', municipality: { slug, name }, likely_shelter: { slug, name, phone, distance_km } } \| { status: 'unconfirmed', municipality: { slug, name }, nearest: { slug, name, distance_km }[] } \| { status: 'outside_slovenia', municipality?: { slug, name } }` |
 | `GET /v1/shelters/municipalities` | municipality search on the index page | `{ items: { slug, name, shelter_slug \| null }[] }` |
 
-`ShelterSummary = { slug, name, city, phone_display }`. `Shelter = { slug, name, address, postal_code, city, phone, phone_display, website?, opening_hours, source, verified_at }`. Client rule (brief): for an unconfirmed municipality, `status: 'likely'` is returned when a likely shelter is known (UI: "Morda pristojno zavetišče" + "Ni potrjeno", the call button is secondary and labelled unconfirmed); otherwise `status: 'unconfirmed'` with `nearest`: up to 2 shelters `{ slug, name, distance_km }` (no phone). `municipality` is always included. A `confirmed` response is the only one with a primary call button; `phone` appears only in `confirmed` and `likely`. Lookups by point use `geo_lookup` (C6).
+`ShelterSummary = { slug, name, city, phone_display, phone, area, municipality_count, verified_at, source, species }` (`phone` E.164, `area` = short region label, `municipality_count` = municipalities assigned, `species` = `('dog' | 'cat')[]` accepted). `Shelter = { slug, name, address, postal_code, city, lat?, lng?, phone, phone_display, email?, website?, opening_hours, source, verified_at }`; `OpeningHours = { days, from, to, closed?: boolean, note_sl?, note_en? }[]` (`closed: true` marks a closed day or range, `from`/`to` then ignored). Client rule (brief): for an unconfirmed municipality, `status: 'likely'` is returned when a likely shelter is known (UI: "Morda pristojno zavetišče" + "Ni potrjeno", the call button is secondary and labelled unconfirmed); otherwise `status: 'unconfirmed'` with `nearest`: up to 2 shelters `{ slug, name, distance_km }` (no phone). `municipality` is always included. A `confirmed` response is the only one with a primary call button; `phone` appears only in `confirmed` and `likely`. Lookups by point use `geo_lookup` (C6).
 
 ## Admin (TASK-89, M3)
 
-`PUT /v1/admin/shelters/:slug`, `POST /v1/admin/shelters`, `PUT /v1/admin/municipality-shelters/:municipality` (staff aal2): zod-validated, writes a `directory_changes` row and an audit entry, bumps `version`. `POST /v1/admin/directory/import?dry_run=true` (CSV) returns the diff; without `dry_run` applies it in one transaction. pg-boss job `directory.reminder` (cron 1 April 08:00 Europe/Ljubljana) notifies admins with entries whose `verified_at` is older than 12 months.
+All routes: staff aal2 (`authMiddleware`, `requireRole('admin')`, `requireAal2`), zod-validated, JSON. Every write inserts a `directory_changes` row (keyed by entity id and `slug`/municipality slug), an audit entry, and bumps `version`.
+
+| Method and path | Purpose | Body → response |
+|---|---|---|
+| `GET /v1/admin/shelters` | admin list (includes inactive) | `{ items: (Shelter & { id, active, version, municipality_count })[] }` |
+| `GET /v1/admin/municipality-shelters` | admin list of the 212 assignments | `{ items: { municipality: { slug, name }, shelter_slug | null, status, source, verified_at, version }[] }` |
+| `GET /v1/admin/shelters/:slug/changes` | history, newest first, keyed by shelter slug | `{ items: { version, data, source, actor_id | null, audit_note | null, created_at }[] }` |
+| `POST /v1/admin/shelters` | create | shelter fields + `municipalities: string[]` (slugs) + `audit_note` → `Shelter` (201) |
+| `PUT /v1/admin/shelters/:slug` | update | shelter fields + `version` (the version the editor loaded) + `municipalities: string[]` + `audit_note` → `Shelter` |
+| `DELETE /v1/admin/shelters/:slug` | delete (or deactivate when history exists) | `{ audit_note }` → 204 |
+| `PUT /v1/admin/municipality-shelters/:municipality` | reassign one municipality | `{ shelter_slug | null, status, source, verified_at, version, audit_note }` → assignment row |
+| `POST /v1/admin/directory/import?dry_run=true` | CSV import | `{ csv: string }` (JSON, not multipart) → `{ changes: { entity, id, action: 'create' | 'update' | 'none', diff }[], errors: { row: number, field: string }[] }`; with `dry_run` nothing is written; without it, applied in one transaction only if `errors` is empty |
+
+Admin errors (C1 envelope): `CONFLICT` (409) when the body `version` is stale (another admin saved first; details carry the current version), `HAS_ASSIGNMENTS` (409) when `DELETE` targets a shelter that still has municipalities assigned (details: count; reassign first), `VALIDATION` (400) for bad bodies including a missing or blank `audit_note`, `NOT_FOUND`, `FORBIDDEN`/`AAL2_REQUIRED`. The two 409s are distinct codes so the UI can offer reload vs reassign. pg-boss job `directory.reminder` (cron 1 April 08:00 Europe/Ljubljana) notifies admins with entries whose `verified_at` is older than 12 months.
 
 ## Client (`@zivali/api/directory`)
 
@@ -93,3 +106,4 @@ Legal timings (3 days / 72 h owner duty, 24 h find notice, 8-day holding) render
 | Version | Date | Change |
 |---|---|---|
 | 1.1 | 2026-10-15 | CH-81: responsible-shelter returns status 'likely' (likely_shelter) or 'unconfirmed' with nearest (up to 2); municipality always included |
+| 1.2 | 2026-10-15 | CH-123, CH-125: admin lists, /changes history by slug, DELETE with audit_note, versioned bodies with municipalities[], {csv} import → {changes, errors[{row, field}]}, OpeningHours.closed, Shelter lat/lng/email, ShelterSummary phone/area/municipality_count/verified_at/source/species; CONFLICT vs HAS_ASSIGNMENTS |

@@ -30,7 +30,7 @@ model profiles {
 
 ## Token verification (`middleware/auth.ts`)
 
-`jose.jwtVerify(token, createRemoteJWKSet(new URL(`${SUPABASE_URL}/auth/v1/.well-known/jwks.json`)), { audience: 'authenticated', issuer: `${SUPABASE_URL}/auth/v1` })`; locally, when the stack signs with the shared secret, `SUPABASE_JWT_SECRET` (HS256). Claims used: `sub`, `is_anonymous`, `aal`, `email`, `email_confirmed_at` is not in the token, so `email_verified` comes from `user_metadata`/`app_metadata` or the Admin API cached per user (5 min). Role comes from `app.profiles` (60 s cache). No custom access token hook.
+`jose.jwtVerify(token, createRemoteJWKSet(new URL(`${SUPABASE_URL}/auth/v1/.well-known/jwks.json`)), { audience: 'authenticated', issuer: `${SUPABASE_URL}/auth/v1` })`; locally, when the stack signs with the shared secret, `SUPABASE_JWT_SECRET` (HS256). Claims used: `sub`, `is_anonymous`, `aal`, `email`, `email_confirmed_at` is not in the token, so `email_verified` comes from `auth.users.email_confirmed_at` (read via the Admin API or a direct read, cached per user for 5 min), never from `user_metadata` (user-writable) or `app_metadata`. Role comes from `app.profiles` (60 s cache). No custom access token hook.
 
 ## Auth configuration (local `supabase/config.toml`; cloud mirrors it)
 
@@ -88,3 +88,4 @@ Clients keep report drafts locally (C4 §Drafts, C17). When a signed-out visitor
 | 1.1 | 2026-10-15 | CH-54: client block updated to the implemented @zivali/api/auth (configureAuth, redirectTo, native idToken, signOut cleanup, gate states, ApiError mapping) |
 | 1.2 | 2026-10-15 | CH-92: signOut cleanup runs DELETE /v1/push-tokens with body { token } |
 | 1.3 | 2026-10-15 | CH-102: `home_point` typed `extensions.geography(Point,4326)` |
+| 1.4 | 2026-10-15 | CH-121: `email_verified` from `auth.users.email_confirmed_at`, never `user_metadata` |

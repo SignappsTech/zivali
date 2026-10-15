@@ -5,6 +5,7 @@ status: To Do
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:12'
+updated_date: '2026-10-15 07:13'
 labels:
   - fe
   - 'est:M'
@@ -44,4 +45,5 @@ Branch: agent/task-12.2-shell-mob
 - [ ] #2 A PermissionPrimer component explains camera, location and notifications in plain language before the OS prompt, and a denial leaves a working fallback.
 - [ ] #3 A settings stack exists (language, notifications, alerts, consent, payments, account) with placeholder screens for later stories.
 - [ ] #4 Safe areas and dark mode work; Android screenshots are attached.
+- [ ] #5 app/_layout.tsx mounts GestureHandlerRootView, BottomSheetModalProvider and Toaster (required by the TASK-8.3 kit: Sheet, Select, toast)
 <!-- AC:END -->
