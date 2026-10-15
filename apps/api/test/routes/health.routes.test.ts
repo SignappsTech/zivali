@@ -6,6 +6,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { app } from '../../app.ts';
 import HealthDao from '../../domains/health/health.dao.ts';
 import { config } from '../../lib/config.ts';
+import { buildOpenApiDocument } from '../../lib/openapi.ts';
 
 afterEach(() => {
 	vi.restoreAllMocks();
@@ -48,31 +49,27 @@ describe('request id', () => {
 	});
 });
 
-describe('API docs', () => {
-	it('serves the OpenAPI document from the route declarations at /docs/openapi.json', async () => {
-		const res = await request(app).get('/docs/openapi.json');
-		expect(res.status).toBe(200);
-		expect(res.body.openapi).toBe('3.1.0');
-		expect(res.body.paths['/v1/health/ready'].get).toMatchObject({
+describe('OpenAPI', () => {
+	it('documents the health route in the committed openapi.json (the RTK Query codegen input)', () => {
+		const committed = JSON.parse(readFileSync(new URL('../../openapi.json', import.meta.url), 'utf8'));
+		expect(buildOpenApiDocument()).toEqual(committed);
+		expect(committed.paths['/v1/health/ready'].get).toMatchObject({
 			operationId: 'getHealthReady',
+			tags: ['health'],
 			responses: {
 				200: { content: { 'application/json': { schema: { $ref: '#/components/schemas/HealthReady' } } } },
+				429: { content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } } },
 			},
 		});
-	});
-
-	it('matches the committed openapi.json (the RTK Query codegen input)', async () => {
-		const res = await request(app).get('/docs/openapi.json');
-		const committed = JSON.parse(readFileSync(new URL('../../openapi.json', import.meta.url), 'utf8'));
-		expect(res.body).toEqual(committed);
 	});
 });
 
 describe('unknown routes', () => {
-	it('answer 404 NOT_FOUND in the C1 error shape', async () => {
+	it('answer 404 NOT_FOUND in the C1 error shape, with x-request-id', async () => {
 		const res = await request(app).get('/v1/does-not-exist');
 		expect(res.status).toBe(404);
 		expect(res.body).toEqual({ error: { code: 'NOT_FOUND', message: 'Route not found' } });
+		expect(res.headers['x-request-id']).toBeTruthy();
 	});
 });
 

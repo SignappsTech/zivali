@@ -11,7 +11,6 @@ import { AppError } from './lib/errors.ts';
 import { logger } from './lib/logger.ts';
 import { errorHandler, notFound } from './middleware/error.middleware.ts';
 import { requestId } from './middleware/requestId.middleware.ts';
-import docsRoutes from './routes/docs.routes.ts';
 import v1Routes from './routes/index.ts';
 
 export const app = express();
@@ -57,8 +56,6 @@ app.get('/ping', (_req, res) => {
 	res.json({ message: 'pong' });
 });
 app.use('/v1', v1Routes);
-// The OpenAPI document at /docs/openapi.json in local and staging; off in production.
-if (config.APP_ENV !== 'production') app.use('/docs', docsRoutes);
 
 app.use(notFound);
 app.use(errorHandler);

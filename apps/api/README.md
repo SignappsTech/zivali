@@ -6,12 +6,11 @@ Express 5 + Prisma 7 REST API and the pg-boss worker, in the client's klikni lay
 
 ```
 app.ts                      Express app, middleware in ADR-020 order (request id → pino-http → helmet → cors →
-                            compression → json 1 MB → global rate limit → /ping, /v1, /docs → 404 → error middleware)
+                            compression → json 1 MB → global rate limit → /ping, /v1 → 404 → error middleware)
 server.ts                   HTTP entry; SIGTERM/SIGINT: stop accepting, finish requests, disconnect Prisma
 worker.ts                   worker entry, same image (`node dist/worker.js`); pg-boss arrives with TASK-6.3
 routes/index.ts             the /v1 router: one mount line per area
 routes/<area>.routes.ts     one Router per area, routes declared with apiRoutes() (validation + OpenAPI, below)
-routes/docs.routes.ts       /docs/openapi.json outside production
 openapi.json                generated, committed OpenAPI 3.1 document (`gen:openapi`); RTK Query codegen input
 controllers/<area>.controller.ts   thin: req → ctx → domain → mapper → res (no try/catch)
 domains/<area>/             all business logic, HTTP-agnostic
@@ -104,7 +103,7 @@ Errors: throw `new AppError(code, message?, details?)`. The error middleware ren
 | `docker run --rm -e DATABASE_URL=… zivali-api npx prisma migrate deploy` | migrations, one-off per deploy                                                                        |
 | `docker compose -f docker-compose.dev.yml up -d`                         | MinIO (S3 :9000, console :9001) with `zivali-private`, `zivali-media` (public read), `zivali-backups` |
 
-Endpoints: `GET /ping` → `{ "message": "pong" }`; `GET /v1/health/ready` → `{ ok, version, db, queue_lag_s }` (503 when the database is down; `queue_lag_s` is `null` until pg-boss, TASK-6.3); `GET /docs/openapi.json` → the OpenAPI 3.1 document, same as `openapi.json` (local and staging, not production; a Swagger UI page at `/docs` is a later task).
+Endpoints: `GET /ping` → `{ "message": "pong" }`; `GET /v1/health/ready` → `{ ok, version, db, queue_lag_s }` (503 when the database is down; `queue_lag_s` is `null` until pg-boss, TASK-6.3). Every response, errors included, carries `x-request-id`. The OpenAPI document is the committed `openapi.json` (Swagger UI at `/docs` is a later task).
 
 Moved Supabase ports (Windows Hyper-V, [supabase/README.md](../../supabase/README.md)): change the port in `DATABASE_URL` and `DIRECT_URL` in `.env.local` too.
 

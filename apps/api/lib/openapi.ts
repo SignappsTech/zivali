@@ -11,6 +11,8 @@ import { z, type ZodObject, type ZodType } from 'zod';
 import { validate } from '../middleware/validate.middleware.ts';
 import { ERROR_STATUS, type ErrorCode } from './errors.ts';
 
+// ponytail: own registry until TASK-6.5 merges; then import the shared `registry` from @zivali/validation (C1),
+// which already holds the DTO components, and drop this line.
 export const registry = new OpenAPIRegistry();
 
 // The one error body of every endpoint (C1).
