@@ -2,53 +2,58 @@ import { cleanup, render } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { getMockEvents, initAnalytics, resetMockEvents, setConsent } from '@zivali/analytics';
+import { routing } from '@/i18n/routing';
 
 import { routeTemplate, ScreenViews } from './screen-views';
 
-const route = vi.hoisted(() => ({ pathname: '/', params: {} as Record<string, string | string[]> }));
-vi.mock('next/navigation', () => ({ usePathname: () => route.pathname, useParams: () => route.params }));
+// next-intl's usePathname returns the internal (EN) route for both locales: /zemljevid and /en/map are both /map.
+const route = vi.hoisted(() => ({ pathname: '/' }));
+vi.mock('@/i18n/navigation', () => ({ usePathname: () => route.pathname }));
 
 afterEach(cleanup);
 
 describe('routeTemplate', () => {
 	it.each([
-		['/', { locale: 'sl' }, '/'],
-		['/en', { locale: 'en' }, '/'],
-		['/r/AB12CD', { locale: 'sl', code: 'AB12CD' }, '/r/[code]'],
-		['/en/r/AB12CD', { locale: 'en', code: 'AB12CD' }, '/r/[code]'],
-		['/r/%C5%A1apa', { locale: 'sl', code: 'šapa' }, '/r/[code]'],
-		['/en/info/help/chips', { locale: 'en', slug: ['help', 'chips'] }, '/info/[...slug]'],
-		['/en/r/abc/x', { locale: 'en' }, '/[...rest]'],
-		['/en/foo', { locale: 'en', rest: ['foo'] }, '/[...rest]'],
-		['/en/r/AB12CD/x9', { locale: 'en' }, '/[...rest]'],
-		['/sl/R/abc', { locale: 'sl' }, '/[...rest]'],
-		['/en/r/123', { locale: 'en' }, '/[...rest]'],
-		['/report/re', { locale: 'sl', code: 're' }, '/report/[code]'],
-	])('%s → %s', (pathname, params, template) => {
-		expect(routeTemplate(pathname, params)).toBe(template);
+		['/', '/'],
+		['/map', '/map'],
+		['/r/AB12CD', '/r/[code]'],
+		['/r/%C5%A1apa', '/r/[code]'],
+		['/r/AB12CD/matches', '/r/[code]/matches'],
+		['/lost-dogs/ljubljana', '/lost-dogs/[location]'],
+		['/guides/chips-help', '/guides/[slug]'],
+		['/inbox/123', '/inbox/[id]'],
+		['/foo', '/[...rest]'],
+		['/r/abc/x', '/[...rest]'],
+		['/R/abc', '/[...rest]'],
+		['/zemljevid', '/[...rest]'],
+	])('%s → %s', (pathname, template) => {
+		expect(routeTemplate(pathname)).toBe(template);
+	});
+
+	it('knows every route in the routing config', () => {
+		for (const key of Object.keys(routing.pathnames))
+			expect(routeTemplate(key.replace(/\[\w+\]/g, 'x1'))).toBe(key);
 	});
 });
 
 describe('ScreenViews', () => {
-	it('sends one page_view per route change, by template, once consent is granted', () => {
+	const sent = (pathnames: string[]) => {
 		initAnalytics();
 		setConsent({ analytics: true });
 		resetMockEvents();
-		const screens = () => getMockEvents().map((event) => event.params.path);
-
-		route.pathname = '/en/r/AB12CD';
-		route.params = { locale: 'en', code: 'AB12CD' };
+		route.pathname = pathnames[0];
 		const { rerender } = render(<ScreenViews />);
-		expect(screens()).toEqual(['/r/[code]']);
+		for (const pathname of pathnames.slice(1)) {
+			route.pathname = pathname;
+			rerender(<ScreenViews />);
+		}
+		return getMockEvents().map((event) => event.params.path);
+	};
 
-		route.params = { ...route.params }; // same route, new params object: no second hit
-		rerender(<ScreenViews />);
-		expect(screens()).toEqual(['/r/[code]']);
-
-		route.pathname = '/en';
-		route.params = { locale: 'en' };
-		rerender(<ScreenViews />);
-		expect(screens()).toEqual(['/r/[code]', '/']);
+	it('SL and EN pages of the same route report one template; unknown paths report the catch-all', () => {
+		// /moje-zivali (SL) and /en/my-pets (EN) both reach the component as /my-pets.
+		expect(sent(['/my-pets'])).toEqual(['/my-pets']);
+		expect(sent(['/r/AB12CD', '/r/AB12CD', '/', '/nope/AB12CD'])).toEqual(['/r/[code]', '/', '/[...rest]']);
 	});
 
 	it('sends nothing without consent', () => {
@@ -57,7 +62,6 @@ describe('ScreenViews', () => {
 		resetMockEvents();
 
 		route.pathname = '/r/AB12CD';
-		route.params = { locale: 'sl', code: 'AB12CD' };
 		render(<ScreenViews />);
 
 		expect(getMockEvents()).toEqual([]);

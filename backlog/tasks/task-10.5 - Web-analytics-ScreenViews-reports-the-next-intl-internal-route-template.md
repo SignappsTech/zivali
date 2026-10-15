@@ -1,10 +1,11 @@
 ---
 id: TASK-10.5
 title: 'Web analytics: ScreenViews reports the next-intl internal route template'
-status: To Do
+status: In Progress
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-15 04:10'
+updated_date: '2026-10-15 05:17'
 labels:
   - fe
   - 'est:XS'
@@ -30,3 +31,7 @@ CH-96. ScreenViews must use next-intl usePathname (internal route template) so S
 - [ ] #2 Unknown paths still report /[...rest]
 - [ ] #3 Unit test covers SL, EN and unknown path
 <!-- AC:END -->
+
+## Packet
+
+Branch: agent/task-10.5-screenviews-localised
