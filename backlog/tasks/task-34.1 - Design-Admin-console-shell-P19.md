@@ -1,11 +1,11 @@
 ---
 id: TASK-34.1
 title: 'Design: Admin console shell (P19)'
-status: To Do
+status: In Progress
 assignee:
   - '@ui-designer'
 created_date: '2026-10-14 21:50'
-updated_date: '2026-10-14 21:51'
+updated_date: '2026-10-15 01:49'
 labels:
   - design
   - 'est:S'
@@ -30,6 +30,7 @@ One console for ads, enquiries and later moderation needs a shell, a dense table
 ## Packet
 Unblocks on: P1 web shell mockup merged (tokens, header patterns)
 Branch: design/P19-admin-shell
+Branch: agent/TASK-34.1-admin-shell
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Acceptance Criteria

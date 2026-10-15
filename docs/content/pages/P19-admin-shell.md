@@ -76,6 +76,8 @@ The "Orders" item from the design slice is dropped (QR tags are out of scope, br
 | admin.destructive_title | {action}: {target}? | {action}: {target}? |
 | admin.destructive_body | Dejanje bo zabeleženo v revizijski sledi. | This action will be recorded in the audit log. |
 | admin.audit_note_label | Opomba za revizijsko sled (neobvezno) | Note for the audit log (optional) |
+| admin.audit_note_required_label | Opomba za revizijsko sled | Note for the audit log |
+| admin.audit_note_required_help | Za izbris je obvezna opomba za revizijsko sled. | A note for the audit log is required to delete. |
 | admin.confirm | Potrdi | Confirm |
 | admin.cancel | Prekliči | Cancel |
 
@@ -243,7 +245,7 @@ Notes:
 - `admin.directory.reminder` shows from 1 April until no entry is older than 12 months; the count is bold (marked `**#**`), `admin.directory.reminder_show` applies `admin.directory.filter_stale`. Not dismissible.
 - A stale row shows the `clock` icon and `admin.directory.stale` in bold next to the date.
 - Day-range options in the hours rows: SL "pon–pet", "pon–sob", "pon", "tor", "sre", "čet", "pet", "sob", "ned", "prazniki"; EN "Mon–Fri", "Mon–Sat", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun", "Public holidays".
-- Delete dialog: `admin.destructive_title` with the action `admin.directory.action_delete` and the shelter name, body `admin.directory.delete_body`, audit note `admin.audit_note_label`. Cancel: `admin.cancel`. Municipality drawer audit note and source use the same keys as the shelter form.
+- Delete dialog: `admin.destructive_title` with the action `admin.directory.action_delete` and the shelter name, body `admin.directory.delete_body`, audit note REQUIRED (`admin.audit_note_required_label`, help `admin.audit_note_required_help`; the delete button stays disabled until it is filled). Cancel: `admin.cancel`. Municipality drawer audit note and source use the same keys as the shelter form.
 - Empty search, error and retry: §3 keys.
 
 # 9. SEO and alt text
