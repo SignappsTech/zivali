@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 import { act, cleanup, renderHook, waitFor } from '@testing-library/react-native';
+import { AppState } from 'react-native';
 
 import { ApiError } from '@zivali/api/client';
 import { createMockApi, type MockRequest, mockError } from '@zivali/api/mock';
@@ -28,13 +29,22 @@ jest.mock(
 	() => (mockFiles ??= jest.requireActual<typeof import('@/test/offline-mocks')>('@/test/offline-mocks').fileSystem())
 );
 const mockKeychain = new Map<string, string>();
+let mockKeychainFailures = 0;
 jest.mock('expo-secure-store', () => ({
 	getItemAsync: async (name: string) => mockKeychain.get(name) ?? null,
-	setItemAsync: async (name: string, value: string) => void mockKeychain.set(name, value),
+	setItemAsync: async (name: string, value: string) => {
+		if (mockKeychainFailures > 0) {
+			mockKeychainFailures -= 1;
+			throw new Error('keychain locked');
+		}
+		mockKeychain.set(name, value);
+	},
 }));
 jest.mock('expo-crypto', () => ({ randomUUID: () => jest.requireActual('node:crypto').randomUUID() }));
-const mockNetwork: { listener?: (state: object) => void } = {};
+const ONLINE = { isConnected: true, isInternetReachable: true };
+const mockNetwork: { listener?: (state: object) => void; state: object } = { state: ONLINE };
 jest.mock('expo-network', () => ({
+	getNetworkStateAsync: async () => mockNetwork.state,
 	addNetworkStateListener: (listener: (state: object) => void) => {
 		mockNetwork.listener = listener;
 		return { remove: () => {} };
@@ -134,6 +144,8 @@ const photoFiles = (id: string) => {
 beforeEach(async () => {
 	now = T0;
 	mockKeychain.clear();
+	mockKeychainFailures = 0;
+	mockNetwork.state = ONLINE;
 	ensureSession.mockClear();
 	put.mockClear();
 	const db = await getDb();
@@ -172,6 +184,8 @@ describe('submitReport', () => {
 		const sent = await row(outboxId);
 		expect(sent).toMatchObject({ status: 'sent', kind: 'found', captured_at: CAPTURED_AT, last_error_code: null });
 		expect(JSON.parse(sent?.result as string)).toEqual({ report_id: 'report-1', short_code: 'CODE1' });
+		// A sent row outlives sign-out: the email and the place are gone from it.
+		expect(JSON.parse(sent?.payload as string)).toEqual({ type: 'found', species: 'cat' });
 		expect(reportCalls()).toHaveLength(1);
 		const [call] = reportCalls();
 		expect(call.headers['Idempotency-Key']).toBe(outboxId);
@@ -360,6 +374,126 @@ describe('send', () => {
 		expect(photoFiles(outboxId)).toEqual([]);
 		expect(await (await getDb()).getFirstAsync('select 1 from outbox_photos')).toBeNull();
 		await waitFor(() => expect(result.current.items).toEqual([]));
+	});
+
+	test('offline without a session never opens the captcha sheet; reconnecting sends it', async () => {
+		const { api, reportCalls } = server();
+		mockNetwork.state = { isConnected: false, isInternetReachable: false };
+		start(api);
+
+		const { outboxId } = await outbox.submitReport(input(), { capturedAt: CAPTURED_AT });
+		await outbox.send();
+
+		expect(ensureSession).not.toHaveBeenCalled();
+		expect(await row(outboxId)).toMatchObject({ status: 'queued', last_error_code: 'NETWORK', attempts: 1 });
+
+		mockNetwork.state = ONLINE;
+		mockNetwork.listener?.(ONLINE);
+		await waitFor(async () => expect((await row(outboxId))?.status).toBe('sent'));
+		expect(ensureSession).toHaveBeenCalledTimes(1);
+		expect(reportCalls()).toHaveLength(1);
+	});
+
+	test('a send() at any moment of a running send is never dropped', async () => {
+		const { api } = server();
+		start(api);
+		const db = await getDb();
+		for (let ticks = 0; ticks < 40; ticks++) {
+			const id = `late-${ticks}`;
+			const first = outbox.send();
+			for (let i = 0; i < ticks; i++) await Promise.resolve();
+			await db.runAsync(
+				`insert into outbox (id, kind, payload, captured_at, status, created_at, updated_at)
+				values (?, 'found', ?, ?, 'queued', ?, ?)`,
+				id,
+				JSON.stringify({ type: 'found', species: 'cat', location: { lat: 46, lng: 14 } }),
+				CAPTURED_AT,
+				now,
+				now
+			);
+			const second = outbox.send();
+			await Promise.all([first, second]);
+			await waitFor(async () => expect((await row(id))?.status).toBe('sent'));
+		}
+	});
+
+	test('the sender runs on app resume', async () => {
+		const { api, state, reportCalls } = server();
+		state.offline = true;
+		let onChange: (state: string) => void = () => {};
+		const spy = jest.spyOn(AppState, 'addEventListener').mockImplementation((_type, listener) => {
+			onChange = listener as (state: string) => void;
+			return { remove: () => {} };
+		});
+		start(api);
+		const { outboxId } = await outbox.submitReport(input(), { capturedAt: CAPTURED_AT });
+		await outbox.send();
+		expect(await row(outboxId)).toMatchObject({ status: 'queued', last_error_code: 'NETWORK' });
+
+		state.offline = false;
+		now = T0 + 2 * MINUTE;
+		onChange('active');
+
+		await waitFor(async () => expect((await row(outboxId))?.status).toBe('sent'));
+		expect(reportCalls()).toHaveLength(1);
+		spy.mockImplementation(() => ({ remove: () => {} }));
+	});
+
+	test('the sender runs when the backoff timer fires', async () => {
+		const { api, state } = server();
+		state.offline = true;
+		const timers: [() => void, number | undefined][] = [];
+		const realSetTimeout = global.setTimeout;
+		const spy = jest.spyOn(global, 'setTimeout').mockImplementation(((fn: () => void, delay?: number) => {
+			timers.push([fn, delay]);
+			return realSetTimeout(() => {}, 0);
+		}) as unknown as typeof setTimeout);
+		start(api);
+		const { outboxId } = await outbox.submitReport(input(), { capturedAt: CAPTURED_AT });
+		await outbox.send();
+		const timer = timers.filter(([, delay]) => delay === MINUTE).pop();
+		expect(timer).toBeDefined();
+		spy.mockRestore();
+
+		state.offline = false;
+		now = T0 + MINUTE;
+		timer?.[0]();
+
+		await waitFor(async () => expect((await row(outboxId))?.status).toBe('sent'));
+	});
+
+	test('once the report exists, a keychain failure keeps the item queued and the retry saves the token', async () => {
+		const { api, state, reportCalls } = server();
+		start(api);
+		mockKeychainFailures = 1;
+
+		const { outboxId } = await outbox.submitReport(input(), { capturedAt: CAPTURED_AT });
+		await outbox.send();
+
+		expect(await row(outboxId)).toMatchObject({ status: 'queued', attempts: 1, next_attempt_at: T0 + MINUTE });
+		expect(photoFiles(outboxId)).toEqual(['0.jpg', '1.jpg']);
+		now = T0 + MINUTE;
+		await outbox.send();
+
+		expect(await row(outboxId)).toMatchObject({ status: 'sent' });
+		expect(state.created).toBe(1);
+		expect(reportCalls()).toHaveLength(2);
+		expect(mockKeychain.get(outbox.manageTokenKey('report-1'))).toBe('token-1');
+	});
+
+	test('folders without an unsent row (left by a kill or a delete) are swept at the next run', async () => {
+		const { api, state } = server();
+		state.offline = true;
+		start(api);
+		const orphan = path.join(outboxDir.uri, 'orphan');
+		fs.mkdirSync(orphan, { recursive: true });
+		fs.writeFileSync(path.join(orphan, '0.jpg'), 'x');
+		const kept = await outbox.submitReport(input(), { capturedAt: CAPTURED_AT });
+
+		await outbox.send();
+
+		expect(fs.existsSync(orphan)).toBe(false);
+		expect(photoFiles(kept.outboxId)).toEqual(['0.jpg', '1.jpg']);
 	});
 
 	test('an item deleted while an earlier one is sending is never sent', async () => {

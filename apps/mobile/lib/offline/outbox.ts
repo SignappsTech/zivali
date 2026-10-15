@@ -1,6 +1,6 @@
 import { randomUUID } from 'expo-crypto';
 import { Directory, File } from 'expo-file-system';
-import { addNetworkStateListener } from 'expo-network';
+import { addNetworkStateListener, getNetworkStateAsync } from 'expo-network';
 import * as SecureStore from 'expo-secure-store';
 import { useEffect, useState } from 'react';
 import { AppState } from 'react-native';
@@ -70,7 +70,7 @@ export type OutboxItem = Omit<Row, 'payload' | 'result'> & {
 	payload: OutboxPayload;
 	result: { report_id: string; short_code: string } | null;
 };
-type PhotoRow = { position: number; path: string; sha256: string; width: number; height: number; bytes: number };
+type PhotoRow = { path: string; sha256: string; width: number; height: number; bytes: number };
 /** How send() reaches the API: the app client, the anonymous session (Turnstile sheet) and the file PUT. */
 export type OutboxTransport = { api: ApiClient; ensureSession: () => Promise<unknown>; put: PutFile };
 
@@ -81,6 +81,25 @@ const RETRY = new Set(['NETWORK', 'INTERNAL', 'SERVICE_UNAVAILABLE']);
 const listeners = new Set<() => void>();
 const changed = () => listeners.forEach((listener) => listener());
 const folder = (id: string) => new Directory(outboxDir, id);
+/** Ids being stored by submitReport: their folder has no row yet, so the sweep must leave it. */
+const storing = new Set<string>();
+
+/** Deletes outbox/<id>/ folders that no unsent row owns (an app kill between the database and the file delete). */
+async function sweep(): Promise<void> {
+	if (!outboxDir.exists) return;
+	const db = await getDb();
+	const keep = new Set(
+		(await db.getAllAsync<{ id: string }>(`select id from outbox where status != 'sent'`)).map(({ id }) => id)
+	);
+	for (const entry of outboxDir.list())
+		if (!keep.has(entry.name) && !storing.has(entry.name)) {
+			try {
+				entry.delete();
+			} catch {
+				// the next sweep tries again
+			}
+		}
+}
 
 /**
  * Stores the report (photos copied to documentDirectory/outbox/<id>/, row `queued`) and returns at once; the send
@@ -92,6 +111,7 @@ export async function submitReport(
 ): Promise<{ outboxId: string }> {
 	// The uuid is also the Idempotency-Key of every attempt (C1).
 	const id = randomUUID();
+	storing.add(id);
 	const dir = folder(id);
 	try {
 		dir.create({ intermediates: true, idempotent: true });
@@ -132,6 +152,8 @@ export async function submitReport(
 	} catch (error) {
 		if (dir.exists) dir.delete();
 		throw error;
+	} finally {
+		storing.delete(id);
 	}
 	changed();
 	void send();
@@ -139,10 +161,12 @@ export async function submitReport(
 }
 
 /** What a failed attempt leaves on the row (C17): wait and retry, wait for the person, or stop with the reason. */
-function outcome(error: unknown, attempts: number, now: number) {
+function outcome(error: unknown, attempts: number, now: number, created: boolean) {
 	const code = error instanceof ApiError ? error.code : 'INTERNAL';
 	const message = error instanceof Error ? error.message : String(error);
 	const backoff = now + BACKOFF_MIN[Math.min(attempts, BACKOFF_MIN.length) - 1] * 60_000;
+	// The report exists but the token or the row could not be saved: the replay with the same key saves them again.
+	if (created) return { status: 'queued', code: 'INTERNAL', message, next: backoff };
 	// The Turnstile sheet was cancelled, timed out or failed: the person retries from the queue.
 	if (code === 'CAPTCHA_FAILED') return { status: 'needs_action', code: 'CAPTCHA_REQUIRED', message, next: null };
 	if (code === 'RATE_LIMITED') {
@@ -164,14 +188,17 @@ async function deliver(transport: OutboxTransport, item: Row): Promise<void> {
 	// Deleted by the person while earlier items were sending.
 	if (changes === 0) return;
 	changed();
+	let created: CreateReportResponse | undefined;
 	try {
+		// Offline, the Turnstile sheet would fail and park the item in needs_action: wait for the connection instead.
+		if (!isOnline(await getNetworkStateAsync())) throw new ApiError('NETWORK', 'Offline');
 		await transport.ensureSession();
 		const photos = await db.getAllAsync<PhotoRow>(
-			'select position, path, sha256, width, height, bytes from outbox_photos where outbox_id = ? order by position',
+			'select path, sha256, width, height, bytes from outbox_photos where outbox_id = ? order by position',
 			item.id
 		);
 		const photoIds: string[] = [];
-		for (const { position, path, ...input } of photos) {
+		for (const { path, ...input } of photos) {
 			// Every attempt registers every photo: one already uploaded answers `existing` without a new PUT, and that
 			// also restarts its 24 h purge clock (C5), so an item that waited long never sends a purged photo id.
 			const { photoId } = await uploadPhoto(
@@ -179,35 +206,34 @@ async function deliver(transport: OutboxTransport, item: Row): Promise<void> {
 				{ ...input, file: { uri: path } },
 				{ put: transport.put }
 			);
-			await db.runAsync(
-				'update outbox_photos set photo_id = ?, uploaded = 1 where outbox_id = ? and position = ?',
-				photoId,
-				item.id,
-				position
-			);
 			photoIds.push(photoId);
 		}
 		// The same key and body replay the first response (C1), so a lost response gives the same report and token.
-		const created = await transport.api.request<CreateReportResponse>('POST', '/v1/reports', {
+		created = await transport.api.request<CreateReportResponse>('POST', '/v1/reports', {
 			body: { ...JSON.parse(item.payload), photo_ids: photoIds, event_at: item.captured_at },
 			idempotent: item.id,
 		});
 		// Keychain first: if the app dies before the row says `sent`, the retry replays the same token.
-		if (created.manage_token) await saveManageToken(created.id, created.manage_token);
+		const { id, short_code, manage_token } = created;
+		if (manage_token) await saveManageToken(id, manage_token);
+		// A sent row outlives sign-out and is listed: keep only what the "sent" UI shows, not the email or the place.
+		const { type, species } = JSON.parse(item.payload) as { type: string; species?: string };
 		await db.withTransactionAsync(async () => {
 			await db.runAsync(
-				`update outbox set status = 'sent', result = ?, next_attempt_at = null, last_error_code = null,
+				`update outbox set status = 'sent', payload = ?, result = ?, next_attempt_at = null, last_error_code = null,
 				last_error_message = null, updated_at = ? where id = ?`,
-				JSON.stringify({ report_id: created.id, short_code: created.short_code }),
+				JSON.stringify({ type, species }),
+				JSON.stringify({ report_id: id, short_code }),
 				Date.now(),
 				item.id
 			);
 			await db.runAsync('delete from outbox_photos where outbox_id = ?', item.id);
 		});
+		// A kill before this leaves the folder; the sweep at the next run removes it.
 		if (folder(item.id).exists) folder(item.id).delete();
 	} catch (error) {
 		const now = Date.now();
-		const { status, code, message, next } = outcome(error, item.attempts + 1, now);
+		const { status, code, message, next } = outcome(error, item.attempts + 1, now, created !== undefined);
 		await db.runAsync(
 			`update outbox set status = ?, attempts = attempts + 1, next_attempt_at = ?, last_error_code = ?,
 			last_error_message = ?, updated_at = ? where id = ?`,
@@ -236,6 +262,7 @@ async function run(sender: OutboxTransport): Promise<void> {
 	const db = await getDb();
 	// Only one run at a time, so a row still `sending` was cut off by an app kill: it goes again with the same key.
 	await db.runAsync(`update outbox set status = 'queued' where status = 'sending'`);
+	await sweep();
 	const due = await db.getAllAsync<Row>(
 		`select * from outbox where status = 'queued' and coalesce(next_attempt_at, 0) <= ? order by created_at`,
 		Date.now()
@@ -266,6 +293,8 @@ export function send(): Promise<void> {
 		.catch(() => {}) // the database itself failed; the next trigger tries again
 		.finally(() => {
 			running = undefined;
+			// A send() that came after the last check of the loop must not be lost.
+			if (again) void send();
 		});
 	return running;
 }
@@ -328,6 +357,7 @@ async function remove(id: string): Promise<void> {
 	const db = await getDb();
 	const { changes } = await db.runAsync(`delete from outbox where id = ? and status != 'sending'`, id);
 	if (changes > 0 && folder(id).exists) folder(id).delete();
+	await sweep().catch(() => {});
 	changed();
 }
 
