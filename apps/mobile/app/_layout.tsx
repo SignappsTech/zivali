@@ -7,6 +7,7 @@ import { AtkinsonHyperlegibleNext_600SemiBold } from '@expo-google-fonts/atkinso
 import { AtkinsonHyperlegibleNext_700Bold } from '@expo-google-fonts/atkinson-hyperlegible-next/700Bold';
 import { BricolageGrotesque_600SemiBold } from '@expo-google-fonts/bricolage-grotesque/600SemiBold';
 import { BricolageGrotesque_700Bold } from '@expo-google-fonts/bricolage-grotesque/700Bold';
+import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { PortalHost } from '@rn-primitives/portal';
 import { useFonts } from 'expo-font';
 import { Stack, ThemeProvider } from 'expo-router';
@@ -14,8 +15,11 @@ import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useColorScheme } from 'nativewind';
 import { useEffect } from 'react';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Provider } from 'react-redux';
+import { useTranslations } from 'use-intl';
 
+import { Toaster } from '@/components/ui/sonner';
 import { ProfileI18n } from '@/lib/profile-i18n';
 import { store } from '@/lib/store';
 import { NAV_THEME } from '@/lib/theme';
@@ -41,16 +45,30 @@ export default function RootLayout() {
 
 	if (!ready) return null;
 
-	// Data fetching is RTK Query (@zivali/api). Order: Redux Provider -> ProfileI18n (profile locale) -> Theme.
+	// Data fetching is RTK Query (@zivali/api). Order: gestures -> Redux Provider -> ProfileI18n (profile locale) ->
+	// Theme -> sheets (the kit's Sheet and Select) -> screens, toasts and the dialog portal.
 	return (
-		<Provider store={store}>
-			<ProfileI18n>
-				<ThemeProvider value={NAV_THEME[colorScheme ?? 'light']}>
-					<StatusBar style="auto" />
-					<Stack screenOptions={{ headerShown: false }} />
-					<PortalHost />
-				</ThemeProvider>
-			</ProfileI18n>
-		</Provider>
+		<GestureHandlerRootView style={{ flex: 1 }}>
+			<Provider store={store}>
+				<ProfileI18n>
+					<ThemeProvider value={NAV_THEME[colorScheme ?? 'light']}>
+						<BottomSheetModalProvider>
+							<StatusBar style="auto" />
+							<Stack screenOptions={{ headerShown: false }} />
+							<AppToaster />
+							<PortalHost />
+						</BottomSheetModalProvider>
+					</ThemeProvider>
+				</ProfileI18n>
+			</Provider>
+		</GestureHandlerRootView>
 	);
+}
+
+// 12 px above the bottom navigation (68 px plus the safe area, which the Toaster adds itself).
+const TOAST_OFFSET = 80;
+
+function AppToaster() {
+	const t = useTranslations('common');
+	return <Toaster closeLabel={t('close')} offset={TOAST_OFFSET} />;
 }

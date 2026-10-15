@@ -7,76 +7,19 @@ import { deleteDatabaseAsync, openDatabaseAsync, type SQLiteDatabase } from 'exp
 import * as SecureStore from 'expo-secure-store';
 
 import { DB_NAME, getDb, migrate, migrations } from '@/lib/db';
-import { bytesUsed, draftsDir, outboxDir, thumbsDir } from '@/lib/db/files';
+import { bytesUsed, draftsDir, outboxDir, pickerCacheDir, thumbsDir } from '@/lib/db/files';
 import { stopGeofencing } from '@/lib/offline/geofence';
 import { manageTokenKey } from '@/lib/offline/outbox';
 import { signOutAndWipe, wipeLocalData } from '@/lib/offline/wipe';
 import { supabase } from '@/lib/supabase';
 
-// Real SQL: node:sqlite stands in for the native expo-sqlite module (in memory, one database per open).
-jest.mock('expo-sqlite', () => {
-	const { DatabaseSync } = jest.requireActual<typeof import('node:sqlite')>('node:sqlite');
-	return {
-		openDatabaseAsync: async () => {
-			const db = new DatabaseSync(':memory:');
-			return {
-				execAsync: async (sql: string) => db.exec(sql),
-				getFirstAsync: async (sql: string, ...params: never[]) => db.prepare(sql).get(...params) ?? null,
-				getAllAsync: async (sql: string, ...params: never[]) => db.prepare(sql).all(...params),
-				withTransactionAsync: async (task: () => Promise<void>) => {
-					db.exec('begin');
-					try {
-						await task();
-						db.exec('commit');
-					} catch (error) {
-						db.exec('rollback');
-						throw error;
-					}
-				},
-				withExclusiveTransactionAsync: async (task: (txn: unknown) => Promise<void>) => {
-					db.exec('begin');
-					try {
-						await task({ execAsync: async (sql: string) => db.exec(sql) });
-						db.exec('commit');
-					} catch (error) {
-						db.exec('rollback');
-						throw error;
-					}
-				},
-				closeAsync: async () => {
-					db.close();
-				},
-			};
-		},
-		deleteDatabaseAsync: jest.fn(async () => {}),
-	};
-});
-// Real files in a temp folder stand in for the app's cache and document directories.
-jest.mock('expo-file-system', () => {
-	const nodeFs = jest.requireActual<typeof import('node:fs')>('node:fs');
-	const nodePath = jest.requireActual<typeof import('node:path')>('node:path');
-	const root = nodeFs.mkdtempSync(nodePath.join(jest.requireActual('node:os').tmpdir(), 'zivali-'));
-	class Directory {
-		uri: string;
-		constructor(...parts: (string | Directory)[]) {
-			this.uri = nodePath.join(...parts.map((part) => (typeof part === 'string' ? part : part.uri)));
-		}
-		get exists() {
-			return nodeFs.existsSync(this.uri);
-		}
-		get size() {
-			if (!this.exists) return null;
-			const files = nodeFs.readdirSync(this.uri, { recursive: true, withFileTypes: true });
-			return files
-				.filter((file) => file.isFile())
-				.reduce((sum, file) => sum + nodeFs.statSync(nodePath.join(file.parentPath, file.name)).size, 0);
-		}
-		delete() {
-			nodeFs.rmSync(this.uri, { recursive: true });
-		}
-	}
-	return { Directory, Paths: { cache: new Directory(root, 'cache'), document: new Directory(root, 'document') } };
-});
+// Real SQL on node:sqlite and real files in a temp folder stand in for the native modules.
+jest.mock('expo-sqlite', () =>
+	jest.requireActual<typeof import('@/test/offline-mocks')>('@/test/offline-mocks').sqlite()
+);
+jest.mock('expo-file-system', () =>
+	jest.requireActual<typeof import('@/test/offline-mocks')>('@/test/offline-mocks').fileSystem()
+);
 const mockKeychain = new Map<string, string>();
 const mockSession = jest.fn(async () => {});
 jest.mock('expo-secure-store', () => ({
@@ -86,6 +29,12 @@ jest.mock('@/lib/supabase', () => ({
 	clearSessionStorage: () => mockSession(),
 	supabase: { auth: { signOut: jest.fn(async () => ({ error: null })) } },
 }));
+// wipe waits for a running sync (lib/offline/sync); its native imports are inert here.
+jest.mock('expo-sqlite/localStorage/install', () => ({}));
+jest.mock('expo-network', () => ({ addNetworkStateListener: jest.fn(), getNetworkStateAsync: jest.fn() }));
+jest.mock('expo-task-manager', () => ({ defineTask: jest.fn() }));
+jest.mock('expo-background-task', () => ({}));
+jest.mock('@/lib/env', () => ({ env: { EXPO_PUBLIC_API_URL: 'http://api.default' } }));
 jest.mock('@/lib/offline/geofence', () => ({ stopGeofencing: jest.fn(async () => {}) }));
 
 const C17_TABLES = [
@@ -207,6 +156,7 @@ async function seed() {
 		insert into outbox_photos (outbox_id, position, path, sha256) values ('o2', 0, 'outbox/o2/0.jpg', 'abc');
 	`);
 	writeFile(thumbsDir, 'r1.jpg', 3);
+	writeFile(pickerCacheDir, 'orig.jpg', 3);
 	writeFile(draftsDir, 'd1/0.jpg', 4);
 	writeFile(outboxDir, 'o2/0.jpg', 5);
 	mockKeychain.set(manageTokenKey('rep-1'), 'token');
@@ -236,6 +186,7 @@ describe('wipeLocalData', () => {
 			expect(stopGeofencing).toHaveBeenCalled();
 			expect(thumbsDir.exists).toBe(false);
 			expect(draftsDir.exists).toBe(false);
+			expect(pickerCacheDir.exists).toBe(false);
 			expect(await count('outbox')).toBe(2);
 			expect(await count('outbox_photos')).toBe(1);
 			expect(outboxDir.exists).toBe(true);

@@ -121,6 +121,166 @@
 			"export": false,
 			"delete": "anonymise",
 			"other_columns": ["id", "entity", "entity_id", "version", "data", "source", "created_at"]
+		},
+		"matches": {
+			"category": "matching",
+			"personal_data": ["rejected_reason"],
+			"basis": "contract (GDPR art. 6(1)(b)): reuniting lost pets (FR-008)",
+			"retention": "while both reports exist; deleted with either report (retention.purge)",
+			"export": false,
+			"delete": "keep (no user id; deleted with the reports)",
+			"other_columns": [
+				"id",
+				"lost_report_id",
+				"other_report_id",
+				"score",
+				"strength",
+				"chip_match",
+				"reasons",
+				"state",
+				"algo_version",
+				"notified_at",
+				"created_at",
+				"updated_at"
+			]
+		},
+		"match_feedback": {
+			"category": "matching",
+			"personal_data": ["user_id", "reason"],
+			"basis": "contract (GDPR art. 6(1)(b))",
+			"retention": "with the match",
+			"export": true,
+			"delete": "delete",
+			"other_columns": ["match_id", "verdict", "created_at"]
+		},
+		"conversations": {
+			"category": "chat",
+			"personal_data": [],
+			"basis": "contract (GDPR art. 6(1)(b)): owner-finder chat (FR-009)",
+			"retention": "6 months after the related report closes (retention.purge, C9)",
+			"export": false,
+			"delete": "keep (no user id; the user's participant rows and messages are deleted)",
+			"other_columns": [
+				"id",
+				"lost_report_id",
+				"other_report_id",
+				"about_report_id",
+				"match_id",
+				"status",
+				"created_at",
+				"closed_at"
+			]
+		},
+		"conversation_participants": {
+			"category": "chat",
+			"personal_data": ["user_id", "alias", "last_read_at"],
+			"basis": "contract (GDPR art. 6(1)(b))",
+			"retention": "6 months after the related report closes (retention.purge, C9)",
+			"export": true,
+			"delete": "delete",
+			"other_columns": ["conversation_id", "role", "muted"]
+		},
+		"messages": {
+			"category": "chat",
+			"personal_data": ["sender_id", "body", "location"],
+			"basis": "contract (GDPR art. 6(1)(b)); message text is personal data, the service never adds emails or phone numbers",
+			"retention": "6 months after the related report closes (retention.purge, C9)",
+			"export": true,
+			"delete": "delete (the user's messages)",
+			"other_columns": ["id", "conversation_id", "kind", "has_link", "created_at"]
+		},
+		"blocks": {
+			"category": "chat",
+			"personal_data": ["blocker_id", "blocked_id"],
+			"basis": "legitimate interest (GDPR art. 6(1)(f)): abuse prevention",
+			"retention": "until the blocker or the blocked account is deleted",
+			"export": true,
+			"delete": "delete",
+			"other_columns": ["created_at"]
+		},
+		"notifications": {
+			"category": "notifications",
+			"personal_data": ["user_id", "payload", "read_at"],
+			"basis": "contract (GDPR art. 6(1)(b))",
+			"retention": "until the account is deleted (inbox pruning: TASK-22.3)",
+			"export": true,
+			"delete": "delete",
+			"other_columns": ["id", "type", "dedupe_key", "created_at"]
+		},
+		"notification_prefs": {
+			"category": "notifications",
+			"personal_data": ["user_id", "in_app", "push", "email"],
+			"basis": "contract (GDPR art. 6(1)(b))",
+			"retention": "until the account is deleted",
+			"export": true,
+			"delete": "delete",
+			"other_columns": ["type"]
+		},
+		"push_tokens": {
+			"category": "notifications",
+			"personal_data": ["user_id", "token", "platform", "last_seen_at"],
+			"basis": "contract (GDPR art. 6(1)(b))",
+			"retention": "until unregistered, reported DeviceNotRegistered, or the account is deleted",
+			"export": false,
+			"delete": "delete",
+			"other_columns": ["id"]
+		},
+		"alert_subscriptions": {
+			"category": "alerts",
+			"personal_data": ["user_id", "center_point", "radius_km", "species", "paused", "daily_cap"],
+			"basis": "consent (GDPR art. 6(1)(a)): opt-in nearby alerts (FR-010)",
+			"retention": "until the user deletes it or the account",
+			"export": true,
+			"delete": "delete",
+			"other_columns": ["id", "created_at", "updated_at"]
+		},
+		"alert_deliveries": {
+			"category": "alerts",
+			"personal_data": ["user_id", "sent_at", "channel"],
+			"basis": "consent (GDPR art. 6(1)(a)): one alert per report, daily cap",
+			"retention": "with the report (retention.purge)",
+			"export": false,
+			"delete": "delete",
+			"other_columns": ["report_id"]
+		},
+		"email_outbox": {
+			"category": "notifications",
+			"personal_data": ["user_id", "to_address_hash", "locale", "error"],
+			"basis": "contract (GDPR art. 6(1)(b)): delivery record",
+			"retention": "90 d after creation (purged by the retention job)",
+			"export": false,
+			"delete": "delete",
+			"other_columns": ["id", "template", "status", "provider_id", "created_at"]
+		},
+		"geo_places": {
+			"category": "reference",
+			"personal_data": [],
+			"basis": "none (no personal data; GURS open data, CC BY 4.0)",
+			"retention": "kept; replaced on a data refresh",
+			"export": false,
+			"delete": "keep",
+			"other_columns": [
+				"id",
+				"kind",
+				"name",
+				"alt_name",
+				"search",
+				"search_alt",
+				"municipality_id",
+				"settlement_id",
+				"weight",
+				"point",
+				"geom"
+			]
+		},
+		"geo_addresses": {
+			"category": "reference",
+			"personal_data": [],
+			"basis": "none (no personal data; GURS open data, CC BY 4.0: house number points, no owners or residents)",
+			"retention": "kept; replaced on a data refresh",
+			"export": false,
+			"delete": "keep",
+			"other_columns": ["place_id", "number", "suffix", "point"]
 		}
 	},
 	"buckets": {

@@ -26,7 +26,8 @@ create table reports_cache (id text primary key, short_code text not null, type 
 create index reports_cache_geo on reports_cache (area_lat, area_lng);
 create index reports_cache_synced on reports_cache (synced_at);
 create table cache_areas (id text primary key check (id in ('home','current')), lat real not null, lng real not null,
-  radius_km real not null, since text /* server_time cursor */, last_sync_at integer);
+  radius_km real not null, since text /* server_time cursor */, last_sync_at integer,
+  shelter text /* C18 responsible-shelter JSON for the area, null until fetched */);
 create table geofences (region_id text primary key /* report id or 'boundary' */, short_code text, lat real not null,
   lng real not null, radius_m integer not null, registered_at integer not null);                       -- M3
 create table geofence_events (report_id text not null, area_key text not null, fired_at integer not null,
@@ -38,6 +39,7 @@ create table geofence_events (report_id text not null, area_key text not null, f
 ## Data seam
 
 - `lib/data/reports.ts` exports `useReportSearch(filters)`, `useReport(code)` and `useMapReports(bbox)`. Screens (map, list, detail) read reports only through these hooks. Online they call `@zivali/api/reports` and upsert the cache; offline (or on network error) they read `reports_cache` and return `{ data, source: 'network' | 'cache', lastSyncAt }`.
+- `lib/data/shelters.ts` exports `getCachedShelter(areaId)`: reads `cache_areas.shelter` (parsed C18 `responsible` response, null when absent) so the shelter checklist works offline.
 - `lib/net.ts`: `useNetworkState()` from `expo-network`, wired to RTK Query `setupListeners` (refetch on reconnect); `isUnmetered()`.
 - No query-cache persister (no redux-persist). Private queries stay in memory.
 
@@ -68,7 +70,7 @@ Send order per item: ensure session (anonymous sign-in with Turnstile token when
 
 ## Device storage
 
-Besides SQLite and SecureStore, the app keeps small non-private UI preferences in the SQLite-backed `localStorage` (`expo-sqlite/localStorage/install`). Allowed keys: the encrypted session ciphertext (TASK-3.4) and `locale` (the mobile language choice, TASK-10.3; not personal data). Anything else needs a contract change; `wipeLocalData` on `account_deleted` clears all of it.
+Besides SQLite and SecureStore, the app keeps small non-private UI preferences in the SQLite-backed `localStorage` (`expo-sqlite/localStorage/install`). Allowed keys: the encrypted session ciphertext (TASK-3.4) `locale` (the mobile language choice, TASK-10.3; not personal data) and the cache settings `cache.max_mb`, `cache.max_age_days`, `cache.mobile_photos` (TASK-85.2). Anything else needs a contract change; `wipeLocalData` on `account_deleted` clears all of it.
 
 ## Wipe
 
@@ -87,3 +89,5 @@ Besides SQLite and SecureStore, the app keeps small non-private UI preferences i
 |---|---|---|
 | 1.1 | 2026-10-15 | CH-111: Wipe: `account_deleted` wipes everything (db file, app files, SecureStore incl. manage tokens, session ciphertext + key); sign-out keeps manage tokens and sent rows unless the user picks removal (`signOutAndWipe({removeManageLinks})`) |
 | 1.2 | 2026-10-15 | CH-113: `locale` added to the allowed device-storage (localStorage) keys |
+| 1.3 | 2026-10-15 | CH-140: cache_areas.shelter and getCachedShelter(areaId) |
+| 1.4 | 2026-10-15 | CH-141: allowed device-storage keys cache.max_mb, cache.max_age_days, cache.mobile_photos |

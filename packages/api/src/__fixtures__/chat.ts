@@ -20,7 +20,7 @@ export const messages: MessageList = {
 		{
 			...message,
 			id: '3f0b7c1e-0000-4000-8000-000000000001',
-			sender_alias_key: 'you',
+			sender_alias_key: 'owner',
 			body: 'Pozdravljeni, to je moj Piko.',
 			created_at: '2026-10-14T15:58:40Z',
 		},
@@ -33,6 +33,7 @@ export const conversations: ConversationList = {
 		{
 			id: conversationId,
 			about_report: { short_code: 'Hk3vT9qP', type: 'found', species: 'dog', thumb_url: null },
+			my_alias_key: 'owner',
 			other_alias_key: 'finder',
 			last_message_preview: message.body,
 			unread: 1,
