@@ -16,6 +16,7 @@ import AuthCallback from '@/app/auth/callback';
 import CheckEmail from '@/app/auth/check-email';
 import ForgotPassword from '@/app/auth/forgot-password';
 import NewPassword from '@/app/auth/new-password';
+import { signOutProviders } from '@/lib/auth';
 import SignIn from '@/app/auth/sign-in';
 import SignUp from '@/app/auth/sign-up';
 import AccountSettings from '@/app/settings/account';
@@ -119,11 +120,13 @@ jest.mock('@zivali/api/geocode', () => ({
 	usePlaceSearch: (q: string) => ({ places: q.length >= 3 ? [ljubljana] : [], isFetching: false }),
 }));
 const mockGoogleSignIn = jest.fn();
+const mockGoogleSignOut = jest.fn();
 jest.mock('@react-native-google-signin/google-signin', () => ({
 	GoogleSignin: {
 		configure: jest.fn(),
 		hasPlayServices: jest.fn(async () => true),
 		signIn: () => mockGoogleSignIn(),
+		signOut: () => mockGoogleSignOut(),
 	},
 }));
 jest.mock('@/components/ui/sonner', () => ({
@@ -188,6 +191,7 @@ beforeEach(() => {
 		...Object.values(mockApiAuth),
 		mockUpdateMe,
 		mockGoogleSignIn,
+		mockGoogleSignOut,
 		mockReady,
 	])
 		mock.mockReset();
@@ -279,14 +283,34 @@ describe('sign up', () => {
 		expect(screen.getByText(sl.auth.check_resend_wait.replace('{seconds}', '60'))).toBeOnTheScreen();
 	});
 
-	test('a taken address is an email field error', async () => {
+	test('an invalid-address error from the server is an email field error, any other validation is generic', async () => {
+		await app('/auth/sign-up');
+		await type(sl.auth.name_label, 'Ana');
+		await type(sl.auth.email_label, 'ana@primer.si');
+		await type(sl.auth.password_label, 'mačka v škornjih');
+		mockSupabase.signUp.mockResolvedValueOnce({
+			data: {},
+			error: new ApiError('VALIDATION', 'VALIDATION', { details: { auth_code: 'email_address_invalid' } }),
+		});
+		await press(sl.auth.signup_button);
+		expect(screen.getByText(sl.auth.error_email_invalid)).toBeOnTheScreen();
+		mockSupabase.signUp.mockResolvedValueOnce({
+			data: {},
+			error: new ApiError('VALIDATION', 'VALIDATION', { details: { auth_code: 'weak_password' } }),
+		});
+		await press(sl.auth.signup_button);
+		expect(screen.getByText(sl.errors.VALIDATION)).toBeOnTheScreen();
+	});
+
+	test('a taken address looks like success', async () => {
 		await app('/auth/sign-up');
 		await type(sl.auth.name_label, 'Ana');
 		await type(sl.auth.email_label, 'ana@primer.si');
 		await type(sl.auth.password_label, 'mačka v škornjih');
 		mockSupabase.signUp.mockResolvedValueOnce({ data: {}, error: new ApiError('CONFLICT', 'CONFLICT') });
 		await press(sl.auth.signup_button);
-		expect(screen.getByText(sl.auth.error_email_taken)).toBeOnTheScreen();
+		expect(screen.queryByText(sl.auth.error_email_taken)).toBeNull();
+		expect(await screen.findByRole('heading', { name: sl.auth.check_title })).toBeOnTheScreen();
 	});
 
 	test('"Odpri e-pošto" opens the mail app', async () => {
@@ -332,6 +356,11 @@ describe('reset and email links', () => {
 		expect(toast.success).toHaveBeenCalledWith(sl.auth.newpass_done);
 	});
 
+	test('the new password screen without a recovery link goes to forgot password', async () => {
+		const result = await app('/auth/new-password');
+		expect(result.getPathname()).toBe('/auth/forgot-password');
+	});
+
 	test('a reset link that no longer works offers a new one', async () => {
 		mockSupabase.exchangeCodeForSession.mockResolvedValueOnce({ data: {}, error: new ApiError('INTERNAL', 'x') });
 		const result = await app('/auth/callback?type=recovery&code=used');
@@ -354,6 +383,16 @@ describe('Google', () => {
 		await press(sl.auth.google);
 		await waitFor(() => expect(result.getPathname()).toBe('/'));
 		expect(mockApiAuth.signInWithGoogle).toHaveBeenCalledWith({ idToken: 'google-id-token' });
+	});
+});
+
+describe('provider sign-out', () => {
+	test('clears the Google account and swallows its errors', async () => {
+		mockGoogleSignOut.mockResolvedValueOnce(undefined);
+		await signOutProviders();
+		expect(mockGoogleSignOut).toHaveBeenCalledTimes(1);
+		mockGoogleSignOut.mockRejectedValueOnce(new Error('no account'));
+		await expect(signOutProviders()).resolves.toBeUndefined();
 	});
 });
 

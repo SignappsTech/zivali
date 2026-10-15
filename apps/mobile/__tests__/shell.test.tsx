@@ -46,6 +46,12 @@ jest.mock('@zivali/api/auth', () => ({ useSession: () => mockSession }));
 const mockSignOutAndWipe = jest.fn();
 jest.mock('@/lib/offline/wipe', () => ({ signOutAndWipe: (options: unknown) => mockSignOutAndWipe(options) }));
 
+const mockSignOutProviders = jest.fn();
+jest.mock('@/lib/auth', () => ({
+	...jest.requireActual('@/lib/auth'),
+	signOutProviders: () => mockSignOutProviders(),
+}));
+
 const routes = {
 	// The root Stack of app/_layout.tsx, without its fonts and store.
 	_layout: () => <Stack screenOptions={{ headerShown: false }} />,
@@ -208,6 +214,7 @@ describe('signed in', () => {
 		await fireEvent.press(buttons[buttons.length - 1]);
 
 		expect(mockSignOutAndWipe).toHaveBeenCalledWith(expect.objectContaining({ removeManageLinks: true }));
+		expect(mockSignOutProviders).toHaveBeenCalled();
 	});
 
 	test('the settings language screen switches the language', async () => {

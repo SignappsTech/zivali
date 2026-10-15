@@ -30,7 +30,7 @@ export default function AuthCallback() {
 	React.useEffect(() => {
 		if (!code || started.current) return;
 		started.current = true;
-		exchangeLinkCode(code).then(
+		exchangeLinkCode(code, type).then(
 			() => (type === 'recovery' ? router.replace('/auth/new-password') : setState('verified')),
 			() => setState(type === 'signup' ? 'verified' : 'failed')
 		);

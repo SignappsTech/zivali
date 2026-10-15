@@ -5,6 +5,7 @@
 	"searching": "Iščemo …",
 	"no_results": "Tega kraja ne najdemo. Poskusite z drugim imenom ali premaknite zemljevid na pravo mesto.",
 	"address_unknown": "Kraj brez imena",
+	"approximate_label": "približno območje",
 	"alert_radius_label": "Polmer opozoril",
 	"alert_radius_value": "{km} km",
 	"alert_radius_help": "Obvestimo vas o izgubljenih živalih znotraj tega območja.",

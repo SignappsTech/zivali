@@ -4,6 +4,7 @@
 	"search_placeholder": "Street and house number, or town",
 	"searching": "Searching …",
 	"no_results": "We cannot find that place. Try another name or move the map to the right spot.",
+	"approximate_label": "approximate area",
 	"address_unknown": "Unnamed place",
 	"alert_radius_label": "Alert radius",
 	"alert_radius_value": "{km} km",

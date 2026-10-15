@@ -51,10 +51,20 @@ export const signUp = ({
 export const resendConfirmation = (email: string) =>
 	check(supabase.auth.resend({ type: 'signup', email, options: { emailRedirectTo: authRedirect('signup') } }));
 
-export const updatePassword = (password: string) => check(supabase.auth.updateUser({ password }));
+/** In memory only: set by a successful recovery-link exchange, so app/auth/new-password is not reachable by a plain session. */
+let recovering = false;
+export const isRecovering = () => recovering;
+
+export const updatePassword = async (password: string) => {
+	await check(supabase.auth.updateUser({ password }));
+	recovering = false;
+};
 
 /** PKCE: the link's code becomes a session, on the device that asked for the link only (its verifier is here). */
-export const exchangeLinkCode = (code: string) => check(supabase.auth.exchangeCodeForSession(code));
+export async function exchangeLinkCode(code: string, type?: string) {
+	await check(supabase.auth.exchangeCodeForSession(code));
+	recovering = type === 'recovery';
+}
 
 /** Google needs its web client id (and the iOS one on iOS); Apple is iOS only and flagged off until its account exists. */
 export const providers = {
@@ -94,10 +104,26 @@ export async function signInWithProvider(provider: 'google' | 'apple'): Promise<
 		});
 		if (!credential.identityToken) return 'cancelled';
 		await signInWithApple({ idToken: credential.identityToken, nonce });
+		// Apple sends the name on the first sign-in only, and not inside the ID token.
+		const { givenName, familyName } = credential.fullName ?? {};
+		const fullName = [givenName, familyName].filter(Boolean).join(' ');
+		if (fullName) await supabase.auth.updateUser({ data: { full_name: fullName } });
 		return 'ok';
 	} catch (error) {
 		if ((error as { code?: string }).code === 'ERR_REQUEST_CANCELED') return 'cancelled';
 		throw error;
+	}
+}
+
+/** Sign-out must also drop the Google account, or the next person on a shared Android device signs in as this user. */
+export async function signOutProviders() {
+	try {
+		type GoogleSdk = typeof import('@react-native-google-signin/google-signin');
+		// eslint-disable-next-line @typescript-eslint/no-require-imports -- lazy on purpose (see signInWithProvider)
+		const { GoogleSignin } = require('@react-native-google-signin/google-signin') as GoogleSdk;
+		await GoogleSignin.signOut();
+	} catch {
+		// No native module (Expo Go) or not signed in with Google: nothing to clear.
 	}
 }
 

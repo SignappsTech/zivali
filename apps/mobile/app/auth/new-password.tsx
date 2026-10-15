@@ -1,14 +1,20 @@
 import * as React from 'react';
+import { Redirect } from 'expo-router';
 import { useTranslations } from 'use-intl';
 
 import { AuthScreen, PasswordField, useErrorText, useLeaveAuth } from '@/components/auth/parts';
 import { Button } from '@/components/ui/button';
 import { FieldError } from '@/components/ui/form-field';
 import { toast } from '@/components/ui/sonner';
-import { MIN_PASSWORD, updatePassword } from '@/lib/auth';
+import { MIN_PASSWORD, isRecovering, updatePassword } from '@/lib/auth';
 
 /** P16 M8, opened by the reset link (app/auth/callback) with the recovery session; saving keeps the user signed in. */
 export default function NewPassword() {
+	if (!isRecovering()) return <Redirect href="/auth/forgot-password" />;
+	return <NewPasswordForm />;
+}
+
+function NewPasswordForm() {
 	const t = useTranslations('auth');
 	const leave = useLeaveAuth();
 	const errorText = useErrorText();

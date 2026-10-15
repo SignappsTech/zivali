@@ -95,9 +95,14 @@ export default function SignUp() {
 			router.push({ pathname: '/auth/check-email', params: { email, sent: '1' } });
 		} catch (failure) {
 			const code = failure instanceof ApiError ? failure.code : null;
-			if (code === 'CONFLICT') setServerError({ field: 'email', text: t('error_email_taken') });
-			else if (code === 'VALIDATION') setServerError({ field: 'password', text: t('error_password_short') });
-			else if (code === 'RATE_LIMITED') {
+			// Taken address: same as success, so the form does not reveal which addresses have an account.
+			if (code === 'CONFLICT') router.push({ pathname: '/auth/check-email', params: { email, sent: '1' } });
+			else if (code === 'VALIDATION') {
+				const authCode = failure instanceof ApiError ? failure.details?.auth_code : undefined;
+				if (authCode === 'email_address_invalid')
+					setServerError({ field: 'email', text: t('error_email_invalid') });
+				else setServerError({ text: te('VALIDATION') });
+			} else if (code === 'RATE_LIMITED') {
 				limited.start();
 				setServerError({ text: t('error_rate_limited'), note: 'limited' });
 			} else if (code === 'CAPTCHA_FAILED') setServerError({ text: te('CAPTCHA_FAILED'), note: 'captcha' });

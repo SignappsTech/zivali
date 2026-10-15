@@ -33,7 +33,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Icon } from '@/components/ui/icon';
 import { toast } from '@/components/ui/sonner';
 import { Text } from '@/components/ui/text';
-import { resendConfirmation } from '@/lib/auth';
+import { resendConfirmation, signOutProviders } from '@/lib/auth';
 import { env } from '@/lib/env';
 import { signOutAndWipe } from '@/lib/offline/wipe';
 
@@ -45,6 +45,7 @@ function SignOutRow() {
 		try {
 			// TASK-86.2 adds the "Send now / Delete / Cancel" prompt; until then unsent items stay in the outbox.
 			await signOutAndWipe({ resolvePending: async () => true, removeManageLinks });
+			await signOutProviders();
 		} catch {
 			toast.error(t('errors.INTERNAL'));
 		}

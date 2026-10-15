@@ -104,10 +104,10 @@ function AccountForm({ me }: { me: Me }) {
 					title={t('profile.row_home_area')}
 					description={
 						me.home
-							? t('alerts.area_value', {
+							? `${t('alerts.area_value', {
 									place: place?.label ?? t('location.address_unknown'),
 									radius: me.home_radius_km,
-								})
+								})} (${t('location.approximate_label')})`
 							: t('alerts.area_none')
 					}
 					onPress={() => router.push('/settings/home-area')}
