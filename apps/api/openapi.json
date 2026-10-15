@@ -41,6 +41,11 @@
 				},
 				"required": ["id", "title", "body", "cta", "image_url", "image_alt", "click_url", "is_house", "label"]
 			},
+			"AdDeleteInput": {
+				"type": "object",
+				"properties": { "note": { "type": "string", "minLength": 1, "maxLength": 500 } },
+				"required": ["note"]
+			},
 			"AdHouseKind": { "type": "string", "enum": ["supporter", "partner", "adopt"] },
 			"AdImageInput": {
 				"type": "object",
@@ -55,8 +60,11 @@
 			},
 			"AdImageUploadResponse": {
 				"type": "object",
-				"properties": { "upload": { "$ref": "#/components/schemas/PresignedUpload" } },
-				"required": ["upload"]
+				"properties": {
+					"upload": { "$ref": "#/components/schemas/PresignedUpload" },
+					"image": { "type": "string" }
+				},
+				"required": ["upload", "image"]
 			},
 			"AdImpressionInput": {
 				"type": "object",
@@ -74,6 +82,10 @@
 					"cta": { "type": "string", "minLength": 1, "maxLength": 24 },
 					"link_url": { "type": "string", "maxLength": 2048, "format": "uri" },
 					"image_alt": { "type": "string", "minLength": 5, "maxLength": 140 },
+					"image": {
+						"type": ["string", "null"],
+						"pattern": "^ads\\/[0-9a-f-]{36}\\/[a-f0-9]{64}\\.(jpg|png)$"
+					},
 					"locales": { "type": "array", "items": { "$ref": "#/components/schemas/Locale" }, "minItems": 1 },
 					"slots": { "type": "array", "items": { "$ref": "#/components/schemas/AdSlot" }, "minItems": 1 },
 					"region_ids": {
@@ -2078,6 +2090,267 @@
 				}
 			}
 		},
+		"/v1/admin/ads": {
+			"get": {
+				"operationId": "listAdminAds",
+				"summary": "Ads",
+				"description": "Admins (aal2). Newest first, without deleted ads; null targeting = every region, municipality or species.",
+				"tags": ["admin"],
+				"parameters": [
+					{
+						"schema": { "$ref": "#/components/schemas/AdStatus" },
+						"required": false,
+						"name": "status",
+						"in": "query"
+					},
+					{
+						"schema": { "type": "string", "format": "uuid" },
+						"required": false,
+						"name": "cursor",
+						"in": "query"
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "One page of ads",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/AdminAdList" } } }
+					},
+					"400": {
+						"description": "VALIDATION",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"401": {
+						"description": "UNAUTHENTICATED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"403": {
+						"description": "FORBIDDEN, AAL2_REQUIRED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"429": {
+						"description": "RATE_LIMITED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"500": {
+						"description": "INTERNAL",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					}
+				}
+			},
+			"post": {
+				"operationId": "createAd",
+				"summary": "Create an ad",
+				"description": "Admins (aal2). Audited. Rejected with VALIDATION (one issue per field): alt text 5–140, https link, title ≤ 60, body ≤ 120, CTA ≤ 24, selling, giving away or rehoming animals (category and ads.blocked_terms keywords, SL and EN), an exclusive ad overlapping another exclusive ad in dates for a shared slot and region (a missing starts_at counts as now), and an uploaded image (path image) that is not a 4:3 JPG or PNG of at least 1200×900 px under 500 KB.",
+				"tags": ["admin"],
+				"requestBody": {
+					"required": true,
+					"content": { "application/json": { "schema": { "$ref": "#/components/schemas/AdInput" } } }
+				},
+				"responses": {
+					"201": {
+						"description": "The new ad",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/AdminAd" } } }
+					},
+					"400": {
+						"description": "VALIDATION",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"401": {
+						"description": "UNAUTHENTICATED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"403": {
+						"description": "FORBIDDEN, AAL2_REQUIRED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"429": {
+						"description": "RATE_LIMITED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"500": {
+						"description": "INTERNAL",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					}
+				}
+			}
+		},
+		"/v1/admin/ads/{id}": {
+			"put": {
+				"operationId": "updateAd",
+				"summary": "Edit an ad",
+				"description": "Admins (aal2). Fields left out keep their value, null clears one. Audited. Rejected with VALIDATION (one issue per field): alt text 5–140, https link, title ≤ 60, body ≤ 120, CTA ≤ 24, selling, giving away or rehoming animals (category and ads.blocked_terms keywords, SL and EN), an exclusive ad overlapping another exclusive ad in dates for a shared slot and region (a missing starts_at counts as now), and an uploaded image (path image) that is not a 4:3 JPG or PNG of at least 1200×900 px under 500 KB.",
+				"tags": ["admin"],
+				"parameters": [
+					{ "schema": { "type": "string", "format": "uuid" }, "required": true, "name": "id", "in": "path" }
+				],
+				"requestBody": {
+					"required": true,
+					"content": { "application/json": { "schema": { "$ref": "#/components/schemas/AdInput" } } }
+				},
+				"responses": {
+					"200": {
+						"description": "The saved ad",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/AdminAd" } } }
+					},
+					"400": {
+						"description": "VALIDATION",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"401": {
+						"description": "UNAUTHENTICATED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"403": {
+						"description": "FORBIDDEN, AAL2_REQUIRED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"404": {
+						"description": "NOT_FOUND",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"429": {
+						"description": "RATE_LIMITED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"500": {
+						"description": "INTERNAL",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					}
+				}
+			},
+			"delete": {
+				"operationId": "deleteAd",
+				"summary": "Delete an ad",
+				"description": "Admins (aal2). Soft delete: no longer listed or served; stats are kept. The note is required and stored in the audit entry.",
+				"tags": ["admin"],
+				"parameters": [
+					{ "schema": { "type": "string", "format": "uuid" }, "required": true, "name": "id", "in": "path" }
+				],
+				"requestBody": {
+					"required": true,
+					"content": { "application/json": { "schema": { "$ref": "#/components/schemas/AdDeleteInput" } } }
+				},
+				"responses": {
+					"204": { "description": "Deleted" },
+					"400": {
+						"description": "VALIDATION",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"401": {
+						"description": "UNAUTHENTICATED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"403": {
+						"description": "FORBIDDEN, AAL2_REQUIRED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"404": {
+						"description": "NOT_FOUND",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"429": {
+						"description": "RATE_LIMITED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"500": {
+						"description": "INTERNAL",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					}
+				}
+			}
+		},
+		"/v1/admin/ads/{id}/image": {
+			"post": {
+				"operationId": "requestAdImageUpload",
+				"summary": "Upload an ad image",
+				"description": "Admins (aal2). A 5-minute presigned PUT to the media bucket (ads/<id>/…) pinned to the declared type and size: 4:3, at least 1200×900 px, JPG or PNG under 500 KB. The ad keeps its current image: send the returned key as `image` on the next save, which checks the uploaded file and only then switches the image.",
+				"tags": ["admin"],
+				"parameters": [
+					{ "schema": { "type": "string", "format": "uuid" }, "required": true, "name": "id", "in": "path" }
+				],
+				"requestBody": {
+					"required": true,
+					"content": { "application/json": { "schema": { "$ref": "#/components/schemas/AdImageInput" } } }
+				},
+				"responses": {
+					"200": {
+						"description": "Where to PUT the file",
+						"content": {
+							"application/json": { "schema": { "$ref": "#/components/schemas/AdImageUploadResponse" } }
+						}
+					},
+					"400": {
+						"description": "VALIDATION",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"401": {
+						"description": "UNAUTHENTICATED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"403": {
+						"description": "FORBIDDEN, AAL2_REQUIRED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"404": {
+						"description": "NOT_FOUND",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"429": {
+						"description": "RATE_LIMITED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"500": {
+						"description": "INTERNAL",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					}
+				}
+			}
+		},
+		"/v1/admin/ads/{id}/status": {
+			"post": {
+				"operationId": "setAdStatus",
+				"summary": "Change an ad's status",
+				"description": "Admins (aal2). Pausing or ending is always allowed; any other status runs the save checks. Stats are kept. Audited. Rejected with VALIDATION (one issue per field): alt text 5–140, https link, title ≤ 60, body ≤ 120, CTA ≤ 24, selling, giving away or rehoming animals (category and ads.blocked_terms keywords, SL and EN), an exclusive ad overlapping another exclusive ad in dates for a shared slot and region (a missing starts_at counts as now), and an uploaded image (path image) that is not a 4:3 JPG or PNG of at least 1200×900 px under 500 KB.",
+				"tags": ["admin"],
+				"parameters": [
+					{ "schema": { "type": "string", "format": "uuid" }, "required": true, "name": "id", "in": "path" }
+				],
+				"requestBody": {
+					"required": true,
+					"content": { "application/json": { "schema": { "$ref": "#/components/schemas/AdStatusInput" } } }
+				},
+				"responses": {
+					"200": {
+						"description": "The saved ad",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/AdminAd" } } }
+					},
+					"400": {
+						"description": "VALIDATION",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"401": {
+						"description": "UNAUTHENTICATED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"403": {
+						"description": "FORBIDDEN, AAL2_REQUIRED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"404": {
+						"description": "NOT_FOUND",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"429": {
+						"description": "RATE_LIMITED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"500": {
+						"description": "INTERNAL",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					}
+				}
+			}
+		},
 		"/v1/admin/abuse-reports": {
 			"get": {
 				"operationId": "listAdminAbuseReports",
@@ -2127,6 +2400,54 @@
 					},
 					"403": {
 						"description": "FORBIDDEN, AAL2_REQUIRED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"429": {
+						"description": "RATE_LIMITED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"500": {
+						"description": "INTERNAL",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					}
+				}
+			}
+		},
+		"/v1/admin/ads/{id}/stats": {
+			"get": {
+				"operationId": "getAdStats",
+				"summary": "Ad stats",
+				"description": "Admins (aal2). Impressions, clicks and CTR (clicks / impressions) per day (Europe/Ljubljana), slot and region (null = unknown), from and to inclusive, at most 366 days.",
+				"tags": ["admin"],
+				"parameters": [
+					{ "schema": { "type": "string", "format": "uuid" }, "required": true, "name": "id", "in": "path" },
+					{
+						"schema": { "type": "string", "format": "date" },
+						"required": true,
+						"name": "from",
+						"in": "query"
+					},
+					{ "schema": { "type": "string", "format": "date" }, "required": true, "name": "to", "in": "query" }
+				],
+				"responses": {
+					"200": {
+						"description": "Daily rows",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/AdStats" } } }
+					},
+					"400": {
+						"description": "VALIDATION",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"401": {
+						"description": "UNAUTHENTICATED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"403": {
+						"description": "FORBIDDEN, AAL2_REQUIRED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"404": {
+						"description": "NOT_FOUND",
 						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
 					},
 					"429": {

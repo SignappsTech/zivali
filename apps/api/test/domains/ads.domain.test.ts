@@ -1,6 +1,7 @@
 // TASK-35.1: ad serving (C14, FR-029) against the local database. Each serving case runs in a rolled-back transaction
 // with every other ad soft-deleted, so seeded and leftover ads never decide the outcome.
 import { randomUUID } from 'node:crypto';
+import { readFileSync } from 'node:fs';
 
 import { beforeAll, describe, expect, it } from 'vitest';
 
@@ -434,4 +435,136 @@ describe('AdsDomain.assertAdWritable (every save, TASK-37.2)', () => {
 			await tx.ads.update({ where: { id: existing.id }, data: { status: 'ended' } });
 			await expect(exclusive({})).resolves.toBeUndefined();
 		}));
+
+	// TASK-35.1 review: a missing starts_at counts as now.
+	it('an exclusive ad that ran out without being marked ended does not block a new one without a start', () =>
+		isolated(async (tx) => {
+			const ctx = { ...adminCtx(tx), now: NOW };
+			const fresh = input({ exclusive: true, starts_at: null, ends_at: null });
+			await create(tx, {
+				exclusive: true,
+				slots: ['DETAIL'],
+				starts_at: new Date(NOW.getTime() - 30 * DAY_MS),
+				ends_at: new Date(NOW.getTime() - DAY_MS),
+			});
+			await expect(AdsDomain.assertAdWritable(fresh, ctx)).resolves.toBeUndefined();
+			// One still running does.
+			await create(tx, { exclusive: true, slots: ['DETAIL'], ends_at: new Date(NOW.getTime() + DAY_MS) });
+			await expect(AdsDomain.assertAdWritable(fresh, ctx)).rejects.toMatchObject({
+				code: 'VALIDATION',
+				issues: [{ path: 'exclusive' }],
+			});
+		}));
+
+	// TASK-35.1 review: the check runs inside the save transaction under a per-slot advisory lock.
+	it('two concurrent exclusive saves for one slot cannot both pass', async () => {
+		// Committed for real: a window and title no other test uses.
+		const title = 'zz-lock-ad';
+		const dates = { starts_at: new Date('2400-01-01T00:00:00Z'), ends_at: new Date('2400-02-01T00:00:00Z') };
+		const ad = input({
+			exclusive: true,
+			slots: ['sidebar'],
+			starts_at: dates.starts_at.toISOString(),
+			ends_at: dates.ends_at.toISOString(),
+		});
+		let locked!: () => void;
+		let release!: () => void;
+		const holding = new Promise<void>((resolve) => (locked = resolve));
+		const gate = new Promise<void>((resolve) => (release = resolve));
+		await prisma.ads.deleteMany({ where: { title } });
+		// The first save passes and inserts, then holds its transaction (and the slot lock) open.
+		const first = prisma.$transaction(
+			async (tx) => {
+				await AdsDomain.assertAdWritable(ad, adminCtx(tx));
+				await create(tx, { title, exclusive: true, slots: ['SIDEBAR'], ...dates });
+				locked();
+				await gate;
+			},
+			{ timeout: 30_000 }
+		);
+		try {
+			await Promise.race([holding, first]);
+			let settled = false;
+			const second = prisma
+				.$transaction((tx) => AdsDomain.assertAdWritable(ad, adminCtx(tx)), { timeout: 30_000 })
+				.then(
+					() => 'passed',
+					(error: unknown) => error
+				)
+				.finally(() => (settled = true));
+			await new Promise((resolve) => setTimeout(resolve, 500));
+			// The second save waits on the slot lock instead of missing the uncommitted ad.
+			expect(settled).toBe(false);
+			release();
+			await first;
+			expect(await second).toMatchObject({ code: 'VALIDATION', issues: [{ path: 'exclusive' }] });
+		} finally {
+			release();
+			await first.catch(() => undefined);
+			await prisma.ads.deleteMany({ where: { title } });
+		}
+	});
+});
+
+describe('ads.blocked_terms (TASK-35.1 review, data migration)', () => {
+	const migration = readFileSync(
+		new URL(
+			'../../prisma/schemas/migrations/20261016040000_task_37_2_ads_blocked_terms/migration.sql',
+			import.meta.url
+		),
+		'utf8'
+	);
+	const ad = (title: string) => ({ title, body: '', cta: '', image_alt: '', link_url: '' });
+
+	it('blocks the added SL and EN terms', async () => {
+		const terms = await AdsDomain.blockedTerms();
+		for (const title of [
+			'Prodajam mladiče',
+			'Prodajamo mucke',
+			'Podarjam psička',
+			'Oddajam muco',
+			'Oddajamo kužke',
+			'Mucka gre v dobre roke',
+			'Shop sells kittens',
+			'Dog rehomed today',
+			'Charity rehomes cats',
+		])
+			expect([title, AdsDomain.blockedFields(ad(title), terms)]).toEqual([title, ['title']]);
+		expect(AdsDomain.blockedFields(ad('Dobre roke veterinarjev'), terms)).toEqual([]);
+	});
+
+	it('appends only the missing terms, keeping what admins added or removed', async () => {
+		const rollback = new Error('rollback');
+		await expect(
+			prisma.$transaction(async (tx) => {
+				const set = (value: Prisma.InputJsonValue) =>
+					tx.app_config.update({ where: { key: 'ads.blocked_terms' }, data: { value } });
+				const get = async () =>
+					(await tx.app_config.findUniqueOrThrow({ where: { key: 'ads.blocked_terms' } })).value;
+
+				await set(['breeder', 'prodajam', 'moj izraz']);
+				await tx.$executeRawUnsafe(migration);
+				expect(await get()).toEqual([
+					'breeder',
+					'prodajam',
+					'moj izraz',
+					'prodajamo',
+					'podarjam',
+					'oddajam',
+					'oddajamo',
+					'v dobre roke',
+					'sells',
+					'rehomed',
+					'rehomes',
+				]);
+				// Running it again changes nothing; a value that is not a list is left alone.
+				await tx.$executeRawUnsafe(migration);
+				expect(await get()).toHaveLength(11);
+				await set({ broken: true });
+				await tx.$executeRawUnsafe(migration);
+				expect(await get()).toEqual({ broken: true });
+				throw rollback;
+			})
+		).rejects.toBe(rollback);
+	});
 });
