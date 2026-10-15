@@ -1,11 +1,11 @@
 ---
 id: TASK-22.5
 title: 'Mobile notifications, push registration and notification settings'
-status: In Progress
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:14'
-updated_date: '2026-10-15 23:06'
+updated_date: '2026-10-15 23:21'
 labels:
   - fe
   - 'est:M'
