@@ -1,11 +1,11 @@
 ---
 id: TASK-31.3
 title: 'Report search API: list and map endpoints through TypedSQL'
-status: To Do
+status: In Progress
 assignee:
   - '@backend-dev'
 created_date: '2026-10-14 22:13'
-updated_date: '2026-10-14 23:38'
+updated_date: '2026-10-15 20:19'
 labels:
   - be
   - 'est:S'
@@ -40,3 +40,7 @@ Branch: agent/task-31.3-search-be
 - [ ] #2 Boosted reports sort first; closed, expired and non-visible reports are excluded by default; no exact location, chip or contact data is returned.
 - [ ] #3 With 500 seeded reports in a viewport the endpoints answer in under 300 ms locally (EXPLAIN shows the GiST index).
 <!-- AC:END -->
+
+## Implementation Notes
+
+AC #1 "TypedSQL" was met with `$queryRaw` + `Prisma.sql` (search.dao.ts) per the CH-117/154 precedent; review accepted.

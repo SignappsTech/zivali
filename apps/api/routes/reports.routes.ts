@@ -6,9 +6,14 @@ import {
 	CodeParams,
 	CreateReportInput,
 	CreateReportResponse,
+	MapReportList,
+	MapReportQuery,
 	PublicReport,
+	ReportList,
 	ReportOwnerView,
+	ReportSearch,
 	UpdateReportInput,
+	Uuid,
 } from '@zivali/validation';
 
 import ReportsController from '../controllers/reports.controller.ts';
@@ -79,6 +84,46 @@ route(
 	},
 	authMiddleware,
 	ReportsController.resendManageLink
+);
+
+// Before /:code, so 'map' is not read as a short code.
+route(
+	{
+		method: 'get',
+		path: '/',
+		operationId: 'searchReports',
+		summary: 'Search public reports (list)',
+		description:
+			'Visible open and matched reports (with `include_closed=true` also those closed or reunited in the last 30 ' +
+			'days), filtered by `bbox=w,s,e,n` and/or `near=lat,lng,km` (km ≤ 100) on the fuzzed public centre, ' +
+			'`types`, `species`, `colours` (any of), `sizes` (comma lists) and `from`/`to` on event_at. Boosted reports ' +
+			'first, then `sort=recent` (event_at, newest first; default) or `sort=distance` (needs `near`). Keyset ' +
+			'pages: `cursor` = the last item id, `limit` ≤ 50 (default 20). Items are PublicReport only (also your own ' +
+			'reports, with `is_mine`). `Cache-Control: private, no-store`.',
+		request: { query: ReportSearch.extend({ cursor: Uuid.optional() }) },
+		responses: { 200: { description: 'One page of reports', schema: ReportList } },
+	},
+	optionalAuth,
+	rateLimit('reports.search', { limit: 120, window: 60, key: 'ip' }),
+	ReportsController.searchReports
+);
+
+route(
+	{
+		method: 'get',
+		path: '/map',
+		operationId: 'getMapReports',
+		summary: 'Public reports in a map viewport',
+		description:
+			'Minimal map items (fuzzed area, boosted, first thumbnail) of the reports whose public centre is in ' +
+			'`bbox=w,s,e,n`, with the list filters; boosted first, then newest events. `limit` ≤ 1000 (default 500). ' +
+			'`Cache-Control: private, no-store`.',
+		request: { query: MapReportQuery },
+		responses: { 200: { description: 'Map items', schema: MapReportList } },
+	},
+	optionalAuth,
+	rateLimit('reports.map', { limit: 120, window: 60, key: 'ip' }),
+	ReportsController.mapReports
 );
 
 route(
