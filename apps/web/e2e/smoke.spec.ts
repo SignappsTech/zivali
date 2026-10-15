@@ -17,7 +17,7 @@ for (const { path, lang, messages } of [
 
 		expect(response?.status()).toBe(200);
 		expect(response?.headers()['content-security-policy']).toMatch(
-			/script-src 'self' 'nonce-[^']+' 'strict-dynamic'/
+			/(?:^|; )script-src 'self' 'nonce-[^']+' 'strict-dynamic'(?:;|$)/
 		);
 		expect(response?.headers()['x-content-type-options']).toBe('nosniff');
 		await expect(page.locator('html')).toHaveAttribute('lang', lang);
@@ -25,6 +25,22 @@ for (const { path, lang, messages } of [
 		expect(errors).toEqual([]);
 	});
 }
+
+test('the CSP nonce differs between requests', async ({ request }) => {
+	const nonce = async () =>
+		(await request.get('/')).headers()['content-security-policy']?.match(/'nonce-([^']+)'/)?.[1];
+	const [first, second] = [await nonce(), await nonce()];
+
+	expect(first).toBeTruthy();
+	expect(second).not.toBe(first);
+});
+
+test('an unknown path renders the 404 with a nonce', async ({ page }) => {
+	const response = await page.goto('/no/such/page');
+
+	expect(response?.status()).toBe(404);
+	expect(response?.headers()['content-security-policy']).toMatch(/'nonce-[^']+'/);
+});
 
 test('dark mode follows the OS', async ({ page }) => {
 	await page.emulateMedia({ colorScheme: 'dark' });
