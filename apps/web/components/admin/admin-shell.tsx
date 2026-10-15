@@ -447,6 +447,8 @@ function SidebarNav({
 									<Link
 										href={itemHref(item)}
 										aria-current={item === current ? 'page' : undefined}
+										// "Oglasi, Kmalu": the comma gives screen readers the pause the layout gives the eye.
+										aria-label={soon ? `${label}, ${t('coming_badge')}` : undefined}
 										onClick={onNavigate}
 										className={cn(itemClass, collapsed && 'w-11 justify-center p-0')}
 									>
@@ -456,9 +458,7 @@ function SidebarNav({
 											className="size-5 shrink-0"
 										/>
 										{collapsed ? (
-											<span className="sr-only">
-												{soon ? `${label}, ${t('coming_badge')}` : label}
-											</span>
+											<span className="sr-only">{label}</span>
 										) : (
 											<>
 												<span className="min-w-0">{label}</span>
