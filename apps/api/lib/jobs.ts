@@ -17,6 +17,7 @@ export const QUEUES = [
 	'photo.publish',
 	'report.lifecycle',
 	'retention.purge',
+	'retention.blur_location',
 	'partners.stats',
 	'payment.effects',
 	'directory.reminder',
@@ -29,6 +30,7 @@ export type QueueName = (typeof QUEUES)[number];
 export const SCHEDULES: Partial<Record<QueueName, string>> = {
 	'report.lifecycle': '0 * * * *',
 	'retention.purge': '30 3 * * *',
+	'retention.blur_location': '45 3 * * *',
 	'partners.stats': '15 * * * *',
 	// After 31 March: the yearly directory refresh (C18).
 	'directory.reminder': '0 8 1 4 *',

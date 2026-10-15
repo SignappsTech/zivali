@@ -17,6 +17,7 @@ import * as paymentEffects from './payment.effects.job.ts';
 import * as photoProcess from './photo.process.job.ts';
 import * as photoPublish from './photo.publish.job.ts';
 import * as reportLifecycle from './report.lifecycle.job.ts';
+import * as retentionBlurLocation from './retention.blur_location.job.ts';
 import * as retentionPurge from './retention.purge.job.ts';
 
 /** C1 job ctx: a system ctx, so handlers pass it straight to domain functions, plus prisma and send. */
@@ -32,6 +33,7 @@ export const handlers: Record<QueueName, JobHandler> = {
 	'photo.publish': photoPublish.handle,
 	'report.lifecycle': reportLifecycle.handle,
 	'retention.purge': retentionPurge.handle,
+	'retention.blur_location': retentionBlurLocation.handle,
 	'partners.stats': partnersStats.handle,
 	'payment.effects': paymentEffects.handle,
 	'directory.reminder': directoryReminder.handle,
