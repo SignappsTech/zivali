@@ -1,10 +1,11 @@
 ---
 id: TASK-99
 title: 'Env sync: postinstall appends missing .env.example keys to .env.local'
-status: To Do
+status: Done
 assignee:
   - '@backend-dev'
 created_date: '2026-10-15 05:42'
+updated_date: '2026-10-15 06:18'
 labels:
   - be
   - 'est:XS'
