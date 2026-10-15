@@ -64,7 +64,11 @@ test('chat errors arrive as { status, data.code }', async (t) => {
 
 test('subscribeConversation: private channel, live messages deduped, catch-up after every (re)subscribe', async (t) => {
 	const first = messages.items[0]!;
-	const missed = Array.from({ length: 50 }, (_, i): Message => ({ ...message, id: `missed-${i}` }));
+	const missed = Array.from({ length: 50 }, (_, i): Message => ({
+		...message,
+		id: `missed-${String(i).padStart(2, '0')}`,
+		created_at: `2026-10-14T16:00:${String(i).padStart(2, '0')}Z`,
+	}));
 	const { store, client } = mockStore(t, {
 		'GET /v1/conversations/:id/messages': ({ query }) =>
 			query.after === first.id
@@ -97,7 +101,7 @@ test('subscribeConversation: private channel, live messages deduped, catch-up af
 	assert.deepEqual(ids(), [first.id, ...missed.map((m) => m.id), message.id]);
 
 	rt.emit('message.created', message);
-	rt.emit('message.created', { ...message, id: 'live-1' });
+	rt.emit('message.created', { ...message, id: 'live-1', created_at: '2026-10-14T16:03:00Z' });
 	assert.deepEqual(ids()!.slice(-2), [message.id, 'live-1']);
 
 	off();
@@ -116,4 +120,70 @@ test('subscribeConversation passes conversation.read through and skips catch-up 
 	await settle();
 	assert.deepEqual(reads, [{ conversation_id: id }]);
 	assert.equal(client.calls.length, 0);
+});
+
+test('live messages are inserted in created_at order and stay idempotent', async (t) => {
+	const { store } = mockStore(t, { 'GET /v1/conversations/:id/messages': messages });
+	const view = store.dispatch(e.listMessages.initiate({ id }));
+	await view;
+	const rt = fakeRealtime();
+	subscribeConversation(rt.realtime, store, id);
+	const older = { ...message, id: 'older', created_at: '2026-10-14T15:59:00Z' };
+	rt.emit('message.created', message);
+	rt.emit('message.created', older);
+	rt.emit('message.created', older);
+	const ids = e.listMessages
+		.select({ id })(store.getState() as never)
+		.data?.items.map((m) => m.id);
+	assert.deepEqual(ids, [messages.items[0]!.id, 'older', message.id]);
+	view.unsubscribe();
+});
+
+test('catch-up waits for a first load still in flight', async (t) => {
+	const { store, client } = mockStore(t, {
+		'GET /v1/conversations/:id/messages': ({ query }) =>
+			query.after ? { items: [message], next_cursor: null } : messages,
+	});
+	const view = store.dispatch(e.listMessages.initiate({ id }));
+	const rt = fakeRealtime();
+	subscribeConversation(rt.realtime, store, id);
+	rt.status('SUBSCRIBED'); // before the load resolved
+	await view;
+	await settle();
+	assert.deepEqual(
+		client.calls.slice(1).map((c) => c.query),
+		[{ after: messages.items[0]!.id, limit: '50' }]
+	);
+	view.unsubscribe();
+});
+
+test('catch-up stops when the server ignores `after`', async (t) => {
+	const page = Array.from({ length: 50 }, (_, i): Message => ({ ...message, id: `p-${i}` }));
+	const { store, client } = mockStore(t, {
+		'GET /v1/conversations/:id/messages': ({ query }) =>
+			query.after ? { items: page, next_cursor: null } : { items: [page.at(-1)!], next_cursor: null },
+	});
+	const view = store.dispatch(e.listMessages.initiate({ id }));
+	await view;
+	const rt = fakeRealtime();
+	subscribeConversation(rt.realtime, store, id);
+	rt.status('SUBSCRIBED');
+	await settle();
+	assert.equal(client.calls.length, 2);
+	view.unsubscribe();
+});
+
+test('sendMessage puts the returned message in the cache without Realtime', async (t) => {
+	const { store } = mockStore(t, {
+		'GET /v1/conversations/:id/messages': messages,
+		'POST /v1/conversations/:id/messages': message,
+	});
+	const view = store.dispatch(e.listMessages.initiate({ id }));
+	await view;
+	await store.dispatch(e.sendMessage.initiate({ id, body: { body: 'x' } }));
+	const ids = e.listMessages
+		.select({ id })(store.getState() as never)
+		.data?.items.map((m) => m.id);
+	assert.deepEqual(ids, [messages.items[0]!.id, message.id]);
+	view.unsubscribe();
 });

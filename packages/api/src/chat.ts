@@ -33,6 +33,14 @@ export const chatApi = api.enhanceEndpoints({ addTagTypes: ['Conversation', 'Mes
 		sendMessage: build.mutation<Message, { id: Uuid; body: SendMessageInput }>({
 			query: ({ id, body }) => ({ url: `/v1/conversations/${id}/messages`, method: 'POST', body }),
 			invalidatesTags: ['Conversation'],
+			// The sender sees the message without Realtime (merge is idempotent by id, so the broadcast echo is a no-op).
+			async onQueryStarted({ id }, { dispatch, getState, queryFulfilled }) {
+				try {
+					mergeMessages({ dispatch, getState } as Store, id, [(await queryFulfilled).data]);
+				} catch {
+					// the mutation result carries the error
+				}
+			},
 		}),
 		markConversationRead: build.mutation<void, { id: Uuid }>({
 			query: ({ id }) => ({ url: `/v1/conversations/${id}/read`, method: 'POST' }),
@@ -62,13 +70,18 @@ const latestArgs = (store: Store, id: Uuid) =>
 		.selectCachedArgsForQuery(store.getState(), 'listMessages')
 		.filter((arg) => arg.id === id && !arg.after && !arg.before);
 
-/** Appends messages (oldest first, C9) to those entries, skipping ids already there. */
+const isAfter = (a: Message, b: Message) => (a.created_at === b.created_at ? a.id > b.id : a.created_at > b.created_at);
+
+/** Inserts messages into those entries in (created_at, id) order, skipping ids already there. */
 function mergeMessages(store: Store, id: Uuid, messages: Message[]): void {
 	for (const arg of latestArgs(store, id))
 		store.dispatch(
 			chatApi.util.updateQueryData('listMessages', arg, (draft) => {
-				for (const message of messages)
-					if (!draft.items.some((item) => item.id === message.id)) draft.items.push(message);
+				for (const message of messages) {
+					if (draft.items.some((item) => item.id === message.id)) continue;
+					const at = draft.items.findIndex((item) => isAfter(item, message));
+					draft.items.splice(at < 0 ? draft.items.length : at, 0, message);
+				}
 			})
 		);
 }
@@ -76,6 +89,8 @@ function mergeMessages(store: Store, id: Uuid, messages: Message[]): void {
 /** `GET …/messages?after=<last id>` until a short page, so nothing sent while disconnected is lost (C9). */
 async function catchUp(store: Store, id: Uuid): Promise<void> {
 	const [arg] = latestArgs(store, id);
+	// A first load still in flight: wait for it, so the last id is known and broadcasts are not dropped.
+	if (arg) await store.dispatch(chatApi.util.getRunningQueryThunk('listMessages', arg));
 	// `as never`: the store's state type does not list injected endpoints; at runtime it is the same slice.
 	let after =
 		arg &&
@@ -91,7 +106,9 @@ async function catchUp(store: Store, id: Uuid): Promise<void> {
 		);
 		if (!data) return;
 		mergeMessages(store, id, data.items);
-		after = data.items.length === CATCH_UP_LIMIT ? data.items.at(-1)?.id : undefined;
+		const last = data.items.at(-1)?.id;
+		// A full page continues; a last id equal to `after` means the server ignored it, so stop.
+		after = data.items.length === CATCH_UP_LIMIT && last !== after ? last : undefined;
 	}
 }
 
