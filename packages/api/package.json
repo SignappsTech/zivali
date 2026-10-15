@@ -11,7 +11,7 @@
 		"gen:api": "node gen-api.ts",
 		"lint": "eslint --max-warnings=0 .",
 		"typecheck": "tsc",
-		"test": "node --test \"test/*.test.ts\""
+		"test": "node --test --test-force-exit \"test/*.test.ts\""
 	},
 	"dependencies": {
 		"@reduxjs/toolkit": "^2.13.0",

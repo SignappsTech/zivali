@@ -57,5 +57,9 @@ export function usePlaceSearch(q: string, near?: LatLng) {
 		[trigger, text, lat, lng]
 	);
 	const active = text.length >= PLACE_SEARCH_MIN_CHARS;
-	return { places: (active && data) || [], isFetching: active && isFetching, error: active ? error : undefined };
+	return {
+		places: (active && data) || [],
+		isFetching: active && isFetching,
+		error: active && !(error && 'name' in error && error.name === 'AbortError') ? error : undefined,
+	};
 }

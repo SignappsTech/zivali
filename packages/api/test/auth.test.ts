@@ -60,6 +60,15 @@ test('Supabase errors map to C1 codes and keep the auth code', () => {
 	assert.deepEqual(authError(authFailure('weak_password')).details, { auth_code: 'weak_password' });
 });
 
+test('authError never carries the raw Supabase message or cause', () => {
+	const raw = { ...authFailure('email_exists', 422), message: 'User ana@example.si already registered' } as AuthError;
+	const error = authError(raw);
+	assert.equal(error.status, 422);
+	assert.equal(error.cause, undefined);
+	assert.doesNotMatch(JSON.stringify({ m: error.message, d: error.details }), /ana@example\.si/);
+	assert.deepEqual(error.details, { auth_code: 'email_exists' });
+});
+
 test('helpers pass the contract arguments to supabase-js and throw ApiError', async () => {
 	const ok = fakeSupabase();
 	configureAuth(ok.client, createApiStore(createMockApi()));
@@ -96,6 +105,7 @@ test('signOut runs the app cleanup first and still ends the session when it fail
 		/offline/
 	);
 	assert.deepEqual([order, fake.calls.map(([name]) => name)], [['cleanup'], ['signOut', 'signOut']]);
+	assert.deepEqual(fake.calls[0][1], { scope: 'local' });
 });
 
 test('configureAuth: another user clears the API cache; MFA verification refetches me', async () => {
@@ -114,6 +124,10 @@ test('configureAuth: another user clears the API cache; MFA verification refetch
 	fake.emit('MFA_CHALLENGE_VERIFIED', session('u1'));
 	await new Promise((resolve) => setTimeout(resolve, 10));
 	assert.equal(client.calls.length, 2);
+
+	fake.emit('SIGNED_IN', session('u1'));
+	await new Promise((resolve) => setTimeout(resolve, 10));
+	assert.equal(client.calls.length, 3);
 
 	fake.emit('SIGNED_IN', session('u2'));
 	assert.equal(cached(), 0);

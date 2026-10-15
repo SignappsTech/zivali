@@ -19,17 +19,23 @@ export type PutFile = (upload: PresignedUpload, file: PreparedPhoto['file'], opt
 export const xhrPut: PutFile = (upload, file, { onProgress, signal }) =>
 	new Promise((resolve, reject) => {
 		if (!(file instanceof Blob)) throw new TypeError('xhrPut sends a Blob; pass `put` for file URIs');
+		if (signal?.aborted) return reject(new DOMException('Upload aborted', 'AbortError'));
 		const xhr = new XMLHttpRequest();
+		const abort = () => xhr.abort();
 		xhr.open(upload.method, upload.url);
 		for (const [name, value] of Object.entries(upload.headers)) xhr.setRequestHeader(name, value);
 		xhr.upload.onprogress = (event) => event.lengthComputable && onProgress?.(event.loaded / event.total);
-		xhr.onload = () =>
-			xhr.status < 300
-				? resolve()
-				: reject(new ApiError('INTERNAL', `Upload failed: HTTP ${xhr.status}`, { status: xhr.status }));
-		xhr.onerror = () => reject(new ApiError('NETWORK', 'Upload failed'));
+		xhr.onload = () => {
+			signal?.removeEventListener('abort', abort);
+			if (xhr.status < 300) resolve();
+			else reject(new ApiError('INTERNAL', `Upload failed: HTTP ${xhr.status}`, { status: xhr.status }));
+		};
+		xhr.onerror = () => {
+			signal?.removeEventListener('abort', abort);
+			reject(new ApiError('NETWORK', 'Upload failed'));
+		};
 		xhr.onabort = () => reject(new DOMException('Upload aborted', 'AbortError'));
-		signal?.addEventListener('abort', () => xhr.abort(), { once: true });
+		signal?.addEventListener('abort', abort, { once: true });
 		xhr.send(file);
 	});
 

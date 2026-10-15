@@ -17,13 +17,13 @@ const listeners = new Set<() => void>();
 
 /**
  * Follows the Supabase session. A different user (sign-in as someone else, sign-out) clears the whole API cache, so
- * no private query of the previous user survives; MFA verification and user updates refetch GET /v1/me.
+ * no private query of the previous user survives; MFA verification, user updates and sign-in refetch GET /v1/me.
  */
 export function configureAuth(client: SupabaseClient, store: Pick<ApiStore, 'dispatch'>): () => void {
 	supabase = client;
 	const { data } = client.auth.onAuthStateChange((event, next) => {
 		if (session !== undefined && session?.user.id !== next?.user.id) store.dispatch(api.util.resetApiState());
-		else if (event === 'MFA_CHALLENGE_VERIFIED' || event === 'USER_UPDATED')
+		else if (event === 'MFA_CHALLENGE_VERIFIED' || event === 'USER_UPDATED' || event === 'SIGNED_IN')
 			store.dispatch(meApi.util.invalidateTags(['Me']));
 		session = next;
 		for (const listener of listeners) listener();
@@ -58,7 +58,8 @@ export function authError(error: AuthError): ApiError {
 	const code =
 		(error.code && AUTH_CODES[error.code]) ||
 		(error.name === 'AuthRetryableFetchError' ? 'NETWORK' : error.status === 429 ? 'RATE_LIMITED' : 'INTERNAL');
-	return new ApiError(code, error.message, { details: { auth_code: error.code }, cause: error });
+	// Fixed message, no `cause`: Supabase's message may contain the user's email.
+	return new ApiError(code, code, { status: error.status, details: { auth_code: error.code } });
 }
 
 /** supabase-js results are `{ data, error: null } | { data: null…, error }`: returns the success `data` or throws. */
@@ -106,7 +107,7 @@ export async function signOut(cleanup?: () => Promise<unknown>): Promise<void> {
 		() => undefined,
 		(error: unknown) => ({ error })
 	);
-	const { error } = await auth().signOut();
+	const { error } = await auth().signOut({ scope: 'local' });
 	if (error) throw authError(error);
 	if (failed) throw failed.error;
 }

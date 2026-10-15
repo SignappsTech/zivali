@@ -82,6 +82,9 @@ test('xhrPut: method, headers and progress from the presigned upload; HTTP and n
 	fail = true;
 	await assert.rejects(xhrPut(upload, file, {}), { code: 'NETWORK' });
 	await assert.rejects(xhrPut(upload, { uri: 'file:///x.jpg' }, {}), TypeError);
+	const sentBefore = sent.length;
+	await assert.rejects(xhrPut(upload, file, { signal: AbortSignal.abort() }), { name: 'AbortError' });
+	assert.equal(sent.length, sentBefore);
 });
 
 test('getPhoto and deletePhoto; CONFLICT when the photo is on a published report', async () => {
