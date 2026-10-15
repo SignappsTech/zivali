@@ -204,6 +204,10 @@ model reports {
   reunited_at          DateTime?                                       @db.Timestamptz(6)
   closed_at            DateTime?                                       @db.Timestamptz(6)
   last_owner_update_at DateTime                                        @default(now()) @db.Timestamptz(6)
+  // report.lifecycle (C4): the last LOST reminder day sent (7, 14, 30) and when report_expiring went out for the
+  // current idle period (a later last_owner_update_at starts a new one).
+  reminder_day         Int?                                            @db.SmallInt
+  expiry_warned_at     DateTime?                                       @db.Timestamptz(6)
   created_by           String?                                         @db.Uuid
   creator              profiles?                                       @relation(fields: [created_by], references: [id], onDelete: SetNull)
   created_at           DateTime                                        @default(now()) @db.Timestamptz(6)
@@ -239,8 +243,8 @@ model report_managers {
   @@schema("app")
 }
 
-// The optional finder email of an anonymous report (manage link, C7). Never returned to the public.
-// TODO(TASK-26.3): delete this row and clear reports.manage_token_hash on close and on expiry (data-inventory).
+// The optional finder email of an anonymous report (manage link, C7). Never returned to the public. Deleted, and
+// reports.manage_token_hash cleared, when the report is closed or expires (domains/reports/lifecycle.domain.ts).
 model report_contacts {
   report_id String  @id @db.Uuid
   report    reports @relation(fields: [report_id], references: [id], onDelete: Cascade)

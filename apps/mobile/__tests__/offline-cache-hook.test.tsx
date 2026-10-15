@@ -2,10 +2,12 @@ import { renderHook } from '@testing-library/react-native';
 
 import { anonymousMe, me } from '@zivali/api/__fixtures__/me';
 import { useSession } from '@zivali/api/auth';
+import { cacheQuietHours } from '@/lib/offline/geofence';
 import { setCacheArea, startCacheSync } from '@/lib/offline/sync';
 import { useOfflineCache } from '@/lib/offline/use-offline-cache';
 
 jest.mock('@zivali/api/auth', () => ({ useSession: jest.fn() }));
+jest.mock('@/lib/offline/geofence', () => ({ cacheQuietHours: jest.fn() }));
 jest.mock('@/lib/offline/sync', () => ({
 	AREA_MAX_KM: 10,
 	setCacheArea: jest.fn(async () => {}),
@@ -34,6 +36,17 @@ test.each([
 	await renderHook(() => useOfflineCache());
 
 	expect(setCacheArea).toHaveBeenCalledWith('home', null, expect.any(Number));
+});
+
+test('caches the profile quiet hours for the geofence handler; no profile keeps the cached ones', async () => {
+	session({ ...me, quiet_from: '22:00', quiet_to: '07:00' });
+	await renderHook(() => useOfflineCache());
+	expect(cacheQuietHours).toHaveBeenCalledWith({ quiet_from: '22:00', quiet_to: '07:00' });
+
+	jest.mocked(cacheQuietHours).mockClear();
+	session(null); // offline start or signed out (the wipe forgets them on sign-out)
+	await renderHook(() => useOfflineCache());
+	expect(cacheQuietHours).not.toHaveBeenCalled();
 });
 
 test('unsubscribes on unmount', async () => {

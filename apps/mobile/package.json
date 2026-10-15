@@ -2,7 +2,7 @@
 	"name": "mobile",
 	"version": "0.1.0",
 	"private": true,
-	"main": "expo-router/entry",
+	"main": "index.ts",
 	"scripts": {
 		"start": "expo start",
 		"android": "expo run:android",
@@ -51,6 +51,7 @@
 		"expo-image-manipulator": "~57.0.21",
 		"expo-image-picker": "~57.0.20",
 		"expo-linking": "~57.0.13",
+		"expo-location": "~57.0.21",
 		"expo-network": "~57.0.2",
 		"expo-notifications": "~57.0.22",
 		"expo-router": "~57.0.27",

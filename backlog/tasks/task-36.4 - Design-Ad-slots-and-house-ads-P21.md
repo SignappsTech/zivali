@@ -13,9 +13,6 @@ labels:
 dependencies:
   - TASK-11.1
   - TASK-12.1
-  - TASK-36.1
-  - TASK-36.2
-  - TASK-36.3
 references:
   - docs/design/system.md
   - docs/design/pages/P21-ad-slots.md
@@ -34,6 +31,8 @@ Sponsor placements earn revenue but can erode trust, so four calm labelled slots
 ## Packet
 Unblocks on: P1 web shell and P2 mobile shell mockups merged (header, footer, tab bar and sheet patterns); assets/house-ad-support.png, house-ad-partner.png and house-ad-adopt.png generated
 Branch: design/P21-ad-slots
+
+Unblocked from the image task(s) TASK-36.1, TASK-36.2, TASK-36.3 (2026-10-16): the Codex CLI is not installed yet, so use a labelled placeholder of the final size and aspect ratio where the illustration goes; the image task swaps the real art in later.
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Acceptance Criteria

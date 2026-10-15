@@ -3,7 +3,7 @@
 import { useTranslations } from 'next-intl';
 import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
 
-import { CONSENT_VERSION, getConsent, needsConsentPrompt, setConsent } from '@zivali/analytics';
+import { CONSENT_VERSION, type ConsentState, getConsent, setConsent } from '@zivali/analytics';
 import { Link } from '@/i18n/navigation';
 
 /** The footer's "Cookie settings" button dispatches this on `window`; the banner opens the Customise view. */
@@ -20,34 +20,28 @@ const sw =
 type View = 'closed' | 'first' | 'custom';
 
 /**
- * P17 consent banner (web): bottom-left card on lg, bottom sheet below. A non-modal labelled dialog, shown after
- * hydration only (the choice lives in a cookie, so the server cannot know), focus on its heading. Escape or ignoring it
- * keeps everything denied. Opened from the footer, it starts in the Customise view with the stored choice.
+ * P17 consent banner (web): bottom-left card on lg, bottom sheet below. A non-modal labelled dialog, focus on its
+ * heading. Escape or ignoring it keeps everything denied. Opened from the footer, it starts in the Customise view with
+ * the stored choice. The server reads the cookie (`prompt`, `stored`: app/[locale]/layout.tsx), so a first view is in
+ * the HTML and paints with the page: rendered after hydration, it was the LCP element, seconds late (TASK-90.4).
  */
-export function ConsentBanner() {
+export function ConsentBanner({ prompt = false, stored = null }: { prompt?: boolean; stored?: ConsentState | null }) {
 	const t = useTranslations('consent');
-	const [view, setView] = useState<View>('closed');
+	const [view, setView] = useState<View>(prompt ? 'first' : 'closed');
 	const [analytics, setAnalytics] = useState(false);
 	const [saved, setSaved] = useState(false);
 	const [fromSettings, setFromSettings] = useState(false);
-	const [reask, setReask] = useState<string | null>(null);
+	const [reask, setReask] = useState(() => {
+		if (!prompt || !stored) return null;
+		// Version bump: only a documented change_<v> is worth saying; otherwise the choice expired by age.
+		if (stored.v === CONSENT_VERSION) return t('reask_year');
+		const key = `change_${CONSENT_VERSION}` as never; // a short phrase added to both catalogues with each bump
+		return t.has(key) ? t('reask_changed', { change: t(key) }) : null;
+	});
 	const heading = useRef<HTMLHeadingElement>(null);
 	const opener = useRef<HTMLElement | null>(null);
 
 	useEffect(() => {
-		// The choice is a cookie the server cannot see: decided after hydration, so the banner never touches the LCP.
-		const stored = getConsent();
-		const key = `change_${CONSENT_VERSION}` as never; // a short phrase added to both catalogues with each bump
-		if (needsConsentPrompt()) {
-			// eslint-disable-next-line react-hooks/set-state-in-effect
-			setView('first');
-			if (stored) {
-				// Version bump: only a documented change_<v> is worth saying; otherwise the choice expired by age.
-				if (stored.v !== CONSENT_VERSION) {
-					if (t.has(key)) setReask(t('reask_changed', { change: t(key) }));
-				} else setReask(t('reask_year'));
-			}
-		}
 		const open = () => {
 			opener.current = document.activeElement as HTMLElement | null;
 			setAnalytics(getConsent()?.analytics ?? false);
@@ -57,7 +51,7 @@ export function ConsentBanner() {
 		};
 		window.addEventListener(OPEN_COOKIE_SETTINGS, open);
 		return () => window.removeEventListener(OPEN_COOKIE_SETTINGS, open);
-	}, [t]);
+	}, []);
 
 	useEffect(() => {
 		if (view !== 'closed') heading.current?.focus();
