@@ -12,6 +12,7 @@ import { AppError } from './lib/errors.ts';
 import { requestLogger } from './lib/logger.ts';
 import { errorHandler, notFound } from './middleware/error.middleware.ts';
 import { requestId } from './middleware/requestId.middleware.ts';
+import docsRoutes from './routes/docs.routes.ts';
 import v1Routes from './routes/index.ts';
 
 export const app = express();
@@ -50,6 +51,7 @@ app.use(
 app.get('/ping', (_req, res) => {
 	res.json({ message: 'pong' });
 });
+app.use('/docs', docsRoutes);
 app.use('/v1', v1Routes);
 
 app.use(notFound);

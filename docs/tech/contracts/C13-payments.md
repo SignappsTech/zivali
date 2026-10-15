@@ -13,7 +13,7 @@ payments(id, user_id, purpose, amount_cents int check (amount_cents >= 200), cur
          receipt_sent_at, created_at, updated_at)
 payment_events(id, provider, provider_event_id text unique, type text, payload jsonb, received_at)
 ```
-Access only through the API (RLS deny-all): users read their own payments; staff read all. Models in `prisma/schemas/payments.prisma`.
+`payment_events.payload` is redacted before storage (TASK-32.1): keep only `id`, `type`, the event object id (`data.object.id`), `payment_intent`, `amount`, `currency`, `status` and `livemode`; never `customer_details`, card data or the raw event. Access only through the API (RLS deny-all): users read their own payments; staff read all. Models in `prisma/schemas/payments.prisma`.
 
 ## `POST /v1/payments/checkout` (auth, not anonymous, `Idempotency-Key` required; owned by TASK-32.1)
 
@@ -22,6 +22,7 @@ Request:
 { "purpose": "tip", "amount_cents": 500, "refs": { "report_id": "…" }, "locale": "sl", "return_to": "/r/Hk3vT9qP/reunited" }
 ```
 Response `200 { "payment_id": "…", "checkout_url": "https://checkout.stripe.com/c/pay/cs_test_…" }`
+`payments.prices` (`app_config`, public, as built in TASK-6.8): `{ "boost_cents": 499, "premium_monthly_cents": 299, "premium_yearly_cents": 2499, "vet_partner_monthly_cents": 3900, "podpornik_min_monthly_cents": 200, "support_suggested_cents": [300, 500, 1000], "support_highlight_cents": 500, "custom_min_cents": 200 }` (EUR cents). `payments.live_allowed` (`false`, not public) keeps live Stripe keys refused.
 Rules: integer cents; `amount_cents ≥ 200` else `422 MIN_AMOUNT` (C1 `ERROR_HTTP_STATUS`; `VALIDATION` stays 400); user-chosen amounts (`tip`, `report_contribution`, `support`) 200–50 000; fixed prices (`boost`, subscriptions) come only from `app_config` key `payments.prices` (Boost EUR 4.99, Premium EUR 2.99/month or EUR 24.99/year, Vet Partner EUR 39/month; M4) and never from the client; `refs.report_id` must belong to the caller for `report_contribution`; `return_to` must be a same-origin path. `CheckoutInput`: `amount_cents` required for `tip`, `report_contribution`, `support` (integer, ≤ 50 000; the lower bound 200 is checked by the domain → `MIN_AMOUNT`), forbidden for `boost` and `subscription` (`VALIDATION`); `refs.report_id` required for `report_contribution`. `GET /v1/payments/:id` (owner) → `Payment = { id, purpose, amount_cents, currency, status, created_at, updated_at }`. Success URL `APP_URL/<locale>/payments/return?payment_id=…`, cancel URL `…&canceled=1`; mobile passes `return_scheme: true` → URLs go through `zivali://payments/return`.
 
 ## `POST /v1/webhooks/stripe` (no JWT; Stripe signature on the raw body; mounted before `express.json`)
@@ -73,3 +74,4 @@ Card payments may need fiscally verified invoices (ZDavPR: payment cards count a
 | Version | Date | Change |
 |---|---|---|
 | 1.1 | 2026-10-15 | CH-63: startCheckout(dispatch, {…, locale, returnScheme?, idempotencyKey?}); operationIds = stub names |
+| 1.2 | 2026-10-15 | CH-138: payments.prices app_config JSON shape as built; payment_events payload redaction rule |

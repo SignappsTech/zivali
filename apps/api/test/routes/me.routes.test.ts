@@ -90,10 +90,10 @@ describe('PATCH /v1/me', () => {
 		expect((await request(app).get('/v1/me').set('Authorization', auth)).body.locale).toBe('en');
 	});
 
-	it('copies a locale change to Auth user_metadata via the Admin API with the service key', async () => {
+	it('copies a locale change to Auth user_metadata via the Admin API with the secret key', async () => {
 		const { id, auth } = await user();
-		const mutable = config as { SUPABASE_SERVICE_ROLE_KEY?: string };
-		mutable.SUPABASE_SERVICE_ROLE_KEY = 'service-key';
+		const mutable = config as { SUPABASE_SECRET_KEY?: string };
+		mutable.SUPABASE_SECRET_KEY = 'service-key';
 		const spy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response('{}', { status: 200 }));
 		try {
 			const res = await request(app).patch('/v1/me').set('Authorization', auth).send({ locale: 'en' });
@@ -108,7 +108,7 @@ describe('PATCH /v1/me', () => {
 			expect(spy).not.toHaveBeenCalled();
 		} finally {
 			spy.mockRestore();
-			delete mutable.SUPABASE_SERVICE_ROLE_KEY;
+			delete mutable.SUPABASE_SECRET_KEY;
 		}
 	});
 

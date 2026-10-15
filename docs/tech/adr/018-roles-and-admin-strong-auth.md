@@ -2,13 +2,14 @@
 
 - Status: Accepted · Date: 2026-10-14 · Owner: Tech Lead
 - Amended 2026-10-15 (ADR-020): roles are read from `app.profiles` by the API per request (short cache), no custom access token hook; the API checks `aal = aal2` from the verified JWT for staff routes; audit entries are written by the API service layer.
+- Amended 2026-10-15 (CH-146): last-admin protection is a service check, not a trigger.
 - Source: FR-001 R-001.3, FR-019 R-019.1, TASK-34 AC#3, NFR-SEC
 
 ## Decision
 
 - `profiles.role` enum `user | shelter_member | moderator | admin` (organisation-level roles live in `organisation_members.role` from M3). A **Supabase custom access token hook** (`public.custom_access_token_hook`) copies it into the JWT claim `user_role`; RLS reads `auth.jwt() ->> 'user_role'`. Role changes take effect on the next token refresh (≤ 1 h; the admin UI forces sign-out of the target user).
 - **Strong authentication**: Supabase Auth MFA with TOTP. Admin and moderator RLS policies and RPCs require `auth.jwt() ->> 'aal' = 'aal2'`; the admin area sends users without a verified factor to enrolment, and users with a factor to the challenge screen.
-- **Bootstrap**: `pnpm admin:create <email>` (service role, local or with the target environment's credentials) sets the role on an existing account; there is no public path to admin. The last admin cannot be demoted (trigger).
+- **Bootstrap**: `pnpm admin:create <email>` (service role, local or with the target environment's credentials) sets the role on an existing account; there is no public path to admin. The last admin cannot be demoted: a service check (`FOR UPDATE` on the ADMIN rows in `setUserRole`), not a trigger (CH-146).
 - Every admin or moderator write goes through RPCs that call `audit(action, target_type, target_id, diff)`.
 
 ## Alternatives

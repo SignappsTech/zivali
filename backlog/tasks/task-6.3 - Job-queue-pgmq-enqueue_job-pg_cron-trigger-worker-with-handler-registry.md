@@ -3,11 +3,11 @@ id: TASK-6.3
 title: >-
   Worker and jobs: pg-boss, queue registry with stubs, schedules, keep-alive,
   drain
-status: To Do
+status: Done
 assignee:
   - '@backend-dev'
 created_date: '2026-10-14 22:12'
-updated_date: '2026-10-15 06:56'
+updated_date: '2026-10-15 11:03'
 labels:
   - be
   - 'est:S'
@@ -39,10 +39,10 @@ Branch: agent/task-6.3-queue
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 worker.ts starts pg-boss (schema pgboss) and registers handlers for match.report, notify.send, alerts.fanout, photo.process, photo.publish, report.lifecycle, retention.purge, partners.stats, payment.effects, directory.reminder, db.keepalive and db.backup (stubs that log, except db.keepalive which runs a trivial query).
-- [ ] #2 lib/jobs.ts sends jobs (optionally inside a Prisma transaction) with retryLimit 5 and backoff; schedules (lifecycle hourly, retention daily, partners hourly, keep-alive every 6 h) are created idempotently in Europe/Ljubljana.
-- [ ] #3 domains/notifications exposes enqueueNotification(input, ctx) as a stub that sends notify.send, so feature tasks can call it before the notifications task merges.
-- [ ] #4 drain() processes queues to empty for tests and `pnpm jobs:drain`; an integration test proves send → handler → completion and failure → retry → failed state; /v1/health/ready reports queue lag.
-- [ ] #5 pg-boss tables (including per-queue partitions) have RLS enabled; test/security fails otherwise (CH-103)
-- [ ] #6 From TASK-6.12: replace the ctx.jobs placeholder (it throws) with the real queue API; call lockDownPgboss() after boss.start/createQueue; the retention job calls PlatformDao.purgeExpired.
+- [x] #1 worker.ts starts pg-boss (schema pgboss) and registers handlers for match.report, notify.send, alerts.fanout, photo.process, photo.publish, report.lifecycle, retention.purge, partners.stats, payment.effects, directory.reminder, db.keepalive and db.backup (stubs that log, except db.keepalive which runs a trivial query).
+- [x] #2 lib/jobs.ts sends jobs (optionally inside a Prisma transaction) with retryLimit 5 and backoff; schedules (lifecycle hourly, retention daily, partners hourly, keep-alive every 6 h) are created idempotently in Europe/Ljubljana.
+- [x] #3 domains/notifications exposes enqueueNotification(input, ctx) as a stub that sends notify.send, so feature tasks can call it before the notifications task merges.
+- [x] #4 drain() processes queues to empty for tests and `pnpm jobs:drain`; an integration test proves send → handler → completion and failure → retry → failed state; /v1/health/ready reports queue lag.
+- [x] #5 pg-boss tables (including per-queue partitions) have RLS enabled; test/security fails otherwise (CH-103)
+- [x] #6 From TASK-6.12: replace the ctx.jobs placeholder (it throws) with the real queue API; call lockDownPgboss() after boss.start/createQueue; the retention job calls PlatformDao.purgeExpired.
 <!-- AC:END -->

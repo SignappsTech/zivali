@@ -22,6 +22,8 @@ allowBuilds:
   # @prisma/engines (apps/api): its postinstall pre-downloads the engines; prisma generate and migrate fetch them on
   # first use, so the script is skipped (without this entry pnpm 11 exits with ERR_PNPM_IGNORED_BUILDS).
   '@prisma/engines': false
+  # swagger-ui-dist (apps/api /docs, TASK-3.12): its postinstall is Scarf install telemetry, so it never runs.
+  '@scarf/scarf': false
 
 # Fixed versions forced over the pinned or too-narrow ranges of tooling parents (tmp via @lhci/cli > inquirer >
 # external-editor, mysql2 via the prisma CLI).

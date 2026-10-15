@@ -1765,6 +1765,70 @@
 				}
 			}
 		},
+		"/v1/geo/search": {
+			"post": {
+				"operationId": "searchPlaces",
+				"summary": "Search places",
+				"description": "Settlements, city districts, streets and house numbers (GURS) for q, best first, at most 5. \"Street 5, Settlement\" puts the house number first. `Cache-Control: no-store`.",
+				"tags": ["geo"],
+				"requestBody": {
+					"required": true,
+					"content": { "application/json": { "schema": { "$ref": "#/components/schemas/GeoSearchInput" } } }
+				},
+				"responses": {
+					"200": {
+						"description": "Matching places",
+						"content": {
+							"application/json": { "schema": { "$ref": "#/components/schemas/GeoSearchResponse" } }
+						}
+					},
+					"400": {
+						"description": "VALIDATION",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"429": {
+						"description": "RATE_LIMITED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"500": {
+						"description": "INTERNAL",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					}
+				}
+			}
+		},
+		"/v1/geo/reverse": {
+			"post": {
+				"operationId": "reversePlace",
+				"summary": "Area label for a point",
+				"description": "The city district or settlement covering the point with its municipality, else the municipality; null outside Slovenia. Never a street or house number. `Cache-Control: no-store`.",
+				"tags": ["geo"],
+				"requestBody": {
+					"required": true,
+					"content": { "application/json": { "schema": { "$ref": "#/components/schemas/GeoReverseInput" } } }
+				},
+				"responses": {
+					"200": {
+						"description": "The place, or null outside Slovenia",
+						"content": {
+							"application/json": { "schema": { "$ref": "#/components/schemas/GeoReverseResponse" } }
+						}
+					},
+					"400": {
+						"description": "VALIDATION",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"429": {
+						"description": "RATE_LIMITED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"500": {
+						"description": "INTERNAL",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					}
+				}
+			}
+		},
 		"/v1/health/ready": {
 			"get": {
 				"operationId": "getHealthReady",

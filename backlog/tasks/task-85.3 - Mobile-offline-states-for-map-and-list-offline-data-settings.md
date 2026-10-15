@@ -45,4 +45,5 @@ Branch: agent/task-85.3-cache-ui
 - [ ] #2 Actions that need a connection (contact, report abuse, share link, poster) are disabled with a short reason; reading cached details still works.
 - [ ] #3 Settings → Offline data shows size used and last update, offers "Clear offline data" and the "Use mobile data for offline photos" switch (off by default).
 - [ ] #4 Airplane-mode screenshots on Android are attached; screen-reader announces the offline state.
+- [ ] #5 The root _layout mounts useOfflineCache() from lib/offline (TASK-85.2), so the background task is defined on a headless launch and the home area follows the profile (null when signed out).
 <!-- AC:END -->

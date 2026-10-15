@@ -3,48 +3,33 @@
 Owner: Primož · Prepared by the Project Lead · 2026-10-15
 Put keys into `.env.local` (gitignored) unless noted. Never paste secrets into chat.
 
-## A. Needed for the first deploy (staging), whenever you're ready
+## A. Needed for the first deploy (staging)
 
-### 1. Temporary domain (the ~€1 one)
-- [ ] Buy a cheap domain (e.g. a `.xyz` / `.online` / `.site` first-year deal). Use it for **staging only**.
-- [ ] Put its DNS on **Cloudflare** (free): add the site in Cloudflare and change the nameservers at the registrar.
-- Why it's fine: every URL in the app comes from config (`APP_URL`), so switching to the final domain later is a config change.
-- ⚠️ Things that bind to a domain and will need redoing when you switch to the final one:
-  - email sender verification
-  - Google/Apple OAuth redirect URLs
-  - Stripe webhook URL
-  - the GA4 stream URL
-  - Turnstile hostnames
-  - **mobile deep links** (universal/app links are baked into app builds)
+Status 2026-10-15 15:15: tokens checked read-only. Hetzner, Turnstile, Brevo, Google OAuth, GitHub and the Cloudflare zone token work.
 
-  So **don't ship store builds on the temporary domain**.
-- ⚠️ Cheap TLDs (.xyz and the like) often land in spam for email. That's fine for staging tests, not for real users.
-- 💡 najdimo.si / najdimo.com were still free last night (≈€15–20/year). Grab them whenever you're 100 % sure.
+### Open now
+- [ ] **Nameservers for najdimo.si**: the Cloudflare zone is still `pending`. At the registrar, set the nameservers to `courtney.ns.cloudflare.com` and `nikon.ns.cloudflare.com`. Once Cloudflare shows the zone as **Active**, we add the DNS records (server, email SPF/DKIM/DMARC).
+- [ ] **R2 buckets**: your R2 token can't list or create buckets (`AccessDenied`). That's expected for an "Object Read & Write" token, and my earlier note was wrong. Pick one:
+  - **(a)** Create a second R2 token with **Admin Read & Write**, put it in `R2_ADMIN_ACCESS_KEY_ID` and `R2_ADMIN_SECRET_ACCESS_KEY`, and we create the 3 buckets in the EU jurisdiction with their CORS and lifecycle rules. You can revoke it afterwards; the app keeps using the Object token.
+  - **(b)** Create the buckets yourself in the dashboard, each with **Location → Specify jurisdiction → European Union**: `zivali-private`, `zivali-media`, `zivali-backups`. Then scope your existing token to these 3 buckets. We still set CORS and lifecycle rules, and that needs (a) or a few dashboard clicks we'd describe.
+- [ ] **GitHub repo visibility**: `pbozic/zivali` is **public**. Make it **private** before we push anything (Settings → General → Danger zone → Change visibility). The code, docs and business notes would otherwise be public.
+- [ ] **Push decision**: may we push `main` to GitHub once the repo is private? It's needed for CI and deploys, and it's your off-site backup.
+- [ ] **Supabase Google provider**: may we enable Google sign-in on the hosted Supabase project `najdimo` with your OAuth client? So far nothing has been changed on the hosted project. The redirect URI is `https://omtpppzrugibquukhnyl.supabase.co/auth/v1/callback`.
+- [ ] **Turnstile hostnames**: add `najdimo.si`, `staging.najdimo.si` and `localhost` to the widget.
+- [ ] **Brevo sender**: once DNS is active, add `najdimo.si` as a sender domain. We add its DNS records.
 
-### 2. Hetzner (server, about €4–5/month)
-- [ ] Create an account at console.hetzner.cloud, then a project "najdimo".
-- [ ] Either **(a)** create an **API token** (Security → API tokens, Read & Write) → `HETZNER_API_TOKEN`, and we create the server; **or (b)** create the server yourself: **CX22** (2 vCPU / 4 GB), **Ubuntu 24.04**, location **Falkenstein or Nuremberg (EU)**, with your SSH key, and send the IP.
+### Done ✅
+- Domain **najdimo.si** bought and added to Cloudflare.
+- Hetzner: server `ubuntu-4gb-fsn1-2`, CAX11 arm64, Falkenstein, Ubuntu 24.04, running. `HETZNER_API_TOKEN` and `HETZNER_SERVER_IP` are set.
+  - No Cloud Firewall yet. With the first deploy we create one: 80 and 443 open, 22 open with key-only SSH, because GitHub's deploy runners use changing IPs.
+- Cloudflare API token (zone access works), Turnstile keys, Brevo key (free plan), Google OAuth client, GitHub fine-grained token (push and Actions-secrets access to `pbozic/zivali`).
 
-### 3. Cloudflare (DNS, photo storage, spam protection, all free tier)
-- [ ] **R2**: enable it (Cloudflare asks for a payment method even for the free tier).
-  - Create an **R2 API token** (Object Read & Write) → `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`.
-  - We create the 3 buckets (EU jurisdiction) ourselves.
-- [ ] **Turnstile** (captcha for anonymous found reports): add a widget for your domain plus `localhost` → `TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY`.
-- [ ] Optional: a **Cloudflare API token** (Zone DNS Edit for your domain) → `CLOUDFLARE_API_TOKEN`, so we set the DNS records ourselves (server, email SPF/DKIM/DMARC).
-- [ ] Optional: **Email Routing** (free): forward e.g. podpora@ and zavetisca@ to your Gmail. That gives you inboxes for free.
-
-### 4. Email sending: Brevo (free, 300 emails/day)
-- [ ] Create an account at brevo.com → **API key** → `BREVO_API_KEY`.
-- [ ] Add your domain as a sender. It gives you DNS records (we add them if you gave us the Cloudflare DNS token).
-
-### 5. Google login
-- [ ] In Google Cloud (your existing project `zivali-511620`), set up the **OAuth consent screen** (External, app name Najdimo) and create **OAuth client ID → Web application**.
-  - Authorised redirect URI: `https://omtpppzrugibquukhnyl.supabase.co/auth/v1/callback`
-  - Put the result in `GOOGLE_OAUTH_CLIENT_ID` and `GOOGLE_OAUTH_CLIENT_SECRET`. We enable it in Supabase.
+### Reference: what the server is
+- **CAX11**: Arm64 Ampere, 2 vCPU, 4 GB RAM, 40 GB SSD, €7.31/month. Our images are built for arm64.
+- It's enough for staging and for the start of production. At launch, production gets its own CAX11, or a resize to CAX21 (4 vCPU / 8 GB) without a rebuild.
+- No backups add-on: the server holds no data, and the database backups go to R2.
+- Things that bind to the domain: email sender, OAuth redirect URLs, Stripe webhook, the GA4 stream URL, Turnstile hostnames, mobile deep links. najdimo.si is the final domain, so they're set up once.
 - Apple sign-in waits for the Apple Developer account (section C).
-
-### 6. GitHub Actions (automatic deploys)
-- [ ] Either add the repo secrets yourself (we'll give you the exact list when the deploy task runs), or give us a fine-grained **PAT** for `pbozic/zivali` (Secrets: read/write, Actions: read/write) → `GITHUB_TOKEN`.
 
 ## B. Business, legal, money (no rush, but they gate public launch)
 
@@ -83,8 +68,9 @@ Put keys into `.env.local` (gitignored) unless noted. Never paste secrets into c
 - [ ] Delete `MAPTILER_API_KEY` from `.env.local` (no longer used; our own geocoder replaced it).
 - [ ] Delete leftover folders in `.claude/worktrees/` that Windows kept locked (git no longer tracks them).
 - [ ] Keep Docker Desktop running while agents work (local database).
+- [ ] Install the **Codex CLI** and sign in with your ChatGPT account: `npm i -g @openai/codex`, then `codex login`. The 8 image tasks wait on it: the app icon, the empty states, the house ads and the reunited illustration.
 - [ ] Once the API scaffold (TASK-3.7) is merged, run `pnpm db:reset` once in the repo root. Prisma 7 refuses to reset a database when an AI agent runs it unless you consent, so this step needs you. It checks that migrations and seed build the local DB from zero.
-- [ ] Decide whether we may **push `main` to GitHub** (`pbozic/zivali`, private). Only the first setup commit is on GitHub. Some agent worktrees are created from that stale `origin/main`, and agents now have to repair that themselves. Pushing would fix it, and it's also your off-site backup.
+- [ ] Decide whether we may **push `main` to GitHub** (`pbozic/zivali`; make it private first, see A). Only the first setup commit is on GitHub. Some agent worktrees are created from that stale `origin/main`, and agents now have to repair that themselves. Pushing would fix it, and it's also your off-site backup.
 
 ## Already done ✅
 - Supabase project `najdimo` (Frankfurt) with keys
