@@ -1,0 +1,79 @@
+{
+	"$comment": "Every Prisma model and R2 bucket (C1). test/security/data-inventory.test.ts fails when a model is missing. export: part of the user's data export; delete: what account deletion does.",
+	"models": {
+		"profiles": {
+			"category": "account",
+			"personal_data": [
+				"id (Supabase user id)",
+				"display_name",
+				"locale",
+				"home_point",
+				"phone",
+				"quiet_from",
+				"quiet_to"
+			],
+			"basis": "contract (GDPR art. 6(1)(b))",
+			"retention": "until the account is deleted",
+			"export": true,
+			"delete": "delete"
+		},
+		"app_config": {
+			"category": "platform",
+			"personal_data": [],
+			"basis": "none (no personal data)",
+			"retention": "kept",
+			"export": false,
+			"delete": "keep"
+		},
+		"audit_log": {
+			"category": "security",
+			"personal_data": ["actor_id", "target_id", "diff"],
+			"basis": "legitimate interest (GDPR art. 6(1)(f)): accountability of staff actions",
+			"retention": "not defined yet",
+			"export": false,
+			"delete": "anonymise"
+		},
+		"rate_limits": {
+			"category": "security",
+			"personal_data": ["key (user id, or HMAC of the IP or device id)"],
+			"basis": "legitimate interest (GDPR art. 6(1)(f)): abuse prevention",
+			"retention": "48 h",
+			"export": false,
+			"delete": "purged after 48 h"
+		},
+		"idempotency_keys": {
+			"category": "platform",
+			"personal_data": ["user_id", "body (stored response)"],
+			"basis": "contract (GDPR art. 6(1)(b)): safe retries of writes",
+			"retention": "24 h",
+			"export": false,
+			"delete": "purged after 24 h"
+		}
+	},
+	"buckets": {
+		"zivali-private": {
+			"category": "media",
+			"personal_data": ["uploaded photos (originals and variants)", "owner_id in object keys"],
+			"basis": "contract (GDPR art. 6(1)(b))",
+			"retention": "unattached uploads 24 h; report photos 12 months after close; pet photos until the pet is deleted (C5)",
+			"export": true,
+			"delete": "delete"
+		},
+		"zivali-media": {
+			"category": "media",
+			"personal_data": ["published report photos (public copies)"],
+			"basis": "contract (GDPR art. 6(1)(b))",
+			"retention": "while the report is visible (C5 photo.publish)",
+			"export": false,
+			"delete": "delete"
+		},
+		"zivali-backups": {
+			"category": "backup",
+			"personal_data": ["full database dumps"],
+			"basis": "legitimate interest (GDPR art. 6(1)(f)): disaster recovery",
+			"retention": "backup rotation (TASK-5.1)",
+			"export": false,
+			"delete": "expires with the backup rotation"
+		}
+	}
+}
