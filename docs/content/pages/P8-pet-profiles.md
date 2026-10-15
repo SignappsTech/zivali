@@ -3,7 +3,7 @@ source: 03§P8; docs/design/pages/P8-pet-profiles.md
 page: P8 Pet profiles
 stories: TASK-16 (FR-002, FR-003)
 copy-for: docs/design/pages/P8-pet-profiles.md
-version: 0.1
+version: 0.2
 status: Draft, native Slovenian review pending
 date: 2026-10-15
 ---
@@ -64,7 +64,7 @@ Empty state:
 | pets.chip_label | Številka čipa | Chip number |
 | pets.chip_help | Običajno ima 15 števk, na primer 705 1234 5678 901. Vidite jo samo vi. | It usually has 15 digits, for example 705 1234 5678 901. Only you can see it. |
 | pets.chip_warning | Številka čipa je običajno dolga 15 števk. Shranili jo bomo kot neznano, preverite jo, ko boste lahko. | Chip numbers usually have 15 digits. We will save it as unknown; please check it when you can. |
-| pets.crpsi_link | Preverite podatke v Centralnem registru psov (CRPsi) | Check your details in the Central Register of Dogs (CRPsi) |
+| pets.chip_register_note | Čip prebere veterinar ali pristojno zavetišče in podatke o lastniku poišče v Centralnem registru hišnih živali (CRHŽ), ki ni javen. Ali so vaši podatki v registru pravilni, preverite pri svojem veterinarju. | A vet or the responsible shelter reads the chip and looks up the owner's details in the Central Register of Pets (CRHŽ), which is not public. Ask your vet to check that your details in the register are correct. |
 | pets.section_notes | Ovratnica in opombe | Collar and notes |
 | pets.collar_label | Ovratnica | Collar |
 | pets.collar_placeholder | Na primer: rdeča ovratnica z zvončkom | For example: red collar with a bell |
@@ -77,7 +77,9 @@ Empty state:
 | pets.species_required | Izberite, ali je pes ali mačka. | Choose dog or cat. |
 | pets.name_required | Vpišite ime. | Enter a name. |
 
-`pets.crpsi_link` is shown for dogs only and opens the official CRPsi search in a new tab (`common.opens_new_tab`).
+`pets.chip_register_note` replaces `pets.crpsi_link`, which is removed. It is a plain help line under the chip field for dogs and cats, with no link and no external-link icon: the public lookup closed in June 2026 and the register is not public (A-003, glossary "CRHŽ").
+
+`CHANGE docs/design/pages/P8-pet-profiles.md§4 Chip: replace "a link for dogs to the official CRPsi lookup (text button with external-link icon)" with the help line pets.chip_register_note under the chip field, no link (A-003).`
 
 # 3. Pet detail
 

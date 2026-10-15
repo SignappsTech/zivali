@@ -1,15 +1,17 @@
 **Draft — requires client/legal review.**
-source: 02§Content, SEO and legal requirements (Legal); FR-034; FR-035; FR-038; brief v0.7 (scope, monetisation); privacy-policy.md
+source: 02§Content, SEO and legal requirements (Legal); FR-034; FR-035; FR-038; brief v1.1 (scope, monetisation without reward escrow); privacy-policy.md
 
 | Field | Value |
 |---|---|
-| Version | 0.1 |
+| Version | 0.2 |
 | Date | 2026-10-15 |
 | Route SL | `/pogoji-uporabe` |
 | Route EN | `/en/terms` |
 | Slug SL / EN | `pogoji-uporabe` / `terms` |
 | Structured data | WebPage |
 | Template | T4 Legal (numbered h2 sections, "On this page" list, draft note) |
+
+Change in 0.2: reward escrow removed (brief v1.1). Chapter 10 no longer offers a reward through Stripe Connect; chapter 6 explains the owner's display-only reward line; chapter 15 names rewards among agreements between users.
 
 **SEO (SL)**
 
@@ -97,6 +99,8 @@ Točne lokacije, številke čipa, telefonske številke in e-naslova ne objavljaj
 - Pri Najdimo vas v pogovoru nikoli ne prosimo za plačilo.
 - Sumljivo ravnanje prijavite z možnostjo „Prijavi zlorabo“ ali na [naročnik: kontaktni e-naslov].
 
+**Nagrada.** Lastnik lahko v prijavi izgubljene živali navede, da ponuja nagrado, in neobvezno njen znesek. To je izjava lastnika, ne naša. Najdimo nagrad ne hrani, ne izplačuje in zanje ne jamči. Lastnik in najditelj se o nagradi dogovorita sama, zunaj Najdimo. Nikoli nikomur ne plačajte ničesar vnaprej: nagrada se izroči šele, ko je žival spet doma.
+
 ## 7. Najditelji
 
 Najdimo ne določa pravnih obveznosti najditeljev. Dolžnosti, ki jih ima oseba, ki najde žival, določa veljavna zakonodaja, na primer obveščanje občine ali zavetišča. Ravnajte v skladu z zakonom in, če ste v dvomu, se obrnite na občino, zavetišče ali veterinarja. [naročnik/pravnik: Q-006 – potrditi pravila o najdenih živalih in rokih hrambe.]
@@ -128,8 +132,6 @@ Zavetišča in občine uporabljajo vse brezplačno, za vedno: portal, množični
 
 **Boost, Premium Zaščita, Podpornik.** Plačljive možnosti, ki povečajo doseg prijave, dodajo zaščito ali podprejo storitev. Cene, trajanje in način preklica so prikazani pred nakupom. Naročnine lahko prekličete. [naročnik/pravnik: preveriti pravico potrošnika do odstopa od pogodbe (14 dni) in izjemo za takoj začeto digitalno storitev ter besedilo, ki ga pokažemo pred plačilom.]
 
-**Nagrada najditelju.** Če bo ta možnost na voljo, denar do potrditve srečanja hrani Stripe (Stripe Connect). Mi zaračunamo provizijo platforme. Možnost bo na voljo šele po dodatnem pravnem pregledu (Q-011).
-
 **Veterinarski partner (poslovne stranke).** Mesečna naročnina za veterinarske ambulante. Vključuje preverjen profil ambulante, izpostavljeno mesto med oglasi „najbližji veterinar“ na njihovem območju, omembo v opozorilih in na plakatih v regiji (vedno označeno kot „Oglas“) ter mesečno poročilo z združenimi številkami. Račune z DDV izdajamo prek Stripe Billing. Naročnino lahko prekličete mesečno. Za poslovne stranke veljajo posebni pogoji ob naročilu. Veterinarski partner nikoli ne zahteva, da veterinar plača za kaj, kar živali vrača domov.
 
 Plačila obdeluje Stripe Payments Europe, Limited. Podatkov o kartici ne vidimo.
@@ -156,7 +158,7 @@ Storitev nudimo „kot je“ in si prizadevamo, da deluje zanesljivo, vendar ne 
 
 Odgovornost omejujemo v obsegu, ki ga dopušča zakon. Ne odgovarjamo za:
 
-- srečanja, dogovore ali posle med uporabniki;
+- srečanja, dogovore ali posle med uporabniki, tudi za nagrade, ki jih ponudijo lastniki;
 - vsebino, ki jo objavijo uporabniki, ali ponudbe oglaševalcev;
 - napačne predloge ujemanja ali umetne inteligence;
 - motnje, ki jih povzročijo tretji ponudniki ali višja sila.
@@ -251,6 +253,8 @@ Do not publish exact locations, chip numbers, phone numbers or email addresses i
 - Najdimo never asks you for a payment in a chat.
 - Report suspicious behaviour with "Report abuse" or at [client: contact email].
 
+**Reward.** In a report of a lost animal, the owner may state that they offer a reward and, optionally, its amount. This is the owner's statement, not ours. Najdimo does not hold, pay or guarantee rewards. The owner and the finder arrange any reward between themselves, outside Najdimo. Never pay anyone anything in advance: a reward is handed over only once the animal is home.
+
 ## 7. Finders
 
 Najdimo does not state the legal obligations of finders. The duties of a person who finds an animal are set by the applicable law, for example informing the municipality or a shelter. Follow the law and, if in doubt, contact the municipality, a shelter or a vet. [client/legal: Q-006 – confirm the rules on found animals and holding periods.]
@@ -282,8 +286,6 @@ Shelters and municipalities use everything for free, forever: the portal, bulk (
 
 **Boost, Premium Protect, Podpornik.** Paid options that widen a report's reach, add protection or support the service. Prices, duration and how to cancel are shown before purchase. You can cancel subscriptions. [client/legal: check the consumer right of withdrawal (14 days) and the exception for a digital service that starts at once, and the wording shown before payment.]
 
-**Finder reward.** If this option becomes available, Stripe (Stripe Connect) holds the money until the reunion is confirmed. We charge a platform fee. This option will be available only after a further legal review (Q-011).
-
 **Vet Partner (business customers).** A monthly subscription for vet clinics. It includes a verified clinic profile, featured placement in the "nearest vet" ad slots in their area, a mention in alerts and on posters for the region (always labelled "Ad"), and a monthly report with aggregate figures. We issue VAT invoices through Stripe Billing. You can cancel monthly. Separate terms for business customers apply at order. Vet Partner never requires a vet to pay for anything that brings animals home.
 
 Payments are processed by Stripe Payments Europe, Limited. We never see your card details.
@@ -310,7 +312,7 @@ We provide the service "as is" and try to keep it reliable, but we do not guaran
 
 We limit our liability as far as the law allows. We are not liable for:
 
-- meetings, agreements or transactions between users;
+- meetings, agreements or transactions between users, including rewards that owners offer;
 - content posted by users, or advertisers' offers;
 - wrong match or AI suggestions;
 - disruption caused by third-party providers or force majeure.
@@ -338,7 +340,7 @@ Najdimo, operated by Signapps, [client: full company name], [client: registered 
 1. **Company details.** Every `[naročnik: …]` / `[client: …]` marker needs a value (company name and form, address, contact email, phone). The build should fail while one remains.
 2. **Age 15 and paid options for adults.** Same line as in the privacy policy (note 6 there). A proposal, not a brief requirement; verify against ZVOP-2 and contract capacity of minors.
 3. **Finders (Q-006).** I do not state any legal duty of finders (e.g. reporting to the municipality or shelter, holding periods). Counsel must confirm the applicable Slovenian rules and whether we should state them.
-4. **Escrow and platform fee (Q-011).** The finder reward via Stripe Connect needs a payment-services review before live use. The fee percentage is not in the terms (5 % appears in the privacy policy); decide where to state it.
+4. **Reward line (changed in 0.2).** Reward escrow and the platform fee are out of scope (brief v1.1, Q-011 closed). An owner may show a display-only reward line; Najdimo is not a party and never handles the money. Confirm whether the line is a public promise of a reward (javna obljuba nagrade, Obligacijski zakonik) that binds the owner, and whether the chapter 6 wording and the chapter 15 carve-out are enough (lawyer pack LQ-67).
 5. **Consumer withdrawal for subscriptions.** Boost, Premium and Podpornik are digital services; check the 14-day right of withdrawal and the exception for services started at once with the consumer's consent, the pre-contract information and the cancellation mechanism (including the "cancel" button duty for online contracts, if applicable).
 6. **Contributions.** Written as "prispevek", voluntary payment to a company, not a donation, minimum €2, no feature in return, non-refundable except where law requires (Q-008). Check the VAT and tax treatment.
 7. **Vet Partner.** A B2B contract: check whether a separate order form and business terms are needed (price, VAT, monthly cancellation notice, refunds, suspension if unpaid, the "Ad" label on alerts and posters, exclusivity if any). The indicative price is not stated. Placement in alerts and posters is paid, so the ad-labelling and unfair-commercial-practice rules apply.
@@ -347,5 +349,5 @@ Najdimo, operated by Signapps, [client: full company name], [client: registered 
 10. **Licence to us.** Confirm scope (store, process, show, matching, poster, sharing; no sublicensing beyond providers) and that it matches the privacy policy.
 11. **Moderation.** The three-report automatic hiding links to Article 22 GDPR (privacy-policy note 5) and, if applicable, the Digital Services Act notice-and-action and statement-of-reasons duties for a hosting service. Counsel to confirm which DSA duties apply to a service of this size.
 12. **AI.** Terms say suggestions can be wrong and users must check them. Check AI Act transparency duties.
-13. **Features not live.** Boost, Premium, Podpornik, rewards, Vet Partner and payments are described as they will be at launch; payments are test mode only now. Publish each part only when it goes live, or version the page.
+13. **Features not live.** Boost, Premium, Podpornik, the reward line, Vet Partner and payments are described as they will be at launch; payments are test mode only now. Publish each part only when it goes live, or version the page.
 14. **Quality.** The Slovenian text needs a native legal review (terms such as „suspendiramo“, „višja sila“, „kot je“).

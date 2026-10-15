@@ -1,14 +1,14 @@
 **Draft — requires client/legal review.**
-source: 02§FR-045, §Content, SEO and legal requirements, NFR-PRIV; brief v1.0 (architecture, monetisation, Q-001…Q-013); docs/discovery/regulatory.md; 06§Risks R-001…R-028; docs/content/legal/*.md (notes for legal review); docs/content content notes
+source: 02§FR-045, §Content, SEO and legal requirements, NFR-PRIV; brief v1.1 (architecture, monetisation without reward escrow, Q-001…Q-013); docs/discovery/regulatory.md; 06§Risks R-001…R-028; docs/content/legal/*.md (notes for legal review); docs/content content notes
 
 | Field | Value |
 |---|---|
 | Document | Lawyer briefing pack: Najdimo |
-| Version | 0.1 (first version sent) |
+| Version | 0.2 (reward escrow removed from scope; Slovenian version) |
 | Date | 15 October 2026 |
 | Owner | Content Strategist, for the client (Signapps) |
 | Story | TASK-91 (FR-045, Q-013); unblocks TASK-71 (final legal pages) |
-| Language | English; Slovenian statute names and product terms in Slovenian. A Slovenian version can be prepared (decision CD-02). |
+| Language | English; Slovenian statute names and product terms in Slovenian. Slovenian version: `lawyer-briefing.sl.md` and `najdimo-pravni-pregled.docx` (CD-02). |
 
 > **Not legal advice. For lawyer review.** The product team (not lawyers) wrote this pack to brief a Slovenian lawyer. Where we describe the law, it is our reading of primary texts and secondary sources, often not checked against the consolidated text on PISRS. Our "proposed answers" are proposals for you to confirm, correct or reject. Nobody should rely on them until you have.
 
@@ -29,7 +29,7 @@ source: 02§FR-045, §Content, SEO and legal requirements, NFR-PRIV; brief v1.0 
 | §2–3 Product and features | How it works and every legally relevant feature with its data and safeguards | 20 min |
 | §4 Drafts | Links to the legal drafts and their known gaps | 5 min |
 | §5 Data flows | Every processor and recipient, the data it gets and where | 10 min |
-| §6 Open questions | 66 questions, each with our proposed answer | 45 min |
+| §6 Open questions | 67 question IDs, each with our proposed answer; 64 open, 3 no longer apply (N/A) | 45 min |
 | §7–9 DPIA, retention, DPA | Working drafts for you to confirm | 20 min |
 | §10 Client decisions | What the client must decide, with your input | 5 min |
 
@@ -41,24 +41,24 @@ source: 02§FR-045, §Content, SEO and legal requirements, NFR-PRIV; brief v1.0 
 - **Operator and controller.** Signapps (company details: CD-01). The client is the controller for all processing described here.
 - **Status.** Not launched. A pilot is planned in Ljubljana and Maribor. All payments run in Stripe test mode, and live payments are blocked by configuration. There is no App Store or Play Store release in this phase.
 - **Mission rule.** Everything that gets animals home is free for everyone, forever: reporting, map and alerts, matching, chat, the PDF poster with a QR code, sharing and chip lookup. Shelters and municipalities use everything free. Paid options never limit these.
-- **Revenue.** Voluntary contributions ("prispevek", never "donacija"), a monthly supporter plan (Podpornik), Boost (€4.99), Premium Protect (€2.99 a month or €24.99 a year), a 5 % fee on finder rewards held in escrow by Stripe, ads ("Oglas") and a paid visibility plan for vet clinics (Vet Partner, about €39 a month).
+- **Revenue.** Voluntary contributions ("prispevek", never "donacija"), a monthly supporter plan (Podpornik), Boost (€4.99), Premium Protect (€2.99 a month or €24.99 a year), ads ("Oglas") and a paid visibility plan for vet clinics (Vet Partner, about €39 a month). There is no reward escrow (removed from scope on 15 October 2026): an owner may show a display-only reward line, and owner and finder arrange any reward between themselves, outside the app.
 - **Data location.** The database and sign-in are at Supabase in the EU (AWS Frankfurt). Our servers run on one Hetzner server in the EU (Germany or Finland). Photos and backups are on Cloudflare R2 (EU storage, to configure). Email goes through Brevo (France). US providers: Anthropic and Voyage AI (photo analysis), Expo (push), Cloudflare (captcha and CDN), Google (analytics, only with consent), Stripe (partly).
 - **Main legal topics.**
   1. Animal-protection duties (ZZZiv) and how the app words them, without claiming to replace them.
   2. GDPR: owners' locations, photos, chip numbers, anonymous reporting, AI providers in the US, DPIA and retention.
   3. Platform duties under the DSA: notices, moderation, automatic hiding.
   4. Consumer law for Boost and the subscriptions: pre-contract information, withdrawal and cancellation.
-  5. Reward escrow: payment-services rules, tax and DAC7.
+  5. The owner's display-only reward line: whether it is a public promise of a reward, and how we warn against "pay first" scams.
   6. Ads and Vet Partner: labelling, ranking and "nearest vet" claims (ZVPot-1, ZEPT, P2B).
   7. Contributions: legal nature, VAT, fiscal invoices (ZDavPR) and dohodnina.
   8. Accessibility (EAA) and open-data licences.
-- **Launch blockers.** The 36 questions marked "Launch" in §6. The rest gate a single feature, live payments or a store release.
+- **Launch blockers.** The 36 questions marked "Launch" in §6. The rest gate a single feature, live payments or a store release. Three questions (LQ-48, LQ-49, LQ-53) no longer apply because reward escrow was removed.
 
 # 2. How the product works
 
 | Flow | What happens | Account needed? |
 |---|---|---|
-| Report a lost pet | The owner picks a saved pet or enters details, adds 1–5 photos, marks the last-seen place with a radius, the time and what happened, and chooses contact through chat only (default) or chat plus phone after a confirmed match. On publish, the report is listed, matching runs and nearby users get an alert. A checklist then tells the owner to report the escape to a vet or the responsible shelter, with one-tap call buttons. | Yes (the form can be filled first) |
+| Report a lost pet | The owner picks a saved pet or enters details, adds 1–5 photos, marks the last-seen place with a radius, the time and what happened, and chooses contact through chat only (default) or chat plus phone after a confirmed match. Optionally the owner adds a reward line ("Nagrada", with or without an amount); no money passes through Najdimo. On publish, the report is listed, matching runs and nearby users get an alert. A checklist then tells the owner to report the escape to a vet or the responsible shelter, with one-tap call buttons. | Yes (the form can be filled first) |
 | Report a found or sighted animal | Photo, place (GPS or photo metadata), "the animal is with me" or "not with me", an optional note and an optional email address. The finder gets a private link (manage link) to edit, close and chat. After sending, a notice tells the finder to report the find to the responsible shelter, with call buttons. Target: under 60 seconds. | No |
 | Map, list and detail | Public map and list of open reports with filters. The detail page shows photos, attributes, an approximate area, the date and the description. Actions: send a message, share, poster, report abuse, "I saw this pet". | No |
 | Matching | Every new or changed report is compared with reports of the other type: equal chip number (score 1.0), otherwise species, distance, time and attributes, later also photo similarity. The owner sees suggestions with reasons and confirms or rejects. Neither side sees contact data before the owner confirms. | Owner: yes |
@@ -92,7 +92,7 @@ Question IDs refer to §6. "Mx" is the delivery milestone in which the feature i
 | F-12 | **Shelter data uploads** (M3): photo batches, CSV (max 500 rows), API with hashed keys; adoption page; municipality reports | Intake animals with chip, species, found place and time, photos; organisation members | Organisation verification; unverified uploads held for moderation; CSV template has no fields for people's data; counts under 5 aggregated in reports | LQ-09, LQ-12, LQ-22 |
 | F-13 | **Shelter directory and legal-duty checklists** (M2) | None (public organisation data) | Source and last-verified date shown; unconfirmed numbers never shown; statutory timings appear only when a legal-content flag is on | LQ-06, LQ-07, LQ-08 |
 | F-14 | **Payments** (M2, M4): contributions after a reunion, after a report and on the profile (€3 / €5 / €10 / custom, minimum €2), Podpornik from €2 a month, Boost €4.99 for 7 days, Premium €2.99 a month or €24.99 a year, Vet Partner | Payment id, purpose, amount, status, time; card data only at Stripe | Test mode only; no pre-selected amount; Skip as visible as Pay; never in the report flows; anonymous finders see no payment prompt; mobile opens web checkout | LQ-41 to LQ-43, LQ-51, LQ-52 |
-| F-15 | **Reward escrow** (M4, "Should", can be dropped): the owner funds a reward of €10–500, Stripe holds it, the finder is paid after the owner confirms the reunion, minus a 5 % platform fee; refund after 30 days or by admin decision | Both parties' payment and payout data (finder onboarded to Stripe Connect Express) | Stripe holds the funds, no own wallet; test mode only; legal review before any live use (Q-011) | LQ-48, LQ-49, LQ-53 |
+| F-15 | **Reward line, display only** (M4; changed in v0.2, reward escrow removed from scope 2026-10-15): the owner may add "Nagrada" (EN "Reward offered") to a lost report, with an optional amount in whole euros; it appears on the detail page and the poster. Najdimo does not hold, pay or guarantee rewards; owner and finder arrange them outside the app | The reward flag and the optional amount, as part of the report | Shown as the owner's own offer; a scam warning next to every reward line ("Nikoli nikomur ne plačajte vnaprej …"); terms chapter 6 says Najdimo is not a party; no payment data collected | LQ-67 (LQ-48, LQ-49, LQ-53: N/A) |
 | F-16 | **Ads and partner enquiries** (M2) | Ads: none (counts aggregated per ad, slot, day and region, no cookies or identifiers). Enquiry form: company, contact name, email, optional phone, message, consent time | "Oglas" label, `rel="sponsored"`, contextual targeting only, blocklist for animal sale or give-away, Premium is ad-free; sponsors get aggregate reports only | LQ-54, LQ-58, LQ-59 |
 | F-17 | **Vet Partner** (M4): paid clinic profile, featured placement in the vet slot for its area, a labelled line on posters and in-app alerts for its region, monthly aggregate report | Clinic data, contact person, billing data and VAT ID (via Stripe Billing) | Always "Oglas"; title "Veterinar v vaši regiji", never "nearest" unless true; a "Kako razvrščamo" ranking link; feature flag until you confirm | LQ-47, LQ-55, LQ-56, LQ-57 |
 | F-18 | **Analytics and consent** (M1): Google Analytics 4 on the web, Firebase Analytics in the app | Pseudonymous analytics events (region, municipality, species, report type, ad slot, amount); no names, emails, chip numbers, coordinates or free text | Consent banner with equal Accept and Reject; nothing loads before consent (basic Consent Mode v2); only `analytics_storage` granted; 14-month retention; Google signals and data sharing off | LQ-26, LQ-27 |
@@ -108,9 +108,9 @@ All drafts carry "Draft — requires client/legal review" at the top and end wit
 
 | Document | File | Version | Route (SL / EN) | Known gaps |
 |---|---|---|---|---|
-| Privacy policy | [privacy-policy.md](../content/legal/privacy-policy.md) | 0.3 (processors per brief v1.0, on-device geofencing) | `/zasebnost` / `/en/privacy` | Company details (CD-01); features not live yet are described as at launch (LQ-04) |
+| Privacy policy | [privacy-policy.md](../content/legal/privacy-policy.md) | 0.4 (reward escrow removed; reward line in the report data) | `/zasebnost` / `/en/privacy` | Company details (CD-01); features not live yet are described as at launch (LQ-04) |
 | Cookie policy | [cookie-policy.md](../content/legal/cookie-policy.md) | 0.2 (offline cache and geofences added) | `/piskotki` / `/en/cookies` | Real cookie durations to verify in the built product |
-| Terms of use | [terms-of-use.md](../content/legal/terms-of-use.md) | 0.1 | `/pogoji-uporabe` / `/en/terms` | Finder duties (LQ-08), withdrawal right (LQ-41), dispute body (LQ-44), DSA wording (LQ-40) |
+| Terms of use | [terms-of-use.md](../content/legal/terms-of-use.md) | 0.2 (reward escrow removed; reward line in chapter 6) | `/pogoji-uporabe` / `/en/terms` | Finder duties (LQ-08), withdrawal right (LQ-41), dispute body (LQ-44), DSA wording (LQ-40) |
 | Imprint | [imprint.md](../content/legal/imprint.md) | 0.3 (hosting per brief v1.0; data sources and map attributions) | `/impresum` / `/en/imprint` | Company details (CD-01) |
 | Accessibility statement | [accessibility-statement.md](../content/legal/accessibility-statement.md) | 0.1 | `/dostopnost` / `/en/accessibility` | Authority and act (LQ-62); status after the M5 audit |
 
@@ -135,7 +135,7 @@ Related content with legal relevance:
 | Vet Partner terms (B2B order form and terms: price, VAT, monthly cancellation, ranking rules, labelling, the clinic's warranty on opening hours and 24-hour claims, compliance with veterinary professional rules) | Vet Partner goes live | We draft a short version from §6 H for your review (LQ-60) |
 | Advertiser terms (order form, content rules, blocklist, aggregate reporting, no tracking) | First paid ad | Same (LQ-60) |
 | Organisation and API terms (shelters, municipalities, vets: verification, data rules for uploads, API key use) | Shelter portal (M3) | Same (LQ-22, LQ-60) |
-| Reward escrow terms (funding, release, refund, dispute, fee) | Escrow goes live | Only if LQ-48 allows the feature |
+| Reward escrow terms | N/A | N/A: removed from scope 2026-10-15 (no escrow, brief v1.1) |
 | "Kako razvrščamo" page (how vet placements are ranked) | Vet Partner goes live | Content team drafts (LQ-56) |
 | "Kam gre vaš denar" transparency page | Live contributions | Content team drafts (FR-024); no dohodnina text until LQ-50 |
 | Record of processing activities (Article 30) | Launch | Generated from the data inventory and §5 (LQ-29) |
@@ -154,7 +154,7 @@ Web browser / mobile app
  │            ├─► Voyage AI, US: photo only ─► image vector                                            [M3]
  │            ├─► Brevo, EU: email address, name, language, message text
  │            ├─► Expo Push, US ─► Apple APNs / Google FCM: push token, notification text
- │            ├─► Stripe, EU (and US): checkout sessions, webhooks, Connect payouts                  [test mode]
+ │            ├─► Stripe, EU (and US): checkout sessions, subscriptions, webhooks                    [test mode]
  │            ├─► Cloudflare Turnstile, US: captcha token check
  │            └─► Sentry, EU region: error events with personal data scrubbed                          [M5]
  ├─ direct ─► Supabase Auth (sign-in) and Supabase Realtime (chat channel)
@@ -183,7 +183,7 @@ The database is not exposed to the internet: all app data goes through our API, 
 | Brevo (Sendinblue SAS), France | Processor | Transactional email (sign-in, alerts, receipts) | Email address, name, language, message text | EU | M1 |
 | Expo (650 Industries, Inc.), US | Processor | Push delivery to Apple and Google | Push token, notification text (no contact data) | US; DPF or SCCs (verify) | M2 |
 | Apple (APNs, Sign in with Apple) and Google (FCM, Google sign-in) | Independent controllers (infrastructure and identity) | Push transport; sign-in if chosen | Push token and payload; identity data at sign-in | Their terms | M2 |
-| Stripe Payments Europe, Ltd., Ireland | Processor, and independent controller for fraud prevention and its legal duties | Checkout, subscriptions, VAT invoices for Vet Partner, Connect payouts | Card and billing data entered on Stripe's page; for escrow, the finder's identity and bank data (Stripe KYC) | EU, US processing possible; DPF or SCCs | M2 (test mode) |
+| Stripe Payments Europe, Ltd., Ireland | Processor, and independent controller for fraud prevention and its legal duties | Checkout, subscriptions, VAT invoices for Vet Partner | Card and billing data entered on Stripe's page | EU, US processing possible; DPF or SCCs | M2 (test mode) |
 | Anthropic (Anthropic PBC, US, or its EU contracting entity: verify) | Processor | Attribute suggestions and moderation signal from photos; Premium AI texts | Photo only (no user identifiers, metadata or location); for Premium texts, the report's public attributes | US; DPF or SCCs (verify) | M3 |
 | Voyage AI (part of MongoDB, Inc. since 2025: verify the contracting entity) | Processor | Image vectors for photo similarity | Photo only | US; DPF or SCCs (verify) | M3 |
 | Google Ireland Ltd. | Processor (Google Analytics data processing terms) | GA4 on the web, Firebase Analytics in the app | Pseudonymous events and device or browser identifiers, only after consent | EU, US processing possible; DPF | M1 (after consent only) |
@@ -201,7 +201,7 @@ The database is not exposed to the internet: all app data goes through our API, 
 
 # 6. Open legal questions
 
-Every open legal point from the draft notes, the regulatory research, the risk register (R-0xx) and the brief's open questions (Q-0xx) appears once here. "Needed before" values: **Launch** (public launch), **Live payments**, **Store** (App Store or Play release) or a named feature, which stays behind a flag until answered.
+Every open legal point from the draft notes, the regulatory research, the risk register (R-0xx) and the brief's open questions (Q-0xx) appears once here. "Needed before" values: **Launch** (public launch), **Live payments**, **Store** (App Store or Play release) or a named feature, which stays behind a flag until answered. **N/A** marks a question that no longer applies because its feature left the scope; the ID is kept so earlier replies still match.
 
 ## A. Operator, texts and process
 
@@ -210,7 +210,7 @@ Every open legal point from the draft notes, the regulatory research, the risk r
 | LQ-01 | Who is the controller and operator named in all texts? | Signapps as a company operates the service and is the controller. A separate non-profit is considered only for dohodnina (LQ-50). | Brief; privacy note 1; D-03 | Launch |
 | LQ-02 | What must the imprint contain for a company website (ZGD-1, ZEPT)? Do we need a supervisory authority or professional rules? | The imprint table: full name and legal form, seat, registration number, tax number and VAT ID, register entry, share capital (d.o.o.), representative, contact. No regulated activity, so no supervisory authority. | Imprint notes 1–2 | Launch |
 | LQ-03 | Which language version of the legal texts prevails? Do we need anything beyond Slovenian under the public-use-of-Slovenian act (ZJRS)? | Slovenian is the source and prevails; English is a courtesy translation. Add one sentence saying so to the terms and the privacy policy. | Content team | Launch |
-| LQ-04 | May the privacy policy and terms describe features that are not live yet (AI, payments, Boost, Premium, Vet Partner, escrow, success stories), or must the texts be versioned per release? | Version per release: publish only the parts for live features; add a part when its feature flag goes on; keep a dated change log. | Privacy note 14; terms note 13 | Launch |
+| LQ-04 | May the privacy policy and terms describe features that are not live yet (AI, payments, Boost, Premium, Vet Partner, the reward line, success stories), or must the texts be versioned per release? | Version per release: publish only the parts for live features; add a part when its feature flag goes on; keep a dated change log. | Privacy note 14; terms note 13 | Launch |
 | LQ-05 | Is the Slovenian legal terminology in the drafts correct (upravljavec, obdelovalec, zakoniti interes, standardne pogodbene klavzule, višja sila, "kot je")? | Please mark up the Slovenian texts directly. | All drafts, last note | Launch |
 
 ## B. Animal protection (ZZZiv) and product wording
@@ -276,20 +276,21 @@ Every open legal point from the draft notes, the regulatory research, the risk r
 | LQ-42 | Contributions ("prispevek"): legal nature (a gift to a company?), whether consumer law applies, and "not refundable except where the law requires". | A voluntary payment without anything in return, so not a consumer contract for a service. Wording stays "prispevek", never "donacija". We propose refunds on request within 14 days as a goodwill policy (the terms draft now says "not refundable"). | Terms note 6; Q-008; P15 | Live payments |
 | LQ-43 | Prices: shown with 22 % VAT included; receipts itemise VAT (FR-046). Anything else for price indication? | All prices final and with VAT; the test-mode badge stays until live payments. | FR-046 | Live payments |
 | LQ-44 | Out-of-court consumer dispute resolution (ZIsRPS): must we name a provider, and must we say whether we take part? (The EU ODR platform closed in 2025.) | Name the competent provider and state that the company does not commit to take part at first (CD-16). | Terms note 8 | Launch |
-| LQ-45 | Liability limits in terms chapter 15 and the escrow rule "the admin decision is final within the app": compatible with mandatory consumer law and the Obligacijski zakonik? | Keep the carve-outs (intent, gross negligence, personal injury). Change the escrow line to "final within the app; your right to go to court is not affected". | Terms note 9; FR-023 | Launch |
+| LQ-45 | Liability limits in terms chapter 15, including for agreements between users such as a reward: compatible with mandatory consumer law and the Obligacijski zakonik? (Changed in v0.2: the escrow rule was removed.) | Keep the carve-outs (intent, gross negligence, personal injury). | Terms note 9 | Launch |
 | LQ-46 | Licence that users grant us (terms chapter 12): store, process, show, use for matching, the poster and sharing, no sublicensing beyond our providers. Enough, and consistent with the privacy policy? | Yes, as drafted. | Terms note 10 | Launch |
 
-## G. Payments, escrow, tax and fiscal rules
+## G. Payments, rewards, tax and fiscal rules
 
 | ID | Question | Our proposed answer | Source | Needed before |
 |---|---|---|---|---|
 | LQ-47 | Stripe Billing VAT invoices for Vet Partner (B2B, all clinics in Slovenia): are Stripe's invoices enough for ZDDV-1 (numbering, mandatory fields)? | Yes, with our numbering series and company details; the accountant confirms. | Privacy note 19(b); A-026 | Vet Partner (M4) |
-| LQ-48 | Reward escrow through Stripe Connect Express: does Signapps provide a payment service under ZPlaSSIED (PSD2), given that Stripe holds and pays out the funds and we take a 5 % fee? Where must the fee be stated? | We never hold or control funds; Stripe, a licensed provider, holds them, so we are a platform under Stripe's licence and not a payment service provider. The fee is shown before funding and in the escrow terms. The feature stays off until you confirm; it can be dropped (CD-12). | Q-011; R-006; FR-023; terms note 4 | Escrow (M4) |
-| LQ-49 | Rewards: is the reward a gift from the owner or payment for a service? Tax for the finder? Does DAC7 (Directive (EU) 2021/514, in ZDavP-2) make us report finders' income as a platform facilitating "personal services"? | A gift for returning the owner's animal, not a service, so DAC7 does not apply. If it does, we drop escrow rather than collect tax numbers from finders. | Content team (new) | Escrow (M4) |
+| LQ-48 | N/A: removed from scope 2026-10-15. (Was: payment-services rules for a reward held in the app.) | No answer needed. | Brief v1.1; Q-011 closed | N/A |
+| LQ-49 | N/A: removed from scope 2026-10-15. (Was: tax and platform reporting of rewards paid through the app.) | No answer needed. | Brief v1.1 | N/A |
 | LQ-50 | Dohodnina: Signapps cannot qualify, and a new society needs about 2 years. Is a partner-NGO model lawful and how may we word it ("Namenite del dohodnine društvu X, ki podpira Najdimo")? | Keep the section hidden. Later, partner with an NGO that already has public-interest status for animal protection, with a written agreement, and promote dohodnina for that NGO only. | D-01 to D-05; Q-008; R-005; regulatory open point 6 | Dohodnina section |
 | LQ-51 | VAT and accounting of contributions: if a contribution has no consideration, is it outside the scope of VAT? FR-046 currently says every invoice shows 22 % VAT. Which document does the payer get ("potrdilo o prispevku", never "potrdilo o donaciji")? | For the accountant: if outside VAT, the payer gets a payment confirmation, not an invoice; the receipt email wording follows. | Q-008; notifications note Q6; FR-046 | Live payments |
 | LQ-52 | Fiscal verification of invoices (ZDavPR): do online card payments (Boost, Premium, contributions, Vet Partner) need it? Which certified provider? | For the accountant (Q-012). The adapter is ready; live payments stay blocked until the decision is recorded. | Q-012; FR-046; TASK-92 | Live payments |
-| LQ-53 | Stripe Connect platform duties (KYC is Stripe's; negative balances, disputes and refunds are the platform's). Anything to add to the terms? | Add to the escrow terms that Stripe checks identity, that refunds follow the 30-day rule and that the platform fee is not refunded after release. | FR-023 | Escrow (M4) |
+| LQ-53 | N/A: removed from scope 2026-10-15. (Was: platform duties for payouts to finders.) | No answer needed. | Brief v1.1 | N/A |
+| LQ-67 | Display-only reward line (new in v0.2). An owner may show "Nagrada" on a lost report, with an optional amount, and arranges any reward with the finder outside the app. Is the line a public promise of a reward (javna obljuba nagrade, Obligacijski zakonik) that binds the owner, and does it create any liability for us? Is our wording enough: terms chapter 6 ("This is the owner's statement, not ours. Najdimo does not hold, pay or guarantee rewards.") and the scam warning next to every reward line? | It binds only the owner, if anyone; Najdimo is not a party and only shows the owner's statement (hosting exemption). Keep the terms wording and the warning "Nikoli nikomur ne plačajte vnaprej. Nagrado lastnik izroči šele, ko je žival spet doma." The line allows only an amount in whole euros, no other conditions. | Brief v1.1; terms chapter 6 and note 4; P6, P9, P18 | Reward line (M4) |
 
 ## H. Advertising and Vet Partner
 
@@ -359,7 +360,7 @@ Result: at least two criteria apply, so we carry out a DPIA (LQ-18).
 | ID | Risk to people | Likelihood / severity (before measures) | Measures | Residual |
 |---|---|---|---|---|
 | D-01 | A lost report reveals where the owner lives (pets are often lost near home) | High / high | Public area of at least 500 m, deterministic blurring, exact point visible only to the reporter, exact point never in the offline cache, analytics or OG images | Low |
-| D-02 | A scammer uses a found or lost listing to extort an owner ("pay and I return your dog") | High / high | Contact through chat only by default, safety banner, links not clickable, report and block, chip and marks kept back ("keep one detail to yourself"), reward escrow instead of cash | Medium |
+| D-02 | A scammer uses a found or lost listing to extort an owner ("pay and I return your dog") | High / high | Contact through chat only by default, safety banner, links not clickable, report and block, chip and marks kept back ("keep one detail to yourself"), a scam warning next to every reward line ("never pay anyone before you have your animal back") | Medium |
 | D-03 | Someone finds and steals a found animal or a valuable pet | Medium / high | The holding place is never asked for; found areas are blurred (at least 150 m); contact data hidden until the owner confirms | Low |
 | D-04 | Chip numbers are enumerated to identify owners | Low / high | Lookup only for verified organisation members, 30 per hour, audit by hash, response never contains personal data | Low |
 | D-05 | Photos show people, children, car plates or house numbers | Medium / medium | Upload reminder, terms, AI flags prominent people, moderator removal on request, metadata stripped from all stored copies | Low |
@@ -379,7 +380,7 @@ Result: at least two criteria apply, so we carry out a DPIA (LQ-18).
 - Data protection officer: none appointed (LQ-33); the privacy contact reviews.
 - Views of data subjects: pilot feedback from owners, finders and two or three shelters.
 - Prior consultation with the Information Commissioner only if a residual risk stays high after measures.
-- Sign-off: the client as controller, after your review. Review triggers: AI features (M3), geofencing (M3), escrow and Vet Partner (M4), national launch.
+- Sign-off: the client as controller, after your review. Review triggers: AI features (M3), geofencing (M3), the reward line and Vet Partner (M4), national launch.
 
 # 8. Retention table (draft)
 
@@ -405,8 +406,7 @@ All values are proposals for your review (A-012). "Policy" says whether the priv
 | Notification inbox | Supabase | 12 months, or until account deletion if sooner | Purge job | No (change "until account deletion") |
 | Push tokens | Supabase | Until sign-out, uninstall or rejection by Apple or Google; inactive for 90 days | Job | No (add) |
 | Nearby-alert subscription | Supabase | Until turned off or account deletion | User action | Yes |
-| Payment records, invoices, escrow ledger | Supabase, Stripe | As tax and accounting law requires (expected 10 years, ZDDV-1; accountant to confirm) | Excluded from deletion | Yes |
-| Escrow dispute statements | Supabase | 24 months after the decision | Purge job | No (add, escrow terms) |
+| Payment records and invoices | Supabase, Stripe | As tax and accounting law requires (expected 10 years, ZDDV-1; accountant to confirm) | Excluded from deletion | Yes |
 | Vet Partner clinic profile and contact person | Supabase | Until the subscription ends, then deleted within 30 days; invoices as above | Job | Yes |
 | Partner enquiries (leads) | Supabase | 24 months after the last contact | Purge job | Yes |
 | Organisation members, API keys (hashed) | Supabase | Until removed or revoked | User action | No (add) |
@@ -439,7 +439,7 @@ Status today: no agreement has been signed or accepted for production; staging u
 | Cloudflare (R2, CDN, Turnstile) | DPA incorporated in Cloudflare's terms | DPF or SCCs | R2 buckets created with EU jurisdiction; CDN caching only for public photos; Turnstile mode and cookies | Open |
 | Brevo | DPA incorporated in Brevo's terms | None (EU) | EU data hosting; no marketing lists; tracking pixels and link tracking off in transactional email | Open |
 | Expo (650 Industries) | DPA on request or in terms (verify) | DPF or SCCs (verify) | Push only; no EAS Insights or analytics with personal data | Open |
-| Stripe | DPA in the Stripe Services Agreement; Connect platform agreement for escrow | DPF or SCCs | Test mode only; Checkout; Billing tax settings; Connect Express | Open |
+| Stripe | DPA in the Stripe Services Agreement | DPF or SCCs | Test mode only; Checkout; Billing tax settings | Open |
 | Anthropic | DPA in the commercial terms (verify entity) | DPF or SCCs (verify) | No training on inputs; retention; zero-retention option if available | Open |
 | Voyage AI (MongoDB) | DPA (verify entity after the acquisition) | DPF or SCCs (verify) | Same as Anthropic | Open |
 | Google (GA4, Firebase) | Accept the Google Analytics data processing terms and the Firebase data processing terms in the consoles | DPF | Retention 14 months, Google signals off, data sharing off, IP handling, Consent Mode basic | Open |
@@ -469,7 +469,7 @@ Status today: no agreement has been signed or accepted for production; staging u
 | ID | Decision | Options and our recommendation | Needed before |
 |---|---|---|---|
 | CD-01 | Company details for all legal texts: full name and legal form, seat, registration number, tax number and VAT ID, register entry, share capital, representative, person responsible for content, privacy, contact and accessibility email addresses, phone | Supply them before the lawyer review, so the drafts can be reviewed complete | Lawyer review |
-| CD-02 | Lawyer: who, scope (this pack), budget and timeline; language of the pack | Send the English pack now; order a Slovenian version only if the lawyer asks | Now |
+| CD-02 | Lawyer: who, scope (this pack), budget and timeline; language of the pack | Send the Slovenian version (`najdimo-pravni-pregled.docx`, ready since v0.2) with the English pack as a reference | Now |
 | CD-03 | Data protection officer | Document that none is required; name a privacy contact (LQ-33) | Launch |
 | CD-04 | Retention values | Approve §8 after the lawyer's answer to LQ-19 | Launch |
 | CD-05 | Age limits | Account from 15, paid options from 18 (LQ-16) | Launch |
@@ -479,7 +479,7 @@ Status today: no agreement has been signed or accepted for production; staging u
 | CD-09 | Geocoding | MapTiler only in production, Photon only in development; check MapTiler's plan for commercial use (LQ-64) | Launch |
 | CD-10 | Hosting settings | Hetzner location (Germany recommended, closest to Supabase Frankfurt); R2 buckets with EU jurisdiction; whether the website also runs behind the Cloudflare CDN | Launch |
 | CD-11 | Monitoring providers | Sentry EU region and an EU uptime monitor in M5 | M5 |
-| CD-12 | Reward escrow | Keep only if LQ-48 and LQ-49 come back clear; otherwise drop the story (it is "Should") | M4 |
+| CD-12 | Reward escrow | N/A: removed from scope 2026-10-15 (brief v1.1, Q-011 closed). Only the display-only reward line remains (LQ-67). | N/A |
 | CD-13 | Vet Partner go-live | Only after LQ-55 to LQ-57; poster line on by default with the owner's switch (decided 2026-10-15); no paid line in email or push without marketing consent | M4 |
 | CD-14 | Contributions and fiscal rules | With the accountant: VAT treatment (LQ-51), fiscal verification and provider (LQ-52), refund policy (LQ-42) | Live payments |
 | CD-15 | Dohodnina | Partner NGO or no dohodnina section (LQ-50) | Before enabling |
@@ -496,3 +496,4 @@ Status today: no agreement has been signed or accepted for production; staging u
 | Version | Date | Change |
 |---|---|---|
 | 0.1 | 2026-10-15 | First version for the lawyer: features, processors per brief v1.0 (Hetzner, Supabase Free for database, auth and realtime, Cloudflare R2, Brevo, no Vercel), 66 consolidated questions, DPIA outline, retention table, DPA checklist, client decisions. Drafts refreshed with it: privacy policy 0.3, cookie policy 0.2, imprint 0.3 (with the data sources chapter). |
+| 0.2 | 2026-10-15 | Brief v1.1: reward escrow removed from scope. F-15 is now a display-only reward line; LQ-48, LQ-49 and LQ-53 marked N/A (IDs kept); new LQ-67 on the reward line; LQ-04 and LQ-45 changed; CD-12 N/A; CD-02 Slovenian version; Stripe Connect removed from §1, §5, §8 (escrow ledger, dispute statements) and §9; DPIA D-02 measure changed. Drafts refreshed with it: privacy policy 0.4, terms of use 0.2. Slovenian version added (`lawyer-briefing.sl.md`, `najdimo-pravni-pregled.docx`). |

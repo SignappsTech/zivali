@@ -3,7 +3,7 @@ source: 03§P3; docs/design/pages/P3-public-pages.md; 02§FR-035, §Content, SEO
 page: P3 Public pages (home and content templates)
 stories: TASK-27, TASK-72 (FR-035)
 copy-for: docs/design/pages/P3-public-pages.md
-version: 0.2
+version: 0.3
 status: Draft, native Slovenian review and client approval pending (TASK-27 AC#4)
 date: 2026-10-15
 ---
@@ -290,7 +290,7 @@ Nikoli vas ne bomo prosili za plačilo v pogovoru, za geslo ali za kodo iz SMS.
 1. Takoj preiščite okolico in žival kličite z mirnim glasom. Mačke se pogosto skrijejo zelo blizu doma, v kleteh, garažah in pod avtomobili.
 2. Prijavite izgubljeno žival na Najdimo. Ljudje v bližini prejmejo opozorilo.
 3. Obvestite bližnja zavetišča in veterinarske ambulante. Pošljite jim fotografijo in opis.
-4. Za psa preverite pri svojem veterinarju, ali so vaši podatki v Centralnem registru psov (CRPsi) pravilni.
+4. Pokličite svojega veterinarja in preverite, ali so vaši podatki v Centralnem registru hišnih živali (CRHŽ) pravilni, predvsem telefonska številka. Ko žival najdejo, čip prebere veterinar ali pristojno zavetišče in vas tako lahko hitro pokliče.
 5. Natisnite plakat s QR kodo in ga izobesite v soseski, v trgovinah in pri veterinarjih.
 6. Prijavo delite v lokalnih skupinah na družbenih omrežjih.
 7. Pred vrata postavite posodo z vodo in kos oblačila, ki diši po vas.
@@ -351,7 +351,7 @@ If you are returning an animal: ask for proof that it is theirs and hand it over
 1. Search the area straight away and call your pet in a calm voice. Cats often hide very close to home, in cellars, garages and under cars.
 2. Report your lost pet on Najdimo. People nearby get an alert.
 3. Tell nearby shelters and vet practices. Send them a photo and a description.
-4. For a dog, check with your vet that your details in the Central Register of Dogs (CRPsi) are correct.
+4. Call your vet and check that your details in the Central Register of Pets (CRHŽ) are correct, especially your phone number. When your pet is found, a vet or the responsible shelter reads the chip and can then call you quickly.
 5. Print the poster with the QR code and put it up in your neighbourhood, in shops and at vets.
 6. Share your report in local social media groups.
 7. Leave a bowl of water and a piece of clothing that smells of you outside your door.

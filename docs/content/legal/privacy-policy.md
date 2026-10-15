@@ -3,13 +3,15 @@ source: 02§Content, SEO and legal requirements (Legal); FR-034; FR-035; FR-038;
 
 | Field | Value |
 |---|---|
-| Version | 0.3 |
+| Version | 0.4 |
 | Date | 2026-10-15 |
 | Route SL | `/zasebnost` |
 | Route EN | `/en/privacy` |
 | Slug SL / EN | `zasebnost` / `privacy` |
 | Structured data | WebPage |
 | Template | T4 Legal (numbered h2 sections, "On this page" list, draft note) |
+
+Change in 0.4: reward escrow removed (brief v1.1): no reward is paid through Najdimo and Stripe Connect is no longer used; an owner's optional reward line is part of the report data (chapter 3) and is explained in chapter 9.
 
 Change in 0.3: processors and hosting per brief v1.0 (Hetzner and Cloudflare R2; Vercel and Supabase file storage removed); exact location shared in a chat; on-device proximity alerts and offline data (chapter 6); database reachable only through our API (chapter 16). Open points are consolidated in `docs/legal/lawyer-briefing.md`.
 
@@ -65,7 +67,7 @@ Večino podatkov nam daste sami: ko ustvarite račun, objavite prijavo ali piše
 |---|---|
 | Račun in nastavitve | prikazno ime, e-naslov, zgoščeno geslo ali identiteta pri Googlu oziroma Applu, jezik, vloga (na primer lastnik, najditelj ali zavetišče), domače območje, privzeti polmer opozoril, neobvezna telefonska številka (nikoli javna), tihi čas, nastavitve obvestil, žetoni za potisna obvestila |
 | Profili živali | vrsta, ime, pasma, barve, vzorec, velikost, spol, leto rojstva, številka čipa (nikoli javna), stanje čipa, ovratnica, opombe (tudi o zdravilih in vedenju), od ene do pet fotografij; pozneje tudi veterinarski zapisi |
-| Prijave (izgubljena, najdena, opažena žival) | vrsta prijave, fotografije, točna točka (vidna samo avtorju prijave), javno približno območje, občina in regija, datum in čas, opis okoliščin, izbira načina stika |
+| Prijave (izgubljena, najdena, opažena žival) | vrsta prijave, fotografije, točna točka (vidna samo avtorju prijave), javno približno območje, občina in regija, datum in čas, opis okoliščin, izbira načina stika, pri izgubljeni živali neobvezna navedba nagrade in njen znesek |
 | Prijave brez računa | anonimna seja, zasebna povezava (hranimo samo njeno zgoščeno vrednost), neobvezen e-naslov, na katerega pošljemo povezavo, identifikator naprave, zgoščen IP naslov za omejevanje zlorab |
 | Pogovori | sporočila, vzdevki, stanje prebranosti, blokade |
 | Obvestila in opozorila | nabiralnik obvestil, naročnina na opozorila v bližini (domača točka in polmer) |
@@ -163,7 +165,9 @@ Ponudnikoma ne pošljemo niti oznak uporabnikov niti metapodatkov EXIF niti poda
 
 **Kaj je vedno brezplačno.** Prijava izgubljene, najdene ali opažene živali, zemljevid in opozorila, ujemanje (čip, fotografija, lastnosti), pogovor, plakat v obliki PDF s QR kodo, deljenje in iskanje po številki čipa so brezplačni za vse, za vedno. Zavetišča in občine vse uporabljajo brezplačno. Plačljive možnosti tega nikoli ne omejujejo. QR koda na plakatu vodi samo na javno prijavo.
 
-**Za kaj lahko plačate.** Zdaj: prispevek v zahvalo po ponovnem srečanju z živaljo (najmanj 2 €) in neobvezni prispevek po prijavi izgubljene živali (2–5 €). Pozneje: povečan doseg prijave (Boost), naročnina Premium Zaščita, mesečna podpora Podpornik in nagrada najditelju prek Stripe Connect. Pri nagradi denar do potrditve srečanja hrani Stripe, mi pa zaračunamo provizijo platforme v višini 5 %. Ta možnost bo na voljo šele po dodatnem pravnem pregledu. Veterinarske ambulante lahko postanejo plačljivi Veterinarski partner (spodaj).
+**Za kaj lahko plačate.** Zdaj: prispevek v zahvalo po ponovnem srečanju z živaljo (najmanj 2 €) in neobvezni prispevek po prijavi izgubljene živali (2–5 €). Pozneje: povečan doseg prijave (Boost), naročnina Premium Zaščita in mesečna podpora Podpornik. Veterinarske ambulante lahko postanejo plačljivi Veterinarski partner (spodaj).
+
+**Nagrada najditelju.** Nagrad ne izplačujemo in plačil med uporabniki ne posredujemo. Če lastnik v prijavi navede, da ponuja nagrado, je ta navedba del prijave (poglavje 3). Za nagrado se lastnik in najditelj dogovorita sama, zunaj Najdimo, zato o njej ne zbiramo nobenih plačilnih podatkov.
 
 Prispevki so prostovoljna plačila družbi za delovanje storitve. Niso donacije.
 
@@ -335,7 +339,7 @@ You give us most of the data yourself: when you create an account, publish a rep
 |---|---|
 | Account and settings | display name, email address, password hash or Google/Apple identity, language, role (for example owner, finder or shelter), home area, default alert radius, optional phone number (never public), quiet hours, notification settings, push notification tokens |
 | Pet profiles | species, name, breed, colours, pattern, size, sex, birth year, chip number (never public), chip status, collar, notes (including medication and temperament), one to five photos; later also vet records |
-| Reports (lost, found, sighted animal) | report type, photos, exact point (visible only to the person who made the report), public approximate area, municipality and region, date and time, description of the circumstances, contact preference |
+| Reports (lost, found, sighted animal) | report type, photos, exact point (visible only to the person who made the report), public approximate area, municipality and region, date and time, description of the circumstances, contact preference, and for a lost animal an optional reward line with its amount |
 | Reports without an account | anonymous session, private link (we store only its hash), optional email address to which we send the link, device identifier, hashed IP address for abuse limits |
 | Chat | messages, aliases, read state, blocks |
 | Notifications and alerts | notification inbox, nearby-alert subscription (home point and radius) |
@@ -433,7 +437,9 @@ If three independent people report the same listing for abuse, we hide it tempor
 
 **What is always free.** Reporting a lost, found or sighted animal, the map and alerts, matching (chip, photo, attributes), chat, the printable PDF poster with a QR code, sharing and chip lookup are free for everyone, forever. Shelters and municipalities use everything for free. Paid options never restrict this. The QR code on the poster leads only to the public listing.
 
-**What you can pay for.** Now: a thank-you contribution after a reunion with your animal (at least €2) and an optional contribution after reporting a lost animal (€2–5). Later: a boost for a report's visibility, the Premium Protect subscription, the monthly supporter plan Podpornik, and a reward for a finder through Stripe Connect. For a reward, Stripe holds the money until the reunion is confirmed, and we charge a platform fee of 5 %. This option will be available only after a further legal review. Vet clinics can become a paying Vet Partner (below).
+**What you can pay for.** Now: a thank-you contribution after a reunion with your animal (at least €2) and an optional contribution after reporting a lost animal (€2–5). Later: a boost for a report's visibility, the Premium Protect subscription and the monthly supporter plan Podpornik. Vet clinics can become a paying Vet Partner (below).
+
+**Rewards for finders.** We do not pay out rewards and do not handle payments between users. If an owner states in a report that they offer a reward, that statement is part of the report (chapter 3). The owner and the finder arrange any reward between themselves, outside Najdimo, so we collect no payment data about it.
 
 Contributions are voluntary payments to a company to help run the service. They are not donations.
 
@@ -584,7 +590,7 @@ We may change this policy, for example when we add a new feature or provider. We
 11. **AI providers.** The text does not claim that Anthropic or Voyage AI do not train on submitted images, because I could not verify the contract terms. Confirm the terms (no training, retention) and add the statement if true. Check whether any AI Act transparency duty applies.
 12. **Ads.** Confirm that ad selection uses only context (region, species) and never a user profile; the "by context" sentence in chapter 11 depends on it. Confirm that sponsors only get aggregate reports.
 13. **Background location (updated in 0.3).** Chapter 6 now explains the opt-in proximity alerts (FR-043): the operating system checks geofences on the phone and no location leaves the device. Confirm with the mobile developers before publishing.
-14. **Features that are not live yet.** AI assistance, payments, Boost, Premium, Podpornik, Vet Partner, finder rewards, success stories, self-service export and delete, and Sentry error tracking are written as they will be at launch. Publish each part only when the feature goes live, or version the page per release. Payments are test mode only now.
+14. **Features that are not live yet.** AI assistance, payments, Boost, Premium, Podpornik, Vet Partner, the reward line, success stories, self-service export and delete, and Sentry error tracking are written as they will be at launch. Publish each part only when the feature goes live, or version the page per release. Payments are test mode only now.
 15. **Email.** The text says nothing about marketing emails (none planned). If any are added, a separate consent and an update are needed.
 16. **Shelters and organisations.** I wrote that they are responsible for data they collect outside Najdimo. If shelters upload intake data into Najdimo, check whether the relationship is joint controllership or processing on their behalf.
 17. **Third-party data.** Photos and free text may show other people. The text asks users to avoid it; moderation handling needs a procedure.
@@ -592,3 +598,4 @@ We may change this policy, for example when we add a new feature or provider. We
 19. **Vet Partner (new in 0.2).** (a) Controller/processor: the clinic is a business customer; the contact person is a natural person, so GDPR applies to their data. Confirm the legal basis (contract) and retention (30 days after the subscription ends; invoices per tax law, proposed up to 10 years, accountant to confirm). (b) Stripe Billing and VAT invoicing: confirm Stripe's role, the VAT ID collection and the invoice rules with the accountant. (c) The monthly report is aggregate only; confirm no personal data enters it. (d) Paid mentions in alerts and on posters must be labelled "Ad" (consumer-protection and ad-labelling rules). (e) Removed with this version: QR/NFC tags (order, delivery address, 90-day retention) and Shelter Pro (brief v0.7).
 20. **Quality.** The Slovenian text needs a native legal review of terminology (upravljavec, obdelovalec, zakoniti interes, pogodbene klavzule). Contributions are described as voluntary payments to a company, never donations (Q-008); no dohodnina text.
 21. **Version 0.3.** Processors per brief v1.0, exact location shared in a chat (FR-004 R-004.3), on-device proximity alerts and offline cache (FR-041, FR-043), API-only database access (ADR-021). Every open point of this draft is consolidated, with a proposed answer, in `docs/legal/lawyer-briefing.md` (§6).
+22. **Version 0.4.** Reward escrow is out of scope (brief v1.1, Q-011 closed): the Stripe Connect payout, the 5 % platform fee and the finder's identity and bank data (Stripe KYC) are gone from chapters 9 and 12. The owner's optional, display-only reward line is report data; no payment data about rewards exists. Lawyer pack: LQ-48, LQ-49, LQ-53 N/A; the reward line is LQ-67.

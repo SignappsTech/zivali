@@ -2,8 +2,8 @@
 source: 02§Glossary; 02§Content, SEO and legal requirements; 03§Content strategy; supabase/seed/geo (GURS regions and municipalities)
 doc: glossary
 title: SL/EN terminology glossary
-version: 0.3
-status: Approved (client, 2026-10-15); v0.3 additions (§3a, CRHŽ row) pending native review
+version: 0.4
+status: Approved (client, 2026-10-15); v0.3 additions (§3a, CRHŽ row) and the v0.4 reward row pending native review
 date: 2026-10-15
 owner: Content Strategist
 story: TASK-2
@@ -181,7 +181,7 @@ Rules:
 | Monthly supporter (M4) | Podpornik (plan name); badge text "Podpira Najdimo" | Supporter; badge "Supports Najdimo" | Badge text is gender-neutral. |
 | Boost (M4) | Povečan doseg | Boost | Pill "Povečan doseg"; action "Povečaj doseg". |
 | Premium (M4) | Premium Zaščita | Premium Protect | |
-| Reward (M4) | nagrada | reward | Escrow: "nagrada, ki jo varno hrani Stripe". |
+| Reward (M4) | nagrada; line "Nagrada" or "Nagrada: {amount}" | reward; line "Reward offered" or "Reward offered: {amount}" | Display only: the owner's own offer, arranged with the finder outside the app (brief v1.1). Najdimo never holds or pays it, so never "varno hrani Stripe", "izplačilo" or "provizija". Always shown with the warning "Nikoli nikomur ne plačajte vnaprej. …" (P9). |
 | Vet Partner (paid clinic visibility) | Veterinarski partner (plan name); profile mark "Partnerska ambulanta" | Vet Partner; profile mark "Partner clinic" | B2B subscription for vet clinics. Its placements in ad slots, alerts and posters are paid and always carry the "Oglas" label. |
 | 24h emergency (clinic badge) | Nujna pomoč 24 ur | 24-hour emergency care | Clinic profile badge. |
 | Ad label | Oglas | Ad | On every ad and every paid placement, no exceptions. |
@@ -326,6 +326,7 @@ Distance band codes are fixed in C6 (`lt1`, `1to3`, `3to10`, `gt10`). Only `lt24
 
 | Version | Date | Change |
 |---|---|---|
+| 0.4 | 2026-10-15 | Reward row: display-only line and scam warning; escrow wording removed (brief v1.1). |
 | 0.3 | 2026-10-15 | §3a statistical regions (12, SL/EN confirmed) and municipality display rules; CRPsi row replaced by CRHŽ (not public, never linked); open point on "QR koda". |
 | 0.2 | 2026-10-15 | Brief v0.7: QR tags removed, Vet Partner and clinic badge added, "Oglas" applies to every paid placement. |
 | 0.1 | 2026-10-14 | First glossary: report types and statuses, core terms, accounts (Vpis for sign-in), money and ads, attributes, plural forms, bands, banned words, open points. |

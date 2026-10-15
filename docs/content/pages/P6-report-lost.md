@@ -3,7 +3,7 @@ source: 03§P6; docs/design/pages/P6-report-lost.md
 page: P6 Report lost
 stories: TASK-29 (FR-005, FR-003, FR-002)
 copy-for: docs/design/pages/P6-report-lost.md
-version: 0.2
+version: 0.3
 status: Draft, native Slovenian review pending
 date: 2026-10-15
 ---
@@ -90,9 +90,11 @@ Upload states (v0.2): the progress bar carries `photos.progress_a11y` as its acc
 | report_lost.marks_label | Posebnosti (neobvezno) | Distinctive marks (optional) |
 | report_lost.marks_help | Po čem jo prepoznamo? Eno posebnost obdržite zase, da boste lažje prepoznali prevaro. | How can people recognise your pet? Keep one detail to yourself so you can spot a scam. |
 | report_lost.sex_label | Spol (neobvezno) | Sex (optional) |
-| report_lost.dog_register_link | Preverite podatke v Centralnem registru psov (CRPsi) | Check your details in the Central Register of Dogs (CRPsi) |
+| report_lost.chip_register_note | Ko žival najdejo, čip prebere veterinar ali pristojno zavetišče in vaše podatke poišče v Centralnem registru hišnih živali (CRHŽ). Pri svojem veterinarju preverite, ali je vaša telefonska številka v registru pravilna. | When your pet is found, a vet or the responsible shelter reads the chip and looks up your details in the Central Register of Pets (CRHŽ). Ask your vet to check that your phone number in the register is correct. |
 
 Attribute labels (species, size, colours, sex): glossary §7.
+
+`report_lost.chip_register_note` (v0.3) replaces `report_lost.dog_register_link`, which is removed. It is a plain help line under the chip field for dogs and cats, with no link: the register is not public and we never link to it (A-003, glossary "CRHŽ").
 
 # 5. Step 4: Where
 
@@ -127,6 +129,15 @@ Location picker (P5) with `location.title_lost` and the radius control.
 | report_lost.contact_phone | Sporočila, telefon pa v potrjenem pogovoru | Messages, plus my phone in a confirmed conversation |
 | report_lost.contact_phone_desc | Številko pokažemo le osebi, s katero ste potrdili ujemanje. | We only show your number to someone you have confirmed a match with. |
 | report_lost.contact_phone_missing | V profilu še nimate telefonske številke. Dodate jo lahko pozneje. | You have no phone number in your profile yet. You can add one later. |
+| report_lost.reward_label | Nagrada (neobvezno) | Reward (optional) |
+| report_lost.reward_toggle | Ponujam nagrado za vrnitev | I am offering a reward for the return |
+| report_lost.reward_amount_label | Znesek v evrih (neobvezno) | Amount in euros (optional) |
+| report_lost.reward_amount_help | Če znesek pustite prazen, v prijavi piše samo „Nagrada“. | If you leave the amount empty, the report only says "Reward offered". |
+| report_lost.reward_amount_invalid | Vpišite znesek v celih evrih, na primer 50. | Enter the amount in whole euros, for example 50. |
+| report_lost.reward_amount_max | Vpišite znesek do {max}. | Enter an amount of up to {max}. |
+| report_lost.reward_note | Za nagrado se z najditeljem dogovorite sami. Najdimo je ne hrani in ne izplača. Nikoli nikomur ne plačajte vnaprej: nagrado izročite šele, ko je žival spet pri vas. | You arrange the reward with the finder yourself. Najdimo does not hold or pay it. Never pay anyone in advance: hand over the reward only once your pet is back with you. |
+
+Reward (v0.3, brief v1.1: display only, no escrow): an optional switch row under the contact choice. When it is on, the amount field and `report_lost.reward_note` (shield icon, always visible while the switch is on) appear below it. The amount takes whole euros only; `{max}` is the configured limit, formatted as currency in the page language ("500 €" / "€500"). Nothing else about the reward is asked: no conditions, no payment.
 
 # 8. Step 7: Review
 
@@ -139,6 +150,8 @@ Location picker (P5) with `location.title_lost` and the radius control.
 | report_lost.review_time | Nazadnje videno | Last seen |
 | report_lost.review_circumstances | Kaj se je zgodilo | What happened |
 | report_lost.review_contact | Kontakt | Contact |
+| report_lost.review_reward | Nagrada | Reward |
+| report_lost.review_reward_none | Brez nagrade | No reward |
 | report_lost.review_edit | Uredi | Edit |
 | report_lost.review_edit_a11y | Uredi: {field} | Edit: {field} |
 | report_lost.review_note | Ko objavite, obvestimo ljudi v bližini, ki imajo vklopljena opozorila. | When you publish, we alert people nearby who have alerts turned on. |
@@ -206,5 +219,8 @@ The flow start page is public and indexable; the steps are client-side.
 | Confirmation illustration (if used) | decorative, `alt=""` | |
 
 # 14. CHANGE requests
+
+- `CHANGE docs/design/pages/P6-report-lost.md§Flow: step 6 adds an optional reward row after the contact preference (switch "Ponujam nagrado za vrnitev", whole-euro amount field and the shield note `report_lost.reward_note`); step 7 adds a "Nagrada" summary row (value `report.reward_line_amount`, `report.reward_line` or `report_lost.review_reward_none`). Brief v1.1.`
+- `CHANGE docs/02-product-requirements.md§FR-023: replace reward escrow with a display-only reward line (optional flag plus amount in whole euros up to a configured limit, shown on P9 and the lost poster, always with the scam warning; no payment, fee or payout). Brief v1.1.`
 
 - `CHANGE docs/tech/contracts/C15-routes-deeplinks.md§Web routes: reportLost SL /prijava/izgubljen → /prijava/izgubljena-zival and reportFound /prijava/najden → /prijava/najdena-zival (agree with "žival", clearer for search).`

@@ -3,7 +3,7 @@ source: 03§P9; docs/design/pages/P9-report-detail.md; 02§FR-007 R-007.4, §Con
 page: P9 Report detail (lost, found, sighted)
 stories: TASK-18, TASK-72 (FR-007, FR-004, FR-011, FR-012)
 copy-for: docs/design/pages/P9-report-detail.md
-version: 0.1
+version: 0.2
 status: Draft, native Slovenian review pending
 date: 2026-10-15
 ---
@@ -46,13 +46,15 @@ H1 without a name: `browse.row_title_lost|found|sighted` (P4).
 | report.action_sighting | Sporoči opažanje | Report a sighting | Lost (primary), found (text) |
 | report.action_message | Pošlji sporočilo | Send a message | Lost (text), sighted (primary) |
 | report.action_mine | To je moja žival | This is my animal | Found (primary), sighted (text) |
-| report.reward_line | Za vrnitev je razpisana nagrada, ki jo do vrnitve varno hrani Stripe. | A reward is offered for the return, held safely by Stripe until then. | M4, only when set |
+| report.reward_line | Nagrada | Reward offered | M4, lost reports only, when the owner set a reward without an amount; gift icon |
+| report.reward_line_amount | Nagrada: {amount} | Reward offered: {amount} | Same, with an amount; `{amount}` as currency in the page language ("50 €" / "€50") |
 
 # 3. Safety note, share and more
 
 | Key | SL | EN |
 |---|---|---|
 | report.safety_note | Nikoli ne pošiljajte denarja vnaprej. Kdor je žival res našel, denarja ne zahteva. | Never send money in advance. A genuine finder does not ask for money. |
+| report.safety_note_reward | Nikoli nikomur ne plačajte vnaprej. Nagrado lastnik izroči šele, ko je žival spet doma. Najdimo nagrad ne izplačuje. | Never pay anyone in advance. The owner hands over the reward only once the animal is home. Najdimo does not pay rewards. |
 | report.safety_link | Nasveti za varnost | Safety tips |
 | report.share_button | Deli ali natisni plakat | Share or print a poster |
 | report.share_copy | Kopiraj povezavo | Copy link |
@@ -62,6 +64,8 @@ H1 without a name: `browse.row_title_lost|found|sighted` (P4).
 | report.more | Več možnosti | More options |
 | report.more_abuse | Prijavi zlorabo | Report abuse |
 | report.more_copy | Kopiraj povezavo | Copy link |
+
+Reward (v0.2, brief v1.1: display only, no escrow). When a reward line is shown, `report.safety_note_reward` replaces `report.safety_note`, so the page still has one safety note, placed right under the reward line. Without a reward the note stays `report.safety_note`.
 
 # 4. Sections below
 
@@ -94,8 +98,9 @@ The ad slot between "Kje je bila videna" and "V bližini" uses P21 copy.
 | report.owner_hidden_contact | Pišite podpori | Contact support |
 | report.owner_disagree | Oseba, ki je žival našla, jo je označila kot vrnjeno. Če žival ni doma, iskanje v 7 dneh ponovno odprite. | The person who found the animal marked it as returned. If your pet is not home, reopen the search within 7 days. |
 | report.owner_reopen | Ponovno odpri | Reopen |
+| report.owner_reward_note | Nagrado izročite šele, ko je žival spet pri vas. Nikoli nikomur ne plačajte vnaprej, tudi ne za prevoz ali „stroške“. | Hand over the reward only once your pet is back with you. Never pay anyone in advance, not even for transport or "costs". |
 
-`report.owner_boost` is hidden until M4. Exact pin label: `location.exact_own` (P5).
+`report.owner_boost` is hidden until M4. Exact pin label: `location.exact_own` (P5). In the owner view the reward line keeps its place and `report.owner_reward_note` replaces the public safety note; the owner changes or removes the reward with "Uredi" (P6 step 6). This follows the design slice §Web layout 6–7 (display-only reward line, one safety note below it).
 
 # 6. Status variants
 

@@ -3,7 +3,7 @@ source: 03§P18; docs/design/pages/P18-poster-share.md; 02§FR-011
 page: P18 Poster and sharing
 stories: TASK-24 (FR-011)
 copy-for: docs/design/pages/P18-poster-share.md
-version: 0.2
+version: 0.3
 status: Draft, native Slovenian review pending
 date: 2026-10-15
 ---
@@ -55,8 +55,15 @@ File name: `najdimo-{code}.pdf` (no pet name, so the file is safe to forward).
 | Call to action, lost | poster.cta_lost | {species, select, dog {Ste ga videli? Skenirajte kodo in nam sporočite.} cat {Ste jo videli? Skenirajte kodo in nam sporočite.} other {Ste jo videli? Skenirajte kodo in nam sporočite.}} | {species, select, dog {Seen this dog? Scan the code and let us know.} cat {Seen this cat? Scan the code and let us know.} other {Seen this pet? Scan the code and let us know.}} |
 | Call to action, found | poster.cta_found | {species, select, dog {Je to vaš pes? Skenirajte kodo.} cat {Je to vaša mačka? Skenirajte kodo.} other {Je to vaša žival? Skenirajte kodo.}} | {species, select, dog {Is this your dog? Scan the code.} cat {Is this your cat? Scan the code.} other {Is this your pet? Scan the code.}} |
 | Link under QR | poster.short_link | {short_url} | {short_url} |
+| Reward, lost only | poster.reward | Nagrada | Reward offered |
+| Reward with amount | poster.reward_amount | Nagrada: {amount} | Reward offered: {amount} |
 | Safety line | poster.safety | Stik samo prek Najdimo. Nikoli ne plačujte vnaprej. | Contact only through Najdimo. Never pay in advance. |
+| Safety line, with a reward | poster.safety_reward | Stik samo prek Najdimo. Nagrado lastnik izroči ob vrnitvi živali. Nikoli ne plačujte vnaprej. | Contact only through Najdimo. The owner hands over the reward when the animal is returned. Never pay in advance. |
 | Footer | poster.footer | Najdimo · Spet doma. | Najdimo · Home again. |
+
+Reward (v0.3, brief v1.1: display only): only on lost posters whose report has a reward. `poster.reward` or `poster.reward_amount` sits between the area line and the call to action; `{amount}` is formatted as currency in the poster language ("50 €" / "€50"). With a reward, `poster.safety_reward` replaces `poster.safety`. Without a reward both reward keys are left out and the poster reflows without a gap.
+
+`CHANGE docs/design/pages/P18-poster-share.md§Poster layout: add an optional "Reward" zone (lost only) between "Where and when" and "Call to action", 32 pt bold, black on white; the safety line uses poster.safety_reward when a reward is shown.`
 
 Fact values: colours as pill labels joined with "in" in lowercase ("rjava in bela"), size as the pill label in lowercase ("srednja"); both agree with the feminine labels "barva" and "velikost". Show 3 to 5 fact lines; skip empty ones.
 
