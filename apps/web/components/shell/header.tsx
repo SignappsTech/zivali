@@ -14,6 +14,7 @@ import { UserCircleIcon } from '@phosphor-icons/react/dist/ssr/UserCircle';
 import { XIcon } from '@phosphor-icons/react/dist/ssr/X';
 import { useLocale, useTranslations } from 'next-intl';
 
+import { UnreadDot } from '@/components/notifications/unread-dot';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { getPathname, Link } from '@/i18n/navigation';
 import { cn } from '@/lib/utils';
@@ -134,9 +135,11 @@ export function SiteHeader({ viewer }: { viewer: Viewer | null }) {
 						</div>
 						{viewer ? (
 							<div className="hidden items-center gap-2 lg:flex">
-								<Button asChild variant="ghost" size="icon">
-									<Link href="/inbox" aria-label={t('inbox')}>
+								<Button asChild variant="ghost" size="icon" className="relative">
+									<Link href="/inbox">
 										<TrayIcon weight="bold" aria-hidden="true" />
+										<span className="sr-only">{t('inbox')}</span>
+										<UnreadDot live className="absolute top-1.5 right-1.5" />
 									</Link>
 								</Button>
 								<Button
@@ -245,6 +248,7 @@ export function SiteHeader({ viewer }: { viewer: Viewer | null }) {
 										<Link href="/inbox" className={menuRowClass}>
 											<TrayIcon weight="bold" aria-hidden="true" />
 											{t('inbox')}
+											<UnreadDot className="ml-auto" />
 										</Link>
 										{accountRows}
 										{signOut}
