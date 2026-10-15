@@ -3,10 +3,11 @@ id: TASK-3.11
 title: >-
   Web scaffold hardening from the TASK-3.3 review: env default, 404 nonce,
   Playwright standalone, nonce e2e
-status: To Do
+status: In Progress
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-15 01:35'
+updated_date: '2026-10-15 03:00'
 labels:
   - fe
   - 'est:S'
@@ -41,3 +42,5 @@ Branch: agent/task-fe-web-hardening
 - [ ] #3 Playwright starts the standalone server (next build output) instead of next dev.
 - [ ] #4 The e2e CSP test anchors the script-src regex and asserts the nonce differs between two requests.
 <!-- AC:END -->
+
+Branch: agent/task-fe-web-hardening
