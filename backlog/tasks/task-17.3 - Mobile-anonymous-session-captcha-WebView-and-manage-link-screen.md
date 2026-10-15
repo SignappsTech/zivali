@@ -1,11 +1,11 @@
 ---
 id: TASK-17.3
 title: 'Mobile anonymous session, captcha WebView and manage-link screen'
-status: To Do
+status: In Progress
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:13'
-updated_date: '2026-10-14 22:42'
+updated_date: '2026-10-15 18:19'
 labels:
   - fe
   - 'est:M'

@@ -12,6 +12,7 @@ const raw = {
 	EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
 	EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
 	EXPO_PUBLIC_APPLE_SIGN_IN: process.env.EXPO_PUBLIC_APPLE_SIGN_IN,
+	EXPO_PUBLIC_CAPTCHA: process.env.EXPO_PUBLIC_CAPTCHA,
 };
 
 // An empty value in .env.local counts as unset.
@@ -32,6 +33,8 @@ const schema = z
 		EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID: optional(z.string()),
 		// Sign in with Apple waits for the Apple Developer account (Q-007): off unless "true" (also sets usesAppleSignIn).
 		EXPO_PUBLIC_APPLE_SIGN_IN: optional(z.enum(['true', 'false'])).transform((v) => v === 'true'),
+		// Turnstile through the web /captcha page before anonymous sign-in (C7); off unless "true" (local Supabase ignores it).
+		EXPO_PUBLIC_CAPTCHA: optional(z.enum(['true', 'false'])).transform((v) => v === 'true'),
 	})
 	.refine((e) => !(e.EXPO_PUBLIC_APP_ENV === 'production' && e.EXPO_PUBLIC_PUSH_PROVIDER === 'mock'), {
 		// Real users must never register the placeholder token.
