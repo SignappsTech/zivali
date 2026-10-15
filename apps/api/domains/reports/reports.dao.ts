@@ -317,6 +317,46 @@ export async function releaseHeld(id: string, tx?: Prisma.TransactionClient): Pr
 	return row?.type ?? null;
 }
 
+/** Largest public radius (C6: the lost requested radius caps at 20 km); lets the area filter use the gist index. */
+const MAX_PUBLIC_RADIUS_M = 20_000;
+
+export type SyncRow = { id: string; updated_at: string; live: boolean };
+
+/**
+ * One page of the sync feed (C4): reports whose public circle meets one of the areas, keyset on (updated_at, id)
+ * after the cursor; `live` = open or matched and visible. Without a cursor (first sync) only live reports.
+ * `updated_at` comes back as text with microseconds so the cursor is exact.
+ */
+export async function syncPage(
+	input: {
+		areas: (Point & { radius_m: number })[];
+		after: { at: string; id: string } | null;
+		take: number;
+	},
+	tx?: Prisma.TransactionClient
+): Promise<SyncRow[]> {
+	const db = tx ?? prisma;
+	const { areas, after, take } = input;
+	const inArea = Prisma.join(
+		areas.map(
+			(
+				a
+			) => Prisma.sql`(extensions.st_dwithin(r.public_point, ${point(a)}, ${a.radius_m + MAX_PUBLIC_RADIUS_M}::float8)
+				and extensions.st_dwithin(r.public_point, ${point(a)}, ${a.radius_m}::float8 + r.public_radius_m))`
+		),
+		' or '
+	);
+	const live = Prisma.sql`(r.status in ('open', 'matched') and r.moderation_state = 'visible')`;
+	return db.$queryRaw<SyncRow[]>`
+		select r.id::text as id, ${live} as live,
+			to_char(r.updated_at at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"') as updated_at
+		from app.reports r
+		where (${inArea})
+			and ${after ? Prisma.sql`(r.updated_at, r.id) > (${after.at}::timestamptz, ${after.id}::uuid)` : live}
+		order by r.updated_at, r.id
+		limit ${take}`;
+}
+
 export type ReportRow = NonNullable<Awaited<ReturnType<typeof findByCode>>>;
 
 export default {
@@ -342,4 +382,5 @@ export default {
 	findType,
 	setPhotos,
 	releaseHeld,
+	syncPage,
 };

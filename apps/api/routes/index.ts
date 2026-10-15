@@ -17,6 +17,7 @@ import petsRoutes from './pets.routes.ts';
 import photosRoutes from './photos.routes.ts';
 import reportsRoutes from './reports.routes.ts';
 import sheltersRoutes from './shelters.routes.ts';
+import syncRoutes from './sync.routes.ts';
 
 const router = Router();
 
@@ -38,6 +39,7 @@ router.use('/pets', petsRoutes);
 router.use('/ads', adsRoutes);
 router.use('/reports', reportMatchesRouter);
 router.use('/matches', matchesRoutes);
+router.use('/sync', syncRoutes);
 router.use('/abuse-reports', abuseReportsRoutes);
 
 export default router;
