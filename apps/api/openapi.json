@@ -1609,7 +1609,8 @@
 					"quiet_from": { "type": ["string", "null"], "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$" },
 					"quiet_to": { "type": ["string", "null"], "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$" },
 					"supporter_badge_visible": { "type": "boolean" }
-				}
+				},
+				"additionalProperties": false
 			},
 			"UpdatePetInput": {
 				"type": "object",
@@ -1716,6 +1717,64 @@
 					"503": {
 						"description": "Not ready (database down)",
 						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/HealthReady" } } }
+					}
+				}
+			}
+		},
+		"/v1/me": {
+			"get": {
+				"operationId": "getMe",
+				"summary": "Own profile",
+				"description": "The own profile including private fields, plus email, email_verified (auth.users.email_confirmed_at), is_anonymous, role and aal (C3).",
+				"tags": ["me"],
+				"responses": {
+					"200": {
+						"description": "Own profile",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/Me" } } }
+					},
+					"401": {
+						"description": "UNAUTHENTICATED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"429": {
+						"description": "RATE_LIMITED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"500": {
+						"description": "INTERNAL",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					}
+				}
+			},
+			"patch": {
+				"operationId": "updateMe",
+				"summary": "Update own profile",
+				"description": "Partial update of the own profile. home is stored coarsened by 20-30 m (C6); sending the stored point back keeps it. The role cannot be changed here.",
+				"tags": ["me"],
+				"requestBody": {
+					"required": true,
+					"content": { "application/json": { "schema": { "$ref": "#/components/schemas/UpdateMeInput" } } }
+				},
+				"responses": {
+					"200": {
+						"description": "Updated profile",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/Profile" } } }
+					},
+					"400": {
+						"description": "VALIDATION",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"401": {
+						"description": "UNAUTHENTICATED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"429": {
+						"description": "RATE_LIMITED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"500": {
+						"description": "INTERNAL",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
 					}
 				}
 			}

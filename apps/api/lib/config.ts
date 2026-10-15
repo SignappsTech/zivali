@@ -30,6 +30,8 @@ const EnvSchema = z.object({
 	// HS256 fallback for JWT verification, honoured only when APP_ENV=local; also signs test tokens and the local
 	// Admin API token (seeder 00-users).
 	SUPABASE_JWT_SECRET: z.string().min(32).optional(),
+	// Server-only: Auth Admin API (locale -> user_metadata so Auth emails follow PATCH /v1/me). Never sent to clients.
+	SUPABASE_SERVICE_ROLE_KEY: z.string().min(1).optional(),
 	// Random 32-byte secrets per environment (C1): HMAC salt for IP and device ids, idempotency body encryption.
 	RATE_SALT: z.string().min(32),
 	IDEMPOTENCY_KEY: z.string().min(32),

@@ -36,6 +36,7 @@ export const UpdateMeInput = z
 		quiet_to: ClockTime.nullable().optional(),
 		supporter_badge_visible: z.boolean().optional(),
 	})
+	.strict()
 	.openapi('UpdateMeInput');
 
 export const AdminUser = z
