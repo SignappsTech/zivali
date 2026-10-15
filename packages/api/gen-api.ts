@@ -1,6 +1,7 @@
 // `pnpm gen:api`. The codegen CLI loads a .ts config only through ts-node or esbuild-runner, so this runs it on
 // Node's own type stripping instead.
-import { existsSync } from 'node:fs';
+import { existsSync, mkdirSync } from 'node:fs';
+import { dirname } from 'node:path';
 
 import { generateEndpoints, parseConfig } from '@rtk-query/codegen-openapi';
 
@@ -13,6 +14,7 @@ if (!existsSync(config.schemaFile)) {
 } else {
 	for (const options of parseConfig(config)) {
 		console.log(`Generating ${options.outputFile}`);
+		mkdirSync(dirname(options.outputFile), { recursive: true });
 		await generateEndpoints(options);
 	}
 }
