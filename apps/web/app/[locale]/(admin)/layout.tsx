@@ -1,6 +1,8 @@
 import type { Metadata } from 'next';
+import { NextIntlClientProvider } from 'next-intl';
 
 import { AdminShell } from '@/components/admin/admin-shell';
+import { StoreProvider } from '@/components/store-provider';
 import { env } from '@/lib/env';
 import { requireViewer } from '@/lib/viewer';
 
@@ -13,9 +15,14 @@ export const metadata: Metadata = { robots: { index: false, follow: false } };
  */
 export default async function AdminLayout({ children, params }: LayoutProps<'/[locale]'>) {
 	const viewer = await requireViewer((await params).locale);
+	// The whole catalogue (the root layout sends only the public pages' namespaces) and the store (TASK-90.5).
 	return (
-		<AdminShell env={env.APP_ENV} initials={viewer.initials} aal2={viewer.aal2}>
-			{children}
-		</AdminShell>
+		<NextIntlClientProvider>
+			<StoreProvider>
+				<AdminShell env={env.APP_ENV} initials={viewer.initials} aal2={viewer.aal2}>
+					{children}
+				</AdminShell>
+			</StoreProvider>
+		</NextIntlClientProvider>
 	);
 }

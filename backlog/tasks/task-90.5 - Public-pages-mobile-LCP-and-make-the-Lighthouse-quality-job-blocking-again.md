@@ -1,10 +1,13 @@
 ---
 id: TASK-90.5
-title: 'Public pages: mobile LCP ≤ 2.5 s and make the Lighthouse quality job blocking again'
-status: To Do
+title: >-
+  Public pages: mobile LCP ≤ 2.5 s and make the Lighthouse quality job blocking
+  again
+status: In Progress
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-16 00:10'
+updated_date: '2026-10-15 22:26'
 labels:
   - bug
   - fe

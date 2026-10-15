@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { deviceId, makeApiClient } from './store';
+import { deviceId, getStore, makeApiClient } from './store';
 
 vi.mock('@/lib/supabase/client', () => ({
 	createClient: () => ({ auth: { getSession: async () => ({ data: { session: null } }) } }),
@@ -32,5 +32,17 @@ describe('x-device-id (C7)', () => {
 			throw new DOMException('denied', 'SecurityError');
 		});
 		expect(deviceId()).toMatch(/^[0-9a-f-]{36}$/);
+	});
+});
+
+describe('getStore', () => {
+	it('shares one store per locale in the browser, so every StoreProvider sees the same cache', () => {
+		expect(getStore('sl')).toBe(getStore('sl'));
+		expect(getStore('en')).not.toBe(getStore('sl'));
+	});
+
+	it('makes a new store per server render, never shared between users', () => {
+		vi.stubGlobal('window', undefined);
+		expect(getStore('sl')).not.toBe(getStore('sl'));
 	});
 });

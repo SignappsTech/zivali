@@ -7,6 +7,7 @@ import { useStore } from 'react-redux';
 import { configureAuth, useSession } from '@zivali/api/auth';
 import { useUpdateMeMutation } from '@zivali/api/me';
 import type { ApiStore } from '@zivali/api/rtk';
+import { StoreProvider } from '@/components/store-provider';
 
 /**
  * Connects @zivali/api/auth to the Supabase session (useSession, useRequireAuth, the API cache reset on user change).
@@ -53,4 +54,13 @@ export function SessionSync() {
 	}, [pendingName, updateMe]);
 
 	return null;
+}
+
+/** SessionSync with the shared store, for app/providers.tsx, which loads it on signed-in pages only (TASK-90.5). */
+export function SessionSyncIsland() {
+	return (
+		<StoreProvider>
+			<SessionSync />
+		</StoreProvider>
+	);
 }
