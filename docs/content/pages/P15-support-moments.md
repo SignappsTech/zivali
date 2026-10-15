@@ -3,7 +3,7 @@ source: 03§P15; docs/design/pages/P15-support-moments.md; 02§FR-021, FR-020
 page: P15 Support moments (tip, contribution, checkout hand-off)
 stories: TASK-33, TASK-32 (FR-021, FR-020)
 copy-for: docs/design/pages/P15-support-moments.md
-version: 0.1
+version: 0.2
 status: Draft, native Slovenian review and client approval pending (wording depends on Q-008)
 date: 2026-10-15
 ---
@@ -48,8 +48,14 @@ Namespaces `support` and `payments`. Mission first: the animal is home or the se
 | support.contribution_pay | Prispevaj {amount} | Contribute {amount} |
 | support.contribution_hide | Skrij | Hide |
 | support.contribution_expand_a11y | Pokaži možnost prispevka | Show the contribution option |
+| support.contribution_pay_disabled | Prispevaj | Contribute |
+| support.amount_suggested_a11y | predlagano | suggested |
+| support.supporter_monthly_label | Podpiram mesečno | I support monthly |
+| support.pay_monthly | Plačaj {amount} na mesec | Pay {amount} per month |
 
 `support.contribution_pay` uses the accusative with no preposition, so it reads correctly for any amount ("Prispevaj 3 €").
+
+`support.contribution_pay_disabled` is the label while no amount is chosen (the button stays visible but inactive; `support.pay_disabled_help` explains). `support.amount_suggested_a11y` is read after the amount by screen readers on the suggested chip only ("5 €, predlagano"); it is not shown. `support.supporter_monthly_label` is an unticked option; `support.pay_monthly` replaces the pay button label when it is ticked. A monthly contribution can be cancelled at any time (cancel flow copy is outside this slice). CH-53 supersedes CH-47.
 
 Hiding or ignoring the row records the skip; the row is not shown again for that report.
 
@@ -100,12 +106,19 @@ Hiding or ignoring the row records the skip; the row is not shown again for that
 
 | Key | SL | EN |
 |---|---|---|
+| support.gate_title | Za prispevek se prijavite | Sign in to contribute |
 | support.gate_body | Za prispevek potrebujete račun, da vam lahko pošljemo potrdilo. | You need an account to contribute, so we can send you a receipt. |
 | support.unverified | Potrdilo bomo poslali, ko potrdite svoj e-naslov. | We will send the receipt once you confirm your email address. |
 | support.already_paid | Hvala, za to prijavo ste že prispevali. | Thank you, you have already contributed for this report. |
 
-Network errors: `errors.NETWORK`; minimum amount from the API: `errors.MIN_AMOUNT` (P1).
+Network errors: `errors.NETWORK` (already in packages/i18n: "Povezava se je prekinila. Preverite internet in poskusite znova." / "The connection dropped. Check your internet and try again."; no new key); minimum amount from the API: `errors.MIN_AMOUNT` (P1).
 
 # 7. SEO and alt text
 
 SEO: N/A (in-app, `noindex`). Alt text: none (icons only, decorative).
+
+# Change log
+
+| Version | Date | Change |
+|---|---|---|
+| 0.2 | 2026-10-15 | CH-53 (supersedes CH-47): added support.contribution_pay_disabled, support.gate_title, support.supporter_monthly_label, support.pay_monthly, support.amount_suggested_a11y; errors.NETWORK confirmed. |

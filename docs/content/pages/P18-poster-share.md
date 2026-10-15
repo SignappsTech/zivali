@@ -3,7 +3,7 @@ source: 03§P18; docs/design/pages/P18-poster-share.md; 02§FR-011
 page: P18 Poster and sharing
 stories: TASK-24 (FR-011)
 copy-for: docs/design/pages/P18-poster-share.md
-version: 0.3
+version: 0.4
 status: Draft, native Slovenian review pending
 date: 2026-10-15
 ---
@@ -110,6 +110,26 @@ PDF metadata: title "{top band} {name} – Najdimo" ("Pogrešan pes Rex – Najd
 
 `{date}` is the short relative or calendar date ("včeraj", "12. 10.").
 
+# 4b. Share kit (Facebook groups and local media)
+
+Copy-ready texts for the owner of a lost-pet report, shown under the share menu. Rule: no phone number, email, chip number, exact address or holding place in any text; the only contact route is the report link `{url}`. The media line is a neutral template: the owner chooses where to send it, and we never name a real station or outlet.
+
+| Key | SL | EN |
+|---|---|---|
+| share.kit_title | Pripravljena besedila za deljenje | Ready-made texts to share |
+| share.kit_intro | Besedila lahko kopirate in prilepite v skupine na Facebooku ali pošljete lokalnim medijem. Stik poteka samo prek povezave. | You can copy and paste these texts into Facebook groups or send them to local media. Contact happens only through the link. |
+| share.kit_post_title | Objava za Facebook | Facebook post |
+| share.kit_post_text | {species, select, dog {Pogrešamo psa: {name}. Nazadnje viden {date}, območje {area}. Če ste ga videli, nam prosim sporočite prek povezave. Hvala, da delite. {url}} cat {Pogrešamo mačko: {name}. Nazadnje videna {date}, območje {area}. Če ste jo videli, nam prosim sporočite prek povezave. Hvala, da delite. {url}} other {Pogrešamo žival: {name}. Nazadnje videna {date}, območje {area}. Če ste jo videli, nam prosim sporočite prek povezave. Hvala, da delite. {url}}} | {species, select, dog {We are missing our dog: {name}. Last seen {date}, area {area}. If you have seen him, please let us know through the link. Thank you for sharing. {url}} cat {We are missing our cat: {name}. Last seen {date}, area {area}. If you have seen her, please let us know through the link. Thank you for sharing. {url}} other {We are missing our pet: {name}. Last seen {date}, area {area}. If you have seen them, please let us know through the link. Thank you for sharing. {url}}} |
+| share.kit_groups_title | Skupine, kamor lahko objavite | Groups where you can post |
+| share.kit_groups_intro | Poiščite skupine za izgubljene živali v svoji občini ali regiji in preberite njihova pravila, preden objavite. Objavo izberete in pošljete sami. | Look for lost-pet groups in your municipality or region and read their rules before posting. You choose and send the post yourself. |
+| share.kit_groups_hint | Poskusite z iskanjem: izgubljene živali, ime kraja. | Try searching: lost pets, your town's name. |
+| share.kit_copy | Kopiraj besedilo | Copy text |
+| share.kit_copied | Besedilo je kopirano. | Text copied. |
+| share.kit_media_title | Sporočilo za lokalni radio | Message for local radio |
+| share.kit_media_intro | Lokalni radio ali krajevni portal lahko objavo prebere ali objavi. Besedilo je kratko in brez osebnih podatkov. | A local radio station or community website may read out or publish this. The text is short and has no personal details. |
+| share.kit_media_text | {species, select, dog {Pogrešan je pes {name}, nazadnje viden {date} v okolici: {area}. Če ga vidite, prosimo, sporočite prek povezave: {url}} cat {Pogrešana je mačka {name}, nazadnje videna {date} v okolici: {area}. Če jo vidite, prosimo, sporočite prek povezave: {url}} other {Pogrešana je žival {name}, nazadnje videna {date} v okolici: {area}. Če jo vidite, prosimo, sporočite prek povezave: {url}}} | {species, select, dog {Missing dog {name}, last seen {date} around {area}. If you see him, please report it through the link: {url}} cat {Missing cat {name}, last seen {date} around {area}. If you see her, please report it through the link: {url}} other {Missing pet {name}, last seen {date} around {area}. If you see them, please report it through the link: {url}}} |
+| share.kit_media_hint | Besedilo pošljite izbranemu lokalnemu radiu ali mediju sami. | Send the text to the local radio station or outlet of your choice yourself. |
+
 # 5. States
 
 | Key | SL | EN |
@@ -132,3 +152,9 @@ N/A: an in-app screen (`noindex`). The poster PDF and OG image are served by the
 | QR code (in the PDF and preview) | Koda QR za prijavo na {short_url} | QR code for the report at {short_url} |
 | Logo on the poster | Najdimo | Najdimo |
 | Link-card preview | P9 §11 OG alt | |
+
+# Change log
+
+| Version | Date | Change |
+|---|---|---|
+| 0.4 | 2026-10-15 | CH-58: added the share kit (section 4b): Facebook post text, group list intro, local radio/media line with neutral placeholder; no contact data. |
