@@ -13,6 +13,9 @@ resolver 127.0.0.11 valid=10s ipv6=off;
 include /opt/zivali-nginx/cloudflare-ips.conf;
 real_ip_header CF-Connecting-IP;
 
+# The browser sends those session cookies back on every request: room for them (default 4 x 8 kB gives 400).
+large_client_header_buffers 4 32k;
+
 gzip on;
 gzip_vary on;
 gzip_proxied any;
