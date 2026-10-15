@@ -1,11 +1,11 @@
 ---
 id: TASK-4.1
 title: 'Quality kit: axe, visual, Lighthouse CI, links, PR template'
-status: In Review
+status: Done
 assignee:
   - '@tech-lead'
 created_date: '2026-10-14 22:12'
-updated_date: '2026-10-15 03:28'
+updated_date: '2026-10-15 04:25'
 labels:
   - tech
   - 'est:S'
