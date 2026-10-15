@@ -1,6 +1,5 @@
 import { createApiClient, type Locale } from '@zivali/api/client';
 import { createApiStore } from '@zivali/api/rtk';
-
 import { env } from '@/lib/env';
 import { createClient } from '@/lib/supabase/client';
 

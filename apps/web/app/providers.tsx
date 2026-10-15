@@ -1,10 +1,10 @@
 'use client';
 
-import type { Locale } from '@zivali/api/client';
 import { useLocale } from 'next-intl';
 import { useMemo } from 'react';
 import { Provider } from 'react-redux';
 
+import type { Locale } from '@zivali/api/client';
 import { makeStore } from '@/lib/store';
 
 /** Client-side providers. RTK Query hooks (@zivali/api) are for client components; server components call the API. */

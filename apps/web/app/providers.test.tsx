@@ -1,7 +1,8 @@
 import { cleanup, render, screen } from '@testing-library/react';
-import { api } from '@zivali/api/rtk';
 import { NextIntlClientProvider } from 'next-intl';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+
+import { api } from '@zivali/api/rtk';
 
 import { Providers } from './providers';
 
