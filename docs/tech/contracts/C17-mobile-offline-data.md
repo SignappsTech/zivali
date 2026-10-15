@@ -66,6 +66,10 @@ Send order per item: ensure session (anonymous sign-in with Turnstile token when
 - Handler (`expo-task-manager` task `zivali-geofence`), offline-capable: on enter → skip if report no longer open in cache, if `geofence_events` has `(report, area_key)`, if 3 alerts already today, or inside quiet hours (cached from the profile) → else local notification (`expo-notifications`, category `nearby_local`, deep link `zivali://r/<code>`) and insert into `geofence_events`. No network calls.
 - Off switch, sign-out, account deletion or permission downgrade → `stopGeofencingAsync` and clear `geofences`.
 
+## Device storage
+
+Besides SQLite and SecureStore, the app keeps small non-private UI preferences in the SQLite-backed `localStorage` (`expo-sqlite/localStorage/install`). Allowed keys: the encrypted session ciphertext (TASK-3.4) and `locale` (the mobile language choice, TASK-10.3; not personal data). Anything else needs a contract change; `wipeLocalData` on `account_deleted` clears all of it.
+
 ## Wipe
 
 `wipeLocalData({ reason: 'sign_out' | 'account_deleted' | 'user_request' })`: if `pendingCount() > 0` the caller first shows "Send now / Delete / Cancel"; then delete `reports_cache`, `cache_areas`, `drafts`, `geofences`, `geofence_events`, thumbnails and draft files, stop geofencing; on `account_deleted` wipes everything: the local db file, app files, all SecureStore keys including manage tokens, the TASK-3.4 session ciphertext and its key, and the outbox. Sign-out calls it after `supabase.auth.signOut()` via `signOutAndWipe({ removeManageLinks })`: by default it keeps manage tokens and sent rows (reports made on this device stay manageable from it); only when the user picks "Odstrani tudi povezave za urejanje prijav s te naprave" (remove my report links from this device) are manage tokens and sent rows removed too.
@@ -82,3 +86,4 @@ Send order per item: ensure session (anonymous sign-in with Turnstile token when
 | Version | Date | Change |
 |---|---|---|
 | 1.1 | 2026-10-15 | CH-111: Wipe: `account_deleted` wipes everything (db file, app files, SecureStore incl. manage tokens, session ciphertext + key); sign-out keeps manage tokens and sent rows unless the user picks removal (`signOutAndWipe({removeManageLinks})`) |
+| 1.2 | 2026-10-15 | CH-113: `locale` added to the allowed device-storage (localStorage) keys |

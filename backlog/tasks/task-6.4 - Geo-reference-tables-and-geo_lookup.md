@@ -37,7 +37,7 @@ Branch: agent/task-6.4-geo
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Prisma models regions and municipalities (geom as Unsupported geography with GiST indexes in the migration) are loaded by seeder 01-geo, which runs the GURS SQL in supabase/seed/geo (scripts/geo-to-sql.mjs output) idempotently.
-- [ ] #2 TypedSQL prisma/sql/geoLookup.sql returns municipality and region ids and slugs for a point and breaks ties with `order by id limit 1` (the Ivančna Gorica and Žužemberk polygons overlap by about 330 m²); no row means in_slovenia = false; GeoDomain.lookup wraps it.
+- [ ] #1 Prisma models regions and municipalities (geom as Unsupported geography with GiST indexes in the migration) are loaded by seeder 01-geo, which runs the GURS SQL in supabase/seed/geo (scripts/geo-to-sql.mjs output) idempotently as an upsert (not truncate+insert; cascade-safe).
+- [ ] #2 GeoDomain.lookup (lib/geo.ts, `$queryRaw` + `Prisma.sql`, lat/lng validated with `LatLng` first; TypedSQL dropped, it needs a live DB at build time; geography type is `extensions.geography`) returns municipality and region ids and slugs for a point and breaks ties with `order by id limit 1` (the Ivančna Gorica and Žužemberk polygons overlap by about 330 m²); no row means in_slovenia = false; GeoDomain.lookup wraps it.
 - [ ] #3 Tests cover inside, the overlap tie, near-border and outside-Slovenia points; a lookup runs in under 5 ms locally using the spatial index.
 <!-- AC:END -->

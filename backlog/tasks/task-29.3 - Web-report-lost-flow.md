@@ -5,7 +5,7 @@ status: To Do
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:14'
-updated_date: '2026-10-15 00:12'
+updated_date: '2026-10-15 06:56'
 labels:
   - fe
   - 'est:M'
@@ -49,4 +49,5 @@ Branch: agent/task-29.3-lost-web
 - [ ] #3 report_lost_start and report_lost_submit fire with report_type, species, region and municipality only, with consent.
 - [ ] #4 No ad slot anywhere in the flow (quality-kit helper); axe 0 violations on every step.
 - [ ] #5 The lost flow offers the optional display-only reward (amount and/or short note) per P6 with the inline contact-data error from containsContactData(); nothing is charged.
+- [ ] #6 When the report form uses PhotoPicker's EXIF location, pass it only as LocationPicker 'suggested' (coarsened on onChange, C6); raw EXIF coordinates are never sent.
 <!-- AC:END -->

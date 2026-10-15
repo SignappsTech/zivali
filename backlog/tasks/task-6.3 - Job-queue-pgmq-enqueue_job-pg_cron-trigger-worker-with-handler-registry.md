@@ -7,7 +7,7 @@ status: To Do
 assignee:
   - '@backend-dev'
 created_date: '2026-10-14 22:12'
-updated_date: '2026-10-15 04:23'
+updated_date: '2026-10-15 06:56'
 labels:
   - be
   - 'est:S'
@@ -44,4 +44,5 @@ Branch: agent/task-6.3-queue
 - [ ] #3 domains/notifications exposes enqueueNotification(input, ctx) as a stub that sends notify.send, so feature tasks can call it before the notifications task merges.
 - [ ] #4 drain() processes queues to empty for tests and `pnpm jobs:drain`; an integration test proves send → handler → completion and failure → retry → failed state; /v1/health/ready reports queue lag.
 - [ ] #5 pg-boss tables (including per-queue partitions) have RLS enabled; test/security fails otherwise (CH-103)
+- [ ] #6 From TASK-6.12: replace the ctx.jobs placeholder (it throws) with the real queue API; call lockDownPgboss() after boss.start/createQueue; the retention job calls PlatformDao.purgeExpired.
 <!-- AC:END -->
