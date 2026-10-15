@@ -1,0 +1,47 @@
+// Photos of a report or a pet (C5). Objects live in R2 (MinIO locally); public URLs are set by photo.publish.
+
+enum PHOTO_STATUS {
+  uploaded
+  accepted
+  rejected
+  published
+  unpublished
+
+  @@schema("app")
+}
+
+enum PHOTO_REJECT_REASON {
+  not_jpeg
+  too_large
+  hash_mismatch
+  decode_failed
+
+  @@schema("app")
+}
+
+model photos {
+  id                 String               @id @default(uuid()) @db.Uuid
+  owner_id           String               @db.Uuid
+  owner              profiles             @relation(fields: [owner_id], references: [id], onDelete: Cascade)
+  // At most one of pet_id and report_id (check in the migration). Unattached uploads are purged after 24 h.
+  pet_id             String?              @db.Uuid
+  pet                pets?                @relation(fields: [pet_id], references: [id], onDelete: SetNull)
+  report_id          String?              @db.Uuid
+  report             reports?             @relation(fields: [report_id], references: [id], onDelete: SetNull)
+  // 0–4
+  position           Int                  @default(0) @db.SmallInt
+  sha256             String
+  width              Int
+  height             Int
+  bytes              Int
+  status             PHOTO_STATUS         @default(uploaded)
+  reject_reason      PHOTO_REJECT_REASON?
+  public_display_url String?
+  public_thumb_url   String?
+  created_at         DateTime             @default(now()) @db.Timestamptz(6)
+
+  @@unique([owner_id, sha256])
+  @@index([report_id])
+  @@index([pet_id])
+  @@schema("app")
+}

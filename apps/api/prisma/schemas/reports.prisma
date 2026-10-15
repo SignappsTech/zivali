@@ -1,0 +1,236 @@
+// Reports, pets, report managers and finder contacts (C4). RLS deny-all; access only through the API (ADR-021).
+// exact_point is the COARSENED private point (never the raw one) and public_point the fuzzed circle centre (C6,
+// ADR-006); both are written and read only through $queryRaw in domains/reports/reports.dao.ts.
+
+enum SPECIES {
+  dog
+  cat
+
+  @@schema("app")
+}
+
+enum REPORT_TYPE {
+  lost
+  found
+  sighted
+
+  @@schema("app")
+}
+
+enum REPORT_STATUS {
+  open
+  matched
+  reunited
+  closed
+
+  @@schema("app")
+}
+
+enum CLOSE_REASON {
+  found_elsewhere
+  gave_up
+  returned_to_owner
+  expired
+  removed
+  other
+
+  @@schema("app")
+}
+
+enum MODERATION_STATE {
+  visible
+  held
+  hidden
+  removed
+
+  @@schema("app")
+}
+
+enum SIZE {
+  xs
+  s
+  m
+  l
+  xl
+
+  @@schema("app")
+}
+
+enum SEX {
+  male
+  female
+  unknown
+
+  @@schema("app")
+}
+
+enum COLOUR {
+  black
+  white
+  grey
+  brown
+  chocolate
+  red
+  cream
+  golden
+  tan
+  blue_grey
+
+  @@schema("app")
+}
+
+enum PATTERN {
+  solid
+  bicolour
+  tricolour
+  tabby
+  tortoiseshell
+  calico
+  brindle
+  merle
+  spotted
+  pointed
+  other
+
+  @@schema("app")
+}
+
+enum CONTACT_PREF {
+  chat_only
+  chat_and_phone
+
+  @@schema("app")
+}
+
+enum REPORT_SOURCE {
+  user
+  anonymous
+  organisation
+
+  @@schema("app")
+}
+
+// Owner-only pet profiles (C4, FR-002). chip_number only ever leaves the API to its owner.
+model pets {
+  id                   String    @id @default(uuid()) @db.Uuid
+  owner_id             String    @db.Uuid
+  owner                profiles  @relation(fields: [owner_id], references: [id], onDelete: Cascade)
+  species              SPECIES
+  name                 String
+  breed_codes          String[]  @default([])
+  colours              COLOUR[]  @default([])
+  pattern              PATTERN?
+  size                 SIZE?
+  sex                  SEX?
+  birth_year           Int?
+  chip_number          String?
+  // valid | invalid | none (normalizeChip)
+  chip_status          String    @default("none")
+  // yes | no | unknown (FR-002 R-002.5)
+  chip_registered_crhz String?
+  // Cats (FR-002): ear tip; lifestyle indoor | outdoor | both
+  ear_tip              Boolean?
+  lifestyle            String?
+  collar               String?
+  notes                String?
+  archived_at          DateTime? @db.Timestamptz(6)
+  created_at           DateTime  @default(now()) @db.Timestamptz(6)
+  updated_at           DateTime  @default(now()) @updatedAt @db.Timestamptz(6)
+  reports              reports[]
+  photos               photos[]
+
+  @@index([owner_id])
+  @@schema("app")
+}
+
+model reports {
+  id                   String                                          @id @default(uuid()) @db.Uuid
+  // 8 chars base58, the public identifier in URLs
+  short_code           String                                          @unique
+  type                 REPORT_TYPE
+  status               REPORT_STATUS                                   @default(open)
+  close_reason         CLOSE_REASON?
+  moderation_state     MODERATION_STATE                                @default(visible)
+  pet_id               String?                                         @db.Uuid
+  pet                  pets?                                           @relation(fields: [pet_id], references: [id], onDelete: SetNull)
+  species              SPECIES
+  // lost only
+  name                 String?
+  breed_codes          String[]                                        @default([])
+  colours              COLOUR[]                                        @default([])
+  pattern              PATTERN?
+  size                 SIZE?
+  sex                  SEX?
+  chip_number          String?
+  chip_status          String                                          @default("none")
+  collar               String?
+  ear_tip              Boolean?
+  lifestyle            String?
+  // The coarsened private point (20–30 m offset applied once at write); never the raw point.
+  exact_point          Unsupported("extensions.geography(Point,4326)")
+  // lost: 200–20000
+  requested_radius_m   Int?
+  // Fuzzed public circle (lib/fuzz.ts), derived from exact_point on every location write.
+  public_point         Unsupported("extensions.geography(Point,4326)")
+  public_radius_m      Int
+  municipality_id      Int?                                            @db.SmallInt
+  municipality         municipalities?                                 @relation(fields: [municipality_id], references: [id])
+  region_id            Int?                                            @db.SmallInt
+  region               regions?                                        @relation(fields: [region_id], references: [id])
+  in_slovenia          Boolean                                         @default(false)
+  // lost: last seen; found/sighted: when seen. Matching uses event_at, never created_at.
+  event_at             DateTime                                        @db.Timestamptz(6)
+  circumstances        String?
+  contact_pref         CONTACT_PREF                                    @default(chat_only)
+  // lost only, display only (no payment)
+  reward_eur           Int?
+  reward_note          String?
+  // a sighting of a lost report
+  linked_report_id     String?                                         @db.Uuid
+  linked_report        reports?                                        @relation("sightings", fields: [linked_report_id], references: [id], onDelete: SetNull)
+  sightings            reports[]                                       @relation("sightings")
+  source               REPORT_SOURCE                                   @default(user)
+  // organisations arrive with TASK-6.8
+  organisation_id      String?                                         @db.Uuid
+  boosted_until        DateTime?                                       @db.Timestamptz(6)
+  manage_token_hash    Bytes?
+  first_match_at       DateTime?                                       @db.Timestamptz(6)
+  reunited_at          DateTime?                                       @db.Timestamptz(6)
+  closed_at            DateTime?                                       @db.Timestamptz(6)
+  last_owner_update_at DateTime                                        @default(now()) @db.Timestamptz(6)
+  created_by           String?                                         @db.Uuid
+  creator              profiles?                                       @relation(fields: [created_by], references: [id], onDelete: SetNull)
+  created_at           DateTime                                        @default(now()) @db.Timestamptz(6)
+  updated_at           DateTime                                        @default(now()) @updatedAt @db.Timestamptz(6)
+  managers             report_managers[]
+  contact              report_contacts?
+  photos               photos[]
+
+  @@index([exact_point], type: Gist)
+  @@index([public_point], type: Gist)
+  @@index([pet_id])
+  @@schema("app")
+}
+
+model report_managers {
+  report_id  String   @db.Uuid
+  report     reports  @relation(fields: [report_id], references: [id], onDelete: Cascade)
+  user_id    String   @db.Uuid
+  user       profiles @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  // owner | finder | staff
+  role       String
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+
+  @@id([report_id, user_id])
+  @@index([user_id])
+  @@schema("app")
+}
+
+// The optional finder email of an anonymous report (manage link, C7). Never returned to the public.
+model report_contacts {
+  report_id String  @id @db.Uuid
+  report    reports @relation(fields: [report_id], references: [id], onDelete: Cascade)
+  email     String
+
+  @@schema("app")
+}

@@ -26,6 +26,10 @@ model profiles {
   quiet_to                String?
   created_at              DateTime                                         @default(now()) @db.Timestamptz(6)
   updated_at              DateTime                                         @updatedAt @db.Timestamptz(6)
+  pets                    pets[]
+  reports                 reports[]
+  managed_reports         report_managers[]
+  photos                  photos[]
 
   @@schema("app")
 }
