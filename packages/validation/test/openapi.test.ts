@@ -1,5 +1,5 @@
 import { OpenApiGeneratorV31, OpenAPIRegistry } from '@asteasolutions/zod-to-openapi';
-import { expect, test } from 'vitest';
+import { expect, test, vi } from 'vitest';
 
 import indexSrc from '../src/index.ts?raw';
 import zodSrc from '../src/zod.ts?raw';
@@ -65,4 +65,19 @@ test('the registry is not exported from the package root (keeps it out of app bu
 
 test('index and zod.ts do not import zod-to-openapi at runtime (lean client bundles)', () => {
 	for (const src of [zodSrc, indexSrc]) expect(src).not.toMatch(/^import (?!type)[^\n]*zod-to-openapi/m);
+});
+
+test('wrong import order (stub installed before the extension) throws', async () => {
+	const proto = (await import('zod')).z.ZodType.prototype as unknown as { openapi?: unknown };
+	const real = proto.openapi;
+	try {
+		delete proto.openapi;
+		vi.resetModules();
+		await import('../src/zod.ts');
+		await expect(import('../src/openapi-extend.ts')).rejects.toThrow(
+			'import @zivali/validation/openapi before @zivali/validation'
+		);
+	} finally {
+		proto.openapi = real;
+	}
 });

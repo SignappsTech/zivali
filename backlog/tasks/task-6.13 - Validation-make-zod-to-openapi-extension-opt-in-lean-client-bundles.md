@@ -32,3 +32,8 @@ CH-32. zod.ts runs extendZodWithOpenApi at import, pulling @asteasolutions/zod-t
 
 ## Packet
 Branch: agent/TASK-6.13-openapi-opt-in
+
+## Notes
+- AC#3 checked by grep: `grep -rn "@zivali/validation/openapi" apps/web apps/mobile` finds nothing (only apps/api imports it), so Next/Metro never reach zod-to-openapi.
+- AC#2 verified with `pnpm --filter api gen:openapi --check` once TASK-3.7 is on main; the 3.7 branch adds `import '@zivali/validation/openapi'` as its first import.
+- Wrong import order now throws (stub.isStub check in openapi-extend.ts), since extendZodWithOpenApi silently returns when `.openapi` already exists.

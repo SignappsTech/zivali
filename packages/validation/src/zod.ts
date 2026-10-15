@@ -4,9 +4,15 @@
 import type {} from '@asteasolutions/zod-to-openapi';
 import { z } from 'zod';
 
-const proto = z.ZodType.prototype as unknown as { openapi?: unknown };
-proto.openapi ??= function (this: unknown) {
-	return this;
-};
+// `isStub` lets './openapi-extend.ts' fail loudly if it is imported AFTER this file (extendZodWithOpenApi silently skips
+// when `.openapi` already exists, which would leave the no-op in place and the OpenAPI output empty).
+const proto = z.ZodType.prototype as unknown as { openapi?: ((this: unknown) => unknown) & { isStub?: boolean } };
+if (!proto.openapi) {
+	const stub = function (this: unknown) {
+		return this;
+	};
+	stub.isStub = true;
+	proto.openapi = stub;
+}
 
 export { z };
