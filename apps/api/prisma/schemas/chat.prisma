@@ -1,13 +1,16 @@
 // Chat (C9): conversations about a report, their participants, messages and blocks. Only the API reads these
 // (ADR-021); clients get messages over Realtime Broadcast (ADR-023), never from a published table.
 // Participants appear by alias or chosen display name only: no emails or phone numbers in chat rows.
-// The *_report_id columns get their foreign keys to reports in a follow-up migration once TASK-6.6 is merged.
+// The *_report_id columns reference reports (ON DELETE CASCADE, TASK-6.16).
 
 model conversations {
   id              String                      @id @default(uuid()) @db.Uuid
   lost_report_id  String?                     @db.Uuid
+  lost_report     reports?                    @relation("conversations_lost", fields: [lost_report_id], references: [id], onDelete: Cascade)
   other_report_id String?                     @db.Uuid
+  other_report    reports?                    @relation("conversations_other", fields: [other_report_id], references: [id], onDelete: Cascade)
   about_report_id String                      @db.Uuid
+  about_report    reports                     @relation("conversations_about", fields: [about_report_id], references: [id], onDelete: Cascade)
   // One conversation per confirmed match (confirm is idempotent, C8).
   match_id        String?                     @unique @db.Uuid
   // 'active' | 'read_only' (check constraint in the migration)
