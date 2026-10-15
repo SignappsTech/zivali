@@ -1,5 +1,5 @@
 // Generates plain SQL that loads the GURS geo reference data (12 statistical regions, 212 municipalities)
-// from supabase/seed/geo/*.geojson into public.regions and public.municipalities (C6, ADR-006).
+// from supabase/seed/geo/*.geojson into app.regions and app.municipalities (C6, ADR-006, ADR-021).
 // Output is deterministic: rows sorted by id, coordinates copied as-is, geometry as EWKT literals.
 // Usage: node scripts/geo-to-sql.mjs <out.sql>
 import { readFileSync, writeFileSync } from 'node:fs';
@@ -54,7 +54,7 @@ const insert = (table, columns, features) => {
 		.map((c) => `${c} = excluded.${c}`)
 		.join(', ');
 	return (
-		`insert into public.${table} (${columns.join(', ')}) values\n${rows.join(',\n')}\n` +
+		`insert into app.${table} (${columns.join(', ')}) values\n${rows.join(',\n')}\n` +
 		`on conflict (id) do update set ${updates};\n`
 	);
 };

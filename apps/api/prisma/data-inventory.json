@@ -54,6 +54,24 @@
 			"export": false,
 			"delete": "purged after 24 h",
 			"other_columns": ["key", "route", "status", "created_at"]
+		},
+		"regions": {
+			"category": "reference",
+			"personal_data": [],
+			"basis": "none (no personal data; GURS open data, CC BY 4.0)",
+			"retention": "kept; replaced on a data refresh",
+			"export": false,
+			"delete": "keep",
+			"other_columns": ["id", "slug", "name_sl", "name_en", "geom"]
+		},
+		"municipalities": {
+			"category": "reference",
+			"personal_data": [],
+			"basis": "none (no personal data; GURS open data, CC BY 4.0)",
+			"retention": "kept; replaced on a data refresh",
+			"export": false,
+			"delete": "keep",
+			"other_columns": ["id", "slug", "name_sl", "name_en", "region_id", "geom"]
 		}
 	},
 	"buckets": {

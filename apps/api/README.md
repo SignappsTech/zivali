@@ -22,7 +22,7 @@ middleware/<name>.middleware.ts    requestId, validate (body, query, params), er
 lib/                        config.ts (zod env, read once), logger.ts (pino), errors.ts (AppError + C1 codes),
                             ctx.ts (requestCtx, systemCtx), openapi.ts (apiRoutes over the @zivali/validation registry)
 scripts/gen-openapi.ts      writes openapi.json; `--check` fails when it is stale (part of `lint`)
-prisma/                     prisma.ts (client singleton), schemas/*.prisma + schemas/migrations/, sql/ (TypedSQL),
+prisma/                     prisma.ts (client singleton), schemas/*.prisma + schemas/migrations/,
                             seed.ts (runs seeders/NN-<name>.seeder.ts in order)
 generated/                  Prisma client output (gitignored, never edited; `prisma generate` rebuilds it)
 test/                       routes/, middleware/, lib/, security/, helpers/ (signTestToken), setup.ts, global-setup.ts
@@ -89,7 +89,8 @@ Logs (pino, `lib/logger.ts`): one line per request with `req_id`, `route` (metho
 - Every new model gets an entry in `prisma/data-inventory.json` (with each R2 bucket); `test/security/data-inventory.test.ts` fails otherwise.
 - Seed: fixture users, password and the local TOTP secret for mod and admin are in [prisma/seeders/README.md](prisma/seeders/README.md).
 - Prisma 7 no longer generates on `migrate dev`: run `pnpm --filter api exec prisma generate` after schema changes (`pnpm install` also does).
-- TypedSQL is enabled (`prisma/sql/`); `prisma generate --sql` needs the database running.
+- Geo reference (`TASK-6.4`, `geo.prisma`): `regions` and `municipalities` (GURS, GiST on `geom`), loaded by seeder `01-geo` in every environment. `GeoDomain.lookup({ lat, lng }, ctx)` (`lib/geo.ts`, one raw PostGIS query) returns the municipality and region ids and slugs, or `in_slovenia: false`.
+- Staging and prod geo data: after `prisma migrate deploy`, run `pnpm --filter api db:seed` from a checkout with that `DATABASE_URL`. Reference data (`01-geo`) loads everywhere; fixture seeders skip themselves via `APP_ENV`.
 
 ## Commands
 

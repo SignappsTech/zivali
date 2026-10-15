@@ -81,7 +81,7 @@ test('the generator is deterministic and emits one row per feature, regions firs
 	const sql = geoToSql(regions, municipalities);
 	assert.equal(geoToSql([...regions].reverse(), [...municipalities].reverse()), sql);
 	assert.equal(sql.match(/^ {2}\(/gm).length, 224);
-	assert.ok(sql.indexOf('insert into public.regions') < sql.indexOf('insert into public.municipalities'));
+	assert.ok(sql.indexOf('insert into app.regions') < sql.indexOf('insert into app.municipalities'));
 	assert.match(sql, /\(61, 'ljubljana', 'Ljubljana', 'Ljubljana', 8, 'SRID=4326;MULTIPOLYGON\(\(\(/);
 	assert.throws(() => geoToSql([{ ...regions[0], properties: { ...regions[0].properties, slug: 'Bad' } }], []));
 });

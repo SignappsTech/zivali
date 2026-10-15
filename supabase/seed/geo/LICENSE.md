@@ -7,7 +7,7 @@
 | `places.ndjson.gz` | geocoder places (C6 `geo_places`): 6,035 settlements, 65 city districts, 10,498 streets; see [Geocoder snapshot](#geocoder-snapshot-places-and-house-numbers) |
 | `addresses.tsv.gz` | geocoder house numbers (C6 `geo_addresses`): 580,251 |
 
-WGS84 (EPSG:4326) GeoJSON, RFC 7946 ring order. `scripts/geo-to-sql.mjs <out.sql>` turns both files into plain SQL for `public.regions` and `public.municipalities` (C6, ADR-006).
+WGS84 (EPSG:4326) GeoJSON, RFC 7946 ring order. `scripts/geo-to-sql.mjs <out.sql>` turns both files into plain SQL for `app.regions` and `app.municipalities`; the API seeder `01-geo` runs it (C6, ADR-006).
 
 ## Source and licence
 

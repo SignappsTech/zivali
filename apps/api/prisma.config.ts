@@ -19,6 +19,5 @@ export default defineConfig({
 		path: 'prisma/schemas/migrations',
 		seed: 'tsx prisma/seed.ts',
 	},
-	typedSql: { path: 'prisma/sql' },
 	datasource: { url },
 });
