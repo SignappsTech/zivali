@@ -192,6 +192,9 @@ export const ABUSE_STATUSES = ['open', 'dismissed', 'actioned'] as const;
 export type AbuseStatus = Values<typeof ABUSE_STATUSES>;
 export const MODERATION_FLAG_KINDS = ['duplicate_chip', 'anon_hold', 'auto_hidden'] as const;
 export type ModerationFlagKind = Values<typeof MODERATION_FLAG_KINDS>;
+// Flags also target pets (duplicate_chip, TASK-16.3), which abuse reports cannot.
+export const MODERATION_FLAG_TARGET_TYPES = ['report', 'message', 'profile', 'pet'] as const;
+export type ModerationFlagTargetType = Values<typeof MODERATION_FLAG_TARGET_TYPES>;
 
 // C12 analytics parameter values
 export const ANALYTICS_USER_ROLES = ['owner', 'finder', 'shelter', 'admin'] as const;

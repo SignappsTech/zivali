@@ -19,9 +19,32 @@ import { cn } from '@/lib/utils';
 
 import { type Day, type DiffField, type DiffRow, formatDays, formatHours, isStale } from './format';
 
+/** Console h1: 30/36 at every width (P19, denser than the public pages). */
+export const adminH1Class = 'font-display text-3xl font-bold tracking-[-0.02em] text-balance';
+
+// Dense table (system §10.9): card 4/16/8, sticky 52 px header, 56 px rows, 15/22, hairlines, row hover accent 60 %.
+export const thClass =
+	'sticky top-0 z-[1] h-13 border-b border-border bg-card px-3 text-left align-middle text-sm font-bold whitespace-nowrap text-muted-foreground';
+export const tdClass = 'h-14 border-b border-border px-3 py-1.5 align-middle';
+
 // Note (system §10.6): muted, radius 20, icon 22, 15/22.
 export const noteClass = 'flex gap-3 rounded-row bg-muted px-[18px] py-4 text-control leading-[22px]';
 export const noteIconClass = 'mt-px size-[22px] shrink-0';
+
+/** P19 S2: the page of a console section that is not built yet (and the dashboard until its KPIs land, M4). */
+export function ComingSoon({ title }: { title: string }) {
+	const t = useTranslations('admin');
+	return (
+		<div>
+			<h1 className={adminH1Class}>{title}</h1>
+			<p className="mt-3 flex items-center gap-2 font-bold text-muted-foreground">
+				<ClockIcon weight="fill" aria-hidden="true" className="size-5" />
+				{t('coming_badge')}
+			</p>
+			<p className="mt-2">{t('coming_body')}</p>
+		</div>
+	);
+}
 
 /** Inline error for a region or a failed save (system §10.9). */
 export function ErrorNote({ children, action }: { children: React.ReactNode; action?: React.ReactNode }) {

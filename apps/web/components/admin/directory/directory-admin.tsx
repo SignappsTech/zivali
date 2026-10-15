@@ -29,7 +29,6 @@ import { FormField } from '@/components/ui/form-field';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Toaster } from '@/components/ui/sonner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
 
@@ -38,7 +37,18 @@ import { isStale, todayIso } from './format';
 import { History } from './history';
 import { ImportDialog } from './import-dialog';
 import { MunicipalityForm } from './municipality-form';
-import { CheckedDate, ErrorNote, type MenuItem, noteClass, noteIconClass, Pill, pillClass, RowMenu } from './parts';
+import {
+	CheckedDate,
+	ErrorNote,
+	type MenuItem,
+	noteClass,
+	noteIconClass,
+	Pill,
+	pillClass,
+	RowMenu,
+	tdClass,
+	thClass,
+} from './parts';
 import { ShelterForm } from './shelter-form';
 
 type Tab = 'shelters' | 'municipalities';
@@ -58,10 +68,6 @@ const fold = (value: string) =>
 		.replace(/\p{Diacritic}/gu, '')
 		.toLowerCase();
 
-// Dense table (system §10.9): card 4/16/8, sticky 52 px header, 56 px rows, 15/22, hairlines, row hover accent 60 %.
-const thClass =
-	'sticky top-0 z-[1] h-13 border-b border-border bg-card px-3 text-left align-middle text-sm font-bold whitespace-nowrap text-muted-foreground';
-const tdClass = 'h-14 border-b border-border px-3 py-1.5 align-middle';
 const rowLinkClass =
 	'inline-flex min-h-11 cursor-pointer items-center rounded-sm text-left font-bold group-hover:underline group-hover:decoration-2 group-hover:underline-offset-4 hover:underline hover:decoration-2 hover:underline-offset-4 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ring';
 const statusClass = 'inline-flex items-center gap-1.5 text-sm font-bold whitespace-nowrap';
@@ -574,9 +580,6 @@ export function DirectoryAdmin() {
 				<DeleteDialog shelter={panelShelter} assigned={counts.get(panelShelter.slug) ?? 0} onClose={close} />
 			)}
 			{panel?.kind === 'import' && <ImportDialog shelterName={shelterName} onClose={close} />}
-
-			{/* TODO(TASK-34.3): the admin shell mounts the toaster once for the whole console. */}
-			<Toaster closeLabel={tCommon('close')} label={tCommon('toasts_label')} />
 		</div>
 	);
 }

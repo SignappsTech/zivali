@@ -20,11 +20,14 @@ import { Provider } from 'react-redux';
 import { useTranslations } from 'use-intl';
 
 import { CaptchaSheet } from '@/components/anonymous/captcha-sheet';
+import { filePut } from '@/components/photos/prepare-photo';
 import { ConsentSheet } from '@/components/shell/consent';
 import { Toaster } from '@/components/ui/sonner';
 import { setupAnalytics, useScreenTracking } from '@/lib/analytics';
+import { ensureSession } from '@/lib/anonymous';
+import { startOutbox } from '@/lib/offline/outbox';
 import { ProfileI18n } from '@/lib/profile-i18n';
-import { store } from '@/lib/store';
+import { apiClient, store } from '@/lib/store';
 import { NAV_THEME } from '@/lib/theme';
 
 export { ErrorBoundary } from 'expo-router';
@@ -43,6 +46,8 @@ export default function RootLayout() {
 	});
 	const ready = fontsLoaded || fontError;
 	useScreenTracking();
+	// Queued found and sighted reports (C17): sent on launch, resume and reconnect; the captcha sheet below serves it.
+	useEffect(() => startOutbox({ api: apiClient, ensureSession, put: filePut }), []);
 
 	useEffect(() => {
 		if (ready) SplashScreen.hideAsync();

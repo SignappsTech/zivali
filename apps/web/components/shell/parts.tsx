@@ -25,9 +25,17 @@ const FLOW = new Set([
 	'/inbox/[id]',
 	'/payments/return',
 ]);
-// Pages whose content has its own primary action, so "Prijavi" is secondary there (system 10.7): P3 home hero,
-// T5/T6 shelters, P9 report detail, P22 partners.
-const OWN_PRIMARY = new Set(['/', '/shelters', '/shelters/[slug]', '/r/[code]', '/advertise']);
+// Pages whose content has its own primary action, so "Prijavi" is secondary there (system 10.7): P3 home hero, the
+// closing rows of How it works and For shelters, T5/T6 shelters, P9 report detail, P22 partners.
+const OWN_PRIMARY = new Set([
+	'/',
+	'/how-it-works',
+	'/for-shelters',
+	'/shelters',
+	'/shelters/[slug]',
+	'/r/[code]',
+	'/advertise',
+]);
 
 /** P1 layout variant of an internal pathname. Admin and portal (P19) and the dev galleries bring their own shell. */
 export function shellVariant(pathname: string): 'content' | 'flow' | 'none' {

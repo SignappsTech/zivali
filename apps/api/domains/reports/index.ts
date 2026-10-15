@@ -7,4 +7,7 @@ export {
 	type ReportView,
 } from './reports.domain.ts';
 export { default as ManageDomain } from './manage.domain.ts';
+export { default as LifecycleDomain } from './lifecycle.domain.ts';
+export { default as SearchDomain, type MapInput, type SearchInput } from './search.domain.ts';
 export { default as ReportsMapper } from './reports.mapper.ts';
+export { default as SyncDomain, type SyncFeed } from './sync.domain.ts';
