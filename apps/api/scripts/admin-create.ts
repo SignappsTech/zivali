@@ -33,8 +33,8 @@ async function adminApiKey(): Promise<string> {
 			.setIssuedAt()
 			.setExpirationTime('5m')
 			.sign(new TextEncoder().encode(config.SUPABASE_JWT_SECRET));
-	if (!config.SUPABASE_SERVICE_ROLE_KEY) throw new Error('SUPABASE_SERVICE_ROLE_KEY is not set');
-	return config.SUPABASE_SERVICE_ROLE_KEY;
+	if (!config.SUPABASE_SECRET_KEY) throw new Error('SUPABASE_SECRET_KEY is not set');
+	return config.SUPABASE_SECRET_KEY;
 }
 
 /** One Supabase Auth Admin API call, e.g. adminApi('/users?page=1'). */
