@@ -20,6 +20,8 @@ jest.mock('expo-sqlite/localStorage/install', () => {
 	return {};
 });
 
+jest.useFakeTimers();
+
 afterEach(() => {
 	// Stop RTK Query's cache timers so Jest can tear down cleanly.
 	for (const s of stores) s.dispatch(api.util.resetApiState());
