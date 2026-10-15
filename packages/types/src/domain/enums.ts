@@ -156,8 +156,6 @@ export const MESSAGE_KINDS = ['text', 'location', 'system'] as const;
 export type MessageKind = Values<typeof MESSAGE_KINDS>;
 export const ALIAS_KEYS = ['owner', 'finder', 'sighter', 'contact', 'shelter'] as const;
 export type AliasKey = Values<typeof ALIAS_KEYS>;
-export const SENDER_ALIAS_KEYS = ['you', ...ALIAS_KEYS] as const;
-export type SenderAliasKey = Values<typeof SENDER_ALIAS_KEYS>;
 export const REALTIME_EVENTS = [
 	'message.created',
 	'conversation.read',

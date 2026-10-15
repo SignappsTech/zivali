@@ -1,0 +1,95 @@
+<!doctype html>
+<!-- Change email (C3; copy: docs/content/notifications-and-emails.md §3.3). Language from user_metadata.locale: "en" is EN, anything else SL. -->
+<html>
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>Najdimo</title>
+	</head>
+	<body
+		style="
+			margin: 0;
+			padding: 24px 16px;
+			background: #f3f6f6;
+			color: #1c2b2d;
+			font:
+				16px/1.5 Arial,
+				Helvetica,
+				sans-serif;
+		"
+	>
+		{{ if eq .Data.locale "en" }}
+		<div lang="en" style="max-width: 560px; margin: 0 auto">
+			<span style="display: none; max-height: 0; overflow: hidden"
+				>Confirm the change of email address on your Najdimo account.</span
+			>
+			<p style="margin: 0 0 24px; font-size: 22px; font-weight: bold; color: #145360">
+				Najdimo <span style="font-size: 14px; font-weight: normal; color: #4a5b5d">Home again.</span>
+			</p>
+			<p>You asked to change the email address of your Najdimo account from {{ .Email }} to {{ .NewEmail }}.</p>
+			<p>Confirm the change with the button below. Until then you keep signing in with your old address.</p>
+			<p style="margin: 24px 0">
+				<a
+					href="{{ .ConfirmationURL }}"
+					style="
+						display: inline-block;
+						padding: 12px 20px;
+						border-radius: 8px;
+						background: #145360;
+						color: #ffffff;
+						font-weight: bold;
+						text-decoration: none;
+					"
+					>Confirm new email</a
+				>
+			</p>
+			<p>If you did not ask for this, sign in and change your password, or write to us.</p>
+			<p style="font-size: 14px; color: #4a5b5d">
+				Button not working? Copy this link into your browser: {{ .ConfirmationURL }}
+			</p>
+			<hr style="border: 0; border-top: 1px solid #d5dfe0; margin: 32px 0 16px" />
+			<p style="font-size: 13px; color: #4a5b5d">
+				You received this email because you have a Najdimo account.<br />
+				Questions? Reply to this email or write to [client: support email address].<br />
+				Najdimo · [client: company address]
+			</p>
+		</div>
+		{{ else }}
+		<div lang="sl" style="max-width: 560px; margin: 0 auto">
+			<span style="display: none; max-height: 0; overflow: hidden"
+				>Potrditev spremembe e-naslova za račun v Najdimo.</span
+			>
+			<p style="margin: 0 0 24px; font-size: 22px; font-weight: bold; color: #145360">
+				Najdimo <span style="font-size: 14px; font-weight: normal; color: #4a5b5d">Spet doma.</span>
+			</p>
+			<p>Zahtevali ste spremembo e-naslova računa v Najdimo z {{ .Email }} na {{ .NewEmail }}.</p>
+			<p>Spremembo potrdite z gumbom spodaj. Do potrditve se še vpisujete s starim e-naslovom.</p>
+			<p style="margin: 24px 0">
+				<a
+					href="{{ .ConfirmationURL }}"
+					style="
+						display: inline-block;
+						padding: 12px 20px;
+						border-radius: 8px;
+						background: #145360;
+						color: #ffffff;
+						font-weight: bold;
+						text-decoration: none;
+					"
+					>Potrdi nov e-naslov</a
+				>
+			</p>
+			<p>Če spremembe niste zahtevali vi, se vpišite in spremenite geslo ali nam pišite.</p>
+			<p style="font-size: 14px; color: #4a5b5d">
+				Gumb ne deluje? Kopirajte to povezavo v brskalnik: {{ .ConfirmationURL }}
+			</p>
+			<hr style="border: 0; border-top: 1px solid #d5dfe0; margin: 32px 0 16px" />
+			<p style="font-size: 13px; color: #4a5b5d">
+				Prejeli ste to e-sporočilo, ker imate račun v Najdimo.<br />
+				Vprašanja? Odgovorite na to sporočilo ali pišite na [naročnik: e-naslov za podporo].<br />
+				Najdimo · [naročnik: naslov družbe]
+			</p>
+		</div>
+		{{ end }}
+	</body>
+</html>

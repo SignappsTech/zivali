@@ -73,6 +73,55 @@
 			"delete": "keep",
 			"other_columns": ["id", "slug", "name_sl", "name_en", "region_id", "geom"]
 		},
+		"shelters": {
+			"category": "reference",
+			"personal_data": [],
+			"basis": "none (no personal data; organisation data the shelters publish, general e-mail addresses only)",
+			"retention": "kept; deactivated instead of deleted once it has history",
+			"export": false,
+			"delete": "keep",
+			"other_columns": [
+				"id",
+				"slug",
+				"name",
+				"address",
+				"postal_code",
+				"city",
+				"lat",
+				"lng",
+				"phone",
+				"phone_display",
+				"email",
+				"website",
+				"opening_hours",
+				"registry_id",
+				"species",
+				"source",
+				"verified_at",
+				"active",
+				"version",
+				"created_at",
+				"updated_at"
+			]
+		},
+		"municipality_shelters": {
+			"category": "reference",
+			"personal_data": [],
+			"basis": "none (no personal data; public-sector sources)",
+			"retention": "kept",
+			"export": false,
+			"delete": "keep",
+			"other_columns": ["municipality_id", "shelter_id", "status", "source", "verified_at", "version"]
+		},
+		"directory_changes": {
+			"category": "reference",
+			"personal_data": ["actor_id"],
+			"basis": "legitimate interest (GDPR art. 6(1)(f)): accountability of directory edits",
+			"retention": "kept (append-only history)",
+			"export": false,
+			"delete": "anonymise",
+			"other_columns": ["id", "entity", "entity_id", "version", "data", "source", "created_at"]
+		},
 		"matches": {
 			"category": "matching",
 			"personal_data": ["rejected_reason"],
@@ -198,7 +247,7 @@
 			"category": "notifications",
 			"personal_data": ["user_id", "to_address_hash", "locale", "error"],
 			"basis": "contract (GDPR art. 6(1)(b)): delivery record",
-			"retention": "not defined yet (TASK-22.3)",
+			"retention": "90 d after creation (purged by the retention job)",
 			"export": false,
 			"delete": "delete",
 			"other_columns": ["id", "template", "status", "provider_id", "created_at"]

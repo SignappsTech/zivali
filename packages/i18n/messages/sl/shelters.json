@@ -44,13 +44,13 @@
 	"what_found_button": "Prijavi najdeno žival",
 	"stale": "Podatki so bili nazadnje preverjeni {date}. Pred obiskom pokličite.",
 	"days": {
-		"mon": "pon",
-		"tue": "tor",
-		"wed": "sre",
-		"thu": "čet",
-		"fri": "pet",
-		"sat": "sob",
-		"sun": "ned"
+		"mon": "ponedeljek",
+		"tue": "torek",
+		"wed": "sreda",
+		"thu": "četrtek",
+		"fri": "petek",
+		"sat": "sobota",
+		"sun": "nedelja"
 	},
 	"seo_title": "Zavetišča za živali po občinah · Najdimo",
 	"seo_description": "Poiščite zavetišče, pristojno za vašo občino: telefon, naslov in delovni čas vseh {count} zavetišč za pse in mačke v Sloveniji.",

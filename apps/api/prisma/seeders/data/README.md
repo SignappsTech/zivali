@@ -14,7 +14,7 @@ and prints the municipalities that still have no confirmed shelter.
 | `slug`                           | ASCII URL slug for `/zavetisca/[slug]`                                                                                                                                                                          |
 | `name`                           | Public shelter name                                                                                                                                                                                             |
 | `address`, `postal_code`, `city` | Address of the shelter (as on the shelter website, else as in the register)                                                                                                                                     |
-| `lat`, `lng`                     | Empty for now (optional in C18)                                                                                                                                                                                 |
+| `lat`, `lng`                     | The GURS house-number point of the address (`supabase/seed/geo/addresses.tsv.gz`, looked up 2026-10-15); used for the distances in the responsible-shelter lookup                                               |
 | `phone`                          | The number to call, in E.164 (`+386…`)                                                                                                                                                                          |
 | `phone_display`                  | The same number, grouped as the shelter publishes it (separators as spaces)                                                                                                                                     |
 | `email`, `website`               | The shelter's general e-mail and website. E-mail addresses that contain a person's name are left out (no personal data)                                                                                         |
@@ -22,6 +22,7 @@ and prints the municipalities that still have no confirmed shelter.
 | `registry_id`                    | `<register edition>#<position>`, e.g. `2026-02-23#3`. **Not an official register number:** the UVHVVR register publishes no shelter numbers, only a numbered list, so this is the list position in that edition |
 | `source`                         | Where each value comes from, and any corrections                                                                                                                                                                |
 | `verified_at`                    | Date the row was last checked against its sources                                                                                                                                                               |
+| `species`                        | Empty = dogs and cats; `cat` = cats only (as the shelter's name or website states)                                                                                                                              |
 
 `municipality_shelters.csv` has at least one row per municipality:
 
@@ -39,6 +40,10 @@ and prints the municipalities that still have no confirmed shelter.
 There is at most one row per municipality and species. Each municipality must resolve for both cats and
 dogs, through an empty-species row or through both a `cat` and a `dog` row. The `species` column is an
 addition to C18 (reported as a CHANGE).
+
+The seeder keeps C18's one assignment per municipality: `CONFIRMED` only when cats and dogs resolve to the
+same confirmed shelter, else `UNCONFIRMED` with the first `suggested_shelter` (all-animals row first) as the
+likely shelter. A species split is therefore unconfirmed in the API, and its `source` lists each row.
 
 ## Sources and method
 

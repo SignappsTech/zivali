@@ -37,8 +37,8 @@ model profiles {
 - Email + password with `enable_confirmations = true`; anonymous sign-ins enabled; MFA TOTP enroll and verify enabled.
 - Google and Apple providers enabled only when their client ids are set (`env(...)` in config).
 - Turnstile captcha: off locally, on in cloud for sign-up and anonymous sign-in.
-- Redirect URLs: `APP_URL/**`, `zivali://**`, Expo dev URLs. JWT expiry 3600 s, refresh token rotation on.
-- Email templates (confirm, recovery, magic link, email change, reauthentication, identity-linked notice) in `supabase/templates/*.html`, copy from `docs/content/notifications-and-emails.md` §5, localised with `{{ if eq .Data.locale "en" }}…{{ else }}…{{ end }}`; check `{{ .Provider }}` and `{{ .NewEmail }}` against the deployed Supabase version.
+- Redirect URLs: production allow-list is `https://<APP_URL>/**` and `zivali://**` only (`exp://` URLs are local/staging only). `secure_password_change = true`. The locale reaches the auth emails through the Admin API (`user_metadata.locale`). JWT expiry 3600 s, refresh token rotation on.
+- Email templates (confirm, recovery, magic link, email change, reauthentication, identity-linked notice) in `supabase/templates/*.html`, copy from `docs/content/notifications-and-emails.md` §3, localised with `{{ if eq .Data.locale "en" }}…{{ else }}…{{ end }}`; check `{{ .Provider }}` and `{{ .NewEmail }}` against the deployed Supabase version.
 
 ## REST
 
@@ -89,3 +89,4 @@ Clients keep report drafts locally (C4 §Drafts, C17). When a signed-out visitor
 | 1.2 | 2026-10-15 | CH-92: signOut cleanup runs DELETE /v1/push-tokens with body { token } |
 | 1.3 | 2026-10-15 | CH-102: `home_point` typed `extensions.geography(Point,4326)` |
 | 1.4 | 2026-10-15 | CH-121: `email_verified` from `auth.users.email_confirmed_at`, never `user_metadata` |
+| 1.5 | 2026-10-15 | CH-129: email copy reference §5 → §3; production redirect allow-list (`https://<APP_URL>/**`, `zivali://**`; `exp://` local/staging only); `secure_password_change = true`; locale reaches auth emails via the Admin API |

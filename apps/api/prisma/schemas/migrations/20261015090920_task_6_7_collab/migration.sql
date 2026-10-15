@@ -3,7 +3,7 @@
 --   app.notification_prefs, app.notifications, app.blocks, app.messages, app.conversation_participants,
 --   app.conversations, app.match_feedback, app.matches; drop type app."MATCH_STATE";
 -- Matching (C8), chat (C9), notifications and nearby alerts (C10). ADR-021: RLS enabled, no policies.
--- Follow-up once TASK-6.6 (reports) is merged, in a new migration:
+-- Follow-up (TASK-6.16) once TASK-6.6 (reports) is merged, in a new migration (all FKs ON DELETE CASCADE):
 --   foreign keys to app.reports(id) on matches.lost_report_id, matches.other_report_id (on delete cascade),
 --   conversations.about_report_id, .lost_report_id, .other_report_id and alert_deliveries.report_id;
 --   alert_subscriptions.species text[] -> app."SPECIES"[] (drop the species check and default, alter type
@@ -273,7 +273,9 @@ alter table app.messages add constraint messages_body_check check (char_length(b
 alter table app.push_tokens add constraint push_tokens_platform_check check (platform in ('ios', 'android'));
 alter table app.alert_subscriptions add constraint alert_subscriptions_radius_km_check check (radius_km between 1 and 25);
 alter table app.alert_subscriptions
-	add constraint alert_subscriptions_species_check check (species <@ array['dog', 'cat']::text[]);
+	add constraint alert_subscriptions_species_check check (
+		species is not null and cardinality(species) > 0 and species <@ array['dog', 'cat']::text[]
+	);
 alter table app.email_outbox
 	add constraint email_outbox_status_check check (status in ('queued', 'sent', 'failed', 'mocked'));
 

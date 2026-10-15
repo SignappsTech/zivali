@@ -65,6 +65,7 @@ test('shelters.csv: 17 registered shelters with unique slugs and complete, sourc
 		'registry_id',
 		'source',
 		'verified_at',
+		'species',
 	]);
 	assert.equal(shelters.rows.length, 17);
 	const slugs = shelters.rows.map((s) => s.slug);
@@ -79,7 +80,9 @@ test('shelters.csv: 17 registered shelters with unique slugs and complete, sourc
 		assert.equal(toE164(s.phone_display), s.phone, `${s.slug}: phone_display is the same number`);
 		assert.ok(!s.email || /^[^\s@]+@[^\s@]+\.[a-z]+$/.test(s.email), `${s.slug}: email`);
 		assert.ok(!s.website || /^https?:\/\/\S+$/.test(s.website), `${s.slug}: website is a URL`);
-		for (const key of ['lat', 'lng']) assert.ok(!s[key] || Number.isFinite(+s[key]), `${s.slug}: ${key}`);
+		// TASK-88.2: lat/lng are the GURS house-number point of the address, inside Slovenia's bounding box.
+		assert.ok(+s.lat > 45.4 && +s.lat < 46.9 && +s.lng > 13.3 && +s.lng < 16.7, `${s.slug}: lat/lng in Slovenia`);
+		assert.ok(['', 'cat', 'dog'].includes(s.species), `${s.slug}: species "${s.species}"`);
 		assert.ok(isPastDate(s.verified_at), `${s.slug}: verified_at is an ISO date, not in the future`);
 		const hours = JSON.parse(s.opening_hours);
 		assert.ok(Array.isArray(hours), `${s.slug}: opening_hours is a JSON array`);
