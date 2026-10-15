@@ -87,7 +87,8 @@ async function listedAuthUser(email_confirm = true) {
 	return id;
 }
 
-describe('pnpm admin:create', () => {
+// Network-bound (local Auth Admin API): slower than the 5 s default when the whole suite runs.
+describe('pnpm admin:create', { timeout: 30_000 }, () => {
 	it('promotes an existing confirmed account to ADMIN through the Auth Admin API, audited', async () => {
 		const id = await listedAuthUser();
 		await expect(adminCreate(`  ${id.toUpperCase()}@TEST.INVALID `)).resolves.toEqual({ id, role: 'ADMIN' });
