@@ -13,13 +13,14 @@ import { type CachedReport, syncReports } from '@zivali/api/sync';
 import { getDb } from '@/lib/db';
 import { thumbsDir } from '@/lib/db/files';
 import { env } from '@/lib/env';
+import { distanceKm, type Point } from '@/lib/geo';
 import { isUnmetered } from '@/lib/net';
+import { refreshGeofences } from '@/lib/offline/geofence';
 
 // Offline cache of nearby public reports (C17 §Sync, ADR-019): the home and current areas, their thumbnails and
 // responsible shelters, the size and age limits, and the refresh triggers.
 
 export type CacheAreaId = 'home' | 'current';
-type Point = { lat: number; lng: number };
 type Area = Point & {
 	id: CacheAreaId;
 	radius_km: number;
@@ -39,10 +40,6 @@ const ROW_BYTES = 1024; // estimated size of one cached row in the budget, next 
 const THUMB_CONCURRENCY = 4;
 
 const round2 = (n: number) => Math.round(n * 100) / 100;
-
-/** Equirectangular distance in km: accurate to metres at the 10 km scale. */
-export const distanceKm = (a: Point, b: Point): number =>
-	Math.hypot((b.lng - a.lng) * Math.cos(((a.lat + b.lat) * Math.PI) / 360), b.lat - a.lat) * 111.32;
 
 /**
  * Settings → Offline data (TASK-85.3) with the C17 defaults. Non-personal preferences, kept in the SQLite
@@ -300,6 +297,8 @@ async function run(api: ApiClient): Promise<void> {
 	const settings = cacheSettings();
 	if (settings.mobilePhotos || (await isUnmetered())) await downloadThumbs(db);
 	await enforceLimits(settings, now);
+	// The cache changed: re-pick the geofenced areas (C17). No fix or no permission keeps the cache result.
+	await refreshGeofences().catch(() => {});
 }
 
 let running: Promise<void> | undefined;
@@ -357,13 +356,14 @@ TaskManager.defineTask(SYNC_TASK, async () => {
 
 /**
  * C17 triggers; call once at start-up (it counts as a resume). Foreground resume syncs when an area is older than
- * 15 minutes, regaining Wi-Fi or Ethernet syncs (and fetches the thumbnails skipped on mobile data), and the OS
- * background task runs about hourly on unmetered networks only. Returns the unsubscribe.
+ * 15 minutes (else only re-picks the geofences, which also notices a revoked Always permission), regaining Wi-Fi or
+ * Ethernet syncs (and fetches the thumbnails skipped on mobile data), and the OS background task runs about hourly on
+ * unmetered networks only. Returns the unsubscribe.
  */
 export function startCacheSync(api: ApiClient = defaultClient()): () => void {
 	// Offline or a server error: keep the cache, the next trigger tries again.
 	const kick = (task: () => Promise<unknown>) => void task().catch(() => {});
-	const resume = () => kick(async () => (await isStale()) && syncNow(api));
+	const resume = () => kick(async () => ((await isStale()) ? syncNow(api) : refreshGeofences()));
 	let wasUnmetered = false;
 	const app = AppState.addEventListener('change', (state) => state === 'active' && resume());
 	const network = addNetworkStateListener((state) =>

@@ -13,7 +13,6 @@ labels:
 dependencies:
   - TASK-11.1
   - TASK-12.1
-  - TASK-31.1
 references:
   - docs/design/system.md
   - docs/design/pages/P11-match-review.md
@@ -32,6 +31,8 @@ Confirming a match is the emotional peak, so it must be honest, readable and cal
 ## Packet
 Unblocks on: P1 web shell and P2 mobile shell mockups merged (header, footer, tab bar and sheet patterns); assets/empty-no-reports.png generated
 Branch: design/P11-match-review
+
+Unblocked from the image task(s) TASK-31.1 (2026-10-16): the Codex CLI is not installed yet, so use a labelled placeholder of the final size and aspect ratio where the illustration goes; the image task swaps the real art in later.
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Acceptance Criteria

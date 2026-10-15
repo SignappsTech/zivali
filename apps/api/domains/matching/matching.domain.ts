@@ -120,4 +120,12 @@ export async function matchReport(input: { report_id: string }, ctx: Ctx): Promi
 	return { stored };
 }
 
-export default { matchReport, matchingConfig };
+/**
+ * Mark reunited (C4): the report's suggested and confirmed matches close, on either side; returns the reports on the
+ * other side of the confirmed ones (the counterparts the reunite reaches).
+ */
+export async function closeMatchesOf(input: { report_id: string }, ctx: Ctx): Promise<string[]> {
+	return MatchingDao.closeForReport(input.report_id, ctx.tx);
+}
+
+export default { matchReport, matchingConfig, closeMatchesOf };

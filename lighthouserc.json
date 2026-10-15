@@ -4,6 +4,11 @@
 			"url": [
 				"http://localhost:8080/",
 				"http://localhost:8080/en",
+				"http://localhost:8080/kako-deluje",
+				"http://localhost:8080/varnost",
+				"http://localhost:8080/pogosta-vprasanja",
+				"http://localhost:8080/za-zavetisca",
+				"http://localhost:8080/o-nas",
 				"http://localhost:8080/zavetisca",
 				"http://localhost:8080/zavetisca/zavetisce-ljubljana"
 			],

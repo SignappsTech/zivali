@@ -56,6 +56,10 @@ describe('ScreenViews', () => {
 		expect(sent(['/r/AB12CD', '/r/AB12CD', '/', '/nope/AB12CD'])).toEqual(['/r/[code]', '/', '/[...rest]']);
 	});
 
+	it('sends no page_view in the admin console, SL or EN (FR-019)', () => {
+		expect(sent(['/admin', '/admin/audit-log', '/admin/shelters', '/admin/ads', '/map'])).toEqual(['/map']);
+	});
+
 	it('sends nothing without consent', () => {
 		initAnalytics();
 		setConsent({ analytics: false });

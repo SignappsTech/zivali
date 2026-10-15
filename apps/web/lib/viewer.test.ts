@@ -37,7 +37,7 @@ describe('getViewer', () => {
 		[{ sub: 'u1' }, ''],
 	])('reads the initials of %j', async (claims, initials) => {
 		auth.token = jwt(claims);
-		expect(await getViewer()).toEqual({ initials });
+		expect(await getViewer()).toEqual({ initials, aal2: false });
 	});
 
 	it('is null signed out, for an anonymous finder session and for a token it cannot read', async () => {
@@ -53,7 +53,7 @@ describe('getViewer', () => {
 describe('getVerifiedViewer', () => {
 	it('is the user only for a session the guards accept, never for a forged or anonymous one', async () => {
 		auth.token = jwt({ email: 'ana@example.si' });
-		expect(await getVerifiedViewer()).toEqual({ initials: 'A' });
+		expect(await getVerifiedViewer()).toEqual({ initials: 'A', aal2: false });
 		auth.token = jwt({ email: 'ana@example.si' }, 'forged');
 		expect(await getVerifiedViewer()).toBeNull();
 		auth.token = jwt({ is_anonymous: true });
@@ -68,7 +68,7 @@ describe('requireViewer', () => {
 		auth.token = undefined;
 		await expect(requireViewer('en')).rejects.toThrow('NEXT_REDIRECT en /sign-in');
 		auth.token = jwt({ email: 'ana@example.si' });
-		await expect(requireViewer('en')).resolves.toEqual({ initials: 'A' });
+		await expect(requireViewer('en')).resolves.toEqual({ initials: 'A', aal2: false });
 	});
 
 	it('sends the page that was asked for along as next', async () => {
@@ -86,7 +86,7 @@ describe('requireViewer', () => {
 	it('lets an anonymous session through only for allowAnonymous (C15 /m report managers)', async () => {
 		auth.token = jwt({ is_anonymous: true });
 		await expect(requireViewer('sl')).rejects.toThrow('NEXT_REDIRECT sl /sign-in');
-		await expect(requireViewer('sl', { allowAnonymous: true })).resolves.toEqual({ initials: '' });
+		await expect(requireViewer('sl', { allowAnonymous: true })).resolves.toEqual({ initials: '', aal2: false });
 	});
 });
 

@@ -75,9 +75,10 @@ describe('SiteHeader', () => {
 		expect(within(language).getByRole('link', { name: 'English' }).getAttribute('href')).toBe('/en/how-it-works');
 		expect(within(language).getByRole('link', { name: 'English' }).getAttribute('hreflang')).toBe('en');
 		expect(within(language).getByRole('link', { name: 'Slovenščina' }).getAttribute('aria-current')).toBe('true');
-		// One primary "Prijavi" per breakpoint (popover from md, sheet below); the popover holds the three choices.
+		// One "Prijavi" per breakpoint (popover from md, sheet below); the popover holds the three choices. Secondary
+		// here: the How it works closing row has the page's primary (P3 W5).
 		for (const button of within(header).getAllByRole('button', { name: sl.nav.report }))
-			expect(button.dataset.variant).toBe('default');
+			expect(button.dataset.variant).toBe('secondary');
 		// The closed popover is in the DOM, hidden until its button opens it.
 		const menu = header.querySelector<HTMLElement>('#report-menu')!;
 		expect(menu.getAttribute('popover')).toBe('auto');
@@ -98,7 +99,7 @@ describe('SiteHeader', () => {
 	});
 
 	it('signed in: My pets and reports, inbox and the account menu instead of Sign in (EN)', () => {
-		renderAt('/en/my-pets', <SiteHeader viewer={{ initials: 'AN' }} />, 'en');
+		renderAt('/en/my-pets', <SiteHeader viewer={{ initials: 'AN', aal2: false }} />, 'en');
 		const header = screen.getByRole('banner');
 
 		const main = within(header).getByRole('navigation', { name: en.nav.main_label });
@@ -151,7 +152,7 @@ describe('SiteHeader', () => {
 	});
 
 	it('leaves admin pages to their own shell', () => {
-		const { container } = renderAt('/admin/zavetisca', <SiteHeader viewer={{ initials: 'AN' }} />);
+		const { container } = renderAt('/admin/zavetisca', <SiteHeader viewer={{ initials: 'AN', aal2: false }} />);
 
 		expect(container.innerHTML).toBe('');
 	});
