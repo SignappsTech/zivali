@@ -3,10 +3,11 @@ id: TASK-93
 title: >-
   Bug: @zivali/validation registerSchemas order is fragile
   (GeoReverseResponse.place loses null under Node)
-status: To Do
+status: Done
 assignee:
   - '@backend-dev'
 created_date: '2026-10-15 02:56'
+updated_date: '2026-10-15 04:31'
 labels:
   - be
   - bug
