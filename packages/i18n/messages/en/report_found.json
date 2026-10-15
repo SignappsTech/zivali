@@ -30,5 +30,18 @@
 	"link_invalid_body": "The report may be closed or deleted. If you gave an email address, we can send you the link again.",
 	"summary_place": "Place",
 	"expiry_note": "{days, plural, one {The report expires in # day.} other {The report expires in # days.}} If the animal is still with you or you still see it, keep the report open.",
-	"extend": "Keep for 30 more days"
+	"extend": "Keep for 30 more days",
+	"open_report": "Open my report",
+	"outbox_title": "Waiting to be sent",
+	"outbox_waiting": "Waiting",
+	"outbox_sending": "Sending …",
+	"outbox_sent": "Sent",
+	"outbox_failed": "Failed",
+	"outbox_retry": "Try again",
+	"outbox_delete": "Delete",
+	"my_reports": "My reports",
+	"outbox_pending_title": "{count, plural, one {# report has not been sent yet} other {# reports have not been sent yet}}",
+	"outbox_pending_body": "Send them now or delete them from this device. Deleted reports cannot be recovered.",
+	"outbox_send_now": "Send now",
+	"outbox_send_failed": "The reports could not be sent. Try again when you are online, or delete them."
 }
