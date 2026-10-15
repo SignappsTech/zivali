@@ -3,7 +3,7 @@ source: 03§P7; docs/design/pages/P7-report-found.md
 page: P7 Report found or sighted (no account) and manage page
 stories: TASK-30, TASK-17 (FR-006, FR-003, FR-004)
 copy-for: docs/design/pages/P7-report-found.md
-version: 0.3
+version: 0.4
 status: Draft, native Slovenian review pending
 date: 2026-10-15
 ---
@@ -210,6 +210,13 @@ The "returned" confirmation dialog and thank-you screen are in P14 §5.
 | Key | SL | EN |
 |---|---|---|
 | report_found.offline_queued | Shranjeno. Prijavo pošljemo, ko boste spet povezani. | Saved. We will send your report when you are back online. |
+| report_found.outbox_title | Čaka na pošiljanje | Waiting to be sent |
+| report_found.outbox_waiting | Čaka | Waiting |
+| report_found.outbox_sending | Pošiljamo … | Sending … |
+| report_found.outbox_sent | Poslano | Sent |
+| report_found.outbox_failed | Ni uspelo | Failed |
+| report_found.outbox_retry | Poskusi znova | Try again |
+| report_found.outbox_delete | Izbriši | Delete |
 | report_found.duplicate_photo | To fotografijo že imamo v drugi prijavi. Odprete obstoječo prijavo? | We already have this photo in another report. Open that report? |
 | report_found.duplicate_open | Odpri prijavo | Open report |
 

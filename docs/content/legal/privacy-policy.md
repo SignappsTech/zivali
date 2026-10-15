@@ -3,13 +3,15 @@ source: 02§Content, SEO and legal requirements (Legal); FR-034; FR-035; FR-038;
 
 | Field | Value |
 |---|---|
-| Version | 0.5 |
+| Version | 0.6 |
 | Date | 2026-10-15 |
 | Route SL | `/zasebnost` |
 | Route EN | `/en/privacy` |
 | Slug SL / EN | `zasebnost` / `privacy` |
 | Structured data | WebPage |
 | Template | T4 Legal (numbered h2 sections, "On this page" list, draft note) |
+
+Change in 0.6: remaining "exact location" wording aligned with the coarsened point (20–30 m, never raw); retention row split: photos 12 months, stored point blurred 30 days after closure (LQ-19, proposal, lawyer to confirm).
 
 Change in 0.5: location minimisation (chapter 6): the raw GPS point is never stored; it is moved by 20–30 m before it is saved; the exact point is blurred 30 days after a report closes (proposal, lawyer to confirm).
 
@@ -44,8 +46,8 @@ Zadnja posodobitev: 15. 10. 2026
 Najdimo pomaga, da se izgubljene živali vrnejo domov. Vse, kar živali vrača domov, je za vse brezplačno. Za to potrebujemo nekaj osebnih podatkov. Tu je povzetek, v nadaljevanju pa je vse natančno.
 
 - Podatke uporabljamo za delovanje storitve: račun, prijave, ujemanje, pogovor, opozorila in plačila.
-- Javno prikažemo le fotografije, lastnosti živali, približno območje, datum in okoliščine. Številke čipa, telefonske številke, e-naslova, točne lokacije in kraja, kjer je najdena žival, ne prikažemo nikomur.
-- Točno lokacijo prijave vidite samo vi, razen če jo sami delite v pogovoru.
+- Javno prikažemo le fotografije, lastnosti živali, približno območje, datum in okoliščine. Številke čipa, telefonske številke, e-naslova, shranjene točke prijave in kraja, kjer je najdena žival, ne prikažemo nikomur.
+- Shranjeno (približno) točko prijave vidite samo vi, razen če jo sami delite v pogovoru.
 - Google Analytics vklopimo le z vašo privolitvijo. Če jo zavrnete, Googlu ne pošljemo ničesar.
 - Oglase samo preštejemo, in sicer brez piškotkov in brez oznak, ki bi razkrile, kdo ste.
 - Glavna zbirka podatkov je v EU (Frankfurt), v EU so tudi naši strežniki in fotografije. Nekateri ponudniki so v ZDA; zanje veljajo zaščitni ukrepi (poglavje 13).
@@ -69,7 +71,7 @@ Večino podatkov nam daste sami: ko ustvarite račun, objavite prijavo ali piše
 |---|---|
 | Račun in nastavitve | prikazno ime, e-naslov, zgoščeno geslo ali identiteta pri Googlu oziroma Applu, jezik, vloga (na primer lastnik, najditelj ali zavetišče), domače območje, privzeti polmer opozoril, neobvezna telefonska številka (nikoli javna), tihi čas, nastavitve obvestil, žetoni za potisna obvestila |
 | Profili živali | vrsta, ime, pasma, barve, vzorec, velikost, spol, leto rojstva, številka čipa (nikoli javna), stanje čipa, ovratnica, opombe (tudi o zdravilih in vedenju), od ene do pet fotografij; pozneje tudi veterinarski zapisi |
-| Prijave (izgubljena, najdena, opažena žival) | vrsta prijave, fotografije, točna točka (vidna samo avtorju prijave), javno približno območje, občina in regija, datum in čas, opis okoliščin, izbira načina stika, pri izgubljeni živali neobvezna navedba nagrade (znesek, kratka opomba) |
+| Prijave (izgubljena, najdena, opažena žival) | vrsta prijave, fotografije, približna točka, premaknjena za 20 do 30 m (vidna samo avtorju prijave), javno približno območje, občina in regija, datum in čas, opis okoliščin, izbira načina stika, pri izgubljeni živali neobvezna navedba nagrade (znesek, kratka opomba) |
 | Prijave brez računa | anonimna seja, zasebna povezava (hranimo samo njeno zgoščeno vrednost), neobvezen e-naslov, na katerega pošljemo povezavo, identifikator naprave, zgoščen IP naslov za omejevanje zlorab |
 | Pogovori | sporočila, vzdevki, stanje prebranosti, blokade |
 | Obvestila in opozorila | nabiralnik obvestil, naročnina na opozorila v bližini (domača točka in polmer) |
@@ -113,8 +115,8 @@ Pri zakoniti podlagi „zakoniti interes“ smo presodili, da vaši interesi in 
 ## 5. Kaj vidijo drugi
 
 - **Vsakdo, tudi brez računa, vidi:** fotografije, lastnosti živali, približno območje, datum in okoliščine, ki ste jih opisali.
-- **Nihče ne vidi:** številke čipa, telefonske številke, e-naslova, točne lokacije in kraja, kjer je najdena žival.
-- **Samo vi vidite:** točno lokacijo svoje prijave. Osebi v pogovoru jo pokažemo le, če jo tam sami delite.
+- **Nihče ne vidi:** številke čipa, telefonske številke, e-naslova, shranjene točke prijave in kraja, kjer je najdena žival.
+- **Samo vi vidite:** približno točko svoje prijave (premaknjeno za 20 do 30 m). Osebi v pogovoru jo pokažemo le, če jo tam sami delite.
 - **Osebi v pogovoru** vidita vzdevka in sporočila. Moderatorji sporočila preberejo samo, če je kdo pogovor prijavil kot zlorabo.
 - **Zavetišča in veterinarji:** ko vnesejo številko čipa, ki je pri nas vpisana, obvestimo osebo, ki žival išče. Zavetišču ali veterinarju ne pokažemo nobenih osebnih podatkov.
 
@@ -130,7 +132,7 @@ V prosto besedilo (opis okoliščin, opombe) ne vpisujte osebnih podatkov drugih
 
 **Opozorilo, ko ste blizu (mobilna aplikacija).** Če to funkcijo izrecno vklopite in aplikaciji dovolite lokacijo tudi v ozadju, telefon sam preverja, ali ste vstopili v približno območje, kjer je bila nazadnje videna izgubljena žival. Ta območja so javna in približna. Preverjanje poteka samo v telefonu: vaše lokacije ne pošljemo nam ali komur koli drugemu. Funkcijo kadar koli izklopite v nastavitvah aplikacije in takrat iz telefona odstranimo vsa območja.
 
-**Podatki v telefonu.** Da aplikacija deluje tudi brez povezave, v telefonu hrani javne prijave iz vaše okolice: približna območja in pomanjšane fotografije, največ 7 dni. Točnih lokacij, številk čipa, kontaktnih podatkov in pogovorov ne hrani. Ob odjavi te podatke izbrišemo.
+**Podatki v telefonu.** Da aplikacija deluje tudi brez povezave, v telefonu hrani javne prijave iz vaše okolice: približna območja in pomanjšane fotografije, največ 7 dni. Točk prijav, številk čipa, kontaktnih podatkov in pogovorov ne hrani. Ob odjavi te podatke izbrišemo.
 
 **Zemljevid in iskanje krajev.** Zemljevidne ploščice naloži vaš brskalnik ali aplikacija neposredno pri strežnikih OpenFreeMap. Ti vidijo vaš IP naslov, piškotkov pa ne uporabljajo. Iskanje krajev in ime območja za točko na zemljevidu pripravimo na svojih strežnikih iz odprtih podatkov Geodetske uprave Republike Slovenije. Iskalnega niza in točke ne pošljemo nikomur drugemu in ju ne shranjujemo.
 
@@ -244,7 +246,8 @@ Kopijo zaščitnih ukrepov lahko zahtevate na e-naslovu iz poglavja 2.
 |---|---|
 | Račun, profili živali, nastavitve, nabiralnik obvestil, opozorila v bližini | do izbrisa računa |
 | Odprte prijave | dokler so odprte ali do izbrisa |
-| Fotografije in točne lokacije zaključenih prijav | izbrišemo 12 mesecev po zaključku prijave |
+| Fotografije zaključenih prijav | izbrišemo 12 mesecev po zaključku prijave |
+| Shranjena (že približna) točka zaključene prijave | zameglimo 30 dni po zaključku prijave; ostaneta zamegljena točka in ime območja |
 | Pogovori | izbrišemo 6 mesecev po zaključku povezane prijave |
 | E-naslov najditelja za zasebno povezavo | izbrišemo 30 dni po zaključku prijave |
 | Zgoščen IP naslov in podatki za omejevanje zahtev | 48 ur |
@@ -315,8 +318,8 @@ Last updated: 15 October 2026
 Najdimo helps lost animals get home again. Everything that brings animals home is free for everyone. To do that we need some personal data. Here is a summary; the details follow.
 
 - We use data to run the service: account, reports, matching, chat, alerts and payments.
-- We show publicly only photos, the animal's attributes, an approximate area, the date and the circumstances. We never show a chip number, phone number, email address, exact location or the place where a found animal is kept.
-- Only you can see the exact location of your report, unless you share it in a chat yourself.
+- We show publicly only photos, the animal's attributes, an approximate area, the date and the circumstances. We never show a chip number, phone number, email address, the stored point of a report or the place where a found animal is kept.
+- Only you can see the stored (approximate) point of your report, unless you share it in a chat yourself.
 - We switch on Google Analytics only with your consent. If you decline, we send nothing to Google.
 - We only count ads, without cookies and without any marker that could reveal who you are.
 - The main database is in the EU (Frankfurt), and so are our servers and photos. Some providers are in the United States; safeguards apply (chapter 13).
@@ -340,7 +343,7 @@ You give us most of the data yourself: when you create an account, publish a rep
 |---|---|
 | Account and settings | display name, email address, password hash or Google/Apple identity, language, role (for example owner, finder or shelter), home area, default alert radius, optional phone number (never public), quiet hours, notification settings, push notification tokens |
 | Pet profiles | species, name, breed, colours, pattern, size, sex, birth year, chip number (never public), chip status, collar, notes (including medication and temperament), one to five photos; later also vet records |
-| Reports (lost, found, sighted animal) | report type, photos, exact point (visible only to the person who made the report), public approximate area, municipality and region, date and time, description of the circumstances, contact preference, and for a lost animal an optional reward line (amount, short note) |
+| Reports (lost, found, sighted animal) | report type, photos, approximate point, shifted by 20 to 30 m (visible only to the person who made the report), public approximate area, municipality and region, date and time, description of the circumstances, contact preference, and for a lost animal an optional reward line (amount, short note) |
 | Reports without an account | anonymous session, private link (we store only its hash), optional email address to which we send the link, device identifier, hashed IP address for abuse limits |
 | Chat | messages, aliases, read state, blocks |
 | Notifications and alerts | notification inbox, nearby-alert subscription (home point and radius) |
@@ -384,8 +387,8 @@ Where processing rests on consent, you can withdraw it at any time. Withdrawal d
 ## 5. What others can see
 
 - **Anyone, even without an account, sees:** photos, the animal's attributes, the approximate area, the date and the circumstances you described.
-- **Nobody sees:** the chip number, phone number, email address, exact location and the place where a found animal is kept.
-- **Only you see:** the exact location of your report. We show it to the other person in a chat only if you share it there yourself.
+- **Nobody sees:** the chip number, phone number, email address, the stored point of a report and the place where a found animal is kept.
+- **Only you see:** the approximate point of your report (shifted by 20 to 30 m). We show it to the other person in a chat only if you share it there yourself.
 - **The two people in a chat** see the aliases and messages. Moderators read messages only if someone has reported the chat as abuse.
 - **Shelters and vets:** when they enter a chip number that is registered with us, we notify the person who is looking for the animal. We show the shelter or vet no personal data.
 
@@ -401,7 +404,7 @@ Please do not enter other people's personal data in free text (circumstances, no
 
 **Alerts when you are nearby (mobile app).** If you turn this feature on and allow the app to use your location in the background, your phone itself checks whether you have entered an approximate area where a lost pet was last seen. These areas are public and approximate. The check happens only on your phone: your location is never sent to us or to anyone else. You can turn the feature off at any time in the app settings, and we then remove all areas from your phone.
 
-**Data on your phone.** So that the app also works offline, it keeps public reports from your area on your phone: approximate areas and small photos, for at most 7 days. It never keeps exact locations, chip numbers, contact details or chats. When you sign out, we delete this data.
+**Data on your phone.** So that the app also works offline, it keeps public reports from your area on your phone: approximate areas and small photos, for at most 7 days. It never keeps report points, chip numbers, contact details or chats. When you sign out, we delete this data.
 
 **Map and place search.** Your browser or app loads map tiles directly from OpenFreeMap servers. They can see your IP address and use no cookies. Place search and the area name for a point on the map run on our own servers, using open data from the Surveying and Mapping Authority of the Republic of Slovenia. We send the search text and the point to no one else and do not store them.
 
@@ -515,7 +518,8 @@ You can ask for a copy of the safeguards at the email address in chapter 2.
 |---|---|
 | Account, pet profiles, settings, notification inbox, nearby alerts | until you delete your account |
 | Open reports | while they are open or until deleted |
-| Photos and exact locations of closed reports | deleted 12 months after the report closes |
+| Photos of closed reports | deleted 12 months after the report closes |
+| Stored (already approximate) point of a closed report | blurred 30 days after the report closes; only the blurred point and the area name remain |
 | Chats | deleted 6 months after the related report closes |
 | Finder's email address for the private link | deleted 30 days after the report closes |
 | Hashed IP address and rate-limit data | 48 hours |
@@ -583,7 +587,7 @@ We may change this policy, for example when we add a new feature or provider. We
 4. **DPIA screening** recommended before launch (location data of owners, photos, AI processing, automatic hiding). Also check the record of processing (Article 30) and the data inventory (FR-034 R-034.3) against the tables in chapters 3 and 14.
 5. **Article 22 GDPR.** Automatic temporary hiding after three independent abuse reports could be seen as a decision with significant effect for the poster. I described human review and a contest route by email. Please confirm this is sufficient.
 6. **Minimum age 15.** Proposal based on the age of digital consent under ZVOP-2; I did not verify the article number. Contract capacity of minors under 18 under Slovenian civil law is limited, so I wrote that paid options are for adults (same line in the terms). This is a proposal, not a brief requirement.
-7. **Retention values are proposals** (A-012). Items I had to propose beyond the brief: "abuse reports and audit log: up to 24 months"; "consent record 12 months" (the cookie lifetime; evidence of consent may need to be kept longer). Open: what remains of a closed report after the photos and exact location are removed at 12 months (text, municipality, dates, species)? Payment records "up to 10 years" is a likely Slovenian requirement and must be confirmed by the accountant. Sentry retention is not stated in the text; confirm and add if needed.
+7. **Retention values are proposals** (A-012). Items I had to propose beyond the brief: "abuse reports and audit log: up to 24 months"; "consent record 12 months" (the cookie lifetime; evidence of consent may need to be kept longer). Open: what remains of a closed report after the photos are removed at 12 months and the point is blurred at 30 days (text, municipality, dates, species)? Payment records "up to 10 years" is a likely Slovenian requirement and must be confirmed by the accountant. Sentry retention is not stated in the text; confirm and add if needed.
 8. **International transfers.** Verify the Data Privacy Framework certification of each US provider at go-live (Supabase Inc., Cloudflare, Stripe, 650 Industries/Expo, Anthropic, Voyage AI (part of MongoDB, Inc. since 2025), Sentry, Google). Where not certified, standard contractual clauses and a transfer impact assessment are needed. Data processing agreements are needed with every processor in chapter 12 (the Google Analytics data processing terms must be accepted in GA4).
 9. **Hosting and backups (updated in 0.3).** Brief v1.0: a Hetzner server in the EU runs the website, API and job worker; photos and nightly database backups are on Cloudflare R2; Vercel and Supabase file storage are no longer used. The text says R2 storage is in the EU, which holds only if the buckets are created with EU jurisdiction (requested from the tech lead). The Hetzner location (Germany or Finland) is a client decision.
 10. **Map providers (changed in 0.4).** Place search and the area name for a point run on our own geocoder in the API, on GURS data (ADR-007, contract C6): queries and points travel only in POST bodies to our server, are never logged or stored, and reach no third party, so the rounding question is moot (lawyer pack LQ-21 and LQ-64 N/A). OpenFreeMap stays listed as an independent controller for map tiles (IP address) because we cannot instruct it.
