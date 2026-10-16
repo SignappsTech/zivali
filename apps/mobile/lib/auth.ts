@@ -120,8 +120,20 @@ export const updatePassword = async (password: string) => {
 
 /** PKCE: the link's code becomes a session, on the device that asked for the link only (its verifier is here). */
 export async function exchangeLinkCode(code: string, type?: string, next?: string) {
+	recovering = null; // an abandoned earlier flow must not carry over, nor a failed exchange keep it
 	await check(supabase.auth.exchangeCodeForSession(code));
 	recovering = type === 'recovery' ? 'recovery' : next === SET_PASSWORD ? 'set' : null;
+	listenSignOut();
+}
+
+// A sign-out ends the flow, so a later session cannot open the new-password screen. One subscription at a time.
+let unsubscribe: (() => void) | undefined;
+function listenSignOut() {
+	unsubscribe?.();
+	const result = supabase.auth.onAuthStateChange((event) => {
+		if (event === 'SIGNED_OUT') recovering = null;
+	});
+	unsubscribe = () => result?.data?.subscription?.unsubscribe();
 }
 
 /** Google needs its web client id (and the iOS one on iOS); Apple is iOS only and flagged off until its account exists. */

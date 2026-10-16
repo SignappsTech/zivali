@@ -17,7 +17,7 @@ import AuthCallback from '@/app/auth/callback';
 import CheckEmail from '@/app/auth/check-email';
 import ForgotPassword from '@/app/auth/forgot-password';
 import NewPassword from '@/app/auth/new-password';
-import { signOutProviders } from '@/lib/auth';
+import { exchangeLinkCode, isRecovering, signOutProviders } from '@/lib/auth';
 import SignIn from '@/app/auth/sign-in';
 import SignUp from '@/app/auth/sign-up';
 import AccountSettings from '@/app/settings/account';
@@ -53,6 +53,7 @@ const mockSupabase = {
 	updateUser: jest.fn(),
 	exchangeCodeForSession: jest.fn(),
 	getSession: jest.fn(),
+	onAuthStateChange: jest.fn(),
 };
 jest.mock('@/lib/supabase', () => ({
 	supabase: {
@@ -584,6 +585,26 @@ describe('reset and email links', () => {
 		expect(await screen.findByRole('heading', { name: sl.auth.link_failed_title })).toBeOnTheScreen();
 		await press(sl.auth.forgot_button);
 		expect(result.getPathname()).toBe('/auth/forgot-password');
+	});
+});
+
+describe('recovery flag', () => {
+	test('a sign-out ends it, so a later session cannot open the new-password screen', async () => {
+		mockSupabase.exchangeCodeForSession.mockResolvedValueOnce({ data: {}, error: null });
+		await exchangeLinkCode('abc', 'recovery');
+		expect(isRecovering()).toBe('recovery');
+		const listener = mockSupabase.onAuthStateChange.mock.calls[0]![0] as (event: string) => void;
+		listener('SIGNED_OUT');
+		expect(isRecovering()).toBeNull();
+	});
+
+	test('a failed exchange clears it', async () => {
+		mockSupabase.exchangeCodeForSession.mockResolvedValueOnce({ data: {}, error: null });
+		await exchangeLinkCode('abc', 'recovery');
+		expect(isRecovering()).toBe('recovery');
+		mockSupabase.exchangeCodeForSession.mockResolvedValueOnce({ data: {}, error: new ApiError('INTERNAL', 'x') });
+		await expect(exchangeLinkCode('used', 'recovery')).rejects.toBeDefined();
+		expect(isRecovering()).toBeNull();
 	});
 });
 
