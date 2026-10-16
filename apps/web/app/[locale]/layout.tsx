@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { hasLocale, NextIntlClientProvider } from 'next-intl';
-import { getTranslations } from 'next-intl/server';
+import { getMessages, getTranslations } from 'next-intl/server';
 import { Atkinson_Hyperlegible_Next, Bricolage_Grotesque } from 'next/font/google';
 import { cookies, headers } from 'next/headers';
 import { notFound } from 'next/navigation';
@@ -25,6 +25,20 @@ const display = Bricolage_Grotesque({
 });
 // next/font has no metrics for this family yet, so the build warns that it cannot size a fallback font.
 const sans = Atkinson_Hyperlegible_Next({ subsets: ['latin', 'latin-ext'], variable: '--font-sans', display: 'swap' });
+
+// The namespaces that client components on public pages read; only these go into every page's HTML, the rest of the
+// catalogue (emails, notifications, page copy, admin, ...) stays on the server (TASK-90.5). The (app), (admin) and dev
+// layouts and the header's inbox dot pass their own. A new client namespace on a public page goes here.
+const CLIENT_NAMESPACES = [
+	'auth',
+	'common',
+	'consent',
+	'errors',
+	'lifecycle',
+	'nav',
+	'report_found',
+	'shelters',
+] as const;
 
 // Light and dark follow the OS before the first paint (system §12; the manual override comes with the profile).
 const themeScript = `(()=>{const m=matchMedia('(prefers-color-scheme: dark)');const s=()=>document.documentElement.classList.toggle('dark',m.matches);s();m.addEventListener('change',s)})()`;
@@ -52,6 +66,8 @@ export default async function LocaleLayout({ children, params }: LayoutProps<'/[
 	const viewer = await getViewer();
 	// P17 banner: decided here from the cookie, so its first view paints with the page instead of becoming a late LCP.
 	const consent = parseConsent((await cookies()).get(CONSENT_KEY)?.value ?? null);
+	const messages = await getMessages();
+	const clientMessages = Object.fromEntries(CLIENT_NAMESPACES.map((ns) => [ns, messages[ns]]));
 
 	return (
 		<html lang={locale} suppressHydrationWarning>
@@ -59,7 +75,7 @@ export default async function LocaleLayout({ children, params }: LayoutProps<'/[
 				<script nonce={nonce} dangerouslySetInnerHTML={{ __html: themeScript }} />
 			</head>
 			<body className={`${display.variable} ${sans.variable}`}>
-				<NextIntlClientProvider>
+				<NextIntlClientProvider messages={clientMessages}>
 					<Providers signedIn={viewer !== null} consent={{ prompt: !isCurrent(consent), stored: consent }}>
 						<SiteHeader viewer={viewer} />
 						{children}

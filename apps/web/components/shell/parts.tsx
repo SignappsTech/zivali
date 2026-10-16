@@ -1,6 +1,7 @@
 'use client';
 
 import { useLocale, useTranslations } from 'next-intl';
+import dynamic from 'next/dynamic';
 import NextLink from 'next/link';
 import { useParams } from 'next/navigation';
 import { type ComponentProps, Fragment, type KeyboardEvent, type ReactNode } from 'react';
@@ -13,6 +14,10 @@ import { useLocaleSwitch } from '@/i18n/use-locale-switch';
 // The client islands of the P1 shell. Header and footer are server components, so their icons, buttons and the
 // tailwind-merge behind `cn` never ship to the browser; these parts need the current route or the browser. Native
 // popovers and dialogs instead of a menu library: top layer, light dismiss, Escape and focus return come with them.
+
+// The header's inbox dot, signed in only: it brings the Redux store, so it loads with its first use instead of with
+// every page's shell (TASK-90.5).
+export const InboxDot = dynamic(() => import('@/components/notifications/unread-dot').then((m) => m.UnreadDotIsland));
 
 // P1 Flow variant (reduced header, one-row footer, no sidebar): the C15 report, manage, auth, chat and payment flows.
 const FLOW = new Set([

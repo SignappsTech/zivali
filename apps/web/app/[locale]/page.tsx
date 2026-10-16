@@ -33,9 +33,10 @@ const SAFE = [
 ] as const;
 
 // Placeholder photos from the design directions (P3 §Assets, docs/design/directions/img) until licensed final photos.
+// WebP (quality 75, same size): the hero is the LCP element, a third of the JPEG's bytes (TASK-90.5).
 const PHOTOS = {
-	dog: { src: '/images/placeholder-dog-aussie-wide.jpg', width: 1200, height: 900 },
-	cat: { src: '/images/placeholder-cat-tabby.jpg', width: 800, height: 800 },
+	dog: { src: '/images/placeholder-dog-aussie-wide.webp', width: 1200, height: 900 },
+	cat: { src: '/images/placeholder-cat-tabby.webp', width: 800, height: 800 },
 };
 
 /** A plain <img>: no next/image client code on this page, and the Docker image ships without sharp for the optimiser. */

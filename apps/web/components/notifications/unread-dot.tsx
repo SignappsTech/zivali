@@ -7,6 +7,7 @@ import { useStore } from 'react-redux';
 import { useSession } from '@zivali/api/auth';
 import { subscribeInbox, useListNotificationsQuery } from '@zivali/api/notifications';
 import type { ApiStore } from '@zivali/api/rtk';
+import { StoreProvider } from '@/components/store-provider';
 import { cn } from '@/lib/utils';
 
 /** The badge needs only the unread count (C10 `unread`), not the rows. */
@@ -56,5 +57,14 @@ export function UnreadDot({
 			{(!visible || unread) && <span className="sr-only">{name}</span>}
 			{unread && <span aria-hidden="true" className={cn('size-2.5 rounded-full bg-primary', className)} />}
 		</>
+	);
+}
+
+/** UnreadDot with the shared store, for the header, which loads it on signed-in pages only (TASK-90.5). */
+export function UnreadDotIsland(props: React.ComponentProps<typeof UnreadDot>) {
+	return (
+		<StoreProvider>
+			<UnreadDot {...props} />
+		</StoreProvider>
 	);
 }
