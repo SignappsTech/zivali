@@ -1,4 +1,4 @@
----
+﻿---
 id: TASK-37.4
 title: 'QA: Ad management in admin'
 status: To Do
@@ -8,6 +8,7 @@ created_date: '2026-10-14 22:15'
 updated_date: '2026-10-14 23:38'
 labels:
   - qa
+  - qa:fail
   - 'est:XS'
 milestone: m-1
 dependencies:
@@ -37,10 +38,20 @@ Branch: - (verify on main)
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
 - [ ] #1 Given an admin, when they create an ad, then they can upload an image and set title, text, link, language, slots, region or municipality, species, start and end dates and status (draft, active, paused) with a live preview per slot.
-- [ ] #2 Given validation, when saving, then missing alt text, non-https links, wrong image size or overlapping dates in an exclusive slot are rejected with clear errors.
-- [ ] #3 Given an ad, when its detail is opened, then impressions, clicks and CTR per day, slot and region are shown with CSV export for sponsor reports.
-- [ ] #4 Given house ads, when managed, then admins can edit and enable the three default house ads (SL and EN) from the public copy story.
-- [ ] #5 Given any edit or status change, when saved, then it is written to the audit log.
-- [ ] #6 Given validation, when an ad is saved, then it is rejected if it advertises the sale, gift or change of ownership of animals.
+- [x] #2 Given validation, when saving, then missing alt text, non-https links, wrong image size or overlapping dates in an exclusive slot are rejected with clear errors.
+- [x] #3 Given an ad, when its detail is opened, then impressions, clicks and CTR per day, slot and region are shown with CSV export for sponsor reports.
+- [x] #4 Given house ads, when managed, then admins can edit and enable the three default house ads (SL and EN) from the public copy story.
+- [x] #5 Given any edit or status change, when saved, then it is written to the audit log.
+- [x] #6 Given validation, when an ad is saved, then it is rejected if it advertises the sale, gift or change of ownership of animals.
 - [ ] #7 Story gates pass on main: `pnpm verify`, plus `pnpm quality` for the pages this story touches; results recorded in the QA notes.
 <!-- AC:END -->
+
+## QA notes
+
+Branch with tests and bugs only; product code unchanged. Machine rules: no e2e, API tests, build or Lighthouse here.
+- Unit: web vitest admin/ads and i18n 75/75 pass; i18n catalogue check OK; eslint clean on admin/ads; tsc has only env noise (PageProps, tokens dist not generated in the worktree).
+- Gates (#7): verify, e2e, Lighthouse: merge queue on main at f683d89d.
+- #1 not checked: TASK-37.5 (SL draft URL), TASK-37.6 (cta label), see also TASK-37.7 (#6 note).
+- CSV carries exact counts while the screen shows '< 5' for 1 to 4; the UI note (ads_method) does not say so.
+- Added e2e (not run here): cta required for two languages, CSV BOM/rows/formula, house switch status call, EN parity.
+

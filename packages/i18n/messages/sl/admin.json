@@ -117,6 +117,8 @@
 	"ads_text_label": "Besedilo",
 	"ads_cta_label": "Besedilo gumba (neobvezno)",
 	"ads_cta_help": "Privzeto: »Več o tem«. Do 24 znakov.",
+	"ads_cta_label_required": "Besedilo gumba",
+	"ads_cta_help_required": "Obvezno za vsak jezik. Do 24 znakov.",
 	"ads_link": "Povezava",
 	"ads_link_help": "Začeti se mora s https://. Odpre se v novem zavihku, klike pa štejemo prek naše preusmeritve.",
 	"ads_char_count": "{count} / {max}",

@@ -174,3 +174,67 @@ test('moderators get the access-denied screen and no ad data', async ({ page, ba
 	}
 	expect(requests).toEqual([]);
 });
+
+test('a new ad in two languages needs its own button text: the save is refused and the field is focused', async ({
+	page,
+	baseURL,
+}) => {
+	await signIn(page, adminMe, baseURL!);
+	await page.goto('/admin/oglasi/nov');
+	await page.getByLabel('Opis slike (alt)', { exact: true }).fill('Pes z igračo ob polni skodelici hrane');
+	await page.getByLabel('Naslov', { exact: true }).fill('Repek: jesenska akcija');
+	await page.getByLabel('Besedilo', { exact: true }).fill('Brezplačna dostava do konca meseca.');
+	await page.getByLabel('Povezava', { exact: true }).fill('https://repek.si/jesen');
+	await page
+		.locator('form')
+		.getByRole('group', { name: 'Oglasna mesta', exact: true })
+		.getByRole('button', { name: 'Stran prijave', exact: true })
+		.click();
+	await page.getByRole('button', { name: 'Shrani', exact: true }).click();
+	await expect(page.getByText('To polje je obvezno.', { exact: true })).toBeVisible();
+	await expect(page.getByLabel(/^Besedilo gumba/)).toBeFocused();
+	await expect(page).toHaveURL(/\/admin\/oglasi\/nov$/);
+});
+
+test('the CSV has the byte order mark, one header row, one row per statistics row and no formula cells', async ({
+	page,
+	baseURL,
+}) => {
+	await signIn(page, adminMe, baseURL!);
+	await page.goto(`/admin/oglasi/${running.id}`);
+	const download = page.waitForEvent('download');
+	await page.getByRole('button', { name: 'Izvozi CSV', exact: true }).click();
+	const stream = await (await download).createReadStream();
+	const chunks: Buffer[] = [];
+	for await (const chunk of stream) chunks.push(chunk as Buffer);
+	const text = Buffer.concat(chunks).toString('utf8');
+	expect(text.charCodeAt(0)).toBe(0xfeff);
+	const lines = text.slice(1).trimEnd().split('\r\n');
+	expect(lines).toHaveLength(fx.adStats.items.length + 1);
+	for (const line of lines) expect(line).not.toMatch(/(^|,)[=+@-]/);
+});
+
+test('a house ad is enabled or paused with its switch (a status call), per language', async ({ page, baseURL }) => {
+	const calls: string[] = [];
+	await signIn(page, adminMe, baseURL!);
+	await page.route(/\/v1\/admin\/ads\/[^/]+\/status$/, (route) => {
+		calls.push(route.request().postDataJSON().status);
+		return route.fulfill({ json: fx.adminAds.items[0] });
+	});
+	await page.goto('/admin/lastni-oglasi');
+	const first = page.getByRole('switch').first();
+	const wasOn = (await first.getAttribute('aria-checked')) === 'true';
+	await first.click();
+	await expect.poll(() => calls.length).toBe(1);
+	expect(calls[0]).toBe(wasOn ? 'paused' : 'active');
+});
+
+test('English: the editor and the house ads are in English', async ({ page, baseURL }) => {
+	await signIn(page, adminMe, baseURL!);
+	await page.goto('/en/admin/ads/new');
+	await expect(page.getByRole('heading', { level: 1, name: 'New ad', exact: true })).toBeVisible();
+	await page.getByRole('button', { name: 'Save', exact: true }).click();
+	await expect(page.getByLabel('Image description (alt)', { exact: true })).toBeFocused();
+	await page.goto('/en/admin/house-ads');
+	await expect(page.getByRole('heading', { level: 1, name: 'House ads', exact: true })).toBeVisible();
+});

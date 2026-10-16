@@ -63,10 +63,10 @@ afterEach(() => {
 	vi.restoreAllMocks();
 });
 
-function renderWith(ui: React.ReactElement, routes: MockRoutes = {}) {
+function renderWith(ui: React.ReactElement, routes: MockRoutes = {}, locale: 'sl' | 'en' = 'sl') {
 	const client = createMockApi({ 'GET /v1/admin/ads': fx.adminAds, ...routes });
 	const view = render(
-		<NextIntlClientProvider locale="sl" messages={sl} timeZone="Europe/Ljubljana">
+		<NextIntlClientProvider locale={locale} messages={locale === 'en' ? en : sl} timeZone="Europe/Ljubljana">
 			<Provider store={createApiStore(client)}>
 				{ui}
 				<Toaster closeLabel={sl.common.close} label={sl.common.toasts_label} />
@@ -214,7 +214,7 @@ describe('ad form', () => {
 		type(a.ads_alt, 'Pes z igračo ob polni skodelici hrane');
 		type(a.ads_title_label, 'Repek: jesenska akcija');
 		type(a.ads_text_label, 'Brezplačna dostava do konca meseca.');
-		type(a.ads_cta_label, 'Več o akciji');
+		type(a.ads_cta_label_required, 'Več o akciji');
 		type(a.ads_link, 'https://repek.si/jesen');
 		press(a.ads_slots, a.ads_slot_detail, form);
 		press(a.ads_regions, 'Gorenjska', form);
@@ -283,7 +283,7 @@ describe('ad form', () => {
 		type(a.ads_alt, 'Mladički na kavču');
 		type(a.ads_title_label, 'Prodam mladičke');
 		type(a.ads_text_label, 'Pokličite.');
-		type(a.ads_cta_label, 'Pokličite');
+		type(a.ads_cta_label_required, 'Pokličite');
 		type(a.ads_link, 'https://example.test');
 		press(a.ads_slots, a.ads_slot_detail, form);
 		fireEvent.click(screen.getByRole('button', { name: a.ads_save }));
@@ -293,6 +293,45 @@ describe('ad form', () => {
 		const title = screen.getByLabelText(a.ads_title_label);
 		expect(title.getAttribute('aria-invalid')).toBe('true');
 		await waitFor(() => expect(document.activeElement).toBe(title));
+	});
+
+	it.each([
+		[
+			'sl',
+			'/admin/oglasi/ad7e1f2a-0000-4000-8000-0000000000aa/uredi',
+			sl.admin,
+			'Pes z igračo ob polni skodelici hrane',
+		],
+		['en', '/en/admin/ads/ad7e1f2a-0000-4000-8000-0000000000aa/edit', en.admin, 'A dog with a toy by a full bowl'],
+	] as const)('moves the draft URL to the edit page after the first save (%s)', async (locale, url, m, alt) => {
+		const replaceState = vi.spyOn(window.history, 'replaceState');
+		const { container } = renderWith(
+			<NewAd {...props} />,
+			{ 'POST /v1/admin/ads': ({ body }) => ({ ...draft, ...(body as object), id: NEW_ID }) },
+			locale
+		);
+		const form = container.querySelector('form')!;
+		type(m.ads_alt, alt);
+		type(m.ads_title_label, 'Repek');
+		type(m.ads_text_label, 'Brezplačna dostava.');
+		type(m.ads_cta_label_required, 'Več');
+		type(m.ads_link, 'https://repek.si/jesen');
+		press(m.ads_slots, m.ads_slot_detail, form);
+		fireEvent.click(screen.getByRole('button', { name: m.ads_save }));
+		await waitFor(() => expect(replaceState).toHaveBeenCalledWith(null, '', url));
+		replaceState.mockRestore();
+	});
+
+	it('labels the button text optional with the default hint for one language, required for two', () => {
+		const { container } = renderWith(<NewAd {...props} />);
+		const form = container.querySelector('form')!;
+		expect(screen.getByLabelText(a.ads_cta_label_required)).toBeTruthy();
+		expect(screen.queryByText(a.ads_cta_help)).toBeNull();
+		expect(screen.getByText(a.ads_cta_help_required)).toBeTruthy();
+		press(a.ads_languages, 'EN', form);
+		expect(screen.getByLabelText(a.ads_cta_label)).toBeTruthy();
+		expect(screen.getByText(a.ads_cta_help)).toBeTruthy();
+		expect(screen.queryByText(a.ads_cta_help_required)).toBeNull();
 	});
 
 	it('creates a new ad as a draft, uploads its image, then saves it with the image and status', async () => {
@@ -405,7 +444,7 @@ function fillForm(form: HTMLElement) {
 	type(a.ads_alt, 'Pes z igračo ob polni skodelici hrane');
 	type(a.ads_title_label, 'Repek: jesenska akcija');
 	type(a.ads_text_label, 'Brezplačna dostava do konca meseca.');
-	type(a.ads_cta_label, 'Več o akciji');
+	type(a.ads_cta_label_required, 'Več o akciji');
 	type(a.ads_link, 'https://repek.si/jesen');
 	press(a.ads_slots, a.ads_slot_detail, form);
 }

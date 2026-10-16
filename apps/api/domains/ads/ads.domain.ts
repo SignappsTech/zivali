@@ -26,7 +26,7 @@ export const BLOCKED_CATEGORIES = {
 } as const;
 
 const BlockedTerms = z.array(z.string());
-const CONTENT_FIELDS = ['title', 'body', 'cta', 'image_alt', 'link_url'] as const;
+const CONTENT_FIELDS = ['title', 'body', 'cta'] as const;
 type AdText = Record<(typeof CONTENT_FIELDS)[number], string>;
 
 /** Lower case, no diacritics, words separated by single spaces and padded, so phrases match on word boundaries. */

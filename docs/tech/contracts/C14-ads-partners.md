@@ -22,7 +22,7 @@ leads(id, company, contact_name, email, phone null, region_interest text null, i
 ```
 Access only through the API (RLS deny-all); models in `prisma/schemas/ads.prisma`.
 
-**Content rule (TASK-35, TASK-37):** no ad may sell, give away or rehome animals; the API rejects such ads on save (category blocklist plus keyword list in `app_config` `ads.blocked_terms`, SL and EN) and the serving query excludes ads flagged `blocked`.
+**Content rule (TASK-35, TASK-37):** no ad may sell, give away or rehome animals; the API rejects such ads on save, checking title, body and cta only, not link_url or image_alt (category blocklist plus keyword list in `app_config` `ads.blocked_terms`, SL and EN) and the serving query excludes ads flagged `blocked`.
 
 ## Serving (owned by TASK-35.1)
 
