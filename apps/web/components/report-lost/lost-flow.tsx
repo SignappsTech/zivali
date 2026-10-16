@@ -62,7 +62,7 @@ import {
 	isOld,
 	isoTime,
 	type LostError,
-	lostResolver,
+	lostResolverAt,
 	type LostValues,
 	NEW_PET,
 	NOTE_MAX,
@@ -79,15 +79,29 @@ import { LostDone } from './lost-done';
 export const LOST_DRAFT = 'lost';
 // C4 §Drafts: idb-keyval `draft:<kind>:<id>`. The location in it is the coarsened point (C6); EXIF never goes in.
 const DRAFT_KEY = `draft:lost:${LOST_DRAFT}`;
-/** `handoff`: when Publish was pressed signed out; back signed in within HANDOFF_MS, the draft publishes itself (C3). */
-type Draft = { step: Step; values: LostValues; at: number; handoff?: number };
+/**
+ * `handoff`: Publish was pressed signed out, at `at`, with `nonce` carried through the sign-in round trip as
+ * `?handoff=`. Back signed in within HANDOFF_MS with the same nonce in the URL, the draft publishes itself (C3); any
+ * other visit (another account on a shared device, a reload) asks first.
+ */
+type Handoff = { at: number; nonce: string };
+type Draft = { step: Step; values: LostValues; at: number; handoff?: Handoff };
+const HANDOFF_PARAM = 'handoff';
+/** Adds (or, without a nonce, strips) the hand-off mark in the address bar, so the gate's `next` carries it. */
+function markUrl(nonce?: string) {
+	const url = new URL(window.location.href);
+	if (nonce) url.searchParams.set(HANDOFF_PARAM, nonce);
+	else if (url.searchParams.has(HANDOFF_PARAM)) url.searchParams.delete(HANDOFF_PARAM);
+	else return;
+	window.history.replaceState(null, '', url);
+}
 const HANDOFF_MS = 24 * 60 * 60 * 1000;
 
 async function loadDraft(): Promise<Draft | undefined> {
 	const draft = await get<Draft>(DRAFT_KEY).catch(() => undefined);
 	return draft?.step && draft.values ? draft : undefined;
 }
-const saveDraft = (step: Step, values: LostValues, handoff?: number) =>
+const saveDraft = (step: Step, values: LostValues, handoff?: Handoff) =>
 	set(DRAFT_KEY, { step, values, at: Date.now(), handoff } satisfies Draft);
 const dropDraft = () => Promise.all([del(DRAFT_KEY).catch(() => {}), clearPhotoDraft(LOST_DRAFT)]);
 
@@ -590,7 +604,13 @@ export function LostFlow({ initialPet, signedIn }: { initialPet?: string; signed
 	const [createReport] = useCreateReportMutation();
 	const [updateReport] = useUpdateReportMutation();
 
-	const form = useForm<LostValues>({ resolver: lostResolver, defaultValues: { ...initialValues, pet: initialPet } });
+	// When Publish was pressed before the sign-in round trip: "Pravkar" means then, not after the detour.
+	const handoffAt = React.useRef<number>(undefined);
+	// "Danes" at 23:50 is not in the future for a Publish pressed at 23:55, even if the way back crosses midnight.
+	const form = useForm<LostValues>({
+		resolver: lostResolverAt(() => handoffAt.current ?? Date.now()),
+		defaultValues: { ...initialValues, pet: initialPet },
+	});
 	const values = useWatch({ control: form.control }) as LostValues;
 	const [step, setStep] = React.useState<Step>('pet');
 	const steps = stepsFor(values.pet);
@@ -614,8 +634,6 @@ export function LostFlow({ initialPet, signedIn }: { initialPet?: string; signed
 	const [awaiting, setAwaiting] = React.useState(false);
 	// The draft read on mount, until the session says whether it continues a hand-off or asks to resume.
 	const [stored, setStored] = React.useState<Draft>();
-	// When Publish was pressed before the sign-in round trip: "Pravkar" means then, not after the detour.
-	const handoffAt = React.useRef<number>(undefined);
 	// Stable across repeats of one submission (C1): key, exact body and its event_at. Cleared once the server has answered.
 	const submission = React.useRef<{ key: string; body: string; when: LostValues['when']; at: Date } | null>(null);
 	const busy = React.useRef(false);
@@ -639,9 +657,14 @@ export function LostFlow({ initialPet, signedIn }: { initialPet?: string; signed
 	// Any other draft asks first.
 	const settle = React.useEffectEvent((draft: Draft) => {
 		setStored(undefined);
-		if (gate === 'ok' && draft.handoff && Date.now() - draft.handoff < HANDOFF_MS) {
-			handoffAt.current = draft.handoff;
+		const nonce = new URLSearchParams(window.location.search).get(HANDOFF_PARAM);
+		markUrl();
+		const { handoff } = draft;
+		if (gate === 'ok' && handoff?.nonce && handoff.nonce === nonce && Date.now() - handoff.at < HANDOFF_MS) {
+			handoffAt.current = handoff.at;
 			restore(draft);
+			// Consumed: a reload, or a retry after a lost answer, stays manual.
+			void saveDraft(draft.step, draft.values).catch(() => {});
 			setAwaiting(true);
 		} else setResume(draft);
 	});
@@ -686,6 +709,8 @@ export function LostFlow({ initialPet, signedIn }: { initialPet?: string; signed
 		setStep(next);
 	};
 	const advance = (next: Step = toReview ? 'review' : steps[index + 1]!) => {
+		// Any later edit is a new "now".
+		handoffAt.current = undefined;
 		if (next === 'review') setToReview(false);
 		go(next);
 		saveDraft(next, form.getValues()).then(
@@ -802,10 +827,15 @@ export function LostFlow({ initialPet, signedIn }: { initialPet?: string; signed
 		if (!values.location) return notSent(() => edit('where'));
 		if (signedOut) {
 			// Marked, so the way back from sign-in or sign-up publishes it.
-			await saveDraft('review', form.getValues(), Date.now()).catch(() => {});
+			const handoff = { at: Date.now(), nonce: crypto.randomUUID() };
+			await saveDraft('review', form.getValues(), handoff).catch(() => {});
+			handoffAt.current = handoff.at;
+			// The gate's `next` is this address: the nonce rides through the sign-in round trip.
+			markUrl(handoff.nonce);
 			return notSent(() => setGateOpen(true));
 		}
-		const at = values.when === 'now' && handoffAt.current ? new Date(handoffAt.current) : eventAt(values)!;
+		// "Pravkar", "Danes" and "Včeraj" mean the day Publish was pressed, not after the sign-in detour.
+		const at = eventAt(values, handoffAt.current ?? Date.now())!;
 		setSending(true);
 		try {
 			let code: string;
@@ -856,6 +886,18 @@ export function LostFlow({ initialPet, signedIn }: { initialPet?: string; signed
 	}, [awaiting, gate, photos.length, held]);
 	// No photos came back (storage cleared): the button stays usable and says why on a press.
 	const waiting = awaiting && photos.length > 0;
+	// The gate calls onReady for verified accounts only, but an unconfirmed owner publishes too (P6): signed in with the
+	// gate still open (the other tab, a sign-in without leaving the page), it closes and Publish goes on.
+	React.useEffect(() => {
+		if (!gateOpen || gate !== 'ok') return;
+		// On the next tick, as above.
+		const timer = setTimeout(() => {
+			markUrl();
+			setGateOpen(false);
+			setAwaiting(true);
+		});
+		return () => clearTimeout(timer);
+	}, [gateOpen, gate]);
 
 	const titles: Record<Exclude<Step, 'where'>, string> = {
 		pet: t('pet_title'),
@@ -1039,6 +1081,7 @@ export function LostFlow({ initialPet, signedIn }: { initialPet?: string; signed
 				open={gateOpen}
 				onOpenChange={(open) => {
 					setGateOpen(open);
+					if (!open) markUrl();
 					// Cancelled: the draft stays, unmarked, so a later visit asks before publishing.
 					if (!open && gate === 'signin') void saveDraft('review', form.getValues()).catch(() => {});
 				}}

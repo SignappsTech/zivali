@@ -213,6 +213,7 @@ afterEach(() => {
 	cleanup();
 	vi.clearAllMocks();
 	vi.useRealTimers();
+	window.history.replaceState(null, '', '/');
 });
 
 describe('LostFlow', () => {
@@ -673,7 +674,11 @@ describe('LostFlow', () => {
 	describe('signed out (C3 draft hand-off)', () => {
 		const kept: Emitted = { key: 'k1', preview: 'blob:1', status: 'kept' };
 		const HANDOFF = new Date(2026, 9, 16, 14, 20).getTime();
-		const draft = (handoff?: number) => ({
+		const NONCE = 'n-7f3a';
+		/** Back from sign-in: the address carries the nonce the gate's `next` took along. */
+		const backFromSignIn = (nonce = NONCE) =>
+			window.history.replaceState(null, '', nonce ? `/?handoff=${nonce}` : '/');
+		const draft = (handoff?: number, values: Record<string, unknown> = {}) => ({
 			step: 'review',
 			values: {
 				pet: 'new',
@@ -684,9 +689,10 @@ describe('LostFlow', () => {
 				when: 'now',
 				date: '',
 				time: '',
+				...values,
 			},
 			at: HANDOFF,
-			handoff,
+			handoff: handoff === undefined ? undefined : { at: handoff, nonce: NONCE },
 		});
 		beforeEach(() => {
 			// The session is not wired on a signed-out page until the gate opens: it never resolves.
@@ -733,12 +739,16 @@ describe('LostFlow', () => {
 			expect(api.store.get('draft:lost:lost')).toMatchObject({
 				step: 'review',
 				values: { species: 'dog', colours: ['brown'], location: COARSE },
-				handoff: Date.now(),
+				handoff: { at: Date.now(), nonce: expect.any(String) },
 			});
+			// The nonce rides in the address, so the gate's `next` brings it back.
+			const { nonce } = (api.store.get('draft:lost:lost') as { handoff: { nonce: string } }).handoff;
+			expect(new URLSearchParams(window.location.search).get('handoff')).toBe(nonce);
 
 			// Prekliči: the draft stays, without the mark.
 			act(() => api.gate.onOpenChange!(false));
 			expect(screen.queryByRole('dialog')).toBeNull();
+			expect(window.location.search).toBe('');
 			await waitFor(() =>
 				expect((api.store.get('draft:lost:lost') as { handoff?: number }).handoff).toBeUndefined()
 			);
@@ -751,11 +761,13 @@ describe('LostFlow', () => {
 			click(t.publish);
 			await screen.findByRole('dialog', { name: t.gate_title });
 
-			// Signed in without leaving the page (another tab): the gate's onReady.
+			// Signed in without leaving the page (another tab), the address not confirmed yet: the gate only calls
+			// onReady for verified accounts, so the flow closes it itself and goes on (P6).
 			api.auth = { gate: 'ok', me, isVerified: false };
 			view.rerender();
 			expect(api.picker.hold).toBe(false);
-			act(() => api.gate.onReady!());
+			await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+			expect(window.location.search).toBe('');
 			photosUp([{ ...kept, status: 'uploading' }]);
 			expect(button(t.publishing)).toBeTruthy();
 			expect(api.createReport).not.toHaveBeenCalled();
@@ -776,6 +788,7 @@ describe('LostFlow', () => {
 			api.store.set('draft:lost:lost', draft(HANDOFF));
 			api.auth = { gate: 'ok', me, isVerified: true };
 			vi.setSystemTime(new Date(2026, 9, 16, 14, 32));
+			backFromSignIn();
 			show();
 
 			await heading(t.review_title);
@@ -798,13 +811,18 @@ describe('LostFlow', () => {
 				photo_ids: ['photo-1'],
 			});
 			expect(api.store.size).toBe(0);
+			// The param is used up.
+			expect(window.location.search).toBe('');
 		});
 
 		it.each([
-			['still signed out', false, HANDOFF],
-			['signed in, a day later', true, HANDOFF - 25 * 60 * 60 * 1000],
-			['signed in, an unmarked draft', true, undefined],
-		])('asks to resume instead when %s', async (_name, signedIn, handoff) => {
+			['still signed out', false, HANDOFF, NONCE],
+			['signed in, a day later', true, HANDOFF - 25 * 60 * 60 * 1000, NONCE],
+			['signed in, an unmarked draft', true, undefined, NONCE],
+			['signed in, no nonce in the address (another account on a shared device)', true, HANDOFF, ''],
+			['signed in, another nonce in the address', true, HANDOFF, 'other'],
+		])('asks to resume instead when %s', async (_name, signedIn, handoff, nonce) => {
+			backFromSignIn(nonce);
 			api.store.set('draft:lost:lost', draft(handoff));
 			if (signedIn) api.auth = { gate: 'ok', me, isVerified: true };
 			show({ signedIn });
@@ -812,6 +830,61 @@ describe('LostFlow', () => {
 			photosUp();
 			await new Promise((resolve) => setTimeout(resolve, 20));
 			expect(api.createReport).not.toHaveBeenCalled();
+			expect(window.location.search).toBe('');
+		});
+
+		it('uses the hand-off up: after a lost answer a reload asks first and a retry keeps its key', async () => {
+			api.createReport.mockRejectedValueOnce({ status: 0, data: { code: 'NETWORK', message: 'offline' } });
+			api.store.set('draft:lost:lost', draft(HANDOFF));
+			api.auth = { gate: 'ok', me, isVerified: true };
+			backFromSignIn();
+			show();
+			await heading(t.review_title);
+			photosUp();
+			expect(await screen.findByText(t.send_failed)).toBeTruthy();
+			expect((api.store.get('draft:lost:lost') as { handoff?: unknown }).handoff).toBeUndefined();
+
+			// A reload (even with the address kept) does not publish again.
+			cleanup();
+			backFromSignIn();
+			show();
+			expect(await screen.findByText(t.resume_title)).toBeTruthy();
+			photosUp();
+			await new Promise((resolve) => setTimeout(resolve, 20));
+			expect(api.createReport).toHaveBeenCalledTimes(1);
+		});
+
+		it('keeps the retry manual with the same key in the page that handed off', async () => {
+			api.createReport.mockRejectedValueOnce({ status: 0, data: { code: 'NETWORK', message: 'offline' } });
+			api.store.set('draft:lost:lost', draft(HANDOFF));
+			api.auth = { gate: 'ok', me, isVerified: true };
+			backFromSignIn();
+			show();
+			await heading(t.review_title);
+			photosUp();
+			await screen.findByText(t.send_failed);
+			await new Promise((resolve) => setTimeout(resolve, 20));
+			expect(api.createReport).toHaveBeenCalledTimes(1);
+			click(t.publish);
+			await heading(t.done_title);
+			const [first, second] = api.createReport.mock.calls.map(([arg]) => arg);
+			expect(second.idempotencyKey).toBe(first.idempotencyKey);
+		});
+
+		it.each([
+			['today', new Date(2026, 9, 16, 23, 50)],
+			['yesterday', new Date(2026, 9, 15, 23, 50)],
+		] as const)('resolves "%s" and its hour against the press, not after midnight', async (when, expected) => {
+			const pressed = new Date(2026, 9, 16, 23, 55).getTime();
+			api.store.set('draft:lost:lost', draft(pressed, { when, time: '23:50' }));
+			api.auth = { gate: 'ok', me, isVerified: true };
+			vi.setSystemTime(new Date(2026, 9, 17, 0, 10));
+			backFromSignIn();
+			show();
+			await heading(t.review_title);
+			photosUp();
+			await heading(t.done_title);
+			expect(api.createReport.mock.calls[0]![0].body.event_at).toBe(expected.toISOString());
 		});
 	});
 });

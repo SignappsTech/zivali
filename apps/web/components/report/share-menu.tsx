@@ -124,7 +124,7 @@ function ToastRegion({ toast, onClose, closeLabel }: { toast?: Toast; onClose: (
  * Content dialog (system 10.9): native modal (focus stays inside, Escape closes, focus returns to the opener), 600 px,
  * padding 28, h2 title, close top right; a click on the backdrop closes it.
  */
-function ContentDialog({
+export function ContentDialog({
 	title,
 	closeLabel,
 	onClose,
@@ -174,7 +174,11 @@ function ContentDialog({
 }
 
 /** P18 poster options: language, "Prenesi PDF" with its progress and failure states, "Natisni", the QR note. */
-function PosterOptions({ poster, copy, onDownload }: Pick<Props, 'poster' | 'copy'> & { onDownload: () => void }) {
+export function PosterOptions({
+	poster,
+	copy,
+	onDownload,
+}: Pick<Props, 'poster' | 'copy'> & { onDownload: () => void }) {
 	const [lang, setLang] = React.useState(poster.lang);
 	const [state, setState] = React.useState<'idle' | 'preparing' | 'failed'>('idle');
 	const labelId = React.useId();
