@@ -26,7 +26,7 @@ import {
 	usePlaceLabel,
 } from '@/components/matches/parts';
 import { Note } from '@/components/report/parts';
-import { reportLink } from '@/components/report/slots/slot-b';
+import { reportLink } from '@/lib/share';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Icon } from '@/components/ui/icon';
