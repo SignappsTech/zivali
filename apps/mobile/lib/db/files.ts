@@ -15,4 +15,5 @@ export function bytesUsed(): { thumbnails: number; queuedPhotos: number } {
 /** File names in the thumbnails folder, listed once so callers avoid a synchronous `exists` call per row. */
 export const thumbNames = (): Set<string> =>
 	new Set(thumbsDir.exists ? thumbsDir.list().map((entry) => entry.name) : []);
-export const fileName = (path: string): string => path.slice(path.lastIndexOf('/') + 1);
+export const fileName = (path: string): string =>
+	path.slice(Math.max(path.lastIndexOf('/'), path.lastIndexOf('\\')) + 1);
