@@ -237,7 +237,7 @@ export function AdForm({
 }: {
 	/** The ad being edited */
 	ad?: AdminAd;
-	/** The ad being duplicated (its image stays with it: keys belong to one ad) */
+	/** The ad being duplicated: it has no image (keys belong to one ad), the admin uploads one; only the alt text is copied */
 	from?: AdminAd;
 	house?: boolean;
 	regions: RegionNames;
@@ -281,7 +281,7 @@ export function AdForm({
 	}, [picked]);
 
 	const say = (problem?: Problem) =>
-		problem ? t(problem.key as 'ads_err_too_long', problem.values as never) : undefined;
+		problem ? (problem.message ?? t(problem.key as 'ads_err_too_long', problem.values as never)) : undefined;
 	const set = <K extends keyof FormState>(field: K, value: FormState[K]) =>
 		setForm((current) => ({ ...current, [field]: value }));
 	const text = (field: 'title' | 'body' | 'cta' | 'link_url' | 'image_alt') => ({
@@ -343,6 +343,8 @@ export function AdForm({
 			if (!id) {
 				id = (await createAd(picked ? { ...body, status: 'draft' } : body).unwrap()).id;
 				setAdId(id);
+				// The draft exists: a cancelled or failed upload leaves the admin on it, not on an orphan.
+				window.history.replaceState(null, '', window.location.pathname.replace(/\/new$/, `/${id}/edit`));
 			}
 			let image: string | null | undefined = removed ? null : undefined;
 			if (picked) {
@@ -373,8 +375,10 @@ export function AdForm({
 		}
 	}
 
-	// The unit's own default in the ad's language (SL first): what an empty button text is saved as.
-	const ctaDefault = messages[form.locales.includes('sl') || !form.locales.length ? 'sl' : 'en'].learn_more ?? '';
+	// The unit's own default in the ad's language: what an empty button text is saved as.
+	// Only for a single-locale ad, in that locale; several locales must type their own (validate), or one language would show in all.
+	const ctaDefault =
+		form.locales.length === 1 ? (messages[form.locales[0] === 'en' ? 'en' : 'sl'].learn_more ?? '') : '';
 	const preview: Ad = {
 		id: ad?.id ?? 'preview',
 		title: form.title,

@@ -166,6 +166,7 @@ function Stats({ ad, regions, today }: { ad: AdminAd; regions: RegionNames; toda
 	const daily = byDay(rows, from, today);
 	const dayText = (day: string) => formatDate(`${day}T12:00:00Z`, locale);
 
+	// Admin only: the rows hold exact counts (the screen shows "< 5"), and the CTR is the ratio as a 4-decimal string.
 	function exportCsv() {
 		const sorted = [...rows].sort((a, b) => a.day.localeCompare(b.day) || a.slot.localeCompare(b.slot));
 		const csv = toCsv([
@@ -183,7 +184,7 @@ function Stats({ ad, regions, today }: { ad: AdminAd; regions: RegionNames; toda
 				labels.region(row.region_slug),
 				row.impressions,
 				row.clicks,
-				Number(row.ctr.toFixed(4)),
+				row.ctr.toFixed(4),
 			]),
 		]);
 		download(`ad-${ad.id.slice(0, 8)}-${from}-${today}.csv`, csv);

@@ -183,7 +183,7 @@ describe('ad form', () => {
 		fireEvent.click(screen.getByRole('button', { name: a.ads_save }));
 		expect(await screen.findByText(a.ads_err_alt)).toBeTruthy();
 		expect(screen.getByText(a.ads_err_slots)).toBeTruthy();
-		expect(screen.getAllByText(a.ads_err_required)).toHaveLength(3); // title, text, link
+		expect(screen.getAllByText(a.ads_err_required)).toHaveLength(4); // title, text, button (SL and EN), link
 		await waitFor(() => expect(document.activeElement).toBe(screen.getByLabelText(a.ads_alt)));
 		expect(screen.getByLabelText(a.ads_alt).getAttribute('aria-invalid')).toBe('true');
 
@@ -201,6 +201,7 @@ describe('ad form', () => {
 		type(a.ads_alt, 'Pes z igračo ob polni skodelici hrane');
 		type(a.ads_title_label, 'Repek: jesenska akcija');
 		type(a.ads_text_label, 'Brezplačna dostava do konca meseca.');
+		type(a.ads_cta_label, 'Več o akciji');
 		type(a.ads_link, 'https://repek.si/jesen');
 		press(a.ads_slots, a.ads_slot_detail, form);
 		press(a.ads_regions, 'Gorenjska', form);
@@ -219,8 +220,7 @@ describe('ad form', () => {
 		expect(client.calls.find((call) => call.method === 'POST')?.body).toEqual({
 			title: 'Repek: jesenska akcija',
 			body: 'Brezplačna dostava do konca meseca.',
-			// Empty button text: the unit's default, in the ad's first language.
-			cta: sl.ads.learn_more,
+			cta: 'Več o akciji',
 			link_url: 'https://repek.si/jesen',
 			image_alt: 'Pes z igračo ob polni skodelici hrane',
 			locales: ['sl', 'en'],
@@ -270,6 +270,7 @@ describe('ad form', () => {
 		type(a.ads_alt, 'Mladički na kavču');
 		type(a.ads_title_label, 'Prodam mladičke');
 		type(a.ads_text_label, 'Pokličite.');
+		type(a.ads_cta_label, 'Pokličite');
 		type(a.ads_link, 'https://example.test');
 		press(a.ads_slots, a.ads_slot_detail, form);
 		fireEvent.click(screen.getByRole('button', { name: a.ads_save }));
@@ -391,6 +392,7 @@ function fillForm(form: HTMLElement) {
 	type(a.ads_alt, 'Pes z igračo ob polni skodelici hrane');
 	type(a.ads_title_label, 'Repek: jesenska akcija');
 	type(a.ads_text_label, 'Brezplačna dostava do konca meseca.');
+	type(a.ads_cta_label, 'Več o akciji');
 	type(a.ads_link, 'https://repek.si/jesen');
 	press(a.ads_slots, a.ads_slot_detail, form);
 }
@@ -447,10 +449,10 @@ describe('ad detail', () => {
 		expect([...bytes.slice(0, 3)]).toEqual([0xef, 0xbb, 0xbf]);
 		expect(new TextDecoder().decode(bytes).split('\r\n')).toEqual([
 			`${a.ads_col_day},${a.ads_preview_slot},${a.ads_col_region},${a.ads_col_impressions},${a.ads_col_clicks},${a.ads_col_ctr}`,
-			'2026-10-13,Stran prijave,Osrednjeslovenska,640,16,0.025',
+			'2026-10-13,Stran prijave,Osrednjeslovenska,640,16,0.0250',
 			'2026-10-13,Stranska vrstica,Gorenjska,210,3,0.0143',
-			'2026-10-14,Stran prijave,Osrednjeslovenska,700,14,0.02',
-			'2026-10-14,Stranska vrstica,Brez regije,4,0,0',
+			'2026-10-14,Stran prijave,Osrednjeslovenska,700,14,0.0200',
+			'2026-10-14,Stranska vrstica,Brez regije,4,0,0.0000',
 			'',
 		]);
 	});

@@ -33,6 +33,7 @@ const valid = {
 	link_url: 'https://repek.si/jesen',
 	image_alt: 'Pes z igračo',
 	slots: ['detail' as const],
+	locales: ['sl' as const],
 };
 
 describe('ad status word', () => {
@@ -144,6 +145,30 @@ describe('server problems', () => {
 			end: { key: 'ads_err_dates' },
 		});
 		expect(other).toEqual([{ path: 'weight', message: 'Too big' }]);
+	});
+
+	it('guesses blocked terms for title, body and button only', () => {
+		const { problems } = serverProblems(
+			[
+				{ path: 'cta', message: 'x' },
+				{ path: 'image_alt', message: 'Alt refused' },
+				{ path: 'link_url', message: 'Bad host' },
+			],
+			valid
+		);
+		expect(problems.cta).toEqual({ key: 'ads_err_blocked' });
+		expect(problems.image_alt).toEqual({ key: 'ads_err_blocked', message: 'Alt refused' });
+		expect(problems.link_url).toEqual({ key: 'ads_err_link' });
+	});
+
+	it('falls back to the server message when an overlap names no title', () => {
+		const { problems } = serverProblems([{ path: 'exclusive', message: 'Overlaps another ad' }], valid);
+		expect(problems.exclusive).toEqual({ key: 'ads_err_overlap', message: 'Overlaps another ad' });
+	});
+
+	it('requires the button text for several locales, not for one', () => {
+		expect(validate({ ...valid, cta: '', locales: ['sl', 'en'] }).cta).toEqual({ key: 'ads_err_required' });
+		expect(validate({ ...valid, cta: '', locales: ['en'] }).cta).toBeUndefined();
 	});
 
 	it('keeps the client message when the field breaks a rule the client knows', () => {

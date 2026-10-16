@@ -6,7 +6,8 @@ import type { AdInput, AdminAd, AdSlot, AdStats, AdStatus, Locale, Species } fro
 
 export type AdminKey = keyof (typeof messages)['admin'];
 /** A message to show: an `admin` key and its values. */
-export type Problem = { key: AdminKey; values?: Record<string, string | number> };
+/** `message` is the API's own text, shown when no client message fits. */
+export type Problem = { key: AdminKey; values?: Record<string, string | number>; message?: string };
 
 export type Phase = 'draft' | 'scheduled' | 'running' | 'paused' | 'ended';
 
@@ -124,7 +125,8 @@ export function validate(form: AdForm, house = false): Problems {
 				: undefined,
 		title: required(form.title) ?? tooLong(form.title, LIMITS.title),
 		body: required(form.body) ?? tooLong(form.body, LIMITS.body),
-		cta: tooLong(form.cta, LIMITS.cta),
+		// One button text cannot serve two languages: with several locales it is typed, never defaulted (until C14 allows it empty).
+		cta: (!house && form.locales.length > 1 ? required(form.cta) : undefined) ?? tooLong(form.cta, LIMITS.cta),
 		link_url: required(form.link_url) ?? (isHttpsLink(form.link_url.trim()) ? undefined : { key: 'ads_err_link' }),
 	};
 	if (!house) {
@@ -136,7 +138,10 @@ export function validate(form: AdForm, house = false): Problems {
 }
 
 const CONTENT = ['title', 'body', 'cta', 'image_alt', 'link_url'] as const;
+const BLOCKABLE = ['title', 'body', 'cta'];
 const IMAGE_PATHS = ['image', 'sha256', 'width', 'height', 'bytes', 'content_type'];
+
+const overlapTitle = (message: string) => /"(.+)"/.exec(message)?.[1];
 
 /**
  * The API's VALIDATION issues (C1 `issues`, by path) as field problems. A content field the client checks pass was
@@ -151,13 +156,18 @@ export function serverProblems(issues: ApiIssue[], form: AdForm): { problems: Pr
 		const path = issue.path.split('.')[0]!;
 		if ((CONTENT as readonly string[]).includes(path)) {
 			const field = path as (typeof CONTENT)[number];
-			problems[field] ??= local[field] ?? { key: 'ads_err_blocked' };
+			// Only the words of title, body and button can be refused for their content (ads.blocked_terms).
+			const guess: Problem | undefined = BLOCKABLE.includes(field)
+				? { key: 'ads_err_blocked' }
+				: field === 'link_url'
+					? { key: 'ads_err_link' }
+					: { key: 'ads_err_blocked', message: issue.message };
+			problems[field] ??= local[field] ?? guess;
 		} else if (IMAGE_PATHS.includes(path)) problems.image ??= { key: 'ads_err_image' };
 		else if (path === 'exclusive')
-			problems.exclusive ??= {
-				key: 'ads_err_overlap',
-				values: { title: /"(.+)"/.exec(issue.message)?.[1] ?? '' },
-			};
+			problems.exclusive ??= overlapTitle(issue.message)
+				? { key: 'ads_err_overlap', values: { title: overlapTitle(issue.message)! } }
+				: { key: 'ads_err_overlap', message: issue.message };
 		else if (path === 'starts_at' || path === 'ends_at') problems.end ??= { key: 'ads_err_dates' };
 		else if (path === 'slots') problems.slots ??= { key: 'ads_err_slots' };
 		else if (path === 'locales') problems.locales ??= { key: 'ads_err_required' };
@@ -168,7 +178,8 @@ export function serverProblems(issues: ApiIssue[], form: AdForm): { problems: Pr
 
 /**
  * AdInput from the form. Empty targeting means everyone (null); a house ad sends its creative only. The button text is
- * optional in the form (P20) but required by the API: an empty one is sent as the unit's default, `ctaDefault`.
+ * optional in the form (P20) for a single-locale ad but required by the API: an empty one is sent as `ctaDefault`
+ * (that locale's default; the form passes none for several locales, where the text is required).
  */
 export function toInput(form: AdForm, house: boolean, ctaDefault = ''): AdInput {
 	const creative = {
