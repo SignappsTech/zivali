@@ -1,11 +1,11 @@
 ---
 id: TASK-87.2
 title: Mobile proximity-alert settings and Always-location primer
-status: In Progress
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:40'
-updated_date: '2026-10-16 01:03'
+updated_date: '2026-10-16 02:04'
 labels:
   - fe
   - 'est:S'

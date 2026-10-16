@@ -3,10 +3,11 @@ id: TASK-17.10
 title: >-
   Web manage page: focus is lost after the 'Zival je spet doma' confirm dialog
   closes
-status: To Do
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-16 00:24'
+updated_date: '2026-10-16 02:04'
 labels:
   - bug
   - 'est:XS'
@@ -23,5 +24,11 @@ Story TASK-17 AC#2, keyboard check (QA TASK-17.4). Steps: /m#<token>, Tab to 'Zi
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Closing the mark-returned confirm dialog with Escape or 'Ne' returns focus to the 'Zival je spet doma' row (keyboard and screen-reader users keep their place)
+- [x] #1 Closing the mark-returned confirm dialog with Escape or 'Ne' returns focus to the 'Zival je spet doma' row (keyboard and screen-reader users keep their place)
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+Fixed on the web in TASK-17.5: AlertDialogContent onCloseAutoFocus returns focus to the page h1. Mobile has no DOM focus loss here.
+<!-- SECTION:NOTES:END -->

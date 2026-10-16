@@ -1,10 +1,11 @@
 ---
 id: TASK-17.8
 title: Mobile manage screen has no Edit action
-status: To Do
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-16 00:23'
+updated_date: '2026-10-16 02:04'
 labels:
   - bug
   - 'est:XS'
@@ -21,5 +22,11 @@ Story TASK-17 AC#2 (QA TASK-17.4), P7 'Manage page': actions as text rows Edit, 
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 The mobile manage screen (app/m.tsx) offers Edit (P7 action rows: Edit, Close report, Animal returned) and it opens an edit view for the finder's report
+- [x] #1 The mobile manage screen (app/m.tsx) offers Edit (P7 action rows: Edit, Close report, Animal returned) and it opens an edit view for the finder's report
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+Fixed in TASK-26.5 (fix round): apps/mobile/app/m.tsx has a secondary Uredi for open and matched reports that opens /r/<code>/edit; edit.tsx allows manage-link holders (claimManageLink binds the token, so is_mine).
+<!-- SECTION:NOTES:END -->
