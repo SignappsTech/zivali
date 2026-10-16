@@ -72,5 +72,6 @@
 	"photo_failed": "Fotografije ni mogoče naložiti.",
 	"mobile_back": "Nazaj",
 	"mobile_share": "Deli",
+	"action_offline": "Na voljo, ko boste spet na spletu.",
 	"offline_cached": "Brez povezave. Prikazujemo shranjeno različico ({time})."
 }

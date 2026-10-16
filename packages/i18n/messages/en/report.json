@@ -72,5 +72,6 @@
 	"photo_failed": "This photo cannot be loaded.",
 	"mobile_back": "Back",
 	"mobile_share": "Share",
+	"action_offline": "Available when you are back online.",
 	"offline_cached": "You are offline. Showing the saved copy ({time})."
 }

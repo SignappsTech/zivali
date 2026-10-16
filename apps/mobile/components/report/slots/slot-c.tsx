@@ -7,7 +7,7 @@ import { Pressable, View } from 'react-native';
 import { useReducedMotion } from 'react-native-reanimated';
 import { useTranslations } from 'use-intl';
 
-import type { ReportSlotProps } from '@/components/report/slots';
+import type { ReportSlotProps } from '@/components/report/slots/types';
 import { Button } from '@/components/ui/button';
 import { useFocusRing } from '@/components/ui/focus-ring';
 import { Icon } from '@/components/ui/icon';
