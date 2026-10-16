@@ -1,11 +1,11 @@
 ---
 id: TASK-16.6
 title: 'Web My pets: list, create, edit, archive, delete'
-status: In Progress
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:13'
-updated_date: '2026-10-15 23:16'
+updated_date: '2026-10-16 00:17'
 labels:
   - fe
   - 'est:M'
