@@ -1,11 +1,11 @@
 ---
 id: TASK-29.3
 title: Web report-lost flow
-status: To Do
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:14'
-updated_date: '2026-10-15 06:56'
+updated_date: '2026-10-16 05:30'
 labels:
   - fe
   - 'est:M'
@@ -44,10 +44,10 @@ Branch: agent/task-29.3-lost-web
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 The lost flow (one question per screen, per P6) lets a signed-in owner pick a saved pet or enter details with PetFields, add photos, set the last-seen place and radius, date and time (default now), circumstances and contact preference (chat only by default).
-- [ ] #2 Submitting calls create_report; errors are specific and localised and keep the input; DUPLICATE_OPEN_REPORT offers to update the open report; old dates warn.
-- [ ] #3 report_lost_start and report_lost_submit fire with report_type, species, region and municipality only, with consent.
+- [x] #1 The lost flow (one question per screen, per P6) lets a signed-in owner pick a saved pet or enter details with PetFields, add photos, set the last-seen place and radius, date and time (default now), circumstances and contact preference (chat only by default).
+- [x] #2 Submitting calls create_report; errors are specific and localised and keep the input; DUPLICATE_OPEN_REPORT offers to update the open report; old dates warn.
+- [x] #3 report_lost_start and report_lost_submit fire with report_type, species, region and municipality only, with consent.
 - [ ] #4 No ad slot anywhere in the flow (quality-kit helper); axe 0 violations on every step.
-- [ ] #5 The lost flow offers the optional display-only reward (amount and/or short note) per P6 with the inline contact-data error from containsContactData(); nothing is charged.
-- [ ] #6 When the report form uses PhotoPicker's EXIF location, pass it only as LocationPicker 'suggested' (coarsened on onChange, C6); raw EXIF coordinates are never sent.
+- [x] #5 The lost flow offers the optional display-only reward (amount and/or short note) per P6 with the inline contact-data error from containsContactData(); nothing is charged.
+- [x] #6 When the report form uses PhotoPicker's EXIF location, pass it only as LocationPicker 'suggested' (coarsened on onChange, C6); raw EXIF coordinates are never sent.
 <!-- AC:END -->

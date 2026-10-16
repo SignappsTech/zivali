@@ -639,12 +639,15 @@ export function LostFlow() {
 	const [awaiting, setAwaiting] = React.useState(false);
 	const focused = useIsFocused();
 	const [sendError, setSendError] = React.useState<string>();
-	const [duplicate, setDuplicate] = React.useState<string>();
+	const [found, setFound] = React.useState<{ code: string; pet?: string }>();
 	const [update, setUpdate] = React.useState(true);
 	// Stable across repeats of one submission (C1): key, exact body and its event_at. Cleared once the server has answered.
-	const submission = React.useRef<{ key: string; body: string; at: Date } | null>(null);
+	const submission = React.useRef<{ key: string; body: string; when: LostValues['when']; at: Date } | null>(null);
+	const busy = React.useRef(false);
 	const scroll = React.useRef<ScrollView>(null);
 	const pet = pets.find((p) => p.id === values.pet);
+	// The open search found by a 409 belongs to the pet it was found for; another choice is a fresh question.
+	const duplicate = found && found.pet === values.pet ? found.code : undefined;
 
 	React.useEffect(() => track('report_lost_start'), []);
 
@@ -715,10 +718,18 @@ export function LostFlow() {
 
 	const failed = (error: unknown) => {
 		const data = (error as Partial<QueryError> | null)?.data;
-		if (data?.code !== 'NETWORK') submission.current = null;
+		// The key survives what may still commit or can be repeated safely (network, 5xx, 429, 409 "in progress");
+		// only a definitive refusal ends the submission.
+		const status = (error as Partial<QueryError> | null)?.status;
+		const retriable =
+			data?.code === 'NETWORK' ||
+			data?.code === 'RATE_LIMITED' ||
+			data?.code === 'CONFLICT' ||
+			(typeof status === 'number' && status >= 500);
+		if (!retriable) submission.current = null;
 		const paths = (data?.issues ?? []).map((issue) => issue.path);
 		if (data?.code === 'DUPLICATE_OPEN_REPORT' && typeof data.details?.short_code === 'string') {
-			setDuplicate(data.details.short_code);
+			setFound({ code: data.details.short_code, pet: values.pet });
 			setUpdate(true);
 			return;
 		}
@@ -742,6 +753,15 @@ export function LostFlow() {
 	};
 
 	const publish = async () => {
+		if (busy.current || photos.some((photo) => photo.status === 'uploading')) return;
+		busy.current = true;
+		try {
+			await send();
+		} finally {
+			busy.current = false;
+		}
+	};
+	const send = async () => {
 		setSendError(undefined);
 		const photoIds = photos.flatMap((photo) => (photo.photoId ? [photo.photoId] : []));
 		if (!photos.length) return setSendError(t('photos_required'));
@@ -765,16 +785,20 @@ export function LostFlow() {
 					.short_code;
 			} else {
 				// A retry after NETWORK repeats key and body (event_at included); any edit is a new submission.
-				const make = (when: Date) =>
-					createBody(values, { photoIds, at: when, pet, inline: Boolean(duplicate) });
 				const prev = submission.current;
-				if (!prev || JSON.stringify(make(prev.at)) !== prev.body) {
-					submission.current = { key: randomUUID(), body: JSON.stringify(make(at)), at };
+				// "Now" is stamped once per submission; a changed time or date is an edit.
+				const when = prev?.when === 'now' && values.when === 'now' ? prev.at : at;
+				const next = JSON.stringify(
+					createBody(values, { photoIds, at: when, pet, inline: Boolean(duplicate) })
+				);
+				if (!prev || next !== prev.body) {
+					submission.current = { key: randomUUID(), body: next, when: values.when, at: when };
 				}
 				const { key, body } = submission.current!;
 				code = (await createReport({ body: JSON.parse(body), idempotencyKey: key }).unwrap()).short_code;
 			}
-			trackSubmit(code);
+			submission.current = null;
+			if (!(duplicate && update)) trackSubmit(code);
 			await dropDraft().catch(() => markPublished().catch(() => {}));
 			const name = pet?.name ?? values.name?.trim();
 			router.replace({ pathname: '/report/lost/done', params: name ? { code, name } : { code } });

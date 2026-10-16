@@ -58,7 +58,6 @@ export async function GET(request: Request, { params }: RouteContext<'/r/[code]/
 	return new ImageResponse(
 		<div style={{ width: '100%', height: '100%', display: 'flex', background: c.primary }}>
 			{photo && (
-				// eslint-disable-next-line @next/next/no-img-element -- next/og draws <img>, it has no next/image
 				<img
 					src={photo}
 					alt=""
