@@ -55,7 +55,7 @@ function TextLink({
 	);
 }
 
-/** One shelter: name in bold, "Ni potrjeno" for a guess, the number, PokliÄi (`tel:`) and its page. */
+/** One shelter: name in bold, "Ni potrjeno" for a guess, the number, Pokliči (`tel:`) and its page. */
 function ShelterLines({
 	name,
 	slug,
@@ -168,7 +168,7 @@ function ShelterRow({ lookup }: { lookup: ResponsibleShelterArg | null }) {
 const AMOUNTS = [2, 3, 5] as const;
 
 /**
- * P15 contribution at the lost confirmation: a collapsed row (text and caret); open, the 2, 3 and 5 â‚¬ pills with none
+ * P15 contribution at the lost confirmation: a collapsed row (text and caret); open, the 2, 3 and 5 € pills with none
  * chosen, then Prispevaj and Skrij at equal weight. Prispevaj opens the checkout hand-off (TASK-32.3); Skrij removes the
  * row. Nothing here holds back the report, matching or alerts.
  */
