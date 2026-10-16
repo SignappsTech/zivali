@@ -23,8 +23,7 @@ Runtime dependencies outside this list (and outside what the Expo SDK 57 templat
 | `@react-native-firebase/app`, `@react-native-firebase/analytics` | mobile | ADR-009 |
 | `expo-image-picker`, `expo-image-manipulator`, `expo-location`, `expo-notifications`, `expo-web-browser`, `expo-secure-store`, `expo-crypto`, `expo-sqlite`, `expo-file-system`, `expo-sharing`, `expo-apple-authentication`, `expo-dev-client`, `react-native-webview`, `expo-network`, `expo-background-task`, `expo-task-manager`, `react-native-svg` | mobile | Expo-native capabilities (offline data layer and geofencing: ADR-019); `react-native-svg` is Expo-pinned (`npx expo install`) and a required peer of `phosphor-react-native` (TASK-8.3) |
 | `@react-native-google-signin/google-signin` | mobile | Native Google ID token for `signInWithIdToken` |
-| `@react-pdf/renderer` | web (server route only) | A4 poster PDF with embedded fonts (š, č, ž) |
-| `qrcode` | web (server) | QR on posters |
+| `qrcode` (+ `@types/qrcode`, dev) | web (server) | QR on posters |
 | `@next/mdx` | web | Legal and long-form pages as MDX |
 | `sonner` / `sonner-native` | web / mobile | Toasts (design system §10.10) |
 | `@phosphor-icons/react` / `phosphor-react-native` | web / mobile | Icon set chosen by the design system (§8); replaces the lucide default of shadcn/RNR |
@@ -40,7 +39,7 @@ Runtime dependencies outside this list (and outside what the Expo SDK 57 templat
 | `@asteasolutions/zod-to-openapi` | validation, api (client decision, TASK-6.5: the zod schemas in `@zivali/validation` are the single OpenAPI source; the package exports the registry and `registerSchemas()`, the API builds the spec from it) | OpenAPI spec from the zod schemas (`apps/api/openapi.json`) feeding the RTK codegen. Swagger UI at `/docs` is served by `swagger-ui-express` (next row) |
 | `swagger-ui-express` (+ `@types/swagger-ui-express`, dev) | api (TASK-3.12) | Swagger UI at `/docs` from the committed `openapi.json`: open in local and staging, admin + aal2 only in production. Serves its own bundled assets (no CDN) under a route-scoped CSP |
 | `stripe` | api | ADR-011 |
-| `pdfkit` | api (worker) | Receipt and fiscal invoice PDFs (klikni uses it; TASK-92) |
+| `pdfkit` (+ `@types/pdfkit`, dev) | api (worker); web (server route only: the A4 poster PDF, TASK-24.2) | Receipt and fiscal invoice PDFs (klikni uses it; TASK-92) and the poster PDF with embedded fonts (š, č, ž). Replaced `@react-pdf/renderer` for the poster on 2026-10-16: one PDF library across the repo, already in the lockfile, and Next keeps it external (`serverExternalPackages`) |
 | `@anthropic-ai/sdk` | api worker (M3) | ADR-012 |
 | `@sentry/nextjs`, `@sentry/react-native` | web, mobile (M5, TASK-70) | Error tracking, EU region, PII scrubbing |
 | Dev: `vitest`, `@testing-library/*`, `jsdom`, `@playwright/test`, `@axe-core/playwright`, `@lhci/cli`, `linkinator`, `jest-expo`, `secretlint` (with `@secretlint/secretlint-rule-preset-recommend`), `supabase` (CLI), `turbo`, `eslint`, `prettier`, `typescript` | repo | ADR-001, ADR-015 |

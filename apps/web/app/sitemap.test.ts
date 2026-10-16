@@ -24,6 +24,8 @@ describe('sitemap.xml', () => {
 			'https://najdimo.si/en/for-shelters',
 			'https://najdimo.si/o-nas',
 			'https://najdimo.si/en/about',
+			'https://najdimo.si/oglasevanje',
+			'https://najdimo.si/en/advertise',
 			'https://najdimo.si/zavetisca',
 			'https://najdimo.si/en/shelters',
 			'https://najdimo.si/zasebnost',

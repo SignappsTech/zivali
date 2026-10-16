@@ -173,7 +173,7 @@ test('a granted browser position is rounded to 2 decimals in requests and stays 
 	page.on('request', (request) => sent.push(`${request.url()} ${request.postData() ?? ''}`));
 	await page.goto('/en/map');
 	await expect(page.getByRole('button', { name: 'Sort: Nearest' }).first()).toBeAttached();
-	expect(urls.some((url) => url.searchParams.get('near') === '46.05,14.51,10')).toBe(true);
+	await expect.poll(() => urls.some((url) => url.searchParams.get('near') === '46.05,14.51,10')).toBe(true);
 	expect(sent.filter((line) => /46\.051|14\.506/.test(line))).toEqual([]);
 	expect(page.url()).not.toMatch(/46\.|14\./);
 });

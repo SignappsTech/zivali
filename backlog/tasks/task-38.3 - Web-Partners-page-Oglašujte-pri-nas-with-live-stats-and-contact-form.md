@@ -1,11 +1,11 @@
 ---
 id: TASK-38.3
 title: Web Partners page (Oglašujte pri nas) with live stats and contact form
-status: To Do
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:14'
-updated_date: '2026-10-14 22:43'
+updated_date: '2026-10-16 05:14'
 labels:
   - fe
   - 'est:M'

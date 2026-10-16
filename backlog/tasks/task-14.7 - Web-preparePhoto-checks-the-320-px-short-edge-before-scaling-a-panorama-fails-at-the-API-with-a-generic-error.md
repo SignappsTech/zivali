@@ -3,11 +3,11 @@ id: TASK-14.7
 title: >-
   Web preparePhoto checks the 320 px short edge before scaling: a panorama fails
   at the API with a generic error
-status: In Progress
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-16 03:37'
-updated_date: '2026-10-16 04:16'
+updated_date: '2026-10-16 05:08'
 labels:
   - bug
   - 'est:XS'

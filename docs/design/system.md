@@ -2,7 +2,7 @@
 doc: design-system
 title: Design system (slice)
 source: 03§Brand and visual language
-version: 0.13
+version: 0.14
 status: Draft, direction A (Lagoon) chosen by the client
 date: 2026-10-15
 owner: Design Lead
@@ -319,7 +319,17 @@ Notes: `input` is a 3:1 line, never a faint border. Status words use the `-subtl
 
 Both are Google Fonts with Latin Extended, so **Č, Š, Ž** (and Đ, Ć) render natively (verified in `directions/A.html`). Set `lang="sl"` on pages and `lang="sl-SI"` in React Native text where supported.
 
-**Loading.** Web: `next/font/google` with `subsets: ['latin', 'latin-ext']`, `display: swap`, variable fonts. Mobile: `expo-font` with `@expo-google-fonts/bricolage-grotesque` (600 SemiBold, 700 Bold) and `@expo-google-fonts/atkinson-hyperlegible-next` (400 Regular, 600 SemiBold, 700 Bold). React Native cannot use variable font axes, so use these static weights only. Static instances use the default optical size, so if mobile headings look loose, tighten tracking by 0.01em. Verify the package names at scaffold time.
+**Loading, web (v0.14, TASK-90.5; budget: first-load fonts at or under about 60 KB).** Three static woff2 files, self-hosted with `next/font/local`, no variable axes:
+
+| Face | Weight | Use |
+|---|---|---|
+| Bricolage Grotesque | 700 only | all display and headings (`font-display`); wordmark. Optical size fixed at the font default (no `opsz` axis). |
+| Atkinson Hyperlegible Next | 400 | body, UI, inputs |
+| Atkinson Hyperlegible Next | 700 | labels, buttons, emphasis (`font-sans-bold`). Weights 500 and 600 are not loaded: web `font-medium` resolves to 400 and `font-semibold` to 700. |
+
+Subset each file (pyftsubset from the OFL sources, `--flavor=woff2`) to U+0020-007E, U+00A0-00FF, U+0100-017F (Č, Š, Ž, Đ, Ć, ě and friends), U+2013-2014, U+2018-201E, U+2022, U+2026, U+20AC, U+2192, U+2212, plus ligature and kerning features `kern, liga, tnum, zero`. Atkinson keeps `tnum` and `zero` (slashed zero for chip numbers). `display: swap`; fallback `Arial` with `size-adjust` (`adjustFontFallback: 'Arial'`) so the swap does not shift layout. Preload all three (they all paint above the fold on public pages). If self-hosting is not possible, the fallback is `next/font/google` with the same weights, `subsets: ['latin', 'latin-ext']`, no `axes`; expect about 80 to 100 KB because Slovenian text pulls the latin-ext file too.
+
+**Mobile.** `expo-font` with `@expo-google-fonts/bricolage-grotesque` (600 SemiBold, 700 Bold) and `@expo-google-fonts/atkinson-hyperlegible-next` (400 Regular, 600 SemiBold, 700 Bold). React Native cannot use variable font axes, so use these static weights only. Static instances use the default optical size, so if mobile headings look loose, tighten tracking by 0.01em. Verify the package names at scaffold time. Mobile bytes are bundled, not network, so no cut there.
 
 React Native family names to register: `BricolageGrotesque_600SemiBold`, `BricolageGrotesque_700Bold`, `AtkinsonHyperlegibleNext_400Regular`, `AtkinsonHyperlegibleNext_600SemiBold`, `AtkinsonHyperlegibleNext_700Bold`. Map them as `font-display` (600/700) and `font-sans` (400/600/700) in the Tailwind preset. `font-sans-bold` is Atkinson Hyperlegible Next 700 (`AtkinsonHyperlegibleNext_700Bold`), generated from the `label-strong` role; on mobile use it for labels that need extra weight, since React Native cannot apply `font-bold` to a static family.
 
@@ -691,3 +701,4 @@ Each page slice in `docs/design/pages/P<n>-<slug>.md` gets one static mockup at 
 | 0.13 | 2026-10-15 | CH-67, CH-68, CH-72: legal note slot exempt from one note per view; checklist "at most one primary" and header "Prijavi" secondary on P3 T5/T6; Accordion row and On this page list components (§10.9). |
 | 0.14 | 2026-10-15 | CH-85, CH-90: drawer stays full width only below 640 px (480 px at 768); chip example fixed to 15 digits. |
 | 0.15 | 2026-10-15 | CH-95 (from TASK-8.2): type steps `control` 15/20 and `control-lg` 17/24 (control labels, tabs, radio rows, toast text, large button); button state tokens `primary-hover`, `primary-pressed`, `secondary-hover`, `secondary-pressed`, `destructive-hover`, `destructive-pressed` in light and dark (replace the 14 % mix; text on every state 10.0:1 or better light and 7.0:1 or better dark, except `secondary-pressed` at 6.4:1 light and 7.0:1 dark, floor 6:1 for the transient state); new primitives `crimson.200`, `crimson.800`. Tokens 0.5.2. |
+| 0.14 | 2026-10-16 | TASK-90.5: web font loading cut to Bricolage 700 + Atkinson 400/700, custom Latin subsets, no opsz, preload, size-adjusted fallback (section 4). Tokens unchanged. |
