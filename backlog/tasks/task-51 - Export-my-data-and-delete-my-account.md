@@ -5,7 +5,7 @@ status: To Do
 assignee:
   - '@tech-lead'
 created_date: '2026-10-14 21:04'
-updated_date: '2026-10-15 23:34'
+updated_date: '2026-10-16 03:00'
 labels:
   - story
   - 'req:FR-034'
@@ -32,6 +32,7 @@ GDPR gives users access and erasure rights and the pilot will hold real personal
 - [ ] #5 Given an organisation owner, when they delete their account, then they must transfer or delete the organisation first.
 - [ ] #6 From TASK-17.2: an anonymous finder can delete their report data from the manage page (/m) per R-034.4.
 - [ ] #7 From the TASK-22.5 review: account deletion on mobile unregisters the device push token (unregisterPush, as in beforeSignOut) before the session is wiped, and account deletion and the anonymous manage-link deletion remove the user's push_tokens rows server-side, with a test.
+- [ ] #8 From QA TASK-86.3/85.4: before wipeLocalData('account_deleted'), the app shows the pending-reports prompt (queued outbox items) like sign-out does, and account deletion on mobile actually calls the account_deleted wipe (C17 §Wipe).
 <!-- AC:END -->
 
 ## Packet

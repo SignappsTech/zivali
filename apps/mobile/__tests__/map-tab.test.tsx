@@ -6,6 +6,7 @@ import { AccessibilityInfo, Text } from 'react-native';
 import { Provider } from 'react-redux';
 import { IntlProvider } from 'use-intl';
 
+import { ad } from '@zivali/api/__fixtures__/ads';
 import * as fx from '@zivali/api/__fixtures__/reports';
 import { createMockApi, type MockRequest } from '@zivali/api/mock';
 import { reportsApi } from '@zivali/api/reports';
@@ -113,6 +114,8 @@ async function renderTab(reports: PublicReport[] = [maks, found]) {
 				municipality_slug: 'ljubljana',
 			},
 		},
+		'GET /v1/ads/slot/:slot': ad,
+		'POST /v1/ads/:id/impressions': () => undefined,
 	});
 	const store = createApiStore(client);
 	stores.push(store);
@@ -183,6 +186,25 @@ test('map and list show the reports around the device: boosted first, counted, c
 
 	await fireEvent.press(screen.getByRole('link', { name: /^Maks, / }));
 	expect(mockPush).toHaveBeenCalledWith('/r/MaksCode');
+});
+
+test('the list carries one labelled feed ad (P21) after the 8th report row, never first', async () => {
+	const many = Array.from({ length: 9 }, (_, i) => ({ ...maks, id: `r-${i}`, name: `Pes ${i + 1}` }));
+	const client = await renderTab(many);
+
+	await screen.findByRole('link', { name: `Oglas: ${ad.title}. ${ad.body}` });
+	const links = screen
+		.getAllByRole('link')
+		.map((link) => link.props.accessibilityLabel as string | undefined)
+		.filter((label): label is string => Boolean(label));
+	expect(links).toHaveLength(10);
+	expect(links.map((label) => label.startsWith('Oglas: '))).toEqual([...Array(8).fill(false), true, false]);
+	await waitFor(() =>
+		expect(client.calls.filter((c) => c.path.startsWith('/v1/ads/')).map((c) => [c.method, c.path])).toEqual([
+			['GET', '/v1/ads/slot/feed'],
+			['POST', `/v1/ads/${ad.id}/impressions`],
+		])
+	);
 });
 
 test('a report created while the tab is open (the lost flow over it) shows on the map without a reload (TASK-29.6)', async () => {

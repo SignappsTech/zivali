@@ -36,6 +36,7 @@ import { Icon } from '@/components/ui/icon';
 import { Text } from '@/components/ui/text';
 import { env } from '@/lib/env';
 import { manageTokenKey, type OutboxItem } from '@/lib/offline/outbox';
+import { isOnline, useNetworkState } from '@/lib/net';
 import { copyText, shareMessage, shareNative } from '@/lib/share';
 
 /** What the flow hands over once Publish has an answer; in memory only (the point is the coarsened one). */
@@ -232,11 +233,13 @@ function Sent({
 /** Q1: saved in the outbox, sent when online; the shelter row works from the cached directory. */
 function Waiting({
 	submitted,
+	item,
 	sending,
 	onCancel,
 	onLeave,
 }: {
 	submitted: Submitted;
+	item?: OutboxItem;
 	sending: boolean;
 	onCancel: () => void;
 	onLeave: () => void;
@@ -244,11 +247,13 @@ function Waiting({
 	const t = useTranslations('report_found');
 	const tc = useTranslations('common');
 	const [asking, setAsking] = React.useState(false);
+	// Online with a failed attempt on the row: the server is the reason, not the network.
+	const busy = isOnline(useNetworkState()) && !!item?.last_error_code && item.last_error_code !== 'NETWORK';
 	return (
 		<DoneScreen
 			icon={ClockIcon}
 			title={t('outbox_title')}
-			body={t('offline_queued')}
+			body={t(busy ? 'server_busy_queued' : 'offline_queued')}
 			onLeave={onLeave}
 			footer={
 				<>
@@ -295,5 +300,13 @@ export function FoundDone({
 	onLeave: () => void;
 }) {
 	if (item?.status === 'sent') return <Sent submitted={submitted} sent={item.result} onLeave={onLeave} />;
-	return <Waiting submitted={submitted} sending={item?.status === 'sending'} onCancel={onCancel} onLeave={onLeave} />;
+	return (
+		<Waiting
+			submitted={submitted}
+			item={item}
+			sending={item?.status === 'sending'}
+			onCancel={onCancel}
+			onLeave={onLeave}
+		/>
+	);
 }

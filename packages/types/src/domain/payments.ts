@@ -20,6 +20,8 @@ export type Payment = {
 	id: Uuid;
 	purpose: PaymentPurpose;
 	amount_cents: number;
+	/** Refunded so far, partial refunds included (status refunded only once it reaches amount_cents). */
+	refunded_cents: number;
 	currency: 'EUR';
 	status: PaymentStatus;
 	created_at: IsoDateTime;

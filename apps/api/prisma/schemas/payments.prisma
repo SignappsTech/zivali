@@ -38,10 +38,14 @@ model payments {
   // e.g. { "report_id": "…" }
   refs                Json?
   receipt_sent_at     DateTime?       @db.Timestamptz(6)
+  // Refunded so far (Stripe charge amount_refunded, cumulative, only ever raised), 0..amount_cents (check in the
+  // migration); each raise is one refund and gets one credit note (TASK-92.4)
+  refunded_cents      Int             @default(0)
   created_at          DateTime        @default(now()) @db.Timestamptz(6)
   updated_at          DateTime        @updatedAt @db.Timestamptz(6)
   user                profiles?       @relation(fields: [user_id], references: [id], onDelete: SetNull)
-  invoice             invoices?
+  // The invoice (refund_total_cents 0) and its credit notes
+  invoices            invoices[]
 
   @@index([user_id, created_at])
   @@schema("app")
@@ -56,40 +60,56 @@ enum INVOICE_STATUS {
 }
 
 // Fiscal invoice of a succeeded payment (C13 §Fiscal invoices, TASK-92): one per payment, created by payment.effects,
-// verified through the fiscal adapter (ZOI ours, EOR from FURS). Accounting record: kept 10 years (ZDDV-1), never
-// deleted with the account (the payment is anonymised instead).
+// verified through the fiscal adapter (ZOI ours, EOR from FURS). A credit note (dobropis, TASK-92.4) is a row of the
+// same series with negative amounts that references the invoice (FURS ReferenceInvoice), one per refund. Accounting
+// record: kept 10 years (ZDDV-1), never deleted with the account (the payment is anonymised instead).
 model invoices {
-  id          String         @id @default(uuid()) @db.Uuid
-  payment_id  String         @unique @db.Uuid
+  id                   String         @id @default(uuid()) @db.Uuid
+  payment_id           String         @db.Uuid
+  // Credit notes: the invoice they correct; null on the invoice itself
+  reference_invoice_id String?        @db.Uuid
+  // 0 on the invoice; on a credit note, the payment's refunded total its refund reached (one credit note per refund)
+  refund_total_cents   Int            @default(0)
   // FURS BusinessPremiseID and ElectronicDeviceID at issue, and the gapless sequence of that series
-  premise_id  String
-  device_id   String
-  sequence    Int
+  premise_id           String
+  device_id            String
+  sequence             Int
   // <premise_id>-<device_id>-<sequence>, as printed
-  number      String         @unique
+  number               String         @unique
   // Fixed at creation (ZOI input): a retry sends the same data
-  issued_at   DateTime       @db.Timestamptz(6)
+  issued_at            DateTime       @db.Timestamptz(6)
   // integer cents; net + vat = gross (check in the migration); gross is payments.amount_cents (set by the domain)
-  net_cents   Int
+  net_cents            Int
   // percent
-  vat_rate    Int
-  vat_cents   Int
-  gross_cents Int
+  vat_rate             Int
+  vat_cents            Int
+  gross_cents          Int
   // 'mock' | 'furs' (check in the migration)
-  provider    String
-  zoi         String
-  eor         String?
-  status      INVOICE_STATUS @default(PENDING)
-  // fiscal verification attempts; FAILED after the last one
-  attempts    Int            @default(0)
-  verified_at DateTime?      @db.Timestamptz(6)
+  provider             String
+  zoi                  String
+  eor                  String?
+  status               INVOICE_STATUS @default(PENDING)
+  // fiscal verification attempts; FAILED after the last one of payment.effects, then fiscal.resubmit adds more
+  attempts             Int            @default(0)
+  // In-flight lease (TASK-92.3): set when an attempt is claimed, cleared when it ends; another attempt waits for it,
+  // and an expired lease (a crash mid-call) frees the invoice again
+  lease_until          DateTime?      @db.Timestamptz(6)
+  // When the admins were alerted that it is still unverified after 24 h (once per invoice)
+  alerted_at           DateTime?      @db.Timestamptz(6)
+  verified_at          DateTime?      @db.Timestamptz(6)
   // object key in the private bucket, set once the worker has rendered the PDF
-  pdf_key     String?
-  created_at  DateTime       @default(now()) @db.Timestamptz(6)
-  updated_at  DateTime       @updatedAt @db.Timestamptz(6)
-  payment     payments       @relation(fields: [payment_id], references: [id], onDelete: Restrict)
+  pdf_key              String?
+  created_at           DateTime       @default(now()) @db.Timestamptz(6)
+  updated_at           DateTime       @updatedAt @db.Timestamptz(6)
+  payment              payments       @relation(fields: [payment_id], references: [id], onDelete: Restrict)
+  // NoAction: checked at the end of the statement, so one delete may remove an invoice with its credit notes
+  reference            invoices?      @relation("credit_notes", fields: [reference_invoice_id], references: [id], onDelete: NoAction)
+  credit_notes         invoices[]     @relation("credit_notes")
 
+  // One invoice per payment (0), one credit note per refund
+  @@unique([payment_id, refund_total_cents])
   @@unique([premise_id, device_id, sequence])
+  @@index([reference_invoice_id])
   @@schema("app")
 }
 

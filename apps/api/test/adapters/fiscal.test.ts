@@ -2,11 +2,12 @@
 // provider switch (FURS production refused, furs needs its files), and the FURS request and response over an injected
 // transport with a key generated here: no test reaches FURS and no certificate is in the repo.
 import { createHash, generateKeyPairSync, sign, verify } from 'node:crypto';
+import { createServer, type Socket } from 'node:net';
 
 import { describe, expect, it } from 'vitest';
 
 import { createFiscal, fursDateTime, zoiInput, type FiscalInvoice } from '../../adapters/fiscal/index.ts';
-import { fursFiscal, type FursTransport } from '../../adapters/fiscal/furs.ts';
+import { fursFiscal, httpsTransport, type FursTransport } from '../../adapters/fiscal/furs.ts';
 import { mockFiscal } from '../../adapters/fiscal/mock.ts';
 import { config, type Config } from '../../lib/config.ts';
 
@@ -181,6 +182,46 @@ describe('furs provider (injected transport)', () => {
 		});
 	});
 
+	it('sends a credit note with negative amounts and the invoice it corrects as ReferenceInvoice (TASK-92.4)', async () => {
+		const bodies: string[] = [];
+		const fiscal = fursFiscal({
+			...options,
+			transport: async (_url, body) => {
+				bodies.push(body);
+				return answer({ InvoiceResponse: { UniqueInvoiceID: 'a1b2c3d4-0000-4000-8000-000000000002' } });
+			},
+		});
+		const note: FiscalInvoice = {
+			...invoice,
+			sequence: 57,
+			issued_at: new Date('2026-10-20T08:00:00Z'),
+			gross_cents: -200,
+			net_cents: -164,
+			vat_cents: -36,
+			reference: { premise_id: 'SPLET', device_id: 'API1', sequence: 42, issued_at: invoice.issued_at },
+		};
+		expect(zoiInput('12345678', note)).toBe('1234567820.10.2026 10:00:0057SPLETAPI1-2.00');
+		await fiscal.issue(note);
+		const token = (JSON.parse(bodies[0]!) as { token: string }).token;
+		const sent = fromB64(token.split('.')[1]!).InvoiceRequest.Invoice;
+		expect(sent).toMatchObject({
+			InvoiceIdentifier: { BusinessPremiseID: 'SPLET', ElectronicDeviceID: 'API1', InvoiceNumber: '57' },
+			InvoiceAmount: -2,
+			PaymentAmount: -2,
+			TaxesPerSeller: [{ VAT: [{ TaxRate: 22, TaxableAmount: -1.64, TaxAmount: -0.36 }] }],
+			ReferenceInvoice: [
+				{
+					ReferenceInvoiceIdentifier: {
+						BusinessPremiseID: 'SPLET',
+						ElectronicDeviceID: 'API1',
+						InvoiceNumber: '42',
+					},
+					ReferenceInvoiceIssueDateTime: '2026-10-16T14:05:09',
+				},
+			],
+		});
+	});
+
 	it('throws on a FURS error, a non-200 answer or an unreadable body, so the job retries', async () => {
 		for (const [response, message] of [
 			[answer({ InvoiceResponse: { Error: { ErrorCode: 'S002', ErrorMessage: 'Napačen podpis' } } }), /S002/],
@@ -190,6 +231,27 @@ describe('furs provider (injected transport)', () => {
 		] as const) {
 			const fiscal = fursFiscal({ ...options, transport: async () => response });
 			await expect(fiscal.issue(invoice)).rejects.toThrow(message);
+		}
+	});
+});
+
+describe('furs https transport', () => {
+	it('destroys the request at the whole-call deadline, long before the socket idle timeout', async () => {
+		// A peer that accepts the connection and never answers the TLS handshake: only the deadline ends the call.
+		const sockets: Socket[] = [];
+		const server = createServer((socket) => sockets.push(socket.resume()));
+		await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
+		const { port } = server.address() as { port: number };
+		try {
+			const started = Date.now();
+			await expect(
+				httpsTransport(`https://127.0.0.1:${port}/invoices`, '{}', { cert: '', key: '' }, 200)
+			).rejects.toThrow(/deadline exceeded/);
+			expect(Date.now() - started).toBeLessThan(5000);
+			await expect.poll(() => sockets[0]?.closed).toBe(true);
+		} finally {
+			for (const socket of sockets) socket.destroy();
+			await new Promise((resolve) => server.close(resolve));
 		}
 	});
 });

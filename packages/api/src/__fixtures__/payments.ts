@@ -18,6 +18,7 @@ export const payment: Payment = {
 	id: checkout.payment_id,
 	purpose: 'tip',
 	amount_cents: 500,
+	refunded_cents: 0,
 	currency: 'EUR',
 	status: 'succeeded',
 	created_at: '2026-10-14T16:20:00Z',

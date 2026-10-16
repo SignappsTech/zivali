@@ -406,6 +406,7 @@ describe('GET /v1/payments/:id and GET /v1/me/payments', () => {
 			id: made[0],
 			purpose: 'tip',
 			amount_cents: 300,
+			refunded_cents: 0,
 			currency: 'EUR',
 			status: 'pending',
 			created_at: expect.any(String),

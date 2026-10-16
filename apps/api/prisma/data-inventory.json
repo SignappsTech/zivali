@@ -315,6 +315,7 @@
 				"status",
 				"provider",
 				"receipt_sent_at",
+				"refunded_cents",
 				"created_at",
 				"updated_at"
 			]
@@ -331,12 +332,14 @@
 		"invoices": {
 			"category": "payments",
 			"personal_data": ["payment_id", "pdf_key"],
-			"basis": "legal obligation (GDPR art. 6(1)(c)): fiscally verified invoices of card payments (ZDavPR, ZDDV-1; C13); linked to a person only through payments.user_id, no name or contact on the invoice",
+			"basis": "legal obligation (GDPR art. 6(1)(c)): fiscally verified invoices and credit notes of card payments (ZDavPR, ZDDV-1; C13); linked to a person only through payments.user_id, no name or contact on the invoice",
 			"retention": "10 years after the end of the year of issue (ZDDV-1 art. 88 invoice retention; the accountant confirms, Q-012)",
 			"export": true,
 			"delete": "keep (the payment is anonymised: user_id set null)",
 			"other_columns": [
 				"id",
+				"reference_invoice_id",
+				"refund_total_cents",
 				"premise_id",
 				"device_id",
 				"sequence",
@@ -351,6 +354,8 @@
 				"eor",
 				"status",
 				"attempts",
+				"lease_until",
+				"alerted_at",
 				"verified_at",
 				"created_at",
 				"updated_at"

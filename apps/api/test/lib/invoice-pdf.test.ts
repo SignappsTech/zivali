@@ -46,6 +46,37 @@ describe('invoice PDF', () => {
 		expect(lines.at(-1)).toBe('EOR: račun bo naknadno potrjen pri FURS.');
 	});
 
+	it('prints a credit note with negative amounts and the invoice it corrects (TASK-92.4)', () => {
+		const note = {
+			...input,
+			number: 'SPLET-API1-57',
+			issued_at: new Date('2026-10-20T08:00:00Z'),
+			net_cents: -164,
+			vat_cents: -36,
+			gross_cents: -200,
+			reference: { number: 'SPLET-API1-42', issued_at: input.issued_at },
+		};
+		expect(text(note)).toEqual([
+			'Najdimo',
+			'Dobropis št. SPLET-API1-57',
+			'Za račun št. SPLET-API1-42 z dne 16. 10. 2026, 14:05:09',
+			'Izdajatelj: Najdimo, davčna številka 12345678',
+			'Datum in čas izdaje: 20. 10. 2026, 10:00:00',
+			'Poslovni prostor: SPLET, elektronska naprava: API1',
+			'Vračilo: Zahvala za Najdimo',
+			// U+2212 minus and the no-break space of formatEur.
+			'Znesek brez DDV: −1,64 €',
+			'DDV 22 %: −0,36 €',
+			'Skupaj: −2,00 €',
+			'Način vračila: na plačilno kartico',
+			'ZOI: a7e5f55e1dbb48b799268e1a6d8618a3',
+			'EOR: eb6fbd57-2aa9-4c4b-9b93-a9d8d6d4c7b1',
+		]);
+		const pending = text({ ...note, eor: null, test: true });
+		expect(pending[2]).toMatch(/^Testni dobropis/);
+		expect(pending.at(-1)).toBe('EOR: dobropis bo naknadno potrjen pri FURS.');
+	});
+
 	it('renders an A4 PDF with the embedded font', async () => {
 		const pdf = await renderInvoicePdf(input);
 		expect(pdf.subarray(0, 5).toString()).toBe('%PDF-');

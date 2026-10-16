@@ -10,6 +10,7 @@ import * as alertsFanout from './alerts.fanout.job.ts';
 import * as dbBackup from './db.backup.job.ts';
 import * as dbKeepalive from './db.keepalive.job.ts';
 import * as directoryReminder from './directory.reminder.job.ts';
+import * as fiscalResubmit from './fiscal.resubmit.job.ts';
 import * as matchReport from './match.report.job.ts';
 import * as notifySend from './notify.send.job.ts';
 import * as partnersStats from './partners.stats.job.ts';
@@ -36,6 +37,7 @@ export const handlers: Record<QueueName, JobHandler> = {
 	'retention.blur_location': retentionBlurLocation.handle,
 	'partners.stats': partnersStats.handle,
 	'payment.effects': paymentEffects.handle,
+	'fiscal.resubmit': fiscalResubmit.handle,
 	'directory.reminder': directoryReminder.handle,
 	'db.keepalive': dbKeepalive.handle,
 	'db.backup': dbBackup.handle,

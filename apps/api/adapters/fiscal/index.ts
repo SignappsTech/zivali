@@ -24,6 +24,8 @@ export type FiscalInvoice = {
 	zoi: string;
 	/** A retry after a failed submission (FURS SubsequentSubmit). */
 	subsequent: boolean;
+	/** A credit note (negative amounts): the invoice it corrects, as FURS ReferenceInvoice. */
+	reference?: { premise_id: string; device_id: string; sequence: number; issued_at: Date };
 };
 export type FiscalResult = { zoi: string; eor: string; issued_at: Date };
 export type FiscalAdapter = {
