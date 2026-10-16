@@ -42,6 +42,13 @@ vi.mock('@/components/map/map-view', () => ({
 		</div>
 	),
 }));
+// The owner actions (slots A and C) are client islands with their own tests (components/report/owner-actions.test.tsx), loaded lazily by slots/owner-lazy.
+vi.mock('@/components/report/slots/owner-lazy', () => ({
+	OwnerActions: ({ report }: { report: DetailReport }) => (
+		<div data-testid="owner-actions" data-status={report.status} />
+	),
+	OwnerMenu: () => <div data-testid="owner-menu" />,
+}));
 // Server components read the whole catalogue (next-intl/server); PageMessages only scopes the client copy, which the
 // last test covers on its own.
 vi.mock('@/components/page-messages', () => ({
@@ -259,6 +266,7 @@ describe('P9 /r/[code], other types and states', () => {
 
 		expect(screen.getByText(sl.browse.status_reunited)).toBeTruthy();
 		expect(screen.getByText('Rex je spet doma. Hvala vsem, ki ste pomagali.')).toBeTruthy();
+		expect(screen.queryByTestId('owner-actions')).toBeNull();
 		expect(screen.queryByRole('note')).toBeNull();
 		expect(screen.queryByTestId('map')).toBeNull();
 		expect(screen.queryByText(sl.report.area_note)).toBeNull();
@@ -317,10 +325,20 @@ describe('P9 /r/[code], owner view', () => {
 		});
 		expect(within(map).getByText(sl.location.exact_own)).toBeTruthy();
 		expect(within(map).getByText(sl.location.exact_own_help)).toBeTruthy();
-		// No "Prijavi zlorabo" on an own report (P10 states).
+		// No "Prijavi zlorabo" on an own report (P10 states): slot C is the owner's menu ("Zaključi iskanje").
 		expect(screen.queryByRole('button', { name: sl.report.more })).toBeNull();
+		expect(screen.getByTestId('owner-menu')).toBeTruthy();
 		expect((await generateMetadata(props())).robots).toEqual({ index: false });
 	});
+
+	it.each(['open', 'closed', 'reunited'] as const)(
+		'puts the owner actions in slot A (%s: they decide about reopening)',
+		async (status) => {
+			show({ ...owner, status });
+			await renderPage();
+			expect(screen.getByTestId('owner-actions').dataset.status).toBe(status);
+		}
+	);
 
 	it("puts the owner's reward reminder in place of the public scam warning", async () => {
 		await renderPage();
