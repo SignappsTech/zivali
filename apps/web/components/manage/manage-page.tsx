@@ -47,7 +47,10 @@ export function ManagePage() {
 	const task = React.useCallback(async () => {
 		const token = takeManageToken();
 		if (!token) throw new ApiError('NOT_FOUND', 'NOT_FOUND');
-		const [{ ensureSession }] = await Promise.all([import('@/lib/auth'), loadView()]);
+		// A chunk that fails to download is a lost connection: the offline note and the automatic retry.
+		const [{ ensureSession }] = await Promise.all([import('@/lib/auth'), loadView()]).catch((cause) => {
+			throw new ApiError('NETWORK', 'NETWORK', { cause });
+		});
 		await ensureSession(getToken);
 		return claim({ token }).unwrap();
 	}, [claim, getToken]);

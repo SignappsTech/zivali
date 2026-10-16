@@ -22,9 +22,10 @@ vi.mock('next/navigation', async (actual) => ({
 	usePathname: () => '/m',
 	useParams: () => ({ locale: 'sl' }),
 }));
+// lib/auth is replaced outright (the page imports only ensureSession): its real module graph (supabase-js) is slow to
+// transform cold, and the lazy import then resolves at once.
 const auth = vi.hoisted(() => ({ ensureSession: vi.fn() }));
-vi.mock('@/lib/auth', async (actual) => ({ ...(await actual<object>()), ...auth }));
-vi.mock('@/lib/supabase/client', () => ({ createClient: () => ({}) }));
+vi.mock('@/lib/auth', () => auth);
 
 const CODE = ownerReport.short_code;
 const claimed = { report_id: ownerReport.id, short_code: CODE };
@@ -50,11 +51,11 @@ const open = (token: string) => history.replaceState(null, '', token ? `/m#${tok
 const actions = (api: ReturnType<typeof createMockApi>) =>
 	api.calls.filter((call) => call.path.endsWith('/transitions')).map((call) => call.body);
 
-// The page loads lib/auth and the report view with the claim (TASK-17.9): load them once up front, so no test's
-// findBy waits on their first transform.
+// The page loads the report view with the claim (TASK-17.9): load it once up front, so no test's findBy waits on
+// its first transform.
 beforeAll(async () => {
-	await Promise.all([import('@/lib/auth'), import('./manage-view')]);
-});
+	await import('./manage-view');
+}, 60_000);
 afterEach(() => {
 	cleanup();
 	vi.clearAllMocks();
@@ -124,9 +125,9 @@ describe('ManagePage (P7, C7)', () => {
 		open(token);
 		const api = show(<ManagePage />, routes, 'en');
 		const heading = await screen.findByRole('heading', { level: 1, name: 'This link no longer works' });
-		expect(document.activeElement).toBe(heading);
+		await vi.waitFor(() => expect(document.activeElement).toBe(heading));
 		expect(screen.getByText(en.report_found.link_invalid_body)).toBeTruthy();
-		// Without a token nothing signs in (lib/auth and supabase-js are not even loaded, TASK-17.9).
+		// Without a token nothing is requested and nothing signs in.
 		if (!token) expect([api.calls, auth.ensureSession.mock.calls]).toEqual([[], []]);
 	});
 
@@ -249,7 +250,7 @@ describe('PrivateLinkBlock (P7 success)', () => {
 		expect(within(block).getByText(link)).toBeTruthy();
 		expect(within(block).getByText(sl.report_found.link_emailed)).toBeTruthy();
 		fireEvent.click(within(block).getByRole('button', { name: 'Kopiraj povezavo' }));
-		expect((await within(block).findByRole('status')).textContent).toBe('Povezava je kopirana.');
+		await vi.waitFor(() => expect(within(block).getByRole('status').textContent).toBe('Povezava je kopirana.'));
 		expect(writeText).toHaveBeenCalledWith(link);
 	});
 });
