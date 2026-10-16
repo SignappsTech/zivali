@@ -22,7 +22,8 @@ function contentSecurityPolicy(nonce: string): string {
 		env.NEXT_PUBLIC_ANALYTICS_PROVIDER === 'ga4'
 			? ' https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com'
 			: '';
-	// Presigned photo PUTs (C5): the one origin the API presigns with (R2 in the EU jurisdiction, MinIO locally).
+	// Presigned photo PUTs and GETs (C5): the one origin the API presigns with (R2 in the EU jurisdiction, MinIO
+	// locally); connect-src for the uploads, img-src for the saved photos shown from signed GET URLs.
 	const uploads = ` ${new URL(env.R2_UPLOAD_ORIGIN).origin}`;
 	// Turnstile (C7, components/auth/turnstile.tsx): its script (trusted through 'strict-dynamic'; the host is the
 	// fallback for browsers without it) and its challenge iframe.
@@ -34,7 +35,7 @@ function contentSecurityPolicy(nonce: string): string {
 		`script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${captcha}${dev ? " 'unsafe-eval'" : ''}`,
 		// React writes style attributes (Radix positioning); a nonce in this list would switch 'unsafe-inline' off.
 		"style-src 'self' 'unsafe-inline'",
-		`img-src 'self' blob: data:${ga}`,
+		`img-src 'self' blob: data:${uploads}${ga}`,
 		"font-src 'self'",
 		`connect-src 'self' ${api} ${supabase.origin} ${realtime}${uploads}${ga}`,
 		...(captcha ? [`frame-src${captcha}`] : []),
