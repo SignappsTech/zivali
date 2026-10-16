@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:14'
-updated_date: '2026-10-16 00:05'
+updated_date: '2026-10-16 00:51'
 labels:
   - fe
   - 'est:S'
@@ -41,8 +41,8 @@ Branch: agent/task-24.3-share-mob
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 The share slot opens the native share sheet with localised text and the short link, per P18.
-- [ ] #2 Poster downloads the web PDF (expo-file-system) and offers it through expo-sharing.
-- [ ] #3 share and poster_download fire with consent only.
-- [ ] #4 The Facebook share kit is available in the app: copy the ready SL text, save the square image and open the regional Facebook lost-pet groups (share.facebook_groups from GET /v1/config/public) and the Radio Aktual submission form.
+- [x] #1 The share slot opens the native share sheet with localised text and the short link, per P18.
+- [x] #2 Poster downloads the web PDF (expo-file-system) and offers it through expo-sharing.
+- [x] #3 share and poster_download fire with consent only.
+- [x] #4 The Facebook share kit is available in the app: copy the ready SL text, save the square image and open the regional Facebook lost-pet groups (share.facebook_groups from GET /v1/config/public) and the Radio Aktual submission form.
 <!-- AC:END -->

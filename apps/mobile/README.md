@@ -76,6 +76,11 @@ Gallery: `/dev/kit` (redirects to `/` when `EXPO_PUBLIC_APP_ENV=production`). `r
 - Every API request carries `x-device-id`: one random id per install in expo-secure-store (`device_id`, `lib/store.ts`).
 - `react-native-webview` is a native module: install a new development build after pulling it.
 
+## Poster and sharing (P18, TASK-24.3)
+
+- Report detail slot B shares the localised P18 text with the short link through the system sheet (`lib/share.ts`; the link alone while the area name is unknown, e.g. offline). The owner's "Plakat" (slot A) opens `app/r/[code]/poster.tsx`: poster language, preview, "Prenesi PDF" (the web `/r/<code>/poster.pdf?lang=` downloaded into the cache with expo-file-system, then offered through expo-sharing), share rows (WhatsApp, Facebook, copy link, system sheet) and, for a lost report, the Facebook and local radio kit (`components/report/share-kit.tsx`; groups and radio form from `GET /v1/config/public`). `share` and `poster_download` go through `track()`, so only with consent.
+- `expo-sharing` and `expo-clipboard` are native modules: install a new development build after pulling them.
+
 ## Payments (C13, TASK-32.3)
 
 - Web checkout only (A-014). `<CheckoutSheet open onOpenChange checkout={{ purpose, amountCents, refs, returnTo }} />` (`components/payments/checkout.tsx`) shows the P15 hand-off sheet; Nadaljuj calls `startCheckout` with `returnScheme: true`, opens the URL with `WebBrowser.openAuthSessionAsync(url, 'zivali://payments/return')` (`lib/checkout.ts`) and then shows the return state in the same sheet (polls `GET /v1/payments/:id` while pending).
