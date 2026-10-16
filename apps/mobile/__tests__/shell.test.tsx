@@ -178,6 +178,16 @@ describe('signed in', () => {
 		mockSession = { session: {}, me: null, isAnonymous: false, loading: false };
 	});
 
+	test('shows the same three tabs and the Prijavi action signed in (TASK-12 AC#1)', async () => {
+		await shell();
+
+		expect(screen.getAllByRole('tab')).toHaveLength(3);
+		for (const name of [sl.nav.tab_map, sl.nav.tab_inbox, sl.nav.tab_profile]) {
+			expect(screen.getByRole('tab', { name })).toBeOnTheScreen();
+		}
+		expect(screen.getByRole('button', { name: sl.nav.tab_report_a11y })).toBeOnTheScreen();
+	});
+
 	test('Profile leads to the settings stack, and back returns to Profile', async () => {
 		const result = await shell();
 		await fireEvent.press(screen.getByRole('tab', { name: sl.nav.tab_profile }));
