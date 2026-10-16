@@ -42,6 +42,8 @@ const OWN_PRIMARY = new Set([
 	'/shelters',
 	'/shelters/[slug]',
 	'/r/[code]',
+	// P11 match review ("To je moja žival").
+	'/r/[code]/matches',
 	'/advertise',
 ]);
 
