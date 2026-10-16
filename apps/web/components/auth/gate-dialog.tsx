@@ -11,7 +11,8 @@ import { getPathname } from '@/i18n/navigation';
 import { resendConfirmation } from '@/lib/auth';
 
 import type { AuthGateReason } from './gate';
-import { ProviderButtons, ResendButton } from './parts';
+import { ResendButton } from './parts';
+import { ProviderButtons } from './provider-buttons';
 
 // The bodies of the gates in gate.tsx, loaded only when one shows: they bring lib/auth (supabase-js), the captcha
 // and the providers, which the pages that merely hold a gate do not need up front.

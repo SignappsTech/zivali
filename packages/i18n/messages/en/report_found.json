@@ -102,6 +102,7 @@
 	"share": "Share",
 	"held_note": "We are still checking your report. Once checked, everyone will see it. Your private link already works.",
 	"offline_queued": "Saved. We will send your report when you are back online.",
+	"server_busy_queued": "The server is busy right now. We'll keep trying automatically.",
 	"cancel_queued_title": "Cancel sending?",
 	"cancel_queued_body": "We delete the report from this device and do not send it.",
 	"cancel_queued_keep": "Keep the report"

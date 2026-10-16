@@ -126,6 +126,43 @@ describe('useCaptcha after a failed api.js load', () => {
 	});
 });
 
+describe('useCaptcha({ lazy: true })', () => {
+	it('loads nothing on mount; the first getToken() loads, renders and runs the widget', async () => {
+		vi.stubEnv('NEXT_PUBLIC_TURNSTILE_SITE_KEY', '1x00000000000000000000AA');
+		let options: Record<string, (value?: string) => void> = {};
+		const turnstile = {
+			render: vi.fn(
+				(_element: HTMLElement, given: Record<string, unknown>) => ((options = given as typeof options), 'w1')
+			),
+			reset: vi.fn(),
+			execute: vi.fn(),
+			remove: vi.fn(),
+		};
+		const append = vi.spyOn(document.head, 'append').mockImplementation((script) => {
+			window.turnstile = turnstile;
+			(script as HTMLScriptElement).onload?.(new Event('load'));
+		});
+		const { useCaptcha } = await import('./turnstile');
+		let captcha!: ReturnType<typeof useCaptcha>;
+		function Form() {
+			captcha = useCaptcha({ lazy: true });
+			return <form>{captcha.widget}</form>;
+		}
+		const { unmount } = render(<Form />, { wrapper });
+		await act(() => new Promise((resolve) => setTimeout(resolve, 10)));
+		expect(append).not.toHaveBeenCalled();
+
+		const token = captcha.getToken();
+		await vi.waitFor(() => expect(turnstile.execute).toHaveBeenCalledWith('w1'));
+		expect(append).toHaveBeenCalledOnce();
+		expect(turnstile.render.mock.calls[0]![0]).toBeInstanceOf(HTMLDivElement);
+		act(() => options.callback!('token-3'));
+		expect(await token).toBe('token-3');
+		unmount();
+		expect(turnstile.remove).toHaveBeenCalledWith('w1');
+	});
+});
+
 describe('CaptchaHost (/captcha for the mobile WebView)', () => {
 	const postMessage = vi.fn();
 	const posted = () => postMessage.mock.calls.map(([message]) => JSON.parse(message as string));

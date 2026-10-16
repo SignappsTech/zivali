@@ -14,7 +14,8 @@ import { Input } from '@/components/ui/input';
 import { getPathname, Link } from '@/i18n/navigation';
 import { signIn } from '@/lib/auth';
 
-import { AuthHeading, AuthNote, PasswordField, ProviderButtons, useCooldown, useErrorText } from './parts';
+import { AuthHeading, AuthNote, PasswordField, useCooldown, useErrorText } from './parts';
+import { ProviderButtons } from './provider-buttons';
 import { CheckEmail } from './sign-up';
 import { useCaptcha } from './turnstile';
 

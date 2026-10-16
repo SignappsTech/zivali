@@ -455,6 +455,16 @@ test('checks on Naprej, the picker when there is no place, and a rate limit that
 	expect(screen.getByRole('heading', { name: t.send_title })).toBeOnTheScreen();
 });
 
+test('online with a server error: Q1 says the server is busy, not that the phone is offline', async () => {
+	await open();
+	await toPublish();
+	api.state.reportReply = () => mockError('INTERNAL', 'boom');
+	await press(t.publish);
+	await heading(t.outbox_title);
+	expect(screen.getByText(t.server_busy_queued)).toBeOnTheScreen();
+	expect(screen.queryByText(t.offline_queued)).toBeNull();
+});
+
 test('close keeps the draft on the device; opening the flow again goes on where it stopped', async () => {
 	await open();
 	await press(t.photo_take);

@@ -1,10 +1,11 @@
 ---
 id: TASK-29.8
 title: 'Mobile: lost-flow confirmation uses the shared ShelterRow'
-status: To Do
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-16 02:23'
+updated_date: '2026-10-16 02:59'
 labels:
   - fe
   - trivial
@@ -31,6 +32,12 @@ Branch: agent/task-29.8-shelter-row
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 apps/mobile/components/report-lost/lost-done.tsx uses components/shelter/shelter-row.tsx with kind 'lost' (lookup by municipality slug, else point, passed as props); the local ShelterRow and ShelterLines are removed.
-- [ ] #2 Duplicate i18n keys between support.json/shelter_row.json are merged; the unused support.unverified key is removed; report-lost-done and shelter-row tests pass.
+- [x] #1 apps/mobile/components/report-lost/lost-done.tsx uses components/shelter/shelter-row.tsx with kind 'lost' (lookup by municipality slug, else point, passed as props); the local ShelterRow and ShelterLines are removed.
+- [x] #2 Duplicate i18n keys between support.json/shelter_row.json are merged; the unused support.unverified key is removed; report-lost-done and shelter-row tests pass.
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+Merged in batch 21 (ff011c1): lost-done uses the shared ShelterRow (kind lost, municipality prop). support.json and shelter_row.json share no keys; support.unverified is still used (checkout.tsx), so it stays.
+<!-- SECTION:NOTES:END -->

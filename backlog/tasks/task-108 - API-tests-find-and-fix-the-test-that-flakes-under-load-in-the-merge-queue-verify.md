@@ -3,10 +3,11 @@ id: TASK-108
 title: >-
   API tests: find and fix the test that flakes under load in the merge-queue
   verify
-status: To Do
+status: Done
 assignee:
   - '@tech-lead'
 created_date: '2026-10-16 01:14'
+updated_date: '2026-10-16 02:44'
 labels:
   - tech
   - 'est:XS'

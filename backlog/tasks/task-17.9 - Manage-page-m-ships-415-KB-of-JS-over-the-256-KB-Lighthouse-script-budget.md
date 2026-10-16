@@ -1,10 +1,11 @@
 ---
 id: TASK-17.9
 title: 'Manage page /m ships 415 KB of JS, over the 256 KB Lighthouse script budget'
-status: To Do
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-16 00:24'
+updated_date: '2026-10-16 02:04'
 labels:
   - bug
   - 'est:XS'
@@ -21,5 +22,11 @@ Story TASK-17 AC#6 (QA TASK-17.4). Steps: production Turbopack build with the e2
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Lighthouse on /m and /en/m (production Turbopack build) reports resource-summary script transfer <= 256 KB (lighthouserc budget, DoD initial JS < 250 KB gz)
+- [x] #1 Lighthouse on /m and /en/m (production Turbopack build) reports resource-summary script transfer <= 256 KB (lighthouserc budget, DoD initial JS < 250 KB gz)
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+Initial JS of /m: lib/auth (zod, supabase-js) now loads with the claim, and so does the claimed report view (manage-view.tsx: report and chat endpoints, P14 AlertDialog); ProviderButtons moved to provider-buttons.tsx so the light auth parts no longer import lib/auth; useCaptcha({ lazy: true }) loads Turnstile api.js on the first getToken(). Lighthouse (Turbopack production build with the e2e env, next start; mobile and desktop): /m and /en/m script 418.1 KB (428115 B) -> 232.4 KB (238021 B); /en/o-nas 164.6 KB. Mobile perf 57 -> 79, best-practices 96 -> 100, a11y 100. Branch: agent/task-17.9-manage-js
+<!-- SECTION:NOTES:END -->

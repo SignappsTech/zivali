@@ -44,9 +44,10 @@ const captchaFailed = () => new ApiError('CAPTCHA_FAILED', 'CAPTCHA_FAILED');
 /**
  * `widget` goes inside the form; `getToken()` runs a fresh challenge on each submit (a token is single-use). The
  * widget stays invisible unless Cloudflare needs a click, and it never takes focus on its own. Without
- * NEXT_PUBLIC_TURNSTILE_SITE_KEY the captcha is off: no widget, no script, `getToken()` resolves undefined.
+ * NEXT_PUBLIC_TURNSTILE_SITE_KEY the captcha is off: no widget, no script, `getToken()` resolves undefined. `lazy`
+ * loads api.js with the first `getToken()` instead of on mount, for a page that may need no captcha at all (P7).
  */
-export function useCaptcha() {
+export function useCaptcha({ lazy = false }: { lazy?: boolean } = {}) {
 	const locale = useLocale();
 	const element = React.useRef<HTMLDivElement | null>(null);
 	const widget = React.useRef<{ turnstile: Turnstile; id: string } | undefined>(undefined);
@@ -80,13 +81,14 @@ export function useCaptcha() {
 			if (!node || !siteKey) return;
 			element.current = node;
 			let cancelled = false;
-			loadTurnstile().then(
-				(loaded) => {
-					if (!cancelled && !widget.current) render(node, loaded);
-				},
-				// Offline or a Cloudflare outage: getToken() loads and renders it on the next attempt.
-				() => undefined
-			);
+			if (!lazy)
+				loadTurnstile().then(
+					(loaded) => {
+						if (!cancelled && !widget.current) render(node, loaded);
+					},
+					// Offline or a Cloudflare outage: getToken() loads and renders it on the next attempt.
+					() => undefined
+				);
 			return () => {
 				cancelled = true;
 				if (element.current === node) element.current = null;
@@ -94,7 +96,7 @@ export function useCaptcha() {
 				widget.current = undefined;
 			};
 		},
-		[siteKey, render]
+		[siteKey, render, lazy]
 	);
 
 	const getToken = React.useCallback(async (): Promise<string | undefined> => {
