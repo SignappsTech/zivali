@@ -72,8 +72,8 @@ export type LocationPickerProps = {
 	permissionDenied?: boolean;
 };
 
-// P5 stops: lost 200 m to 5 km (default 500 m), alert area 1 to 25 km (default 5 km).
-const RADII = {
+// P5 stops: lost 200 m to 5 km (default 500 m), alert area 1 to 25 km (default 5 km). The alert settings reuse them.
+export const RADII = {
 	lost: { stops: [200, 300, 400, 500, 750, 1000, 1500, 2000, 2500, 3000, 3500, 4000, 4500, 5000], initial: 500 },
 	alert: { stops: [1, 2, 3, 4, 5, 7, 10, 15, 20, 25].map((km) => km * 1000), initial: 5000 },
 };
@@ -97,7 +97,7 @@ const metresPerPx = (lat: number, zoom: number) => (EARTH_M * Math.cos((lat * Ma
 const zoomFor = (lat: number, radiusM: number, px: number) =>
 	Math.log2((EARTH_M * Math.cos((lat * Math.PI) / 180) * px) / (512 * radiusM));
 const metres = (a: LatLng, b: LatLng) => distanceKm(a, b) * 1000;
-const nearest = (stops: number[], m: number) =>
+export const nearest = (stops: number[], m: number) =>
 	stops.reduce((best, stop, i) => (Math.abs(stop - m) < Math.abs(stops[best]! - m) ? i : best), 0);
 // coarsenPoint's default needs a global crypto, which Hermes lacks; expo-crypto supplies the same random source.
 const random = () => getRandomValues(new Uint32Array(1))[0]! / 2 ** 32;
