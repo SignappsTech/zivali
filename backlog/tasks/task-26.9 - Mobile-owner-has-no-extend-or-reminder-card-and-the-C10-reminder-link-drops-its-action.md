@@ -3,10 +3,11 @@ id: TASK-26.9
 title: >-
   Mobile: owner has no extend or reminder card, and the C10 reminder link drops
   its action
-status: To Do
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-16 07:50'
+updated_date: '2026-10-16 09:45'
 labels:
   - bug
   - 'est:S'

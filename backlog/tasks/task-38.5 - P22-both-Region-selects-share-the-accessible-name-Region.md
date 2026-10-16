@@ -1,10 +1,11 @@
 ---
 id: TASK-38.5
 title: 'P22: both Region selects share the accessible name ''Region'''
-status: To Do
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-16 08:57'
+updated_date: '2026-10-16 09:45'
 labels:
   - bug
   - 'est:XS'

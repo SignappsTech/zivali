@@ -3,10 +3,11 @@ id: TASK-36.9
 title: >-
   Web AdSlot: AdUnit throws 'window is not defined' during streamed SSR (every
   slot)
-status: To Do
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-16 09:16'
+updated_date: '2026-10-16 09:45'
 labels:
   - bug
   - 'est:XS'

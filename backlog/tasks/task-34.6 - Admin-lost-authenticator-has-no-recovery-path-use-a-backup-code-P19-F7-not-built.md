@@ -3,10 +3,11 @@ id: TASK-34.6
 title: >-
   Admin: lost authenticator has no recovery path; 'use a backup code' (P19 F7)
   not built
-status: To Do
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-16 09:28'
+updated_date: '2026-10-16 09:45'
 labels:
   - bug
   - 'est:S'

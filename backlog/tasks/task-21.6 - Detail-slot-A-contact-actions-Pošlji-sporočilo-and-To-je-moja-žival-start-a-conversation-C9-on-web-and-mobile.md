@@ -3,10 +3,10 @@ id: TASK-21.6
 title: >-
   Detail slot A contact actions: 'Pošlji sporočilo' and 'To je moja žival' start
   a conversation (C9) on web and mobile
-status: In Progress
+status: Done
 assignee: []
 created_date: '2026-10-16 07:27'
-updated_date: '2026-10-16 07:28'
+updated_date: '2026-10-16 09:45'
 labels:
   - fe
 dependencies: []

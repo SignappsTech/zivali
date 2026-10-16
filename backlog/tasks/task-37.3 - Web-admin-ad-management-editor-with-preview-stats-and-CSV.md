@@ -1,11 +1,11 @@
 ---
 id: TASK-37.3
 title: 'Web admin ad management: editor with preview, stats and CSV'
-status: In Progress
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:14'
-updated_date: '2026-10-16 06:58'
+updated_date: '2026-10-16 09:45'
 labels:
   - fe
   - 'est:M'

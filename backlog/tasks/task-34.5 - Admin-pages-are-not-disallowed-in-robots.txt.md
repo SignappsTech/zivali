@@ -1,10 +1,11 @@
 ---
 id: TASK-34.5
 title: Admin pages are not disallowed in robots.txt
-status: To Do
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-16 09:27'
+updated_date: '2026-10-16 09:45'
 labels:
   - bug
   - 'est:XS'

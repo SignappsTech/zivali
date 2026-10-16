@@ -1,10 +1,11 @@
 ---
 id: TASK-34.7
 title: 'Admin API: ad list/stats/image-upload and directory reads write no audit entry'
-status: To Do
+status: Done
 assignee:
   - '@backend-dev'
 created_date: '2026-10-16 09:28'
+updated_date: '2026-10-16 09:45'
 labels:
   - bug
   - 'est:XS'

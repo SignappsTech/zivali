@@ -1,10 +1,11 @@
 ---
 id: TASK-26.8
 title: 'Mobile /m: marking the pet returned fires no reunited analytics event'
-status: To Do
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-16 07:50'
+updated_date: '2026-10-16 09:45'
 labels:
   - bug
   - 'est:XS'
