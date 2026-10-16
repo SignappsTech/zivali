@@ -364,6 +364,28 @@ describe('Add and edit', () => {
 		expect(await heading('Runo')).toBeOnTheScreen();
 	});
 
+	test('a double tap on save creates one pet', async () => {
+		const api = petsApi([]);
+		const result = await open(api, '/pets/new');
+		await heading(t.section_photos);
+		await press('test: add photo');
+		await next();
+		await fireEvent.press(screen.getByRole('radio', { name: 'Pes' }));
+		await fireEvent.changeText(screen.getByLabelText(t.name_label), 'Runo');
+		for (let i = 0; i < 3; i++) await next();
+		await heading(t.section_notes);
+		const save = screen.getByRole('button', { name: t.save });
+		// Both taps land before the first save settles.
+		await act(async () => {
+			save.props.onClick();
+			save.props.onClick();
+		});
+
+		await waitFor(() => expect(result.getPathname()).toBe('/pets/pet-new'));
+		expect(callsTo(api, 'POST', '/v1/pets')).toHaveLength(1);
+		expect(await heading('Runo')).toBeOnTheScreen();
+	});
+
 	test('waits for uploads before saving and sends the user back to the photos', async () => {
 		const api = petsApi([]);
 		await open(api, '/pets/new');

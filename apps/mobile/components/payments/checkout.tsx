@@ -11,7 +11,7 @@ import { useDispatch } from 'react-redux';
 import { useLocale, useTranslations } from 'use-intl';
 
 import { useSession } from '@zivali/api/auth';
-import { uuid } from '@zivali/api/client';
+import { ApiError, uuid } from '@zivali/api/client';
 import { type StartCheckoutInput, startCheckout, useGetPaymentQuery } from '@zivali/api/payments';
 import type { ApiStore } from '@zivali/api/rtk';
 import type { Locale, PaymentStatus, Uuid } from '@zivali/types';
@@ -97,7 +97,12 @@ function Handoff({
 			const { canceled } = await payInBrowser(checkoutUrl);
 			onResult({ paymentId, canceled });
 		} catch (failure) {
-			setError(errorText(failure));
+			// Premium checkout answers 503 while the subscription product is not configured: calm, not INTERNAL.
+			setError(
+				checkout.purpose === 'subscription' && failure instanceof ApiError && failure.status === 503
+					? t('premium_unavailable')
+					: errorText(failure)
+			);
 			setBusy(false);
 		}
 	};

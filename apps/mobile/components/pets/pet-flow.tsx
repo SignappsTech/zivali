@@ -143,6 +143,8 @@ export function PetFlow({ pet }: { pet?: Pet }) {
 	const leaving = React.useRef(false);
 	// A pet created by an earlier attempt whose photo step failed: the retry patches it instead of creating another.
 	const created = React.useRef<string>(undefined);
+	// A second tap on Shrani while the first save is in flight must not create a second pet.
+	const saving = React.useRef(false);
 	const scroll = React.useRef<ScrollView>(null);
 
 	const photoIds = photos.flatMap((photo) => (photo.photoId ? [photo.photoId] : []));
@@ -169,6 +171,8 @@ export function PetFlow({ pet }: { pet?: Pet }) {
 	const confirmDiscard = () => {
 		void clearPhotoDraft(draft).catch(() => {});
 		leaving.current = true;
+		// The pet exists already (an earlier attempt created it) but its photos never got attached.
+		if (created.current) toast(t('pets.saved_without_photos'));
 		discard?.();
 	};
 	const back = () => (step > 0 ? setStep(step - 1) : leave(exit));
@@ -191,10 +195,12 @@ export function PetFlow({ pet }: { pet?: Pet }) {
 	const save = () =>
 		form.handleSubmit(
 			async (values) => {
+				if (saving.current) return;
 				if (photoProblem) {
 					setPhotoCheck(true);
 					return setStep(0);
 				}
+				saving.current = true;
 				setSaveError(undefined);
 				setLimitHit(false);
 				try {
@@ -221,6 +227,8 @@ export function PetFlow({ pet }: { pet?: Pet }) {
 				} catch (failure) {
 					if (isPetLimit(failure)) setLimitHit(true);
 					else setSaveError(errorText(failure));
+				} finally {
+					saving.current = false;
 				}
 			},
 			() => setStep(BASICS)

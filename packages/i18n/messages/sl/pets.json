@@ -56,6 +56,7 @@
 	"section_photos": "Fotografije",
 	"photos_help": "Dodate lahko do 5 fotografij. Prva je naslovna.",
 	"saved": "Profil je shranjen.",
+	"saved_without_photos": "Žival je shranjena brez fotografij.",
 	"photo_alt": "{name}, fotografija {n}",
 	"fact_species": "Vrsta",
 	"fact_breed": "Pasma",
