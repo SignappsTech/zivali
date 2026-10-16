@@ -1,11 +1,11 @@
 ---
 id: TASK-15.3
 title: 'Web LocationPicker: GPS, pin, search, radius, permission fallback'
-status: In Progress
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:12'
-updated_date: '2026-10-16 03:36'
+updated_date: '2026-10-16 04:09'
 labels:
   - fe
   - 'est:S'
