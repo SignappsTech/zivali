@@ -430,7 +430,7 @@ describe('P9 /r/[code], integrated slots (TASK-18.4)', () => {
 	});
 
 	it('shows neither the reward line nor the scam warning on a report without a reward', async () => {
-		show({ ...lost, reward: null });
+		show({ ...lost, reward: undefined });
 		await renderPage();
 
 		expect(screen.queryByText(/^Nagrada/)).toBeNull();
