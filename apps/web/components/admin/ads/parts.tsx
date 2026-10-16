@@ -69,8 +69,6 @@ export function useAdLabels(regions: RegionNames) {
 		slot,
 		species,
 		region,
-		/** API region id → name (id = index + 1 in REGION_SLUGS). */
-		regionById: (id: number) => region(REGION_SLUGS[id - 1] ?? null),
 		slots: (ad: Pick<AdminAd, 'slots'>) => ad.slots.map(slot).join(', '),
 		/** "Osrednjeslovenska · Psi"; nothing chosen is "all of Slovenia, all animals". */
 		targeting: (ad: Pick<AdminAd, 'region_ids' | 'municipality_ids' | 'species'>) => {
@@ -101,7 +99,8 @@ export function useAdminAd(id: string) {
 	React.useEffect(() => {
 		if (more) void fetchNextPage();
 	}, [more, fetchNextPage]);
-	return { ad, query, searching: !ad && (query.isLoading || hasNextPage) };
+	// Still looking while a page loads, also the refetch after a save that created it.
+	return { ad, query, searching: !ad && (isFetching || hasNextPage) };
 }
 
 /** P20 "Končaj zdaj": the ad stops at once, its statistics stay; focus starts on Cancel (Radix AlertDialog). */
@@ -142,7 +141,7 @@ export function EndDialog({ ad, onClose }: { ad: AdminAd; onClose: () => void })
 }
 
 /** P20 delete: soft, with the audit note the API requires; the button stays off until it is filled. */
-export function DeleteDialog({ ad, onClose, onDeleted }: { ad: AdminAd; onClose: () => void; onDeleted?: () => void }) {
+export function DeleteDialog({ ad, onClose }: { ad: AdminAd; onClose: () => void }) {
 	const t = useTranslations('admin');
 	const errorText = useErrorText();
 	const [remove, removing] = useDeleteAdMutation();
@@ -154,7 +153,6 @@ export function DeleteDialog({ ad, onClose, onDeleted }: { ad: AdminAd; onClose:
 			await remove({ id: ad.id, body: { note: note.trim() } }).unwrap();
 			toast.success(t('saved_logged'));
 			onClose();
-			onDeleted?.();
 		} catch (error) {
 			setFailure(errorText(error));
 		}

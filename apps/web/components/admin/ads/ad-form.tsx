@@ -248,7 +248,6 @@ export function AdForm({
 	onCancel: () => void;
 }) {
 	const t = useTranslations('admin');
-	const tAds = useTranslations('ads');
 	const tCommon = useTranslations('common');
 	const errorText = useErrorText();
 	const formRef = React.useRef<HTMLFormElement>(null);
@@ -336,7 +335,7 @@ export function AdForm({
 		setFailure(undefined);
 		if (Object.keys(all).length) return focusFirst();
 		if (status) setForm(next);
-		const body = toInput(next, house);
+		const body = toInput(next, house, ctaDefault);
 		setSaving(true);
 		try {
 			let id = adId;
@@ -374,11 +373,13 @@ export function AdForm({
 		}
 	}
 
+	// The unit's own default in the ad's language (SL first): what an empty button text is saved as.
+	const ctaDefault = messages[form.locales.includes('sl') || !form.locales.length ? 'sl' : 'en'].learn_more ?? '';
 	const preview: Ad = {
 		id: ad?.id ?? 'preview',
 		title: form.title,
 		body: form.body,
-		cta: form.cta,
+		cta: form.cta.trim() || ctaDefault,
 		image_url: imageUrl,
 		image_alt: form.image_alt,
 		click_url: '',
@@ -548,7 +549,7 @@ export function AdForm({
 							hint={<Hint text={t('ads_cta_help')} count={form.cta.trim().length} max={LIMITS.cta} />}
 							error={say(problems.cta)}
 						>
-							<Input placeholder={tAds('learn_more')} {...text('cta')} />
+							<Input placeholder={ctaDefault} {...text('cta')} />
 						</FormField>
 						<FormField
 							label={t('ads_link')}

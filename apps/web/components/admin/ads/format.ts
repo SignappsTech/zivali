@@ -135,21 +135,6 @@ export function validate(form: AdForm, house = false): Problems {
 	return Object.fromEntries(Object.entries(problems).filter(([, problem]) => problem));
 }
 
-/** The order of the fields on the page: the first problem gets the focus. */
-export const FIELD_ORDER: Field[] = [
-	'image',
-	'image_alt',
-	'title',
-	'body',
-	'cta',
-	'link_url',
-	'slots',
-	'locales',
-	'start',
-	'end',
-	'exclusive',
-];
-
 const CONTENT = ['title', 'body', 'cta', 'image_alt', 'link_url'] as const;
 const IMAGE_PATHS = ['image', 'sha256', 'width', 'height', 'bytes', 'content_type'];
 
@@ -181,12 +166,15 @@ export function serverProblems(issues: ApiIssue[], form: AdForm): { problems: Pr
 	return { problems, other };
 }
 
-/** AdInput from the form. Empty targeting means everyone (null); a house ad sends its creative only. */
-export function toInput(form: AdForm, house: boolean): AdInput {
+/**
+ * AdInput from the form. Empty targeting means everyone (null); a house ad sends its creative only. The button text is
+ * optional in the form (P20) but required by the API: an empty one is sent as the unit's default, `ctaDefault`.
+ */
+export function toInput(form: AdForm, house: boolean, ctaDefault = ''): AdInput {
 	const creative = {
 		title: form.title.trim(),
 		body: form.body.trim(),
-		cta: form.cta.trim(),
+		cta: form.cta.trim() || ctaDefault,
 		link_url: form.link_url.trim(),
 		image_alt: form.image_alt.trim(),
 	};

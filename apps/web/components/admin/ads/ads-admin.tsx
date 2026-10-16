@@ -25,7 +25,7 @@ import { DeleteDialog, EndDialog, PhaseLabel, type RegionNames, useAdLabels, use
 const PHASE_ORDER: Phase[] = ['running', 'scheduled', 'draft', 'paused', 'ended'];
 
 /** 64 × 48 thumbnail with the ad's own alt text (content §7); a muted box when there is no image yet. */
-export function Thumb({ ad, className }: { ad: AdminAd; className?: string }) {
+function Thumb({ ad, className }: { ad: AdminAd; className?: string }) {
 	if (!ad.image_url)
 		return (
 			<span
@@ -51,7 +51,7 @@ export function Thumb({ ad, className }: { ad: AdminAd; className?: string }) {
 }
 
 /** Row actions (P20): edit, duplicate, end now, delete; an ended ad is read only, a draft has nothing to end. */
-export function useAdActions(onEnd: (ad: AdminAd) => void, onDelete: (ad: AdminAd) => void) {
+function useAdActions(onEnd: (ad: AdminAd) => void, onDelete: (ad: AdminAd) => void) {
 	const t = useTranslations('admin');
 	const router = useRouter();
 	return (ad: AdminAd, phase: Phase): MenuItem[] => [

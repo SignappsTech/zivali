@@ -49,7 +49,8 @@ function DayChart({ label, days, values }: { label: string; days: string[]; valu
 		month: 'numeric',
 		timeZone,
 	});
-	const top = Math.max(1, ...values);
+	// An even top, so the middle gridline is a whole number.
+	const top = Math.max(2, 2 * Math.ceil(Math.max(0, ...values) / 2));
 	const [left, right, base, peak] = [8, 716, 124, 14];
 	const x = (index: number) => left + (days.length > 1 ? (index * (right - left)) / (days.length - 1) : 0);
 	const y = (value: number) => base - (value / top) * (base - peak);
