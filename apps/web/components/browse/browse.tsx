@@ -17,7 +17,8 @@ import { MapView, type Marker } from '@/components/map/map-view';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { StatusLabel } from '@/components/ui/status-label';
-import { Link, useRouter } from '@/i18n/navigation';
+import { useRouter } from '@/i18n/client-navigation';
+import { Link } from '@/i18n/navigation';
 
 import { FilterDrawer } from './filter-drawer';
 import {
