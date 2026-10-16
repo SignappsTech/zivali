@@ -6,10 +6,10 @@ import { payment } from '@zivali/api/__fixtures__/payments';
 import sl from '@zivali/i18n/dist/sl.json' with { type: 'json' };
 import type { CheckoutInput, Payment } from '@zivali/types';
 
-import { api, dismissConsent, signInAs } from './session';
+import { api, dismissConsent, hydrated, signInAs } from './session';
 
 // TASK-33.2: the P15 asks on web with the C13 mock provider. e2e/mock-api.ts keeps its own report Tip12345 in
-// memory (not Own12345, which lifecycle.spec.ts uses); the browser's payment calls are answered here, and /dev/checkout posts the signed webhook from the server.
+// memory (not Mine1234, which lifecycle.spec.ts uses); the browser's payment calls are answered here, and /dev/checkout posts the signed webhook from the server.
 const AXE_TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'];
 const OWNER = { id: '0b5f6a3e-6c1d-4f8e-9a2b-3c4d5e6f7a80', role: 'USER', aal: 'aal1' } as const;
 const ID = payment.id;
@@ -62,7 +62,7 @@ async function answerPayments(page: Page, baseURL: string, state: Pick<Payment, 
 /** The owner marks Medo home (P9 → P14) and lands on the reunited page. */
 async function reunite(page: Page) {
 	await page.goto('/r/Tip12345');
-	await page.getByRole('button', { name: 'Žival je spet doma', exact: true }).click();
+	await (await hydrated(page.getByRole('button', { name: 'Žival je spet doma', exact: true }))).click();
 	await page
 		.getByRole('dialog', { name: 'Je Medo res spet doma?' })
 		.getByRole('button', { name: 'Da, spet je doma', exact: true })

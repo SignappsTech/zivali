@@ -1,4 +1,4 @@
-import type { Page } from '@playwright/test';
+import { expect, type Locator, type Page } from '@playwright/test';
 
 import { CONSENT_VERSION } from '@zivali/analytics';
 
@@ -36,6 +36,17 @@ export async function dismissConsent(page: Page) {
 	const choice = { v: CONSENT_VERSION, analytics: false, ts: new Date().toISOString() };
 	const value = encodeURIComponent(JSON.stringify(choice));
 	await page.context().addCookies([{ name: 'zz_consent', value, domain: 'localhost', path: '/' }]);
+}
+
+/**
+ * Resolves once React has hydrated the element. Code that loads on demand (the owner's slots, owner-lazy.tsx) hydrates
+ * after the page has loaded; until then its server-rendered button is inert and a press does nothing.
+ */
+export async function hydrated(locator: Locator) {
+	await expect
+		.poll(() => locator.evaluate((element) => Object.keys(element).some((key) => key.startsWith('__reactProps$'))))
+		.toBe(true);
+	return locator;
 }
 
 /** The cookie of a forged session: right shape and kid, no valid signature. */

@@ -113,18 +113,18 @@ for (const viewport of [
 	});
 }
 
-// TASK-17.7 AC#1: the Edit row opens the edit page, which the e2e API (mock-api.ts, Own12345) answers as the manager's.
+// TASK-17.7 AC#1: the Edit row opens the edit page, which the e2e API (mock-api.ts, Mine1234) answers as the manager's.
 test('/m: the Edit row opens the edit page with an editable description', async ({ page, baseURL }) => {
 	await signInAs(page, { id: '0b5f6a3e-6c1d-4f8e-9a2b-3c4d5e6f7a80', role: 'USER', aal: 'aal1' }, baseURL!);
 	await answer(
 		page,
-		{ status: 200, body: { report_id: ownerReport.id, short_code: 'Own12345' } },
-		{ ...ownerReport, short_code: 'Own12345' }
+		{ status: 200, body: { report_id: ownerReport.id, short_code: 'Mine1234' } },
+		{ ...ownerReport, short_code: 'Mine1234' }
 	);
 	await page.goto('/m#good-token');
 	await page.getByRole('link', { name: 'Uredi prijavo' }).click();
 
-	await expect(page).toHaveURL(/\/r\/Own12345\/uredi$/);
+	await expect(page).toHaveURL(/\/r\/Mine1234\/uredi$/);
 	await expect(page.getByRole('heading', { level: 1 })).toHaveText('Uredi prijavo');
 	await expect(page.getByLabel('Opis okoliščin (neobvezno)')).toBeEditable();
 });

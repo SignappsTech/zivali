@@ -45,10 +45,11 @@ const lostReport = {
 // Answered with an error status: [status, code].
 const failures: Record<string, [number, string]> = { '/v1/reports/Gone1234': [410, 'GONE'] };
 
-// TASK-26.4 owner lifecycle: Own12345, the signed-in owner's lost report (the mock answers its owner view to anyone),
+// TASK-26.4 owner lifecycle: Mine1234, the signed-in owner's lost report (the mock answers its owner view to anyone),
 // kept in memory so the page shows each transition and edit when it re-renders. POST /e2e/reset starts it afresh.
 // Tip12345 is the same report for support.spec.ts alone (reset by POST /e2e/reset/Tip12345), so the specs never race.
-const ownReport = (code = 'Own12345', id = '51aa3c2e-4b1d-4f6a-9e2c-8d7b5a1f3e11') => {
+// Codes must be C1 short codes (no 0, O, I, l): proxy.ts answers any other /r/<code> document with 404.
+const ownReport = (code = 'Mine1234', id = '51aa3c2e-4b1d-4f6a-9e2c-8d7b5a1f3e11') => {
 	const now = new Date().toISOString();
 	return {
 		...lostReport,
@@ -77,18 +78,18 @@ const ownReport = (code = 'Own12345', id = '51aa3c2e-4b1d-4f6a-9e2c-8d7b5a1f3e11
 };
 const tipId = '51aa3c2e-4b1d-4f6a-9e2c-8d7b5a1f3e12';
 const owned: Record<string, ReturnType<typeof ownReport>> = {
-	Own12345: ownReport(),
+	Mine1234: ownReport(),
 	Tip12345: ownReport('Tip12345', tipId),
 };
 
-/** C4 transitions and PATCH on Own12345 and Tip12345; undefined for any other request. */
+/** C4 transitions and PATCH on Mine1234 and Tip12345; undefined for any other request. */
 function lifecycle(method: string, path: string, body: Record<string, unknown>) {
 	const now = new Date().toISOString();
-	if (method === 'POST' && path === '/e2e/reset') return (owned.Own12345 = ownReport());
+	if (method === 'POST' && path === '/e2e/reset') return (owned.Mine1234 = ownReport());
 	const reset = path.match(/^\/e2e\/reset\/(Tip12345)$/)?.[1];
 	if (method === 'POST' && reset) return (owned[reset] = ownReport(reset, tipId));
-	if (path === '/v1/me/reports') return { items: [owned.Own12345], next_cursor: null };
-	const code = path.match(/^\/v1\/reports\/(Own12345|Tip12345)(\/transitions)?$/)?.[1];
+	if (path === '/v1/me/reports') return { items: [owned.Mine1234], next_cursor: null };
+	const code = path.match(/^\/v1\/reports\/(Mine1234|Tip12345)(\/transitions)?$/)?.[1];
 	const own = code && owned[code];
 	if (!own) return undefined;
 	if (path === `/v1/reports/${code}` && method === 'PATCH') {
