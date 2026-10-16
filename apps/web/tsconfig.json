@@ -6,7 +6,26 @@
 		"incremental": true,
 		"types": ["node", "mdx"],
 		"plugins": [{ "name": "next" }],
-		"paths": { "@/*": ["./*"] }
+		// Replaces the base's paths: the @zivali/* entries repeat tsconfig.base.json (keep them in step).
+		"paths": {
+			"@/*": ["./*"],
+			"@zivali/analytics": ["../../packages/analytics/src/index.ts"],
+			"@zivali/api/*": ["../../packages/api/src/*.ts"],
+			"@zivali/i18n/dist/*": ["../../packages/i18n/dist/*", "../../node_modules/@zivali/i18n/dist/*"],
+			"@zivali/i18n/format": ["../../packages/i18n/src/format.ts"],
+			"@zivali/tokens/map-style": [
+				"../../packages/tokens/dist/map-style.ts",
+				"../../node_modules/@zivali/tokens/dist/map-style.ts"
+			],
+			"@zivali/tokens/values": [
+				"../../packages/tokens/dist/values.ts",
+				"../../node_modules/@zivali/tokens/dist/values.ts"
+			],
+			"@zivali/types": ["../../packages/types/src/index.ts"],
+			"@zivali/types/domain/*": ["../../packages/types/src/domain/*.ts"],
+			"@zivali/validation": ["../../packages/validation/src/index.ts"],
+			"@zivali/validation/*": ["../../packages/validation/src/*.ts"]
+		}
 	},
 	"include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", "**/*.mts", ".next/types/**/*.ts", ".next/dev/types/**/*.ts"],
 	"exclude": ["node_modules"]

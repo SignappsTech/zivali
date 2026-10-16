@@ -33,13 +33,20 @@ const fileErrors = {
 	TOO_SMALL: 'photos.too_small',
 	HEIC: 'photos.heic_unsupported',
 } as const;
-export type PickedPhoto = Stored & {
-	status: 'uploading' | 'uploaded' | 'failed';
-	progress: number;
-	error?: PhotoMessage;
-	/** Object URL of the thumbnail. */
-	preview: string;
-};
+/** A photo the pet already has (edit form, C4 `Pet.photos`): shown from its URL, moved or removed, never uploaded. */
+export type SavedPhoto = { id: string; thumb_url: string };
+export type PickedPhoto = Omit<Stored, keyof WebPreparedPhoto> &
+	Partial<WebPreparedPhoto> & {
+		status: 'uploading' | 'uploaded' | 'failed';
+		progress: number;
+		error?: PhotoMessage;
+		/** Object URL of the thumbnail, or a saved photo's URL. */
+		preview: string;
+		/** A SavedPhoto: no file, so it stays out of the draft. */
+		saved?: true;
+	};
+type LocalPhoto = PickedPhoto & WebPreparedPhoto;
+const isLocal = (photo: PickedPhoto): photo is LocalPhoto => !photo.saved;
 
 const draftKey = (draft: string) => `photos:${draft}`;
 
@@ -59,18 +66,29 @@ function failure(error: unknown): { message: PhotoMessage; retry: boolean } {
  * Prepares, keeps and uploads up to 5 photos of one draft (C5): one upload at a time so the first is done soonest on
  * a weak connection, retries with backoff, aborts on remove, and resumes from IndexedDB after a reload or going
  * back online. `onExif` gets the place and time read from a photo, to offer them with consent; nothing stores them.
+ * `saved` photos (read once, on mount) come first and count towards the 5.
  */
-export function usePhotoUploads(draft: string, onExif?: (exif: PhotoExif) => void) {
+export function usePhotoUploads(draft: string, onExif?: (exif: PhotoExif) => void, saved: SavedPhoto[] = []) {
 	const locale = useLocale();
 	const client = useMemo(() => makeApiClient(locale), [locale]);
-	const [photos, setPhotos] = useState<PickedPhoto[]>([]);
+	const [seeded] = useState(() =>
+		saved.map(({ id, thumb_url }): PickedPhoto => ({
+			key: id,
+			photoId: id,
+			saved: true,
+			status: 'uploaded',
+			progress: 1,
+			preview: thumb_url,
+		}))
+	);
+	const [photos, setPhotos] = useState(seeded);
 	const [preparing, setPreparing] = useState(0);
 	const [notice, setNotice] = useState<PhotoMessage>();
 	const [justUploaded, setJustUploaded] = useState(false);
 	// Mutable side of the queue, read by async work that outlives a render.
 	const live = useRef({
 		alive: false,
-		photos: [] as PickedPhoto[],
+		photos: seeded,
 		preparing: 0,
 		chain: Promise.resolve(),
 		controllers: new Map<string, AbortController>(),
@@ -90,8 +108,9 @@ export function usePhotoUploads(draft: string, onExif?: (exif: PhotoExif) => voi
 	const save = () =>
 		set(
 			draftKey(draft),
-			live.current.photos.map(
-				({ key, sha256, width, height, bytes, file, thumb, photoId, uploadedAt }): Stored => ({
+			live.current.photos
+				.filter(isLocal)
+				.map(({ key, sha256, width, height, bytes, file, thumb, photoId, uploadedAt }): Stored => ({
 					key,
 					sha256,
 					width,
@@ -101,13 +120,12 @@ export function usePhotoUploads(draft: string, onExif?: (exif: PhotoExif) => voi
 					thumb,
 					photoId,
 					uploadedAt,
-				})
-			)
+				}))
 		).catch(() => {});
 
 	async function upload(key: string) {
 		const photo = live.current.photos.find((item) => item.key === key);
-		if (!live.current.alive || !photo || photo.photoId) return;
+		if (!live.current.alive || !photo || !isLocal(photo) || photo.photoId) return;
 		const controller = new AbortController();
 		live.current.controllers.set(key, controller);
 		patch(key, { status: 'uploading', progress: 0, error: undefined });
@@ -218,7 +236,9 @@ export function usePhotoUploads(draft: string, onExif?: (exif: PhotoExif) => voi
 				preview: URL.createObjectURL(photo.thumb),
 			};
 		});
-		commit([...restored, ...live.current.photos]);
+		// Saved photos stay first, then the draft's, then any picked meanwhile.
+		const current = live.current.photos;
+		commit([...current.filter((photo) => photo.saved), ...restored, ...current.filter(isLocal)]);
 		for (const photo of restored) if (!photo.photoId) enqueue(photo.key);
 	});
 	const backOnline = useEffectEvent(() => {
@@ -228,6 +248,8 @@ export function usePhotoUploads(draft: string, onExif?: (exif: PhotoExif) => voi
 	useEffect(() => {
 		const state = live.current;
 		state.alive = true;
+		// After a StrictMode remount the ref is empty (cleanup below) while the state still lists the saved photos.
+		state.photos = seeded;
 		let cancelled = false;
 		void restore(() => cancelled);
 		const online = () => backOnline();
@@ -243,7 +265,7 @@ export function usePhotoUploads(draft: string, onExif?: (exif: PhotoExif) => voi
 			// The draft stays in IndexedDB; a remount restores it.
 			state.photos = [];
 		};
-	}, [draft]);
+	}, [draft, seeded]);
 
 	return { photos, preparing, notice, justUploaded, add, remove, move, retry };
 }
