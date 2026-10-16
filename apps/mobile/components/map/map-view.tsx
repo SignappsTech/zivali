@@ -57,6 +57,20 @@ export type MapViewProps = {
 	/** Mobile only: px covered by an overlay at the bottom (the list sheet); the attribution stays above it. */
 	bottomInset?: number;
 	testID?: string;
+	/** LocationPicker: the camera while it moves (`moving`) and once it stops, not debounced. */
+	onCameraChange?(camera: CameraState): void;
+	/** LocationPicker: the map element's accessible name and hint (default "Zemljevid: n prijav", "Pokaži seznam"). */
+	label?: string;
+	hint?: string;
+	/** Drawn over the map and under the list (the picker's centre pin); give it `pointerEvents="none"`. */
+	children?: React.ReactNode;
+	ref?: React.Ref<MapViewHandle>;
+};
+
+export type CameraState = { center: LatLng; zoom: number; moving: boolean };
+export type MapViewHandle = {
+	/** Eases the camera to `center` (and `zoom`), at once under reduced motion. */
+	moveTo(center: LatLng, zoom?: number): void;
 };
 
 const SLOVENIA: BBox = [13.38, 45.42, 16.61, 46.88];
@@ -105,6 +119,11 @@ export function MapView({
 	height,
 	bottomInset = 0,
 	testID,
+	onCameraChange,
+	label,
+	hint,
+	children,
+	ref,
 }: MapViewProps) {
 	const t = useTranslations('map');
 	const { colorScheme } = useColorScheme();
@@ -140,7 +159,30 @@ export function MapView({
 	// Alert and home areas are `primary` at the token's area alpha (system §9).
 	const areaAlpha = c['marker-area'].slice(7);
 
+	React.useImperativeHandle(
+		ref,
+		() => ({
+			moveTo: (center, zoom) =>
+				camera.current?.easeTo({
+					center: [center.lng, center.lat],
+					...(zoom !== undefined && { zoom }),
+					duration: reduceMotion ? 0 : motion.duration.slow,
+					easing: 'ease',
+				}),
+		}),
+		[reduceMotion]
+	);
+
+	const cameraChange = (moving: boolean) => (event: NativeSyntheticEvent<ViewStateChangeEvent>) => {
+		if (!onCameraChange) return;
+		const { center, zoom } = event.nativeEvent;
+		onCameraChange({ center: { lng: center[0], lat: center[1] }, zoom, moving });
+	};
+	const onCameraMove = cameraChange(true);
+	const onCameraStop = cameraChange(false);
+
 	const onRegionDidChange = (event: NativeSyntheticEvent<ViewStateChangeEvent>) => {
+		onCameraStop(event);
 		if (!onViewportChange) return;
 		const { bounds, zoom } = event.nativeEvent;
 		clearTimeout(timer.current);
@@ -178,8 +220,8 @@ export function MapView({
 				ref={mapRef}
 				accessible
 				role="button"
-				aria-label={t('a11y_label', { count: reports.length })}
-				accessibilityHint={t('list_show')}
+				aria-label={label ?? t('a11y_label', { count: reports.length })}
+				accessibilityHint={hint ?? t('list_show')}
 				aria-expanded={listOpen}
 				aria-hidden={listOpen}
 				accessibilityActions={[{ name: 'activate' }]}
@@ -196,6 +238,8 @@ export function MapView({
 					compass={false}
 					touchRotate={false}
 					touchPitch={false}
+					onRegionWillChange={onCameraChange && onCameraMove}
+					onRegionIsChanging={onCameraChange && onCameraMove}
 					onRegionDidChange={onRegionDidChange}
 					onDidFinishLoadingMap={() => setFailed(false)}
 					onDidFailLoadingMap={() => setFailed(true)}
@@ -329,6 +373,7 @@ export function MapView({
 						/>
 					</GeoJSONSource>
 				</MapLibreMap>
+				{children}
 			</View>
 
 			{failed && !listOpen && (
