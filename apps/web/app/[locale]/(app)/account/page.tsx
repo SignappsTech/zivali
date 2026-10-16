@@ -5,7 +5,7 @@ import { getTranslations } from 'next-intl/server';
 import { AccountSettings } from '@/components/account/account-settings';
 import { SupportCard } from '@/components/payments/support';
 import { ContentPage, h1Class } from '@/components/shell/page';
-import { env } from '@/lib/env';
+import { env, paymentsEnabled } from '@/lib/env';
 import { requireViewer } from '@/lib/viewer';
 
 export async function generateMetadata({ params }: PageProps<'/[locale]/account'>): Promise<Metadata> {
@@ -15,7 +15,7 @@ export async function generateMetadata({ params }: PageProps<'/[locale]/account'
 
 /**
  * Account (`/racun`, `/en/account`, C15): a real account only, so no anonymous report manager (C7). Last, the quiet
- * P15 support card (C13 `support`), never a prompt.
+ * P15 support card (C13 `support`), never a prompt; none while payments are off (paymentsEnabled).
  */
 export default async function AccountPage({ params }: PageProps<'/[locale]/account'>) {
 	const { locale } = await params;
@@ -26,7 +26,9 @@ export default async function AccountPage({ params }: PageProps<'/[locale]/accou
 		<ContentPage>
 			<h1 className={h1Class}>{t('account_profile')}</h1>
 			<AccountSettings />
-			<SupportCard testMode={env.APP_ENV !== 'production'} className="mt-16 max-w-[560px]" />
+			{paymentsEnabled() && (
+				<SupportCard testMode={env.APP_ENV !== 'production'} className="mt-16 max-w-[560px]" />
+			)}
 		</ContentPage>
 	);
 }

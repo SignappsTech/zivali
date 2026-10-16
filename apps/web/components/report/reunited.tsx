@@ -124,14 +124,16 @@ type ReunitedProps = {
 	report: DetailReport;
 	/** The manage-link session (C7): no account, so no tip (P15). */
 	anonymous: boolean;
+	/** Payments off (the page's paymentsEnabled()): no tip, so the ad shows. */
+	payments?: boolean;
 	/** Outside production: the tip's test-payment note. */
 	testMode?: boolean;
 };
 
 /** The reunited page of a report this viewer manages: the owner's celebration or the finder's thank-you. */
-export function Reunited({ report, anonymous, testMode = false }: ReunitedProps) {
+export function Reunited({ report, anonymous, payments = true, testMode = false }: ReunitedProps) {
 	return report.manager_role === 'owner' ? (
-		<OwnerReunited report={report} tip={!anonymous} testMode={testMode} />
+		<OwnerReunited report={report} tip={!anonymous && payments} testMode={testMode} />
 	) : (
 		<FinderThanks report={report} anonymous={anonymous} />
 	);

@@ -237,15 +237,28 @@ function AlreadyPaid({ className }: { className?: string }) {
 	);
 }
 
-/** Signed-in accounts only: an anonymous finder or a signed-out visitor never sees an ask. */
+/**
+ * Payments on (C13 §Payments off, TASK-76.1): off with EXPO_PUBLIC_PAYMENTS_ENABLED=false in the build, or once the API
+ * reports `payments.enabled: false` (PAYMENTS_PROVIDER=off). On while the config loads or cannot be read.
+ */
+function usePaymentsOn() {
+	const reported = useGetPublicConfigQuery().data?.['payments.enabled'];
+	return env.EXPO_PUBLIC_PAYMENTS_ENABLED && reported !== false;
+}
+
+/**
+ * Signed-in accounts only: an anonymous finder or a signed-out visitor never sees an ask, and nobody does while payments
+ * are off.
+ */
 function useCanAsk() {
 	const { me, isAnonymous } = useSession();
-	return Boolean(me) && !isAnonymous;
+	return usePaymentsOn() && Boolean(me) && !isAnonymous;
 }
 
 /**
  * State of the reunited tip ask for a report: 'asking' (shown), 'skipped', 'paid', or 'none' when no ask is possible
- * (signed out or anonymous). Shares SupportTip's store, so a sibling re-renders when the ask is skipped or paid.
+ * (signed out, anonymous or payments off). Shares SupportTip's store, so a sibling re-renders when the ask is skipped
+ * or paid.
  */
 export function useSupportTipState(code: string): 'asking' | 'skipped' | 'paid' | 'none' {
 	const canAsk = useCanAsk();
@@ -276,9 +289,13 @@ export function SupportTip({ reportId, code, className }: { reportId: string; co
 	);
 }
 
-/** Profile card "Pomagajte nam izboljšati Najdimo" (C13 `support`): the tip's amounts, no Skip, never a prompt. */
+/**
+ * Profile card "Pomagajte nam izboljšati Najdimo" (C13 `support`): the tip's amounts, no Skip, never a prompt; none
+ * while payments are off.
+ */
 export function SupportCard({ className }: { className?: string }) {
 	const t = useTranslations('support');
+	if (!usePaymentsOn()) return null;
 	return (
 		<Card className={className}>
 			<CardTitle>{t('card_title')}</CardTitle>

@@ -38,11 +38,20 @@ globalThis.ResizeObserver ??= class {
 	disconnect() {}
 } as unknown as typeof ResizeObserver;
 
-function show(report: DetailReport, { anonymous = false, locale = 'sl' as 'sl' | 'en', testMode = false } = {}) {
+function show(
+	report: DetailReport,
+	{
+		anonymous = false,
+		locale = 'sl' as 'sl' | 'en',
+		payments = undefined as boolean | undefined,
+		testMode = false,
+		config = {} as Record<string, unknown>,
+	} = {}
+) {
 	render(
 		<NextIntlClientProvider locale={locale} messages={{ sl, en }[locale]}>
-			<Provider store={createApiStore(createMockApi({ 'GET /v1/config/public': {} }))}>
-				<Reunited report={report} anonymous={anonymous} testMode={testMode} />
+			<Provider store={createApiStore(createMockApi({ 'GET /v1/config/public': config }))}>
+				<Reunited report={report} anonymous={anonymous} payments={payments} testMode={testMode} />
 			</Provider>
 		</NextIntlClientProvider>
 	);
@@ -145,6 +154,20 @@ describe('Reunited page (P14)', () => {
 		sessionStorage.clear();
 		show(rex, { anonymous: true });
 		expect(screen.getByTestId('ad-reunited')).toBeTruthy();
+	});
+
+	it('with payments off (PAYMENTS_ENABLED=false, TASK-76.1) asks for no tip and shows the ad at once', () => {
+		show(rex, { payments: false });
+		expect(screen.queryByRole('heading', { name: sl.support.tip_title })).toBeNull();
+		expect(screen.queryByRole('radiogroup')).toBeNull();
+		expect(screen.getByTestId('ad-reunited')).toBeTruthy();
+		expect(screen.getByRole('link', { name: 'Končano' })).toBeTruthy();
+	});
+
+	it('with payments off on the API (payments.enabled false) the tip goes and the ad shows', async () => {
+		show(rex, { config: { 'payments.enabled': false } });
+		expect(await screen.findByTestId('ad-reunited')).toBeTruthy();
+		expect(screen.queryByRole('heading', { name: sl.support.tip_title })).toBeNull();
 	});
 
 	it('a finder gets the short thank-you, with no consent, tip or ad, and the account offer when anonymous', async () => {

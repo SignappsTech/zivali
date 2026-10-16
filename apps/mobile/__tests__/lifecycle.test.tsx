@@ -25,7 +25,9 @@ import { toast } from '@/components/ui/sonner';
 import { useMyReports, useReport } from '@/lib/data/reports';
 
 jest.mock('@/lib/data/reports', () => ({ useReport: jest.fn(), useMyReports: jest.fn() }));
-jest.mock('@/lib/env', () => ({ env: { EXPO_PUBLIC_APP_URL: 'https://najdimo.test' } }));
+jest.mock('@/lib/env', () => ({
+	env: { EXPO_PUBLIC_APP_URL: 'https://najdimo.test', EXPO_PUBLIC_PAYMENTS_ENABLED: true },
+}));
 // Online for the ad slots (ad-slot.test.tsx); they collapse unless a test serves an ad.
 jest.mock('expo-network', () => ({ useNetworkState: () => ({ isConnected: true, isInternetReachable: true }) }));
 jest.mock('@/components/ui/sonner', () => ({

@@ -1,9 +1,9 @@
 ---
 doc_id: DOC-04
 title: Technical Design
-version: 0.11
+version: 0.12
 status: Draft
-date: 2026-10-15
+date: 2026-10-16
 owner: Tech Lead
 audience: Team, client IT
 approvals:
@@ -177,6 +177,8 @@ All tables in schema `app` as Prisma models (snake_case plural names, `id uuid`,
 | Staging | Hetzner VPS (Compose: caddy, web, api, worker) at `staging.<domain>` / `api.staging.<domain>` (sslip.io name until a domain exists); Supabase project `najdimo` (ref `omtpppzrugibquukhnyl`, eu-central-1, Free); R2 buckets `zivali-*` (EU jurisdiction); EAS profile `preview` | client preview, QA, pilot alpha | GitHub Actions on merge to `main` |
 | Production | same VPS, separate Compose project and hostnames; a second Supabase project in eu-central-1 before public launch; EAS profile `production` (no store submission) | live pilot | tagged release `vX.Y.Z` + manual approval |
 
+**Web-first pilot (CH-199, TASK-76.1):** until the public launch the pilot is ONE environment: the staging stack (`zivali-staging`, `APP_ENV=staging`, auto-deployed from `main`) serves `najdimo.si` and `api.najdimo.si`; `www` and `staging.najdimo.si` redirect to `najdimo.si` (Cloudflare). Payments stay on in Stripe test mode with `FISCAL_PROVIDER=mock` (live only after the split, the accountant's answer and the owner's approval); a payments-off switch exists for later (`PAYMENTS_PROVIDER=off`, which the web and the app follow through `payments.enabled` in the public config, plus `PAYMENTS_ENABLED` / `EXPO_PUBLIC_PAYMENTS_ENABLED` overrides; C13). The site stays out of search results (`SEARCH_INDEXING=false`: `X-Robots-Tag: noindex, nofollow` on every page; API hosts always noindex). Before the public launch the pilot's data (project `najdimo`, buckets `zivali-*`) becomes production and staging gets new resources. Runbook: `docs/tech/pilot-runbook.md`.
+
 **Shared Supabase project (until launch):** staging and production share Supabase project `najdimo` until a separate production project exists. Create that project before public launch (client to-do) and set its URL and keys in the EAS `production` environment.
 
 Configuration through environment variables only (names in `frontend.md` / `backend.md`; values never committed; `.env.local` and `.secrets/` are gitignored; on the VPS `/opt/zivali/<env>/.env`, mode 600). Cache: HTTP caching (Caddy, `Cache-Control` on public endpoints); no Redis. CDN: Cloudflare in front of the R2 media bucket.
@@ -304,3 +306,4 @@ Full records: `docs/tech/adr/NNN-*.md` (context, decision, alternatives, consequ
 | 0.9 | 2026-10-15 | Client decision (CH-25, CH-24): raw GPS never stored, 20–30 m coarsening once at write on device and server, public blur from the coarsened point, post-closure blur job (ADR-006, C6); C4 models/DTOs/limits/query encoding confirmed from TASK-6.5; ADR-017 rows (CH-15, CH-28) |
 | 0.10 | 2026-10-15 | CH-109: §Environments notes that staging and production share Supabase project `najdimo` until a separate production project exists |
 | 0.11 | 2026-10-15 | TASK-4.2: CI in `ci.yml` (jobs verify, quality, images; deploy placeholder), full `pnpm verify` (secretlint, API tests; `pnpm audit` and the Playwright smoke as separate CI steps), `pnpm images`, branch protection for main, Turbo passes `DATABASE_URL`/`DIRECT_URL` through |
+| 0.12 | 2026-10-16 | TASK-76.1 (CH-199): §Environments web-first pilot as one environment on the staging stack; pilot payments in Stripe test mode; payments-off switch for later (`PAYMENTS_PROVIDER=off`, off by default in `APP_ENV=production`, reported as `payments.enabled` in the public config; `PAYMENTS_ENABLED`, `EXPO_PUBLIC_PAYMENTS_ENABLED` overrides) and `SEARCH_INDEXING` (noindex); `docs/tech/pilot-runbook.md` |

@@ -2,7 +2,7 @@
 // redaction, the Checkout Session request (fetch stubbed: no test reaches Stripe), the mock dev-page URL.
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { createPayments } from '../../adapters/payments/index.ts';
+import { createPayments, paymentsOn } from '../../adapters/payments/index.ts';
 import { mockEvent, mockPayments, signWebhook } from '../../adapters/payments/mock.ts';
 import { stripePayments } from '../../adapters/payments/stripe.ts';
 import { STRIPE_API_VERSION } from '../../adapters/payments/stripe-version.ts';
@@ -67,6 +67,46 @@ describe('live-key guard', () => {
 		expect(stripe.provider).toBe('stripe');
 		expect(createPayments({ ...blank, PAYMENTS_PROVIDER: 'stripe' }).provider).toBe('mock');
 		expect(createPayments(blank).provider).toBe('mock');
+	});
+});
+
+describe('payments off (TASK-76.1: production before the fiscal questions are cleared)', () => {
+	const input = {
+		paymentId: 'p1',
+		amountCents: 500,
+		currency: 'eur',
+		description: 'Tip',
+		locale: 'sl',
+		successUrl: 'https://najdimo.si/placila/zakljucek',
+		cancelUrl: 'https://najdimo.si/placila/zakljucek?canceled=1',
+	} as const;
+	const unavailable = expect.objectContaining({ name: 'AppError', code: 'SERVICE_UNAVAILABLE' });
+
+	it('is the default in APP_ENV=production: every checkout and webhook answers SERVICE_UNAVAILABLE', () => {
+		for (const NODE_ENV of ['development', 'production'] as const) {
+			const off = createPayments({ ...blank, NODE_ENV, APP_ENV: 'production' });
+			expect(() => off.createCheckout(input)).toThrowError(unavailable);
+			expect(() => off.parseWebhook('{}', 'sig')).toThrowError(unavailable);
+		}
+		// Explicit off in any environment.
+		const off = createPayments({ ...blank, PAYMENTS_PROVIDER: 'off' });
+		expect(() => off.createCheckout(input)).toThrowError(unavailable);
+		// What GET /v1/config/public reports as payments.enabled.
+		expect(paymentsOn(off)).toBe(false);
+		expect(paymentsOn(createPayments(blank))).toBe(true);
+		expect(paymentsOn(stripePayments('sk_test_x', 'whsec_x'))).toBe(true);
+	});
+
+	it('production still takes an explicit stripe provider; staging keeps fail-fast without one', () => {
+		const prod = { ...blank, NODE_ENV: 'production', APP_ENV: 'production' } as const;
+		const stripe = {
+			PAYMENTS_PROVIDER: 'stripe',
+			STRIPE_SECRET_KEY: 'sk_test_x',
+			STRIPE_WEBHOOK_SECRET: 'w',
+		} as const;
+		expect(createPayments({ ...prod, ...stripe }).provider).toBe('stripe');
+		expect(() => createPayments({ ...prod, APP_ENV: 'staging' })).toThrow(/PAYMENTS_PROVIDER/);
+		expect(createPayments({ ...prod, APP_ENV: 'staging', ...stripe }).provider).toBe('stripe');
 	});
 });
 

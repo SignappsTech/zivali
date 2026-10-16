@@ -125,3 +125,23 @@ describe('content security policy', () => {
 		expect(imgSrc).toContain(new URL(env.R2_UPLOAD_ORIGIN).origin);
 	});
 });
+
+describe('search indexing (SEARCH_INDEXING, TASK-76.1)', () => {
+	afterEach(() => {
+		env.SEARCH_INDEXING = undefined;
+	});
+
+	it('sends no X-Robots-Tag while indexing is on (local here)', async () => {
+		const response = await proxy(new NextRequest('https://najdimo.si/kako-deluje'));
+		expect(response.headers.get('x-robots-tag')).toBeNull();
+	});
+
+	it.each(['/', '/kako-deluje', '/en/how-it-works'])(
+		'%s: noindex, nofollow on every page with indexing off',
+		async (path) => {
+			env.SEARCH_INDEXING = 'false';
+			const response = await proxy(new NextRequest(`https://najdimo.si${path}`));
+			expect(response.headers.get('x-robots-tag')).toBe('noindex, nofollow');
+		}
+	);
+});

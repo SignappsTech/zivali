@@ -2,7 +2,7 @@
 
 import { AdSlot } from '@/components/ads/ad-slot';
 import { useAnswer } from '@/components/payments/answers';
-import { SupportTip } from '@/components/payments/support';
+import { SupportTip, usePaymentsOn } from '@/components/payments/support';
 import type { DetailReport } from '@/components/report/slots/types';
 
 /** "Končano": takes focus when Preskoči removes the tip. */
@@ -29,11 +29,12 @@ export function ReunitedTip({ report, testMode, className }: ReunitedSlotProps &
 
 /**
  * P14 ad slot: the one labelled ad (P21 `reunited`, "Oglas", 200 px reserved, 176 from lg), below the support moment.
- * Never beside the ask (P15): the web tip (TASK-33.2) hides it while the tip asks, as on mobile. Until it loads it
- * keeps its box; no ad or a failure collapse it with no gap.
+ * Never beside the ask (P15): the web tip (TASK-33.2) hides it while the tip asks, as on mobile; with payments off
+ * there is no ask. Until it loads it keeps its box; no ad or a failure collapse it with no gap.
  */
 export function ReunitedAd({ report, tip, className }: ReunitedSlotProps & { tip: boolean }) {
 	const [answer] = useAnswer(`tip:${report.short_code}`);
-	if (tip && answer === null) return null;
+	const paymentsOn = usePaymentsOn();
+	if (tip && paymentsOn && answer === null) return null;
 	return <AdSlot slot="reunited" species={report.species} region={report.region_slug} className={className} />;
 }

@@ -1,6 +1,7 @@
-// Payments (C13). Provider: PAYMENTS_PROVIDER mock | stripe | off. Live keys are refused at boot outside
-// APP_ENV=production; in production a live key boots, but every checkout waits for the live gate
-// (PaymentsDomain.liveGateOpen: app_config payments.live_allowed, fiscal invoicing live or not required, TASK-92).
+// Payments (C13). Provider: PAYMENTS_PROVIDER mock | stripe | off; unset in APP_ENV=production means off (web-first
+// pilot: payments stay off until the fiscal questions are cleared, TASK-92), so every checkout answers 503. Live keys
+// are refused at boot outside APP_ENV=production; in production a live key boots, but every checkout waits for the
+// live gate (PaymentsDomain.liveGateOpen: app_config payments.live_allowed, fiscal invoicing live or not required).
 import type { Config } from '../../lib/config.ts';
 import { offAdapter, pickProvider } from '../select.ts';
 import { mockPayments } from './mock.ts';
@@ -55,9 +56,14 @@ export function createPayments(cfg: Config): PaymentsAdapter {
 		throw new Error('STRIPE_SECRET_KEY: live keys are refused outside APP_ENV=production (test mode only, C13)');
 	}
 	const creds = !!(cfg.STRIPE_SECRET_KEY && cfg.STRIPE_WEBHOOK_SECRET);
-	const p = pickProvider('PAYMENTS_PROVIDER', cfg.PAYMENTS_PROVIDER, creds, cfg.NODE_ENV === 'production');
+	const provider = cfg.PAYMENTS_PROVIDER ?? (cfg.APP_ENV === 'production' ? 'off' : undefined);
+	const p = pickProvider('PAYMENTS_PROVIDER', provider, creds, cfg.NODE_ENV === 'production');
 	if (p === 'off') return offAdapter<PaymentsAdapter>('PAYMENTS_PROVIDER');
 	return p === 'mock'
 		? mockPayments(cfg.APP_URL, cfg.MOCK_WEBHOOK_SECRET ?? 'mock-webhook-secret')
 		: stripePayments(cfg.STRIPE_SECRET_KEY!, cfg.STRIPE_WEBHOOK_SECRET!);
 }
+
+/** A real provider (stripe or mock) takes checkouts; the off adapter has no provider name (its props are throwers). */
+export const paymentsOn = (payments: PaymentsAdapter): boolean =>
+	payments.provider === 'stripe' || payments.provider === 'mock';

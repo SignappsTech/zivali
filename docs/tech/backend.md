@@ -100,7 +100,7 @@ Domains throw `AppError`; unknown errors become `INTERNAL` (500) with the reques
 | `SUPABASE_URL`, `SUPABASE_SECRET_KEY` (Admin API only), `SUPABASE_JWT_SECRET` (local HS256 fallback) | JWKS at `${SUPABASE_URL}/auth/v1/.well-known/jwks.json` |
 | `FUZZ_SECRET`, `RATE_SALT`, `IDEMPOTENCY_KEY` | random 32-byte secrets per environment |
 | `STORAGE_PROVIDER` (`minio`/`r2`/`memory`), `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_PRIVATE`, `R2_BUCKET_MEDIA`, `R2_BUCKET_BACKUPS`, `MEDIA_BASE_URL`, `S3_ENDPOINT` (MinIO locally) | ADR-014; buckets are in the R2 **EU jurisdiction**, so the r2 adapter always uses `https://<R2_ACCOUNT_ID>.eu.r2.cloudflarestorage.com` (also for presigned URLs) |
-| `PAYMENTS_PROVIDER` (`mock`/`stripe`), `STRIPE_SECRET_KEY` (sk_test only), `STRIPE_WEBHOOK_SECRET`, `MOCK_WEBHOOK_SECRET` | live keys rejected (C13) |
+| `PAYMENTS_PROVIDER` (`mock`/`stripe`/`off`), `STRIPE_SECRET_KEY` (sk_test only), `STRIPE_WEBHOOK_SECRET`, `MOCK_WEBHOOK_SECRET` | live keys rejected (C13); `off` (the default when `APP_ENV=production` sets none; the pilot runs `stripe` test mode) answers every checkout and webhook 503 `SERVICE_UNAVAILABLE` and makes `GET /v1/config/public` report `payments.enabled: false`, which the web and app follow (C13 §Payments off) |
 | `EMAIL_PROVIDER` (`mock`/`brevo`), `BREVO_API_KEY`, `EMAIL_FROM`, `LEADS_NOTIFY_EMAIL` | mock keeps an in-memory sent list (no `email_outbox`); staging/production: configured or explicitly off |
 | `PUSH_PROVIDER` (`mock`/`expo`), `EXPO_ACCESS_TOKEN` | |
 | `CAPTCHA_PROVIDER` (`mock`/`turnstile`), `TURNSTILE_SECRET_KEY` | leads form; Auth captcha is configured in Supabase |

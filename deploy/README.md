@@ -10,6 +10,8 @@ One Hetzner Cloud **CAX11** (Arm64 Ampere, 2 vCPU, 4 GB, 40 GB disk, Ubuntu 24.0
 
 Single-level names only: Cloudflare proxies the hostnames, and its free Universal SSL covers `najdimo.si` and `*.najdimo.si`, not `*.staging.najdimo.si`. Public photos: `https://media.najdimo.si` (R2 custom domain on `zivali-media`, served by Cloudflare, no nginx block). Database and Auth: Supabase project `najdimo` (staging, Free). Images: `zivali-api:<sha or tag>` and `zivali-web:<env>-<sha or tag>`, built for `linux/arm64` on the deploying machine and streamed to the VPS over SSH (`docker save | zstd | docker load`); no registry.
 
+**Web-first pilot (TASK-76.1):** until the public launch the staging stack serves `najdimo.si` and `api.najdimo.si` (one environment; `staging.najdimo.si` and `www` redirect), payments in Stripe test mode, noindex by configuration: hostnames in `edge.env`, flags and the split before launch in [`docs/tech/pilot-runbook.md`](../docs/tech/pilot-runbook.md).
+
 On the VPS everything lives in `/opt/zivali/`:
 
     docker-compose.yml, remote.sh, nginx/     copied from deploy/ on every deploy

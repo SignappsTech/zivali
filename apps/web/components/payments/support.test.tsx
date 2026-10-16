@@ -261,8 +261,8 @@ describe('contribution row at the lost confirmation (AC#2)', () => {
 		expect(screen.queryByRole('radio', { checked: true })).toBeNull();
 		expect(button(t.contribution_pay_disabled).disabled).toBe(true);
 		expect(screen.getByText(t.test_note)).toBeTruthy();
-		// The tip's monthly flag is not asked for here.
-		expect(api.calls.some((call) => call.path === '/v1/config/public')).toBe(false);
+		// The tip's monthly option is not offered here (the public config is read for payments.enabled only).
+		expect(screen.queryByRole('checkbox')).toBeNull();
 
 		fireEvent.click(radio('3 €'));
 		fireEvent.click(button(`Prispevaj ${eur(300)}`));
@@ -315,5 +315,22 @@ describe('contribution row at the lost confirmation (AC#2)', () => {
 		session.current = { me: { id: 'anon' }, isAnonymous: true };
 		show(row(REPORT));
 		expect(screen.queryByText(t.contribution_row)).toBeNull();
+	});
+});
+
+describe('payments off on the API (payments.enabled false, PAYMENTS_PROVIDER=off, TASK-76.1)', () => {
+	it('the tip, the Profile card and the contribution row hide themselves; nothing reaches checkout', async () => {
+		const api = show(
+			<>
+				{tip()}
+				<SupportCard testMode={false} />
+				<ContributionRow reportId={REPORT} code={CODE} testMode={false} />
+			</>,
+			{ 'GET /v1/config/public': { 'payments.enabled': false } }
+		);
+		await waitFor(() => expect(screen.queryByRole('heading', { name: t.tip_title })).toBeNull());
+		expect(screen.queryByRole('heading', { name: t.card_title })).toBeNull();
+		expect(screen.queryByText(t.contribution_row)).toBeNull();
+		expect(checkouts(api)).toEqual([]);
 	});
 });

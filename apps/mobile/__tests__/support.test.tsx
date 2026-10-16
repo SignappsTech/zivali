@@ -15,7 +15,17 @@ const REPORT_ID = '7c1e4b2a-0000-4000-8000-000000000001';
 
 const mockSession = { me: {} as object | null, isAnonymous: false };
 jest.mock('@zivali/api/auth', () => ({ useSession: () => mockSession }));
-jest.mock('@/lib/env', () => ({ env: { EXPO_PUBLIC_APP_URL: 'https://najdimo.test', EXPO_PUBLIC_APP_ENV: 'local' } }));
+const mockEnv = {
+	EXPO_PUBLIC_APP_URL: 'https://najdimo.test',
+	EXPO_PUBLIC_APP_ENV: 'local',
+	EXPO_PUBLIC_PAYMENTS_ENABLED: true,
+};
+// A getter: the factory runs before mockEnv is initialised (jest.mock is hoisted above the imports).
+jest.mock('@/lib/env', () => ({
+	get env() {
+		return mockEnv;
+	},
+}));
 // The hand-off sheet (TASK-32.3, payments.test) as a marker of what it would pay for; "paid" plays a successful return.
 jest.mock('@/components/payments/checkout', () => {
 	const { Pressable, Text, View } = jest.requireActual<typeof import('react-native')>('react-native');
@@ -71,7 +81,42 @@ const press = (name: string) => fireEvent.press(button(name));
 const paying = () => JSON.parse(screen.getByTestId('checkout').props.children);
 const eur = (cents: number) => formatEur(cents, 'sl');
 
-beforeEach(() => Object.assign(mockSession, { me: {}, isAnonymous: false }));
+beforeEach(() => {
+	Object.assign(mockSession, { me: {}, isAnonymous: false });
+	mockEnv.EXPO_PUBLIC_PAYMENTS_ENABLED = true;
+});
+
+describe('payments off (TASK-76.1): no tip, contribution row or Profile card; the tip state is none', () => {
+	function Sibling() {
+		return <Text testID="state">{useSupportTipState('Off1')}</Text>;
+	}
+	const asks = (
+		<>
+			<SupportTip reportId={REPORT_ID} code="Off1" />
+			<ContributionRow reportId={REPORT_ID} code="Off1" />
+			<SupportCard />
+			<Sibling />
+		</>
+	);
+	const gone = () => {
+		expect(screen.getByTestId('state')).toHaveTextContent('none');
+		expect(screen.queryByText(tp.tip_title)).toBeNull();
+		expect(screen.queryByText(tp.card_title)).toBeNull();
+		expect(screen.queryByRole('button', { name: new RegExp(tp.contribution_row) })).toBeNull();
+	};
+
+	test('EXPO_PUBLIC_PAYMENTS_ENABLED=false in the build', async () => {
+		mockEnv.EXPO_PUBLIC_PAYMENTS_ENABLED = false;
+		await show(asks);
+		gone();
+	});
+
+	test('the API reports payments.enabled false (PAYMENTS_PROVIDER=off)', async () => {
+		await show(asks, { 'GET /v1/config/public': { 'payments.enabled': false } });
+		await waitFor(() => expect(screen.getByTestId('state')).toHaveTextContent('none'));
+		gone();
+	});
+});
 
 describe('reunited tip (P15)', () => {
 	test('3, 5 (suggested, not chosen), 10 € or another amount; Pay waits for an amount, Skip as visible; web checkout', async () => {

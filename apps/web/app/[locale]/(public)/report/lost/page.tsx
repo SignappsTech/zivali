@@ -5,7 +5,7 @@ import { getMessages, getTranslations } from 'next-intl/server';
 import { PageMessages } from '@/components/page-messages';
 import { LostFlow } from '@/components/report-lost/lost-flow';
 import { StoreProvider } from '@/components/store-provider';
-import { env } from '@/lib/env';
+import { env, paymentsEnabled } from '@/lib/env';
 import { absoluteUrl, breadcrumbLd, jsonLd } from '@/lib/seo';
 import { getViewer } from '@/lib/viewer';
 
@@ -87,6 +87,7 @@ export default async function ReportLostPage({ params, searchParams }: PageProps
 				<LostFlow
 					initialPet={typeof pet === 'string' ? pet : undefined}
 					signedIn={viewer !== null}
+					payments={paymentsEnabled()}
 					testMode={env.APP_ENV !== 'production'}
 				/>
 			</StoreProvider>
