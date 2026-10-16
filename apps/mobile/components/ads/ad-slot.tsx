@@ -1,12 +1,12 @@
 import * as WebBrowser from 'expo-web-browser';
 import { CaretRightIcon } from 'phosphor-react-native/src/icons/CaretRight';
 import * as React from 'react';
-import { Image, Pressable, View } from 'react-native';
+import { Dimensions, Image, Pressable, View } from 'react-native';
 import { useLocale, useTranslations } from 'use-intl';
 
 import { type EventParams, track } from '@zivali/analytics';
 import { useAd, useRecordAdImpressionMutation } from '@zivali/api/ads';
-import type { Ad, AdSlot as Slot, Locale, Species } from '@zivali/types';
+import { type Ad, type AdSlot as Slot, type Locale, REGION_SLUGS, type RegionSlug, type Species } from '@zivali/types';
 import { useFocusRing } from '@/components/ui/focus-ring';
 import { Icon } from '@/components/ui/icon';
 import { Text } from '@/components/ui/text';
@@ -17,8 +17,19 @@ import { cn } from '@/lib/utils';
 type InlineSlot = Exclude<Slot, 'sidebar'>;
 type Region = EventParams['ad_impression']['region'];
 
-/** P21 reserved sizes, so nothing shifts when the ad arrives: the feed row 88 px, the detail and reunited units 136. */
-const RESERVED = { feed: 'min-h-[88px]', detail: 'min-h-[136px]', reunited: 'min-h-[136px]' } as const;
+/** P21 reserved sizes, so nothing shifts when the ad arrives: the feed row 88 px, the detail and reunited units 200. */
+const RESERVED = { feed: 'min-h-[88px]', detail: 'min-h-[200px]', reunited: 'min-h-[200px]' } as const;
+
+// Counted like web (A-016 CHANGE row still open): once per unit and ad, when at least half of it has been in view for 1 s.
+const VISIBLE_RATIO = 0.5;
+const VISIBLE_MS = 1000;
+const POLL_MS = 250;
+
+/** C14 `region_id`: the 1-based index of the slug in the ordered REGION_SLUGS (C6 `regions.id`); none for an unknown slug. */
+export const regionId = (slug?: string): number | undefined => {
+	const index = REGION_SLUGS.indexOf(slug as RegionSlug);
+	return index < 0 ? undefined : index + 1;
+};
 
 /**
  * Only our click counter (C14 `click_url`, which redirects to the stored https link) opens, and only over https
@@ -43,7 +54,7 @@ const a11yName = (label: string, body: string) => `${label}${/[.?!]$/.test(label
  * P21 AdSlot (feed, detail, reunited): one labelled "Oglas" unit on `muted`, radius 20, no border, shadow or motion;
  * the whole unit is one link that opens the C14 click URL in the in-app browser. Loading keeps the reserved box
  * (empty, hidden from screen readers); no ad, an error, a blocked request or no network collapse it with no gap and
- * no message, so a cached ad is never shown as live. The impression goes to our DB once per rendered unit (A-016);
+ * no message, so a cached ad is never shown as live. The impression goes to our DB once per unit and ad once half of it has been in view for 1 s (as web, A-016 open);
  * `ad_impression` and `ad_click` reach GA only with consent (`track()` is a no-op without it, C12). Never place it in
  * the report flows, manage, chat, sign-in or payments (C15; guarded by `__tests__/ad-slot.test.tsx`).
  */
@@ -61,19 +72,35 @@ export function AdSlot({
 }) {
 	const locale = useLocale() as Locale;
 	const online = isOnline(useNetworkState());
-	const { ad, loading } = useAd(slot, { locale, ...(species && { species }) });
+	const region_id = regionId(region);
+	const { ad, loading } = useAd(slot, { locale, ...(species && { species }), ...(region_id && { region_id }) });
 	const [record] = useRecordAdImpressionMutation();
 
-	// Once per rendered ad (A-016): our aggregate count always, GA only with consent.
-	// The ref survives offline gaps (shownId goes undefined), so the same ad is never billed twice per unit.
+	// Once per unit and ad, when at least half of it has been in view for 1 s (as web): our aggregate count always,
+	// GA only with consent. The ref survives offline gaps (shownId goes undefined), so an ad is never billed twice.
 	const shownId = online ? ad?.id : undefined;
+	const unit = React.useRef<View>(null);
 	const recorded = React.useRef<string | undefined>(undefined);
 	React.useEffect(() => {
 		if (!shownId || recorded.current === shownId) return;
-		recorded.current = shownId;
-		void record({ id: shownId, body: { slot } });
-		track('ad_impression', gaParams(slot, shownId, species, region));
-	}, [shownId, slot, species, region, record]);
+		let since: number | undefined;
+		const timer = setInterval(() => {
+			unit.current?.measureInWindow((_x, y, _w, h) => {
+				const shown = Math.min(y + h, Dimensions.get('window').height) - Math.max(y, 0);
+				if (!(h > 0 && shown >= h * VISIBLE_RATIO)) {
+					since = undefined;
+					return;
+				}
+				since ??= Date.now();
+				if (Date.now() - since < VISIBLE_MS || recorded.current === shownId) return;
+				recorded.current = shownId;
+				clearInterval(timer);
+				void record({ id: shownId, body: { slot, ...(region_id && { region_id }) } });
+				track('ad_impression', gaParams(slot, shownId, species, region));
+			});
+		}, POLL_MS);
+		return () => clearInterval(timer);
+	}, [shownId, slot, species, region, region_id, record]);
 
 	if (!online) return null;
 	if (!ad) return loading ? <View aria-hidden className={cn(RESERVED[slot], className)} /> : null;
@@ -83,15 +110,17 @@ export function AdSlot({
 		track('ad_click', gaParams(slot, ad.id, species, region));
 		void WebBrowser.openBrowserAsync(ad.click_url).catch(() => undefined);
 	};
-	return <AdUnit ad={ad} slot={slot} onPress={open} className={className} />;
+	return <AdUnit ref={unit} ad={ad} slot={slot} onPress={open} className={className} />;
 }
 
 function AdUnit({
+	ref,
 	ad,
 	slot,
 	onPress,
 	className,
 }: {
+	ref: React.Ref<View>;
 	ad: Ad;
 	slot: InlineSlot;
 	onPress: () => void;
@@ -119,6 +148,7 @@ function AdUnit({
 
 	return (
 		<Pressable
+			ref={ref}
 			role="link"
 			aria-label={a11yName(t('unit_a11y', { title: ad.title }), ad.body)}
 			onPress={onPress}
