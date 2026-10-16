@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import type { Locale } from 'next-intl';
 import { getMessages, getTranslations } from 'next-intl/server';
+import { Suspense } from 'react';
 
 import { Browse } from '@/components/browse/browse';
 import { PageMessages } from '@/components/page-messages';
@@ -39,7 +40,11 @@ export default async function MapPage({ params }: PageProps<'/[locale]/map'>) {
 				}}
 			>
 				<StoreProvider>
-					<Browse />
+					{/* useSearchParams: the page renders per request, so this never suspends; it keeps a static
+					    render from failing the build. */}
+					<Suspense>
+						<Browse />
+					</Suspense>
 				</StoreProvider>
 			</PageMessages>
 			<script

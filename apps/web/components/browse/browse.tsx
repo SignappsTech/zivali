@@ -43,8 +43,11 @@ type Translate = ReturnType<typeof useTranslations<'browse'>>;
 type Access = 'unknown' | 'granted' | 'ask' | 'denied';
 
 const LG = '(min-width: 64rem)';
-/** Below lg the list is a sheet over the map: peek, half and full (P4, system §10.7); the grabber steps through them. */
-const SNAPS = ['40%', '60%', '92%'];
+/**
+ * Below lg the list is a sheet over the map: peek, half and full up to the area pill (24 + 48 px, 12 px gap; P4,
+ * system §10.7); the grabber steps through them.
+ */
+const SNAPS = ['40%', '60%', 'calc(100% - 84px)'];
 const COUNT_DEBOUNCE_MS = 300;
 // A cached fix up to 10 minutes old is fine for "near you"; no fix within 5 s leaves the list Slovenia-wide.
 const FIX: PositionOptions = { maximumAge: 10 * 60_000, timeout: 5000 };
@@ -119,7 +122,7 @@ function useBrowserLocation() {
 }
 
 /** "Izgubljene in najdene · psi in mačke · zadnjih 7 dni · 10 km" (content slice §1), first letter capital. */
-export function filtersSummary(t: Translate, f: Filters): string {
+function filtersSummary(t: Translate, f: Filters): string {
 	const types = TYPES.filter((type) => f.types.includes(type)).map((type) => t(`summary_${type}`));
 	const text = t('filters_summary', {
 		types:

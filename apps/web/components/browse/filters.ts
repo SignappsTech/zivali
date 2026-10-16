@@ -12,6 +12,7 @@ import {
 	SPECIES as ALL_SPECIES,
 	type Species,
 } from '@zivali/types';
+import { SLOVENIA } from '@/components/map/map-data';
 
 // P4 browse filters on the web: the mobile Map tab's logic (apps/mobile/components/browse/filters.ts), plus the URL
 // codec, since the web keeps the applied filters in the address (shareable, and the header's ?type=lost links).
@@ -160,7 +161,7 @@ export function toSearch(f: Filters, center: Point | null, now = Date.now()): Om
 }
 
 /** Slovenia's bounding box: the map without a centre. */
-export const SLOVENIA: BBox = [13.38, 45.42, 16.61, 46.88];
+export { SLOVENIA };
 const KM_PER_DEGREE = 111.32;
 
 /** The square around the area circle (the map's initial view and its query). */
