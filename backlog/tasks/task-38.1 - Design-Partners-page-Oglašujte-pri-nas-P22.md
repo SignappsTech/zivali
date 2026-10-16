@@ -1,11 +1,11 @@
 ---
 id: TASK-38.1
 title: 'Design: Partners page "Oglašujte pri nas" (P22)'
-status: To Do
+status: In Progress
 assignee:
   - '@ui-designer'
 created_date: '2026-10-14 21:50'
-updated_date: '2026-10-14 21:51'
+updated_date: '2026-10-15 22:16'
 labels:
   - design
   - 'est:M'
@@ -31,6 +31,7 @@ This page sells the first sponsors, so it shows real numbers and the placements 
 ## Packet
 Unblocks on: P1 web shell and P21 ad slot mockups merged
 Branch: design/P22-partners
+Branch: agent/TASK-38.1-partner-page
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Acceptance Criteria
@@ -40,3 +41,8 @@ Branch: design/P22-partners
 - [ ] #3 Given accessibility, when the mockup is checked, then text meets 4.5:1 (7:1 for body text and the main action), targets are at least 44 px, a visible focus state is shown, and labels sit above fields.
 - [ ] #4 Given the audience section, when shown, then values under 5 read "< 5" and the honest pilot note is present, the consent checkbox is not pre-ticked, and the page has no ad slot.
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+<!-- SECTION:NOTES:END -->
