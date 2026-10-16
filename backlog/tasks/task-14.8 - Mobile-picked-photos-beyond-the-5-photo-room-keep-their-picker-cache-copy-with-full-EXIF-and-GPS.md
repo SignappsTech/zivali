@@ -3,10 +3,11 @@ id: TASK-14.8
 title: >-
   Mobile: picked photos beyond the 5-photo room keep their picker cache copy
   with full EXIF and GPS
-status: To Do
+status: In Progress
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-16 03:37'
+updated_date: '2026-10-16 04:16'
 labels:
   - bug
   - 'est:XS'
@@ -24,5 +25,11 @@ Story TASK-14 AC#2 (QA TASK-14.4; focus: picked originals with full EXIF are del
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 usePhotoUploads add() deletes the expo-image-picker cache copy (under Paths.cache) of every asset it does not prepare (over the 5-photo room); the jest 'keeps at most 5 photos' case asserts assets 6 and 7 are deleted
+- [x] #1 usePhotoUploads add() deletes the expo-image-picker cache copy (under Paths.cache) of every asset it does not prepare (over the 5-photo room); the jest 'keeps at most 5 photos' case asserts assets 6 and 7 are deleted
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+Branch: agent/task-14.5-photo-fixes
+<!-- SECTION:NOTES:END -->

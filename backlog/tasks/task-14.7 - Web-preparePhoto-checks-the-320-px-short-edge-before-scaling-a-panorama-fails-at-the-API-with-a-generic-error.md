@@ -3,10 +3,11 @@ id: TASK-14.7
 title: >-
   Web preparePhoto checks the 320 px short edge before scaling: a panorama fails
   at the API with a generic error
-status: To Do
+status: In Progress
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-16 03:37'
+updated_date: '2026-10-16 04:16'
 labels:
   - bug
   - 'est:XS'
@@ -24,5 +25,11 @@ Story TASK-14 AC#1 (QA TASK-14.4). Steps: on /dev/photos (or the pet form) pick 
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Web preparePhoto rejects a photo whose short edge is under 320 px after scaling to 1600 px (as mobile does) with photos.too_small, before any API call; unit test with e.g. an 8000 x 400 image
+- [x] #1 Web preparePhoto rejects a photo whose short edge is under 320 px after scaling to 1600 px (as mobile does) with photos.too_small, before any API call; unit test with e.g. an 8000 x 400 image
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+Branch: agent/task-14.5-photo-fixes
+<!-- SECTION:NOTES:END -->

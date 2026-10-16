@@ -7,7 +7,7 @@ status: In Progress
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-16 03:36'
-updated_date: '2026-10-16 03:55'
+updated_date: '2026-10-16 04:16'
 labels:
   - bug
   - 'est:XS'
@@ -25,5 +25,11 @@ Story TASK-14 AC#4 (QA TASK-14.4). Steps: build web with APP_ENV=staging, R2_UPL
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 With APP_ENV staging or production, the proxy CSP img-src allows the public media origin (MEDIA_BASE_URL, https://media.najdimo.si) next to the R2 presign origin, from a validated web env var; the /m manage page photo and any PublicReport photo load without a CSP violation; proxy or env test covers it
+- [x] #1 With APP_ENV staging or production, the proxy CSP img-src allows the public media origin (MEDIA_BASE_URL, https://media.najdimo.si) next to the R2 presign origin, from a validated web env var; the /m manage page photo and any PublicReport photo load without a CSP violation; proxy or env test covers it
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+Branch: agent/task-14.5-photo-fixes
+<!-- SECTION:NOTES:END -->
