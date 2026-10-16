@@ -10,7 +10,6 @@ import sl from '@zivali/i18n/dist/sl.json';
 import type { DetailReport } from '@/components/report/slots/types';
 
 import { EditReport } from './edit-report';
-import { flash } from './owner-actions';
 
 // Radix's switch in a form measures itself; jsdom has no ResizeObserver.
 globalThis.ResizeObserver ??= class {
@@ -26,6 +25,9 @@ vi.mock('next/navigation', async (actual) => ({
 	usePathname: () => '/r/Rex12345/uredi',
 	useParams: () => ({ locale: 'sl' }),
 }));
+// The report page shows the toast the form leaves (owner-actions.test.tsx).
+const flash = vi.hoisted(() => vi.fn());
+vi.mock('./owner-actions', () => ({ flash }));
 
 const lost: DetailReport = {
 	...ownerReport,
@@ -60,7 +62,6 @@ const save = () => fireEvent.click(screen.getByRole('button', { name: 'Shrani' }
 afterEach(() => {
 	cleanup();
 	vi.clearAllMocks();
-	flash.message = undefined;
 });
 
 describe('EditReport (P9 "Uredi")', () => {
@@ -84,7 +85,7 @@ describe('EditReport (P9 "Uredi")', () => {
 		expect(patches(api)).toEqual([
 			{ circumstances: 'Ušel je zvečer.', reward_eur: 50, reward_note: 'tudi za podatek' },
 		]);
-		expect(flash.message).toBe(sl.common.toast_saved);
+		expect(flash).toHaveBeenCalledWith(sl.common.toast_saved);
 	});
 
 	it('turning the reward off clears it', async () => {

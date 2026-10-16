@@ -9,7 +9,7 @@ import { createApiStore } from '@zivali/api/rtk';
 import sl from '@zivali/i18n/dist/sl.json';
 import type { DetailReport } from '@/components/report/slots/types';
 
-import { flash, OwnerActions } from './owner-actions';
+import { flash, OwnerActions, OwnerMenu } from './owner-actions';
 
 // Radix radios measure themselves; jsdom has no ResizeObserver.
 globalThis.ResizeObserver ??= class {
@@ -60,6 +60,8 @@ function show(report: DetailReport, routes: MockRoutes = {}) {
 			}}
 		>
 			<OwnerActions report={report} />
+			{/* Slot C, as the layout puts it: while the search is open. */}
+			{(report.status === 'open' || report.status === 'matched') && <OwnerMenu report={report} />}
 		</NextIntlClientProvider>
 	);
 	return api;
@@ -71,12 +73,24 @@ const clientCopy = {
 	errors,
 	nav: navCopy,
 	lifecycle,
-	report: { owner_home: sl.report.owner_home, owner_edit: sl.report.owner_edit, owner_close: sl.report.owner_close },
+	report: {
+		more: sl.report.more,
+		owner_home: sl.report.owner_home,
+		owner_edit: sl.report.owner_edit,
+		owner_close: sl.report.owner_close,
+	},
 	report_found: { expiry_note: sl.report_found.expiry_note, extend: sl.report_found.extend },
 };
 const sent = (api: ReturnType<typeof createMockApi>) =>
 	api.calls.filter((call) => call.path === '/v1/reports/Rex12345/transitions').map((call) => call.body);
 const button = (name: string) => screen.getByRole('button', { name });
+/** Slot C: "Več možnosti", then "Zaključi iskanje", which opens the reason dialog. */
+async function openClose() {
+	fireEvent.keyDown(button(sl.report.more), { key: 'Enter' });
+	const menu = await screen.findByRole('menu', { name: sl.report.more });
+	fireEvent.click(within(menu).getByRole('menuitem', { name: 'Zaključi iskanje' }));
+	return screen.findByRole('dialog', { name: 'Zaključite iskanje?' });
+}
 
 beforeEach(() => {
 	initAnalytics();
@@ -89,21 +103,25 @@ afterEach(() => {
 });
 
 describe('OwnerActions (P9 slot A for managers, P14)', () => {
-	it('an open search: the one primary "Žival je spet doma", then "Uredi" and "Zaključi iskanje"', () => {
+	it('an open search: the one primary "Žival je spet doma", "Uredi", and "Zaključi iskanje" in "Več možnosti"', async () => {
 		show(lost);
 
 		expect(button('Žival je spet doma').dataset.variant).toBe('default');
 		expect(screen.getByRole('link', { name: 'Uredi' }).getAttribute('href')).toBe('/r/Rex12345/uredi');
-		expect(button('Zaključi iskanje').dataset.variant).toBe('text');
+		expect(screen.queryByRole('button', { name: 'Zaključi iskanje' })).toBeNull();
+		expect(await openClose()).toBeTruthy();
 		expect(screen.queryByText(sl.lifecycle.reminder_title)).toBeNull();
 	});
 
-	it('shows the toast the edit page left for it', () => {
-		flash.message = sl.common.toast_saved;
+	it('shows the toast the edit page left for it, once', () => {
+		flash(sl.common.toast_saved);
 		show(lost);
-
 		expect(toast.success).toHaveBeenCalledWith(sl.common.toast_saved);
-		expect(flash.message).toBeUndefined();
+
+		cleanup();
+		vi.clearAllMocks();
+		show(lost);
+		expect(toast.success).not.toHaveBeenCalled();
 	});
 
 	it.each([
@@ -114,9 +132,7 @@ describe('OwnerActions (P9 slot A for managers, P14)', () => {
 		['Drugo', 'other'],
 	])('closes with the reason "%s" (%s)', async (label, reason) => {
 		const api = show(lost);
-		fireEvent.click(button('Zaključi iskanje'));
-
-		const dialog = screen.getByRole('dialog', { name: 'Zaključite iskanje?' });
+		const dialog = await openClose();
 		expect(within(dialog).getByText(sl.lifecycle.close_body)).toBeTruthy();
 		const confirm = within(dialog).getByRole('button', { name: 'Zaključi iskanje' }) as HTMLButtonElement;
 		expect(confirm.disabled).toBe(true);
@@ -129,10 +145,9 @@ describe('OwnerActions (P9 slot A for managers, P14)', () => {
 		expect(screen.queryByRole('dialog')).toBeNull();
 	});
 
-	it('"Pusti odprto" keeps the search open', () => {
+	it('"Pusti odprto" keeps the search open', async () => {
 		const api = show(lost);
-		fireEvent.click(button('Zaključi iskanje'));
-		fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Pusti odprto' }));
+		fireEvent.click(within(await openClose()).getByRole('button', { name: 'Pusti odprto' }));
 
 		expect(screen.queryByRole('dialog')).toBeNull();
 		expect(sent(api)).toEqual([]);
@@ -140,8 +155,7 @@ describe('OwnerActions (P9 slot A for managers, P14)', () => {
 
 	it('closed meanwhile (CONFLICT): says it is already closed and leaves only "Zapri"', async () => {
 		show(lost, { 'POST /v1/reports/:code/transitions': () => mockError('CONFLICT') });
-		fireEvent.click(button('Zaključi iskanje'));
-		const dialog = screen.getByRole('dialog');
+		const dialog = await openClose();
 		fireEvent.click(within(dialog).getByRole('radio', { name: 'Ne iščem več' }));
 		fireEvent.click(within(dialog).getByRole('button', { name: 'Zaključi iskanje' }));
 

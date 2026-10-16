@@ -11,6 +11,7 @@ import * as React from 'react';
 import { toast } from 'sonner';
 
 import { canReopen, CloseSearch, expiryNotice, HomeAgain, useQuickTransition } from '@/components/report/lifecycle';
+import { OverflowMenu } from '@/components/report/slots/more-menu';
 import type { DetailReport } from '@/components/report/slots/types';
 import { noteClass } from '@/components/shelters/classes';
 import { StoreProvider } from '@/components/store-provider';
@@ -19,23 +20,27 @@ import { Toaster } from '@/components/ui/sonner';
 import { Link } from '@/i18n/navigation';
 import { cn } from '@/lib/utils';
 
+let pending: string | undefined;
+
 /**
- * A toast for the next owner view to show: the edit page sets it before it goes back to the report, whose toaster
+ * A toast for the next owner view to show: the edit page leaves it before it goes back to the report, whose toaster
  * mounts only then (the two pages are in different layouts).
  */
-export const flash: { message?: string } = {};
+export function flash(message: string) {
+	pending = message;
+}
 
 type Props = { report: DetailReport; className?: string };
 
 /**
  * P9 slot A for the report's managers (signed-in owner or manage-link holder, `is_mine`), P14 on web:
- * - Open or matched: primary `lg` "Žival je spet doma" (the P14 confirm, then /r/[code]/reunited), text buttons
- *   "Uredi" (/r/[code]/edit) and "Zaključi iskanje" (the reason dialog). Due for an update (a lost search idle for 7
+ * - Open or matched: primary `lg` "Žival je spet doma" (the P14 confirm, then /r/[code]/reunited), text button
+ *   "Uredi" (/r/[code]/edit); "Zaključi iskanje" is in slot C (OwnerMenu). Due for an update (a lost search idle for 7
  *   days, a found or sighted report 5 days before it expires): the note, and "Nadaljuj iskanje" / "Podaljšaj za 30
  *   dni" takes the primary's place (P14 M5, W3).
  * - Closed or reunited within the reopen window: "Ponovno odpri" ("Nadaljuj iskanje" with the note after the 90-day
  *   expiry); a quiet text button when reunited. Past the window: nothing.
- * "Zaključi iskanje" sits here rather than in the slot C overflow until the web has that menu (P9).
+ * "Plakat" joins the text buttons with the web poster (TASK-24.2).
  */
 export function OwnerActions(props: Props) {
 	return (
@@ -52,9 +57,9 @@ function Actions({ report, className }: Props) {
 	const ref = React.useRef<HTMLDivElement>(null);
 
 	React.useEffect(() => {
-		if (!flash.message) return;
-		toast.success(flash.message);
-		flash.message = undefined;
+		if (!pending) return;
+		toast.success(pending);
+		pending = undefined;
 	}, []);
 	// After a transition the pressed control is gone: focus moves to what replaced it.
 	const state = `${report.status}|${report.last_owner_update_at}`;
@@ -115,7 +120,6 @@ function Open({ report, now }: { report: DetailReport; now: number }) {
 	const tl = useTranslations('lifecycle');
 	const tf = useTranslations('report_found');
 	const [home, setHome] = React.useState(false);
-	const [closing, setClosing] = React.useState(false);
 	const extend = useQuickTransition(report, 'extend');
 	const notice = expiryNotice(report, now);
 	const homeButton = (variant: 'default' | 'text') => (
@@ -160,12 +164,30 @@ function Open({ report, now }: { report: DetailReport; now: number }) {
 						{t('owner_edit')}
 					</Link>
 				</Button>
-				<Button variant="text" aria-haspopup="dialog" onClick={() => setClosing(true)}>
-					<XCircleIcon weight="bold" aria-hidden="true" />
-					{t('owner_close')}
-				</Button>
 			</div>
 			<HomeAgain report={report} open={home} onOpenChange={setHome} />
+		</>
+	);
+}
+
+/**
+ * P9 slot C for managers: "Več možnosti" with "Zaključi iskanje", which opens the P14 reason dialog ("Povečaj doseg"
+ * joins it in M4). Its toast shows in slot A's toaster, which stays when the closed report re-renders without slot C.
+ */
+export function OwnerMenu({ report }: { report: DetailReport }) {
+	return (
+		<StoreProvider>
+			<CloseMenu report={report} />
+		</StoreProvider>
+	);
+}
+
+function CloseMenu({ report }: { report: DetailReport }) {
+	const t = useTranslations('report');
+	const [closing, setClosing] = React.useState(false);
+	return (
+		<>
+			<OverflowMenu icon={XCircleIcon} label={t('owner_close')} onChoose={() => setClosing(true)} />
 			<CloseSearch report={report} open={closing} onOpenChange={setClosing} />
 		</>
 	);

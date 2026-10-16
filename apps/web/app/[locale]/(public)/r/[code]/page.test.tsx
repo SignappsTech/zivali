@@ -42,11 +42,12 @@ vi.mock('@/components/map/map-view', () => ({
 		</div>
 	),
 }));
-// Slot A's owner actions are a client island with their own tests (components/report/owner-actions.test.tsx).
+// The owner actions (slots A and C) are client islands with their own tests (components/report/owner-actions.test.tsx).
 vi.mock('@/components/report/owner-actions', () => ({
 	OwnerActions: ({ report }: { report: DetailReport }) => (
 		<div data-testid="owner-actions" data-status={report.status} />
 	),
+	OwnerMenu: () => <div data-testid="owner-menu" />,
 }));
 // Server components read the whole catalogue (next-intl/server); PageMessages only scopes the client copy, which the
 // last test covers on its own.
@@ -324,8 +325,9 @@ describe('P9 /r/[code], owner view', () => {
 		});
 		expect(within(map).getByText(sl.location.exact_own)).toBeTruthy();
 		expect(within(map).getByText(sl.location.exact_own_help)).toBeTruthy();
-		// No "Prijavi zlorabo" on an own report (P10 states).
+		// No "Prijavi zlorabo" on an own report (P10 states): slot C is the owner's menu ("Zaključi iskanje").
 		expect(screen.queryByRole('button', { name: sl.report.more })).toBeNull();
+		expect(screen.getByTestId('owner-menu')).toBeTruthy();
 		expect((await generateMetadata(props())).robots).toEqual({ index: false });
 	});
 

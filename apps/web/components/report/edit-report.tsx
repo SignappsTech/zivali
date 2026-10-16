@@ -116,10 +116,11 @@ export function EditReport({ report }: { report: DetailReport }) {
 		try {
 			await update({ code: report.short_code, body: toBody(values, lost) }).unwrap();
 		} catch (failure) {
-			if (isContactData(failure)) setError('reward_note', { message: 'reward_note_contact_data' }, { shouldFocus: true });
+			if (isContactData(failure))
+				setError('reward_note', { message: 'reward_note_contact_data' }, { shouldFocus: true });
 			return;
 		}
-		flash.message = tc('toast_saved');
+		flash(tc('toast_saved'));
 		router.push(detail);
 		router.refresh();
 	});
@@ -143,7 +144,9 @@ export function EditReport({ report }: { report: DetailReport }) {
 
 			{lost && (
 				<fieldset className="mt-10">
-					<legend className="font-display text-xl font-semibold tracking-[-0.01em]">{t('reward_label')}</legend>
+					<legend className="font-display text-xl font-semibold tracking-[-0.01em]">
+						{t('reward_label')}
+					</legend>
 					<label className="mt-3 flex min-h-14 cursor-pointer items-center justify-between gap-4 font-bold">
 						{t('reward_toggle')}
 						<Controller
@@ -154,7 +157,9 @@ export function EditReport({ report }: { report: DetailReport }) {
 							)}
 						/>
 					</label>
-					{errors.reward?.message && <FieldError className="mt-1.5">{message(errors.reward.message)}</FieldError>}
+					{errors.reward?.message && (
+						<FieldError className="mt-1.5">{message(errors.reward.message)}</FieldError>
+					)}
 					{reward && (
 						<>
 							<FormField
@@ -182,7 +187,11 @@ export function EditReport({ report }: { report: DetailReport }) {
 								/>
 							</FormField>
 							<div className={cn(noteClass, 'mt-6')}>
-								<ShieldWarningIcon weight="fill" aria-hidden="true" className="mt-px size-[22px] shrink-0" />
+								<ShieldWarningIcon
+									weight="fill"
+									aria-hidden="true"
+									className="mt-px size-[22px] shrink-0"
+								/>
 								<p>{t('reward_warning')}</p>
 							</div>
 						</>
@@ -192,7 +201,11 @@ export function EditReport({ report }: { report: DetailReport }) {
 
 			{error && !isContactData(error) && (
 				<div role="alert" className={cn(noteClass, 'mt-8')}>
-					<WarningCircleIcon weight="fill" aria-hidden="true" className="mt-px size-[22px] shrink-0 text-destructive" />
+					<WarningCircleIcon
+						weight="fill"
+						aria-hidden="true"
+						className="mt-px size-[22px] shrink-0 text-destructive"
+					/>
 					<p>{errorText(error)}</p>
 				</div>
 			)}

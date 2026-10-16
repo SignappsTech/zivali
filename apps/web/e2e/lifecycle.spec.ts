@@ -35,7 +35,9 @@ test('the owner closes the search with a reason, then reopens it within the wind
 	await expect(page.getByRole('heading', { level: 1 })).toHaveText('Medo');
 	await expectNoAxeViolations(page);
 
-	await page.getByRole('button', { name: 'Zaključi iskanje' }).click();
+	// P9: "Zaključi iskanje" is in the owner's "Več možnosti" (slot C).
+	await page.getByRole('button', { name: 'Več možnosti' }).click();
+	await page.getByRole('menuitem', { name: 'Zaključi iskanje' }).click();
 	const dialog = page.getByRole('dialog', { name: 'Zaključite iskanje?' });
 	await expect(dialog.getByRole('button', { name: 'Zaključi iskanje' })).toBeDisabled();
 	await expectNoAxeViolations(page);
