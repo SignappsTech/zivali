@@ -6,11 +6,13 @@ import { CheckCircleIcon } from '@phosphor-icons/react/dist/ssr/CheckCircle';
 import { HeartIcon } from '@phosphor-icons/react/dist/ssr/Heart';
 import { HourglassMediumIcon } from '@phosphor-icons/react/dist/ssr/HourglassMedium';
 import { LockSimpleIcon } from '@phosphor-icons/react/dist/ssr/LockSimple';
+import { skipToken } from '@reduxjs/toolkit/query';
 import { useTranslations } from 'next-intl';
 import * as React from 'react';
 import { toast } from 'sonner';
 
 import { useListConversationsQuery } from '@zivali/api/chat';
+import { useReversePlaceQuery } from '@zivali/api/geocode';
 import { useGetReportQuery, useTransitionReportMutation } from '@zivali/api/reports';
 import type { ReportOwnerView, ReportTransitionAction } from '@zivali/types';
 import { AuthHeading, AuthNote, Spot, useErrorText } from '@/components/auth/parts';
@@ -41,6 +43,8 @@ export function ManageView({ code }: { code: string }) {
 	const tLife = useTranslations('lifecycle');
 	const errorText = useErrorText();
 	const { data, isError, isFetching, refetch } = useGetReportQuery({ code });
+	// "Kraj": the public place of the report's fuzzed area, as on its detail page (never the exact point).
+	const place = useReversePlaceQuery(data ? { lat: data.area.lat, lng: data.area.lng } : skipToken);
 	const conversations = useListConversationsQuery();
 	const [transition, { isLoading: saving, originalArgs }] = useTransitionReportMutation();
 	const [confirmHome, setConfirmHome] = React.useState(false);
@@ -115,6 +119,7 @@ export function ManageView({ code }: { code: string }) {
 			</h1>
 			<dl className="mt-6 grid gap-5">
 				<Fact label={t('summary_animal')}>{t(`species_${report.species}`)}</Fact>
+				{place.currentData && <Fact label={t('summary_place')}>{place.currentData.label}</Fact>}
 				<Fact label={t('summary_situation')}>
 					{t(type === 'found' ? 'summary_with_me' : 'summary_not_with_me')}
 				</Fact>

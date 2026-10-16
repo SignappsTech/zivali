@@ -10,7 +10,6 @@ import { ContentPage, Placeholder } from '@/components/shell/page';
 // replaces its entry. Every other unknown path renders the 404 inside the locale layout, with the CSP nonce.
 const PENDING = {
 	'/report/lost': 'nav.report_lost_title',
-	'/report/found': 'nav.report_found_title',
 	'/advertise': 'footer.partners',
 } as const;
 

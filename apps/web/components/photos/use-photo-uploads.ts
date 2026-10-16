@@ -66,9 +66,15 @@ function failure(error: unknown): { message: PhotoMessage; retry: boolean } {
  * Prepares, keeps and uploads up to 5 photos of one draft (C5): one upload at a time so the first is done soonest on
  * a weak connection, retries with backoff, aborts on remove, and resumes from IndexedDB after a reload or going
  * back online. `onExif` gets the place and time read from a photo, to offer them with consent; nothing stores them.
- * `saved` photos (read once, on mount) come first and count towards the 5.
+ * `saved` photos (read once, on mount) come first and count towards the 5. `beforeUpload` runs before each upload (a
+ * failure fails that upload like any other): the anonymous sign-in a finder without an account needs first (C7).
  */
-export function usePhotoUploads(draft: string, onExif?: (exif: PhotoExif) => void, saved: SavedPhoto[] = []) {
+export function usePhotoUploads(
+	draft: string,
+	onExif?: (exif: PhotoExif) => void,
+	saved: SavedPhoto[] = [],
+	beforeUpload?: () => Promise<unknown>
+) {
 	const locale = useLocale();
 	const client = useMemo(() => makeApiClient(locale), [locale]);
 	const [seeded] = useState(() =>
@@ -130,6 +136,7 @@ export function usePhotoUploads(draft: string, onExif?: (exif: PhotoExif) => voi
 		live.current.controllers.set(key, controller);
 		patch(key, { status: 'uploading', progress: 0, error: undefined });
 		try {
+			await beforeUpload?.();
 			const { sha256, width, height, bytes, file } = photo;
 			const { photoId } = await uploadPhoto(
 				client,

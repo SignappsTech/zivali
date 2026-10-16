@@ -1,11 +1,11 @@
 ---
 id: TASK-30.2
 title: Web quick found or sighted report without an account
-status: To Do
+status: In Progress
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:14'
-updated_date: '2026-10-14 23:37'
+updated_date: '2026-10-16 04:48'
 labels:
   - fe
   - 'est:M'

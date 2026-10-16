@@ -10,6 +10,7 @@
 				"http://localhost:8080/za-zavetisca",
 				"http://localhost:8080/o-nas",
 				"http://localhost:8080/zavetisca",
+				"http://localhost:8080/prijava/najdena-zival",
 				"http://localhost:8080/zavetisca/zavetisce-ljubljana",
 				"http://localhost:8080/zemljevid"
 			],
