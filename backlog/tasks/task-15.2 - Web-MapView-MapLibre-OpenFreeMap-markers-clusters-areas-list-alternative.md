@@ -3,11 +3,11 @@ id: TASK-15.2
 title: >-
   Web MapView: MapLibre + OpenFreeMap, markers, clusters, areas, list
   alternative
-status: To Do
+status: In Progress
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:12'
-updated_date: '2026-10-14 22:41'
+updated_date: '2026-10-15 22:11'
 labels:
   - fe
   - 'est:M'
