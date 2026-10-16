@@ -1,6 +1,4 @@
-import { z } from 'zod';
-
-import { type Colour, type CreateReportInput, type Size, SPECIES, type Species } from '@zivali/types';
+import type { Colour, CreateReportInput, Size, Species } from '@zivali/types';
 import type { LatLng } from '@/components/map/map-view';
 
 // P7 found or sighted report on the web (FR-006, TASK-30.2): the steps, their checks and the C4 body, kept apart from
@@ -16,7 +14,8 @@ export const SIGHTING_STEPS: Step[] = ['where', 'when', 'extra'];
 /** `circumstances` limit (C4, `@zivali/validation` reports schema). */
 export const NOTE_MAX = 1000;
 const FUTURE_SLACK_MS = 10 * 60_000; // the API accepts event_at up to 10 min ahead (C4)
-const emailSchema = z.email().max(254);
+// A light check: the API validates for real (zod stays out of this page's first-load JS, see lib/store.ts).
+const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export type FoundValues = {
 	species?: Species;
@@ -53,19 +52,6 @@ export const initialValues = (entry: 'found' | 'sighted', now = new Date()): Fou
 	...(entry === 'sighted' && { situation: 'seen' as const }),
 });
 
-/**
- * C15 `report/found?type=sighted&linked_report_id=<uuid>&code=&species=`: the short linked sighting flow. A bad id is
- * dropped, so the finder still gets the normal sighting flow; without a species the flow reads it from the listing.
- */
-export function parseLinked(params: Record<string, string | string[] | undefined>): Linked | undefined {
-	const one = (key: string) => (typeof params[key] === 'string' ? (params[key] as string) : undefined);
-	const id = one('linked_report_id');
-	const code = one('code') || undefined;
-	const species = SPECIES.find((s) => s === one('species'));
-	if (one('type') !== 'sighted' || !z.uuid().safeParse(id).success || !(species || code)) return undefined;
-	return { id: id!, ...(code && { code }), ...(species && { species }) };
-}
-
 const pad = (n: number) => String(n).padStart(2, '0');
 /** "2026-10-15" and "18:30" in local time, as the native inputs take them. */
 export const isoDay = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
@@ -86,7 +72,11 @@ export function stepErrors(step: Step, values: FoundValues): Partial<Record<Fiel
 	if (step === 'what' && !values.species) errors.species = true;
 	if (step === 'situation' && !values.situation) errors.situation = true;
 	if ((step === 'situation' || step === 'extra') && values.note.trim().length > NOTE_MAX) errors.note = true;
-	if (step === 'situation' && values.email.trim() && !emailSchema.safeParse(values.email.trim()).success)
+	if (
+		step === 'situation' &&
+		values.email.trim() &&
+		(values.email.trim().length > 254 || !EMAIL.test(values.email.trim()))
+	)
 		errors.email = true;
 	if (step === 'when' && !sightingTime(values)) errors.when = true;
 	return errors;
@@ -125,15 +115,15 @@ export function nextSubmission(
 }
 
 /**
- * Whether a failed send keeps its submission for the retry: no answer (NETWORK), a server fault (5xx), a rate limit
- * or a failed captcha may mean nothing or the report itself was stored, and the API keeps none of those answers, so
+ * Whether a failed send keeps its submission for the retry: no answer (NETWORK), a server fault (5xx), a rate limit,
+ * a failed captcha or a CONFLICT (the first request with this key is still running, C1) may mean nothing or the report itself was stored, and the API keeps none of those answers, so
  * the same key is what keeps a repeat from creating a second report. Only a definitive refusal (another 4xx) ends it.
  */
 export function keepsSubmission(error: unknown): boolean {
 	const failure = error as { status?: number; code?: string; data?: { code?: string } } | null;
 	const status = failure?.status ?? 0;
 	const code = failure?.code ?? failure?.data?.code;
-	return status === 0 || status >= 500 || code === 'RATE_LIMITED' || code === 'CAPTCHA_FAILED';
+	return status === 0 || status >= 500 || code === 'RATE_LIMITED' || code === 'CAPTCHA_FAILED' || code === 'CONFLICT';
 }
 
 /**

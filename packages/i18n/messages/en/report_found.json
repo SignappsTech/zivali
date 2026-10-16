@@ -12,6 +12,7 @@
 	"link_emailed": "We have also emailed the link to you.",
 	"link_copy": "Copy link",
 	"link_copied": "Link copied.",
+	"link_qr_alt": "QR code with the private link to your report",
 	"status_found": "Found",
 	"status_sighted": "Sighted",
 	"manage_title": "Your report",

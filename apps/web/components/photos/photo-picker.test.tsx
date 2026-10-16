@@ -189,11 +189,34 @@ describe('PhotoPicker', () => {
 		renderPicker({ beforeUpload });
 
 		pick(file(1));
-		expect(await screen.findByText('Fotografija se ni naložila.')).toBeTruthy();
+		expect(await screen.findByText(sl.photos.captcha_failed)).toBeTruthy();
 		expect(upload).not.toHaveBeenCalled();
 		fireEvent.click(screen.getByRole('button', { name: 'Poskusi znova' }));
 		expect(await screen.findByText('Naslovna fotografija')).toBeTruthy();
 		expect(order).toEqual(['session', 'session', 'upload']);
+	});
+
+	it('retries a failed captcha after 60 s (C7), not as a generic photo failure', async () => {
+		vi.useFakeTimers({ shouldAdvanceTime: true });
+		try {
+			const beforeUpload = vi
+				.fn()
+				.mockRejectedValueOnce(new ApiError('CAPTCHA_FAILED', 'CAPTCHA_FAILED'))
+				.mockResolvedValue(undefined);
+			upload.mockResolvedValue({ photoId: 'photo-1' });
+			renderPicker({ beforeUpload });
+
+			pick(file(1));
+			expect(await screen.findByText(sl.photos.captcha_failed)).toBeTruthy();
+			expect(screen.queryByText(sl.photos.failed)).toBeNull();
+			await act(async () => void vi.advanceTimersByTime(59_000));
+			expect(beforeUpload).toHaveBeenCalledTimes(1);
+			await act(async () => void vi.advanceTimersByTime(2_000));
+			expect(await screen.findByText('Naslovna fotografija')).toBeTruthy();
+			expect(upload).toHaveBeenCalledTimes(1);
+		} finally {
+			vi.useRealTimers();
+		}
 	});
 
 	it('retries a dropped upload with backoff, on "Poskusi znova" and when back online', async () => {

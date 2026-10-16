@@ -4,10 +4,11 @@ import { getMessages, getTranslations } from 'next-intl/server';
 
 import { PageMessages } from '@/components/page-messages';
 import { FoundFlow } from '@/components/report-found/found-flow';
-import { parseLinked } from '@/components/report-found/found-form';
 import { StoreProvider } from '@/components/store-provider';
 import { absoluteUrl, breadcrumbLd, jsonLd } from '@/lib/seo';
 import { getViewer } from '@/lib/viewer';
+
+import { parseLinked } from './linked';
 
 const HREF = '/report/found';
 // What the flow's client components translate (PageMessages adds the shell's namespaces).

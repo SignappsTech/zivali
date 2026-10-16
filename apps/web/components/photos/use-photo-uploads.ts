@@ -13,10 +13,13 @@ import { type PhotoExif, PhotoFileError, preparePhoto, type WebPreparedPhoto } f
 export const MAX_PHOTOS = 5;
 /** Automatic retries for network and server faults (1, 2, 4, 8 s); then "Poskusi znova" or going back online. */
 const RETRIES = 4;
+/** C7: a failed or unavailable captcha fixes itself, so the upload is tried again every 60 s. */
+const CAPTCHA_RETRY_MS = 60_000;
 
 export type PhotoMessage =
 	| 'photos.failed'
 	| 'photos.failed_network'
+	| 'photos.captcha_failed'
 	| 'photos.limit'
 	| 'photos.too_small'
 	| 'photos.heic_unsupported'
@@ -55,6 +58,7 @@ export const clearPhotoDraft = (draft: string) => del(draftKey(draft)).catch(() 
 
 function failure(error: unknown): { message: PhotoMessage; retry: boolean } {
 	const code = error instanceof ApiError ? error.code : undefined;
+	if (code === 'CAPTCHA_FAILED') return { message: 'photos.captcha_failed', retry: true };
 	if (code === 'NETWORK') return { message: 'photos.failed_network', retry: true };
 	if (code === 'VALIDATION') return { message: 'photos.failed', retry: false };
 	if (code === 'RATE_LIMITED') return { message: 'errors.RATE_LIMITED_generic', retry: false };
@@ -154,7 +158,13 @@ export function usePhotoUploads(
 			const { message, retry } = failure(error);
 			patch(key, { status: 'failed', error: message });
 			const attempt = live.current.attempts.get(key) ?? 0;
-			if (retry && attempt < RETRIES) {
+			if (message === 'photos.captcha_failed') {
+				clearTimeout(live.current.timers.get(key));
+				live.current.timers.set(
+					key,
+					setTimeout(() => enqueue(key), CAPTCHA_RETRY_MS)
+				);
+			} else if (retry && attempt < RETRIES) {
 				live.current.attempts.set(key, attempt + 1);
 				clearTimeout(live.current.timers.get(key));
 				live.current.timers.set(
@@ -249,7 +259,8 @@ export function usePhotoUploads(
 		for (const photo of restored) if (!photo.photoId) enqueue(photo.key);
 	});
 	const backOnline = useEffectEvent(() => {
-		for (const photo of live.current.photos) if (photo.error === 'photos.failed_network') retry(photo.key);
+		for (const photo of live.current.photos)
+			if (photo.error === 'photos.failed_network' || photo.error === 'photos.captcha_failed') retry(photo.key);
 	});
 
 	useEffect(() => {

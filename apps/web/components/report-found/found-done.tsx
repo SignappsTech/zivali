@@ -19,8 +19,8 @@ import type { Linked } from './found-form';
 /**
  * After Publish (P7 M6, web W1; C5 for a sighting from a listing): the report is live (or being checked, `held_note`),
  * the private link for an anonymous finder (C7), the responsible-shelter row (not for the short sighting flow: the
- * owner is already notified), then Odpri mojo prijavo, the account offer and Deli. No tip, no ad. The QR code of W1
- * waits for TASK-24.2's encoder. `point` is the coarsened one the report was sent with.
+ * owner is already notified), then Odpri mojo prijavo, the account offer and Deli. No tip, no ad. The QR code of the
+ * private link is in its block. `point` is the coarsened one the report was sent with.
  */
 export function FoundDone({
 	result,
@@ -75,6 +75,7 @@ export function FoundDone({
 						<Button asChild size="lg">
 							<Link href={report}>{t('open_report')}</Link>
 						</Button>
+						{/* TODO(TASK-17.12): convert the anonymous session into an account instead of a plain sign-up. */}
 						{result.manage_token && (
 							<Button asChild variant="text">
 								<Link href="/sign-up">{t('create_account')}</Link>

@@ -9,7 +9,6 @@ import {
 	initialValues,
 	keepsSubmission,
 	nextSubmission,
-	parseLinked,
 	sightingTime,
 	stepErrors,
 	type Submission,
@@ -30,27 +29,6 @@ const filled = (
 });
 let keys = 0;
 const newKey = () => `key-${++keys}`;
-
-describe('parseLinked (C15 report/found?type=sighted&linked_report_id=)', () => {
-	it('links a sighting to a lost report with a valid id and its code or species', () => {
-		expect(parseLinked({ type: 'sighted', linked_report_id: ID, code: 'Rex12345' })).toEqual({
-			id: ID,
-			code: 'Rex12345',
-		});
-		expect(parseLinked({ type: 'sighted', linked_report_id: ID, species: 'cat' })).toEqual({
-			id: ID,
-			species: 'cat',
-		});
-	});
-
-	it('falls back to the plain flow for a bad id, another type, an unknown species or neither code nor species', () => {
-		expect(parseLinked({ type: 'sighted', linked_report_id: 'not-a-uuid', code: 'Rex12345' })).toBeUndefined();
-		expect(parseLinked({ type: 'sighted', linked_report_id: [ID, ID], code: 'Rex12345' })).toBeUndefined();
-		expect(parseLinked({ linked_report_id: ID, code: 'Rex12345' })).toBeUndefined();
-		expect(parseLinked({ type: 'sighted', linked_report_id: ID, species: 'horse' })).toBeUndefined();
-		expect(parseLinked({ type: 'sighted', linked_report_id: ID })).toBeUndefined();
-	});
-});
 
 describe('stepErrors', () => {
 	it('needs the species, the situation, a note within 1000 characters and a valid email only when given', () => {
@@ -195,6 +173,8 @@ describe('keepsSubmission (TASK-29.3 review a)', () => {
 		expect(keepsSubmission({ status: 429, data: { code: 'RATE_LIMITED' } })).toBe(true);
 		expect(keepsSubmission(new ApiError('NETWORK', 'NETWORK'))).toBe(true);
 		expect(keepsSubmission(new ApiError('CAPTCHA_FAILED', 'CAPTCHA_FAILED'))).toBe(true);
+		expect(keepsSubmission({ status: 409, data: { code: 'CONFLICT' } })).toBe(true);
+		expect(keepsSubmission(new ApiError('CONFLICT', 'CONFLICT'))).toBe(true);
 	});
 
 	it('ends the submission on a definitive refusal', () => {

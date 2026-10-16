@@ -27,6 +27,7 @@ vi.mock('next/navigation', async (actual) => ({
 // transform cold, and the lazy import then resolves at once.
 const auth = vi.hoisted(() => ({ ensureSession: vi.fn() }));
 vi.mock('@/lib/auth', () => auth);
+vi.mock('qrcode', () => ({ toString: vi.fn(async () => '<svg xmlns="http://www.w3.org/2000/svg"></svg>') }));
 
 const CODE = ownerReport.short_code;
 const claimed = { report_id: ownerReport.id, short_code: CODE };
@@ -266,5 +267,17 @@ describe('PrivateLinkBlock (P7 success)', () => {
 		fireEvent.click(within(block).getByRole('button', { name: 'Kopiraj povezavo' }));
 		await vi.waitFor(() => expect(within(block).getByRole('status').textContent).toBe('Povezava je kopirana.'));
 		expect(writeText).toHaveBeenCalledWith(link);
+	});
+
+	it('draws the QR code of the link in the browser, lazy-loaded, with an accessible name', async () => {
+		const { toString } = await import('qrcode');
+		show(<PrivateLinkBlock token="q7Vt-token" />);
+
+		const qr = await screen.findByRole('img', { name: sl.report_found.link_qr_alt });
+		expect(qr.getAttribute('src')).toMatch(/^data:image\/svg\+xml/);
+		expect(toString).toHaveBeenCalledWith(
+			`${window.location.origin}/m#q7Vt-token`,
+			expect.objectContaining({ type: 'svg' })
+		);
 	});
 });

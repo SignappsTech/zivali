@@ -138,13 +138,9 @@ function useGpsFix(): { fix?: Offered; locating: boolean } {
 }
 
 /** The lost pet a sighting is about (P7 S1): 48 px photo, name, status word, on every step. */
-function LinkedPet({ code, onSpecies }: { code: string; onSpecies: (species: Species) => void }) {
+function LinkedPet({ code }: { code: string }) {
 	const t = useTranslations('browse');
 	const { data } = useGetReportQuery({ code });
-	const species = data?.species;
-	React.useEffect(() => {
-		if (species) onSpecies(species);
-	}, [species, onSpecies]);
 	if (!data) return null;
 	const thumb = data.photos[0]?.thumb_url;
 	return (
@@ -443,7 +439,7 @@ function useTrackSubmit() {
  */
 export function FoundFlow({
 	entry,
-	linked,
+	linked: linkedProp,
 	account = false,
 }: {
 	entry: 'found' | 'sighted';
@@ -457,6 +453,10 @@ export function FoundFlow({
 	const tph = useTranslations('photos');
 	const errorText = useErrorText();
 	const trackSubmit = useTrackSubmit();
+	// The link without a species reads it from the listing; a listing that will not load drops the link, so the finder
+	// still gets the plain sighting flow instead of a Publish that does nothing.
+	const listing = useGetReportQuery(linkedProp?.code && !linkedProp.species ? { code: linkedProp.code } : skipToken);
+	const linked = listing.isError ? undefined : linkedProp;
 	const steps = linked ? SIGHTING_STEPS : FOUND_STEPS;
 	const last = steps[steps.length - 1]!;
 	const photoStep: Step = linked ? 'extra' : 'photo';
@@ -466,7 +466,9 @@ export function FoundFlow({
 
 	const [values, setValues] = React.useState<FoundValues>(() => initialValues(entry));
 	const set = React.useCallback((change: Partial<FoundValues>) => setValues((prev) => ({ ...prev, ...change })), []);
-	const [step, setStep] = React.useState<Step>(steps[0]!);
+	// Until the finder moves on, the first step of whichever flow it is: a dropped link changes the flow.
+	const [stepState, setStep] = React.useState<Step>();
+	const step = stepState && steps.includes(stepState) ? stepState : steps[0]!;
 	const index = steps.indexOf(step);
 	const [attempted, setAttempted] = React.useState(false);
 	const [toReview, setToReview] = React.useState(false);
@@ -475,8 +477,6 @@ export function FoundFlow({
 	const [exif, setExif] = React.useState<Offered>();
 	const { fix, locating } = useGpsFix();
 	const [picking, setPicking] = React.useState(false);
-	// The listing's species, when the link did not carry it.
-	const [listed, setListed] = React.useState<Species>();
 	const [limit, setLimit] = React.useState<{ until: number; text: string }>();
 	const [checking, setChecking] = React.useState(false);
 	const root = React.useRef<HTMLElement>(null);
@@ -484,17 +484,13 @@ export function FoundFlow({
 
 	React.useEffect(() => track('report_found_start'), []);
 
-	// Restored silently, as on mobile; without a photo time the capture time is when the finder returned.
+	// Restored silently, as on mobile; the draft keeps its own startedAt, the capture time without a photo time.
 	React.useEffect(() => {
 		let live = true;
 		get<Draft>(draftKey)
 			.then((draft) => {
 				if (!live || !draft?.step || !draft.values) return;
-				setValues((prev) => ({
-					...prev,
-					...draft.values,
-					...(!draft.values.takenAt && { startedAt: new Date().toISOString() }),
-				}));
+				setValues((prev) => ({ ...prev, ...draft.values }));
 				if (steps.includes(draft.step)) setStep(draft.step);
 			})
 			.catch(() => {});
@@ -553,9 +549,40 @@ export function FoundFlow({
 		[photos]
 	);
 	const uploading = photos.some((photo) => photo.status === 'uploading');
-	const species = linked ? (linked.species ?? listed) : values.species;
+	const species = linked ? (linked.species ?? listing.data?.species) : values.species;
+	const noteLimit = React.useCallback(
+		(error: unknown) => {
+			if (errorCode(error) !== 'RATE_LIMITED') return;
+			const seconds =
+				Number(((error as QueryError).data?.details ?? (error as ApiError).details)?.retry_after_s) || 60;
+			const minutes = Math.max(1, Math.ceil(seconds / 60));
+			setLimit({
+				until: Date.now() + seconds * 1000,
+				text: minutes > 60 ? t('limit_day') : t('limit_hour', { minutes }),
+			});
+		},
+		[t]
+	);
+	// What is still missing before a publish: a step to go back to, 'wait' (uploads, the listing's species) or nothing.
+	const missing = (): Step | 'wait' | undefined => {
+		for (const s of steps) if (Object.keys(stepErrors(s, values)).length > 0) return s;
+		// Found reports need a photo (C4: 1 to 5); a sighting may have none. Uploads still running finish first.
+		if (uploading) return 'wait';
+		if (!linked && photoIds.length === 0) return 'photo';
+		if (!values.location) return 'where';
+		if (!species) return 'wait';
+	};
+	const ready = step === last && !missing();
 	const send = React.useCallback(async (): Promise<CreateReportResponse> => {
-		await session();
+		// The automatic retry runs this on any step: only the finder on the last step, with everything checked, publishes.
+		if (!ready) throw new ApiError('NETWORK', 'NETWORK');
+		try {
+			await session();
+		} catch (error) {
+			// The anonymous sign-in has its own rate limit (GoTrue 429); a failed captcha shows its note and retries.
+			noteLimit(error);
+			throw error;
+		}
 		const location = values.location!;
 		submission.current = nextSubmission(
 			submission.current,
@@ -572,17 +599,10 @@ export function FoundFlow({
 		} catch (error) {
 			// Only a definitive refusal ends the submission; anything the API may have stored repeats with its key.
 			if (!keepsSubmission(error)) submission.current = null;
-			if (errorCode(error) === 'RATE_LIMITED') {
-				const seconds = Number((error as QueryError).data?.details?.retry_after_s) || 60;
-				const minutes = Math.max(1, Math.ceil(seconds / 60));
-				setLimit({
-					until: Date.now() + seconds * 1000,
-					text: minutes > 60 ? t('limit_day') : t('limit_hour', { minutes }),
-				});
-			}
+			noteLimit(error);
 			throw error;
 		}
-	}, [session, values, species, photoIds, linked, account, createReport, t]);
+	}, [ready, session, noteLimit, values, species, photoIds, linked, account, createReport]);
 	const submit = useAutoRetry(send);
 	const sending = submit.status === 'running';
 	const result = submit.status === 'done' ? submit.result : undefined;
@@ -652,17 +672,12 @@ export function FoundFlow({
 		if (busy.current || sending || limit) return;
 		busy.current = true;
 		try {
-			for (const s of steps) {
-				if (Object.keys(stepErrors(s, values)).length > 0) {
-					edit(s);
-					return setAttempted(true);
-				}
+			const blocker = missing();
+			if (blocker === 'wait') return;
+			if (blocker) {
+				edit(blocker);
+				return setAttempted(Object.keys(stepErrors(blocker, values)).length > 0);
 			}
-			// Found reports need a photo (C4: 1 to 5); a sighting may have none. Uploads still running finish first.
-			if (uploading) return;
-			if (!linked && photoIds.length === 0) return edit('photo');
-			if (!values.location) return edit('where');
-			if (!species) return;
 			await submit.run();
 		} finally {
 			busy.current = false;
@@ -715,7 +730,7 @@ export function FoundFlow({
 		<main id="main" ref={root} className="mx-auto box-content max-w-[560px] px-5 pt-6 pb-16 lg:pt-8 lg:pb-24">
 			{captcha.widget}
 			<StepBars current={index + 1} total={steps.length} />
-			{linked?.code && <LinkedPet code={linked.code} onSpecies={setListed} />}
+			{linked?.code && <LinkedPet code={linked.code} />}
 
 			{inlinePicker && (
 				<div className="mt-8 lg:mt-10">

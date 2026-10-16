@@ -16,6 +16,7 @@ import { timeZone } from '@zivali/i18n/format';
 import type { CreateReportInput } from '@zivali/types';
 
 import { FoundFlow } from './found-flow';
+import { initialValues } from './found-form';
 
 // The P7 flow with its pickers stubbed (PhotoPicker and LocationPicker have their own tests): the photo stub signs in
 // the way the real uploads do (beforeUpload), reports EXIF and one uploaded photo; the API is the mock client.
@@ -38,6 +39,7 @@ vi.mock('idb-keyval', () => ({
 	set: async (key: string, value: unknown) => void idb.set(key, value),
 	del: async (key: string) => void idb.delete(key),
 }));
+const exif = vi.hoisted(() => ({ on: true }));
 const auth = vi.hoisted(() => ({ ensureSession: vi.fn(async () => {}) }));
 vi.mock('@/lib/auth', () => auth);
 vi.mock('@zivali/analytics', () => ({ track: vi.fn(), getConsent: vi.fn(() => null) }));
@@ -56,7 +58,7 @@ vi.mock('@/components/photos/photo-picker', () => ({
 			type="button"
 			onClick={async () => {
 				await beforeUpload();
-				onExif({ ...RAW, takenAt: new Date(TAKEN) });
+				if (exif.on) onExif({ ...RAW, takenAt: new Date(TAKEN) });
 				onChange([{ key: 'k1', photoId: 'photo-1', status: 'uploaded', progress: 1, preview: 'blob:1' }]);
 			}}
 		>
@@ -132,6 +134,7 @@ const publish = () => fireEvent.click(screen.getByRole('button', { name: 'Objavi
 beforeEach(() => {
 	idb.clear();
 	localStorage.clear();
+	exif.on = true;
 });
 afterEach(() => {
 	cleanup();
@@ -352,6 +355,116 @@ describe('FoundFlow publish (C1 Idempotency-Key, C7 retries)', () => {
 		expect(button.disabled).toBe(true);
 		expect(button.getAttribute('aria-describedby')).toBe(note.parentElement!.id);
 		expect(posts(api)).toHaveLength(1);
+	});
+
+	it('reuses the key for the second POST once the limit is over', async () => {
+		const answers: (MockHandler | object)[] = [
+			() => mockError('RATE_LIMITED', 'Too many', { retry_after_s: 1 }),
+			created,
+		];
+		const api = show({}, { 'POST /v1/reports': (request) => resolve(answers.shift()!, request) });
+		await fillFound();
+		publish();
+		await waitFor(() =>
+			expect((screen.getByRole('button', { name: 'Objavi prijavo' }) as HTMLButtonElement).disabled).toBe(true)
+		);
+		await waitFor(
+			() =>
+				expect((screen.getByRole('button', { name: 'Objavi prijavo' }) as HTMLButtonElement).disabled).toBe(
+					false
+				),
+			{ timeout: 3000 }
+		);
+		publish();
+		expect(await screen.findByRole('heading', { level: 1, name: 'Hvala, prijava je objavljena' })).toBeTruthy();
+		expect(posts(api)).toHaveLength(2);
+		expect(keyOf(posts(api)[1]!)).toBe(keyOf(posts(api)[0]!));
+	});
+
+	it('keeps the key on a CONFLICT (the first request with it is still running, C1)', async () => {
+		const answers: (MockHandler | object)[] = [() => mockError('CONFLICT'), created];
+		const api = show({}, { 'POST /v1/reports': (request) => resolve(answers.shift()!, request) });
+		await fillFound();
+		publish();
+		await screen.findByText(sl.errors.CONFLICT);
+		publish();
+		expect(await screen.findByRole('heading', { level: 1, name: 'Hvala, prijava je objavljena' })).toBeTruthy();
+		expect(posts(api)).toHaveLength(2);
+		expect(keyOf(posts(api)[1]!)).toBe(keyOf(posts(api)[0]!));
+	});
+
+	it('shows the limit when the anonymous sign-in itself is rate limited (GoTrue 429)', async () => {
+		const api = show();
+		await fillFound();
+		auth.ensureSession.mockRejectedValueOnce(new ApiError('RATE_LIMITED', 'RATE_LIMITED', { status: 429 }));
+		publish();
+		expect(
+			await screen.findByText(
+				'V kratkem času ste oddali več prijav, zato smo jih začasno omejili. Poskusite znova čez 1 minuto.'
+			)
+		).toBeTruthy();
+		expect((screen.getByRole('button', { name: 'Objavi prijavo' }) as HTMLButtonElement).disabled).toBe(true);
+		expect(posts(api)).toHaveLength(0);
+	});
+
+	it('does not publish from the automatic retry unless the finder is on the last step', async () => {
+		let fail = true;
+		const api = show(
+			{},
+			{
+				'POST /v1/reports': () => {
+					if (!fail) return created;
+					fail = false;
+					throw new TypeError('Failed to fetch');
+				},
+			}
+		);
+		await fillFound();
+		publish();
+		await screen.findByText(sl.errors.NETWORK);
+		fireEvent.click(screen.getByRole('button', { name: 'Nazaj' }));
+		await screen.findByRole('heading', { level: 1, name: sl.report_found.situation_title });
+		act(() => void window.dispatchEvent(new Event('online')));
+		await new Promise((r) => setTimeout(r, 100));
+		expect(posts(api)).toHaveLength(1);
+		next();
+		await screen.findByRole('heading', { level: 1, name: 'Objavite prijavo' });
+		act(() => void window.dispatchEvent(new Event('online')));
+		expect(await screen.findByRole('heading', { level: 1, name: 'Hvala, prijava je objavljena' })).toBeTruthy();
+		expect(posts(api)).toHaveLength(2);
+	});
+
+	it("keeps the draft's startedAt as the capture time when it is restored", async () => {
+		exif.on = false;
+		const startedAt = '2026-10-01T05:00:00.000Z';
+		idb.set('draft:found:found', {
+			step: 'send',
+			values: {
+				...initialValues('found'),
+				startedAt,
+				species: 'dog',
+				situation: 'have',
+				location: PICKED,
+				source: 'pin',
+			},
+		});
+		const api = show();
+		await screen.findByRole('heading', { level: 1, name: 'Objavite prijavo' });
+		fireEvent.click(screen.getByRole('button', { name: 'Dodaj fotografijo', hidden: true }));
+		await waitFor(() =>
+			expect((screen.getByRole('button', { name: 'Objavi prijavo' }) as HTMLButtonElement).disabled).toBe(false)
+		);
+		publish();
+		expect(await screen.findByRole('heading', { level: 1, name: 'Hvala, prijava je objavljena' })).toBeTruthy();
+		expect((posts(api)[0]!.body as CreateReportInput).event_at).toBe(startedAt);
+	});
+
+	it('falls back to the plain flow when the linked listing cannot be read and the link has no species', async () => {
+		show(
+			{ entry: 'sighted', linked: { id: LOST_ID, code: 'Gone1234' } },
+			{ 'GET /v1/reports/:code': () => mockError('NOT_FOUND') }
+		);
+		expect(await screen.findByRole('heading', { level: 1, name: 'Fotografirajte žival' })).toBeTruthy();
 	});
 
 	it('says the daily limit when the wait is longer than an hour', async () => {

@@ -22,6 +22,20 @@ export function PrivateLinkBlock({ token, emailed = false }: { token: string; em
 	const linkRef = React.useRef<HTMLParagraphElement>(null);
 	const [copied, setCopied] = React.useState(false);
 	const titleId = React.useId();
+	const [qr, setQr] = React.useState<string>();
+
+	// Drawn here in the browser only (C7: the manage token never goes to a server) and loaded on demand, so the
+	// encoder is not part of the page's first-load JS.
+	React.useEffect(() => {
+		let live = true;
+		import('qrcode')
+			.then((QRCode) => QRCode.toString(link, { type: 'svg', margin: 1 }))
+			.then((svg) => live && setQr(`data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`))
+			.catch(() => {});
+		return () => {
+			live = false;
+		};
+	}, [link]);
 
 	React.useEffect(() => {
 		if (!copied) return;
@@ -52,6 +66,16 @@ export function PrivateLinkBlock({ token, emailed = false }: { token: string; em
 				{link}
 			</p>
 			<p className="mt-2 text-sm text-muted-foreground">{t('link_help')}</p>
+			{qr && (
+				// eslint-disable-next-line @next/next/no-img-element -- an inline data URL drawn in the browser
+				<img
+					src={qr}
+					alt={t('link_qr_alt')}
+					width={160}
+					height={160}
+					className="mt-4 size-40 rounded-lg bg-white"
+				/>
+			)}
 			<Button variant="secondary" className="mt-4 w-full sm:w-auto" onClick={copy}>
 				<CopyIcon weight="bold" aria-hidden="true" />
 				{t('link_copy')}
