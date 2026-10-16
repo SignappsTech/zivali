@@ -30,7 +30,7 @@ afterEach(cleanup);
 
 describe('CatchAll', () => {
 	it.each([
-		['sl', ['report', 'found'], 'Najdena žival'],
+		['sl', ['advertise'], 'Oglašujte pri nas'],
 		['en', ['report', 'lost'], 'Lost pet'],
 	] as const)('a pending %s page %j gets a placeholder titled %s, not indexed', async (locale, rest, title) => {
 		render(
