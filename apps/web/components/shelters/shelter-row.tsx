@@ -83,10 +83,22 @@ function ShelterLines({
  * potrjeno"; otherwise the nearest names or the directory note, never a guessed number. No statutory deadline: that
  * text waits for `content.legal_timings` and the lawyer's wording (P6 content slice). Needs a StoreProvider above it.
  */
-export function ShelterRow({ point, kind, className }: { point: LatLng; kind: Kind; className?: string }) {
+export function ShelterRow({
+	point,
+	municipality,
+	kind,
+	className,
+}: {
+	/** The report's point; null (not known yet) shows the skeleton. */
+	point: LatLng | null;
+	/** The municipality slug the API derived for the report; wins over the point (no rounding across a border). */
+	municipality?: string;
+	kind: Kind;
+	className?: string;
+}) {
 	const t = useTranslations('shelter_row');
 	const tc = useTranslations('common');
-	const result = useResponsibleShelter(point);
+	const result = useResponsibleShelter(municipality ? { municipality } : point);
 
 	if (result.status === 'loading')
 		return (
@@ -99,13 +111,13 @@ export function ShelterRow({ point, kind, className }: { point: LatLng; kind: Ki
 				</div>
 			</div>
 		);
-	const municipality = result.municipality?.name;
-	if (result.status === 'error' || result.status === 'outside_slovenia' || !municipality)
+	const name = result.municipality?.name;
+	if (result.status === 'error' || result.status === 'outside_slovenia' || !name)
 		return <DirectoryNote text={t('unknown_municipality')} className={className} />;
 	if (result.status === 'unconfirmed' && result.nearest.length === 0)
-		return <DirectoryNote text={t('unconfirmed', { municipality })} className={className} />;
+		return <DirectoryNote text={t('unconfirmed', { municipality: name })} className={className} />;
 
-	const body = t(`${kind}_body`, { municipality });
+	const body = t(`${kind}_body`, { municipality: name });
 	return (
 		<div className={cn('grid grid-cols-[24px_minmax(0,1fr)] gap-3.5', className)}>
 			<PhoneIcon weight="bold" aria-hidden="true" className="mt-0.5 size-6 text-primary" />

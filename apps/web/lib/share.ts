@@ -8,6 +8,7 @@ import type { PublicReport } from '@zivali/types';
 import type { DetailReport } from '@/components/report/slots/types';
 import { ShortCode } from '@zivali/validation/common.schema';
 import { env } from '@/lib/env';
+import { reportLink } from '@/lib/poster-link';
 
 // P18 sharing (FR-011), server side: the texts of slot B and what the poster PDF and the Facebook square need. Every
 // text carries only the short public link and the area name (the reverse lookup of the fuzzed circle): never a phone,
@@ -16,16 +17,9 @@ import { env } from '@/lib/env';
 const catalogues = { sl, en };
 export const translator = (locale: Locale) => createTranslator({ locale, messages: catalogues[locale] });
 
-/** The short canonical link of a report (C15): posters and shares use `https://<APP_HOST>/r/<code>`. */
-export const reportLink = (code: string) => `${env.NEXT_PUBLIC_APP_URL}/r/${code}`;
+export { posterFileName, posterPath, reportLink, squarePath } from '@/lib/poster-link';
 /** The link as printed under the QR and on the square: host and path, no scheme ("najdimo.si/r/k7m2qx"). */
 export const printedLink = (code: string) => reportLink(code).replace(/^https?:\/\//, '');
-/** Web server endpoints (C15), same origin: the A4 poster PDF and the 1080 × 1080 Facebook image. */
-export const posterPath = (code: string, lang: Locale) => `/r/${encodeURIComponent(code)}/poster.pdf?lang=${lang}`;
-export const squarePath = (code: string, lang: Locale) => `/r/${encodeURIComponent(code)}/square.png?lang=${lang}`;
-/** No pet name in the file name, so the file is safe to forward (content P18 §1). */
-export const posterFileName = (code: string) => `najdimo-${code}.pdf`;
-
 /** What the texts need besides the report: the area name, when the lookup has it, and the text language. */
 export type ShareContext = { report: DetailReport; area: string | undefined; locale: Locale };
 

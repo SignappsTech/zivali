@@ -8,7 +8,6 @@ import { CheckCircleIcon } from '@phosphor-icons/react/dist/ssr/CheckCircle';
 import { DogIcon } from '@phosphor-icons/react/dist/ssr/Dog';
 import { GiftIcon } from '@phosphor-icons/react/dist/ssr/Gift';
 import { InfoIcon } from '@phosphor-icons/react/dist/ssr/Info';
-import { MagnifyingGlassIcon } from '@phosphor-icons/react/dist/ssr/MagnifyingGlass';
 import { PhoneIcon } from '@phosphor-icons/react/dist/ssr/Phone';
 import { PlusIcon } from '@phosphor-icons/react/dist/ssr/Plus';
 import { ShieldWarningIcon } from '@phosphor-icons/react/dist/ssr/ShieldWarning';
@@ -28,6 +27,7 @@ import { reportsApi, useCreateReportMutation, useUpdateReportMutation } from '@z
 import type { QueryError } from '@zivali/api/rtk';
 import { formatDate, type Locale } from '@zivali/i18n/format';
 import type { Pet } from '@zivali/types';
+import { AuthGate } from '@/components/auth/gate';
 import { LocationPicker } from '@/components/location/location-picker';
 import type { LatLng } from '@/components/map/map-view';
 import { PetFields } from '@/components/pets/pet-fields';
@@ -62,7 +62,7 @@ import {
 	isOld,
 	isoTime,
 	type LostError,
-	lostResolver,
+	lostResolverAt,
 	type LostValues,
 	NEW_PET,
 	NOTE_MAX,
@@ -73,18 +73,36 @@ import {
 	stepsFor,
 	type When,
 } from './lost-form';
+import { LostDone } from './lost-done';
 
 /** The one lost-report draft of this browser; PhotoPicker keeps its photos under the same name. */
 export const LOST_DRAFT = 'lost';
 // C4 §Drafts: idb-keyval `draft:<kind>:<id>`. The location in it is the coarsened point (C6); EXIF never goes in.
 const DRAFT_KEY = `draft:lost:${LOST_DRAFT}`;
-type Draft = { step: Step; values: LostValues; at: number };
+/**
+ * `handoff`: Publish was pressed signed out, at `at`, with `nonce` carried through the sign-in round trip as
+ * `?handoff=`. Back signed in within HANDOFF_MS with the same nonce in the URL, the draft publishes itself (C3); any
+ * other visit (another account on a shared device, a reload) asks first.
+ */
+type Handoff = { at: number; nonce: string };
+type Draft = { step: Step; values: LostValues; at: number; handoff?: Handoff };
+const HANDOFF_PARAM = 'handoff';
+/** Adds (or, without a nonce, strips) the hand-off mark in the address bar, so the gate's `next` carries it. */
+function markUrl(nonce?: string) {
+	const url = new URL(window.location.href);
+	if (nonce) url.searchParams.set(HANDOFF_PARAM, nonce);
+	else if (url.searchParams.has(HANDOFF_PARAM)) url.searchParams.delete(HANDOFF_PARAM);
+	else return;
+	window.history.replaceState(null, '', url);
+}
+const HANDOFF_MS = 24 * 60 * 60 * 1000;
 
 async function loadDraft(): Promise<Draft | undefined> {
 	const draft = await get<Draft>(DRAFT_KEY).catch(() => undefined);
 	return draft?.step && draft.values ? draft : undefined;
 }
-const saveDraft = (step: Step, values: LostValues) => set(DRAFT_KEY, { step, values, at: Date.now() } satisfies Draft);
+const saveDraft = (step: Step, values: LostValues, handoff?: Handoff) =>
+	set(DRAFT_KEY, { step, values, at: Date.now(), handoff } satisfies Draft);
 const dropDraft = () => Promise.all([del(DRAFT_KEY).catch(() => {}), clearPhotoDraft(LOST_DRAFT)]);
 
 const titleClass =
@@ -540,39 +558,6 @@ function ReviewStep({ photos, pet, edit, duplicate, update, onUpdateChange }: Re
 	);
 }
 
-/** After publishing: the heading, the lede and what happens next (TASK-29.4 adds poster, shelter row and support). */
-function Done({ name, verified }: { name?: string; verified: boolean }) {
-	const t = useTranslations('report_lost');
-	const id = React.useId();
-	const steps = [
-		[BellIcon, t('next_1')],
-		[MagnifyingGlassIcon, t('next_2')],
-		[ChatCircleIcon, t('next_3')],
-	] as const;
-	return (
-		<>
-			<h1 className={titleClass}>{t('done_title')}</h1>
-			<p className="mt-3 text-lg leading-7">{name ? t('done_lede_named', { name }) : t('done_lede')}</p>
-			{!verified && (
-				<Note icon={InfoIcon} className="mt-6">
-					{t('unverified_note')}
-				</Note>
-			)}
-			<h2 id={id} className="mt-10 font-display text-2xl leading-[30px] font-bold tracking-[-0.015em]">
-				{t('next_title')}
-			</h2>
-			<ul aria-labelledby={id} className="mt-4 grid gap-4">
-				{steps.map(([Icon, text]) => (
-					<li key={text} className="flex gap-3.5">
-						<Icon weight="bold" aria-hidden="true" className="mt-0.5 size-6 shrink-0 text-primary" />
-						{text}
-					</li>
-				))}
-			</ul>
-		</>
-	);
-}
-
 /** report_lost_submit (C12) needs the region and municipality the API derived; fetched only with consent. */
 function useTrackSubmit() {
 	const [fetchReport] = reportsApi.endpoints.getReport.useLazyQuery();
@@ -599,22 +584,33 @@ function useTrackSubmit() {
  * details. The draft is saved on every step (C4 §Drafts); publishing calls create_report (C4) once per submission
  * (one Idempotency-Key for the exact body, a new one after any edit), maps errors back to their fields with the input
  * kept, and offers to update the open search on DUPLICATE_OPEN_REPORT. A photo's EXIF place is only offered to the
- * LocationPicker, which coarsens what it hands back (C6). Signed-in owners only: the page shows signed-out visitors
- * the sign-in gate (TASK-29.4 adds the fill-first hand-off). No ad in the flow (C15).
+ * LocationPicker, which coarsens what it hands back (C6). A signed-out visitor fills every step (the photos wait in
+ * this browser); Publish then asks for an account (P16 dialog) and the draft hand-off (C3) publishes it once they are
+ * back signed in, nothing sent before. The confirmation is LostDone. No ad in the flow (C15).
  */
-export function LostFlow({ initialPet }: { initialPet?: string }) {
+export function LostFlow({ initialPet, signedIn }: { initialPet?: string; signedIn: boolean }) {
 	const t = useTranslations('report_lost');
 	const errorText = useErrorText();
 	const tErrors = useTranslations('errors');
 	const trackSubmit = useTrackSubmit();
-	const { gate, me, isVerified } = useRequireAuth();
+	const auth = useRequireAuth();
+	const { me, isVerified } = auth;
+	// The page read the session cookie: signed out, supabase-js loads only with the gate (TASK-90.5), so until then
+	// the session never resolves and this is a visitor.
+	const gate = !signedIn && auth.gate === 'loading' ? 'signin' : auth.gate;
 	const petList = useListPetsQuery(gate === 'ok' ? undefined : skipToken);
 	const pets = React.useMemo(() => (petList.data?.items ?? []).filter((pet) => !pet.archived_at), [petList.data]);
 	const petsLoading = gate === 'loading' || petList.isLoading;
 	const [createReport] = useCreateReportMutation();
 	const [updateReport] = useUpdateReportMutation();
 
-	const form = useForm<LostValues>({ resolver: lostResolver, defaultValues: { ...initialValues, pet: initialPet } });
+	// When Publish was pressed before the sign-in round trip: "Pravkar" means then, not after the detour.
+	const handoffAt = React.useRef<number>(undefined);
+	// "Danes" at 23:50 is not in the future for a Publish pressed at 23:55, even if the way back crosses midnight.
+	const form = useForm<LostValues>({
+		resolver: lostResolverAt(() => handoffAt.current ?? Date.now()),
+		defaultValues: { ...initialValues, pet: initialPet },
+	});
 	const values = useWatch({ control: form.control }) as LostValues;
 	const [step, setStep] = React.useState<Step>('pet');
 	const steps = stepsFor(values.pet);
@@ -632,7 +628,12 @@ export function LostFlow({ initialPet }: { initialPet?: string }) {
 	const [sendError, setSendError] = React.useState<string>();
 	const [found, setFound] = React.useState<{ code: string; pet?: string }>();
 	const [update, setUpdate] = React.useState(true);
-	const [done, setDone] = React.useState<{ name?: string }>();
+	const [done, setDone] = React.useState<{ code: string; name?: string; species: Pet['species']; point: LatLng }>();
+	const [gateOpen, setGateOpen] = React.useState(false);
+	// Publish was pressed signed out: it goes on once signed in and the photos are up.
+	const [awaiting, setAwaiting] = React.useState(false);
+	// The draft read on mount, until the session says whether it continues a hand-off or asks to resume.
+	const [stored, setStored] = React.useState<Draft>();
 	// Stable across repeats of one submission (C1): key, exact body and its event_at. Cleared once the server has answered.
 	const submission = React.useRef<{ key: string; body: string; when: LostValues['when']; at: Date } | null>(null);
 	const busy = React.useRef(false);
@@ -646,11 +647,33 @@ export function LostFlow({ initialPet }: { initialPet?: string }) {
 
 	React.useEffect(() => {
 		let live = true;
-		void loadDraft().then((draft) => live && draft && setResume(draft));
+		void loadDraft().then((draft) => live && draft && setStored(draft));
 		return () => {
 			live = false;
 		};
 	}, []);
+
+	// Back from sign-in or sign-up with a pressed Publish (C3 hand-off): restored at the review, it publishes itself.
+	// Any other draft asks first.
+	const settle = React.useEffectEvent((draft: Draft) => {
+		setStored(undefined);
+		const nonce = new URLSearchParams(window.location.search).get(HANDOFF_PARAM);
+		markUrl();
+		const { handoff } = draft;
+		if (gate === 'ok' && handoff?.nonce && handoff.nonce === nonce && Date.now() - handoff.at < HANDOFF_MS) {
+			handoffAt.current = handoff.at;
+			restore(draft);
+			// Consumed: a reload, or a retry after a lost answer, stays manual.
+			void saveDraft(draft.step, draft.values).catch(() => {});
+			setAwaiting(true);
+		} else setResume(draft);
+	});
+	React.useEffect(() => {
+		if (!stored || gate === 'loading') return;
+		// On the next tick, so the restore is not a state update inside this commit.
+		const timer = setTimeout(() => settle(stored));
+		return () => clearTimeout(timer);
+	}, [stored, gate]);
 
 	// Without saved pets "Vnesi podatke" is the only row, so it is chosen; a pet that is gone (archived, another
 	// account's link) is not kept.
@@ -681,9 +704,13 @@ export function LostFlow({ initialPet }: { initialPet?: string }) {
 
 	const go = (next: Step) => {
 		setAttempted(false);
+		// Leaving the review stops a waiting publish; the owner publishes again from there.
+		setAwaiting(false);
 		setStep(next);
 	};
 	const advance = (next: Step = toReview ? 'review' : steps[index + 1]!) => {
+		// Any later edit is a new "now".
+		handoffAt.current = undefined;
 		if (next === 'review') setToReview(false);
 		go(next);
 		saveDraft(next, form.getValues()).then(
@@ -698,6 +725,11 @@ export function LostFlow({ initialPet }: { initialPet?: string }) {
 		if (fields.length && !(await form.trigger(fields, { shouldFocus: true }))) return;
 		advance();
 	};
+	const restore = (draft: Draft) => {
+		form.reset({ ...initialValues, ...draft.values });
+		setSaved(true);
+		go(draft.step);
+	};
 	const back = () => index > 0 && go(steps[index - 1]!);
 	const edit = (target: Step) => {
 		setToReview(true);
@@ -709,8 +741,12 @@ export function LostFlow({ initialPet }: { initialPet?: string }) {
 		// The API stores no 5xx/429 answer, so the same key may repeat safely (createReport dedupes on it); only a
 		// definitive refusal ends the submission.
 		const status = (error as Partial<QueryError> | null)?.status;
+		// CONFLICT: the same key is still being processed (C1), so its answer is still to come under that key.
 		const retriable =
-			data?.code === 'NETWORK' || data?.code === 'RATE_LIMITED' || (typeof status === 'number' && status >= 500);
+			data?.code === 'NETWORK' ||
+			data?.code === 'RATE_LIMITED' ||
+			data?.code === 'CONFLICT' ||
+			(typeof status === 'number' && status >= 500);
 		if (!retriable) submission.current = null;
 		const paths = (data?.issues ?? []).map((issue) => issue.path);
 		if (data?.code === 'DUPLICATE_OPEN_REPORT' && typeof data.details?.short_code === 'string') {
@@ -754,31 +790,52 @@ export function LostFlow({ initialPet }: { initialPet?: string }) {
 
 	const uploading = photos.some((photo) => photo.status === 'uploading');
 	const publish = async () => {
+		setAwaiting(false);
 		if (busy.current || uploading) return;
 		busy.current = true;
+		let sent = false;
 		try {
-			await send();
+			sent = await send();
 		} finally {
-			busy.current = false;
+			// Once sent the guard stays closed: a press before the confirmation shows would be a new submission with a
+			// new key, so a second report.
+			if (!sent) busy.current = false;
 		}
 	};
-	const send = async () => {
+	/** true once the report is created or updated. */
+	const send = async (): Promise<boolean> => {
 		setSendError(undefined);
 		const photoIds = photos.flatMap((photo) =>
 			photo.status === 'uploaded' && photo.photoId ? [photo.photoId] : []
 		);
-		if (!photos.length) return setSendError(t('photos_required'));
-		if (photos.some((photo) => photo.status === 'failed')) return edit('photos');
-		if (!photoIds.length) return setSendError(t('photos_wait'));
+		const notSent = (show: () => void) => {
+			show();
+			return false;
+		};
+		if (!photos.length) return notSent(() => setSendError(t('photos_required')));
+		if (photos.some((photo) => photo.status === 'failed')) return notSent(() => edit('photos'));
+		const signedOut = gate === 'signin';
+		// Signed out, the photos wait in this browser; they upload after sign-in (C3: nothing is sent before).
+		if (!photoIds.length && !signedOut) return notSent(() => setSendError(t('photos_wait')));
 		for (const s of steps) {
 			const fields = STEP_FIELDS[s];
 			if (fields.length && !(await form.trigger(fields))) {
 				edit(s);
-				return setAttempted(true);
+				return notSent(() => setAttempted(true));
 			}
 		}
-		if (!values.location) return edit('where');
-		const at = eventAt(values)!;
+		if (!values.location) return notSent(() => edit('where'));
+		if (signedOut) {
+			// Marked, so the way back from sign-in or sign-up publishes it.
+			const handoff = { at: Date.now(), nonce: crypto.randomUUID() };
+			await saveDraft('review', form.getValues(), handoff).catch(() => {});
+			handoffAt.current = handoff.at;
+			// The gate's `next` is this address: the nonce rides through the sign-in round trip.
+			markUrl(handoff.nonce);
+			return notSent(() => setGateOpen(true));
+		}
+		// "Pravkar", "Danes" and "Včeraj" mean the day Publish was pressed, not after the sign-in detour.
+		const at = eventAt(values, handoffAt.current ?? Date.now())!;
 		setSending(true);
 		try {
 			let code: string;
@@ -803,13 +860,44 @@ export function LostFlow({ initialPet }: { initialPet?: string }) {
 			submission.current = null;
 			if (!(duplicate && update)) trackSubmit(code);
 			await dropDraft();
-			setDone({ name: pet?.name ?? values.name?.trim() });
+			setDone({
+				code,
+				name: pet?.name ?? values.name?.trim(),
+				species: (pet?.species ?? values.species)!,
+				point: values.location,
+			});
+			return true;
 		} catch (error) {
 			failed(error);
+			return false;
 		} finally {
 			setSending(false);
 		}
 	};
+
+	// The photos restored from this browser upload first (signed in, the picker no longer holds them).
+	const held = photos.some((photo) => photo.status === 'kept' || photo.status === 'uploading');
+	const publishNow = React.useEffectEvent(() => void publish());
+	React.useEffect(() => {
+		if (!awaiting || gate !== 'ok' || !photos.length || held) return;
+		// On the next tick, as above; dropped if anything changes first.
+		const timer = setTimeout(publishNow);
+		return () => clearTimeout(timer);
+	}, [awaiting, gate, photos.length, held]);
+	// No photos came back (storage cleared): the button stays usable and says why on a press.
+	const waiting = awaiting && photos.length > 0;
+	// The gate calls onReady for verified accounts only, but an unconfirmed owner publishes too (P6): signed in with the
+	// gate still open (the other tab, a sign-in without leaving the page), it closes and Publish goes on.
+	React.useEffect(() => {
+		if (!gateOpen || gate !== 'ok') return;
+		// On the next tick, as above.
+		const timer = setTimeout(() => {
+			markUrl();
+			setGateOpen(false);
+			setAwaiting(true);
+		});
+		return () => clearTimeout(timer);
+	}, [gateOpen, gate]);
 
 	const titles: Record<Exclude<Step, 'where'>, string> = {
 		pet: t('pet_title'),
@@ -833,7 +921,7 @@ export function LostFlow({ initialPet }: { initialPet?: string }) {
 				)}
 			>
 				{done ? (
-					<Done name={done.name} verified={isVerified} />
+					<LostDone {...done} unverified={Boolean(me) && !isVerified} titleClass={titleClass} />
 				) : (
 					<>
 						<StepBars current={index + 1} total={steps.length} />
@@ -891,6 +979,7 @@ export function LostFlow({ initialPet }: { initialPet?: string }) {
 									onExif={({ lat, lng }) =>
 										lat !== undefined && lng !== undefined && setExif({ lat, lng })
 									}
+									hold={gate === 'signin' || gate === 'loading'}
 									className="mt-6"
 								/>
 								{step === 'photos' && photos.some((photo) => photo.status === 'failed') && (
@@ -963,10 +1052,14 @@ export function LostFlow({ initialPet }: { initialPet?: string }) {
 									<Button
 										type="submit"
 										size="lg"
-										loading={step === 'review' && (sending || uploading)}
+										loading={step === 'review' && (sending || uploading || waiting)}
 										className="flex-1 lg:flex-none"
 									>
-										{step !== 'review' ? t('next') : sending ? t('publishing') : t('publish')}
+										{step !== 'review'
+											? t('next')
+											: sending || waiting
+												? t('publishing')
+												: t('publish')}
 									</Button>
 									{index > 0 && (
 										<Button type="button" variant="text" onClick={back}>
@@ -980,13 +1073,27 @@ export function LostFlow({ initialPet }: { initialPet?: string }) {
 				)}
 			</main>
 
+			{/* P16 W3 with the P6 copy; sign-in and sign-up come back here through `next` (this page, with ?pet=). */}
+			<AuthGate
+				reason="report"
+				title={t('gate_title')}
+				body={t('gate_body')}
+				open={gateOpen}
+				onOpenChange={(open) => {
+					setGateOpen(open);
+					if (!open) markUrl();
+					// Cancelled: the draft stays, unmarked, so a later visit asks before publishing; times go back to
+					// "when Objavi is pressed next".
+					if (!open && gate === 'signin') {
+						handoffAt.current = undefined;
+						void saveDraft('review', form.getValues()).catch(() => {});
+					}
+				}}
+				onReady={() => setAwaiting(true)}
+			/>
 			<ResumeDialog
 				draft={resume}
-				onContinue={(draft) => {
-					form.reset({ ...initialValues, ...draft.values });
-					setSaved(true);
-					go(draft.step);
-				}}
+				onContinue={restore}
 				onDiscard={() => {
 					void dropDraft().then(() => setPickerKey((key) => key + 1));
 				}}
