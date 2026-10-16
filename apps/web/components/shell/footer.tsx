@@ -3,7 +3,7 @@ import type { ComponentProps } from 'react';
 
 import { Link } from '@/i18n/navigation';
 
-import { Logo, ringClass } from './page';
+import { Logo, ringClass, useLanguageLabels } from './page';
 import { CookieSettingsButton, LanguageSwitch, ShellSlot } from './parts';
 
 type Href = ComponentProps<typeof Link>['href'];
@@ -33,6 +33,7 @@ const linkClass = `inline-flex min-h-11 min-w-11 items-center rounded-sm text-co
 /** P1 footer, a server component: logo with tagline, the link rows, language and copyright; flows get one quiet row. */
 export function SiteFooter() {
 	const t = useTranslations('footer');
+	const languages = useLanguageLabels();
 	const list = (
 		links: readonly (readonly [Href | null, (typeof INFO | typeof LEGAL)[number][1]])[],
 		className = ''
@@ -66,7 +67,7 @@ export function SiteFooter() {
 							{list(INFO)}
 							{list(LEGAL, 'mt-3 lg:mt-0')}
 						</div>
-						<LanguageSwitch className="mt-3 -ml-1.5 lg:mt-0 lg:ml-0" />
+						<LanguageSwitch labels={languages} className="mt-3 -ml-1.5 lg:mt-0 lg:ml-0" />
 					</nav>
 					<p className="mt-3 text-sm text-muted-foreground lg:mt-6">
 						{t('copyright', { year: new Date().getFullYear() })}
