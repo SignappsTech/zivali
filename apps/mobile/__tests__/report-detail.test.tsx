@@ -300,11 +300,19 @@ describe('report detail (P9 mobile)', () => {
 		await fireEvent.press(screen.getByRole('button', { name: r.action_sighting }));
 		expect(await screen.findByText('sighted flow')).toBeOnTheScreen();
 		expect(page.getPathname()).toBe('/report/found');
+		// The API links sightings to lost listings only: a found listing gets a plain sighting.
+		expect(page.getSearchParams()).toEqual({ type: 'sighted' });
+	});
+
+	test('slot A on a lost listing: the sighting is linked to it', async () => {
+		const { page } = await open({ data: lost }, lost.short_code);
+		await fireEvent.press(screen.getByRole('button', { name: r.action_sighting }));
+		expect(await screen.findByText('sighted flow')).toBeOnTheScreen();
 		expect(page.getSearchParams()).toEqual({
 			type: 'sighted',
-			linked_report_id: found.id,
-			code: found.short_code,
-			species: found.species,
+			linked_report_id: lost.id,
+			code: lost.short_code,
+			species: lost.species,
 		});
 	});
 
