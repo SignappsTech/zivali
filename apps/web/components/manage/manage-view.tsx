@@ -14,6 +14,7 @@ import { useListConversationsQuery } from '@zivali/api/chat';
 import { useGetReportQuery, useTransitionReportMutation } from '@zivali/api/reports';
 import type { ReportOwnerView, ReportTransitionAction } from '@zivali/types';
 import { AuthHeading, AuthNote, Spot, useErrorText } from '@/components/auth/parts';
+import { ConversationRow } from '@/components/chat/conversations';
 import { h1Class, InlineError, PageSkeleton, ringClass } from '@/components/shell/page';
 import {
 	AlertDialog,
@@ -135,9 +136,12 @@ export function ManageView({ code }: { code: string }) {
 							{t('manage_unread', { count: unread })}
 						</p>
 					)}
-					<Button asChild size="lg" className="mt-4 w-full">
-						<Link href="/inbox">{t('manage_open_messages')}</Link>
-					</Button>
+					{/* Each conversation opens its thread from here (P12 web, as the mobile manage screen). */}
+					<ul className="-mx-3 mt-3 grid gap-1">
+						{threads.map((conversation) => (
+							<ConversationRow key={conversation.id} conversation={conversation} />
+						))}
+					</ul>
 				</section>
 			)}
 
