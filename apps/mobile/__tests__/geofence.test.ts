@@ -331,6 +331,17 @@ describe('handler', () => {
 		expect(notified()).toHaveLength(DAILY_CAP + 1);
 	});
 
+	test('areas entered at once (concurrent handlers) never pass the cap together', async () => {
+		await cache(...many(6));
+
+		await enter('r01');
+		await enter('r02');
+		await Promise.all([enter('r03'), enter('r04'), enter('r05'), enter('r06')]);
+
+		expect(notified()).toHaveLength(DAILY_CAP);
+		expect(await all('select * from geofence_events')).toHaveLength(DAILY_CAP);
+	});
+
 	test('cached quiet hours (Europe/Ljubljana, across midnight) hold the alert for a later entry', async () => {
 		cacheQuietHours({ quiet_from: '22:00', quiet_to: '07:00' });
 		await cache({ id: 'night' });

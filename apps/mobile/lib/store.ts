@@ -7,6 +7,7 @@ import { createApiStore } from '@zivali/api/rtk';
 import { env } from '@/lib/env';
 import { getCurrentLocale } from '@/lib/i18n';
 import { setupNetworkListeners } from '@/lib/net';
+import { wipeOnSessionEnd } from '@/lib/offline/wipe';
 import { supabase } from '@/lib/supabase';
 
 /**
@@ -34,6 +35,8 @@ export const apiClient = createApiClient({
 // The one Redux store (RTK Query over the API client).
 export const store = createApiStore(apiClient);
 
-// Once, at start-up: refetchOnReconnect/Focus, and the cache follows the Supabase session.
+// Once, at start-up: refetchOnReconnect/Focus, the cache follows the Supabase session, and a session that ended
+// outside the app wipes the device data as the sign-out does.
 setupNetworkListeners(store.dispatch);
 configureAuth(supabase, store);
+wipeOnSessionEnd();

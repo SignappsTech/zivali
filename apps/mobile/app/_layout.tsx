@@ -22,6 +22,7 @@ import { useTranslations } from 'use-intl';
 import { CaptchaSheet } from '@/components/anonymous/captcha-sheet';
 import { filePut } from '@/components/photos/prepare-photo';
 import { ConsentSheet } from '@/components/shell/consent';
+import { SessionEndedNotice } from '@/components/shell/session-ended';
 import { Toaster } from '@/components/ui/sonner';
 import { setupAnalytics, useScreenTracking } from '@/lib/analytics';
 import { ensureSession } from '@/lib/anonymous';
@@ -71,6 +72,7 @@ export default function RootLayout() {
 							<CaptchaSheet />
 							<PushNotifications />
 							<OfflineCache />
+							<SessionEndedNotice />
 							<AppToaster />
 							<PortalHost />
 						</BottomSheetModalProvider>

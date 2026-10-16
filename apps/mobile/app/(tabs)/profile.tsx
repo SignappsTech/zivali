@@ -1,4 +1,4 @@
-import { useRouter } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { BellIcon } from 'phosphor-react-native/src/icons/Bell';
 import { BellRingingIcon } from 'phosphor-react-native/src/icons/BellRinging';
 import { CheckIcon } from 'phosphor-react-native/src/icons/Check';
@@ -40,6 +40,7 @@ import { toast } from '@/components/ui/sonner';
 import { Text } from '@/components/ui/text';
 import { resendConfirmation, signOutProviders } from '@/lib/auth';
 import { env } from '@/lib/env';
+import { geofenceState } from '@/lib/offline/geofence';
 import { signOutAndWipe } from '@/lib/offline/wipe';
 import { unregisterPush } from '@/lib/push';
 
@@ -140,8 +141,23 @@ export default function ProfileTab() {
 	const locale = useLocale();
 	const router = useRouter();
 	const { session, me, isAnonymous, loading } = useSession();
-	if (loading) return <View className="flex-1 bg-background" />;
 	const signedIn = Boolean(session) && !isAnonymous;
+	// Reminders a session left behind (it ended outside the app and its wipe failed): their off switch stays reachable.
+	const [reminders, setReminders] = React.useState(false);
+	useFocusEffect(
+		React.useCallback(() => {
+			let active = true;
+			if (!loading && !signedIn)
+				void geofenceState().then(
+					(state) => active && setReminders(state === 'on'),
+					() => active && setReminders(false)
+				);
+			return () => {
+				active = false;
+			};
+		}, [loading, signedIn])
+	);
+	if (loading) return <View className="flex-1 bg-background" />;
 
 	const help = (
 		<MenuRow
@@ -222,6 +238,13 @@ export default function ProfileTab() {
 							create={t('profile.signed_out_create')}
 						/>
 						<View className="mt-10 gap-3">
+							{reminders ? (
+								<MenuRow
+									icon={<Icon as={BellRingingIcon} size={24} />}
+									title={t('alerts.reminders_title')}
+									onPress={() => router.push('/settings/alerts')}
+								/>
+							) : null}
 							<LanguageRow />
 							{offline}
 							{cookies}

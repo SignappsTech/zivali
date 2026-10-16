@@ -268,18 +268,17 @@ async function alertNear(reportId: string): Promise<void> {
 	);
 	if (!report || (await ownReportIds()).has(reportId) || isQuiet(now)) return;
 	if (!(await Notifications.getPermissionsAsync()).granted) return;
-	// Local midnight: the cap follows the user's day.
-	const today = await db.getFirstAsync<{ n: number }>(
-		'select count(*) as n from geofence_events where fired_at >= ?',
-		new Date(now).setHours(0, 0, 0, 0)
-	);
-	if ((today?.n ?? 0) >= DAILY_CAP) return;
-	// Claimed before showing, so two quick entries never alert twice.
+	// Claimed before showing, so two quick entries never alert twice. The daily cap (from local midnight: it follows the
+	// user's day) is checked by the same statement, so areas entered at once (handlers run concurrently) never pass it
+	// together.
 	const claim = await db.runAsync(
-		'insert or ignore into geofence_events (report_id, area_key, fired_at) values (?, ?, ?)',
+		`insert or ignore into geofence_events (report_id, area_key, fired_at)
+		 select ?, ?, ? where (select count(*) from geofence_events where fired_at >= ?) < ?`,
 		reportId,
 		report.area_key,
-		now
+		now,
+		new Date(now).setHours(0, 0, 0, 0),
+		DAILY_CAP
 	);
 	if (claim.changes === 0) return;
 
