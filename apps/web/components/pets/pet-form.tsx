@@ -104,7 +104,13 @@ export function PetForm({ pet }: { pet?: Pet }) {
 			const changes = Object.fromEntries(
 				Object.entries(values).filter(([field]) => dirtyFields[field as keyof PetFieldValues])
 			);
-			const saved = id ? await updatePet({ id, body: changes }).unwrap() : await createPet(values).unwrap();
+			// A photos-only edit has nothing to PATCH.
+			const saved =
+				id && Object.keys(changes).length === 0
+					? { id }
+					: id
+						? await updatePet({ id, body: changes }).unwrap()
+						: await createPet(values).unwrap();
 			setId(saved.id);
 			if (photoIds.join() !== savedIds)
 				await setPetPhotos({ id: saved.id, body: { photo_ids: photoIds } }).unwrap();

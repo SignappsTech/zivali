@@ -8,7 +8,7 @@ import { LockSimpleIcon } from '@phosphor-icons/react/dist/ssr/LockSimple';
 import { PencilSimpleIcon } from '@phosphor-icons/react/dist/ssr/PencilSimple';
 import { TrashIcon } from '@phosphor-icons/react/dist/ssr/Trash';
 import { useTranslations } from 'next-intl';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 import { useArchivePetMutation, useDeletePetMutation, useGetPetQuery } from '@zivali/api/pets';
@@ -72,6 +72,8 @@ export function PetDetail({ pet }: { pet: Pet }) {
 	const errorText = useErrorText();
 	const router = useRouter();
 	const [shown, setShown] = useState(false);
+	const heading = useRef<HTMLHeadingElement>(null);
+	const archiving = useRef(false);
 	const [deletePet] = useDeletePetMutation();
 	const [archivePet] = useArchivePetMutation();
 	const [cover, ...more] = pet.photos;
@@ -88,6 +90,11 @@ export function PetDetail({ pet }: { pet: Pet }) {
 		[t('notes_label'), pet.notes],
 	].filter(([, value]) => value);
 
+	// The Archive trigger unmounts once the pet is archived; focus would drop to the body, so it goes to the name.
+	useEffect(() => {
+		if (pet.archived_at && archiving.current) heading.current?.focus();
+	}, [pet.archived_at]);
+
 	const remove = async () => {
 		try {
 			await deletePet({ id: pet.id }).unwrap();
@@ -99,6 +106,7 @@ export function PetDetail({ pet }: { pet: Pet }) {
 	};
 	const archive = async () => {
 		try {
+			archiving.current = true;
 			await archivePet({ id: pet.id }).unwrap();
 			toast.success(t('archived'));
 		} catch (failure) {
@@ -143,7 +151,9 @@ export function PetDetail({ pet }: { pet: Pet }) {
 					</div>
 				)}
 				<div className="min-w-0">
-					<h1 className={cn(h1Class, 'break-words')}>{pet.name}</h1>
+					<h1 ref={heading} tabIndex={-1} className={cn(h1Class, 'break-words outline-none')}>
+						{pet.name}
+					</h1>
 					<p className="mt-1 text-muted-foreground lg:mt-2 lg:text-xl lg:leading-8">{meta(pet)}</p>
 					{pet.archived_at ? (
 						<p className="mt-4">
@@ -174,7 +184,12 @@ export function PetDetail({ pet }: { pet: Pet }) {
 										groupChip(pet.chip_number)
 									) : (
 										// The digits' length, not the digits: the number stays out of the page until asked for.
-										<span aria-hidden="true">{groupChip(pet.chip_number).replace(/\d/g, '•')}</span>
+										<>
+											<span aria-hidden="true">
+												{groupChip(pet.chip_number).replace(/\d/g, '•')}
+											</span>
+											<span className="sr-only">{t('chip_hidden')}</span>
+										</>
 									)}
 								</p>
 								<Button variant="text" className="mt-1 -ml-3" onClick={() => setShown(!shown)}>

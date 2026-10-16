@@ -68,6 +68,7 @@
 	"chip_row": "Microchip",
 	"chip_show": "Show number",
 	"chip_hide": "Hide number",
+	"chip_hidden": "Number hidden",
 	"chip_only_you": "Only you can see the number.",
 	"report_lost": "Report as lost",
 	"edit": "Edit",

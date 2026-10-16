@@ -68,6 +68,7 @@
 	"chip_row": "Čip",
 	"chip_show": "Pokaži številko",
 	"chip_hide": "Skrij številko",
+	"chip_hidden": "Številka je skrita",
 	"chip_only_you": "Številko vidite samo vi.",
 	"report_lost": "Prijavi izgubljeno žival",
 	"edit": "Uredi",

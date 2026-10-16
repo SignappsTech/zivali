@@ -112,11 +112,20 @@ function RowPhoto({ pet }: { pet: Pet }) {
  * P8 list "Moje živali": heading, count and the one primary "Dodaj žival", the free-limit note at the limit, then a
  * row per pet (photo, name, species and breed, chip status), archived ones last. Loading keeps the row geometry.
  */
+// A stable ref callback: focus on mount only, not on every render.
+const focusOnMount = (node: HTMLElement | null) => node?.focus({ preventScroll: true });
+
 export function PetList() {
 	const t = useTranslations('pets');
 	const tCommon = useTranslations('common');
 	const meta = usePetMeta();
 	const query = useListPetsQuery();
+	// After a delete the router lands here: focus goes to the heading rather than the body.
+	const heading = (
+		<h1 ref={focusOnMount} tabIndex={-1} className={cn(h1Class, 'outline-none')}>
+			{t('title')}
+		</h1>
+	);
 	const pets = query.data?.items;
 	const add = (
 		<Button asChild size="lg" className="max-sm:w-full">
@@ -130,7 +139,7 @@ export function PetList() {
 	if (query.isError && !pets)
 		return (
 			<>
-				<h1 className={h1Class}>{t('title')}</h1>
+				{heading}
 				<div className="mt-8">
 					<InlineError onRetry={query.refetch} retrying={query.isFetching} />
 				</div>
@@ -139,7 +148,7 @@ export function PetList() {
 	if (!pets)
 		return (
 			<div aria-busy="true">
-				<h1 className={h1Class}>{t('title')}</h1>
+				{heading}
 				<p role="status" className="sr-only">
 					{tCommon('loading')}
 				</p>
@@ -160,7 +169,7 @@ export function PetList() {
 	if (pets.length === 0)
 		return (
 			<>
-				<h1 className={h1Class}>{t('title')}</h1>
+				{heading}
 				<EmptyState
 					className="mt-8"
 					illustration={<SpotIllustration />}
@@ -177,7 +186,7 @@ export function PetList() {
 		<>
 			<div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-5">
 				<div>
-					<h1 className={h1Class}>{t('title')}</h1>
+					{heading}
 					<p className="mt-1 text-muted-foreground lg:mt-2 lg:text-lg">
 						{t('count', { count: pets.length })}
 					</p>

@@ -141,6 +141,12 @@ describe('PetList', () => {
 		expect(container.innerHTML).not.toMatch(/705\s?0{3,}/);
 	});
 
+	it('puts focus on the heading, where a delete lands', () => {
+		api.list = { data: { items: [make(1)] } };
+		show(<PetList />);
+		expect(document.activeElement).toBe(screen.getByRole('heading', { level: 1, name: 'Moje živali' }));
+	});
+
 	it('shows the quiet free-limit note at two active pets, and the add action stays', () => {
 		api.list = { data: { items: [make(1), make(2)] } };
 		show(<PetList />);
@@ -273,6 +279,16 @@ describe('PetForm', () => {
 		expect(api.createPet).not.toHaveBeenCalled();
 	});
 
+	it('sends no PATCH for a photos-only edit', async () => {
+		show(<PetForm pet={make(1)} />);
+		await save([{ key: 'x', photoId: 'photo-x', status: 'uploaded' }]);
+		await waitFor(() =>
+			expect(api.setPetPhotos).toHaveBeenCalledWith({ id: 'pet-1', body: { photo_ids: ['photo-x'] } })
+		);
+		expect(api.updatePet).not.toHaveBeenCalled();
+		expect(api.createPet).not.toHaveBeenCalled();
+	});
+
 	it('asks before leaving with unsaved changes: keep editing, or discard and go back to the list', async () => {
 		show(<PetForm />);
 		const back = screen.getByRole('link', { name: 'Moje živali' });
@@ -320,6 +336,8 @@ describe('PetDetail', () => {
 		expect(screen.getByRole('link', { name: 'Uredi' }).getAttribute('href')).toBe('/moje-zivali/pet-1/uredi');
 
 		expect(container.textContent).not.toContain('705');
+		// The bullets are aria-hidden: a screen reader still hears that the number is hidden.
+		expect(screen.getByText(sl.pets.chip_hidden).className).toContain('sr-only');
 		click('Pokaži številko');
 		expect(screen.getByText('705 0000 0012 3456')).toBeTruthy();
 		click('Skrij številko');

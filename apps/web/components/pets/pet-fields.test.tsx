@@ -186,6 +186,22 @@ describe('PetFields species rules', () => {
 		expect(await saved()).toMatchObject({ species: 'dog', ear_tip: null, lifestyle: null });
 	});
 
+	it('drops a dog-only size when the species becomes cat', async () => {
+		const { chooseSpecies, group, typeName, save, saved } = setup();
+		chooseSpecies('Pes');
+		fireEvent.click(within(group('Velikost')).getByRole('radio', { name: 'Zelo velika' }));
+		expect(within(group('Velikost')).getByRole('radio', { name: 'Zelo velika' }).getAttribute('aria-checked')).toBe(
+			'true'
+		);
+
+		chooseSpecies('Mačka');
+		for (const radio of within(group('Velikost')).getAllByRole('radio'))
+			expect(radio.getAttribute('aria-checked')).toBe('false');
+		typeName('Luna');
+		await save();
+		expect(await saved()).toMatchObject({ species: 'cat', size: null });
+	});
+
 	it('keeps breed, pattern and size disabled until the species is chosen', () => {
 		const { group, chooseSpecies } = setup();
 		const breed = screen.getByRole('combobox', { name: 'Pasma' }) as HTMLInputElement;
