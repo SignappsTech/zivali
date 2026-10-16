@@ -29,7 +29,8 @@ export function MapDemo({ markers, circles, paths }: { markers: Marker[]; circle
 					Ljubljana
 				</Button>
 				<output data-testid="camera">
-					{camera && `${camera.zoom.toFixed(1)} ${camera.moving ? 'moving' : 'idle'}`}
+					{camera &&
+						`${camera.center.lat.toFixed(4)},${camera.center.lng.toFixed(4)} z${camera.zoom.toFixed(1)} ${camera.moving ? 'moving' : 'idle'}`}
 				</output>
 				<output data-testid="pressed">{pressed}</output>
 			</div>

@@ -254,7 +254,11 @@ export function createMapEngine(options: EngineOptions): MapEngine {
 			);
 		}, VIEWPORT_DEBOUNCE_MS);
 	};
-	map.once('load', viewport);
+	// The initial view is set in the constructor, before these listeners: report it once the map has loaded.
+	map.once('load', () => {
+		options.onCameraChange(camera(false));
+		viewport();
+	});
 	map.on('move', () => options.onCameraChange(camera(true)));
 	map.on('moveend', () => {
 		options.onCameraChange(camera(false));

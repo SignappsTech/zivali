@@ -31,7 +31,8 @@ export type MapViewProps = {
 	detail?: boolean;
 	/** Debounced 300 ms after the camera stops; also once after the first load. */
 	onViewportChange?(bbox: BBox, zoom: number): void;
-	/** The camera while it moves (`moving: true`) and once it stops; not debounced (LocationPicker's centre pin). */
+	/** The camera while it moves (`moving: true`), once it stops and once after the first load; not debounced
+	 * (LocationPicker's centre pin). */
 	onCameraChange?(camera: CameraState): void;
 	onMarkerPress?(id: string): void;
 	/** Required: the list (or a sentence pointing to it) for screen reader and keyboard users, rendered right after
