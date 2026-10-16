@@ -57,6 +57,8 @@ export const safety: Record<'sl' | 'en', ArticleContent> = {
 				],
 			},
 			{
+				// The P6 confirmation links here (content P6 §10).
+				id: 'prvih-24-ur',
 				title: 'Ko izgubite žival: prvih 24 ur',
 				blocks: [
 					{
@@ -152,6 +154,8 @@ export const safety: Record<'sl' | 'en', ArticleContent> = {
 				],
 			},
 			{
+				// The P6 confirmation links here (content P6 §10).
+				id: 'first-24-hours',
 				title: 'If you lose your pet: the first 24 hours',
 				blocks: [
 					{

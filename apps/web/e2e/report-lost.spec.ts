@@ -1,14 +1,17 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, type Page, test } from '@playwright/test';
 
+import { responsibleConfirmed } from '@zivali/api/__fixtures__/directory';
 import { me } from '@zivali/api/__fixtures__/me';
 import { pet } from '@zivali/api/__fixtures__/pets';
+import { ownerReport } from '@zivali/api/__fixtures__/reports';
 import type { Pet } from '@zivali/types';
 
 import { api, dismissConsent, signInAs } from './session';
 
 // TASK-29.3: the P6 lost flow on web against a faked API (C4, C5, C6) and stubbed map tiles: every step is checked
-// with axe and for ad slots (C15), and the request body is read where it leaves the browser.
+// with axe and for ad slots (C15), and the request body is read where it leaves the browser. TASK-29.4: the signed-out
+// draft hand-off (C3) and the confirmation (poster, share, shelter row, C18).
 const AXE_TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'];
 const TILES = 'https://tiles.openfreemap.org';
 const PUT_URL = 'https://e2e.eu.r2.cloudflarestorage.com/zivali-private/uploads/u1/photo.jpg?X-Amz-Signature=e2e';
@@ -36,10 +39,18 @@ async function checkStep(page: Page) {
 
 type Seen = { method: string; path: string; body: unknown; key?: string };
 
-/** Signs in and answers /v1 (me, pets, photos, reports, geocoder) and the tiles, recording every call. */
-async function fakeApi(page: Page, baseURL: string, pets: Pet[], create: (call: number) => [number, unknown]) {
+const signIn = (page: Page, baseURL: string) => signInAs(page, { id: me.id, role: me.role, aal: 'aal1' }, baseURL);
+
+/** Signs in (unless `signedOut`) and answers /v1 (me, pets, photos, reports, geocoder, directory) and the tiles, recording every call. */
+async function fakeApi(
+	page: Page,
+	baseURL: string,
+	pets: Pet[],
+	create: (call: number) => [number, unknown],
+	{ signedOut = false } = {}
+) {
 	const seen: Seen[] = [];
-	await signInAs(page, { id: me.id, role: me.role, aal: 'aal1' }, baseURL);
+	if (!signedOut) await signIn(page, baseURL);
 	await dismissConsent(page);
 	await page.route(`${TILES}/**`, (route) => {
 		const { pathname } = new URL(route.request().url());
@@ -86,6 +97,9 @@ async function fakeApi(page: Page, baseURL: string, pets: Pet[], create: (call: 
 			return json(...create(seen.filter((call) => call.path === '/v1/reports').length));
 		if (path.startsWith('/v1/reports/') && request.method() === 'PATCH')
 			return json(200, { short_code: path.split('/')[3] });
+		if (path.startsWith('/v1/reports/') && request.method() === 'GET')
+			return json(200, { ...ownerReport, type: 'lost', name: 'Medo', short_code: path.split('/')[3] });
+		if (path === '/v1/shelters/responsible') return json(200, responsibleConfirmed);
 		return json(404, { error: { code: 'NOT_FOUND', message: path } });
 	});
 	return seen;
@@ -112,14 +126,91 @@ async function jpeg(page: Page): Promise<Buffer> {
 
 const heading = (page: Page, name: string) => expect(page.getByRole('heading', { level: 1, name })).toBeFocused();
 
-test('signed out, the start page asks for an account and returns here after sign-in', async ({ page }) => {
-	await page.goto('/prijava/izgubljena-zival');
+test('signed out: fill first, sign in at Publish, and the draft (fields and photos) publishes itself (C3, AC#1)', async ({
+	page,
+	baseURL,
+}) => {
+	test.setTimeout(120_000);
+	const seen = await fakeApi(page, baseURL!, [], created, { signedOut: true });
+	await page.goto(`/prijava/izgubljena-zival?pet=${pet.id}`);
 	await expect(page).toHaveTitle('Prijavite izgubljenega psa ali mačko · Najdimo');
-	await expect(page.getByRole('heading', { level: 1, name: 'Prijava izgubljene živali' })).toBeVisible();
-	await expect(page.getByRole('link', { name: 'Vpiši se' })).toHaveAttribute(
+	await expect(page.getByRole('radio', { name: 'Vnesi podatke' })).toBeChecked();
+	await page.getByRole('button', { name: 'Naprej' }).click();
+
+	await heading(page, 'Dodajte fotografije');
+	await page
+		.locator('input[type=file][multiple]')
+		.setInputFiles({ name: 'IMG_0003.jpg', mimeType: 'image/jpeg', buffer: await jpeg(page) });
+	// Kept in this browser: ready to the eye, nothing uploaded before sign-in.
+	await expect(page.getByText('Naslovna fotografija')).toBeVisible({ timeout: 30_000 });
+	await page.getByRole('button', { name: 'Naprej' }).click();
+	await heading(page, 'Opišite žival');
+	await page.getByRole('radio', { name: 'Pes' }).click();
+	await page.getByRole('button', { name: 'Rjava', exact: true }).click();
+	await page.getByRole('textbox', { name: 'Ime' }).fill('Medo');
+	await page.getByRole('textbox', { name: 'Ime' }).press('Enter');
+	await heading(page, 'Kje ste žival nazadnje videli?');
+	await expect(page.locator('[data-slot=map-view]')).toHaveAttribute('data-state', 'ready');
+	await page.getByRole('button', { name: 'Potrdi kraj' }).click();
+	await heading(page, 'Kdaj ste žival nazadnje videli?');
+	await page.getByRole('button', { name: 'Naprej' }).click();
+	await heading(page, 'Kaj se je zgodilo?');
+	await page.getByRole('button', { name: 'Naprej' }).click();
+	await heading(page, 'Preverite in objavite');
+	await page.getByRole('button', { name: 'Objavi iskanje' }).click();
+
+	const gate = page.getByRole('dialog', { name: 'Za objavo potrebujete račun' });
+	await expect(gate).toBeVisible();
+	await expect(gate.getByText('Vse, kar ste vnesli, ostane.', { exact: false })).toBeVisible();
+	await checkStep(page);
+	// `next` is this page, relative, with ?pet=.
+	const next = `/prijava/izgubljena-zival?pet=${pet.id}`;
+	await expect(gate.getByRole('link', { name: 'Vpiši se' })).toHaveAttribute(
 		'href',
-		'/vpis?next=%2Fprijava%2Fizgubljena-zival'
+		`/vpis?next=${encodeURIComponent(next)}`
 	);
+	await expect(gate.getByRole('link', { name: 'Ustvari račun' })).toHaveAttribute(
+		'href',
+		`/registracija?next=${encodeURIComponent(next)}`
+	);
+	expect(seen.filter((call) => call.path === '/v1/photos' || call.path === '/v1/reports')).toEqual([]);
+
+	// Sign-in sends the browser back to `next`; the session is the mock API's.
+	await signIn(page, baseURL!);
+	await page.goto(next);
+	await heading(page, 'Iskanje je objavljeno');
+	await checkStep(page);
+	const posts = seen.filter((call) => call.method === 'POST' && call.path === '/v1/reports');
+	expect(posts).toHaveLength(1);
+	expect(posts[0]!.body).toMatchObject({
+		type: 'lost',
+		species: 'dog',
+		name: 'Medo',
+		colours: ['brown'],
+		photo_ids: ['9b0e2d4c-1f3a-4b5c-8d6e-7f8091a2b3c4'],
+	});
+
+	// AC#2, AC#4: next steps, the responsible shelter with its call and the duty, the poster, the report and the tips.
+	await expect(page.getByRole('heading', { level: 2, name: 'Kaj se zgodi zdaj' })).toBeVisible();
+	await expect(
+		page.getByText('Pobeg čim prej sporočite veterinarju ali zavetišču, pristojnemu za občino Ljubljana.', {
+			exact: false,
+		})
+	).toBeVisible();
+	await expect(page.getByRole('link', { name: 'Pokliči Zavetišče Ljubljana' })).toHaveAttribute(
+		'href',
+		'tel:+38612345678'
+	);
+	await expect(page.getByRole('link', { name: 'Prenesi plakat' })).toHaveAttribute(
+		'href',
+		'/r/Hk3vT9qP/poster.pdf?lang=sl'
+	);
+	await expect(page.getByRole('link', { name: 'Odpri mojo prijavo' })).toHaveAttribute('href', '/r/Hk3vT9qP');
+	await expect(page.getByRole('link', { name: 'Kaj storiti v prvih 24 urah' })).toHaveAttribute(
+		'href',
+		'/varnost#prvih-24-ur'
+	);
+	await expect(page.getByRole('button', { name: 'Deli' })).toBeVisible();
 	await checkStep(page);
 });
 
@@ -154,7 +245,8 @@ test('SL: a new pet in seven steps, keyboard and axe on each, one POST with the 
 	await page.getByRole('radio', { name: 'Pes' }).click();
 	await page.getByRole('button', { name: 'Rjava', exact: true }).click();
 	await page.getByRole('textbox', { name: 'Ime' }).fill('Medo');
-	await page.getByRole('button', { name: 'Naprej' }).click();
+	// Enter in a text field submits the step like Naprej (the picker's buttons are not the form's default button).
+	await page.getByRole('textbox', { name: 'Ime' }).press('Enter');
 
 	await heading(page, 'Kje ste žival nazadnje videli?');
 	await expect(page.locator('[data-slot=map-view]')).toHaveAttribute('data-state', 'ready');

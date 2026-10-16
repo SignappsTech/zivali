@@ -19,7 +19,12 @@ globalThis.ResizeObserver ??= class {
 } as unknown as typeof ResizeObserver;
 
 const t = sl.report_lost;
-type Emitted = { key: string; preview: string; photoId?: string; status: 'uploading' | 'uploaded' | 'failed' };
+type Emitted = {
+	key: string;
+	preview: string;
+	photoId?: string;
+	status: 'kept' | 'uploading' | 'uploaded' | 'failed';
+};
 const RAW_EXIF = { lat: 46.0489, lng: 14.4691 };
 // What the LocationPicker hands back on Potrdi: its own coarsened point (C6), never the raw input.
 const COARSE = { lat: 46.04902, lng: 14.46934 };
@@ -33,13 +38,53 @@ const api = vi.hoisted(() => ({
 	consent: { analytics: true } as { analytics: boolean } | null,
 	store: new Map<string, unknown>(),
 	clearPhotoDraft: vi.fn(async () => {}),
-	picker: { photos: [] as Emitted[], onChange: undefined as undefined | ((photos: Emitted[]) => void) },
+	picker: {
+		photos: [] as Emitted[],
+		hold: undefined as boolean | undefined,
+		onChange: undefined as undefined | ((photos: Emitted[]) => void),
+	},
+	// Set in beforeEach (a hoisted block cannot use the imported fixture).
+	auth: {} as { gate: string; me: object | null; isVerified: boolean },
+	gate: {
+		onOpenChange: undefined as undefined | ((open: boolean) => void),
+		onReady: undefined as undefined | (() => void),
+	},
 	exif: undefined as undefined | ((exif: { lat?: number; lng?: number }) => void),
 	suggested: undefined as unknown,
 	mutation: (fn: (arg: unknown) => unknown) => () => [(arg: unknown) => ({ unwrap: async () => fn(arg) })],
 }));
-vi.mock('@zivali/api/auth', () => ({
-	useRequireAuth: () => ({ gate: 'ok', me, isVerified: true }),
+vi.mock('@zivali/api/auth', () => ({ useRequireAuth: () => api.auth }));
+// The P16 dialog (gate.tsx, own tests): its title and body when open; the test plays its close and onReady.
+vi.mock('@/components/auth/gate', () => ({
+	AuthGate: ({
+		open,
+		title,
+		body,
+		onOpenChange,
+		onReady,
+	}: {
+		open: boolean;
+		title: string;
+		body: string;
+		onOpenChange: (open: boolean) => void;
+		onReady: () => void;
+	}) => {
+		Object.assign(api.gate, { onOpenChange, onReady });
+		return open ? (
+			<div role="dialog" aria-label={title}>
+				<p>{body}</p>
+			</div>
+		) : null;
+	},
+}));
+// The confirmation has its own tests: here it shows what the flow hands it.
+vi.mock('./lost-done', () => ({
+	LostDone: ({ titleClass: _, ...props }: { titleClass: string }) => (
+		<>
+			<h1>{sl.report_lost.done_title}</h1>
+			<p data-testid="done">{JSON.stringify(props)}</p>
+		</>
+	),
 }));
 vi.mock('@zivali/api/pets', () => ({
 	useListPetsQuery: () => ({ data: { items: api.pets }, isLoading: false }),
@@ -68,11 +113,14 @@ vi.mock('@/components/photos/photo-picker', () => ({
 	PhotoPicker: ({
 		onChange,
 		onExif,
+		hold,
 	}: {
 		onChange: (photos: Emitted[]) => void;
 		onExif: (exif: { lat?: number; lng?: number }) => void;
+		hold?: boolean;
 	}) => {
 		api.picker.onChange = onChange;
+		api.picker.hold = hold;
 		api.exif = onExif;
 		useEffect(() => onChange(api.picker.photos), []); // eslint-disable-line react-hooks/exhaustive-deps
 		return null;
@@ -100,18 +148,28 @@ vi.mock('@/components/location/location-picker', () => ({
 
 const uploaded: Emitted = { key: 'k1', preview: 'blob:1', photoId: 'photo-1', status: 'uploaded' };
 
-function show(props: React.ComponentProps<typeof LostFlow> = {}) {
-	return render(
+function show(props: Partial<React.ComponentProps<typeof LostFlow>> = {}) {
+	const ui = (more: typeof props) => (
 		<NextIntlClientProvider locale="sl" messages={sl} timeZone={timeZone}>
-			<LostFlow {...props} />
+			<LostFlow signedIn {...more} />
 		</NextIntlClientProvider>
 	);
+	const view = render(ui(props));
+	return { rerender: () => view.rerender(ui(props)) };
 }
+const done = () => JSON.parse(screen.getByTestId('done').textContent!);
 const button = (name: string | RegExp) => screen.getByRole('button', { name });
 const click = (name: string | RegExp) => fireEvent.click(button(name));
 const heading = (name: string) => screen.findByRole('heading', { level: 1, name });
 const bars = () => screen.getByRole('progressbar').getAttribute('aria-label');
 const photosUp = (photos: Emitted[] = [uploaded]) => act(() => api.picker.onChange!(photos));
+/** Enter in a text field as browsers do it (implicit submission): a click on the form's first submit button. */
+const enter = (field: HTMLElement) =>
+	fireEvent.click(
+		(field as HTMLInputElement).form!.querySelector(
+			'button:not([type]), button[type="submit"], input[type="submit"]'
+		)!
+	);
 
 /** From the pet step to the review with a new pet: photos, Pes in Rjava, the picker's point, now, no reward. */
 async function toReview() {
@@ -141,6 +199,7 @@ beforeEach(() => {
 	api.pets = [];
 	api.picker.photos = [];
 	api.consent = { analytics: true };
+	api.auth = { gate: 'ok', me, isVerified: true };
 	api.store.clear();
 	api.createReport.mockResolvedValue({ id: 'r1', short_code: 'Hk3vT9qP', moderation_state: 'visible', warnings: [] });
 	api.updateReport.mockResolvedValue({ short_code: 'Pq7xYz12' });
@@ -182,7 +241,8 @@ describe('LostFlow', () => {
 		);
 		fireEvent.click(screen.getByRole('button', { name: 'Rjava' }));
 		fireEvent.change(screen.getByRole('textbox', { name: sl.pets.name_label }), { target: { value: 'Medo' } });
-		click(t.next);
+		// Enter in the name field advances like Naprej.
+		enter(screen.getByRole('textbox', { name: sl.pets.name_label }));
 
 		await heading(sl.location.title_lost);
 		expect(bars()).toBe('Korak 4 od 7');
@@ -210,7 +270,13 @@ describe('LostFlow', () => {
 
 		click(t.publish);
 		await heading(t.done_title);
-		expect(screen.getByText(t.done_lede_named.replace('{name}', 'Medo'))).toBeTruthy();
+		expect(done()).toEqual({
+			code: 'Hk3vT9qP',
+			name: 'Medo',
+			species: 'dog',
+			point: COARSE,
+			unverified: false,
+		});
 		expect(api.createReport).toHaveBeenCalledTimes(1);
 		const { body, idempotencyKey } = api.createReport.mock.calls[0]![0];
 		expect(idempotencyKey).toMatch(/^[0-9a-f-]{36}$/);
@@ -464,6 +530,10 @@ describe('LostFlow', () => {
 	it.each([
 		['a gateway 502', { status: 502, data: { code: 'INTERNAL', message: 'bad gateway' } }],
 		['a 429', { status: 429, data: { code: 'RATE_LIMITED', message: 'x', details: { retry_after_s: 90 } } }],
+		[
+			'a 409 CONFLICT (the same key still in progress, C1)',
+			{ status: 409, data: { code: 'CONFLICT', message: 'x' } },
+		],
 	])('keeps the key after %s, so the retry cannot create a second report', async (_name, failure) => {
 		api.createReport.mockRejectedValueOnce(failure);
 		show();
@@ -533,6 +603,24 @@ describe('LostFlow', () => {
 		expect(api.createReport).toHaveBeenCalledTimes(1);
 	});
 
+	it('keeps Publish closed once the report is created, until the confirmation shows (one POST)', async () => {
+		let cleared!: () => void;
+		api.clearPhotoDraft.mockImplementationOnce(() => new Promise<void>((resolve) => (cleared = resolve)));
+		show();
+		await toReview();
+		const form = screen.getByRole('heading', { level: 1, name: t.review_title }).closest('form')!;
+		click(t.publish);
+		// The POST has answered: the flow is clearing the draft on its way to the confirmation.
+		await waitFor(() => expect(api.clearPhotoDraft).toHaveBeenCalled());
+		cleared();
+		// The send has returned and React has not shown the confirmation yet (microtasks only): a second press now.
+		for (let i = 0; i < 20; i++) await Promise.resolve();
+		form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+		await heading(t.done_title);
+		await new Promise((resolve) => setTimeout(resolve, 20));
+		expect(api.createReport).toHaveBeenCalledTimes(1);
+	});
+
 	it('forgets the open search found for one pet when another pet is chosen', async () => {
 		const other = { ...pet, id: 'pet-2', name: 'Muri' };
 		api.pets = [pet, other];
@@ -580,5 +668,150 @@ describe('LostFlow', () => {
 		await heading(t.when_title);
 		expect(bars()).toBe('Korak 5 od 7');
 		expect(screen.getByText(t.draft_saved)).toBeTruthy();
+	});
+
+	describe('signed out (C3 draft hand-off)', () => {
+		const kept: Emitted = { key: 'k1', preview: 'blob:1', status: 'kept' };
+		const HANDOFF = new Date(2026, 9, 16, 14, 20).getTime();
+		const draft = (handoff?: number) => ({
+			step: 'review',
+			values: {
+				pet: 'new',
+				species: 'cat',
+				colours: ['black'],
+				location: COARSE,
+				radius_m: 1000,
+				when: 'now',
+				date: '',
+				time: '',
+			},
+			at: HANDOFF,
+			handoff,
+		});
+		beforeEach(() => {
+			// The session is not wired on a signed-out page until the gate opens: it never resolves.
+			api.auth = { gate: 'loading', me: null, isVerified: false };
+		});
+
+		/** Pes in Rjava with a kept photo, to the review. */
+		async function fillToReview() {
+			await heading(t.pet_title);
+			expect(screen.getAllByRole('radio')).toHaveLength(1);
+			expect(screen.getByRole('radio', { name: t.pet_enter }).getAttribute('aria-checked')).toBe('true');
+			click(t.next);
+			await heading(t.photos_title);
+			// Nothing leaves the browser before sign-in: the picker keeps the photos.
+			expect(api.picker.hold).toBe(true);
+			photosUp([kept]);
+			click(t.next);
+			await heading(t.details_title);
+			fireEvent.click(
+				within(screen.getByRole('radiogroup', { name: sl.pets.species_label })).getByRole('radio', {
+					name: 'Pes',
+				})
+			);
+			fireEvent.click(screen.getByRole('button', { name: 'Rjava' }));
+			click(t.next);
+			await heading(sl.location.title_lost);
+			click(sl.location.confirm);
+			await heading(t.when_title);
+			click(t.next);
+			await heading(t.circumstances_title);
+			click(t.next);
+			await heading(t.review_title);
+		}
+
+		it('lets a visitor fill every step, then asks for an account at Publish with the draft kept and marked', async () => {
+			show({ signedIn: false });
+			await fillToReview();
+			click(t.publish);
+
+			expect(await screen.findByRole('dialog', { name: t.gate_title })).toBeTruthy();
+			expect(screen.getByText(t.gate_body)).toBeTruthy();
+			expect(screen.queryByText(t.photos_wait)).toBeNull();
+			expect(api.createReport).not.toHaveBeenCalled();
+			expect(api.store.get('draft:lost:lost')).toMatchObject({
+				step: 'review',
+				values: { species: 'dog', colours: ['brown'], location: COARSE },
+				handoff: Date.now(),
+			});
+
+			// Prekliči: the draft stays, without the mark.
+			act(() => api.gate.onOpenChange!(false));
+			expect(screen.queryByRole('dialog')).toBeNull();
+			await waitFor(() =>
+				expect((api.store.get('draft:lost:lost') as { handoff?: number }).handoff).toBeUndefined()
+			);
+			expect(api.store.get('draft:lost:lost')).toMatchObject({ step: 'review', values: { species: 'dog' } });
+		});
+
+		it('publishes once signed in, after the kept photos are uploaded by the new account', async () => {
+			const view = show({ signedIn: false });
+			await fillToReview();
+			click(t.publish);
+			await screen.findByRole('dialog', { name: t.gate_title });
+
+			// Signed in without leaving the page (another tab): the gate's onReady.
+			api.auth = { gate: 'ok', me, isVerified: false };
+			view.rerender();
+			expect(api.picker.hold).toBe(false);
+			act(() => api.gate.onReady!());
+			photosUp([{ ...kept, status: 'uploading' }]);
+			expect(button(t.publishing)).toBeTruthy();
+			expect(api.createReport).not.toHaveBeenCalled();
+
+			photosUp();
+			await heading(t.done_title);
+			expect(api.createReport).toHaveBeenCalledTimes(1);
+			expect(api.createReport.mock.calls[0]![0].body).toMatchObject({
+				species: 'dog',
+				colours: ['brown'],
+				photo_ids: ['photo-1'],
+			});
+			expect(done()).toMatchObject({ unverified: true });
+			expect(api.store.size).toBe(0);
+		});
+
+		it('back from sign-in or sign-up, restores the marked draft at the review and publishes it by itself', async () => {
+			api.store.set('draft:lost:lost', draft(HANDOFF));
+			api.auth = { gate: 'ok', me, isVerified: true };
+			vi.setSystemTime(new Date(2026, 9, 16, 14, 32));
+			show();
+
+			await heading(t.review_title);
+			expect(screen.queryByText(t.resume_title)).toBeNull();
+			expect(api.picker.hold).toBe(false);
+			// The picker restores the photo from this browser and uploads it; the send waits for it.
+			photosUp([{ ...kept, status: 'uploading' }]);
+			expect(api.createReport).not.toHaveBeenCalled();
+			photosUp();
+
+			await heading(t.done_title);
+			expect(api.createReport).toHaveBeenCalledTimes(1);
+			const { body } = api.createReport.mock.calls[0]![0];
+			// "Pravkar" is when Publish was pressed, not after the sign-in detour.
+			expect(body).toMatchObject({
+				species: 'cat',
+				colours: ['black'],
+				location: COARSE,
+				event_at: new Date(HANDOFF).toISOString(),
+				photo_ids: ['photo-1'],
+			});
+			expect(api.store.size).toBe(0);
+		});
+
+		it.each([
+			['still signed out', false, HANDOFF],
+			['signed in, a day later', true, HANDOFF - 25 * 60 * 60 * 1000],
+			['signed in, an unmarked draft', true, undefined],
+		])('asks to resume instead when %s', async (_name, signedIn, handoff) => {
+			api.store.set('draft:lost:lost', draft(handoff));
+			if (signedIn) api.auth = { gate: 'ok', me, isVerified: true };
+			show({ signedIn });
+			expect(await screen.findByText(t.resume_title)).toBeTruthy();
+			photosUp();
+			await new Promise((resolve) => setTimeout(resolve, 20));
+			expect(api.createReport).not.toHaveBeenCalled();
+		});
 	});
 });

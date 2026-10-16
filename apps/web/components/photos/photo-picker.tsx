@@ -33,6 +33,8 @@ type PhotoPickerProps = {
 	onExif?: (exif: PhotoExif) => void;
 	/** Runs before each upload: the anonymous sign-in (C7) of a finder without an account (P7). */
 	beforeUpload?: () => Promise<unknown>;
+	/** true keeps new photos in this browser and uploads them once false, e.g. until a lost report has an account (C3). */
+	hold?: boolean;
 	className?: string;
 };
 
@@ -40,14 +42,15 @@ type PhotoPickerProps = {
  * Photo step of P6 and P7 (FR-003): camera and gallery tiles on touch screens, a file button with a drop area on
  * desktop, then a row per photo with its preview, upload progress, retry, reorder and remove. Up to 5 photos.
  */
-export function PhotoPicker({ draft, saved, onChange, onExif, beforeUpload, className }: PhotoPickerProps) {
+export function PhotoPicker({ draft, saved, onChange, onExif, beforeUpload, hold, className }: PhotoPickerProps) {
 	const t = useTranslations('photos');
 	const message = useTranslations();
 	const { photos, preparing, notice, justUploaded, add, remove, move, retry } = usePhotoUploads(
 		draft,
 		onExif,
 		saved,
-		beforeUpload
+		beforeUpload,
+		hold
 	);
 	const root = React.useRef<HTMLDivElement>(null);
 	const camera = React.useRef<HTMLInputElement>(null);
@@ -129,6 +132,8 @@ export function PhotoPicker({ draft, saved, onChange, onExif, beforeUpload, clas
 					{photos.map((photo, index) => {
 						const n = index + 1;
 						const percent = Math.round(photo.progress * 100);
+						// A held photo is kept in this browser; it reads as ready, its upload comes later.
+						const ready = photo.status === 'uploaded' || photo.status === 'kept';
 						return (
 							<li
 								key={photo.key}
@@ -146,9 +151,7 @@ export function PhotoPicker({ draft, saved, onChange, onExif, beforeUpload, clas
 									className="size-20 rounded-row bg-muted object-cover"
 								/>
 								<div>
-									{photo.status === 'uploaded' && index === 0 && (
-										<p className="text-sm font-bold">{t('cover')}</p>
-									)}
+									{ready && index === 0 && <p className="text-sm font-bold">{t('cover')}</p>}
 									{photo.status === 'uploading' && (
 										<>
 											<p className="text-sm">{t('uploading', { percent })}</p>
@@ -167,14 +170,9 @@ export function PhotoPicker({ draft, saved, onChange, onExif, beforeUpload, clas
 											</FieldError>
 										</>
 									)}
-									<div
-										className={cn(
-											'-ml-2.5 flex flex-wrap gap-1',
-											photo.status === 'uploaded' ? 'mt-2' : 'mt-1'
-										)}
-									>
+									<div className={cn('-ml-2.5 flex flex-wrap gap-1', ready ? 'mt-2' : 'mt-1')}>
 										{photo.status === 'failed' ? (
-											<Button variant="text" onClick={() => retry(photo.key)}>
+											<Button type="button" variant="text" onClick={() => retry(photo.key)}>
 												<ArrowClockwiseIcon weight="bold" aria-hidden="true" />
 												{t('retry')}
 											</Button>
@@ -182,6 +180,7 @@ export function PhotoPicker({ draft, saved, onChange, onExif, beforeUpload, clas
 											<>
 												{index > 0 && (
 													<Button
+														type="button"
 														variant="ghost"
 														size="icon"
 														data-move="-1"
@@ -196,6 +195,7 @@ export function PhotoPicker({ draft, saved, onChange, onExif, beforeUpload, clas
 												)}
 												{index < photos.length - 1 && (
 													<Button
+														type="button"
 														variant="ghost"
 														size="icon"
 														data-move="1"
@@ -210,7 +210,10 @@ export function PhotoPicker({ draft, saved, onChange, onExif, beforeUpload, clas
 												)}
 											</>
 										)}
+										{/* type="button" on every row button: the picker sits inside step forms, where an untyped
+										    button would be the default one and take Enter from the form's text fields. */}
 										<Button
+											type="button"
 											variant="ghost"
 											size="icon"
 											aria-label={t('remove', { n })}
