@@ -3,16 +3,15 @@ import type { Icon as PhosphorIcon } from 'phosphor-react-native';
 import { ChatCircleIcon } from 'phosphor-react-native/src/icons/ChatCircle';
 import { EyeIcon } from 'phosphor-react-native/src/icons/Eye';
 import { HeartIcon } from 'phosphor-react-native/src/icons/Heart';
-import { PencilSimpleIcon } from 'phosphor-react-native/src/icons/PencilSimple';
-import { PrinterIcon } from 'phosphor-react-native/src/icons/Printer';
 import * as React from 'react';
 import { View } from 'react-native';
 import { useTranslations } from 'use-intl';
 
 import { AuthGate } from '@/components/auth/gate';
-import type { ReportSlotProps } from '@/components/report/slots';
+import type { ReportSlotProps } from '@/components/report/slots/types';
 import { Button } from '@/components/ui/button';
 import { Icon } from '@/components/ui/icon';
+import { Text } from '@/components/ui/text';
 
 type Action = { label: string; icon: PhosphorIcon; onPress?: () => void };
 
@@ -26,10 +25,11 @@ type Action = { label: string; icon: PhosphorIcon; onPress?: () => void };
  * needs an account: the P16 gate first, then TASK-21.4 opens the conversation in `startContact`. "Žival je spet doma"
  * opens `r/[code]/reunited`; "Uredi" and "Plakat" are wired by TASK-26.5 and TASK-24.3.
  */
-export function SlotA({ report, children }: ReportSlotProps) {
+export function SlotA({ report, offline, children }: ReportSlotProps) {
 	const t = useTranslations('report');
 	const router = useRouter();
 	const [gate, setGate] = React.useState(false);
+	// TASK-21.4 fills this: it opens the conversation once the P16 gate is passed.
 	const startContact = React.useCallback(() => undefined, []);
 
 	const sighting: Action = {
@@ -45,22 +45,24 @@ export function SlotA({ report, children }: ReportSlotProps) {
 	const message: Action = { label: t('action_message'), icon: ChatCircleIcon, ...contact };
 	const mine: Action = { label: t('action_mine'), icon: HeartIcon, ...contact };
 
+	// Every action needs the network (the sighting flow does not queue through the outbox yet), so the saved copy
+	// disables them all and says why.
 	const [primary, ...secondary]: Action[] = report.is_mine
 		? [
 				{
 					label: t('owner_home'),
 					icon: HeartIcon,
+					// TODO(TASK-26.5): reunited screen
 					onPress: () => router.push(`/r/${report.short_code}/reunited` as Href),
 				},
-				{ label: t('owner_edit'), icon: PencilSimpleIcon },
-				{ label: t('owner_poster'), icon: PrinterIcon },
+				// Hidden until wired: "Uredi" by TASK-26.5, "Plakat" by TASK-24.3.
 			]
 		: { lost: [sighting, message], found: [mine, sighting], sighted: [message, mine] }[report.type];
 
 	return (
 		<View>
 			<View className="flex-row items-center gap-2">
-				<Button size="lg" className="flex-1 px-5" onPress={primary.onPress}>
+				<Button size="lg" className="flex-1 px-5" disabled={offline} onPress={primary.onPress}>
 					<Icon as={primary.icon} />
 					{primary.label}
 				</Button>
@@ -68,12 +70,23 @@ export function SlotA({ report, children }: ReportSlotProps) {
 			</View>
 			<View className="mt-1 flex-row">
 				{secondary.map((action) => (
-					<Button key={action.label} variant="text" className="flex-1" onPress={action.onPress}>
+					<Button
+						key={action.label}
+						variant="text"
+						className="flex-1"
+						disabled={offline}
+						onPress={action.onPress}
+					>
 						<Icon as={action.icon} />
 						{action.label}
 					</Button>
 				))}
 			</View>
+			{offline && (
+				<Text role="status" className="mt-2 text-center text-sm text-muted-foreground">
+					{t('action_offline')}
+				</Text>
+			)}
 			{!report.is_mine && (
 				<AuthGate
 					reason="contact"

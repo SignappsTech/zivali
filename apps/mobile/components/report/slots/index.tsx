@@ -1,25 +1,14 @@
 import type * as React from 'react';
-import type { StyleProp, ViewStyle } from 'react-native';
 
-import type { PublicReport, ReportOwnerView } from '@zivali/types';
 import { Ad } from '@/components/report/slots/ad';
 import { MatchesNote } from '@/components/report/slots/matches-note';
 import { NearHere } from '@/components/report/slots/near-here';
 import { SlotA } from '@/components/report/slots/slot-a';
 import { SlotB } from '@/components/report/slots/slot-b';
 import { SlotC } from '@/components/report/slots/slot-c';
+import type { DetailReport, ReportSlotProps } from '@/components/report/slots/types';
 
-/** The report a slot acts on: the public view, plus the manager fields when the viewer manages it (`is_mine`). */
-export type DetailReport = PublicReport & Partial<Omit<ReportOwnerView, keyof PublicReport>>;
-
-export type ReportSlotProps = {
-	report: DetailReport;
-	/** How the layout places the slot (slot B: the floating or the top bar button). */
-	className?: string;
-	style?: StyleProp<ViewStyle>;
-	/** Slot A puts this beside its primary action: the slot C overflow. */
-	children?: React.ReactNode;
-};
+export type { DetailReport, ReportSlotProps };
 
 /**
  * The P9 slots (named as in docs/design/pages/P9-report-detail.md). The detail screen owns the layout and renders
