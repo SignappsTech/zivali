@@ -2,6 +2,7 @@ import { useRouter } from 'expo-router';
 import { BellIcon } from 'phosphor-react-native/src/icons/Bell';
 import { BellRingingIcon } from 'phosphor-react-native/src/icons/BellRinging';
 import { CheckIcon } from 'phosphor-react-native/src/icons/Check';
+import { CloudArrowDownIcon } from 'phosphor-react-native/src/icons/CloudArrowDown';
 import { CookieIcon } from 'phosphor-react-native/src/icons/Cookie';
 import { CreditCardIcon } from 'phosphor-react-native/src/icons/CreditCard';
 import { QuestionIcon } from 'phosphor-react-native/src/icons/Question';
@@ -146,6 +147,14 @@ export default function ProfileTab() {
 			onPress={() => Linking.openURL(`${env.EXPO_PUBLIC_APP_URL}${locale === 'en' ? '/en/safety' : '/varnost'}`)}
 		/>
 	);
+	// The report cache serves the Map tab signed in or not (C17).
+	const offline = (
+		<MenuRow
+			icon={<Icon as={CloudArrowDownIcon} size={24} />}
+			title={t('profile.row_offline')}
+			onPress={() => router.push('/settings/offline')}
+		/>
+	);
 	const cookies = (
 		<MenuRow
 			icon={<Icon as={CookieIcon} size={24} />}
@@ -186,6 +195,7 @@ export default function ProfileTab() {
 							title={t('profile.nav_account')}
 							onPress={() => router.push('/settings/account')}
 						/>
+						{offline}
 						{cookies}
 						{help}
 						<SignOutRow />
@@ -200,6 +210,7 @@ export default function ProfileTab() {
 						/>
 						<View className="mt-10 gap-3">
 							<LanguageRow />
+							{offline}
 							{cookies}
 							{help}
 						</View>

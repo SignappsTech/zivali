@@ -1,11 +1,11 @@
 ---
 id: TASK-20.4
 title: 'Mobile match review: compare, confirm, reject'
-status: To Do
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:14'
-updated_date: '2026-10-14 22:42'
+updated_date: '2026-10-16 01:36'
 labels:
   - fe
   - 'est:M'
@@ -38,7 +38,7 @@ Design: P11 docs/design/pages/P11-match-review.md (mockup docs/design/mockups/P1
 Copy: docs/content/pages/P11-match-review.md
 Contracts: C8, C12 (in references); conventions in C1
 Review: tech-lead code review (full mode); run `pnpm verify` before reporting done.
-Branch: agent/task-20.4-matchreview-mob
+Branch: agent/task-20.4-match-mob
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Acceptance Criteria

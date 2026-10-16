@@ -20,7 +20,6 @@ import { signOutProviders } from '@/lib/auth';
 import SignIn from '@/app/auth/sign-in';
 import SignUp from '@/app/auth/sign-up';
 import AccountSettings from '@/app/settings/account';
-import HomeAreaSettings from '@/app/settings/home-area';
 import SettingsLayout from '@/app/settings/_layout';
 import { AuthGate } from '@/components/auth/gate';
 import { Button } from '@/components/ui/button';
@@ -117,7 +116,6 @@ const ljubljana = {
 };
 jest.mock('@zivali/api/geocode', () => ({
 	useReversePlaceQuery: () => ({ data: ljubljana }),
-	usePlaceSearch: (q: string) => ({ places: q.length >= 3 ? [ljubljana] : [], isFetching: false }),
 }));
 const mockGoogleSignIn = jest.fn();
 const mockGoogleSignOut = jest.fn();
@@ -160,7 +158,8 @@ const routes = {
 	'auth/callback': AuthCallback,
 	'settings/_layout': SettingsLayout,
 	'settings/account': AccountSettings,
-	'settings/home-area': HomeAreaSettings,
+	// The picker screen itself is covered in alerts.test.tsx.
+	'settings/home-area': () => <Text>home-area</Text>,
 };
 
 function Providers({ children }: { children: React.ReactNode }) {
@@ -456,22 +455,10 @@ describe('account', () => {
 		).toBeOnTheScreen();
 	});
 
-	test('the home area is searched, chosen and saved coarsened with the alert radius', async () => {
+	test('the home area row opens the home-area picker', async () => {
 		const result = await app('/settings/account');
 		await press(`${sl.profile.row_home_area}, ${sl.alerts.area_none}`);
 		expect(result.getPathname()).toBe('/settings/home-area');
-
-		await type(sl.location.search_label, 'Ljub');
-		await fireEvent.press(screen.getByRole('radio', { name: 'Ljubljana' }));
-		mockUpdateMe.mockResolvedValueOnce({});
-		await press(sl.location.save_area);
-
-		const patch = mockUpdateMe.mock.calls[0][0] as { home: { lat: number; lng: number }; home_radius_km: number };
-		expect(patch.home_radius_km).toBe(5);
-		// C6: never the place's own point, but within 30 m of it.
-		expect(patch.home).not.toEqual({ lat: ljubljana.lat, lng: ljubljana.lng });
-		expect(Math.abs(patch.home.lat - ljubljana.lat)).toBeLessThan(0.0003);
-		expect(result.getPathname()).toBe('/settings/account');
 	});
 
 	test('signed out, the account screens go back to Profile', async () => {

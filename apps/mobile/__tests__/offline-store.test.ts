@@ -196,7 +196,7 @@ describe('wipeLocalData', () => {
 		expect(mockKeychain.has('manage_tokens')).toBe(false);
 	});
 
-	test.each(['sign_out', 'user_request'] as const)(
+	test.each(['sign_out'] as const)(
 		'%s clears cache, areas, drafts, geofences and files but keeps the outbox and tokens',
 		async (reason) => {
 			jest.mocked(cacheQuietHours).mockClear();
@@ -218,6 +218,22 @@ describe('wipeLocalData', () => {
 			expect(mockKeychain.has(manageTokenKey('rep-1'))).toBe(true);
 		}
 	);
+
+	test('user_request clears the cache and geofences but keeps drafts and the outbox', async () => {
+		await wipeLocalData({ reason: 'user_request' });
+
+		for (const table of ['reports_cache', 'cache_areas', 'geofences', 'geofence_events']) {
+			expect(await count(table)).toBe(0);
+		}
+		expect(await count('drafts')).toBe(1);
+		expect(await count('outbox')).toBe(2);
+		expect(await count('outbox_photos')).toBe(1);
+		expect(thumbsDir.exists).toBe(false);
+		expect(pickerCacheDir.exists).toBe(false);
+		expect(draftsDir.exists).toBe(true);
+		expect(outboxDir.exists).toBe(true);
+		expect(mockKeychain.has(manageTokenKey('rep-1'))).toBe(true);
+	});
 
 	test('account_deleted also clears the outbox, its photos and the manage tokens', async () => {
 		await wipeLocalData({ reason: 'account_deleted' });

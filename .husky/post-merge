@@ -1,0 +1,5 @@
+# packages/i18n and packages/tokens dist are gitignored build outputs, and every checkout resolves its own dist first
+# (TASK-107). Rebuild them after a merge so a worktree never type-checks or tests against stale messages or tokens.
+# Takes about a second; never fails the git command.
+node packages/i18n/build.mjs > /dev/null 2>&1 || true
+node packages/tokens/build.mjs > /dev/null 2>&1 || true

@@ -301,6 +301,19 @@ describe('LocationPicker', () => {
 		expect(screen.queryByText(sl.location.exact_own, { includeHiddenElements: true })).toBeNull();
 	});
 
+	it('hands the stored point back unchanged when confirmed unmoved, so re-saving never coarsens it again', async () => {
+		const onChange = jest.fn();
+		await render(ui({ mode: 'alert', onChange, value: { point: RAW, radiusM: 5000 } }));
+		// The map settles on the stored point (within 1 m) and only the radius changes.
+		await panTo({ lat: RAW.lat + 0.000001, lng: RAW.lng });
+		await fireEvent(screen.getByRole('adjustable'), 'accessibilityAction', {
+			nativeEvent: { actionName: 'increment' },
+		});
+		await press(sl.location.save_area);
+		expect(confirmed(onChange)).toEqual({ point: RAW, radiusM: 7000, source: 'pin' });
+		expect(confirmed(onChange).point).toBe(RAW);
+	});
+
 	it('screen readers move the pin 100 m with the nudge buttons in place of the map', async () => {
 		await render(ui({ mode: 'found', value: { point: RAW } }));
 		const map = screen.getByRole('button', { name: `${sl.location.pin_a11y} ${sl.location.exact_own}` });
