@@ -16,7 +16,7 @@ import { EnquiryForm } from '@/components/partners/enquiry-form';
 import { ContentPage, h1Class, SpotIllustration } from '@/components/shell/page';
 import { noteClass } from '@/components/shelters/classes';
 import { Button } from '@/components/ui/button';
-import { regionOptions } from '@/lib/partners';
+import { clientMessages, regionOptions } from '@/lib/partners';
 import { absoluteUrl, breadcrumbLd, jsonLd, pageMetadata } from '@/lib/seo';
 import { cn } from '@/lib/utils';
 
@@ -30,7 +30,6 @@ const ANCHORS = {
 } as const;
 
 const FAQ = [1, 2, 3, 4, 5, 6] as const;
-const CLIENT_KEYS = /^(region_|stat_|form_|err_|success_|limited$|captcha_failed$|server_error$)/;
 const sectionClass = 'grid scroll-mt-6 gap-8';
 
 export async function generateMetadata({ params }: PageProps<'/[locale]/advertise'>): Promise<Metadata> {
@@ -69,11 +68,11 @@ export default async function AdvertisePage({ params }: PageProps<'/[locale]/adv
 	]);
 	const id = ANCHORS[locale];
 	const faq = FAQ.map((n) => [t(`faq_${n}_q`), t(`faq_${n}_a`)] as const);
-	const partners = Object.fromEntries(Object.entries(messages.partners).filter(([key]) => CLIENT_KEYS.test(key)));
 	const url = absoluteUrl(locale, '/advertise');
 
+	// Around the whole page, so both islands share one copy of the shell strings; server components ignore it.
 	return (
-		<PageMessages messages={{ partners }}>
+		<PageMessages messages={{ partners: clientMessages(messages.partners) }}>
 			<ContentPage>
 				<div className="grid gap-16 lg:gap-24">
 					<section className="grid items-center gap-8 lg:grid-cols-12 lg:gap-12">

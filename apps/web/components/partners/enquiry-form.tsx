@@ -163,98 +163,97 @@ export function EnquiryForm({ regions }: { regions: { slug: string; name: string
 						<p className="min-w-0 flex-1">{t(shown.key)}</p>
 					</div>
 				)}
-				<fieldset disabled={busy} className="grid min-w-0 gap-6">
-					<FormField label={t('form_company')} error={errors.company}>
-						<Input
-							ref={companyRef}
-							name="organization"
-							autoComplete="organization"
-							maxLength={120}
-							value={values.company}
-							onChange={set('company')}
+				<FormField label={t('form_company')} error={errors.company} disabled={busy}>
+					<Input
+						ref={companyRef}
+						name="organization"
+						autoComplete="organization"
+						maxLength={120}
+						value={values.company}
+						onChange={set('company')}
+					/>
+				</FormField>
+				<FormField label={t('form_name')} error={errors.name} disabled={busy}>
+					<Input
+						ref={nameRef}
+						name="name"
+						autoComplete="name"
+						maxLength={120}
+						value={values.name}
+						onChange={set('name')}
+					/>
+				</FormField>
+				<FormField label={t('form_email')} error={errors.email} disabled={busy}>
+					<Input
+						ref={emailRef}
+						type="email"
+						name="email"
+						autoComplete="email"
+						inputMode="email"
+						autoCapitalize="none"
+						spellCheck={false}
+						maxLength={254}
+						value={values.email}
+						onChange={set('email')}
+					/>
+				</FormField>
+				<FormField label={t('form_phone')} error={errors.phone} disabled={busy}>
+					<Input
+						ref={phoneRef}
+						type="tel"
+						name="tel"
+						autoComplete="tel"
+						maxLength={30}
+						value={values.phone}
+						onChange={set('phone')}
+					/>
+				</FormField>
+				<FormField label={t('form_interest')} disabled={busy}>
+					<NativeSelect
+						name="interest"
+						value={interest}
+						onChange={(event) => setInterest(event.target.value as LeadInterest)}
+					>
+						<option value="ad">{t('form_interest_ad')}</option>
+						<option value="vet_partner">{t('form_interest_vet')}</option>
+						<option value="unsure">{t('form_interest_unsure')}</option>
+					</NativeSelect>
+				</FormField>
+				<FormField label={t('form_region')} disabled={busy}>
+					<NativeSelect name="region" value={region} onChange={(event) => setRegion(event.target.value)}>
+						<option value="">{t('form_region_all')}</option>
+						{regions.map(({ slug, name }) => (
+							<option key={slug} value={slug}>
+								{name}
+							</option>
+						))}
+					</NativeSelect>
+				</FormField>
+				<FormField label={t('form_message')} error={errors.message} disabled={busy}>
+					<Textarea
+						ref={messageRef}
+						name="message"
+						rows={4}
+						placeholder={t('form_message_placeholder')}
+						value={values.message}
+						onChange={set('message')}
+					/>
+				</FormField>
+				<div>
+					<label className="flex min-h-11 cursor-pointer items-start gap-3 py-2.5">
+						<Checkbox
+							ref={consentRef}
+							name="consent"
+							checked={consent}
+							disabled={busy}
+							onCheckedChange={(checked) => setConsent(checked === true)}
+							aria-invalid={errors.consent ? true : undefined}
+							aria-describedby={errors.consent ? 'enquiry-consent-error' : undefined}
 						/>
-					</FormField>
-					<FormField label={t('form_name')} error={errors.name}>
-						<Input
-							ref={nameRef}
-							name="name"
-							autoComplete="name"
-							maxLength={120}
-							value={values.name}
-							onChange={set('name')}
-						/>
-					</FormField>
-					<FormField label={t('form_email')} error={errors.email}>
-						<Input
-							ref={emailRef}
-							type="email"
-							name="email"
-							autoComplete="email"
-							inputMode="email"
-							autoCapitalize="none"
-							spellCheck={false}
-							maxLength={254}
-							value={values.email}
-							onChange={set('email')}
-						/>
-					</FormField>
-					<FormField label={t('form_phone')} error={errors.phone}>
-						<Input
-							ref={phoneRef}
-							type="tel"
-							name="tel"
-							autoComplete="tel"
-							maxLength={30}
-							value={values.phone}
-							onChange={set('phone')}
-						/>
-					</FormField>
-					<FormField label={t('form_interest')}>
-						<NativeSelect
-							name="interest"
-							value={interest}
-							onChange={(event) => setInterest(event.target.value as LeadInterest)}
-						>
-							<option value="ad">{t('form_interest_ad')}</option>
-							<option value="vet_partner">{t('form_interest_vet')}</option>
-							<option value="unsure">{t('form_interest_unsure')}</option>
-						</NativeSelect>
-					</FormField>
-					<FormField label={t('form_region')}>
-						<NativeSelect name="region" value={region} onChange={(event) => setRegion(event.target.value)}>
-							<option value="">{t('form_region_all')}</option>
-							{regions.map(({ slug, name }) => (
-								<option key={slug} value={slug}>
-									{name}
-								</option>
-							))}
-						</NativeSelect>
-					</FormField>
-					<FormField label={t('form_message')} error={errors.message}>
-						<Textarea
-							ref={messageRef}
-							name="message"
-							rows={4}
-							placeholder={t('form_message_placeholder')}
-							value={values.message}
-							onChange={set('message')}
-						/>
-					</FormField>
-					<div>
-						<label className="flex min-h-11 cursor-pointer items-start gap-3 py-2.5">
-							<Checkbox
-								ref={consentRef}
-								name="consent"
-								checked={consent}
-								onCheckedChange={(checked) => setConsent(checked === true)}
-								aria-invalid={errors.consent ? true : undefined}
-								aria-describedby={errors.consent ? 'enquiry-consent-error' : undefined}
-							/>
-							<span>{t('form_consent')}</span>
-						</label>
-						{errors.consent && <FieldError id="enquiry-consent-error">{errors.consent}</FieldError>}
-					</div>
-				</fieldset>
+						<span>{t('form_consent')}</span>
+					</label>
+					{errors.consent && <FieldError id="enquiry-consent-error">{errors.consent}</FieldError>}
+				</div>
 				{captcha.widget}
 				<div className="grid justify-items-start gap-3">
 					<Button type="submit" size="lg" loading={busy}>

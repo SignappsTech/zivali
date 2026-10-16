@@ -20,6 +20,12 @@ export const getPartnerStats = cache(async (locale: Locale): Promise<PartnerStat
 	}
 });
 
+const CLIENT_KEYS = /^(region_|stat_|form_|err_|success_|limited$|captcha_failed$|server_error$)/;
+
+/** The `partners` strings of the two client islands (region switch, enquiry form); the page copy stays on the server. */
+export const clientMessages = (messages: Record<string, string>) =>
+	Object.fromEntries(Object.entries(messages).filter(([key]) => CLIENT_KEYS.test(key)));
+
 /** The 12 GURS statistical regions (supabase/seed/geo/regions.geojson): the API's `region_slug` and our names. */
 export const REGIONS: Record<string, Record<Locale, string>> = {
 	pomurska: { sl: 'Pomurska', en: 'Mura' },
