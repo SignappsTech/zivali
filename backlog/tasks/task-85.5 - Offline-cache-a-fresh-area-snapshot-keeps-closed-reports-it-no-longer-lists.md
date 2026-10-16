@@ -1,11 +1,11 @@
 ---
 id: TASK-85.5
 title: 'Offline cache: a fresh area snapshot keeps closed reports it no longer lists'
-status: In Progress
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-16 02:42'
-updated_date: '2026-10-16 02:58'
+updated_date: '2026-10-16 03:09'
 labels:
   - bug
   - 'est:XS'
@@ -22,11 +22,13 @@ Found by TASK-85.4 (QA), AC #4 (closed, hidden or expired reports are removed wh
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 After a complete sync with since = null (first sync, or an area moved or resized by setCacheArea), cached rows inside that area that the snapshot does not list are deleted, not marked seen; the QA test.failing 'a fresh snapshot drops cached rows inside the area it no longer lists' in apps/mobile/__tests__/offline-sync.test.ts passes as a plain test
+- [x] #1 After a complete sync with since = null (first sync, or an area moved or resized by setCacheArea), cached rows inside that area that the snapshot does not list are deleted, not marked seen; the QA test.failing 'a fresh snapshot drops cached rows inside the area it no longer lists' in apps/mobile/__tests__/offline-sync.test.ts passes as a plain test
 <!-- AC:END -->
 
 ## Implementation Notes
 
 <!-- SECTION:NOTES:BEGIN -->
 Delete only after the whole snapshot completed (has_more pages), and keep rows the snapshot did upsert on earlier pages. The existing 'limits' tests in offline-sync.test.ts seed rows with upsertReports and then run a snapshot sync; they need a since cursor (or rows outside the area) once this is fixed. Applies to rows written by browsing (useReportSearch/useReport) before the area's first snapshot too.
+
+Branch: agent/task-85.5-cache-fixes
 <!-- SECTION:NOTES:END -->

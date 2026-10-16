@@ -3,11 +3,11 @@ id: TASK-85.6
 title: >-
   Offline cache: list and detail views write closed and non-visible reports into
   the public cache
-status: In Progress
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-16 02:43'
-updated_date: '2026-10-16 02:58'
+updated_date: '2026-10-16 03:09'
 labels:
   - bug
   - 'est:XS'
@@ -24,5 +24,11 @@ Found by TASK-85.4 (QA), AC #1 (active reports only), AC #4 (closed or hidden re
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 lib/data/reports.ts caches only live public reports (status open or matched; an owner view only when moderation_state is visible), or the sync removes such rows; a closed report from 'Pokaži zaključene' or a shared link and an owner's held report are gone from reports_cache after the next refresh past cache.max_age_days; the QA test.failing 'a closed report or a held owner view seen online does not stay in the cache' in apps/mobile/__tests__/offline-sync.test.ts passes as a plain test
+- [x] #1 lib/data/reports.ts caches only live public reports (status open or matched; an owner view only when moderation_state is visible), or the sync removes such rows; a closed report from 'Pokaži zaključene' or a shared link and an owner's held report are gone from reports_cache after the next refresh past cache.max_age_days; the QA test.failing 'a closed report or a held owner view seen online does not stay in the cache' in apps/mobile/__tests__/offline-sync.test.ts passes as a plain test
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+Branch: agent/task-85.5-cache-fixes
+<!-- SECTION:NOTES:END -->

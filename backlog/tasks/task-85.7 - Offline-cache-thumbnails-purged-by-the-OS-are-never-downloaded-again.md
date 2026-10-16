@@ -1,11 +1,11 @@
 ---
 id: TASK-85.7
 title: 'Offline cache: thumbnails purged by the OS are never downloaded again'
-status: In Progress
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-16 02:44'
-updated_date: '2026-10-16 02:58'
+updated_date: '2026-10-16 03:09'
 labels:
   - bug
   - 'est:XS'
@@ -22,5 +22,11 @@ Found by TASK-85.4 (QA), AC #1 (cached with thumbnails), ADR-019 (thumbnails in 
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 When a cached row's thumb_path file no longer exists (the OS cleared Paths.cache/thumbs, ADR-019 purgeable), the next sync on Wi-Fi (or mobile data when allowed) downloads it again and cacheBytes() no longer counts the missing bytes; offline rows without a file fall back to the placeholder instead of a dead file URI; the QA test.failing 'a thumbnail the OS purged is downloaded again on the next Wi-Fi sync' in apps/mobile/__tests__/offline-sync.test.ts passes as a plain test
+- [x] #1 When a cached row's thumb_path file no longer exists (the OS cleared Paths.cache/thumbs, ADR-019 purgeable), the next sync on Wi-Fi (or mobile data when allowed) downloads it again and cacheBytes() no longer counts the missing bytes; offline rows without a file fall back to the placeholder instead of a dead file URI; the QA test.failing 'a thumbnail the OS purged is downloaded again on the next Wi-Fi sync' in apps/mobile/__tests__/offline-sync.test.ts passes as a plain test
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+Branch: agent/task-85.5-cache-fixes
+<!-- SECTION:NOTES:END -->
