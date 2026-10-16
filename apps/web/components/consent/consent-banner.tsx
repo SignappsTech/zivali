@@ -1,10 +1,11 @@
 'use client';
 
-import { useTranslations } from 'next-intl';
+import NextLink from 'next/link';
 import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
 
-import { CONSENT_VERSION, type ConsentState, getConsent, setConsent } from '@zivali/analytics';
-import { Link } from '@/i18n/navigation';
+import { getConsent, setConsent } from '@zivali/analytics';
+
+import type { ConsentCopy } from './copy';
 
 /** The footer's "Cookie settings" button dispatches this on `window`; the banner opens the Customise view. */
 export const OPEN_COOKIE_SETTINGS = 'zz:cookie-settings';
@@ -22,22 +23,25 @@ type View = 'closed' | 'first' | 'custom';
 /**
  * P17 consent banner (web): bottom-left card on lg, bottom sheet below. A non-modal labelled dialog, focus on its
  * heading. Escape or ignoring it keeps everything denied. Opened from the footer, it starts in the Customise view with
- * the stored choice. The server reads the cookie (`prompt`, `stored`: app/[locale]/layout.tsx), so a first view is in
- * the HTML and paints with the page: rendered after hydration, it was the LCP element, seconds late (TASK-90.4).
+ * the stored choice. The server reads the cookie (`prompt`) and makes the copy (`copy`, `policyHref`:
+ * app/[locale]/layout.tsx), so a first view is in the HTML and paints with the page: rendered after hydration, it was
+ * the LCP element, seconds late (TASK-90.4); and the banner ships no translator (TASK-90.7).
  */
-export function ConsentBanner({ prompt = false, stored = null }: { prompt?: boolean; stored?: ConsentState | null }) {
-	const t = useTranslations('consent');
+export function ConsentBanner({
+	prompt = false,
+	copy,
+	policyHref,
+}: {
+	prompt?: boolean;
+	copy: ConsentCopy;
+	policyHref: string;
+}) {
+	const t = (key: Exclude<keyof ConsentCopy, 'reask'>) => copy[key];
 	const [view, setView] = useState<View>(prompt ? 'first' : 'closed');
 	const [analytics, setAnalytics] = useState(false);
 	const [saved, setSaved] = useState(false);
 	const [fromSettings, setFromSettings] = useState(false);
-	const [reask, setReask] = useState(() => {
-		if (!prompt || !stored) return null;
-		// Version bump: only a documented change_<v> is worth saying; otherwise the choice expired by age.
-		if (stored.v === CONSENT_VERSION) return t('reask_year');
-		const key = `change_${CONSENT_VERSION}` as never; // a short phrase added to both catalogues with each bump
-		return t.has(key) ? t('reask_changed', { change: t(key) }) : null;
-	});
+	const [reask, setReask] = useState(copy.reask);
 	const heading = useRef<HTMLHeadingElement>(null);
 	const opener = useRef<HTMLElement | null>(null);
 
@@ -108,13 +112,13 @@ export function ConsentBanner({ prompt = false, stored = null }: { prompt?: bool
 							<p id="consent-body" className="mt-2 text-muted-foreground">
 								{reask && <>{reask} </>}
 								{t('body_web')}{' '}
-								<Link
-									href="/cookies"
+								<NextLink
+									href={policyHref}
 									prefetch={false}
 									className="text-primary underline underline-offset-4"
 								>
 									{t('policy_link')}
-								</Link>
+								</NextLink>
 							</p>
 							<div className="mt-4 flex flex-col gap-3 lg:flex-row">
 								<button type="button" className={button} onClick={() => choose(false)}>

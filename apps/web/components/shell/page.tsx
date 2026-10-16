@@ -1,7 +1,7 @@
 import { ArrowClockwiseIcon } from '@phosphor-icons/react/dist/ssr/ArrowClockwise';
 import { MapTrifoldIcon } from '@phosphor-icons/react/dist/ssr/MapTrifold';
 import { WarningCircleIcon } from '@phosphor-icons/react/dist/ssr/WarningCircle';
-import { useTranslations } from 'next-intl';
+import { type Locale, useLocale, useTranslations } from 'next-intl';
 import type * as React from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -30,6 +30,19 @@ export function LogoMark({ className, tone = 'fill-primary stroke-primary' }: { 
 		</svg>
 	);
 }
+
+/** LanguageSwitch's strings, made where the switch is rendered: the switch itself ships no translator (TASK-90.7). */
+export function useLanguageLabels() {
+	const t = useTranslations('nav');
+	const name = (locale: Locale) => t(`language_${locale}_full`);
+
+	return {
+		label: t('language_label', { current: name(useLocale()) }),
+		short: { sl: t('language_sl'), en: t('language_en') },
+		full: { sl: name('sl'), en: name('en') },
+	};
+}
+export type LanguageLabels = ReturnType<typeof useLanguageLabels>;
 
 /** Logo mark and wordmark, a link home named by `nav.home_label`. Below 360 px only the mark shows. */
 export function Logo({ small = false, className }: { small?: boolean; className?: string }) {
@@ -200,18 +213,6 @@ export function ErrorPage({ status, onRetry }: { status: keyof typeof ERROR_COPY
 				)}
 			</div>
 		</div>
-	);
-}
-
-/** The 500 page for app/[locale]/error.tsx, which loads it only when a page fails. */
-export function ServerErrorPage({ onRetry }: { onRetry: () => void }) {
-	const t = useTranslations('errors');
-
-	return (
-		<ContentPage>
-			<title>{`${t('page_500_doc_title')} · Najdimo`}</title>
-			<ErrorPage status={500} onRetry={onRetry} />
-		</ContentPage>
 	);
 }
 
