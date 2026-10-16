@@ -12,6 +12,7 @@
 	"link_emailed": "Povezavo smo poslali tudi na vaš e-naslov.",
 	"link_copy": "Kopiraj povezavo",
 	"link_copied": "Povezava je kopirana.",
+	"link_qr_alt": "Koda QR z zasebno povezavo do vaše prijave",
 	"status_found": "Najdena",
 	"status_sighted": "Opažena",
 	"manage_title": "Vaša prijava",
@@ -108,5 +109,9 @@
 	"server_busy_queued": "Strežnik je trenutno zaseden. Poskusili bomo znova samodejno.",
 	"cancel_queued_title": "Prekličete pošiljanje?",
 	"cancel_queued_body": "Prijavo izbrišemo s te naprave in je ne pošljemo.",
-	"cancel_queued_keep": "Obdrži prijavo"
+	"cancel_queued_keep": "Obdrži prijavo",
+	"flow_label_found": "Prijava najdene živali",
+	"create_account": "Ustvari račun in obdrži prijavo",
+	"seo_title": "Našli ste psa ali mačko? Prijava brez računa · Najdimo",
+	"seo_description": "Našli ali videli ste psa ali mačko? Prijava vzame manj kot minuto in ne potrebuje računa. Vaša telefonska številka ostane skrita."
 }

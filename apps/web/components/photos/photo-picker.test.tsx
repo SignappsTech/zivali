@@ -173,6 +173,52 @@ describe('PhotoPicker', () => {
 		expect(upload).toHaveBeenCalledTimes(2);
 	});
 
+	it("runs beforeUpload (the finder's anonymous sign-in) before each upload; its failure fails the upload", async () => {
+		const order: string[] = [];
+		const beforeUpload = vi
+			.fn()
+			.mockImplementationOnce(async () => {
+				order.push('session');
+				throw new ApiError('CAPTCHA_FAILED', 'CAPTCHA_FAILED');
+			})
+			.mockImplementation(async () => void order.push('session'));
+		upload.mockImplementation(async () => {
+			order.push('upload');
+			return { photoId: 'photo-1' };
+		});
+		renderPicker({ beforeUpload });
+
+		pick(file(1));
+		expect(await screen.findByText(sl.photos.captcha_failed)).toBeTruthy();
+		expect(upload).not.toHaveBeenCalled();
+		fireEvent.click(screen.getByRole('button', { name: 'Poskusi znova' }));
+		expect(await screen.findByText('Naslovna fotografija')).toBeTruthy();
+		expect(order).toEqual(['session', 'session', 'upload']);
+	});
+
+	it('retries a failed captcha after 60 s (C7), not as a generic photo failure', async () => {
+		vi.useFakeTimers({ shouldAdvanceTime: true });
+		try {
+			const beforeUpload = vi
+				.fn()
+				.mockRejectedValueOnce(new ApiError('CAPTCHA_FAILED', 'CAPTCHA_FAILED'))
+				.mockResolvedValue(undefined);
+			upload.mockResolvedValue({ photoId: 'photo-1' });
+			renderPicker({ beforeUpload });
+
+			pick(file(1));
+			expect(await screen.findByText(sl.photos.captcha_failed)).toBeTruthy();
+			expect(screen.queryByText(sl.photos.failed)).toBeNull();
+			await act(async () => void vi.advanceTimersByTime(59_000));
+			expect(beforeUpload).toHaveBeenCalledTimes(1);
+			await act(async () => void vi.advanceTimersByTime(2_000));
+			expect(await screen.findByText('Naslovna fotografija')).toBeTruthy();
+			expect(upload).toHaveBeenCalledTimes(1);
+		} finally {
+			vi.useRealTimers();
+		}
+	});
+
 	it('retries a dropped upload with backoff, on "Poskusi znova" and when back online', async () => {
 		upload.mockRejectedValue(new ApiError('NETWORK', 'Upload failed'));
 		renderPicker();
