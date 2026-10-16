@@ -91,7 +91,27 @@ beforeAll(async () => {
 			public_thumb_url: position === 2 ? null : `https://media.test/r/${lostId}/${position}/thumb.webp`,
 		})),
 	});
-	await create('found', actor(ids.anon, true), { type: 'found', species: 'cat', source: 'anonymous' });
+	const foundId = await create('found', actor(ids.anon, true), {
+		type: 'found',
+		species: 'cat',
+		source: 'anonymous',
+		colours: ['grey'],
+		pattern: 'tabby',
+	});
+	await prisma.photos.create({
+		data: {
+			owner_id: ids.anon,
+			report_id: foundId,
+			position: 0,
+			sha256: randomBytes(32).toString('hex'),
+			width: 800,
+			height: 600,
+			bytes: 50_000,
+			status: 'published',
+			public_display_url: `https://media.test/r/${foundId}/0/display.jpg`,
+			public_thumb_url: `https://media.test/r/${foundId}/0/thumb.webp`,
+		},
+	});
 	await create('sighting', actor(ids.finder), { type: 'sighted', linked_report_id: lostId });
 	for (const [key, data] of [
 		['hidden', { moderation_state: 'hidden' }],
@@ -146,12 +166,23 @@ describe('GET /v1/reports/:code, public read model', () => {
 		expect(sl.body.photos).toEqual([
 			expect.objectContaining({
 				url: expect.stringContaining('/0/display.jpg'),
-				alt: 'Pogrešani pes Piki, fotografija 1 od 2',
+				alt: 'Piki: pes rjave in bele barve, Ljubljana, fotografija 1 od 2',
 			}),
 			expect.objectContaining({ url: expect.stringContaining('/1/display.jpg'), width: 800, height: 600 }),
 		]);
 		const en = await get(codes.lost, undefined, { 'Accept-Language': 'en' });
-		expect(en.body.photos[0].alt).toBe('Lost dog Piki, photo 1 of 2');
+		expect(en.body.photos[0].alt).toBe('Piki: brown and white dog, Ljubljana, photo 1 of 2');
+		// The collar text is manager-only: never in a public alt.
+		expect(JSON.stringify(sl.body.photos)).not.toContain('ovratnica');
+	});
+
+	it('builds the alt from species, colours, pattern and the public area, with no count for a single photo', async () => {
+		const sl = await get(codes.found);
+		expect(sl.body.photos.map((photo: { alt: string }) => photo.alt)).toEqual([
+			'Mačka sive barve, s progastim vzorcem, Ljubljana',
+		]);
+		const en = await get(codes.found, undefined, { 'Accept-Language': 'en' });
+		expect(en.body.photos[0].alt).toBe('Grey tabby cat, Ljubljana');
 	});
 
 	it('shows found and sighted reports without name or reward, with the 150 m circle and the linked report', async () => {
