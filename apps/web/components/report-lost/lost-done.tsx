@@ -28,7 +28,7 @@ import { getPathname, Link } from '@/i18n/navigation';
 import { cn } from '@/lib/utils';
 
 /** The A4 poster PDF (C15), as on mobile (apps/mobile/lib/share.ts `posterUrl`), on this origin. */
-export const posterPath = (code: string, lang: Locale) => `/r/${code}/poster.pdf?lang=${lang}`;
+const posterPath = (code: string, lang: Locale) => `/r/${code}/poster.pdf?lang=${lang}`;
 /** The safety page's "first 24 hours" section (content P6 §10). */
 const FIRST_24H = { sl: 'prvih-24-ur', en: 'first-24-hours' } as const;
 
