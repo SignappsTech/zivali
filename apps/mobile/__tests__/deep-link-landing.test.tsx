@@ -67,8 +67,9 @@ describe('a link from outside lands on a screen', () => {
 	});
 
 	test.each([
-		['https://najdimo.si/r/%E0%A4%A', /^report:/],
-		['zivali://r/a%20b', 'report:a b'],
+		// A code outside [\w-] is no listing (TASK-12.6: lib/deep-link.ts LISTING), so it opens the map.
+		['https://najdimo.si/r/%E0%A4%A', 'map'],
+		['zivali://r/a%20b', 'map'],
 		['https://najdimo.si/r/..', /^(report:|map$)/],
 		['https://najdimo.si/m#%zz', 'manage'],
 	])('malformed %s renders without throwing', async (url, text) => {
