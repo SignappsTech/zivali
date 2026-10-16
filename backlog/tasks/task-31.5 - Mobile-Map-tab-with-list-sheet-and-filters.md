@@ -1,11 +1,11 @@
 ---
 id: TASK-31.5
 title: Mobile Map tab with list sheet and filters
-status: To Do
+status: In Progress
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:14'
-updated_date: '2026-10-14 22:41'
+updated_date: '2026-10-15 23:16'
 labels:
   - fe
   - 'est:M'
