@@ -63,7 +63,10 @@ export type LocationPickerProps = {
 	mode: Mode;
 	/** A point to offer: EXIF from a photo ("Uporabi kraj s fotografije"), or a GPS fix the map opens on. */
 	suggested?: LatLng & { source: 'exif' | 'gps' };
-	/** Confirm: the point coarsened once here (C6), never the raw one, with the radius for lost and alert. */
+	/**
+	 * Confirm: the point coarsened once here (C6), never the raw one, or the stored `value` point as is when it was not
+	 * moved; with the radius for lost and alert.
+	 */
 	onChange(value: LocationValue & { source: Source }): void;
 	/** The OS location permission is denied: the explanation replaces "Uporabi mojo lokacijo"; pin and search work. */
 	permissionDenied?: boolean;
@@ -181,20 +184,28 @@ export function LocationPicker({ value, mode, suggested, onChange, permissionDen
 	const [locating, setLocating] = React.useState(false);
 	const [gps, setGps] = React.useState<'ok' | 'denied' | 'failed'>('ok');
 	const denied = permissionDenied || gps === 'denied';
+	// A fix can arrive after the user left the screen: then nothing is set.
+	const mounted = React.useRef(true);
+	React.useEffect(() => {
+		mounted.current = true;
+		return () => void (mounted.current = false);
+	}, []);
 	const locate = async () => {
 		setLocating(true);
+		let fix: LatLng | undefined;
 		try {
 			const { coords } = await withTimeout(
 				Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High }),
 				GPS_TIMEOUT_MS
 			);
-			setGps('ok');
-			choose({ point: { lat: coords.latitude, lng: coords.longitude }, source: 'gps' });
+			fix = { lat: coords.latitude, lng: coords.longitude };
 		} catch {
-			setGps('failed');
-		} finally {
-			setLocating(false);
+			// No fix in time: the button stays to retry.
 		}
+		if (!mounted.current) return;
+		setLocating(false);
+		setGps(fix ? 'ok' : 'failed');
+		if (fix) choose({ point: fix, source: 'gps' });
 	};
 	const locateMe = async () => {
 		try {
@@ -231,9 +242,10 @@ export function LocationPicker({ value, mode, suggested, onChange, permissionDen
 	// Offline: lost and alert wait for the map; found and sighted can still confirm a GPS point (FR-042).
 	const confirmable = online || (!area && (pick.source === 'gps' || value !== undefined));
 	const own = value !== undefined && metres(pick.point, value.point) < SAME_M;
+	// The stored point is coarsened already: confirmed unmoved it goes back as is, so re-saving never random-walks it.
 	const confirm = () =>
 		onChange({
-			point: coarsenPoint(pick.point, random),
+			point: own ? value.point : coarsenPoint(pick.point, random),
 			...(radiusM !== undefined && { radiusM }),
 			source: pick.source,
 		});
