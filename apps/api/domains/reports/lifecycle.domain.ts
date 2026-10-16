@@ -1,6 +1,7 @@
 // Report lifecycle (C4 status machine, FR-012): POST /v1/reports/:code/transitions for managers (mark_reunited, close,
-// reopen, extend), the hourly report.lifecycle job (LOST reminders, expiry warnings, automatic expiry) and the
-// notify.send variables of the report_* notifications they send. Timings come from app_config lifecycle.* only.
+// reopen, extend), the hourly report.lifecycle job (LOST reminders, expiry warnings, automatic expiry), the daily
+// retention.blur_location job (stored point blurred after the report ended) and the notify.send variables of the
+// report_* notifications they send. Timings come from app_config lifecycle.* and retention.exact_point_blur_days only.
 // Pending nearby alerts need no cancelling: notify.send drops them once the report is no longer open or matched (C10).
 import { z } from 'zod';
 
@@ -327,6 +328,29 @@ export async function tick(_input: void, ctx: Ctx): Promise<{ expired: number; w
 	return { expired, warned, reminded };
 }
 
+// --- retention.blur_location (daily) ---
+
+/** Rows blurred per statement (backend.md: chunks of at most 500); each holds its row locks only while it runs. */
+const BLUR_CHUNK = 500;
+
+/**
+ * retention.blur_location (ADR-006, CH-24): app_config retention.exact_point_blur_days (30) after a report is closed
+ * (expiry included) or reunited, its stored point becomes the public centre, so only the area remains. The public
+ * circle and the municipality stay as they are, so nobody learns more than before. A reopen clears closed_at and
+ * reunited_at, so a report reopened in time is left alone; one reopened after the blur keeps the blurred point.
+ * Idempotent: a blurred report no longer matches. Returns how many were blurred.
+ */
+export async function blurEndedLocations(_input: void, ctx: Ctx): Promise<number> {
+	const days = Days.catch(30).parse(await configStore.get('retention.exact_point_blur_days'));
+	const endedBefore = new Date(ctx.now.getTime() - days * DAY_MS);
+	let blurred = 0;
+	for (;;) {
+		const count = await ReportsDao.blurEnded({ endedBefore, take: BLUR_CHUNK }, ctx.tx);
+		blurred += count;
+		if (count < BLUR_CHUNK) return blurred;
+	}
+}
+
 // --- notify.send variables (notifications/sources.ts); null drops a notification that is moot by now ---
 
 const managed = (report_id: string | undefined, user_id: string, ctx: Ctx) =>
@@ -374,6 +398,7 @@ export default {
 	lifecycleConfig,
 	transitionReport,
 	tick,
+	blurEndedLocations,
 	reminderVars,
 	expiringVars,
 	closedVars,

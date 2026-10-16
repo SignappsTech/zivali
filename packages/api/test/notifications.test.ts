@@ -21,7 +21,7 @@ test('notification endpoints map their arguments to the C10 routes', async (t) =
 		'PUT /v1/notification-prefs/:type': ({ params, body }) => ({ type: params.type, ...(body as object) }),
 		'PATCH /v1/me': {},
 		'POST /v1/push-tokens': none,
-		'DELETE /v1/push-tokens/:token': none,
+		'DELETE /v1/push-tokens': none,
 	});
 
 	const list = await store.dispatch(n.listNotifications.initiate({ cursor: 'n2', limit: 20 }, { subscribe: false }));
@@ -46,7 +46,7 @@ test('notification endpoints map their arguments to the C10 routes', async (t) =
 			query: {},
 			body: { token: 'ExponentPushToken[abc]', platform: 'android' },
 		},
-		{ method: 'DELETE', path: '/v1/push-tokens/ExponentPushToken%5Babc%5D', query: {}, body: undefined },
+		{ method: 'DELETE', path: '/v1/push-tokens', query: {}, body: { token: 'ExponentPushToken[abc]' } },
 	]);
 });
 

@@ -269,6 +269,25 @@ describe('signOutAndWipe', () => {
 		expect(await count('reports_cache')).toBe(1);
 	});
 
+	test('the push-token delete runs while the session exists; its failure does not stop the sign-out', async () => {
+		const order: string[] = [];
+		jest.mocked(supabase.auth.signOut).mockImplementationOnce(async () => {
+			order.push('signOut');
+			return { error: null };
+		});
+		const beforeSignOut = jest.fn(async () => {
+			order.push('unregister');
+			throw new Error('offline');
+		});
+		const cancelled = jest.fn(async () => {});
+
+		expect(await signOutAndWipe({ resolvePending: async () => false, beforeSignOut: cancelled })).toBe(false);
+		expect(cancelled).not.toHaveBeenCalled();
+		expect(await signOutAndWipe({ resolvePending: async () => true, beforeSignOut })).toBe(true);
+		expect(order).toEqual(['unregister', 'signOut']);
+		expect(await count('reports_cache')).toBe(0);
+	});
+
 	test('signs out, then wipes', async () => {
 		expect(await signOutAndWipe({ resolvePending: async () => true })).toBe(true);
 

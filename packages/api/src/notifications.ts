@@ -47,8 +47,8 @@ export const notificationsApi = api
 				query: (body) => ({ url: '/v1/push-tokens', method: 'POST', body }),
 			}),
 			unregisterPushToken: build.mutation<void, { token: string }>({
-				// Expo tokens contain brackets: `ExponentPushToken[…]`.
-				query: ({ token }) => ({ url: `/v1/push-tokens/${encodeURIComponent(token)}`, method: 'DELETE' }),
+				// C10 (CH-76): the token goes in the body, so it stays out of URLs and access logs.
+				query: (body) => ({ url: '/v1/push-tokens', method: 'DELETE', body }),
 			}),
 		}),
 	});

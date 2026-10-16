@@ -4533,6 +4533,43 @@
 				}
 			}
 		},
+		"/v1/payments/{id}/invoice.pdf": {
+			"get": {
+				"operationId": "getInvoicePdf",
+				"summary": "Own fiscal invoice (PDF)",
+				"description": "The fiscal invoice of one of the caller’s payments as `application/pdf` (download; number, VAT 22 % breakdown, ZOI and EOR), rendered by the worker after the payment succeeded. 404 for anyone else’s payment and until the invoice exists (or when fiscal invoicing is off for its purpose).",
+				"tags": ["payments"],
+				"parameters": [
+					{ "schema": { "type": "string", "format": "uuid" }, "required": true, "name": "id", "in": "path" }
+				],
+				"responses": {
+					"200": {
+						"description": "The invoice PDF",
+						"content": { "application/pdf": { "schema": { "type": "string", "format": "binary" } } }
+					},
+					"400": {
+						"description": "VALIDATION",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"401": {
+						"description": "UNAUTHENTICATED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"404": {
+						"description": "NOT_FOUND",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"429": {
+						"description": "RATE_LIMITED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"500": {
+						"description": "INTERNAL",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					}
+				}
+			}
+		},
 		"/v1/pets": {
 			"get": {
 				"operationId": "listPets",

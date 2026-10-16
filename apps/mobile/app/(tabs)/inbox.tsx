@@ -5,12 +5,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslations } from 'use-intl';
 
 import { useSession } from '@zivali/api/auth';
+import { NotificationsView } from '@/components/notifications/notifications-view';
 import { SignInButtons, Spot } from '@/components/shell/parts';
-import { EmptyState } from '@/components/ui/empty-state';
 import { Icon } from '@/components/ui/icon';
 import { Text } from '@/components/ui/text';
 
-// Inbox tab (P2 A3 signed out). Conversations and notifications fill it in TASK-21.4 and TASK-22.5.
+// Inbox tab (P2 A3 signed out; P13 notifications view signed in). TASK-21.4 adds the conversations view beside it.
 export default function InboxTab() {
 	const t = useTranslations();
 	const { session, isAnonymous, loading } = useSession();
@@ -40,11 +40,8 @@ export default function InboxTab() {
 	}
 
 	return (
-		<SafeAreaView edges={['top']} className="flex-1 bg-background px-5 pt-6">
-			<Text role="heading" className="font-display text-3xl tracking-[-0.6px]">
-				{t('nav.tab_inbox')}
-			</Text>
-			<EmptyState className="mt-10" title={t('common.empty_title')} description={t('common.empty_body')} />
+		<SafeAreaView edges={['top']} className="flex-1 bg-background">
+			<NotificationsView />
 		</SafeAreaView>
 	);
 }
