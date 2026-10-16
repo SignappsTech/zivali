@@ -5,7 +5,7 @@ import { confirmedMatch, matches } from '../src/__fixtures__/matches.ts';
 import { adminUsers, auditLog, me } from '../src/__fixtures__/me.ts';
 import { pet, petLimit, pets } from '../src/__fixtures__/pets.ts';
 import { matchesApi } from '../src/matches.ts';
-import { meApi } from '../src/me.ts';
+import { convertAnonymousPassword, meApi } from '../src/me.ts';
 import { createMockApi, mockError } from '../src/mock.ts';
 import { petsApi } from '../src/pets.ts';
 import { createApiStore } from '../src/rtk.ts';
@@ -30,6 +30,20 @@ test('me: GET and PATCH /v1/me; UNAUTHENTICATED without a session; a PATCH refet
 	const signedOut = createApiStore(createMockApi({ 'GET /v1/me': () => mockError('UNAUTHENTICATED') }));
 	const { error } = await signedOut.dispatch(meApi.endpoints.getMe.initiate(undefined, { subscribe: false }));
 	assert.equal(error && 'status' in error && error.status, 401);
+});
+
+test('convertAnonymousPassword: POST /v1/me/convert-password with the password; errors are ApiError', async () => {
+	const client = createMockApi({ 'POST /v1/me/convert-password': () => undefined });
+	assert.equal(await convertAnonymousPassword(client, { password: 'mačka v škornjih' }), undefined);
+	assert.deepEqual(
+		client.calls.map(({ method, path, body }) => ({ method, path, body })),
+		[{ method: 'POST', path: '/v1/me/convert-password', body: { password: 'mačka v škornjih' } }]
+	);
+	const refused = createMockApi({ 'POST /v1/me/convert-password': () => mockError('FORBIDDEN') });
+	await assert.rejects(convertAnonymousPassword(refused, { password: 'mačka v škornjih' }), {
+		name: 'ApiError',
+		code: 'FORBIDDEN',
+	});
 });
 
 test('admin users: query and cursor, role change with PUT', async () => {

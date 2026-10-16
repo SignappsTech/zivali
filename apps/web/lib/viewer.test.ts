@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { getVerifiedViewer, getViewer, recoveryEmail, requireViewer, safeNext } from './viewer';
+import { getVerifiedViewer, getViewer, isAnonymousViewer, recoveryEmail, requireViewer, safeNext } from './viewer';
 
 const auth = vi.hoisted(() => ({ token: undefined as string | undefined, path: null as string | null }));
 vi.mock('next/headers', () => ({ headers: async () => new Headers(auth.path ? { 'x-next-path': auth.path } : {}) }));
@@ -60,6 +60,22 @@ describe('getVerifiedViewer', () => {
 		expect(await getVerifiedViewer()).toBeNull();
 		auth.token = undefined;
 		expect(await getVerifiedViewer()).toBeNull();
+	});
+});
+
+describe('isAnonymousViewer', () => {
+	it('is true only for a signature-checked anonymous finder session (sign-up then converts it, C7 §6)', async () => {
+		auth.token = jwt({ sub: 'u-anon', is_anonymous: true });
+		expect(await isAnonymousViewer()).toBe(true);
+		for (const token of [
+			jwt({ email: 'ana@example.si', is_anonymous: false }),
+			jwt({ email: 'ana@example.si' }),
+			jwt({ is_anonymous: true }, 'forged'),
+			undefined,
+		]) {
+			auth.token = token;
+			expect(await isAnonymousViewer(), String(token)).toBe(false);
+		}
 	});
 });
 

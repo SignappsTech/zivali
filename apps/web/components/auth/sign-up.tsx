@@ -14,7 +14,7 @@ import { Button } from '@/components/ui/button';
 import { FieldError, FormField } from '@/components/ui/form-field';
 import { Input } from '@/components/ui/input';
 import { Link } from '@/i18n/navigation';
-import { convertAnonymous, MIN_PASSWORD, resendConfirmation, signUp, validEmail } from '@/lib/auth';
+import { convertAnonymous, MIN_PASSWORD, resendConfirmation, resendConversion, signUp, validEmail } from '@/lib/auth';
 
 import { AuthHeading, AuthNote, PasswordField, ResendButton, Spot, useCooldown, useErrorText } from './parts';
 import { ProviderButtons } from './provider-buttons';
@@ -26,18 +26,20 @@ const inlineLink =
 /**
  * P16 M4 "Preverite e-pošto": after sign-up (`sent`: resend starts cooling down) or a sign-in with an unconfirmed
  * address. Web has no "Odpri e-pošto", so "Pošlji znova" is the primary (P16 G2). `convert`: the link of a converted
- * anonymous session is an email change (C7 §6).
+ * anonymous session is an email change, sent again by setting the address again (C7 §6), back to `next`.
  */
 export function CheckEmail({
 	email,
 	sent,
 	onChange,
 	convert = false,
+	next,
 }: {
 	email: string;
 	sent: boolean;
 	onChange: () => void;
 	convert?: boolean;
+	next?: string;
 }) {
 	const t = useTranslations('auth');
 	const locale = useLocale();
@@ -59,7 +61,9 @@ export function CheckEmail({
 					label={t('check_resend')}
 					coolingDown={sent}
 					onResend={(captchaToken) =>
-						resendConfirmation(email, locale, captchaToken, convert ? 'email_change' : 'signup')
+						convert
+							? resendConversion(email, locale, next)
+							: resendConfirmation(email, locale, captchaToken)
 					}
 				/>
 				<Button variant="text" className="w-full" onClick={onChange}>
@@ -144,12 +148,13 @@ export function SignUpForm({
 			setSentTo(email);
 		} catch (failure) {
 			const code = failure instanceof ApiError ? failure.code : null;
-			const authCode = failure instanceof ApiError ? failure.details?.auth_code : undefined;
+			// The API's convert-password refuses the password itself (its policy or GoTrue's) with an issue on it.
+			const passwordRefused = failure instanceof ApiError && failure.issues?.some((i) => i.path === 'password');
 			if (code === 'CONFLICT' && convert) {
 				setServerError({ field: 'email', text: t('convert_email_taken') });
 				emailRef.current?.focus();
 			} else if (code === 'CONFLICT') setSentTo(email);
-			else if (convert && authCode === 'weak_password') {
+			else if (convert && passwordRefused) {
 				setServerError({ field: 'password', text: t('error_password_weak') });
 				passwordRef.current?.focus();
 			} else if (code === 'RATE_LIMITED') {
@@ -168,6 +173,7 @@ export function SignUpForm({
 				email={sentTo}
 				sent
 				convert={convert}
+				next={next}
 				onChange={() => {
 					setSentTo(undefined);
 					// After the form is back.

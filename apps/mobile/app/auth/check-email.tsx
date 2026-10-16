@@ -10,16 +10,18 @@ import { Spot } from '@/components/shell/parts';
 import { Button } from '@/components/ui/button';
 import { Icon } from '@/components/ui/icon';
 import { Text } from '@/components/ui/text';
-import { openMailApp, resendConfirmation } from '@/lib/auth';
+import { openMailApp, resendConfirmation, resendConversion } from '@/lib/auth';
 
 /**
  * P16 M4: after sign-up (`sent`, so resend starts cooling down) or a sign-in with an unconfirmed address. `convert`:
- * the link of a converted anonymous session is an email change (C7 §6).
+ * the link of a converted anonymous session is an email change, sent again by setting the address again (C7 §6), and
+ * "Spremeni e-naslov" goes back to the conversion form, not the plain sign-up (which would start another user).
  */
 export default function CheckEmail() {
 	const t = useTranslations('auth');
 	const router = useRouter();
 	const { email = '', sent, convert } = useLocalSearchParams<{ email?: string; sent?: string; convert?: string }>();
+	const converting = convert === '1';
 	return (
 		<AuthScreen
 			title={t('check_title')}
@@ -33,9 +35,17 @@ export default function CheckEmail() {
 					<ResendButton
 						label={t('check_resend')}
 						coolingDown={sent === '1'}
-						onResend={() => resendConfirmation(email, convert === '1' ? 'email_change' : 'signup')}
+						onResend={() => (converting ? resendConversion(email) : resendConfirmation(email))}
 					/>
-					<Button variant="text" onPress={() => router.dismissTo('/auth/sign-up')}>
+					<Button
+						variant="text"
+						onPress={() =>
+							// POP_TO replaces the params of the screen it returns to, so convert has to come along.
+							router.dismissTo(
+								converting ? { pathname: '/auth/sign-up', params: { convert: '1' } } : '/auth/sign-up'
+							)
+						}
+					>
 						{t('check_change')}
 					</Button>
 				</>

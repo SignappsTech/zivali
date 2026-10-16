@@ -107,9 +107,14 @@ jest.mock('@zivali/api/auth', () => {
 	};
 });
 const mockUpdateMe = jest.fn();
+// POST /v1/me/convert-password (C7 §6), over lib/store's API client.
+const mockConvertPassword = jest.fn();
 jest.mock('@zivali/api/me', () => ({
 	useUpdateMeMutation: () => [(patch: unknown) => ({ unwrap: () => mockUpdateMe(patch) }), { isLoading: false }],
+	convertAnonymousPassword: (client: unknown, body: unknown) => mockConvertPassword(client, body),
 }));
+const mockApiClient = { request: jest.fn() };
+jest.mock('@/lib/store', () => ({ apiClient: mockApiClient }));
 const ljubljana = {
 	label: 'Ljubljana',
 	lat: 46.0569,
@@ -192,6 +197,7 @@ beforeEach(() => {
 		...Object.values(mockSupabase),
 		...Object.values(mockApiAuth),
 		mockUpdateMe,
+		mockConvertPassword,
 		mockGoogleSignIn,
 		mockGoogleSignOut,
 		mockReady,
@@ -334,26 +340,66 @@ describe('sign up', () => {
 		await type(sl.auth.password_label, 'mačka v škornjih');
 		await press(sl.auth.signup_button);
 
+		// The address (and name) with updateUser, then the password through the API: GoTrue would ask a session over
+		// 24 h old to reauthenticate (secure_password_change).
 		expect(mockSupabase.updateUser).toHaveBeenCalledWith(
-			{ email: 'ana@primer.si', password: 'mačka v škornjih', data: { locale: 'sl', display_name: 'Ana' } },
+			{ email: 'ana@primer.si', data: { locale: 'sl', display_name: 'Ana' } },
 			{ emailRedirectTo: expect.stringMatching(/auth\/callback\?type=signup$/) }
+		);
+		expect(mockConvertPassword).toHaveBeenCalledWith(mockApiClient, { password: 'mačka v škornjih' });
+		expect(mockSupabase.updateUser.mock.invocationCallOrder[0]).toBeLessThan(
+			mockConvertPassword.mock.invocationCallOrder[0]!
 		);
 		expect(mockSupabase.signUp).not.toHaveBeenCalled();
 		expect(result.getPathname()).toBe('/auth/check-email');
 		expect(getMockEvents()).toEqual([{ name: 'sign_up', params: { method: 'convert' } }]);
 	});
 
-	test("the conversion's link is resent as an email change", async () => {
-		mockSupabase.resend.mockResolvedValue({ data: {}, error: null });
+	test("the conversion's link is sent again by setting the address again; too soon is a toast", async () => {
+		mockSupabase.getSession.mockResolvedValue({
+			data: { session: { user: { id: 'u-anon', is_anonymous: true } } },
+			error: null,
+		});
+		mockSupabase.updateUser.mockResolvedValue({ data: { user: { id: 'u-anon' } }, error: null });
 		await app('/auth/check-email?email=ana%40primer.si&convert=1');
 		await press(sl.auth.check_resend);
 		await waitFor(() =>
-			expect(mockSupabase.resend).toHaveBeenCalledWith({
-				type: 'email_change',
-				email: 'ana@primer.si',
-				options: { emailRedirectTo: expect.stringMatching(/auth\/callback\?type=signup$/) },
-			})
+			expect(mockSupabase.updateUser).toHaveBeenCalledWith(
+				{ email: 'ana@primer.si' },
+				{ emailRedirectTo: expect.stringMatching(/auth\/callback\?type=signup$/) }
+			)
 		);
+		// resend() would find no user by the address (an anonymous user has none) and carry no PKCE.
+		expect(mockSupabase.resend).not.toHaveBeenCalled();
+		expect(mockConvertPassword).not.toHaveBeenCalled();
+	});
+
+	test('"Spremeni e-naslov" goes back to the conversion form, so a resubmit converts again, never signs up', async () => {
+		mockSession.set({ ...signedOut, session: {}, isAnonymous: true });
+		mockSupabase.getSession.mockResolvedValue({
+			data: { session: { user: { id: 'u-anon', is_anonymous: true } } },
+			error: null,
+		});
+		mockSupabase.updateUser.mockResolvedValue({ data: { user: { id: 'u-anon' } }, error: null });
+		const result = await app('/auth/sign-up?convert=1');
+		await type(sl.auth.name_label, 'Ana');
+		await type(sl.auth.email_label, 'ana@primer.si');
+		await type(sl.auth.password_label, 'mačka v škornjih');
+		await press(sl.auth.signup_button);
+		expect(result.getPathname()).toBe('/auth/check-email');
+
+		await press(sl.auth.check_change);
+		expect(result.getPathname()).toBe('/auth/sign-up');
+		expect(screen.getByText(sl.auth.convert_note)).toBeOnTheScreen();
+		await type(sl.auth.email_label, 'ana.novak@primer.si');
+		await press(sl.auth.signup_button);
+		expect(mockSupabase.updateUser).toHaveBeenLastCalledWith(
+			{ email: 'ana.novak@primer.si', data: { locale: 'sl', display_name: 'Ana' } },
+			expect.anything()
+		);
+		expect(mockConvertPassword).toHaveBeenCalledTimes(2);
+		expect(mockSupabase.signUp).not.toHaveBeenCalled();
+		expect(result.getPathname()).toBe('/auth/check-email');
 	});
 
 	test('converting: a taken address and a weak password are said on their fields; another session is refused', async () => {
@@ -371,10 +417,13 @@ describe('sign up', () => {
 		expect(screen.getByText(sl.auth.convert_email_taken)).toBeOnTheScreen();
 		expect(screen.getByRole('button', { name: sl.auth.to_signin })).toBeOnTheScreen();
 
-		mockSupabase.updateUser.mockResolvedValueOnce({
-			data: {},
-			error: new ApiError('VALIDATION', 'VALIDATION', { details: { auth_code: 'weak_password' } }),
-		});
+		// The API's convert-password (its policy or GoTrue's) names the field.
+		mockSupabase.updateUser.mockResolvedValueOnce({ data: { user: { id: 'u-anon' } }, error: null });
+		mockConvertPassword.mockRejectedValueOnce(
+			new ApiError('VALIDATION', 'Password refused', {
+				issues: [{ path: 'password', message: 'Password refused' }],
+			})
+		);
 		await press(sl.auth.signup_button);
 		expect(screen.getByText(sl.auth.error_password_weak)).toBeOnTheScreen();
 

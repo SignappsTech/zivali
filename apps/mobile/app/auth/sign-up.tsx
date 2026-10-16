@@ -125,9 +125,12 @@ export default function SignUp() {
 			else if (code === 'CONFLICT') router.push(checkEmail);
 			else if (code === 'VALIDATION') {
 				const authCode = failure instanceof ApiError ? failure.details?.auth_code : undefined;
+				// The API's convert-password refuses the password itself (its policy or GoTrue's) with an issue on it.
+				const passwordRefused =
+					failure instanceof ApiError && failure.issues?.some((i) => i.path === 'password');
 				if (authCode === 'email_address_invalid')
 					setServerError({ field: 'email', text: t('error_email_invalid') });
-				else if (convert && authCode === 'weak_password') {
+				else if (convert && passwordRefused) {
 					setServerError({ field: 'password', text: t('error_password_weak') });
 					passwordRef.current?.focus();
 				} else setServerError({ text: te('VALIDATION') });

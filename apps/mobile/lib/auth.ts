@@ -6,6 +6,7 @@ import { z } from 'zod';
 
 import { authError, signInWithApple, signInWithGoogle } from '@zivali/api/auth';
 import { ApiError } from '@zivali/api/client';
+import { convertAnonymousPassword } from '@zivali/api/me';
 import type { Locale } from '@zivali/i18n/format';
 import { env } from '@/lib/env';
 import { supabase } from '@/lib/supabase';
@@ -19,8 +20,8 @@ import { supabase } from '@/lib/supabase';
  */
 export const authRedirect = (type: 'signup' | 'recovery') => `${Linking.createURL('/auth/callback')}?type=${type}`;
 
-/** The Supabase minimum (supabase/config.toml minimum_password_length). */
-export const MIN_PASSWORD = 8;
+/** The sign-up policy (supabase/config.toml minimum_password_length), shared with the API's convert-password. */
+export { MIN_PASSWORD } from '@zivali/validation/me.schema';
 export const validEmail = (value: string) => z.email().safeParse(value).success;
 
 async function check<R extends { error: AuthError | null }>(request: Promise<R>): Promise<R> {
@@ -49,11 +50,18 @@ export const signUp = ({
 		})
 	);
 
+/** Conversion only ever touches the anonymous finder session (C7), never an account's address or password. */
+async function assertAnonymous() {
+	if (!(await supabase.auth.getSession()).data.session?.user.is_anonymous)
+		throw new ApiError('UNAUTHENTICATED', 'UNAUTHENTICATED');
+}
+
 /**
  * C7 §6: the finder's anonymous session becomes the account in place, so the user id, report_managers and the manage
- * links stay. One updateUser sets the password, the name and the address; GoTrue mails a confirmation link to it
- * (`email_change`, back to the signup callback) and the user stops being anonymous once it is opened. Refused on any
- * other session, so a real account never has its address or password changed here.
+ * links stay. updateUser sets the name and the address (GoTrue mails the `email_change` link, back to the signup
+ * callback), then the API sets the password: GoTrue's own password update asks a session over 24 h old to
+ * reauthenticate (secure_password_change), which an anonymous user cannot. The user stops being anonymous once the
+ * link is opened. Refused on any other session.
  */
 export async function convertAnonymous({
 	name,
@@ -66,19 +74,26 @@ export async function convertAnonymous({
 	password: string;
 	locale: Locale;
 }) {
-	if (!(await supabase.auth.getSession()).data.session?.user.is_anonymous)
-		throw new ApiError('UNAUTHENTICATED', 'UNAUTHENTICATED');
-	const data = { locale, display_name: name };
-	const options = { emailRedirectTo: authRedirect('signup') };
-	const { error } = await supabase.auth.updateUser({ email, password, data }, options);
-	// Sent again ("Spremeni e-naslov"): the password is already this one, and GoTrue refuses to set it twice.
-	if (error?.code === 'same_password') await check(supabase.auth.updateUser({ email, data }, options));
-	else if (error) throw authError(error);
+	await assertAnonymous();
+	const redirect = { emailRedirectTo: authRedirect('signup') };
+	await check(supabase.auth.updateUser({ email, data: { locale, display_name: name } }, redirect));
+	// Required here, not imported: lib/store starts the session listeners, which every screen importing this would load.
+	// eslint-disable-next-line @typescript-eslint/no-require-imports -- lazy on purpose
+	const { apiClient } = require('@/lib/store') as typeof import('@/lib/store');
+	await convertAnonymousPassword(apiClient, { password });
 }
 
-/** `email_change`: the link of a converted anonymous session (convertAnonymous). */
-export const resendConfirmation = (email: string, type: 'signup' | 'email_change' = 'signup') =>
-	check(supabase.auth.resend({ type, email, options: { emailRedirectTo: authRedirect('signup') } }));
+export const resendConfirmation = (email: string) =>
+	check(supabase.auth.resend({ type: 'signup', email, options: { emailRedirectTo: authRedirect('signup') } }));
+
+/**
+ * "Pošlji znova" after convertAnonymous: the address again. resend({ type: 'email_change' }) finds no one (an
+ * anonymous user's email is empty) and carries no PKCE; a repeat within 60 s is RATE_LIMITED.
+ */
+export async function resendConversion(email: string) {
+	await assertAnonymous();
+	await check(supabase.auth.updateUser({ email }, { emailRedirectTo: authRedirect('signup') }));
+}
 
 /** In memory only: set by a successful recovery-link exchange, so app/auth/new-password is not reachable by a plain session. */
 let recovering = false;

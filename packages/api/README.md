@@ -23,6 +23,8 @@ Typed client for the REST API (`apps/api`, contract C1), shared by web and mobil
 | `directory-admin`                  | C18 §Admin directory editing (admin, aal2): lists, shelter and municipality writes, history, CSV import dry run     |
 | `broadcast`                        | `subscribeBroadcast` (private Supabase Broadcast channel, typed without supabase-js)                                |
 
+`me` also has `convertAnonymousPassword(client, { password })` (C7 §6), a plain call for lib/auth's `convertAnonymous`.
+
 Until `gen:api` covers a domain, its file holds `injectEndpoints` stubs that follow the contract (paths, types, the owning backend task in the header); delete them when the generated endpoints land and keep the hand-written helpers.
 
 ```ts

@@ -30,6 +30,7 @@ const auth = vi.hoisted(() => ({
 	signUp: vi.fn(),
 	convertAnonymous: vi.fn(),
 	resendConfirmation: vi.fn(),
+	resendConversion: vi.fn(),
 	requestPasswordReset: vi.fn(),
 	updatePassword: vi.fn(),
 	signInWithProvider: vi.fn(),
@@ -115,9 +116,7 @@ describe('SignInForm (P16 W1)', () => {
 		expect(document.activeElement).toBe(heading);
 		expect(screen.getByText(sl.auth.check_body.replace('{email}', 'ana@example.si'))).toBeTruthy();
 		fireEvent.click(screen.getByRole('button', { name: sl.auth.check_resend }));
-		await vi.waitFor(() =>
-			expect(auth.resendConfirmation).toHaveBeenCalledWith('ana@example.si', 'sl', undefined, 'signup')
-		);
+		await vi.waitFor(() => expect(auth.resendConfirmation).toHaveBeenCalledWith('ana@example.si', 'sl', undefined));
 	});
 
 	it('shows the calm rate-limit note and disables the primary; providers stay', async () => {
@@ -234,12 +233,14 @@ describe('SignUpForm converting an anonymous finder (C7 §6)', () => {
 		expect(getMockEvents()).toEqual([{ name: 'sign_up', params: { method: 'convert' } }]);
 	});
 
-	it("resends the conversion's link as an email change", async () => {
-		show(<CheckEmail email="ana@example.si" sent={false} onChange={() => {}} convert />);
+	it("resends the conversion's link by setting the address again, back to the same page", async () => {
+		show(<CheckEmail email="ana@example.si" sent={false} onChange={() => {}} convert next="/r/Xy7pQ2mK" />);
 		fireEvent.click(screen.getByRole('button', { name: sl.auth.check_resend }));
 		await vi.waitFor(() =>
-			expect(auth.resendConfirmation).toHaveBeenCalledWith('ana@example.si', 'sl', undefined, 'email_change')
+			expect(auth.resendConversion).toHaveBeenCalledWith('ana@example.si', 'sl', '/r/Xy7pQ2mK')
 		);
+		// resend() would find no user by the address (an anonymous user has none) and carry no PKCE.
+		expect(auth.resendConfirmation).not.toHaveBeenCalled();
 	});
 
 	it('sends nothing to analytics without consent', async () => {
@@ -267,8 +268,11 @@ describe('SignUpForm converting an anonymous finder (C7 §6)', () => {
 	});
 
 	it('puts a weak password on its field and the rate limit and network errors under the form, without retrying', async () => {
+		// The API's convert-password (its policy or GoTrue's) names the field.
 		auth.convertAnonymous.mockRejectedValueOnce(
-			new ApiError('VALIDATION', 'VALIDATION', { details: { auth_code: 'weak_password' } })
+			new ApiError('VALIDATION', 'Password refused', {
+				issues: [{ path: 'password', message: 'Password refused' }],
+			})
 		);
 		show(<SignUpForm convert />);
 		fill();
