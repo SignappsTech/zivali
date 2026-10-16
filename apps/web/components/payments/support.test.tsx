@@ -67,12 +67,11 @@ describe('reunited tip (P15)', () => {
 		expect(screen.getByRole('heading', { level: 2, name: t.tip_title })).toBeTruthy();
 		expect(screen.getByText(t.tip_body)).toBeTruthy();
 		const group = await screen.findByRole('radiogroup', { name: t.amount_group });
-		expect([...group.querySelectorAll('[role=radio]')].map((pill) => pill.textContent)).toEqual([
-			'3 €',
-			`5 €, ${t.amount_suggested_a11y}`,
-			'10 €',
-			t.amount_other,
-		]);
+		expect(
+			[...group.querySelectorAll('[role=radio]')].map(
+				(pill) => pill.getAttribute('aria-label') ?? pill.textContent
+			)
+		).toEqual(['3 €', `5 €, ${t.amount_suggested_a11y}`, '10 €', t.amount_other]);
 		expect(screen.queryByRole('radio', { checked: true })).toBeNull();
 		const pay = button(t.pay_disabled);
 		const skip = button(t.skip);

@@ -164,6 +164,8 @@ export function AmountAsk({ kind, checkout, testMode, onSkip, onCheckout }: Amou
 						<RadioGroupPrimitive.Item
 							key={value}
 							value={value}
+							// "5 €, predlagano" as one name: Chrome reads an sr-only span as a block, "5 € , predlagano".
+							aria-label={suggested ? `${label}, ${t('amount_suggested_a11y')}` : undefined}
 							// The suggested amount: a 2 px primary line, never a fill or a check, so it never reads as chosen.
 							className={cn(
 								pillClass,
@@ -173,7 +175,6 @@ export function AmountAsk({ kind, checkout, testMode, onSkip, onCheckout }: Amou
 						>
 							<PillCheck />
 							{label}
-							{suggested && <span className="sr-only">, {t('amount_suggested_a11y')}</span>}
 						</RadioGroupPrimitive.Item>
 					);
 				})}
