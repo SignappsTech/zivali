@@ -17,8 +17,8 @@ import { Sheet, SheetContent, SheetTitle, SheetTrigger } from '@/components/ui/s
 import { Text } from '@/components/ui/text';
 import { cn } from '@/lib/utils';
 
-/** A 56 px menu row (P9 M7): icon 20, label 17 semibold, pressed with `foreground` at 10 %. */
-function MenuItem({
+/** A 56 px menu row (P9 M7): icon 20, label 17 semibold, pressed with `foreground` at 10 %. Also the chat menu (P12). */
+export function MenuItem({
 	icon,
 	label,
 	onPress,
