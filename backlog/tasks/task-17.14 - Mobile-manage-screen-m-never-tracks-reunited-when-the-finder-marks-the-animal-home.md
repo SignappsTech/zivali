@@ -3,10 +3,11 @@ id: TASK-17.14
 title: >-
   Mobile manage screen (/m) never tracks reunited when the finder marks the
   animal home
-status: To Do
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-16 09:43'
+updated_date: '2026-10-16 10:46'
 labels:
   - bug
   - 'est:XS'
@@ -25,3 +26,9 @@ Story AC#2 (mark returned), C12. Steps: open mobile manage screen from a private
 <!-- AC:BEGIN -->
 - [ ] #1 Marking 'Zival je spet doma' on apps/mobile/app/m.tsx fires C12 reunited (species, region, municipality) once, consent-gated, like web trackReunited and mobile report/lifecycle.tsx; no event without consent or for a place abroad
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+Duplicate of TASK-26.8 (mobile /m reunited event), fixed and merged with TASK-26.9.
+<!-- SECTION:NOTES:END -->

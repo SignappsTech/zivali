@@ -1,10 +1,11 @@
 ---
 id: TASK-30.6
 title: 'Web: held linked sighting says the owner was told'
-status: To Do
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-16 07:31'
+updated_date: '2026-10-16 10:46'
 labels:
   - bug
   - 'est:XS'

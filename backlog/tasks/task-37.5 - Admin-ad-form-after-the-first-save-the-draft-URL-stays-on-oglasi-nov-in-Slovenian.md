@@ -1,10 +1,13 @@
 ---
 id: TASK-37.5
-title: 'Admin ad form: after the first save the draft URL stays on /admin/oglasi/nov in Slovenian'
-status: To Do
+title: >-
+  Admin ad form: after the first save the draft URL stays on /admin/oglasi/nov
+  in Slovenian
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-16 12:10'
+updated_date: '2026-10-16 10:46'
 labels:
   - bug
   - 'est:XS'

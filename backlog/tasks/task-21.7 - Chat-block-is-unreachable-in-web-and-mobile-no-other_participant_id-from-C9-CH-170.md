@@ -3,11 +3,11 @@ id: TASK-21.7
 title: >-
   Chat: block is unreachable in web and mobile (no other_participant_id from C9,
   CH-170)
-status: In Progress
+status: Done
 assignee:
   - '@backend-dev'
 created_date: '2026-10-16 10:02'
-updated_date: '2026-10-16 10:34'
+updated_date: '2026-10-16 10:46'
 labels:
   - bug
   - 'est:S'

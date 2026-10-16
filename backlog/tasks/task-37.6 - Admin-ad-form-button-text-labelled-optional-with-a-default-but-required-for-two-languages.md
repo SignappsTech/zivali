@@ -1,10 +1,13 @@
 ---
 id: TASK-37.6
-title: 'Admin ad form: button text labelled optional with a default, but required for two languages'
-status: To Do
+title: >-
+  Admin ad form: button text labelled optional with a default, but required for
+  two languages
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-16 12:10'
+updated_date: '2026-10-16 10:46'
 labels:
   - bug
   - 'est:XS'

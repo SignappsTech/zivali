@@ -1,10 +1,11 @@
 ---
 id: TASK-37.7
 title: 'Ads API: blocked terms are also checked on image_alt and link_url'
-status: To Do
+status: Done
 assignee:
   - '@backend-dev'
 created_date: '2026-10-16 12:10'
+updated_date: '2026-10-16 10:46'
 labels:
   - bug
   - 'est:XS'

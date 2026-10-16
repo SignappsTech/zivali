@@ -1,11 +1,11 @@
 ---
 id: TASK-21.8
 title: 'Chat: link caution misses bare domains on uncommon TLDs (has_link regex)'
-status: In Progress
+status: Done
 assignee:
   - '@backend-dev'
 created_date: '2026-10-16 10:02'
-updated_date: '2026-10-16 10:34'
+updated_date: '2026-10-16 10:46'
 labels:
   - bug
   - 'est:XS'
