@@ -139,6 +139,13 @@ function PillRadios<T extends string>({ label, value, onChange, options, hint, d
 type PetFieldsProps = {
 	/** Section headings: h2 under a page h1 (P8 profile form), h3 inside a flow step (P6). */
 	headingLevel?: 2 | 3;
+	/**
+	 * `profile` (P8) adds birth year, the CRHŽ question and the private notes; `report` (P6 lost flow) shows only what
+	 * a report carries (C4 CreateReportInput).
+	 */
+	variant?: 'profile' | 'report';
+	/** Shown under the colours, which the caller's schema may require (the lost flow does). */
+	colourError?: string;
 	className?: string;
 };
 
@@ -147,7 +154,8 @@ type PetFieldsProps = {
  * and notes. It renders inside the caller's react-hook-form `FormProvider` (resolver `zodResolver(PetInput)` or a
  * schema with the same field names) and has no form, submit, photos or page layout of its own.
  */
-export function PetFields({ headingLevel = 2, className }: PetFieldsProps) {
+export function PetFields({ headingLevel = 2, variant = 'profile', colourError, className }: PetFieldsProps) {
+	const profile = variant === 'profile';
 	const t = useTranslations('pets');
 	const ta = useTranslations('attributes');
 	const { control, getValues, setValue } = useFormContext<PetFieldValues>();
@@ -243,30 +251,34 @@ export function PetFields({ headingLevel = 2, className }: PetFieldsProps) {
 								/>
 							)}
 						/>
-						<Controller
-							control={control}
-							name="birth_year"
-							render={({ field }) => (
-								<FormField label={t('birth_year_label')}>
-									<Select
-										value={field.value ? String(field.value) : ''}
-										onValueChange={(next) => field.onChange(next === NONE ? null : Number(next))}
-									>
-										<SelectTrigger ref={field.ref} onBlur={field.onBlur}>
-											<SelectValue placeholder={t('birth_year_placeholder')} />
-										</SelectTrigger>
-										<SelectContent>
-											<SelectItem value={NONE}>{t('not_sure')}</SelectItem>
-											{years.map((year) => (
-												<SelectItem key={year} value={String(year)}>
-													{year}
-												</SelectItem>
-											))}
-										</SelectContent>
-									</Select>
-								</FormField>
-							)}
-						/>
+						{profile && (
+							<Controller
+								control={control}
+								name="birth_year"
+								render={({ field }) => (
+									<FormField label={t('birth_year_label')}>
+										<Select
+											value={field.value ? String(field.value) : ''}
+											onValueChange={(next) =>
+												field.onChange(next === NONE ? null : Number(next))
+											}
+										>
+											<SelectTrigger ref={field.ref} onBlur={field.onBlur}>
+												<SelectValue placeholder={t('birth_year_placeholder')} />
+											</SelectTrigger>
+											<SelectContent>
+												<SelectItem value={NONE}>{t('not_sure')}</SelectItem>
+												{years.map((year) => (
+													<SelectItem key={year} value={String(year)}>
+														{year}
+													</SelectItem>
+												))}
+											</SelectContent>
+										</Select>
+									</FormField>
+								)}
+							/>
+						)}
 					</div>
 					{species === 'cat' && (
 						<Controller
@@ -334,17 +346,24 @@ export function PetFields({ headingLevel = 2, className }: PetFieldsProps) {
 								<ToggleGroup.Root
 									type="multiple"
 									aria-labelledby={`${id}-colours`}
+									aria-describedby={colourError ? `${id}-colours-error` : undefined}
 									value={field.value ?? []}
 									onValueChange={field.onChange}
 									className="flex flex-wrap gap-2"
 								>
-									{Colour.options.map((colour) => (
-										<ToggleGroup.Item key={colour} value={colour} className={pillClass}>
+									{Colour.options.map((colour, index) => (
+										<ToggleGroup.Item
+											key={colour}
+											ref={index === 0 ? field.ref : undefined}
+											value={colour}
+											className={pillClass}
+										>
 											<PillCheck />
 											{ta(`colours.${colour}`)}
 										</ToggleGroup.Item>
 									))}
 								</ToggleGroup.Root>
+								{colourError && <FieldError id={`${id}-colours-error`}>{colourError}</FieldError>}
 							</div>
 						)}
 					/>
@@ -374,30 +393,33 @@ export function PetFields({ headingLevel = 2, className }: PetFieldsProps) {
 				t('section_chip'),
 				<>
 					<ChipField />
-					<Controller
-						control={control}
-						name="chip_registered_crhz"
-						render={({ field }) => (
-							<PillRadios
-								label={t('crhz_label')}
-								value={field.value}
-								onChange={field.onChange}
-								options={ChipRegisteredCrhz.options.map(
-									(answer) => [answer, t(`answer_${answer}`)] as const
-								)}
-								hint={
-									<>
-										{(field.value === 'no' || field.value === 'unknown') && (
-											<span className="mb-2 block font-bold text-foreground">
-												{t('crhz_reminder')}
-											</span>
-										)}
-										{t('chip_register_note')}
-									</>
-								}
-							/>
-						)}
-					/>
+					{!profile && <p className={hintClass}>{t('chip_register_note')}</p>}
+					{profile && (
+						<Controller
+							control={control}
+							name="chip_registered_crhz"
+							render={({ field }) => (
+								<PillRadios
+									label={t('crhz_label')}
+									value={field.value}
+									onChange={field.onChange}
+									options={ChipRegisteredCrhz.options.map(
+										(answer) => [answer, t(`answer_${answer}`)] as const
+									)}
+									hint={
+										<>
+											{(field.value === 'no' || field.value === 'unknown') && (
+												<span className="mb-2 block font-bold text-foreground">
+													{t('crhz_reminder')}
+												</span>
+											)}
+											{t('chip_register_note')}
+										</>
+									}
+								/>
+							)}
+						/>
+					)}
 				</>
 			)}
 
@@ -411,18 +433,20 @@ export function PetFields({ headingLevel = 2, className }: PetFieldsProps) {
 						placeholder={t('collar_placeholder')}
 						maxLength={200}
 					/>
-					<NullableTextarea
-						name="notes"
-						label={t('notes_label')}
-						placeholder={t('notes_placeholder')}
-						maxLength={1000}
-						hint={
-							<span className="flex items-center gap-2">
-								<LockSimpleIcon weight="bold" aria-hidden="true" className="size-4.5 shrink-0" />
-								{t('notes_private')}
-							</span>
-						}
-					/>
+					{profile && (
+						<NullableTextarea
+							name="notes"
+							label={t('notes_label')}
+							placeholder={t('notes_placeholder')}
+							maxLength={1000}
+							hint={
+								<span className="flex items-center gap-2">
+									<LockSimpleIcon weight="bold" aria-hidden="true" className="size-4.5 shrink-0" />
+									{t('notes_private')}
+								</span>
+							}
+						/>
+					)}
 				</>
 			)}
 		</div>
