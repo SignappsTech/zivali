@@ -49,6 +49,12 @@ jest.mock('@/lib/offline/wipe', () => ({ signOutAndWipe: (options: unknown) => m
 const mockUnregisterPush = jest.fn();
 jest.mock('@/lib/push', () => ({ unregisterPush: () => mockUnregisterPush() }));
 
+// The support card has its own tests (support.test.tsx) and needs the store; here only where it sits.
+jest.mock('@/components/payments/support', () => {
+	const { Text: MockText } = jest.requireActual<typeof import('react-native')>('react-native');
+	return { SupportCard: () => <MockText>support card</MockText> };
+});
+
 const mockSignOutProviders = jest.fn();
 jest.mock('@/lib/auth', () => ({
 	...jest.requireActual('@/lib/auth'),
@@ -155,6 +161,7 @@ describe('signed-out tabs', () => {
 
 		expect(screen.getByRole('heading', { name: sl.profile.signed_out_title })).toBeOnTheScreen();
 		expect(screen.getByRole('button', { name: sl.profile.signed_out_create })).toBeOnTheScreen();
+		expect(screen.queryByText('support card')).toBeNull();
 
 		await fireEvent.press(
 			screen.getByRole('button', { name: `${sl.profile.row_language}, ${sl.nav.language_sl_full}` })
@@ -193,6 +200,7 @@ describe('signed in', () => {
 		await fireEvent.press(screen.getByRole('tab', { name: sl.nav.tab_profile }));
 
 		expect(screen.getByRole('heading', { name: sl.profile.title })).toBeOnTheScreen();
+		expect(screen.getByText('support card')).toBeOnTheScreen();
 		for (const [name, path] of [
 			[sl.profile.row_reports, '/settings/reports'],
 			[sl.profile.row_alerts, '/settings/alerts'],
