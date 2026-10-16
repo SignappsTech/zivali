@@ -333,8 +333,14 @@ function BreedField({ species }: { species?: Species }) {
 	);
 }
 
-/** Looks: breed, colours (several), pattern and size per species; cats add the ear tip. */
-export function PetLooksFields({ variant = 'profile' }: { variant?: PetFieldsVariant }) {
+/** Looks: breed, colours (several), pattern and size per species; cats add the ear tip. The lost flow requires a colour. */
+export function PetLooksFields({
+	variant = 'profile',
+	colourError,
+}: {
+	variant?: PetFieldsVariant;
+	colourError?: string;
+}) {
 	const t = useTranslations('pets');
 	const ta = useTranslations('attributes');
 	const tc = useTranslations('common');
@@ -348,7 +354,7 @@ export function PetLooksFields({ variant = 'profile' }: { variant?: PetFieldsVar
 		<View className="gap-8">
 			<BreedField species={species} />
 
-			<Group title={t('colour_label')}>
+			<Group title={t('colour_label')} error={colourError}>
 				<View role="group" aria-label={t('colour_label')} className="flex-row flex-wrap gap-2">
 					{COLOURS.map((colour) => {
 						const selected = picked.includes(colour);
