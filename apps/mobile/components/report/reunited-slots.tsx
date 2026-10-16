@@ -13,7 +13,8 @@ export function ReunitedTip({ report, className }: ReunitedSlotProps) {
 
 /**
  * P14 ad slot: the one labelled ad (P21 `reunited`, "Oglas"), below the support moment. TASK-36.6 renders the AdSlot
- * here; until it loads, fails or is blocked the slot takes no space (no gap, no message).
+ * here; until it loads, fails or is blocked the slot takes no space (no gap, no message). Hide the ad while
+ * `useSupportTipState(report.short_code)` (components/payments/support) is 'asking': the tip ask comes first.
  */
 export function ReunitedAd(_props: ReunitedSlotProps) {
 	return null;

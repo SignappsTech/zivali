@@ -1,5 +1,6 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import type { ReactNode } from 'react';
+import { Text } from 'react-native';
 import { Provider } from 'react-redux';
 import { IntlProvider } from 'use-intl';
 
@@ -7,7 +8,7 @@ import { createMockApi, type MockRoutes } from '@zivali/api/mock';
 import { type ApiStore, createApiStore, api as rtk } from '@zivali/api/rtk';
 import { formatEur } from '@zivali/i18n/format';
 import sl from '@zivali/i18n/dist/sl.json';
-import { ContributionRow, SupportCard, SupportTip } from '@/components/payments/support';
+import { ContributionRow, SupportCard, SupportTip, useSupportTipState } from '@/components/payments/support';
 
 const tp = sl.support;
 const REPORT_ID = '7c1e4b2a-0000-4000-8000-000000000001';
@@ -144,6 +145,40 @@ describe('reunited tip (P15)', () => {
 		await view.unmount();
 		Object.assign(mockSession, { me: null, isAnonymous: false });
 		expect((await show(<SupportTip reportId={REPORT_ID} code="Tip5" />)).toJSON()).toBeNull();
+	});
+
+	test('only plain decimals with at most two places are amounts: "1e2", "0x10", "1_0", "2,555" are not', async () => {
+		await show(<SupportTip reportId={REPORT_ID} code="Tip6" />);
+		await fireEvent.press(screen.getByRole('radio', { name: tp.amount_other }));
+		const field = screen.getByLabelText(tp.amount_other_label);
+		await fireEvent(field, 'blur');
+		for (const bad of ['1e2', '0x10', '1_0', '2,555']) {
+			await fireEvent.changeText(field, bad);
+			expect(button(tp.pay_disabled)).toBeDisabled();
+			expect(screen.getByText(tp.amount_min_error)).toBeOnTheScreen();
+		}
+		await fireEvent.changeText(field, '2.50');
+		await press(`Plačaj ${eur(250)}`);
+		expect(paying()).toMatchObject({ amountCents: 250 });
+	});
+
+	test('useSupportTipState goes asking to skipped and a sibling re-renders; none when signed out', async () => {
+		function Sibling() {
+			return <Text testID="state">{useSupportTipState('Tip7')}</Text>;
+		}
+		await show(
+			<>
+				<SupportTip reportId={REPORT_ID} code="Tip7" />
+				<Sibling />
+			</>
+		);
+		expect(screen.getByTestId('state')).toHaveTextContent('asking');
+		await press(tp.skip);
+		expect(screen.getByTestId('state')).toHaveTextContent('skipped');
+
+		Object.assign(mockSession, { me: null });
+		await show(<Sibling />);
+		expect(screen.getAllByTestId('state').at(-1)).toHaveTextContent('none');
 	});
 });
 

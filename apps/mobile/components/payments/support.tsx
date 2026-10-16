@@ -33,22 +33,32 @@ const MAX_CENTS = 50_000;
 const SUGGESTED = 5;
 
 type Answer = 'skipped' | 'paid';
-// Asks answered this app session, per moment and report: skipped or paid, a report is never asked twice.
+// Asks answered this app session, per moment and report: skipped or paid, a report is never asked twice. A tiny store
+// so siblings (the reunited ad) re-render when the ask is skipped or paid.
 const answered = new Map<string, Answer>();
+const listeners = new Set<() => void>();
+const subscribe = (listener: () => void) => {
+	listeners.add(listener);
+	return () => void listeners.delete(listener);
+};
 
 function useAnswer(key: string) {
-	const [answer, setAnswer] = React.useState(() => answered.get(key));
+	const answer = React.useSyncExternalStore(
+		subscribe,
+		() => answered.get(key),
+		() => undefined
+	);
 	const record = (next: Answer) => {
 		answered.set(key, next);
-		setAnswer(next);
+		listeners.forEach((l) => l());
 	};
 	return [answer, record] as const;
 }
 
-/** "Drug znesek" in integer cents: accepts "2,5" and "2.5"; undefined when it is not a number. */
+/** "Drug znesek" in integer cents: accepts "2,5" and "2.5"; undefined when it is not a plain decimal (max 2 places). */
 function toCents(text: string): number | undefined {
-	const value = Number(text.trim().replace(',', '.'));
-	return text.trim() && Number.isFinite(value) ? Math.round(value * 100) : undefined;
+	const s = text.trim();
+	return /^\d+([.,]\d{1,2})?$/.test(s) ? Math.round(Number(s.replace(',', '.')) * 100) : undefined;
 }
 
 /**
@@ -103,6 +113,9 @@ function AmountAsk({
 			? t('pay_monthly', { amount })
 			: t(tip ? 'pay' : 'contribution_pay', { amount });
 	const help = valid || error ? undefined : t('pay_disabled_help');
+	const markPaid = React.useCallback(() => {
+		paid.current = true;
+	}, []);
 	const onSheet = (open: boolean) => {
 		setPaying(open);
 		if (!open && paid.current) onPaid?.();
@@ -201,7 +214,7 @@ function AmountAsk({
 				<CheckoutSheet
 					open={paying}
 					onOpenChange={onSheet}
-					onPaid={() => (paid.current = true)}
+					onPaid={markPaid}
 					checkout={
 						monthly && monthlyOffered
 							? { purpose: 'subscription', returnTo: checkout.returnTo }
@@ -228,6 +241,16 @@ function AlreadyPaid({ className }: { className?: string }) {
 function useCanAsk() {
 	const { me, isAnonymous } = useSession();
 	return Boolean(me) && !isAnonymous;
+}
+
+/**
+ * State of the reunited tip ask for a report: 'asking' (shown), 'skipped', 'paid', or 'none' when no ask is possible
+ * (signed out or anonymous). Shares SupportTip's store, so a sibling re-renders when the ask is skipped or paid.
+ */
+export function useSupportTipState(code: string): 'asking' | 'skipped' | 'paid' | 'none' {
+	const canAsk = useCanAsk();
+	const [answer] = useAnswer(`tip:${code}`);
+	return canAsk ? (answer ?? 'asking') : 'none';
 }
 
 /** P14/P15 thank-you tip on the reunited screen: h3, one sentence, 3, 5 (suggested) or 10 € or another amount. */
