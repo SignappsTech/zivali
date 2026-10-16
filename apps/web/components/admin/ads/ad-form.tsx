@@ -286,7 +286,13 @@ export function AdForm({
 		setForm((current) => ({ ...current, [field]: value }));
 	const text = (field: 'title' | 'body' | 'cta' | 'link_url' | 'image_alt') => ({
 		value: form[field],
-		onChange: (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => set(field, event.target.value),
+		onChange: (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+			set(field, event.target.value);
+			// A shown problem goes as soon as the field is right: left to the blur, it would vanish under the press of
+			// the next control and move it away from the pointer.
+			if (problems[field] && !validate({ ...form, [field]: event.target.value }, house)[field])
+				setProblems((current) => ({ ...current, [field]: undefined }));
+		},
 		// On blur: this field's check only, so untouched fields stay quiet.
 		onBlur: () => setProblems((current) => ({ ...current, [field]: validate(form, house)[field] })),
 	});

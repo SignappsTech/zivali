@@ -193,6 +193,19 @@ describe('ad form', () => {
 		expect(client.calls.some((call) => call.method !== 'GET')).toBe(false);
 	});
 
+	it('drops a problem as soon as the field is right, before the blur, and keeps it while still wrong', async () => {
+		renderWith(<NewAd {...props} />);
+		fireEvent.click(screen.getByRole('button', { name: a.ads_save }));
+		expect(await screen.findByText(a.ads_err_alt)).toBeTruthy();
+		const link = screen.getByLabelText(a.ads_link);
+		type(a.ads_link, 'http://repek.si');
+		expect(link.getAttribute('aria-invalid')).toBe('true');
+		type(a.ads_link, 'https://repek.si/jesen');
+		// The blur would remove the message under the next control's press and move it away from the pointer.
+		expect(link.getAttribute('aria-invalid')).not.toBe('true');
+		expect(screen.getAllByText(a.ads_err_required)).toHaveLength(3); // title, text, button (SL and EN)
+	});
+
 	it('saves the targeting, dates, status and exclusivity, then opens the ad', async () => {
 		const { client } = renderWith(<NewAd {...props} />, {
 			'POST /v1/admin/ads': ({ body }) => ({ ...draft, ...(body as object), id: NEW_ID }),
