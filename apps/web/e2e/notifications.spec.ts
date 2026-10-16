@@ -177,3 +177,35 @@ for (const colorScheme of ['light', 'dark'] as const)
 		await expect.poll(() => sent.me.at(-1)).toEqual({ quiet_from: null, quiet_to: null });
 		await expectNoAxeViolations(page);
 	});
+
+// TASK-22.6 (QA): empty and error states of the notifications view (TASK-22.4 AC3), keyboard-reachable retry.
+test('empty inbox shows the empty state with a link to the alert settings', async ({ page, baseURL }) => {
+	await signIn(page, baseURL!);
+	await page.route(/\/v1\/notifications(\?.*)?$/, (route) =>
+		route.fulfill({ json: { items: [], next_cursor: null, unread: 0 } })
+	);
+	await page.goto('/nabiralnik?view=notifications');
+
+	await expect(page.getByText('Obvestil še ni')).toBeVisible();
+	await expect(page.getByRole('link', { name: 'Nastavi opozorila' })).toHaveAttribute('href', '/racun/opozorila');
+	await expect(page.getByRole('button', { name: 'Označi vse kot prebrano' })).toHaveCount(0);
+	await expectNoAxeViolations(page);
+});
+
+test('a failed load shows an inline error and Try again reloads the list', async ({ page, baseURL }) => {
+	await signIn(page, baseURL!);
+	let fail = true;
+	await page.route(/\/v1\/notifications(\?.*)?$/, (route) =>
+		fail
+			? route.fulfill({ status: 500, json: { error: { code: 'INTERNAL', message: 'x' } } })
+			: route.fulfill({ json: { items, next_cursor: null, unread: 2 } })
+	);
+	await page.goto('/en/inbox?view=notifications');
+
+	const retry = page.getByRole('button', { name: 'Try again' });
+	await expect(retry).toBeVisible();
+	await retry.focus();
+	fail = false;
+	await page.keyboard.press('Enter');
+	await expect(page.getByRole('link', { name: /unread/ }).first()).toBeVisible();
+});

@@ -1,4 +1,4 @@
----
+﻿---
 id: TASK-22.4
 title: 'Web notifications view, unread badge and notification settings'
 status: Done
@@ -41,7 +41,7 @@ Branch: agent/task-22.4-notify-web
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 The header shows an unread badge updated in real time; /inbox?view=notifications lists notifications with mark-as-read and deep links to their targets, per P13.
-- [ ] #2 /account/notifications lets the user control each notification type per channel and set quiet hours.
-- [ ] #3 Empty and error states follow the design system; axe 0 violations; Playwright covers read and preference changes.
+- [x] #1 The header shows an unread badge updated in real time; /inbox?view=notifications lists notifications with mark-as-read and deep links to their targets, per P13.
+- [x] #2 /account/notifications lets the user control each notification type per channel and set quiet hours.
+- [x] #3 Empty and error states follow the design system; axe 0 violations; Playwright covers read and preference changes.
 <!-- AC:END -->
