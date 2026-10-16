@@ -133,3 +133,31 @@ test('an unconfirmed email gets "Potrdite svoj e-naslov" on opt-in and nothing i
 	await expect(page.getByRole('switch', { name: 'Alerts about lost pets nearby' })).not.toBeChecked();
 	expect(sent).toEqual([]);
 });
+
+// TASK-23.4: the radius never leaves 1-25 km, whatever is typed in the number field (keyboard only).
+test('a typed radius is snapped into 1-25 km before it is saved; an empty field saves nothing', async ({
+	page,
+	baseURL,
+}) => {
+	const sent = await signIn(page, baseURL!);
+	await page.goto('/racun/opozorila');
+	await page.getByRole('switch', { name: 'Opozorila o izgubljenih živalih v bližini' }).press('Space');
+	await expect.poll(() => sent.length).toBe(1);
+
+	const km = page.getByRole('spinbutton', { name: 'Polmer v kilometrih' });
+	await km.fill('99');
+	await km.press('Enter');
+	await expect.poll(() => (sent.at(-1) as AlertSubscriptionInput).radius_km).toBe(25);
+	await expect(page.getByRole('slider', { name: 'Polmer' })).toHaveAttribute('aria-valuetext', '25 km');
+
+	await km.fill('0');
+	await km.press('Enter');
+	await expect.poll(() => (sent.at(-1) as AlertSubscriptionInput).radius_km).toBe(1);
+
+	const saved = sent.length;
+	await km.fill('');
+	await km.press('Enter');
+	await expect(page.getByRole('slider', { name: 'Polmer' })).toHaveAttribute('aria-valuetext', '1 km');
+	expect(sent).toHaveLength(saved);
+	for (const body of sent) expect((body as AlertSubscriptionInput).radius_km).toBeLessThanOrEqual(25);
+});
