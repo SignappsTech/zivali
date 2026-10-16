@@ -252,3 +252,11 @@ export function useOpenLostReportsByPet(): Map<string, string> {
 		[data]
 	);
 }
+
+/**
+ * The caller's own reports (GET /v1/me/reports, newest first), for My reports. Network only: the manager view carries
+ * private fields, so it never goes to the device cache (C17); offline the query stays uninitialised.
+ */
+export function useMyReports() {
+	return useListMyReportsInfiniteQuery(undefined, { skip: useOffline() });
+}

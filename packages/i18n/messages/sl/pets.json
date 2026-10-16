@@ -1,5 +1,7 @@
 {
 	"section_basics": "Osnovno",
+	"my_reports": "Moje prijave",
+	"my_reports_empty": "Nimate še nobene prijave.",
 	"species_label": "Vrsta",
 	"name_label": "Ime",
 	"sex_label": "Spol",

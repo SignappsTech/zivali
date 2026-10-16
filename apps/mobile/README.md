@@ -76,6 +76,12 @@ Gallery: `/dev/kit` (redirects to `/` when `EXPO_PUBLIC_APP_ENV=production`). `r
 - Client steps (Q-007): (1) Apple Developer Team ID into `APPLE_TEAM_ID` on both web hosts, then rebuild iOS with the Associated Domains capability; (2) after the first EAS build run `eas credentials` (and Play Console, app signing) for the SHA-256 fingerprint(s) into `ANDROID_CERT_SHA256`; (3) check `https://<host>/.well-known/assetlinks.json` and `adb shell pm get-app-links si.signapps.zivali` (`verified`); (4) FCM/APNs credentials in EAS, then `EXPO_PUBLIC_PUSH_PROVIDER=expo`.
 - Push: `usePushPermission().request` (`lib/push.ts`) is the `request` of the notifications `PermissionPrimer`; after the OS grant it passes the token to `registerPushToken`. `EXPO_PUBLIC_PUSH_PROVIDER=mock` (default) uses a placeholder token. TASK-22.5 mounts the primer.
 
+## Report lifecycle and My reports (P14, TASK-26.5)
+
+- Owner actions (signed-in owner or manage-link holder, `is_mine`) fill slot A and slot C of `app/r/[code]`: "Žival je spet doma" (confirm sheet; a finder gets the dialog), "Uredi" (`app/r/[code]/edit.tsx`: what happened and the lost report's reward), "Zaključi iskanje" with a reason, and "Ponovno odpri" while a closed or reunited report is within 7 days. The sheets and the transitions are in `components/report/lifecycle.tsx`.
+- `app/r/[code]/reunited.tsx` is the reunited screen (owner: story switch, tip and ad slots in `components/report/reunited-slots.tsx` for TASK-33.3 and TASK-36.6; finder: the short thank-you). `reunited` is tracked on a successful mark, with consent only.
+- Profil → Moje prijave (`app/settings/reports.tsx`): the device queue, then `useMyReports()` (`lib/data/reports.ts`, network only).
+
 ## Anonymous finders and the manage link (C7, TASK-17.3)
 
 - `ensureSession()` (`lib/anonymous.ts`) returns the current session or signs in anonymously; with `EXPO_PUBLIC_CAPTCHA=true` (eas.json production and preview) it first gets a Turnstile token from the web page `<APP_URL>/captcha?lang=` in a WebView (`components/anonymous/captcha-sheet.tsx`, mounted in the root layout). The page posts `{ type: 'captcha', token }` or `{ type: 'captcha_error' }`; the sheet shows only if Turnstile has not passed after 3 s. Errors are `ApiError` (`CAPTCHA_FAILED`, `NETWORK`, `RATE_LIMITED`): callers keep their draft and try again.
