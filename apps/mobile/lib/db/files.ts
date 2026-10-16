@@ -11,3 +11,8 @@ export const outboxDir = new Directory(Paths.document, 'outbox');
 export function bytesUsed(): { thumbnails: number; queuedPhotos: number } {
 	return { thumbnails: thumbsDir.size ?? 0, queuedPhotos: outboxDir.size ?? 0 };
 }
+
+/** File names in the thumbnails folder, listed once so callers avoid a synchronous `exists` call per row. */
+export const thumbNames = (): Set<string> =>
+	new Set(thumbsDir.exists ? thumbsDir.list().map((entry) => entry.name) : []);
+export const fileName = (path: string): string => path.slice(path.lastIndexOf('/') + 1);
