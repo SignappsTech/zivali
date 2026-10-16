@@ -10,6 +10,39 @@ import {
 	responsibleUnconfirmed,
 	shelterPage,
 } from '@zivali/api/__fixtures__/directory';
+import { placeReverse } from '@zivali/api/__fixtures__/geocode';
+import { publicReport } from '@zivali/api/__fixtures__/reports';
+
+// TASK-18.2 report detail: a lost report with a reward and a photo served from here (playwright.config.ts sets
+// MEDIA_BASE_URL to this server), the found fixture (the /m page's "Uredi prijavo" target) and a gone one.
+const media = `http://localhost:${process.env.PORT || 4010}/media`;
+// 1 x 1 PNG.
+const PIXEL = Buffer.from(
+	'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=',
+	'base64'
+);
+const lostReport = {
+	...publicReport,
+	id: '51aa3c2e-4b1d-4f6a-9e2c-8d7b5a1f3e10',
+	short_code: 'Rex12345',
+	type: 'lost',
+	name: 'Rex',
+	breed_codes: ['dog.mixed'],
+	colours: ['brown', 'white'],
+	pattern: 'bicolour',
+	size: 'm',
+	sex: 'male',
+	has_chip: true,
+	event_at: '2026-10-12T16:00:00Z',
+	circumstances: 'Rex se je ustrašil ognjemeta in zbežal z vrta.',
+	reward: { eur: 50, note: null },
+	area: { lat: 46.064, lng: 14.493, radius_m: 500 },
+	photos: [
+		{ url: `${media}/rex.png`, thumb_url: `${media}/rex.png`, alt: 'Pogrešani pes Rex', width: 800, height: 600 },
+	],
+};
+// Answered with an error status: [status, code].
+const failures: Record<string, [number, string]> = { '/v1/reports/Gone1234': [410, 'GONE'] };
 
 const noPhone = {
 	...ljubljanaShelter,
@@ -53,6 +86,9 @@ const routes: Record<string, unknown> = {
 	'/v1/shelters/responsible?municipality=kocevje': responsibleLikely,
 	'/v1/shelters/responsible?municipality=osilnica': responsibleUnconfirmed,
 	'/v1/shelters/responsible?municipality=skofja-loka': responsibleUnconfirmed,
+	[`/v1/reports/${lostReport.short_code}`]: lostReport,
+	[`/v1/reports/${publicReport.short_code}`]: publicReport,
+	'/v1/geo/reverse': placeReverse,
 };
 
 // Supabase Auth stand-in (TASK-105): the web build points NEXT_PUBLIC_SUPABASE_URL here, so getClaims() verifies a
@@ -104,6 +140,15 @@ createServer((request, response) => {
 	if (url.pathname === '/e2e/token') {
 		response.writeHead(200, { 'Content-Type': 'text/plain', 'Access-Control-Allow-Origin': '*' });
 		return void response.end(token(url.searchParams));
+	}
+	if (url.pathname.startsWith('/media/')) {
+		response.writeHead(200, { 'Content-Type': 'image/png' });
+		return void response.end(PIXEL);
+	}
+	const failure = failures[url.pathname];
+	if (failure) {
+		response.writeHead(failure[0], { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+		return void response.end(JSON.stringify({ error: { code: failure[1], message: failure[1] } }));
 	}
 	const body = routes[request.url ?? ''];
 	response.writeHead(request.method === 'OPTIONS' ? 204 : body ? 200 : 404, {

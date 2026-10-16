@@ -12,6 +12,7 @@ vi.mock('@supabase/ssr', () => ({
 	createServerClient: (_url: string, _key: string, { cookies }: { cookies: { setAll: SetAll } }) => ({
 		auth: {
 			getClaims: async () => ({ data: null, error: supabase.error }),
+			getSession: async () => ({ data: { session: { access_token: 'refreshed-token' } } }),
 			signOut: async (options: object) => {
 				supabase.signOut(options);
 				cookies.setAll([{ name: 'sb-x-auth-token', value: '', options: { maxAge: 0, path: '/' } }], {});
@@ -50,4 +51,15 @@ describe('updateSession', () => {
 			expect(response.headers.get('set-cookie')).toBeNull();
 		}
 	);
+
+	it('hands the session token to `next` for an API call as the user (proxy.ts report status)', async () => {
+		supabase.error = null;
+		let token: string | undefined;
+		await updateSession(new NextRequest('http://localhost/r/Hk3vT9qP'), async (_request, accessToken) => {
+			token = await accessToken();
+			return NextResponse.next();
+		});
+
+		expect(token).toBe('refreshed-token');
+	});
 });
