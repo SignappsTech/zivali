@@ -1,11 +1,11 @@
 ---
 id: TASK-38.1
 title: 'Design: Partners page "Oglašujte pri nas" (P22)'
-status: In Progress
+status: Done
 assignee:
   - '@ui-designer'
 created_date: '2026-10-14 21:50'
-updated_date: '2026-10-15 22:16'
+updated_date: '2026-10-16 03:54'
 labels:
   - design
   - 'est:M'
