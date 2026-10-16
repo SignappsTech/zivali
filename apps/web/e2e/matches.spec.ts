@@ -224,3 +224,25 @@ test('a non-manager is refused with a way back to the report, not a retry', asyn
 	await expect(main.getByRole('button', { name: 'Poskusi znova' })).toHaveCount(0);
 	await expectNoAxeViolations(page);
 });
+
+test('an unconfirmed email on confirm shows the sentence and the verify gate, and does not open the chat', async ({
+	page,
+	baseURL,
+}) => {
+	await signIn(page, baseURL!);
+	await page.route(/\/v1\/matches\/[^/]+\/confirm$/, (route) =>
+		route.request().method() === 'OPTIONS'
+			? route.continue()
+			: route.fulfill({
+					status: 403,
+					json: { error: { code: 'UNVERIFIED_EMAIL', message: 'UNVERIFIED_EMAIL' } },
+				})
+	);
+	await page.setViewportSize({ width: 1440, height: 900 });
+	await page.goto(`/r/${CODE}/ujemanja`);
+	await page.getByRole('button', { name: 'To je moja žival' }).click();
+	const main = page.getByRole('main');
+	await expect(main.getByRole('alert')).toContainText('Najprej potrdite svoj e-naslov.');
+	await expect(main.getByRole('button', { name: 'Potrdite svoj e-naslov' })).toBeVisible();
+	await expect(page).toHaveURL(/\/ujemanja/);
+});
