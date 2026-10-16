@@ -238,11 +238,13 @@ export function LocationPicker({
 
 	const [query, setQuery] = React.useState('');
 	const [open, setOpen] = React.useState(false);
-	const [active, setActive] = React.useState(0);
+	const [row, setRow] = React.useState(0);
 	const search = usePlaceSearch(query, pick.point);
 	const typed = query.trim().length >= PLACE_SEARCH_MIN_CHARS;
 	const options = search.isFetching ? [] : search.places;
 	const expanded = open && options.length > 0;
+	// A new answer (the map moved under the same text) can be shorter than the row the keyboard was on.
+	const active = row < options.length ? row : 0;
 	const popover = open && typed && (search.isFetching || search.searched || Boolean(search.error));
 	const choosePlace = (place: Place) => {
 		setQuery('');
@@ -254,7 +256,7 @@ export function LocationPicker({
 			event.preventDefault();
 			if (!options.length) return;
 			const step = event.key === 'ArrowDown' ? 1 : -1;
-			setActive(expanded ? (active + step + options.length) % options.length : 0);
+			setRow(expanded ? (active + step + options.length) % options.length : 0);
 			setOpen(true);
 		} else if (event.key === 'Enter' && expanded) {
 			event.preventDefault();
@@ -342,7 +344,7 @@ export function LocationPicker({
 							value={query}
 							onChange={(event) => {
 								setQuery(event.target.value);
-								setActive(0);
+								setRow(0);
 								setOpen(true);
 							}}
 							onFocus={() => setOpen(true)}
