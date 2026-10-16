@@ -118,8 +118,9 @@ describe('content rule (no selling, giving away or rehoming animals)', () => {
 		[{ title: 'Iscemo nov dom za Rexa' }, ['title']],
 		[{ cta: 'IŠČEMO NOV DOM' }, ['cta']],
 		[{ title: 'Kittens for sale', body: 'We rehome dogs' }, ['title', 'body']],
-		[{ image_alt: 'Free to good home: a puppy' }, ['image_alt']],
-		[{ link_url: 'https://example.com/psi-za-prodajo' }, ['link_url']],
+		// image_alt and link_url are not checked (C14): a URL like /for-sale-of-tools is fine
+		[{ image_alt: 'Free to good home: a puppy' }, []],
+		[{ link_url: 'https://example.com/for-sale-of-tools' }, []],
 		// ads.blocked_terms (migration default, SL and EN)
 		[{ body: 'Prodaja mladičev z rodovnikom' }, ['body']],
 		[{ body: 'Puppies for sale near you' }, ['body']],
@@ -383,6 +384,19 @@ describe('AdsDomain.assertAdWritable (every save, TASK-37.2)', () => {
 	it('lets an admin with aal2 save an ordinary ad', () =>
 		isolated(async (tx) => {
 			await expect(AdsDomain.assertAdWritable(input(), adminCtx(tx))).resolves.toBeUndefined();
+		}));
+
+	it('accepts a link or image alt containing a blocked word (C14: title, body and cta only)', () =>
+		isolated(async (tx) => {
+			await expect(
+				AdsDomain.assertAdWritable(
+					input({
+						link_url: 'https://example.com/for-sale-of-tools',
+						image_alt: 'Orodje na prodaj v trgovini',
+					}),
+					adminCtx(tx)
+				)
+			).resolves.toBeUndefined();
 		}));
 
 	it('rejects ads that sell, give away or rehome animals, naming each field', () =>

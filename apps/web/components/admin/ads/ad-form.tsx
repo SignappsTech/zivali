@@ -37,6 +37,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Textarea } from '@/components/ui/textarea';
 import { useRouter } from '@/i18n/client-navigation';
+import { localisedPath } from '@/i18n/route';
 import { cn } from '@/lib/utils';
 
 import { adminH1Class, ErrorNote, noteClass, noteIconClass, useErrorText } from '../directory/parts';
@@ -253,6 +254,7 @@ export function AdForm({
 	const formRef = React.useRef<HTMLFormElement>(null);
 	const fileInput = React.useRef<HTMLInputElement>(null);
 	const ids = React.useId();
+	const uiLocale = useLocale();
 	const [initial] = React.useState(() => formOf(ad ?? from, Boolean(from)));
 	const [form, setForm] = React.useState(initial);
 	const [problems, setProblems] = React.useState<Problems>({});
@@ -344,7 +346,11 @@ export function AdForm({
 				id = (await createAd(picked ? { ...body, status: 'draft' } : body).unwrap()).id;
 				setAdId(id);
 				// The draft exists: a cancelled or failed upload leaves the admin on it, not on an orphan.
-				window.history.replaceState(null, '', window.location.pathname.replace(/\/new$/, `/${id}/edit`));
+				window.history.replaceState(
+					null,
+					'',
+					localisedPath({ locale: uiLocale, href: { pathname: '/admin/ads/[id]/edit', params: { id } } })
+				);
 			}
 			let image: string | null | undefined = removed ? null : undefined;
 			if (picked) {
@@ -377,6 +383,7 @@ export function AdForm({
 
 	// The unit's own default in the ad's language: what an empty button text is saved as.
 	// Only for a single-locale ad, in that locale; several locales must type their own (validate), or one language would show in all.
+	const optionalCta = form.locales.length === 1;
 	const ctaDefault =
 		form.locales.length === 1 ? (messages[form.locales[0] === 'en' ? 'en' : 'sl'].learn_more ?? '') : '';
 	const preview: Ad = {
@@ -549,8 +556,14 @@ export function AdForm({
 							<Textarea rows={2} required {...text('body')} />
 						</FormField>
 						<FormField
-							label={t('ads_cta_label')}
-							hint={<Hint text={t('ads_cta_help')} count={form.cta.trim().length} max={LIMITS.cta} />}
+							label={t(optionalCta ? 'ads_cta_label' : 'ads_cta_label_required')}
+							hint={
+								<Hint
+									text={t(optionalCta ? 'ads_cta_help' : 'ads_cta_help_required')}
+									count={form.cta.trim().length}
+									max={LIMITS.cta}
+								/>
+							}
 							error={say(problems.cta)}
 						>
 							<Input placeholder={ctaDefault} {...text('cta')} />

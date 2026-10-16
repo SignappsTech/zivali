@@ -117,6 +117,8 @@
 	"ads_text_label": "Text",
 	"ads_cta_label": "Button text (optional)",
 	"ads_cta_help": "Default: \"Learn more\". Up to 24 characters.",
+	"ads_cta_label_required": "Button text",
+	"ads_cta_help_required": "Required for each language. Up to 24 characters.",
 	"ads_link": "Link",
 	"ads_link_help": "Must start with https://. It opens in a new tab, and clicks are counted through our redirect.",
 	"ads_char_count": "{count} / {max}",
