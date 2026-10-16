@@ -3,10 +3,11 @@ id: TASK-32.5
 title: >-
   Web build fails to load next.config.ts: SWC rejects two-entry non-wildcard
   tsconfig paths (TASK-107)
-status: To Do
+status: Done
 assignee:
   - '@tech-lead'
 created_date: '2026-10-16 00:22'
+updated_date: '2026-10-16 02:07'
 labels:
   - bug
   - 'est:XS'
@@ -30,5 +31,11 @@ Severity: blocker (red main). Check why the merge-queue verify did not catch it 
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 On main, `pnpm --filter web build` (Turbopack) and `next build --webpack` load next.config.ts and complete; non-wildcard @zivali/* paths in apps/web/tsconfig.json have exactly one target (or the fallback moves elsewhere); scripts/workspace-paths.test.mjs guards it
+- [x] #1 On main, `pnpm --filter web build` (Turbopack) and `next build --webpack` load next.config.ts and complete; non-wildcard @zivali/* paths in apps/web/tsconfig.json have exactly one target (or the fallback moves elsewhere); scripts/workspace-paths.test.mjs guards it
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+Fixed on main in 336949b (TASK-107 follow-up): apps/web keeps one paths target for non-glob keys, so next build loads next.config.ts again; batch 16+ verify and e2e passed.
+<!-- SECTION:NOTES:END -->
