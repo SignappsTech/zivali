@@ -9,6 +9,7 @@ updated_date: '2026-10-14 22:17'
 labels:
   - qa
   - 'est:XS'
+  - 'qa:pass'
 milestone: m-1
 dependencies:
   - TASK-33.2
@@ -36,11 +37,21 @@ Branch: - (verify on main)
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Given an owner who just marked a pet reunited, when the thank-you screen shows, then one-tap amounts EUR 3, EUR 5 (highlighted, not pre-selected), EUR 10 and a custom amount (minimum EUR 2) are offered and Skip is as visible as Pay.
-- [ ] #2 Given the lost-report confirmation screen, when shown, then the same optional support ask is collapsed by default, nothing is pre-selected and it is not shown again for that report once skipped.
-- [ ] #3 Given the profile screen on web and mobile, when opened, then a Pomagajte nam izboljšati Najdimo card offers the same amounts and the monthly Podpornik option (FR-022), with no nagging or repeated prompts.
-- [ ] #4 Given a completed contribution, when recorded, then the user sees a warm thank-you, a receipt email arrives and donation fires with an amount bucket and no personal data (consent only).
-- [ ] #5 Given the wording, when displayed, then it says support or contribution (podpora, prispevek) and not charitable donation unless the legal entity allows it (FR-024).
-- [ ] #6 Given the user ignores any ask, when continuing, then nothing blocks or delays their report, matching or alerts.
+- [x] #1 Given an owner who just marked a pet reunited, when the thank-you screen shows, then one-tap amounts EUR 3, EUR 5 (highlighted, not pre-selected), EUR 10 and a custom amount (minimum EUR 2) are offered and Skip is as visible as Pay.
+- [x] #2 Given the lost-report confirmation screen, when shown, then the same optional support ask is collapsed by default, nothing is pre-selected and it is not shown again for that report once skipped.
+- [x] #3 Given the profile screen on web and mobile, when opened, then a Pomagajte nam izboljšati Najdimo card offers the same amounts and the monthly Podpornik option (FR-022), with no nagging or repeated prompts.
+- [x] #4 Given a completed contribution, when recorded, then the user sees a warm thank-you, a receipt email arrives and donation fires with an amount bucket and no personal data (consent only).
+- [x] #5 Given the wording, when displayed, then it says support or contribution (podpora, prispevek) and not charitable donation unless the legal entity allows it (FR-024).
+- [x] #6 Given the user ignores any ask, when continuing, then nothing blocks or delays their report, matching or alerts.
 - [ ] #7 Story gates pass on main: `pnpm verify`, plus `pnpm quality` for the pages this story touches; results recorded in the QA notes.
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+QA (read-only review, no servers, per machine rules). Web vitest (payments, reunited, report-lost; 93 tests) and mobile jest (support, payments; 29 tests) pass; i18n check OK (SL/EN parity).
+- AC1-6 pass: nothing pre-selected (3/5/10/other; 5 has a 2 px ring only), Pay and Skip both secondary and equal, 2-500 EUR client bound plus zod max 50_000 and domain MIN 200 server side, Idempotency-Key per attempt (kept on retry, new on another amount), checkout URL only from the API, payments client lazy (`await import`), donation once (settlePayment), consent via track, no PII, bfcache pageshow reset, focus before Skip, ad hidden `tip && answer === null` (web) and `asking` (mobile), monthly label "Podpiram mesecno" with no amount, no tax or charity claims, receipt and fiscal via payment.effects.
+- Added e2e: apps/web/e2e/report-lost.spec.ts asserts the lost-confirmation row collapsed, nothing chosen, Skrij removes it, no payment call (not run here).
+- AC7 open: verify, e2e, Lighthouse: merge queue on main at b965dff9.
+- Observations (no bug): payment-return retry makes a fresh Idempotency-Key per click (a lost response risks a second pending session, never a second charge); fiscal invoices are issued for every succeeded payment (C13 text), Checkout offers no non-card method today, so equal to card only in practice; ticking monthly ignores the chosen amount (behind flag until M4, API 503s).
+<!-- SECTION:NOTES:END -->
