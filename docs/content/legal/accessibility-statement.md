@@ -67,7 +67,7 @@ Izjavo smo pripravili 15. 10. 2026. Način: samoocena med razvojem. Zunanji preg
 
 ## 6. Povratne informacije in pomoč
 
-Če naletite na oviro ali potrebujete vsebino v drugi obliki, nam pišite: [naročnik: e-naslov za dostopnost], ali nas pokličite: [naročnik: telefonska številka]. Odgovorimo v 14 dneh.
+Če naletite na oviro ali potrebujete vsebino v drugi obliki, nam pišite: info@signapps.si, ali nas pokličite: 040 975 210 (+386 40 975 210). Odgovorimo v 14 dneh.
 
 ## 7. Postopek uveljavljanja
 
@@ -117,7 +117,7 @@ We prepared this statement on 15 October 2026. Method: self-assessment during de
 
 ## 6. Feedback and help
 
-If you meet a barrier or need content in another format, write to [client: accessibility contact email] or call [client: phone number]. We reply within 14 days.
+If you meet a barrier or need content in another format, write to info@signapps.si or call 040 975 210 (+386 40 975 210). We reply within 14 days.
 
 ## 7. Enforcement procedure
 
