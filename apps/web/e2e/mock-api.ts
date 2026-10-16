@@ -192,6 +192,40 @@ function token(query: URLSearchParams) {
 	return `${input}.${signature.toString('base64url')}`;
 }
 
+// GET /auth/v1/user (supabase-js getUser, mfa.listFactors on the admin dashboard, TASK-34.6): the token's user with
+// one verified TOTP factor. Claims are read, not verified: the app's guards check the signature (getClaims).
+function user(request: IncomingMessage, response: ServerResponse) {
+	const jwt = String(request.headers.authorization ?? '').replace(/^Bearer /, '');
+	const claims = JSON.parse(Buffer.from(jwt.split('.')[1] ?? '', 'base64url').toString() || '{}');
+	response.writeHead(claims.sub ? 200 : 401, {
+		'Content-Type': 'application/json',
+		'Access-Control-Allow-Origin': '*',
+	});
+	const at = '2026-10-01T08:00:00Z';
+	const factor = {
+		id: 'e2e-totp',
+		friendly_name: 'Telefon',
+		factor_type: 'totp',
+		status: 'verified',
+		created_at: at,
+	};
+	response.end(
+		JSON.stringify(
+			claims.sub
+				? {
+						id: claims.sub,
+						aud: 'authenticated',
+						role: 'authenticated',
+						app_metadata: {},
+						user_metadata: {},
+						created_at: at,
+						factors: [{ ...factor, updated_at: at }],
+					}
+				: { code: 401, error_code: 'no_authorization', msg: 'No token' }
+		)
+	);
+}
+
 // C13 webhook as the mock provider's /dev/checkout posts it (server side, so no page.route sees it): 200 only for an
 // event signed like Stripe with the default MOCK_WEBHOOK_SECRET, as apps/api verifies it.
 function webhook(request: IncomingMessage, response: ServerResponse) {
@@ -217,6 +251,7 @@ createServer((request, response) => {
 		response.writeHead(200, { 'Content-Type': 'text/plain', 'Access-Control-Allow-Origin': '*' });
 		return void response.end(token(url.searchParams));
 	}
+	if (request.method === 'GET' && url.pathname === '/auth/v1/user') return user(request, response);
 	if (url.pathname.startsWith('/media/')) {
 		response.writeHead(200, { 'Content-Type': 'image/png' });
 		return void response.end(PIXEL);

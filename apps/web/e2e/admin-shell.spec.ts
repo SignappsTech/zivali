@@ -54,7 +54,9 @@ for (const colorScheme of ['light', 'dark'] as const) {
 		await expect(page.locator('meta[name=robots]')).toHaveAttribute('content', 'noindex, nofollow');
 		for (const group of ['Pregled', 'Vsebina', 'Varnost', 'Organizacije', 'Ljudje', 'Posel', 'Sistem'])
 			await expect(sidebar(page).getByRole('list', { name: group })).toBeVisible();
-		await expect(sidebar(page).getByRole('link', { name: 'Oglasi, Kmalu', exact: true })).toBeVisible();
+		// Built sections link plainly (Oglasi, TASK-37.3); the rest say "Kmalu".
+		await expect(sidebar(page).getByRole('link', { name: 'Oglasi', exact: true })).toBeVisible();
+		await expect(sidebar(page).getByRole('link', { name: 'Moderacija, Kmalu', exact: true })).toBeVisible();
 		await expect(page.getByText('Lokalno')).toBeVisible();
 		await expect(page.getByText('Skrbnik')).toBeVisible();
 		await expect(page.getByRole('table', { name: 'Zadnje spremembe' }).getByRole('row')).toHaveCount(4);
