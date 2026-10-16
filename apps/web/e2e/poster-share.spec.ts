@@ -1,6 +1,8 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, type Page, test } from '@playwright/test';
 
+import { hydrated } from './session';
+
 // TASK-24.2: P9 slot B share menu and the P18 poster (e2e/mock-api.ts: Rex12345 lost with a photo served by the mock,
 // Gone1234 gone). The native <dialog> (focus trap, Escape, focus return) is checked in a real browser here.
 const AXE_TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'];
@@ -22,7 +24,9 @@ for (const viewport of [
 		await page.setViewportSize(viewport);
 		await page.goto('/r/Rex12345');
 
-		const button = page.getByRole('button', { name: 'Deli ali natisni plakat' });
+		// Hydrated first: an Enter pressed before React hydrates the button is replayed once it does, so the menu opens,
+		// but Radix had not yet seen the keyboard and leaves focus on the menu instead of its first row (CI under load).
+		const button = await hydrated(page.getByRole('button', { name: 'Deli ali natisni plakat' }));
 		await button.focus();
 		await page.keyboard.press('Enter');
 		const menu = page.getByRole('menu', { name: 'Deli ali natisni plakat' });
@@ -40,7 +44,8 @@ for (const viewport of [
 		await expect(menu.getByRole('menuitem', { name: /WhatsApp/ })).toBeFocused();
 		await expectNoAxeViolations(page);
 
-		await page.keyboard.press('ArrowUp');
+		// axe scrolls while it checks, which can move the menu's focus (Radix follows the pointer): pick the row again.
+		await menu.getByRole('menuitem', { name: 'Kopiraj povezavo' }).focus();
 		await page.keyboard.press('Enter');
 		await expect(menu).toBeHidden();
 		await expect(page.getByRole('status').filter({ hasText: 'Povezava je kopirana.' })).toBeVisible();
