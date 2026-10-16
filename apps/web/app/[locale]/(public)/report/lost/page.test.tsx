@@ -22,11 +22,19 @@ const viewer = vi.hoisted(() => ({ current: null as null | { initials: string; a
 vi.mock('@/lib/viewer', () => ({ getViewer: async () => viewer.current }));
 // The flow has its own tests: here it shows what the page hands it.
 vi.mock('@/components/report-lost/lost-flow', () => ({
-	LostFlow: ({ initialPet, signedIn }: { initialPet?: string; signedIn: boolean }) => (
-		<p data-testid="flow" data-pet={initialPet} data-signed-in={signedIn}>
-			{Object.keys(useMessages()).sort().join(' ')}
-		</p>
-	),
+	LostFlow: ({ initialPet, signedIn }: { initialPet?: string; signedIn: boolean }) => {
+		const messages = useMessages();
+		return (
+			<p
+				data-testid="flow"
+				data-pet={initialPet}
+				data-signed-in={signedIn}
+				data-messages={JSON.stringify(messages)}
+			>
+				{Object.keys(messages).sort().join(' ')}
+			</p>
+		);
+	},
 }));
 
 const props = (locale: 'sl' | 'en', query: Record<string, string> = {}) =>
@@ -70,6 +78,16 @@ describe('ReportLostPage', () => {
 			expect.arrayContaining(['report_lost', 'photos', 'location', 'auth', 'shelter_row', 'share', 'support'])
 		);
 		expect(document.querySelector('[data-ad-slot]')).toBeNull();
+		// The confirmation's share menu and poster dialog (lost-done.tsx): the poster copy and these report rows only.
+		const messages = JSON.parse(flow.dataset.messages!);
+		expect(messages.poster).toEqual(sl.poster);
+		expect(messages.report).toEqual({
+			share_copy: sl.report.share_copy,
+			share_whatsapp: sl.report.share_whatsapp,
+			share_facebook: sl.report.share_facebook,
+			share_poster: sl.report.share_poster,
+		});
+		expect(messages.browse).toEqual({ status_reunited: sl.browse.status_reunited });
 		const ld = JSON.parse(document.querySelector('script[type="application/ld+json"]')!.textContent!);
 		expect(ld['@graph'].map((node: { '@type': string }) => node['@type'])).toEqual(['WebPage', 'BreadcrumbList']);
 	});

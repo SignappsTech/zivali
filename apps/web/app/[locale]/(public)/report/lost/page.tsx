@@ -11,7 +11,7 @@ import { getViewer } from '@/lib/viewer';
 
 const HREF = '/report/lost';
 // What the flow's client components translate (PageMessages adds the shell's namespaces): the steps, the sign-in
-// dialog (auth) and the confirmation (shelter_row, share, support).
+// dialog (auth) and the confirmation (shelter_row, share, poster, support).
 const NAMESPACES = [
 	'report_lost',
 	'pets',
@@ -24,8 +24,11 @@ const NAMESPACES = [
 	'auth',
 	'shelter_row',
 	'share',
+	'poster',
 	'support',
 ] as const;
+// The confirmation's share menu rows and its poster dialog title (lost-done.tsx), not the whole report copy.
+const REPORT_KEYS = ['share_copy', 'share_whatsapp', 'share_facebook', 'share_poster'] as const;
 
 export async function generateMetadata({ params }: PageProps<'/[locale]/report/lost'>): Promise<Metadata> {
 	const locale = (await params).locale as Locale;
@@ -73,7 +76,13 @@ export default async function ReportLostPage({ params, searchParams }: PageProps
 	);
 
 	return (
-		<PageMessages messages={Object.fromEntries(NAMESPACES.map((ns) => [ns, messages[ns]]))}>
+		<PageMessages
+			messages={{
+				...Object.fromEntries(NAMESPACES.map((ns) => [ns, messages[ns]])),
+				report: Object.fromEntries(REPORT_KEYS.map((key) => [key, messages.report[key]])),
+				browse: { status_reunited: messages.browse.status_reunited },
+			}}
+		>
 			<StoreProvider>
 				<LostFlow
 					initialPet={typeof pet === 'string' ? pet : undefined}
