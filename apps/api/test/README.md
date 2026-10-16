@@ -17,6 +17,12 @@ slow down as the shared database filled up: `pgboss.job` has no index on `data->
 and `match.report` scans every open report. Test queries on it therefore carry a `created_on >= <test start>` bound, and the
 `reports.write` drain test first removes queued matching jobs left over from earlier runs.
 
+Alert residue (TASK-110): a timed-out `alerts.domain.test.ts` once left 12k subscriptions and 47k deliveries of test users, and every
+later fan-out test had to deliver to them. The test now picks its point per run (a random municipality, 20 km from the old fixed point,
+clear of the collab fixtures), cleans up with set-based deletes (jobs, deliveries, subscriptions, reports, profiles) in an `afterAll`
+with a 120 s timeout, and the 1000-subscriber test cleans up its own users in a `finally`. `global-setup` also deletes the
+`alert_deliveries` and `alert_subscriptions` of profiles without an `auth.users` row (test users; profiles are kept), same host guard.
+
 ## Proposal: a dedicated test database for main (not switched yet)
 
 `jobs.test.ts` ("runs one job per queue") fails whenever another process works the same `pgboss` queues: a `pnpm dev:worker`

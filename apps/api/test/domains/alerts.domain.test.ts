@@ -28,8 +28,8 @@ type QueuedAlert = {
 	dedupe_key: string;
 };
 
-// Novo mesto: far from the 20-collab fixture subscriptions (Ljubljana, Maribor).
-const P: Point = { lat: 45.804, lng: 15.169 };
+// TASK-110: the test point is picked per run (pickPoint), so alert subscriptions left by earlier runs cannot cover it.
+let P: Point;
 const at = (from: Point, north_m: number, east_m: number): Point => ({
 	lat: from.lat + north_m / 111_320,
 	lng: from.lng + east_m / (111_320 * Math.cos((from.lat * Math.PI) / 180)),
@@ -41,6 +41,44 @@ const geography = ({ lat, lng }: Point) =>
 
 const reports: string[] = [];
 const users = new Set<string>();
+
+const OLD_P: Point = { lat: 45.804, lng: 15.169 }; // the former fixed point: residue of earlier runs sits here
+// Fixture subscriptions of the collab seeder (radius up to 25 km): Ljubljana and Maribor.
+const FIXTURES: Point[] = [
+	{ lat: 46.056, lng: 14.505 },
+	{ lat: 46.554, lng: 15.646 },
+];
+const km = (a: Point, b: Point) => {
+	const rad = Math.PI / 180;
+	const h =
+		Math.sin(((b.lat - a.lat) * rad) / 2) ** 2 +
+		Math.cos(a.lat * rad) * Math.cos(b.lat * rad) * Math.sin(((b.lng - a.lng) * rad) / 2) ** 2;
+	return 12_742 * Math.asin(Math.sqrt(h));
+};
+
+/** A random municipality's inner point: inside Slovenia, 20 km from the old P, 45 km from the fixtures (also 60 and 120 km north). */
+async function pickPoint(): Promise<Point> {
+	const rows = await prisma.$queryRaw<Point[]>`
+		select extensions.st_y(extensions.st_pointonsurface(geom::extensions.geometry)) as lat,
+			extensions.st_x(extensions.st_pointonsurface(geom::extensions.geometry)) as lng
+		from app.municipalities order by random()`;
+	for (const point of rows) {
+		const spots = [0, 1, 2].map((step) => at(point, step * 60_000, 0));
+		if (km(point, OLD_P) < 20 || spots.some((spot) => FIXTURES.some((fixture) => km(spot, fixture) < 45))) continue;
+		if ((await geoLookup(point.lat, point.lng)).in_slovenia) return point;
+	}
+	throw new Error('no usable municipality point for the alerts test');
+}
+
+/** Set-based cleanup in FK order: queued jobs, deliveries, subscriptions, reports, profiles. Safe to repeat. */
+async function purge(reportIds: string[], userIds: string[]): Promise<void> {
+	const keys = reportIds.map((id) => `nearby:${id}`);
+	await prisma.$executeRaw`delete from pgboss.job where name = 'notify.send' and data->>'dedupe_key' = any(${keys})`;
+	await prisma.$executeRaw`delete from app.alert_deliveries where report_id = any(${reportIds}::uuid[]) or user_id = any(${userIds}::uuid[])`;
+	await prisma.$executeRaw`delete from app.alert_subscriptions where user_id = any(${userIds}::uuid[])`;
+	await prisma.$executeRaw`delete from app.reports where id = any(${reportIds}::uuid[])`;
+	await prisma.$executeRaw`delete from app.profiles where id = any(${userIds}::uuid[])`;
+}
 const jobCtx = (): JobCtx => ({ ...systemCtx(), prisma, send: jobs.send });
 
 async function profiles(count: number): Promise<string[]> {
@@ -107,19 +145,14 @@ const recipients = async (report_id: string) => (await queued(report_id)).map((d
 beforeAll(async () => {
 	await startJobs();
 	await seedGeo();
+	P = await pickPoint();
 }, 120_000);
 
 afterEach(() => {
 	vi.restoreAllMocks();
 });
 
-afterAll(async () => {
-	const keys = reports.map((id) => `nearby:${id}`);
-	await prisma.$executeRaw`delete from pgboss.job where name = 'notify.send' and data->>'dedupe_key' = any(${keys})`;
-	await prisma.$executeRaw`delete from app.alert_deliveries where report_id = any(${reports}::uuid[])`;
-	await prisma.$executeRaw`delete from app.reports where id = any(${reports}::uuid[])`;
-	await prisma.profiles.deleteMany({ where: { id: { in: [...users] } } });
-});
+afterAll(() => purge(reports, [...users]), 120_000);
 
 describe('AlertsDomain.fanout', () => {
 	it('queues ids-only nearby_lost jobs for subscribers covering the public point; nearbyAlert adds area and band', async () => {
@@ -235,23 +268,30 @@ describe('AlertsDomain.fanout', () => {
 
 	it('fans out to 1000 subscribers in chunks of 500 in under 60 s (AC#4)', async () => {
 		const ids = await profiles(1_000);
-		await prisma.$executeRaw`
-			insert into app.alert_subscriptions (id, user_id, center_point, radius_km, updated_at)
-			select gen_random_uuid(), u, extensions.st_project(${geography(P)}, random() * 2000, radians(random() * 360)), 5,
-				now()
-			from unnest(${ids}::uuid[]) as u`;
-		const id = await report();
-		const find = vi.spyOn(AlertsDao, 'findRecipients');
+		let id = '';
+		try {
+			await prisma.$executeRaw`
+				insert into app.alert_subscriptions (id, user_id, center_point, radius_km, updated_at)
+				select gen_random_uuid(), u, extensions.st_project(${geography(P)}, random() * 2000, radians(random() * 360)), 5,
+					now()
+				from unnest(${ids}::uuid[]) as u`;
+			id = await report();
+			const find = vi.spyOn(AlertsDao, 'findRecipients');
 
-		const started = performance.now();
-		await AlertsDomain.fanout({ report_id: id }, systemCtx());
-		const seconds = (performance.now() - started) / 1000;
+			const started = performance.now();
+			await AlertsDomain.fanout({ report_id: id }, systemCtx());
+			const seconds = (performance.now() - started) / 1000;
 
-		expect(seconds).toBeLessThan(60);
-		expect((await recipients(id)).filter((user) => ids.includes(user))).toHaveLength(1_000);
-		expect(await prisma.alert_deliveries.count({ where: { report_id: id, user_id: { in: ids } } })).toBe(1_000);
-		expect(find.mock.calls.every(([, limit]) => limit === 500)).toBe(true);
-		expect(find.mock.calls.length).toBeGreaterThanOrEqual(3);
+			expect(seconds).toBeLessThan(60);
+			expect((await recipients(id)).filter((user) => ids.includes(user))).toHaveLength(1_000);
+			expect(await prisma.alert_deliveries.count({ where: { report_id: id, user_id: { in: ids } } })).toBe(1_000);
+			expect(find.mock.calls.every(([, limit]) => limit === 500)).toBe(true);
+			expect(find.mock.calls.length).toBeGreaterThanOrEqual(3);
+		} finally {
+			// Its own cleanup: a timeout elsewhere must not leave 1000 users behind.
+			await purge(id ? [id] : [], ids);
+			for (const user of ids) users.delete(user);
+		}
 	}, 120_000);
 });
 
