@@ -1,9 +1,9 @@
 import { createApiClient, type Locale, uuid } from '@zivali/api/client';
 import { createApiStore } from '@zivali/api/rtk';
 
-// The store is in every page's bundle, so it imports neither lib/env.ts (zod) nor supabase-js (about 90 KB gz between
-// them, TASK-11.2). The server has validated the API URL in lib/env.ts already (proxy.ts imports it on every request);
-// the fallback is env.ts's APP_ENV=local default.
+// The store is in the bundle of every page that calls the API, so it imports neither lib/env.ts (zod) nor supabase-js
+// (about 90 KB gz between them, TASK-11.2). The server has validated the API URL in lib/env.ts already (proxy.ts
+// imports it on every request); the fallback is env.ts's APP_ENV=local default.
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 
 const DEVICE_KEY = 'device_id';
@@ -37,7 +37,20 @@ export function makeApiClient(locale: Locale) {
 	});
 }
 
-/** Redux store for client components: RTK Query over the REST API (ADR-020 §Client). One per session or SSR request. */
+/** Redux store for client components: RTK Query over the REST API (ADR-020 §Client). */
 export function makeStore(locale: Locale) {
 	return createApiStore(makeApiClient(locale));
+}
+
+let current: { locale: Locale; store: ReturnType<typeof makeStore> } | undefined;
+
+/**
+ * The store of a StoreProvider. In the browser a single slot for the current locale (a locale switch drops the old store, so no previous user's cache outlives it) (responses are localised, Accept-Language), shared by
+ * every provider in the tab, so the cache reset on a user change (SessionSync) reaches the page's queries too. On the
+ * server a new one per render, never shared between users.
+ */
+export function getStore(locale: Locale) {
+	if (typeof window === 'undefined') return makeStore(locale);
+	if (current?.locale !== locale) current = { locale, store: makeStore(locale) };
+	return current.store;
 }
