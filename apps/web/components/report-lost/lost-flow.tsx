@@ -768,34 +768,42 @@ export function LostFlow({ initialPet, signedIn }: { initialPet?: string; signed
 		setAwaiting(false);
 		if (busy.current || uploading) return;
 		busy.current = true;
+		let sent = false;
 		try {
-			await send();
+			sent = await send();
 		} finally {
-			busy.current = false;
+			// Once sent the guard stays closed: a press before the confirmation shows would be a new submission with a
+			// new key, so a second report.
+			if (!sent) busy.current = false;
 		}
 	};
-	const send = async () => {
+	/** true once the report is created or updated. */
+	const send = async (): Promise<boolean> => {
 		setSendError(undefined);
 		const photoIds = photos.flatMap((photo) =>
 			photo.status === 'uploaded' && photo.photoId ? [photo.photoId] : []
 		);
-		if (!photos.length) return setSendError(t('photos_required'));
-		if (photos.some((photo) => photo.status === 'failed')) return edit('photos');
+		const notSent = (show: () => void) => {
+			show();
+			return false;
+		};
+		if (!photos.length) return notSent(() => setSendError(t('photos_required')));
+		if (photos.some((photo) => photo.status === 'failed')) return notSent(() => edit('photos'));
 		const signedOut = gate === 'signin';
 		// Signed out, the photos wait in this browser; they upload after sign-in (C3: nothing is sent before).
-		if (!photoIds.length && !signedOut) return setSendError(t('photos_wait'));
+		if (!photoIds.length && !signedOut) return notSent(() => setSendError(t('photos_wait')));
 		for (const s of steps) {
 			const fields = STEP_FIELDS[s];
 			if (fields.length && !(await form.trigger(fields))) {
 				edit(s);
-				return setAttempted(true);
+				return notSent(() => setAttempted(true));
 			}
 		}
-		if (!values.location) return edit('where');
+		if (!values.location) return notSent(() => edit('where'));
 		if (signedOut) {
 			// Marked, so the way back from sign-in or sign-up publishes it.
 			await saveDraft('review', form.getValues(), Date.now()).catch(() => {});
-			return setGateOpen(true);
+			return notSent(() => setGateOpen(true));
 		}
 		const at = values.when === 'now' && handoffAt.current ? new Date(handoffAt.current) : eventAt(values)!;
 		setSending(true);
@@ -828,8 +836,10 @@ export function LostFlow({ initialPet, signedIn }: { initialPet?: string; signed
 				species: (pet?.species ?? values.species)!,
 				point: values.location,
 			});
+			return true;
 		} catch (error) {
 			failed(error);
+			return false;
 		} finally {
 			setSending(false);
 		}

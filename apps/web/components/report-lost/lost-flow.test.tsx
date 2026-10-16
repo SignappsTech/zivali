@@ -603,6 +603,24 @@ describe('LostFlow', () => {
 		expect(api.createReport).toHaveBeenCalledTimes(1);
 	});
 
+	it('keeps Publish closed once the report is created, until the confirmation shows (one POST)', async () => {
+		let cleared!: () => void;
+		api.clearPhotoDraft.mockImplementationOnce(() => new Promise<void>((resolve) => (cleared = resolve)));
+		show();
+		await toReview();
+		const form = screen.getByRole('heading', { level: 1, name: t.review_title }).closest('form')!;
+		click(t.publish);
+		// The POST has answered: the flow is clearing the draft on its way to the confirmation.
+		await waitFor(() => expect(api.clearPhotoDraft).toHaveBeenCalled());
+		cleared();
+		// The send has returned and React has not shown the confirmation yet (microtasks only): a second press now.
+		for (let i = 0; i < 20; i++) await Promise.resolve();
+		form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+		await heading(t.done_title);
+		await new Promise((resolve) => setTimeout(resolve, 20));
+		expect(api.createReport).toHaveBeenCalledTimes(1);
+	});
+
 	it('forgets the open search found for one pet when another pet is chosen', async () => {
 		const other = { ...pet, id: 'pet-2', name: 'Muri' };
 		api.pets = [pet, other];
