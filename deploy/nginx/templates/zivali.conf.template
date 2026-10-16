@@ -75,6 +75,16 @@ server {
 	}
 }
 
+# Pilot (web-first, one environment): the staging stack serves the main host; www and the old staging host redirect to
+# it. STAGING_ALIAS_HOSTS lists them (edge.env; never empty: alias.invalid when none). Split staging and production
+# again before the public launch (docs/tech/pilot-runbook.md §9).
+server {
+	listen 443 ssl;
+	http2 on;
+	server_name ${STAGING_ALIAS_HOSTS};
+	return 301 https://${STAGING_WEB_HOST}$request_uri;
+}
+
 server {
 	listen 443 ssl;
 	http2 on;

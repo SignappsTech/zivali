@@ -62,10 +62,13 @@ The deploy itself is `node scripts/deploy.mjs <staging|production> --deploy` (wo
         ```
         CERT_NAME=najdimo.si
         STAGING_WEB_HOST=staging.najdimo.si
+        STAGING_ALIAS_HOSTS=alias.invalid
         STAGING_API_HOST=api-staging.najdimo.si
         PRODUCTION_WEB_HOST=najdimo.si
         PRODUCTION_API_HOST=api.najdimo.si
         ```
+
+        `STAGING_ALIAS_HOSTS`: names that 301 to `STAGING_WEB_HOST` (the pilot: `www.najdimo.si staging.najdimo.si`, docs/tech/pilot-runbook.md §1); required and never empty (nginx refuses an empty `server_name`), `alias.invalid` when none. The API host variables take several space-separated names; the web ones exactly one.
 
     - `/opt/zivali/staging/.env`: the apps/api block of the root `.env.example`, plus `APP_ENV=staging` (it also picks the env files in Compose). Database: Supabase **Connect, Session pooler** (IPv4; containers have no IPv6 by default; port **5432**) for both `DATABASE_URL` and `DIRECT_URL`, each ending in `?schema=app`. Not the transaction pooler (port 6543): migrations need a session, and `remote.sh check` reports a missing `DIRECT_URL` or one on port 6543. Secrets `RATE_SALT`, `IDEMPOTENCY_KEY`, `FUZZ_SECRET`: `openssl rand -hex 32` each, per environment. `STORAGE_PROVIDER=r2` with the `R2_*` values and `MEDIA_BASE_URL=https://media.najdimo.si`. Every other adapter is configured or explicitly `off` (`PAYMENTS_PROVIDER`, `EMAIL_PROVIDER`, `PUSH_PROVIDER`, `CAPTCHA_PROVIDER`, `AI_PROVIDER`, `EMBEDDER_PROVIDER`); `mock` is refused outside local. `API_URL=https://api-staging.najdimo.si`, `APP_URL` and `WEB_ORIGINS=https://staging.najdimo.si`.
     - `/opt/zivali/staging/web.env`: `APP_ENV=staging`, `R2_UPLOAD_ORIGIN=https://<R2_ACCOUNT_ID>.eu.r2.cloudflarestorage.com`, `MEDIA_BASE_URL=https://media.najdimo.si` (the API's value; the web fails fast without it), and `GA_PROPERTY_ID`/`GA_SERVICE_ACCOUNT_KEY_FILE` only once partner stats are on. `NEXT_PUBLIC_*` values do not go here: they are baked into the web image at build time by `scripts/deploy.mjs` (from `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `WEB_HOST`, `API_HOST` and the optional `NEXT_PUBLIC_*` it is given).

@@ -93,6 +93,11 @@ fi
 docker compose version >/dev/null 2>&1 || need "Docker with the Compose plugin (deploy/README.md, VPS)"
 command -v zstd >/dev/null 2>&1 || need "zstd on the VPS: apt-get install -y zstd (deploy/README.md, VPS)"
 if [ -f edge.env ]; then
+	# Every name the nginx template renders; an empty one would leave a server block without server_name.
+	for var in CERT_NAME STAGING_WEB_HOST STAGING_ALIAS_HOSTS STAGING_API_HOST PRODUCTION_WEB_HOST PRODUCTION_API_HOST; do
+		[ -n "$(sed -n "s/^$var=//p" edge.env)" ] ||
+			need "$var in /opt/zivali/edge.env (deploy/README.md, VPS; alias.invalid parks an unused name)"
+	done
 	cert=$(sed -n 's/^CERT_NAME=//p' edge.env)
 	docker run --rm -v /opt/zivali/letsencrypt:/le:ro --entrypoint test nginx:1.30-alpine -f "/le/live/$cert/fullchain.pem" ||
 		need "TLS certificate '$cert': run the first issuance (deploy/README.md, TLS)"
