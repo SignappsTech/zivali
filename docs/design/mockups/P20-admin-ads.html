@@ -2,7 +2,7 @@
 <!--
   P20 Admin ad management mockup (TASK-37.1). Built from docs/design/mockups/_template.html.
   Sources: docs/design/pages/P20-admin-ads.md, docs/design/system.md, docs/content/pages/P20-admin-ads.md (v0.1), shell and table pattern from P19-admin-shell.html.
-  Ad units in the preview follow docs/design/pages/P21-ad-slots.md (the P21 mockup is not merged yet; units are drawn here from the slice).
+  Ad units in the preview use the merged P21 reserved sizes: Feed 88, Detail/Reunited 176 (web) and 200 (mobile, .ad-m), Sidebar 320 x 452.
   Static HTML. Everything in #src is cloned once per colour mode by ../directions/directions.js.
 -->
 <html lang="en">
@@ -123,6 +123,8 @@ th[aria-sort="ascending"] .sortbtn, th[aria-sort="descending"] .sortbtn { color:
 /* Enquiry status: icon + word (teal for new, foreground in progress, muted when closed) */
 .lst { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; line-height: 20px; font-weight: 700; white-space: nowrap; }
 .lst i { font-size: 16px; }
+.lst-ver { color: hsl(var(--foreground)); }
+.lst-del { color: hsl(var(--muted-foreground)); }
 .lst-new { color: hsl(var(--primary)); } .lst-wip { color: hsl(var(--foreground)); } .lst-done { color: hsl(var(--muted-foreground)); }
 /* Filter row: line search (label above) and select filters drawn as pills */
 .frow { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px 24px; }
@@ -207,16 +209,17 @@ th[aria-sort="ascending"] .sortbtn, th[aria-sort="descending"] .sortbtn { color:
 .ctl { font-size: 13px; font-weight: 700; fill: hsl(var(--foreground)); font-family: inherit; }
 /* P21 ad units as drawn in the admin preview */
 .ad { box-sizing: border-box; border-radius: var(--radius-row); background: hsl(var(--muted)); color: hsl(var(--foreground)); text-align: left; }
-.ad-label { margin: 0 0 6px; font-size: 13px; line-height: 18px; font-weight: 700; color: hsl(var(--muted-foreground)); }
+.ad-label { margin: 0 0 8px; font-size: 13px; line-height: 18px; font-weight: 700; color: hsl(var(--muted-foreground)); }
 .ad-house { font-weight: 600; }
 .ad-t { margin: 0; font-size: 16px; line-height: 22px; font-weight: 700; }
 .ad-x { margin: 0; font-size: 15px; line-height: 22px; color: hsl(var(--foreground)); }
 .ad-feed { min-height: 88px; padding: 10px 16px 12px; }
 .ad-feed .flex > i { font-size: 20px; color: hsl(var(--muted-foreground)); flex: none; }
 .ad-i64 { width: 64px; height: 64px; flex: none; border-radius: var(--radius-row); object-fit: cover; display: block; }
-.ad-detail { min-height: 136px; padding: 12px 16px 16px; }
+.ad-detail { min-height: 176px; padding: 16px; }
+.ad-detail.ad-m { min-height: 200px; }
 .ad-i96 { width: 96px; height: 96px; flex: none; border-radius: var(--radius-row); object-fit: cover; display: block; }
-.ad-side { width: 320px; max-width: 100%; padding: 12px 16px 16px; }
+.ad-side { width: 320px; max-width: 100%; min-height: 452px; padding: 16px; box-sizing: border-box; }
 .ad-i43 { width: 100%; aspect-ratio: 4 / 3; border-radius: var(--radius-row); object-fit: cover; display: block; }
 .ad-btn { display: inline-flex; align-items: center; gap: 6px; margin-top: 6px; font-size: 16px; line-height: 24px; font-weight: 700; color: hsl(var(--primary)); text-decoration: underline; text-underline-offset: 4px; text-decoration-thickness: 1px; }
 .ad-btn i { font-size: 16px; }
@@ -269,6 +272,7 @@ th[aria-sort="ascending"] .sortbtn, th[aria-sort="descending"] .sortbtn { color:
 
 <section class="tile-section !max-w-[1400px] !pt-6">
 
+  <p class="meta" style="margin:16px 48px 0;max-width:760px">Admin is desktop first (page slice). Frames at 1200 shrink with the window; F10 is the real 390 frame, a usable phone layout, not optimised.</p>
   <p class="tile-h" style="margin-top:64px">F1 · Ads list · mixed statuses (running, scheduled, draft, ended) · hover on row 2 · row menu open on "Kras Vet" (ended: no Edit, no End now) · keyboard focus on "Nov oglas"</p>
   <div class="fit-1200"><div class="browser relative" style="width:1200px" lang="sl">
     <div class="browser-bar"><span class="dots"><i></i><i></i><i></i></span><span class="url"><i class="ph ph-lock-simple " aria-hidden="true"></i>najdimo.si/admin/oglasi</span></div>
@@ -318,6 +322,10 @@ th[aria-sort="ascending"] .sortbtn, th[aria-sort="descending"] .sortbtn { color:
       <td><span class="lst lst-done"><i class="ph-fill ph-pencil-simple " aria-hidden="true"></i>Osnutek</span></td><td>Seznam prijav</td><td>Podravska · Psi</td><td class="tnum nowrap">–</td><td class="tr tnum">–</td><td class="tr tnum">–</td><td class="tr tnum">–</td>
       <td class="c-act"><div class="relative inline-block"><button type="button" class="iconbtn" aria-label="Dejanja: Salon Šapa: striženje psov" aria-haspopup="menu" aria-expanded="false"><i class="ph-bold ph-dots-three " aria-hidden="true"></i></button></div></td></tr>
 <tr class="">
+      <td><div class="flex items-center gap-3"><img class="athumb" src="../directions/img/dog-aussie.jpg" alt="Sličica oglasa: Pasja šola Vižmarje: tečaj za mladičke" width="64" height="48"><a href="#" class="rowlink">Pasja šola Vižmarje: tečaj za mladičke</a></div></td>
+      <td><span class="lst lst-ver"><i class="ph-fill ph-hourglass-medium " aria-hidden="true"></i>Preverjanje slike</span></td><td>Stran prijave</td><td>Osrednjeslovenska · Psi</td><td class="tnum nowrap">15. 10. – 15. 11. 2026</td><td class="tr tnum">–</td><td class="tr tnum">–</td><td class="tr tnum">–</td>
+      <td class="c-act"><div class="relative inline-block"><button type="button" class="iconbtn" aria-label="Dejanja: Pasja šola Vižmarje: tečaj za mladičke" aria-haspopup="menu" aria-expanded="false"><i class="ph-bold ph-dots-three " aria-hidden="true"></i></button></div></td></tr>
+<tr class="">
       <td><div class="flex items-center gap-3"><img class="athumb" src="../directions/img/cat-tabby.jpg" alt="Sličica oglasa: Kras Vet: cepljenje mačk" width="64" height="48"><a href="#" class="rowlink">Kras Vet: cepljenje mačk</a></div></td>
       <td><span class="lst lst-done"><i class="ph-fill ph-check-circle " aria-hidden="true"></i>Končan</span></td><td>Zaslon Spet doma</td><td>Obalno-kraška · Mačke</td><td class="tnum nowrap">1. 9. – 30. 9. 2026</td><td class="tr tnum">6.205</td><td class="tr tnum">97</td><td class="tr tnum">1,6 %</td>
       <td class="c-act"><div class="relative inline-block"><button type="button" class="iconbtn is-open" aria-label="Dejanja: Kras Vet: cepljenje mačk" aria-haspopup="menu" aria-expanded="true"><i class="ph-bold ph-dots-three " aria-hidden="true"></i></button><div class="pop rmenu" role="menu" aria-label="Dejanja: Kras Vet: cepljenje mačk">
@@ -330,7 +338,12 @@ th[aria-sort="ascending"] .sortbtn, th[aria-sort="descending"] .sortbtn { color:
 <tr class="">
       <td><div class="flex items-center gap-3"><img class="athumb" src="../directions/img/dog-aussie.jpg" alt="Sličica oglasa: Vrtnarstvo Gaj: jesenska razprodaja" width="64" height="48"><a href="#" class="rowlink">Vrtnarstvo Gaj: jesenska razprodaja</a></div></td>
       <td><span class="lst lst-done"><i class="ph-fill ph-check-circle " aria-hidden="true"></i>Končan</span></td><td>Stran prijave</td><td>Savinjska · Psi, mačke</td><td class="tnum nowrap">1. 8. – 31. 8. 2026</td><td class="tr tnum">4.318</td><td class="tr tnum">52</td><td class="tr tnum">1,2 %</td>
-      <td class="c-act"><div class="relative inline-block"><button type="button" class="iconbtn" aria-label="Dejanja: Vrtnarstvo Gaj: jesenska razprodaja" aria-haspopup="menu" aria-expanded="false"><i class="ph-bold ph-dots-three " aria-hidden="true"></i></button></div></td></tr></tbody></table></div>
+      <td class="c-act"><div class="relative inline-block"><button type="button" class="iconbtn" aria-label="Dejanja: Vrtnarstvo Gaj: jesenska razprodaja" aria-haspopup="menu" aria-expanded="false"><i class="ph-bold ph-dots-three " aria-hidden="true"></i></button></div></td></tr>
+<tr class="">
+      <td><div class="flex items-center gap-3"><img class="athumb" src="../directions/img/cat-ginger.jpg" alt="Sličica oglasa: Mačja pošta: zimske odeje" width="64" height="48"><a href="#" class="rowlink" aria-label="Odpri statistiko: Mačja pošta: zimske odeje (izbrisan)">Mačja pošta: zimske odeje</a></div></td>
+      <td><span class="lst lst-del"><i class="ph-fill ph-trash-simple " aria-hidden="true"></i>Izbrisan</span></td><td>Seznam prijav</td><td>Gorenjska · Mačke</td><td class="tnum nowrap">1. 7. – 31. 7. 2026</td><td class="tr tnum">3.102</td><td class="tr tnum">41</td><td class="tr tnum">1,3 %</td>
+      <td class="c-act"><div class="relative inline-block"><button type="button" class="iconbtn" aria-label="Dejanja: Mačja pošta: zimske odeje" aria-haspopup="menu" aria-expanded="false"><i class="ph-bold ph-dots-three " aria-hidden="true"></i></button></div></td></tr></tbody></table></div>
+    <p class="meta" style="margin-top:-24px">Sample: the "Preverjanje slike" row (image checked, not live yet) and the "Izbrisan" row (soft deleted, kept for its statistics; the title still opens them).</p>
     </main>
     </div>
   </div>
@@ -529,7 +542,7 @@ th[aria-sort="ascending"] .sortbtn, th[aria-sort="descending"] .sortbtn { color:
           <div class="field"><label for="f3ed">Konec</label><input id="f3ed" type="date" class="input" value="2026-11-30"></div>
         </div>
         <div class="field"><label for="f3stt">Stanje</label><button type="button" id="f3stt" class="input select" aria-haspopup="listbox" aria-expanded="false"><span>Načrtovan</span><i class="ph-bold ph-caret-down " aria-hidden="true"></i></button></div>
-        <div><label class="check"><input type="checkbox" checked aria-describedby="f3exh f3exe"><span class="cbx"><i class="ph-bold ph-check " aria-hidden="true"></i></span><span class="font-bold">Izključno mesto</span></label><p class="help ml-9" id="f3exh">V istem obdobju na tem mestu in v teh regijah ne bo drugih oglasov.</p><div class="ml-9 mt-2"><p class="err" id="f3exe"><i class="ph-fill ph-warning-circle text-[18px] leading-5" aria-hidden="true"></i><span>V tem obdobju je to mesto že rezervirano za oglas: Hotel Mijav: zimska ponudba. <a href="#" class="lnk !min-h-0 ml-1">Odpri oglas</a></span></p></div></div>
+        <div><label class="check"><input type="checkbox" checked aria-describedby="f3exh f3exe"><span class="cbx"><i class="ph-bold ph-check " aria-hidden="true"></i></span><span class="font-bold">Izključno mesto</span></label><p class="help ml-9" id="f3exh">V istem obdobju na tem mestu in v teh regijah ne bo drugih oglasov.</p><div class="ml-9 mt-2"><p class="err" id="f3exe"><i class="ph-fill ph-warning-circle text-[18px] leading-5" aria-hidden="true"></i><span>V tem obdobju je to mesto že rezervirano za oglas: Hotel Mijav: zimska ponudba. <a href="#" class="lnk ml-1">Odpri oglas</a></span></p></div></div>
       </section>
       <div class="sfoot" role="group" aria-label="Dejanja"><button type="button" class="btn btn-primary btn-lg">Shrani</button><button type="button" class="btn btn-text">Shrani kot osnutek</button><button type="button" class="btn btn-text">Prekliči</button></div>
       </form>
@@ -656,6 +669,8 @@ th[aria-sort="ascending"] .sortbtn, th[aria-sort="descending"] .sortbtn { color:
     <div class="stcell"><div class="field"><span class="label">Slika</span><div class="drop"><p class="err"><i class="ph-fill ph-warning-circle text-[18px] leading-5" aria-hidden="true"></i><span>Slike ni bilo mogoče naložiti. Poskusite znova.</span></p><div class="flex flex-wrap justify-center gap-3"><button type="button" class="btn btn-secondary btn-sm"><i class="ph-bold ph-arrow-clockwise " aria-hidden="true"></i>Poskusi znova</button><button type="button" class="btn btn-text btn-sm"><i class="ph-bold ph-upload-simple " aria-hidden="true"></i>Izberi datoteko</button></div></div></div><p class="cap mt-3">Napaka pri nalaganju (retry)</p></div>
     <div class="stcell"><div class="grid gap-3"><div class="note" role="status"><i class="ph-fill ph-lock-simple " aria-hidden="true"></i><p>Oglas je končan in ga ni mogoče urejati. Lahko ga podvojite.</p></div><div class="field is-disabled"><label for="ro-t">Naslov</label><input id="ro-t" class="input" disabled value="Kras Vet: cepljenje mačk"></div><div><button type="button" class="btn btn-secondary btn-sm"><i class="ph-bold ph-copy " aria-hidden="true"></i>Podvoji</button></div></div><p class="cap mt-3">Končan oglas: samo za branje</p></div>
 
+    <div class="stcell"><div class="grid gap-3"><div class="field"><span class="label" id="vi-l">Slika</span><div role="group" aria-labelledby="vi-l" aria-describedby="vi-h" class="drop"><div class="flex items-center gap-4 w-full"><img class="athumb-lg" src="../directions/img/dog-aussie.jpg" alt="" width="120" height="90"><div class="text-left min-w-0"><p class="font-bold truncate">sola-vizmarje.jpg</p><p class="lst lst-ver mt-1"><i class="ph-fill ph-hourglass-medium " aria-hidden="true"></i>Preverjanje slike</p></div></div><button type="button" class="btn btn-text btn-sm"><i class="ph-bold ph-upload-simple " aria-hidden="true"></i>Zamenjaj sliko</button></div><p class="help" id="vi-h" role="status">Slika še ni v živo. Oglas se začne prikazovati, ko je slika preverjena.</p></div><div><button type="button" class="btn btn-primary btn-lg">Shrani</button></div></div><p class="cap mt-3">Preverjanje slike (form: image uploaded, not live yet; Save still works, status in the list reads the same; sample strings)</p></div>
+    <div class="stcell"><div><label class="check"><input type="checkbox" checked aria-describedby="xo-h xo-e"><span class="cbx"><i class="ph-bold ph-check " aria-hidden="true"></i></span><span class="font-bold">Izključno mesto</span></label><p class="help ml-9" id="xo-h">V istem obdobju na tem mestu in v teh regijah ne bo drugih oglasov.</p><div class="ml-9 mt-2"><p class="err" id="xo-e"><i class="ph-fill ph-warning-circle text-[18px] leading-5" aria-hidden="true"></i><span>V tem obdobju je to mesto že rezervirano za oglas: Repek: hrana in igrače za pse in mačke. <a href="#" class="lnk ml-1">Odpri oglas</a></span></p></div></div><p class="cap mt-3">Izključno mesto: prekrivanje z drugim oglasom (names the conflicting ad)</p></div>
     <div class="stcell wide"><div class="grid grid-cols-2 gap-8"><div class="grid gap-4"><div class="grid grid-cols-2 gap-6"><div class="field"><label for="e-sd">Začetek</label><input id="e-sd" type="date" class="input" value="2026-11-30"></div><div class="field"><label for="e-ed">Konec</label><input id="e-ed" type="date" class="input is-error" value="2026-11-15" aria-invalid="true" aria-describedby="e-ede"></div></div><p class="err" id="e-ede"><i class="ph-fill ph-warning-circle text-[18px] leading-5" aria-hidden="true"></i><span>Konec mora biti po začetku.</span></p></div>
       <div class="grid gap-2"><span class="label" id="e-sl">Oglasna mesta</span><div class="pg" role="group" aria-labelledby="e-sl" aria-describedby="e-sle"><button type="button" class="pill" aria-pressed="false"><i class="ph-bold ph-check tick" aria-hidden="true"></i>Seznam prijav</button><button type="button" class="pill" aria-pressed="false"><i class="ph-bold ph-check tick" aria-hidden="true"></i>Stran prijave</button><button type="button" class="pill" aria-pressed="false"><i class="ph-bold ph-check tick" aria-hidden="true"></i>Zaslon Spet doma</button><button type="button" class="pill" aria-pressed="false"><i class="ph-bold ph-check tick" aria-hidden="true"></i>Stranska vrstica</button></div><p class="err" id="e-sle"><i class="ph-fill ph-warning-circle text-[18px] leading-5" aria-hidden="true"></i><span>Izberite vsaj eno oglasno mesto.</span></p></div></div><p class="cap mt-3">End before start, no slot chosen (also: "To polje je obvezno." for empty required fields)</p></div>
   </div></div>
@@ -684,7 +699,7 @@ th[aria-sort="ascending"] .sortbtn, th[aria-sort="descending"] .sortbtn { color:
         <div class="grid gap-3 mt-2">
           <div role="radiogroup" aria-label="Mesto" class="pg"><button type="button" role="radio" class="pill" aria-pressed="false" aria-checked="false"><i class="ph-bold ph-check tick" aria-hidden="true"></i>Seznam prijav</button><button type="button" role="radio" class="pill" aria-pressed="true" aria-checked="true"><i class="ph-bold ph-check tick" aria-hidden="true"></i>Stran prijave</button><button type="button" role="radio" class="pill" aria-pressed="false" aria-checked="false"><i class="ph-bold ph-check tick" aria-hidden="true"></i>Zaslon Spet doma</button><button type="button" role="radio" class="pill" aria-pressed="false" aria-checked="false"><i class="ph-bold ph-check tick" aria-hidden="true"></i>Stranska vrstica</button></div>
           <div class="grid grid-cols-2 gap-3"><div class="seg" role="radiogroup" aria-label="Jezik"><button type="button" role="radio" aria-checked="true" aria-selected="true">SL</button><button type="button" role="radio" aria-checked="false" aria-selected="false">EN</button></div><div class="seg" role="radiogroup" aria-label="Svetlo / temno"><button type="button" role="radio" aria-checked="true" aria-selected="true">Svetlo</button><button type="button" role="radio" aria-checked="false" aria-selected="false">Temno</button></div></div>
-          <div class="pvwrap"><div class="ad ad-detail" role="group" aria-label="Oglas: Repek: hrana in igrače za pse in mačke"><p class="ad-label">Oglas</p><div class="flex gap-4"><img class="ad-i96" src="../directions/img/dog-golden.jpg" alt="Pes z igračo ob polni skodelici hrane"><div class="min-w-0 flex-1"><p class="ad-t">Repek: hrana in igrače za pse in mačke</p><p class="ad-x line-clamp-2">Za nakupe nad 25 € je dostava po vsej Sloveniji brezplačna do konca oktobra.</p><span class="ad-btn">Več o tem<i class="ph-bold ph-arrow-square-out " aria-hidden="true"></i></span></div></div></div></div>
+          <div class="pvwrap"><div class="ad ad-detail ad-m" role="group" aria-label="Oglas: Repek: hrana in igrače za pse in mačke"><p class="ad-label">Oglas</p><div class="flex gap-4"><img class="ad-i96" src="../directions/img/dog-golden.jpg" alt="Pes z igračo ob polni skodelici hrane"><div class="min-w-0 flex-1"><p class="ad-t">Repek: hrana in igrače za pse in mačke</p><p class="ad-x line-clamp-2">Za nakupe nad 25 € je dostava po vsej Sloveniji brezplačna do konca oktobra.</p><span class="ad-btn">Več o tem<i class="ph-bold ph-arrow-square-out " aria-hidden="true"></i></span></div></div></div></div>
         </div>
       </div>
       <span class="home-ind"></span>
