@@ -1,6 +1,9 @@
 // Fiscal invoices (C13 §Fiscal invoices, TASK-92, FR-046): payment.effects issues one per succeeded payment, numbered
 // <premise>-<device>-<sequence> without gaps, with a VAT breakdown, verified through the fiscal adapter (retried by
-// pg-boss with backoff), then rendered to a PDF in the private bucket. Every step is idempotent per payment.
+// pg-boss with a backoff in minutes, app_config fiscal.retry), then rendered to a PDF in the private bucket. The
+// hourly fiscal.resubmit job sends what is still unverified again (TASK-92.3). Every step is idempotent per payment.
+import { z } from 'zod';
+
 import { PAYMENT_PURPOSES, type PaymentPurpose } from '@zivali/types';
 
 import type { FiscalInvoice } from '../../adapters/fiscal/index.ts';
@@ -9,15 +12,44 @@ import configStore from '../../lib/config-store.ts';
 import type { Ctx } from '../../lib/ctx.ts';
 import { renderInvoicePdf } from '../../lib/invoice-pdf.ts';
 import { prisma } from '../../prisma/prisma.ts';
+import { DirectoryDomain } from '../directory/index.ts';
 import PaymentsDao, { type InvoiceRow, type PaymentRow } from './payments.dao.ts';
 
 /** Standard Slovenian VAT rate (ZDDV-1); FR-046 itemises it on every invoice. */
 export const VAT_RATE = 22;
 /**
  * Verification attempts before an invoice is FAILED. Below the job's runs (1 + 5 retries), so the last attempt still
- * hands over the receipt and the PDF with the ZOI; a FAILED invoice is submitted to FURS later (deploy/README.md §10).
+ * hands over the receipt and the PDF with the ZOI; fiscal.resubmit then sends a FAILED invoice again.
  */
 export const MAX_ATTEMPTS = 5;
+/** In-flight lease of one attempt: far above the FURS call's 30 s deadline; after a crash mid-call it frees the invoice. */
+export const LEASE_MS = 2 * 60_000;
+/** PENDING this long after issue = past every payment.effects retry (at most 5 × 30 min): fiscal.resubmit takes it. */
+export const STALE_PENDING_MS = 3 * 3_600_000;
+/** Still unverified this long after issue: the admins are alerted (FURS expects it within 2 working days). */
+export const ALERT_AFTER_MS = 24 * 3_600_000;
+const RESUBMIT_BATCH = 100;
+
+// app_config fiscal.retry (minutes). The bounds keep the whole retry ladder below STALE_PENDING_MS.
+const RetryConfig = z.object({
+	delay_minutes: z.number().int().min(1).max(10),
+	max_delay_minutes: z.number().int().min(1).max(30),
+});
+const DEFAULT_RETRY: z.infer<typeof RetryConfig> = { delay_minutes: 2, max_delay_minutes: 30 };
+
+/**
+ * pg-boss retry options of payment.effects: the first retry after fiscal.retry delay_minutes, then doubling (with
+ * jitter) up to max_delay_minutes. A missing or malformed value means the default (2 and 30 minutes).
+ */
+export async function retryOptions(): Promise<{ retryBackoff: true; retryDelay: number; retryDelayMax: number }> {
+	const parsed = RetryConfig.safeParse(await configStore.get('fiscal.retry'));
+	const { delay_minutes, max_delay_minutes } = parsed.success ? parsed.data : DEFAULT_RETRY;
+	return {
+		retryBackoff: true,
+		retryDelay: delay_minutes * 60,
+		retryDelayMax: Math.max(delay_minutes, max_delay_minutes) * 60,
+	};
+}
 
 /** Net and VAT of a VAT-inclusive amount, in whole cents; net + vat = gross. */
 export function vatBreakdown(gross_cents: number, vat_rate = VAT_RATE): { net_cents: number; vat_cents: number } {
@@ -74,9 +106,12 @@ async function createInvoice(payment: PaymentRow, ctx: Ctx): Promise<InvoiceRow>
 	}
 }
 
-async function verify(invoice: InvoiceRow, ctx: Ctx): Promise<InvoiceRow> {
+/**
+ * One verification attempt. From payment.effects a failure before the last attempt throws (pg-boss retries); a
+ * resubmission (fiscal.resubmit) is always a SubsequentSubmit and leaves the invoice FAILED when FURS fails again.
+ */
+async function verify(invoice: InvoiceRow, ctx: Ctx, resubmit = false): Promise<InvoiceRow> {
 	const { fiscal } = ctx.adapters;
-	const attempt = invoice.attempts + 1;
 	// A row made by another provider (mock vs furs) is never sent on: its ZOI and number belong to that series.
 	if (invoice.provider !== fiscal.provider) {
 		ctx.logger.error(
@@ -87,22 +122,46 @@ async function verify(invoice: InvoiceRow, ctx: Ctx): Promise<InvoiceRow> {
 			`fiscal: invoice ${invoice.id} belongs to provider ${invoice.provider}, not ${fiscal.provider}`
 		);
 	}
-	// The claim counts the attempt before the call, so a crash mid-call still counts; a concurrent run loses and retries.
-	if (!(await PaymentsDao.claimInvoiceAttempt(invoice.id, invoice.attempts)))
-		throw new Error('fiscal: invoice verification already in progress');
-	const log = { invoice_id: invoice.id, attempt };
+	// The claim counts the attempt and takes the in-flight lease before the call: a crash mid-call still counts, and no
+	// other run (a payment.effects retry or redelivery, fiscal.resubmit) sends this invoice until the lease ends. A run
+	// that read the invoice before another run's attempt loses too, so overlapping runs send it once.
+	const now = new Date();
+	const lease_until = new Date(now.getTime() + LEASE_MS);
+	const claimed = await PaymentsDao.claimInvoiceAttempt({
+		id: invoice.id,
+		attempts: invoice.attempts,
+		now,
+		lease_until,
+	});
+	if (!claimed) throw new Error('fiscal: invoice verification already in progress');
+	const attempt = claimed.attempts;
+	const log = { invoice_id: invoice.id, attempt, resubmit };
+	// Every write that ends the attempt is fenced on its attempt number: a run that outlived its lease (a hung call) may
+	// not overwrite the result of the run that took the invoice over, nor clear that run's lease.
+	const settle = async (data: Parameters<typeof PaymentsDao.settleInvoiceAttempt>[2]) => {
+		const row = await PaymentsDao.settleInvoiceAttempt(invoice.id, attempt, data);
+		if (row) return row;
+		ctx.logger.warn({ ...log, status: data.status }, 'fiscal: attempt outlived its lease, another run took over');
+		return (await PaymentsDao.getInvoice(invoice.id))!;
+	};
+	let eor: string;
 	try {
-		const { eor } = await fiscal.issue(toFiscal(invoice, attempt > 1));
-		ctx.logger.info(log, 'fiscal: invoice verified');
-		return await PaymentsDao.updateInvoice(invoice.id, { status: 'VERIFIED', eor, verified_at: ctx.now });
+		// The stored row: the same number, issue time, amounts and ZOI on every attempt.
+		({ eor } = await fiscal.issue(toFiscal(claimed, resubmit || attempt > 1)));
 	} catch (err) {
-		if (attempt < MAX_ATTEMPTS) {
+		if (!resubmit && attempt < MAX_ATTEMPTS) {
 			ctx.logger.warn({ ...log, err }, 'fiscal: verification failed, retrying');
+			await settle({ lease_until: null });
 			throw err;
 		}
-		ctx.logger.error({ ...log, err }, 'fiscal: verification failed for good, invoice FAILED (submit it later)');
-		return PaymentsDao.updateInvoice(invoice.id, { status: 'FAILED' });
+		ctx.logger.error(
+			{ ...log, err },
+			'fiscal: verification failed, invoice FAILED (fiscal.resubmit sends it again)'
+		);
+		return settle({ status: 'FAILED', lease_until: null });
 	}
+	ctx.logger.info(log, 'fiscal: invoice verified');
+	return settle({ status: 'VERIFIED', eor, verified_at: ctx.now, lease_until: null });
 }
 
 async function storePdf(invoice: InvoiceRow, item: string, ctx: Ctx): Promise<InvoiceRow> {
@@ -135,4 +194,77 @@ export async function issueInvoice(payment: PaymentRow, item: string, ctx: Ctx):
 	return invoice;
 }
 
-export default { issueInvoice, vatBreakdown };
+/**
+ * Alerts the admins (the ops email channel: confirmed admin addresses) once about each invoice still unverified 24 h
+ * after issue, and logs it as an error. The mark is taken before the email; when no admin could be emailed it is
+ * given back, so the next run alerts again. Returns the number of invoices alerted.
+ */
+async function alertUnverified(ctx: Ctx): Promise<number> {
+	const due = await PaymentsDao.claimUnverifiedAlerts(new Date(ctx.now.getTime() - ALERT_AFTER_MS), ctx.now);
+	if (!due.length) return 0;
+	ctx.logger.error({ invoices: due.map((i) => i.number) }, 'fiscal: invoices unverified 24 h after issue');
+	const lines = [
+		'Ti računi 24 ur po izdaji še niso davčno potrjeni. FURS pričakuje naknadno potrditev v 2 delovnih dneh; ' +
+			'opravilo fiscal.resubmit jih pošilja vsako uro. Preverite povezavo s FURS in certifikat (deploy/README.md §10).',
+		...due.map((i) => `- ${i.number}: ${i.status}, poskusov ${i.attempts}, izdan ${i.issued_at.toISOString()}`),
+	];
+	const subject = `Davčno potrjevanje: nepotrjeni računi (${due.length})`;
+	const admins = await DirectoryDomain.listAdminEmails(undefined, ctx);
+	if (await DirectoryDomain.emailAdmins(admins, { subject, lines }, ctx)) return due.length;
+	await PaymentsDao.releaseAlerts(due.map((i) => i.id));
+	ctx.logger.error('fiscal: no admin could be emailed about unverified invoices');
+	return 0;
+}
+
+/**
+ * fiscal.resubmit (hourly cron, Europe/Ljubljana; FURS expects a late submission within 2 working days): sends FAILED
+ * invoices and PENDING ones payment.effects stopped short of again, as SubsequentSubmit with the stored number, issue
+ * time and ZOI (nothing is renumbered or re-signed), one claim per invoice, fewest attempts first; once FURS fails, the
+ * rest waits for the next run. An invoice still without its PDF (a VERIFIED one too) goes back to payment.effects (PDF
+ * and receipt). Then the 24 h admin alert.
+ */
+export async function resubmitInvoices(
+	_input: void,
+	ctx: Ctx
+): Promise<{ resubmitted: number; verified: number; alerted: number }> {
+	const { fiscal } = ctx.adapters;
+	let resubmitted = 0;
+	let verified = 0;
+	if (fiscal.provider !== 'off') {
+		const due = await PaymentsDao.listResubmittable({
+			provider: fiscal.provider,
+			stale_before: new Date(ctx.now.getTime() - STALE_PENDING_MS),
+			now: new Date(),
+			take: RESUBMIT_BATCH,
+		});
+		let fursDown = false;
+		for (const invoice of due) {
+			let row = invoice;
+			if (invoice.status !== 'VERIFIED') {
+				// FURS failed on this run: no more calls (each may hang to the deadline); PDFs and receipts still go out.
+				if (fursDown) continue;
+				try {
+					row = await verify(invoice, ctx, true);
+				} catch (err) {
+					// Claimed by an attempt in flight since the listing: that attempt settles it.
+					ctx.logger.warn({ invoice_id: invoice.id, err }, 'fiscal.resubmit: invoice skipped');
+					continue;
+				}
+				resubmitted++;
+				if (row.status === 'VERIFIED') verified++;
+				else if (row.status === 'FAILED') fursDown = true;
+			}
+			if (!row.pdf_key)
+				await ctx.jobs.send(
+					'payment.effects',
+					{ payment_id: row.payment_id },
+					{ singletonKey: row.payment_id, ...(await retryOptions()) }
+				);
+		}
+	}
+	const alerted = await alertUnverified(ctx);
+	ctx.logger.info({ resubmitted, verified, alerted }, 'fiscal.resubmit: done');
+	return { resubmitted, verified, alerted };
+}
+
+export default { issueInvoice, resubmitInvoices, retryOptions, vatBreakdown };

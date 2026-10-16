@@ -351,6 +351,8 @@
 				"eor",
 				"status",
 				"attempts",
+				"lease_until",
+				"alerted_at",
 				"verified_at",
 				"created_at",
 				"updated_at"

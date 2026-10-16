@@ -20,6 +20,7 @@ export const QUEUES = [
 	'retention.blur_location',
 	'partners.stats',
 	'payment.effects',
+	'fiscal.resubmit',
 	'directory.reminder',
 	'db.keepalive',
 	'db.backup',
@@ -32,6 +33,8 @@ export const SCHEDULES: Partial<Record<QueueName, string>> = {
 	'retention.purge': '30 3 * * *',
 	'retention.blur_location': '45 3 * * *',
 	'partners.stats': '15 * * * *',
+	// FAILED and stale PENDING fiscal invoices again, well inside the FURS deadline of 2 working days (TASK-92.3).
+	'fiscal.resubmit': '25 * * * *',
 	// After 31 March: the yearly directory refresh (C18).
 	'directory.reminder': '0 8 1 4 *',
 	// Supabase Free pauses a project without database activity.
