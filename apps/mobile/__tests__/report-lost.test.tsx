@@ -18,7 +18,9 @@ jest.mock('expo-crypto', () => {
 	return { randomUUID: () => `5b1e28ba-2fa1-4d3b-a3f5-ef19b5a7633${n++}` };
 });
 const mockRouter = { replace: jest.fn(), back: jest.fn(), canGoBack: () => true };
-jest.mock('expo-router', () => ({ useRouter: () => mockRouter }));
+// false while the auth screens are on top of the flow.
+const mockScreen = { focused: true };
+jest.mock('expo-router', () => ({ useRouter: () => mockRouter, useIsFocused: () => mockScreen.focused }));
 jest.mock('@zivali/analytics', () => ({ track: jest.fn(), getConsent: jest.fn(() => null) }));
 
 // The test renderer has no native nodes to focus: record which mounts ask for the screen reader focus.
@@ -54,19 +56,24 @@ jest.mock('@/components/auth/gate', () => {
 	};
 });
 
-// PhotoPicker (TASK-14.3) adds an uploaded photo; LocationPicker (TASK-15.5) confirms an already coarsened point.
+// PhotoPicker (TASK-14.3) adds an uploaded photo, or keeps it on the device while held; the tests play its uploads
+// through `mockPicker.onChange`. LocationPicker (TASK-15.5) confirms an already coarsened point.
 const COARSE = { lat: 46.07012, lng: 14.48771 };
 const photo = { key: 'k1', photoId: 'ph-1', status: 'uploaded', progress: 1, thumb: { uri: 'file:///t1.jpg' } };
+const mockPicker: { hold?: boolean; onChange?: (photos: unknown[]) => void } = {};
 jest.mock('@/components/photos/photo-picker', () => {
 	const { Pressable, Text } = jest.requireActual<typeof import('react-native')>('react-native');
 	const { createElement } = jest.requireActual<typeof import('react')>('react');
 	return {
-		PhotoPicker: ({ onChange }: { onChange: (photos: unknown[]) => void }) =>
-			createElement(
+		PhotoPicker: ({ onChange, hold }: { onChange: (photos: unknown[]) => void; hold?: boolean }) => {
+			Object.assign(mockPicker, { hold, onChange });
+			const kept = { ...photo, photoId: undefined, status: 'kept', progress: 0 };
+			return createElement(
 				Pressable,
-				{ role: 'button', onPress: () => onChange([photo]) },
+				{ role: 'button', onPress: () => onChange([hold ? kept : photo]) },
 				createElement(Text, null, 'Fotografiraj')
-			),
+			);
+		},
 	};
 });
 const mockClearPhotos = jest.fn(async (_draft: string) => {});
@@ -152,6 +159,7 @@ beforeEach(() => {
 	routes = {};
 	mockAuth.gate = 'ok';
 	mockAuth.me = { phone: null };
+	mockScreen.focused = true;
 });
 
 describe('report lost flow (P6)', () => {
@@ -244,13 +252,15 @@ describe('report lost flow (P6)', () => {
 		expect(posted()[0]!.body).not.toHaveProperty('pet_id');
 	});
 
-	test('signed out: only "Vnesi podatke", chosen; Publish opens the sign-in gate and sends once signed in', async () => {
+	test('signed out: the draft (fields and photos) waits for sign-in or sign-up, then the same publish sends it', async () => {
 		mockAuth.gate = 'signin';
 		mockAuth.me = null;
 		const view = await renderFlow();
 		expect(screen.getAllByRole('radio')).toHaveLength(1);
 		await waitFor(() => expect(screen.getByRole('radio', { name: t.pet_enter })).toBeChecked());
 		await next();
+		// Nothing is sent before sign-in (C3): the photo stays on the device.
+		expect(mockPicker.hold).toBe(true);
 		await press('Fotografiraj');
 		await next();
 		await fireEvent.press(screen.getByRole('radio', { name: 'Mačka' }));
@@ -262,13 +272,63 @@ describe('report lost flow (P6)', () => {
 		await press(t.publish);
 
 		expect(await screen.findByText(t.gate_title)).toBeTruthy();
-		expect(posted()).toHaveLength(0);
+		expect(screen.queryByText(t.photos_wait)).toBeNull();
+		expect(calls).toHaveLength(0);
+		// Every step was saved in the drafts table (C17), so an app restart on the way keeps it too.
+		expect(JSON.parse(mockDrafts.get('lost')!.data)).toMatchObject({
+			step: 'review',
+			values: { species: 'cat', colours: ['black'], location: COARSE },
+		});
+
+		// The account is ready while the auth screens are still on top (sign-up: the email link).
+		mockScreen.focused = false;
 		mockAuth.gate = 'ok';
 		mockAuth.me = { phone: '041000000' };
 		await view.rerender();
 		await press(t.gate_title);
+		expect(mockPicker.hold).toBe(false);
+		await act(async () => mockPicker.onChange!([{ ...photo, photoId: undefined, status: 'uploading' }]));
+		await act(async () => mockPicker.onChange!([photo]));
+		expect(posted()).toHaveLength(0);
+		expect(screen.getByRole('button', { name: t.publishing })).toBeTruthy();
+
+		// Back on the flow with the upload done: the report goes out once, with the photo the new account uploaded.
+		mockScreen.focused = true;
+		await view.rerender();
 		await waitFor(() => expect(posted()).toHaveLength(1));
-		expect(posted()[0]!.body).toMatchObject({ species: 'cat', colours: ['black'] });
+		expect(posted()[0]!.body).toMatchObject({ species: 'cat', colours: ['black'], photo_ids: ['ph-1'] });
+		await waitFor(() =>
+			expect(mockRouter.replace).toHaveBeenCalledWith({
+				pathname: '/report/lost/done',
+				params: { code: created.short_code },
+			})
+		);
+		expect(mockDrafts.size).toBe(0);
+	});
+
+	test('after sign-in the send waits for the photo upload', async () => {
+		mockAuth.gate = 'signin';
+		mockAuth.me = null;
+		const view = await renderFlow();
+		await waitFor(() => expect(screen.getByRole('radio', { name: t.pet_enter })).toBeChecked());
+		await next();
+		await press('Fotografiraj');
+		await next();
+		await fireEvent.press(screen.getByRole('radio', { name: 'Pes' }));
+		await fireEvent.press(screen.getByRole('checkbox', { name: 'Rjava' }));
+		await next();
+		await press('Potrdi kraj');
+		await next();
+		await next();
+		await press(t.publish);
+		mockAuth.gate = 'ok';
+		mockAuth.me = { phone: null };
+		await view.rerender();
+		await press(t.gate_title);
+		await act(async () => mockPicker.onChange!([{ ...photo, photoId: undefined, status: 'uploading' }]));
+		expect(posted()).toHaveLength(0);
+		await act(async () => mockPicker.onChange!([photo]));
+		await waitFor(() => expect(posted()).toHaveLength(1));
 	});
 
 	test('when: Danes asks the time, a future date is refused, more than 30 days back only warns', async () => {

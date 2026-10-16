@@ -1,3 +1,15 @@
 {
+	"amount_group": "Znesek prispevka",
+	"pay_disabled_help": "Najprej izberite znesek.",
+	"test_note": "Testno plačilo: s kartice se ne bremeni denar.",
+	"contribution_row": "Pomagajte ohraniti Najdimo brezplačno",
+	"contribution_body": "Prijava, opozorila in iskanje ujemanj so brezplačni in takšni bodo ostali. Če želite, lahko z majhnim prispevkom pomagate pokriti stroške.",
+	"contribution_2": "2 €",
+	"contribution_3": "3 €",
+	"contribution_5": "5 €",
+	"contribution_pay": "Prispevaj {amount}",
+	"contribution_hide": "Skrij",
+	"contribution_expand_a11y": "Pokaži možnost prispevka",
+	"contribution_pay_disabled": "Prispevaj",
 	"unverified": "Potrdilo bomo poslali, ko potrdite svoj e-naslov."
 }

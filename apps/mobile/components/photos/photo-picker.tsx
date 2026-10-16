@@ -81,6 +81,8 @@ type PhotoPickerProps = {
 	saved?: SavedPhoto[];
 	/** Remove asks first with this dialog copy (P8: removed photos are deleted from storage too). */
 	confirmRemove?: { title: string; body: string; confirm: string };
+	/** true keeps the photos on this device and uploads them once false, e.g. until a lost report has an account (C3). */
+	hold?: boolean;
 	className?: string;
 };
 export type PhotoPickerHandle = { pick: (source: 'camera' | 'gallery') => Promise<void> };
@@ -99,6 +101,7 @@ export function PhotoPicker({
 	ref,
 	saved,
 	confirmRemove,
+	hold,
 	className,
 }: PhotoPickerProps) {
 	const t = useTranslations('photos');
@@ -107,6 +110,7 @@ export function PhotoPicker({
 		cameraPrimer,
 		onExif,
 		saved,
+		hold,
 	});
 	React.useImperativeHandle(ref, () => ({ pick }));
 	// The photo waiting for the remove confirmation.
@@ -138,6 +142,8 @@ export function PhotoPicker({
 					{photos.map((photo, index) => {
 						const n = index + 1;
 						const percent = Math.round(photo.progress * 100);
+						// A held photo is kept on this device; it reads as ready, its upload comes later.
+						const ready = photo.status === 'uploaded' || photo.status === 'kept';
 						return (
 							<View key={photo.key} className="flex-row items-start gap-4">
 								<Image
@@ -147,7 +153,7 @@ export function PhotoPicker({
 									resizeMode="cover"
 								/>
 								<View className="min-w-0 flex-1">
-									{photo.status === 'uploaded' && index === 0 && (
+									{ready && index === 0 && (
 										<Text className="font-sans-bold text-sm">{t('cover')}</Text>
 									)}
 									{photo.status === 'uploading' && (
@@ -168,12 +174,7 @@ export function PhotoPicker({
 											</FieldError>
 										</>
 									)}
-									<View
-										className={cn(
-											'-ml-2.5 flex-row flex-wrap gap-1',
-											photo.status === 'uploaded' ? 'mt-2' : 'mt-1'
-										)}
-									>
+									<View className={cn('-ml-2.5 flex-row flex-wrap gap-1', ready ? 'mt-2' : 'mt-1')}>
 										{photo.status === 'failed' ? (
 											<Button variant="text" onPress={() => retry(photo.key)}>
 												<Icon as={ArrowClockwiseIcon} />
