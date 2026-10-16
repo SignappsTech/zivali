@@ -196,15 +196,15 @@ describe('Profile card (purpose support)', () => {
 		expect(paying()).toEqual({ purpose: 'support', amountCents: 500, returnTo: '/account/payments' });
 	});
 
-	test('the monthly Podpornik option only with flags.supporter_monthly: unticked, then "na mesec"', async () => {
+	test('the monthly Podpornik option only with flags.supporter_monthly: unticked, then the pay button says "Podpiram mesečno", no amount', async () => {
 		await show(<SupportCard />, { 'GET /v1/config/public': { 'flags.supporter_monthly': true } });
 		const monthly = await screen.findByRole('checkbox', { name: tp.supporter_monthly_label });
 		expect(monthly).not.toBeChecked();
 		await fireEvent.press(screen.getByRole('radio', { name: tp.amount_3 }));
 		expect(button(`Plačaj ${eur(300)}`)).toBeEnabled();
 		await fireEvent.press(monthly);
-		await waitFor(() => expect(button(`Plačaj ${eur(300)} na mesec`)).toBeEnabled());
-		await press(`Plačaj ${eur(300)} na mesec`);
+		await waitFor(() => expect(button(tp.supporter_monthly_label)).toBeEnabled());
+		await press(tp.supporter_monthly_label);
 		expect(paying()).toEqual({ purpose: 'subscription', returnTo: '/account/payments' });
 	});
 });
