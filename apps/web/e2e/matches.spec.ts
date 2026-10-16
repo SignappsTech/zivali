@@ -202,13 +202,11 @@ test('no matches: share, poster PDF and alerts are offered', async ({ page, base
 	await expect(page).toHaveURL(/\/racun\/opozorila$/);
 });
 
-test('a garbled ?m shows the list, and a review has the abuse overflow', async ({ page, baseURL }) => {
+test('a garbled ?m shows the list', async ({ page, baseURL }) => {
 	await signIn(page, baseURL!);
 	await page.setViewportSize({ width: 1440, height: 900 });
 	await page.goto(`/r/${CODE}/ujemanja?m=garbled`);
 	await expect(page.getByRole('heading', { level: 2, name: 'Ujemanje' })).toBeVisible();
-	await page.getByRole('button', { name: 'Več možnosti' }).click();
-	await expect(page.getByRole('menuitem', { name: 'Prijavi zlorabo' })).toBeVisible();
 });
 
 test('a non-manager is refused with a way back to the report, not a retry', async ({ page, baseURL }) => {

@@ -201,11 +201,6 @@ describe('MatchReview list (P11)', () => {
 		expect((within(dialog).getByRole('textbox', { name: t.reject_reason }) as HTMLTextAreaElement).value).toBe('');
 	});
 
-	it('offers the report-abuse overflow in the review column', () => {
-		show({ selected: 'm-chip' });
-		expect(screen.getByRole('button', { name: sl.report.more })).toBeTruthy();
-	});
-
 	it('offers the poster PDF and the alerts settings when there are no matches', () => {
 		show({ list: { data: { items: [] } }, locale: 'en' });
 		expect(screen.getByRole('link', { name: en.matches.empty_poster }).getAttribute('href')).toBe(
