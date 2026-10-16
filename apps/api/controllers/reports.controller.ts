@@ -24,7 +24,9 @@ export async function getReport(req: Request, res: Response): Promise<void> {
 }
 
 export async function createReport(req: Request, res: Response): Promise<void> {
-	const created = await ReportsDomain.createReport(req.body, userCtx(req));
+	// The Idempotency-Key (required, a UUID, checked by the route) doubles as the submission id beyond its 24 h replay.
+	const submission_id = req.get('idempotency-key');
+	const created = await ReportsDomain.createReport({ ...req.body, submission_id }, userCtx(req));
 	res.status(201).set('Cache-Control', PRIVATE).json(ReportsMapper.toCreated(created));
 }
 

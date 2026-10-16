@@ -2,14 +2,14 @@
 // replays the stored response to the same user for the same route and body for 24 h; another user, route or body gets
 // 409 CONFLICT, as does a repeat while the first is still running. Bodies are always stored encrypted
 // (IDEMPOTENCY_KEY), since some carry secrets (manage tokens). 5xx, 429, 401 and 403 answers are not stored, so the
-// client can retry them with the same key.
+// client can retry them with the same key. POST /v1/reports also dedupes beyond the window (submission_id, C17).
 import { createHash } from 'node:crypto';
 
 import type { Request, RequestHandler, Response } from 'express';
 
 import { PlatformDao } from '../domains/platform/index.ts';
 import { IDEMPOTENCY_TTL_MS } from '../domains/platform/platform.dao.ts';
-import { decryptJson, encryptJson } from '../lib/crypto.ts';
+import { canonical, decryptJson, encryptJson } from '../lib/crypto.ts';
 import { AppError } from '../lib/errors.ts';
 
 // A row still in flight after this long belongs to a crashed request; it is freed for the retry.
@@ -19,17 +19,6 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const headerIssue = (message: string) =>
 	new AppError('VALIDATION', message, undefined, [{ path: 'headers.idempotency-key', message }]);
 const keep = (status: number) => status < 500 && ![401, 403, 429].includes(status);
-
-/** JSON with sorted object keys, so the same body hashes the same whatever its key order. */
-const canonical = (value: unknown): string => {
-	if (Array.isArray(value)) return `[${value.map(canonical).join(',')}]`;
-	if (value && typeof value === 'object')
-		return `{${Object.keys(value)
-			.sort()
-			.map((k) => `${JSON.stringify(k)}:${canonical((value as Record<string, unknown>)[k])}`)
-			.join(',')}}`;
-	return JSON.stringify(value) ?? 'null';
-};
 
 type Stored = NonNullable<Awaited<ReturnType<typeof PlatformDao.getIdempotencyKey>>>;
 

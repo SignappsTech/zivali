@@ -28,6 +28,7 @@ import {
 	type UpdateReportInput,
 } from '@zivali/validation';
 
+import { canonical, hashKey } from '../../lib/crypto.ts';
 import type { Actor, Ctx } from '../../lib/ctx.ts';
 import { AppError } from '../../lib/errors.ts';
 import { distanceM, fuzzArea, fuzzSettings, publicRadius, type Point } from '../../lib/fuzz.ts';
@@ -118,6 +119,9 @@ export type NewReport = {
 	/** Anonymous reports (C7): SHA-256 of the manage token and the HMAC of x-device-id. */
 	manage_token_hash?: Uint8Array<ArrayBuffer> | null;
 	device_hash?: string | null;
+	/** POST /v1/reports: the client's submission id and the keyed hash of its body (repeats, C17). */
+	submission_id?: string | null;
+	submission_hash?: string | null;
 };
 
 /**
@@ -183,6 +187,8 @@ export async function updateReportLocation(
 }
 
 type CreateInput = z.infer<typeof CreateReportInput>;
+/** The body and the client's submission id: its Idempotency-Key, the mobile outbox id (C17). */
+type SubmitInput = CreateInput & { submission_id?: string };
 type UpdateInput = z.infer<typeof UpdateReportInput> & { code: string };
 
 function invalid(path: string, message: string): AppError {
@@ -276,14 +282,46 @@ export type CreatedReport = {
 };
 
 /**
- * POST /v1/reports (C4). Lost reports need a real account; the submission guard runs before the other rules and may
- * hold the report. With pet_id the pet's attributes fill what the input leaves out. One transaction: the report
- * (coarsened point, fuzz, geo lookup), its manager, its photos and the jobs photo.publish, match.report and, for
- * visible lost reports, alerts.fanout. Anonymous callers (C7) get a manage token (only its hash is stored) and, with
- * finder_email, the manage link by email after the commit.
+ * A repeat of an earlier submission by the same creator (C17 outbox: after the 24 h Idempotency-Key replay, C1, or a
+ * 5xx that freed the key): the report created then, never a duplicate; the same id with another body → CONFLICT.
+ * Only the hash of the first manage token is stored (C7), so an anonymous submitter gets a new one (the old link
+ * stops working) and the finder email on file gets the new link. Closed reports have no manage link any more.
  */
-export async function createReport(input: CreateInput, ctx: Ctx): Promise<CreatedReport> {
+async function repeatSubmission(
+	actor: Actor,
+	submission: { submission_id: string; submission_hash: string },
+	ctx: Ctx
+): Promise<CreatedReport | null> {
+	const report = await ReportsDao.findBySubmission(actor.user_id, submission.submission_id, ctx.tx);
+	if (!report) return null;
+	if (report.submission_hash !== submission.submission_hash)
+		throw new AppError('CONFLICT', 'Idempotency-Key was already used for another request');
+	const old = report.created_at.getTime() - report.event_at.getTime() > OLD_EVENT_MS;
+	const { id, short_code, type, species, moderation_state } = report;
+	const created: CreatedReport = { id, short_code, moderation_state, warnings: old ? ['OLD_EVENT'] : [] };
+	if (!actor.is_anonymous || !report.manage_token_hash) return created;
+	const manage = newManageToken();
+	await ReportsDao.updateReport(id, { manage_token_hash: manage.hash }, ctx.tx);
+	const to = await ReportsDao.getContactEmail(id, ctx.tx);
+	if (to) await mailManageLink({ to, short_code, type, species, token: manage.token }, ctx);
+	return { ...created, manage_token: manage.token };
+}
+
+/**
+ * POST /v1/reports (C4). A repeat of an earlier submission_id returns that report (repeatSubmission). Lost reports
+ * need a real account; the submission guard runs before the other rules and may hold the report. With pet_id the
+ * pet's attributes fill what the input leaves out. One transaction: the report (coarsened point, fuzz, geo lookup,
+ * the submission id), its manager, its photos and the jobs photo.publish, match.report and, for visible lost reports,
+ * alerts.fanout. Anonymous callers (C7) get a manage token (only its hash is stored) and, with finder_email, the
+ * manage link by email after the commit.
+ */
+export async function createReport(submitted: SubmitInput, ctx: Ctx): Promise<CreatedReport> {
 	const actor = signedIn(ctx);
+	const { submission_id, ...input } = submitted;
+	// Keyed (RATE_SALT), so the stored digest of a body with an email and a point cannot be tested against guesses.
+	const submission = submission_id ? { submission_id, submission_hash: hashKey(canonical(input)) } : null;
+	const repeat = submission && (await repeatSubmission(actor, submission, ctx));
+	if (repeat) return repeat;
 	if (input.type === 'lost' && actor.is_anonymous) throw new AppError('FORBIDDEN', 'Lost reports need an account');
 	if (input.finder_email && !actor.is_anonymous) throw invalid('finder_email', 'Anonymous reports only');
 	const { moderation_state, hold_reasons } = await submissionGuard(input, ctx);
@@ -315,7 +353,7 @@ export async function createReport(input: CreateInput, ctx: Ctx): Promise<Create
 		const source: ReportSource = actor.is_anonymous ? 'anonymous' : 'user';
 		const anonymous = manage && { manage_token_hash: manage.hash, device_hash: ctx.device_hash ?? null };
 		const { id, short_code } = await insertReport(
-			{ ...fromPet, ...fields, event_at, moderation_state, source, ...anonymous },
+			{ ...fromPet, ...fields, event_at, moderation_state, source, ...anonymous, ...submission },
 			{ ...ctx, tx }
 		);
 		if (finder_email) await ReportsDao.addContact({ report_id: id, email: finder_email }, tx);

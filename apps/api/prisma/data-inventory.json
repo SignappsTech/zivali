@@ -519,6 +519,8 @@
 				"last_owner_update_at",
 				"reminder_day",
 				"expiry_warned_at",
+				"submission_id",
+				"submission_hash",
 				"created_at",
 				"updated_at"
 			]

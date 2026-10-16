@@ -200,6 +200,10 @@ model reports {
   // Anonymous reports: HMAC (RATE_SALT) of x-device-id for the hold rule (C7, > 10 reports in 7 days); cleared
   // after 7 days by retention.purge.
   device_hash          String?
+  // The client's submission id (its Idempotency-Key: the mobile outbox id, C17) and a keyed hash (RATE_SALT) of the
+  // body: a repeat from the same creator returns this report after the 24 h replay window (C1); no expiry.
+  submission_id        String?                                         @db.Uuid
+  submission_hash      String?
   first_match_at       DateTime?                                       @db.Timestamptz(6)
   reunited_at          DateTime?                                       @db.Timestamptz(6)
   closed_at            DateTime?                                       @db.Timestamptz(6)
@@ -222,6 +226,7 @@ model reports {
   conversations_about  conversations[]                                 @relation("conversations_about")
   alert_deliveries     alert_deliveries[]
 
+  @@unique([created_by, submission_id])
   @@index([exact_point], type: Gist)
   @@index([public_point], type: Gist)
   @@index([pet_id])

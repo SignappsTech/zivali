@@ -277,6 +277,25 @@ export async function findByManageToken(manage_token_hash: Uint8Array<ArrayBuffe
 	});
 }
 
+/** The creator's report from an earlier submission with this client id (POST /v1/reports repeats, C17 outbox). */
+export async function findBySubmission(created_by: string, submission_id: string, tx?: Prisma.TransactionClient) {
+	const db = tx ?? prisma;
+	return db.reports.findFirst({
+		where: { created_by, submission_id },
+		select: {
+			id: true,
+			short_code: true,
+			type: true,
+			species: true,
+			moderation_state: true,
+			manage_token_hash: true,
+			submission_hash: true,
+			event_at: true,
+			created_at: true,
+		},
+	});
+}
+
 /** Reports sent from this device (anonymous reports carry the device hash) since the given time. */
 export async function countByDevice(device_hash: string, since: Date, tx?: Prisma.TransactionClient) {
 	const db = tx ?? prisma;
@@ -527,6 +546,7 @@ export default {
 	addContact,
 	getContactEmail,
 	findByManageToken,
+	findBySubmission,
 	countByDevice,
 	photosMatchHeld,
 	flagHeld,
