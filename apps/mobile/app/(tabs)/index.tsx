@@ -196,7 +196,7 @@ export default function MapTab() {
 				locationDenied={access === 'denied' || declined}
 				onUseLocation={() => void locateMe()}
 				placeLabel={place}
-				near={here ?? undefined}
+				near={rounded}
 			/>
 			<PermissionPrimer
 				kind="location"

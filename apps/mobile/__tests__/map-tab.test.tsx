@@ -1,5 +1,5 @@
 /// <reference types="node" />
-import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react-native';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import * as Location from 'expo-location';
 import * as React from 'react';
 import { Text } from 'react-native';

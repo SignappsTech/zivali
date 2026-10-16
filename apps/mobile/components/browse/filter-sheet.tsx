@@ -210,13 +210,15 @@ export function FilterSheet({
 												key={colour}
 												selected={draft.colours.includes(colour)}
 												onPress={() => set({ colours: toggle(draft.colours, colour) })}
+												leading={
+													SWATCH[colour] ? (
+														<View
+															aria-hidden
+															className={`size-[18px] rounded-full border-2 border-input ${SWATCH[colour]}`}
+														/>
+													) : null
+												}
 											>
-												{SWATCH[colour] ? (
-													<View
-														aria-hidden
-														className={`size-[18px] rounded-full border-2 border-input ${SWATCH[colour]}`}
-													/>
-												) : null}
 												{ta(`colours.${colour}`)}
 											</Pill>
 										))}
