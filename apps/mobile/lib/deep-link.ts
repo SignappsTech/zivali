@@ -5,12 +5,12 @@ const ALLOWED = /^\/(m|inbox\/[\w-]+|payments\/.+|auth\/callback)?$/;
 const LISTING = /^\/r\/([\w-]+)(?:\/([^/]*).*)?$/;
 
 /** Web pages under a listing (C15: SL slug, EN name) -> its app screen. */
-const LISTING_SCREENS: Record<string, string> = {
-	ujemanja: 'matches',
-	matches: 'matches',
-	'spet-doma': 'reunited',
-	reunited: 'reunited',
-};
+const LISTING_SCREENS = new Map([
+	['ujemanja', 'matches'],
+	['matches', 'matches'],
+	['spet-doma', 'reunited'],
+	['reunited', 'reunited'],
+]);
 
 /**
  * Web link -> Expo Router path (C15). Web routes are SL unprefixed and EN under `/en`; the app has one route tree, so
@@ -27,7 +27,7 @@ export function toAppPath(url: string): string {
 	const pathname = path.replace(/[?#].*$/, '');
 	const listing = LISTING.exec(pathname);
 	if (listing) {
-		const screen = LISTING_SCREENS[listing[2] ?? ''];
+		const screen = LISTING_SCREENS.get(listing[2] ?? '');
 		return `/r/${listing[1]}${screen ? `/${screen}` : ''}${path.slice(pathname.length)}`;
 	}
 	return ALLOWED.test(pathname) ? path : '/';

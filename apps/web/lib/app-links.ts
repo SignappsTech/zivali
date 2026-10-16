@@ -7,7 +7,7 @@ export const APP_LINK_PATHS = ['/r/*', '/en/r/*', '/m', '/en/m', '/payments/*'] 
 // Files under a listing (C15 server endpoints) open in the browser, not the app. iOS takes the first matching
 // component, so these come first. Android has no exclusions: the app's intent filter claims listing pages by pattern
 // (apps/mobile app.config.ts).
-const APP_LINK_EXCLUDES =['/r/*/poster.pdf', '/r/*/opengraph-image*'] as const;
+const APP_LINK_EXCLUDES = ['/r/*/poster.pdf', '/r/*/opengraph-image*'] as const;
 
 export function appleAppSiteAssociation(teamId?: string) {
 	const components = [

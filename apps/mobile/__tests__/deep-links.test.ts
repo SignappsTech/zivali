@@ -65,6 +65,7 @@ describe('deep link paths', () => {
 		['https://najdimo.si/r/Hk3vT9qP/poster.pdf?lang=sl', '/r/Hk3vT9qP?lang=sl'],
 		['https://najdimo.si/r/Hk3vT9qP/opengraph-image', '/r/Hk3vT9qP'],
 		['https://najdimo.si/r/Hk3vT9qP/', '/r/Hk3vT9qP'],
+		['/r/Hk3vT9qP/constructor', '/r/Hk3vT9qP'],
 		['zivali://inbox/5e1d0a2b-0000-4000-8000-000000000001', '/inbox/5e1d0a2b-0000-4000-8000-000000000001'],
 		['/r/../dev/kit', '/'],
 		['/r/', '/'],
