@@ -69,7 +69,7 @@ import {
 	initialValues,
 	isOld,
 	type LostError,
-	lostResolver,
+	lostResolverAt,
 	type LostValues,
 	NEW_PET,
 	NOTE_MAX,
@@ -616,7 +616,14 @@ export function LostFlow() {
 	const [createReport] = useCreateReportMutation();
 	const [updateReport] = useUpdateReportMutation();
 
-	const form = useForm<LostValues>({ resolver: lostResolver, defaultValues: initialValues });
+	// When Publish was pressed signed out: "Pravkar", "Danes" and "Včeraj" mean then, not after the sign-in detour.
+	// The hand-off itself lives in this screen (`awaiting`, set by the gate's onReady): nothing is persisted, so a
+	// relaunch or another account never publishes the draft.
+	const pressAt = React.useRef<number>(undefined);
+	const form = useForm<LostValues>({
+		resolver: lostResolverAt(() => pressAt.current ?? Date.now()),
+		defaultValues: initialValues,
+	});
 	const values = useWatch({ control: form.control }) as LostValues;
 	const [step, setStep] = React.useState<Step>('pet');
 	const steps = stepsFor(values.pet);
@@ -672,6 +679,8 @@ export function LostFlow() {
 	}, [attempted, step, values, form]);
 
 	const go = (next: Step) => {
+		// Any later edit is a new "now".
+		pressAt.current = undefined;
 		setAttempted(false);
 		setStep(next);
 		scroll.current?.scrollTo({ y: 0, animated: false });
@@ -777,9 +786,12 @@ export function LostFlow() {
 				return setAttempted(true);
 			}
 		}
-		if (gate === 'signin') return setGateOpen(true);
+		if (gate === 'signin') {
+			pressAt.current = Date.now();
+			return setGateOpen(true);
+		}
 		if (!values.location) return edit('where');
-		const at = eventAt(values)!;
+		const at = eventAt(values, pressAt.current ?? Date.now())!;
 		setSending(true);
 		try {
 			let code: string;
@@ -925,7 +937,15 @@ export function LostFlow() {
 							</View>
 						) : null}
 						{step === 'review' ? (
-							<Button size="lg" loading={sending || awaiting} onPress={() => void publish()}>
+							<Button
+								size="lg"
+								loading={sending || awaiting}
+								onPress={() => {
+									// Pressed signed in: a hand-off's press time is stale.
+									if (gate !== 'signin') pressAt.current = undefined;
+									void publish();
+								}}
+							>
 								{sending || awaiting ? t('publishing') : t('publish')}
 							</Button>
 						) : (
@@ -952,6 +972,7 @@ export function LostFlow() {
 				body={t('gate_body')}
 				open={gateOpen}
 				onOpenChange={setGateOpen}
+				verified={false}
 				onReady={() => setAwaiting(true)}
 			/>
 			<AlertDialog open={closing} onOpenChange={setClosing}>

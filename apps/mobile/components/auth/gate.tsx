@@ -23,6 +23,8 @@ type AuthGateProps = {
 	onOpenChange: (open: boolean) => void;
 	/** Runs once the user has a verified account: at once when they already had one, or after signing in. */
 	onReady?: () => void;
+	/** Default true. False for actions an unconfirmed owner may take (P6 report lost): signed in is enough. */
+	verified?: boolean;
 };
 
 /**
@@ -32,11 +34,11 @@ type AuthGateProps = {
  *
  * Usage: `<AuthGate reason="contact" open={open} onOpenChange={setOpen} onReady={send} />`, opened on the action.
  */
-export function AuthGate({ reason, title, body, open, onOpenChange, onReady }: AuthGateProps) {
+export function AuthGate({ reason, title, body, open, onOpenChange, onReady, verified = true }: AuthGateProps) {
 	const t = useTranslations('auth');
 	const tc = useTranslations('common');
 	const router = useRouter();
-	const { gate, me } = useRequireAuth({ verified: true });
+	const { gate, me } = useRequireAuth({ verified });
 	// Set while the auth screens are open on top: the sheet is closed then, but the step still waits for the account.
 	const waiting = React.useRef(false);
 
