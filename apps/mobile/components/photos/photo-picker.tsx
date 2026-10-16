@@ -122,12 +122,7 @@ export function PhotoPicker({ draft, kind, cameraPrimer, onChange, onExif, hold,
 											</FieldError>
 										</>
 									)}
-									<View
-										className={cn(
-											'-ml-2.5 flex-row flex-wrap gap-1',
-											ready ? 'mt-2' : 'mt-1'
-										)}
-									>
+									<View className={cn('-ml-2.5 flex-row flex-wrap gap-1', ready ? 'mt-2' : 'mt-1')}>
 										{photo.status === 'failed' ? (
 											<Button variant="text" onPress={() => retry(photo.key)}>
 												<Icon as={ArrowClockwiseIcon} />

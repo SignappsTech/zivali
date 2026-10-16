@@ -8,6 +8,7 @@ import { IntlProvider } from 'use-intl';
 
 import * as fx from '@zivali/api/__fixtures__/reports';
 import { createMockApi, type MockRequest } from '@zivali/api/mock';
+import { reportsApi } from '@zivali/api/reports';
 import { api, createApiStore } from '@zivali/api/rtk';
 import sl from '@zivali/i18n/dist/sl.json';
 import type { MapReport, PublicReport } from '@zivali/types';
@@ -99,6 +100,7 @@ async function renderTab(reports: PublicReport[] = [maks, found]) {
 		'GET /v1/reports/map': (request) => ({
 			items: [...reports.map(pin), far].filter((r) => bySpecies(request, r)),
 		}),
+		'POST /v1/reports': () => ({ id: 'r-luna', short_code: 'LunaCode', moderation_state: 'visible', warnings: [] }),
 		'POST /v1/geo/reverse': {
 			place: {
 				label: 'Šiška, Ljubljana',
@@ -177,6 +179,32 @@ test('map and list show the reports around the device: boosted first, counted, c
 
 	await fireEvent.press(screen.getByRole('link', { name: /^Maks, / }));
 	expect(mockPush).toHaveBeenCalledWith('/r/MaksCode');
+});
+
+test('a report created while the tab is open (the lost flow over it) shows on the map without a reload (TASK-29.6)', async () => {
+	const reports = [maks];
+	const client = await renderTab(reports);
+	await screen.findByRole('link', { name: /^Maks, / });
+	const mapCalls = () => client.calls.filter((c) => c.path === '/v1/reports/map').length;
+	const before = mapCalls();
+
+	const luna: PublicReport = {
+		...maks,
+		id: 'r-luna',
+		short_code: 'LunaCode',
+		name: 'Luna',
+		area: { ...AREA, radius_m: 750 },
+	};
+	reports.push(luna);
+	// The same mutation the lost flow sends (C4); its invalidation refetches the open map and list queries.
+	await stores[0]!.dispatch(
+		reportsApi.endpoints.createReport.initiate({ body: { type: 'lost' } as never, idempotencyKey: 'k-1' })
+	);
+
+	expect(await screen.findByRole('link', { name: /^Luna, Izgubljena, / })).toBeOnTheScreen();
+	expect(mapCalls()).toBeGreaterThan(before);
+	const source = screen.getByTestId('GeoJSONSource:reports', { includeHiddenElements: true });
+	expect(source.props.data.features).toHaveLength(2);
 });
 
 test('a GPS that never answers does not hold the list back: Slovenia-wide after 5 s (FR-007)', async () => {

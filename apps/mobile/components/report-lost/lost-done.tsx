@@ -32,14 +32,22 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Text } from '@/components/ui/text';
 import { env } from '@/lib/env';
 
-import { Heading, Note } from './lost-flow';
+import { Heading, Note } from './parts';
 
 /** A page of the web app (C15): the directory index, one shelter's page, or the safety tips. */
 const webUrl = (locale: Locale, sl: string, en: string) => `${env.EXPO_PUBLIC_APP_URL}${locale === 'en' ? en : sl}`;
 const directoryUrl = (locale: Locale, slug = '') =>
 	webUrl(locale, `/zavetisca${slug && `/${slug}`}`, `/en/shelters${slug && `/${slug}`}`);
 
-function TextLink({ href, className = '-ml-3 self-start', children }: { href: string; className?: string; children: string }) {
+function TextLink({
+	href,
+	className = '-ml-3 self-start',
+	children,
+}: {
+	href: string;
+	className?: string;
+	children: string;
+}) {
 	return (
 		<Button variant="text" className={className} onPress={() => void Linking.openURL(href)}>
 			{children}
@@ -47,7 +55,7 @@ function TextLink({ href, className = '-ml-3 self-start', children }: { href: st
 	);
 }
 
-/** One shelter: name in bold, "Ni potrjeno" for a guess, the number, Pokliči (`tel:`) and its page. */
+/** One shelter: name in bold, "Ni potrjeno" for a guess, the number, PokliÄi (`tel:`) and its page. */
 function ShelterLines({
 	name,
 	slug,
@@ -160,7 +168,7 @@ function ShelterRow({ lookup }: { lookup: ResponsibleShelterArg | null }) {
 const AMOUNTS = [2, 3, 5] as const;
 
 /**
- * P15 contribution at the lost confirmation: a collapsed row (text and caret); open, the 2, 3 and 5 € pills with none
+ * P15 contribution at the lost confirmation: a collapsed row (text and caret); open, the 2, 3 and 5 â‚¬ pills with none
  * chosen, then Prispevaj and Skrij at equal weight. Prispevaj opens the checkout hand-off (TASK-32.3); Skrij removes the
  * row. Nothing here holds back the report, matching or alerts.
  */

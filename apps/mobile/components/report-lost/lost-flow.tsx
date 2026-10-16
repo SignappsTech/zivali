@@ -2,7 +2,6 @@ import { skipToken } from '@reduxjs/toolkit/query';
 import { useAccessibilityFocus } from '@rn-primitives/hooks';
 import { randomUUID } from 'expo-crypto';
 import { useIsFocused, useRouter } from 'expo-router';
-import type { Icon as PhosphorIcon } from 'phosphor-react-native';
 import { ArrowsClockwiseIcon } from 'phosphor-react-native/src/icons/ArrowsClockwise';
 import { BellIcon } from 'phosphor-react-native/src/icons/Bell';
 import { CalendarBlankIcon } from 'phosphor-react-native/src/icons/CalendarBlank';
@@ -20,7 +19,7 @@ import { WarningCircleIcon } from 'phosphor-react-native/src/icons/WarningCircle
 import { XIcon } from 'phosphor-react-native/src/icons/X';
 import * as React from 'react';
 import { FormProvider, useController, useForm, useFormContext, useFormState, useWatch } from 'react-hook-form';
-import { BackHandler, Image, KeyboardAvoidingView, type Text as RNText, ScrollView, View } from 'react-native';
+import { BackHandler, Image, KeyboardAvoidingView, ScrollView, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFormatter, useLocale, useTranslations } from 'use-intl';
 
@@ -81,6 +80,7 @@ import {
 	stepsFor,
 	type When,
 } from './lost-form';
+import { Heading, Note } from './parts';
 
 /** The one lost-report draft of this device (C17 `drafts`); PhotoPicker keeps its photos under the same id. */
 export const LOST_DRAFT = 'lost';
@@ -125,46 +125,6 @@ async function dropDraft(): Promise<void> {
 
 const hidden = { display: 'none' } as const;
 const groupTitle = 'font-display-semibold text-xl tracking-[-0.2px]';
-
-/** The view's note (system `note`): muted surface, icon and words, never colour alone. */
-export function Note({
-	icon,
-	alert,
-	className,
-	children,
-}: {
-	icon: PhosphorIcon;
-	alert?: boolean;
-	className?: string;
-	children: string;
-}) {
-	return (
-		<View
-			role={alert ? 'alert' : 'status'}
-			aria-live="polite"
-			accessible
-			className={cn('flex-row gap-3 rounded-row bg-muted px-[18px] py-4', className)}
-		>
-			<Icon
-				as={icon}
-				weight={alert ? 'fill' : undefined}
-				size={22}
-				className={cn('mt-0.5', alert && 'text-destructive')}
-			/>
-			<Text className="min-w-0 flex-1 text-control leading-[22px]">{children}</Text>
-		</View>
-	);
-}
-
-/** The step's h1 (34/40); it takes screen reader focus when the step opens. */
-export function Heading({ children }: { children: string }) {
-	const ref = useAccessibilityFocus<RNText>();
-	return (
-		<Text ref={ref} role="heading" className="font-display text-[34px] leading-[40px] tracking-[-0.68px]">
-			{children}
-		</Text>
-	);
-}
 
 /** One bar per step of the real path; on the picker step (its own h1) the bars take the step-change focus. */
 function StepBars({ current, total, focus }: { current: number; total: number; focus: boolean }) {
@@ -826,11 +786,15 @@ export function LostFlow() {
 	};
 
 	const held = photos.some((photo) => photo.status === 'kept' || photo.status === 'uploading');
-	const publishNow = React.useEffectEvent(() => void publish());
+	const publishNow = React.useEffectEvent(() => {
+		setAwaiting(false);
+		void publish();
+	});
 	React.useEffect(() => {
 		if (!awaiting || gate !== 'ok' || !focused || held) return;
-		setAwaiting(false);
-		publishNow();
+		// On the next tick, so the send is not a state update inside this commit; dropped if anything changes first.
+		const timer = setTimeout(publishNow);
+		return () => clearTimeout(timer);
 	}, [awaiting, gate, focused, held]);
 
 	const summary = attempted && STEP_FIELDS[step].some((field) => form.formState.errors[field]);

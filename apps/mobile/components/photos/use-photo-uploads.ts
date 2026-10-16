@@ -315,7 +315,9 @@ export function usePhotoUploads(
 	const release = useEffectEvent(() => {
 		const kept = live.current.photos.filter((photo) => photo.status === 'kept');
 		if (!kept.length) return;
-		commit(live.current.photos.map((photo) => (photo.status === 'kept' ? { ...photo, status: 'uploading' } : photo)));
+		commit(
+			live.current.photos.map((photo) => (photo.status === 'kept' ? { ...photo, status: 'uploading' } : photo))
+		);
 		for (const photo of kept) enqueue(photo.key);
 	});
 	const backOnline = useEffectEvent(() => {
