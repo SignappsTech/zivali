@@ -1,4 +1,4 @@
----
+﻿---
 id: TASK-28.3
 title: 'Legal pages render <p> nested in <p> (invalid HTML, hydration risk)'
 status: To Do
@@ -21,5 +21,9 @@ Violates TASK-28.2 AC#5 (HTML validity gate). Steps: curl https://staging.najdim
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Legal pages (privacy, cookies, terms, imprint, accessibility; SL and EN) contain no <p> inside <p>; the HTML gate and the browser console are clean
+- [x] #1 Legal pages (privacy, cookies, terms, imprint, accessibility; SL and EN) contain no <p> inside <p>; the HTML gate and the browser console are clean
 <!-- AC:END -->
+
+## Packet
+
+Branch: agent/task-28.3-legal-fixes

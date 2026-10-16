@@ -1,4 +1,4 @@
----
+﻿---
 id: TASK-28.4
 title: Cookie policy omits the web sessionStorage key manage_token
 status: To Do
@@ -21,5 +21,9 @@ Violates TASK-28.2 AC#2 (list strictly necessary storage). Steps: read apps/web/
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Cookie policy section 3 (SL and EN) lists the sessionStorage item manage_token (private-link token stash, one tab session, strictly necessary) next to the manage:<report id> localStorage item
+- [x] #1 Cookie policy section 3 (SL and EN) lists the sessionStorage item manage_token (private-link token stash, one tab session, strictly necessary) next to the manage:<report id> localStorage item
 <!-- AC:END -->
+
+## Packet
+
+Branch: agent/task-28.3-legal-fixes
