@@ -1,5 +1,6 @@
 import { type Href, useRouter } from 'expo-router';
 import type { Icon as PhosphorIcon } from 'phosphor-react-native';
+import { ClockIcon } from 'phosphor-react-native/src/icons/Clock';
 import { DotsThreeCircleIcon } from 'phosphor-react-native/src/icons/DotsThreeCircle';
 import { HeartIcon } from 'phosphor-react-native/src/icons/Heart';
 import { HouseIcon } from 'phosphor-react-native/src/icons/House';
@@ -10,11 +11,11 @@ import * as React from 'react';
 import { View } from 'react-native';
 import { useTranslations } from 'use-intl';
 
-import { type EventParams, track } from '@zivali/analytics';
 import { useTransitionReportMutation } from '@zivali/api/reports';
 import type { QueryError } from '@zivali/api/rtk';
 import type { CloseReason, ReportTransitionInput } from '@zivali/types';
 import { useErrorText } from '@/components/auth/parts';
+import { expiryNotice, type ReportAction, trackReunited } from '@/components/report/lifecycle-helpers';
 import { Note } from '@/components/report/parts';
 import type { DetailReport } from '@/components/report/slots/types';
 import {
@@ -48,16 +49,6 @@ export function canReopen(report: DetailReport, now: number): boolean {
 	return Boolean(
 		report.is_mine && report.close_reason !== 'removed' && ended && now - Date.parse(ended) < REOPEN_DAYS * DAY
 	);
-}
-
-/** C12 `reunited`: species, region and municipality only. A no-op without consent; nothing for a place abroad. */
-function trackReunited({ species, region_slug, municipality_slug }: DetailReport) {
-	if (region_slug && municipality_slug)
-		track('reunited', {
-			species,
-			region: region_slug as EventParams['reunited']['region'],
-			municipality: municipality_slug,
-		});
 }
 
 const isConflict = (error: unknown) => (error as Partial<QueryError> | undefined)?.data?.code === 'CONFLICT';
@@ -301,4 +292,68 @@ export function useReopen(report: DetailReport) {
 		else toast(tl('reopened_toast'));
 	};
 	return { reopen, busy };
+}
+
+/**
+ * The C10 reminder card (web owner-actions Open / my-reports DeepAction): a lost search idle 7 days gets "Še iščete?",
+ * a found or sighted report near expiry the expiry note, with the one primary that extends. A `keep` or `extend` link
+ * shows it even when nothing is due yet; `close` opens the reason sheet. Opening sends nothing, only the press does.
+ */
+export function ReminderCard({
+	report,
+	action,
+	onDone,
+	className,
+}: {
+	report: DetailReport;
+	action?: ReportAction;
+	onDone?: () => void;
+	className?: string;
+}) {
+	const tl = useTranslations('lifecycle');
+	const tf = useTranslations('report_found');
+	const tc = useTranslations('common');
+	const errorText = useErrorText();
+	const { run, busy } = useTransition(report);
+	const [now] = React.useState(Date.now);
+	const [closing, setClosing] = React.useState(true);
+	const open = report.is_mine && (report.status === 'open' || report.status === 'matched');
+	if (!open) return null;
+	if (action === 'close')
+		return (
+			<CloseSearch
+				report={report}
+				open={closing}
+				onOpenChange={(next) => {
+					setClosing(next);
+					if (!next) onDone?.();
+				}}
+			/>
+		);
+	const notice = expiryNotice(report, now);
+	const lost = report.type === 'lost';
+	if (!notice && !action) return null;
+	const extend = async () => {
+		const failure = await run({ action: 'extend' });
+		if (failure) toast.error(errorText(failure));
+		else {
+			toast.success(tc('toast_saved'));
+			onDone?.();
+		}
+	};
+	const days = notice?.days ?? Math.floor((now - Date.parse(report.created_at)) / DAY);
+	return (
+		<Note
+			role="status"
+			icon={ClockIcon}
+			className={className}
+			action={
+				<Button variant="secondary" size="sm" loading={busy} onPress={() => void extend()}>
+					{lost ? tl('reminder_keep') : tf('extend')}
+				</Button>
+			}
+		>
+			{lost ? `${tl('reminder_title')} ${tl('reminder_body', { days })}` : tf('expiry_note', { days })}
+		</Note>
+	);
 }

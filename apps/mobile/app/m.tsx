@@ -40,6 +40,7 @@ import { Icon } from '@/components/ui/icon';
 import { toast } from '@/components/ui/sonner';
 import { statusIcons } from '@/components/ui/status-label';
 import { Text } from '@/components/ui/text';
+import { trackReunited } from '@/components/report/lifecycle-helpers';
 import { claimManageLink } from '@/lib/anonymous';
 import { isOnline } from '@/lib/net';
 
@@ -265,7 +266,10 @@ function ManageView({ report }: { report: ReportOwnerView }) {
 				}
 			);
 	const markReturned = async () => {
-		if (await act('mark_reunited')) setThanked(true);
+		if (await act('mark_reunited')) {
+			trackReunited(report);
+			setThanked(true);
+		}
 	};
 
 	const threads = conversations?.items.filter((c) => c.about_report.short_code === report.short_code) ?? [];

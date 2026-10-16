@@ -464,3 +464,66 @@ describe('My reports (settings/reports)', () => {
 		expect(refetch).toHaveBeenCalled();
 	});
 });
+
+// TASK-26.9: the C10 reminder card and `?action=` deep links, as on the web.
+describe('reminder card and C10 actions (TASK-26.9)', () => {
+	const idle = (days: number): ReportOwnerView => ({
+		...owner,
+		created_at: daysAgo(days),
+		last_owner_update_at: daysAgo(days),
+	});
+	const reminder = new RegExp(`^${l.reminder_title}`);
+	const extendBody = { action: 'extend' };
+
+	test('a lost report idle 7+ days shows the reminder; only the press sends extend', async () => {
+		await open('/r/Rex2Lost', idle(9));
+		expect(screen.getByText(reminder)).toBeOnTheScreen();
+		expect(sent('POST')).toEqual([]);
+		await fireEvent.press(screen.getByRole('button', { name: l.reminder_keep }));
+		await waitFor(() => expect(sent('POST')).toEqual([extendBody]));
+	});
+
+	test('a found report within 5 days of expiry shows the expiry note and "Podaljšaj"', async () => {
+		await open('/r/Rex2Lost', { ...idle(27), type: 'found' });
+		expect(screen.getByText(/^Prijava bo potekla čez/)).toBeOnTheScreen();
+		await fireEvent.press(screen.getByRole('button', { name: sl.report_found.extend }));
+		await waitFor(() => expect(sent('POST')).toEqual([extendBody]));
+	});
+
+	test('no card when nothing is due and there is no action', async () => {
+		await open('/r/Rex2Lost', idle(1));
+		expect(screen.queryByText(reminder)).toBeNull();
+	});
+
+	test.each(['keep', 'extend'])('?action=%s shows the card with nothing sent on load', async (action) => {
+		await open(`/r/Rex2Lost?action=${action}`, idle(1));
+		expect(screen.getByText(reminder)).toBeOnTheScreen();
+		expect(sent('POST')).toEqual([]);
+		await fireEvent.press(screen.getByRole('button', { name: l.reminder_keep }));
+		await waitFor(() => expect(sent('POST')).toEqual([extendBody]));
+	});
+
+	test('?action=close opens the reason sheet and sends nothing until confirmed', async () => {
+		await open('/r/Rex2Lost?action=close', idle(1));
+		// The bottom-sheet mock renders every sheet inline: the owner menu's (slot C) and the deep link's.
+		expect(screen.getAllByRole('heading', { name: l.close_title })).toHaveLength(2);
+		expect(sent('POST')).toEqual([]);
+		const [, linked] = screen.getAllByRole('radio', { name: l.close_reason_mistake });
+		await fireEvent.press(linked);
+		await fireEvent.press(screen.getAllByRole('button', { name: l.close_confirm })[1]);
+		await waitFor(() => expect(sent('POST')).toEqual([{ action: 'close', reason: 'other' }]));
+	});
+
+	test('an unknown action is ignored', async () => {
+		await open('/r/Rex2Lost?action=delete', idle(1));
+		expect(screen.queryByText(reminder)).toBeNull();
+		expect(screen.getAllByRole('heading', { name: l.close_title })).toHaveLength(1);
+	});
+
+	test('Moje prijave: ?r=<code>&action=keep shows the card for that report', async () => {
+		myReports({ data: { pages: [{ items: [], next_cursor: null }], pageParams: [null] } });
+		await open('/settings/reports?r=Rex2Lost&action=keep', idle(1));
+		expect(screen.getByText(reminder)).toBeOnTheScreen();
+		expect(sent('POST')).toEqual([]);
+	});
+});

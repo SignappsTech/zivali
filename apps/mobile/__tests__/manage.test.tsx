@@ -11,6 +11,7 @@ import * as React from 'react';
 import { Text } from 'react-native';
 import { Provider } from 'react-redux';
 
+import { getMockEvents, initAnalytics, resetMockEvents, setConsent } from '@zivali/analytics';
 import { ownerReport } from '@zivali/api/__fixtures__/reports';
 import { ApiError, createApiClient } from '@zivali/api/client';
 import { type MockRequest, mockError } from '@zivali/api/mock';
@@ -492,6 +493,19 @@ describe('manage link screen (P7)', () => {
 		await act(async () => fireEvent.press(screen.getByRole('button', { name: 'Da, žival je doma' })));
 		expect(await screen.findByRole('heading', { name: 'Hvala, ker ste pomagali' })).toBeOnTheScreen();
 		expect(transitions()).toEqual([{ action: 'mark_reunited' }]);
+	});
+
+	test('marking returned fires `reunited` (species, region, municipality) with consent, only after it worked', async () => {
+		initAnalytics({ provider: 'mock', storage: { get: () => null, set: () => undefined } });
+		resetMockEvents();
+		setConsent({ analytics: true });
+		await openLink();
+		await act(async () => fireEvent.press(await screen.findByRole('button', { name: 'Žival je spet doma' })));
+		await act(async () => fireEvent.press(screen.getByRole('button', { name: 'Da, žival je doma' })));
+		expect(await screen.findByRole('heading', { name: 'Hvala, ker ste pomagali' })).toBeOnTheScreen();
+		expect(getMockEvents()).toEqual([
+			{ name: 'reunited', params: { species: 'dog', region: 'osrednjeslovenska', municipality: 'ljubljana' } },
+		]);
 	});
 
 	test('closed within 7 days: read-only with Reopen, no close action', async () => {
