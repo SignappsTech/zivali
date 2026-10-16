@@ -59,7 +59,7 @@ describe('P22 audience numbers', () => {
 
 	it('switches to a region without a request; "< 5" reads "fewer than 5" and 0 stays 0', async () => {
 		await show('en');
-		const select = screen.getByRole('combobox', { name: 'Region' });
+		const select = screen.getByRole('combobox', { name: 'Show figures for region' });
 
 		expect(
 			within(select)
