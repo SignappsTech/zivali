@@ -607,3 +607,26 @@ test('two Publish presses in the same tick enqueue one report', async () => {
 	expect(await outboxRows()).toHaveLength(1);
 	submit.mockRestore();
 }, 20_000);
+
+// TASK-30.4 QA. Known defect (bug filed on TASK-30): settle() removes the outbox item on a CONFLICT (and on a
+// RATE_LIMITED), so the next Publish takes a new Idempotency-Key; the AC keeps it on NETWORK/5xx/429/CONFLICT, as web does
+// (keepsSubmission). Remove `.failing` when fixed.
+test.failing('a CONFLICT keeps the Idempotency-Key for the next Publish (web parity)', async () => {
+	await open();
+	await toPublish();
+	const answers: unknown[] = [mockError('CONFLICT', 'still running')];
+	api.state.reportReply = () =>
+		answers.shift() ?? {
+			id: 'r1',
+			short_code: 'CODE1',
+			moderation_state: 'visible',
+			manage_token: 'tok',
+			warnings: [],
+		};
+	await press(t.publish);
+	await screen.findByText(sl.errors.CONFLICT);
+	await press(t.publish);
+	const posts = () => api.api.calls.filter((call) => call.method === 'POST' && call.path === '/v1/reports');
+	await waitFor(() => expect(posts()).toHaveLength(2));
+	expect(posts()[1]!.headers['Idempotency-Key']).toBe(posts()[0]!.headers['Idempotency-Key']);
+});
