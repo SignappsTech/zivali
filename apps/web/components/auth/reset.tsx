@@ -6,6 +6,7 @@ import { EnvelopeSimpleIcon } from '@phosphor-icons/react/dist/ssr/EnvelopeSimpl
 import { LinkBreakIcon } from '@phosphor-icons/react/dist/ssr/LinkBreak';
 import { ShieldWarningIcon } from '@phosphor-icons/react/dist/ssr/ShieldWarning';
 import { useLocale, useTranslations } from 'next-intl';
+import NextLink from 'next/link';
 import * as React from 'react';
 
 import { ApiError } from '@zivali/api/client';
@@ -13,7 +14,7 @@ import { Button } from '@/components/ui/button';
 import { FieldError, FormField } from '@/components/ui/form-field';
 import { Input } from '@/components/ui/input';
 import { Link } from '@/i18n/navigation';
-import { MIN_PASSWORD, requestPasswordReset, updatePassword, validEmail } from '@/lib/auth';
+import { MIN_PASSWORD, passwordTooLong, requestPasswordReset, updatePassword, validEmail } from '@/lib/auth';
 
 import { AuthHeading, AuthNote, PasswordField, useCooldown, useErrorText } from './parts';
 import { useCaptcha } from './turnstile';
@@ -112,14 +113,15 @@ export function ForgotForm({ email: initialEmail = '', expired = false }: { emai
 /**
  * P16 M8 new password. The page renders it only for a session from a reset link (lib/viewer.ts recoveryEmail, on
  * the server). The hidden username field lets password managers save the new password to the right entry. Saving
- * keeps the user signed in.
+ * keeps the user signed in. `set` (C7 §6): the first password of a converted finder, whose address the link has just
+ * confirmed; done, on to `next` (the step that offered the account).
  */
-export function NewPasswordForm({ email }: { email: string }) {
+export function NewPasswordForm({ email, set = false, next }: { email: string; set?: boolean; next?: string }) {
 	const t = useTranslations('auth');
 	const tc = useTranslations('common');
 	const errorText = useErrorText();
 	const [password, setPassword] = React.useState('');
-	const [short, setShort] = React.useState(false);
+	const [problem, setProblem] = React.useState<'error_password_short' | 'error_password_long'>();
 	const [error, setError] = React.useState<string>();
 	const [busy, setBusy] = React.useState(false);
 	const [done, setDone] = React.useState(false);
@@ -128,8 +130,14 @@ export function NewPasswordForm({ email }: { email: string }) {
 	const submit = async (event: React.FormEvent) => {
 		event.preventDefault();
 		if (busy) return;
-		setShort(password.length < MIN_PASSWORD);
-		if (password.length < MIN_PASSWORD) {
+		const issue =
+			password.length < MIN_PASSWORD
+				? 'error_password_short'
+				: passwordTooLong(password)
+					? 'error_password_long'
+					: undefined;
+		setProblem(issue);
+		if (issue) {
 			passwordRef.current?.focus();
 			return;
 		}
@@ -145,22 +153,25 @@ export function NewPasswordForm({ email }: { email: string }) {
 		}
 	};
 
+	const title = t(set ? 'setpass_title' : 'newpass_title');
 	if (done)
 		return (
 			<>
-				<AuthHeading focus>{t('newpass_title')}</AuthHeading>
+				<AuthHeading focus>{title}</AuthHeading>
 				<AuthNote icon={CheckCircleIcon} className="mt-8">
-					{t('newpass_done')}
+					{t(set ? 'setpass_done' : 'newpass_done')}
 				</AuthNote>
 				<Button asChild size="lg" className="mt-8 w-full">
-					<Link href="/">{tc('continue')}</Link>
+					{/* `next` is already a localised path (safeNext on the page). */}
+					{next ? <NextLink href={next}>{tc('continue')}</NextLink> : <Link href="/">{tc('continue')}</Link>}
 				</Button>
 			</>
 		);
 
 	return (
 		<>
-			<AuthHeading>{t('newpass_title')}</AuthHeading>
+			<AuthHeading>{title}</AuthHeading>
+			{set && <p className="mt-3 text-lg leading-7">{t('setpass_body')}</p>}
 			<form noValidate onSubmit={submit} className="mt-8">
 				<input type="email" name="username" autoComplete="username" value={email} readOnly hidden />
 				<PasswordField
@@ -168,13 +179,13 @@ export function NewPasswordForm({ email }: { email: string }) {
 					name="new-password"
 					label={t('newpass_label')}
 					hint={t('password_hint')}
-					error={short ? t('error_password_short') : undefined}
+					error={problem && t(problem)}
 					large
 					autoComplete="new-password"
 					value={password}
 					onChange={(event) => {
 						setPassword(event.target.value);
-						setShort(false);
+						setProblem(undefined);
 					}}
 				/>
 				{error && <FieldError className="mt-4">{error}</FieldError>}

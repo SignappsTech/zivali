@@ -134,7 +134,7 @@ async function open(url: string, report: ReportOwnerView | null = owner) {
 		{ initialUrl: url, wrapper: Providers }
 	);
 	unmount = (await page).unmount;
-	return { getPathname: () => page.getPathname() };
+	return { getPathname: () => page.getPathname(), getSearchParams: () => page.getSearchParams() };
 }
 
 let consentRecord: string | null = null;
@@ -229,6 +229,8 @@ describe('owner actions on the report page (P9 slot A, P14)', () => {
 		expect(screen.queryByRole('heading', { name: sl.support.tip_title })).toBeNull();
 		await fireEvent.press(screen.getByRole('button', { name: l.finder_thanks_account }));
 		expect(page.getPathname()).toBe('/auth/sign-up');
+		// Sign-up converts this anonymous session (C7 §6).
+		expect(page.getSearchParams()).toEqual({ convert: '1' });
 	});
 
 	test('"Zaključi iskanje": a reason first; "Prijava je bila pomota" closes with `other`, then a toast', async () => {

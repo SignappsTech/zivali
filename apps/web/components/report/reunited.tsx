@@ -113,7 +113,7 @@ function FinderThanks({ report, anonymous }: { report: DetailReport; anonymous: 
 			<p className="mt-3 text-lg leading-7 lg:text-xl lg:leading-8">{tl('finder_thanks_body')}</p>
 			{anonymous && (
 				<Button asChild variant="text" className="mt-8 -ml-3">
-					<Link href="/sign-up">{tl('finder_thanks_account')}</Link>
+					<Link href={{ pathname: '/sign-up', query: { convert: '1' } }}>{tl('finder_thanks_account')}</Link>
 				</Button>
 			)}
 		</main>

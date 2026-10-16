@@ -15,6 +15,7 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useLocale, useTranslations } from 'use-intl';
 
 import { type EventParams, track } from '@zivali/analytics';
+import { useSession } from '@zivali/api/auth';
 import { useGetReportQuery } from '@zivali/api/reports';
 import type { Locale } from '@zivali/i18n/format';
 import type { LatLng } from '@/components/map/features';
@@ -171,6 +172,7 @@ function Sent({
 	const locale = useLocale();
 	const router = useRouter();
 	const token = useManageToken(sent.report_id);
+	const { isAnonymous } = useSession();
 	const { data: report } = useGetReportQuery({ code: sent.short_code });
 	const held = report !== undefined && 'moderation_state' in report && report.moderation_state === 'held';
 
@@ -205,6 +207,15 @@ function Sent({
 						<Button size="lg" onPress={() => router.replace(`/r/${sent.short_code}` as Href)}>
 							{t('open_report')}
 						</Button>
+						{/* Sign-up converts this anonymous session, so the report stays (C7 §6); never for an account. */}
+						{token && isAnonymous ? (
+							<Button
+								variant="text"
+								onPress={() => router.push({ pathname: '/auth/sign-up', params: { convert: '1' } })}
+							>
+								{t('create_account')}
+							</Button>
+						) : null}
 						{/* Not while it is held (nobody else can open it yet); P18 text, link alone without the area. */}
 						{report && !held ? (
 							<Button

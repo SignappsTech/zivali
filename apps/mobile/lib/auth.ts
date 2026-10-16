@@ -5,7 +5,9 @@ import { Platform } from 'react-native';
 import { z } from 'zod';
 
 import { authError, signInWithApple, signInWithGoogle } from '@zivali/api/auth';
+import { ApiError } from '@zivali/api/client';
 import type { Locale } from '@zivali/i18n/format';
+import { MAX_PASSWORD } from '@zivali/validation/me.schema';
 import { env } from '@/lib/env';
 import { supabase } from '@/lib/supabase';
 
@@ -14,12 +16,17 @@ import { supabase } from '@/lib/supabase';
 
 /**
  * Confirmation and reset links come back to app/auth/callback (zivali://**, allow-listed in C3); GoTrue appends the
- * code to this query, and `type` tells the callback which link it was.
+ * code to this query, `type` tells the callback which link it was, and `next` (only SET_PASSWORD) where to go on.
  */
-export const authRedirect = (type: 'signup' | 'recovery') => `${Linking.createURL('/auth/callback')}?type=${type}`;
+export const authRedirect = (type: 'signup' | 'recovery', next?: string) =>
+	`${Linking.createURL('/auth/callback')}?${new URLSearchParams({ type, ...(next && { next }) })}`;
 
-/** The Supabase minimum (supabase/config.toml minimum_password_length). */
-export const MIN_PASSWORD = 8;
+/** A converted finder's link whose password did not go with the address (C7 §6): its session sets it there. */
+const SET_PASSWORD = '/auth/new-password';
+
+export { MIN_PASSWORD } from '@zivali/validation/me.schema';
+/** GoTrue counts UTF-8 bytes ("č" is 2), so a password of fewer than 72 characters can be too long already. */
+export const passwordTooLong = (password: string) => new TextEncoder().encode(password).length > MAX_PASSWORD;
 export const validEmail = (value: string) => z.email().safeParse(value).success;
 
 async function check<R extends { error: AuthError | null }>(request: Promise<R>): Promise<R> {
@@ -48,22 +55,85 @@ export const signUp = ({
 		})
 	);
 
+/** Conversion only ever touches the anonymous finder session (C7), never an account's address or password. */
+async function assertAnonymous() {
+	if (!(await supabase.auth.getSession()).data.session?.user.is_anonymous)
+		throw new ApiError('UNAUTHENTICATED', 'UNAUTHENTICATED');
+}
+
+/**
+ * C7 §6: the finder's anonymous session becomes the account in place, so the user id, report_managers and the manage
+ * links stay. One updateUser sets the password, the name and the address: GoTrue applies the password first, then
+ * mails the `email_change` link (PKCE, back to the signup callback) in the same transaction, so the link survives
+ * (checked on local Supabase). The user stops being anonymous once the link is opened. A session over 24 h old gets
+ * `reauthentication_needed` (secure_password_change; an anonymous user has no address to reauthenticate with): then
+ * the address goes alone, and the link's fresh session sets the password (`setPassword`, app/auth/new-password). Any
+ * other failure is thrown as is, never retried. Refused on any other session.
+ */
+export async function convertAnonymous({
+	name,
+	email,
+	password,
+	locale,
+}: {
+	name: string;
+	email: string;
+	password: string;
+	locale: Locale;
+}): Promise<{ setPassword: boolean }> {
+	await assertAnonymous();
+	const data = { locale, display_name: name };
+	try {
+		await check(supabase.auth.updateUser({ email, password, data }, { emailRedirectTo: authRedirect('signup') }));
+		return { setPassword: false };
+	} catch (failure) {
+		if (!(failure instanceof ApiError && failure.details?.auth_code === 'reauthentication_needed')) throw failure;
+	}
+	await check(supabase.auth.updateUser({ email, data }, { emailRedirectTo: authRedirect('signup', SET_PASSWORD) }));
+	return { setPassword: true };
+}
+
 export const resendConfirmation = (email: string) =>
 	check(supabase.auth.resend({ type: 'signup', email, options: { emailRedirectTo: authRedirect('signup') } }));
 
-/** In memory only: set by a successful recovery-link exchange, so app/auth/new-password is not reachable by a plain session. */
-let recovering = false;
+/**
+ * "Pošlji znova" after convertAnonymous: the address again, to the same callback. resend({ type: 'email_change' })
+ * finds no one (an anonymous user's email is empty) and carries no PKCE; a repeat within 60 s is RATE_LIMITED.
+ */
+export async function resendConversion(email: string, setPassword = false) {
+	await assertAnonymous();
+	const redirect = authRedirect('signup', setPassword ? SET_PASSWORD : undefined);
+	await check(supabase.auth.updateUser({ email }, { emailRedirectTo: redirect }));
+}
+
+/**
+ * In memory only: set by a successful exchange of a reset link (`recovery`) or of a converted finder's link that still
+ * has to set the password (`set`, C7 §6), so app/auth/new-password is not reachable by a plain session.
+ */
+let recovering: 'recovery' | 'set' | null = null;
 export const isRecovering = () => recovering;
 
 export const updatePassword = async (password: string) => {
 	await check(supabase.auth.updateUser({ password }));
-	recovering = false;
+	recovering = null;
 };
 
 /** PKCE: the link's code becomes a session, on the device that asked for the link only (its verifier is here). */
-export async function exchangeLinkCode(code: string, type?: string) {
+export async function exchangeLinkCode(code: string, type?: string, next?: string) {
+	recovering = null; // an abandoned earlier flow must not carry over, nor a failed exchange keep it
 	await check(supabase.auth.exchangeCodeForSession(code));
-	recovering = type === 'recovery';
+	recovering = type === 'recovery' ? 'recovery' : next === SET_PASSWORD ? 'set' : null;
+	listenSignOut();
+}
+
+// A sign-out ends the flow, so a later session cannot open the new-password screen. One subscription at a time.
+let unsubscribe: (() => void) | undefined;
+function listenSignOut() {
+	unsubscribe?.();
+	const result = supabase.auth.onAuthStateChange((event) => {
+		if (event === 'SIGNED_OUT') recovering = null;
+	});
+	unsubscribe = () => result?.data?.subscription?.unsubscribe();
 }
 
 /** Google needs its web client id (and the iOS one on iOS); Apple is iOS only and flagged off until its account exists. */

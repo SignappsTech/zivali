@@ -7,7 +7,7 @@ import { AuthMain } from '@/components/auth/parts';
 import { SignUpForm } from '@/components/auth/sign-up';
 import { PageMessages } from '@/components/page-messages';
 import { getPathname } from '@/i18n/navigation';
-import { getVerifiedViewer, safeNext } from '@/lib/viewer';
+import { getVerifiedViewer, isAnonymousViewer, safeNext } from '@/lib/viewer';
 
 const one = (value: string | string[] | undefined) => (typeof value === 'string' ? value : undefined);
 
@@ -16,18 +16,23 @@ export async function generateMetadata({ params }: PageProps<'/[locale]/sign-up'
 	return { title: t('signup_title'), robots: { index: false } };
 }
 
-/** P16 create account (`/registracija`, `/en/sign-up`), flow variant, noindex; `?next=` as on sign-in. */
+/**
+ * P16 create account (`/registracija`, `/en/sign-up`), flow variant, noindex; `?next=` as on sign-in. `?convert=1`
+ * (the anonymous finder's account offer) converts this browser's anonymous session instead (C7 §6); without one it is
+ * the plain form.
+ */
 export default async function SignUpPage({ params, searchParams }: PageProps<'/[locale]/sign-up'>) {
 	const locale = (await params).locale as Locale;
 	const query = await searchParams;
 	const next = safeNext(one(query.next));
 	if (await getVerifiedViewer()) redirect(next ?? getPathname({ locale, href: '/' }));
+	const convert = one(query.convert) === '1' && (await isAnonymousViewer());
 	const { auth } = await getMessages({ locale });
 
 	return (
 		<PageMessages messages={{ auth }}>
 			<AuthMain>
-				<SignUpForm next={next} email={one(query.email)} />
+				<SignUpForm next={next} email={one(query.email)} convert={convert} />
 			</AuthMain>
 		</PageMessages>
 	);

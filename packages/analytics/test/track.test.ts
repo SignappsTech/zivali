@@ -23,8 +23,8 @@ beforeEach(() => {
 	resetMockEvents();
 });
 
-test('registry holds the 16 taxonomy events with GA4 parameter names only', () => {
-	assert.equal(Object.keys(EVENTS).length, 16);
+test('registry holds the 17 taxonomy events with GA4 parameter names only', () => {
+	assert.equal(Object.keys(EVENTS).length, 17);
 	const names = new Set(Object.values(EVENTS).flatMap((schema) => Object.keys(schema)));
 	assert.deepEqual([...names].sort(), [
 		'ad_id',

@@ -71,7 +71,7 @@ getMe(api): Promise<Me>, updateMe(api, patch): Promise<Me>
 ```
 Hooks (same names on web and mobile): `useSession(): { session, me, isAnonymous, isVerified, role, aal, loading }`, `useRequireAuth({ verified?, role?, aal2? })` returns `gate`: `ok | loading | signin | verify | forbidden | aal2 | error` (anonymous counts as signed out; `forbidden` = role is not MODERATOR or ADMIN, as in `requireRole`).
 
-Supabase errors become `ApiError` with C1 codes (`details.auth_code` keeps the original).
+Supabase errors become `ApiError` with C1 codes (`details.auth_code` keeps the original; `reauthentication_needed` is `UNAUTHENTICATED`).
 
 ## Draft hand-off (FR-005 R-005.2)
 
@@ -95,3 +95,4 @@ Clients keep report drafts locally (C4 §Drafts, C17). When a signed-out visitor
 | 1.4 | 2026-10-15 | CH-121: `email_verified` from `auth.users.email_confirmed_at`, never `user_metadata` |
 | 1.5 | 2026-10-15 | CH-129: email copy reference §5 → §3; production redirect allow-list (`https://<APP_URL>/**`, `zivali://**`; `exp://` local/staging only); `secure_password_change = true`; locale reaches auth emails via the Admin API |
 | 1.6 | 2026-10-15 | CH-145: GET /v1/admin/audit-log and /v1/admin/queues, role body {role, note}, AdminUser email_masked + is_anonymous (no banned_at yet), limit/cursor, users query, errors NOT_FOUND and RATE_LIMITED |
+| 1.7 | 2026-10-16 | TASK-17.12: `reauthentication_needed` → `UNAUTHENTICATED`. `POST /v1/me/convert-password` (briefly added for the C7 §6 conversion) is removed before release: the Admin API password update clears the pending `email_change` token and signs out every session, so the mailed link and "Pošlji znova" died. The conversion sends password and address in one `updateUser` instead (C7 §6) |

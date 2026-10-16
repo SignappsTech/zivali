@@ -39,6 +39,13 @@ export const UpdateMeInput = z
 	.strict()
 	.openapi('UpdateMeInput');
 
+/**
+ * The password policy the sign-up forms check before GoTrue does: supabase/config.toml minimum_password_length, and
+ * GoTrue's 72 (bcrypt's limit, in UTF-8 bytes: "č" counts 2; checked on local Supabase).
+ */
+export const MIN_PASSWORD = 8;
+export const MAX_PASSWORD = 72;
+
 export const AdminUser = z
 	.object({
 		id: Uuid,

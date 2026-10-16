@@ -126,7 +126,10 @@ function FinderThanks({ report, onClose }: { report: DetailReport; onClose: () =
 			</View>
 			{isAnonymous ? (
 				<View className="px-5 pb-11">
-					<Button variant="text" onPress={() => router.push('/auth/sign-up' as Href)}>
+					<Button
+						variant="text"
+						onPress={() => router.push({ pathname: '/auth/sign-up', params: { convert: '1' } })}
+					>
 						{tl('finder_thanks_account')}
 					</Button>
 				</View>

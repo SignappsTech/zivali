@@ -189,8 +189,9 @@ describe('FoundFlow (P7 web, FR-006)', () => {
 		expect(screen.getByRole('link', { name: 'Odpri mojo prijavo' }).getAttribute('href')).toBe(
 			`/r/${created.short_code}`
 		);
+		// Sign-up converts this anonymous session (C7 §6).
 		expect(screen.getByRole('link', { name: 'Ustvari račun in obdrži prijavo' }).getAttribute('href')).toBe(
-			'/registracija'
+			'/registracija?convert=1'
 		);
 		expect(document.querySelector('[data-ad-slot]')).toBeNull();
 		// The draft is gone once the report is live.
@@ -245,6 +246,8 @@ describe('FoundFlow (P7 web, FR-006)', () => {
 		expect(posts(api)[0]!.body).toMatchObject({ type: 'sighted' });
 		expect(posts(api)[0]!.body).not.toHaveProperty('finder_email');
 		expect(screen.queryByText('Vaša zasebna povezava')).toBeNull();
+		// An account has nothing to convert (C7 §6).
+		expect(screen.queryByRole('link', { name: 'Ustvari račun in obdrži prijavo' })).toBeNull();
 		// The softer row for a sighting: no "does not replace" and no chip line.
 		expect(
 			await screen.findByText(
@@ -277,6 +280,22 @@ describe('FoundFlow (P7 web, FR-006)', () => {
 		expect(body).not.toHaveProperty('finder_email');
 		expect(screen.queryByRole('link', { name: /Pokliči/ })).toBeNull();
 		expect(screen.getByRole('link', { name: 'Zapri' }).getAttribute('href')).toBe('/r/Rex12345');
+	});
+
+	it('says a held sighting from a listing is being checked, not that the owner was told', async () => {
+		show(
+			{ entry: 'sighted', linked: { id: LOST_ID, code: lostReport.short_code } },
+			{ 'POST /v1/reports': { ...created, moderation_state: 'held' } }
+		);
+		fireEvent.click(await screen.findByRole('button', { name: 'Potrdi kraj' }));
+		await screen.findByRole('heading', { level: 1, name: 'Kdaj ste jo videli?' });
+		next();
+		await screen.findByRole('heading', { level: 1, name: 'Dodate fotografijo?' });
+		fireEvent.click(screen.getByRole('button', { name: 'Pošlji opažanje' }));
+
+		expect(await screen.findByRole('heading', { level: 1, name: 'Hvala za opažanje' })).toBeTruthy();
+		expect(screen.getByText(sl.report_found.held_note)).toBeTruthy();
+		expect(screen.queryByText(sl.report_found.sighting_done_body)).toBeNull();
 	});
 
 	it('fires report_found_start, and report_found_submit with the region only with consent', async () => {

@@ -57,6 +57,22 @@ describe('auth callback', () => {
 		);
 	});
 
+	it("takes a converted finder's link straight to the set-password form when its session is here (C7 §6)", async () => {
+		const set = (path: string) => `next=${encodeURIComponent(path)}`;
+		exchange.mockResolvedValue({ error: null });
+		expect(await callback('en', `type=signup&code=c5&${set('/en/reset-password?set=1&next=%2Fen%2Fr%2FX')}`)).toBe(
+			'https://najdimo.si/en/reset-password?set=1&next=%2Fen%2Fr%2FX'
+		);
+		expect(await callback('sl', `type=signup&code=c6&${set('/pozabljeno-geslo?set=1')}`)).toBe(
+			'https://najdimo.si/pozabljeno-geslo?set=1'
+		);
+		// Another browser (no verifier, no session): the plain confirmation, still pointing on.
+		exchange.mockResolvedValue({ error: new Error('code verifier not found') });
+		expect(await callback('sl', `type=signup&code=c7&${set('/pozabljeno-geslo?set=1')}`)).toBe(
+			'https://najdimo.si/vpis?confirmed=1&next=%2Fpozabljeno-geslo%3Fset%3D1'
+		);
+	});
+
 	it('returns from Google to next, never off-site; a cancel goes back to sign-in quietly', async () => {
 		exchange.mockResolvedValue({ error: null });
 		expect(await callback('en', 'type=oauth&code=c4&next=%2Fen%2Fr%2FHk3vT9qP')).toBe(

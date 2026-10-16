@@ -9,7 +9,7 @@ source: docs/04-technical-design.md§Authentication and authorization, ADR-005, 
 3. Client uploads photos (C5) and calls `POST /v1/reports` with an `Idempotency-Key` (C4). Response includes `manage_token` (shown once, stored on device: web `localStorage` key `manage:<report_id>`, mobile `expo-secure-store`).
 4. Manage link = `<APP_URL>/m#<manage_token>` (SL) or `<APP_URL>/en/m#<manage_token>`. If `finder_email` was given, the `notify.send` job emails the link (template `manage_link`).
 5. On another device the link page signs in anonymously (captcha) and calls `POST /v1/manage/claim` → the new anonymous uid becomes a manager; redirect to the report manage view.
-6. Claiming with an account: from the manage view, "Create an account" converts the current anonymous user (`updateUser({ email, password })` or `linkIdentity`); same uid, nothing moves.
+6. Claiming with an account: from the manage view, "Create an account" converts the current anonymous user (or `linkIdentity`); same uid, nothing moves. Email and password: one `updateUser({ email, password, data: { locale, display_name } }, { emailRedirectTo })`; GoTrue applies the password first, then mails the `email_change` link (PKCE on web) in the same transaction, so the link stays valid (checked on local Supabase). A session older than 24 h gets `reauthentication_needed` (`secure_password_change`; an anonymous user has no address to reauthenticate with): the client then sends `updateUser({ email, data }, { emailRedirectTo })` without the password, the link's `next` names the new-password form (web `/pozabljeno-geslo?set=1&next=…`, mobile `next=/auth/new-password`), and the link's fresh session sets it with `updateUser({ password })`. No other failure is retried. "Send again" repeats `updateUser({ email }, { emailRedirectTo })` with the same redirect, anonymous sessions only (`resend({ type: 'email_change' })` finds no one, the anonymous user's email is empty, and carries no PKCE; 60 s apart, else `RATE_LIMITED`). The user stops being anonymous when the link is opened; the email copy for an empty current address confirms the new account (`supabase/templates/email_change.html`). Never the Admin API: its password update clears the pending email change and signs out every session.
 
 ## REST (owned by TASK-17.1)
 
@@ -45,3 +45,9 @@ All clients send `x-device-id: <uuid>` (generated once per install/browser, stor
 // POST /v1/reports (anonymous) → 201
 { "id": "a1…", "short_code": "Xy7pQ2mK", "moderation_state": "visible", "manage_token": "q7Vt…43chars" }
 ```
+
+## Change log
+
+| Version | Date | Change |
+|---|---|---|
+| 1.1 | 2026-10-16 | TASK-17.12: §Flow 6, email and password conversion = one `updateUser({ email, password, data })`; on `reauthentication_needed` the address alone, then the password in the link's fresh session; "send again" = `updateUser({ email })`; email_change copy without a current address. Replaces the short-lived `POST /v1/me/convert-password` (C3 1.7) |

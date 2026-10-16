@@ -156,7 +156,7 @@ describe('Reunited page (P14)', () => {
 		expect(screen.queryByRole('switch')).toBeNull();
 		expect(screen.queryByRole('heading', { name: sl.support.tip_title })).toBeNull();
 		expect(screen.getByRole('link', { name: sl.lifecycle.finder_thanks_account }).getAttribute('href')).toBe(
-			'/registracija'
+			'/registracija?convert=1'
 		);
 
 		cleanup();

@@ -60,6 +60,7 @@ test('Supabase errors map to C1 codes and keep the auth code', () => {
 		[authFailure('over_email_send_rate_limit', 429), 'RATE_LIMITED'],
 		[authFailure('user_already_exists', 422), 'CONFLICT'],
 		[authFailure('weak_password', 422), 'VALIDATION'],
+		[authFailure('reauthentication_needed', 400), 'UNAUTHENTICATED'],
 		[authFailure('unexpected', 0, 'AuthRetryableFetchError'), 'NETWORK'],
 		[authFailure('something_new', 500), 'INTERNAL'],
 	];

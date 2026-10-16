@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { getVerifiedViewer, getViewer, recoveryEmail, requireViewer, safeNext } from './viewer';
+import { getVerifiedViewer, getViewer, isAnonymousViewer, recoveryEmail, requireViewer, safeNext } from './viewer';
 
 const auth = vi.hoisted(() => ({ token: undefined as string | undefined, path: null as string | null }));
 vi.mock('next/headers', () => ({ headers: async () => new Headers(auth.path ? { 'x-next-path': auth.path } : {}) }));
@@ -63,6 +63,22 @@ describe('getVerifiedViewer', () => {
 	});
 });
 
+describe('isAnonymousViewer', () => {
+	it('is true only for a signature-checked anonymous finder session (sign-up then converts it, C7 §6)', async () => {
+		auth.token = jwt({ sub: 'u-anon', is_anonymous: true });
+		expect(await isAnonymousViewer()).toBe(true);
+		for (const token of [
+			jwt({ email: 'ana@example.si', is_anonymous: false }),
+			jwt({ email: 'ana@example.si' }),
+			jwt({ is_anonymous: true }, 'forged'),
+			undefined,
+		]) {
+			auth.token = token;
+			expect(await isAnonymousViewer(), String(token)).toBe(false);
+		}
+	});
+});
+
 describe('requireViewer', () => {
 	it('sends signed-out visitors to sign-in in their language', async () => {
 		auth.token = undefined;
@@ -109,6 +125,19 @@ describe('recoveryEmail', () => {
 		expect(await recoveryEmail()).toBeNull();
 		auth.token = jwt({ email: 'ana@example.si', amr: [{ method: 'recovery', timestamp: now }] }, 'forged');
 		expect(await recoveryEmail()).toBeNull();
+	});
+
+	it("with `converted`, is only a converted finder's email_change session of the last hour (C7 §6)", async () => {
+		auth.token = jwt({ email: 'ana@example.si', amr: [{ method: 'email_change', timestamp: now - 60 }] });
+		expect(await recoveryEmail({ converted: true })).toBe('ana@example.si');
+		// Neither form takes the other's session.
+		expect(await recoveryEmail()).toBeNull();
+		auth.token = jwt({ email: 'ana@example.si', amr: [{ method: 'recovery', timestamp: now - 60 }] });
+		expect(await recoveryEmail({ converted: true })).toBeNull();
+		auth.token = jwt({ email: 'ana@example.si', amr: [{ method: 'email_change', timestamp: now - 7200 }] });
+		expect(await recoveryEmail({ converted: true })).toBeNull();
+		auth.token = jwt({ email: 'ana@example.si', amr: [{ method: 'email_change', timestamp: now }] }, 'forged');
+		expect(await recoveryEmail({ converted: true })).toBeNull();
 	});
 });
 

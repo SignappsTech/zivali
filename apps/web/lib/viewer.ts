@@ -56,6 +56,9 @@ export async function getVerifiedViewer(): Promise<Viewer | null> {
 	return claims && !claims.is_anonymous ? toViewer(claims) : null;
 }
 
+/** An anonymous finder session (C7), read from the signature-checked claims: sign-up then converts it (C7 §6). */
+export const isAnonymousViewer = async () => (await verifiedClaims())?.is_anonymous === true;
+
 /**
  * Server guard of the (app), (admin) and (portal) layouts and the account pages: visitors without a verified session
  * go to sign-in, with the page they asked for as `next` (the proxy's x-next-path), so they come back to it.
@@ -95,16 +98,17 @@ const RECOVERY_SECONDS = 3600;
  * The email of a password-recovery session, else null: GoTrue marks the session a reset link signed in with the
  * `recovery` amr (PKCE code) or `otp` (token hash, verifyOtp), both checked against local Supabase, so the
  * new-password form needs that link, not a client flag. Web has no other email-code sign-in, and either proves control
- * of the address, which is all a reset asks. Read from the signature-checked claims.
+ * of the address, which is all a reset asks. Read from the signature-checked claims. `converted`: instead the session
+ * a converted finder's `email_change` link signed in with (C7 §6, amr checked on local Supabase), which still has to
+ * set its password.
  */
-export async function recoveryEmail(): Promise<string | null> {
+export async function recoveryEmail({ converted = false } = {}): Promise<string | null> {
 	const claims = await verifiedClaims();
 	const now = Date.now() / 1000;
+	const methods = converted ? ['email_change'] : ['recovery', 'otp'];
 	const recovered = claims?.amr?.some(
 		(entry) =>
-			typeof entry === 'object' &&
-			(entry.method === 'recovery' || entry.method === 'otp') &&
-			now - entry.timestamp < RECOVERY_SECONDS
+			typeof entry === 'object' && methods.includes(entry.method) && now - entry.timestamp < RECOVERY_SECONDS
 	);
 	return recovered ? (claims?.email ?? '') : null;
 }

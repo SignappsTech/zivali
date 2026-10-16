@@ -8,6 +8,7 @@ import { renderRouter } from 'expo-router/testing-library';
 import * as React from 'react';
 import { Linking } from 'react-native';
 
+import { getMockEvents, initAnalytics, resetMockEvents, setConsent } from '@zivali/analytics';
 import { ApiError } from '@zivali/api/client';
 import en from '@zivali/i18n/dist/en.json';
 import sl from '@zivali/i18n/dist/sl.json';
@@ -16,7 +17,7 @@ import AuthCallback from '@/app/auth/callback';
 import CheckEmail from '@/app/auth/check-email';
 import ForgotPassword from '@/app/auth/forgot-password';
 import NewPassword from '@/app/auth/new-password';
-import { signOutProviders } from '@/lib/auth';
+import { exchangeLinkCode, isRecovering, signOutProviders } from '@/lib/auth';
 import SignIn from '@/app/auth/sign-in';
 import SignUp from '@/app/auth/sign-up';
 import AccountSettings from '@/app/settings/account';
@@ -51,6 +52,8 @@ const mockSupabase = {
 	resend: jest.fn(),
 	updateUser: jest.fn(),
 	exchangeCodeForSession: jest.fn(),
+	getSession: jest.fn(),
+	onAuthStateChange: jest.fn(),
 };
 jest.mock('@/lib/supabase', () => ({
 	supabase: {
@@ -70,6 +73,7 @@ type MockSession = {
 		home_radius_km: number;
 	} | null;
 	gate: string;
+	isAnonymous?: boolean;
 };
 const signedOut: MockSession = { session: null, me: null, gate: 'signin' };
 const me = { email: 'ana@primer.si', display_name: 'Ana', phone: null, home: null, home_radius_km: 5 };
@@ -312,6 +316,221 @@ describe('sign up', () => {
 		expect(await screen.findByRole('heading', { name: sl.auth.check_title })).toBeOnTheScreen();
 	});
 
+	test('from an anonymous finder session it converts that session in place, never a new user (C7 §6)', async () => {
+		initAnalytics({ provider: 'mock', storage: { get: () => null, set: () => {} } });
+		setConsent({ analytics: true });
+		resetMockEvents();
+		mockSession.set({ ...signedOut, session: {}, isAnonymous: true });
+		mockSupabase.getSession.mockResolvedValue({
+			data: { session: { user: { id: 'u-anon', is_anonymous: true } } },
+			error: null,
+		});
+		mockSupabase.updateUser.mockResolvedValue({ data: { user: { id: 'u-anon' } }, error: null });
+		const result = await app('/auth/sign-up?convert=1');
+		expect(screen.getByText(sl.auth.convert_note)).toBeOnTheScreen();
+		// Google would start another user, so the reports would not come along.
+		expect(screen.queryByRole('button', { name: sl.auth.google })).toBeNull();
+		await type(sl.auth.name_label, 'Ana');
+		await type(sl.auth.email_label, 'ana@primer.si');
+		await type(sl.auth.password_label, 'mačka v škornjih');
+		await press(sl.auth.signup_button);
+
+		// One call: GoTrue sets the password before it mails the email_change link, so the link survives.
+		expect(mockSupabase.updateUser.mock.calls).toEqual([
+			[
+				{ email: 'ana@primer.si', password: 'mačka v škornjih', data: { locale: 'sl', display_name: 'Ana' } },
+				{ emailRedirectTo: expect.stringMatching(/auth\/callback\?type=signup$/) },
+			],
+		]);
+		expect(mockSupabase.signUp).not.toHaveBeenCalled();
+		expect(result.getPathname()).toBe('/auth/check-email');
+		expect(screen.queryByText(sl.auth.check_set_password)).toBeNull();
+		expect(getMockEvents()).toEqual([{ name: 'sign_up', params: { method: 'convert' } }]);
+	});
+
+	test('a session over 24 h old (reauthentication_needed) sends the address alone; its link sets the password', async () => {
+		mockSession.set({ ...signedOut, session: {}, isAnonymous: true });
+		mockSupabase.getSession.mockResolvedValue({
+			data: { session: { user: { id: 'u-anon', is_anonymous: true } } },
+			error: null,
+		});
+		mockSupabase.updateUser
+			.mockResolvedValueOnce({
+				data: {},
+				error: new ApiError('UNAUTHENTICATED', 'x', { details: { auth_code: 'reauthentication_needed' } }),
+			})
+			.mockResolvedValue({ data: { user: { id: 'u-anon' } }, error: null });
+		const result = await app('/auth/sign-up?convert=1');
+		await type(sl.auth.name_label, 'Ana');
+		await type(sl.auth.email_label, 'ana@primer.si');
+		await type(sl.auth.password_label, 'mačka v škornjih');
+		await press(sl.auth.signup_button);
+
+		const setPassword = expect.stringMatching(/auth\/callback\?type=signup&next=%2Fauth%2Fnew-password$/);
+		expect(mockSupabase.updateUser).toHaveBeenCalledTimes(2);
+		expect(mockSupabase.updateUser).toHaveBeenLastCalledWith(
+			{ email: 'ana@primer.si', data: { locale: 'sl', display_name: 'Ana' } },
+			{ emailRedirectTo: setPassword }
+		);
+		expect(result.getPathname()).toBe('/auth/check-email');
+		expect(screen.getByText(sl.auth.check_set_password)).toBeOnTheScreen();
+	});
+
+	test('"Pošlji znova" after that keeps the set-password link', async () => {
+		mockSupabase.getSession.mockResolvedValue({
+			data: { session: { user: { id: 'u-anon', is_anonymous: true } } },
+			error: null,
+		});
+		mockSupabase.updateUser.mockResolvedValue({ data: { user: { id: 'u-anon' } }, error: null });
+		await app('/auth/check-email?email=ana%40primer.si&convert=1&setPassword=1');
+		expect(screen.getByText(sl.auth.check_set_password)).toBeOnTheScreen();
+		await press(sl.auth.check_resend);
+		await waitFor(() =>
+			expect(mockSupabase.updateUser).toHaveBeenCalledWith(
+				{ email: 'ana@primer.si' },
+				{ emailRedirectTo: expect.stringMatching(/auth\/callback\?type=signup&next=%2Fauth%2Fnew-password$/) }
+			)
+		);
+	});
+
+	test("that link's fresh session (no reauthentication) sets the password on the new-password screen", async () => {
+		mockSupabase.exchangeCodeForSession.mockResolvedValueOnce({ data: {}, error: null });
+		const link = await app('/auth/callback?type=signup&code=abc&next=%2Fauth%2Fnew-password');
+		expect(await screen.findByRole('heading', { name: sl.auth.setpass_title })).toBeOnTheScreen();
+		expect(link.getPathname()).toBe('/auth/new-password');
+		expect(screen.getByText(sl.auth.setpass_body)).toBeOnTheScreen();
+		await type(sl.auth.newpass_label, 'č'.repeat(37));
+		await press(sl.auth.newpass_button);
+		expect(screen.getByText(sl.auth.error_password_long)).toBeOnTheScreen();
+		mockSupabase.updateUser.mockResolvedValueOnce({ data: {}, error: null });
+		await type(sl.auth.newpass_label, 'mačka v škornjih');
+		await press(sl.auth.newpass_button);
+		expect(mockSupabase.updateUser).toHaveBeenCalledWith({ password: 'mačka v škornjih' });
+		expect(toast.success).toHaveBeenCalledWith(sl.auth.setpass_done);
+	});
+
+	test("the conversion's link is sent again by setting the address again; too soon is a toast", async () => {
+		mockSupabase.getSession.mockResolvedValue({
+			data: { session: { user: { id: 'u-anon', is_anonymous: true } } },
+			error: null,
+		});
+		mockSupabase.updateUser.mockResolvedValue({ data: { user: { id: 'u-anon' } }, error: null });
+		await app('/auth/check-email?email=ana%40primer.si&convert=1');
+		await press(sl.auth.check_resend);
+		await waitFor(() =>
+			expect(mockSupabase.updateUser).toHaveBeenCalledWith(
+				{ email: 'ana@primer.si' },
+				{ emailRedirectTo: expect.stringMatching(/auth\/callback\?type=signup$/) }
+			)
+		);
+		// resend() would find no user by the address (an anonymous user has none) and carry no PKCE.
+		expect(mockSupabase.resend).not.toHaveBeenCalled();
+	});
+
+	test('"Spremeni e-naslov" goes back to the conversion form, so a resubmit converts again, never signs up', async () => {
+		mockSession.set({ ...signedOut, session: {}, isAnonymous: true });
+		mockSupabase.getSession.mockResolvedValue({
+			data: { session: { user: { id: 'u-anon', is_anonymous: true } } },
+			error: null,
+		});
+		mockSupabase.updateUser.mockResolvedValue({ data: { user: { id: 'u-anon' } }, error: null });
+		const result = await app('/auth/sign-up?convert=1');
+		await type(sl.auth.name_label, 'Ana');
+		await type(sl.auth.email_label, 'ana@primer.si');
+		await type(sl.auth.password_label, 'mačka v škornjih');
+		await press(sl.auth.signup_button);
+		expect(result.getPathname()).toBe('/auth/check-email');
+
+		await press(sl.auth.check_change);
+		expect(result.getPathname()).toBe('/auth/sign-up');
+		expect(screen.getByText(sl.auth.convert_note)).toBeOnTheScreen();
+		await type(sl.auth.email_label, 'ana.novak@primer.si');
+		await press(sl.auth.signup_button);
+		expect(mockSupabase.updateUser).toHaveBeenLastCalledWith(
+			{ email: 'ana.novak@primer.si', password: 'mačka v škornjih', data: { locale: 'sl', display_name: 'Ana' } },
+			expect.anything()
+		);
+		expect(mockSupabase.updateUser).toHaveBeenCalledTimes(2);
+		expect(mockSupabase.signUp).not.toHaveBeenCalled();
+		expect(result.getPathname()).toBe('/auth/check-email');
+	});
+
+	test('converting: a taken address, a long or weak password, the email limit; another session is refused', async () => {
+		mockSession.set({ ...signedOut, session: {}, isAnonymous: true });
+		mockSupabase.getSession.mockResolvedValue({
+			data: { session: { user: { id: 'u-anon', is_anonymous: true } } },
+			error: null,
+		});
+		await app('/auth/sign-up?convert=1');
+		await type(sl.auth.name_label, 'Ana');
+		await type(sl.auth.email_label, 'ana@primer.si');
+		await type(sl.auth.password_label, 'mačka v škornjih');
+		mockSupabase.updateUser.mockResolvedValueOnce({ data: {}, error: new ApiError('CONFLICT', 'CONFLICT') });
+		await press(sl.auth.signup_button);
+		expect(screen.getByText(sl.auth.convert_email_taken)).toBeOnTheScreen();
+		expect(screen.getByRole('button', { name: sl.auth.to_signin })).toBeOnTheScreen();
+
+		// Over 72 bytes ("č" counts 2) is refused on the form, before GoTrue.
+		mockSupabase.updateUser.mockClear();
+		await type(sl.auth.password_label, 'č'.repeat(37));
+		await press(sl.auth.signup_button);
+		expect(screen.getByText(sl.auth.error_password_long)).toBeOnTheScreen();
+		expect(mockSupabase.updateUser).not.toHaveBeenCalled();
+
+		// GoTrue's own policy (weak_password), stricter on the hosted project than the length checked here.
+		await type(sl.auth.password_label, 'mačka v škornjih');
+		mockSupabase.updateUser.mockResolvedValueOnce({
+			data: {},
+			error: new ApiError('VALIDATION', 'x', { details: { auth_code: 'weak_password' } }),
+		});
+		await press(sl.auth.signup_button);
+		expect(screen.getByText(sl.auth.error_password_weak)).toBeOnTheScreen();
+
+		// Signed in to an account meanwhile: its address and password are never touched.
+		mockSupabase.updateUser.mockClear();
+		mockSupabase.getSession.mockResolvedValue({
+			data: { session: { user: { id: 'u-1', is_anonymous: false } } },
+			error: null,
+		});
+		await press(sl.auth.signup_button);
+		expect(await screen.findByText(sl.errors.UNAUTHENTICATED)).toBeOnTheScreen();
+		expect(mockSupabase.updateUser).not.toHaveBeenCalled();
+		expect(mockSupabase.signUp).not.toHaveBeenCalled();
+	});
+
+	test('converting: the email limit (one a minute) is the note with the wait, never retried behind the back', async () => {
+		mockSession.set({ ...signedOut, session: {}, isAnonymous: true });
+		mockSupabase.getSession.mockResolvedValue({
+			data: { session: { user: { id: 'u-anon', is_anonymous: true } } },
+			error: null,
+		});
+		mockSupabase.updateUser.mockResolvedValueOnce({
+			data: {},
+			error: new ApiError('RATE_LIMITED', 'x', { details: { auth_code: 'over_email_send_rate_limit' } }),
+		});
+		await app('/auth/sign-up?convert=1');
+		await type(sl.auth.name_label, 'Ana');
+		await type(sl.auth.email_label, 'ana@primer.si');
+		await type(sl.auth.password_label, 'mačka v škornjih');
+		await press(sl.auth.signup_button);
+		expect(await screen.findByText(sl.auth.error_rate_limited)).toBeOnTheScreen();
+		await press(sl.auth.signup_button);
+		expect(mockSupabase.updateUser).toHaveBeenCalledTimes(1);
+	});
+
+	test('convert=1 without an anonymous session is the plain sign-up', async () => {
+		mockSupabase.signUp.mockResolvedValueOnce({ data: {}, error: null });
+		await app('/auth/sign-up?convert=1');
+		expect(screen.queryByText(sl.auth.convert_note)).toBeNull();
+		expect(screen.getByRole('button', { name: sl.auth.google })).toBeOnTheScreen();
+		await type(sl.auth.name_label, 'Ana');
+		await type(sl.auth.email_label, 'ana@primer.si');
+		await type(sl.auth.password_label, 'mačka v škornjih');
+		await press(sl.auth.signup_button);
+		expect(mockSupabase.signUp).toHaveBeenCalled();
+		expect(mockSupabase.updateUser).not.toHaveBeenCalled();
+	});
+
 	test('"Odpri e-pošto" opens the mail app', async () => {
 		const openURL = jest.spyOn(Linking, 'openURL').mockResolvedValue(true);
 		await app('/auth/check-email?email=ana%40primer.si');
@@ -366,6 +585,26 @@ describe('reset and email links', () => {
 		expect(await screen.findByRole('heading', { name: sl.auth.link_failed_title })).toBeOnTheScreen();
 		await press(sl.auth.forgot_button);
 		expect(result.getPathname()).toBe('/auth/forgot-password');
+	});
+});
+
+describe('recovery flag', () => {
+	test('a sign-out ends it, so a later session cannot open the new-password screen', async () => {
+		mockSupabase.exchangeCodeForSession.mockResolvedValueOnce({ data: {}, error: null });
+		await exchangeLinkCode('abc', 'recovery');
+		expect(isRecovering()).toBe('recovery');
+		const listener = mockSupabase.onAuthStateChange.mock.calls[0]![0] as (event: string) => void;
+		listener('SIGNED_OUT');
+		expect(isRecovering()).toBeNull();
+	});
+
+	test('a failed exchange clears it', async () => {
+		mockSupabase.exchangeCodeForSession.mockResolvedValueOnce({ data: {}, error: null });
+		await exchangeLinkCode('abc', 'recovery');
+		expect(isRecovering()).toBe('recovery');
+		mockSupabase.exchangeCodeForSession.mockResolvedValueOnce({ data: {}, error: new ApiError('INTERNAL', 'x') });
+		await expect(exchangeLinkCode('used', 'recovery')).rejects.toBeDefined();
+		expect(isRecovering()).toBeNull();
 	});
 });
 

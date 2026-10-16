@@ -53,7 +53,8 @@ export function FoundDone({
 			<Spot>{linked ? <EyeIcon weight="bold" /> : <HandHeartIcon weight="bold" />}</Spot>
 			<h1 className={titleClass}>{t(linked ? 'sighting_done_title' : 'done_title')}</h1>
 			<p className="mt-3 text-lg leading-7 lg:mt-4 lg:text-xl lg:leading-8">
-				{linked ? t('sighting_done_body') : t(held ? 'held_note' : 'done_body')}
+				{/* Held first: a held sighting has not reached the owner yet (as on mobile). */}
+				{t(held ? 'held_note' : linked ? 'sighting_done_body' : 'done_body')}
 			</p>
 			{result.manage_token && (
 				<div className="mt-8 lg:mt-10">
@@ -75,10 +76,12 @@ export function FoundDone({
 						<Button asChild size="lg">
 							<Link href={report}>{t('open_report')}</Link>
 						</Button>
-						{/* TODO(TASK-17.12): convert the anonymous session into an account instead of a plain sign-up. */}
+						{/* Only an anonymous finder has a token: sign-up converts that session (C7 §6). */}
 						{result.manage_token && (
 							<Button asChild variant="text">
-								<Link href="/sign-up">{t('create_account')}</Link>
+								<Link href={{ pathname: '/sign-up', query: { convert: '1' } }}>
+									{t('create_account')}
+								</Link>
 							</Button>
 						)}
 						{/* Not while it is held: nobody else can open it yet. */}
