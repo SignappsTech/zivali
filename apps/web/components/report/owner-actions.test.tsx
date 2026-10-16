@@ -31,6 +31,8 @@ const store = vi.hoisted(() => ({ current: undefined as unknown }));
 vi.mock('@/lib/store', () => ({ getStore: () => store.current }));
 const toast = vi.hoisted(() => ({ success: vi.fn(), error: vi.fn(), info: vi.fn() }));
 vi.mock('sonner', async (actual) => ({ ...(await actual()), toast }));
+// Close, reopen and extend share one toast: the next replaces the last instead of stacking over it.
+const stateToast = { id: 'report-state' };
 
 const DAY = 86_400_000;
 const ago = (days: number) => new Date(Date.now() - days * DAY).toISOString();
@@ -141,7 +143,7 @@ describe('OwnerActions (P9 slot A for managers, P14)', () => {
 		fireEvent.click(confirm);
 
 		await waitFor(() => expect(sent(api)).toEqual([{ action: 'close', reason }]));
-		await waitFor(() => expect(toast.success).toHaveBeenCalledWith(sl.lifecycle.closed_toast));
+		await waitFor(() => expect(toast.success).toHaveBeenCalledWith(sl.lifecycle.closed_toast, stateToast));
 		expect(nav.refresh).toHaveBeenCalled();
 		expect(screen.queryByRole('dialog')).toBeNull();
 	});
@@ -219,7 +221,7 @@ describe('OwnerActions (P9 slot A for managers, P14)', () => {
 		fireEvent.click(button('Ponovno odpri'));
 
 		await waitFor(() => expect(sent(api)).toEqual([{ action: 'reopen' }]));
-		await waitFor(() => expect(toast.success).toHaveBeenCalledWith(sl.lifecycle.reopened_toast));
+		await waitFor(() => expect(toast.success).toHaveBeenCalledWith(sl.lifecycle.reopened_toast, stateToast));
 		expect(nav.refresh).toHaveBeenCalled();
 	});
 
@@ -236,7 +238,7 @@ describe('OwnerActions (P9 slot A for managers, P14)', () => {
 			}
 		);
 		fireEvent.click(button('Ponovno odpri'));
-		await waitFor(() => expect(toast.error).toHaveBeenCalledWith(sl.errors.GONE));
+		await waitFor(() => expect(toast.error).toHaveBeenCalledWith(sl.errors.GONE, stateToast));
 	});
 
 	it.each([
@@ -262,7 +264,7 @@ describe('OwnerActions (P9 slot A for managers, P14)', () => {
 		fireEvent.click(button('Nadaljuj iskanje'));
 
 		await waitFor(() => expect(sent(api)).toEqual([{ action: 'extend' }]));
-		await waitFor(() => expect(toast.success).toHaveBeenCalledWith(sl.common.toast_saved));
+		await waitFor(() => expect(toast.success).toHaveBeenCalledWith(sl.common.toast_saved, stateToast));
 	});
 
 	it('a found report 3 days before it expires: the P7 note and "Podaljšaj za 30 dni"', async () => {

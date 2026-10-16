@@ -111,7 +111,9 @@ describe('MyReports (P8 "Moje prijave")', () => {
 
 			fireEvent.click(keep);
 			await waitFor(() => expect(sent(api)).toEqual([{ action: 'extend' }]));
-			await waitFor(() => expect(toast.success).toHaveBeenCalledWith(sl.common.toast_saved));
+			await waitFor(() =>
+				expect(toast.success).toHaveBeenCalledWith(sl.common.toast_saved, { id: 'report-state' })
+			);
 			expect(nav.replace).toHaveBeenCalledWith('/moje-prijave');
 			expect(document.activeElement).toBe(screen.getByRole('heading', { level: 1 }));
 		}

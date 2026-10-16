@@ -38,6 +38,8 @@ import { cn } from '@/lib/utils';
 // window and "Nadaljuj iskanje" / "Podaljšaj za 30 dni", all through POST /v1/reports/:code/transitions (C4).
 
 const isConflict = (error: unknown) => (error as Partial<QueryError> | undefined)?.data?.code === 'CONFLICT';
+/** One toast for the search's state: a reopen right after a close replaces "Iskanje je zaključeno.", never stacks on it. */
+const STATE_TOAST = { id: 'report-state' };
 
 /**
  * One transition; `run` resolves to the failure (kept in `error` until the next try), undefined when it worked. A
@@ -69,8 +71,8 @@ export function useQuickTransition(report: Pick<DetailReport, 'short_code'>, act
 	const { run, busy } = useTransition(report);
 	const go = async () => {
 		const failure = await run({ action });
-		if (failure) toast.error(errorText(failure));
-		else toast.success(action === 'reopen' ? tl('reopened_toast') : tc('toast_saved'));
+		if (failure) toast.error(errorText(failure), STATE_TOAST);
+		else toast.success(action === 'reopen' ? tl('reopened_toast') : tc('toast_saved'), STATE_TOAST);
 		return !failure;
 	};
 	return { go, busy };
@@ -279,7 +281,7 @@ export function CloseSearch({ report, open, onOpenChange, returnFocus }: DialogP
 	const confirm = async () => {
 		if (!reason || (await run({ action: 'close', reason }))) return;
 		setOpen(false);
-		toast.success(tl('closed_toast'));
+		toast.success(tl('closed_toast'), STATE_TOAST);
 	};
 
 	return (
