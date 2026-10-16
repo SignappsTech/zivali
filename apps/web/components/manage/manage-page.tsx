@@ -148,7 +148,8 @@ function ManageView({ code }: { code: string }) {
 	const act = async (action: ReportTransitionAction) => {
 		refocus.current = action === 'close' || action === 'reopen';
 		try {
-			await transition({ code, body: { action } }).unwrap();
+			// C4: a manager closes with a reason; the finder's page has no choice (P7/P14), so the neutral `other`.
+			await transition({ code, body: action === 'close' ? { action, reason: 'other' } : { action } }).unwrap();
 			if (action === 'mark_reunited') setThanked(true);
 		} catch (error) {
 			refocus.current = false;
@@ -287,7 +288,13 @@ function ManageView({ code }: { code: string }) {
 
 			{/* P14 §6: the finder marks the animal as home. */}
 			<AlertDialog open={confirmHome} onOpenChange={setConfirmHome}>
-				<AlertDialogContent>
+				<AlertDialogContent
+					onCloseAutoFocus={(event) => {
+						// The row that opened the dialog is no trigger: keep focus on the page, at the h1.
+						event.preventDefault();
+						headingRef.current?.focus();
+					}}
+				>
 					<AlertDialogTitle>{tLife('finder_confirm_title')}</AlertDialogTitle>
 					<AlertDialogDescription>{tLife('finder_confirm_body')}</AlertDialogDescription>
 					<AlertDialogFooter>

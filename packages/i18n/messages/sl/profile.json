@@ -25,5 +25,18 @@
 	"sign_out_remove_links": "Odstrani tudi povezave za urejanje prijav s te naprave",
 	"sign_out_confirm": "Odjava",
 	"sign_out_cancel": "Prekliči",
-	"saved": "Shranjeno."
+	"saved": "Shranjeno.",
+	"row_offline": "Podatki brez povezave",
+	"offline_body": "Prijave v bližini in njihove fotografije shranimo v telefon, da jih vidite tudi brez povezave.",
+	"offline_size": "Zasedeno",
+	"offline_size_value": "{size} MB",
+	"offline_updated": "Zadnja posodobitev",
+	"offline_updated_never": "Še ni bilo posodobitve",
+	"offline_mobile_photos": "Za fotografije brez povezave uporabi mobilne podatke",
+	"offline_mobile_photos_help": "Ko je izklopljeno, fotografije prenesemo samo prek omrežja Wi-Fi.",
+	"offline_clear": "Počisti podatke brez povezave",
+	"offline_clear_title": "Želite počistiti podatke brez povezave?",
+	"offline_clear_body": "S telefona izbrišemo shranjene prijave v bližini in njihove fotografije. Prijave, ki čakajo na pošiljanje, ostanejo.",
+	"offline_clear_confirm": "Počisti",
+	"offline_cleared": "Podatki brez povezave so počiščeni."
 }

@@ -3,6 +3,7 @@ import type { Icon as PhosphorIcon } from 'phosphor-react-native';
 import { ChatCircleIcon } from 'phosphor-react-native/src/icons/ChatCircle';
 import { EyeIcon } from 'phosphor-react-native/src/icons/Eye';
 import { HeartIcon } from 'phosphor-react-native/src/icons/Heart';
+import { PrinterIcon } from 'phosphor-react-native/src/icons/Printer';
 import * as React from 'react';
 import { View } from 'react-native';
 import { useTranslations } from 'use-intl';
@@ -23,7 +24,8 @@ type Action = { label: string; icon: PhosphorIcon; onPress?: () => void };
  * - Owner (signed-in owner or manage-link holder): "Žival je spet doma" (P14), text "Uredi" and "Plakat".
  * A sighting opens the sighted flow linked to this report (C15 `report/found?type=sighted`, TASK-30.3). Contact
  * needs an account: the P16 gate first, then TASK-21.4 opens the conversation in `startContact`. "Žival je spet doma"
- * opens `r/[code]/reunited`; "Uredi" and "Plakat" are wired by TASK-26.5 and TASK-24.3.
+ * opens `r/[code]/reunited`; "Plakat" the P18 poster and sharing screen (`r/[code]/poster`); "Uredi" waits for
+ * TASK-26.5.
  */
 export function SlotA({ report, offline, children }: ReportSlotProps) {
 	const t = useTranslations('report');
@@ -55,7 +57,12 @@ export function SlotA({ report, offline, children }: ReportSlotProps) {
 					// TODO(TASK-26.5): reunited screen
 					onPress: () => router.push(`/r/${report.short_code}/reunited` as Href),
 				},
-				// Hidden until wired: "Uredi" by TASK-26.5, "Plakat" by TASK-24.3.
+				// Hidden until wired: "Uredi" by TASK-26.5.
+				{
+					label: t('owner_poster'),
+					icon: PrinterIcon,
+					onPress: () => router.push(`/r/${report.short_code}/poster` as Href),
+				},
 			]
 		: { lost: [sighting, message], found: [mine, sighting], sighted: [message, mine] }[report.type];
 

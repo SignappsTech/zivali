@@ -3,6 +3,7 @@ import type { Locale } from 'next-intl';
 import { getTranslations } from 'next-intl/server';
 
 import { ManagePage } from '@/components/manage/manage-page';
+import { StoreProvider } from '@/components/store-provider';
 
 export async function generateMetadata({ params }: PageProps<'/[locale]/m'>): Promise<Metadata> {
 	const t = await getTranslations({ locale: (await params).locale as Locale, namespace: 'report_found' });
@@ -11,5 +12,9 @@ export async function generateMetadata({ params }: PageProps<'/[locale]/m'>): Pr
 
 /** P7 manage page (`/m#<token>`, `/en/m#<token>`, C7, C15): private, noindex, no ad slot. The token never reaches the server. */
 export default function Page() {
-	return <ManagePage />;
+	return (
+		<StoreProvider>
+			<ManagePage />
+		</StoreProvider>
+	);
 }

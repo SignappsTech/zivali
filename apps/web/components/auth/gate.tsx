@@ -4,6 +4,7 @@ import dynamic from 'next/dynamic';
 import * as React from 'react';
 
 import { useRequireAuth } from '@zivali/api/auth';
+import { StoreProvider } from '@/components/store-provider';
 import { InlineError, PageSkeleton } from '@/components/shell/page';
 
 import { useConfigureAuth } from './session-sync';
@@ -48,7 +49,16 @@ type AuthGateProps = {
  *
  * Usage: `<AuthGate reason="contact" open={open} onOpenChange={setOpen} onReady={send} />`, opened on the action.
  */
-export function AuthGate({ reason, title, body, open, onOpenChange, onReady }: AuthGateProps) {
+export function AuthGate(props: AuthGateProps) {
+	// Public pages have no store (TASK-90.5), so the gate brings its own.
+	return (
+		<StoreProvider>
+			<AuthGateInner {...props} />
+		</StoreProvider>
+	);
+}
+
+function AuthGateInner({ reason, title, body, open, onOpenChange, onReady }: AuthGateProps) {
 	useConfigureAuth(open);
 	const { gate, me } = useRequireAuth({ verified: true });
 	// The dialog loads on the first open and then stays mounted, so it can animate out and return focus.
