@@ -1,11 +1,11 @@
 ---
 id: TASK-36.5
 title: 'Web AdSlot and placements: feed, detail, reunited, sidebar'
-status: In Progress
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:14'
-updated_date: '2026-10-16 06:01'
+updated_date: '2026-10-16 07:07'
 labels:
   - fe
   - 'est:M'
