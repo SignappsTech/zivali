@@ -3,6 +3,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
+import { waitFor } from '@testing-library/react-native';
 import { deleteDatabaseAsync, openDatabaseAsync, type SQLiteDatabase } from 'expo-sqlite';
 import * as SecureStore from 'expo-secure-store';
 
@@ -10,7 +11,7 @@ import { DB_NAME, getDb, migrate, migrations } from '@/lib/db';
 import { bytesUsed, draftsDir, outboxDir, pickerCacheDir, thumbsDir } from '@/lib/db/files';
 import { cacheOwnReports, cacheQuietHours, stopGeofencing } from '@/lib/offline/geofence';
 import { manageTokenKey, saveManageToken } from '@/lib/offline/outbox';
-import { signOutAndWipe, wipeLocalData } from '@/lib/offline/wipe';
+import { signOutAndWipe, wipeLocalData, wipeOnSessionEnd } from '@/lib/offline/wipe';
 import { supabase } from '@/lib/supabase';
 
 // Real SQL on node:sqlite and real files in a temp folder stand in for the native modules.
@@ -27,9 +28,19 @@ jest.mock('expo-secure-store', () => ({
 	setItemAsync: jest.fn(async (name: string, value: string) => void mockKeychain.set(name, value)),
 	deleteItemAsync: jest.fn(async (name: string) => void mockKeychain.delete(name)),
 }));
+// The Supabase session events (onAuthStateChange); the last listener is kept to fire them.
+let mockAuthListener: ((event: string) => void) | undefined;
 jest.mock('@/lib/supabase', () => ({
 	clearSessionStorage: () => mockSession(),
-	supabase: { auth: { signOut: jest.fn(async () => ({ error: null })) } },
+	supabase: {
+		auth: {
+			signOut: jest.fn(async () => ({ error: null })),
+			onAuthStateChange: jest.fn((listener: (event: string) => void) => {
+				mockAuthListener = listener;
+				return { data: { subscription: { unsubscribe: jest.fn() } } };
+			}),
+		},
+	},
 }));
 // wipe waits for a running sync (lib/offline/sync); its native imports are inert here.
 jest.mock('expo-sqlite/localStorage/install', () => ({}));
@@ -328,5 +339,48 @@ describe('signOutAndWipe', () => {
 		expect(resolvePending).not.toHaveBeenCalled();
 		expect(supabase.auth.signOut).toHaveBeenLastCalledWith({ scope: 'local' });
 		expect(await count('drafts')).toBe(0);
+	});
+});
+
+describe('wipeOnSessionEnd', () => {
+	beforeEach(async () => {
+		await seed();
+		jest.mocked(stopGeofencing).mockClear();
+		jest.mocked(cacheQuietHours).mockClear();
+		jest.mocked(cacheOwnReports).mockClear();
+		jest.mocked(supabase.auth.signOut).mockClear();
+		wipeOnSessionEnd();
+	});
+
+	test('a session ended outside the app (revoked refresh token) gets the sign-out wipe', async () => {
+		// Refreshes and an offline start (the session kept) wipe nothing.
+		for (const event of ['INITIAL_SESSION', 'TOKEN_REFRESHED', 'SIGNED_IN']) mockAuthListener!(event);
+		await new Promise((resolve) => setTimeout(resolve, 0));
+		expect(stopGeofencing).not.toHaveBeenCalled();
+		expect(await count('reports_cache')).toBe(1);
+
+		mockAuthListener!('SIGNED_OUT');
+		await waitFor(async () => expect(await count('reports_cache')).toBe(0));
+		await waitFor(() => expect(thumbsDir.exists).toBe(false));
+		expect(stopGeofencing).toHaveBeenCalledTimes(1);
+		expect(cacheQuietHours).toHaveBeenCalledWith(null);
+		expect(cacheOwnReports).toHaveBeenCalledWith(null);
+		for (const table of ['cache_areas', 'drafts', 'geofences', 'geofence_events']) expect(await count(table)).toBe(0);
+		// As on sign-out: the outbox and the manage tokens stay.
+		expect(await count('outbox')).toBe(2);
+		expect(mockKeychain.has(manageTokenKey('rep-1'))).toBe(true);
+	});
+
+	test('the in-app sign-out wipes once: its own SIGNED_OUT starts no second wipe', async () => {
+		jest.mocked(supabase.auth.signOut).mockImplementationOnce(async () => {
+			mockAuthListener!('SIGNED_OUT');
+			return { error: null };
+		});
+
+		expect(await signOutAndWipe({ resolvePending: async () => true })).toBe(true);
+		await new Promise((resolve) => setTimeout(resolve, 0));
+
+		expect(stopGeofencing).toHaveBeenCalledTimes(1);
+		expect(await count('reports_cache')).toBe(0);
 	});
 });

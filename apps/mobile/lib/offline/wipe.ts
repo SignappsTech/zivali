@@ -78,6 +78,24 @@ async function sentTokenKeys(): Promise<string[]> {
 	});
 }
 
+// While the in-app sign-out ends the session: it runs its own wipe, after the outbox prompt.
+let signingOut = false;
+
+/**
+ * A session that ended outside the app gets the sign-out wipe too (C17 §Wipe), so no geofence keeps using Always
+ * location for a signed-out user. Supabase drops a session whose refresh token was revoked (sign-out everywhere,
+ * password reset, account deleted on the web) with SIGNED_OUT, at start-up or on a later refresh; offline it keeps
+ * the session and says nothing. Subscribe once, before the client restores the session (lib/store).
+ */
+export function wipeOnSessionEnd(): () => void {
+	const { data } = supabase.auth.onAuthStateChange((event) => {
+		// Not awaited: the auth client waits for its listeners. A failed wipe leaves the reminders' off switch, shown
+		// signed out too (settings/alerts).
+		if (event === 'SIGNED_OUT' && !signingOut) void wipeLocalData({ reason: 'sign_out' }).catch(() => {});
+	});
+	return () => data.subscription.unsubscribe();
+}
+
 /**
  * Sign-out with the wipe. With unsent outbox items, `resolvePending(count)` first shows "Send now / Delete / Cancel",
  * does it, and resolves false on Cancel; then nothing happens and this resolves false.
@@ -96,9 +114,14 @@ export async function signOutAndWipe({
 	const count = await pendingCount();
 	if (count > 0 && !(await resolvePending(count))) return false;
 	await beforeSignOut?.().catch(() => {});
-	const { error } = await supabase.auth.signOut();
-	// Offline the server call fails and keeps the session; forget it on this device anyway.
-	if (error) await supabase.auth.signOut({ scope: 'local' });
+	signingOut = true;
+	try {
+		const { error } = await supabase.auth.signOut();
+		// Offline the server call fails and keeps the session; forget it on this device anyway.
+		if (error) await supabase.auth.signOut({ scope: 'local' });
+	} finally {
+		signingOut = false;
+	}
 	await wipeLocalData({ reason: 'sign_out', removeManageLinks });
 	return true;
 }
