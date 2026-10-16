@@ -253,8 +253,12 @@ function useGpsFix(): { fix?: Offered; locating: boolean } {
 }
 
 /** The lost pet a sighting is about (P7 S1): 48 px photo, name, status word, on every step. */
-function LinkedPet({ code }: { code: string }) {
+function LinkedPet({ code, onSpecies }: { code: string; onSpecies: (species: Species) => void }) {
 	const { data } = useReport(code);
+	const species = data?.species;
+	React.useEffect(() => {
+		if (species) onSpecies(species);
+	}, [species, onSpecies]);
 	if (!data) return null;
 	const thumb = 'photos' in data ? data.photos[0]?.thumb_url : data.thumb_url;
 	return (
@@ -584,6 +588,8 @@ export function FoundFlow({ entry, linked }: { entry: 'found' | 'sighted'; linke
 	const [cameraDenied, setCameraDenied] = React.useState(false);
 	// The photo's place wins over GPS; both are coarsened once when they arrive (C6).
 	const [exif, setExif] = React.useState<Offered>();
+	// The listing's species, when the link did not carry it.
+	const [listed, setListed] = React.useState<Species>();
 	const { fix, locating } = useGpsFix();
 	const [picking, setPicking] = React.useState(false);
 	const [closing, setClosing] = React.useState(false);
@@ -603,7 +609,12 @@ export function FoundFlow({ entry, linked }: { entry: 'found' | 'sighted'; linke
 		loadDraft(draftId)
 			.then((draft) => {
 				if (!alive || !draft) return;
-				setValues((prev) => ({ ...prev, ...draft.values }));
+				// Without a photo time the capture time is when the finder returned, not when the draft was started.
+				setValues((prev) => ({
+					...prev,
+					...draft.values,
+					...(!draft.values.takenAt && { startedAt: new Date().toISOString() }),
+				}));
 				if (steps.includes(draft.step)) setStep(draft.step);
 			})
 			.catch(() => {});
@@ -696,7 +707,7 @@ export function FoundFlow({ entry, linked }: { entry: 'found' | 'sighted'; linke
 		}
 		// Found reports need a photo (C4: 1 to 5); a sighting may have none.
 		if (!linked && photos.length === 0) return edit('photo');
-		const species = linked ? linked.species : values.species;
+		const species = linked ? (linked.species ?? listed) : values.species;
 		const location = values.location;
 		if (!species || !location) return setSendError({ text: errorText('VALIDATION') });
 		setSending(true);
@@ -838,7 +849,7 @@ export function FoundFlow({ entry, linked }: { entry: 'found' | 'sighted'; linke
 						keyboardShouldPersistTaps="handled"
 						contentContainerClassName="grow px-5 pb-8 pt-2"
 					>
-						{linked?.code ? <LinkedPet code={linked.code} /> : null}
+						{linked?.code ? <LinkedPet code={linked.code} onSpecies={setListed} /> : null}
 						{emptyPhotos ? (
 							<View className="mb-6">
 								<Spot icon={CameraIcon} />

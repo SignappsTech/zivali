@@ -232,10 +232,12 @@ function Sent({
 /** Q1: saved in the outbox, sent when online; the shelter row works from the cached directory. */
 function Waiting({
 	submitted,
+	sending,
 	onCancel,
 	onLeave,
 }: {
 	submitted: Submitted;
+	sending: boolean;
 	onCancel: () => void;
 	onLeave: () => void;
 }) {
@@ -253,9 +255,11 @@ function Waiting({
 					<Button size="lg" onPress={onLeave}>
 						{tc('close')}
 					</Button>
-					<Button variant="text" onPress={() => setAsking(true)}>
-						{tc('cancel')}
-					</Button>
+					{sending ? null : (
+						<Button variant="text" onPress={() => setAsking(true)}>
+							{tc('cancel')}
+						</Button>
+					)}
 				</>
 			}
 		>
@@ -291,5 +295,5 @@ export function FoundDone({
 	onLeave: () => void;
 }) {
 	if (item?.status === 'sent') return <Sent submitted={submitted} sent={item.result} onLeave={onLeave} />;
-	return <Waiting submitted={submitted} onCancel={onCancel} onLeave={onLeave} />;
+	return <Waiting submitted={submitted} sending={item?.status === 'sending'} onCancel={onCancel} onLeave={onLeave} />;
 }

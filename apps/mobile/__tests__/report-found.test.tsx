@@ -167,7 +167,8 @@ const OFFLINE = { isConnected: false, isInternetReachable: false };
 const ONLINE = { isConnected: true, isInternetReachable: true };
 // Two hours ago, whole seconds (EXIF has no milliseconds); a time in the future would not count.
 const TAKEN = new Date(Math.floor(Date.now() / 1000 - 2 * 3600) * 1000);
-const lostRex: PublicReport = { ...publicReport, id: 'lost-1', short_code: 'Rex2Lost', type: 'lost', name: 'Rex' };
+const LOST_ID = '3f2b8c1e-5d4a-4e6b-9a7c-1b2d3e4f5a6b';
+const lostRex: PublicReport = { ...publicReport, id: LOST_ID, short_code: 'Rex2Lost', type: 'lost', name: 'Rex' };
 
 /** The API as apps/api answers it; `reportReply` overrides the POST /v1/reports answer. */
 function server() {
@@ -387,7 +388,7 @@ test('offline: Publish waits in the outbox with the capture time, then turns int
 
 test('"I saw this pet": the short linked flow creates a SIGHTED report linked to the listing, without email or shelter row', async () => {
 	jest.mocked(useReport).mockReturnValue({ data: lostRex } as ReturnType<typeof useReport>);
-	await open('/report/found?type=sighted&linked_report_id=lost-1&code=Rex2Lost&species=dog');
+	await open(`/report/found?type=sighted&linked_report_id=${LOST_ID}&code=Rex2Lost&species=dog`);
 	await heading(t.sighting_where);
 	expect(screen.getByText('Rex')).toBeOnTheScreen();
 	expect(screen.getByText(t.where_from_gps)).toBeOnTheScreen();
@@ -406,7 +407,7 @@ test('"I saw this pet": the short linked flow creates a SIGHTED report linked to
 	await heading(t.sighting_done_title);
 	const [body] = api.reportBodies() as Record<string, unknown>[];
 	expect(body).toEqual(
-		expect.objectContaining({ type: 'sighted', species: 'dog', linked_report_id: 'lost-1', photo_ids: [] })
+		expect.objectContaining({ type: 'sighted', species: 'dog', linked_report_id: LOST_ID, photo_ids: [] })
 	);
 	expect(body).not.toHaveProperty('finder_email');
 	// Today at 00.00 in the device's clock.
@@ -496,11 +497,31 @@ test('pure rules: capture time, the checks and the body', () => {
 			finder_email: 'a@b.si',
 		}
 	);
-	expect(outboxPayload({ ...values, species: 'dog', location: point, email: 'a@b.si' }, { id: 'lost-1' })).toEqual({
+	expect(outboxPayload({ ...values, species: 'dog', location: point, email: 'a@b.si' }, { id: LOST_ID })).toEqual({
 		type: 'sighted',
 		species: 'dog',
 		colours: ['brown'],
 		location: point,
-		linked_report_id: 'lost-1',
+		linked_report_id: LOST_ID,
 	});
+});
+
+test('a linked sighting with a bad listing id falls back to the normal sighted flow', async () => {
+	await open('/report/found?type=sighted&linked_report_id=lost-1&code=Rex2Lost&species=dog');
+	expect(await screen.findByRole('button', { name: t.photo_take })).toBeOnTheScreen();
+	expect(screen.queryByText(t.sighting_where)).toBeNull();
+});
+
+test('a linked sighting without species takes it from the listing', async () => {
+	jest.mocked(useReport).mockReturnValue({ data: { ...lostRex, species: 'cat' } } as ReturnType<typeof useReport>);
+	await open(`/report/found?type=sighted&linked_report_id=${LOST_ID}&code=Rex2Lost`);
+	await heading(t.sighting_where);
+	await press(tc.next);
+	await heading(t.sighting_when);
+	await press(t.sighting_when_today, 'radio');
+	await press(tc.next);
+	await heading(t.sighting_photo);
+	await press(t.sighting_send);
+	await heading(t.sighting_done_title);
+	expect(api.reportBodies()).toEqual([expect.objectContaining({ species: 'cat', linked_report_id: LOST_ID })]);
 });

@@ -21,8 +21,8 @@ import { cn } from '@/lib/utils';
 const directoryUrl = (locale: Locale, slug?: string) =>
 	`${env.EXPO_PUBLIC_APP_URL}${locale === 'en' ? '/en/shelters' : '/zavetisca'}${slug ? `/${slug}` : ''}`;
 
-/** The shelter row (no card) under a sent report: the find goes to `found`, a sighting is the softer `sighted`. */
-type Kind = 'found' | 'sighted';
+/** The shelter row (no card) under a sent report: the find goes to `found`, a sighting is the softer `sighted`; `lost` is the owner's own report. */
+export type Kind = 'lost' | 'found' | 'sighted';
 type Saved = { data: ResponsibleShelterResponse | null; at: number | null };
 
 /** The directory answer: live for the point while online, else the one cached with the last area sync (C17). */
@@ -112,7 +112,7 @@ function ShelterLines({
 							variant="secondary"
 							size="sm"
 							aria-label={t('call_a11y', { shelter: name })}
-							onPress={() => void Linking.openURL(`tel:${phone}`)}
+							onPress={() => void Linking.openURL(`tel:${phone.replace(/[^+\d]/g, '')}`)}
 						>
 							<Icon as={PhoneIcon} />
 							{t('call')}
@@ -166,7 +166,7 @@ export function ShelterRow({ point, kind, className }: { point: LatLng; kind: Ki
 	if (result.status === 'unconfirmed' && result.nearest.length === 0)
 		return <DirectoryNote text={t('unconfirmed', { municipality })} online={online} className={className} />;
 
-	const body = t(kind === 'found' ? 'found_body' : 'sighted_body', { municipality });
+	const body = t(`${kind}_body`, { municipality });
 	return (
 		<View className={cn('flex-row gap-3.5', className)}>
 			<Icon as={PhoneIcon} size={24} className="mt-0.5 text-primary" />

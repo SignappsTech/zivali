@@ -13,7 +13,7 @@ import {
 import { createMockApi } from '@zivali/api/mock';
 import { createApiStore } from '@zivali/api/rtk';
 import sl from '@zivali/i18n/dist/sl.json';
-import { ShelterRow } from '@/components/shelter/shelter-row';
+import { type Kind, ShelterRow } from '@/components/shelter/shelter-row';
 import { getCachedShelter } from '@/lib/offline/sync';
 
 const mockNet = { state: { isConnected: true, isInternetReachable: true } };
@@ -24,7 +24,7 @@ jest.mock('@/lib/offline/sync', () => ({ getCachedShelter: jest.fn(async () => n
 const ts = sl.shelter_row;
 const point = { lat: 46.0512, lng: 14.5061 };
 
-async function show(answer: object, kind: 'found' | 'sighted' = 'found') {
+async function show(answer: object, kind: Kind = 'found') {
 	const store = createApiStore(createMockApi({ 'GET /v1/shelters/responsible': answer }));
 	await render(
 		<Provider store={store}>
@@ -59,6 +59,13 @@ test('likely, sighted: "Morda pristojno zavetišče" and "Ni potrjeno", the soft
 	expect(screen.getByText(ts.suggested_label)).toBeOnTheScreen();
 	expect(screen.getByText(ts.unconfirmed_note)).toBeOnTheScreen();
 	expect(screen.getByRole('button', { name: 'Pokliči Zavetišče Ljubljana' })).toBeOnTheScreen();
+	expect(screen.queryByText(ts.not_replace, { exact: false })).toBeNull();
+	expect(screen.queryByText(ts.chip_line)).toBeNull();
+});
+
+test('lost: the owner sentence, no "does not replace" line, no chip line', async () => {
+	await show(responsibleConfirmed, 'lost');
+	expect(await screen.findByText(ts.lost_body.replace('{municipality}', 'Ljubljana'))).toBeOnTheScreen();
 	expect(screen.queryByText(ts.not_replace, { exact: false })).toBeNull();
 	expect(screen.queryByText(ts.chip_line)).toBeNull();
 });

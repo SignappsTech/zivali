@@ -1,4 +1,5 @@
 import { useLocalSearchParams } from 'expo-router';
+import { z } from 'zod';
 
 import { SPECIES, type Species } from '@zivali/types';
 import { FoundFlow } from '@/components/report-found/found-flow';
@@ -12,10 +13,10 @@ type Params = { type?: string; linked_report_id?: string; code?: string; species
 export default function ReportFoundScreen() {
 	const { type, linked_report_id: id, code, species } = useLocalSearchParams<Params>();
 	const known = SPECIES.includes(species as Species) ? (species as Species) : undefined;
-	return (
-		<FoundFlow
-			entry={type === 'sighted' ? 'sighted' : 'found'}
-			linked={type === 'sighted' && id ? { id, code: code || undefined, species: known } : undefined}
-		/>
-	);
+	// A bad id is dropped: the finder still gets the normal sighting flow. Without a species the flow reads it from the listing.
+	const linked =
+		type === 'sighted' && z.uuid().safeParse(id).success && (known || code)
+			? { id: id as string, code: code || undefined, species: known }
+			: undefined;
+	return <FoundFlow entry={type === 'sighted' ? 'sighted' : 'found'} linked={linked} />;
 }
