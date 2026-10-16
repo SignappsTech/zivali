@@ -1,7 +1,7 @@
 ---
 id: TASK-20.7
 title: Mobile match list empty state lacks poster and alerts next steps
-status: To Do
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-16 07:31'
@@ -21,5 +21,8 @@ Steps: open a lost report with no suggestions on mobile, open Poglej ujemanja. E
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Mobile /r/[code]/matches empty state offers share, poster and alerts, as web does (AC TASK-20.5 #4)
+- [x] #1 Mobile /r/[code]/matches empty state offers share, poster and alerts, as web does (AC TASK-20.5 #4)
 <!-- AC:END -->
+
+## Packet
+Branch: agent/task-20.7-match-empty-mob
