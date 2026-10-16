@@ -91,7 +91,8 @@ let stores: ReturnType<typeof createApiStore>[] = [];
 async function renderTab(reports: PublicReport[] = [maks, found]) {
 	const client = createMockApi({
 		'GET /v1/reports': (request) => ({
-			items: reports.filter((r) => bySpecies(request, r)),
+			// The API orders boosted first (C4); the screen no longer re-sorts network pages.
+			items: reports.filter((r) => bySpecies(request, r)).sort((a, b) => Number(b.boosted) - Number(a.boosted)),
 			next_cursor: null,
 			total_estimate: reports.length,
 		}),
@@ -176,6 +177,21 @@ test('map and list show the reports around the device: boosted first, counted, c
 
 	await fireEvent.press(screen.getByRole('link', { name: /^Maks, / }));
 	expect(mockPush).toHaveBeenCalledWith('/r/MaksCode');
+});
+
+test('a GPS that never answers does not hold the list back: Slovenia-wide after 5 s (FR-007)', async () => {
+	jest.mocked(Location.getLastKnownPositionAsync).mockResolvedValue(null as never);
+	jest.mocked(Location.getCurrentPositionAsync).mockReturnValue(new Promise(() => {}) as never);
+	jest.useFakeTimers({ doNotFake: ['nextTick', 'setImmediate', 'queueMicrotask'] });
+	try {
+		const client = await renderTab();
+		expect(listCalls(client)).toHaveLength(0);
+		await jest.advanceTimersByTimeAsync(5000);
+		await waitFor(() => expect(listCalls(client).length).toBeGreaterThan(0));
+		expect(listCalls(client)[0]!.query).not.toHaveProperty('near');
+	} finally {
+		jest.useRealTimers();
+	}
 });
 
 test('the last foreground location becomes the offline cache area "current" (TASK-85.2)', async () => {

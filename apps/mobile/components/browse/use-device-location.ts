@@ -9,6 +9,8 @@ import { setCacheArea } from '@/lib/offline/sync';
 export type LocationAccess = 'unknown' | 'granted' | 'ask' | 'denied';
 
 const FIX_MAX_AGE_MS = 10 * 60_000;
+/** Weak GPS must not hold the list back: after this the area is Slovenia-wide until a late fix moves it. */
+const FIX_WAIT_MS = 5000;
 
 /**
  * The device's foreground location for the Map tab. Read only while the permission is granted (on mount and each time
@@ -18,6 +20,13 @@ const FIX_MAX_AGE_MS = 10 * 60_000;
 export function useDeviceLocation() {
 	const [here, setHere] = React.useState<Point | null>(null);
 	const [access, setAccess] = React.useState<LocationAccess>('unknown');
+	const mounted = React.useRef(true);
+	React.useEffect(() => {
+		mounted.current = true;
+		return () => {
+			mounted.current = false;
+		};
+	}, []);
 
 	const locate = React.useCallback(async () => {
 		try {
@@ -25,7 +34,7 @@ export function useDeviceLocation() {
 				(await Location.getLastKnownPositionAsync({ maxAge: FIX_MAX_AGE_MS })) ??
 				(await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced }));
 			const point = { lat: fix.coords.latitude, lng: fix.coords.longitude };
-			setHere(point);
+			if (mounted.current) setHere(point);
 			await setCacheArea('current', point).catch(() => {});
 		} catch {
 			// No fix (location services off): keep the last one.
@@ -41,8 +50,17 @@ export function useDeviceLocation() {
 					const next: LocationAccess =
 						permission?.granted === true ? 'granted' : permission?.canAskAgain === false ? 'denied' : 'ask';
 					// After the fix, so `unknown` lasts until the first centre is known (or known to be missing).
-					if (next === 'granted') await locate();
-					setAccess(next);
+					if (next === 'granted') {
+						let timer: ReturnType<typeof setTimeout> | undefined;
+						await Promise.race([
+							locate(),
+							new Promise<void>((resolve) => {
+								timer = setTimeout(resolve, FIX_WAIT_MS);
+							}),
+						]);
+						clearTimeout(timer);
+					}
+					if (mounted.current) setAccess(next);
 					return next;
 				}),
 		[locate]

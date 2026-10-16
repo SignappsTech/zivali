@@ -76,7 +76,10 @@ export default function MapTab() {
 	const mapQuery = toMapQuery(applied, center);
 	const map = useMapReports(mapQuery, { skip });
 	const pins = React.useMemo(() => inArea(map.data?.items ?? [], center, applied.km), [map.data, center, applied.km]);
-	const reports = React.useMemo(() => search.data && boostedFirst(search.data), [search.data]);
+	const reports = React.useMemo(
+		() => search.data && (search.source === 'cache' ? boostedFirst(search.data) : search.data),
+		[search.data, search.source]
+	);
 
 	// The filter sheet's live count: the draft (debounced while the slider moves); closed, the map's own query.
 	const settled = useDebounced(draft, COUNT_DEBOUNCE_MS);
