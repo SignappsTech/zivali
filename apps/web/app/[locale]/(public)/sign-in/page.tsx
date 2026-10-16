@@ -1,12 +1,13 @@
 import { CheckIcon } from '@phosphor-icons/react/dist/ssr/Check';
 import type { Metadata } from 'next';
 import type { Locale } from 'next-intl';
-import { getTranslations } from 'next-intl/server';
+import { getMessages, getTranslations } from 'next-intl/server';
 import NextLink from 'next/link';
 import { redirect } from 'next/navigation';
 
 import { AuthHeading, AuthMain, Spot } from '@/components/auth/parts';
 import { SignInForm, type SignInNotice } from '@/components/auth/sign-in';
+import { PageMessages } from '@/components/page-messages';
 import { Button } from '@/components/ui/button';
 import { getPathname, Link } from '@/i18n/navigation';
 import { getVerifiedViewer, safeNext } from '@/lib/viewer';
@@ -58,13 +59,16 @@ export default async function SignInPage({ params, searchParams }: PageProps<'/[
 	}
 
 	const notice = one(query.link) ?? one(query.error);
+	const { auth } = await getMessages({ locale });
 	return (
 		<AuthMain>
-			<SignInForm
-				next={next}
-				email={one(query.email)}
-				notice={notice && NOTICES.includes(notice) ? (notice as SignInNotice) : undefined}
-			/>
+			<PageMessages messages={{ auth }}>
+				<SignInForm
+					next={next}
+					email={one(query.email)}
+					notice={notice && NOTICES.includes(notice) ? (notice as SignInNotice) : undefined}
+				/>
+			</PageMessages>
 		</AuthMain>
 	);
 }

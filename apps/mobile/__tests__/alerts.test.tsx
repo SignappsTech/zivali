@@ -3,6 +3,7 @@ import 'react-native-reanimated';
 
 import { PortalHost } from '@rn-primitives/portal';
 import { act, fireEvent, screen, waitFor } from '@testing-library/react-native';
+import * as Location from 'expo-location';
 import { Stack } from 'expo-router';
 import { renderRouter } from 'expo-router/testing-library';
 import * as React from 'react';
@@ -19,6 +20,7 @@ import HomeAreaSettings from '@/app/settings/home-area';
 import { toast } from '@/components/ui/sonner';
 import { distanceKm } from '@/lib/geo';
 import { I18nProvider } from '@/lib/i18n';
+import { enableGeofencing, geofenceState, stopGeofencing } from '@/lib/offline/geofence';
 
 const mockStorage = new Map<string, string>();
 jest.mock('expo-sqlite/localStorage/install', () => {
@@ -51,6 +53,14 @@ jest.mock('expo-location', () => ({
 	getForegroundPermissionsAsync: jest.fn(),
 	requestForegroundPermissionsAsync: jest.fn(),
 	getCurrentPositionAsync: jest.fn(),
+	getBackgroundPermissionsAsync: jest.fn(),
+}));
+// The on-device geofence engine (TASK-87.1) behind the nearby reminders switch.
+jest.mock('@/lib/offline/geofence', () => ({
+	DAILY_CAP: 3,
+	geofenceState: jest.fn(),
+	enableGeofencing: jest.fn(),
+	stopGeofencing: jest.fn(async () => {}),
 }));
 jest.mock('expo-network', () => ({
 	useNetworkState: () => ({}),
@@ -67,7 +77,7 @@ jest.mock('@zivali/api/geocode', () => ({
 
 const HOME: LatLng = alertSubscription.center; // the profile's home area and the subscription agree
 const ME = { display_name: 'Ana', email: 'ana@primer.si', email_verified: true, home: HOME as LatLng | null };
-let mockMe: typeof ME & { home_radius_km: number };
+let mockMe: typeof ME & { home_radius_km: number; quiet_from?: string | null; quiet_to?: string | null };
 jest.mock('@zivali/api/auth', () => ({
 	// AuthGate asks for a verified account; the screens only for a signed-in one.
 	useRequireAuth: (require?: { verified?: boolean }) => ({
@@ -119,6 +129,7 @@ const open = async (initialUrl = '/settings/alerts') => {
 			profile: () => null,
 			'settings/alerts': AlertSettings,
 			'settings/home-area': HomeAreaSettings,
+			'settings/notifications': () => null,
 		},
 		{ initialUrl, wrapper: Providers }
 	);
@@ -142,6 +153,12 @@ beforeEach(() => {
 	resetMockEvents();
 	mockMe = { ...ME, home_radius_km: 5 };
 	mockSub = null;
+	jest.mocked(geofenceState).mockResolvedValue('off');
+	jest.mocked(enableGeofencing).mockResolvedValue(true);
+	jest.mocked(Location.getBackgroundPermissionsAsync).mockResolvedValue({
+		granted: false,
+		canAskAgain: true,
+	} as never);
 	const consent = new Map<string, string>();
 	initAnalytics({
 		provider: 'mock',
@@ -310,5 +327,156 @@ describe('nearby alert settings (P13)', () => {
 		expect(lastPut()).toEqual({ center: HOME, radius_km: 10, species: ['dog', 'cat'], paused: false });
 		expect(sent('PATCH', '/v1/me')).toEqual([{ home_radius_km: 10 }]);
 		expect(optIns()).toEqual([]);
+	});
+});
+
+describe('nearby reminders (P13, on-device geofences)', () => {
+	const reminders = () => control('switch', sl.alerts.reminders_label);
+	/** The switch once the engine has said whether it is on. */
+	const ready = async () => {
+		await waitFor(() => expect(reminders()).not.toBeDisabled());
+		return reminders();
+	};
+	/** Whether the Always primer sheet is open (the sheet mock keeps its content mounted while closed). */
+	const primer = () => {
+		let node = screen.getByRole('heading', { name: sl.permissions.location_always_title }).parent;
+		while (node && node.props['aria-modal'] === undefined) node = node.parent;
+		return node?.props['aria-modal'] as boolean;
+	};
+	const allow = () => fireEvent.press(screen.getByRole('button', { name: sl.permissions.location_always_allow }));
+	const plain = (rich: string) => rich.replace(/<\/?b>/g, '');
+
+	test('shown apart from the alerts, with the daily cap and the quiet hours from the profile', async () => {
+		mockMe = { ...mockMe, quiet_from: '22:00', quiet_to: '07:00' };
+		const result = await open();
+		const toggle = await ready();
+
+		expect(toggle).not.toBeChecked();
+		expect(screen.getByRole('heading', { name: sl.alerts.reminders_title })).toBeOnTheScreen();
+		expect(screen.getByText(sl.alerts.reminders_separate)).toBeOnTheScreen();
+		const help = sl.alerts.reminders_help.replace('{cap}', '3');
+		expect(toggle.props.accessibilityHint).toBe(help);
+		expect(screen.getByText(help)).toBeOnTheScreen();
+		expect(screen.getByText(sl.alerts.quiet_title)).toBeOnTheScreen();
+		expect(screen.getByText('od 22:00 do 07:00')).toBeOnTheScreen();
+		// Their own switch: there with the alerts off.
+		expect(await master()).not.toBeChecked();
+
+		// Quiet hours are kept in one place ("Kako vas obvestimo").
+		await fireEvent.press(screen.getByRole('button', { name: sl.alerts.reminders_quiet_change }));
+		await waitFor(() => expect(result.getPathname()).toBe('/settings/notifications'));
+	});
+
+	test('without quiet hours it says so', async () => {
+		await open();
+		await ready();
+		expect(screen.getByText(sl.alerts.quiet_off)).toBeOnTheScreen();
+	});
+
+	test('turning on shows the Always primer before the OS asks; "Ne zdaj" leaves it off and asks nothing', async () => {
+		await open();
+		await ready();
+		expect(primer()).toBe(false);
+		await fireEvent.press(reminders());
+
+		expect(primer()).toBe(true);
+		expect(screen.getByText(sl.permissions.location_always_body)).toBeOnTheScreen();
+		for (const key of ['location_always_watched', 'location_always_private', 'location_always_off'] as const) {
+			expect(screen.getByText(plain(sl.permissions[key]))).toBeOnTheScreen();
+		}
+		expect(enableGeofencing).not.toHaveBeenCalled();
+
+		await fireEvent.press(screen.getByRole('button', { name: sl.permissions.not_now }));
+		await waitFor(() => expect(primer()).toBe(false));
+		expect(enableGeofencing).not.toHaveBeenCalled();
+		expect(reminders()).not.toBeChecked();
+		// Not asked, so no "open the phone settings" note.
+		expect(screen.queryByText(sl.permissions.location_always_denied)).toBeNull();
+	});
+
+	test('"Dovoli vedno" asks the OS and turns them on; off stops every region at once', async () => {
+		await open();
+		await fireEvent.press(await ready());
+		await allow();
+
+		await waitFor(() => expect(reminders()).toBeChecked());
+		expect(primer()).toBe(false);
+		expect(enableGeofencing).toHaveBeenCalledTimes(1);
+		expect(toast.success).toHaveBeenCalledWith(sl.profile.saved);
+
+		await fireEvent.press(reminders());
+		await waitFor(() => expect(reminders()).not.toBeChecked());
+		expect(stopGeofencing).toHaveBeenCalledTimes(1);
+	});
+
+	test('declined in the OS: stays off with a note and "Odpri nastavitve telefona"; the alerts still work', async () => {
+		jest.mocked(enableGeofencing).mockResolvedValueOnce(false);
+		await open();
+		await fireEvent.press(await ready());
+		await allow();
+
+		expect(await screen.findByText(sl.permissions.location_always_denied)).toBeOnTheScreen();
+		expect(reminders()).not.toBeChecked();
+		expect(screen.getByRole('button', { name: sl.permissions.open_settings })).toBeOnTheScreen();
+
+		await fireEvent.press(await master());
+		await waitFor(() => expect(control('switch', sl.alerts.master_label)).toBeChecked());
+	});
+
+	test('the OS can no longer ask: the note at once; Always already allowed: on without the primer', async () => {
+		jest.mocked(Location.getBackgroundPermissionsAsync).mockResolvedValueOnce({
+			granted: false,
+			canAskAgain: false,
+		} as never);
+		await open();
+		await fireEvent.press(await ready());
+		expect(await screen.findByText(sl.permissions.location_always_denied)).toBeOnTheScreen();
+		expect(primer()).toBe(false);
+		expect(enableGeofencing).not.toHaveBeenCalled();
+
+		jest.mocked(Location.getBackgroundPermissionsAsync).mockResolvedValueOnce({
+			granted: true,
+			canAskAgain: true,
+		} as never);
+		await fireEvent.press(reminders());
+		await waitFor(() => expect(reminders()).toBeChecked());
+		expect(primer()).toBe(false);
+		expect(enableGeofencing).toHaveBeenCalledTimes(1);
+		expect(screen.queryByText(sl.permissions.location_always_denied)).toBeNull();
+	});
+
+	test('a permission the OS took back: off, with the reason', async () => {
+		jest.mocked(geofenceState).mockResolvedValue('permission_lost');
+		await open();
+
+		expect(await screen.findByText(sl.alerts.reminders_lost)).toBeOnTheScreen();
+		expect(reminders()).not.toBeChecked();
+		expect(screen.getByRole('button', { name: sl.permissions.open_settings })).toBeOnTheScreen();
+	});
+
+	test('no position for the first areas: stays off and says so', async () => {
+		jest.mocked(enableGeofencing).mockRejectedValueOnce(new Error('no fix'));
+		await open();
+		await fireEvent.press(await ready());
+		await allow();
+
+		await waitFor(() => expect(toast.error).toHaveBeenCalledWith(sl.alerts.reminders_no_location));
+		expect(reminders()).not.toBeChecked();
+	});
+
+	test('pausing or turning off the alerts leaves the reminders on', async () => {
+		jest.mocked(geofenceState).mockResolvedValue('on');
+		mockSub = { ...alertSubscription };
+		await open();
+		expect(await master()).toBeChecked();
+		expect(await ready()).toBeChecked();
+
+		await fireEvent.press(control('switch', sl.alerts.pause_label));
+		await waitFor(() => expect(control('switch', sl.alerts.pause_label)).toBeChecked());
+		await fireEvent.press(await master());
+		await waitFor(() => expect(control('switch', sl.alerts.master_label)).not.toBeChecked());
+
+		expect(stopGeofencing).not.toHaveBeenCalled();
+		expect(reminders()).toBeChecked();
 	});
 });

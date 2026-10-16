@@ -242,6 +242,7 @@ function ManageView({ report }: { report: ReportOwnerView }) {
 	const t = useTranslations('report_found');
 	const tl = useTranslations('lifecycle');
 	const tc = useTranslations('common');
+	const tr = useTranslations('report');
 	const router = useRouter();
 	const errorText = useErrorText();
 	const [transition, { isLoading: busy }] = useTransitionReportMutation();
@@ -360,6 +361,16 @@ function ManageView({ report }: { report: ReportOwnerView }) {
 						{t('extend')}
 					</Button>
 				</Note>
+			) : null}
+
+			{report.status === 'open' || report.status === 'matched' ? (
+				<Button
+					variant="secondary"
+					className="mt-8 self-start"
+					onPress={() => router.push(`/r/${report.short_code}/edit` as Href)}
+				>
+					{tr('owner_edit')}
+				</Button>
 			) : null}
 
 			{/* Closed: facts read-only, no actions besides Reopen (P7 C8). */}

@@ -5,10 +5,19 @@ import { CameraIcon } from 'phosphor-react-native/src/icons/Camera';
 import { ImagesIcon } from 'phosphor-react-native/src/icons/Images';
 import { TrashIcon } from 'phosphor-react-native/src/icons/Trash';
 import * as React from 'react';
-import { Image, Pressable, View } from 'react-native';
+import { AccessibilityInfo, Image, Pressable, View } from 'react-native';
 import { useReducedMotion } from 'react-native-reanimated';
 import { useTranslations } from 'use-intl';
 
+import {
+	AlertDialog,
+	AlertDialogAction,
+	AlertDialogCancel,
+	AlertDialogContent,
+	AlertDialogDescription,
+	AlertDialogFooter,
+	AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { useFocusRing } from '@/components/ui/focus-ring';
 import { FieldError } from '@/components/ui/form-field';
@@ -19,14 +28,25 @@ import { Text } from '@/components/ui/text';
 import { cn } from '@/lib/utils';
 
 import type { PhotoExif } from './prepare-photo';
-import { type DraftKind, type PickedPhoto, usePhotoUploads } from './use-photo-uploads';
+import { type DraftKind, type PickedPhoto, type SavedPhoto, usePhotoUploads } from './use-photo-uploads';
 
 /** Photo source tile (P6 .ptile): card surface, radius 20, the tile is the button; pressed lays foreground at 10 %. */
-function Tile({ icon, label, onPress }: { icon: typeof CameraIcon; label: string; onPress: () => void }) {
+function Tile({
+	icon,
+	label,
+	onPress,
+	ref,
+}: {
+	icon: typeof CameraIcon;
+	label: string;
+	onPress: () => void;
+	ref?: React.Ref<View>;
+}) {
 	const reduceMotion = useReducedMotion();
 	const focus = useFocusRing();
 	return (
 		<Pressable
+			ref={ref}
 			role="button"
 			onPress={onPress}
 			onFocus={focus.onFocus}
@@ -57,6 +77,10 @@ type PhotoPickerProps = {
 	/** false hides the two tiles: the screen offers its own buttons and calls `pick` on the ref (P7 step 1, empty). */
 	tiles?: boolean;
 	ref?: React.Ref<PhotoPickerHandle>;
+	/** Photos the entity already has (editing a pet), read on mount; they come first. */
+	saved?: SavedPhoto[];
+	/** Remove asks first with this dialog copy (P8: removed photos are deleted from storage too). */
+	confirmRemove?: { title: string; body: string; confirm: string };
 	className?: string;
 };
 export type PhotoPickerHandle = { pick: (source: 'camera' | 'gallery') => Promise<void> };
@@ -73,6 +97,8 @@ export function PhotoPicker({
 	onExif,
 	tiles = true,
 	ref,
+	saved,
+	confirmRemove,
 	className,
 }: PhotoPickerProps) {
 	const t = useTranslations('photos');
@@ -80,8 +106,17 @@ export function PhotoPicker({
 	const { photos, preparing, notice, pick, remove, move, retry } = usePhotoUploads(draft, kind, {
 		cameraPrimer,
 		onExif,
+		saved,
 	});
 	React.useImperativeHandle(ref, () => ({ pick }));
+	// The photo waiting for the remove confirmation.
+	const [removing, setRemoving] = React.useState<string>();
+	const addRef = React.useRef<View>(null);
+	// The removed photo's controls are gone, so a screen reader would be left nowhere: land on the add button.
+	const refocus = () =>
+		setTimeout(() => {
+			if (addRef.current) AccessibilityInfo.sendAccessibilityEvent(addRef.current, 'focus');
+		}, 300);
 
 	const changed = React.useEffectEvent((next: PickedPhoto[]) => onChange?.(next));
 	React.useEffect(() => changed(photos), [photos]);
@@ -91,7 +126,7 @@ export function PhotoPicker({
 			<View className="gap-3">
 				{tiles && (
 					<View className="flex-row gap-3">
-						<Tile icon={CameraIcon} label={t('take')} onPress={() => void pick('camera')} />
+						<Tile ref={addRef} icon={CameraIcon} label={t('take')} onPress={() => void pick('camera')} />
 						<Tile icon={ImagesIcon} label={t('choose')} onPress={() => void pick('gallery')} />
 					</View>
 				)}
@@ -172,7 +207,7 @@ export function PhotoPicker({
 											variant="ghost"
 											size="icon"
 											aria-label={t('remove', { n })}
-											onPress={() => remove(photo.key)}
+											onPress={() => (confirmRemove ? setRemoving(photo.key) : remove(photo.key))}
 										>
 											<Icon as={TrashIcon} />
 										</Button>
@@ -185,6 +220,28 @@ export function PhotoPicker({
 						<Skeleton key={`preparing-${index}`} className="size-20 rounded-row" />
 					))}
 				</View>
+			)}
+			{confirmRemove && (
+				<AlertDialog
+					open={removing !== undefined}
+					onOpenChange={(open) => {
+						if (!open) {
+							setRemoving(undefined);
+							refocus();
+						}
+					}}
+				>
+					<AlertDialogContent>
+						<AlertDialogTitle>{confirmRemove.title}</AlertDialogTitle>
+						<AlertDialogDescription>{confirmRemove.body}</AlertDialogDescription>
+						<AlertDialogFooter>
+							<AlertDialogAction size="lg" onPress={() => removing && remove(removing)}>
+								{confirmRemove.confirm}
+							</AlertDialogAction>
+							<AlertDialogCancel>{message('common.cancel')}</AlertDialogCancel>
+						</AlertDialogFooter>
+					</AlertDialogContent>
+				</AlertDialog>
 			)}
 		</View>
 	);
