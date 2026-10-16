@@ -199,6 +199,15 @@ createServer((request, response) => {
 		response.writeHead(200, { 'Content-Type': 'image/png' });
 		return void response.end(PIXEL);
 	}
+	// C14 ads: no ad (apps/api would serve a house ad), so the slots collapse unless a spec serves one (ads.spec.ts).
+	if (url.pathname.startsWith('/v1/ads/') && request.method !== 'OPTIONS') {
+		const impression = request.method === 'POST';
+		response.writeHead(impression ? 204 : 200, {
+			'Content-Type': 'application/json',
+			'Access-Control-Allow-Origin': '*',
+		});
+		return void response.end(impression ? undefined : 'null');
+	}
 	if (
 		request.method !== 'OPTIONS' &&
 		(url.pathname === '/e2e/reset' || url.pathname.match(/^\/v1\/(me\/)?reports/))

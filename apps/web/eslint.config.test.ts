@@ -17,6 +17,7 @@ describe('no @zivali/api hooks on public pages', () => {
 		'app/[locale]/layout.tsx',
 		'components/shell/header.tsx',
 		'components/shelters/shelter-search.tsx',
+		'components/ads/ad-unit.tsx',
 	])('flags a hook in %s', async (file) => {
 		expect(await restricted(file, hook)).toBe(1);
 	});

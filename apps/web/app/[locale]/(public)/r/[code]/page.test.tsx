@@ -49,6 +49,12 @@ vi.mock('@/components/report/slots/owner-lazy', () => ({
 	),
 	OwnerMenu: () => <div data-testid="owner-menu" />,
 }));
+// The ad units have their own tests (components/ads/ad-slot.test.tsx); here: where the page puts them.
+vi.mock('@/components/ads/ad-slot', () => ({
+	AdSlot: (props: { slot: string; region?: string; species?: string }) => (
+		<div data-testid={`ad-${props.slot}`} data-region={props.region} data-species={props.species} />
+	),
+}));
 // Server components read the whole catalogue (next-intl/server); PageMessages only scopes the client copy, which the
 // last test covers on its own.
 vi.mock('@/components/page-messages', () => ({
@@ -156,6 +162,22 @@ describe('P9 /r/[code], lost report (visitor)', () => {
 		expect(JSON.parse(map.dataset.circles!)).toEqual([
 			{ id: 'area', center: { lat: 46.064, lng: 14.493 }, radiusM: 500, kind: 'area', status: 'lost' },
 		]);
+	});
+
+	it('puts one detail ad below "Kje je bila videna" and the sidebar ad in the "Oglasi" landmark (P21, AC#2)', async () => {
+		await renderPage();
+
+		const where = screen.getByRole('heading', { level: 2, name: sl.report.where_title });
+		const detail = screen.getByTestId('ad-detail');
+		expect(where.compareDocumentPosition(detail) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+		const sidebar = screen.getByRole('complementary', { name: sl.ads.sidebar_label });
+		expect(sidebar.className).toContain('lg:block');
+		expect(sidebar.className).toContain('hidden');
+		expect(within(sidebar).getByTestId('ad-sidebar')).toBeTruthy();
+		// Targeted by the report's region and species (C14), on both.
+		for (const ad of [detail, within(sidebar).getByTestId('ad-sidebar')])
+			expect([ad.dataset.region, ad.dataset.species]).toEqual(['osrednjeslovenska', 'dog']);
+		expect(screen.getAllByTestId(/^ad-/)).toHaveLength(2);
 	});
 
 	it('shows the reward line with the reward scam warning as the one note', async () => {
