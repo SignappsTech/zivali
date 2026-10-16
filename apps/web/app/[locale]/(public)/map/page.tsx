@@ -30,7 +30,14 @@ export default async function MapPage({ params }: PageProps<'/[locale]/map'>) {
 
 	return (
 		<>
-			<PageMessages messages={{ browse: messages.browse, map: messages.map, attributes: messages.attributes }}>
+			{/* The drawer's colour pills are the only attribute labels on the page. */}
+			<PageMessages
+				messages={{
+					browse: messages.browse,
+					map: messages.map,
+					attributes: { colours: messages.attributes.colours },
+				}}
+			>
 				<StoreProvider>
 					<Browse />
 				</StoreProvider>
