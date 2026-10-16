@@ -121,7 +121,8 @@ describe('ManagePage (P7, C7)', () => {
 		const heading = await screen.findByRole('heading', { level: 1, name: 'This link no longer works' });
 		expect(document.activeElement).toBe(heading);
 		expect(screen.getByText(en.report_found.link_invalid_body)).toBeTruthy();
-		if (!token) expect(api.calls).toEqual([]);
+		// Without a token nothing signs in (lib/auth and supabase-js are not even loaded, TASK-17.9).
+		if (!token) expect([api.calls, auth.ensureSession.mock.calls]).toEqual([[], []]);
 	});
 
 	it('keeps trying after a lost connection or a failed captcha, with a calm note', async () => {
