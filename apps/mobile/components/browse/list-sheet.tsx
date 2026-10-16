@@ -10,6 +10,7 @@ import type { CachedReport } from '@zivali/api/sync';
 import { formatDate, type Locale } from '@zivali/i18n/format';
 import { type AdSlot, AD_EVERY, type ListItem, type Sort, withAdSlots } from '@/components/browse/filters';
 import { ReportRow } from '@/components/browse/report-row';
+import { Note } from '@/components/report/parts';
 import { Button, Spinner } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Icon } from '@/components/ui/icon';
@@ -84,15 +85,9 @@ function OfflineNote({ at }: { at: number | null }) {
 	const text = at === null ? t('offline_note_saved') : t('offline_note', { time });
 	useAnnounced(text);
 	return (
-		<View
-			accessible
-			role="status"
-			aria-live="polite"
-			className="mb-5 flex-row gap-3 rounded-row bg-muted px-[18px] py-4"
-		>
-			<Icon as={WifiSlashIcon} weight="fill" size={22} className="mt-px" />
-			<Text className="min-w-0 flex-1 text-control leading-[22px]">{text}</Text>
-		</View>
+		<Note role="status" icon={WifiSlashIcon} iconClassName="text-foreground" className="mb-5">
+			{text}
+		</Note>
 	);
 }
 
