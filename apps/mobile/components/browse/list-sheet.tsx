@@ -46,7 +46,10 @@ export type ListSheetProps = {
 	onOpenReport: (shortCode: string) => void;
 	onReport: () => void;
 	onSetAlert: () => void;
-	/** P21 insertion point (TASK-36.6): renders the ad row placed after every 8 report rows; no ads without it. */
+	/**
+	 * P21 insertion point: renders the ad row placed after every 8 report rows; no ads without it. The row brings its
+	 * own 20 px gap below, so a collapsed ad leaves the rows' rhythm unchanged.
+	 */
 	renderAd?: (slot: AdSlot) => React.ReactElement | null;
 	/** Above the rows, scrolling with them (the outbox group, P7 C6). */
 	header?: React.ReactElement;
@@ -289,4 +292,6 @@ export function ListSheet({
 	);
 }
 
-const RowGap = () => <View className="h-5" />;
+// None after an ad row: it carries its own gap, so an empty (collapsed) one adds no second gap (P21 S2).
+const RowGap = ({ leadingItem }: { leadingItem?: ListItem }) =>
+	leadingItem?.kind === 'ad' ? null : <View className="h-5" />;
