@@ -383,6 +383,61 @@ describe('P9 /r/[code], owner view', () => {
 	});
 });
 
+describe('P9 /r/[code], integrated slots (TASK-18.4)', () => {
+	const follows = (a: Element, b: Element) => !!(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING);
+
+	it.each(['sl', 'en'] as const)('orders the slots per P9 and has one h1 and one main (%s)', async (locale) => {
+		show({ ...lost, is_mine: false });
+		await renderPage(locale);
+
+		const t = catalogues[locale].report;
+		const sighting = screen.getByRole('link', { name: t.action_sighting });
+		const note = screen.getByRole('note');
+		const share = screen.getByRole('button', { name: t.share_button });
+		const more = screen.getByRole('button', { name: t.more });
+		const where = screen.getByRole('heading', { level: 2, name: t.where_title });
+		const detail = screen.getByTestId('ad-detail');
+		// slot A, then the safety note, then slot B, then slot C; "Where", then the ad.
+		expect(follows(sighting, note)).toBe(true);
+		expect(follows(note, share)).toBe(true);
+		expect(follows(share, more)).toBe(true);
+		expect(follows(more, where)).toBe(true);
+		expect(follows(where, detail)).toBe(true);
+		expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1);
+		expect(screen.getAllByRole('main')).toHaveLength(1);
+		// The detail unit never sits inside the sidebar landmark.
+		expect(screen.getByRole('complementary').contains(detail)).toBe(false);
+	});
+
+	it('gives a visitor the sighting and the abuse menu but no owner code', async () => {
+		show({ ...lost, is_mine: false });
+		await renderPage();
+
+		expect(screen.getByRole('link', { name: sl.report.action_sighting })).toBeTruthy();
+		expect(screen.getByRole('button', { name: sl.report.more })).toBeTruthy();
+		expect(screen.queryByTestId('owner-actions')).toBeNull();
+		expect(screen.queryByTestId('owner-menu')).toBeNull();
+	});
+
+	it('gives the owner the owner actions and never the visitor sighting or the abuse menu', async () => {
+		show({ ...owner, moderation_state: 'visible' });
+		await renderPage();
+
+		expect(screen.getByTestId('owner-actions')).toBeTruthy();
+		expect(screen.getByTestId('owner-menu')).toBeTruthy();
+		expect(screen.queryByRole('link', { name: sl.report.action_sighting })).toBeNull();
+		expect(screen.queryByRole('button', { name: sl.report.more })).toBeNull();
+	});
+
+	it('shows neither the reward line nor the scam warning on a report without a reward', async () => {
+		show({ ...lost, reward: null });
+		await renderPage();
+
+		expect(screen.queryByText(/^Nagrada/)).toBeNull();
+		expect(screen.queryByText(sl.report.safety_note_reward, { exact: false })).toBeNull();
+	});
+});
+
 describe('P9 gallery with the client copy the page sends', () => {
 	it('switches photos with named controls and shows the placeholder for a failed one', () => {
 		const { common, consent, errors, nav } = sl;
