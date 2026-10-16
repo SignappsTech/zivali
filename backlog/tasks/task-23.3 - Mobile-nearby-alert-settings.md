@@ -1,11 +1,11 @@
 ---
 id: TASK-23.3
 title: Mobile nearby-alert settings
-status: To Do
+status: In Progress
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:14'
-updated_date: '2026-10-14 22:42'
+updated_date: '2026-10-16 00:01'
 labels:
   - fe
   - 'est:S'
