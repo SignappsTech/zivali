@@ -128,19 +128,68 @@ export async function insertInvoice(data: Prisma.invoicesUncheckedCreateInput, t
 	return db.invoices.create({ data });
 }
 
-/** Claims the next verification attempt of a pending invoice; false when another run claimed it first. */
-export async function claimInvoiceAttempt(id: string, attempts: number, tx?: Prisma.TransactionClient) {
+/**
+ * Claims the next verification attempt of an unverified invoice as the caller read it (`attempts`): counts it and
+ * takes the in-flight lease until `lease_until`, in one UPDATE, so of concurrent runs exactly one gets the row. Null
+ * while another attempt holds an unexpired lease, after another run made an attempt since the read, or once verified.
+ */
+export async function claimInvoiceAttempt(
+	claim: { id: string; attempts: number; now: Date; lease_until: Date },
+	tx?: Prisma.TransactionClient
+) {
 	const db = tx ?? prisma;
-	const { count } = await db.invoices.updateMany({
-		where: { id, status: 'PENDING', attempts },
-		data: { attempts: attempts + 1 },
+	const { id, attempts, now, lease_until } = claim;
+	const [row] = await db.invoices.updateManyAndReturn({
+		where: {
+			id,
+			attempts,
+			status: { in: ['PENDING', 'FAILED'] },
+			OR: [{ lease_until: null }, { lease_until: { lte: now } }],
+		},
+		data: { attempts: attempts + 1, lease_until },
 	});
-	return count === 1;
+	return row ?? null;
+}
+
+/**
+ * What fiscal.resubmit sends again, oldest first: FAILED invoices, and PENDING ones issued before `stale_before`
+ * (payment.effects stopped short of verifying them), of this provider, not leased by a running attempt.
+ */
+export async function listResubmittable(
+	input: { provider: string; stale_before: Date; now: Date; take: number },
+	tx?: Prisma.TransactionClient
+) {
+	const db = tx ?? prisma;
+	return db.invoices.findMany({
+		where: {
+			provider: input.provider,
+			OR: [{ status: 'FAILED' }, { status: 'PENDING', issued_at: { lt: input.stale_before } }],
+			AND: [{ OR: [{ lease_until: null }, { lease_until: { lte: input.now } }] }],
+		},
+		orderBy: [{ issued_at: 'asc' }, { id: 'asc' }],
+		take: input.take,
+	});
+}
+
+/** Marks the not yet alerted invoices that are still unverified and were issued before `before`; returns them. */
+export async function claimUnverifiedAlerts(before: Date, now: Date, tx?: Prisma.TransactionClient) {
+	const db = tx ?? prisma;
+	return db.invoices.updateManyAndReturn({
+		where: { status: { not: 'VERIFIED' }, issued_at: { lt: before }, alerted_at: null },
+		data: { alerted_at: now },
+		select: { id: true, number: true, status: true, attempts: true, issued_at: true },
+	});
+}
+
+/** Gives alert marks back (no admin could be emailed), so the next run alerts again. */
+export async function releaseAlerts(ids: string[], tx?: Prisma.TransactionClient) {
+	const db = tx ?? prisma;
+	await db.invoices.updateMany({ where: { id: { in: ids } }, data: { alerted_at: null } });
 }
 
 export async function updateInvoice(
 	id: string,
-	data: Pick<Prisma.invoicesUpdateInput, 'status' | 'eor' | 'verified_at' | 'pdf_key'>,
+	data: Pick<Prisma.invoicesUpdateInput, 'status' | 'eor' | 'verified_at' | 'pdf_key' | 'lease_until'>,
 	tx?: Prisma.TransactionClient
 ) {
 	const db = tx ?? prisma;
@@ -152,6 +201,9 @@ export default {
 	nextInvoiceSequence,
 	insertInvoice,
 	claimInvoiceAttempt,
+	listResubmittable,
+	claimUnverifiedAlerts,
+	releaseAlerts,
 	updateInvoice,
 	insertPayment,
 	getPayment,

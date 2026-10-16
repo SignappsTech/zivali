@@ -149,6 +149,12 @@ describe('ledger and status', () => {
 			provider_payment_id: `pi_${payment_id}`,
 		});
 		expect(await queued(payment_id)).toBe(1n);
+		// TASK-92.3: FURS retries wait minutes (app_config fiscal.retry: 2 min, doubling, at most 30 min), not seconds.
+		expect(
+			await prisma.$queryRaw`
+				select retry_limit, retry_delay, retry_backoff, retry_delay_max from pgboss.job
+				where name = 'payment.effects' and data->>'payment_id' = ${payment_id}`
+		).toEqual([{ retry_limit: 5, retry_delay: 120, retry_backoff: true, retry_delay_max: 1800 }]);
 	});
 
 	it('moves pending payments to failed or canceled; a late event never moves a settled one', async () => {

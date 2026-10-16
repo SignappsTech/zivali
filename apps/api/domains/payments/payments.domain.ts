@@ -194,8 +194,13 @@ export async function handleWebhook(
 			{ payment_id: payment.id, event_type: event.type, status: moved ? move.to : payment.status },
 			'payments: webhook'
 		);
+		// Retries wait minutes, not seconds (app_config fiscal.retry): a FURS outage outlasts a few seconds.
 		if (moved && move.to === 'SUCCEEDED')
-			await ctx.jobs.send('payment.effects', { payment_id: payment.id }, { tx, singletonKey: payment.id });
+			await ctx.jobs.send(
+				'payment.effects',
+				{ payment_id: payment.id },
+				{ tx, singletonKey: payment.id, ...(await InvoicesDomain.retryOptions()) }
+			);
 		return { duplicate: false };
 	});
 }

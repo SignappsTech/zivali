@@ -3,11 +3,11 @@ id: TASK-92.3
 title: >-
   Fiscal invoices: resubmit FAILED invoices within the FURS deadline, with a
   longer retry delay
-status: To Do
+status: In Progress
 assignee:
   - '@tech-lead'
 created_date: '2026-10-15 23:40'
-updated_date: '2026-10-15 23:54'
+updated_date: '2026-10-16 01:03'
 labels:
   - be
   - 'est:S'
