@@ -24,6 +24,11 @@ const HOLD_DEVICE_REPORTS = 10;
 export const HOLD_WINDOW_MS = 7 * DAY_S * 1000;
 const Limit = z.number().int().positive();
 
+/** Anonymous callers only: does a photo match (sha256) a photo of a held or removed report? Also used when photos are attached later. */
+export async function photoMatchHold(photo_ids: string[], ctx: Ctx): Promise<boolean> {
+	return !!ctx.actor?.is_anonymous && (await ReportsDao.photosMatchHeld(photo_ids, ctx.tx));
+}
+
 export async function submissionGuard(input: z.infer<typeof CreateReportInput>, ctx: Ctx): Promise<SubmissionVerdict> {
 	if (!ctx.actor?.is_anonymous) return { moderation_state: 'visible', hold_reasons: [] };
 
@@ -39,8 +44,8 @@ export async function submissionGuard(input: z.infer<typeof CreateReportInput>, 
 	const since = new Date(ctx.now.getTime() - HOLD_WINDOW_MS);
 	if (ctx.device_hash && (await ReportsDao.countByDevice(ctx.device_hash, since, ctx.tx)) >= HOLD_DEVICE_REPORTS)
 		hold_reasons.push('device_volume');
-	if (await ReportsDao.photosMatchHeld(input.photo_ids, ctx.tx)) hold_reasons.push('photo_match');
+	if (await photoMatchHold(input.photo_ids, ctx)) hold_reasons.push('photo_match');
 	return { moderation_state: hold_reasons.length ? 'held' : 'visible', hold_reasons };
 }
 
-export default { submissionGuard };
+export default { submissionGuard, photoMatchHold };

@@ -70,7 +70,9 @@ const routes = {
 	'settings/alerts': () => null,
 	'settings/notifications': () => null,
 	'settings/payments': () => null,
+	'pets/index': () => null,
 	'settings/offline': () => null,
+	'settings/reports': () => null,
 	// Stand-ins for the flow and auth screens that later stories add.
 	'report/lost': () => null,
 	'report/found': () => null,
@@ -182,6 +184,7 @@ describe('signed in', () => {
 
 		expect(screen.getByRole('heading', { name: sl.profile.title })).toBeOnTheScreen();
 		for (const [name, path] of [
+			[sl.profile.row_reports, '/settings/reports'],
 			[sl.profile.row_alerts, '/settings/alerts'],
 			[sl.alerts.channels_title, '/settings/notifications'],
 			[sl.profile.row_offline, '/settings/offline'],
@@ -194,9 +197,12 @@ describe('signed in', () => {
 			expect(screen.getByRole('tab', { name: sl.nav.tab_profile, selected: true })).toBeOnTheScreen();
 			expect(result.getPathname()).toBe('/profile');
 		}
-		// Plačila is its own screen (payments.test.tsx).
+		// Plačila and Moje živali are their own screens (payments.test.tsx, pets.test.tsx).
 		await fireEvent.press(screen.getByRole('button', { name: sl.profile.row_payments }));
 		expect(result.getPathname()).toBe('/settings/payments');
+		await act(() => router.back());
+		await fireEvent.press(screen.getByRole('button', { name: sl.pets.title }));
+		expect(result.getPathname()).toBe('/pets');
 	});
 
 	test('Profile shows the account header; an unconfirmed address can get a new link', async () => {

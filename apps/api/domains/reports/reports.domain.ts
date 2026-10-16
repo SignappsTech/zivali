@@ -37,7 +37,7 @@ import { GeoDomain } from '../geo/index.ts';
 import { publicObjects } from '../photos/photo-objects.ts';
 import { mailManageLink, newManageToken } from './manage.domain.ts';
 import ReportsDao, { type LocationColumns, type ReportRow, type StoredLocation } from './reports.dao.ts';
-import { HOLD_WINDOW_MS, submissionGuard } from './submission-guard.ts';
+import { HOLD_WINDOW_MS, photoMatchHold, submissionGuard } from './submission-guard.ts';
 
 const BASE58 = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
 const SHORT_CODE_ATTEMPTS = 5;
@@ -365,7 +365,11 @@ export async function updateReport(input: UpdateInput, ctx: Ctx): Promise<Manage
 		const pet_id = fields.pet_id === undefined ? report.pet_id : fields.pet_id;
 		if (pet_id && (pet_id !== report.pet_id || species !== report.species))
 			await checkPet({ pet_id, species, report_id: report.id }, actor, tx);
+		// C7: photos attached later get the same hash check as on create; a match holds the report (nothing is published).
+		const hold =
+			!!photo_ids && report.moderation_state === 'visible' && (await photoMatchHold(photo_ids, { ...ctx, tx }));
 		if (photo_ids) await setPhotos(report, photo_ids, actor, ctx, tx);
+		if (hold) await ReportsDao.flagHeld(report.id, ['photo_match'], tx);
 
 		const normalized = chip === undefined ? undefined : normalizeChip(chip);
 		const data = {
@@ -374,6 +378,7 @@ export async function updateReport(input: UpdateInput, ctx: Ctx): Promise<Manage
 			chip_number: normalized?.chip,
 			chip_status: normalized?.status,
 			last_owner_update_at: ctx.now,
+			...(hold && { moderation_state: 'held' as const }),
 		};
 		const rematch = MATCH_INPUTS.some(
 			(key) => data[key] !== undefined && !isDeepStrictEqual(data[key], report[key])
@@ -381,11 +386,11 @@ export async function updateReport(input: UpdateInput, ctx: Ctx): Promise<Manage
 		await ReportsDao.updateReport(report.id, data, tx);
 		const moved = await updateReportLocation({ id: report.id, location, requested_radius_m }, { ...ctx, tx });
 		const queues: QueueName[] = [
-			...(photo_ids ? (['photo.publish'] as const) : []),
+			...(photo_ids && !hold ? (['photo.publish'] as const) : []),
 			...(moved || rematch ? (['match.report'] as const) : []),
 			...(moved ? (['alerts.fanout'] as const) : []),
 		];
-		await sendJobs(report, queues, ctx, tx);
+		await sendJobs({ ...report, moderation_state: hold ? 'held' : report.moderation_state }, queues, ctx, tx);
 	});
 	return (await getReport({ code }, ctx)) as ManagerView;
 }

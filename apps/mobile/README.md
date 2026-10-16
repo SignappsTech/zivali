@@ -49,6 +49,12 @@ Gallery: `/dev/kit` (redirects to `/` when `EXPO_PUBLIC_APP_ENV=production`). `r
 - `@maplibre/maplibre-react-native` 11.4.1 (pinned; not in the Expo SDK 57 `bundledNativeModules.json`) is a native module with a config plugin: install a new development build after pulling it. `/dev/map` renders 500 seeded markers for the smoothness check (redirects to `/` in production).
 - `LocationPicker` (`components/location/location-picker.tsx`, TASK-15.5) takes the C6 props and fills its parent under the flow's top bar. It draws on `MapView` with three picker hooks: `ref` (`moveTo(center, zoom)`), `onCameraChange` (centre and zoom, not debounced) and `children` (the centre pin and radius disc, above the map and under the list); `label`/`hint` rename the map element ("Oznaka je na sredini zemljevida …", "Pokaži gumbe za premik", whose list is the 100 m nudge buttons). The raw GPS, pin, search or EXIF point stays in the picker: Confirm calls `onChange` once with `coarsenPoint` applied (a stored `value` confirmed unmoved comes back as is, never coarsened again), so pass that value on to forms, drafts and the outbox as is. `/dev/picker` shows each mode and the confirmed value (redirects to `/` in production).
 
+## Report lost (P6, TASK-29.5)
+
+- `app/report/lost/index.tsx` runs `LostFlow` (`components/report-lost/lost-flow.tsx`; rules and request bodies in `lost-form.ts`): pet, photos, details (new pet only, the PetFields parts), where (LocationPicker, lost mode with radius), when, what happened (contact preference and the display-only reward, checked with `containsContactData()`), review. Publish calls `POST /v1/reports` online (lost reports need an account, so no outbox); `DUPLICATE_OPEN_REPORT` offers to update the open search (`PATCH`) or to report the pet again inline. Signed out, Publish opens the `AuthGate`. `/report/lost/done` is the short confirmation that TASK-29.6 completes.
+- The draft is the `drafts` row `lost` (C17), saved on every step with the coarsened point; PhotoPicker keeps its photos under the same id. Opening the flow with a draft offers to continue it.
+- A saved pet still asks for photos: pet photos cannot be attached to a report (C5).
+
 ## Map tab (P4, TASK-31.5)
 
 - `app/(tabs)/index.tsx` composes `MapView`, the area pill (opens `components/browse/filter-sheet.tsx`) and the list sheet (`components/browse/list-sheet.tsx`, a non-modal `@gorhom/bottom-sheet` at 40 / 60 / 100 % under the pill). Filters and their C4 queries live in `components/browse/filters.ts`; map and list read only `useMapReports` / `useReportSearch` (`lib/data/reports.ts`, `skip` holds them until the location is known).
@@ -59,7 +65,7 @@ Gallery: `/dev/kit` (redirects to `/` when `EXPO_PUBLIC_APP_ENV=production`). `r
 ## Shell (P2)
 
 - `app/(tabs)`: Zemljevid (`index`), Sporočila (`inbox`), Prijavi (`report`) and Profil (`profile`) with the bottom navigation in `components/shell/tab-bar.tsx`. The Prijavi button opens the Report sheet (lost → `/report/lost`, found → `/report/found`, sighted → `/report/found?type=sighted`); the `report` route shows the same choice for a link.
-- `app/settings`: a stack above the tabs: `account`, `alerts`, `consent`, `home-area`, `language`, `notifications`, `offline`, `payments`. `alerts` (TASK-23.3) and `home-area` share one home area: a save writes the profile (`home`, `home_radius_km`) and the alert subscription (C10) together (`lib/alerts.ts`).
+- `app/settings`: a stack above the tabs: `account`, `alerts`, `consent`, `home-area`, `language`, `notifications`, `offline`, `payments`. `alerts` (TASK-23.3) and `home-area` share one home area: a save writes the profile (`home`, `home_radius_km`) and the alert subscription (C10) together (`lib/alerts.ts`). Below them, `alerts` has the separate on-device "Opomniki v bližini" switch (TASK-87.2): `geofenceState()`, the `location_always` primer, then `enableGeofencing()`; off is `stopGeofencing()`. Pausing the server alerts does not touch it.
 - Permissions: show `PermissionPrimer` (`components/shell/permission-primer.tsx`) before every OS prompt while the OS can still ask, passing the prompt as `request`; on `onResult(false)` show `PermissionNote` where the permission was needed.
 - Sign-out (Profil) calls `signOutAndWipe({ removeManageLinks })` after a confirmation with the "remove links" choice.
 
@@ -69,6 +75,12 @@ Gallery: `/dev/kit` (redirects to `/` when `EXPO_PUBLIC_APP_ENV=production`). `r
 - The verification files are served by apps/web: `/.well-known/apple-app-site-association` (env `APPLE_TEAM_ID`) and `/.well-known/assetlinks.json` (env `ANDROID_CERT_SHA256`, comma-separated). A platform whose value is unset gets an empty file, so links open the web page.
 - Client steps (Q-007): (1) Apple Developer Team ID into `APPLE_TEAM_ID` on both web hosts, then rebuild iOS with the Associated Domains capability; (2) after the first EAS build run `eas credentials` (and Play Console, app signing) for the SHA-256 fingerprint(s) into `ANDROID_CERT_SHA256`; (3) check `https://<host>/.well-known/assetlinks.json` and `adb shell pm get-app-links si.signapps.zivali` (`verified`); (4) FCM/APNs credentials in EAS, then `EXPO_PUBLIC_PUSH_PROVIDER=expo`.
 - Push: `usePushPermission().request` (`lib/push.ts`) is the `request` of the notifications `PermissionPrimer`; after the OS grant it passes the token to `registerPushToken`. `EXPO_PUBLIC_PUSH_PROVIDER=mock` (default) uses a placeholder token. TASK-22.5 mounts the primer.
+
+## Report lifecycle and My reports (P14, TASK-26.5)
+
+- Owner actions (signed-in owner or manage-link holder, `is_mine`) fill slot A and slot C of `app/r/[code]`: "Žival je spet doma" (confirm sheet; a finder gets the dialog), "Uredi" (`app/r/[code]/edit.tsx`: what happened and the lost report's reward), "Zaključi iskanje" with a reason, and "Ponovno odpri" while a closed or reunited report is within 7 days. The sheets and the transitions are in `components/report/lifecycle.tsx`.
+- `app/r/[code]/reunited.tsx` is the reunited screen (owner: story switch, tip and ad slots in `components/report/reunited-slots.tsx` for TASK-33.3 and TASK-36.6; finder: the short thank-you). `reunited` is tracked on a successful mark, with consent only.
+- Profil → Moje prijave (`app/settings/reports.tsx`): the device queue, then `useMyReports()` (`lib/data/reports.ts`, network only).
 
 ## Anonymous finders and the manage link (C7, TASK-17.3)
 

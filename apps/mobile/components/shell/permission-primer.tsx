@@ -6,6 +6,8 @@ import { CameraIcon } from 'phosphor-react-native/src/icons/Camera';
 import { CameraSlashIcon } from 'phosphor-react-native/src/icons/CameraSlash';
 import { GpsSlashIcon } from 'phosphor-react-native/src/icons/GpsSlash';
 import { MapPinIcon } from 'phosphor-react-native/src/icons/MapPin';
+import { MapPinLineIcon } from 'phosphor-react-native/src/icons/MapPinLine';
+import { NavigationArrowIcon } from 'phosphor-react-native/src/icons/NavigationArrow';
 import * as React from 'react';
 import { Linking, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -18,11 +20,13 @@ import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { Text } from '@/components/ui/text';
 import { cn } from '@/lib/utils';
 
-export type PermissionKind = 'camera' | 'location' | 'notifications';
+/** `location_always`: background location for the nearby reminders (P13, OS geofences). */
+export type PermissionKind = 'camera' | 'location' | 'location_always' | 'notifications';
 
 const ICONS: Record<PermissionKind, [spot: PhosphorIcon, denied: PhosphorIcon]> = {
 	camera: [CameraIcon, CameraSlashIcon],
 	location: [MapPinIcon, GpsSlashIcon],
+	location_always: [NavigationArrowIcon, MapPinLineIcon],
 	notifications: [BellIcon, BellSlashIcon],
 };
 
@@ -40,9 +44,12 @@ export function PermissionPrimer({
 	open,
 	request,
 	onResult,
+	children,
 }: {
 	kind: PermissionKind;
 	open: boolean;
+	/** More plain-language detail under the two sentences (the Always primer's "what we watch" list). */
+	children?: React.ReactNode;
 	/** The OS prompt, e.g. `async () => (await Location.requestForegroundPermissionsAsync()).granted`. */
 	request: () => Promise<boolean>;
 	/** Close the primer here. `false` also for "Ne zdaj", the grabber, the scrim and Android back: show the fallback. */
@@ -73,6 +80,7 @@ export function PermissionPrimer({
 							{t(`${kind}_title`)}
 						</Text>
 						<Text className="mt-3 text-lg">{t(`${kind}_body`)}</Text>
+						{children}
 					</BottomSheetScrollView>
 					<View className="gap-1 pb-3 pt-2">
 						<Button size="lg" loading={asking} onPress={allow}>
@@ -90,11 +98,12 @@ export function PermissionPrimer({
 
 /**
  * The denied fallback, in the place that needed the permission: one quiet sentence naming the alternative that works
- * without it, and "Odpri nastavitve telefona". Notifications use the `note` surface (inbox, P2 B7).
+ * without it, and "Odpri nastavitve telefona". Notifications and Always location use the `note` surface (inbox, P2 B7;
+ * P13). `text` replaces the sentence where the reason differs.
  */
-export function PermissionNote({ kind, className }: { kind: PermissionKind; className?: string }) {
+export function PermissionNote({ kind, text, className }: { kind: PermissionKind; text?: string; className?: string }) {
 	const t = useTranslations('permissions');
-	const boxed = kind === 'notifications';
+	const boxed = kind === 'notifications' || kind === 'location_always';
 	return (
 		<View className={cn('flex-row gap-3', boxed ? 'rounded-row bg-muted px-[18px] py-4' : 'gap-2', className)}>
 			<Icon
@@ -104,7 +113,7 @@ export function PermissionNote({ kind, className }: { kind: PermissionKind; clas
 			/>
 			<View className="min-w-0 flex-1 items-start">
 				<Text className={boxed ? 'text-control leading-[22px]' : 'text-sm text-muted-foreground'}>
-					{t(`${kind}_denied`)}
+					{text ?? t(`${kind}_denied`)}
 				</Text>
 				<Button variant="text" className="-ml-3" onPress={() => Linking.openSettings()}>
 					{t('open_settings')}

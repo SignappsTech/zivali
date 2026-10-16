@@ -5,13 +5,16 @@ import { Platform } from 'react-native';
 
 import { getDb } from '@/lib/db';
 import {
+	cacheOwnReports,
 	cacheQuietHours,
 	DAILY_CAP,
 	enableGeofencing,
 	GEOFENCE_TASK,
+	geofenceState,
 	refreshGeofences,
 	stopGeofencing,
 } from '@/lib/offline/geofence';
+import { listManageTokenIds } from '@/lib/offline/outbox';
 
 jest.mock('expo-sqlite', () =>
 	jest.requireActual<typeof import('@/test/offline-mocks')>('@/test/offline-mocks').sqlite()
@@ -50,6 +53,8 @@ jest.mock('expo-notifications', () => ({
 	scheduleNotificationAsync: jest.fn(async () => 'id'),
 }));
 jest.mock('expo-task-manager', () => ({ defineTask: jest.fn() }));
+// Reports sent or claimed on this device (their manage tokens, in the keychain).
+jest.mock('@/lib/offline/outbox', () => ({ listManageTokenIds: jest.fn() }));
 
 const NOW = Date.parse('2026-10-15T08:00:00Z'); // 10:00 in Ljubljana
 const DAY = 86_400_000;
@@ -114,6 +119,7 @@ beforeEach(async () => {
 	jest.mocked(Location.requestBackgroundPermissionsAsync).mockResolvedValue(GRANTED as never);
 	jest.mocked(Location.getBackgroundPermissionsAsync).mockResolvedValue(GRANTED as never);
 	jest.mocked(Notifications.getPermissionsAsync).mockResolvedValue(GRANTED as never);
+	jest.mocked(listManageTokenIds).mockResolvedValue([]);
 	await (await getDb()).execAsync('delete from reports_cache; delete from geofences; delete from geofence_events;');
 });
 // C17, FR-043 R-043.5: nothing in this engine talks to the network; the position never leaves the device.
@@ -182,6 +188,16 @@ describe('region selection', () => {
 		expect(registered()).toEqual([...many(limit).map((r) => r.id), 'boundary']);
 	});
 
+	test("the user's own reports take no region: manage tokens on this device and the account's own", async () => {
+		await cache({ id: 'sent-here', km: 0.2 }, { id: 'mine', km: 0.3 }, { id: 'other', km: 0.4 });
+		jest.mocked(listManageTokenIds).mockResolvedValue(['sent-here']);
+		cacheOwnReports(['mine']);
+
+		await enableGeofencing();
+
+		expect(registered()).toEqual(['other', 'boundary']);
+	});
+
 	test('declining either location prompt registers nothing', async () => {
 		await cache({ id: 'a' });
 		jest.mocked(Location.requestBackgroundPermissionsAsync).mockResolvedValueOnce(DENIED as never);
@@ -207,6 +223,7 @@ describe('region selection', () => {
 
 	test('leaving the boundary re-runs the selection around the new position; refresh does nothing while off', async () => {
 		expect(await refreshGeofences()).toBe('off');
+		expect(await geofenceState()).toBe('off');
 		expect(Location.getLastKnownPositionAsync).not.toHaveBeenCalled();
 
 		await cache({ id: 'home', km: 0.5 }, { id: 'away', km: 4 });
@@ -276,6 +293,31 @@ describe('handler', () => {
 
 		expect(notified()).toEqual([]);
 		expect(await all('select * from geofence_events')).toEqual([]);
+	});
+
+	test("never alerts about the user's own reports, also from a region registered before they were known", async () => {
+		await cache({ id: 'sent-here' }, { id: 'mine' });
+		jest.mocked(listManageTokenIds).mockResolvedValue(['sent-here']);
+		cacheOwnReports(['mine']);
+
+		await enter('sent-here');
+		await enter('mine');
+
+		expect(notified()).toEqual([]);
+		expect(await all('select * from geofence_events')).toEqual([]);
+	});
+
+	test('a notification that fails to show frees its claim: the pet can still alert and the cap is not spent', async () => {
+		await cache(...many(DAILY_CAP + 1));
+		jest.mocked(Notifications.scheduleNotificationAsync).mockRejectedValueOnce(new Error('scheduler down'));
+
+		await expect(enter('r01')).rejects.toThrow('scheduler down');
+		expect(await all('select * from geofence_events')).toEqual([]);
+
+		for (const r of many(DAILY_CAP + 1)) await enter(r.id);
+		const events = await all<{ report_id: string }>('select report_id from geofence_events order by report_id');
+		expect(events.map((e) => e.report_id)).toEqual(['r01', 'r02', 'r03']);
+		expect(notified()).toHaveLength(1 + DAILY_CAP); // the failed try, then the full cap
 	});
 
 	test(`at most ${DAILY_CAP} alerts a day`, async () => {
@@ -354,6 +396,32 @@ describe('cleanup', () => {
 		expect(mockRegions).toBeNull();
 		expect(await regionRows()).toBe(0);
 		expect(await refreshGeofences()).toBe('off');
+	});
+
+	test('settings state: on, then a revoked Always permission stops it and stays explained until the switch is used', async () => {
+		jest.mocked(Location.getLastKnownPositionAsync).mockClear();
+		expect(await geofenceState()).toBe('on');
+
+		jest.mocked(Location.getBackgroundPermissionsAsync).mockResolvedValue(DENIED as never);
+		expect(await geofenceState()).toBe('permission_lost');
+		expect(mockRegions).toBeNull();
+		expect(await regionRows()).toBe(0);
+		// The next visit (or app start) still explains it; reading the state never asks for a position.
+		expect(await geofenceState()).toBe('permission_lost');
+		expect(Location.getLastKnownPositionAsync).not.toHaveBeenCalled();
+
+		await stopGeofencing();
+		expect(await geofenceState()).toBe('off');
+	});
+
+	test('a revocation a refresh noticed first is explained too; turning on again clears it', async () => {
+		jest.mocked(Location.getBackgroundPermissionsAsync).mockResolvedValue(DENIED as never);
+		await refreshGeofences();
+		expect(await geofenceState()).toBe('permission_lost');
+
+		jest.mocked(Location.requestBackgroundPermissionsAsync).mockResolvedValueOnce(DENIED as never);
+		expect(await enableGeofencing()).toBe(false);
+		expect(await geofenceState()).toBe('off');
 	});
 
 	test('a stop during a selection in flight leaves nothing registered', async () => {

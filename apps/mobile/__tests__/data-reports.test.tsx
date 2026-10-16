@@ -7,7 +7,7 @@ import { Provider } from 'react-redux';
 import * as fx from '@zivali/api/__fixtures__/reports';
 import { createMockApi, type MockRoutes } from '@zivali/api/mock';
 import { api, createApiStore } from '@zivali/api/rtk';
-import { useMapReports, useReport, useReportSearch } from '@/lib/data/reports';
+import { useMapReports, useOpenLostReportsByPet, useReport, useReportSearch } from '@/lib/data/reports';
 import { getDb } from '@/lib/db';
 import { setCacheArea, upsertReports } from '@/lib/offline/sync';
 
@@ -155,6 +155,36 @@ describe('online', () => {
 		await waitFor(() => expect(result.current.source).toBe('cache'), { timeout: 8000 });
 		await waitFor(() => expect(result.current.data?.items).toHaveLength(2));
 	}, 15000);
+
+	test('my open lost searches by pet: lost, open or matched, with a pet; never cached', async () => {
+		const mine = {
+			...fx.ownerReport,
+			type: 'lost' as const,
+			status: 'open' as const,
+			manager_role: 'owner' as const,
+		};
+		const { wrapper } = setup({
+			'GET /v1/me/reports': {
+				items: [
+					{ ...mine, id: 'm1', short_code: 'Open1Abc', pet_id: 'pet-1' },
+					{ ...mine, id: 'm2', short_code: 'Home1Abc', pet_id: 'pet-2', status: 'reunited' },
+					{ ...mine, id: 'm3', short_code: 'Find1Abc', pet_id: 'pet-3', type: 'found' },
+					{ ...mine, id: 'm4', short_code: 'Inln1Abc', pet_id: null },
+					{ ...mine, id: 'm5', short_code: 'Mtch1Abc', pet_id: 'pet-5', status: 'matched' },
+				],
+				next_cursor: null,
+			},
+		});
+
+		const { result } = await renderHook(() => useOpenLostReportsByPet(), { wrapper });
+
+		await waitFor(() => expect(result.current.size).toBe(2));
+		expect([...result.current]).toEqual([
+			['pet-1', 'Open1Abc'],
+			['pet-5', 'Mtch1Abc'],
+		]);
+		expect(await (await getDb()).getAllAsync(`select id from reports_cache where id like 'm%'`)).toEqual([]);
+	});
 
 	test('other errors stay network errors', async () => {
 		const { wrapper } = setup();

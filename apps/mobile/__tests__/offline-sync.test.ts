@@ -59,6 +59,7 @@ jest.mock('expo-background-task', () => ({
 jest.mock('expo-secure-store', () => ({ deleteItemAsync: jest.fn(async () => {}) }));
 jest.mock('@/lib/supabase', () => ({ clearSessionStorage: jest.fn(async () => {}), supabase: { auth: {} } }));
 jest.mock('@/lib/offline/geofence', () => ({
+	cacheOwnReports: jest.fn(),
 	cacheQuietHours: jest.fn(),
 	refreshGeofences: jest.fn(async () => 'off'),
 	stopGeofencing: jest.fn(async () => {}),

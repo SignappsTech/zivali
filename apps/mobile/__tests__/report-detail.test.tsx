@@ -27,6 +27,8 @@ import { toAppPath } from '@/lib/deep-link';
 jest.mock('@/lib/data/reports', () => ({ useReport: jest.fn() }));
 jest.mock('@/lib/env', () => ({ env: { EXPO_PUBLIC_APP_URL: 'https://najdimo.test' } }));
 jest.mock('expo-web-browser', () => ({ openBrowserAsync: jest.fn(async () => ({})) }));
+// The owner actions share the auth error text, whose module loads the Supabase client; nothing here signs in.
+jest.mock('@/lib/auth', () => ({ providers: [], signInWithProvider: jest.fn() }));
 // The anonymous session before a report-abuse request has its own tests (manage.test.tsx).
 jest.mock('@/lib/anonymous', () => ({ ensureSession: jest.fn(async () => ({})) }));
 // The P16 gate has its own tests (auth.test.tsx); here it only shows whether contact opened it.
@@ -128,7 +130,6 @@ async function open(report: Partial<Result>, code = 'Rex2Lost') {
 			_layout: () => <Stack screenOptions={{ headerShown: false }} />,
 			index: () => <Text>map tab</Text>,
 			'r/[code]/index': ReportScreen,
-			'r/[code]/reunited': () => <Text>reunited screen</Text>,
 			'r/[code]/poster': () => <Text>poster screen</Text>,
 			'report/found': () => <Text>sighted flow</Text>,
 		},
@@ -362,7 +363,7 @@ describe('report detail (P9 mobile)', () => {
 
 	test('the owner view: owner actions, the held note, the own point labelled, the owner reward note', async () => {
 		const held: ReportOwnerView = { ...owner, moderation_state: 'held', reward: { eur: 100, note: null } };
-		const { page } = await open({ data: held });
+		await open({ data: held });
 		expect(screen.getByRole('status')).toHaveTextContent(r.owner_held);
 		expect(screen.getByLabelText('Ovratnica: rdeča z zvončkom')).toBeOnTheScreen();
 		expect(JSON.stringify(screen.toJSON())).not.toContain(owner.chip_number);
@@ -374,8 +375,8 @@ describe('report detail (P9 mobile)', () => {
 		expect(screen.getByText(r.owner_reward_note)).toBeOnTheScreen();
 		expect(screen.queryByText(new RegExp(`^${r.safety_note_reward}`))).toBeNull();
 		expect(screen.queryByRole('button', { name: r.action_sighting })).toBeNull();
-		// "Uredi" stays hidden until TASK-26.5 wires it.
-		expect(screen.queryByRole('button', { name: r.owner_edit })).toBeNull();
+		expect(screen.getByRole('button', { name: r.owner_edit })).toBeOnTheScreen();
+		expect(screen.getByRole('button', { name: r.owner_poster })).toBeOnTheScreen();
 		await fireEvent.press(screen.getByRole('button', { name: r.more }));
 		const menu = container('menu', r.more);
 		expect(within(menu).getByRole('menuitem', { name: r.owner_close })).toBeOnTheScreen();
@@ -384,8 +385,7 @@ describe('report detail (P9 mobile)', () => {
 		await fireEvent.press(screen.getByRole('button', { name: sl.common.cancel }));
 
 		await fireEvent.press(screen.getByRole('button', { name: r.owner_home }));
-		expect(await screen.findByText('reunited screen')).toBeOnTheScreen();
-		expect(page.getPathname()).toBe('/r/Rex2Lost/reunited');
+		expect(screen.getByRole('heading', { name: 'Je Rex res spet doma?' })).toBeOnTheScreen();
 	});
 
 	test('the owner "Plakat" opens the P18 poster and sharing screen (TASK-24.3)', async () => {

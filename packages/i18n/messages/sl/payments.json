@@ -3,6 +3,7 @@
 	"handoff_body": "Odprli bomo varno plačilno stran Stripe. Ko končate, se vrnete v aplikacijo.",
 	"handoff_continue": "Nadaljuj",
 	"handoff_cancel": "Prekliči",
+	"premium_unavailable": "Premium še ni na voljo. Poskusite znova kmalu.",
 	"success_title": "Hvala za vaš prispevek",
 	"success_body": "Potrdilo o plačilu smo vam poslali po e-pošti.",
 	"success_back": "Nazaj na prijavo",
