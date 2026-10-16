@@ -41,5 +41,9 @@
 	"offline_retry": "Try again",
 	"offline_gps_set": "The point is set from GPS. We will add the place name when you are back online.",
 	"approximate_label": "approximate area",
-	"exact_own": "Approximate location · visible only to you"
+	"exact_own": "Approximate location · visible only to you",
+	"area_line": "Area: {area}, about {radius}",
+	"area_note": "The area shown is approximate.",
+	"area_map_alt": "Approximate area around {area}, radius about {radius}",
+	"exact_own_help": "We moved the point by 20–30 m before saving it. The public sees only a wider area around it."
 }
