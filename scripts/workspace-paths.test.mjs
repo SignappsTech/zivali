@@ -67,8 +67,12 @@ const matchPaths = (paths, spec) => {
 	return undefined;
 };
 
+// Turbopack (apps/web) accepts one target for a key without `*`: web keeps only the first one there.
+const firstOnlyWithoutGlob = (paths) =>
+	Object.fromEntries(Object.entries(paths).map(([key, t]) => [key, key.includes('*') ? t : t.slice(0, 1)]));
+
 test('apps/web and apps/mobile repeat the base @zivali paths', () => {
-	assert.deepEqual(rebased(tsconfigs.web), base);
+	assert.deepEqual(rebased(tsconfigs.web), firstOnlyWithoutGlob(base));
 	assert.deepEqual(rebased(tsconfigs.mobile), base);
 });
 
