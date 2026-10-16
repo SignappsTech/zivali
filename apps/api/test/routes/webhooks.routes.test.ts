@@ -235,7 +235,9 @@ describe('mock provider end to end', () => {
 			[en, paid.en, 'Invoice no.', 700],
 			[sl, paid.sl, 'Račun št.', 500],
 		] as const) {
-			const invoice = await prisma.invoices.findUniqueOrThrow({ where: { payment_id } });
+			const invoice = await prisma.invoices.findUniqueOrThrow({
+				where: { payment_id_refund_total_cents: { payment_id, refund_total_cents: 0 } },
+			});
 			expect(invoice).toMatchObject({ status: 'VERIFIED', gross_cents: gross, vat_rate: 22 });
 			const { text, html } = mail(who.email)[0]!;
 			for (const line of [`${label} ${invoice.number}`, `ZOI: ${invoice.zoi}`, `EOR: ${invoice.eor}`]) {

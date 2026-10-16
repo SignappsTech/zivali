@@ -56,7 +56,11 @@ async function succeeded(amount_cents = 500, purpose: PAYMENT_PURPOSE = 'TIP') {
 	});
 }
 
-const invoiceOf = (payment_id: string) => prisma.invoices.findUniqueOrThrow({ where: { payment_id } });
+/** The payment's invoice (refund_total_cents 0), not its credit notes. */
+const invoiceOf = (payment_id: string) =>
+	prisma.invoices.findUniqueOrThrow({
+		where: { payment_id_refund_total_cents: { payment_id, refund_total_cents: 0 } },
+	});
 const issue = InvoicesDomain.issueInvoice;
 
 describe('VAT breakdown (22 %)', () => {

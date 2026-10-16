@@ -1,7 +1,8 @@
 // Fiscal invoices (C13 §Fiscal invoices, TASK-92, FR-046): payment.effects issues one per succeeded payment, numbered
 // <premise>-<device>-<sequence> without gaps, with a VAT breakdown, verified through the fiscal adapter (retried by
 // pg-boss with a backoff in minutes, app_config fiscal.retry), then rendered to a PDF in the private bucket. The
-// hourly fiscal.resubmit job sends what is still unverified again (TASK-92.3). Every step is idempotent per payment.
+// hourly fiscal.resubmit job sends what is still unverified again (TASK-92.3). A refund gets a credit note of the same
+// series that references the invoice (TASK-92.4). Every step is idempotent per payment and refund.
 import { z } from 'zod';
 
 import { PAYMENT_PURPOSES, type PaymentPurpose } from '@zivali/types';
@@ -63,7 +64,7 @@ async function invoicedPurposes(): Promise<readonly string[]> {
 	return Array.isArray(value) ? value : PAYMENT_PURPOSES;
 }
 
-const toFiscal = (invoice: InvoiceRow, subsequent: boolean): FiscalInvoice => ({
+const toFiscal = (invoice: InvoiceRow, subsequent: boolean, reference: InvoiceRow | null): FiscalInvoice => ({
 	premise_id: invoice.premise_id,
 	device_id: invoice.device_id,
 	sequence: invoice.sequence,
@@ -74,12 +75,27 @@ const toFiscal = (invoice: InvoiceRow, subsequent: boolean): FiscalInvoice => ({
 	vat_rate: invoice.vat_rate,
 	vat_cents: invoice.vat_cents,
 	subsequent,
+	...(reference && {
+		reference: {
+			premise_id: reference.premise_id,
+			device_id: reference.device_id,
+			sequence: reference.sequence,
+			issued_at: reference.issued_at,
+		},
+	}),
 });
 
-async function createInvoice(payment: PaymentRow, ctx: Ctx): Promise<InvoiceRow> {
+type Amounts = Pick<InvoiceRow, 'gross_cents' | 'net_cents' | 'vat_rate' | 'vat_cents'>;
+/** A credit note's link: the invoice it corrects and the refunded total its refund reached. */
+type CreditOf = { reference_invoice_id: string; refund_total_cents: number };
+
+/**
+ * Numbers and stores an invoice, or a credit note of the same series, once per (payment, refund_total_cents): a
+ * concurrent run that loses the insert gives its number back with the rollback and returns the winner's row.
+ */
+async function createRow(payment_id: string, amounts: Amounts, ctx: Ctx, credit?: CreditOf): Promise<InvoiceRow> {
 	const { fiscal } = ctx.adapters;
 	const { premise_id, device_id } = fiscal;
-	const amounts = { gross_cents: payment.amount_cents, vat_rate: VAT_RATE, ...vatBreakdown(payment.amount_cents) };
 	try {
 		return await prisma.$transaction(async (tx) => {
 			const sequence = await PaymentsDao.nextInvoiceSequence(premise_id, device_id, tx);
@@ -88,7 +104,8 @@ async function createInvoice(payment: PaymentRow, ctx: Ctx): Promise<InvoiceRow>
 			return PaymentsDao.insertInvoice(
 				{
 					...draft,
-					payment_id: payment.id,
+					...credit,
+					payment_id,
 					number: `${premise_id}-${device_id}-${sequence}`,
 					provider: fiscal.provider,
 					zoi: fiscal.zoi({ ...draft, subsequent: false }),
@@ -97,9 +114,8 @@ async function createInvoice(payment: PaymentRow, ctx: Ctx): Promise<InvoiceRow>
 			);
 		});
 	} catch (err) {
-		// A concurrent run inserted this payment's invoice first: the rollback returned our number, so use theirs.
 		if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002') {
-			const existing = await PaymentsDao.getInvoiceByPayment(payment.id);
+			const existing = await PaymentsDao.getCreditNote(payment_id, credit?.refund_total_cents ?? 0);
 			if (existing) return existing;
 		}
 		throw err;
@@ -122,6 +138,8 @@ async function verify(invoice: InvoiceRow, ctx: Ctx, resubmit = false): Promise<
 			`fiscal: invoice ${invoice.id} belongs to provider ${invoice.provider}, not ${fiscal.provider}`
 		);
 	}
+	// A credit note names the invoice it corrects (FURS ReferenceInvoice).
+	const reference = invoice.reference_invoice_id ? await PaymentsDao.getInvoice(invoice.reference_invoice_id) : null;
 	// The claim counts the attempt and takes the in-flight lease before the call: a crash mid-call still counts, and no
 	// other run (a payment.effects retry or redelivery, fiscal.resubmit) sends this invoice until the lease ends. A run
 	// that read the invoice before another run's attempt loses too, so overlapping runs send it once.
@@ -139,7 +157,7 @@ async function verify(invoice: InvoiceRow, ctx: Ctx, resubmit = false): Promise<
 	let eor: string;
 	try {
 		// The stored row: the same number, issue time, amounts and ZOI on every attempt.
-		({ eor } = await fiscal.issue(toFiscal(claimed, resubmit || attempt > 1)));
+		({ eor } = await fiscal.issue(toFiscal(claimed, resubmit || attempt > 1, reference)));
 	} catch (err) {
 		if (!resubmit && attempt < MAX_ATTEMPTS) {
 			ctx.logger.warn({ ...log, err }, 'fiscal: verification failed, retrying');
@@ -156,17 +174,30 @@ async function verify(invoice: InvoiceRow, ctx: Ctx, resubmit = false): Promise<
 	return PaymentsDao.updateInvoice(invoice.id, { status: 'VERIFIED', eor, verified_at: ctx.now, lease_until: null });
 }
 
-async function storePdf(invoice: InvoiceRow, item: string, ctx: Ctx): Promise<InvoiceRow> {
+async function storePdf(
+	invoice: InvoiceRow,
+	item: string,
+	ctx: Ctx,
+	reference: InvoiceRow | null
+): Promise<InvoiceRow> {
 	const { fiscal, storage } = ctx.adapters;
 	const pdf = await renderInvoicePdf({
 		...invoice,
 		item,
 		tax_number: fiscal.tax_number,
 		test: !fiscal.live,
+		...(reference && { reference: { number: reference.number, issued_at: reference.issued_at } }),
 	});
 	const key = `invoices/${invoice.id}.pdf`;
 	await storage.put({ bucket: 'private', key }, pdf, 'application/pdf');
 	return PaymentsDao.updateInvoice(invoice.id, { pdf_key: key });
+}
+
+/** Verified (or FAILED after the last attempt) and rendered; throws while verification is still retrying. */
+async function settle(row: InvoiceRow, item: string, ctx: Ctx, reference: InvoiceRow | null): Promise<InvoiceRow> {
+	if (row.status === 'PENDING') row = await verify(row, ctx);
+	if (!row.pdf_key) row = await storePdf(row, item, ctx, reference);
+	return row;
 }
 
 /**
@@ -179,11 +210,51 @@ export async function issueInvoice(payment: PaymentRow, item: string, ctx: Ctx):
 	if (!invoice) {
 		const purpose = payment.purpose.toLowerCase() as PaymentPurpose;
 		if (!(await invoicedPurposes()).includes(purpose)) return null;
-		invoice = await createInvoice(payment, ctx);
+		const amounts = {
+			gross_cents: payment.amount_cents,
+			vat_rate: VAT_RATE,
+			...vatBreakdown(payment.amount_cents),
+		};
+		invoice = await createRow(payment.id, amounts, ctx);
 	}
-	if (invoice.status === 'PENDING') invoice = await verify(invoice, ctx);
-	if (!invoice.pdf_key) invoice = await storePdf(invoice, item, ctx);
-	return invoice;
+	return settle(invoice, item, ctx, null);
+}
+
+/** One refund of a payment: the refunded total it reached (Stripe amount_refunded) and its own amount. */
+export type Refund = { total_cents: number; amount_cents: number };
+
+/**
+ * The credit note (dobropis) of one refund (TASK-92.4): its own number in the invoice's series, the refunded amount
+ * as negative gross with its VAT breakdown at the invoice's rate, referencing the invoice's number and issue time
+ * (FURS ReferenceInvoice), verified through the same adapter and rendered to a PDF. Keyed by the refunded total, so a
+ * redelivered event or a job retry finds the same row. Throws while verification is still retrying.
+ */
+export async function issueCreditNote(
+	invoice: InvoiceRow,
+	refund: Refund,
+	item: string,
+	ctx: Ctx
+): Promise<InvoiceRow | null> {
+	if (ctx.adapters.fiscal.provider === 'off') return null;
+	let note = await PaymentsDao.getCreditNote(invoice.payment_id, refund.total_cents);
+	if (!note) {
+		const { net_cents, vat_cents } = vatBreakdown(refund.amount_cents, invoice.vat_rate);
+		const amounts = {
+			gross_cents: -refund.amount_cents,
+			net_cents: -net_cents,
+			vat_cents: -vat_cents,
+			vat_rate: invoice.vat_rate,
+		};
+		note = await createRow(invoice.payment_id, amounts, ctx, {
+			reference_invoice_id: invoice.id,
+			refund_total_cents: refund.total_cents,
+		});
+		ctx.logger.info(
+			{ invoice_id: invoice.id, credit_note_id: note.id, refund_cents: refund.amount_cents },
+			'fiscal: credit note issued'
+		);
+	}
+	return settle(note, item, ctx, invoice);
 }
 
 const escapeHtml = (text: string) =>
@@ -254,10 +325,14 @@ export async function resubmitInvoices(
 			}
 			resubmitted++;
 			if (row.status === 'VERIFIED') verified++;
+			// A credit note carries its refund, so payment.effects renders that note.
+			const refund = row.refund_total_cents
+				? { refund: { total_cents: row.refund_total_cents, amount_cents: -row.gross_cents } }
+				: {};
 			if (!row.pdf_key)
 				await ctx.jobs.send(
 					'payment.effects',
-					{ payment_id: row.payment_id },
+					{ payment_id: row.payment_id, ...refund },
 					{ singletonKey: row.payment_id, ...(await retryOptions()) }
 				);
 		}
@@ -267,4 +342,4 @@ export async function resubmitInvoices(
 	return { resubmitted, verified, alerted };
 }
 
-export default { issueInvoice, resubmitInvoices, retryOptions, vatBreakdown };
+export default { issueInvoice, issueCreditNote, resubmitInvoices, retryOptions, vatBreakdown };

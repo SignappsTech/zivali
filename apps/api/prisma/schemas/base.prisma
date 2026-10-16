@@ -2,9 +2,9 @@
 // (C1), each with @@schema("app") (ADR-021). The database URL comes from prisma.config.ts.
 
 generator client {
-  provider        = "prisma-client"
-  output          = "../../generated"
-  moduleFormat    = "esm"
+  provider     = "prisma-client"
+  output       = "../../generated"
+  moduleFormat = "esm"
 }
 
 datasource db {

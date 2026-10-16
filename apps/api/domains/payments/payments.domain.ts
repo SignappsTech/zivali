@@ -179,7 +179,9 @@ export async function handleWebhook(
 			move &&
 			!(event.type === 'checkout.session.completed' && o.status === 'unpaid') &&
 			!(event.type === 'charge.refunded' && !o.refunded);
-		if (!settled) return { duplicate: false };
+		// Every refund, partial or full, gets a credit note (TASK-92.4); only a full one moves the status.
+		const refunded = event.type === 'charge.refunded' ? (o.amount_refunded ?? 0) : 0;
+		if (!settled && !refunded) return { duplicate: false };
 		const payment = await PaymentsDao.findForEvent(
 			{ payment_id: o.metadata.payment_id, object_id: o.id, payment_intent: o.payment_intent },
 			tx
@@ -188,29 +190,48 @@ export async function handleWebhook(
 			ctx.logger.warn({ event_id: event.id, event_type: event.type }, 'payments: event for an unknown payment');
 			return { duplicate: false };
 		}
-		const data = { status: move.to, ...(o.payment_intent && { provider_payment_id: o.payment_intent }) };
-		const moved = await PaymentsDao.moveStatus(payment.id, move.from, data, tx);
-		ctx.logger.info(
-			{ payment_id: payment.id, event_type: event.type, status: moved ? move.to : payment.status },
-			'payments: webhook'
-		);
 		// Retries wait minutes, not seconds (app_config fiscal.retry): a FURS outage outlasts a few seconds.
-		if (moved && move.to === 'SUCCEEDED')
-			await ctx.jobs.send(
-				'payment.effects',
-				{ payment_id: payment.id },
-				{ tx, singletonKey: payment.id, ...(await InvoicesDomain.retryOptions()) }
+		const effects = async (data: object) =>
+			ctx.jobs.send('payment.effects', data, {
+				tx,
+				singletonKey: payment.id,
+				...(await InvoicesDomain.retryOptions()),
+			});
+		if (settled) {
+			const data = { status: move.to, ...(o.payment_intent && { provider_payment_id: o.payment_intent }) };
+			const moved = await PaymentsDao.moveStatus(payment.id, move.from, data, tx);
+			ctx.logger.info(
+				{ payment_id: payment.id, event_type: event.type, status: moved ? move.to : payment.status },
+				'payments: webhook'
 			);
+			if (moved && move.to === 'SUCCEEDED') await effects({ payment_id: payment.id });
+		}
+		if (refunded) {
+			// Stripe sends the charge's cumulative amount_refunded; the raise takes this refund's share under a row lock,
+			// and a repeated or late event (not higher) is a no-op.
+			const before = await PaymentsDao.raiseRefunded(payment.id, refunded, tx);
+			if (before !== null) {
+				const refund = { total_cents: refunded, amount_cents: refunded - before };
+				ctx.logger.info({ payment_id: payment.id, refund_cents: refund.amount_cents }, 'payments: refund');
+				await effects({ payment_id: payment.id, refund });
+			}
+		}
 		return { duplicate: false };
 	});
 }
 
-const EffectsInput = z.object({ payment_id: z.uuid() });
+const EffectsInput = z.object({
+	payment_id: z.uuid(),
+	refund: z
+		.object({ total_cents: z.number().int().positive(), amount_cents: z.number().int().positive() })
+		.optional(),
+});
 
 /**
  * payment.effects: the fiscal invoice (TASK-92), then the payment_receipt notification (email in the recipient's locale
- * and in-app, C10) once per succeeded payment; receipt_sent_at and the notify.send job commit together. Boosts and
- * entitlements: M4.
+ * and in-app, C10) once per succeeded payment; receipt_sent_at and the notify.send job commit together. With a refund
+ * (TASK-92.4) also that refund's credit note; the money was taken, so a payment refunded before its effects ran still
+ * gets its invoice first. Boosts and entitlements: M4.
  */
 export async function paymentEffects(data: unknown, ctx: Ctx): Promise<void> {
 	const parsed = EffectsInput.safeParse(data);
@@ -218,11 +239,13 @@ export async function paymentEffects(data: unknown, ctx: Ctx): Promise<void> {
 		ctx.logger.error('payment.effects: invalid job dropped');
 		return;
 	}
+	const { refund } = parsed.data;
 	const payment = await PaymentsDao.getPayment(parsed.data.payment_id);
-	if (payment?.status !== 'SUCCEEDED') return;
+	if (!payment || !(payment.status === 'SUCCEEDED' || (refund && payment.status === 'REFUNDED'))) return;
 	// The fiscal invoice first (TASK-92): the receipt carries its number, ZOI and EOR. Throws while FURS keeps failing.
-	const purpose = payment.purpose.toLowerCase() as PaymentPurpose;
-	await InvoicesDomain.issueInvoice(payment, PRODUCT.sl[purpose], ctx);
+	const item = PRODUCT.sl[payment.purpose.toLowerCase() as PaymentPurpose];
+	const invoice = await InvoicesDomain.issueInvoice(payment, item, ctx);
+	if (refund && invoice) await InvoicesDomain.issueCreditNote(invoice, refund, item, ctx);
 	if (!payment.user_id || payment.receipt_sent_at) return;
 	const user_id = payment.user_id;
 	await prisma.$transaction(async (tx) => {

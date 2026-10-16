@@ -100,11 +100,41 @@ export async function markReceiptSent(id: string, at: Date, tx?: Prisma.Transact
 	return count === 1;
 }
 
+/**
+ * Raises the refunded total to `total_cents` (Stripe's cumulative amount_refunded) and returns what it was before,
+ * under a row lock, so concurrent refund events each see the total the other left; null when it is not higher (a
+ * late or repeated event) or above the amount.
+ */
+export async function raiseRefunded(
+	id: string,
+	total_cents: number,
+	tx: Prisma.TransactionClient
+): Promise<number | null> {
+	const [row] = await tx.$queryRaw<{ before: number }[]>`
+		update app.payments p set refunded_cents = ${total_cents}, updated_at = now()
+		from (select id, refunded_cents as before from app.payments where id = ${id}::uuid for update) old
+		where p.id = old.id and old.before < ${total_cents} and ${total_cents} <= p.amount_cents
+		returning old.before`;
+	return row ? row.before : null;
+}
+
 export type InvoiceRow = NonNullable<Awaited<ReturnType<typeof getInvoiceByPayment>>>;
 
+/** The payment's invoice (refund_total_cents 0), not its credit notes. */
 export async function getInvoiceByPayment(payment_id: string, tx?: Prisma.TransactionClient) {
 	const db = tx ?? prisma;
-	return db.invoices.findUnique({ where: { payment_id } });
+	return db.invoices.findUnique({ where: { payment_id_refund_total_cents: { payment_id, refund_total_cents: 0 } } });
+}
+
+/** The credit note of the refund that brought the payment's refunded total to `refund_total_cents`. */
+export async function getCreditNote(payment_id: string, refund_total_cents: number, tx?: Prisma.TransactionClient) {
+	const db = tx ?? prisma;
+	return db.invoices.findUnique({ where: { payment_id_refund_total_cents: { payment_id, refund_total_cents } } });
+}
+
+export async function getInvoice(id: string, tx?: Prisma.TransactionClient) {
+	const db = tx ?? prisma;
+	return db.invoices.findUnique({ where: { id } });
 }
 
 /**
@@ -197,7 +227,10 @@ export async function updateInvoice(
 }
 
 export default {
+	raiseRefunded,
 	getInvoiceByPayment,
+	getCreditNote,
+	getInvoice,
 	nextInvoiceSequence,
 	insertInvoice,
 	claimInvoiceAttempt,

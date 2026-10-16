@@ -43,6 +43,8 @@ export const Payment = z
 		id: Uuid,
 		purpose: PaymentPurpose,
 		amount_cents: z.number().int(),
+		/** Refunded so far, partial refunds included (status refunded only once it reaches amount_cents). */
+		refunded_cents: z.number().int().nonnegative(),
 		currency: z.literal('EUR'),
 		status: PaymentStatus,
 		created_at: IsoDateTime,
