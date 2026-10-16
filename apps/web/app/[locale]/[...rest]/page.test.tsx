@@ -31,7 +31,7 @@ afterEach(cleanup);
 describe('CatchAll', () => {
 	it.each([
 		['sl', ['report', 'found'], 'Najdena žival'],
-		['en', ['advertise'], 'Advertise with us'],
+		['en', ['report', 'found'], 'Found animal'],
 	] as const)('a pending %s page %j gets a placeholder titled %s, not indexed', async (locale, rest, title) => {
 		render(
 			<NextIntlClientProvider locale={locale} messages={catalogues[locale]}>
