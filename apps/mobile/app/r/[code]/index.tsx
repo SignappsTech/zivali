@@ -23,7 +23,8 @@ import { useReversePlaceQuery } from '@zivali/api/geocode';
 import { formatDate, formatDayMonth } from '@zivali/i18n/format';
 import type { PublicReport } from '@zivali/types';
 import { AreaMap } from '@/components/report/area-map';
-import { canReopen } from '@/components/report/lifecycle';
+import { canReopen, ReminderCard } from '@/components/report/lifecycle';
+import { parseAction, type ReportAction } from '@/components/report/lifecycle-helpers';
 import { Note, StatusWord } from '@/components/report/parts';
 import { PHOTO_HEIGHT, PhotoCarousel } from '@/components/report/photo-carousel';
 import { type DetailReport, isActive, ReportSlot } from '@/components/report/slots';
@@ -215,7 +216,16 @@ function Safety({ report }: { report: DetailReport }) {
 	);
 }
 
-function Detail({ report, cachedAt }: { report: DetailReport; cachedAt: number | null | undefined }) {
+function Detail({
+	report,
+	cachedAt,
+	action,
+}: {
+	report: DetailReport;
+	cachedAt: number | null | undefined;
+	action?: ReportAction;
+}) {
+	const router = useRouter();
 	const t = useTranslations('report');
 	const tb = useTranslations('browse');
 	const ta = useTranslations('attributes');
@@ -297,6 +307,14 @@ function Detail({ report, cachedAt }: { report: DetailReport; cachedAt: number |
 						</Note>
 					)}
 					<ReportSlot name="matches-note" report={report} offline={offline} className="mb-6" />
+					{!offline && (
+						<ReminderCard
+							report={report}
+							action={action}
+							className="mb-6"
+							onDone={() => router.setParams({ action: undefined })}
+						/>
+					)}
 
 					<View className="flex-row flex-wrap items-center gap-x-3">
 						<StatusWord report={report} />
@@ -372,7 +390,7 @@ function Detail({ report, cachedAt }: { report: DetailReport; cachedAt: number |
  * Removed, expired and hidden reports are the 410 page; an unknown code the 404 page.
  */
 export default function ReportScreen() {
-	const params = useLocalSearchParams<{ code?: string | string[] }>();
+	const params = useLocalSearchParams<{ code?: string | string[]; action?: string | string[] }>();
 	const code = (Array.isArray(params.code) ? params.code[0] : params.code) ?? '';
 	const { data, source, lastSyncAt, isLoading, error, refetch } = useReport(code);
 	const t = useTranslations('common');
@@ -402,5 +420,11 @@ export default function ReportScreen() {
 			</StatePage>
 		);
 	if (!data) return <Gone kind={source === 'cache' ? 'offline' : 'not_found'} />;
-	return <Detail report={toDetail(data)} cachedAt={source === 'cache' ? lastSyncAt : undefined} />;
+	return (
+		<Detail
+			report={toDetail(data)}
+			cachedAt={source === 'cache' ? lastSyncAt : undefined}
+			action={parseAction(params.action)}
+		/>
+	);
 }

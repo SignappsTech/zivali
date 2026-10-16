@@ -23,6 +23,8 @@ AC: TASK-26.5#1 (owner actions incl. extend, per web owner-actions.tsx Open and 
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Given a LOST report idle 7+ days or a FOUND report within 5 days of expiry, when the signed-in owner opens it on mobile, then the reminder or expiry note with Nadaljuj iskanje / Podaljsaj shows and its press sends extend only
-- [ ] #2 Given /my-reports?r=<code>&action=keep|extend|close, when the app opens it, then keep/extend show the note and close opens the reason sheet, nothing sent until pressed
+- [x] #1 Given a LOST report idle 7+ days or a FOUND report within 5 days of expiry, when the signed-in owner opens it on mobile, then the reminder or expiry note with Nadaljuj iskanje / Podaljsaj shows and its press sends extend only
+- [x] #2 Given /my-reports?r=<code>&action=keep|extend|close, when the app opens it, then keep/extend show the note and close opens the reason sheet, nothing sent until pressed
 <!-- AC:END -->
+
+Branch: agent/task-26.9-lifecycle-mob

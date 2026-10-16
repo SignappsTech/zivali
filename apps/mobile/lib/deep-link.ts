@@ -43,14 +43,16 @@ const TARGETS = /^\/(r\/[\w-]+(\/matches)?|inbox\/[\w-]+|settings\/payments)$/;
 
 /**
  * The `data.url` of a push (C10 deep link, e.g. `/r/<code>/matches`, `/inbox/<id>`) or of a local proximity alert
- * (`zivali://r/<code>`) -> app route. `/my-reports?r=<code>` opens that listing, `/account/payments` the payments
+ * (`zivali://r/<code>`) -> app route. `/my-reports?r=<code>` opens that listing (`&action=keep|extend|close` kept, anything else dropped), `/account/payments` the payments
  * settings; anything else opens the inbox. Query and hash are dropped.
  */
 export function toTargetPath(url: string): string {
 	const [pathname = '/', query = ''] = internalPath(url).split(/[?#]/);
 	if (pathname === '/my-reports') {
 		const code = /(?:^|&)r=([\w-]+)/.exec(query)?.[1];
-		return code ? `/r/${code}` : '/inbox';
+		// C10 reminders carry `action=keep|extend|close`: the report page shows the card; nothing is sent on load.
+		const action = /(?:^|&)action=(keep|extend|close)(?:&|$)/.exec(query)?.[1];
+		return code ? `/r/${code}${action ? `?action=${action}` : ''}` : '/inbox';
 	}
 	if (pathname === '/account/payments') return '/settings/payments';
 	return TARGETS.test(pathname) ? pathname : '/inbox';

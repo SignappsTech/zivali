@@ -1,4 +1,4 @@
-import { type Href, Redirect, Stack, useRouter } from 'expo-router';
+import { type Href, Redirect, Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { ArrowClockwiseIcon } from 'phosphor-react-native/src/icons/ArrowClockwise';
 import { ClipboardTextIcon } from 'phosphor-react-native/src/icons/ClipboardText';
 import { WarningCircleIcon } from 'phosphor-react-native/src/icons/WarningCircle';
@@ -12,13 +12,16 @@ import { formatDayMonth } from '@zivali/i18n/format';
 import type { ReportOwnerView } from '@zivali/types';
 import { useErrorText } from '@/components/auth/parts';
 import { OutboxList } from '@/components/outbox/queue';
+import { ReminderCard } from '@/components/report/lifecycle';
+import { parseAction } from '@/components/report/lifecycle-helpers';
 import { Note, statusOf, StatusWord } from '@/components/report/parts';
+import type { DetailReport } from '@/components/report/slots/types';
 import { Button } from '@/components/ui/button';
 import { useFocusRing } from '@/components/ui/focus-ring';
 import { Icon } from '@/components/ui/icon';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Text } from '@/components/ui/text';
-import { useMyReports } from '@/lib/data/reports';
+import { useMyReports, useReport } from '@/lib/data/reports';
 
 /** P8 report row: photo 48 (radius 16), name over the date line, the status word on the right; opens the report. */
 function ReportRow({ report }: { report: ReportOwnerView }) {
@@ -51,6 +54,28 @@ function ReportRow({ report }: { report: ReportOwnerView }) {
 			</View>
 			<StatusWord report={report} />
 		</Pressable>
+	);
+}
+
+/** C10 `?r=<code>&action=keep|extend|close`: the reminder card (or the close sheet) for that report; the press sends. */
+function DeepAction() {
+	const params = useLocalSearchParams<{ r?: string | string[]; action?: string | string[] }>();
+	const code = [params.r].flat()[0];
+	const action = parseAction(params.action);
+	return code && action && /^[\w-]+$/.test(code) ? <DeepCard code={code} action={action} /> : null;
+}
+
+function DeepCard({ code, action }: { code: string; action: NonNullable<ReturnType<typeof parseAction>> }) {
+	const router = useRouter();
+	const { data } = useReport(code);
+	if (!data) return null;
+	return (
+		<ReminderCard
+			report={data as DetailReport}
+			action={action}
+			className="mb-8"
+			onDone={() => router.setParams({ r: undefined, action: undefined })}
+		/>
 	);
 }
 
@@ -114,6 +139,7 @@ function MyReports() {
 			renderItem={({ item }) => <ReportRow report={item} />}
 			ListHeaderComponent={
 				<>
+					<DeepAction />
 					<OutboxList recent className="mb-8" />
 					{state}
 				</>

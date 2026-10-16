@@ -82,7 +82,11 @@ describe('notification targets (push data.url, C10 deep links)', () => {
 		['/r/Hk3vT9qP', '/r/Hk3vT9qP'],
 		// The local proximity alert (TASK-87.1).
 		['zivali://r/Hk3vT9qP', '/r/Hk3vT9qP'],
-		['/my-reports?r=Hk3vT9qP&action=keep', '/r/Hk3vT9qP'],
+		['/my-reports?r=Hk3vT9qP&action=keep', '/r/Hk3vT9qP?action=keep'],
+		['/my-reports?action=close&r=Hk3vT9qP', '/r/Hk3vT9qP?action=close'],
+		['/my-reports?r=Hk3vT9qP&action=extend', '/r/Hk3vT9qP?action=extend'],
+		['/my-reports?r=Hk3vT9qP&action=delete', '/r/Hk3vT9qP'],
+		['/my-reports?r=Hk3vT9qP&action=close/../x', '/r/Hk3vT9qP'],
 		['/my-reports', '/inbox'],
 		['/account/payments', '/settings/payments'],
 		['https://najdimo.si/en/r/Hk3vT9qP/matches', '/r/Hk3vT9qP/matches'],

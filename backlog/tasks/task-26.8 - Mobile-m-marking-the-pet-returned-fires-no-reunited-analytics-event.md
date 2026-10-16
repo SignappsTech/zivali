@@ -21,5 +21,5 @@ AC: TASK-26.5#3 / TASK-26.6#1. Steps: read apps/mobile/app/m.tsx markReturned: i
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Given consent, when the finder marks returned on /m (apps/mobile/app/m.tsx act('mark_reunited')), then reunited fires with species, region and municipality only, as on web /m and the mobile owner flow
+- [x] #1 Given consent, when the finder marks returned on /m (apps/mobile/app/m.tsx act('mark_reunited')), then reunited fires with species, region and municipality only, as on web /m and the mobile owner flow
 <!-- AC:END -->
