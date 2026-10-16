@@ -37,8 +37,12 @@ export function AuthMain({ children }: { children: React.ReactNode }) {
 /** The page h1. `focus` moves focus to it when the view changes in place (check email, done), so it is announced. */
 export function AuthHeading({ focus = false, children }: { focus?: boolean; children: React.ReactNode }) {
 	const ref = React.useRef<HTMLHeadingElement>(null);
+	const mounted = React.useRef(false);
 	React.useEffect(() => {
-		if (focus) ref.current?.focus();
+		// On first load the open consent banner (P17) takes focus; a later in-place change still moves it here.
+		const first = !mounted.current;
+		mounted.current = true;
+		if (focus && !(first && document.querySelector('[data-consent-banner]'))) ref.current?.focus();
 	}, [focus]);
 	return (
 		<h1 ref={ref} tabIndex={-1} className={cn(h1Class, 'outline-none')}>

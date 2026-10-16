@@ -1,10 +1,11 @@
 ---
 id: TASK-86.5
 title: 'Reports: dedupe outbox submissions beyond the 24 h Idempotency-Key window'
-status: To Do
+status: Done
 assignee:
   - '@tech-lead'
 created_date: '2026-10-16 02:44'
+updated_date: '2026-10-16 03:55'
 labels:
   - be
   - 'est:S'

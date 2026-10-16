@@ -225,6 +225,7 @@ export async function expireIdle(input: IdleCutoffs, tx: Prisma.TransactionClien
 /**
  * retention.blur_location (ADR-006): up to `take` reports closed or reunited at or before `endedBefore` whose stored
  * point is not their public centre yet get exact_point = public_point (skip locked). The circle and the area stay.
+ * submission_hash goes too: a keyed digest of the body, it would let the received point be guessed inside the circle.
  */
 export async function blurEnded(
 	input: { endedBefore: Date; take: number },
@@ -233,12 +234,13 @@ export async function blurEnded(
 	const db = tx ?? prisma;
 	const { endedBefore, take } = input;
 	return db.$executeRaw`
-		update app.reports set exact_point = public_point, updated_at = now()
+		update app.reports set exact_point = public_point, submission_hash = null, updated_at = now()
 		where id in (
 			select id from app.reports
 			where ((status = 'closed' and closed_at <= ${endedBefore})
 					or (status = 'reunited' and reunited_at <= ${endedBefore}))
-				and not extensions.st_equals(exact_point::extensions.geometry, public_point::extensions.geometry)
+				and (not extensions.st_equals(exact_point::extensions.geometry, public_point::extensions.geometry)
+					or submission_hash is not null)
 			limit ${take} for update skip locked)`;
 }
 
@@ -273,6 +275,25 @@ export async function findByManageToken(manage_token_hash: Uint8Array<ArrayBuffe
 			moderation_state: true,
 			closed_at: true,
 			reunited_at: true,
+		},
+	});
+}
+
+/** The creator's report from an earlier submission with this client id (POST /v1/reports repeats, C17 outbox). */
+export async function findBySubmission(created_by: string, submission_id: string, tx?: Prisma.TransactionClient) {
+	const db = tx ?? prisma;
+	return db.reports.findFirst({
+		where: { created_by, submission_id },
+		select: {
+			id: true,
+			short_code: true,
+			type: true,
+			species: true,
+			moderation_state: true,
+			manage_token_hash: true,
+			submission_hash: true,
+			event_at: true,
+			created_at: true,
 		},
 	});
 }
@@ -527,6 +548,7 @@ export default {
 	addContact,
 	getContactEmail,
 	findByManageToken,
+	findBySubmission,
 	countByDevice,
 	photosMatchHeld,
 	flagHeld,

@@ -9,5 +9,6 @@
 	"tiles_error": "The map cannot load right now. Reports are in the list.",
 	"a11y_label": "Map: {count, plural, one {# report} other {# reports}}",
 	"list_show": "Show list",
-	"list_hide": "Show map"
+	"list_hide": "Show map",
+	"keyboard_hint": "Move the map with the arrow keys, zoom in with + and out with −."
 }

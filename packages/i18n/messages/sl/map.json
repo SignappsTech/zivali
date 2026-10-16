@@ -9,5 +9,6 @@
 	"tiles_error": "Zemljevida ta trenutek ni mogoče naložiti. Prijave so v seznamu.",
 	"a11y_label": "Zemljevid: {count, plural, one {# prijava} two {# prijavi} few {# prijave} other {# prijav}}",
 	"list_show": "Pokaži seznam",
-	"list_hide": "Pokaži zemljevid"
+	"list_hide": "Pokaži zemljevid",
+	"keyboard_hint": "Zemljevid premikate s puščicami, povečate s tipko + in pomanjšate s tipko −."
 }

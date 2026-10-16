@@ -25,10 +25,10 @@ export default async function SignUpPage({ params, searchParams }: PageProps<'/[
 	const { auth } = await getMessages({ locale });
 
 	return (
-		<AuthMain>
-			<PageMessages messages={{ auth }}>
+		<PageMessages messages={{ auth }}>
+			<AuthMain>
 				<SignUpForm next={next} email={one(query.email)} />
-			</PageMessages>
-		</AuthMain>
+			</AuthMain>
+		</PageMessages>
 	);
 }

@@ -1,11 +1,11 @@
 ---
 id: TASK-36.6
 title: 'Mobile AdSlot and placements: feed, detail, reunited'
-status: In Progress
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:14'
-updated_date: '2026-10-16 02:08'
+updated_date: '2026-10-16 04:06'
 labels:
   - fe
   - 'est:S'

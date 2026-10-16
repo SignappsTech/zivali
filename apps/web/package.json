@@ -5,7 +5,7 @@
 	"type": "module",
 	"scripts": {
 		"dev": "next dev",
-		"build": "next build",
+		"build": "node ../../scripts/build-guard.mjs && next build",
 		"start": "next start",
 		"lint": "eslint --cache --cache-strategy content --cache-location node_modules/.cache/eslint/ --max-warnings=0 .",
 		"typecheck": "next typegen && tsc --noEmit",
