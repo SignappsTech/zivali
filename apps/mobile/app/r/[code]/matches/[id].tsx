@@ -20,11 +20,21 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFormatter, useLocale, useTranslations } from 'use-intl';
 
 import { type EventParams, track } from '@zivali/analytics';
+import { useSession } from '@zivali/api/auth';
 import { useConfirmMatchMutation, useListMatchesQuery, useRejectMatchMutation } from '@zivali/api/matches';
 import type { CachedReport } from '@zivali/api/sync';
 import type { MatchSuggestion, PublicReport } from '@zivali/types';
 import { useErrorText } from '@/components/auth/parts';
-import { forgetShown, LIST_STATES, Strength, useBack, usePlaceLabel, useReasonLines } from '@/components/matches/parts';
+import {
+	ForbiddenState,
+	forgetShown,
+	LIST_STATES,
+	errorCodeOf,
+	Strength,
+	useBack,
+	usePlaceLabel,
+	useReasonLines,
+} from '@/components/matches/parts';
 import { Note } from '@/components/report/parts';
 import {
 	AlertDialog,
@@ -273,6 +283,7 @@ const regionOf = (report: Mine | undefined) =>
 /** Fixed footer: confirm and reject (or the confirmed state and "Odpri pogovor"), both reachable without scrolling. */
 function Actions({ match, mine, code }: { match: MatchSuggestion; mine: Mine | undefined; code: string }) {
 	const t = useTranslations('matches');
+	const ta = useTranslations('auth');
 	const router = useRouter();
 	const errorText = useErrorText();
 	const back = useBack(`/r/${code}/matches`);
@@ -280,11 +291,13 @@ function Actions({ match, mine, code }: { match: MatchSuggestion; mine: Mine | u
 	const [confirm, confirming] = useConfirmMatchMutation();
 	const [reject, rejecting] = useRejectMatchMutation();
 	const [reason, setReason] = React.useState('');
+	const [unverified, setUnverified] = React.useState(false);
+	const { me } = useSession();
 
 	// Confirming opens the conversation (C9); a confirmed match answers with the same one again (idempotent).
 	const openChat = async (first: boolean) => {
 		try {
-			const { conversation_id } = await confirm({ id: match.id }).unwrap();
+			await confirm({ id: match.id }).unwrap();
 			const region = regionOf(mine);
 			if (first && region)
 				track('match_confirmed', {
@@ -292,17 +305,18 @@ function Actions({ match, mine, code }: { match: MatchSuggestion; mine: Mine | u
 					region,
 					match_source: match.chip_match ? 'chip' : 'attributes',
 				});
-			// The P12 conversation screen is TASK-21.4's route (C15 `/inbox/<id>`).
-			router.push(`/inbox/${conversation_id}` as Href);
+			// TODO(TASK-21.4): `/inbox/${conversation_id}` once the P12 conversation route exists; the inbox tab until then.
+			router.push('/inbox' as Href);
 		} catch (failure) {
-			toast.error(errorText(failure));
+			if (errorCodeOf(failure) === 'UNVERIFIED_EMAIL') setUnverified(true);
+			else toast.error(errorText(failure));
 		}
 	};
 	const onReject = async () => {
-		forgetShown(code, match.id);
 		try {
 			const text = reason.trim();
 			await reject({ id: match.id, body: text ? { reason: text } : undefined }).unwrap();
+			forgetShown(code, match.id);
 			toast(t('rejected_toast'));
 			back();
 		} catch (failure) {
@@ -345,6 +359,27 @@ function Actions({ match, mine, code }: { match: MatchSuggestion; mine: Mine | u
 			) : (
 				<Note role="status" icon={WifiSlashIcon} iconClassName="text-foreground">
 					{t('offline')}
+				</Note>
+			)}
+			{unverified && (
+				<Note
+					role="alert"
+					icon={WarningCircleIcon}
+					iconClassName="text-destructive"
+					className="mt-3"
+					action={
+						<Button
+							variant="text"
+							size="sm"
+							onPress={() =>
+								router.push({ pathname: '/auth/check-email', params: { email: me?.email ?? '' } })
+							}
+						>
+							{ta('gate_unverified_title')}
+						</Button>
+					}
+				>
+					{errorText({ data: { code: 'UNVERIFIED_EMAIL' } })}
 				</Note>
 			)}
 			<Button
@@ -489,7 +524,7 @@ function Loading() {
  */
 export default function MatchReviewScreen() {
 	const { code = '', id = '' } = useLocalSearchParams<{ code: string; id: string }>();
-	const te = useTranslations('errors');
+	const t = useTranslations('matches');
 	const tc = useTranslations('common');
 	const insets = useSafeAreaInsets();
 	const { data, isLoading, error, refetch } = useListMatchesQuery({ code, state: LIST_STATES });
@@ -503,6 +538,8 @@ export default function MatchReviewScreen() {
 				<Loading />
 			) : match ? (
 				<Review match={match} mine={mine ?? undefined} code={code} />
+			) : error && !data && errorCodeOf(error) === 'FORBIDDEN' ? (
+				<ForbiddenState code={code} className="px-5 pt-6" />
 			) : error && !data ? (
 				<View className="px-5 pt-6">
 					<Note
@@ -521,7 +558,7 @@ export default function MatchReviewScreen() {
 				</View>
 			) : (
 				// Rejected, withdrawn or an old link: the match is no longer there.
-				<EmptyState className="px-5 pt-6" title={te('page_410_title')} description={te('page_410_body')} />
+				<EmptyState className="px-5 pt-6" title={t('unavailable_title')} description={t('unavailable_body')} />
 			)}
 		</View>
 	);

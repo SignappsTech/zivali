@@ -67,5 +67,7 @@
 	"offline": "Offline. You can look at matches and confirm them once you are back online.",
 	"already_confirmed": "You have already confirmed this match.",
 	"alt_mine": "Your pet: {alt}",
-	"alt_other": "Reported animal: {alt}"
+	"alt_other": "Reported animal: {alt}",
+	"unavailable_title": "Match no longer available",
+	"unavailable_body": "This match was hidden or removed."
 }

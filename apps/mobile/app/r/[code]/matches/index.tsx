@@ -15,7 +15,9 @@ import { useTranslations } from 'use-intl';
 import { useListMatchesQuery } from '@zivali/api/matches';
 import type { MatchSuggestion } from '@zivali/types';
 import {
+	ForbiddenState,
 	LIST_STATES,
+	errorCodeOf,
 	Strength,
 	isWithdrawn,
 	sortMatches,
@@ -169,6 +171,8 @@ export default function MatchesScreen() {
 
 				{isLoading ? (
 					<LoadingRows />
+				) : error && !data && errorCodeOf(error) === 'FORBIDDEN' ? (
+					<ForbiddenState code={code} className="mt-6" />
 				) : error && !data ? (
 					<Note
 						role="alert"

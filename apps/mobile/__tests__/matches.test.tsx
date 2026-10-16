@@ -176,7 +176,8 @@ async function open(path: string) {
 			'r/[code]/index': () => <Text>report screen</Text>,
 			'r/[code]/matches/index': MatchesScreen,
 			'r/[code]/matches/[id]': MatchReviewScreen,
-			'inbox/[id]': () => <Text>chat screen</Text>,
+			inbox: () => <Text>chat screen</Text>,
+			'auth/check-email': () => <Text>check email screen</Text>,
 		},
 		{ initialUrl: path, wrapper: Providers }
 	);
@@ -257,12 +258,20 @@ describe('matches list (P11 mobile)', () => {
 		expect(screen.getAllByRole('link')).toHaveLength(2);
 	});
 
+	test('not the owner: the permission sentence and a way back, no retry', async () => {
+		listOverride = () => mockError('FORBIDDEN');
+		await open(`/r/${nextCode()}/matches`);
+		expect(await screen.findByText(sl.errors.FORBIDDEN)).toBeOnTheScreen();
+		expect(screen.queryByRole('button', { name: sl.common.try_again })).toBeNull();
+		expect(screen.getAllByRole('button', { name: sl.common.back })).toHaveLength(2);
+	});
+
 	test('loading shows one "Nalaganje …"; a failure the error sentence with retry', async () => {
 		listOverride = () => new Promise(() => undefined);
 		await open(`/r/${nextCode()}/matches`);
 		expect(screen.getByText(sl.common.loading)).toBeOnTheScreen();
 
-		listOverride = () => mockError('FORBIDDEN');
+		listOverride = () => mockError('NOT_FOUND');
 		await open(`/r/${nextCode()}/matches`);
 		expect(await screen.findByText(sl.common.inline_error)).toBeOnTheScreen();
 		listOverride = null;
@@ -356,7 +365,7 @@ describe('match review (P11 mobile)', () => {
 
 		await fireEvent.press(screen.getByRole('button', { name: m.confirm }));
 		expect(await screen.findByText('chat screen')).toBeOnTheScreen();
-		expect(page.getPathname()).toBe(`/inbox/${CONVERSATION}`);
+		expect(page.getPathname()).toBe('/inbox'); // TODO(TASK-21.4): `/inbox/${CONVERSATION}`
 		expect(calls('/v1/matches/')).toEqual([expect.objectContaining({ path: `/v1/matches/${chip.id}/confirm` })]);
 		expect(getMockEvents().map((e) => [e.name, e.params])).toEqual([
 			['match_suggested', { species: 'dog', region: 'osrednjeslovenska', match_source: 'chip' }],
@@ -375,8 +384,10 @@ describe('match review (P11 mobile)', () => {
 		confirmFailure = mockError('UNVERIFIED_EMAIL');
 		await open(`/r/${nextCode()}/matches/${chip.id}`);
 		await fireEvent.press(await screen.findByRole('button', { name: m.confirm }));
-		await waitFor(() => expect(toast.error).toHaveBeenCalledWith(sl.errors.UNVERIFIED_EMAIL));
+		expect(await screen.findByText(sl.errors.UNVERIFIED_EMAIL)).toBeOnTheScreen();
 		expect(screen.queryByText('chat screen')).toBeNull();
+		await fireEvent.press(screen.getByRole('button', { name: sl.auth.gate_unverified_title }));
+		expect(await screen.findByText('check email screen')).toBeOnTheScreen();
 	});
 
 	test('reject asks once, sends the optional reason and hides the match for good', async () => {
@@ -424,7 +435,7 @@ describe('match review (P11 mobile)', () => {
 		expect(screen.queryByRole('button', { name: m.confirm })).toBeNull();
 		await fireEvent.press(screen.getByRole('button', { name: m.open_chat }));
 		expect(await screen.findByText('chat screen')).toBeOnTheScreen();
-		expect(page.getPathname()).toBe(`/inbox/${CONVERSATION}`);
+		expect(page.getPathname()).toBe('/inbox'); // TODO(TASK-21.4): `/inbox/${CONVERSATION}`
 		expect(getMockEvents()).toEqual([]);
 	});
 
@@ -441,7 +452,7 @@ describe('match review (P11 mobile)', () => {
 
 	test('a match that is no longer there says so', async () => {
 		await open(`/r/${nextCode()}/matches/aaaaaaaa-0000-4000-8000-00000000dead`);
-		expect(await screen.findByRole('heading', { name: sl.errors.page_410_title })).toBeOnTheScreen();
+		expect(await screen.findByRole('heading', { name: m.unavailable_title })).toBeOnTheScreen();
 	});
 });
 

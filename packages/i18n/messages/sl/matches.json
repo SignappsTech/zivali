@@ -67,5 +67,7 @@
 	"offline": "Brez povezave. Ujemanja lahko pogledate, potrdite pa jih, ko boste spet povezani.",
 	"already_confirmed": "Ujemanje ste že potrdili.",
 	"alt_mine": "Vaša žival: {alt}",
-	"alt_other": "Prijavljena žival: {alt}"
+	"alt_other": "Prijavljena žival: {alt}",
+	"unavailable_title": "Ujemanja ni več na voljo",
+	"unavailable_body": "To ujemanje je skrito ali odstranjeno."
 }

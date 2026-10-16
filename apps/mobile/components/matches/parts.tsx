@@ -4,6 +4,8 @@ import { useTranslations } from 'use-intl';
 
 import { useReversePlaceQuery } from '@zivali/api/geocode';
 import type { MatchState, MatchSuggestion, PublicArea } from '@zivali/types';
+import { Button } from '@/components/ui/button';
+import { EmptyState } from '@/components/ui/empty-state';
 import { Text } from '@/components/ui/text';
 import { isOnline, useNetworkState } from '@/lib/net';
 import { cn } from '@/lib/utils';
@@ -122,4 +124,27 @@ export function isWithdrawn(code: string, items: MatchSuggestion[]): boolean {
 /** A match the owner rejected leaves the list without the "withdrawn" note. */
 export function forgetShown(code: string, id: string): void {
 	shown.get(code)?.ids.delete(id);
+}
+
+/** The C8 error code of a failed query ('' when none). */
+export const errorCodeOf = (error: unknown): string => (error as { data?: { code?: string } } | null)?.data?.code ?? '';
+
+/** Not the owner of this report (C8 FORBIDDEN): the permission sentence and a way back, never a retry. */
+export function ForbiddenState({ code, className }: { code: string; className?: string }) {
+	const t = useTranslations('matches');
+	const te = useTranslations('errors');
+	const tc = useTranslations('common');
+	const router = useRouter();
+	return (
+		<EmptyState
+			className={className}
+			title={t('title')}
+			description={te('FORBIDDEN')}
+			action={
+				<Button variant="secondary" onPress={() => router.replace(`/r/${code}` as Href)}>
+					{tc('back')}
+				</Button>
+			}
+		/>
+	);
 }
