@@ -15,6 +15,7 @@ import en from '@zivali/i18n/dist/en.json';
 import { formatDate, type Locale } from '@zivali/i18n/format';
 import {
 	AlertDialog,
+	AlertDialogAction,
 	AlertDialogCancel,
 	AlertDialogContent,
 	AlertDialogDescription,
@@ -41,6 +42,8 @@ const looks: Record<Shown, { icon?: PhosphorIcon; className: string }> = {
 	sent: { icon: CheckCircleIcon, className: 'text-primary' },
 	failed: { icon: WarningCircleIcon, className: 'text-destructive' },
 };
+/** A queued item whose last attempt hit a rate limit or a server fault (C17 keeps it queued): reason, Retry, Delete. */
+const SERVER_HOLD = new Set(['RATE_LIMITED', 'INTERNAL', 'SERVICE_UNAVAILABLE']);
 const shown = ({ status }: OutboxItem): Shown =>
 	status === 'queued' ? 'waiting' : status === 'needs_action' ? 'failed' : status;
 
@@ -68,8 +71,17 @@ function OutboxRow({ item, retry, remove }: { item: OutboxItem } & Actions) {
 	const look = looks[state];
 	// The C1 code's message (errors.<code>); the cancelled Turnstile sheet reads as the failed check.
 	const code = item.last_error_code === 'CAPTCHA_REQUIRED' ? 'CAPTCHA_FAILED' : (item.last_error_code ?? '');
+	const held = item.status === 'queued' && SERVER_HOLD.has(code);
+	const stuck = state === 'failed' || held;
+	const [asking, setAsking] = React.useState(false);
+	const [now] = React.useState(Date.now);
+	let reason = tErrors(code in en.errors ? (code as keyof typeof en.errors) : 'INTERNAL');
+	if (code === 'RATE_LIMITED') {
+		const minutes = Math.max(1, Math.ceil(((item.next_attempt_at ?? now) - now) / 60_000));
+		reason = tErrors('RATE_LIMITED', { minutes });
+	} else if (held) reason = t('server_busy_queued');
 	return (
-		<View role="listitem" className={cn('flex-row gap-4', state === 'failed' ? 'items-start' : 'items-center')}>
+		<View role="listitem" className={cn('flex-row gap-4', stuck ? 'items-start' : 'items-center')}>
 			{item.photo ? (
 				<Image aria-hidden source={{ uri: item.photo }} className="size-16 rounded-row bg-muted" />
 			) : (
@@ -98,13 +110,9 @@ function OutboxRow({ item, retry, remove }: { item: OutboxItem } & Actions) {
 							{formatDate(item.created_at, locale, 'time')}
 						</Text>
 					</View>
-					{state === 'failed' ? (
-						<Text className="mt-1 text-sm text-muted-foreground">
-							{tErrors(code in en.errors ? (code as keyof typeof en.errors) : 'INTERNAL')}
-						</Text>
-					) : null}
+					{stuck ? <Text className="mt-1 text-sm text-muted-foreground">{reason}</Text> : null}
 				</View>
-				{state === 'failed' ? (
+				{stuck ? (
 					<View className="-ml-3 mt-1 flex-row items-center gap-1">
 						<Button variant="text" onPress={() => void retry(item.id)}>
 							<Icon as={ArrowClockwiseIcon} />
@@ -114,11 +122,25 @@ function OutboxRow({ item, retry, remove }: { item: OutboxItem } & Actions) {
 							variant="ghost"
 							size="icon"
 							aria-label={t('outbox_delete')}
-							onPress={() => void remove(item.id)}
+							onPress={() => (held ? setAsking(true) : void remove(item.id))}
 						>
 							<Icon as={TrashIcon} />
 						</Button>
 					</View>
+				) : null}
+				{held ? (
+					<AlertDialog open={asking} onOpenChange={setAsking}>
+						<AlertDialogContent>
+							<AlertDialogTitle>{t('cancel_queued_title')}</AlertDialogTitle>
+							<AlertDialogDescription>{t('cancel_queued_body')}</AlertDialogDescription>
+							<AlertDialogFooter>
+								<AlertDialogAction onPress={() => void remove(item.id)}>
+									{t('outbox_delete')}
+								</AlertDialogAction>
+								<AlertDialogCancel>{t('cancel_queued_keep')}</AlertDialogCancel>
+							</AlertDialogFooter>
+						</AlertDialogContent>
+					</AlertDialog>
 				) : null}
 				{token ? (
 					<Button variant="text" className="-ml-3 mt-1 self-start" onPress={() => router.push(`/m#${token}`)}>

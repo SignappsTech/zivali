@@ -201,6 +201,26 @@ describe('queue rows (Profile → My reports)', () => {
 		expect(screen.getAllByRole('button', { name: t.outbox_delete })).toHaveLength(2);
 	});
 
+	test('a queued report held by a rate limit or a server error shows the reason with Retry and a confirmed Delete', async () => {
+		await insert('r1', 'queued', { code: 'RATE_LIMITED' });
+		await insert('s1', 'queued', { code: 'SERVICE_UNAVAILABLE' });
+		await insert('n1', 'queued', { code: 'NETWORK' });
+		await open();
+
+		expect(await screen.findByText(/Poskusite znova čez 1 minuto\./)).toBeOnTheScreen();
+		expect(screen.getByText(t.server_busy_queued)).toBeOnTheScreen();
+		// Waiting for the network has no reason and no actions.
+		expect(screen.getAllByRole('button', { name: t.outbox_retry })).toHaveLength(2);
+		const deletes = screen.getAllByRole('button', { name: t.outbox_delete });
+		expect(deletes).toHaveLength(2);
+
+		await fireEvent.press(deletes[0]!);
+		expect(await screen.findByText(t.cancel_queued_title)).toBeOnTheScreen();
+		expect(await statuses()).toEqual({ n1: 'queued', r1: 'queued', s1: 'queued' });
+		await fireEvent.press(screen.getAllByRole('button', { name: t.outbox_delete }).at(-1)!);
+		await waitFor(async () => expect(Object.keys(await statuses())).toHaveLength(2));
+	});
+
 	test('Retry sends a failed report once; it switches to Sent and opens its manage page', async () => {
 		await insert('f1', 'failed', { code: 'VALIDATION' });
 		startServer();
