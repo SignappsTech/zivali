@@ -1,7 +1,7 @@
 import { cache } from 'react';
 
 import { ApiError, createApiClient, type Locale } from '@zivali/api/client';
-import type { PartnerStats } from '@zivali/types';
+import { type PartnerStats, REGION_SLUGS, type RegionSlug } from '@zivali/types';
 import { env } from '@/lib/env';
 
 // C14 partner stats for the P22 server page: no session token, one call per request (React cache). The API serves
@@ -27,7 +27,7 @@ export const clientMessages = (messages: Record<string, string>) =>
 	Object.fromEntries(Object.entries(messages).filter(([key]) => CLIENT_KEYS.test(key)));
 
 /** The 12 GURS statistical regions (supabase/seed/geo/regions.geojson): the API's `region_slug` and our names. */
-export const REGIONS: Record<string, Record<Locale, string>> = {
+export const REGIONS: Record<RegionSlug, Record<Locale, string>> = {
 	pomurska: { sl: 'Pomurska', en: 'Mura' },
 	podravska: { sl: 'Podravska', en: 'Drava' },
 	koroska: { sl: 'Koroška', en: 'Carinthia' },
@@ -43,10 +43,10 @@ export const REGIONS: Record<string, Record<Locale, string>> = {
 };
 
 /** Region options for a select, sorted by name in the page's language. */
-export const regionOptions = (locale: Locale, slugs: string[] = Object.keys(REGIONS)) =>
+export const regionOptions = (locale: Locale, slugs: readonly string[] = REGION_SLUGS) =>
 	slugs
-		.filter((slug) => REGIONS[slug])
-		.map((slug) => ({ slug, name: REGIONS[slug]![locale] }))
+		.filter((slug): slug is RegionSlug => slug in REGIONS)
+		.map((slug) => ({ slug, name: REGIONS[slug][locale] }))
 		.sort((a, b) => a.name.localeCompare(b.name, locale));
 
 /** Data state of the loaded GURS geodata (supabase/seed/geo/LICENSE.md), for `common.geo_attribution`. */

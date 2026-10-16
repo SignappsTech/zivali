@@ -11,6 +11,12 @@ import { Reunited } from './reunited';
 
 const toast = vi.hoisted(() => ({ success: vi.fn(), error: vi.fn() }));
 vi.mock('sonner', async (actual) => ({ ...(await actual()), toast }));
+// The ad unit has its own tests (components/ads/ad-slot.test.tsx); here: that the owner's page holds the one slot.
+vi.mock('@/components/ads/ad-slot', () => ({
+	AdSlot: (props: { slot: string; region?: string; species?: string }) => (
+		<div data-testid={`ad-${props.slot}`} data-region={props.region} data-species={props.species} />
+	),
+}));
 
 const rex: DetailReport = {
 	...ownerReport,
@@ -46,6 +52,11 @@ describe('Reunited page (P14)', () => {
 		expect(screen.getByText(sl.lifecycle.home_body)).toBeTruthy();
 		expect(screen.getByRole('link', { name: 'Končano' }).getAttribute('href')).toBe('/zemljevid');
 		expect(screen.getByRole('button', { name: 'Delite veselo novico' })).toBeTruthy();
+		// One ad (P21 reunited), before "Končano", targeted by the report's region and species.
+		const ad = screen.getByTestId('ad-reunited');
+		expect([ad.dataset.region, ad.dataset.species]).toEqual(['osrednjeslovenska', 'dog']);
+		const done = screen.getByRole('link', { name: 'Končano' });
+		expect(ad.compareDocumentPosition(done) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
 	});
 
 	it('asks for the story consent with a switch that is off, explained, and saved nowhere yet', () => {
@@ -99,5 +110,6 @@ describe('Reunited page (P14)', () => {
 		cleanup();
 		show({ ...rex, manager_role: 'finder' });
 		expect(screen.queryByRole('link')).toBeNull();
+		expect(screen.queryByTestId(/^ad-/)).toBeNull();
 	});
 });

@@ -20,11 +20,13 @@ export default defineConfig(
 	{
 		// Public pages keep Redux and RTK Query off their first load (TASK-90.5, TASK-90.6): an @zivali/api hook in a
 		// public route or in a component it imports statically (the shell on every page, the public forms) pulls them
-		// in. /m brings its own StoreProvider, so components/manage is not in the list.
+		// in. /m brings its own StoreProvider, so components/manage is not in the list. The ad slot (TASK-36.5) is on
+		// public pages too and calls the API without the store.
 		files: [
 			'app/*/(public)/**/*.tsx',
 			'app/*/{layout,page}.tsx',
 			'app/providers.tsx',
+			'components/ads/*.tsx',
 			'components/{analytics,consent,content,legal,partners,shell}/**/*.tsx',
 			'components/report/{report-detail,slots/*}.tsx',
 			'components/auth/{parts,reset,sign-in,sign-up}.tsx',

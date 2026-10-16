@@ -3,6 +3,8 @@
 // the 12 C6 statistical regions) or C6 municipality slugs, so names, emails, phone and chip numbers, coordinates, ids
 // and free text cannot pass.
 
+import { REGION_SLUGS } from '@zivali/types';
+
 type Check<T> = ((value: unknown) => value is T) & { optional?: true };
 
 const oneOf =
@@ -45,20 +47,7 @@ export type ParamName =
 
 const municipality = slug;
 // C6 `regions.slug`: the 12 statistical regions.
-const region = oneOf(
-	'pomurska',
-	'podravska',
-	'koroska',
-	'savinjska',
-	'zasavska',
-	'posavska',
-	'jugovzhodna-slovenija',
-	'osrednjeslovenska',
-	'gorenjska',
-	'primorsko-notranjska',
-	'goriska',
-	'obalno-kraska'
-);
+const region = oneOf(...REGION_SLUGS);
 const species = oneOf('dog', 'cat');
 const report_type = oneOf('lost', 'found', 'sighted');
 const ad_slot = oneOf('feed', 'detail', 'reunited', 'sidebar');

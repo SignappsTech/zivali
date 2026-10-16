@@ -13,6 +13,7 @@ import { flattenPages } from '@zivali/api/pagination';
 import { useGetMapReportsQuery, useSearchReportsInfiniteQuery } from '@zivali/api/reports';
 import { formatRelative, type Locale } from '@zivali/i18n/format';
 import type { MapReport, PublicReport } from '@zivali/types';
+import { AdSlot } from '@/components/ads/ad-slot';
 import { MapView, type Marker } from '@/components/map/map-view';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -190,6 +191,13 @@ export function Browse() {
 	// In the API's order: boosted first (C4), so pages are not re-sorted here.
 	const reports = React.useMemo(() => list.data && flattenPages(list.data), [list.data]);
 	const count = map.data ? pins.length : (reports?.length ?? 0);
+	// P21 feed rows, in the page's context: the region of the first (nearest) row, the species when only one is shown.
+	const adRegion = reports?.[0]?.region_slug;
+	const adSpecies = applied.species.length === 1 ? applied.species[0] : undefined;
+	const renderAd = React.useCallback(
+		() => <AdSlot slot="feed" region={adRegion} species={adSpecies} />,
+		[adRegion, adSpecies]
+	);
 
 	// The drawer's live count: the draft (debounced while the slider moves); closed, the map's own query.
 	const settled = useDebounced(draft, COUNT_DEBOUNCE_MS);
@@ -355,6 +363,7 @@ export function Browse() {
 						onLoadMore={() => void list.fetchNextPage()}
 						selected={selected}
 						onActiveChange={setActive}
+						renderAd={renderAd}
 					/>
 				</div>
 			</section>

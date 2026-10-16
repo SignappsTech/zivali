@@ -34,7 +34,7 @@ export type ReportListProps = {
 	onActiveChange?: (code: string | null) => void;
 	/**
 	 * P21 insertion point: renders the ad row placed after every 8 report rows (never first, never two in a row); no
-	 * ads without it. TASK-36.5 passes the feed AdSlot here.
+	 * ads without it. Browse passes the feed AdSlot.
 	 */
 	renderAd?: (slot: AdSlot) => React.ReactNode;
 };
@@ -151,7 +151,10 @@ export function ReportList({
 				<ul className="grid gap-5">
 					{items.map((item) =>
 						item.kind === 'ad' ? (
-							<li key={item.key}>{renderAd?.(item)}</li>
+							// A collapsed ad leaves no row and no extra gap (P21 S2).
+							<li key={item.key} className="empty:hidden">
+								{renderAd?.(item)}
+							</li>
 						) : (
 							<li key={item.key}>
 								<ReportRow
