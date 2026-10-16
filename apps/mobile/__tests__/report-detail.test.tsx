@@ -16,7 +16,7 @@ import * as fx from '@zivali/api/__fixtures__/reports';
 import type { CachedReport } from '@zivali/api/sync';
 import sl from '@zivali/i18n/dist/sl.json';
 import { formatDayMonth } from '@zivali/i18n/format';
-import { createMockApi } from '@zivali/api/mock';
+import { createMockApi, type MockHandler, mockError } from '@zivali/api/mock';
 import { api, createApiStore } from '@zivali/api/rtk';
 import type { PublicReport, ReportOwnerView } from '@zivali/types';
 import ReportScreen from '@/app/r/[code]/index';
@@ -33,14 +33,37 @@ jest.mock('expo-network', () => ({ useNetworkState: () => ({ isConnected: true, 
 jest.mock('@/lib/auth', () => ({ providers: [], signInWithProvider: jest.fn() }));
 // The anonymous session before a report-abuse request has its own tests (manage.test.tsx).
 jest.mock('@/lib/anonymous', () => ({ ensureSession: jest.fn(async () => ({})) }));
-// The P16 gate has its own tests (auth.test.tsx); here it only shows whether contact opened it.
+// The P16 gate has its own tests (auth.test.tsx): signed out (or anonymous) it shows, with a confirmed account it
+// closes and continues at once.
+const mockGate = { signedIn: false };
 jest.mock('@/components/auth/gate', () => {
 	const { Text: MockText } = jest.requireActual<typeof import('react-native')>('react-native');
+	const { useEffect } = jest.requireActual<typeof import('react')>('react');
 	return {
-		AuthGate: ({ open, reason }: { open: boolean; reason: string }) =>
-			open ? <MockText>{`gate:${reason}`}</MockText> : null,
+		AuthGate: ({
+			open,
+			reason,
+			onOpenChange,
+			onReady,
+		}: {
+			open: boolean;
+			reason: string;
+			onOpenChange: (open: boolean) => void;
+			onReady?: () => void;
+		}) => {
+			useEffect(() => {
+				if (!open || !mockGate.signedIn) return;
+				onOpenChange(false);
+				onReady?.();
+			}, [open, onOpenChange, onReady]);
+			return open && !mockGate.signedIn ? <MockText>{`gate:${reason}`}</MockText> : null;
+		},
 	};
 });
+jest.mock('@zivali/api/auth', () => ({
+	...jest.requireActual('@zivali/api/auth'),
+	useSession: () => ({ me: { email: 'ana@zivali.test' } }),
+}));
 
 const NOW = new Date('2026-10-16T12:00:00Z');
 const r = sl.report;
@@ -100,8 +123,11 @@ const queryError = (code: 'GONE' | 'NOT_FOUND' | 'INTERNAL', status: number) => 
 	data: { code, message: code },
 });
 
+const CONVERSATION = 'c9a1d2e3-0000-4000-8000-000000000001';
+let conversation: MockHandler = () => ({ id: CONVERSATION });
 const stores: ReturnType<typeof createApiStore>[] = [];
 const mockApi = createMockApi({
+	'POST /v1/conversations': (request) => conversation(request),
 	'POST /v1/geo/reverse': {
 		place: {
 			label: 'Šiška, Ljubljana',
@@ -134,6 +160,8 @@ async function open(report: Partial<Result>, code = 'Rex2Lost') {
 			'r/[code]/index': ReportScreen,
 			'r/[code]/poster': () => <Text>poster screen</Text>,
 			'report/found': () => <Text>sighted flow</Text>,
+			'inbox/[id]': () => <Text>conversation screen</Text>,
+			'auth/check-email': () => <Text>check email screen</Text>,
 		},
 		{ initialUrl: `/r/${code}`, wrapper: Providers }
 	);
@@ -181,6 +209,8 @@ const expectInOrder = (labels: string[]) => {
 beforeEach(() => {
 	refetch.mockReset();
 	mockApi.calls.length = 0;
+	mockGate.signedIn = false;
+	conversation = () => ({ id: CONVERSATION });
 });
 // renderRouter runs on fake timers.
 afterEach(() => {
@@ -319,6 +349,81 @@ describe('report detail (P9 mobile)', () => {
 	test('slot A for a sighted report: message first, "To je moja žival" as the text button', async () => {
 		await open({ data: sighted }, sighted.short_code);
 		expectInOrder([r.action_message, r.more, r.action_mine]);
+	});
+
+	describe('contact (C9, TASK-21.6)', () => {
+		const contactCalls = () =>
+			mockApi.calls.filter((call) => call.path === '/v1/conversations').map((call) => call.body);
+
+		test.each([
+			['lost', r.action_message, lost],
+			['found', r.action_mine, found],
+			['sighted', r.action_message, sighted],
+			['sighted', r.action_mine, sighted],
+		] as const)('%s: "%s" starts the conversation about the report and opens it', async (_type, label, report) => {
+			mockGate.signedIn = true;
+			const { page } = await open({ data: report }, report.short_code);
+			await fireEvent.press(screen.getByRole('button', { name: label }));
+			expect(await screen.findByText('conversation screen')).toBeOnTheScreen();
+			expect(page.getPathname()).toBe(`/inbox/${CONVERSATION}`);
+			expect(contactCalls()).toEqual([{ about_report_code: report.short_code }]);
+		});
+
+		test('signed out or anonymous: the P16 gate opens and nothing is sent', async () => {
+			await open({ data: lost });
+			await fireEvent.press(screen.getByRole('button', { name: r.action_message }));
+			expect(screen.getByText('gate:contact')).toBeOnTheScreen();
+			expect(contactCalls()).toEqual([]);
+		});
+
+		test('UNVERIFIED_EMAIL opens "Potrdite svoj e-naslov" for the account address', async () => {
+			mockGate.signedIn = true;
+			conversation = () => mockError('UNVERIFIED_EMAIL');
+			const { page } = await open({ data: found }, found.short_code);
+			await fireEvent.press(screen.getByRole('button', { name: r.action_mine }));
+			expect(await screen.findByText('check email screen')).toBeOnTheScreen();
+			expect(page.getPathname()).toBe('/auth/check-email');
+			expect(page.getSearchParams()).toEqual({ email: 'ana@zivali.test' });
+		});
+
+		test('RATE_LIMITED (contact, 10 a day) is a calm note in the bar, not an error', async () => {
+			mockGate.signedIn = true;
+			conversation = () => mockError('RATE_LIMITED', 'RATE_LIMITED', { retry_after_s: 3600 });
+			await open({ data: lost });
+			await fireEvent.press(screen.getByRole('button', { name: r.action_message }));
+			expect(await screen.findByRole('status')).toHaveTextContent(sl.errors.RATE_LIMITED_generic);
+			expect(screen.queryByRole('alert')).toBeNull();
+			expect(screen.queryByText('conversation screen')).toBeNull();
+		});
+
+		test('another refusal is an error note', async () => {
+			mockGate.signedIn = true;
+			conversation = () => mockError('FORBIDDEN');
+			await open({ data: lost });
+			await fireEvent.press(screen.getByRole('button', { name: r.action_message }));
+			expect(await screen.findByRole('alert')).toHaveTextContent(sl.errors.FORBIDDEN);
+		});
+
+		test('a second press while the first is on its way sends nothing more', async () => {
+			mockGate.signedIn = true;
+			let answer: (value: unknown) => void = () => undefined;
+			conversation = () => new Promise((resolve) => (answer = resolve));
+			await open({ data: sighted }, sighted.short_code);
+			await fireEvent.press(screen.getByRole('button', { name: r.action_message }));
+			await waitFor(() => expect(contactCalls()).toHaveLength(1));
+			await fireEvent.press(screen.getByRole('button', { name: r.action_mine }));
+			await fireEvent.press(screen.getByRole('button', { name: r.action_message }));
+			expect(contactCalls()).toHaveLength(1);
+			await act(async () => answer({ id: CONVERSATION }));
+			expect(await screen.findByText('conversation screen')).toBeOnTheScreen();
+			expect(contactCalls()).toHaveLength(1);
+		});
+
+		test('owners never see the contact actions', async () => {
+			await open({ data: { ...owner, type: 'sighted' } });
+			expect(screen.queryByRole('button', { name: r.action_message })).toBeNull();
+			expect(screen.queryByRole('button', { name: r.action_mine })).toBeNull();
+		});
 	});
 
 	test('share opens the system sheet with the localised P18 text and the short link (slot B)', async () => {

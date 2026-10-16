@@ -4,14 +4,21 @@ import { ArrowCounterClockwiseIcon } from 'phosphor-react-native/src/icons/Arrow
 import { ChatCircleIcon } from 'phosphor-react-native/src/icons/ChatCircle';
 import { EyeIcon } from 'phosphor-react-native/src/icons/Eye';
 import { HeartIcon } from 'phosphor-react-native/src/icons/Heart';
+import { InfoIcon } from 'phosphor-react-native/src/icons/Info';
 import { PencilSimpleIcon } from 'phosphor-react-native/src/icons/PencilSimple';
 import { PrinterIcon } from 'phosphor-react-native/src/icons/Printer';
+import { WarningCircleIcon } from 'phosphor-react-native/src/icons/WarningCircle';
 import * as React from 'react';
 import { View } from 'react-native';
 import { useTranslations } from 'use-intl';
 
+import { useSession } from '@zivali/api/auth';
+import { useCreateConversationMutation } from '@zivali/api/chat';
+import type { QueryError } from '@zivali/api/rtk';
 import { AuthGate } from '@/components/auth/gate';
+import { useErrorText } from '@/components/auth/parts';
 import { HomeAgain, useReopen } from '@/components/report/lifecycle';
+import { Note } from '@/components/report/parts';
 import type { DetailReport, ReportSlotProps } from '@/components/report/slots/types';
 import { Button } from '@/components/ui/button';
 import { Icon } from '@/components/ui/icon';
@@ -28,16 +35,16 @@ type Action = { label: string; icon: PhosphorIcon; onPress?: () => void };
  *   `r/[code]/reunited`), text "Uredi" (`r/[code]/edit`). Closed or reunited within the
  *   reopen window: "Ponovno odpri" only ("Nadaljuj iskanje" after the 90-day expiry).
  * A sighting opens the sighted flow linked to this report (C15 `report/found?type=sighted`, TASK-30.3). Contact
- * needs an account: the P16 gate first, then TASK-21.4 opens the conversation in `startContact`. "Plakat" opens the
- * P18 poster and sharing screen (`r/[code]/poster`).
+ * needs an account: the P16 gate first (signed out or anonymous), then `startContact` (C9, TASK-21.6). "Plakat" opens
+ * the P18 poster and sharing screen (`r/[code]/poster`).
  */
 export function SlotA({ report, offline, children }: ReportSlotProps) {
 	const t = useTranslations('report');
 	const router = useRouter();
 	const [gate, setGate] = React.useState(false);
 	const [home, setHome] = React.useState(false);
-	// TASK-21.4 fills this: it opens the conversation once the P16 gate is passed.
-	const startContact = React.useCallback(() => undefined, []);
+	const [pressed, setPressed] = React.useState<string>();
+	const startContact = useStartContact(report.short_code);
 
 	// The layout shows the bar for an ended report only while the owner can still reopen it.
 	if (report.status === 'closed' || report.status === 'reunited') return <Reopen report={report} offline={offline} />;
@@ -61,9 +68,17 @@ export function SlotA({ report, offline, children }: ReportSlotProps) {
 						: { type: 'sighted' },
 			} as unknown as Href),
 	};
-	const contact = { onPress: () => setGate(true) };
-	const message: Action = { label: t('action_message'), icon: ChatCircleIcon, ...contact };
-	const mine: Action = { label: t('action_mine'), icon: HeartIcon, ...contact };
+	const contact = (label: string, icon: PhosphorIcon): Action => ({
+		label,
+		icon,
+		onPress: () => {
+			setPressed(label);
+			setGate(true);
+		},
+	});
+	const message = contact(t('action_message'), ChatCircleIcon);
+	const mine = contact(t('action_mine'), HeartIcon);
+	const loading = (action: Action) => startContact.busy && pressed === action.label;
 
 	// Every action needs the network (the sighting flow does not queue through the outbox yet), so the saved copy
 	// disables them all and says why.
@@ -86,7 +101,13 @@ export function SlotA({ report, offline, children }: ReportSlotProps) {
 	return (
 		<View>
 			<View className="flex-row items-center gap-2">
-				<Button size="lg" className="flex-1 px-5" disabled={offline} onPress={primary.onPress}>
+				<Button
+					size="lg"
+					className="flex-1 px-5"
+					disabled={offline}
+					loading={loading(primary)}
+					onPress={primary.onPress}
+				>
 					<Icon as={primary.icon} />
 					{primary.label}
 				</Button>
@@ -99,6 +120,7 @@ export function SlotA({ report, offline, children }: ReportSlotProps) {
 						variant="text"
 						className="flex-1"
 						disabled={offline}
+						loading={loading(action)}
 						onPress={action.onPress}
 					>
 						<Icon as={action.icon} />
@@ -111,6 +133,17 @@ export function SlotA({ report, offline, children }: ReportSlotProps) {
 					{t('action_offline')}
 				</Text>
 			)}
+			{startContact.note && (
+				// Calm for the daily contact limit, an error otherwise.
+				<Note
+					role={startContact.note.limited ? 'status' : 'alert'}
+					icon={startContact.note.limited ? InfoIcon : WarningCircleIcon}
+					iconClassName={startContact.note.limited ? 'text-primary' : 'text-destructive'}
+					className="mt-2"
+				>
+					{startContact.note.text}
+				</Note>
+			)}
 			{report.is_mine ? (
 				<HomeAgain report={report} open={home} onOpenChange={setHome} />
 			) : (
@@ -119,11 +152,45 @@ export function SlotA({ report, offline, children }: ReportSlotProps) {
 					body={t('gate_body')}
 					open={gate}
 					onOpenChange={setGate}
-					onReady={startContact}
+					onReady={startContact.start}
 				/>
 			)}
 		</View>
 	);
+}
+
+/**
+ * Contact after the P16 gate (C9): POST /v1/conversations { about_report_code }, then the conversation
+ * (`inbox/[id]`); the API answers the same one again for the same report and caller. UNVERIFIED_EMAIL opens the
+ * "Potrdite svoj e-naslov" screen; RATE_LIMITED (contact, 10 a day) and other refusals are a note in the bar.
+ * chat_started fires in the conversation, with the first message.
+ */
+function useStartContact(code: string) {
+	const router = useRouter();
+	const errorText = useErrorText();
+	const { me } = useSession();
+	const [create, { isLoading: busy }] = useCreateConversationMutation();
+	const [note, setNote] = React.useState<{ limited: boolean; text: string }>();
+	// A ref, not `busy`: a second press in the same tick (or the gate's onReady) sees stale state.
+	const starting = React.useRef(false);
+
+	const start = async () => {
+		if (starting.current) return;
+		starting.current = true;
+		setNote(undefined);
+		try {
+			const { id } = await create({ about_report_code: code }).unwrap();
+			router.push(`/inbox/${id}` as Href);
+		} catch (failure) {
+			const refusal = (failure as Partial<QueryError> | null)?.data?.code;
+			if (refusal === 'UNVERIFIED_EMAIL')
+				router.push({ pathname: '/auth/check-email', params: { email: me?.email ?? '' } });
+			else setNote({ limited: refusal === 'RATE_LIMITED', text: errorText(failure) });
+		} finally {
+			starting.current = false;
+		}
+	};
+	return { start: () => void start(), busy, note };
 }
 
 /** P14 S6/S7: the primary "Ponovno odpri" ("Nadaljuj iskanje" after the expiry); a quiet text button when reunited. */
