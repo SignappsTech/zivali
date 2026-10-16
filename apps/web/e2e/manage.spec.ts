@@ -83,7 +83,7 @@ for (const viewport of [
 		await expect(page.getByText('Najdena')).toBeVisible();
 		await expect(page.getByRole('link', { name: 'Uredi prijavo' })).toHaveAttribute(
 			'href',
-			`/r/${ownerReport.short_code}`
+			`/r/${ownerReport.short_code}/uredi`
 		);
 		await expect(page.getByRole('button', { name: 'Žival je spet doma' })).toBeVisible();
 		expect(await page.title()).toBe('Vaša prijava · Najdimo');
