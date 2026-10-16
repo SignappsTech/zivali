@@ -1,0 +1,11 @@
+{
+	"row_title_named": "{name}",
+	"row_title_lost": "{species, select, dog {Lost dog} cat {Lost cat} other {Lost animal}}",
+	"row_title_found": "{species, select, dog {Found dog} cat {Found cat} other {Found animal}}",
+	"row_title_sighted": "{species, select, dog {Sighted dog} cat {Sighted cat} other {Sighted animal}}",
+	"status_lost": "Lost",
+	"status_found": "Found",
+	"status_sighted": "Sighted",
+	"status_reunited": "Home again",
+	"status_closed": "Closed"
+}
