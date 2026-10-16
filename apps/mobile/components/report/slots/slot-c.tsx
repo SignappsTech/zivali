@@ -7,6 +7,7 @@ import { Pressable, View } from 'react-native';
 import { useReducedMotion } from 'react-native-reanimated';
 import { useTranslations } from 'use-intl';
 
+import { CloseSearch } from '@/components/report/lifecycle';
 import type { ReportSlotProps } from '@/components/report/slots/types';
 import { Button } from '@/components/ui/button';
 import { useFocusRing } from '@/components/ui/focus-ring';
@@ -39,34 +40,46 @@ function MenuItem({ icon, label, onPress }: { icon: PhosphorIcon; label: string;
 
 /**
  * P9 slot C, "Več možnosti": the overflow beside slot A that opens a sheet menu. Visitors get "Prijavi zlorabo" (the
- * P10 sheet, TASK-25.4); owners get "Zaključi iskanje" instead (TASK-26.5; "Povečaj doseg" joins it in M4). Until those
- * tasks fill their item it closes the menu. "Kopiraj povezavo" waits for a clipboard module.
+ * P10 sheet, TASK-25.4); owners get "Zaključi iskanje" instead, which opens the P14 close sheet ("Povečaj doseg" joins it
+ * in M4, hidden until then). Until TASK-25.4 fills its item it closes the menu. "Kopiraj povezavo" waits for a
+ * clipboard module.
  */
 export function SlotC({ report }: ReportSlotProps) {
 	const t = useTranslations('report');
 	const tc = useTranslations('common');
 	const [open, setOpen] = React.useState(false);
+	const [closing, setClosing] = React.useState(false);
 	const close = () => setOpen(false);
 	return (
-		<Sheet open={open} onOpenChange={setOpen}>
-			<SheetTrigger asChild>
-				<Button variant="ghost" size="icon" aria-label={t('more')}>
-					<Icon as={DotsThreeIcon} size={24} />
-				</Button>
-			</SheetTrigger>
-			<SheetContent closeLabel={tc('close')}>
-				<SheetTitle>{t('more')}</SheetTitle>
-				<View role="menu" aria-label={t('more')} className="-mx-2 gap-1 pt-3">
-					{report.is_mine ? (
-						<MenuItem icon={XCircleIcon} label={t('owner_close')} onPress={close} />
-					) : (
-						<MenuItem icon={FlagIcon} label={t('more_abuse')} onPress={close} />
-					)}
-				</View>
-				<Button variant="text" className="mt-3" onPress={close}>
-					{tc('cancel')}
-				</Button>
-			</SheetContent>
-		</Sheet>
+		<>
+			<Sheet open={open} onOpenChange={setOpen}>
+				<SheetTrigger asChild>
+					<Button variant="ghost" size="icon" aria-label={t('more')}>
+						<Icon as={DotsThreeIcon} size={24} />
+					</Button>
+				</SheetTrigger>
+				<SheetContent closeLabel={tc('close')}>
+					<SheetTitle>{t('more')}</SheetTitle>
+					<View role="menu" aria-label={t('more')} className="-mx-2 gap-1 pt-3">
+						{report.is_mine ? (
+							<MenuItem
+								icon={XCircleIcon}
+								label={t('owner_close')}
+								onPress={() => {
+									close();
+									setClosing(true);
+								}}
+							/>
+						) : (
+							<MenuItem icon={FlagIcon} label={t('more_abuse')} onPress={close} />
+						)}
+					</View>
+					<Button variant="text" className="mt-3" onPress={close}>
+						{tc('cancel')}
+					</Button>
+				</SheetContent>
+			</Sheet>
+			{report.is_mine && <CloseSearch report={report} open={closing} onOpenChange={setClosing} />}
+		</>
 	);
 }

@@ -1,6 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
 
-import { useGetMapReportsQuery, useGetReportQuery, useSearchReportsInfiniteQuery } from '@zivali/api/reports';
+import {
+	useGetMapReportsQuery,
+	useGetReportQuery,
+	useListMyReportsInfiniteQuery,
+	useSearchReportsInfiniteQuery,
+} from '@zivali/api/reports';
 import type { QueryError } from '@zivali/api/rtk';
 import type { CachedReport } from '@zivali/api/sync';
 import type { MapReportList, MapReportQuery, PublicReport, ReportSearch } from '@zivali/types';
@@ -215,4 +220,12 @@ export function useReport(
 		...useCacheFallback<PublicReport | CachedReport | null>(network, code, readOne),
 		refetch: network.refetch,
 	};
+}
+
+/**
+ * The caller's own reports (GET /v1/me/reports, newest first), for My reports. Network only: the manager view carries
+ * private fields, so it never goes to the device cache (C17); offline the query stays uninitialised.
+ */
+export function useMyReports() {
+	return useListMyReportsInfiniteQuery(undefined, { skip: useOffline() });
 }

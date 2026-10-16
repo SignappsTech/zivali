@@ -13,6 +13,7 @@
 	"row_language": "Language",
 	"row_home_area": "Home area",
 	"row_phone": "Phone (optional)",
+	"row_reports": "My reports",
 	"phone_help": "We never show your number publicly. We only show it in a confirmed conversation, if you choose that when reporting.",
 	"phone_invalid": "Enter a phone number, for example 041 123 456.",
 	"row_payments": "Payments",

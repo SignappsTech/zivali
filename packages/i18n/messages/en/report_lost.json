@@ -1,0 +1,18 @@
+{
+	"circumstances_label": "What happened (optional)",
+	"circumstances_placeholder": "For example: fireworks scared him on a walk and he slipped his lead.",
+	"circumstances_help": "This will be public. Do not include your address or phone number.",
+	"circumstances_too_long": "The description is too long. Please shorten it to {max} characters or fewer.",
+	"reward_label": "Reward (optional)",
+	"reward_toggle": "I am offering a reward for the return",
+	"reward_amount_label": "Amount in euros (optional)",
+	"reward_amount_invalid": "Enter the amount in whole euros, for example 50.",
+	"reward_amount_max": "Enter an amount of up to {max}.",
+	"reward_note_label": "Note (optional)",
+	"reward_note_placeholder": "For example: also for information that helps the search",
+	"reward_note_help": "Up to 80 characters. No phone number, email address or links: people reach you through messages in the app.",
+	"reward_note_contact_data": "Remove the phone number, email address, link or account number. People reach you through messages in the app.",
+	"reward_note_too_long": "The note is too long. Please shorten it to 80 characters or fewer.",
+	"reward_empty": "Enter an amount or a note, or turn the reward off.",
+	"reward_warning": "You arrange the reward with the finder yourself. Najdimo does not hold or pay it. Never pay anyone in advance: hand over the reward only once your pet is back with you."
+}

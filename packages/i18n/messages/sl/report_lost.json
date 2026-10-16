@@ -1,0 +1,18 @@
+{
+	"circumstances_label": "Opis okoliščin (neobvezno)",
+	"circumstances_placeholder": "Na primer: med sprehodom ga je prestrašil ognjemet in se je iztrgal s povodca.",
+	"circumstances_help": "To bo javno vidno. Ne navajajte naslova ali telefonske številke.",
+	"circumstances_too_long": "Opis je predolg. Skrajšajte ga na največ {max} znakov.",
+	"reward_label": "Nagrada (neobvezno)",
+	"reward_toggle": "Ponujam nagrado za vrnitev",
+	"reward_amount_label": "Znesek v evrih (neobvezno)",
+	"reward_amount_invalid": "Vpišite znesek v celih evrih, na primer 50.",
+	"reward_amount_max": "Vpišite znesek do {max}.",
+	"reward_note_label": "Opomba (neobvezno)",
+	"reward_note_placeholder": "Na primer: tudi za podatek, ki pomaga pri iskanju",
+	"reward_note_help": "Največ 80 znakov. Brez telefonske številke, e-naslova in povezav: ljudje vam pišejo prek sporočil v aplikaciji.",
+	"reward_note_contact_data": "Odstranite telefonsko številko, e-naslov, povezavo ali številko računa. Ljudje vam pišejo prek sporočil v aplikaciji.",
+	"reward_note_too_long": "Opomba je predolga. Skrajšajte jo na največ 80 znakov.",
+	"reward_empty": "Vpišite znesek ali opombo ali pa nagrado izklopite.",
+	"reward_warning": "Za nagrado se z najditeljem dogovorite sami. Najdimo je ne hrani in ne izplača. Nikoli nikomur ne plačajte vnaprej: nagrado izročite šele, ko je žival spet pri vas."
+}

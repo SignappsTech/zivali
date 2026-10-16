@@ -1,5 +1,7 @@
 {
 	"section_basics": "Basics",
+	"my_reports": "My reports",
+	"my_reports_empty": "You have no reports yet.",
 	"species_label": "Species",
 	"name_label": "Name",
 	"sex_label": "Sex",

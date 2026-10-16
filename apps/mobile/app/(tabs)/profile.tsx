@@ -2,6 +2,7 @@ import { useRouter } from 'expo-router';
 import { BellIcon } from 'phosphor-react-native/src/icons/Bell';
 import { BellRingingIcon } from 'phosphor-react-native/src/icons/BellRinging';
 import { CheckIcon } from 'phosphor-react-native/src/icons/Check';
+import { ClipboardTextIcon } from 'phosphor-react-native/src/icons/ClipboardText';
 import { CookieIcon } from 'phosphor-react-native/src/icons/Cookie';
 import { CreditCardIcon } from 'phosphor-react-native/src/icons/CreditCard';
 import { QuestionIcon } from 'phosphor-react-native/src/icons/Question';
@@ -161,11 +162,16 @@ export default function ProfileTab() {
 					{t(signedIn ? 'profile.title' : 'profile.signed_out_title')}
 				</Text>
 				{signedIn && me ? <AccountHeader me={me} /> : null}
-				{/* Reports sent or waiting on this device, signed in or not (FR-042); TASK-26.5 adds the account's own. */}
-				<OutboxList heading={t('report_found.my_reports')} className="mt-7" />
+				{/* Reports sent or waiting on this device (FR-042); signed in, they open "Moje prijave" (settings/reports). */}
+				{signedIn ? null : <OutboxList heading={t('report_found.my_reports')} className="mt-7" />}
 				{signedIn ? (
 					<View className="mt-7 gap-3">
 						<LanguageRow />
+						<MenuRow
+							icon={<Icon as={ClipboardTextIcon} size={24} />}
+							title={t('profile.row_reports')}
+							onPress={() => router.push('/settings/reports')}
+						/>
 						<MenuRow
 							icon={<Icon as={BellRingingIcon} size={24} />}
 							title={t('profile.row_alerts')}
