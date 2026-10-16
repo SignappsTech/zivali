@@ -5,7 +5,7 @@ status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:14'
-updated_date: '2026-10-16 01:13'
+updated_date: '2026-10-16 09:28'
 labels:
   - fe
   - 'est:S'
@@ -43,7 +43,7 @@ Branch: agent/task-23.3-alerts-mob
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Profile → Alerts sets the home area, radius 1–25 km (default 5), species and opt-in or pause, per P13.
-- [ ] #2 Opt-in fires alert_opt_in with consent only; unverified users see the verify prompt.
+- [x] #1 Profile → Alerts sets the home area, radius 1–25 km (default 5), species and opt-in or pause, per P13.
+- [x] #2 Opt-in fires alert_opt_in with consent only; unverified users see the verify prompt.
 - [ ] #3 Screen-reader labels and the radius control are verified on Android.
 <!-- AC:END -->
