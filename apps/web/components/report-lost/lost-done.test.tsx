@@ -30,6 +30,11 @@ const track = vi.hoisted(() => vi.fn());
 const fetchMock = vi.fn<typeof fetch>();
 const LINK = `https://najdimo.si/r/${CODE}`;
 vi.mock('@zivali/analytics', () => ({ track }));
+// The P15 row has its own tests (who is asked, the ask itself: components/payments/support.test.tsx); here only its
+// slot.
+vi.mock('@/components/payments/support', () => ({
+	ContributionRow: ({ code }: { code: string }) => <div data-testid="contribution-row" data-code={code} />,
+}));
 
 function show(props: Partial<React.ComponentProps<typeof LostDone>> = {}, routes: MockRoutes = {}) {
 	const api = createMockApi({
@@ -101,8 +106,14 @@ describe('LostDone (P6 M9)', () => {
 			'tel:+38612345678'
 		);
 		expect(document.querySelector('[data-ad-slot]')).toBeNull();
-		// Signed out here: the P15 contribution row asks signed-in accounts only (components/payments/support.test.tsx).
-		expect(screen.queryByText(sl.support.contribution_row)).toBeNull();
+		// The P15 contribution slot comes last (it asks signed-in accounts only: components/payments/support.test.tsx).
+		expect(screen.getByTestId('contribution-row').dataset.code).toBe(CODE);
+	});
+
+	it('leaves the contribution slot out while payments are off (paymentsEnabled, TASK-76.1)', () => {
+		show({ payments: false });
+		expect(screen.getByRole('heading', { level: 1, name: t.done_title })).toBeTruthy();
+		expect(screen.queryByTestId('contribution-row')).toBeNull();
 	});
 
 	it('opens the poster options: language, a failure on 503, then the PDF, with poster_download by region', async () => {

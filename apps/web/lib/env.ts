@@ -36,6 +36,12 @@ const schema = z
 			.optional(),
 		// Signs the /dev/checkout mock events (C13): the API's MOCK_WEBHOOK_SECRET. Defaults to its local value only when APP_ENV=local; unset elsewhere.
 		MOCK_WEBHOOK_SECRET: z.string().optional(),
+		// Server only, read per request: the P15 asks (reunited tip, lost contribution row, Profile support card); read
+		// it through paymentsEnabled().
+		PAYMENTS_ENABLED: z.enum(['true', 'false']).optional(),
+		// Server only, read per request: search engines may index the site (robots.txt sitemap, X-Robots-Tag); read it
+		// through searchIndexing().
+		SEARCH_INDEXING: z.enum(['true', 'false']).optional(),
 	})
 	.refine(
 		(v) => {
@@ -98,8 +104,28 @@ const source = {
 	APPLE_TEAM_ID: process.env.APPLE_TEAM_ID,
 	ANDROID_CERT_SHA256: process.env.ANDROID_CERT_SHA256,
 	MOCK_WEBHOOK_SECRET: process.env.MOCK_WEBHOOK_SECRET,
+	PAYMENTS_ENABLED: process.env.PAYMENTS_ENABLED,
+	SEARCH_INDEXING: process.env.SEARCH_INDEXING,
 };
 
 // `next build` loads route modules without reading them (every page renders per request for the CSP nonce), so a
 // build without .env.local still passes `pnpm verify`; the server and the browser fail on the first import instead.
 export const env = process.env.NEXT_PHASE === 'phase-production-build' ? (source as Env) : parseEnv(source);
+
+/**
+ * Whether the server pages render the P15 payment asks (C13): off only with PAYMENTS_ENABLED=false. Without it the
+ * asks follow the API: they hide themselves once GET /v1/config/public says `payments.enabled: false`
+ * (PAYMENTS_PROVIDER=off, components/payments/support.tsx); the flag also keeps them out of the server render.
+ * Server only.
+ */
+export const paymentsEnabled = ({ PAYMENTS_ENABLED }: Pick<Env, 'PAYMENTS_ENABLED'> = env) =>
+	PAYMENTS_ENABLED !== 'false';
+
+/**
+ * Whether search engines may index the site: SEARCH_INDEXING, else everywhere but staging (local stays indexable for
+ * the quality run's Lighthouse SEO audit). Off: every page sends `X-Robots-Tag: noindex, nofollow` (proxy.ts) and
+ * robots.txt names no sitemap; crawling stays allowed, so crawlers see the noindex. The web-first pilot on najdimo.si
+ * keeps it off until the public launch (docs/tech/pilot-runbook.md). Server only.
+ */
+export const searchIndexing = ({ SEARCH_INDEXING, APP_ENV }: Pick<Env, 'SEARCH_INDEXING' | 'APP_ENV'> = env) =>
+	SEARCH_INDEXING ? SEARCH_INDEXING === 'true' : APP_ENV !== 'staging';

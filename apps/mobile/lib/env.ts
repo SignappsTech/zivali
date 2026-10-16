@@ -13,6 +13,7 @@ const raw = {
 	EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
 	EXPO_PUBLIC_APPLE_SIGN_IN: process.env.EXPO_PUBLIC_APPLE_SIGN_IN,
 	EXPO_PUBLIC_CAPTCHA: process.env.EXPO_PUBLIC_CAPTCHA,
+	EXPO_PUBLIC_PAYMENTS_ENABLED: process.env.EXPO_PUBLIC_PAYMENTS_ENABLED,
 };
 
 // An empty value in .env.local counts as unset.
@@ -35,6 +36,10 @@ const schema = z
 		EXPO_PUBLIC_APPLE_SIGN_IN: optional(z.enum(['true', 'false'])).transform((v) => v === 'true'),
 		// Turnstile through the web /captcha page before anonymous sign-in (C7); off unless "true" (local Supabase ignores it).
 		EXPO_PUBLIC_CAPTCHA: optional(z.enum(['true', 'false'])).transform((v) => v === 'true'),
+		// The P15 asks (reunited tip, lost contribution row, Profile support card, C13): off only with "false" (a new
+		// build). Without it they follow the API and hide once GET /v1/config/public says payments.enabled false
+		// (PAYMENTS_PROVIDER=off, components/payments/support.tsx).
+		EXPO_PUBLIC_PAYMENTS_ENABLED: optional(z.enum(['true', 'false'])).transform((v) => v !== 'false'),
 	})
 	.refine((e) => !(e.EXPO_PUBLIC_APP_ENV === 'production' && e.EXPO_PUBLIC_PUSH_PROVIDER === 'mock'), {
 		// Real users must never register the placeholder token.

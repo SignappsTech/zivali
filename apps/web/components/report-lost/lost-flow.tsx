@@ -591,10 +591,13 @@ function useTrackSubmit() {
 export function LostFlow({
 	initialPet,
 	signedIn,
+	payments = true,
 	testMode = false,
 }: {
 	initialPet?: string;
 	signedIn: boolean;
+	/** Payments off (the page's paymentsEnabled()): no P15 contribution row on the confirmation. */
+	payments?: boolean;
 	/** Outside production (APP_ENV): the P15 test-payment note on the confirmation. */
 	testMode?: boolean;
 }) {
@@ -934,6 +937,7 @@ export function LostFlow({
 						{...done}
 						unverified={Boolean(me) && !isVerified}
 						titleClass={titleClass}
+						payments={payments}
 						testMode={testMode}
 					/>
 				) : (

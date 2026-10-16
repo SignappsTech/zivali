@@ -9,6 +9,7 @@ import dynamic from 'next/dynamic';
 import * as React from 'react';
 
 import { useSession } from '@zivali/api/auth';
+import { useGetPublicConfigQuery } from '@zivali/api/config';
 import type { Locale } from '@zivali/i18n/format';
 import { rememberPayment, useAnswer } from '@/components/payments/answers';
 import { Card, CardTitle } from '@/components/ui/card';
@@ -25,6 +26,15 @@ const AmountAsk = dynamic(() => import('@/components/payments/amount-ask').then(
 
 const titleClass =
 	'font-display text-xl leading-7 font-semibold tracking-[-0.01em] text-balance lg:text-2xl lg:leading-8';
+
+/**
+ * False once the API reports `payments.enabled: false` (PAYMENTS_PROVIDER=off, C13 §Payments off): every ask then hides
+ * itself. Shown while the config loads or when it cannot be read, so the asks render on the server; the server flag
+ * PAYMENTS_ENABLED=false (lib/env.ts paymentsEnabled) keeps them out of the page from the start.
+ */
+export function usePaymentsOn(): boolean {
+	return useGetPublicConfigQuery().data?.['payments.enabled'] !== false;
+}
 
 /** P15 B6: replaces the tip block or the contribution row once this report has a contribution. */
 function AlreadyPaid({ className }: { className?: string }) {
@@ -63,7 +73,8 @@ export function SupportTip({ reportId, code, testMode, skipFocusId, className }:
 	const key = `tip:${code}`;
 	const [answer, setAnswer] = useAnswer(key);
 	const id = React.useId();
-	if (answer === 'skipped') return null;
+	const paymentsOn = usePaymentsOn();
+	if (!paymentsOn || answer === 'skipped') return null;
 	if (answer === 'paid') return <AlreadyPaid className={className} />;
 	return (
 		<section aria-labelledby={id} className={className}>
@@ -90,6 +101,7 @@ export function SupportTip({ reportId, code, testMode, skipFocusId, className }:
 export function SupportCard({ testMode, className }: { testMode: boolean; className?: string }) {
 	const t = useTranslations('support');
 	const locale = useLocale() as Locale;
+	if (!usePaymentsOn()) return null;
 	return (
 		<Card className={className}>
 			<CardTitle asChild>
@@ -128,7 +140,8 @@ export function ContributionRow({ reportId, code, testMode, skipFocusId, classNa
 	const key = `report_contribution:${code}`;
 	const [answer, setAnswer] = useAnswer(key);
 	const bodyId = React.useId();
-	if (!me || isAnonymous || answer === 'skipped') return null;
+	const paymentsOn = usePaymentsOn();
+	if (!paymentsOn || !me || isAnonymous || answer === 'skipped') return null;
 	if (answer === 'paid') return <AlreadyPaid className={className} />;
 	const Caret = open ? CaretUpIcon : CaretDownIcon;
 	return (

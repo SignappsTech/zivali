@@ -4,7 +4,7 @@ import { type NextRequest, NextResponse } from 'next/server';
 import { ShortCode } from '@zivali/validation/common.schema';
 import { hreflangLink } from '@/i18n/alternates';
 import { routing } from '@/i18n/routing';
-import { env } from '@/lib/env';
+import { env, searchIndexing } from '@/lib/env';
 import { updateSession } from '@/lib/supabase/middleware';
 
 const handleI18nRouting = createMiddleware(routing);
@@ -109,6 +109,8 @@ export async function proxy(request: NextRequest) {
 	const link =
 		rewrite || !response.headers.has('location') ? hreflangLink(env.NEXT_PUBLIC_APP_URL, internal) : undefined;
 	if (link) response.headers.set('link', link);
+	// Staging and the pilot until launch (SEARCH_INDEXING): every page out of search results, whatever its metadata.
+	if (!searchIndexing()) response.headers.set('x-robots-tag', 'noindex, nofollow');
 	return response;
 }
 

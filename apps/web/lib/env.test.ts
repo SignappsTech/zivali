@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { parseEnv } from './env';
+import { parseEnv, paymentsEnabled, searchIndexing } from './env';
 
 const valid = {
 	NEXT_PUBLIC_SUPABASE_URL: 'http://127.0.0.1:54321',
@@ -113,5 +113,40 @@ describe('parseEnv', () => {
 		expect(parseEnv({ ...staging, MEDIA_BASE_URL: 'https://media.najdimo.si' }).MEDIA_BASE_URL).toBe(
 			'https://media.najdimo.si'
 		);
+	});
+
+	it('renders the payment asks unless PAYMENTS_ENABLED=false, in every environment (TASK-76.1)', () => {
+		const remote = {
+			...valid,
+			NEXT_PUBLIC_API_URL: 'https://api.najdimo.si',
+			NEXT_PUBLIC_APP_URL: 'https://najdimo.si',
+			R2_UPLOAD_ORIGIN: 'https://acct.eu.r2.cloudflarestorage.com',
+			MEDIA_BASE_URL: 'https://media.najdimo.si',
+		};
+		for (const APP_ENV of ['staging', 'production']) {
+			expect(paymentsEnabled(parseEnv({ ...remote, APP_ENV }))).toBe(true);
+			expect(paymentsEnabled(parseEnv({ ...remote, APP_ENV, PAYMENTS_ENABLED: '' }))).toBe(true);
+			expect(paymentsEnabled(parseEnv({ ...remote, APP_ENV, PAYMENTS_ENABLED: 'true' }))).toBe(true);
+			expect(paymentsEnabled(parseEnv({ ...remote, APP_ENV, PAYMENTS_ENABLED: 'false' }))).toBe(false);
+		}
+		expect(paymentsEnabled(parseEnv(valid))).toBe(true);
+		expect(() => parseEnv({ ...valid, PAYMENTS_ENABLED: 'off' })).toThrow(/PAYMENTS_ENABLED/);
+	});
+
+	it('lets search engines index by default everywhere but staging; SEARCH_INDEXING overrides (TASK-76.1)', () => {
+		const remote = {
+			...valid,
+			NEXT_PUBLIC_API_URL: 'https://api.najdimo.si',
+			NEXT_PUBLIC_APP_URL: 'https://najdimo.si',
+			R2_UPLOAD_ORIGIN: 'https://acct.eu.r2.cloudflarestorage.com',
+			MEDIA_BASE_URL: 'https://media.najdimo.si',
+		};
+		expect(searchIndexing(parseEnv(valid))).toBe(true);
+		expect(searchIndexing(parseEnv({ ...remote, APP_ENV: 'production' }))).toBe(true);
+		expect(searchIndexing(parseEnv({ ...remote, APP_ENV: 'staging' }))).toBe(false);
+		expect(searchIndexing(parseEnv({ ...remote, APP_ENV: 'staging', SEARCH_INDEXING: '' }))).toBe(false);
+		expect(searchIndexing(parseEnv({ ...remote, APP_ENV: 'staging', SEARCH_INDEXING: 'true' }))).toBe(true);
+		expect(searchIndexing(parseEnv({ ...remote, APP_ENV: 'production', SEARCH_INDEXING: 'false' }))).toBe(false);
+		expect(() => parseEnv({ ...valid, SEARCH_INDEXING: 'no' })).toThrow(/SEARCH_INDEXING/);
 	});
 });

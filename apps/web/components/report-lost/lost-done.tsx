@@ -46,6 +46,8 @@ type LostDoneProps = {
 	/** Signed in with the address not confirmed yet: alerts and messages wait for it (P16). */
 	unverified: boolean;
 	titleClass: string;
+	/** Payments off (the page's paymentsEnabled()): no contribution row. */
+	payments?: boolean;
 	/** Outside production: the contribution row's test-payment note. */
 	testMode?: boolean;
 };
@@ -56,7 +58,16 @@ type LostDoneProps = {
  * (P18 PDF), share and the report, the first-24-hours tips, and the P15 contribution slot last. No ad (C15).
  * `share` and `poster_download` go through track(), a no-op without analytics consent (C12).
  */
-export function LostDone({ code, name, species, point, unverified, titleClass, testMode = false }: LostDoneProps) {
+export function LostDone({
+	code,
+	name,
+	species,
+	point,
+	unverified,
+	titleClass,
+	payments = true,
+	testMode = false,
+}: LostDoneProps) {
 	const t = useTranslations('report_lost');
 	const ts = useTranslations('share');
 	const tt = useTranslations();
@@ -202,13 +213,15 @@ export function LostDone({ code, name, species, point, unverified, titleClass, t
 					</NextLink>
 				</Button>
 				{/* P15, last: collapsed, nothing chosen, once per report; its ask and the payments client load on demand. */}
-				<ContributionRow
-					reportId={report?.id}
-					code={code}
-					testMode={testMode}
-					skipFocusId="lost-first-24h"
-					className="mt-6"
-				/>
+				{payments && (
+					<ContributionRow
+						reportId={report?.id}
+						code={code}
+						testMode={testMode}
+						skipFocusId="lost-first-24h"
+						className="mt-6"
+					/>
+				)}
 			</div>
 			{posterOpen && (
 				<ContentDialog title={copy.poster} closeLabel={copy.close} onClose={() => setPosterOpen(false)}>

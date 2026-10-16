@@ -62,6 +62,13 @@ Card payments may need fiscally verified invoices (ZDavPR: payment cards count a
 - Model `invoices` (`payment_id`, `number` = premises/device/sequence, `net_cents`, `vat_rate` 22, `vat_cents`, `gross_cents`, `zoi`, `eor`, `status` PENDING | VERIFIED | FAILED, `attempts`); created by `payment.effects` for every succeeded payment, verified through the adapter with retries; ZOI and EOR printed on the receipt email and PDF (`GET /v1/payments/:id/invoice.pdf`, PDF rendered in the worker).
 - **Live gate**: `app_config` `payments.live_allowed` is false and the payments adapter refuses live keys until fiscal invoicing is enabled or the accountant records that it is not required.
 
+## Payments off (TASK-76.1)
+
+A switch per environment, no code change, for an environment that must not take payments yet (e.g. production before the fiscal questions are cleared, TASK-92.x). The web-first pilot does not use it: it runs Stripe test mode with `FISCAL_PROVIDER=mock` (`docs/tech/pilot-runbook.md`).
+- API and worker: `PAYMENTS_PROVIDER=off` (also the default when `APP_ENV=production` sets no provider): `POST /v1/payments/checkout` and the webhook answer 503 `SERVICE_UNAVAILABLE`; no payment row is written (the provider call comes before the insert). `GET /v1/config/public` reports `payments.enabled: false` (true with `stripe` or `mock`; computed from the adapter, not an `app_config` row).
+- Web and app follow it: the reunited tip, the lost contribution row and the Profile support card hide themselves once the config says false (shown while it loads); the reunited ad then shows at once (no ask to stand beside). `GET /v1/me/payments` and the payments history stay.
+- Explicit overrides: `PAYMENTS_ENABLED=false` on the web server (runtime; the asks are left out of the server render, no flash) and `EXPO_PUBLIC_PAYMENTS_ENABLED=false` in an app build. Unset, both follow the API.
+
 ## Example
 
 ```json

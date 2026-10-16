@@ -21,7 +21,13 @@ const mockParams: { code: string; name?: string } = { code: CODE };
 jest.mock('expo-router', () => ({ useRouter: () => mockRouter, useLocalSearchParams: () => mockParams }));
 const mockSession = { me: {} as object | null, isVerified: true };
 jest.mock('@zivali/api/auth', () => ({ useSession: () => mockSession }));
-jest.mock('@/lib/env', () => ({ env: { EXPO_PUBLIC_APP_URL: 'https://najdimo.test', EXPO_PUBLIC_APP_ENV: 'local' } }));
+jest.mock('@/lib/env', () => ({
+	env: {
+		EXPO_PUBLIC_APP_URL: 'https://najdimo.test',
+		EXPO_PUBLIC_APP_ENV: 'local',
+		EXPO_PUBLIC_PAYMENTS_ENABLED: true,
+	},
+}));
 jest.mock('@/lib/offline/sync', () => ({ getCachedShelter: jest.fn(async () => null), lastSyncAt: jest.fn() }));
 jest.mock('expo-network', () => ({ useNetworkState: () => ({ isConnected: true, isInternetReachable: true }) }));
 // The hand-off sheet (TASK-32.3) as a marker of what it would pay for.

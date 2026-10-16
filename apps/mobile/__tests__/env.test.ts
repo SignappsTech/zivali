@@ -49,3 +49,16 @@ test('production refuses the mock push provider', () => {
 	expect(() => parseEnv(prod)).toThrow('EXPO_PUBLIC_PUSH_PROVIDER');
 	expect(parseEnv({ ...prod, EXPO_PUBLIC_PUSH_PROVIDER: 'expo' }).EXPO_PUBLIC_PUSH_PROVIDER).toBe('expo');
 });
+
+test('shows the payment asks unless the flag is "false", in every environment (TASK-76.1)', () => {
+	const flag = (input: Record<string, string>) => parseEnv({ ...valid, ...input }).EXPO_PUBLIC_PAYMENTS_ENABLED;
+	const prod = { EXPO_PUBLIC_APP_ENV: 'production', EXPO_PUBLIC_PUSH_PROVIDER: 'expo' };
+	const envs: Record<string, string>[] = [{}, { EXPO_PUBLIC_APP_ENV: 'staging' }, prod];
+	for (const appEnv of envs) {
+		expect(flag(appEnv)).toBe(true);
+		expect(flag({ ...appEnv, EXPO_PUBLIC_PAYMENTS_ENABLED: '' })).toBe(true);
+		expect(flag({ ...appEnv, EXPO_PUBLIC_PAYMENTS_ENABLED: 'true' })).toBe(true);
+		expect(flag({ ...appEnv, EXPO_PUBLIC_PAYMENTS_ENABLED: 'false' })).toBe(false);
+	}
+	expect(() => flag({ EXPO_PUBLIC_PAYMENTS_ENABLED: 'off' })).toThrow('EXPO_PUBLIC_PAYMENTS_ENABLED');
+});

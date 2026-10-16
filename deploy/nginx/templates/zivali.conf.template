@@ -85,6 +85,8 @@ server {
 		set $zivali_upstream http://staging-api:4000;
 		proxy_pass $zivali_upstream;
 		include /opt/zivali-nginx/proxy.conf;
+		# Nothing on an API host is for search results (the Swagger UI at /docs included), in any environment.
+		add_header X-Robots-Tag "noindex, nofollow" always;
 	}
 }
 
@@ -116,5 +118,6 @@ server {
 		set $zivali_upstream http://production-api:4000;
 		proxy_pass $zivali_upstream;
 		include /opt/zivali-nginx/proxy.conf;
+		add_header X-Robots-Tag "noindex, nofollow" always;
 	}
 }
