@@ -23,5 +23,7 @@ Linked to TASK-36 AC#3/AC#5 (no layout shift, silent behaviour) and the 'never o
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 AdUnit renders on the server without an error: no window access in render or state initialisers (read matchMedia in an effect), so the reserved box is server-rendered and the boundary does not fall back to client rendering
+- [x] #1 AdUnit renders on the server without an error: no window access in render or state initialisers (read matchMedia in an effect), so the reserved box is server-rendered and the boundary does not fall back to client rendering
 <!-- AC:END -->
+
+Branch: agent/task-36.9-adunit-ssr

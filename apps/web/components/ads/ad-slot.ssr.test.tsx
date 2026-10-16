@@ -13,8 +13,7 @@ import { AdSlot } from './ad-slot';
 // no window. It must not error there, and must not ask for an ad (nothing is counted on SSR).
 describe('AdSlot streamed SSR', () => {
 	for (const slot of ['feed', 'detail', 'reunited', 'sidebar'] as const)
-		// Fails today: the unit reads window in its useState initialiser (QA bug, see backlog TASK-36 subtasks).
-		it.fails(`${slot} renders on the server without an error and without a request`, async () => {
+		it(`${slot} renders on the server without an error and without a request`, async () => {
 			const fetchMock = vi.fn();
 			vi.stubGlobal('fetch', fetchMock);
 			const errors: unknown[] = [];
@@ -27,7 +26,7 @@ describe('AdSlot streamed SSR', () => {
 					<NextIntlClientProvider locale="sl" messages={sl} timeZone="Europe/Ljubljana">
 						<AdSlot slot={slot} />
 					</NextIntlClientProvider>,
-					{ onAllReady: () => stream.pipe(out), onError: (e) => errors.push(e) }
+					{ onAllReady: () => stream.pipe(out), onError: (e) => void errors.push(e) }
 				);
 			});
 			expect(errors).toEqual([]);
