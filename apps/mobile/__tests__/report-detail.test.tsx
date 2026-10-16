@@ -27,6 +27,8 @@ import { toAppPath } from '@/lib/deep-link';
 jest.mock('@/lib/data/reports', () => ({ useReport: jest.fn() }));
 jest.mock('@/lib/env', () => ({ env: { EXPO_PUBLIC_APP_URL: 'https://najdimo.test' } }));
 jest.mock('expo-web-browser', () => ({ openBrowserAsync: jest.fn(async () => ({})) }));
+// Online for the ad slot (ad-slot.test.tsx); no ad is served here, so it collapses.
+jest.mock('expo-network', () => ({ useNetworkState: () => ({ isConnected: true, isInternetReachable: true }) }));
 // The owner actions share the auth error text, whose module loads the Supabase client; nothing here signs in.
 jest.mock('@/lib/auth', () => ({ providers: [], signInWithProvider: jest.fn() }));
 // The anonymous session before a report-abuse request has its own tests (manage.test.tsx).

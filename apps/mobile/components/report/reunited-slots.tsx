@@ -12,9 +12,12 @@ export function ReunitedTip(_props: ReunitedSlotProps) {
 }
 
 /**
- * P14 ad slot: the one labelled ad (P21 `reunited`, "Oglas"), below the support moment. Until it loads it keeps the
- * reserved box; no ad, a failure or no network collapse it (no gap, no message).
+ * P14 ad slot: the one labelled ad (P21 `reunited`, "Oglas"). Never next to the support ask (P15): it sits after the
+ * screen's actions, below a hairline. Until it loads it keeps the reserved box; no ad, a failure or no network
+ * collapse it with its hairline (no gap, no message).
  */
 export function ReunitedAd({ report, className }: ReunitedSlotProps) {
-	return <AdSlot slot="reunited" species={report.species} region={report.region_slug} className={className} />;
+	return (
+		<AdSlot slot="reunited" species={report.species} region={report.region_slug} divider className={className} />
+	);
 }

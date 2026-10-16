@@ -11,11 +11,12 @@ import { Provider } from 'react-redux';
 import { IntlProvider } from 'use-intl';
 
 import { getMockEvents, initAnalytics, resetMockEvents, setConsent } from '@zivali/analytics';
+import { ad } from '@zivali/api/__fixtures__/ads';
 import * as fx from '@zivali/api/__fixtures__/reports';
 import { createMockApi, type MockRequest, mockError } from '@zivali/api/mock';
 import { api, createApiStore } from '@zivali/api/rtk';
 import sl from '@zivali/i18n/dist/sl.json';
-import type { ReportOwnerView } from '@zivali/types';
+import type { Ad, ReportOwnerView } from '@zivali/types';
 import EditReportScreen from '@/app/r/[code]/edit';
 import ReportScreen from '@/app/r/[code]/index';
 import ReunitedScreen from '@/app/r/[code]/reunited';
@@ -25,6 +26,8 @@ import { useMyReports, useReport } from '@/lib/data/reports';
 
 jest.mock('@/lib/data/reports', () => ({ useReport: jest.fn(), useMyReports: jest.fn() }));
 jest.mock('@/lib/env', () => ({ env: { EXPO_PUBLIC_APP_URL: 'https://najdimo.test' } }));
+// Online for the ad slots (ad-slot.test.tsx); no ad is served here, so they collapse.
+jest.mock('expo-network', () => ({ useNetworkState: () => ({ isConnected: true, isInternetReachable: true }) }));
 jest.mock('@/components/ui/sonner', () => ({
 	toast: Object.assign(jest.fn(), { success: jest.fn(), error: jest.fn() }),
 }));
@@ -66,10 +69,14 @@ const reunited: ReportOwnerView = { ...owner, status: 'reunited', reunited_at: d
 let current: ReportOwnerView | null;
 let transition: (request: MockRequest) => unknown;
 let patch: (request: MockRequest) => unknown;
+let served: Ad | null = null;
 const mockApi = createMockApi({
 	'POST /v1/geo/reverse': { place: { label: 'Šiška, Ljubljana', lat: 46.066, lng: 14.493, kind: 'district' } },
 	'POST /v1/reports/:code/transitions': (request) => transition(request),
 	'PATCH /v1/reports/:code': (request) => patch(request),
+	// No ad unless a test serves one (the ad slot has its own tests, ad-slot.test.tsx).
+	'GET /v1/ads/slot/:slot': () => served,
+	'POST /v1/ads/:id/impressions': () => undefined,
 });
 const sent = (method: 'POST' | 'PATCH') =>
 	mockApi.calls
@@ -139,6 +146,7 @@ beforeEach(() => {
 	});
 	resetMockEvents();
 	mockApi.calls.length = 0;
+	served = null;
 	mockSession = { session: {}, me: null, isAnonymous: false, loading: false };
 	transition = ({ body }) => {
 		const { action } = body as { action: string };
@@ -361,6 +369,7 @@ describe('Uredi (r/[code]/edit)', () => {
 describe('reunited screen (P14 M3)', () => {
 	test('the calm celebration: story consent off by default, its toast, Končano to the map, share the news', async () => {
 		const shared = jest.spyOn(Share, 'share').mockResolvedValue({ action: 'sharedAction' });
+		served = ad;
 		const page = await open('/r/Rex2Lost/reunited', reunited);
 		expect(screen.getByRole('heading', { name: 'Rex je spet doma' })).toBeOnTheScreen();
 		expect(screen.getByText(l.home_body)).toBeOnTheScreen();
@@ -377,6 +386,12 @@ describe('reunited screen (P14 M3)', () => {
 		await fireEvent.press(story);
 		expect(story).not.toBeChecked();
 		expect(toast).not.toHaveBeenCalled();
+
+		// The one ad comes last, after the actions and a hairline: never next to the support ask (P15).
+		const unit = await screen.findByRole('link', { name: `Oglas: ${ad.title}. ${ad.body}` });
+		const tree = JSON.stringify(screen.toJSON());
+		expect(tree.indexOf(l.share_news)).toBeLessThan(tree.indexOf(unit.props.accessibilityLabel));
+		expect(tree).toContain('mb-12 h-px bg-border');
 
 		await fireEvent.press(screen.getByRole('button', { name: l.share_news }));
 		expect(shared).toHaveBeenCalledWith({
