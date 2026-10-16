@@ -27,13 +27,13 @@ Where it is forced:
 
 Fix:
 - Alerts: allow an empty species list (min 0) in the schema and the UI; the fan-out sends nothing for an empty subscription (check alerts.fanout and its SQL treat [] as no match, not as all); show the state plainly ("Ne prejemate opozoril za živali v bližini"). Consider mapping "nothing selected" to the existing `paused` instead if that is simpler and reads the same.
-- Notification channels: drop the in-app lock for matches and messages. Chats still appear under Sporočila regardless (only the notification row goes). Because matches are how an owner learns their pet may have been found, show a short note when every channel for matches is off ("Ujemanj vam ne bomo sporočili; vidite jih le na strani prijave"). Update the P13 page slice and docs/design note (design-lead CHANGE) for the dropped lock.
+- Notification channels: drop the in-app lock for matches and messages, and remove its note ("Možnih ujemanj in sporočil v aplikaciji ni mogoče izklopiti, da ne zamudite česa pomembnega.", the locked-note copy and its i18n keys, SL and EN). Owner: "if they don't want, they don't want": no lock, no warning when everything is off. Chats still appear under Sporočila regardless (only the notification row goes). Update the P13 page slice and the design note (design-lead CHANGE) for the dropped lock.
 - Mobile app settings: same rules (follow-up task if they differ).
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
 - [ ] #1 Every species in the nearby-alert settings can be switched off; with none, the API accepts it and no nearby alert is sent (fan-out test)
-- [ ] #2 Every channel for every notification type can be switched off, including in-app for matches and messages; with all off for a type, no notification of that type is created or sent (test), and the matches warning note shows
+- [ ] #2 Every channel for every notification type can be switched off, including in-app for matches and messages; with all off for a type, no notification of that type is created or sent (test); the locked note and its copy are gone, and no warning replaces it
 - [ ] #3 SL and EN copy for the empty states and the note; unit, route and e2e tests updated; mobile checked
 <!-- AC:END -->
