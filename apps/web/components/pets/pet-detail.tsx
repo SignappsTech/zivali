@@ -28,7 +28,8 @@ import {
 	AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
-import { Link, useRouter } from '@/i18n/navigation';
+import { useRouter } from '@/i18n/client-navigation';
+import { Link } from '@/i18n/navigation';
 import { cn } from '@/lib/utils';
 
 /** Codes that mean "not your pet, or no such pet": the 404 page, never a hint which one. */

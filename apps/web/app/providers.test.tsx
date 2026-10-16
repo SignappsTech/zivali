@@ -1,5 +1,4 @@
 import { cleanup, render, screen } from '@testing-library/react';
-import { NextIntlClientProvider } from 'next-intl';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { Providers } from './providers';
@@ -10,16 +9,21 @@ vi.mock('@/components/analytics/screen-views', async (importOriginal) => ({
 	ScreenViews: () => null,
 }));
 const route = vi.hoisted(() => ({ pathname: '/' }));
-vi.mock('@/i18n/navigation', () => ({ usePathname: () => route.pathname }));
+vi.mock('next/navigation', async (actual) => ({
+	...(await actual()),
+	usePathname: () => route.pathname,
+	useParams: () => ({ locale: 'sl' }),
+}));
 vi.mock('@/components/consent/consent-banner', () => ({ ConsentBanner: () => <p>consent banner</p> }));
 vi.mock('@/components/auth/session-sync', () => ({ SessionSyncIsland: () => <p>session sync</p> }));
 
 afterEach(cleanup);
 
+// No intl provider around it: the root layout renders none (TASK-90.7).
 const page = (signedIn = false) => (
-	<NextIntlClientProvider locale="sl" messages={{}}>
-		<Providers signedIn={signedIn}>{null}</Providers>
-	</NextIntlClientProvider>
+	<Providers signedIn={signedIn} consent={{ copy: {} as never, policyHref: '/piskotki' }} messages={{}}>
+		{null}
+	</Providers>
 );
 
 describe('Providers', () => {
@@ -32,11 +36,11 @@ describe('Providers', () => {
 	});
 
 	it('shows the consent banner on public pages, never in the admin console (no GA there, C12)', async () => {
-		route.pathname = '/admin/audit-log';
+		route.pathname = '/admin/revizijska-sled';
 		const { rerender } = render(page());
 		await expect(screen.findByText('consent banner', {}, { timeout: 300 })).rejects.toThrow();
 
-		route.pathname = '/map';
+		route.pathname = '/zemljevid';
 		rerender(page());
 		expect(await screen.findByText('consent banner')).toBeTruthy();
 	});

@@ -28,7 +28,8 @@ import {
 	AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Button, buttonVariants } from '@/components/ui/button';
-import { Link, useRouter } from '@/i18n/navigation';
+import { useRouter } from '@/i18n/client-navigation';
+import { Link } from '@/i18n/navigation';
 import { cn } from '@/lib/utils';
 
 type Saved = z.output<typeof PetInput>;
