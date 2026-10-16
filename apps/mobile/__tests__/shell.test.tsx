@@ -71,6 +71,7 @@ const routes = {
 	'settings/[section]': SettingsPlaceholder,
 	'settings/notifications': () => null,
 	'settings/payments': () => null,
+	'settings/offline': () => null,
 	// Stand-ins for the flow and auth screens that later stories add.
 	'report/lost': () => null,
 	'report/found': () => null,
@@ -148,7 +149,7 @@ describe('signed-out tabs', () => {
 		expect(result.getPathname()).toBe('/auth/sign-in');
 	});
 
-	test('Profile has sign-in, the language sheet and cookie settings, which work signed out', async () => {
+	test('Profile has sign-in, the language sheet, offline data and cookie settings, which work signed out', async () => {
 		const result = await shell('/profile');
 
 		expect(screen.getByRole('heading', { name: sl.profile.signed_out_title })).toBeOnTheScreen();
@@ -161,6 +162,10 @@ describe('signed-out tabs', () => {
 		expect(screen.getByRole('heading', { name: en.profile.signed_out_title })).toBeOnTheScreen();
 		expect(mockStorage.get('locale')).toBe('en');
 
+		// The report cache serves the Map tab signed out too (offline-settings.test.tsx).
+		await fireEvent.press(screen.getByRole('button', { name: en.profile.row_offline }));
+		expect(result.getPathname()).toBe('/settings/offline');
+		await act(() => router.back());
 		await fireEvent.press(screen.getByRole('button', { name: en.profile.row_cookie_settings }));
 		expect(result.getPathname()).toBe('/settings/consent');
 		expect(screen.getByText(en.consent.necessary_locked)).toBeOnTheScreen();
@@ -180,6 +185,7 @@ describe('signed in', () => {
 		for (const [name, path, placeholder] of [
 			[sl.profile.row_alerts, '/settings/alerts', true],
 			[sl.alerts.channels_title, '/settings/notifications', false],
+			[sl.profile.row_offline, '/settings/offline', false],
 		] as const) {
 			await fireEvent.press(screen.getByRole('button', { name }));
 			expect(result.getPathname()).toBe(path);
