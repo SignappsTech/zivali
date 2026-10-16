@@ -102,6 +102,7 @@
 	"share": "Deli",
 	"held_note": "Prijavo še pregledujemo. Ko jo preverimo, bo vidna vsem. Zasebna povezava že deluje.",
 	"offline_queued": "Shranjeno. Prijavo pošljemo, ko boste spet povezani.",
+	"server_busy_queued": "Strežnik je trenutno zaseden. Poskusili bomo znova samodejno.",
 	"cancel_queued_title": "Prekličete pošiljanje?",
 	"cancel_queued_body": "Prijavo izbrišemo s te naprave in je ne pošljemo.",
 	"cancel_queued_keep": "Obdrži prijavo"
