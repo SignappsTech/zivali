@@ -346,7 +346,7 @@ const readInclude = (userId: string | undefined) =>
 			orderBy: { position: 'asc' },
 			select: { public_display_url: true, public_thumb_url: true, width: true, height: true },
 		},
-		municipality: { select: { slug: true } },
+		municipality: { select: { slug: true, name_sl: true, name_en: true } },
 		region: { select: { slug: true } },
 		linked_report: { select: { short_code: true } },
 	}) satisfies Prisma.reportsInclude;

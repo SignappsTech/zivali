@@ -2,8 +2,8 @@
 #   docker build -f apps/web/Dockerfile -t zivali-web .                                  (this machine's platform)
 #   docker buildx build --platform linux/arm64 -f apps/web/Dockerfile -t zivali-web .   (the Hetzner CAX11, Arm64)
 # NEXT_PUBLIC_* values are inlined into the bundles at build time, so each environment gets its own image (build
-# args below, set by scripts/deploy.mjs). Server-only values (APP_ENV, APP_VERSION, R2_UPLOAD_ORIGIN) come from
-# /opt/zivali/<env>/web.env at runtime.
+# args below, set by scripts/deploy.mjs). Server-only values (APP_ENV, APP_VERSION, R2_UPLOAD_ORIGIN, MEDIA_BASE_URL)
+# come from /opt/zivali/<env>/web.env at runtime.
 # The build runs on the build machine's own platform; the runtime stage only copies files, so an Arm64 image needs
 # no emulation.
 FROM --platform=$BUILDPLATFORM node:22-slim AS build

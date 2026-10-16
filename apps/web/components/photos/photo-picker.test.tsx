@@ -346,3 +346,23 @@ describe('readExif', () => {
 		expect(await readExif(new Blob([new Uint8Array([0xff, 0xd8, 0xff, 0xd9])]))).toEqual({});
 	});
 });
+
+describe('preparePhoto', () => {
+	afterEach(() => vi.unstubAllGlobals());
+
+	it('rejects a panorama whose short edge is under 320 px after scaling to 1600 px, before encoding it', async () => {
+		const actual = await vi.importActual<typeof import('./prepare-photo')>('./prepare-photo');
+		const close = vi.fn();
+		vi.stubGlobal(
+			'createImageBitmap',
+			vi.fn(async () => ({ width: 8000, height: 400, close }))
+		);
+		const canvas = vi.fn();
+		vi.stubGlobal('OffscreenCanvas', canvas);
+
+		// 8000 x 400 scales to 1600 x 80: too small, although the original's short edge is 400 px.
+		await expect(actual.preparePhoto(file(1))).rejects.toMatchObject({ code: 'TOO_SMALL' });
+		expect(canvas).not.toHaveBeenCalled();
+		expect(close).toHaveBeenCalled();
+	});
+});

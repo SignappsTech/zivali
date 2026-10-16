@@ -3,7 +3,7 @@
 # profile edge) serve every environment over the shared network zivali-edge. Files on the VPS, mode 600, never in
 # images or Git:
 #   /opt/zivali/<env>/.env         api and worker (names: .env.example, apps/api block), with APP_ENV
-#   /opt/zivali/<env>/web.env      web server (APP_ENV, R2_UPLOAD_ORIGIN, GA_* if used)
+#   /opt/zivali/<env>/web.env      web server (APP_ENV, R2_UPLOAD_ORIGIN, MEDIA_BASE_URL, GA_* if used)
 #   /opt/zivali/<env>/release.env  API_IMAGE, WEB_IMAGE, APP_VERSION of the running release (deploy/remote.sh)
 #   /opt/zivali/edge.env           hostnames and CERT_NAME for nginx (deploy/README.md)
 #   /opt/zivali/cloudflare.ini     CERTBOT_CLOUDFLARE_TOKEN for the DNS-01 challenge (deploy/README.md, TLS)

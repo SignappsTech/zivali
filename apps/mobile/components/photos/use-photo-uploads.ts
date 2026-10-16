@@ -12,7 +12,14 @@ import { draftsDir } from '@/lib/db/files';
 import { isOnline, useNetworkState } from '@/lib/net';
 import { apiClient } from '@/lib/store';
 
-import { filePut, type MobilePreparedPhoto, type PhotoExif, PhotoFileError, preparePhoto } from './prepare-photo';
+import {
+	deletePickerCopy,
+	filePut,
+	type MobilePreparedPhoto,
+	type PhotoExif,
+	PhotoFileError,
+	preparePhoto,
+} from './prepare-photo';
 
 export const MAX_PHOTOS = 5;
 /** Automatic retries for network and server faults (1, 2, 4, 8 s); then "Poskusi znova" or going back online. */
@@ -243,6 +250,8 @@ export function usePhotoUploads(
 		const room = MAX_PHOTOS - live.current.photos.length - live.current.preparing;
 		if (assets.length > room) setNotice('photos.limit');
 		const picked = assets.slice(0, Math.max(0, room));
+		// Over the room (Android without the system photo picker ignores selectionLimit): preparePhoto never sees them.
+		for (const asset of assets.slice(picked.length)) deletePickerCopy(asset.uri);
 		live.current.preparing += picked.length;
 		setPreparing(live.current.preparing);
 		// One at a time: a phone holds only one decoded 12 MP image.
