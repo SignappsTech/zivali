@@ -1,11 +1,11 @@
 ---
 id: TASK-15.5
 title: 'Mobile LocationPicker: GPS, pin, search, radius, permission fallback'
-status: In Progress
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:13'
-updated_date: '2026-10-15 23:58'
+updated_date: '2026-10-16 00:16'
 labels:
   - fe
   - 'est:S'

@@ -214,6 +214,37 @@ describe('PhotoPicker', () => {
 		);
 	});
 
+	it("lists a pet's saved photos first, never uploads or stores them, and counts them towards the 5", async () => {
+		upload.mockResolvedValue({ photoId: 'photo-new' });
+		idb.set('photos:pet', [{ key: 'd', ...photo(7) }]);
+		const onChange = vi.fn();
+		const saved = [
+			{ id: 'saved-1', thumb_url: 'https://media.test/1.webp' },
+			{ id: 'saved-2', thumb_url: 'https://media.test/2.webp' },
+		];
+		renderPicker({ draft: 'pet', saved, onChange });
+
+		// The draft's photo comes after the saved ones.
+		await screen.findByRole('listitem', { name: 'Fotografija 3 od 3' });
+		const ids = () => onChange.mock.lastCall![0].map((item: { photoId?: string }) => item.photoId);
+		await waitFor(() => expect(ids()).toEqual(['saved-1', 'saved-2', 'photo-new']));
+		expect(screen.getByRole('img', { name: 'Fotografija 1 od 3' }).getAttribute('src')).toBe(saved[0]!.thumb_url);
+		expect(screen.getByText('Naslovna fotografija')).toBeTruthy();
+
+		fireEvent.click(screen.getByRole('button', { name: 'Premakni fotografijo 1 nazaj' }));
+		fireEvent.click(screen.getByRole('button', { name: 'Odstrani fotografijo 3' }));
+		expect(ids()).toEqual(['saved-2', 'saved-1']);
+		pick(file(1), file(2), file(3), file(4));
+		await screen.findByRole('listitem', { name: 'Fotografija 5 od 5' });
+		expect(screen.getByText('Dodate lahko največ 5 fotografij.')).toBeTruthy();
+
+		await waitFor(() => expect(upload).toHaveBeenCalledTimes(4));
+		expect(upload.mock.calls.map((call) => Number(call[1].sha256))).toEqual([7, 1, 2, 3]);
+		await waitFor(() =>
+			expect((idb.get('photos:pet') as { sha256: string }[]).map((p) => Number(p.sha256))).toEqual([1, 2, 3])
+		);
+	});
+
 	it('restores the draft after a reload and resumes the upload without picking again', async () => {
 		idb.set('photos:lost', [
 			{ key: 'a', ...photo(1), photoId: 'photo-1', uploadedAt: Date.now() },
