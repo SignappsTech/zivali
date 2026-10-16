@@ -1,11 +1,11 @@
 ---
 id: TASK-25.4
 title: Mobile report-abuse sheet and detail slot
-status: In Progress
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:13'
-updated_date: '2026-10-16 00:37'
+updated_date: '2026-10-16 01:14'
 labels:
   - fe
   - 'est:S'

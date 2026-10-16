@@ -63,14 +63,17 @@ export type LocationPickerProps = {
 	mode: Mode;
 	/** A point to offer: EXIF from a photo ("Uporabi kraj s fotografije"), or a GPS fix the map opens on. */
 	suggested?: LatLng & { source: 'exif' | 'gps' };
-	/** Confirm: the point coarsened once here (C6), never the raw one, with the radius for lost and alert. */
+	/**
+	 * Confirm: the point coarsened once here (C6), never the raw one, or the stored `value` point as is when it was not
+	 * moved; with the radius for lost and alert.
+	 */
 	onChange(value: LocationValue & { source: Source }): void;
 	/** The OS location permission is denied: the explanation replaces "Uporabi mojo lokacijo"; pin and search work. */
 	permissionDenied?: boolean;
 };
 
-// P5 stops: lost 200 m to 5 km (default 500 m), alert area 1 to 25 km (default 5 km).
-const RADII = {
+// P5 stops: lost 200 m to 5 km (default 500 m), alert area 1 to 25 km (default 5 km). The alert settings reuse them.
+export const RADII = {
 	lost: { stops: [200, 300, 400, 500, 750, 1000, 1500, 2000, 2500, 3000, 3500, 4000, 4500, 5000], initial: 500 },
 	alert: { stops: [1, 2, 3, 4, 5, 7, 10, 15, 20, 25].map((km) => km * 1000), initial: 5000 },
 };
@@ -94,7 +97,7 @@ const metresPerPx = (lat: number, zoom: number) => (EARTH_M * Math.cos((lat * Ma
 const zoomFor = (lat: number, radiusM: number, px: number) =>
 	Math.log2((EARTH_M * Math.cos((lat * Math.PI) / 180) * px) / (512 * radiusM));
 const metres = (a: LatLng, b: LatLng) => distanceKm(a, b) * 1000;
-const nearest = (stops: number[], m: number) =>
+export const nearest = (stops: number[], m: number) =>
 	stops.reduce((best, stop, i) => (Math.abs(stop - m) < Math.abs(stops[best]! - m) ? i : best), 0);
 // coarsenPoint's default needs a global crypto, which Hermes lacks; expo-crypto supplies the same random source.
 const random = () => getRandomValues(new Uint32Array(1))[0]! / 2 ** 32;
@@ -181,20 +184,28 @@ export function LocationPicker({ value, mode, suggested, onChange, permissionDen
 	const [locating, setLocating] = React.useState(false);
 	const [gps, setGps] = React.useState<'ok' | 'denied' | 'failed'>('ok');
 	const denied = permissionDenied || gps === 'denied';
+	// A fix can arrive after the user left the screen: then nothing is set.
+	const mounted = React.useRef(true);
+	React.useEffect(() => {
+		mounted.current = true;
+		return () => void (mounted.current = false);
+	}, []);
 	const locate = async () => {
 		setLocating(true);
+		let fix: LatLng | undefined;
 		try {
 			const { coords } = await withTimeout(
 				Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High }),
 				GPS_TIMEOUT_MS
 			);
-			setGps('ok');
-			choose({ point: { lat: coords.latitude, lng: coords.longitude }, source: 'gps' });
+			fix = { lat: coords.latitude, lng: coords.longitude };
 		} catch {
-			setGps('failed');
-		} finally {
-			setLocating(false);
+			// No fix in time: the button stays to retry.
 		}
+		if (!mounted.current) return;
+		setLocating(false);
+		setGps(fix ? 'ok' : 'failed');
+		if (fix) choose({ point: fix, source: 'gps' });
 	};
 	const locateMe = async () => {
 		try {
@@ -231,9 +242,10 @@ export function LocationPicker({ value, mode, suggested, onChange, permissionDen
 	// Offline: lost and alert wait for the map; found and sighted can still confirm a GPS point (FR-042).
 	const confirmable = online || (!area && (pick.source === 'gps' || value !== undefined));
 	const own = value !== undefined && metres(pick.point, value.point) < SAME_M;
+	// The stored point is coarsened already: confirmed unmoved it goes back as is, so re-saving never random-walks it.
 	const confirm = () =>
 		onChange({
-			point: coarsenPoint(pick.point, random),
+			point: own ? value.point : coarsenPoint(pick.point, random),
 			...(radiusM !== undefined && { radiusM }),
 			source: pick.source,
 		});

@@ -14,7 +14,6 @@ import TabsLayout from '@/app/(tabs)/_layout';
 import InboxTab from '@/app/(tabs)/inbox';
 import ProfileTab from '@/app/(tabs)/profile';
 import ReportTab from '@/app/(tabs)/report';
-import SettingsPlaceholder from '@/app/settings/[section]';
 import ConsentSettings from '@/app/settings/consent';
 import SettingsLayout from '@/app/settings/_layout';
 import LanguageSettings from '@/app/settings/language';
@@ -68,7 +67,7 @@ const routes = {
 	'settings/_layout': SettingsLayout,
 	'settings/consent': ConsentSettings,
 	'settings/language': LanguageSettings,
-	'settings/[section]': SettingsPlaceholder,
+	'settings/alerts': () => null,
 	'settings/notifications': () => null,
 	'settings/payments': () => null,
 	'settings/reports': () => null,
@@ -178,14 +177,13 @@ describe('signed in', () => {
 		await fireEvent.press(screen.getByRole('tab', { name: sl.nav.tab_profile }));
 
 		expect(screen.getByRole('heading', { name: sl.profile.title })).toBeOnTheScreen();
-		for (const [name, path, placeholder] of [
-			[sl.profile.row_reports, '/settings/reports', false],
-			[sl.profile.row_alerts, '/settings/alerts', true],
-			[sl.alerts.channels_title, '/settings/notifications', false],
+		for (const [name, path] of [
+			[sl.profile.row_reports, '/settings/reports'],
+			[sl.profile.row_alerts, '/settings/alerts'],
+			[sl.alerts.channels_title, '/settings/notifications'],
 		] as const) {
 			await fireEvent.press(screen.getByRole('button', { name }));
 			expect(result.getPathname()).toBe(path);
-			if (placeholder) expect(screen.getByText(sl.common.empty_title)).toBeOnTheScreen();
 			// The settings stack sits above the tabs, so the bottom navigation is gone until back.
 			expect(screen.queryByRole('tab')).toBeNull();
 			await act(() => router.back());
