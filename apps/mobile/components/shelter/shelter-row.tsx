@@ -5,7 +5,12 @@ import * as React from 'react';
 import { Linking, View } from 'react-native';
 import { useLocale, useTranslations } from 'use-intl';
 
-import { type ResponsibleShelterResponse, toResult, useResponsibleShelter } from '@zivali/api/directory';
+import {
+	type ResponsibleShelterArg,
+	type ResponsibleShelterResponse,
+	toResult,
+	useResponsibleShelter,
+} from '@zivali/api/directory';
 import { formatDate, type Locale } from '@zivali/i18n/format';
 import type { LatLng } from '@/components/map/features';
 import { Button } from '@/components/ui/button';
@@ -26,8 +31,8 @@ export type Kind = 'lost' | 'found' | 'sighted';
 type Saved = { data: ResponsibleShelterResponse | null; at: number | null };
 
 /** The directory answer: live for the point while online, else the one cached with the last area sync (C17). */
-function useShelter(point: LatLng, online: boolean) {
-	const live = useResponsibleShelter(online ? point : null);
+function useShelter(arg: ResponsibleShelterArg | null, online: boolean) {
+	const live = useResponsibleShelter(online ? arg : null);
 	const [saved, setSaved] = React.useState<Saved>();
 	React.useEffect(() => {
 		if (online) return;
@@ -136,17 +141,29 @@ function ShelterLines({
 
 /**
  * The responsible-shelter row (P6/P7 `shelter_row`, FR-044, C18): a phone icon row, no card. `found` (the finder has
- * the animal) adds "Prijava na Najdimo tega ne nadomesti." and the chip line; `sighted` is the softer sentence.
+ * the animal) and `lost` add "Prijava na Najdimo tega ne nadomesti.", `found` also the chip line; `sighted` is the softer sentence.
  * Confirmed shelters get the call button; a likely one says "Ni potrjeno"; otherwise the nearest names or the
  * directory note, never a guessed number. Offline it uses the directory cached with the area sync and says from when.
  * No statutory deadline: that text waits for `content.legal_timings` and the lawyer's wording (P6 content slice).
  */
-export function ShelterRow({ point, kind, className }: { point: LatLng; kind: Kind; className?: string }) {
+export function ShelterRow({
+	point,
+	municipality: slug,
+	kind,
+	className,
+}: {
+	/** The report's point; a null one (not loaded yet) shows the skeleton. */
+	point: LatLng | null;
+	/** The municipality slug the API derived for the report; wins over the point. */
+	municipality?: string;
+	kind: Kind;
+	className?: string;
+}) {
 	const t = useTranslations('shelter_row');
 	const tc = useTranslations('common');
 	const locale = useLocale() as Locale;
 	const online = isOnline(useNetworkState());
-	const { result, at, missing } = useShelter(point, online);
+	const { result, at, missing } = useShelter(slug ? { municipality: slug } : point, online);
 
 	// Offline without a cached directory there is nothing true to say.
 	if (missing) return null;
@@ -171,7 +188,7 @@ export function ShelterRow({ point, kind, className }: { point: LatLng; kind: Ki
 		<View className={cn('flex-row gap-3.5', className)}>
 			<Icon as={PhoneIcon} size={24} className="mt-0.5 text-primary" />
 			<View className="min-w-0 flex-1">
-				<Text>{kind === 'found' ? `${body} ${t('not_replace')}` : body}</Text>
+				<Text>{kind === 'sighted' ? body : `${body} ${t('not_replace')}`}</Text>
 				<View className="mt-3">
 					{result.status === 'confirmed' ? (
 						<ShelterLines

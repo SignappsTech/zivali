@@ -22,6 +22,8 @@ jest.mock('expo-router', () => ({ useRouter: () => mockRouter, useLocalSearchPar
 const mockSession = { me: {} as object | null, isVerified: true };
 jest.mock('@zivali/api/auth', () => ({ useSession: () => mockSession }));
 jest.mock('@/lib/env', () => ({ env: { EXPO_PUBLIC_APP_URL: 'https://najdimo.test', EXPO_PUBLIC_APP_ENV: 'local' } }));
+jest.mock('@/lib/offline/sync', () => ({ getCachedShelter: jest.fn(async () => null), lastSyncAt: jest.fn() }));
+jest.mock('expo-network', () => ({ useNetworkState: () => ({ isConnected: true, isInternetReachable: true }) }));
 // The hand-off sheet (TASK-32.3) as a marker of what it would pay for.
 jest.mock('@/components/payments/checkout', () => {
 	const { Text } = jest.requireActual<typeof import('react-native')>('react-native');
@@ -144,9 +146,9 @@ test('a likely shelter is never shown as the certain one: "Morda pristojno zavet
 	expect(Linking.openURL).toHaveBeenCalledWith('tel:+38612345678');
 });
 
-test('an unconfirmed municipality shows the generic notice and the directory, never a guessed number', async () => {
+test('an unconfirmed municipality shows the nearest shelters and the directory, never a guessed number', async () => {
 	await renderDone(dir.responsibleUnconfirmed);
-	expect(await screen.findByText(ts.unconfirmed.replace('{municipality}', 'Osilnica'))).toBeOnTheScreen();
+	expect(await screen.findByText(ts.nearest_label)).toBeOnTheScreen();
 	expect(screen.queryByRole('button', { name: /^Pokliči/ })).toBeNull();
 	await press(ts.directory_link);
 	expect(Linking.openURL).toHaveBeenCalledWith('https://najdimo.test/zavetisca');

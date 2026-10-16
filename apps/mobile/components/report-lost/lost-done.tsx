@@ -11,8 +11,6 @@ import { FlaskIcon } from 'phosphor-react-native/src/icons/Flask';
 import { HeartIcon } from 'phosphor-react-native/src/icons/Heart';
 import { InfoIcon } from 'phosphor-react-native/src/icons/Info';
 import { MegaphoneIcon } from 'phosphor-react-native/src/icons/Megaphone';
-import { PhoneIcon } from 'phosphor-react-native/src/icons/Phone';
-import { QuestionIcon } from 'phosphor-react-native/src/icons/Question';
 import { ShareNetworkIcon } from 'phosphor-react-native/src/icons/ShareNetwork';
 import { XIcon } from 'phosphor-react-native/src/icons/X';
 import * as React from 'react';
@@ -21,16 +19,15 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useLocale, useTranslations } from 'use-intl';
 
 import { useSession } from '@zivali/api/auth';
-import { type ResponsibleShelterArg, useResponsibleShelter } from '@zivali/api/directory';
 import { useReversePlaceQuery } from '@zivali/api/geocode';
 import { useGetReportQuery } from '@zivali/api/reports';
 import { formatEur, type Locale } from '@zivali/i18n/format';
 import { CheckoutSheet } from '@/components/payments/checkout';
+import { ShelterRow } from '@/components/shelter/shelter-row';
 import { Spot } from '@/components/shell/parts';
 import { Button } from '@/components/ui/button';
 import { Icon } from '@/components/ui/icon';
 import { Pill } from '@/components/ui/pill';
-import { Skeleton } from '@/components/ui/skeleton';
 import { Text } from '@/components/ui/text';
 import { env } from '@/lib/env';
 import { shareMessage, shareNative } from '@/lib/share';
@@ -39,8 +36,6 @@ import { Heading, Note } from './parts';
 
 /** A page of the web app (C15): the directory index, one shelter's page, or the safety tips. */
 const webUrl = (locale: Locale, sl: string, en: string) => `${env.EXPO_PUBLIC_APP_URL}${locale === 'en' ? en : sl}`;
-const directoryUrl = (locale: Locale, slug = '') =>
-	webUrl(locale, `/zavetisca${slug && `/${slug}`}`, `/en/shelters${slug && `/${slug}`}`);
 
 function TextLink({
 	href,
@@ -58,120 +53,10 @@ function TextLink({
 	);
 }
 
-/** One shelter: name in bold, "Ni potrjeno" for a guess, the number, Pokliči (`tel:`) and its page. */
-function ShelterLines({
-	name,
-	slug,
-	phone,
-	display,
-	unconfirmed,
-}: {
-	name: string;
-	slug: string;
-	phone: string;
-	display?: string;
-	unconfirmed?: boolean;
-}) {
-	const t = useTranslations('shelter_row');
-	const locale = useLocale() as Locale;
-	return (
-		<View>
-			<Text className="font-sans-bold">{name}</Text>
-			{unconfirmed ? (
-				<>
-					<View className="flex-row items-center gap-1.5">
-						<Icon as={QuestionIcon} size={16} className="text-muted-foreground" />
-						<Text className="font-sans-bold text-sm text-muted-foreground">{t('unconfirmed_note')}</Text>
-					</View>
-					<Text className="text-sm text-muted-foreground">{t('unconfirmed_note_hint')}</Text>
-				</>
-			) : null}
-			<Text className={unconfirmed ? 'mt-1 tabular-nums' : 'tabular-nums'}>{display ?? phone}</Text>
-			<View className="mt-3 flex-row flex-wrap items-center gap-x-4 gap-y-1">
-				<Button
-					variant="secondary"
-					size="sm"
-					aria-label={t('call_a11y', { shelter: name })}
-					onPress={() => void Linking.openURL(`tel:${phone}`)}
-				>
-					<Icon as={PhoneIcon} />
-					{t('call')}
-				</Button>
-				<TextLink href={directoryUrl(locale, slug)}>{t('details_link')}</TextLink>
-			</View>
-		</View>
-	);
-}
-
-/**
- * The responsible shelter for the report (P6 `shelter_row`, FR-044, C18): the duty sentence and "does not replace
- * it", then a one-tap call. A likely shelter says "Ni potrjeno"; an unconfirmed or unknown municipality is the note
- * with the directory link, never a guessed number. Kept small here: the shared row of the found flow (TASK-30.3) adds
- * the nearest shelters and the offline cache. No statutory deadline: that text waits for `content.legal_timings` and
- * the lawyer's wording (P6 content slice, LQ-06).
- */
-function ShelterRow({ lookup }: { lookup: ResponsibleShelterArg | null }) {
-	const t = useTranslations('shelter_row');
-	const tc = useTranslations('common');
-	const locale = useLocale() as Locale;
-	const result = useResponsibleShelter(lookup);
-	const municipality = result.municipality?.name;
-
-	if (!lookup || result.status === 'loading')
-		return (
-			<View accessible aria-label={tc('loading')} aria-busy className="mt-8 flex-row gap-3.5">
-				<Skeleton className="size-6 rounded-full" />
-				<View className="flex-1 gap-2">
-					<Skeleton className="h-5 w-full rounded-md" />
-					<Skeleton className="h-5 w-2/3 rounded-md" />
-				</View>
-			</View>
-		);
-	if (!municipality || (result.status !== 'confirmed' && result.status !== 'likely'))
-		return (
-			<View className="mt-8">
-				<Note icon={PhoneIcon}>
-					{municipality && result.status === 'unconfirmed'
-						? t('unconfirmed', { municipality })
-						: t('unknown_municipality')}
-				</Note>
-				<TextLink href={directoryUrl(locale)}>{t('directory_link')}</TextLink>
-			</View>
-		);
-	return (
-		<View className="mt-8 flex-row gap-3.5">
-			<Icon as={PhoneIcon} size={24} className="mt-0.5 text-primary" />
-			<View className="min-w-0 flex-1">
-				<Text>{`${t('lost_body', { municipality })} ${t('not_replace')}`}</Text>
-				<View className="mt-3">
-					{result.status === 'confirmed' ? (
-						<ShelterLines
-							name={result.shelter.name}
-							slug={result.shelter.slug}
-							phone={result.shelter.phone}
-							display={result.shelter.phone_display}
-						/>
-					) : (
-						<>
-							<Text className="font-sans-bold text-sm text-muted-foreground">{t('suggested_label')}</Text>
-							<ShelterLines
-								name={result.likely_shelter.name}
-								slug={result.likely_shelter.slug}
-								phone={result.likely_shelter.phone}
-								unconfirmed
-							/>
-						</>
-					)}
-				</View>
-			</View>
-		</View>
-	);
-}
-
 const AMOUNTS = [2, 3, 5] as const;
 
 /**
- * P15 contribution at the lost confirmation: a collapsed row (text and caret); open, the 2, 3 and 5 € pills with none
+ * P15 contribution at the lost confirmation: a collapsed row (text and caret); open, the 2, 3 and 5 â‚¬ pills with none
  * chosen, then Prispevaj and Skrij at equal weight. Prispevaj opens the checkout hand-off (TASK-32.3); Skrij removes the
  * row. Nothing here holds back the report, matching or alerts.
  */
@@ -275,13 +160,7 @@ export function LostDone() {
 	// The area name for the P18 share text (the reverse lookup of the public circle); without it the text is the link.
 	const place = useReversePlaceQuery(report ? { lat: report.area.lat, lng: report.area.lng } : skipToken).currentData;
 	// The municipality the API derived for the report, else its point (C18 accepts both).
-	const lookup = report
-		? report.municipality_slug
-			? { municipality: report.municipality_slug }
-			: 'location' in report
-				? report.location
-				: null
-		: null;
+	const point = report && 'location' in report ? report.location : null;
 
 	return (
 		<SafeAreaView edges={['top']} className="flex-1 bg-background">
@@ -317,7 +196,12 @@ export function LostDone() {
 					))}
 				</View>
 
-				<ShelterRow lookup={lookup} />
+				<ShelterRow
+					point={point}
+					municipality={report?.municipality_slug ?? undefined}
+					kind="lost"
+					className="mt-8"
+				/>
 
 				<View className="mt-auto gap-1 pt-10">
 					<Button size="lg" onPress={() => router.push({ pathname: '/r/[code]/poster', params: { code } })}>
