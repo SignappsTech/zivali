@@ -48,13 +48,17 @@ export function SlotA({ report, offline, children }: ReportSlotProps) {
 		onPress: () =>
 			router.push({
 				pathname: '/report/found',
-				// The code shows the pet on every step; the species is the sighting's (the short flow does not ask it).
-				params: {
-					type: 'sighted',
-					linked_report_id: report.id,
-					code: report.short_code,
-					species: report.species,
-				},
+				// The API links sightings to lost listings only (VALIDATION otherwise): there the code shows the pet on
+				// every step and the species is the listing's; on a found listing it is a plain sighting.
+				params:
+					report.type === 'lost'
+						? {
+								type: 'sighted',
+								linked_report_id: report.id,
+								code: report.short_code,
+								species: report.species,
+							}
+						: { type: 'sighted' },
 			} as unknown as Href),
 	};
 	const contact = { onPress: () => setGate(true) };

@@ -1,11 +1,11 @@
 ---
 id: TASK-29.4
 title: 'Web lost flow: signed-out draft hand-off and confirmation screen'
-status: In Progress
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:14'
-updated_date: '2026-10-16 05:40'
+updated_date: '2026-10-16 07:08'
 labels:
   - fe
   - 'est:S'

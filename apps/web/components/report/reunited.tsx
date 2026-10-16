@@ -83,7 +83,7 @@ function OwnerReunited({ report, tip, testMode }: { report: DetailReport; tip: b
 			</div>
 
 			{tip && <ReunitedTip report={report} testMode={testMode} className="mt-16" />}
-			<ReunitedAd report={report} className="mt-16" />
+			<ReunitedAd report={report} tip={tip} className="mt-16" />
 
 			<div className="mt-16 flex flex-wrap items-center gap-x-4 gap-y-2 max-sm:*:w-full">
 				<Button asChild size="lg">

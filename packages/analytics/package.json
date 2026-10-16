@@ -12,6 +12,9 @@
 		"typecheck": "tsc",
 		"test": "node --test \"test/*.test.ts\""
 	},
+	"dependencies": {
+		"@zivali/types": "workspace:*"
+	},
 	"devDependencies": {
 		"@types/node": "^22.19.0"
 	},

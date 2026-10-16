@@ -217,6 +217,23 @@ export const PAYMENT_PROVIDERS = ['stripe', 'mock'] as const;
 export type PaymentProvider = Values<typeof PAYMENT_PROVIDERS>;
 
 // C14 ads, partners, leads
+// C6 `regions.slug` in `regions.id` order: id = index + 1 (supabase/seed/geo/regions.geojson ids 1 to 12).
+export const REGION_SLUGS = [
+	'pomurska',
+	'podravska',
+	'koroska',
+	'savinjska',
+	'zasavska',
+	'posavska',
+	'jugovzhodna-slovenija',
+	'osrednjeslovenska',
+	'gorenjska',
+	'primorsko-notranjska',
+	'goriska',
+	'obalno-kraska',
+] as const;
+export type RegionSlug = Values<typeof REGION_SLUGS>;
+
 export const AD_SLOTS = ['feed', 'detail', 'reunited', 'sidebar'] as const;
 export type AdSlot = Values<typeof AD_SLOTS>;
 export const AD_STATUSES = ['draft', 'active', 'paused', 'ended'] as const;
