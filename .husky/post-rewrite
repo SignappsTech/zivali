@@ -1,0 +1,3 @@
+# After a rebase or amend: same dist refresh as post-merge.
+node packages/i18n/build.mjs > /dev/null 2>&1 || true
+node packages/tokens/build.mjs > /dev/null 2>&1 || true
