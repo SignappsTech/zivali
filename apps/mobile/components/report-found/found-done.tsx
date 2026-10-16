@@ -1,22 +1,24 @@
 import { type Href, useRouter } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 import type { Icon as PhosphorIcon } from 'phosphor-react-native';
+import { CheckCircleIcon } from 'phosphor-react-native/src/icons/CheckCircle';
 import { ClockIcon } from 'phosphor-react-native/src/icons/Clock';
+import { CopyIcon } from 'phosphor-react-native/src/icons/Copy';
 import { EnvelopeSimpleIcon } from 'phosphor-react-native/src/icons/EnvelopeSimple';
 import { EyeIcon } from 'phosphor-react-native/src/icons/Eye';
 import { HandHeartIcon } from 'phosphor-react-native/src/icons/HandHeart';
 import { ShareNetworkIcon } from 'phosphor-react-native/src/icons/ShareNetwork';
 import { XIcon } from 'phosphor-react-native/src/icons/X';
 import * as React from 'react';
-import { ScrollView, Share, View } from 'react-native';
+import { ScrollView, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocale, useTranslations } from 'use-intl';
 
 import { type EventParams, track } from '@zivali/analytics';
 import { useGetReportQuery } from '@zivali/api/reports';
+import type { Locale } from '@zivali/i18n/format';
 import type { LatLng } from '@/components/map/features';
 import { Heading, Line } from '@/components/report-found/parts';
-import { reportLink } from '@/components/report/slots/slot-b';
 import { ShelterRow } from '@/components/shelter/shelter-row';
 import { Spot } from '@/components/shell/parts';
 import {
@@ -34,6 +36,7 @@ import { Icon } from '@/components/ui/icon';
 import { Text } from '@/components/ui/text';
 import { env } from '@/lib/env';
 import { manageTokenKey, type OutboxItem } from '@/lib/offline/outbox';
+import { copyText, shareMessage, shareNative } from '@/lib/share';
 
 /** What the flow hands over once Publish has an answer; in memory only (the point is the coarsened one). */
 export type Submitted = {
@@ -86,9 +89,18 @@ function DoneScreen({
 	);
 }
 
+/** "Povezava je kopirana." stays this long (P7 M6). */
+const COPIED_MS = 5000;
+
 /** The manage link as real, selectable text (C7 step 4); the token itself only ever comes from secure storage. */
 function LinkBlock({ link, emailed }: { link: string; emailed: boolean }) {
 	const t = useTranslations('report_found');
+	const [copied, setCopied] = React.useState(false);
+	React.useEffect(() => {
+		if (!copied) return;
+		const timer = setTimeout(() => setCopied(false), COPIED_MS);
+		return () => clearTimeout(timer);
+	}, [copied]);
 	return (
 		<Card aria-label={t('link_label')} className="mt-8">
 			<CardTitle className="text-lg">{t('link_label')}</CardTitle>
@@ -100,6 +112,25 @@ function LinkBlock({ link, emailed }: { link: string; emailed: boolean }) {
 				{link}
 			</Text>
 			<Text className="mt-2 text-sm text-muted-foreground">{t('link_help')}</Text>
+			<Button
+				variant="secondary"
+				className="mt-4"
+				onPress={() =>
+					void copyText(link).then(
+						() => setCopied(true),
+						() => {}
+					)
+				}
+			>
+				<Icon as={CopyIcon} />
+				{t('link_copy')}
+			</Button>
+			{copied ? (
+				<View role="status" aria-live="polite" accessible className="mt-3 flex-row items-center gap-1.5">
+					<Icon as={CheckCircleIcon} weight="fill" size={16} className="text-primary" />
+					<Text className="font-sans-bold text-sm">{t('link_copied')}</Text>
+				</View>
+			) : null}
 			{emailed ? (
 				<Line icon={EnvelopeSimpleIcon} weight="bold" className="mt-4">
 					{t('link_emailed')}
@@ -173,17 +204,21 @@ function Sent({
 						<Button size="lg" onPress={() => router.replace(`/r/${sent.short_code}` as Href)}>
 							{t('open_report')}
 						</Button>
-						{held ? null : (
+						{/* Not while it is held (nobody else can open it yet); P18 text, link alone without the area. */}
+						{report && !held ? (
 							<Button
 								variant="text"
 								onPress={() =>
-									void Share.share({ message: reportLink(sent.short_code) }).catch(() => undefined)
+									void shareNative(
+										report,
+										shareMessage({ report, area: undefined, locale: locale as Locale })
+									)
 								}
 							>
 								<Icon as={ShareNetworkIcon} />
 								{t('share')}
 							</Button>
-						)}
+						) : null}
 					</>
 				)
 			}

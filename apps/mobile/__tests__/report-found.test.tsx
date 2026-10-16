@@ -9,6 +9,7 @@ import { PortalHost } from '@rn-primitives/portal';
 import { act, fireEvent, screen, waitFor } from '@testing-library/react-native';
 import { router, Stack } from 'expo-router';
 import { renderRouter } from 'expo-router/testing-library';
+import * as Clipboard from 'expo-clipboard';
 import * as Network from 'expo-network';
 import * as React from 'react';
 import { Text } from 'react-native';
@@ -85,6 +86,8 @@ jest.mock('expo-location', () => ({
 		throw new Error('no fix');
 	},
 }));
+jest.mock('expo-clipboard', () => ({ setStringAsync: jest.fn(async () => true) }));
+jest.mock('expo-sharing', () => ({ shareAsync: jest.fn(async () => undefined) }));
 jest.mock('expo-image-picker', () => ({
 	getCameraPermissionsAsync: async () => ({ granted: true, canAskAgain: true }),
 }));
@@ -299,6 +302,9 @@ test('found online: five steps, publish through the outbox, M6 with the private 
 	expect(mockKeychain.get('manage_token.report-1')).toBe('token-1');
 	expect(await screen.findByText('https://najdimo.test/m#token-1')).toBeOnTheScreen();
 	expect(screen.getByText(t.link_emailed)).toBeOnTheScreen();
+	await press(t.link_copy);
+	expect(Clipboard.setStringAsync).toHaveBeenCalledWith('https://najdimo.test/m#token-1');
+	expect(await screen.findByText(t.link_copied)).toBeOnTheScreen();
 	expect(page.getPathname()).toBe('/report/found');
 
 	// AC #5: the responsible shelter after submit, with the call button and the chip line.
