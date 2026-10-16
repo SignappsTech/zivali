@@ -129,7 +129,7 @@ function ClusterFace({ count, onPress }: { count: number; onPress: () => void })
 			data-kind="cluster"
 			onClick={onPress}
 			className={cn(
-				'grid size-10 cursor-pointer place-items-center rounded-full bg-marker-cluster text-[15px] font-bold text-marker-cluster-foreground tabular-nums',
+				'grid size-10 cursor-pointer place-items-center rounded-full bg-marker-cluster font-sans text-[15px] font-bold text-marker-cluster-foreground tabular-nums',
 				HALO
 			)}
 		>
@@ -204,6 +204,8 @@ export function MapView({
 	React.useEffect(() => {
 		let cancelled = false;
 		let created: MapEngine | undefined;
+		// User Timing: the map starts loading here (performance traces; the AC#4 budget in e2e/map.spec.ts).
+		performance.mark('mapview:load');
 		import('./engine')
 			.then(({ createMapEngine }) => {
 				if (cancelled || !container.current) return;
@@ -263,10 +265,12 @@ export function MapView({
 				>
 					{tCommon('skip_map')}
 				</a>
-				{/* The canvas MapLibre puts in here is the focusable map; the ring sits inside the clipped box. */}
+				{/* MapLibre's own (unlayered) CSS makes this `position: relative` with its Helvetica font, beating
+				    utilities: it is sized in flow and the faces set their font. Its canvas is the focusable map; the
+				    ring sits inside the clipped box. */}
 				<div
 					ref={container}
-					className="absolute inset-0 [&_canvas]:outline-none [&_canvas:focus-visible]:outline-3 [&_canvas:focus-visible]:-outline-offset-3 [&_canvas:focus-visible]:outline-ring"
+					className="size-full [&_canvas]:outline-none [&_canvas:focus-visible]:outline-3 [&_canvas:focus-visible]:-outline-offset-3 [&_canvas:focus-visible]:outline-ring"
 				/>
 				<p id={`${id}-hint`} className="sr-only">
 					{hint ?? t('keyboard_hint')}
