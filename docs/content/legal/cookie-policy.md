@@ -62,6 +62,7 @@ Zapise delimo na dve vrsti:
 | `NEXT_LOCALE` (piškotek) | Najdimo | Si zapomni izbran jezik. | nujni | [naročnik: preveriti trajanje, verjetno do konca seje] |
 | Osnutek prijave (lokalna shramba) | Najdimo | Shrani nedokončano prijavo, da je ne izgubite. | nujni | dokler prijave ne oddate ali osnutka ne zavržete |
 | `manage:<ID prijave>` (lokalna shramba) | Najdimo | Hrani žeton zasebne povezave, prek katere upravljate prijavo brez računa. | nujni | do zaključka prijave ali do izbrisa shrambe |
+| `manage_token` (sejna shramba) | Najdimo | Začasno hrani žeton zasebne povezave iz naslova /m, da ga po osvežitvi strani ne izgubite. | nujni | do zaprtja zavihka |
 | Identifikator naprave (lokalna shramba) | Najdimo | Naključna oznaka za omejevanje zlorab (število zahtev). | nujni | do izbrisa shrambe |
 | Preverjanje „nisem robot“ (Turnstile) | Cloudflare, Inc. | Loči ljudi od botov s tehničnimi signali naprave in brskalnika. Ne služi oglaševanju. [naročnik: preveriti, ali nastavi piškotke] | nujni | po pravilih ponudnika |
 | `_ga` (piškotek) | Google Ireland Limited | Loči uporabnike za statistiko obiska. | analitični | 2 leti |
@@ -152,6 +153,7 @@ We split items into two kinds:
 | `NEXT_LOCALE` (cookie) | Najdimo | Remembers the language you chose. | necessary | [client: verify duration, likely session] |
 | Report draft (local storage) | Najdimo | Saves an unfinished report so you do not lose it. | necessary | until you submit the report or discard the draft |
 | `manage:<report id>` (local storage) | Najdimo | Holds the private-link token that lets you manage a report without an account. | necessary | until the report closes or storage is cleared |
+| `manage_token` (session storage) | Najdimo | Temporarily holds the private-link token from the /m address so a page reload does not lose it. | necessary | until the tab closes |
 | Device identifier (local storage) | Najdimo | Random identifier for abuse limits (rate limiting). | necessary | until storage is cleared |
 | "Not a robot" check (Turnstile) | Cloudflare, Inc. | Tells people from bots using technical device and browser signals. Not used for advertising. [client: verify whether it sets cookies] | necessary | per the provider's rules |
 | `_ga` (cookie) | Google Ireland Limited | Distinguishes users for visit statistics. | analytics | 2 years |
