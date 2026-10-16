@@ -3,7 +3,7 @@ id: TASK-17.5
 title: >-
   Manage page Close sends no reason: the API refuses it (VALIDATION) on web and
   mobile
-status: To Do
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-16 00:21'
@@ -23,5 +23,9 @@ Story TASK-17 AC#2 (QA TASK-17.4). Steps: open a manage link (/m#token or zivali
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Close report on the web /m page and the mobile manage screen sends a C4 close reason (e.g. a reason choice or a fixed manager reason) and the report closes (200, status closed)
+- [x] #1 Close report on the web /m page and the mobile manage screen sends a C4 close reason (e.g. a reason choice or a fixed manager reason) and the report closes (200, status closed)
 <!-- AC:END -->
+
+## Packet
+
+Branch: agent/task-17.5-manage-close

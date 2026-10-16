@@ -3,7 +3,7 @@ id: TASK-17.6
 title: >-
   PATCH /v1/reports photo_ids skips the photo-hash hold: a visible anonymous
   report can take a held or removed report's photo
-status: To Do
+status: Done
 assignee:
   - '@backend-dev'
 created_date: '2026-10-16 00:22'
@@ -23,5 +23,9 @@ Story TASK-17 AC#5 (QA TASK-17.4). Steps: (1) another report is held or removed 
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 PATCH /v1/reports/:code with photo_ids that match (sha256) a photo of a held or removed report holds the report (moderation_state held, anon_hold flag photo_match) or refuses the change, and the photo is not published; a regression test covers it
+- [x] #1 PATCH /v1/reports/:code with photo_ids that match (sha256) a photo of a held or removed report holds the report (moderation_state held, anon_hold flag photo_match) or refuses the change, and the photo is not published; a regression test covers it
 <!-- AC:END -->
+
+## Packet
+
+Branch: agent/task-17.6-patch-photo-hash
