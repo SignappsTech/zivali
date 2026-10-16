@@ -1,11 +1,11 @@
 ---
 id: TASK-29.6
 title: 'Mobile lost flow: signed-out draft hand-off and confirmation screen'
-status: In Progress
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:14'
-updated_date: '2026-10-16 01:10'
+updated_date: '2026-10-16 02:09'
 labels:
   - fe
   - 'est:S'
