@@ -1,7 +1,10 @@
 import AxeBuilder from '@axe-core/playwright';
-import { expect, type Page, test } from '@playwright/test';
+import { expect, type Page, type Route, test } from '@playwright/test';
 
+import { me } from '@zivali/api/__fixtures__/me';
 import { publicReport } from '@zivali/api/__fixtures__/reports';
+
+import { dismissConsent, signInAs } from './session';
 
 // TASK-18.2: P9 /r/[code] server-rendered from the report API (e2e/mock-api.ts: Rex12345 lost with a reward,
 // the found fixture, Gone1234 gone, anything else unknown).
@@ -89,4 +92,45 @@ test('a found report has its detail page', async ({ page }) => {
 
 	expect(response?.status()).toBe(200);
 	await expect(page.getByRole('heading', { level: 1 })).toHaveText('Najden pes');
+});
+
+// TASK-21.6: slot A contact (C9). The browser's calls are answered here: GET /v1/me (a confirmed account) and
+// POST /v1/conversations; the session is signed by the e2e mock (e2e/session.ts).
+test('signed in, "Pošlji sporočilo" opens the conversation about the report', async ({ page, baseURL }) => {
+	const id = 'c9a1d2e3-0000-4000-8000-000000000006';
+	const sent: unknown[] = [];
+	const answer = (url: RegExp, handler: (route: Route) => Promise<void>) =>
+		page.route(url, (route) => (route.request().method() === 'OPTIONS' ? route.continue() : handler(route)));
+	await signInAs(page, { id: me.id, role: 'USER', aal: 'aal1' }, baseURL!);
+	await dismissConsent(page);
+	await answer(/\/v1\/me$/, (route) => route.fulfill({ json: me }));
+	await answer(/\/v1\/notifications(\?.*)?$/, (route) =>
+		route.fulfill({ json: { items: [], next_cursor: null, unread: 0 } })
+	);
+	await answer(/\/v1\/conversations$/, (route) => {
+		if (route.request().method() !== 'POST') return route.fulfill({ json: { items: [], next_cursor: null } });
+		sent.push(route.request().postDataJSON());
+		return route.fulfill({ json: { id } });
+	});
+	await page.goto('/r/Rex12345');
+
+	await page.getByRole('button', { name: 'Pošlji sporočilo', exact: true }).click();
+	await expect(page).toHaveURL(new RegExp(`/nabiralnik/${id}$`));
+	expect(sent).toEqual([{ about_report_code: 'Rex12345' }]);
+});
+
+test('signed out, "To je moja žival" on a found report opens the P16 gate and sends nothing', async ({ page }) => {
+	const sent: string[] = [];
+	await page.route(/\/v1\/conversations$/, (route) => {
+		sent.push(route.request().method());
+		return route.abort();
+	});
+	await dismissConsent(page);
+	await page.goto(`/r/${publicReport.short_code}`);
+
+	await page.getByRole('button', { name: 'To je moja žival', exact: true }).click();
+	const gate = page.getByRole('dialog', { name: 'Za pogovor potrebujete račun' });
+	await expect(gate).toBeVisible();
+	await expect(gate.getByRole('link', { name: 'Vpiši se' })).toBeVisible();
+	expect(sent).toEqual([]);
 });
