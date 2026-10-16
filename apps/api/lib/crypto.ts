@@ -8,6 +8,17 @@ export function hashKey(value: string): string {
 	return createHmac('sha256', config.RATE_SALT).update(value).digest('base64url');
 }
 
+/** JSON with sorted object keys, so the same body hashes the same whatever its key order (request dedupe, C1). */
+export const canonical = (value: unknown): string => {
+	if (Array.isArray(value)) return `[${value.map(canonical).join(',')}]`;
+	if (value && typeof value === 'object')
+		return `{${Object.keys(value)
+			.sort()
+			.map((k) => `${JSON.stringify(k)}:${canonical((value as Record<string, unknown>)[k])}`)
+			.join(',')}}`;
+	return JSON.stringify(value) ?? 'null';
+};
+
 const KEY = createHash('sha256').update(config.IDEMPOTENCY_KEY).digest();
 
 /** JSON value → base64url(iv | tag | ciphertext). */

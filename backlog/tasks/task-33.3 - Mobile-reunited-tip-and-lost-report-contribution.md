@@ -1,11 +1,11 @@
 ---
 id: TASK-33.3
 title: 'Mobile support ask: reunited tip, lost-report contribution, profile card'
-status: To Do
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:14'
-updated_date: '2026-10-14 22:43'
+updated_date: '2026-10-16 04:06'
 labels:
   - fe
   - 'est:S'

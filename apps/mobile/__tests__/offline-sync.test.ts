@@ -12,11 +12,13 @@ import { responsibleConfirmed } from '@zivali/api/__fixtures__/directory';
 import * as fx from '@zivali/api/__fixtures__/reports';
 import { createMockApi, mockError } from '@zivali/api/mock';
 import type { CachedReport, SyncReportsResponse } from '@zivali/api/sync';
+import { toCached } from '@/lib/data/reports';
 import { getDb } from '@/lib/db';
 import { refreshGeofences } from '@/lib/offline/geofence';
 import { wipeLocalData } from '@/lib/offline/wipe';
 import { thumbsDir } from '@/lib/db/files';
 import {
+	cacheBytes,
 	cacheSettings,
 	enforceLimits,
 	getCachedShelter,
@@ -268,6 +270,18 @@ describe('area sync', () => {
 		expect(await all('select * from cache_areas')).toEqual([]);
 	});
 
+	test('a report seen closed online leaves the cache; an owner view is cached only while visible', async () => {
+		await upsertReports([report('a'), report('b'), report('c', { status: 'matched' })]);
+
+		await upsertReports([
+			report('a', { status: 'reunited' }),
+			{ ...report('b'), moderation_state: 'hidden' },
+			{ ...report('d'), moderation_state: 'visible' },
+		]);
+
+		expect(await ids()).toEqual(['c', 'd']);
+	});
+
 	test('a response for an area wiped meanwhile (sign-out) is not written', async () => {
 		await setCacheArea('home', LJUBLJANA);
 		const client = createMockApi({
@@ -383,6 +397,21 @@ describe('thumbnails', () => {
 			{ idempotent: true }
 		);
 	});
+
+	test('a purged thumbnail stops counting at the next sync, also on mobile data without photos', async () => {
+		await setCacheArea('home', LJUBLJANA);
+		await syncNow(api(fx.syncSnapshot));
+		expect(await cacheBytes()).toBe(2 * 1024 + 1000);
+		thumbsDir.delete();
+		jest.mocked(getNetworkStateAsync).mockResolvedValue(CELLULAR);
+		jest.mocked(File.downloadFileAsync).mockClear();
+
+		await syncNow(api({ ...fx.syncSnapshot, upserts: [] }));
+
+		expect(File.downloadFileAsync).not.toHaveBeenCalled();
+		expect(await cacheBytes()).toBe(2 * 1024);
+		expect(await all('select id from reports_cache where thumb_path is not null')).toEqual([]);
+	});
 });
 
 describe('limits', () => {
@@ -405,13 +434,15 @@ describe('limits', () => {
 	test('over the size budget the farthest go first, then the oldest, thumbnails included', async () => {
 		await setCacheArea('home', LJUBLJANA);
 		const at = (km: number) => ({ lat: 46.06 + km / 111.32, lng: 14.51, radius_m: 500 });
+		const near = report('near', { area: at(0), thumb_url: 'https://media.zivali.test/near.webp' });
 		await upsertReports([
-			report('near', { area: at(0), thumb_url: 'https://media.zivali.test/near.webp' }),
+			near,
 			report('mid', { area: at(20), thumb_url: 'https://media.zivali.test/mid.webp' }),
 			report('far-old', { area: at(50), event_at: '2026-09-01T00:00:00Z' }),
 			report('far-new', { area: at(50), event_at: '2026-10-01T00:00:00Z' }),
 		]);
-		await syncNow(api({ ...fx.syncSnapshot, upserts: [] })); // downloads the two thumbnails (1000 B each)
+		// The area's snapshot lists near (the others are outside it) and downloads the two thumbnails (1000 B each).
+		await syncNow(api({ ...fx.syncSnapshot, upserts: [near] }));
 
 		// Four rows of 1 KiB plus 2000 B of thumbnails; 3100 B keeps near (2024 B) only once mid's photo counts.
 		await enforceLimits({ maxMb: 3100 / 1024 / 1024, maxAgeDays: 7, mobilePhotos: false });
@@ -482,6 +513,34 @@ describe('triggers', () => {
 		expect(refreshGeofences).toHaveBeenCalledTimes(3);
 	});
 
+	test('a new or moved area syncs at once, after a sync already running; an unchanged one does not', async () => {
+		let release = () => {};
+		const held = new Promise<void>((resolve) => (release = resolve));
+		const areas: string[] = [];
+		const client = createMockApi({
+			'GET /v1/sync/reports': async ({ query }) => {
+				areas.push(query.areas!);
+				await held;
+				return fx.syncSnapshot;
+			},
+			'GET /v1/shelters/responsible': responsibleConfirmed,
+		});
+		const home = '[{"lat":46.06,"lng":14.51,"radius_km":10}]';
+		const current = '[{"lat":46.04,"lng":14.49,"radius_km":10}]';
+		stop = startCacheSync(client);
+		await flush(); // the launch sync waits on its first page
+
+		await setCacheArea('current', { lat: 46.0441, lng: 14.4893 });
+		release();
+		await flush();
+		expect(areas).toEqual([home, home, current]);
+
+		await setCacheArea('current', { lat: 46.0442, lng: 14.4893 }); // inside the rounding
+		await setCacheArea('home', LJUBLJANA);
+		await flush();
+		expect(areas).toHaveLength(3);
+	});
+
 	test('regaining an unmetered connection syncs; mobile data does not', async () => {
 		const client = api(fx.syncSnapshot);
 		stop = startCacheSync(client);
@@ -540,5 +599,111 @@ describe('background task', () => {
 
 		expect(await backgroundTask()).toBe(BackgroundTask.BackgroundTaskResult.Success);
 		expect(fetchMock).not.toHaveBeenCalled();
+	});
+});
+
+// TASK-85.4 (QA): story checks. A test.failing reproduces a filed bug; the fix flips it to test.
+describe('QA TASK-85.4', () => {
+	const dump = async () => {
+		const tables = await all<{ name: string }>(
+			"select name from sqlite_master where type = 'table' and name not like 'sqlite_%'"
+		);
+		return JSON.stringify(await Promise.all(tables.map(({ name }) => all(`select * from ${name}`))));
+	};
+
+	test('a manager view seen online reaches the cache as its public subset only (AC #3)', async () => {
+		const owner = {
+			...fx.ownerReport,
+			chip_number: PRIVATE.chip_number,
+			location: PRIVATE.location,
+			collar: 'Rdeča ovratnica z zvoncem',
+			reward_note: 'Pokličite me',
+		};
+
+		await upsertReports([toCached(owner)]);
+
+		const text = await dump();
+		for (const value of [
+			PRIVATE.chip_number,
+			String(PRIVATE.location.lat),
+			String(PRIVATE.location.lng),
+			owner.collar,
+			owner.reward_note,
+		]) {
+			expect(text).not.toContain(value);
+		}
+		const [row] = await all<{ area_lat: number; area_lng: number; area_radius_m: number }>(
+			'select area_lat, area_lng, area_radius_m from reports_cache'
+		);
+		expect({ lat: row!.area_lat, lng: row!.area_lng, radius_m: row!.area_radius_m }).toEqual(owner.area);
+	});
+
+	test('the app entry defines both background tasks before the router loads (headless launch)', () => {
+		const entry = fs.readFileSync(path.join(__dirname, '../index.ts'), 'utf8');
+		const at = (spec: string) => entry.indexOf(`import '${spec}';`);
+		expect(at('./lib/offline/sync')).toBeGreaterThanOrEqual(0);
+		expect(at('./lib/offline/geofence')).toBeGreaterThanOrEqual(0);
+		expect(at('./lib/offline/sync')).toBeLessThan(at('expo-router/entry'));
+		expect(at('./lib/offline/geofence')).toBeLessThan(at('expo-router/entry'));
+	});
+
+	test('a thumbnail is deleted with its aged-out row', async () => {
+		await setCacheArea('home', LJUBLJANA);
+		await syncNow(api(fx.syncSnapshot));
+		expect(thumbsDir.list().map((entry) => entry.name)).toContain(lost.id);
+
+		jest.mocked(Date.now).mockReturnValue(NOW + 8 * DAY);
+		await setCacheArea('home', null); // no area confirms the rows any more
+		await enforceLimits();
+
+		expect(await ids()).toEqual([]);
+		expect(thumbsDir.list()).toEqual([]);
+	});
+
+	// TASK-85.5
+	test('a fresh snapshot drops cached rows inside the area it no longer lists (AC #4)', async () => {
+		await setCacheArea('current', LJUBLJANA);
+		await syncNow(api(fx.syncSnapshot));
+		expect(await ids()).toContain(lost.id);
+		jest.mocked(Date.now).mockReturnValue(NOW + DAY);
+
+		// About 1 km on: a new rounded centre, so a fresh snapshot. Maks was reunited meanwhile, and a snapshot lists
+		// live reports only, without removed ids.
+		await setCacheArea('current', { lat: LJUBLJANA.lat + 0.01, lng: LJUBLJANA.lng });
+		await syncNow(api({ ...fx.syncSnapshot, upserts: fx.syncSnapshot.upserts.filter((u) => u.id !== lost.id) }));
+
+		expect(await ids()).not.toContain(lost.id);
+	});
+
+	// TASK-85.6
+	test('a closed report or a held owner view seen online does not stay in the cache (AC #1, #4)', async () => {
+		await setCacheArea('home', LJUBLJANA);
+		await syncNow(api(fx.syncSnapshot));
+		// "Pokaži zaključene" or a shared link (useReportSearch / useReport), and the owner's own report on hold.
+		const held = { ...fx.ownerReport, id: 'held', short_code: 'held', moderation_state: 'held' as const };
+		await upsertReports([
+			toCached({ ...fx.publicReport, id: 'reunited', short_code: 'reunited', status: 'reunited' }),
+			toCached(held),
+		]);
+
+		for (const day of [3, 6, 9]) {
+			jest.mocked(Date.now).mockReturnValue(NOW + day * DAY);
+			await syncNow(api({ upserts: [], removed_ids: [], server_time: `T${day}`, has_more: false }));
+		}
+
+		expect(await ids()).not.toContain('reunited');
+		expect(await ids()).not.toContain('held');
+	});
+
+	// TASK-85.7
+	test('a thumbnail the OS purged is downloaded again on the next Wi-Fi sync (ADR-019)', async () => {
+		await setCacheArea('home', LJUBLJANA);
+		await syncNow(api(fx.syncSnapshot));
+		thumbsDir.delete(); // the OS clears the cache folder under storage pressure
+		jest.mocked(File.downloadFileAsync).mockClear();
+
+		await syncNow(api({ ...fx.syncSnapshot, upserts: [] }));
+
+		expect(File.downloadFileAsync).toHaveBeenCalledWith(lost.thumb_url, expect.anything(), { idempotent: true });
 	});
 });

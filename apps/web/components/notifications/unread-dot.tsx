@@ -1,12 +1,14 @@
 'use client';
 
-import { useTranslations } from 'next-intl';
+import { type AbstractIntlMessages, type Locale, NextIntlClientProvider, useTranslations } from 'next-intl';
+import { useParams } from 'next/navigation';
 import * as React from 'react';
 import { useStore } from 'react-redux';
 
 import { useSession } from '@zivali/api/auth';
 import { subscribeInbox, useListNotificationsQuery } from '@zivali/api/notifications';
 import type { ApiStore } from '@zivali/api/rtk';
+import { timeZone } from '@zivali/i18n/format';
 import { StoreProvider } from '@/components/store-provider';
 import { cn } from '@/lib/utils';
 
@@ -60,11 +62,19 @@ export function UnreadDot({
 	);
 }
 
-/** UnreadDot with the shared store, for the header, which loads it on signed-in pages only (TASK-90.5). */
-export function UnreadDotIsland(props: React.ComponentProps<typeof UnreadDot>) {
+/**
+ * UnreadDot with the shared store, for the header, which loads it on signed-in pages only (TASK-90.5). The root
+ * layout has no intl provider (TASK-90.7), so the island brings one with the `messages` the header passes.
+ */
+export function UnreadDotIsland({
+	messages,
+	...props
+}: React.ComponentProps<typeof UnreadDot> & { messages: AbstractIntlMessages }) {
 	return (
-		<StoreProvider>
-			<UnreadDot {...props} />
-		</StoreProvider>
+		<NextIntlClientProvider locale={useParams<{ locale: Locale }>().locale} timeZone={timeZone} messages={messages}>
+			<StoreProvider>
+				<UnreadDot {...props} />
+			</StoreProvider>
+		</NextIntlClientProvider>
 	);
 }

@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { hasLocale, NextIntlClientProvider } from 'next-intl';
+import { hasLocale } from 'next-intl';
 import { getMessages, getTranslations } from 'next-intl/server';
 import localFont from 'next/font/local';
 import { cookies, headers } from 'next/headers';
@@ -7,8 +7,10 @@ import { notFound } from 'next/navigation';
 
 import { CONSENT_KEY, isCurrent, parseConsent } from '@zivali/analytics';
 import { Providers } from '@/app/providers';
+import { consentCopy } from '@/components/consent/copy';
 import { SiteFooter } from '@/components/shell/footer';
 import { SiteHeader } from '@/components/shell/header';
+import { getPathname } from '@/i18n/navigation';
 import { routing } from '@/i18n/routing';
 import { env } from '@/lib/env';
 import { getViewer } from '@/lib/viewer';
@@ -39,12 +41,6 @@ const sans = localFont({
 	fallback: ['ui-sans-serif', 'system-ui', 'sans-serif'],
 });
 
-// The namespaces that client components on every public page read; only these go into every page's HTML, the rest of
-// the catalogue (emails, notifications, page copy, admin, ...) stays on the server (TASK-90.5). The (app), (admin) and
-// dev layouts and the header's inbox dot pass their own; a public page adds its own with PageMessages (sign-in, sign-up,
-// reset-password and /m: auth; /m: report_found, lifecycle; /zavetisca: shelters).
-const CLIENT_NAMESPACES = ['common', 'consent', 'errors', 'nav'] as const;
-
 // Light and dark follow the OS before the first paint (system §12; the manual override comes with the profile).
 const themeScript = `(()=>{const m=matchMedia('(prefers-color-scheme: dark)');const s=()=>document.documentElement.classList.toggle('dark',m.matches);s();m.addEventListener('change',s)})()`;
 
@@ -70,9 +66,13 @@ export default async function LocaleLayout({ children, params }: LayoutProps<'/[
 	const nonce = (await headers()).get('x-nonce') ?? undefined;
 	const viewer = await getViewer();
 	// P17 banner: decided here from the cookie, so its first view paints with the page instead of becoming a late LCP.
-	const consent = parseConsent((await cookies()).get(CONSENT_KEY)?.value ?? null);
-	const messages = await getMessages();
-	const clientMessages = Object.fromEntries(CLIENT_NAMESPACES.map((ns) => [ns, messages[ns]]));
+	const stored = parseConsent((await cookies()).get(CONSENT_KEY)?.value ?? null);
+	const prompt = !isCurrent(stored);
+	const [messages, t] = await Promise.all([getMessages(), getTranslations('consent')]);
+	// No intl provider around the page (TASK-90.7): the shell's client islands get their strings as props, so a public
+	// page ships no intl runtime. Client components that translate sit under PageMessages or an (app), (admin) or dev
+	// layout provider; only the lazily loaded 500 page reads these.
+	const errorMessages = { common: messages.common, errors: messages.errors };
 
 	return (
 		<html lang={locale} suppressHydrationWarning>
@@ -80,13 +80,19 @@ export default async function LocaleLayout({ children, params }: LayoutProps<'/[
 				<script nonce={nonce} dangerouslySetInnerHTML={{ __html: themeScript }} />
 			</head>
 			<body className={`${display.variable} ${sans.variable}`}>
-				<NextIntlClientProvider messages={clientMessages}>
-					<Providers signedIn={viewer !== null} consent={{ prompt: !isCurrent(consent), stored: consent }}>
-						<SiteHeader viewer={viewer} />
-						{children}
-						<SiteFooter />
-					</Providers>
-				</NextIntlClientProvider>
+				<Providers
+					signedIn={viewer !== null}
+					consent={{
+						prompt,
+						copy: consentCopy(t, prompt, stored),
+						policyHref: getPathname({ locale, href: '/cookies' }),
+					}}
+					messages={errorMessages}
+				>
+					<SiteHeader viewer={viewer} />
+					{children}
+					<SiteFooter />
+				</Providers>
 			</body>
 		</html>
 	);

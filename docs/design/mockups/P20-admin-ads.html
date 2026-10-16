@@ -1,0 +1,717 @@
+<!doctype html>
+<!--
+  P20 Admin ad management mockup (TASK-37.1). Built from docs/design/mockups/_template.html.
+  Sources: docs/design/pages/P20-admin-ads.md, docs/design/system.md, docs/content/pages/P20-admin-ads.md (v0.1), shell and table pattern from P19-admin-shell.html.
+  Ad units in the preview use the merged P21 reserved sizes: Feed 88, Detail/Reunited 176 (web) and 200 (mobile, .ad-m), Sidebar 320 x 452.
+  Static HTML. Everything in #src is cloned once per colour mode by ../directions/directions.js.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Najdimo mockup: P20 Admin ad management</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:wght@400;500;600;700&family=Bricolage+Grotesque:opsz,wght@12..96,500..800&display=swap" rel="stylesheet">
+<link href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css" rel="stylesheet">
+<link href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/bold/style.css" rel="stylesheet">
+<link href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css" rel="stylesheet">
+<link href="../tokens.css" rel="stylesheet">
+<link href="../directions/directions.css" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com/3.4.17"></script>
+<script src="../directions/tailwind-config.js"></script>
+<style>
+/* Admin shell parts used only by this mockup. Token-driven; frontend maps them to shadcn sidebar, table, sheet and dialog. */
+.scope h1, .scope h2, .scope h3 { text-wrap: balance; }
+.nowrap { white-space: nowrap; }
+.anno { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; font-size: 13px; line-height: 18px; font-weight: 700; background: hsl(var(--foreground)); color: hsl(var(--background)); white-space: nowrap; }
+.cap { margin: 0; font-size: 14px; line-height: 20px; font-weight: 700; color: hsl(var(--muted-foreground)); }
+/* Mockup scaffolding: outline of a screen region drawn at real size (not product UI) */
+.part { border-radius: var(--radius-card); background: hsl(var(--background)); box-shadow: 0 0 0 1px hsl(var(--input) / 0.45); }
+
+/* Console type: h1 30/36 at every width (dense console; see CHANGE in the report), section h2 24/30, drawer and dialog title 20/28 */
+.h1c { margin: 0; font-family: var(--font-display); font-weight: 700; font-size: 30px; line-height: 36px; letter-spacing: -0.02em; }
+.h2c { margin: 0; font-family: var(--font-display); font-weight: 700; font-size: 24px; line-height: 30px; letter-spacing: -0.015em; }
+.dtitle { margin: 0; font-family: var(--font-display); font-weight: 600; font-size: 20px; line-height: 28px; letter-spacing: -0.005em; }
+.meta { font-size: 14px; line-height: 20px; color: hsl(var(--muted-foreground)); }
+
+/* Shell: sidebar 280 (72 collapsed) + column with top bar 72 and content (gutters 48, 40 between blocks, max 1280) */
+.adm { display: flex; align-items: stretch; }
+.adm-col { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.adm-main { width: 100%; max-width: 1280px; box-sizing: border-box; padding: 4px 48px 64px; display: flex; flex-direction: column; gap: 40px; }
+
+.sb { width: 280px; flex: none; box-sizing: border-box; display: flex; flex-direction: column; background: hsl(var(--sidebar)); color: hsl(var(--sidebar-foreground)); }
+.sb-head { height: 72px; flex: none; display: flex; align-items: center; gap: 8px; padding: 0 12px; }
+.sb-home { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 8px; border-radius: calc(var(--radius) - 4px); color: inherit; text-decoration: none; }
+.sb-home svg { width: 32px; height: 32px; flex: none; color: hsl(var(--sidebar-foreground)); }
+.sb-name { font-family: var(--font-display); font-weight: 700; font-size: 20px; line-height: 24px; letter-spacing: -0.02em; }
+.sb-sub, .sb-label, .sb-soon { color: hsl(var(--sidebar-foreground) / 0.72); }
+.sb-sub { font-size: 14px; line-height: 20px; font-weight: 600; }
+.sb-nav { flex: 1; padding: 4px 12px 20px; }
+.sb-group + .sb-group { margin-top: 16px; }
+.sb-label { margin: 0 0 4px; padding: 0 12px; font-size: 14px; line-height: 20px; font-weight: 600; }
+.sb-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+.sb-item { display: flex; align-items: center; gap: 12px; width: 100%; box-sizing: border-box; min-height: 44px; padding: 10px 12px; border: 0; border-radius: calc(var(--radius) - 4px); background: transparent; color: inherit; font: inherit; font-weight: 600; font-size: 16px; line-height: 20px; text-align: left; text-decoration: none; cursor: pointer; transition: background-color 150ms var(--ease); }
+.sb-item > i { font-size: 20px; line-height: 1; flex: none; }
+.sb-t { min-width: 0; }
+.sb-soon { margin-left: auto; padding-left: 8px; font-size: 14px; line-height: 20px; font-weight: 400; white-space: nowrap; }
+.sb-item:hover, .sb-item.is-hover { background: hsl(var(--sidebar-accent)); color: hsl(var(--sidebar-accent-foreground)); }
+.sb-item:hover .sb-soon, .sb-item.is-hover .sb-soon { color: hsl(var(--sidebar-accent-foreground) / 0.78); }
+.sb-item[aria-current="page"] { background: hsl(var(--sidebar-primary)); color: hsl(var(--sidebar-primary-foreground)); font-weight: 700; }
+.sb a:focus-visible, .sb button:focus-visible, .sb .is-focus { outline: 3px solid hsl(var(--sidebar-ring)); outline-offset: 2px; }
+.sb .iconbtn:hover { background: hsl(var(--sidebar-accent)); }
+.sb-foot { padding: 12px; border-top: 1px solid hsl(var(--sidebar-border)); }
+.sb.is-collapsed { width: 72px; }
+.sb.is-collapsed .sb-head { justify-content: center; padding: 0; }
+.sb.is-collapsed .sb-nav { padding: 4px 14px 20px; }
+.sb.is-collapsed .sb-item { width: 44px; padding: 0; justify-content: center; }
+.sb.is-collapsed .sb-group + .sb-group { margin-top: 8px; padding-top: 8px; border-top: 1px solid hsl(var(--sidebar-border)); }
+.sb.is-collapsed .sb-foot { padding: 12px 14px; }
+.sb-sheet { position: absolute; top: 0; bottom: 0; left: 0; z-index: 5; border-radius: 0 var(--radius-card) var(--radius-card) 0; box-shadow: var(--shadow-pop); }
+.sbx { width: 280px; max-width: 100%; padding: 6px 12px; border-radius: var(--radius-row); }
+/* Tooltip for the collapsed sidebar (popover surface) */
+.tip { position: absolute; left: calc(100% + 12px); top: 50%; transform: translateY(-50%); z-index: 6; padding: 8px 12px; border-radius: calc(var(--radius) - 4px); background: hsl(var(--popover)); color: hsl(var(--popover-foreground)); box-shadow: var(--shadow-pop); font-size: 14px; line-height: 20px; font-weight: 700; white-space: nowrap; pointer-events: none; }
+
+/* Top bar 72 px on background: breadcrumb links, then environment, role and account menu */
+.tb { height: 72px; flex: none; display: flex; align-items: center; gap: 12px; padding: 0 48px; box-sizing: border-box; }
+.crumbs { display: flex; align-items: center; gap: 2px; list-style: none; margin: 0; padding: 0; font-size: 15px; line-height: 20px; font-weight: 600; }
+.crumbs a { display: inline-flex; align-items: center; min-height: 44px; padding: 0 6px; margin-left: -6px; border-radius: 8px; color: hsl(var(--primary)); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 4px; }
+.crumbs a:hover { text-decoration-thickness: 2px; }
+.crumbs li { display: flex; align-items: center; }
+.crumbs .sep { color: hsl(var(--muted-foreground)); font-size: 14px; }
+.crumbs .sep i { display: block; }
+.crumbs [aria-current] { padding: 0 6px; color: hsl(var(--foreground)); }
+.tb-meta { margin-left: auto; display: flex; align-items: center; gap: 16px; }
+.envw { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; line-height: 20px; font-weight: 700; white-space: nowrap; }
+.envw i { font-size: 16px; }
+.vr { width: 1px; height: 20px; background: hsl(var(--input) / 0.5); }
+.acct { display: inline-flex; align-items: center; gap: 4px; min-height: 44px; padding: 0 10px 0 6px; border: 0; border-radius: 999px; background: transparent; color: inherit; font: inherit; cursor: pointer; }
+.acct:hover { background: hsl(var(--foreground) / 0.10); }
+.acct i { font-size: 16px; }
+.phead { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px 24px; }
+
+/* Dashboard number blocks: no cards, number 48/52 */
+.kpi { display: flex; flex-direction: column-reverse; margin: 0; }
+.kpi dt { font-size: 16px; line-height: 24px; }
+.kpi-n { margin: 0; font-family: var(--font-display); font-weight: 700; font-size: 48px; line-height: 52px; letter-spacing: -0.02em; }
+.kpi-link { margin: 4px 0 0 -12px; }
+
+/* Dense table: card surface, hairlines allowed, header 52, rows 56, text 15/22 */
+.tcard { background: hsl(var(--card)); color: hsl(var(--card-foreground)); border-radius: var(--radius-card); padding: 4px 16px 8px; }
+.tbl { width: 100%; border-collapse: collapse; font-size: 15px; line-height: 22px; }
+.tbl th { position: sticky; top: 0; z-index: 1; height: 52px; padding: 0 12px; background: hsl(var(--card)); border-bottom: 1px solid hsl(var(--border)); text-align: left; vertical-align: middle; font-size: 14px; line-height: 20px; font-weight: 700; color: hsl(var(--muted-foreground)); white-space: nowrap; }
+.tbl td { height: 56px; box-sizing: border-box; padding: 6px 12px; border-bottom: 1px solid hsl(var(--border)); vertical-align: middle; }
+.tbl tbody tr:last-child td { border-bottom: 0; }
+.tbl tbody tr { transition: background-color 150ms var(--ease); }
+.tbl tbody tr:not(.no-hover):hover, .tbl tbody tr.is-hover { background: hsl(var(--accent) / 0.6); }
+.tbl tbody tr.is-selected { background: hsl(var(--accent)); }
+.tbl .c-check { width: 44px; padding: 0 4px; }
+.tbl .c-act { width: 52px; padding: 0 4px; text-align: right; }
+.tmuted { color: hsl(var(--muted-foreground)); }
+.rowlink { display: inline-flex; align-items: center; min-height: 44px; border-radius: 8px; color: inherit; font-weight: 700; text-decoration: none; }
+.rowlink:hover, .tbl tbody tr:hover .rowlink, .tbl tr.is-hover .rowlink { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 4px; }
+.sortbtn { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; margin: 0 -8px; padding: 0 8px; border: 0; border-radius: calc(var(--radius) - 4px); background: transparent; color: inherit; font: inherit; font-weight: 700; white-space: nowrap; cursor: pointer; }
+.sortbtn i { font-size: 16px; }
+.sortbtn:hover, .sortbtn.is-hover { background: hsl(var(--foreground) / 0.10); color: hsl(var(--foreground)); }
+th[aria-sort="ascending"] .sortbtn, th[aria-sort="descending"] .sortbtn { color: hsl(var(--foreground)); }
+.check.solo { width: 44px; justify-content: center; padding: 10px 0; }
+.cbx.is-mixed { background: hsl(var(--primary)); border-color: hsl(var(--primary)); }
+.cbx.is-mixed i { visibility: visible; }
+.bulk { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; min-height: 60px; padding: 8px 0; border-bottom: 1px solid hsl(var(--border)); }
+.bulk p { margin: 0 8px 0 4px; }
+.btn-ghost.danger, .btn-ghost.danger:hover { color: hsl(var(--destructive)); }
+/* Enquiry status: icon + word (teal for new, foreground in progress, muted when closed) */
+.lst { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; line-height: 20px; font-weight: 700; white-space: nowrap; }
+.lst i { font-size: 16px; }
+.lst-ver { color: hsl(var(--foreground)); }
+.lst-del { color: hsl(var(--muted-foreground)); }
+.lst-new { color: hsl(var(--primary)); } .lst-wip { color: hsl(var(--foreground)); } .lst-done { color: hsl(var(--muted-foreground)); }
+/* Filter row: line search (label above) and select filters drawn as pills */
+.frow { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px 24px; }
+.f-search { width: 320px; max-width: 100%; }
+.pill i.ph-caret-down { font-size: 16px; }
+.pill.is-set { background: hsl(var(--primary)); color: hsl(var(--primary-foreground)); }
+/* Row menu */
+.iconbtn.is-open { background: hsl(var(--foreground) / 0.10); }
+.rmenu { position: absolute; right: 0; top: calc(100% + 4px); width: 208px; padding: 8px; border-radius: var(--radius-row); text-align: left; }
+.sep { height: 1px; margin: 6px 12px; background: hsl(var(--border)); }
+.mi-danger, .mi-danger:hover { color: hsl(var(--destructive)); }
+/* Stacked rows below lg */
+.srows { list-style: none; margin: 0; padding: 0; }
+.srow { display: flex; align-items: flex-start; gap: 8px; padding: 8px 0; border-bottom: 1px solid hsl(var(--border)); }
+.srow:last-child { border-bottom: 0; }
+.srow-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 12px; margin: 0 0 6px; font-size: 14px; line-height: 20px; color: hsl(var(--muted-foreground)); }
+
+/* Right drawer 480 px (sheet): card surface, shadow-pop, leading corners 24 */
+.drawer { position: absolute; top: 44px; right: 0; bottom: 0; z-index: 5; width: 480px; display: flex; flex-direction: column; background: hsl(var(--card)); color: hsl(var(--card-foreground)); border-radius: var(--radius-card) 0 0 var(--radius-card); box-shadow: var(--shadow-pop); }
+.drawer-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 24px 16px 8px 24px; }
+.drawer-body { flex: 1; padding: 8px 24px 24px; display: flex; flex-direction: column; gap: 32px; }
+.drawer-foot { display: flex; align-items: center; gap: 8px; padding: 16px 24px 24px; }
+.dlist { display: grid; grid-template-columns: 112px minmax(0, 1fr); column-gap: 16px; margin: 0; }
+.dlist dt, .dlist dd { display: flex; align-items: center; min-height: 44px; margin: 0; }
+.dlist dt { font-size: 14px; line-height: 20px; font-weight: 700; color: hsl(var(--muted-foreground)); }
+.lnk { display: inline-flex; align-items: center; min-height: 44px; color: hsl(var(--primary)); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 4px; }
+.lnk:hover { text-decoration-thickness: 2px; }
+.tst { position: absolute; bottom: 24px; left: 150px; width: 420px; z-index: 6; }
+
+/* Sign-in gate: 440 column, the 6-digit field is the 64 px single-question input */
+.logo-link { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; border-radius: 12px; color: hsl(var(--foreground)); text-decoration: none; }
+.auth { max-width: 440px; margin: 0 auto; padding: 72px 0 96px; }
+.otp { font-weight: 700; letter-spacing: 0.32em; font-variant-numeric: tabular-nums; }
+.otpkey { margin: 0; font-size: 18px; line-height: 28px; font-weight: 700; letter-spacing: 0.06em; user-select: all; }
+/* QR: dark modules on a light field in both modes so every scanner reads it */
+.qr { width: 168px; height: 168px; flex: none; display: grid; place-items: center; border-radius: var(--radius-row); background: hsl(var(--card)); color: hsl(var(--foreground)); }
+.dark .qr { background: hsl(var(--foreground)); color: hsl(var(--background)); }
+.qr i { font-size: 148px; line-height: 1; }
+
+/* Frames shrink on narrow screens so the page never scrolls sideways (1200 and 768 frames) */
+.fit-1200 { width: 1200px; } .fit-768 { width: 768px; }
+@media (max-width: 1263px) { .fit-1200 { zoom: 0.88; } }
+@media (max-width: 1118px) { .fit-1200 { zoom: 0.75; } }
+@media (max-width: 962px) { .fit-1200 { zoom: 0.6; } }
+@media (max-width: 830px) { .fit-768 { zoom: 0.9; } }
+@media (max-width: 782px) { .fit-1200 { zoom: 0.48; } }
+@media (max-width: 753px) { .fit-768 { zoom: 0.8; } }
+@media (max-width: 660px) { .fit-768 { zoom: 0.6; } }
+@media (max-width: 638px) { .fit-1200 { zoom: 0.38; } }
+@media (max-width: 507px) { .fit-768 { zoom: 0.44; } }
+@media (max-width: 502px) { .fit-1200 { zoom: 0.28; } }
+@media (max-width: 389px) { .fit-1200 { zoom: 0.24; } .fit-768 { zoom: 0.38; } }
+@media (max-width: 359px) { .fit-1200 { zoom: 0.21; } .fit-768 { zoom: 0.33; } }
+/* ===== P20 additions (token-driven) ===== */
+.tr { text-align: right; }
+.tbl.adt th, .tbl.adt td { padding-left: 10px; padding-right: 10px; }
+.tbl.adt td { height: 72px; }
+.athumb { width: 64px; height: 48px; flex: none; border-radius: 12px; object-fit: cover; display: block; }
+.athumb-lg { flex: none; border-radius: var(--radius-row); object-fit: cover; display: block; max-width: 100%; height: auto; }
+.rowlink { text-align: left; }
+.pgrid { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 48px; align-items: start; }
+.formcol { display: flex; flex-direction: column; gap: 40px; min-width: 0; }
+.fsec { display: flex; flex-direction: column; gap: 20px; }
+.pg { display: flex; flex-wrap: wrap; gap: 8px; }
+.label { font-weight: 700; font-size: 15px; line-height: 20px; }
+.cnt { flex: none; font-size: 14px; line-height: 20px; color: hsl(var(--muted-foreground)); font-variant-numeric: tabular-nums; }
+.cnt.is-over { color: hsl(var(--destructive)); font-weight: 700; }
+.drop { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 24px; border-radius: var(--radius-row); background: hsl(var(--muted)); text-align: center; }
+.sfoot { position: sticky; bottom: 0; z-index: 2; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; padding: 12px 16px; border-radius: var(--radius-row); background: hsl(var(--card)); }
+.prev { position: sticky; top: 24px; }
+.pvwrap, .pvstage { border-radius: var(--radius-card); }
+.pvwrap { padding: 16px; background: hsl(var(--background)); color: hsl(var(--foreground)); box-shadow: inset 0 0 0 1px hsl(var(--input) / 0.45); }
+.dark.pvwrap { box-shadow: inset 0 0 0 1px hsl(var(--input) / 0.45); }
+.pvstage { display: flex; justify-content: center; }
+.pvstage > * { max-width: 100%; }
+.empty { display: flex; flex-direction: column; align-items: center; gap: 16px; padding: 72px 0; text-align: center; }
+.empty-ic { display: grid; place-items: center; width: 72px; height: 72px; border-radius: 50%; background: hsl(var(--muted)); color: hsl(var(--muted-foreground)); }
+.empty-ic i { font-size: 32px; }
+.h3c { margin: 0; font-family: var(--font-display); font-weight: 600; font-size: 20px; line-height: 28px; }
+.chart { width: 100%; height: auto; display: block; overflow: visible; }
+.ct { font-size: 13px; fill: hsl(var(--muted-foreground)); font-family: inherit; }
+.ctl { font-size: 13px; font-weight: 700; fill: hsl(var(--foreground)); font-family: inherit; }
+/* P21 ad units as drawn in the admin preview */
+.ad { box-sizing: border-box; border-radius: var(--radius-row); background: hsl(var(--muted)); color: hsl(var(--foreground)); text-align: left; }
+.ad-label { display: block; margin: 0; font-size: 13px; line-height: 16px; font-weight: 700; color: hsl(var(--muted-foreground)); }
+.ad-house { font-weight: 600; }
+.ad-t { display: block; margin: 0; font-family: var(--font-display); font-size: 18px; line-height: 24px; font-weight: 600; letter-spacing: -0.01em; }
+.ad-x { display: block; margin: 0; font-size: 16px; line-height: 24px; color: hsl(var(--foreground)); }
+.ad-t1, .ad-x1 { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ad-t2, .ad-x2, .ad-x3 { display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden; }
+.ad-t2 { -webkit-line-clamp: 2; } .ad-x2 { -webkit-line-clamp: 2; } .ad-x3 { -webkit-line-clamp: 3; }
+.ad-feed { min-height: 88px; padding: 12px; box-sizing: border-box; }
+.ad-feed .flex > i { font-size: 20px; color: hsl(var(--muted-foreground)); flex: none; }
+.ad-i64 { width: 64px; height: 64px; flex: none; border-radius: var(--radius-row); object-fit: cover; display: block; }
+.ad-detail { min-height: 176px; padding: 16px; }
+.ad-detail.ad-m { min-height: 200px; }
+.ad-i96 { width: 96px; height: 96px; flex: none; border-radius: var(--radius-row); object-fit: cover; display: block; }
+.ad-side { width: 320px; max-width: 100%; min-height: 452px; padding: 16px; box-sizing: border-box; }
+.ad-i43 { width: 100%; aspect-ratio: 4 / 3; border-radius: var(--radius-row); object-fit: cover; display: block; }
+.ad-btn { display: inline-flex; align-items: center; gap: 6px; margin-top: 6px; font-size: 16px; line-height: 24px; font-weight: 700; color: hsl(var(--primary)); text-decoration: underline; text-underline-offset: 4px; text-decoration-thickness: 1px; }
+.ad-btn i { font-size: 16px; }
+.pvboard { padding: 40px 48px 56px; }
+.pvrow { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-bottom: 32px; align-items: start; }
+.hlist { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.hrow { display: flex; align-items: flex-start; gap: 20px; padding: 16px; border-radius: var(--radius-row); background: hsl(var(--card)); }
+.hedit { padding: 24px 16px 8px 16px; background: hsl(var(--card)); border-radius: var(--radius-row); }
+.stboard { padding: 40px 48px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 40px 32px; align-items: start; }
+.stcell.wide { grid-column: 1 / -1; }
+.stcell .dialog { max-width: 100%; box-shadow: none; background: hsl(var(--card)); }
+.stcell .toast { max-width: 100%; }
+</style>
+</head>
+<body>
+<a class="sr-only focus:not-sr-only" href="#stage">Skip to content</a>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <symbol id="nj-mark" viewBox="0 0 48 48">
+    <g fill="currentColor" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round">
+      <path d="M24 45.5 C24 45.5 10.5 33.2 10.5 24.4 A13.5 13.5 0 0 1 37.5 24.4 C37.5 33.2 24 45.5 24 45.5 Z M24 17.9 A6.5 6.5 0 1 0 24 30.9 A6.5 6.5 0 1 0 24 17.9 Z"/>
+      <path d="M12.2 19.6 L11.2 5 L22.6 11.4 Z"/><path d="M35.8 19.6 L25.4 11.4 L36.8 5 Z"/>
+    </g>
+    <circle cx="24" cy="24.4" r="3.6" fill="#F7B32B"/>
+  </symbol>
+</svg>
+
+<header class="chrome">
+  <div class="flex flex-wrap items-center gap-x-5 gap-y-2 px-6 py-2 max-w-[1400px] mx-auto">
+    <span class="flex items-center gap-2 font-display font-bold text-lg"><svg class="logo-mark w-7 h-7" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg>Najdimo</span>
+    <span class="text-muted-foreground text-[15px]">P20 Admin ad management (mockup)</span>
+    <div class="ml-auto flex items-center gap-2" role="group" aria-label="Colour mode">
+      <button class="mode-btn" data-mode="light" aria-pressed="true">Light</button>
+      <button class="mode-btn" data-mode="dark" aria-pressed="false">Dark</button>
+      <button class="mode-btn" data-mode="both" aria-pressed="false">Side by side</button>
+    </div>
+  </div>
+</header>
+
+<main id="stage"></main>
+
+<div id="src" hidden>
+<section class="tile-section !max-w-[1400px] !pb-0">
+  <h1 class="tile-title">P20 Admin ad management</h1>
+  <p class="tile-lede">Web, desktop first, inside the P19 admin shell. Ads list (mixed, empty, loading), the create form with every validation error and the live preview in all four slots in SL and EN, the ad detail with statistics, the house ads manager, dialogs and states, and the 390 px layout. Copy is final from the P20 content slice (v0.1, native review pending); table data, history entries and the unsaved-changes "stay" button are sample text.</p>
+  <div class="flex flex-wrap gap-2">
+    <span class="anno">10 frames</span><span class="anno">Form column + sticky preview 340 from lg</span><span class="anno">One primary per view</span><span class="anno">Status = icon + word</span><span class="anno">Targets 44+</span>
+  </div>
+</section>
+
+<section class="tile-section !max-w-[1400px] !pt-6">
+
+  <p class="meta" style="margin:16px 48px 0;max-width:760px">Admin is desktop first (page slice). Frames at 1200 shrink with the window; F10 is the real 390 frame, a usable phone layout, not optimised.</p>
+  <p class="tile-h" style="margin-top:64px">F1 · Ads list · mixed statuses (running, scheduled, draft, ended) · hover on row 2 · row menu open on "Kras Vet" (ended: no Edit, no End now) · keyboard focus on "Nov oglas"</p>
+  <div class="fit-1200"><div class="browser relative" style="width:1200px" lang="sl">
+    <div class="browser-bar"><span class="dots"><i></i><i></i><i></i></span><span class="url"><i class="ph ph-lock-simple " aria-hidden="true"></i>najdimo.si/admin/oglasi</span></div>
+    <div class="adm" style="min-height:880px">
+    <div class="sb is-collapsed">
+    <div class="sb-head"><a href="#" class="sb-home" aria-label="Najdimo, Konzola"><svg viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg></a></div>
+    <nav class="sb-nav" aria-label="Konzola">
+      <div class="sb-group"><ul class="sb-list" aria-label="Pregled"><li class="relative"><a href="#" class="sb-item"><i class="ph ph-squares-four " aria-hidden="true"></i><span class="sr-only">Nadzorna plošča</span></a></li></ul></div>
+      <div class="sb-group"><ul class="sb-list" aria-label="Vsebina"><li class="relative"><a href="#" class="sb-item" aria-current="page"><i class="ph-fill ph-image-square " aria-hidden="true"></i><span class="sr-only">Oglasi</span></a></li><li class="relative"><a href="#" class="sb-item"><i class="ph ph-paw-print " aria-hidden="true"></i><span class="sr-only">Lastni oglasi</span></a></li></ul></div>
+      <div class="sb-group"><ul class="sb-list" aria-label="Varnost"><li class="relative"><a href="#" class="sb-item"><i class="ph ph-list-checks " aria-hidden="true"></i><span class="sr-only">Moderacija, Kmalu</span></a></li><li class="relative"><a href="#" class="sb-item"><i class="ph ph-flag " aria-hidden="true"></i><span class="sr-only">Prijave zlorab, Kmalu</span></a></li></ul></div>
+      <div class="sb-group"><ul class="sb-list" aria-label="Organizacije"><li class="relative"><a href="#" class="sb-item"><i class="ph ph-seal-check " aria-hidden="true"></i><span class="sr-only">Preverjanje</span></a></li><li class="relative"><a href="#" class="sb-item"><i class="ph ph-buildings " aria-hidden="true"></i><span class="sr-only">Organizacije</span></a></li><li class="relative"><a href="#" class="sb-item"><i class="ph ph-address-book " aria-hidden="true"></i><span class="sr-only">Imenik zavetišč</span></a></li></ul></div>
+      <div class="sb-group"><ul class="sb-list" aria-label="Ljudje"><li class="relative"><a href="#" class="sb-item"><i class="ph ph-users " aria-hidden="true"></i><span class="sr-only">Uporabniki</span></a></li></ul></div>
+      <div class="sb-group"><ul class="sb-list" aria-label="Posel"><li class="relative"><a href="#" class="sb-item"><i class="ph ph-tray " aria-hidden="true"></i><span class="sr-only">Povpraševanja</span></a></li><li class="relative"><a href="#" class="sb-item"><i class="ph ph-stethoscope " aria-hidden="true"></i><span class="sr-only">Veterinarski partnerji, Kmalu</span></a></li></ul></div>
+      <div class="sb-group"><ul class="sb-list" aria-label="Sistem"><li class="relative"><a href="#" class="sb-item"><i class="ph ph-clock-counter-clockwise " aria-hidden="true"></i><span class="sr-only">Revizijska sled</span></a></li><li class="relative"><a href="#" class="sb-item"><i class="ph ph-gear-six " aria-hidden="true"></i><span class="sr-only">Nastavitve</span></a></li></ul></div>
+    </nav>
+    <div class="sb-foot"><button type="button" class="sb-item sb-toggle" aria-label="Razširi meni"><i class="ph-bold ph-caret-double-right " aria-hidden="true"></i></button></div>
+  </div>
+    <div class="adm-col">
+    <header class="tb">
+      <nav aria-label="Drobtine"><ol class="crumbs"><li><a href="#">Konzola</a></li><li class="sep" aria-hidden="true"><i class="ph-bold ph-caret-right " aria-hidden="true"></i></li><li><span aria-current="page">Oglasi</span></li></ol></nav>
+      <div class="tb-meta">
+        <span class="envw"><i class="ph-bold ph-globe-simple " aria-hidden="true"></i>Produkcija</span><span class="vr" aria-hidden="true"></span>
+        <span class="envw text-muted-foreground"><i class="ph-bold ph-user-gear " aria-hidden="true"></i>Skrbnik</span>
+        <button type="button" class="acct" aria-label="Moj račun" aria-haspopup="menu" aria-expanded="false"><span class="av av-32" aria-hidden="true">MK</span><i class="ph-bold ph-caret-down " aria-hidden="true"></i></button>
+      </div>
+    </header>
+    <main class="adm-main">
+      <div class="phead"><h1 class="h1c">Oglasi</h1><a href="#" class="btn btn-primary btn-lg is-focus"><i class="ph-bold ph-plus " aria-hidden="true"></i>Nov oglas</a></div>
+      <div class="frow">
+        <div class="field f-search"><label for="q-f1">Iskanje</label><div class="input-wrap"><i class="ph-bold ph-magnifying-glass " aria-hidden="true"></i><input id="q-f1" type="search" class="input" autocomplete="off"></div></div>
+        <div class="flex flex-wrap items-center gap-2" role="group" aria-label="Filtri"><button type="button" class="pill" aria-haspopup="listbox" aria-expanded="false">Stanje<i class="ph-bold ph-caret-down " aria-hidden="true"></i></button><button type="button" class="pill" aria-haspopup="listbox" aria-expanded="false">Oglasna mesta<i class="ph-bold ph-caret-down " aria-hidden="true"></i></button><button type="button" class="pill" aria-haspopup="listbox" aria-expanded="false">Regije<i class="ph-bold ph-caret-down " aria-hidden="true"></i></button><button type="button" class="pill" aria-haspopup="listbox" aria-expanded="false">Živali<i class="ph-bold ph-caret-down " aria-hidden="true"></i></button></div>
+      </div>
+      <div class="tcard"><table class="tbl adt"><caption class="sr-only">Oglasi</caption><thead><tr><th scope="col"><span class="sr-only">Predogled, </span>Naslov</th><th scope="col">Stanje</th><th scope="col">Mesta</th><th scope="col">Ciljanje</th><th scope="col">Obdobje</th><th scope="col" class="tr">Prikazi</th><th scope="col" class="tr">Kliki</th><th scope="col" class="tr">Delež klikov</th><th class="c-act" scope="col"><span class="sr-only">Dejanja</span></th></tr></thead><tbody><tr class="">
+      <td><div class="flex items-center gap-3"><img class="athumb" src="../directions/img/dog-golden.jpg" alt="Sličica oglasa: Repek: hrana in igrače za pse in mačke" width="64" height="48"><a href="#" class="rowlink">Repek: hrana in igrače za pse in mačke</a></div></td>
+      <td><span class="lst lst-new"><i class="ph-fill ph-play-circle " aria-hidden="true"></i>Se prikazuje</span></td><td>Stran prijave, Stranska vrstica</td><td>2 regiji · Psi, mačke</td><td class="tnum nowrap">1. 10. – 31. 10. 2026</td><td class="tr tnum">18.420</td><td class="tr tnum">412</td><td class="tr tnum">2,2 %</td>
+      <td class="c-act"><div class="relative inline-block"><button type="button" class="iconbtn" aria-label="Dejanja: Repek: hrana in igrače za pse in mačke" aria-haspopup="menu" aria-expanded="false"><i class="ph-bold ph-dots-three " aria-hidden="true"></i></button></div></td></tr>
+<tr class="is-hover">
+      <td><div class="flex items-center gap-3"><img class="athumb" src="../directions/img/dog-beagle.jpg" alt="Sličica oglasa: Ambulanta Taca: zimski pregled" width="64" height="48"><a href="#" class="rowlink">Ambulanta Taca: zimski pregled</a></div></td>
+      <td><span class="lst lst-new"><i class="ph-fill ph-play-circle " aria-hidden="true"></i>Se prikazuje</span></td><td>Seznam prijav, Stran prijave</td><td>Osrednjeslovenska · Psi</td><td class="tnum nowrap">5. 10. – 5. 12. 2026</td><td class="tr tnum">9.870</td><td class="tr tnum">188</td><td class="tr tnum">1,9 %</td>
+      <td class="c-act"><div class="relative inline-block"><button type="button" class="iconbtn" aria-label="Dejanja: Ambulanta Taca: zimski pregled" aria-haspopup="menu" aria-expanded="false"><i class="ph-bold ph-dots-three " aria-hidden="true"></i></button></div></td></tr>
+<tr class="">
+      <td><div class="flex items-center gap-3"><img class="athumb" src="../directions/img/cat-ginger.jpg" alt="Sličica oglasa: Hotel Mijav: zimska ponudba" width="64" height="48"><a href="#" class="rowlink">Hotel Mijav: zimska ponudba</a></div></td>
+      <td><span class="lst lst-wip"><i class="ph-fill ph-clock " aria-hidden="true"></i>Načrtovan</span></td><td>Stranska vrstica</td><td>Vsa Slovenija, vse živali</td><td class="tnum nowrap">1. 11. – 30. 11. 2026</td><td class="tr tnum">–</td><td class="tr tnum">–</td><td class="tr tnum">–</td>
+      <td class="c-act"><div class="relative inline-block"><button type="button" class="iconbtn" aria-label="Dejanja: Hotel Mijav: zimska ponudba" aria-haspopup="menu" aria-expanded="false"><i class="ph-bold ph-dots-three " aria-hidden="true"></i></button></div></td></tr>
+<tr class="">
+      <td><div class="flex items-center gap-3"><img class="athumb" src="../directions/img/dog-terrier.jpg" alt="Sličica oglasa: Salon Šapa: striženje psov" width="64" height="48"><a href="#" class="rowlink">Salon Šapa: striženje psov</a></div></td>
+      <td><span class="lst lst-done"><i class="ph-fill ph-pencil-simple " aria-hidden="true"></i>Osnutek</span></td><td>Seznam prijav</td><td>Podravska · Psi</td><td class="tnum nowrap">–</td><td class="tr tnum">–</td><td class="tr tnum">–</td><td class="tr tnum">–</td>
+      <td class="c-act"><div class="relative inline-block"><button type="button" class="iconbtn" aria-label="Dejanja: Salon Šapa: striženje psov" aria-haspopup="menu" aria-expanded="false"><i class="ph-bold ph-dots-three " aria-hidden="true"></i></button></div></td></tr>
+<tr class="">
+      <td><div class="flex items-center gap-3"><img class="athumb" src="../directions/img/dog-aussie.jpg" alt="Sličica oglasa: Pasja šola Vižmarje: tečaj za mladičke" width="64" height="48"><a href="#" class="rowlink">Pasja šola Vižmarje: tečaj za mladičke</a></div></td>
+      <td><span class="lst lst-ver"><i class="ph-fill ph-hourglass-medium " aria-hidden="true"></i>Preverjanje slike</span></td><td>Stran prijave</td><td>Osrednjeslovenska · Psi</td><td class="tnum nowrap">15. 10. – 15. 11. 2026</td><td class="tr tnum">–</td><td class="tr tnum">–</td><td class="tr tnum">–</td>
+      <td class="c-act"><div class="relative inline-block"><button type="button" class="iconbtn" aria-label="Dejanja: Pasja šola Vižmarje: tečaj za mladičke" aria-haspopup="menu" aria-expanded="false"><i class="ph-bold ph-dots-three " aria-hidden="true"></i></button></div></td></tr>
+<tr class="">
+      <td><div class="flex items-center gap-3"><img class="athumb" src="../directions/img/cat-tabby.jpg" alt="Sličica oglasa: Kras Vet: cepljenje mačk" width="64" height="48"><a href="#" class="rowlink">Kras Vet: cepljenje mačk</a></div></td>
+      <td><span class="lst lst-done"><i class="ph-fill ph-check-circle " aria-hidden="true"></i>Končan</span></td><td>Zaslon Spet doma</td><td>Obalno-kraška · Mačke</td><td class="tnum nowrap">1. 9. – 30. 9. 2026</td><td class="tr tnum">6.205</td><td class="tr tnum">97</td><td class="tr tnum">1,6 %</td>
+      <td class="c-act"><div class="relative inline-block"><button type="button" class="iconbtn is-open" aria-label="Dejanja: Kras Vet: cepljenje mačk" aria-haspopup="menu" aria-expanded="true"><i class="ph-bold ph-dots-three " aria-hidden="true"></i></button><div class="pop rmenu" role="menu" aria-label="Dejanja: Kras Vet: cepljenje mačk">
+          
+          <button type="button" role="menuitem" class="mi is-focus"><i class="ph-bold ph-copy " aria-hidden="true"></i>Podvoji</button>
+          
+          <div class="sep" role="separator"></div>
+          <button type="button" role="menuitem" class="mi mi-danger"><i class="ph-bold ph-trash " aria-hidden="true"></i>Izbriši</button>
+        </div></div></td></tr>
+<tr class="">
+      <td><div class="flex items-center gap-3"><img class="athumb" src="../directions/img/dog-aussie.jpg" alt="Sličica oglasa: Vrtnarstvo Gaj: jesenska razprodaja" width="64" height="48"><a href="#" class="rowlink">Vrtnarstvo Gaj: jesenska razprodaja</a></div></td>
+      <td><span class="lst lst-done"><i class="ph-fill ph-check-circle " aria-hidden="true"></i>Končan</span></td><td>Stran prijave</td><td>Savinjska · Psi, mačke</td><td class="tnum nowrap">1. 8. – 31. 8. 2026</td><td class="tr tnum">4.318</td><td class="tr tnum">52</td><td class="tr tnum">1,2 %</td>
+      <td class="c-act"><div class="relative inline-block"><button type="button" class="iconbtn" aria-label="Dejanja: Vrtnarstvo Gaj: jesenska razprodaja" aria-haspopup="menu" aria-expanded="false"><i class="ph-bold ph-dots-three " aria-hidden="true"></i></button></div></td></tr>
+<tr class="">
+      <td><div class="flex items-center gap-3"><img class="athumb" src="../directions/img/cat-ginger.jpg" alt="Sličica oglasa: Mačja pošta: zimske odeje" width="64" height="48"><a href="#" class="rowlink" aria-label="Odpri statistiko: Mačja pošta: zimske odeje (izbrisan)">Mačja pošta: zimske odeje</a></div></td>
+      <td><span class="lst lst-del"><i class="ph-fill ph-trash-simple " aria-hidden="true"></i>Izbrisan</span></td><td>Seznam prijav</td><td>Gorenjska · Mačke</td><td class="tnum nowrap">1. 7. – 31. 7. 2026</td><td class="tr tnum">3.102</td><td class="tr tnum">41</td><td class="tr tnum">1,3 %</td>
+      <td class="c-act"><div class="relative inline-block"><button type="button" class="iconbtn" aria-label="Dejanja: Mačja pošta: zimske odeje" aria-haspopup="menu" aria-expanded="false"><i class="ph-bold ph-dots-three " aria-hidden="true"></i></button></div></td></tr></tbody></table></div>
+    <p class="meta" style="margin-top:-24px">Sample: the "Preverjanje slike" row (image checked, not live yet) and the "Izbrisan" row (soft deleted, kept for its statistics; the title still opens them).</p>
+    </main>
+    </div>
+  </div>
+  </div></div>
+
+  <p class="tile-h" style="margin-top:64px">F2 · Ads list · empty (no ads yet): the primary action moves into the empty state, none in the header</p>
+  <div class="fit-1200"><div class="browser relative" style="width:1200px" lang="sl">
+    <div class="browser-bar"><span class="dots"><i></i><i></i><i></i></span><span class="url"><i class="ph ph-lock-simple " aria-hidden="true"></i>najdimo.si/admin/oglasi</span></div>
+    <div class="adm" style="min-height:520px">
+    <div class="sb is-collapsed">
+    <div class="sb-head"><a href="#" class="sb-home" aria-label="Najdimo, Konzola"><svg viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg></a></div>
+    <nav class="sb-nav" aria-label="Konzola">
+      <div class="sb-group"><ul class="sb-list" aria-label="Pregled"><li class="relative"><a href="#" class="sb-item"><i class="ph ph-squares-four " aria-hidden="true"></i><span class="sr-only">Nadzorna plošča</span></a></li></ul></div>
+      <div class="sb-group"><ul class="sb-list" aria-label="Vsebina"><li class="relative"><a href="#" class="sb-item" aria-current="page"><i class="ph-fill ph-image-square " aria-hidden="true"></i><span class="sr-only">Oglasi</span></a></li><li class="relative"><a href="#" class="sb-item"><i class="ph ph-paw-print " aria-hidden="true"></i><span class="sr-only">Lastni oglasi</span></a></li></ul></div>
+      <div class="sb-group"><ul class="sb-list" aria-label="Varnost"><li class="relative"><a href="#" class="sb-item"><i class="ph ph-list-checks " aria-hidden="true"></i><span class="sr-only">Moderacija, Kmalu</span></a></li><li class="relative"><a href="#" class="sb-item"><i class="ph ph-flag " aria-hidden="true"></i><span class="sr-only">Prijave zlorab, Kmalu</span></a></li></ul></div>
+      <div class="sb-group"><ul class="sb-list" aria-label="Organizacije"><li class="relative"><a href="#" class="sb-item"><i class="ph ph-seal-check " aria-hidden="true"></i><span class="sr-only">Preverjanje</span></a></li><li class="relative"><a href="#" class="sb-item"><i class="ph ph-buildings " aria-hidden="true"></i><span class="sr-only">Organizacije</span></a></li><li class="relative"><a href="#" class="sb-item"><i class="ph ph-address-book " aria-hidden="true"></i><span class="sr-only">Imenik zavetišč</span></a></li></ul></div>
+      <div class="sb-group"><ul class="sb-list" aria-label="Ljudje"><li class="relative"><a href="#" class="sb-item"><i class="ph ph-users " aria-hidden="true"></i><span class="sr-only">Uporabniki</span></a></li></ul></div>
+      <div class="sb-group"><ul class="sb-list" aria-label="Posel"><li class="relative"><a href="#" class="sb-item"><i class="ph ph-tray " aria-hidden="true"></i><span class="sr-only">Povpraševanja</span></a></li><li class="relative"><a href="#" class="sb-item"><i class="ph ph-stethoscope " aria-hidden="true"></i><span class="sr-only">Veterinarski partnerji, Kmalu</span></a></li></ul></div>
+      <div class="sb-group"><ul class="sb-list" aria-label="Sistem"><li class="relative"><a href="#" class="sb-item"><i class="ph ph-clock-counter-clockwise " aria-hidden="true"></i><span class="sr-only">Revizijska sled</span></a></li><li class="relative"><a href="#" class="sb-item"><i class="ph ph-gear-six " aria-hidden="true"></i><span class="sr-only">Nastavitve</span></a></li></ul></div>
+    </nav>
+    <div class="sb-foot"><button type="button" class="sb-item sb-toggle" aria-label="Razširi meni"><i class="ph-bold ph-caret-double-right " aria-hidden="true"></i></button></div>
+  </div>
+    <div class="adm-col">
+    <header class="tb">
+      <nav aria-label="Drobtine"><ol class="crumbs"><li><a href="#">Konzola</a></li><li class="sep" aria-hidden="true"><i class="ph-bold ph-caret-right " aria-hidden="true"></i></li><li><span aria-current="page">Oglasi</span></li></ol></nav>
+      <div class="tb-meta">
+        <span class="envw"><i class="ph-bold ph-globe-simple " aria-hidden="true"></i>Produkcija</span><span class="vr" aria-hidden="true"></span>
+        <span class="envw text-muted-foreground"><i class="ph-bold ph-user-gear " aria-hidden="true"></i>Skrbnik</span>
+        <button type="button" class="acct" aria-label="Moj račun" aria-haspopup="menu" aria-expanded="false"><span class="av av-32" aria-hidden="true">MK</span><i class="ph-bold ph-caret-down " aria-hidden="true"></i></button>
+      </div>
+    </header>
+    <main class="adm-main">
+      <div class="phead"><h1 class="h1c">Oglasi</h1></div>
+      <div class="empty"><span class="empty-ic" aria-hidden="true"><i class="ph ph-image-square " aria-hidden="true"></i></span><p class="text-[18px] leading-7 font-bold">Oglasov še ni.</p><a href="#" class="btn btn-primary btn-lg"><i class="ph-bold ph-plus " aria-hidden="true"></i>Nov oglas</a></div>
+    </main>
+    </div>
+  </div>
+  </div></div>
+
+  <p class="tile-h" style="margin-top:64px">F3 · Ads list · loading (skeleton rows, table header already real, aria-busy, no spinner)</p>
+  <div class="fit-1200"><div class="browser relative" style="width:1200px" lang="sl">
+    <div class="browser-bar"><span class="dots"><i></i><i></i><i></i></span><span class="url"><i class="ph ph-lock-simple " aria-hidden="true"></i>najdimo.si/admin/oglasi</span></div>
+    <div class="adm" style="min-height:620px">
+    <div class="sb is-collapsed">
+    <div class="sb-head"><a href="#" class="sb-home" aria-label="Najdimo, Konzola"><svg viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg></a></div>
+    <nav class="sb-nav" aria-label="Konzola">
+      <div class="sb-group"><ul class="sb-list" aria-label="Pregled"><li class="relative"><a href="#" class="sb-item"><i class="ph ph-squares-four " aria-hidden="true"></i><span class="sr-only">Nadzorna plošča</span></a></li></ul></div>
+      <div class="sb-group"><ul class="sb-list" aria-label="Vsebina"><li class="relative"><a href="#" class="sb-item" aria-current="page"><i class="ph-fill ph-image-square " aria-hidden="true"></i><span class="sr-only">Oglasi</span></a></li><li class="relative"><a href="#" class="sb-item"><i class="ph ph-paw-print " aria-hidden="true"></i><span class="sr-only">Lastni oglasi</span></a></li></ul></div>
+      <div class="sb-group"><ul class="sb-list" aria-label="Varnost"><li class="relative"><a href="#" class="sb-item"><i class="ph ph-list-checks " aria-hidden="true"></i><span class="sr-only">Moderacija, Kmalu</span></a></li><li class="relative"><a href="#" class="sb-item"><i class="ph ph-flag " aria-hidden="true"></i><span class="sr-only">Prijave zlorab, Kmalu</span></a></li></ul></div>
+      <div class="sb-group"><ul class="sb-list" aria-label="Organizacije"><li class="relative"><a href="#" class="sb-item"><i class="ph ph-seal-check " aria-hidden="true"></i><span class="sr-only">Preverjanje</span></a></li><li class="relative"><a href="#" class="sb-item"><i class="ph ph-buildings " aria-hidden="true"></i><span class="sr-only">Organizacije</span></a></li><li class="relative"><a href="#" class="sb-item"><i class="ph ph-address-book " aria-hidden="true"></i><span class="sr-only">Imenik zavetišč</span></a></li></ul></div>
+      <div class="sb-group"><ul class="sb-list" aria-label="Ljudje"><li class="relative"><a href="#" class="sb-item"><i class="ph ph-users " aria-hidden="true"></i><span class="sr-only">Uporabniki</span></a></li></ul></div>
+      <div class="sb-group"><ul class="sb-list" aria-label="Posel"><li class="relative"><a href="#" class="sb-item"><i class="ph ph-tray " aria-hidden="true"></i><span class="sr-only">Povpraševanja</span></a></li><li class="relative"><a href="#" class="sb-item"><i class="ph ph-stethoscope " aria-hidden="true"></i><span class="sr-only">Veterinarski partnerji, Kmalu</span></a></li></ul></div>
+      <div class="sb-group"><ul class="sb-list" aria-label="Sistem"><li class="relative"><a href="#" class="sb-item"><i class="ph ph-clock-counter-clockwise " aria-hidden="true"></i><span class="sr-only">Revizijska sled</span></a></li><li class="relative"><a href="#" class="sb-item"><i class="ph ph-gear-six " aria-hidden="true"></i><span class="sr-only">Nastavitve</span></a></li></ul></div>
+    </nav>
+    <div class="sb-foot"><button type="button" class="sb-item sb-toggle" aria-label="Razširi meni"><i class="ph-bold ph-caret-double-right " aria-hidden="true"></i></button></div>
+  </div>
+    <div class="adm-col">
+    <header class="tb">
+      <nav aria-label="Drobtine"><ol class="crumbs"><li><a href="#">Konzola</a></li><li class="sep" aria-hidden="true"><i class="ph-bold ph-caret-right " aria-hidden="true"></i></li><li><span aria-current="page">Oglasi</span></li></ol></nav>
+      <div class="tb-meta">
+        <span class="envw"><i class="ph-bold ph-globe-simple " aria-hidden="true"></i>Produkcija</span><span class="vr" aria-hidden="true"></span>
+        <span class="envw text-muted-foreground"><i class="ph-bold ph-user-gear " aria-hidden="true"></i>Skrbnik</span>
+        <button type="button" class="acct" aria-label="Moj račun" aria-haspopup="menu" aria-expanded="false"><span class="av av-32" aria-hidden="true">MK</span><i class="ph-bold ph-caret-down " aria-hidden="true"></i></button>
+      </div>
+    </header>
+    <main class="adm-main">
+      <div class="phead"><h1 class="h1c">Oglasi</h1><a href="#" class="btn btn-primary btn-lg"><i class="ph-bold ph-plus " aria-hidden="true"></i>Nov oglas</a></div>
+      <div class="frow">
+        <div class="field f-search"><label for="q-f3">Iskanje</label><div class="input-wrap"><i class="ph-bold ph-magnifying-glass " aria-hidden="true"></i><input id="q-f3" type="search" class="input" autocomplete="off"></div></div>
+        <div class="flex flex-wrap items-center gap-2" role="group" aria-label="Filtri"><button type="button" class="pill" aria-haspopup="listbox" aria-expanded="false">Stanje<i class="ph-bold ph-caret-down " aria-hidden="true"></i></button><button type="button" class="pill" aria-haspopup="listbox" aria-expanded="false">Oglasna mesta<i class="ph-bold ph-caret-down " aria-hidden="true"></i></button><button type="button" class="pill" aria-haspopup="listbox" aria-expanded="false">Regije<i class="ph-bold ph-caret-down " aria-hidden="true"></i></button><button type="button" class="pill" aria-haspopup="listbox" aria-expanded="false">Živali<i class="ph-bold ph-caret-down " aria-hidden="true"></i></button></div>
+      </div>
+      <div class="tcard" aria-busy="true"><table class="tbl adt"><caption class="sr-only">Oglasi, nalaganje</caption><thead><tr><th scope="col"><span class="sr-only">Predogled, </span>Naslov</th><th scope="col">Stanje</th><th scope="col">Mesta</th><th scope="col">Ciljanje</th><th scope="col">Obdobje</th><th scope="col" class="tr">Prikazi</th><th scope="col" class="tr">Kliki</th><th scope="col" class="tr">Delež klikov</th><th class="c-act" scope="col"><span class="sr-only">Dejanja</span></th></tr></thead><tbody><tr class="no-hover"><td><div class="flex items-center gap-3"><span class="skel" style="width:64px;height:48px"></span><span class="skel" style="width:150px;height:16px"></span></div></td><td><span class="skel" style="width:88px;height:16px"></span></td><td><span class="skel" style="width:96px;height:16px"></span></td><td><span class="skel" style="width:96px;height:16px"></span></td><td><span class="skel" style="width:88px;height:16px"></span></td><td class="tr"><span class="skel" style="width:44px;height:16px"></span></td><td class="tr"><span class="skel" style="width:36px;height:16px"></span></td><td class="tr"><span class="skel" style="width:44px;height:16px"></span></td><td class="c-act"></td></tr><tr class="no-hover"><td><div class="flex items-center gap-3"><span class="skel" style="width:64px;height:48px"></span><span class="skel" style="width:150px;height:16px"></span></div></td><td><span class="skel" style="width:88px;height:16px"></span></td><td><span class="skel" style="width:96px;height:16px"></span></td><td><span class="skel" style="width:96px;height:16px"></span></td><td><span class="skel" style="width:88px;height:16px"></span></td><td class="tr"><span class="skel" style="width:44px;height:16px"></span></td><td class="tr"><span class="skel" style="width:36px;height:16px"></span></td><td class="tr"><span class="skel" style="width:44px;height:16px"></span></td><td class="c-act"></td></tr><tr class="no-hover"><td><div class="flex items-center gap-3"><span class="skel" style="width:64px;height:48px"></span><span class="skel" style="width:150px;height:16px"></span></div></td><td><span class="skel" style="width:88px;height:16px"></span></td><td><span class="skel" style="width:96px;height:16px"></span></td><td><span class="skel" style="width:96px;height:16px"></span></td><td><span class="skel" style="width:88px;height:16px"></span></td><td class="tr"><span class="skel" style="width:44px;height:16px"></span></td><td class="tr"><span class="skel" style="width:36px;height:16px"></span></td><td class="tr"><span class="skel" style="width:44px;height:16px"></span></td><td class="c-act"></td></tr><tr class="no-hover"><td><div class="flex items-center gap-3"><span class="skel" style="width:64px;height:48px"></span><span class="skel" style="width:150px;height:16px"></span></div></td><td><span class="skel" style="width:88px;height:16px"></span></td><td><span class="skel" style="width:96px;height:16px"></span></td><td><span class="skel" style="width:96px;height:16px"></span></td><td><span class="skel" style="width:88px;height:16px"></span></td><td class="tr"><span class="skel" style="width:44px;height:16px"></span></td><td class="tr"><span class="skel" style="width:36px;height:16px"></span></td><td class="tr"><span class="skel" style="width:44px;height:16px"></span></td><td class="c-act"></td></tr><tr class="no-hover"><td><div class="flex items-center gap-3"><span class="skel" style="width:64px;height:48px"></span><span class="skel" style="width:150px;height:16px"></span></div></td><td><span class="skel" style="width:88px;height:16px"></span></td><td><span class="skel" style="width:96px;height:16px"></span></td><td><span class="skel" style="width:96px;height:16px"></span></td><td><span class="skel" style="width:88px;height:16px"></span></td><td class="tr"><span class="skel" style="width:44px;height:16px"></span></td><td class="tr"><span class="skel" style="width:36px;height:16px"></span></td><td class="tr"><span class="skel" style="width:44px;height:16px"></span></td><td class="c-act"></td></tr></tbody></table><p class="sr-only" role="status">Nalaganje</p></div>
+    </main>
+    </div>
+  </div>
+  </div></div>
+
+  <p class="tile-h" style="margin-top:64px">F4 · New ad · complete and valid · keyboard focus on the alt text field · live preview sticky right (Sidebar slot, SL, light) · sticky footer with one primary</p>
+  <div class="fit-1200"><div class="browser relative" style="width:1200px" lang="sl">
+    <div class="browser-bar"><span class="dots"><i></i><i></i><i></i></span><span class="url"><i class="ph ph-lock-simple " aria-hidden="true"></i>najdimo.si/admin/oglasi/nov</span></div>
+    <div class="adm" style="min-height:2150px">
+    <div class="sb is-collapsed">
+    <div class="sb-head"><a href="#" class="sb-home" aria-label="Najdimo, Konzola"><svg viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg></a></div>
+    <nav class="sb-nav" aria-label="Konzola">
+      <div class="sb-group"><ul class="sb-list" aria-label="Pregled"><li class="relative"><a href="#" class="sb-item"><i class="ph ph-squares-four " aria-hidden="true"></i><span class="sr-only">Nadzorna plošča</span></a></li></ul></div>
+      <div class="sb-group"><ul class="sb-list" aria-label="Vsebina"><li class="relative"><a href="#" class="sb-item" aria-current="page"><i class="ph-fill ph-image-square " aria-hidden="true"></i><span class="sr-only">Oglasi</span></a></li><li class="relative"><a href="#" class="sb-item"><i class="ph ph-paw-print " aria-hidden="true"></i><span class="sr-only">Lastni oglasi</span></a></li></ul></div>
+      <div class="sb-group"><ul class="sb-list" aria-label="Varnost"><li class="relative"><a href="#" class="sb-item"><i class="ph ph-list-checks " aria-hidden="true"></i><span class="sr-only">Moderacija, Kmalu</span></a></li><li class="relative"><a href="#" class="sb-item"><i class="ph ph-flag " aria-hidden="true"></i><span class="sr-only">Prijave zlorab, Kmalu</span></a></li></ul></div>
+      <div class="sb-group"><ul class="sb-list" aria-label="Organizacije"><li class="relative"><a href="#" class="sb-item"><i class="ph ph-seal-check " aria-hidden="true"></i><span class="sr-only">Preverjanje</span></a></li><li class="relative"><a href="#" class="sb-item"><i class="ph ph-buildings " aria-hidden="true"></i><span class="sr-only">Organizacije</span></a></li><li class="relative"><a href="#" class="sb-item"><i class="ph ph-address-book " aria-hidden="true"></i><span class="sr-only">Imenik zavetišč</span></a></li></ul></div>
+      <div class="sb-group"><ul class="sb-list" aria-label="Ljudje"><li class="relative"><a href="#" class="sb-item"><i class="ph ph-users " aria-hidden="true"></i><span class="sr-only">Uporabniki</span></a></li></ul></div>
+      <div class="sb-group"><ul class="sb-list" aria-label="Posel"><li class="relative"><a href="#" class="sb-item"><i class="ph ph-tray " aria-hidden="true"></i><span class="sr-only">Povpraševanja</span></a></li><li class="relative"><a href="#" class="sb-item"><i class="ph ph-stethoscope " aria-hidden="true"></i><span class="sr-only">Veterinarski partnerji, Kmalu</span></a></li></ul></div>
+      <div class="sb-group"><ul class="sb-list" aria-label="Sistem"><li class="relative"><a href="#" class="sb-item"><i class="ph ph-clock-counter-clockwise " aria-hidden="true"></i><span class="sr-only">Revizijska sled</span></a></li><li class="relative"><a href="#" class="sb-item"><i class="ph ph-gear-six " aria-hidden="true"></i><span class="sr-only">Nastavitve</span></a></li></ul></div>
+    </nav>
+    <div class="sb-foot"><button type="button" class="sb-item sb-toggle" aria-label="Razširi meni"><i class="ph-bold ph-caret-double-right " aria-hidden="true"></i></button></div>
+  </div>
+    <div class="adm-col">
+    <header class="tb">
+      <nav aria-label="Drobtine"><ol class="crumbs"><li><a href="#">Konzola</a></li><li class="sep" aria-hidden="true"><i class="ph-bold ph-caret-right " aria-hidden="true"></i></li><li><a href="#">Oglasi</a></li><li class="sep" aria-hidden="true"><i class="ph-bold ph-caret-right " aria-hidden="true"></i></li><li><span aria-current="page">Nov oglas</span></li></ol></nav>
+      <div class="tb-meta">
+        <span class="envw"><i class="ph-bold ph-globe-simple " aria-hidden="true"></i>Produkcija</span><span class="vr" aria-hidden="true"></span>
+        <span class="envw text-muted-foreground"><i class="ph-bold ph-user-gear " aria-hidden="true"></i>Skrbnik</span>
+        <button type="button" class="acct" aria-label="Moj račun" aria-haspopup="menu" aria-expanded="false"><span class="av av-32" aria-hidden="true">MK</span><i class="ph-bold ph-caret-down " aria-hidden="true"></i></button>
+      </div>
+    </header>
+    <main class="adm-main">
+      <div class="phead"><h1 class="h1c">Nov oglas</h1></div>
+      <div class="pgrid"><form class="formcol" novalidate aria-label="Nov oglas">
+      <section class="fsec" aria-labelledby="f1s1"><h2 class="dtitle" id="f1s1">Oglas</h2>
+        <div class="field"><span class="label" id="f1iml">Slika</span><div role="group" aria-labelledby="f1iml" aria-describedby="f1imh" class="grid gap-3"><div class="flex items-center gap-4"><img class="athumb-lg" src="../directions/img/dog-golden.jpg" alt="Naložena slika: pes z igračo" width="160" height="120"><div class="min-w-0"><p class="font-bold truncate">repek-jesen.jpg</p><p class="help tnum">JPG · 1600 × 1200 · 212 KB</p><div class="flex gap-1 -ml-3"><button type="button" class="btn btn-text btn-sm"><i class="ph-bold ph-arrows-clockwise " aria-hidden="true"></i>Zamenjaj</button><button type="button" class="btn btn-text btn-sm"><i class="ph-bold ph-trash " aria-hidden="true"></i>Odstrani</button></div></div></div>
+        <p class="help" id="f1imh">Razmerje 4:3, najmanj 1200 × 900 slikovnih pik, JPG ali PNG do 500 KB.</p></div></div>
+        <div class="field"><label for="f1alt">Opis slike (alt)</label><textarea id="f1alt" class="input is-focus" rows="2" required aria-describedby="f1alth">Pes z igračo ob polni skodelici hrane</textarea><div class="flex items-start justify-between gap-4"><p class="help" id="f1alth">Opišite, kaj je na sliki, za ljudi z bralnikom zaslona. Ne ponavljajte naslova. Od 5 do 140 znakov.</p><span class="cnt" aria-hidden="true">37 / 140</span></div></div>
+        <div class="field"><label for="f1tit">Naslov</label><input id="f1tit" class="input " required maxlength="60" value="Repek: hrana in igrače za pse in mačke"><div class="flex items-start justify-between gap-4"><span></span><span class="cnt" aria-hidden="true">38 / 60</span></div></div>
+        <div class="field"><label for="f1txt">Besedilo</label><textarea id="f1txt" class="input " rows="2" required>Za nakupe nad 25 € je dostava po vsej Sloveniji brezplačna do konca oktobra.</textarea><div class="flex items-start justify-between gap-4"><span></span><span class="cnt" aria-hidden="true">75 / 120</span></div></div>
+        <div class="field"><label for="f1cta">Besedilo gumba (neobvezno)</label><input id="f1cta" class="input " placeholder="Več o tem" value="" aria-describedby="f1ctah"><div class="flex items-start justify-between gap-4"><p class="help" id="f1ctah">Privzeto: »Več o tem«. Do 24 znakov.</p><span class="cnt" aria-hidden="true">0 / 24</span></div></div>
+        <div class="field"><label for="f1lnk">Povezava</label><input id="f1lnk" class="input " type="url" required value="https://repek.si/jesen" aria-describedby="f1lnkh"><div class="flex items-start justify-between gap-4"><p class="help" id="f1lnkh"><i class="ph-bold ph-arrow-square-out align-[-2px]" aria-hidden="true"></i> Začeti se mora s https://. Odpre se v novem zavihku, klike pa štejemo prek naše preusmeritve.</p></div></div>
+      </section>
+      <section class="fsec" aria-labelledby="f1s2"><h2 class="dtitle" id="f1s2">Kje</h2>
+        <div role="group" aria-labelledby="f1sl" class="grid gap-2"><span class="label" id="f1sl">Oglasna mesta</span><div class="pg"><button type="button" class="pill" aria-pressed="false"><i class="ph-bold ph-check tick" aria-hidden="true"></i>Seznam prijav</button><button type="button" class="pill" aria-pressed="true"><i class="ph-bold ph-check tick" aria-hidden="true"></i>Stran prijave</button><button type="button" class="pill" aria-pressed="false"><i class="ph-bold ph-check tick" aria-hidden="true"></i>Zaslon Spet doma</button><button type="button" class="pill" aria-pressed="true"><i class="ph-bold ph-check tick" aria-hidden="true"></i>Stranska vrstica</button></div></div>
+        <div role="group" aria-labelledby="f1lg" class="grid gap-2"><span class="label" id="f1lg">Jeziki</span><div class="pg"><button type="button" class="pill" aria-pressed="true"><i class="ph-bold ph-check tick" aria-hidden="true"></i>SL</button><button type="button" class="pill" aria-pressed="true"><i class="ph-bold ph-check tick" aria-hidden="true"></i>EN</button></div></div>
+      </section>
+      <section class="fsec" aria-labelledby="f1s3"><h2 class="dtitle" id="f1s3">Komu</h2>
+        <div role="group" aria-labelledby="f1rg" class="grid gap-2"><span class="label" id="f1rg">Regije</span><div class="pg"><button type="button" class="pill" aria-pressed="false"><i class="ph-bold ph-check tick" aria-hidden="true"></i>Pomurska</button><button type="button" class="pill" aria-pressed="false"><i class="ph-bold ph-check tick" aria-hidden="true"></i>Podravska</button><button type="button" class="pill" aria-pressed="false"><i class="ph-bold ph-check tick" aria-hidden="true"></i>Koroška</button><button type="button" class="pill" aria-pressed="false"><i class="ph-bold ph-check tick" aria-hidden="true"></i>Savinjska</button><button type="button" class="pill" aria-pressed="false"><i class="ph-bold ph-check tick" aria-hidden="true"></i>Zasavska</button><button type="button" class="pill" aria-pressed="false"><i class="ph-bold ph-check tick" aria-hidden="true"></i>Posavska</button><button type="button" class="pill" aria-pressed="false"><i class="ph-bold ph-check tick" aria-hidden="true"></i>Jugovzhodna Slovenija</button><button type="button" class="pill" aria-pressed="true"><i class="ph-bold ph-check tick" aria-hidden="true"></i>Osrednjeslovenska</button><button type="button" class="pill" aria-pressed="true"><i class="ph-bold ph-check tick" aria-hidden="true"></i>Gorenjska</button><button type="button" class="pill" aria-pressed="false"><i class="ph-bold ph-check tick" aria-hidden="true"></i>Primorsko-notranjska</button><button type="button" class="pill" aria-pressed="false"><i class="ph-bold ph-check tick" aria-hidden="true"></i>Goriška</button><button type="button" class="pill" aria-pressed="false"><i class="ph-bold ph-check tick" aria-hidden="true"></i>Obalno-kraška</button></div></div>
+        <div class="field"><label for="f1mun">Občine</label><div class="input-wrap"><i class="ph-bold ph-magnifying-glass " aria-hidden="true"></i><input id="f1mun" type="search" class="input" autocomplete="off" placeholder="Poiščite občino"></div><div class="pg mt-2"><button type="button" class="pill" aria-label="Odstrani: Kamnik">Kamnik<i class="ph-bold ph-x " aria-hidden="true"></i></button><button type="button" class="pill" aria-label="Odstrani: Domžale">Domžale<i class="ph-bold ph-x " aria-hidden="true"></i></button></div></div>
+        <div role="group" aria-labelledby="f1sp" class="grid gap-2"><span class="label" id="f1sp">Živali</span><div class="pg"><button type="button" class="pill" aria-pressed="true"><i class="ph-bold ph-check tick" aria-hidden="true"></i>Psi</button><button type="button" class="pill" aria-pressed="true"><i class="ph-bold ph-check tick" aria-hidden="true"></i>Mačke</button></div><p class="help">Brez izbire pomeni vse.</p></div>
+      </section>
+      <section class="fsec" aria-labelledby="f1s4"><h2 class="dtitle" id="f1s4">Kdaj</h2>
+        <div class="grid grid-cols-2 gap-6">
+          <div class="field"><label for="f1sd">Začetek</label><input id="f1sd" type="date" class="input" value="2026-11-01"></div>
+          <div class="field"><label for="f1ed">Konec</label><input id="f1ed" type="date" class="input" value="2026-11-30"></div>
+        </div>
+        <div class="field"><label for="f1stt">Stanje</label><button type="button" id="f1stt" class="input select" aria-haspopup="listbox" aria-expanded="false"><span>Osnutek</span><i class="ph-bold ph-caret-down " aria-hidden="true"></i></button></div>
+        <div><label class="check"><input type="checkbox" checked aria-describedby="f1exh"><span class="cbx"><i class="ph-bold ph-check " aria-hidden="true"></i></span><span class="font-bold">Izključno mesto</span></label><p class="help ml-9" id="f1exh">V istem obdobju na tem mestu in v teh regijah ne bo drugih oglasov.</p></div>
+      </section>
+      <div class="sfoot" role="group" aria-label="Dejanja"><button type="button" class="btn btn-primary btn-lg">Shrani</button><button type="button" class="btn btn-text">Shrani kot osnutek</button><button type="button" class="btn btn-text">Prekliči</button></div>
+      </form>
+      <aside class="prev" aria-labelledby="pv2h"><h2 class="dtitle" id="pv2h">Predogled</h2>
+        <div class="grid gap-4 mt-4">
+          <div role="radiogroup" aria-label="Mesto" class="pg"><button type="button" role="radio" class="pill" aria-pressed="false" aria-checked="false"><i class="ph-bold ph-check tick" aria-hidden="true"></i>Seznam prijav</button><button type="button" role="radio" class="pill" aria-pressed="false" aria-checked="false"><i class="ph-bold ph-check tick" aria-hidden="true"></i>Stran prijave</button><button type="button" role="radio" class="pill" aria-pressed="false" aria-checked="false"><i class="ph-bold ph-check tick" aria-hidden="true"></i>Zaslon Spet doma</button><button type="button" role="radio" class="pill" aria-pressed="true" aria-checked="true"><i class="ph-bold ph-check tick" aria-hidden="true"></i>Stranska vrstica</button></div>
+          <div class="grid grid-cols-2 gap-3"><div class="seg" role="radiogroup" aria-label="Jezik"><button type="button" role="radio" aria-checked="true" aria-selected="true">SL</button><button type="button" role="radio" aria-checked="false" aria-selected="false">EN</button></div><div class="seg" role="radiogroup" aria-label="Svetlo / temno"><button type="button" role="radio" aria-checked="true" aria-selected="true">Svetlo</button><button type="button" role="radio" aria-checked="false" aria-selected="false">Temno</button></div></div>
+          <div class="pvwrap"><div class="pvstage" lang="sl"><div class="ad ad-side" role="group" aria-label="Oglas: Repek: hrana in igrače za pse in mačke"><p class="ad-label">Oglas</p><img class="ad-i43" src="../directions/img/dog-golden.jpg" alt="Pes z igračo ob polni skodelici hrane"><p class="ad-t ad-t2 mt-3">Repek: hrana in igrače za pse in mačke</p><p class="ad-x ad-x3 mt-1">Za nakupe nad 25 € je dostava po vsej Sloveniji brezplačna do konca oktobra.</p><span class="ad-btn">Več o tem<i class="ph-bold ph-arrow-square-out " aria-hidden="true"></i></span></div></div></div>
+        </div></aside></div>
+    </main>
+    </div>
+  </div>
+  </div></div>
+
+  <p class="tile-h" style="margin-top:64px">F5 · New ad · every validation error inline (image format, alt text, text too long, non-https link, exclusive-slot overlap naming the other ad) · first error receives focus (the file button) · preview shows Detail slot, EN, dark</p>
+  <div class="fit-1200"><div class="browser relative" style="width:1200px" lang="sl">
+    <div class="browser-bar"><span class="dots"><i></i><i></i><i></i></span><span class="url"><i class="ph ph-lock-simple " aria-hidden="true"></i>najdimo.si/admin/oglasi/nov</span></div>
+    <div class="adm" style="min-height:2350px">
+    <div class="sb is-collapsed">
+    <div class="sb-head"><a href="#" class="sb-home" aria-label="Najdimo, Konzola"><svg viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg></a></div>
+    <nav class="sb-nav" aria-label="Konzola">
+      <div class="sb-group"><ul class="sb-list" aria-label="Pregled"><li class="relative"><a href="#" class="sb-item"><i class="ph ph-squares-four " aria-hidden="true"></i><span class="sr-only">Nadzorna plošča</span></a></li></ul></div>
+      <div class="sb-group"><ul class="sb-list" aria-label="Vsebina"><li class="relative"><a href="#" class="sb-item" aria-current="page"><i class="ph-fill ph-image-square " aria-hidden="true"></i><span class="sr-only">Oglasi</span></a></li><li class="relative"><a href="#" class="sb-item"><i class="ph ph-paw-print " aria-hidden="true"></i><span class="sr-only">Lastni oglasi</span></a></li></ul></div>
+      <div class="sb-group"><ul class="sb-list" aria-label="Varnost"><li class="relative"><a href="#" class="sb-item"><i class="ph ph-list-checks " aria-hidden="true"></i><span class="sr-only">Moderacija, Kmalu</span></a></li><li class="relative"><a href="#" class="sb-item"><i class="ph ph-flag " aria-hidden="true"></i><span class="sr-only">Prijave zlorab, Kmalu</span></a></li></ul></div>
+      <div class="sb-group"><ul class="sb-list" aria-label="Organizacije"><li class="relative"><a href="#" class="sb-item"><i class="ph ph-seal-check " aria-hidden="true"></i><span class="sr-only">Preverjanje</span></a></li><li class="relative"><a href="#" class="sb-item"><i class="ph ph-buildings " aria-hidden="true"></i><span class="sr-only">Organizacije</span></a></li><li class="relative"><a href="#" class="sb-item"><i class="ph ph-address-book " aria-hidden="true"></i><span class="sr-only">Imenik zavetišč</span></a></li></ul></div>
+      <div class="sb-group"><ul class="sb-list" aria-label="Ljudje"><li class="relative"><a href="#" class="sb-item"><i class="ph ph-users " aria-hidden="true"></i><span class="sr-only">Uporabniki</span></a></li></ul></div>
+      <div class="sb-group"><ul class="sb-list" aria-label="Posel"><li class="relative"><a href="#" class="sb-item"><i class="ph ph-tray " aria-hidden="true"></i><span class="sr-only">Povpraševanja</span></a></li><li class="relative"><a href="#" class="sb-item"><i class="ph ph-stethoscope " aria-hidden="true"></i><span class="sr-only">Veterinarski partnerji, Kmalu</span></a></li></ul></div>
+      <div class="sb-group"><ul class="sb-list" aria-label="Sistem"><li class="relative"><a href="#" class="sb-item"><i class="ph ph-clock-counter-clockwise " aria-hidden="true"></i><span class="sr-only">Revizijska sled</span></a></li><li class="relative"><a href="#" class="sb-item"><i class="ph ph-gear-six " aria-hidden="true"></i><span class="sr-only">Nastavitve</span></a></li></ul></div>
+    </nav>
+    <div class="sb-foot"><button type="button" class="sb-item sb-toggle" aria-label="Razširi meni"><i class="ph-bold ph-caret-double-right " aria-hidden="true"></i></button></div>
+  </div>
+    <div class="adm-col">
+    <header class="tb">
+      <nav aria-label="Drobtine"><ol class="crumbs"><li><a href="#">Konzola</a></li><li class="sep" aria-hidden="true"><i class="ph-bold ph-caret-right " aria-hidden="true"></i></li><li><a href="#">Oglasi</a></li><li class="sep" aria-hidden="true"><i class="ph-bold ph-caret-right " aria-hidden="true"></i></li><li><span aria-current="page">Nov oglas</span></li></ol></nav>
+      <div class="tb-meta">
+        <span class="envw"><i class="ph-bold ph-globe-simple " aria-hidden="true"></i>Produkcija</span><span class="vr" aria-hidden="true"></span>
+        <span class="envw text-muted-foreground"><i class="ph-bold ph-user-gear " aria-hidden="true"></i>Skrbnik</span>
+        <button type="button" class="acct" aria-label="Moj račun" aria-haspopup="menu" aria-expanded="false"><span class="av av-32" aria-hidden="true">MK</span><i class="ph-bold ph-caret-down " aria-hidden="true"></i></button>
+      </div>
+    </header>
+    <main class="adm-main">
+      <div class="phead"><h1 class="h1c">Nov oglas</h1></div>
+      <div class="pgrid"><form class="formcol" novalidate aria-label="Nov oglas">
+      <section class="fsec" aria-labelledby="f3s1"><h2 class="dtitle" id="f3s1">Oglas</h2>
+        <div class="field"><span class="label" id="f3iml">Slika</span><div role="group" aria-labelledby="f3iml" aria-describedby="f3imh" class="grid gap-3"><div class="drop" id="f3drop"><div class="flex items-center gap-4 w-full"><img class="athumb-lg" src="../directions/img/cat-bw.jpg" alt="" width="120" height="120"><div class="text-left min-w-0"><p class="font-bold truncate">repek-baner.gif</p><p class="help tnum">GIF · 640 × 640 · 1,4 MB</p></div></div><div class="flex flex-wrap items-center justify-center gap-3"><button type="button" class="btn btn-secondary btn-sm is-focus"><i class="ph-bold ph-upload-simple " aria-hidden="true"></i>Izberi datoteko</button></div></div>
+        <p class="help" id="f3imh">Razmerje 4:3, najmanj 1200 × 900 slikovnih pik, JPG ali PNG do 500 KB.</p><p class="err" id="f3ime"><i class="ph-fill ph-warning-circle text-[18px] leading-5" aria-hidden="true"></i><span>Slika mora imeti razmerje 4:3, najmanj 1200 × 900 slikovnih pik, in biti JPG ali PNG do 500 KB.</span></p></div></div>
+        <div class="field"><label for="f3alt">Opis slike (alt)</label><textarea id="f3alt" class="input  is-error" rows="2" required aria-invalid="true" aria-describedby="f3alth f3alte"></textarea><div class="flex items-start justify-between gap-4"><p class="help" id="f3alth">Opišite, kaj je na sliki, za ljudi z bralnikom zaslona. Ne ponavljajte naslova. Od 5 do 140 znakov.</p><span class="cnt" aria-hidden="true">0 / 140</span></div><p class="err" id="f3alte"><i class="ph-fill ph-warning-circle text-[18px] leading-5" aria-hidden="true"></i><span>Dodajte opis slike.</span></p></div>
+        <div class="field"><label for="f3tit">Naslov</label><input id="f3tit" class="input " required maxlength="60" value="Repek: hrana in igrače za pse in mačke"><div class="flex items-start justify-between gap-4"><span></span><span class="cnt" aria-hidden="true">38 / 60</span></div></div>
+        <div class="field"><label for="f3txt">Besedilo</label><textarea id="f3txt" class="input  is-error" rows="2" required aria-invalid="true" aria-describedby="f3txte">Za nakupe nad 25 € je dostava po vsej Sloveniji brezplačna do konca oktobra, izbrani izdelki za pse in mačke pa so tudi do 20 % ceneje.</textarea><div class="flex items-start justify-between gap-4"><span></span><span class="cnt is-over" aria-hidden="true">133 / 120</span></div><p class="err" id="f3txte"><i class="ph-fill ph-warning-circle text-[18px] leading-5" aria-hidden="true"></i><span>Največ 120 znakov.</span></p></div>
+        <div class="field"><label for="f3cta">Besedilo gumba (neobvezno)</label><input id="f3cta" class="input " placeholder="Več o tem" value="" aria-describedby="f3ctah"><div class="flex items-start justify-between gap-4"><p class="help" id="f3ctah">Privzeto: »Več o tem«. Do 24 znakov.</p><span class="cnt" aria-hidden="true">0 / 24</span></div></div>
+        <div class="field"><label for="f3lnk">Povezava</label><input id="f3lnk" class="input  is-error" type="url" required value="http://repek.si/jesen" aria-invalid="true" aria-describedby="f3lnkh f3lnke"><div class="flex items-start justify-between gap-4"><p class="help" id="f3lnkh"><i class="ph-bold ph-arrow-square-out align-[-2px]" aria-hidden="true"></i> Začeti se mora s https://. Odpre se v novem zavihku, klike pa štejemo prek naše preusmeritve.</p></div><p class="err" id="f3lnke"><i class="ph-fill ph-warning-circle text-[18px] leading-5" aria-hidden="true"></i><span>Povezava se mora začeti s https://.</span></p></div>
+      </section>
+      <section class="fsec" aria-labelledby="f3s2"><h2 class="dtitle" id="f3s2">Kje</h2>
+        <div role="group" aria-labelledby="f3sl" class="grid gap-2"><span class="label" id="f3sl">Oglasna mesta</span><div class="pg"><button type="button" class="pill" aria-pressed="false"><i class="ph-bold ph-check tick" aria-hidden="true"></i>Seznam prijav</button><button type="button" class="pill" aria-pressed="true"><i class="ph-bold ph-check tick" aria-hidden="true"></i>Stran prijave</button><button type="button" class="pill" aria-pressed="false"><i class="ph-bold ph-check tick" aria-hidden="true"></i>Zaslon Spet doma</button><button type="button" class="pill" aria-pressed="true"><i class="ph-bold ph-check tick" aria-hidden="true"></i>Stranska vrstica</button></div></div>
+        <div role="group" aria-labelledby="f3lg" class="grid gap-2"><span class="label" id="f3lg">Jeziki</span><div class="pg"><button type="button" class="pill" aria-pressed="true"><i class="ph-bold ph-check tick" aria-hidden="true"></i>SL</button><button type="button" class="pill" aria-pressed="true"><i class="ph-bold ph-check tick" aria-hidden="true"></i>EN</button></div></div>
+      </section>
+      <section class="fsec" aria-labelledby="f3s3"><h2 class="dtitle" id="f3s3">Komu</h2>
+        <div role="group" aria-labelledby="f3rg" class="grid gap-2"><span class="label" id="f3rg">Regije</span><div class="pg"><button type="button" class="pill" aria-pressed="false"><i class="ph-bold ph-check tick" aria-hidden="true"></i>Pomurska</button><button type="button" class="pill" aria-pressed="false"><i class="ph-bold ph-check tick" aria-hidden="true"></i>Podravska</button><button type="button" class="pill" aria-pressed="false"><i class="ph-bold ph-check tick" aria-hidden="true"></i>Koroška</button><button type="button" class="pill" aria-pressed="false"><i class="ph-bold ph-check tick" aria-hidden="true"></i>Savinjska</button><button type="button" class="pill" aria-pressed="false"><i class="ph-bold ph-check tick" aria-hidden="true"></i>Zasavska</button><button type="button" class="pill" aria-pressed="false"><i class="ph-bold ph-check tick" aria-hidden="true"></i>Posavska</button><button type="button" class="pill" aria-pressed="false"><i class="ph-bold ph-check tick" aria-hidden="true"></i>Jugovzhodna Slovenija</button><button type="button" class="pill" aria-pressed="true"><i class="ph-bold ph-check tick" aria-hidden="true"></i>Osrednjeslovenska</button><button type="button" class="pill" aria-pressed="true"><i class="ph-bold ph-check tick" aria-hidden="true"></i>Gorenjska</button><button type="button" class="pill" aria-pressed="false"><i class="ph-bold ph-check tick" aria-hidden="true"></i>Primorsko-notranjska</button><button type="button" class="pill" aria-pressed="false"><i class="ph-bold ph-check tick" aria-hidden="true"></i>Goriška</button><button type="button" class="pill" aria-pressed="false"><i class="ph-bold ph-check tick" aria-hidden="true"></i>Obalno-kraška</button></div></div>
+        <div class="field"><label for="f3mun">Občine</label><div class="input-wrap"><i class="ph-bold ph-magnifying-glass " aria-hidden="true"></i><input id="f3mun" type="search" class="input" autocomplete="off" placeholder="Poiščite občino"></div><div class="pg mt-2"><button type="button" class="pill" aria-label="Odstrani: Kamnik">Kamnik<i class="ph-bold ph-x " aria-hidden="true"></i></button><button type="button" class="pill" aria-label="Odstrani: Domžale">Domžale<i class="ph-bold ph-x " aria-hidden="true"></i></button></div></div>
+        <div role="group" aria-labelledby="f3sp" class="grid gap-2"><span class="label" id="f3sp">Živali</span><div class="pg"><button type="button" class="pill" aria-pressed="true"><i class="ph-bold ph-check tick" aria-hidden="true"></i>Psi</button><button type="button" class="pill" aria-pressed="true"><i class="ph-bold ph-check tick" aria-hidden="true"></i>Mačke</button></div><p class="help">Brez izbire pomeni vse.</p></div>
+      </section>
+      <section class="fsec" aria-labelledby="f3s4"><h2 class="dtitle" id="f3s4">Kdaj</h2>
+        <div class="grid grid-cols-2 gap-6">
+          <div class="field"><label for="f3sd">Začetek</label><input id="f3sd" type="date" class="input" value="2026-11-01"></div>
+          <div class="field"><label for="f3ed">Konec</label><input id="f3ed" type="date" class="input" value="2026-11-30"></div>
+        </div>
+        <div class="field"><label for="f3stt">Stanje</label><button type="button" id="f3stt" class="input select" aria-haspopup="listbox" aria-expanded="false"><span>Načrtovan</span><i class="ph-bold ph-caret-down " aria-hidden="true"></i></button></div>
+        <div><label class="check"><input type="checkbox" checked aria-describedby="f3exh f3exe"><span class="cbx"><i class="ph-bold ph-check " aria-hidden="true"></i></span><span class="font-bold">Izključno mesto</span></label><p class="help ml-9" id="f3exh">V istem obdobju na tem mestu in v teh regijah ne bo drugih oglasov.</p><div class="ml-9 mt-2"><p class="err" id="f3exe"><i class="ph-fill ph-warning-circle text-[18px] leading-5" aria-hidden="true"></i><span>V tem obdobju je to mesto že rezervirano za oglas: Hotel Mijav: zimska ponudba. <a href="#" class="lnk ml-1">Odpri oglas</a></span></p></div></div>
+      </section>
+      <div class="sfoot" role="group" aria-label="Dejanja"><button type="button" class="btn btn-primary btn-lg">Shrani</button><button type="button" class="btn btn-text">Shrani kot osnutek</button><button type="button" class="btn btn-text">Prekliči</button></div>
+      </form>
+      <aside class="prev" aria-labelledby="pv4h"><h2 class="dtitle" id="pv4h">Predogled</h2>
+        <div class="grid gap-4 mt-4">
+          <div role="radiogroup" aria-label="Mesto" class="pg"><button type="button" role="radio" class="pill" aria-pressed="false" aria-checked="false"><i class="ph-bold ph-check tick" aria-hidden="true"></i>Seznam prijav</button><button type="button" role="radio" class="pill" aria-pressed="true" aria-checked="true"><i class="ph-bold ph-check tick" aria-hidden="true"></i>Stran prijave</button><button type="button" role="radio" class="pill" aria-pressed="false" aria-checked="false"><i class="ph-bold ph-check tick" aria-hidden="true"></i>Zaslon Spet doma</button><button type="button" role="radio" class="pill" aria-pressed="false" aria-checked="false"><i class="ph-bold ph-check tick" aria-hidden="true"></i>Stranska vrstica</button></div>
+          <div class="grid grid-cols-2 gap-3"><div class="seg" role="radiogroup" aria-label="Jezik"><button type="button" role="radio" aria-checked="false" aria-selected="false">SL</button><button type="button" role="radio" aria-checked="true" aria-selected="true">EN</button></div><div class="seg" role="radiogroup" aria-label="Svetlo / temno"><button type="button" role="radio" aria-checked="false" aria-selected="false">Svetlo</button><button type="button" role="radio" aria-checked="true" aria-selected="true">Temno</button></div></div>
+          <div class="dark pvwrap"><div class="pvstage" lang="en"><div class="ad ad-detail" role="group" aria-label="Ad: Repek: hrana in igrače za pse in mačke"><p class="ad-label">Ad</p><div class="flex gap-4 mt-2"><img class="ad-i96" src="../directions/img/dog-golden.jpg" alt="Pes z igračo ob polni skodelici hrane"><div class="min-w-0 flex-1"><p class="ad-t ad-t1">Repek: hrana in igrače za pse in mačke</p><p class="ad-x ad-x2">Za nakupe nad 25 € je dostava po vsej Sloveniji brezplačna do konca oktobra.</p><span class="ad-btn">Learn more<i class="ph-bold ph-arrow-square-out " aria-hidden="true"></i></span></div></div></div></div></div>
+        </div></aside></div>
+    </main>
+    </div>
+  </div>
+  </div></div>
+
+  <p class="tile-h" style="margin-top:64px">F6 · Live preview, all four slots in SL and EN (P21 components, same crop rules) · plus house ad (quiet "Lastni" marker, admin only), text-only unit (no image) and long text cut at two lines</p>
+  <div class="fit-1200"><div class="part pvboard" style="width:1200px" lang="sl">
+    <h2 class="dtitle mb-6">Predogled: Seznam prijav, Stran prijave, Zaslon Spet doma, Stranska vrstica</h2>
+    <div class="pvrow"><div class="pvcell"><p class="cap mb-2">Seznam prijav · SL</p><div lang="sl" class="" style="width:400px;max-width:100%"><div class="ad ad-feed" role="group" aria-label="Oglas: Repek: hrana in igrače za pse in mačke"><div class="flex items-center gap-3"><img class="ad-i64" src="../directions/img/dog-golden.jpg" alt="Pes z igračo ob polni skodelici hrane"><div class="min-w-0 flex-1"><p class="ad-label">Oglas</p><p class="ad-t ad-t1">Repek: hrana in igrače za pse in mačke</p><p class="ad-x ad-x1">Za nakupe nad 25 € je dostava po vsej Sloveniji brezplačna do konca oktobra.</p></div><i class="ph-bold ph-caret-right " aria-hidden="true"></i></div></div></div></div><div class="pvcell"><p class="cap mb-2">Seznam prijav · EN</p><div lang="en" class="" style="width:400px;max-width:100%"><div class="ad ad-feed" role="group" aria-label="Ad: Repek: hrana in igrače za pse in mačke"><div class="flex items-center gap-3"><img class="ad-i64" src="../directions/img/dog-golden.jpg" alt="Pes z igračo ob polni skodelici hrane"><div class="min-w-0 flex-1"><p class="ad-label">Ad</p><p class="ad-t ad-t1">Repek: hrana in igrače za pse in mačke</p><p class="ad-x ad-x1">Za nakupe nad 25 € je dostava po vsej Sloveniji brezplačna do konca oktobra.</p></div><i class="ph-bold ph-caret-right " aria-hidden="true"></i></div></div></div></div></div><div class="pvrow"><div class="pvcell"><p class="cap mb-2">Stran prijave · SL</p><div lang="sl" class="" style="width:400px;max-width:100%"><div class="ad ad-detail" role="group" aria-label="Oglas: Repek: hrana in igrače za pse in mačke"><p class="ad-label">Oglas</p><div class="flex gap-4 mt-2"><img class="ad-i96" src="../directions/img/dog-golden.jpg" alt="Pes z igračo ob polni skodelici hrane"><div class="min-w-0 flex-1"><p class="ad-t ad-t1">Repek: hrana in igrače za pse in mačke</p><p class="ad-x ad-x2">Za nakupe nad 25 € je dostava po vsej Sloveniji brezplačna do konca oktobra.</p><span class="ad-btn">Več o tem<i class="ph-bold ph-arrow-square-out " aria-hidden="true"></i></span></div></div></div></div></div><div class="pvcell"><p class="cap mb-2">Stran prijave · EN</p><div lang="en" class="" style="width:400px;max-width:100%"><div class="ad ad-detail" role="group" aria-label="Ad: Repek: hrana in igrače za pse in mačke"><p class="ad-label">Ad</p><div class="flex gap-4 mt-2"><img class="ad-i96" src="../directions/img/dog-golden.jpg" alt="Pes z igračo ob polni skodelici hrane"><div class="min-w-0 flex-1"><p class="ad-t ad-t1">Repek: hrana in igrače za pse in mačke</p><p class="ad-x ad-x2">Za nakupe nad 25 € je dostava po vsej Sloveniji brezplačna do konca oktobra.</p><span class="ad-btn">Learn more<i class="ph-bold ph-arrow-square-out " aria-hidden="true"></i></span></div></div></div></div></div></div><div class="pvrow"><div class="pvcell"><p class="cap mb-2">Zaslon Spet doma · SL</p><div lang="sl" class="" style="width:400px;max-width:100%"><div class="ad ad-detail" role="group" aria-label="Oglas: Repek: hrana in igrače za pse in mačke"><p class="ad-label">Oglas</p><div class="flex gap-4 mt-2"><img class="ad-i96" src="../directions/img/dog-golden.jpg" alt="Pes z igračo ob polni skodelici hrane"><div class="min-w-0 flex-1"><p class="ad-t ad-t1">Repek: hrana in igrače za pse in mačke</p><p class="ad-x ad-x2">Za nakupe nad 25 € je dostava po vsej Sloveniji brezplačna do konca oktobra.</p><span class="ad-btn">Več o tem<i class="ph-bold ph-arrow-square-out " aria-hidden="true"></i></span></div></div></div></div></div><div class="pvcell"><p class="cap mb-2">Zaslon Spet doma · EN</p><div lang="en" class="" style="width:400px;max-width:100%"><div class="ad ad-detail" role="group" aria-label="Ad: Repek: hrana in igrače za pse in mačke"><p class="ad-label">Ad</p><div class="flex gap-4 mt-2"><img class="ad-i96" src="../directions/img/dog-golden.jpg" alt="Pes z igračo ob polni skodelici hrane"><div class="min-w-0 flex-1"><p class="ad-t ad-t1">Repek: hrana in igrače za pse in mačke</p><p class="ad-x ad-x2">Za nakupe nad 25 € je dostava po vsej Sloveniji brezplačna do konca oktobra.</p><span class="ad-btn">Learn more<i class="ph-bold ph-arrow-square-out " aria-hidden="true"></i></span></div></div></div></div></div></div><div class="pvrow"><div class="pvcell"><p class="cap mb-2">Stranska vrstica · SL</p><div lang="sl" class="" style="width:320px;max-width:100%"><div class="ad ad-side" role="group" aria-label="Oglas: Repek: hrana in igrače za pse in mačke"><p class="ad-label">Oglas</p><img class="ad-i43" src="../directions/img/dog-golden.jpg" alt="Pes z igračo ob polni skodelici hrane"><p class="ad-t ad-t2 mt-3">Repek: hrana in igrače za pse in mačke</p><p class="ad-x ad-x3 mt-1">Za nakupe nad 25 € je dostava po vsej Sloveniji brezplačna do konca oktobra.</p><span class="ad-btn">Več o tem<i class="ph-bold ph-arrow-square-out " aria-hidden="true"></i></span></div></div></div><div class="pvcell"><p class="cap mb-2">Stranska vrstica · EN</p><div lang="en" class="" style="width:320px;max-width:100%"><div class="ad ad-side" role="group" aria-label="Ad: Repek: hrana in igrače za pse in mačke"><p class="ad-label">Ad</p><img class="ad-i43" src="../directions/img/dog-golden.jpg" alt="Pes z igračo ob polni skodelici hrane"><p class="ad-t ad-t2 mt-3">Repek: hrana in igrače za pse in mačke</p><p class="ad-x ad-x3 mt-1">Za nakupe nad 25 € je dostava po vsej Sloveniji brezplačna do konca oktobra.</p><span class="ad-btn">Learn more<i class="ph-bold ph-arrow-square-out " aria-hidden="true"></i></span></div></div></div></div>
+    <div class="pvrow"><div class="pvcell"><p class="cap mb-2">Lastni oglas (Podpora) · Stran prijave · SL</p><div style="width:400px;max-width:100%" lang="sl"><div class="ad ad-detail" role="group" aria-label="Oglas: Pomagajte ohraniti iskanje brezplačno"><p class="ad-label">Oglas <span class="ad-house">· Lastni</span></p><div class="flex gap-4 mt-2"><img class="ad-i96" src="../directions/img/cat-siamese.jpg" alt="Ilustracija: sonce nad mehkimi griči in pot, ki vodi do hiše"><div class="min-w-0 flex-1"><p class="ad-t ad-t1">Pomagajte ohraniti iskanje brezplačno</p><p class="ad-x ad-x2">Vsaka vrnitev domov je brezplačna. Prostovoljni prispevki pokrivajo strežnike, zemljevide in opozorila.</p><span class="ad-btn">Kako pomagati<i class="ph-bold ph-arrow-square-out " aria-hidden="true"></i></span></div></div></div></div></div>
+    <div class="pvcell"><p class="cap mb-2">Brez slike (samo besedilo) · Seznam prijav · SL</p><div style="width:400px;max-width:100%" lang="sl"><div class="ad ad-feed" role="group" aria-label="Oglas: Ambulanta Taca: zimski pregled"><div class="flex items-center gap-3"><div class="min-w-0 flex-1"><p class="ad-label">Oglas</p><p class="ad-t ad-t1">Ambulanta Taca: zimski pregled</p><p class="ad-x ad-x1">Brezplačen pregled za starejše pse do konca novembra.</p></div><i class="ph-bold ph-caret-right " aria-hidden="true"></i></div></div></div></div></div>
+    <div class="pvrow"><div class="pvcell"><p class="cap mb-2">Dolgo besedilo, največ 2 vrstici · Stran prijave · SL</p><div style="width:400px;max-width:100%" lang="sl"><div class="ad ad-detail" role="group" aria-label="Oglas: Hotel Mijav: zimska ponudba za mačke, ki ne marajo potovanj"><p class="ad-label">Oglas</p><div class="flex gap-4 mt-2"><img class="ad-i96" src="../directions/img/dog-golden.jpg" alt="Pes z igračo ob polni skodelici hrane"><div class="min-w-0 flex-1"><p class="ad-t ad-t1">Hotel Mijav: zimska ponudba za mačke, ki ne marajo potovanj</p><p class="ad-x ad-x2">Namestitev za mačke v mirnih sobah z dnevno svetlobo, individualna oskrba, dnevno poročilo z mislijo na lastnika in neomejeno gledanje skozi okno na vrt, z rezervacijo do konca meseca.</p><span class="ad-btn">Več o tem<i class="ph-bold ph-arrow-square-out " aria-hidden="true"></i></span></div></div></div></div></div><div></div></div>
+  </div></div>
+
+  <p class="tile-h" style="margin-top:64px">F7 · Ad detail · running ad · totals as plain numbers, range select, line charts by day (chart-1, direct labels) with the data table below, slot and region breakdowns ("< 5"), CSV export, counting note, change history</p>
+  <div class="fit-1200"><div class="browser relative" style="width:1200px" lang="sl">
+    <div class="browser-bar"><span class="dots"><i></i><i></i><i></i></span><span class="url"><i class="ph ph-lock-simple " aria-hidden="true"></i>najdimo.si/admin/oglasi/repek-hrana</span></div>
+    <div class="adm" style="min-height:2500px">
+    <div class="sb is-collapsed">
+    <div class="sb-head"><a href="#" class="sb-home" aria-label="Najdimo, Konzola"><svg viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg></a></div>
+    <nav class="sb-nav" aria-label="Konzola">
+      <div class="sb-group"><ul class="sb-list" aria-label="Pregled"><li class="relative"><a href="#" class="sb-item"><i class="ph ph-squares-four " aria-hidden="true"></i><span class="sr-only">Nadzorna plošča</span></a></li></ul></div>
+      <div class="sb-group"><ul class="sb-list" aria-label="Vsebina"><li class="relative"><a href="#" class="sb-item" aria-current="page"><i class="ph-fill ph-image-square " aria-hidden="true"></i><span class="sr-only">Oglasi</span></a></li><li class="relative"><a href="#" class="sb-item"><i class="ph ph-paw-print " aria-hidden="true"></i><span class="sr-only">Lastni oglasi</span></a></li></ul></div>
+      <div class="sb-group"><ul class="sb-list" aria-label="Varnost"><li class="relative"><a href="#" class="sb-item"><i class="ph ph-list-checks " aria-hidden="true"></i><span class="sr-only">Moderacija, Kmalu</span></a></li><li class="relative"><a href="#" class="sb-item"><i class="ph ph-flag " aria-hidden="true"></i><span class="sr-only">Prijave zlorab, Kmalu</span></a></li></ul></div>
+      <div class="sb-group"><ul class="sb-list" aria-label="Organizacije"><li class="relative"><a href="#" class="sb-item"><i class="ph ph-seal-check " aria-hidden="true"></i><span class="sr-only">Preverjanje</span></a></li><li class="relative"><a href="#" class="sb-item"><i class="ph ph-buildings " aria-hidden="true"></i><span class="sr-only">Organizacije</span></a></li><li class="relative"><a href="#" class="sb-item"><i class="ph ph-address-book " aria-hidden="true"></i><span class="sr-only">Imenik zavetišč</span></a></li></ul></div>
+      <div class="sb-group"><ul class="sb-list" aria-label="Ljudje"><li class="relative"><a href="#" class="sb-item"><i class="ph ph-users " aria-hidden="true"></i><span class="sr-only">Uporabniki</span></a></li></ul></div>
+      <div class="sb-group"><ul class="sb-list" aria-label="Posel"><li class="relative"><a href="#" class="sb-item"><i class="ph ph-tray " aria-hidden="true"></i><span class="sr-only">Povpraševanja</span></a></li><li class="relative"><a href="#" class="sb-item"><i class="ph ph-stethoscope " aria-hidden="true"></i><span class="sr-only">Veterinarski partnerji, Kmalu</span></a></li></ul></div>
+      <div class="sb-group"><ul class="sb-list" aria-label="Sistem"><li class="relative"><a href="#" class="sb-item"><i class="ph ph-clock-counter-clockwise " aria-hidden="true"></i><span class="sr-only">Revizijska sled</span></a></li><li class="relative"><a href="#" class="sb-item"><i class="ph ph-gear-six " aria-hidden="true"></i><span class="sr-only">Nastavitve</span></a></li></ul></div>
+    </nav>
+    <div class="sb-foot"><button type="button" class="sb-item sb-toggle" aria-label="Razširi meni"><i class="ph-bold ph-caret-double-right " aria-hidden="true"></i></button></div>
+  </div>
+    <div class="adm-col">
+    <header class="tb">
+      <nav aria-label="Drobtine"><ol class="crumbs"><li><a href="#">Konzola</a></li><li class="sep" aria-hidden="true"><i class="ph-bold ph-caret-right " aria-hidden="true"></i></li><li><a href="#">Oglasi</a></li><li class="sep" aria-hidden="true"><i class="ph-bold ph-caret-right " aria-hidden="true"></i></li><li><span aria-current="page">Repek: hrana in igrače</span></li></ol></nav>
+      <div class="tb-meta">
+        <span class="envw"><i class="ph-bold ph-globe-simple " aria-hidden="true"></i>Produkcija</span><span class="vr" aria-hidden="true"></span>
+        <span class="envw text-muted-foreground"><i class="ph-bold ph-user-gear " aria-hidden="true"></i>Skrbnik</span>
+        <button type="button" class="acct" aria-label="Moj račun" aria-haspopup="menu" aria-expanded="false"><span class="av av-32" aria-hidden="true">MK</span><i class="ph-bold ph-caret-down " aria-hidden="true"></i></button>
+      </div>
+    </header>
+    <main class="adm-main">
+      <div class="phead"><div class="grid gap-2"><h1 class="h1c">Repek: hrana in igrače za pse in mačke</h1><span class="lst lst-new"><i class="ph-fill ph-play-circle " aria-hidden="true"></i>Se prikazuje</span></div><div class="flex flex-wrap gap-2"><a href="#" class="btn btn-secondary btn-sm"><i class="ph-bold ph-pencil-simple " aria-hidden="true"></i>Uredi</a><a href="#" class="btn btn-ghost btn-sm"><i class="ph-bold ph-copy " aria-hidden="true"></i>Podvoji</a><button type="button" class="btn btn-ghost btn-sm danger"><i class="ph-bold ph-stop-circle " aria-hidden="true"></i>Končaj zdaj</button></div></div>
+      <section aria-label="Statistika" class="grid gap-8">
+        <div class="flex flex-wrap items-end justify-between gap-6"><div class="grid grid-cols-3 gap-12"><dl class="kpi"><dt>Prikazi</dt><dd class="kpi-n tnum">18.420</dd></dl><dl class="kpi"><dt>Kliki</dt><dd class="kpi-n tnum">412</dd></dl><dl class="kpi"><dt>Delež klikov</dt><dd class="kpi-n tnum">2,2 %</dd></dl></div>
+        <div class="field w-[240px]"><label for="rng">Obdobje</label><button type="button" id="rng" class="input select" aria-haspopup="listbox" aria-expanded="false"><span>Zadnjih 30 dni</span><i class="ph-bold ph-caret-down " aria-hidden="true"></i></button></div></div>
+        <figure class="m-0 grid gap-2"><figcaption class="help">Graf prikazov in klikov po dnevih. Podatki so v tabeli pod grafom.</figcaption>
+          <svg viewBox="0 0 780 150" class="chart" role="img" aria-label="Prikazi po dnevih. Podatki so v tabeli pod grafom."><line x1="8" x2="716" y1="124" y2="124" style="stroke:hsl(var(--border))" stroke-width="1"/><text x="724" y="128" class="ct">0</text><line x1="8" x2="716" y1="69" y2="69" style="stroke:hsl(var(--border))" stroke-width="1"/><text x="724" y="73" class="ct">400</text><line x1="8" x2="716" y1="14" y2="14" style="stroke:hsl(var(--border))" stroke-width="1"/><text x="724" y="18" class="ct">800</text><text x="8" y="144" class="ct" text-anchor="middle">1. 10.</text><text x="178.89655172413794" y="144" class="ct" text-anchor="middle">8. 10.</text><text x="349.7931034482759" y="144" class="ct" text-anchor="middle">15. 10.</text><text x="520.6896551724138" y="144" class="ct" text-anchor="middle">22. 10.</text><text x="691.5862068965517" y="144" class="ct" text-anchor="middle">29. 10.</text><polyline points="8.0,44.4 32.4,46.7 56.8,37.6 81.2,40.4 105.7,29.3 130.1,20.1 154.5,12.9 178.9,27.9 203.3,25.8 227.7,29.4 252.1,38.2 276.6,28.7 301.0,33.5 325.4,23.6 349.8,48.8 374.2,48.2 398.6,59.9 423.0,58.1 447.4,58.6 471.9,53.7 496.3,50.8 520.7,67.1 545.1,62.8 569.5,56.6 593.9,51.4 618.3,45.4 642.8,39.4 667.2,30.4 691.6,45.5 716.0,31.6" fill="none" style="stroke:hsl(var(--chart-1))" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/><circle cx="716" cy="31.600000000000005" r="4.5" style="fill:hsl(var(--chart-1))"/><circle cx="154.48275862068965" cy="12.899999999999999" r="4" style="fill:hsl(var(--background));stroke:hsl(var(--chart-1))" stroke-width="2"/><text x="154.48275862068965" y="3.8999999999999986" class="ctl" text-anchor="middle">Vrh: 808</text><text x="726" y="35.60000000000001" class="ctl">Prikazi</text></svg>
+          <svg viewBox="0 0 780 150" class="chart" role="img" aria-label="Kliki po dnevih. Podatki so v tabeli pod grafom."><line x1="8" x2="716" y1="124" y2="124" style="stroke:hsl(var(--border))" stroke-width="1"/><text x="724" y="128" class="ct">0</text><line x1="8" x2="716" y1="69" y2="69" style="stroke:hsl(var(--border))" stroke-width="1"/><text x="724" y="73" class="ct">10</text><line x1="8" x2="716" y1="14" y2="14" style="stroke:hsl(var(--border))" stroke-width="1"/><text x="724" y="18" class="ct">20</text><text x="8" y="144" class="ct" text-anchor="middle">1. 10.</text><text x="178.89655172413794" y="144" class="ct" text-anchor="middle">8. 10.</text><text x="349.7931034482759" y="144" class="ct" text-anchor="middle">15. 10.</text><text x="520.6896551724138" y="144" class="ct" text-anchor="middle">22. 10.</text><text x="691.5862068965517" y="144" class="ct" text-anchor="middle">29. 10.</text><polyline points="8.0,52.5 32.4,58.0 56.8,47.0 81.2,41.5 105.7,41.5 130.1,25.0 154.5,36.0 178.9,47.0 203.3,47.0 227.7,41.5 252.1,58.0 276.6,25.0 301.0,41.5 325.4,41.5 349.8,52.5 374.2,58.0 398.6,58.0 423.0,69.0 447.4,69.0 471.9,58.0 496.3,63.5 520.7,63.5 545.1,63.5 569.5,69.0 593.9,58.0 618.3,52.5 642.8,52.5 667.2,52.5 691.6,58.0 716.0,36.0" fill="none" style="stroke:hsl(var(--chart-1))" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/><circle cx="716" cy="36" r="4.5" style="fill:hsl(var(--chart-1))"/><circle cx="130.0689655172414" cy="25" r="4" style="fill:hsl(var(--background));stroke:hsl(var(--chart-1))" stroke-width="2"/><text x="130.0689655172414" y="16" class="ctl" text-anchor="middle">Vrh: 18</text><text x="726" y="40" class="ctl">Kliki</text></svg>
+        </figure>
+        <div class="tcard"><table class="tbl"><caption class="text-left font-bold px-3 py-3">Podatki po dnevih (zadnjih 7)</caption><thead><tr><th scope="col">Datum</th><th scope="col" class="tr">Prikazi</th><th scope="col" class="tr">Kliki</th><th scope="col" class="tr">Delež klikov</th></tr></thead><tbody><tr><td class="tnum">30. 10. 2026</td><td class="tr tnum">672</td><td class="tr tnum">16</td><td class="tr tnum">2,4 %</td></tr><tr><td class="tnum">29. 10. 2026</td><td class="tr tnum">571</td><td class="tr tnum">12</td><td class="tr tnum">2,1 %</td></tr><tr><td class="tnum">28. 10. 2026</td><td class="tr tnum">681</td><td class="tr tnum">13</td><td class="tr tnum">1,9 %</td></tr><tr><td class="tnum">27. 10. 2026</td><td class="tr tnum">615</td><td class="tr tnum">13</td><td class="tr tnum">2,1 %</td></tr><tr><td class="tnum">26. 10. 2026</td><td class="tr tnum">572</td><td class="tr tnum">13</td><td class="tr tnum">2,3 %</td></tr><tr><td class="tnum">25. 10. 2026</td><td class="tr tnum">528</td><td class="tr tnum">12</td><td class="tr tnum">2,3 %</td></tr><tr><td class="tnum">24. 10. 2026</td><td class="tr tnum">490</td><td class="tr tnum">10</td><td class="tr tnum">2,0 %</td></tr></tbody></table></div>
+      </section>
+      <section class="grid grid-cols-2 gap-8" aria-label="Razčlenitev"><div><h3 class="h3c">Po mestih</h3><div class="tcard mt-3"><table class="tbl"><caption class="sr-only">Po mestih</caption><thead><tr><th scope="col">Mesto</th><th scope="col" class="tr">Prikazi</th><th scope="col" class="tr">Kliki</th><th scope="col" class="tr">Delež klikov</th></tr></thead><tbody><tr><td>Stran prijave</td><td class="tr tnum">11.204</td><td class="tr tnum">268</td><td class="tr tnum">2,4 %</td></tr><tr><td>Stranska vrstica</td><td class="tr tnum">7.216</td><td class="tr tnum">144</td><td class="tr tnum">2,0 %</td></tr><tr><td>Seznam prijav</td><td class="tr tnum">0</td><td class="tr tnum">0</td><td class="tr tnum">–</td></tr></tbody></table></div></div><div><h3 class="h3c">Po regijah</h3><div class="tcard mt-3"><table class="tbl"><caption class="sr-only">Po regijah</caption><thead><tr><th scope="col">Regija</th><th scope="col" class="tr">Prikazi</th><th scope="col" class="tr">Kliki</th><th scope="col" class="tr">Delež klikov</th></tr></thead><tbody><tr><td>Osrednjeslovenska</td><td class="tr tnum">13.050</td><td class="tr tnum">301</td><td class="tr tnum">2,3 %</td></tr><tr><td>Gorenjska</td><td class="tr tnum">5.370</td><td class="tr tnum">111</td><td class="tr tnum">2,1 %</td></tr><tr><td>Koroška</td><td class="tr tnum"><span aria-hidden="true">&lt; 5</span><span class="sr-only">manj kot 5</span></td><td class="tr tnum"><span aria-hidden="true">&lt; 5</span><span class="sr-only">manj kot 5</span></td><td class="tr tnum">–</td></tr><tr><td>Pomurska</td><td class="tr tnum">1.612</td><td class="tr tnum"><span aria-hidden="true">&lt; 5</span><span class="sr-only">manj kot 5</span></td><td class="tr tnum">–</td></tr></tbody></table></div></div></section>
+      <section class="grid gap-4"><div class="flex flex-wrap items-center justify-between gap-4"><button type="button" class="btn btn-secondary btn-sm"><i class="ph-bold ph-download-simple " aria-hidden="true"></i>Izvozi CSV</button></div><div class="note" role="note"><i class="ph-fill ph-info " aria-hidden="true"></i><p>Prikaze in klike štejemo v naši bazi, skupno in brez piškotkov. Prikaz pomeni, da se je oglas izrisal na zaslonu; vidnosti ne merimo.</p></div></section>
+      <section><h2 class="h2c mb-4">Zgodovina sprememb</h2><div class="tcard"><table class="tbl"><caption class="sr-only">Zgodovina sprememb</caption><thead><tr><th scope="col">Čas</th><th scope="col">Kdo</th><th scope="col">Sprememba</th></tr></thead><tbody><tr><td class="tnum tmuted nowrap">15. 10. 2026 14:32</td><td>Maja Kovač</td><td>Sprememba konca: 31. 10. → 15. 11. 2026</td></tr><tr><td class="tnum tmuted nowrap">9. 10. 2026 09:41</td><td>Rok Bizjak</td><td>Dodano mesto: Stranska vrstica</td></tr><tr><td class="tnum tmuted nowrap">1. 10. 2026 08:00</td><td>Sistem</td><td>Stanje: Načrtovan → Se prikazuje</td></tr><tr><td class="tnum tmuted nowrap">28. 9. 2026 16:20</td><td>Maja Kovač</td><td>Slika naložena in preverjena</td></tr><tr><td class="tnum tmuted nowrap">28. 9. 2026 16:12</td><td>Maja Kovač</td><td>Oglas ustvarjen kot osnutek</td></tr></tbody></table></div></section>
+    </main>
+    </div>
+  </div>
+  </div></div>
+
+  <p class="tile-h" style="margin-top:64px">F8 · House ads manager · three fixed house ads with preview, text, link target and status · "Podpora" opened for editing: same form, slots locked (all four, disabled), no Who and When sections</p>
+  <div class="fit-1200"><div class="browser relative" style="width:1200px" lang="sl">
+    <div class="browser-bar"><span class="dots"><i></i><i></i><i></i></span><span class="url"><i class="ph ph-lock-simple " aria-hidden="true"></i>najdimo.si/admin/lastni-oglasi</span></div>
+    <div class="adm" style="min-height:1500px">
+    <div class="sb is-collapsed">
+    <div class="sb-head"><a href="#" class="sb-home" aria-label="Najdimo, Konzola"><svg viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg></a></div>
+    <nav class="sb-nav" aria-label="Konzola">
+      <div class="sb-group"><ul class="sb-list" aria-label="Pregled"><li class="relative"><a href="#" class="sb-item"><i class="ph ph-squares-four " aria-hidden="true"></i><span class="sr-only">Nadzorna plošča</span></a></li></ul></div>
+      <div class="sb-group"><ul class="sb-list" aria-label="Vsebina"><li class="relative"><a href="#" class="sb-item"><i class="ph ph-image-square " aria-hidden="true"></i><span class="sr-only">Oglasi</span></a></li><li class="relative"><a href="#" class="sb-item" aria-current="page"><i class="ph-fill ph-paw-print " aria-hidden="true"></i><span class="sr-only">Lastni oglasi</span></a></li></ul></div>
+      <div class="sb-group"><ul class="sb-list" aria-label="Varnost"><li class="relative"><a href="#" class="sb-item"><i class="ph ph-list-checks " aria-hidden="true"></i><span class="sr-only">Moderacija, Kmalu</span></a></li><li class="relative"><a href="#" class="sb-item"><i class="ph ph-flag " aria-hidden="true"></i><span class="sr-only">Prijave zlorab, Kmalu</span></a></li></ul></div>
+      <div class="sb-group"><ul class="sb-list" aria-label="Organizacije"><li class="relative"><a href="#" class="sb-item"><i class="ph ph-seal-check " aria-hidden="true"></i><span class="sr-only">Preverjanje</span></a></li><li class="relative"><a href="#" class="sb-item"><i class="ph ph-buildings " aria-hidden="true"></i><span class="sr-only">Organizacije</span></a></li><li class="relative"><a href="#" class="sb-item"><i class="ph ph-address-book " aria-hidden="true"></i><span class="sr-only">Imenik zavetišč</span></a></li></ul></div>
+      <div class="sb-group"><ul class="sb-list" aria-label="Ljudje"><li class="relative"><a href="#" class="sb-item"><i class="ph ph-users " aria-hidden="true"></i><span class="sr-only">Uporabniki</span></a></li></ul></div>
+      <div class="sb-group"><ul class="sb-list" aria-label="Posel"><li class="relative"><a href="#" class="sb-item"><i class="ph ph-tray " aria-hidden="true"></i><span class="sr-only">Povpraševanja</span></a></li><li class="relative"><a href="#" class="sb-item"><i class="ph ph-stethoscope " aria-hidden="true"></i><span class="sr-only">Veterinarski partnerji, Kmalu</span></a></li></ul></div>
+      <div class="sb-group"><ul class="sb-list" aria-label="Sistem"><li class="relative"><a href="#" class="sb-item"><i class="ph ph-clock-counter-clockwise " aria-hidden="true"></i><span class="sr-only">Revizijska sled</span></a></li><li class="relative"><a href="#" class="sb-item"><i class="ph ph-gear-six " aria-hidden="true"></i><span class="sr-only">Nastavitve</span></a></li></ul></div>
+    </nav>
+    <div class="sb-foot"><button type="button" class="sb-item sb-toggle" aria-label="Razširi meni"><i class="ph-bold ph-caret-double-right " aria-hidden="true"></i></button></div>
+  </div>
+    <div class="adm-col">
+    <header class="tb">
+      <nav aria-label="Drobtine"><ol class="crumbs"><li><a href="#">Konzola</a></li><li class="sep" aria-hidden="true"><i class="ph-bold ph-caret-right " aria-hidden="true"></i></li><li><span aria-current="page">Lastni oglasi</span></li></ol></nav>
+      <div class="tb-meta">
+        <span class="envw"><i class="ph-bold ph-globe-simple " aria-hidden="true"></i>Produkcija</span><span class="vr" aria-hidden="true"></span>
+        <span class="envw text-muted-foreground"><i class="ph-bold ph-user-gear " aria-hidden="true"></i>Skrbnik</span>
+        <button type="button" class="acct" aria-label="Moj račun" aria-haspopup="menu" aria-expanded="false"><span class="av av-32" aria-hidden="true">MK</span><i class="ph-bold ph-caret-down " aria-hidden="true"></i></button>
+      </div>
+    </header>
+    <main class="adm-main">
+      <div class="phead"><div class="grid gap-2"><h1 class="h1c">Lastni oglasi</h1><p class="max-w-[60ch]">Prikažejo se, kadar za mesto ni plačanega oglasa.</p></div></div>
+      <ul class="hlist"><li class="hrow"><img class="athumb-lg" src="../directions/img/cat-siamese.jpg" alt="Ilustracija: sonce nad mehkimi griči in pot, ki vodi do hiše" width="120" height="90"><div class="min-w-0 flex-1"><p class="meta">Podpora <span class="ad-house">· Lastni</span></p><p class="font-bold">Pomagajte ohraniti iskanje brezplačno</p><p class="line-clamp-2">Vsaka vrnitev domov je brezplačna. Prostovoljni prispevki pokrivajo strežnike, zemljevide in opozorila.</p><p class="meta mt-1">Povezava: <span class="tnum">/o-nas#financiranje</span></p></div><div class="flex flex-col items-end gap-2"><span class="lst lst-new"><i class="ph-fill ph-play-circle " aria-hidden="true"></i>Se prikazuje</span><button type="button" class="btn btn-secondary btn-sm is-focus" aria-expanded="true"><i class="ph-bold ph-pencil-simple " aria-hidden="true"></i>Uredi</button></div></li><li class="hedit"><form novalidate aria-label="Uredi lastni oglas: Podpora" class="formcol" style="max-width:640px">
+        <section class="fsec" aria-labelledby="h5s1"><h2 class="dtitle" id="h5s1">Oglas</h2>
+          <div class="flex items-center gap-4"><img class="athumb-lg" src="../directions/img/cat-siamese.jpg" alt="Naložena slika: ilustracija sonca nad griči" width="160" height="120"><div><p class="font-bold">house-ad-support.png</p><p class="help tnum">PNG · 1600 × 1200 · 188 KB</p><button type="button" class="btn btn-text btn-sm -ml-3"><i class="ph-bold ph-arrows-clockwise " aria-hidden="true"></i>Zamenjaj</button></div></div>
+          <div class="field"><label for="h5a">Opis slike (alt)</label><textarea id="h5a" class="input " rows="2" required aria-describedby="h5ah">Ilustracija: sonce nad mehkimi griči in pot, ki vodi do hiše</textarea><div class="flex items-start justify-between gap-4"><p class="help" id="h5ah">Opišite, kaj je na sliki, za ljudi z bralnikom zaslona. Ne ponavljajte naslova. Od 5 do 140 znakov.</p><span class="cnt" aria-hidden="true">61 / 140</span></div></div>
+          <div class="field"><label for="h5t">Naslov</label><input id="h5t" class="input " required value="Pomagajte ohraniti iskanje brezplačno"><div class="flex items-start justify-between gap-4"><span></span><span class="cnt" aria-hidden="true">37 / 60</span></div></div>
+          <div class="field"><label for="h5x">Besedilo</label><textarea id="h5x" class="input " rows="2" required>Vsaka vrnitev domov je brezplačna. Prostovoljni prispevki pokrivajo strežnike, zemljevide in opozorila.</textarea><div class="flex items-start justify-between gap-4"><span></span><span class="cnt" aria-hidden="true">102 / 120</span></div></div>
+          <div class="field"><label for="h5b">Besedilo gumba (neobvezno)</label><input id="h5b" class="input "  value="Kako pomagati"><div class="flex items-start justify-between gap-4"><span></span><span class="cnt" aria-hidden="true">13 / 24</span></div></div>
+          <div class="field"><label for="h5l">Povezava</label><input id="h5l" class="input " type="url" required value="https://najdimo.si/o-nas#financiranje" aria-describedby="h5lh"><div class="flex items-start justify-between gap-4"><p class="help" id="h5lh"><i class="ph-bold ph-arrow-square-out align-[-2px]" aria-hidden="true"></i> Začeti se mora s https://. Odpre se v novem zavihku, klike pa štejemo prek naše preusmeritve.</p></div></div>
+        </section>
+        <section class="fsec" aria-labelledby="h5s2"><h2 class="dtitle" id="h5s2">Kje</h2>
+          <div role="group" aria-labelledby="h5sl" class="grid gap-2"><span class="label" id="h5sl">Oglasna mesta</span><div class="pg"><button type="button" class="pill" aria-pressed="true" disabled><i class="ph-bold ph-check tick" aria-hidden="true"></i>Seznam prijav</button><button type="button" class="pill" aria-pressed="true" disabled><i class="ph-bold ph-check tick" aria-hidden="true"></i>Stran prijave</button><button type="button" class="pill" aria-pressed="true" disabled><i class="ph-bold ph-check tick" aria-hidden="true"></i>Zaslon Spet doma</button><button type="button" class="pill" aria-pressed="true" disabled><i class="ph-bold ph-check tick" aria-hidden="true"></i>Stranska vrstica</button></div></div>
+          <div class="note" role="note"><i class="ph-fill ph-lock-simple " aria-hidden="true"></i><p>Pri lastnih oglasih so mesta in ciljanje fiksni.</p></div>
+        </section>
+        <div class="sfoot" role="group" aria-label="Dejanja"><button type="button" class="btn btn-primary btn-lg">Shrani</button><button type="button" class="btn btn-text">Prekliči</button></div>
+      </form></li><li class="hrow"><img class="athumb-lg" src="../directions/img/dog-terrier.jpg" alt="Ilustracija: vrsta lokalnih trgovin in ambulanta ob ulici" width="120" height="90"><div class="min-w-0 flex-1"><p class="meta">Oglašujte pri nas <span class="ad-house">· Lastni</span></p><p class="font-bold">Vaša ambulanta ali trgovina na tem mestu?</p><p class="line-clamp-2">Veterinarji, trgovine in saloni: dosezite lastnike psov in mačk v svoji regiji. Oglasi so vedno jasno označeni.</p><p class="meta mt-1">Povezava: <span class="tnum">/oglasevanje</span></p></div><div class="flex flex-col items-end gap-2"><span class="lst lst-new"><i class="ph-fill ph-play-circle " aria-hidden="true"></i>Se prikazuje</span><button type="button" class="btn btn-secondary btn-sm" aria-expanded="false"><i class="ph-bold ph-pencil-simple " aria-hidden="true"></i>Uredi</button></div></li><li class="hrow"><img class="athumb-lg" src="../directions/img/dog-beagle.jpg" alt="Ilustracija: odprta vrata hiše, sonce in pot čez griče" width="120" height="90"><div class="min-w-0 flex-1"><p class="meta">Posvojitev <span class="ad-house">· Lastni</span></p><p class="font-bold">Posvojite žival iz zavetišča</p><p class="line-clamp-2">Psi in mačke v zavetiščih čakajo na nov dom. Morda prav na vašega.</p><p class="meta mt-1">Povezava: <span class="tnum">/zavetisca</span></p></div><div class="flex flex-col items-end gap-2"><span class="lst lst-new"><i class="ph-fill ph-play-circle " aria-hidden="true"></i>Se prikazuje</span><button type="button" class="btn btn-secondary btn-sm" aria-expanded="false"><i class="ph-bold ph-pencil-simple " aria-hidden="true"></i>Uredi</button></div></li></ul>
+    </main>
+    </div>
+  </div>
+  </div></div>
+
+  <p class="tile-h" style="margin-top:64px">F9 · States and dialogs · end now · delete with required audit note · unsaved changes · saved toast ("Logged") · upload failure with retry · ended ad read-only · date and slot errors</p>
+  <div class="fit-1200"><div class="part stboard" style="width:1200px" lang="sl">
+    <div class="stcell"><div class="dialog" role="alertdialog" aria-modal="true" aria-label="Končate oglas zdaj?"><h3 class="dtitle">Končate oglas zdaj?</h3><p class="mt-2">Oglas se takoj neha prikazovati. Statistika ostane.</p><div class="grid gap-2 mt-6"><button type="button" class="btn btn-destructive btn-block">Končaj zdaj</button><button type="button" class="btn btn-text btn-block is-focus">Prekliči</button></div></div><p class="cap mt-3">Končaj zdaj (focus starts on Prekliči)</p></div>
+    <div class="stcell"><div class="dialog" role="alertdialog" aria-modal="true" aria-label="Izbrišete oglas?"><h3 class="dtitle">Izbrišete oglas?</h3><p class="mt-2">Oglas skrijemo iz seznama, statistika in zgodovina pa ostaneta.</p><div class="field mt-5"><label for="an6">Opomba za revizijsko sled</label><textarea id="an6" class="input" rows="2" required aria-describedby="an6h"></textarea><p id="an6h" class="help">Za izbris je obvezna opomba za revizijsko sled.</p></div><div class="grid gap-2 mt-6"><button type="button" class="btn btn-destructive btn-block" disabled aria-disabled="true">Izbriši</button><button type="button" class="btn btn-text btn-block is-focus">Prekliči</button></div></div><p class="cap mt-3">Izbriši (soft delete; the button stays off until the note is filled)</p></div>
+    <div class="stcell"><div class="dialog" role="alertdialog" aria-modal="true" aria-label="Zavržem spremembe?"><h3 class="dtitle">Zavržem spremembe?</h3><p class="mt-2">Če zdaj odidete, se neshranjene spremembe izgubijo.</p><div class="grid gap-2 mt-6"><button type="button" class="btn btn-destructive btn-block">Zavrzi</button><button type="button" class="btn btn-text btn-block is-focus">Nadaljuj z urejanjem</button></div></div><p class="cap mt-3">Neshranjene spremembe (sample button text "Nadaljuj z urejanjem")</p></div>
+
+    <div class="stcell"><div class="pop toast" role="status" aria-live="polite"><i class="ph-fill ph-check-circle " aria-hidden="true"></i><p>Shranjeno in zabeleženo.</p><button type="button" class="iconbtn" aria-label="Zapri"><i class="ph-bold ph-x " aria-hidden="true"></i></button></div><p class="cap mt-3">Po shranjevanju</p></div>
+    <div class="stcell"><div class="field"><span class="label">Slika</span><div class="drop"><p class="err"><i class="ph-fill ph-warning-circle text-[18px] leading-5" aria-hidden="true"></i><span>Slike ni bilo mogoče naložiti. Poskusite znova.</span></p><div class="flex flex-wrap justify-center gap-3"><button type="button" class="btn btn-secondary btn-sm"><i class="ph-bold ph-arrow-clockwise " aria-hidden="true"></i>Poskusi znova</button><button type="button" class="btn btn-text btn-sm"><i class="ph-bold ph-upload-simple " aria-hidden="true"></i>Izberi datoteko</button></div></div></div><p class="cap mt-3">Napaka pri nalaganju (retry)</p></div>
+    <div class="stcell"><div class="grid gap-3"><div class="note" role="status"><i class="ph-fill ph-lock-simple " aria-hidden="true"></i><p>Oglas je končan in ga ni mogoče urejati. Lahko ga podvojite.</p></div><div class="field is-disabled"><label for="ro-t">Naslov</label><input id="ro-t" class="input" disabled value="Kras Vet: cepljenje mačk"></div><div><button type="button" class="btn btn-secondary btn-sm"><i class="ph-bold ph-copy " aria-hidden="true"></i>Podvoji</button></div></div><p class="cap mt-3">Končan oglas: samo za branje</p></div>
+
+    <div class="stcell"><div class="grid gap-3"><div class="field"><span class="label" id="vi-l">Slika</span><div role="group" aria-labelledby="vi-l" aria-describedby="vi-h" class="drop"><div class="flex items-center gap-4 w-full"><img class="athumb-lg" src="../directions/img/dog-aussie.jpg" alt="" width="120" height="90"><div class="text-left min-w-0"><p class="font-bold truncate">sola-vizmarje.jpg</p><p class="lst lst-ver mt-1"><i class="ph-fill ph-hourglass-medium " aria-hidden="true"></i>Preverjanje slike</p></div></div><button type="button" class="btn btn-text btn-sm"><i class="ph-bold ph-upload-simple " aria-hidden="true"></i>Zamenjaj sliko</button></div><p class="help" id="vi-h" role="status">Slika še ni v živo. Oglas se začne prikazovati, ko je slika preverjena.</p></div><div><button type="button" class="btn btn-primary btn-lg">Shrani</button></div></div><p class="cap mt-3">Preverjanje slike (form: image uploaded, not live yet; Save still works, status in the list reads the same; sample strings)</p></div>
+    <div class="stcell"><div><label class="check"><input type="checkbox" checked aria-describedby="xo-h xo-e"><span class="cbx"><i class="ph-bold ph-check " aria-hidden="true"></i></span><span class="font-bold">Izključno mesto</span></label><p class="help ml-9" id="xo-h">V istem obdobju na tem mestu in v teh regijah ne bo drugih oglasov.</p><div class="ml-9 mt-2"><p class="err" id="xo-e"><i class="ph-fill ph-warning-circle text-[18px] leading-5" aria-hidden="true"></i><span>V tem obdobju je to mesto že rezervirano za oglas: Repek: hrana in igrače za pse in mačke. <a href="#" class="lnk ml-1">Odpri oglas</a></span></p></div></div><p class="cap mt-3">Izključno mesto: prekrivanje z drugim oglasom (names the conflicting ad)</p></div>
+    <div class="stcell wide"><div class="grid grid-cols-2 gap-8"><div class="grid gap-4"><div class="grid grid-cols-2 gap-6"><div class="field"><label for="e-sd">Začetek</label><input id="e-sd" type="date" class="input" value="2026-11-30"></div><div class="field"><label for="e-ed">Konec</label><input id="e-ed" type="date" class="input is-error" value="2026-11-15" aria-invalid="true" aria-describedby="e-ede"></div></div><p class="err" id="e-ede"><i class="ph-fill ph-warning-circle text-[18px] leading-5" aria-hidden="true"></i><span>Konec mora biti po začetku.</span></p></div>
+      <div class="grid gap-2"><span class="label" id="e-sl">Oglasna mesta</span><div class="pg" role="group" aria-labelledby="e-sl" aria-describedby="e-sle"><button type="button" class="pill" aria-pressed="false"><i class="ph-bold ph-check tick" aria-hidden="true"></i>Seznam prijav</button><button type="button" class="pill" aria-pressed="false"><i class="ph-bold ph-check tick" aria-hidden="true"></i>Stran prijave</button><button type="button" class="pill" aria-pressed="false"><i class="ph-bold ph-check tick" aria-hidden="true"></i>Zaslon Spet doma</button><button type="button" class="pill" aria-pressed="false"><i class="ph-bold ph-check tick" aria-hidden="true"></i>Stranska vrstica</button></div><p class="err" id="e-sle"><i class="ph-fill ph-warning-circle text-[18px] leading-5" aria-hidden="true"></i><span>Izberite vsaj eno oglasno mesto.</span></p></div></div><p class="cap mt-3">End before start, no slot chosen (also: "To polje je obvezno." for empty required fields)</p></div>
+  </div></div>
+
+  <p class="tile-h" style="margin-top:64px">F10 · 390 px · below lg the form is one column, the preview is a bottom sheet opened by "Predogled" (modal, focus on close) · the console stays usable on a phone, not optimised</p>
+  <div class="wrap-x"><div class="flex flex-wrap gap-x-10 gap-y-12 items-start"><div lang="sl">
+    <div class="phone"><div class="phone-screen">
+      <div class="statusbar"><span>14:20</span><span class="isl"></span><span class="ic"><i class="ph-fill ph-cell-signal-full " aria-hidden="true"></i><i class="ph-fill ph-wifi-high " aria-hidden="true"></i><i class="ph-fill ph-battery-high " aria-hidden="true"></i></span></div>
+      <div aria-hidden="true" inert class="flex-1 overflow-hidden">
+        <header class="tb !px-4 !h-[60px]"><button type="button" class="iconbtn -ml-2" aria-label="Odpri meni"><i class="ph-bold ph-list " aria-hidden="true"></i></button><nav aria-label="Drobtine"><ol class="crumbs"><li><a href="#">Oglasi</a></li><li class="sep"><i class="ph-bold ph-caret-right " aria-hidden="true"></i></li><li><span aria-current="page">Nov oglas</span></li></ol></nav><div class="tb-meta"><span class="av av-32">MK</span></div></header>
+        <div class="px-5 grid gap-6">
+          <h1 class="h1c">Nov oglas</h1>
+          <section class="fsec"><h2 class="dtitle">Oglas</h2>
+            <div class="drop"><p>Povlecite sliko sem ali</p><button type="button" class="btn btn-secondary btn-sm"><i class="ph-bold ph-upload-simple " aria-hidden="true"></i>Izberi datoteko</button></div>
+            <div class="field"><label for="m7alt">Opis slike (alt)</label><textarea id="m7alt" class="input  is-error" rows="2" required aria-invalid="true" aria-describedby="m7e"></textarea><div class="flex items-start justify-between gap-4"><span></span><span class="cnt" aria-hidden="true">0 / 140</span></div><p class="err" id="m7e"><i class="ph-fill ph-warning-circle text-[18px] leading-5" aria-hidden="true"></i><span>Dodajte opis slike.</span></p></div>
+            <div class="field"><label for="m7t">Naslov</label><input id="m7t" class="input "  value="Repek: hrana in igrače"><div class="flex items-start justify-between gap-4"><span></span><span class="cnt" aria-hidden="true">22 / 60</span></div></div>
+          </section>
+          <section class="fsec"><h2 class="dtitle">Kje</h2><div class="pg"><button type="button" class="pill" aria-pressed="false"><i class="ph-bold ph-check tick" aria-hidden="true"></i>Seznam prijav</button><button type="button" class="pill" aria-pressed="true"><i class="ph-bold ph-check tick" aria-hidden="true"></i>Stran prijave</button></div></section>
+        </div>
+      </div>
+      <div class="sfoot !rounded-none" style="padding:12px 20px 34px"><button type="button" class="btn btn-secondary"><i class="ph-bold ph-eye " aria-hidden="true"></i>Predogled</button><button type="button" class="btn btn-primary">Shrani</button></div>
+      <div class="scrim"></div>
+      <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="m7sh" style="padding:12px 20px 34px;z-index:6">
+        <span class="mx-auto block h-1 w-10 rounded-full mb-3" style="background:hsl(var(--input))" aria-hidden="true"></span>
+        <div class="flex items-center justify-between"><h2 class="dtitle" id="m7sh">Predogled</h2><button type="button" class="iconbtn is-focus -mr-2" aria-label="Zapri"><i class="ph-bold ph-x " aria-hidden="true"></i></button></div>
+        <div class="grid gap-3 mt-2">
+          <div role="radiogroup" aria-label="Mesto" class="pg"><button type="button" role="radio" class="pill" aria-pressed="false" aria-checked="false"><i class="ph-bold ph-check tick" aria-hidden="true"></i>Seznam prijav</button><button type="button" role="radio" class="pill" aria-pressed="true" aria-checked="true"><i class="ph-bold ph-check tick" aria-hidden="true"></i>Stran prijave</button><button type="button" role="radio" class="pill" aria-pressed="false" aria-checked="false"><i class="ph-bold ph-check tick" aria-hidden="true"></i>Zaslon Spet doma</button><button type="button" role="radio" class="pill" aria-pressed="false" aria-checked="false"><i class="ph-bold ph-check tick" aria-hidden="true"></i>Stranska vrstica</button></div>
+          <div class="grid grid-cols-2 gap-3"><div class="seg" role="radiogroup" aria-label="Jezik"><button type="button" role="radio" aria-checked="true" aria-selected="true">SL</button><button type="button" role="radio" aria-checked="false" aria-selected="false">EN</button></div><div class="seg" role="radiogroup" aria-label="Svetlo / temno"><button type="button" role="radio" aria-checked="true" aria-selected="true">Svetlo</button><button type="button" role="radio" aria-checked="false" aria-selected="false">Temno</button></div></div>
+          <div class="pvwrap"><div class="ad ad-detail ad-m" role="group" aria-label="Oglas: Repek: hrana in igrače za pse in mačke"><p class="ad-label">Oglas</p><div class="flex gap-4 mt-2"><img class="ad-i96" src="../directions/img/dog-golden.jpg" alt="Pes z igračo ob polni skodelici hrane"><div class="min-w-0 flex-1"><p class="ad-t ad-t1">Repek: hrana in igrače za pse in mačke</p><p class="ad-x ad-x2">Za nakupe nad 25 € je dostava po vsej Sloveniji brezplačna do konca oktobra.</p><span class="ad-btn">Več o tem<i class="ph-bold ph-arrow-square-out " aria-hidden="true"></i></span></div></div></div></div>
+        </div>
+      </div>
+      <span class="home-ind"></span>
+    </div></div>
+  </div></div></div>
+</section>
+<p class="tile-section !py-8 text-sm text-muted-foreground">Copy: docs/content/pages/P20-admin-ads.md (v0.1) and P21 ad strings. Sample: table rows, history entries, the unsaved-changes stay button, section captions, "Podatki po dnevih". Placeholder photography from docs/design/directions/img (Unsplash License); house-ad illustrations will be assets/house-ad-support.png, house-ad-partner.png, house-ad-adopt.png (not drawn here). Creative text is shared by both languages; only the unit chrome ("Oglas"/"Ad", "Več o tem"/"Learn more") switches.</p>
+</div>
+
+<script src="../directions/directions.js"></script>
+</body>
+</html>

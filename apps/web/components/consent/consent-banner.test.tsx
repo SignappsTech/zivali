@@ -1,5 +1,5 @@
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
-import { NextIntlClientProvider } from 'next-intl';
+import { createTranslator } from 'next-intl';
 import { renderToString } from 'react-dom/server';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -8,6 +8,7 @@ import en from '@zivali/i18n/dist/en.json';
 import sl from '@zivali/i18n/dist/sl.json';
 
 import { ConsentBanner, OPEN_COOKIE_SETTINGS } from './consent-banner';
+import { consentCopy } from './copy';
 
 vi.mock('next/navigation', async (actual) => ({
 	...(await actual()),
@@ -19,14 +20,13 @@ vi.mock('next/navigation', async (actual) => ({
 let stored: string | null;
 const storage = { get: () => stored, set: (value: string) => (stored = value) };
 
-// As app/[locale]/layout.tsx does on the server: the cookie decides the first view.
+// As app/[locale]/layout.tsx does on the server: the cookie decides the first view, the catalogue makes the copy.
 function banner(locale: 'sl' | 'en' = 'sl', extra: Record<string, string> = {}) {
 	const consent = parseConsent(stored);
-	return (
-		<NextIntlClientProvider locale={locale} messages={withChange(locale === 'sl' ? sl : en, extra)}>
-			<ConsentBanner prompt={!isCurrent(consent)} stored={consent} />
-		</NextIntlClientProvider>
-	);
+	const prompt = !isCurrent(consent);
+	const messages = withChange(locale === 'sl' ? sl : en, extra);
+	const t = createTranslator({ locale, messages, namespace: 'consent' });
+	return <ConsentBanner prompt={prompt} copy={consentCopy(t as never, prompt, consent)} policyHref="/piskotki" />;
 }
 function mount(...args: Parameters<typeof banner>) {
 	initAnalytics({ provider: 'mock', storage });
@@ -64,6 +64,7 @@ describe('ConsentBanner', () => {
 			buttons[0]!.className,
 		]);
 		expect(dialog.querySelectorAll('button')).toHaveLength(3);
+		expect(screen.getByRole('link', { name: 'Cookie policy' }).getAttribute('href')).toBe('/piskotki');
 		expect(getConsent()).toBeNull();
 	});
 

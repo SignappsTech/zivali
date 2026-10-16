@@ -1,12 +1,15 @@
 'use client';
 
 import type { User } from '@supabase/supabase-js';
+import { type Locale, NextIntlClientProvider } from 'next-intl';
+import { useParams } from 'next/navigation';
 import * as React from 'react';
 import { useStore } from 'react-redux';
 
 import { configureAuth, useSession } from '@zivali/api/auth';
 import { useUpdateMeMutation } from '@zivali/api/me';
 import type { ApiStore } from '@zivali/api/rtk';
+import { timeZone } from '@zivali/i18n/format';
 import { StoreProvider } from '@/components/store-provider';
 import { useProfileLocale } from '@/i18n/use-profile-locale';
 
@@ -59,11 +62,16 @@ export function SessionSync() {
 	return null;
 }
 
-/** SessionSync with the shared store, for app/providers.tsx, which loads it on signed-in pages only (TASK-90.5). */
+/**
+ * SessionSync with the shared store, for app/providers.tsx, which loads it on signed-in pages only (TASK-90.5). The
+ * root layout has no intl provider (TASK-90.7); the store reads the locale from one.
+ */
 export function SessionSyncIsland() {
 	return (
-		<StoreProvider>
-			<SessionSync />
-		</StoreProvider>
+		<NextIntlClientProvider locale={useParams<{ locale: Locale }>().locale} timeZone={timeZone}>
+			<StoreProvider>
+				<SessionSync />
+			</StoreProvider>
+		</NextIntlClientProvider>
 	);
 }

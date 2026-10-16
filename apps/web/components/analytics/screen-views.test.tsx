@@ -6,9 +6,14 @@ import { routing } from '@/i18n/routing';
 
 import { routeTemplate, ScreenViews } from './screen-views';
 
-// next-intl's usePathname returns the internal (EN) route for both locales: /zemljevid and /en/map are both /map.
-const route = vi.hoisted(() => ({ pathname: '/' }));
-vi.mock('@/i18n/navigation', () => ({ usePathname: () => route.pathname }));
+// The browser path (next/navigation) reaches the component as the internal (EN) route for both locales
+// (@/i18n/route): /zemljevid and /en/map are both /map.
+const route = vi.hoisted(() => ({ pathname: '/', locale: 'sl' }));
+vi.mock('next/navigation', async (actual) => ({
+	...(await actual()),
+	usePathname: () => route.pathname,
+	useParams: () => ({ locale: route.locale }),
+}));
 
 afterEach(cleanup);
 
@@ -37,7 +42,8 @@ describe('routeTemplate', () => {
 });
 
 describe('ScreenViews', () => {
-	const sent = (pathnames: string[]) => {
+	const sent = (pathnames: string[], locale = 'sl') => {
+		route.locale = locale;
 		initAnalytics();
 		setConsent({ analytics: true });
 		resetMockEvents();
@@ -51,13 +57,18 @@ describe('ScreenViews', () => {
 	};
 
 	it('SL and EN pages of the same route report one template; unknown paths report the catch-all', () => {
-		// /moje-zivali (SL) and /en/my-pets (EN) both reach the component as /my-pets.
-		expect(sent(['/my-pets'])).toEqual(['/my-pets']);
+		expect(sent(['/moje-zivali'])).toEqual(['/my-pets']);
+		expect(sent(['/en/my-pets'], 'en')).toEqual(['/my-pets']);
+		expect(sent(['/zavetisca/zavetisce-ljubljana'])).toEqual(['/shelters/[slug]']);
+		expect(sent(['/en', '/en/shelters/zavetisce-ljubljana'], 'en')).toEqual(['/', '/shelters/[slug]']);
 		expect(sent(['/r/AB12CD', '/r/AB12CD', '/', '/nope/AB12CD'])).toEqual(['/r/[code]', '/', '/[...rest]']);
 	});
 
 	it('sends no page_view in the admin console, SL or EN (FR-019)', () => {
-		expect(sent(['/admin', '/admin/audit-log', '/admin/shelters', '/admin/ads', '/map'])).toEqual(['/map']);
+		expect(sent(['/admin', '/admin/revizijska-sled', '/admin/zavetisca', '/admin/ads', '/zemljevid'])).toEqual([
+			'/map',
+		]);
+		expect(sent(['/en/admin/audit-log', '/en/map'], 'en')).toEqual(['/map']);
 	});
 
 	it('sends nothing without consent', () => {

@@ -1,6 +1,7 @@
 // retention.blur_location (daily, ADR-006 CH-24, TASK-26.7) with a faked clock (ctx.now): the stored point of reports
 // closed, expired or reunited more than retention.exact_point_blur_days (30) ago becomes the public centre, once;
-// the public circle stays; open, recently closed and reopened reports are left alone; the job logs counts only.
+// the public circle stays and the submission hash goes (TASK-86.5); open, recently closed and reopened reports are left
+// alone; the job logs counts only.
 import { randomInt } from 'node:crypto';
 
 import { pino } from 'pino';
@@ -58,6 +59,9 @@ const location = async (r: Report): Promise<Location> =>
 				public_radius_m, municipality_id
 			from app.reports where id = ${r.id}::uuid`
 	)[0]!;
+const submissionHash = async (r: Report) =>
+	(await prisma.reports.findUniqueOrThrow({ where: { id: r.id }, select: { submission_hash: true } }))
+		.submission_hash;
 /** The stored location after a blur: the stored point is the public centre, everything public as it was. */
 const blurredFrom = (before: Location): Location => ({
 	...before,
@@ -92,11 +96,20 @@ describe('retention.blur_location', () => {
 	});
 
 	it('blurs closed, expired and reunited reports N days after they ended, not before, once; the circle stays', async () => {
-		const closed = await report('lost', { status: 'closed', close_reason: 'gave_up', closed_at: daysAgo(20) });
+		const closed = await report('lost', {
+			status: 'closed',
+			close_reason: 'gave_up',
+			closed_at: daysAgo(20),
+			submission_hash: 'h',
+		});
 		const expired = await report('lost', { status: 'closed', close_reason: 'expired', closed_at: daysAgo(20) });
 		const reunited = await report('found', { status: 'reunited', reunited_at: daysAgo(20) });
 		const recent = await report('lost', { status: 'closed', close_reason: 'gave_up', closed_at: daysAgo(5) });
-		const open = await report('lost', { created_at: daysAgo(400), last_owner_update_at: daysAgo(400) });
+		const open = await report('lost', {
+			created_at: daysAgo(400),
+			last_owner_update_at: daysAgo(400),
+			submission_hash: 'h',
+		});
 		const ended = [closed, expired, reunited];
 		const before = new Map<string, Location>();
 		for (const r of [...ended, recent, open]) before.set(r.id, await location(r));
@@ -112,9 +125,19 @@ describe('retention.blur_location', () => {
 		for (const r of ended) expect(await location(r)).toEqual(blurredFrom(before.get(r.id)!));
 		for (const r of [recent, open]) expect(await location(r)).toEqual(before.get(r.id));
 
+		// The keyed hash of the submitted body (received point, finder email) goes with it; open reports keep theirs.
+		expect(await submissionHash(closed)).toBeNull();
+		expect(await submissionHash(open)).toBe('h');
+
 		// Idempotent: a second run finds nothing and changes nothing.
 		expect(await blur(at)).toBe(0);
 		for (const r of ended) expect(await location(r)).toEqual(blurredFrom(before.get(r.id)!));
+
+		// A hash left on an already blurred report is still cleared.
+		await prisma.reports.update({ where: { id: closed.id }, data: { submission_hash: 'h' } });
+		expect(await blur(at)).toBe(1);
+		expect(await submissionHash(closed)).toBeNull();
+		expect(await location(closed)).toEqual(blurredFrom(before.get(closed.id)!));
 
 		// The owner now sees the blurred point, inside the same public circle.
 		const res = await request(app).get(`/v1/reports/${closed.short_code}`).set('Authorization', auth);
