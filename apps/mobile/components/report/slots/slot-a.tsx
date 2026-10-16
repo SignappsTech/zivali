@@ -120,17 +120,25 @@ export function SlotA({ report, offline, children }: ReportSlotProps) {
 function Reopen({ report, offline }: { report: DetailReport; offline: boolean }) {
 	const tl = useTranslations('lifecycle');
 	const { reopen, busy } = useReopen(report);
+	const t = useTranslations('report');
 	const expired = report.type === 'lost' && report.close_reason === 'expired';
 	return (
-		<Button
-			size="lg"
-			variant={report.status === 'reunited' ? 'text' : 'default'}
-			loading={busy}
-			disabled={offline}
-			onPress={() => void reopen()}
-		>
-			<Icon as={ArrowCounterClockwiseIcon} />
-			{expired ? tl('expired_lost_action') : tl('reopen')}
-		</Button>
+		<View>
+			<Button
+				size="lg"
+				variant={report.status === 'reunited' ? 'text' : 'default'}
+				loading={busy}
+				disabled={offline}
+				onPress={() => void reopen()}
+			>
+				<Icon as={ArrowCounterClockwiseIcon} />
+				{expired ? tl('expired_lost_action') : tl('reopen')}
+			</Button>
+			{offline && (
+				<Text role="status" className="mt-2 text-center text-sm text-muted-foreground">
+					{t('action_offline')}
+				</Text>
+			)}
+		</View>
 	);
 }

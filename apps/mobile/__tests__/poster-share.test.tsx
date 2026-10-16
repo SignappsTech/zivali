@@ -30,6 +30,10 @@ jest.mock('@/lib/env', () => ({ env: { EXPO_PUBLIC_APP_URL: 'https://najdimo.tes
 jest.mock('@/components/ui/sonner', () => ({ toast: { success: jest.fn(), error: jest.fn() } }));
 // The detail screen's slot A (imported for the back button) brings the auth gate and its session store.
 jest.mock('@/components/auth/gate', () => ({ AuthGate: () => null }));
+// The owner actions in slot A share the auth error text, whose module loads the Supabase client.
+jest.mock('@/lib/auth', () => ({ providers: [], signInWithProvider: jest.fn() }));
+// Slot C brings the report-abuse sheet and its anonymous session.
+jest.mock('@/lib/anonymous', () => ({ ensureSession: jest.fn(async () => ({})) }));
 jest.mock('expo-clipboard', () => ({ setStringAsync: jest.fn(async () => true) }));
 jest.mock('expo-sharing', () => ({ shareAsync: jest.fn(async () => undefined) }));
 jest.mock('expo-file-system', () => {

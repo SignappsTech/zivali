@@ -28,6 +28,8 @@ jest.mock('@/lib/env', () => ({ env: { EXPO_PUBLIC_APP_URL: 'https://najdimo.tes
 jest.mock('@/components/ui/sonner', () => ({
 	toast: Object.assign(jest.fn(), { success: jest.fn(), error: jest.fn() }),
 }));
+// The anonymous session before a report-abuse request has its own tests (manage.test.tsx).
+jest.mock('@/lib/anonymous', () => ({ ensureSession: jest.fn(async () => ({})) }));
 // The sign-in helpers behind the shared error text load the Supabase client; nothing here signs in.
 jest.mock('@/lib/auth', () => ({ providers: [], signInWithProvider: jest.fn() }));
 // The contact gate and the device queue have their own tests (auth, outbox-ui).
@@ -160,8 +162,7 @@ describe('owner actions on the report page (P9 slot A, P14)', () => {
 		setConsent({ analytics: true });
 		const page = await open('/r/Rex2Lost');
 		expect(screen.getByRole('button', { name: r.owner_edit })).toBeOnTheScreen();
-		// "Plakat" joins with TASK-24.3.
-		expect(screen.queryByRole('button', { name: r.owner_poster })).toBeNull();
+		expect(screen.getByRole('button', { name: r.owner_poster })).toBeOnTheScreen();
 
 		await fireEvent.press(screen.getByRole('button', { name: r.owner_home }));
 		expect(screen.getByRole('heading', { name: 'Je Rex res spet doma?' })).toBeOnTheScreen();
@@ -257,6 +258,8 @@ describe('owner actions on the report page (P9 slot A, P14)', () => {
 
 	test('no actions after the 7 days or for other people; a reunited report keeps a quiet "Ponovno odpri"', async () => {
 		await open('/r/Rex2Lost', { ...owner, status: 'closed', close_reason: 'gave_up', closed_at: daysAgo(8) });
+		expect(screen.queryByRole('button', { name: l.reopen })).toBeNull();
+		await open('/r/Rex2Lost', { ...owner, status: 'closed', close_reason: 'removed', closed_at: daysAgo(1) });
 		expect(screen.queryByRole('button', { name: l.reopen })).toBeNull();
 		await open('/r/Rex2Lost', { ...reunited, is_mine: false });
 		expect(screen.queryByRole('button', { name: l.reopen })).toBeNull();
@@ -370,11 +373,10 @@ describe('reunited screen (P14 M3)', () => {
 		expect(story.props.accessibilityHint).toBe(l.story_help);
 		await fireEvent.press(story);
 		expect(story).toBeChecked();
-		expect(toast).toHaveBeenCalledWith(l.story_on_toast);
-		// Off again withdraws it, with no dialog and no second toast.
+		// The consent has no API field yet, so turning it on claims nothing: no toast. Off again needs no dialog.
 		await fireEvent.press(story);
 		expect(story).not.toBeChecked();
-		expect(toast).toHaveBeenCalledTimes(1);
+		expect(toast).not.toHaveBeenCalled();
 
 		await fireEvent.press(screen.getByRole('button', { name: l.share_news }));
 		expect(shared).toHaveBeenCalledWith({

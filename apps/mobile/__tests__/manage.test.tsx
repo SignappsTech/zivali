@@ -8,6 +8,7 @@ import { renderRouter } from 'expo-router/testing-library';
 import * as Network from 'expo-network';
 import * as SecureStore from 'expo-secure-store';
 import * as React from 'react';
+import { Text } from 'react-native';
 import { Provider } from 'react-redux';
 
 import { ownerReport } from '@zivali/api/__fixtures__/reports';
@@ -186,10 +187,17 @@ function Providers({ children }: { children: React.ReactNode }) {
 }
 
 const openLink = async (url = `/m#${TOKEN}`) => {
-	await renderRouter(
-		{ _layout: () => <Stack screenOptions={{ headerShown: false }} />, index: () => null, m: ManageScreen },
+	const page = renderRouter(
+		{
+			_layout: () => <Stack screenOptions={{ headerShown: false }} />,
+			index: () => null,
+			m: ManageScreen,
+			'r/[code]/edit': () => <Text>edit screen</Text>,
+		},
 		{ initialUrl: url, wrapper: Providers }
 	);
+	await page;
+	return { page };
 };
 const claimCalls = () => mockApi.calls.filter((call) => call.path === '/v1/manage/claim');
 const transitions = () => mockApi.calls.filter((call) => call.path.endsWith('/transitions')).map((call) => call.body);
@@ -446,6 +454,20 @@ describe('manage link screen (P7)', () => {
 
 		await act(async () => fireEvent.press(screen.getByRole('button', { name: 'Podaljšaj za 30 dni' })));
 		await waitFor(() => expect(transitions()).toEqual([{ action: 'extend' }]));
+	});
+
+	test('"Uredi" opens the edit screen for an open report, and is gone once closed (TASK-17.8)', async () => {
+		const { page } = await openLink();
+		await act(async () => fireEvent.press(await screen.findByRole('button', { name: 'Uredi' })));
+		expect(await screen.findByText('edit screen')).toBeOnTheScreen();
+		expect(page.getPathname()).toBe(`/r/${report().short_code}/edit`);
+	});
+
+	test('a closed report has no "Uredi"', async () => {
+		serve({ view: report({ status: 'closed', closed_at: new Date(Date.now() - 2 * DAY).toISOString() }) });
+		await openLink();
+		await screen.findByRole('button', { name: 'Ponovno odpri' });
+		expect(screen.queryByRole('button', { name: 'Uredi' })).toBeNull();
 	});
 
 	test('close report from the action rows', async () => {

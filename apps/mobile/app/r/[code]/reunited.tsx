@@ -10,12 +10,11 @@ import { useTranslations } from 'use-intl';
 import { useSession } from '@zivali/api/auth';
 import { StatusWord } from '@/components/report/parts';
 import { ReunitedAd, ReunitedTip } from '@/components/report/reunited-slots';
-import { reportLink } from '@/components/report/slots/slot-b';
+import { reportLink } from '@/lib/share';
 import type { DetailReport } from '@/components/report/slots/types';
 import { Button } from '@/components/ui/button';
 import { Icon } from '@/components/ui/icon';
 import { Switch } from '@/components/ui/switch';
-import { toast } from '@/components/ui/sonner';
 import { Text } from '@/components/ui/text';
 import { useReport } from '@/lib/data/reports';
 import { cn } from '@/lib/utils';
@@ -63,11 +62,7 @@ function OwnerReunited({ report, onClose }: { report: DetailReport; onClose: () 
 	const share = () =>
 		void Share.share({ message: `${shareText} ${reportLink(report.short_code)}` }).catch(() => undefined);
 	// The consent stays on this screen for now: C4 has no field for it yet (CHANGE request); success stories are M5.
-	const onStory = (on: boolean) => {
-		setStory(on);
-		// Turning it off withdraws the consent with no extra dialog (P14 S5).
-		if (on) toast(tl('story_on_toast'));
-	};
+	const onStory = (on: boolean) => setStory(on);
 
 	return (
 		<SafeAreaView className="flex-1 bg-background">

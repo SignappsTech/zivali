@@ -41,11 +41,13 @@ const DAY = 86_400_000;
 /** C4 `lifecycle.reopen_days` (default 7). Past it the API answers GONE, which the reopen action shows. */
 export const REOPEN_DAYS = 7;
 
-/** A manager's closed or reunited report, still within the reopen window. */
+/** A manager's closed or reunited report, still within the reopen window. A moderation removal stays closed. */
 export function canReopen(report: DetailReport, now: number): boolean {
 	const ended =
 		report.status === 'closed' ? report.closed_at : report.status === 'reunited' ? report.reunited_at : null;
-	return Boolean(report.is_mine && ended && now - Date.parse(ended) < REOPEN_DAYS * DAY);
+	return Boolean(
+		report.is_mine && report.close_reason !== 'removed' && ended && now - Date.parse(ended) < REOPEN_DAYS * DAY
+	);
 }
 
 /** C12 `reunited`: species, region and municipality only. A no-op without consent; nothing for a place abroad. */
