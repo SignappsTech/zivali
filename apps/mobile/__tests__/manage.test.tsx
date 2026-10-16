@@ -68,6 +68,8 @@ const secure = (SecureStore as unknown as { data: Map<string, string> }).data;
 const networkListeners = (Network as unknown as { listeners: Set<(state: object) => void> }).listeners;
 const mockEnv = env as { EXPO_PUBLIC_CAPTCHA: boolean };
 
+// The real store (device id test) subscribes the session-end wipe, whose offline modules are not under test here.
+jest.mock('@/lib/offline/wipe', () => ({ wipeOnSessionEnd: () => () => {} }));
 const mockSupabase = { session: null as { access_token: string } | null };
 jest.mock('@/lib/supabase', () => ({
 	supabase: {
