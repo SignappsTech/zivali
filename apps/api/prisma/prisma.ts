@@ -5,9 +5,14 @@ import { PrismaClient } from '../generated/client.ts';
 import { config } from '../lib/config.ts';
 
 // Small pool: Supabase Free has few connections and pg-boss needs its own (ADR-022). The connect timeout
-// keeps /v1/health/ready from hanging when the database is unreachable.
+// keeps /v1/health/ready from hanging when the database is unreachable. Tests get 30 s: the first connect of a file
+// exceeds 5 s when many agents share the machine and the database (TASK-108), and no test relies on the short one.
 const adapter = new PrismaPg(
-	{ connectionString: config.DATABASE_URL, max: 5, connectionTimeoutMillis: 5_000 },
+	{
+		connectionString: config.DATABASE_URL,
+		max: 5,
+		connectionTimeoutMillis: config.NODE_ENV === 'test' ? 30_000 : 5_000,
+	},
 	{ schema: 'app' }
 );
 
