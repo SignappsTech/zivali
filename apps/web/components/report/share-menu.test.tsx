@@ -38,8 +38,13 @@ function show(report: DetailReport, locale: 'sl' | 'en' = 'sl', where: typeof pl
 		</NextIntlClientProvider>
 	);
 }
-// jsdom hides popovers and cannot open them (no popovertarget): the rows are queried as they sit in the closed menu.
-const item = (name: string | RegExp) => screen.getByRole('menuitem', { name, hidden: true });
+const trigger = () =>
+	screen.getByRole('button', { name: new RegExp(`${sl.report.share_button}|${en.report.share_button}`) });
+/** A row of the menu, opened first (each choice closes it). */
+function item(name: string | RegExp) {
+	if (!screen.queryByRole('menu')) fireEvent.keyDown(trigger(), { key: 'Enter' });
+	return screen.getByRole('menuitem', { name });
+}
 const events = () => getMockEvents().map(({ name, params }) => ({ name, params }));
 
 // jsdom has <dialog> without showModal() and close().
@@ -75,14 +80,12 @@ describe('P9 slot B share menu (P18)', () => {
 	it('offers copy link, WhatsApp, Facebook, the Web Share API and the poster, with the localised text', () => {
 		show(lost);
 
-		const button = screen.getByRole('button', { name: sl.report.share_button });
-		expect(button.getAttribute('aria-haspopup')).toBe('menu');
-		// The button opens the native popover menu it names.
-		const menu = document.getElementById(button.getAttribute('popovertarget')!)!;
-		expect([menu.getAttribute('role'), menu.getAttribute('aria-label')]).toEqual(['menu', sl.report.share_button]);
+		expect(trigger().getAttribute('aria-haspopup')).toBe('menu');
+		fireEvent.keyDown(trigger(), { key: 'Enter' });
+		const menu = screen.getByRole('menu', { name: sl.report.share_button });
 		expect(
 			within(menu)
-				.getAllByRole('menuitem', { hidden: true })
+				.getAllByRole('menuitem')
 				.map((row) => row.textContent)
 		).toEqual([
 			'Kopiraj povezavo',
@@ -166,12 +169,16 @@ describe('P9 slot B share menu (P18)', () => {
 });
 
 describe('P18 poster dialog', () => {
-	const openPoster = () => fireEvent.click(item('Plakat s QR kodo'));
+	// The dialog opens once the menu has handed focus back to its button.
+	const openPoster = async () => {
+		fireEvent.click(item('Plakat s QR kodo'));
+		await screen.findByRole('dialog');
+	};
 
 	it('downloads the PDF in the chosen language as najdimo-<code>.pdf and counts poster_download', async () => {
 		fetchMock.mockResolvedValue(new Response('%PDF-', { headers: { 'content-type': 'application/pdf' } }));
 		show(lost);
-		openPoster();
+		await openPoster();
 
 		const dialog = screen.getByRole('dialog', { name: sl.report.share_poster });
 		expect(within(dialog).getByText(sl.poster.qr_note)).toBeTruthy();
@@ -196,7 +203,7 @@ describe('P18 poster dialog', () => {
 		let fail: (response: Response) => void = () => undefined;
 		fetchMock.mockReturnValue(new Promise((resolve) => (fail = resolve)));
 		show(lost);
-		openPoster();
+		await openPoster();
 		fireEvent.click(screen.getByRole('button', { name: sl.poster.download }));
 
 		const busy = screen.getByRole('button', { name: sl.poster.preparing });
@@ -208,17 +215,17 @@ describe('P18 poster dialog', () => {
 		expect(events()).toEqual([]);
 	});
 
-	it('asks for a photo instead of a download when the report has none', () => {
+	it('asks for a photo instead of a download when the report has none', async () => {
 		show({ ...lost, photos: [] });
-		openPoster();
+		await openPoster();
 		const dialog = screen.getByRole('dialog');
 		expect(within(dialog).getByText(sl.poster.no_photo)).toBeTruthy();
 		expect(within(dialog).queryByRole('button', { name: sl.poster.download })).toBeNull();
 	});
 
-	it('marks the "Spet doma" poster of a reunited report', () => {
+	it('marks the "Spet doma" poster of a reunited report', async () => {
 		show({ ...lost, status: 'reunited' });
-		openPoster();
+		await openPoster();
 		expect(within(screen.getByRole('dialog')).getByText(sl.browse.status_reunited)).toBeTruthy();
 	});
 });
@@ -241,8 +248,13 @@ describe('P18 Facebook kit (owner of an open lost report)', () => {
 	it('opens from the Facebook row: the ready text, the square image, the groups (region first) and the radio form', async () => {
 		fetchMock.mockResolvedValue(new Response(JSON.stringify(config)));
 		show(owner);
-		expect(item('Facebook').tagName).toBe('BUTTON');
+		// The owner's row opens the kit, not the sharer.
+		expect([item('Facebook').getAttribute('href'), item('Facebook').getAttribute('aria-haspopup')]).toEqual([
+			null,
+			'dialog',
+		]);
 		fireEvent.click(item('Facebook'));
+		await screen.findByRole('dialog');
 
 		const dialog = screen.getByRole('dialog', { name: sl.share.kit_title });
 		expect(fetchMock).toHaveBeenCalledWith('http://localhost:4000/v1/config/public');
@@ -283,6 +295,7 @@ describe('P18 Facebook kit (owner of an open lost report)', () => {
 		fetchMock.mockRejectedValue(new Error('offline'));
 		show(owner);
 		fireEvent.click(item('Facebook'));
+		await screen.findByRole('dialog');
 		const dialog = screen.getByRole('dialog');
 		await waitFor(() => expect(fetchMock).toHaveBeenCalled());
 		expect(within(dialog).queryAllByRole('listitem')).toHaveLength(0);

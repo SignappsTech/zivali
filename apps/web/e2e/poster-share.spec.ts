@@ -2,7 +2,7 @@ import AxeBuilder from '@axe-core/playwright';
 import { expect, type Page, test } from '@playwright/test';
 
 // TASK-24.2: P9 slot B share menu and the P18 poster (e2e/mock-api.ts: Rex12345 lost with a photo served by the mock,
-// Gone1234 gone). The native popover and <dialog> only open in a real browser, so they are checked here.
+// Gone1234 gone). The native <dialog> (focus trap, Escape, focus return) is checked in a real browser here.
 const AXE_TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'];
 
 async function expectNoAxeViolations(page: Page) {
@@ -23,7 +23,8 @@ for (const viewport of [
 		await page.goto('/r/Rex12345');
 
 		const button = page.getByRole('button', { name: 'Deli ali natisni plakat' });
-		await button.click();
+		await button.focus();
+		await page.keyboard.press('Enter');
 		const menu = page.getByRole('menu', { name: 'Deli ali natisni plakat' });
 		await expect(menu).toBeVisible();
 		await expect(menu.getByRole('menuitem')).toHaveText([

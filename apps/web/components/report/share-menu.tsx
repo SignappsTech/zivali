@@ -11,6 +11,7 @@ import { ShareNetworkIcon } from '@phosphor-icons/react/dist/ssr/ShareNetwork';
 import { WarningCircleIcon } from '@phosphor-icons/react/dist/ssr/WarningCircle';
 import { WhatsappLogoIcon } from '@phosphor-icons/react/dist/ssr/WhatsappLogo';
 import { XIcon } from '@phosphor-icons/react/dist/ssr/X';
+import { DropdownMenu } from 'radix-ui';
 import * as React from 'react';
 
 import { type EventParams, track } from '@zivali/analytics';
@@ -85,9 +86,9 @@ type Props = {
 type Toast = { text: string; error?: boolean };
 
 const ring = 'focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ring';
-// System 10.9 menu: popover, radius 20, 8 px padding, shadow-pop; rows 48 px, icon 20, 16 semibold (as the header).
-const menuRow = `flex min-h-12 w-full cursor-pointer items-center gap-3 rounded-xl px-3 text-left font-semibold text-foreground no-underline hover:bg-foreground/10 [&_svg]:size-5 [&_svg]:shrink-0 ${ring}`;
-const MENU_WIDTH = 272;
+// System §10.9 menu rows: 48 px, icon 20, 16 semibold (as slot C's "Več možnosti").
+const rowClass =
+	'flex min-h-12 cursor-pointer items-center gap-3 rounded-sm px-3 font-semibold text-foreground no-underline outline-hidden select-none data-[highlighted]:bg-foreground/10 [&_svg]:size-5 [&_svg]:shrink-0';
 
 /** Toast look (system 10.9) in a polite live region; one inside each open dialog, as the page behind it is inert. */
 function ToastRegion({ toast, onClose, closeLabel }: { toast?: Toast; onClose: () => void; closeLabel: string }) {
@@ -258,26 +259,15 @@ function PosterOptions({ poster, copy, onDownload }: Pick<Props, 'poster' | 'cop
 	);
 }
 
-/** Arrow keys, Home and End move between the menu rows. */
-function moveFocus(event: React.KeyboardEvent<HTMLElement>) {
-	const rows = [...event.currentTarget.querySelectorAll<HTMLElement>('[role="menuitem"]')];
-	const index = rows.indexOf(document.activeElement as HTMLElement);
-	const next = { ArrowDown: index + 1, ArrowUp: index - 1, Home: 0, End: rows.length - 1 }[event.key];
-	if (next === undefined) return;
-	event.preventDefault();
-	rows[(next + rows.length) % rows.length]?.focus();
-}
-
 /**
- * P9 slot B menu (P18 sharing, FR-011): "Kopiraj povezavo", WhatsApp, Facebook (the sharer, or the owner's kit),
- * "Več …" (the Web Share API, else the link is copied) and "Plakat s QR kodo" (the poster dialog). `share` and
- * `poster_download` go through track(), a no-op without analytics consent (C12).
+ * P9 slot B menu (P18 sharing, FR-011), the same menu as slot C's "Več možnosti": "Kopiraj povezavo", WhatsApp,
+ * Facebook (the sharer, or the owner's kit), "Več …" (the Web Share API, else the link is copied) and "Plakat s QR
+ * kodo" (the poster dialog). A dialog opens once the menu has closed and handed focus back to the button, so the
+ * dialog returns it there. `share` and `poster_download` go through track(), a no-op without analytics consent (C12).
  */
 export function ShareMenu({ url, message, analytics, poster, kit, copy }: Props) {
-	const menuId = React.useId();
-	const menu = React.useRef<HTMLDivElement>(null);
-	const button = React.useRef<HTMLButtonElement>(null);
 	const [dialog, setDialog] = React.useState<'poster' | 'kit' | null>(null);
+	const chosen = React.useRef<'poster' | 'kit' | null>(null);
 	const [toast, setToast] = React.useState<Toast>();
 
 	React.useEffect(() => {
@@ -293,12 +283,7 @@ export function ShareMenu({ url, message, analytics, poster, kit, copy }: Props)
 		const region = analytics.region as EventParams['poster_download']['region'] | undefined;
 		if (region) track('poster_download', { species: analytics.species, region });
 	};
-	const close = () => menu.current?.hidePopover?.();
-	// Focus goes back to the menu button: the row that opened the dialog sits in the closed menu.
-	const closeDialog = () => {
-		setDialog(null);
-		button.current?.focus();
-	};
+	const closeDialog = () => setDialog(null);
 	const copyText = async (text: string, done: string) => {
 		try {
 			await navigator.clipboard.writeText(text);
@@ -310,11 +295,9 @@ export function ShareMenu({ url, message, analytics, poster, kit, copy }: Props)
 		}
 	};
 	const copyLink = async () => {
-		close();
 		if (await copyText(url, copy.copied)) shared('copy_link');
 	};
 	const shareNative = async () => {
-		close();
 		if (!navigator.share) {
 			await copyText(url, copy.unsupported);
 			return;
@@ -330,110 +313,80 @@ export function ShareMenu({ url, message, analytics, poster, kit, copy }: Props)
 
 	return (
 		<>
-			<Button
-				ref={button}
-				variant="ghost"
-				size="sm"
-				popoverTarget={menuId}
-				aria-haspopup="menu"
-				className="[&_svg]:size-5"
-			>
-				<ShareNetworkIcon weight="bold" aria-hidden="true" />
-				{copy.button}
-			</Button>
-			<div
-				ref={menu}
-				id={menuId}
-				popover="auto"
-				role="menu"
-				aria-label={copy.button}
-				className="absolute inset-auto m-0 max-w-[calc(100vw-40px)] rounded-row border-0 bg-popover p-2 text-popover-foreground shadow-pop"
-				style={{ width: MENU_WIDTH }}
-				onBeforeToggle={(event) => {
-					const rect = button.current?.getBoundingClientRect();
-					if (event.newState !== 'open' || !rect) return;
-					const left = Math.max(
-						20,
-						Math.min(rect.left, document.documentElement.clientWidth - MENU_WIDTH - 20)
-					);
-					event.currentTarget.style.top = `${rect.bottom + window.scrollY + 8}px`;
-					event.currentTarget.style.left = `${left + window.scrollX}px`;
-				}}
-				onToggle={(event) => {
-					if (event.newState === 'open')
-						event.currentTarget.querySelector<HTMLElement>('[role="menuitem"]')?.focus();
-				}}
-				onKeyDown={moveFocus}
-			>
-				<button type="button" role="menuitem" className={menuRow} onClick={() => void copyLink()}>
-					<LinkIcon weight="bold" aria-hidden="true" />
-					{copy.copy}
-				</button>
-				<a
-					role="menuitem"
-					className={menuRow}
-					href={`https://wa.me/?text=${encodeURIComponent(message)}`}
-					target="_blank"
-					rel="noopener noreferrer"
-					onClick={() => {
-						close();
-						shared('whatsapp');
-					}}
-				>
-					<WhatsappLogoIcon weight="bold" aria-hidden="true" />
-					{copy.whatsapp}
-					<span className="sr-only">{copy.opensNewTab}</span>
-				</a>
-				{kit ? (
-					<button
-						type="button"
-						role="menuitem"
-						aria-haspopup="dialog"
-						className={menuRow}
-						onClick={() => {
-							close();
-							setDialog('kit');
+			<DropdownMenu.Root>
+				<DropdownMenu.Trigger asChild>
+					<Button variant="ghost" size="sm" className="[&_svg]:size-5">
+						<ShareNetworkIcon weight="bold" aria-hidden="true" />
+						{copy.button}
+					</Button>
+				</DropdownMenu.Trigger>
+				<DropdownMenu.Portal>
+					<DropdownMenu.Content
+						align="start"
+						sideOffset={8}
+						collisionPadding={20}
+						aria-label={copy.button}
+						className="z-50 w-68 max-w-[calc(100vw-40px)] rounded-row bg-popover p-2 text-popover-foreground shadow-pop"
+						// Runs before the menu focuses its trigger: the dialog then opens over a focused button.
+						onCloseAutoFocus={() => {
+							if (!chosen.current) return;
+							setDialog(chosen.current);
+							chosen.current = null;
 						}}
 					>
-						<FacebookLogoIcon weight="bold" aria-hidden="true" />
-						{copy.facebook}
-					</button>
-				) : (
-					<a
-						role="menuitem"
-						className={menuRow}
-						href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`}
-						target="_blank"
-						rel="noopener noreferrer"
-						onClick={() => {
-							close();
-							shared('facebook');
-						}}
-					>
-						<FacebookLogoIcon weight="bold" aria-hidden="true" />
-						{copy.facebook}
-						<span className="sr-only">{copy.opensNewTab}</span>
-					</a>
-				)}
-				<button type="button" role="menuitem" className={menuRow} onClick={() => void shareNative()}>
-					<ShareNetworkIcon weight="bold" aria-hidden="true" />
-					{copy.more}
-				</button>
-				<div role="separator" className="mx-3 my-1.5 h-px bg-border" />
-				<button
-					type="button"
-					role="menuitem"
-					aria-haspopup="dialog"
-					className={menuRow}
-					onClick={() => {
-						close();
-						setDialog('poster');
-					}}
-				>
-					<PrinterIcon weight="bold" aria-hidden="true" />
-					{copy.poster}
-				</button>
-			</div>
+						<DropdownMenu.Item className={rowClass} onSelect={() => void copyLink()}>
+							<LinkIcon weight="bold" aria-hidden="true" />
+							{copy.copy}
+						</DropdownMenu.Item>
+						<DropdownMenu.Item asChild className={rowClass} onSelect={() => shared('whatsapp')}>
+							<a
+								href={`https://wa.me/?text=${encodeURIComponent(message)}`}
+								target="_blank"
+								rel="noopener noreferrer"
+							>
+								<WhatsappLogoIcon weight="bold" aria-hidden="true" />
+								{copy.whatsapp}
+								<span className="sr-only">{copy.opensNewTab}</span>
+							</a>
+						</DropdownMenu.Item>
+						{kit ? (
+							<DropdownMenu.Item
+								className={rowClass}
+								aria-haspopup="dialog"
+								onSelect={() => (chosen.current = 'kit')}
+							>
+								<FacebookLogoIcon weight="bold" aria-hidden="true" />
+								{copy.facebook}
+							</DropdownMenu.Item>
+						) : (
+							<DropdownMenu.Item asChild className={rowClass} onSelect={() => shared('facebook')}>
+								<a
+									href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`}
+									target="_blank"
+									rel="noopener noreferrer"
+								>
+									<FacebookLogoIcon weight="bold" aria-hidden="true" />
+									{copy.facebook}
+									<span className="sr-only">{copy.opensNewTab}</span>
+								</a>
+							</DropdownMenu.Item>
+						)}
+						<DropdownMenu.Item className={rowClass} onSelect={() => void shareNative()}>
+							<ShareNetworkIcon weight="bold" aria-hidden="true" />
+							{copy.more}
+						</DropdownMenu.Item>
+						<DropdownMenu.Separator className="mx-3 my-1.5 h-px bg-border" />
+						<DropdownMenu.Item
+							className={rowClass}
+							aria-haspopup="dialog"
+							onSelect={() => (chosen.current = 'poster')}
+						>
+							<PrinterIcon weight="bold" aria-hidden="true" />
+							{copy.poster}
+						</DropdownMenu.Item>
+					</DropdownMenu.Content>
+				</DropdownMenu.Portal>
+			</DropdownMenu.Root>
 			<ToastRegion
 				toast={dialog ? undefined : toast}
 				onClose={() => setToast(undefined)}
