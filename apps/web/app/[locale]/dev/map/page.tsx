@@ -2,14 +2,16 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 
-import { type Circle, type Marker, MapView, type Path } from '@/components/map/map-view';
+import type { Circle, Marker, Path } from '@/components/map/map-view';
 import { env } from '@/lib/env';
+
+import { MapDemo } from './map-demo';
 
 export const metadata: Metadata = { title: 'MapView', robots: { index: false, follow: false } };
 
 const KINDS = ['lost', 'found', 'sighted', 'reunited'] as const;
-const PHOTOS = ['/images/placeholder-dog-aussie-wide.jpg', '/images/placeholder-cat-tabby.jpg', undefined];
-// Seeded around a few towns, so the run is the same every time (TASK-15.2 AC#4: 500 markers with clustering).
+const PHOTOS = ['/images/placeholder-dog-aussie-wide.webp', '/images/placeholder-cat-tabby.webp', undefined];
+// Seeded around six towns, so every run draws the same map (TASK-15.2 AC#4: 500 markers with clustering).
 const TOWNS = [
 	[46.0569, 14.5058],
 	[46.5547, 15.6459],
@@ -30,6 +32,7 @@ function random(seed: number) {
 
 /** TASK-15.2: MapView with 500 seeded public points, areas and a path, for e2e and review (SL /dev/map, EN /en/dev/map). */
 export default async function MapDevPage() {
+	// Dev and staging only (frontend.md: APP_ENV guards dev pages).
 	if (env.APP_ENV === 'production') notFound();
 	const t = await getTranslations('map');
 
@@ -66,26 +69,7 @@ export default async function MapDevPage() {
 	return (
 		<main className="mx-auto grid w-full max-w-[1200px] gap-6 px-5 py-8">
 			<h1 className="font-display text-[34px] leading-10 font-bold tracking-[-0.02em]">MapView</h1>
-			<MapView
-				testID="dev-map"
-				height={560}
-				cluster
-				markers={markers}
-				circles={circles}
-				paths={paths}
-				textAlternative={
-					<section aria-labelledby="dev-map-list" className="grid gap-2">
-						<h2 id="dev-map-list" className="font-display text-2xl font-bold">
-							{t('text_alternative', { place: 'Slovenija' })}
-						</h2>
-						<ul className="grid gap-1">
-							{markers.slice(0, 20).map((marker) => (
-								<li key={marker.id}>{marker.label}</li>
-							))}
-						</ul>
-					</section>
-				}
-			/>
+			<MapDemo markers={markers} circles={circles} paths={paths} />
 		</main>
 	);
 }

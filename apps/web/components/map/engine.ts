@@ -15,9 +15,11 @@ import { colors } from '@zivali/tokens/values';
 
 import {
 	type BBox,
+	type CameraState,
 	type Circle,
 	circleFeatures,
 	type InitialView,
+	type LatLng,
 	type Marker,
 	markerFeatures,
 	type Path,
@@ -25,7 +27,8 @@ import {
 	SLOVENIA,
 } from './map-data';
 
-// v6 finds its worker next to its own module URL, which the bundle rewrites; the bundler emits the file from here.
+// v6 looks for its worker next to its own module URL, which the bundle rewrites; the bundler emits the worker from
+// this reference as a same-origin file (CSP worker-src 'self', proxy.ts).
 setWorkerUrl(new URL('maplibre-gl/dist/maplibre-gl-worker.mjs', import.meta.url).href);
 
 /** A marker, cluster or "you" dot on the map: MapView renders its face into `element` (a React portal). */
@@ -36,33 +39,38 @@ export type MapData = { markers: Marker[]; circles: Circle[]; paths: Path[]; clu
 export type MapEngine = {
 	setData(data: MapData): void;
 	setMode(mode: MapMode): void;
+	setLabel(label: string): void;
+	moveTo(center: LatLng, zoom?: number): void;
 	zoomToCluster(clusterId: number): void;
 	destroy(): void;
 };
 type EngineOptions = {
 	container: HTMLElement;
 	mode: MapMode;
+	detail: boolean;
 	initialView?: InitialView;
 	data: MapData;
-	/** Accessible name of the focusable canvas; `describedBy` is the id of the keyboard hint. */
-	title: string;
+	/** Accessible name of the focusable canvas; `describedBy` is the id of its hint. */
+	label: string;
 	describedBy: string;
 	onItems(items: MapItem[]): void;
 	onViewportChange(bbox: BBox, zoom: number): void;
-	onError(): void;
+	onCameraChange(camera: CameraState): void;
+	/** `true` while the base map cannot draw (style, sprite, glyphs or tiles failed before any tile loaded). */
+	onFailed(failed: boolean): void;
 };
 
 const MARKERS = 'zz-markers';
 const CIRCLES = 'zz-circles';
 const PATHS = 'zz-paths';
 const PATH_POINTS = 'zz-path-points';
-// Clustering per P4: count discs once markers sit closer than an avatar on a lost-area disc.
+// Count discs once markers sit closer than an avatar on a lost-area disc; none past street level.
 const CLUSTER = { clusterRadius: 56, clusterMaxZoom: 15 };
+const VIEWPORT_DEBOUNCE_MS = 300;
 
-/** `marker-area` carries the area alpha (0.16 light, 0.20 dark, system §9); the other area hues reuse it. */
+/** Area discs per system §9: status hue at `marker-area`'s alpha (0.16 light, 0.20 dark); alert areas `primary`. */
 function areaPaint(mode: MapMode): FillLayerSpecification['paint'] {
 	const c = colors[mode];
-	const alpha = parseInt(c['marker-area'].slice(7, 9), 16) / 255;
 	return {
 		'fill-color': [
 			'match',
@@ -75,27 +83,28 @@ function areaPaint(mode: MapMode): FillLayerSpecification['paint'] {
 			c['marker-sighted'],
 			c['marker-area'].slice(0, 7),
 		],
-		'fill-opacity': alpha,
+		'fill-opacity': parseInt(c['marker-area'].slice(7, 9), 16) / 255,
 	};
 }
 
 export function createMapEngine(options: EngineOptions): MapEngine {
-	const { container, initialView } = options;
+	const { container, initialView, detail } = options;
 	let data = options.data;
 	let mode = options.mode;
 	let debounce: ReturnType<typeof setTimeout> | undefined;
+	let tileLoaded = false;
 
 	const map = new MapLibre({
 		container,
-		style: buildMapStyle(mode) as StyleSpecification,
+		style: buildMapStyle(mode, { detail }) as StyleSpecification,
 		...(initialView && 'bbox' in initialView
 			? { bounds: initialView.bbox, fitBoundsOptions: { padding: 32 } }
 			: initialView
 				? { center: [initialView.center.lng, initialView.center.lat], zoom: initialView.zoom }
 				: { bounds: SLOVENIA }),
-		// map.attribution is MapView's own 44 px link (P4); no logo, no compact "i" button.
+		// The attribution is MapView's own 44 px link (P4); no logo, no compact "i" button.
 		attributionControl: false,
-		locale: { 'Map.Title': options.title },
+		locale: { 'Map.Title': options.label },
 		// Calm map: north stays up.
 		dragRotate: false,
 		pitchWithRotate: false,
@@ -105,19 +114,19 @@ export function createMapEngine(options: EngineOptions): MapEngine {
 	map.keyboard.disableRotation();
 	map.getCanvas().setAttribute('aria-describedby', options.describedBy);
 
-	// Live HTML markers by key; "you" dots are never clustered and sit apart.
+	// Live HTML markers by key; "you" dots are never clustered and kept apart.
 	const live = new globalThis.Map<string, { marker: GLMarker; item: MapItem; at: string }>();
 	const me = new globalThis.Map<string, { marker: GLMarker; item: MapItem }>();
 	const emit = () => options.onItems([...me.values(), ...live.values()].map((entry) => entry.item));
 
-	/** Lost-area discs (104 px) lie under avatars, clusters above them, the "you" dot on top. */
+	/** Lost-area discs lie under avatars, clusters above them, the "you" dot on top. */
 	function addMarker(lngLat: [number, number], layer: number) {
 		const element = document.createElement('div');
 		element.style.zIndex = String(layer);
 		return { element, marker: new GLMarker({ element }).setLngLat(lngLat).addTo(map) };
 	}
 
-	/** Mirror the clustered source's features (in loaded tiles) as HTML markers; only changes reach React. */
+	/** Mirrors the clustered source's features (in loaded tiles) as HTML markers; only changes reach React. */
 	function sync() {
 		if (!map.getSource(MARKERS) || !map.isSourceLoaded(MARKERS)) return;
 		const seen = new Set<string>();
@@ -202,7 +211,7 @@ export function createMapEngine(options: EngineOptions): MapEngine {
 			filter: ['!=', ['get', 'n'], ''],
 			layout: {
 				'text-field': ['get', 'n'],
-				'text-font': ['Noto Sans Regular'],
+				'text-font': ['Noto Sans Bold'],
 				'text-size': 13,
 				'text-allow-overlap': true,
 			},
@@ -230,6 +239,11 @@ export function createMapEngine(options: EngineOptions): MapEngine {
 		emit();
 	});
 	map.on('render', sync);
+
+	const camera = (moving: boolean): CameraState => {
+		const { lng, lat } = map.getCenter();
+		return { center: { lat, lng }, zoom: map.getZoom(), moving };
+	};
 	const viewport = () => {
 		clearTimeout(debounce);
 		debounce = setTimeout(() => {
@@ -238,12 +252,25 @@ export function createMapEngine(options: EngineOptions): MapEngine {
 				[bounds.getWest(), bounds.getSouth(), bounds.getEast(), bounds.getNorth()],
 				map.getZoom()
 			);
-		}, 300);
+		}, VIEWPORT_DEBOUNCE_MS);
 	};
 	map.once('load', viewport);
-	map.on('moveend', viewport);
-	// Tiles, sprite or glyphs failed (offline, provider down): MapView shows map.tiles_error; the list still works.
-	map.on('error', options.onError);
+	map.on('move', () => options.onCameraChange(camera(true)));
+	map.on('moveend', () => {
+		options.onCameraChange(camera(false));
+		viewport();
+	});
+
+	// One failed tile is not a broken map: only errors before the first base-map tile count, and a later tile (back
+	// online, panned) clears them. MapView then shows map.tiles_error over the map; the list works either way.
+	map.on('error', () => {
+		if (!tileLoaded) options.onFailed(true);
+	});
+	map.on('data', (event) => {
+		if (tileLoaded || event.dataType !== 'source' || !event.tile || event.sourceId.startsWith('zz-')) return;
+		tileLoaded = true;
+		options.onFailed(false);
+	});
 	setMe(data.markers);
 
 	return {
@@ -264,15 +291,24 @@ export function createMapEngine(options: EngineOptions): MapEngine {
 		setMode(next) {
 			if (next === mode) return;
 			mode = next;
-			map.setStyle(buildMapStyle(mode) as StyleSpecification, { diff: false });
+			map.setStyle(buildMapStyle(mode, { detail }) as StyleSpecification, { diff: false });
+		},
+		setLabel(label) {
+			map.getCanvas().setAttribute('aria-label', label);
+		},
+		// MapLibre makes eases instant under prefers-reduced-motion.
+		moveTo(center, zoom) {
+			map.easeTo({ center: [center.lng, center.lat], ...(zoom !== undefined && { zoom }) });
 		},
 		zoomToCluster(clusterId) {
 			const source = map.getSource<GeoJSONSource>(MARKERS);
 			const entry = live.get(`c:${clusterId}`);
 			if (!source || !entry) return;
-			void source
+			source
 				.getClusterExpansionZoom(clusterId)
-				.then((zoom) => map.easeTo({ center: entry.marker.getLngLat(), zoom }));
+				.then((zoom) => map.easeTo({ center: entry.marker.getLngLat(), zoom }))
+				// The cluster changed under the click (new data); the next click works on the new one.
+				.catch(() => undefined);
 		},
 		destroy() {
 			clearTimeout(debounce);

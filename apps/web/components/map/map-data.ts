@@ -5,8 +5,9 @@ export type LatLng = { lat: number; lng: number };
 export type BBox = [number, number, number, number];
 export type MarkerKind = 'lost' | 'found' | 'sighted' | 'reunited' | 'me';
 /**
- * `position` is the public point: for reports the centre of the fuzzed public circle (`PublicReport.area`), never an
- * exact point. `label` is the accessible name (`map.marker_a11y`). `photoUrl` (thumbnail) draws the photo avatar.
+ * C6 Marker. `position` is the public point: for a report the centre of its fuzzed public circle
+ * (`PublicReport.area`), never an exact point; for `me` the viewer's own position, which stays in the browser.
+ * `label` is the accessible name (`map.marker_a11y`). Web adds `photoUrl` (a thumbnail) for the photo avatar.
  */
 export type Marker = {
 	id: string;
@@ -16,7 +17,10 @@ export type Marker = {
 	boosted?: boolean;
 	photoUrl?: string;
 };
-/** `status` picks the area hue (system §9): lost `marker-area` (default), found and sighted their marker hue. */
+/**
+ * C6 Circle, drawn to scale (system §9 area disc). Web adds `status` for the report's hue: lost `marker-area`
+ * (default), found and sighted their marker hue; `kind: 'alert'` (own alert or home area) is `primary`.
+ */
 export type Circle = {
 	id: string;
 	center: LatLng;
@@ -26,6 +30,8 @@ export type Circle = {
 };
 export type Path = { id: string; points: LatLng[]; numbered?: boolean };
 export type InitialView = { center: LatLng; zoom: number } | { bbox: BBox };
+/** The camera while it moves (`moving`) and once it stops (mobile MapView's `onCameraChange`). */
+export type CameraState = { center: LatLng; zoom: number; moving: boolean };
 
 type Point = { type: 'Point'; coordinates: [number, number] };
 type Feature<G, P> = { type: 'Feature'; geometry: G; properties: P };
