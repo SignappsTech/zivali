@@ -33,25 +33,26 @@ async function photoData(report: PublicReport): Promise<string | undefined> {
 /**
  * Open Graph image of a public report (C15 `/r/[code]/opengraph-image`, FR-011 R-011.3): the first photo and the type
  * label ("Izgubljen pes" and the name), never the location. `?lang=en` for the EN page. Unknown, held and gone
- * reports answer 404, so a preview never outlives the listing.
+ * reports answer 404, so a preview never outlives the listing. When the API fails or takes over 3 s, the brand alone,
+ * not cached, so the next crawl draws the report.
  */
 export async function GET(request: Request, { params }: RouteContext<'/r/[code]/opengraph-image'>) {
 	const { code } = await params;
 	const locale = new URL(request.url).searchParams.get('lang') === 'en' ? 'en' : 'sl';
-	let report: PublicReport;
+	let report: PublicReport | undefined;
 	try {
 		report = await createApiClient({ baseUrl: env.NEXT_PUBLIC_API_URL, locale }).request<PublicReport>(
 			'GET',
-			`/v1/reports/${encodeURIComponent(code)}`
+			`/v1/reports/${encodeURIComponent(code)}`,
+			{ signal: AbortSignal.timeout(3000) }
 		);
 	} catch (error) {
 		if (error instanceof ApiError && ['NOT_FOUND', 'GONE', 'VALIDATION'].includes(error.code))
 			return new Response(null, { status: 404 });
-		throw error;
 	}
 	const t = createTranslator({ locale, messages: catalogues[locale], namespace: 'browse' });
-	const label = t(`row_title_${report.type}`, { species: report.species });
-	const photo = await photoData(report);
+	const label = report && t(`row_title_${report.type}`, { species: report.species });
+	const photo = report && (await photoData(report));
 	const c = colors.light;
 
 	return new ImageResponse(
@@ -94,7 +95,7 @@ export async function GET(request: Request, { params }: RouteContext<'/r/[code]/
 				</div>
 				<div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
 					<div style={{ fontSize: photo ? 64 : 80, lineHeight: 1.1, letterSpacing: '-0.025em' }}>{label}</div>
-					{report.name && (
+					{report?.name && (
 						<div style={{ fontSize: photo ? 48 : 60, lineHeight: 1.1, letterSpacing: '-0.02em' }}>
 							{report.name}
 						</div>
@@ -103,6 +104,6 @@ export async function GET(request: Request, { params }: RouteContext<'/r/[code]/
 			</div>
 		</div>,
 		// A listing changes (photo, status), so the image is cached for an hour, not for a year.
-		{ ...SIZE, headers: { 'cache-control': 'public, max-age=3600' } }
+		{ ...SIZE, headers: { 'cache-control': report ? 'public, max-age=3600' : 'no-store' } }
 	);
 }

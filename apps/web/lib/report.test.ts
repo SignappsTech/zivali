@@ -58,6 +58,16 @@ describe('getReport', () => {
 		reply(500, error('INTERNAL'));
 		await expect(getReport('sl', 'x')).rejects.toMatchObject({ code: 'INTERNAL' });
 	});
+
+	it('gives up on a slow API after 3 s, to the error page', async () => {
+		const timeout = vi.spyOn(AbortSignal, 'timeout');
+		fetchMock.mockRejectedValue(new DOMException('The operation timed out.', 'TimeoutError'));
+
+		await expect(getReport('sl', 'Hk3vT9qP')).rejects.toThrow();
+		expect(timeout).toHaveBeenCalledWith(3000);
+		expect(fetchMock.mock.calls[0]![1]?.signal).toBe(timeout.mock.results[0]!.value);
+		timeout.mockRestore();
+	});
 });
 
 describe('getPlace', () => {
@@ -84,6 +94,43 @@ describe('getPlace', () => {
 		reply(200, { place: null });
 		expect(await getPlace('sl', 45.8, 13.6)).toBeUndefined();
 		reply(429, error('RATE_LIMITED'));
-		expect(await getPlace('sl', 46.06, 14.49)).toBeUndefined();
+		expect(await getPlace('sl', 46.1, 14.5)).toBeUndefined();
+	});
+
+	it('gives up after 1.5 s: no name', async () => {
+		const timeout = vi.spyOn(AbortSignal, 'timeout');
+		fetchMock.mockRejectedValue(new DOMException('The operation timed out.', 'TimeoutError'));
+
+		expect(await getPlace('sl', 46.2, 14.5)).toBeUndefined();
+		expect(timeout).toHaveBeenCalledWith(1500);
+		expect(fetchMock.mock.calls[0]![1]?.signal).toBe(timeout.mock.results[0]!.value);
+		timeout.mockRestore();
+	});
+
+	it('asks once per point and language; a failure is asked again', async () => {
+		reply(429, error('RATE_LIMITED'));
+		expect(await getPlace('sl', 46.3, 14.3)).toBeUndefined();
+		reply(200, placeReverse);
+		expect(await getPlace('sl', 46.3, 14.3)).toMatchObject({ label: 'Šiška, Ljubljana' });
+		expect(await getPlace('sl', 46.3, 14.3)).toMatchObject({ label: 'Šiška, Ljubljana' });
+		expect(fetchMock).toHaveBeenCalledTimes(2);
+
+		reply(200, placeReverse);
+		await getPlace('en', 46.3, 14.3);
+		expect(fetchMock).toHaveBeenCalledTimes(3);
+	});
+
+	it('keeps the 2000 most recently used places', async () => {
+		fetchMock.mockImplementation(async () => new Response(JSON.stringify(placeReverse)));
+		for (let i = 0; i < 2000; i++) await getPlace('en', i, 0);
+		await getPlace('en', 0, 0); // used again: now the most recent
+		await getPlace('en', 2000, 0); // one more: the least recently used (1) goes
+		fetchMock.mockClear();
+
+		await getPlace('en', 0, 0);
+		await getPlace('en', 2000, 0);
+		expect(fetchMock).not.toHaveBeenCalled();
+		await getPlace('en', 1, 0);
+		expect(fetchMock).toHaveBeenCalledOnce();
 	});
 });

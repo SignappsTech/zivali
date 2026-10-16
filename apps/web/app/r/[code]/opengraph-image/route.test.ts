@@ -69,4 +69,28 @@ describe('/r/[code]/opengraph-image', () => {
 		answer(status, { error: { code, message: code } });
 		expect((await get('Gone1234')).status).toBe(404);
 	});
+
+	it('waits 3 s for the API, then draws the brand alone, not cached', async () => {
+		const timeout = vi.spyOn(AbortSignal, 'timeout');
+		fetchMock.mockImplementation(async (input, init) =>
+			String(input).startsWith(API)
+				? Promise.reject(new DOMException('The operation timed out.', 'TimeoutError'))
+				: realFetch(input, init)
+		);
+		const response = await get('Hk3vT9qP');
+
+		expect(response.status).toBe(200);
+		expect(response.headers.get('content-type')).toBe('image/png');
+		expect(response.headers.get('cache-control')).toBe('no-store');
+		expect(timeout).toHaveBeenCalledWith(3000);
+		expect(fetchMock.mock.calls[0]![1]?.signal).toBe(timeout.mock.results[0]!.value);
+		timeout.mockRestore();
+	});
+
+	it('draws the brand alone, not cached, when the API fails', async () => {
+		answer(500, { error: { code: 'INTERNAL', message: 'INTERNAL' } });
+		const response = await get('Hk3vT9qP');
+
+		expect([response.status, response.headers.get('cache-control')]).toEqual([200, 'no-store']);
+	});
 });

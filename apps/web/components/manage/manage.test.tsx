@@ -80,7 +80,8 @@ describe('ManagePage (P7, C7)', () => {
 		// No messages yet: "Sporočila" is the first row and the page has no primary.
 		expect(screen.queryByRole('heading', { name: 'Sporočila' })).toBeNull();
 		expect(screen.getByRole('link', { name: 'Sporočila' }).getAttribute('href')).toBe('/nabiralnik');
-		expect(screen.getByRole('link', { name: 'Uredi prijavo' }).getAttribute('href')).toBe(`/r/${CODE}`);
+		// No Edit row until the detail page has owner actions (TODO(TASK-26.4)): it would lead nowhere.
+		expect(screen.queryByRole('link', { name: 'Uredi prijavo' })).toBeNull();
 		expect(screen.getByRole('button', { name: 'Zaključi prijavo' })).toBeTruthy();
 		expect(screen.getByRole('button', { name: 'Žival je spet doma' })).toBeTruthy();
 		expect(document.querySelector('[data-ad-slot]')).toBeNull();
