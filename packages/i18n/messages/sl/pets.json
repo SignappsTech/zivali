@@ -56,6 +56,7 @@
 	"section_photos": "Fotografije",
 	"photos_help": "Dodate lahko do 5 fotografij. Prva je naslovna.",
 	"saved": "Profil je shranjen.",
+	"saved_without_photos": "Žival je shranjena brez fotografij.",
 	"photo_alt": "{name}, fotografija {n}",
 	"fact_species": "Vrsta",
 	"fact_breed": "Pasma",
@@ -82,5 +83,16 @@
 	"archive_body": "Arhiviran profil ostane shranjen, a se ne šteje več med brezplačne profile. Arhiviranja ni mogoče preklicati.",
 	"archive_confirm": "Arhiviraj profil",
 	"archived": "Profil je arhiviran.",
-	"archived_label": "Arhiviran"
+	"archived_label": "Arhiviran",
+	"status_lost": "Izgubljena",
+	"open_search": "Odpri iskanje",
+	"premium_action": "Več profilov s Premium Zaščito",
+	"report_without_profile": "Prijavi izgubljeno žival brez profila",
+	"empty_action": "Dodaj žival",
+	"step_a11y": "Korak {n} od {total}",
+	"photos_required": "Dodajte vsaj eno fotografijo.",
+	"photos_pending": "Počakajte, da se fotografije naložijo, ali odstranite tiste, ki se niso naložile.",
+	"photo_delete_title": "Odstranim fotografijo?",
+	"photo_delete_body": "Fotografija bo izbrisana tudi iz shrambe.",
+	"photo_delete_confirm": "Odstrani"
 }

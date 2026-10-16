@@ -208,6 +208,37 @@ describe('PetFields', () => {
 		expect(onValid.mock.calls[0][0]).toMatchObject({ breed_codes: ['dog.labrador_retriever'] });
 	});
 
+	test('the breed search text goes on blur without a pick and with a species change; rows are 44 pt or more', async () => {
+		const onValid = await setup();
+		const breed = () => screen.getByPlaceholderText(t.breed_search);
+		await fillRequired();
+
+		await fireEvent.changeText(breed(), 'labr');
+		const row = screen.getByRole('radio', { name: 'Labradorec' });
+		const minHeight = Number(/\bmin-h-(\d+)\b/.exec(row.props.className)?.[1]) * 4;
+		expect(minHeight).toBeGreaterThanOrEqual(44);
+		// Left without a pick: the field shows the saved breed (none), not the search.
+		await fireEvent(breed(), 'blur');
+		expect(breed().props.value).toBe('');
+		expect(screen.queryByRole('radio', { name: 'Labradorec' })).toBeNull();
+
+		await fireEvent.changeText(breed(), 'labr');
+		await fireEvent.press(screen.getByRole('radio', { name: 'Labradorec' }));
+		await fireEvent.changeText(breed(), 'beag');
+		await fireEvent(breed(), 'blur');
+		expect(breed().props.value).toBe('Labradorec');
+
+		// A species switch drops the search with the dog breed.
+		await fireEvent.changeText(breed(), 'evrop');
+		await fireEvent.press(screen.getByRole('radio', { name: 'Mačka' }));
+		expect(breed().props.value).toBe('');
+		expect(screen.queryByRole('radio', { name: 'Evropska kratkodlaka' })).toBeNull();
+
+		await save();
+		await waitFor(() => expect(onValid).toHaveBeenCalledTimes(1));
+		expect(onValid.mock.calls[0][0]).toMatchObject({ species: 'cat', breed_codes: [] });
+	});
+
 	test('blank notes are no value, so saving is not blocked', async () => {
 		const onValid = await setup();
 		await fillRequired();

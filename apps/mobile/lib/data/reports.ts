@@ -1,6 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
 
-import { useGetMapReportsQuery, useGetReportQuery, useSearchReportsInfiniteQuery } from '@zivali/api/reports';
+import {
+	useGetMapReportsQuery,
+	useGetReportQuery,
+	useListMyReportsInfiniteQuery,
+	useSearchReportsInfiniteQuery,
+} from '@zivali/api/reports';
 import type { QueryError } from '@zivali/api/rtk';
 import type { CachedReport } from '@zivali/api/sync';
 import type { MapReportList, MapReportQuery, PublicReport, ReportSearch } from '@zivali/types';
@@ -227,4 +232,23 @@ export function useReport(
 		...useCacheFallback<PublicReport | CachedReport | null>(network, code, readOne),
 		refetch: network.refetch,
 	};
+}
+
+/**
+ * Short codes of the caller's lost reports still searching (open or matched), by pet id, from the first page of
+ * GET /v1/me/reports, for "Izgubljena · Odpri iskanje" on My pets (P8). Network only: own reports are never cached.
+ */
+export function useOpenLostReportsByPet(): Map<string, string> {
+	const { data } = useListMyReportsInfiniteQuery(undefined, { skip: useOffline() });
+	return useMemo(
+		() =>
+			new Map(
+				(data?.pages[0]?.items ?? []).flatMap((report) =>
+					report.type === 'lost' && report.pet_id && (report.status === 'open' || report.status === 'matched')
+						? [[report.pet_id, report.short_code] as const]
+						: []
+				)
+			),
+		[data]
+	);
 }

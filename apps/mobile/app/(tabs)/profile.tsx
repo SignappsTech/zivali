@@ -5,6 +5,7 @@ import { CheckIcon } from 'phosphor-react-native/src/icons/Check';
 import { CloudArrowDownIcon } from 'phosphor-react-native/src/icons/CloudArrowDown';
 import { CookieIcon } from 'phosphor-react-native/src/icons/Cookie';
 import { CreditCardIcon } from 'phosphor-react-native/src/icons/CreditCard';
+import { PawPrintIcon } from 'phosphor-react-native/src/icons/PawPrint';
 import { QuestionIcon } from 'phosphor-react-native/src/icons/Question';
 import { SignOutIcon } from 'phosphor-react-native/src/icons/SignOut';
 import { UserCircleIcon } from 'phosphor-react-native/src/icons/UserCircle';
@@ -174,6 +175,11 @@ export default function ProfileTab() {
 				<OutboxList heading={t('report_found.my_reports')} className="mt-7" />
 				{signedIn ? (
 					<View className="mt-7 gap-3">
+						<MenuRow
+							icon={<Icon as={PawPrintIcon} size={24} />}
+							title={t('pets.title')}
+							onPress={() => router.push('/pets')}
+						/>
 						<LanguageRow />
 						<MenuRow
 							icon={<Icon as={BellRingingIcon} size={24} />}
