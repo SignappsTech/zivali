@@ -3,6 +3,7 @@ import type { Locale } from 'next-intl';
 import { z } from 'zod';
 
 import { authError } from '@zivali/api/auth';
+import { ApiError } from '@zivali/api/client';
 import { getPathname } from '@/i18n/navigation';
 import { env } from '@/lib/env';
 import { createClient } from '@/lib/supabase/client';
@@ -77,10 +78,45 @@ export const signUp = ({
 		})
 	);
 
-export const resendConfirmation = (email: string, locale: Locale, captchaToken?: string) =>
+/**
+ * C7 §6: the finder's anonymous session becomes the account in place, so the user id, report_managers and the manage
+ * links stay. One updateUser sets the password, the name and the address; GoTrue mails a confirmation link to it
+ * (`email_change`, back to the signup callback) and the user stops being anonymous once it is opened. Refused on any
+ * other session, so a real account never has its address or password changed here.
+ */
+export async function convertAnonymous({
+	name,
+	email,
+	password,
+	locale,
+	next,
+}: {
+	name: string;
+	email: string;
+	password: string;
+	locale: Locale;
+	next?: string;
+}) {
+	if (!(await auth().getSession()).data.session?.user.is_anonymous)
+		throw new ApiError('UNAUTHENTICATED', 'UNAUTHENTICATED');
+	const data = { locale, display_name: name };
+	const options = { emailRedirectTo: callbackUrl('signup', locale, next) };
+	const { error } = await auth().updateUser({ email, password, data }, options);
+	// Sent again ("Spremeni e-naslov"): the password is already this one, and GoTrue refuses to set it twice.
+	if (error?.code === 'same_password') await check(auth().updateUser({ email, data }, options));
+	else if (error) throw authError(error);
+}
+
+/** `email_change`: the link of a converted anonymous session (convertAnonymous). */
+export const resendConfirmation = (
+	email: string,
+	locale: Locale,
+	captchaToken?: string,
+	type: 'signup' | 'email_change' = 'signup'
+) =>
 	check(
 		auth().resend({
-			type: 'signup',
+			type,
 			email,
 			options: { emailRedirectTo: callbackUrl('signup', locale), captchaToken },
 		})

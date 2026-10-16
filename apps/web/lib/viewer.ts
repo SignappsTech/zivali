@@ -56,6 +56,9 @@ export async function getVerifiedViewer(): Promise<Viewer | null> {
 	return claims && !claims.is_anonymous ? toViewer(claims) : null;
 }
 
+/** An anonymous finder session (C7), read from the signature-checked claims: sign-up then converts it (C7 §6). */
+export const isAnonymousViewer = async () => (await verifiedClaims())?.is_anonymous === true;
+
 /**
  * Server guard of the (app), (admin) and (portal) layouts and the account pages: visitors without a verified session
  * go to sign-in, with the page they asked for as `next` (the proxy's x-next-path), so they come back to it.

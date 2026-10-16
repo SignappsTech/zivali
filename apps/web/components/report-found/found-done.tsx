@@ -75,10 +75,12 @@ export function FoundDone({
 						<Button asChild size="lg">
 							<Link href={report}>{t('open_report')}</Link>
 						</Button>
-						{/* TODO(TASK-17.12): convert the anonymous session into an account instead of a plain sign-up. */}
+						{/* Only an anonymous finder has a token: sign-up converts that session (C7 §6). */}
 						{result.manage_token && (
 							<Button asChild variant="text">
-								<Link href="/sign-up">{t('create_account')}</Link>
+								<Link href={{ pathname: '/sign-up', query: { convert: '1' } }}>
+									{t('create_account')}
+								</Link>
 							</Button>
 						)}
 						{/* Not while it is held: nobody else can open it yet. */}

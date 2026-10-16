@@ -5,6 +5,7 @@ import { ApiError } from '@zivali/api/client';
 
 import {
 	callbackUrl,
+	convertAnonymous,
 	ensureSession,
 	requestPasswordReset,
 	signIn,
@@ -88,6 +89,52 @@ describe('Supabase calls', () => {
 				emailRedirectTo: `${origin}/auth/callback?type=signup&next=%2Fracun`,
 			},
 		});
+	});
+
+	it('converts the anonymous session in place with one updateUser, never a sign-up (C7 §6)', async () => {
+		const anonymous = { user: { id: 'u-anon', is_anonymous: true } };
+		supabase.getSession.mockResolvedValue({ data: { session: anonymous }, error: null });
+		supabase.updateUser.mockResolvedValue({ data: { user: { id: 'u-anon' } }, error: null });
+		const account = { name: 'Ana', email: 'ana@example.si', password: 'mačka v škornjih', locale: 'sl' } as const;
+		await convertAnonymous(account);
+		expect(supabase.updateUser).toHaveBeenCalledWith(
+			{ email: 'ana@example.si', password: 'mačka v škornjih', data: { locale: 'sl', display_name: 'Ana' } },
+			{ emailRedirectTo: `${origin}/auth/callback?type=signup` }
+		);
+		// Same user: no new one, no sign-out, so report_managers and the manage link stay.
+		expect(supabase.signUp).not.toHaveBeenCalled();
+		expect(supabase.signInAnonymously).not.toHaveBeenCalled();
+
+		// Sent again with another address: the password is already set, so the address alone.
+		supabase.updateUser.mockReset();
+		supabase.updateUser
+			.mockResolvedValueOnce({
+				data: {},
+				error: new AuthError('New password should be different', 422, 'same_password'),
+			})
+			.mockResolvedValueOnce({ data: {}, error: null });
+		await convertAnonymous({ ...account, email: 'ana.novak@example.si' });
+		expect(supabase.updateUser).toHaveBeenLastCalledWith(
+			{ email: 'ana.novak@example.si', data: { locale: 'sl', display_name: 'Ana' } },
+			{ emailRedirectTo: `${origin}/auth/callback?type=signup` }
+		);
+
+		supabase.updateUser.mockResolvedValue({ data: {}, error: new AuthError('exists', 422, 'email_exists') });
+		await expect(convertAnonymous(account)).rejects.toMatchObject({ code: 'CONFLICT' });
+		supabase.updateUser.mockResolvedValue({ data: {}, error: new AuthError('weak', 422, 'weak_password') });
+		await expect(convertAnonymous(account)).rejects.toMatchObject({
+			code: 'VALIDATION',
+			details: { auth_code: 'weak_password' },
+		});
+	});
+
+	it('never changes the address or password of an account or a missing session', async () => {
+		const account = { name: 'Ana', email: 'ana@example.si', password: 'mačka v škornjih', locale: 'en' } as const;
+		for (const session of [{ user: { id: 'u-1', is_anonymous: false } }, null]) {
+			supabase.getSession.mockResolvedValue({ data: { session }, error: null });
+			await expect(convertAnonymous(account)).rejects.toMatchObject({ code: 'UNAUTHENTICATED' });
+		}
+		expect(supabase.updateUser).not.toHaveBeenCalled();
 	});
 
 	it('asks for the reset link with the recovery callback; a repeat is RATE_LIMITED', async () => {

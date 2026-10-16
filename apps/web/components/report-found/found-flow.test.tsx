@@ -189,8 +189,9 @@ describe('FoundFlow (P7 web, FR-006)', () => {
 		expect(screen.getByRole('link', { name: 'Odpri mojo prijavo' }).getAttribute('href')).toBe(
 			`/r/${created.short_code}`
 		);
+		// Sign-up converts this anonymous session (C7 §6).
 		expect(screen.getByRole('link', { name: 'Ustvari račun in obdrži prijavo' }).getAttribute('href')).toBe(
-			'/registracija'
+			'/registracija?convert=1'
 		);
 		expect(document.querySelector('[data-ad-slot]')).toBeNull();
 		// The draft is gone once the report is live.
@@ -225,6 +226,8 @@ describe('FoundFlow (P7 web, FR-006)', () => {
 		expect(posts(api)[0]!.body).toMatchObject({ type: 'sighted' });
 		expect(posts(api)[0]!.body).not.toHaveProperty('finder_email');
 		expect(screen.queryByText('Vaša zasebna povezava')).toBeNull();
+		// An account has nothing to convert (C7 §6).
+		expect(screen.queryByRole('link', { name: 'Ustvari račun in obdrži prijavo' })).toBeNull();
 		// The softer row for a sighting: no "does not replace" and no chip line.
 		expect(
 			await screen.findByText(

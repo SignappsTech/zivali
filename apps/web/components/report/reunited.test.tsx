@@ -93,7 +93,7 @@ describe('Reunited page (P14)', () => {
 		expect(screen.getByText(sl.browse.status_reunited)).toBeTruthy();
 		expect(screen.queryByRole('switch')).toBeNull();
 		expect(screen.getByRole('link', { name: sl.lifecycle.finder_thanks_account }).getAttribute('href')).toBe(
-			'/registracija'
+			'/registracija?convert=1'
 		);
 
 		cleanup();

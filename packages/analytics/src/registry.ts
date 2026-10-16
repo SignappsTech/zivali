@@ -87,6 +87,8 @@ export const EVENTS = {
 	share: { method, report_type, species },
 	poster_download: { species, region },
 	alert_opt_in: { species: opt(species), region: opt(region) },
+	// GA4's recommended event; `convert`: an anonymous finder session became the account (C7 §6).
+	sign_up: { method: oneOf('convert') },
 } satisfies Record<string, Partial<Record<ParamName, Check<unknown>>>>;
 
 type Schema = typeof EVENTS;

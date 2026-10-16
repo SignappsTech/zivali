@@ -2,8 +2,9 @@ import { cleanup, fireEvent, render, screen, within } from '@testing-library/rea
 import { NextIntlClientProvider } from 'next-intl';
 import type * as React from 'react';
 import { Provider } from 'react-redux';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { getMockEvents, initAnalytics, resetMockEvents, setConsent } from '@zivali/analytics';
 import type { AuthGate as Gate } from '@zivali/api/auth';
 import { ApiError } from '@zivali/api/client';
 import { createMockApi } from '@zivali/api/mock';
@@ -15,7 +16,7 @@ import { AuthGate, VerifiedOnly } from './gate';
 import { ForgotForm, NewPasswordForm } from './reset';
 import { metadataName, SessionSync } from './session-sync';
 import { SignInForm } from './sign-in';
-import { SignUpForm } from './sign-up';
+import { CheckEmail, SignUpForm } from './sign-up';
 
 vi.mock('next/navigation', async (actual) => ({
 	...(await actual()),
@@ -27,6 +28,7 @@ vi.mock('next/navigation', async (actual) => ({
 const auth = vi.hoisted(() => ({
 	signIn: vi.fn(),
 	signUp: vi.fn(),
+	convertAnonymous: vi.fn(),
 	resendConfirmation: vi.fn(),
 	requestPasswordReset: vi.fn(),
 	updatePassword: vi.fn(),
@@ -113,7 +115,9 @@ describe('SignInForm (P16 W1)', () => {
 		expect(document.activeElement).toBe(heading);
 		expect(screen.getByText(sl.auth.check_body.replace('{email}', 'ana@example.si'))).toBeTruthy();
 		fireEvent.click(screen.getByRole('button', { name: sl.auth.check_resend }));
-		await vi.waitFor(() => expect(auth.resendConfirmation).toHaveBeenCalledWith('ana@example.si', 'sl', undefined));
+		await vi.waitFor(() =>
+			expect(auth.resendConfirmation).toHaveBeenCalledWith('ana@example.si', 'sl', undefined, 'signup')
+		);
 	});
 
 	it('shows the calm rate-limit note and disables the primary; providers stay', async () => {
@@ -193,6 +197,106 @@ describe('SignUpForm (P16 W2)', () => {
 		expect(screen.getByRole('link', { name: 'terms of use' }).getAttribute('href')).toBe('/en/terms');
 		expect(screen.getByRole('link', { name: 'privacy policy' }).getAttribute('href')).toBe('/en/privacy');
 		expect(screen.queryByRole('checkbox')).toBeNull();
+	});
+});
+
+describe('SignUpForm converting an anonymous finder (C7 §6)', () => {
+	beforeEach(() => {
+		initAnalytics();
+		setConsent({ analytics: true });
+		resetMockEvents();
+	});
+
+	const fill = () => {
+		type('Ime', 'Ana');
+		type('E-naslov', ' ana@example.si ');
+		type('Geslo', 'mačka v škornjih');
+		fireEvent.click(screen.getByRole('button', { name: 'Ustvari račun' }));
+	};
+
+	it('converts the session in place instead of signing up, then waits for the email change link', async () => {
+		auth.providers.google = true;
+		show(<SignUpForm convert />);
+		expect(screen.getByText(sl.auth.convert_note)).toBeTruthy();
+		// Google would start another user, so the reports would not come along.
+		expect(screen.queryByRole('button', { name: sl.auth.google })).toBeNull();
+		fill();
+
+		await screen.findByRole('heading', { level: 1, name: sl.auth.check_title });
+		expect(auth.convertAnonymous).toHaveBeenCalledWith({
+			name: 'Ana',
+			email: 'ana@example.si',
+			password: 'mačka v škornjih',
+			locale: 'sl',
+			next: undefined,
+		});
+		expect(auth.signUp).not.toHaveBeenCalled();
+		expect(getMockEvents()).toEqual([{ name: 'sign_up', params: { method: 'convert' } }]);
+	});
+
+	it("resends the conversion's link as an email change", async () => {
+		show(<CheckEmail email="ana@example.si" sent={false} onChange={() => {}} convert />);
+		fireEvent.click(screen.getByRole('button', { name: sl.auth.check_resend }));
+		await vi.waitFor(() =>
+			expect(auth.resendConfirmation).toHaveBeenCalledWith('ana@example.si', 'sl', undefined, 'email_change')
+		);
+	});
+
+	it('sends nothing to analytics without consent', async () => {
+		setConsent({ analytics: false });
+		show(<SignUpForm convert />);
+		fill();
+		await screen.findByRole('heading', { level: 1, name: sl.auth.check_title });
+		expect(getMockEvents()).toEqual([]);
+	});
+
+	it('names a taken address and says the reports stay on the private link, offering sign-in', async () => {
+		auth.convertAnonymous.mockRejectedValueOnce(authError('CONFLICT'));
+		show(<SignUpForm convert />);
+		fill();
+
+		const alert = await screen.findByRole('alert');
+		expect(alert.textContent).toBe(sl.auth.convert_email_taken);
+		const email = screen.getByLabelText('E-naslov');
+		expect(email.getAttribute('aria-describedby')).toContain(alert.id);
+		expect(document.activeElement).toBe(email);
+		expect(screen.getByRole('link', { name: sl.auth.to_signin }).getAttribute('href')).toBe(
+			'/vpis?email=ana%40example.si'
+		);
+		expect(getMockEvents()).toEqual([]);
+	});
+
+	it('puts a weak password on its field and the rate limit and network errors under the form, without retrying', async () => {
+		auth.convertAnonymous.mockRejectedValueOnce(
+			new ApiError('VALIDATION', 'VALIDATION', { details: { auth_code: 'weak_password' } })
+		);
+		show(<SignUpForm convert />);
+		fill();
+		expect((await screen.findByRole('alert')).textContent).toBe(sl.auth.error_password_weak);
+		expect(document.activeElement).toBe(screen.getByLabelText('Geslo'));
+
+		auth.convertAnonymous.mockRejectedValueOnce(authError('NETWORK'));
+		fireEvent.click(screen.getByRole('button', { name: 'Ustvari račun' }));
+		expect((await screen.findByRole('alert')).textContent).toBe(sl.errors.NETWORK);
+
+		auth.convertAnonymous.mockRejectedValueOnce(authError('RATE_LIMITED'));
+		fireEvent.click(screen.getByRole('button', { name: 'Ustvari račun' }));
+		expect((await screen.findByRole('status')).textContent).toBe(sl.auth.error_rate_limited);
+		expect(screen.getByRole<HTMLButtonElement>('button', { name: 'Ustvari račun' }).disabled).toBe(true);
+		expect(auth.convertAnonymous).toHaveBeenCalledTimes(3);
+		expect(auth.signUp).not.toHaveBeenCalled();
+	});
+
+	it('is the plain form without convert: no note, the providers, sign-up', async () => {
+		auth.providers.google = true;
+		show(<SignUpForm />);
+		expect(screen.queryByText(sl.auth.convert_note)).toBeNull();
+		expect(screen.getByRole('button', { name: sl.auth.google })).toBeTruthy();
+		fill();
+		await screen.findByRole('heading', { level: 1, name: sl.auth.check_title });
+		expect(auth.convertAnonymous).not.toHaveBeenCalled();
+		expect(auth.signUp).toHaveBeenCalled();
+		expect(getMockEvents()).toEqual([]);
 	});
 });
 
