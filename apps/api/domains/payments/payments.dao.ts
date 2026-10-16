@@ -100,7 +100,59 @@ export async function markReceiptSent(id: string, at: Date, tx?: Prisma.Transact
 	return count === 1;
 }
 
+export type InvoiceRow = NonNullable<Awaited<ReturnType<typeof getInvoiceByPayment>>>;
+
+export async function getInvoiceByPayment(payment_id: string, tx?: Prisma.TransactionClient) {
+	const db = tx ?? prisma;
+	return db.invoices.findUnique({ where: { payment_id } });
+}
+
+/**
+ * The next sequence of a premise/device series. Call inside the transaction that inserts the invoice: the upsert's
+ * row lock holds other issuers until that commit, and a rollback returns the number, so the series has no gaps.
+ */
+export async function nextInvoiceSequence(
+	premise_id: string,
+	device_id: string,
+	tx: Prisma.TransactionClient
+): Promise<number> {
+	const [row] = await tx.$queryRaw<{ last_sequence: number }[]>`
+		insert into app.invoice_sequences (premise_id, device_id, last_sequence) values (${premise_id}, ${device_id}, 1)
+		on conflict (premise_id, device_id) do update set last_sequence = app.invoice_sequences.last_sequence + 1
+		returning last_sequence`;
+	return row!.last_sequence;
+}
+
+export async function insertInvoice(data: Prisma.invoicesUncheckedCreateInput, tx?: Prisma.TransactionClient) {
+	const db = tx ?? prisma;
+	return db.invoices.create({ data });
+}
+
+/** Claims the next verification attempt of a pending invoice; false when another run claimed it first. */
+export async function claimInvoiceAttempt(id: string, attempts: number, tx?: Prisma.TransactionClient) {
+	const db = tx ?? prisma;
+	const { count } = await db.invoices.updateMany({
+		where: { id, status: 'PENDING', attempts },
+		data: { attempts: attempts + 1 },
+	});
+	return count === 1;
+}
+
+export async function updateInvoice(
+	id: string,
+	data: Pick<Prisma.invoicesUpdateInput, 'status' | 'eor' | 'verified_at' | 'pdf_key'>,
+	tx?: Prisma.TransactionClient
+) {
+	const db = tx ?? prisma;
+	return db.invoices.update({ where: { id }, data });
+}
+
 export default {
+	getInvoiceByPayment,
+	nextInvoiceSequence,
+	insertInvoice,
+	claimInvoiceAttempt,
+	updateInvoice,
 	insertPayment,
 	getPayment,
 	listByUser,

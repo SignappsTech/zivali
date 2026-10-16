@@ -6,11 +6,16 @@ import { randomUUID } from 'node:crypto';
 import request from 'supertest';
 import { afterAll, afterEach, describe, expect, it, vi } from 'vitest';
 
+import type { FiscalAdapter } from '../../adapters/fiscal/index.ts';
 import { adapters } from '../../adapters/index.ts';
+import InvoicesDomain from '../../domains/payments/invoices.domain.ts';
+import { PaymentsDomain } from '../../domains/payments/index.ts';
 import { ReportsDomain } from '../../domains/reports/index.ts';
 import { app } from '../../app.ts';
+import { Prisma } from '../../generated/client.ts';
 import { config } from '../../lib/config.ts';
-import { userCtx } from '../../lib/ctx.ts';
+import configStore from '../../lib/config-store.ts';
+import { systemCtx, userCtx, type Actor } from '../../lib/ctx.ts';
 import { prisma } from '../../prisma/prisma.ts';
 import { createAuthUser, deleteAuthUsers, signTestToken, type TestTokenClaims } from '../helpers/token.ts';
 
@@ -30,6 +35,7 @@ afterEach(() => {
 });
 
 afterAll(async () => {
+	await prisma.invoices.deleteMany({ where: { payment: { user_id: { in: ids } } } });
 	await prisma.payments.deleteMany({ where: { user_id: { in: ids } } });
 	await prisma.reports.deleteMany({ where: { id: { in: reportIds } } });
 	await deleteAuthUsers(ids);
@@ -164,6 +170,142 @@ describe('POST /v1/payments/checkout amounts', () => {
 			value: false,
 			is_public: false,
 		});
+	});
+});
+
+describe('live gate (C13, FR-046, Q-012)', () => {
+	async function setConfig(values: Partial<Record<'payments.live_allowed' | 'fiscal.required', boolean | null>>) {
+		for (const [key, value] of Object.entries(values))
+			await prisma.app_config.update({ where: { key }, data: { value: value ?? Prisma.JsonNull } });
+		configStore.invalidate();
+	}
+	afterEach(async () => {
+		await setConfig({ 'payments.live_allowed': false, 'fiscal.required': null });
+	});
+
+	const fiscal = {
+		mock: adapters.fiscal,
+		off: { ...adapters.fiscal, provider: 'off' as const },
+		// FURS production: no provider is live yet (the furs provider is test-environment only).
+		live: { ...adapters.fiscal, provider: 'furs' as const, live: true },
+	};
+	const livePayments = { ...adapters.payments, live: true };
+	const ctxWith = (f: FiscalAdapter, actor?: Actor) => ({
+		...systemCtx({ actor }),
+		adapters: { ...adapters, fiscal: f },
+	});
+
+	it('starts closed: live_allowed false and the accountant decision open, both private', async () => {
+		for (const [key, value] of [
+			['payments.live_allowed', false],
+			['fiscal.required', null],
+		] as const)
+			expect(await prisma.app_config.findUniqueOrThrow({ where: { key } })).toMatchObject({
+				value,
+				is_public: false,
+			});
+		for (const f of Object.values(fiscal)) expect(await PaymentsDomain.liveGateOpen(ctxWith(f))).toBe(false);
+	});
+
+	it('opens only with live_allowed and live fiscal invoicing, or a recorded "not required" with the fiscal adapter off', async () => {
+		for (const live_allowed of [false, true])
+			for (const required of [null, true, false])
+				for (const [name, f] of Object.entries(fiscal)) {
+					await setConfig({ 'payments.live_allowed': live_allowed, 'fiscal.required': required });
+					const expected = live_allowed && (name === 'live' || (required === false && name === 'off'));
+					expect(await PaymentsDomain.liveGateOpen(ctxWith(f)), `${live_allowed} ${required} ${name}`).toBe(
+						expected
+					);
+				}
+	});
+
+	it('refuses a live checkout (422 LIVE_MODE_FORBIDDEN, nothing stored, provider untouched) until the gate opens', async () => {
+		const { id } = await user();
+		await prisma.profiles.upsert({ where: { id }, create: { id }, update: {} });
+		const actor: Actor = {
+			user_id: id,
+			role: 'USER',
+			is_anonymous: false,
+			aal: 'aal1',
+			email_verified: true,
+			locale: 'sl',
+		};
+		const create = vi.spyOn(livePayments, 'createCheckout');
+		const input = { purpose: 'tip', amount_cents: 500, locale: 'sl', return_to: '/my-reports' } as const;
+		const ctx = { ...ctxWith(fiscal.mock, actor), adapters: { ...adapters, payments: livePayments } };
+		await expect(PaymentsDomain.createCheckout(input, ctx)).rejects.toMatchObject({ code: 'LIVE_MODE_FORBIDDEN' });
+		// Live switch on, fiscal decision still open: closed.
+		await setConfig({ 'payments.live_allowed': true });
+		await expect(PaymentsDomain.createCheckout(input, ctx)).rejects.toMatchObject({ code: 'LIVE_MODE_FORBIDDEN' });
+		expect(create).not.toHaveBeenCalled();
+		expect(await prisma.payments.count({ where: { user_id: id } })).toBe(0);
+		// The accountant records "not required" and fiscal invoicing is off: open.
+		await setConfig({ 'fiscal.required': false });
+		const open = { ...ctx, adapters: { ...ctx.adapters, fiscal: fiscal.off } };
+		await expect(PaymentsDomain.createCheckout(input, open)).resolves.toMatchObject({
+			payment_id: expect.any(String),
+		});
+		expect(create).toHaveBeenCalledOnce();
+	});
+});
+
+describe('GET /v1/payments/:id/invoice.pdf', () => {
+	// superagent hands the raw response stream to a custom parser.
+	const binary = (res: request.Response, done: (err: Error | null, body: Buffer) => void) => {
+		const stream = res as unknown as NodeJS.ReadableStream;
+		const chunks: Buffer[] = [];
+		stream.on('data', (chunk: Buffer) => chunks.push(chunk));
+		stream.on('end', () => done(null, Buffer.concat(chunks)));
+	};
+	async function invoiced(owner: { auth: string }) {
+		const { payment_id } = (await checkout(owner.auth)).body;
+		const payment = await prisma.payments.update({ where: { id: payment_id }, data: { status: 'SUCCEEDED' } });
+		const invoice = await InvoicesDomain.issueInvoice(payment, 'Zahvala za Najdimo', systemCtx());
+		return { payment_id, invoice: invoice! };
+	}
+
+	it('serves the owner the PDF once the invoice is issued, 404 before', async () => {
+		const owner = await user();
+		const { payment_id } = (await checkout(owner.auth)).body;
+		const url = `/v1/payments/${payment_id}/invoice.pdf`;
+		const before = await request(app).get(url).set('Authorization', owner.auth);
+		expect(before.status).toBe(404);
+		expect(before.body.error.code).toBe('NOT_FOUND');
+
+		const issued = await invoiced(owner);
+		const res = await request(app)
+			.get(`/v1/payments/${issued.payment_id}/invoice.pdf`)
+			.set('Authorization', owner.auth)
+			.buffer(true)
+			.parse(binary);
+		expect(res.status).toBe(200);
+		expect(res.headers['content-type']).toBe('application/pdf');
+		expect(res.headers['content-disposition']).toBe(`attachment; filename="racun-${issued.invoice.number}.pdf"`);
+		expect(res.headers['cache-control']).toBe('private, no-store');
+		expect((res.body as Buffer).subarray(0, 5).toString()).toBe('%PDF-');
+	});
+
+	it('hides it from everyone else (404), staff included; anonymous and signed-out get 401', async () => {
+		const owner = await user();
+		const { payment_id } = await invoiced(owner);
+		const url = `/v1/payments/${payment_id}/invoice.pdf`;
+		for (const [role, aal] of [
+			['USER', 'aal1'],
+			['MODERATOR', 'aal1'],
+			['MODERATOR', 'aal2'],
+			['ADMIN', 'aal2'],
+		] as const) {
+			const other = await user({}, { aal });
+			await prisma.profiles.upsert({ where: { id: other.id }, create: { id: other.id, role }, update: { role } });
+			const res = await request(app).get(url).set('Authorization', other.auth);
+			expect(res.status, `${role} ${aal}`).toBe(404);
+		}
+		const anonymous = await user({ is_anonymous: true });
+		for (const auth of ['', anonymous.auth])
+			expect((await request(app).get(url).set('Authorization', auth)).status).toBe(401);
+		expect(
+			(await request(app).get('/v1/payments/not-a-uuid/invoice.pdf').set('Authorization', owner.auth)).status
+		).toBe(400);
 	});
 });
 

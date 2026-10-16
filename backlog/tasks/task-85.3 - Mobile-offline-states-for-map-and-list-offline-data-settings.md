@@ -1,11 +1,11 @@
 ---
 id: TASK-85.3
 title: 'Mobile offline states for map and list, offline data settings'
-status: To Do
+status: In Progress
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:39'
-updated_date: '2026-10-14 23:38'
+updated_date: '2026-10-16 00:15'
 labels:
   - fe
   - 'est:S'

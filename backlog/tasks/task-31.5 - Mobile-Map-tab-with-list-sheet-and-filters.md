@@ -1,11 +1,11 @@
 ---
 id: TASK-31.5
 title: Mobile Map tab with list sheet and filters
-status: To Do
+status: In Progress
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:14'
-updated_date: '2026-10-14 22:41'
+updated_date: '2026-10-16 00:10'
 labels:
   - fe
   - 'est:M'
@@ -42,9 +42,9 @@ Branch: agent/task-31.5-browse-mob
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 The Map tab shows clustered reports with a bottom-sheet list (@gorhom/bottom-sheet) as the accessible alternative, per P4.
-- [ ] #2 Filters (type, species, distance, date range, colour, size) narrow map and list and show counts with correct SL plurals.
-- [ ] #3 Boosted reports first, closed excluded by default, empty state with Report and Set alert, and an insertion point for ad cards.
-- [ ] #4 Map, list and report screens read reports only through lib/data/reports.ts hooks (C17 data seam), so the offline cache plugs in without screen changes.
-- [ ] #5 The map calls setCacheArea('current', point) with the last foreground location (TASK-85.2 offline cache), so the current area is cached for offline use.
+- [x] #1 The Map tab shows clustered reports with a bottom-sheet list (@gorhom/bottom-sheet) as the accessible alternative, per P4.
+- [x] #2 Filters (type, species, distance, date range, colour, size) narrow map and list and show counts with correct SL plurals.
+- [x] #3 Boosted reports first, closed excluded by default, empty state with Report and Set alert, and an insertion point for ad cards.
+- [x] #4 Map, list and report screens read reports only through lib/data/reports.ts hooks (C17 data seam), so the offline cache plugs in without screen changes.
+- [x] #5 The map calls setCacheArea('current', point) with the last foreground location (TASK-85.2 offline cache), so the current area is cached for offline use.
 <!-- AC:END -->

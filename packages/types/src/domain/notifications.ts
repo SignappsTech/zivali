@@ -35,6 +35,12 @@ export type NotificationPayloads = {
 		paid_at: IsoDateTime;
 		receipt_ref: string;
 		is_test: boolean;
+		/** Fiscal invoice (C13 §Fiscal invoices): number and ZOI when one was issued, the EOR once FURS confirmed it. */
+		has_invoice: boolean;
+		invoice_number?: string;
+		zoi?: string;
+		has_eor: boolean;
+		eor?: string;
 	};
 };
 

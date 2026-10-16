@@ -60,6 +60,36 @@ export function formatDate(date: Date | string | number, locale: Locale, style: 
 	return new Intl.DateTimeFormat(intlLocale[locale], { ...dateOptions[style], timeZone }).format(new Date(date));
 }
 
+// Slovenian dates read "12. oktobra": the month in the genitive, which Intl (CLDR) does not decline.
+const slMonthsGenitive = [
+	'januarja',
+	'februarja',
+	'marca',
+	'aprila',
+	'maja',
+	'junija',
+	'julija',
+	'avgusta',
+	'septembra',
+	'oktobra',
+	'novembra',
+	'decembra',
+];
+
+/** "12. oktobra" / "12 October" in the Ljubljana calendar, with the year when it is not the current one. */
+export function formatDayMonth(date: Date | string | number, locale: Locale, now: Date | number = Date.now()): string {
+	const parts = (d: Date) => Object.fromEntries(ljubljanaDate.formatToParts(d).map((p) => [p.type, p.value]));
+	const { day, month, year } = parts(new Date(date));
+	const withYear = year !== parts(new Date(now)).year;
+	if (locale === 'sl') return `${Number(day)}. ${slMonthsGenitive[Number(month) - 1]}${withYear ? ` ${year}` : ''}`;
+	return new Intl.DateTimeFormat('en-GB', {
+		day: 'numeric',
+		month: 'long',
+		year: withYear ? 'numeric' : undefined,
+		timeZone,
+	}).format(new Date(date));
+}
+
 /**
  * "zdaj" (under a minute, or a future time from clock skew), "pred 5 minutami", "pred 2 urama" (same Ljubljana
  * day), "včeraj", "pred 3 dnevi" (up to 6 days), then the short date. EN: "now", "5 minutes ago", "yesterday" ….

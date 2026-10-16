@@ -135,7 +135,19 @@ export const TYPES: Record<NotificationType, TypeSpec> = {
 		category: 'payment',
 		prefs: false,
 		link: () => '/account/payments',
-		fields: ['payment_id', 'amount_cents', 'purpose', 'paid_at', 'receipt_ref', 'is_test'],
+		fields: [
+			'payment_id',
+			'amount_cents',
+			'purpose',
+			'paid_at',
+			'receipt_ref',
+			'is_test',
+			'has_invoice',
+			'invoice_number',
+			'zoi',
+			'has_eor',
+			'eor',
+		],
 	},
 };
 
