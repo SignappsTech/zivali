@@ -1,7 +1,7 @@
 ---
 id: TASK-29.11
 title: 'Mobile lost flow: RATE_LIMITED shows the generic text, not the wait in minutes'
-status: To Do
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-16 09:01'
@@ -21,5 +21,8 @@ Linked: TASK-29 AC#6 (errors specific and localised), TASK-29.9. Steps: mobile l
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 A 429 with details.retry_after_s on POST /v1/reports shows errors.RATE_LIMITED with minutes (ceil(retry_after_s/60), min 1), as the web flow does; key kept (jest test)
+- [x] #1 A 429 with details.retry_after_s on POST /v1/reports shows errors.RATE_LIMITED with minutes (ceil(retry_after_s/60), min 1), as the web flow does; key kept (jest test)
 <!-- AC:END -->
+
+## Packet
+Branch: agent/task-29.12-lost-errors-mob

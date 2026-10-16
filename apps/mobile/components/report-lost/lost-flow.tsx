@@ -608,6 +608,7 @@ export function LostFlow() {
 	const router = useRouter();
 	const insets = useSafeAreaInsets();
 	const errorText = useErrorText();
+	const tErrors = useTranslations('errors');
 	const trackSubmit = useTrackSubmit();
 	const { gate, me } = useRequireAuth();
 	const petList = useListPetsQuery(gate === 'ok' ? undefined : skipToken);
@@ -757,6 +758,25 @@ export function LostFlow() {
 			edit('when');
 			form.setError(values.when === 'other' ? 'date' : 'time', { message: 'when_future' });
 			return;
+		}
+		if (data?.code === 'VALIDATION') {
+			// Other paths go to their step; a bare "check the marked fields" would point at nothing.
+			const roots = paths.map((path) => path.split(/[.[]/)[0]!);
+			const target = roots.includes('photo_ids')
+				? 'photos'
+				: roots.includes('location') || roots.includes('radius_m')
+					? 'where'
+					: steps.find((s) => STEP_FIELDS[s].some((field) => roots.includes(field)));
+			if (target) {
+				edit(target);
+				setAttempted(true);
+				return;
+			}
+		}
+		if (data?.code === 'RATE_LIMITED' && typeof data.details?.retry_after_s === 'number') {
+			return setSendError(
+				tErrors('RATE_LIMITED', { minutes: Math.max(1, Math.ceil(data.details.retry_after_s / 60)) })
+			);
 		}
 		setSendError(data?.code === 'NETWORK' ? t('send_failed') : errorText(error));
 	};

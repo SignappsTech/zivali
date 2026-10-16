@@ -3,7 +3,7 @@ id: TASK-29.12
 title: >-
   Mobile lost flow: VALIDATION on photo_ids, location or radius does not go back
   to its step
-status: To Do
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-16 09:01'
@@ -23,5 +23,8 @@ Linked: TASK-29 AC#6 (errors specific, form keeps input). Steps: mobile lost flo
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 A VALIDATION issue on photo_ids opens the photos step, on location or radius_m the where step, on a step field that step, input kept, as the web flow does (jest test)
+- [x] #1 A VALIDATION issue on photo_ids opens the photos step, on location or radius_m the where step, on a step field that step, input kept, as the web flow does (jest test)
 <!-- AC:END -->
+
+## Packet
+Branch: agent/task-29.12-lost-errors-mob
