@@ -1,11 +1,11 @@
 ---
 id: TASK-29.5
 title: Mobile report-lost flow
-status: To Do
+status: In Progress
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:14'
-updated_date: '2026-10-15 00:12'
+updated_date: '2026-10-16 00:01'
 labels:
   - fe
   - 'est:M'

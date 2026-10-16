@@ -1,11 +1,11 @@
 ---
 id: TASK-26.5
 title: 'Mobile My reports, owner actions and reunited screen'
-status: To Do
+status: In Progress
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:14'
-updated_date: '2026-10-14 22:42'
+updated_date: '2026-10-16 00:05'
 labels:
   - fe
   - 'est:M'
