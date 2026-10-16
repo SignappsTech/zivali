@@ -1082,8 +1082,12 @@ export function LostFlow({ initialPet, signedIn }: { initialPet?: string; signed
 				onOpenChange={(open) => {
 					setGateOpen(open);
 					if (!open) markUrl();
-					// Cancelled: the draft stays, unmarked, so a later visit asks before publishing.
-					if (!open && gate === 'signin') void saveDraft('review', form.getValues()).catch(() => {});
+					// Cancelled: the draft stays, unmarked, so a later visit asks before publishing; times go back to
+					// "when Objavi is pressed next".
+					if (!open && gate === 'signin') {
+						handoffAt.current = undefined;
+						void saveDraft('review', form.getValues()).catch(() => {});
+					}
 				}}
 				onReady={() => setAwaiting(true)}
 			/>
