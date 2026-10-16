@@ -102,7 +102,8 @@ model invoices {
   created_at           DateTime       @default(now()) @db.Timestamptz(6)
   updated_at           DateTime       @updatedAt @db.Timestamptz(6)
   payment              payments       @relation(fields: [payment_id], references: [id], onDelete: Restrict)
-  reference            invoices?      @relation("credit_notes", fields: [reference_invoice_id], references: [id], onDelete: Restrict)
+  // NoAction: checked at the end of the statement, so one delete may remove an invoice with its credit notes
+  reference            invoices?      @relation("credit_notes", fields: [reference_invoice_id], references: [id], onDelete: NoAction)
   credit_notes         invoices[]     @relation("credit_notes")
 
   // One invoice per payment (0), one credit note per refund

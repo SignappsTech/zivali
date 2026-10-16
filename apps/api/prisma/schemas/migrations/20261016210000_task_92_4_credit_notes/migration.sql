@@ -1,5 +1,5 @@
 -- task: TASK-92.4
--- rollback: delete from app.invoices where reference_invoice_id is not null; alter table app.invoices drop constraint invoices_reference_invoice_id_fkey, drop constraint invoices_amounts_check, drop column reference_invoice_id, drop column refund_total_cents, add constraint invoices_amounts_check check (gross_cents > 0 and net_cents >= 0 and vat_cents >= 0 and net_cents + vat_cents = gross_cents); drop index app.invoices_payment_id_refund_total_cents_key; create unique index invoices_payment_id_key on app.invoices (payment_id); alter table app.payments drop column refunded_cents;
+-- rollback: delete from app.invoices where reference_invoice_id is not null; drop index app.invoices_payment_id_refund_total_cents_key; create unique index invoices_payment_id_key on app.invoices (payment_id); alter table app.invoices drop constraint invoices_reference_invoice_id_fkey, drop constraint invoices_amounts_check, drop column reference_invoice_id, drop column refund_total_cents, add constraint invoices_amounts_check check (gross_cents > 0 and net_cents >= 0 and vat_cents >= 0 and net_cents + vat_cents = gross_cents); alter table app.payments drop column refunded_cents;
 -- Credit notes (dobropis, C13 §Fiscal invoices): rows of the invoice series with negative amounts that reference the
 -- invoice, one per refund (keyed by the refunded total it reached); payments.refunded_cents follows Stripe's
 -- cumulative amount_refunded. Check constraints are hand-written below (Prisma does not model them).
@@ -18,7 +18,7 @@ DROP INDEX "invoices_payment_id_key";
 ALTER TABLE "payments" ADD COLUMN     "refunded_cents" INTEGER NOT NULL DEFAULT 0;
 
 -- AddForeignKey
-ALTER TABLE "invoices" ADD CONSTRAINT "invoices_reference_invoice_id_fkey" FOREIGN KEY ("reference_invoice_id") REFERENCES "invoices"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "invoices" ADD CONSTRAINT "invoices_reference_invoice_id_fkey" FOREIGN KEY ("reference_invoice_id") REFERENCES "invoices"("id") ON DELETE NO ACTION ON UPDATE CASCADE;
 
 -- An invoice has positive amounts and no refund; a credit note references an invoice and has negative amounts.
 alter table app.invoices

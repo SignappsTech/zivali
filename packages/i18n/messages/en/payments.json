@@ -24,6 +24,7 @@
 	"purpose_support": "Support for Najdimo",
 	"status_paid": "Paid",
 	"status_refunded": "Refunded",
+	"refunded_partial": "Partly refunded: {amount}",
 	"status_failed": "Failed",
 	"receipt": "Receipt",
 	"test_label": "Test",

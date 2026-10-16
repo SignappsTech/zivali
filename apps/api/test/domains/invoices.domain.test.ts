@@ -486,3 +486,71 @@ describe('fiscal.resubmit (TASK-92.3)', () => {
 		expect(email.sent!.filter((m) => m.to === admin)).toHaveLength(1);
 	});
 });
+
+describe('credit notes (TASK-92.4)', () => {
+	it('numbers one per refund in the invoice’s series, negative with its VAT, referencing the invoice', async () => {
+		const mock = mockFiscal({ tax_number: '12345678', premise_id: 'X', device_id: 'D1' });
+		const send = vi.fn<FiscalAdapter['issue']>().mockImplementation((invoice) => mock.issue(invoice));
+		const { ctx, fiscal, premise_id } = fiscalCtx({ issue: send });
+		const payment = await succeeded(1000);
+		const invoice = (await issue(payment, 'Zahvala', ctx))!;
+		const partial = await InvoicesDomain.issueCreditNote(
+			invoice,
+			{ total_cents: 300, amount_cents: 300 },
+			'Zahvala',
+			ctx
+		);
+		const rest = await InvoicesDomain.issueCreditNote(
+			invoice,
+			{ total_cents: 1000, amount_cents: 700 },
+			'Zahvala',
+			ctx
+		);
+		for (const [note, sequence, gross, net, vat, total] of [
+			[partial!, 2, -300, -246, -54, 300],
+			[rest!, 3, -700, -574, -126, 1000],
+		] as const) {
+			expect(note).toMatchObject({
+				payment_id: payment.id,
+				reference_invoice_id: invoice.id,
+				refund_total_cents: total,
+				sequence,
+				number: `${premise_id}-D1-${sequence}`,
+				gross_cents: gross,
+				net_cents: net,
+				vat_cents: vat,
+				vat_rate: 22,
+				status: 'VERIFIED',
+				eor: expect.any(String),
+				pdf_key: `invoices/${note.id}.pdf`,
+			});
+			expect(note.zoi).toBe(fiscal.zoi({ ...note, subsequent: false }));
+			const pdf = await adapters.storage.get({ bucket: 'private', key: note.pdf_key! });
+			expect(pdf.subarray(0, 5).toString()).toBe('%PDF-');
+		}
+		// The two credit notes undo the invoice exactly.
+		expect(partial!.gross_cents + rest!.gross_cents).toBe(-invoice.gross_cents);
+		expect(partial!.vat_cents + rest!.vat_cents).toBe(-invoice.vat_cents);
+		// FURS gets the invoice's number and issue time as ReferenceInvoice.
+		const reference = { premise_id, device_id: 'D1', sequence: 1, issued_at: invoice.issued_at };
+		expect(send.mock.calls.map(([sent]) => sent.reference)).toEqual([undefined, reference, reference]);
+	});
+
+	it('is idempotent across job retries and racing runs: one credit note per refund, no number lost', async () => {
+		const { ctx, premise_id } = fiscalCtx();
+		const payment = await succeeded(500);
+		const invoice = (await issue(payment, 'Zahvala', ctx))!;
+		const refund = { total_cents: 500, amount_cents: 500 };
+		const runs = await Promise.allSettled(
+			Array.from({ length: 4 }, () => InvoicesDomain.issueCreditNote(invoice, refund, 'Zahvala', ctx))
+		);
+		for (const run of runs)
+			if (run.status === 'rejected') expect(String(run.reason)).toMatch(/verification already in progress/);
+		const again = await InvoicesDomain.issueCreditNote(invoice, refund, 'Zahvala', ctx);
+		expect(again).toMatchObject({ sequence: 2, gross_cents: -500, status: 'VERIFIED' });
+		expect(await prisma.invoices.count({ where: { payment_id: payment.id } })).toBe(2);
+		// A lost race gave its number back: the next invoice of the series follows without a gap.
+		expect(await issue(await succeeded(), 'Zahvala', ctx)).toMatchObject({ sequence: 3 });
+		expect(await prisma.invoices.count({ where: { premise_id } })).toBe(3);
+	});
+});

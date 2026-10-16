@@ -289,3 +289,98 @@ describe('mock provider end to end', () => {
 		expect(await prisma.notifications.count({ where: { user_id: id } })).toBe(0);
 	});
 });
+
+describe('refunds and credit notes (TASK-92.4)', () => {
+	const invoiceOf = (payment_id: string) =>
+		prisma.invoices.findUniqueOrThrow({
+			where: { payment_id_refund_total_cents: { payment_id, refund_total_cents: 0 } },
+		});
+	const notesOf = (reference_invoice_id: string) =>
+		prisma.invoices.findMany({ where: { reference_invoice_id }, orderBy: { sequence: 'asc' } });
+	const charge = (payment_id: string, amount: number) => ({
+		id: `ch_${randomUUID()}`,
+		payment_intent: `mock_pi_${payment_id}`,
+		amount,
+		metadata: {},
+	});
+	const refunded = (object: object, amount_refunded: number, full = false) =>
+		event('charge.refunded', { ...object, amount_refunded, refunded: full });
+
+	it('a partial then a full refund: one credit note each, idempotent across redelivery and job retries', async () => {
+		const owner = await user();
+		const payment_id = await pay(owner.auth, 1000);
+		await post(mockEvent('success', payment_id));
+		await drain(runJob);
+		const invoice = await invoiceOf(payment_id);
+		const ch = charge(payment_id, 1000);
+
+		const partial = refunded(ch, 300);
+		expect((await post(partial)).status).toBe(200);
+		// Stripe redelivers the same event; a replay under a new event id carries the same refunded total.
+		expect((await post(partial)).status).toBe(200);
+		expect((await post(refunded(ch, 300))).status).toBe(200);
+		await drain(runJob);
+		// payment.effects runs the same refund again (a retry after its credit note was stored).
+		const { handlers } = await import('../../jobs/index.ts');
+		const { jobs } = await import('../../lib/jobs.ts');
+		const jobCtx = { ...systemCtx(), prisma, send: jobs.send };
+		await handlers['payment.effects']({ payment_id, refund: { total_cents: 300, amount_cents: 300 } }, jobCtx);
+
+		const [first, ...none] = await notesOf(invoice.id);
+		expect(none).toHaveLength(0);
+		expect(first).toMatchObject({
+			payment_id,
+			refund_total_cents: 300,
+			premise_id: invoice.premise_id,
+			device_id: invoice.device_id,
+			gross_cents: -300,
+			net_cents: -246,
+			vat_cents: -54,
+			status: 'VERIFIED',
+			pdf_key: `invoices/${first!.id}.pdf`,
+		});
+		expect(first!.sequence).toBeGreaterThan(invoice.sequence);
+		let res = await request(app).get(`/v1/payments/${payment_id}`).set('Authorization', owner.auth);
+		expect(res.body).toMatchObject({ status: 'succeeded', amount_cents: 1000, refunded_cents: 300 });
+
+		// The rest is refunded; a late event with the earlier total changes nothing.
+		await post(refunded(ch, 1000, true));
+		await post(refunded(ch, 300));
+		await drain(runJob);
+		const notes = await notesOf(invoice.id);
+		expect(notes.map((n) => [n.refund_total_cents, n.gross_cents, n.status])).toEqual([
+			[300, -300, 'VERIFIED'],
+			[1000, -700, 'VERIFIED'],
+		]);
+		expect(notes[1]!.number).toBe(`${invoice.premise_id}-${invoice.device_id}-${notes[1]!.sequence}`);
+		const pdf = await adapters.storage.get({ bucket: 'private', key: notes[1]!.pdf_key! });
+		expect(pdf.subarray(0, 5).toString()).toBe('%PDF-');
+
+		// My payments shows the refund.
+		res = await request(app).get(`/v1/payments/${payment_id}`).set('Authorization', owner.auth);
+		expect(res.body).toMatchObject({ status: 'refunded', refunded_cents: 1000 });
+		res = await request(app).get('/v1/me/payments').set('Authorization', owner.auth);
+		expect(res.body.items.find((p: { id: string }) => p.id === payment_id)).toMatchObject({
+			status: 'refunded',
+			amount_cents: 1000,
+			refunded_cents: 1000,
+		});
+		// One receipt, sent for the payment before the refunds.
+		expect(adapters.email.sent!.filter((m) => m.to === owner.email)).toHaveLength(1);
+	});
+
+	it('a refund before payment.effects ran: the invoice first, then its credit note; no receipt', async () => {
+		const owner = await user();
+		const payment_id = await pay(owner.auth, 500);
+		await post(mockEvent('success', payment_id));
+		await post(refunded(charge(payment_id, 500), 500, true));
+		await drain(runJob);
+		const invoice = await invoiceOf(payment_id);
+		expect(invoice).toMatchObject({ gross_cents: 500, status: 'VERIFIED' });
+		expect(await notesOf(invoice.id)).toMatchObject([
+			{ refund_total_cents: 500, gross_cents: -500, net_cents: -410, vat_cents: -90, status: 'VERIFIED' },
+		]);
+		expect((await prisma.payments.findUniqueOrThrow({ where: { id: payment_id } })).status).toBe('REFUNDED');
+		expect(adapters.email.sent!.filter((m) => m.to === owner.email)).toHaveLength(0);
+	});
+});
