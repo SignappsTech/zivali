@@ -388,6 +388,8 @@ describe('LostFlow', () => {
 		expect(api.updateReport).toHaveBeenCalledWith(
 			expect.objectContaining({ code: 'Pq7xYz12', body: expect.objectContaining({ photo_ids: ['photo-1'] }) })
 		);
+		// Only a created report is a report_lost_submit.
+		expect(api.getReport).not.toHaveBeenCalled();
 	});
 
 	it('creates a new report with the pet inline when the owner chooses so after a 409', async () => {
@@ -420,13 +422,150 @@ describe('LostFlow', () => {
 		expect(second.idempotencyKey).not.toBe(api.createReport.mock.calls[0]![0].idempotencyKey);
 	});
 
-	it('waits for a photo to upload before publishing', async () => {
+	it('sends the owner to the photos step with a retry-or-remove message when a photo failed', async () => {
 		show();
 		await toReview();
 		photosUp([{ key: 'k1', preview: 'blob:1', status: 'failed' }]);
 		click(t.publish);
-		expect(await screen.findByText(t.photos_wait)).toBeTruthy();
+		await heading(t.photos_title);
+		expect(screen.getByText(t.photos_failed)).toBeTruthy();
 		expect(api.createReport).not.toHaveBeenCalled();
+	});
+
+	it('does not drop a failed photo when another one uploaded', async () => {
+		show();
+		await toReview();
+		photosUp([uploaded, { key: 'k2', preview: 'blob:2', status: 'failed' }]);
+		click(t.publish);
+		await heading(t.photos_title);
+		expect(api.createReport).not.toHaveBeenCalled();
+	});
+
+	it('takes a new key and the new event_at when only the time was edited after a network failure', async () => {
+		api.createReport.mockRejectedValueOnce({ status: 0, data: { code: 'NETWORK', message: 'offline' } });
+		show();
+		await toReview();
+		click(t.publish);
+		await screen.findByText(t.send_failed);
+		click(`${t.review_edit}: ${t.review_time}`);
+		await heading(t.when_title);
+		fireEvent.click(screen.getByRole('radio', { name: t.when_other }));
+		fireEvent.change(screen.getByLabelText(t.when_date), { target: { value: '2026-10-15' } });
+		fireEvent.change(screen.getByLabelText(t.when_time), { target: { value: '10:00' } });
+		click(t.next);
+		await heading(t.review_title);
+		click(t.publish);
+		await heading(t.done_title);
+		const [first, second] = api.createReport.mock.calls.map(([arg]) => arg);
+		expect(second.idempotencyKey).not.toBe(first.idempotencyKey);
+		expect(second.body.event_at).toBe(new Date(2026, 9, 15, 10, 0).toISOString());
+	});
+
+	it.each([
+		['a gateway 502', { status: 502, data: { code: 'INTERNAL', message: 'bad gateway' } }],
+		['a 429', { status: 429, data: { code: 'RATE_LIMITED', message: 'x', details: { retry_after_s: 90 } } }],
+	])('keeps the key after %s, so the retry cannot create a second report', async (_name, failure) => {
+		api.createReport.mockRejectedValueOnce(failure);
+		show();
+		await toReview();
+		click(t.publish);
+		await screen.findByRole('alert');
+		click(t.publish);
+		await heading(t.done_title);
+		const [first, second] = api.createReport.mock.calls.map(([arg]) => arg);
+		expect(second.idempotencyKey).toBe(first.idempotencyKey);
+		expect(second.body).toEqual(first.body);
+	});
+
+	it('takes a new key after a definitive refusal', async () => {
+		api.createReport.mockRejectedValueOnce({ status: 403, data: { code: 'FORBIDDEN', message: 'x' } });
+		show();
+		await toReview();
+		click(t.publish);
+		await screen.findByRole('alert');
+		click(t.publish);
+		await heading(t.done_title);
+		const [first, second] = api.createReport.mock.calls.map(([arg]) => arg);
+		expect(second.idempotencyKey).not.toBe(first.idempotencyKey);
+	});
+
+	it('names the wait in minutes on RATE_LIMITED with retry_after_s', async () => {
+		api.createReport.mockRejectedValueOnce({
+			status: 429,
+			data: { code: 'RATE_LIMITED', message: 'x', details: { retry_after_s: 100 } },
+		});
+		show();
+		await toReview();
+		click(t.publish);
+		expect(await screen.findByText(/čez 2 minuti/)).toBeTruthy();
+	});
+
+	it('sends a VALIDATION on photo_ids to the photos step, and one on species to the details step', async () => {
+		api.createReport.mockRejectedValueOnce({
+			status: 422,
+			data: { code: 'VALIDATION', message: 'x', issues: [{ path: 'photo_ids', message: 'INVALID' }] },
+		});
+		api.createReport.mockRejectedValueOnce({
+			status: 422,
+			data: { code: 'VALIDATION', message: 'x', issues: [{ path: 'species', message: 'INVALID' }] },
+		});
+		show();
+		await toReview();
+		click(t.publish);
+		await heading(t.photos_title);
+		click(t.next);
+		await heading(t.review_title);
+		click(t.publish);
+		await heading(t.details_title);
+	});
+
+	it('starts one publish for a double click', async () => {
+		let release!: (value: unknown) => void;
+		api.createReport.mockReturnValueOnce(new Promise((resolve) => (release = resolve)));
+		show();
+		await toReview();
+		const publish = button(t.publish);
+		fireEvent.click(publish);
+		fireEvent.click(publish);
+		await waitFor(() => expect(api.createReport).toHaveBeenCalledTimes(1));
+		release({ id: 'r1', short_code: 'Hk3vT9qP', moderation_state: 'visible', warnings: [] });
+		await heading(t.done_title);
+		expect(api.createReport).toHaveBeenCalledTimes(1);
+	});
+
+	it('forgets the open search found for one pet when another pet is chosen', async () => {
+		const other = { ...pet, id: 'pet-2', name: 'Muri' };
+		api.pets = [pet, other];
+		api.createReport.mockRejectedValueOnce({
+			status: 409,
+			data: { code: 'DUPLICATE_OPEN_REPORT', message: 'x', details: { short_code: 'Pq7xYz12' } },
+		});
+		show({ initialPet: pet.id });
+		await heading(t.pet_title);
+		click(t.next);
+		await heading(t.photos_title);
+		photosUp();
+		click(t.next);
+		await heading(sl.location.title_lost);
+		click(sl.location.confirm);
+		await heading(t.when_title);
+		click(t.next);
+		await heading(t.circumstances_title);
+		click(t.next);
+		await heading(t.review_title);
+		click(t.publish);
+		await screen.findByText(t.duplicate_title);
+
+		click(`${t.review_edit}: ${t.review_pet}`);
+		await heading(t.pet_title);
+		fireEvent.click(screen.getByRole('radio', { name: `${other.name} · Pes` }));
+		click(t.next);
+		await heading(t.review_title);
+		expect(screen.queryByText(t.duplicate_title)).toBeNull();
+		click(t.publish);
+		await heading(t.done_title);
+		expect(api.updateReport).not.toHaveBeenCalled();
+		expect(api.createReport.mock.calls[1]![0].body).toMatchObject({ pet_id: 'pet-2' });
 	});
 
 	it('offers to resume a saved draft at its step', async () => {

@@ -39,7 +39,8 @@ export default async function ReportLostPage({ params, searchParams }: PageProps
 		getMessages({ locale }),
 		getViewer(),
 	]);
-	const next = getPathname({ locale, href: HREF });
+	const next =
+		getPathname({ locale, href: HREF }) + (typeof pet === 'string' ? `?pet=${encodeURIComponent(pet)}` : '');
 	const ld = (
 		<script
 			type="application/ld+json"

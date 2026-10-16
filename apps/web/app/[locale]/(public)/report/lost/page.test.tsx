@@ -76,6 +76,13 @@ describe('ReportLostPage', () => {
 		expect(ld['@graph'].map((node: { '@type': string }) => node['@type'])).toEqual(['WebPage', 'BreadcrumbList']);
 	});
 
+	it('carries ?pet= through the sign-in hand-off', async () => {
+		await show('sl', { pet: 'pet-1' });
+		expect(screen.getByRole('link', { name: sl.auth.gate_signin }).getAttribute('href')).toBe(
+			'/vpis?next=%2Fprijava%2Fizgubljena-zival%3Fpet%3Dpet-1'
+		);
+	});
+
 	it('gives a signed-in owner the flow with its namespaces and the pet from ?pet=', async () => {
 		viewer.current = { initials: 'AN', aal2: false };
 		await show('en', { pet: 'pet-1' });

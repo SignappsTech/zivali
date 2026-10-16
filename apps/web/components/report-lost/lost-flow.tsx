@@ -605,6 +605,7 @@ function useTrackSubmit() {
 export function LostFlow({ initialPet }: { initialPet?: string }) {
 	const t = useTranslations('report_lost');
 	const errorText = useErrorText();
+	const tErrors = useTranslations('errors');
 	const trackSubmit = useTrackSubmit();
 	const { gate, me, isVerified } = useRequireAuth();
 	const petList = useListPetsQuery(gate === 'ok' ? undefined : skipToken);
@@ -629,14 +630,17 @@ export function LostFlow({ initialPet }: { initialPet?: string }) {
 	const [resume, setResume] = React.useState<Draft>();
 	const [sending, setSending] = React.useState(false);
 	const [sendError, setSendError] = React.useState<string>();
-	const [duplicate, setDuplicate] = React.useState<string>();
+	const [found, setFound] = React.useState<{ code: string; pet?: string }>();
 	const [update, setUpdate] = React.useState(true);
 	const [done, setDone] = React.useState<{ name?: string }>();
 	// Stable across repeats of one submission (C1): key, exact body and its event_at. Cleared once the server has answered.
-	const submission = React.useRef<{ key: string; body: string; at: Date } | null>(null);
+	const submission = React.useRef<{ key: string; body: string; when: LostValues['when']; at: Date } | null>(null);
+	const busy = React.useRef(false);
 	const root = React.useRef<HTMLElement>(null);
 	const headingId = React.useId();
 	const pet = pets.find((p) => p.id === values.pet);
+	// The open search found by a 409 belongs to the pet it was found for; another choice is a fresh question.
+	const duplicate = found && found.pet === values.pet ? found.code : undefined;
 
 	React.useEffect(() => track('report_lost_start'), []);
 
@@ -702,10 +706,15 @@ export function LostFlow({ initialPet }: { initialPet?: string }) {
 
 	const failed = (error: unknown) => {
 		const data = (error as Partial<QueryError> | null)?.data;
-		if (data?.code !== 'NETWORK') submission.current = null;
+		// The API stores no 5xx/429 answer, so the same key may repeat safely (createReport dedupes on it); only a
+		// definitive refusal ends the submission.
+		const status = (error as Partial<QueryError> | null)?.status;
+		const retriable =
+			data?.code === 'NETWORK' || data?.code === 'RATE_LIMITED' || (typeof status === 'number' && status >= 500);
+		if (!retriable) submission.current = null;
 		const paths = (data?.issues ?? []).map((issue) => issue.path);
 		if (data?.code === 'DUPLICATE_OPEN_REPORT' && typeof data.details?.short_code === 'string') {
-			setDuplicate(data.details.short_code);
+			setFound({ code: data.details.short_code, pet: values.pet });
 			setUpdate(true);
 			return;
 		}
@@ -725,16 +734,41 @@ export function LostFlow({ initialPet }: { initialPet?: string }) {
 			form.setError(values.when === 'other' ? 'date' : 'time', { message: 'when_future' });
 			return;
 		}
+		if (data?.code === 'VALIDATION') {
+			// Other paths go to their step; a bare "check the marked fields" would point at nothing.
+			const roots = paths.map((path) => path.split(/[.[]/)[0]!);
+			const target = roots.includes('photo_ids')
+				? 'photos'
+				: roots.includes('location') || roots.includes('radius_m')
+					? 'where'
+					: steps.find((s) => STEP_FIELDS[s].some((field) => roots.includes(field)));
+			if (target) return edit(target);
+		}
+		if (data?.code === 'RATE_LIMITED' && typeof data.details?.retry_after_s === 'number') {
+			return setSendError(
+				tErrors('RATE_LIMITED', { minutes: Math.max(1, Math.ceil(data.details.retry_after_s / 60)) })
+			);
+		}
 		setSendError(data?.code === 'NETWORK' ? t('send_failed') : errorText(error));
 	};
 
 	const uploading = photos.some((photo) => photo.status === 'uploading');
 	const publish = async () => {
+		if (busy.current || uploading) return;
+		busy.current = true;
+		try {
+			await send();
+		} finally {
+			busy.current = false;
+		}
+	};
+	const send = async () => {
 		setSendError(undefined);
 		const photoIds = photos.flatMap((photo) =>
 			photo.status === 'uploaded' && photo.photoId ? [photo.photoId] : []
 		);
 		if (!photos.length) return setSendError(t('photos_required'));
+		if (photos.some((photo) => photo.status === 'failed')) return edit('photos');
 		if (!photoIds.length) return setSendError(t('photos_wait'));
 		for (const s of steps) {
 			const fields = STEP_FIELDS[s];
@@ -753,17 +787,21 @@ export function LostFlow({ initialPet }: { initialPet?: string }) {
 					.short_code;
 			} else {
 				// A retry after NETWORK repeats key and body (event_at included); any edit is a new submission.
-				const make = (when: Date) =>
-					createBody(values, { photoIds, at: when, pet, inline: Boolean(duplicate) });
 				const prev = submission.current;
-				if (!prev || JSON.stringify(make(prev.at)) !== prev.body) {
-					submission.current = { key: crypto.randomUUID(), body: JSON.stringify(make(at)), at };
+				// "Now" is stamped once per submission; a changed time or date is an edit.
+				const sameNow = prev?.when === 'now' && values.when === 'now';
+				const when = sameNow ? prev.at : at;
+				const next = JSON.stringify(
+					createBody(values, { photoIds, at: when, pet, inline: Boolean(duplicate) })
+				);
+				if (!prev || next !== prev.body) {
+					submission.current = { key: crypto.randomUUID(), body: next, when: values.when, at: when };
 				}
 				const { key, body } = submission.current!;
 				code = (await createReport({ body: JSON.parse(body), idempotencyKey: key }).unwrap()).short_code;
 			}
 			submission.current = null;
-			trackSubmit(code);
+			if (!(duplicate && update)) trackSubmit(code);
 			await dropDraft();
 			setDone({ name: pet?.name ?? values.name?.trim() });
 		} catch (error) {
@@ -855,6 +893,9 @@ export function LostFlow({ initialPet }: { initialPet?: string }) {
 									}
 									className="mt-6"
 								/>
+								{step === 'photos' && photos.some((photo) => photo.status === 'failed') && (
+									<FieldError className="mt-4">{t('photos_failed')}</FieldError>
+								)}
 								{attempted && step === 'photos' && !photos.length && (
 									<FieldError className="mt-4">{t('photos_required')}</FieldError>
 								)}
