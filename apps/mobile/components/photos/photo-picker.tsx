@@ -28,7 +28,7 @@ import { Text } from '@/components/ui/text';
 import { cn } from '@/lib/utils';
 
 import type { PhotoExif } from './prepare-photo';
-import { type DraftKind, type ExistingPhoto, type PickedPhoto, usePhotoUploads } from './use-photo-uploads';
+import { type DraftKind, type PickedPhoto, type SavedPhoto, usePhotoUploads } from './use-photo-uploads';
 
 /** Photo source tile (P6 .ptile): card surface, radius 20, the tile is the button; pressed lays foreground at 10 %. */
 function Tile({ icon, label, onPress }: { icon: typeof CameraIcon; label: string; onPress: () => void }) {
@@ -64,7 +64,7 @@ type PhotoPickerProps = {
 	/** Place and time read from a photo, for LocationPicker `suggested`. Coarsen the point before it goes anywhere. */
 	onExif?: (exif: PhotoExif) => void;
 	/** Photos the entity already has (editing a pet), read on mount; they come first. */
-	existing?: ExistingPhoto[];
+	saved?: SavedPhoto[];
 	/** Remove asks first with this dialog copy (P8: removed photos are deleted from storage too). */
 	confirmRemove?: { title: string; body: string; confirm: string };
 	className?: string;
@@ -80,7 +80,7 @@ export function PhotoPicker({
 	cameraPrimer,
 	onChange,
 	onExif,
-	existing,
+	saved,
 	confirmRemove,
 	className,
 }: PhotoPickerProps) {
@@ -89,7 +89,7 @@ export function PhotoPicker({
 	const { photos, preparing, notice, pick, remove, move, retry } = usePhotoUploads(draft, kind, {
 		cameraPrimer,
 		onExif,
-		existing,
+		saved,
 	});
 	// The photo waiting for the remove confirmation.
 	const [removing, setRemoving] = React.useState<string>();

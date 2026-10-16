@@ -671,7 +671,7 @@ describe('PhotoPicker', () => {
 		const onChange = jest.fn();
 		await renderPicker({
 			onChange,
-			existing: [
+			saved: [
 				{ id: 'photo-1', thumb_url: 'https://media.zivali.test/1.webp' },
 				{ id: 'photo-2', thumb_url: 'https://media.zivali.test/2.webp' },
 			],

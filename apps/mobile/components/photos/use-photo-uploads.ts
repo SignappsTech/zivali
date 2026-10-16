@@ -48,13 +48,13 @@ export type PickedPhoto = Stored &
 		status: 'uploading' | 'uploaded' | 'failed';
 		progress: number;
 		error?: PhotoMessage;
-		/** One of `existing`: already on the server, nothing on disk or in the draft. */
-		existing?: true;
+		/** One of `saved`: already on the server, nothing on disk or in the draft. */
+		saved?: true;
 	};
 /** A photo the entity already has (C5 `{ id, thumb_url }`, e.g. a pet's), shown first and kept by its id. */
-export type ExistingPhoto = { id: string; thumb_url: string };
+export type SavedPhoto = { id: string; thumb_url: string };
 
-const fromExisting = ({ id, thumb_url }: ExistingPhoto): PickedPhoto => ({
+const fromSaved = ({ id, thumb_url }: SavedPhoto): PickedPhoto => ({
 	key: id,
 	photoId: id,
 	sha256: '',
@@ -65,7 +65,7 @@ const fromExisting = ({ id, thumb_url }: ExistingPhoto): PickedPhoto => ({
 	thumb: { uri: thumb_url },
 	status: 'uploaded',
 	progress: 1,
-	existing: true,
+	saved: true,
 });
 
 const fileErrors = {
@@ -105,7 +105,7 @@ async function loadDraft(draft: string): Promise<Stored[]> {
 /** The form writes `data`; the picker writes only `photo_paths`, creating the draft row if the form has not yet. */
 async function saveDraft(draft: string, kind: DraftKind, photos: PickedPhoto[]) {
 	const stored = photos
-		.filter((photo) => !photo.existing)
+		.filter((photo) => !photo.saved)
 		.map(({ key, sha256, width, height, bytes, photoId, uploadedAt }): Stored => ({
 			key,
 			sha256,
@@ -146,7 +146,7 @@ function failure(error: unknown): { message: PhotoMessage; retry: boolean } {
  * is done soonest on a weak connection, retries with backoff, aborts on remove, and resumes from the drafts table after
  * an app restart or going back online. `cameraPrimer` is shown before the OS camera prompt; no camera means the
  * gallery. `onExif` gets the place and time read from a photo, to offer them with consent; nothing stores them.
- * `existing` photos (read on mount) come first; removing one only drops it from the list, the caller detaches it.
+ * `saved` photos (read on mount) come first; removing one only drops it from the list, the caller detaches it.
  */
 export function usePhotoUploads(
 	draft: string,
@@ -154,8 +154,8 @@ export function usePhotoUploads(
 	{
 		cameraPrimer,
 		onExif,
-		existing = [],
-	}: { cameraPrimer: () => Promise<boolean>; onExif?: (exif: PhotoExif) => void; existing?: ExistingPhoto[] }
+		saved = [],
+	}: { cameraPrimer: () => Promise<boolean>; onExif?: (exif: PhotoExif) => void; saved?: SavedPhoto[] }
 ) {
 	const t = useTranslations('photos');
 	const online = isOnline(useNetworkState());
@@ -291,7 +291,7 @@ export function usePhotoUploads(
 		live.current.controllers.get(key)?.abort();
 		clearTimeout(live.current.timers.get(key));
 		const photo = live.current.photos.find((item) => item.key === key);
-		if (photo && !photo.existing) removeFiles(photo);
+		if (photo && !photo.saved) removeFiles(photo);
 		commit(live.current.photos.filter((item) => item.key !== key));
 		void save();
 	}
@@ -311,7 +311,7 @@ export function usePhotoUploads(
 
 	const restore = useEffectEvent(async (cancelled: () => boolean) => {
 		const stored = await loadDraft(draft).catch(() => []);
-		if (cancelled() || !(stored.length || existing.length)) return;
+		if (cancelled() || !(stored.length || saved.length)) return;
 		const restored = stored.flatMap((photo): PickedPhoto[] => {
 			const kept = filesOf(draft, photo.key);
 			if (!new File(kept.file.uri).exists) return [];
@@ -326,7 +326,7 @@ export function usePhotoUploads(
 				},
 			];
 		});
-		commit([...existing.map(fromExisting), ...restored, ...live.current.photos]);
+		commit([...saved.map(fromSaved), ...restored, ...live.current.photos]);
 		for (const photo of restored) if (!photo.photoId) enqueue(photo.key);
 	});
 	const backOnline = useEffectEvent(() => {

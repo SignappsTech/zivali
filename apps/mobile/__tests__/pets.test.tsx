@@ -30,7 +30,7 @@ type PickerProps = {
 	draft: string;
 	kind: string;
 	onChange?: (photos: Partial<PickedPhoto>[]) => void;
-	existing?: { id: string }[];
+	saved?: { id: string }[];
 	confirmRemove?: { title: string; body: string; confirm: string };
 };
 const mockPickerProps = jest.fn((_props: PickerProps) => {});
@@ -38,7 +38,7 @@ const mockPickerProps = jest.fn((_props: PickerProps) => {});
 function MockPhotoPicker(props: PickerProps) {
 	mockPickerProps(props);
 	const [list, setList] = React.useState<Partial<PickedPhoto>[]>(() =>
-		(props.existing ?? []).map(({ id }) => ({ key: id, photoId: id, status: 'uploaded' }))
+		(props.saved ?? []).map(({ id }) => ({ key: id, photoId: id, status: 'uploaded' }))
 	);
 	const { onChange } = props;
 	React.useEffect(() => onChange?.(list), [list, onChange]);
@@ -416,7 +416,7 @@ describe('Add and edit', () => {
 		await press(t.edit);
 
 		expect(await heading(t.section_photos)).toBeOnTheScreen();
-		expect(mockPickerProps.mock.lastCall?.[0]).toMatchObject({ draft: `pet-${luna.id}`, existing: luna.photos });
+		expect(mockPickerProps.mock.lastCall?.[0]).toMatchObject({ draft: `pet-${luna.id}`, saved: luna.photos });
 		await press('test: remove first');
 		await next();
 		expect(screen.getByLabelText(t.name_label).props.value).toBe('Luna');

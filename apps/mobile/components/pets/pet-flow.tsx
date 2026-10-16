@@ -274,7 +274,7 @@ export function PetFlow({ pet }: { pet?: Pet }) {
 								kind="pet"
 								cameraPrimer={cameraPrimer}
 								onChange={setPhotos}
-								existing={pet?.photos}
+								saved={pet?.photos}
 								confirmRemove={{
 									title: t('pets.photo_delete_title'),
 									body: t('pets.photo_delete_body'),
