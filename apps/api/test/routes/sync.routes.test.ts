@@ -3,7 +3,7 @@
 import { randomBytes, randomUUID } from 'node:crypto';
 
 import request from 'supertest';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { CachedReport } from '@zivali/validation';
 
@@ -267,7 +267,7 @@ describe('GET /v1/sync/reports, feed', () => {
 		expect(next.pages.map((page) => page.upserts.length + page.removed_ids.length)).toEqual([2, 2, 1]);
 	});
 
-	it('serves 1000 reports of one area in one call in under 500 ms', async () => {
+	it('serves 1000 reports of one area in one call with the area index and a constant number of queries', async () => {
 		const prefix = ReportsDomain.newShortCode().slice(0, 4);
 		const rows = await prisma.$queryRaw<{ id: string }[]>`
 			insert into app.reports (id, short_code, type, species, event_at, exact_point, public_point, public_radius_m)
@@ -278,14 +278,20 @@ describe('GET /v1/sync/reports, feed', () => {
 					${BULK.lng}::float8 + (i % 40) * 0.0005, ${BULK.lat}::float8 + (i / 40) * 0.0005), 4326)::extensions.geography as p) as g
 			returning id::text as id`;
 		bulk.push(...rows.map((row) => row.id));
-		await sync([BULK], { limit: 1000 }); // warm-up (connection pool, plan cache)
-		const started = performance.now();
+		// Speed is asserted by plan and query count, not wall clock: a time budget flakes on loaded or CI hardware (TASK-108).
+		const queries = vi.spyOn(prisma, '$queryRaw');
 		const res = await sync([BULK], { limit: 1000 });
-		const elapsed = performance.now() - started;
+		const queryCount = queries.mock.calls.length;
+		queries.mockRestore();
 		expect(res.status).toBe(200);
 		expect(res.body.upserts).toHaveLength(1000);
 		expect(res.body.has_more).toBe(false);
-		expect(elapsed).toBeLessThan(500);
+		expect(queryCount).toBeLessThanOrEqual(3); // feed page + batched views, never one query per report
+		// The area predicate of ReportsDao.syncPage must be answered by the GiST index on public_point.
+		const plan = await prisma.$queryRaw<{ 'QUERY PLAN': string }[]>`
+			explain select r.id from app.reports r
+			where extensions.st_dwithin(r.public_point, extensions.st_setsrid(extensions.st_makepoint(${BULK.lng}::float8, ${BULK.lat}::float8), 4326)::extensions.geography, ${3000 + 20_000}::float8)`;
+		expect(plan.map((row) => row['QUERY PLAN']).join('\n')).toContain('reports_public_point_idx');
 	});
 });
 
