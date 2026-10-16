@@ -186,10 +186,18 @@ function Providers({ children }: { children: React.ReactNode }) {
 }
 
 const openLink = async (url = `/m#${TOKEN}`) => {
-	await renderRouter(
-		{ _layout: () => <Stack screenOptions={{ headerShown: false }} />, index: () => null, m: ManageScreen },
+	const result = renderRouter(
+		{
+			_layout: () => <Stack screenOptions={{ headerShown: false }} />,
+			index: () => null,
+			m: ManageScreen,
+			'inbox/[id]': () => null,
+		},
 		{ initialUrl: url, wrapper: Providers }
 	);
+	// The result is a promise with the router getters attached; awaiting it would drop them.
+	await result;
+	return { getPathname: result.getPathname };
 };
 const claimCalls = () => mockApi.calls.filter((call) => call.path === '/v1/manage/claim');
 const transitions = () => mockApi.calls.filter((call) => call.path.endsWith('/transitions')).map((call) => call.body);
@@ -427,12 +435,15 @@ describe('manage link screen (P7)', () => {
 		).toBeOnTheScreen();
 	});
 
-	test('unread messages: the count and "Odpri sporočila" as the primary', async () => {
+	test('messages: the unread count and each conversation, opened right here (no account inbox)', async () => {
 		serve({ threads: 2, unread: 2 });
-		await openLink();
+		const page = await openLink();
 		expect(await screen.findByText('2 neprebrani sporočili')).toBeOnTheScreen();
-		expect(screen.getByRole('button', { name: 'Odpri sporočila' })).toBeOnTheScreen();
+		expect(screen.getByRole('button', { name: 'Najdena žival' })).toBeOnTheScreen();
 		expect(screen.queryByRole('button', { name: 'Sporočila' })).toBeNull();
+
+		await act(async () => fireEvent.press(screen.getByRole('button', { name: 'Najdena žival, neprebrano' })));
+		await waitFor(() => expect(page.getPathname()).toBe('/inbox/c0'));
 	});
 
 	test('from day 25 the expiry note offers 30 more days (extend)', async () => {

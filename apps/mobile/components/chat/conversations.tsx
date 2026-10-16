@@ -1,24 +1,17 @@
-import { type Href, useRouter } from 'expo-router';
 import { LockSimpleIcon } from 'phosphor-react-native/src/icons/LockSimple';
 import { PawPrintIcon } from 'phosphor-react-native/src/icons/PawPrint';
 import * as React from 'react';
-import { Image, Pressable, ScrollView, View } from 'react-native';
+import { Image, Pressable, View } from 'react-native';
 import { useReducedMotion } from 'react-native-reanimated';
-import { useDispatch } from 'react-redux';
 import { useTranslations } from 'use-intl';
 
-import { useSession } from '@zivali/api/auth';
-import { useListConversationsQuery } from '@zivali/api/chat';
-import { subscribeInbox } from '@zivali/api/notifications';
-import type { ApiStore } from '@zivali/api/rtk';
 import type { AliasKey, ConversationSummary, Uuid } from '@zivali/types';
-import { InlineError, Loading } from '@/components/notifications/notifications-view';
-import { EmptyState } from '@/components/ui/empty-state';
 import { useFocusRing } from '@/components/ui/focus-ring';
 import { Icon } from '@/components/ui/icon';
 import { Text } from '@/components/ui/text';
-import { supabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
+
+// P12 parts shared by the Inbox list, the thread and the manage screen (anonymous managers).
 
 /** CH-170: block needs the other participant's id, which C9 does not list yet; Block shows once the API sends it. */
 export type Conversation = ConversationSummary & { other_participant_id?: Uuid };
@@ -105,40 +98,5 @@ export function ConversationRow({ conversation, onPress }: { conversation: Conve
 			</View>
 			{unread ? <View className="mt-2 size-2.5 self-start rounded-full bg-primary" /> : null}
 		</Pressable>
-	);
-}
-
-/**
- * P12 Conversations view of the Inbox tab: newest activity first (C9), unread rows bold with the primary dot.
- * `conversation.updated` on `user:<id>` re-fetches the list, so previews and unread counts follow in real time.
- */
-export function ConversationsView() {
-	const t = useTranslations('chat');
-	const router = useRouter();
-	const dispatch = useDispatch<ApiStore['dispatch']>();
-	const userId = useSession().session?.user.id;
-	const { data, isLoading, isError, isFetching, refetch } = useListConversationsQuery();
-
-	React.useEffect(() => (userId ? subscribeInbox(supabase, dispatch, userId) : undefined), [dispatch, userId]);
-
-	if (isLoading) return <Loading className="px-5" />;
-	if (isError && !data)
-		return <InlineError className="mx-5 mt-5" retrying={isFetching} onRetry={() => void refetch()} />;
-	if (!data?.items.length)
-		return (
-			<View className="flex-1 justify-center px-5 pb-10">
-				<EmptyState title={t('empty_title')} description={t('empty_body')} />
-			</View>
-		);
-	return (
-		<ScrollView contentContainerClassName="gap-1 px-2 pb-6 pt-2">
-			{data.items.map((conversation) => (
-				<ConversationRow
-					key={conversation.id}
-					conversation={conversation}
-					onPress={() => router.push(`/inbox/${conversation.id}` as Href)}
-				/>
-			))}
-		</ScrollView>
 	);
 }

@@ -1,3 +1,4 @@
+import { addNetworkStateListener } from 'expo-network';
 import { type Href, useRouter } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import type { Icon as PhosphorIcon } from 'phosphor-react-native';
@@ -19,7 +20,15 @@ import { WarningIcon } from 'phosphor-react-native/src/icons/Warning';
 import { WarningCircleIcon } from 'phosphor-react-native/src/icons/WarningCircle';
 import { WifiSlashIcon } from 'phosphor-react-native/src/icons/WifiSlash';
 import * as React from 'react';
-import { AccessibilityInfo, ActivityIndicator, FlatList, Image, KeyboardAvoidingView, Pressable, View } from 'react-native';
+import {
+	AccessibilityInfo,
+	ActivityIndicator,
+	FlatList,
+	Image,
+	KeyboardAvoidingView,
+	Pressable,
+	View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useDispatch, useStore } from 'react-redux';
 import { useLocale, useTranslations } from 'use-intl';
@@ -41,12 +50,7 @@ import { formatDate, formatDayMonth, type Locale } from '@zivali/i18n/format';
 import type { Message, Uuid } from '@zivali/types';
 import { ReportAbuse } from '@/components/abuse/report-abuse';
 import { useErrorText } from '@/components/auth/parts';
-import {
-	type Conversation,
-	StatusWord,
-	useAlias,
-	useConversationTitle,
-} from '@/components/chat/conversations';
+import { type Conversation, StatusWord, useAlias, useConversationTitle } from '@/components/chat/conversations';
 import { InlineError } from '@/components/notifications/notifications-view';
 import { Note } from '@/components/report/parts';
 import { MenuItem } from '@/components/report/slots/slot-c';
@@ -144,6 +148,8 @@ function ThreadView({ conversation }: { conversation: Conversation }) {
 	const [lock, setLock] = React.useState<Lock>();
 	const [sheet, setSheet] = React.useState<SheetMode>();
 	const [draft, setDraft] = React.useState('');
+	// "Danes" and "Včeraj" need no live clock: the time the screen opened is enough.
+	const [now] = React.useState(Date.now);
 	const started = React.useRef(false);
 	const seen = React.useRef<string>(undefined);
 
@@ -180,10 +186,11 @@ function ThreadView({ conversation }: { conversation: Conversation }) {
 
 	const update = (key: string, state?: Pending['state']) =>
 		setPending((items) =>
-			state ? items.map((item) => (item.key === key ? { ...item, state } : item)) : items.filter((item) => item.key !== key)
+			state
+				? items.map((item) => (item.key === key ? { ...item, state } : item))
+				: items.filter((item) => item.key !== key)
 		);
 	const deliver = async (item: Pending) => {
-		if (!online) return update(item.key, 'queued');
 		update(item.key, 'sending');
 		const first = !messages.some(isOwn);
 		try {
@@ -207,17 +214,23 @@ function ThreadView({ conversation }: { conversation: Conversation }) {
 		}
 	};
 	// Back online: the queued messages go out in order.
-	React.useEffect(() => {
-		if (online) for (const item of pending) if (item.state === 'queued') void deliver(item);
+	const flush = React.useEffectEvent(() => {
+		for (const item of pending) if (item.state === 'queued') void deliver(item);
 	});
+	React.useEffect(() => {
+		const network = addNetworkStateListener((state) => {
+			if (isOnline(state)) flush();
+		});
+		return () => network.remove();
+	}, []);
 
 	const submit = () => {
 		const body = draft.trim();
 		if (!body) return;
 		setDraft('');
-		const item: Pending = { key: `${Date.now()}-${pending.length}`, body, state: 'sending' };
+		const item: Pending = { key: `${Date.now()}-${pending.length}`, body, state: online ? 'sending' : 'queued' };
 		setPending((items) => [...items, item]);
-		void deliver(item);
+		if (online) void deliver(item);
 	};
 
 	const loadOlder = async () => {
@@ -228,7 +241,8 @@ function ThreadView({ conversation }: { conversation: Conversation }) {
 			chatApi.endpoints.listMessages.initiate({ id, before }, { subscribe: false, forceRefetch: true })
 		);
 		setLoadingOlder(false);
-		if (page) setOlder((current) => ({ items: [...page.items, ...(current?.items ?? [])], cursor: page.next_cursor }));
+		if (page)
+			setOlder((current) => ({ items: [...page.items, ...(current?.items ?? [])], cursor: page.next_cursor }));
 	};
 
 	const close = () => setSheet(undefined);
@@ -246,7 +260,6 @@ function ThreadView({ conversation }: { conversation: Conversation }) {
 	const target = [...messages].reverse().find((m) => m.kind !== 'system' && !isOwn(m) && !reported.has(m.id));
 
 	// Day separators in the Ljubljana calendar; pending messages are today's.
-	const now = Date.now();
 	const dayLabel = (at: string | number) => {
 		const days = day(now) - day(at);
 		return days <= 0 ? t('day_today') : days === 1 ? t('day_yesterday') : formatDayMonth(at, locale, now);
@@ -270,9 +283,7 @@ function ThreadView({ conversation }: { conversation: Conversation }) {
 
 	const renderRow = ({ item: row }: { item: Row }) => {
 		if (row.kind === 'day')
-			return (
-				<Text className="my-1.5 self-center font-sans-bold text-sm text-muted-foreground">{row.label}</Text>
-			);
+			return <Text className="my-1.5 self-center font-sans-bold text-sm text-muted-foreground">{row.label}</Text>;
 		if (row.kind === 'pending')
 			return <PendingBubble pending={row.pending} onRetry={() => void deliver(row.pending)} />;
 		const { message } = row;
@@ -427,7 +438,12 @@ function ThreadView({ conversation }: { conversation: Conversation }) {
 						<SheetTitle>{t('block_title')}</SheetTitle>
 						<SheetDescription className="text-lg text-foreground">{t('block_body')}</SheetDescription>
 						<View className="mt-6 gap-1">
-							<Button variant="destructive" size="lg" loading={blocking} onPress={() => void confirmBlock()}>
+							<Button
+								variant="destructive"
+								size="lg"
+								loading={blocking}
+								onPress={() => void confirmBlock()}
+							>
 								{t('block_confirm')}
 							</Button>
 							<Button variant="text" onPress={close}>
@@ -458,7 +474,11 @@ function ThreadView({ conversation }: { conversation: Conversation }) {
 								/>
 							) : null}
 							{block && lock !== 'blocked_by_you' ? (
-								<MenuItem icon={ProhibitIcon} label={t('menu_block')} onPress={() => setSheet('block')} />
+								<MenuItem
+									icon={ProhibitIcon}
+									label={t('menu_block')}
+									onPress={() => setSheet('block')}
+								/>
 							) : null}
 						</View>
 						<Button variant="text" className="mt-3" onPress={close}>
@@ -588,7 +608,11 @@ function PendingBubble({ pending, onRetry }: { pending: Pending; onRetry: () => 
 				<Meta icon={ClockIcon}>{t('queued')}</Meta>
 			) : (
 				<View className="flex-row items-center gap-1">
-					<ActivityIndicator size="small" className="text-muted-foreground" style={{ transform: [{ scale: 0.6 }] }} />
+					<ActivityIndicator
+						size="small"
+						className="text-muted-foreground"
+						style={{ transform: [{ scale: 0.6 }] }}
+					/>
 					<Meta>{t('sending')}</Meta>
 				</View>
 			)}

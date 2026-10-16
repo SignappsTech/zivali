@@ -1,18 +1,24 @@
-import { useLocalSearchParams } from 'expo-router';
+import { type Href, useLocalSearchParams, useRouter } from 'expo-router';
 import { ChatCircleIcon } from 'phosphor-react-native/src/icons/ChatCircle';
 import { HandHeartIcon } from 'phosphor-react-native/src/icons/HandHeart';
 import * as React from 'react';
-import { View } from 'react-native';
+import { ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useDispatch } from 'react-redux';
 import { useTranslations } from 'use-intl';
 
 import { useSession } from '@zivali/api/auth';
-import { ConversationsView } from '@/components/chat/conversations';
-import { NotificationsView } from '@/components/notifications/notifications-view';
+import { useListConversationsQuery } from '@zivali/api/chat';
+import { subscribeInbox } from '@zivali/api/notifications';
+import type { ApiStore } from '@zivali/api/rtk';
+import { ConversationRow } from '@/components/chat/conversations';
+import { InlineError, Loading, NotificationsView } from '@/components/notifications/notifications-view';
 import { SignInButtons, Spot } from '@/components/shell/parts';
+import { EmptyState } from '@/components/ui/empty-state';
 import { Icon } from '@/components/ui/icon';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Text } from '@/components/ui/text';
+import { supabase } from '@/lib/supabase';
 
 // Inbox tab (P2 A3 signed out). Signed in: h1 "Sporočila" and the P12 segmented control between Conversations (P12)
 // and Notifications (P13); `?view=notifications` (C15) opens the second. Anonymous managers chat from the manage
@@ -67,5 +73,40 @@ export default function InboxTab() {
 				</TabsContent>
 			</Tabs>
 		</SafeAreaView>
+	);
+}
+
+/**
+ * P12 Conversations view: newest activity first (C9), unread rows bold with the primary dot. `conversation.updated`
+ * on `user:<id>` re-fetches the list, so previews and unread counts follow in real time.
+ */
+function ConversationsView() {
+	const t = useTranslations('chat');
+	const router = useRouter();
+	const dispatch = useDispatch<ApiStore['dispatch']>();
+	const userId = useSession().session?.user.id;
+	const { data, isLoading, isError, isFetching, refetch } = useListConversationsQuery();
+
+	React.useEffect(() => (userId ? subscribeInbox(supabase, dispatch, userId) : undefined), [dispatch, userId]);
+
+	if (isLoading) return <Loading className="px-5" />;
+	if (isError && !data)
+		return <InlineError className="mx-5 mt-5" retrying={isFetching} onRetry={() => void refetch()} />;
+	if (!data?.items.length)
+		return (
+			<View className="flex-1 justify-center px-5 pb-10">
+				<EmptyState title={t('empty_title')} description={t('empty_body')} />
+			</View>
+		);
+	return (
+		<ScrollView contentContainerClassName="gap-1 px-2 pb-6 pt-2">
+			{data.items.map((conversation) => (
+				<ConversationRow
+					key={conversation.id}
+					conversation={conversation}
+					onPress={() => router.push(`/inbox/${conversation.id}` as Href)}
+				/>
+			))}
+		</ScrollView>
 	);
 }
