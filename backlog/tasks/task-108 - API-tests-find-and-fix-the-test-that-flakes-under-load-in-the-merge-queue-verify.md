@@ -24,7 +24,7 @@ On 2026-10-16 the merge-queue verify (turbo run test on main, shared local postg
 ## Packet
 
 Review: tech-lead code review (full mode)
-Branch: agent/task-109-api-flake
+Branch: agent/task-108-api-flake
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Acceptance Criteria
