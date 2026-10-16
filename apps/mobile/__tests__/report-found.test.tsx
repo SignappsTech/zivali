@@ -454,8 +454,8 @@ test('checks on Naprej, the picker when there is no place, and a rate limit that
 	await press(t.publish);
 	expect(await screen.findByText(/Poskusite znova čez 12 minut\./)).toBeOnTheScreen();
 	expect(screen.getByRole('button', { name: t.publish })).toBeDisabled();
-	// The form stays and the outbox item goes, so a later Publish sends the answers as they are then.
-	expect(await outboxRows()).toEqual([]);
+	// The form stays and the outbox item waits with its key (TASK-30.7).
+	expect(await outboxRows()).toHaveLength(1);
 	expect(screen.getByRole('heading', { name: t.send_title })).toBeOnTheScreen();
 });
 
@@ -588,6 +588,56 @@ test('restoring a draft keeps its startedAt: the capture time without a photo ti
 	await press(t.publish);
 	await heading(t.outbox_title);
 	expect(await outboxRows()).toEqual([{ status: 'queued', captured_at: started }]);
+});
+
+// Before the two-press test: its fake-timer advance leaves the tests after it a spent waitFor clock.
+// TASK-30.7: the Idempotency-Key stays on NETWORK/5xx/429/CONFLICT, as web does (keepsSubmission).
+test('a CONFLICT keeps the Idempotency-Key for the next Publish (web parity)', async () => {
+	await open();
+	await toPublish();
+	const answers: unknown[] = [mockError('CONFLICT', 'still running')];
+	api.state.reportReply = () =>
+		answers.shift() ?? {
+			id: 'r1',
+			short_code: 'CODE1',
+			moderation_state: 'visible',
+			manage_token: 'tok',
+			warnings: [],
+		};
+	await press(t.publish);
+	await screen.findByText(sl.errors.CONFLICT);
+	await press(t.publish);
+	await waitFor(() => expect(posts()).toHaveLength(2));
+	expect(posts()[1]!.headers['Idempotency-Key']).toBe(posts()[0]!.headers['Idempotency-Key']);
+});
+
+const okReply = { id: 'r1', short_code: 'CODE1', moderation_state: 'visible', manage_token: 'tok', warnings: [] };
+const posts = () => api.api.calls.filter((call) => call.method === 'POST' && call.path === '/v1/reports');
+
+test('a RATE_LIMITED keeps the Idempotency-Key for the Publish after the wait', async () => {
+	await open();
+	await toPublish();
+	const answers: unknown[] = [mockError('RATE_LIMITED', 'slow down', { retry_after_s: 1 })];
+	api.state.reportReply = () => answers.shift() ?? okReply;
+	await press(t.publish);
+	expect(await screen.findByText(/Poskusite znova/)).toBeOnTheScreen();
+	await waitFor(() => expect(screen.getByRole('button', { name: t.publish })).toBeEnabled(), { timeout: 4000 });
+	await press(t.publish);
+	await waitFor(() => expect(posts()).toHaveLength(2));
+	expect(posts()[1]!.headers['Idempotency-Key']).toBe(posts()[0]!.headers['Idempotency-Key']);
+});
+
+test('a definitive refusal drops the item: the next Publish takes a new Idempotency-Key', async () => {
+	await open();
+	await toPublish();
+	const answers: unknown[] = [mockError('VALIDATION', 'bad')];
+	api.state.reportReply = () => answers.shift() ?? okReply;
+	await press(t.publish);
+	await screen.findByText(sl.errors.VALIDATION);
+	expect(await outboxRows()).toEqual([]);
+	await press(t.publish);
+	await waitFor(() => expect(posts()).toHaveLength(2));
+	expect(posts()[1]!.headers['Idempotency-Key']).not.toBe(posts()[0]!.headers['Idempotency-Key']);
 });
 
 test('two Publish presses in the same tick enqueue one report', async () => {

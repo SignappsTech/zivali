@@ -83,9 +83,9 @@ type PhotoRow = { path: string; sha256: string; width: number; height: number; b
 /** How send() reaches the API: the app client, the anonymous session (Turnstile sheet) and the file PUT. */
 export type OutboxTransport = { api: ApiClient; ensureSession: () => Promise<unknown>; put: PutFile };
 
-/** Retry delays for network and server faults, in minutes; the last one repeats. */
+/** Retry delays for network and server faults (and a CONFLICT: the first request with the key is still running), in minutes; the last one repeats. */
 const BACKOFF_MIN = [1, 5, 15, 60];
-const RETRY = new Set(['NETWORK', 'INTERNAL', 'SERVICE_UNAVAILABLE']);
+const RETRY = new Set(['NETWORK', 'INTERNAL', 'SERVICE_UNAVAILABLE', 'CONFLICT']);
 
 const listeners = new Set<() => void>();
 const changed = () => listeners.forEach((listener) => listener());
