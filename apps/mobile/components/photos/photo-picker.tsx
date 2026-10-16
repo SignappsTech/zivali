@@ -74,12 +74,16 @@ type PhotoPickerProps = {
 	onChange?: (photos: PickedPhoto[]) => void;
 	/** Place and time read from a photo, for LocationPicker `suggested`. Coarsen the point before it goes anywhere. */
 	onExif?: (exif: PhotoExif) => void;
+	/** false hides the two tiles: the screen offers its own buttons and calls `pick` on the ref (P7 step 1, empty). */
+	tiles?: boolean;
+	ref?: React.Ref<PhotoPickerHandle>;
 	/** Photos the entity already has (editing a pet), read on mount; they come first. */
 	saved?: SavedPhoto[];
 	/** Remove asks first with this dialog copy (P8: removed photos are deleted from storage too). */
 	confirmRemove?: { title: string; body: string; confirm: string };
 	className?: string;
 };
+export type PhotoPickerHandle = { pick: (source: 'camera' | 'gallery') => Promise<void> };
 
 /**
  * Photo step of P6 and P7 (FR-003): camera and gallery tiles, then a row per photo with its preview, upload progress,
@@ -91,6 +95,8 @@ export function PhotoPicker({
 	cameraPrimer,
 	onChange,
 	onExif,
+	tiles = true,
+	ref,
 	saved,
 	confirmRemove,
 	className,
@@ -102,6 +108,7 @@ export function PhotoPicker({
 		onExif,
 		saved,
 	});
+	React.useImperativeHandle(ref, () => ({ pick }));
 	// The photo waiting for the remove confirmation.
 	const [removing, setRemoving] = React.useState<string>();
 	const addRef = React.useRef<View>(null);
@@ -117,10 +124,12 @@ export function PhotoPicker({
 	return (
 		<View className={cn('gap-7', className)}>
 			<View className="gap-3">
-				<View className="flex-row gap-3">
-					<Tile ref={addRef} icon={CameraIcon} label={t('take')} onPress={() => void pick('camera')} />
-					<Tile icon={ImagesIcon} label={t('choose')} onPress={() => void pick('gallery')} />
-				</View>
+				{tiles && (
+					<View className="flex-row gap-3">
+						<Tile ref={addRef} icon={CameraIcon} label={t('take')} onPress={() => void pick('camera')} />
+						<Tile icon={ImagesIcon} label={t('choose')} onPress={() => void pick('gallery')} />
+					</View>
+				)}
 				{notice && <FieldError>{message(notice)}</FieldError>}
 			</View>
 

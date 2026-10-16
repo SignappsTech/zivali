@@ -1,0 +1,19 @@
+{
+	"title": "Pristojno zavetišče za občino {municipality}",
+	"lost_body": "Pobeg čim prej sporočite veterinarju ali zavetišču, pristojnemu za občino {municipality}.",
+	"found_body": "Najdbo čim prej sporočite zavetišču, pristojnemu za občino {municipality}.",
+	"sighted_body": "Če žival ujamete ali jo kdo vzame k sebi, pokličite zavetišče, pristojno za občino {municipality}.",
+	"not_replace": "Prijava na Najdimo tega ne nadomesti.",
+	"chip_line": "Čip lahko prebere katero koli zavetišče ali veterinar.",
+	"call": "Pokliči",
+	"call_a11y": "Pokliči {shelter}",
+	"details_link": "Delovni čas in naslov",
+	"unconfirmed": "Za občino {municipality} še nimamo potrjenega zavetišča. Pokličite občino ali poglejte imenik zavetišč.",
+	"unknown_municipality": "Občine nismo mogli določiti. Pristojno zavetišče poiščite v imeniku zavetišč.",
+	"directory_link": "Imenik zavetišč",
+	"cached": "Iz shranjenega imenika z dne {date}.",
+	"suggested_label": "Morda pristojno zavetišče",
+	"unconfirmed_note": "Ni potrjeno",
+	"unconfirmed_note_hint": "Pristojnost za vašo občino še ni potrjena. Pred obiskom pokličite.",
+	"nearest_label": "Najbližji zavetišči"
+}
