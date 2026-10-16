@@ -23,3 +23,7 @@ AC#2. Steps: read apps/api/domains/ads/ads-admin.domain.ts (listAds, getAdStats,
 <!-- AC:BEGIN -->
 - [ ] #1 Every staff service call writes an audit entry (C1): GET /v1/admin/ads, /ads/:id/stats, POST /ads/:id/image, GET /shelters, /municipality-shelters, /shelters/:slug/changes
 <!-- AC:END -->
+
+## Packet
+
+Branch: agent/task-34.6-admin-fixes

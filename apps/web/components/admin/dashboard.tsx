@@ -4,6 +4,7 @@ import { useTranslations } from 'next-intl';
 
 import { useSession } from '@zivali/api/auth';
 
+import { BackupAuthenticator } from './backup-authenticator';
 import { RecentChanges } from './audit-log';
 import { ComingSoon } from './directory/parts';
 
@@ -17,6 +18,7 @@ export function Dashboard() {
 	return (
 		<>
 			<ComingSoon title={t('dash_title')} />
+			<BackupAuthenticator />
 			{role === 'ADMIN' && <RecentChanges />}
 		</>
 	);

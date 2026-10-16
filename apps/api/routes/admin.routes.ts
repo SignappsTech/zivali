@@ -137,7 +137,9 @@ route(
 	PartnersController.listLeads
 );
 
-// Ads (C14 §Admin, TASK-37.2): admins (aal2) only; every write is audited.
+// Ads (C14 §Admin, TASK-37.2): admins (aal2) only; every write is audited. Checked for the whole area before the
+// route's request validation, so a moderator gets FORBIDDEN rather than field errors.
+router.use('/ads', adminOnly);
 const adWrites = rateLimit('admin.ads', { limit: 300, window: 3600, key: 'user' });
 const adErrors = [...staffErrors, 'NOT_FOUND'] as const;
 const saveRules =

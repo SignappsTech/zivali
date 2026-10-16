@@ -3,6 +3,7 @@
 - Status: Accepted · Date: 2026-10-14 · Owner: Tech Lead
 - Amended 2026-10-15 (ADR-020): roles are read from `app.profiles` by the API per request (short cache), no custom access token hook; the API checks `aal = aal2` from the verified JWT for staff routes; audit entries are written by the API service layer.
 - Amended 2026-10-15 (CH-146): last-admin protection is a service check, not a trigger.
+- Amended 2026-10-16 (TASK-34.6): no backup codes (Supabase TOTP has none); recovery is a second TOTP factor plus `pnpm admin:create --reset-mfa <email>`, see [admin-runbook](../admin-runbook.md).
 - Source: FR-001 R-001.3, FR-019 R-019.1, TASK-34 AC#3, NFR-SEC
 
 ## Decision
