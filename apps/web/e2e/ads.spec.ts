@@ -139,7 +139,12 @@ const PROTECTED = [
 	'/piskotki',
 	'/oglasevanje',
 ];
-const SIGNED_IN = ['/nabiralnik', '/placila/zakljucek', '/racun/placila'];
+const SIGNED_IN = [
+	'/nabiralnik',
+	'/nabiralnik/00000000-0000-4000-8000-000000000001',
+	'/placila/zakljucek',
+	'/racun/placila',
+];
 
 for (const path of [...PROTECTED, ...SIGNED_IN])
 	test(`${path} has no ad slot and asks for no ad`, async ({ page, baseURL }) => {

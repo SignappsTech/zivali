@@ -255,8 +255,10 @@ describe('no AdSlot in protected flows', () => {
 	];
 	const PROTECTED = [
 		'app/[locale]/(public)/report/lost/page.tsx',
+		'app/[locale]/(public)/report/found/page.tsx',
 		'app/[locale]/(public)/m/page.tsx',
 		'app/[locale]/(app)/inbox/page.tsx',
+		'app/[locale]/(app)/inbox/[id]/page.tsx',
 		'app/[locale]/(public)/sign-in/page.tsx',
 		'app/[locale]/(public)/sign-up/page.tsx',
 		'app/[locale]/(public)/reset-password/page.tsx',
