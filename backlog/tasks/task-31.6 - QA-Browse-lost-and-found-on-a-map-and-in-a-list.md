@@ -40,7 +40,7 @@ Branch: - (verify on main)
 <!-- AC:BEGIN -->
 - [x] #1 Given the map, when it loads, then pins or clusters for LOST, FOUND and SIGHTED reports in view appear within 2 s on 4G for 500 reports, coded by icon and colour (not colour alone) with fuzzed locations.
 - [x] #2 Given the list, when opened, then it shows the same results ordered by distance or recency with pagination and works as the full alternative to the map for keyboard and screen reader users.
-- [ ] #3 Given filters, when applied, then type, species, distance, date range, colour and size narrow both map and list, persist in the URL on web and show result counts with correct SL plural forms.
+- [x] #3 Given filters, when applied, then type, species, distance, date range, colour and size narrow both map and list, persist in the URL on web and show result counts with correct SL plural forms.
 - [x] #4 Given boosted reports, when listed, then boosted_until sorts them first and highlights them on the map (behaviour ready, purchase comes in M4).
 - [x] #5 Given closed or expired reports, when browsing, then they are excluded by default.
 - [ ] #6 Story gates pass on main: `pnpm verify`, plus `pnpm quality` for the pages this story touches; results recorded in the QA notes.
@@ -59,4 +59,4 @@ QA 2026-10-16 on main b965dff9 (read-only checks; machine rules forbid e2e, API 
 - SEO: title absolute seo_title, description, canonical /map per locale, hreflang via proxy Link header (routing.test), CollectionPage + breadcrumb JSON-LD.
 - Mobile: reads only lib/data/reports hooks, setCacheArea('current') with rounded point, ad slot every 8, same count logic (same cap).
 - TASK-31.1 image still open: empty state uses a SpotIllustration placeholder, not failed.
-
+Re-check 2026-10-16 on main bd5a8271 (static + unit; machine rules: no e2e, API tests, build, Lighthouse). TASK-31.7 confirmed: resultCount() in web and mobile filters.ts uses total_estimate, shows 500+ when only the capped map is known; drawer and mobile sheet use it; browse.test (600 total vs 500 pins) and map-tab test pass. Web vitest browse + map, mobile browse-filters, map-tab, map-view green. AC3 ticked (date range stays presets by P4 design). Only AC6 remains: verify, e2e, Lighthouse: merge queue on main at bd5a8271.

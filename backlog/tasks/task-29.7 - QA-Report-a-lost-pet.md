@@ -46,7 +46,7 @@ Branch: - (verify on main)
 - [x] #3 Given a submitted report, when saved, then it appears on the map and list within a minute with fuzzed location, matching runs, nearby alerts fan out and the owner sees a confirmation with next steps (poster, share, tips).
 - [x] #4 Given the confirmation screen, when displayed, then it reserves a slot for the optional support contribution (FR-021), nothing is pre-selected, and no ad appears anywhere in the flow.
 - [x] #5 Given the flow, when it starts and when it is submitted, then report_lost_start and report_lost_submit fire with region and species only, and only with consent.
-- [ ] #6 Given incomplete data, when the user submits, then errors are specific and localised and the form keeps their input.
+- [x] #6 Given incomplete data, when the user submits, then errors are specific and localised and the form keeps their input.
 - [x] #7 Given a submitted lost report, when the confirmation shows, then a checklist offers a one-tap call to the responsible shelter from the directory and states the owner reporting duty (escape reported to a vet or the responsible shelter within 3 days; the nearest shelter within 72 h), never claiming the app replaces it; the legal timings appear only when the legal-content flag is on.
 - [ ] #8 Story gates pass on main: `pnpm verify`, plus `pnpm quality` for the pages this story touches; results recorded in the QA notes.
 - [x] #9 Given a lost report with a reward, when it is created and viewed, then the reward shows only as a display line with the scam warning, contact data in the note is refused, and no payment step appears.
@@ -58,4 +58,5 @@ Branch: - (verify on main)
 QA 2026-10-16 on main 98289182 (includes Merge TASK-29.10). Web vitest report-lost 50/50, mobile jest report-lost + lost-form + shelter-row 46/46, i18n check OK (SL/EN parity). API write tests read, not run. AC#8 (pnpm verify, quality, e2e, Lighthouse): merge queue on main at 98289182.
 Bugs: TASK-29.11 (mobile RATE_LIMITED without minutes), TASK-29.12 (mobile VALIDATION not routed to its step); both low, AC#6 stays open until fixed.
 Spec gap, not a bug: legal timings (3 days / 72 h) are never rendered; the flag-on path waits for the lawyer's wording (flag-off behaviour verified).
+Re-check 2026-10-16 on main bd5a8271 (static + unit; machine rules: no e2e, API tests, build, Lighthouse). TASK-29.11 (429 retry_after_s shown as minutes, lost-flow.tsx failed(), jest test) and TASK-29.12 (VALIDATION photo_ids to photos step, location/radius_m to where step, input kept, jest test) confirmed. Mobile jest report-lost, report-lost-done, lost-form, shelter-row green; web vitest report-lost green; i18n check OK. AC6 ticked. Only AC8 remains: verify, e2e, Lighthouse: merge queue on main at bd5a8271. Legal-timings spec gap unchanged.
 <!-- SECTION:NOTES:END -->

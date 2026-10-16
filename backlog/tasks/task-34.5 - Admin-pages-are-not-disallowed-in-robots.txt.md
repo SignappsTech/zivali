@@ -22,7 +22,7 @@ AC#1/#6 (admin hardening). Steps: curl -s https://staging.najdimo.si/robots.txt.
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 robots.txt returns Disallow: /admin and /en/admin; sitemap keeps no admin URL
+- [x] #1 robots.txt returns Disallow: /admin and /en/admin; sitemap keeps no admin URL
 <!-- AC:END -->
 
 ## Packet
