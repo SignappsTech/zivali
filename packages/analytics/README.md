@@ -25,7 +25,7 @@ track('report_found_start');
 
 ## Rules
 
-- **Registry** (`src/registry.ts`): the 16 taxonomy events and their parameters under the exact GA4 names (`municipality`, `region`, `species`, `report_type`, `ad_slot`, `ad_id`, `match_source`, `value`, `currency`, `amount_bucket`, `method`, `purpose`). Values are enums, C6 slugs (lowercase words and hyphens), an ad uuid, or EUR with two decimals (max 10 000). Names, emails, phone and chip numbers, coordinates, report codes, user ids and free text cannot pass.
+- **Registry** (`src/registry.ts`): the 17 taxonomy events and their parameters under the exact GA4 names (`municipality`, `region`, `species`, `report_type`, `ad_slot`, `ad_id`, `match_source`, `value`, `currency`, `amount_bucket`, `method`, `purpose`). Values are enums, C6 slugs (lowercase words and hyphens), an ad uuid, or EUR with two decimals (max 10 000). Names, emails, phone and chip numbers, coordinates, report codes, user ids and free text cannot pass.
 - **Violations** (unknown event, unknown param, bad value, missing param, non-template screen path) throw in development and tests; in production the event is dropped (unknown event) or the bad parameter stripped. Messages name keys, never values.
 - **Consent**: checked on every call. Grant: the adapter is enabled, then the remembered role and current screen are sent. Withdraw, decline, version bump or expiry: the adapter is disabled, also at start (`initAnalytics` or the first call), so a stale grant's `_ga` cookies are deleted on the next visit. Storage: web cookie `zz_consent` (strictly necessary, 12 months, `SameSite=Lax`, URI-encoded JSON); mobile injects secure storage under the same key.
 

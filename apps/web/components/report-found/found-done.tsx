@@ -53,7 +53,8 @@ export function FoundDone({
 			<Spot>{linked ? <EyeIcon weight="bold" /> : <HandHeartIcon weight="bold" />}</Spot>
 			<h1 className={titleClass}>{t(linked ? 'sighting_done_title' : 'done_title')}</h1>
 			<p className="mt-3 text-lg leading-7 lg:mt-4 lg:text-xl lg:leading-8">
-				{linked ? t('sighting_done_body') : t(held ? 'held_note' : 'done_body')}
+				{/* Held first: a held sighting has not reached the owner yet (as on mobile). */}
+				{t(held ? 'held_note' : linked ? 'sighting_done_body' : 'done_body')}
 			</p>
 			{result.manage_token && (
 				<div className="mt-8 lg:mt-10">
