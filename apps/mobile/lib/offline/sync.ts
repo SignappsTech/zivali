@@ -12,7 +12,7 @@ import type { ResponsibleShelterResponse } from '@zivali/api/directory';
 import { type CachedReport, syncReports } from '@zivali/api/sync';
 import type { ModerationState } from '@zivali/types';
 import { getDb } from '@/lib/db';
-import { thumbsDir } from '@/lib/db/files';
+import { fileName, thumbNames, thumbsDir } from '@/lib/db/files';
 import { env } from '@/lib/env';
 import { distanceKm, type Point } from '@/lib/geo';
 import { isUnmetered } from '@/lib/net';
@@ -87,6 +87,10 @@ export async function setCacheArea(id: CacheAreaId, point: Point | null, radiusK
 		await db.runAsync('delete from cache_areas where id = ?', id);
 		return;
 	}
+	const prev = await db.getFirstAsync<{ last_sync_at: number | null }>(
+		'select last_sync_at from cache_areas where id = ?',
+		id
+	);
 	const { changes } = await db.runAsync(
 		`insert into cache_areas (id, lat, lng, radius_km) values (?, ?, ?, ?)
 		 on conflict (id) do update set lat = excluded.lat, lng = excluded.lng, radius_km = excluded.radius_km,
@@ -97,7 +101,9 @@ export async function setCacheArea(id: CacheAreaId, point: Point | null, radiusK
 		round2(point.lng),
 		Math.min(radiusKm, AREA_MAX_KM)
 	);
-	if (changes > 0) areaChanged?.();
+	// A move right after a sync waits for the resume trigger, so walking or driving does not download a snapshot per move.
+	const recent = prev?.last_sync_at != null && Date.now() - prev.last_sync_at < 5 * 60_000;
+	if (changes > 0 && !recent) areaChanged?.();
 }
 
 const COLUMNS = [
@@ -261,9 +267,10 @@ async function forgetPurgedThumbs(db: SQLiteDatabase): Promise<void> {
 	const rows = await db.getAllAsync<{ id: string; thumb_path: string }>(
 		'select id, thumb_path from reports_cache where thumb_path is not null'
 	);
+	const present = thumbNames();
 	await db.runAsync(
 		'update reports_cache set thumb_path = null, thumb_bytes = 0 where id in (select value from json_each(?))',
-		JSON.stringify(rows.filter((r) => !new File(r.thumb_path).exists).map((r) => r.id))
+		JSON.stringify(rows.filter((r) => !present.has(fileName(r.thumb_path))).map((r) => r.id))
 	);
 }
 
