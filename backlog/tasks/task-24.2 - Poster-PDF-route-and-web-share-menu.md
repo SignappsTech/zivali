@@ -1,11 +1,11 @@
 ---
 id: TASK-24.2
 title: Poster PDF route and web share menu
-status: To Do
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:14'
-updated_date: '2026-10-14 23:37'
+updated_date: '2026-10-16 06:27'
 labels:
   - fe
   - 'est:M'

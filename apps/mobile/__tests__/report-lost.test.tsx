@@ -559,6 +559,15 @@ describe('report lost flow (P6)', () => {
 		expect(posted()).toHaveLength(1);
 	});
 
+	test('a press that lands after the publish went through starts nothing (no second report)', async () => {
+		await toReviewWithSavedPet();
+		const publish = screen.getByRole('button', { name: t.publish });
+		await fireEvent.press(publish);
+		await waitFor(() => expect(mockRouter.replace).toHaveBeenCalled());
+		await fireEvent.press(publish);
+		expect(posted()).toHaveLength(1);
+	});
+
 	test('report_lost_submit is not tracked after the duplicate update', async () => {
 		jest.mocked(getConsent).mockReturnValue({ v: 1, analytics: true, ts: new Date().toISOString() });
 		routes = {

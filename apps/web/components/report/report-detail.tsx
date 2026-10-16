@@ -270,7 +270,7 @@ export function ReportDetail({ report, place }: { report: DetailReport; place?: 
 					{(active || report.is_mine) && <ReportSlot name="slot-a" report={report} className="mt-8" />}
 					{active && <Safety report={report} />}
 					<div className="mt-5 -ml-2 flex items-center gap-1 empty:hidden">
-						<ReportSlot name="slot-b" report={report} />
+						<ReportSlot name="slot-b" report={report} place={place} />
 						{active && <ReportSlot name="slot-c" report={report} />}
 					</div>
 				</div>

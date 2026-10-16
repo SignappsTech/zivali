@@ -1,3 +1,4 @@
+import { randomUUID } from 'expo-crypto';
 import { addNetworkStateListener } from 'expo-network';
 import { type Href, useRouter } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
@@ -202,7 +203,7 @@ function ThreadView({ conversation }: { conversation: Conversation }) {
 		update(item.key, 'sending');
 		const first = !messages.some(isOwn);
 		try {
-			const message = await sendMessage({ id, body: { body: item.body } }).unwrap();
+			const message = await sendMessage({ id, body: { body: item.body }, idempotencyKey: item.key }).unwrap();
 			update(item.key);
 			setSent((ids) => new Set(ids).add(message.id));
 			// C9/C12: the first message the user sends here; track() is a no-op without analytics consent.
@@ -228,7 +229,12 @@ function ThreadView({ conversation }: { conversation: Conversation }) {
 		if (flushing.current) return;
 		flushing.current = true;
 		try {
-			for (let item; (item = queue.current.find((m) => m.state === 'queued'));) if (!(await deliver(item))) break;
+			for (let item; (item = queue.current.find((m) => m.state === 'queued'));)
+				if (!(await deliver(item))) {
+					// Whatever waits behind the failure would show "sending" for good: failed too, each with its own retry.
+					change((items) => items.map((m) => (m.state === 'queued' ? { ...m, state: 'failed' } : m)));
+					break;
+				}
 		} finally {
 			flushing.current = false;
 		}
@@ -245,7 +251,7 @@ function ThreadView({ conversation }: { conversation: Conversation }) {
 		if (!body) return;
 		setDraft('');
 		// Always through the queue: behind anything queued, sending or failed, the new message goes out in order.
-		const item: Pending = { key: `${Date.now()}-${queue.current.length}-${body.length}`, body, state: 'queued' };
+		const item: Pending = { key: randomUUID(), body, state: 'queued' };
 		change((items) => [...items, item]);
 		if (online) void flush();
 	};

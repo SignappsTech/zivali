@@ -9,15 +9,18 @@ import { HeartIcon } from '@phosphor-icons/react/dist/ssr/Heart';
 import { HourglassMediumIcon } from '@phosphor-icons/react/dist/ssr/HourglassMedium';
 import { LockSimpleIcon } from '@phosphor-icons/react/dist/ssr/LockSimple';
 import { PencilSimpleIcon } from '@phosphor-icons/react/dist/ssr/PencilSimple';
+import { skipToken } from '@reduxjs/toolkit/query';
 import { useTranslations } from 'next-intl';
 import * as React from 'react';
 import { toast } from 'sonner';
 
 import { useListConversationsQuery } from '@zivali/api/chat';
+import { useReversePlaceQuery } from '@zivali/api/geocode';
 import { useResendManageLinkMutation } from '@zivali/api/manage';
 import { useGetReportQuery, useTransitionReportMutation } from '@zivali/api/reports';
 import type { ReportOwnerView, ReportTransitionAction } from '@zivali/types';
 import { AuthHeading, AuthNote, errorCode, Spot, useErrorText } from '@/components/auth/parts';
+import { ConversationRow } from '@/components/chat/conversations';
 import { canReopen as reopenable, expiryNotice, trackReunited } from '@/components/report/lifecycle-helpers';
 import { h1Class, InlineError, PageSkeleton, ringClass } from '@/components/shell/page';
 import {
@@ -49,6 +52,8 @@ export function ManageView({ code }: { code: string }) {
 	const tCommon = useTranslations('common');
 	const errorText = useErrorText();
 	const { data, isError, isFetching, refetch } = useGetReportQuery({ code });
+	// "Kraj": the public place of the report's fuzzed area, as on its detail page (never the exact point).
+	const place = useReversePlaceQuery(data ? { lat: data.area.lat, lng: data.area.lng } : skipToken);
 	const conversations = useListConversationsQuery();
 	const [transition, { isLoading: saving, originalArgs }] = useTransitionReportMutation();
 	const [resend, { isLoading: resending }] = useResendManageLinkMutation();
@@ -142,6 +147,7 @@ export function ManageView({ code }: { code: string }) {
 			</h1>
 			<dl className="mt-6 grid gap-5">
 				<Fact label={t('summary_animal')}>{t(`species_${report.species}`)}</Fact>
+				{place.currentData && <Fact label={t('summary_place')}>{place.currentData.label}</Fact>}
 				<Fact label={t('summary_situation')}>
 					{t(type === 'found' ? 'summary_with_me' : 'summary_not_with_me')}
 				</Fact>
@@ -162,9 +168,12 @@ export function ManageView({ code }: { code: string }) {
 							{t('manage_unread', { count: unread })}
 						</p>
 					)}
-					<Button asChild size="lg" className="mt-4 w-full">
-						<Link href="/inbox">{t('manage_open_messages')}</Link>
-					</Button>
+					{/* Each conversation opens its thread from here (P12 web, as the mobile manage screen). */}
+					<ul className="-mx-3 mt-3 grid gap-1">
+						{threads.map((conversation) => (
+							<ConversationRow key={conversation.id} conversation={conversation} />
+						))}
+					</ul>
 				</section>
 			)}
 

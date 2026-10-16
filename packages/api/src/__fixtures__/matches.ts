@@ -15,6 +15,7 @@ export const match: MatchSuggestion = {
 	],
 	state: 'suggested',
 	other: {
+		id: publicReport.id,
 		short_code: 'Hk3vT9qP',
 		type: 'found',
 		species: 'dog',

@@ -3,9 +3,10 @@ id: TASK-17.12
 title: >-
   Create an account from an anonymous session converts it (C7 §6) on web and
   mobile success screens
-status: To Do
+status: In Progress
 assignee: []
 created_date: '2026-10-16 05:45'
+updated_date: '2026-10-16 06:26'
 labels:
   - fe
 dependencies: []

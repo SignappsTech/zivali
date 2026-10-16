@@ -6,6 +6,7 @@ import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { getMockEvents, initAnalytics, resetMockEvents, setConsent } from '@zivali/analytics';
 import { conversations } from '@zivali/api/__fixtures__/chat';
+import { placeReverse } from '@zivali/api/__fixtures__/geocode';
 import { ownerReport } from '@zivali/api/__fixtures__/reports';
 import { ApiError } from '@zivali/api/client';
 import { createMockApi, type MockRoutes, mockError } from '@zivali/api/mock';
@@ -27,6 +28,7 @@ vi.mock('next/navigation', async (actual) => ({
 // transform cold, and the lazy import then resolves at once.
 const auth = vi.hoisted(() => ({ ensureSession: vi.fn() }));
 vi.mock('@/lib/auth', () => auth);
+vi.mock('qrcode', () => ({ toString: vi.fn(async () => '<svg xmlns="http://www.w3.org/2000/svg"></svg>') }));
 
 const CODE = ownerReport.short_code;
 const claimed = { report_id: ownerReport.id, short_code: CODE };
@@ -89,6 +91,18 @@ describe('ManagePage (P7, C7)', () => {
 		expect(document.querySelector('[data-ad-slot]')).toBeNull();
 	});
 
+	it('shows the place of the report\'s public area as "Kraj" (TASK-30.2)', async () => {
+		open('good');
+		const api = show(<ManagePage />, { 'POST /v1/geo/reverse': placeReverse });
+		expect(await screen.findByText('Šiška, Ljubljana')).toBeTruthy();
+		expect(screen.getByText('Kraj')).toBeTruthy();
+		// The fuzzed area's centre, never the exact point the manager view also carries.
+		expect(api.calls.find((call) => call.path === '/v1/geo/reverse')?.body).toEqual({
+			lat: ownerReport.area.lat,
+			lng: ownerReport.area.lng,
+		});
+	});
+
 	it('takes the token out of the address bar; a reload in the tab still claims', async () => {
 		open('good');
 		const first = show(<ManagePage />);
@@ -103,7 +117,7 @@ describe('ManagePage (P7, C7)', () => {
 		expect(reloaded.calls.find((call) => call.path === '/v1/manage/claim')?.body).toEqual({ token: 'good' });
 	});
 
-	it('shows the messages with the unread count and "Odpri sporočila" when there are conversations', async () => {
+	it('shows the messages with the unread count and each conversation, opened from here (P12 web)', async () => {
 		open('good');
 		show(<ManagePage />, {
 			'GET /v1/conversations': {
@@ -116,7 +130,12 @@ describe('ManagePage (P7, C7)', () => {
 		});
 		expect(await screen.findByRole('heading', { name: 'Sporočila' })).toBeTruthy();
 		expect(screen.getByText('2 neprebrani sporočili')).toBeTruthy();
-		expect(screen.getByRole('link', { name: 'Odpri sporočila' }).getAttribute('href')).toBe('/nabiralnik');
+		const rows = screen.getAllByRole('link', { name: /^Najdena žival/ });
+		expect(rows.map((row) => row.getAttribute('href'))).toEqual([
+			`/nabiralnik/${conversations.items[0]!.id}`,
+			'/nabiralnik/x',
+		]);
+		expect(rows[0]!.textContent).toContain('Najdena žival, neprebrano');
 		expect(screen.queryByRole('link', { name: 'Sporočila' })).toBeNull();
 	});
 
@@ -298,5 +317,17 @@ describe('PrivateLinkBlock (P7 success)', () => {
 		fireEvent.click(within(block).getByRole('button', { name: 'Kopiraj povezavo' }));
 		await vi.waitFor(() => expect(within(block).getByRole('status').textContent).toBe('Povezava je kopirana.'));
 		expect(writeText).toHaveBeenCalledWith(link);
+	});
+
+	it('draws the QR code of the link in the browser, lazy-loaded, with an accessible name', async () => {
+		const { toString } = await import('qrcode');
+		show(<PrivateLinkBlock token="q7Vt-token" />);
+
+		const qr = await screen.findByRole('img', { name: sl.report_found.link_qr_alt });
+		expect(qr.getAttribute('src')).toMatch(/^data:image\/svg\+xml/);
+		expect(toString).toHaveBeenCalledWith(
+			`${window.location.origin}/m#q7Vt-token`,
+			expect.objectContaining({ type: 'svg' })
+		);
 	});
 });

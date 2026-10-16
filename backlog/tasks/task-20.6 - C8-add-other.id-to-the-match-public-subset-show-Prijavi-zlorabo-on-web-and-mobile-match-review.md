@@ -3,7 +3,7 @@ id: TASK-20.6
 title: >-
   C8: add other.id to the match public subset; show 'Prijavi zlorabo' on web and
   mobile match review
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-10-16 05:21'
 labels:
@@ -26,3 +26,7 @@ TASK-20.3's fix round put the P11 overflow 'Prijavi zlorabo' on the web match re
 - [ ] #1 GET matches returns other.id for each match (API test), types regenerated, C8 updated
 - [ ] #2 Web and mobile match review show 'Prijavi zlorabo' for the other report and a submit succeeds against the mock API (vitest/jest)
 <!-- AC:END -->
+
+## Packet
+
+Branch: agent/task-20.6-match-other-id
