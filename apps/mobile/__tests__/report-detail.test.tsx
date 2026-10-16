@@ -14,6 +14,7 @@ import { IntlProvider } from 'use-intl';
 import * as fx from '@zivali/api/__fixtures__/reports';
 import type { CachedReport } from '@zivali/api/sync';
 import sl from '@zivali/i18n/dist/sl.json';
+import { formatDayMonth } from '@zivali/i18n/format';
 import { createMockApi } from '@zivali/api/mock';
 import { api, createApiStore } from '@zivali/api/rtk';
 import type { PublicReport, ReportOwnerView } from '@zivali/types';
@@ -122,6 +123,7 @@ async function open(report: Partial<Result>, code = 'Rex2Lost') {
 			index: () => <Text>map tab</Text>,
 			'r/[code]/index': ReportScreen,
 			'r/[code]/reunited': () => <Text>reunited screen</Text>,
+			'r/[code]/poster': () => <Text>poster screen</Text>,
 			'report/found': () => <Text>sighted flow</Text>,
 		},
 		{ initialUrl: `/r/${code}`, wrapper: Providers }
@@ -297,11 +299,33 @@ describe('report detail (P9 mobile)', () => {
 		expectInOrder([r.action_message, r.more, r.action_mine]);
 	});
 
-	test('share opens the system sheet with the short link (slot B)', async () => {
+	test('share opens the system sheet with the localised P18 text and the short link (slot B)', async () => {
 		const share = jest.spyOn(Share, 'share').mockResolvedValue({ action: 'sharedAction' });
 		await open({ data: lost });
+		// The text names the area once the page's reverse lookup has it.
+		await screen.findByRole('button', { name: /^Odpri zemljevid\. Območje: Šiška, Ljubljana/ });
 		await fireEvent.press(screen.getByRole('button', { name: r.mobile_share }));
-		expect(share).toHaveBeenCalledWith({ message: 'https://najdimo.test/r/Rex2Lost' });
+		const date = formatDayMonth(lost.event_at, 'sl');
+		expect(share).toHaveBeenCalledWith({
+			message: `Pomagajte najti psa: Rex. Nazadnje viden ${date}, območje Šiška, Ljubljana. Ste ga videli? https://najdimo.test/r/Rex2Lost`,
+		});
+	});
+
+	test('a reunited report shares the thank-you text', async () => {
+		const share = jest.spyOn(Share, 'share').mockResolvedValue({ action: 'sharedAction' });
+		await open({ data: { ...lost, status: 'reunited' } });
+		await fireEvent.press(screen.getByRole('button', { name: r.mobile_share }));
+		expect(share).toHaveBeenLastCalledWith({
+			message: 'Rex je spet doma. Hvala vsem, ki ste delili in pomagali. https://najdimo.test/r/Rex2Lost',
+		});
+	});
+
+	test('offline there is no area name, so the share is the short link alone', async () => {
+		const share = jest.spyOn(Share, 'share').mockResolvedValue({ action: 'sharedAction' });
+		await open({ data: lost, source: 'cache', lastSyncAt: NOW.getTime() });
+		await fireEvent.press(screen.getByRole('button', { name: r.mobile_share }));
+		expect(share).toHaveBeenLastCalledWith({ message: 'https://najdimo.test/r/Rex2Lost' });
+		expect(mockApi.calls.some((call) => call.path === '/v1/geo/reverse')).toBe(false);
 	});
 
 	test('visitors get "Prijavi zlorabo" in Več možnosti (slot C)', async () => {
@@ -326,9 +350,8 @@ describe('report detail (P9 mobile)', () => {
 		expect(screen.getByText(r.owner_reward_note)).toBeOnTheScreen();
 		expect(screen.queryByText(new RegExp(`^${r.safety_note_reward}`))).toBeNull();
 		expect(screen.queryByRole('button', { name: r.action_sighting })).toBeNull();
-		// "Uredi" and "Plakat" stay hidden until TASK-26.5 and TASK-24.3 wire them.
+		// "Uredi" stays hidden until TASK-26.5 wires it.
 		expect(screen.queryByRole('button', { name: r.owner_edit })).toBeNull();
-		expect(screen.queryByRole('button', { name: r.owner_poster })).toBeNull();
 		await fireEvent.press(screen.getByRole('button', { name: r.more }));
 		const menu = container('menu', r.more);
 		expect(within(menu).getByRole('menuitem', { name: r.owner_close })).toBeOnTheScreen();
@@ -339,6 +362,13 @@ describe('report detail (P9 mobile)', () => {
 		await fireEvent.press(screen.getByRole('button', { name: r.owner_home }));
 		expect(await screen.findByText('reunited screen')).toBeOnTheScreen();
 		expect(page.getPathname()).toBe('/r/Rex2Lost/reunited');
+	});
+
+	test('the owner "Plakat" opens the P18 poster and sharing screen (TASK-24.3)', async () => {
+		const { page } = await open({ data: owner });
+		await fireEvent.press(screen.getByRole('button', { name: r.owner_poster }));
+		expect(await screen.findByText('poster screen')).toBeOnTheScreen();
+		expect(page.getPathname()).toBe('/r/Rex2Lost/poster');
 	});
 
 	test('reunited: thank-you line, share stays, no actions, area or safety note', async () => {

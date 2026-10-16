@@ -119,23 +119,24 @@ export async function shareFile(url: string, name: string, type: 'pdf' | 'png'):
 	);
 }
 
-// C1 public config (admin-edited JSON): lost-pet groups on Facebook and the local radio's announcement form. Only https
-// links open; anything malformed is left out rather than breaking the screen.
+// C1 public config (admin-edited JSON): lost-pet groups on Facebook (`[{ name, url, regions? }]`, regions as C6 slugs)
+// and the local radio's announcement form (`share.radio_form_url`). Only https links open; a malformed entry is left
+// out rather than breaking the screen.
 const https = z.url({ protocol: /^https$/ });
-const shareConfig = z.object({
-	'share.facebook_groups': z
-		.array(z.object({ name: z.string().min(1), url: https, regions: z.array(z.string()).optional() }))
-		.catch([]),
-	'share.radio_form_url': https.optional().catch(undefined),
-});
-export type FacebookGroup = z.infer<typeof shareConfig>['share.facebook_groups'][number];
+const group = z.object({ name: z.string().min(1), url: https, regions: z.array(z.string()).optional() });
+export type FacebookGroup = z.infer<typeof group>;
 
 /** The groups, the report's region first, and the radio form link. */
-export function parseShareConfig(config: unknown, region: string | undefined) {
-	const parsed = shareConfig.catch({ 'share.facebook_groups': [], 'share.radio_form_url': undefined }).parse(config);
+export function parseShareConfig(config: Record<string, unknown> | undefined, region: string | undefined) {
+	const entries = config?.['share.facebook_groups'];
+	const groups = (Array.isArray(entries) ? entries : []).flatMap((entry) => {
+		const parsed = group.safeParse(entry);
+		return parsed.success ? [parsed.data] : [];
+	});
 	const local = (g: FacebookGroup) => (region && g.regions?.includes(region) ? 0 : 1);
+	const radio = https.safeParse(config?.['share.radio_form_url']);
 	return {
-		groups: [...parsed['share.facebook_groups']].sort((a, b) => local(a) - local(b)),
-		radioFormUrl: parsed['share.radio_form_url'],
+		groups: groups.sort((a, b) => local(a) - local(b)),
+		radioFormUrl: radio.success ? radio.data : undefined,
 	};
 }
