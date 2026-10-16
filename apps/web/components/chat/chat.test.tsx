@@ -11,7 +11,7 @@ import { type ApiStore, createApiStore } from '@zivali/api/rtk';
 import sl from '@zivali/i18n/dist/sl.json';
 import type { Message } from '@zivali/types';
 
-import { type Conversation, ConversationList } from './conversations';
+import { type Conversation, ConversationList, ConversationRow } from './conversations';
 import { Thread } from './thread';
 
 // TASK-21.3: P12 on the web, over the in-memory API (C9) and a fake Supabase Realtime client.
@@ -184,6 +184,26 @@ describe('ConversationList (P12 inbox)', () => {
 		expect(other.textContent).toContain('Hvala!');
 		expect(unread.getAttribute('aria-current')).toBeNull();
 		expect(screen.queryByText(/@|\+386/)).toBeNull();
+	});
+
+	it('a row needs only the three chat lines the /m page sends (app/[locale]/(public)/m/page.tsx)', () => {
+		const onError = vi.fn();
+		const { row_title_fallback, row_unread_a11y, row_status_closed } = c;
+		render(
+			<NextIntlClientProvider
+				locale="sl"
+				messages={{ chat: { row_title_fallback, row_unread_a11y, row_status_closed } }}
+				onError={onError}
+			>
+				<ul>
+					<ConversationRow conversation={conversation({ status: 'read_only' })} />
+				</ul>
+			</NextIntlClientProvider>
+		);
+
+		expect(screen.getByRole('link').textContent).toContain('Najdena žival, neprebrano');
+		expect(screen.getByText(c.row_status_closed)).toBeTruthy();
+		expect(onError).not.toHaveBeenCalled();
 	});
 
 	it('empty: the sentence about how chats start; beside a thread the heading is an h2', async () => {
