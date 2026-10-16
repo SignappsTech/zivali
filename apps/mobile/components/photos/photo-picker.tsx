@@ -9,6 +9,15 @@ import { Image, Pressable, View } from 'react-native';
 import { useReducedMotion } from 'react-native-reanimated';
 import { useTranslations } from 'use-intl';
 
+import {
+	AlertDialog,
+	AlertDialogAction,
+	AlertDialogCancel,
+	AlertDialogContent,
+	AlertDialogDescription,
+	AlertDialogFooter,
+	AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { useFocusRing } from '@/components/ui/focus-ring';
 import { FieldError } from '@/components/ui/form-field';
@@ -19,7 +28,7 @@ import { Text } from '@/components/ui/text';
 import { cn } from '@/lib/utils';
 
 import type { PhotoExif } from './prepare-photo';
-import { type DraftKind, type PickedPhoto, usePhotoUploads } from './use-photo-uploads';
+import { type DraftKind, type ExistingPhoto, type PickedPhoto, usePhotoUploads } from './use-photo-uploads';
 
 /** Photo source tile (P6 .ptile): card surface, radius 20, the tile is the button; pressed lays foreground at 10 %. */
 function Tile({ icon, label, onPress }: { icon: typeof CameraIcon; label: string; onPress: () => void }) {
@@ -54,6 +63,10 @@ type PhotoPickerProps = {
 	onChange?: (photos: PickedPhoto[]) => void;
 	/** Place and time read from a photo, for LocationPicker `suggested`. Coarsen the point before it goes anywhere. */
 	onExif?: (exif: PhotoExif) => void;
+	/** Photos the entity already has (editing a pet), read on mount; they come first. */
+	existing?: ExistingPhoto[];
+	/** Remove asks first with this dialog copy (P8: removed photos are deleted from storage too). */
+	confirmRemove?: { title: string; body: string; confirm: string };
 	className?: string;
 };
 
@@ -61,13 +74,25 @@ type PhotoPickerProps = {
  * Photo step of P6 and P7 (FR-003): camera and gallery tiles, then a row per photo with its preview, upload progress,
  * retry, reorder and remove. Up to 5 photos.
  */
-export function PhotoPicker({ draft, kind, cameraPrimer, onChange, onExif, className }: PhotoPickerProps) {
+export function PhotoPicker({
+	draft,
+	kind,
+	cameraPrimer,
+	onChange,
+	onExif,
+	existing,
+	confirmRemove,
+	className,
+}: PhotoPickerProps) {
 	const t = useTranslations('photos');
 	const message = useTranslations();
 	const { photos, preparing, notice, pick, remove, move, retry } = usePhotoUploads(draft, kind, {
 		cameraPrimer,
 		onExif,
+		existing,
 	});
+	// The photo waiting for the remove confirmation.
+	const [removing, setRemoving] = React.useState<string>();
 
 	const changed = React.useEffectEvent((next: PickedPhoto[]) => onChange?.(next));
 	React.useEffect(() => changed(photos), [photos]);
@@ -156,7 +181,7 @@ export function PhotoPicker({ draft, kind, cameraPrimer, onChange, onExif, class
 											variant="ghost"
 											size="icon"
 											aria-label={t('remove', { n })}
-											onPress={() => remove(photo.key)}
+											onPress={() => (confirmRemove ? setRemoving(photo.key) : remove(photo.key))}
 										>
 											<Icon as={TrashIcon} />
 										</Button>
@@ -169,6 +194,20 @@ export function PhotoPicker({ draft, kind, cameraPrimer, onChange, onExif, class
 						<Skeleton key={`preparing-${index}`} className="size-20 rounded-row" />
 					))}
 				</View>
+			)}
+			{confirmRemove && (
+				<AlertDialog open={removing !== undefined} onOpenChange={(open) => !open && setRemoving(undefined)}>
+					<AlertDialogContent>
+						<AlertDialogTitle>{confirmRemove.title}</AlertDialogTitle>
+						<AlertDialogDescription>{confirmRemove.body}</AlertDialogDescription>
+						<AlertDialogFooter>
+							<AlertDialogAction size="lg" onPress={() => removing && remove(removing)}>
+								{confirmRemove.confirm}
+							</AlertDialogAction>
+							<AlertDialogCancel>{message('common.cancel')}</AlertDialogCancel>
+						</AlertDialogFooter>
+					</AlertDialogContent>
+				</AlertDialog>
 			)}
 		</View>
 	);

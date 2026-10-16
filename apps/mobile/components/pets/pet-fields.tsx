@@ -263,8 +263,9 @@ const isFallback = (code: BreedCode) => /\.(mixed|unknown)$/.test(code);
 
 /**
  * Breed as a searchable select (P8 C4): typing lists up to 6 matching breeds of the chosen species (accents and case
- * ignored, alphabetical) as choice rows, then Mixed breed and Not sure; with no match the hint says so. One breed per
- * pet in the form (`breed_codes` holds up to 5).
+ * ignored, alphabetical) as choice rows (64 px, above the 44 px minimum), then Mixed breed and Not sure; with no match
+ * the hint says so. The search text goes on blur without a pick and with a species change, so the field only ever
+ * shows the saved breed. One breed per pet in the form (`breed_codes` holds up to 5).
  */
 function BreedField({ species }: { species?: Species }) {
 	const t = useTranslations('pets');
@@ -273,6 +274,11 @@ function BreedField({ species }: { species?: Species }) {
 	const reduceMotion = useReducedMotion();
 	const { field } = useController<PetFormValues, 'breed_codes'>({ name: 'breed_codes' });
 	const [query, setQuery] = React.useState<string | null>(null);
+	const [searchedSpecies, setSearchedSpecies] = React.useState(species);
+	if (species !== searchedSpecies) {
+		setSearchedSpecies(species);
+		setQuery(null);
+	}
 	const chosen = field.value?.[0];
 	const options: readonly BreedCode[] = species ? breedsFor(species) : [];
 	const needle = fold(query?.trim() ?? '');
@@ -297,7 +303,10 @@ function BreedField({ species }: { species?: Species }) {
 						ref={(el) => field.ref(el)}
 						value={query ?? (chosen ? tb(chosen) : '')}
 						onChangeText={setQuery}
-						onBlur={field.onBlur}
+						onBlur={() => {
+							setQuery(null);
+							field.onBlur();
+						}}
 						placeholder={t('breed_search')}
 						autoCorrect={false}
 						autoComplete="off"
@@ -503,7 +512,9 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 /**
  * The pet form section shared by pet profiles (P8) and the lost flow (P6), inside a react-hook-form FormProvider
  * (`usePetForm()` for profiles). Mobile screens that show one part per screen use the parts directly, under the
- * screen's h1: PetBasicsFields, PetLooksFields, PetChipFields, PetNotesFields. Photos are PhotoPicker's.
+ * screen's h1: PetBasicsFields, PetLooksFields, PetChipFields, PetNotesFields. Photos are PhotoPicker's. The
+ * surrounding ScrollView needs `keyboardShouldPersistTaps="handled"`, so a tap on a breed row picks it before the search
+ * field blurs (blur clears the search).
  */
 export function PetFields({ variant = 'profile', className }: { variant?: PetFieldsVariant; className?: string }) {
 	const t = useTranslations('pets');
