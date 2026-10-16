@@ -1,11 +1,11 @@
 ---
 id: TASK-23.2
 title: Web nearby-alert settings
-status: In Progress
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:14'
-updated_date: '2026-10-16 04:35'
+updated_date: '2026-10-16 04:45'
 labels:
   - fe
   - 'est:S'
