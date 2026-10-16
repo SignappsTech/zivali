@@ -25,5 +25,18 @@
 	"sign_out_remove_links": "Also remove the links for managing reports from this device",
 	"sign_out_confirm": "Sign out",
 	"sign_out_cancel": "Cancel",
-	"saved": "Saved."
+	"saved": "Saved.",
+	"row_offline": "Offline data",
+	"offline_body": "We keep reports near you and their photos on this phone, so you can see them offline too.",
+	"offline_size": "Space used",
+	"offline_size_value": "{size} MB",
+	"offline_updated": "Last updated",
+	"offline_updated_never": "Not updated yet",
+	"offline_mobile_photos": "Use mobile data for offline photos",
+	"offline_mobile_photos_help": "When this is off, we download photos over Wi-Fi only.",
+	"offline_clear": "Clear offline data",
+	"offline_clear_title": "Clear offline data?",
+	"offline_clear_body": "We delete the saved reports near you, their photos and your report drafts from this phone. Reports waiting to be sent stay.",
+	"offline_clear_confirm": "Clear",
+	"offline_cleared": "Offline data cleared."
 }

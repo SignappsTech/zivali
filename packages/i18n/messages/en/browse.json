@@ -74,5 +74,8 @@
 	"no_match_action": "Reset filters",
 	"error": "We cannot load reports right now. The map shows the last ones we had.",
 	"error_action": "Try again",
-	"loading": "Loading reports nearby …"
+	"loading": "Loading reports nearby …",
+	"offline_note": "Offline, last updated {time}.",
+	"offline_note_saved": "Offline. Showing saved reports.",
+	"offline_empty_body": "We save reports near you on this phone while you are online, so you can see them offline too."
 }

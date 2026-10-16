@@ -1,14 +1,17 @@
 import BottomSheet, { type BottomSheetBackgroundProps, BottomSheetFlatList } from '@gorhom/bottom-sheet';
 import { ArrowsDownUpIcon } from 'phosphor-react-native/src/icons/ArrowsDownUp';
 import { WarningCircleIcon } from 'phosphor-react-native/src/icons/WarningCircle';
+import { WifiSlashIcon } from 'phosphor-react-native/src/icons/WifiSlash';
 import * as React from 'react';
-import { Pressable, View } from 'react-native';
-import { useTranslations } from 'use-intl';
+import { AccessibilityInfo, Platform, Pressable, View } from 'react-native';
+import { useFormatter, useLocale, useNow, useTranslations } from 'use-intl';
 
 import type { CachedReport } from '@zivali/api/sync';
+import { formatDate, type Locale } from '@zivali/i18n/format';
 import { type AdSlot, AD_EVERY, type ListItem, type Sort, withAdSlots } from '@/components/browse/filters';
 import { ReportRow } from '@/components/browse/report-row';
 import { Button, Spinner } from '@/components/ui/button';
+import { EmptyState } from '@/components/ui/empty-state';
 import { Icon } from '@/components/ui/icon';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Text } from '@/components/ui/text';
@@ -27,6 +30,8 @@ export type ListSheetProps = {
 	isLoading: boolean;
 	isError: boolean;
 	onRetry: () => void;
+	/** Offline, the rows come from the cache: its last update, null before the first; undefined online. */
+	cachedAt?: number | null;
 	/** Filters differ from the defaults: an empty list is "no match", not "empty region". */
 	filtered: boolean;
 	onResetFilters: () => void;
@@ -53,10 +58,60 @@ function Background({ style }: BottomSheetBackgroundProps) {
 	return <View style={[style, shadow('lg')]} className="rounded-t-sheet bg-card" />;
 }
 
+/** When the offline cache was last updated: the time today, else the day and time ("14:20", "12. 10., 14:20"). */
+export function useUpdatedTime(at: number): string {
+	const format = useFormatter();
+	const locale = useLocale() as Locale;
+	const otherDay = formatDate(at, locale) !== formatDate(useNow(), locale);
+	return format.dateTime(at, {
+		hour: '2-digit',
+		minute: '2-digit',
+		...(otherDay && { day: 'numeric', month: 'numeric' }),
+	});
+}
+
+/** iOS has no live regions, so an offline state is announced when it appears; Android reads its polite region. */
+function useAnnounced(text: string) {
+	React.useEffect(() => {
+		if (Platform.OS === 'ios') AccessibilityInfo.announceForAccessibility(text);
+	}, [text]);
+}
+
+/** P4 offline: one calm note above the cached rows, "Brez povezave, zadnja posodobitev …" (P2 offline state). */
+function OfflineNote({ at }: { at: number | null }) {
+	const t = useTranslations('browse');
+	const time = useUpdatedTime(at ?? 0);
+	const text = at === null ? t('offline_note_saved') : t('offline_note', { time });
+	useAnnounced(text);
+	return (
+		<View
+			accessible
+			role="status"
+			aria-live="polite"
+			className="mb-5 flex-row gap-3 rounded-row bg-muted px-[18px] py-4"
+		>
+			<Icon as={WifiSlashIcon} weight="fill" size={22} className="mt-px" />
+			<Text className="min-w-0 flex-1 text-control leading-[22px]">{text}</Text>
+		</View>
+	);
+}
+
+/** Offline before the first sync: nothing is cached yet, so say why the list is empty (no network actions). */
+function OfflineEmpty() {
+	const t = useTranslations();
+	const body = t('browse.offline_empty_body');
+	useAnnounced(`${t('errors.offline_title')}. ${body}`);
+	return (
+		<View role="status" aria-live="polite" className="pt-3">
+			<EmptyState title={t('errors.offline_title')} description={body} />
+		</View>
+	);
+}
+
 /**
  * The Map tab's list sheet (P4, FR-007): the accessible alternative to the map, never behind it. Grabber (a button
  * that steps through the snap points), h2 "V bližini" with the count, the sort text button; then the rows (20 px
- * apart, paging 20 at a time), the loading, error and empty states, and "Pokaži zaključene …" at the end.
+ * apart, paging 20 at a time), the loading, error, empty and offline states, and "Pokaži zaključene …" at the end.
  */
 export function ListSheet({
 	reports,
@@ -65,6 +120,7 @@ export function ListSheet({
 	isLoading,
 	isError,
 	onRetry,
+	cachedAt,
 	filtered,
 	onResetFilters,
 	sort,
@@ -86,6 +142,9 @@ export function ListSheet({
 	const [snap, setSnap] = React.useState(0);
 	const items = React.useMemo(() => withAdSlots(reports ?? [], renderAd ? AD_EVERY : null), [reports, renderAd]);
 	const loading = isLoading && !reports?.length;
+	const offline = cachedAt !== undefined;
+	// Offline before the first sync with nothing from earlier browsing either.
+	const nothingCached = offline && cachedAt === null && !loading && items.length === 0;
 	const sortWord = t(sort === 'distance' ? 'sort_nearest' : 'sort_newest');
 
 	const renderItem = ({ item }: { item: ListItem }) =>
@@ -116,6 +175,8 @@ export function ListSheet({
 				))}
 			</View>
 		</View>
+	) : nothingCached ? (
+		<OfflineEmpty />
 	) : isError ? null : filtered ? (
 		<View className="pt-3">
 			<Text>{t('no_match')}</Text>
@@ -203,6 +264,7 @@ export function ListSheet({
 				ItemSeparatorComponent={RowGap}
 				ListHeaderComponent={
 					<View>
+						{offline && !loading && !nothingCached && <OfflineNote at={cachedAt} />}
 						{header}
 						{isError && (
 							<View role="alert" className="mb-5 flex-row gap-3 rounded-row bg-muted px-[18px] py-4">

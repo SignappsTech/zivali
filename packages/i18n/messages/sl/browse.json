@@ -74,5 +74,8 @@
 	"no_match_action": "Ponastavi filtre",
 	"error": "Prijav ta trenutek ne moremo naložiti. Na zemljevidu so zadnje znane.",
 	"error_action": "Poskusi znova",
-	"loading": "Nalagamo prijave v bližini …"
+	"loading": "Nalagamo prijave v bližini …",
+	"offline_note": "Brez povezave, zadnja posodobitev {time}.",
+	"offline_note_saved": "Brez povezave. Prikazujemo shranjene prijave.",
+	"offline_empty_body": "Prijave v bližini shranimo v telefon, ko ste na spletu. Potem jih vidite tudi brez povezave."
 }
