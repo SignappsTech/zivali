@@ -1,7 +1,7 @@
 ﻿---
 id: TASK-31.7
 title: Browse result count caps at 500 (counts map pins, ignores total_estimate)
-status: To Do
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-16 11:30'
@@ -26,5 +26,9 @@ Severity: low (only above 500 reports in view).
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 With more than 500 matching reports the list header, the filter button and the mobile sheet show the real total (total_estimate, or "500+" when only the map is known); map and list counts agree below 500 (jest test on web and mobile)
+- [x] #1 With more than 500 matching reports the list header, the filter button and the mobile sheet show the real total (total_estimate, or "500+" when only the map is known); map and list counts agree below 500 (jest test on web and mobile)
 <!-- AC:END -->
+
+## Packet
+
+Branch: agent/task-31.7-browse-count

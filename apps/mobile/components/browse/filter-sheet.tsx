@@ -22,6 +22,7 @@ import {
 	toggle,
 	TYPES,
 	WHEN,
+	plus,
 } from '@/components/browse/filters';
 import { Button } from '@/components/ui/button';
 import { FormField } from '@/components/ui/form-field';
@@ -55,6 +56,8 @@ export type FilterSheetProps = {
 	onDraftChange: (draft: Filters) => void;
 	/** Reports the draft would show. */
 	count: number;
+	/** `count` is the map's cap: show "500+". */
+	capped?: boolean;
 	onApply: () => void;
 	/** Location access was refused: show the note and the place search. */
 	locationDenied: boolean;
@@ -76,6 +79,7 @@ export function FilterSheet({
 	draft,
 	onDraftChange,
 	count,
+	capped = false,
 	onApply,
 	locationDenied,
 	onUseLocation,
@@ -98,8 +102,8 @@ export function FilterSheet({
 		}
 		if (count === announced.current) return;
 		announced.current = count;
-		AccessibilityInfo.announceForAccessibility(t('count_announce', { count }));
-	}, [count, open, t]);
+		AccessibilityInfo.announceForAccessibility(plus(t('count_announce', { count }), count, capped));
+	}, [count, capped, open, t]);
 
 	return (
 		<Sheet open={open} onOpenChange={onOpenChange}>
@@ -240,7 +244,7 @@ export function FilterSheet({
 					</BottomSheetScrollView>
 					<View className="pt-3">
 						<Button size="lg" onPress={onApply}>
-							{t('filters_apply', { count })}
+							{plus(t('filters_apply', { count }), count, capped)}
 						</Button>
 					</View>
 				</View>

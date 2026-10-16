@@ -208,7 +208,12 @@ export function useMapReports(
 export function useReportSearch(
 	filters: Omit<ReportSearch, 'cursor'>,
 	{ skip }: Options = {}
-): ReportsResult<CachedReport[]> & { hasNextPage: boolean; fetchNextPage: () => unknown; refetch: () => unknown } {
+): ReportsResult<CachedReport[]> & {
+	total?: number;
+	hasNextPage: boolean;
+	fetchNextPage: () => unknown;
+	refetch: () => unknown;
+} {
 	const network = useSearchReportsInfiniteQuery(filters, { skip: useOffline() || skip });
 	const items = useMemo(() => network.data?.pages.flatMap((page) => page.items.map(toCached)), [network.data]);
 	useEffect(() => {
@@ -217,6 +222,8 @@ export function useReportSearch(
 	const result = useCacheFallback(held({ ...network, data: items }, skip), JSON.stringify(filters), readList);
 	return {
 		...result,
+		// The list's real total (C4 total_estimate), network only.
+		total: result.source === 'network' ? network.data?.pages[0]?.total_estimate : undefined,
 		hasNextPage: result.source === 'network' && network.hasNextPage,
 		fetchNextPage: network.fetchNextPage,
 		refetch: network.refetch,
