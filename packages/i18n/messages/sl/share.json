@@ -26,5 +26,7 @@
 	"kit_media_form": "Lokalni radio: obrazec za obvestila",
 	"kit_image_title": "Kvadratna slika",
 	"kit_image_save": "Shrani sliko",
-	"kit_image_alt": "Kvadratna slika za objavo: {title}"
+	"kit_image_alt": "Kvadratna slika za objavo: {title}",
+	"unsupported": "Deljenje ni na voljo, zato smo povezavo kopirali.",
+	"copy_failed": "Povezave ni bilo mogoče kopirati."
 }
