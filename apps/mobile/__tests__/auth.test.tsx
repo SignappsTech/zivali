@@ -8,6 +8,7 @@ import { renderRouter } from 'expo-router/testing-library';
 import * as React from 'react';
 import { Linking } from 'react-native';
 
+import { getMockEvents, initAnalytics, resetMockEvents, setConsent } from '@zivali/analytics';
 import { ApiError } from '@zivali/api/client';
 import en from '@zivali/i18n/dist/en.json';
 import sl from '@zivali/i18n/dist/sl.json';
@@ -51,6 +52,7 @@ const mockSupabase = {
 	resend: jest.fn(),
 	updateUser: jest.fn(),
 	exchangeCodeForSession: jest.fn(),
+	getSession: jest.fn(),
 };
 jest.mock('@/lib/supabase', () => ({
 	supabase: {
@@ -70,6 +72,7 @@ type MockSession = {
 		home_radius_km: number;
 	} | null;
 	gate: string;
+	isAnonymous?: boolean;
 };
 const signedOut: MockSession = { session: null, me: null, gate: 'signin' };
 const me = { email: 'ana@primer.si', display_name: 'Ana', phone: null, home: null, home_radius_km: 5 };
@@ -310,6 +313,94 @@ describe('sign up', () => {
 		await press(sl.auth.signup_button);
 		expect(screen.queryByText(sl.auth.error_email_taken)).toBeNull();
 		expect(await screen.findByRole('heading', { name: sl.auth.check_title })).toBeOnTheScreen();
+	});
+
+	test('from an anonymous finder session it converts that session in place, never a new user (C7 §6)', async () => {
+		initAnalytics({ provider: 'mock', storage: { get: () => null, set: () => {} } });
+		setConsent({ analytics: true });
+		resetMockEvents();
+		mockSession.set({ ...signedOut, session: {}, isAnonymous: true });
+		mockSupabase.getSession.mockResolvedValue({
+			data: { session: { user: { id: 'u-anon', is_anonymous: true } } },
+			error: null,
+		});
+		mockSupabase.updateUser.mockResolvedValue({ data: { user: { id: 'u-anon' } }, error: null });
+		const result = await app('/auth/sign-up?convert=1');
+		expect(screen.getByText(sl.auth.convert_note)).toBeOnTheScreen();
+		// Google would start another user, so the reports would not come along.
+		expect(screen.queryByRole('button', { name: sl.auth.google })).toBeNull();
+		await type(sl.auth.name_label, 'Ana');
+		await type(sl.auth.email_label, 'ana@primer.si');
+		await type(sl.auth.password_label, 'mačka v škornjih');
+		await press(sl.auth.signup_button);
+
+		expect(mockSupabase.updateUser).toHaveBeenCalledWith(
+			{ email: 'ana@primer.si', password: 'mačka v škornjih', data: { locale: 'sl', display_name: 'Ana' } },
+			{ emailRedirectTo: expect.stringMatching(/auth\/callback\?type=signup$/) }
+		);
+		expect(mockSupabase.signUp).not.toHaveBeenCalled();
+		expect(result.getPathname()).toBe('/auth/check-email');
+		expect(getMockEvents()).toEqual([{ name: 'sign_up', params: { method: 'convert' } }]);
+	});
+
+	test("the conversion's link is resent as an email change", async () => {
+		mockSupabase.resend.mockResolvedValue({ data: {}, error: null });
+		await app('/auth/check-email?email=ana%40primer.si&convert=1');
+		await press(sl.auth.check_resend);
+		await waitFor(() =>
+			expect(mockSupabase.resend).toHaveBeenCalledWith({
+				type: 'email_change',
+				email: 'ana@primer.si',
+				options: { emailRedirectTo: expect.stringMatching(/auth\/callback\?type=signup$/) },
+			})
+		);
+	});
+
+	test('converting: a taken address and a weak password are said on their fields; another session is refused', async () => {
+		mockSession.set({ ...signedOut, session: {}, isAnonymous: true });
+		mockSupabase.getSession.mockResolvedValue({
+			data: { session: { user: { id: 'u-anon', is_anonymous: true } } },
+			error: null,
+		});
+		await app('/auth/sign-up?convert=1');
+		await type(sl.auth.name_label, 'Ana');
+		await type(sl.auth.email_label, 'ana@primer.si');
+		await type(sl.auth.password_label, 'mačka v škornjih');
+		mockSupabase.updateUser.mockResolvedValueOnce({ data: {}, error: new ApiError('CONFLICT', 'CONFLICT') });
+		await press(sl.auth.signup_button);
+		expect(screen.getByText(sl.auth.convert_email_taken)).toBeOnTheScreen();
+		expect(screen.getByRole('button', { name: sl.auth.to_signin })).toBeOnTheScreen();
+
+		mockSupabase.updateUser.mockResolvedValueOnce({
+			data: {},
+			error: new ApiError('VALIDATION', 'VALIDATION', { details: { auth_code: 'weak_password' } }),
+		});
+		await press(sl.auth.signup_button);
+		expect(screen.getByText(sl.auth.error_password_weak)).toBeOnTheScreen();
+
+		// Signed in to an account meanwhile: its address and password are never touched.
+		mockSupabase.updateUser.mockClear();
+		mockSupabase.getSession.mockResolvedValue({
+			data: { session: { user: { id: 'u-1', is_anonymous: false } } },
+			error: null,
+		});
+		await press(sl.auth.signup_button);
+		expect(await screen.findByText(sl.errors.UNAUTHENTICATED)).toBeOnTheScreen();
+		expect(mockSupabase.updateUser).not.toHaveBeenCalled();
+		expect(mockSupabase.signUp).not.toHaveBeenCalled();
+	});
+
+	test('convert=1 without an anonymous session is the plain sign-up', async () => {
+		mockSupabase.signUp.mockResolvedValueOnce({ data: {}, error: null });
+		await app('/auth/sign-up?convert=1');
+		expect(screen.queryByText(sl.auth.convert_note)).toBeNull();
+		expect(screen.getByRole('button', { name: sl.auth.google })).toBeOnTheScreen();
+		await type(sl.auth.name_label, 'Ana');
+		await type(sl.auth.email_label, 'ana@primer.si');
+		await type(sl.auth.password_label, 'mačka v škornjih');
+		await press(sl.auth.signup_button);
+		expect(mockSupabase.signUp).toHaveBeenCalled();
+		expect(mockSupabase.updateUser).not.toHaveBeenCalled();
 	});
 
 	test('"Odpri e-pošto" opens the mail app', async () => {

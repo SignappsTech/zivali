@@ -5,6 +5,7 @@ import { Platform } from 'react-native';
 import { z } from 'zod';
 
 import { authError, signInWithApple, signInWithGoogle } from '@zivali/api/auth';
+import { ApiError } from '@zivali/api/client';
 import type { Locale } from '@zivali/i18n/format';
 import { env } from '@/lib/env';
 import { supabase } from '@/lib/supabase';
@@ -48,8 +49,36 @@ export const signUp = ({
 		})
 	);
 
-export const resendConfirmation = (email: string) =>
-	check(supabase.auth.resend({ type: 'signup', email, options: { emailRedirectTo: authRedirect('signup') } }));
+/**
+ * C7 §6: the finder's anonymous session becomes the account in place, so the user id, report_managers and the manage
+ * links stay. One updateUser sets the password, the name and the address; GoTrue mails a confirmation link to it
+ * (`email_change`, back to the signup callback) and the user stops being anonymous once it is opened. Refused on any
+ * other session, so a real account never has its address or password changed here.
+ */
+export async function convertAnonymous({
+	name,
+	email,
+	password,
+	locale,
+}: {
+	name: string;
+	email: string;
+	password: string;
+	locale: Locale;
+}) {
+	if (!(await supabase.auth.getSession()).data.session?.user.is_anonymous)
+		throw new ApiError('UNAUTHENTICATED', 'UNAUTHENTICATED');
+	const data = { locale, display_name: name };
+	const options = { emailRedirectTo: authRedirect('signup') };
+	const { error } = await supabase.auth.updateUser({ email, password, data }, options);
+	// Sent again ("Spremeni e-naslov"): the password is already this one, and GoTrue refuses to set it twice.
+	if (error?.code === 'same_password') await check(supabase.auth.updateUser({ email, data }, options));
+	else if (error) throw authError(error);
+}
+
+/** `email_change`: the link of a converted anonymous session (convertAnonymous). */
+export const resendConfirmation = (email: string, type: 'signup' | 'email_change' = 'signup') =>
+	check(supabase.auth.resend({ type, email, options: { emailRedirectTo: authRedirect('signup') } }));
 
 /** In memory only: set by a successful recovery-link exchange, so app/auth/new-password is not reachable by a plain session. */
 let recovering = false;

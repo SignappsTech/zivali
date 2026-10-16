@@ -12,11 +12,14 @@ import { Icon } from '@/components/ui/icon';
 import { Text } from '@/components/ui/text';
 import { openMailApp, resendConfirmation } from '@/lib/auth';
 
-/** P16 M4: after sign-up (`sent`, so resend starts cooling down) or a sign-in with an unconfirmed address. */
+/**
+ * P16 M4: after sign-up (`sent`, so resend starts cooling down) or a sign-in with an unconfirmed address. `convert`:
+ * the link of a converted anonymous session is an email change (C7 §6).
+ */
 export default function CheckEmail() {
 	const t = useTranslations('auth');
 	const router = useRouter();
-	const { email = '', sent } = useLocalSearchParams<{ email?: string; sent?: string }>();
+	const { email = '', sent, convert } = useLocalSearchParams<{ email?: string; sent?: string; convert?: string }>();
 	return (
 		<AuthScreen
 			title={t('check_title')}
@@ -30,7 +33,7 @@ export default function CheckEmail() {
 					<ResendButton
 						label={t('check_resend')}
 						coolingDown={sent === '1'}
-						onResend={() => resendConfirmation(email)}
+						onResend={() => resendConfirmation(email, convert === '1' ? 'email_change' : 'signup')}
 					/>
 					<Button variant="text" onPress={() => router.dismissTo('/auth/sign-up')}>
 						{t('check_change')}

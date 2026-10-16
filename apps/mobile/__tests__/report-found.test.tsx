@@ -99,6 +99,12 @@ jest.mock('@/lib/anonymous', () => ({ useCaptchaRequest: () => mockCaptcha.id })
 jest.mock('@/lib/data/reports', () => ({ useReport: jest.fn(() => ({ data: undefined })) }));
 jest.mock('@/lib/offline/sync', () => ({ getCachedShelter: jest.fn(async () => null), lastSyncAt: jest.fn() }));
 jest.mock('@/components/photos/use-photo-uploads', () => ({ clearPhotoDraft: jest.fn(async () => {}) }));
+// The finder's session: anonymous (the outbox signs in anonymously) unless a test says it is an account.
+const mockAnonymous = { value: true };
+jest.mock('@zivali/api/auth', () => {
+	const actual = jest.requireActual<typeof import('@zivali/api/auth')>('@zivali/api/auth');
+	return { ...actual, useSession: () => ({ ...actual.useSession(), isAnonymous: mockAnonymous.value }) };
+});
 
 /** What the next picked photo carries: its EXIF (place and time) and its file in the app cache. */
 const mockPick: { exif?: { lat?: number; lng?: number; takenAt?: Date } } = {};
@@ -220,6 +226,7 @@ async function open(url = '/report/found') {
 			index: () => <Text>map tab</Text>,
 			'report/found/index': ReportFoundScreen,
 			'r/[code]/index': () => <Text>report detail</Text>,
+			'auth/sign-up': () => <Text>sign up</Text>,
 		},
 		{ initialUrl: url, wrapper: Providers }
 	);
@@ -260,6 +267,7 @@ beforeEach(async () => {
 	mockLocation.granted = true;
 	mockLocation.fix = { lat: 46.0569, lng: 14.5058 };
 	mockCaptcha.id = null;
+	mockAnonymous.value = true;
 	setNetwork(ONLINE);
 	const db = await getDb();
 	await db.runAsync('delete from outbox');
@@ -344,6 +352,28 @@ test('without consent the flow sends no analytics event', async () => {
 	await press(t.publish);
 	await heading(t.done_title);
 	expect(getMockEvents()).toEqual([]);
+});
+
+test('an anonymous finder gets "Ustvari račun", which converts this session (C7 §6); an account never sees it', async () => {
+	const { page } = await open();
+	await toPublish();
+	await press(t.publish);
+	await heading(t.done_title);
+	await press(t.create_account);
+	expect(await screen.findByText('sign up')).toBeOnTheScreen();
+	expect(page.getPathname()).toBe('/auth/sign-up');
+	expect(page.getSearchParams()).toEqual({ convert: '1' });
+});
+
+test('a signed-in finder gets no account offer', async () => {
+	mockAnonymous.value = false;
+	await open();
+	await toPublish();
+	await press(t.publish);
+	await heading(t.done_title);
+	// Once the stored token has loaded, so the offer would show by now.
+	expect(await screen.findByText('https://najdimo.test/m#token-1')).toBeOnTheScreen();
+	expect(screen.queryByRole('button', { name: t.create_account })).toBeNull();
 });
 
 test('offline: Publish waits in the outbox with the capture time, then turns into M6 once it is sent', async () => {

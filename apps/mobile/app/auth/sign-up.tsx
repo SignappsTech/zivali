@@ -1,10 +1,13 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ClockIcon } from 'phosphor-react-native/src/icons/Clock';
+import { ShieldCheckIcon } from 'phosphor-react-native/src/icons/ShieldCheck';
 import { ShieldWarningIcon } from 'phosphor-react-native/src/icons/ShieldWarning';
 import * as React from 'react';
 import { Linking, type TextInput, View } from 'react-native';
 import { useLocale, useTranslations } from 'use-intl';
 
+import { track } from '@zivali/analytics';
+import { useSession } from '@zivali/api/auth';
 import { ApiError } from '@zivali/api/client';
 import {
 	AuthNote,
@@ -17,9 +20,10 @@ import {
 } from '@/components/auth/parts';
 import { Button } from '@/components/ui/button';
 import { FieldError, FormField } from '@/components/ui/form-field';
+import { Icon } from '@/components/ui/icon';
 import { Input } from '@/components/ui/input';
 import { Text } from '@/components/ui/text';
-import { MIN_PASSWORD, signUp, validEmail } from '@/lib/auth';
+import { convertAnonymous, MIN_PASSWORD, signUp, validEmail } from '@/lib/auth';
 import { env } from '@/lib/env';
 
 /** Inline link in a sentence (terms, privacy): opens the web page. */
@@ -37,7 +41,14 @@ function WebLink({ url, children }: { url: string; children: React.ReactNode }) 
 
 type Field = 'name' | 'email' | 'password';
 
-/** P16 M2: name, email and password; checked on submit, then live per field (E2); terms as a sentence with links. */
+/**
+ * P16 M2: name, email and password; checked on submit, then live per field (E2); terms as a sentence with links.
+ *
+ * `convert=1` (the anonymous finder's account offer) while this session is anonymous: the same form turns the session
+ * into the account (convertAnonymous, C7 §6), so the reports made without one stay. GoTrue names a taken address
+ * here, so the form says it and why signing in does not move those reports; no providers (they would start another
+ * user).
+ */
 export default function SignUp() {
 	const t = useTranslations('auth');
 	const te = useTranslations('errors');
@@ -45,7 +56,9 @@ export default function SignUp() {
 	const router = useRouter();
 	const leave = useLeaveAuth();
 	const errorText = useErrorText();
-	const params = useLocalSearchParams<{ email?: string }>();
+	const params = useLocalSearchParams<{ email?: string; convert?: string }>();
+	const { isAnonymous } = useSession();
+	const convert = params.convert === '1' && isAnonymous;
 	const [values, setValues] = React.useState({ name: '', email: params.email ?? '', password: '' });
 	const [submitted, setSubmitted] = React.useState(false);
 	const [serverError, setServerError] = React.useState<{
@@ -89,19 +102,35 @@ export default function SignUp() {
 			({ name: nameRef, email: emailRef, password: passwordRef })[invalid].current?.focus();
 			return;
 		}
+		const account = { name: values.name.trim(), email, password: values.password, locale };
+		const checkEmail = {
+			pathname: '/auth/check-email' as const,
+			params: { email, sent: '1', ...(convert && { convert: '1' }) },
+		};
 		setBusy(true);
 		try {
-			await signUp({ name: values.name.trim(), email, password: values.password, locale });
-			router.push({ pathname: '/auth/check-email', params: { email, sent: '1' } });
+			if (convert) {
+				await convertAnonymous(account);
+				// C12, dropped without consent; never the address.
+				track('sign_up', { method: 'convert' });
+			} else await signUp(account);
+			router.push(checkEmail);
 		} catch (failure) {
 			const code = failure instanceof ApiError ? failure.code : null;
+			if (code === 'CONFLICT' && convert) {
+				setServerError({ field: 'email', text: t('convert_email_taken') });
+				emailRef.current?.focus();
+			}
 			// Taken address: same as success, so the form does not reveal which addresses have an account.
-			if (code === 'CONFLICT') router.push({ pathname: '/auth/check-email', params: { email, sent: '1' } });
+			else if (code === 'CONFLICT') router.push(checkEmail);
 			else if (code === 'VALIDATION') {
 				const authCode = failure instanceof ApiError ? failure.details?.auth_code : undefined;
 				if (authCode === 'email_address_invalid')
 					setServerError({ field: 'email', text: t('error_email_invalid') });
-				else setServerError({ text: te('VALIDATION') });
+				else if (convert && authCode === 'weak_password') {
+					setServerError({ field: 'password', text: t('error_password_weak') });
+					passwordRef.current?.focus();
+				} else setServerError({ text: te('VALIDATION') });
 			} else if (code === 'RATE_LIMITED') {
 				limited.start();
 				setServerError({ text: t('error_rate_limited'), note: 'limited' });
@@ -120,6 +149,12 @@ export default function SignUp() {
 
 	return (
 		<AuthScreen title={t('signup_title')}>
+			{convert ? (
+				<View className="mt-3 flex-row gap-2">
+					<Icon as={ShieldCheckIcon} weight="fill" size={20} className="mt-1 text-primary" />
+					<Text className="min-w-0 flex-1 text-lg">{t('convert_note')}</Text>
+				</View>
+			) : null}
 			<View className="mt-8 gap-6">
 				<FormField label={t('name_label')} hint={errors.name ? undefined : t('name_help')} error={errors.name}>
 					<Input
@@ -179,7 +214,7 @@ export default function SignUp() {
 			<Button size="lg" className="mt-6" loading={busy} disabled={limited.active} onPress={submit}>
 				{t('signup_button')}
 			</Button>
-			<ProviderButtons className="mt-6" onSignedIn={leave} />
+			{convert ? null : <ProviderButtons className="mt-6" onSignedIn={leave} />}
 			<Button
 				variant="text"
 				className="mt-4"
