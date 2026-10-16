@@ -15,15 +15,22 @@ import { XIcon } from '@phosphor-icons/react/dist/ssr/X';
 import { NextIntlClientProvider, useLocale, useMessages, useTranslations } from 'next-intl';
 import type { ComponentProps } from 'react';
 
-import { UnreadDot } from '@/components/notifications/unread-dot';
-import { StoreProvider } from '@/components/store-provider';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { getPathname, Link } from '@/i18n/navigation';
 import { cn } from '@/lib/utils';
 import type { Viewer } from '@/lib/viewer';
 
 import { Logo, ringClass } from './page';
-import { HeaderPopover, LanguageSwitch, NavLinks, ShellButton, ShellDialog, ShellSlot, SignOutButton } from './parts';
+import {
+	HeaderPopover,
+	InboxDot,
+	LanguageSwitch,
+	NavLinks,
+	ShellButton,
+	ShellDialog,
+	ShellSlot,
+	SignOutButton,
+} from './parts';
 
 type Href = Parameters<typeof getPathname>[0]['href'];
 
@@ -54,14 +61,12 @@ const separatorClass = 'mx-3 my-1.5 h-px bg-border';
 const dialogClass =
 	'm-0 overflow-y-auto overscroll-contain border-0 bg-card p-0 text-card-foreground backdrop:bg-scrim';
 
-/** Signed in only: the unread dot with the store and the messages it needs, which public pages do not load (TASK-90.5). */
-function InboxDot(props: ComponentProps<typeof UnreadDot>) {
+/** Signed in only: the inbox dot (store and code load lazily) with the messages it needs, not on public pages (TASK-90.5). */
+function InboxLabel(props: ComponentProps<typeof InboxDot>) {
 	const { notifications } = useMessages();
 	return (
 		<NextIntlClientProvider locale={useLocale()} messages={{ notifications }}>
-			<StoreProvider>
-				<UnreadDot {...props} />
-			</StoreProvider>
+			<InboxDot {...props} />
 		</NextIntlClientProvider>
 	);
 }
@@ -152,7 +157,7 @@ export function SiteHeader({ viewer }: { viewer: Viewer | null }) {
 								<Button asChild variant="ghost" size="icon" className="relative">
 									<Link href="/inbox">
 										<TrayIcon weight="bold" aria-hidden="true" />
-										<InboxDot label={t('inbox')} live className="absolute top-1.5 right-1.5" />
+										<InboxLabel label={t('inbox')} live className="absolute top-1.5 right-1.5" />
 									</Link>
 								</Button>
 								<Button
@@ -260,7 +265,7 @@ export function SiteHeader({ viewer }: { viewer: Viewer | null }) {
 									<div role="group" aria-label={t('account_menu')} className="-mx-3 mt-7">
 										<Link href="/inbox" className={menuRowClass}>
 											<TrayIcon weight="bold" aria-hidden="true" />
-											<InboxDot label={t('inbox')} visible className="ml-auto" />
+											<InboxLabel label={t('inbox')} visible className="ml-auto" />
 										</Link>
 										{accountRows}
 										{signOut}
