@@ -1,6 +1,7 @@
 import createMiddleware from 'next-intl/middleware';
-import type { NextRequest } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
+import { ShortCode } from '@zivali/validation/common.schema';
 import { hreflangLink } from '@/i18n/alternates';
 import { routing } from '@/i18n/routing';
 import { env } from '@/lib/env';
@@ -53,6 +54,43 @@ function contentSecurityPolicy(nonce: string): string {
 	].join('; ');
 }
 
+/** The report detail page, /r/<code> and /en/r/<code> (C15). */
+const REPORT_PAGE = /^\/(?:en\/)?r\/([^/]+)\/?$/;
+
+/**
+ * The HTTP status of a report page, which only the proxy can set: 410 for hidden, removed and long-closed reports
+ * (FR-007 AC#3), 404 for unknown codes; undefined keeps 200. Asks the API as the viewer, so a manager still gets the
+ * report. A failed or slow check (1 s) also keeps 200: the page then shows what the API tells it.
+ */
+async function reportStatus(code: string, token: string | undefined): Promise<410 | 404 | undefined> {
+	try {
+		const response = await fetch(
+			`${env.NEXT_PUBLIC_API_URL.replace(/\/+$/, '')}/v1/reports/${encodeURIComponent(code)}`,
+			{
+				headers: token ? { authorization: `Bearer ${token}` } : {},
+				signal: AbortSignal.timeout(1000),
+			}
+		);
+		await response.body?.cancel();
+		if (response.status === 410) return 410;
+		// Held reads as unknown to non-managers (C4); a malformed code is unknown too.
+		return response.status === 404 || response.status === 400 ? 404 : undefined;
+	} catch {
+		return undefined;
+	}
+}
+
+/** next-intl's routing, plus the report page's status on document requests (client navigations need none). */
+async function route(request: NextRequest, accessToken: () => Promise<string | undefined>) {
+	const response = handleI18nRouting(request);
+	const code = REPORT_PAGE.exec(request.nextUrl.pathname)?.[1];
+	if (!code || request.headers.has('rsc') || response.headers.has('location')) return response;
+	// A code outside the short-code alphabet (C1 ShortCode) is unknown without asking anyone.
+	const status = ShortCode.safeParse(code).success ? await reportStatus(code, await accessToken()) : 404;
+	// Same headers (the locale rewrite, the request headers it passes on), another status: the page still renders.
+	return status ? new NextResponse(null, { status, headers: response.headers }) : response;
+}
+
 export async function proxy(request: NextRequest) {
 	const nonce = btoa(crypto.randomUUID());
 	const csp = contentSecurityPolicy(nonce);
@@ -62,7 +100,7 @@ export async function proxy(request: NextRequest) {
 	// The page as requested, for the guards' `next` (lib/viewer.ts requireViewer); set here, so never the client's.
 	request.headers.set('x-next-path', request.nextUrl.pathname + request.nextUrl.search);
 
-	const response = await updateSession(request, handleI18nRouting);
+	const response = await updateSession(request, route);
 	response.headers.set('content-security-policy', csp);
 
 	// Internal path: the rewrite target when the URL was localised, else the request path (already internal).
@@ -76,6 +114,7 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
 	// Pages only: not API routes, Next.js internals or files with an extension (next-intl matcher), nor the
-	// unlocalised /captcha page for the mobile WebView (C15; its CSP is in next.config.ts).
-	matcher: '/((?!api|captcha(?:/|$)|_next|.*\\..*).*)',
+	// unlocalised /captcha page for the mobile WebView (C15; its CSP is in next.config.ts), nor the reports' Open
+	// Graph images (app/r/[code]/opengraph-image, C15).
+	matcher: '/((?!api|captcha(?:/|$)|r/[^/]+/opengraph-image$|_next|.*\\..*).*)',
 };

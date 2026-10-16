@@ -6,11 +6,12 @@ import { env } from '@/lib/env';
 /**
  * Refreshes an expired Supabase session before the request is routed. Refreshed cookies go onto the request first,
  * so `next` (next-intl, which copies the request headers) hands them to server components, then onto the response.
- * The cookies are Secure on an https app URL (SameSite=Lax stays from @supabase/ssr).
+ * The cookies are Secure on an https app URL (SameSite=Lax stays from @supabase/ssr). `accessToken` reads the
+ * refreshed session's token for a proxy call to the API as the user (the report page's status, proxy.ts).
  */
 export async function updateSession(
 	request: NextRequest,
-	next: (request: NextRequest) => NextResponse
+	next: (request: NextRequest, accessToken: () => Promise<string | undefined>) => NextResponse | Promise<NextResponse>
 ): Promise<NextResponse> {
 	let written: Parameters<SetAllCookies> = [[], {}];
 
@@ -30,7 +31,7 @@ export async function updateSession(
 	// An outage (network, 5xx, rate limit) keeps the session.
 	if (error?.code === 'invalid_jwt' || error?.code === 'bad_jwt') await supabase.auth.signOut({ scope: 'local' });
 
-	const response = next(request);
+	const response = await next(request, async () => (await supabase.auth.getSession()).data.session?.access_token);
 	const [cookiesToSet, headers] = written;
 	for (const { name, value, options } of cookiesToSet) response.cookies.set(name, value, options);
 	// Responses that set auth cookies must not be cached (no-store headers from @supabase/ssr).

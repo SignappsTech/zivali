@@ -67,6 +67,8 @@ export default defineConfig({
 					process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || 'e2e-placeholder',
 				// Origin of PUT_URL in e2e/photos.spec.ts.
 				R2_UPLOAD_ORIGIN: 'https://e2e.eu.r2.cloudflarestorage.com',
+				// e2e/report-detail.spec.ts: the mock API serves the report photos too.
+				MEDIA_BASE_URL: `${api}/media`,
 				// e2e/analytics.spec.ts: ga4 with a test id; the spec answers every Google request itself.
 				NEXT_PUBLIC_ANALYTICS_PROVIDER: 'ga4',
 				NEXT_PUBLIC_GA_MEASUREMENT_ID: 'G-E2ETEST',

@@ -6,7 +6,6 @@ import { CheckCircleIcon } from '@phosphor-icons/react/dist/ssr/CheckCircle';
 import { HeartIcon } from '@phosphor-icons/react/dist/ssr/Heart';
 import { HourglassMediumIcon } from '@phosphor-icons/react/dist/ssr/HourglassMedium';
 import { LockSimpleIcon } from '@phosphor-icons/react/dist/ssr/LockSimple';
-import { PencilSimpleIcon } from '@phosphor-icons/react/dist/ssr/PencilSimple';
 import { useTranslations } from 'next-intl';
 import * as React from 'react';
 import { toast } from 'sonner';
@@ -180,11 +179,8 @@ export function ManageView({ code }: { code: string }) {
 							</ActionRow>
 						</li>
 					)}
-					<li>
-						<ActionRow icon={PencilSimpleIcon} href={{ pathname: '/r/[code]', params: { code } }}>
-							{t('manage_edit')}
-						</ActionRow>
-					</li>
+					{/* TODO(TASK-26.4): the Edit row (PencilSimple, t('manage_edit'), href /r/[code]) comes back with the
+					detail page's owner actions; until then that page has nothing to edit. */}
 					<li>
 						<ActionRow icon={CheckCircleIcon} busy={busy('close')} onClick={() => act('close')}>
 							{t('manage_close')}
@@ -237,7 +233,7 @@ function Fact({ label, children }: { label: string; children: React.ReactNode })
 
 /**
  * Manage action as a text row (P7): 56 px, icon 20 in `primary`, hover `foreground` at 10 %, aligned to the text.
- * With `href` a link (Edit, Messages), else a button.
+ * With `href` a link (Messages), else a button.
  */
 function ActionRow({
 	icon: Icon,
