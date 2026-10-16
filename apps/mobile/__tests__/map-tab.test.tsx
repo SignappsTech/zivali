@@ -2,12 +2,13 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import * as Location from 'expo-location';
 import * as React from 'react';
-import { Text } from 'react-native';
+import { AccessibilityInfo, Text } from 'react-native';
 import { Provider } from 'react-redux';
 import { IntlProvider } from 'use-intl';
 
 import * as fx from '@zivali/api/__fixtures__/reports';
 import { createMockApi, type MockRequest } from '@zivali/api/mock';
+import { reportsApi } from '@zivali/api/reports';
 import { api, createApiStore } from '@zivali/api/rtk';
 import sl from '@zivali/i18n/dist/sl.json';
 import type { MapReport, PublicReport } from '@zivali/types';
@@ -15,6 +16,7 @@ import MapTab from '@/app/(tabs)/index';
 import { ListSheet, type ListSheetProps } from '@/components/browse/list-sheet';
 import { toCached } from '@/lib/data/reports';
 import { getDb } from '@/lib/db';
+import { upsertReports } from '@/lib/offline/sync';
 
 jest.mock('expo-sqlite', () =>
 	jest.requireActual<typeof import('@/test/offline-mocks')>('@/test/offline-mocks').sqlite()
@@ -23,11 +25,13 @@ jest.mock('expo-file-system', () =>
 	jest.requireActual<typeof import('@/test/offline-mocks')>('@/test/offline-mocks').fileSystem()
 );
 jest.mock('expo-sqlite/localStorage/install', () => ({}));
+const ONLINE = { isConnected: true, isInternetReachable: true };
+let mockNetwork: { isConnected: boolean; isInternetReachable: boolean } = ONLINE;
 jest.mock('expo-network', () => ({
 	NetworkStateType: { WIFI: 'WIFI', ETHERNET: 'ETHERNET' },
 	addNetworkStateListener: jest.fn(() => ({ remove: () => {} })),
 	getNetworkStateAsync: jest.fn(async () => ({ isConnected: true, isInternetReachable: true })),
-	useNetworkState: () => ({ isConnected: true, isInternetReachable: true }),
+	useNetworkState: () => mockNetwork,
 }));
 jest.mock('expo-task-manager', () => ({ defineTask: jest.fn() }));
 jest.mock('expo-background-task', () => ({ BackgroundTaskResult: { Success: 1, Failed: 2 } }));
@@ -99,6 +103,7 @@ async function renderTab(reports: PublicReport[] = [maks, found]) {
 		'GET /v1/reports/map': (request) => ({
 			items: [...reports.map(pin), far].filter((r) => bySpecies(request, r)),
 		}),
+		'POST /v1/reports': () => ({ id: 'r-luna', short_code: 'LunaCode', moderation_state: 'visible', warnings: [] }),
 		'POST /v1/geo/reverse': {
 			place: {
 				label: 'Šiška, Ljubljana',
@@ -130,6 +135,7 @@ function permission(granted: boolean, canAskAgain = true) {
 
 beforeEach(async () => {
 	jest.clearAllMocks();
+	mockNetwork = ONLINE;
 	permission(true);
 	jest.mocked(Location.getLastKnownPositionAsync).mockResolvedValue({ coords: HERE } as never);
 	await (await getDb()).execAsync('delete from reports_cache; delete from cache_areas;');
@@ -177,6 +183,32 @@ test('map and list show the reports around the device: boosted first, counted, c
 
 	await fireEvent.press(screen.getByRole('link', { name: /^Maks, / }));
 	expect(mockPush).toHaveBeenCalledWith('/r/MaksCode');
+});
+
+test('a report created while the tab is open (the lost flow over it) shows on the map without a reload (TASK-29.6)', async () => {
+	const reports = [maks];
+	const client = await renderTab(reports);
+	await screen.findByRole('link', { name: /^Maks, / });
+	const mapCalls = () => client.calls.filter((c) => c.path === '/v1/reports/map').length;
+	const before = mapCalls();
+
+	const luna: PublicReport = {
+		...maks,
+		id: 'r-luna',
+		short_code: 'LunaCode',
+		name: 'Luna',
+		area: { ...AREA, radius_m: 750 },
+	};
+	reports.push(luna);
+	// The same mutation the lost flow sends (C4); its invalidation refetches the open map and list queries.
+	await stores[0]!.dispatch(
+		reportsApi.endpoints.createReport.initiate({ body: { type: 'lost' } as never, idempotencyKey: 'k-1' })
+	);
+
+	expect(await screen.findByRole('link', { name: /^Luna, Izgubljena, / })).toBeOnTheScreen();
+	expect(mapCalls()).toBeGreaterThan(before);
+	const source = screen.getByTestId('GeoJSONSource:reports', { includeHiddenElements: true });
+	expect(source.props.data.features).toHaveLength(2);
 });
 
 test('a GPS that never answers does not hold the list back: Slovenia-wide after 5 s (FR-007)', async () => {
@@ -300,6 +332,85 @@ test('"Uporabi mojo lokacijo" asks through the primer, never straight away', asy
 	expect(await screen.findByText('Šiška, Ljubljana, 10 km')).toBeOnTheScreen();
 });
 
+describe('offline (FR-041, TASK-85.3)', () => {
+	const OFFLINE = { isConnected: false, isInternetReachable: false };
+	const time = (at: number) =>
+		new Intl.DateTimeFormat('sl', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Ljubljana' }).format(at);
+
+	test('map and list show the cached reports under "Brez povezave, zadnja posodobitev …", a polite status', async () => {
+		const syncedAt = Date.now() - 60_000;
+		await upsertReports([toCached(maks), toCached(found)]);
+		await (
+			await getDb()
+		).runAsync(
+			"insert into cache_areas (id, lat, lng, radius_km, last_sync_at) values ('home', 46.06, 14.51, 10, ?)",
+			syncedAt
+		);
+		mockNetwork = OFFLINE;
+		const client = await renderTab();
+
+		const note = await screen.findByRole('status');
+		expect(note).toHaveTextContent(`Brez povezave, zadnja posodobitev ${time(syncedAt)}.`);
+		expect(note.props['aria-live']).toBe('polite');
+		// iOS has no live region: the state is announced (the jest-expo preset runs as iOS).
+		expect(AccessibilityInfo.announceForAccessibility).toHaveBeenCalledWith(
+			`Brez povezave, zadnja posodobitev ${time(syncedAt)}.`
+		);
+		// The cached rows, boosted first, and their pins; nothing asked from the network.
+		const rows = await screen.findAllByRole('link', { name: /^(Najden pes|Maks), / });
+		expect(rows.map((row) => row.props.accessibilityLabel)).toEqual([
+			expect.stringMatching(/^Najden pes, /),
+			expect.stringMatching(/^Maks, /),
+		]);
+		await waitFor(() =>
+			expect(
+				screen.getByTestId('GeoJSONSource:reports', { includeHiddenElements: true }).props.data.features
+			).toHaveLength(2)
+		);
+		expect(screen.getByText('2 prijavi')).toBeOnTheScreen();
+		expect(client.calls.filter((c) => c.path.startsWith('/v1/reports'))).toEqual([]);
+		// Reading a cached report still works (the detail reads the cache, TASK-18.3).
+		await fireEvent.press(rows[1]!);
+		expect(mockPush).toHaveBeenCalledWith('/r/MaksCode');
+	});
+
+	test('filters work on the cached reports', async () => {
+		await upsertReports([toCached(maks), toCached(found)]);
+		mockNetwork = OFFLINE;
+		await renderTab();
+		await screen.findByText('2 prijavi');
+
+		await fireEvent.press(pill());
+		await fireEvent.press(screen.getByRole('checkbox', { name: t.filter_type_found }));
+		await fireEvent.press(await screen.findByRole('button', { name: 'Prikaži 1 prijavo' }));
+		await waitFor(() => expect(screen.queryByRole('link', { name: /^Najden pes, / })).toBeNull());
+		expect(screen.getByRole('link', { name: /^Maks, / })).toBeOnTheScreen();
+	});
+
+	test('first launch offline: an explanatory empty state instead of the empty region, no network actions', async () => {
+		mockNetwork = OFFLINE;
+		await renderTab();
+
+		expect(await screen.findByRole('heading', { name: sl.errors.offline_title })).toBeOnTheScreen();
+		expect(screen.getByText(t.offline_empty_body)).toBeOnTheScreen();
+		expect(AccessibilityInfo.announceForAccessibility).toHaveBeenCalledWith(
+			`${sl.errors.offline_title}. ${t.offline_empty_body}`
+		);
+		// One message: the time note is left out.
+		expect(screen.queryByRole('status')).toBeNull();
+		expect(screen.queryByText(t.empty_title)).toBeNull();
+		expect(screen.queryByRole('button', { name: t.empty_secondary })).toBeNull();
+		expect(screen.queryByRole('button', { name: t.show_closed })).toBeNull();
+	});
+
+	test('online, no offline note', async () => {
+		await renderTab();
+		await screen.findByText('2 prijavi');
+
+		expect(screen.queryByRole('status')).toBeNull();
+	});
+});
+
 describe('ListSheet', () => {
 	const props = (over: Partial<ListSheetProps>): ListSheetProps => ({
 		reports: [],
@@ -351,5 +462,19 @@ describe('ListSheet', () => {
 		expect(screen.getByRole('link', { name: /^Maks, / })).toBeOnTheScreen();
 		await fireEvent.press(screen.getByRole('button', { name: t.error_action }));
 		expect(onRetry).toHaveBeenCalled();
+	});
+
+	test('offline without a completed sync, rows saved while browsing still show, with a note without a time', async () => {
+		await sheet({ reports: [toCached(maks)], count: 1, cachedAt: null });
+
+		expect(screen.getByRole('status')).toHaveTextContent(t.offline_note_saved);
+		expect(screen.getByRole('link', { name: /^Maks, / })).toBeOnTheScreen();
+	});
+
+	test('offline on another day, the note names the day and the time', async () => {
+		const at = Date.parse('2026-10-12T12:20:00Z');
+		await sheet({ reports: [toCached(maks)], count: 1, cachedAt: at });
+
+		expect(screen.getByRole('status')).toHaveTextContent('Brez povezave, zadnja posodobitev 12. 10., 14:20.');
 	});
 });

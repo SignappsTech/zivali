@@ -1,114 +1,81 @@
-import { Redirect, Stack, useRouter } from 'expo-router';
-import { getRandomValues } from 'expo-crypto';
+import { skipToken } from '@reduxjs/toolkit/query';
+import { Redirect, Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import * as React from 'react';
-import { ScrollView, View } from 'react-native';
+import { View } from 'react-native';
 import { useTranslations } from 'use-intl';
 
+import { useGetAlertSubscriptionQuery, useSaveAlertSubscriptionMutation } from '@zivali/api/alerts';
 import { useRequireAuth } from '@zivali/api/auth';
-import { usePlaceSearch } from '@zivali/api/geocode';
 import { useUpdateMeMutation } from '@zivali/api/me';
-import type { Me, Place } from '@zivali/types';
-import { coarsenPoint } from '@zivali/validation/geo';
+import type { AlertSubscription, Me } from '@zivali/types';
 import { useErrorText } from '@/components/auth/parts';
-import { Button } from '@/components/ui/button';
-import { FormField } from '@/components/ui/form-field';
-import { Input } from '@/components/ui/input';
-import { ChoiceRow, RadioGroup } from '@/components/ui/radio-group';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { LocationPicker, type LocationValue, RADII } from '@/components/location/location-picker';
+import { InlineError, Loading } from '@/components/notifications/notifications-view';
 import { toast } from '@/components/ui/sonner';
-import { Text } from '@/components/ui/text';
+import { alertInput, newAlerts, samePoint, trackOptIn } from '@/lib/alerts';
 
-/** Alert radius choices within the API's 1–25 km (C3). */
-const RADII = [1, 2, 3, 5, 10, 15, 20, 25];
-// coarsenPoint's default needs a global crypto, which Hermes lacks; expo-crypto supplies the same random source.
-const random = () => getRandomValues(new Uint32Array(1))[0]! / 2 ** 32;
-
-/** Home area and alert radius (P13 profile row; P5 copy). Place search until the mobile LocationPicker (TASK-15.5). */
+/**
+ * The home area and its radius: the P5 picker in alert mode, from the account row and the alert settings. One area for
+ * the profile (account row, offline home cache, C17) and the nearby-alert subscription (C10): a save writes both, so
+ * they never disagree. `?subscribe=1` (alerts turned on before there was an area) creates the subscription too.
+ */
 export default function HomeAreaSettings() {
-	const t = useTranslations('location');
 	const { me, gate } = useRequireAuth();
+	const { subscribe } = useLocalSearchParams<{ subscribe?: string }>();
+	const { data, isFetching, refetch } = useGetAlertSubscriptionQuery(gate === 'signin' ? skipToken : undefined);
 	if (gate === 'signin') return <Redirect href="/profile" />;
 	return (
 		<>
-			<Stack.Screen options={{ title: t('title_home') }} />
-			{me ? <HomeAreaForm me={me} /> : <View className="flex-1 bg-background" />}
+			{/* The picker brings its own question as the heading. */}
+			<Stack.Screen options={{ title: '' }} />
+			{me && data !== undefined ? (
+				<HomeAreaPicker me={me} sub={data} subscribe={subscribe === '1'} />
+			) : (
+				<View className="flex-1 bg-background px-5 pt-6">
+					{isFetching || gate === 'loading' ? (
+						<Loading />
+					) : (
+						<InlineError retrying={isFetching} onRetry={() => void refetch()} />
+					)}
+				</View>
+			)}
 		</>
 	);
 }
 
-function HomeAreaForm({ me }: { me: Me }) {
-	const t = useTranslations();
+function HomeAreaPicker({ me, sub, subscribe }: { me: Me; sub: AlertSubscription | null; subscribe: boolean }) {
+	const t = useTranslations('profile');
 	const router = useRouter();
 	const errorText = useErrorText();
-	const [query, setQuery] = React.useState('');
-	const [place, setPlace] = React.useState<Place>();
-	const [radius, setRadius] = React.useState(String(me.home_radius_km));
-	const search = usePlaceSearch(query, me.home ?? undefined);
-	const [updateMe, { isLoading }] = useUpdateMeMutation();
+	const [updateMe] = useUpdateMeMutation();
+	const [save] = useSaveAlertSubscriptionMutation();
+	const stored = sub
+		? { point: sub.center, radiusM: sub.radius_km * 1000 }
+		: me.home
+			? { point: me.home, radiusM: me.home_radius_km * 1000 }
+			: undefined;
 
-	const save = async () => {
+	// The picker hands back the stored point unchanged when it was not moved, else a new one coarsened once (C6); the
+	// profile is only sent a point it does not hold already.
+	const confirm = async ({ point, radiusM = RADII.alert.initial }: LocationValue) => {
+		const radius_km = radiusM / 1000;
+		const alerts = sub
+			? alertInput(sub, { center: point, radius_km })
+			: subscribe
+				? newAlerts(point, radius_km)
+				: null;
 		try {
-			// C6: the chosen point is coarsened once, here; only that is sent and stored.
-			const home = place ? coarsenPoint(place, random) : undefined;
-			await updateMe({ home_radius_km: Number(radius), ...(home && { home }) }).unwrap();
-			toast.success(t('profile.saved'));
+			await Promise.all([
+				alerts && save(alerts).unwrap(),
+				updateMe({ home_radius_km: radius_km, ...(!samePoint(point, me.home) && { home: point }) }).unwrap(),
+			]);
+			if (alerts && !sub) trackOptIn(alerts.species);
+			toast.success(t('saved'));
 			router.back();
 		} catch (failure) {
 			toast.error(errorText(failure));
 		}
 	};
 
-	const key = (p: Place) => `${p.lat},${p.lng}`;
-	return (
-		<ScrollView keyboardShouldPersistTaps="handled" contentContainerClassName="gap-6 px-5 pb-8 pt-6">
-			<FormField label={t('location.search_label')}>
-				<Input
-					value={query}
-					onChangeText={setQuery}
-					placeholder={t('location.search_placeholder')}
-					autoCorrect={false}
-					returnKeyType="search"
-				/>
-			</FormField>
-			{search.isFetching ? (
-				<Text aria-live="polite" className="text-muted-foreground">
-					{t('location.searching')}
-				</Text>
-			) : query.trim().length >= 3 && search.places.length === 0 ? (
-				<Text aria-live="polite" className="text-muted-foreground">
-					{t('location.no_results')}
-				</Text>
-			) : null}
-			{search.places.length > 0 ? (
-				<RadioGroup
-					aria-label={t('location.search_label')}
-					value={place && key(place)}
-					onValueChange={(value) => setPlace(search.places.find((p) => key(p) === value))}
-					className="gap-3"
-				>
-					{search.places.map((p) => (
-						<ChoiceRow key={key(p)} value={key(p)} title={p.label} />
-					))}
-				</RadioGroup>
-			) : null}
-			<FormField label={t('location.alert_radius_label')} hint={t('location.alert_radius_help')}>
-				<Select value={radius} onValueChange={setRadius}>
-					<SelectTrigger>
-						<SelectValue />
-					</SelectTrigger>
-					<SelectContent closeLabel={t('common.close')}>
-						{RADII.map((km) => (
-							<SelectItem key={km} value={String(km)}>
-								{t('location.alert_radius_value', { km })}
-							</SelectItem>
-						))}
-					</SelectContent>
-				</Select>
-			</FormField>
-			<Text className="text-sm text-muted-foreground">{t('location.privacy_alert')}</Text>
-			<Button size="lg" loading={isLoading} disabled={!place && !me.home} onPress={save}>
-				{t('location.save_area')}
-			</Button>
-		</ScrollView>
-	);
+	return <LocationPicker mode="alert" value={stored} onChange={(value) => void confirm(value)} />;
 }

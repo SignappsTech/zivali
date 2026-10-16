@@ -4,6 +4,7 @@ import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 
+import { PortalHost } from '@rn-primitives/portal';
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import { File, Paths } from 'expo-file-system';
 import * as ImagePicker from 'expo-image-picker';
@@ -412,6 +413,7 @@ function renderPicker(props: Partial<React.ComponentProps<typeof PhotoPicker>> =
 	return render(
 		<IntlProvider locale="sl" messages={sl} timeZone="Europe/Ljubljana">
 			<PhotoPicker draft="draft-1" kind="lost" cameraPrimer={jest.fn(async () => true)} {...props} />
+			<PortalHost />
 		</IntlProvider>
 	);
 }
@@ -649,6 +651,42 @@ describe('PhotoPicker', () => {
 		);
 	});
 
+	it('holds the photos on the device while `hold` is on (also after a restart), then uploads them', async () => {
+		const calls = pendingUploads();
+		const onChange = jest.fn();
+		const tree = (hold: boolean) => (
+			<IntlProvider locale="sl" messages={sl} timeZone="Europe/Ljubljana">
+				<PhotoPicker
+					draft="draft-1"
+					kind="lost"
+					cameraPrimer={jest.fn(async () => true)}
+					{...{ hold, onChange }}
+				/>
+			</IntlProvider>
+		);
+		const first = await render(tree(true));
+		await press('Izberi iz galerije');
+		expect(await screen.findByText('Naslovna fotografija')).toBeOnTheScreen();
+		expect(screen.queryByText(/^Nalaganje/)).toBeNull();
+		await waitFor(async () => expect(await storedPhotos()).toHaveLength(1));
+		await first.unmount();
+
+		const view = await render(tree(true));
+		expect(await screen.findByLabelText('Fotografija 1 od 1')).toBeOnTheScreen();
+		expect(onChange).toHaveBeenLastCalledWith([expect.objectContaining({ status: 'kept', photoId: undefined })]);
+		expect(upload).not.toHaveBeenCalled();
+
+		await view.rerender(tree(false));
+		await waitFor(() => expect(calls).toHaveLength(1));
+		await act(async () => calls[0].resolve('photo-1'));
+		await waitFor(() =>
+			expect(onChange).toHaveBeenLastCalledWith([
+				expect.objectContaining({ status: 'uploaded', photoId: 'photo-1' }),
+			])
+		);
+		expect(upload).toHaveBeenCalledTimes(1);
+	});
+
 	it('hands EXIF place and time to the page and never puts them or the file name in the draft', async () => {
 		const exif = { lat: 46.0569, lng: 14.5058, takenAt: new Date('2026-10-14T07:30:00Z') };
 		prepare.mockResolvedValueOnce({ photo: prepared(1), exif });
@@ -662,6 +700,51 @@ describe('PhotoPicker', () => {
 		const row = (await draftRow())!.photo_paths;
 		expect(Object.keys(JSON.parse(row)[0]).sort()).toEqual(['bytes', 'height', 'key', 'sha256', 'width']);
 		expect(row).not.toMatch(/46\.05|14\.50|IMG_|HEIC|2026/);
+	});
+
+	it('lists the photos an entity already has first, keeps them out of the draft and can confirm a removal', async () => {
+		pendingUploads();
+		const onChange = jest.fn();
+		await renderPicker({
+			onChange,
+			saved: [
+				{ id: 'photo-1', thumb_url: 'https://media.zivali.test/1.webp' },
+				{ id: 'photo-2', thumb_url: 'https://media.zivali.test/2.webp' },
+			],
+			confirmRemove: {
+				title: 'Odstranim fotografijo?',
+				body: 'Izbrisana bo tudi iz shrambe.',
+				confirm: 'Odstrani',
+			},
+		});
+
+		expect(await screen.findByLabelText('Fotografija 2 od 2')).toBeOnTheScreen();
+		const ids = () => onChange.mock.lastCall![0].map((photo: { photoId?: string }) => photo.photoId);
+		expect(onChange.mock.lastCall![0].map((photo: { status: string }) => photo.status)).toEqual([
+			'uploaded',
+			'uploaded',
+		]);
+		expect(ids()).toEqual(['photo-1', 'photo-2']);
+		expect(screen.getByText(sl.photos.cover)).toBeOnTheScreen();
+
+		await press('Izberi iz galerije');
+		await screen.findByLabelText('Fotografija 3 od 3');
+		// Only the new photo is uploaded and kept in the draft.
+		await waitFor(async () => expect(await storedPhotos()).toHaveLength(1));
+		expect(upload).toHaveBeenCalledTimes(1);
+
+		await press('Odstrani fotografijo 1');
+		expect(await screen.findByRole('heading', { name: 'Odstranim fotografijo?' })).toBeOnTheScreen();
+		expect(screen.getByText('Izbrisana bo tudi iz shrambe.')).toBeOnTheScreen();
+		await press(sl.common.cancel);
+		expect(screen.getByLabelText('Fotografija 3 od 3')).toBeOnTheScreen();
+
+		await press('Odstrani fotografijo 1');
+		await screen.findByRole('heading', { name: 'Odstranim fotografijo?' });
+		await press('Odstrani');
+		await waitFor(() => expect(screen.queryByLabelText('Fotografija 3 od 3')).toBeNull());
+		expect(ids()).toEqual(['photo-2', undefined]);
+		await waitFor(async () => expect(await storedPhotos()).toHaveLength(1));
 	});
 
 	it('clears the draft photos and their files once the report is sent', async () => {

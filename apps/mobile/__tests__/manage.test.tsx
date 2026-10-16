@@ -8,6 +8,7 @@ import { renderRouter } from 'expo-router/testing-library';
 import * as Network from 'expo-network';
 import * as SecureStore from 'expo-secure-store';
 import * as React from 'react';
+import { Text } from 'react-native';
 import { Provider } from 'react-redux';
 
 import { ownerReport } from '@zivali/api/__fixtures__/reports';
@@ -186,10 +187,19 @@ function Providers({ children }: { children: React.ReactNode }) {
 }
 
 const openLink = async (url = `/m#${TOKEN}`) => {
-	await renderRouter(
-		{ _layout: () => <Stack screenOptions={{ headerShown: false }} />, index: () => null, m: ManageScreen },
+	const result = renderRouter(
+		{
+			_layout: () => <Stack screenOptions={{ headerShown: false }} />,
+			index: () => null,
+			m: ManageScreen,
+			'inbox/[id]': () => null,
+			'r/[code]/edit': () => <Text>edit screen</Text>,
+		},
 		{ initialUrl: url, wrapper: Providers }
 	);
+	// The result is a promise with the router getters attached; awaiting it would drop them.
+	await result;
+	return { getPathname: result.getPathname, page: { getPathname: result.getPathname } };
 };
 const claimCalls = () => mockApi.calls.filter((call) => call.path === '/v1/manage/claim');
 const transitions = () => mockApi.calls.filter((call) => call.path.endsWith('/transitions')).map((call) => call.body);
@@ -427,12 +437,15 @@ describe('manage link screen (P7)', () => {
 		).toBeOnTheScreen();
 	});
 
-	test('unread messages: the count and "Odpri sporočila" as the primary', async () => {
+	test('messages: the unread count and each conversation, opened right here (no account inbox)', async () => {
 		serve({ threads: 2, unread: 2 });
-		await openLink();
+		const page = await openLink();
 		expect(await screen.findByText('2 neprebrani sporočili')).toBeOnTheScreen();
-		expect(screen.getByRole('button', { name: 'Odpri sporočila' })).toBeOnTheScreen();
+		expect(screen.getByRole('button', { name: 'Najdena žival' })).toBeOnTheScreen();
 		expect(screen.queryByRole('button', { name: 'Sporočila' })).toBeNull();
+
+		await act(async () => fireEvent.press(screen.getByRole('button', { name: 'Najdena žival, neprebrano' })));
+		await waitFor(() => expect(page.getPathname()).toBe('/inbox/c0'));
 	});
 
 	test('from day 25 the expiry note offers 30 more days (extend)', async () => {
@@ -448,10 +461,24 @@ describe('manage link screen (P7)', () => {
 		await waitFor(() => expect(transitions()).toEqual([{ action: 'extend' }]));
 	});
 
+	test('"Uredi" opens the edit screen for an open report, and is gone once closed (TASK-17.8)', async () => {
+		const { page } = await openLink();
+		await act(async () => fireEvent.press(await screen.findByRole('button', { name: 'Uredi' })));
+		expect(await screen.findByText('edit screen')).toBeOnTheScreen();
+		expect(page.getPathname()).toBe(`/r/${report().short_code}/edit`);
+	});
+
+	test('a closed report has no "Uredi"', async () => {
+		serve({ view: report({ status: 'closed', closed_at: new Date(Date.now() - 2 * DAY).toISOString() }) });
+		await openLink();
+		await screen.findByRole('button', { name: 'Ponovno odpri' });
+		expect(screen.queryByRole('button', { name: 'Uredi' })).toBeNull();
+	});
+
 	test('close report from the action rows', async () => {
 		await openLink();
 		await act(async () => fireEvent.press(await screen.findByRole('button', { name: 'Zaključi prijavo' })));
-		await waitFor(() => expect(transitions()).toEqual([{ action: 'close' }]));
+		await waitFor(() => expect(transitions()).toEqual([{ action: 'close', reason: 'other' }]));
 	});
 
 	test('"Žival je spet doma" asks first (P14 §5), then marks it reunited and thanks the finder', async () => {

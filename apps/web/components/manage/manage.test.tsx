@@ -146,13 +146,13 @@ describe('ManagePage (P7, C7)', () => {
 		open('good');
 		const api = show(<ManagePage />);
 		fireEvent.click(await screen.findByRole('button', { name: 'Zaključi prijavo' }));
-		await vi.waitFor(() => expect(actions(api)).toEqual([{ action: 'close' }]));
+		await vi.waitFor(() => expect(actions(api)).toEqual([{ action: 'close', reason: 'other' }]));
 
 		fireEvent.click(screen.getByRole('button', { name: 'Žival je spet doma' }));
 		const dialog = await screen.findByRole('alertdialog', { name: sl.lifecycle.finder_confirm_title });
 		fireEvent.click(within(dialog).getByRole('button', { name: sl.lifecycle.finder_confirm_yes }));
 		expect(await screen.findByRole('heading', { level: 1, name: sl.lifecycle.finder_thanks_title })).toBeTruthy();
-		expect(actions(api)).toEqual([{ action: 'close' }, { action: 'mark_reunited' }]);
+		expect(actions(api)).toEqual([{ action: 'close', reason: 'other' }, { action: 'mark_reunited' }]);
 	});
 
 	it('moves focus to the closed note after close and to the h1 after reopen', async () => {

@@ -23,7 +23,7 @@ vi.mock('@zivali/api/auth', () => ({ useSession: () => ({ session: null, me: nul
 vi.mock('@zivali/api/me', () => ({ useUpdateMeMutation: () => [vi.fn()] }));
 // The inbox link's unread state has its own test (components/notifications/unread-dot.test.tsx).
 vi.mock('@/components/notifications/unread-dot', () => ({
-	UnreadDot: ({ label }: { label: string }) => <span>{label}</span>,
+	UnreadDotIsland: ({ label }: { label: string }) => <span>{label}</span>,
 }));
 
 const catalogues = { sl, en };
@@ -102,7 +102,7 @@ describe('SiteHeader', () => {
 			expect(button.dataset.variant).toBe('secondary');
 	});
 
-	it('signed in: My pets and reports, inbox and the account menu instead of Sign in (EN)', () => {
+	it('signed in: My pets and reports, inbox and the account menu instead of Sign in (EN)', async () => {
 		renderAt('/en/my-pets', <SiteHeader viewer={{ initials: 'AN', aal2: false }} />, 'en');
 		const header = screen.getByRole('banner');
 
@@ -111,7 +111,10 @@ describe('SiteHeader', () => {
 			'textContent',
 			'My pets and reports'
 		);
-		expect(within(header).getByRole('link', { name: en.nav.inbox }).getAttribute('href')).toBe('/en/inbox');
+		// The inbox label comes with the lazily loaded unread dot (TASK-90.5).
+		expect((await within(header).findByRole('link', { name: en.nav.inbox })).getAttribute('href')).toBe(
+			'/en/inbox'
+		);
 		expect(within(header).getByRole('button', { name: en.nav.account_menu }).textContent).toBe('AN');
 		const account = header.querySelector<HTMLElement>('#account-menu')!;
 		expect(hrefs(within(account).getAllByRole('link', { hidden: true })).slice(0, 3)).toEqual([

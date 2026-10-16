@@ -1,0 +1,17 @@
+{
+	"screen_title": "Poster and sharing",
+	"language_label": "Poster language",
+	"language_sl": "Slovenščina",
+	"language_en": "English",
+	"download": "Download PDF",
+	"preparing": "Preparing …",
+	"ready_file": "File: {filename}",
+	"qr_note": "The poster has a QR code that opens this report.",
+	"top_lost": "{species, select, dog {Missing dog} cat {Missing cat} other {Missing pet}}",
+	"top_found": "{species, select, dog {Found dog} cat {Found cat} other {Found animal}}",
+	"top_home": "Home again",
+	"no_photo": "The poster needs a photo where the animal is clearly visible.",
+	"failed": "The poster could not be prepared. Please try again.",
+	"unavailable_closed": "The search is closed, so the poster is not available.",
+	"preview_alt": "Poster preview: {title}, with photo and QR code"
+}

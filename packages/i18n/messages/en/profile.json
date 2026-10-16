@@ -13,6 +13,7 @@
 	"row_language": "Language",
 	"row_home_area": "Home area",
 	"row_phone": "Phone (optional)",
+	"row_reports": "My reports",
 	"phone_help": "We never show your number publicly. We only show it in a confirmed conversation, if you choose that when reporting.",
 	"phone_invalid": "Enter a phone number, for example 041 123 456.",
 	"row_payments": "Payments",
@@ -25,5 +26,18 @@
 	"sign_out_remove_links": "Also remove the links for managing reports from this device",
 	"sign_out_confirm": "Sign out",
 	"sign_out_cancel": "Cancel",
-	"saved": "Saved."
+	"saved": "Saved.",
+	"row_offline": "Offline data",
+	"offline_body": "We keep reports near you and their photos on this phone, so you can see them offline too.",
+	"offline_size": "Space used",
+	"offline_size_value": "{size} MB",
+	"offline_updated": "Last updated",
+	"offline_updated_never": "Not updated yet",
+	"offline_mobile_photos": "Use mobile data for offline photos",
+	"offline_mobile_photos_help": "When this is off, we download photos over Wi-Fi only.",
+	"offline_clear": "Clear offline data",
+	"offline_clear_title": "Clear offline data?",
+	"offline_clear_body": "We delete the saved reports near you and their photos from this phone. Reports waiting to be sent stay.",
+	"offline_clear_confirm": "Clear",
+	"offline_cleared": "Offline data cleared."
 }

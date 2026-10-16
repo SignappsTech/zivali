@@ -42,7 +42,7 @@ const THUMB_CONCURRENCY = 4;
 const round2 = (n: number) => Math.round(n * 100) / 100;
 
 /**
- * Settings → Offline data (TASK-85.3) with the C17 defaults. Non-personal preferences, kept in the SQLite
+ * Settings → Offline data with the C17 defaults. Non-personal preferences, kept in the SQLite
  * localStorage like `locale`.
  */
 export function cacheSettings(): { maxMb: number; maxAgeDays: number; mobilePhotos: boolean } {
@@ -55,6 +55,18 @@ export function cacheSettings(): { maxMb: number; maxAgeDays: number; mobilePhot
 		maxAgeDays: positive('cache.max_age_days', 7),
 		mobilePhotos: localStorage.getItem('cache.mobile_photos') === 'true',
 	};
+}
+
+/** "Use mobile data for offline photos" (off by default); the next sync follows it. */
+export const setMobilePhotos = (on: boolean): void => localStorage.setItem('cache.mobile_photos', String(on));
+
+/** What the cache counts against `cache.max_mb` (rows and thumbnails), for Settings → Offline data. */
+export async function cacheBytes(): Promise<number> {
+	const db = await getDb();
+	const row = await db.getFirstAsync<{ rows: number; thumbs: number | null }>(
+		'select count(*) as rows, sum(thumb_bytes) as thumbs from reports_cache'
+	);
+	return (row?.rows ?? 0) * ROW_BYTES + (row?.thumbs ?? 0);
 }
 
 let client: ApiClient | undefined;

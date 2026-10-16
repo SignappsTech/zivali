@@ -1,7 +1,6 @@
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { NextIntlClientProvider } from 'next-intl';
-import { Provider } from 'react-redux';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
 	municipalityList,
@@ -10,11 +9,15 @@ import {
 	responsibleUnconfirmed,
 } from '@zivali/api/__fixtures__/directory';
 import { createMockApi, mockError, type MockRoutes } from '@zivali/api/mock';
-import { createApiStore } from '@zivali/api/rtk';
+import { type ApiStore, createApiStore } from '@zivali/api/rtk';
 import en from '@zivali/i18n/dist/en.json';
 import sl from '@zivali/i18n/dist/sl.json';
 
 import { ShelterSearch } from './shelter-search';
+
+// The answer brings its own StoreProvider (shelter-answer.tsx); its store runs over the in-memory API.
+const stores = vi.hoisted(() => ({ current: undefined as ApiStore | undefined, getStore: vi.fn() }));
+vi.mock('@/lib/store', () => ({ getStore: stores.getStore.mockImplementation(() => stores.current) }));
 
 const t = sl.shelters;
 const municipalities = [
@@ -31,7 +34,7 @@ const responsible: Record<string, object> = {
 };
 
 function renderSearch(routes: MockRoutes = {}, locale: 'sl' | 'en' = 'sl') {
-	const store = createApiStore(
+	stores.current = createApiStore(
 		createMockApi(
 			{
 				'GET /v1/shelters/responsible': ({ query }) => responsible[query.municipality!],
@@ -42,9 +45,7 @@ function renderSearch(routes: MockRoutes = {}, locale: 'sl' | 'en' = 'sl') {
 	);
 	render(
 		<NextIntlClientProvider locale={locale} messages={locale === 'sl' ? sl : en}>
-			<Provider store={store}>
-				<ShelterSearch municipalities={municipalities} />
-			</Provider>
+			<ShelterSearch municipalities={municipalities} />
 		</NextIntlClientProvider>
 	);
 	return screen.getByRole('combobox', { name: locale === 'sl' ? t.search_label : en.shelters.search_label });
@@ -57,9 +58,23 @@ function choose(input: HTMLElement, text: string, option: string) {
 
 const callLinks = () => screen.queryAllByRole('link').filter((link) => link.getAttribute('href')?.startsWith('tel:'));
 
-afterEach(cleanup);
+afterEach(() => {
+	cleanup();
+	stores.getStore.mockClear();
+});
 
 describe('ShelterSearch', () => {
+	it('loads the store only with the first chosen municipality, so the page itself has no Redux (TASK-90.5)', async () => {
+		const input = renderSearch();
+		fireEvent.change(input, { target: { value: 'ljub' } });
+		expect(stores.getStore).not.toHaveBeenCalled();
+
+		fireEvent.mouseDown(screen.getByRole('option', { name: 'Ljubljana' }));
+		expect(screen.getByText(sl.common.loading)).toBeTruthy();
+		await screen.findByRole('link', { name: 'Pokliči Zavetišče Ljubljana' });
+		expect(stores.getStore).toHaveBeenCalledWith('sl');
+	});
+
 	it('suggests municipalities ignoring case and diacritics, prefix matches first', () => {
 		const input = renderSearch();
 		fireEvent.change(input, { target: { value: 'skof' } });

@@ -11,19 +11,26 @@ import { Share, Text } from 'react-native';
 import { Provider } from 'react-redux';
 import { IntlProvider } from 'use-intl';
 
+import { abuseCreated } from '@zivali/api/__fixtures__/abuse';
 import * as fx from '@zivali/api/__fixtures__/reports';
 import type { CachedReport } from '@zivali/api/sync';
 import sl from '@zivali/i18n/dist/sl.json';
+import { formatDayMonth } from '@zivali/i18n/format';
 import { createMockApi } from '@zivali/api/mock';
 import { api, createApiStore } from '@zivali/api/rtk';
 import type { PublicReport, ReportOwnerView } from '@zivali/types';
 import ReportScreen from '@/app/r/[code]/index';
+import { ensureSession } from '@/lib/anonymous';
 import { useReport } from '@/lib/data/reports';
 import { toAppPath } from '@/lib/deep-link';
 
 jest.mock('@/lib/data/reports', () => ({ useReport: jest.fn() }));
 jest.mock('@/lib/env', () => ({ env: { EXPO_PUBLIC_APP_URL: 'https://najdimo.test' } }));
 jest.mock('expo-web-browser', () => ({ openBrowserAsync: jest.fn(async () => ({})) }));
+// The owner actions share the auth error text, whose module loads the Supabase client; nothing here signs in.
+jest.mock('@/lib/auth', () => ({ providers: [], signInWithProvider: jest.fn() }));
+// The anonymous session before a report-abuse request has its own tests (manage.test.tsx).
+jest.mock('@/lib/anonymous', () => ({ ensureSession: jest.fn(async () => ({})) }));
 // The P16 gate has its own tests (auth.test.tsx); here it only shows whether contact opened it.
 jest.mock('@/components/auth/gate', () => {
 	const { Text: MockText } = jest.requireActual<typeof import('react-native')>('react-native');
@@ -76,6 +83,7 @@ const owner: ReportOwnerView = {
 
 type Result = ReturnType<typeof useReport>;
 const mockUseReport = jest.mocked(useReport);
+const mockEnsureSession = jest.mocked(ensureSession);
 const refetch = jest.fn();
 const result = (patch: Partial<Result>): Result => ({
 	data: undefined,
@@ -101,6 +109,7 @@ const mockApi = createMockApi({
 			municipality_slug: 'ljubljana',
 		},
 	},
+	'POST /v1/abuse-reports': abuseCreated,
 });
 
 async function open(report: Partial<Result>, code = 'Rex2Lost') {
@@ -121,7 +130,7 @@ async function open(report: Partial<Result>, code = 'Rex2Lost') {
 			_layout: () => <Stack screenOptions={{ headerShown: false }} />,
 			index: () => <Text>map tab</Text>,
 			'r/[code]/index': ReportScreen,
-			'r/[code]/reunited': () => <Text>reunited screen</Text>,
+			'r/[code]/poster': () => <Text>poster screen</Text>,
 			'report/found': () => <Text>sighted flow</Text>,
 		},
 		{ initialUrl: `/r/${code}`, wrapper: Providers }
@@ -289,7 +298,12 @@ describe('report detail (P9 mobile)', () => {
 		await fireEvent.press(screen.getByRole('button', { name: r.action_sighting }));
 		expect(await screen.findByText('sighted flow')).toBeOnTheScreen();
 		expect(page.getPathname()).toBe('/report/found');
-		expect(page.getSearchParams()).toEqual({ type: 'sighted', linked_report_id: found.id });
+		expect(page.getSearchParams()).toEqual({
+			type: 'sighted',
+			linked_report_id: found.id,
+			code: found.short_code,
+			species: found.species,
+		});
 	});
 
 	test('slot A for a sighted report: message first, "To je moja žival" as the text button', async () => {
@@ -297,11 +311,33 @@ describe('report detail (P9 mobile)', () => {
 		expectInOrder([r.action_message, r.more, r.action_mine]);
 	});
 
-	test('share opens the system sheet with the short link (slot B)', async () => {
+	test('share opens the system sheet with the localised P18 text and the short link (slot B)', async () => {
 		const share = jest.spyOn(Share, 'share').mockResolvedValue({ action: 'sharedAction' });
 		await open({ data: lost });
+		// The text names the area once the page's reverse lookup has it.
+		await screen.findByRole('button', { name: /^Odpri zemljevid\. Območje: Šiška, Ljubljana/ });
 		await fireEvent.press(screen.getByRole('button', { name: r.mobile_share }));
-		expect(share).toHaveBeenCalledWith({ message: 'https://najdimo.test/r/Rex2Lost' });
+		const date = formatDayMonth(lost.event_at, 'sl');
+		expect(share).toHaveBeenCalledWith({
+			message: `Pomagajte najti psa: Rex. Nazadnje viden ${date}, območje Šiška, Ljubljana. Ste ga videli? https://najdimo.test/r/Rex2Lost`,
+		});
+	});
+
+	test('a reunited report shares the thank-you text', async () => {
+		const share = jest.spyOn(Share, 'share').mockResolvedValue({ action: 'sharedAction' });
+		await open({ data: { ...lost, status: 'reunited' } });
+		await fireEvent.press(screen.getByRole('button', { name: r.mobile_share }));
+		expect(share).toHaveBeenLastCalledWith({
+			message: 'Rex je spet doma. Hvala vsem, ki ste delili in pomagali. https://najdimo.test/r/Rex2Lost',
+		});
+	});
+
+	test('offline there is no area name, so the share is the short link alone', async () => {
+		const share = jest.spyOn(Share, 'share').mockResolvedValue({ action: 'sharedAction' });
+		await open({ data: lost, source: 'cache', lastSyncAt: NOW.getTime() });
+		await fireEvent.press(screen.getByRole('button', { name: r.mobile_share }));
+		expect(share).toHaveBeenLastCalledWith({ message: 'https://najdimo.test/r/Rex2Lost' });
+		expect(mockApi.calls.some((call) => call.path === '/v1/geo/reverse')).toBe(false);
 	});
 
 	test('visitors get "Prijavi zlorabo" in Več možnosti (slot C)', async () => {
@@ -310,11 +346,29 @@ describe('report detail (P9 mobile)', () => {
 		const menu = container('menu', r.more);
 		expect(within(menu).getByRole('menuitem', { name: r.more_abuse })).toBeOnTheScreen();
 		expect(within(menu).queryByRole('menuitem', { name: r.owner_close })).toBeNull();
+
+		// The same sheet turns into the P10 form for this report (TASK-25.4).
+		await fireEvent.press(within(menu).getByRole('menuitem', { name: r.more_abuse }));
+		expect(screen.getByRole('heading', { name: sl.abuse.title })).toBeOnTheScreen();
+		expect(screen.getByText('Glede objave: Rex')).toBeOnTheScreen();
+		expect(screen.queryByRole('menuitem', { name: r.more_abuse })).toBeNull();
+		await fireEvent.press(screen.getByRole('radio', { name: sl.abuse.reason_scam }));
+		await fireEvent.press(screen.getByRole('button', { name: sl.abuse.send }));
+		expect(await screen.findByRole('heading', { name: sl.abuse.done_title })).toBeOnTheScreen();
+		expect(mockEnsureSession).toHaveBeenCalled();
+		expect(mockApi.calls.find((call) => call.path === '/v1/abuse-reports')?.body).toEqual({
+			target_type: 'report',
+			target_id: lost.id,
+			reason: 'scam',
+		});
+		// "Končano" closes the sheet; it opens on the menu again.
+		await fireEvent.press(screen.getByRole('button', { name: sl.abuse.done_close }));
+		expect(screen.getByRole('menuitem', { name: r.more_abuse })).toBeOnTheScreen();
 	});
 
 	test('the owner view: owner actions, the held note, the own point labelled, the owner reward note', async () => {
 		const held: ReportOwnerView = { ...owner, moderation_state: 'held', reward: { eur: 100, note: null } };
-		const { page } = await open({ data: held });
+		await open({ data: held });
 		expect(screen.getByRole('status')).toHaveTextContent(r.owner_held);
 		expect(screen.getByLabelText('Ovratnica: rdeča z zvončkom')).toBeOnTheScreen();
 		expect(JSON.stringify(screen.toJSON())).not.toContain(owner.chip_number);
@@ -326,9 +380,8 @@ describe('report detail (P9 mobile)', () => {
 		expect(screen.getByText(r.owner_reward_note)).toBeOnTheScreen();
 		expect(screen.queryByText(new RegExp(`^${r.safety_note_reward}`))).toBeNull();
 		expect(screen.queryByRole('button', { name: r.action_sighting })).toBeNull();
-		// "Uredi" and "Plakat" stay hidden until TASK-26.5 and TASK-24.3 wire them.
-		expect(screen.queryByRole('button', { name: r.owner_edit })).toBeNull();
-		expect(screen.queryByRole('button', { name: r.owner_poster })).toBeNull();
+		expect(screen.getByRole('button', { name: r.owner_edit })).toBeOnTheScreen();
+		expect(screen.getByRole('button', { name: r.owner_poster })).toBeOnTheScreen();
 		await fireEvent.press(screen.getByRole('button', { name: r.more }));
 		const menu = container('menu', r.more);
 		expect(within(menu).getByRole('menuitem', { name: r.owner_close })).toBeOnTheScreen();
@@ -337,8 +390,14 @@ describe('report detail (P9 mobile)', () => {
 		await fireEvent.press(screen.getByRole('button', { name: sl.common.cancel }));
 
 		await fireEvent.press(screen.getByRole('button', { name: r.owner_home }));
-		expect(await screen.findByText('reunited screen')).toBeOnTheScreen();
-		expect(page.getPathname()).toBe('/r/Rex2Lost/reunited');
+		expect(screen.getByRole('heading', { name: 'Je Rex res spet doma?' })).toBeOnTheScreen();
+	});
+
+	test('the owner "Plakat" opens the P18 poster and sharing screen (TASK-24.3)', async () => {
+		const { page } = await open({ data: owner });
+		await fireEvent.press(screen.getByRole('button', { name: r.owner_poster }));
+		expect(await screen.findByText('poster screen')).toBeOnTheScreen();
+		expect(page.getPathname()).toBe('/r/Rex2Lost/poster');
 	});
 
 	test('reunited: thank-you line, share stays, no actions, area or safety note', async () => {
@@ -398,6 +457,11 @@ describe('states (AC 3)', () => {
 		expect(screen.getByText(r.action_offline)).toBeOnTheScreen();
 		await fireEvent.press(screen.getByRole('button', { name: r.action_message }));
 		expect(screen.queryByText('gate:contact')).toBeNull();
+		// Report abuse keeps the choice but cannot send until the network is back.
+		await fireEvent.press(screen.getByRole('button', { name: r.more }));
+		await fireEvent.press(screen.getByRole('menuitem', { name: r.more_abuse }));
+		await fireEvent.press(screen.getByRole('radio', { name: sl.abuse.reason_fake }));
+		expect(screen.getByRole('button', { name: sl.abuse.send })).toBeDisabled();
 		await act(async () => {});
 		expect(mockApi.calls).toEqual([]);
 	});

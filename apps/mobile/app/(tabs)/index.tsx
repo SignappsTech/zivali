@@ -50,7 +50,7 @@ function useDebounced<T>(value: T, ms: number): T {
 /**
  * P4 Map tab, the app home (FR-007): a full-bleed MapView of public fuzzed areas (clustered), the area pill as the only
  * floating control, and the list sheet as its accessible alternative, both narrowed by the same filters. Reports come
- * only through `lib/data/reports.ts` (C17), so the offline cache serves them without changes here. The device location
+ * only through `lib/data/reports.ts` (C17), so offline the cache serves them and the sheet shows its offline note. The device location
  * stays in memory and is never drawn; it centres the area and becomes the cache's `current` area.
  */
 export default function MapTab() {
@@ -167,6 +167,8 @@ export default function MapTab() {
 				center={center}
 				isLoading={search.isLoading}
 				isError={Boolean(search.error)}
+				// Offline (or no network behind the connection) the list and the pins come from the C17 cache.
+				cachedAt={search.source === 'cache' ? search.lastSyncAt : undefined}
 				onRetry={() => {
 					search.refetch();
 					map.refetch();
