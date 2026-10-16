@@ -22,5 +22,5 @@ Steps: open /en/advertise, list comboboxes. Expected: names distinguish the audi
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 The audience region switch and the enquiry region field have distinct accessible names (e.g. 'Show numbers for region' vs 'Region of interest') in SL and EN
+- [x] #1 The audience region switch and the enquiry region field have distinct accessible names (e.g. 'Show numbers for region' vs 'Region of interest') in SL and EN
 <!-- AC:END -->

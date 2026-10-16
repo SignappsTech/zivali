@@ -75,11 +75,7 @@ test('P22 audience: real numbers with "< 5", the region switch and the pilot not
 
 	await expect(numbers).toHaveText(['1,240', '86', '31']);
 	await expect(page.getByText('We are piloting in Ljubljana.', { exact: false })).toBeVisible();
-	// The enquiry form further down has its own "Region" select; this one is the audience switch.
-	await page
-		.locator('section', { has: page.getByRole('heading', { name: 'Our audience' }) })
-		.getByRole('combobox', { name: 'Region' })
-		.selectOption('koroska');
+	await page.getByRole('combobox', { name: 'Show figures for region' }).selectOption('koroska');
 	await expect(numbers).toHaveText(['38', '< 5fewer than 5', '0']);
 	await expect(numbers.nth(1).getByText('< 5')).toBeVisible();
 });
