@@ -606,6 +606,33 @@ describe('report lost flow (P6)', () => {
 		expect(keys[0] === keys[1]).toBe(same);
 	});
 
+	test('a 429 with retry_after_s shows the wait in minutes, not the generic text', async () => {
+		routes = { 'POST /v1/reports': () => mockError('RATE_LIMITED', 'x', { retry_after_s: 90 }) };
+		await toReviewWithSavedPet();
+		await press(t.publish);
+		expect(await screen.findByText(/čez 2 minuti/)).toBeTruthy();
+	});
+
+	test.each([
+		['photo_ids', 'photo_ids.0', () => screen.getByRole('heading', { name: t.photos_title })],
+		['location', 'location', () => screen.getByText('Potrdi kraj')],
+		['radius_m', 'radius_m', () => screen.getByText('Potrdi kraj')],
+	])('a VALIDATION issue on %s goes back to its step', async (_name, path, onStep) => {
+		routes = {
+			'POST /v1/reports': () => {
+				const response = mockError('VALIDATION', 'x');
+				return new Response(
+					JSON.stringify({ error: { code: 'VALIDATION', message: 'x', issues: [{ path, message: 'bad' }] } }),
+					{ status: response.status, headers: { 'Content-Type': 'application/json' } }
+				);
+			},
+		};
+		await toReviewWithSavedPet();
+		await press(t.publish);
+		await waitFor(() => expect(onStep()).toBeTruthy());
+		expect(screen.queryByRole('heading', { name: t.review_title })).toBeNull();
+	});
+
 	test('the open search found for one pet is forgotten when another pet is chosen', async () => {
 		const other = { ...pet, id: 'pet-2', name: 'Muri' };
 		routes = {
