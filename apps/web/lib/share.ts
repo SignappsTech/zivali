@@ -113,13 +113,14 @@ export async function fetchPhoto(report: PublicReport): Promise<{ data: Buffer; 
 		if (Number(response.headers.get('content-length')) > MAX_PHOTO_BYTES) return undefined;
 		const chunks: Uint8Array[] = [];
 		let size = 0;
-		for await (const chunk of response.body) {
-			size += chunk.byteLength;
+		const reader = response.body.getReader();
+		for (let chunk = await reader.read(); !chunk.done; chunk = await reader.read()) {
+			size += chunk.value.byteLength;
 			if (size > MAX_PHOTO_BYTES) {
-				void response.body.cancel().catch(() => undefined);
+				void reader.cancel().catch(() => undefined);
 				return undefined;
 			}
-			chunks.push(chunk);
+			chunks.push(chunk.value);
 		}
 		return { data: Buffer.concat(chunks), type };
 	} catch {
