@@ -292,6 +292,20 @@ test('SL: a new pet in seven steps, keyboard and axe on each, one POST with the 
 
 	await heading(page, 'Iskanje je objavljeno');
 	await checkStep(page);
+	// TASK-33.4 (P15): the signed-in contribution row is collapsed with nothing chosen and Skrij removes it; no payment
+	// call was made by looking at it.
+	const row = page.getByRole('button', { name: /^Pomagajte ohraniti Najdimo brezplačno/ });
+	await expect(row).toHaveAttribute('aria-expanded', 'false');
+	await expect(page.getByRole('radiogroup', { name: 'Znesek prispevka' })).toHaveCount(0);
+	await row.click();
+	const amounts = page.getByRole('radiogroup', { name: 'Znesek prispevka' });
+	await expect(amounts.getByRole('radio')).toHaveCount(3);
+	await expect(amounts.getByRole('radio', { checked: true })).toHaveCount(0);
+	await expect(page.getByRole('button', { name: 'Prispevaj', exact: true })).toBeDisabled();
+	await expect(page.getByRole('button', { name: 'Skrij', exact: true })).toBeEnabled();
+	await page.getByRole('button', { name: 'Skrij', exact: true }).click();
+	await expect(row).toHaveCount(0);
+	expect(seen.some((call) => call.path.startsWith('/v1/payments'))).toBe(false);
 	const posts = seen.filter((call) => call.method === 'POST' && call.path === '/v1/reports');
 	expect(posts).toHaveLength(1);
 	expect(posts[0]!.key).toMatch(/^[0-9a-f-]{36}$/);
