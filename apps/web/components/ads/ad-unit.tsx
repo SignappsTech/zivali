@@ -6,7 +6,7 @@ import * as React from 'react';
 
 import { track } from '@zivali/analytics';
 import { createApiClient, type Locale } from '@zivali/api/client';
-import type { Ad, AdSlot as Slot } from '@zivali/types';
+import { type Ad, type AdSlot as Slot, REGION_SLUGS, type RegionSlug } from '@zivali/types';
 import { type AdSlotProps, RESERVED, ReservedAd } from '@/components/ads/ad-slot';
 import { ringClass, SpotIllustration } from '@/components/shell/page';
 import { cn } from '@/lib/utils';
@@ -14,23 +14,9 @@ import { cn } from '@/lib/utils';
 // As lib/store.ts, which this chunk does not import: it brings the RTK store.
 const API_URL = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000').replace(/\/+$/, '');
 
-// C6 `regions.id` 1 to 12 in this order (supabase/seed/geo/regions.geojson): the API targets by id, a report has the slug.
-const REGIONS = [
-	'pomurska',
-	'podravska',
-	'koroska',
-	'savinjska',
-	'zasavska',
-	'posavska',
-	'jugovzhodna-slovenija',
-	'osrednjeslovenska',
-	'gorenjska',
-	'primorsko-notranjska',
-	'goriska',
-	'obalno-kraska',
-] as const;
-type Region = (typeof REGIONS)[number];
-const asRegion = (slug?: string) => REGIONS.find((region) => region === slug);
+// The API targets by region id (index + 1 in REGION_SLUGS), a report has the slug.
+type Region = RegionSlug;
+const asRegion = (slug?: string) => REGION_SLUGS.find((region) => region === slug);
 
 /** Only our click counter (C14 `click_url`: it counts, then 302s to the https link stored with the ad) is a link. */
 export const isOurClickUrl = (url: string) => url.startsWith(`${API_URL}/v1/ads/`);
@@ -92,15 +78,24 @@ export function AdUnit({ slot, species, region: slug, className }: AdSlotProps) 
 	const t = useTranslations('ads');
 	const locale = useLocale() as Locale;
 	const region = asRegion(slug);
-	const region_id = region && REGIONS.indexOf(region) + 1;
+	const region_id = region && REGION_SLUGS.indexOf(region) + 1;
 	// undefined while loading; null collapses the slot (no ad, an error, a blocked request, a foreign link).
 	const [ad, setAd] = React.useState<Ad | null>();
+	// The sidebar shows from lg only: below it the hidden box asks for nothing, and asks once the window grows past lg.
+	const [wide, setWide] = React.useState(() => window.matchMedia?.(SIDEBAR_FROM).matches !== false);
 	const unit = React.useRef<HTMLAnchorElement>(null);
 	const counted = React.useRef<string>(undefined);
 
 	React.useEffect(() => {
-		// The sidebar shows from lg only: below it the hidden box asks for nothing.
-		if (slot === 'sidebar' && window.matchMedia?.(SIDEBAR_FROM).matches === false) return;
+		const query = slot === 'sidebar' ? window.matchMedia?.(SIDEBAR_FROM) : undefined;
+		if (!query) return;
+		const change = (event: MediaQueryListEvent) => setWide(event.matches);
+		query.addEventListener('change', change);
+		return () => query.removeEventListener('change', change);
+	}, [slot]);
+
+	React.useEffect(() => {
+		if (slot === 'sidebar' && !wide) return;
 		const request = new AbortController();
 		// TODO(TASK-55): the ad-free path (Premium, M4) sends the session token here, and the API answers null.
 		createApiClient({ baseUrl: API_URL, locale })
@@ -113,7 +108,7 @@ export function AdUnit({ slot, species, region: slug, className }: AdSlotProps) 
 				() => !request.signal.aborted && setAd(null)
 			);
 		return () => request.abort();
-	}, [slot, region_id, species, locale]);
+	}, [slot, wide, region_id, species, locale]);
 
 	React.useEffect(() => {
 		const node = unit.current;
@@ -150,14 +145,16 @@ export function AdUnit({ slot, species, region: slug, className }: AdSlotProps) 
 	if (!ad) return null;
 
 	const label = <span className={labelClass}>{t('label')}</span>;
-	const cta = <span className={buttonClass}>{ad.cta || t('learn_more')}</span>;
+	const ctaText = ad.cta || t('learn_more');
+	const cta = <span className={buttonClass}>{ctaText}</span>;
 	return (
 		<a
 			ref={unit}
 			href={ad.click_url}
 			target="_blank"
 			rel="sponsored noopener"
-			aria-label={`${a11yName(t('unit_a11y', { title: ad.title }), ad.body)} ${t('opens_new_tab')}`}
+			// WCAG 2.5.3: the visible button text is part of the name (the feed row has none).
+			aria-label={`${a11yName(t('unit_a11y', { title: ad.title }), ad.body)}${slot === 'feed' ? '' : ` ${ctaText}`} ${t('opens_new_tab')}`}
 			data-ad-slot={slot}
 			onClick={() => track('ad_click', gaParams(slot, ad.id, region, species))}
 			className={cn(
@@ -195,7 +192,7 @@ export function AdUnit({ slot, species, region: slug, className }: AdSlotProps) 
 					<span className="mt-2 flex items-start gap-4">
 						<AdImage ad={ad} box="inline" />
 						<span className="block min-w-0 flex-1">
-							<span className={cn(titleClass, 'line-clamp-2')}>{ad.title}</span>
+							<span className={cn(titleClass, 'line-clamp-2 lg:line-clamp-1')}>{ad.title}</span>
 							<span className={cn(bodyClass, 'line-clamp-2')}>{ad.body}</span>
 							<span className="mt-1 block">{cta}</span>
 						</span>

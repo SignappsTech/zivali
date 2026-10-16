@@ -294,10 +294,15 @@ export function ReportDetail({ report, place }: { report: DetailReport; place?: 
 					<ReportSlot name="ad" report={report} className="mt-16 lg:mt-24" />
 					<ReportSlot name="near-here" report={report} className="mt-16 lg:mt-24" />
 				</div>
-				{/* A collapsed sidebar leaves no empty landmark. */}
-				<aside aria-label={tads('sidebar_label')} className="sticky top-6 mt-24 hidden empty:hidden lg:block">
-					<AdSlot slot="sidebar" species={report.species} region={report.region_slug} />
-				</aside>
+				{/* Only an active report: the detail unit and the sidebar are never adjacent (P21). A collapsed sidebar leaves no empty landmark. */}
+				{active && (
+					<aside
+						aria-label={tads('sidebar_label')}
+						className="sticky top-6 mt-24 hidden empty:hidden lg:block"
+					>
+						<AdSlot slot="sidebar" species={report.species} region={report.region_slug} />
+					</aside>
+				)}
 			</div>
 		</main>
 	);

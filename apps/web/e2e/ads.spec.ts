@@ -1,61 +1,14 @@
-import { expect, type Page, test } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 
 import { ad } from '@zivali/api/__fixtures__/ads';
 import sl from '@zivali/i18n/dist/sl.json' with { type: 'json' };
-import type { AdSlot } from '@zivali/types';
 
-import { api, signInAs } from './session';
+import { clickUrl, feedName, serveAds, unitName, watchShifts } from './ads';
+import { signInAs } from './session';
 
-// TASK-36.5: the P21 ad units on the web. The browser asks the API for each slot (e2e/mock-api.ts serves no ad), so
-// the tests serve one here, on the browser context (the click opens a new tab), and record what the units send.
+// TASK-36.5: the P21 ad units on the web (detail and sidebar here; the reunited unit is in lifecycle.spec.ts). The
+// browser asks the API for each slot, so ads.ts serves one on the browser context (the click opens a new tab).
 const OWNER = { id: '0b5f6a3e-6c1d-4f8e-9a2b-3c4d5e6f7a80', role: 'USER', aal: 'aal1' } as const;
-const clickUrl = (slot: AdSlot) => `${api()}/v1/ads/${ad.id}/click?s=${slot}&r=8`;
-const unitName = `${sl.ads.label}: ${ad.title}. ${ad.body} ${sl.ads.opens_new_tab}`;
-
-async function serveAds(page: Page) {
-	const seen = { slots: [] as string[], impressions: [] as unknown[], clicks: [] as string[] };
-	await page.context().route(
-		(url) => url.pathname.startsWith('/v1/ads/'),
-		(route) => {
-			const request = route.request();
-			const url = new URL(request.url());
-			const headers = {
-				'Access-Control-Allow-Origin': '*',
-				'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-				'Access-Control-Allow-Headers': request.headers()['access-control-request-headers'] ?? '*',
-			};
-			if (request.method() === 'OPTIONS') return route.fulfill({ status: 204, headers });
-			const slot = url.pathname.match(/^\/v1\/ads\/slot\/(\w+)$/)?.[1] as AdSlot | undefined;
-			if (slot) {
-				seen.slots.push(slot);
-				// The fixture, with its image from the mock API (MEDIA_BASE_URL, so the CSP allows it).
-				const served = { ...ad, image_url: `${api()}/media/ad.png`, click_url: clickUrl(slot) };
-				return route.fulfill({ headers: { ...headers, 'Cache-Control': 'private, max-age=60' }, json: served });
-			}
-			if (url.pathname.endsWith('/impressions')) {
-				seen.impressions.push(request.postDataJSON());
-				return route.fulfill({ status: 204, headers });
-			}
-			// The counting redirect (apps/api answers 302 to the sponsor's link): the tab lands on this page.
-			seen.clicks.push(request.url());
-			return route.fulfill({ contentType: 'text/html', body: '<title>Sponsor</title>' });
-		}
-	);
-	return seen;
-}
-
-/** Sums the layout shifts not caused by input (CLS), from the first paint. */
-async function watchShifts(page: Page) {
-	await page.addInitScript(() => {
-		const w = window as unknown as { cls: number };
-		w.cls = 0;
-		new PerformanceObserver((list) => {
-			for (const entry of list.getEntries() as unknown as { value: number; hadRecentInput: boolean }[])
-				if (!entry.hadRecentInput) w.cls += entry.value;
-		}).observe({ type: 'layout-shift', buffered: true });
-	});
-	return () => page.evaluate(() => (window as unknown as { cls: number }).cls);
-}
 
 test('report detail at 1440: one labelled detail unit and the sidebar, both through our click counter', async ({
 	page,
@@ -108,21 +61,54 @@ test('report detail at 390: the detail unit only; the sidebar asks for nothing b
 	expect(await cls()).toBeLessThan(0.1);
 });
 
-test('the reunited page has its one labelled unit', async ({ page, baseURL }) => {
-	await fetch(`${api()}/e2e/reset`, { method: 'POST' });
-	await fetch(`${api()}/v1/reports/Own12345/transitions`, {
-		method: 'POST',
-		headers: { 'Content-Type': 'application/json' },
-		body: JSON.stringify({ action: 'mark_reunited' }),
-	});
-	await signInAs(page, OWNER, baseURL!);
+// The feed: an ad after every eighth report in the list, one request, no shift when it loads in (CLS < 0.1).
+test('the feed row after the eighth report, with its reserved row', async ({ page }) => {
 	const seen = await serveAds(page);
-	await page.goto('/r/Own12345/spet-doma');
+	const cls = await watchShifts(page);
+	// Empty tiles and ten reports (the browser calls the API, so page.route answers).
+	await page.route('https://tiles.openfreemap.org/**', (route) =>
+		route.fulfill({ json: {}, headers: { 'access-control-allow-origin': '*' } })
+	);
+	const items = Array.from({ length: 10 }, (_, i) => ({
+		id: `00000000-0000-4000-8000-${String(i + 1).padStart(12, '0')}`,
+		short_code: `Code${i + 1}`,
+		type: 'lost',
+		status: 'open',
+		species: 'dog',
+		area: { lat: 46.05, lng: 14.5, radius_m: 500 },
+		boosted: false,
+		thumb_url: null,
+		breed_codes: [],
+		colours: [],
+		pattern: null,
+		size: null,
+		sex: 'unknown',
+		has_chip: false,
+		collar_described: false,
+		event_at: new Date(Date.now() - 2 * 3_600_000).toISOString(),
+		in_slovenia: true,
+		photos: [],
+		created_at: '2026-10-15T08:00:00Z',
+		updated_at: '2026-10-15T08:00:00Z',
+		is_mine: false,
+	}));
+	await page.route(/\/v1\/reports(\/map)?\?/, (route) => {
+		const headers = { 'access-control-allow-origin': '*' };
+		const map = new URL(route.request().url()).pathname.endsWith('/map');
+		return route.fulfill({
+			headers,
+			json: map ? { items } : { items, next_cursor: null, total_estimate: items.length },
+		});
+	});
+	await page.setViewportSize({ width: 1440, height: 900 });
+	await page.goto('/zemljevid');
 
-	const unit = page.locator('a[data-ad-slot="reunited"]');
-	await expect(unit).toHaveAccessibleName(unitName);
-	await expect(unit).toHaveAttribute('href', clickUrl('reunited'));
-	expect(seen.slots).toEqual(['reunited']);
+	const feed = page.locator('a[data-ad-slot="feed"]');
+	await feed.scrollIntoViewIfNeeded();
+	await expect(feed).toHaveAccessibleName(feedName);
+	await expect(feed).toHaveAttribute('href', clickUrl('feed'));
+	expect(seen.slots).toEqual(['feed']);
+	expect(await cls()).toBeLessThan(0.1);
 });
 
 // The report flows, manage, chat, sign-in and payments (C15 protected flows), plus cookie settings and the Partners

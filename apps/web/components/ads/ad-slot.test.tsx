@@ -24,8 +24,9 @@ const API = 'http://localhost:4000';
 const served: Ad = fixture;
 const report = publicReport as DetailReport;
 const catalogues = { sl, en };
-const name = (ad: Ad, locale: 'sl' | 'en' = 'sl') =>
-	`${catalogues[locale].ads.label}: ${ad.title}. ${ad.body} ${catalogues[locale].ads.opens_new_tab}`;
+// The visible button text is part of the name (WCAG 2.5.3); the feed row has none.
+const name = (ad: Ad, locale: 'sl' | 'en' = 'sl', button = true) =>
+	`${catalogues[locale].ads.label}: ${ad.title}. ${ad.body}${button ? ` ${ad.cta || catalogues[locale].ads.learn_more}` : ''} ${catalogues[locale].ads.opens_new_tab}`;
 
 type Answer = Ad | null | Error | number;
 const fetchMock = vi.fn<typeof fetch>();
@@ -78,6 +79,24 @@ async function view(ratio: number, ms: number) {
 		observer().show(ratio);
 		vi.advanceTimersByTime(ms);
 	});
+}
+/** A min-width media query that can change: matchMedia and the way to flip it. */
+function media(matches: boolean) {
+	const listeners = new Set<(event: MediaQueryListEvent) => void>();
+	const list = {
+		get matches() {
+			return matches;
+		},
+		addEventListener: (_: string, listener: (event: MediaQueryListEvent) => void) => listeners.add(listener),
+		removeEventListener: (_: string, listener: (event: MediaQueryListEvent) => void) => listeners.delete(listener),
+	};
+	return {
+		matchMedia: (() => list) as unknown as typeof matchMedia,
+		set(next: boolean) {
+			matches = next;
+			listeners.forEach((listener) => listener({ matches } as MediaQueryListEvent));
+		},
+	};
 }
 const gaEvents = () => getMockEvents().filter((event) => event.name.startsWith('ad_'));
 
@@ -141,7 +160,7 @@ describe('AdSlot (P21 web)', () => {
 
 	it('counts one impression once half the unit has been in view for a second; GA gets nothing without consent', async () => {
 		show(<AdSlot slot="feed" region="osrednjeslovenska" />);
-		const unit = await screen.findByRole('link', { name: name(served) });
+		const unit = await screen.findByRole('link', { name: name(served, 'sl', false) });
 		expect(observer().options).toEqual({ threshold: 0.5 });
 		vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
 
@@ -181,7 +200,7 @@ describe('AdSlot (P21 web)', () => {
 
 	it('feed: a row with the label, one-line title and text and a chevron; EN label "Ad"', async () => {
 		show(<AdSlot slot="feed" />, 'en');
-		const unit = await screen.findByRole('link', { name: name(served, 'en') });
+		const unit = await screen.findByRole('link', { name: name(served, 'en', false) });
 		expect(unit.className).toContain('min-h-[88px]');
 		expect(screen.getByText(en.ads.label)).toBeTruthy();
 		expect(screen.getByText(served.title).className).toContain('truncate');
@@ -194,7 +213,7 @@ describe('AdSlot (P21 web)', () => {
 	it('a sponsor without an image is text-only; a house ad shows the decorative illustration; no button text → "Več o tem"', async () => {
 		answer({ ...served, image_url: null, cta: '' });
 		show(<AdSlot slot="detail" />);
-		const unit = await screen.findByRole('link', { name: name(served) });
+		const unit = await screen.findByRole('link', { name: name({ ...served, cta: '' }) });
 		expect(screen.queryByRole('img')).toBeNull();
 		expect(unit.querySelector('svg')).toBeNull();
 		expect(screen.getByText(sl.ads.learn_more)).toBeTruthy();
@@ -209,7 +228,7 @@ describe('AdSlot (P21 web)', () => {
 	});
 
 	it('sidebar: the 320 by 452 unit with the 4:3 image on top, and no request below lg', async () => {
-		window.matchMedia = ((query: string) => ({ matches: query === '(min-width: 64rem)' })) as typeof matchMedia;
+		window.matchMedia = media(true).matchMedia;
 		show(<AdSlot slot="sidebar" region="gorenjska" species="cat" />);
 		const unit = await screen.findByRole('link', { name: name(served) });
 		expect(unit.className).toContain('min-h-[452px]');
@@ -219,13 +238,19 @@ describe('AdSlot (P21 web)', () => {
 		cleanup();
 		fetchMock.mockClear();
 
-		window.matchMedia = (() => ({ matches: false })) as unknown as typeof matchMedia;
+		const narrow = media(false);
+		window.matchMedia = narrow.matchMedia;
 		const { container } = show(<AdSlot slot="sidebar" />);
 		await act(async () => {
 			await import('./ad-unit');
 		});
 		expect(container.querySelector('[data-ad-slot="sidebar"]')?.getAttribute('aria-hidden')).toBe('true');
 		expect(fetchMock).not.toHaveBeenCalled();
+
+		// Rotating the tablet from 768 to 1024 fills the box.
+		await act(async () => narrow.set(true));
+		expect(await screen.findByRole('link', { name: name(served) })).toBeTruthy();
+		expect(calls('GET')).toHaveLength(1);
 	});
 
 	it('the server renders only the reserved box: no request and no impression before the browser has it', () => {
@@ -246,7 +271,6 @@ describe('AdSlot (P21 web)', () => {
 // imports AdSlot, so none of their states can show one (C15, FR-030).
 describe('no AdSlot in protected flows', () => {
 	const ROOT = path.join(import.meta.dirname, '../..');
-	const APP = path.join(ROOT, 'app');
 	const AD_SLOT = path.join(ROOT, 'components/ads/ad-slot.tsx');
 	const WITH_ADS = [
 		'app/[locale]/(public)/map/page.tsx',
@@ -269,9 +293,12 @@ describe('no AdSlot in protected flows', () => {
 		'app/[locale]/(public)/advertise/page.tsx',
 		'app/[locale]/(admin)/admin/page.tsx',
 	];
-	// Value imports and re-exports, side-effect imports included; `import type` brings no code. Dynamic import() is
-	// not followed: a lazily loaded AdSlot must be added to this guard by hand.
-	const IMPORT = /^\s*(?:import|export)\s+(?!type\s)(?:[^'";]*?\sfrom\s+)?['"]([^'"]+)['"]/gm;
+	// Value imports and re-exports, side-effect imports included; `import type` brings no code. Dynamic import()s are
+	// followed too (manage-view.tsx is loaded that way).
+	const IMPORT =
+		/^\s*(?:import|export)\s+(?!type\s)(?:[^'";]*?\sfrom\s+)?['"]([^'"]+)['"]|import\(\s*['"]([^'"]+)['"]/gm;
+	// A route's own components only, wherever they live (also under app/): another route file does not render this route.
+	const ROUTE_FILE = /(page|layout|route|template|default)\.tsx?$/;
 
 	const resolve = (from: string, spec: string): string | null => {
 		const base = spec.startsWith('@/')
@@ -286,13 +313,12 @@ describe('no AdSlot in protected flows', () => {
 				.find((file) => fs.existsSync(file) && fs.statSync(file).isFile()) ?? null
 		);
 	};
-	// A route's own components only: a helper from another route file does not render that route.
 	const reaches = (file: string, seen = new Set<string>()): boolean => {
 		if (file === AD_SLOT) return true;
-		if (seen.has(file) || (seen.size > 0 && file.startsWith(APP))) return false;
+		if (seen.has(file) || (seen.size > 0 && ROUTE_FILE.test(file))) return false;
 		seen.add(file);
-		return [...fs.readFileSync(file, 'utf8').matchAll(IMPORT)].some(([, spec]) => {
-			const dep = resolve(file, spec!);
+		return [...fs.readFileSync(file, 'utf8').matchAll(IMPORT)].some(([, from, lazy]) => {
+			const dep = resolve(file, (from ?? lazy)!);
 			return dep !== null && reaches(dep, seen);
 		});
 	};

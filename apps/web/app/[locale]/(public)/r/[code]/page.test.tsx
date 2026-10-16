@@ -180,6 +180,18 @@ describe('P9 /r/[code], lost report (visitor)', () => {
 		expect(screen.getAllByTestId(/^ad-/)).toHaveLength(2);
 	});
 
+	it.each(['closed', 'reunited'] as const)(
+		'%s: the detail ad only, no sidebar beside it (P21: never adjacent)',
+		async (status) => {
+			show({ ...lost, status });
+			await renderPage();
+
+			expect(screen.getByTestId('ad-detail')).toBeTruthy();
+			expect(screen.queryByRole('complementary', { name: sl.ads.sidebar_label })).toBeNull();
+			expect(screen.queryByTestId('ad-sidebar')).toBeNull();
+		}
+	);
+
 	it('shows the reward line with the reward scam warning as the one note', async () => {
 		await renderPage();
 
