@@ -5,6 +5,7 @@ import { ShieldCheckIcon } from '@phosphor-icons/react/dist/ssr/ShieldCheck';
 import { useFormatter, useLocale, useTranslations } from 'next-intl';
 
 import { formatDayMonth } from '@zivali/i18n/format';
+import { AdSlot } from '@/components/ads/ad-slot';
 import { AreaMap } from '@/components/report/area-map';
 import { Gallery } from '@/components/report/gallery';
 import { listOf } from '@/components/report/seo';
@@ -186,6 +187,7 @@ export function ReportDetail({ report, place }: { report: DetailReport; place?: 
 	const t = useTranslations('report');
 	const ta = useTranslations('attributes');
 	const tbr = useTranslations('breeds');
+	const tads = useTranslations('ads');
 	const locale = useLocale();
 	const title = useReportTitle(report);
 	const active = isActive(report);
@@ -268,7 +270,7 @@ export function ReportDetail({ report, place }: { report: DetailReport; place?: 
 					{(active || report.is_mine) && <ReportSlot name="slot-a" report={report} className="mt-8" />}
 					{active && <Safety report={report} />}
 					<div className="mt-5 -ml-2 flex items-center gap-1 empty:hidden">
-						<ReportSlot name="slot-b" report={report} />
+						<ReportSlot name="slot-b" report={report} place={place} />
 						{active && <ReportSlot name="slot-c" report={report} />}
 					</div>
 				</div>
@@ -285,9 +287,23 @@ export function ReportDetail({ report, place }: { report: DetailReport; place?: 
 				)}
 			</div>
 
-			{active && <Where report={report} place={place} title={title} />}
-			<ReportSlot name="ad" report={report} className="mt-16 lg:mt-24" />
-			<ReportSlot name="near-here" report={report} className="mt-16 lg:mt-24" />
+			{/* From lg the P21 sidebar (320 px, sticky) takes the right column beside the sections below the columns. */}
+			<div className="lg:grid lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start lg:gap-8">
+				<div className="min-w-0">
+					{active && <Where report={report} place={place} title={title} />}
+					<ReportSlot name="ad" report={report} className="mt-16 lg:mt-24" />
+					<ReportSlot name="near-here" report={report} className="mt-16 lg:mt-24" />
+				</div>
+				{/* Only an active report: the detail unit and the sidebar are never adjacent (P21). A collapsed sidebar leaves no empty landmark. */}
+				{active && (
+					<aside
+						aria-label={tads('sidebar_label')}
+						className="sticky top-6 mt-24 hidden empty:hidden lg:block"
+					>
+						<AdSlot slot="sidebar" species={report.species} region={report.region_slug} />
+					</aside>
+				)}
+			</div>
 		</main>
 	);
 }

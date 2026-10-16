@@ -31,11 +31,12 @@ export default async function MapPage({ params }: PageProps<'/[locale]/map'>) {
 
 	return (
 		<>
-			{/* The drawer's colour pills are the only attribute labels on the page. */}
+			{/* The drawer's colour pills are the only attribute labels on the page; `ads` for the feed rows. */}
 			<PageMessages
 				messages={{
 					browse: messages.browse,
 					map: messages.map,
+					ads: messages.ads,
 					attributes: { colours: messages.attributes.colours },
 				}}
 			>

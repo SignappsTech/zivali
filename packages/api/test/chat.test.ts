@@ -31,7 +31,7 @@ test('chat endpoints map their arguments to the C9 routes', async (t) => {
 	const list = await store.dispatch(e.listConversations.initiate({ cursor: 'c2' }, { subscribe: false }));
 	assert.deepEqual(list.data, conversations);
 	await store.dispatch(e.listMessages.initiate({ id, before: 'm1', limit: 20 }, { subscribe: false }));
-	const sent = await store.dispatch(e.sendMessage.initiate({ id, body: { body: 'Hvala!' } }));
+	const sent = await store.dispatch(e.sendMessage.initiate({ id, body: { body: 'Hvala!' }, idempotencyKey: KEY }));
 	assert.deepEqual(sent.data, message);
 	await store.dispatch(e.markConversationRead.initiate({ id }));
 	await store.dispatch(e.blockParticipant.initiate({ id, body: { participant_id: 'u2' } }));
@@ -58,7 +58,7 @@ test('chat errors arrive as { status, data.code }', async (t) => {
 	});
 	const created = await store.dispatch(e.createConversation.initiate({ about_report_code: 'Hk3vT9qP' }));
 	assert.deepEqual(failure(created), [403, 'UNVERIFIED_EMAIL']);
-	const sent = await store.dispatch(e.sendMessage.initiate({ id, body: { body: 'Hvala!' } }));
+	const sent = await store.dispatch(e.sendMessage.initiate({ id, body: { body: 'Hvala!' }, idempotencyKey: KEY }));
 	assert.deepEqual(failure(sent), [410, 'GONE']);
 });
 
@@ -173,6 +173,8 @@ test('catch-up stops when the server ignores `after`', async (t) => {
 	view.unsubscribe();
 });
 
+const KEY = '1b4e28ba-2fa1-4d3b-a3f5-ef19b5a76330';
+
 test('sendMessage puts the returned message in the cache without Realtime', async (t) => {
 	const { store } = mockStore(t, {
 		'GET /v1/conversations/:id/messages': messages,
@@ -180,10 +182,24 @@ test('sendMessage puts the returned message in the cache without Realtime', asyn
 	});
 	const view = store.dispatch(e.listMessages.initiate({ id }));
 	await view;
-	await store.dispatch(e.sendMessage.initiate({ id, body: { body: 'x' } }));
+	await store.dispatch(e.sendMessage.initiate({ id, body: { body: 'x' }, idempotencyKey: KEY }));
 	const ids = e.listMessages
 		.select({ id })(store.getState() as never)
 		.data?.items.map((m) => m.id);
 	assert.deepEqual(ids, [messages.items[0]!.id, message.id]);
 	view.unsubscribe();
+});
+
+test('sendMessage sends the Idempotency-Key header; a retry sends the same key', async (t) => {
+	let fail = true;
+	const { store, client } = mockStore(t, {
+		'POST /v1/conversations/:id/messages': () => (fail ? mockError('INTERNAL') : message),
+	});
+	await store.dispatch(e.sendMessage.initiate({ id, body: { body: 'x' }, idempotencyKey: KEY }));
+	fail = false;
+	await store.dispatch(e.sendMessage.initiate({ id, body: { body: 'x' }, idempotencyKey: KEY }));
+	assert.deepEqual(
+		client.calls.map((c) => c.headers['Idempotency-Key']),
+		[KEY, KEY]
+	);
 });

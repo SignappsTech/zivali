@@ -41,6 +41,13 @@ type ReportAbuseProps = {
 	onSent?: (result: { blocked: boolean }) => void;
 };
 
+type DialogProps = ReportAbuseProps & {
+	open: boolean;
+	onOpenChange: (open: boolean) => void;
+	/** Where focus goes on close when the opener has left the page (chat folds a reported message with its button). */
+	returnFocus?: () => HTMLElement | null | undefined;
+};
+
 const NOTE_MAX = 500;
 // The counter shows only in the last 50 characters (P10 copy) and is announced at 50, 20 and 0, not on every key.
 const COUNTER_FROM = 50;
@@ -68,18 +75,16 @@ const headingClass = 'outline-hidden';
  * P10 report abuse, web dialog (max 440 px, system §10.9): the reason as one radiogroup of choice rows, an optional
  * plain-text note (500, counter near the limit), the block switch for messages and users, "Pošlji" disabled until a
  * reason is chosen with the reason said. Signed-out visitors get an anonymous session only when they send (C7, the
- * captcha's api.js loads then too). A duplicate is thanked like a new report; rate limits and errors keep the choice.
+ * captcha's api.js loads then too). A duplicate is thanked like a new report; rate limits and errors keep the choice,
+ * and a rate limit leaves "Pošlji" disabled until the dialog is opened again. One request at a time, however fast the
+ * submits.
  * Focus moves to the heading on open and to "Hvala" on the confirmation; nothing auto-dismisses. Escape and "Prekliči"
  * close it and focus returns to the opener. Inside another Radix dialog (chat, profile) Escape closes only this one:
  * Radix answers Escape in the topmost layer alone, and none of its controls handle the key themselves.
  *
  * Usage: `<ReportAbuseDialog target={{ type: 'message', id }} open={open} onOpenChange={setOpen} onBlock={block} />`.
  */
-export function ReportAbuseDialog({
-	open,
-	onOpenChange,
-	...props
-}: ReportAbuseProps & { open: boolean; onOpenChange: (open: boolean) => void }) {
+export function ReportAbuseDialog({ open, onOpenChange, returnFocus, ...props }: DialogProps) {
 	const heading = React.useRef<HTMLHeadingElement>(null);
 	// Opened without a DialogTrigger (a menu row, a chat menu), so Radix has no trigger to refocus: the dialog keeps
 	// what had focus when it opened and returns focus there.
@@ -96,7 +101,7 @@ export function ReportAbuseDialog({
 					}}
 					onCloseAutoFocus={(event) => {
 						event.preventDefault();
-						opener.current?.focus();
+						(opener.current?.isConnected ? opener.current : returnFocus?.())?.focus();
 					}}
 				>
 					<ReportAbuse {...props} heading={heading} onClose={() => onOpenChange(false)} />
@@ -154,6 +159,10 @@ function ReportAbuse({
 	const [spoken, setSpoken] = React.useState('');
 	const [block, setBlock] = React.useState(defaultBlock);
 	const [sending, setSending] = React.useState(false);
+	// Two submits in one tick (a double click, Enter twice) see the same `sending`; the ref lets one request start.
+	const inFlight = React.useRef(false);
+	// A rate limit keeps "Pošlji" disabled until the dialog is opened again, as on mobile: changing the reason or the
+	// note does not lift it (the limit is per hour, C11).
 	const [limited, setLimited] = React.useState(false);
 	const [error, setError] = React.useState<string>();
 	const [done, setDone] = React.useState<{ blocked: boolean }>();
@@ -162,7 +171,8 @@ function ReportAbuse({
 
 	const send = async (event: React.FormEvent) => {
 		event.preventDefault();
-		if (!reason || limited || sending) return;
+		if (!reason || limited || inFlight.current) return;
+		inFlight.current = true;
 		setSending(true);
 		setError(undefined);
 		try {
@@ -191,6 +201,7 @@ function ReportAbuse({
 			if (code === 'RATE_LIMITED') setLimited(true);
 			else setError(ownSentence(code) ? te(code) : t('error'));
 		} finally {
+			inFlight.current = false;
 			setSending(false);
 		}
 	};

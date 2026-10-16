@@ -40,6 +40,7 @@ import {
 	usePlaceLabel,
 	useReasonLines,
 } from '@/components/matches/parts';
+import { MoreMenu } from '@/components/report/slots/more-menu';
 import { InlineError, ringClass, SpotIllustration } from '@/components/shell/page';
 import {
 	AlertDialog,
@@ -533,14 +534,12 @@ function Actions({ match, mine, code }: { match: MatchSuggestion; mine?: Mine; c
 		if (opening.current) return;
 		opening.current = true;
 		try {
-			await confirm({ id: match.id }).unwrap();
+			const { conversation_id } = await confirm({ id: match.id }).unwrap();
 			const region = regionOf(mine);
 			// match_confirmed (C12): track() drops it without analytics consent.
 			if (first && region)
 				track('match_confirmed', { species: match.other.species, region, match_source: sourceOf(match) });
-			// TODO(TASK-21.3): open the conversation itself, { pathname: '/inbox/[id]', params: { id: conversation_id } },
-			// once the web conversation page exists; until then the inbox lists it.
-			router.push('/inbox');
+			router.push({ pathname: '/inbox/[id]', params: { id: conversation_id } });
 		} catch (failure) {
 			if (errorCode(failure) === 'UNVERIFIED_EMAIL') setUnverified(true);
 			else toast.error(errorText(failure));
@@ -724,7 +723,9 @@ function Review({ match, mine, code }: { match: MatchSuggestion; mine?: Mine; co
 				</Note>
 			)}
 			<Actions match={match} mine={mine} code={code} />
-			{/* TODO(TASK-20.6): 'Prijavi zlorabo' for the other report once C8 has other.id (MoreMenu, target report). */}
+			<div className="mt-4 flex justify-end">
+				<MoreMenu target={{ type: 'report', id: match.other.id }} />
+			</div>
 		</>
 	);
 }

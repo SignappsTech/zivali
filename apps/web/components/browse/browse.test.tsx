@@ -36,6 +36,12 @@ vi.mock('@/components/map/map-view', () => ({
 		);
 	},
 }));
+// The ad unit has its own tests (components/ads/ad-slot.test.tsx); here: where the list puts the feed rows.
+vi.mock('@/components/ads/ad-slot', () => ({
+	AdSlot: (props: { slot: string; region?: string; species?: string }) => (
+		<div data-testid={`ad-${props.slot}`} data-region={props.region} data-species={props.species} />
+	),
+}));
 // The page's search params follow history.replaceState, as in Next.js.
 const nav = vi.hoisted(() => ({ push: vi.fn(), listeners: new Set<() => void>() }));
 vi.mock('next/navigation', async (actual) => {
@@ -248,6 +254,27 @@ describe('Browse (P4 web)', () => {
 		await waitFor(() => expect(document.activeElement).toBe(rows()[20]));
 		expect(screen.queryByRole('button', { name: t.load_more })).toBeNull();
 		expect(screen.getByRole('button', { name: t.show_closed })).toBeTruthy();
+	});
+
+	it('puts a feed ad after every 8th row, in the context of the area and the one species shown (P21, AC#2)', async () => {
+		const many = Array.from({ length: 17 }, (_, i) =>
+			report(i + 1, { region_slug: i === 0 ? 'gorenjska' : 'osrednjeslovenska' })
+		);
+		renderBrowse(many, { search: '?species=cat' });
+		await screen.findByText('17 prijav');
+		const items = screen.getAllByRole('listitem');
+		const ads = screen.getAllByTestId('ad-feed');
+		expect(ads.map((ad) => items.indexOf(ad.closest('li')!))).toEqual([8, 17]);
+		// The first (nearest) row's region; the species while only cats are shown.
+		expect(ads.map((ad) => [ad.dataset.region, ad.dataset.species])).toEqual([
+			['gorenjska', 'cat'],
+			['gorenjska', 'cat'],
+		]);
+		cleanup();
+
+		renderBrowse(many.slice(0, 7));
+		await screen.findByText('7 prijav');
+		expect(screen.queryByTestId('ad-feed')).toBeNull();
 	});
 
 	it('an empty region offers "Prijavi" and the alerts; with filters it offers "Ponastavi filtre" (AC#4)', async () => {

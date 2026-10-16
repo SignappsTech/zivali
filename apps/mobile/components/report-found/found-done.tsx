@@ -194,7 +194,7 @@ function Sent({
 		<DoneScreen
 			icon={submitted.linked ? EyeIcon : HandHeartIcon}
 			title={t(submitted.linked ? 'sighting_done_title' : 'done_title')}
-			body={submitted.linked ? t('sighting_done_body') : t(held ? 'held_note' : 'done_body')}
+			body={held ? t('held_note') : t(submitted.linked ? 'sighting_done_body' : 'done_body')}
 			onLeave={onLeave}
 			footer={
 				submitted.linked ? (

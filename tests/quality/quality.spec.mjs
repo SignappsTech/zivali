@@ -56,6 +56,11 @@ const PROTECTED = [
 	// TASK-30.2 report found or sighted (P7)
 	'/prijava/najdena-zival',
 	'/en/report/found',
+	// TASK-21.3 inbox and conversation (P12; signed out they are the sign-in page)
+	'/nabiralnik',
+	'/en/inbox',
+	'/nabiralnik/c9a1d2e3-0000-4000-8000-000000000001',
+	'/en/inbox/c9a1d2e3-0000-4000-8000-000000000001',
 	// TASK-32.2 payments return (P15; signed out it is the sign-in page) and the mock checkout (404 in production)
 	'/placila/zakljucek',
 	'/en/payments/return',

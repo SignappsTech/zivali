@@ -594,6 +594,7 @@ export function FoundFlow({ entry, linked }: { entry: 'found' | 'sighted'; linke
 	const [picking, setPicking] = React.useState(false);
 	const [closing, setClosing] = React.useState(false);
 	const [sending, setSending] = React.useState(false);
+	const sendingRef = React.useRef(false);
 	const [sendError, setSendError] = React.useState<SendError>();
 	const [submitted, setSubmitted] = React.useState<Submitted>();
 	const [done, setDone] = React.useState<Submitted>();
@@ -609,12 +610,8 @@ export function FoundFlow({ entry, linked }: { entry: 'found' | 'sighted'; linke
 		loadDraft(draftId)
 			.then((draft) => {
 				if (!alive || !draft) return;
-				// Without a photo time the capture time is when the finder returned, not when the draft was started.
-				setValues((prev) => ({
-					...prev,
-					...draft.values,
-					...(!draft.values.takenAt && { startedAt: new Date().toISOString() }),
-				}));
+				// The draft keeps its own startedAt: the capture time without a photo time is when the flow started.
+				setValues((prev) => ({ ...prev, ...draft.values }));
 				if (steps.includes(draft.step)) setStep(draft.step);
 			})
 			.catch(() => {});
@@ -697,7 +694,7 @@ export function FoundFlow({ entry, linked }: { entry: 'found' | 'sighted'; linke
 		});
 
 	const publish = async () => {
-		if (sending || sendError?.until) return;
+		if (sending || sendingRef.current || sendError?.until) return;
 		setSendError(undefined);
 		for (const s of steps) {
 			if (Object.keys(stepErrors(s, values)).length > 0) {
@@ -710,6 +707,8 @@ export function FoundFlow({ entry, linked }: { entry: 'found' | 'sighted'; linke
 		const species = linked ? (linked.species ?? listed) : values.species;
 		const location = values.location;
 		if (!species || !location) return setSendError({ text: errorText('VALIDATION') });
+		// A ref too: two presses in one tick both see `sending` false.
+		sendingRef.current = true;
 		setSending(true);
 		try {
 			const { outboxId } = await submitReport(
@@ -724,6 +723,7 @@ export function FoundFlow({ entry, linked }: { entry: 'found' | 'sighted'; linke
 				emailed: !linked && values.email.trim() !== '',
 			});
 		} catch {
+			sendingRef.current = false;
 			setSending(false);
 			setSendError({ text: errorText('INTERNAL') });
 		}
@@ -752,6 +752,7 @@ export function FoundFlow({ entry, linked }: { entry: 'found' | 'sighted'; linke
 		void remove(current.id)
 			.catch(() => {})
 			.then(() => {
+				sendingRef.current = false;
 				setSending(false);
 				setSubmitted(undefined);
 				setSendError(error);

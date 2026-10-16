@@ -101,7 +101,7 @@ function deepLink(type: InboxType, v: Record<string, string | number>): Href | u
 
 const dayFormat = new Intl.DateTimeFormat('en-CA', { timeZone, year: 'numeric', month: '2-digit', day: '2-digit' });
 /** Day number of the Ljubljana calendar date, so groups follow midnights, not 24-hour blocks. */
-const dayNumber = (date: Date | string) => Date.parse(dayFormat.format(new Date(date))) / 86_400_000;
+export const dayNumber = (date: Date | string) => Date.parse(dayFormat.format(new Date(date))) / 86_400_000;
 
 export function groupOf(date: string, now: Date): Group {
 	const days = dayNumber(now) - dayNumber(date);

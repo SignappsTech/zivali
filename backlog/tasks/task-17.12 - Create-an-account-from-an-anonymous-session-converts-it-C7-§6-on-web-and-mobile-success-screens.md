@@ -3,9 +3,10 @@ id: TASK-17.12
 title: >-
   Create an account from an anonymous session converts it (C7 §6) on web and
   mobile success screens
-status: To Do
+status: In Progress
 assignee: []
 created_date: '2026-10-16 05:45'
+updated_date: '2026-10-16 06:54'
 labels:
   - fe
 dependencies: []
@@ -18,6 +19,10 @@ ordinal: 348000
 
 <!-- SECTION:DESCRIPTION:BEGIN -->
 From the TASK-30.2 web review: the found success screen's 'Create an account' goes to /registracija, which calls signUp and starts a NEW user, so the anonymous report access is not kept as the copy promises. TASK-17.1 AC#5 already supports converting the anonymous user in place (same id, report_managers kept). Wire the conversion (Supabase updateUser with email and password on the anonymous session, then the email verification) from the web and mobile success screens of the found and lost flows, P16 copy, and keep the manage link valid.
+
+## Packet
+
+Branch: agent/task-17.12-anon-convert
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Acceptance Criteria

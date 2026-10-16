@@ -13,9 +13,18 @@ export async function generateMetadata({ params }: PageProps<'/[locale]/m'>): Pr
 
 /** P7 manage page (`/m#<token>`, `/en/m#<token>`, C7, C15): private, noindex, no ad slot. The token never reaches the server. */
 export default async function Page({ params }: PageProps<'/[locale]/m'>) {
-	const { auth, lifecycle, report_found } = await getMessages({ locale: (await params).locale as Locale });
+	const { auth, chat, lifecycle, report_found } = await getMessages({ locale: (await params).locale as Locale });
+	// The report's conversation rows (P12, TASK-21.3) need only these lines of the chat namespace.
+	const { row_title_fallback, row_unread_a11y, row_status_closed } = chat;
 	return (
-		<PageMessages messages={{ auth, lifecycle, report_found }}>
+		<PageMessages
+			messages={{
+				auth,
+				lifecycle,
+				report_found,
+				chat: { row_title_fallback, row_unread_a11y, row_status_closed },
+			}}
+		>
 			<StoreProvider>
 				<ManagePage />
 			</StoreProvider>

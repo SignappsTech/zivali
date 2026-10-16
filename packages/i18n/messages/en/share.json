@@ -26,5 +26,7 @@
 	"kit_media_form": "Local radio: announcement form",
 	"kit_image_title": "Square image",
 	"kit_image_save": "Save image",
-	"kit_image_alt": "Square image for the post: {title}"
+	"kit_image_alt": "Square image for the post: {title}",
+	"unsupported": "Sharing is not available here, so we copied the link.",
+	"copy_failed": "The link could not be copied."
 }

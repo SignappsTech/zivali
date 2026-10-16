@@ -140,6 +140,17 @@ const routes: Record<string, unknown> = {
 	[`/v1/reports/${lostReport.short_code}`]: lostReport,
 	[`/v1/reports/${publicReport.short_code}`]: publicReport,
 	'/v1/geo/reverse': placeReverse,
+	// TASK-24.2 Facebook kit: the C1 public share keys.
+	'/v1/config/public': {
+		'share.facebook_groups': [
+			{
+				name: 'Izgubljene živali – Osrednja Slovenija',
+				url: 'https://www.facebook.com/groups/e2e',
+				regions: ['osrednjeslovenska'],
+			},
+		],
+		'share.radio_form_url': 'https://radio.example/obvestila',
+	},
 	// C14 partner stats (server-rendered on P22) and the enquiry (any method answers the body, so POST is a success).
 	'/v1/partners/stats': partnerStats,
 	'/v1/leads': { id: 'a1e5f00d-0000-4000-8000-000000000001' },
@@ -198,6 +209,15 @@ createServer((request, response) => {
 	if (url.pathname.startsWith('/media/')) {
 		response.writeHead(200, { 'Content-Type': 'image/png' });
 		return void response.end(PIXEL);
+	}
+	// C14 ads: no ad (apps/api would serve a house ad), so the slots collapse unless a spec serves one (ads.spec.ts).
+	if (url.pathname.startsWith('/v1/ads/') && request.method !== 'OPTIONS') {
+		const impression = request.method === 'POST';
+		response.writeHead(impression ? 204 : 200, {
+			'Content-Type': 'application/json',
+			'Access-Control-Allow-Origin': '*',
+		});
+		return void response.end(impression ? undefined : 'null');
 	}
 	if (
 		request.method !== 'OPTIONS' &&

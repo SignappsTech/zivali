@@ -1,11 +1,14 @@
-import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { NextIntlClientProvider } from 'next-intl';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { getMockEvents, initAnalytics, resetMockEvents, setConsent } from '@zivali/analytics';
 import { match } from '@zivali/api/__fixtures__/matches';
 import { ownerReport } from '@zivali/api/__fixtures__/reports';
+import { abuseCreated } from '@zivali/api/__fixtures__/abuse';
 import { ApiError } from '@zivali/api/client';
+import { createMockApi } from '@zivali/api/mock';
+import { type ApiStore, createApiStore } from '@zivali/api/rtk';
 import en from '@zivali/i18n/dist/en.json';
 import sl from '@zivali/i18n/dist/sl.json';
 import type { MatchList, MatchSuggestion, ReportOwnerView } from '@zivali/types';
@@ -40,6 +43,21 @@ vi.mock('next/navigation', async (actual) => ({
 vi.mock('@/components/auth/gate', () => ({
 	AuthGate: ({ open }: { open: boolean }) => (open ? <p role="dialog">{sl.auth.gate_unverified_title}</p> : null),
 }));
+// The abuse dialog (lazy) brings its own StoreProvider over the in-memory API; no session is needed to send.
+const stores = vi.hoisted(() => ({ current: undefined as ApiStore | undefined }));
+vi.mock('@/lib/store', async (actual) => {
+	const real = await actual<typeof import('@/lib/store')>();
+	return {
+		...real,
+		getStore: (...args: Parameters<typeof real.getStore>) => stores.current ?? real.getStore(...args),
+	};
+});
+vi.mock('@/lib/auth', () => ({ ensureSession: vi.fn() }));
+globalThis.ResizeObserver ??= class {
+	observe() {}
+	unobserve() {}
+	disconnect() {}
+} as unknown as typeof ResizeObserver;
 const toast = vi.hoisted(() => Object.assign(vi.fn(), { error: vi.fn(), success: vi.fn() }));
 vi.mock('sonner', async (actual) => ({ ...(await actual()), toast }));
 
@@ -289,13 +307,13 @@ describe('MatchReview review (P11)', () => {
 		expect(getMockEvents()).toEqual([]);
 	});
 
-	it('confirm opens the conversation in the inbox and fires match_confirmed', async () => {
+	it('confirm opens the conversation itself and fires match_confirmed', async () => {
 		show({ selected: 'm-chip' });
 		resetMockEvents();
 		fireEvent.click(screen.getByRole('button', { name: t.confirm }));
 		await flush();
 		expect(state.confirm).toHaveBeenCalledWith({ id: 'm-chip' });
-		expect(state.push).toHaveBeenCalledWith('/nabiralnik');
+		expect(state.push).toHaveBeenCalledWith('/nabiralnik/c1');
 		expect(getMockEvents()).toEqual([
 			{ name: 'match_confirmed', params: { species: 'dog', region: 'osrednjeslovenska', match_source: 'chip' } },
 		]);
@@ -352,7 +370,7 @@ describe('MatchReview review (P11)', () => {
 		expect(screen.queryByRole('button', { name: t.reject })).toBeNull();
 		fireEvent.click(screen.getByRole('button', { name: t.open_chat }));
 		await flush();
-		expect(state.push).toHaveBeenCalledWith('/nabiralnik');
+		expect(state.push).toHaveBeenCalledWith('/nabiralnik/c1');
 		expect(getMockEvents()).toEqual([]);
 	});
 
@@ -415,5 +433,25 @@ describe('P9 matches-note slot', () => {
 		state.list = { data: { items } };
 		note({ ...mine, moderation_state: 'held' });
 		expect(screen.getByRole('status').textContent).toBe(sl.report.owner_held);
+	});
+});
+
+describe('MatchReview abuse entry (TASK-20.6)', () => {
+	it('reports the other report from the overflow menu: the submit sends target_id = other.id', async () => {
+		const api = createMockApi({ 'POST /v1/abuse-reports': abuseCreated });
+		stores.current = createApiStore(api);
+		show({ selected: 'm-chip' });
+		fireEvent.keyDown(screen.getByRole('button', { name: sl.report.more }), { key: 'Enter' });
+		const menu = await screen.findByRole('menu', { name: sl.report.more });
+		fireEvent.click(within(menu).getByRole('menuitem', { name: sl.report.more_abuse }));
+		const dialog = await screen.findByRole('dialog');
+		fireEvent.click(within(dialog).getByRole('radio', { name: sl.abuse.reason_scam }));
+		fireEvent.click(within(dialog).getByRole('button', { name: sl.abuse.send }));
+		await waitFor(() => expect(api.calls.filter((call) => call.path === '/v1/abuse-reports')).toHaveLength(1));
+		expect(api.calls.find((call) => call.path === '/v1/abuse-reports')?.body).toMatchObject({
+			target_type: 'report',
+			target_id: chip.other.id,
+			reason: 'scam',
+		});
 	});
 });

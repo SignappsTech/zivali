@@ -29,6 +29,7 @@ import { capturedAt, type FoundValues, outboxPayload, stepErrors } from '@/compo
 import { useReport } from '@/lib/data/reports';
 import { getDb } from '@/lib/db';
 import { outboxDir } from '@/lib/db/files';
+import * as outbox from '@/lib/offline/outbox';
 import { startOutbox } from '@/lib/offline/outbox';
 import { getCachedShelter, lastSyncAt } from '@/lib/offline/sync';
 
@@ -179,7 +180,10 @@ const lostRex: PublicReport = { ...publicReport, id: LOST_ID, short_code: 'Rex2L
 /** The API as apps/api answers it; `reportReply` overrides the POST /v1/reports answer. */
 function server() {
 	let created = 0;
-	const state = { reportReply: undefined as ((request: MockRequest) => unknown) | undefined };
+	const state = {
+		reportReply: undefined as ((request: MockRequest) => unknown) | undefined,
+		moderation: 'visible',
+	};
 	const api = createMockApi({
 		'POST /v1/photos': { photo_id: 'photo-a', upload: { url: 'https://r2.test/put', method: 'PUT', headers: {} } },
 		'POST /v1/photos/:id/complete': { status: 'uploaded' },
@@ -197,7 +201,7 @@ function server() {
 		'GET /v1/reports/:code': ({ params }) => ({
 			...publicReport,
 			short_code: params.code,
-			moderation_state: 'visible',
+			moderation_state: state.moderation,
 			manager_role: 'finder',
 		}),
 		'POST /v1/geo/reverse': placeReverse,
@@ -565,3 +569,71 @@ test('a linked sighting without species takes it from the listing', async () => 
 	await heading(t.sighting_done_title);
 	expect(api.reportBodies()).toEqual([expect.objectContaining({ species: 'cat', linked_report_id: LOST_ID })]);
 });
+
+test('a held linked sighting says it is being checked, not that the owner was told', async () => {
+	api.state.moderation = 'held';
+	jest.mocked(useReport).mockReturnValue({ data: lostRex } as ReturnType<typeof useReport>);
+	await open(`/report/found?type=sighted&linked_report_id=${LOST_ID}&code=Rex2Lost&species=dog`);
+	await heading(t.sighting_where);
+	await press(tc.next);
+	await press(t.sighting_when_today, 'radio');
+	await press(tc.next);
+	await press(t.sighting_send);
+	await heading(t.sighting_done_title);
+	expect(await screen.findByText(t.held_note)).toBeOnTheScreen();
+	expect(screen.queryByText(t.sighting_done_body)).toBeNull();
+});
+
+test('restoring a draft keeps its startedAt: the capture time without a photo time is when the flow started', async () => {
+	mockPick.exif = { lat: 46.0712, lng: 14.5102 };
+	setNetwork(OFFLINE);
+	await open();
+	await press(t.photo_take);
+	await press(tc.next);
+	await press(t.species_cat, 'radio');
+	await fireEvent.press(screen.getAllByRole('button', { name: tc.close })[0]!);
+	await fireEvent.press((await screen.findAllByRole('button', { name: tc.close })).at(-1)!);
+	expect(await screen.findByText('map tab')).toBeOnTheScreen();
+	const started = '2026-10-16T08:00:00.000Z';
+	const db = await getDb();
+	const row = (await db.getFirstAsync<{ id: string; data: string }>('select id, data from drafts'))!;
+	const draft = JSON.parse(row.data) as { values: object };
+	await db.runAsync(
+		'update drafts set data = ? where id = ?',
+		JSON.stringify({ ...draft, values: { ...draft.values, startedAt: started } }),
+		row.id
+	);
+
+	await act(async () => router.push('/report/found'));
+	await waitFor(() => expect(screen.getByRole('radio', { name: startsWith(t.species_cat) })).toBeChecked());
+	await press(tc.next);
+	await press(tc.next);
+	await press(t.situation_seen, 'radio');
+	await press(tc.next);
+	await press(t.publish);
+	// The photos are not part of the draft: Publish sends the person back to the photo step first.
+	await heading(t.photo_title);
+	await press(t.photo_take);
+	await press(tc.next);
+	await press(t.publish);
+	await heading(t.outbox_title);
+	expect(await outboxRows()).toEqual([{ status: 'queued', captured_at: started }]);
+});
+
+test('two Publish presses in the same tick enqueue one report', async () => {
+	setNetwork(OFFLINE);
+	await open();
+	await toPublish();
+	const button = await screen.findByRole('button', { name: t.publish });
+	const submit = jest.spyOn(outbox, 'submitReport');
+	// Both presses land before React re-renders: `sending` still reads false in the second.
+	act(() => {
+		fireEvent.press(button);
+		fireEvent.press(button);
+	});
+	// Room for a second submission to land, were there one.
+	await act(async () => jest.advanceTimersByTimeAsync(1000));
+	expect(submit).toHaveBeenCalledTimes(1);
+	expect(await outboxRows()).toHaveLength(1);
+	submit.mockRestore();
+}, 20_000);

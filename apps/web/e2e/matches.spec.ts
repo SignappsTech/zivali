@@ -8,8 +8,7 @@ import type { MatchSuggestion, ReportOwnerView } from '@zivali/types';
 
 import { api, dismissConsent, signInAs } from './session';
 
-// TASK-20.3: P11 match review on web (/r/[code]/ujemanja, FR-008): compare, confirm (the inbox until the web
-// conversation page, TASK-21.3), reject with an optional reason, and the non-manager refusal. The browser's API calls
+// TASK-20.3: P11 match review on web (/r/[code]/ujemanja, FR-008): compare, confirm (opens the conversation), reject with an optional reason, and the non-manager refusal. The browser's API calls
 // are answered here (C8 matches, C4 report, C6 reverse lookup, C3 me); the session is signed by the e2e mock
 // (e2e/session.ts) and the photos come from its /media.
 
@@ -119,6 +118,10 @@ test('desktop: the list beside the first match, chip match first, no ads, no axe
 	await expect(page.getByText('Najdena žival ima enako številko čipa kot vaša.', { exact: false })).toBeVisible();
 	await expect(page.getByRole('table', { name: 'Primerjava podatkov' })).toBeVisible();
 	await expect(page.locator('[data-ad-slot]')).toHaveCount(0);
+	// P11 overflow: "Prijavi zlorabo" for the other report.
+	await page.getByRole('main').getByRole('button', { name: 'Več možnosti', exact: true }).click();
+	await expect(page.getByRole('menuitem', { name: 'Prijavi zlorabo', exact: true })).toBeVisible();
+	await page.keyboard.press('Escape');
 	await expectNoAxeViolations(page);
 
 	// The other row opens its match in place, with the sighting caveat.
@@ -179,14 +182,14 @@ test('reject by keyboard: one confirmation, the optional reason, and the match i
 	await expect(page.locator('a[href*="?m="]').first()).not.toContainText('Številka čipa se ujema');
 });
 
-test('confirm opens the conversation in the inbox', async ({ page, baseURL }) => {
+test('confirm opens the conversation', async ({ page, baseURL }) => {
 	const { confirmed } = await signIn(page, baseURL!);
 	await page.setViewportSize({ width: 1440, height: 900 });
 	await page.goto(`/r/${CODE}/ujemanja`);
 
 	await expect(page.getByText('Ko potrdite, se odpre pogovor. Telefonske številke ostanejo skrite.')).toBeVisible();
 	await page.getByRole('button', { name: 'To je moja žival' }).click();
-	await expect(page).toHaveURL(/\/nabiralnik$/);
+	await expect(page).toHaveURL(/\/nabiralnik\/c0e1d2f3-4a5b-4c6d-8e7f-9a0b1c2d3e00$/);
 	expect(confirmed).toEqual([chip().id]);
 });
 

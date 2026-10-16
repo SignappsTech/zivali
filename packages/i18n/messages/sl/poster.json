@@ -13,5 +13,22 @@
 	"no_photo": "Za plakat potrebujemo fotografijo, na kateri je žival dobro vidna.",
 	"failed": "Plakata ni bilo mogoče pripraviti. Poskusite znova.",
 	"unavailable_closed": "Iskanje je zaključeno, zato plakat ni na voljo.",
-	"preview_alt": "Predogled plakata: {title}, s fotografijo in kodo QR"
+	"preview_alt": "Predogled plakata: {title}, s fotografijo in kodo QR",
+	"print": "Natisni",
+	"fact_colour": "Barva: {colours}",
+	"fact_size": "Velikost: {size}",
+	"fact_breed": "Pasma: {breed}",
+	"since_lost": "{species, select, dog {Pogrešan od {date}} cat {Pogrešana od {date}} other {Pogrešana od {date}}}",
+	"since_found": "{species, select, dog {Najden {date}} cat {Najdena {date}} other {Najdena {date}}}",
+	"area": "Območje: {area}, {municipality} (približno)",
+	"cta_lost": "{species, select, dog {Ste ga videli? Skenirajte kodo in nam sporočite.} cat {Ste jo videli? Skenirajte kodo in nam sporočite.} other {Ste jo videli? Skenirajte kodo in nam sporočite.}}",
+	"cta_found": "{species, select, dog {Je to vaš pes? Skenirajte kodo.} cat {Je to vaša mačka? Skenirajte kodo.} other {Je to vaša žival? Skenirajte kodo.}}",
+	"reward": "Nagrada",
+	"reward_amount": "Nagrada: {amount}",
+	"safety": "Stik samo prek Najdimo. Nikoli ne plačujte vnaprej.",
+	"safety_reward": "Stik samo prek Najdimo. Nagrado lastnik izroči šele, ko je žival spet doma. Nikoli nikomur ne plačajte vnaprej.",
+	"footer": "Najdimo · Spet doma.",
+	"home_named": "{name} je spet doma.",
+	"home_thanks": "Hvala vsem, ki ste pomagali. Plakat lahko odstranite.",
+	"og_area": "Območje: {area}"
 }

@@ -14,6 +14,7 @@ export const MatchReason = z
 	})
 	.openapi('MatchReason', { description: 'Why two reports match: bands and overlaps only, never exact data.' });
 export const MatchOther = PublicReport.pick({
+	id: true,
 	short_code: true,
 	type: true,
 	species: true,

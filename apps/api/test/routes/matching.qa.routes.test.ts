@@ -115,12 +115,14 @@ describe('QA TASK-19.3: matching end to end', () => {
 		expect(item.reasons).toContainEqual({ code: 'chip' });
 		expect(item.other.short_code).toBe(found.short_code);
 
-		// Only what anyone sees on the found report's public page: same public circle, no contact, chip or ids.
+		// Only what anyone sees on the found report's public page: same public circle and public id (C8 other.id,
+		// TASK-20.6, for abuse reports), no contact, chip or the finder's id.
 		const pub = await get(null, found.short_code);
 		expect(pub.status).toBe(200);
 		expect(item.other.area).toEqual(pub.body.area);
+		expect(item.other.id).toBe(pub.body.id);
 		const raw = JSON.stringify(res.body);
-		for (const secret of [number, 'chip_number', 'email', 'phone', 'manage', finder.id, found.id, 'exact'])
+		for (const secret of [number, 'chip_number', 'email', 'phone', 'manage', finder.id, 'exact'])
 			expect(raw).not.toContain(secret);
 		for (const reason of item.reasons) expect(Object.keys(reason)).not.toContain('distance_km');
 

@@ -117,7 +117,7 @@ describe('ManagePage (P7, C7)', () => {
 		expect(reloaded.calls.find((call) => call.path === '/v1/manage/claim')?.body).toEqual({ token: 'good' });
 	});
 
-	it('shows the messages with the unread count and "Odpri sporočila" when there are conversations', async () => {
+	it('shows the messages with the unread count and each conversation, opened from here (P12 web)', async () => {
 		open('good');
 		show(<ManagePage />, {
 			'GET /v1/conversations': {
@@ -130,7 +130,12 @@ describe('ManagePage (P7, C7)', () => {
 		});
 		expect(await screen.findByRole('heading', { name: 'Sporočila' })).toBeTruthy();
 		expect(screen.getByText('2 neprebrani sporočili')).toBeTruthy();
-		expect(screen.getByRole('link', { name: 'Odpri sporočila' }).getAttribute('href')).toBe('/nabiralnik');
+		const rows = screen.getAllByRole('link', { name: /^Najdena žival/ });
+		expect(rows.map((row) => row.getAttribute('href'))).toEqual([
+			`/nabiralnik/${conversations.items[0]!.id}`,
+			'/nabiralnik/x',
+		]);
+		expect(rows[0]!.textContent).toContain('Najdena žival, neprebrano');
 		expect(screen.queryByRole('link', { name: 'Sporočila' })).toBeNull();
 	});
 

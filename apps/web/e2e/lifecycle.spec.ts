@@ -1,6 +1,7 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, type Page, test } from '@playwright/test';
 
+import { clickUrl, serveAds, unitName, watchShifts } from './ads';
 import { api, signInAs } from './session';
 
 // TASK-26.4: the owner's lifecycle on web (P9 slot A, P14): close with a reason, reopen, mark reunited and the
@@ -66,11 +67,14 @@ for (const viewport of [
 	}) => {
 		await page.setViewportSize(viewport);
 		const sent = transitions(page);
+		const cls = await watchShifts(page);
 		await page.goto('/r/Own12345');
 
 		await page.getByRole('button', { name: 'Žival je spet doma' }).click();
 		const dialog = page.getByRole('dialog', { name: 'Je Medo res spet doma?' });
 		await expectNoAxeViolations(page);
+		// TASK-36.5: the reunited page has its one labelled ad unit (P21), and nothing shifts when it fills in.
+		const seen = await serveAds(page);
 		await dialog.getByRole('button', { name: 'Da, spet je doma' }).click();
 
 		await expect(page).toHaveURL(/\/r\/Own12345\/spet-doma$/);
@@ -82,6 +86,11 @@ for (const viewport of [
 		);
 		await expect(page.getByRole('link', { name: 'Končano' })).toHaveAttribute('href', '/zemljevid');
 		expect(sent).toEqual([{ action: 'mark_reunited' }]);
+		const ad = page.locator('a[data-ad-slot="reunited"]');
+		await expect(ad).toHaveAccessibleName(unitName);
+		await expect(ad).toHaveAttribute('href', clickUrl('reunited'));
+		expect(seen.slots).toEqual(['reunited']);
+		expect(await cls()).toBeLessThan(0.1);
 		expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(viewport.width);
 		await expectNoAxeViolations(page);
 
