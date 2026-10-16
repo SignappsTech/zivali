@@ -6,12 +6,10 @@ import { ChatCircleIcon } from '@phosphor-icons/react/dist/ssr/ChatCircle';
 import { DownloadSimpleIcon } from '@phosphor-icons/react/dist/ssr/DownloadSimple';
 import { InfoIcon } from '@phosphor-icons/react/dist/ssr/Info';
 import { MegaphoneIcon } from '@phosphor-icons/react/dist/ssr/Megaphone';
-import { ShareNetworkIcon } from '@phosphor-icons/react/dist/ssr/ShareNetwork';
 import { skipToken } from '@reduxjs/toolkit/query';
 import { useLocale, useTranslations } from 'next-intl';
 import NextLink from 'next/link';
 import * as React from 'react';
-import { toast } from 'sonner';
 
 import { type EventParams, track } from '@zivali/analytics';
 import { useReversePlaceQuery } from '@zivali/api/geocode';
@@ -21,15 +19,15 @@ import type { Species } from '@zivali/types';
 import { Spot } from '@/components/auth/parts';
 import { ContributionRow } from '@/components/payments/support';
 import type { LatLng } from '@/components/map/map-view';
+import { ContentDialog, PosterOptions, ShareMenu } from '@/components/report/share-menu';
 import { noteClass } from '@/components/shelters/classes';
 import { ShelterRow } from '@/components/shelters/shelter-row';
 import { Button } from '@/components/ui/button';
-import { Toaster } from '@/components/ui/sonner';
 import { getPathname, Link } from '@/i18n/navigation';
+import { env } from '@/lib/env';
+import { posterFileName, posterPath, reportLink, squarePath } from '@/lib/poster-link';
 import { cn } from '@/lib/utils';
 
-/** The A4 poster PDF (C15), as on mobile (apps/mobile/lib/share.ts `posterUrl`), on this origin. */
-const posterPath = (code: string, lang: Locale) => `/r/${code}/poster.pdf?lang=${lang}`;
 /** The safety page's "first 24 hours" section (content P6 §10). */
 const FIRST_24H = { sl: 'prvih-24-ur', en: 'first-24-hours' } as const;
 
@@ -61,7 +59,7 @@ type LostDoneProps = {
 export function LostDone({ code, name, species, point, unverified, titleClass, testMode = false }: LostDoneProps) {
 	const t = useTranslations('report_lost');
 	const ts = useTranslations('share');
-	const tc = useTranslations('common');
+	const tt = useTranslations();
 	const locale = useLocale() as Locale;
 	const id = React.useId();
 	const { currentData: report, isError } = useGetReportQuery({ code });
@@ -69,32 +67,62 @@ export function LostDone({ code, name, species, point, unverified, titleClass, t
 	const area = useReversePlaceQuery(report ? { lat: report.area.lat, lng: report.area.lng } : skipToken).currentData
 		?.label;
 
-	const shared = (method: EventParams['share']['method']) => track('share', { method, report_type: 'lost', species });
+	const [posterOpen, setPosterOpen] = React.useState(false);
+	const url = reportLink(code);
+	const region = report?.region_slug as EventParams['poster_download']['region'] | undefined;
 	// The P18 text (as on mobile); without the area it needs, the link alone.
-	const message = (url: string) => {
-		if (!report || !area) return url;
-		const values = { species, date: formatDayMonth(report.event_at, locale), area, url };
-		return report.name ? ts('text_lost', { ...values, name: report.name }) : ts('text_lost_noname', values);
-	};
-	const share = async () => {
-		const url = `${window.location.origin}/r/${code}`;
-		try {
-			if (navigator.share) {
-				await navigator.share({ text: message(url) });
-				shared('native');
-			} else {
-				await navigator.clipboard.writeText(url);
-				toast.success(ts('copied'));
-				shared('copy_link');
-			}
-		} catch {
-			// The share sheet was closed, or the clipboard is not allowed: nothing to tell.
-		}
-	};
+	const values = report && area ? { species, date: formatDayMonth(report.event_at, locale), area, url } : undefined;
+	const message = values
+		? report?.name
+			? ts('text_lost', { ...values, name: report.name })
+			: ts('text_lost_noname', values)
+		: url;
+	// The owner's Facebook kit, when the area is known (P18 W2).
+	const kitText = (key: 'kit_post_text' | 'kit_media_text') =>
+		values && report?.name ? ts(key, { ...values, name: report.name }) : message;
 	const posterDownloaded = () => {
-		// C12 `poster_download` needs the region; a report outside the 12 regions sends none.
-		const region = report?.region_slug as EventParams['poster_download']['region'] | undefined;
+		// C12  needs the region; a report outside the 12 regions sends none.
 		if (region) track('poster_download', { species, region });
+	};
+	const copy = {
+		button: t('share'),
+		copy: tt('report.share_copy'),
+		whatsapp: tt('report.share_whatsapp'),
+		facebook: tt('report.share_facebook'),
+		more: ts('more'),
+		poster: tt('report.share_poster'),
+		copied: ts('copied'),
+		unsupported: ts('unsupported'),
+		copyFailed: ts('copy_failed'),
+		close: tt('common.close'),
+		opensNewTab: tt('common.opens_new_tab'),
+		languageLabel: tt('poster.language_label'),
+		languageSl: tt('poster.language_sl'),
+		languageEn: tt('poster.language_en'),
+		download: tt('poster.download'),
+		preparing: tt('poster.preparing'),
+		readyFile: tt('poster.ready_file', { filename: posterFileName(code) }),
+		print: tt('poster.print'),
+		qrNote: tt('poster.qr_note'),
+		noPhoto: tt('poster.no_photo'),
+		failed: tt('poster.failed'),
+		tryAgain: tt('common.try_again'),
+		reunited: tt('browse.status_reunited'),
+		kitTitle: ts('kit_title'),
+		kitIntro: ts('kit_intro'),
+		kitPostTitle: ts('kit_post_title'),
+		kitCopy: ts('kit_copy'),
+		kitCopied: ts('kit_copied'),
+		kitImageTitle: ts('kit_image_title'),
+		kitImageSave: ts('kit_image_save'),
+		kitImageAlt: ts('kit_image_alt', { title: [t('done_title'), name].filter(Boolean).join(' ') }),
+		kitGroupsTitle: ts('kit_groups_title'),
+		kitGroupsIntro: ts('kit_groups_intro'),
+		kitGroupsHint: ts('kit_groups_hint'),
+		kitMediaTitle: ts('kit_media_title'),
+		kitMediaIntro: ts('kit_media_intro'),
+		kitMediaHint: ts('kit_media_hint'),
+		kitMediaForm: ts('kit_media_form'),
 	};
 
 	return (
@@ -132,17 +160,35 @@ export function LostDone({ code, name, species, point, unverified, titleClass, t
 			/>
 
 			<div className="mt-10 grid gap-1">
-				<Button asChild size="lg">
-					<a href={posterPath(code, locale)} download={`najdimo-${code}.pdf`} onClick={posterDownloaded}>
-						<DownloadSimpleIcon weight="bold" aria-hidden="true" />
-						{t('poster')}
-					</a>
+				<Button size="lg" aria-haspopup="dialog" onClick={() => setPosterOpen(true)}>
+					<DownloadSimpleIcon weight="bold" aria-hidden="true" />
+					{t('poster')}
 				</Button>
 				<div className="grid grid-cols-2 gap-2">
-					<Button variant="text" onClick={() => void share()}>
-						<ShareNetworkIcon weight="bold" aria-hidden="true" />
-						{t('share')}
-					</Button>
+					<ShareMenu
+						url={url}
+						message={message}
+						analytics={{ report_type: 'lost', species, region }}
+						poster={{
+							href: { sl: posterPath(code, 'sl'), en: posterPath(code, 'en') },
+							fileName: posterFileName(code),
+							lang: locale,
+							photo: true,
+							reunited: false,
+						}}
+						kit={
+							values
+								? {
+										post: kitText('kit_post_text'),
+										media: kitText('kit_media_text'),
+										image: squarePath(code, locale),
+										imageName: `najdimo-${code}.png`,
+										configUrl: `${env.NEXT_PUBLIC_API_URL}/v1/config/public`,
+									}
+								: null
+						}
+						copy={copy}
+					/>
 					<Button asChild variant="text">
 						<Link href={{ pathname: '/r/[code]', params: { code } }}>{t('open_report')}</Link>
 					</Button>
@@ -155,7 +201,21 @@ export function LostDone({ code, name, species, point, unverified, titleClass, t
 				{/* P15, last: collapsed, nothing chosen, once per report; its ask and the payments client load on demand. */}
 				<ContributionRow reportId={report?.id} code={code} testMode={testMode} className="mt-6" />
 			</div>
-			<Toaster closeLabel={tc('close')} label={tc('toasts_label')} />
+			{posterOpen && (
+				<ContentDialog title={copy.poster} closeLabel={copy.close} onClose={() => setPosterOpen(false)}>
+					<PosterOptions
+						poster={{
+							href: { sl: posterPath(code, 'sl'), en: posterPath(code, 'en') },
+							fileName: posterFileName(code),
+							lang: locale,
+							photo: true,
+							reunited: false,
+						}}
+						copy={copy}
+						onDownload={posterDownloaded}
+					/>
+				</ContentDialog>
+			)}
 		</>
 	);
 }

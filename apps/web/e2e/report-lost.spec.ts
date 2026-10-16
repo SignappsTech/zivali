@@ -163,8 +163,10 @@ test('signed out: fill first, sign in at Publish, and the draft (fields and phot
 	await expect(gate).toBeVisible();
 	await expect(gate.getByText('Vse, kar ste vnesli, ostane.', { exact: false })).toBeVisible();
 	await checkStep(page);
-	// `next` is this page, relative, with ?pet=.
-	const next = `/prijava/izgubljena-zival?pet=${pet.id}`;
+	// `next` is this page, relative, with ?pet= and the one-off hand-off nonce of this press.
+	const nonce = new URL(page.url()).searchParams.get('handoff');
+	expect(nonce).toMatch(/^[0-9a-f-]{36}$/);
+	const next = `/prijava/izgubljena-zival?pet=${pet.id}&handoff=${nonce}`;
 	await expect(gate.getByRole('link', { name: 'Vpiši se' })).toHaveAttribute(
 		'href',
 		`/vpis?next=${encodeURIComponent(next)}`
@@ -201,16 +203,21 @@ test('signed out: fill first, sign in at Publish, and the draft (fields and phot
 		'href',
 		'tel:+38612345678'
 	);
-	await expect(page.getByRole('link', { name: 'Prenesi plakat' })).toHaveAttribute(
+	// The poster opens P18's options (language, PDF, print), not a bare download.
+	await page.getByRole('button', { name: 'Prenesi plakat', exact: true }).click();
+	const posterDialog = page.getByRole('dialog', { name: 'Plakat s QR kodo' });
+	await expect(posterDialog.getByRole('link', { name: /Natisni/ })).toHaveAttribute(
 		'href',
 		'/r/Hk3vT9qP/poster.pdf?lang=sl'
 	);
+	await posterDialog.getByRole('button', { name: 'Zapri' }).click();
+	await expect(posterDialog).toBeHidden();
 	await expect(page.getByRole('link', { name: 'Odpri mojo prijavo' })).toHaveAttribute('href', '/r/Hk3vT9qP');
 	await expect(page.getByRole('link', { name: 'Kaj storiti v prvih 24 urah' })).toHaveAttribute(
 		'href',
 		'/varnost#prvih-24-ur'
 	);
-	await expect(page.getByRole('button', { name: 'Deli' })).toBeVisible();
+	await expect(page.getByRole('button', { name: 'Deli', exact: true })).toBeVisible();
 	await checkStep(page);
 });
 

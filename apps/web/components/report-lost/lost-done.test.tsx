@@ -1,7 +1,7 @@
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { NextIntlClientProvider } from 'next-intl';
 import { Provider } from 'react-redux';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { responsibleConfirmed } from '@zivali/api/__fixtures__/directory';
 import { placeReverse } from '@zivali/api/__fixtures__/geocode';
@@ -27,6 +27,8 @@ vi.mock('next/navigation', async (actual) => ({
 	useParams: () => ({ locale: locale.current }),
 }));
 const track = vi.hoisted(() => vi.fn());
+const fetchMock = vi.fn<typeof fetch>();
+const LINK = `https://najdimo.si/r/${CODE}`;
 vi.mock('@zivali/analytics', () => ({ track }));
 
 function show(props: Partial<React.ComponentProps<typeof LostDone>> = {}, routes: MockRoutes = {}) {
@@ -55,12 +57,27 @@ function show(props: Partial<React.ComponentProps<typeof LostDone>> = {}, routes
 }
 const duty = `${sl.shelter_row.lost_body.replace('{municipality}', 'Ljubljana')} ${sl.shelter_row.not_replace}`;
 
+// jsdom has <dialog> without showModal() and close().
+beforeAll(() => {
+	HTMLDialogElement.prototype.showModal ??= function (this: HTMLDialogElement) {
+		this.setAttribute('open', '');
+	};
+	HTMLDialogElement.prototype.close ??= function (this: HTMLDialogElement) {
+		this.removeAttribute('open');
+		this.dispatchEvent(new Event('close'));
+	};
+});
 beforeEach(() => {
 	locale.current = 'sl';
+	vi.stubGlobal('fetch', fetchMock);
+	URL.createObjectURL = vi.fn(() => 'blob:poster');
+	URL.revokeObjectURL = vi.fn();
 });
 afterEach(() => {
 	cleanup();
 	vi.clearAllMocks();
+	vi.unstubAllGlobals();
+	fetchMock.mockReset();
 	Reflect.deleteProperty(navigator, 'share');
 	Reflect.deleteProperty(navigator, 'clipboard');
 });
@@ -88,63 +105,91 @@ describe('LostDone (P6 M9)', () => {
 		expect(screen.queryByText(sl.support.contribution_row)).toBeNull();
 	});
 
-	it('links the poster PDF in the page language, the report and the first-24-hours tips', async () => {
+	it('opens the poster options: language, a failure on 503, then the PDF, with poster_download by region', async () => {
+		vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => undefined);
 		show();
-		const poster = screen.getByRole('link', { name: t.poster });
-		expect(poster.getAttribute('href')).toBe(`/r/${CODE}/poster.pdf?lang=sl`);
-		expect(poster.getAttribute('download')).toBe(`najdimo-${CODE}.pdf`);
+		await screen.findByText(duty);
+		fireEvent.click(screen.getByRole('button', { name: t.poster }));
+		const dialog = screen.getByRole('dialog', { name: sl.report.share_poster });
+		expect(within(dialog).getByText(sl.poster.qr_note)).toBeTruthy();
+		expect(
+			within(dialog)
+				.getByRole('link', { name: new RegExp(sl.poster.print) })
+				.getAttribute('href')
+		).toBe(`/r/${CODE}/poster.pdf?lang=sl`);
+
+		fetchMock.mockResolvedValueOnce(new Response('', { status: 503 }));
+		fireEvent.click(within(dialog).getByRole('button', { name: sl.poster.download }));
+		expect((await within(dialog).findByRole('alert')).textContent).toBe(sl.poster.failed);
+		expect(track).not.toHaveBeenCalledWith('poster_download', expect.anything());
+
+		fireEvent.click(within(dialog).getByRole('button', { name: /English/ }));
+		fetchMock.mockResolvedValueOnce(new Response('%PDF-'));
+		fireEvent.click(within(dialog).getByRole('button', { name: sl.common.try_again }));
+		await waitFor(() =>
+			expect(track).toHaveBeenCalledWith('poster_download', { species: 'dog', region: 'osrednjeslovenska' })
+		);
+		expect(fetchMock).toHaveBeenLastCalledWith(`/r/${CODE}/poster.pdf?lang=en`);
 		expect(screen.getByRole('link', { name: t.open_report }).getAttribute('href')).toBe(`/r/${CODE}`);
 		expect(screen.getByRole('link', { name: t.first_24h }).getAttribute('href')).toBe('/varnost#prvih-24-ur');
-
-		// poster_download carries the region the API derived (C12); track() itself waits for consent.
-		await screen.findByText(duty);
-		fireEvent.click(poster);
-		expect(track).toHaveBeenCalledWith('poster_download', { species: 'dog', region: 'osrednjeslovenska' });
 	});
 
-	it('uses the English poster and safety anchors in English', async () => {
+	it('uses the English safety anchor in English', () => {
 		locale.current = 'en';
 		show();
-		expect(screen.getByRole('link', { name: en.report_lost.poster }).getAttribute('href')).toBe(
-			`/r/${CODE}/poster.pdf?lang=en`
-		);
 		expect(screen.getByRole('link', { name: en.report_lost.first_24h }).getAttribute('href')).toBe(
 			'/en/safety#first-24-hours'
 		);
 	});
 
-	it('shares the P18 text with the short link, else copies the link', async () => {
+	it('shares through the P18 menu with the canonical link (never the page origin), the area text and the kit', async () => {
 		const share = vi.fn(async () => {});
 		Object.defineProperty(navigator, 'share', { value: share, configurable: true });
+		const writeText = vi.fn(async () => {});
+		Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true });
 		const api = show();
 		await screen.findByText(duty);
 		await waitFor(() => expect(api.calls.some((c) => c.path === '/v1/geo/reverse')).toBe(true));
 		await new Promise((resolve) => setTimeout(resolve, 10));
 
-		fireEvent.click(screen.getByRole('button', { name: t.share }));
-		const url = `${window.location.origin}/r/${CODE}`;
+		const open = () => fireEvent.keyDown(screen.getByRole('button', { name: t.share }), { key: 'Enter' });
+		open();
+		const menu = screen.getByRole('menu');
+		expect(
+			within(menu)
+				.getAllByRole('menuitem')
+				.map((row) => row.textContent)
+		).toEqual(['Kopiraj povezavo', 'WhatsApp(odpre se v novem zavihku)', 'Facebook', 'Več …', 'Plakat s QR kodo']);
 		// The area is the reverse lookup of the public circle; the text has no phone, chip or exact point.
-		await waitFor(() =>
-			expect(share).toHaveBeenCalledWith({
-				text: expect.stringMatching(
-					new RegExp(
-						`^Pomagajte najti psa: Medo\\. Nazadnje viden .+, območje Šiška, Ljubljana\\. .+ ${url}$`
-					)
-				),
-			})
+		const text = new RegExp(
+			`^Pomagajte najti psa: Medo[.] Nazadnje viden .+, območje Šiška, Ljubljana[.] .+ ${LINK}$`
 		);
+		const wa = within(menu)
+			.getByRole('menuitem', { name: /WhatsApp/ })
+			.getAttribute('href')!;
+		expect(decodeURIComponent(wa.replace('https://wa.me/?text=', ''))).toMatch(text);
 		expect(api.calls.find((c) => c.path === '/v1/geo/reverse')!.body).toEqual({
 			lat: report.area.lat,
 			lng: report.area.lng,
 		});
+
+		fireEvent.click(within(menu).getByRole('menuitem', { name: 'Več …' }));
+		await waitFor(() => expect(share).toHaveBeenCalledWith({ text: expect.stringMatching(text) }));
 		expect(track).toHaveBeenCalledWith('share', { method: 'native', report_type: 'lost', species: 'dog' });
 
+		// No Web Share API: the link is copied, with the unsupported toast.
 		Reflect.deleteProperty(navigator, 'share');
-		const writeText = vi.fn(async () => {});
-		Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true });
-		fireEvent.click(screen.getByRole('button', { name: t.share }));
-		await waitFor(() => expect(writeText).toHaveBeenCalledWith(url));
-		expect(track).toHaveBeenCalledWith('share', { method: 'copy_link', report_type: 'lost', species: 'dog' });
+		open();
+		fireEvent.click(screen.getByRole('menuitem', { name: 'Več …' }));
+		await waitFor(() => expect(writeText).toHaveBeenCalledWith(LINK));
+		expect(await screen.findByText(sl.share.unsupported)).toBeTruthy();
+
+		// A clipboard that refuses says so.
+		writeText.mockRejectedValueOnce(new Error('denied'));
+		open();
+		fireEvent.click(screen.getByRole('menuitem', { name: 'Kopiraj povezavo' }));
+		expect(await screen.findByText(sl.share.copy_failed)).toBeTruthy();
+		expect(window.location.origin).not.toBe('https://najdimo.si');
 	});
 
 	it('says what an unconfirmed address still waits for', () => {
@@ -153,18 +198,17 @@ describe('LostDone (P6 M9)', () => {
 		expect(screen.getByText(t.done_lede)).toBeTruthy();
 	});
 
-	it('falls back to the sent point for the shelter and to the bare link for sharing when the report cannot be read', async () => {
-		const share = vi.fn(async () => {});
-		Object.defineProperty(navigator, 'share', { value: share, configurable: true });
+	it('falls back to the sent point for the shelter and to the bare link for sharing, without the kit, when the report cannot be read', async () => {
 		const api = show({}, { 'GET /v1/reports/:code': () => mockError('FORBIDDEN') });
 		expect(await screen.findByText(duty)).toBeTruthy();
 		expect(api.calls.find((c) => c.path === '/v1/shelters/responsible')!.query).toEqual({
 			lat: '46.05',
 			lng: '14.51',
 		});
-		fireEvent.click(screen.getByRole('button', { name: t.share }));
-		await waitFor(() => expect(share).toHaveBeenCalledWith({ text: `${window.location.origin}/r/${CODE}` }));
-		fireEvent.click(screen.getByRole('link', { name: t.poster }));
-		expect(track).not.toHaveBeenCalledWith('poster_download', expect.anything());
+		fireEvent.keyDown(screen.getByRole('button', { name: t.share }), { key: 'Enter' });
+		const wa = screen.getByRole('menuitem', { name: /WhatsApp/ }).getAttribute('href');
+		expect(wa).toBe(`https://wa.me/?text=${encodeURIComponent(LINK)}`);
+		// No area, so Facebook is the plain sharer link.
+		expect(screen.getByRole('menuitem', { name: /Facebook/ }).getAttribute('href')).toContain('sharer.php');
 	});
 });
