@@ -13,6 +13,7 @@ import type { MapViewProps } from '@/components/map/map-view';
 import { StoreProvider } from '@/components/store-provider';
 
 import { Browse } from './browse';
+import { plus, resultCount } from './filters';
 import { ReportList } from './report-list';
 
 // The store runs over the in-memory API; MapLibre needs WebGL, so MapView is a stand-in that draws its markers as
@@ -231,6 +232,34 @@ describe('Browse (P4 web)', () => {
 		fireEvent.click(within(drawer).getByRole('radio', { name: t.filter_24h }));
 		fireEvent.click(within(drawer).getByRole('button', { name: t.filters_close }));
 		expect(window.location.search).toBe('?type=lost');
+	});
+
+	it('counts the list total, not the 500 map pins; the drawer reads "500+" from the map alone (TASK-31.7)', async () => {
+		const pins = Array.from({ length: 500 }, (_, i) => pin(report(i + 1)));
+		const api = renderBrowse(three, {
+			routes: {
+				'GET /v1/reports': { items: three, next_cursor: null, total_estimate: 600 },
+				'GET /v1/reports/map': { items: pins },
+			},
+		});
+		expect(await screen.findByText('600 prijav')).toBeTruthy();
+		const listCalls = queries(api, '/v1/reports').length;
+
+		fireEvent.click(screen.getByRole('button', { name: t.filters_button }));
+		const drawer = screen.getByRole('dialog', { name: t.filters_title });
+		await within(drawer).findByRole('button', { name: 'Prikaži 500+ prijav' });
+		expect(within(drawer).getByText('Najdenih je 500+ prijav')).toBeTruthy();
+		fireEvent.click(within(drawer).getByRole('button', { name: t.filter_type_found }));
+		await within(drawer).findByRole('button', { name: 'Prikaži 500+ prijav' });
+		// The live count is the map's own query: no extra list request.
+		expect(queries(api, '/v1/reports')).toHaveLength(listCalls);
+	});
+
+	it('below 500 the count is the same on map and list; without a list total the full map reads 500+', () => {
+		expect(resultCount(3, 3, 3, 3)).toEqual({ count: 3, capped: false });
+		expect(resultCount(undefined, 3, 2, 3)).toEqual({ count: 2, capped: false });
+		expect(resultCount(undefined, 500, 500, 20)).toEqual({ count: 500, capped: true });
+		expect(plus('500 prijav', 500, true)).toBe('500+ prijav');
 	});
 
 	it('shows closed reports only after "Pokaži zaključene …" (AC#4)', async () => {

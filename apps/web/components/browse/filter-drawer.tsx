@@ -30,6 +30,7 @@ import {
 	toggle,
 	TYPES,
 	WHEN,
+	plus,
 } from './filters';
 
 const SPECIES_LABEL = { dog: 'filter_dogs', cat: 'filter_cats' } as const;
@@ -54,6 +55,8 @@ export type FilterDrawerProps = {
 	onDraftChange: (draft: Filters) => void;
 	/** Reports the draft would show. */
 	count: number;
+	/** `count` is the map's cap: show "500+". */
+	capped?: boolean;
 	onApply: () => void;
 	/** No browser location to centre on: the place search takes over. */
 	noLocation: boolean;
@@ -78,6 +81,7 @@ export function FilterDrawer({
 	draft,
 	onDraftChange,
 	count,
+	capped = false,
 	onApply,
 	noLocation,
 	locationDenied,
@@ -232,10 +236,10 @@ export function FilterDrawer({
 				<div className="px-5 pt-4 pb-[max(1.5rem,env(safe-area-inset-bottom))] lg:px-6">
 					{/* P4: the count change is announced politely while the drawer is open. */}
 					<p role="status" className="sr-only">
-						{t('count_announce', { count })}
+						{plus(t('count_announce', { count }), count, capped)}
 					</p>
 					<Button size="lg" className="w-full" onClick={onApply}>
-						{t('filters_apply', { count })}
+						{plus(t('filters_apply', { count }), count, capped)}
 					</Button>
 				</div>
 			</DialogContent>

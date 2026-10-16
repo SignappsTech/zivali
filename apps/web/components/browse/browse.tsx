@@ -31,7 +31,9 @@ import {
 	isDefault,
 	parseFilters,
 	type Point,
+	plus,
 	resetFilters,
+	resultCount,
 	SLOVENIA,
 	SPECIES,
 	toMapQuery,
@@ -190,7 +192,12 @@ export function Browse() {
 	const pins = React.useMemo(() => inArea(map.data?.items ?? [], center, applied.km), [map.data, center, applied.km]);
 	// In the API's order: boosted first (C4), so pages are not re-sorted here.
 	const reports = React.useMemo(() => list.data && flattenPages(list.data), [list.data]);
-	const count = map.data ? pins.length : (reports?.length ?? 0);
+	const { count, capped } = resultCount(
+		list.data?.pages[0]?.total_estimate,
+		map.data?.items.length,
+		pins.length,
+		reports?.length ?? 0
+	);
 	// P21 feed rows, in the page's context: the region of the first (nearest) row, the species when only one is shown.
 	const adRegion = reports?.[0]?.region_slug;
 	const adSpecies = applied.species.length === 1 ? applied.species[0] : undefined;
@@ -203,7 +210,13 @@ export function Browse() {
 	const settled = useDebounced(draft, COUNT_DEBOUNCE_MS);
 	const draftCenter = settled.place ?? here;
 	const counted = useGetMapReportsQuery(filtersOpen ? toMapQuery(settled, draftCenter) : mapQuery, { skip });
-	const draftCount = inArea(counted.data?.items ?? [], draftCenter, settled.km).length;
+	// Only the map is asked for the draft (no extra list request): a full map answer reads "500+".
+	const { count: draftCount, capped: draftCapped } = resultCount(
+		undefined,
+		counted.data?.items.length ?? 0,
+		inArea(counted.data?.items ?? [], draftCenter, settled.km).length,
+		0
+	);
 
 	// The area's place: the chosen one, else the settlement around the browser (asked at 2 decimals), else Slovenia.
 	const rounded = here ? { lat: round2(here.lat), lng: round2(here.lng) } : undefined;
@@ -310,7 +323,7 @@ export function Browse() {
 								<Skeleton className="h-4 w-16 self-center" />
 							) : (
 								<span className="text-sm text-muted-foreground tabular-nums">
-									{t('count', { count })}
+									{plus(t('count', { count }), count, capped)}
 								</span>
 							)}
 						</div>
@@ -403,6 +416,7 @@ export function Browse() {
 				draft={draft}
 				onDraftChange={setDraft}
 				count={draftCount}
+				capped={draftCapped}
 				onApply={() => {
 					apply(draft);
 					setFiltersOpen(false);

@@ -8,7 +8,7 @@ import { IntlProvider } from 'use-intl';
 
 import { ad } from '@zivali/api/__fixtures__/ads';
 import * as fx from '@zivali/api/__fixtures__/reports';
-import { createMockApi, type MockRequest } from '@zivali/api/mock';
+import { createMockApi, type MockRequest, type MockRoutes } from '@zivali/api/mock';
 import { reportsApi } from '@zivali/api/reports';
 import { api, createApiStore } from '@zivali/api/rtk';
 import sl from '@zivali/i18n/dist/sl.json';
@@ -93,7 +93,7 @@ const bySpecies = (request: MockRequest, r: { species: string }) =>
 	!request.query.species || request.query.species.split(',').includes(r.species);
 
 let stores: ReturnType<typeof createApiStore>[] = [];
-async function renderTab(reports: PublicReport[] = [maks, found]) {
+async function renderTab(reports: PublicReport[] = [maks, found], routes: MockRoutes = {}) {
 	const client = createMockApi({
 		'GET /v1/reports': (request) => ({
 			// The API orders boosted first (C4); the screen no longer re-sorts network pages.
@@ -116,6 +116,7 @@ async function renderTab(reports: PublicReport[] = [maks, found]) {
 		},
 		'GET /v1/ads/slot/:slot': ad,
 		'POST /v1/ads/:id/impressions': () => undefined,
+		...routes,
 	});
 	const store = createApiStore(client);
 	stores.push(store);
@@ -296,7 +297,24 @@ test('filters: nothing applies until "Prikaži"; the live count uses Slovenian p
 	await waitFor(() => expect(listCalls(client).at(-1)!.query).toMatchObject({ species: 'dog' }));
 });
 
-test('distance slider: adjustable by assistive tech, 1 to 50 km, applied to the area', async () => {
+test('600 matches: the list shows total_estimate, the map stops at 500, the sheet reads 500+ (TASK-31.7)', async () => {
+	const pins = Array.from({ length: 500 }, (_, i) => ({ ...pin(maks), id: `p-${i}`, short_code: `Pin${i}` }));
+	const client = await renderTab([maks], {
+		'GET /v1/reports': { items: [maks], next_cursor: null, total_estimate: 600 },
+		'GET /v1/reports/map': { items: pins },
+	});
+	expect(await screen.findByText('600 prijav')).toBeOnTheScreen();
+	const listRequests = listCalls(client).length;
+
+	await fireEvent.press(pill());
+	expect(await screen.findByRole('button', { name: 'Prikaži 500+ prijav' })).toBeOnTheScreen();
+	await fireEvent.press(screen.getByRole('checkbox', { name: t.filter_cats }));
+	expect(await screen.findByRole('button', { name: 'Prikaži 500+ prijav' })).toBeOnTheScreen();
+	// The live count is the map's own query: no extra list request.
+	expect(listCalls(client)).toHaveLength(listRequests);
+});
+
+test('distance slider:adjustable by assistive tech, 1 to 50 km, applied to the area', async () => {
 	const client = await renderTab();
 	await screen.findByText('2 prijavi');
 	await fireEvent.press(pill());

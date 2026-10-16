@@ -8,7 +8,7 @@ import { useFormatter, useLocale, useNow, useTranslations } from 'use-intl';
 
 import type { CachedReport } from '@zivali/api/sync';
 import { formatDate, type Locale } from '@zivali/i18n/format';
-import { type AdSlot, AD_EVERY, type ListItem, type Sort, withAdSlots } from '@/components/browse/filters';
+import { type AdSlot, AD_EVERY, type ListItem, plus, type Sort, withAdSlots } from '@/components/browse/filters';
 import { ReportRow } from '@/components/browse/report-row';
 import { Note } from '@/components/report/parts';
 import { Button, Spinner } from '@/components/ui/button';
@@ -27,6 +27,8 @@ export type ListSheetProps = {
 	/** Rows in display order (boosted first); undefined until the first load. */
 	reports: CachedReport[] | undefined;
 	count: number;
+	/** `count` is the map's cap: show "500+". */
+	capped?: boolean;
 	center: Point | null;
 	isLoading: boolean;
 	isError: boolean;
@@ -114,6 +116,7 @@ function OfflineEmpty() {
 export function ListSheet({
 	reports,
 	count,
+	capped = false,
 	center,
 	isLoading,
 	isError,
@@ -241,7 +244,9 @@ export function ListSheet({
 					{loading ? (
 						<Skeleton className="h-4 w-16 self-center" />
 					) : (
-						<Text className="text-sm text-muted-foreground">{t('count', { count })}</Text>
+						<Text className="text-sm text-muted-foreground">
+							{plus(t('count', { count }), count, capped)}
+						</Text>
 					)}
 				</View>
 				{onSortChange && !loading && (

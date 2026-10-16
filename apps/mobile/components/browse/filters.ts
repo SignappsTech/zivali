@@ -163,3 +163,25 @@ export function withAdSlots(reports: CachedReport[], every: number | null = AD_E
 			: [row];
 	});
 }
+
+/** The API's cap on GET /v1/reports/map pins (MAP_LIMIT): a map answer this long may have more behind it. */
+export const MAP_CAP = 500;
+
+/**
+ * The result count: the list's `total_estimate` when known (the real number); else the map's pins, which show as
+ * "500+" when the map came back full. `mapItems` is the raw map answer, before the circle filter.
+ */
+export function resultCount(
+	total: number | undefined,
+	mapItems: number | undefined,
+	pins: number,
+	listed: number
+): { count: number; capped: boolean } {
+	if (total !== undefined) return { count: total, capped: false };
+	if (mapItems === undefined) return { count: listed, capped: false };
+	return mapItems >= MAP_CAP ? { count: MAP_CAP, capped: true } : { count: pins, capped: false };
+}
+
+/** "500 prijav" as "500+ prijav": the P4 slice has no wording for a capped count. */
+export const plus = (text: string, count: number, capped: boolean) =>
+	capped ? text.replace(String(count), `${count}+`) : text;

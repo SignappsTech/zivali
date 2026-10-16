@@ -18,6 +18,7 @@ import {
 	inArea,
 	isDefault,
 	resetFilters,
+	resultCount,
 	SLOVENIA,
 	toMapQuery,
 	toSearch,
@@ -78,6 +79,7 @@ export default function MapTab() {
 	const mapQuery = toMapQuery(applied, center);
 	const map = useMapReports(mapQuery, { skip });
 	const pins = React.useMemo(() => inArea(map.data?.items ?? [], center, applied.km), [map.data, center, applied.km]);
+	const { count, capped } = resultCount(search.total, map.data?.items.length, pins.length, search.data?.length ?? 0);
 	const reports = React.useMemo(
 		() => search.data && (search.source === 'cache' ? boostedFirst(search.data) : search.data),
 		[search.data, search.source]
@@ -93,7 +95,12 @@ export default function MapTab() {
 	const settled = useDebounced(draft, COUNT_DEBOUNCE_MS);
 	const draftCenter = settled.place ?? here;
 	const counted = useMapReports(filtersOpen ? toMapQuery(settled, draftCenter) : mapQuery, { skip });
-	const draftCount = inArea(counted.data?.items ?? [], draftCenter, settled.km).length;
+	const { count: draftCount, capped: draftCapped } = resultCount(
+		undefined,
+		counted.data?.items.length ?? 0,
+		inArea(counted.data?.items ?? [], draftCenter, settled.km).length,
+		0
+	);
 
 	// The pill's place: the chosen one, else the settlement around the device (asked at 2 decimals), else Slovenia.
 	const rounded = here ? { lat: round2(here.lat), lng: round2(here.lng) } : undefined;
@@ -171,7 +178,8 @@ export default function MapTab() {
 			</Pressable>
 			<ListSheet
 				reports={reports}
-				count={map.data ? pins.length : (reports?.length ?? 0)}
+				count={count}
+				capped={capped}
 				center={center}
 				isLoading={search.isLoading}
 				isError={Boolean(search.error)}
@@ -203,6 +211,7 @@ export default function MapTab() {
 				draft={draft}
 				onDraftChange={setDraft}
 				count={draftCount}
+				capped={draftCapped}
 				onApply={() => {
 					setApplied(draft);
 					setFiltersOpen(false);
