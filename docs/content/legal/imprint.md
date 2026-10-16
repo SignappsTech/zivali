@@ -75,7 +75,7 @@ Najdimo je delovno ime storitve.
 
 ## 6. Avtorstvo slik
 
-Fotografije živali v prijavah so last njihovih avtorjev, ki so nam dovolili prikaz v Najdimo. Ilustracije so delo ekipe Najdimo. [naročnik: dodati morebitne druge navedbe avtorjev.]
+Fotografije živali v prijavah so last njihovih avtorjev, ki so nam dovolili prikaz v Najdimo. Ilustracije so delo ekipe Najdimo.
 
 ## 7. Viri podatkov in zemljevidi
 
@@ -102,7 +102,7 @@ Najdimo is operated by the company Signapps.
 | Item | Value |
 |---|---|
 | Full company name and legal form | SIGNAPPS, grafična in digitalna agencija, d.o.o. (short: SIGNAPPS d.o.o.) |
-| Registered seat | Kolomban 34B, 6280 Ankaran – Ancarano, Slovenija |
+| Registered seat | Kolomban 34B, 6280 Ankaran – Ancarano, Slovenia |
 | Registration number | 6575536000 |
 | Tax number / VAT ID | SI16967666 (VAT payer) |
 | Register entry | Court register at the District Court of Koper, entered on 21 March 2014 |
@@ -133,7 +133,7 @@ Najdimo is a working name of the service.
 
 ## 6. Image credits
 
-Photos of animals in reports belong to their authors, who allowed us to display them in Najdimo. Illustrations are by the Najdimo team. [client: add any other credits.]
+Photos of animals in reports belong to their authors, who allowed us to display them in Najdimo. Illustrations are by the Najdimo team.
 
 ## 7. Data sources and maps
 

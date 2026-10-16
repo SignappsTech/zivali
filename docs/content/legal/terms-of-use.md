@@ -199,7 +199,7 @@ Najdimo helps lost animals get home again. Everything that brings animals home i
 
 ## 2. What Najdimo is
 
-Najdimo is a website and mobile app for posting and searching for lost, found and sighted dogs and cats in Slovenia. The service is operated by the company SIGNAPPS, grafična in digitalna agencija, d.o.o., Kolomban 34B, 6280 Ankaran – Ancarano, Slovenija ("we"). "Najdimo" is the working name of the service.
+Najdimo is a website and mobile app for posting and searching for lost, found and sighted dogs and cats in Slovenia. The service is operated by the company SIGNAPPS, grafična in digitalna agencija, d.o.o., Kolomban 34B, 6280 Ankaran – Ancarano, Slovenia ("we"). "Najdimo" is the working name of the service.
 
 Our purpose is to get animals home. Money only keeps the service running. These are free for everyone, forever:
 
@@ -331,7 +331,7 @@ Consumers can also resolve a dispute out of court with an out-of-court consumer 
 
 ## 18. Contact
 
-Najdimo, operated by SIGNAPPS, grafična in digitalna agencija, d.o.o., Kolomban 34B, 6280 Ankaran – Ancarano, Slovenija. Email: info@signapps.si. Phone: 040 975 210 (+386 40 975 210).
+Najdimo, operated by SIGNAPPS, grafična in digitalna agencija, d.o.o., Kolomban 34B, 6280 Ankaran – Ancarano, Slovenia. Email: info@signapps.si. Phone: 040 975 210 (+386 40 975 210).
 
 ---
 

@@ -327,7 +327,7 @@ Najdimo helps lost animals get home again. Everything that brings animals home i
 
 ## 2. Who is the controller
 
-The controller of your personal data is the company SIGNAPPS, grafična in digitalna agencija, d.o.o., Kolomban 34B, 6280 Ankaran – Ancarano, Slovenija, registration number 6575536000. In this text "we" means that company as the operator of Najdimo.
+The controller of your personal data is the company SIGNAPPS, grafična in digitalna agencija, d.o.o., Kolomban 34B, 6280 Ankaran – Ancarano, Slovenia, registration number 6575536000. In this text "we" means that company as the operator of Najdimo.
 
 For questions about privacy and to use your rights, write to info@signapps.si or call 040 975 210 (+386 40 975 210).
 
