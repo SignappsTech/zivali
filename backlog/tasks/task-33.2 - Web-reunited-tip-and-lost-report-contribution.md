@@ -1,11 +1,11 @@
 ---
 id: TASK-33.2
 title: 'Web support ask: reunited tip, lost-report contribution, profile card'
-status: To Do
+status: In Progress
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:14'
-updated_date: '2026-10-14 22:42'
+updated_date: '2026-10-16 06:28'
 labels:
   - fe
   - 'est:S'

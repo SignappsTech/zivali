@@ -5,12 +5,13 @@ import { getMessages, getTranslations } from 'next-intl/server';
 import { PageMessages } from '@/components/page-messages';
 import { LostFlow } from '@/components/report-lost/lost-flow';
 import { StoreProvider } from '@/components/store-provider';
+import { env } from '@/lib/env';
 import { absoluteUrl, breadcrumbLd, jsonLd } from '@/lib/seo';
 import { getViewer } from '@/lib/viewer';
 
 const HREF = '/report/lost';
 // What the flow's client components translate (PageMessages adds the shell's namespaces): the steps, the sign-in
-// dialog (auth) and the confirmation (shelter_row, share).
+// dialog (auth) and the confirmation (shelter_row, share, support).
 const NAMESPACES = [
 	'report_lost',
 	'pets',
@@ -23,6 +24,7 @@ const NAMESPACES = [
 	'auth',
 	'shelter_row',
 	'share',
+	'support',
 ] as const;
 
 export async function generateMetadata({ params }: PageProps<'/[locale]/report/lost'>): Promise<Metadata> {
@@ -73,7 +75,11 @@ export default async function ReportLostPage({ params, searchParams }: PageProps
 	return (
 		<PageMessages messages={Object.fromEntries(NAMESPACES.map((ns) => [ns, messages[ns]]))}>
 			<StoreProvider>
-				<LostFlow initialPet={typeof pet === 'string' ? pet : undefined} signedIn={viewer !== null} />
+				<LostFlow
+					initialPet={typeof pet === 'string' ? pet : undefined}
+					signedIn={viewer !== null}
+					testMode={env.APP_ENV !== 'production'}
+				/>
 			</StoreProvider>
 			{ld}
 		</PageMessages>

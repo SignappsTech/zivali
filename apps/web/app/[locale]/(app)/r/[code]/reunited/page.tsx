@@ -3,6 +3,7 @@ import type { Locale } from 'next-intl';
 import { getTranslations } from 'next-intl/server';
 
 import { Reunited } from '@/components/report/reunited';
+import { env } from '@/lib/env';
 import { redirect } from '@/i18n/navigation';
 import { getReport } from '@/lib/report';
 import { getViewer } from '@/lib/viewer';
@@ -26,5 +27,5 @@ export default async function ReunitedPage({ params }: Props) {
 	if (!report?.is_mine || report.status !== 'reunited')
 		return redirect({ href: { pathname: '/r/[code]', params: { code } }, locale });
 	// The group's guard has verified the session; no viewer means the anonymous manage-link session (C7).
-	return <Reunited report={report} anonymous={!(await getViewer())} />;
+	return <Reunited report={report} anonymous={!(await getViewer())} testMode={env.APP_ENV !== 'production'} />;
 }

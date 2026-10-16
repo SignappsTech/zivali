@@ -84,7 +84,7 @@ describe('LostDone (P6 M9)', () => {
 			'tel:+38612345678'
 		);
 		expect(document.querySelector('[data-ad-slot]')).toBeNull();
-		// The P15 slot is TASK-33.2's: nothing to pay here yet.
+		// Signed out here: the P15 contribution row asks signed-in accounts only (components/payments/support.test.tsx).
 		expect(screen.queryByText(sl.support.contribution_row)).toBeNull();
 	});
 
