@@ -35,13 +35,7 @@ import { toast } from '@/components/ui/sonner';
 import { Switch } from '@/components/ui/switch';
 import { Text } from '@/components/ui/text';
 import { alertInput, newAlerts, trackOptIn } from '@/lib/alerts';
-import {
-	DAILY_CAP,
-	enableGeofencing,
-	type GeofenceState,
-	geofenceState,
-	stopGeofencing,
-} from '@/lib/offline/geofence';
+import { DAILY_CAP, enableGeofencing, type GeofenceState, geofenceState, stopGeofencing } from '@/lib/offline/geofence';
 
 const STOPS_M = RADII.alert.stops; // the picker's alert stops, 1 to 25 km
 

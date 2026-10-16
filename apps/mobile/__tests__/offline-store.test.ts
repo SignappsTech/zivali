@@ -8,7 +8,7 @@ import * as SecureStore from 'expo-secure-store';
 
 import { DB_NAME, getDb, migrate, migrations } from '@/lib/db';
 import { bytesUsed, draftsDir, outboxDir, pickerCacheDir, thumbsDir } from '@/lib/db/files';
-import { cacheQuietHours, stopGeofencing } from '@/lib/offline/geofence';
+import { cacheOwnReports, cacheQuietHours, stopGeofencing } from '@/lib/offline/geofence';
 import { manageTokenKey, saveManageToken } from '@/lib/offline/outbox';
 import { signOutAndWipe, wipeLocalData } from '@/lib/offline/wipe';
 import { supabase } from '@/lib/supabase';
@@ -37,7 +37,11 @@ jest.mock('expo-network', () => ({ addNetworkStateListener: jest.fn(), getNetwor
 jest.mock('expo-task-manager', () => ({ defineTask: jest.fn() }));
 jest.mock('expo-background-task', () => ({}));
 jest.mock('@/lib/env', () => ({ env: { EXPO_PUBLIC_API_URL: 'http://api.default' } }));
-jest.mock('@/lib/offline/geofence', () => ({ cacheQuietHours: jest.fn(), stopGeofencing: jest.fn(async () => {}) }));
+jest.mock('@/lib/offline/geofence', () => ({
+	cacheOwnReports: jest.fn(),
+	cacheQuietHours: jest.fn(),
+	stopGeofencing: jest.fn(async () => {}),
+}));
 
 const C17_TABLES = [
 	'cache_areas',
@@ -200,15 +204,18 @@ describe('wipeLocalData', () => {
 		'%s clears cache, areas, drafts, geofences and files but keeps the outbox and tokens',
 		async (reason) => {
 			jest.mocked(cacheQuietHours).mockClear();
+			jest.mocked(cacheOwnReports).mockClear();
 			await wipeLocalData({ reason });
 
 			for (const table of ['reports_cache', 'cache_areas', 'drafts', 'geofences', 'geofence_events']) {
 				expect(await count(table)).toBe(0);
 			}
 			expect(stopGeofencing).toHaveBeenCalled();
-			// The account's cached quiet hours go on sign-out only.
-			if (reason === 'sign_out') expect(cacheQuietHours).toHaveBeenCalledWith(null);
-			else expect(cacheQuietHours).not.toHaveBeenCalled();
+			// The account's cached quiet hours and own report ids go on sign-out only.
+			for (const cached of [cacheQuietHours, cacheOwnReports]) {
+				if (reason === 'sign_out') expect(cached).toHaveBeenCalledWith(null);
+				else expect(cached).not.toHaveBeenCalled();
+			}
 			expect(thumbsDir.exists).toBe(false);
 			expect(draftsDir.exists).toBe(false);
 			expect(pickerCacheDir.exists).toBe(false);
