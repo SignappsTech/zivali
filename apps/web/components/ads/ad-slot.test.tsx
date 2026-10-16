@@ -183,7 +183,7 @@ describe('AdSlot (P21 web)', () => {
 
 	it('with consent, ad_impression and ad_click reach GA with the slot, ad id, region and species (reunited)', async () => {
 		setConsent({ analytics: true });
-		show(<ReunitedAd report={report} />);
+		show(<ReunitedAd report={report} tip={false} />);
 		const unit = await screen.findByRole('link', { name: name(served) });
 		expect(calls('GET')[0]?.url).toBe(`${API}/v1/ads/slot/reunited?region_id=8&species=dog&locale=sl`);
 		vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });

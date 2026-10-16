@@ -5,6 +5,9 @@ import { useAnswer } from '@/components/payments/answers';
 import { SupportTip } from '@/components/payments/support';
 import type { DetailReport } from '@/components/report/slots/types';
 
+/** "Končano": takes focus when Preskoči removes the tip. */
+export const DONE_ID = 'reunited-done';
+
 type ReunitedSlotProps = { report: DetailReport; className?: string };
 
 /**
@@ -13,7 +16,15 @@ type ReunitedSlotProps = { report: DetailReport; className?: string };
  * page renders it for a real account only. `testMode` (outside production) adds the test-payment note.
  */
 export function ReunitedTip({ report, testMode, className }: ReunitedSlotProps & { testMode: boolean }) {
-	return <SupportTip reportId={report.id} code={report.short_code} testMode={testMode} className={className} />;
+	return (
+		<SupportTip
+			reportId={report.id}
+			code={report.short_code}
+			testMode={testMode}
+			skipFocusId={DONE_ID}
+			className={className}
+		/>
+	);
 }
 
 /**

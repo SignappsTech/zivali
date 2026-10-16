@@ -8,8 +8,8 @@ import type { CheckoutInput, Payment } from '@zivali/types';
 
 import { api, dismissConsent, signInAs } from './session';
 
-// TASK-33.2: the P15 asks on web with the C13 mock provider. e2e/mock-api.ts keeps the owner's report Own12345 in
-// memory; the browser's payment calls are answered here, and /dev/checkout posts the signed webhook from the server.
+// TASK-33.2: the P15 asks on web with the C13 mock provider. e2e/mock-api.ts keeps its own report Tip12345 in
+// memory (not Own12345, which lifecycle.spec.ts uses); the browser's payment calls are answered here, and /dev/checkout posts the signed webhook from the server.
 const AXE_TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'];
 const OWNER = { id: '0b5f6a3e-6c1d-4f8e-9a2b-3c4d5e6f7a80', role: 'USER', aal: 'aal1' } as const;
 const ID = payment.id;
@@ -61,18 +61,18 @@ async function answerPayments(page: Page, baseURL: string, state: Pick<Payment, 
 
 /** The owner marks Medo home (P9 → P14) and lands on the reunited page. */
 async function reunite(page: Page) {
-	await page.goto('/r/Own12345');
+	await page.goto('/r/Tip12345');
 	await page.getByRole('button', { name: 'Žival je spet doma', exact: true }).click();
 	await page
 		.getByRole('dialog', { name: 'Je Medo res spet doma?' })
 		.getByRole('button', { name: 'Da, spet je doma', exact: true })
 		.click();
-	await expect(page).toHaveURL(/\/r\/Own12345\/spet-doma$/);
+	await expect(page).toHaveURL(/\/r\/Tip12345\/spet-doma$/);
 	return page.getByRole('region', { name: t.tip_title, exact: true });
 }
 
 test.beforeEach(async ({ page, baseURL }) => {
-	await fetch(`${api()}/e2e/reset`, { method: 'POST' });
+	await fetch(`${api()}/e2e/reset/Tip12345`, { method: 'POST' });
 	await signInAs(page, OWNER, baseURL!);
 	await dismissConsent(page);
 });
@@ -101,7 +101,7 @@ test('the reunited tip: nothing chosen, 5 € through the mock checkout, then th
 		purpose: 'tip',
 		amount_cents: 500,
 		locale: 'sl',
-		return_to: '/r/Own12345/spet-doma',
+		return_to: '/r/Tip12345/spet-doma',
 	});
 	expect(sent[0]!.body.refs?.report_id).toBeTruthy();
 	expect(sent[0]!.key).toMatch(/^[0-9a-f-]{36}$/);
@@ -114,7 +114,7 @@ test('the reunited tip: nothing chosen, 5 € through the mock checkout, then th
 	});
 	await page.getByRole('link', { name: sl.payments.success_back, exact: true }).click();
 
-	await expect(page).toHaveURL(/\/r\/Own12345\/spet-doma$/);
+	await expect(page).toHaveURL(/\/r\/Tip12345\/spet-doma$/);
 	await expect(page.getByText(t.already_paid, { exact: true })).toBeVisible();
 	await expect(page.getByRole('region', { name: t.tip_title, exact: true })).toHaveCount(0);
 });

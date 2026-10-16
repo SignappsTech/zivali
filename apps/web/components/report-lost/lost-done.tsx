@@ -194,12 +194,21 @@ export function LostDone({ code, name, species, point, unverified, titleClass, t
 					</Button>
 				</div>
 				<Button asChild variant="text" className="mt-2 justify-self-center">
-					<NextLink href={`${getPathname({ locale, href: '/safety' })}#${FIRST_24H[locale]}`}>
+					<NextLink
+						id="lost-first-24h"
+						href={`${getPathname({ locale, href: '/safety' })}#${FIRST_24H[locale]}`}
+					>
 						{t('first_24h')}
 					</NextLink>
 				</Button>
 				{/* P15, last: collapsed, nothing chosen, once per report; its ask and the payments client load on demand. */}
-				<ContributionRow reportId={report?.id} code={code} testMode={testMode} className="mt-6" />
+				<ContributionRow
+					reportId={report?.id}
+					code={code}
+					testMode={testMode}
+					skipFocusId="lost-first-24h"
+					className="mt-6"
+				/>
 			</div>
 			{posterOpen && (
 				<ContentDialog title={copy.poster} closeLabel={copy.close} onClose={() => setPosterOpen(false)}>

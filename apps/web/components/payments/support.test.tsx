@@ -154,6 +154,33 @@ describe('reunited tip (P15)', () => {
 		expect(keyOf(checkouts(api)[2]!)).not.toBe(keyOf(first!));
 	});
 
+	it('Preskoči moves focus to the next stable element before the ask goes (WCAG 2.4.3)', async () => {
+		show(
+			<>
+				<SupportTip reportId={REPORT} code={CODE} testMode={false} skipFocusId="done" />
+				<a id="done" href="#top">
+					done
+				</a>
+			</>
+		);
+		fireEvent.click(await screen.findByRole('button', { name: t.skip }));
+		expect(document.activeElement).toBe(document.getElementById('done'));
+		expect(screen.queryByRole('heading', { name: t.tip_title })).toBeNull();
+	});
+
+	it('Pay stops spinning when Back from Checkout restores the page from the bfcache', async () => {
+		show(tip());
+		fireEvent.click(await screen.findByRole('radio', { name: '10 €' }));
+		fireEvent.click(button(`Plačaj ${eur(1000)}`));
+		await waitFor(() => expect(payments.redirect).toHaveBeenCalled());
+		const pay = button(`Plačaj ${eur(1000)}`);
+		expect(pay.getAttribute('aria-busy')).toBe('true');
+		fireEvent(window, new PageTransitionEvent('pageshow', { persisted: false }));
+		expect(pay.getAttribute('aria-busy')).toBe('true');
+		fireEvent(window, new PageTransitionEvent('pageshow', { persisted: true }));
+		await waitFor(() => expect(pay.getAttribute('aria-busy')).toBeNull());
+	});
+
 	it('Skip removes the ask and it stays gone for that report; a payment leaves the thank-you line', async () => {
 		show(tip());
 		fireEvent.click(await screen.findByRole('button', { name: t.skip }));
@@ -207,7 +234,8 @@ describe('Profile card (purpose support, AC#3)', () => {
 		expect(monthly.getAttribute('aria-checked')).toBe('false');
 		fireEvent.click(radio('3 €'));
 		fireEvent.click(monthly);
-		fireEvent.click(button(`Plačaj ${eur(300)} na mesec`));
+		// C13 forbids an amount for a subscription, so the button does not promise one.
+		fireEvent.click(button(t.supporter_monthly_label));
 		await waitFor(() => expect(checkouts(api)).toHaveLength(1));
 		expect(checkouts(api)[0]!.body).toEqual({ purpose: 'subscription', locale: 'sl', return_to: '/racun/placila' });
 	});
@@ -257,6 +285,20 @@ describe('contribution row at the lost confirmation (AC#2)', () => {
 		cleanup();
 		show(row(REPORT));
 		expect(screen.queryByText(t.contribution_row)).toBeNull();
+	});
+
+	it('Skrij moves focus to the next stable element before the row goes (WCAG 2.4.3)', async () => {
+		show(
+			<>
+				<a id="above" href="#top">
+					above
+				</a>
+				<ContributionRow reportId={REPORT} code={CODE} testMode skipFocusId="above" />
+			</>
+		);
+		fireEvent.click(screen.getByRole('button', { name: new RegExp(t.contribution_row) }));
+		fireEvent.click(await screen.findByRole('button', { name: t.contribution_hide }));
+		expect(document.activeElement).toBe(document.getElementById('above'));
 	});
 
 	it('Pay waits while the report loads', async () => {

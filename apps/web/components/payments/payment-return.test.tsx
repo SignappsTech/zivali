@@ -8,7 +8,7 @@ import { ApiError } from '@zivali/api/client';
 import sl from '@zivali/i18n/dist/sl.json';
 import type { Payment } from '@zivali/types';
 
-import { rememberPayment } from './answers';
+import { rememberPayment, settlePayment } from './answers';
 import { PaymentReturn } from './payment-return';
 
 const state = vi.hoisted(() => ({
@@ -147,6 +147,16 @@ describe('PaymentReturn', () => {
 			returnTo: RETURN_TO,
 			locale: 'sl',
 		});
+	});
+
+	it('links the retry checkout to the ask the cancelled one answered, so a later success closes it', async () => {
+		state.startCheckout.mockResolvedValue({ paymentId: 'p2', checkoutUrl: 'https://checkout.test/p2' });
+		rememberPayment(payment.id, 'tip:Hk3vT9qP');
+		show({ status: 'pending' }, { canceled: true });
+		fireEvent.click(screen.getByRole('button', { name: sl.payments.cancel_retry }));
+		await vi.waitFor(() => expect(state.redirectToCheckout).toHaveBeenCalled());
+		expect(settlePayment('p2')).toBe(true);
+		expect(sessionStorage.getItem('zz_support:tip:Hk3vT9qP')).toBe('paid');
 	});
 
 	it('explains a declined card calmly, retry first, skip back; a failed retry says why', async () => {

@@ -37,14 +37,27 @@ function AlreadyPaid({ className }: { className?: string }) {
 	);
 }
 
-type TipProps = { reportId: string; code: string; testMode: boolean; className?: string };
+/** Skip removes the focused button: focus goes to the next stable element first (WCAG 2.4.3). */
+const focusThen = (id: string | undefined, done: () => void) => {
+	if (id) document.getElementById(id)?.focus();
+	done();
+};
+
+type TipProps = {
+	reportId: string;
+	code: string;
+	testMode: boolean;
+	/** The element that takes focus when Preskoči removes the ask. */
+	skipFocusId?: string;
+	className?: string;
+};
 
 /**
  * P14/P15 thank-you tip on the owner's reunited page (a real account, checked by the page): h2 in the h3 role, one
  * sentence, 3, 5 (suggested) or 10 € or another amount. Preskoči ends the ask for this report; a payment leaves the
  * thank-you line.
  */
-export function SupportTip({ reportId, code, testMode, className }: TipProps) {
+export function SupportTip({ reportId, code, testMode, skipFocusId, className }: TipProps) {
 	const t = useTranslations('support');
 	const locale = useLocale() as Locale;
 	const key = `tip:${code}`;
@@ -66,7 +79,7 @@ export function SupportTip({ reportId, code, testMode, className }: TipProps) {
 					refs: { report_id: reportId },
 					returnTo: getPathname({ locale, href: { pathname: '/r/[code]/reunited', params: { code } } }),
 				}}
-				onSkip={() => setAnswer('skipped')}
+				onSkip={() => focusThen(skipFocusId, () => setAnswer('skipped'))}
 				onCheckout={(paymentId) => rememberPayment(paymentId, key)}
 			/>
 		</section>
@@ -97,6 +110,8 @@ type RowProps = {
 	reportId?: string;
 	code: string;
 	testMode: boolean;
+	/** The element that takes focus when Skrij removes the row. */
+	skipFocusId?: string;
 	className?: string;
 };
 
@@ -105,7 +120,7 @@ type RowProps = {
  * chosen, then Prispevaj and Skrij side by side. Skrij or a payment ends the ask for this report. Signed-in accounts
  * only.
  */
-export function ContributionRow({ reportId, code, testMode, className }: RowProps) {
+export function ContributionRow({ reportId, code, testMode, skipFocusId, className }: RowProps) {
 	const t = useTranslations('support');
 	const locale = useLocale() as Locale;
 	const { me, isAnonymous } = useSession();
@@ -150,7 +165,7 @@ export function ContributionRow({ reportId, code, testMode, className }: RowProp
 									}
 								: undefined
 						}
-						onSkip={() => setAnswer('skipped')}
+						onSkip={() => focusThen(skipFocusId, () => setAnswer('skipped'))}
 						onCheckout={(paymentId) => rememberPayment(paymentId, key)}
 					/>
 				</div>

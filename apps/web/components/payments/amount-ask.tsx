@@ -77,6 +77,12 @@ export function AmountAsk({ kind, checkout, testMode, onSkip, onCheckout }: Amou
 	// amount is another attempt.
 	const attempt = React.useRef<{ input: string; key: string }>(undefined);
 	const id = React.useId();
+	// Back from Checkout restores the page from the bfcache with `busy` still set; start over.
+	React.useEffect(() => {
+		const show = (event: PageTransitionEvent) => event.persisted && setBusy(false);
+		window.addEventListener('pageshow', show);
+		return () => window.removeEventListener('pageshow', show);
+	}, []);
 
 	const pills = tip
 		? ([
@@ -100,7 +106,7 @@ export function AmountAsk({ kind, checkout, testMode, onSkip, onCheckout }: Amou
 	const payLabel = !valid
 		? t(tip ? 'pay_disabled' : 'contribution_pay_disabled')
 		: subscription
-			? t('pay_monthly', { amount })
+			? t('supporter_monthly_label')
 			: t(tip ? 'pay' : 'contribution_pay', { amount });
 	const help = valid || fieldError ? undefined : t('pay_disabled_help');
 	const fieldId = `${id}-other`;

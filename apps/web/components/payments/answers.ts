@@ -19,7 +19,7 @@ const subscribe = (listener: () => void) => {
 
 function read(key: string): string | null {
 	try {
-		return sessionStorage.getItem(PREFIX + key);
+		return sessionStorage.getItem(PREFIX + key) ?? memory.get(key) ?? null;
 	} catch {
 		return memory.get(key) ?? null;
 	}
@@ -46,6 +46,12 @@ export function useAnswer(key: string) {
 
 /** Pay: which ask this checkout answers, so the return page can close it. */
 export const rememberPayment = (paymentId: string, key: string) => write(`payment:${paymentId}`, key);
+
+/** Retry from the return page: the new checkout answers the same ask as the one it replaces. */
+export function relinkPayment(oldId: string, newId: string) {
+	const key = read(`payment:${oldId}`);
+	if (key && key !== SETTLED) write(`payment:${newId}`, key);
+}
 
 /**
  * Return page, payment succeeded: the ask it answered turns into the thank-you line. True only the first time this

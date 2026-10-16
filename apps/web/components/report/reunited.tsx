@@ -6,7 +6,7 @@ import * as React from 'react';
 import { toast } from 'sonner';
 
 import { AuthHeading } from '@/components/auth/parts';
-import { ReunitedAd, ReunitedTip } from '@/components/report/reunited-slots';
+import { DONE_ID, ReunitedAd, ReunitedTip } from '@/components/report/reunited-slots';
 import type { DetailReport } from '@/components/report/slots/types';
 import { StatusWord } from '@/components/report/status-word';
 import { SpotIllustration } from '@/components/shell/page';
@@ -87,7 +87,9 @@ function OwnerReunited({ report, tip, testMode }: { report: DetailReport; tip: b
 
 			<div className="mt-16 flex flex-wrap items-center gap-x-4 gap-y-2 max-sm:*:w-full">
 				<Button asChild size="lg">
-					<Link href="/map">{tl('done')}</Link>
+					<Link id={DONE_ID} href="/map">
+						{tl('done')}
+					</Link>
 				</Button>
 				<Button variant="text" onClick={() => void share()}>
 					<ShareNetworkIcon weight="bold" aria-hidden="true" />

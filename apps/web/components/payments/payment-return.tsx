@@ -15,7 +15,7 @@ import { redirectToCheckout, startCheckout, useGetPaymentQuery } from '@zivali/a
 import type { ApiStore } from '@zivali/api/rtk';
 import { type Payment, type PaymentStatus, USER_AMOUNT_PURPOSES, type Uuid } from '@zivali/types';
 import { Link } from '@/i18n/navigation';
-import { settlePayment } from '@/components/payments/answers';
+import { relinkPayment, settlePayment } from '@/components/payments/answers';
 import { Spot, useErrorText } from '@/components/auth/parts';
 import { InlineError } from '@/components/shell/page';
 import { noteClass } from '@/components/shelters/classes';
@@ -123,12 +123,13 @@ export function PaymentReturn({ paymentId, returnTo, canceled }: Props) {
 		setRetrying(true);
 		setRetryError(undefined);
 		try {
-			const { checkoutUrl } = await startCheckout(dispatch, {
+			const { paymentId: next, checkoutUrl } = await startCheckout(dispatch, {
 				purpose: payment.purpose,
 				amountCents: payment.amount_cents,
 				returnTo,
 				locale,
 			});
+			relinkPayment(payment.id, next);
 			redirectToCheckout(checkoutUrl);
 		} catch (error) {
 			setRetryError(errorText(error));

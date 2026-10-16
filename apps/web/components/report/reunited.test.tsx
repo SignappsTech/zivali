@@ -50,12 +50,15 @@ function show(report: DetailReport, { anonymous = false, locale = 'sl' as 'sl' |
 
 afterEach(() => {
 	cleanup();
+	sessionStorage.clear();
 	vi.clearAllMocks();
 	Object.assign(navigator, { share: undefined });
 });
 
 describe('Reunited page (P14)', () => {
 	it('celebrates calmly: the photo, the focused h1 with the name, one sentence and the next steps', async () => {
+		// The tip is answered (paid), so the ad shows; while it asks the ad waits (below).
+		sessionStorage.setItem('zz_support:tip:Rex12345', 'paid');
 		show(rex);
 
 		const heading = screen.getByRole('heading', { level: 1, name: 'Rex je spet doma' });
@@ -121,6 +124,27 @@ describe('Reunited page (P14)', () => {
 		cleanup();
 		show(rex, { anonymous: true });
 		expect(screen.queryByRole('heading', { name: sl.support.tip_title })).toBeNull();
+	});
+
+	it('hides the ad while the tip asks; skipped or paid, or with no tip (manage link), the ad shows (P21)', async () => {
+		show(rex);
+		expect(screen.queryByTestId('ad-reunited')).toBeNull();
+
+		fireEvent.click(await screen.findByRole('button', { name: sl.support.skip }));
+		// Preskoči: focus goes to "Končano" before the ask is removed.
+		expect(document.activeElement).toBe(screen.getByRole('link', { name: 'Končano' }));
+		expect(screen.getByTestId('ad-reunited')).toBeTruthy();
+
+		cleanup();
+		sessionStorage.clear();
+		sessionStorage.setItem('zz_support:tip:Rex12345', 'paid');
+		show(rex);
+		expect(screen.getByTestId('ad-reunited')).toBeTruthy();
+
+		cleanup();
+		sessionStorage.clear();
+		show(rex, { anonymous: true });
+		expect(screen.getByTestId('ad-reunited')).toBeTruthy();
 	});
 
 	it('a finder gets the short thank-you, with no consent, tip or ad, and the account offer when anonymous', async () => {
