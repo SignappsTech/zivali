@@ -1,11 +1,11 @@
 ---
 id: TASK-18.2
 title: 'Web report detail /r/[code]: SSR, slots, OG image, JSON-LD, 410'
-status: In Progress
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:13'
-updated_date: '2026-10-16 03:36'
+updated_date: '2026-10-16 04:45'
 labels:
   - fe
   - 'est:M'
