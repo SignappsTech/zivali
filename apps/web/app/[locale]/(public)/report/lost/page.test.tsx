@@ -22,8 +22,8 @@ const viewer = vi.hoisted(() => ({ current: null as null | { initials: string; a
 vi.mock('@/lib/viewer', () => ({ getViewer: async () => viewer.current }));
 // The flow has its own tests: here it shows what the page hands it.
 vi.mock('@/components/report-lost/lost-flow', () => ({
-	LostFlow: ({ initialPet }: { initialPet?: string }) => (
-		<p data-testid="flow" data-pet={initialPet}>
+	LostFlow: ({ initialPet, signedIn }: { initialPet?: string; signedIn: boolean }) => (
+		<p data-testid="flow" data-pet={initialPet} data-signed-in={signedIn}>
 			{Object.keys(useMessages()).sort().join(' ')}
 		</p>
 	),
@@ -62,25 +62,16 @@ describe('ReportLostPage', () => {
 		});
 	});
 
-	it('asks a signed-out visitor for an account, returning to the flow, with WebPage and BreadcrumbList', async () => {
+	it('gives a signed-out visitor the flow to fill first, with the sign-in dialog and confirmation copy (C3)', async () => {
 		await show('sl');
-		expect(screen.getByRole('heading', { level: 1 }).textContent).toBe(sl.report_lost.flow_label);
-		expect(screen.getByRole('link', { name: sl.auth.gate_signin }).getAttribute('href')).toBe(
-			'/vpis?next=%2Fprijava%2Fizgubljena-zival'
+		const flow = screen.getByTestId('flow');
+		expect(flow.dataset.signedIn).toBe('false');
+		expect(flow.textContent!.split(' ')).toEqual(
+			expect.arrayContaining(['report_lost', 'photos', 'location', 'auth', 'shelter_row', 'share'])
 		);
-		expect(screen.getByRole('link', { name: sl.auth.gate_signup }).getAttribute('href')).toBe(
-			'/registracija?next=%2Fprijava%2Fizgubljena-zival'
-		);
-		expect(screen.queryByTestId('flow')).toBeNull();
+		expect(document.querySelector('[data-ad-slot]')).toBeNull();
 		const ld = JSON.parse(document.querySelector('script[type="application/ld+json"]')!.textContent!);
 		expect(ld['@graph'].map((node: { '@type': string }) => node['@type'])).toEqual(['WebPage', 'BreadcrumbList']);
-	});
-
-	it('carries ?pet= through the sign-in hand-off', async () => {
-		await show('sl', { pet: 'pet-1' });
-		expect(screen.getByRole('link', { name: sl.auth.gate_signin }).getAttribute('href')).toBe(
-			'/vpis?next=%2Fprijava%2Fizgubljena-zival%3Fpet%3Dpet-1'
-		);
 	});
 
 	it('gives a signed-in owner the flow with its namespaces and the pet from ?pet=', async () => {
@@ -88,6 +79,7 @@ describe('ReportLostPage', () => {
 		await show('en', { pet: 'pet-1' });
 		const flow = screen.getByTestId('flow');
 		expect(flow.dataset.pet).toBe('pet-1');
+		expect(flow.dataset.signedIn).toBe('true');
 		expect(flow.textContent!.split(' ')).toEqual(
 			expect.arrayContaining([
 				'report_lost',
