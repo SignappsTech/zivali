@@ -2,6 +2,8 @@
 import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
+	// @zivali/* from this checkout's packages (tsconfig.base.json paths), not the shared node_modules links.
+	resolve: { tsconfigPaths: true },
 	test: {
 		include: ['test/**/*.test.ts'],
 		globalSetup: ['test/global-setup.ts'],
