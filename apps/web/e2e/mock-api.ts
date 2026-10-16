@@ -89,6 +89,17 @@ const routes: Record<string, unknown> = {
 	[`/v1/reports/${lostReport.short_code}`]: lostReport,
 	[`/v1/reports/${publicReport.short_code}`]: publicReport,
 	'/v1/geo/reverse': placeReverse,
+	// TASK-24.2 Facebook kit: the C1 public share keys.
+	'/v1/config/public': {
+		'share.facebook_groups': [
+			{
+				name: 'Izgubljene živali – Osrednja Slovenija',
+				url: 'https://www.facebook.com/groups/e2e',
+				regions: ['osrednjeslovenska'],
+			},
+		],
+		'share.radio_form_url': 'https://radio.example/obvestila',
+	},
 };
 
 // Supabase Auth stand-in (TASK-105): the web build points NEXT_PUBLIC_SUPABASE_URL here, so getClaims() verifies a

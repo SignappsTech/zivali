@@ -7,7 +7,7 @@ import { join } from 'node:path';
 import PDFDocument from 'pdfkit';
 import { create as createQr } from 'qrcode';
 
-import { formatDayMonth, type Locale } from '@zivali/i18n/format';
+import { type Locale, timeZone } from '@zivali/i18n/format';
 import { colors } from '@zivali/tokens/values';
 import type { PublicReport } from '@zivali/types';
 import type { ReportPlace } from '@/lib/report';
@@ -46,6 +46,17 @@ export type PosterContent = {
 	thanks?: string;
 	footer: string;
 };
+
+/** The print date (mockup A1, A2): "12. 10." / "12 Oct", with the year when it is not this year. */
+function posterDate(date: string, lang: Locale): string {
+	const year = (value: Date) => new Intl.DateTimeFormat('en', { year: 'numeric', timeZone }).format(value);
+	return new Intl.DateTimeFormat(lang === 'sl' ? 'sl' : 'en-GB', {
+		day: 'numeric',
+		month: lang === 'sl' ? 'numeric' : 'short',
+		year: year(new Date(date)) === year(new Date()) ? undefined : 'numeric',
+		timeZone,
+	}).format(new Date(date));
+}
 
 export function posterContent(report: PublicReport, place: ReportPlace | undefined, lang: Locale): PosterContent {
 	const t = translator(lang);
@@ -92,7 +103,7 @@ export function posterContent(report: PublicReport, place: ReportPlace | undefin
 		breed && t('poster.fact_breed', { breed }),
 	].filter((fact): fact is string => !!fact);
 
-	const date = formatDayMonth(report.event_at, lang);
+	const date = posterDate(report.event_at, lang);
 	// A settlement that is its own municipality is named once ("Območje: Kranj (približno)").
 	const area = place && t('poster.area', place);
 	const areaLine =
@@ -161,7 +172,8 @@ function draw(doc: Doc, text: string, x: number, y: number, block: Block): numbe
 		width: block.width,
 		lineGap,
 		align: block.align,
-		...(block.lines && { height, ellipsis: true }),
+		// pdfkit fits the last line by the font's own line height, so the limit gets back the trimmed leading.
+		...(block.lines && { height: height - lineGap + 1 }),
 	});
 	return height;
 }
@@ -220,8 +232,11 @@ export function renderPosterPdf(content: PosterContent, photo: Buffer): Promise<
 	y += draw(doc, content.band, MARGIN, y, { font: 'displayHeavy', size: bandSize, lineHeight: 0.9, width: WIDTH });
 	y += mm(5);
 
-	// Measure what follows the photo row first, so the photo gets the spare height.
-	const name: Block = { font: 'display', size: 72, lineHeight: 0.92, width: WIDTH, lines: 2 };
+	// Measure what follows the photo row first, so the photo gets the spare height. A long name shrinks to one line
+	// (down to 48 pt), then wraps to two.
+	let name: Block = { font: 'display', size: 72, lineHeight: 0.92, width: WIDTH, lines: 2 };
+	while (content.name && name.size > 48 && measure(doc, content.name, { ...name, lines: undefined }) > name.size)
+		name = { ...name, size: name.size - 4 };
 	const half = (WIDTH - mm(8)) / 2;
 	const details: Block = { font: 'sans', size: 22, lineHeight: 1.2, width: half };
 	const small: Block = { font: 'sans', size: 12, lineHeight: 1.3, width: WIDTH };
@@ -239,20 +254,24 @@ export function renderPosterPdf(content: PosterContent, photo: Buffer): Promise<
 		(content.safety ? mm(3) + measure(doc, content.safety, small) : 0) +
 		(content.thanks ? mm(4) + measure(doc, content.thanks, thanks) : 0) +
 		mm(5);
+	// The action column beside the photo: call to action, the 56 mm QR, the printed link.
+	const cta: Block = { font: 'display', size: 26, lineHeight: 1.04, width: mm(64) };
+	const link: Block = { font: 'sansBold', size: 14, lineHeight: 1.2, width: mm(64), align: 'center' };
+	const ctaHeight = content.cta ? measure(doc, content.cta, cta) : 0;
+	const column = content.cta ? ctaHeight + mm(8) + mm(56) + mm(8.5) + 14 * 1.2 : 0;
+	// 119 to 152 mm (139.5 alone); below 119 only when long texts would otherwise run off the page, never below the
+	// action column, so the QR keeps its size.
 	const photoWidth = content.home ? WIDTH : mm(114);
-	const photoHeight = Math.max(mm(119), Math.min(content.home ? mm(139.5) : mm(152), footerTop - below - y));
+	const spare = footerTop - below - y;
+	const photoHeight =
+		spare >= mm(119) ? Math.min(content.home ? mm(139.5) : mm(152), spare) : Math.max(spare, column);
 
 	doc.save().roundedRect(MARGIN, y, photoWidth, photoHeight, mm(5)).clip();
 	doc.image(photo, MARGIN, y, { cover: [photoWidth, photoHeight], align: 'center', valign: 'center' });
 	doc.restore();
 
-	if (!content.home && content.cta) {
-		// The action column, bottom-aligned with the photo: call to action, QR, the printed link.
+	if (content.cta) {
 		const x = MARGIN + mm(122);
-		const cta: Block = { font: 'display', size: 26, lineHeight: 1.04, width: mm(64) };
-		const link: Block = { font: 'sansBold', size: 14, lineHeight: 1.2, width: mm(64), align: 'center' };
-		const ctaHeight = measure(doc, content.cta, cta);
-		const column = ctaHeight + mm(8) + mm(56) + mm(8.5) + 14 * 1.2;
 		let top = y + Math.max(0, photoHeight - column);
 		top += draw(doc, content.cta, x, top, cta) + mm(8);
 		drawQr(doc, content.url, x + mm(4), top, mm(56));

@@ -17,6 +17,7 @@ import { type EventParams, track } from '@zivali/analytics';
 import type { Locale } from '@zivali/i18n/format';
 import { ShareKit, type KitProps } from '@/components/report/share-kit';
 import { Button, buttonVariants } from '@/components/ui/button';
+import { noteClass } from '@/components/shelters/classes';
 import { Pill } from '@/components/ui/pill';
 import { StatusLabel } from '@/components/ui/status-label';
 
@@ -86,7 +87,6 @@ type Toast = { text: string; error?: boolean };
 const ring = 'focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ring';
 // System 10.9 menu: popover, radius 20, 8 px padding, shadow-pop; rows 48 px, icon 20, 16 semibold (as the header).
 const menuRow = `flex min-h-12 w-full cursor-pointer items-center gap-3 rounded-xl px-3 text-left font-semibold text-foreground no-underline hover:bg-foreground/10 [&_svg]:size-5 [&_svg]:shrink-0 ${ring}`;
-const noteClass = 'flex gap-3 rounded-row bg-muted px-[18px] py-4 text-control leading-[22px]';
 const MENU_WIDTH = 272;
 
 /** Toast look (system 10.9) in a polite live region; one inside each open dialog, as the page behind it is inert. */
@@ -294,6 +294,11 @@ export function ShareMenu({ url, message, analytics, poster, kit, copy }: Props)
 		if (region) track('poster_download', { species: analytics.species, region });
 	};
 	const close = () => menu.current?.hidePopover?.();
+	// Focus goes back to the menu button: the row that opened the dialog sits in the closed menu.
+	const closeDialog = () => {
+		setDialog(null);
+		button.current?.focus();
+	};
 	const copyText = async (text: string, done: string) => {
 		try {
 			await navigator.clipboard.writeText(text);
@@ -436,12 +441,12 @@ export function ShareMenu({ url, message, analytics, poster, kit, copy }: Props)
 			/>
 
 			{dialog === 'poster' && (
-				<ContentDialog title={copy.poster} closeLabel={copy.close} onClose={() => setDialog(null)}>
+				<ContentDialog title={copy.poster} closeLabel={copy.close} onClose={closeDialog}>
 					<PosterOptions poster={poster} copy={copy} onDownload={posterDownloaded} />
 				</ContentDialog>
 			)}
 			{dialog === 'kit' && kit && (
-				<ContentDialog title={copy.kitTitle} closeLabel={copy.close} onClose={() => setDialog(null)}>
+				<ContentDialog title={copy.kitTitle} closeLabel={copy.close} onClose={closeDialog}>
 					<ShareKit
 						{...kit}
 						region={analytics.region}
