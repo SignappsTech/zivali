@@ -6,21 +6,32 @@ import pg from 'pg';
 
 import { guardMessage, migrationDrift } from './helpers/db-guard';
 
-// TASK-109: finished pg-boss jobs pile up in the shared local DB and slow the job-drain tests. Local databases only.
-async function purgeFinishedJobs(url: string): Promise<void> {
+// TASK-109: finished pg-boss jobs pile up in the shared local DB and slow the job-drain tests.
+// TASK-110: so do alert subscriptions/deliveries of test users (profiles without an auth.users row) left by a timed-out run.
+// Local databases only.
+async function purgeResidue(url: string): Promise<void> {
 	if (!['127.0.0.1', 'localhost'].includes(new URL(url).hostname)) {
-		process.stderr.write('[global-setup] job purge skipped: the database host is not 127.0.0.1/localhost\n');
+		process.stderr.write('[global-setup] residue purge skipped: the database host is not 127.0.0.1/localhost\n');
 		return;
 	}
 	const client = new pg.Client({ connectionString: url.replace(/[?&]schema=[^&]*/, '') });
 	await client.connect();
 	try {
 		const { rows } = await client.query(`select to_regclass('pgboss.job') is not null as ready`);
-		if (!rows[0].ready) return; // fresh database: pg-boss installs its schema on first start
-		const res = await client.query(
-			`delete from pgboss.job where state in ('completed', 'cancelled') or (state = 'failed' and completed_on < now() - interval '1 day')`
+		if (rows[0].ready) {
+			const res = await client.query(
+				`delete from pgboss.job where state in ('completed', 'cancelled') or (state = 'failed' and completed_on < now() - interval '1 day')`
+			);
+			process.stdout.write(`[global-setup] purged ${res.rowCount} finished pg-boss jobs\n`);
+		} // else a fresh database: pg-boss installs its schema on first start
+		// Profiles stay: other test data references them. Needs Supabase's auth schema (a plain Postgres has none).
+		if (!(await client.query(`select to_regclass('auth.users') is not null as ready`)).rows[0].ready) return;
+		const orphans = `select p.id from app.profiles p where not exists (select 1 from auth.users u where u.id = p.id)`;
+		const deliveries = await client.query(`delete from app.alert_deliveries where user_id in (${orphans})`);
+		const subscriptions = await client.query(`delete from app.alert_subscriptions where user_id in (${orphans})`);
+		process.stdout.write(
+			`[global-setup] purged ${deliveries.rowCount} alert deliveries and ${subscriptions.rowCount} alert subscriptions of test users\n`
 		);
-		process.stdout.write(`[global-setup] purged ${res.rowCount} finished pg-boss jobs\n`);
 	} finally {
 		await client.end();
 	}
@@ -42,5 +53,5 @@ export default async function setup(): Promise<void> {
 		if (message) throw new Error(message);
 	}
 	execSync('prisma migrate deploy', { stdio: 'inherit' });
-	if (url) await purgeFinishedJobs(url);
+	if (url) await purgeResidue(url);
 }
