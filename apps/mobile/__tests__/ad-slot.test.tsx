@@ -188,6 +188,29 @@ describe('AdSlot (P21 mobile)', () => {
 		expect(adCalls(cached, 'GET')).toEqual([]);
 	});
 
+	test('online, offline, online with the same ad records one impression (advertisers are billed per impression)', async () => {
+		const client = await renderSlot(<AdSlot slot="feed" />);
+		await screen.findByRole('link', { name: name(served) });
+		await waitFor(() => expect(adCalls(client, 'POST')).toHaveLength(1));
+
+		const again = () =>
+			screen.rerender(
+				<Provider store={stores[0]!}>
+					<IntlProvider locale="sl" messages={sl} timeZone="Europe/Ljubljana">
+						<AdSlot slot="feed" />
+					</IntlProvider>
+				</Provider>
+			);
+		mockNetwork = { isConnected: true, isInternetReachable: false };
+		await again();
+		expect(screen.toJSON()).toBeNull();
+		mockNetwork = ONLINE;
+		await again();
+		await screen.findByRole('link', { name: name(served) });
+		await new Promise((resolve) => setTimeout(resolve, 50));
+		expect(adCalls(client, 'POST')).toHaveLength(1);
+	});
+
 	test('only our https click counter opens: any other URL is dropped, not opened or tracked', async () => {
 		expect(isSafeClickUrl(served.click_url)).toBe(true);
 		for (const url of [
@@ -242,6 +265,7 @@ describe('no AdSlot in protected flows', () => {
 		'app/settings/consent.tsx',
 	];
 	// Value imports and re-exports, including side-effect imports; `import type` brings no code.
+	// NOTE: this regex does not follow dynamic `import()` or `require()`: a lazy AdSlot import must be added to the guard by hand.
 	const IMPORT = /^\s*(?:import|export)\s+(?!type\s)(?:[^'";]*?\sfrom\s+)?['"]([^'"]+)['"]/gm;
 
 	const resolve = (from: string, spec: string): string | null => {

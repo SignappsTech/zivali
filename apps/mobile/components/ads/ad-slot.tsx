@@ -65,9 +65,12 @@ export function AdSlot({
 	const [record] = useRecordAdImpressionMutation();
 
 	// Once per rendered ad (A-016): our aggregate count always, GA only with consent.
+	// The ref survives offline gaps (shownId goes undefined), so the same ad is never billed twice per unit.
 	const shownId = online ? ad?.id : undefined;
+	const recorded = React.useRef<string | undefined>(undefined);
 	React.useEffect(() => {
-		if (!shownId) return;
+		if (!shownId || recorded.current === shownId) return;
+		recorded.current = shownId;
 		void record({ id: shownId, body: { slot } });
 		track('ad_impression', gaParams(slot, shownId, species, region));
 	}, [shownId, slot, species, region, record]);
