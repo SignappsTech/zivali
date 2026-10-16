@@ -10,6 +10,8 @@ import { ImageIcon } from 'phosphor-react-native/src/icons/Image';
 import { NotEqualsIcon } from 'phosphor-react-native/src/icons/NotEquals';
 import { PawPrintIcon } from 'phosphor-react-native/src/icons/PawPrint';
 import { QuestionIcon } from 'phosphor-react-native/src/icons/Question';
+import { DotsThreeIcon } from 'phosphor-react-native/src/icons/DotsThree';
+import { FlagIcon } from 'phosphor-react-native/src/icons/Flag';
 import { ShieldCheckIcon } from 'phosphor-react-native/src/icons/ShieldCheck';
 import { WarningCircleIcon } from 'phosphor-react-native/src/icons/WarningCircle';
 import { WifiSlashIcon } from 'phosphor-react-native/src/icons/WifiSlash';
@@ -46,10 +48,13 @@ import {
 	AlertDialogTitle,
 	AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import { ReportAbuse } from '@/components/abuse/report-abuse';
+import { MenuItem } from '@/components/report/slots/slot-c';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
 import { FormField } from '@/components/ui/form-field';
 import { Icon } from '@/components/ui/icon';
+import { Sheet, SheetContent, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from '@/components/ui/sonner';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -419,6 +424,46 @@ function Actions({ match, mine, code }: { match: MatchSuggestion; mine: Mine | u
 	);
 }
 
+/** P11 "Več možnosti": a sheet whose one row, "Prijavi zlorabo", becomes the P10 form for the other report (C11). */
+function OtherMenu({ otherId }: { otherId: string }) {
+	const t = useTranslations('report');
+	const tc = useTranslations('common');
+	const offline = !isOnline(useNetworkState());
+	const [open, setOpen] = React.useState(false);
+	const [abuse, setAbuse] = React.useState(false);
+	const onOpenChange = (next: boolean) => {
+		setOpen(next);
+		if (!next) setAbuse(false);
+	};
+	return (
+		<View className="mt-4 items-end">
+			<Sheet open={open} onOpenChange={onOpenChange}>
+				<SheetTrigger asChild>
+					<Button variant="ghost" size="icon" aria-label={t('more')}>
+						<Icon as={DotsThreeIcon} size={24} />
+					</Button>
+				</SheetTrigger>
+				<SheetContent closeLabel={tc('close')}>
+					{abuse ? (
+						<ReportAbuse
+							target={{ type: 'report', id: otherId }}
+							offline={offline}
+							onClose={() => onOpenChange(false)}
+						/>
+					) : (
+						<>
+							<SheetTitle>{t('more')}</SheetTitle>
+							<View role="menu" aria-label={t('more')} className="-mx-2 gap-1 pt-3">
+								<MenuItem icon={FlagIcon} label={t('more_abuse')} onPress={() => setAbuse(true)} />
+							</View>
+						</>
+					)}
+				</SheetContent>
+			</Sheet>
+		</View>
+	);
+}
+
 function Review({ match, mine, code }: { match: MatchSuggestion; mine: Mine | undefined; code: string }) {
 	const t = useTranslations('matches');
 	const ta = useTranslations('attributes');
@@ -488,6 +533,7 @@ function Review({ match, mine, code }: { match: MatchSuggestion; mine: Mine | un
 						{t('caveat_no_photo')}
 					</Note>
 				)}
+				<OtherMenu otherId={match.other.id} />
 			</ScrollView>
 			<View className="bg-background px-5 pt-3" style={{ paddingBottom: insets.bottom + 12 }}>
 				<Actions match={match} mine={mine} code={code} />

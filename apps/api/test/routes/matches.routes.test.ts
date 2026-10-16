@@ -161,9 +161,20 @@ describe('GET /v1/reports/:code/matches', () => {
 				{ code: 'distance', band: 'lt1' },
 				{ code: 'time', hours_band: 'lt24' },
 			],
-			other: { short_code: found.short_code, type: 'found', species: 'dog', photos: [] },
+			other: { id: found.id, short_code: found.short_code, type: 'found', species: 'dog', photos: [] },
 		});
-		const fields = ['short_code', 'type', 'species', 'breed_codes', 'colours', 'size', 'sex', 'photos', 'event_at'];
+		const fields = [
+			'id',
+			'short_code',
+			'type',
+			'species',
+			'breed_codes',
+			'colours',
+			'size',
+			'sex',
+			'photos',
+			'event_at',
+		];
 		expect(Object.keys(res.body.items[0].other).sort()).toEqual([...fields, 'area'].sort());
 		const raw = JSON.stringify(res.body);
 		for (const secret of [CHIP, 'chip_number', 'location', 'email', 'phone', 'manage', finder.id])

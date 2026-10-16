@@ -17,7 +17,17 @@ export type MatchReason = {
 };
 export type MatchOther = Pick<
 	PublicReport,
-	'short_code' | 'type' | 'species' | 'breed_codes' | 'colours' | 'size' | 'sex' | 'photos' | 'event_at' | 'area'
+	| 'id'
+	| 'short_code'
+	| 'type'
+	| 'species'
+	| 'breed_codes'
+	| 'colours'
+	| 'size'
+	| 'sex'
+	| 'photos'
+	| 'event_at'
+	| 'area'
 >;
 export type MatchSuggestion = {
 	id: Uuid;
