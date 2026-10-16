@@ -1,3 +1,5 @@
+'use client';
+
 import { CheckIcon } from '@phosphor-icons/react/dist/ssr/Check';
 import type * as React from 'react';
 

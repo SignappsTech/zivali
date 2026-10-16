@@ -151,7 +151,12 @@ function useAppliedFilters() {
 		setPlace(next.place);
 		const query = filtersSearch(next);
 		// Next.js syncs useSearchParams with history.replaceState, without a server round trip.
-		window.history.replaceState(null, '', query ? `?${query}` : window.location.pathname);
+		// The chosen place is deliberately not in the URL (privacy), so it is not restored on reload.
+		window.history.replaceState(
+			window.history.state,
+			'',
+			(query ? `?${query}` : window.location.pathname) + window.location.hash
+		);
 	}, []);
 	return [applied, apply] as const;
 }
