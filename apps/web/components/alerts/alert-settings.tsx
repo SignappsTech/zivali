@@ -114,14 +114,18 @@ function Radius({ km, onSave }: { km: number; onSave(km: number): void }) {
 		if (stop !== km) onSave(stop);
 	};
 
-	// React's onChange follows every step; the native change event fires once, where the pointer lets go. Bound again
-	// on each render, so it sees the current `km`.
+	// React's onChange follows every step; the native change event fires once, where the pointer lets go. Bound once;
+	// the ref keeps it on the latest `commit` (and so the current `km`).
+	const latest = React.useRef(commit);
+	React.useEffect(() => {
+		latest.current = commit;
+	});
 	React.useEffect(() => {
 		const input = slider.current!;
-		const onRelease = () => commit(STOPS_KM[Number(input.value)]!);
+		const onRelease = () => latest.current(STOPS_KM[Number(input.value)]!);
 		input.addEventListener('change', onRelease);
 		return () => input.removeEventListener('change', onRelease);
-	});
+	}, []);
 
 	const commitText = () => {
 		if (text === undefined) return;
@@ -222,7 +226,14 @@ function AlertsForm({ me, sub }: { me: Me; sub: AlertSubscription | null }) {
 	const reverse = useReversePlaceQuery(current?.center ?? { lat: 0, lng: 0 }, { skip: !current });
 
 	/** Saves (or with null deletes) the subscription, then the profile's side of the one home area. */
-	const write = async (next: AlertSubscriptionInput | null, profile?: UpdateMeInput) => {
+	// Writes run one after another, so an older reply can never overwrite a newer one.
+	const queue = React.useRef<Promise<unknown>>(Promise.resolve());
+	const write = (next: AlertSubscriptionInput | null, profile?: UpdateMeInput) => {
+		const run = queue.current.then(() => doWrite(next, profile));
+		queue.current = run;
+		return run;
+	};
+	const doWrite = async (next: AlertSubscriptionInput | null, profile?: UpdateMeInput) => {
 		const optIn = next !== null && current === null;
 		try {
 			const saved = next ? await save(next).unwrap() : null;

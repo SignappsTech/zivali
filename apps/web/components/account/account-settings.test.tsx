@@ -10,29 +10,23 @@ import type { Me } from '@zivali/types';
 
 import { AccountSettings } from './account-settings';
 
-// Radix radios measure themselves; jsdom has no ResizeObserver.
-globalThis.ResizeObserver ??= class {
-	observe() {}
-	unobserve() {}
-	disconnect() {}
-} as unknown as typeof ResizeObserver;
-
 const state = vi.hoisted(() => ({
 	me: null as Me | null,
 	gate: 'loading',
-	places: [] as { lat: number; lng: number; label: string }[],
 	updateMe: vi.fn(),
 }));
 vi.mock('@zivali/api/auth', () => ({ useRequireAuth: () => ({ me: state.me, gate: state.gate }) }));
 vi.mock('@zivali/api/me', () => ({ useUpdateMeMutation: () => [state.updateMe, { isLoading: false }] }));
 vi.mock('@zivali/api/geocode', () => ({
-	usePlaceSearch: (q: string) => ({ places: q.length >= 3 ? state.places : [], isFetching: false }),
 	useReversePlaceQuery: () => ({ data: { lat: 46.06, lng: 14.51, label: 'Šiška, Ljubljana' } }),
 }));
 // Language and sign-out are the shell's (tested there).
 vi.mock('@/components/shell/parts', () => ({
 	LanguageSwitch: () => <div>language switch</div>,
 	SignOutButton: (props: React.ComponentProps<'button'>) => <button type="button" {...props} />,
+}));
+vi.mock('@/i18n/navigation', () => ({
+	Link: ({ href, ...props }: React.ComponentProps<'a'>) => <a href={href} {...props} />,
 }));
 vi.mock('@/lib/auth', () => ({ resendConfirmation: vi.fn() }));
 
@@ -90,23 +84,13 @@ describe('AccountSettings', () => {
 		expect(screen.getByLabelText(sl.profile.row_phone).getAttribute('aria-invalid')).toBe('true');
 	});
 
-	it('shows the home area as approximate and saves a new place coarsened, with the radius', async () => {
-		state.places = [{ lat: 46.0569, lng: 14.5058, label: 'Prešernov trg, Ljubljana' }];
-		state.updateMe.mockReturnValue(unwrap({}));
+	it('shows the home area as approximate and links to the alerts page, without editing it here', () => {
 		show(me);
 		expect(screen.getByText(`Šiška, Ljubljana, 5 km (${sl.location.approximate_label})`)).toBeTruthy();
-
-		fireEvent.change(screen.getByLabelText(sl.location.search_label), { target: { value: 'Prešernov' } });
-		fireEvent.click(screen.getByRole('radio', { name: 'Prešernov trg, Ljubljana' }));
-		fireEvent.click(screen.getByRole('button', { name: sl.location.save_area }));
-
-		await vi.waitFor(() => expect(state.updateMe).toHaveBeenCalledOnce());
-		const { home, home_radius_km } = state.updateMe.mock.calls[0]![0];
-		expect(home_radius_km).toBe(5);
-		// 20–30 m away from the picked point (C6), never the point itself.
-		const metres = Math.hypot((home.lat - 46.0569) * 111_320, (home.lng - 14.5058) * 111_320 * Math.cos(0.804));
-		expect(metres).toBeGreaterThan(15);
-		expect(metres).toBeLessThan(35);
+		expect(screen.getByRole('link', { name: sl.alerts.area_change }).getAttribute('href')).toBe('/account/alerts');
+		expect(screen.queryByLabelText(sl.location.search_label)).toBeNull();
+		expect(screen.queryByRole('button', { name: sl.location.save_area })).toBeNull();
+		expect(state.updateMe).not.toHaveBeenCalled();
 	});
 
 	it('offers a new confirmation link while the address is unconfirmed', () => {
