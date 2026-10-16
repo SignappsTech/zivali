@@ -214,3 +214,50 @@ test('EN: at the free limit the list shows the note, and a third pet gets it aga
 	await expect(page).toHaveURL('/en/my-pets/new');
 	await expectNoAxeViolations(page);
 });
+
+// TASK-16.8 (QA): archive, the cat attributes and the CRHŽ question (AC#2, AC#6), scoped by radiogroup name so the
+// Yes/No/Not-sure pills of the two questions never collide.
+test('SL: an owner archives a pet after confirming; it no longer offers a lost report', async ({ page, baseURL }) => {
+	const seen = await fakeApi(page, baseURL!, [structuredClone(fixture)]);
+	await page.goto(`/moje-zivali/${fixture.id}`);
+	await page.getByRole('button', { name: 'Arhiviraj' }).click();
+	const dialog = page.getByRole('alertdialog', { name: 'Arhiviram ta profil?' });
+	await expect(dialog.getByRole('button', { name: 'Prekliči' })).toBeFocused();
+	await dialog.getByRole('button', { name: 'Arhiviraj profil' }).click();
+	await expect(page.getByText('Profil je arhiviran.')).toBeVisible();
+	await expect(page.getByRole('button', { name: 'Arhiviraj', exact: true })).toHaveCount(0);
+	await expect(page.getByRole('link', { name: 'Prijavi izgubljeno žival' })).toHaveCount(0);
+	expect(seen.some((call) => call.method === 'POST' && call.path === `/v1/pets/${fixture.id}/archive`)).toBe(true);
+	await expectNoAxeViolations(page);
+});
+
+test('SL: a cat gets ear tip, the CRHŽ question reminds about the vet, and a dog has no ear tip', async ({
+	page,
+	baseURL,
+}) => {
+	const seen = await fakeApi(page, baseURL!, []);
+	await page.goto('/moje-zivali/nova');
+	const earTip = page.getByRole('radiogroup', { name: 'Ali ima prirezano konico ušesa?' });
+	await page.getByRole('radio', { name: 'Pes' }).click();
+	await expect(earTip).toHaveCount(0);
+	await page.getByRole('radio', { name: 'Mačka' }).click();
+	await page.getByRole('textbox', { name: 'Ime' }).fill('Muri');
+	await earTip.getByRole('radio', { name: 'Da' }).click();
+
+	const crhz = page.getByRole('radiogroup', {
+		name: 'Ali je čip v CRHŽ vpisan z vašo trenutno telefonsko številko?',
+	});
+	await expect(page.getByText('Prosite veterinarja, naj v registru posodobi')).toHaveCount(0);
+	await crhz.getByRole('radio', { name: 'Ne', exact: true }).click();
+	await expect(page.getByText('Prosite veterinarja, naj v registru posodobi')).toBeVisible();
+	await expectNoAxeViolations(page);
+
+	await page.getByRole('button', { name: 'Shrani' }).click();
+	await expect(page).toHaveURL(/\/moje-zivali\/pet-1$/);
+	expect(seen.find((call) => call.method === 'POST' && call.path === '/v1/pets')?.body).toMatchObject({
+		species: 'cat',
+		name: 'Muri',
+		ear_tip: true,
+		chip_registered_crhz: 'no',
+	});
+});
