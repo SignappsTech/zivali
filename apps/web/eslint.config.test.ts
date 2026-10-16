@@ -34,3 +34,41 @@ describe('no @zivali/api hooks on public pages', () => {
 		expect(await restricted('app/[locale]/(public)/shelters/page.tsx', code)).toBe(0);
 	});
 });
+
+// The TASK-90.7 rule: the shell's client islands ship no next-intl client code.
+describe('no next-intl client code in the shell islands', () => {
+	const intl = async (filePath: string, code: string) => {
+		const [result] = await eslint.lintText(code, { filePath });
+		return result.messages.filter((message) => message.ruleId === '@typescript-eslint/no-restricted-imports')
+			.length;
+	};
+	const hook = "import { useTranslations } from 'next-intl';\n\nexport const t = useTranslations;\n";
+
+	it.each([
+		['components/shell/parts.tsx', hook],
+		['app/providers.tsx', "import { usePathname } from '@/i18n/navigation';\n\nexport const p = usePathname;\n"],
+		[
+			'components/consent/consent-banner.tsx',
+			"import { Link } from '@/i18n/navigation';\n\nexport const L = Link;\n",
+		],
+	])('flags %s', async (file, code) => {
+		expect(await intl(file, code)).toBe(1);
+	});
+
+	it('allows type imports there, and next-intl in the server shell and the app', async () => {
+		const type = "import type { Locale } from 'next-intl';\n\nexport const locale: Locale = 'sl';\n";
+		expect(await intl('components/shell/parts.tsx', type)).toBe(0);
+		expect(await intl('components/shell/header.tsx', hook)).toBe(0);
+		expect(await intl('components/account/account-settings.tsx', hook)).toBe(0);
+	});
+
+	it("flags next-intl's createNavigation anywhere, its types stay usable", async () => {
+		const runtime =
+			"import { createNavigation } from 'next-intl/navigation';\n\nexport const n = createNavigation;\n";
+		const types =
+			"import type { createNavigation } from 'next-intl/navigation';\n\nexport type N = typeof createNavigation;\n";
+		expect(await intl('lib/seo.ts', runtime)).toBe(1);
+		expect(await intl('components/shell/parts.tsx', runtime)).toBe(1);
+		expect(await intl('i18n/navigation.ts', types)).toBe(0);
+	});
+});

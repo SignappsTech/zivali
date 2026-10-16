@@ -24,7 +24,8 @@ import { Logo, LogoMark, ringClass } from '@/components/shell/page';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogClose, DialogContent, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Toaster } from '@/components/ui/sonner';
-import { getPathname, Link, usePathname, useRouter } from '@/i18n/navigation';
+import { usePathname, useRouter } from '@/i18n/client-navigation';
+import { getPathname, Link } from '@/i18n/navigation';
 import type { Env } from '@/lib/env';
 import { cn } from '@/lib/utils';
 

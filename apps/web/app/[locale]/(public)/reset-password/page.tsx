@@ -24,14 +24,14 @@ export default async function ResetPasswordPage({ params, searchParams }: PagePr
 	const { auth } = await getMessages({ locale: (await params).locale as Locale });
 
 	return (
-		<AuthMain>
-			<PageMessages messages={{ auth }}>
+		<PageMessages messages={{ auth }}>
+			<AuthMain>
 				{email === null ? (
 					<ForgotForm email={one(query.email)} expired={one(query.link) === 'expired'} />
 				) : (
 					<NewPasswordForm email={email} />
 				)}
-			</PageMessages>
-		</AuthMain>
+			</AuthMain>
+		</PageMessages>
 	);
 }
