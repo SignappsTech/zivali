@@ -296,3 +296,33 @@ describe('PetFields species rules', () => {
 		expect(onSave.mock.calls[0]![0]).toMatchObject({ species: 'cat', breed_codes: [] });
 	});
 });
+
+describe('PetFields report variant (P6 lost flow)', () => {
+	function Report({ colourError }: { colourError?: string }) {
+		const form = useForm<PetFieldValues>({ defaultValues: emptyPetFields });
+		return (
+			<NextIntlClientProvider locale="sl" messages={sl} timeZone={timeZone}>
+				<FormProvider {...form}>
+					<PetFields variant="report" colourError={colourError} />
+				</FormProvider>
+			</NextIntlClientProvider>
+		);
+	}
+
+	it('shows only what a report carries: no birth year, CRHŽ question or private notes', () => {
+		render(<Report />);
+		expect(screen.queryByText('Leto rojstva')).toBeNull();
+		expect(screen.queryByText(sl.pets.crhz_label)).toBeNull();
+		expect(screen.queryByRole('textbox', { name: 'Opombe' })).toBeNull();
+		expect(screen.getByRole('textbox', { name: 'Številka čipa' })).toBeTruthy();
+		expect(screen.getByText(sl.pets.chip_register_note)).toBeTruthy();
+		expect(screen.getByRole('textbox', { name: 'Ovratnica' })).toBeTruthy();
+	});
+
+	it('ties the colour error to the colour group', () => {
+		render(<Report colourError="Izberite vsaj eno barvo." />);
+		const error = screen.getByRole('alert');
+		expect(error.textContent).toBe('Izberite vsaj eno barvo.');
+		expect(screen.getByRole('toolbar', { name: 'Barva' }).getAttribute('aria-describedby')).toBe(error.id);
+	});
+});

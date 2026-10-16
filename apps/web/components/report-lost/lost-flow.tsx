@@ -132,14 +132,9 @@ function PetThumb({ pet }: { pet: Pet }) {
 	const url = pet.photos[0]?.thumb_url;
 	const Species = pet.species === 'cat' ? CatIcon : DogIcon;
 	return url ? (
+		// The row's title names the pet, so the photo is decorative here (alt text would say the name twice).
 		// eslint-disable-next-line @next/next/no-img-element -- a short-lived presigned thumbnail
-		<img
-			src={url}
-			alt={pet.name}
-			width={48}
-			height={48}
-			className="size-12 shrink-0 rounded-xl bg-muted object-cover"
-		/>
+		<img src={url} alt="" width={48} height={48} className="size-12 shrink-0 rounded-xl bg-muted object-cover" />
 	) : (
 		<span className="grid size-12 shrink-0 place-items-center rounded-xl bg-muted text-muted-foreground">
 			<Species weight="bold" aria-hidden="true" className="size-6" />
