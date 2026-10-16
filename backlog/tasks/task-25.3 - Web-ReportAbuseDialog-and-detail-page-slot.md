@@ -1,11 +1,11 @@
 ---
 id: TASK-25.3
 title: Web ReportAbuseDialog and detail-page slot
-status: To Do
+status: In Progress
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:13'
-updated_date: '2026-10-14 22:42'
+updated_date: '2026-10-16 04:47'
 labels:
   - fe
   - 'est:S'
