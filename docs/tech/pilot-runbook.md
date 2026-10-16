@@ -11,8 +11,8 @@ The current staging stack becomes the pilot: the Compose project `zivali-staging
 | Hostname                 | Serves                                                            | Where it is set                                                     |
 | ------------------------ | ----------------------------------------------------------------- | ------------------------------------------------------------------- |
 | `najdimo.si`             | web (`staging-web`)                                               | `/opt/zivali/edge.env` `STAGING_WEB_HOST`                           |
-| `www.najdimo.si`         | 301 to `https://najdimo.si`                                       | Cloudflare Redirect Rule                                            |
-| `staging.najdimo.si`     | 301 to `https://najdimo.si` (same path and query)                 | Cloudflare Redirect Rule (the origin keeps serving it, no gap)      |
+| `www.najdimo.si`         | 301 to `https://najdimo.si` (same path and query)                 | nginx: `edge.env` `STAGING_ALIAS_HOSTS`                             |
+| `staging.najdimo.si`     | 301 to `https://najdimo.si` (same path and query)                 | nginx: `edge.env` `STAGING_ALIAS_HOSTS`                             |
 | `api.najdimo.si`         | API (`staging-api`)                                               | `edge.env` `STAGING_API_HOST=api.najdimo.si api-staging.najdimo.si` |
 | `api-staging.najdimo.si` | the same API: the Stripe test webhook and the Android preview app | the same line (nginx takes several names)                           |
 | `media.najdimo.si`       | public photos (R2 custom domain on `zivali-media`), unchanged     | Cloudflare R2                                                       |
@@ -21,13 +21,14 @@ The current staging stack becomes the pilot: the Compose project `zivali-staging
 
 ```
 CERT_NAME=najdimo.si
-STAGING_WEB_HOST=najdimo.si staging.najdimo.si
+STAGING_WEB_HOST=najdimo.si
+STAGING_ALIAS_HOSTS=www.najdimo.si staging.najdimo.si
 STAGING_API_HOST=api.najdimo.si api-staging.najdimo.si
 PRODUCTION_WEB_HOST=production.invalid
 PRODUCTION_API_HOST=api.production.invalid
 ```
 
-The certificate `najdimo.si` already covers `najdimo.si`, `www`, `api`, `staging` and `api-staging` (deploy/README.md §2). DNS: A (and AAAA) records for `@`, `www` and `api` pointing at the VPS, **proxied**, next to the existing `staging` and `api-staging`; the redirect rules only fire on proxied names. nginx is re-rendered on every deploy; by hand: `docker compose -p zivali-edge --env-file staging/.env --env-file staging/release.env up -d nginx` (a changed `edge.env` recreates it).
+The redirects are done in nginx, not with Cloudflare Redirect Rules. An nginx server block, added by the lead's change to `deploy/nginx/templates/zivali.conf.template`, answers the names in `STAGING_ALIAS_HOSTS` with a 301 to `najdimo.si`, keeping the path and query. The certificate `najdimo.si` already covers `najdimo.si`, `www`, `api`, `staging` and `api-staging` (deploy/README.md §2). DNS: A (and AAAA) records for `@`, `www` and `api` pointing at the VPS, **proxied**, next to the existing `staging` and `api-staging`. nginx is re-rendered on every deploy. By hand: `docker compose -p zivali-edge --env-file staging/.env --env-file staging/release.env up -d nginx` (a changed `edge.env` recreates it).
 
 ## 2. Environment variables (pilot values; names only here)
 
@@ -109,9 +110,9 @@ Hard-coded values found: house ad links and the support address point at the fin
 1. Owner items done (section 10, items 1 to 6); the copy and legal texts merged.
 2. This branch merged: it deploys to the current staging host by itself. In `staging/web.env` set `SEARCH_INDEXING=false`; recreate the web container (section 2); check on `staging.najdimo.si` that the noindex header is there and the asks still show.
 3. Supabase Auth (project `najdimo`): Site URL `https://najdimo.si`; Redirect URLs add `https://najdimo.si/**` (keep `zivali://**`; `https://staging.najdimo.si/**` until the redirect is live).
-4. Cloudflare DNS: `@`, `www`, `api` proxied to the VPS. `edge.env` as in section 1. `staging/.env`: `API_URL`, `APP_URL`, `WEB_ORIGINS` (both origins for now).
+4. Cloudflare DNS: `@`, `www`, `api` proxied to the VPS. `edge.env` as in section 1, except that `staging.najdimo.si` stays served for now: set `STAGING_WEB_HOST=najdimo.si staging.najdimo.si` and `STAGING_ALIAS_HOSTS=www.najdimo.si`. `staging/.env`: `API_URL`, `APP_URL`, `WEB_ORIGINS` (both origins for now).
 5. GitHub environment `staging`: `WEB_HOST=najdimo.si`, `API_HOST=api.najdimo.si`; re-run the latest `staging` deploy. Its smoke checks must pass on `najdimo.si`.
-6. Cloudflare Redirect Rules: `staging.najdimo.si` and `www.najdimo.si` to `https://najdimo.si` (301, keep path and query). Then `WEB_ORIGINS=https://najdimo.si` and the staging redirect URL out of Supabase.
+6. The staging redirect: move `staging.najdimo.si` from `STAGING_WEB_HOST` to `STAGING_ALIAS_HOSTS` (the final values of section 1), then recreate nginx. Then set `WEB_ORIGINS=https://najdimo.si` and remove the staging redirect URL from Supabase.
 7. Uptime monitors on `https://api.najdimo.si/v1/health/ready` and `https://najdimo.si/` (deploy/README.md §9); the GA4 web stream URL set to `https://najdimo.si`.
 8. Manual smoke test (section 7); results in the TASK-76.1 notes.
 9. Owner approves go-live; pilot users are invited. Error tracking (Sentry, TASK-70) is not wired yet: until then container logs (deploy/README.md §9) and the uptime alerts are the monitoring.
@@ -124,7 +125,7 @@ The pilot's data (Supabase project `najdimo`, buckets `zivali-*`) becomes produc
 2. `/opt/zivali/production/.env` and `web.env`: the pilot's current `staging/.env` and `web.env` with `APP_ENV=production` (keep the pilot's `RATE_SALT`, `IDEMPOTENCY_KEY` and `FUZZ_SECRET`: blur circles stay consistent). Payments: `PAYMENTS_PROVIDER=off` until the switch to live (section 3; test payments do not belong in production), or left unset (off is its production default). `SEARCH_INDEXING=true` only at the public launch.
 3. `/opt/zivali/staging/.env` and `web.env` rewritten for the new resources (new secrets, `staging.najdimo.si`, `api-staging.najdimo.si`, `media-staging.najdimo.si`), Stripe test mode and `FISCAL_PROVIDER=mock` as on the pilot.
 4. GitHub: environment `production` (required reviewers, deployment tags `v*`) with the pilot's values and `WEB_HOST=najdimo.si`, `API_HOST=api.najdimo.si`; environment `staging` back to `staging.najdimo.si`, `api-staging.najdimo.si` and the new project's keys.
-5. Order: remove the `staging.najdimo.si` redirect rule; tag `vX.Y.Z` and approve the production deploy (migrations are a no-op, the seed keeps admin edits); switch `edge.env` to `STAGING_WEB_HOST=staging.najdimo.si`, `STAGING_API_HOST=api-staging.najdimo.si`, `PRODUCTION_WEB_HOST=najdimo.si`, `PRODUCTION_API_HOST=api.najdimo.si` and recreate nginx; deploy staging on the new resources; smoke both. Backups then go to `db/production/` (and the new staging bucket).
+5. Order: tag `vX.Y.Z` and approve the production deploy (migrations are a no-op, the seed keeps admin edits). Switch `edge.env` to `STAGING_WEB_HOST=staging.najdimo.si`, `STAGING_API_HOST=api-staging.najdimo.si`, `PRODUCTION_WEB_HOST=najdimo.si`, `PRODUCTION_API_HOST=api.najdimo.si`. Take `www.najdimo.si` and `staging.najdimo.si` out of `STAGING_ALIAS_HOSTS`: from then on the production block redirects `www`. Recreate nginx; deploy staging on the new resources; smoke both. Backups then go to `db/production/` (and the new staging bucket).
 6. EAS `production` profile env (Supabase URL and key, API URL), store builds (TASK-75.1).
 
 ## 10. Owner actions (all hosted; nothing here is done by the team)
@@ -136,7 +137,7 @@ The pilot's data (Supabase project `najdimo`, buckets `zivali-*`) becomes produc
 5. Supabase: Pro plan or a written acceptance of the Auth backup risk (section 6); Auth URLs (section 8, step 3); Brevo SMTP and the `email_sent` rate limit (supabase/README.md).
 6. Brevo: sender domain authenticated (DKIM, DMARC), `EMAIL_FROM` and the API key in `staging/.env`.
 7. Stripe test mode: the sandbox webhook endpoint and secret in place (section 3); decide whether pilot users see the test-mode asks.
-8. Cloudflare: DNS `@`, `www`, `api` proxied; the two Redirect Rules; optional media noindex rule.
+8. Cloudflare: DNS `@`, `www`, `api` proxied; optional media noindex rule. The redirects themselves come from nginx (`STAGING_ALIAS_HOSTS`).
 9. VPS: `edge.env` (section 1), `staging/.env` and `web.env` values (section 2), containers recreated.
 10. GitHub `staging` environment variables `WEB_HOST`, `API_HOST` (and the GA4 and Turnstile variables), then a deploy.
 11. Admin console: house ads only, no sponsor ads.
