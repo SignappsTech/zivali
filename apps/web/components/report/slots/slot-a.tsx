@@ -1,4 +1,4 @@
-import { OwnerActions } from '@/components/report/owner-actions';
+import { OwnerActions } from '@/components/report/slots/owner-lazy';
 import type { ReportSlotProps } from '@/components/report/slots/types';
 
 /**

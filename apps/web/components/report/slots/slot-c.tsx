@@ -1,6 +1,6 @@
 import { useTranslations } from 'next-intl';
 
-import { OwnerMenu } from '@/components/report/owner-actions';
+import { OwnerMenu } from '@/components/report/slots/owner-lazy';
 import { MoreMenu } from '@/components/report/slots/more-menu';
 import type { ReportSlotProps } from '@/components/report/slots/types';
 

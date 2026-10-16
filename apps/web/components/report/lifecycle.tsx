@@ -11,11 +11,11 @@ import { useTranslations } from 'next-intl';
 import * as React from 'react';
 import { toast } from 'sonner';
 
-import { type EventParams, track } from '@zivali/analytics';
 import { useTransitionReportMutation } from '@zivali/api/reports';
 import type { QueryError } from '@zivali/api/rtk';
 import type { CloseReason, ReportTransitionInput } from '@zivali/types';
-import { useErrorText } from '@/components/pets/pet-list';
+import { useErrorText } from '@/components/auth/parts';
+import { trackReunited } from '@/components/report/lifecycle-helpers';
 import type { DetailReport } from '@/components/report/slots/types';
 import { noteClass } from '@/components/shelters/classes';
 import {
@@ -36,52 +36,6 @@ import { cn } from '@/lib/utils';
 // P14 lifecycle on web, as on mobile (apps/mobile/components/report/lifecycle.tsx): "Žival je spet doma" (the owner's
 // confirm dialog or the finder's alert dialog), "Zaključi iskanje" with a reason, "Ponovno odpri" within the reopen
 // window and "Nadaljuj iskanje" / "Podaljšaj za 30 dni", all through POST /v1/reports/:code/transitions (C4).
-
-const DAY = 86_400_000;
-/** C4 `lifecycle.reopen_days` (default 7). Past it the API answers GONE, which the reopen action shows. */
-export const REOPEN_DAYS = 7;
-/** Found and sighted reports expire after 30 idle days (C4); the note shows from day 25 (P7). */
-const EXPIRY_DAYS = 30;
-const NOTICE_DAYS = 5;
-/** Lost reports: the first reminder is at day 7 (C4); "Nadaljuj iskanje" resets the idle time. */
-const REMINDER_DAYS = 7;
-
-/** A manager's closed or reunited report, still within the reopen window. A moderation removal stays closed. */
-export function canReopen(report: DetailReport, now: number): boolean {
-	const ended =
-		report.status === 'closed' ? report.closed_at : report.status === 'reunited' ? report.reunited_at : null;
-	return Boolean(
-		report.is_mine && report.close_reason !== 'removed' && ended && now - Date.parse(ended) < REOPEN_DAYS * DAY
-	);
-}
-
-/**
- * The open search's due notice, if any: a lost report idle for 7 days gets the reminder ("Še iščete?", with the days
- * since it was posted); a found or sighted one the expiry note from day 25 (with the days left).
- */
-export function expiryNotice(
-	report: DetailReport,
-	now: number
-): { kind: 'reminder' | 'expiry'; days: number } | undefined {
-	if (!report.is_mine || (report.status !== 'open' && report.status !== 'matched')) return undefined;
-	const idle = Math.floor((now - Date.parse(report.last_owner_update_at ?? report.created_at)) / DAY);
-	if (report.type === 'lost')
-		return idle >= REMINDER_DAYS
-			? { kind: 'reminder', days: Math.floor((now - Date.parse(report.created_at)) / DAY) }
-			: undefined;
-	const left = EXPIRY_DAYS - idle;
-	return left >= 1 && left <= NOTICE_DAYS ? { kind: 'expiry', days: left } : undefined;
-}
-
-/** C12 `reunited`: species, region and municipality only. A no-op without consent; nothing for a place abroad. */
-function trackReunited({ species, region_slug, municipality_slug }: DetailReport) {
-	if (region_slug && municipality_slug)
-		track('reunited', {
-			species,
-			region: region_slug as EventParams['reunited']['region'],
-			municipality: municipality_slug,
-		});
-}
 
 const isConflict = (error: unknown) => (error as Partial<QueryError> | undefined)?.data?.code === 'CONFLICT';
 
@@ -107,7 +61,7 @@ export function useTransition(report: Pick<DetailReport, 'short_code'>) {
 	return { run, busy: isLoading, error, reset: () => setError(undefined) };
 }
 
-/** A one-tap transition (reopen, extend): a toast when it worked; GONE past the window or another failure: the error. */
+/** A one-tap transition (reopen, extend; `go` resolves to whether it worked): a toast when it worked; GONE past the window or another failure: the error. */
 export function useQuickTransition(report: Pick<DetailReport, 'short_code'>, action: 'reopen' | 'extend') {
 	const tl = useTranslations('lifecycle');
 	const tc = useTranslations('common');
@@ -117,6 +71,7 @@ export function useQuickTransition(report: Pick<DetailReport, 'short_code'>, act
 		const failure = await run({ action });
 		if (failure) toast.error(errorText(failure));
 		else toast.success(action === 'reopen' ? tl('reopened_toast') : tc('toast_saved'));
+		return !failure;
 	};
 	return { go, busy };
 }
@@ -182,7 +137,32 @@ function DialogButtons({
 	);
 }
 
-type DialogProps = { report: DetailReport; open: boolean; onOpenChange: (open: boolean) => void };
+type DialogProps = {
+	report: DetailReport;
+	open: boolean;
+	onOpenChange: (open: boolean) => void;
+	/** Where focus goes on close when the opener is gone or none (a deep link): the page's heading. */
+	returnFocus?: () => HTMLElement | null | undefined;
+};
+
+/**
+ * These dialogs open from state, not from a Radix trigger, so Radix has nothing to refocus: the opener is what had
+ * focus as the dialog opened (the button, or "Več možnosti"), and focus goes back to it on every way out.
+ */
+function useReturnFocus(returnFocus: DialogProps['returnFocus']) {
+	const opener = React.useRef<HTMLElement | null>(null);
+	return {
+		onOpenAutoFocus: () => {
+			opener.current = document.activeElement as HTMLElement | null;
+		},
+		onCloseAutoFocus: (event: Event) => {
+			event.preventDefault();
+			const back =
+				opener.current?.isConnected && opener.current !== document.body ? opener.current : returnFocus?.();
+			back?.focus();
+		},
+	};
+}
 
 /** P14 web h2 in a content dialog (W2): display 24/30, 30 from lg. */
 const titleClass = 'pr-10 text-2xl leading-[30px] font-bold tracking-[-0.015em] lg:text-3xl lg:leading-9';
@@ -192,12 +172,13 @@ const titleClass = 'pr-10 text-2xl leading-[30px] font-bold tracking-[-0.015em] 
  * confirms in the alert dialog (M6, focus on "Še ne") and gets the short thank-you there. Either fires `reunited`
  * (with consent only).
  */
-export function HomeAgain({ report, open, onOpenChange }: DialogProps) {
+export function HomeAgain({ report, open, onOpenChange, returnFocus }: DialogProps) {
 	const tl = useTranslations('lifecycle');
 	const tc = useTranslations('common');
 	const router = useRouter();
 	const errorText = useErrorText();
 	const { run, busy, error, reset } = useTransition(report);
+	const focus = useReturnFocus(returnFocus);
 	const setOpen = (next: boolean) => {
 		onOpenChange(next);
 		if (!next) reset();
@@ -213,7 +194,7 @@ export function HomeAgain({ report, open, onOpenChange }: DialogProps) {
 	if (report.manager_role !== 'owner')
 		return (
 			<AlertDialog open={open} onOpenChange={setOpen}>
-				<AlertDialogContent>
+				<AlertDialogContent {...focus}>
 					<AlertDialogTitle>{tl('finder_confirm_title')}</AlertDialogTitle>
 					<AlertDialogDescription>{tl('finder_confirm_body')}</AlertDialogDescription>
 					<AlertDialogFooter>
@@ -236,7 +217,7 @@ export function HomeAgain({ report, open, onOpenChange }: DialogProps) {
 
 	return (
 		<Dialog open={open} onOpenChange={setOpen}>
-			<DialogContent closeLabel={tc('close')}>
+			<DialogContent closeLabel={tc('close')} {...focus}>
 				<DialogTitle className={titleClass}>
 					{report.name ? tl('confirm_title_named', { name: report.name }) : tl('confirm_title')}
 				</DialogTitle>
@@ -280,10 +261,11 @@ const REASONS: { key: 'home' | 'stopped' | 'mistake' | 'other'; reason: CloseRea
  * keeps it open. The mockup's optional note is left out: the transition takes no note (C4), and typed text must not
  * be dropped silently.
  */
-export function CloseSearch({ report, open, onOpenChange }: DialogProps) {
+export function CloseSearch({ report, open, onOpenChange, returnFocus }: DialogProps) {
 	const tl = useTranslations('lifecycle');
 	const tc = useTranslations('common');
 	const { run, busy, error, reset } = useTransition(report);
+	const focus = useReturnFocus(returnFocus);
 	const [choice, setChoice] = React.useState<string>();
 	const labelId = React.useId();
 	const setOpen = (next: boolean) => {
@@ -302,7 +284,7 @@ export function CloseSearch({ report, open, onOpenChange }: DialogProps) {
 
 	return (
 		<Dialog open={open} onOpenChange={setOpen}>
-			<DialogContent closeLabel={tc('close')} className="max-w-[560px] lg:p-7">
+			<DialogContent closeLabel={tc('close')} className="max-w-[560px] lg:p-7" {...focus}>
 				<DialogTitle className={titleClass}>{tl('close_title')}</DialogTitle>
 				<DialogMessage error={error}>
 					<DialogDescription className="mt-3 text-lg leading-7">{tl('close_body')}</DialogDescription>

@@ -18,7 +18,7 @@ import { useResendManageLinkMutation } from '@zivali/api/manage';
 import { useGetReportQuery, useTransitionReportMutation } from '@zivali/api/reports';
 import type { ReportOwnerView, ReportTransitionAction } from '@zivali/types';
 import { AuthHeading, AuthNote, errorCode, Spot, useErrorText } from '@/components/auth/parts';
-import { canReopen as reopenable, expiryNotice } from '@/components/report/lifecycle';
+import { canReopen as reopenable, expiryNotice, trackReunited } from '@/components/report/lifecycle-helpers';
 import { h1Class, InlineError, PageSkeleton, ringClass } from '@/components/shell/page';
 import {
 	AlertDialog,
@@ -75,7 +75,10 @@ export function ManageView({ code }: { code: string }) {
 		try {
 			// C4: a manager closes with a reason; the finder's page has no choice (P7/P14), so the neutral `other`.
 			await transition({ code, body: action === 'close' ? { action, reason: 'other' } : { action } }).unwrap();
-			if (action === 'mark_reunited') setThanked(true);
+			if (action === 'mark_reunited') {
+				trackReunited(data);
+				setThanked(true);
+			}
 			if (action === 'extend') {
 				// The note and its button are gone: say so and keep focus on the page.
 				toast.success(tCommon('toast_saved'));

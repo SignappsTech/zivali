@@ -4,6 +4,7 @@ import type * as React from 'react';
 import { Provider } from 'react-redux';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
+import { getMockEvents, initAnalytics, resetMockEvents, setConsent } from '@zivali/analytics';
 import { conversations } from '@zivali/api/__fixtures__/chat';
 import { ownerReport } from '@zivali/api/__fixtures__/reports';
 import { ApiError } from '@zivali/api/client';
@@ -151,7 +152,10 @@ describe('ManagePage (P7, C7)', () => {
 		expect(auth.ensureSession).toHaveBeenCalledTimes(3);
 	});
 
-	it('closes the report, and marks the animal home after the P14 confirmation', async () => {
+	it('closes the report, and marks the animal home after the P14 confirmation (`reunited`, with consent)', async () => {
+		initAnalytics();
+		setConsent({ analytics: true });
+		resetMockEvents();
 		open('good');
 		const api = show(<ManagePage />);
 		fireEvent.click(await screen.findByRole('button', { name: 'Zaključi prijavo' }));
@@ -162,6 +166,9 @@ describe('ManagePage (P7, C7)', () => {
 		fireEvent.click(within(dialog).getByRole('button', { name: sl.lifecycle.finder_confirm_yes }));
 		expect(await screen.findByRole('heading', { level: 1, name: sl.lifecycle.finder_thanks_title })).toBeTruthy();
 		expect(actions(api)).toEqual([{ action: 'close', reason: 'other' }, { action: 'mark_reunited' }]);
+		expect(getMockEvents()).toEqual([
+			{ name: 'reunited', params: { species: 'dog', region: 'osrednjeslovenska', municipality: 'ljubljana' } },
+		]);
 	});
 
 	it('moves focus to the closed note after close and to the h1 after reopen', async () => {

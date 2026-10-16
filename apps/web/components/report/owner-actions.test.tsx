@@ -9,7 +9,8 @@ import { createApiStore } from '@zivali/api/rtk';
 import sl from '@zivali/i18n/dist/sl.json';
 import type { DetailReport } from '@/components/report/slots/types';
 
-import { flash, OwnerActions, OwnerMenu } from './owner-actions';
+import { flash } from './lifecycle-helpers';
+import { OwnerActions, OwnerMenu } from './owner-actions';
 
 // Radix radios measure themselves; jsdom has no ResizeObserver.
 globalThis.ResizeObserver ??= class {
@@ -269,5 +270,40 @@ describe('OwnerActions (P9 slot A for managers, P14)', () => {
 		expect(screen.getByText(/^Prijava bo potekla čez 3 dni\./)).toBeTruthy();
 		fireEvent.click(button('Podaljšaj za 30 dni'));
 		await waitFor(() => expect(sent(api)).toEqual([{ action: 'extend' }]));
+	});
+});
+
+describe('focus returns to the opener (no Radix trigger)', () => {
+	it('"Žival je spet doma" (owner): Escape and "Še ne" focus the button', async () => {
+		show(lost);
+		const opener = button('Žival je spet doma');
+		opener.focus();
+		fireEvent.click(opener);
+		const dialog = await screen.findByRole('dialog');
+		fireEvent.keyDown(dialog, { key: 'Escape' });
+		await waitFor(() => expect(document.activeElement).toBe(opener));
+
+		opener.focus();
+		fireEvent.click(opener);
+		fireEvent.click(
+			within(await screen.findByRole('dialog')).getByRole('button', { name: sl.lifecycle.confirm_no })
+		);
+		await waitFor(() => expect(document.activeElement).toBe(opener));
+	});
+
+	it('"Žival je spet doma" (finder): "Še ne" focuses the button', async () => {
+		show({ ...ownerReport, short_code: 'Rex12345', manager_role: 'finder' });
+		const opener = button('Žival je spet doma');
+		opener.focus();
+		fireEvent.click(opener);
+		const dialog = screen.getByRole('alertdialog', { name: sl.lifecycle.finder_confirm_title });
+		fireEvent.click(within(dialog).getByRole('button', { name: sl.lifecycle.finder_confirm_no }));
+		await waitFor(() => expect(document.activeElement).toBe(opener));
+	});
+
+	it('"Zaključi iskanje": "Pusti odprto" focuses "Več možnosti"', async () => {
+		show(lost);
+		fireEvent.click(within(await openClose()).getByRole('button', { name: 'Pusti odprto' }));
+		await waitFor(() => expect(document.activeElement).toBe(button(sl.report.more)));
 	});
 });

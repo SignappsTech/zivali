@@ -10,7 +10,8 @@ import { useTranslations } from 'next-intl';
 import * as React from 'react';
 import { toast } from 'sonner';
 
-import { canReopen, CloseSearch, expiryNotice, HomeAgain, useQuickTransition } from '@/components/report/lifecycle';
+import { CloseSearch, HomeAgain, useQuickTransition } from '@/components/report/lifecycle';
+import { canReopen, expiryNotice, takeFlash } from '@/components/report/lifecycle-helpers';
 import { OverflowMenu } from '@/components/report/slots/more-menu';
 import type { DetailReport } from '@/components/report/slots/types';
 import { noteClass } from '@/components/shelters/classes';
@@ -19,16 +20,6 @@ import { Button } from '@/components/ui/button';
 import { Toaster } from '@/components/ui/sonner';
 import { Link } from '@/i18n/navigation';
 import { cn } from '@/lib/utils';
-
-let pending: string | undefined;
-
-/**
- * A toast for the next owner view to show: the edit page leaves it before it goes back to the report, whose toaster
- * mounts only then (the two pages are in different layouts).
- */
-export function flash(message: string) {
-	pending = message;
-}
 
 type Props = { report: DetailReport; className?: string };
 
@@ -57,9 +48,8 @@ function Actions({ report, className }: Props) {
 	const ref = React.useRef<HTMLDivElement>(null);
 
 	React.useEffect(() => {
-		if (!pending) return;
-		toast.success(pending);
-		pending = undefined;
+		const message = takeFlash();
+		if (message) toast.success(message);
 	}, []);
 	// After a transition the pressed control is gone: focus moves to what replaced it.
 	const state = `${report.status}|${report.last_owner_update_at}`;

@@ -13,7 +13,7 @@ import type { QueryError } from '@zivali/api/rtk';
 import type { UpdateReportInput } from '@zivali/types';
 import { containsContactData } from '@zivali/validation/text';
 import { backLinkClass, useErrorText } from '@/components/pets/pet-list';
-import { flash } from '@/components/report/owner-actions';
+import { flash } from '@/components/report/lifecycle-helpers';
 import type { DetailReport } from '@/components/report/slots/types';
 import { noteClass } from '@/components/shelters/classes';
 import { h1Class } from '@/components/shell/page';

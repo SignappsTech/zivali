@@ -27,7 +27,7 @@ vi.mock('next/navigation', async (actual) => ({
 }));
 // The report page shows the toast the form leaves (owner-actions.test.tsx).
 const flash = vi.hoisted(() => vi.fn());
-vi.mock('./owner-actions', () => ({ flash }));
+vi.mock('./lifecycle-helpers', () => ({ flash }));
 
 const lost: DetailReport = {
 	...ownerReport,

@@ -42,8 +42,8 @@ vi.mock('@/components/map/map-view', () => ({
 		</div>
 	),
 }));
-// The owner actions (slots A and C) are client islands with their own tests (components/report/owner-actions.test.tsx).
-vi.mock('@/components/report/owner-actions', () => ({
+// The owner actions (slots A and C) are client islands with their own tests (components/report/owner-actions.test.tsx), loaded lazily by slots/owner-lazy.
+vi.mock('@/components/report/slots/owner-lazy', () => ({
 	OwnerActions: ({ report }: { report: DetailReport }) => (
 		<div data-testid="owner-actions" data-status={report.status} />
 	),

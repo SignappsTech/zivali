@@ -98,15 +98,34 @@ describe('MyReports (P8 "Moje prijave")', () => {
 	});
 
 	it.each(['keep', 'extend'] as const)(
-		'?action=%s keeps the search open once and drops the query',
+		'?action=%s shows the reminder and extends only when "Nadaljuj iskanje" is pressed',
 		async (action) => {
 			const api = show({}, { code: 'Rex12345', action });
 
+			const keep = await screen.findByRole('button', { name: sl.lifecycle.reminder_keep });
+			expect(screen.getByText(sl.lifecycle.reminder_title)).toBeTruthy();
+			// Opening the link changes nothing.
+			await new Promise((resolve) => setTimeout(resolve, 20));
+			expect(sent(api)).toEqual([]);
+			expect(nav.replace).not.toHaveBeenCalled();
+
+			fireEvent.click(keep);
 			await waitFor(() => expect(sent(api)).toEqual([{ action: 'extend' }]));
 			await waitFor(() => expect(toast.success).toHaveBeenCalledWith(sl.common.toast_saved));
 			expect(nav.replace).toHaveBeenCalledWith('/moje-prijave');
+			expect(document.activeElement).toBe(screen.getByRole('heading', { level: 1 }));
 		}
 	);
+
+	it('a found report gets "Podaljšaj za 30 dni" on the same terms', async () => {
+		const api = show(
+			{ 'GET /v1/reports/:code': { ...rex, type: 'found' } },
+			{ code: 'Rex12345', action: 'extend' }
+		);
+
+		fireEvent.click(await screen.findByRole('button', { name: sl.report_found.extend }));
+		await waitFor(() => expect(sent(api)).toEqual([{ action: 'extend' }]));
+	});
 
 	it('?action=close opens the reason dialog; "Pusti odprto" drops the query', async () => {
 		const api = show({}, { code: 'Rex12345', action: 'close' });
@@ -115,6 +134,8 @@ describe('MyReports (P8 "Moje prijave")', () => {
 		fireEvent.click(within(dialog).getByRole('button', { name: 'Pusti odprto' }));
 		expect(nav.replace).toHaveBeenCalledWith('/moje-prijave');
 		expect(sent(api)).toEqual([]);
+		// The dialog has no trigger: focus goes to the h1, not to the body.
+		await waitFor(() => expect(document.activeElement).toBe(screen.getByRole('heading', { level: 1 })));
 	});
 
 	it('an action on a report that has ended says it is already closed', async () => {

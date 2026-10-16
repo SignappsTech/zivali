@@ -1,6 +1,7 @@
 'use client';
 
 import { ClipboardTextIcon } from '@phosphor-icons/react/dist/ssr/ClipboardText';
+import { ClockIcon } from '@phosphor-icons/react/dist/ssr/Clock';
 import { PawPrintIcon } from '@phosphor-icons/react/dist/ssr/PawPrint';
 import { useLocale, useTranslations } from 'next-intl';
 import * as React from 'react';
@@ -11,8 +12,10 @@ import { useGetReportQuery, useListMyReportsInfiniteQuery } from '@zivali/api/re
 import { formatDayMonth } from '@zivali/i18n/format';
 import type { ReportOwnerView } from '@zivali/types';
 import { CloseSearch, useQuickTransition } from '@/components/report/lifecycle';
+import { expiryNotice } from '@/components/report/lifecycle-helpers';
 import type { DetailReport } from '@/components/report/slots/types';
 import { StatusWord } from '@/components/report/status-word';
+import { noteClass } from '@/components/shelters/classes';
 import { InlineError, h1Class, ringClass } from '@/components/shell/page';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -64,39 +67,76 @@ function ReportRow({ report }: { report: ReportOwnerView }) {
 }
 
 /**
- * The C10 action on one report, once: "Nadaljuj iskanje" / "Podaljšaj" extends it at once (the link is the tap);
- * "Zaključi iskanje" opens the reason dialog. An ended report says it is already closed. The address then drops the
- * query, so a reload does not repeat it.
+ * The C10 action on one report: "Zaključi iskanje" opens the reason dialog; "Nadaljuj iskanje" / "Podaljšaj" shows the
+ * reminder note with the one primary, and only its press extends the report: a link, however it was made up, changes
+ * nothing by being opened. An ended report says it is already closed. The address drops the query once the link is
+ * handled, so a reload does not repeat it; focus goes to the h1.
  */
-function DeepAction({ code, action }: ReportAction) {
+function DeepAction({ code, action, heading }: ReportAction & { heading: () => HTMLElement | null }) {
 	const tl = useTranslations('lifecycle');
+	const tf = useTranslations('report_found');
 	const router = useRouter();
 	const { data, isError } = useGetReportQuery({ code });
 	const report = data as DetailReport | undefined;
 	const extend = useQuickTransition({ short_code: code }, 'extend');
 	const [closing, setClosing] = React.useState(true);
+	const [now] = React.useState(() => Date.now());
 	const done = React.useRef(false);
 	const active = report?.is_mine && (report.status === 'open' || report.status === 'matched');
-	const clear = React.useCallback(() => router.replace('/my-reports'), [router]);
+	const clear = React.useCallback(() => {
+		router.replace('/my-reports');
+		heading()?.focus();
+	}, [router, heading]);
 
 	React.useEffect(() => {
-		if (done.current || (!report && !isError) || (action === 'close' && active)) return;
+		if (done.current || (!report && !isError) || active) return;
 		done.current = true;
-		if (active) void extend.go();
-		else toast.info(tl('already_closed'));
+		toast.info(tl('already_closed'));
 		clear();
-	}, [report, isError, active, action, extend, tl, clear]);
+	}, [report, isError, active, tl, clear]);
 
-	if (action !== 'close' || !report || !active) return null;
+	if (!report || !active) return null;
+	if (action === 'close')
+		return (
+			<CloseSearch
+				report={report}
+				open={closing}
+				returnFocus={heading}
+				onOpenChange={(open) => {
+					setClosing(open);
+					if (!open) clear();
+				}}
+			/>
+		);
+	const notice = expiryNotice(report, now);
+	const lost = report.type === 'lost';
 	return (
-		<CloseSearch
-			report={report}
-			open={closing}
-			onOpenChange={(open) => {
-				setClosing(open);
-				if (!open) clear();
-			}}
-		/>
+		<div className={cn(noteClass, 'mt-4 mb-2 flex-wrap')}>
+			<ClockIcon weight="fill" aria-hidden="true" className="mt-px size-[22px] shrink-0" />
+			<div>
+				{lost ? (
+					<p>
+						<b className="block">{tl('reminder_title')}</b>
+						{tl('reminder_body', {
+							days: notice?.days ?? Math.floor((now - Date.parse(report.created_at)) / 86_400_000),
+						})}
+					</p>
+				) : (
+					notice && <p>{tf('expiry_note', { days: notice.days })}</p>
+				)}
+				<Button
+					className="mt-3"
+					loading={extend.busy}
+					onClick={() =>
+						void extend.go().then((ok) => {
+							if (ok) clear();
+						})
+					}
+				>
+					{lost ? tl('reminder_keep') : tf('extend')}
+				</Button>
+			</div>
+		</div>
 	);
 }
 
@@ -112,6 +152,8 @@ export function MyReports({ level = 1, deepLink }: { level?: 1 | 2; deepLink?: R
 	const reports = query.data ? flattenPages(query.data) : undefined;
 	const Heading = level === 1 ? 'h1' : 'h2';
 	const headingId = React.useId();
+	const heading = React.useRef<HTMLHeadingElement>(null);
+	const getHeading = React.useCallback(() => heading.current, []);
 
 	let body: React.ReactNode;
 	if (query.isError && !reports)
@@ -172,13 +214,18 @@ export function MyReports({ level = 1, deepLink }: { level?: 1 | 2; deepLink?: R
 	return (
 		<section aria-labelledby={headingId}>
 			<Heading
+				ref={heading}
 				id={headingId}
-				className={level === 1 ? h1Class : 'font-display text-3xl font-bold tracking-[-0.015em]'}
+				tabIndex={-1}
+				className={cn(
+					level === 1 ? h1Class : 'font-display text-3xl font-bold tracking-[-0.015em]',
+					'outline-none'
+				)}
 			>
 				{t('my_reports')}
 			</Heading>
+			{deepLink && <DeepAction {...deepLink} heading={getHeading} />}
 			{body}
-			{deepLink && <DeepAction {...deepLink} />}
 		</section>
 	);
 }

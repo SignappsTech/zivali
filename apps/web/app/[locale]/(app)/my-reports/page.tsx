@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import type { Locale } from 'next-intl';
 import { getTranslations } from 'next-intl/server';
 
+import { ShortCode } from '@zivali/validation/common.schema';
 import { MyReports, type ReportAction } from '@/components/report/my-reports';
 import { ContentPage } from '@/components/shell/page';
 import { Toaster } from '@/components/ui/sonner';
@@ -22,9 +23,11 @@ const ACTIONS = new Set<string>(['keep', 'extend', 'close']);
 export default async function MyReportsPage({ params, searchParams }: Props) {
 	const t = await getTranslations({ locale: (await params).locale as Locale, namespace: 'common' });
 	const { r, action } = await searchParams;
+	// The code goes into an API path unencoded: only a C1 short code gets that far.
+	const code = ShortCode.safeParse(r);
 	const deepLink =
-		typeof r === 'string' && typeof action === 'string' && ACTIONS.has(action)
-			? ({ code: r, action } as ReportAction)
+		code.success && typeof action === 'string' && ACTIONS.has(action)
+			? ({ code: code.data, action } as ReportAction)
 			: undefined;
 	return (
 		<ContentPage>
