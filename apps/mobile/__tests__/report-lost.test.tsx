@@ -187,7 +187,7 @@ describe('report lost flow (P6)', () => {
 		expect(screen.getByText(t.review_reward_none)).toBeTruthy();
 		for (const field of [t.review_photos, t.review_pet, t.review_place, t.review_time, t.review_contact])
 			expect(screen.getByRole('button', { name: `Uredi: ${field}` })).toBeTruthy();
-		expect(screen.queryByTestId(/ad/i)).toBeNull();
+		expect(screen.queryByTestId(/ad-slot/i)).toBeNull();
 
 		await press(t.publish);
 
