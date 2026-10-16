@@ -50,7 +50,7 @@ const fromCache = (r: CachedReport): DetailReport => ({
 	created_at: r.updated_at,
 	photos: r.thumb_url ? [{ url: r.thumb_url, thumb_url: r.thumb_url, alt: '', width: 0, height: 0 }] : [],
 });
-const toDetail = (r: PublicReport | CachedReport): DetailReport => ('photos' in r ? r : fromCache(r));
+export const toDetail = (r: PublicReport | CachedReport): DetailReport => ('photos' in r ? r : fromCache(r));
 
 function useBack() {
 	const router = useRouter();
@@ -58,7 +58,7 @@ function useBack() {
 	return () => (router.canGoBack() ? router.back() : router.replace('/'));
 }
 
-function BackButton({ className, style }: { className?: string; style?: StyleProp<ViewStyle> }) {
+export function BackButton({ className, style }: { className?: string; style?: StyleProp<ViewStyle> }) {
 	const t = useTranslations('report');
 	const back = useBack();
 	return (
