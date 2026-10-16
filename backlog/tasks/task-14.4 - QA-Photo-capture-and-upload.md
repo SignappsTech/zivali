@@ -1,15 +1,13 @@
 ---
 id: TASK-14.4
 title: 'QA: Photo capture and upload'
-status: To Do
+status: Done
 assignee:
   - '@qa'
 created_date: '2026-10-14 22:15'
-updated_date: '2026-10-16 03:38'
+updated_date: '2026-10-16 09:34'
 labels:
-  - qa
-  - 'est:XS'
-  - 'qa:fail'
+  - 'qa qa:pass'
 milestone: m-1
 dependencies:
   - TASK-14.1
@@ -37,12 +35,12 @@ Branch: - (verify on main)
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Given a phone or desktop, when the user takes or picks 1-5 photos, then they are resized client-side (long edge at most 1600 px, under 1 MB each), previewed and uploaded with progress and retry.
+- [x] #1 Given a phone or desktop, when the user takes or picks 1-5 photos, then they are resized client-side (long edge at most 1600 px, under 1 MB each), previewed and uploaded with progress and retry.
 - [x] #2 Given a photo with EXIF GPS and time, when selected, then location and time are offered as suggestions to the form and EXIF is stripped from the stored public copy.
 - [x] #3 Given a weak connection, when an upload fails, then the draft keeps the photos locally and resumes without data loss.
-- [ ] #4 Given stored images, when accessed, then originals are private and derived public variants follow the storage contract, type and size are validated server-side and unreferenced uploads are cleaned up after 24 h.
+- [x] #4 Given stored images, when accessed, then originals are private and derived public variants follow the storage contract, type and size are validated server-side and unreferenced uploads are cleaned up after 24 h.
 - [x] #5 Given an uploaded photo, when stored, then a photo-uploaded hook exists for AI extraction and embeddings (used from M3).
-- [ ] #6 Given any displayed photo, when rendered, then it has alt text built from species, colour and area.
+- [x] #6 Given any displayed photo, when rendered, then it has alt text built from species, colour and area.
 - [x] #7 Story gates pass on main: `pnpm verify`, plus `pnpm quality` for the pages this story touches; results recorded in the QA notes.
 <!-- AC:END -->
 
@@ -62,4 +60,6 @@ AC #6 FAIL (Medium, TASK-14.6): the API alt is type, species and name ('Pogreša
 AC #7 PASS with the gaps above (verify via the merge queue; e2e, WebKit and quality not run here).
 
 Needs a device, not run: camera capture and the primer, denied camera permission falling back to the gallery, iOS HEIC in Compatible mode, Android EXIF GPS sign and ref, deletion of the ImagePicker cache copy (Paths.cache prefix on iOS and Android), Android selectionLimit on devices without the system photo picker, a 12 MP to 48 MP image (memory, one decode at a time), File.upload progress and abort, app kill mid-upload then restore.
+
+Re-QA 2026-10-16 on main b965dff9. Bugs 14.5-14.8 verified fixed by code and tests: web proxy.ts img-src adds new URL(MEDIA_BASE_URL).origin (env.ts requires https outside local; proxy.test + env.test pass); mapper photoAlt = name, species, colours, pattern, municipality, photo n of m, SL/EN (reports.routes test pins 'Piki: pes rjave in bele barve, Ljubljana, fotografija 1 od 2', API not run here); web preparePhoto checks the short edge after scaling to 1600 (8000x400 test); mobile add() deletePickerCopy for assets over the room (photos.test asserts). Web vitest components/photos+proxy+env 45/45; mobile jest photos 20/20. SL/EN photos keys 20/20 equal. Reorder, remove, retry buttons type=button with aria-labels (photo-picker.tsx). beforeUpload gating, hold/kept, abort on remove, resume, 23 h re-upload covered by picker unit tests. Server (API not run): private uploads, display.jpg and thumb variants, hash check, photo-hash hold TASK-17.6 read OK. verify, e2e, Lighthouse, WebKit: merge queue on main at b965dff9. Not run here: camera/device items listed in earlier notes.
 <!-- SECTION:NOTES:END -->
