@@ -24,6 +24,7 @@ test('wire types in @zivali/types match the zod schemas', () => {
 	expectTypeOf<Out<typeof V.Profile>>().toEqualTypeOf<Flat<T.Profile>>();
 	expectTypeOf<Out<typeof V.Me>>().toEqualTypeOf<Flat<T.Me>>();
 	expectTypeOf<Out<typeof V.UpdateMeInput>>().toEqualTypeOf<Flat<T.UpdateMeInput>>();
+	expectTypeOf<Out<typeof V.ConvertPasswordInput>>().toEqualTypeOf<Flat<T.ConvertPasswordInput>>();
 	expectTypeOf<Out<typeof V.AdminUserList>>().toEqualTypeOf<Flat<T.AdminUserList>>();
 	expectTypeOf<Out<typeof V.AdminUserQuery>>().toEqualTypeOf<Flat<T.AdminUserQuery>>();
 	expectTypeOf<Out<typeof V.SetRoleInput>>().toEqualTypeOf<Flat<T.SetRoleInput>>();
