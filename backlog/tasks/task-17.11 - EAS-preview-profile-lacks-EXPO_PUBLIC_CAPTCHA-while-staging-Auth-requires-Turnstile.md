@@ -3,10 +3,11 @@ id: TASK-17.11
 title: >-
   EAS preview profile lacks EXPO_PUBLIC_CAPTCHA while staging Auth requires
   Turnstile
-status: To Do
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-16 00:25'
+updated_date: '2026-10-16 01:35'
 labels:
   - bug
   - 'est:XS'
