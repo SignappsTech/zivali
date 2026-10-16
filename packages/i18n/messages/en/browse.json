@@ -77,5 +77,7 @@
 	"loading": "Loading reports nearby …",
 	"offline_note": "Offline, last updated {time}.",
 	"offline_note_saved": "Offline. Showing saved reports.",
-	"offline_empty_body": "We save reports near you on this phone while you are online, so you can see them offline too."
+	"offline_empty_body": "We save reports near you on this phone while you are online, so you can see them offline too.",
+	"seo_title": "Map of lost and found pets · Najdimo",
+	"seo_description": "Lost and found dogs and cats on a map of Slovenia. Choose a place, type and time, and help animals get home."
 }

@@ -1,10 +1,11 @@
 ---
 id: TASK-31.4
 title: Web map and list browse with filters
-status: To Do
+status: In Progress
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:14'
+updated_date: '2026-10-16 03:35'
 labels:
   - fe
   - 'est:M'
