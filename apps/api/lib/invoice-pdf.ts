@@ -29,6 +29,8 @@ export type InvoicePdfInput = {
 	eor: string | null;
 	/** Mock or FURS test environment: not a valid fiscal invoice. */
 	test: boolean;
+	/** A credit note (dobropis, negative amounts): the invoice it corrects. */
+	reference?: { number: string; issued_at: Date };
 };
 export type PdfLine = { text: string; style?: 'title' | 'heading' | 'strong' | 'note' };
 
@@ -45,22 +47,32 @@ const issuedAt = new Intl.DateTimeFormat('sl', {
 /** What the invoice says, top to bottom (tests read this; the PDF content stream is glyph ids). */
 export function invoiceLines(i: InvoicePdfInput): PdfLine[] {
 	const eur = (cents: number) => formatEur(cents, 'sl');
+	const credit = i.reference;
+	const kind = credit ? 'Dobropis' : 'Račun';
 	return [
 		{ text: 'Najdimo', style: 'title' },
-		{ text: `Račun št. ${i.number}`, style: 'heading' },
+		{ text: `${kind} št. ${i.number}`, style: 'heading' },
 		...(i.test
-			? [{ text: 'Testni račun: kartica ni bila bremenjena, račun ni davčno veljaven.', style: 'note' } as const]
+			? [
+					{
+						text: credit
+							? 'Testni dobropis: na kartico ni bilo vračila, dobropis ni davčno veljaven.'
+							: 'Testni račun: kartica ni bila bremenjena, račun ni davčno veljaven.',
+						style: 'note',
+					} as const,
+				]
 			: []),
+		...(credit ? [{ text: `Za račun št. ${credit.number} z dne ${issuedAt.format(credit.issued_at)}` }] : []),
 		{ text: `Izdajatelj: Najdimo, davčna številka ${i.tax_number}` },
 		{ text: `Datum in čas izdaje: ${issuedAt.format(i.issued_at)}` },
 		{ text: `Poslovni prostor: ${i.premise_id}, elektronska naprava: ${i.device_id}` },
-		{ text: `Postavka: ${i.item}` },
+		{ text: credit ? `Vračilo: ${i.item}` : `Postavka: ${i.item}` },
 		{ text: `Znesek brez DDV: ${eur(i.net_cents)}` },
 		{ text: `DDV ${i.vat_rate} %: ${eur(i.vat_cents)}` },
 		{ text: `Skupaj: ${eur(i.gross_cents)}`, style: 'strong' },
-		{ text: 'Način plačila: plačilna kartica' },
+		{ text: credit ? 'Način vračila: na plačilno kartico' : 'Način plačila: plačilna kartica' },
 		{ text: `ZOI: ${i.zoi}` },
-		{ text: i.eor ? `EOR: ${i.eor}` : 'EOR: račun bo naknadno potrjen pri FURS.' },
+		{ text: i.eor ? `EOR: ${i.eor}` : `EOR: ${kind.toLowerCase()} bo naknadno potrjen pri FURS.` },
 	];
 }
 
@@ -78,7 +90,7 @@ export async function renderInvoicePdf(input: InvoicePdfInput): Promise<Buffer> 
 	const doc = new PDFDocument({
 		size: 'A4',
 		margin: 56,
-		info: { Title: `Račun ${input.number}`, Author: 'Najdimo' },
+		info: { Title: `${input.reference ? 'Dobropis' : 'Račun'} ${input.number}`, Author: 'Najdimo' },
 	});
 	doc.registerFont('regular', FONTS.regular);
 	doc.registerFont('bold', FONTS.bold);

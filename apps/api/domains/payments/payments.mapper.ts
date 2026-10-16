@@ -10,6 +10,7 @@ export function toPaymentDto(row: PaymentRow): z.infer<typeof Payment> {
 		id: row.id,
 		purpose: row.purpose.toLowerCase(),
 		amount_cents: row.amount_cents,
+		refunded_cents: row.refunded_cents,
 		currency: row.currency,
 		status: row.status.toLowerCase(),
 		created_at: row.created_at.toISOString(),

@@ -10,11 +10,12 @@ import { ActivityIndicator, type Text as RNText, View } from 'react-native';
 import { useDispatch } from 'react-redux';
 import { useLocale, useTranslations } from 'use-intl';
 
+import { type EventParams, track } from '@zivali/analytics';
 import { useSession } from '@zivali/api/auth';
 import { ApiError, uuid } from '@zivali/api/client';
 import { type StartCheckoutInput, startCheckout, useGetPaymentQuery } from '@zivali/api/payments';
 import type { ApiStore } from '@zivali/api/rtk';
-import type { Locale, PaymentStatus, Uuid } from '@zivali/types';
+import type { Locale, Payment, PaymentStatus, Uuid } from '@zivali/types';
 import { AuthNote, useErrorText } from '@/components/auth/parts';
 import { Spot } from '@/components/shell/parts';
 import { Button } from '@/components/ui/button';
@@ -34,15 +35,18 @@ type Step = { paymentId: Uuid; canceled: boolean } | null;
  * P15 mobile checkout hand-off (A-014: web checkout, no native purchase UI). The sheet explains "Plačali boste v
  * brskalniku"; Nadaljuj creates the session and opens it in the in-app browser, and on the way back the same sheet
  * shows the return state over the screen the payment started from. Cancelled and failed start a new attempt.
+ * `onPaid` runs once the payment has succeeded (the ask behind it then says thanks instead).
  */
 export function CheckoutSheet({
 	open,
 	onOpenChange,
 	checkout,
+	onPaid,
 }: {
 	open: boolean;
 	onOpenChange: (open: boolean) => void;
 	checkout: Checkout;
+	onPaid?: () => void;
 }) {
 	const t = useTranslations('common');
 	const [result, setResult] = React.useState<Step>(null);
@@ -57,7 +61,7 @@ export function CheckoutSheet({
 		<Sheet open={open} onOpenChange={onOpenChange}>
 			<SheetContent closeLabel={t('close')}>
 				{result ? (
-					<CheckoutResult {...result} onClose={close} onRetry={() => setResult(null)} />
+					<CheckoutResult {...result} onClose={close} onRetry={() => setResult(null)} onPaid={onPaid} />
 				) : (
 					<Handoff checkout={checkout} onResult={setResult} onCancel={close} />
 				)}
@@ -140,22 +144,33 @@ const VIEWS: Record<PaymentStatus, ResultView> = {
 };
 const POLL_MS = 2000;
 
+/** C12 `donation` for a succeeded contribution: euros, the amount bucket and the purpose, nothing else. */
+function donation({ purpose, amount_cents, currency }: Payment): EventParams['donation'] | null {
+	if (purpose !== 'tip' && purpose !== 'report_contribution' && purpose !== 'support') return null;
+	const value = amount_cents / 100;
+	const amount_bucket = value < 5 ? '2-4' : value < 10 ? '5-9' : value < 20 ? '10-19' : '20+';
+	return { value, currency, amount_bucket, purpose };
+}
+
 /**
  * P15 return states, from GET /v1/payments/:id (the webhook sets the status, C13): success (receipt sentence, or the
  * unconfirmed-email note), cancelled, failed, and pending, which polls until the webhook lands. A closed browser
  * (`canceled`) reads the status once, in case the payment went through just before. Screen reader focus moves to the
- * heading of each state. `onRetry` (the hand-off sheet) adds Poskusi znova / Poskusi z drugo kartico.
+ * heading of each state. `onRetry` (the hand-off sheet) adds Poskusi znova / Poskusi z drugo kartico. Success fires
+ * `donation` once (a no-op without consent, C12) and `onPaid`.
  */
 export function CheckoutResult({
 	paymentId,
 	canceled,
 	onClose,
 	onRetry,
+	onPaid,
 }: {
 	paymentId: Uuid;
 	canceled: boolean;
 	onClose: () => void;
 	onRetry?: () => void;
+	onPaid?: () => void;
 }) {
 	const t = useTranslations();
 	const errorText = useErrorText();
@@ -170,6 +185,15 @@ export function CheckoutResult({
 			? 'cancelled'
 			: 'pending';
 	if (!settled && view !== 'pending') setSettled(true);
+	const succeeded = view === 'success' ? data : undefined;
+	const reported = React.useRef(false);
+	React.useEffect(() => {
+		if (!succeeded || reported.current) return;
+		reported.current = true;
+		const params = donation(succeeded);
+		if (params) track('donation', params);
+		onPaid?.();
+	}, [succeeded, onPaid]);
 
 	if (view === 'success')
 		return (

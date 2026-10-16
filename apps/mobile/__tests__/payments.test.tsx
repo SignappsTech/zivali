@@ -8,6 +8,7 @@ import type { ReactNode } from 'react';
 import { Provider } from 'react-redux';
 import { IntlProvider } from 'use-intl';
 
+import { getMockEvents, initAnalytics, resetMockEvents, setConsent } from '@zivali/analytics';
 import { checkout, payment } from '@zivali/api/__fixtures__/payments';
 import { createMockApi, type MockRequest, type MockRoutes, mockError } from '@zivali/api/mock';
 import { type ApiStore, createApiStore, api as rtk } from '@zivali/api/rtk';
@@ -119,6 +120,39 @@ describe('checkout hand-off', () => {
 
 		await fireEvent.press(screen.getByRole('button', { name: sl.payments.success_back }));
 		expect(onOpenChange).toHaveBeenCalledWith(false);
+	});
+
+	test('a succeeded contribution fires `donation` (value, currency, amount_bucket, purpose) with consent only', async () => {
+		let record: string | null = null;
+		initAnalytics({ provider: 'mock', storage: { get: () => record, set: (value) => void (record = value) } });
+		resetMockEvents();
+		mockOpenAuthSession.mockResolvedValue({ type: 'success', url: `${RETURN}?payment_id=${checkout.payment_id}` });
+		const onPaid = jest.fn();
+		const sheet = async (paid: Partial<Payment>) => {
+			const view = await render(
+				<Providers api={payments(() => 'succeeded', { 'GET /v1/payments/:id': { ...payment, ...paid } })}>
+					<CheckoutSheet open onOpenChange={jest.fn()} checkout={tip} onPaid={onPaid} />
+				</Providers>
+			);
+			await pressContinue();
+			await screen.findByRole('heading', { name: sl.payments.success_title });
+			return view;
+		};
+
+		await (await sheet({})).unmount();
+		expect(onPaid).toHaveBeenCalledTimes(1);
+		expect(getMockEvents()).toEqual([]);
+
+		setConsent({ analytics: true });
+		await sheet({ purpose: 'report_contribution', amount_cents: 250 });
+		expect(onPaid).toHaveBeenCalledTimes(2);
+		expect(getMockEvents()).toEqual([
+			{
+				name: 'donation',
+				params: { value: 2.5, currency: 'EUR', amount_bucket: '2-4', purpose: 'report_contribution' },
+			},
+		]);
+		setConsent({ analytics: false });
 	});
 
 	test('Prekliči closes the sheet without creating a session', async () => {
@@ -319,6 +353,23 @@ describe('Settings → Plačila', () => {
 		expect(screen.getByText(sl.payments.status_refunded)).toBeOnTheScreen();
 		expect(screen.getAllByText(sl.payments.test_label)).toHaveLength(3);
 		expect(screen.queryByText(/7,00 €|9,00 €/)).toBeNull();
+	});
+
+	test('a partly refunded payment stays paid and says how much came back (TASK-92.4)', async () => {
+		await settings(
+			list([
+				at('p1', {
+					purpose: 'tip',
+					amount_cents: 1000,
+					refunded_cents: 300,
+					status: 'succeeded',
+					created_at: '2026-10-15T10:00:00Z',
+				}),
+			])
+		);
+		expect(await screen.findByText('15. 10. 2026 · Prispevek v zahvalo · 10,00 €')).toBeOnTheScreen();
+		expect(screen.getByText(sl.payments.status_paid)).toBeOnTheScreen();
+		expect(screen.getByText('Delno vrnjeno: 3,00 €')).toBeOnTheScreen();
 	});
 
 	test('no payments: one sentence, no prompt to pay', async () => {

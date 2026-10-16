@@ -1382,12 +1382,22 @@
 					"id": { "type": "string", "format": "uuid" },
 					"purpose": { "$ref": "#/components/schemas/PaymentPurpose" },
 					"amount_cents": { "type": "integer" },
+					"refunded_cents": { "type": "integer", "minimum": 0 },
 					"currency": { "type": "string", "enum": ["EUR"] },
 					"status": { "$ref": "#/components/schemas/PaymentStatus" },
 					"created_at": { "type": "string", "format": "date-time" },
 					"updated_at": { "type": "string", "format": "date-time" }
 				},
-				"required": ["id", "purpose", "amount_cents", "currency", "status", "created_at", "updated_at"]
+				"required": [
+					"id",
+					"purpose",
+					"amount_cents",
+					"refunded_cents",
+					"currency",
+					"status",
+					"created_at",
+					"updated_at"
+				]
 			},
 			"PaymentList": {
 				"type": "object",

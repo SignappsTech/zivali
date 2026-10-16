@@ -25,6 +25,7 @@
 	"purpose_support": "Podpora za Najdimo",
 	"status_paid": "Plačano",
 	"status_refunded": "Vrnjeno",
+	"refunded_partial": "Delno vrnjeno: {amount}",
 	"status_failed": "Neuspešno",
 	"receipt": "Potrdilo",
 	"test_label": "Testno",

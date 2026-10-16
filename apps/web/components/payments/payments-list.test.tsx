@@ -27,6 +27,8 @@ const items = [
 	row(3, { status: 'pending', created_at: '2026-10-01T10:00:00Z' }),
 	row(4, { status: 'canceled', created_at: '2026-10-01T10:00:00Z' }),
 	row(5, { purpose: 'support', status: 'refunded', amount_cents: 1000, created_at: '2026-09-18T10:00:00Z' }),
+	// TASK-92.4: a partial refund keeps the payment paid and says how much came back.
+	row(6, { amount_cents: 1000, refunded_cents: 300, created_at: '2026-09-10T10:00:00Z' }),
 ];
 
 function show(query: typeof state.query, { locale = 'sl' as 'sl' | 'en', testMode = true } = {}) {
@@ -53,6 +55,7 @@ describe('PaymentsList', () => {
 			'15. 10. 2026 · Prispevek v zahvalo · 5,00 €PlačanoTestno',
 			'2. 10. 2026 · Prispevek ob prijavi · 3,00 €NeuspešnoTestno',
 			'18. 9. 2026 · Podpora za Najdimo · 10,00 €VrnjenoTestno',
+			'10. 9. 2026 · Prispevek v zahvalo · 10,00 €PlačanoDelno vrnjeno: 3,00 €Testno',
 		]);
 	});
 

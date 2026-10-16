@@ -11,11 +11,12 @@ import { Provider } from 'react-redux';
 import { IntlProvider } from 'use-intl';
 
 import { getMockEvents, initAnalytics, resetMockEvents, setConsent } from '@zivali/analytics';
+import { ad } from '@zivali/api/__fixtures__/ads';
 import * as fx from '@zivali/api/__fixtures__/reports';
 import { createMockApi, type MockRequest, mockError } from '@zivali/api/mock';
 import { api, createApiStore } from '@zivali/api/rtk';
 import sl from '@zivali/i18n/dist/sl.json';
-import type { ReportOwnerView } from '@zivali/types';
+import type { Ad, ReportOwnerView } from '@zivali/types';
 import EditReportScreen from '@/app/r/[code]/edit';
 import ReportScreen from '@/app/r/[code]/index';
 import ReunitedScreen from '@/app/r/[code]/reunited';
@@ -25,6 +26,8 @@ import { useMyReports, useReport } from '@/lib/data/reports';
 
 jest.mock('@/lib/data/reports', () => ({ useReport: jest.fn(), useMyReports: jest.fn() }));
 jest.mock('@/lib/env', () => ({ env: { EXPO_PUBLIC_APP_URL: 'https://najdimo.test' } }));
+// Online for the ad slots (ad-slot.test.tsx); they collapse unless a test serves an ad.
+jest.mock('expo-network', () => ({ useNetworkState: () => ({ isConnected: true, isInternetReachable: true }) }));
 jest.mock('@/components/ui/sonner', () => ({
 	toast: Object.assign(jest.fn(), { success: jest.fn(), error: jest.fn() }),
 }));
@@ -38,7 +41,7 @@ jest.mock('@/components/outbox/queue', () => {
 	const { Text: MockText } = jest.requireActual<typeof import('react-native')>('react-native');
 	return { OutboxList: () => <MockText>device queue</MockText> };
 });
-let mockSession = { session: {} as object | null, me: null, isAnonymous: false, loading: false };
+let mockSession = { session: {} as object | null, me: null as object | null, isAnonymous: false, loading: false };
 jest.mock('@zivali/api/auth', () => ({
 	useSession: () => mockSession,
 	useRequireAuth: () => ({ ...mockSession, gate: mockSession.session ? 'ok' : 'signin' }),
@@ -66,10 +69,14 @@ const reunited: ReportOwnerView = { ...owner, status: 'reunited', reunited_at: d
 let current: ReportOwnerView | null;
 let transition: (request: MockRequest) => unknown;
 let patch: (request: MockRequest) => unknown;
+let served: Ad | null = null;
 const mockApi = createMockApi({
 	'POST /v1/geo/reverse': { place: { label: 'Šiška, Ljubljana', lat: 46.066, lng: 14.493, kind: 'district' } },
 	'POST /v1/reports/:code/transitions': (request) => transition(request),
 	'PATCH /v1/reports/:code': (request) => patch(request),
+	// No ad unless a test serves one (the ad slot has its own tests, ad-slot.test.tsx).
+	'GET /v1/ads/slot/:slot': () => served,
+	'POST /v1/ads/:id/impressions': () => undefined,
 });
 const sent = (method: 'POST' | 'PATCH') =>
 	mockApi.calls
@@ -139,6 +146,7 @@ beforeEach(() => {
 	});
 	resetMockEvents();
 	mockApi.calls.length = 0;
+	served = null;
 	mockSession = { session: {}, me: null, isAnonymous: false, loading: false };
 	transition = ({ body }) => {
 		const { action } = body as { action: string };
@@ -218,6 +226,7 @@ describe('owner actions on the report page (P9 slot A, P14)', () => {
 		expect(screen.getByText(l.finder_thanks_body)).toBeOnTheScreen();
 		// No story consent, tip or ad on the finder's side (M7).
 		expect(screen.queryByRole('switch')).toBeNull();
+		expect(screen.queryByRole('heading', { name: sl.support.tip_title })).toBeNull();
 		await fireEvent.press(screen.getByRole('button', { name: l.finder_thanks_account }));
 		expect(page.getPathname()).toBe('/auth/sign-up');
 	});
@@ -361,6 +370,7 @@ describe('Uredi (r/[code]/edit)', () => {
 describe('reunited screen (P14 M3)', () => {
 	test('the calm celebration: story consent off by default, its toast, Končano to the map, share the news', async () => {
 		const shared = jest.spyOn(Share, 'share').mockResolvedValue({ action: 'sharedAction' });
+		served = ad;
 		const page = await open('/r/Rex2Lost/reunited', reunited);
 		expect(screen.getByRole('heading', { name: 'Rex je spet doma' })).toBeOnTheScreen();
 		expect(screen.getByText(l.home_body)).toBeOnTheScreen();
@@ -378,6 +388,12 @@ describe('reunited screen (P14 M3)', () => {
 		expect(story).not.toBeChecked();
 		expect(toast).not.toHaveBeenCalled();
 
+		// No tip ask without an account, so the one ad (P21) shows in its slot, before "Končano".
+		const unit = await screen.findByRole('link', { name: `Oglas: ${ad.title}. ${ad.body}` });
+		const tree = JSON.stringify(screen.toJSON());
+		expect(tree.indexOf(l.story_label)).toBeLessThan(tree.indexOf(unit.props.accessibilityLabel));
+		expect(tree.indexOf(unit.props.accessibilityLabel)).toBeLessThan(tree.indexOf(l.done));
+
 		await fireEvent.press(screen.getByRole('button', { name: l.share_news }));
 		expect(shared).toHaveBeenCalledWith({
 			message: 'Rex je spet doma. Hvala vsem, ki ste delili in pomagali. https://najdimo.test/r/Rex2Lost',
@@ -385,6 +401,31 @@ describe('reunited screen (P14 M3)', () => {
 		await fireEvent.press(screen.getByRole('button', { name: l.done }));
 		expect(await screen.findByText('map tab')).toBeOnTheScreen();
 		expect(page.getPathname()).toBe('/');
+	});
+
+	test('the owner gets the optional tip after the reunion, between the story switch and Končano (P15)', async () => {
+		mockSession = { ...mockSession, me: {} };
+		await open('/r/Rex2Lost/reunited', reunited);
+		expect(screen.getByRole('heading', { name: sl.support.tip_title })).toBeOnTheScreen();
+		for (const pill of screen.getAllByRole('radio')) expect(pill).not.toBeChecked();
+		expect(screen.getByRole('button', { name: sl.support.pay_disabled })).toBeDisabled();
+		await fireEvent.press(screen.getByRole('button', { name: sl.support.skip }));
+		expect(screen.queryByRole('heading', { name: sl.support.tip_title })).toBeNull();
+		// Skipping changes nothing else on the screen.
+		expect(screen.getByRole('button', { name: l.done })).toBeOnTheScreen();
+	});
+
+	test('no ad beside the tip ask: hidden (not even asked for) while it asks, shown once skipped (P15, P21)', async () => {
+		mockSession = { ...mockSession, me: {} };
+		served = ad;
+		// Another report: the ask for Rex2Lost was answered above (in-memory per app session).
+		await open('/r/Mica1234/reunited', { ...reunited, id: 'b2', short_code: 'Mica1234' });
+		expect(screen.getByRole('heading', { name: sl.support.tip_title })).toBeOnTheScreen();
+		expect(screen.queryByRole('link', { name: /^Oglas: / })).toBeNull();
+		expect(mockApi.calls.some((call) => call.path.startsWith('/v1/ads/'))).toBe(false);
+
+		await fireEvent.press(screen.getByRole('button', { name: sl.support.skip }));
+		expect(await screen.findByRole('link', { name: `Oglas: ${ad.title}. ${ad.body}` })).toBeOnTheScreen();
 	});
 
 	test('only for a manager of a reunited report; anyone else gets the report page', async () => {

@@ -103,6 +103,12 @@ export function PaymentsList({ testMode }: { testMode: boolean }) {
 								/>
 								{t(status.label)}
 							</span>
+							{payment.status === 'succeeded' && payment.refunded_cents > 0 && (
+								<span className="inline-flex items-center gap-1.5 text-sm text-muted-foreground">
+									<ArrowUUpLeftIcon weight="bold" aria-hidden="true" className="size-4 shrink-0" />
+									{t('refunded_partial', { amount: formatEur(payment.refunded_cents, locale) })}
+								</span>
+							)}
 							{testMode && (
 								<span className="inline-flex items-center gap-1.5 text-sm text-muted-foreground">
 									<FlaskIcon weight="bold" aria-hidden="true" className="size-4 shrink-0" />
