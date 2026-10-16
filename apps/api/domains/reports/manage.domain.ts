@@ -22,6 +22,10 @@ export function newManageToken(): { token: string; hash: Uint8Array<ArrayBuffer>
 	return { token, hash: hashManageToken(token) };
 }
 
+/** 3 new manage links per report per day: resends and repeated submissions (createReport) share the bucket. */
+export const consumeNewLink = (report_id: string, now: Date) =>
+	consumeRateLimit({ name: 'manage_link.resend', key: report_id, limit: RESEND_PER_DAY, window_s: 86_400 }, now);
+
 /** Removed, or reunited or closed longer ago than it can be reopened (C4 lifecycle.reopen_days): GONE. */
 async function assertManageable(
 	report: { status: string; moderation_state: string; closed_at: Date | null; reunited_at: Date | null },
@@ -95,14 +99,11 @@ export async function resendManageLink(input: { code: string }, ctx: Ctx): Promi
 	await assertManageable(report, ctx.now);
 	const to = await ReportsDao.getContactEmail(report.id, db);
 	if (!to) throw new AppError('CONFLICT', 'No finder email on file');
-	await consumeRateLimit(
-		{ name: 'manage_link.resend', key: report.id, limit: RESEND_PER_DAY, window_s: 86_400 },
-		ctx.now
-	);
+	await consumeNewLink(report.id, ctx.now);
 	const { token, hash } = newManageToken();
 	const link = { to, short_code: report.short_code, type: report.type, species: report.species, token };
 	if ((await sendLink(link, ctx)) === 'failed') throw new Error('manage link email failed');
 	await ReportsDao.updateReport(report.id, { manage_token_hash: hash }, ctx.tx);
 }
 
-export default { hashManageToken, newManageToken, mailManageLink, claimManage, resendManageLink };
+export default { hashManageToken, newManageToken, consumeNewLink, mailManageLink, claimManage, resendManageLink };

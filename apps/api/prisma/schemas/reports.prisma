@@ -201,7 +201,8 @@ model reports {
   // after 7 days by retention.purge.
   device_hash          String?
   // The client's submission id (its Idempotency-Key: the mobile outbox id, C17) and a keyed hash (RATE_SALT) of the
-  // body: a repeat from the same creator returns this report after the 24 h replay window (C1); no expiry.
+  // body: a repeat from the same creator returns this report after the 24 h replay window (C1). The id stays; the
+  // hash (personal: it commits to the received point and the finder email) is cleared by retention.blur_location.
   submission_id        String?                                         @db.Uuid
   submission_hash      String?
   first_match_at       DateTime?                                       @db.Timestamptz(6)

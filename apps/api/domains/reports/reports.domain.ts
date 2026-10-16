@@ -33,10 +33,11 @@ import type { Actor, Ctx } from '../../lib/ctx.ts';
 import { AppError } from '../../lib/errors.ts';
 import { distanceM, fuzzArea, fuzzSettings, publicRadius, type Point } from '../../lib/fuzz.ts';
 import type { QueueName } from '../../lib/jobs.ts';
-import { prisma, type Prisma } from '../../prisma/prisma.ts';
+import { Prisma } from '../../generated/client.ts';
+import { prisma } from '../../prisma/prisma.ts';
 import { GeoDomain } from '../geo/index.ts';
 import { publicObjects } from '../photos/photo-objects.ts';
-import { mailManageLink, newManageToken } from './manage.domain.ts';
+import { consumeNewLink, mailManageLink, newManageToken } from './manage.domain.ts';
 import ReportsDao, { type LocationColumns, type ReportRow, type StoredLocation } from './reports.dao.ts';
 import { HOLD_WINDOW_MS, photoMatchHold, submissionGuard } from './submission-guard.ts';
 
@@ -282,10 +283,12 @@ export type CreatedReport = {
 };
 
 /**
- * A repeat of an earlier submission by the same creator (C17 outbox: after the 24 h Idempotency-Key replay, C1, or a
- * 5xx that freed the key): the report created then, never a duplicate; the same id with another body → CONFLICT.
+ * A repeat of an earlier submission by the same creator (C17 outbox: after the 24 h Idempotency-Key replay, C1, a
+ * 5xx that freed the key, or a concurrent request that lost the unique index): the report created then, never a
+ * duplicate; the same id with another body → CONFLICT, unless the location blur already cleared the body's hash.
  * Only the hash of the first manage token is stored (C7), so an anonymous submitter gets a new one (the old link
- * stops working) and the finder email on file gets the new link. Closed reports have no manage link any more.
+ * stops working) and the finder email on file gets the new link, within the resend limit (RATE_LIMITED). Closed and
+ * removed reports get no new manage link.
  */
 async function repeatSubmission(
 	actor: Actor,
@@ -294,15 +297,16 @@ async function repeatSubmission(
 ): Promise<CreatedReport | null> {
 	const report = await ReportsDao.findBySubmission(actor.user_id, submission.submission_id, ctx.tx);
 	if (!report) return null;
-	if (report.submission_hash !== submission.submission_hash)
+	if (report.submission_hash && report.submission_hash !== submission.submission_hash)
 		throw new AppError('CONFLICT', 'Idempotency-Key was already used for another request');
 	const old = report.created_at.getTime() - report.event_at.getTime() > OLD_EVENT_MS;
 	const { id, short_code, type, species, moderation_state } = report;
 	const created: CreatedReport = { id, short_code, moderation_state, warnings: old ? ['OLD_EVENT'] : [] };
-	if (!actor.is_anonymous || !report.manage_token_hash) return created;
+	if (!actor.is_anonymous || !report.manage_token_hash || moderation_state === 'removed') return created;
+	const to = await ReportsDao.getContactEmail(id, ctx.tx);
+	if (to) await consumeNewLink(id, ctx.now);
 	const manage = newManageToken();
 	await ReportsDao.updateReport(id, { manage_token_hash: manage.hash }, ctx.tx);
-	const to = await ReportsDao.getContactEmail(id, ctx.tx);
 	if (to) await mailManageLink({ to, short_code, type, species, token: manage.token }, ctx);
 	return { ...created, manage_token: manage.token };
 }
@@ -362,8 +366,17 @@ export async function createReport(submitted: SubmitInput, ctx: Ctx): Promise<Cr
 		await setPhotos(report, photo_ids, actor, ctx, tx);
 		await sendJobs(report, ['photo.publish', 'match.report', 'alerts.fanout'], ctx, tx);
 		return { id, short_code, moderation_state, ...(manage && { manage_token: manage.token }), warnings };
+	}).catch(async (err: unknown) => {
+		// The same submission committed meanwhile (a retry after the key's 60 s stale window, C1): the unique index
+		// (created_by, submission_id) refused this one, so it is answered as a repeat, not 409.
+		const raced =
+			submission && !ctx.tx && err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002';
+		const repeat = raced && (await repeatSubmission(actor, submission, ctx));
+		if (!repeat) throw err;
+		return repeat;
 	});
-	if (manage && finder_email) {
+	// A repeat (the race above) carries another token, or none, and mailed its own link.
+	if (manage && finder_email && created.manage_token === manage.token) {
 		const { short_code } = created;
 		await mailManageLink(
 			{ to: finder_email, short_code, type: input.type, species: input.species, token: manage.token },

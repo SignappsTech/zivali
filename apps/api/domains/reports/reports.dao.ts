@@ -225,6 +225,7 @@ export async function expireIdle(input: IdleCutoffs, tx: Prisma.TransactionClien
 /**
  * retention.blur_location (ADR-006): up to `take` reports closed or reunited at or before `endedBefore` whose stored
  * point is not their public centre yet get exact_point = public_point (skip locked). The circle and the area stay.
+ * submission_hash goes too: a keyed digest of the body, it would let the received point be guessed inside the circle.
  */
 export async function blurEnded(
 	input: { endedBefore: Date; take: number },
@@ -233,12 +234,13 @@ export async function blurEnded(
 	const db = tx ?? prisma;
 	const { endedBefore, take } = input;
 	return db.$executeRaw`
-		update app.reports set exact_point = public_point, updated_at = now()
+		update app.reports set exact_point = public_point, submission_hash = null, updated_at = now()
 		where id in (
 			select id from app.reports
 			where ((status = 'closed' and closed_at <= ${endedBefore})
 					or (status = 'reunited' and reunited_at <= ${endedBefore}))
-				and not extensions.st_equals(exact_point::extensions.geometry, public_point::extensions.geometry)
+				and (not extensions.st_equals(exact_point::extensions.geometry, public_point::extensions.geometry)
+					or submission_hash is not null)
 			limit ${take} for update skip locked)`;
 }
 

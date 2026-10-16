@@ -483,10 +483,11 @@
 				"circumstances",
 				"reward_note",
 				"manage_token_hash",
-				"device_hash"
+				"device_hash",
+				"submission_hash"
 			],
 			"basis": "contract (GDPR art. 6(1)(b)); public reports show the fuzzed area only (C6); device_hash (HMAC of x-device-id, anonymous reports): legitimate interest in spam protection (GDPR art. 6(1)(f), C7)",
-			"retention": "exact_point (already coarsened 20–30 m at write, the raw point is never stored) is replaced by public_point retention.exact_point_blur_days (30) after closing, expiry or reuniting (retention.blur_location, daily; public_point, public_radius_m and municipality_id stay; a reopened report keeps the blurred point); device_hash cleared 7 days after creation (retention.purge); manage_token_hash cleared and report_contacts deleted on close, reunite or expiry (POST /v1/reports/:code/transitions, report.lifecycle)",
+			"retention": "exact_point (already coarsened 20–30 m at write, the raw point is never stored) is replaced by public_point retention.exact_point_blur_days (30) after closing, expiry or reuniting (retention.blur_location, daily; public_point, public_radius_m and municipality_id stay; a reopened report keeps the blurred point); device_hash cleared 7 days after creation (retention.purge); manage_token_hash cleared and report_contacts deleted on close, reunite or expiry (POST /v1/reports/:code/transitions, report.lifecycle); submission_hash (HMAC with RATE_SALT of the POST /v1/reports body: received point, finder_email, circumstances; outbox repeats, C17) cleared with the location blur (retention.blur_location)",
 			"export": true,
 			"delete": "anonymise (created_by set null)",
 			"other_columns": [
@@ -525,7 +526,6 @@
 				"reminder_day",
 				"expiry_warned_at",
 				"submission_id",
-				"submission_hash",
 				"created_at",
 				"updated_at"
 			]
