@@ -451,7 +451,7 @@ describe('manage link screen (P7)', () => {
 	test('close report from the action rows', async () => {
 		await openLink();
 		await act(async () => fireEvent.press(await screen.findByRole('button', { name: 'Zaključi prijavo' })));
-		await waitFor(() => expect(transitions()).toEqual([{ action: 'close' }]));
+		await waitFor(() => expect(transitions()).toEqual([{ action: 'close', reason: 'other' }]));
 	});
 
 	test('"Žival je spet doma" asks first (P14 §5), then marks it reunited and thanks the finder', async () => {
