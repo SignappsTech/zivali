@@ -2,7 +2,7 @@ import * as SecureStore from 'expo-secure-store';
 
 import { deleteDb, getDb } from '@/lib/db';
 import { draftsDir, outboxDir, pickerCacheDir, thumbsDir } from '@/lib/db/files';
-import { cacheQuietHours, stopGeofencing } from '@/lib/offline/geofence';
+import { cacheOwnReports, cacheQuietHours, stopGeofencing } from '@/lib/offline/geofence';
 import { MANAGE_TOKENS_INDEX, listManageTokenIds, manageTokenKey, pendingCount } from '@/lib/offline/outbox';
 import { syncIdle } from '@/lib/offline/sync';
 import { clearSessionStorage, supabase } from '@/lib/supabase';
@@ -21,8 +21,11 @@ export async function wipeLocalData({
 	removeManageLinks?: boolean;
 }): Promise<void> {
 	await stopGeofencing();
-	// The account's quiet hours go with it; "Clear offline data" keeps them for the next opt-in.
-	if (reason !== 'user_request') cacheQuietHours(null);
+	// The account's quiet hours and own report ids go with it; "Clear offline data" keeps them for the next opt-in.
+	if (reason !== 'user_request') {
+		cacheQuietHours(null);
+		cacheOwnReports(null);
+	}
 	// A running sync holds a transaction on the same connection; its resumed page then finds the area gone and drops.
 	await syncIdle();
 	const deleted = reason === 'account_deleted';
