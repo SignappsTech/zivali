@@ -1,5 +1,6 @@
 <!doctype html>
-<!-- Change email (C3; copy: docs/content/notifications-and-emails.md §3.3). Language from user_metadata.locale: "en" is EN, anything else SL. -->
+<!-- Change email (C3; copy: docs/content/notifications-and-emails.md §3.3). Language from user_metadata.locale: "en" is EN, anything else SL.
+     No current address (.Email empty): an anonymous finder session becoming an account (C7 §6), so the copy confirms the new account. -->
 <html>
 	<head>
 		<meta charset="utf-8" />
@@ -21,11 +22,13 @@
 		{{ if eq .Data.locale "en" }}
 		<div lang="en" style="max-width: 560px; margin: 0 auto">
 			<span style="display: none; max-height: 0; overflow: hidden"
-				>Confirm the change of email address on your Najdimo account.</span
+				>{{ if .Email }}Confirm the change of email address on your Najdimo account.{{ else }}One more step to
+				your Najdimo account.{{ end }}</span
 			>
 			<p style="margin: 0 0 24px; font-size: 22px; font-weight: bold; color: #145360">
 				Najdimo <span style="font-size: 14px; font-weight: normal; color: #4a5b5d">Home again.</span>
 			</p>
+			{{ if .Email }}
 			<p>You asked to change the email address of your Najdimo account from {{ .Email }} to {{ .NewEmail }}.</p>
 			<p>Confirm the change with the button below. Until then you keep signing in with your old address.</p>
 			<p style="margin: 24px 0">
@@ -44,6 +47,26 @@
 				>
 			</p>
 			<p>If you did not ask for this, sign in and change your password, or write to us.</p>
+			{{ else }}
+			<p>Thank you for creating a Najdimo account. Please confirm that {{ .NewEmail }} is your email address.</p>
+			<p>The reports you made without an account stay yours.</p>
+			<p style="margin: 24px 0">
+				<a
+					href="{{ .ConfirmationURL }}"
+					style="
+						display: inline-block;
+						padding: 12px 20px;
+						border-radius: 8px;
+						background: #145360;
+						color: #ffffff;
+						font-weight: bold;
+						text-decoration: none;
+					"
+					>Confirm email</a
+				>
+			</p>
+			<p>If you did not create an account, you can ignore this email.</p>
+			{{ end }}
 			<p style="font-size: 14px; color: #4a5b5d">
 				Button not working? Copy this link into your browser: {{ .ConfirmationURL }}
 			</p>
@@ -57,11 +80,13 @@
 		{{ else }}
 		<div lang="sl" style="max-width: 560px; margin: 0 auto">
 			<span style="display: none; max-height: 0; overflow: hidden"
-				>Potrditev spremembe e-naslova za račun v Najdimo.</span
+				>{{ if .Email }}Potrditev spremembe e-naslova za račun v Najdimo.{{ else }}Še en korak do računa v
+				Najdimo.{{ end }}</span
 			>
 			<p style="margin: 0 0 24px; font-size: 22px; font-weight: bold; color: #145360">
 				Najdimo <span style="font-size: 14px; font-weight: normal; color: #4a5b5d">Spet doma.</span>
 			</p>
+			{{ if .Email }}
 			<p>Zahtevali ste spremembo e-naslova računa v Najdimo z {{ .Email }} na {{ .NewEmail }}.</p>
 			<p>Spremembo potrdite z gumbom spodaj. Do potrditve se še vpisujete s starim e-naslovom.</p>
 			<p style="margin: 24px 0">
@@ -80,6 +105,26 @@
 				>
 			</p>
 			<p>Če spremembe niste zahtevali vi, se vpišite in spremenite geslo ali nam pišite.</p>
+			{{ else }}
+			<p>Hvala, da ste ustvarili račun v Najdimo. Potrdite, da je {{ .NewEmail }} vaš e-naslov.</p>
+			<p>Prijave, ki ste jih oddali brez računa, ostanejo vaše.</p>
+			<p style="margin: 24px 0">
+				<a
+					href="{{ .ConfirmationURL }}"
+					style="
+						display: inline-block;
+						padding: 12px 20px;
+						border-radius: 8px;
+						background: #145360;
+						color: #ffffff;
+						font-weight: bold;
+						text-decoration: none;
+					"
+					>Potrdi e-naslov</a
+				>
+			</p>
+			<p>Če računa niste ustvarili vi, tega e-sporočila ne upoštevajte.</p>
+			{{ end }}
 			<p style="font-size: 14px; color: #4a5b5d">
 				Gumb ne deluje? Kopirajte to povezavo v brskalnik: {{ .ConfirmationURL }}
 			</p>

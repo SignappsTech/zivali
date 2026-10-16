@@ -251,7 +251,7 @@ describe('SignUpForm converting an anonymous finder (C7 §6)', () => {
 		expect(getMockEvents()).toEqual([]);
 	});
 
-	it('names a taken address and says the reports stay on the private link, offering sign-in', async () => {
+	it('names a taken address and says to sign in and then open the private link, offering sign-in', async () => {
 		auth.convertAnonymous.mockRejectedValueOnce(authError('CONFLICT'));
 		show(<SignUpForm convert />);
 		fill();

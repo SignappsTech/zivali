@@ -263,8 +263,9 @@ content_path = "./supabase/templates/recovery.html"
 subject = '{{ if eq .Data.locale "en" }}Your sign-in link{{ else }}Povezava za vpis{{ end }}'
 content_path = "./supabase/templates/magic_link.html"
 
+# No current address (.Email empty): an anonymous finder session becoming an account (C7 §6).
 [auth.email.template.email_change]
-subject = '{{ if eq .Data.locale "en" }}Confirm your new email address{{ else }}Potrdite nov e-naslov{{ end }}'
+subject = '{{ if .Email }}{{ if eq .Data.locale "en" }}Confirm your new email address{{ else }}Potrdite nov e-naslov{{ end }}{{ else }}{{ if eq .Data.locale "en" }}Confirm your email address{{ else }}Potrdite e-naslov{{ end }}{{ end }}'
 content_path = "./supabase/templates/email_change.html"
 
 [auth.email.template.reauthentication]

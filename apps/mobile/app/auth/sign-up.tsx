@@ -46,8 +46,8 @@ type Field = 'name' | 'email' | 'password';
  *
  * `convert=1` (the anonymous finder's account offer) while this session is anonymous: the same form turns the session
  * into the account (convertAnonymous, C7 §6), so the reports made without one stay. GoTrue names a taken address
- * here, so the form says it and why signing in does not move those reports; no providers (they would start another
- * user).
+ * here, so the form says it and how to add the report to that account (sign in, then the private link); no providers
+ * (they would start another user).
  */
 export default function SignUp() {
 	const t = useTranslations('auth');

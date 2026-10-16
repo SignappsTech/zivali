@@ -9,7 +9,7 @@ source: docs/04-technical-design.md§Authentication and authorization, ADR-005, 
 3. Client uploads photos (C5) and calls `POST /v1/reports` with an `Idempotency-Key` (C4). Response includes `manage_token` (shown once, stored on device: web `localStorage` key `manage:<report_id>`, mobile `expo-secure-store`).
 4. Manage link = `<APP_URL>/m#<manage_token>` (SL) or `<APP_URL>/en/m#<manage_token>`. If `finder_email` was given, the `notify.send` job emails the link (template `manage_link`).
 5. On another device the link page signs in anonymously (captcha) and calls `POST /v1/manage/claim` → the new anonymous uid becomes a manager; redirect to the report manage view.
-6. Claiming with an account: from the manage view, "Create an account" converts the current anonymous user (`updateUser({ email, password })` or `linkIdentity`); same uid, nothing moves.
+6. Claiming with an account: from the manage view, "Create an account" converts the current anonymous user (or `linkIdentity`); same uid, nothing moves. Email and password: `updateUser({ email, data: { locale, display_name } }, { emailRedirectTo })` (GoTrue mails the `email_change` link, PKCE on web), then `POST /v1/me/convert-password { password }` (C3): GoTrue's own password update asks a session older than 24 h to reauthenticate (`secure_password_change`), which an anonymous user cannot. "Send again" repeats `updateUser({ email })` (`resend({ type: 'email_change' })` finds no one, the anonymous user's email is empty, and carries no PKCE; 60 s apart, else `RATE_LIMITED`). The user stops being anonymous when the link is opened; the email copy for an empty current address confirms the new account (`supabase/templates/email_change.html`).
 
 ## REST (owned by TASK-17.1)
 
@@ -45,3 +45,9 @@ All clients send `x-device-id: <uuid>` (generated once per install/browser, stor
 // POST /v1/reports (anonymous) → 201
 { "id": "a1…", "short_code": "Xy7pQ2mK", "moderation_state": "visible", "manage_token": "q7Vt…43chars" }
 ```
+
+## Change log
+
+| Version | Date | Change |
+|---|---|---|
+| 1.1 | 2026-10-16 | TASK-17.12: §Flow 6, email and password conversion = `updateUser({ email, data })` then `POST /v1/me/convert-password` (C3), "send again" = `updateUser({ email })`, email_change copy without a current address |
