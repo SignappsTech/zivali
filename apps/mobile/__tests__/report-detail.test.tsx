@@ -11,6 +11,7 @@ import { Share, Text } from 'react-native';
 import { Provider } from 'react-redux';
 import { IntlProvider } from 'use-intl';
 
+import { abuseCreated } from '@zivali/api/__fixtures__/abuse';
 import * as fx from '@zivali/api/__fixtures__/reports';
 import type { CachedReport } from '@zivali/api/sync';
 import sl from '@zivali/i18n/dist/sl.json';
@@ -19,6 +20,7 @@ import { createMockApi } from '@zivali/api/mock';
 import { api, createApiStore } from '@zivali/api/rtk';
 import type { PublicReport, ReportOwnerView } from '@zivali/types';
 import ReportScreen from '@/app/r/[code]/index';
+import { ensureSession } from '@/lib/anonymous';
 import { useReport } from '@/lib/data/reports';
 import { toAppPath } from '@/lib/deep-link';
 
@@ -27,6 +29,8 @@ jest.mock('@/lib/env', () => ({ env: { EXPO_PUBLIC_APP_URL: 'https://najdimo.tes
 jest.mock('expo-web-browser', () => ({ openBrowserAsync: jest.fn(async () => ({})) }));
 // The owner actions share the auth error text, whose module loads the Supabase client; nothing here signs in.
 jest.mock('@/lib/auth', () => ({ providers: [], signInWithProvider: jest.fn() }));
+// The anonymous session before a report-abuse request has its own tests (manage.test.tsx).
+jest.mock('@/lib/anonymous', () => ({ ensureSession: jest.fn(async () => ({})) }));
 // The P16 gate has its own tests (auth.test.tsx); here it only shows whether contact opened it.
 jest.mock('@/components/auth/gate', () => {
 	const { Text: MockText } = jest.requireActual<typeof import('react-native')>('react-native');
@@ -79,6 +83,7 @@ const owner: ReportOwnerView = {
 
 type Result = ReturnType<typeof useReport>;
 const mockUseReport = jest.mocked(useReport);
+const mockEnsureSession = jest.mocked(ensureSession);
 const refetch = jest.fn();
 const result = (patch: Partial<Result>): Result => ({
 	data: undefined,
@@ -104,6 +109,7 @@ const mockApi = createMockApi({
 			municipality_slug: 'ljubljana',
 		},
 	},
+	'POST /v1/abuse-reports': abuseCreated,
 });
 
 async function open(report: Partial<Result>, code = 'Rex2Lost') {
@@ -335,6 +341,24 @@ describe('report detail (P9 mobile)', () => {
 		const menu = container('menu', r.more);
 		expect(within(menu).getByRole('menuitem', { name: r.more_abuse })).toBeOnTheScreen();
 		expect(within(menu).queryByRole('menuitem', { name: r.owner_close })).toBeNull();
+
+		// The same sheet turns into the P10 form for this report (TASK-25.4).
+		await fireEvent.press(within(menu).getByRole('menuitem', { name: r.more_abuse }));
+		expect(screen.getByRole('heading', { name: sl.abuse.title })).toBeOnTheScreen();
+		expect(screen.getByText('Glede objave: Rex')).toBeOnTheScreen();
+		expect(screen.queryByRole('menuitem', { name: r.more_abuse })).toBeNull();
+		await fireEvent.press(screen.getByRole('radio', { name: sl.abuse.reason_scam }));
+		await fireEvent.press(screen.getByRole('button', { name: sl.abuse.send }));
+		expect(await screen.findByRole('heading', { name: sl.abuse.done_title })).toBeOnTheScreen();
+		expect(mockEnsureSession).toHaveBeenCalled();
+		expect(mockApi.calls.find((call) => call.path === '/v1/abuse-reports')?.body).toEqual({
+			target_type: 'report',
+			target_id: lost.id,
+			reason: 'scam',
+		});
+		// "Končano" closes the sheet; it opens on the menu again.
+		await fireEvent.press(screen.getByRole('button', { name: sl.abuse.done_close }));
+		expect(screen.getByRole('menuitem', { name: r.more_abuse })).toBeOnTheScreen();
 	});
 
 	test('the owner view: owner actions, the held note, the own point labelled, the owner reward note', async () => {
@@ -428,6 +452,11 @@ describe('states (AC 3)', () => {
 		expect(screen.getByText(r.action_offline)).toBeOnTheScreen();
 		await fireEvent.press(screen.getByRole('button', { name: r.action_message }));
 		expect(screen.queryByText('gate:contact')).toBeNull();
+		// Report abuse keeps the choice but cannot send until the network is back.
+		await fireEvent.press(screen.getByRole('button', { name: r.more }));
+		await fireEvent.press(screen.getByRole('menuitem', { name: r.more_abuse }));
+		await fireEvent.press(screen.getByRole('radio', { name: sl.abuse.reason_fake }));
+		expect(screen.getByRole('button', { name: sl.abuse.send })).toBeDisabled();
 		await act(async () => {});
 		expect(mockApi.calls).toEqual([]);
 	});
