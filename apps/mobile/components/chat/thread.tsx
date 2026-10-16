@@ -143,6 +143,9 @@ function ThreadView({ conversation }: { conversation: Conversation }) {
 	const [older, setOlder] = React.useState<{ items: Message[]; cursor: string | null }>();
 	const [loadingOlder, setLoadingOlder] = React.useState(false);
 	const [pending, setPending] = React.useState<Pending[]>([]);
+	// The queue mirrored in a ref, so a flush never reads a stale render; `flushing` keeps one sender at a time.
+	const queue = React.useRef<Pending[]>([]);
+	const flushing = React.useRef(false);
 	const [sent, setSent] = React.useState<ReadonlySet<string>>(new Set());
 	const [reported, setReported] = React.useState<ReadonlySet<string>>(new Set());
 	const [lock, setLock] = React.useState<Lock>();
@@ -184,12 +187,17 @@ function ThreadView({ conversation }: { conversation: Conversation }) {
 					.then(() => setLock('blocked_by_you'))
 		: undefined;
 
+	const change = (next: (items: Pending[]) => Pending[]) => {
+		queue.current = next(queue.current);
+		setPending(queue.current);
+	};
 	const update = (key: string, state?: Pending['state']) =>
-		setPending((items) =>
+		change((items) =>
 			state
 				? items.map((item) => (item.key === key ? { ...item, state } : item))
 				: items.filter((item) => item.key !== key)
 		);
+	/** Sends one message; false means stop the queue (connection error or lock), the message stays for a retry. */
 	const deliver = async (item: Pending) => {
 		update(item.key, 'sending');
 		const first = !messages.some(isOwn);
@@ -211,15 +219,23 @@ function ThreadView({ conversation }: { conversation: Conversation }) {
 				dispatch(chatApi.util.invalidateTags(['Conversation']));
 			} else toast.error(errorText(error));
 			update(item.key, 'failed');
+			return false;
 		}
+		return true;
 	};
-	// Back online: the queued messages go out in order.
-	const flush = React.useEffectEvent(() => {
-		for (const item of pending) if (item.state === 'queued') void deliver(item);
+	// Queued messages go out one at a time, in order; the first failure stops the run.
+	const flush = React.useEffectEvent(async () => {
+		if (flushing.current) return;
+		flushing.current = true;
+		try {
+			for (let item; (item = queue.current.find((m) => m.state === 'queued'));) if (!(await deliver(item))) break;
+		} finally {
+			flushing.current = false;
+		}
 	});
 	React.useEffect(() => {
 		const network = addNetworkStateListener((state) => {
-			if (isOnline(state)) flush();
+			if (isOnline(state)) void flush();
 		});
 		return () => network.remove();
 	}, []);
@@ -228,9 +244,14 @@ function ThreadView({ conversation }: { conversation: Conversation }) {
 		const body = draft.trim();
 		if (!body) return;
 		setDraft('');
-		const item: Pending = { key: `${Date.now()}-${pending.length}`, body, state: online ? 'sending' : 'queued' };
-		setPending((items) => [...items, item]);
-		if (online) void deliver(item);
+		// Always through the queue: behind anything queued, sending or failed, the new message goes out in order.
+		const item: Pending = { key: `${Date.now()}-${queue.current.length}-${body.length}`, body, state: 'queued' };
+		change((items) => [...items, item]);
+		if (online) void flush();
+	};
+	const retry = (item: Pending) => {
+		update(item.key, 'queued');
+		void flush();
 	};
 
 	const loadOlder = async () => {
@@ -284,8 +305,7 @@ function ThreadView({ conversation }: { conversation: Conversation }) {
 	const renderRow = ({ item: row }: { item: Row }) => {
 		if (row.kind === 'day')
 			return <Text className="my-1.5 self-center font-sans-bold text-sm text-muted-foreground">{row.label}</Text>;
-		if (row.kind === 'pending')
-			return <PendingBubble pending={row.pending} onRetry={() => void deliver(row.pending)} />;
+		if (row.kind === 'pending') return <PendingBubble pending={row.pending} onRetry={() => retry(row.pending)} />;
 		const { message } = row;
 		if (message.kind === 'system')
 			return (

@@ -45,7 +45,7 @@
 	"read_only": "This conversation is closed because the report is closed. You can still read the messages.",
 	"blocked_by_you": "You have blocked this person.",
 	"blocked_you": "You can no longer message this person.",
-	"offline": "Offline. We will send your messages when you are back online.",
+	"offline": "Offline. We will send your messages when you are back online. Stay on this screen: unsent messages are lost if you leave.",
 	"queued": "Waiting to send",
 	"new_message_announce": "New message from {author}",
 	"unverified": "Please confirm your email address before messaging.",

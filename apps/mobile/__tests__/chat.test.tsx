@@ -416,6 +416,28 @@ describe('conversation (P12 thread)', () => {
 		expect(screen.queryByText(c.queued)).toBeNull();
 	});
 
+	test('offline: two queued messages and two quick online events send exactly twice, in order', async () => {
+		mockNet.state = { isConnected: false, isInternetReachable: false } as NetworkState;
+		serve();
+		await open();
+		await screen.findByText(HISTORY[1]!.body);
+
+		await type('Prvo');
+		await fireEvent.press(sendButton());
+		await type('Drugo');
+		await fireEvent.press(sendButton());
+		expect(sent('POST', MESSAGES)).toEqual([]);
+
+		mockNet.state = { isConnected: true, isInternetReachable: true } as NetworkState;
+		await act(async () => {
+			mockNet.listeners.forEach((listener) => listener(mockNet.state));
+			mockNet.listeners.forEach((listener) => listener(mockNet.state));
+		});
+		await waitFor(() => expect(sent('POST', MESSAGES)).toHaveLength(2));
+		expect(sent('POST', MESSAGES)).toEqual([{ body: 'Prvo' }, { body: 'Drugo' }]);
+		await waitFor(() => expect(screen.queryByText(c.queued)).toBeNull());
+	});
+
 	test('"Prijavi in blokiraj": the P10 sheet for the latest message, then the block; the message folds', async () => {
 		serve();
 		await open();

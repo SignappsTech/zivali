@@ -45,7 +45,7 @@
 	"read_only": "Pogovor je zaprt, ker je prijava zaključena. Sporočila lahko še berete.",
 	"blocked_by_you": "To osebo ste blokirali.",
 	"blocked_you": "Tej osebi ne morete več pisati.",
-	"offline": "Brez povezave. Sporočila pošljemo, ko boste spet povezani.",
+	"offline": "Brez povezave. Sporočila pošljemo, ko boste spet povezani. Ostanite na tem zaslonu: neposlana sporočila se ob izhodu izgubijo.",
 	"queued": "Čaka na pošiljanje",
 	"new_message_announce": "Novo sporočilo od: {author}",
 	"unverified": "Za pogovor najprej potrdite svoj e-naslov.",

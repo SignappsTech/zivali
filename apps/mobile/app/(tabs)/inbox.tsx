@@ -28,6 +28,12 @@ export default function InboxTab() {
 	const { session, isAnonymous, loading } = useSession();
 	const params = useLocalSearchParams<{ view?: string }>();
 	const [view, setView] = React.useState(params.view === 'notifications' ? 'notifications' : 'conversations');
+	// A later deep link (C15) changes the param while the tab is mounted: adjust state during render.
+	const [seenParam, setSeenParam] = React.useState(params.view);
+	if (params.view !== seenParam) {
+		setSeenParam(params.view);
+		if (params.view) setView(params.view === 'notifications' ? 'notifications' : 'conversations');
+	}
 	if (loading) return <View className="flex-1 bg-background" />;
 
 	if (!session || isAnonymous) {
