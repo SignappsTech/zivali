@@ -6,7 +6,7 @@ import * as React from 'react';
 import { toast } from 'sonner';
 
 import { AuthHeading } from '@/components/auth/parts';
-import { ReunitedAd, ReunitedTip } from '@/components/report/reunited-slots';
+import { DONE_ID, ReunitedAd, ReunitedTip } from '@/components/report/reunited-slots';
 import type { DetailReport } from '@/components/report/slots/types';
 import { StatusWord } from '@/components/report/status-word';
 import { SpotIllustration } from '@/components/shell/page';
@@ -27,7 +27,7 @@ const columnClass = 'mx-auto box-content max-w-[640px] px-5 pt-6 pb-16 md:px-12 
  * default: explicit consent, A-023), the tip slot (P15), the one ad slot (P21), "Končano" to the map and "Delite veselo
  * novico".
  */
-function OwnerReunited({ report }: { report: DetailReport }) {
+function OwnerReunited({ report, tip, testMode }: { report: DetailReport; tip: boolean; testMode: boolean }) {
 	const tl = useTranslations('lifecycle');
 	const tb = useTranslations('browse');
 	const ts = useTranslations('share');
@@ -82,12 +82,14 @@ function OwnerReunited({ report }: { report: DetailReport }) {
 				</p>
 			</div>
 
-			<ReunitedTip report={report} className="mt-16" />
-			<ReunitedAd report={report} className="mt-16" />
+			{tip && <ReunitedTip report={report} testMode={testMode} className="mt-16" />}
+			<ReunitedAd report={report} tip={tip} className="mt-16" />
 
 			<div className="mt-16 flex flex-wrap items-center gap-x-4 gap-y-2 max-sm:*:w-full">
 				<Button asChild size="lg">
-					<Link href="/map">{tl('done')}</Link>
+					<Link id={DONE_ID} href="/map">
+						{tl('done')}
+					</Link>
 				</Button>
 				<Button variant="text" onClick={() => void share()}>
 					<ShareNetworkIcon weight="bold" aria-hidden="true" />
@@ -118,10 +120,18 @@ function FinderThanks({ report, anonymous }: { report: DetailReport; anonymous: 
 	);
 }
 
+type ReunitedProps = {
+	report: DetailReport;
+	/** The manage-link session (C7): no account, so no tip (P15). */
+	anonymous: boolean;
+	/** Outside production: the tip's test-payment note. */
+	testMode?: boolean;
+};
+
 /** The reunited page of a report this viewer manages: the owner's celebration or the finder's thank-you. */
-export function Reunited({ report, anonymous }: { report: DetailReport; anonymous: boolean }) {
+export function Reunited({ report, anonymous, testMode = false }: ReunitedProps) {
 	return report.manager_role === 'owner' ? (
-		<OwnerReunited report={report} />
+		<OwnerReunited report={report} tip={!anonymous} testMode={testMode} />
 	) : (
 		<FinderThanks report={report} anonymous={anonymous} />
 	);

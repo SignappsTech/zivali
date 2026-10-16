@@ -8,6 +8,7 @@ import { ApiError } from '@zivali/api/client';
 import sl from '@zivali/i18n/dist/sl.json';
 import type { Payment } from '@zivali/types';
 
+import { rememberPayment, settlePayment } from './answers';
 import { PaymentReturn } from './payment-return';
 
 const state = vi.hoisted(() => ({
@@ -30,6 +31,8 @@ vi.mock('@/i18n/navigation', () => ({
 	Link: ({ href, children }: { href: string; children: React.ReactNode }) => <a href={href}>{children}</a>,
 }));
 vi.mock('react-redux', () => ({ useDispatch: () => 'dispatch' }));
+const track = vi.hoisted(() => vi.fn());
+vi.mock('@zivali/analytics', () => ({ track }));
 
 const RETURN_TO = '/r/Hk3vT9qP/spet-doma';
 
@@ -47,6 +50,7 @@ const heading = () => screen.getByRole('heading', { level: 1 });
 afterEach(() => {
 	cleanup();
 	vi.clearAllMocks();
+	sessionStorage.clear();
 	state.gate = 'ok';
 });
 
@@ -81,6 +85,45 @@ describe('PaymentReturn', () => {
 		expect(screen.getByRole('link', { name: sl.payments.success_back }).getAttribute('href')).toBe(RETURN_TO);
 	});
 
+	it('fires donation once on success with value, currency, band and purpose only (C12); the ask says thanks', () => {
+		rememberPayment(payment.id, 'tip:Hk3vT9qP');
+		show({ status: 'succeeded', amount_cents: 1000 });
+		expect(track).toHaveBeenCalledExactlyOnceWith('donation', {
+			value: 10,
+			currency: 'EUR',
+			amount_bucket: '10-19',
+			purpose: 'tip',
+		});
+		expect(sessionStorage.getItem('zz_support:tip:Hk3vT9qP')).toBe('paid');
+		// A reload of the return page does not count it again.
+		cleanup();
+		show({ status: 'succeeded', amount_cents: 1000 });
+		expect(track).toHaveBeenCalledTimes(1);
+	});
+
+	it.each([
+		[200, 'report_contribution', '2-4'],
+		[500, 'support', '5-9'],
+		[2500, 'tip', '20+'],
+	] as const)('bands %i cents of %s as %s', (amount_cents, purpose, amount_bucket) => {
+		show({ status: 'succeeded', amount_cents, purpose });
+		expect(track).toHaveBeenCalledWith('donation', {
+			value: amount_cents / 100,
+			currency: 'EUR',
+			amount_bucket,
+			purpose,
+		});
+	});
+
+	it('sends no donation before or without a success, nor for a fixed-price purpose', () => {
+		for (const data of [{ status: 'pending' }, { status: 'failed' }, { status: 'canceled' }] as const) {
+			show(data);
+			cleanup();
+		}
+		show({ status: 'succeeded', purpose: 'boost' });
+		expect(track).not.toHaveBeenCalled();
+	});
+
 	it('says the receipt waits for a confirmed address', () => {
 		state.gate = 'verify';
 		show({ status: 'succeeded' });
@@ -104,6 +147,16 @@ describe('PaymentReturn', () => {
 			returnTo: RETURN_TO,
 			locale: 'sl',
 		});
+	});
+
+	it('links the retry checkout to the ask the cancelled one answered, so a later success closes it', async () => {
+		state.startCheckout.mockResolvedValue({ paymentId: 'p2', checkoutUrl: 'https://checkout.test/p2' });
+		rememberPayment(payment.id, 'tip:Hk3vT9qP');
+		show({ status: 'pending' }, { canceled: true });
+		fireEvent.click(screen.getByRole('button', { name: sl.payments.cancel_retry }));
+		await vi.waitFor(() => expect(state.redirectToCheckout).toHaveBeenCalled());
+		expect(settlePayment('p2')).toBe(true);
+		expect(sessionStorage.getItem('zz_support:tip:Hk3vT9qP')).toBe('paid');
 	});
 
 	it('explains a declined card calmly, retry first, skip back; a failed retry says why', async () => {

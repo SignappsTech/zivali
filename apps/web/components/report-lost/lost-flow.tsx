@@ -588,7 +588,16 @@ function useTrackSubmit() {
  * this browser); Publish then asks for an account (P16 dialog) and the draft hand-off (C3) publishes it once they are
  * back signed in, nothing sent before. The confirmation is LostDone. No ad in the flow (C15).
  */
-export function LostFlow({ initialPet, signedIn }: { initialPet?: string; signedIn: boolean }) {
+export function LostFlow({
+	initialPet,
+	signedIn,
+	testMode = false,
+}: {
+	initialPet?: string;
+	signedIn: boolean;
+	/** Outside production (APP_ENV): the P15 test-payment note on the confirmation. */
+	testMode?: boolean;
+}) {
 	const t = useTranslations('report_lost');
 	const errorText = useErrorText();
 	const tErrors = useTranslations('errors');
@@ -921,7 +930,12 @@ export function LostFlow({ initialPet, signedIn }: { initialPet?: string; signed
 				)}
 			>
 				{done ? (
-					<LostDone {...done} unverified={Boolean(me) && !isVerified} titleClass={titleClass} />
+					<LostDone
+						{...done}
+						unverified={Boolean(me) && !isVerified}
+						titleClass={titleClass}
+						testMode={testMode}
+					/>
 				) : (
 					<>
 						<StepBars current={index + 1} total={steps.length} />

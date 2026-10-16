@@ -79,7 +79,7 @@ vi.mock('@/components/auth/gate', () => ({
 }));
 // The confirmation has its own tests: here it shows what the flow hands it.
 vi.mock('./lost-done', () => ({
-	LostDone: ({ titleClass: _, ...props }: { titleClass: string }) => (
+	LostDone: ({ titleClass: _, testMode: _test, ...props }: { titleClass: string; testMode?: boolean }) => (
 		<>
 			<h1>{sl.report_lost.done_title}</h1>
 			<p data-testid="done">{JSON.stringify(props)}</p>

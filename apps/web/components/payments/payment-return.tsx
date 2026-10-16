@@ -9,11 +9,13 @@ import NextLink from 'next/link';
 import * as React from 'react';
 import { useDispatch } from 'react-redux';
 
+import { type EventParams, track } from '@zivali/analytics';
 import { useRequireAuth } from '@zivali/api/auth';
 import { redirectToCheckout, startCheckout, useGetPaymentQuery } from '@zivali/api/payments';
 import type { ApiStore } from '@zivali/api/rtk';
-import { type PaymentStatus, USER_AMOUNT_PURPOSES, type Uuid } from '@zivali/types';
+import { type Payment, type PaymentStatus, USER_AMOUNT_PURPOSES, type Uuid } from '@zivali/types';
 import { Link } from '@/i18n/navigation';
+import { relinkPayment, settlePayment } from '@/components/payments/answers';
 import { Spot, useErrorText } from '@/components/auth/parts';
 import { InlineError } from '@/components/shell/page';
 import { noteClass } from '@/components/shelters/classes';
@@ -33,6 +35,14 @@ const VIEW: Record<PaymentStatus, View> = {
 const POLL_MS = 3000;
 // The webhook normally lands within seconds; after this the page stops asking and points to My payments.
 const POLL_LIMIT_MS = 90_000;
+
+/** C12 `donation` for a succeeded contribution: euros, the amount bucket and the purpose, nothing else (as on mobile). */
+function donation({ purpose, amount_cents, currency }: Payment): EventParams['donation'] | null {
+	if (purpose !== 'tip' && purpose !== 'report_contribution' && purpose !== 'support') return null;
+	const value = amount_cents / 100;
+	const amount_bucket = value < 5 ? '2-4' : value < 10 ? '5-9' : value < 20 ? '10-19' : '20+';
+	return { value, currency, amount_bucket, purpose };
+}
 
 const headingClass = 'font-display text-2xl font-bold tracking-[-0.015em] text-balance outline-none lg:text-3xl';
 const bodyClass = 'mt-3 text-lg leading-7 lg:mt-4 lg:text-xl lg:leading-8';
@@ -94,6 +104,14 @@ export function PaymentReturn({ paymentId, returnTo, canceled }: Props) {
 	const status = payment ? VIEW[payment.status] : 'pending';
 	const view: View = status === 'pending' && canceled ? 'canceled' : status;
 	if (!settled && view !== 'pending') setSettled(true);
+	// Success: the ask the payment answered says thanks from now on, and `donation` goes out once (a no-op without
+	// analytics consent, C12; a reload does not send it again).
+	const succeeded = view === 'success' ? payment : undefined;
+	React.useEffect(() => {
+		if (!succeeded || !settlePayment(succeeded.id)) return;
+		const params = donation(succeeded);
+		if (params) track('donation', params);
+	}, [succeeded]);
 	React.useEffect(() => {
 		if (settled) return;
 		const timer = setTimeout(() => setTimedOut(true), POLL_LIMIT_MS);
@@ -105,12 +123,13 @@ export function PaymentReturn({ paymentId, returnTo, canceled }: Props) {
 		setRetrying(true);
 		setRetryError(undefined);
 		try {
-			const { checkoutUrl } = await startCheckout(dispatch, {
+			const { paymentId: next, checkoutUrl } = await startCheckout(dispatch, {
 				purpose: payment.purpose,
 				amountCents: payment.amount_cents,
 				returnTo,
 				locale,
 			});
+			relinkPayment(payment.id, next);
 			redirectToCheckout(checkoutUrl);
 		} catch (error) {
 			setRetryError(errorText(error));

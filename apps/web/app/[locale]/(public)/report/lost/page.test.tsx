@@ -67,7 +67,7 @@ describe('ReportLostPage', () => {
 		const flow = screen.getByTestId('flow');
 		expect(flow.dataset.signedIn).toBe('false');
 		expect(flow.textContent!.split(' ')).toEqual(
-			expect.arrayContaining(['report_lost', 'photos', 'location', 'auth', 'shelter_row', 'share'])
+			expect.arrayContaining(['report_lost', 'photos', 'location', 'auth', 'shelter_row', 'share', 'support'])
 		);
 		expect(document.querySelector('[data-ad-slot]')).toBeNull();
 		const ld = JSON.parse(document.querySelector('script[type="application/ld+json"]')!.textContent!);
