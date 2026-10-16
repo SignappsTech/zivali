@@ -1,13 +1,14 @@
+import { SupportTip } from '@/components/payments/support';
 import type { DetailReport } from '@/components/report/slots/types';
 
 type ReunitedSlotProps = { report: DetailReport; className?: string };
 
 /**
  * P14 support moment (P15 `support.tip_*`): h3, three amount pills, custom amount, Pay and Skip of equal size, between
- * the story switch and "Končano". TASK-33.3 renders it here; until then it takes no space.
+ * the story switch and "Končano". Gone once skipped; a thank-you line once paid.
  */
-export function ReunitedTip(_props: ReunitedSlotProps) {
-	return null;
+export function ReunitedTip({ report, className }: ReunitedSlotProps) {
+	return <SupportTip reportId={report.id} code={report.short_code} className={className} />;
 }
 
 /**

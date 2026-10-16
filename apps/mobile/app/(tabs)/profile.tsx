@@ -19,6 +19,7 @@ import { useSession } from '@zivali/api/auth';
 import type { Me } from '@zivali/types';
 import { useErrorText } from '@/components/auth/parts';
 import { OutboxList, usePendingPrompt } from '@/components/outbox/queue';
+import { SupportCard } from '@/components/payments/support';
 import { LanguageRow } from '@/components/shell/language';
 import { MenuRow, SignInButtons } from '@/components/shell/parts';
 import {
@@ -228,6 +229,8 @@ export default function ProfileTab() {
 						</View>
 					</>
 				)}
+				{/* P15 support card (C13 `support`): last on the page, quiet, never a prompt. */}
+				{signedIn ? <SupportCard className="mt-10" /> : null}
 			</ScrollView>
 		</SafeAreaView>
 	);
