@@ -3,11 +3,11 @@ id: TASK-14.6
 title: >-
   Report photo alt text has no colour (or area): API builds it from type,
   species and name only
-status: In Progress
+status: Done
 assignee:
   - '@backend-dev'
 created_date: '2026-10-16 03:36'
-updated_date: '2026-10-16 04:16'
+updated_date: '2026-10-16 05:08'
 labels:
   - bug
   - 'est:XS'

@@ -81,10 +81,8 @@ for (const viewport of [
 
 		await expect(page.getByRole('heading', { level: 1, name: 'Vaša prijava' })).toBeVisible();
 		await expect(page.getByText('Najdena')).toBeVisible();
-		await expect(page.getByRole('link', { name: 'Uredi prijavo' })).toHaveAttribute(
-			'href',
-			`/r/${ownerReport.short_code}`
-		);
+		// TODO(TASK-26.4): the Edit row is hidden until the detail page has owner actions (manage-view.tsx).
+		await expect(page.getByRole('link', { name: 'Uredi prijavo' })).toHaveCount(0);
 		await expect(page.getByRole('button', { name: 'Žival je spet doma' })).toBeVisible();
 		expect(await page.title()).toBe('Vaša prijava · Najdimo');
 		await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content', 'noindex, nofollow');

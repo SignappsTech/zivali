@@ -72,7 +72,13 @@ function Target({ row }: { row: Row }) {
 			</span>
 		);
 	return (
-		<Link href={{ pathname: '/r/[code]', params: { code: row.target_code } }} className={linkClass}>
+		// No prefetch: moderation targets are often hidden or removed (a 404 or 410 page), and a long queue would load
+		// the API with page renders nobody asked for.
+		<Link
+			href={{ pathname: '/r/[code]', params: { code: row.target_code } }}
+			prefetch={false}
+			className={linkClass}
+		>
 			{t(row.target_type === 'message' ? 'abuse.link_message' : 'abuse.link_report', { code: row.target_code })}
 		</Link>
 	);
