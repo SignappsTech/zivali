@@ -3,7 +3,7 @@ id: TASK-13.7
 title: >-
   Web re-ask after 12 months never says a year has passed (consent cookie
   expires with the choice)
-status: To Do
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-16 03:46'
@@ -25,5 +25,5 @@ TASK-13.4 QA, AC#6 / P17 Re-ask 'The first sentence says what changed'. Steps: a
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 When a stored web choice is older than 12 months, the banner returns with the reask_year sentence (the zz_consent cookie outlives the 12-month consent window, e.g. Max-Age 13 months)
+- [x] #1 When a stored web choice is older than 12 months, the banner returns with the reask_year sentence (the zz_consent cookie outlives the 12-month consent window, e.g. Max-Age 13 months)
 <!-- AC:END -->

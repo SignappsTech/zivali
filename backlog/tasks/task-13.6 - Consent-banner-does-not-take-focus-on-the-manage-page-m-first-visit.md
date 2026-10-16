@@ -1,7 +1,7 @@
 ---
 id: TASK-13.6
 title: Consent banner does not take focus on the manage page (/m) first visit
-status: To Do
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-16 03:46'
@@ -23,5 +23,5 @@ TASK-13.4 QA, AC#5 / P17 States 'First visit: banner visible, focus moved into i
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 On a first visit to /m and /en/m (no zz_consent cookie) focus is on the banner heading after load, as on every other public page (e2e/consent-qa.spec.ts '/m focus' test passes without test.fail)
+- [x] #1 On a first visit to /m and /en/m (no zz_consent cookie) focus is on the banner heading after load, as on every other public page (e2e/consent-qa.spec.ts '/m focus' test passes without test.fail)
 <!-- AC:END -->

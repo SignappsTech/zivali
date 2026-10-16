@@ -39,6 +39,7 @@ export function ConsentBanner({ prompt = false, stored = null }: { prompt?: bool
 		return t.has(key) ? t('reask_changed', { change: t(key) }) : null;
 	});
 	const heading = useRef<HTMLHeadingElement>(null);
+	const banner = useRef<HTMLElement>(null);
 	const opener = useRef<HTMLElement | null>(null);
 
 	useEffect(() => {
@@ -55,6 +56,27 @@ export function ConsentBanner({ prompt = false, stored = null }: { prompt?: bool
 
 	useEffect(() => {
 		if (view !== 'closed') heading.current?.focus();
+	}, [view]);
+
+	// WCAG 2.4.11: the fixed banner must not hide the focused control. While open, the page gets bottom padding and
+	// scroll padding equal to the banner's height (non-modal: the page stays usable).
+	useEffect(() => {
+		const el = banner.current;
+		if (view === 'closed' || !el) return;
+		const root = document.documentElement;
+		const sync = () => {
+			const h = `${el.offsetHeight}px`;
+			root.style.scrollPaddingBottom = h;
+			document.body.style.paddingBottom = h;
+		};
+		sync();
+		const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(sync);
+		observer?.observe(el);
+		return () => {
+			observer?.disconnect();
+			root.style.scrollPaddingBottom = '';
+			document.body.style.paddingBottom = '';
+		};
 	}, [view]);
 
 	useEffect(() => {
@@ -95,6 +117,8 @@ export function ConsentBanner({ prompt = false, stored = null }: { prompt?: bool
 			{view !== 'closed' && (
 				<section
 					role="dialog"
+					data-consent-banner=""
+					ref={banner}
 					aria-label={t('dialog_label')}
 					aria-describedby="consent-body"
 					onKeyDown={onKeyDown}

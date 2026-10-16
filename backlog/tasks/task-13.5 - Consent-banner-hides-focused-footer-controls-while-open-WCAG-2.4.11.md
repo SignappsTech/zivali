@@ -1,7 +1,7 @@
 ---
 id: TASK-13.5
 title: Consent banner hides focused footer controls while open (WCAG 2.4.11)
-status: To Do
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-16 03:45'
@@ -23,5 +23,5 @@ TASK-13.4 QA, AC#5 (WCAG 2.2 AA). Steps: first visit /en (no zz_consent cookie),
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 While the P17 banner is open, no control that receives keyboard focus is entirely hidden behind it, at 390 px and 1440 px (e2e/consent-qa.spec.ts 'WCAG 2.4.11' tests pass without test.fail)
+- [x] #1 While the P17 banner is open, no control that receives keyboard focus is entirely hidden behind it, at 390 px and 1440 px (e2e/consent-qa.spec.ts 'WCAG 2.4.11' tests pass without test.fail)
 <!-- AC:END -->

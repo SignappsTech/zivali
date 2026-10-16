@@ -113,7 +113,7 @@ test.describe('AC#1, AC#2: first visit on every public page', () => {
 			const heading = banner.getByRole('heading', { name: copy.title });
 
 			await expect(banner).toBeVisible();
-			if (!FOCUS_BUG.includes(path)) await expect(heading).toBeFocused(); // TASK-13.6: tested on its own below
+			await expect(heading).toBeFocused();
 			await expect(banner.getByRole('button')).toHaveText(copy.buttons);
 			await page.waitForLoadState('networkidle');
 			await expectNoAnalyticsBeforeConsent(page);
@@ -133,10 +133,7 @@ test.describe('AC#1, AC#2: first visit on every public page', () => {
 		});
 	}
 
-	test('the manage page (/m) moves focus into the banner too', async ({ page, browserName }) => {
-		// TASK-13.6: a race between the page's and the banner's focus; Chromium loses it every time, WebKit now and then.
-		test.skip(browserName !== 'chromium', 'racy outside Chromium until TASK-13.6');
-		test.fail(true, 'TASK-13.6: the page keeps focus on its own heading; drop this line with the fix');
+	test('the manage page (/m) moves focus into the banner too', async ({ page }) => {
 		for (const path of FOCUS_BUG) {
 			await visit(page, path);
 			await expect(page.getByRole('dialog')).toBeVisible();
@@ -379,10 +376,6 @@ test.describe('AC#5: keyboard and screen reader', () => {
 		test(`WCAG 2.4.11 at ${name}: while the banner is open, Tab never lands on a control it hides entirely`, async ({
 			page,
 		}) => {
-			test.fail(
-				true,
-				'TASK-13.5: footer controls are focused behind the open banner; drop this line with the fix'
-			);
 			await page.setViewportSize(viewport);
 			await visit(page, '/en');
 			await expect(page.getByRole('dialog')).toBeVisible();
@@ -412,7 +405,6 @@ test.describe('AC#6: asked again', () => {
 	test('the consent cookie outlives the 12-month window, so the re-ask can say a year has passed', async ({
 		page,
 	}) => {
-		test.fail(true, 'TASK-13.7: Max-Age equals the consent window, the record is gone when it expires');
 		await visit(page, '/en');
 		await page.getByRole('dialog').getByRole('button', { name: 'Reject all' }).click();
 		const cookie = (await page.context().cookies()).find((c) => c.name === 'zz_consent')!;
