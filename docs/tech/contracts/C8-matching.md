@@ -43,7 +43,7 @@ Access only through the API: managers of the lost report read and act on its sug
 
 ```ts
 type MatchSuggestion = { id; score; strength; chip_match; reasons; state;
-  other: Pick<PublicReport,'short_code'|'type'|'species'|'breed_codes'|'colours'|'size'|'sex'|'photos'|'event_at'|'area'> }
+  other: Pick<PublicReport,'id'|'short_code'|'type'|'species'|'breed_codes'|'colours'|'size'|'sex'|'photos'|'event_at'|'area'> }
 ```
 Errors: `FORBIDDEN`, `CONFLICT` (already confirmed/rejected), `UNVERIFIED_EMAIL` (confirm opens chat).
 
@@ -58,5 +58,9 @@ Neither side sees contact data before confirmation (FR-008 R-008.5); after confi
 ```json
 { "id": "m1…", "score": 0.78, "strength": "good", "chip_match": false,
   "reasons": [{ "code": "distance", "band": "1to3" }, { "code": "time", "hours_band": "lt24" }, { "code": "colour", "overlap": 1 }],
-  "other": { "short_code": "Hk3vT9qP", "type": "found", "species": "dog", "photos": [ … ] } }
+  "other": { "id": "7c1e2a4b-5d6f-4a8b-9c0d-1e2f3a4b5c6d", "short_code": "Hk3vT9qP", "type": "found", "species": "dog", "photos": [ … ] } }
 ```
+
+## Changelog
+
+- 2026-10-16 (TASK-20.6): `other.id` (the other report's uuid, already public on `GET /v1/reports/:code`) added to the MatchSuggestion `other` subset so the review can report abuse (C11 `target_id`).

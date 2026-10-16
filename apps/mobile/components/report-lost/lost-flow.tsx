@@ -755,13 +755,16 @@ export function LostFlow() {
 	const publish = async () => {
 		if (busy.current || photos.some((photo) => photo.status === 'uploading')) return;
 		busy.current = true;
+		// Stays closed after a publish that went through: the screen is leaving, and a late press would start a new
+		// submission (a new key, so a second report).
+		let sent = false;
 		try {
-			await send();
+			sent = (await send()) === true;
 		} finally {
-			busy.current = false;
+			if (!sent) busy.current = false;
 		}
 	};
-	const send = async () => {
+	const send = async (): Promise<boolean | void> => {
 		setSendError(undefined);
 		const photoIds = photos.flatMap((photo) => (photo.photoId ? [photo.photoId] : []));
 		if (!photos.length) return setSendError(t('photos_required'));
@@ -802,6 +805,7 @@ export function LostFlow() {
 			await dropDraft().catch(() => markPublished().catch(() => {}));
 			const name = pet?.name ?? values.name?.trim();
 			router.replace({ pathname: '/report/lost/done', params: name ? { code, name } : { code } });
+			return true;
 		} catch (error) {
 			failed(error);
 		} finally {
