@@ -1068,6 +1068,7 @@
 			"MatchOther": {
 				"type": "object",
 				"properties": {
+					"id": { "type": "string", "format": "uuid" },
 					"short_code": { "type": "string" },
 					"type": { "$ref": "#/components/schemas/ReportType" },
 					"species": { "$ref": "#/components/schemas/Species" },
@@ -1080,6 +1081,7 @@
 					"area": { "$ref": "#/components/schemas/PublicArea" }
 				},
 				"required": [
+					"id",
 					"short_code",
 					"type",
 					"species",

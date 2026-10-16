@@ -118,6 +118,10 @@ test('desktop: the list beside the first match, chip match first, no ads, no axe
 	await expect(page.getByText('Najdena žival ima enako številko čipa kot vaša.', { exact: false })).toBeVisible();
 	await expect(page.getByRole('table', { name: 'Primerjava podatkov' })).toBeVisible();
 	await expect(page.locator('[data-ad-slot]')).toHaveCount(0);
+	// P11 overflow: "Prijavi zlorabo" for the other report.
+	await page.getByRole('main').getByRole('button', { name: 'Več možnosti', exact: true }).click();
+	await expect(page.getByRole('menuitem', { name: 'Prijavi zlorabo', exact: true })).toBeVisible();
+	await page.keyboard.press('Escape');
 	await expectNoAxeViolations(page);
 
 	// The other row opens its match in place, with the sighting caveat.

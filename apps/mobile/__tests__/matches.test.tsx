@@ -11,6 +11,7 @@ import { Provider } from 'react-redux';
 import { IntlProvider } from 'use-intl';
 
 import { getMockEvents, initAnalytics, resetMockEvents, setConsent } from '@zivali/analytics';
+import { abuseCreated } from '@zivali/api/__fixtures__/abuse';
 import * as fx from '@zivali/api/__fixtures__/reports';
 import { matchesApi } from '@zivali/api/matches';
 import { createMockApi, mockError, type MockRequest } from '@zivali/api/mock';
@@ -25,6 +26,7 @@ import { useReport } from '@/lib/data/reports';
 
 jest.mock('@/lib/data/reports', () => ({ useReport: jest.fn() }));
 jest.mock('@/lib/env', () => ({ env: { EXPO_PUBLIC_APP_URL: 'https://najdimo.test' } }));
+jest.mock('@/lib/anonymous', () => ({ ensureSession: jest.fn(async () => ({})) }));
 jest.mock('@/lib/auth', () => ({ providers: [], signInWithProvider: jest.fn() }));
 jest.mock('@/components/ui/sonner', () => ({ toast: Object.assign(jest.fn(), { error: jest.fn() }) }));
 const mockNetwork = { isConnected: true, isInternetReachable: true };
@@ -60,6 +62,7 @@ const owner: ReportOwnerView = {
 	].map((p) => ({ ...p, width: 1600, height: 1200 })),
 };
 const other = (patch: Partial<MatchSuggestion['other']>): MatchSuggestion['other'] => ({
+	id: 'bbbbbbbb-0000-4000-8000-000000000001',
 	short_code: 'Cand0001',
 	type: 'found',
 	species: 'dog',
@@ -130,6 +133,7 @@ let confirmFailure: Response | null = null;
 const mockApi = createMockApi({
 	'GET /v1/reports/:code/matches': () => (listOverride ? listOverride() : { items }),
 	'POST /v1/matches/:id/confirm': () => confirmFailure ?? { conversation_id: CONVERSATION },
+	'POST /v1/abuse-reports': abuseCreated,
 	'POST /v1/matches/:id/reject': ({ params }: MockRequest) => {
 		items = items.filter((match) => match.id !== params.id);
 		return undefined;
@@ -453,6 +457,23 @@ describe('match review (P11 mobile)', () => {
 	test('a match that is no longer there says so', async () => {
 		await open(`/r/${nextCode()}/matches/aaaaaaaa-0000-4000-8000-00000000dead`);
 		expect(await screen.findByRole('heading', { name: m.unavailable_title })).toBeOnTheScreen();
+	});
+});
+
+describe('match review abuse entry (TASK-20.6)', () => {
+	test('"Prijavi zlorabo" reports the other report: the submit sends target_id = other.id', async () => {
+		await open(`/r/${nextCode()}/matches/${chip.id}`);
+		await fireEvent.press(await screen.findByRole('button', { name: sl.report.more }));
+		await fireEvent.press(screen.getByRole('menuitem', { name: sl.report.more_abuse }));
+		expect(screen.getByRole('heading', { name: sl.abuse.title })).toBeOnTheScreen();
+		await fireEvent.press(screen.getByRole('radio', { name: sl.abuse.reason_scam }));
+		await fireEvent.press(screen.getByRole('button', { name: sl.abuse.send }));
+		expect(await screen.findByRole('heading', { name: sl.abuse.done_title })).toBeOnTheScreen();
+		expect(mockApi.calls.find((call) => call.path === '/v1/abuse-reports')?.body).toEqual({
+			target_type: 'report',
+			target_id: chip.other.id,
+			reason: 'scam',
+		});
 	});
 });
 
