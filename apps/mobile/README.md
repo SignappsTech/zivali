@@ -65,7 +65,7 @@ Gallery: `/dev/kit` (redirects to `/` when `EXPO_PUBLIC_APP_ENV=production`). `r
 ## Shell (P2)
 
 - `app/(tabs)`: Zemljevid (`index`), Sporočila (`inbox`), Prijavi (`report`) and Profil (`profile`) with the bottom navigation in `components/shell/tab-bar.tsx`. The Prijavi button opens the Report sheet (lost → `/report/lost`, found → `/report/found`, sighted → `/report/found?type=sighted`); the `report` route shows the same choice for a link.
-- `app/settings`: a stack above the tabs: `account`, `alerts`, `consent`, `home-area`, `language`, `notifications`, `offline`, `payments`. `alerts` (TASK-23.3) and `home-area` share one home area: a save writes the profile (`home`, `home_radius_km`) and the alert subscription (C10) together (`lib/alerts.ts`).
+- `app/settings`: a stack above the tabs: `account`, `alerts`, `consent`, `home-area`, `language`, `notifications`, `offline`, `payments`. `alerts` (TASK-23.3) and `home-area` share one home area: a save writes the profile (`home`, `home_radius_km`) and the alert subscription (C10) together (`lib/alerts.ts`). Below them, `alerts` has the separate on-device "Opomniki v bližini" switch (TASK-87.2): `geofenceState()`, the `location_always` primer, then `enableGeofencing()`; off is `stopGeofencing()`. Pausing the server alerts does not touch it.
 - Permissions: show `PermissionPrimer` (`components/shell/permission-primer.tsx`) before every OS prompt while the OS can still ask, passing the prompt as `request`; on `onResult(false)` show `PermissionNote` where the permission was needed.
 - Sign-out (Profil) calls `signOutAndWipe({ removeManageLinks })` after a confirmation with the "remove links" choice.
 

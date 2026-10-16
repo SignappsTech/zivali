@@ -1,8 +1,12 @@
 import { skipToken } from '@reduxjs/toolkit/query';
+import * as Location from 'expo-location';
 import { Redirect, Stack, useRouter } from 'expo-router';
 import { CaretRightIcon } from 'phosphor-react-native/src/icons/CaretRight';
+import { CheckIcon } from 'phosphor-react-native/src/icons/Check';
+import { ToggleRightIcon } from 'phosphor-react-native/src/icons/ToggleRight';
+import { XIcon } from 'phosphor-react-native/src/icons/X';
 import * as React from 'react';
-import { ScrollView, View } from 'react-native';
+import { AppState, ScrollView, View } from 'react-native';
 import { useDispatch } from 'react-redux';
 import { useTranslations } from 'use-intl';
 
@@ -22,6 +26,7 @@ import { useErrorText } from '@/components/auth/parts';
 import { nearest, RADII } from '@/components/location/location-picker';
 import { RadiusSlider } from '@/components/location/radius-slider';
 import { InlineError, Loading } from '@/components/notifications/notifications-view';
+import { PermissionNote, PermissionPrimer } from '@/components/shell/permission-primer';
 import { Button } from '@/components/ui/button';
 import { Icon } from '@/components/ui/icon';
 import { Label } from '@/components/ui/label';
@@ -30,10 +35,17 @@ import { toast } from '@/components/ui/sonner';
 import { Switch } from '@/components/ui/switch';
 import { Text } from '@/components/ui/text';
 import { alertInput, newAlerts, trackOptIn } from '@/lib/alerts';
+import { DAILY_CAP, enableGeofencing, type GeofenceState, geofenceState, stopGeofencing } from '@/lib/offline/geofence';
 
 const STOPS_M = RADII.alert.stops; // the picker's alert stops, 1 to 25 km
 
-type SwitchRowProps = { label: string; help: string; checked: boolean; onCheckedChange(on: boolean): void };
+type SwitchRowProps = {
+	label: string;
+	help: string;
+	checked: boolean;
+	disabled?: boolean;
+	onCheckedChange(on: boolean): void;
+};
 
 /** A switch row with its help line under it (read as the hint). */
 function SwitchRow({ help, ...props }: SwitchRowProps) {
@@ -179,10 +191,129 @@ function AlertsForm({ me, sub }: { me: Me; sub: AlertSubscription | null }) {
 	);
 }
 
+/** The Always primer's list: what is watched, that nothing is uploaded, how to turn it off. */
+const PRIMER_POINTS = [
+	['location_always_watched', CheckIcon],
+	['location_always_private', XIcon],
+	['location_always_off', ToggleRightIcon],
+] as const;
+
+/**
+ * P13 "Opomniki v bližini" (FR-043): on-device reminders from OS geofences (C17), separate from the alerts above, so
+ * pausing those does not stop these (open product question). Turning on shows the Always primer while the OS can still
+ * ask; a decline or a permission the OS took back leaves it off with a note. Shows the daily cap and the profile's quiet
+ * hours, which are changed in "Kako vas obvestimo".
+ */
+function NearbyReminders({ me }: { me: Me }) {
+	const t = useTranslations();
+	const router = useRouter();
+	const errorText = useErrorText();
+	const [state, setState] = React.useState<GeofenceState | 'denied'>();
+	const [primer, setPrimer] = React.useState(false);
+
+	React.useEffect(() => {
+		// Again on the way back from the phone settings, where the permission may have changed.
+		const check = () =>
+			void geofenceState()
+				.then((next) => setState((prev) => (prev === 'denied' && next === 'off' ? prev : next)))
+				.catch(() => setState('off'));
+		check();
+		const app = AppState.addEventListener('change', (now) => now === 'active' && check());
+		return () => app.remove();
+	}, []);
+
+	/** The OS prompts (in use, then Always) and the first regions; false when declined or without a position. */
+	const enable = async () => {
+		try {
+			const on = await enableGeofencing();
+			setState(on ? 'on' : 'denied');
+			if (on) toast.success(t('profile.saved'));
+			return on;
+		} catch {
+			toast.error(t('alerts.reminders_no_location'));
+			return false;
+		}
+	};
+	const turn = async (on: boolean) => {
+		try {
+			if (on) {
+				const always = await Location.getBackgroundPermissionsAsync();
+				if (always.granted) await enable();
+				else if (always.canAskAgain) setPrimer(true);
+				else setState('denied');
+			} else {
+				await stopGeofencing();
+				setState('off');
+				toast.success(t('profile.saved'));
+			}
+		} catch (failure) {
+			toast.error(errorText(failure));
+		}
+	};
+
+	return (
+		<View className="mt-5 gap-5">
+			<View className="gap-2">
+				<Text role="heading" className="font-display text-[22px] leading-7 tracking-[-0.22px]">
+					{t('alerts.reminders_title')}
+				</Text>
+				<Text className="text-sm text-muted-foreground">{t('alerts.reminders_separate')}</Text>
+			</View>
+			<SwitchRow
+				label={t('alerts.reminders_label')}
+				help={t('alerts.reminders_help', { cap: DAILY_CAP })}
+				checked={state === 'on'}
+				disabled={state === undefined}
+				onCheckedChange={(on) => void turn(on)}
+			/>
+			{state === 'denied' || state === 'permission_lost' ? (
+				<PermissionNote
+					kind="location_always"
+					text={state === 'permission_lost' ? t('alerts.reminders_lost') : undefined}
+				/>
+			) : null}
+			<View className="flex-row items-center gap-3">
+				<View className="min-w-0 flex-1">
+					<Label>{t('alerts.quiet_title')}</Label>
+					<Text>
+						{me.quiet_from && me.quiet_to
+							? t('alerts.reminders_quiet_value', { from: me.quiet_from, to: me.quiet_to })
+							: t('alerts.quiet_off')}
+					</Text>
+				</View>
+				<Button
+					variant="text"
+					className="-mr-3"
+					aria-label={t('alerts.reminders_quiet_change')}
+					onPress={() => router.push('/settings/notifications')}
+				>
+					{t('alerts.area_change')}
+					<Icon as={CaretRightIcon} />
+				</Button>
+			</View>
+			<PermissionPrimer kind="location_always" open={primer} request={enable} onResult={() => setPrimer(false)}>
+				<View className="mt-6 gap-4">
+					{PRIMER_POINTS.map(([key, icon]) => (
+						<View key={key} className="flex-row gap-3">
+							<Icon as={icon} weight="bold" size={20} className="mt-0.5" />
+							<Text className="flex-1">
+								{t.rich(`permissions.${key}`, {
+									b: (chunks) => <Text className="font-sans-bold">{chunks}</Text>,
+								})}
+							</Text>
+						</View>
+					))}
+				</View>
+			</PermissionPrimer>
+		</View>
+	);
+}
+
 /**
  * P13 "Opozorila v bližini" (settings stack, FR-010): the master switch; when on, the home area (P5 picker), the radius,
  * the animals and pause. Every change saves at once with the "Shranjeno." toast. Channels and quiet hours live in
- * "Kako vas obvestimo" (settings/notifications); the area is the profile's home area (settings/home-area).
+ * "Kako vas obvestimo" (settings/notifications); the area is the profile's home area (settings/home-area). Below, the
+ * separate on-device nearby reminders.
  */
 export default function AlertSettings() {
 	const t = useTranslations('alerts');
@@ -202,6 +333,7 @@ export default function AlertSettings() {
 				) : (
 					<InlineError retrying={isFetching} onRetry={() => void refetch()} />
 				)}
+				{me ? <NearbyReminders me={me} /> : null}
 			</ScrollView>
 		</>
 	);
