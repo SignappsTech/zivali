@@ -24,7 +24,7 @@ AC#3. Steps: open /admin as staff with a verified TOTP factor. Expected: code sc
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Staff who lost their authenticator have a specified, documented recovery path; the code screen offers it per P19
+- [x] #1 Staff who lost their authenticator have a specified, documented recovery path; the code screen offers it per P19
 <!-- AC:END -->
 
 ## Packet

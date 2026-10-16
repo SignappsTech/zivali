@@ -37,7 +37,7 @@ Branch: - (verify on main)
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Given an admin, when they create an ad, then they can upload an image and set title, text, link, language, slots, region or municipality, species, start and end dates and status (draft, active, paused) with a live preview per slot.
+- [x] #1 Given an admin, when they create an ad, then they can upload an image and set title, text, link, language, slots, region or municipality, species, start and end dates and status (draft, active, paused) with a live preview per slot.
 - [x] #2 Given validation, when saving, then missing alt text, non-https links, wrong image size or overlapping dates in an exclusive slot are rejected with clear errors.
 - [x] #3 Given an ad, when its detail is opened, then impressions, clicks and CTR per day, slot and region are shown with CSV export for sponsor reports.
 - [x] #4 Given house ads, when managed, then admins can edit and enable the three default house ads (SL and EN) from the public copy story.
@@ -54,4 +54,4 @@ Branch with tests and bugs only; product code unchanged. Machine rules: no e2e, 
 - #1 not checked: TASK-37.5 (SL draft URL), TASK-37.6 (cta label), see also TASK-37.7 (#6 note).
 - CSV carries exact counts while the screen shows '< 5' for 1 to 4; the UI note (ads_method) does not say so.
 - Added e2e (not run here): cta required for two languages, CSV BOM/rows/formula, house switch status call, EN parity.
-
+Re-check 2026-10-16 on main bd5a8271 (static + unit; machine rules: no e2e, API tests, build, Lighthouse). Fixes are on branch agent/task-37.5-admin-ads-fixes (approved, not on main); checked with git diff main...branch and the branch tests run in this worktree. TASK-37.5 (draft URL via localisedPath, SL /admin/oglasi/<id>/uredi and EN, tested for both), TASK-37.6 (cta label/help required for 2+ languages, optional with default for one; i18n keys SL+EN; CHANGE row), TASK-37.7 (blocked terms checked on title, body, cta only; C14 updated; API domain test updated, read not run) confirmed. Web vitest admin/ads 34/34 and i18n check OK on the branch. AC1 ticked. Only AC7 remains: verify, e2e, Lighthouse: merge queue on main at bd5a8271, after the branch merges.
