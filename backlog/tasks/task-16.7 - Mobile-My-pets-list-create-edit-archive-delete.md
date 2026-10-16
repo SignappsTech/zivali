@@ -1,11 +1,11 @@
 ---
 id: TASK-16.7
 title: 'Mobile My pets: list, create, edit, archive, delete'
-status: To Do
+status: In Progress
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:13'
-updated_date: '2026-10-14 22:42'
+updated_date: '2026-10-15 23:32'
 labels:
   - fe
   - 'est:M'

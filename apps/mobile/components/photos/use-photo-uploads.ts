@@ -48,7 +48,25 @@ export type PickedPhoto = Stored &
 		status: 'kept' | 'uploading' | 'uploaded' | 'failed';
 		progress: number;
 		error?: PhotoMessage;
+		/** One of `saved`: already on the server, nothing on disk or in the draft. */
+		saved?: true;
 	};
+/** A photo the entity already has (C5 `{ id, thumb_url }`, e.g. a pet's), shown first and kept by its id. */
+export type SavedPhoto = { id: string; thumb_url: string };
+
+const fromSaved = ({ id, thumb_url }: SavedPhoto): PickedPhoto => ({
+	key: id,
+	photoId: id,
+	sha256: '',
+	width: 0,
+	height: 0,
+	bytes: 0,
+	file: { uri: thumb_url },
+	thumb: { uri: thumb_url },
+	status: 'uploaded',
+	progress: 1,
+	saved: true,
+});
 
 const fileErrors = {
 	UPLOAD_TYPE: 'errors.UPLOAD_TYPE',
@@ -86,15 +104,17 @@ async function loadDraft(draft: string): Promise<Stored[]> {
 
 /** The form writes `data`; the picker writes only `photo_paths`, creating the draft row if the form has not yet. */
 async function saveDraft(draft: string, kind: DraftKind, photos: PickedPhoto[]) {
-	const stored = photos.map(({ key, sha256, width, height, bytes, photoId, uploadedAt }): Stored => ({
-		key,
-		sha256,
-		width,
-		height,
-		bytes,
-		photoId,
-		uploadedAt,
-	}));
+	const stored = photos
+		.filter((photo) => !photo.saved)
+		.map(({ key, sha256, width, height, bytes, photoId, uploadedAt }): Stored => ({
+			key,
+			sha256,
+			width,
+			height,
+			bytes,
+			photoId,
+			uploadedAt,
+		}));
 	const db = await getDb();
 	await db.runAsync(
 		`insert into drafts (id, kind, data, photo_paths, updated_at) values (?, ?, '{}', ?, ?)
@@ -126,6 +146,7 @@ function failure(error: unknown): { message: PhotoMessage; retry: boolean } {
  * is done soonest on a weak connection, retries with backoff, aborts on remove, and resumes from the drafts table after
  * an app restart or going back online. `cameraPrimer` is shown before the OS camera prompt; no camera means the
  * gallery. `onExif` gets the place and time read from a photo, to offer them with consent; nothing stores them.
+ * `saved` photos (read on mount) come first; removing one only drops it from the list, the caller detaches it.
  * `hold` keeps the photos on the device (`kept`) and uploads them once it is false again.
  */
 export function usePhotoUploads(
@@ -134,8 +155,14 @@ export function usePhotoUploads(
 	{
 		cameraPrimer,
 		onExif,
+		saved = [],
 		hold = false,
-	}: { cameraPrimer: () => Promise<boolean>; onExif?: (exif: PhotoExif) => void; hold?: boolean }
+	}: {
+		cameraPrimer: () => Promise<boolean>;
+		onExif?: (exif: PhotoExif) => void;
+		saved?: SavedPhoto[];
+		hold?: boolean;
+	}
 ) {
 	const t = useTranslations('photos');
 	const online = isOnline(useNetworkState());
@@ -274,7 +301,7 @@ export function usePhotoUploads(
 		live.current.controllers.get(key)?.abort();
 		clearTimeout(live.current.timers.get(key));
 		const photo = live.current.photos.find((item) => item.key === key);
-		if (photo) removeFiles(photo);
+		if (photo && !photo.saved) removeFiles(photo);
 		commit(live.current.photos.filter((item) => item.key !== key));
 		void save();
 	}
@@ -294,7 +321,7 @@ export function usePhotoUploads(
 
 	const restore = useEffectEvent(async (cancelled: () => boolean) => {
 		const stored = await loadDraft(draft).catch(() => []);
-		if (cancelled() || !stored.length) return;
+		if (cancelled() || !(stored.length || saved.length)) return;
 		const restored = stored.flatMap((photo): PickedPhoto[] => {
 			const kept = filesOf(draft, photo.key);
 			if (!new File(kept.file.uri).exists) return [];
@@ -309,7 +336,7 @@ export function usePhotoUploads(
 				},
 			];
 		});
-		commit([...restored, ...live.current.photos]);
+		commit([...saved.map(fromSaved), ...restored, ...live.current.photos]);
 		for (const photo of restored) if (photo.status === 'uploading') enqueue(photo.key);
 	});
 	const release = useEffectEvent(() => {

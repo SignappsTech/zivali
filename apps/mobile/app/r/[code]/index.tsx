@@ -23,6 +23,7 @@ import { useReversePlaceQuery } from '@zivali/api/geocode';
 import { formatDate, formatDayMonth } from '@zivali/i18n/format';
 import type { PublicReport } from '@zivali/types';
 import { AreaMap } from '@/components/report/area-map';
+import { canReopen } from '@/components/report/lifecycle';
 import { Note, StatusWord } from '@/components/report/parts';
 import { PHOTO_HEIGHT, PhotoCarousel } from '@/components/report/photo-carousel';
 import { type DetailReport, isActive, ReportSlot } from '@/components/report/slots';
@@ -246,6 +247,8 @@ function Detail({ report, cachedAt }: { report: DetailReport; cachedAt: number |
 		.filter(Boolean)
 		.join(' · ');
 	const now = useNow();
+	// The action bar: slot A while the report takes actions, or the owner's "Ponovno odpri" within the window (P14).
+	const actions = active || canReopen(report, now.getTime());
 	const date = formatDayMonth(report.event_at, locale, now);
 	const photos = report.photos.map((p) => ({ url: p.url, alt: p.alt || title }));
 	// When the saved copy is from: the time today, else the day and time ("14.05", "12. 10., 14.05").
@@ -264,7 +267,7 @@ function Detail({ report, cachedAt }: { report: DetailReport; cachedAt: number |
 			<ScrollView
 				onScroll={onScroll}
 				scrollEventThrottle={32}
-				contentContainerStyle={{ paddingBottom: (active ? bar : insets.bottom) + 40 }}
+				contentContainerStyle={{ paddingBottom: (actions ? bar : insets.bottom) + 40 }}
 			>
 				<View>
 					{/* Before the photo in reading order, drawn over it. */}
@@ -347,7 +350,7 @@ function Detail({ report, cachedAt }: { report: DetailReport; cachedAt: number |
 				</View>
 			)}
 
-			{active && (
+			{actions && (
 				// P9 sticky action bar: `card`, 20 px padding, shadow-lg; slot A with the slot C overflow beside it.
 				<View
 					onLayout={(event) => setBar(event.nativeEvent.layout.height)}

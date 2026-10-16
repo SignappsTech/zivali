@@ -3,9 +3,10 @@ import { PhoneIcon } from '@phosphor-icons/react/dist/ssr/Phone';
 import { WarningCircleIcon } from '@phosphor-icons/react/dist/ssr/WarningCircle';
 import type { Metadata } from 'next';
 import type { Locale } from 'next-intl';
-import { getTranslations } from 'next-intl/server';
+import { getMessages, getTranslations } from 'next-intl/server';
 
 import { ApiError } from '@zivali/api/client';
+import { PageMessages } from '@/components/page-messages';
 import { noteClass, titleLinkClass } from '@/components/shelters/classes';
 import { ShelterSearch } from '@/components/shelters/shelter-search';
 import { Button } from '@/components/ui/button';
@@ -40,10 +41,11 @@ export async function generateMetadata({ params }: PageProps<'/[locale]/shelters
 /** T5 shelter directory (P3): find the responsible shelter for a municipality, then all shelters. */
 export default async function SheltersPage({ params }: PageProps<'/[locale]/shelters'>) {
 	const locale = (await params).locale as Locale;
-	const [t, tc, tf, data] = await Promise.all([
+	const [t, tc, tf, messages, data] = await Promise.all([
 		getTranslations({ locale, namespace: 'shelters' }),
 		getTranslations({ locale, namespace: 'common' }),
 		getTranslations({ locale, namespace: 'footer' }),
+		getMessages({ locale }),
 		load(locale),
 	]);
 	const served = new Map<string, number>();
@@ -59,10 +61,12 @@ export default async function SheltersPage({ params }: PageProps<'/[locale]/shel
 				</h1>
 				<p className="mt-3 text-lg leading-7 lg:mt-4 lg:text-xl lg:leading-8">{t('lede')}</p>
 				{data ? (
-					<ShelterSearch
-						municipalities={data.municipalities.map(({ slug, name }) => ({ slug, name }))}
-						className="mt-8 lg:mt-10"
-					/>
+					<PageMessages messages={{ shelters: messages.shelters }}>
+						<ShelterSearch
+							municipalities={data.municipalities.map(({ slug, name }) => ({ slug, name }))}
+							className="mt-8 lg:mt-10"
+						/>
+					</PageMessages>
 				) : (
 					<div className={`${noteClass} mt-8 lg:mt-10`} role="alert">
 						<WarningCircleIcon

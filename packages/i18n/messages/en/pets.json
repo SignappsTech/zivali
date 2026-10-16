@@ -1,5 +1,7 @@
 {
 	"section_basics": "Basics",
+	"my_reports": "My reports",
+	"my_reports_empty": "You have no reports yet.",
 	"species_label": "Species",
 	"name_label": "Name",
 	"sex_label": "Sex",
@@ -56,6 +58,7 @@
 	"section_photos": "Photos",
 	"photos_help": "You can add up to 5 photos. The first is the cover.",
 	"saved": "Profile saved.",
+	"saved_without_photos": "Pet saved without photos.",
 	"photo_alt": "{name}, photo {n}",
 	"fact_species": "Species",
 	"fact_breed": "Breed",
@@ -82,5 +85,16 @@
 	"archive_body": "An archived profile stays saved but no longer counts towards your free profiles. Archiving cannot be undone.",
 	"archive_confirm": "Archive profile",
 	"archived": "Profile archived.",
-	"archived_label": "Archived"
+	"archived_label": "Archived",
+	"status_lost": "Lost",
+	"open_search": "Open search",
+	"premium_action": "More profiles with Premium Protect",
+	"report_without_profile": "Report a lost pet without a profile",
+	"empty_action": "Add a pet",
+	"step_a11y": "Step {n} of {total}",
+	"photos_required": "Add at least one photo.",
+	"photos_pending": "Wait until the photos are uploaded, or remove the ones that did not upload.",
+	"photo_delete_title": "Remove this photo?",
+	"photo_delete_body": "The photo will also be deleted from storage.",
+	"photo_delete_confirm": "Remove"
 }

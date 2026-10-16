@@ -21,6 +21,7 @@ vi.mock('next-intl/server', async () => {
 	return {
 		getTranslations: async ({ locale, namespace }: { locale: 'sl' | 'en'; namespace: string }) =>
 			createTranslator({ locale, messages: catalogues[locale], namespace: namespace as 'shelters' }),
+		getMessages: async ({ locale }: { locale: 'sl' | 'en' }) => catalogues[locale],
 	};
 });
 
@@ -38,10 +39,12 @@ const sheltersParams = (locale: 'sl' | 'en') =>
 const shelterParams = (locale: 'sl' | 'en', slug = 'zavetisce-ljubljana') =>
 	({ params: Promise.resolve({ locale, slug }) }) as PageProps<'/[locale]/shelters/[slug]'>;
 
+// Only what the root layout sends (its CLIENT_NAMESPACES), so the search's `shelters` messages must come from the page.
 async function renderPage(node: Promise<React.ReactNode>, locale: 'sl' | 'en' = 'sl') {
 	const page = await node;
+	const { common, consent, errors, nav } = catalogues[locale];
 	render(
-		<NextIntlClientProvider locale={locale} messages={catalogues[locale]}>
+		<NextIntlClientProvider locale={locale} messages={{ common, consent, errors, nav }}>
 			<Provider store={createApiStore(createMockApi({}, { locale }))}>{page}</Provider>
 		</NextIntlClientProvider>
 	);
