@@ -3,9 +3,10 @@ id: TASK-29.9
 title: >-
   Mobile lost flow: keep the idempotency key on 5xx/429/network, re-key on a
   time edit, reset the duplicate choice on pet change
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-10-16 05:00'
+updated_date: '2026-10-16 05:40'
 labels:
   - bug
   - mobile
