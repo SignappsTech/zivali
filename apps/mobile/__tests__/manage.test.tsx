@@ -8,6 +8,7 @@ import { renderRouter } from 'expo-router/testing-library';
 import * as Network from 'expo-network';
 import * as SecureStore from 'expo-secure-store';
 import * as React from 'react';
+import { Text } from 'react-native';
 import { Provider } from 'react-redux';
 
 import { ownerReport } from '@zivali/api/__fixtures__/reports';
@@ -192,12 +193,13 @@ const openLink = async (url = `/m#${TOKEN}`) => {
 			index: () => null,
 			m: ManageScreen,
 			'inbox/[id]': () => null,
+			'r/[code]/edit': () => <Text>edit screen</Text>,
 		},
 		{ initialUrl: url, wrapper: Providers }
 	);
 	// The result is a promise with the router getters attached; awaiting it would drop them.
 	await result;
-	return { getPathname: result.getPathname };
+	return { getPathname: result.getPathname, page: { getPathname: result.getPathname } };
 };
 const claimCalls = () => mockApi.calls.filter((call) => call.path === '/v1/manage/claim');
 const transitions = () => mockApi.calls.filter((call) => call.path.endsWith('/transitions')).map((call) => call.body);
@@ -457,6 +459,20 @@ describe('manage link screen (P7)', () => {
 
 		await act(async () => fireEvent.press(screen.getByRole('button', { name: 'Podaljšaj za 30 dni' })));
 		await waitFor(() => expect(transitions()).toEqual([{ action: 'extend' }]));
+	});
+
+	test('"Uredi" opens the edit screen for an open report, and is gone once closed (TASK-17.8)', async () => {
+		const { page } = await openLink();
+		await act(async () => fireEvent.press(await screen.findByRole('button', { name: 'Uredi' })));
+		expect(await screen.findByText('edit screen')).toBeOnTheScreen();
+		expect(page.getPathname()).toBe(`/r/${report().short_code}/edit`);
+	});
+
+	test('a closed report has no "Uredi"', async () => {
+		serve({ view: report({ status: 'closed', closed_at: new Date(Date.now() - 2 * DAY).toISOString() }) });
+		await openLink();
+		await screen.findByRole('button', { name: 'Ponovno odpri' });
+		expect(screen.queryByRole('button', { name: 'Uredi' })).toBeNull();
 	});
 
 	test('close report from the action rows', async () => {
