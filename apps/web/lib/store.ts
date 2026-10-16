@@ -42,16 +42,15 @@ export function makeStore(locale: Locale) {
 	return createApiStore(makeApiClient(locale));
 }
 
-const stores = new Map<Locale, ReturnType<typeof makeStore>>();
+let current: { locale: Locale; store: ReturnType<typeof makeStore> } | undefined;
 
 /**
- * The store of a StoreProvider. In the browser one per locale (responses are localised, Accept-Language), shared by
+ * The store of a StoreProvider. In the browser a single slot for the current locale (a locale switch drops the old store, so no previous user's cache outlives it) (responses are localised, Accept-Language), shared by
  * every provider in the tab, so the cache reset on a user change (SessionSync) reaches the page's queries too. On the
  * server a new one per render, never shared between users.
  */
 export function getStore(locale: Locale) {
 	if (typeof window === 'undefined') return makeStore(locale);
-	let store = stores.get(locale);
-	if (!store) stores.set(locale, (store = makeStore(locale)));
-	return store;
+	if (current?.locale !== locale) current = { locale, store: makeStore(locale) };
+	return current.store;
 }

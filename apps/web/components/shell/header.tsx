@@ -63,9 +63,10 @@ const dialogClass =
 
 /** Signed in only: the inbox dot (store and code load lazily) with the messages it needs, not on public pages (TASK-90.5). */
 function InboxLabel(props: ComponentProps<typeof InboxDot>) {
-	const { notifications } = useMessages();
+	const { notifications } = useMessages() as { notifications: { row_unread_a11y: string } };
+	const messages = { notifications: { row_unread_a11y: notifications.row_unread_a11y } };
 	return (
-		<NextIntlClientProvider locale={useLocale()} messages={{ notifications }}>
+		<NextIntlClientProvider locale={useLocale()} messages={messages}>
 			<InboxDot {...props} />
 		</NextIntlClientProvider>
 	);

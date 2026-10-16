@@ -1,13 +1,15 @@
 'use client';
 
+import { ArrowClockwiseIcon } from '@phosphor-icons/react/dist/ssr/ArrowClockwise';
 import { MagnifyingGlassIcon } from '@phosphor-icons/react/dist/ssr/MagnifyingGlass';
 import { MapPinAreaIcon } from '@phosphor-icons/react/dist/ssr/MapPinArea';
+import { WarningCircleIcon } from '@phosphor-icons/react/dist/ssr/WarningCircle';
 import { XIcon } from '@phosphor-icons/react/dist/ssr/X';
 import { useTranslations } from 'next-intl';
-import dynamic from 'next/dynamic';
-import { useId, useMemo, useRef, useState } from 'react';
+import { type ComponentType, useEffect, useId, useMemo, useRef, useState } from 'react';
 
 import type { MunicipalityRef } from '@zivali/api/directory';
+import { noteClass } from '@/components/shelters/classes';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { FormField } from '@/components/ui/form-field';
@@ -38,10 +40,8 @@ export function AnswerSkeleton() {
 
 // The answer calls the API through RTK Query, so it and the store load with the first chosen municipality, not with
 // the page (TASK-90.5).
-const Answer = dynamic(() => import('./shelter-answer').then((m) => m.ShelterAnswer), {
-	ssr: false,
-	loading: AnswerSkeleton,
-});
+// A failed chunk load shows the inline error with a retry instead of reaching error.tsx; focusing the field warms it.
+const loadAnswer = () => import('./shelter-answer');
 
 /** T5 municipality combobox (ARIA 1.2 list autocomplete) and the responsible-shelter answer under it. */
 export function ShelterSearch({
@@ -58,6 +58,21 @@ export function ShelterSearch({
 	const [open, setOpen] = useState(false);
 	const [active, setActive] = useState(0);
 	const [chosen, setChosen] = useState<MunicipalityRef | null>(null);
+	const [Answer, setAnswer] = useState<ComponentType<{ municipality: MunicipalityRef }> | null>(null);
+	const [loadFailed, setLoadFailed] = useState(false);
+	const tc = useTranslations('common');
+
+	useEffect(() => {
+		if (!chosen || Answer || loadFailed) return;
+		let live = true;
+		loadAnswer().then(
+			(m) => live && setAnswer(() => m.ShelterAnswer),
+			() => live && setLoadFailed(true)
+		);
+		return () => {
+			live = false;
+		};
+	}, [chosen, Answer, loadFailed]);
 
 	const query = fold(text.trim());
 	const matches = useMemo(() => {
@@ -117,6 +132,7 @@ export function ShelterSearch({
 							setOpen(true);
 						}}
 						onKeyDown={onKeyDown}
+						onFocus={() => void loadAnswer().catch(() => {})}
 						onBlur={() => setOpen(false)}
 						className="pr-12 pl-[34px]"
 					/>
@@ -177,7 +193,26 @@ export function ShelterSearch({
 			)}
 			<div aria-live="polite">
 				{chosen ? (
-					<Answer municipality={chosen} />
+					Answer ? (
+						<Answer municipality={chosen} />
+					) : loadFailed ? (
+						<div className={`${noteClass} ${answerClass}`} role="alert">
+							<WarningCircleIcon
+								weight="fill"
+								aria-hidden="true"
+								className="mt-px size-[22px] shrink-0 text-destructive"
+							/>
+							<div>
+								<p>{t('error')}</p>
+								<Button variant="text" className="mt-1 -ml-3" onClick={() => setLoadFailed(false)}>
+									<ArrowClockwiseIcon weight="bold" aria-hidden="true" />
+									{tc('try_again')}
+								</Button>
+							</div>
+						</div>
+					) : (
+						<AnswerSkeleton />
+					)
 				) : (
 					query &&
 					!matches.length && (

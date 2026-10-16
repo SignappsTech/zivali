@@ -38,7 +38,12 @@ describe('x-device-id (C7)', () => {
 describe('getStore', () => {
 	it('shares one store per locale in the browser, so every StoreProvider sees the same cache', () => {
 		expect(getStore('sl')).toBe(getStore('sl'));
-		expect(getStore('en')).not.toBe(getStore('sl'));
+	});
+
+	it('keeps one slot: switching locale and back gives a new store, so no old user cache survives', () => {
+		const sl = getStore('sl');
+		getStore('en');
+		expect(getStore('sl')).not.toBe(sl);
 	});
 
 	it('makes a new store per server render, never shared between users', () => {
