@@ -129,6 +129,42 @@ test('/m: the Edit row opens the edit page with an editable description', async 
 	await expect(page.getByLabel('Opis okoliščin (neobvezno)')).toBeEditable();
 });
 
+// TASK-17.4 AC#2: Close sends the neutral reason `other` (C4, TASK-17.5); resend without an email on file says so (C7).
+test('/m: Close sends reason other; resend without an email on file says so', async ({ page }) => {
+	await answer(page, { status: 200, body: { report_id: ownerReport.id, short_code: ownerReport.short_code } });
+	const cors = {
+		'Access-Control-Allow-Origin': '*',
+		'Access-Control-Allow-Headers': '*',
+		'Access-Control-Allow-Methods': '*',
+	};
+	const bodies: unknown[] = [];
+	await page.route(
+		(url) => url.pathname.endsWith('/transitions') || url.pathname.endsWith('/manage-link/resend'),
+		(route) => {
+			const request = route.request();
+			if (request.method() === 'OPTIONS') return route.fulfill({ status: 204, headers: cors });
+			if (request.url().endsWith('/transitions')) {
+				bodies.push(request.postDataJSON());
+				return route.fulfill({
+					status: 200,
+					headers: cors,
+					json: { ...ownerReport, status: 'closed', closed_at: new Date().toISOString() },
+				});
+			}
+			return route.fulfill({
+				status: 409,
+				headers: cors,
+				json: { error: { code: 'CONFLICT', message: 'no email' } },
+			});
+		}
+	);
+	await page.goto('/m#good-token');
+	await page.getByRole('button', { name: 'Pošljite mi zasebno povezavo' }).click();
+	await expect(page.getByText('Ob prijavi niste navedli e-naslova')).toBeVisible();
+	await page.getByRole('button', { name: 'Zaključi prijavo' }).click();
+	await expect.poll(() => bodies).toEqual([{ action: 'close', reason: 'other' }]);
+});
+
 test('/en/m says an unknown link no longer works', async ({ page }) => {
 	await answer(page, { status: 404, body: { error: { code: 'NOT_FOUND', message: 'unknown token' } } });
 	await page.goto('/en/m#unknown');
