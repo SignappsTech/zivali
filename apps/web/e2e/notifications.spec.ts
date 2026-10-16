@@ -135,8 +135,11 @@ test('opening an unread row marks it read; the view switch keeps ?view= in the U
 	await expect(page).toHaveTitle('Messages and notifications · Najdimo');
 	await page.getByRole('tab', { name: 'Notifications' }).click();
 	await expect(page).toHaveURL(/\/en\/inbox\?view=notifications$/);
-	await page.getByRole('link', { name: /Still looking for your pet\?, unread/ }).click();
-	await expect(page).toHaveURL(/\/en\/my-reports\?r=Rm7xK2mN&action=keep$/);
+	// Caught as it happens: My reports then runs the action and drops the query (TASK-26.4).
+	await Promise.all([
+		page.waitForURL(/\/en\/my-reports\?r=Rm7xK2mN&action=keep$/),
+		page.getByRole('link', { name: /Still looking for your pet\?, unread/ }).click(),
+	]);
 	await expect.poll(() => sent.read).toEqual([{ ids: [items[1]!.id] }]);
 });
 

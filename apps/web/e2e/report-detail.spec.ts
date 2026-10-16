@@ -83,8 +83,8 @@ test('an unknown code answers 404', async ({ page }) => {
 	expect((await page.goto('/r/Nope1234'))?.status()).toBe(404);
 });
 
-// TASK-17.7: the /m page's "Uredi prijavo" links to /r/<code>, which is this page now.
-test('the manage page Edit target is a working detail page', async ({ page }) => {
+// The /m page's "Uredi prijavo" opens /r/<code>/uredi (e2e/lifecycle.spec.ts); the found report's own page works too.
+test('a found report has its detail page', async ({ page }) => {
 	const response = await page.goto(`/r/${publicReport.short_code}`);
 
 	expect(response?.status()).toBe(200);

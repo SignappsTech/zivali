@@ -28,6 +28,9 @@ const PAGES = [
 	'/en/shelters',
 	'/zavetisca/zavetisce-ljubljana',
 	'/en/shelters/zavetisce-ljubljana',
+	// TASK-30.2 report found or sighted (P7): public and indexable
+	'/prijava/najdena-zival',
+	'/en/report/found',
 	// TASK-31.4 P4 map and list
 	'/zemljevid',
 	'/en/map',
@@ -50,6 +53,9 @@ const PROTECTED = [
 	// TASK-17.2 manage link (P7)
 	'/m',
 	'/en/m',
+	// TASK-30.2 report found or sighted (P7)
+	'/prijava/najdena-zival',
+	'/en/report/found',
 	// TASK-32.2 payments return (P15; signed out it is the sign-in page) and the mock checkout (404 in production)
 	'/placila/zakljucek',
 	'/en/payments/return',

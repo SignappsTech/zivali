@@ -1,4 +1,3 @@
-import { ArchiveIcon } from '@phosphor-icons/react/dist/ssr/Archive';
 import { CaretLeftIcon } from '@phosphor-icons/react/dist/ssr/CaretLeft';
 import { GiftIcon } from '@phosphor-icons/react/dist/ssr/Gift';
 import { MapPinAreaIcon } from '@phosphor-icons/react/dist/ssr/MapPinArea';
@@ -10,9 +9,9 @@ import { AreaMap } from '@/components/report/area-map';
 import { Gallery } from '@/components/report/gallery';
 import { listOf } from '@/components/report/seo';
 import { type DetailReport, ReportSlot } from '@/components/report/slots';
+import { StatusWord } from '@/components/report/status-word';
 import { noteClass } from '@/components/shelters/classes';
 import { Button } from '@/components/ui/button';
-import { StatusLabel } from '@/components/ui/status-label';
 import { Link } from '@/i18n/navigation';
 import type { ReportPlace } from '@/lib/report';
 import { cn } from '@/lib/utils';
@@ -33,24 +32,6 @@ export const isActive = (report: Pick<DetailReport, 'status'>) =>
 function useReportTitle(report: Pick<DetailReport, 'name' | 'type' | 'species'>) {
 	const t = useTranslations('browse');
 	return report.name ?? t(`row_title_${report.type}`, { species: report.species });
-}
-
-/** P9 large status word (`st-lg`): fill icon 18 and the word 16 bold in the status colour; closed is muted. */
-function StatusWord({ report }: { report: DetailReport }) {
-	const t = useTranslations('browse');
-	if (report.status === 'closed')
-		return (
-			<span className="inline-flex items-center gap-[5px] font-bold whitespace-nowrap text-muted-foreground">
-				<ArchiveIcon weight="fill" aria-hidden="true" className="size-[18px] shrink-0" />
-				{t('status_closed')}
-			</span>
-		);
-	const status = report.status === 'reunited' ? 'reunited' : report.type;
-	return (
-		<StatusLabel status={status} className="text-base [&>svg]:size-[18px]">
-			{t(`status_${status}`)}
-		</StatusLabel>
-	);
 }
 
 /** Facts in two columns (three on tablets): label 14 muted over a 16 semibold value; the chip only as "Čip vpisan". */
@@ -283,12 +264,9 @@ export function ReportDetail({ report, place }: { report: DetailReport; place?: 
 						</div>
 					)}
 
-					{active && (
-						<>
-							<ReportSlot name="slot-a" report={report} className="mt-8" />
-							<Safety report={report} />
-						</>
-					)}
+					{/* Managers keep slot A once the report ended: "Ponovno odpri" within the reopen window (P14). */}
+					{(active || report.is_mine) && <ReportSlot name="slot-a" report={report} className="mt-8" />}
+					{active && <Safety report={report} />}
 					<div className="mt-5 -ml-2 flex items-center gap-1 empty:hidden">
 						<ReportSlot name="slot-b" report={report} place={place} />
 						{active && <ReportSlot name="slot-c" report={report} />}

@@ -4,7 +4,9 @@ import type * as React from 'react';
 import { Provider } from 'react-redux';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
+import { getMockEvents, initAnalytics, resetMockEvents, setConsent } from '@zivali/analytics';
 import { conversations } from '@zivali/api/__fixtures__/chat';
+import { placeReverse } from '@zivali/api/__fixtures__/geocode';
 import { ownerReport } from '@zivali/api/__fixtures__/reports';
 import { ApiError } from '@zivali/api/client';
 import { createMockApi, type MockRoutes, mockError } from '@zivali/api/mock';
@@ -26,6 +28,7 @@ vi.mock('next/navigation', async (actual) => ({
 // transform cold, and the lazy import then resolves at once.
 const auth = vi.hoisted(() => ({ ensureSession: vi.fn() }));
 vi.mock('@/lib/auth', () => auth);
+vi.mock('qrcode', () => ({ toString: vi.fn(async () => '<svg xmlns="http://www.w3.org/2000/svg"></svg>') }));
 
 const CODE = ownerReport.short_code;
 const claimed = { report_id: ownerReport.id, short_code: CODE };
@@ -80,11 +83,24 @@ describe('ManagePage (P7, C7)', () => {
 		// No messages yet: "Sporočila" is the first row and the page has no primary.
 		expect(screen.queryByRole('heading', { name: 'Sporočila' })).toBeNull();
 		expect(screen.getByRole('link', { name: 'Sporočila' }).getAttribute('href')).toBe('/nabiralnik');
-		// No Edit row until the detail page has owner actions (TODO(TASK-26.4)): it would lead nowhere.
-		expect(screen.queryByRole('link', { name: 'Uredi prijavo' })).toBeNull();
+		// TASK-17.7: Edit opens the edit page, which takes the manage-link session (TASK-26.4).
+		expect(screen.getByRole('link', { name: 'Uredi prijavo' }).getAttribute('href')).toBe(`/r/${CODE}/uredi`);
 		expect(screen.getByRole('button', { name: 'Zaključi prijavo' })).toBeTruthy();
 		expect(screen.getByRole('button', { name: 'Žival je spet doma' })).toBeTruthy();
+		expect(screen.getByRole('button', { name: sl.report_found.resend_title })).toBeTruthy();
 		expect(document.querySelector('[data-ad-slot]')).toBeNull();
+	});
+
+	it('shows the place of the report\'s public area as "Kraj" (TASK-30.2)', async () => {
+		open('good');
+		const api = show(<ManagePage />, { 'POST /v1/geo/reverse': placeReverse });
+		expect(await screen.findByText('Šiška, Ljubljana')).toBeTruthy();
+		expect(screen.getByText('Kraj')).toBeTruthy();
+		// The fuzzed area's centre, never the exact point the manager view also carries.
+		expect(api.calls.find((call) => call.path === '/v1/geo/reverse')?.body).toEqual({
+			lat: ownerReport.area.lat,
+			lng: ownerReport.area.lng,
+		});
 	});
 
 	it('takes the token out of the address bar; a reload in the tab still claims', async () => {
@@ -150,7 +166,10 @@ describe('ManagePage (P7, C7)', () => {
 		expect(auth.ensureSession).toHaveBeenCalledTimes(3);
 	});
 
-	it('closes the report, and marks the animal home after the P14 confirmation', async () => {
+	it('closes the report, and marks the animal home after the P14 confirmation (`reunited`, with consent)', async () => {
+		initAnalytics();
+		setConsent({ analytics: true });
+		resetMockEvents();
 		open('good');
 		const api = show(<ManagePage />);
 		fireEvent.click(await screen.findByRole('button', { name: 'Zaključi prijavo' }));
@@ -161,6 +180,9 @@ describe('ManagePage (P7, C7)', () => {
 		fireEvent.click(within(dialog).getByRole('button', { name: sl.lifecycle.finder_confirm_yes }));
 		expect(await screen.findByRole('heading', { level: 1, name: sl.lifecycle.finder_thanks_title })).toBeTruthy();
 		expect(actions(api)).toEqual([{ action: 'close', reason: 'other' }, { action: 'mark_reunited' }]);
+		expect(getMockEvents()).toEqual([
+			{ name: 'reunited', params: { species: 'dog', region: 'osrednjeslovenska', municipality: 'ljubljana' } },
+		]);
 	});
 
 	it('moves focus to the closed note after close and to the h1 after reopen', async () => {
@@ -206,6 +228,43 @@ describe('ManagePage (P7, C7)', () => {
 		show(<ManagePage />, { 'GET /v1/reports/:code': { ...ownerReport, moderation_state: 'held' } });
 		expect(await screen.findByText(sl.report_found.under_review_title)).toBeTruthy();
 		expect(screen.getByRole('button', { name: 'Zaključi prijavo' })).toBeTruthy();
+	});
+
+	it('offers no reopen for a report removed by moderation', async () => {
+		open('good');
+		const closedAt = new Date(Date.now() - 86_400_000).toISOString();
+		show(<ManagePage />, {
+			'GET /v1/reports/:code': { ...ownerReport, status: 'closed', close_reason: 'removed', closed_at: closedAt },
+		});
+		expect(await screen.findByText(sl.report_found.closed_note)).toBeTruthy();
+		expect(screen.queryByRole('button', { name: 'Ponovno odpri' })).toBeNull();
+	});
+
+	it('from day 25 without an update says when it expires and keeps it 30 more days (P14 S9)', async () => {
+		open('good');
+		const idle = new Date(Date.now() - 27 * 86_400_000).toISOString();
+		const api = show(<ManagePage />, {
+			'GET /v1/reports/:code': { ...ownerReport, last_owner_update_at: idle },
+		});
+		expect(await screen.findByText(/^Prijava bo potekla čez 3 dni\./)).toBeTruthy();
+		fireEvent.click(screen.getByRole('button', { name: 'Podaljšaj za 30 dni' }));
+		await vi.waitFor(() => expect(actions(api)).toEqual([{ action: 'extend' }]));
+		expect(await screen.findByText(sl.common.toast_saved)).toBeTruthy();
+	});
+
+	it('sends the private link again to the email on file, and says when there is none (C7)', async () => {
+		open('good');
+		let email = true;
+		const api = show(<ManagePage />, {
+			'POST /v1/reports/:code/manage-link/resend': () => (email ? undefined : mockError('CONFLICT')),
+		});
+		fireEvent.click(await screen.findByRole('button', { name: sl.report_found.resend_title }));
+		expect(await screen.findByText(sl.report_found.resend_done)).toBeTruthy();
+		expect(api.calls.filter((call) => call.path === `/v1/reports/${CODE}/manage-link/resend`)).toHaveLength(1);
+
+		email = false;
+		fireEvent.click(screen.getByRole('button', { name: sl.report_found.resend_title }));
+		expect(await screen.findByText(sl.report_found.resend_no_email)).toBeTruthy();
 	});
 });
 
@@ -253,5 +312,17 @@ describe('PrivateLinkBlock (P7 success)', () => {
 		fireEvent.click(within(block).getByRole('button', { name: 'Kopiraj povezavo' }));
 		await vi.waitFor(() => expect(within(block).getByRole('status').textContent).toBe('Povezava je kopirana.'));
 		expect(writeText).toHaveBeenCalledWith(link);
+	});
+
+	it('draws the QR code of the link in the browser, lazy-loaded, with an accessible name', async () => {
+		const { toString } = await import('qrcode');
+		show(<PrivateLinkBlock token="q7Vt-token" />);
+
+		const qr = await screen.findByRole('img', { name: sl.report_found.link_qr_alt });
+		expect(qr.getAttribute('src')).toMatch(/^data:image\/svg\+xml/);
+		expect(toString).toHaveBeenCalledWith(
+			`${window.location.origin}/m#q7Vt-token`,
+			expect.objectContaining({ type: 'svg' })
+		);
 	});
 });
