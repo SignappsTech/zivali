@@ -9,7 +9,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { adapters } from '../../adapters/index.ts';
 import { mockEvent, signWebhook } from '../../adapters/payments/mock.ts';
 import { app } from '../../app.ts';
-import { PaymentsDomain } from '../../domains/payments/index.ts';
+import { InvoicesDomain, PaymentsDomain } from '../../domains/payments/index.ts';
 import { runJob } from '../../jobs/index.ts';
 import { config } from '../../lib/config.ts';
 import { systemCtx } from '../../lib/ctx.ts';
@@ -320,11 +320,15 @@ describe('refunds and credit notes (TASK-92.4)', () => {
 		expect((await post(partial)).status).toBe(200);
 		expect((await post(refunded(ch, 300))).status).toBe(200);
 		await drain(runJob);
-		// payment.effects runs the same refund again (a retry after its credit note was stored).
+		// payment.effects runs again (a retry after its credit note was stored).
 		const { handlers } = await import('../../jobs/index.ts');
 		const { jobs } = await import('../../lib/jobs.ts');
 		const jobCtx = { ...systemCtx(), prisma, send: jobs.send };
-		await handlers['payment.effects']({ payment_id, refund: { total_cents: 300, amount_cents: 300 } }, jobCtx);
+		await handlers['payment.effects']({ payment_id }, jobCtx);
+		// An amount_refunded above the payment is logged and ignored.
+		await post(refunded(ch, 1001));
+		await drain(runJob);
+		expect((await prisma.payments.findUniqueOrThrow({ where: { id: payment_id } })).refunded_cents).toBe(300);
 
 		const [first, ...none] = await notesOf(invoice.id);
 		expect(none).toHaveLength(0);
@@ -382,5 +386,60 @@ describe('refunds and credit notes (TASK-92.4)', () => {
 		]);
 		expect((await prisma.payments.findUniqueOrThrow({ where: { id: payment_id } })).status).toBe('REFUNDED');
 		expect(adapters.email.sent!.filter((m) => m.to === owner.email)).toHaveLength(0);
+	});
+
+	it('a partial refund while the payment is still pending, then its completion: one credit note', async () => {
+		const owner = await user();
+		const payment_id = await pay(owner.auth, 1000);
+		// The charge names the payment (metadata): Stripe may send charge.refunded before the session completes.
+		await post(refunded({ ...charge(payment_id, 1000), metadata: { payment_id } }, 400));
+		await drain(runJob);
+		expect(await prisma.payments.findUniqueOrThrow({ where: { id: payment_id } })).toMatchObject({
+			status: 'PENDING',
+			refunded_cents: 400,
+		});
+		expect(await prisma.invoices.count({ where: { payment_id } })).toBe(0);
+		await post(mockEvent('success', payment_id));
+		await drain(runJob);
+		const invoice = await invoiceOf(payment_id);
+		expect(invoice).toMatchObject({ gross_cents: 1000, status: 'VERIFIED' });
+		expect(await notesOf(invoice.id)).toMatchObject([
+			{ refund_total_cents: 400, gross_cents: -400, net_cents: -328, vat_cents: -72, status: 'VERIFIED' },
+		]);
+		expect(adapters.email.sent!.filter((m) => m.to === owner.email)).toHaveLength(1);
+	});
+
+	it('a refund whose payment.effects failed before the credit note is healed by fiscal.resubmit', async () => {
+		const owner = await user();
+		const payment_id = await pay(owner.auth, 800);
+		await post(mockEvent('success', payment_id));
+		await drain(runJob);
+		const invoice = await invoiceOf(payment_id);
+		await post(refunded(charge(payment_id, 800), 200));
+		// The worker crashes on that refund's job on every attempt: retries run out, the refund has no credit note.
+		await drain((queue, job) =>
+			queue === 'payment.effects' ? Promise.reject(new Error('worker crashed')) : runJob(queue, job)
+		);
+		expect(await notesOf(invoice.id)).toEqual([]);
+		const failed = () =>
+			prisma.$queryRaw<{ state: string }[]>`
+				select state from pgboss.job where name = 'payment.effects' and data->>'payment_id' = ${payment_id}
+				order by created_on`;
+		expect((await failed()).map((j) => j.state)).toEqual(['completed', 'failed']);
+		// A fresh refund may still have its job running: fiscal.resubmit leaves it alone.
+		await InvoicesDomain.resubmitInvoices(undefined, systemCtx());
+		expect(await failed()).toHaveLength(2);
+		// Past the retries (3 h): fiscal.resubmit sends payment.effects again, which issues the note from stored state.
+		await prisma.$executeRaw`update app.payments set updated_at = now() - interval '4 hours' where id = ${payment_id}::uuid`;
+		await InvoicesDomain.resubmitInvoices(undefined, systemCtx());
+		await drain(runJob);
+		expect(await notesOf(invoice.id)).toMatchObject([
+			{ refund_total_cents: 200, gross_cents: -200, net_cents: -164, vat_cents: -36, status: 'VERIFIED' },
+		]);
+		// Credited in full: the next run sends nothing.
+		await prisma.$executeRaw`update app.payments set updated_at = now() - interval '4 hours' where id = ${payment_id}::uuid`;
+		const before = (await failed()).length;
+		await InvoicesDomain.resubmitInvoices(undefined, systemCtx());
+		expect(await failed()).toHaveLength(before);
 	});
 });

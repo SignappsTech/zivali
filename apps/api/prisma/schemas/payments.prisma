@@ -109,6 +109,7 @@ model invoices {
   // One invoice per payment (0), one credit note per refund
   @@unique([payment_id, refund_total_cents])
   @@unique([premise_id, device_id, sequence])
+  @@index([reference_invoice_id])
   @@schema("app")
 }
 

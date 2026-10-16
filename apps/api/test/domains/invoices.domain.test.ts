@@ -16,6 +16,7 @@ import InvoicesDomain, {
 	STALE_PENDING_MS,
 	vatBreakdown,
 } from '../../domains/payments/invoices.domain.ts';
+import PaymentsDomain from '../../domains/payments/payments.domain.ts';
 import type { INVOICE_STATUS, PAYMENT_PURPOSE } from '../../generated/enums.ts';
 import configStore from '../../lib/config-store.ts';
 import { systemCtx } from '../../lib/ctx.ts';
@@ -615,37 +616,40 @@ describe('fiscal.resubmit (TASK-92.3)', () => {
 });
 
 describe('credit notes (TASK-92.4)', () => {
-	it('numbers one per refund in the invoice’s series, negative with its VAT, referencing the invoice', async () => {
+	/** What the webhook stores: Stripe's cumulative amount_refunded. */
+	const refundTo = (id: string, refunded_cents: number) =>
+		prisma.payments.update({ where: { id }, data: { refunded_cents } });
+	const notesOf = (reference_invoice_id: string) =>
+		prisma.invoices.findMany({ where: { reference_invoice_id }, orderBy: { sequence: 'asc' } });
+
+	it('numbers one per refund in the invoice’s series, negative with cumulative VAT, referencing the invoice', async () => {
 		const mock = mockFiscal({ tax_number: '12345678', premise_id: 'X', device_id: 'D1' });
 		const send = vi.fn<FiscalAdapter['issue']>().mockImplementation((invoice) => mock.issue(invoice));
 		const { ctx, fiscal, premise_id } = fiscalCtx({ issue: send });
 		const payment = await succeeded(1000);
 		const invoice = (await issue(payment, 'Zahvala', ctx))!;
-		const partial = await InvoicesDomain.issueCreditNote(
-			invoice,
-			{ total_cents: 300, amount_cents: 300 },
-			'Zahvala',
-			ctx
-		);
-		const rest = await InvoicesDomain.issueCreditNote(
-			invoice,
-			{ total_cents: 1000, amount_cents: 700 },
-			'Zahvala',
-			ctx
-		);
-		for (const [note, sequence, gross, net, vat, total] of [
-			[partial!, 2, -300, -246, -54, 300],
-			[rest!, 3, -700, -574, -126, 1000],
-		] as const) {
+		await refundTo(payment.id, 3);
+		await InvoicesDomain.issueCreditNotes(invoice, 'Zahvala', ctx);
+		await refundTo(payment.id, 1000);
+		await InvoicesDomain.issueCreditNotes(invoice, 'Zahvala', ctx);
+		// Nothing left to credit: a further run changes nothing.
+		await InvoicesDomain.issueCreditNotes(invoice, 'Zahvala', ctx);
+		const notes = await notesOf(invoice.id);
+		// 997 alone would split 817 + 180; cumulative VAT (1000 minus 3) makes the notes net the invoice exactly.
+		expect(notes.map((n) => [n.sequence, n.refund_total_cents, n.gross_cents, n.net_cents, n.vat_cents])).toEqual([
+			[2, 3, -3, -2, -1],
+			[3, 1000, -997, -818, -179],
+		]);
+		const sum = (key: 'gross_cents' | 'net_cents' | 'vat_cents') => notes.reduce((t, n) => t + n[key], 0);
+		expect([sum('gross_cents'), sum('net_cents'), sum('vat_cents')]).toEqual([
+			-invoice.gross_cents,
+			-invoice.net_cents,
+			-invoice.vat_cents,
+		]);
+		for (const note of notes) {
 			expect(note).toMatchObject({
 				payment_id: payment.id,
-				reference_invoice_id: invoice.id,
-				refund_total_cents: total,
-				sequence,
-				number: `${premise_id}-D1-${sequence}`,
-				gross_cents: gross,
-				net_cents: net,
-				vat_cents: vat,
+				number: `${premise_id}-D1-${note.sequence}`,
 				vat_rate: 22,
 				status: 'VERIFIED',
 				eor: expect.any(String),
@@ -655,29 +659,50 @@ describe('credit notes (TASK-92.4)', () => {
 			const pdf = await adapters.storage.get({ bucket: 'private', key: note.pdf_key! });
 			expect(pdf.subarray(0, 5).toString()).toBe('%PDF-');
 		}
-		// The two credit notes undo the invoice exactly.
-		expect(partial!.gross_cents + rest!.gross_cents).toBe(-invoice.gross_cents);
-		expect(partial!.vat_cents + rest!.vat_cents).toBe(-invoice.vat_cents);
 		// FURS gets the invoice's number and issue time as ReferenceInvoice.
 		const reference = { premise_id, device_id: 'D1', sequence: 1, issued_at: invoice.issued_at };
 		expect(send.mock.calls.map(([sent]) => sent.reference)).toEqual([undefined, reference, reference]);
 	});
 
-	it('is idempotent across job retries and racing runs: one credit note per refund, no number lost', async () => {
-		const { ctx, premise_id } = fiscalCtx();
+	it('never credits an invoice another provider made', async () => {
+		const { ctx } = fiscalCtx();
 		const payment = await succeeded(500);
 		const invoice = (await issue(payment, 'Zahvala', ctx))!;
-		const refund = { total_cents: 500, amount_cents: 500 };
-		const runs = await Promise.allSettled(
-			Array.from({ length: 4 }, () => InvoicesDomain.issueCreditNote(invoice, refund, 'Zahvala', ctx))
+		await refundTo(payment.id, 500);
+		const send = vi.fn<FiscalAdapter['issue']>();
+		const { ctx: furs } = fiscalCtx({ provider: 'furs', issue: send });
+		await expect(InvoicesDomain.issueCreditNotes(invoice, 'Zahvala', furs)).rejects.toThrow(
+			/belongs to provider mock, not furs/
 		);
-		for (const run of runs)
-			if (run.status === 'rejected') expect(String(run.reason)).toMatch(/verification already in progress/);
-		const again = await InvoicesDomain.issueCreditNote(invoice, refund, 'Zahvala', ctx);
-		expect(again).toMatchObject({ sequence: 2, gross_cents: -500, status: 'VERIFIED' });
-		expect(await prisma.invoices.count({ where: { payment_id: payment.id } })).toBe(2);
-		// A lost race gave its number back: the next invoice of the series follows without a gap.
-		expect(await issue(await succeeded(), 'Zahvala', ctx)).toMatchObject({ sequence: 3 });
-		expect(await prisma.invoices.count({ where: { premise_id } })).toBe(3);
+		expect(send).not.toHaveBeenCalled();
+		expect(await notesOf(invoice.id)).toEqual([]);
+	});
+
+	it('never over-credits when payment.effects runs race on one refund after another, and loses no number', async () => {
+		const { ctx, premise_id } = fiscalCtx();
+		const payment = await succeeded(1000);
+		await issue(payment, 'Zahvala', ctx);
+		const race = async () => {
+			const runs = await Promise.allSettled(
+				Array.from({ length: 4 }, () => PaymentsDomain.paymentEffects({ payment_id: payment.id }, ctx))
+			);
+			for (const run of runs)
+				if (run.status === 'rejected') expect(String(run.reason)).toMatch(/verification already in progress/);
+			// A losing run is retried later and finds everything done.
+			await PaymentsDomain.paymentEffects({ payment_id: payment.id }, ctx);
+		};
+		await refundTo(payment.id, 300);
+		await race();
+		await refundTo(payment.id, 1000);
+		await race();
+		const invoice = await invoiceOf(payment.id);
+		const notes = await notesOf(invoice.id);
+		expect(notes.map((n) => [n.sequence, n.refund_total_cents, n.gross_cents, n.status])).toEqual([
+			[2, 300, -300, 'VERIFIED'],
+			[3, 1000, -700, 'VERIFIED'],
+		]);
+		// No number was taken and given back to a gap: the next invoice of the series follows.
+		expect(await issue(await succeeded(), 'Zahvala', ctx)).toMatchObject({ sequence: 4 });
+		expect(await prisma.invoices.count({ where: { premise_id } })).toBe(4);
 	});
 });
