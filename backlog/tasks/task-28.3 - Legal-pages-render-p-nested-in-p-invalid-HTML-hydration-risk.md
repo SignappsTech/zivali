@@ -1,10 +1,11 @@
-﻿---
+---
 id: TASK-28.3
 title: 'Legal pages render <p> nested in <p> (invalid HTML, hydration risk)'
-status: To Do
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-16 07:12'
+updated_date: '2026-10-16 08:56'
 labels:
   - bug
   - 'est:XS'

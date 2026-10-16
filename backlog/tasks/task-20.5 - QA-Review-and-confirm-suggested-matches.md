@@ -1,11 +1,11 @@
 ---
 id: TASK-20.5
 title: 'QA: Review and confirm suggested matches'
-status: To Do
+status: Done
 assignee:
   - '@qa'
 created_date: '2026-10-14 22:15'
-updated_date: '2026-10-16 07:31'
+updated_date: '2026-10-16 08:56'
 labels:
   - 'qa qa:fail'
 milestone: m-1

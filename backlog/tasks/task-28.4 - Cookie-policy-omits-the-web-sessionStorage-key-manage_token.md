@@ -1,10 +1,11 @@
-﻿---
+---
 id: TASK-28.4
 title: Cookie policy omits the web sessionStorage key manage_token
-status: To Do
+status: Done
 assignee:
   - '@content-strategist'
 created_date: '2026-10-16 07:12'
+updated_date: '2026-10-16 08:56'
 labels:
   - bug
   - 'est:XS'

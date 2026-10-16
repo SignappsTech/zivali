@@ -1,10 +1,11 @@
 ---
 id: TASK-30.7
 title: 'Mobile: CONFLICT and RATE_LIMITED drop the Idempotency-Key on the next Publish'
-status: In Progress
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-16 07:31'
+updated_date: '2026-10-16 08:56'
 labels:
   - bug
   - 'est:S'
