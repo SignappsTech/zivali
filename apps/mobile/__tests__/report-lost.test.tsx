@@ -480,6 +480,101 @@ describe('report lost flow (P6)', () => {
 		expect(second!.body).toMatchObject({ circumstances: 'Pobegnil je na sprehodu' });
 	});
 
+	test('a time edit after a network failure takes a new key and the new event_at', async () => {
+		let fail = true;
+		routes = { 'POST /v1/reports': () => (fail ? offline() : created) };
+		await toReviewWithSavedPet();
+		await press(t.publish);
+		expect(await screen.findByText(t.send_failed)).toBeTruthy();
+
+		await press(`Uredi: ${t.review_time}`);
+		await fireEvent.press(screen.getByRole('radio', { name: t.when_other }));
+		await fireEvent.changeText(screen.getByLabelText(t.when_date), '1. 1. 2020');
+		await next();
+		fail = false;
+		await press(t.publish);
+		await waitFor(() => expect(mockRouter.replace).toHaveBeenCalled());
+		const [first, second] = posted();
+		expect(second!.headers['Idempotency-Key']).not.toBe(first!.headers['Idempotency-Key']);
+		expect((second!.body as { event_at: string }).event_at).toMatch(/^2020-01-01/);
+	});
+
+	test.each([
+		['a 5xx', () => mockError('INTERNAL'), true],
+		['a 429', () => mockError('RATE_LIMITED', 'x', { retry_after_s: 90 }), true],
+		['a 409 in progress', () => mockError('CONFLICT'), true],
+		['a definitive 403', () => mockError('FORBIDDEN'), false],
+	])('after %s the retry %s the Idempotency-Key', async (_name, failure, same) => {
+		let fail = true;
+		routes = { 'POST /v1/reports': () => (fail ? failure() : created) };
+		await toReviewWithSavedPet();
+		await press(t.publish);
+		await waitFor(() => expect(posted()).toHaveLength(1));
+		await act(async () => new Promise((resolve) => setTimeout(resolve, 20)));
+		fail = false;
+		await press(t.publish);
+		await waitFor(() => expect(mockRouter.replace).toHaveBeenCalled());
+		const [first, second] = posted();
+		const keys = [first!.headers['Idempotency-Key'], second!.headers['Idempotency-Key']];
+		expect(keys[0] === keys[1]).toBe(same);
+	});
+
+	test('the open search found for one pet is forgotten when another pet is chosen', async () => {
+		const other = { ...pet, id: 'pet-2', name: 'Muri' };
+		routes = {
+			'GET /v1/pets': () => ({ items: [pet, other] }),
+			'POST /v1/reports': ({ body }: MockRequest) =>
+				(body as { pet_id?: string }).pet_id === pet.id
+					? mockError('DUPLICATE_OPEN_REPORT', 'open', { report_id: 'r0', short_code: 'Pq7xYz12' })
+					: created,
+		};
+		await renderFlow();
+		await fireEvent.press(await screen.findByRole('radio', { name: /Runo · Pes/ }));
+		await next();
+		await press('Fotografiraj');
+		await next();
+		await press('Potrdi kraj');
+		await next();
+		await next();
+		await press(t.publish);
+		expect(await screen.findByText(t.duplicate_title)).toBeTruthy();
+
+		await press(`Uredi: ${t.review_pet}`);
+		await fireEvent.press(screen.getByRole('radio', { name: /Muri · Pes/ }));
+		await next();
+		expect(screen.queryByText(t.duplicate_title)).toBeNull();
+		await press(t.publish);
+		await waitFor(() => expect(mockRouter.replace).toHaveBeenCalled());
+		expect(calls.some((call) => call.method === 'PATCH')).toBe(false);
+		expect(posted()[1]!.body).toMatchObject({ pet_id: 'pet-2' });
+	});
+
+	test('a double press starts one publish', async () => {
+		routes = { 'POST /v1/reports': () => new Promise((resolve) => setTimeout(() => resolve(created), 50)) };
+		await toReviewWithSavedPet();
+		const publish = screen.getByRole('button', { name: t.publish });
+		await fireEvent.press(publish);
+		await fireEvent.press(publish);
+		await waitFor(() => expect(mockRouter.replace).toHaveBeenCalled());
+		expect(posted()).toHaveLength(1);
+	});
+
+	test('report_lost_submit is not tracked after the duplicate update', async () => {
+		jest.mocked(getConsent).mockReturnValue({ v: 1, analytics: true, ts: new Date().toISOString() });
+		routes = {
+			'POST /v1/reports': () =>
+				mockError('DUPLICATE_OPEN_REPORT', 'open', { report_id: 'r0', short_code: 'Pq7xYz12' }),
+			'PATCH /v1/reports/:code': () => ({ short_code: 'Pq7xYz12' }),
+			'GET /v1/reports/:code': () => ({ short_code: 'Pq7xYz12', species: 'dog' }),
+		};
+		await toReviewWithSavedPet();
+		await press(t.publish);
+		await screen.findByText(t.duplicate_title);
+		await press(t.publish);
+		await waitFor(() => expect(mockRouter.replace).toHaveBeenCalled());
+		expect(track).not.toHaveBeenCalledWith('report_lost_submit', expect.anything());
+	});
+
 	test('report_lost_submit fires with consent only, with the region and municipality the API derived', async () => {
 		jest.mocked(getConsent).mockReturnValue({ v: 1, analytics: true, ts: new Date().toISOString() });
 		routes = {
