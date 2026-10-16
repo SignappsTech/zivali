@@ -1,10 +1,11 @@
 ---
 id: TASK-21.8
 title: 'Chat: link caution misses bare domains on uncommon TLDs (has_link regex)'
-status: To Do
+status: In Progress
 assignee:
   - '@backend-dev'
 created_date: '2026-10-16 10:02'
+updated_date: '2026-10-16 10:34'
 labels:
   - bug
   - 'est:XS'
@@ -23,5 +24,9 @@ Found in QA TASK-21.5, TASK-21 AC#6. Steps: send 'poglej is.gd/abc' or 'foo.dev/
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 has_link is true for any host-like token such as foo.dev, cutt.ly, is.gd, example.page, not only the TLD allowlist in chat.domain.ts
+- [x] #1 has_link is true for any host-like token such as foo.dev, cutt.ly, is.gd, example.page, not only the TLD allowlist in chat.domain.ts
 <!-- AC:END -->
+
+## Packet
+
+Branch: agent/task-21.7-chat-block

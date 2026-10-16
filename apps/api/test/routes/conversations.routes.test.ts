@@ -9,6 +9,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { Message } from '@zivali/validation';
 
 import { app } from '../../app.ts';
+import { hasLink } from '../../domains/chat/chat.domain.ts';
 import { chatMessageVars } from '../../domains/chat/chat.notify.ts';
 import { ChatDomain } from '../../domains/chat/index.ts';
 import { ReportsDomain } from '../../domains/reports/index.ts';
@@ -235,6 +236,34 @@ describe('messages', () => {
 			expect((await send(contact, id, { body })).body.has_link).toBe(true);
 		const reply = await send(owner, id, { body: 'Hvala!' });
 		expect(reply.body.sender_alias_key).toBe('owner');
+	});
+
+	it('flags any host-like token as a link (any TLD), not numbers, ordinals or abbreviations', () => {
+		for (const body of [
+			'poglej is.gd/abc',
+			'foo.dev/x',
+			'cutt.ly/abc',
+			'example.page',
+			'Pišite na najdimo.si',
+			'primer.com',
+			'trgovina.shop/akcija',
+			'api.app.io',
+			'HTTPS://EXAMPLE.ORG',
+			'tg://resolve',
+		])
+			expect([body, hasLink(body)]).toEqual([body, true]);
+		for (const body of [
+			'Cena je 3.14 €',
+			'Pridem ob 17.30',
+			'1.5 km stran',
+			'e.g. pes',
+			'npr. ob reki, i.e. tukaj',
+			'Podjetje d.o.o.',
+			'Hvala... se vidimo',
+			'3.5.2026',
+			'v 2.nadstropju od 5.maja',
+		])
+			expect([body, hasLink(body)]).toEqual([body, false]);
 	});
 
 	it('validates the body: empty, too long, location without kind', async () => {
