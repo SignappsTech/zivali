@@ -3,10 +3,10 @@ id: TASK-32.6
 title: >-
   Mobile checkout: premium_unavailable never shows (instanceof ApiError vs
   QueryError)
-status: In Progress
+status: Done
 assignee: []
 created_date: '2026-10-16 07:00'
-updated_date: '2026-10-16 07:19'
+updated_date: '2026-10-16 08:56'
 labels:
   - bug
   - mobile
