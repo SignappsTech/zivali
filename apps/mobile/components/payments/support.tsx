@@ -90,8 +90,7 @@ function AmountAsk({
 				[3, t('contribution_3')],
 				[5, t('contribution_5')],
 			] as const);
-	const typed = choice === 'other' ? toCents(other) : undefined;
-	const cents = choice === 'other' ? typed : choice && choice * 100;
+	const cents = choice === 'other' ? toCents(other) : choice && choice * 100;
 	const valid = cents !== undefined && cents >= MIN_CENTS && cents <= MAX_CENTS;
 	const error =
 		choice === 'other' && touched && other.trim() && !valid
@@ -111,7 +110,11 @@ function AmountAsk({
 
 	return (
 		<>
-			<View role="radiogroup" aria-label={t('amount_group')} className={cn('flex-row flex-wrap gap-2', tip ? 'mt-5' : 'mt-4')}>
+			<View
+				role="radiogroup"
+				aria-label={t('amount_group')}
+				className={cn('flex-row flex-wrap gap-2', tip ? 'mt-5' : 'mt-4')}
+			>
 				{pills.map(([euros, label]) => {
 					const suggested = tip && euros === SUGGESTED && choice !== euros;
 					return (
@@ -119,7 +122,9 @@ function AmountAsk({
 							key={euros}
 							role="radio"
 							selected={choice === euros}
-							aria-label={tip && euros === SUGGESTED ? `${label}, ${t('amount_suggested_a11y')}` : undefined}
+							aria-label={
+								tip && euros === SUGGESTED ? `${label}, ${t('amount_suggested_a11y')}` : undefined
+							}
 							// The suggested amount: a 2 px primary line, never a fill or a check, so it never reads as chosen.
 							className={suggested ? 'border-2 border-primary px-4' : undefined}
 							onPress={() => setChoice(euros)}
@@ -264,7 +269,15 @@ export function SupportCard({ className }: { className?: string }) {
  * P15 contribution at the lost confirmation: a collapsed row (text and caret); open, the 2, 3 and 5 € pills with none
  * chosen, then Prispevaj and Skrij side by side. Skrij or a payment ends the ask for this report.
  */
-export function ContributionRow({ reportId, code, className }: { reportId?: string; code: string; className?: string }) {
+export function ContributionRow({
+	reportId,
+	code,
+	className,
+}: {
+	reportId?: string;
+	code: string;
+	className?: string;
+}) {
 	const t = useTranslations('support');
 	const canAsk = useCanAsk();
 	const [open, setOpen] = React.useState(false);
@@ -292,7 +305,11 @@ export function ContributionRow({ reportId, code, className }: { reportId?: stri
 						kind="contribution"
 						checkout={
 							reportId
-								? { purpose: 'report_contribution', refs: { report_id: reportId }, returnTo: `/r/${code}` }
+								? {
+										purpose: 'report_contribution',
+										refs: { report_id: reportId },
+										returnTo: `/r/${code}`,
+									}
 								: undefined
 						}
 						onSkip={() => setAnswer('skipped')}

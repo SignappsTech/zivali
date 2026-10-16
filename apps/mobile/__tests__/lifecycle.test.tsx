@@ -38,7 +38,7 @@ jest.mock('@/components/outbox/queue', () => {
 	const { Text: MockText } = jest.requireActual<typeof import('react-native')>('react-native');
 	return { OutboxList: () => <MockText>device queue</MockText> };
 });
-let mockSession = { session: {} as object | null, me: null, isAnonymous: false, loading: false };
+let mockSession = { session: {} as object | null, me: null as object | null, isAnonymous: false, loading: false };
 jest.mock('@zivali/api/auth', () => ({
 	useSession: () => mockSession,
 	useRequireAuth: () => ({ ...mockSession, gate: mockSession.session ? 'ok' : 'signin' }),
@@ -218,6 +218,7 @@ describe('owner actions on the report page (P9 slot A, P14)', () => {
 		expect(screen.getByText(l.finder_thanks_body)).toBeOnTheScreen();
 		// No story consent, tip or ad on the finder's side (M7).
 		expect(screen.queryByRole('switch')).toBeNull();
+		expect(screen.queryByRole('heading', { name: sl.support.tip_title })).toBeNull();
 		await fireEvent.press(screen.getByRole('button', { name: l.finder_thanks_account }));
 		expect(page.getPathname()).toBe('/auth/sign-up');
 	});
@@ -385,6 +386,18 @@ describe('reunited screen (P14 M3)', () => {
 		await fireEvent.press(screen.getByRole('button', { name: l.done }));
 		expect(await screen.findByText('map tab')).toBeOnTheScreen();
 		expect(page.getPathname()).toBe('/');
+	});
+
+	test('the owner gets the optional tip after the reunion, between the story switch and Končano (P15)', async () => {
+		mockSession = { ...mockSession, me: {} };
+		await open('/r/Rex2Lost/reunited', reunited);
+		expect(screen.getByRole('heading', { name: sl.support.tip_title })).toBeOnTheScreen();
+		for (const pill of screen.getAllByRole('radio')) expect(pill).not.toBeChecked();
+		expect(screen.getByRole('button', { name: sl.support.pay_disabled })).toBeDisabled();
+		await fireEvent.press(screen.getByRole('button', { name: sl.support.skip }));
+		expect(screen.queryByRole('heading', { name: sl.support.tip_title })).toBeNull();
+		// Skipping changes nothing else on the screen.
+		expect(screen.getByRole('button', { name: l.done })).toBeOnTheScreen();
 	});
 
 	test('only for a manager of a reunited report; anyone else gets the report page', async () => {
