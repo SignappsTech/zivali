@@ -1,11 +1,11 @@
 ---
 id: TASK-26.4
 title: 'Web My reports, owner actions and reunited screen'
-status: In Progress
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:14'
-updated_date: '2026-10-16 04:48'
+updated_date: '2026-10-16 06:01'
 labels:
   - fe
   - 'est:M'
