@@ -22,6 +22,7 @@ import { useGetReportQuery, useTransitionReportMutation } from '@zivali/api/repo
 import type { QueryError } from '@zivali/api/rtk';
 import type { ReportOwnerView, ReportTransitionAction } from '@zivali/types';
 import { useErrorText } from '@/components/auth/parts';
+import { ConversationRow } from '@/components/chat/conversations';
 import { Spot } from '@/components/shell/parts';
 import {
 	AlertDialog,
@@ -267,7 +268,6 @@ function ManageView({ report }: { report: ReportOwnerView }) {
 
 	const threads = conversations?.items.filter((c) => c.about_report.short_code === report.short_code) ?? [];
 	const unread = threads.reduce((sum, c) => sum + c.unread, 0);
-	// The inbox lists the conversations of every report this session manages (P12).
 	const openMessages = () => router.push('/inbox' as Href);
 
 	// Day counts need no live clock: the time the screen opened is enough.
@@ -337,9 +337,16 @@ function ManageView({ report }: { report: ReportOwnerView }) {
 							<Text className="font-sans-bold">{t('manage_unread', { count: unread })}</Text>
 						</View>
 					) : null}
-					<Button size="lg" className="mt-4" onPress={openMessages}>
-						{t('manage_open_messages')}
-					</Button>
+					{/* The Inbox tab is for accounts; this session opens its conversations here (P12, C9). */}
+					<View className="-mx-3 mt-3 gap-1">
+						{threads.map((conversation) => (
+							<ConversationRow
+								key={conversation.id}
+								conversation={conversation}
+								onPress={() => router.push(`/inbox/${conversation.id}` as Href)}
+							/>
+						))}
+					</View>
 				</>
 			) : null}
 
