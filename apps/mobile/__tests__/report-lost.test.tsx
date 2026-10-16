@@ -13,6 +13,9 @@ import { LostFlow } from '@/components/report-lost/lost-flow';
 
 const t = sl.report_lost;
 
+// Each test walks the whole multi-step flow; on the CI runner a single test can take well over jest's 5 s default.
+jest.setTimeout(30_000);
+
 jest.mock('expo-crypto', () => {
 	let n = 0;
 	return { randomUUID: () => `5b1e28ba-2fa1-4d3b-a3f5-ef19b5a7633${n++}` };
