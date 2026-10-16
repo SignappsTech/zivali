@@ -13,5 +13,22 @@
 	"no_photo": "The poster needs a photo where the animal is clearly visible.",
 	"failed": "The poster could not be prepared. Please try again.",
 	"unavailable_closed": "The search is closed, so the poster is not available.",
-	"preview_alt": "Poster preview: {title}, with photo and QR code"
+	"preview_alt": "Poster preview: {title}, with photo and QR code",
+	"print": "Print",
+	"fact_colour": "Colour: {colours}",
+	"fact_size": "Size: {size}",
+	"fact_breed": "Breed: {breed}",
+	"since_lost": "{species, select, dog {Missing since {date}} cat {Missing since {date}} other {Missing since {date}}}",
+	"since_found": "{species, select, dog {Found on {date}} cat {Found on {date}} other {Found on {date}}}",
+	"area": "Area: {area}, {municipality} (approximate)",
+	"cta_lost": "{species, select, dog {Seen this dog? Scan the code and let us know.} cat {Seen this cat? Scan the code and let us know.} other {Seen this pet? Scan the code and let us know.}}",
+	"cta_found": "{species, select, dog {Is this your dog? Scan the code.} cat {Is this your cat? Scan the code.} other {Is this your pet? Scan the code.}}",
+	"reward": "Reward offered",
+	"reward_amount": "Reward offered: {amount}",
+	"safety": "Contact only through Najdimo. Never pay in advance.",
+	"safety_reward": "Contact only through Najdimo. The owner hands over the reward only once the animal is home. Never pay anyone in advance.",
+	"footer": "Najdimo · Home again.",
+	"home_named": "{name} is home again.",
+	"home_thanks": "Thank you to everyone who helped. You can take this poster down.",
+	"og_area": "Area: {area}"
 }

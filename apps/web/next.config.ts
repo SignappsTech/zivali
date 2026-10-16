@@ -20,6 +20,13 @@ const nextConfig: NextConfig = {
 	// Ship TypeScript source (@zivali/i18n/format). They resolve from this checkout's packages/*/src through
 	// tsconfig.json `paths`, not the node_modules links.
 	transpilePackages: ['@zivali/api', '@zivali/analytics', '@zivali/i18n'],
+	// The poster route's pdfkit reads its own data files at run time, so it loads from node_modules, not the bundle.
+	serverExternalPackages: ['pdfkit'],
+	// The poster PDF and the Facebook square read the brand fonts from assets/fonts (OFL) at run time.
+	outputFileTracingIncludes: {
+		'/r/[code]/poster.pdf': ['./assets/fonts/*.ttf'],
+		'/r/[code]/square.png': ['./assets/fonts/*.ttf'],
+	},
 	// Types are checked once by the `typecheck` task (next typegen && tsc) in pnpm verify and CI; repeating it in
 	// every build (turbo, e2e, quality, Docker) cost minutes each.
 	typescript: { ignoreBuildErrors: true },
