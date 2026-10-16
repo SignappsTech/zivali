@@ -4,7 +4,7 @@ import { expect, type Page, test } from '@playwright/test';
 import * as fx from '@zivali/api/__fixtures__/ads';
 import { adminMe } from '@zivali/api/__fixtures__/me';
 
-import { dismissConsent, signInAs } from './session';
+import { api, dismissConsent, signInAs } from './session';
 
 // TASK-37.3: P20 ad management for admins (aal2): list, editor with the live preview, detail with statistics and
 // CSV, house ads; access denied for moderators; axe in light and dark. The API is answered here from the
@@ -15,13 +15,20 @@ const running = fx.adminAds.items[0]!;
 const NEW_ID = 'ad7e1f2a-0000-4000-8000-0000000000aa';
 
 async function signIn(page: Page, me: typeof adminMe, baseURL: string) {
+	// The fixture image from the mock API: the CSP allows the media origin (MEDIA_BASE_URL), not the fixture's host.
+	const list = {
+		...fx.adminAds,
+		items: fx.adminAds.items.map((item) =>
+			item.image_url ? { ...item, image_url: `${api()}/media/${item.id}.jpg` } : item
+		),
+	};
 	await signInAs(page, me, baseURL);
 	await dismissConsent(page);
 	await page.route(/\/v1\/me$/, (route) => route.fulfill({ json: me }));
 	await page.route(/\/v1\/admin\/ads(\?.*)?$/, (route) =>
 		route.request().method() === 'POST'
 			? route.fulfill({ json: { ...fx.adminAds.items[2], ...route.request().postDataJSON(), id: NEW_ID } })
-			: route.fulfill({ json: fx.adminAds })
+			: route.fulfill({ json: list })
 	);
 	await page.route(/\/v1\/admin\/ads\/[^/]+\/stats/, (route) => route.fulfill({ json: fx.adStats }));
 	await page.route(/\/v1\/admin\/audit-log/, (route) => route.fulfill({ json: fx.adHistory }));

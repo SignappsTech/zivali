@@ -142,12 +142,9 @@ test('the Profile card: the same amounts, no Skip, purpose support', async ({ pa
 		.locator('[data-slot=card]')
 		.filter({ has: page.getByRole('heading', { level: 2, name: t.card_title, exact: true }) });
 
-	await expect(card.getByRole('radio')).toHaveText([
-		t.amount_3,
-		`${t.amount_5}, ${t.amount_suggested_a11y}`,
-		t.amount_10,
-		t.amount_other,
-	]);
+	await expect(card.getByRole('radio')).toHaveText([t.amount_3, t.amount_5, t.amount_10, t.amount_other]);
+	// "predlagano" is in the name only (aria-label), not on screen.
+	await expect(card.getByRole('radio').nth(1)).toHaveAccessibleName(`${t.amount_5}, ${t.amount_suggested_a11y}`);
 	await expect(card.getByRole('button', { name: t.skip, exact: true })).toHaveCount(0);
 	await expectNoAxeViolations(page);
 
