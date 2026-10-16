@@ -38,10 +38,10 @@ Branch: - (verify on main)
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
 - [x] #1 Given an anonymous submission, when received, then it needs a valid captcha token (privacy-friendly provider chosen in the TDD) and is rate limited per IP and device (default 5 per hour, 20 per day, configurable) with a friendly error.
-- [ ] #2 Given a created report, when the finder returns through the secret manage link (high entropy, invalid after close), then they can edit, close or mark returned and open chat on any device without an account.
+- [x] #2 Given a created report, when the finder returns through the secret manage link (high entropy, invalid after close), then they can edit, close or mark returned and open chat on any device without an account.
 - [x] #3 Given the anonymous finder, when they chat, then they act through an anonymous session bound to the report and can later claim it by creating an account.
 - [x] #4 Given other stories, when they need it, then the anonymous submit endpoint, token model and RLS rules are documented as a contract slice.
-- [ ] #5 Given abuse patterns (many reports from one device, identical photo hash), when detected, then reports are held for moderation instead of published.
+- [x] #5 Given abuse patterns (many reports from one device, identical photo hash), when detected, then reports are held for moderation instead of published.
 - [ ] #6 Story gates pass on main: `pnpm verify`, plus `pnpm quality` for the pages this story touches; results recorded in the QA notes.
 <!-- AC:END -->
 
@@ -59,4 +59,9 @@ AC#6 FAIL: /m ships 415 KB JS against the 256 KB budget (TASK-17.9). Lighthouse 
 
 Privacy: the token never appears in a request URL, a Referer (strict-origin-when-cross-origin), a request body other than the claim, an analytics argument, cookies, localStorage or history; it leaves the address bar at once (replaceState) and waits in sessionStorage for the tab. API logs redact body/url/query, email_outbox keeps only the address hash, the idempotency replay is encrypted, no pgboss payload. Observation: the GA4 init and page_view calls run while the hash is still in the address bar (page_location is the template /m, gtag.js loads after the hash is gone, so no hit carries it); stripping the hash before analytics init would remove the timing dependence. Mobile: token in expo-secure-store, screen_view uses the template; Firebase auto-collection on deep links needs a device.
 Tests: API manage.routes 18/18, rateLimit/idempotency/ctx 24/24, reports.write 47/48 and report.lifecycle 5/6 (scratch DB has no geo seed or realtime schema; unrelated). Web vitest 40/40 (manage.test focus case flaky under load, passes alone). Mobile jest 54/54. e2e manage.spec 4/4 in Chromium and WebKit. Added: apps/api/test/routes/manage.qa.routes.test.ts (3), apps/web/e2e/manage-privacy.spec.ts (2, Chromium). Turbopack refuses the node_modules junction in a worktree: the QA build used a temporary uncommitted turbopack.root override. CHANGE row: C7 device-volume hold keys only on x-device-id.
+
+Re-QA on main b965dff9 (worktree reset to main). verify, e2e, Lighthouse: merge queue on main at b965dff9 (AC#6 stays open until the queue records them).
+AC#2 pass: 17.5 (Close sends reason other, web+mobile), 17.7 (Edit -> /r/<code>/uredi, page exists and gates on is_mine), 17.8 (mobile Edit), 17.10 (focus to h1) verified in code and tests; claim, resend (new token replaces the hash, 3/day, CONFLICT without email), reunited with confirm, extend, Kraj fact present on web and mobile. Gap: mobile /m never fires the C12 reunited event (TASK-17.14, minor); mobile has no resend row (CHANGE row). Added an e2e case to apps/web/e2e/manage.spec.ts (Close body, resend CONFLICT toast), not run here (no e2e on this machine).
+AC#5 pass: guard keyed by ip_hash + device_hash, holds on device volume (>10 in 7 days) and photo hash, PATCH photo_ids now holds (17.6, manage.routes test).
+Other: session_ended wipe keeps drafts, outbox and manage tokens (wipe.ts, offline-store tests). reunited params carry species/region/municipality only. EAS preview and production set EXPO_PUBLIC_CAPTCHA (17.11). TASK-17.12/17.13 (anonymous-to-account conversion) are not on main: noted, not failed. Tests: web vitest manage + report-found 54 pass; mobile jest manage/offline/outbox/report-found 83 pass (needed i18n and tokens dist built in the worktree).
 <!-- SECTION:NOTES:END -->
