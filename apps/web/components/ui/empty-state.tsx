@@ -10,11 +10,13 @@ type EmptyStateProps = {
 	description: React.ReactNode;
 	/** One secondary Button. */
 	action?: React.ReactNode;
+	/** The title's level: h3 under a section's h2; h2 when the page's h1 is the only heading above it. */
+	heading?: 'h2' | 'h3';
 	className?: string;
 };
 
-/** Spot illustration, h3, one sentence, one secondary button; no container (system §10.6). */
-function EmptyState({ illustration, title, description, action, className }: EmptyStateProps) {
+/** Spot illustration, h3 (or `heading`), one sentence, one secondary button; no container (system §10.6). */
+function EmptyState({ illustration, title, description, action, heading: Heading = 'h3', className }: EmptyStateProps) {
 	return (
 		<div data-slot="empty-state" className={cn('max-w-[360px]', className)}>
 			{illustration && (
@@ -25,9 +27,9 @@ function EmptyState({ illustration, title, description, action, className }: Emp
 					{illustration}
 				</div>
 			)}
-			<h3 className="mt-6 font-display text-xl leading-7 font-semibold tracking-[-0.01em] text-balance first:mt-0 lg:text-2xl lg:leading-8">
+			<Heading className="mt-6 font-display text-xl leading-7 font-semibold tracking-[-0.01em] text-balance first:mt-0 lg:text-2xl lg:leading-8">
 				{title}
-			</h3>
+			</Heading>
 			<p className="mt-2 max-w-[58ch]">{description}</p>
 			{action && <div className="mt-5">{action}</div>}
 		</div>

@@ -131,7 +131,8 @@ describe('NotificationsView', () => {
 		state.query = { data: { items: [], next_cursor: null, unread: 0 } };
 		show();
 
-		expect(screen.getByRole('heading', { level: 3 }).textContent).toBe(sl.notifications.empty_title);
+		// An h2 right under the view's h1 (axe heading-order).
+		expect(screen.getByRole('heading', { level: 2 }).textContent).toBe(sl.notifications.empty_title);
 		expect(screen.getByText(sl.notifications.empty_body)).toBeTruthy();
 		expect(screen.getByRole('link', { name: sl.notifications.empty_action }).getAttribute('href')).toBe(
 			'/racun/opozorila'

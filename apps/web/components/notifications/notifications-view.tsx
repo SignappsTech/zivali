@@ -88,6 +88,8 @@ export function NotificationsView() {
 			<EmptyState
 				className="mt-8"
 				illustration={<SpotIllustration />}
+				// Right under the view's h1: no group headings (h2) when there is nothing.
+				heading="h2"
 				title={t('empty_title')}
 				description={t('empty_body')}
 				action={
