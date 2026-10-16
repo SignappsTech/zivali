@@ -1,11 +1,11 @@
 ---
 id: TASK-29.3
 title: Web report-lost flow
-status: In Progress
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:14'
-updated_date: '2026-10-16 04:48'
+updated_date: '2026-10-16 05:30'
 labels:
   - fe
   - 'est:M'
