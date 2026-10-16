@@ -38,10 +38,11 @@ Branch: - (verify on main)
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Given a listing or profile, when a user taps Report abuse, then they pick a reason (scam, fake, spam, inappropriate image, other), add an optional note and submit, and anonymous visitors can report listings too (rate limited).
-- [ ] #2 Given a submitted report, when stored, then it links to the target with reason and reporter, a confirmation is shown and duplicates from the same user are ignored.
-- [ ] #3 Given 3 independent abuse reports on one listing (default), when received, then the listing is hidden from public view pending review and the owner is told.
-- [ ] #4 Given a chat message report from the chat screen, when submitted, then the same abuse model is used.
-- [ ] #5 Given flags, when stored, then moderators can read them through the admin shell until the full queue exists (M4).
+- [x] #1 Given a listing or profile, when a user taps Report abuse, then they pick a reason (scam, fake, spam, inappropriate image, other), add an optional note and submit, and anonymous visitors can report listings too (rate limited).
+- [x] #2 Given a submitted report, when stored, then it links to the target with reason and reporter, a confirmation is shown and duplicates from the same user are ignored.
+- [x] #3 Given 3 independent abuse reports on one listing (default), when received, then the listing is hidden from public view pending review and the owner is told.
+- [x] #4 Given a chat message report from the chat screen, when submitted, then the same abuse model is used.
+- [x] #5 Given flags, when stored, then moderators can read them through the admin shell until the full queue exists (M4).
 - [ ] #6 Story gates pass on main: `pnpm verify`, plus `pnpm quality` for the pages this story touches; results recorded in the QA notes.
+  - QA note: verify, e2e, Lighthouse: merge queue on main at e2457eef. Local: web vitest (abuse, admin, matches, chat, report) and mobile jest (report-abuse, report-detail) green; i18n check OK.
 <!-- AC:END -->
