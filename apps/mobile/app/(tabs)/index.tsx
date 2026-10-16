@@ -39,7 +39,6 @@ const PILL_HEIGHT = 48;
 const COUNT_DEBOUNCE_MS = 300;
 const round2 = (n: number) => Math.round(n * 100) / 100;
 // P21 feed row between the report rows, with the 20 px row gap below it (the list adds none after an ad).
-const renderAd = () => <AdSlot slot="feed" className="mb-5" />;
 
 function useDebounced<T>(value: T, ms: number): T {
 	const [settled, setSettled] = React.useState(value);
@@ -82,6 +81,12 @@ export default function MapTab() {
 	const reports = React.useMemo(
 		() => search.data && (search.source === 'cache' ? boostedFirst(search.data) : search.data),
 		[search.data, search.source]
+	);
+	// C14: the feed's ad targets the region of the first row.
+	const firstRegion = reports?.[0]?.region_slug;
+	const renderAd = React.useCallback(
+		() => <AdSlot slot="feed" region={firstRegion} className="mb-5" />,
+		[firstRegion]
 	);
 
 	// The filter sheet's live count: the draft (debounced while the slider moves); closed, the map's own query.

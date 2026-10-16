@@ -190,6 +190,13 @@ test('map and list show the reports around the device: boosted first, counted, c
 
 test('the list carries one labelled feed ad (P21) after the 8th report row, never first', async () => {
 	const many = Array.from({ length: 9 }, (_, i) => ({ ...maks, id: `r-${i}`, name: `Pes ${i + 1}` }));
+	// The unit is in view (any box), so the impression counts after its 1 s dwell.
+	const native = jest.requireActual<{ default: { measureInWindow: jest.Mock } }>(
+		'@react-native/jest-preset/jest/MockNativeMethods'
+	).default;
+	native.measureInWindow.mockImplementation((cb: (x: number, y: number, w: number, h: number) => void) =>
+		cb(0, 100, 390, 136)
+	);
 	const client = await renderTab(many);
 
 	await screen.findByRole('link', { name: `Oglas: ${ad.title}. ${ad.body}` });
@@ -199,12 +206,16 @@ test('the list carries one labelled feed ad (P21) after the 8th report row, neve
 		.filter((label): label is string => Boolean(label));
 	expect(links).toHaveLength(10);
 	expect(links.map((label) => label.startsWith('Oglas: '))).toEqual([...Array(8).fill(false), true, false]);
-	await waitFor(() =>
-		expect(client.calls.filter((c) => c.path.startsWith('/v1/ads/')).map((c) => [c.method, c.path])).toEqual([
-			['GET', '/v1/ads/slot/feed'],
-			['POST', `/v1/ads/${ad.id}/impressions`],
-		])
+	await waitFor(
+		() =>
+			expect(client.calls.filter((c) => c.path.startsWith('/v1/ads/')).map((c) => [c.method, c.path])).toEqual([
+				['GET', '/v1/ads/slot/feed'],
+				['POST', `/v1/ads/${ad.id}/impressions`],
+			]),
+		{ timeout: 3000 }
 	);
+	// C14: the feed asks for the first row's region (osrednjeslovenska = 8).
+	expect(client.calls.find((c) => c.path === '/v1/ads/slot/feed')?.query).toMatchObject({ region_id: '8' });
 });
 
 test('a report created while the tab is open (the lost flow over it) shows on the map without a reload (TASK-29.6)', async () => {
