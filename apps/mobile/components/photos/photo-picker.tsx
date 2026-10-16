@@ -54,20 +54,34 @@ type PhotoPickerProps = {
 	onChange?: (photos: PickedPhoto[]) => void;
 	/** Place and time read from a photo, for LocationPicker `suggested`. Coarsen the point before it goes anywhere. */
 	onExif?: (exif: PhotoExif) => void;
+	/** false hides the two tiles: the screen offers its own buttons and calls `pick` on the ref (P7 step 1, empty). */
+	tiles?: boolean;
+	ref?: React.Ref<PhotoPickerHandle>;
 	className?: string;
 };
+export type PhotoPickerHandle = { pick: (source: 'camera' | 'gallery') => Promise<void> };
 
 /**
  * Photo step of P6 and P7 (FR-003): camera and gallery tiles, then a row per photo with its preview, upload progress,
  * retry, reorder and remove. Up to 5 photos.
  */
-export function PhotoPicker({ draft, kind, cameraPrimer, onChange, onExif, className }: PhotoPickerProps) {
+export function PhotoPicker({
+	draft,
+	kind,
+	cameraPrimer,
+	onChange,
+	onExif,
+	tiles = true,
+	ref,
+	className,
+}: PhotoPickerProps) {
 	const t = useTranslations('photos');
 	const message = useTranslations();
 	const { photos, preparing, notice, pick, remove, move, retry } = usePhotoUploads(draft, kind, {
 		cameraPrimer,
 		onExif,
 	});
+	React.useImperativeHandle(ref, () => ({ pick }));
 
 	const changed = React.useEffectEvent((next: PickedPhoto[]) => onChange?.(next));
 	React.useEffect(() => changed(photos), [photos]);
@@ -75,10 +89,12 @@ export function PhotoPicker({ draft, kind, cameraPrimer, onChange, onExif, class
 	return (
 		<View className={cn('gap-7', className)}>
 			<View className="gap-3">
-				<View className="flex-row gap-3">
-					<Tile icon={CameraIcon} label={t('take')} onPress={() => void pick('camera')} />
-					<Tile icon={ImagesIcon} label={t('choose')} onPress={() => void pick('gallery')} />
-				</View>
+				{tiles && (
+					<View className="flex-row gap-3">
+						<Tile icon={CameraIcon} label={t('take')} onPress={() => void pick('camera')} />
+						<Tile icon={ImagesIcon} label={t('choose')} onPress={() => void pick('gallery')} />
+					</View>
+				)}
 				{notice && <FieldError>{message(notice)}</FieldError>}
 			</View>
 

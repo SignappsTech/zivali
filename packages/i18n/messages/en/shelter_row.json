@@ -1,0 +1,19 @@
+{
+	"title": "Responsible shelter for {municipality}",
+	"lost_body": "As soon as you can, report the escape to a vet or to the shelter responsible for {municipality}.",
+	"found_body": "As soon as you can, report the find to the shelter responsible for {municipality}.",
+	"sighted_body": "If you catch the animal or someone takes it in, call the shelter responsible for {municipality}.",
+	"not_replace": "A report on Najdimo does not replace this.",
+	"chip_line": "Any shelter or vet can read the chip.",
+	"call": "Call",
+	"call_a11y": "Call {shelter}",
+	"details_link": "Opening hours and address",
+	"unconfirmed": "We do not have a confirmed shelter for {municipality} yet. Call the municipality or see the shelter directory.",
+	"unknown_municipality": "We could not tell the municipality. Find the responsible shelter in the shelter directory.",
+	"directory_link": "Shelter directory",
+	"cached": "From the saved directory of {date}.",
+	"suggested_label": "Possibly the responsible shelter",
+	"unconfirmed_note": "Not confirmed",
+	"unconfirmed_note_hint": "Responsibility for your municipality is not confirmed yet. Call before you visit.",
+	"nearest_label": "Nearest shelters"
+}

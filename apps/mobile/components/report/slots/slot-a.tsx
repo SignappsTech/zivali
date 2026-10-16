@@ -38,7 +38,13 @@ export function SlotA({ report, offline, children }: ReportSlotProps) {
 		onPress: () =>
 			router.push({
 				pathname: '/report/found',
-				params: { type: 'sighted', linked_report_id: report.id },
+				// The code shows the pet on every step; the species is the sighting's (the short flow does not ask it).
+				params: {
+					type: 'sighted',
+					linked_report_id: report.id,
+					code: report.short_code,
+					species: report.species,
+				},
 			} as unknown as Href),
 	};
 	const contact = { onPress: () => setGate(true) };
