@@ -17,6 +17,7 @@ import { useGetReportQuery } from '@zivali/api/reports';
 import { formatDayMonth, type Locale } from '@zivali/i18n/format';
 import type { Species } from '@zivali/types';
 import { Spot } from '@/components/auth/parts';
+import { ContributionRow } from '@/components/payments/support';
 import type { LatLng } from '@/components/map/map-view';
 import { ContentDialog, PosterOptions, ShareMenu } from '@/components/report/share-menu';
 import { noteClass } from '@/components/shelters/classes';
@@ -45,6 +46,8 @@ type LostDoneProps = {
 	/** Signed in with the address not confirmed yet: alerts and messages wait for it (P16). */
 	unverified: boolean;
 	titleClass: string;
+	/** Outside production: the contribution row's test-payment note. */
+	testMode?: boolean;
 };
 
 /**
@@ -53,7 +56,7 @@ type LostDoneProps = {
  * (P18 PDF), share and the report, the first-24-hours tips, and the P15 contribution slot last. No ad (C15).
  * `share` and `poster_download` go through track(), a no-op without analytics consent (C12).
  */
-export function LostDone({ code, name, species, point, unverified, titleClass }: LostDoneProps) {
+export function LostDone({ code, name, species, point, unverified, titleClass, testMode = false }: LostDoneProps) {
 	const t = useTranslations('report_lost');
 	const ts = useTranslations('share');
 	const tt = useTranslations();
@@ -191,12 +194,21 @@ export function LostDone({ code, name, species, point, unverified, titleClass }:
 					</Button>
 				</div>
 				<Button asChild variant="text" className="mt-2 justify-self-center">
-					<NextLink href={`${getPathname({ locale, href: '/safety' })}#${FIRST_24H[locale]}`}>
+					<NextLink
+						id="lost-first-24h"
+						href={`${getPathname({ locale, href: '/safety' })}#${FIRST_24H[locale]}`}
+					>
 						{t('first_24h')}
 					</NextLink>
 				</Button>
-				{/* TODO(TASK-33.2): the P15 contribution row goes here, last: collapsed, nothing pre-selected, once per
-				    report (support.contribution_*). No payment code before that task. */}
+				{/* P15, last: collapsed, nothing chosen, once per report; its ask and the payments client load on demand. */}
+				<ContributionRow
+					reportId={report?.id}
+					code={code}
+					testMode={testMode}
+					skipFocusId="lost-first-24h"
+					className="mt-6"
+				/>
 			</div>
 			{posterOpen && (
 				<ContentDialog title={copy.poster} closeLabel={copy.close} onClose={() => setPosterOpen(false)}>

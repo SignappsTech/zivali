@@ -5,6 +5,7 @@ import * as path from 'node:path';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import * as WebBrowser from 'expo-web-browser';
 import * as React from 'react';
+import { Dimensions } from 'react-native';
 import { Provider } from 'react-redux';
 import { IntlProvider } from 'use-intl';
 
@@ -65,8 +66,17 @@ const adCalls = (client: Awaited<ReturnType<typeof renderSlot>>, method: string)
 	client.calls.filter((c) => c.method === method && c.path.startsWith('/v1/ads/'));
 const gaEvents = () => getMockEvents().filter((e) => e.name.startsWith('ad_'));
 
+// Where the unit sits in the window (y, height): fully in view unless a test moves it.
+const mockNative = jest.requireActual<{ default: { measureInWindow: jest.Mock } }>(
+	'@react-native/jest-preset/jest/MockNativeMethods'
+).default;
+let box = { y: 100, h: 136 };
 beforeEach(() => {
 	jest.clearAllMocks();
+	box = { y: 100, h: 136 };
+	mockNative.measureInWindow.mockImplementation((cb: (x: number, y: number, w: number, h: number) => void) =>
+		cb(0, box.y, 390, box.h)
+	);
 	mockNetwork = ONLINE;
 	resetMockEvents();
 	const consent = new Map<string, string>();
@@ -95,7 +105,7 @@ describe('AdSlot (P21 mobile)', () => {
 		expect(screen.getByLabelText(served.image_alt).props.accessible).toBe(false);
 		expect(adCalls(client, 'GET')[0]).toMatchObject({ path: '/v1/ads/slot/feed', query: { locale: 'sl' } });
 
-		await waitFor(() => expect(adCalls(client, 'POST')).toHaveLength(1));
+		await waitFor(() => expect(adCalls(client, 'POST')).toHaveLength(1), { timeout: 3000 });
 		expect(adCalls(client, 'POST')[0]).toMatchObject({
 			path: `/v1/ads/${served.id}/impressions`,
 			body: { slot: 'feed' },
@@ -112,12 +122,15 @@ describe('AdSlot (P21 mobile)', () => {
 		setConsent({ analytics: true });
 		const client = await renderSlot(<ReunitedAd report={report} />);
 
-		await fireEvent.press(await screen.findByRole('link', { name: name(served) }));
+		const unit = await screen.findByRole('link', { name: name(served) });
+		await waitFor(() => expect(gaEvents()).toHaveLength(1), { timeout: 3000 });
+		await fireEvent.press(unit);
 		expect(adCalls(client, 'GET')[0]).toMatchObject({
 			path: '/v1/ads/slot/reunited',
-			query: { locale: 'sl', species: 'dog' },
+			query: { locale: 'sl', species: 'dog', region_id: '8' },
 		});
 		const params = { ad_slot: 'reunited', ad_id: served.id, region: 'osrednjeslovenska', species: 'dog' };
+		await waitFor(() => expect(gaEvents()).toHaveLength(2), { timeout: 3000 });
 		expect(gaEvents()).toEqual([
 			{ name: 'ad_impression', params },
 			{ name: 'ad_click', params },
@@ -138,6 +151,48 @@ describe('AdSlot (P21 mobile)', () => {
 		expect(screen.getByText(en.ads.label)).toBeOnTheScreen();
 		expect(screen.getByText(en.ads.learn_more)).toBeOnTheScreen();
 		expect(screen.queryByLabelText(plain.image_alt)).toBeNull();
+	});
+
+	test('region_id (REGION_SLUGS index + 1) goes in the request and the impression body; none without a region', async () => {
+		const client = await renderSlot(<DetailAd report={report} offline={false} />);
+		await screen.findByRole('link', { name: name(served) });
+		await waitFor(() => expect(adCalls(client, 'POST')).toHaveLength(1), { timeout: 3000 });
+		expect(adCalls(client, 'GET')[0]!.query).toMatchObject({ region_id: '8' });
+		expect(adCalls(client, 'POST')[0]!.body).toEqual({ slot: 'detail', region_id: 8 });
+		await cleanup();
+
+		const bare = await renderSlot(<AdSlot slot="feed" />);
+		await screen.findByRole('link', { name: name(served) });
+		await waitFor(() => expect(adCalls(bare, 'POST')).toHaveLength(1), { timeout: 3000 });
+		expect(adCalls(bare, 'GET')[0]!.query).not.toHaveProperty('region_id');
+		expect(adCalls(bare, 'POST')[0]!.body).toEqual({ slot: 'feed' });
+	});
+
+	test('counts only once at least half the unit has been in view for 1 s', async () => {
+		box = { y: Dimensions.get('window').height - 40, h: 136 }; // 40 of 136 px inside the window: under half
+		const client = await renderSlot(<AdSlot slot="feed" />);
+		await screen.findByRole('link', { name: name(served) });
+		await new Promise((resolve) => setTimeout(resolve, 1500));
+		expect(adCalls(client, 'POST')).toEqual([]);
+
+		box = { y: 100, h: 136 };
+		await new Promise((resolve) => setTimeout(resolve, 600));
+		expect(adCalls(client, 'POST')).toEqual([]);
+		await waitFor(() => expect(adCalls(client, 'POST')).toHaveLength(1), { timeout: 3000 });
+	});
+
+	test('detail and reunited reserve 200 px while loading, the feed 88 px', async () => {
+		const pending = { 'GET /v1/ads/slot/:slot': () => new Promise(() => {}) };
+		for (const [slot, minHeight] of [
+			['detail', 200],
+			['reunited', 200],
+			['feed', 88],
+		] as const) {
+			await renderSlot(<AdSlot slot={slot} />, pending);
+			const view = screen.toJSON() as { props: { style?: unknown } };
+			expect(JSON.stringify(view.props)).toContain(`min-h-[${minHeight}px]`);
+			await cleanup();
+		}
 	});
 
 	test('loading keeps the empty reserved box, hidden from screen readers', async () => {
@@ -168,7 +223,7 @@ describe('AdSlot (P21 mobile)', () => {
 	test('offline hides the ad, even one already loaded, and counts nothing; the saved report copy has no ad', async () => {
 		const client = await renderSlot(<AdSlot slot="feed" />);
 		await screen.findByRole('link', { name: name(served) });
-		await waitFor(() => expect(adCalls(client, 'POST')).toHaveLength(1));
+		await waitFor(() => expect(adCalls(client, 'POST')).toHaveLength(1), { timeout: 3000 });
 
 		mockNetwork = { isConnected: true, isInternetReachable: false };
 		await screen.rerender(
@@ -191,7 +246,7 @@ describe('AdSlot (P21 mobile)', () => {
 	test('online, offline, online with the same ad records one impression (advertisers are billed per impression)', async () => {
 		const client = await renderSlot(<AdSlot slot="feed" />);
 		await screen.findByRole('link', { name: name(served) });
-		await waitFor(() => expect(adCalls(client, 'POST')).toHaveLength(1));
+		await waitFor(() => expect(adCalls(client, 'POST')).toHaveLength(1), { timeout: 3000 });
 
 		const again = () =>
 			screen.rerender(
@@ -232,7 +287,7 @@ describe('AdSlot (P21 mobile)', () => {
 		await renderSlot(<AdSlot slot="feed" />, { 'GET /v1/ads/slot/:slot': evil });
 		await fireEvent.press(await screen.findByRole('link', { name: name(evil) }));
 		expect(WebBrowser.openBrowserAsync).not.toHaveBeenCalled();
-		expect(gaEvents().map((e) => e.name)).toEqual(['ad_impression']);
+		await waitFor(() => expect(gaEvents().map((e) => e.name)).toEqual(['ad_impression']), { timeout: 3000 });
 	});
 
 	test('our ad copy never claims "nearest" (paid placements, content P21 §2)', () => {

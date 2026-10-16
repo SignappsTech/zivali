@@ -44,15 +44,22 @@ jest.mock('@/components/auth/parts', () => ({
 	useErrorText: () => (error: { data?: { code?: string } }) => `errors.${error.data?.code}`,
 }));
 
+const mockGateProps: { verified?: boolean } = {};
 // The sign-in gate (P16, TASK-9.4) as a marker that can sign in.
 jest.mock('@/components/auth/gate', () => {
 	const { Pressable, Text } = jest.requireActual<typeof import('react-native')>('react-native');
 	const { createElement } = jest.requireActual<typeof import('react')>('react');
 	return {
-		AuthGate: ({ open, title, onReady }: { open: boolean; title: string; onReady: () => void }) =>
-			open
-				? createElement(Pressable, { role: 'button', onPress: onReady }, createElement(Text, null, title))
-				: null,
+		AuthGate: (props: { open: boolean; title: string; onReady: () => void; verified?: boolean }) => {
+			mockGateProps.verified = props.verified;
+			return props.open
+				? createElement(
+						Pressable,
+						{ role: 'button', onPress: props.onReady },
+						createElement(Text, null, props.title)
+					)
+				: null;
+		},
 	};
 });
 
@@ -327,6 +334,86 @@ describe('report lost flow (P6)', () => {
 		await press(t.gate_title);
 		await act(async () => mockPicker.onChange!([{ ...photo, photoId: undefined, status: 'uploading' }]));
 		expect(posted()).toHaveLength(0);
+		await act(async () => mockPicker.onChange!([photo]));
+		await waitFor(() => expect(posted()).toHaveLength(1));
+	});
+
+	/** Signed out, a new cat, up to the Publish press on the review (which opens the gate). */
+	async function pressPublishSignedOut(when?: { time: string }) {
+		mockAuth.gate = 'signin';
+		mockAuth.me = null;
+		const view = await renderFlow();
+		await waitFor(() => expect(screen.getByRole('radio', { name: t.pet_enter })).toBeChecked());
+		await next();
+		await press('Fotografiraj');
+		await next();
+		await fireEvent.press(screen.getByRole('radio', { name: 'Mačka' }));
+		await fireEvent.press(screen.getByRole('checkbox', { name: 'Črna' }));
+		await next();
+		await press('Potrdi kraj');
+		if (when) {
+			await fireEvent.press(screen.getByRole('radio', { name: t.when_today }));
+			await fireEvent.changeText(screen.getByLabelText(t.when_time), when.time);
+		}
+		await next();
+		await next();
+		await press(t.publish);
+		await screen.findByText(t.gate_title);
+		return view;
+	}
+
+	test('a relaunch after the sign-in round trip never publishes: the hand-off is not stored, the draft asks first', async () => {
+		await pressPublishSignedOut();
+		// The app restarts signed in: nothing marks the saved draft as a hand-off.
+		await screen.unmount();
+		mockAuth.gate = 'ok';
+		mockAuth.me = { phone: null };
+		await renderFlow();
+		expect(await screen.findByText(t.resume_title)).toBeTruthy();
+		expect(posted()).toHaveLength(0);
+	});
+
+	test('the hand-off is consumed: one automatic send, and the retry button keeps its key', async () => {
+		routes = { 'POST /v1/reports': () => (posted().length < 2 ? offline() : created) };
+		const view = await pressPublishSignedOut();
+		mockAuth.gate = 'ok';
+		mockAuth.me = { phone: null };
+		await view.rerender();
+		await press(t.gate_title);
+		await act(async () => mockPicker.onChange!([photo]));
+		await waitFor(() => expect(posted()).toHaveLength(1));
+		const key = posted()[0]!.headers['Idempotency-Key'];
+		expect(await screen.findByText(t.send_failed)).toBeTruthy();
+		expect(posted()).toHaveLength(1);
+		await press(t.publish);
+		await waitFor(() => expect(posted()).toHaveLength(2));
+		expect(posted()[1]!.headers['Idempotency-Key']).toBe(key);
+	});
+
+	test('"Danes" means the day Publish was pressed, not after a sign-in detour across midnight', async () => {
+		const now = jest.spyOn(Date, 'now');
+		const pressed = new Date(2026, 9, 16, 23, 50).getTime();
+		now.mockReturnValue(pressed);
+		const view = await pressPublishSignedOut({ time: '23.45' });
+		// The way back crosses midnight: against this clock 23.45 "today" would be a day ahead.
+		now.mockReturnValue(pressed + 30 * 60_000);
+		mockAuth.gate = 'ok';
+		mockAuth.me = { phone: null };
+		await view.rerender();
+		await press(t.gate_title);
+		await act(async () => mockPicker.onChange!([photo]));
+		await waitFor(() => expect(posted()).toHaveLength(1));
+		expect(posted()[0]!.body).toMatchObject({ event_at: new Date(2026, 9, 16, 23, 45).toISOString() });
+		now.mockRestore();
+	});
+
+	test('an unconfirmed owner publishes after sign-in: the gate asks for a signed-in account, not a verified one', async () => {
+		const view = await pressPublishSignedOut();
+		expect(mockGateProps.verified).toBe(false);
+		mockAuth.gate = 'ok';
+		mockAuth.me = { phone: null };
+		await view.rerender();
+		await press(t.gate_title);
 		await act(async () => mockPicker.onChange!([photo]));
 		await waitFor(() => expect(posted()).toHaveLength(1));
 	});

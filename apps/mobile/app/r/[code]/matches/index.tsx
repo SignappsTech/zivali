@@ -1,9 +1,11 @@
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { type Href, useLocalSearchParams, useRouter } from 'expo-router';
 import { ArrowClockwiseIcon } from 'phosphor-react-native/src/icons/ArrowClockwise';
 import { CaretLeftIcon } from 'phosphor-react-native/src/icons/CaretLeft';
 import { CaretRightIcon } from 'phosphor-react-native/src/icons/CaretRight';
+import { BellIcon } from 'phosphor-react-native/src/icons/Bell';
 import { CheckCircleIcon } from 'phosphor-react-native/src/icons/CheckCircle';
 import { InfoIcon } from 'phosphor-react-native/src/icons/Info';
+import { PrinterIcon } from 'phosphor-react-native/src/icons/Printer';
 import { ShareNetworkIcon } from 'phosphor-react-native/src/icons/ShareNetwork';
 import { ShieldCheckIcon } from 'phosphor-react-native/src/icons/ShieldCheck';
 import { WarningCircleIcon } from 'phosphor-react-native/src/icons/WarningCircle';
@@ -145,6 +147,7 @@ export default function MatchesScreen() {
 	const { code = '' } = useLocalSearchParams<{ code: string }>();
 	const t = useTranslations('matches');
 	const tc = useTranslations('common');
+	const router = useRouter();
 	const insets = useSafeAreaInsets();
 	const { data, isLoading, isFetching, error, refetch } = useListMatchesQuery({ code, state: LIST_STATES });
 	const items = React.useMemo(() => sortMatches(data?.items ?? []), [data]);
@@ -194,15 +197,28 @@ export default function MatchesScreen() {
 							title={t('empty_title')}
 							description={t('empty_body')}
 							action={
-								<Button
-									variant="secondary"
-									onPress={() =>
-										void Share.share({ message: reportLink(code) }).catch(() => undefined)
-									}
-								>
-									<Icon as={ShareNetworkIcon} />
-									{t('empty_share')}
-								</Button>
+								<View className="gap-3">
+									<Button
+										variant="secondary"
+										onPress={() =>
+											void Share.share({ message: reportLink(code) }).catch(() => undefined)
+										}
+									>
+										<Icon as={ShareNetworkIcon} />
+										{t('empty_share')}
+									</Button>
+									<Button
+										variant="secondary"
+										onPress={() => router.push(`/r/${code}/poster` as Href)}
+									>
+										<Icon as={PrinterIcon} />
+										{t('empty_poster')}
+									</Button>
+									<Button variant="secondary" onPress={() => router.push('/settings/alerts' as Href)}>
+										<Icon as={BellIcon} />
+										{t('empty_alerts')}
+									</Button>
+								</View>
 							}
 						/>
 					</View>

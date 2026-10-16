@@ -3,9 +3,10 @@ id: TASK-36.8
 title: >-
   Mobile AdSlot: send region_id, reserve 200 px for detail and reunited, count
   impressions like web
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-10-16 06:46'
+updated_date: '2026-10-16 08:57'
 labels:
   - fe
   - mobile

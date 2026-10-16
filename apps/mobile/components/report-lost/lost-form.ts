@@ -148,13 +148,16 @@ export function lostErrors(values: LostValues, now = Date.now()): Partial<Record
 	return errors;
 }
 
-/** react-hook-form resolver over lostErrors(); `message` is the report_lost key. */
-export const lostResolver: Resolver<LostValues> = async (values) => {
-	const found = Object.entries(lostErrors(values));
-	if (!found.length) return { values, errors: {} };
-	const errors = Object.fromEntries(found.map(([name, message]) => [name, { type: 'validate', message }]));
-	return { values: {}, errors: errors as FieldErrors<LostValues> };
-};
+/** react-hook-form resolver over lostErrors(), judging "future" against `now()`; `message` is the report_lost key. */
+export const lostResolverAt =
+	(now: () => number): Resolver<LostValues> =>
+	async (values) => {
+		const found = Object.entries(lostErrors(values, now()));
+		if (!found.length) return { values, errors: {} };
+		const errors = Object.fromEntries(found.map(([name, message]) => [name, { type: 'validate', message }]));
+		return { values: {}, errors: errors as FieldErrors<LostValues> };
+	};
+export const lostResolver = lostResolverAt(Date.now);
 
 const orUndefined = <T>(value: T | null | undefined) => value ?? undefined;
 const text = (value?: string | null) => value?.trim() || undefined;

@@ -73,10 +73,14 @@ test('the poster and square routes answer files, and nothing for a gone report',
 	expect(pdf.headers()['content-type']).toBe('application/pdf');
 	expect(pdf.headers()['content-disposition']).toBe('inline; filename="najdimo-Rex12345.pdf"');
 	expect((await pdf.body()).subarray(0, 5).toString()).toBe('%PDF-');
+	// TASK-24.4: private cache only (a hidden or removed report's photo must not sit in a shared cache), not indexed.
+	expect(pdf.headers()['cache-control']).toBe('private, max-age=300');
+	expect(pdf.headers()['x-robots-tag']).toBe('noindex');
 
 	const square = await request.get('/r/Rex12345/square.png');
 	expect(square.status()).toBe(200);
 	expect(square.headers()['content-type']).toBe('image/png');
+	expect(square.headers()['cache-control']).toBe('private, max-age=300');
 
 	expect((await request.get('/r/Gone1234/poster.pdf')).status()).toBe(404);
 	expect((await request.get('/r/Gone1234/square.png')).status()).toBe(404);

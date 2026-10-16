@@ -207,6 +207,26 @@ describe('FoundFlow (P7 web, FR-006)', () => {
 		expect(screen.queryByText('Povezavo smo poslali tudi na vaš e-naslov.')).toBeNull();
 	});
 
+	// TASK-30.4 QA. Known defect (bug filed on TASK-30): FoundDone ignores `held` for a linked sighting and says the
+	// owner was told, while a held report notifies nobody; mobile says held_note. Remove `.fails` when fixed.
+	it.fails(
+		'a held linked sighting says it is being checked, not that the owner was told (mobile parity)',
+		async () => {
+			show(
+				{ entry: 'sighted', linked: { id: LOST_ID, code: lostReport.short_code } },
+				{ 'POST /v1/reports': { ...created, moderation_state: 'held' } }
+			);
+			fireEvent.click(await screen.findByRole('button', { name: 'Potrdi kraj' }));
+			await screen.findByRole('heading', { level: 1, name: 'Kdaj ste jo videli?' });
+			next();
+			await screen.findByRole('heading', { level: 1, name: 'Dodate fotografijo?' });
+			fireEvent.click(screen.getByRole('button', { name: 'Pošlji opažanje' }));
+			await screen.findByRole('heading', { level: 1, name: 'Hvala za opažanje' });
+			expect(screen.getByText(sl.report_found.held_note)).toBeTruthy();
+			expect(screen.queryByText(sl.report_found.sighting_done_body)).toBeNull();
+		}
+	);
+
 	it('asks a signed-in finder no email and shows no private link', async () => {
 		const api = show({ account: true }, { 'POST /v1/reports': createdReport });
 		expect(await screen.findByRole('heading', { level: 1, name: 'Fotografirajte žival' })).toBeTruthy();

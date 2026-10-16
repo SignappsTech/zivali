@@ -110,7 +110,7 @@ function AmountAsk({
 	const payLabel = !valid
 		? t(tip ? 'pay_disabled' : 'contribution_pay_disabled')
 		: monthly && monthlyOffered
-			? t('pay_monthly', { amount })
+			? t('supporter_monthly_label')
 			: t(tip ? 'pay' : 'contribution_pay', { amount });
 	const help = valid || error ? undefined : t('pay_disabled_help');
 	const markPaid = React.useCallback(() => {
