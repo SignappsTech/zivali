@@ -130,6 +130,9 @@ describe('P9 /r/[code], lost report (visitor)', () => {
 		expect(screen.getByText('Ustrašil se je ognjemeta.')).toBeTruthy();
 		expect(screen.getByRole('img', { name: 'Pogrešani pes Rex, fotografija 1 od 2' })).toBeTruthy();
 
+		// Slot C (TASK-25.3): a visitor can report abuse from "Več možnosti".
+		expect(screen.getByRole('button', { name: sl.report.more }).getAttribute('aria-haspopup')).toBe('menu');
+
 		const map = screen.getByTestId('map');
 		expect(map.getAttribute('aria-label')).toBe('Približno območje okoli kraja Šiška, polmer približno 500 m');
 		expect(within(map).getByText('Območje: Šiška, približno 500 m')).toBeTruthy();
@@ -259,6 +262,7 @@ describe('P9 /r/[code], other types and states', () => {
 		expect(screen.queryByRole('note')).toBeNull();
 		expect(screen.queryByTestId('map')).toBeNull();
 		expect(screen.queryByText(sl.report.area_note)).toBeNull();
+		expect(screen.queryByRole('button', { name: sl.report.more })).toBeNull();
 		expect(jsonLd()).toBeUndefined();
 		expect((await generateMetadata(props())).robots).toEqual({ index: false });
 	});
@@ -313,6 +317,8 @@ describe('P9 /r/[code], owner view', () => {
 		});
 		expect(within(map).getByText(sl.location.exact_own)).toBeTruthy();
 		expect(within(map).getByText(sl.location.exact_own_help)).toBeTruthy();
+		// No "Prijavi zlorabo" on an own report (P10 states).
+		expect(screen.queryByRole('button', { name: sl.report.more })).toBeNull();
 		expect((await generateMetadata(props())).robots).toEqual({ index: false });
 	});
 

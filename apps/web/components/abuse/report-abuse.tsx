@@ -81,14 +81,22 @@ export function ReportAbuseDialog({
 	...props
 }: ReportAbuseProps & { open: boolean; onOpenChange: (open: boolean) => void }) {
 	const heading = React.useRef<HTMLHeadingElement>(null);
+	// Opened without a DialogTrigger (a menu row, a chat menu), so Radix has no trigger to refocus: the dialog keeps
+	// what had focus when it opened and returns focus there.
+	const opener = React.useRef<HTMLElement | null>(null);
 	return (
 		// Public pages have no store (TASK-90.5), so the dialog brings its own; elsewhere it is the page's (lib/store).
 		<StoreProvider>
 			<Dialog open={open} onOpenChange={onOpenChange}>
 				<DialogContent
 					onOpenAutoFocus={(event) => {
+						opener.current = document.activeElement as HTMLElement | null;
 						event.preventDefault();
 						heading.current?.focus();
+					}}
+					onCloseAutoFocus={(event) => {
+						event.preventDefault();
+						opener.current?.focus();
 					}}
 				>
 					<ReportAbuse {...props} heading={heading} onClose={() => onOpenChange(false)} />
