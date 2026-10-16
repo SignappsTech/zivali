@@ -136,7 +136,7 @@ function MatchRow({ match, code, selected }: { match: MatchSuggestion; code: str
 				href={{ pathname: '/r/[code]/matches', params: { code }, query: { m: match.id } }}
 				aria-current={selected || undefined}
 				className={cn(
-					'-mx-2 flex items-center gap-4 rounded-row p-2 text-foreground hover:bg-foreground/10 active:bg-accent',
+					'-m-2 flex items-center gap-4 rounded-row p-2 text-foreground hover:bg-foreground/10 active:bg-accent active:text-accent-foreground',
 					ringClass,
 					selected && 'bg-accent shadow-[inset_3px_0_0_hsl(var(--primary))] hover:bg-accent'
 				)}
@@ -340,13 +340,13 @@ function Comparison({ mine, other, type }: { mine: Photo[]; other: Photo[]; type
 					<Side key={side.key} label={side.label} photos={side.photos} />
 				))}
 			</div>
-			<Tabs defaultValue="other" className="mt-6 lg:hidden">
+			<Tabs defaultValue="other" className="mt-6 gap-3 lg:hidden">
 				{sides.map((side) => (
 					<TabsContent key={side.key} value={side.key}>
 						<Side photos={side.photos} />
 					</TabsContent>
 				))}
-				<TabsList>
+				<TabsList className="max-w-full">
 					{sides.map((side) => (
 						<TabsTrigger key={side.key} value={side.key}>
 							{side.label}
@@ -630,7 +630,9 @@ function Actions({ match, mine, code }: { match: MatchSuggestion; mine?: Mine; c
 				</AlertDialog>
 			</div>
 			{/* "Potrdite svoj e-naslov" with "Pošlji znova" (P16 G2); confirmed meanwhile, it confirms the match. */}
-			<AuthGate reason="contact" open={verify} onOpenChange={setVerify} onReady={() => void openChat(true)} />
+			{unverified && (
+				<AuthGate reason="contact" open={verify} onOpenChange={setVerify} onReady={() => void openChat(true)} />
+			)}
 		</div>
 	);
 }
@@ -705,7 +707,7 @@ function Review({ match, mine, code }: { match: MatchSuggestion; mine?: Mine; co
 
 /**
  * P11 match review on web (`/r/[code]/ujemanja`, `/en/r/[code]/matches`; `?m=` picks a match): from `lg` the list
- * (360 px) left and the review right, the first match open; below it the list, and a picked match on its own with a
+ * (360 px) left and the review right, the first match open; below it the list, and a picked match under the h1 with a
  * way back. Managers of the lost report only (C8; others get FORBIDDEN). The candidate is the C8 `other` subset: the
  * fuzzed area, distance and time as bands, never a chip number or contact data.
  */
@@ -748,6 +750,14 @@ export function MatchReview({ code, selected }: { code: string; selected?: strin
 		<>
 			<div className="lg:flex lg:items-start lg:gap-12">
 				<div className="min-w-0 lg:w-[360px] lg:flex-none">
+					{selected && (
+						<Button asChild variant="text" size="sm" className="mb-3 -ml-3 lg:hidden">
+							<Link href={{ pathname: '/r/[code]/matches', params: { code } }}>
+								<CaretLeftIcon weight="bold" aria-hidden="true" />
+								{tc('back')}
+							</Link>
+						</Button>
+					)}
 					<PetHeader mine={mine} />
 					<h1
 						id={TITLE_ID}
@@ -756,7 +766,11 @@ export function MatchReview({ code, selected }: { code: string; selected?: strin
 					>
 						{t('title')}
 					</h1>
-					{data && <p className="mt-1 text-muted-foreground">{t('count', { count: items.length })}</p>}
+					{data && (
+						<p className={cn('mt-1 text-muted-foreground', selected && 'max-lg:hidden')}>
+							{t('count', { count: items.length })}
+						</p>
+					)}
 					<div className={cn('mt-6', selected && !failed && 'max-lg:hidden')}>
 						{list}
 						{withdrawn && (
@@ -771,14 +785,6 @@ export function MatchReview({ code, selected }: { code: string; selected?: strin
 						aria-labelledby={match ? REVIEW_ID : undefined}
 						className={cn('mt-10 min-w-0 flex-1 lg:mt-0', !selected && 'max-lg:hidden')}
 					>
-						{selected && (
-							<Button asChild variant="text" size="sm" className="mb-3 -ml-3 lg:hidden">
-								<Link href={{ pathname: '/r/[code]/matches', params: { code } }}>
-									<CaretLeftIcon weight="bold" aria-hidden="true" />
-									{tc('back')}
-								</Link>
-							</Button>
-						)}
 						{!data ? (
 							<ReviewSkeleton />
 						) : match ? (
