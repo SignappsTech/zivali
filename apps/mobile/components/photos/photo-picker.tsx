@@ -54,6 +54,8 @@ type PhotoPickerProps = {
 	onChange?: (photos: PickedPhoto[]) => void;
 	/** Place and time read from a photo, for LocationPicker `suggested`. Coarsen the point before it goes anywhere. */
 	onExif?: (exif: PhotoExif) => void;
+	/** true keeps the photos on this device and uploads them once false, e.g. until a lost report has an account (C3). */
+	hold?: boolean;
 	className?: string;
 };
 
@@ -61,12 +63,13 @@ type PhotoPickerProps = {
  * Photo step of P6 and P7 (FR-003): camera and gallery tiles, then a row per photo with its preview, upload progress,
  * retry, reorder and remove. Up to 5 photos.
  */
-export function PhotoPicker({ draft, kind, cameraPrimer, onChange, onExif, className }: PhotoPickerProps) {
+export function PhotoPicker({ draft, kind, cameraPrimer, onChange, onExif, hold, className }: PhotoPickerProps) {
 	const t = useTranslations('photos');
 	const message = useTranslations();
 	const { photos, preparing, notice, pick, remove, move, retry } = usePhotoUploads(draft, kind, {
 		cameraPrimer,
 		onExif,
+		hold,
 	});
 
 	const changed = React.useEffectEvent((next: PickedPhoto[]) => onChange?.(next));
@@ -87,6 +90,8 @@ export function PhotoPicker({ draft, kind, cameraPrimer, onChange, onExif, class
 					{photos.map((photo, index) => {
 						const n = index + 1;
 						const percent = Math.round(photo.progress * 100);
+						// A held photo is kept on this device; it reads as ready, its upload comes later.
+						const ready = photo.status === 'uploaded' || photo.status === 'kept';
 						return (
 							<View key={photo.key} className="flex-row items-start gap-4">
 								<Image
@@ -96,7 +101,7 @@ export function PhotoPicker({ draft, kind, cameraPrimer, onChange, onExif, class
 									resizeMode="cover"
 								/>
 								<View className="min-w-0 flex-1">
-									{photo.status === 'uploaded' && index === 0 && (
+									{ready && index === 0 && (
 										<Text className="font-sans-bold text-sm">{t('cover')}</Text>
 									)}
 									{photo.status === 'uploading' && (
@@ -120,7 +125,7 @@ export function PhotoPicker({ draft, kind, cameraPrimer, onChange, onExif, class
 									<View
 										className={cn(
 											'-ml-2.5 flex-row flex-wrap gap-1',
-											photo.status === 'uploaded' ? 'mt-2' : 'mt-1'
+											ready ? 'mt-2' : 'mt-1'
 										)}
 									>
 										{photo.status === 'failed' ? (

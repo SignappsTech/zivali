@@ -1,7 +1,7 @@
 import { skipToken } from '@reduxjs/toolkit/query';
 import { useAccessibilityFocus } from '@rn-primitives/hooks';
 import { randomUUID } from 'expo-crypto';
-import { useRouter } from 'expo-router';
+import { useIsFocused, useRouter } from 'expo-router';
 import type { Icon as PhosphorIcon } from 'phosphor-react-native';
 import { ArrowsClockwiseIcon } from 'phosphor-react-native/src/icons/ArrowsClockwise';
 import { BellIcon } from 'phosphor-react-native/src/icons/Bell';
@@ -127,7 +127,7 @@ const hidden = { display: 'none' } as const;
 const groupTitle = 'font-display-semibold text-xl tracking-[-0.2px]';
 
 /** The view's note (system `note`): muted surface, icon and words, never colour alone. */
-function Note({
+export function Note({
 	icon,
 	alert,
 	className,
@@ -157,7 +157,7 @@ function Note({
 }
 
 /** The step's h1 (34/40); it takes screen reader focus when the step opens. */
-function Heading({ children }: { children: string }) {
+export function Heading({ children }: { children: string }) {
 	const ref = useAccessibilityFocus<RNText>();
 	return (
 		<Text ref={ref} role="heading" className="font-display text-[34px] leading-[40px] tracking-[-0.68px]">
@@ -675,6 +675,9 @@ export function LostFlow() {
 	const [closing, setClosing] = React.useState(false);
 	const [gateOpen, setGateOpen] = React.useState(false);
 	const [sending, setSending] = React.useState(false);
+	// Publish was pressed signed out: it goes on once the account is ready, this screen is back and the photos are up.
+	const [awaiting, setAwaiting] = React.useState(false);
+	const focused = useIsFocused();
 	const [sendError, setSendError] = React.useState<string>();
 	const [duplicate, setDuplicate] = React.useState<string>();
 	const [update, setUpdate] = React.useState(true);
@@ -781,7 +784,9 @@ export function LostFlow() {
 	const publish = async () => {
 		setSendError(undefined);
 		const photoIds = photos.flatMap((photo) => (photo.photoId ? [photo.photoId] : []));
-		if (!photoIds.length) return setSendError(t(photos.length ? 'photos_wait' : 'photos_required'));
+		if (!photos.length) return setSendError(t('photos_required'));
+		// Signed out, the photos wait on the device; they upload after sign-in (C3: nothing is sent before).
+		if (!photoIds.length && gate !== 'signin') return setSendError(t('photos_wait'));
 		for (const s of steps) {
 			const fields = STEP_FIELDS[s];
 			if (fields.length && !(await form.trigger(fields))) {
@@ -819,6 +824,14 @@ export function LostFlow() {
 			setSending(false);
 		}
 	};
+
+	const held = photos.some((photo) => photo.status === 'kept' || photo.status === 'uploading');
+	const publishNow = React.useEffectEvent(() => void publish());
+	React.useEffect(() => {
+		if (!awaiting || gate !== 'ok' || !focused || held) return;
+		setAwaiting(false);
+		publishNow();
+	}, [awaiting, gate, focused, held]);
 
 	const summary = attempted && STEP_FIELDS[step].some((field) => form.formState.errors[field]);
 	const titles: Record<Exclude<Step, 'where'>, string> = {
@@ -880,6 +893,7 @@ export function LostFlow() {
 								onExif={({ lat, lng }) =>
 									lat !== undefined && lng !== undefined && setExif({ lat, lng })
 								}
+								hold={gate === 'signin' || gate === 'loading'}
 								className="mt-6"
 							/>
 							{attempted && step === 'photos' && !photos.length ? (
@@ -919,8 +933,8 @@ export function LostFlow() {
 							</View>
 						) : null}
 						{step === 'review' ? (
-							<Button size="lg" loading={sending} onPress={() => void publish()}>
-								{sending ? t('publishing') : t('publish')}
+							<Button size="lg" loading={sending || awaiting} onPress={() => void publish()}>
+								{sending || awaiting ? t('publishing') : t('publish')}
 							</Button>
 						) : (
 							<Button size="lg" onPress={() => void next()}>
@@ -946,7 +960,7 @@ export function LostFlow() {
 				body={t('gate_body')}
 				open={gateOpen}
 				onOpenChange={setGateOpen}
-				onReady={() => void publish()}
+				onReady={() => setAwaiting(true)}
 			/>
 			<AlertDialog open={closing} onOpenChange={setClosing}>
 				<AlertDialogContent>
