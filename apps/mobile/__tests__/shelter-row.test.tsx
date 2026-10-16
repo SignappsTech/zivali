@@ -63,10 +63,11 @@ test('likely, sighted: "Morda pristojno zavetišče" and "Ni potrjeno", the soft
 	expect(screen.queryByText(ts.chip_line)).toBeNull();
 });
 
-test('lost: the owner sentence, no "does not replace" line, no chip line', async () => {
+test('lost: the owner sentence with "does not replace", no chip line', async () => {
 	await show(responsibleConfirmed, 'lost');
-	expect(await screen.findByText(ts.lost_body.replace('{municipality}', 'Ljubljana'))).toBeOnTheScreen();
-	expect(screen.queryByText(ts.not_replace, { exact: false })).toBeNull();
+	expect(
+		await screen.findByText(`${ts.lost_body.replace('{municipality}', 'Ljubljana')} ${ts.not_replace}`)
+	).toBeOnTheScreen();
 	expect(screen.queryByText(ts.chip_line)).toBeNull();
 });
 
