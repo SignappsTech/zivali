@@ -45,7 +45,7 @@ export function schedulePlaceSearch(
 
 /** Search-as-you-type for LocationPicker (web and mobile): debounce 300 ms, minimum 3 characters, abort previous. */
 export function usePlaceSearch(q: string, near?: LatLng) {
-	const [trigger, { data, isFetching, error }] = useLazySearchPlacesQuery();
+	const [trigger, { data, isFetching, error, originalArgs }] = useLazySearchPlacesQuery();
 	const text = q.trim();
 	const { lat, lng } = near ?? {};
 	useEffect(
@@ -60,6 +60,8 @@ export function usePlaceSearch(q: string, near?: LatLng) {
 	return {
 		places: (active && data) || [],
 		isFetching: active && isFetching,
+		/** The results for the current text are in, so "no results" never shows while the search is still waiting. */
+		searched: active && !isFetching && originalArgs?.q === text,
 		error: active && !(error && 'name' in error && error.name === 'AbortError') ? error : undefined,
 	};
 }
