@@ -10,18 +10,18 @@ import type { ReportSlotProps } from '@/components/report/slots';
  * and hidden reports say why others cannot see them; the "N possible matches" note with "Poglej" (P11) and the
  * "finder marked it returned" note join here with the match review and lifecycle tasks. Public view: nothing.
  */
-export function MatchesNote({ report }: ReportSlotProps) {
+export function MatchesNote({ report, className }: ReportSlotProps) {
 	const t = useTranslations('report');
 	if (!report.is_mine) return null;
 	if (report.moderation_state === 'held')
 		return (
-			<Note role="status" icon={HourglassMediumIcon}>
+			<Note role="status" icon={HourglassMediumIcon} className={className}>
 				{t('owner_held')}
 			</Note>
 		);
 	if (report.moderation_state === 'hidden')
 		return (
-			<Note role="status" icon={EyeSlashIcon}>
+			<Note role="status" icon={EyeSlashIcon} className={className}>
 				{t('owner_hidden')}
 			</Note>
 		);
