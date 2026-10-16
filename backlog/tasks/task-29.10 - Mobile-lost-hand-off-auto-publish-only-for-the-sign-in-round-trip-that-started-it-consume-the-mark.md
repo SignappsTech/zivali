@@ -3,9 +3,10 @@ id: TASK-29.10
 title: >-
   Mobile lost hand-off: auto-publish only for the sign-in round trip that
   started it; consume the mark
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-10-16 06:38'
+updated_date: '2026-10-16 08:56'
 labels:
   - bug
   - mobile
