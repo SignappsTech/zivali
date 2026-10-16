@@ -22,6 +22,7 @@
 			"env": {
 				"EXPO_PUBLIC_APP_ENV": "staging",
 				"EXPO_PUBLIC_PUSH_PROVIDER": "expo",
+				"EXPO_PUBLIC_CAPTCHA": "true",
 				"EXPO_PUBLIC_APP_URL": "https://staging.najdimo.si",
 				"EXPO_PUBLIC_SUPABASE_URL": "https://omtpppzrugibquukhnyl.supabase.co"
 			}
