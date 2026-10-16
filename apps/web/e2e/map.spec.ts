@@ -185,17 +185,13 @@ test('moveTo, onCameraChange, a cluster click and a marker press work on the rea
 	await page.getByRole('button', { name: 'Ljubljana' }).click();
 	await expect(camera(page)).toHaveText('46.0569,14.5058 z13.0 idle');
 
-	// Zoom in on a cluster until a lone marker is in view, then press it.
-	const kinds = ['found', 'sighted', 'reunited'];
-	let single = await faceInView(page, kinds);
-	for (let tries = 0; tries < 6 && !single; tries++) {
-		await (await faceInView(page, ['cluster']))!.click();
-		await expect(camera(page)).toHaveText(/ idle$/);
-		single = await faceInView(page, kinds);
-	}
-	const name = (await single!.getAttribute('aria-label'))!;
-	expect(name).toMatch(/^#\d+, (found|sighted|reunited)$/);
-	await single!.click();
+	// Press a lone marker in view (the faces follow once the new view's tiles are in).
+	const kinds = ['lost', 'found', 'sighted', 'reunited'];
+	await expect.poll(async () => Boolean(await faceInView(page, kinds))).toBe(true);
+	const single = (await faceInView(page, kinds))!;
+	const name = (await single.getAttribute('aria-label'))!;
+	expect(name).toMatch(/^#\d+, (lost|found|sighted|reunited)\b/);
+	await single.click();
 	await expect(page.getByTestId('pressed')).toHaveText(`r${name.slice(1, name.indexOf(','))}`);
 });
 

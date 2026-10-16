@@ -67,11 +67,11 @@ async function ready() {
 }
 
 /** The engine reports what is on screen: one element per marker, cluster or "you" dot. */
-function show(options: Options, items: Array<Omit<MapItem, 'element' | 'key'> & { key?: string }>) {
+function show(options: Options, items: Array<{ id: string } | { cluster: { id: number; count: number } }>) {
 	const shown = items.map((item) => {
 		const element = document.createElement('div');
 		options.container.append(element);
-		return { ...item, key: item.key ?? JSON.stringify(item), element } as MapItem;
+		return { ...item, key: JSON.stringify(item), element } as MapItem;
 	});
 	act(() => options.onItems(shown));
 }
