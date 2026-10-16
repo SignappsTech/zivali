@@ -27,6 +27,8 @@ function contentSecurityPolicy(nonce: string): string {
 	// Turnstile (C7, components/auth/turnstile.tsx): its script (trusted through 'strict-dynamic'; the host is the
 	// fallback for browsers without it) and its challenge iframe.
 	const captcha = env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ? ' https://challenges.cloudflare.com' : '';
+	// MapView (C6): OpenFreeMap tiles, sprite and glyphs.
+	const tiles = ' https://tiles.openfreemap.org';
 
 	return [
 		"default-src 'self'",
@@ -36,7 +38,9 @@ function contentSecurityPolicy(nonce: string): string {
 		"style-src 'self' 'unsafe-inline'",
 		`img-src 'self' blob: data:${ga}`,
 		"font-src 'self'",
-		`connect-src 'self' ${api} ${supabase.origin} ${realtime}${uploads}${ga}`,
+		`connect-src 'self' ${api} ${supabase.origin} ${realtime}${uploads}${ga}${tiles}`,
+		// MapLibre's worker, a same-origin module ('strict-dynamic' above ignores 'self' for workers).
+		"worker-src 'self'",
 		...(captcha ? [`frame-src${captcha}`] : []),
 		"object-src 'none'",
 		"base-uri 'self'",
