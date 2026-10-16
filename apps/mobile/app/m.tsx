@@ -253,7 +253,8 @@ function ManageView({ report }: { report: ReportOwnerView }) {
 
 	/** Resolves whether it worked; a failure is a toast and the page stays as it was. */
 	const act = (action: ReportTransitionAction) =>
-		transition({ code: report.short_code, body: { action } })
+		// C4: a manager closes with a reason; the finder's page has no choice (P7/P14), so the neutral `other`.
+		transition({ code: report.short_code, body: action === 'close' ? { action, reason: 'other' } : { action } })
 			.unwrap()
 			.then(
 				() => true,
