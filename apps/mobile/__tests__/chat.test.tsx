@@ -345,9 +345,34 @@ describe('conversation (P12 thread)', () => {
 		await fireEvent.press(sendButton());
 		expect(await screen.findByText(c.blocked_you)).toBeOnTheScreen();
 		expect(screen.getByText(c.failed)).toBeOnTheScreen();
+		expect(screen.getByLabelText('Vi, Ni poslano: Halo?')).toBeOnTheScreen();
 		expect(screen.getByRole('button', { name: c.retry })).toBeOnTheScreen();
 		expect(composer().props.editable).toBe(false);
 		expect(sendButton()).toBeDisabled();
+	});
+
+	test('a failed send says so with the reason; "Poskusi znova" sends the same text again', async () => {
+		let fail = true;
+		serve({
+			routes: {
+				'POST /v1/conversations/:id/messages': ({ body }) =>
+					fail
+						? mockError('RATE_LIMITED')
+						: msg('sent-1', { sender_alias_key: 'owner', body: (body as { body: string }).body }),
+			},
+		});
+		await open();
+		await screen.findByText(HISTORY[1]!.body);
+
+		await type('Ste še tam?');
+		await fireEvent.press(sendButton());
+		expect(await screen.findByText(c.failed)).toBeOnTheScreen();
+		expect(composer().props.editable).toBe(true);
+		fail = false;
+		await fireEvent.press(screen.getByRole('button', { name: c.retry }));
+		expect(await screen.findByText(c.sent)).toBeOnTheScreen();
+		expect(screen.queryByText(c.failed)).toBeNull();
+		expect(sent('POST', MESSAGES)).toEqual([{ body: 'Ste še tam?' }, { body: 'Ste še tam?' }]);
 	});
 
 	test('read-only: the composer is replaced by the closed note; the thread stays readable', async () => {

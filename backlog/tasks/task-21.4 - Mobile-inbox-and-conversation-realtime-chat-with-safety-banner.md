@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:14'
-updated_date: '2026-10-16 01:03'
+updated_date: '2026-10-16 01:41'
 labels:
   - fe
   - 'est:M'
@@ -43,8 +43,8 @@ Branch: agent/task-21.4-chat-mob
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 The Inbox tab lists conversations with unread counts; the conversation screen shows messages in real time with a persistent safety banner, per P12.
-- [ ] #2 URLs are plain text with a caution; no contact data is shown unless typed.
-- [ ] #3 Report and Block actions work; blocked users are refused; read-only conversations disable input.
-- [ ] #4 chat_started fires with consent only; anonymous managers chat from the manage screen; no ad component on chat screens.
+- [x] #1 The Inbox tab lists conversations with unread counts; the conversation screen shows messages in real time with a persistent safety banner, per P12.
+- [x] #2 URLs are plain text with a caution; no contact data is shown unless typed.
+- [x] #3 Report and Block actions work; blocked users are refused; read-only conversations disable input.
+- [x] #4 chat_started fires with consent only; anonymous managers chat from the manage screen; no ad component on chat screens.
 <!-- AC:END -->

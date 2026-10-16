@@ -591,7 +591,12 @@ function PendingBubble({ pending, onRetry }: { pending: Pending; onRetry: () => 
 		<View className="max-w-[80%] items-end gap-1 self-end">
 			<View
 				accessible
-				aria-label={`${t('alias_you')}, ${status} ${pending.body}`}
+				// "Vi, Ni poslano: …", as P12 names a bubble (author, state, text).
+				aria-label={t('bubble_a11y', {
+					author: t('alias_you'),
+					time: status.replace(/[\s.…]+$/, ''),
+					text: pending.body,
+				})}
 				className={cn('rounded-[20px] rounded-br-[6px] px-4 py-2.5', failed ? 'bg-muted' : 'bg-primary')}
 			>
 				<Text className={failed ? 'text-foreground' : 'text-primary-foreground'}>{pending.body}</Text>
