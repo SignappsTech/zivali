@@ -3,7 +3,7 @@
 import { useEffect, useRef } from 'react';
 
 import { trackScreen } from '@zivali/analytics';
-import { usePathname } from '@/i18n/navigation';
+import { useRoute } from '@/i18n/client-navigation';
 import { routing } from '@/i18n/routing';
 
 const CATCH_ALL = '/[...rest]';
@@ -23,7 +23,7 @@ export const isAdminPath = (pathname: string) => /^\/admin(\/|$)/.test(pathname)
 
 /** A page_view per route change (C12), sent as the route template: no short codes, ids or query text. */
 export function ScreenViews() {
-	const pathname = usePathname();
+	const { pathname } = useRoute();
 	const sent = useRef<string>(null);
 
 	useEffect(() => {

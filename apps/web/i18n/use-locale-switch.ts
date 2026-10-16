@@ -1,8 +1,9 @@
-import { type Locale, useLocale } from 'next-intl';
-import { useParams } from 'next/navigation';
+import type { Locale } from 'next-intl';
+import { useRouter } from 'next/navigation';
 import { useCallback } from 'react';
 
-import { usePathname, useRouter } from '@/i18n/navigation';
+import { useRoute } from './client-navigation';
+import { localisedPath, syncLocaleCookie } from './route';
 
 /**
  * The signed-in side of the switch, set by useProfileLocale (use-profile-locale.ts) while SessionSync runs: it saves
@@ -12,21 +13,22 @@ import { usePathname, useRouter } from '@/i18n/navigation';
 export const profileLocale: { save?: (next: Locale) => Promise<unknown> } = {};
 
 /**
- * The language switch (FR-036, C16): `switchLocale('en')` opens the same page in English and next-intl writes the
- * NEXT_LOCALE cookie. A signed-in user's profile locale is saved first, since emails and push use it.
+ * The language switch (FR-036, C16): `switchLocale('en')` opens the same page in English and writes the NEXT_LOCALE
+ * cookie, as next-intl's `router.replace(href, { locale })` does, without its client runtime (./route.ts). A signed-in
+ * user's profile locale is saved first, since emails and push use it.
  */
 export function useLocaleSwitch() {
-	const locale = useLocale();
-	const pathname = usePathname();
-	const params = useParams();
+	const { locale, pathname, params } = useRoute();
 	const router = useRouter();
 
 	const open = useCallback(
-		(next: Locale) =>
-			// The query string is dropped on purpose (accepted in review); only pathname and params carry over.
-			// @ts-expect-error -- params always belong to the current pathname (next-intl locale switcher pattern).
-			router.replace({ pathname, params }, { locale: next }),
-		[router, pathname, params]
+		(next: Locale) => {
+			syncLocaleCookie(locale, next);
+			// Always prefixed, so the proxy redirects /sl/… to the unprefixed SL path. The query string is dropped on
+			// purpose (accepted in review); only pathname and params carry over.
+			router.replace(localisedPath({ locale: next, href: { pathname, params }, forcePrefix: true }));
+		},
+		[router, locale, pathname, params]
 	);
 
 	const switchLocale = useCallback(

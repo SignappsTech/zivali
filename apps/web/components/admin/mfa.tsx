@@ -8,7 +8,7 @@ import { ApiError } from '@zivali/api/client';
 import { Button } from '@/components/ui/button';
 import { FormField } from '@/components/ui/form-field';
 import { Input } from '@/components/ui/input';
-import { useRouter } from '@/i18n/navigation';
+import { useRouter } from '@/i18n/client-navigation';
 
 import { adminH1Class, ErrorNote } from './directory/parts';
 

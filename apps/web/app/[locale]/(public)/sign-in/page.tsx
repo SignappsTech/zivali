@@ -35,40 +35,43 @@ export default async function SignInPage({ params, searchParams }: PageProps<'/[
 
 	if (confirmed) {
 		const t = await getTranslations({ locale, namespace: 'auth' });
+		// AuthMain is a client component that translates: no provider above the page (TASK-90.7).
 		return (
-			<AuthMain>
-				<Spot>
-					<CheckIcon weight="bold" />
-				</Spot>
-				<AuthHeading>{t('verified_title')}</AuthHeading>
-				<p className="mt-3 text-lg leading-7">{t('verified_body')}</p>
-				{/* Back to the step that asked for the account, else the map; in another browser, sign in first. */}
-				<Button asChild size="lg" className="mt-8 w-full">
-					{viewer ? (
-						<NextLink href={next ?? getPathname({ locale, href: '/map' })}>
-							{t('verified_continue')}
-						</NextLink>
-					) : (
-						<Link href={{ pathname: '/sign-in', query: next ? { next } : {} }}>
-							{t('verified_continue')}
-						</Link>
-					)}
-				</Button>
-			</AuthMain>
+			<PageMessages messages={{}}>
+				<AuthMain>
+					<Spot>
+						<CheckIcon weight="bold" />
+					</Spot>
+					<AuthHeading>{t('verified_title')}</AuthHeading>
+					<p className="mt-3 text-lg leading-7">{t('verified_body')}</p>
+					{/* Back to the step that asked for the account, else the map; in another browser, sign in first. */}
+					<Button asChild size="lg" className="mt-8 w-full">
+						{viewer ? (
+							<NextLink href={next ?? getPathname({ locale, href: '/map' })}>
+								{t('verified_continue')}
+							</NextLink>
+						) : (
+							<Link href={{ pathname: '/sign-in', query: next ? { next } : {} }}>
+								{t('verified_continue')}
+							</Link>
+						)}
+					</Button>
+				</AuthMain>
+			</PageMessages>
 		);
 	}
 
 	const notice = one(query.link) ?? one(query.error);
 	const { auth } = await getMessages({ locale });
 	return (
-		<AuthMain>
-			<PageMessages messages={{ auth }}>
+		<PageMessages messages={{ auth }}>
+			<AuthMain>
 				<SignInForm
 					next={next}
 					email={one(query.email)}
 					notice={notice && NOTICES.includes(notice) ? (notice as SignInNotice) : undefined}
 				/>
-			</PageMessages>
-		</AuthMain>
+			</AuthMain>
+		</PageMessages>
 	);
 }
