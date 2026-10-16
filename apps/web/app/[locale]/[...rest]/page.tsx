@@ -9,7 +9,6 @@ import { ContentPage, Placeholder } from '@/components/shell/page';
 // header and footer links work (0 broken links). A real route folder wins over this catch-all, so each story's page
 // replaces its entry. Every other unknown path renders the 404 inside the locale layout, with the CSP nonce.
 const PENDING = {
-	'/report/lost': 'nav.report_lost_title',
 	'/report/found': 'nav.report_found_title',
 	'/advertise': 'footer.partners',
 } as const;

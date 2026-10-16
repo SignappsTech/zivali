@@ -16,6 +16,8 @@
 	"reward_empty": "Enter an amount or a note, or turn the reward off.",
 	"reward_warning": "You arrange the reward with the finder yourself. Najdimo does not hold or pay it. Never pay anyone in advance: hand over the reward only once your pet is back with you.",
 	"flow_label": "Report a lost pet",
+	"seo_title": "Report a lost dog or cat · Najdimo",
+	"seo_description": "Lost your dog or cat? Reporting is free and takes a few minutes. People nearby get an alert and we look for matches.",
 	"step_a11y": "Step {current} of {total}",
 	"back": "Back",
 	"next": "Next",

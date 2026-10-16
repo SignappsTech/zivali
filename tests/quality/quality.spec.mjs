@@ -31,6 +31,9 @@ const PAGES = [
 	// TASK-31.4 P4 map and list
 	'/zemljevid',
 	'/en/map',
+	// TASK-29.3 report lost (P6): the start page is public and indexable
+	'/prijava/izgubljena-zival',
+	'/en/report/lost',
 ];
 // Protected flows (report-lost, report-found, sign-in, chat, payment), SL and EN. Each of those stories adds its routes.
 const PROTECTED = [
@@ -48,6 +51,9 @@ const PROTECTED = [
 	'/placila/zakljucek',
 	'/en/payments/return',
 	'/dev/checkout',
+	// TASK-29.3 report lost (P6)
+	'/prijava/izgubljena-zival',
+	'/en/report/lost',
 ];
 const VIEWPORTS = { mobile: { width: 390, height: 844 }, desktop: { width: 1440, height: 900 } };
 const AXE_TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'];
