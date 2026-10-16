@@ -1,11 +1,11 @@
 ---
 id: TASK-20.3
 title: 'Web match review: compare, confirm, reject'
-status: To Do
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:13'
-updated_date: '2026-10-14 22:42'
+updated_date: '2026-10-16 05:30'
 labels:
   - fe
   - 'est:M'

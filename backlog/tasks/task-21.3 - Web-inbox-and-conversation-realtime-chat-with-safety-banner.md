@@ -1,11 +1,11 @@
 ---
 id: TASK-21.3
 title: 'Web inbox and conversation: realtime chat with safety banner'
-status: To Do
+status: In Progress
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:14'
-updated_date: '2026-10-14 22:42'
+updated_date: '2026-10-16 05:16'
 labels:
   - fe
   - 'est:M'
