@@ -8,6 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslations } from 'use-intl';
 
 import { useReversePlaceQuery } from '@zivali/api/geocode';
+import { AdSlot } from '@/components/ads/ad-slot';
 import { FilterSheet } from '@/components/browse/filter-sheet';
 import {
 	areaBBox,
@@ -37,6 +38,8 @@ const PILL_TOP = 12;
 const PILL_HEIGHT = 48;
 const COUNT_DEBOUNCE_MS = 300;
 const round2 = (n: number) => Math.round(n * 100) / 100;
+// P21 feed row between the report rows, with the 20 px row gap below it (the list adds none after an ad).
+const renderAd = () => <AdSlot slot="feed" className="mb-5" />;
 
 function useDebounced<T>(value: T, ms: number): T {
 	const [settled, setSettled] = React.useState(value);
@@ -184,6 +187,7 @@ export default function MapTab() {
 				onOpenReport={openReport}
 				onReport={() => router.push('/report')}
 				onSetAlert={() => router.push('/settings/alerts' as Href)}
+				renderAd={renderAd}
 				header={<OutboxList recent />}
 				topInset={topInset}
 				onSnapChange={setSnap}

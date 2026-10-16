@@ -1,4 +1,5 @@
-import { SupportTip } from '@/components/payments/support';
+import { AdSlot } from '@/components/ads/ad-slot';
+import { SupportTip, useSupportTipState } from '@/components/payments/support';
 import type { DetailReport } from '@/components/report/slots/types';
 
 type ReunitedSlotProps = { report: DetailReport; className?: string };
@@ -12,10 +13,12 @@ export function ReunitedTip({ report, className }: ReunitedSlotProps) {
 }
 
 /**
- * P14 ad slot: the one labelled ad (P21 `reunited`, "Oglas"), below the support moment. TASK-36.6 renders the AdSlot
- * here; until it loads, fails or is blocked the slot takes no space (no gap, no message). Hide the ad while
- * `useSupportTipState(report.short_code)` (components/payments/support) is 'asking': the tip ask comes first.
+ * P14 ad slot: the one labelled ad (P21 `reunited`, "Oglas"), below the support moment. Never beside the ask (P15):
+ * hidden while the tip asks, it shows once the ask is skipped or paid, or when there is none (signed out). Until it
+ * loads it keeps the reserved box; no ad, a failure or no network collapse it (no gap, no message).
  */
-export function ReunitedAd(_props: ReunitedSlotProps) {
-	return null;
+export function ReunitedAd({ report, className }: ReunitedSlotProps) {
+	const tip = useSupportTipState(report.short_code);
+	if (tip === 'asking') return null;
+	return <AdSlot slot="reunited" species={report.species} region={report.region_slug} className={className} />;
 }
