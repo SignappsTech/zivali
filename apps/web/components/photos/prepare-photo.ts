@@ -16,7 +16,7 @@ export type WebPreparedPhoto = PreparedPhoto & { file: Blob; thumb: Blob };
 
 /**
  * Not a decodable image (`UPLOAD_TYPE`), a HEIC this browser cannot open (`HEIC`), too large even after re-encoding
- * (`UPLOAD_SIZE`) or under 320 px on the short side (`TOO_SMALL`).
+ * (`UPLOAD_SIZE`) or under 320 px on the short side once scaled (`TOO_SMALL`).
  */
 export class PhotoFileError extends Error {
 	constructor(readonly code: 'UPLOAD_TYPE' | 'UPLOAD_SIZE' | 'TOO_SMALL' | 'HEIC') {
@@ -65,7 +65,9 @@ export async function preparePhoto(file: File): Promise<{ photo: WebPreparedPhot
 		throw new PhotoFileError(heic ? 'HEIC' : 'UPLOAD_TYPE');
 	});
 	try {
-		if (Math.min(image.width, image.height) < MIN_EDGE) throw new PhotoFileError('TOO_SMALL');
+		// After scaling to 1600 px, so a panorama that ends up under 320 px on its short side is caught too.
+		const scale = Math.min(1, LONG_EDGE / Math.max(image.width, image.height));
+		if (Math.round(Math.min(image.width, image.height) * scale) < MIN_EDGE) throw new PhotoFileError('TOO_SMALL');
 		let jpeg: Awaited<ReturnType<typeof encode>> | undefined;
 		for (const quality of QUALITIES) {
 			jpeg = await encode(image, LONG_EDGE, quality);
