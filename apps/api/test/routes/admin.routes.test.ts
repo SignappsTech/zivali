@@ -264,3 +264,51 @@ describe('GET /v1/admin/queues', () => {
 		}
 	});
 });
+
+// TASK-34.4: the router-level guard also covers the later admin areas (ads, abuse reports, flags, directory), writes
+// included: the guard answers before validation and before any handler, so an empty body is enough.
+describe('staff guards on the ads, abuse, moderation and directory routes', () => {
+	const zero = '00000000-0000-0000-0000-000000000000';
+	const others = [
+		{ method: 'get', path: '/v1/admin/ads' },
+		{ method: 'post', path: '/v1/admin/ads' },
+		{ method: 'put', path: `/v1/admin/ads/${zero}` },
+		{ method: 'post', path: `/v1/admin/ads/${zero}/image` },
+		{ method: 'post', path: `/v1/admin/ads/${zero}/status` },
+		{ method: 'delete', path: `/v1/admin/ads/${zero}` },
+		{ method: 'get', path: `/v1/admin/ads/${zero}/stats` },
+		{ method: 'get', path: '/v1/admin/abuse-reports' },
+		{ method: 'get', path: '/v1/admin/moderation-flags' },
+		{ method: 'get', path: '/v1/admin/leads' },
+		{ method: 'get', path: '/v1/admin/shelters' },
+		{ method: 'post', path: '/v1/admin/shelters' },
+		{ method: 'get', path: '/v1/admin/municipality-shelters' },
+		{ method: 'post', path: '/v1/admin/directory/import' },
+		{ method: 'get', path: '/v1/admin/does-not-exist' },
+	] as const;
+	const adminOnlyPath = /\/(ads|leads|shelters|municipality-shelters|directory)\b/;
+	const cases = [
+		{ who: 'signed-out visitor', role: null, claims: undefined, code: 'UNAUTHENTICATED' },
+		{ who: 'user (aal2)', role: 'USER', claims: { aal: 'aal2' }, code: 'FORBIDDEN' },
+		{ who: 'moderator without TOTP', role: 'MODERATOR', claims: { aal: 'aal1' }, code: 'AAL2_REQUIRED' },
+		{ who: 'admin without TOTP', role: 'ADMIN', claims: { aal: 'aal1' }, code: 'AAL2_REQUIRED' },
+	] as const;
+
+	it.each(cases)('$who gets $code', async ({ role, claims, code }) => {
+		const caller = claims ? await actor(role, claims) : undefined;
+		for (const call of others) {
+			const req = request(app)[call.method](call.path);
+			const res = await (caller ? req.set('Authorization', caller.auth) : req);
+			expect([call.method, call.path, res.body.error?.code]).toEqual([call.method, call.path, code]);
+			expect(JSON.stringify(res.body)).not.toMatch(/stack|prisma|select |at \w+ \(/i);
+		}
+	});
+
+	it('a moderator with TOTP is refused the admin-only areas', async () => {
+		const moderator = await actor('MODERATOR', { aal: 'aal2' });
+		for (const call of others.filter((c) => adminOnlyPath.test(c.path))) {
+			const res = await request(app)[call.method](call.path).set('Authorization', moderator.auth);
+			expect([call.method, call.path, res.body.error?.code]).toEqual([call.method, call.path, 'FORBIDDEN']);
+		}
+	});
+});

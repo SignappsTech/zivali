@@ -88,6 +88,7 @@ async function assertAdImage(id: string, image_path: string, ctx: Ctx): Promise<
 export async function listAds(input: AdminAdQuery, ctx: Ctx) {
 	assertAdAdmin(ctx);
 	const rows = await AdsDao.listAdmin({ ...input, take: PAGE + 1 }, ctx.tx);
+	await AuditDao.write(ctx.tx, { actor_id: ctx.actor.user_id, action: 'admin.ads.list', target_type: 'ad' });
 	const items = rows.slice(0, PAGE);
 	return { items, next_cursor: rows.length > PAGE ? items[items.length - 1]!.id : null };
 }
@@ -163,6 +164,12 @@ export async function requestAdImageUpload(
 		{ bucket: 'media', key: image },
 		{ contentType: content_type, contentLength: bytes, expiresInS: UPLOAD_TTL_S }
 	);
+	await AuditDao.write(ctx.tx, {
+		actor_id: ctx.actor.user_id,
+		action: 'admin.ads.image_presign',
+		target_type: 'ad',
+		target_id: id,
+	});
 	return { upload, image };
 }
 
@@ -211,7 +218,14 @@ export async function getAdStats(input: AdStatsQuery & { id: string }, ctx: Ctx)
 	if (days < 0) throw invalid('to', 'Ends before it starts');
 	if (days >= MAX_STATS_DAYS) throw invalid('to', `At most ${MAX_STATS_DAYS} days`);
 	await getAd(input.id, ctx.tx, true);
-	return AdsDao.stats({ ad_id: input.id, from: input.from, to: input.to }, ctx.tx);
+	const rows = await AdsDao.stats({ ad_id: input.id, from: input.from, to: input.to }, ctx.tx);
+	await AuditDao.write(ctx.tx, {
+		actor_id: ctx.actor.user_id,
+		action: 'admin.ads.stats',
+		target_type: 'ad',
+		target_id: input.id,
+	});
+	return rows;
 }
 
 export default { listAds, createAd, updateAd, requestAdImageUpload, setAdStatus, deleteAd, getAdStats };

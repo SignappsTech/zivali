@@ -8,7 +8,15 @@ import { AdminDomain, AdminMapper } from '../../domains/admin/index.ts';
 import { config } from '../../lib/config.ts';
 import { systemCtx } from '../../lib/ctx.ts';
 import { prisma } from '../../prisma/prisma.ts';
-import { adminApi, adminCreate, isLocalTarget, main, PRODUCTION_FLAG } from '../../scripts/admin-create.ts';
+import {
+	adminApi,
+	adminCreate,
+	isLocalTarget,
+	main,
+	PRODUCTION_FLAG,
+	resetMfa,
+	RESET_MFA_FLAG,
+} from '../../scripts/admin-create.ts';
 import { createAuthUser, deleteAuthUsers } from '../helpers/token.ts';
 
 const ids: string[] = [];
@@ -127,6 +135,10 @@ describe('pnpm admin:create', { timeout: 30_000 }, () => {
 		expect(await prisma.profiles.findUnique({ where: { id } })).toBeNull();
 	});
 
+	it('--reset-mfa refuses an unknown email', async () => {
+		await expect(resetMfa('nobody-here@test.invalid')).rejects.toThrow(/No account/);
+	});
+
 	it('is local only unless the production flag is passed (and then confirmed at an interactive prompt)', async () => {
 		const db = 'postgresql://postgres:x@127.0.0.1:55322/postgres?schema=app';
 		expect(isLocalTarget({ APP_ENV: 'local', SUPABASE_URL: 'http://127.0.0.1:55321', DATABASE_URL: db })).toBe(
@@ -152,6 +164,11 @@ describe('pnpm admin:create', { timeout: 30_000 }, () => {
 			// Tests have no TTY: the confirmation prompt cannot be answered, so the flag alone never promotes.
 			expect(await main([`${id}@test.invalid`, PRODUCTION_FLAG])).toBe(1);
 			expect(await prisma.profiles.findUnique({ where: { id } })).toBeNull();
+			// --reset-mfa has the same guards: no flag, no TTY, an email is required (no network is reached).
+			expect(await main([RESET_MFA_FLAG])).toBe(2);
+			expect(await main([RESET_MFA_FLAG, `${id}@test.invalid`])).toBe(1);
+			expect(await main([RESET_MFA_FLAG, `${id}@test.invalid`, PRODUCTION_FLAG])).toBe(1);
+			expect(await prisma.audit_log.count({ where: { action: 'admin.mfa.reset', target_id: id } })).toBe(0);
 		} finally {
 			config.APP_ENV = saved;
 		}

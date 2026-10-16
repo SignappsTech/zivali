@@ -132,6 +132,7 @@ describe('AdminShell', () => {
 		renderShell('ok', { aal2: false });
 		expect(await screen.findByRole('heading', { level: 1, name: a.mfa_title })).toBeTruthy();
 		expect(screen.queryByText('admin page')).toBeNull();
+		expect(screen.getByText(a.mfa_lost)).toBeTruthy();
 		fireEvent.change(screen.getByLabelText(a.mfa_label), { target: { value: '482913' } });
 		fireEvent.click(screen.getByRole('button', { name: a.mfa_submit }));
 		await waitFor(() => expect(route.refresh).toHaveBeenCalled());

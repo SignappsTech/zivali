@@ -231,6 +231,36 @@ test('staff with a factor enter the code before any admin page loads; a wrong co
 	await expect(page).toHaveURL(/\/admin\/revizijska-sled$/);
 });
 
+test('too many wrong codes: the rate limit is told plainly, the console stays closed and no admin call is made', async ({
+	page,
+	baseURL,
+}) => {
+	const requests: string[] = [];
+	page.on('request', (request) => {
+		if (request.url().includes('/v1/admin/')) requests.push(request.url());
+	});
+	const staff: Me = { ...adminMe, aal: 'aal1' };
+	await signIn(page, staff, baseURL!);
+	await mockTotp(page, staff, [factor]);
+	await page.route(/\/auth\/v1\/factors\/[^/]+\/verify$/, (route) =>
+		route.fulfill({
+			status: 429,
+			json: { code: 429, error_code: 'over_request_rate_limit', msg: 'Request rate limit reached' },
+		})
+	);
+	await page.goto('/admin');
+
+	const field = page.getByLabel('6-mestna koda');
+	await field.fill('482913');
+	await page.getByRole('button', { name: 'Potrdi' }).click();
+	await expect(
+		page.getByText('V kratkem času je bilo poslanih več zahtev. Poskusite znova malo pozneje.')
+	).toBeVisible();
+	await expect(field).toHaveAttribute('aria-invalid', 'true');
+	await expect(page.getByRole('navigation', { name: 'Konzola' })).toHaveCount(0);
+	expect(requests).toEqual([]);
+});
+
 test('staff without a factor enrol with the QR code or the key, in light and dark', async ({ page, baseURL }) => {
 	const staff: Me = { ...adminMe, role: 'MODERATOR', aal: 'aal1' };
 	await signIn(page, staff, baseURL!);

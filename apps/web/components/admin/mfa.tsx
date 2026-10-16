@@ -19,7 +19,7 @@ type Step =
 	| { kind: 'enrol'; factorId: string; qr: string; secret: string };
 
 /** "JBSWY3DPEHPK3PXP" → "JBSW Y3DP EHPK 3PXP", easier to type into an app. */
-const groupKey = (secret: string) => secret.match(/.{1,4}/g)?.join(' ') ?? secret;
+export const groupKey = (secret: string) => secret.match(/.{1,4}/g)?.join(' ') ?? secret;
 
 /**
  * P19 strong authentication (FR-019): staff with a verified TOTP factor enter its code (F7); staff without one enrol
@@ -157,6 +157,7 @@ export function Mfa() {
 					{t(enrol ? 'enrol_submit' : 'mfa_submit')}
 				</Button>
 			</form>
+			{!enrol && <p className="mt-8 text-sm">{t('mfa_lost')}</p>}
 		</>
 	);
 }

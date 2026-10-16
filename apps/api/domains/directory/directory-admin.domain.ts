@@ -112,18 +112,33 @@ async function addVersion(
 // --- Lists ---
 
 export async function listShelters(_input: void, ctx: Ctx) {
-	return (await DirectoryDao.listAllShelters(ctx.tx)).sort(bySlName);
+	const rows = (await DirectoryDao.listAllShelters(ctx.tx)).sort(bySlName);
+	await AuditDao.write(ctx.tx, { actor_id: actorId(ctx), action: 'admin.shelters.list', target_type: 'shelter' });
+	return rows;
 }
 
 export async function listAssignments(_input: void, ctx: Ctx) {
-	return (await DirectoryDao.listAdminAssignments(undefined, ctx.tx)).sort(bySlName);
+	const rows = (await DirectoryDao.listAdminAssignments(undefined, ctx.tx)).sort(bySlName);
+	await AuditDao.write(ctx.tx, {
+		actor_id: actorId(ctx),
+		action: 'admin.municipality_shelters.list',
+		target_type: 'municipality_shelter',
+	});
+	return rows;
 }
 
 /** The shelter's versions, newest first (inactive shelters too). */
 export async function listShelterChanges(slug: string, ctx: Ctx) {
 	const shelter = await DirectoryDao.findShelterBySlug(slug, ctx.tx);
 	if (!shelter) throw new AppError('NOT_FOUND', 'Unknown shelter');
-	return DirectoryDao.listChanges('shelter', shelter.id, ctx.tx);
+	const rows = await DirectoryDao.listChanges('shelter', shelter.id, ctx.tx);
+	await AuditDao.write(ctx.tx, {
+		actor_id: actorId(ctx),
+		action: 'admin.shelters.changes',
+		target_type: 'shelter',
+		target_id: shelter.id,
+	});
+	return rows;
 }
 
 // --- Shelters ---

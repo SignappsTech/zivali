@@ -3,6 +3,8 @@
 // it refuses any target but the local stack; with it, the operator must also type the email again at the prompt.
 // The account is found through the Supabase Auth Admin API; the role is set (and audited, actor = system) by the same
 // domain function as PUT /v1/admin/users/:id/role.
+// `--reset-mfa <email>` is the lost-authenticator recovery (TASK-34.6, docs/tech/admin-runbook.md): it deletes all of the
+// account's MFA factors through the Admin API (audited, actor = system) so the person enrols again; same guards.
 import { createInterface } from 'node:readline/promises';
 import { pathToFileURL } from 'node:url';
 
@@ -12,10 +14,12 @@ import { AdminDomain } from '../domains/admin/index.ts';
 import { UsersDomain } from '../domains/users/index.ts';
 import { config, type Config } from '../lib/config.ts';
 import { systemCtx } from '../lib/ctx.ts';
+import { AuditDao } from '../domains/platform/index.ts';
 import { prisma } from '../prisma/prisma.ts';
 import { isLocalStack } from '../prisma/seeders/00-users.seeder.ts';
 
 export const PRODUCTION_FLAG = '--i-know-this-is-production';
+export const RESET_MFA_FLAG = '--reset-mfa';
 const PER_PAGE = 1000;
 
 type Target = Pick<Config, 'APP_ENV' | 'SUPABASE_URL' | 'DATABASE_URL'>;
@@ -70,14 +74,31 @@ export async function adminCreate(email: string) {
 	return AdminDomain.setUserRole({ id: user.id, role: 'ADMIN', note: 'pnpm admin:create' }, systemCtx());
 }
 
+/** Deletes every MFA factor of the account behind `email` (lost device); returns how many. Audited. */
+export async function resetMfa(email: string) {
+	const user = await findAuthUser(email.trim().toLowerCase());
+	if (!user) throw new Error('No account with this email');
+	const factors = await adminApi<{ id: string }[]>(`/users/${user.id}/factors`);
+	for (const factor of factors) await adminApi(`/users/${user.id}/factors/${factor.id}`, 'DELETE');
+	await AuditDao.write(undefined, {
+		actor_id: null,
+		action: 'admin.mfa.reset',
+		target_type: 'profile',
+		target_id: user.id,
+		diff: { removed: factors.length },
+		note: 'pnpm admin:create --reset-mfa',
+	});
+	return { id: user.id, removed: factors.length };
+}
+
 const out = (line: string) => process.stdout.write(`${line}\n`);
 
-async function confirmProduction(email: string): Promise<boolean> {
+async function confirmProduction(email: string, what: string): Promise<boolean> {
 	if (!process.stdin.isTTY) return false;
 	const hosts = [config.DATABASE_URL, config.SUPABASE_URL].map((url) => new URL(url).hostname).join(', ');
 	const rl = createInterface({ input: process.stdin, output: process.stdout });
 	try {
-		const answer = await rl.question(`Promote to ADMIN on ${config.APP_ENV} (${hosts}). Type the email again: `);
+		const answer = await rl.question(`${what} on ${config.APP_ENV} (${hosts}). Type the email again: `);
 		return answer.trim().toLowerCase() === email.trim().toLowerCase();
 	} finally {
 		rl.close();
@@ -88,19 +109,32 @@ export async function main(argv: string[]): Promise<number> {
 	const flags = argv.filter((arg) => arg.startsWith('--'));
 	const args = argv.filter((arg) => !arg.startsWith('--'));
 	const email = args[0];
-	if (args.length !== 1 || !email || !/^[^\s@]+@[^\s@]+$/.test(email) || flags.some((f) => f !== PRODUCTION_FLAG)) {
-		out(`Usage: pnpm admin:create <email> [${PRODUCTION_FLAG}]`);
+	if (
+		args.length !== 1 ||
+		!email ||
+		!/^[^\s@]+@[^\s@]+$/.test(email) ||
+		flags.some((f) => f !== PRODUCTION_FLAG && f !== RESET_MFA_FLAG)
+	) {
+		out(`Usage: pnpm admin:create [${RESET_MFA_FLAG}] <email> [${PRODUCTION_FLAG}]`);
 		return 2;
 	}
+	const reset = flags.includes(RESET_MFA_FLAG);
 	if (!isLocalTarget(config)) {
 		if (!flags.includes(PRODUCTION_FLAG)) {
-			out(`Refused: the target is not the local stack. Pass ${PRODUCTION_FLAG} to promote an account there.`);
+			out(
+				`Refused: the target is not the local stack. Pass ${PRODUCTION_FLAG} to ${reset ? 'reset MFA for' : 'promote'} an account there.`
+			);
 			return 1;
 		}
-		if (!(await confirmProduction(email))) {
+		if (!(await confirmProduction(email, reset ? 'Reset MFA' : 'Promote to ADMIN'))) {
 			out('Refused: not confirmed (an interactive terminal is required).');
 			return 1;
 		}
+	}
+	if (reset) {
+		const { id, removed } = await resetMfa(email);
+		out(`Removed ${removed} MFA factor(s) of ${id} (audited). They must sign in and enrol a new authenticator.`);
+		return 0;
 	}
 	const { id } = await adminCreate(email);
 	out(`Promoted ${id} to ADMIN (audited). Staff routes need a TOTP factor: sign in and enrol one.`);
