@@ -25,11 +25,10 @@ import { useLocale, useTranslations } from 'use-intl';
 import { z } from 'zod';
 
 import { track } from '@zivali/analytics';
-import { ApiError, type ErrorCode } from '@zivali/api/client';
 import { useReversePlaceQuery } from '@zivali/api/geocode';
+import en from '@zivali/i18n/dist/en.json';
 import { COLOURS, type Colour, SIZES, type Size, type Species } from '@zivali/types';
 import { coarsenPoint } from '@zivali/validation/geo';
-import { useErrorText } from '@/components/auth/parts';
 import { LocationPicker } from '@/components/location/location-picker';
 import type { LatLng } from '@/components/map/features';
 import { PhotoPicker, type PhotoPickerHandle } from '@/components/photos/photo-picker';
@@ -552,7 +551,9 @@ export function FoundFlow({ entry, linked }: { entry: 'found' | 'sighted'; linke
 	const tph = useTranslations('photos');
 	const router = useRouter();
 	const insets = useSafeAreaInsets();
-	const errorText = useErrorText();
+	const te = useTranslations('errors');
+	/** The C1 code's sentence (errors.<code>), INTERNAL for anything unknown. */
+	const errorText = (code: string) => te(code in en.errors ? (code as keyof typeof en.errors) : 'INTERNAL');
 	const online = isOnline(useNetworkState());
 	const steps = linked ? SIGHTING_STEPS : FOUND_STEPS;
 	const last = steps[steps.length - 1]!;
@@ -571,7 +572,7 @@ export function FoundFlow({ entry, linked }: { entry: 'found' | 'sighted'; linke
 		startedAt: new Date().toISOString(),
 		...(entry === 'sighted' && !linked && { situation: 'seen' as const }),
 	}));
-	const set = React.useCallback((change: Partial<FoundValues>) => setValues((prev) => ({ ...prev, ...change })), []);
+	const set = (change: Partial<FoundValues>) => setValues((prev) => ({ ...prev, ...change }));
 	const [step, setStep] = React.useState<Step>(steps[0]!);
 	const index = steps.indexOf(step);
 	const [attempted, setAttempted] = React.useState(false);
@@ -697,7 +698,7 @@ export function FoundFlow({ entry, linked }: { entry: 'found' | 'sighted'; linke
 		if (!linked && photos.length === 0) return edit('photo');
 		const species = linked ? linked.species : values.species;
 		const location = values.location;
-		if (!species || !location) return setSendError({ text: errorText(new ApiError('VALIDATION', 'incomplete')) });
+		if (!species || !location) return setSendError({ text: errorText('VALIDATION') });
 		setSending(true);
 		try {
 			const { outboxId } = await submitReport(
@@ -713,7 +714,7 @@ export function FoundFlow({ entry, linked }: { entry: 'found' | 'sighted'; linke
 			});
 		} catch {
 			setSending(false);
-			setSendError({ text: errorText(new ApiError('INTERNAL', 'outbox')) });
+			setSendError({ text: errorText('INTERNAL') });
 		}
 	};
 
@@ -736,7 +737,7 @@ export function FoundFlow({ entry, linked }: { entry: 'found' | 'sighted'; linke
 			const minutes = Math.max(1, Math.ceil((until - Date.now()) / 60_000));
 			error = { text: minutes > 60 ? t('limit_day') : t('limit_hour', { minutes }), until };
 		} else if (code === 'CAPTCHA_REQUIRED') error = { text: t('captcha_failed'), captcha: true };
-		else error = { text: errorText(new ApiError((code ?? 'INTERNAL') as ErrorCode, 'outbox')) };
+		else error = { text: errorText(code ?? 'INTERNAL') };
 		void remove(current.id)
 			.catch(() => {})
 			.then(() => {
@@ -985,7 +986,14 @@ export function FoundFlow({ entry, linked }: { entry: 'found' | 'sighted'; linke
 					<AlertDialogTitle>{t('close_title')}</AlertDialogTitle>
 					<AlertDialogDescription>{t('close_body')}</AlertDialogDescription>
 					<AlertDialogFooter>
-						<AlertDialogAction variant="secondary" onPress={leave}>
+						<AlertDialogAction
+							variant="secondary"
+							onPress={() => {
+								// "Osnutek ostane shranjen": the answers of this step too.
+								void saveDraft(draftId, kind, { step, values }).catch(() => {});
+								leave();
+							}}
+						>
 							{tc('close')}
 						</AlertDialogAction>
 						<AlertDialogCancel>{tc('continue')}</AlertDialogCancel>

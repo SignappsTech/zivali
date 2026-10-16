@@ -76,6 +76,13 @@ Gallery: `/dev/kit` (redirects to `/` when `EXPO_PUBLIC_APP_ENV=production`). `r
 - Every API request carries `x-device-id`: one random id per install in expo-secure-store (`device_id`, `lib/store.ts`).
 - `react-native-webview` is a native module: install a new development build after pulling it.
 
+## Report found or sighted (P7, TASK-30.3)
+
+- `app/report/found/index.tsx` runs `components/report-found/found-flow.tsx`: photo, which animal, where, is it with you, publish (`?type=sighted` starts on "Ne, žival ni pri meni"). With `linked_report_id` (plus `code` and `species`, from P9 "Sporoči opažanje") it is the short sighting flow: where, when, optional photo and note, no email. It never asks where the animal is kept.
+- "Kje" takes the photo's EXIF place, else a GPS fix when the permission is already granted (it never prompts); both are coarsened once on arrival, and with neither the LocationPicker opens. The capture time is the earliest EXIF time (else when the flow opened) or the sighting's "when"; it becomes `event_at` however late the outbox sends.
+- Publish calls `submitReport()` (C17). The outbox answer picks the screen (`found-done.tsx`): sent → the private link (token read from expo-secure-store, never in a URL param or log) and the responsible-shelter row; still queued → "Čaka na pošiljanje" with the row from the cached directory, which turns into the sent screen by itself. A rate limit, a failed check or a refusal removes that outbox item and keeps the form.
+- `ShelterRow` (`components/shelter/shelter-row.tsx`, namespace `shelter_row`) is the shared P6/P7 row: confirmed, likely, nearest or the directory note, live online and from `getCachedShelter` offline.
+
 ## Payments (C13, TASK-32.3)
 
 - Web checkout only (A-014). `<CheckoutSheet open onOpenChange checkout={{ purpose, amountCents, refs, returnTo }} />` (`components/payments/checkout.tsx`) shows the P15 hand-off sheet; Nadaljuj calls `startCheckout` with `returnScheme: true`, opens the URL with `WebBrowser.openAuthSessionAsync(url, 'zivali://payments/return')` (`lib/checkout.ts`) and then shows the return state in the same sheet (polls `GET /v1/payments/:id` while pending).
