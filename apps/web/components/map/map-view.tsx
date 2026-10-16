@@ -35,6 +35,8 @@ export type MapViewProps = {
 	 * (LocationPicker's centre pin). */
 	onCameraChange?(camera: CameraState): void;
 	onMarkerPress?(id: string): void;
+	/** A marker drawn larger, e.g. the one whose list row is hovered or whose preview is open (P4). */
+	highlightId?: string;
 	/** Required: the list (or a sentence pointing to it) for screen reader and keyboard users, rendered right after
 	 * the map; "Skip map" jumps to it. */
 	textAlternative: React.ReactNode;
@@ -77,7 +79,15 @@ const useThemeMode = () => React.useSyncExternalStore(subscribeToTheme, themeMod
  * reports on a 96 px fuzzed-area disc, the 18 px "you" dot. The accessible name carries the status, so it is never
  * colour alone.
  */
-function MarkerFace({ marker, onPress }: { marker: Marker; onPress?: (id: string) => void }) {
+function MarkerFace({
+	marker,
+	highlighted,
+	onPress,
+}: {
+	marker: Marker;
+	highlighted: boolean;
+	onPress?: (id: string) => void;
+}) {
 	const t = useTranslations('map');
 	const press = onPress && (() => onPress(marker.id));
 	if (marker.kind === 'me')
@@ -101,10 +111,12 @@ function MarkerFace({ marker, onPress }: { marker: Marker; onPress?: (id: string
 			role="img"
 			aria-label={marker.kind === 'lost' ? `${marker.label}. ${t('lost_area_a11y')}` : marker.label}
 			data-kind={marker.kind}
+			data-highlighted={highlighted || undefined}
 			onClick={press}
 			className={cn(
-				'grid place-items-center',
+				'grid place-items-center transition-transform duration-150 motion-reduce:transition-none',
 				marker.kind === 'lost' && 'size-24 rounded-full bg-marker-area',
+				highlighted && 'scale-120',
 				press && 'cursor-pointer'
 			)}
 		>
@@ -168,6 +180,7 @@ export function MapView({
 	onViewportChange,
 	onCameraChange,
 	onMarkerPress,
+	highlightId,
 	textAlternative,
 	label,
 	hint,
@@ -314,7 +327,15 @@ export function MapView({
 					const marker = byId.get(item.id);
 					return (
 						marker &&
-						createPortal(<MarkerFace marker={marker} onPress={onMarkerPress} />, item.element, item.key)
+						createPortal(
+							<MarkerFace
+								marker={marker}
+								highlighted={marker.id === highlightId}
+								onPress={onMarkerPress}
+							/>,
+							item.element,
+							item.key
+						)
 					);
 				})}
 			</div>
