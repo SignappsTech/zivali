@@ -245,6 +245,32 @@ function gate() {
 	return { open, opened };
 }
 
+/** A gate that is open from the start. */
+const openGate = () => ({ open: () => {}, opened: Promise.resolve() });
+
+/** One scripted FURS call: held until opened, then a failure or this EOR. */
+type Step = { held: ReturnType<typeof gate>; eor?: string };
+
+/** A fiscal adapter whose calls for this test's premise follow `steps` in order; other premises verify at once. */
+function scripted(steps: Step[]) {
+	const mock = mockFiscal({ tax_number: '12345678', premise_id: 'X', device_id: 'D1' });
+	let premise = '';
+	const send = vi.fn<FiscalAdapter['issue']>().mockImplementation(async (invoice) => {
+		if (invoice.premise_id !== premise) return mock.issue(invoice);
+		const step = steps.shift()!;
+		await step.held.opened;
+		if (!step.eor) throw new Error('furs: HTTP 503');
+		return { zoi: invoice.zoi, eor: step.eor, issued_at: invoice.issued_at };
+	});
+	const made = fiscalCtx({ issue: send });
+	premise = made.premise_id;
+	const mine = () => send.mock.calls.filter(([invoice]) => invoice.premise_id === premise).length;
+	return { ...made, send, mine };
+}
+
+const expireLease = (id: string) =>
+	prisma.invoices.update({ where: { id }, data: { lease_until: new Date(Date.now() - 1000) } });
+
 describe('in-flight lease (TASK-92.3)', () => {
 	it('lets no second attempt run while one is in flight for the same invoice', async () => {
 		const mock = mockFiscal({ tax_number: '12345678', premise_id: 'X', device_id: 'D1' });
@@ -297,6 +323,30 @@ describe('in-flight lease (TASK-92.3)', () => {
 			lease_until: null,
 		});
 		expect(flaky.mock.calls[1]![0].subsequent).toBe(true);
+	});
+
+	it('keeps a run that outlived its lease from clearing the lease or the result of the run that took over', async () => {
+		const late: Step = { held: gate() };
+		const next: Step = { held: gate(), eor: randomUUID() };
+		const { ctx, mine } = scripted([late, next]);
+		const payment = await succeeded();
+		// Attempt 1 hangs past its lease; a payment.effects retry takes attempt 2.
+		const stale = issue(payment, 'Zahvala', ctx);
+		await vi.waitFor(() => expect(mine()).toBe(1));
+		const { id } = await invoiceOf(payment.id);
+		await expireLease(id);
+		const current = issue(payment, 'Zahvala', ctx);
+		await vi.waitFor(() => expect(mine()).toBe(2));
+		// The stale attempt fails late: attempt 2 keeps its lease, so nothing else sends meanwhile.
+		late.held.open();
+		await expect(stale).rejects.toThrow(/HTTP 503/);
+		const during = await invoiceOf(payment.id);
+		expect(during).toMatchObject({ status: 'PENDING', attempts: 2 });
+		expect(during.lease_until!.getTime()).toBeGreaterThan(Date.now());
+		await expect(issue(payment, 'Zahvala', ctx)).rejects.toThrow(/verification already in progress/);
+		next.held.open();
+		expect(await current).toMatchObject({ status: 'VERIFIED', eor: next.eor, attempts: 2, lease_until: null });
+		expect(mine()).toBe(2);
 	});
 });
 
@@ -375,7 +425,15 @@ describe('fiscal.resubmit (TASK-92.3)', () => {
 			data: { lease_until: new Date(Date.now() + 60_000) },
 		});
 		const otherProvider = await stored(fiscal, 6, { provider: 'furs' });
-		await prisma.invoice_sequences.create({ data: { premise_id, device_id: 'D1', last_sequence: 6 } });
+		// Verified, but payment.effects never stored the PDF: stale ones go back to it, without a FURS call.
+		const unrendered = await stored(fiscal, 7, {
+			status: 'VERIFIED',
+			hoursAgo: staleHours,
+			attempts: 1,
+			pdf: false,
+		});
+		const rendering = await stored(fiscal, 8, { status: 'VERIFIED', hoursAgo: 0.5, attempts: 1, pdf: false });
+		await prisma.invoice_sequences.create({ data: { premise_id, device_id: 'D1', last_sequence: 8 } });
 
 		const result = await InvoicesDomain.resubmitInvoices(undefined, ctx);
 		expect(result.resubmitted).toBeGreaterThanOrEqual(2);
@@ -397,18 +455,18 @@ describe('fiscal.resubmit (TASK-92.3)', () => {
 				eor: expect.any(String),
 			});
 		}
-		for (const row of [fresh, verified, leased, otherProvider])
+		for (const row of [fresh, verified, leased, otherProvider, unrendered, rendering])
 			expect(await prisma.invoices.findUniqueOrThrow({ where: { id: row.id } })).toMatchObject({
 				status: row.status,
 				attempts: row.attempts,
 			});
 		// No new number or ZOI: the series and its counter are untouched.
-		expect(await prisma.invoices.count({ where: { premise_id } })).toBe(6);
+		expect(await prisma.invoices.count({ where: { premise_id } })).toBe(8);
 		expect(
 			await prisma.invoice_sequences.findUniqueOrThrow({
 				where: { premise_id_device_id: { premise_id, device_id: 'D1' } },
 			})
-		).toMatchObject({ last_sequence: 6 });
+		).toMatchObject({ last_sequence: 8 });
 		// The stale invoice never got its PDF and receipt: payment.effects runs for it again, with the minutes backoff.
 		const jobsOf = (payment_id: string) => prisma.$queryRaw<
 			{ retry_delay: number; retry_backoff: boolean; retry_delay_max: number }[]
@@ -418,7 +476,76 @@ describe('fiscal.resubmit (TASK-92.3)', () => {
 		expect(await jobsOf(stale.payment_id)).toEqual([
 			{ retry_delay: 120, retry_backoff: true, retry_delay_max: 1800 },
 		]);
+		expect(await jobsOf(unrendered.payment_id)).toHaveLength(1);
 		expect(await jobsOf(failed.payment_id)).toEqual([]);
+		expect(await jobsOf(rendering.payment_id)).toEqual([]);
+	});
+
+	it('sends the fewest attempts first and stops calling FURS after its first failure, PDFs still go out', async () => {
+		const { ctx, fiscal, mine, send } = scripted([{ held: openGate() }]);
+		const retried = await stored(fiscal, 1, { attempts: 1, hoursAgo: 5 });
+		const older = await stored(fiscal, 2, { attempts: 3, hoursAgo: 10 });
+		const unrendered = await stored(fiscal, 3, { status: 'VERIFIED', attempts: 1, hoursAgo: 10, pdf: false });
+		await InvoicesDomain.resubmitInvoices(undefined, ctx);
+		// The newer invoice with fewer attempts went first; FURS failed it, so the older one waits for the next run.
+		expect(mine()).toBe(1);
+		expect(send.mock.calls.find(([invoice]) => invoice.premise_id === fiscal.premise_id)![0].sequence).toBe(1);
+		expect(await prisma.invoices.findUniqueOrThrow({ where: { id: retried.id } })).toMatchObject({
+			status: 'FAILED',
+			attempts: 2,
+		});
+		expect(await prisma.invoices.findUniqueOrThrow({ where: { id: older.id } })).toMatchObject({
+			status: 'FAILED',
+			attempts: 3,
+			lease_until: null,
+		});
+		const jobs = await prisma.$queryRaw<{ id: string }[]>`
+			select id from pgboss.job where name = 'payment.effects' and data->>'payment_id' = ${unrendered.payment_id}`;
+		expect(jobs).toHaveLength(1);
+	});
+
+	it('never lets a resubmission that outlived its lease write over the run that took over', async () => {
+		const lateFailure: Step = { held: gate() };
+		const takeover1: Step = { held: openGate(), eor: randomUUID() };
+		const lateSuccess: Step = { held: gate(), eor: randomUUID() };
+		const takeover2: Step = { held: openGate(), eor: randomUUID() };
+		const { ctx, fiscal, mine } = scripted([lateFailure, takeover1, lateSuccess, takeover2]);
+		const get = (id: string) => prisma.invoices.findUniqueOrThrow({ where: { id } });
+		const run = () => InvoicesDomain.resubmitInvoices(undefined, ctx);
+
+		// A late FURS failure must not turn the next run's VERIFIED back into FAILED (resubmit would send it again).
+		const first = await stored(fiscal, 1);
+		const stale = run();
+		await vi.waitFor(() => expect(mine()).toBe(1), { timeout: 10_000 });
+		await expireLease(first.id);
+		await run();
+		const verified = await get(first.id);
+		expect(verified).toMatchObject({
+			status: 'VERIFIED',
+			attempts: MAX_ATTEMPTS + 2,
+			eor: takeover1.eor,
+			lease_until: null,
+		});
+		lateFailure.held.open();
+		await stale;
+		expect(await get(first.id)).toEqual(verified);
+
+		// A late success must not overwrite the EOR the next run stored.
+		const second = await stored(fiscal, 2);
+		const slow = run();
+		await vi.waitFor(() => expect(mine()).toBe(3), { timeout: 10_000 });
+		await expireLease(second.id);
+		await run();
+		const settled = await get(second.id);
+		expect(settled).toMatchObject({
+			status: 'VERIFIED',
+			attempts: MAX_ATTEMPTS + 2,
+			eor: takeover2.eor,
+			lease_until: null,
+		});
+		lateSuccess.held.open();
+		await slow;
+		expect(await get(second.id)).toEqual(settled);
 	});
 
 	it('claims each invoice once when runs overlap, and leaves it FAILED when FURS fails again', async () => {

@@ -1,10 +1,11 @@
 import type { Metadata } from 'next';
 import type { Locale } from 'next-intl';
-import { getTranslations } from 'next-intl/server';
+import { getMessages, getTranslations } from 'next-intl/server';
 import { redirect } from 'next/navigation';
 
 import { AuthMain } from '@/components/auth/parts';
 import { SignUpForm } from '@/components/auth/sign-up';
+import { PageMessages } from '@/components/page-messages';
 import { getPathname } from '@/i18n/navigation';
 import { getVerifiedViewer, safeNext } from '@/lib/viewer';
 
@@ -21,10 +22,13 @@ export default async function SignUpPage({ params, searchParams }: PageProps<'/[
 	const query = await searchParams;
 	const next = safeNext(one(query.next));
 	if (await getVerifiedViewer()) redirect(next ?? getPathname({ locale, href: '/' }));
+	const { auth } = await getMessages({ locale });
 
 	return (
 		<AuthMain>
-			<SignUpForm next={next} email={one(query.email)} />
+			<PageMessages messages={{ auth }}>
+				<SignUpForm next={next} email={one(query.email)} />
+			</PageMessages>
 		</AuthMain>
 	);
 }

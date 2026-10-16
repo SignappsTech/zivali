@@ -2,8 +2,11 @@ import { useRouter } from 'expo-router';
 import { BellIcon } from 'phosphor-react-native/src/icons/Bell';
 import { BellRingingIcon } from 'phosphor-react-native/src/icons/BellRinging';
 import { CheckIcon } from 'phosphor-react-native/src/icons/Check';
+import { ClipboardTextIcon } from 'phosphor-react-native/src/icons/ClipboardText';
+import { CloudArrowDownIcon } from 'phosphor-react-native/src/icons/CloudArrowDown';
 import { CookieIcon } from 'phosphor-react-native/src/icons/Cookie';
 import { CreditCardIcon } from 'phosphor-react-native/src/icons/CreditCard';
+import { PawPrintIcon } from 'phosphor-react-native/src/icons/PawPrint';
 import { QuestionIcon } from 'phosphor-react-native/src/icons/Question';
 import { SignOutIcon } from 'phosphor-react-native/src/icons/SignOut';
 import { UserCircleIcon } from 'phosphor-react-native/src/icons/UserCircle';
@@ -146,6 +149,14 @@ export default function ProfileTab() {
 			onPress={() => Linking.openURL(`${env.EXPO_PUBLIC_APP_URL}${locale === 'en' ? '/en/safety' : '/varnost'}`)}
 		/>
 	);
+	// The report cache serves the Map tab signed in or not (C17).
+	const offline = (
+		<MenuRow
+			icon={<Icon as={CloudArrowDownIcon} size={24} />}
+			title={t('profile.row_offline')}
+			onPress={() => router.push('/settings/offline')}
+		/>
+	);
 	const cookies = (
 		<MenuRow
 			icon={<Icon as={CookieIcon} size={24} />}
@@ -161,11 +172,21 @@ export default function ProfileTab() {
 					{t(signedIn ? 'profile.title' : 'profile.signed_out_title')}
 				</Text>
 				{signedIn && me ? <AccountHeader me={me} /> : null}
-				{/* Reports sent or waiting on this device, signed in or not (FR-042); TASK-26.5 adds the account's own. */}
-				<OutboxList heading={t('report_found.my_reports')} className="mt-7" />
+				{/* Reports sent or waiting on this device (FR-042); signed in, they lead "Moje prijave". */}
+				{signedIn ? null : <OutboxList heading={t('report_found.my_reports')} className="mt-7" />}
 				{signedIn ? (
 					<View className="mt-7 gap-3">
+						<MenuRow
+							icon={<Icon as={PawPrintIcon} size={24} />}
+							title={t('pets.title')}
+							onPress={() => router.push('/pets')}
+						/>
 						<LanguageRow />
+						<MenuRow
+							icon={<Icon as={ClipboardTextIcon} size={24} />}
+							title={t('profile.row_reports')}
+							onPress={() => router.push('/settings/reports')}
+						/>
 						<MenuRow
 							icon={<Icon as={BellRingingIcon} size={24} />}
 							title={t('profile.row_alerts')}
@@ -186,6 +207,7 @@ export default function ProfileTab() {
 							title={t('profile.nav_account')}
 							onPress={() => router.push('/settings/account')}
 						/>
+						{offline}
 						{cookies}
 						{help}
 						<SignOutRow />
@@ -200,6 +222,7 @@ export default function ProfileTab() {
 						/>
 						<View className="mt-10 gap-3">
 							<LanguageRow />
+							{offline}
 							{cookies}
 							{help}
 						</View>

@@ -121,8 +121,19 @@ export function fursFiscal(o: FursOptions): FiscalAdapter {
 	};
 }
 
-/** POST over mutual TLS (our certificate and key; the FURS CA when given), 10 s timeout. */
-const httpsTransport: FursTransport = (url, body, tls) =>
+/** Whole-call deadline: the socket timeout counts idle time only, so a trickling answer could outlast the lease. */
+export const DEADLINE_MS = 30_000;
+
+/**
+ * POST over mutual TLS (our certificate and key; the FURS CA when given): 10 s socket idle timeout, and the request
+ * is destroyed at `deadline_ms` however it is going.
+ */
+export const httpsTransport = (
+	url: string,
+	body: string,
+	tls: FursTls,
+	deadline_ms = DEADLINE_MS
+): ReturnType<FursTransport> =>
 	new Promise((resolve, reject) => {
 		const req = request(
 			url,
@@ -146,5 +157,11 @@ const httpsTransport: FursTransport = (url, body, tls) =>
 		);
 		req.on('timeout', () => req.destroy(new Error('furs: timeout')));
 		req.on('error', reject);
+		const deadline = setTimeout(() => {
+			const err = new Error('furs: deadline exceeded');
+			req.destroy(err);
+			reject(err);
+		}, deadline_ms);
+		req.on('close', () => clearTimeout(deadline));
 		req.end(body);
 	});

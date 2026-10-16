@@ -14,7 +14,6 @@ import TabsLayout from '@/app/(tabs)/_layout';
 import InboxTab from '@/app/(tabs)/inbox';
 import ProfileTab from '@/app/(tabs)/profile';
 import ReportTab from '@/app/(tabs)/report';
-import SettingsPlaceholder from '@/app/settings/[section]';
 import ConsentSettings from '@/app/settings/consent';
 import SettingsLayout from '@/app/settings/_layout';
 import LanguageSettings from '@/app/settings/language';
@@ -68,9 +67,12 @@ const routes = {
 	'settings/_layout': SettingsLayout,
 	'settings/consent': ConsentSettings,
 	'settings/language': LanguageSettings,
-	'settings/[section]': SettingsPlaceholder,
+	'settings/alerts': () => null,
 	'settings/notifications': () => null,
 	'settings/payments': () => null,
+	'pets/index': () => null,
+	'settings/offline': () => null,
+	'settings/reports': () => null,
 	// Stand-ins for the flow and auth screens that later stories add.
 	'report/lost': () => null,
 	'report/found': () => null,
@@ -148,7 +150,7 @@ describe('signed-out tabs', () => {
 		expect(result.getPathname()).toBe('/auth/sign-in');
 	});
 
-	test('Profile has sign-in, the language sheet and cookie settings, which work signed out', async () => {
+	test('Profile has sign-in, the language sheet, offline data and cookie settings, which work signed out', async () => {
 		const result = await shell('/profile');
 
 		expect(screen.getByRole('heading', { name: sl.profile.signed_out_title })).toBeOnTheScreen();
@@ -161,6 +163,10 @@ describe('signed-out tabs', () => {
 		expect(screen.getByRole('heading', { name: en.profile.signed_out_title })).toBeOnTheScreen();
 		expect(mockStorage.get('locale')).toBe('en');
 
+		// The report cache serves the Map tab signed out too (offline-settings.test.tsx).
+		await fireEvent.press(screen.getByRole('button', { name: en.profile.row_offline }));
+		expect(result.getPathname()).toBe('/settings/offline');
+		await act(() => router.back());
 		await fireEvent.press(screen.getByRole('button', { name: en.profile.row_cookie_settings }));
 		expect(result.getPathname()).toBe('/settings/consent');
 		expect(screen.getByText(en.consent.necessary_locked)).toBeOnTheScreen();
@@ -177,22 +183,26 @@ describe('signed in', () => {
 		await fireEvent.press(screen.getByRole('tab', { name: sl.nav.tab_profile }));
 
 		expect(screen.getByRole('heading', { name: sl.profile.title })).toBeOnTheScreen();
-		for (const [name, path, placeholder] of [
-			[sl.profile.row_alerts, '/settings/alerts', true],
-			[sl.alerts.channels_title, '/settings/notifications', false],
+		for (const [name, path] of [
+			[sl.profile.row_reports, '/settings/reports'],
+			[sl.profile.row_alerts, '/settings/alerts'],
+			[sl.alerts.channels_title, '/settings/notifications'],
+			[sl.profile.row_offline, '/settings/offline'],
 		] as const) {
 			await fireEvent.press(screen.getByRole('button', { name }));
 			expect(result.getPathname()).toBe(path);
-			if (placeholder) expect(screen.getByText(sl.common.empty_title)).toBeOnTheScreen();
 			// The settings stack sits above the tabs, so the bottom navigation is gone until back.
 			expect(screen.queryByRole('tab')).toBeNull();
 			await act(() => router.back());
 			expect(screen.getByRole('tab', { name: sl.nav.tab_profile, selected: true })).toBeOnTheScreen();
 			expect(result.getPathname()).toBe('/profile');
 		}
-		// Plačila is its own screen (payments.test.tsx).
+		// Plačila and Moje živali are their own screens (payments.test.tsx, pets.test.tsx).
 		await fireEvent.press(screen.getByRole('button', { name: sl.profile.row_payments }));
 		expect(result.getPathname()).toBe('/settings/payments');
+		await act(() => router.back());
+		await fireEvent.press(screen.getByRole('button', { name: sl.pets.title }));
+		expect(result.getPathname()).toBe('/pets');
 	});
 
 	test('Profile shows the account header; an unconfirmed address can get a new link', async () => {

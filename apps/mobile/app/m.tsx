@@ -22,6 +22,7 @@ import { useGetReportQuery, useTransitionReportMutation } from '@zivali/api/repo
 import type { QueryError } from '@zivali/api/rtk';
 import type { ReportOwnerView, ReportTransitionAction } from '@zivali/types';
 import { useErrorText } from '@/components/auth/parts';
+import { ConversationRow } from '@/components/chat/conversations';
 import { Spot } from '@/components/shell/parts';
 import {
 	AlertDialog,
@@ -242,6 +243,7 @@ function ManageView({ report }: { report: ReportOwnerView }) {
 	const t = useTranslations('report_found');
 	const tl = useTranslations('lifecycle');
 	const tc = useTranslations('common');
+	const tr = useTranslations('report');
 	const router = useRouter();
 	const errorText = useErrorText();
 	const [transition, { isLoading: busy }] = useTransitionReportMutation();
@@ -252,7 +254,8 @@ function ManageView({ report }: { report: ReportOwnerView }) {
 
 	/** Resolves whether it worked; a failure is a toast and the page stays as it was. */
 	const act = (action: ReportTransitionAction) =>
-		transition({ code: report.short_code, body: { action } })
+		// C4: a manager closes with a reason; the finder's page has no choice (P7/P14), so the neutral `other`.
+		transition({ code: report.short_code, body: action === 'close' ? { action, reason: 'other' } : { action } })
 			.unwrap()
 			.then(
 				() => true,
@@ -267,7 +270,6 @@ function ManageView({ report }: { report: ReportOwnerView }) {
 
 	const threads = conversations?.items.filter((c) => c.about_report.short_code === report.short_code) ?? [];
 	const unread = threads.reduce((sum, c) => sum + c.unread, 0);
-	// The inbox lists the conversations of every report this session manages (P12).
 	const openMessages = () => router.push('/inbox' as Href);
 
 	// Day counts need no live clock: the time the screen opened is enough.
@@ -337,9 +339,16 @@ function ManageView({ report }: { report: ReportOwnerView }) {
 							<Text className="font-sans-bold">{t('manage_unread', { count: unread })}</Text>
 						</View>
 					) : null}
-					<Button size="lg" className="mt-4" onPress={openMessages}>
-						{t('manage_open_messages')}
-					</Button>
+					{/* The Inbox tab is for accounts; this session opens its conversations here (P12, C9). */}
+					<View className="-mx-3 mt-3 gap-1">
+						{threads.map((conversation) => (
+							<ConversationRow
+								key={conversation.id}
+								conversation={conversation}
+								onPress={() => router.push(`/inbox/${conversation.id}` as Href)}
+							/>
+						))}
+					</View>
 				</>
 			) : null}
 
@@ -359,6 +368,16 @@ function ManageView({ report }: { report: ReportOwnerView }) {
 						{t('extend')}
 					</Button>
 				</Note>
+			) : null}
+
+			{report.status === 'open' || report.status === 'matched' ? (
+				<Button
+					variant="secondary"
+					className="mt-8 self-start"
+					onPress={() => router.push(`/r/${report.short_code}/edit` as Href)}
+				>
+					{tr('owner_edit')}
+				</Button>
 			) : null}
 
 			{/* Closed: facts read-only, no actions besides Reopen (P7 C8). */}

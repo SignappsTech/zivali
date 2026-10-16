@@ -1,23 +1,25 @@
 import { type Locale, useLocale } from 'next-intl';
 import { useParams } from 'next/navigation';
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback } from 'react';
 
-import { useSession } from '@zivali/api/auth';
-import { useUpdateMeMutation } from '@zivali/api/me';
 import { usePathname, useRouter } from '@/i18n/navigation';
 
 /**
+ * The signed-in side of the switch, set by useProfileLocale (use-profile-locale.ts) while SessionSync runs: it saves
+ * the profile locale. Signed-out pages leave it empty, so the switch (in every page's header and footer) ships no Redux
+ * (TASK-90.5).
+ */
+export const profileLocale: { save?: (next: Locale) => Promise<unknown> } = {};
+
+/**
  * The language switch (FR-036, C16): `switchLocale('en')` opens the same page in English and next-intl writes the
- * NEXT_LOCALE cookie. A signed-in user's profile locale is saved first, since emails and push use it. After a sign-in
- * in this tab the profile locale wins: the page moves to that language.
+ * NEXT_LOCALE cookie. A signed-in user's profile locale is saved first, since emails and push use it.
  */
 export function useLocaleSwitch() {
 	const locale = useLocale();
 	const pathname = usePathname();
 	const params = useParams();
 	const router = useRouter();
-	const { session, me, loading } = useSession();
-	const [updateMe] = useUpdateMeMutation();
 
 	const open = useCallback(
 		(next: Locale) =>
@@ -31,21 +33,11 @@ export function useLocaleSwitch() {
 		async (next: Locale) => {
 			if (next === locale) return;
 			// Awaited: the switch may reload the page, which would cancel the request. A failed save still switches.
-			if (me && me.locale !== next) await updateMe({ locale: next });
+			await profileLocale.save?.(next);
 			open(next);
 		},
-		[locale, me, updateMe, open]
+		[locale, open]
 	);
 
-	const wasSignedOut = useRef(false);
-	useEffect(() => {
-		if (loading) return;
-		if (!session) wasSignedOut.current = true;
-		else if (wasSignedOut.current && me && !me.is_anonymous) {
-			wasSignedOut.current = false;
-			if (me.locale !== locale) open(me.locale);
-		}
-	}, [loading, session, me, locale, open]);
-
-	return { locale, switchLocale };
+	return { locale, switchLocale, open };
 }

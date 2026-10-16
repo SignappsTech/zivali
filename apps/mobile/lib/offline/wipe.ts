@@ -2,7 +2,7 @@ import * as SecureStore from 'expo-secure-store';
 
 import { deleteDb, getDb } from '@/lib/db';
 import { draftsDir, outboxDir, pickerCacheDir, thumbsDir } from '@/lib/db/files';
-import { cacheQuietHours, stopGeofencing } from '@/lib/offline/geofence';
+import { cacheOwnReports, cacheQuietHours, stopGeofencing } from '@/lib/offline/geofence';
 import { MANAGE_TOKENS_INDEX, listManageTokenIds, manageTokenKey, pendingCount } from '@/lib/offline/outbox';
 import { syncIdle } from '@/lib/offline/sync';
 import { clearSessionStorage, supabase } from '@/lib/supabase';
@@ -10,7 +10,7 @@ import { clearSessionStorage, supabase } from '@/lib/supabase';
 export type WipeReason = 'sign_out' | 'account_deleted' | 'user_request';
 
 /**
- * C17 §Wipe: the public cache, areas, drafts, geofences and their files go. The outbox (the user's own unsent
+ * C17 §Wipe: the public cache, areas, drafts (not on a user-requested clear), geofences and their files go. The outbox (the user's own unsent
  * reports, resolved by the caller first) and the manage tokens of sent ones go only with the account (the whole database, files, session and keychain entries) or an explicit removeManageLinks.
  */
 export async function wipeLocalData({
@@ -21,12 +21,17 @@ export async function wipeLocalData({
 	removeManageLinks?: boolean;
 }): Promise<void> {
 	await stopGeofencing();
-	// The account's quiet hours go with it; "Clear offline data" keeps them for the next opt-in.
-	if (reason !== 'user_request') cacheQuietHours(null);
+	// The account's quiet hours and own report ids go with it; "Clear offline data" keeps them for the next opt-in.
+	if (reason !== 'user_request') {
+		cacheQuietHours(null);
+		cacheOwnReports(null);
+	}
 	// A running sync holds a transaction on the same connection; its resumed page then finds the area gone and drops.
 	await syncIdle();
 	const deleted = reason === 'account_deleted';
-	const dirs = [thumbsDir, draftsDir, pickerCacheDir];
+	// "Clear offline data" keeps unsent work: drafts (rows and files) stay with the outbox.
+	const dirs = [thumbsDir, pickerCacheDir];
+	if (reason !== 'user_request') dirs.push(draftsDir);
 	let tokenKeys: string[] = [];
 	if (deleted) {
 		tokenKeys = await sentTokenKeys();
@@ -34,9 +39,9 @@ export async function wipeLocalData({
 		await deleteDb();
 	} else {
 		const db = await getDb();
-		const sql = ['reports_cache', 'cache_areas', 'drafts', 'geofences', 'geofence_events']
-			.map((table) => `delete from ${table};`)
-			.join(' ');
+		const tables = ['reports_cache', 'cache_areas', 'geofences', 'geofence_events'];
+		if (reason !== 'user_request') tables.push('drafts');
+		const sql = tables.map((table) => `delete from ${table};`).join(' ');
 		if (removeManageLinks) {
 			tokenKeys = await sentTokenKeys();
 			const sent = `outbox_id in (select id from outbox where status = 'sent')`;

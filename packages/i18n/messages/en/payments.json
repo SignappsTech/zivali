@@ -3,6 +3,7 @@
 	"handoff_body": "We will open Stripe's secure payment page. When you are done, you will come back to the app.",
 	"handoff_continue": "Continue",
 	"handoff_cancel": "Cancel",
+	"premium_unavailable": "Premium isn't available yet. Please try again soon.",
 	"success_title": "Thank you for your contribution",
 	"success_body": "We have emailed you a receipt.",
 	"success_back": "Back to my report",
