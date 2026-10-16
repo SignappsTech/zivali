@@ -51,15 +51,12 @@ export function AdSlot({
 	slot,
 	species,
 	region,
-	divider = false,
 	className,
 }: {
 	slot: InlineSlot;
 	/** Targeting and GA context of the report the slot sits beside. */
 	species?: Species;
 	region?: string;
-	/** A hairline above the unit, shown and collapsed with it: keeps it apart from what comes before. */
-	divider?: boolean;
 	className?: string;
 }) {
 	const locale = useLocale() as Locale;
@@ -75,27 +72,15 @@ export function AdSlot({
 		track('ad_impression', gaParams(slot, shownId, species, region));
 	}, [shownId, slot, species, region, record]);
 
-	if (!online || (!ad && !loading)) return null;
+	if (!online) return null;
+	if (!ad) return loading ? <View aria-hidden className={cn(RESERVED[slot], className)} /> : null;
 
-	const open = (served: Ad) => {
-		if (!isSafeClickUrl(served.click_url)) return;
-		track('ad_click', gaParams(slot, served.id, species, region));
-		void WebBrowser.openBrowserAsync(served.click_url).catch(() => undefined);
+	const open = () => {
+		if (!isSafeClickUrl(ad.click_url)) return;
+		track('ad_click', gaParams(slot, ad.id, species, region));
+		void WebBrowser.openBrowserAsync(ad.click_url).catch(() => undefined);
 	};
-	const placed = divider ? undefined : className;
-	const unit = ad ? (
-		<AdUnit ad={ad} slot={slot} onPress={() => open(ad)} className={placed} />
-	) : (
-		<View aria-hidden className={cn(RESERVED[slot], placed)} />
-	);
-	return divider ? (
-		<View className={className}>
-			<View aria-hidden className="mb-12 h-px bg-border" />
-			{unit}
-		</View>
-	) : (
-		unit
-	);
+	return <AdUnit ad={ad} slot={slot} onPress={open} className={className} />;
 }
 
 function AdUnit({

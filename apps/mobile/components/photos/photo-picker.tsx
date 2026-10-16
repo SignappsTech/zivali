@@ -74,12 +74,18 @@ type PhotoPickerProps = {
 	onChange?: (photos: PickedPhoto[]) => void;
 	/** Place and time read from a photo, for LocationPicker `suggested`. Coarsen the point before it goes anywhere. */
 	onExif?: (exif: PhotoExif) => void;
+	/** false hides the two tiles: the screen offers its own buttons and calls `pick` on the ref (P7 step 1, empty). */
+	tiles?: boolean;
+	ref?: React.Ref<PhotoPickerHandle>;
 	/** Photos the entity already has (editing a pet), read on mount; they come first. */
 	saved?: SavedPhoto[];
 	/** Remove asks first with this dialog copy (P8: removed photos are deleted from storage too). */
 	confirmRemove?: { title: string; body: string; confirm: string };
+	/** true keeps the photos on this device and uploads them once false, e.g. until a lost report has an account (C3). */
+	hold?: boolean;
 	className?: string;
 };
+export type PhotoPickerHandle = { pick: (source: 'camera' | 'gallery') => Promise<void> };
 
 /**
  * Photo step of P6 and P7 (FR-003): camera and gallery tiles, then a row per photo with its preview, upload progress,
@@ -91,8 +97,11 @@ export function PhotoPicker({
 	cameraPrimer,
 	onChange,
 	onExif,
+	tiles = true,
+	ref,
 	saved,
 	confirmRemove,
+	hold,
 	className,
 }: PhotoPickerProps) {
 	const t = useTranslations('photos');
@@ -101,7 +110,9 @@ export function PhotoPicker({
 		cameraPrimer,
 		onExif,
 		saved,
+		hold,
 	});
+	React.useImperativeHandle(ref, () => ({ pick }));
 	// The photo waiting for the remove confirmation.
 	const [removing, setRemoving] = React.useState<string>();
 	const addRef = React.useRef<View>(null);
@@ -117,10 +128,12 @@ export function PhotoPicker({
 	return (
 		<View className={cn('gap-7', className)}>
 			<View className="gap-3">
-				<View className="flex-row gap-3">
-					<Tile ref={addRef} icon={CameraIcon} label={t('take')} onPress={() => void pick('camera')} />
-					<Tile icon={ImagesIcon} label={t('choose')} onPress={() => void pick('gallery')} />
-				</View>
+				{tiles && (
+					<View className="flex-row gap-3">
+						<Tile ref={addRef} icon={CameraIcon} label={t('take')} onPress={() => void pick('camera')} />
+						<Tile icon={ImagesIcon} label={t('choose')} onPress={() => void pick('gallery')} />
+					</View>
+				)}
 				{notice && <FieldError>{message(notice)}</FieldError>}
 			</View>
 
@@ -129,6 +142,8 @@ export function PhotoPicker({
 					{photos.map((photo, index) => {
 						const n = index + 1;
 						const percent = Math.round(photo.progress * 100);
+						// A held photo is kept on this device; it reads as ready, its upload comes later.
+						const ready = photo.status === 'uploaded' || photo.status === 'kept';
 						return (
 							<View key={photo.key} className="flex-row items-start gap-4">
 								<Image
@@ -138,7 +153,7 @@ export function PhotoPicker({
 									resizeMode="cover"
 								/>
 								<View className="min-w-0 flex-1">
-									{photo.status === 'uploaded' && index === 0 && (
+									{ready && index === 0 && (
 										<Text className="font-sans-bold text-sm">{t('cover')}</Text>
 									)}
 									{photo.status === 'uploading' && (
@@ -159,12 +174,7 @@ export function PhotoPicker({
 											</FieldError>
 										</>
 									)}
-									<View
-										className={cn(
-											'-ml-2.5 flex-row flex-wrap gap-1',
-											photo.status === 'uploaded' ? 'mt-2' : 'mt-1'
-										)}
-									>
+									<View className={cn('-ml-2.5 flex-row flex-wrap gap-1', ready ? 'mt-2' : 'mt-1')}>
 										{photo.status === 'failed' ? (
 											<Button variant="text" onPress={() => retry(photo.key)}>
 												<Icon as={ArrowClockwiseIcon} />

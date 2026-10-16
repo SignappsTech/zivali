@@ -20,7 +20,7 @@ import { useReport } from '@/lib/data/reports';
 import { cn } from '@/lib/utils';
 
 // P14 reunited screen (C15 `r/[code]/reunited`, managers only): the owner's calm celebration with the story consent,
-// the tip slot, "Končano" and the ad slot last; a finder gets the short thank-you (M7: no tip, no ad). No confetti, no motion.
+// the tip and ad slots and "Končano"; a finder gets the short thank-you (M7: no tip, no ad). No confetti, no motion.
 
 function TopBar({ onClose }: { onClose: () => void }) {
 	const tc = useTranslations('common');
@@ -49,8 +49,8 @@ function Heading({ children, className }: { children: string; className?: string
 
 /**
  * M3, top to bottom: the pet photo (its own 4:3 frame), h1 with the name, one warm sentence, the story switch (off by
- * default: explicit consent, A-023), the tip slot (P15), "Končano" to the map and "Delite veselo novico", then the one
- * ad slot (P21) below a hairline, away from the support ask (P15). The spot illustration above the photo joins when assets/reunited-celebration.png exists (TASK-26.1).
+ * default: explicit consent, A-023), the tip slot (P15), the one ad slot (P21), "Končano" to the map and "Delite veselo
+ * novico". The spot illustration above the photo joins when assets/reunited-celebration.png exists (TASK-26.1).
  */
 function OwnerReunited({ report, onClose }: { report: DetailReport; onClose: () => void }) {
 	const tl = useTranslations('lifecycle');
@@ -95,6 +95,7 @@ function OwnerReunited({ report, onClose }: { report: DetailReport; onClose: () 
 				</View>
 
 				<ReunitedTip report={report} className="mt-12" />
+				<ReunitedAd report={report} className="mt-12" />
 
 				<View className="mt-12 gap-1">
 					<Button size="lg" onPress={() => router.replace('/' as Href)}>
@@ -105,8 +106,6 @@ function OwnerReunited({ report, onClose }: { report: DetailReport; onClose: () 
 						{tl('share_news')}
 					</Button>
 				</View>
-				{/* Last, below a hairline: never next to the support ask (P15). */}
-				<ReunitedAd report={report} className="mt-12" />
 			</ScrollView>
 		</SafeAreaView>
 	);

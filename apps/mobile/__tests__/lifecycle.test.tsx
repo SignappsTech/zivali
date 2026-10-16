@@ -26,7 +26,7 @@ import { useMyReports, useReport } from '@/lib/data/reports';
 
 jest.mock('@/lib/data/reports', () => ({ useReport: jest.fn(), useMyReports: jest.fn() }));
 jest.mock('@/lib/env', () => ({ env: { EXPO_PUBLIC_APP_URL: 'https://najdimo.test' } }));
-// Online for the ad slots (ad-slot.test.tsx); no ad is served here, so they collapse.
+// Online for the ad slots (ad-slot.test.tsx); they collapse unless a test serves an ad.
 jest.mock('expo-network', () => ({ useNetworkState: () => ({ isConnected: true, isInternetReachable: true }) }));
 jest.mock('@/components/ui/sonner', () => ({
 	toast: Object.assign(jest.fn(), { success: jest.fn(), error: jest.fn() }),
@@ -41,7 +41,7 @@ jest.mock('@/components/outbox/queue', () => {
 	const { Text: MockText } = jest.requireActual<typeof import('react-native')>('react-native');
 	return { OutboxList: () => <MockText>device queue</MockText> };
 });
-let mockSession = { session: {} as object | null, me: null, isAnonymous: false, loading: false };
+let mockSession = { session: {} as object | null, me: null as object | null, isAnonymous: false, loading: false };
 jest.mock('@zivali/api/auth', () => ({
 	useSession: () => mockSession,
 	useRequireAuth: () => ({ ...mockSession, gate: mockSession.session ? 'ok' : 'signin' }),
@@ -226,6 +226,7 @@ describe('owner actions on the report page (P9 slot A, P14)', () => {
 		expect(screen.getByText(l.finder_thanks_body)).toBeOnTheScreen();
 		// No story consent, tip or ad on the finder's side (M7).
 		expect(screen.queryByRole('switch')).toBeNull();
+		expect(screen.queryByRole('heading', { name: sl.support.tip_title })).toBeNull();
 		await fireEvent.press(screen.getByRole('button', { name: l.finder_thanks_account }));
 		expect(page.getPathname()).toBe('/auth/sign-up');
 	});
@@ -387,11 +388,11 @@ describe('reunited screen (P14 M3)', () => {
 		expect(story).not.toBeChecked();
 		expect(toast).not.toHaveBeenCalled();
 
-		// The one ad comes last, after the actions and a hairline: never next to the support ask (P15).
+		// No tip ask without an account, so the one ad (P21) shows in its slot, before "Končano".
 		const unit = await screen.findByRole('link', { name: `Oglas: ${ad.title}. ${ad.body}` });
 		const tree = JSON.stringify(screen.toJSON());
-		expect(tree.indexOf(l.share_news)).toBeLessThan(tree.indexOf(unit.props.accessibilityLabel));
-		expect(tree).toContain('mb-12 h-px bg-border');
+		expect(tree.indexOf(l.story_label)).toBeLessThan(tree.indexOf(unit.props.accessibilityLabel));
+		expect(tree.indexOf(unit.props.accessibilityLabel)).toBeLessThan(tree.indexOf(l.done));
 
 		await fireEvent.press(screen.getByRole('button', { name: l.share_news }));
 		expect(shared).toHaveBeenCalledWith({
@@ -400,6 +401,31 @@ describe('reunited screen (P14 M3)', () => {
 		await fireEvent.press(screen.getByRole('button', { name: l.done }));
 		expect(await screen.findByText('map tab')).toBeOnTheScreen();
 		expect(page.getPathname()).toBe('/');
+	});
+
+	test('the owner gets the optional tip after the reunion, between the story switch and Končano (P15)', async () => {
+		mockSession = { ...mockSession, me: {} };
+		await open('/r/Rex2Lost/reunited', reunited);
+		expect(screen.getByRole('heading', { name: sl.support.tip_title })).toBeOnTheScreen();
+		for (const pill of screen.getAllByRole('radio')) expect(pill).not.toBeChecked();
+		expect(screen.getByRole('button', { name: sl.support.pay_disabled })).toBeDisabled();
+		await fireEvent.press(screen.getByRole('button', { name: sl.support.skip }));
+		expect(screen.queryByRole('heading', { name: sl.support.tip_title })).toBeNull();
+		// Skipping changes nothing else on the screen.
+		expect(screen.getByRole('button', { name: l.done })).toBeOnTheScreen();
+	});
+
+	test('no ad beside the tip ask: hidden (not even asked for) while it asks, shown once skipped (P15, P21)', async () => {
+		mockSession = { ...mockSession, me: {} };
+		served = ad;
+		// Another report: the ask for Rex2Lost was answered above (in-memory per app session).
+		await open('/r/Mica1234/reunited', { ...reunited, id: 'b2', short_code: 'Mica1234' });
+		expect(screen.getByRole('heading', { name: sl.support.tip_title })).toBeOnTheScreen();
+		expect(screen.queryByRole('link', { name: /^Oglas: / })).toBeNull();
+		expect(mockApi.calls.some((call) => call.path.startsWith('/v1/ads/'))).toBe(false);
+
+		await fireEvent.press(screen.getByRole('button', { name: sl.support.skip }));
+		expect(await screen.findByRole('link', { name: `Oglas: ${ad.title}. ${ad.body}` })).toBeOnTheScreen();
 	});
 
 	test('only for a manager of a reunited report; anyone else gets the report page', async () => {

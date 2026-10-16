@@ -33,6 +33,8 @@ jest.mock('expo-network', () => ({
 	getNetworkStateAsync: jest.fn(async () => ({ isConnected: true, isInternetReachable: true })),
 	useNetworkState: () => mockNetwork,
 }));
+// No tip ask on the reunited screen, so its ad may show (the gating on the ask is tested in lifecycle.test.tsx).
+jest.mock('@/components/payments/support', () => ({ useSupportTipState: () => 'none' }));
 
 const served: Ad = {
 	...fixture,
@@ -110,11 +112,7 @@ describe('AdSlot (P21 mobile)', () => {
 		setConsent({ analytics: true });
 		const client = await renderSlot(<ReunitedAd report={report} />);
 
-		const unit = await screen.findByRole('link', { name: name(served) });
-		// Kept apart from the support ask above it by a decorative hairline (P15).
-		const [hairline] = (screen.toJSON() as { children: { props: Record<string, unknown> }[] }).children;
-		expect(hairline!.props).toMatchObject({ 'aria-hidden': true, className: 'mb-12 h-px bg-border' });
-		await fireEvent.press(unit);
+		await fireEvent.press(await screen.findByRole('link', { name: name(served) }));
 		expect(adCalls(client, 'GET')[0]).toMatchObject({
 			path: '/v1/ads/slot/reunited',
 			query: { locale: 'sl', species: 'dog' },
@@ -153,22 +151,19 @@ describe('AdSlot (P21 mobile)', () => {
 		['no ad for the slot', { 'GET /v1/ads/slot/:slot': () => null }],
 		['a failed request', { 'GET /v1/ads/slot/:slot': () => mockError('INTERNAL') }],
 		['a refused slot', { 'GET /v1/ads/slot/:slot': () => mockError('VALIDATION') }],
-	])(
-		'%s collapses the slot silently (the reunited one with its hairline): nothing rendered or counted',
-		async (_case, routes) => {
-			const client = await renderSlot(
-				<>
-					<AdSlot slot="feed" />
-					<ReunitedAd report={report} />
-				</>,
-				routes
-			);
-			await waitFor(() => expect(adCalls(client, 'GET').length).toBeGreaterThanOrEqual(2));
-			// A 5xx is retried twice first (C1), with the reserved box meanwhile.
-			await waitFor(() => expect(screen.toJSON()).toBeNull(), { timeout: 4000 });
-			expect(adCalls(client, 'POST')).toEqual([]);
-		}
-	);
+	])('%s collapses the slots silently (feed and reunited): nothing rendered or counted', async (_case, routes) => {
+		const client = await renderSlot(
+			<>
+				<AdSlot slot="feed" />
+				<ReunitedAd report={report} />
+			</>,
+			routes
+		);
+		await waitFor(() => expect(adCalls(client, 'GET').length).toBeGreaterThanOrEqual(2));
+		// A 5xx is retried twice first (C1), with the reserved box meanwhile.
+		await waitFor(() => expect(screen.toJSON()).toBeNull(), { timeout: 4000 });
+		expect(adCalls(client, 'POST')).toEqual([]);
+	});
 
 	test('offline hides the ad, even one already loaded, and counts nothing; the saved report copy has no ad', async () => {
 		const client = await renderSlot(<AdSlot slot="feed" />);
@@ -234,9 +229,11 @@ describe('no AdSlot in protected flows', () => {
 		'app/(tabs)/report.tsx',
 		'app/report/lost/index.tsx',
 		'app/report/lost/done.tsx',
+		'app/report/found/index.tsx',
 		'app/m.tsx',
 		'app/settings/reports.tsx',
 		'app/(tabs)/inbox.tsx',
+		'app/inbox/[id].tsx',
 		'app/auth/sign-in.tsx',
 		'app/auth/sign-up.tsx',
 		'app/auth/forgot-password.tsx',

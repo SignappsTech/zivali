@@ -51,8 +51,10 @@ Gallery: `/dev/kit` (redirects to `/` when `EXPO_PUBLIC_APP_ENV=production`). `r
 
 ## Report lost (P6, TASK-29.5)
 
-- `app/report/lost/index.tsx` runs `LostFlow` (`components/report-lost/lost-flow.tsx`; rules and request bodies in `lost-form.ts`): pet, photos, details (new pet only, the PetFields parts), where (LocationPicker, lost mode with radius), when, what happened (contact preference and the display-only reward, checked with `containsContactData()`), review. Publish calls `POST /v1/reports` online (lost reports need an account, so no outbox); `DUPLICATE_OPEN_REPORT` offers to update the open search (`PATCH`) or to report the pet again inline. Signed out, Publish opens the `AuthGate`. `/report/lost/done` is the short confirmation that TASK-29.6 completes.
+- `app/report/lost/index.tsx` runs `LostFlow` (`components/report-lost/lost-flow.tsx`; rules and request bodies in `lost-form.ts`): pet, photos, details (new pet only, the PetFields parts), where (LocationPicker, lost mode with radius), when, what happened (contact preference and the display-only reward, checked with `containsContactData()`), review. Publish calls `POST /v1/reports` online (lost reports need an account, so no outbox); `DUPLICATE_OPEN_REPORT` offers to update the open search (`PATCH`) or to report the pet again inline. Signed out, Publish opens the `AuthGate`.
 - The draft is the `drafts` row `lost` (C17), saved on every step with the coarsened point; PhotoPicker keeps its photos under the same id. Opening the flow with a draft offers to continue it.
+- Signed out (TASK-29.6), nothing is sent: PhotoPicker runs with `hold` (photos stay `kept` on the device). After sign-in or sign-up through the gate the flow uploads them under the new account and, once it is the focused screen again, sends the same publish (one submission, its pinned Idempotency-Key and body).
+- `/report/lost/done` (`components/report-lost/lost-done.tsx`): next steps, the responsible shelter (`useResponsibleShelter`, C18, by the report's municipality, else its point) with `tel:` call and the duty sentence, the poster (the P18 screen `r/[code]/poster`), share (`lib/share`), the report, the first-24-hours tips and the collapsed P15 contribution row (`ContributionRow`, 2, 3, 5 €, nothing chosen; Prispevaj opens `CheckoutSheet`). No legal timings until `content.legal_timings` and their copy exist.
 - A saved pet still asks for photos: pet photos cannot be attached to a report (C5).
 
 ## Map tab (P4, TASK-31.5)
@@ -71,7 +73,7 @@ Gallery: `/dev/kit` (redirects to `/` when `EXPO_PUBLIC_APP_ENV=production`). `r
 
 ## Deep links and push token (C15, C10)
 
-- `app.config.ts` takes the host from `EXPO_PUBLIC_APP_URL` (eas.json: staging `staging.najdimo.si`, production `najdimo.si`; unset in dev builds): iOS `associatedDomains`, Android `autoVerify` intent filter for `/r/`, `/en/r/`, `/m`, `/en/m`, `/payments/`. `zivali://` stays for dev; `app/+native-intent.ts` drops the `/en` prefix (`lib/deep-link.ts`).
+- `app.config.ts` takes the host from `EXPO_PUBLIC_APP_URL` (eas.json: staging `staging.najdimo.si`, production `najdimo.si`; unset in dev builds): iOS `associatedDomains`, Android `autoVerify` intent filter for the listing (`/r/<code>`, `/ujemanja`, `/spet-doma`; EN `/en/r/<code>`, `/matches`, `/reunited`), `/m`, `/en/m`, `/payments/`. The poster PDF and OG image under `/r/<code>/` are not claimed (AASA excludes them). `zivali://` stays for dev; `app/+native-intent.ts` drops the `/en` prefix and maps the SL pages to `r/[code]/matches` and `reunited` (`lib/deep-link.ts`). A route without a screen shows `app/+not-found.tsx`; the generated `/_sitemap` is off.
 - The verification files are served by apps/web: `/.well-known/apple-app-site-association` (env `APPLE_TEAM_ID`) and `/.well-known/assetlinks.json` (env `ANDROID_CERT_SHA256`, comma-separated). A platform whose value is unset gets an empty file, so links open the web page.
 - Client steps (Q-007): (1) Apple Developer Team ID into `APPLE_TEAM_ID` on both web hosts, then rebuild iOS with the Associated Domains capability; (2) after the first EAS build run `eas credentials` (and Play Console, app signing) for the SHA-256 fingerprint(s) into `ANDROID_CERT_SHA256`; (3) check `https://<host>/.well-known/assetlinks.json` and `adb shell pm get-app-links si.signapps.zivali` (`verified`); (4) FCM/APNs credentials in EAS, then `EXPO_PUBLIC_PUSH_PROVIDER=expo`.
 - Push: `usePushPermission().request` (`lib/push.ts`) is the `request` of the notifications `PermissionPrimer`; after the OS grant it passes the token to `registerPushToken`. `EXPO_PUBLIC_PUSH_PROVIDER=mock` (default) uses a placeholder token. TASK-22.5 mounts the primer.
@@ -79,7 +81,7 @@ Gallery: `/dev/kit` (redirects to `/` when `EXPO_PUBLIC_APP_ENV=production`). `r
 ## Report lifecycle and My reports (P14, TASK-26.5)
 
 - Owner actions (signed-in owner or manage-link holder, `is_mine`) fill slot A and slot C of `app/r/[code]`: "Žival je spet doma" (confirm sheet; a finder gets the dialog), "Uredi" (`app/r/[code]/edit.tsx`: what happened and the lost report's reward), "Zaključi iskanje" with a reason, and "Ponovno odpri" while a closed or reunited report is within 7 days. The sheets and the transitions are in `components/report/lifecycle.tsx`.
-- `app/r/[code]/reunited.tsx` is the reunited screen (owner: story switch, tip and ad slots in `components/report/reunited-slots.tsx` for TASK-33.3 and TASK-36.6; finder: the short thank-you). `reunited` is tracked on a successful mark, with consent only.
+- `app/r/[code]/reunited.tsx` is the reunited screen (owner: story switch, the P15 tip (`SupportTip`) and the ad slot in `components/report/reunited-slots.tsx`, TASK-36.6; finder: the short thank-you). `reunited` is tracked on a successful mark, with consent only.
 - Profil → Moje prijave (`app/settings/reports.tsx`): the device queue, then `useMyReports()` (`lib/data/reports.ts`, network only).
 
 ## Anonymous finders and the manage link (C7, TASK-17.3)
@@ -88,6 +90,13 @@ Gallery: `/dev/kit` (redirects to `/` when `EXPO_PUBLIC_APP_ENV=production`). `r
 - `app/m.tsx` opens `/m#<token>` (universal link or `zivali://m#<token>`; Expo Router passes the fragment as the `#` param): `claimManageLink()` signs in, calls `POST /v1/manage/claim`, stores the token in expo-secure-store (`manage_token.<report_id>`, as the outbox) and shows the P7 manage page. Offline, captcha or server failures retry every 60 s and on reconnect.
 - Every API request carries `x-device-id`: one random id per install in expo-secure-store (`device_id`, `lib/store.ts`).
 - `react-native-webview` is a native module: install a new development build after pulling it.
+
+## Report found or sighted (P7, TASK-30.3)
+
+- `app/report/found/index.tsx` runs `components/report-found/found-flow.tsx`: photo, which animal, where, is it with you, publish (`?type=sighted` starts on "Ne, žival ni pri meni"). With `linked_report_id` (plus `code` and `species`, from P9 "Sporoči opažanje") it is the short sighting flow: where, when, optional photo and note, no email. It never asks where the animal is kept.
+- "Kje" takes the photo's EXIF place, else a GPS fix when the permission is already granted (it never prompts); both are coarsened once on arrival, and with neither the LocationPicker opens. The capture time is the earliest EXIF time (else when the flow opened) or the sighting's "when"; it becomes `event_at` however late the outbox sends.
+- Publish calls `submitReport()` (C17). The outbox answer picks the screen (`found-done.tsx`): sent → the private link (token read from expo-secure-store, never in a URL param or log) and the responsible-shelter row; still queued → "Čaka na pošiljanje" with the row from the cached directory, which turns into the sent screen by itself. A rate limit, a failed check or a refusal removes that outbox item and keeps the form.
+- `ShelterRow` (`components/shelter/shelter-row.tsx`, namespace `shelter_row`) is the shared P6/P7 row: confirmed, likely, nearest or the directory note, live online and from `getCachedShelter` offline.
 
 ## Poster and sharing (P18, TASK-24.3)
 
@@ -98,6 +107,7 @@ Gallery: `/dev/kit` (redirects to `/` when `EXPO_PUBLIC_APP_ENV=production`). `r
 
 - Web checkout only (A-014). `<CheckoutSheet open onOpenChange checkout={{ purpose, amountCents, refs, returnTo }} />` (`components/payments/checkout.tsx`) shows the P15 hand-off sheet; Nadaljuj calls `startCheckout` with `returnScheme: true`, opens the URL with `WebBrowser.openAuthSessionAsync(url, 'zivali://payments/return')` (`lib/checkout.ts`) and then shows the return state in the same sheet (polls `GET /v1/payments/:id` while pending).
 - Android also hands that return link to the router; `app/+native-intent.ts` drops it while the browser is open. Opened later (the app was closed meanwhile), it lands on `app/payments/return.tsx`. Only `canceled=1` is read from the link, so an https page that bounces to `zivali://payments/return` works the same.
+- P15 asks (`components/payments/support.tsx`, TASK-33.3): `SupportTip` (reunited: 3, 5 suggested, 10 € or another amount from 2 to 500 €, Pay and Preskoči stacked), `ContributionRow` (lost confirmation, collapsed) and `SupportCard` (Profile, purpose `support`, no Skip). Nothing pre-selected; signed-in accounts only; a skipped or paid ask is not shown again for that report this app session (in memory, nothing on the device). The unticked monthly box shows only with the public `flags.supporter_monthly` and checks out `subscription` (503 before M4 → `payments.premium_unavailable`). A succeeded payment fires `donation` (value, currency, amount_bucket, purpose; consent only) from the return state.
 - Settings → Plačila (`app/settings/payments.tsx`) lists settled payments. Dev builds: `/dev/pay` starts a 5 € `support` payment (mock provider locally). `expo-web-browser` is a native module: install a new development build after pulling it.
 
 ## Analytics (TASK-7.3)

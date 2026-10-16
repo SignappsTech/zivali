@@ -297,7 +297,7 @@ function Actions({ match, mine, code }: { match: MatchSuggestion; mine: Mine | u
 	// Confirming opens the conversation (C9); a confirmed match answers with the same one again (idempotent).
 	const openChat = async (first: boolean) => {
 		try {
-			await confirm({ id: match.id }).unwrap();
+			const { conversation_id } = await confirm({ id: match.id }).unwrap();
 			const region = regionOf(mine);
 			if (first && region)
 				track('match_confirmed', {
@@ -305,8 +305,7 @@ function Actions({ match, mine, code }: { match: MatchSuggestion; mine: Mine | u
 					region,
 					match_source: match.chip_match ? 'chip' : 'attributes',
 				});
-			// TODO(TASK-21.4): `/inbox/${conversation_id}` once the P12 conversation route exists; the inbox tab until then.
-			router.push('/inbox' as Href);
+			router.push(`/inbox/${conversation_id}` as Href);
 		} catch (failure) {
 			if (errorCodeOf(failure) === 'UNVERIFIED_EMAIL') setUnverified(true);
 			else toast.error(errorText(failure));

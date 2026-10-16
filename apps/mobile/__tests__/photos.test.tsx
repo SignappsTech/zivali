@@ -651,6 +651,42 @@ describe('PhotoPicker', () => {
 		);
 	});
 
+	it('holds the photos on the device while `hold` is on (also after a restart), then uploads them', async () => {
+		const calls = pendingUploads();
+		const onChange = jest.fn();
+		const tree = (hold: boolean) => (
+			<IntlProvider locale="sl" messages={sl} timeZone="Europe/Ljubljana">
+				<PhotoPicker
+					draft="draft-1"
+					kind="lost"
+					cameraPrimer={jest.fn(async () => true)}
+					{...{ hold, onChange }}
+				/>
+			</IntlProvider>
+		);
+		const first = await render(tree(true));
+		await press('Izberi iz galerije');
+		expect(await screen.findByText('Naslovna fotografija')).toBeOnTheScreen();
+		expect(screen.queryByText(/^Nalaganje/)).toBeNull();
+		await waitFor(async () => expect(await storedPhotos()).toHaveLength(1));
+		await first.unmount();
+
+		const view = await render(tree(true));
+		expect(await screen.findByLabelText('Fotografija 1 od 1')).toBeOnTheScreen();
+		expect(onChange).toHaveBeenLastCalledWith([expect.objectContaining({ status: 'kept', photoId: undefined })]);
+		expect(upload).not.toHaveBeenCalled();
+
+		await view.rerender(tree(false));
+		await waitFor(() => expect(calls).toHaveLength(1));
+		await act(async () => calls[0].resolve('photo-1'));
+		await waitFor(() =>
+			expect(onChange).toHaveBeenLastCalledWith([
+				expect.objectContaining({ status: 'uploaded', photoId: 'photo-1' }),
+			])
+		);
+		expect(upload).toHaveBeenCalledTimes(1);
+	});
+
 	it('hands EXIF place and time to the page and never puts them or the file name in the draft', async () => {
 		const exif = { lat: 46.0569, lng: 14.5058, takenAt: new Date('2026-10-14T07:30:00Z') };
 		prepare.mockResolvedValueOnce({ photo: prepared(1), exif });

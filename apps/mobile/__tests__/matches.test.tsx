@@ -176,7 +176,7 @@ async function open(path: string) {
 			'r/[code]/index': () => <Text>report screen</Text>,
 			'r/[code]/matches/index': MatchesScreen,
 			'r/[code]/matches/[id]': MatchReviewScreen,
-			inbox: () => <Text>chat screen</Text>,
+			'inbox/[id]': () => <Text>chat screen</Text>,
 			'auth/check-email': () => <Text>check email screen</Text>,
 		},
 		{ initialUrl: path, wrapper: Providers }
@@ -365,7 +365,7 @@ describe('match review (P11 mobile)', () => {
 
 		await fireEvent.press(screen.getByRole('button', { name: m.confirm }));
 		expect(await screen.findByText('chat screen')).toBeOnTheScreen();
-		expect(page.getPathname()).toBe('/inbox'); // TODO(TASK-21.4): `/inbox/${CONVERSATION}`
+		expect(page.getPathname()).toBe(`/inbox/${CONVERSATION}`);
 		expect(calls('/v1/matches/')).toEqual([expect.objectContaining({ path: `/v1/matches/${chip.id}/confirm` })]);
 		expect(getMockEvents().map((e) => [e.name, e.params])).toEqual([
 			['match_suggested', { species: 'dog', region: 'osrednjeslovenska', match_source: 'chip' }],
@@ -435,7 +435,7 @@ describe('match review (P11 mobile)', () => {
 		expect(screen.queryByRole('button', { name: m.confirm })).toBeNull();
 		await fireEvent.press(screen.getByRole('button', { name: m.open_chat }));
 		expect(await screen.findByText('chat screen')).toBeOnTheScreen();
-		expect(page.getPathname()).toBe('/inbox'); // TODO(TASK-21.4): `/inbox/${CONVERSATION}`
+		expect(page.getPathname()).toBe(`/inbox/${CONVERSATION}`);
 		expect(getMockEvents()).toEqual([]);
 	});
 

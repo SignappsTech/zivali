@@ -74,8 +74,8 @@ export type InboxRow = {
 export type InboxGroup = { group: 'today' | 'week' | 'earlier'; rows: InboxRow[] };
 
 const ljubljanaDate = new Intl.DateTimeFormat('en-GB', { timeZone, year: 'numeric', month: 'numeric', day: 'numeric' });
-/** Day number of the Ljubljana calendar date, so "today" ends at local midnight. */
-function day(date: string | number): number {
+/** Day number of the Ljubljana calendar date, so "today" ends at local midnight (also the chat day separators). */
+export function day(date: string | number): number {
 	const parts = Object.fromEntries(ljubljanaDate.formatToParts(new Date(date)).map((p) => [p.type, p.value]));
 	return Date.UTC(Number(parts.year), Number(parts.month) - 1, Number(parts.day)) / 86_400_000;
 }

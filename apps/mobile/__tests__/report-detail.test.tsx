@@ -300,7 +300,12 @@ describe('report detail (P9 mobile)', () => {
 		await fireEvent.press(screen.getByRole('button', { name: r.action_sighting }));
 		expect(await screen.findByText('sighted flow')).toBeOnTheScreen();
 		expect(page.getPathname()).toBe('/report/found');
-		expect(page.getSearchParams()).toEqual({ type: 'sighted', linked_report_id: found.id });
+		expect(page.getSearchParams()).toEqual({
+			type: 'sighted',
+			linked_report_id: found.id,
+			code: found.short_code,
+			species: found.species,
+		});
 	});
 
 	test('slot A for a sighted report: message first, "To je moja žival" as the text button', async () => {

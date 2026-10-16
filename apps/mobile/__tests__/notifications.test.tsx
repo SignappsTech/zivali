@@ -352,7 +352,7 @@ describe('Inbox tab: notifications view', () => {
 		serve({
 			'GET /v1/notifications': list([message('m2', 5), message('m1', 10), nearby, todayChip, reminder, receipt]),
 		});
-		await open('/inbox');
+		await open('/inbox?view=notifications');
 
 		expect(await screen.findByRole('heading', { name: sl.notifications.title })).toBeOnTheScreen();
 		for (const group of ['group_today', 'group_week', 'group_earlier'] as const)
@@ -376,7 +376,7 @@ describe('Inbox tab: notifications view', () => {
 			'GET /v1/notifications': list([message('m2', 5), message('m1', 10), todayChip]),
 			'POST /v1/notifications/read': () => undefined,
 		});
-		const result = await open('/inbox');
+		const result = await open('/inbox?view=notifications');
 
 		await fireEvent.press(await screen.findByRole('button', { name: sl.notifications.mark_all }));
 		await waitFor(() => expect(sent('POST', '/v1/notifications/read')).toEqual([{ all: true }]));
@@ -389,7 +389,7 @@ describe('Inbox tab: notifications view', () => {
 	test('a new notification arrives in real time', async () => {
 		let items = [nearby];
 		serve({ 'GET /v1/notifications': () => list(items) });
-		await open('/inbox');
+		await open('/inbox?view=notifications');
 		await screen.findByText('Izgubljen pes v vaši bližini');
 		expect(screen.queryByRole('button', { name: sl.notifications.mark_all })).toBeNull();
 
@@ -405,7 +405,7 @@ describe('Inbox tab: notifications view', () => {
 			'POST /v1/notifications/read': () => undefined,
 			'POST /v1/reports/:code/transitions': () => ({}),
 		});
-		const result = await open('/inbox');
+		const result = await open('/inbox?view=notifications');
 
 		await fireEvent.press(await screen.findByRole('button', { name: sl.notifications.reminder_keep }));
 		await waitFor(() => expect(sent('POST', '/v1/reports/Lu7aB2cD/transitions')).toEqual([{ action: 'extend' }]));
@@ -418,7 +418,7 @@ describe('Inbox tab: notifications view', () => {
 	test('empty: the sentence and "Set up alerts"; push denied: the fallback note', async () => {
 		mockPush.permission = { granted: false, canAskAgain: false };
 		serve({ 'GET /v1/notifications': list([]) });
-		const result = await open('/inbox');
+		const result = await open('/inbox?view=notifications');
 
 		expect(await screen.findByText(sl.notifications.empty_title)).toBeOnTheScreen();
 		expect(screen.getByText(sl.notifications.empty_body)).toBeOnTheScreen();
@@ -432,7 +432,7 @@ describe('Inbox tab: notifications view', () => {
 		serve({
 			'GET /v1/notifications': () => (fail ? mockError('INTERNAL') : list([nearby])),
 		});
-		await open('/inbox');
+		await open('/inbox?view=notifications');
 
 		expect(await screen.findByText(sl.common.inline_error, {}, { timeout: 10_000 })).toBeOnTheScreen();
 		fail = false;
