@@ -10,6 +10,8 @@ const AXE_TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'];
 const OWNER = { id: '0b5f6a3e-6c1d-4f8e-9a2b-3c4d5e6f7a80', role: 'USER', aal: 'aal1' } as const;
 
 async function expectNoAxeViolations(page: Page) {
+	// Axe measures contrast mid-fade otherwise (a slow single-worker CI run): wait for every animation to settle.
+	await page.waitForFunction(() => document.getAnimations().every((animation) => animation.playState !== 'running'));
 	const { violations } = await new AxeBuilder({ page }).withTags(AXE_TAGS).analyze();
 	expect(
 		violations.map(({ id, nodes }) => `${id}: ${nodes.map((node) => node.target.join(' ')).join(', ')}`)
@@ -46,7 +48,8 @@ test('the owner closes the search with a reason, then reopens it within the wind
 	await dialog.getByRole('radio', { name: 'Prijava je bila pomota' }).click();
 	await dialog.getByRole('button', { name: 'Zaključi iskanje' }).click();
 
-	await expect(page.getByText('Iskanje je zaključeno.')).toBeVisible();
+	// The page's own note, not the toast with the same words.
+	await expect(page.getByRole('main').getByText('Iskanje je zaključeno.')).toBeVisible();
 	await expect(page.getByText('Zaključeno', { exact: true })).toBeVisible();
 	expect(sent).toEqual([{ action: 'close', reason: 'other' }]);
 
