@@ -9,7 +9,7 @@ import { afterAll, describe, expect, it, vi } from 'vitest';
 
 import { adapters } from '../../adapters/index.ts';
 import { app } from '../../app.ts';
-import { ReportsDomain } from '../../domains/reports/index.ts';
+import { ReportsDomain, ReportsMapper } from '../../domains/reports/index.ts';
 import type { USER_ROLE } from '../../generated/enums.ts';
 import configStore from '../../lib/config-store.ts';
 import { config } from '../../lib/config.ts';
@@ -357,6 +357,103 @@ describe('manage token on POST /v1/reports (C7)', () => {
 		const withEmail = await post(member, sighted({ finder_email: email() }));
 		expect(withEmail.status).toBe(400);
 		expect(withEmail.body.error.issues[0].path).toBe('finder_email');
+	});
+});
+
+describe('repeats beyond the Idempotency-Key window (C17 outbox, C1)', () => {
+	/** What the 24 h window leaves after a day: the stored response is past its age, so the key is free again. */
+	const expire = (key: string) =>
+		prisma.idempotency_keys.updateMany({ where: { key }, data: { created_at: new Date(Date.now() - 25 * HOUR) } });
+
+	it('after 25 h returns the found report created then with a new token; the old link stops, the email gets the new one', async () => {
+		const finder = await anon();
+		const to = email();
+		const key = randomUUID();
+		const payload = sighted({ type: 'found', finder_email: to, photo_ids: [await photo(finder.id)] });
+		const first = await post(finder, payload, { key, device: randomUUID() });
+		expect(first.status).toBe(201);
+		await expire(key);
+
+		const repeat = await post(finder, payload, { key, device: randomUUID() });
+		expect(repeat.status).toBe(201);
+		expect(repeat.headers['idempotent-replayed']).toBeUndefined();
+		const { manage_token: oldToken, ...created } = first.body;
+		const { manage_token: token, ...again } = repeat.body;
+		expect(again).toEqual(created);
+		expect(token).toMatch(TOKEN);
+		expect(token).not.toBe(oldToken);
+		expect(await prisma.reports.count({ where: { created_by: finder.id } })).toBe(1);
+		const row = await prisma.reports.findUniqueOrThrow({ where: { id: created.id } });
+		expect(Buffer.from(row.manage_token_hash!)).toEqual(sha256(token));
+		expect(JSON.stringify(row)).not.toContain(token);
+		expect(mailsTo(to).map((m) => tokenIn(m.html))).toEqual([oldToken, token]);
+		expect((await claim(await anon(), oldToken)).status).toBe(404);
+		expect((await claim(await anon(), token)).body).toEqual({
+			report_id: created.id,
+			short_code: created.short_code,
+		});
+
+		// The repeat's answer is what the key replays for the next 24 h.
+		const replay = await post(finder, payload, { key });
+		expect(replay.headers['idempotent-replayed']).toBe('true');
+		expect(replay.body).toEqual(repeat.body);
+	});
+
+	it('a 5xx after the commit frees the key, yet the retry returns the report created then; closed reports get no token', async () => {
+		const finder = await anon();
+		const key = randomUUID();
+		const payload = sighted();
+		const fail = vi.spyOn(ReportsMapper, 'toCreated').mockImplementationOnce(() => {
+			throw new Error('answer lost after the commit');
+		});
+		try {
+			expect((await post(finder, payload, { key })).status).toBe(500);
+		} finally {
+			fail.mockRestore();
+		}
+		expect(await prisma.idempotency_keys.findUnique({ where: { key } })).toBeNull();
+		const [report] = await prisma.reports.findMany({ where: { created_by: finder.id } });
+
+		const retry = await post(finder, payload, { key });
+		expect(retry.status).toBe(201);
+		expect(retry.body).toMatchObject({ id: report!.id, short_code: report!.short_code, warnings: [] });
+		expect(await prisma.reports.count({ where: { created_by: finder.id } })).toBe(1);
+		const row = await prisma.reports.findUniqueOrThrow({ where: { id: report!.id } });
+		expect(Buffer.from(row.manage_token_hash!)).toEqual(sha256(retry.body.manage_token));
+
+		// Closing ends the manage link (C7): a later repeat returns the report without issuing a new one.
+		await prisma.reports.update({ where: { id: row.id }, data: { status: 'closed', manage_token_hash: null } });
+		await expire(key);
+		const closed = await post(finder, payload, { key });
+		expect(closed.status).toBe(201);
+		expect(closed.body).not.toHaveProperty('manage_token');
+		expect((await prisma.reports.findUniqueOrThrow({ where: { id: row.id } })).manage_token_hash).toBeNull();
+	});
+
+	it('another body with the same id is CONFLICT; ids are per creator; signed-in creators get no token', async () => {
+		const member = await person();
+		const key = randomUUID();
+		const payload = sighted({ photo_ids: [await photo(member.id)] });
+		const first = await post(member, payload, { key });
+		expect(first.status).toBe(201);
+		await expire(key);
+
+		const repeat = await post(member, payload, { key });
+		expect(repeat.status).toBe(201);
+		expect(repeat.body).toEqual(first.body);
+		expect(repeat.body).not.toHaveProperty('manage_token');
+		await expire(key);
+		const other = await post(member, { ...payload, circumstances: 'Another sighting' }, { key });
+		expect(other.status).toBe(409);
+		expect(other.body.error.code).toBe('CONFLICT');
+		expect(await prisma.reports.count({ where: { created_by: member.id } })).toBe(1);
+
+		// Someone else's submission with the same id (after the window) is their own report.
+		await expire(key);
+		const finder = await anon();
+		const theirs = await post(finder, sighted(), { key });
+		expect(theirs.status).toBe(201);
+		expect(theirs.body.id).not.toBe(first.body.id);
 	});
 });
 
