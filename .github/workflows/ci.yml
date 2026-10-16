@@ -1,5 +1,7 @@
 # CI (ADR-016, docs/04 §CI/CD): every pull request and every push to main runs the gates of `pnpm verify`, the
 # quality kit and the Docker image builds. Branch protection on main requires the jobs verify, quality and images.
+# The mobile app's gates run in mobile.yml instead: the app ships through EAS, so they do not hold up the web deploy
+# (deploy.yml waits for this workflow only).
 # No secrets are used: every adapter runs on its mock and the database is a throwaway local Supabase stack.
 name: ci
 
@@ -25,9 +27,9 @@ env:
 
 jobs:
   verify:
-    # `pnpm verify` (format, lint, root script tests, secretlint, then Turbo: lint, typecheck, unit tests (Vitest,
-    # jest-expo), i18n check, tokens build (contrast), API and ADR-021 security tests, web build, mobile expo
-    # export), then `pnpm audit --audit-level high` and the Playwright smoke as separate steps.
+    # `pnpm verify` without the mobile app (format, lint, root script tests, secretlint, then Turbo: lint, typecheck,
+    # Vitest unit tests, i18n check, tokens build (contrast), API and ADR-021 security tests, web build), then
+    # `pnpm audit --audit-level high` and the Playwright smoke as separate steps.
     runs-on: ubuntu-24.04
     timeout-minutes: 40
     steps:
@@ -63,7 +65,8 @@ jobs:
           echo "DIRECT_URL=$url" >> "$GITHUB_ENV"
       - name: Migrate and seed (prisma migrate reset)
         run: pnpm db:reset
-      - run: pnpm verify
+      - run: pnpm verify:static
+      - run: pnpm exec turbo run lint typecheck test build --filter='!mobile'
       - run: pnpm audit --audit-level high
       - run: pnpm --filter web e2e
       - name: Trim the Turbo cache to the last 7 days
