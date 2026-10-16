@@ -101,6 +101,14 @@ describe('P9 slot B share menu (P18)', () => {
 		);
 	});
 
+	it('is not modal: the open menu aria-hides nothing around it (axe aria-hidden-focus)', () => {
+		const { container } = show(lost);
+		fireEvent.keyDown(trigger(), { key: 'Enter' });
+		expect(screen.getByRole('menu')).toBeTruthy();
+		expect(container.closest('[aria-hidden]')).toBeNull();
+		expect(document.querySelectorAll('body > [aria-hidden="true"]')).toHaveLength(0);
+	});
+
 	it('shares the bare link without an area name, and thanks everyone once reunited', () => {
 		show(lost, 'sl', null);
 		expect(item(/WhatsApp/).getAttribute('href')).toBe(`https://wa.me/?text=${encodeURIComponent(LINK)}`);

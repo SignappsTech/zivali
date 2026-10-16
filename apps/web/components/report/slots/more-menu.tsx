@@ -36,7 +36,8 @@ export function OverflowMenu({
 	const t = useTranslations('report');
 	const chosen = React.useRef(false);
 	return (
-		<DropdownMenu.Root>
+		// Not modal (the APG menu button): a modal menu aria-hides the page while its links stay focusable.
+		<DropdownMenu.Root modal={false}>
 			<DropdownMenu.Trigger asChild>
 				<Button variant="ghost" size="icon" aria-label={t('more')}>
 					<DotsThreeIcon weight="bold" aria-hidden="true" />

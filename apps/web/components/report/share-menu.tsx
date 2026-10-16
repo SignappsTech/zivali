@@ -317,7 +317,8 @@ export function ShareMenu({ url, message, analytics, poster, kit, copy }: Props)
 
 	return (
 		<>
-			<DropdownMenu.Root>
+			{/* Not modal (the APG menu button): a modal menu aria-hides the page while its links stay focusable. */}
+			<DropdownMenu.Root modal={false}>
 				<DropdownMenu.Trigger asChild>
 					<Button variant="ghost" size="sm" className="[&_svg]:size-5">
 						<ShareNetworkIcon weight="bold" aria-hidden="true" />
