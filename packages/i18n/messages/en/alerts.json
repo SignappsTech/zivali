@@ -9,6 +9,7 @@
 	"area_none": "No area chosen yet",
 	"radius_label": "Radius",
 	"radius_value": "{km} km",
+	"radius_number_label": "Radius in kilometres",
 	"species_label": "Which animals",
 	"species_dogs": "Dogs",
 	"species_cats": "Cats",
