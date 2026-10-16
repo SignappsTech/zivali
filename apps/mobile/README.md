@@ -47,7 +47,7 @@ Gallery: `/dev/kit` (redirects to `/` when `EXPO_PUBLIC_APP_ENV=production`). `r
 - `MapView` (`components/map/map-view.tsx`) takes the C6 props plus `bottomInset` (the px a list sheet covers, so the attribution stays above it). Markers, clusters, areas and paths are native MapLibre layers on `buildMapStyle(mode)`; it draws only the points it is given and never reads the device location.
 - The map is one accessible element ("Zemljevid: 12 prijav"); activating it with a screen reader or switch control shows `textAlternative` in its place. Jest mocks MapLibre in `jest.setup.ts` (parts carry testID `<Component>:<id>`; they are hidden from the accessibility tree, so query them with `includeHiddenElements`).
 - `@maplibre/maplibre-react-native` 11.4.1 (pinned; not in the Expo SDK 57 `bundledNativeModules.json`) is a native module with a config plugin: install a new development build after pulling it. `/dev/map` renders 500 seeded markers for the smoothness check (redirects to `/` in production).
-- `LocationPicker` (`components/location/location-picker.tsx`, TASK-15.5) takes the C6 props and fills its parent under the flow's top bar. It draws on `MapView` with three picker hooks: `ref` (`moveTo(center, zoom)`), `onCameraChange` (centre and zoom, not debounced) and `children` (the centre pin and radius disc, above the map and under the list); `label`/`hint` rename the map element ("Oznaka je na sredini zemljevida …", "Pokaži gumbe za premik", whose list is the 100 m nudge buttons). The raw GPS, pin, search or EXIF point stays in the picker: Confirm calls `onChange` once with `coarsenPoint` applied, so pass that value on to forms, drafts and the outbox as is. `/dev/picker` shows each mode and the confirmed value (redirects to `/` in production).
+- `LocationPicker` (`components/location/location-picker.tsx`, TASK-15.5) takes the C6 props and fills its parent under the flow's top bar. It draws on `MapView` with three picker hooks: `ref` (`moveTo(center, zoom)`), `onCameraChange` (centre and zoom, not debounced) and `children` (the centre pin and radius disc, above the map and under the list); `label`/`hint` rename the map element ("Oznaka je na sredini zemljevida …", "Pokaži gumbe za premik", whose list is the 100 m nudge buttons). The raw GPS, pin, search or EXIF point stays in the picker: Confirm calls `onChange` once with `coarsenPoint` applied (a stored `value` confirmed unmoved comes back as is, never coarsened again), so pass that value on to forms, drafts and the outbox as is. `/dev/picker` shows each mode and the confirmed value (redirects to `/` in production).
 
 ## Map tab (P4, TASK-31.5)
 
@@ -58,7 +58,7 @@ Gallery: `/dev/kit` (redirects to `/` when `EXPO_PUBLIC_APP_ENV=production`). `r
 ## Shell (P2)
 
 - `app/(tabs)`: Zemljevid (`index`), Sporočila (`inbox`), Prijavi (`report`) and Profil (`profile`) with the bottom navigation in `components/shell/tab-bar.tsx`. The Prijavi button opens the Report sheet (lost → `/report/lost`, found → `/report/found`, sighted → `/report/found?type=sighted`); the `report` route shows the same choice for a link.
-- `app/settings`: a stack above the tabs. `language` works; `[section]` is the placeholder for `notifications`, `alerts`, `consent` and `account` until a story adds `app/settings/<section>.tsx`.
+- `app/settings`: a stack above the tabs: `account`, `alerts`, `consent`, `home-area`, `language`, `notifications`, `payments`. `alerts` (TASK-23.3) and `home-area` share one home area: a save writes the profile (`home`, `home_radius_km`) and the alert subscription (C10) together (`lib/alerts.ts`).
 - Permissions: show `PermissionPrimer` (`components/shell/permission-primer.tsx`) before every OS prompt while the OS can still ask, passing the prompt as `request`; on `onResult(false)` show `PermissionNote` where the permission was needed.
 - Sign-out (Profil) calls `signOutAndWipe({ removeManageLinks })` after a confirmation with the "remove links" choice.
 
@@ -82,6 +82,11 @@ Gallery: `/dev/kit` (redirects to `/` when `EXPO_PUBLIC_APP_ENV=production`). `r
 - "Kje" takes the photo's EXIF place, else a GPS fix when the permission is already granted (it never prompts); both are coarsened once on arrival, and with neither the LocationPicker opens. The capture time is the earliest EXIF time (else when the flow opened) or the sighting's "when"; it becomes `event_at` however late the outbox sends.
 - Publish calls `submitReport()` (C17). The outbox answer picks the screen (`found-done.tsx`): sent → the private link (token read from expo-secure-store, never in a URL param or log) and the responsible-shelter row; still queued → "Čaka na pošiljanje" with the row from the cached directory, which turns into the sent screen by itself. A rate limit, a failed check or a refusal removes that outbox item and keeps the form.
 - `ShelterRow` (`components/shelter/shelter-row.tsx`, namespace `shelter_row`) is the shared P6/P7 row: confirmed, likely, nearest or the directory note, live online and from `getCachedShelter` offline.
+
+## Poster and sharing (P18, TASK-24.3)
+
+- Report detail slot B shares the localised P18 text with the short link through the system sheet (`lib/share.ts`; the link alone while the area name is unknown, e.g. offline). The owner's "Plakat" (slot A) opens `app/r/[code]/poster.tsx`: poster language, preview, "Prenesi PDF" (the web `/r/<code>/poster.pdf?lang=` downloaded into the cache with expo-file-system, then offered through expo-sharing), share rows (WhatsApp, Facebook, copy link, system sheet) and, for a lost report, the Facebook and local radio kit (`components/report/share-kit.tsx`; groups and radio form from `GET /v1/config/public`). `share` and `poster_download` go through `track()`, so only with consent.
+- `expo-sharing` and `expo-clipboard` are native modules: install a new development build after pulling them.
 
 ## Payments (C13, TASK-32.3)
 

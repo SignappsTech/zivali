@@ -1,0 +1,17 @@
+{
+	"screen_title": "Plakat in deljenje",
+	"language_label": "Jezik plakata",
+	"language_sl": "Slovenščina",
+	"language_en": "English",
+	"download": "Prenesi PDF",
+	"preparing": "Pripravljamo …",
+	"ready_file": "Datoteka: {filename}",
+	"qr_note": "Plakat ima kodo QR, ki odpre to prijavo.",
+	"top_lost": "{species, select, dog {Pogrešan pes} cat {Pogrešana mačka} other {Pogrešana žival}}",
+	"top_found": "{species, select, dog {Najden pes} cat {Najdena mačka} other {Najdena žival}}",
+	"top_home": "Spet doma",
+	"no_photo": "Za plakat potrebujemo fotografijo, na kateri je žival dobro vidna.",
+	"failed": "Plakata ni bilo mogoče pripraviti. Poskusite znova.",
+	"unavailable_closed": "Iskanje je zaključeno, zato plakat ni na voljo.",
+	"preview_alt": "Predogled plakata: {title}, s fotografijo in kodo QR"
+}
