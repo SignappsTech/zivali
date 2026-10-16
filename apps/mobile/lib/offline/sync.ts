@@ -10,6 +10,7 @@ import { AppState } from 'react-native';
 import { type ApiClient, createApiClient } from '@zivali/api/client';
 import type { ResponsibleShelterResponse } from '@zivali/api/directory';
 import { type CachedReport, syncReports } from '@zivali/api/sync';
+import type { ModerationState } from '@zivali/types';
 import { getDb } from '@/lib/db';
 import { thumbsDir } from '@/lib/db/files';
 import { env } from '@/lib/env';
@@ -72,11 +73,13 @@ export async function cacheBytes(): Promise<number> {
 let client: ApiClient | undefined;
 // The feed is public (optionalAuth): no session token, so a sync never ties the areas to the account.
 const defaultClient = () => (client ??= createApiClient({ baseUrl: env.EXPO_PUBLIC_API_URL, locale: 'sl' }));
+/** Set by startCacheSync: a new or moved area syncs at once. */
+let areaChanged: (() => void) | undefined;
 
 /**
  * `home`: the profile's home point and radius (capped to 10 km); `current`: the last foreground location (10 km).
- * Centres are kept as sent, at 2 decimals (about 1 km). A moved or resized area starts a fresh snapshot; `null`
- * forgets it (no home set).
+ * Centres are kept as sent, at 2 decimals (about 1 km). A new, moved or resized area starts a fresh snapshot, synced
+ * at once once startCacheSync runs; `null` forgets it (no home set).
  */
 export async function setCacheArea(id: CacheAreaId, point: Point | null, radiusKm = AREA_MAX_KM): Promise<void> {
 	const db = await getDb();
@@ -84,7 +87,7 @@ export async function setCacheArea(id: CacheAreaId, point: Point | null, radiusK
 		await db.runAsync('delete from cache_areas where id = ?', id);
 		return;
 	}
-	await db.runAsync(
+	const { changes } = await db.runAsync(
 		`insert into cache_areas (id, lat, lng, radius_km) values (?, ?, ?, ?)
 		 on conflict (id) do update set lat = excluded.lat, lng = excluded.lng, radius_km = excluded.radius_km,
 			since = null, last_sync_at = null, shelter = null
@@ -94,6 +97,7 @@ export async function setCacheArea(id: CacheAreaId, point: Point | null, radiusK
 		round2(point.lng),
 		Math.min(radiusKm, AREA_MAX_KM)
 	);
+	if (changes > 0) areaChanged?.();
 }
 
 const COLUMNS = [
@@ -128,16 +132,27 @@ const UPSERT = `insert into reports_cache (${COLUMNS.join(', ')}) values (${COLU
 	thumb_path = case when thumb_url is excluded.thumb_url then thumb_path end,
 	thumb_bytes = case when thumb_url is excluded.thumb_url then thumb_bytes else 0 end`;
 
+/** A report to cache; an owner view's `moderation_state` only decides whether it is public and is never written. */
+export type Cacheable = CachedReport & { moderation_state?: ModerationState };
+
 /** C6 public blur (500 m lost, 150 m found and sighted): anything finer is not a public area and is never cached. */
 const isBlurred = (report: CachedReport) => report.area.radius_m >= (report.type === 'lost' ? 500 : 150);
+/** What the feed lists (C4): open or matched, and visible. */
+const isLive = (report: Cacheable) =>
+	(report.status === 'open' || report.status === 'matched') && (report.moderation_state ?? 'visible') === 'visible';
+
+const deleteIds = (db: SQLiteDatabase, ids: string[]) =>
+	db.runAsync('delete from reports_cache where id in (select value from json_each(?))', JSON.stringify(ids));
 
 /**
- * Writes reports with the C17 whitelist only: whatever else a response carries (a manager view's exact point, chip
- * or contact) never reaches the disk.
+ * Writes live public reports with the C17 whitelist only: whatever else a response carries (a manager view's exact
+ * point, chip or contact) never reaches the disk. A closed, held or hidden one seen online leaves the cache.
  */
-export async function upsertReports(reports: CachedReport[], now = Date.now()): Promise<void> {
+export async function upsertReports(reports: Cacheable[], now = Date.now()): Promise<void> {
 	const db = await getDb();
-	for (const r of reports.filter(isBlurred)) {
+	const gone = reports.filter((r) => !isLive(r)).map((r) => r.id);
+	await deleteIds(db, gone);
+	for (const r of reports.filter((r) => isLive(r) && isBlurred(r))) {
 		await db.runAsync(UPSERT, [
 			r.id,
 			r.short_code,
@@ -165,8 +180,6 @@ export async function upsertReports(reports: CachedReport[], now = Date.now()): 
 	}
 }
 
-const deleteIds = (db: SQLiteDatabase, ids: string[]) =>
-	db.runAsync('delete from reports_cache where id in (select value from json_each(?))', JSON.stringify(ids));
 // A response is applied only while its area is still the one requested: a wipe (sign-out) or setCacheArea may
 // have removed or moved it meanwhile.
 const SAME_AREA = 'id = ? and lat = ? and lng = ? and radius_km = ?';
@@ -175,8 +188,12 @@ const sameArea = (area: Area) => [area.id, area.lat, area.lng, area.radius_km];
 /** Resolves true when the area's sync completed (no more pages), false when MAX_PAGES or a wipe cut it short. */
 async function syncArea(api: ApiClient, db: SQLiteDatabase, area: Area, now: number): Promise<boolean> {
 	let since = area.since;
+	// A fresh snapshot (no cursor: first sync, or a new, moved or resized area) lists every live report there and no
+	// removals. One that MAX_PAGES cuts short continues as an incremental sync.
+	const listed = since === null ? new Set<string>() : undefined;
 	for (let page = 0; page < MAX_PAGES; page++) {
 		const feed = await syncReports(api, { areas: [area], since: since ?? undefined, limit: PAGE_LIMIT });
+		for (const r of feed.upserts) listed?.add(r.id);
 		const done = !feed.has_more;
 		// server_time is an opaque cursor (C4): every page continues from it, so rows sharing an updated_at at a
 		// page boundary are not skipped.
@@ -187,7 +204,7 @@ async function syncArea(api: ApiClient, db: SQLiteDatabase, area: Area, now: num
 			if (!current) return;
 			await upsertReports(feed.upserts, now);
 			await deleteIds(db, feed.removed_ids);
-			if (done) await confirmArea(db, area, now);
+			if (done) await confirmArea(db, area, now, listed);
 			await db.runAsync(
 				'update cache_areas set since = ?, last_sync_at = coalesce(?, last_sync_at) where id = ?',
 				since,
@@ -202,20 +219,24 @@ async function syncArea(api: ApiClient, db: SQLiteDatabase, area: Area, now: num
 }
 
 /**
- * The feed lists only changes, so after a complete sync every row inside the area is current: it counts as seen
- * for `cache.max_age_days`.
+ * After a complete sync every row inside the area (its public circle meets it, as on the server) is current: it
+ * counts as seen for `cache.max_age_days`. An incremental feed lists only changes; after a fresh snapshot, a row it
+ * did not list is closed, hidden or gone (or was browsed before), so it is deleted.
  */
-async function confirmArea(db: SQLiteDatabase, area: Area, now: number): Promise<void> {
+async function confirmArea(db: SQLiteDatabase, area: Area, now: number, listed?: Set<string>): Promise<void> {
 	const rows = await db.getAllAsync<{ id: string; area_lat: number; area_lng: number; area_radius_m: number }>(
 		'select id, area_lat, area_lng, area_radius_m from reports_cache'
 	);
-	const inside = rows.filter(
-		(r) => distanceKm(area, { lat: r.area_lat, lng: r.area_lng }) <= area.radius_km + r.area_radius_m / 1000
-	);
+	const inside = rows
+		.filter(
+			(r) => distanceKm(area, { lat: r.area_lat, lng: r.area_lng }) <= area.radius_km + r.area_radius_m / 1000
+		)
+		.map((r) => r.id);
+	await deleteIds(db, listed ? inside.filter((id) => !listed.has(id)) : []);
 	await db.runAsync(
 		'update reports_cache set synced_at = ? where id in (select value from json_each(?))',
 		now,
-		JSON.stringify(inside.map((r) => r.id))
+		JSON.stringify(inside)
 	);
 }
 
@@ -233,6 +254,17 @@ async function cacheShelter(api: ApiClient, db: SQLiteDatabase, area: Area): Pro
 	} catch {
 		// The reports are cached already.
 	}
+}
+
+/** ADR-019: the OS may purge the cache folder. A row whose file is gone stops counting and is downloaded again. */
+async function forgetPurgedThumbs(db: SQLiteDatabase): Promise<void> {
+	const rows = await db.getAllAsync<{ id: string; thumb_path: string }>(
+		'select id, thumb_path from reports_cache where thumb_path is not null'
+	);
+	await db.runAsync(
+		'update reports_cache set thumb_path = null, thumb_bytes = 0 where id in (select value from json_each(?))',
+		JSON.stringify(rows.filter((r) => !new File(r.thumb_path).exists).map((r) => r.id))
+	);
 }
 
 /** 480 px thumbnails into the purgeable cache folder, one file per report id; a failed one is retried next sync. */
@@ -303,6 +335,8 @@ export async function enforceLimits(settings = cacheSettings(), now = Date.now()
 async function run(api: ApiClient): Promise<void> {
 	const db = await getDb();
 	const now = Date.now();
+	// First, so the size used is right even when this sync fails or skips the photos.
+	await forgetPurgedThumbs(db);
 	for (const area of await db.getAllAsync<Area>('select * from cache_areas')) {
 		if (await syncArea(api, db, area, now)) await cacheShelter(api, db, area);
 	}
@@ -369,13 +403,19 @@ TaskManager.defineTask(SYNC_TASK, async () => {
 /**
  * C17 triggers; call once at start-up (it counts as a resume). Foreground resume syncs when an area is older than
  * 15 minutes (else only re-picks the geofences, which also notices a revoked Always permission), regaining Wi-Fi or
- * Ethernet syncs (and fetches the thumbnails skipped on mobile data), and the OS background task runs about hourly on
- * unmetered networks only. Returns the unsubscribe.
+ * Ethernet syncs (and fetches the thumbnails skipped on mobile data), a new or moved area syncs at once, and the OS
+ * background task runs about hourly on unmetered networks only. Returns the unsubscribe.
  */
 export function startCacheSync(api: ApiClient = defaultClient()): () => void {
 	// Offline or a server error: keep the cache, the next trigger tries again.
 	const kick = (task: () => Promise<unknown>) => void task().catch(() => {});
 	const resume = () => kick(async () => ((await isStale()) ? syncNow(api) : refreshGeofences()));
+	// After a sync already running: it read the areas before the change.
+	areaChanged = () =>
+		kick(async () => {
+			await syncIdle();
+			await syncNow(api);
+		});
 	let wasUnmetered = false;
 	const app = AppState.addEventListener('change', (state) => state === 'active' && resume());
 	const network = addNetworkStateListener((state) =>
@@ -389,6 +429,7 @@ export function startCacheSync(api: ApiClient = defaultClient()): () => void {
 	resume();
 	kick(() => BackgroundTask.registerTaskAsync(SYNC_TASK, { minimumInterval: 60 }));
 	return () => {
+		areaChanged = undefined;
 		app.remove();
 		network.remove();
 	};

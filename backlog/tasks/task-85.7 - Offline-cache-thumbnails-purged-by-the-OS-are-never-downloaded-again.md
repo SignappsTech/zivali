@@ -1,10 +1,11 @@
 ---
 id: TASK-85.7
 title: 'Offline cache: thumbnails purged by the OS are never downloaded again'
-status: To Do
+status: In Progress
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-16 02:44'
+updated_date: '2026-10-16 02:58'
 labels:
   - bug
   - 'est:XS'

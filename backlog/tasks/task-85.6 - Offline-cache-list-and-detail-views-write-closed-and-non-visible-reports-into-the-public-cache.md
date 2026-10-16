@@ -3,10 +3,11 @@ id: TASK-85.6
 title: >-
   Offline cache: list and detail views write closed and non-visible reports into
   the public cache
-status: To Do
+status: In Progress
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-16 02:43'
+updated_date: '2026-10-16 02:58'
 labels:
   - bug
   - 'est:XS'

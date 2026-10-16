@@ -1,5 +1,8 @@
 /// <reference types="node" />
+import fs from 'node:fs';
+
 import { cleanup, renderHook, waitFor } from '@testing-library/react-native';
+import { File } from 'expo-file-system';
 import { useNetworkState } from 'expo-network';
 import type { ReactNode } from 'react';
 import { Provider } from 'react-redux';
@@ -9,6 +12,7 @@ import { createMockApi, type MockRoutes } from '@zivali/api/mock';
 import { api, createApiStore } from '@zivali/api/rtk';
 import { useMapReports, useOpenLostReportsByPet, useReport, useReportSearch } from '@/lib/data/reports';
 import { getDb } from '@/lib/db';
+import { thumbsDir } from '@/lib/db/files';
 import { setCacheArea, upsertReports } from '@/lib/offline/sync';
 
 jest.mock('expo-sqlite', () =>
@@ -106,6 +110,23 @@ describe('offline', () => {
 
 		await waitFor(() => expect(result.current.isLoading).toBe(false));
 		expect(result.current).toMatchObject({ source: 'cache', data: found });
+	});
+
+	test('a downloaded thumbnail is shown while the OS keeps it, then the remote URL', async () => {
+		const { wrapper } = setup();
+		const file = new File(thumbsDir, lost.id);
+		thumbsDir.create();
+		fs.writeFileSync(file.uri, Buffer.alloc(1000));
+		await (await getDb()).runAsync('update reports_cache set thumb_path = ? where id = ?', file.uri, lost.id);
+
+		const kept = await renderHook(() => useReport(lost.short_code), { wrapper });
+		await waitFor(() => expect(kept.result.current.isLoading).toBe(false));
+		expect(kept.result.current.data).toMatchObject({ thumb_url: file.uri });
+
+		thumbsDir.delete(); // purged under storage pressure (ADR-019)
+		const purged = await renderHook(() => useReport(lost.short_code), { wrapper });
+		await waitFor(() => expect(purged.result.current.isLoading).toBe(false));
+		expect(purged.result.current.data).toMatchObject({ thumb_url: lost.thumb_url });
 	});
 });
 

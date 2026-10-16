@@ -1,11 +1,11 @@
 ---
 id: TASK-85.5
 title: 'Offline cache: a fresh area snapshot keeps closed reports it no longer lists'
-status: To Do
+status: In Progress
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-16 02:42'
-updated_date: '2026-10-16 02:43'
+updated_date: '2026-10-16 02:58'
 labels:
   - bug
   - 'est:XS'

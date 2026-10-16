@@ -1,3 +1,4 @@
+import { File } from 'expo-file-system';
 import { useEffect, useMemo, useState } from 'react';
 
 import {
@@ -8,11 +9,11 @@ import {
 } from '@zivali/api/reports';
 import type { QueryError } from '@zivali/api/rtk';
 import type { CachedReport } from '@zivali/api/sync';
-import type { MapReportList, MapReportQuery, PublicReport, ReportSearch } from '@zivali/types';
+import type { MapReportList, MapReportQuery, PublicReport, ReportOwnerView, ReportSearch } from '@zivali/types';
 import { getDb } from '@/lib/db';
 import { distanceKm } from '@/lib/geo';
 import { isOnline, useNetworkState } from '@/lib/net';
-import { lastSyncAt, upsertReports } from '@/lib/offline/sync';
+import { type Cacheable, lastSyncAt, upsertReports } from '@/lib/offline/sync';
 
 // The only path for report maps, lists and details on mobile (C17 §Data seam): online from the API, upserting the
 // offline cache; offline, or when a request fails for lack of network, from reports_cache.
@@ -53,8 +54,11 @@ type Row = {
 	updated_at: string;
 };
 
-/** The public subset the cache keeps (C17); a manager view's private fields stop here. */
-export function toCached(r: PublicReport): CachedReport {
+/**
+ * The public subset the cache keeps (C17); a manager view's private fields stop here, and its moderation state only
+ * keeps a held or hidden report out of the cache.
+ */
+export function toCached(r: PublicReport | ReportOwnerView): Cacheable {
 	return {
 		id: r.id,
 		short_code: r.short_code,
@@ -75,10 +79,11 @@ export function toCached(r: PublicReport): CachedReport {
 		boosted: r.boosted,
 		updated_at: r.updated_at,
 		thumb_url: r.photos[0]?.thumb_url ?? null,
+		moderation_state: 'moderation_state' in r ? r.moderation_state : undefined,
 	};
 }
 
-/** A cached row; `thumb_url` is the downloaded file when there is one. */
+/** A cached row; `thumb_url` is the downloaded file while the OS has not purged it (ADR-019). */
 const fromRow = (r: Row): CachedReport => ({
 	id: r.id,
 	short_code: r.short_code,
@@ -98,7 +103,7 @@ const fromRow = (r: Row): CachedReport => ({
 	region_slug: r.region_slug ?? undefined,
 	boosted: r.boosted === 1,
 	updated_at: r.updated_at,
-	thumb_url: r.thumb_path ?? r.thumb_url,
+	thumb_url: r.thumb_path && new File(r.thumb_path).exists ? r.thumb_path : r.thumb_url,
 });
 
 // The C4 filters, applied to the cache in memory (a few thousand rows at most).
