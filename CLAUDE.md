@@ -10,6 +10,7 @@ Lost pet finder (dogs and cats, Slovenia). Web and mobile. Brief: `docs/01-proje
 - Base branch: main
 - Auto-merge: approved (merge once review passes, report after)
 - Trivial tasks: smaller models (haiku for text/copy/config-only changes, sonnet for est:XS local code); see the dev-team skill "Trivial tasks"
+- Design reworks: a wireframe confirmed by a person comes first (owner rule 2026-10-16). Low-fi, or a mock built from our real components if that is no more work; in docs/design/wireframes/. No mockup or implementation task starts until the approval (who, date, version) is in the wireframe task's notes. Bug fixes to existing layouts don't need one.
 - Stack: pnpm + Turborepo monorepo; apps/web Next.js (App Router) + shadcn/ui; apps/mobile Expo Router + React Native Reusables (NativeWind); shared packages (tokens, types, api, validation); Supabase (Postgres/PostGIS/pgvector, Auth, Storage, Realtime, Edge Functions); Vercel; EAS
 - Run/preview: -
 - Docs artifact: https://claude.ai/artifact/2jhatCqvPbqHhEHVsLexbW
