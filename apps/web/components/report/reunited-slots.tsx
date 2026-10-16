@@ -1,5 +1,7 @@
 'use client';
 
+import type { ReactNode } from 'react';
+
 import { AdSlot } from '@/components/ads/ad-slot';
 import { useAnswer } from '@/components/payments/answers';
 import { SupportTip, usePaymentsOn } from '@/components/payments/support';
@@ -33,8 +35,13 @@ export function ReunitedTip({ report, testMode, className }: ReunitedSlotProps &
  * there is no ask. Until it loads it keeps its box; no ad or a failure collapse it with no gap.
  */
 export function ReunitedAd({ report, tip, className }: ReunitedSlotProps & { tip: boolean }) {
-	const [answer] = useAnswer(`tip:${report.short_code}`);
+	const ad = <AdSlot slot="reunited" species={report.species} region={report.region_slug} className={className} />;
+	return tip ? <AfterTip code={report.short_code}>{ad}</AfterTip> : ad;
+}
+
+/** The ad waits while the tip asks; only then does it need the public config (payments on or off). */
+function AfterTip({ code, children }: { code: string; children: ReactNode }) {
+	const [answer] = useAnswer(`tip:${code}`);
 	const paymentsOn = usePaymentsOn();
-	if (tip && paymentsOn && answer === null) return null;
-	return <AdSlot slot="reunited" species={report.species} region={report.region_slug} className={className} />;
+	return paymentsOn && answer === null ? null : children;
 }

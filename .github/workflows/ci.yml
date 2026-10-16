@@ -108,6 +108,10 @@ jobs:
       # Once public pages read the API on the server, start it here before the kit runs:
       #   pnpm exec supabase start -x studio,postgres-meta,imgproxy > /dev/null && pnpm db:reset
       #   pnpm --filter api build && (node apps/api/dist/server.js &) with DATABASE_URL as in the verify job
+      # Ubuntu 24.04 blocks the unprivileged user namespaces Chrome's sandbox needs (AppArmor), so Lighthouse's Chrome
+      # never opened its debugging port. Playwright runs Chromium without the sandbox; Lighthouse keeps it, with this.
+      - name: Allow Chrome's sandbox (Lighthouse)
+        run: sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
       - run: pnpm quality
       - name: Upload the quality report
         if: always()

@@ -89,6 +89,10 @@ function lifecycle(method: string, path: string, body: Record<string, unknown>) 
 	const reset = path.match(/^\/e2e\/reset\/(Tip12345)$/)?.[1];
 	if (method === 'POST' && reset) return (owned[reset] = ownReport(reset, tipId));
 	if (path === '/v1/me/reports') return { items: [owned.Mine1234], next_cursor: null };
+	// The map page's list and pins, empty unless a spec stubs them in the browser (browse, ads): the quality kit's
+	// map pages then load without console errors.
+	if (method === 'GET' && path === '/v1/reports/map') return { items: [] };
+	if (method === 'GET' && path === '/v1/reports') return { items: [], next_cursor: null, total_estimate: 0 };
 	const code = path.match(/^\/v1\/reports\/(Mine1234|Tip12345)(\/transitions)?$/)?.[1];
 	const own = code && owned[code];
 	if (!own) return undefined;
