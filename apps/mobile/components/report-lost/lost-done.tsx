@@ -1,3 +1,4 @@
+import { skipToken } from '@reduxjs/toolkit/query';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import type { Icon as PhosphorIcon } from 'phosphor-react-native';
 import { ArrowsLeftRightIcon } from 'phosphor-react-native/src/icons/ArrowsLeftRight';
@@ -5,6 +6,7 @@ import { BellIcon } from 'phosphor-react-native/src/icons/Bell';
 import { CaretDownIcon } from 'phosphor-react-native/src/icons/CaretDown';
 import { CaretUpIcon } from 'phosphor-react-native/src/icons/CaretUp';
 import { ChatCircleIcon } from 'phosphor-react-native/src/icons/ChatCircle';
+import { DownloadSimpleIcon } from 'phosphor-react-native/src/icons/DownloadSimple';
 import { FlaskIcon } from 'phosphor-react-native/src/icons/Flask';
 import { HeartIcon } from 'phosphor-react-native/src/icons/Heart';
 import { InfoIcon } from 'phosphor-react-native/src/icons/Info';
@@ -14,16 +16,16 @@ import { QuestionIcon } from 'phosphor-react-native/src/icons/Question';
 import { ShareNetworkIcon } from 'phosphor-react-native/src/icons/ShareNetwork';
 import { XIcon } from 'phosphor-react-native/src/icons/X';
 import * as React from 'react';
-import { Linking, Pressable, ScrollView, Share, View } from 'react-native';
+import { Linking, Pressable, ScrollView, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocale, useTranslations } from 'use-intl';
 
 import { useSession } from '@zivali/api/auth';
 import { type ResponsibleShelterArg, useResponsibleShelter } from '@zivali/api/directory';
+import { useReversePlaceQuery } from '@zivali/api/geocode';
 import { useGetReportQuery } from '@zivali/api/reports';
 import { formatEur, type Locale } from '@zivali/i18n/format';
 import { CheckoutSheet } from '@/components/payments/checkout';
-import { reportLink } from '@/components/report/slots/slot-b';
 import { Spot } from '@/components/shell/parts';
 import { Button } from '@/components/ui/button';
 import { Icon } from '@/components/ui/icon';
@@ -31,6 +33,7 @@ import { Pill } from '@/components/ui/pill';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Text } from '@/components/ui/text';
 import { env } from '@/lib/env';
+import { shareMessage, shareNative } from '@/lib/share';
 
 import { Heading, Note } from './parts';
 
@@ -258,7 +261,7 @@ const NEXT: readonly [PhosphorIcon, 'next_1' | 'next_2' | 'next_3'][] = [
 /**
  * P6 confirmation (M9) after a lost report is published: what happens next, the responsible shelter with its call
  * button and the owner's duty to report (the app never replaces it), share and the report, the first-24-hours tips,
- * and the collapsed contribution row last. No ad (C15). The poster button comes with the poster (TASK-24.3).
+ * and the collapsed contribution row last. The poster and the share text are P18's (TASK-24.3). No ad (C15).
  */
 export function LostDone() {
 	const t = useTranslations('report_lost');
@@ -269,6 +272,8 @@ export function LostDone() {
 	const { code, name } = useLocalSearchParams<{ code: string; name?: string }>();
 	const { me, isVerified } = useSession();
 	const report = useGetReportQuery({ code }).currentData;
+	// The area name for the P18 share text (the reverse lookup of the public circle); without it the text is the link.
+	const place = useReversePlaceQuery(report ? { lat: report.area.lat, lng: report.area.lng } : skipToken).currentData;
 	// The municipality the API derived for the report, else its point (C18 accepts both).
 	const lookup = report
 		? report.municipality_slug
@@ -315,11 +320,18 @@ export function LostDone() {
 				<ShelterRow lookup={lookup} />
 
 				<View className="mt-auto gap-1 pt-10">
+					<Button size="lg" onPress={() => router.push({ pathname: '/r/[code]/poster', params: { code } })}>
+						<Icon as={DownloadSimpleIcon} />
+						{t('poster')}
+					</Button>
 					<View className="flex-row gap-2">
 						<Button
 							variant="text"
 							className="flex-1"
-							onPress={() => void Share.share({ message: reportLink(code) }).catch(() => undefined)}
+							disabled={!report}
+							onPress={() =>
+								report && void shareNative(report, shareMessage({ report, area: place?.label, locale }))
+							}
 						>
 							<Icon as={ShareNetworkIcon} />
 							{t('share')}

@@ -16,7 +16,7 @@ const ts = sl.shelter_row;
 const tp = sl.support;
 const CODE = ownerReport.short_code;
 
-const mockRouter = { replace: jest.fn() };
+const mockRouter = { replace: jest.fn(), push: jest.fn() };
 const mockParams: { code: string; name?: string } = { code: CODE };
 jest.mock('expo-router', () => ({ useRouter: () => mockRouter, useLocalSearchParams: () => mockParams }));
 const mockSession = { me: {} as object | null, isVerified: true };
@@ -82,10 +82,14 @@ test('next steps, the responsible shelter with a one-tap call and the reporting 
 	expect(screen.queryByText(t.unverified_note)).toBeNull();
 });
 
-test('share, the report, the first-24-hours tips and close', async () => {
+test('the poster (P18 screen), share, the report, the first-24-hours tips and close', async () => {
 	await renderDone(dir.responsibleConfirmed);
+	await press(t.poster);
+	expect(mockRouter.push).toHaveBeenCalledWith({ pathname: '/r/[code]/poster', params: { code: CODE } });
+	await waitFor(() => expect(screen.getByRole('button', { name: t.share })).toBeEnabled());
 	await press(t.share);
-	expect(Share.share).toHaveBeenCalledWith({ message: `https://najdimo.test/r/${CODE}` });
+	// The P18 text needs the area name; without the reverse lookup it is the short link alone.
+	await waitFor(() => expect(Share.share).toHaveBeenCalledWith({ message: `https://najdimo.test/r/${CODE}` }));
 	await press(t.open_report);
 	expect(mockRouter.replace).toHaveBeenCalledWith({ pathname: '/r/[code]', params: { code: CODE } });
 	await press(t.first_24h);
