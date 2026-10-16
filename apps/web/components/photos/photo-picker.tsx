@@ -16,7 +16,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 
 import type { PhotoExif } from './prepare-photo';
-import { type PickedPhoto, usePhotoUploads } from './use-photo-uploads';
+import { type PickedPhoto, type SavedPhoto, usePhotoUploads } from './use-photo-uploads';
 
 // Photo source tile (P6 .ptile): card surface, radius 20, the tile is the button; hover lays foreground at 10 %.
 const tile =
@@ -25,6 +25,8 @@ const tile =
 type PhotoPickerProps = {
 	/** Draft name; its photos survive a reload in IndexedDB (`clearPhotoDraft` when the report is sent). */
 	draft: string;
+	/** Photos already attached (editing a pet), listed first; read once, on mount. */
+	saved?: SavedPhoto[];
 	/** Every change, in order; uploaded photos carry `photoId` for the report or pet. */
 	onChange?: (photos: PickedPhoto[]) => void;
 	/** Place and time read from a photo, to offer with consent. Coarsen the point before it goes anywhere. */
@@ -36,10 +38,10 @@ type PhotoPickerProps = {
  * Photo step of P6 and P7 (FR-003): camera and gallery tiles on touch screens, a file button with a drop area on
  * desktop, then a row per photo with its preview, upload progress, retry, reorder and remove. Up to 5 photos.
  */
-export function PhotoPicker({ draft, onChange, onExif, className }: PhotoPickerProps) {
+export function PhotoPicker({ draft, saved, onChange, onExif, className }: PhotoPickerProps) {
 	const t = useTranslations('photos');
 	const message = useTranslations();
-	const { photos, preparing, notice, justUploaded, add, remove, move, retry } = usePhotoUploads(draft, onExif);
+	const { photos, preparing, notice, justUploaded, add, remove, move, retry } = usePhotoUploads(draft, onExif, saved);
 	const root = React.useRef<HTMLDivElement>(null);
 	const camera = React.useRef<HTMLInputElement>(null);
 	const gallery = React.useRef<HTMLInputElement>(null);
@@ -127,7 +129,7 @@ export function PhotoPicker({ draft, onChange, onExif, className }: PhotoPickerP
 								aria-label={t('thumb_a11y', { n, total: photos.length })}
 								className="grid grid-cols-[80px_minmax(0,1fr)] items-start gap-4"
 							>
-								{/* A local object URL: next/image cannot optimise it. */}
+								{/* A local object URL, or a saved photo's short-lived presigned URL: nothing for next/image. */}
 								{/* eslint-disable-next-line @next/next/no-img-element */}
 								<img
 									src={photo.preview}
