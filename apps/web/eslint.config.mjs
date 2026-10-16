@@ -25,7 +25,7 @@ export default defineConfig(
 			'app/*/(public)/**/*.tsx',
 			'app/*/{layout,page}.tsx',
 			'app/providers.tsx',
-			'components/{analytics,consent,content,legal,shell}/**/*.tsx',
+			'components/{analytics,consent,content,legal,partners,shell}/**/*.tsx',
 			'components/auth/{parts,reset,sign-in,sign-up}.tsx',
 			'components/shelters/shelter-search.tsx',
 		],

@@ -285,6 +285,23 @@ export function ArticlePage({
 	);
 }
 
+/** One T3 question row (system 10.9 accordion): a native disclosure with the question as h3; P22 reuses it. */
+export function FaqItem({ question, answer }: { question: string; answer: string }) {
+	return (
+		<details className={rowClass}>
+			<summary className={cn(summaryClass, 'min-h-16 px-5 py-[18px] lg:min-h-[76px] lg:p-6')}>
+				<h3 className="font-display text-lg leading-7 font-semibold tracking-[-0.005em] lg:text-xl">
+					{question}
+				</h3>
+				<ToggleIcon />
+			</summary>
+			<p className="max-w-[62ch] px-5 pb-5 lg:px-6 lg:pb-6">
+				<Rich text={answer} />
+			</p>
+		</details>
+	);
+}
+
 /** T3 FAQ: back link, h1, lede, grouped question rows (native disclosure, h3 inside), a closing contact note. */
 export function FaqPage({ content, href }: { content: FaqContent; href: Pathname }) {
 	const locale = useLocale();
@@ -300,19 +317,7 @@ export function FaqPage({ content, href }: { content: FaqContent; href: Pathname
 						<h2 className={h2Class}>{title}</h2>
 						<div className="mt-5 grid gap-3">
 							{items.map(([question, answer]) => (
-								<details key={question} className={rowClass}>
-									<summary
-										className={cn(summaryClass, 'min-h-16 px-5 py-[18px] lg:min-h-[76px] lg:p-6')}
-									>
-										<h3 className="font-display text-lg leading-7 font-semibold tracking-[-0.005em] lg:text-xl">
-											{question}
-										</h3>
-										<ToggleIcon />
-									</summary>
-									<p className="max-w-[62ch] px-5 pb-5 lg:px-6 lg:pb-6">
-										<Rich text={answer} />
-									</p>
-								</details>
+								<FaqItem key={question} question={question} answer={answer} />
 							))}
 						</div>
 					</section>

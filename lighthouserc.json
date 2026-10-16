@@ -11,7 +11,8 @@
 				"http://localhost:8080/o-nas",
 				"http://localhost:8080/zavetisca",
 				"http://localhost:8080/zavetisca/zavetisce-ljubljana",
-				"http://localhost:8080/zemljevid"
+				"http://localhost:8080/zemljevid",
+				"http://localhost:8080/oglasevanje"
 			],
 			"numberOfRuns": 2,
 			"settings": { "formFactor": "mobile" }
