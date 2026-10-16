@@ -35,6 +35,7 @@ export const conversations: ConversationList = {
 			about_report: { short_code: 'Hk3vT9qP', type: 'found', species: 'dog', thumb_url: null },
 			my_alias_key: 'owner',
 			other_alias_key: 'finder',
+			other_participant_id: '5b1e0c2a-0000-4000-8000-000000000009',
 			last_message_preview: message.body,
 			unread: 1,
 			status: 'active',

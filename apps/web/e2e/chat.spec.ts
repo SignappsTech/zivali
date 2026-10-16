@@ -25,7 +25,12 @@ const FINDER: E2eUser & { alias: AliasKey } = {
 	alias: 'finder',
 };
 
-function chatServer(baseURL: string) {
+function chatServer(
+	baseURL: string,
+	options: { status?: ConversationSummary['status']; failFirstSend?: boolean } = {}
+) {
+	let failures = options.failFirstSend ? 1 : 0;
+	const keys: (string | undefined)[] = [];
 	const messages: Message[] = [
 		{
 			id: 'm0',
@@ -45,9 +50,10 @@ function chatServer(baseURL: string) {
 		about_report: { short_code: 'Hk3vT9qP', type: 'found', species: 'dog', thumb_url: null },
 		my_alias_key: alias,
 		other_alias_key: alias === 'owner' ? 'finder' : 'owner',
+		other_participant_id: alias === 'owner' ? FINDER.id : OWNER.id,
 		last_message_preview: messages.at(-1)!.body,
 		unread: 0,
-		status: 'active',
+		status: options.status ?? 'active',
 	});
 	const broadcast = (message: Message) => {
 		for (const { ws, topics } of sockets)
@@ -103,6 +109,11 @@ function chatServer(baseURL: string) {
 					return reply(200, { items: messages.slice(from), next_cursor: null });
 				}
 				if (key === `POST /v1/conversations/${ID}/messages`) {
+					keys.push(request.headers()['idempotency-key']);
+					if (failures > 0) {
+						failures -= 1;
+						return reply(503, { error: { code: 'INTERNAL', message: 'down' } });
+					}
 					const body = request.postDataJSON() as { body: string };
 					sent.push({ from: who.alias, body });
 					const message: Message = {
@@ -123,7 +134,7 @@ function chatServer(baseURL: string) {
 			}
 		);
 	}
-	return { attach, sent };
+	return { attach, sent, keys };
 }
 
 async function expectNoAxeViolations(page: Page) {
@@ -200,4 +211,32 @@ test('below lg the thread stands alone with a back link to the inbox; the inbox 
 	await expect(page).toHaveURL(new RegExp(`/nabiralnik/${ID}$`));
 	await expectNoAdSlots(page);
 	await expectNoAxeViolations(page);
+});
+
+// TASK-21.5: a failed send stays on screen as "Ni poslano." and never retries on its own; "Poskusi znova" sends the
+// same text with the same Idempotency-Key (a lost response cannot double it).
+test('a failed send waits for "Poskusi znova" and retries with the same Idempotency-Key', async ({ page, baseURL }) => {
+	const server = chatServer(baseURL!, { failFirstSend: true });
+	await server.attach(page, OWNER);
+	await page.goto(`/nabiralnik/${ID}`);
+	await page.getByRole('textbox', { name: 'Sporočilo' }).fill('Prvo sporočilo');
+	await page.keyboard.press('Enter');
+	await expect(page.getByRole('alert').getByText('Ni poslano.')).toBeVisible();
+	expect(server.keys).toHaveLength(1);
+	await page.getByRole('button', { name: 'Poskusi znova' }).click();
+	await expect(page.getByRole('log').getByText('Prvo sporočilo')).toHaveCount(1);
+	expect(server.keys).toHaveLength(2);
+	expect(server.keys[0]).toBeTruthy();
+	expect(server.keys[1]).toBe(server.keys[0]);
+});
+
+test('a closed conversation is read-only: the closed note replaces the composer, the banner stays', async ({
+	page,
+	baseURL,
+}) => {
+	await chatServer(baseURL!, { status: 'read_only' }).attach(page, OWNER);
+	await page.goto(`/nabiralnik/${ID}`);
+	await expect(page.getByText('Nikoli ne pošiljajte denarja vnaprej.')).toBeVisible();
+	await expect(page.getByText(/Pogovor je zaprt/)).toBeVisible();
+	await expect(page.getByRole('textbox', { name: 'Sporočilo' })).toHaveCount(0);
 });

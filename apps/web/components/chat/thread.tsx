@@ -39,10 +39,10 @@ import {
 import { ApiError } from '@zivali/api/client';
 import type { ApiStore, QueryError } from '@zivali/api/rtk';
 import { formatDate, formatDayMonth, type Locale } from '@zivali/i18n/format';
-import type { Message, Uuid } from '@zivali/types';
+import type { ConversationSummary, Message, Uuid } from '@zivali/types';
 import type { AbuseTarget } from '@/components/abuse/report-abuse';
 import { AuthNote, useErrorText } from '@/components/auth/parts';
-import { type Conversation, StatusWord, useAlias, useConversationTitle } from '@/components/chat/conversations';
+import { StatusWord, useAlias, useConversationTitle } from '@/components/chat/conversations';
 import { dayNumber } from '@/components/notifications/model';
 import { InlineError, ringClass } from '@/components/shell/page';
 import {
@@ -179,7 +179,7 @@ function BackLink() {
 	);
 }
 
-function ThreadView({ conversation }: { conversation: Conversation }) {
+function ThreadView({ conversation }: { conversation: ConversationSummary }) {
 	const { id } = conversation;
 	const t = useTranslations('chat');
 	const ta = useTranslations('abuse');
@@ -386,8 +386,8 @@ function ThreadView({ conversation }: { conversation: Conversation }) {
 			toast.error(errorText(error));
 		}
 	};
-	// "Prijavi zlorabo" in the menu reports the other person (C11 profile) once the API names them (CH-170); until then
-	// their latest message, as on mobile.
+	// "Prijavi zlorabo" in the menu reports the other person (C11 profile, other_participant_id); without one (no other
+	// participant left) their latest message, as on mobile.
 	const lastOther = [...earlier, ...(latest ?? [])]
 		.reverse()
 		.find((m) => m.kind !== 'system' && !isOwn(m) && !reported.has(m.id));

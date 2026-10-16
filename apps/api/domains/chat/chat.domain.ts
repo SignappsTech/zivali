@@ -22,9 +22,13 @@ const NOTIFY_WINDOW_MS = 5 * 60_000;
 /** Clients mark a conversation read while it is open; a read this recent counts as online (no notification). */
 const ONLINE_MS = 2 * 60_000;
 const OPEN_STATUSES = new Set(['open', 'matched']);
-/** Links get a caution in clients and are never linkified: schemes, www. and bare domains on common TLDs. */
-const LINK =
-	/(?:https?:\/\/|www\.)\S|\b[a-z0-9-]+\.(?:si|com|net|org|eu|info|io|me|ly|link|xyz|top|app|shop|click|online|site|store|ru|de|at|hr|it|co|uk|biz)\b/i;
+/**
+ * Links get a caution in clients and are never linkified: a scheme (https://, ftp://, …), www., or a bare host on any
+ * TLD (is.gd/x, foo.dev): dot-separated labels ending in 2+ letters, so numbers (3.14, 17.30) and e.g. are no links;
+ * an all-digit label before the TLD reads as an ordinal ("2.nadstropje", "5.maja"), not a host.
+ */
+const LINK = /\b[a-z][a-z0-9+.-]*:\/\/\S|\bwww\.\S|\b(?:[a-z0-9-]+\.)+(?<!\b\d+\.)[a-z]{2,63}\b/i;
+export const hasLink = (body: string): boolean => LINK.test(body);
 const RetentionMonths = z.number().int().positive();
 
 function actorId(ctx: Ctx): string {
@@ -212,7 +216,7 @@ export async function sendMessage(
 				kind,
 				body: input.body,
 				location: kind === 'location' ? coarsenPoint(input.location!) : undefined,
-				has_link: LINK.test(input.body),
+				has_link: hasLink(input.body),
 			},
 			tx
 		);

@@ -41,6 +41,9 @@ export const ConversationSummary = z
 		my_alias_key: AliasKey,
 		other_alias_key: AliasKey,
 		other_display_name: z.string().optional(),
+		other_participant_id: Uuid.nullable().openapi({
+			description: 'User id of the other participant, for block (participant_id) and a profile abuse report.',
+		}),
 		last_message_preview: z.string().nullable(),
 		unread: z.number().int().min(0),
 		status: ConversationStatus,

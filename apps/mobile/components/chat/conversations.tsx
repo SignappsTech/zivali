@@ -5,16 +5,13 @@ import { Image, Pressable, View } from 'react-native';
 import { useReducedMotion } from 'react-native-reanimated';
 import { useTranslations } from 'use-intl';
 
-import type { AliasKey, ConversationSummary, Uuid } from '@zivali/types';
+import type { AliasKey, ConversationSummary } from '@zivali/types';
 import { useFocusRing } from '@/components/ui/focus-ring';
 import { Icon } from '@/components/ui/icon';
 import { Text } from '@/components/ui/text';
 import { cn } from '@/lib/utils';
 
 // P12 parts shared by the Inbox list, the thread and the manage screen (anonymous managers).
-
-/** CH-170: block needs the other participant's id, which C9 does not list yet; Block shows once the API sends it. */
-export type Conversation = ConversationSummary & { other_participant_id?: Uuid };
 
 /** The row and header title: C9 has no pet name yet, so the P12 fallback by report type. */
 export function useConversationTitle() {

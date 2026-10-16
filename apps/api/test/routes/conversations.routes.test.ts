@@ -9,6 +9,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { Message } from '@zivali/validation';
 
 import { app } from '../../app.ts';
+import { hasLink } from '../../domains/chat/chat.domain.ts';
 import { chatMessageVars } from '../../domains/chat/chat.notify.ts';
 import { ChatDomain } from '../../domains/chat/index.ts';
 import { ReportsDomain } from '../../domains/reports/index.ts';
@@ -237,6 +238,34 @@ describe('messages', () => {
 		expect(reply.body.sender_alias_key).toBe('owner');
 	});
 
+	it('flags any host-like token as a link (any TLD), not numbers, ordinals or abbreviations', () => {
+		for (const body of [
+			'poglej is.gd/abc',
+			'foo.dev/x',
+			'cutt.ly/abc',
+			'example.page',
+			'Pišite na najdimo.si',
+			'primer.com',
+			'trgovina.shop/akcija',
+			'api.app.io',
+			'HTTPS://EXAMPLE.ORG',
+			'tg://resolve',
+		])
+			expect([body, hasLink(body)]).toEqual([body, true]);
+		for (const body of [
+			'Cena je 3.14 €',
+			'Pridem ob 17.30',
+			'1.5 km stran',
+			'e.g. pes',
+			'npr. ob reki, i.e. tukaj',
+			'Podjetje d.o.o.',
+			'Hvala... se vidimo',
+			'3.5.2026',
+			'v 2.nadstropju od 5.maja',
+		])
+			expect([body, hasLink(body)]).toEqual([body, false]);
+	});
+
 	it('validates the body: empty, too long, location without kind', async () => {
 		expect((await send(contact, id, { body: '   ' })).status).toBe(400);
 		expect((await send(contact, id, { body: 'x'.repeat(2001) })).status).toBe(400);
@@ -366,7 +395,10 @@ describe('messages', () => {
 		expect((await block(owner.id)).status).toBe(400);
 		expect((await block(stranger.id)).status).toBe(400);
 		expect((await block('not-a-uuid')).status).toBe(400);
-		expect((await block(target.id)).status).toBe(204);
+		// The blocker takes the id from the inbox (CH-170).
+		const summary = (await inbox(owner)).body.items.find((item: { id: string }) => item.id === cid);
+		expect(summary.other_participant_id).toBe(target.id);
+		expect((await block(summary.other_participant_id)).status).toBe(204);
 		expect((await block(target.id)).status).toBe(204);
 		const refused = await send(target, cid, { body: 'Halo?' });
 		expect([refused.status, refused.body.error.code]).toEqual([403, 'FORBIDDEN']);
@@ -419,11 +451,19 @@ describe('GET /v1/conversations', () => {
 			about_report: { short_code: found.short_code, type: 'found', species: 'dog', thumb_url: null },
 			my_alias_key: 'contact',
 			other_alias_key: 'finder',
+			other_participant_id: anonFinder.id,
 			last_message_preview: 'Odgovor najditelja',
 			unread: 1,
 			status: 'active',
 		});
-		expect(list.items[1]).toMatchObject({ my_alias_key: 'contact', other_alias_key: 'owner', unread: 0 });
+		expect(list.items[1]).toMatchObject({
+			my_alias_key: 'contact',
+			other_alias_key: 'owner',
+			other_participant_id: owner.id,
+			unread: 0,
+		});
+		// The other participant is named by user id only: no email or phone.
+		expect(JSON.stringify(list)).not.toMatch(/@|email|phone/);
 
 		const first = (await inbox(asker, '?limit=1')).body;
 		expect(first.items.map((item: { id: string }) => item.id)).toEqual([b]);
@@ -432,7 +472,11 @@ describe('GET /v1/conversations', () => {
 		expect((await inbox(asker, '?cursor=abc')).status).toBe(400);
 
 		const theirs = (await inbox(anonFinder)).body.items.find((item: { id: string }) => item.id === b);
-		expect(theirs).toMatchObject({ my_alias_key: 'finder', other_alias_key: 'contact' });
+		expect(theirs).toMatchObject({
+			my_alias_key: 'finder',
+			other_alias_key: 'contact',
+			other_participant_id: asker.id,
+		});
 		expect((await request(app).get('/v1/conversations')).status).toBe(401);
 	});
 

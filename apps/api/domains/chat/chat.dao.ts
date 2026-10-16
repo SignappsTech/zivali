@@ -250,6 +250,7 @@ export type ConversationListRow = {
 	unread: number;
 	other_role: ParticipantRole | null;
 	other_alias: string | null;
+	other_user_id: string | null;
 };
 
 /**
@@ -284,12 +285,12 @@ export async function listConversations(
 			(select count(*)::int from app.messages m
 				where m.conversation_id = mine.id and m.sender_id is distinct from ${user_id}::uuid
 					and (mine.last_read_at is null or m.created_at > mine.last_read_at)) as unread,
-			op.role as other_role, op.alias as other_alias
+			op.role as other_role, op.alias as other_alias, op.user_id as other_user_id
 		from mine
 		join app.reports r on r.id = mine.about_report_id
 		left join app.reports o on o.id = mine.other_report_id
 		left join lateral (
-			select q.role, q.alias from app.conversation_participants q
+			select q.role, q.alias, q.user_id from app.conversation_participants q
 			where q.conversation_id = mine.id and q.user_id <> ${user_id}::uuid
 			order by (q.role = mine.my_role), q.user_id limit 1
 		) op on true

@@ -40,9 +40,10 @@ Supabase Realtime **Broadcast** on private channels; no table is published.
 type Message = { id; conversation_id; sender_alias_key: 'owner'|'finder'|'sighter'|'contact'|'shelter'; sender_display_name?: string;
                  kind: 'text'|'location'|'system'; body; has_link: boolean; location?: { lat; lng }; created_at }
 type ConversationSummary = { id; about_report: { short_code, type, species, thumb_url }; my_alias_key; other_alias_key; other_display_name?;
-                             last_message_preview; unread: number; status: 'active'|'read_only' }
+                             other_participant_id: Uuid | null; last_message_preview; unread: number; status: 'active'|'read_only' }
 ```
-`has_link` is set by the service (URL regex). Location messages only from a manager of the related report (explicit exact-point share, R-004.3).
+`other_participant_id` is the other participant's user id (the one `other_alias_key` names; `null` when none is left): the `participant_id` for block and the `target_id` of a `profile` abuse report (C11). It is the only participant id in any DTO; never their email or phone.
+`has_link` is set by the service (URL regex): a scheme (`https://`, …), `www.`, or a bare host on any TLD (dot-separated labels ending in 2+ letters, e.g. `is.gd/x`, `foo.dev`); numbers (`3.14`, `17.30`), ordinals (`2.nadstropje`) and abbreviations (`e.g.`) are not links. Location messages only from a manager of the related report (explicit exact-point share, R-004.3).
 Aliases: conversation lists and messages return alias keys (`owner` | `finder` | `sighter` | `contact` | `shelter`) or the participant's chosen `display_name`; clients render the neutral i18n keys `chat.alias_owner` ("Oseba, ki išče žival" / "Person searching"), `chat.alias_finder`, `chat.alias_sighter`, `chat.alias_contact`, `chat.alias_shelter` (P12 content slice). Never email or phone.
 
 ## Client rendering rules
@@ -69,3 +70,4 @@ Aliases: conversation lists and messages return alias keys (`owner` | `finder` |
 |---|---|---|
 | 1.1 | 2026-10-15 | CH-61: message order oldest-first, after cursor exclusive forward; CH-62: conversation.read and conversation.updated payloads |
 | 1.2 | 2026-10-15 | CH-75: sender_alias_key is the role alias (no 'you'); ConversationSummary gets my_alias_key |
+| 1.3 | 2026-10-16 | CH-170: ConversationSummary gets other_participant_id (user id, for block and the profile abuse report); has_link matches bare hosts on any TLD (TASK-21.7, TASK-21.8) |
