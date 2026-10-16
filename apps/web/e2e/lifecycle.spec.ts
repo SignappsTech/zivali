@@ -123,3 +123,58 @@ test('My reports lists the report with its status', async ({ page }) => {
 	await expect(page.getByRole('link', { name: /Medo/ })).toHaveAttribute('href', '/en/r/Own12345');
 	await expectNoAxeViolations(page);
 });
+
+// TASK-26.6, C10: a reminder link changes nothing by being opened; only the press sends, and a made-up code or action
+// is ignored.
+test('the reminder link ?action=keep sends nothing on load, only the "Nadaljuj iskanje" press extends', async ({
+	page,
+}) => {
+	const sent = transitions(page);
+	await page.goto('/moje-prijave?r=Own12345&action=keep');
+	await expect(page.getByText('Še iščete?')).toBeVisible();
+	await expect(page.getByRole('link', { name: /Medo/ })).toBeVisible();
+	expect(sent).toEqual([]);
+	await page.reload();
+	await expect(page.getByText('Še iščete?')).toBeVisible();
+	expect(sent).toEqual([]);
+
+	await page.getByRole('button', { name: 'Nadaljuj iskanje' }).click();
+	await expect(page).toHaveURL(/\/moje-prijave$/);
+	expect(sent).toEqual([{ action: 'extend' }]);
+	await expect(page.getByRole('heading', { level: 1, name: 'Moje prijave' })).toBeFocused();
+});
+
+test('the link ?action=close opens the reason dialog without sending; "Pusti odprto" returns focus to the heading', async ({
+	page,
+}) => {
+	const sent = transitions(page);
+	await page.goto('/moje-prijave?r=Own12345&action=close');
+	const dialog = page.getByRole('dialog', { name: 'Zaključite iskanje?' });
+	await expect(dialog).toBeVisible();
+	expect(sent).toEqual([]);
+	await dialog.getByRole('button', { name: 'Pusti odprto' }).click();
+	await expect(dialog).toBeHidden();
+	await expect(page.getByRole('heading', { level: 1, name: 'Moje prijave' })).toBeFocused();
+	expect(sent).toEqual([]);
+});
+
+test('a malformed code or an unknown action opens nothing and sends nothing', async ({ page }) => {
+	const sent = transitions(page);
+	for (const query of ['r=../x&action=keep', 'r=Own12345&action=reopen', 'r=Own12345&action=%3Cb%3E']) {
+		await page.goto(`/moje-prijave?${query}`);
+		await expect(page.getByRole('heading', { level: 1, name: 'Moje prijave' })).toBeVisible();
+		await expect(page.getByRole('dialog')).toHaveCount(0);
+		await expect(page.getByText('Še iščete?')).toHaveCount(0);
+	}
+	expect(sent).toEqual([]);
+});
+
+test('"Pusti odprto" in the close dialog from the report returns focus to the opener', async ({ page }) => {
+	await page.goto('/r/Own12345');
+	await page.getByRole('button', { name: 'Več možnosti' }).click();
+	await page.getByRole('menuitem', { name: 'Zaključi iskanje' }).click();
+	const dialog = page.getByRole('dialog', { name: 'Zaključite iskanje?' });
+	await dialog.getByRole('button', { name: 'Pusti odprto' }).click();
+	await expect(dialog).toBeHidden();
+	await expect(page.getByRole('button', { name: 'Več možnosti' })).toBeFocused();
+});
