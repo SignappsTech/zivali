@@ -77,7 +77,7 @@ export function ConversationRow({
 		<li>
 			<Link
 				href={{ pathname: '/inbox/[id]', params: { id: conversation.id } }}
-				aria-current={selected || undefined}
+				aria-current={selected ? 'page' : undefined}
 				className={cn(
 					'flex min-h-20 items-center gap-4 rounded-row px-3 py-2 text-foreground transition-[transform,background-color] duration-150 hover:bg-foreground/10 active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100',
 					selected && 'bg-secondary hover:bg-secondary',

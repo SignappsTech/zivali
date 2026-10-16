@@ -6,6 +6,9 @@ import type { AliasKey, ConversationSummary, Message } from '@zivali/types';
 
 import { dismissConsent, type E2eUser, signInAs } from './session';
 
+/** Protected flow (C15): no ad slot renders (as tests/quality/guards.mjs expectNoAdSlots, which has no types). */
+const expectNoAdSlots = (page: Page) => expect(page.locator('[data-ad-slot]')).toHaveCount(0);
+
 // TASK-21.3: P12 chat on the web. Two browser contexts (the owner in SL, the finder in EN) exchange messages through
 // one in-memory C9 API answered here, and Supabase Realtime is a mocked WebSocket speaking the Phoenix frames
 // realtime-js uses ([join_ref, ref, topic, event, payload]): every push gets an ok reply, and a stored message is
@@ -173,8 +176,8 @@ test('owner and finder exchange messages in real time in two browser contexts; n
 	]);
 
 	// Protected flow (C15): no ad slot.
-	await expect(owner.locator('[data-ad-slot]')).toHaveCount(0);
-	await expect(finder.locator('[data-ad-slot]')).toHaveCount(0);
+	await expectNoAdSlots(owner);
+	await expectNoAdSlots(finder);
 	await expectNoAxeViolations(owner);
 	await expectNoAxeViolations(finder);
 	await finderContext.close();
@@ -195,6 +198,6 @@ test('below lg the thread stands alone with a back link to the inbox; the inbox 
 	await expect(page.getByRole('heading', { level: 1, name: 'Sporočila' })).toBeVisible();
 	await page.getByRole('link', { name: /^Najdena žival/ }).click();
 	await expect(page).toHaveURL(new RegExp(`/nabiralnik/${ID}$`));
-	await expect(page.locator('[data-ad-slot]')).toHaveCount(0);
+	await expectNoAdSlots(page);
 	await expectNoAxeViolations(page);
 });

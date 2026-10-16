@@ -127,15 +127,31 @@ const spinnerClass =
  */
 export function Thread({ id }: { id: Uuid }) {
 	const tc = useTranslations('common');
-	const { data, isError, isFetching, refetch } = useListConversationsQuery();
+	const te = useTranslations('errors');
+	const tn = useTranslations('chat');
+	// Refetched on open: the cached first page may predate a fresh conversation (a confirmed match opens it at once).
+	const { data, isError, isFetching, fulfilledTimeStamp, refetch } = useListConversationsQuery(undefined, {
+		refetchOnMountOrArgChange: true,
+	});
+	// "Not found" only from a list fetched since opening, never from the cached one the refetch has yet to replace.
+	const [opened] = React.useState(Date.now);
+	const fresh = !isFetching && (fulfilledTimeStamp ?? 0) >= opened;
 	const conversation = data?.items.find((item) => item.id === id);
 	if (conversation) return <ThreadView key={id} conversation={conversation} />;
 	return (
 		<div className="pt-2">
 			<BackLink />
-			{data || isError ? (
+			{isError ? (
 				<div className="mt-4">
 					<InlineError onRetry={() => void refetch()} retrying={isFetching} />
+				</div>
+			) : data && fresh ? (
+				// Not among the user's conversations (C9 has no single-conversation GET): nothing to retry.
+				<div role="alert" className="mt-4 grid gap-3 rounded-row bg-muted p-4 text-control leading-[22px]">
+					<p>{te('NOT_FOUND')}</p>
+					<Button asChild variant="text" size="sm" className="justify-self-start">
+						<Link href="/inbox">{tn('inbox_title')}</Link>
+					</Button>
 				</div>
 			) : (
 				<div aria-busy="true" className="mt-4 grid gap-3">
@@ -274,7 +290,7 @@ function ThreadView({ conversation }: { conversation: Conversation }) {
 		update(item.key, 'sending');
 		const first = ![...earlier, ...(latest ?? [])].some(isOwn);
 		try {
-			const message = await sendMessage({ id, body: { body: item.body } }).unwrap();
+			const message = await sendMessage({ id, body: { body: item.body }, idempotencyKey: item.key }).unwrap();
 			update(item.key);
 			setSent((ids) => new Set(ids).add(message.id));
 			// C9/C12: the first message the user sends here; track() drops it without analytics consent.
@@ -300,7 +316,12 @@ function ThreadView({ conversation }: { conversation: Conversation }) {
 		if (flushing.current) return;
 		flushing.current = true;
 		try {
-			for (let item; (item = queue.current.find((m) => m.state === 'queued'));) if (!(await deliver(item))) break;
+			for (let item; (item = queue.current.find((m) => m.state === 'queued'));)
+				if (!(await deliver(item))) {
+					// Whatever waits behind the failure would show "sending" for good: failed too, each with its own retry.
+					change((items) => items.map((m) => (m.state === 'queued' ? { ...m, state: 'failed' } : m)));
+					break;
+				}
 		} finally {
 			flushing.current = false;
 		}
@@ -317,6 +338,8 @@ function ThreadView({ conversation }: { conversation: Conversation }) {
 		// Always through the queue: behind anything queued, sending or failed, the new message goes out in order.
 		change((items) => [...items, { key: crypto.randomUUID(), body, state: 'queued' }]);
 		setFlushes((n) => n + 1);
+		// The send button took focus; typing goes on in the field.
+		composer.current?.focus();
 		// The newest message is at the bottom (scrollTop 0 in the reversed scroller).
 		if (scroller.current) scroller.current.scrollTop = 0;
 	};
@@ -384,12 +407,10 @@ function ThreadView({ conversation }: { conversation: Conversation }) {
 		at: message.created_at,
 		message,
 	});
-	const [earlierRows = [], latestRows = []] = withDays([
+	const [earlierRows = [], latestRows = [], pendingRows = []] = withDays([
 		earlier.map(messageRow),
-		[
-			...(latest ?? []).map(messageRow),
-			...pending.map((item): Row => ({ kind: 'pending', key: item.key, at: now, pending: item })),
-		],
+		(latest ?? []).map(messageRow),
+		pending.map((item): Row => ({ kind: 'pending', key: item.key, at: now, pending: item })),
 	]);
 	const renderRow = (row: Row) => {
 		if (row.kind === 'day')
@@ -584,6 +605,8 @@ function ThreadView({ conversation }: { conversation: Conversation }) {
 						<div role="log" aria-live="polite" className="flex flex-col gap-1.5">
 							{latestRows.map(renderRow)}
 						</div>
+						{/* Outside the log: a sending message is not announced twice (here and once it is stored). */}
+						{pendingRows.map(renderRow)}
 						{empty && (
 							<p className="mt-2 flex gap-2.5">
 								<ChatTeardropTextIcon

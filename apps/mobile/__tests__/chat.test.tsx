@@ -37,6 +37,10 @@ jest.mock('expo-sqlite/localStorage/install', () => {
 jest.mock('@/lib/env', () => ({
 	env: { EXPO_PUBLIC_APP_URL: 'https://najdimo.test', EXPO_PUBLIC_PUSH_PROVIDER: 'mock' },
 }));
+jest.mock('expo-crypto', () => {
+	let n = 0;
+	return { randomUUID: () => `1b4e28ba-2fa1-4d3b-a3f5-ef19b5a7${String(++n).padStart(4, '0')}` };
+});
 jest.mock('expo-web-browser', () => ({ openBrowserAsync: jest.fn(async () => ({})) }));
 jest.mock('@/lib/anonymous', () => ({ ensureSession: jest.fn(async () => ({})) }));
 // The Notifications view reads the push permission (P13 fallback note).
@@ -145,6 +149,10 @@ function serve({
 const sent = (method: string, path: string) =>
 	calls.filter((call) => call.method === method && call.path === path).map((call) => call.body);
 const MESSAGES = `/v1/conversations/${ID}/messages`;
+const keys = () =>
+	calls
+		.filter((call) => call.method === 'POST' && call.path === MESSAGES)
+		.map((call) => call.headers['Idempotency-Key']);
 
 function Providers({ children }: { children: React.ReactNode }) {
 	return (
@@ -373,6 +381,26 @@ describe('conversation (P12 thread)', () => {
 		expect(await screen.findByText(c.sent)).toBeOnTheScreen();
 		expect(screen.queryByText(c.failed)).toBeNull();
 		expect(sent('POST', MESSAGES)).toEqual([{ body: 'Ste še tam?' }, { body: 'Ste še tam?' }]);
+		// One message, one key: a retry after a lost response never doubles it (C1).
+		expect(keys()[0]).toMatch(/^[0-9a-f-]{36}$/);
+		expect(keys()[1]).toBe(keys()[0]);
+	});
+
+	test('a failure stops the run: the messages queued behind it are failed too, not stuck on "sending"', async () => {
+		mockNet.state = { isConnected: false, isInternetReachable: false } as NetworkState;
+		serve({ routes: { 'POST /v1/conversations/:id/messages': () => mockError('RATE_LIMITED') } });
+		await open();
+		await screen.findByText(HISTORY[1]!.body);
+		await type('Prvo');
+		await fireEvent.press(sendButton());
+		await type('Drugo');
+		await fireEvent.press(sendButton());
+
+		mockNet.state = { isConnected: true, isInternetReachable: true } as NetworkState;
+		await act(async () => mockNet.listeners.forEach((listener) => listener(mockNet.state)));
+		await waitFor(() => expect(screen.getAllByRole('button', { name: c.retry })).toHaveLength(2));
+		expect(sent('POST', MESSAGES)).toEqual([{ body: 'Prvo' }]);
+		expect(screen.queryByText(c.queued)).toBeNull();
 	});
 
 	test('read-only: the composer is replaced by the closed note; the thread stays readable', async () => {

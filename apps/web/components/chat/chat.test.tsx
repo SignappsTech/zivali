@@ -123,6 +123,10 @@ function serve({
 	calls = api.calls;
 	state.store = createApiStore(api);
 }
+const keys = () =>
+	calls
+		.filter((call) => call.method === 'POST' && call.path === MESSAGES)
+		.map((call) => call.headers['Idempotency-Key']);
 const sent = (method: string, path: string) =>
 	calls.filter((call) => call.method === method && call.path === path).map((call) => call.body);
 
@@ -180,7 +184,7 @@ describe('ConversationList (P12 inbox)', () => {
 		expect(unread.querySelector('.bg-primary')).toBeTruthy();
 		const other = screen.getByRole('link', { name: /Prijava zaključena/ });
 		expect(other.getAttribute('href')).toBe('/nabiralnik/c2');
-		expect(other.getAttribute('aria-current')).toBe('true');
+		expect(other.getAttribute('aria-current')).toBe('page');
 		expect(other.textContent).toContain('Hvala!');
 		expect(unread.getAttribute('aria-current')).toBeNull();
 		expect(screen.queryByText(/@|\+386/)).toBeNull();
@@ -218,6 +222,64 @@ describe('ConversationList (P12 inbox)', () => {
 });
 
 describe('Thread (P12)', () => {
+	it('a conversation the list does not have: a not-found note linking to the inbox, no retry', async () => {
+		serve();
+		show(<Thread id="c9a1d2e3-0000-4000-8000-0000000000ff" />);
+
+		const note = await screen.findByRole('alert');
+		expect(note.textContent).toContain(sl.errors.NOT_FOUND);
+		expect(within(note).getByRole('link', { name: c.inbox_title }).getAttribute('href')).toBe('/nabiralnik');
+		expect(screen.queryByRole('button', { name: sl.common.inline_error_retry })).toBeNull();
+	});
+
+	it('opening refetches the list: a conversation newer than the cached page is found', async () => {
+		let items: Conversation[] = [];
+		serve({ routes: { 'GET /v1/conversations': () => ({ items, next_cursor: null }) } });
+		await state.store!.dispatch(
+			(await import('@zivali/api/chat')).chatApi.endpoints.listConversations.initiate(undefined)
+		);
+		items = [conversation()];
+		show();
+
+		expect(await screen.findByText(HISTORY[1]!.body)).toBeTruthy();
+		expect(screen.queryByRole('alert')).toBeNull();
+	});
+
+	it('switching to another conversation leaves the first channel, joins the second, and ignores a late broadcast of the first', async () => {
+		const B = 'c9a1d2e3-0000-4000-8000-000000000002';
+		serve({
+			routes: {
+				'GET /v1/conversations': () => ({
+					items: [conversation(), conversation({ id: B })],
+					next_cursor: null,
+				}),
+				[`GET /v1/conversations/${B}/messages`]: () => ({
+					items: [msg('b1', { conversation_id: B, body: 'Pogovor B.' })],
+					next_cursor: null,
+				}),
+				[`POST /v1/conversations/${B}/read`]: () => undefined,
+			},
+		});
+		const { rerender } = show();
+		await screen.findByText(HISTORY[1]!.body);
+		const first = await joined();
+
+		rerender(
+			<NextIntlClientProvider locale="sl" messages={sl}>
+				<Provider store={state.store!}>
+					<Thread id={B} />
+				</Provider>
+			</NextIntlClientProvider>
+		);
+		expect(await screen.findByText('Pogovor B.')).toBeTruthy();
+		expect(screen.queryByText(HISTORY[1]!.body)).toBeNull();
+		expect(state.removed).toContain(TOPIC);
+		await waitFor(() => expect(state.channels.get(`conversation:${B}`)?.status).toBeTypeOf('function'));
+
+		act(() => first.handlers['message.created']!({ payload: msg('late', { body: 'Pozna sporočilo A.' }) }));
+		expect(screen.queryByText('Pozna sporočilo A.')).toBeNull();
+	});
+
 	it('safety banner, plain-text links with the caution, system line, own and other bubbles; marks read', async () => {
 		serve();
 		show();
@@ -319,7 +381,7 @@ describe('Thread (P12)', () => {
 
 		type('Kje ste?');
 		fireEvent.click(sendButton());
-		const alert = await within(screen.getByRole('log')).findByRole('alert');
+		const alert = await screen.findByRole('alert');
 		expect(alert.textContent).toContain(c.failed);
 		expect(bubble(/^Vi, Ni poslano: Kje ste\?$/)).toBeTruthy();
 		await new Promise((resolve) => setTimeout(resolve, 50));
@@ -330,7 +392,43 @@ describe('Thread (P12)', () => {
 		fireEvent.click(within(alert).getByRole('button', { name: c.retry }));
 		expect(await screen.findByText(c.sent)).toBeTruthy();
 		expect(sent('POST', MESSAGES)).toHaveLength(2);
-		expect(within(screen.getByRole('log')).queryByRole('alert')).toBeNull();
+		expect(screen.queryByRole('alert')).toBeNull();
+		// One message, one key: the retry repeats it, so a lost response never doubles the message (C1).
+		expect(keys()[0]).toMatch(/^[0-9a-f-]{36}$/);
+		expect(keys()[1]).toBe(keys()[0]);
+	});
+
+	it('a failure stops the run: messages queued behind it fail too, each with its own retry, outside the live log', async () => {
+		const onLine = vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(false);
+		serve({ routes: { [`POST ${MESSAGES}`]: () => mockError('RATE_LIMITED') } });
+		show();
+		await screen.findByText(HISTORY[1]!.body);
+		type('Prvo');
+		fireEvent.click(sendButton());
+		type('Drugo');
+		fireEvent.click(sendButton());
+		expect(screen.getAllByText(c.queued)).toHaveLength(2);
+		// Pending bubbles sit after the log, so the live region does not announce them twice.
+		expect(within(screen.getByRole('log')).queryByText('Prvo')).toBeNull();
+
+		onLine.mockReturnValue(true);
+		act(() => void window.dispatchEvent(new Event('online')));
+		await waitFor(() => expect(screen.getAllByRole('button', { name: c.retry })).toHaveLength(2));
+		expect(sent('POST', MESSAGES)).toEqual([{ body: 'Prvo' }]);
+		expect(screen.queryByText(c.sending)).toBeNull();
+		expect(screen.queryByText(c.queued)).toBeNull();
+	});
+
+	it('after sending with the button, focus returns to the composer', async () => {
+		serve();
+		show();
+		await screen.findByText(HISTORY[1]!.body);
+
+		type('Pridem.');
+		sendButton().focus();
+		fireEvent.click(sendButton());
+		expect(document.activeElement).toBe(composer());
+		await screen.findByText(c.sent);
 	});
 
 	it('offline: the note, the message waits with the clock, and goes out when the browser is back online', async () => {
@@ -413,6 +511,26 @@ describe('Thread (P12)', () => {
 		expect(screen.getByText(a.message_folded)).toBeTruthy();
 		expect(screen.queryByText(HISTORY[1]!.body)).toBeNull();
 		await waitFor(() => expect(document.activeElement).toBe(composer()));
+	});
+
+	it('the menu without other_participant_id: report targets the latest message of the other person, no Block rows', async () => {
+		serve();
+		show();
+		await screen.findByText(HISTORY[1]!.body);
+
+		const menu = await openMenu();
+		expect(within(menu).getByRole('menuitem', { name: c.menu_report })).toBeTruthy();
+		expect(within(menu).queryByRole('menuitem', { name: a.entry_block })).toBeNull();
+		expect(within(menu).queryByRole('menuitem', { name: c.menu_block })).toBeNull();
+		fireEvent.click(within(menu).getByRole('menuitem', { name: c.menu_report }));
+		const dialog = await screen.findByRole('dialog');
+		expect(within(dialog).getByText(a.target_message)).toBeTruthy();
+		fireEvent.click(within(dialog).getByRole('radio', { name: a.reason_scam }));
+		fireEvent.click(within(dialog).getByRole('button', { name: a.send }));
+		await within(dialog).findByRole('button', { name: a.done_close });
+		expect(sent('POST', '/v1/abuse-reports')).toEqual([
+			{ target_type: 'message', target_id: 'm3', reason: 'scam' },
+		]);
 	});
 
 	it('the menu: open report, report the person (profile) with the block switch, block with a confirmation', async () => {
