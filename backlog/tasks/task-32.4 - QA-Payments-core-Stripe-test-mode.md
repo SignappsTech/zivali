@@ -1,11 +1,11 @@
 ---
 id: TASK-32.4
 title: 'QA: Payments core (Stripe test mode)'
-status: To Do
+status: Done
 assignee:
   - '@qa'
 created_date: '2026-10-14 22:15'
-updated_date: '2026-10-16 00:23'
+updated_date: '2026-10-16 01:34'
 labels:
   - qa
   - 'est:XS'
