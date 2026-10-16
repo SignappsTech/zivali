@@ -222,6 +222,26 @@ export async function expireIdle(input: IdleCutoffs, tx: Prisma.TransactionClien
 		left join app.profiles p on p.id = e.created_by`;
 }
 
+/**
+ * retention.blur_location (ADR-006): up to `take` reports closed or reunited at or before `endedBefore` whose stored
+ * point is not their public centre yet get exact_point = public_point (skip locked). The circle and the area stay.
+ */
+export async function blurEnded(
+	input: { endedBefore: Date; take: number },
+	tx?: Prisma.TransactionClient
+): Promise<number> {
+	const db = tx ?? prisma;
+	const { endedBefore, take } = input;
+	return db.$executeRaw`
+		update app.reports set exact_point = public_point, updated_at = now()
+		where id in (
+			select id from app.reports
+			where ((status = 'closed' and closed_at <= ${endedBefore})
+					or (status = 'reunited' and reunited_at <= ${endedBefore}))
+				and not extensions.st_equals(exact_point::extensions.geometry, public_point::extensions.geometry)
+			limit ${take} for update skip locked)`;
+}
+
 /** Adds the manager; an existing manager row stays as it is (a repeated manage-link claim). */
 export async function addManager(
 	data: { report_id: string; user_id: string; role: 'owner' | 'finder' | 'staff' },
@@ -502,6 +522,7 @@ export default {
 	claimReminders,
 	claimExpiryWarnings,
 	expireIdle,
+	blurEnded,
 	addManager,
 	addContact,
 	getContactEmail,

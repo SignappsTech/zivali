@@ -27,6 +27,7 @@ import { setupAnalytics, useScreenTracking } from '@/lib/analytics';
 import { ensureSession } from '@/lib/anonymous';
 import { startOutbox } from '@/lib/offline/outbox';
 import { ProfileI18n } from '@/lib/profile-i18n';
+import { usePushNotifications } from '@/lib/push';
 import { apiClient, store } from '@/lib/store';
 import { NAV_THEME } from '@/lib/theme';
 
@@ -67,6 +68,7 @@ export default function RootLayout() {
 							<Stack screenOptions={{ headerShown: false }} />
 							<ConsentSheet />
 							<CaptchaSheet />
+							<PushNotifications />
 							<AppToaster />
 							<PortalHost />
 						</BottomSheetModalProvider>
@@ -79,6 +81,12 @@ export default function RootLayout() {
 
 // 12 px above the bottom navigation (68 px plus the safe area, which the Toaster adds itself).
 const TOAST_OFFSET = 80;
+
+/** Push token per session and the tap on a push or proximity alert (C10); after the Stack, so taps can navigate. */
+function PushNotifications() {
+	usePushNotifications();
+	return null;
+}
 
 function AppToaster() {
 	const t = useTranslations('common');

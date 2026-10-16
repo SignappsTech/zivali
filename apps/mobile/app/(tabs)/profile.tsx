@@ -37,6 +37,7 @@ import { Text } from '@/components/ui/text';
 import { resendConfirmation, signOutProviders } from '@/lib/auth';
 import { env } from '@/lib/env';
 import { signOutAndWipe } from '@/lib/offline/wipe';
+import { unregisterPush } from '@/lib/push';
 
 /**
  * "Odjava" and its confirmation; the wipe keeps the manage links unless the user ticks their removal, and unsent
@@ -48,7 +49,8 @@ function SignOutRow() {
 	const { resolvePending, prompt } = usePendingPrompt();
 	const signOut = async () => {
 		try {
-			if (await signOutAndWipe({ resolvePending, removeManageLinks })) await signOutProviders();
+			if (await signOutAndWipe({ resolvePending, removeManageLinks, beforeSignOut: unregisterPush }))
+				await signOutProviders();
 		} catch {
 			toast.error(t('errors.INTERNAL'));
 		}

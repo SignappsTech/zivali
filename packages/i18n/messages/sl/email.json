@@ -101,6 +101,9 @@
 		"date": "Datum: {paid_at}",
 		"amount": "Znesek: {amount}",
 		"reference": "Referenca: {receipt_ref}",
+		"invoice": "{has_invoice, select, yes {Račun št. {invoice_number}} other {}}",
+		"zoi": "{has_invoice, select, yes {ZOI: {zoi}} other {}}",
+		"eor": "{has_eor, select, yes {EOR: {eor}} other {}}",
 		"test_note": "{is_test, select, yes {Testno plačilo – kartica ni bila bremenjena.} other {}}",
 		"not_donation": "To je potrdilo o plačilu, ne potrdilo o donaciji."
 	}

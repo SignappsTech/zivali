@@ -10,7 +10,29 @@ const ALLOWED = /^\/(r\/[^/]+|m|payments\/.+|auth\/callback)?$/;
  * rest of /auth stays closed (new-password also needs the in-memory recovery flag).
  */
 export function toAppPath(url: string): string {
+	const path = internalPath(url);
+	return ALLOWED.test(path.replace(/[?#].*$/, '')) ? path : '/';
+}
+
+function internalPath(url: string): string {
 	const path = url.replace(/^(https?:\/\/[^/]+|zivali:\/)/, '').replace(/^\/en(?=\/|$|[?#])/, '');
-	const withSlash = path.startsWith('/') ? path : `/${path}`;
-	return ALLOWED.test(withSlash.replace(/[?#].*$/, '')) ? withSlash : '/';
+	return path.startsWith('/') ? path : `/${path}`;
+}
+
+/** Screens a notification may open (C15 §Mobile): a listing, its matches, a conversation, payments. */
+const TARGETS = /^\/(r\/[\w-]+(\/matches)?|inbox\/[\w-]+|settings\/payments)$/;
+
+/**
+ * The `data.url` of a push (C10 deep link, e.g. `/r/<code>/matches`, `/inbox/<id>`) or of a local proximity alert
+ * (`zivali://r/<code>`) -> app route. `/my-reports?r=<code>` opens that listing, `/account/payments` the payments
+ * settings; anything else opens the inbox. Query and hash are dropped.
+ */
+export function toTargetPath(url: string): string {
+	const [pathname = '/', query = ''] = internalPath(url).split(/[?#]/);
+	if (pathname === '/my-reports') {
+		const code = /(?:^|&)r=([\w-]+)/.exec(query)?.[1];
+		return code ? `/r/${code}` : '/inbox';
+	}
+	if (pathname === '/account/payments') return '/settings/payments';
+	return TARGETS.test(pathname) ? pathname : '/inbox';
 }

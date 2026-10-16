@@ -1,11 +1,11 @@
 ---
 id: TASK-22.5
 title: 'Mobile notifications, push registration and notification settings'
-status: To Do
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:14'
-updated_date: '2026-10-14 22:42'
+updated_date: '2026-10-15 23:34'
 labels:
   - fe
   - 'est:M'
@@ -42,7 +42,14 @@ Branch: agent/task-22.5-notify-mob
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 The Inbox tab shows notifications with unread counts in real time and mark-as-read, per P13.
-- [ ] #2 After the notifications primer the device registers its push token on sign-in and unregisters on sign-out; denial falls back to in-app and email.
-- [ ] #3 Tapping a push opens the target screen through the deep-link routes; settings control types, channels and quiet hours.
+- [x] #1 The Inbox tab shows notifications with unread counts in real time and mark-as-read, per P13.
+- [x] #2 After the notifications primer the device registers its push token on sign-in and unregisters on sign-out; denial falls back to in-app and email.
+- [x] #3 Tapping a push opens the target screen through the deep-link routes; settings control types, channels and quiet hours.
+- [x] #4 From the TASK-22.4 build: @zivali/api unregisterPushToken sends the push token in the request body, never the URL (C10 §1.2), client and API route, with a test.
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+Mobile: Inbox tab = P13 notifications view (components/notifications/notifications-view.tsx; Realtime user:<id> refetch, mark read, Keep searching = extend, Close = listing). Push: lib/push.ts (foreground handler, token on each signed-in session when granted, delete before sign-out via signOutAndWipe beforeSignOut, taps and local proximity alerts -> lib/deep-link toTargetPath). Settings: app/settings/notifications.tsx (4-row channel matrix, in-app locked for matches and messages, primer when push not asked yet, quiet hours HH:MM fields). @zivali/api: unregisterPushToken sends { token } in the body (C10 CH-76; API route already reads the body); baseQuery maps a 204 to null data. TASK-23.3 and the report flows mount <PermissionPrimer kind=notifications request={usePushPermission().request} /> when alerts turn on / after the first report.
+<!-- SECTION:NOTES:END -->

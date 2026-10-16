@@ -80,13 +80,17 @@ async function sentTokenKeys(): Promise<string[]> {
 export async function signOutAndWipe({
 	resolvePending,
 	removeManageLinks = false,
+	beforeSignOut,
 }: {
 	resolvePending: (count: number) => Promise<boolean>;
 	/** Also forget the manage tokens and sent rows ("remove my report links from this device"); C17 keeps them by default. */
 	removeManageLinks?: boolean;
+	/** Runs while the session still exists, e.g. the push-token delete (C10); a failure does not stop the sign-out. */
+	beforeSignOut?: () => Promise<unknown>;
 }): Promise<boolean> {
 	const count = await pendingCount();
 	if (count > 0 && !(await resolvePending(count))) return false;
+	await beforeSignOut?.().catch(() => {});
 	const { error } = await supabase.auth.signOut();
 	// Offline the server call fails and keeps the session; forget it on this device anyway.
 	if (error) await supabase.auth.signOut({ scope: 'local' });
