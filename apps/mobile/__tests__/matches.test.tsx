@@ -180,6 +180,8 @@ async function open(path: string) {
 			'r/[code]/index': () => <Text>report screen</Text>,
 			'r/[code]/matches/index': MatchesScreen,
 			'r/[code]/matches/[id]': MatchReviewScreen,
+			'r/[code]/poster': () => <Text>poster screen</Text>,
+			'settings/alerts': () => <Text>alerts screen</Text>,
 			'inbox/[id]': () => <Text>chat screen</Text>,
 			'auth/check-email': () => <Text>check email screen</Text>,
 		},
@@ -249,6 +251,23 @@ describe('matches list (P11 mobile)', () => {
 		expect(screen.getByText(m.empty_body)).toBeOnTheScreen();
 		expect(screen.getByRole('button', { name: m.empty_share })).toBeOnTheScreen();
 		expect(screen.getByText('0 možnih ujemanj')).toBeOnTheScreen();
+	});
+
+	test('empty: the poster opens the poster screen', async () => {
+		items = [];
+		const code = nextCode();
+		const { page } = await open(`/r/${code}/matches`);
+		await fireEvent.press(await screen.findByRole('button', { name: m.empty_poster }));
+		expect(await screen.findByText('poster screen')).toBeOnTheScreen();
+		expect(page.getPathname()).toBe(`/r/${code}/poster`);
+	});
+
+	test('empty: alerts opens the alert settings', async () => {
+		items = [];
+		const { page } = await open(`/r/${nextCode()}/matches`);
+		await fireEvent.press(await screen.findByRole('button', { name: m.empty_alerts }));
+		expect(await screen.findByText('alerts screen')).toBeOnTheScreen();
+		expect(page.getPathname()).toBe('/settings/alerts');
 	});
 
 	test('a match the server withdrew disappears with the note', async () => {
