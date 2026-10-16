@@ -1,10 +1,11 @@
 ---
 id: TASK-29.8
 title: 'Mobile: lost-flow confirmation uses the shared ShelterRow'
-status: To Do
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-16 02:23'
+updated_date: '2026-10-16 02:44'
 labels:
   - fe
   - trivial
