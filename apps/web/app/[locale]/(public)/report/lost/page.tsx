@@ -12,7 +12,7 @@ import { getViewer } from '@/lib/viewer';
 
 const HREF = '/report/lost';
 // What the flow's client components translate (PageMessages adds the shell's namespaces).
-const NAMESPACES = ['report_lost', 'pets', 'attributes', 'breeds', 'photos', 'location', 'permissions'] as const;
+const NAMESPACES = ['report_lost', 'pets', 'attributes', 'breeds', 'photos', 'location', 'map', 'permissions'] as const;
 
 export async function generateMetadata({ params }: PageProps<'/[locale]/report/lost'>): Promise<Metadata> {
 	const locale = (await params).locale as Locale;
