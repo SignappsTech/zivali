@@ -1,11 +1,11 @@
 ---
 id: TASK-25.4
 title: Mobile report-abuse sheet and detail slot
-status: To Do
+status: In Progress
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:13'
-updated_date: '2026-10-14 22:42'
+updated_date: '2026-10-16 00:37'
 labels:
   - fe
   - 'est:S'
@@ -40,7 +40,7 @@ Branch: agent/task-25.4-abuse-mob
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 A report-abuse sheet offers the same reasons and optional note, per P10; anonymous users sign in anonymously first.
-- [ ] #2 It fills the report-abuse slot on the report screen and is reusable from chat; duplicates show the same confirmation.
-- [ ] #3 Errors and rate limits are localised; screen-reader labels verified.
+- [x] #1 A report-abuse sheet offers the same reasons and optional note, per P10; anonymous users sign in anonymously first.
+- [x] #2 It fills the report-abuse slot on the report screen and is reusable from chat; duplicates show the same confirmation.
+- [x] #3 Errors and rate limits are localised; screen-reader labels verified.
 <!-- AC:END -->
