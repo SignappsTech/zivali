@@ -212,11 +212,19 @@ export function useReportSearch(
 	};
 }
 
-/** A report by short code: the full public (or manager) view online, the cached subset offline (null if absent). */
-export function useReport(code: string): ReportsResult<PublicReport | CachedReport | null> {
+/**
+ * A report by short code: the full public (or manager) view online, the cached subset offline (null if absent).
+ * `refetch` retries the network request after an error.
+ */
+export function useReport(
+	code: string
+): ReportsResult<PublicReport | CachedReport | null> & { refetch: () => unknown } {
 	const network = useGetReportQuery({ code }, { skip: useOffline() });
 	useEffect(() => {
 		if (network.data) cacheQuietly([toCached(network.data)]);
 	}, [network.data]);
-	return useCacheFallback<PublicReport | CachedReport | null>(network, code, readOne);
+	return {
+		...useCacheFallback<PublicReport | CachedReport | null>(network, code, readOne),
+		refetch: network.refetch,
+	};
 }
