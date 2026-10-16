@@ -599,7 +599,10 @@ export function FoundFlow({ entry, linked }: { entry: 'found' | 'sighted'; linke
 	const [submitted, setSubmitted] = React.useState<Submitted>();
 	const [done, setDone] = React.useState<Submitted>();
 	const scroll = React.useRef<ScrollView>(null);
-	const { items, remove } = useOutbox();
+	const { items, remove, retry } = useOutbox();
+	// A rate-limited or CONFLICT item stays in the outbox with its Idempotency-Key; the next Publish with the same answers resends it.
+	const sentSignature = React.useRef('');
+	const held = React.useRef<{ submitted: Submitted; signature: string }>(null);
 	const item = submitted ? items.find((i) => i.id === submitted.outboxId) : undefined;
 	const doneItem = done ? items.find((i) => i.id === done.outboxId) : undefined;
 
@@ -711,8 +714,20 @@ export function FoundFlow({ entry, linked }: { entry: 'found' | 'sighted'; linke
 		sendingRef.current = true;
 		setSending(true);
 		try {
+			const payload = outboxPayload({ ...values, species, location }, linked);
+			const signature = JSON.stringify([payload, photos.map((photo) => photo.sha256)]);
+			if (held.current?.signature === signature) {
+				const { submitted: again } = held.current;
+				settling.current = null;
+				// Same answers: the same outbox item, so the same Idempotency-Key (a sent one just closes the flow).
+				await retry(again.outboxId);
+				return setSubmitted(again);
+			}
+			if (held.current) void remove(held.current.submitted.outboxId).catch(() => {});
+			held.current = null;
+			sentSignature.current = signature;
 			const { outboxId } = await submitReport(
-				{ ...outboxPayload({ ...values, species, location }, linked), photos },
+				{ ...payload, photos },
 				{ capturedAt: capturedAt(values, Boolean(linked)) }
 			);
 			setSubmitted({
@@ -730,13 +745,17 @@ export function FoundFlow({ entry, linked }: { entry: 'found' | 'sighted'; linke
 	};
 
 	// The outbox answers Publish: sent (M6) or waiting for the network (Q1) closes the flow; a rate limit, a failed
-	// check or a refusal keeps the form, and that outbox item goes so the next Publish sends the edited answers.
+	// check or a refusal keeps the form. A rate limit or a CONFLICT keeps its outbox item (and key); a refusal's item goes
+	// so the next Publish sends the edited answers.
 	const settling = React.useRef<string>(null);
 	const settle = React.useEffectEvent((current: OutboxItem) => {
 		if (!submitted || settling.current === current.id) return;
 		settling.current = current.id;
 		const code = current.last_error_code;
-		if (current.status === 'sent' || (current.status === 'queued' && code !== 'RATE_LIMITED')) {
+		if (
+			current.status === 'sent' ||
+			(current.status === 'queued' && code !== 'RATE_LIMITED' && code !== 'CONFLICT')
+		) {
 			void dropDraft(draftId)
 				.catch(() => {})
 				.then(() => setDone(submitted));
@@ -749,7 +768,9 @@ export function FoundFlow({ entry, linked }: { entry: 'found' | 'sighted'; linke
 			error = { text: minutes > 60 ? t('limit_day') : t('limit_hour', { minutes }), until };
 		} else if (code === 'CAPTCHA_REQUIRED') error = { text: t('captcha_failed'), captcha: true };
 		else error = { text: errorText(code ?? 'INTERNAL') };
-		void remove(current.id)
+		const keep = code === 'RATE_LIMITED' || code === 'CONFLICT';
+		if (keep) held.current = { submitted, signature: sentSignature.current };
+		void (keep ? Promise.resolve() : remove(current.id))
 			.catch(() => {})
 			.then(() => {
 				sendingRef.current = false;

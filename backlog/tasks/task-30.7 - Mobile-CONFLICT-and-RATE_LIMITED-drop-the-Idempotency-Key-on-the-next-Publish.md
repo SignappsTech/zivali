@@ -1,7 +1,7 @@
 ---
 id: TASK-30.7
 title: 'Mobile: CONFLICT and RATE_LIMITED drop the Idempotency-Key on the next Publish'
-status: To Do
+status: In Progress
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-16 07:31'
@@ -21,5 +21,8 @@ Steps: mobile found flow to Publish, API answers CONFLICT (first request with th
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 After a CONFLICT or RATE_LIMITED answer the next Publish on mobile reuses the same Idempotency-Key (web keepsSubmission parity) while the answers are unchanged
+- [x] #1 After a CONFLICT or RATE_LIMITED answer the next Publish on mobile reuses the same Idempotency-Key (web keepsSubmission parity) while the answers are unchanged
 <!-- AC:END -->
+
+## Packet
+Branch: agent/task-30.7-outbox-key-mob
