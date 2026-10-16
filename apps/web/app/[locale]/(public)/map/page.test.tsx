@@ -45,14 +45,16 @@ describe('/zemljevid', () => {
 		}
 	);
 
-	it('sends the browse, map and colour messages with the island and describes the page in JSON-LD', async () => {
+	it('sends the browse, map, ad and colour messages with the island and describes the page in JSON-LD', async () => {
 		const { common, consent, errors, nav } = sl;
 		render(
 			<NextIntlClientProvider locale="sl" messages={{ common, consent, errors, nav }}>
 				{await MapPage(props('sl'))}
 			</NextIntlClientProvider>
 		);
-		expect(screen.getByTestId('namespaces').textContent).toBe('attributes,browse,common,consent,errors,map,nav');
+		expect(screen.getByTestId('namespaces').textContent).toBe(
+			'ads,attributes,browse,common,consent,errors,map,nav'
+		);
 		const ld = JSON.parse(document.querySelector('script[type="application/ld+json"]')!.textContent!);
 		expect(ld['@graph']).toEqual([
 			{ '@type': 'CollectionPage', name: sl.browse.seo_title, url: 'https://najdimo.si/zemljevid' },

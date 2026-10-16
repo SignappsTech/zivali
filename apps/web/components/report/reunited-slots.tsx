@@ -1,3 +1,4 @@
+import { AdSlot } from '@/components/ads/ad-slot';
 import type { DetailReport } from '@/components/report/slots/types';
 
 type ReunitedSlotProps = { report: DetailReport; className?: string };
@@ -12,10 +13,10 @@ export function ReunitedTip(_props: ReunitedSlotProps) {
 }
 
 /**
- * P14 ad slot: the one labelled ad (P21 `reunited`, "Oglas", 176 px reserved on web), below the support moment and
- * never beside the ask (P15): hidden while the tip asks. Until it loads it keeps its box; no ad, a failure or no network
- * collapse it with no gap. Empty until the web AdSlot (TASK-36.5) fills it.
+ * P14 ad slot: the one labelled ad (P21 `reunited`, "Oglas", 200 px reserved, 176 from lg), below the support moment.
+ * Never beside the ask (P15): the web tip (TASK-33.2) hides it while the tip asks, as on mobile. Until it loads it
+ * keeps its box; no ad or a failure collapse it with no gap.
  */
-export function ReunitedAd(_props: ReunitedSlotProps) {
-	return null;
+export function ReunitedAd({ report, className }: ReunitedSlotProps) {
+	return <AdSlot slot="reunited" species={report.species} region={report.region_slug} className={className} />;
 }
