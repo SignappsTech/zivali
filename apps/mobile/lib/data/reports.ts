@@ -181,27 +181,39 @@ function useCacheFallback<T>(
 }
 
 const useOffline = () => !isOnline(useNetworkState());
+/** `skip`: not ready to ask yet (the map's centre is still unknown); loading, from neither the network nor the cache. */
+type Options = { skip?: boolean };
+const held = <N extends { isUninitialized: boolean; isLoading: boolean }>(network: N, skip?: boolean): N =>
+	skip ? { ...network, isUninitialized: false, isLoading: true } : network;
 
 /** Map pins in a bbox. Network pins carry too few fields to cache; the area sync fills the cache for the map. */
-export function useMapReports(query: MapReportQuery): ReportsResult<MapReportList> {
-	const network = useGetMapReportsQuery(query, { skip: useOffline() });
-	return useCacheFallback(network, JSON.stringify(query), readMap);
+export function useMapReports(
+	query: MapReportQuery,
+	{ skip }: Options = {}
+): ReportsResult<MapReportList> & { refetch: () => unknown } {
+	const network = useGetMapReportsQuery(query, { skip: useOffline() || skip });
+	return { ...useCacheFallback(held(network, skip), JSON.stringify(query), readMap), refetch: network.refetch };
 }
 
-/** The report list as cache-shaped items (network pages flattened); `fetchNextPage` pages the network only. */
+/**
+ * The report list as cache-shaped items (network pages flattened); `fetchNextPage` pages the network only, `refetch`
+ * retries it after an `error`.
+ */
 export function useReportSearch(
-	filters: Omit<ReportSearch, 'cursor'>
-): ReportsResult<CachedReport[]> & { hasNextPage: boolean; fetchNextPage: () => unknown } {
-	const network = useSearchReportsInfiniteQuery(filters, { skip: useOffline() });
+	filters: Omit<ReportSearch, 'cursor'>,
+	{ skip }: Options = {}
+): ReportsResult<CachedReport[]> & { hasNextPage: boolean; fetchNextPage: () => unknown; refetch: () => unknown } {
+	const network = useSearchReportsInfiniteQuery(filters, { skip: useOffline() || skip });
 	const items = useMemo(() => network.data?.pages.flatMap((page) => page.items.map(toCached)), [network.data]);
 	useEffect(() => {
 		if (items) cacheQuietly(items);
 	}, [items]);
-	const result = useCacheFallback({ ...network, data: items }, JSON.stringify(filters), readList);
+	const result = useCacheFallback(held({ ...network, data: items }, skip), JSON.stringify(filters), readList);
 	return {
 		...result,
 		hasNextPage: result.source === 'network' && network.hasNextPage,
 		fetchNextPage: network.fetchNextPage,
+		refetch: network.refetch,
 	};
 }
 

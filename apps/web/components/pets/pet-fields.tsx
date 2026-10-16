@@ -79,9 +79,10 @@ const headingClass = 'font-display text-xl font-semibold tracking-[-0.01em]';
 const groupLabelClass = 'text-control font-bold';
 const hintClass = 'text-sm text-muted-foreground';
 
-// System §10.4 pill: 44 px, secondary fill; selected primary plus a check (radio pills and toggle pills).
+// System §10.4 pill: 44 px, secondary fill; selected primary plus a check (radio pills and toggle pills). Disabled is
+// the muted fill (§10.2).
 const pillClass =
-	'group/pill inline-flex min-h-11 cursor-pointer items-center gap-1.5 rounded-chip bg-secondary px-4.5 text-control font-bold whitespace-nowrap text-secondary-foreground transition-transform duration-[80ms] hover:bg-secondary-hover focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ring active:scale-[0.98] data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground data-[state=checked]:hover:bg-primary-hover data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:hover:bg-primary-hover motion-reduce:transition-none motion-reduce:active:scale-100';
+	'group/pill inline-flex min-h-11 cursor-pointer items-center gap-1.5 rounded-chip bg-secondary px-4.5 text-control font-bold whitespace-nowrap text-secondary-foreground transition-transform duration-[80ms] hover:bg-secondary-hover focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ring active:scale-[0.98] disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground disabled:active:scale-100 data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground data-[state=checked]:hover:bg-primary-hover data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:hover:bg-primary-hover motion-reduce:transition-none motion-reduce:active:scale-100';
 
 function PillCheck() {
 	return (
@@ -99,14 +100,16 @@ type PillRadiosProps<T extends string> = {
 	onChange: (value: T) => void;
 	options: readonly (readonly [T, React.ReactNode])[];
 	hint?: React.ReactNode;
+	/** Say why in `hint`. */
+	disabled?: boolean;
 };
 
 /** Single choice as pills (sex, size, yes/no): a labelled radiogroup with arrow-key navigation. */
-function PillRadios<T extends string>({ label, value, onChange, options, hint }: PillRadiosProps<T>) {
+function PillRadios<T extends string>({ label, value, onChange, options, hint, disabled }: PillRadiosProps<T>) {
 	const id = useId();
 	return (
 		<div className="grid gap-2">
-			<p id={`${id}-label`} className={groupLabelClass}>
+			<p id={`${id}-label`} className={cn(groupLabelClass, disabled && 'text-muted-foreground')}>
 				{label}
 			</p>
 			<RadioGroupPrimitive.Root
@@ -114,6 +117,7 @@ function PillRadios<T extends string>({ label, value, onChange, options, hint }:
 				aria-describedby={hint ? `${id}-hint` : undefined}
 				value={value ?? ''}
 				onValueChange={(next) => onChange(next as T)}
+				disabled={disabled}
 				className="flex flex-wrap gap-2"
 			>
 				{options.map(([option, text]) => (
@@ -352,8 +356,12 @@ export function PetFields({ headingLevel = 2, className }: PetFieldsProps) {
 								label={t('size_label')}
 								value={field.value}
 								onChange={field.onChange}
-								options={SIZES[species ?? 'cat'].map((size) => [size, ta(`size.${size}`)] as const)}
-								hint={species === 'dog' && ta('size_help_dog')}
+								// Disabled like breed and pattern until a species is chosen, then that species' sizes.
+								options={(species ? SIZES[species] : Size.options).map(
+									(size) => [size, ta(`size.${size}`)] as const
+								)}
+								disabled={!species}
+								hint={species ? species === 'dog' && ta('size_help_dog') : t('species_first')}
 							/>
 						)}
 					/>
@@ -496,7 +504,10 @@ function ChipField() {
 	);
 }
 
-/** Cats only: ear tip as yes / no / not sure; "not sure" stores null, like an unanswered question. */
+/**
+ * Cats only: ear tip as yes / no / not sure. "Not sure" is UI-only: it stores null, like an unanswered question, so a
+ * saved pet opens again with no answer chosen.
+ */
 function EarTipField() {
 	const t = useTranslations('pets');
 	const { control } = useFormContext<PetFieldValues>();
@@ -552,6 +563,19 @@ function BreedField({ species }: { species: Species | undefined }) {
 		if (expanded) document.getElementById(`${id}-option-${active}`)?.scrollIntoView?.({ block: 'nearest' });
 	}, [expanded, active, id]);
 
+	// Escape closes only the open list: a surrounding Radix dialog listens on the document in the capture phase, so
+	// the key is stopped on window, before it. With the list closed Escape goes on as usual.
+	useEffect(() => {
+		if (!expanded) return;
+		const onEscape = (event: KeyboardEvent) => {
+			if (event.key !== 'Escape') return;
+			event.stopPropagation();
+			setOpen(false);
+		};
+		window.addEventListener('keydown', onEscape, true);
+		return () => window.removeEventListener('keydown', onEscape, true);
+	}, [expanded]);
+
 	const choose = (code: (typeof options)[number]['code']) => {
 		field.onChange([code]);
 		setText(null);
@@ -567,8 +591,6 @@ function BreedField({ species }: { species: Species | undefined }) {
 		} else if (event.key === 'Enter' && expanded) {
 			event.preventDefault();
 			choose(options[active]!.code);
-		} else if (event.key === 'Escape') {
-			setOpen(false);
 		}
 	};
 

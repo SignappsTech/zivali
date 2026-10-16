@@ -24,6 +24,10 @@ export const routing = defineRouting({
 		'/r/[code]/reunited': { sl: '/r/[code]/spet-doma', en: '/r/[code]/reunited' },
 		'/m': '/m',
 		'/my-pets': { sl: '/moje-zivali', en: '/my-pets' },
+		// P8 pet pages (TASK-16.6); `new` before `[id]`, so it matches first.
+		'/my-pets/new': { sl: '/moje-zivali/nova', en: '/my-pets/new' },
+		'/my-pets/[id]': { sl: '/moje-zivali/[id]', en: '/my-pets/[id]' },
+		'/my-pets/[id]/edit': { sl: '/moje-zivali/[id]/uredi', en: '/my-pets/[id]/edit' },
 		'/my-reports': { sl: '/moje-prijave', en: '/my-reports' },
 		'/inbox': { sl: '/nabiralnik', en: '/inbox' },
 		'/inbox/[id]': { sl: '/nabiralnik/[id]', en: '/inbox/[id]' },

@@ -12,7 +12,6 @@ import en from '@zivali/i18n/dist/en.json';
 import sl from '@zivali/i18n/dist/sl.json';
 import TabsLayout from '@/app/(tabs)/_layout';
 import InboxTab from '@/app/(tabs)/inbox';
-import MapTab from '@/app/(tabs)/index';
 import ProfileTab from '@/app/(tabs)/profile';
 import ReportTab from '@/app/(tabs)/report';
 import SettingsPlaceholder from '@/app/settings/[section]';
@@ -61,7 +60,8 @@ const routes = {
 	// The root Stack of app/_layout.tsx, without its fonts and store.
 	_layout: () => <Stack screenOptions={{ headerShown: false }} />,
 	'(tabs)/_layout': TabsLayout,
-	'(tabs)/index': MapTab,
+	// The Map tab needs the store and the map; map-tab.test covers it.
+	'(tabs)/index': () => null,
 	'(tabs)/inbox': InboxTab,
 	'(tabs)/report': ReportTab,
 	'(tabs)/profile': ProfileTab,

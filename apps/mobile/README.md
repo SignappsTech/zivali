@@ -49,6 +49,12 @@ Gallery: `/dev/kit` (redirects to `/` when `EXPO_PUBLIC_APP_ENV=production`). `r
 - `@maplibre/maplibre-react-native` 11.4.1 (pinned; not in the Expo SDK 57 `bundledNativeModules.json`) is a native module with a config plugin: install a new development build after pulling it. `/dev/map` renders 500 seeded markers for the smoothness check (redirects to `/` in production).
 - `LocationPicker` (`components/location/location-picker.tsx`, TASK-15.5) takes the C6 props and fills its parent under the flow's top bar. It draws on `MapView` with three picker hooks: `ref` (`moveTo(center, zoom)`), `onCameraChange` (centre and zoom, not debounced) and `children` (the centre pin and radius disc, above the map and under the list); `label`/`hint` rename the map element ("Oznaka je na sredini zemljevida …", "Pokaži gumbe za premik", whose list is the 100 m nudge buttons). The raw GPS, pin, search or EXIF point stays in the picker: Confirm calls `onChange` once with `coarsenPoint` applied, so pass that value on to forms, drafts and the outbox as is. `/dev/picker` shows each mode and the confirmed value (redirects to `/` in production).
 
+## Map tab (P4, TASK-31.5)
+
+- `app/(tabs)/index.tsx` composes `MapView`, the area pill (opens `components/browse/filter-sheet.tsx`) and the list sheet (`components/browse/list-sheet.tsx`, a non-modal `@gorhom/bottom-sheet` at 40 / 60 / 100 % under the pill). Filters and their C4 queries live in `components/browse/filters.ts`; map and list read only `useMapReports` / `useReportSearch` (`lib/data/reports.ts`, `skip` holds them until the location is known).
+- The device location (`components/browse/use-device-location.ts`) is read only while the permission is granted, never drawn, sent at 2 decimals, and each fix is the offline cache's `current` area. "Uporabi mojo lokacijo" goes through the location `PermissionPrimer`; refused, the filter sheet shows the note and the place search.
+- Ads (P21, TASK-36.6): pass `renderAd` to `ListSheet`; it gets an `AdSlot` after every 8 rows. Without it no ad rows exist.
+
 ## Shell (P2)
 
 - `app/(tabs)`: Zemljevid (`index`), Sporočila (`inbox`), Prijavi (`report`) and Profil (`profile`) with the bottom navigation in `components/shell/tab-bar.tsx`. The Prijavi button opens the Report sheet (lost → `/report/lost`, found → `/report/found`, sighted → `/report/found?type=sighted`); the `report` route shows the same choice for a link.
