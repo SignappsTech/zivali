@@ -3,10 +3,11 @@ id: TASK-12.6
 title: >-
   Mobile deep links: /r/<code>/ujemanja, /matches, /spet-doma, /reunited and
   /poster.pdf open the app on the map
-status: To Do
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-16 01:49'
+updated_date: '2026-10-16 02:33'
 labels:
   - bug
   - 'est:S'
