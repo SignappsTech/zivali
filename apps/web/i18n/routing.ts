@@ -22,6 +22,8 @@ export const routing = defineRouting({
 		'/r/[code]': '/r/[code]',
 		'/r/[code]/matches': { sl: '/r/[code]/ujemanja', en: '/r/[code]/matches' },
 		'/r/[code]/reunited': { sl: '/r/[code]/spet-doma', en: '/r/[code]/reunited' },
+		// P9 owner "Uredi" (TASK-26.4), as mobile r/[code]/edit; C15 CHANGE requested.
+		'/r/[code]/edit': { sl: '/r/[code]/uredi', en: '/r/[code]/edit' },
 		'/m': '/m',
 		'/my-pets': { sl: '/moje-zivali', en: '/my-pets' },
 		// P8 pet pages (TASK-16.6); `new` before `[id]`, so it matches first.

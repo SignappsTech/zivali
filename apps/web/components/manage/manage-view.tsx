@@ -3,18 +3,23 @@
 import type { Icon as PhosphorIcon } from '@phosphor-icons/react';
 import { ChatCircleIcon } from '@phosphor-icons/react/dist/ssr/ChatCircle';
 import { CheckCircleIcon } from '@phosphor-icons/react/dist/ssr/CheckCircle';
+import { ClockIcon } from '@phosphor-icons/react/dist/ssr/Clock';
+import { EnvelopeSimpleIcon } from '@phosphor-icons/react/dist/ssr/EnvelopeSimple';
 import { HeartIcon } from '@phosphor-icons/react/dist/ssr/Heart';
 import { HourglassMediumIcon } from '@phosphor-icons/react/dist/ssr/HourglassMedium';
 import { LockSimpleIcon } from '@phosphor-icons/react/dist/ssr/LockSimple';
+import { PencilSimpleIcon } from '@phosphor-icons/react/dist/ssr/PencilSimple';
 import { useTranslations } from 'next-intl';
 import * as React from 'react';
 import { toast } from 'sonner';
 
 import { useListConversationsQuery } from '@zivali/api/chat';
+import { useResendManageLinkMutation } from '@zivali/api/manage';
 import { useGetReportQuery, useTransitionReportMutation } from '@zivali/api/reports';
 import type { ReportOwnerView, ReportTransitionAction } from '@zivali/types';
-import { AuthHeading, AuthNote, Spot, useErrorText } from '@/components/auth/parts';
+import { AuthHeading, AuthNote, errorCode, Spot, useErrorText } from '@/components/auth/parts';
 import { ConversationRow } from '@/components/chat/conversations';
+import { canReopen as reopenable, expiryNotice, trackReunited } from '@/components/report/lifecycle-helpers';
 import { h1Class, InlineError, PageSkeleton, ringClass } from '@/components/shell/page';
 import {
 	AlertDialog,
@@ -31,19 +36,23 @@ import { statusIcons } from '@/components/ui/status-label';
 import { Link } from '@/i18n/navigation';
 import { cn } from '@/lib/utils';
 
-const REOPEN_DAYS = 7;
-
 // The claimed report of the P7 manage page (manage-page.tsx), loaded with the claim: the report and chat endpoints,
 // the P14 confirm dialog and the status parts stay out of the page's first download (TASK-17.9).
 
-/** The claimed report: photo, status, facts, private line, messages, the one state note and the actions. */
+/**
+ * The claimed report: photo, status, facts, private line, messages, the one state note (closed with "Ponovno odpri",
+ * under review, or the expiry note with "Podaljšaj za 30 dni") and the actions: Edit (/r/[code]/uredi), Close,
+ * "Žival je spet doma" and the manage link sent again to the email on file (C7).
+ */
 export function ManageView({ code }: { code: string }) {
 	const t = useTranslations('report_found');
 	const tLife = useTranslations('lifecycle');
+	const tCommon = useTranslations('common');
 	const errorText = useErrorText();
 	const { data, isError, isFetching, refetch } = useGetReportQuery({ code });
 	const conversations = useListConversationsQuery();
 	const [transition, { isLoading: saving, originalArgs }] = useTransitionReportMutation();
+	const [resend, { isLoading: resending }] = useResendManageLinkMutation();
 	const [confirmHome, setConfirmHome] = React.useState(false);
 	const [thanked, setThanked] = React.useState(false);
 	// The reopen window is checked against the time the view opened; the API has the last word (GONE).
@@ -67,10 +76,27 @@ export function ManageView({ code }: { code: string }) {
 		try {
 			// C4: a manager closes with a reason; the finder's page has no choice (P7/P14), so the neutral `other`.
 			await transition({ code, body: action === 'close' ? { action, reason: 'other' } : { action } }).unwrap();
-			if (action === 'mark_reunited') setThanked(true);
+			if (action === 'mark_reunited') {
+				trackReunited(data);
+				setThanked(true);
+			}
+			if (action === 'extend') {
+				// The note and its button are gone: say so and keep focus on the page.
+				toast.success(tCommon('toast_saved'));
+				headingRef.current?.focus();
+			}
 		} catch (error) {
 			refocus.current = false;
 			toast.error(errorText(error));
+		}
+	};
+	const sendLink = async () => {
+		try {
+			await resend({ code }).unwrap();
+			toast.success(t('resend_done'));
+		} catch (error) {
+			// CONFLICT: no email was given with the report (C7).
+			toast.error(errorCode(error) === 'CONFLICT' ? t('resend_no_email') : errorText(error));
 		}
 	};
 
@@ -88,8 +114,9 @@ export function ManageView({ code }: { code: string }) {
 	const type = report.type === 'sighted' ? 'sighted' : 'found';
 	const StatusIcon = statusIcons[type];
 	const photo = report.photos[0];
-	const closedAt = report.closed_at ?? report.reunited_at;
-	const canReopen = closed && !!closedAt && now - Date.parse(closedAt) < REOPEN_DAYS * 86_400_000;
+	const canReopen = reopenable(report, now);
+	const notice = expiryNotice(report, now);
+	const underReview = report.moderation_state === 'held' || report.moderation_state === 'hidden';
 	const threads = (conversations.data?.items ?? []).filter((item) => item.about_report.short_code === code);
 	const unread = threads.reduce((sum, item) => sum + item.unread, 0);
 	const busy = (action: ReportTransitionAction) => saving && originalArgs?.body.action === action;
@@ -145,11 +172,30 @@ export function ManageView({ code }: { code: string }) {
 				</section>
 			)}
 
-			{(report.moderation_state === 'held' || report.moderation_state === 'hidden') && (
+			{underReview && (
 				<AuthNote icon={HourglassMediumIcon} className="mt-10">
 					<b className="block">{t('under_review_title')}</b>
 					{t('under_review_body')}
 				</AuthNote>
+			)}
+
+			{/* P14 W3, S9: from day 25 without an update, the one note says when the report expires (C4). */}
+			{notice && !underReview && (
+				<div className="mt-10 flex gap-3 rounded-row bg-muted py-4 pr-4 pl-[18px] text-control leading-[22px]">
+					<ClockIcon weight="fill" aria-hidden="true" className="mt-px size-[22px] shrink-0" />
+					<div>
+						<p>{t('expiry_note', { days: notice.days })}</p>
+						<Button
+							variant="secondary"
+							size="sm"
+							className="mt-3"
+							loading={busy('extend')}
+							onClick={() => act('extend')}
+						>
+							{t('extend')}
+						</Button>
+					</div>
+				</div>
 			)}
 
 			{closed ? (
@@ -183,8 +229,11 @@ export function ManageView({ code }: { code: string }) {
 							</ActionRow>
 						</li>
 					)}
-					{/* TODO(TASK-26.4): the Edit row (PencilSimple, t('manage_edit'), href /r/[code]) comes back with the
-					detail page's owner actions; until then that page has nothing to edit. */}
+					<li>
+						<ActionRow icon={PencilSimpleIcon} href={{ pathname: '/r/[code]/edit', params: { code } }}>
+							{t('manage_edit')}
+						</ActionRow>
+					</li>
 					<li>
 						<ActionRow icon={CheckCircleIcon} busy={busy('close')} onClick={() => act('close')}>
 							{t('manage_close')}
@@ -198,6 +247,11 @@ export function ManageView({ code }: { code: string }) {
 							onClick={() => setConfirmHome(true)}
 						>
 							{t('manage_returned')}
+						</ActionRow>
+					</li>
+					<li>
+						<ActionRow icon={EnvelopeSimpleIcon} busy={resending} onClick={() => void sendLink()}>
+							{t('resend_title')}
 						</ActionRow>
 					</li>
 				</ul>
@@ -215,7 +269,7 @@ export function ManageView({ code }: { code: string }) {
 					<AlertDialogTitle>{tLife('finder_confirm_title')}</AlertDialogTitle>
 					<AlertDialogDescription>{tLife('finder_confirm_body')}</AlertDialogDescription>
 					<AlertDialogFooter>
-						<AlertDialogAction onClick={() => act('mark_reunited')}>
+						<AlertDialogAction variant="default" onClick={() => act('mark_reunited')}>
 							{tLife('finder_confirm_yes')}
 						</AlertDialogAction>
 						<AlertDialogCancel>{tLife('finder_confirm_no')}</AlertDialogCancel>

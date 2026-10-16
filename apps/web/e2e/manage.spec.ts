@@ -3,6 +3,8 @@ import { expect, type Page, type Request, test } from '@playwright/test';
 
 import { ownerReport } from '@zivali/api/__fixtures__/reports';
 
+import { signInAs } from './session';
+
 // TASK-17.2: the P7 manage page from the private link (C7) and the /captcha WebView host (C15). The browser's calls
 // are answered here: GoTrue's anonymous sign-in (POST /auth/v1/signup) and the API (claim, report, conversations).
 const AXE_TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'];
@@ -13,7 +15,7 @@ const ACCESS_TOKEN = [b64({ alg: 'HS256', typ: 'JWT' }), b64({ sub: 'anon-1', is
 );
 
 /** Answers the browser's GoTrue and API calls (CORS preflights pass); returns the API requests it saw. */
-async function answer(page: Page, claim: { status: number; body: object }) {
+async function answer(page: Page, claim: { status: number; body: object }, report = ownerReport) {
 	const seen: Request[] = [];
 	const answers: Record<string, () => { status: number; body: object }> = {
 		'POST /auth/v1/signup': () => ({
@@ -36,7 +38,7 @@ async function answer(page: Page, claim: { status: number; body: object }) {
 			},
 		}),
 		'POST /v1/manage/claim': () => claim,
-		[`GET /v1/reports/${ownerReport.short_code}`]: () => ({ status: 200, body: ownerReport }),
+		[`GET /v1/reports/${report.short_code}`]: () => ({ status: 200, body: report }),
 		'GET /v1/conversations': () => ({ status: 200, body: { items: [], next_cursor: null } }),
 	};
 	await page.route(
@@ -81,8 +83,11 @@ for (const viewport of [
 
 		await expect(page.getByRole('heading', { level: 1, name: 'Vaša prijava' })).toBeVisible();
 		await expect(page.getByText('Najdena')).toBeVisible();
-		// TODO(TASK-26.4): the Edit row is hidden until the detail page has owner actions (manage-view.tsx).
-		await expect(page.getByRole('link', { name: 'Uredi prijavo' })).toHaveCount(0);
+		// TASK-17.7: the Edit row links to the edit page (opened in the next test).
+		await expect(page.getByRole('link', { name: 'Uredi prijavo' })).toHaveAttribute(
+			'href',
+			`/r/${ownerReport.short_code}/uredi`
+		);
 		await expect(page.getByRole('button', { name: 'Žival je spet doma' })).toBeVisible();
 		expect(await page.title()).toBe('Vaša prijava · Najdimo');
 		await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content', 'noindex, nofollow');
@@ -107,6 +112,22 @@ for (const viewport of [
 		expect(seen.filter((request) => new URL(request.url()).pathname === '/v1/manage/claim')).toHaveLength(2);
 	});
 }
+
+// TASK-17.7 AC#1: the Edit row opens the edit page, which the e2e API (mock-api.ts, Own12345) answers as the manager's.
+test('/m: the Edit row opens the edit page with an editable description', async ({ page, baseURL }) => {
+	await signInAs(page, { id: '0b5f6a3e-6c1d-4f8e-9a2b-3c4d5e6f7a80', role: 'USER', aal: 'aal1' }, baseURL!);
+	await answer(
+		page,
+		{ status: 200, body: { report_id: ownerReport.id, short_code: 'Own12345' } },
+		{ ...ownerReport, short_code: 'Own12345' }
+	);
+	await page.goto('/m#good-token');
+	await page.getByRole('link', { name: 'Uredi prijavo' }).click();
+
+	await expect(page).toHaveURL(/\/r\/Own12345\/uredi$/);
+	await expect(page.getByRole('heading', { level: 1 })).toHaveText('Uredi prijavo');
+	await expect(page.getByLabel('Opis okoliščin (neobvezno)')).toBeEditable();
+});
 
 test('/en/m says an unknown link no longer works', async ({ page }) => {
 	await answer(page, { status: 404, body: { error: { code: 'NOT_FOUND', message: 'unknown token' } } });
