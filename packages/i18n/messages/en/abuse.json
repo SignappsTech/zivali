@@ -27,6 +27,5 @@
 	"message_show": "Show",
 	"rate_limited": "You cannot send another report right now. Please try again later.",
 	"already": "You have already reported this. Thank you.",
-	"error": "The report could not be sent. Your choice is saved; please try again.",
-	"offline": "No internet connection. You can send the report when you are back online."
+	"error": "The report could not be sent. Your choice is saved; please try again."
 }

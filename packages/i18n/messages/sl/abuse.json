@@ -27,6 +27,5 @@
 	"message_show": "Pokaži",
 	"rate_limited": "Ta trenutek ne morete poslati nove prijave zlorabe. Poskusite znova pozneje.",
 	"already": "To ste že prijavili. Hvala.",
-	"error": "Prijave ni bilo mogoče poslati. Vaša izbira je shranjena, poskusite znova.",
-	"offline": "Ni internetne povezave. Prijavo lahko pošljete, ko boste spet povezani."
+	"error": "Prijave ni bilo mogoče poslati. Vaša izbira je shranjena, poskusite znova."
 }

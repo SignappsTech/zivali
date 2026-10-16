@@ -10,7 +10,6 @@ import { ImageIcon } from 'phosphor-react-native/src/icons/Image';
 import { SealWarningIcon } from 'phosphor-react-native/src/icons/SealWarning';
 import { ShieldCheckIcon } from 'phosphor-react-native/src/icons/ShieldCheck';
 import { WarningCircleIcon } from 'phosphor-react-native/src/icons/WarningCircle';
-import { WifiSlashIcon } from 'phosphor-react-native/src/icons/WifiSlash';
 import * as React from 'react';
 import { type NativeSyntheticEvent, type TargetedEvent, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -20,7 +19,6 @@ import { useReportAbuseMutation } from '@zivali/api/abuse';
 import { ApiError } from '@zivali/api/client';
 import type { QueryError } from '@zivali/api/rtk';
 import type { AbuseReason, AbuseTargetType } from '@zivali/types';
-import { useErrorText } from '@/components/auth/parts';
 import { Note } from '@/components/report/parts';
 import { Button } from '@/components/ui/button';
 import { FormField } from '@/components/ui/form-field';
@@ -55,8 +53,11 @@ const NOTE_MAX = 500;
 const COUNTER_FROM = 50;
 // SheetContent's grabber (44 px, -12 overlap) and its bottom padding, as in the consent sheet.
 const SHEET_CHROME = 32;
-// Worth trying again with the same choice; other codes have their own errors.* sentence.
-const RETRYABLE = new Set(['NETWORK', 'INTERNAL', 'SERVICE_UNAVAILABLE']);
+// Codes where trying again cannot help as is: their own errors.* sentence (C1). Others (NETWORK, INTERNAL, …) get the
+// calm abuse.error: the choice is kept, "Pošlji" sends again.
+const OWN_SENTENCE = ['CAPTCHA_FAILED', 'FORBIDDEN', 'NOT_FOUND', 'GONE', 'VALIDATION'] as const;
+const ownSentence = (code: string | undefined): code is (typeof OWN_SENTENCE)[number] =>
+	(OWN_SENTENCE as readonly (string | undefined)[]).includes(code);
 
 const REASONS = {
 	scam: [HandCoinsIcon, 'reason_scam'],
@@ -113,7 +114,8 @@ export function ReportAbuse({
 	onClose,
 }: ReportAbuseProps) {
 	const t = useTranslations('abuse');
-	const errorText = useErrorText();
+	const tr = useTranslations('report');
+	const te = useTranslations('errors');
 	const [reportAbuse] = useReportAbuseMutation();
 	const [reason, setReason] = React.useState<AbuseReason>();
 	const [note, setNote] = React.useState('');
@@ -154,20 +156,16 @@ export function ReportAbuse({
 		} catch (cause) {
 			const code = codeOf(cause);
 			if (code === 'RATE_LIMITED') setLimited(true);
-			else setError(!code || RETRYABLE.has(code) ? t('error') : errorText(cause));
+			else setError(ownSentence(code) ? te(code) : t('error'));
 		} finally {
 			setSending(false);
 		}
 	};
 
-	// Why "Pošlji" cannot be pressed, shown above it and read with it.
-	const blocker = offline
-		? t('offline')
-		: limited
-			? t('rate_limited')
-			: !reason
-				? t('send_disabled_help')
-				: undefined;
+	// Why "Pošlji" cannot be pressed: the help line (offline as on slot A, no reason yet) or the rate-limit note above
+	// it, also read with the button.
+	const help = offline ? tr('action_offline') : !reason ? t('send_disabled_help') : undefined;
+	const blocker = limited ? t('rate_limited') : help;
 	const left = NOTE_MAX - note.length;
 
 	return (
@@ -214,20 +212,21 @@ export function ReportAbuse({
 				</View>
 			</BottomSheetScrollView>
 			<View className="pt-4">
-				{offline ? (
-					<Note icon={WifiSlashIcon} role="status" className="mb-3">
-						{t('offline')}
-					</Note>
-				) : limited ? (
+				{limited ? (
 					<Note icon={ClockIcon} role="status" className="mb-3">
 						{t('rate_limited')}
 					</Note>
-				) : error ? (
+				) : error && !offline ? (
 					<Note icon={WarningCircleIcon} iconClassName="text-destructive" role="alert" className="mb-3">
 						{error}
 					</Note>
-				) : !reason ? (
-					<Text className="mb-2 text-center text-sm text-muted-foreground">{t('send_disabled_help')}</Text>
+				) : help ? (
+					<Text
+						role={offline ? 'status' : undefined}
+						className="mb-2 text-center text-sm text-muted-foreground"
+					>
+						{help}
+					</Text>
 				) : null}
 				<Button
 					size="lg"
