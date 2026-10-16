@@ -38,7 +38,13 @@ function ReportRow({ report }: { report: ReportOwnerView }) {
 		>
 			{thumb ? (
 				// eslint-disable-next-line @next/next/no-img-element -- a presigned thumb (C5), nothing to cache
-				<img src={thumb} alt="" width={48} height={48} className="size-12 rounded-[16px] bg-muted object-cover" />
+				<img
+					src={thumb}
+					alt=""
+					width={48}
+					height={48}
+					className="size-12 rounded-[16px] bg-muted object-cover"
+				/>
 			) : (
 				<span className="grid size-12 place-items-center rounded-[16px] bg-muted text-muted-foreground">
 					<PawPrintIcon weight="bold" aria-hidden="true" className="size-6" />

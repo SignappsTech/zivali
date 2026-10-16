@@ -37,6 +37,6 @@
 	"reminder_title": "Still searching?",
 	"reminder_body": "{days, plural, one {Your search has been open for # day.} other {Your search has been open for # days.}} If your pet is home, let us know so we can tell everyone who is helping.",
 	"reminder_keep": "Keep searching",
-	"expired_lost":"We closed the search because it was not updated for 90 days. If you are still searching, you can reopen it straight away.",
+	"expired_lost": "We closed the search because it was not updated for 90 days. If you are still searching, you can reopen it straight away.",
 	"expired_lost_action": "Keep searching"
 }

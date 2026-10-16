@@ -138,7 +138,11 @@ function DialogMessage({ error, children }: { error: unknown; children: React.Re
 	if (error)
 		return (
 			<div role="alert" className={cn(noteClass, 'mt-4')}>
-				<WarningCircleIcon weight="fill" aria-hidden="true" className="mt-px size-[22px] shrink-0 text-destructive" />
+				<WarningCircleIcon
+					weight="fill"
+					aria-hidden="true"
+					className="mt-px size-[22px] shrink-0 text-destructive"
+				/>
 				<p>{errorText(error)}</p>
 			</div>
 		);

@@ -37,6 +37,6 @@
 	"reminder_title": "Še iščete?",
 	"reminder_body": "{days, plural, one {Iskanje je odprto # dan.} two {Iskanje je odprto # dneva.} few {Iskanje je odprto # dni.} other {Iskanje je odprto # dni.}} Če je žival doma, nam sporočite, da obvestimo vse, ki pomagajo.",
 	"reminder_keep": "Nadaljuj iskanje",
-	"expired_lost":"Iskanje smo zaključili, ker ga 90 dni niste posodobili. Če žival še iščete, ga lahko takoj znova odprete.",
+	"expired_lost": "Iskanje smo zaključili, ker ga 90 dni niste posodobili. Če žival še iščete, ga lahko takoj znova odprete.",
 	"expired_lost_action": "Nadaljuj iskanje"
 }

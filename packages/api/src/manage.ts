@@ -12,7 +12,10 @@ export const manageApi = api.injectEndpoints({
 		}),
 		// Managers: a new link to the finder email on file (204); CONFLICT without one, 3 per report per day.
 		resendManageLink: build.mutation<void, { code: string }>({
-			query: ({ code }) => ({ url: `/v1/reports/${encodeURIComponent(code)}/manage-link/resend`, method: 'POST' }),
+			query: ({ code }) => ({
+				url: `/v1/reports/${encodeURIComponent(code)}/manage-link/resend`,
+				method: 'POST',
+			}),
 		}),
 	}),
 });
