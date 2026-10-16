@@ -223,9 +223,8 @@ describe('My pets list', () => {
 		expect(rows.map((row) => row.props.accessibilityLabel)).toEqual([
 			`Runo, Pes · Labradorec, ${t.chip_on_file}`,
 			`Luna, Mačka · Evropska kratkodlaka, ${t.chip_none}`,
-			`Piki, Pes · Labradorec, ${t.chip_on_file}`,
+			`Piki, Pes · Labradorec, ${t.chip_on_file}, ${t.archived_label}`,
 		]);
-		expect(screen.getByRole('heading', { name: t.archived_title })).toBeOnTheScreen();
 		// The chip number stays on the owner's pet detail.
 		expect(screen.queryByText(/705/)).toBeNull();
 		// Two active pets (the archived one does not count): the quiet limit note, no offers yet.
@@ -491,7 +490,7 @@ describe('Pet detail', () => {
 			expect(screen.getByText(value)).toBeOnTheScreen();
 		}
 
-		const masked = screen.getByLabelText(t.chip_hidden_a11y);
+		const masked = screen.getByLabelText(t.chip_hidden);
 		expect(masked).toHaveTextContent('••• •••• •••• ••••');
 		expect(screen.queryByText('705 0000 0012 3456')).toBeNull();
 		expect(screen.getByText(t.chip_only_you)).toBeOnTheScreen();
@@ -539,7 +538,7 @@ describe('Pet detail', () => {
 		expect(await heading(t.archive_title)).toBeOnTheScreen();
 		await press(t.archive_confirm);
 
-		expect(await screen.findByText(t.archived_note)).toBeOnTheScreen();
+		expect(await screen.findByText(t.archived_label)).toBeOnTheScreen();
 		expect(callsTo(api, 'POST', `/v1/pets/${runo.id}/archive`)).toHaveLength(1);
 		expect(mockToast.success).toHaveBeenCalledWith(t.archived);
 		expect(screen.queryByRole('button', { name: t.report_lost })).toBeNull();
