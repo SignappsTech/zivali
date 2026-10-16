@@ -13,6 +13,8 @@ type PillProps = Omit<React.ComponentProps<typeof Pressable>, 'style' | 'childre
 	/** `radio` inside a radiogroup (one of), `checkbox` for a toggle (several of). */
 	role?: 'radio' | 'checkbox';
 	style?: StyleProp<ViewStyle>;
+	/** Decorative element before the label, e.g. a colour swatch (the label still says it). */
+	leading?: React.ReactNode;
 	children: string;
 };
 
@@ -28,6 +30,7 @@ function Pill({
 	style,
 	onFocus,
 	onBlur,
+	leading,
 	children,
 	...props
 }: PillProps) {
@@ -57,6 +60,7 @@ function Pill({
 			{...props}
 		>
 			{selected ? <Icon as={CheckIcon} size={18} className={tone} /> : null}
+			{leading}
 			<Text className={cn('shrink font-sans-bold text-control', tone)}>{children}</Text>
 		</Pressable>
 	);

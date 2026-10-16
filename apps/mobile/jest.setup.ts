@@ -7,7 +7,11 @@ jest.mock('react-native-reanimated', () => ({
 	...jest.requireActual('react-native-reanimated/mock'),
 	useReducedMotion: () => false,
 }));
-jest.mock('@gorhom/bottom-sheet', () => jest.requireActual('@gorhom/bottom-sheet/mock'));
+// The mock has no __esModule flag, so without it the default import (BottomSheet) would be the whole module.
+jest.mock('@gorhom/bottom-sheet', () => ({
+	__esModule: true,
+	...jest.requireActual<object>('@gorhom/bottom-sheet/mock'),
+}));
 // MapLibre Native ships no mock: its components become host Views that keep their props (testID `<Component>:<id>`),
 // and the Camera and GeoJSONSource refs are the shared spies in `__refs`.
 jest.mock('@maplibre/maplibre-react-native', () => {

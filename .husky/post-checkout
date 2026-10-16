@@ -1,0 +1,4 @@
+# Branch checkouts only ($3 = 1), including a new worktree: same dist refresh as post-merge.
+[ "$3" = "1" ] || exit 0
+node packages/i18n/build.mjs > /dev/null 2>&1 || true
+node packages/tokens/build.mjs > /dev/null 2>&1 || true

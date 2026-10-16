@@ -41,5 +41,9 @@
 	"offline_retry": "Poskusi znova",
 	"offline_gps_set": "Točka je določena po GPS. Ime kraja dodamo, ko boste spet povezani.",
 	"approximate_label": "približno območje",
-	"exact_own": "Približna lokacija · vidno samo vam"
+	"exact_own": "Približna lokacija · vidno samo vam",
+	"area_line": "Območje: {area}, približno {radius}",
+	"area_note": "Prikazano območje je približno.",
+	"area_map_alt": "Približno območje okoli kraja {area}, polmer približno {radius}",
+	"exact_own_help": "Točko smo pred shranjevanjem premaknili za 20 do 30 m. Javno prikažemo samo širše območje okoli nje."
 }
