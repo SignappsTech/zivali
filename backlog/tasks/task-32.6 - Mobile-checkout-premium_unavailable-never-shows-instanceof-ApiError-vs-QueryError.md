@@ -3,9 +3,10 @@ id: TASK-32.6
 title: >-
   Mobile checkout: premium_unavailable never shows (instanceof ApiError vs
   QueryError)
-status: To Do
+status: In Progress
 assignee: []
 created_date: '2026-10-16 07:00'
+updated_date: '2026-10-16 07:19'
 labels:
   - bug
   - mobile
@@ -25,3 +26,5 @@ Found during TASK-33.2: apps/mobile checkout.tsx checks error instanceof ApiErro
 <!-- AC:BEGIN -->
 - [ ] #1 A checkout rejected with the premium-unavailable code shows the premium_unavailable copy (jest), other errors unchanged
 <!-- AC:END -->
+
+Branch: agent/task-32.6-checkout-error-mob

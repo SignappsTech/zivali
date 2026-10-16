@@ -12,9 +12,9 @@ import { useLocale, useTranslations } from 'use-intl';
 
 import { type EventParams, track } from '@zivali/analytics';
 import { useSession } from '@zivali/api/auth';
-import { ApiError, uuid } from '@zivali/api/client';
+import { uuid } from '@zivali/api/client';
 import { type StartCheckoutInput, startCheckout, useGetPaymentQuery } from '@zivali/api/payments';
-import type { ApiStore } from '@zivali/api/rtk';
+import type { ApiStore, QueryError } from '@zivali/api/rtk';
 import type { Locale, Payment, PaymentStatus, Uuid } from '@zivali/types';
 import { AuthNote, useErrorText } from '@/components/auth/parts';
 import { Spot } from '@/components/shell/parts';
@@ -103,7 +103,7 @@ function Handoff({
 		} catch (failure) {
 			// Premium checkout answers 503 while the subscription product is not configured: calm, not INTERNAL.
 			setError(
-				checkout.purpose === 'subscription' && failure instanceof ApiError && failure.status === 503
+				checkout.purpose === 'subscription' && (failure as Partial<QueryError> | undefined)?.status === 503
 					? t('premium_unavailable')
 					: errorText(failure)
 			);

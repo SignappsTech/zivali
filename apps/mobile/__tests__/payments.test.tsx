@@ -257,6 +257,32 @@ describe('checkout hand-off', () => {
 		await pressContinue();
 		expect(await screen.findByText(sl.errors.MIN_AMOUNT)).toBeOnTheScreen();
 	});
+
+	test('a 503 on the subscription checkout shows the premium_unavailable copy', async () => {
+		const api = payments(() => 'pending', {
+			'POST /v1/payments/checkout': () => mockError('SERVICE_UNAVAILABLE'),
+		});
+		await render(
+			<Providers api={api}>
+				<CheckoutSheet
+					open
+					onOpenChange={jest.fn()}
+					checkout={{ purpose: 'subscription', returnTo: '/account/payments' }}
+				/>
+			</Providers>
+		);
+		await pressContinue();
+		expect(await screen.findByText(sl.payments.premium_unavailable)).toBeOnTheScreen();
+	});
+
+	test('a 503 on a non-subscription checkout keeps the generic copy', async () => {
+		await openSheet(
+			payments(() => 'pending', { 'POST /v1/payments/checkout': () => mockError('SERVICE_UNAVAILABLE') })
+		);
+		await pressContinue();
+		expect(await screen.findByText(sl.errors.SERVICE_UNAVAILABLE)).toBeOnTheScreen();
+		expect(screen.queryByText(sl.payments.premium_unavailable)).toBeNull();
+	});
 });
 
 describe('the return link', () => {
