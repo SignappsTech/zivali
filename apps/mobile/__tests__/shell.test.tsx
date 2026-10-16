@@ -71,6 +71,7 @@ const routes = {
 	'settings/[section]': SettingsPlaceholder,
 	'settings/notifications': () => null,
 	'settings/payments': () => null,
+	'settings/reports': () => null,
 	// Stand-ins for the flow and auth screens that later stories add.
 	'report/lost': () => null,
 	'report/found': () => null,
@@ -178,6 +179,7 @@ describe('signed in', () => {
 
 		expect(screen.getByRole('heading', { name: sl.profile.title })).toBeOnTheScreen();
 		for (const [name, path, placeholder] of [
+			[sl.profile.row_reports, '/settings/reports', false],
 			[sl.profile.row_alerts, '/settings/alerts', true],
 			[sl.alerts.channels_title, '/settings/notifications', false],
 		] as const) {

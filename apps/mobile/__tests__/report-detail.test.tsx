@@ -24,6 +24,8 @@ import { toAppPath } from '@/lib/deep-link';
 jest.mock('@/lib/data/reports', () => ({ useReport: jest.fn() }));
 jest.mock('@/lib/env', () => ({ env: { EXPO_PUBLIC_APP_URL: 'https://najdimo.test' } }));
 jest.mock('expo-web-browser', () => ({ openBrowserAsync: jest.fn(async () => ({})) }));
+// The owner actions share the auth error text, whose module loads the Supabase client; nothing here signs in.
+jest.mock('@/lib/auth', () => ({ providers: [], signInWithProvider: jest.fn() }));
 // The P16 gate has its own tests (auth.test.tsx); here it only shows whether contact opened it.
 jest.mock('@/components/auth/gate', () => {
 	const { Text: MockText } = jest.requireActual<typeof import('react-native')>('react-native');
@@ -121,7 +123,6 @@ async function open(report: Partial<Result>, code = 'Rex2Lost') {
 			_layout: () => <Stack screenOptions={{ headerShown: false }} />,
 			index: () => <Text>map tab</Text>,
 			'r/[code]/index': ReportScreen,
-			'r/[code]/reunited': () => <Text>reunited screen</Text>,
 			'report/found': () => <Text>sighted flow</Text>,
 		},
 		{ initialUrl: `/r/${code}`, wrapper: Providers }
@@ -314,7 +315,7 @@ describe('report detail (P9 mobile)', () => {
 
 	test('the owner view: owner actions, the held note, the own point labelled, the owner reward note', async () => {
 		const held: ReportOwnerView = { ...owner, moderation_state: 'held', reward: { eur: 100, note: null } };
-		const { page } = await open({ data: held });
+		await open({ data: held });
 		expect(screen.getByRole('status')).toHaveTextContent(r.owner_held);
 		expect(screen.getByLabelText('Ovratnica: rdeča z zvončkom')).toBeOnTheScreen();
 		expect(JSON.stringify(screen.toJSON())).not.toContain(owner.chip_number);
@@ -326,8 +327,8 @@ describe('report detail (P9 mobile)', () => {
 		expect(screen.getByText(r.owner_reward_note)).toBeOnTheScreen();
 		expect(screen.queryByText(new RegExp(`^${r.safety_note_reward}`))).toBeNull();
 		expect(screen.queryByRole('button', { name: r.action_sighting })).toBeNull();
-		// "Uredi" and "Plakat" stay hidden until TASK-26.5 and TASK-24.3 wire them.
-		expect(screen.queryByRole('button', { name: r.owner_edit })).toBeNull();
+		// "Plakat" stays hidden until TASK-24.3 wires it; the owner actions themselves are in lifecycle.test.tsx.
+		expect(screen.getByRole('button', { name: r.owner_edit })).toBeOnTheScreen();
 		expect(screen.queryByRole('button', { name: r.owner_poster })).toBeNull();
 		await fireEvent.press(screen.getByRole('button', { name: r.more }));
 		const menu = container('menu', r.more);
@@ -337,8 +338,7 @@ describe('report detail (P9 mobile)', () => {
 		await fireEvent.press(screen.getByRole('button', { name: sl.common.cancel }));
 
 		await fireEvent.press(screen.getByRole('button', { name: r.owner_home }));
-		expect(await screen.findByText('reunited screen')).toBeOnTheScreen();
-		expect(page.getPathname()).toBe('/r/Rex2Lost/reunited');
+		expect(screen.getByRole('heading', { name: 'Je Rex res spet doma?' })).toBeOnTheScreen();
 	});
 
 	test('reunited: thank-you line, share stays, no actions, area or safety note', async () => {

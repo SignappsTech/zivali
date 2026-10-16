@@ -110,7 +110,7 @@ export function SlotA({ report, offline, children }: ReportSlotProps) {
 	);
 }
 
-/** P14 S6/S7: the one primary "Ponovno odpri" ("Nadaljuj iskanje" after the expiry); quiet text on a reunited report. */
+/** P14 S6/S7: the primary "Ponovno odpri" ("Nadaljuj iskanje" after the expiry); a quiet text button when reunited. */
 function Reopen({ report, offline }: { report: DetailReport; offline: boolean }) {
 	const tl = useTranslations('lifecycle');
 	const { reopen, busy } = useReopen(report);

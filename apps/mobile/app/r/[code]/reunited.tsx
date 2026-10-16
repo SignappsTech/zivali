@@ -59,10 +59,9 @@ function OwnerReunited({ report, onClose }: { report: DetailReport; onClose: () 
 	const router = useRouter();
 	const [story, setStory] = React.useState(false);
 	const photo = report.photos[0];
+	const shareText = report.name ? tl('share_text_named', { name: report.name }) : tl('share_text');
 	const share = () =>
-		void Share.share({
-			message: `${report.name ? tl('share_text_named', { name: report.name }) : tl('share_text')} ${reportLink(report.short_code)}`,
-		}).catch(() => undefined);
+		void Share.share({ message: `${shareText} ${reportLink(report.short_code)}` }).catch(() => undefined);
 	// The consent stays on this screen for now: C4 has no field for it yet (CHANGE request); success stories are M5.
 	const onStory = (on: boolean) => {
 		setStory(on);
@@ -77,7 +76,9 @@ function OwnerReunited({ report, onClose }: { report: DetailReport; onClose: () 
 				{photo ? (
 					<Image
 						source={{ uri: photo.url }}
-						alt={report.name ?? tb(`row_title_${report.type}`, { species: report.species })}
+						role="img"
+						accessible
+						aria-label={report.name ?? tb(`row_title_${report.type}`, { species: report.species })}
 						className="aspect-[4/3] w-full rounded-[24px] bg-muted"
 					/>
 				) : null}

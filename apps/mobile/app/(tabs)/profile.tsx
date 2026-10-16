@@ -162,7 +162,7 @@ export default function ProfileTab() {
 					{t(signedIn ? 'profile.title' : 'profile.signed_out_title')}
 				</Text>
 				{signedIn && me ? <AccountHeader me={me} /> : null}
-				{/* Reports sent or waiting on this device (FR-042); signed in, they open "Moje prijave" (settings/reports). */}
+				{/* Reports sent or waiting on this device (FR-042); signed in, they lead "Moje prijave". */}
 				{signedIn ? null : <OutboxList heading={t('report_found.my_reports')} className="mt-7" />}
 				{signedIn ? (
 					<View className="mt-7 gap-3">

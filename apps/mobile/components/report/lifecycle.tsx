@@ -60,7 +60,7 @@ function trackReunited({ species, region_slug, municipality_slug }: DetailReport
 
 const isConflict = (error: unknown) => (error as Partial<QueryError> | undefined)?.data?.code === 'CONFLICT';
 
-/** One transition; `run` resolves to the failure (also kept in `error` until the next try), undefined when it worked. */
+/** One transition; `run` resolves to the failure (kept in `error` until the next try), undefined when it worked. */
 function useTransition(report: DetailReport) {
 	const [transition, { isLoading }] = useTransitionReportMutation();
 	const [error, setError] = React.useState<unknown>();
@@ -163,7 +163,7 @@ export function HomeAgain({ report, open, onOpenChange }: SheetProps) {
 					<AlertDialogTitle>{tl('finder_confirm_title')}</AlertDialogTitle>
 					<AlertDialogDescription>{tl('finder_confirm_body')}</AlertDialogDescription>
 					<AlertDialogFooter>
-						{/* The dialog closes on press; a failure comes back as a toast and the report stays as it was. */}
+						{/* The dialog closes on press; a failure comes back as a toast, the report as it was. */}
 						<AlertDialogAction
 							variant="default"
 							onPress={() =>
@@ -288,7 +288,7 @@ export function CloseSearch({ report, open, onOpenChange }: SheetProps) {
 	);
 }
 
-/** "Ponovno odpri" (P14 S7): a toast when it worked; past the window (GONE) or another failure, the error as a toast. */
+/** "Ponovno odpri" (P14 S7): a toast when it worked; past the window (GONE) or another failure, the error toast. */
 export function useReopen(report: DetailReport) {
 	const tl = useTranslations('lifecycle');
 	const errorText = useErrorText();

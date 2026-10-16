@@ -40,9 +40,9 @@ function MenuItem({ icon, label, onPress }: { icon: PhosphorIcon; label: string;
 
 /**
  * P9 slot C, "Več možnosti": the overflow beside slot A that opens a sheet menu. Visitors get "Prijavi zlorabo" (the
- * P10 sheet, TASK-25.4); owners get "Zaključi iskanje" instead, which opens the P14 close sheet ("Povečaj doseg" joins it
- * in M4, hidden until then). Until TASK-25.4 fills its item it closes the menu. "Kopiraj povezavo" waits for a
- * clipboard module.
+ * P10 sheet, TASK-25.4); owners get "Zaključi iskanje" instead, which opens the P14 close sheet ("Povečaj doseg"
+ * joins it in M4, hidden until then). Until TASK-25.4 fills its item it closes the menu. "Kopiraj povezavo" waits for
+ * a clipboard module.
  */
 export function SlotC({ report }: ReportSlotProps) {
 	const t = useTranslations('report');

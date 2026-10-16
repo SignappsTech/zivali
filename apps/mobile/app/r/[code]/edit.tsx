@@ -68,7 +68,7 @@ const isContactData = (error: unknown) =>
 		(issue) => issue.path === 'reward_note' && issue.message === 'CONTACT_DATA'
 	) ?? false;
 
-/** Only the fields that changed meaning: an emptied description cannot be sent (C4 takes no empty text). */
+/** The PATCH body: what happened, when it has text (C4 stores no empty one); on a lost report the reward (null: off). */
 function toBody(values: Values, lost: boolean): UpdateReportInput {
 	const circumstances = values.circumstances.trim();
 	const eur = values.reward_eur.trim();
@@ -111,7 +111,8 @@ function EditForm({ report }: { report: DetailReport }) {
 		try {
 			await update({ code: report.short_code, body: toBody(values, lost) }).unwrap();
 			toast(tc('saved'));
-			router.back();
+			if (router.canGoBack()) router.back();
+			else router.replace(`/r/${report.short_code}` as Href);
 		} catch (failure) {
 			// Any other failure is the note above "Shrani"; the input stays as typed.
 			if (isContactData(failure)) setError('reward_note', { message: 'reward_note_contact_data' });
