@@ -1,11 +1,11 @@
 ---
 id: TASK-20.4
 title: 'Mobile match review: compare, confirm, reject'
-status: To Do
+status: In Progress
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:14'
-updated_date: '2026-10-14 22:42'
+updated_date: '2026-10-16 00:05'
 labels:
   - fe
   - 'est:M'
