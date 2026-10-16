@@ -355,6 +355,23 @@ describe('Settings → Plačila', () => {
 		expect(screen.queryByText(/7,00 €|9,00 €/)).toBeNull();
 	});
 
+	test('a partly refunded payment stays paid and says how much came back (TASK-92.4)', async () => {
+		await settings(
+			list([
+				at('p1', {
+					purpose: 'tip',
+					amount_cents: 1000,
+					refunded_cents: 300,
+					status: 'succeeded',
+					created_at: '2026-10-15T10:00:00Z',
+				}),
+			])
+		);
+		expect(await screen.findByText('15. 10. 2026 · Prispevek v zahvalo · 10,00 €')).toBeOnTheScreen();
+		expect(screen.getByText(sl.payments.status_paid)).toBeOnTheScreen();
+		expect(screen.getByText('Delno vrnjeno: 3,00 €')).toBeOnTheScreen();
+	});
+
 	test('no payments: one sentence, no prompt to pay', async () => {
 		await settings(list([]));
 		expect(await screen.findByText(sl.payments.empty)).toBeOnTheScreen();

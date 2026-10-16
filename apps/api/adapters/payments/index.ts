@@ -34,6 +34,8 @@ export type PaymentEvent = {
 		status?: string | null;
 		/** Charges: true once fully refunded. */
 		refunded?: boolean | null;
+		/** Charges: refunded so far in cents, cumulative over the charge's refunds (charge.refunded). */
+		amount_refunded?: number | null;
 		metadata: Record<string, string>;
 	};
 };

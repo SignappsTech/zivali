@@ -93,6 +93,18 @@ export function fursFiscal(o: FursOptions): FiscalAdapter {
 						],
 						ProtectedID: invoice.zoi,
 						SubsequentSubmit: invoice.subsequent,
+						...(invoice.reference && {
+							ReferenceInvoice: [
+								{
+									ReferenceInvoiceIdentifier: {
+										BusinessPremiseID: invoice.reference.premise_id,
+										ElectronicDeviceID: invoice.reference.device_id,
+										InvoiceNumber: String(invoice.reference.sequence),
+									},
+									ReferenceInvoiceIssueDateTime: fursDateTime(invoice.reference.issued_at),
+								},
+							],
+						}),
 					},
 				},
 			});

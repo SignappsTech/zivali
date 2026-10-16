@@ -1,7 +1,8 @@
 // Fiscal invoices (C13 §Fiscal invoices, TASK-92, FR-046): payment.effects issues one per succeeded payment, numbered
 // <premise>-<device>-<sequence> without gaps, with a VAT breakdown, verified through the fiscal adapter (retried by
 // pg-boss with a backoff in minutes, app_config fiscal.retry), then rendered to a PDF in the private bucket. The
-// hourly fiscal.resubmit job sends what is still unverified again (TASK-92.3). Every step is idempotent per payment.
+// hourly fiscal.resubmit job sends what is still unverified again (TASK-92.3). A refund gets a credit note of the same
+// series that references the invoice (TASK-92.4). Every step is idempotent per payment and refund.
 import { z } from 'zod';
 
 import { PAYMENT_PURPOSES, type PaymentPurpose } from '@zivali/types';
@@ -63,7 +64,7 @@ async function invoicedPurposes(): Promise<readonly string[]> {
 	return Array.isArray(value) ? value : PAYMENT_PURPOSES;
 }
 
-const toFiscal = (invoice: InvoiceRow, subsequent: boolean): FiscalInvoice => ({
+const toFiscal = (invoice: InvoiceRow, subsequent: boolean, reference: InvoiceRow | null): FiscalInvoice => ({
 	premise_id: invoice.premise_id,
 	device_id: invoice.device_id,
 	sequence: invoice.sequence,
@@ -74,36 +75,84 @@ const toFiscal = (invoice: InvoiceRow, subsequent: boolean): FiscalInvoice => ({
 	vat_rate: invoice.vat_rate,
 	vat_cents: invoice.vat_cents,
 	subsequent,
+	...(reference && {
+		reference: {
+			premise_id: reference.premise_id,
+			device_id: reference.device_id,
+			sequence: reference.sequence,
+			issued_at: reference.issued_at,
+		},
+	}),
 });
 
-async function createInvoice(payment: PaymentRow, ctx: Ctx): Promise<InvoiceRow> {
+type Amounts = Pick<InvoiceRow, 'gross_cents' | 'net_cents' | 'vat_rate' | 'vat_cents'>;
+/** A credit note's link: the invoice it corrects and the payment's refunded total it covers up to. */
+type CreditOf = { reference_invoice_id: string; refund_total_cents: number };
+
+/**
+ * Numbers and stores an invoice, or a credit note of the same series, in `tx`: after the sequence lock (held to
+ * commit), so number order and time order cannot invert, and a rollback gives the number back.
+ */
+async function insertRow(
+	tx: Prisma.TransactionClient,
+	payment_id: string,
+	amounts: Amounts,
+	ctx: Ctx,
+	credit?: CreditOf
+): Promise<InvoiceRow> {
 	const { fiscal } = ctx.adapters;
 	const { premise_id, device_id } = fiscal;
+	const sequence = await PaymentsDao.nextInvoiceSequence(premise_id, device_id, tx);
+	const draft = { premise_id, device_id, sequence, issued_at: new Date(), ...amounts };
+	return PaymentsDao.insertInvoice(
+		{
+			...draft,
+			...credit,
+			payment_id,
+			number: `${premise_id}-${device_id}-${sequence}`,
+			provider: fiscal.provider,
+			zoi: fiscal.zoi({ ...draft, subsequent: false }),
+		},
+		tx
+	);
+}
+
+/** The payment's invoice, once: a concurrent run that loses the insert gives its number back and returns the winner's. */
+async function createInvoice(payment: PaymentRow, ctx: Ctx): Promise<InvoiceRow> {
 	const amounts = { gross_cents: payment.amount_cents, vat_rate: VAT_RATE, ...vatBreakdown(payment.amount_cents) };
 	try {
-		return await prisma.$transaction(async (tx) => {
-			const sequence = await PaymentsDao.nextInvoiceSequence(premise_id, device_id, tx);
-			// After the sequence lock (held to commit), so number order and time order cannot invert.
-			const draft = { premise_id, device_id, sequence, issued_at: new Date(), ...amounts };
-			return PaymentsDao.insertInvoice(
-				{
-					...draft,
-					payment_id: payment.id,
-					number: `${premise_id}-${device_id}-${sequence}`,
-					provider: fiscal.provider,
-					zoi: fiscal.zoi({ ...draft, subsequent: false }),
-				},
-				tx
-			);
-		});
+		return await prisma.$transaction((tx) => insertRow(tx, payment.id, amounts, ctx));
 	} catch (err) {
-		// A concurrent run inserted this payment's invoice first: the rollback returned our number, so use theirs.
 		if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002') {
 			const existing = await PaymentsDao.getInvoiceByPayment(payment.id);
 			if (existing) return existing;
 		}
 		throw err;
 	}
+}
+
+/**
+ * The credit note of what was refunded since the last one, from stored state: payments.refunded_cents (raised by the
+ * webhook) above the highest refunded total a note covers. Under the payment row lock, so concurrent runs see each
+ * other's notes and never credit a cent twice. The VAT is cumulative (the breakdown of the new total minus that of the
+ * previous one), so the notes of a fully refunded payment net its invoice exactly (the lead's default until the
+ * accountant decides otherwise). Null when nothing is left.
+ */
+async function createCreditNote(invoice: InvoiceRow, ctx: Ctx): Promise<InvoiceRow | null> {
+	const { payment_id, vat_rate } = invoice;
+	return prisma.$transaction(async (tx) => {
+		const total = await PaymentsDao.lockRefunded(payment_id, tx);
+		const previous = await PaymentsDao.creditedTotal(payment_id, tx);
+		if (total <= previous) return null;
+		const [now, before] = [vatBreakdown(total, vat_rate), vatBreakdown(previous, vat_rate)];
+		const amounts = {
+			gross_cents: previous - total,
+			net_cents: before.net_cents - now.net_cents,
+			vat_cents: before.vat_cents - now.vat_cents,
+			vat_rate,
+		};
+		return insertRow(tx, payment_id, amounts, ctx, { reference_invoice_id: invoice.id, refund_total_cents: total });
+	});
 }
 
 /**
@@ -122,6 +171,8 @@ async function verify(invoice: InvoiceRow, ctx: Ctx, resubmit = false): Promise<
 			`fiscal: invoice ${invoice.id} belongs to provider ${invoice.provider}, not ${fiscal.provider}`
 		);
 	}
+	// A credit note names the invoice it corrects (FURS ReferenceInvoice).
+	const reference = invoice.reference_invoice_id ? await PaymentsDao.getInvoice(invoice.reference_invoice_id) : null;
 	// The claim counts the attempt and takes the in-flight lease before the call: a crash mid-call still counts, and no
 	// other run (a payment.effects retry or redelivery, fiscal.resubmit) sends this invoice until the lease ends. A run
 	// that read the invoice before another run's attempt loses too, so overlapping runs send it once.
@@ -147,7 +198,7 @@ async function verify(invoice: InvoiceRow, ctx: Ctx, resubmit = false): Promise<
 	let eor: string;
 	try {
 		// The stored row: the same number, issue time, amounts and ZOI on every attempt.
-		({ eor } = await fiscal.issue(toFiscal(claimed, resubmit || attempt > 1)));
+		({ eor } = await fiscal.issue(toFiscal(claimed, resubmit || attempt > 1, reference)));
 	} catch (err) {
 		if (!resubmit && attempt < MAX_ATTEMPTS) {
 			ctx.logger.warn({ ...log, err }, 'fiscal: verification failed, retrying');
@@ -164,17 +215,30 @@ async function verify(invoice: InvoiceRow, ctx: Ctx, resubmit = false): Promise<
 	return settle({ status: 'VERIFIED', eor, verified_at: ctx.now, lease_until: null });
 }
 
-async function storePdf(invoice: InvoiceRow, item: string, ctx: Ctx): Promise<InvoiceRow> {
+async function storePdf(
+	invoice: InvoiceRow,
+	item: string,
+	ctx: Ctx,
+	reference: InvoiceRow | null
+): Promise<InvoiceRow> {
 	const { fiscal, storage } = ctx.adapters;
 	const pdf = await renderInvoicePdf({
 		...invoice,
 		item,
 		tax_number: fiscal.tax_number,
 		test: !fiscal.live,
+		...(reference && { reference: { number: reference.number, issued_at: reference.issued_at } }),
 	});
 	const key = `invoices/${invoice.id}.pdf`;
 	await storage.put({ bucket: 'private', key }, pdf, 'application/pdf');
 	return PaymentsDao.updateInvoice(invoice.id, { pdf_key: key });
+}
+
+/** Verified (or FAILED after the last attempt) and rendered; throws while verification is still retrying. */
+async function settle(row: InvoiceRow, item: string, ctx: Ctx, reference: InvoiceRow | null): Promise<InvoiceRow> {
+	if (row.status === 'PENDING') row = await verify(row, ctx);
+	if (!row.pdf_key) row = await storePdf(row, item, ctx, reference);
+	return row;
 }
 
 /**
@@ -189,9 +253,37 @@ export async function issueInvoice(payment: PaymentRow, item: string, ctx: Ctx):
 		if (!(await invoicedPurposes()).includes(purpose)) return null;
 		invoice = await createInvoice(payment, ctx);
 	}
-	if (invoice.status === 'PENDING') invoice = await verify(invoice, ctx);
-	if (!invoice.pdf_key) invoice = await storePdf(invoice, item, ctx);
-	return invoice;
+	return settle(invoice, item, ctx, null);
+}
+
+/**
+ * The invoice's credit notes (dobropis, TASK-92.4): one for what was refunded since the last note (createCreditNote),
+ * its own number in the invoice's series, negative amounts at the invoice's VAT rate, referencing the invoice's number
+ * and issue time (FURS ReferenceInvoice); then every note not yet verified or rendered is verified through the same
+ * adapter and rendered to a PDF. Built from stored state, so any later payment.effects run (a retry, the next refund,
+ * fiscal.resubmit) completes what a failed one left. Throws while verification is still retrying.
+ */
+export async function issueCreditNotes(invoice: InvoiceRow, item: string, ctx: Ctx): Promise<void> {
+	const { fiscal } = ctx.adapters;
+	if (fiscal.provider === 'off') return;
+	// A credit note joins the invoice's series and FURS record: never for a row another provider (mock vs furs) made.
+	if (invoice.provider !== fiscal.provider) {
+		ctx.logger.error(
+			{ invoice_id: invoice.id, row_provider: invoice.provider, provider: fiscal.provider },
+			'fiscal: invoice was created by another provider, no credit note'
+		);
+		throw new Error(
+			`fiscal: invoice ${invoice.id} belongs to provider ${invoice.provider}, not ${fiscal.provider}`
+		);
+	}
+	const note = await createCreditNote(invoice, ctx);
+	if (note)
+		ctx.logger.info(
+			{ invoice_id: invoice.id, credit_note_id: note.id, refund_cents: -note.gross_cents },
+			'fiscal: credit note issued'
+		);
+	for (const unsettled of await PaymentsDao.listUnsettledCreditNotes(invoice.id))
+		await settle(unsettled, item, ctx, invoice);
 }
 
 /**
@@ -221,7 +313,8 @@ async function alertUnverified(ctx: Ctx): Promise<number> {
  * invoices and PENDING ones payment.effects stopped short of again, as SubsequentSubmit with the stored number, issue
  * time and ZOI (nothing is renumbered or re-signed), one claim per invoice, fewest attempts first; once FURS fails, the
  * rest waits for the next run. An invoice still without its PDF (a VERIFIED one too) goes back to payment.effects (PDF
- * and receipt). Then the 24 h admin alert.
+ * and receipt), and so does a payment refunded beyond its credit notes (its refund's job ran out of retries). Then the
+ * 24 h admin alert.
  */
 export async function resubmitInvoices(
 	_input: void,
@@ -231,9 +324,10 @@ export async function resubmitInvoices(
 	let resubmitted = 0;
 	let verified = 0;
 	if (fiscal.provider !== 'off') {
+		const stale_before = new Date(ctx.now.getTime() - STALE_PENDING_MS);
 		const due = await PaymentsDao.listResubmittable({
 			provider: fiscal.provider,
-			stale_before: new Date(ctx.now.getTime() - STALE_PENDING_MS),
+			stale_before,
 			now: new Date(),
 			take: RESUBMIT_BATCH,
 		});
@@ -261,10 +355,19 @@ export async function resubmitInvoices(
 					{ singletonKey: row.payment_id, ...(await retryOptions()) }
 				);
 		}
+		const uncredited = await PaymentsDao.listUncredited({
+			provider: fiscal.provider,
+			stale_before,
+			take: RESUBMIT_BATCH,
+		});
+		for (const payment_id of uncredited)
+			await ctx.jobs.send('payment.effects', { payment_id }, await retryOptions());
+		if (uncredited.length)
+			ctx.logger.warn({ payments: uncredited }, 'fiscal.resubmit: refunds without a credit note');
 	}
 	const alerted = await alertUnverified(ctx);
 	ctx.logger.info({ resubmitted, verified, alerted }, 'fiscal.resubmit: done');
 	return { resubmitted, verified, alerted };
 }
 
-export default { issueInvoice, resubmitInvoices, retryOptions, vatBreakdown };
+export default { issueInvoice, issueCreditNotes, resubmitInvoices, retryOptions, vatBreakdown };

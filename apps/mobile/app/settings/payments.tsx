@@ -127,6 +127,16 @@ function PaymentsList() {
 											{t(`payments.${status.label}`)}
 										</Text>
 									</View>
+									{payment.status === 'succeeded' && payment.refunded_cents > 0 ? (
+										<View className="flex-row items-center gap-1.5">
+											<Icon as={ArrowUUpLeftIcon} size={16} className="text-muted-foreground" />
+											<Text className="text-sm text-muted-foreground">
+												{t('payments.refunded_partial', {
+													amount: formatEur(payment.refunded_cents, locale),
+												})}
+											</Text>
+										</View>
+									) : null}
 									{test ? (
 										<View className="flex-row items-center gap-1.5">
 											<Icon as={FlaskIcon} size={16} className="text-muted-foreground" />

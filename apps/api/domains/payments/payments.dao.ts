@@ -100,11 +100,76 @@ export async function markReceiptSent(id: string, at: Date, tx?: Prisma.Transact
 	return count === 1;
 }
 
+/**
+ * Raises the refunded total to `total_cents` (Stripe's cumulative amount_refunded) and returns what it was before,
+ * under a row lock, so concurrent refund events each see the total the other left; null when it is not higher (a
+ * late or repeated event) or above the amount.
+ */
+export async function raiseRefunded(
+	id: string,
+	total_cents: number,
+	tx: Prisma.TransactionClient
+): Promise<number | null> {
+	const [row] = await tx.$queryRaw<{ before: number }[]>`
+		update app.payments p set refunded_cents = ${total_cents}, updated_at = now()
+		from (select id, refunded_cents as before from app.payments where id = ${id}::uuid for update) old
+		where p.id = old.id and old.before < ${total_cents} and ${total_cents} <= p.amount_cents
+		returning old.before`;
+	return row ? row.before : null;
+}
+
 export type InvoiceRow = NonNullable<Awaited<ReturnType<typeof getInvoiceByPayment>>>;
 
+/** The payment's invoice (refund_total_cents 0), not its credit notes. */
 export async function getInvoiceByPayment(payment_id: string, tx?: Prisma.TransactionClient) {
 	const db = tx ?? prisma;
-	return db.invoices.findUnique({ where: { payment_id } });
+	return db.invoices.findUnique({ where: { payment_id_refund_total_cents: { payment_id, refund_total_cents: 0 } } });
+}
+
+/**
+ * The payment's refunded total, under a row lock held to commit: credit note issuers for one payment run one after
+ * another, each seeing the notes the previous one committed. NO KEY UPDATE, so inserting a row that references the
+ * payment (FOR KEY SHARE) never waits on it.
+ */
+export async function lockRefunded(payment_id: string, tx: Prisma.TransactionClient): Promise<number> {
+	const [row] = await tx.$queryRaw<{ refunded_cents: number }[]>`
+		select refunded_cents from app.payments where id = ${payment_id}::uuid for no key update`;
+	return row!.refunded_cents;
+}
+
+/** The refunded total the payment's credit notes cover: the highest refund_total_cents, 0 without notes. */
+export async function creditedTotal(payment_id: string, tx?: Prisma.TransactionClient): Promise<number> {
+	const db = tx ?? prisma;
+	const { _max } = await db.invoices.aggregate({ where: { payment_id }, _max: { refund_total_cents: true } });
+	return _max.refund_total_cents ?? 0;
+}
+
+/** Credit notes of an invoice not yet verified (PENDING) or without their PDF, in refund order. */
+export async function listUnsettledCreditNotes(reference_invoice_id: string, tx?: Prisma.TransactionClient) {
+	const db = tx ?? prisma;
+	return db.invoices.findMany({
+		where: { reference_invoice_id, OR: [{ status: 'PENDING' }, { pdf_key: null }] },
+		orderBy: { refund_total_cents: 'asc' },
+	});
+}
+
+/**
+ * Payments refunded beyond what their credit notes cover, last changed before `stale_before` (the refund's own
+ * payment.effects ran out of retries): those with an invoice of this provider.
+ */
+export async function listUncredited(
+	input: { provider: string; stale_before: Date; take: number },
+	tx?: Prisma.TransactionClient
+): Promise<string[]> {
+	const db = tx ?? prisma;
+	const rows = await db.$queryRaw<{ id: string }[]>`
+		select p.id from app.payments p
+		join app.invoices i on i.payment_id = p.id and i.refund_total_cents = 0 and i.provider = ${input.provider}
+		where p.status in ('SUCCEEDED', 'REFUNDED') and p.updated_at < ${input.stale_before}
+			and p.refunded_cents > (select max(n.refund_total_cents) from app.invoices n where n.payment_id = p.id)
+		order by p.updated_at
+		limit ${input.take}`;
+	return rows.map((row) => row.id);
 }
 
 export async function getInvoice(id: string, tx?: Prisma.TransactionClient) {
@@ -220,7 +285,12 @@ export async function settleInvoiceAttempt(
 }
 
 export default {
+	raiseRefunded,
 	getInvoiceByPayment,
+	lockRefunded,
+	creditedTotal,
+	listUnsettledCreditNotes,
+	listUncredited,
 	getInvoice,
 	nextInvoiceSequence,
 	insertInvoice,

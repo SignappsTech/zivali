@@ -16,6 +16,7 @@ import InvoicesDomain, {
 	STALE_PENDING_MS,
 	vatBreakdown,
 } from '../../domains/payments/invoices.domain.ts';
+import PaymentsDomain from '../../domains/payments/payments.domain.ts';
 import type { INVOICE_STATUS, PAYMENT_PURPOSE } from '../../generated/enums.ts';
 import configStore from '../../lib/config-store.ts';
 import { systemCtx } from '../../lib/ctx.ts';
@@ -56,7 +57,11 @@ async function succeeded(amount_cents = 500, purpose: PAYMENT_PURPOSE = 'TIP') {
 	});
 }
 
-const invoiceOf = (payment_id: string) => prisma.invoices.findUniqueOrThrow({ where: { payment_id } });
+/** The payment's invoice (refund_total_cents 0), not its credit notes. */
+const invoiceOf = (payment_id: string) =>
+	prisma.invoices.findUniqueOrThrow({
+		where: { payment_id_refund_total_cents: { payment_id, refund_total_cents: 0 } },
+	});
 const issue = InvoicesDomain.issueInvoice;
 
 describe('VAT breakdown (22 %)', () => {
@@ -607,5 +612,97 @@ describe('fiscal.resubmit (TASK-92.3)', () => {
 
 		await InvoicesDomain.resubmitInvoices(undefined, ctx);
 		expect(email.sent!.filter((m) => m.to === admin)).toHaveLength(1);
+	});
+});
+
+describe('credit notes (TASK-92.4)', () => {
+	/** What the webhook stores: Stripe's cumulative amount_refunded. */
+	const refundTo = (id: string, refunded_cents: number) =>
+		prisma.payments.update({ where: { id }, data: { refunded_cents } });
+	const notesOf = (reference_invoice_id: string) =>
+		prisma.invoices.findMany({ where: { reference_invoice_id }, orderBy: { sequence: 'asc' } });
+
+	it('numbers one per refund in the invoice’s series, negative with cumulative VAT, referencing the invoice', async () => {
+		const mock = mockFiscal({ tax_number: '12345678', premise_id: 'X', device_id: 'D1' });
+		const send = vi.fn<FiscalAdapter['issue']>().mockImplementation((invoice) => mock.issue(invoice));
+		const { ctx, fiscal, premise_id } = fiscalCtx({ issue: send });
+		const payment = await succeeded(1000);
+		const invoice = (await issue(payment, 'Zahvala', ctx))!;
+		await refundTo(payment.id, 3);
+		await InvoicesDomain.issueCreditNotes(invoice, 'Zahvala', ctx);
+		await refundTo(payment.id, 1000);
+		await InvoicesDomain.issueCreditNotes(invoice, 'Zahvala', ctx);
+		// Nothing left to credit: a further run changes nothing.
+		await InvoicesDomain.issueCreditNotes(invoice, 'Zahvala', ctx);
+		const notes = await notesOf(invoice.id);
+		// 997 alone would split 817 + 180; cumulative VAT (1000 minus 3) makes the notes net the invoice exactly.
+		expect(notes.map((n) => [n.sequence, n.refund_total_cents, n.gross_cents, n.net_cents, n.vat_cents])).toEqual([
+			[2, 3, -3, -2, -1],
+			[3, 1000, -997, -818, -179],
+		]);
+		const sum = (key: 'gross_cents' | 'net_cents' | 'vat_cents') => notes.reduce((t, n) => t + n[key], 0);
+		expect([sum('gross_cents'), sum('net_cents'), sum('vat_cents')]).toEqual([
+			-invoice.gross_cents,
+			-invoice.net_cents,
+			-invoice.vat_cents,
+		]);
+		for (const note of notes) {
+			expect(note).toMatchObject({
+				payment_id: payment.id,
+				number: `${premise_id}-D1-${note.sequence}`,
+				vat_rate: 22,
+				status: 'VERIFIED',
+				eor: expect.any(String),
+				pdf_key: `invoices/${note.id}.pdf`,
+			});
+			expect(note.zoi).toBe(fiscal.zoi({ ...note, subsequent: false }));
+			const pdf = await adapters.storage.get({ bucket: 'private', key: note.pdf_key! });
+			expect(pdf.subarray(0, 5).toString()).toBe('%PDF-');
+		}
+		// FURS gets the invoice's number and issue time as ReferenceInvoice.
+		const reference = { premise_id, device_id: 'D1', sequence: 1, issued_at: invoice.issued_at };
+		expect(send.mock.calls.map(([sent]) => sent.reference)).toEqual([undefined, reference, reference]);
+	});
+
+	it('never credits an invoice another provider made', async () => {
+		const { ctx } = fiscalCtx();
+		const payment = await succeeded(500);
+		const invoice = (await issue(payment, 'Zahvala', ctx))!;
+		await refundTo(payment.id, 500);
+		const send = vi.fn<FiscalAdapter['issue']>();
+		const { ctx: furs } = fiscalCtx({ provider: 'furs', issue: send });
+		await expect(InvoicesDomain.issueCreditNotes(invoice, 'Zahvala', furs)).rejects.toThrow(
+			/belongs to provider mock, not furs/
+		);
+		expect(send).not.toHaveBeenCalled();
+		expect(await notesOf(invoice.id)).toEqual([]);
+	});
+
+	it('never over-credits when payment.effects runs race on one refund after another, and loses no number', async () => {
+		const { ctx, premise_id } = fiscalCtx();
+		const payment = await succeeded(1000);
+		await issue(payment, 'Zahvala', ctx);
+		const race = async () => {
+			const runs = await Promise.allSettled(
+				Array.from({ length: 4 }, () => PaymentsDomain.paymentEffects({ payment_id: payment.id }, ctx))
+			);
+			for (const run of runs)
+				if (run.status === 'rejected') expect(String(run.reason)).toMatch(/verification already in progress/);
+			// A losing run is retried later and finds everything done.
+			await PaymentsDomain.paymentEffects({ payment_id: payment.id }, ctx);
+		};
+		await refundTo(payment.id, 300);
+		await race();
+		await refundTo(payment.id, 1000);
+		await race();
+		const invoice = await invoiceOf(payment.id);
+		const notes = await notesOf(invoice.id);
+		expect(notes.map((n) => [n.sequence, n.refund_total_cents, n.gross_cents, n.status])).toEqual([
+			[2, 300, -300, 'VERIFIED'],
+			[3, 1000, -700, 'VERIFIED'],
+		]);
+		// No number was taken and given back to a gap: the next invoice of the series follows.
+		expect(await issue(await succeeded(), 'Zahvala', ctx)).toMatchObject({ sequence: 4 });
+		expect(await prisma.invoices.count({ where: { premise_id } })).toBe(4);
 	});
 });
