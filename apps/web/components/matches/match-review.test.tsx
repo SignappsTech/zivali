@@ -180,6 +180,42 @@ describe('MatchReview list (P11)', () => {
 		Reflect.deleteProperty(navigator, 'share');
 	});
 
+	it('opens the conversation once for a double trigger in the same tick', async () => {
+		show({ selected: 'm-chip' });
+		const button = screen.getByRole('button', { name: t.confirm });
+		fireEvent.click(button);
+		fireEvent.click(button);
+		await flush();
+		expect(state.confirm).toHaveBeenCalledTimes(1);
+		expect(getMockEvents().filter((e) => e.name === 'match_confirmed')).toHaveLength(1);
+	});
+
+	it('clears the reject reason when the dialog is cancelled', () => {
+		show({ selected: 'm-chip' });
+		fireEvent.click(screen.getByRole('button', { name: t.reject }));
+		let dialog = screen.getByRole('alertdialog', { name: t.reject_title });
+		fireEvent.change(within(dialog).getByRole('textbox', { name: t.reject_reason }), { target: { value: 'Ne' } });
+		fireEvent.click(within(dialog).getByRole('button', { name: t.reject_cancel }));
+		fireEvent.click(screen.getByRole('button', { name: t.reject }));
+		dialog = screen.getByRole('alertdialog', { name: t.reject_title });
+		expect((within(dialog).getByRole('textbox', { name: t.reject_reason }) as HTMLTextAreaElement).value).toBe('');
+	});
+
+	it('offers the report-abuse overflow in the review column', () => {
+		show({ selected: 'm-chip' });
+		expect(screen.getByRole('button', { name: sl.report.more })).toBeTruthy();
+	});
+
+	it('offers the poster PDF and the alerts settings when there are no matches', () => {
+		show({ list: { data: { items: [] } }, locale: 'en' });
+		expect(screen.getByRole('link', { name: en.matches.empty_poster }).getAttribute('href')).toBe(
+			`/r/${CODE}/poster.pdf?lang=en`
+		);
+		expect(screen.getByRole('link', { name: en.matches.empty_alerts }).getAttribute('href')).toBe(
+			'/en/account/alerts'
+		);
+	});
+
 	it('refuses a non-manager with the permission sentence and a link back to the report, not a retry', () => {
 		show({ list: { error: { status: 403, data: { code: 'FORBIDDEN' } } } });
 		expect(screen.getByRole('alert').textContent).toBe(sl.errors.FORBIDDEN);

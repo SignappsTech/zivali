@@ -53,8 +53,8 @@ const sighted = (): MatchSuggestion => ({
 });
 
 /** Signs in and answers the endpoints; returns the reject bodies and the confirmed ids the page sent. */
-async function signIn(page: Page, baseURL: string, { forbidden = false } = {}) {
-	let items = [sighted(), chip()];
+async function signIn(page: Page, baseURL: string, { forbidden = false, empty = false } = {}) {
+	let items = empty ? [] : [sighted(), chip()];
 	const rejected: unknown[] = [];
 	const confirmed: string[] = [];
 	const answer = (url: RegExp, handler: (route: Route) => Promise<void>) =>
@@ -188,6 +188,27 @@ test('confirm opens the conversation in the inbox', async ({ page, baseURL }) =>
 	await page.getByRole('button', { name: 'To je moja žival' }).click();
 	await expect(page).toHaveURL(/\/nabiralnik$/);
 	expect(confirmed).toEqual([chip().id]);
+});
+
+test('no matches: share, poster PDF and alerts are offered', async ({ page, baseURL }) => {
+	await signIn(page, baseURL!, { empty: true });
+	await page.goto(`/r/${CODE}/ujemanja`);
+	await expect(page.getByRole('button', { name: 'Deli iskanje' })).toBeVisible();
+	await expect(page.getByRole('link', { name: 'Natisni plakat' })).toHaveAttribute(
+		'href',
+		`/r/${CODE}/poster.pdf?lang=sl`
+	);
+	await page.getByRole('link', { name: 'Opozorila v bližini' }).click();
+	await expect(page).toHaveURL(/\/racun\/opozorila$/);
+});
+
+test('a garbled ?m shows the list, and a review has the abuse overflow', async ({ page, baseURL }) => {
+	await signIn(page, baseURL!);
+	await page.setViewportSize({ width: 1440, height: 900 });
+	await page.goto(`/r/${CODE}/ujemanja?m=garbled`);
+	await expect(page.getByRole('heading', { level: 2, name: 'Ujemanje' })).toBeVisible();
+	await page.getByRole('button', { name: 'Več možnosti' }).click();
+	await expect(page.getByRole('menuitem', { name: 'Prijavi zlorabo' })).toBeVisible();
 });
 
 test('a non-manager is refused with a way back to the report, not a retry', async ({ page, baseURL }) => {

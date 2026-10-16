@@ -1,12 +1,14 @@
 'use client';
 
 import type { Icon as PhosphorIcon } from '@phosphor-icons/react';
+import { BellIcon } from '@phosphor-icons/react/dist/ssr/Bell';
 import { CaretLeftIcon } from '@phosphor-icons/react/dist/ssr/CaretLeft';
 import { CaretRightIcon } from '@phosphor-icons/react/dist/ssr/CaretRight';
 import { ChatCircleIcon } from '@phosphor-icons/react/dist/ssr/ChatCircle';
 import { CheckIcon } from '@phosphor-icons/react/dist/ssr/Check';
 import { CheckCircleIcon } from '@phosphor-icons/react/dist/ssr/CheckCircle';
 import { EyeIcon } from '@phosphor-icons/react/dist/ssr/Eye';
+import { FilePdfIcon } from '@phosphor-icons/react/dist/ssr/FilePdf';
 import { ImageIcon } from '@phosphor-icons/react/dist/ssr/Image';
 import { InfoIcon } from '@phosphor-icons/react/dist/ssr/Info';
 import { LockSimpleIcon } from '@phosphor-icons/react/dist/ssr/LockSimple';
@@ -38,6 +40,7 @@ import {
 	usePlaceLabel,
 	useReasonLines,
 } from '@/components/matches/parts';
+import { MoreMenu } from '@/components/report/slots/more-menu';
 import { InlineError, ringClass, SpotIllustration } from '@/components/shell/page';
 import {
 	AlertDialog,
@@ -248,10 +251,25 @@ function Empty({ code }: { code: string }) {
 			title={t('empty_title')}
 			description={t('empty_body')}
 			action={
-				<Button variant="secondary" onClick={() => void share()}>
-					<ShareNetworkIcon weight="bold" aria-hidden="true" />
-					{t('empty_share')}
-				</Button>
+				<div className="flex flex-wrap justify-center gap-3">
+					<Button variant="secondary" onClick={() => void share()}>
+						<ShareNetworkIcon weight="bold" aria-hidden="true" />
+						{t('empty_share')}
+					</Button>
+					{/* The poster is a server route (C15), not a page: a plain link, in the page's language. */}
+					<Button variant="secondary" asChild>
+						<a href={`/r/${code}/poster.pdf?lang=${locale}`}>
+							<FilePdfIcon weight="bold" aria-hidden="true" />
+							{t('empty_poster')}
+						</a>
+					</Button>
+					<Button variant="secondary" asChild>
+						<Link href="/account/alerts">
+							<BellIcon weight="bold" aria-hidden="true" />
+							{t('empty_alerts')}
+						</Link>
+					</Button>
+				</div>
 			}
 		/>
 	);
@@ -510,7 +528,11 @@ function Actions({ match, mine, code }: { match: MatchSuggestion; mine?: Mine; c
 	const [unverified, setUnverified] = React.useState(false);
 	const [verify, setVerify] = React.useState(false);
 
+	// A ref, not `confirming.isLoading`: a second trigger in the same tick (AuthGate's onReady) sees stale state.
+	const opening = React.useRef(false);
 	const openChat = async (first: boolean) => {
+		if (opening.current) return;
+		opening.current = true;
 		try {
 			await confirm({ id: match.id }).unwrap();
 			const region = regionOf(mine);
@@ -523,6 +545,8 @@ function Actions({ match, mine, code }: { match: MatchSuggestion; mine?: Mine; c
 		} catch (failure) {
 			if (errorCode(failure) === 'UNVERIFIED_EMAIL') setUnverified(true);
 			else toast.error(errorText(failure));
+		} finally {
+			opening.current = false;
 		}
 	};
 	const onReject = async () => {
@@ -601,7 +625,7 @@ function Actions({ match, mine, code }: { match: MatchSuggestion; mine?: Mine; c
 				>
 					{t('confirm')}
 				</Button>
-				<AlertDialog>
+				<AlertDialog onOpenChange={(open) => !open && setReason('')}>
 					<AlertDialogTrigger asChild>
 						<Button
 							variant="text"
@@ -701,6 +725,10 @@ function Review({ match, mine, code }: { match: MatchSuggestion; mine?: Mine; co
 				</Note>
 			)}
 			<Actions match={match} mine={mine} code={code} />
+			{/* The overflow (P11): "Prijavi zlorabo" for the other report, the same menu and dialog as the detail page. */}
+			<div className="mt-2 flex justify-end">
+				<MoreMenu target={{ type: 'report', id: match.other.short_code }} />
+			</div>
 		</>
 	);
 }
