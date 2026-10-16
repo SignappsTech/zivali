@@ -134,8 +134,8 @@ test('/m at 320 px: no horizontal scroll, 44 px targets, every action reachable 
 		await page.keyboard.press('Tab');
 		reached.push(await page.evaluate(() => (document.activeElement?.textContent ?? '').trim()));
 	}
-	for (const name of ['Sporočila', 'Uredi prijavo', 'Zaključi prijavo', 'Žival je spet doma'])
-		expect(reached).toContain(name);
+	// TODO(TASK-26.4): 'Uredi prijavo' joins these when the Edit row comes back (manage-view.tsx).
+	for (const name of ['Sporočila', 'Zaključi prijavo', 'Žival je spet doma']) expect(reached).toContain(name);
 
 	await page.getByRole('button', { name: 'Žival je spet doma' }).focus();
 	await page.keyboard.press('Enter');

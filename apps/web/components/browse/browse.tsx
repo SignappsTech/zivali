@@ -150,13 +150,10 @@ function useAppliedFilters() {
 	const apply = React.useCallback((next: Filters) => {
 		setPlace(next.place);
 		const query = filtersSearch(next);
-		// Next.js syncs useSearchParams with history.replaceState, without a server round trip.
-		// The chosen place is deliberately not in the URL (privacy), so it is not restored on reload.
-		window.history.replaceState(
-			window.history.state,
-			'',
-			(query ? `?${query}` : window.location.pathname) + window.location.hash
-		);
+		// Next.js syncs useSearchParams with history.replaceState, without a server round trip. The state must be
+		// null: Next skips the sync for a state that carries its own markers (window.history.state does), and copies
+		// its internal state itself. The chosen place is deliberately not in the URL (privacy), so a reload drops it.
+		window.history.replaceState(null, '', (query ? `?${query}` : window.location.pathname) + window.location.hash);
 	}, []);
 	return [applied, apply] as const;
 }
