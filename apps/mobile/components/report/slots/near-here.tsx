@@ -1,4 +1,4 @@
-import type { ReportSlotProps } from '@/components/report/slots';
+import type { ReportSlotProps } from '@/components/report/slots/types';
 
 /**
  * P9 "Near here": "V bližini" (`report.nearby_title`) with report tiles in two columns, no container, at the end of

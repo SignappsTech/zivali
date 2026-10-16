@@ -1,4 +1,4 @@
-import type { ReportSlotProps } from '@/components/report/slots';
+import type { ReportSlotProps } from '@/components/report/slots/types';
 
 /**
  * P9 ad slot: the one labelled ad unit ("Oglas", P21 Detail), after "Kaj se je zgodilo". TASK-36.6 renders the

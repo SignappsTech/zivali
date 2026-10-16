@@ -2,7 +2,7 @@ import { ShareNetworkIcon } from 'phosphor-react-native/src/icons/ShareNetwork';
 import { Share } from 'react-native';
 import { useTranslations } from 'use-intl';
 
-import type { ReportSlotProps } from '@/components/report/slots';
+import type { ReportSlotProps } from '@/components/report/slots/types';
 import { Button } from '@/components/ui/button';
 import { Icon } from '@/components/ui/icon';
 import { env } from '@/lib/env';

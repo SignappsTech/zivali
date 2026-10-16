@@ -3,7 +3,7 @@ import { HourglassMediumIcon } from 'phosphor-react-native/src/icons/HourglassMe
 import { useTranslations } from 'use-intl';
 
 import { Note } from '@/components/report/parts';
-import type { ReportSlotProps } from '@/components/report/slots';
+import type { ReportSlotProps } from '@/components/report/slots/types';
 
 /**
  * P9 matches-note slot: the owner's one note at the top of the content, one variant at a time (P9 mockup S7). Held

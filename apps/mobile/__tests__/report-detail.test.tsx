@@ -326,8 +326,9 @@ describe('report detail (P9 mobile)', () => {
 		expect(screen.getByText(r.owner_reward_note)).toBeOnTheScreen();
 		expect(screen.queryByText(new RegExp(`^${r.safety_note_reward}`))).toBeNull();
 		expect(screen.queryByRole('button', { name: r.action_sighting })).toBeNull();
-		expect(screen.getByRole('button', { name: r.owner_edit })).toBeOnTheScreen();
-		expect(screen.getByRole('button', { name: r.owner_poster })).toBeOnTheScreen();
+		// "Uredi" and "Plakat" stay hidden until TASK-26.5 and TASK-24.3 wire them.
+		expect(screen.queryByRole('button', { name: r.owner_edit })).toBeNull();
+		expect(screen.queryByRole('button', { name: r.owner_poster })).toBeNull();
 		await fireEvent.press(screen.getByRole('button', { name: r.more }));
 		const menu = container('menu', r.more);
 		expect(within(menu).getByRole('menuitem', { name: r.owner_close })).toBeOnTheScreen();
@@ -391,8 +392,12 @@ describe('states (AC 3)', () => {
 		expect(screen.getByRole('heading', { name: 'Maks' })).toBeOnTheScreen();
 		expect(screen.getByText(r.area_note)).toBeOnTheScreen();
 		expect(screen.queryByRole('button', { name: /^Odpri zemljevid/ })).toBeNull();
-		// Actions stay; they explain themselves when tapped (outbox, queued message).
-		expect(screen.getByRole('button', { name: r.action_sighting })).toBeOnTheScreen();
+		// The actions need the network: disabled, with the reason, and the gate never opens.
+		const sighting = screen.getByRole('button', { name: r.action_sighting });
+		expect(sighting).toBeDisabled();
+		expect(screen.getByText(r.action_offline)).toBeOnTheScreen();
+		await fireEvent.press(screen.getByRole('button', { name: r.action_message }));
+		expect(screen.queryByText('gate:contact')).toBeNull();
 		await act(async () => {});
 		expect(mockApi.calls).toEqual([]);
 	});

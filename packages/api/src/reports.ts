@@ -56,12 +56,12 @@ export const reportsApi = api.enhanceEndpoints({ addTagTypes: ['Reports'] }).inj
 		}),
 		// TASK-6.6. Managers get the ReportOwnerView fields too.
 		getReport: build.query<PublicReport | ReportOwnerView, { code: string }>({
-			query: ({ code }) => `/v1/reports/${code}`,
+			query: ({ code }) => `/v1/reports/${encodeURIComponent(code)}`,
 			providesTags: ['Reports'],
 		}),
 		// TASK-29.2
 		updateReport: build.mutation<ReportOwnerView, { code: string; body: UpdateReportInput }>({
-			query: ({ code, body }) => ({ url: `/v1/reports/${code}`, method: 'PATCH', body }),
+			query: ({ code, body }) => ({ url: `/v1/reports/${encodeURIComponent(code)}`, method: 'PATCH', body }),
 			invalidatesTags: ['Reports'],
 		}),
 		// TASK-31.3

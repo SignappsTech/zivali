@@ -268,13 +268,22 @@ function Detail({ report, cachedAt }: { report: DetailReport; cachedAt: number |
 			>
 				<View>
 					{/* Before the photo in reading order, drawn over it. */}
-					<BackButton className={cn(FAB, 'left-4')} style={[shadow('md'), { marginTop: insets.top + 12 }]} />
-					<ReportSlot
-						name="slot-b"
-						report={report}
-						className={cn(FAB, 'right-4')}
-						style={[shadow('md'), { marginTop: insets.top + 12 }]}
-					/>
+					{/* Only while the compact bar is not up: two copies would be two "Nazaj" and two "Deli" for TalkBack. */}
+					{!compact && (
+						<>
+							<BackButton
+								className={cn(FAB, 'left-4')}
+								style={[shadow('md'), { marginTop: insets.top + 12 }]}
+							/>
+							<ReportSlot
+								name="slot-b"
+								report={report}
+								offline={offline}
+								className={cn(FAB, 'right-4')}
+								style={[shadow('md'), { marginTop: insets.top + 12 }]}
+							/>
+						</>
+					)}
 					<PhotoCarousel photos={photos} />
 				</View>
 
@@ -284,7 +293,7 @@ function Detail({ report, cachedAt }: { report: DetailReport; cachedAt: number |
 							{t('offline_cached', { time: savedTime })}
 						</Note>
 					)}
-					<ReportSlot name="matches-note" report={report} className="mb-6" />
+					<ReportSlot name="matches-note" report={report} offline={offline} className="mb-6" />
 
 					<View className="flex-row flex-wrap items-center gap-x-3">
 						<StatusWord report={report} />
@@ -321,8 +330,8 @@ function Detail({ report, cachedAt }: { report: DetailReport; cachedAt: number |
 							) : null}
 						</>
 					)}
-					<ReportSlot name="ad" report={report} className="mt-10" />
-					<ReportSlot name="near-here" report={report} className="mt-10" />
+					<ReportSlot name="ad" report={report} offline={offline} className="mt-10" />
+					<ReportSlot name="near-here" report={report} offline={offline} className="mt-10" />
 				</View>
 			</ScrollView>
 
@@ -333,7 +342,7 @@ function Detail({ report, cachedAt }: { report: DetailReport; cachedAt: number |
 						<Text numberOfLines={1} aria-hidden className="flex-1 font-display-semibold text-lg">
 							{title}
 						</Text>
-						<ReportSlot name="slot-b" report={report} />
+						<ReportSlot name="slot-b" report={report} offline={offline} />
 					</View>
 				</View>
 			)}
@@ -345,8 +354,8 @@ function Detail({ report, cachedAt }: { report: DetailReport; cachedAt: number |
 					className="absolute inset-x-0 bottom-0 bg-card px-5 pt-5"
 					style={[shadow('lg'), { paddingBottom: 20 + insets.bottom }]}
 				>
-					<ReportSlot name="slot-a" report={report}>
-						<ReportSlot name="slot-c" report={report} />
+					<ReportSlot name="slot-a" report={report} offline={offline}>
+						<ReportSlot name="slot-c" report={report} offline={offline} />
 					</ReportSlot>
 				</View>
 			)}
@@ -360,10 +369,12 @@ function Detail({ report, cachedAt }: { report: DetailReport; cachedAt: number |
  * Removed, expired and hidden reports are the 410 page; an unknown code the 404 page.
  */
 export default function ReportScreen() {
-	const { code = '' } = useLocalSearchParams<{ code: string }>();
+	const params = useLocalSearchParams<{ code?: string | string[] }>();
+	const code = (Array.isArray(params.code) ? params.code[0] : params.code) ?? '';
 	const { data, source, lastSyncAt, isLoading, error, refetch } = useReport(code);
 	const t = useTranslations('common');
 
+	if (!code) return <Gone kind="not_found" />;
 	if (isLoading) return <Loading />;
 	if (error?.data?.code === 'GONE') return <Gone kind="gone" />;
 	if (error?.data?.code === 'NOT_FOUND') return <Gone kind="not_found" />;
