@@ -49,20 +49,24 @@ type FormFieldProps = {
 	children: React.ReactNode;
 };
 
-/** Label above, the control, help and error below (system §10.3, §12). */
-function FormField({ label, hint, error, disabled, id, className, children }: FormFieldProps) {
-	const autoId = React.useId();
-	const labelId = `${id ?? autoId}-label`;
-	const description = [plain(hint), plain(error)].filter(Boolean).join(' ') || undefined;
-
-	// Announce an error that appears or changes after the first render (a submit); one present on mount is read with
-	// the field instead, so a screen that opens with errors does not talk over itself.
-	const errorText = plain(error);
+/**
+ * Announces an error that appears or changes after the first render (a submit); one present on mount is read with the
+ * field instead, so a screen that opens with errors does not talk over itself.
+ */
+function useAnnounceError(errorText: string | undefined) {
 	const mounted = React.useRef(false);
 	React.useEffect(() => {
 		if (mounted.current && errorText) AccessibilityInfo.announceForAccessibility(errorText);
 		mounted.current = true;
 	}, [errorText]);
+}
+
+/** Label above, the control, help and error below (system §10.3, §12). */
+function FormField({ label, hint, error, disabled, id, className, children }: FormFieldProps) {
+	const autoId = React.useId();
+	const labelId = `${id ?? autoId}-label`;
+	const description = [plain(hint), plain(error)].filter(Boolean).join(' ') || undefined;
+	useAnnounceError(plain(error));
 
 	return (
 		<View className={cn('gap-1.5', className)}>
@@ -90,4 +94,4 @@ function FieldError({ className, children }: { className?: string; children: Rea
 	);
 }
 
-export { FieldError, FormField, useFormField };
+export { FieldError, FormField, useAnnounceError, useFormField };

@@ -17,6 +17,8 @@
 		"@expo-google-fonts/bricolage-grotesque": "^0.4.1",
 		"@formatjs/intl-pluralrules": "^6.3.15",
 		"@gorhom/bottom-sheet": "^5.2.14",
+		"@hookform/resolvers": "^5.9.1",
+		"@maplibre/maplibre-react-native": "11.4.1",
 		"@react-native-firebase/analytics": "26.4.0",
 		"@react-native-firebase/app": "26.4.0",
 		"@react-native-google-signin/google-signin": "^16.1.5",
@@ -43,6 +45,7 @@
 		"expo-apple-authentication": "~57.0.2",
 		"expo-background-task": "~57.0.21",
 		"expo-build-properties": "~57.0.22",
+		"expo-clipboard": "~57.0.2",
 		"expo-constants": "~57.0.22",
 		"expo-crypto": "~57.0.4",
 		"expo-dev-client": "~57.0.20",
@@ -56,15 +59,18 @@
 		"expo-notifications": "~57.0.22",
 		"expo-router": "~57.0.27",
 		"expo-secure-store": "~57.0.4",
+		"expo-sharing": "~57.0.23",
 		"expo-splash-screen": "~57.0.10",
 		"expo-sqlite": "~57.0.4",
 		"expo-status-bar": "~57.0.1",
 		"expo-system-ui": "~57.0.4",
 		"expo-task-manager": "~57.0.21",
+		"expo-web-browser": "~57.0.3",
 		"nativewind": "^4.2.7",
 		"phosphor-react-native": "3.0.6",
 		"react": "19.2.3",
 		"react-dom": "19.2.3",
+		"react-hook-form": "^7.90.0",
 		"react-native": "0.86.3",
 		"react-native-gesture-handler": "~2.32.0",
 		"react-native-reanimated": "4.5.1",
@@ -104,7 +110,22 @@
 			"/node_modules/@react-native/babel-preset/"
 		],
 		"moduleNameMapper": {
-			"^@/(.*)$": "<rootDir>/$1"
+			"^@/(.*)$": "<rootDir>/$1",
+			"^@zivali/analytics$": "<rootDir>/../../packages/analytics/src/index.ts",
+			"^@zivali/api/(.*)$": "<rootDir>/../../packages/api/src/$1.ts",
+			"^@zivali/i18n/dist/(.*)$": [
+				"<rootDir>/../../packages/i18n/dist/$1",
+				"<rootDir>/../../node_modules/@zivali/i18n/dist/$1"
+			],
+			"^@zivali/i18n/format$": "<rootDir>/../../packages/i18n/src/format.ts",
+			"^@zivali/tokens/(values|map-style)$": [
+				"<rootDir>/../../packages/tokens/dist/$1.ts",
+				"<rootDir>/../../node_modules/@zivali/tokens/dist/$1.ts"
+			],
+			"^@zivali/types$": "<rootDir>/../../packages/types/src/index.ts",
+			"^@zivali/types/domain/(.*)$": "<rootDir>/../../packages/types/src/domain/$1.ts",
+			"^@zivali/validation$": "<rootDir>/../../packages/validation/src/index.ts",
+			"^@zivali/validation/(.*)$": "<rootDir>/../../packages/validation/src/$1.ts"
 		}
 	}
 }

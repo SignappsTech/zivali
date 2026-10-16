@@ -2,23 +2,21 @@ import type { Metadata } from 'next';
 import type { Locale } from 'next-intl';
 import { getTranslations } from 'next-intl/server';
 
-import { ContentPage, Placeholder } from '@/components/shell/page';
-import { requireViewer } from '@/lib/viewer';
+import { PetList } from '@/components/pets/pet-list';
+import { ContentPage } from '@/components/shell/page';
 
 export async function generateMetadata({ params }: PageProps<'/[locale]/my-pets'>): Promise<Metadata> {
-	const t = await getTranslations({ locale: (await params).locale as Locale, namespace: 'nav' });
-	return { title: t('my_pets_reports'), robots: { index: false } };
+	const t = await getTranslations({ locale: (await params).locale as Locale, namespace: 'pets' });
+	return { title: t('title'), robots: { index: false } };
 }
 
-/** Target of the signed-in header link "Moje živali in prijave". TODO(TASK-16.6): the My pets list. */
-export default async function MyPetsPage({ params }: PageProps<'/[locale]/my-pets'>) {
-	const { locale } = await params;
-	await requireViewer(locale);
-	const t = await getTranslations({ locale: locale as Locale, namespace: 'nav' });
-
+/** P8 My pets (C15 /moje-zivali), the target of the signed-in header link; the layout has checked the account. */
+export default function MyPetsPage() {
 	return (
 		<ContentPage>
-			<Placeholder title={t('my_pets_reports')} />
+			<div className="max-w-[720px]">
+				<PetList />
+			</div>
 		</ContentPage>
 	);
 }

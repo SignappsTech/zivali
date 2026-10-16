@@ -4,14 +4,17 @@ export const APP_ID = 'si.signapps.zivali';
 // Listing, manage-link and payment-return paths, SL and EN (C15 §Deep links).
 export const APP_LINK_PATHS = ['/r/*', '/en/r/*', '/m', '/en/m', '/payments/*'] as const;
 
+// Files under a listing (C15 server endpoints) open in the browser, not the app. iOS takes the first matching
+// component, so these come first. Android has no exclusions: the app's intent filter claims listing pages by pattern
+// (apps/mobile app.config.ts).
+const APP_LINK_EXCLUDES = ['/r/*/poster.pdf', '/r/*/opengraph-image*'] as const;
+
 export function appleAppSiteAssociation(teamId?: string) {
-	return {
-		applinks: {
-			details: teamId
-				? [{ appIDs: [`${teamId}.${APP_ID}`], components: APP_LINK_PATHS.map((path) => ({ '/': path })) }]
-				: [],
-		},
-	};
+	const components = [
+		...APP_LINK_EXCLUDES.map((path) => ({ '/': path, exclude: true })),
+		...APP_LINK_PATHS.map((path) => ({ '/': path })),
+	];
+	return { applinks: { details: teamId ? [{ appIDs: [`${teamId}.${APP_ID}`], components }] : [] } };
 }
 
 /** `sha256` is the comma-separated list of signing certificate fingerprints (EAS release keystore, Play app signing). */

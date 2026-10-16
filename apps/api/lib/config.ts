@@ -58,6 +58,27 @@ const EnvSchema = z.object({
 	STRIPE_SECRET_KEY: z.string().optional(),
 	STRIPE_WEBHOOK_SECRET: z.string().optional(),
 	MOCK_WEBHOOK_SECRET: z.string().optional(),
+	// Fiscal invoices (C13, TASK-92): mock (default in every environment while payments are test-only) | furs (FURS
+	// test environment, needs the FURS_* files) | off (no invoices). Premise and device are the ids registered with FURS.
+	FISCAL_PROVIDER: z.enum(['mock', 'furs', 'off']).default('mock'),
+	FISCAL_TAX_NUMBER: z
+		.string()
+		.regex(/^\d{8}$/)
+		.optional(),
+	FISCAL_PREMISE_ID: z
+		.string()
+		.regex(/^[0-9A-Za-z]{1,20}$/)
+		.default('SPLET'),
+	FISCAL_DEVICE_ID: z
+		.string()
+		.regex(/^[0-9A-Za-z]{1,20}$/)
+		.default('API1'),
+	FURS_URL: z.url().default('https://blagajne-test.fu.gov.si:9002/v1/cash_registers'),
+	// PEM files outside the repo (e.g. .secrets/): the FURS certificate, its private key and the FURS CA chain.
+	FURS_CERT_PATH: z.string().optional(),
+	FURS_KEY_PATH: z.string().optional(),
+	FURS_KEY_PASSPHRASE: z.string().optional(),
+	FURS_CA_PATH: z.string().optional(),
 	EMAIL_PROVIDER: z.enum(['mock', 'brevo', 'off']).optional(),
 	BREVO_API_KEY: z.string().optional(),
 	EMAIL_FROM: z.string().optional(),

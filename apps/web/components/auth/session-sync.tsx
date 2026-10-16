@@ -7,6 +7,8 @@ import { useStore } from 'react-redux';
 import { configureAuth, useSession } from '@zivali/api/auth';
 import { useUpdateMeMutation } from '@zivali/api/me';
 import type { ApiStore } from '@zivali/api/rtk';
+import { StoreProvider } from '@/components/store-provider';
+import { useProfileLocale } from '@/i18n/use-profile-locale';
 
 /**
  * Connects @zivali/api/auth to the Supabase session (useSession, useRequireAuth, the API cache reset on user change).
@@ -39,11 +41,13 @@ export function metadataName(user: User | undefined): string | undefined {
 }
 
 /**
- * For signed-in pages (app/providers.tsx): configures auth for the whole page, and gives a new profile the name that
- * waits in user_metadata (the API creates the profile without one, C3).
+ * For signed-in pages (app/providers.tsx): configures auth for the whole page, connects the language switch to the
+ * profile locale, and gives a new profile the name that waits in user_metadata (the API creates the profile without
+ * one, C3).
  */
 export function SessionSync() {
 	useConfigureAuth();
+	useProfileLocale();
 	const { me, session } = useSession();
 	const [updateMe] = useUpdateMeMutation();
 	const pendingName = me && !me.is_anonymous && !me.display_name ? metadataName(session?.user) : undefined;
@@ -53,4 +57,13 @@ export function SessionSync() {
 	}, [pendingName, updateMe]);
 
 	return null;
+}
+
+/** SessionSync with the shared store, for app/providers.tsx, which loads it on signed-in pages only (TASK-90.5). */
+export function SessionSyncIsland() {
+	return (
+		<StoreProvider>
+			<SessionSync />
+		</StoreProvider>
+	);
 }

@@ -147,6 +147,7 @@
 					"reporter_id": { "type": "string", "format": "uuid" },
 					"target_type": { "$ref": "#/components/schemas/AbuseTargetType" },
 					"target_id": { "type": "string", "format": "uuid" },
+					"target_code": { "type": ["string", "null"], "pattern": "^[1-9A-HJ-NP-Za-km-z]{8}$" },
 					"reason": { "$ref": "#/components/schemas/AbuseReason" },
 					"note": { "type": ["string", "null"] },
 					"weight": { "type": "number" },
@@ -158,6 +159,7 @@
 					"reporter_id",
 					"target_type",
 					"target_id",
+					"target_code",
 					"reason",
 					"note",
 					"weight",
@@ -1168,11 +1170,21 @@
 					"kind": { "$ref": "#/components/schemas/ModerationFlagKind" },
 					"target_type": { "$ref": "#/components/schemas/ModerationFlagTargetType" },
 					"target_id": { "type": "string", "format": "uuid" },
+					"target_code": { "type": ["string", "null"], "pattern": "^[1-9A-HJ-NP-Za-km-z]{8}$" },
 					"details": { "type": "object", "additionalProperties": {} },
 					"created_at": { "type": "string", "format": "date-time" },
 					"resolved_at": { "type": ["string", "null"], "format": "date-time" }
 				},
-				"required": ["id", "kind", "target_type", "target_id", "details", "created_at", "resolved_at"]
+				"required": [
+					"id",
+					"kind",
+					"target_type",
+					"target_id",
+					"target_code",
+					"details",
+					"created_at",
+					"resolved_at"
+				]
 			},
 			"ModerationFlagKind": { "type": "string", "enum": ["duplicate_chip", "anon_hold", "auto_hidden"] },
 			"ModerationFlagList": {
@@ -4497,6 +4509,43 @@
 					"200": {
 						"description": "The payment",
 						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/Payment" } } }
+					},
+					"400": {
+						"description": "VALIDATION",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"401": {
+						"description": "UNAUTHENTICATED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"404": {
+						"description": "NOT_FOUND",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"429": {
+						"description": "RATE_LIMITED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"500": {
+						"description": "INTERNAL",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					}
+				}
+			}
+		},
+		"/v1/payments/{id}/invoice.pdf": {
+			"get": {
+				"operationId": "getInvoicePdf",
+				"summary": "Own fiscal invoice (PDF)",
+				"description": "The fiscal invoice of one of the caller’s payments as `application/pdf` (download; number, VAT 22 % breakdown, ZOI and EOR), rendered by the worker after the payment succeeded. 404 for anyone else’s payment and until the invoice exists (or when fiscal invoicing is off for its purpose).",
+				"tags": ["payments"],
+				"parameters": [
+					{ "schema": { "type": "string", "format": "uuid" }, "required": true, "name": "id", "in": "path" }
+				],
+				"responses": {
+					"200": {
+						"description": "The invoice PDF",
+						"content": { "application/pdf": { "schema": { "type": "string", "format": "binary" } } }
 					},
 					"400": {
 						"description": "VALIDATION",

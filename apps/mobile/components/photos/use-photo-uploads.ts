@@ -42,9 +42,31 @@ type Stored = {
 	photoId?: string;
 	uploadedAt?: number;
 };
-/** A PreparedPhoto (C5) the outbox can take as is, plus its upload state. */
+/** A PreparedPhoto (C5) the outbox can take as is, plus its upload state; `kept`: on the device only, while held. */
 export type PickedPhoto = Stored &
-	MobilePreparedPhoto & { status: 'uploading' | 'uploaded' | 'failed'; progress: number; error?: PhotoMessage };
+	MobilePreparedPhoto & {
+		status: 'kept' | 'uploading' | 'uploaded' | 'failed';
+		progress: number;
+		error?: PhotoMessage;
+		/** One of `saved`: already on the server, nothing on disk or in the draft. */
+		saved?: true;
+	};
+/** A photo the entity already has (C5 `{ id, thumb_url }`, e.g. a pet's), shown first and kept by its id. */
+export type SavedPhoto = { id: string; thumb_url: string };
+
+const fromSaved = ({ id, thumb_url }: SavedPhoto): PickedPhoto => ({
+	key: id,
+	photoId: id,
+	sha256: '',
+	width: 0,
+	height: 0,
+	bytes: 0,
+	file: { uri: thumb_url },
+	thumb: { uri: thumb_url },
+	status: 'uploaded',
+	progress: 1,
+	saved: true,
+});
 
 const fileErrors = {
 	UPLOAD_TYPE: 'errors.UPLOAD_TYPE',
@@ -82,15 +104,17 @@ async function loadDraft(draft: string): Promise<Stored[]> {
 
 /** The form writes `data`; the picker writes only `photo_paths`, creating the draft row if the form has not yet. */
 async function saveDraft(draft: string, kind: DraftKind, photos: PickedPhoto[]) {
-	const stored = photos.map(({ key, sha256, width, height, bytes, photoId, uploadedAt }): Stored => ({
-		key,
-		sha256,
-		width,
-		height,
-		bytes,
-		photoId,
-		uploadedAt,
-	}));
+	const stored = photos
+		.filter((photo) => !photo.saved)
+		.map(({ key, sha256, width, height, bytes, photoId, uploadedAt }): Stored => ({
+			key,
+			sha256,
+			width,
+			height,
+			bytes,
+			photoId,
+			uploadedAt,
+		}));
 	const db = await getDb();
 	await db.runAsync(
 		`insert into drafts (id, kind, data, photo_paths, updated_at) values (?, ?, '{}', ?, ?)
@@ -122,11 +146,23 @@ function failure(error: unknown): { message: PhotoMessage; retry: boolean } {
  * is done soonest on a weak connection, retries with backoff, aborts on remove, and resumes from the drafts table after
  * an app restart or going back online. `cameraPrimer` is shown before the OS camera prompt; no camera means the
  * gallery. `onExif` gets the place and time read from a photo, to offer them with consent; nothing stores them.
+ * `saved` photos (read on mount) come first; removing one only drops it from the list, the caller detaches it.
+ * `hold` keeps the photos on the device (`kept`) and uploads them once it is false again.
  */
 export function usePhotoUploads(
 	draft: string,
 	kind: DraftKind,
-	{ cameraPrimer, onExif }: { cameraPrimer: () => Promise<boolean>; onExif?: (exif: PhotoExif) => void }
+	{
+		cameraPrimer,
+		onExif,
+		saved = [],
+		hold = false,
+	}: {
+		cameraPrimer: () => Promise<boolean>;
+		onExif?: (exif: PhotoExif) => void;
+		saved?: SavedPhoto[];
+		hold?: boolean;
+	}
 ) {
 	const t = useTranslations('photos');
 	const online = isOnline(useNetworkState());
@@ -136,6 +172,7 @@ export function usePhotoUploads(
 	// Mutable side of the queue, read by async work that outlives a render.
 	const live = useRef({
 		alive: false,
+		hold,
 		photos: [] as PickedPhoto[],
 		preparing: 0,
 		chain: Promise.resolve(),
@@ -157,6 +194,7 @@ export function usePhotoUploads(
 	async function upload(key: string) {
 		const photo = live.current.photos.find((item) => item.key === key);
 		if (!live.current.alive || !photo || photo.photoId) return;
+		if (live.current.hold) return patch(key, { status: 'kept', progress: 0 });
 		const controller = new AbortController();
 		live.current.controllers.set(key, controller);
 		patch(key, { status: 'uploading', progress: 0, error: undefined });
@@ -221,9 +259,10 @@ export function usePhotoUploads(
 				folder(draft).create({ intermediates: true, idempotent: true });
 				await new File(photo.file.uri).move(new File(kept.file.uri));
 				await new File(photo.thumb.uri).move(new File(kept.thumb.uri));
-				commit([...live.current.photos, { ...photo, ...kept, key, status: 'uploading', progress: 0 }]);
+				const status = live.current.hold ? 'kept' : 'uploading';
+				commit([...live.current.photos, { ...photo, ...kept, key, status, progress: 0 }]);
 				void save();
-				enqueue(key);
+				if (status === 'uploading') enqueue(key);
 				if (exif.lat !== undefined || exif.takenAt) onExif?.(exif);
 			} catch (error) {
 				setNotice(error instanceof PhotoFileError ? fileErrors[error.code] : 'errors.UPLOAD_TYPE');
@@ -262,7 +301,7 @@ export function usePhotoUploads(
 		live.current.controllers.get(key)?.abort();
 		clearTimeout(live.current.timers.get(key));
 		const photo = live.current.photos.find((item) => item.key === key);
-		if (photo) removeFiles(photo);
+		if (photo && !photo.saved) removeFiles(photo);
 		commit(live.current.photos.filter((item) => item.key !== key));
 		void save();
 	}
@@ -282,7 +321,7 @@ export function usePhotoUploads(
 
 	const restore = useEffectEvent(async (cancelled: () => boolean) => {
 		const stored = await loadDraft(draft).catch(() => []);
-		if (cancelled() || !stored.length) return;
+		if (cancelled() || !(stored.length || saved.length)) return;
 		const restored = stored.flatMap((photo): PickedPhoto[] => {
 			const kept = filesOf(draft, photo.key);
 			if (!new File(kept.file.uri).exists) return [];
@@ -292,13 +331,21 @@ export function usePhotoUploads(
 					...photo,
 					...kept,
 					photoId: fresh ? photo.photoId : undefined,
-					status: fresh ? 'uploaded' : 'uploading',
+					status: fresh ? 'uploaded' : live.current.hold ? 'kept' : 'uploading',
 					progress: fresh ? 1 : 0,
 				},
 			];
 		});
-		commit([...restored, ...live.current.photos]);
-		for (const photo of restored) if (!photo.photoId) enqueue(photo.key);
+		commit([...saved.map(fromSaved), ...restored, ...live.current.photos]);
+		for (const photo of restored) if (photo.status === 'uploading') enqueue(photo.key);
+	});
+	const release = useEffectEvent(() => {
+		const kept = live.current.photos.filter((photo) => photo.status === 'kept');
+		if (!kept.length) return;
+		commit(
+			live.current.photos.map((photo) => (photo.status === 'kept' ? { ...photo, status: 'uploading' } : photo))
+		);
+		for (const photo of kept) enqueue(photo.key);
 	});
 	const backOnline = useEffectEvent(() => {
 		for (const photo of live.current.photos) if (photo.error === 'photos.failed_network') retry(photo.key);
@@ -307,6 +354,11 @@ export function usePhotoUploads(
 	useEffect(() => {
 		if (online) backOnline();
 	}, [online]);
+
+	useEffect(() => {
+		live.current.hold = hold;
+		if (!hold) release();
+	}, [hold]);
 
 	useEffect(() => {
 		const state = live.current;

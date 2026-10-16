@@ -1,6 +1,4 @@
 {
-	"label": "Zemljevid",
-	"keyboard_hint": "Zemljevid premikate s puščicami, povečate s tipko + in pomanjšate s tipko −.",
 	"text_alternative": "Zemljevid prijav v okolici kraja {place}. Vse prijave so naštete v seznamu.",
 	"marker_a11y": "{title}, {status}",
 	"cluster_a11y": "{count, plural, one {# prijava na tem območju} two {# prijavi na tem območju} few {# prijave na tem območju} other {# prijav na tem območju}}. Povečaj",
@@ -8,5 +6,8 @@
 	"preview_open": "Odpri",
 	"attribution": "© OpenFreeMap © OpenMapTiles, podatki © sodelavci OpenStreetMap",
 	"loading": "Nalagamo zemljevid …",
-	"tiles_error": "Zemljevida ta trenutek ni mogoče naložiti. Prijave so v seznamu."
+	"tiles_error": "Zemljevida ta trenutek ni mogoče naložiti. Prijave so v seznamu.",
+	"a11y_label": "Zemljevid: {count, plural, one {# prijava} two {# prijavi} few {# prijave} other {# prijav}}",
+	"list_show": "Pokaži seznam",
+	"list_hide": "Pokaži zemljevid"
 }

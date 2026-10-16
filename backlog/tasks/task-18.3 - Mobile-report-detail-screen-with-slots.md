@@ -1,11 +1,11 @@
 ---
 id: TASK-18.3
 title: Mobile report detail screen with slots
-status: To Do
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:13'
-updated_date: '2026-10-15 00:12'
+updated_date: '2026-10-16 00:44'
 labels:
   - fe
   - 'est:M'

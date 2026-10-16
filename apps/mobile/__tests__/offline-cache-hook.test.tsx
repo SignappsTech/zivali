@@ -1,13 +1,16 @@
+import { skipToken } from '@reduxjs/toolkit/query';
 import { renderHook } from '@testing-library/react-native';
 
 import { anonymousMe, me } from '@zivali/api/__fixtures__/me';
 import { useSession } from '@zivali/api/auth';
-import { cacheQuietHours } from '@/lib/offline/geofence';
+import { useListMyReportsInfiniteQuery } from '@zivali/api/reports';
+import { cacheOwnReports, cacheQuietHours } from '@/lib/offline/geofence';
 import { setCacheArea, startCacheSync } from '@/lib/offline/sync';
 import { useOfflineCache } from '@/lib/offline/use-offline-cache';
 
 jest.mock('@zivali/api/auth', () => ({ useSession: jest.fn() }));
-jest.mock('@/lib/offline/geofence', () => ({ cacheQuietHours: jest.fn() }));
+jest.mock('@zivali/api/reports', () => ({ useListMyReportsInfiniteQuery: jest.fn(() => ({ data: undefined })) }));
+jest.mock('@/lib/offline/geofence', () => ({ cacheOwnReports: jest.fn(), cacheQuietHours: jest.fn() }));
 jest.mock('@/lib/offline/sync', () => ({
 	AREA_MAX_KM: 10,
 	setCacheArea: jest.fn(async () => {}),
@@ -47,6 +50,32 @@ test('caches the profile quiet hours for the geofence handler; no profile keeps 
 	session(null); // offline start or signed out (the wipe forgets them on sign-out)
 	await renderHook(() => useOfflineCache());
 	expect(cacheQuietHours).not.toHaveBeenCalled();
+});
+
+test('caches the account own report ids for the geofence handler; anonymous and signed out fetch none', async () => {
+	const page = (...ids: string[]) => ({ items: ids.map((id) => ({ id })), next_cursor: null });
+	const mine = jest.mocked(useListMyReportsInfiniteQuery);
+	mine.mockReturnValue({ data: { pages: [page('rep-1', 'rep-2')], pageParams: [null] } } as never);
+	session(me);
+	const { rerender } = await renderHook(() => useOfflineCache());
+	expect(mine).toHaveBeenLastCalledWith(undefined);
+	expect(cacheOwnReports).toHaveBeenCalledWith(['rep-1', 'rep-2']);
+
+	// A refetch with the same reports writes nothing; none left is an empty list.
+	await rerender({});
+	expect(cacheOwnReports).toHaveBeenCalledTimes(1);
+	mine.mockReturnValue({ data: { pages: [page()], pageParams: [null] } } as never);
+	await rerender({});
+	expect(cacheOwnReports).toHaveBeenLastCalledWith([]);
+
+	mine.mockReturnValue({ data: undefined } as never);
+	jest.mocked(cacheOwnReports).mockClear();
+	for (const value of [anonymousMe, null]) {
+		session(value);
+		await renderHook(() => useOfflineCache());
+		expect(mine).toHaveBeenLastCalledWith(skipToken);
+	}
+	expect(cacheOwnReports).not.toHaveBeenCalled();
 });
 
 test('unsubscribes on unmount', async () => {

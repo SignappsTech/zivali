@@ -103,6 +103,15 @@ afterAll(async () => {
 	await prisma.profiles.deleteMany({ where: { id: { in: users } } });
 });
 
+const publishJobs = async (report_id: string) =>
+	Number(
+		(
+			await prisma.$queryRaw<
+				{ n: bigint }[]
+			>`select count(*) n from pgboss.job where name = 'photo.publish' and data->>'report_id' = ${report_id}`
+		)[0]!.n
+	);
+
 describe('submission guard (C7)', () => {
 	it('refuses the sixth anonymous report within an hour from one device (RATE_LIMITED, Retry-After)', async () => {
 		const finder = await anon();
@@ -249,6 +258,44 @@ describe('submission guard (C7)', () => {
 				expect(
 					(await prisma.moderation_flags.findFirstOrThrow({ where: { target_id: res.body.id } })).details
 				).toEqual({ reasons: ['photo_match'] });
+		}
+	});
+
+	it('PATCH photo_ids holds a visible anonymous report whose new photo matches a held or removed report, photo stays private', async () => {
+		const other = await person();
+		for (const state of ['held', 'removed'] as const) {
+			const sha = randomBytes(32).toString('hex');
+			const earlier = await ReportsDomain.insertReport(
+				{ type: 'found', species: 'dog', location: LJ, event_at: new Date(), moderation_state: state },
+				userCtx({
+					user_id: other.id,
+					role: 'USER',
+					is_anonymous: false,
+					aal: 'aal1',
+					email_verified: true,
+					locale: 'sl',
+				})
+			);
+			await photo(other.id, sha, earlier.id);
+			const finder = await anon();
+			const created = await post(
+				finder,
+				sighted({ type: 'found', species: 'dog', photo_ids: [await photo(finder.id)] })
+			);
+			expect(created.body.moderation_state).toBe('visible');
+			const before = await publishJobs(created.body.id);
+			const fresh = await photo(finder.id, sha);
+			const res = await request(app)
+				.patch(`/v1/reports/${created.body.short_code}`)
+				.set('Authorization', `Bearer ${finder.token}`)
+				.send({ photo_ids: [fresh] });
+			expect(res.status).toBe(200);
+			expect(res.body.moderation_state).toBe('held');
+			expect(
+				(await prisma.moderation_flags.findFirstOrThrow({ where: { target_id: created.body.id } })).details
+			).toEqual({ reasons: ['photo_match'] });
+			expect((await prisma.photos.findUniqueOrThrow({ where: { id: fresh } })).status).not.toBe('published');
+			expect(await publishJobs(created.body.id)).toBe(before);
 		}
 	});
 

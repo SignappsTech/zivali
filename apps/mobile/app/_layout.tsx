@@ -26,7 +26,9 @@ import { Toaster } from '@/components/ui/sonner';
 import { setupAnalytics, useScreenTracking } from '@/lib/analytics';
 import { ensureSession } from '@/lib/anonymous';
 import { startOutbox } from '@/lib/offline/outbox';
+import { useOfflineCache } from '@/lib/offline/use-offline-cache';
 import { ProfileI18n } from '@/lib/profile-i18n';
+import { usePushNotifications } from '@/lib/push';
 import { apiClient, store } from '@/lib/store';
 import { NAV_THEME } from '@/lib/theme';
 
@@ -67,6 +69,8 @@ export default function RootLayout() {
 							<Stack screenOptions={{ headerShown: false }} />
 							<ConsentSheet />
 							<CaptchaSheet />
+							<PushNotifications />
+							<OfflineCache />
 							<AppToaster />
 							<PortalHost />
 						</BottomSheetModalProvider>
@@ -79,6 +83,21 @@ export default function RootLayout() {
 
 // 12 px above the bottom navigation (68 px plus the safe area, which the Toaster adds itself).
 const TOAST_OFFSET = 80;
+
+/** Push token per session and the tap on a push or proximity alert (C10); after the Stack, so taps can navigate. */
+function PushNotifications() {
+	usePushNotifications();
+	return null;
+}
+
+/**
+ * The C17 cache triggers and the home area from the profile (null signed out), under the Provider for the session.
+ * The background task itself is defined in lib/offline/sync.ts and imported by index.ts, before the router, for a headless launch.
+ */
+function OfflineCache() {
+	useOfflineCache();
+	return null;
+}
 
 function AppToaster() {
 	const t = useTranslations('common');

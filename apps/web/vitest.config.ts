@@ -1,6 +1,8 @@
 import { configDefaults, defineConfig } from 'vitest/config';
 
 export default defineConfig({
+	// `@/` and @zivali/* from this checkout's packages (tsconfig.json paths), not the shared node_modules links. The
+	// fs module cache (node_modules/.vitest-cache) keys on this file, not on tsconfig.json: touch it when paths change.
 	resolve: { tsconfigPaths: true },
 	test: {
 		environment: 'jsdom',

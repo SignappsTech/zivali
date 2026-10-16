@@ -22,22 +22,39 @@ afterEach(() => {
 });
 
 describe('live-key guard', () => {
-	it('refuses sk_live_, rk_live_ and pk_live_ keys with any provider, in any environment', () => {
+	it('refuses sk_live_, rk_live_ and pk_live_ keys with any provider outside APP_ENV=production', () => {
 		for (const key of ['sk_live_abc', 'rk_live_abc', 'pk_live_abc']) {
 			for (const PAYMENTS_PROVIDER of [undefined, 'mock', 'stripe', 'off'] as const) {
 				for (const NODE_ENV of ['development', 'test', 'production'] as const) {
-					expect(() =>
-						createPayments({
-							...blank,
-							NODE_ENV,
-							PAYMENTS_PROVIDER,
-							STRIPE_SECRET_KEY: key,
-							STRIPE_WEBHOOK_SECRET: 'whsec_x',
-						})
-					).toThrow(/live keys are refused/);
+					for (const APP_ENV of ['local', 'staging'] as const) {
+						expect(() =>
+							createPayments({
+								...blank,
+								NODE_ENV,
+								APP_ENV,
+								PAYMENTS_PROVIDER,
+								STRIPE_SECRET_KEY: key,
+								STRIPE_WEBHOOK_SECRET: 'whsec_x',
+							})
+						).toThrow(/live keys are refused/);
+					}
 				}
 			}
 		}
+	});
+
+	it('boots a live key in APP_ENV=production as a live adapter (checkouts then wait for the live gate)', () => {
+		const live = createPayments({
+			...blank,
+			NODE_ENV: 'production',
+			APP_ENV: 'production',
+			PAYMENTS_PROVIDER: 'stripe',
+			STRIPE_SECRET_KEY: 'sk_live_abc',
+			STRIPE_WEBHOOK_SECRET: 'whsec_x',
+		});
+		expect(live).toMatchObject({ provider: 'stripe', live: true });
+		expect(stripePayments('sk_test_x', 'whsec_x').live).toBe(false);
+		expect(mockPayments('http://localhost:3000', 's').live).toBe(false);
 	});
 
 	it('accepts test keys; without them outside production the mock provider runs', () => {
@@ -196,6 +213,14 @@ describe('stripe createCheckout', () => {
 			new Response(JSON.stringify({ id: 'cs_live_1', url: 'https://x', livemode: true }), { status: 200 })
 		);
 		await expect(adapter.createCheckout(input)).rejects.toMatchObject({ code: 'LIVE_MODE_FORBIDDEN' });
+		// A live key's sessions are live (the domain's live gate decides before the call).
+		vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(
+			new Response(JSON.stringify({ id: 'cs_live_1', url: 'https://x', livemode: true }), { status: 200 })
+		);
+		await expect(stripePayments('sk_live_secret', 'whsec_x').createCheckout(input)).resolves.toEqual({
+			id: 'cs_live_1',
+			url: 'https://x',
+		});
 	});
 
 	it('maps a timeout or network failure to SERVICE_UNAVAILABLE', async () => {

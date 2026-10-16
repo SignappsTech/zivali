@@ -1,11 +1,11 @@
 ---
 id: TASK-30.3
 title: Mobile quick found or sighted report (submits through the outbox)
-status: To Do
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:14'
-updated_date: '2026-10-14 23:37'
+updated_date: '2026-10-16 02:08'
 labels:
   - fe
   - 'est:M'

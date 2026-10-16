@@ -17,6 +17,8 @@ export type AdminAbuseReport = {
 	reporter_id: Uuid;
 	target_type: AbuseTargetType;
 	target_id: Uuid;
+	/** The listing behind the target (itself, or a message's conversation listing); null for profiles. */
+	target_code: string | null;
 	reason: AbuseReason;
 	note: string | null;
 	weight: number;
@@ -35,6 +37,8 @@ export type ModerationFlag = {
 	kind: ModerationFlagKind;
 	target_type: ModerationFlagTargetType;
 	target_id: Uuid;
+	/** Short code of the listing behind the target, as on AdminAbuseReport; null for profiles and pets. */
+	target_code: string | null;
 	details: Record<string, unknown>;
 	created_at: IsoDateTime;
 	resolved_at: IsoDateTime | null;

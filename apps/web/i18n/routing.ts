@@ -24,6 +24,10 @@ export const routing = defineRouting({
 		'/r/[code]/reunited': { sl: '/r/[code]/spet-doma', en: '/r/[code]/reunited' },
 		'/m': '/m',
 		'/my-pets': { sl: '/moje-zivali', en: '/my-pets' },
+		// P8 pet pages (TASK-16.6); `new` before `[id]`, so it matches first.
+		'/my-pets/new': { sl: '/moje-zivali/nova', en: '/my-pets/new' },
+		'/my-pets/[id]': { sl: '/moje-zivali/[id]', en: '/my-pets/[id]' },
+		'/my-pets/[id]/edit': { sl: '/moje-zivali/[id]/uredi', en: '/my-pets/[id]/edit' },
 		'/my-reports': { sl: '/moje-prijave', en: '/my-reports' },
 		'/inbox': { sl: '/nabiralnik', en: '/inbox' },
 		'/inbox/[id]': { sl: '/nabiralnik/[id]', en: '/inbox/[id]' },
@@ -60,6 +64,7 @@ export const routing = defineRouting({
 		'/imprint': { sl: '/impresum', en: '/imprint' },
 		'/accessibility': { sl: '/dostopnost', en: '/accessibility' },
 		'/admin': '/admin',
+		'/admin/abuse-reports': { sl: '/admin/prijave-zlorab', en: '/admin/abuse-reports' },
 		'/admin/audit-log': { sl: '/admin/revizijska-sled', en: '/admin/audit-log' },
 		'/admin/shelters': { sl: '/admin/zavetisca', en: '/admin/shelters' },
 		// P19 sections not built yet ("Kmalu"); after the static admin paths, so those match first (routeTemplate).

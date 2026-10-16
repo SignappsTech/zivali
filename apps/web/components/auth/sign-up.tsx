@@ -14,16 +14,8 @@ import { Input } from '@/components/ui/input';
 import { Link } from '@/i18n/navigation';
 import { MIN_PASSWORD, resendConfirmation, signUp, validEmail } from '@/lib/auth';
 
-import {
-	AuthHeading,
-	AuthNote,
-	PasswordField,
-	ProviderButtons,
-	ResendButton,
-	Spot,
-	useCooldown,
-	useErrorText,
-} from './parts';
+import { AuthHeading, AuthNote, PasswordField, ResendButton, Spot, useCooldown, useErrorText } from './parts';
+import { ProviderButtons } from './provider-buttons';
 import { useCaptcha } from './turnstile';
 
 const inlineLink =

@@ -1,11 +1,11 @@
 ---
 id: TASK-26.5
 title: 'Mobile My reports, owner actions and reunited screen'
-status: To Do
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:14'
-updated_date: '2026-10-14 22:42'
+updated_date: '2026-10-16 02:04'
 labels:
   - fe
   - 'est:M'
@@ -39,7 +39,7 @@ Design: P14 docs/design/pages/P14-reunited.md (mockup docs/design/mockups/P14-re
 Copy: docs/content/pages/P14-reunited.md; docs/content/pages/P9-report-detail.md
 Contracts: C4 (in references); conventions in C1
 Review: tech-lead code review (full mode); run `pnpm verify` before reporting done.
-Branch: agent/task-26.5-lifecycle-mob
+Branch: agent/task-26.5-myreports-mob
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Acceptance Criteria

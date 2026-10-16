@@ -4,3 +4,5 @@
 *.webp binary
 *.pdf binary
 *.gz binary
+# Append-only CHANGE table: agents add rows at the end on main and on branches; keep both sides.
+backlog/changes.md merge=union

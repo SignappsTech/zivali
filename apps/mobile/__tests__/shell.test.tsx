@@ -12,10 +12,8 @@ import en from '@zivali/i18n/dist/en.json';
 import sl from '@zivali/i18n/dist/sl.json';
 import TabsLayout from '@/app/(tabs)/_layout';
 import InboxTab from '@/app/(tabs)/inbox';
-import MapTab from '@/app/(tabs)/index';
 import ProfileTab from '@/app/(tabs)/profile';
 import ReportTab from '@/app/(tabs)/report';
-import SettingsPlaceholder from '@/app/settings/[section]';
 import ConsentSettings from '@/app/settings/consent';
 import SettingsLayout from '@/app/settings/_layout';
 import LanguageSettings from '@/app/settings/language';
@@ -47,6 +45,10 @@ jest.mock('@zivali/api/auth', () => ({ useSession: () => mockSession }));
 const mockSignOutAndWipe = jest.fn();
 jest.mock('@/lib/offline/wipe', () => ({ signOutAndWipe: (options: unknown) => mockSignOutAndWipe(options) }));
 
+// The sign-out deletes the push token first (C10).
+const mockUnregisterPush = jest.fn();
+jest.mock('@/lib/push', () => ({ unregisterPush: () => mockUnregisterPush() }));
+
 const mockSignOutProviders = jest.fn();
 jest.mock('@/lib/auth', () => ({
 	...jest.requireActual('@/lib/auth'),
@@ -57,14 +59,20 @@ const routes = {
 	// The root Stack of app/_layout.tsx, without its fonts and store.
 	_layout: () => <Stack screenOptions={{ headerShown: false }} />,
 	'(tabs)/_layout': TabsLayout,
-	'(tabs)/index': MapTab,
+	// The Map tab needs the store and the map; map-tab.test covers it.
+	'(tabs)/index': () => null,
 	'(tabs)/inbox': InboxTab,
 	'(tabs)/report': ReportTab,
 	'(tabs)/profile': ProfileTab,
 	'settings/_layout': SettingsLayout,
 	'settings/consent': ConsentSettings,
 	'settings/language': LanguageSettings,
-	'settings/[section]': SettingsPlaceholder,
+	'settings/alerts': () => null,
+	'settings/notifications': () => null,
+	'settings/payments': () => null,
+	'pets/index': () => null,
+	'settings/offline': () => null,
+	'settings/reports': () => null,
 	// Stand-ins for the flow and auth screens that later stories add.
 	'report/lost': () => null,
 	'report/found': () => null,
@@ -96,6 +104,7 @@ beforeEach(() => {
 	mockStorage.set('locale', 'sl');
 	mockSession = { session: null, me: null, isAnonymous: false, loading: false };
 	mockSignOutAndWipe.mockReset().mockResolvedValue(true);
+	mockSignOutProviders.mockClear();
 });
 
 describe('bottom navigation', () => {
@@ -141,7 +150,7 @@ describe('signed-out tabs', () => {
 		expect(result.getPathname()).toBe('/auth/sign-in');
 	});
 
-	test('Profile has sign-in, the language sheet and cookie settings, which work signed out', async () => {
+	test('Profile has sign-in, the language sheet, offline data and cookie settings, which work signed out', async () => {
 		const result = await shell('/profile');
 
 		expect(screen.getByRole('heading', { name: sl.profile.signed_out_title })).toBeOnTheScreen();
@@ -154,6 +163,10 @@ describe('signed-out tabs', () => {
 		expect(screen.getByRole('heading', { name: en.profile.signed_out_title })).toBeOnTheScreen();
 		expect(mockStorage.get('locale')).toBe('en');
 
+		// The report cache serves the Map tab signed out too (offline-settings.test.tsx).
+		await fireEvent.press(screen.getByRole('button', { name: en.profile.row_offline }));
+		expect(result.getPathname()).toBe('/settings/offline');
+		await act(() => router.back());
 		await fireEvent.press(screen.getByRole('button', { name: en.profile.row_cookie_settings }));
 		expect(result.getPathname()).toBe('/settings/consent');
 		expect(screen.getByText(en.consent.necessary_locked)).toBeOnTheScreen();
@@ -165,25 +178,41 @@ describe('signed in', () => {
 		mockSession = { session: {}, me: null, isAnonymous: false, loading: false };
 	});
 
+	test('shows the same three tabs and the Prijavi action signed in (TASK-12 AC#1)', async () => {
+		await shell();
+
+		expect(screen.getAllByRole('tab')).toHaveLength(3);
+		for (const name of [sl.nav.tab_map, sl.nav.tab_inbox, sl.nav.tab_profile]) {
+			expect(screen.getByRole('tab', { name })).toBeOnTheScreen();
+		}
+		expect(screen.getByRole('button', { name: sl.nav.tab_report_a11y })).toBeOnTheScreen();
+	});
+
 	test('Profile leads to the settings stack, and back returns to Profile', async () => {
 		const result = await shell();
 		await fireEvent.press(screen.getByRole('tab', { name: sl.nav.tab_profile }));
 
 		expect(screen.getByRole('heading', { name: sl.profile.title })).toBeOnTheScreen();
 		for (const [name, path] of [
+			[sl.profile.row_reports, '/settings/reports'],
 			[sl.profile.row_alerts, '/settings/alerts'],
 			[sl.alerts.channels_title, '/settings/notifications'],
-			[sl.profile.row_payments, '/settings/payments'],
-		]) {
+			[sl.profile.row_offline, '/settings/offline'],
+		] as const) {
 			await fireEvent.press(screen.getByRole('button', { name }));
 			expect(result.getPathname()).toBe(path);
-			expect(screen.getByText(sl.common.empty_title)).toBeOnTheScreen();
 			// The settings stack sits above the tabs, so the bottom navigation is gone until back.
 			expect(screen.queryByRole('tab')).toBeNull();
 			await act(() => router.back());
 			expect(screen.getByRole('tab', { name: sl.nav.tab_profile, selected: true })).toBeOnTheScreen();
 			expect(result.getPathname()).toBe('/profile');
 		}
+		// Plačila and Moje živali are their own screens (payments.test.tsx, pets.test.tsx).
+		await fireEvent.press(screen.getByRole('button', { name: sl.profile.row_payments }));
+		expect(result.getPathname()).toBe('/settings/payments');
+		await act(() => router.back());
+		await fireEvent.press(screen.getByRole('button', { name: sl.pets.title }));
+		expect(result.getPathname()).toBe('/pets');
 	});
 
 	test('Profile shows the account header; an unconfirmed address can get a new link', async () => {
@@ -215,8 +244,31 @@ describe('signed in', () => {
 		const buttons = screen.getAllByRole('button', { name: sl.profile.sign_out_confirm });
 		await fireEvent.press(buttons[buttons.length - 1]);
 
-		expect(mockSignOutAndWipe).toHaveBeenCalledWith(expect.objectContaining({ removeManageLinks: true }));
+		expect(mockSignOutAndWipe).toHaveBeenCalledWith(
+			expect.objectContaining({ removeManageLinks: true, beforeSignOut: expect.any(Function) })
+		);
 		expect(mockSignOutProviders).toHaveBeenCalled();
+		// The push token is deleted before the session ends (C10).
+		await mockSignOutAndWipe.mock.calls[0][0].beforeSignOut();
+		expect(mockUnregisterPush).toHaveBeenCalled();
+	});
+
+	test('unsent reports: sign-out first offers Send now, Delete or Cancel; Cancel keeps the session', async () => {
+		mockSignOutAndWipe.mockImplementation(
+			({ resolvePending }: { resolvePending: (count: number) => Promise<boolean> }) => resolvePending(2)
+		);
+		await shell('/profile');
+
+		await fireEvent.press(screen.getByRole('button', { name: sl.profile.sign_out }));
+		const buttons = screen.getAllByRole('button', { name: sl.profile.sign_out_confirm });
+		await fireEvent.press(buttons[buttons.length - 1]);
+		expect(await screen.findByRole('heading', { name: '2 prijavi še nista poslani' })).toBeOnTheScreen();
+		expect(screen.getByRole('button', { name: sl.report_found.outbox_send_now })).toBeOnTheScreen();
+		expect(screen.getByRole('button', { name: sl.report_found.outbox_delete })).toBeOnTheScreen();
+
+		await fireEvent.press(screen.getByRole('button', { name: sl.common.cancel }));
+		expect(screen.queryByRole('heading', { name: '2 prijavi še nista poslani' })).toBeNull();
+		expect(mockSignOutProviders).not.toHaveBeenCalled();
 	});
 
 	test('the settings language screen switches the language', async () => {

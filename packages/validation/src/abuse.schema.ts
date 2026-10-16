@@ -1,5 +1,5 @@
 // C11 abuse reports and moderation flags.
-import { IsoDateTime, limit, page, text, Uuid } from './common.schema.ts';
+import { IsoDateTime, limit, page, ShortCode, text, Uuid } from './common.schema.ts';
 import { AbuseReason, AbuseStatus, AbuseTargetType, ModerationFlagKind, ModerationFlagTargetType } from './enums.ts';
 import { z } from './zod.ts';
 
@@ -14,6 +14,8 @@ export const AdminAbuseReport = z
 		reporter_id: Uuid,
 		target_type: AbuseTargetType,
 		target_id: Uuid,
+		// The listing behind the target (itself, or a message's conversation listing); null for profiles.
+		target_code: ShortCode.nullable(),
 		reason: AbuseReason,
 		note: z.string().nullable(),
 		weight: z.number(),
@@ -34,6 +36,8 @@ export const ModerationFlag = z
 		kind: ModerationFlagKind,
 		target_type: ModerationFlagTargetType,
 		target_id: Uuid,
+		// The listing behind the target, as on AdminAbuseReport; null for profiles and pets.
+		target_code: ShortCode.nullable(),
 		details: z.record(z.string(), z.unknown()),
 		created_at: IsoDateTime,
 		resolved_at: IsoDateTime.nullable(),

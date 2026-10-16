@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { hasLocale, NextIntlClientProvider } from 'next-intl';
-import { getTranslations } from 'next-intl/server';
-import { Atkinson_Hyperlegible_Next, Bricolage_Grotesque } from 'next/font/google';
+import { getMessages, getTranslations } from 'next-intl/server';
+import localFont from 'next/font/local';
 import { cookies, headers } from 'next/headers';
 import { notFound } from 'next/navigation';
 
@@ -15,16 +15,35 @@ import { getViewer } from '@/lib/viewer';
 
 import '../globals.css';
 
-// The variables override the font stacks from tokens.css (system §4). Preloaded (checked in TASK-11.2: without the
-// preload the fonts start after the scripts and the simulated FCP doubles, LCP stays the same).
-const display = Bricolage_Grotesque({
-	subsets: ['latin', 'latin-ext'],
-	axes: ['opsz'],
+// System §4 v0.14: three static Latin subsets, self-hosted (app/fonts/README.md, 47 KB in all). The variables override
+// the font stacks from tokens.css. Preloaded (next/font's default; checked in TASK-11.2: without the preload the fonts
+// start after the scripts and the simulated FCP doubles). No 500, 600 or 800 files: the browser's font matching takes
+// font-medium to 400 and font-semibold and font-extrabold to 700, and every Bricolage weight to 700.
+// next/font takes literal options only, so both calls spell them out.
+const display = localFont({
+	src: '../fonts/bricolage-grotesque-700.woff2',
+	weight: '700',
 	variable: '--font-display',
 	display: 'swap',
+	adjustFontFallback: 'Arial',
+	fallback: ['ui-sans-serif', 'system-ui', 'sans-serif'],
 });
-// next/font has no metrics for this family yet, so the build warns that it cannot size a fallback font.
-const sans = Atkinson_Hyperlegible_Next({ subsets: ['latin', 'latin-ext'], variable: '--font-sans', display: 'swap' });
+const sans = localFont({
+	src: [
+		{ path: '../fonts/atkinson-hyperlegible-next-400.woff2', weight: '400' },
+		{ path: '../fonts/atkinson-hyperlegible-next-700.woff2', weight: '700' },
+	],
+	variable: '--font-sans',
+	display: 'swap',
+	adjustFontFallback: 'Arial',
+	fallback: ['ui-sans-serif', 'system-ui', 'sans-serif'],
+});
+
+// The namespaces that client components on every public page read; only these go into every page's HTML, the rest of
+// the catalogue (emails, notifications, page copy, admin, ...) stays on the server (TASK-90.5). The (app), (admin) and
+// dev layouts and the header's inbox dot pass their own; a public page adds its own with PageMessages (sign-in, sign-up,
+// reset-password and /m: auth; /m: report_found, lifecycle; /zavetisca: shelters).
+const CLIENT_NAMESPACES = ['common', 'consent', 'errors', 'nav'] as const;
 
 // Light and dark follow the OS before the first paint (system §12; the manual override comes with the profile).
 const themeScript = `(()=>{const m=matchMedia('(prefers-color-scheme: dark)');const s=()=>document.documentElement.classList.toggle('dark',m.matches);s();m.addEventListener('change',s)})()`;
@@ -52,6 +71,8 @@ export default async function LocaleLayout({ children, params }: LayoutProps<'/[
 	const viewer = await getViewer();
 	// P17 banner: decided here from the cookie, so its first view paints with the page instead of becoming a late LCP.
 	const consent = parseConsent((await cookies()).get(CONSENT_KEY)?.value ?? null);
+	const messages = await getMessages();
+	const clientMessages = Object.fromEntries(CLIENT_NAMESPACES.map((ns) => [ns, messages[ns]]));
 
 	return (
 		<html lang={locale} suppressHydrationWarning>
@@ -59,7 +80,7 @@ export default async function LocaleLayout({ children, params }: LayoutProps<'/[
 				<script nonce={nonce} dangerouslySetInnerHTML={{ __html: themeScript }} />
 			</head>
 			<body className={`${display.variable} ${sans.variable}`}>
-				<NextIntlClientProvider>
+				<NextIntlClientProvider messages={clientMessages}>
 					<Providers signedIn={viewer !== null} consent={{ prompt: !isCurrent(consent), stored: consent }}>
 						<SiteHeader viewer={viewer} />
 						{children}

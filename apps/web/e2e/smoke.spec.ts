@@ -56,6 +56,17 @@ test('dark mode follows the OS', async ({ page }) => {
 	await expect(page.locator('html')).not.toHaveClass(/\bdark\b/);
 });
 
+test('the page preloads its three web font files, 60 KB at most together (system §4)', async ({ page, request }) => {
+	await page.goto('/');
+	const fonts = await page
+		.locator('link[rel="preload"][as="font"]')
+		.evaluateAll((links) => links.map((link) => (link as HTMLLinkElement).href));
+
+	expect(fonts).toHaveLength(3);
+	const bytes = await Promise.all(fonts.map(async (href) => (await (await request.get(href)).body()).length));
+	expect(bytes.reduce((sum, size) => sum + size, 0)).toBeLessThanOrEqual(60_000);
+});
+
 test('/api/health answers', async ({ request }) => {
 	const response = await request.get('/api/health');
 

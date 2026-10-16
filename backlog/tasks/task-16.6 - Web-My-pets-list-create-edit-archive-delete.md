@@ -1,11 +1,11 @@
 ---
 id: TASK-16.6
 title: 'Web My pets: list, create, edit, archive, delete'
-status: To Do
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:13'
-updated_date: '2026-10-14 22:42'
+updated_date: '2026-10-16 00:17'
 labels:
   - fe
   - 'est:M'
@@ -46,4 +46,5 @@ Branch: agent/task-16.6-pets-web
 - [ ] #2 The chip is never shown outside the owner's own pet pages.
 - [ ] #3 A free account adding a third pet sees the Premium option and a note that it can still report that pet lost with inline details (FR-002, free limit 2).
 - [ ] #4 Works in SL and EN; axe 0 violations; Playwright covers create, edit and delete.
+- [ ] #5 From the TASK-16.4 review (PetFields): size is disabled until a species is chosen (no cat sizes shown by default); Escape in the breed combobox stops propagation only while the list is open, so a surrounding dialog doesn't close; a comment notes that the ear-tip 'not sure' choice is UI-only (null is stored).
 <!-- AC:END -->

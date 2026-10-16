@@ -6,7 +6,9 @@ import { AdminAbuseReport, ModerationFlag } from '@zivali/validation';
 
 import type { abuse_reports, moderation_flags } from '../../generated/client.ts';
 
-export function toAdminAbuseReportDto(row: abuse_reports): z.infer<typeof AdminAbuseReport> {
+type WithCode = { target_code: string | null };
+
+export function toAdminAbuseReportDto(row: abuse_reports & WithCode): z.infer<typeof AdminAbuseReport> {
 	return AdminAbuseReport.parse({
 		...row,
 		reason: row.reason.toLowerCase(),
@@ -15,7 +17,7 @@ export function toAdminAbuseReportDto(row: abuse_reports): z.infer<typeof AdminA
 	});
 }
 
-export function toModerationFlagDto(row: moderation_flags): z.infer<typeof ModerationFlag> {
+export function toModerationFlagDto(row: moderation_flags & WithCode): z.infer<typeof ModerationFlag> {
 	return ModerationFlag.parse({
 		...row,
 		details: row.details ?? {},

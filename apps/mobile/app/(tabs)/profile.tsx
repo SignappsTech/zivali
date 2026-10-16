@@ -2,8 +2,11 @@ import { useRouter } from 'expo-router';
 import { BellIcon } from 'phosphor-react-native/src/icons/Bell';
 import { BellRingingIcon } from 'phosphor-react-native/src/icons/BellRinging';
 import { CheckIcon } from 'phosphor-react-native/src/icons/Check';
+import { ClipboardTextIcon } from 'phosphor-react-native/src/icons/ClipboardText';
+import { CloudArrowDownIcon } from 'phosphor-react-native/src/icons/CloudArrowDown';
 import { CookieIcon } from 'phosphor-react-native/src/icons/Cookie';
 import { CreditCardIcon } from 'phosphor-react-native/src/icons/CreditCard';
+import { PawPrintIcon } from 'phosphor-react-native/src/icons/PawPrint';
 import { QuestionIcon } from 'phosphor-react-native/src/icons/Question';
 import { SignOutIcon } from 'phosphor-react-native/src/icons/SignOut';
 import { UserCircleIcon } from 'phosphor-react-native/src/icons/UserCircle';
@@ -15,6 +18,7 @@ import { useLocale, useTranslations } from 'use-intl';
 import { useSession } from '@zivali/api/auth';
 import type { Me } from '@zivali/types';
 import { useErrorText } from '@/components/auth/parts';
+import { OutboxList, usePendingPrompt } from '@/components/outbox/queue';
 import { LanguageRow } from '@/components/shell/language';
 import { MenuRow, SignInButtons } from '@/components/shell/parts';
 import {
@@ -36,42 +40,49 @@ import { Text } from '@/components/ui/text';
 import { resendConfirmation, signOutProviders } from '@/lib/auth';
 import { env } from '@/lib/env';
 import { signOutAndWipe } from '@/lib/offline/wipe';
+import { unregisterPush } from '@/lib/push';
 
-/** "Odjava" and its confirmation; the wipe keeps the manage links unless the user ticks their removal (C17 §Wipe). */
+/**
+ * "Odjava" and its confirmation; the wipe keeps the manage links unless the user ticks their removal, and unsent
+ * reports first get "Send now / Delete / Cancel" (C17 §Wipe).
+ */
 function SignOutRow() {
 	const t = useTranslations();
 	const [removeManageLinks, setRemoveManageLinks] = React.useState(false);
+	const { resolvePending, prompt } = usePendingPrompt();
 	const signOut = async () => {
 		try {
-			// TASK-86.2 adds the "Send now / Delete / Cancel" prompt; until then unsent items stay in the outbox.
-			await signOutAndWipe({ resolvePending: async () => true, removeManageLinks });
-			await signOutProviders();
+			if (await signOutAndWipe({ resolvePending, removeManageLinks, beforeSignOut: unregisterPush }))
+				await signOutProviders();
 		} catch {
 			toast.error(t('errors.INTERNAL'));
 		}
 	};
 	return (
-		<AlertDialog>
-			<AlertDialogTrigger asChild>
-				<MenuRow icon={<Icon as={SignOutIcon} size={24} />} title={t('profile.sign_out')} />
-			</AlertDialogTrigger>
-			<AlertDialogContent>
-				<AlertDialogTitle>{t('profile.sign_out_title')}</AlertDialogTitle>
-				<AlertDialogDescription>{t('profile.sign_out_body')}</AlertDialogDescription>
-				<Checkbox
-					className="mt-4"
-					checked={removeManageLinks}
-					onCheckedChange={setRemoveManageLinks}
-					label={t('profile.sign_out_remove_links')}
-				/>
-				<AlertDialogFooter>
-					<AlertDialogAction variant="default" onPress={signOut}>
-						{t('profile.sign_out_confirm')}
-					</AlertDialogAction>
-					<AlertDialogCancel>{t('profile.sign_out_cancel')}</AlertDialogCancel>
-				</AlertDialogFooter>
-			</AlertDialogContent>
-		</AlertDialog>
+		<>
+			{prompt}
+			<AlertDialog>
+				<AlertDialogTrigger asChild>
+					<MenuRow icon={<Icon as={SignOutIcon} size={24} />} title={t('profile.sign_out')} />
+				</AlertDialogTrigger>
+				<AlertDialogContent>
+					<AlertDialogTitle>{t('profile.sign_out_title')}</AlertDialogTitle>
+					<AlertDialogDescription>{t('profile.sign_out_body')}</AlertDialogDescription>
+					<Checkbox
+						className="mt-4"
+						checked={removeManageLinks}
+						onCheckedChange={setRemoveManageLinks}
+						label={t('profile.sign_out_remove_links')}
+					/>
+					<AlertDialogFooter>
+						<AlertDialogAction variant="default" onPress={signOut}>
+							{t('profile.sign_out_confirm')}
+						</AlertDialogAction>
+						<AlertDialogCancel>{t('profile.sign_out_cancel')}</AlertDialogCancel>
+					</AlertDialogFooter>
+				</AlertDialogContent>
+			</AlertDialog>
+		</>
 	);
 }
 
@@ -138,6 +149,14 @@ export default function ProfileTab() {
 			onPress={() => Linking.openURL(`${env.EXPO_PUBLIC_APP_URL}${locale === 'en' ? '/en/safety' : '/varnost'}`)}
 		/>
 	);
+	// The report cache serves the Map tab signed in or not (C17).
+	const offline = (
+		<MenuRow
+			icon={<Icon as={CloudArrowDownIcon} size={24} />}
+			title={t('profile.row_offline')}
+			onPress={() => router.push('/settings/offline')}
+		/>
+	);
 	const cookies = (
 		<MenuRow
 			icon={<Icon as={CookieIcon} size={24} />}
@@ -153,9 +172,21 @@ export default function ProfileTab() {
 					{t(signedIn ? 'profile.title' : 'profile.signed_out_title')}
 				</Text>
 				{signedIn && me ? <AccountHeader me={me} /> : null}
+				{/* Reports sent or waiting on this device (FR-042); signed in, they lead "Moje prijave". */}
+				{signedIn ? null : <OutboxList heading={t('report_found.my_reports')} className="mt-7" />}
 				{signedIn ? (
 					<View className="mt-7 gap-3">
+						<MenuRow
+							icon={<Icon as={PawPrintIcon} size={24} />}
+							title={t('pets.title')}
+							onPress={() => router.push('/pets')}
+						/>
 						<LanguageRow />
+						<MenuRow
+							icon={<Icon as={ClipboardTextIcon} size={24} />}
+							title={t('profile.row_reports')}
+							onPress={() => router.push('/settings/reports')}
+						/>
 						<MenuRow
 							icon={<Icon as={BellRingingIcon} size={24} />}
 							title={t('profile.row_alerts')}
@@ -176,6 +207,7 @@ export default function ProfileTab() {
 							title={t('profile.nav_account')}
 							onPress={() => router.push('/settings/account')}
 						/>
+						{offline}
 						{cookies}
 						{help}
 						<SignOutRow />
@@ -190,6 +222,7 @@ export default function ProfileTab() {
 						/>
 						<View className="mt-10 gap-3">
 							<LanguageRow />
+							{offline}
 							{cookies}
 							{help}
 						</View>

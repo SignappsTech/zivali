@@ -1,0 +1,15 @@
+{
+	"amount_group": "Contribution amount",
+	"pay_disabled_help": "Choose an amount first.",
+	"test_note": "Test payment: no money is taken from your card.",
+	"contribution_row": "Help keep Najdimo free",
+	"contribution_body": "Reporting, alerts and matching are free and will stay that way. If you like, a small contribution helps cover the costs.",
+	"contribution_2": "€2",
+	"contribution_3": "€3",
+	"contribution_5": "€5",
+	"contribution_pay": "Contribute {amount}",
+	"contribution_hide": "Hide",
+	"contribution_expand_a11y": "Show the contribution option",
+	"contribution_pay_disabled": "Contribute",
+	"unverified": "We will send the receipt once you confirm your email address."
+}

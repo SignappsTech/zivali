@@ -23,9 +23,12 @@ const appleSignIn = process.env.EXPO_PUBLIC_APPLE_SIGN_IN === 'true';
 // (local dev builds): no associated domains and no https intent filter; the zivali:// scheme still works. The scheme is
 // the dev and fallback path; no exp:// redirects. Verification files: apps/web /.well-known (APPLE_TEAM_ID, ANDROID_CERT_SHA256).
 const appHost = process.env.EXPO_PUBLIC_APP_URL ? new URL(process.env.EXPO_PUBLIC_APP_URL).host : undefined;
+// Android cannot exclude paths, so listings are claimed by pattern: a code is 8 characters (ShortCode), each `.` one of
+// them. The listing, its matches and reunited pages open in the app; the poster PDF and OG image stay in the browser.
+const code = '.'.repeat(8);
 const linkPaths = [
-	{ pathPrefix: '/r/' },
-	{ pathPrefix: '/en/r/' },
+	...['', '/ujemanja', '/spet-doma'].map((page) => ({ pathPattern: `/r/${code}${page}` })),
+	...['', '/matches', '/reunited'].map((page) => ({ pathPattern: `/en/r/${code}${page}` })),
 	{ path: '/m' },
 	{ path: '/en/m' },
 	{ pathPrefix: '/payments/' },
@@ -64,7 +67,8 @@ const config: ExpoConfig = {
 			: undefined,
 	},
 	plugins: [
-		'expo-router',
+		// No generated /_sitemap screen (debug view); routes without a screen get app/+not-found.tsx.
+		['expo-router', { sitemap: false }],
 		'expo-dev-client',
 		// Native Firebase needs both Google config files; without them the build skips it and analytics stays on the mock.
 		...(googleServicesFile && googleServiceInfoPlist
@@ -92,6 +96,8 @@ const config: ExpoConfig = {
 				isAndroidBackgroundLocationEnabled: true,
 			},
 		],
+		// MapLibre Native for MapView (components/map); it never shows or reads the device location itself.
+		'@maplibre/maplibre-react-native',
 		[
 			'expo-splash-screen',
 			{

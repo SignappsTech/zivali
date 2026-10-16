@@ -9,6 +9,7 @@ import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 import { AdminAbuseReportList, ModerationFlagList } from '@zivali/validation';
 
 import { app } from '../../app.ts';
+import { AbuseDomain } from '../../domains/abuse/index.ts';
 import { reportHiddenVars } from '../../domains/abuse/abuse.notify.ts';
 import { ReportsDomain } from '../../domains/reports/index.ts';
 import { systemCtx, userCtx, type Actor } from '../../lib/ctx.ts';
@@ -168,6 +169,21 @@ describe('POST /v1/abuse-reports', () => {
 		expect([res.status, res.body.duplicate]).toEqual([201, false]);
 	});
 
+	it('refuses reports on your own listing (any manager of it) or your own profile (FORBIDDEN), storing nothing', async () => {
+		const target = await listing(owner);
+		const finder = await user();
+		await prisma.report_managers.create({ data: { report_id: target.id, user_id: finder.id, role: 'finder' } });
+		for (const [who, body] of [
+			[owner, onListing(target.id)],
+			[finder, onListing(target.id)],
+			[reporter, { target_type: 'profile', target_id: reporter.id, reason: 'spam' }],
+		] as const) {
+			const res = await report(who, body);
+			expect([res.status, res.body.error.code]).toEqual([403, 'FORBIDDEN']);
+		}
+		expect(await prisma.abuse_reports.count({ where: { target_id: { in: [target.id, reporter.id] } } })).toBe(0);
+	});
+
 	it('limits each user to 10 reports per hour (from any IP)', async () => {
 		const targets = await Promise.all(Array.from({ length: 11 }, () => listing(owner)));
 		for (const target of targets.slice(0, 10))
@@ -221,6 +237,48 @@ describe('auto-hide at abuse.auto_hide_threshold (3)', () => {
 		expect((await report(reporter, onListing(target.id))).status).toBe(201);
 		expect(await prisma.moderation_flags.count({ where: { target_id: target.id } })).toBe(1);
 		expect(await jobs('notify.send', target.id)).toHaveLength(1);
+	});
+
+	it('restoring the listing dismisses its open reports and resolves the flag: the next report does not re-hide it', async () => {
+		const target = await listing(owner);
+		const reporters = await Promise.all([user(), user(), user(), user()]);
+		for (const who of reporters.slice(0, 3)) expect((await report(who, onListing(target.id))).status).toBe(201);
+		expect(await moderationState(target.id)).toBe('hidden');
+		const mod = await user({ role: 'MODERATOR', aal: 'aal2' });
+
+		expect(
+			await AbuseDomain.restoreReport({ id: target.id, note: 'Checked, genuine' }, userCtx(mod.actor))
+		).toEqual({ dismissed: 3 });
+		expect(await moderationState(target.id)).toBe('visible');
+		const statuses = await prisma.abuse_reports.findMany({
+			where: { target_id: target.id },
+			select: { status: true },
+		});
+		expect(statuses.map((row) => row.status)).toEqual(['dismissed', 'dismissed', 'dismissed']);
+		const [flag] = await prisma.moderation_flags.findMany({ where: { target_id: target.id } });
+		expect(flag!.resolved_at).toBeInstanceOf(Date);
+		expect(await jobs('photo.publish', target.id)).toHaveLength(2);
+		expect(
+			await prisma.audit_log.findFirst({
+				where: { actor_id: mod.id, action: 'report.restore' },
+				select: { target_type: true, target_id: true, diff: true },
+			})
+		).toEqual({
+			target_type: 'report',
+			target_id: target.id,
+			diff: { from: 'hidden', to: 'visible', dismissed: 3, note: 'Checked, genuine' },
+		});
+
+		// The weight starts again from 0: one more report keeps the listing visible.
+		expect((await report(reporters[3]!, onListing(target.id))).status).toBe(201);
+		expect(await moderationState(target.id)).toBe('visible');
+
+		await expect(AbuseDomain.restoreReport({ id: target.id }, userCtx(mod.actor))).rejects.toMatchObject({
+			code: 'CONFLICT',
+		});
+		await expect(AbuseDomain.restoreReport({ id: target.id }, userCtx(owner.actor))).rejects.toMatchObject({
+			code: 'FORBIDDEN',
+		});
 	});
 
 	it('report_hidden variables: code and type for a manager while hidden, nothing otherwise', async () => {
@@ -287,6 +345,7 @@ describe('GET /v1/admin/abuse-reports and /v1/admin/moderation-flags', () => {
 			reporter_id: r1.id,
 			target_type: 'report',
 			target_id: target.id,
+			target_code: target.short_code,
 			reason: 'scam',
 			note: 'Fake photos',
 			weight: 1,
@@ -315,10 +374,38 @@ describe('GET /v1/admin/abuse-reports and /v1/admin/moderation-flags', () => {
 			kind: 'auto_hidden',
 			target_type: 'report',
 			target_id: target.id,
+			target_code: target.short_code,
 			details: { weight: 3, threshold: 3 },
 			created_at: expect.any(String),
 			resolved_at: null,
 		});
+
+		// A message links to the listing its conversation is about; a profile to nothing.
+		const conversation = await prisma.conversations.create({
+			data: {
+				about_report_id: target.id,
+				participants: {
+					create: [
+						{ user_id: owner.id, role: 'owner' },
+						{ user_id: r1.id, role: 'contact' },
+					],
+				},
+				messages: { create: { sender_id: owner.id, kind: 'text', body: 'Pay first' } },
+			},
+			include: { messages: true },
+		});
+		await report(r1, { target_type: 'message', target_id: conversation.messages[0]!.id, reason: 'scam' });
+		await report(r1, { target_type: 'profile', target_id: owner.id, reason: 'spam' });
+		const codes = async (target_type: string) => {
+			const res = await request(app)
+				.get(`/v1/admin/abuse-reports?target_type=${target_type}&limit=50`)
+				.set('Authorization', mod.auth);
+			return res.body.items
+				.filter((item: { reporter_id: string }) => item.reporter_id === r1.id)
+				.map((item: { target_code: string | null }) => item.target_code);
+		};
+		expect(await codes('message')).toEqual([target.short_code]);
+		expect(await codes('profile')).toEqual([null]);
 
 		const audit = await prisma.audit_log.findMany({
 			where: { actor_id: { in: [mod.id, admin.id] } },

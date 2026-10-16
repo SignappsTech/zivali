@@ -1,11 +1,11 @@
 ---
 id: TASK-26.2
 title: 'Design: Reunited and lifecycle (P14)'
-status: To Do
+status: Done
 assignee:
   - '@ui-designer'
 created_date: '2026-10-14 21:50'
-updated_date: '2026-10-14 21:51'
+updated_date: '2026-10-15 22:55'
 labels:
   - design
   - 'est:S'
@@ -32,7 +32,7 @@ The reunited screen is the warmest moment in the product and holds two optional 
 
 ## Packet
 Unblocks on: P1 web shell and P2 mobile shell mockups merged (header, footer, tab bar and sheet patterns); P15 support block and P21 ad slot mockups merged; assets/reunited-celebration.png generated
-Branch: design/P14-reunited
+Branch: agent/TASK-26.2-reunite-flow
 
 Unblocked from the image task(s) TASK-26.1 (2026-10-16): the Codex CLI is not installed yet, so use a labelled placeholder of the final size and aspect ratio where the illustration goes; the image task swaps the real art in later.
 <!-- SECTION:DESCRIPTION:END -->

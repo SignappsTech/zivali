@@ -1,9 +1,10 @@
 import type { Metadata } from 'next';
 import type { Locale } from 'next-intl';
-import { getTranslations } from 'next-intl/server';
+import { getMessages, getTranslations } from 'next-intl/server';
 
 import { AuthMain } from '@/components/auth/parts';
 import { ForgotForm, NewPasswordForm } from '@/components/auth/reset';
+import { PageMessages } from '@/components/page-messages';
 import { recoveryEmail } from '@/lib/viewer';
 
 const one = (value: string | string[] | undefined) => (typeof value === 'string' ? value : undefined);
@@ -17,17 +18,20 @@ export async function generateMetadata({ params }: PageProps<'/[locale]/reset-pa
  * P16 forgot password (`/pozabljeno-geslo`, `/en/reset-password`), flow variant, noindex. The reset link's callback
  * brings the user back here with a recovery session: only then, checked on the server, the new-password form shows.
  */
-export default async function ResetPasswordPage({ searchParams }: PageProps<'/[locale]/reset-password'>) {
+export default async function ResetPasswordPage({ params, searchParams }: PageProps<'/[locale]/reset-password'>) {
 	const query = await searchParams;
 	const email = await recoveryEmail();
+	const { auth } = await getMessages({ locale: (await params).locale as Locale });
 
 	return (
 		<AuthMain>
-			{email === null ? (
-				<ForgotForm email={one(query.email)} expired={one(query.link) === 'expired'} />
-			) : (
-				<NewPasswordForm email={email} />
-			)}
+			<PageMessages messages={{ auth }}>
+				{email === null ? (
+					<ForgotForm email={one(query.email)} expired={one(query.link) === 'expired'} />
+				) : (
+					<NewPasswordForm email={email} />
+				)}
+			</PageMessages>
 		</AuthMain>
 	);
 }
