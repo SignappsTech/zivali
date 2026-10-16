@@ -58,6 +58,14 @@ async function load(props: Props) {
 	return { locale, result, place, seo: await reportSeo(locale, report, place) };
 }
 
+/** The P16 gate dialog's strings (gate-dialog.tsx with its provider and resend buttons), not the whole auth copy. */
+const gateCopy = (auth: Record<string, string>) =>
+	Object.fromEntries(
+		Object.entries(auth).filter(
+			([key]) => key.startsWith('gate_') || ['or', 'google', 'apple', 'check_resend_wait'].includes(key)
+		)
+	);
+
 const canonical = (locale: Locale, report: DetailReport) =>
 	absoluteUrl(locale, { pathname: '/r/[code]', params: { code: report.short_code } });
 
@@ -104,12 +112,12 @@ export default async function ReportPage(props: Props) {
 	if ('gone' in result || !seo) return <GonePage />;
 	const { report } = result;
 	const url = canonical(locale, report);
-	const { map, nav, report: copy, abuse, ads, lifecycle, report_found: found } = await getMessages({ locale });
+	const { map, nav, report: copy, abuse, ads, auth, lifecycle, report_found: found } = await getMessages({ locale });
 	const organisation = { '@type': 'Organization', name: 'Najdimo', url: absoluteUrl(locale, '/') };
 
 	return (
 		// Client copy: the gallery's controls, MapView's own strings, slot C's menu and its report abuse dialog, the ad
-		// units and, for managers, the owner actions (P14).
+		// units, for visitors the contact buttons and their P16 gate, and for managers the owner actions (P14).
 		<PageMessages
 			messages={{
 				map,
@@ -123,16 +131,17 @@ export default async function ReportPage(props: Props) {
 					photo_position: copy.photo_position,
 					photo_thumb: copy.photo_thumb,
 					photo_failed: copy.photo_failed,
-					...(report.is_mine && {
-						owner_home: copy.owner_home,
-						owner_edit: copy.owner_edit,
-						owner_close: copy.owner_close,
-					}),
+					...(report.is_mine
+						? { owner_home: copy.owner_home, owner_edit: copy.owner_edit, owner_close: copy.owner_close }
+						: {
+								action_message: copy.action_message,
+								action_mine: copy.action_mine,
+								gate_body: copy.gate_body,
+							}),
 				},
-				...(report.is_mine && {
-					lifecycle,
-					report_found: { expiry_note: found.expiry_note, extend: found.extend },
-				}),
+				...(report.is_mine
+					? { lifecycle, report_found: { expiry_note: found.expiry_note, extend: found.extend } }
+					: { auth: gateCopy(auth) }),
 			}}
 		>
 			<ReportDetail report={report} place={place} />
