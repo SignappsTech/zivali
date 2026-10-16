@@ -116,7 +116,7 @@ Besedilo posodobimo, ko dodamo ali odstranimo zapis ali ponudnika. Datum zadnje 
 
 ## 10. Kontakt
 
-Vprašanja: [naročnik: e-naslov za zasebnost]. Splošno o obdelavi podatkov: [politika zasebnosti](/zasebnost).
+Vprašanja: info@signapps.si. Splošno o obdelavi podatkov: [politika zasebnosti](/zasebnost).
 
 ---
 
@@ -207,7 +207,7 @@ We update this text when we add or remove an item or a provider. The date of the
 
 ## 10. Contact
 
-Questions: [client: privacy contact email]. General information about data processing: [privacy policy](/en/privacy).
+Questions: info@signapps.si. General information about data processing: [privacy policy](/en/privacy).
 
 ---
 

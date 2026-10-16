@@ -43,23 +43,23 @@ Najdimo upravlja družba Signapps.
 
 | Podatek | Vrednost |
 |---|---|
-| Polno ime družbe in pravnoorganizacijska oblika | [naročnik: polno ime družbe in oblika, npr. d.o.o.] |
-| Sedež | [naročnik: naslov sedeža] |
-| Matična številka | [naročnik: matična številka] |
-| Davčna številka / ID za DDV | [naročnik: davčna številka in ID za DDV] |
-| Vpis v register | [naročnik: sodni register ali AJPES, številka vpisa] |
-| Osnovni kapital | [naročnik: znesek osnovnega kapitala, če gre za d.o.o.] |
-| Zastopnik | [naročnik: ime in priimek zastopnika, funkcija] |
+| Polno ime družbe in pravnoorganizacijska oblika | SIGNAPPS, grafična in digitalna agencija, d.o.o. (skrajšano: SIGNAPPS d.o.o.) |
+| Sedež | Kolomban 34B, 6280 Ankaran – Ancarano, Slovenija |
+| Matična številka | 6575536000 |
+| Davčna številka / ID za DDV | SI16967666 (zavezanec za DDV) |
+| Vpis v register | Sodni register pri Okrožnem sodišču v Kopru, vpis z dne 21. 3. 2014 |
+| Osnovni kapital | 7.500,00 EUR |
+| Zastopnik | Primož Božič, direktor; prokuristka: Mateja Urlep |
 
 ## 2. Kontakt
 
-- E-naslov: [naročnik: kontaktni e-naslov]
-- Telefon: [naročnik: telefonska številka]
-- Zasebnost in pravice glede podatkov: [naročnik: e-naslov za zasebnost]
+- E-naslov: info@signapps.si
+- Telefon: 040 975 210 (+386 40 975 210)
+- Zasebnost in pravice glede podatkov: info@signapps.si
 
 ## 3. Odgovorna oseba za vsebino
 
-Za vsebino te spletne strani odgovarja [naročnik: ime in priimek odgovorne osebe]. Za vsebino, ki jo objavijo uporabniki, velja [politika zasebnosti](/zasebnost) in [pogoji uporabe](/pogoji-uporabe).
+Za vsebino te spletne strani odgovarja Primož Božič. Za vsebino, ki jo objavijo uporabniki, velja [politika zasebnosti](/zasebnost) in [pogoji uporabe](/pogoji-uporabe).
 
 ## 4. Gostovanje
 
@@ -101,23 +101,23 @@ Najdimo is operated by the company Signapps.
 
 | Item | Value |
 |---|---|
-| Full company name and legal form | [client: full company name and form, for example d.o.o.] |
-| Registered seat | [client: registered address] |
-| Registration number | [client: registration number] |
-| Tax number / VAT ID | [client: tax number and VAT ID] |
-| Register entry | [client: court register or AJPES, entry number] |
-| Share capital | [client: amount of share capital, if a d.o.o.] |
-| Representative | [client: name of the representative, position] |
+| Full company name and legal form | SIGNAPPS, grafična in digitalna agencija, d.o.o. (short: SIGNAPPS d.o.o.) |
+| Registered seat | Kolomban 34B, 6280 Ankaran – Ancarano, Slovenija |
+| Registration number | 6575536000 |
+| Tax number / VAT ID | SI16967666 (VAT payer) |
+| Register entry | Court register at the District Court of Koper, entered on 21 March 2014 |
+| Share capital | EUR 7,500.00 |
+| Representative | Primož Božič, director; procurator (prokurist): Mateja Urlep |
 
 ## 2. Contact
 
-- Email: [client: contact email]
-- Phone: [client: phone number]
-- Privacy and data rights: [client: privacy contact email]
+- Email: info@signapps.si
+- Phone: 040 975 210 (+386 40 975 210)
+- Privacy and data rights: info@signapps.si
 
 ## 3. Person responsible for content
 
-The person responsible for the content of this website is [client: name of the responsible person]. For content posted by users, the [privacy policy](/en/privacy) and the [terms of use](/en/terms) apply.
+The person responsible for the content of this website is Primož Božič. For content posted by users, the [privacy policy](/en/privacy) and the [terms of use](/en/terms) apply.
 
 ## 4. Hosting
 

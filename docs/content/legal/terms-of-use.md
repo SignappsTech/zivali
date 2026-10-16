@@ -45,7 +45,7 @@ Najdimo pomaga, da se izgubljene živali vrnejo domov. Vse, kar živali vrača d
 
 ## 2. Kaj je Najdimo
 
-Najdimo je spletna stran in mobilna aplikacija za objavo in iskanje izgubljenih, najdenih in opaženih psov in mačk v Sloveniji. Storitev upravlja družba Signapps, [naročnik: polno ime družbe], [naročnik: naslov sedeža] (v nadaljevanju „mi“). „Najdimo“ je delovno ime storitve.
+Najdimo je spletna stran in mobilna aplikacija za objavo in iskanje izgubljenih, najdenih in opaženih psov in mačk v Sloveniji. Storitev upravlja družba SIGNAPPS, grafična in digitalna agencija, d.o.o., Kolomban 34B, 6280 Ankaran – Ancarano, Slovenija (v nadaljevanju „mi“). „Najdimo“ je delovno ime storitve.
 
 Naš namen je, da se živali vrnejo domov. Denar le krije delovanje storitve. Brezplačno za vse, za vedno, so:
 
@@ -97,7 +97,7 @@ Točne lokacije, številke čipa, telefonske številke in e-naslova ne objavljaj
 - Žival prevzemite ali predajte na javnem kraju, podnevi in v spremstvu.
 - Kode, ki jo prejmete po SMS, ne povejte nikomur.
 - Pri Najdimo vas v pogovoru nikoli ne prosimo za plačilo.
-- Sumljivo ravnanje prijavite z možnostjo „Prijavi zlorabo“ ali na [naročnik: kontaktni e-naslov].
+- Sumljivo ravnanje prijavite z možnostjo „Prijavi zlorabo“ ali na info@signapps.si.
 
 **Nagrada.** Lastnik lahko v prijavi izgubljene živali navede, da ponuja nagrado, z zneskom ali kratko opombo. Navedba ne sme vsebovati kontaktnih podatkov ali zahteve za plačilo vnaprej; take navedbe odstranimo. To je izjava lastnika, ne naša. Najdimo nagrad ne hrani, ne izplačuje in zanje ne jamči. Lastnik in najditelj se o nagradi dogovorita sama, zunaj Najdimo. Nikoli nikomur ne plačajte ničesar vnaprej: nagrada se izroči šele, ko je žival spet doma.
 
@@ -114,7 +114,7 @@ Prijave in sporočila lahko pregledamo, kadar jih nekdo prijavi kot zlorabo ali 
 - račun začasno omejimo (suspendiramo);
 - račun trajno izključimo (prepoved).
 
-Če tri neodvisne osebe prijavijo isto prijavo zaradi zlorabe, jo samodejno začasno skrijemo, dokler je ne pregleda moderator. Moderator nato odloči, ali jo vrne ali odstrani. Če menite, da je bila odločitev napačna, nam pišite na [naročnik: kontaktni e-naslov]. Odločitev bo ponovno pregledala oseba.
+Če tri neodvisne osebe prijavijo isto prijavo zaradi zlorabe, jo samodejno začasno skrijemo, dokler je ne pregleda moderator. Moderator nato odloči, ali jo vrne ali odstrani. Če menite, da je bila odločitev napačna, nam pišite na info@signapps.si. Odločitev bo ponovno pregledala oseba.
 
 ## 9. Zavetišča, veterinarji in občine
 
@@ -171,13 +171,13 @@ Pogoje lahko spremenimo. Pomembne spremembe vam sporočimo vnaprej v aplikaciji,
 
 ## 17. Veljavno pravo in spori
 
-Veljajo slovenski zakoni. Pravice potrošnika po obveznih predpisih države, kjer prebivate, ostanejo. Za spore smo najprej pripravljeni na pogovor: pišite nam na [naročnik: kontaktni e-naslov].
+Veljajo slovenski zakoni. Pravice potrošnika po obveznih predpisih države, kjer prebivate, ostanejo. Za spore smo najprej pripravljeni na pogovor: pišite nam na info@signapps.si.
 
 Potrošniki lahko spor rešujejo tudi izvensodno pri izvajalcu izvensodnega reševanja potrošniških sporov. [naročnik/pravnik: določiti izvajalca po ZIsRPS, npr. ustrezno telo, in navesti naziv, spletno stran ter ali smo se zavezali k sodelovanju.]
 
 ## 18. Kontakt
 
-Najdimo, upravlja ga družba Signapps, [naročnik: polno ime družbe], [naročnik: naslov sedeža]. E-naslov: [naročnik: kontaktni e-naslov]. Telefon: [naročnik: telefonska številka].
+Najdimo, upravlja ga družba SIGNAPPS, grafična in digitalna agencija, d.o.o., Kolomban 34B, 6280 Ankaran – Ancarano, Slovenija. E-naslov: info@signapps.si. Telefon: 040 975 210 (+386 40 975 210).
 
 ---
 
@@ -199,7 +199,7 @@ Najdimo helps lost animals get home again. Everything that brings animals home i
 
 ## 2. What Najdimo is
 
-Najdimo is a website and mobile app for posting and searching for lost, found and sighted dogs and cats in Slovenia. The service is operated by the company Signapps, [client: full company name], [client: registered address] ("we"). "Najdimo" is the working name of the service.
+Najdimo is a website and mobile app for posting and searching for lost, found and sighted dogs and cats in Slovenia. The service is operated by the company SIGNAPPS, grafična in digitalna agencija, d.o.o., Kolomban 34B, 6280 Ankaran – Ancarano, Slovenija ("we"). "Najdimo" is the working name of the service.
 
 Our purpose is to get animals home. Money only keeps the service running. These are free for everyone, forever:
 
@@ -251,7 +251,7 @@ Do not publish exact locations, chip numbers, phone numbers or email addresses i
 - Collect or hand over an animal in a public place, in daylight, with someone you trust.
 - Never share a code you receive by text message.
 - Najdimo never asks you for a payment in a chat.
-- Report suspicious behaviour with "Report abuse" or at [client: contact email].
+- Report suspicious behaviour with "Report abuse" or at info@signapps.si.
 
 **Reward.** In a report of a lost animal, the owner may state that they offer a reward, with an amount or a short note. The line may not contain contact details or ask for any payment in advance; we remove such lines. This is the owner's statement, not ours. Najdimo does not hold, pay or guarantee rewards. The owner and the finder arrange any reward between themselves, outside Najdimo. Never pay anyone anything in advance: a reward is handed over only once the animal is home.
 
@@ -268,7 +268,7 @@ We may review reports and messages when someone reports them as abuse or when sa
 - suspend the account temporarily;
 - ban the account permanently.
 
-If three independent people report the same listing for abuse, we hide it automatically and temporarily until a moderator reviews it. The moderator then decides whether to restore or remove it. If you think a decision was wrong, write to [client: contact email]. A person will review the decision again.
+If three independent people report the same listing for abuse, we hide it automatically and temporarily until a moderator reviews it. The moderator then decides whether to restore or remove it. If you think a decision was wrong, write to info@signapps.si. A person will review the decision again.
 
 ## 9. Shelters, vets and municipalities
 
@@ -325,13 +325,13 @@ We may change the terms. We tell you about important changes in advance in the a
 
 ## 17. Governing law and disputes
 
-Slovenian law applies. Your consumer rights under mandatory rules of the country where you live are preserved. If there is a dispute, we would first like to talk: write to [client: contact email].
+Slovenian law applies. Your consumer rights under mandatory rules of the country where you live are preserved. If there is a dispute, we would first like to talk: write to info@signapps.si.
 
 Consumers can also resolve a dispute out of court with an out-of-court consumer dispute resolution provider. [client/legal: name the provider under ZIsRPS, with its name and website, and state whether we commit to take part.]
 
 ## 18. Contact
 
-Najdimo, operated by Signapps, [client: full company name], [client: registered address]. Email: [client: contact email]. Phone: [client: phone number].
+Najdimo, operated by SIGNAPPS, grafična in digitalna agencija, d.o.o., Kolomban 34B, 6280 Ankaran – Ancarano, Slovenija. Email: info@signapps.si. Phone: 040 975 210 (+386 40 975 210).
 
 ---
 

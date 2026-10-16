@@ -51,13 +51,13 @@ Najdimo pomaga, da se izgubljene živali vrnejo domov. Vse, kar živali vrača d
 - Google Analytics vklopimo le z vašo privolitvijo. Če jo zavrnete, Googlu ne pošljemo ničesar.
 - Oglase samo preštejemo, in sicer brez piškotkov in brez oznak, ki bi razkrile, kdo ste.
 - Glavna zbirka podatkov je v EU (Frankfurt), v EU so tudi naši strežniki in fotografije. Nekateri ponudniki so v ZDA; zanje veljajo zaščitni ukrepi (poglavje 13).
-- Podatke lahko izvozite, račun pa izbrišete. Pravice uveljavite na [naročnik: e-naslov za zasebnost].
+- Podatke lahko izvozite, račun pa izbrišete. Pravice uveljavite na info@signapps.si.
 
 ## 2. Kdo je upravljavec
 
-Upravljavec vaših osebnih podatkov je družba Signapps, [naročnik: polno ime družbe], [naročnik: naslov sedeža], matična številka [naročnik: matična številka]. V tem besedilu „mi“ pomeni to družbo kot upravljavca storitve Najdimo.
+Upravljavec vaših osebnih podatkov je družba SIGNAPPS, grafična in digitalna agencija, d.o.o., Kolomban 34B, 6280 Ankaran – Ancarano, Slovenija, matična številka 6575536000. V tem besedilu „mi“ pomeni to družbo kot upravljavca storitve Najdimo.
 
-Za vprašanja o zasebnosti in za uveljavljanje pravic nam pišite na [naročnik: e-naslov za zasebnost] ali nas pokličite na [naročnik: telefonska številka].
+Za vprašanja o zasebnosti in za uveljavljanje pravic nam pišite na info@signapps.si ali nas pokličite na 040 975 210 (+386 40 975 210).
 
 Za podatke, ki jih zavetišča in druge organizacije zbirajo zunaj Najdimo (na primer ob sprejemu živali), so odgovorne same.
 
@@ -159,7 +159,7 @@ Ponudnikoma ne pošljemo niti oznak uporabnikov niti metapodatkov EXIF niti poda
 
 ### Samodejno začasno skritje
 
-Če tri neodvisne osebe prijavijo isto prijavo zaradi zlorabe, jo začasno skrijemo, dokler je ne pregleda moderator. Moderator nato odloči, ali jo vrne ali odstrani. Če menite, da je bila prijava skrita po nepotrebnem, nam pišite na [naročnik: kontaktni e-naslov]. Odločitev bo ponovno pregledala oseba.
+Če tri neodvisne osebe prijavijo isto prijavo zaradi zlorabe, jo začasno skrijemo, dokler je ne pregleda moderator. Moderator nato odloči, ali jo vrne ali odstrani. Če menite, da je bila prijava skrita po nepotrebnem, nam pišite na info@signapps.si. Odločitev bo ponovno pregledala oseba.
 
 ## 9. Plačila
 
@@ -278,7 +278,7 @@ Imate pravico do:
 - **ugovora** zoper obdelavo na podlagi zakonitega interesa;
 - **preklica privolitve** kadar koli.
 
-Podatke lahko izvozite (datoteka JSON ali ZIP) in račun izbrišete v nastavitvah računa. Anonimni najditelji lahko prijavo in podatke izbrišejo prek zasebne povezave. Za vse drugo nam pišite na [naročnik: e-naslov za zasebnost].
+Podatke lahko izvozite (datoteka JSON ali ZIP) in račun izbrišete v nastavitvah računa. Anonimni najditelji lahko prijavo in podatke izbrišejo prek zasebne povezave. Za vse drugo nam pišite na info@signapps.si.
 
 Odgovorimo najpozneje v enem mesecu. Pri zapletenih zahtevah lahko ta rok po zakonu podaljšamo; o tem vas obvestimo v prvem mesecu. Uveljavljanje pravic je brezplačno. Če ne moremo potrditi vaše identitete, vas lahko prosimo za dodatne podatke.
 
@@ -299,7 +299,7 @@ Podatke varujemo z organizacijskimi in tehničnimi ukrepi, med drugim:
 
 ## 17. Otroci
 
-Račun lahko ustvarite, če ste dopolnili 15 let. Če izvemo, da je račun ustvarila mlajša oseba, ga izbrišemo. Plačljive možnosti so namenjene polnoletnim osebam. Če ste starš ali skrbnik in menite, da je otrok pri nas vpisal podatke, nam pišite na [naročnik: e-naslov za zasebnost].
+Račun lahko ustvarite, če ste dopolnili 15 let. Če izvemo, da je račun ustvarila mlajša oseba, ga izbrišemo. Plačljive možnosti so namenjene polnoletnim osebam. Če ste starš ali skrbnik in menite, da je otrok pri nas vpisal podatke, nam pišite na info@signapps.si.
 
 ## 18. Spremembe te politike
 
@@ -323,13 +323,13 @@ Najdimo helps lost animals get home again. Everything that brings animals home i
 - We switch on Google Analytics only with your consent. If you decline, we send nothing to Google.
 - We only count ads, without cookies and without any marker that could reveal who you are.
 - The main database is in the EU (Frankfurt), and so are our servers and photos. Some providers are in the United States; safeguards apply (chapter 13).
-- You can export your data and delete your account. Use your rights at [client: privacy contact email].
+- You can export your data and delete your account. Use your rights at info@signapps.si.
 
 ## 2. Who is the controller
 
-The controller of your personal data is the company Signapps, [client: full company name], [client: registered address], registration number [client: registration number]. In this text "we" means that company as the operator of Najdimo.
+The controller of your personal data is the company SIGNAPPS, grafična in digitalna agencija, d.o.o., Kolomban 34B, 6280 Ankaran – Ancarano, Slovenija, registration number 6575536000. In this text "we" means that company as the operator of Najdimo.
 
-For questions about privacy and to use your rights, write to [client: privacy contact email] or call [client: phone number].
+For questions about privacy and to use your rights, write to info@signapps.si or call 040 975 210 (+386 40 975 210).
 
 Shelters and other organisations are responsible for data they collect outside Najdimo (for example when taking in an animal).
 
@@ -431,7 +431,7 @@ We do not send the providers any user identifiers, EXIF metadata or location dat
 
 ### Automatic temporary hiding
 
-If three independent people report the same listing for abuse, we hide it temporarily until a moderator reviews it. The moderator then decides whether to restore or remove it. If you think a report was hidden unnecessarily, write to [client: contact email]. A person will review the decision again.
+If three independent people report the same listing for abuse, we hide it temporarily until a moderator reviews it. The moderator then decides whether to restore or remove it. If you think a report was hidden unnecessarily, write to info@signapps.si. A person will review the decision again.
 
 ## 9. Payments
 
@@ -550,7 +550,7 @@ You have the right to:
 - **object** to processing based on legitimate interest;
 - **withdraw consent** at any time.
 
-You can export your data (a JSON or ZIP file) and delete your account in your account settings. Anonymous finders can delete their report and data through the private link. For anything else, write to [client: privacy contact email].
+You can export your data (a JSON or ZIP file) and delete your account in your account settings. Anonymous finders can delete their report and data through the private link. For anything else, write to info@signapps.si.
 
 We reply within one month at the latest. For complex requests the law allows us to extend this period; we tell you within the first month. Using your rights is free of charge. If we cannot confirm your identity, we may ask you for further information.
 
@@ -571,7 +571,7 @@ If a personal data breach occurs that could put your rights at risk, we will act
 
 ## 17. Children
 
-You can create an account if you are at least 15 years old. If we learn that a younger person created an account, we delete it. Paid options are intended for adults. If you are a parent or guardian and think a child has entered data with us, write to [client: privacy contact email].
+You can create an account if you are at least 15 years old. If we learn that a younger person created an account, we delete it. Paid options are intended for adults. If you are a parent or guardian and think a child has entered data with us, write to info@signapps.si.
 
 ## 18. Changes to this policy
 
