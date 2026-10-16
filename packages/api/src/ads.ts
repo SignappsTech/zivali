@@ -18,6 +18,7 @@ import type {
 	Uuid,
 } from '@zivali/types';
 
+import { pageParams } from './pagination.ts';
 import { api, type QueryError } from './rtk.ts';
 
 export const adsApi = api.enhanceEndpoints({ addTagTypes: ['AdminAd', 'AuditLog'] }).injectEndpoints({
@@ -32,6 +33,12 @@ export const adsApi = api.enhanceEndpoints({ addTagTypes: ['AdminAd', 'AuditLog'
 		}),
 		listAdminAds: build.query<AdminAdList, AdminAdQuery | void>({
 			query: (params) => ({ url: '/v1/admin/ads', params: params ?? undefined }),
+			providesTags: ['AdminAd'],
+		}),
+		/** The same list with "Load more" (P20): every loaded page refetches after a save. */
+		listAdminAdPages: build.infiniteQuery<AdminAdList, Omit<AdminAdQuery, 'cursor'>, string | null>({
+			infiniteQueryOptions: pageParams,
+			query: ({ queryArg, pageParam }) => ({ url: '/v1/admin/ads', params: { ...queryArg, cursor: pageParam } }),
 			providesTags: ['AdminAd'],
 		}),
 		createAd: build.mutation<AdminAd, AdInput>({
@@ -66,6 +73,7 @@ export const {
 	useGetAdForSlotQuery,
 	useRecordAdImpressionMutation,
 	useListAdminAdsQuery,
+	useListAdminAdPagesInfiniteQuery,
 	useCreateAdMutation,
 	useUpdateAdMutation,
 	useRequestAdImageUploadMutation,
