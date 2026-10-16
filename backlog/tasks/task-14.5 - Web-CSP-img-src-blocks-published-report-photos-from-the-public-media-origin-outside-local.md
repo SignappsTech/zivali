@@ -3,10 +3,11 @@ id: TASK-14.5
 title: >-
   Web CSP img-src blocks published report photos from the public media origin
   outside local
-status: To Do
+status: In Progress
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-16 03:36'
+updated_date: '2026-10-16 03:55'
 labels:
   - bug
   - 'est:XS'

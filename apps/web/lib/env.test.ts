@@ -24,6 +24,7 @@ describe('parseEnv', () => {
 			NEXT_PUBLIC_API_URL: 'https://api.example.com',
 			NEXT_PUBLIC_APP_URL: 'https://najdimo.si',
 			R2_UPLOAD_ORIGIN: 'https://acct.eu.r2.cloudflarestorage.com',
+			MEDIA_BASE_URL: 'https://media.najdimo.si',
 		};
 		expect(parseEnv(staging).MOCK_WEBHOOK_SECRET).toBeUndefined();
 	});
@@ -37,6 +38,7 @@ describe('parseEnv', () => {
 				NEXT_PUBLIC_API_URL: 'https://api.example.com',
 				NEXT_PUBLIC_APP_URL: 'https://najdimo.si',
 				R2_UPLOAD_ORIGIN: 'https://acct.eu.r2.cloudflarestorage.com',
+				MEDIA_BASE_URL: 'https://media.najdimo.si',
 			}).APP_ENV
 		).toBe('staging');
 	});
@@ -83,6 +85,7 @@ describe('parseEnv', () => {
 			APP_ENV: 'staging',
 			NEXT_PUBLIC_API_URL: 'https://api.example.com',
 			NEXT_PUBLIC_APP_URL: 'https://najdimo.si',
+			MEDIA_BASE_URL: 'https://media.najdimo.si',
 		};
 		expect(() => parseEnv(staging)).toThrow(/R2_UPLOAD_ORIGIN/);
 		for (const bad of [
@@ -93,6 +96,22 @@ describe('parseEnv', () => {
 			expect(() => parseEnv({ ...staging, R2_UPLOAD_ORIGIN: bad })).toThrow(/R2_UPLOAD_ORIGIN/);
 		expect(parseEnv({ ...staging, R2_UPLOAD_ORIGIN: 'https://acct.eu.r2.cloudflarestorage.com' }).APP_ENV).toBe(
 			'staging'
+		);
+	});
+
+	it('takes the media origin as optional locally and requires https elsewhere', () => {
+		expect(parseEnv(valid).MEDIA_BASE_URL).toBeUndefined();
+		const staging = {
+			...valid,
+			APP_ENV: 'staging',
+			NEXT_PUBLIC_API_URL: 'https://api.example.com',
+			NEXT_PUBLIC_APP_URL: 'https://najdimo.si',
+			R2_UPLOAD_ORIGIN: 'https://acct.eu.r2.cloudflarestorage.com',
+		};
+		expect(() => parseEnv(staging)).toThrow(/MEDIA_BASE_URL/);
+		expect(() => parseEnv({ ...staging, MEDIA_BASE_URL: 'http://media.najdimo.si' })).toThrow(/MEDIA_BASE_URL/);
+		expect(parseEnv({ ...staging, MEDIA_BASE_URL: 'https://media.najdimo.si' }).MEDIA_BASE_URL).toBe(
+			'https://media.najdimo.si'
 		);
 	});
 });
