@@ -154,7 +154,8 @@ test('SL: a new pet in seven steps, keyboard and axe on each, one POST with the 
 	await page.getByRole('radio', { name: 'Pes' }).click();
 	await page.getByRole('button', { name: 'Rjava', exact: true }).click();
 	await page.getByRole('textbox', { name: 'Ime' }).fill('Medo');
-	await page.getByRole('button', { name: 'Naprej' }).click();
+	// Enter in a text field submits the step like Naprej (the picker's buttons are not the form's default button).
+	await page.getByRole('textbox', { name: 'Ime' }).press('Enter');
 
 	await heading(page, 'Kje ste žival nazadnje videli?');
 	await expect(page.locator('[data-slot=map-view]')).toHaveAttribute('data-state', 'ready');

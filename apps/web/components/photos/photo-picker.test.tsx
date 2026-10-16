@@ -318,6 +318,36 @@ describe('PhotoPicker', () => {
 		expect(upload.mock.calls.map((call) => call[1].sha256)).toEqual([photo(1).sha256, photo(2).sha256]);
 	});
 
+	it("leaves Enter in a step form's text field to the form's own submit button", async () => {
+		// Uploaded, failed, uploaded: every row button shows (move down, retry, move up, remove).
+		upload
+			.mockResolvedValueOnce({ photoId: 'photo-1' })
+			.mockRejectedValueOnce(new ApiError('VALIDATION', 'x'))
+			.mockResolvedValueOnce({ photoId: 'photo-3' });
+		const submit = vi.fn((event: React.FormEvent) => event.preventDefault());
+		render(
+			<NextIntlClientProvider locale="sl" messages={sl} timeZone={timeZone}>
+				<form onSubmit={submit}>
+					<PhotoPicker draft="lost" />
+					<input aria-label="Ime" />
+					<button type="submit">Naprej</button>
+				</form>
+			</NextIntlClientProvider>
+		);
+		pick(file(1), file(2), file(3));
+		await screen.findByRole('button', { name: 'Poskusi znova' });
+		await waitFor(() => expect(upload).toHaveBeenCalledTimes(3));
+		expect(screen.getByRole('button', { name: 'Premakni fotografijo 1 nazaj' })).toBeTruthy();
+
+		// Implicit submission (HTML): Enter in a text field clicks the form's default button, its first submit button.
+		const form = screen.getByRole('textbox', { name: 'Ime' }).closest('form')!;
+		const submitters = form.querySelectorAll('button:not([type]), button[type="submit"], input[type="submit"]');
+		expect([...submitters].map((button) => button.textContent)).toEqual(['Naprej']);
+		fireEvent.click(submitters[0]!);
+		expect(submit).toHaveBeenCalledOnce();
+		expect(screen.getAllByRole('listitem')).toHaveLength(3);
+	});
+
 	it('never queues a photo twice, so repeated retries cannot multiply uploads', async () => {
 		const calls = pendingUploads();
 		renderPicker();

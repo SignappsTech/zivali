@@ -169,7 +169,7 @@ export function PhotoPicker({ draft, saved, onChange, onExif, hold, className }:
 									)}
 									<div className={cn('-ml-2.5 flex flex-wrap gap-1', ready ? 'mt-2' : 'mt-1')}>
 										{photo.status === 'failed' ? (
-											<Button variant="text" onClick={() => retry(photo.key)}>
+											<Button type="button" variant="text" onClick={() => retry(photo.key)}>
 												<ArrowClockwiseIcon weight="bold" aria-hidden="true" />
 												{t('retry')}
 											</Button>
@@ -177,6 +177,7 @@ export function PhotoPicker({ draft, saved, onChange, onExif, hold, className }:
 											<>
 												{index > 0 && (
 													<Button
+														type="button"
 														variant="ghost"
 														size="icon"
 														data-move="-1"
@@ -191,6 +192,7 @@ export function PhotoPicker({ draft, saved, onChange, onExif, hold, className }:
 												)}
 												{index < photos.length - 1 && (
 													<Button
+														type="button"
 														variant="ghost"
 														size="icon"
 														data-move="1"
@@ -205,7 +207,10 @@ export function PhotoPicker({ draft, saved, onChange, onExif, hold, className }:
 												)}
 											</>
 										)}
+										{/* type="button" on every row button: the picker sits inside step forms, where an untyped
+										    button would be the default one and take Enter from the form's text fields. */}
 										<Button
+											type="button"
 											variant="ghost"
 											size="icon"
 											aria-label={t('remove', { n })}
