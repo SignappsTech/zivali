@@ -154,3 +154,21 @@ for (const [name, path] of [
 		await expect(page.getByRole('option')).toHaveCount(2);
 		await check();
 	});
+
+test('in a dialog, Escape closes the open results first and the dialog second (AC#4)', async ({ page }) => {
+	await stub(page);
+	await page.goto('/en/dev/location?dialog=1');
+	await page.getByRole('button', { name: 'LocationPicker' }).click();
+	const dialog = page.getByRole('dialog');
+	await expect(dialog.locator('[data-slot=map-view]')).toHaveAttribute('data-state', 'ready');
+	const field = page.getByRole('combobox', { name: 'Search for a place' });
+	await field.focus();
+	await page.keyboard.type('trubarjeva');
+	await expect(page.getByRole('option')).toHaveCount(2);
+	await page.keyboard.press('Escape');
+	await expect(page.getByRole('option')).toHaveCount(0);
+	await expect(dialog).toBeVisible();
+	await expect(field).toBeFocused();
+	await page.keyboard.press('Escape');
+	await expect(dialog).toBeHidden();
+});

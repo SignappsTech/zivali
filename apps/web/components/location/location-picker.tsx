@@ -199,6 +199,11 @@ export function LocationPicker({
 	const [locating, setLocating] = React.useState(false);
 	const [gps, setGps] = React.useState<'ok' | 'denied' | 'failed'>('ok');
 	const denied = permissionDenied || gps === 'denied';
+	// The refusal removes the button that had focus (and the primer returns focus to it): the note takes it.
+	const note = React.useRef<HTMLParagraphElement>(null);
+	React.useEffect(() => {
+		if (gps === 'denied') note.current?.focus();
+	}, [gps]);
 	// A fix can arrive after the picker closed: then nothing is set.
 	const mounted = React.useRef(true);
 	React.useEffect(() => {
@@ -261,10 +266,20 @@ export function LocationPicker({
 		} else if (event.key === 'Enter' && expanded) {
 			event.preventDefault();
 			choosePlace(options[active]!);
-		} else if (event.key === 'Escape') {
-			setOpen(false);
 		}
 	};
+	// Escape closes only the open list: a surrounding Radix dialog listens on the document in the capture phase, so
+	// the key is stopped on window, before it. With the list closed Escape goes on as usual.
+	React.useEffect(() => {
+		if (!popover) return;
+		const onEscape = (event: KeyboardEvent) => {
+			if (event.key !== 'Escape') return;
+			event.stopPropagation();
+			setOpen(false);
+		};
+		window.addEventListener('keydown', onEscape, true);
+		return () => window.removeEventListener('keydown', onEscape, true);
+	}, [popover]);
 
 	// Reverse lookup once the map stops (search results bring their own label); null means outside Slovenia.
 	const lookup = !camera.moving && !pick.label;
@@ -333,7 +348,8 @@ export function LocationPicker({
 						/>
 						<Input
 							ref={field}
-							type="search"
+							type="text"
+							enterKeyHint="search"
 							role="combobox"
 							aria-autocomplete="list"
 							aria-expanded={expanded}
@@ -576,7 +592,7 @@ export function LocationPicker({
 				)}
 			</div>
 			{(denied || gps === 'failed') && (
-				<p role="status" className={cn(noteClass, 'mt-3')}>
+				<p ref={note} tabIndex={-1} role="status" className={cn(noteClass, 'mt-3 outline-none')}>
 					<GpsSlashIcon weight="bold" aria-hidden="true" className="mt-px size-[22px] shrink-0" />
 					<span>{t('gps_denied')}</span>
 				</p>

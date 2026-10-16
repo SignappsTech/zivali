@@ -9,6 +9,7 @@ import { createApiStore } from '@zivali/api/rtk';
 import en from '@zivali/i18n/dist/en.json';
 import sl from '@zivali/i18n/dist/sl.json';
 import { coarsenPoint } from '@zivali/validation/geo';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 
 import type { LatLng } from '../map/map-data';
 import { LocationPicker, type LocationPickerProps } from './location-picker';
@@ -171,6 +172,7 @@ describe('LocationPicker (web)', () => {
 		fireEvent.click(await screen.findByRole('button', { name: en.permissions.not_now }));
 		expect(await screen.findByText(t.gps_denied)).toBeTruthy();
 		expect(screen.queryByRole('button', { name: t.use_my_location })).toBeNull();
+		await vi.waitFor(() => expect(document.activeElement).not.toBe(document.body));
 	});
 
 	it('explains a denied permission in place of the button; search and the pin still work (AC#2)', async () => {
@@ -240,6 +242,34 @@ describe('LocationPicker (web)', () => {
 		expect(await screen.findByText(t.no_results)).toBeTruthy();
 		fireEvent.keyDown(field, { key: 'Escape' });
 		expect(screen.getByText(t.no_results).closest('[hidden]')).not.toBeNull();
+	});
+
+	it('Escape closes only the open results inside a dialog; a second Escape closes the dialog (AC#4)', async () => {
+		const store = createApiStore(
+			createMockApi({ 'POST /v1/geo/search': placeSearch, 'POST /v1/geo/reverse': placeReverse })
+		);
+		render(
+			<Provider store={store}>
+				<NextIntlClientProvider locale="en" messages={en}>
+					<Dialog defaultOpen>
+						<DialogContent closeLabel="Close" aria-describedby={undefined}>
+							<DialogTitle>Picker</DialogTitle>
+							<LocationPicker mode="lost" onChange={vi.fn()} variant="dialog" />
+						</DialogContent>
+					</Dialog>
+				</NextIntlClientProvider>
+			</Provider>
+		);
+		const field = searchField();
+		field.focus();
+		fireEvent.change(field, { target: { value: 'trubarjeva' } });
+		await screen.findAllByRole('option');
+		fireEvent.keyDown(field, { key: 'Escape' });
+		expect(field.getAttribute('aria-expanded')).toBe('false');
+		expect(screen.getByRole('dialog', { name: 'Picker' })).toBeTruthy();
+		expect(document.activeElement).toBe(field);
+		fireEvent.keyDown(field, { key: 'Escape' });
+		await vi.waitFor(() => expect(screen.queryByRole('dialog', { name: 'Picker' })).toBeNull());
 	});
 
 	it('keeps the radius slider and the number in sync, warns from 3 km and sends the radius (AC#1, AC#4)', async () => {
