@@ -152,9 +152,9 @@ test('SL: a new pet in seven steps, keyboard and axe on each, one POST with the 
 	await expect(page.getByText('Izberite vsaj eno barvo.')).toBeVisible();
 	await checkStep(page);
 	await page.getByRole('radio', { name: 'Pes' }).click();
-	await page.getByRole('button', { name: 'Rjava' }).click();
+	await page.getByRole('button', { name: 'Rjava', exact: true }).click();
 	await page.getByRole('textbox', { name: 'Ime' }).fill('Medo');
-	await page.getByRole('textbox', { name: 'Ime' }).press('Enter');
+	await page.getByRole('button', { name: 'Naprej' }).click();
 
 	await heading(page, 'Kje ste žival nazadnje videli?');
 	await expect(page.locator('[data-slot=map-view]')).toHaveAttribute('data-state', 'ready');
