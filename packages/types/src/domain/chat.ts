@@ -25,6 +25,8 @@ export type ConversationSummary = {
 	my_alias_key: AliasKey;
 	other_alias_key: AliasKey;
 	other_display_name?: string;
+	/** The other participant's user id: `participant_id` for block, `target_id` of a profile abuse report. */
+	other_participant_id: Uuid | null;
 	last_message_preview: string | null;
 	unread: number;
 	status: ConversationStatus;

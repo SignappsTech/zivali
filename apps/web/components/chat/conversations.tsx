@@ -5,7 +5,7 @@ import { PawPrintIcon } from '@phosphor-icons/react/dist/ssr/PawPrint';
 import { useTranslations } from 'next-intl';
 
 import { useListConversationsQuery } from '@zivali/api/chat';
-import type { AliasKey, ConversationSummary, Uuid } from '@zivali/types';
+import type { AliasKey, ConversationSummary } from '@zivali/types';
 import { InlineError, ringClass, SpotIllustration } from '@/components/shell/page';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -13,9 +13,6 @@ import { Link } from '@/i18n/navigation';
 import { cn } from '@/lib/utils';
 
 // P12 parts shared by the inbox list, the thread and the manage page (anonymous managers), as on mobile (TASK-21.4).
-
-/** CH-170: block needs the other participant's id, which C9 does not list yet; Block shows once the API sends it. */
-export type Conversation = ConversationSummary & { other_participant_id?: Uuid };
 
 /** Row and header title: C9 has no pet name yet, so the P12 fallback by report type. */
 export function useConversationTitle() {
@@ -67,7 +64,7 @@ export function ConversationRow({
 	conversation,
 	selected = false,
 }: {
-	conversation: Conversation;
+	conversation: ConversationSummary;
 	selected?: boolean;
 }) {
 	const t = useTranslations('chat');

@@ -16,10 +16,9 @@ import { abuseCreated } from '@zivali/api/__fixtures__/abuse';
 import { createMockApi, mockError, type MockRequest, type MockRoutes } from '@zivali/api/mock';
 import { type ApiStore, createApiStore } from '@zivali/api/rtk';
 import sl from '@zivali/i18n/dist/sl.json';
-import type { Message } from '@zivali/types';
+import type { ConversationSummary, Message } from '@zivali/types';
 import InboxTab from '@/app/(tabs)/inbox';
 import ConversationScreen from '@/app/inbox/[id]';
-import type { Conversation } from '@/components/chat/conversations';
 import { I18nProvider } from '@/lib/i18n';
 
 const c = sl.chat;
@@ -95,12 +94,13 @@ jest.mock('@zivali/api/auth', () => ({
 }));
 
 const ID = 'c9a1d2e3-0000-4000-8000-000000000001';
-const conversation = (patch: Partial<Conversation> = {}): Conversation => ({
+const OTHER = '5b1e0c2a-0000-4000-8000-000000000009';
+const conversation = (patch: Partial<ConversationSummary> = {}): ConversationSummary => ({
 	id: ID,
 	about_report: { short_code: 'Hk3vT9qP', type: 'found', species: 'dog', thumb_url: null },
 	my_alias_key: 'owner',
 	other_alias_key: 'finder',
-	other_participant_id: '5b1e0c2a-0000-4000-8000-000000000009',
+	other_participant_id: OTHER,
 	last_message_preview: 'Je pri meni, lahko pridete po 17h.',
 	unread: 2,
 	status: 'active',
@@ -130,7 +130,7 @@ function serve({
 	summary = conversation(),
 	history = HISTORY,
 	routes = {},
-}: { summary?: Conversation; history?: Message[]; routes?: MockRoutes } = {}) {
+}: { summary?: ConversationSummary; history?: Message[]; routes?: MockRoutes } = {}) {
 	let n = 0;
 	const client = createMockApi({
 		'GET /v1/conversations': () => ({ items: [summary], next_cursor: null }),
@@ -466,7 +466,7 @@ describe('conversation (P12 thread)', () => {
 		await waitFor(() => expect(screen.queryByText(c.queued)).toBeNull());
 	});
 
-	test('"Prijavi in blokiraj": the P10 sheet for the latest message, then the block; the message folds', async () => {
+	test('"Prijavi in blokiraj": the P10 sheet for the other person (profile), then the block', async () => {
 		serve();
 		await open();
 		await screen.findByText(HISTORY[1]!.body);
@@ -478,20 +478,20 @@ describe('conversation (P12 thread)', () => {
 		await fireEvent.press(within(menu).getByRole('menuitem', { name: a.entry_block }));
 
 		expect(screen.getByRole('heading', { name: a.title })).toBeOnTheScreen();
+		expect(screen.getByText(a.target_profile)).toBeOnTheScreen();
 		expect(screen.getByRole('switch', { name: a.block_label, checked: true })).toBeOnTheScreen();
 		await fireEvent.press(screen.getByRole('radio', { name: a.reason_scam }));
 		await fireEvent.press(screen.getByRole('button', { name: a.send }));
 
 		expect(await screen.findByText(a.done_blocked)).toBeOnTheScreen();
 		expect(sent('POST', '/v1/abuse-reports')).toEqual([
-			{ target_type: 'message', target_id: 'm3', reason: 'scam' },
+			{ target_type: 'profile', target_id: OTHER, reason: 'scam' },
 		]);
-		expect(sent('POST', `/v1/conversations/${ID}/block`)).toEqual([
-			{ participant_id: conversation().other_participant_id },
-		]);
+		expect(sent('POST', `/v1/conversations/${ID}/block`)).toEqual([{ participant_id: OTHER }]);
 		await fireEvent.press(screen.getByRole('button', { name: a.done_close }));
-		expect(screen.getByText(a.message_folded)).toBeOnTheScreen();
-		expect(screen.queryByText(HISTORY[3]!.body)).toBeNull();
+		// A profile report folds no message.
+		expect(screen.queryByText(a.message_folded)).toBeNull();
+		expect(screen.getByText(HISTORY[3]!.body)).toBeOnTheScreen();
 		expect(screen.getByText(c.blocked_by_you)).toBeOnTheScreen();
 		expect(sendButton()).toBeDisabled();
 	});
@@ -508,7 +508,7 @@ describe('conversation (P12 thread)', () => {
 		await fireEvent.press(screen.getByRole('button', { name: c.block_confirm }));
 
 		expect(await screen.findByText(c.blocked_by_you)).toBeOnTheScreen();
-		expect(sent('POST', `/v1/conversations/${ID}/block`)).toHaveLength(1);
+		expect(sent('POST', `/v1/conversations/${ID}/block`)).toEqual([{ participant_id: OTHER }]);
 		expect(composer().props.editable).toBe(false);
 	});
 
@@ -531,16 +531,24 @@ describe('conversation (P12 thread)', () => {
 		expect(sent('POST', `/v1/conversations/${ID}/block`)).toEqual([]);
 	});
 
-	test('no participant id from the API (CH-170): report stays, block is not offered', async () => {
-		serve({ summary: conversation({ other_participant_id: undefined }) });
+	test('no other participant (null id): report targets their latest message, block is not offered', async () => {
+		serve({ summary: conversation({ other_participant_id: null }) });
 		await open();
 		await screen.findByText(HISTORY[1]!.body);
 
 		await fireEvent.press(screen.getByRole('button', { name: c.menu }));
 		const menu = container('menu', c.menu);
-		expect(within(menu).getByRole('menuitem', { name: c.menu_report })).toBeOnTheScreen();
 		expect(within(menu).queryByRole('menuitem', { name: c.menu_block })).toBeNull();
 		expect(within(menu).queryByRole('menuitem', { name: a.entry_block })).toBeNull();
+		await fireEvent.press(within(menu).getByRole('menuitem', { name: c.menu_report }));
+		expect(screen.getByText(a.target_message)).toBeOnTheScreen();
+		expect(screen.queryByRole('switch')).toBeNull();
+		await fireEvent.press(screen.getByRole('radio', { name: a.reason_scam }));
+		await fireEvent.press(screen.getByRole('button', { name: a.send }));
+		await screen.findByRole('heading', { name: a.done_title });
+		expect(sent('POST', '/v1/abuse-reports')).toEqual([
+			{ target_type: 'message', target_id: 'm3', reason: 'scam' },
+		]);
 	});
 
 	test('"Odpri prijavo" opens the listing', async () => {

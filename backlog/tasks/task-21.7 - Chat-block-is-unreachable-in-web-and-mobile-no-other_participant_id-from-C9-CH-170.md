@@ -3,10 +3,11 @@ id: TASK-21.7
 title: >-
   Chat: block is unreachable in web and mobile (no other_participant_id from C9,
   CH-170)
-status: To Do
+status: In Progress
 assignee:
   - '@backend-dev'
 created_date: '2026-10-16 10:02'
+updated_date: '2026-10-16 10:34'
 labels:
   - bug
   - 'est:S'
@@ -25,5 +26,9 @@ Found in QA TASK-21.5, TASK-21 AC#4 (report or block). Steps: open any conversat
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 ConversationSummary carries other_participant_id (or block takes a message id) and the web and mobile thread menus offer Block and Report person; a blocked user's POST message answers FORBIDDEN
+- [x] #1 ConversationSummary carries other_participant_id (or block takes a message id) and the web and mobile thread menus offer Block and Report person; a blocked user's POST message answers FORBIDDEN
 <!-- AC:END -->
+
+## Packet
+
+Branch: agent/task-21.7-chat-block

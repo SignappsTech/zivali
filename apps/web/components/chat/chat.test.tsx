@@ -9,9 +9,9 @@ import { abuseCreated } from '@zivali/api/__fixtures__/abuse';
 import { createMockApi, mockError, type MockRequest, type MockRoutes } from '@zivali/api/mock';
 import { type ApiStore, createApiStore } from '@zivali/api/rtk';
 import sl from '@zivali/i18n/dist/sl.json';
-import type { Message } from '@zivali/types';
+import type { ConversationSummary, Message } from '@zivali/types';
 
-import { type Conversation, ConversationList, ConversationRow } from './conversations';
+import { ConversationList, ConversationRow } from './conversations';
 import { Thread } from './thread';
 
 // TASK-21.3: P12 on the web, over the in-memory API (C9) and a fake Supabase Realtime client.
@@ -74,11 +74,12 @@ const OTHER = '5b1e0c2a-0000-4000-8000-000000000009';
 const MESSAGES = `/v1/conversations/${ID}/messages`;
 const TOPIC = `conversation:${ID}`;
 
-const conversation = (patch: Partial<Conversation> = {}): Conversation => ({
+const conversation = (patch: Partial<ConversationSummary> = {}): ConversationSummary => ({
 	id: ID,
 	about_report: { short_code: 'Hk3vT9qP', type: 'found', species: 'dog', thumb_url: null },
 	my_alias_key: 'owner',
 	other_alias_key: 'finder',
+	other_participant_id: OTHER,
 	last_message_preview: 'Je pri meni, lahko pridete po 17h.',
 	unread: 2,
 	status: 'active',
@@ -107,7 +108,7 @@ function serve({
 	summary = conversation(),
 	history = HISTORY,
 	routes = {},
-}: { summary?: Conversation; history?: Message[]; routes?: MockRoutes } = {}) {
+}: { summary?: ConversationSummary; history?: Message[]; routes?: MockRoutes } = {}) {
 	let n = 0;
 	const api = createMockApi({
 		'GET /v1/conversations': () => ({ items: [summary], next_cursor: null }),
@@ -233,7 +234,7 @@ describe('Thread (P12)', () => {
 	});
 
 	it('opening refetches the list: a conversation newer than the cached page is found', async () => {
-		let items: Conversation[] = [];
+		let items: ConversationSummary[] = [];
 		serve({ routes: { 'GET /v1/conversations': () => ({ items, next_cursor: null }) } });
 		await state.store!.dispatch(
 			(await import('@zivali/api/chat')).chatApi.endpoints.listConversations.initiate(undefined)
@@ -499,8 +500,8 @@ describe('Thread (P12)', () => {
 		fireEvent.click(buttons[0]!);
 		const dialog = await screen.findByRole('dialog');
 		expect(within(dialog).getByText(a.target_message)).toBeTruthy();
-		// No other_participant_id from the API yet (CH-170): no block switch.
-		expect(within(dialog).queryByRole('switch')).toBeNull();
+		// The block switch is offered, off for a message report.
+		expect(within(dialog).getByRole('switch').getAttribute('aria-checked')).toBe('false');
 		fireEvent.click(within(dialog).getByRole('radio', { name: a.reason_scam }));
 		fireEvent.click(within(dialog).getByRole('button', { name: a.send }));
 		fireEvent.click(await within(dialog).findByRole('button', { name: a.done_close }));
@@ -508,13 +509,14 @@ describe('Thread (P12)', () => {
 		expect(sent('POST', '/v1/abuse-reports')).toEqual([
 			{ target_type: 'message', target_id: 'm1', reason: 'scam' },
 		]);
+		expect(sent('POST', `/v1/conversations/${ID}/block`)).toEqual([]);
 		expect(screen.getByText(a.message_folded)).toBeTruthy();
 		expect(screen.queryByText(HISTORY[1]!.body)).toBeNull();
 		await waitFor(() => expect(document.activeElement).toBe(composer()));
 	});
 
-	it('the menu without other_participant_id: report targets the latest message of the other person, no Block rows', async () => {
-		serve();
+	it('no other participant (null id): report targets their latest message, no Block rows', async () => {
+		serve({ summary: conversation({ other_participant_id: null }) });
 		show();
 		await screen.findByText(HISTORY[1]!.body);
 

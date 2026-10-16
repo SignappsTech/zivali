@@ -1,5 +1,6 @@
-// Chat rows → C9 DTOs. Participants appear only as alias keys or their chosen display name, never ids, emails or
-// phone numbers. The Message DTO is also the message.created broadcast payload (ADR-023).
+// Chat rows → C9 DTOs. Participants appear only as alias keys or their chosen display name, never emails or phone
+// numbers; the inbox carries the other participant's user id only, for block and the profile abuse report (CH-170).
+// The Message DTO is also the message.created broadcast payload (ADR-023).
 import type { z } from 'zod';
 
 import type { AliasKey } from '@zivali/types';
@@ -58,6 +59,7 @@ export function toConversationListDto(rows: ConversationListRow[], next_cursor: 
 				my_alias_key: aliasKey(row.my_role, finderSide),
 				other_alias_key: aliasKey(row.other_role ?? 'contact', finderSide),
 				other_display_name: row.other_alias ?? undefined,
+				other_participant_id: row.other_user_id,
 				last_message_preview: row.last_body?.slice(0, PREVIEW_MAX) ?? null,
 				unread: row.unread,
 				status: row.status,

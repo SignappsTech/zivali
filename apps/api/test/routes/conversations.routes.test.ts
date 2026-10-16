@@ -366,7 +366,10 @@ describe('messages', () => {
 		expect((await block(owner.id)).status).toBe(400);
 		expect((await block(stranger.id)).status).toBe(400);
 		expect((await block('not-a-uuid')).status).toBe(400);
-		expect((await block(target.id)).status).toBe(204);
+		// The blocker takes the id from the inbox (CH-170).
+		const summary = (await inbox(owner)).body.items.find((item: { id: string }) => item.id === cid);
+		expect(summary.other_participant_id).toBe(target.id);
+		expect((await block(summary.other_participant_id)).status).toBe(204);
 		expect((await block(target.id)).status).toBe(204);
 		const refused = await send(target, cid, { body: 'Halo?' });
 		expect([refused.status, refused.body.error.code]).toEqual([403, 'FORBIDDEN']);
@@ -419,11 +422,19 @@ describe('GET /v1/conversations', () => {
 			about_report: { short_code: found.short_code, type: 'found', species: 'dog', thumb_url: null },
 			my_alias_key: 'contact',
 			other_alias_key: 'finder',
+			other_participant_id: anonFinder.id,
 			last_message_preview: 'Odgovor najditelja',
 			unread: 1,
 			status: 'active',
 		});
-		expect(list.items[1]).toMatchObject({ my_alias_key: 'contact', other_alias_key: 'owner', unread: 0 });
+		expect(list.items[1]).toMatchObject({
+			my_alias_key: 'contact',
+			other_alias_key: 'owner',
+			other_participant_id: owner.id,
+			unread: 0,
+		});
+		// The other participant is named by user id only: no email or phone.
+		expect(JSON.stringify(list)).not.toMatch(/@|email|phone/);
 
 		const first = (await inbox(asker, '?limit=1')).body;
 		expect(first.items.map((item: { id: string }) => item.id)).toEqual([b]);
@@ -432,7 +443,11 @@ describe('GET /v1/conversations', () => {
 		expect((await inbox(asker, '?cursor=abc')).status).toBe(400);
 
 		const theirs = (await inbox(anonFinder)).body.items.find((item: { id: string }) => item.id === b);
-		expect(theirs).toMatchObject({ my_alias_key: 'finder', other_alias_key: 'contact' });
+		expect(theirs).toMatchObject({
+			my_alias_key: 'finder',
+			other_alias_key: 'contact',
+			other_participant_id: asker.id,
+		});
 		expect((await request(app).get('/v1/conversations')).status).toBe(401);
 	});
 

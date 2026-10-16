@@ -48,10 +48,10 @@ import {
 import { ApiError } from '@zivali/api/client';
 import type { ApiStore, QueryError } from '@zivali/api/rtk';
 import { formatDate, formatDayMonth, type Locale } from '@zivali/i18n/format';
-import type { Message, Uuid } from '@zivali/types';
-import { ReportAbuse } from '@/components/abuse/report-abuse';
+import type { ConversationSummary, Message, Uuid } from '@zivali/types';
+import { type AbuseTarget, ReportAbuse } from '@/components/abuse/report-abuse';
 import { useErrorText } from '@/components/auth/parts';
-import { type Conversation, StatusWord, useAlias, useConversationTitle } from '@/components/chat/conversations';
+import { StatusWord, useAlias, useConversationTitle } from '@/components/chat/conversations';
 import { InlineError } from '@/components/notifications/notifications-view';
 import { Note } from '@/components/report/parts';
 import { MenuItem } from '@/components/report/slots/slot-c';
@@ -79,7 +79,7 @@ const SYSTEM = ['confirmed', 'contact', 'closed', 'home', 'reopened'] as const;
 type Pending = { key: string; body: string; state: 'sending' | 'queued' | 'failed' };
 /** Why the composer is off: read-only replaces it; the others disable it with their sentence (P12 M6, M9). */
 type Lock = 'read_only' | 'blocked_by_you' | 'blocked_you' | 'unverified';
-type SheetMode = 'menu' | 'block' | { report: Uuid; block: boolean };
+type SheetMode = 'menu' | 'block' | { target: AbuseTarget; block: boolean };
 type Row =
 	| { kind: 'day'; key: string; label: string }
 	| { kind: 'message'; key: string; message: Message }
@@ -123,7 +123,7 @@ function BackButton() {
 	);
 }
 
-function ThreadView({ conversation }: { conversation: Conversation }) {
+function ThreadView({ conversation }: { conversation: ConversationSummary }) {
 	const { id } = conversation;
 	const t = useTranslations('chat');
 	const ta = useTranslations('abuse');
@@ -282,9 +282,12 @@ function ThreadView({ conversation }: { conversation: Conversation }) {
 			toast.error(errorText(error));
 		}
 	};
-	const report = (message: Message) => setSheet({ report: message.id, block: false });
-	// The header's "Prijavi zlorabo" reports the other person's latest message (C11 targets a message, not a user).
-	const target = [...messages].reverse().find((m) => m.kind !== 'system' && !isOwn(m) && !reported.has(m.id));
+	const report = (message: Message) => setSheet({ target: { type: 'message', id: message.id }, block: false });
+	// The menu's "Prijavi zlorabo" reports the other person (C11 profile); without their id, their latest message.
+	const lastOther = [...messages].reverse().find((m) => m.kind !== 'system' && !isOwn(m) && !reported.has(m.id));
+	const personTarget: AbuseTarget | undefined = participant
+		? { type: 'profile', id: participant }
+		: lastOther && { type: 'message', id: lastOther.id };
 
 	// Day separators in the Ljubljana calendar; pending messages are today's.
 	const dayLabel = (at: string | number) => {
@@ -452,11 +455,14 @@ function ThreadView({ conversation }: { conversation: Conversation }) {
 			<SheetContent closeLabel={tc('close')}>
 				{typeof sheet === 'object' ? (
 					<ReportAbuse
-						target={{ type: 'message', id: sheet.report }}
+						target={sheet.target}
 						offline={!online}
 						onBlock={block}
 						defaultBlock={sheet.block}
-						onSent={() => setReported((ids) => new Set(ids).add(sheet.report))}
+						onSent={() => {
+							if (sheet.target.type === 'message')
+								setReported((ids) => new Set(ids).add(sheet.target.id));
+						}}
 						onClose={close}
 					/>
 				) : sheet === 'block' ? (
@@ -489,14 +495,18 @@ function ThreadView({ conversation }: { conversation: Conversation }) {
 									router.push(`/r/${conversation.about_report.short_code}` as Href);
 								}}
 							/>
-							{target ? (
-								<MenuItem icon={FlagIcon} label={t('menu_report')} onPress={() => report(target)} />
+							{personTarget ? (
+								<MenuItem
+									icon={FlagIcon}
+									label={t('menu_report')}
+									onPress={() => setSheet({ target: personTarget, block: false })}
+								/>
 							) : null}
-							{target && block && lock !== 'blocked_by_you' ? (
+							{personTarget && block && lock !== 'blocked_by_you' ? (
 								<MenuItem
 									icon={FlagIcon}
 									label={ta('entry_block')}
-									onPress={() => setSheet({ report: target.id, block: true })}
+									onPress={() => setSheet({ target: personTarget, block: true })}
 								/>
 							) : null}
 							{block && lock !== 'blocked_by_you' ? (

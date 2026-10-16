@@ -50,6 +50,7 @@ function chatServer(
 		about_report: { short_code: 'Hk3vT9qP', type: 'found', species: 'dog', thumb_url: null },
 		my_alias_key: alias,
 		other_alias_key: alias === 'owner' ? 'finder' : 'owner',
+		other_participant_id: alias === 'owner' ? FINDER.id : OWNER.id,
 		last_message_preview: messages.at(-1)!.body,
 		unread: 0,
 		status: options.status ?? 'active',
