@@ -92,7 +92,8 @@ describe('AdminShell', () => {
 		const dashboard = within(sidebar()).getByRole('link', { name: a.nav_dashboard });
 		expect(dashboard.getAttribute('aria-current')).toBe('page');
 		// Not built yet: the item still opens its page and says "Kmalu".
-		expect(within(sidebar()).getByRole('link', { name: `${a.nav_ads}, ${a.coming_badge}` })).toBeTruthy();
+		expect(within(sidebar()).getByRole('link', { name: `${a.nav_users}, ${a.coming_badge}` })).toBeTruthy();
+		expect(within(sidebar()).getByRole('link', { name: a.nav_ads })).toBeTruthy();
 		expect(within(sidebar()).getByRole('link', { name: a.nav_audit })).toBeTruthy();
 		expect(screen.getByText(a.env_staging)).toBeTruthy();
 		expect(screen.getByText(a.role_admin)).toBeTruthy();

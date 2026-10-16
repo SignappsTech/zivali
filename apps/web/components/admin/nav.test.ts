@@ -7,6 +7,8 @@ describe('admin navigation rules', () => {
 		expect(adminItem('/admin')?.key).toBe('nav_dashboard');
 		expect(adminItem('/admin/shelters/lipa')?.key).toBe('nav_directory');
 		expect(adminItem('/admin/ads')?.key).toBe('nav_ads');
+		expect(adminItem('/admin/ads/[id]/edit')?.key).toBe('nav_ads');
+		expect(adminItem('/admin/house-ads')?.key).toBe('nav_house_ads');
 		expect(adminItem('/admin/unknown')).toBeUndefined();
 	});
 
@@ -16,13 +18,20 @@ describe('admin navigation rules', () => {
 		expect(canOpen('/admin/abuse-reports', 'MODERATOR')).toBe(true);
 		expect(canOpen('/admin/audit-log', 'MODERATOR')).toBe(false);
 		expect(canOpen('/admin/shelters', 'MODERATOR')).toBe(false);
+		expect(canOpen('/admin/ads/new', 'MODERATOR')).toBe(false);
+		expect(canOpen('/admin/house-ads', 'MODERATOR')).toBe(false);
 		expect(canOpen('/admin/unknown', 'MODERATOR')).toBe(false);
 		expect(canOpen('/admin/unknown', 'ADMIN')).toBe(true);
 	});
 
 	it('links built pages directly and the others through /admin/[section]', () => {
 		expect(itemHref(adminItem('/admin/audit-log')!)).toBe('/admin/audit-log');
-		expect(itemHref(comingSection('ads')!)).toEqual({ pathname: '/admin/[section]', params: { section: 'ads' } });
+		expect(itemHref(adminItem('/admin/ads')!)).toBe('/admin/ads');
+		expect(itemHref(comingSection('users')!)).toEqual({
+			pathname: '/admin/[section]',
+			params: { section: 'users' },
+		});
+		expect(comingSection('ads')).toBeUndefined();
 		expect(comingSection('shelters')).toBeUndefined();
 		expect(comingSection('abuse-reports')).toBeUndefined();
 	});

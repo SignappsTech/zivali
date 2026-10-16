@@ -5,13 +5,7 @@ import * as React from 'react';
 import type { AdSlot as Slot, Species } from '@zivali/types';
 import { cn } from '@/lib/utils';
 
-/** P21 reserved sizes (mockup): the feed row 88 px, the detail and reunited units 200 (176 from lg), the sidebar 320 by 452. */
-export const RESERVED: Record<Slot, string> = {
-	feed: 'min-h-[88px]',
-	detail: 'min-h-[200px] lg:min-h-[176px]',
-	reunited: 'min-h-[200px] lg:min-h-[176px]',
-	sidebar: 'min-h-[452px] w-full max-w-[320px]',
-};
+import { RESERVED } from './reserved';
 
 export type AdSlotProps = {
 	slot: Slot;

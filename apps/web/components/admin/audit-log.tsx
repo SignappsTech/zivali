@@ -52,7 +52,7 @@ export const tableClass =
 	'w-full border-collapse text-control leading-[22px] max-lg:hidden [&_tbody_tr:last-child>td]:border-b-0';
 
 /** The dense table from lg, stacked rows below (P19 T2); read only, newest first. */
-function Entries({
+export function Entries({
 	entries,
 	caption,
 	change = false,

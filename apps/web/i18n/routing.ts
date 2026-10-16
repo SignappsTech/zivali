@@ -69,6 +69,12 @@ export const routing = defineRouting({
 		'/admin/abuse-reports': { sl: '/admin/prijave-zlorab', en: '/admin/abuse-reports' },
 		'/admin/audit-log': { sl: '/admin/revizijska-sled', en: '/admin/audit-log' },
 		'/admin/shelters': { sl: '/admin/zavetisca', en: '/admin/shelters' },
+		// P20 (TASK-37.3), URLs from its mockup; `new` before `[id]`, so it matches first.
+		'/admin/ads': { sl: '/admin/oglasi', en: '/admin/ads' },
+		'/admin/ads/new': { sl: '/admin/oglasi/nov', en: '/admin/ads/new' },
+		'/admin/ads/[id]': { sl: '/admin/oglasi/[id]', en: '/admin/ads/[id]' },
+		'/admin/ads/[id]/edit': { sl: '/admin/oglasi/[id]/uredi', en: '/admin/ads/[id]/edit' },
+		'/admin/house-ads': { sl: '/admin/lastni-oglasi', en: '/admin/house-ads' },
 		// P19 sections not built yet ("Kmalu"); after the static admin paths, so those match first (routeTemplate).
 		'/admin/[section]': '/admin/[section]',
 		'/portal': '/portal',
