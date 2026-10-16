@@ -13,7 +13,7 @@ import { useUpdateMeMutation } from '@zivali/api/me';
 import type { Me, Place } from '@zivali/types';
 import { coarsenPoint } from '@zivali/validation/geo';
 import { ResendButton, useErrorText } from '@/components/auth/parts';
-import { InlineError, PageSkeleton } from '@/components/shell/page';
+import { InlineError, PageSkeleton, useLanguageLabels } from '@/components/shell/page';
 import { LanguageSwitch, SignOutButton } from '@/components/shell/parts';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { FormField } from '@/components/ui/form-field';
@@ -47,6 +47,7 @@ export function AccountSettings() {
 function AccountForm({ me }: { me: Me }) {
 	const t = useTranslations();
 	const locale = useLocale();
+	const languages = useLanguageLabels();
 	const errorText = useErrorText();
 	const [name, setName] = React.useState(me.display_name ?? '');
 	const [phone, setPhone] = React.useState(me.phone ?? '');
@@ -129,7 +130,7 @@ function AccountForm({ me }: { me: Me }) {
 				<h2 id="account-language" className={sectionTitle}>
 					{t('profile.row_language')}
 				</h2>
-				<LanguageSwitch full className="mt-2 -ml-1.5" />
+				<LanguageSwitch labels={languages} full className="mt-2 -ml-1.5" />
 			</section>
 
 			<HomeArea me={me} />

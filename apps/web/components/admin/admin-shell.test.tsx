@@ -40,9 +40,11 @@ vi.mock('@/i18n/navigation', () => ({
 			{children}
 		</a>
 	),
+	getPathname: ({ href }: { href: string }) => href,
+}));
+vi.mock('@/i18n/client-navigation', () => ({
 	usePathname: () => route.pathname,
 	useRouter: () => ({ replace: route.replace, refresh: route.refresh }),
-	getPathname: ({ href }: { href: string }) => href,
 }));
 
 beforeEach(() => {

@@ -12,7 +12,7 @@ import { TrayIcon } from '@phosphor-icons/react/dist/ssr/Tray';
 import { UserIcon } from '@phosphor-icons/react/dist/ssr/User';
 import { UserCircleIcon } from '@phosphor-icons/react/dist/ssr/UserCircle';
 import { XIcon } from '@phosphor-icons/react/dist/ssr/X';
-import { NextIntlClientProvider, useLocale, useMessages, useTranslations } from 'next-intl';
+import { useLocale, useMessages, useTranslations } from 'next-intl';
 import type { ComponentProps } from 'react';
 
 import { Button, buttonVariants } from '@/components/ui/button';
@@ -20,7 +20,7 @@ import { getPathname, Link } from '@/i18n/navigation';
 import { cn } from '@/lib/utils';
 import type { Viewer } from '@/lib/viewer';
 
-import { Logo, ringClass } from './page';
+import { Logo, ringClass, useLanguageLabels } from './page';
 import {
 	HeaderPopover,
 	InboxDot,
@@ -61,15 +61,13 @@ const separatorClass = 'mx-3 my-1.5 h-px bg-border';
 const dialogClass =
 	'm-0 overflow-y-auto overscroll-contain border-0 bg-card p-0 text-card-foreground backdrop:bg-scrim';
 
-/** Signed in only: the inbox dot (store and code load lazily) with the messages it needs, not on public pages (TASK-90.5). */
-function InboxLabel(props: ComponentProps<typeof InboxDot>) {
+/**
+ * Signed in only: the inbox dot (store, code and its intl provider load lazily) with the message it needs, not on
+ * public pages (TASK-90.5, TASK-90.7).
+ */
+function InboxLabel(props: Omit<ComponentProps<typeof InboxDot>, 'messages'>) {
 	const { notifications } = useMessages() as { notifications: { row_unread_a11y: string } };
-	const messages = { notifications: { row_unread_a11y: notifications.row_unread_a11y } };
-	return (
-		<NextIntlClientProvider locale={useLocale()} messages={messages}>
-			<InboxDot {...props} />
-		</NextIntlClientProvider>
-	);
+	return <InboxDot {...props} messages={{ notifications: { row_unread_a11y: notifications.row_unread_a11y } }} />;
 }
 
 /**
@@ -80,6 +78,7 @@ function InboxLabel(props: ComponentProps<typeof InboxDot>) {
 export function SiteHeader({ viewer }: { viewer: Viewer | null }) {
 	const t = useTranslations('nav');
 	const tCommon = useTranslations('common');
+	const languages = useLanguageLabels();
 	const locale = useLocale();
 	const href = (target: Href) => getPathname({ locale, href: target });
 	// TODO(TASK-31.4): C15 has no map filter query yet; `type` uses the C4 report types.
@@ -151,7 +150,7 @@ export function SiteHeader({ viewer }: { viewer: Viewer | null }) {
 					<div className="flex items-center gap-2 lg:ml-auto">
 						{/* From md; signed in it moves into the account menu between lg and xl (P1 B3). */}
 						<div className={viewer ? 'hidden md:block lg:hidden xl:block' : 'hidden md:block'}>
-							<LanguageSwitch />
+							<LanguageSwitch labels={languages} />
 						</div>
 						{viewer ? (
 							<div className="hidden items-center gap-2 lg:flex">
@@ -188,7 +187,7 @@ export function SiteHeader({ viewer }: { viewer: Viewer | null }) {
 											aria-hidden="true"
 											className="mr-1.5 size-5 text-foreground"
 										/>
-										<LanguageSwitch full />
+										<LanguageSwitch labels={languages} full />
 									</div>
 									<div className={`${separatorClass} xl:hidden`} />
 									{signOut}
@@ -276,7 +275,7 @@ export function SiteHeader({ viewer }: { viewer: Viewer | null }) {
 										<Link href="/sign-in">{t('sign_in')}</Link>
 									</Button>
 								)}
-								<LanguageSwitch full className="mt-6 -ml-1.5 md:hidden" />
+								<LanguageSwitch labels={languages} full className="mt-6 -ml-1.5 md:hidden" />
 							</div>
 						</ShellDialog>
 					</div>

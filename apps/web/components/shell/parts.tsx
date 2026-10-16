@@ -1,19 +1,22 @@
 'use client';
 
-import { useLocale, useTranslations } from 'next-intl';
 import dynamic from 'next/dynamic';
 import NextLink from 'next/link';
-import { useParams } from 'next/navigation';
 import { type ComponentProps, Fragment, type KeyboardEvent, type ReactNode } from 'react';
 
 import { routeTemplate } from '@/components/analytics/screen-views';
-import { getPathname, usePathname } from '@/i18n/navigation';
+import { useRoute } from '@/i18n/client-navigation';
+import { localisedPath } from '@/i18n/route';
 import { routing } from '@/i18n/routing';
 import { useLocaleSwitch } from '@/i18n/use-locale-switch';
+
+import type { LanguageLabels } from './page';
 
 // The client islands of the P1 shell. Header and footer are server components, so their icons, buttons and the
 // tailwind-merge behind `cn` never ship to the browser; these parts need the current route or the browser. Native
 // popovers and dialogs instead of a menu library: top layer, light dismiss, Escape and focus return come with them.
+// No next-intl here: the route comes from @/i18n/client-navigation and the strings from the server components that render these
+// parts, so the shell ships no intl runtime (TASK-90.7).
 
 // The header's inbox dot, signed in only: it brings the Redux store, so it loads with its first use instead of with
 // every page's shell (TASK-90.5).
@@ -50,7 +53,7 @@ export function shellVariant(pathname: string): 'content' | 'flow' | 'none' {
 
 /** Renders its children on pages of `variant` only: the layout, and so the shell, stays mounted across navigations. */
 export function ShellSlot({ variant, children }: { variant: 'content' | 'flow'; children: ReactNode }) {
-	return shellVariant(usePathname()) === variant ? children : null;
+	return shellVariant(useRoute().pathname) === variant ? children : null;
 }
 
 /** Links (localised on the server) with `aria-current="page"` on the current route. */
@@ -63,7 +66,7 @@ export function NavLinks({
 	className?: string;
 	linkClassName: string;
 }) {
-	const route = routeTemplate(usePathname());
+	const route = routeTemplate(useRoute().pathname);
 
 	return (
 		<ul className={className}>
@@ -92,7 +95,7 @@ export function ShellButton({
 	className,
 	...props
 }: ComponentProps<'button'> & { looks?: [string, string]; dialog?: string }) {
-	const secondary = OWN_PRIMARY.has(routeTemplate(usePathname()));
+	const secondary = OWN_PRIMARY.has(routeTemplate(useRoute().pathname));
 
 	return (
 		<button
@@ -180,7 +183,7 @@ export function CookieSettingsButton(props: ComponentProps<'button'>) {
  * signed-out user stays in memory (C3).
  */
 export function SignOutButton(props: ComponentProps<'button'>) {
-	const locale = useLocale();
+	const { locale } = useRoute();
 
 	return (
 		<button
@@ -189,7 +192,7 @@ export function SignOutButton(props: ComponentProps<'button'>) {
 			onClick={async () => {
 				const { createClient } = await import('@/lib/supabase/client');
 				await createClient().auth.signOut({ scope: 'local' });
-				window.location.assign(getPathname({ locale, href: '/' }));
+				window.location.assign(localisedPath({ locale, href: '/' }));
 			}}
 		/>
 	);
@@ -198,18 +201,24 @@ export function SignOutButton(props: ComponentProps<'button'>) {
 /**
  * Text toggle "SL / EN" (or the full names), current language underlined. Plain links to the same page in each
  * language (hreflang, works without JS); with JS a click goes through useLocaleSwitch, which saves a signed-in user's
- * profile locale first (FR-036).
+ * profile locale first (FR-036). `labels` come from useLanguageLabels (./page.tsx) where the switch is rendered.
  */
-export function LanguageSwitch({ full = false, className = '' }: { full?: boolean; className?: string }) {
-	const t = useTranslations('nav');
+export function LanguageSwitch({
+	labels,
+	full = false,
+	className = '',
+}: {
+	labels: LanguageLabels;
+	full?: boolean;
+	className?: string;
+}) {
 	const { locale, switchLocale } = useLocaleSwitch();
-	const pathname = usePathname();
-	const params = useParams();
+	const { pathname, params } = useRoute();
 
 	return (
 		<div
 			role="group"
-			aria-label={t('language_label', { current: t(`language_${locale}_full`) })}
+			aria-label={labels.label}
 			className={`inline-flex items-center text-control font-semibold text-muted-foreground ${className}`}
 		>
 			{routing.locales.map((next, index) => (
@@ -220,13 +229,12 @@ export function LanguageSwitch({ full = false, className = '' }: { full?: boolea
 						</span>
 					)}
 					<a
-						// The page's own URL in that language (SL unprefixed); next-intl's Link would prefix /sl for the switch.
-						// @ts-expect-error -- params always belong to the current pathname (next-intl locale switcher pattern).
-						href={getPathname({ locale: next, href: { pathname, params } })}
+						// The page's own URL in that language (SL unprefixed); the switch itself prefixes /sl (useLocaleSwitch).
+						href={localisedPath({ locale: next, href: { pathname, params } })}
 						lang={next}
 						hrefLang={next}
 						aria-current={next === locale ? 'true' : undefined}
-						aria-label={full ? undefined : t(`language_${next}_full`)}
+						aria-label={full ? undefined : labels.full[next]}
 						onClick={(event) => {
 							if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
 							event.preventDefault();
@@ -234,7 +242,7 @@ export function LanguageSwitch({ full = false, className = '' }: { full?: boolea
 						}}
 						className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-full px-1.5 whitespace-nowrap hover:text-foreground focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ring aria-[current=true]:text-foreground aria-[current=true]:underline aria-[current=true]:decoration-primary aria-[current=true]:decoration-2 aria-[current=true]:underline-offset-6"
 					>
-						{t(full ? `language_${next}_full` : `language_${next}`)}
+						{labels[full ? 'full' : 'short'][next]}
 					</a>
 				</Fragment>
 			))}

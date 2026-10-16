@@ -105,7 +105,7 @@ describe('outbox retry against the API (C17, C1)', () => {
 		expect(await reportCount()).toBe(before + 1);
 	});
 
-	it('a found retry after the key expired (24 h) is refused, not duplicated: its photo is on the first report', async () => {
+	it('a found retry after the key expired (24 h) returns the first report with a new manage token (TASK-86.5)', async () => {
 		const outboxId = randomUUID();
 		const sha = randomBytes(32).toString('hex');
 		const photoId = await uploadPhoto(sha);
@@ -116,7 +116,8 @@ describe('outbox retry against the API (C17, C1)', () => {
 			photo_ids: [photoId],
 			event_at: new Date(Date.now() - 2 * HOUR).toISOString(),
 		};
-		expect((await postReport(outboxId, body)).status).toBe(201);
+		const first = await postReport(outboxId, body);
+		expect(first.status).toBe(201);
 		const before = await reportCount();
 		await prisma.idempotency_keys.update({
 			where: { key: outboxId },
@@ -125,8 +126,10 @@ describe('outbox retry against the API (C17, C1)', () => {
 
 		const late = await postReport(outboxId, body);
 
-		expect(late.status).toBe(400);
-		expect(late.body.error.code).toBe('VALIDATION');
+		expect(late.status).toBe(201);
+		expect(late.body).toMatchObject({ id: first.body.id, short_code: first.body.short_code });
+		expect(typeof late.body.manage_token).toBe('string');
+		expect(late.body.manage_token).not.toBe(first.body.manage_token);
 		expect(await reportCount()).toBe(before);
 	});
 });

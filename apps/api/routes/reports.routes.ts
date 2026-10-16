@@ -33,7 +33,10 @@ route(
 		operationId: 'createReport',
 		summary: 'Create a lost, found or sighted report',
 		description:
-			'Requires `Idempotency-Key: <uuid>` (a replay from the same user returns the stored response for 24 h). ' +
+			'Requires `Idempotency-Key: <uuid>` (a replay from the same user returns the stored response for 24 h; ' +
+			'later, or after a 5xx, the same key and body from the same user return the report created then with 201, ' +
+			'with a new `manage_token` for anonymous callers whose old link stops working, none for closed or removed ' +
+			'reports, 3 new links per report per day, then RATE_LIMITED; another body: CONFLICT). ' +
 			'`location` is the point the client already coarsened; the API coarsens it again by 20–30 m and never ' +
 			'stores or returns the received point. Lost reports need a real account. `warnings` may hold OLD_EVENT ' +
 			'(event older than 30 days). Starts photo publishing, matching and, for visible lost reports, nearby alerts. ' +
