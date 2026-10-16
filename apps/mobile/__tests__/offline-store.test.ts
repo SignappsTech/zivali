@@ -11,7 +11,7 @@ import { DB_NAME, getDb, migrate, migrations } from '@/lib/db';
 import { bytesUsed, draftsDir, outboxDir, pickerCacheDir, thumbsDir } from '@/lib/db/files';
 import { cacheOwnReports, cacheQuietHours, stopGeofencing } from '@/lib/offline/geofence';
 import { manageTokenKey, saveManageToken } from '@/lib/offline/outbox';
-import { signOutAndWipe, wipeLocalData, wipeOnSessionEnd } from '@/lib/offline/wipe';
+import { signOutAndWipe, takeSessionEnded, wipeLocalData, wipeOnSessionEnd } from '@/lib/offline/wipe';
 import { supabase } from '@/lib/supabase';
 
 // Real SQL on node:sqlite and real files in a temp folder stand in for the native modules.
@@ -24,6 +24,8 @@ jest.mock('expo-file-system', () =>
 const mockKeychain = new Map<string, string>();
 const mockSession = jest.fn(async () => {});
 jest.mock('expo-secure-store', () => ({
+	getItem: jest.fn((name: string) => mockKeychain.get(name) ?? null),
+	setItem: jest.fn((name: string, value: string) => void mockKeychain.set(name, value)),
 	getItemAsync: jest.fn(async (name: string) => mockKeychain.get(name) ?? null),
 	setItemAsync: jest.fn(async (name: string, value: string) => void mockKeychain.set(name, value)),
 	deleteItemAsync: jest.fn(async (name: string) => void mockKeychain.delete(name)),
@@ -356,6 +358,7 @@ describe('wipeOnSessionEnd', () => {
 		// Refreshes and an offline start (the session kept) wipe nothing.
 		for (const event of ['INITIAL_SESSION', 'TOKEN_REFRESHED', 'SIGNED_IN']) mockAuthListener!(event);
 		await new Promise((resolve) => setTimeout(resolve, 0));
+		expect(takeSessionEnded()).toBe(false);
 		expect(stopGeofencing).not.toHaveBeenCalled();
 		expect(await count('reports_cache')).toBe(1);
 
@@ -365,10 +368,14 @@ describe('wipeOnSessionEnd', () => {
 		expect(stopGeofencing).toHaveBeenCalledTimes(1);
 		expect(cacheQuietHours).toHaveBeenCalledWith(null);
 		expect(cacheOwnReports).toHaveBeenCalledWith(null);
-		for (const table of ['cache_areas', 'drafts', 'geofences', 'geofence_events'])
-			expect(await count(table)).toBe(0);
-		// As on sign-out: the outbox and the manage tokens stay.
+		for (const table of ['cache_areas', 'geofences', 'geofence_events']) expect(await count(table)).toBe(0);
+		// Unlike sign-out: unsent drafts stay, with the outbox and the manage tokens.
+		expect(await count('drafts')).toBe(1);
+		expect(draftsDir.exists).toBe(true);
 		expect(await count('outbox')).toBe(2);
+		// The next open shows the notice once.
+		expect(takeSessionEnded()).toBe(true);
+		expect(takeSessionEnded()).toBe(false);
 		expect(mockKeychain.has(manageTokenKey('rep-1'))).toBe(true);
 	});
 

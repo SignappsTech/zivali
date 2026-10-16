@@ -226,7 +226,7 @@ function NearbyReminders({ me }: { me: Me | null }) {
 			// Turned off in the phone settings: no reminder can show, so no area stays watched for nothing.
 			if (next === 'on' && !notifications.granted) {
 				await stopGeofencing();
-				next = notifications.canAskAgain ? 'off' : 'no_notifications';
+				next = 'no_notifications';
 			}
 			const kept = (prev?: RemindersState) =>
 				prev === 'denied' || (prev === 'no_notifications' && !notifications.granted);
@@ -304,6 +304,9 @@ function NearbyReminders({ me }: { me: Me | null }) {
 					kind="location_always"
 					text={state === 'permission_lost' ? t('alerts.reminders_lost') : undefined}
 				/>
+			) : null}
+			{!me ? (
+				<Text className="text-sm text-muted-foreground">{t('alerts.reminders_signed_out_note')}</Text>
 			) : null}
 			{state === 'no_notifications' ? (
 				<PermissionNote kind="notifications" text={t('alerts.push_denied')} />

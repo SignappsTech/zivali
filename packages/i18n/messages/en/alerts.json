@@ -41,5 +41,6 @@
 	"reminders_quiet_value": "{from} to {to}",
 	"reminders_quiet_change": "Change quiet hours",
 	"reminders_lost": "We turned the reminders off because your phone no longer allows location Always. Allow it in your phone settings, then switch them back on here.",
-	"reminders_no_location": "We cannot find your phone's location right now. Please try again in a moment."
+	"reminders_no_location": "We cannot find your phone's location right now. Please try again in a moment.",
+	"reminders_signed_out_note": "You are signed out, so you can only turn these reminders off."
 }

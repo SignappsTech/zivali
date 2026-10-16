@@ -146,11 +146,15 @@ export default function ProfileTab() {
 	const [reminders, setReminders] = React.useState(false);
 	useFocusEffect(
 		React.useCallback(() => {
+			let active = true;
 			if (!loading && !signedIn)
 				void geofenceState().then(
-					(state) => setReminders(state === 'on'),
-					() => setReminders(false)
+					(state) => active && setReminders(state === 'on'),
+					() => active && setReminders(false)
 				);
+			return () => {
+				active = false;
+			};
 		}, [loading, signedIn])
 	);
 	if (loading) return <View className="flex-1 bg-background" />;
