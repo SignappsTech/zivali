@@ -77,5 +77,7 @@
 	"loading": "Nalagamo prijave v bližini …",
 	"offline_note": "Brez povezave, zadnja posodobitev {time}.",
 	"offline_note_saved": "Brez povezave. Prikazujemo shranjene prijave.",
-	"offline_empty_body": "Prijave v bližini shranimo v telefon, ko ste na spletu. Potem jih vidite tudi brez povezave."
+	"offline_empty_body": "Prijave v bližini shranimo v telefon, ko ste na spletu. Potem jih vidite tudi brez povezave.",
+	"seo_title": "Zemljevid izgubljenih in najdenih živali · Najdimo",
+	"seo_description": "Izgubljeni in najdeni psi in mačke na zemljevidu Slovenije. Izberite kraj, vrsto in čas ter pomagajte, da se živali vrnejo domov."
 }

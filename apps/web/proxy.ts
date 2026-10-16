@@ -1,6 +1,7 @@
 import createMiddleware from 'next-intl/middleware';
 import { type NextRequest, NextResponse } from 'next/server';
 
+import { ShortCode } from '@zivali/validation/common.schema';
 import { hreflangLink } from '@/i18n/alternates';
 import { routing } from '@/i18n/routing';
 import { env } from '@/lib/env';
@@ -25,7 +26,7 @@ function contentSecurityPolicy(nonce: string): string {
 	// Presigned photo PUTs and GETs (C5): the one origin the API presigns with (R2 in the EU jurisdiction, MinIO
 	// locally); connect-src for the uploads, img-src for the saved photos shown from signed GET URLs.
 	const uploads = ` ${new URL(env.R2_UPLOAD_ORIGIN).origin}`;
-	// Public report photos (C5 MEDIA_BASE_URL; locally they come from MinIO, the uploads origin).
+	// Published report photos (PublicReport.photos[].url, C5) come from the public media bucket.
 	const media = env.MEDIA_BASE_URL ? ` ${new URL(env.MEDIA_BASE_URL).origin}` : '';
 	// Turnstile (C7, components/auth/turnstile.tsx): its script (trusted through 'strict-dynamic'; the host is the
 	// fallback for browsers without it) and its challenge iframe.
@@ -59,7 +60,7 @@ const REPORT_PAGE = /^\/(?:en\/)?r\/([^/]+)\/?$/;
 /**
  * The HTTP status of a report page, which only the proxy can set: 410 for hidden, removed and long-closed reports
  * (FR-007 AC#3), 404 for unknown codes; undefined keeps 200. Asks the API as the viewer, so a manager still gets the
- * report. A failed check also keeps 200: the page then shows what the API tells it.
+ * report. A failed or slow check (1 s) also keeps 200: the page then shows what the API tells it.
  */
 async function reportStatus(code: string, token: string | undefined): Promise<410 | 404 | undefined> {
 	try {
@@ -67,7 +68,7 @@ async function reportStatus(code: string, token: string | undefined): Promise<41
 			`${env.NEXT_PUBLIC_API_URL.replace(/\/+$/, '')}/v1/reports/${encodeURIComponent(code)}`,
 			{
 				headers: token ? { authorization: `Bearer ${token}` } : {},
-				signal: AbortSignal.timeout(3000),
+				signal: AbortSignal.timeout(1000),
 			}
 		);
 		await response.body?.cancel();
@@ -84,7 +85,8 @@ async function route(request: NextRequest, accessToken: () => Promise<string | u
 	const response = handleI18nRouting(request);
 	const code = REPORT_PAGE.exec(request.nextUrl.pathname)?.[1];
 	if (!code || request.headers.has('rsc') || response.headers.has('location')) return response;
-	const status = await reportStatus(code, await accessToken());
+	// A code outside the short-code alphabet (C1 ShortCode) is unknown without asking anyone.
+	const status = ShortCode.safeParse(code).success ? await reportStatus(code, await accessToken()) : 404;
 	// Same headers (the locale rewrite, the request headers it passes on), another status: the page still renders.
 	return status ? new NextResponse(null, { status, headers: response.headers }) : response;
 }

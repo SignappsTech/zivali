@@ -41,5 +41,6 @@
 	"reminders_quiet_value": "od {from} do {to}",
 	"reminders_quiet_change": "Spremeni tihi čas",
 	"reminders_lost": "Opomnike smo izklopili, ker telefon ne dovoli več lokacije »vedno«. Ko jo dovolite v nastavitvah telefona, jih znova vklopite tukaj.",
-	"reminders_no_location": "Lokacije telefona ta hip ne moremo določiti. Poskusite znova čez trenutek."
+	"reminders_no_location": "Lokacije telefona ta hip ne moremo določiti. Poskusite znova čez trenutek.",
+	"reminders_signed_out_note": "Niste prijavljeni, zato lahko opomnike le izklopite."
 }

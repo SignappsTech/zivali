@@ -116,6 +116,16 @@ describe('MapView', () => {
 		expect(document.getElementById(options.describedBy)?.textContent).toBe('The pin is in the centre of the map.');
 	});
 
+	it('draws the highlighted marker larger (P4: its row is hovered or its preview open)', async () => {
+		const { update } = renderMap({ highlightId: 'mici' });
+		show(await ready(), [{ id: 'maks' }, { id: 'mici' }]);
+		const face = (name: string) => screen.getByRole('img', { name: new RegExp(`^${name}`) });
+		expect(face('mici').hasAttribute('data-highlighted')).toBe(true);
+		expect(face('maks').hasAttribute('data-highlighted')).toBe(false);
+		update({ highlightId: undefined });
+		expect(face('mici').hasAttribute('data-highlighted')).toBe(false);
+	});
+
 	it('clusters only from 25 report markers (P4 "Many results")', async () => {
 		const many = Array.from({ length: 24 }, (_, index) => report(`r${index}`, 'found'));
 		const { update } = renderMap({ cluster: true, markers: [...many, report('me', 'me')] });

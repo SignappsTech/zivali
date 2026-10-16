@@ -505,13 +505,23 @@ describe('PhotoPicker', () => {
 
 	it('keeps at most 5 photos, skips the same photo twice and says why a photo cannot be used', async () => {
 		pendingUploads();
-		picker.launchImageLibraryAsync.mockResolvedValue(assets(1, 1, 2, 3, 4, 5, 6));
+		const seven = assets(1, 1, 2, 3, 4, 5, 6);
+		// Assets 6 and 7 do not fit: their picker cache copies (full EXIF and GPS) go at once, unprepared.
+		const extra = seven.assets.slice(5);
+		fs.mkdirSync(path.join(Paths.cache.uri, 'ImagePicker'), { recursive: true });
+		for (const asset of extra) {
+			asset.uri = new File(Paths.cache, 'ImagePicker', `${asset.uri}.jpg`).uri;
+			fs.writeFileSync(asset.uri, 'original with GPS');
+		}
+		picker.launchImageLibraryAsync.mockResolvedValue(seven);
 		await renderPicker();
 
 		await press('Izberi iz galerije');
 		expect(await screen.findByText('Dodate lahko največ 5 fotografij.')).toBeOnTheScreen();
 		await waitFor(() => expect(prepare).toHaveBeenCalledTimes(5));
 		expect(await screen.findByLabelText('Fotografija 4 od 4')).toBeOnTheScreen();
+		for (const asset of extra) expect(fs.existsSync(asset.uri)).toBe(false);
+		fs.rmSync(path.join(Paths.cache.uri, 'ImagePicker'), { recursive: true });
 
 		// One more fits: the gallery limits the selection to it.
 		prepare.mockRejectedValueOnce(new PhotoFileError('TOO_SMALL'));

@@ -11,6 +11,8 @@ export type ConsentStorage = { get(): string | null; set(value: string): void };
 /** The web cookie; the server reads it too, so the banner's first view is in the HTML (apps/web layout). */
 export const CONSENT_KEY = 'zz_consent';
 const YEAR_S = 365 * 24 * 60 * 60;
+/** The cookie outlives the 12-month window so the age check can say "a year has passed" (TASK-13.7). */
+const COOKIE_S = 400 * 24 * 60 * 60;
 
 export const cookieStorage: ConsentStorage = {
 	get() {
@@ -21,7 +23,7 @@ export const cookieStorage: ConsentStorage = {
 	set(value) {
 		if (typeof document === 'undefined') return;
 		const secure = location.protocol === 'https:' ? '; Secure' : '';
-		document.cookie = `${CONSENT_KEY}=${encodeURIComponent(value)}; Max-Age=${YEAR_S}; Path=/; SameSite=Lax${secure}`;
+		document.cookie = `${CONSENT_KEY}=${encodeURIComponent(value)}; Max-Age=${COOKIE_S}; Path=/; SameSite=Lax${secure}`;
 	},
 };
 

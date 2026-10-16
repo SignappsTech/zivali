@@ -67,7 +67,7 @@ test('ga4: nothing loads before consent; grant follows basic Consent Mode v2 ord
 	assert.equal(b.win.dataLayer, undefined);
 	assert.equal(b.win.gtag, undefined);
 	assert.deepEqual([...b.jar.keys()], ['zz_consent']);
-	assert.match(b.writes[0]!, /^zz_consent=%7B.*; Max-Age=31536000; Path=\/; SameSite=Lax; Secure$/);
+	assert.match(b.writes[0]!, /^zz_consent=%7B.*; Max-Age=34560000; Path=\/; SameSite=Lax; Secure$/);
 
 	setConsent({ analytics: true });
 	assert.deepEqual(b.scripts, [

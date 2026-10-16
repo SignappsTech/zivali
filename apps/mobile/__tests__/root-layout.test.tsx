@@ -17,6 +17,8 @@ jest.mock('expo-router', () => ({
 jest.mock('@/components/anonymous/captcha-sheet', () => ({ CaptchaSheet: () => null }));
 jest.mock('@/components/photos/prepare-photo', () => ({ filePut: jest.fn() }));
 jest.mock('@/components/shell/consent', () => ({ ConsentSheet: () => null }));
+// The session-ended notice (TASK-87.6) reads the offline store; its own suite covers it.
+jest.mock('@/components/shell/session-ended', () => ({ SessionEndedNotice: () => null }));
 jest.mock('@/components/ui/sonner', () => ({ Toaster: () => null }));
 jest.mock('@/lib/analytics', () => ({ setupAnalytics: jest.fn(), useScreenTracking: jest.fn() }));
 jest.mock('@/lib/anonymous', () => ({ ensureSession: jest.fn() }));

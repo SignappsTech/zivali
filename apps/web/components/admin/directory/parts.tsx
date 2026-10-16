@@ -1,7 +1,6 @@
 'use client';
 
 import type { Icon } from '@phosphor-icons/react';
-import { CheckIcon } from '@phosphor-icons/react/dist/ssr/Check';
 import { ClockIcon } from '@phosphor-icons/react/dist/ssr/Clock';
 import { DotsThreeIcon } from '@phosphor-icons/react/dist/ssr/DotsThree';
 import { WarningCircleIcon } from '@phosphor-icons/react/dist/ssr/WarningCircle';
@@ -59,30 +58,7 @@ export function ErrorNote({ children, action }: { children: React.ReactNode; act
 	);
 }
 
-/** Filter pill (system §10.4): secondary, selected primary with a check. */
-export function Pill({
-	pressed,
-	onPressedChange,
-	children,
-}: {
-	pressed: boolean;
-	onPressedChange: (next: boolean) => void;
-	children: React.ReactNode;
-}) {
-	return (
-		<Button
-			type="button"
-			size="sm"
-			variant={pressed ? 'default' : 'secondary'}
-			aria-pressed={pressed}
-			className="rounded-chip text-control"
-			onClick={() => onPressedChange(!pressed)}
-		>
-			{pressed && <CheckIcon weight="bold" aria-hidden="true" className="size-4.5" />}
-			{children}
-		</Button>
-	);
-}
+export { Pill } from '@/components/ui/pill';
 
 export const pillClass = cn(buttonVariants({ variant: 'secondary', size: 'sm' }), 'rounded-chip text-control');
 

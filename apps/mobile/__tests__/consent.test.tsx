@@ -2,6 +2,7 @@ import 'react-native-reanimated';
 
 import { PortalHost } from '@rn-primitives/portal';
 import { fireEvent, render, screen } from '@testing-library/react-native';
+import { renderRouter } from 'expo-router/testing-library';
 import type { ReactNode } from 'react';
 
 import {
@@ -14,7 +15,9 @@ import {
 	trackScreen,
 } from '@zivali/analytics';
 import sl from '@zivali/i18n/dist/sl.json';
+import ConsentSettings from '@/app/settings/consent';
 import { ConsentSheet } from '@/components/shell/consent';
+import { toast } from '@/components/ui/sonner';
 import { I18nProvider } from '@/lib/i18n';
 
 const mockStorage = new Map<string, string>();
@@ -27,6 +30,7 @@ jest.mock('expo-sqlite/localStorage/install', () => {
 	return {};
 });
 jest.mock('@/lib/env', () => ({ env: { EXPO_PUBLIC_APP_URL: 'https://najdimo.test' } }));
+jest.mock('@/components/ui/sonner', () => ({ toast: Object.assign(jest.fn(), { success: jest.fn() }) }));
 
 const store = new Map<string, string>();
 const storage = { get: () => store.get('zz_consent') ?? null, set: (v: string) => void store.set('zz_consent', v) };
@@ -100,5 +104,53 @@ describe('consent sheet', () => {
 		await screen.unmount();
 		await sheet();
 		expect(screen.getByText(sl.consent.reask_year)).toBeOnTheScreen();
+	});
+});
+
+// TASK-13.4 QA (AC#4): Profile -> Cookie settings changes or withdraws the choice as easily as it was given.
+describe('Cookie settings screen', () => {
+	jest.setTimeout(60_000);
+	const settings = () =>
+		renderRouter({ 'settings/consent': ConsentSettings }, { initialUrl: '/settings/consent', wrapper: Providers });
+
+	test('shows the stored grant; one switch and Save withdraw it at once, with a toast', async () => {
+		setConsent({ analytics: true });
+		await settings();
+		const analytics = screen.getByRole('switch', { name: sl.consent.analytics_switch_a11y });
+		expect(analytics).toBeChecked();
+		await fireEvent.press(analytics);
+		await fireEvent.press(screen.getByRole('button', { name: sl.consent.save }));
+		expect(getConsent()).toMatchObject({ v: 1, analytics: false });
+		expect(toast.success).toHaveBeenCalledWith(sl.consent.saved_toast);
+		resetMockEvents();
+		trackScreen('/profile');
+		expect(getMockEvents()).toHaveLength(0);
+		expect(screen.getByRole('switch', { name: sl.consent.analytics_switch_a11y })).not.toBeChecked();
+	});
+
+	test('after a decline, Accept all grants at once; Reject all withdraws again', async () => {
+		setConsent({ analytics: false });
+		await settings();
+		expect(screen.getByRole('switch', { name: sl.consent.analytics_switch_a11y })).not.toBeChecked();
+		await fireEvent.press(screen.getByRole('button', { name: sl.consent.accept_all }));
+		expect(getConsent()).toMatchObject({ analytics: true });
+		resetMockEvents();
+		trackScreen('/profile');
+		expect(getMockEvents().map((e) => e.name)).toContain('screen_view');
+		await fireEvent.press(screen.getByRole('button', { name: sl.consent.reject_all }));
+		expect(getConsent()).toMatchObject({ analytics: false });
+		resetMockEvents();
+		trackScreen('/map');
+		expect(getMockEvents()).toHaveLength(0);
+	});
+
+	test('an expired grant shows the switch off: the stored choice is not treated as current', async () => {
+		store.set(
+			'zz_consent',
+			JSON.stringify({ v: 1, analytics: true, ts: new Date(Date.now() - 400 * 864e5).toISOString() })
+		);
+		initAnalytics({ provider: 'mock', storage });
+		await settings();
+		expect(screen.getByRole('switch', { name: sl.consent.analytics_switch_a11y })).not.toBeChecked();
 	});
 });

@@ -21,8 +21,8 @@ const schema = z
 		APP_VERSION: z.string().default('dev'),
 		// Origin the API presigns photo PUTs with (C5): the CSP connect-src opens exactly this.
 		R2_UPLOAD_ORIGIN: z.url(),
-		// Where the API serves public report photos (C5, the API's own MEDIA_BASE_URL): CSP img-src and the Open Graph
-		// image fetch open its origin. Unset locally, where the photos come from MinIO on R2_UPLOAD_ORIGIN.
+		// Public media bucket the API serves published report photos from (C5; same value as the API's): the CSP
+		// img-src opens its origin. Optional locally, where MinIO serves it from the R2_UPLOAD_ORIGIN host.
 		MEDIA_BASE_URL: z.url().optional(),
 		// Universal / App Links (TASK-12.3): a platform's entry is left out of its .well-known file while unset (Q-007).
 		APPLE_TEAM_ID: z
@@ -45,6 +45,10 @@ const schema = z
 		},
 		{ path: ['R2_UPLOAD_ORIGIN'], message: 'must be https://<account>.eu.r2.cloudflarestorage.com outside local' }
 	)
+	.refine((v) => v.APP_ENV === 'local' || v.MEDIA_BASE_URL?.startsWith('https://'), {
+		path: ['MEDIA_BASE_URL'],
+		message: 'required, https, outside local',
+	})
 	.refine((v) => v.NEXT_PUBLIC_ANALYTICS_PROVIDER !== 'ga4' || v.NEXT_PUBLIC_GA_MEASUREMENT_ID, {
 		path: ['NEXT_PUBLIC_GA_MEASUREMENT_ID'],
 		message: 'required when NEXT_PUBLIC_ANALYTICS_PROVIDER=ga4',
