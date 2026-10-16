@@ -15,7 +15,7 @@ import { placeReverse } from '@zivali/api/__fixtures__/geocode';
 import { publicReport } from '@zivali/api/__fixtures__/reports';
 
 // TASK-18.2 report detail: a lost report with a reward and a photo served from here (playwright.config.ts sets
-// MEDIA_BASE_URL to this server), the found fixture (the /m page's "Uredi prijavo" target) and a gone one.
+// MEDIA_BASE_URL to this server), the found fixture and a gone one.
 const media = `http://localhost:${process.env.PORT || 4010}/media`;
 // 1 x 1 PNG.
 const PIXEL = Buffer.from(
@@ -44,6 +44,56 @@ const lostReport = {
 };
 // Answered with an error status: [status, code].
 const failures: Record<string, [number, string]> = { '/v1/reports/Gone1234': [410, 'GONE'] };
+
+// TASK-26.4 owner lifecycle: Own12345, the signed-in owner's lost report (the mock answers its owner view to anyone),
+// kept in memory so the page shows each transition and edit when it re-renders. POST /e2e/reset starts it afresh.
+const ownReport = () => {
+	const now = new Date().toISOString();
+	return {
+		...lostReport,
+		id: '51aa3c2e-4b1d-4f6a-9e2c-8d7b5a1f3e11',
+		short_code: 'Own12345',
+		name: 'Medo',
+		is_mine: true,
+		manager_role: 'owner',
+		moderation_state: 'visible',
+		close_reason: null as string | null,
+		pet_id: null,
+		chip_number: null,
+		chip_status: 'none',
+		collar: null,
+		location: { lat: 46.0641, lng: 14.4931 },
+		requested_radius_m: null,
+		contact_pref: 'chat_only',
+		reward_eur: 50,
+		reward_note: null,
+		first_match_at: null,
+		reunited_at: null as string | null,
+		closed_at: null as string | null,
+		created_at: now,
+		last_owner_update_at: now,
+	};
+};
+let own = ownReport();
+
+/** C4 transitions and PATCH on Own12345; undefined for any other request. */
+function lifecycle(method: string, path: string, body: Record<string, unknown>) {
+	const now = new Date().toISOString();
+	if (method === 'POST' && path === '/e2e/reset') return (own = ownReport());
+	if (path === '/v1/me/reports') return { items: [own], next_cursor: null };
+	if (path === '/v1/reports/Own12345' && method === 'PATCH') {
+		Object.assign(own, body);
+		own.reward = { eur: own.reward_eur, note: own.reward_note };
+	}
+	if (path === '/v1/reports/Own12345') return own;
+	if (method !== 'POST' || path !== '/v1/reports/Own12345/transitions') return undefined;
+	if (body.action === 'close') Object.assign(own, { status: 'closed', close_reason: body.reason, closed_at: now });
+	if (body.action === 'reopen')
+		Object.assign(own, { status: 'open', close_reason: null, closed_at: null, reunited_at: null });
+	if (body.action === 'mark_reunited') Object.assign(own, { status: 'reunited', reunited_at: now });
+	if (body.action === 'extend') own.last_owner_update_at = now;
+	return own;
+}
 
 const noPhone = {
 	...ljubljanaShelter,
@@ -149,6 +199,25 @@ createServer((request, response) => {
 		response.writeHead(200, { 'Content-Type': 'image/png' });
 		return void response.end(PIXEL);
 	}
+	if (
+		request.method !== 'OPTIONS' &&
+		(url.pathname === '/e2e/reset' || url.pathname.match(/^\/v1\/(me\/)?reports/))
+	) {
+		let raw = '';
+		request.on('data', (chunk) => (raw += chunk));
+		request.on('end', () => {
+			const result = lifecycle(request.method ?? 'GET', url.pathname, raw ? JSON.parse(raw) : {});
+			if (!result) return void serve(request, response, url);
+			response.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+			response.end(JSON.stringify(result));
+		});
+		return;
+	}
+	serve(request, response, url);
+}).listen(Number(process.env.PORT || 4010));
+
+/** Fixture routes and failures by URL; preflights allow the methods the clients send. */
+function serve(request: IncomingMessage, response: ServerResponse, url: URL) {
 	const failure = failures[url.pathname];
 	if (failure) {
 		response.writeHead(failure[0], { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
@@ -159,6 +228,7 @@ createServer((request, response) => {
 		'Content-Type': 'application/json',
 		'Access-Control-Allow-Origin': '*',
 		'Access-Control-Allow-Headers': '*',
+		'Access-Control-Allow-Methods': 'GET, POST, PATCH, PUT, DELETE',
 	});
 	response.end(JSON.stringify(body ?? { error: { code: 'NOT_FOUND', message: `No mock for ${request.url}` } }));
-}).listen(Number(process.env.PORT || 4010));
+}

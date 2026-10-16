@@ -14,6 +14,7 @@
 	"uploaded": "Fotografija je naložena.",
 	"failed": "Fotografija se ni naložila.",
 	"failed_network": "Fotografija se ni naložila. Preverite povezavo in poskusite znova.",
+	"captcha_failed": "Preverjanje ni uspelo. Poskusili bomo znova čez minuto.",
 	"retry": "Poskusi znova",
 	"limit": "Dodate lahko največ 5 fotografij.",
 	"too_small": "Fotografija je premajhna. Izberite večjo, ki je na krajši stranici široka vsaj 320 slikovnih pik.",

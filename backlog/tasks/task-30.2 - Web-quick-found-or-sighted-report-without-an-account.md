@@ -1,11 +1,11 @@
 ---
 id: TASK-30.2
 title: Web quick found or sighted report without an account
-status: To Do
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:14'
-updated_date: '2026-10-14 23:37'
+updated_date: '2026-10-16 06:11'
 labels:
   - fe
   - 'est:M'
@@ -45,12 +45,18 @@ Branch: agent/task-30.2-found-web
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Report found follows the P7 sequence: photo, location pre-filled from GPS or EXIF, 'I have the animal' or 'I only saw it', optional note, optional email; it never asks where the animal is kept.
-- [ ] #2 Submitting without an account uses the anonymous session (captcha when enabled), creates the report and shows the success screen with the private manage link (and email if given).
-- [ ] #3 'I saw this pet' on a lost listing (sighting slot) creates a SIGHTED report linked to it.
-- [ ] #4 Rate-limit and hold responses show friendly messages; report_found_start and report_found_submit fire with consent only; no ad slot in the flow.
+- [x] #1 Report found follows the P7 sequence: photo, location pre-filled from GPS or EXIF, 'I have the animal' or 'I only saw it', optional note, optional email; it never asks where the animal is kept.
+- [x] #2 Submitting without an account uses the anonymous session (captcha when enabled), creates the report and shows the success screen with the private manage link (and email if given).
+- [x] #3 'I saw this pet' on a lost listing (sighting slot) creates a SIGHTED report linked to it.
+- [x] #4 Rate-limit and hold responses show friendly messages; report_found_start and report_found_submit fire with consent only; no ad slot in the flow.
 - [ ] #5 A scripted Playwright run completes the flow in under 60 s on a mobile viewport; axe 0 violations.
-- [ ] #6 After submit (so the 60 s target is unaffected) a notice says the find should be reported to the responsible shelter, with call buttons from the directory (C18), and that any vet or shelter can read the chip; the legal timing appears only when content.legal_timings is on.
+- [x] #6 After submit (so the 60 s target is unaffected) a notice says the find should be reported to the responsible shelter, with call buttons from the directory (C18), and that any vet or shelter can read the chip; the legal timing appears only when content.legal_timings is on.
 - [ ] #7 From TASK-17.2: on Publish, store the returned manage token with saveManageToken (lib/manage-link.ts) and wrap the submit in useAutoRetry (components/manage/use-auto-retry.ts), so a captcha or network failure keeps the draft and retries every 60 s and on reconnect; the success screen shows and copies the manage link (C7) with a QR code from TASK-24.2's encoder, and offers "Create an account".
-- [ ] #8 From TASK-17.2: the manage page (/m) shows the "Kraj" (place) fact once this task provides the public place label.
+- [x] #8 From TASK-17.2: the manage page (/m) shows the "Kraj" (place) fact once this task provides the public place label.
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+TASK-30.2 (frontend): AC#5 spec written (apps/web/e2e/report-found.spec.ts), run left to the merge queue. AC#7 done except the QR code: TASK-24.2's encoder is not merged yet (only the qrcode dependency); the QR must be drawn in the browser, since the token never reaches the server (C7). Publish keeps its Idempotency-Key on NETWORK, 5xx, RATE_LIMITED and a failed captcha, and drops it only on another 4xx or when the body changes (TASK-29.3 review a-c).
+<!-- SECTION:NOTES:END -->

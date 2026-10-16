@@ -13,10 +13,13 @@ import { type PhotoExif, PhotoFileError, preparePhoto, type WebPreparedPhoto } f
 export const MAX_PHOTOS = 5;
 /** Automatic retries for network and server faults (1, 2, 4, 8 s); then "Poskusi znova" or going back online. */
 const RETRIES = 4;
+/** C7: a failed or unavailable captcha fixes itself, so the upload is tried again every 60 s. */
+const CAPTCHA_RETRY_MS = 60_000;
 
 export type PhotoMessage =
 	| 'photos.failed'
 	| 'photos.failed_network'
+	| 'photos.captcha_failed'
 	| 'photos.limit'
 	| 'photos.too_small'
 	| 'photos.heic_unsupported'
@@ -56,6 +59,7 @@ export const clearPhotoDraft = (draft: string) => del(draftKey(draft)).catch(() 
 
 function failure(error: unknown): { message: PhotoMessage; retry: boolean } {
 	const code = error instanceof ApiError ? error.code : undefined;
+	if (code === 'CAPTCHA_FAILED') return { message: 'photos.captcha_failed', retry: true };
 	if (code === 'NETWORK') return { message: 'photos.failed_network', retry: true };
 	if (code === 'VALIDATION') return { message: 'photos.failed', retry: false };
 	if (code === 'RATE_LIMITED') return { message: 'errors.RATE_LIMITED_generic', retry: false };
@@ -67,13 +71,16 @@ function failure(error: unknown): { message: PhotoMessage; retry: boolean } {
  * Prepares, keeps and uploads up to 5 photos of one draft (C5): one upload at a time so the first is done soonest on
  * a weak connection, retries with backoff, aborts on remove, and resumes from IndexedDB after a reload or going
  * back online. `onExif` gets the place and time read from a photo, to offer them with consent; nothing stores them.
- * `saved` photos (read once, on mount) come first and count towards the 5. `hold` keeps new photos in this browser
- * (`kept`) and uploads them once it is false again: a signed-out lost report sends nothing before sign-in (C3).
+ * `saved` photos (read once, on mount) come first and count towards the 5. `beforeUpload` runs before each upload (a
+ * failure fails that upload like any other): the anonymous sign-in a finder without an account needs first (C7).
+ * `hold` keeps new photos in this browser (`kept`) and uploads them once it is false again: a signed-out lost report
+ * sends nothing before sign-in (C3).
  */
 export function usePhotoUploads(
 	draft: string,
 	onExif?: (exif: PhotoExif) => void,
 	saved: SavedPhoto[] = [],
+	beforeUpload?: () => Promise<unknown>,
 	hold = false
 ) {
 	const locale = useLocale();
@@ -139,6 +146,7 @@ export function usePhotoUploads(
 		live.current.controllers.set(key, controller);
 		patch(key, { status: 'uploading', progress: 0, error: undefined });
 		try {
+			await beforeUpload?.();
 			const { sha256, width, height, bytes, file } = photo;
 			const { photoId } = await uploadPhoto(
 				client,
@@ -156,7 +164,13 @@ export function usePhotoUploads(
 			const { message, retry } = failure(error);
 			patch(key, { status: 'failed', error: message });
 			const attempt = live.current.attempts.get(key) ?? 0;
-			if (retry && attempt < RETRIES) {
+			if (message === 'photos.captcha_failed') {
+				clearTimeout(live.current.timers.get(key));
+				live.current.timers.set(
+					key,
+					setTimeout(() => enqueue(key), CAPTCHA_RETRY_MS)
+				);
+			} else if (retry && attempt < RETRIES) {
 				live.current.attempts.set(key, attempt + 1);
 				clearTimeout(live.current.timers.get(key));
 				live.current.timers.set(
@@ -252,7 +266,8 @@ export function usePhotoUploads(
 		for (const photo of restored) if (!photo.photoId) enqueue(photo.key);
 	});
 	const backOnline = useEffectEvent(() => {
-		for (const photo of live.current.photos) if (photo.error === 'photos.failed_network') retry(photo.key);
+		for (const photo of live.current.photos)
+			if (photo.error === 'photos.failed_network' || photo.error === 'photos.captcha_failed') retry(photo.key);
 	});
 	const release = useEffectEvent(() => {
 		for (const photo of live.current.photos) if (photo.status === 'kept') enqueue(photo.key);

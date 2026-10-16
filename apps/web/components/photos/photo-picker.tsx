@@ -31,6 +31,8 @@ type PhotoPickerProps = {
 	onChange?: (photos: PickedPhoto[]) => void;
 	/** Place and time read from a photo, to offer with consent. Coarsen the point before it goes anywhere. */
 	onExif?: (exif: PhotoExif) => void;
+	/** Runs before each upload: the anonymous sign-in (C7) of a finder without an account (P7). */
+	beforeUpload?: () => Promise<unknown>;
 	/** true keeps new photos in this browser and uploads them once false, e.g. until a lost report has an account (C3). */
 	hold?: boolean;
 	className?: string;
@@ -40,13 +42,14 @@ type PhotoPickerProps = {
  * Photo step of P6 and P7 (FR-003): camera and gallery tiles on touch screens, a file button with a drop area on
  * desktop, then a row per photo with its preview, upload progress, retry, reorder and remove. Up to 5 photos.
  */
-export function PhotoPicker({ draft, saved, onChange, onExif, hold, className }: PhotoPickerProps) {
+export function PhotoPicker({ draft, saved, onChange, onExif, beforeUpload, hold, className }: PhotoPickerProps) {
 	const t = useTranslations('photos');
 	const message = useTranslations();
 	const { photos, preparing, notice, justUploaded, add, remove, move, retry } = usePhotoUploads(
 		draft,
 		onExif,
 		saved,
+		beforeUpload,
 		hold
 	);
 	const root = React.useRef<HTMLDivElement>(null);

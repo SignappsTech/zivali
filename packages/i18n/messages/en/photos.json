@@ -14,6 +14,7 @@
 	"uploaded": "Photo uploaded.",
 	"failed": "The photo did not upload.",
 	"failed_network": "The photo did not upload. Check your connection and try again.",
+	"captcha_failed": "The check did not pass. We will try again in a minute.",
 	"retry": "Try again",
 	"limit": "You can add up to 5 photos.",
 	"too_small": "The photo is too small. Please choose a larger one, at least 320 pixels on its shorter side.",
