@@ -365,7 +365,8 @@ describe('wipeOnSessionEnd', () => {
 		expect(stopGeofencing).toHaveBeenCalledTimes(1);
 		expect(cacheQuietHours).toHaveBeenCalledWith(null);
 		expect(cacheOwnReports).toHaveBeenCalledWith(null);
-		for (const table of ['cache_areas', 'drafts', 'geofences', 'geofence_events']) expect(await count(table)).toBe(0);
+		for (const table of ['cache_areas', 'drafts', 'geofences', 'geofence_events'])
+			expect(await count(table)).toBe(0);
 		// As on sign-out: the outbox and the manage tokens stay.
 		expect(await count('outbox')).toBe(2);
 		expect(mockKeychain.has(manageTokenKey('rep-1'))).toBe(true);

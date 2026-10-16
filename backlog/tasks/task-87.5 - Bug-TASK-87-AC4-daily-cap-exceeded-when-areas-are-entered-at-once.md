@@ -1,11 +1,11 @@
 ---
 id: TASK-87.5
 title: 'Bug (TASK-87 AC#4): daily cap exceeded when areas are entered at once'
-status: To Do
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-16 03:34'
-updated_date: '2026-10-16 03:36'
+updated_date: '2026-10-16 04:02'
 labels:
   - bug
   - 'est:XS'
@@ -31,5 +31,11 @@ Severity: low (one extra alert per simultaneous area, only where areas overlap).
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Geofence entries that arrive together never show more than DAILY_CAP (3) local alerts a day; a jest test in geofence.test.ts enters several areas concurrently and expects exactly the cap.
+- [x] #1 Geofence entries that arrive together never show more than DAILY_CAP (3) local alerts a day; a jest test in geofence.test.ts enters several areas concurrently and expects exactly the cap.
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+Branch: agent/task-87.4-proximity-fixes. The claim insert checks the daily cap in the same statement (insert ... select ... where count < DAILY_CAP), so concurrent handlers never pass it together. Test: geofence.test.ts 'areas entered at once' (6 before the fix, 3 now).
+<!-- SECTION:NOTES:END -->

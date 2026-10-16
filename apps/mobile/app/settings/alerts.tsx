@@ -1,5 +1,6 @@
 import { skipToken } from '@reduxjs/toolkit/query';
 import * as Location from 'expo-location';
+import * as Notifications from 'expo-notifications';
 import { Redirect, Stack, useRouter } from 'expo-router';
 import { CaretRightIcon } from 'phosphor-react-native/src/icons/CaretRight';
 import { CheckIcon } from 'phosphor-react-native/src/icons/Check';
@@ -36,6 +37,7 @@ import { Switch } from '@/components/ui/switch';
 import { Text } from '@/components/ui/text';
 import { alertInput, newAlerts, trackOptIn } from '@/lib/alerts';
 import { DAILY_CAP, enableGeofencing, type GeofenceState, geofenceState, stopGeofencing } from '@/lib/offline/geofence';
+import { usePushPermission } from '@/lib/push';
 
 const STOPS_M = RADII.alert.stops; // the picker's alert stops, 1 to 25 km
 
@@ -198,27 +200,41 @@ const PRIMER_POINTS = [
 	['location_always_off', ToggleRightIcon],
 ] as const;
 
+/** `denied`: Always location declined; `no_notifications`: the phone shows no notifications, so no reminder can show. */
+type RemindersState = GeofenceState | 'denied' | 'no_notifications';
+
 /**
  * P13 "Opomniki v bližini" (FR-043): on-device reminders from OS geofences (C17), separate from the alerts above, so
- * pausing those does not stop these (open product question). Turning on shows the Always primer while the OS can still
- * ask; a decline or a permission the OS took back leaves it off with a note. Shows the daily cap and the profile's quiet
- * hours, which are changed in "Kako vas obvestimo".
+ * pausing those does not stop these (open product question). Turning on needs notifications, then Always location:
+ * each primer shows while the OS can still ask; a decline or a permission the OS took back leaves it off with a note.
+ * Shows the daily cap and the profile's quiet hours, which are changed in "Kako vas obvestimo". Signed out (`me`
+ * null: reminders a session left behind), only the off switch works.
  */
-function NearbyReminders({ me }: { me: Me }) {
+function NearbyReminders({ me }: { me: Me | null }) {
 	const t = useTranslations();
 	const router = useRouter();
 	const errorText = useErrorText();
-	const [state, setState] = React.useState<GeofenceState | 'denied'>();
-	const [primer, setPrimer] = React.useState(false);
+	const { request: requestNotifications } = usePushPermission();
+	const [state, setState] = React.useState<RemindersState>();
+	const [primer, setPrimer] = React.useState<'notifications' | 'location_always'>();
 
 	React.useEffect(() => {
-		// Again on the way back from the phone settings, where the permission may have changed.
-		const check = () =>
-			void geofenceState()
-				.then((next) => setState((prev) => (prev === 'denied' && next === 'off' ? prev : next)))
-				.catch(() => setState('off'));
-		check();
-		const app = AppState.addEventListener('change', (now) => now === 'active' && check());
+		// Again on the way back from the phone settings, where a permission may have changed.
+		const check = async () => {
+			let next: RemindersState = await geofenceState();
+			const notifications = await Notifications.getPermissionsAsync();
+			// Turned off in the phone settings: no reminder can show, so no area stays watched for nothing.
+			if (next === 'on' && !notifications.granted) {
+				await stopGeofencing();
+				next = notifications.canAskAgain ? 'off' : 'no_notifications';
+			}
+			const kept = (prev?: RemindersState) =>
+				prev === 'denied' || (prev === 'no_notifications' && !notifications.granted);
+			setState((prev) => (next === 'off' && kept(prev) ? prev : next));
+		};
+		const run = () => void check().catch(() => setState('off'));
+		run();
+		const app = AppState.addEventListener('change', (now) => now === 'active' && run());
 		return () => app.remove();
 	}, []);
 
@@ -234,14 +250,30 @@ function NearbyReminders({ me }: { me: Me }) {
 			return false;
 		}
 	};
+	/** The notifications primer's OS prompt (and push token, TASK-22.5); an OS decline shows the note. */
+	const allowNotifications = async () => {
+		const granted = await requestNotifications();
+		if (!granted) setState('no_notifications');
+		return granted;
+	};
+	// Notifications first: without them no reminder ever shows, so Always location is not worth asking for.
+	const turnOn = async () => {
+		const notifications = await Notifications.getPermissionsAsync();
+		if (!notifications.granted) {
+			if (notifications.canAskAgain) setPrimer('notifications');
+			else setState('no_notifications');
+			return;
+		}
+		setState((prev) => (prev === 'no_notifications' ? 'off' : prev));
+		const always = await Location.getBackgroundPermissionsAsync();
+		if (always.granted) await enable();
+		else if (always.canAskAgain) setPrimer('location_always');
+		else setState('denied');
+	};
 	const turn = async (on: boolean) => {
 		try {
-			if (on) {
-				const always = await Location.getBackgroundPermissionsAsync();
-				if (always.granted) await enable();
-				else if (always.canAskAgain) setPrimer(true);
-				else setState('denied');
-			} else {
+			if (on) await turnOn();
+			else {
 				await stopGeofencing();
 				setState('off');
 				toast.success(t('profile.saved'));
@@ -263,7 +295,8 @@ function NearbyReminders({ me }: { me: Me }) {
 				label={t('alerts.reminders_label')}
 				help={t('alerts.reminders_help', { cap: DAILY_CAP })}
 				checked={state === 'on'}
-				disabled={state === undefined}
+				// Signed out they can only be turned off.
+				disabled={state === undefined || (!me && state !== 'on')}
 				onCheckedChange={(on) => void turn(on)}
 			/>
 			{state === 'denied' || state === 'permission_lost' ? (
@@ -272,26 +305,46 @@ function NearbyReminders({ me }: { me: Me }) {
 					text={state === 'permission_lost' ? t('alerts.reminders_lost') : undefined}
 				/>
 			) : null}
-			<View className="flex-row items-center gap-3">
-				<View className="min-w-0 flex-1">
-					<Label>{t('alerts.quiet_title')}</Label>
-					<Text>
-						{me.quiet_from && me.quiet_to
-							? t('alerts.reminders_quiet_value', { from: me.quiet_from, to: me.quiet_to })
-							: t('alerts.quiet_off')}
-					</Text>
+			{state === 'no_notifications' ? (
+				<PermissionNote kind="notifications" text={t('alerts.push_denied')} />
+			) : null}
+			{me ? (
+				<View className="flex-row items-center gap-3">
+					<View className="min-w-0 flex-1">
+						<Label>{t('alerts.quiet_title')}</Label>
+						<Text>
+							{me.quiet_from && me.quiet_to
+								? t('alerts.reminders_quiet_value', { from: me.quiet_from, to: me.quiet_to })
+								: t('alerts.quiet_off')}
+						</Text>
+					</View>
+					<Button
+						variant="text"
+						className="-mr-3"
+						aria-label={t('alerts.reminders_quiet_change')}
+						onPress={() => router.push('/settings/notifications')}
+					>
+						{t('alerts.area_change')}
+						<Icon as={CaretRightIcon} />
+					</Button>
 				</View>
-				<Button
-					variant="text"
-					className="-mr-3"
-					aria-label={t('alerts.reminders_quiet_change')}
-					onPress={() => router.push('/settings/notifications')}
-				>
-					{t('alerts.area_change')}
-					<Icon as={CaretRightIcon} />
-				</Button>
-			</View>
-			<PermissionPrimer kind="location_always" open={primer} request={enable} onResult={() => setPrimer(false)}>
+			) : null}
+			{/* The TASK-22.5 notifications primer; once allowed, the Always step follows. */}
+			<PermissionPrimer
+				kind="notifications"
+				open={primer === 'notifications'}
+				request={allowNotifications}
+				onResult={(granted) => {
+					setPrimer(undefined);
+					if (granted) void turn(true);
+				}}
+			/>
+			<PermissionPrimer
+				kind="location_always"
+				open={primer === 'location_always'}
+				request={enable}
+				onResult={() => setPrimer(undefined)}
+			>
 				<View className="mt-6 gap-4">
 					{PRIMER_POINTS.map(([key, icon]) => (
 						<View key={key} className="flex-row gap-3">
@@ -313,27 +366,45 @@ function NearbyReminders({ me }: { me: Me }) {
  * P13 "Opozorila v bližini" (settings stack, FR-010): the master switch; when on, the home area (P5 picker), the radius,
  * the animals and pause. Every change saves at once with the "Shranjeno." toast. Channels and quiet hours live in
  * "Kako vas obvestimo" (settings/notifications); the area is the profile's home area (settings/home-area). Below, the
- * separate on-device nearby reminders.
+ * separate on-device nearby reminders. Signed out it sends to the profile, unless reminders a session left behind are
+ * still on (their wipe failed): then only their off switch shows.
  */
 export default function AlertSettings() {
 	const t = useTranslations('alerts');
 	const { me, gate } = useRequireAuth();
-	const { data, isLoading, isFetching, refetch } = useGetAlertSubscriptionQuery(
-		gate === 'signin' ? skipToken : undefined
-	);
-	if (gate === 'signin') return <Redirect href="/profile" />;
+	const signedOut = gate === 'signin';
+	const { data, isLoading, isFetching, refetch } = useGetAlertSubscriptionQuery(signedOut ? skipToken : undefined);
+	const [leftover, setLeftover] = React.useState<boolean>();
+	React.useEffect(() => {
+		if (signedOut)
+			void geofenceState().then(
+				(state) => setLeftover(state === 'on'),
+				() => setLeftover(false)
+			);
+	}, [signedOut]);
+	if (signedOut && leftover === false) return <Redirect href="/profile" />;
 	return (
 		<>
 			<Stack.Screen options={{ title: t('title') }} />
 			<ScrollView contentContainerClassName="gap-5 px-5 pb-10 pt-6">
-				{me && data !== undefined ? (
-					<AlertsForm me={me} sub={data} />
-				) : isLoading || gate === 'loading' ? (
-					<Loading />
+				{signedOut ? (
+					leftover ? (
+						<NearbyReminders me={null} />
+					) : (
+						<Loading />
+					)
 				) : (
-					<InlineError retrying={isFetching} onRetry={() => void refetch()} />
+					<>
+						{me && data !== undefined ? (
+							<AlertsForm me={me} sub={data} />
+						) : isLoading || gate === 'loading' ? (
+							<Loading />
+						) : (
+							<InlineError retrying={isFetching} onRetry={() => void refetch()} />
+						)}
+						{me ? <NearbyReminders me={me} /> : null}
+					</>
 				)}
-				{me ? <NearbyReminders me={me} /> : null}
 			</ScrollView>
 		</>
 	);

@@ -3,11 +3,11 @@ id: TASK-87.4
 title: >-
   Bug (TASK-87 AC#3): nearby reminders never alert without notification
   permission
-status: To Do
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-16 03:34'
-updated_date: '2026-10-16 03:36'
+updated_date: '2026-10-16 04:02'
 labels:
   - bug
   - 'est:S'
@@ -33,5 +33,11 @@ Severity: medium (the feature is silently dead for users who never enabled push,
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Turning on Nearby reminders without notification permission asks for it (notifications primer while the OS can still ask) or shows the notifications-denied note in the Nearby reminders section with Odpri nastavitve telefona; the section never shows the reminders as working while local notifications cannot show; jest tests cover ask, decline and already denied.
+- [x] #1 Turning on Nearby reminders without notification permission asks for it (notifications primer while the OS can still ask) or shows the notifications-denied note in the Nearby reminders section with Odpri nastavitve telefona; the section never shows the reminders as working while local notifications cannot show; jest tests cover ask, decline and already denied.
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+Branch: agent/task-87.4-proximity-fixes. Turning on checks notifications first (TASK-22.5 primer while the OS can ask, then the Always primer); OS decline or can't ask: off with the notifications note (alerts.push_denied) and Odpri nastavitve telefona; notifications revoked later: the screen stops the areas and explains. Tests: alerts.test.tsx (ask, Ne zdaj, decline, already denied, revoked while on).
+<!-- SECTION:NOTES:END -->

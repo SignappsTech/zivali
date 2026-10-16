@@ -3,11 +3,11 @@ id: TASK-87.6
 title: >-
   Bug (TASK-87 AC#6): reminders and cache survive a session ended outside the
   app
-status: To Do
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-16 03:35'
-updated_date: '2026-10-16 03:36'
+updated_date: '2026-10-16 04:02'
 labels:
   - bug
   - 'est:XS'
@@ -33,5 +33,11 @@ Severity: low (rare trigger; the cached data is public plus the user's own ids, 
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 When the session ends without the in-app sign-out (Supabase SIGNED_OUT after a revoked refresh token: sign out everywhere, password reset, account deleted on the web), the app runs the sign-out wipe (wipeLocalData reason sign_out: geofences stopped, cache, quiet hours and own report ids cleared); a jest test covers it.
+- [x] #1 When the session ends without the in-app sign-out (Supabase SIGNED_OUT after a revoked refresh token: sign out everywhere, password reset, account deleted on the web), the app runs the sign-out wipe (wipeLocalData reason sign_out: geofences stopped, cache, quiet hours and own report ids cleared); a jest test covers it.
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+Branch: agent/task-87.4-proximity-fixes. wipeOnSessionEnd (lib/offline/wipe.ts, subscribed in lib/store at start-up): a SIGNED_OUT not from signOutAndWipe runs wipeLocalData sign_out; the in-app sign-out still wipes once. Signed out with reminders still registered: Profile row and the off switch in Settings > Alerts. Tests: offline-store.test.ts, alerts.test.tsx, shell.test.tsx.
+<!-- SECTION:NOTES:END -->

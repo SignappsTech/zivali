@@ -2,7 +2,7 @@
 import 'react-native-reanimated';
 
 import { PortalHost } from '@rn-primitives/portal';
-import { act, fireEvent, render, screen } from '@testing-library/react-native';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import { router, Stack } from 'expo-router';
 import { renderRouter } from 'expo-router/testing-library';
 import type { ReactNode } from 'react';
@@ -19,6 +19,7 @@ import SettingsLayout from '@/app/settings/_layout';
 import LanguageSettings from '@/app/settings/language';
 import { PermissionNote, PermissionPrimer } from '@/components/shell/permission-primer';
 import { I18nProvider } from '@/lib/i18n';
+import { geofenceState } from '@/lib/offline/geofence';
 
 const mockStorage = new Map<string, string>();
 jest.mock('expo-sqlite/localStorage/install', () => {
@@ -44,6 +45,8 @@ let mockSession = {
 jest.mock('@zivali/api/auth', () => ({ useSession: () => mockSession }));
 const mockSignOutAndWipe = jest.fn();
 jest.mock('@/lib/offline/wipe', () => ({ signOutAndWipe: (options: unknown) => mockSignOutAndWipe(options) }));
+// Nearby reminders still registered (a session left them behind) keep a way to their off switch signed out.
+jest.mock('@/lib/offline/geofence', () => ({ geofenceState: jest.fn() }));
 
 // The sign-out deletes the push token first (C10).
 const mockUnregisterPush = jest.fn();
@@ -111,6 +114,7 @@ beforeEach(() => {
 	mockSession = { session: null, me: null, isAnonymous: false, loading: false };
 	mockSignOutAndWipe.mockReset().mockResolvedValue(true);
 	mockSignOutProviders.mockClear();
+	jest.mocked(geofenceState).mockReset().mockResolvedValue('off');
 });
 
 describe('bottom navigation', () => {
@@ -162,6 +166,9 @@ describe('signed-out tabs', () => {
 		expect(screen.getByRole('heading', { name: sl.profile.signed_out_title })).toBeOnTheScreen();
 		expect(screen.getByRole('button', { name: sl.profile.signed_out_create })).toBeOnTheScreen();
 		expect(screen.queryByText('support card')).toBeNull();
+		// No nearby reminders left on: no row for them.
+		await waitFor(() => expect(geofenceState).toHaveBeenCalled());
+		expect(screen.queryByRole('button', { name: sl.alerts.reminders_title })).toBeNull();
 
 		await fireEvent.press(
 			screen.getByRole('button', { name: `${sl.profile.row_language}, ${sl.nav.language_sl_full}` })
@@ -177,6 +184,14 @@ describe('signed-out tabs', () => {
 		await fireEvent.press(screen.getByRole('button', { name: en.profile.row_cookie_settings }));
 		expect(result.getPathname()).toBe('/settings/consent');
 		expect(screen.getByText(en.consent.necessary_locked)).toBeOnTheScreen();
+	});
+
+	test('Profile signed out: nearby reminders a session left on lead to their off switch', async () => {
+		jest.mocked(geofenceState).mockResolvedValue('on');
+		const result = await shell('/profile');
+
+		await fireEvent.press(await screen.findByRole('button', { name: sl.alerts.reminders_title }));
+		expect(result.getPathname()).toBe('/settings/alerts');
 	});
 });
 
