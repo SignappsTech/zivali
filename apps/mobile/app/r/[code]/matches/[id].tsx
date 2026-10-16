@@ -502,7 +502,7 @@ export default function MatchReviewScreen() {
 			{isLoading ? (
 				<Loading />
 			) : match ? (
-				<Review match={match} mine={mine} code={code} />
+				<Review match={match} mine={mine ?? undefined} code={code} />
 			) : error && !data ? (
 				<View className="px-5 pt-6">
 					<Note
