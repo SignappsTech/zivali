@@ -9,6 +9,7 @@
 	"area_none": "Območje še ni izbrano",
 	"radius_label": "Polmer",
 	"radius_value": "{km} km",
+	"radius_number_label": "Polmer v kilometrih",
 	"species_label": "Za katere živali",
 	"species_dogs": "Psi",
 	"species_cats": "Mačke",

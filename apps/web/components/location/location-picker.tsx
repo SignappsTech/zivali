@@ -116,8 +116,8 @@ const noteClass = 'flex gap-3 rounded-row bg-muted px-[18px] py-4 text-control l
 const floatClass = 'bg-card text-card-foreground shadow-md';
 const floatButton = cn(floatClass, 'hover:bg-[color-mix(in_srgb,hsl(var(--card))_90%,hsl(var(--foreground)))]');
 // P5 radius slider: 44 px target, 6 px `input` track with the `primary` fill to the thumb (`--f`), 28 px `primary`
-// thumb on a 3 px `background` ring, the focus ring around it.
-const rangeClass = cn(
+// thumb on a 3 px `background` ring, the focus ring around it. Also the P13 alert settings' radius.
+export const rangeClass = cn(
 	'block h-11 w-full cursor-pointer appearance-none bg-transparent focus:outline-none',
 	'[&::-webkit-slider-runnable-track]:h-1.5 [&::-webkit-slider-runnable-track]:rounded-full [&::-webkit-slider-runnable-track]:bg-[linear-gradient(to_right,hsl(var(--primary))_0_calc(14px_+_(100%_-_28px)_*_var(--f)),hsl(var(--input))_0)]',
 	'[&::-webkit-slider-thumb]:-mt-[11px] [&::-webkit-slider-thumb]:size-7 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-primary [&::-webkit-slider-thumb]:shadow-[0_0_0_3px_hsl(var(--background))]',
