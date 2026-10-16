@@ -5,6 +5,7 @@ import { Provider } from 'react-redux';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { conversations } from '@zivali/api/__fixtures__/chat';
+import { placeReverse } from '@zivali/api/__fixtures__/geocode';
 import { ownerReport } from '@zivali/api/__fixtures__/reports';
 import { ApiError } from '@zivali/api/client';
 import { createMockApi, type MockRoutes, mockError } from '@zivali/api/mock';
@@ -85,6 +86,18 @@ describe('ManagePage (P7, C7)', () => {
 		expect(screen.getByRole('button', { name: 'Zaključi prijavo' })).toBeTruthy();
 		expect(screen.getByRole('button', { name: 'Žival je spet doma' })).toBeTruthy();
 		expect(document.querySelector('[data-ad-slot]')).toBeNull();
+	});
+
+	it('shows the place of the report\'s public area as "Kraj" (TASK-30.2)', async () => {
+		open('good');
+		const api = show(<ManagePage />, { 'POST /v1/geo/reverse': placeReverse });
+		expect(await screen.findByText('Šiška, Ljubljana')).toBeTruthy();
+		expect(screen.getByText('Kraj')).toBeTruthy();
+		// The fuzzed area's centre, never the exact point the manager view also carries.
+		expect(api.calls.find((call) => call.path === '/v1/geo/reverse')?.body).toEqual({
+			lat: ownerReport.area.lat,
+			lng: ownerReport.area.lng,
+		});
 	});
 
 	it('takes the token out of the address bar; a reload in the tab still claims', async () => {
