@@ -11,7 +11,6 @@ import { ContentPage, Placeholder } from '@/components/shell/page';
 const PENDING = {
 	'/report/lost': 'nav.report_lost_title',
 	'/report/found': 'nav.report_found_title',
-	'/advertise': 'footer.partners',
 } as const;
 
 async function pendingTitle({ params }: PageProps<'/[locale]/[...rest]'>) {

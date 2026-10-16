@@ -81,6 +81,7 @@ for (const viewport of [
 
 		await expect(page.getByRole('heading', { level: 1, name: 'Vaša prijava' })).toBeVisible();
 		await expect(page.getByText('Najdena')).toBeVisible();
+		// TASK-17.7: Edit opens the edit page, which takes the manage-link session (TASK-26.4).
 		await expect(page.getByRole('link', { name: 'Uredi prijavo' })).toHaveAttribute(
 			'href',
 			`/r/${ownerReport.short_code}/uredi`

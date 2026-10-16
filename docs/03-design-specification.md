@@ -1,7 +1,7 @@
 ---
 doc_id: DOC-03
 title: Design Specification
-version: 0.4
+version: 0.5
 status: Draft (direction approved 2026-10-14)
 date: 2026-10-15
 owner: Design Lead
@@ -30,7 +30,7 @@ Direction name: **Warm harbour**, realised as Lagoon. Mockups: `design/direction
 - **Personality:** calm, warm, hopeful, trustworthy. We speak like a kind neighbour who knows what to do. We avoid alarm (capitals, red banners, many exclamation marks), cute talk and paw puns, emoji in the interface, guilt and pity, and promises we cannot keep.
 - **Logo:** a map pin with two soft ears, the hole holding a sun-yellow dot ("the eye of the search"). Works at 16 px and in one colour plus the dot. Files in `design/brand/` (`najdimo-mark.svg`, `najdimo-mark-light.svg`, `najdimo-app-icon.svg`). The wordmark is live text in Bricolage Grotesque for now and will be outlined in the final logo pack.
 - **Color:** lagoon teal (`#145360` primary), mist neutrals (`#E8EEEE` canvas, `#FBFDFD` card), night neutrals for dark mode, sun yellow (`#F7B32B`) as the single warm accent. Status colours: coral (lost), leaf green (found), blue (sighted), sun (reunited). Premium plum, verified teal. 7:1 contrast for body text and the primary action, 4.5:1 minimum elsewhere, verified by the token build. Roles and values in `design/system.md`.
-- **Typography:** Bricolage Grotesque (headings) and Atkinson Hyperlegible Next (text), both Google Fonts with full Slovenian diacritics (Č, Š, Ž verified). Body 16 px minimum, meta 14 px, chip numbers tabular with a slashed zero.
+- **Typography:** Bricolage Grotesque (headings) and Atkinson Hyperlegible Next (text), both Google Fonts with full Slovenian diacritics (Č, Š, Ž verified). Body 16 px minimum, meta 14 px, chip numbers tabular with a slashed zero. **Web font budget (v0.5, TASK-90.5, NFR performance):** first-load fonts at or under about 60 KB, three self-hosted woff2 files: Bricolage Grotesque 700 (headings, one weight, optical size fixed), Atkinson Hyperlegible Next 400 and 700 (500 and 600 fold to 400 and 700). Each file is a custom Latin subset (Basic Latin, Latin-1, Latin Extended-A: covers Č Š Ž Đ Ć and typographic punctuation), preloaded, `font-display: swap` with a size-adjusted Arial fallback. Rationale: the mobile LCP gate (2.5 s) is lost to font bytes (159 KB of variable files with opsz and full weight ranges); the brand lives in the heading face and the Atkinson letterforms, not in extra weights. Details in `design/system.md` §4.
 - **Imagery:** honest owner-snapshot photography, rounded frames, no text or pills on photos. Illustration is flat geometry in brand colours, used only for empty states, the reunited moment and house ads. Generated images are never used as a stand-in for a real report. Brief format for image tasks is in `design/system.md`.
 - **Iconography and motion:** Phosphor Icons (regular, bold, fill), status always icon plus word plus colour. Motion only for feedback and state change, `transform` and `opacity` only, reduced motion honoured.
 - **Maps:** OpenFreeMap tiles in a calm style (land, water, parks, main roads, area names). Lost pets appear as a translucent area with the pet photo, never an exact pin. At most three marker styles.
@@ -149,3 +149,4 @@ Mobile first. Breakpoints: 640 (sm), 768 (md), 1024 (lg), 1280 (xl), 1536 (2xl).
 | 0.2 | 2026-10-14 | Direction phase: brand proposal (name Najdimo, tone, logo, palette, type), directions A and B explored, client chose A, decluttering pass applied, direction section and brand and visual language written. |
 | 0.3 | 2026-10-14 | Client approved the decluttered direction A. Information architecture, key flows, page inventory P1 to P23 (M1 and M2) with design slices, content strategy rules, accessibility and responsive sections completed from requirements v0.2. |
 | 0.4 | 2026-10-15 | FR-044 shelter directory (PRD 0.6, tech re-plan): IA and flows add /zavetisca and the admin directory; P3 gains T5 and T6, P19 the directory screen, P6 and P7 the responsible-shelter call row, P1 footer the Shelters link. Design system v0.5 to v0.7 (P23 and P16 reviews). |
+| 0.5 | 2026-10-16 | TASK-90.5: web font cuts for the mobile LCP gate (single heading weight 700, body 400/700, no opsz axis, custom Latin subsets, preload, size-adjusted fallback). Typography bullet and system.md §4 updated. |
