@@ -11,7 +11,7 @@ import { safety } from '@/content/pages/safety';
 import { routing } from '@/i18n/routing';
 import { OG_PAGES, type OgPage } from '@/lib/seo';
 
-// Open Graph cards for the P3 pages (lib/seo pageMetadata), one per page and locale, built at build time: logo,
+// Open Graph cards for the P3 pages and P22 (lib/seo pageMetadata), one per page and locale, built at build time: logo,
 // wordmark and the page heading in the brand colours, until the image task delivers og-home.png. The URLs end in .png,
 // so the proxy (locale rewrite) skips them.
 export const dynamicParams = false;
@@ -19,13 +19,20 @@ export const generateStaticParams = () =>
 	routing.locales.flatMap((locale) => OG_PAGES.map((page) => ({ image: `${locale}-${page}.png` })));
 
 const ARTICLES = { 'how-it-works': howItWorks, safety, faq, 'for-shelters': forShelters, about };
-const HOME = { sl: sl.pages.home.hero_title, en: en.pages.home.hero_title };
+// Headings kept in the catalogues: the home hero and P22 (until the image task delivers og-partners.png).
+const HEADINGS = {
+	home: { sl: sl.pages.home.hero_title, en: en.pages.home.hero_title },
+	partners: { sl: sl.partners.hero_title, en: en.partners.hero_title },
+};
 
 export async function GET(_request: Request, { params }: RouteContext<'/og/[image]'>) {
 	const [, locale, page] = /^(sl|en)-([a-z-]+)\.png$/.exec((await params).image) ?? [];
 	if (!(locale === 'sl' || locale === 'en') || !OG_PAGES.includes(page as OgPage))
 		return new Response(null, { status: 404 });
-	const heading = page === 'home' ? HOME[locale] : ARTICLES[page as Exclude<OgPage, 'home'>][locale].h1;
+	const heading =
+		page === 'home' || page === 'partners'
+			? HEADINGS[page][locale]
+			: ARTICLES[page as keyof typeof ARTICLES][locale].h1;
 	const c = colors.light;
 
 	return new ImageResponse(
