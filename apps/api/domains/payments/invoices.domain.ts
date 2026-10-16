@@ -12,7 +12,7 @@ import configStore from '../../lib/config-store.ts';
 import type { Ctx } from '../../lib/ctx.ts';
 import { renderInvoicePdf } from '../../lib/invoice-pdf.ts';
 import { prisma } from '../../prisma/prisma.ts';
-import { listAdminEmails } from '../directory/index.ts';
+import { DirectoryDomain } from '../directory/index.ts';
 import PaymentsDao, { type InvoiceRow, type PaymentRow } from './payments.dao.ts';
 
 /** Standard Slovenian VAT rate (ZDDV-1); FR-046 itemises it on every invoice. */
@@ -22,7 +22,7 @@ export const VAT_RATE = 22;
  * hands over the receipt and the PDF with the ZOI; fiscal.resubmit then sends a FAILED invoice again.
  */
 export const MAX_ATTEMPTS = 5;
-/** In-flight lease of one attempt: far above the FURS call's 10 s timeout; after a crash mid-call it frees the invoice. */
+/** In-flight lease of one attempt: far above the FURS call's 30 s deadline; after a crash mid-call it frees the invoice. */
 export const LEASE_MS = 2 * 60_000;
 /** PENDING this long after issue = past every payment.effects retry (at most 5 × 30 min): fiscal.resubmit takes it. */
 export const STALE_PENDING_MS = 3 * 3_600_000;
@@ -136,6 +136,14 @@ async function verify(invoice: InvoiceRow, ctx: Ctx, resubmit = false): Promise<
 	if (!claimed) throw new Error('fiscal: invoice verification already in progress');
 	const attempt = claimed.attempts;
 	const log = { invoice_id: invoice.id, attempt, resubmit };
+	// Every write that ends the attempt is fenced on its attempt number: a run that outlived its lease (a hung call) may
+	// not overwrite the result of the run that took the invoice over, nor clear that run's lease.
+	const settle = async (data: Parameters<typeof PaymentsDao.settleInvoiceAttempt>[2]) => {
+		const row = await PaymentsDao.settleInvoiceAttempt(invoice.id, attempt, data);
+		if (row) return row;
+		ctx.logger.warn({ ...log, status: data.status }, 'fiscal: attempt outlived its lease, another run took over');
+		return (await PaymentsDao.getInvoice(invoice.id))!;
+	};
 	let eor: string;
 	try {
 		// The stored row: the same number, issue time, amounts and ZOI on every attempt.
@@ -143,17 +151,17 @@ async function verify(invoice: InvoiceRow, ctx: Ctx, resubmit = false): Promise<
 	} catch (err) {
 		if (!resubmit && attempt < MAX_ATTEMPTS) {
 			ctx.logger.warn({ ...log, err }, 'fiscal: verification failed, retrying');
-			await PaymentsDao.updateInvoice(invoice.id, { lease_until: null });
+			await settle({ lease_until: null });
 			throw err;
 		}
 		ctx.logger.error(
 			{ ...log, err },
 			'fiscal: verification failed, invoice FAILED (fiscal.resubmit sends it again)'
 		);
-		return PaymentsDao.updateInvoice(invoice.id, { status: 'FAILED', lease_until: null });
+		return settle({ status: 'FAILED', lease_until: null });
 	}
 	ctx.logger.info(log, 'fiscal: invoice verified');
-	return PaymentsDao.updateInvoice(invoice.id, { status: 'VERIFIED', eor, verified_at: ctx.now, lease_until: null });
+	return settle({ status: 'VERIFIED', eor, verified_at: ctx.now, lease_until: null });
 }
 
 async function storePdf(invoice: InvoiceRow, item: string, ctx: Ctx): Promise<InvoiceRow> {
@@ -186,9 +194,6 @@ export async function issueInvoice(payment: PaymentRow, item: string, ctx: Ctx):
 	return invoice;
 }
 
-const escapeHtml = (text: string) =>
-	text.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
-
 /**
  * Alerts the admins (the ops email channel: confirmed admin addresses) once about each invoice still unverified 24 h
  * after issue, and logs it as an error. The mark is taken before the email; when no admin could be emailed it is
@@ -203,21 +208,9 @@ async function alertUnverified(ctx: Ctx): Promise<number> {
 			'opravilo fiscal.resubmit jih pošilja vsako uro. Preverite povezavo s FURS in certifikat (deploy/README.md §10).',
 		...due.map((i) => `- ${i.number}: ${i.status}, poskusov ${i.attempts}, izdan ${i.issued_at.toISOString()}`),
 	];
-	const message = {
-		subject: `Davčno potrjevanje: nepotrjeni računi (${due.length})`,
-		text: lines.join('\n'),
-		html: lines.map((line) => `<p style="margin:0 0 8px">${escapeHtml(line)}</p>`).join(''),
-	};
-	let sent = 0;
-	for (const to of await listAdminEmails()) {
-		try {
-			await ctx.adapters.email.send({ to, ...message });
-			sent++;
-		} catch (err) {
-			ctx.logger.warn({ err }, 'fiscal: alert email failed');
-		}
-	}
-	if (sent) return due.length;
+	const subject = `Davčno potrjevanje: nepotrjeni računi (${due.length})`;
+	const admins = await DirectoryDomain.listAdminEmails(undefined, ctx);
+	if (await DirectoryDomain.emailAdmins(admins, { subject, lines }, ctx)) return due.length;
 	await PaymentsDao.releaseAlerts(due.map((i) => i.id));
 	ctx.logger.error('fiscal: no admin could be emailed about unverified invoices');
 	return 0;
@@ -226,8 +219,9 @@ async function alertUnverified(ctx: Ctx): Promise<number> {
 /**
  * fiscal.resubmit (hourly cron, Europe/Ljubljana; FURS expects a late submission within 2 working days): sends FAILED
  * invoices and PENDING ones payment.effects stopped short of again, as SubsequentSubmit with the stored number, issue
- * time and ZOI (nothing is renumbered or re-signed), one claim per invoice. An invoice still without its PDF goes back
- * to payment.effects (PDF and receipt). Then the 24 h admin alert.
+ * time and ZOI (nothing is renumbered or re-signed), one claim per invoice, fewest attempts first; once FURS fails, the
+ * rest waits for the next run. An invoice still without its PDF (a VERIFIED one too) goes back to payment.effects (PDF
+ * and receipt). Then the 24 h admin alert.
  */
 export async function resubmitInvoices(
 	_input: void,
@@ -243,17 +237,23 @@ export async function resubmitInvoices(
 			now: new Date(),
 			take: RESUBMIT_BATCH,
 		});
+		let fursDown = false;
 		for (const invoice of due) {
-			let row: InvoiceRow;
-			try {
-				row = await verify(invoice, ctx, true);
-			} catch (err) {
-				// Claimed by an attempt in flight since the listing: that attempt settles it.
-				ctx.logger.warn({ invoice_id: invoice.id, err }, 'fiscal.resubmit: invoice skipped');
-				continue;
+			let row = invoice;
+			if (invoice.status !== 'VERIFIED') {
+				// FURS failed on this run: no more calls (each may hang to the deadline); PDFs and receipts still go out.
+				if (fursDown) continue;
+				try {
+					row = await verify(invoice, ctx, true);
+				} catch (err) {
+					// Claimed by an attempt in flight since the listing: that attempt settles it.
+					ctx.logger.warn({ invoice_id: invoice.id, err }, 'fiscal.resubmit: invoice skipped');
+					continue;
+				}
+				resubmitted++;
+				if (row.status === 'VERIFIED') verified++;
+				else if (row.status === 'FAILED') fursDown = true;
 			}
-			resubmitted++;
-			if (row.status === 'VERIFIED') verified++;
 			if (!row.pdf_key)
 				await ctx.jobs.send(
 					'payment.effects',

@@ -19,7 +19,7 @@ import type { municipality_shelters, Prisma, shelters } from '../../generated/cl
 import { prisma } from '../../prisma/prisma.ts';
 import { AuditDao } from '../platform/index.ts';
 import DirectoryDao from './directory.dao.ts';
-import { AssignmentCsvRow, bySlName, ShelterCsvRow, toAssignment } from './directory.domain.ts';
+import { AssignmentCsvRow, bySlName, emailAdmins, ShelterCsvRow, toAssignment } from './directory.domain.ts';
 
 type Tx = Prisma.TransactionClient;
 type ShelterInput = z.infer<typeof CreateShelterInput> | z.infer<typeof UpdateShelterInput>;
@@ -412,9 +412,6 @@ export async function importDirectory(
 
 // --- Yearly reminder (directory.reminder, 1 April) ---
 
-const escapeHtml = (text: string) =>
-	text.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
-
 /**
  * Emails every admin with a confirmed address the active shelters and assignments verified more than 12 months ago
  * (FR-044 R-044.3). Nothing stale = no email. Throws (pg-boss retries) only when no email could be sent.
@@ -441,11 +438,6 @@ export async function sendReminder(_input: void, ctx: Ctx) {
 		...list('Zavetišča', stale.shelters),
 		...list('Občine', stale.municipalities),
 	];
-	const message = {
-		subject: 'Imenik zavetišč: letna osvežitev',
-		text: lines.join('\n'),
-		html: lines.map((line) => `<p style="margin:0 0 8px">${escapeHtml(line)}</p>`).join(''),
-	};
 	const admins = await DirectoryDao.listAdminEmails(ctx.tx);
 	// Claim the year first: the audit entry (diff.year) is written before any email, under a lock, in one transaction,
 	// so a second run (retry, double fire) finds it and sends nothing.
@@ -472,15 +464,7 @@ export async function sendReminder(_input: void, ctx: Ctx) {
 		return { ...counts, sent: 0 };
 	}
 	const db = ctx.tx ?? prisma;
-	let sent = 0;
-	for (const to of admins) {
-		try {
-			await ctx.adapters.email.send({ to, ...message });
-			sent++;
-		} catch (err) {
-			ctx.logger.warn({ err }, 'directory.reminder: email failed');
-		}
-	}
+	const sent = await emailAdmins(admins, { subject: 'Imenik zavetišč: letna osvežitev', lines }, ctx);
 	if (admins.length && !sent) {
 		await db.audit_log.delete({ where: { id: claim.id } }); // release the year so the retry can send
 		throw new Error('directory.reminder: no email could be sent');

@@ -107,6 +107,11 @@ export async function getInvoiceByPayment(payment_id: string, tx?: Prisma.Transa
 	return db.invoices.findUnique({ where: { payment_id } });
 }
 
+export async function getInvoice(id: string, tx?: Prisma.TransactionClient) {
+	const db = tx ?? prisma;
+	return db.invoices.findUnique({ where: { id } });
+}
+
 /**
  * The next sequence of a premise/device series. Call inside the transaction that inserts the invoice: the upsert's
  * row lock holds other issuers until that commit, and a rollback returns the number, so the series has no gaps.
@@ -152,8 +157,9 @@ export async function claimInvoiceAttempt(
 }
 
 /**
- * What fiscal.resubmit sends again, oldest first: FAILED invoices, and PENDING ones issued before `stale_before`
- * (payment.effects stopped short of verifying them), of this provider, not leased by a running attempt.
+ * What fiscal.resubmit takes, fewest attempts first, then oldest: FAILED invoices, PENDING ones issued before
+ * `stale_before` (payment.effects stopped short of verifying them) and VERIFIED ones still without their PDF by then,
+ * of this provider, not leased by a running attempt.
  */
 export async function listResubmittable(
 	input: { provider: string; stale_before: Date; now: Date; take: number },
@@ -163,10 +169,14 @@ export async function listResubmittable(
 	return db.invoices.findMany({
 		where: {
 			provider: input.provider,
-			OR: [{ status: 'FAILED' }, { status: 'PENDING', issued_at: { lt: input.stale_before } }],
+			OR: [
+				{ status: 'FAILED' },
+				{ status: 'PENDING', issued_at: { lt: input.stale_before } },
+				{ status: 'VERIFIED', pdf_key: null, issued_at: { lt: input.stale_before } },
+			],
 			AND: [{ OR: [{ lease_until: null }, { lease_until: { lte: input.now } }] }],
 		},
-		orderBy: [{ issued_at: 'asc' }, { id: 'asc' }],
+		orderBy: [{ attempts: 'asc' }, { issued_at: 'asc' }, { id: 'asc' }],
 		take: input.take,
 	});
 }
@@ -187,17 +197,31 @@ export async function releaseAlerts(ids: string[], tx?: Prisma.TransactionClient
 	await db.invoices.updateMany({ where: { id: { in: ids } }, data: { alerted_at: null } });
 }
 
-export async function updateInvoice(
-	id: string,
-	data: Pick<Prisma.invoicesUpdateInput, 'status' | 'eor' | 'verified_at' | 'pdf_key' | 'lease_until'>,
-	tx?: Prisma.TransactionClient
-) {
+type InvoiceUpdate = Pick<Prisma.invoicesUpdateInput, 'status' | 'eor' | 'verified_at' | 'pdf_key' | 'lease_until'>;
+
+export async function updateInvoice(id: string, data: InvoiceUpdate, tx?: Prisma.TransactionClient) {
 	const db = tx ?? prisma;
 	return db.invoices.update({ where: { id }, data });
 }
 
+/**
+ * Ends the verification attempt the caller claimed (`attempts` as the claim returned it); null when another run has
+ * claimed a later attempt since (this one outlived its lease), so a stale run never overwrites that run's result.
+ */
+export async function settleInvoiceAttempt(
+	id: string,
+	attempts: number,
+	data: InvoiceUpdate,
+	tx?: Prisma.TransactionClient
+) {
+	const db = tx ?? prisma;
+	const [row] = await db.invoices.updateManyAndReturn({ where: { id, attempts }, data });
+	return row ?? null;
+}
+
 export default {
 	getInvoiceByPayment,
+	getInvoice,
 	nextInvoiceSequence,
 	insertInvoice,
 	claimInvoiceAttempt,
@@ -205,6 +229,7 @@ export default {
 	claimUnverifiedAlerts,
 	releaseAlerts,
 	updateInvoice,
+	settleInvoiceAttempt,
 	insertPayment,
 	getPayment,
 	listByUser,

@@ -2,11 +2,12 @@
 // provider switch (FURS production refused, furs needs its files), and the FURS request and response over an injected
 // transport with a key generated here: no test reaches FURS and no certificate is in the repo.
 import { createHash, generateKeyPairSync, sign, verify } from 'node:crypto';
+import { createServer, type Socket } from 'node:net';
 
 import { describe, expect, it } from 'vitest';
 
 import { createFiscal, fursDateTime, zoiInput, type FiscalInvoice } from '../../adapters/fiscal/index.ts';
-import { fursFiscal, type FursTransport } from '../../adapters/fiscal/furs.ts';
+import { fursFiscal, httpsTransport, type FursTransport } from '../../adapters/fiscal/furs.ts';
 import { mockFiscal } from '../../adapters/fiscal/mock.ts';
 import { config, type Config } from '../../lib/config.ts';
 
@@ -190,6 +191,27 @@ describe('furs provider (injected transport)', () => {
 		] as const) {
 			const fiscal = fursFiscal({ ...options, transport: async () => response });
 			await expect(fiscal.issue(invoice)).rejects.toThrow(message);
+		}
+	});
+});
+
+describe('furs https transport', () => {
+	it('destroys the request at the whole-call deadline, long before the socket idle timeout', async () => {
+		// A peer that accepts the connection and never answers the TLS handshake: only the deadline ends the call.
+		const sockets: Socket[] = [];
+		const server = createServer((socket) => sockets.push(socket.resume()));
+		await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
+		const { port } = server.address() as { port: number };
+		try {
+			const started = Date.now();
+			await expect(
+				httpsTransport(`https://127.0.0.1:${port}/invoices`, '{}', { cert: '', key: '' }, 200)
+			).rejects.toThrow(/deadline exceeded/);
+			expect(Date.now() - started).toBeLessThan(5000);
+			await expect.poll(() => sockets[0]?.closed).toBe(true);
+		} finally {
+			for (const socket of sockets) socket.destroy();
+			await new Promise((resolve) => server.close(resolve));
 		}
 	});
 });

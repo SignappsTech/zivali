@@ -212,4 +212,49 @@ export async function loadInitialDirectory(
 	});
 }
 
-export default { getResponsibleShelter, listShelters, getShelter, listMunicipalities, loadInitialDirectory };
+// --- The ops email channel (directory reminder, fiscal alerts) ---
+
+/** Admins with a confirmed email address. */
+export function listAdminEmails(_input: void, ctx: Ctx): Promise<string[]> {
+	return DirectoryDao.listAdminEmails(ctx.tx);
+}
+
+const escapeHtml = (text: string) =>
+	text.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
+
+/**
+ * Emails one ops message to each address: the lines as text, and as escaped HTML paragraphs. A failed send is logged
+ * and skipped; returns the number sent.
+ */
+export async function emailAdmins(
+	to: string[],
+	message: { subject: string; lines: string[] },
+	ctx: Ctx
+): Promise<number> {
+	const { subject, lines } = message;
+	const mail = {
+		subject,
+		text: lines.join('\n'),
+		html: lines.map((line) => `<p style="margin:0 0 8px">${escapeHtml(line)}</p>`).join(''),
+	};
+	let sent = 0;
+	for (const address of to) {
+		try {
+			await ctx.adapters.email.send({ to: address, ...mail });
+			sent++;
+		} catch (err) {
+			ctx.logger.warn({ err, subject }, 'ops email failed');
+		}
+	}
+	return sent;
+}
+
+export default {
+	getResponsibleShelter,
+	listShelters,
+	getShelter,
+	listMunicipalities,
+	loadInitialDirectory,
+	listAdminEmails,
+	emailAdmins,
+};
