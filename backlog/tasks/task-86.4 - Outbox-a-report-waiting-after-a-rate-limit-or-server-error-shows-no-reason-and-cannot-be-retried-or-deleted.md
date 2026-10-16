@@ -3,10 +3,11 @@ id: TASK-86.4
 title: >-
   Outbox: a report waiting after a rate limit or server error shows no reason
   and cannot be retried or deleted
-status: To Do
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-16 02:42'
+updated_date: '2026-10-16 03:00'
 labels:
   - bug
   - 'est:XS'
