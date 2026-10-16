@@ -35,9 +35,10 @@ const fileErrors = {
 } as const;
 /** A photo the pet already has (edit form, C4 `Pet.photos`): shown from its URL, moved or removed, never uploaded. */
 export type SavedPhoto = { id: string; thumb_url: string };
+/** `kept`: in this browser only, while `hold` is on; it uploads once `hold` is off. */
 export type PickedPhoto = Omit<Stored, keyof WebPreparedPhoto> &
 	Partial<WebPreparedPhoto> & {
-		status: 'uploading' | 'uploaded' | 'failed';
+		status: 'kept' | 'uploading' | 'uploaded' | 'failed';
 		progress: number;
 		error?: PhotoMessage;
 		/** Object URL of the thumbnail, or a saved photo's URL. */
@@ -66,9 +67,15 @@ function failure(error: unknown): { message: PhotoMessage; retry: boolean } {
  * Prepares, keeps and uploads up to 5 photos of one draft (C5): one upload at a time so the first is done soonest on
  * a weak connection, retries with backoff, aborts on remove, and resumes from IndexedDB after a reload or going
  * back online. `onExif` gets the place and time read from a photo, to offer them with consent; nothing stores them.
- * `saved` photos (read once, on mount) come first and count towards the 5.
+ * `saved` photos (read once, on mount) come first and count towards the 5. `hold` keeps new photos in this browser
+ * (`kept`) and uploads them once it is false again: a signed-out lost report sends nothing before sign-in (C3).
  */
-export function usePhotoUploads(draft: string, onExif?: (exif: PhotoExif) => void, saved: SavedPhoto[] = []) {
+export function usePhotoUploads(
+	draft: string,
+	onExif?: (exif: PhotoExif) => void,
+	saved: SavedPhoto[] = [],
+	hold = false
+) {
 	const locale = useLocale();
 	const client = useMemo(() => makeApiClient(locale), [locale]);
 	const [seeded] = useState(() =>
@@ -88,6 +95,7 @@ export function usePhotoUploads(draft: string, onExif?: (exif: PhotoExif) => voi
 	// Mutable side of the queue, read by async work that outlives a render.
 	const live = useRef({
 		alive: false,
+		hold,
 		photos: seeded,
 		preparing: 0,
 		chain: Promise.resolve(),
@@ -126,6 +134,7 @@ export function usePhotoUploads(draft: string, onExif?: (exif: PhotoExif) => voi
 	async function upload(key: string) {
 		const photo = live.current.photos.find((item) => item.key === key);
 		if (!live.current.alive || !photo || !isLocal(photo) || photo.photoId) return;
+		if (live.current.hold) return patch(key, { status: 'kept', progress: 0 });
 		const controller = new AbortController();
 		live.current.controllers.set(key, controller);
 		patch(key, { status: 'uploading', progress: 0, error: undefined });
@@ -188,7 +197,8 @@ export function usePhotoUploads(draft: string, onExif?: (exif: PhotoExif) => voi
 				if (live.current.photos.some((item) => item.sha256 === photo.sha256)) continue;
 				const key = crypto.randomUUID();
 				const preview = URL.createObjectURL(photo.thumb);
-				commit([...live.current.photos, { ...photo, key, status: 'uploading', progress: 0, preview }]);
+				const status = live.current.hold ? 'kept' : 'uploading';
+				commit([...live.current.photos, { ...photo, key, status, progress: 0, preview }]);
 				void save();
 				enqueue(key);
 				if (exif.lat !== undefined || exif.takenAt) onExif?.(exif);
@@ -231,7 +241,7 @@ export function usePhotoUploads(draft: string, onExif?: (exif: PhotoExif) => voi
 			return {
 				...photo,
 				photoId: fresh ? photo.photoId : undefined,
-				status: fresh ? ('uploaded' as const) : ('uploading' as const),
+				status: fresh ? ('uploaded' as const) : live.current.hold ? ('kept' as const) : ('uploading' as const),
 				progress: fresh ? 1 : 0,
 				preview: URL.createObjectURL(photo.thumb),
 			};
@@ -244,6 +254,14 @@ export function usePhotoUploads(draft: string, onExif?: (exif: PhotoExif) => voi
 	const backOnline = useEffectEvent(() => {
 		for (const photo of live.current.photos) if (photo.error === 'photos.failed_network') retry(photo.key);
 	});
+	const release = useEffectEvent(() => {
+		for (const photo of live.current.photos) if (photo.status === 'kept') enqueue(photo.key);
+	});
+
+	useEffect(() => {
+		live.current.hold = hold;
+		if (!hold) release();
+	}, [hold]);
 
 	useEffect(() => {
 		const state = live.current;

@@ -285,6 +285,39 @@ describe('PhotoPicker', () => {
 		);
 	});
 
+	it('keeps picked and restored photos in this browser while held, then uploads them once released (C3)', async () => {
+		idb.set('photos:lost', [{ key: 'a', ...photo(1) }]);
+		upload.mockResolvedValueOnce({ photoId: 'photo-1' }).mockResolvedValueOnce({ photoId: 'photo-2' });
+		const onChange = vi.fn();
+		const view = renderPicker({ hold: true, onChange });
+
+		expect(await screen.findByRole('listitem', { name: 'Fotografija 1 od 1' })).toBeTruthy();
+		pick(file(2));
+		await screen.findByRole('listitem', { name: 'Fotografija 2 od 2' });
+		// Ready to the eye (the cover label, no progress), but nothing has left the browser.
+		expect(screen.getByText('Naslovna fotografija')).toBeTruthy();
+		expect(screen.queryByRole('progressbar')).toBeNull();
+		expect(onChange).toHaveBeenLastCalledWith([
+			expect.objectContaining({ key: 'a', status: 'kept' }),
+			expect.objectContaining({ status: 'kept' }),
+		]);
+		expect(onChange.mock.lastCall![0].map((p: { photoId?: string }) => p.photoId)).toEqual([undefined, undefined]);
+		expect(upload).not.toHaveBeenCalled();
+
+		view.rerender(
+			<NextIntlClientProvider locale="sl" messages={sl} timeZone={timeZone}>
+				<PhotoPicker draft="lost" hold={false} onChange={onChange} />
+			</NextIntlClientProvider>
+		);
+		await waitFor(() =>
+			expect(onChange).toHaveBeenLastCalledWith([
+				expect.objectContaining({ status: 'uploaded', photoId: 'photo-1' }),
+				expect.objectContaining({ status: 'uploaded', photoId: 'photo-2' }),
+			])
+		);
+		expect(upload.mock.calls.map((call) => call[1].sha256)).toEqual([photo(1).sha256, photo(2).sha256]);
+	});
+
 	it('never queues a photo twice, so repeated retries cannot multiply uploads', async () => {
 		const calls = pendingUploads();
 		renderPicker();

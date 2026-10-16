@@ -31,6 +31,8 @@ type PhotoPickerProps = {
 	onChange?: (photos: PickedPhoto[]) => void;
 	/** Place and time read from a photo, to offer with consent. Coarsen the point before it goes anywhere. */
 	onExif?: (exif: PhotoExif) => void;
+	/** true keeps new photos in this browser and uploads them once false, e.g. until a lost report has an account (C3). */
+	hold?: boolean;
 	className?: string;
 };
 
@@ -38,10 +40,15 @@ type PhotoPickerProps = {
  * Photo step of P6 and P7 (FR-003): camera and gallery tiles on touch screens, a file button with a drop area on
  * desktop, then a row per photo with its preview, upload progress, retry, reorder and remove. Up to 5 photos.
  */
-export function PhotoPicker({ draft, saved, onChange, onExif, className }: PhotoPickerProps) {
+export function PhotoPicker({ draft, saved, onChange, onExif, hold, className }: PhotoPickerProps) {
 	const t = useTranslations('photos');
 	const message = useTranslations();
-	const { photos, preparing, notice, justUploaded, add, remove, move, retry } = usePhotoUploads(draft, onExif, saved);
+	const { photos, preparing, notice, justUploaded, add, remove, move, retry } = usePhotoUploads(
+		draft,
+		onExif,
+		saved,
+		hold
+	);
 	const root = React.useRef<HTMLDivElement>(null);
 	const camera = React.useRef<HTMLInputElement>(null);
 	const gallery = React.useRef<HTMLInputElement>(null);
@@ -122,6 +129,8 @@ export function PhotoPicker({ draft, saved, onChange, onExif, className }: Photo
 					{photos.map((photo, index) => {
 						const n = index + 1;
 						const percent = Math.round(photo.progress * 100);
+						// A held photo is kept in this browser; it reads as ready, its upload comes later.
+						const ready = photo.status === 'uploaded' || photo.status === 'kept';
 						return (
 							<li
 								key={photo.key}
@@ -139,9 +148,7 @@ export function PhotoPicker({ draft, saved, onChange, onExif, className }: Photo
 									className="size-20 rounded-row bg-muted object-cover"
 								/>
 								<div>
-									{photo.status === 'uploaded' && index === 0 && (
-										<p className="text-sm font-bold">{t('cover')}</p>
-									)}
+									{ready && index === 0 && <p className="text-sm font-bold">{t('cover')}</p>}
 									{photo.status === 'uploading' && (
 										<>
 											<p className="text-sm">{t('uploading', { percent })}</p>
@@ -160,12 +167,7 @@ export function PhotoPicker({ draft, saved, onChange, onExif, className }: Photo
 											</FieldError>
 										</>
 									)}
-									<div
-										className={cn(
-											'-ml-2.5 flex flex-wrap gap-1',
-											photo.status === 'uploaded' ? 'mt-2' : 'mt-1'
-										)}
-									>
+									<div className={cn('-ml-2.5 flex flex-wrap gap-1', ready ? 'mt-2' : 'mt-1')}>
 										{photo.status === 'failed' ? (
 											<Button variant="text" onClick={() => retry(photo.key)}>
 												<ArrowClockwiseIcon weight="bold" aria-hidden="true" />
