@@ -2,7 +2,7 @@ import { act, cleanup, fireEvent, render, renderHook, screen, within } from '@te
 import { NextIntlClientProvider } from 'next-intl';
 import type * as React from 'react';
 import { Provider } from 'react-redux';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { conversations } from '@zivali/api/__fixtures__/chat';
 import { ownerReport } from '@zivali/api/__fixtures__/reports';
@@ -50,6 +50,11 @@ const open = (token: string) => history.replaceState(null, '', token ? `/m#${tok
 const actions = (api: ReturnType<typeof createMockApi>) =>
 	api.calls.filter((call) => call.path.endsWith('/transitions')).map((call) => call.body);
 
+// The page loads lib/auth and the report view with the claim (TASK-17.9): load them once up front, so no test's
+// findBy waits on their first transform.
+beforeAll(async () => {
+	await Promise.all([import('@/lib/auth'), import('./manage-view')]);
+});
 afterEach(() => {
 	cleanup();
 	vi.clearAllMocks();

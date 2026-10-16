@@ -39,7 +39,7 @@ export function ManagePage() {
 	const tCommon = useTranslations('common');
 	const te = useTranslations('errors');
 	const errorText = useErrorText();
-	// Most visits have a session or no link to claim: api.js waits for a sign-in that needs it.
+	// api.js loads only for a sign-in that needs the captcha: not with a session already, nor without a link.
 	const captcha = useCaptcha({ lazy: true });
 	const [claim] = useClaimManageLinkMutation();
 	const { getToken } = captcha;
