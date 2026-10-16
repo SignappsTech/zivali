@@ -1,11 +1,11 @@
 ---
 id: TASK-24.3
 title: Mobile share sheet and poster download
-status: To Do
+status: In Progress
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:14'
-updated_date: '2026-10-14 23:37'
+updated_date: '2026-10-16 00:05'
 labels:
   - fe
   - 'est:S'
