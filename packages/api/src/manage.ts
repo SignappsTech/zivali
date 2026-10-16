@@ -10,7 +10,11 @@ export const manageApi = api.injectEndpoints({
 		claimManageLink: build.mutation<ManageClaimResponse, ManageClaimInput>({
 			query: (body) => ({ url: '/v1/manage/claim', method: 'POST', body }),
 		}),
+		// Managers: a new link to the finder email on file (204); CONFLICT without one, 3 per report per day.
+		resendManageLink: build.mutation<void, { code: string }>({
+			query: ({ code }) => ({ url: `/v1/reports/${encodeURIComponent(code)}/manage-link/resend`, method: 'POST' }),
+		}),
 	}),
 });
 
-export const { useClaimManageLinkMutation } = manageApi;
+export const { useClaimManageLinkMutation, useResendManageLinkMutation } = manageApi;

@@ -104,11 +104,11 @@ export default async function ReportPage(props: Props) {
 	if ('gone' in result || !seo) return <GonePage />;
 	const { report } = result;
 	const url = canonical(locale, report);
-	const { map, nav, report: copy } = await getMessages({ locale });
+	const { map, nav, report: copy, lifecycle, report_found: found } = await getMessages({ locale });
 	const organisation = { '@type': 'Organization', name: 'Najdimo', url: absoluteUrl(locale, '/') };
 
 	return (
-		// Client copy: the gallery's controls and MapView's own strings.
+		// Client copy: the gallery's controls, MapView's own strings and, for managers, the owner actions (P14).
 		<PageMessages
 			messages={{
 				map,
@@ -118,7 +118,16 @@ export default async function ReportPage(props: Props) {
 					photo_position: copy.photo_position,
 					photo_thumb: copy.photo_thumb,
 					photo_failed: copy.photo_failed,
+					...(report.is_mine && {
+						owner_home: copy.owner_home,
+						owner_edit: copy.owner_edit,
+						owner_close: copy.owner_close,
+					}),
 				},
+				...(report.is_mine && {
+					lifecycle,
+					report_found: { expiry_note: found.expiry_note, extend: found.extend },
+				}),
 			}}
 		>
 			<ReportDetail report={report} place={place} />
