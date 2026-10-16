@@ -36,7 +36,7 @@
 	"offline_mobile_photos_help": "Ko je izklopljeno, fotografije prenesemo samo prek omrežja Wi-Fi.",
 	"offline_clear": "Počisti podatke brez povezave",
 	"offline_clear_title": "Želite počistiti podatke brez povezave?",
-	"offline_clear_body": "S telefona izbrišemo shranjene prijave v bližini, njihove fotografije in osnutke prijav. Prijave, ki čakajo na pošiljanje, ostanejo.",
+	"offline_clear_body": "S telefona izbrišemo shranjene prijave v bližini in njihove fotografije. Prijave, ki čakajo na pošiljanje, ostanejo.",
 	"offline_clear_confirm": "Počisti",
 	"offline_cleared": "Podatki brez povezave so počiščeni."
 }

@@ -92,7 +92,7 @@ function PushNotifications() {
 
 /**
  * The C17 cache triggers and the home area from the profile (null signed out), under the Provider for the session.
- * The background task itself is defined in index.ts, before the router, for a headless launch.
+ * The background task itself is defined in lib/offline/sync.ts and imported by index.ts, before the router, for a headless launch.
  */
 function OfflineCache() {
 	useOfflineCache();
