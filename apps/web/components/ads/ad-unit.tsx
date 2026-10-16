@@ -25,6 +25,13 @@ export const isOurClickUrl = (url: string) => url.startsWith(`${API_URL}/v1/ads/
 const a11yName = (label: string, body: string) => `${label}${/[.?!]$/.test(label) ? ' ' : '. '}${body}`;
 
 const SIDEBAR_FROM = '(min-width: 64rem)';
+// matchMedia is read on the client only (useSyncExternalStore's server snapshot is true: the request is an effect).
+const wideNow = () => window.matchMedia?.(SIDEBAR_FROM).matches !== false;
+const subscribeWide = (notify: () => void) => {
+	const query = window.matchMedia?.(SIDEBAR_FROM);
+	query?.addEventListener('change', notify);
+	return () => query?.removeEventListener('change', notify);
+};
 const VISIBLE_RATIO = 0.5;
 const VISIBLE_MS = 1000;
 
@@ -82,17 +89,9 @@ export function AdUnit({ slot, species, region: slug, className }: AdSlotProps) 
 	// undefined while loading; null collapses the slot (no ad, an error, a blocked request, a foreign link).
 	const [ad, setAd] = React.useState<Ad | null>();
 	// The sidebar shows from lg only: below it the hidden box asks for nothing, and asks once the window grows past lg.
-	const [wide, setWide] = React.useState(() => window.matchMedia?.(SIDEBAR_FROM).matches !== false);
+	const wide = React.useSyncExternalStore(subscribeWide, wideNow, () => true);
 	const unit = React.useRef<HTMLAnchorElement>(null);
 	const counted = React.useRef<string>(undefined);
-
-	React.useEffect(() => {
-		const query = slot === 'sidebar' ? window.matchMedia?.(SIDEBAR_FROM) : undefined;
-		if (!query) return;
-		const change = (event: MediaQueryListEvent) => setWide(event.matches);
-		query.addEventListener('change', change);
-		return () => query.removeEventListener('change', change);
-	}, [slot]);
 
 	React.useEffect(() => {
 		if (slot === 'sidebar' && !wide) return;
