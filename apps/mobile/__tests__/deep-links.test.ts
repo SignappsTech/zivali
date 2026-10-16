@@ -13,7 +13,11 @@ jest.mock('expo-notifications', () => ({
 	getExpoPushTokenAsync: (options: unknown) => mockGetToken(options),
 }));
 
-type Config = { ios: { associatedDomains?: string[] }; android: { intentFilters?: Record<string, unknown>[] } };
+type Config = {
+	ios: { associatedDomains?: string[] };
+	android: { intentFilters?: Record<string, unknown>[] };
+	plugins: unknown[];
+};
 const loadConfig = (appUrl?: string) => {
 	const before = process.env.EXPO_PUBLIC_APP_URL;
 	if (appUrl) process.env.EXPO_PUBLIC_APP_URL = appUrl;
@@ -50,6 +54,21 @@ describe('deep link paths', () => {
 		['https://najdimo.si/en/r/ABC', '/r/ABC'],
 		['https://najdimo.si/m?t=1', '/m?t=1'],
 		['https://najdimo.si', '/'],
+		// Pages under a listing (TASK-12.6): the email buttons (API webUrl) open their screens, never the map.
+		['https://najdimo.si/r/Hk3vT9qP/ujemanja', '/r/Hk3vT9qP/matches'],
+		['https://najdimo.si/en/r/Hk3vT9qP/matches', '/r/Hk3vT9qP/matches'],
+		['https://najdimo.si/r/Hk3vT9qP/spet-doma', '/r/Hk3vT9qP/reunited'],
+		['https://najdimo.si/en/r/Hk3vT9qP/reunited?x=1', '/r/Hk3vT9qP/reunited?x=1'],
+		['https://najdimo.si/r/Hk3vT9qP/ujemanja/', '/r/Hk3vT9qP/matches'],
+		['zivali://r/Hk3vT9qP/matches', '/r/Hk3vT9qP/matches'],
+		// Anything else under a listing opens the listing.
+		['https://najdimo.si/r/Hk3vT9qP/poster.pdf?lang=sl', '/r/Hk3vT9qP?lang=sl'],
+		['https://najdimo.si/r/Hk3vT9qP/opengraph-image', '/r/Hk3vT9qP'],
+		['https://najdimo.si/r/Hk3vT9qP/', '/r/Hk3vT9qP'],
+		['zivali://inbox/5e1d0a2b-0000-4000-8000-000000000001', '/inbox/5e1d0a2b-0000-4000-8000-000000000001'],
+		['/r/../dev/kit', '/'],
+		['/r/', '/'],
+		['/inbox/a/b', '/'],
 	])('%s -> %s', (url, path) => {
 		expect(toAppPath(url)).toBe(path);
 	});
@@ -82,12 +101,43 @@ describe('app.config links', () => {
 		const [filter] = config.android.intentFilters!;
 		expect(filter).toMatchObject({ action: 'VIEW', autoVerify: true });
 		expect(filter.data).toEqual([
-			{ scheme: 'https', host: 'staging.najdimo.si', pathPrefix: '/r/' },
-			{ scheme: 'https', host: 'staging.najdimo.si', pathPrefix: '/en/r/' },
+			{ scheme: 'https', host: 'staging.najdimo.si', pathPattern: '/r/........' },
+			{ scheme: 'https', host: 'staging.najdimo.si', pathPattern: '/r/......../ujemanja' },
+			{ scheme: 'https', host: 'staging.najdimo.si', pathPattern: '/r/......../spet-doma' },
+			{ scheme: 'https', host: 'staging.najdimo.si', pathPattern: '/en/r/........' },
+			{ scheme: 'https', host: 'staging.najdimo.si', pathPattern: '/en/r/......../matches' },
+			{ scheme: 'https', host: 'staging.najdimo.si', pathPattern: '/en/r/......../reunited' },
 			{ scheme: 'https', host: 'staging.najdimo.si', path: '/m' },
 			{ scheme: 'https', host: 'staging.najdimo.si', path: '/en/m' },
 			{ scheme: 'https', host: 'staging.najdimo.si', pathPrefix: '/payments/' },
 		]);
+	});
+
+	test('Android claims listing pages only: the poster PDF and OG image stay in the browser (TASK-12.6)', () => {
+		const [filter] = loadConfig('https://najdimo.si').android.intentFilters!;
+		// Android pathPattern (simple glob, no `*` used here): each `.` is any one character; the whole path must match.
+		const claimed = (path: string) =>
+			(filter.data as { path?: string; pathPrefix?: string; pathPattern?: string }[]).some(
+				(d) =>
+					d.path === path ||
+					(d.pathPrefix !== undefined && path.startsWith(d.pathPrefix)) ||
+					(d.pathPattern !== undefined && new RegExp(`^${d.pathPattern.replace(/\./g, '[^]')}$`).test(path))
+			);
+		for (const path of [
+			'/r/Hk3vT9qP',
+			'/r/Hk3vT9qP/ujemanja',
+			'/r/Hk3vT9qP/spet-doma',
+			'/en/r/Hk3vT9qP',
+			'/en/r/Hk3vT9qP/matches',
+			'/en/r/Hk3vT9qP/reunited',
+		])
+			expect([path, claimed(path)]).toEqual([path, true]);
+		for (const path of ['/r/Hk3vT9qP/poster.pdf', '/r/Hk3vT9qP/opengraph-image', '/r/Hk3vT9qP/ujemanja/x'])
+			expect([path, claimed(path)]).toEqual([path, false]);
+	});
+
+	test('no generated _sitemap screen (TASK-12.7)', () => {
+		expect(loadConfig().plugins).toContainEqual(['expo-router', { sitemap: false }]);
 	});
 
 	test('no host (local build): no web links, no exp:// redirect', () => {
