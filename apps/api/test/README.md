@@ -9,6 +9,14 @@ Vitest + Supertest against the real local Postgres (ADR-015). Files run one afte
 - Generated geography points stay clear of bbox edges (geodesic edges bow ~1.6e-5 deg).
 - The Prisma pool waits 30 s for a connection in tests (`prisma/prisma.ts`), 5 s in production.
 
+## Job table hygiene (TASK-109)
+
+`global-setup` deletes finished pg-boss jobs (`completed`, `cancelled`, `failed` older than a day) once per run, only when the
+database host is 127.0.0.1 or localhost (otherwise it logs a warning and skips), and logs the count. The drain tests used to
+slow down as the shared database filled up: `pgboss.job` has no index on `data->>'report_id'`, and `drain()` runs every queued job,
+and `match.report` scans every open report. Test queries on it therefore carry a `created_on >= <test start>` bound, and the
+`reports.write` drain test first removes queued matching jobs left over from earlier runs.
+
 ## Proposal: a dedicated test database for main (not switched yet)
 
 `jobs.test.ts` ("runs one job per queue") fails whenever another process works the same `pgboss` queues: a `pnpm dev:worker`

@@ -81,10 +81,13 @@ const lostReport = async (overrides: Record<string, unknown> = {}) => {
 	expect(res.status).toBe(201);
 	return res.body as { id: string; short_code: string };
 };
+// pgboss.job has no index on data->>'report_id': the created_on bound (this run's start) keeps the scan to this run's rows.
+const startedAt = new Date(Date.now() - 5000);
 const queued = async (report_id: string) =>
 	(
 		await prisma.$queryRaw<{ name: string; data: unknown }[]>`
-			select name, data from pgboss.job where data->>'report_id' = ${report_id} order by name`
+			select name, data from pgboss.job
+			where created_on >= ${startedAt} and data->>'report_id' = ${report_id} order by name`
 	).map(({ name, data }) => {
 		// ids-only payloads: no point, no other field
 		expect(data).toEqual({ report_id });
@@ -316,6 +319,10 @@ describe('POST /v1/reports', () => {
 		await prisma.$executeRaw`
 			delete from pgboss.job where data->>'report_id' in (
 				select id::text from app.reports where created_by = any(${Object.values(ids)}::uuid[]))`;
+		// Matching jobs left queued by earlier runs would make the drain run the engine over every open report again.
+		await prisma.$executeRaw`
+			delete from pgboss.job
+			where state < 'active' and created_on < ${startedAt} and name in ('match.report', 'photo.publish')`;
 		const sighting = await post(
 			tokens.finder,
 			body({ type: 'sighted', species: 'cat', location: { lat: 48.2082, lng: 16.3738 } })
@@ -324,7 +331,8 @@ describe('POST /v1/reports', () => {
 		await drain(runJob);
 		expect(await queued(sighting.body.id)).toEqual(['match.report', 'photo.publish']);
 		const states = await prisma.$queryRaw<{ state: string }[]>`
-			select state::text as state from pgboss.job where data->>'report_id' = ${sighting.body.id}`;
+			select state::text as state from pgboss.job
+			where created_on >= ${startedAt} and data->>'report_id' = ${sighting.body.id}`;
 		expect(states.map((s) => s.state)).toEqual(['completed', 'completed']);
 		const res = await get(`/v1/reports/${sighting.body.short_code}`);
 		expect(res.status).toBe(200);

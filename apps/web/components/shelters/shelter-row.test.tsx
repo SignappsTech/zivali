@@ -23,16 +23,20 @@ vi.mock('next/navigation', async (actual) => ({
 
 const POINT = { lat: 46.0612, lng: 14.4977 };
 
-function show(kind: Kind, answer: object | (() => Response)) {
+type Props = React.ComponentProps<typeof ShelterRow>;
+
+function show(kind: Kind, answer: object | (() => Response), props: Partial<Props> = {}) {
 	const api = createMockApi({ 'GET /v1/shelters/responsible': answer });
-	render(
+	const store = createApiStore(api);
+	const ui = (more: Partial<Props>) => (
 		<NextIntlClientProvider locale="sl" messages={sl}>
-			<Provider store={createApiStore(api)}>
-				<ShelterRow point={POINT} kind={kind} />
+			<Provider store={store}>
+				<ShelterRow point={POINT} kind={kind} {...more} />
 			</Provider>
 		</NextIntlClientProvider>
 	);
-	return api;
+	const view = render(ui(props));
+	return Object.assign(api, { rerender: (more: Partial<Props>) => view.rerender(ui(more)) });
 }
 afterEach(cleanup);
 
@@ -86,5 +90,21 @@ describe('ShelterRow (C18, P7 web)', () => {
 				'Za občino Osilnica še nimamo potrjenega zavetišča. Pokličite občino ali poglejte imenik zavetišč.'
 			)
 		).toBeTruthy();
+	});
+
+	it('asks by the municipality the API derived for a lost report, after the skeleton while the point is unknown', async () => {
+		const api = show('lost', responsibleConfirmed, { point: null });
+		expect(screen.getByText(sl.common.loading)).toBeTruthy();
+		expect(api.calls).toHaveLength(0);
+
+		api.rerender({ point: POINT, municipality: 'ljubljana' });
+		expect(
+			await screen.findByText(
+				'Pobeg čim prej sporočite veterinarju ali zavetišču, pristojnemu za občino Ljubljana. Prijava na Najdimo tega ne nadomesti.'
+			)
+		).toBeTruthy();
+		expect(api.calls.map((call) => call.query)).toEqual([{ municipality: 'ljubljana' }]);
+		expect(screen.getByRole('link', { name: 'Pokliči Zavetišče Ljubljana' })).toBeTruthy();
+		expect(screen.queryByText(sl.shelter_row.chip_line)).toBeNull();
 	});
 });
