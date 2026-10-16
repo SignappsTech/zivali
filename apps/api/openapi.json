@@ -665,12 +665,6 @@
 					"status"
 				]
 			},
-			"ConvertPasswordInput": {
-				"type": "object",
-				"properties": { "password": { "type": "string", "minLength": 8, "maxLength": 72 } },
-				"required": ["password"],
-				"additionalProperties": false
-			},
 			"CountValue": {
 				"anyOf": [
 					{ "type": "integer", "minimum": 0 },
@@ -4064,47 +4058,6 @@
 					},
 					"500": {
 						"description": "INTERNAL",
-						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
-					}
-				}
-			}
-		},
-		"/v1/me/convert-password": {
-			"post": {
-				"operationId": "convertAnonymousPassword",
-				"summary": "Set the password of an anonymous session that becomes an account",
-				"description": "C7 §6. Anonymous sessions only (the token and Supabase Auth both say so), after updateUser({ email }) has left an address pending: sets the password (the sign-up policy, 8–72 characters) with the Auth Admin API, because GoTrue asks a session older than 24 h to reauthenticate, which an anonymous user cannot. The user stays anonymous until the email_change link is opened. FORBIDDEN for an account or without a pending address. Audited without the password. 10 per hour per IP.",
-				"tags": ["me"],
-				"requestBody": {
-					"required": true,
-					"content": {
-						"application/json": { "schema": { "$ref": "#/components/schemas/ConvertPasswordInput" } }
-					}
-				},
-				"responses": {
-					"204": { "description": "Password set" },
-					"400": {
-						"description": "VALIDATION",
-						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
-					},
-					"401": {
-						"description": "UNAUTHENTICATED",
-						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
-					},
-					"403": {
-						"description": "FORBIDDEN",
-						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
-					},
-					"429": {
-						"description": "RATE_LIMITED",
-						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
-					},
-					"500": {
-						"description": "INTERNAL",
-						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
-					},
-					"503": {
-						"description": "SERVICE_UNAVAILABLE",
 						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
 					}
 				}

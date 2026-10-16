@@ -191,6 +191,17 @@ describe('SignUpForm (P16 W2)', () => {
 		expect(screen.getByLabelText<HTMLInputElement>('E-naslov').value).toBe('ana@example.si');
 	});
 
+	it('refuses a password over 72 bytes before GoTrue does ("č" counts 2)', () => {
+		show(<SignUpForm />);
+		type('Ime', 'Ana');
+		type('E-naslov', 'ana@example.si');
+		type('Geslo', 'č'.repeat(37));
+		fireEvent.click(screen.getByRole('button', { name: 'Ustvari račun' }));
+		expect(screen.getByRole('alert').textContent).toBe(sl.auth.error_password_long);
+		expect(document.activeElement).toBe(screen.getByLabelText('Geslo'));
+		expect(auth.signUp).not.toHaveBeenCalled();
+	});
+
 	it('links the terms and privacy pages in a plain sentence, no checkbox', () => {
 		show(<SignUpForm />, 'en');
 		expect(screen.getByRole('link', { name: 'terms of use' }).getAttribute('href')).toBe('/en/terms');
@@ -204,6 +215,7 @@ describe('SignUpForm converting an anonymous finder (C7 §6)', () => {
 		initAnalytics();
 		setConsent({ analytics: true });
 		resetMockEvents();
+		auth.convertAnonymous.mockResolvedValue({ setPassword: false });
 	});
 
 	const fill = () => {
@@ -231,13 +243,29 @@ describe('SignUpForm converting an anonymous finder (C7 §6)', () => {
 		});
 		expect(auth.signUp).not.toHaveBeenCalled();
 		expect(getMockEvents()).toEqual([{ name: 'sign_up', params: { method: 'convert' } }]);
+		expect(screen.queryByText(sl.auth.check_set_password)).toBeNull();
 	});
 
-	it("resends the conversion's link by setting the address again, back to the same page", async () => {
+	it('says the password comes after the link when the conversion could not set it (a session over 24 h old)', async () => {
+		auth.convertAnonymous.mockResolvedValueOnce({ setPassword: true });
+		show(<SignUpForm convert next="/r/Xy7pQ2mK" />);
+		fill();
+		await screen.findByRole('heading', { level: 1, name: sl.auth.check_title });
+		expect(screen.getByText(sl.auth.check_set_password)).toBeTruthy();
+		expect(getMockEvents()).toEqual([{ name: 'sign_up', params: { method: 'convert' } }]);
+	});
+
+	it("resends the conversion's link by setting the address again, to the same callback", async () => {
 		show(<CheckEmail email="ana@example.si" sent={false} onChange={() => {}} convert next="/r/Xy7pQ2mK" />);
 		fireEvent.click(screen.getByRole('button', { name: sl.auth.check_resend }));
 		await vi.waitFor(() =>
-			expect(auth.resendConversion).toHaveBeenCalledWith('ana@example.si', 'sl', '/r/Xy7pQ2mK')
+			expect(auth.resendConversion).toHaveBeenCalledWith('ana@example.si', 'sl', '/r/Xy7pQ2mK', false)
+		);
+		cleanup();
+		show(<CheckEmail email="ana@example.si" sent={false} onChange={() => {}} convert setPassword />);
+		fireEvent.click(screen.getByRole('button', { name: sl.auth.check_resend }));
+		await vi.waitFor(() =>
+			expect(auth.resendConversion).toHaveBeenLastCalledWith('ana@example.si', 'sl', undefined, true)
 		);
 		// resend() would find no user by the address (an anonymous user has none) and carry no PKCE.
 		expect(auth.resendConfirmation).not.toHaveBeenCalled();
@@ -268,14 +296,20 @@ describe('SignUpForm converting an anonymous finder (C7 §6)', () => {
 	});
 
 	it('puts a weak password on its field and the rate limit and network errors under the form, without retrying', async () => {
-		// The API's convert-password (its policy or GoTrue's) names the field.
+		// GoTrue's own policy (weak_password), stricter on the hosted project than the length checked here.
 		auth.convertAnonymous.mockRejectedValueOnce(
-			new ApiError('VALIDATION', 'Password refused', {
-				issues: [{ path: 'password', message: 'Password refused' }],
-			})
+			new ApiError('VALIDATION', 'VALIDATION', { details: { auth_code: 'weak_password' } })
 		);
 		show(<SignUpForm convert />);
-		fill();
+		type('Ime', 'Ana');
+		type('E-naslov', 'ana@example.si');
+		type('Geslo', 'č'.repeat(37));
+		fireEvent.click(screen.getByRole('button', { name: 'Ustvari račun' }));
+		// Over 72 bytes is refused on the form, before GoTrue.
+		expect(screen.getByRole('alert').textContent).toBe(sl.auth.error_password_long);
+		expect(auth.convertAnonymous).not.toHaveBeenCalled();
+		type('Geslo', 'mačka v škornjih');
+		fireEvent.click(screen.getByRole('button', { name: 'Ustvari račun' }));
 		expect((await screen.findByRole('alert')).textContent).toBe(sl.auth.error_password_weak);
 		expect(document.activeElement).toBe(screen.getByLabelText('Geslo'));
 
@@ -347,6 +381,24 @@ describe('NewPasswordForm (P16 M8)', () => {
 		expect((await screen.findByRole('status')).textContent).toBe(sl.auth.newpass_done);
 		expect(auth.updatePassword).toHaveBeenCalledWith('mačka v škornjih');
 		expect(screen.getByRole('link', { name: sl.common.continue }).getAttribute('href')).toBe('/');
+	});
+
+	it("sets a converted finder's first password (C7 §6), refuses one over 72 bytes, then goes on to next", async () => {
+		auth.updatePassword.mockResolvedValue({});
+		show(<NewPasswordForm email="ana@example.si" set next="/en/r/Xy7pQ2mK" />, 'en');
+		expect(screen.getByRole('heading', { level: 1 }).textContent).toBe(en.auth.setpass_title);
+		expect(screen.getByText(en.auth.setpass_body)).toBeTruthy();
+
+		type('New password', 'č'.repeat(37));
+		fireEvent.click(screen.getByRole('button', { name: en.auth.newpass_button }));
+		expect(screen.getByRole('alert').textContent).toBe(en.auth.error_password_long);
+		expect(auth.updatePassword).not.toHaveBeenCalled();
+
+		type('New password', 'mačka v škornjih');
+		fireEvent.click(screen.getByRole('button', { name: en.auth.newpass_button }));
+		expect((await screen.findByRole('status')).textContent).toBe(en.auth.setpass_done);
+		expect(auth.updatePassword).toHaveBeenCalledWith('mačka v škornjih');
+		expect(screen.getByRole('link', { name: en.common.continue }).getAttribute('href')).toBe('/en/r/Xy7pQ2mK');
 	});
 });
 

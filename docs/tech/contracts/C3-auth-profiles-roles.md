@@ -37,7 +37,7 @@ model profiles {
 - Email + password with `enable_confirmations = true`; anonymous sign-ins enabled; MFA TOTP enroll and verify enabled.
 - Google and Apple providers enabled only when their client ids are set (`env(...)` in config).
 - Turnstile captcha: off locally, on in cloud for sign-up and anonymous sign-in.
-- Redirect URLs: production allow-list is `https://<APP_URL>/**` and `zivali://**` only (`exp://` URLs are local/staging only). `secure_password_change = true` (GoTrue asks a session older than 24 h to reauthenticate before a password update; an anonymous user cannot, so the conversion of C7 §6 sets its password with `POST /v1/me/convert-password`). The locale reaches the auth emails through the Admin API (`user_metadata.locale`). JWT expiry 3600 s, refresh token rotation on.
+- Redirect URLs: production allow-list is `https://<APP_URL>/**` and `zivali://**` only (`exp://` URLs are local/staging only). `secure_password_change = true`. The locale reaches the auth emails through the Admin API (`user_metadata.locale`). JWT expiry 3600 s, refresh token rotation on.
 - Email templates (confirm, recovery, magic link, email change, reauthentication, identity-linked notice) in `supabase/templates/*.html`, copy from `docs/content/notifications-and-emails.md` §3, localised with `{{ if eq .Data.locale "en" }}…{{ else }}…{{ end }}`; check `{{ .Provider }}` and `{{ .NewEmail }}` against the deployed Supabase version.
 
 ## REST
@@ -46,7 +46,6 @@ model profiles {
 |---|---|---|---|
 | `GET /v1/me` | auth | - | `Profile` (own, incl. private fields) + `{ email, email_verified, is_anonymous, role, aal }` |
 | `PATCH /v1/me` | auth | `{ display_name?, locale?, home?: { lat, lng } \| null, home_radius_km?, phone?, quiet_from?, quiet_to?, supporter_badge_visible? }` | `Profile` |
-| `POST /v1/me/convert-password` | auth, anonymous only (the token's `is_anonymous` and, re-checked, the Auth Admin API user), rate limit 10/hour per IP (`me.convert_password`) | `{ password }` (strict; the sign-up policy: 8–72 characters, `Password` in `@zivali/validation`) | `204`. C7 §6: needs the address the client set first with `updateUser({ email })` (`new_email` pending), sets the password with the Admin API (`PUT /auth/v1/admin/users/:id`), audited (`user.password.convert`, no secret). `FORBIDDEN` for an account or without a pending address; GoTrue's own refusal (`weak_password`) is `VALIDATION` with `details.auth_code` and an issue on `password`; `SERVICE_UNAVAILABLE` without `SUPABASE_SECRET_KEY` |
 | `GET /v1/admin/users?query=&cursor=&limit=` | moderator, aal2 | `query` = display_name substring or exact email | `{ items: AdminUser[], next_cursor }` (`AdminUser` = profile columns for moderation: id, display_name, role, created_at, `email_masked`, `is_anonymous`; no phone, no `banned_at` until a ban column lands; defined in `packages/types/src/domain/`, TASK-6.5) |
 | `PUT /v1/admin/users/:id/role` | admin, aal2 | `{ role, note }` (strict; `note` trimmed, 1–500 chars) | `{ id, role }` (audited; last admin protected) |
 | `GET /v1/admin/audit-log?actor_id&action&target_type&target_id&cursor&limit` | admin, aal2 | - | `AuditLogList` = `{ items, next_cursor }` |
@@ -54,7 +53,7 @@ model profiles {
 
 Admin lists take `limit`; `cursor` is the last returned item's `id`.
 
-Errors: `UNAUTHENTICATED`, `VALIDATION` (radius 1–25, locale sl/en, password), `FORBIDDEN`, `AAL2_REQUIRED`, `CONFLICT` (last admin), `NOT_FOUND`, `RATE_LIMITED`, `SERVICE_UNAVAILABLE` (convert-password without the Admin API key).
+Errors: `UNAUTHENTICATED`, `VALIDATION` (radius 1–25, locale sl/en), `FORBIDDEN`, `AAL2_REQUIRED`, `CONFLICT` (last admin), `NOT_FOUND`, `RATE_LIMITED`.
 
 ## Client (`@zivali/api/auth` + `@zivali/api/me`)
 
@@ -69,7 +68,6 @@ signOut(cleanup?)               // runs DELETE /v1/push-tokens with body { token
 mfa.enroll(), mfa.challengeAndVerify(factorId, code)
 // API:
 getMe(api): Promise<Me>, updateMe(api, patch): Promise<Me>
-convertAnonymousPassword(client, { password }): Promise<void>   // @zivali/api/me, a plain call (C7 §6, lib/auth convertAnonymous)
 ```
 Hooks (same names on web and mobile): `useSession(): { session, me, isAnonymous, isVerified, role, aal, loading }`, `useRequireAuth({ verified?, role?, aal2? })` returns `gate`: `ok | loading | signin | verify | forbidden | aal2 | error` (anonymous counts as signed out; `forbidden` = role is not MODERATOR or ADMIN, as in `requireRole`).
 
@@ -97,4 +95,4 @@ Clients keep report drafts locally (C4 §Drafts, C17). When a signed-out visitor
 | 1.4 | 2026-10-15 | CH-121: `email_verified` from `auth.users.email_confirmed_at`, never `user_metadata` |
 | 1.5 | 2026-10-15 | CH-129: email copy reference §5 → §3; production redirect allow-list (`https://<APP_URL>/**`, `zivali://**`; `exp://` local/staging only); `secure_password_change = true`; locale reaches auth emails via the Admin API |
 | 1.6 | 2026-10-15 | CH-145: GET /v1/admin/audit-log and /v1/admin/queues, role body {role, note}, AdminUser email_masked + is_anonymous (no banned_at yet), limit/cursor, users query, errors NOT_FOUND and RATE_LIMITED |
-| 1.7 | 2026-10-16 | TASK-17.12: `POST /v1/me/convert-password` (anonymous only, pending address, Admin API, 10/hour per IP, audited) for the C7 §6 conversion under `secure_password_change`; client `convertAnonymousPassword`; `reauthentication_needed` → `UNAUTHENTICATED`; error `SERVICE_UNAVAILABLE` |
+| 1.7 | 2026-10-16 | TASK-17.12: `reauthentication_needed` → `UNAUTHENTICATED`. `POST /v1/me/convert-password` (briefly added for the C7 §6 conversion) is removed before release: the Admin API password update clears the pending `email_change` token and signs out every session, so the mailed link and "Pošlji znova" died. The conversion sends password and address in one `updateUser` instead (C7 §6) |

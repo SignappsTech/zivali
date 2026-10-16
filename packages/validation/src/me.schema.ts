@@ -1,5 +1,4 @@
-// C3 profiles and roles: GET/PATCH /v1/me, POST /v1/me/convert-password, GET /v1/admin/users,
-// PUT /v1/admin/users/:id/role.
+// C3 profiles and roles: GET/PATCH /v1/me, GET /v1/admin/users, PUT /v1/admin/users/:id/role.
 import { ClockTime, IsoDateTime, LatLng, limit, nullOr, page, text, Uuid } from './common.schema.ts';
 import { Aal, Locale, UserRole } from './enums.ts';
 import { z } from './zod.ts';
@@ -40,11 +39,12 @@ export const UpdateMeInput = z
 	.strict()
 	.openapi('UpdateMeInput');
 
-/** The sign-up password policy (supabase/config.toml minimum_password_length; GoTrue refuses more than 72 bytes). */
+/**
+ * The password policy the sign-up forms check before GoTrue does: supabase/config.toml minimum_password_length, and
+ * GoTrue's 72 (bcrypt's limit, in UTF-8 bytes: "č" counts 2; checked on local Supabase).
+ */
 export const MIN_PASSWORD = 8;
-export const Password = z.string().min(MIN_PASSWORD).max(72);
-// C7 §6: the password of an anonymous session that is becoming an account (its address is pending confirmation).
-export const ConvertPasswordInput = z.object({ password: Password }).strict().openapi('ConvertPasswordInput');
+export const MAX_PASSWORD = 72;
 
 export const AdminUser = z
 	.object({

@@ -10,12 +10,14 @@ import { AuthScreen, useLeaveAuth } from '@/components/auth/parts';
 import { Spot } from '@/components/shell/parts';
 import { Button } from '@/components/ui/button';
 import { Text } from '@/components/ui/text';
-import { exchangeLinkCode } from '@/lib/auth';
+import { exchangeLinkCode, isRecovering } from '@/lib/auth';
 
 /**
  * Where confirmation and reset emails land (zivali://auth/callback?type=…&code=…, see authRedirect). The code becomes
  * a session on this device; a reset continues to the new password, a confirmation shows P16 M5. GoTrue confirms the
  * address before it issues the code, so a confirmation opened on another device (no PKCE verifier here) still counts.
+ * A converted finder's link with `next` (C7 §6: the password did not go with the address) continues to the new
+ * password too; on another device it is the plain confirmation, and "Pozabljeno geslo?" sets the password.
  */
 export default function AuthCallback() {
 	const t = useTranslations('auth');
@@ -23,18 +25,18 @@ export default function AuthCallback() {
 	const router = useRouter();
 	const leave = useLeaveAuth();
 	const { session } = useSession();
-	const { code, type } = useLocalSearchParams<{ code?: string; type?: string }>();
+	const { code, type, next } = useLocalSearchParams<{ code?: string; type?: string; next?: string }>();
 	const [state, setState] = React.useState<'loading' | 'verified' | 'failed'>(code ? 'loading' : 'failed');
 	const started = React.useRef(false);
 
 	React.useEffect(() => {
 		if (!code || started.current) return;
 		started.current = true;
-		exchangeLinkCode(code, type).then(
-			() => (type === 'recovery' ? router.replace('/auth/new-password') : setState('verified')),
+		exchangeLinkCode(code, type, next).then(
+			() => (isRecovering() ? router.replace('/auth/new-password') : setState('verified')),
 			() => setState(type === 'signup' ? 'verified' : 'failed')
 		);
-	}, [code, type, router]);
+	}, [code, type, next, router]);
 
 	if (state === 'loading')
 		return (

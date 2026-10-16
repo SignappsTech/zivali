@@ -126,6 +126,19 @@ describe('recoveryEmail', () => {
 		auth.token = jwt({ email: 'ana@example.si', amr: [{ method: 'recovery', timestamp: now }] }, 'forged');
 		expect(await recoveryEmail()).toBeNull();
 	});
+
+	it("with `converted`, is only a converted finder's email_change session of the last hour (C7 §6)", async () => {
+		auth.token = jwt({ email: 'ana@example.si', amr: [{ method: 'email_change', timestamp: now - 60 }] });
+		expect(await recoveryEmail({ converted: true })).toBe('ana@example.si');
+		// Neither form takes the other's session.
+		expect(await recoveryEmail()).toBeNull();
+		auth.token = jwt({ email: 'ana@example.si', amr: [{ method: 'recovery', timestamp: now - 60 }] });
+		expect(await recoveryEmail({ converted: true })).toBeNull();
+		auth.token = jwt({ email: 'ana@example.si', amr: [{ method: 'email_change', timestamp: now - 7200 }] });
+		expect(await recoveryEmail({ converted: true })).toBeNull();
+		auth.token = jwt({ email: 'ana@example.si', amr: [{ method: 'email_change', timestamp: now }] }, 'forged');
+		expect(await recoveryEmail({ converted: true })).toBeNull();
+	});
 });
 
 describe('safeNext', () => {

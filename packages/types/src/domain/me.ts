@@ -1,4 +1,4 @@
-// C3 auth, profiles and roles: GET/PATCH /v1/me, POST /v1/me/convert-password, admin users.
+// C3 auth, profiles and roles: GET/PATCH /v1/me, admin users.
 import type { IsoDateTime, LatLng, Page, Uuid } from './common.ts';
 import type { Aal, Locale, UserRole } from './enums.ts';
 
@@ -29,9 +29,6 @@ export type UpdateMeInput = {
 	quiet_to?: string | null;
 	supporter_badge_visible?: boolean;
 };
-
-/** POST /v1/me/convert-password (C7 §6): 8–72 characters, as at sign-up. */
-export type ConvertPasswordInput = { password: string };
 
 /** No phone; the email is masked (`a***@example.si`). */
 export type AdminUser = {

@@ -27,7 +27,9 @@ async function sessionFromLink(code: string | null, tokenHash: string | null) {
  *   works only there; a `token_hash` (verifyOtp) works on any device. The recovery template still sends the code
  *   ({{ .ConfirmationURL }}); its switch to the token hash is tracked in backlog/changes.md (TASK-9.3, C3);
  * - `signup`: the "E-naslov je potrjen" view (P16 M5). GoTrue confirms the address before it issues the code, so a
- *   link opened in another browser (no verifier there, no session) still counts; only an expired or used link fails;
+ *   link opened in another browser (no verifier there, no session) still counts; only an expired or used link fails.
+ *   A converted finder's link whose `next` is the set-password form (lib/auth convertAnonymous) goes straight there;
+ *   without the session (another browser) it is the plain view, and "Pozabljeno geslo?" sets the password;
  * - `oauth`: back to `next`; cancelled or failed, to sign-in with a quiet message.
  */
 export async function GET(request: NextRequest, { params }: RouteContext<'/[locale]/auth/callback'>) {
@@ -48,6 +50,9 @@ export async function GET(request: NextRequest, { params }: RouteContext<'/[loca
 		case 'recovery':
 			return to(exchanged ? '/reset-password' : { pathname: '/reset-password', query: { link: 'expired' } });
 		case 'signup':
+			// C7 §6: a converted finder whose password could not go with the address sets it in this fresh session.
+			if (exchanged && next?.startsWith(`${getPathname({ locale, href: '/reset-password' })}?set=1`))
+				return go(next);
 			return to({
 				pathname: '/sign-in',
 				query: code ? { confirmed: '1', ...(next && { next }) } : { link: 'expired' },

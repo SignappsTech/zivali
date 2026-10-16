@@ -17,10 +17,4 @@ export async function updateMe(req: Request, res: Response): Promise<void> {
 	res.json(UsersMapper.toProfileDto(row));
 }
 
-/** C7 §6: 204; the address is confirmed through GoTrue's email_change link afterwards. */
-export async function convertPassword(req: Request, res: Response): Promise<void> {
-	await UsersDomain.convertPassword(req.body, userCtx(req));
-	res.status(204).end();
-}
-
-export default { getMe, updateMe, convertPassword };
+export default { getMe, updateMe };

@@ -7,6 +7,7 @@ import {
 	callbackUrl,
 	convertAnonymous,
 	ensureSession,
+	passwordTooLong,
 	requestPasswordReset,
 	resendConversion,
 	signIn,
@@ -25,11 +26,6 @@ const supabase = vi.hoisted(() => ({
 	signInAnonymously: vi.fn(),
 }));
 vi.mock('@/lib/supabase/client', () => ({ createClient: () => ({ auth: supabase }) }));
-// The REST client of POST /v1/me/convert-password (the real @zivali/api/me helper calls it).
-const api = vi.hoisted(() => ({ request: vi.fn(), locale: undefined as string | undefined }));
-vi.mock('@/lib/store', () => ({
-	makeApiClient: (locale: string) => ((api.locale = locale), { request: api.request }),
-}));
 
 afterEach(() => vi.clearAllMocks());
 
@@ -99,63 +95,81 @@ describe('Supabase calls', () => {
 
 	const anonymous = { data: { session: { user: { id: 'u-anon', is_anonymous: true } } }, error: null };
 	const account = { name: 'Ana', email: 'ana@example.si', password: 'mačka v škornjih', locale: 'sl' } as const;
+	const ok = { data: { user: { id: 'u-anon' } }, error: null };
+	const refused = (code: string, status = 400) => ({ data: {}, error: new AuthError('x', status, code) });
+	/** The conversion link's callback; with `set`, its next is the set-password form, then the page that asked. */
+	const callback = (locale: '' | '/en', next: string, set = false) =>
+		`${origin}${locale}/auth/callback?${new URLSearchParams({
+			type: 'signup',
+			next: set
+				? `${locale}/${locale ? 'reset-password' : 'pozabljeno-geslo'}?set=1&next=${encodeURIComponent(next)}`
+				: next,
+		})}`;
 
-	it('converts the anonymous session in place: the address with updateUser, then the password through the API (C7 §6)', async () => {
+	it('converts the anonymous session in place with one updateUser: password, name and address together (C7 §6)', async () => {
 		supabase.getSession.mockResolvedValue(anonymous);
-		supabase.updateUser.mockResolvedValue({ data: { user: { id: 'u-anon' } }, error: null });
-		api.request.mockResolvedValue(undefined);
-		await convertAnonymous({ ...account, next: '/r/Xy7pQ2mK' });
-		// No password here: GoTrue would ask a session over 24 h old to reauthenticate (secure_password_change).
-		expect(supabase.updateUser).toHaveBeenCalledWith(
-			{ email: 'ana@example.si', data: { locale: 'sl', display_name: 'Ana' } },
-			{ emailRedirectTo: `${origin}/auth/callback?type=signup&next=%2Fr%2FXy7pQ2mK` }
-		);
-		expect(api.request).toHaveBeenCalledWith('POST', '/v1/me/convert-password', {
-			body: { password: 'mačka v škornjih' },
-		});
-		expect(api.locale).toBe('sl');
-		// The address is pending before the API is asked for the password.
-		expect(supabase.updateUser.mock.invocationCallOrder[0]).toBeLessThan(api.request.mock.invocationCallOrder[0]!);
+		supabase.updateUser.mockResolvedValue(ok);
+		await expect(convertAnonymous({ ...account, next: '/r/Xy7pQ2mK' })).resolves.toEqual({ setPassword: false });
+		// One call: GoTrue sets the password before it mails the email_change link, so the link survives.
+		expect(supabase.updateUser.mock.calls).toEqual([
+			[
+				{ email: 'ana@example.si', password: 'mačka v škornjih', data: { locale: 'sl', display_name: 'Ana' } },
+				{ emailRedirectTo: callback('', '/r/Xy7pQ2mK') },
+			],
+		]);
 		// Same user: no new one, no sign-out, so report_managers and the manage link stay.
 		expect(supabase.signUp).not.toHaveBeenCalled();
 		expect(supabase.signInAnonymously).not.toHaveBeenCalled();
 	});
 
-	it('maps GoTrue and API failures to C1 codes; a refused address never reaches the API', async () => {
+	it('on reauthentication_needed (a session over 24 h old) sends the address alone, to the set-password form', async () => {
 		supabase.getSession.mockResolvedValue(anonymous);
-		for (const [auth_code, code] of [
-			['email_exists', 'CONFLICT'],
-			['email_address_invalid', 'VALIDATION'],
-			['over_email_send_rate_limit', 'RATE_LIMITED'],
-			['reauthentication_needed', 'UNAUTHENTICATED'],
-		] as const) {
-			supabase.updateUser.mockResolvedValueOnce({ data: {}, error: new AuthError('x', 422, auth_code) });
-			await expect(convertAnonymous(account)).rejects.toMatchObject({ code, details: { auth_code } });
-		}
-		expect(api.request).not.toHaveBeenCalled();
+		supabase.updateUser.mockResolvedValueOnce(refused('reauthentication_needed')).mockResolvedValueOnce(ok);
+		const converting = convertAnonymous({ ...account, locale: 'en', next: '/en/r/Xy7pQ2mK' });
+		await expect(converting).resolves.toEqual({ setPassword: true });
+		expect(supabase.updateUser.mock.calls).toEqual([
+			[expect.objectContaining({ password: 'mačka v škornjih' }), expect.anything()],
+			[
+				{ email: 'ana@example.si', data: { locale: 'en', display_name: 'Ana' } },
+				{ emailRedirectTo: callback('/en', '/en/r/Xy7pQ2mK', true) },
+			],
+		]);
 
-		supabase.updateUser.mockResolvedValue({ data: { user: { id: 'u-anon' } }, error: null });
-		const weak = new ApiError('VALIDATION', 'Password refused', { issues: [{ path: 'password', message: 'x' }] });
-		api.request.mockRejectedValueOnce(weak);
-		await expect(convertAnonymous(account)).rejects.toBe(weak);
-		api.request.mockRejectedValueOnce(new ApiError('RATE_LIMITED', 'Too many requests'));
+		// The address alone can fail too (the 60 s email limit): thrown, not tried again.
+		supabase.updateUser
+			.mockResolvedValueOnce(refused('reauthentication_needed'))
+			.mockResolvedValueOnce(refused('over_email_send_rate_limit', 429));
 		await expect(convertAnonymous(account)).rejects.toMatchObject({ code: 'RATE_LIMITED' });
+		expect(supabase.updateUser).toHaveBeenCalledTimes(4);
 	});
 
-	it('sends the conversion link again by setting the address again, not resend(); 60 s apart', async () => {
+	it('maps every other failure to C1 codes and never retries: a taken or invalid address, the email limit, the password', async () => {
 		supabase.getSession.mockResolvedValue(anonymous);
-		supabase.updateUser.mockResolvedValueOnce({ data: { user: { id: 'u-anon' } }, error: null });
+		for (const [auth_code, status, code] of [
+			['email_exists', 422, 'CONFLICT'],
+			['email_address_invalid', 400, 'VALIDATION'],
+			['over_email_send_rate_limit', 429, 'RATE_LIMITED'],
+			['weak_password', 422, 'VALIDATION'],
+			// More than 72 bytes (GoTrue's own limit, also checked on the form).
+			['validation_failed', 400, 'VALIDATION'],
+		] as const) {
+			supabase.updateUser.mockResolvedValueOnce(refused(auth_code, status));
+			await expect(convertAnonymous(account)).rejects.toMatchObject({ code, details: { auth_code } });
+		}
+		expect(supabase.updateUser).toHaveBeenCalledTimes(5);
+	});
+
+	it('sends the conversion link again by setting the address again, to the same callback; 60 s apart', async () => {
+		supabase.getSession.mockResolvedValue(anonymous);
+		supabase.updateUser.mockResolvedValue(ok);
 		await resendConversion('ana@example.si', 'en', '/en/r/Xy7pQ2mK');
-		expect(supabase.updateUser).toHaveBeenCalledWith(
-			{ email: 'ana@example.si' },
-			{ emailRedirectTo: `${origin}/en/auth/callback?type=signup&next=%2Fen%2Fr%2FXy7pQ2mK` }
-		);
-		supabase.updateUser.mockResolvedValueOnce({
-			data: {},
-			error: new AuthError('wait 60 s', 429, 'over_email_send_rate_limit'),
-		});
+		await resendConversion('ana@example.si', 'sl', '/r/Xy7pQ2mK', true);
+		expect(supabase.updateUser.mock.calls).toEqual([
+			[{ email: 'ana@example.si' }, { emailRedirectTo: callback('/en', '/en/r/Xy7pQ2mK') }],
+			[{ email: 'ana@example.si' }, { emailRedirectTo: callback('', '/r/Xy7pQ2mK', true) }],
+		]);
+		supabase.updateUser.mockResolvedValueOnce(refused('over_email_send_rate_limit', 429));
 		await expect(resendConversion('ana@example.si', 'en')).rejects.toMatchObject({ code: 'RATE_LIMITED' });
-		expect(api.request).not.toHaveBeenCalled();
 	});
 
 	it('never changes the address or password of an account or a missing session', async () => {
@@ -167,7 +181,13 @@ describe('Supabase calls', () => {
 			await expect(resendConversion(account.email, 'en')).rejects.toMatchObject({ code: 'UNAUTHENTICATED' });
 		}
 		expect(supabase.updateUser).not.toHaveBeenCalled();
-		expect(api.request).not.toHaveBeenCalled();
+	});
+
+	it('counts the password in UTF-8 bytes, as GoTrue does', () => {
+		expect(passwordTooLong('x'.repeat(72))).toBe(false);
+		expect(passwordTooLong('x'.repeat(73))).toBe(true);
+		// 37 characters, 74 bytes: GoTrue refuses it (checked on local Supabase).
+		expect(passwordTooLong('č'.repeat(37))).toBe(true);
 	});
 
 	it('asks for the reset link with the recovery callback; a repeat is RATE_LIMITED', async () => {

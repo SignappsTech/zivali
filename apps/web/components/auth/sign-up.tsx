@@ -14,7 +14,15 @@ import { Button } from '@/components/ui/button';
 import { FieldError, FormField } from '@/components/ui/form-field';
 import { Input } from '@/components/ui/input';
 import { Link } from '@/i18n/navigation';
-import { convertAnonymous, MIN_PASSWORD, resendConfirmation, resendConversion, signUp, validEmail } from '@/lib/auth';
+import {
+	convertAnonymous,
+	MIN_PASSWORD,
+	passwordTooLong,
+	resendConfirmation,
+	resendConversion,
+	signUp,
+	validEmail,
+} from '@/lib/auth';
 
 import { AuthHeading, AuthNote, PasswordField, ResendButton, Spot, useCooldown, useErrorText } from './parts';
 import { ProviderButtons } from './provider-buttons';
@@ -26,19 +34,22 @@ const inlineLink =
 /**
  * P16 M4 "Preverite e-pošto": after sign-up (`sent`: resend starts cooling down) or a sign-in with an unconfirmed
  * address. Web has no "Odpri e-pošto", so "Pošlji znova" is the primary (P16 G2). `convert`: the link of a converted
- * anonymous session is an email change, sent again by setting the address again (C7 §6), back to `next`.
+ * anonymous session is an email change, sent again by setting the address again (C7 §6), back to `next`;
+ * `setPassword`: the password did not go with the address, so the link leads to the set-password form.
  */
 export function CheckEmail({
 	email,
 	sent,
 	onChange,
 	convert = false,
+	setPassword = false,
 	next,
 }: {
 	email: string;
 	sent: boolean;
 	onChange: () => void;
 	convert?: boolean;
+	setPassword?: boolean;
 	next?: string;
 }) {
 	const t = useTranslations('auth');
@@ -51,6 +62,7 @@ export function CheckEmail({
 			</Spot>
 			<AuthHeading focus>{t('check_title')}</AuthHeading>
 			<p className="mt-3 text-lg leading-7 break-words">{t('check_body', { email })}</p>
+			{setPassword && <p className="mt-3 text-lg leading-7">{t('check_set_password')}</p>}
 			<p className="mt-5 flex gap-2 text-sm text-muted-foreground">
 				<TrayIcon weight="bold" aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
 				<span>{t('check_spam')}</span>
@@ -62,7 +74,7 @@ export function CheckEmail({
 					coolingDown={sent}
 					onResend={(captchaToken) =>
 						convert
-							? resendConversion(email, locale, next)
+							? resendConversion(email, locale, next, setPassword)
 							: resendConfirmation(email, locale, captchaToken)
 					}
 				/>
@@ -109,7 +121,7 @@ export function SignUpForm({
 		note?: 'limited' | 'captcha';
 	}>();
 	const [busy, setBusy] = React.useState(false);
-	const [sentTo, setSentTo] = React.useState<string>();
+	const [sentTo, setSentTo] = React.useState<{ email: string; setPassword?: boolean }>();
 	const nameRef = React.useRef<HTMLInputElement>(null);
 	const emailRef = React.useRef<HTMLInputElement>(null);
 	const passwordRef = React.useRef<HTMLInputElement>(null);
@@ -117,7 +129,12 @@ export function SignUpForm({
 	const problems = (current: typeof values): Partial<Record<Field, string>> => ({
 		name: current.name.trim() ? undefined : t('error_name_required'),
 		email: validEmail(current.email.trim()) ? undefined : t('error_email_invalid'),
-		password: current.password.length >= MIN_PASSWORD ? undefined : t('error_password_short'),
+		password:
+			current.password.length < MIN_PASSWORD
+				? t('error_password_short')
+				: passwordTooLong(current.password)
+					? t('error_password_long')
+					: undefined,
 	});
 	const errors = submitted ? problems(values) : {};
 	if (serverError?.field && !errors[serverError.field]) errors[serverError.field] = serverError.text;
@@ -142,20 +159,22 @@ export function SignUpForm({
 		setBusy(true);
 		try {
 			if (convert) {
-				await convertAnonymous(account);
+				const { setPassword } = await convertAnonymous(account);
 				// C12, dropped without consent; never the address.
 				track('sign_up', { method: 'convert' });
-			} else await signUp({ ...account, captchaToken: await captcha.getToken() });
-			setSentTo(email);
+				setSentTo({ email, setPassword });
+			} else {
+				await signUp({ ...account, captchaToken: await captcha.getToken() });
+				setSentTo({ email });
+			}
 		} catch (failure) {
 			const code = failure instanceof ApiError ? failure.code : null;
-			// The API's convert-password refuses the password itself (its policy or GoTrue's) with an issue on it.
-			const passwordRefused = failure instanceof ApiError && failure.issues?.some((i) => i.path === 'password');
 			if (code === 'CONFLICT' && convert) {
 				setServerError({ field: 'email', text: t('convert_email_taken') });
 				emailRef.current?.focus();
-			} else if (code === 'CONFLICT') setSentTo(email);
-			else if (convert && passwordRefused) {
+			} else if (code === 'CONFLICT') setSentTo({ email });
+			// Converting: GoTrue's own password policy (the hosted one may be stricter than the length checked here).
+			else if (convert && failure instanceof ApiError && failure.details?.auth_code === 'weak_password') {
 				setServerError({ field: 'password', text: t('error_password_weak') });
 				passwordRef.current?.focus();
 			} else if (code === 'RATE_LIMITED') {
@@ -171,9 +190,10 @@ export function SignUpForm({
 	if (sentTo)
 		return (
 			<CheckEmail
-				email={sentTo}
+				email={sentTo.email}
 				sent
 				convert={convert}
+				setPassword={sentTo.setPassword}
 				next={next}
 				onChange={() => {
 					setSentTo(undefined);

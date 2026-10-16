@@ -52,7 +52,8 @@ const AUTH_CODES: Record<string, ErrorCode> = {
 	validation_failed: 'VALIDATION',
 	email_address_invalid: 'VALIDATION',
 	mfa_verification_failed: 'VALIDATION',
-	// secure_password_change: a session over 24 h old must reauthenticate before a password update (sign in again).
+	// secure_password_change: a session over 24 h old must reauthenticate before a password update (sign in again);
+	// the anonymous conversion (C7 §6) catches it and sets the password after the email link instead.
 	reauthentication_needed: 'UNAUTHENTICATED',
 };
 

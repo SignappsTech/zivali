@@ -23,7 +23,7 @@ import { FieldError, FormField } from '@/components/ui/form-field';
 import { Icon } from '@/components/ui/icon';
 import { Input } from '@/components/ui/input';
 import { Text } from '@/components/ui/text';
-import { convertAnonymous, MIN_PASSWORD, signUp, validEmail } from '@/lib/auth';
+import { convertAnonymous, MIN_PASSWORD, passwordTooLong, signUp, validEmail } from '@/lib/auth';
 import { env } from '@/lib/env';
 
 /** Inline link in a sentence (terms, privacy): opens the web page. */
@@ -72,11 +72,17 @@ export default function SignUp() {
 	const emailRef = React.useRef<TextInput>(null);
 	const passwordRef = React.useRef<TextInput>(null);
 
+	const passwordProblem =
+		values.password.length < MIN_PASSWORD
+			? t('error_password_short')
+			: passwordTooLong(values.password)
+				? t('error_password_long')
+				: undefined;
 	const errors: Partial<Record<Field, string>> = submitted
 		? {
 				name: values.name.trim() ? undefined : t('error_name_required'),
 				email: validEmail(values.email.trim()) ? undefined : t('error_email_invalid'),
-				password: values.password.length >= MIN_PASSWORD ? undefined : t('error_password_short'),
+				password: passwordProblem,
 			}
 		: {};
 	if (serverError?.field && !errors[serverError.field]) errors[serverError.field] = serverError.text;
@@ -92,29 +98,29 @@ export default function SignUp() {
 		setServerError(undefined);
 		const email = values.email.trim();
 		const invalid = (['name', 'email', 'password'] as const).find((field) =>
-			field === 'name'
-				? !values.name.trim()
-				: field === 'email'
-					? !validEmail(email)
-					: values.password.length < MIN_PASSWORD
+			field === 'name' ? !values.name.trim() : field === 'email' ? !validEmail(email) : passwordProblem
 		);
 		if (invalid) {
 			({ name: nameRef, email: emailRef, password: passwordRef })[invalid].current?.focus();
 			return;
 		}
 		const account = { name: values.name.trim(), email, password: values.password, locale };
-		const checkEmail = {
+		// `setPassword`: the link leads to the new password (the conversion could not set it, C7 §6).
+		const checkEmail = (setPassword = false) => ({
 			pathname: '/auth/check-email' as const,
-			params: { email, sent: '1', ...(convert && { convert: '1' }) },
-		};
+			params: { email, sent: '1', ...(convert && { convert: '1' }), ...(setPassword && { setPassword: '1' }) },
+		});
 		setBusy(true);
 		try {
 			if (convert) {
-				await convertAnonymous(account);
+				const { setPassword } = await convertAnonymous(account);
 				// C12, dropped without consent; never the address.
 				track('sign_up', { method: 'convert' });
-			} else await signUp(account);
-			router.push(checkEmail);
+				router.push(checkEmail(setPassword));
+			} else {
+				await signUp(account);
+				router.push(checkEmail());
+			}
 		} catch (failure) {
 			const code = failure instanceof ApiError ? failure.code : null;
 			if (code === 'CONFLICT' && convert) {
@@ -122,15 +128,13 @@ export default function SignUp() {
 				emailRef.current?.focus();
 			}
 			// Taken address: same as success, so the form does not reveal which addresses have an account.
-			else if (code === 'CONFLICT') router.push(checkEmail);
+			else if (code === 'CONFLICT') router.push(checkEmail());
 			else if (code === 'VALIDATION') {
 				const authCode = failure instanceof ApiError ? failure.details?.auth_code : undefined;
-				// The API's convert-password refuses the password itself (its policy or GoTrue's) with an issue on it.
-				const passwordRefused =
-					failure instanceof ApiError && failure.issues?.some((i) => i.path === 'password');
 				if (authCode === 'email_address_invalid')
 					setServerError({ field: 'email', text: t('error_email_invalid') });
-				else if (convert && passwordRefused) {
+				// Converting: GoTrue's own password policy (the hosted one may be stricter than the length checked here).
+				else if (convert && authCode === 'weak_password') {
 					setServerError({ field: 'password', text: t('error_password_weak') });
 					passwordRef.current?.focus();
 				} else setServerError({ text: te('VALIDATION') });

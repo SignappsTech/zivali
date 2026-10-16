@@ -4,6 +4,7 @@ import { z } from 'zod';
 
 import { authError } from '@zivali/api/auth';
 import { ApiError } from '@zivali/api/client';
+import { MAX_PASSWORD } from '@zivali/validation/me.schema';
 import { getPathname } from '@/i18n/navigation';
 import { env } from '@/lib/env';
 import { createClient } from '@/lib/supabase/client';
@@ -12,8 +13,9 @@ import { createClient } from '@/lib/supabase/client';
 // cookie for the server-side exchange in app/[locale]/auth/callback), and the links in the auth emails. Errors are
 // ApiError with C1 codes (`authError` from @zivali/api/auth, `details.auth_code` keeps Supabase's code).
 
-/** The sign-up policy (supabase/config.toml minimum_password_length), shared with the API's convert-password. */
 export { MIN_PASSWORD } from '@zivali/validation/me.schema';
+/** GoTrue counts UTF-8 bytes ("č" is 2), so a password of fewer than 72 characters can be too long already. */
+export const passwordTooLong = (password: string) => new TextEncoder().encode(password).length > MAX_PASSWORD;
 export const validEmail = (value: string) => z.email().safeParse(value).success;
 
 /** Provider buttons show only for providers enabled in Supabase Auth (env flags); Apple is off until its account exists. */
@@ -85,11 +87,26 @@ async function assertAnonymous() {
 }
 
 /**
+ * The conversion link's callback (C7 §6). `setPassword`: the password did not go with the address, so after the link
+ * the new-password form sets it (/reset-password?set=1, then on to `next`); the callback goes straight there.
+ */
+const conversionCallback = (locale: Locale, next: string | undefined, setPassword: boolean) =>
+	callbackUrl(
+		'signup',
+		locale,
+		setPassword
+			? getPathname({ locale, href: { pathname: '/reset-password', query: { set: '1', ...(next && { next }) } } })
+			: next
+	);
+
+/**
  * C7 §6: the finder's anonymous session becomes the account in place, so the user id, report_managers and the manage
- * links stay. updateUser sets the name and the address (GoTrue mails the `email_change` link with PKCE, back to the
- * signup callback), then the API sets the password: GoTrue's own password update asks a session over 24 h old to
- * reauthenticate (secure_password_change), which an anonymous user cannot. The user stops being anonymous once the
- * link is opened. Refused on any other session.
+ * links stay. One updateUser sets the password, the name and the address: GoTrue applies the password first, then
+ * mails the `email_change` link (PKCE, back to the signup callback) in the same transaction, so the link survives
+ * (checked on local Supabase). The user stops being anonymous once the link is opened. A session over 24 h old gets
+ * `reauthentication_needed` (secure_password_change; an anonymous user has no address to reauthenticate with): then
+ * the address goes alone, and the link's fresh session sets the password (`setPassword`). Any other failure is
+ * thrown as is, never retried. Refused on any other session.
  */
 export async function convertAnonymous({
 	name,
@@ -103,16 +120,19 @@ export async function convertAnonymous({
 	password: string;
 	locale: Locale;
 	next?: string;
-}) {
+}): Promise<{ setPassword: boolean }> {
 	await assertAnonymous();
-	const redirect = { emailRedirectTo: callbackUrl('signup', locale, next) };
-	await check(auth().updateUser({ email, data: { locale, display_name: name } }, redirect));
-	// Loaded here: the sign-up page has no store, so RTK stays out of its bundle.
-	const [{ convertAnonymousPassword }, { makeApiClient }] = await Promise.all([
-		import('@zivali/api/me'),
-		import('@/lib/store'),
-	]);
-	await convertAnonymousPassword(makeApiClient(locale), { password });
+	const data = { locale, display_name: name };
+	try {
+		await check(
+			auth().updateUser({ email, password, data }, { emailRedirectTo: conversionCallback(locale, next, false) })
+		);
+		return { setPassword: false };
+	} catch (failure) {
+		if (!(failure instanceof ApiError && failure.details?.auth_code === 'reauthentication_needed')) throw failure;
+	}
+	await check(auth().updateUser({ email, data }, { emailRedirectTo: conversionCallback(locale, next, true) }));
+	return { setPassword: true };
 }
 
 export const resendConfirmation = (email: string, locale: Locale, captchaToken?: string) =>
@@ -125,12 +145,12 @@ export const resendConfirmation = (email: string, locale: Locale, captchaToken?:
 	);
 
 /**
- * "Pošlji znova" after convertAnonymous: the address again. resend({ type: 'email_change' }) finds no one (an
- * anonymous user's email is empty) and carries no PKCE; a repeat within 60 s is RATE_LIMITED.
+ * "Pošlji znova" after convertAnonymous: the address again, to the same callback. resend({ type: 'email_change' })
+ * finds no one (an anonymous user's email is empty) and carries no PKCE; a repeat within 60 s is RATE_LIMITED.
  */
-export async function resendConversion(email: string, locale: Locale, next?: string) {
+export async function resendConversion(email: string, locale: Locale, next?: string, setPassword = false) {
 	await assertAnonymous();
-	await check(auth().updateUser({ email }, { emailRedirectTo: callbackUrl('signup', locale, next) }));
+	await check(auth().updateUser({ email }, { emailRedirectTo: conversionCallback(locale, next, setPassword) }));
 }
 
 /** The recovery email is localised from the user's metadata locale; the link opens the new-password form. */

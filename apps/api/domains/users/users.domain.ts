@@ -1,5 +1,5 @@
 // Profiles (C3). Knows nothing about Express or tokens: the auth middleware passes the verified claims in.
-import { LOCALES, type ConvertPasswordInput, type Locale, type UpdateMeInput } from '@zivali/types';
+import { LOCALES, type Locale, type UpdateMeInput } from '@zivali/types';
 import { coarsenPoint } from '@zivali/validation/geo';
 
 import { config } from '../../lib/config.ts';
@@ -7,7 +7,6 @@ import type { Ctx } from '../../lib/ctx.ts';
 import { AppError } from '../../lib/errors.ts';
 import { logger } from '../../lib/logger.ts';
 import { prisma, type Prisma } from '../../prisma/prisma.ts';
-import { AuditDao } from '../platform/index.ts';
 import UsersDao, { type AuthProfile, type MeRow } from './users.dao.ts';
 
 export type { AuthProfile, MeRow };
@@ -64,61 +63,20 @@ export async function updateMe(input: UpdateMeInput, ctx: Ctx): Promise<MeRow> {
 	return row;
 }
 
-/** One Auth user over the Admin API, with the server-only secret key (never sent to clients or logged). */
-const authAdmin = (id: string, key: string, init: RequestInit = {}) =>
-	fetch(`${config.SUPABASE_URL}/auth/v1/admin/users/${id}`, {
-		...init,
-		headers: { apikey: key, Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
-	});
-
 /** Auth emails read user_metadata.locale: keep it in step with the profile (best effort, the profile is the truth). */
 async function syncAuthLocale(id: string, locale: Locale): Promise<void> {
 	const key = config.SUPABASE_SECRET_KEY;
 	if (!key) return;
 	try {
-		const res = await authAdmin(id, key, { method: 'PUT', body: JSON.stringify({ user_metadata: { locale } }) });
+		const res = await fetch(`${config.SUPABASE_URL}/auth/v1/admin/users/${id}`, {
+			method: 'PUT',
+			headers: { apikey: key, Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
+			body: JSON.stringify({ user_metadata: { locale } }),
+		});
 		if (!res.ok) logger.warn({ status: res.status }, 'auth locale sync failed');
 	} catch {
 		logger.warn('auth locale sync failed');
 	}
 }
 
-const NOT_ANONYMOUS = 'Only an anonymous session can be converted';
-
-/**
- * C7 §6: the password of an anonymous finder whose session is becoming the account. The client has just set the
- * address (updateUser({ email }), which mails the email_change link); GoTrue's own password update asks for a
- * reauthentication once the session is 24 h old (secure_password_change), which an anonymous user cannot do, so the
- * password is set here with the Admin API. Only while the token and Auth both say anonymous and an address is pending,
- * so a real account's password never changes here.
- */
-export async function convertPassword(input: ConvertPasswordInput, ctx: Ctx): Promise<void> {
-	const id = actorId(ctx);
-	if (!ctx.actor!.is_anonymous) throw new AppError('FORBIDDEN', NOT_ANONYMOUS);
-	const key = config.SUPABASE_SECRET_KEY;
-	if (!key) throw new AppError('SERVICE_UNAVAILABLE', 'Auth Admin API is not configured');
-	const found = await authAdmin(id, key);
-	if (found.status === 404) throw new AppError('UNAUTHENTICATED', 'Sign in required');
-	if (!found.ok) throw new Error(`Auth Admin API get user answered ${found.status}`);
-	const user = (await found.json()) as { is_anonymous?: boolean; new_email?: string | null };
-	if (!user.is_anonymous) throw new AppError('FORBIDDEN', NOT_ANONYMOUS);
-	if (!user.new_email) throw new AppError('FORBIDDEN', 'Set the email address first');
-	const updated = await authAdmin(id, key, { method: 'PUT', body: JSON.stringify({ password: input.password }) });
-	// GoTrue's own policy (weak_password, length): said on the field, with its code as the client mapping keeps it.
-	if (updated.status === 400 || updated.status === 422) {
-		const body = (await updated.json().catch(() => ({}))) as { error_code?: string };
-		throw new AppError('VALIDATION', 'Password refused', { auth_code: body.error_code }, [
-			{ path: 'password', message: 'Password refused' },
-		]);
-	}
-	if (!updated.ok) throw new Error(`Auth Admin API update user answered ${updated.status}`);
-	// No secret and no address in the trail: who, and that it happened.
-	await AuditDao.write(ctx.tx, {
-		actor_id: id,
-		action: 'user.password.convert',
-		target_type: 'profile',
-		target_id: id,
-	});
-}
-
-export default { ensureProfile, getMe, updateMe, convertPassword };
+export default { ensureProfile, getMe, updateMe };

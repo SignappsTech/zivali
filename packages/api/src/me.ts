@@ -1,11 +1,10 @@
-// C3 profile and admin users over REST, and the password of a converting anonymous session (C7 §6). Stubs typed from @zivali/types until apps/api/openapi.json has these routes;
+// C3 profile and admin users over REST. Stubs typed from @zivali/types until apps/api/openapi.json has these routes;
 // then `gen:api` generates them (src/generated/endpoints.ts) and this file is deleted.
 import type {
 	AdminUserList,
 	AdminUserQuery,
 	AuditLogList,
 	AuditLogQuery,
-	ConvertPasswordInput,
 	Me,
 	Profile,
 	SetRoleInput,
@@ -14,16 +13,8 @@ import type {
 	Uuid,
 } from '@zivali/types';
 
-import type { ApiClient } from './client.ts';
 import { pageParams } from './pagination.ts';
 import { api } from './rtk.ts';
-
-/**
- * POST /v1/me/convert-password (TASK-17.12): after updateUser({ email }) on an anonymous session, its password. A plain
- * call (lib/auth convertAnonymous awaits it between two Supabase calls), so failures are ApiError (C1).
- */
-export const convertAnonymousPassword = (client: ApiClient, body: ConvertPasswordInput) =>
-	client.request<void>('POST', '/v1/me/convert-password', { body });
 
 export const meApi = api.enhanceEndpoints({ addTagTypes: ['Me', 'AdminUsers', 'AuditLog'] }).injectEndpoints({
 	endpoints: (build) => ({

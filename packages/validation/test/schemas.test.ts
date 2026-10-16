@@ -10,7 +10,6 @@ import {
 	breedsFor,
 	CAT_BREEDS,
 	CheckoutInput,
-	ConvertPasswordInput,
 	CreatePhotoInput,
 	CreateReportInput,
 	DOG_BREEDS,
@@ -201,15 +200,6 @@ describe('other request schemas', () => {
 	test('GeoSearchInput: q 2–100 chars, trimmed', () => {
 		expect(issues(GeoSearchInput.safeParse({ q: 'x' }))).toEqual(['q: Too short']);
 		expect(GeoSearchInput.parse({ q: ' kranj ' }).q).toBe('kranj');
-	});
-
-	test('ConvertPasswordInput: the sign-up policy, 8–72 characters, nothing else', () => {
-		expect(ConvertPasswordInput.safeParse({ password: 'mačka v škornjih' }).success).toBe(true);
-		expect(issues(ConvertPasswordInput.safeParse({ password: '1234567' }))).toEqual([
-			'password: Too small: expected string to have >=8 characters',
-		]);
-		expect(ConvertPasswordInput.safeParse({ password: 'x'.repeat(73) }).success).toBe(false);
-		expect(ConvertPasswordInput.safeParse({ password: 'mačka v škornjih', email: 'a@b.si' }).success).toBe(false);
 	});
 
 	test('CreatePhotoInput: ≤ 1 MB, long edge ≤ 1600, short edge ≥ 320', () => {
