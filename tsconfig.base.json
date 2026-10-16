@@ -13,6 +13,31 @@
 		"resolveJsonModule": true,
 		"skipLibCheck": true,
 		"forceConsistentCasingInFileNames": true,
-		"strict": true
+		"strict": true,
+		// @zivali/* source packages resolve from this checkout, never through node_modules links: agent worktrees share
+		// the main checkout's node_modules, whose links point at one checkout (TASK-107). Mirrors each package's
+		// `exports`; built outputs (tokens values/map-style .ts, i18n dist json) resolve here first, falling back to node_modules (dist is gitignored); only the CSS, tailwind-preset and
+		// app.config.ts still go through node_modules. A tsconfig that
+		// sets its own `paths` replaces these, so apps/web and apps/mobile repeat them: keep the three in step.
+		// Vitest (resolve.tsconfigPaths), Next.js, Expo's Metro, tsx and tsup (esbuild) read these; jest uses
+		// apps/mobile's moduleNameMapper.
+		"paths": {
+			"@zivali/analytics": ["./packages/analytics/src/index.ts"],
+			"@zivali/api/*": ["./packages/api/src/*.ts"],
+			"@zivali/i18n/dist/*": ["./packages/i18n/dist/*", "./node_modules/@zivali/i18n/dist/*"],
+			"@zivali/i18n/format": ["./packages/i18n/src/format.ts"],
+			"@zivali/tokens/map-style": [
+				"./packages/tokens/dist/map-style.ts",
+				"./node_modules/@zivali/tokens/dist/map-style.ts"
+			],
+			"@zivali/tokens/values": [
+				"./packages/tokens/dist/values.ts",
+				"./node_modules/@zivali/tokens/dist/values.ts"
+			],
+			"@zivali/types": ["./packages/types/src/index.ts"],
+			"@zivali/types/domain/*": ["./packages/types/src/domain/*.ts"],
+			"@zivali/validation": ["./packages/validation/src/index.ts"],
+			"@zivali/validation/*": ["./packages/validation/src/*.ts"]
+		}
 	}
 }

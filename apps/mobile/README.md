@@ -55,6 +55,12 @@ Gallery: `/dev/kit` (redirects to `/` when `EXPO_PUBLIC_APP_ENV=production`). `r
 - The draft is the `drafts` row `lost` (C17), saved on every step with the coarsened point; PhotoPicker keeps its photos under the same id. Opening the flow with a draft offers to continue it.
 - A saved pet still asks for photos: pet photos cannot be attached to a report (C5).
 
+## Map tab (P4, TASK-31.5)
+
+- `app/(tabs)/index.tsx` composes `MapView`, the area pill (opens `components/browse/filter-sheet.tsx`) and the list sheet (`components/browse/list-sheet.tsx`, a non-modal `@gorhom/bottom-sheet` at 40 / 60 / 100 % under the pill). Filters and their C4 queries live in `components/browse/filters.ts`; map and list read only `useMapReports` / `useReportSearch` (`lib/data/reports.ts`, `skip` holds them until the location is known).
+- The device location (`components/browse/use-device-location.ts`) is read only while the permission is granted, never drawn, sent at 2 decimals, and each fix is the offline cache's `current` area. "Uporabi mojo lokacijo" goes through the location `PermissionPrimer`; refused, the filter sheet shows the note and the place search.
+- Ads (P21, TASK-36.6): pass `renderAd` to `ListSheet`; it gets an `AdSlot` after every 8 rows. Without it no ad rows exist.
+
 ## Shell (P2)
 
 - `app/(tabs)`: Zemljevid (`index`), Sporočila (`inbox`), Prijavi (`report`) and Profil (`profile`) with the bottom navigation in `components/shell/tab-bar.tsx`. The Prijavi button opens the Report sheet (lost → `/report/lost`, found → `/report/found`, sighted → `/report/found?type=sighted`); the `report` route shows the same choice for a link.

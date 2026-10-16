@@ -17,7 +17,8 @@ const nextConfig: NextConfig = {
 	// Own container on the Hetzner VPS (ADR-016).
 	output: 'standalone',
 	poweredByHeader: false,
-	// Ship TypeScript source (@zivali/i18n/format).
+	// Ship TypeScript source (@zivali/i18n/format). They resolve from this checkout's packages/*/src through
+	// tsconfig.json `paths`, not the node_modules links.
 	transpilePackages: ['@zivali/api', '@zivali/analytics', '@zivali/i18n'],
 	// Types are checked once by the `typecheck` task (next typegen && tsc) in pnpm verify and CI; repeating it in
 	// every build (turbo, e2e, quality, Docker) cost minutes each.
