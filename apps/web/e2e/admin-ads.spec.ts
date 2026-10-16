@@ -92,7 +92,7 @@ for (const colorScheme of ['light', 'dark'] as const) {
 		await page.getByLabel('Naslov', { exact: true }).fill('Repek: jesenska akcija');
 		await page.getByLabel('Besedilo', { exact: true }).fill('Brezplačna dostava do konca meseca.');
 		// SL and EN (the default): one button text cannot serve both, so it is typed (TASK-37.3 fix round).
-		await page.getByLabel('Besedilo gumba (neobvezno)', { exact: true }).fill('Več o tem');
+		await page.getByLabel('Besedilo gumba', { exact: true }).fill('Več o tem');
 		await page.getByLabel('Povezava', { exact: true }).fill('https://repek.si/jesen');
 		const form = page.locator('form');
 		await form
