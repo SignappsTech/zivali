@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:14'
-updated_date: '2026-10-16 04:18'
+updated_date: '2026-10-16 04:35'
 labels:
   - fe
   - 'est:S'
@@ -43,7 +43,7 @@ Branch: agent/task-23.2-alerts-web
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 /account/alerts sets the home area (LocationPicker alert mode), radius 1–25 km (default 5), species and opt-in or pause, per P13.
-- [ ] #2 Opt-in fires alert_opt_in with species and region only (consent only); unverified users see the verify prompt.
+- [x] #1 /account/alerts sets the home area (LocationPicker alert mode), radius 1–25 km (default 5), species and opt-in or pause, per P13.
+- [x] #2 Opt-in fires alert_opt_in with species and region only (consent only); unverified users see the verify prompt.
 - [ ] #3 axe 0 violations; Playwright covers opt-in and pause.
 <!-- AC:END -->
