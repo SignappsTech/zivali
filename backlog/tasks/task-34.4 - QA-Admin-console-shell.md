@@ -5,9 +5,9 @@ status: To Do
 assignee:
   - '@qa'
 created_date: '2026-10-14 22:15'
+updated_date: '2026-10-16 09:29'
 labels:
-  - qa
-  - 'est:XS'
+  - 'qa qa:fail'
 milestone: m-1
 dependencies:
   - TASK-34.2
@@ -35,10 +35,16 @@ Branch: - (verify on main)
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Given a user with the admin or moderator role, when they open the admin area, then they see a navigation shell (Ads, Reports, Organisations, Users, Orders, KPIs) filtered by role and everyone else is redirected or gets 403.
+- [x] #1 Given a user with the admin or moderator role, when they open the admin area, then they see a navigation shell (Ads, Reports, Organisations, Users, Orders, KPIs) filtered by role and everyone else is redirected or gets 403.
 - [ ] #2 Given any admin action, when performed, then an audit log entry (who, what, when, target) is stored and viewable by admins.
-- [ ] #3 Given admin roles, when they sign in, then strong authentication (TOTP or equivalent, decided in the TDD) is required.
-- [ ] #4 Given the first admin, when bootstrapping a new environment, then a documented script creates the initial admin without a public sign-up path.
+- [x] #3 Given admin roles, when they sign in, then strong authentication (TOTP or equivalent, decided in the TDD) is required.
+- [x] #4 Given the first admin, when bootstrapping a new environment, then a documented script creates the initial admin without a public sign-up path.
 - [ ] #5 Given the admin area, when used, then it is web-only, SL and EN, and core tables and forms meet WCAG 2.2 AA.
 - [ ] #6 Story gates pass on main: `pnpm verify`, plus `pnpm quality` for the pages this story touches; results recorded in the QA notes.
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+QA 2026-10-16 (static, main b965dff9): AC1 pass (nav.ts roles + router guard; Orders/KPIs entries not present yet); AC2 FAIL bug TASK-34.7; AC3 pass, recovery gap TASK-34.6 + CHANGE row; AC4 pass; AC5/AC6 verify, e2e: merge queue on main at b965dff9 (web vitest admin suites need built i18n dist, not runnable here). Also TASK-34.5 robots.txt. Tests added: admin.routes guard sweep (ads/abuse/flags/directory), e2e MFA rate-limit.
+<!-- SECTION:NOTES:END -->
