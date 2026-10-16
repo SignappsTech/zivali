@@ -1,11 +1,11 @@
 ---
 id: TASK-92.4
 title: 'Fiscal invoices: credit note (dobropis) for refunded payments'
-status: In Progress
+status: Done
 assignee:
   - '@tech-lead'
 created_date: '2026-10-15 23:40'
-updated_date: '2026-10-16 02:07'
+updated_date: '2026-10-16 03:18'
 labels:
   - be
   - 'est:S'
