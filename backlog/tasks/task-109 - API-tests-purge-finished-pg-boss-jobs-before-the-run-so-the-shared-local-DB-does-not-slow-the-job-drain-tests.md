@@ -3,9 +3,10 @@ id: TASK-109
 title: >-
   API tests: purge finished pg-boss jobs before the run so the shared local DB
   does not slow the job-drain tests
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-10-16 06:44'
+updated_date: '2026-10-16 07:07'
 labels:
   - tech
   - test
