@@ -3,9 +3,10 @@ id: TASK-30.5
 title: >-
   Mobile found flow: sightings link only to lost listings, keep startedAt on
   draft restore, held linked sighting copy
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-10-16 05:45'
+updated_date: '2026-10-16 07:08'
 labels:
   - bug
   - mobile
