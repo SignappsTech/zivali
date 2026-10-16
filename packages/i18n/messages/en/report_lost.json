@@ -103,6 +103,7 @@
 	"duplicate_title": "You already have an open search for this pet",
 	"duplicate_update": "Update the existing search",
 	"duplicate_new": "Create a new report",
+	"duplicate_replaces_photos": "Photos will be replaced with the new ones.",
 	"send_failed": "We could not send your report. Your draft is saved; please try again.",
 	"validation_summary": "Please check the highlighted fields.",
 	"unverified_note": "Your search is live. Confirm your email address to get alerts and messages."

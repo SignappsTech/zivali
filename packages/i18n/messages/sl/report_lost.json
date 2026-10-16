@@ -103,6 +103,7 @@
 	"duplicate_title": "Za to žival že imate odprto iskanje",
 	"duplicate_update": "Posodobi obstoječe iskanje",
 	"duplicate_new": "Ustvari novo prijavo",
+	"duplicate_replaces_photos": "Fotografije bodo zamenjane z novimi.",
 	"send_failed": "Prijave nismo mogli poslati. Osnutek je shranjen, poskusite znova.",
 	"validation_summary": "Preverite označena polja.",
 	"unverified_note": "Iskanje je objavljeno. Za opozorila in sporočila še potrdite svoj e-naslov."

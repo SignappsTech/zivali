@@ -113,6 +113,11 @@ async function saveDraft(draft: Draft): Promise<void> {
 	);
 }
 
+/** Fallback when dropDraft fails after a send: loadDraft ignores a row without a step, so no resume offer. */
+async function markPublished(): Promise<void> {
+	await (await getDb()).runAsync(`update drafts set data = '{"published":true}' where id = ?`, LOST_DRAFT);
+}
+
 async function dropDraft(): Promise<void> {
 	await clearPhotoDraft(LOST_DRAFT);
 	await (await getDb()).runAsync('delete from drafts where id = ?', LOST_DRAFT);
@@ -546,6 +551,7 @@ function ReviewStep({ photos, pet, edit, duplicate, update, onUpdateChange }: Re
 						/>
 						<ChoiceRow value="new" title={t('duplicate_new')} icon={<Icon as={PlusIcon} size={24} />} />
 					</RadioGroup>
+					{update ? <Note icon={InfoIcon}>{t('duplicate_replaces_photos')}</Note> : null}
 				</View>
 			) : null}
 			<View className="gap-5">
@@ -672,8 +678,8 @@ export function LostFlow() {
 	const [sendError, setSendError] = React.useState<string>();
 	const [duplicate, setDuplicate] = React.useState<string>();
 	const [update, setUpdate] = React.useState(true);
-	// Stable across repeats of one submission (C1); a new one once the server has answered.
-	const idempotencyKey = React.useRef<string>(null);
+	// Stable across repeats of one submission (C1): key, exact body and its event_at. Cleared once the server has answered.
+	const submission = React.useRef<{ key: string; body: string; at: Date } | null>(null);
 	const scroll = React.useRef<ScrollView>(null);
 	const pet = pets.find((p) => p.id === values.pet);
 
@@ -722,7 +728,9 @@ export function LostFlow() {
 		advance();
 	};
 	const back = () => (index > 0 ? go(steps[index - 1]!) : setClosing(true));
-	const hardwareBack = React.useEffectEvent(back);
+	const hardwareBack = React.useEffectEvent(() => {
+		if (!closing && !resume) back();
+	});
 	React.useEffect(() => {
 		const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
 			hardwareBack();
@@ -744,7 +752,7 @@ export function LostFlow() {
 
 	const failed = (error: unknown) => {
 		const data = (error as Partial<QueryError> | null)?.data;
-		if (data?.code !== 'NETWORK') idempotencyKey.current = null;
+		if (data?.code !== 'NETWORK') submission.current = null;
 		const paths = (data?.issues ?? []).map((issue) => issue.path);
 		if (data?.code === 'DUPLICATE_OPEN_REPORT' && typeof data.details?.short_code === 'string') {
 			setDuplicate(data.details.short_code);
@@ -782,6 +790,7 @@ export function LostFlow() {
 			}
 		}
 		if (gate === 'signin') return setGateOpen(true);
+		if (!values.location) return edit('where');
 		const at = eventAt(values)!;
 		setSending(true);
 		try {
@@ -790,12 +799,18 @@ export function LostFlow() {
 				code = (await updateReport({ code: duplicate, body: reportFields(values, photoIds, at) }).unwrap())
 					.short_code;
 			} else {
-				idempotencyKey.current ??= randomUUID();
-				const body = createBody(values, { photoIds, at, pet, inline: Boolean(duplicate) });
-				code = (await createReport({ body, idempotencyKey: idempotencyKey.current }).unwrap()).short_code;
+				// A retry after NETWORK repeats key and body (event_at included); any edit is a new submission.
+				const make = (when: Date) =>
+					createBody(values, { photoIds, at: when, pet, inline: Boolean(duplicate) });
+				const prev = submission.current;
+				if (!prev || JSON.stringify(make(prev.at)) !== prev.body) {
+					submission.current = { key: randomUUID(), body: JSON.stringify(make(at)), at };
+				}
+				const { key, body } = submission.current!;
+				code = (await createReport({ body: JSON.parse(body), idempotencyKey: key }).unwrap()).short_code;
 			}
 			trackSubmit(code);
-			await dropDraft().catch(() => {});
+			await dropDraft().catch(() => markPublished().catch(() => {}));
 			const name = pet?.name ?? values.name?.trim();
 			router.replace({ pathname: '/report/lost/done', params: name ? { code, name } : { code } });
 		} catch (error) {

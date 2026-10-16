@@ -392,10 +392,32 @@ describe('report lost flow (P6)', () => {
 		});
 
 		fail = false;
+		// "Pravkar" is the clock: a recomputed event_at would differ.
+		await act(async () => new Promise((resolve) => setTimeout(resolve, 20)));
 		await press(t.publish);
 		await waitFor(() => expect(mockRouter.replace).toHaveBeenCalled());
 		const [first, second] = posted();
 		expect(second!.headers['Idempotency-Key']).toBe(first!.headers['Idempotency-Key']);
+		expect(second!.body).toEqual(first!.body);
+		expect((second!.body as { event_at: string }).event_at).toBe((first!.body as { event_at: string }).event_at);
+	});
+
+	test('editing the input after a network failure is a new submission: a new Idempotency-Key', async () => {
+		let fail = true;
+		routes = { 'POST /v1/reports': () => (fail ? offline() : created) };
+		await toReviewWithSavedPet();
+		await press(t.publish);
+		expect(await screen.findByText(t.send_failed)).toBeTruthy();
+
+		await press(`Uredi: ${t.review_reward}`);
+		await fireEvent.changeText(screen.getByLabelText(t.circumstances_label), 'Pobegnil je na sprehodu');
+		await next();
+		fail = false;
+		await press(t.publish);
+		await waitFor(() => expect(mockRouter.replace).toHaveBeenCalled());
+		const [first, second] = posted();
+		expect(second!.headers['Idempotency-Key']).not.toBe(first!.headers['Idempotency-Key']);
+		expect(second!.body).toMatchObject({ circumstances: 'Pobegnil je na sprehodu' });
 	});
 
 	test('report_lost_submit fires with consent only, with the region and municipality the API derived', async () => {
