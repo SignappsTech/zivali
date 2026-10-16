@@ -7,13 +7,14 @@ const get = (image: string) =>
 	GET(new Request(`https://najdimo.si/og/${image}`), { params: Promise.resolve({ image }) });
 
 describe('/og/[image].png', () => {
-	it('builds one card per P3 page and locale', () => {
-		expect(generateStaticParams()).toHaveLength(12);
+	it('builds one card per P3 page and P22, per locale', () => {
+		expect(generateStaticParams()).toHaveLength(14);
 		expect(generateStaticParams()).toContainEqual({ image: 'sl-for-shelters.png' });
+		expect(generateStaticParams()).toContainEqual({ image: 'en-partners.png' });
 	});
 
-	it('answers a 1200 x 630 PNG', async () => {
-		const response = await get('sl-faq.png');
+	it.each(['sl-faq.png', 'en-partners.png'])('answers %s as a 1200 x 630 PNG', async (image) => {
+		const response = await get(image);
 		const png = Buffer.from(await response.arrayBuffer());
 
 		expect(response.status).toBe(200);

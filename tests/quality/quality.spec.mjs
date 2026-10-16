@@ -31,6 +31,9 @@ const PAGES = [
 	// TASK-31.4 P4 map and list
 	'/zemljevid',
 	'/en/map',
+	// TASK-38.3 P22 partners page (stats from e2e/mock-api.ts)
+	'/oglasevanje',
+	'/en/advertise',
 ];
 // Protected flows (report-lost, report-found, sign-in, chat, payment), SL and EN. Each of those stories adds its routes.
 const PROTECTED = [
