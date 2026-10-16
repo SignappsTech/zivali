@@ -55,6 +55,7 @@ describe('/r/[code]/poster.pdf', () => {
 		expect(response.headers.get('content-type')).toBe('application/pdf');
 		expect(response.headers.get('content-disposition')).toBe(`inline; filename="najdimo-${report.short_code}.pdf"`);
 		expect(response.headers.get('x-robots-tag')).toBe('noindex');
+		expect(response.headers.get('cache-control')).toBe('private, max-age=300');
 		expect(pdf.subarray(0, 5).toString()).toBe('%PDF-');
 		expect(pdf.toString('latin1')).toContain('/Lang (en)');
 		// No session: the poster is what everyone who scans it sees.
@@ -92,6 +93,30 @@ describe('/r/[code]/poster.pdf', () => {
 		expect((await get('Hk3vT9qP')).status).toBe(410);
 		serve({ ...report, photos: [] });
 		expect((await get('Hk3vT9qP')).status).toBe(409);
+	});
+
+	it('answers a malformed code 404 without asking the API', async () => {
+		serve(report);
+		const response = await get('../x');
+		expect(response.status).toBe(404);
+		expect(fetchMock).not.toHaveBeenCalled();
+	});
+
+	it('answers 503, uncached, for a photo that redirects, is over 4 MB or lies about its size', async () => {
+		for (const photo of [
+			new Error('redirect'),
+			new Response(PHOTO, {
+				headers: { 'content-type': 'image/png', 'content-length': String(5 * 1024 * 1024) },
+			}),
+			new Response(new Uint8Array(4 * 1024 * 1024 + 1), { headers: { 'content-type': 'image/png' } }),
+		]) {
+			serve(report, 200, photo);
+			const response = await get('Hk3vT9qP');
+			expect([response.status, response.headers.get('cache-control')]).toEqual([503, 'no-store']);
+		}
+		serve(report);
+		await get('Hk3vT9qP');
+		expect(fetchMock.mock.calls.find(([url]) => String(url) === JPEG)?.[1]?.redirect).toBe('error');
 	});
 
 	it('answers 503 (retry) when the photo cannot be fetched, and never fetches from another origin', async () => {

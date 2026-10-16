@@ -6,6 +6,7 @@ import en from '@zivali/i18n/dist/en.json';
 import sl from '@zivali/i18n/dist/sl.json';
 import type { PublicReport } from '@zivali/types';
 import type { DetailReport } from '@/components/report/slots/types';
+import { ShortCode } from '@zivali/validation/common.schema';
 import { env } from '@/lib/env';
 
 // P18 sharing (FR-011), server side: the texts of slot B and what the poster PDF and the Facebook square need. Every
@@ -78,6 +79,7 @@ export function posterBand(report: Pick<PublicReport, 'status' | 'type' | 'speci
  * takes over 2 s (so the poster still fits in 5 s with its photo).
  */
 export async function getPublicReport(code: string, locale: Locale): Promise<PublicReport | 'missing' | 'error'> {
+	if (!ShortCode.safeParse(code).success) return 'missing';
 	try {
 		return await createApiClient({ baseUrl: env.NEXT_PUBLIC_API_URL, locale }).request<PublicReport>(
 			'GET',
@@ -95,18 +97,31 @@ const PHOTO_ORIGINS = new Set(
 	[env.MEDIA_BASE_URL, env.R2_UPLOAD_ORIGIN].filter((url): url is string => !!url).map((url) => new URL(url).origin)
 );
 
+const MAX_PHOTO_BYTES = 4 * 1024 * 1024;
+
 /**
  * The first photo's JPEG variant (C5 `display.jpg`; PDF and PNG renderers take no WebP) as bytes, or undefined when it
- * is missing, on another origin, not a JPEG or PNG, or slower than 2.5 s.
+ * is missing, on another origin, redirects, not a JPEG or PNG, over 4 MB, or slower than 2.5 s. Never throws.
  */
 export async function fetchPhoto(report: PublicReport): Promise<{ data: Buffer; type: string } | undefined> {
-	const url = report.photos[0]?.url.replace(/\/display\.webp$/, '/display.jpg');
-	if (!url || !PHOTO_ORIGINS.has(new URL(url).origin)) return undefined;
 	try {
-		const response = await fetch(url, { signal: AbortSignal.timeout(2500) });
+		const url = report.photos[0]?.url.replace(/\/display\.webp$/, '/display.jpg');
+		if (!url || !PHOTO_ORIGINS.has(new URL(url).origin)) return undefined;
+		const response = await fetch(url, { signal: AbortSignal.timeout(2500), redirect: 'error' });
 		const type = response.headers.get('content-type') ?? '';
-		if (!response.ok || !/^image\/(jpeg|png)$/.test(type)) return undefined;
-		return { data: Buffer.from(await response.arrayBuffer()), type };
+		if (!response.ok || !response.body || !/^image\/(jpeg|png)$/.test(type)) return undefined;
+		if (Number(response.headers.get('content-length')) > MAX_PHOTO_BYTES) return undefined;
+		const chunks: Uint8Array[] = [];
+		let size = 0;
+		for await (const chunk of response.body) {
+			size += chunk.byteLength;
+			if (size > MAX_PHOTO_BYTES) {
+				void response.body.cancel().catch(() => undefined);
+				return undefined;
+			}
+			chunks.push(chunk);
+		}
+		return { data: Buffer.concat(chunks), type };
 	} catch {
 		return undefined;
 	}

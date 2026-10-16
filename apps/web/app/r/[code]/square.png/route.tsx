@@ -15,7 +15,7 @@ const STATUS_COLOUR = {
 	reunited: 'status-reunited-subtle-foreground',
 } as const;
 
-// The brand fonts (OFL, assets/fonts), read once per server: next/og's own font has no č, š or ž.
+// The brand fonts (OFL, assets/fonts), read once per server: not next/og's default.
 let fonts: ReturnType<typeof loadFonts> | undefined;
 function loadFonts() {
 	const file = (name: string) => readFile(join(process.cwd(), 'assets/fonts', name));
@@ -46,6 +46,7 @@ export async function GET(request: Request, { params }: RouteContext<'/r/[code]/
 		fetchPhoto(report),
 		(fonts ??= loadFonts()),
 	]);
+	if (report.photos.length > 0 && !photo) return fail(503);
 	const t = translator(lang);
 	const c = colors.light;
 	const status = report.status === 'reunited' ? 'reunited' : report.type;
@@ -145,8 +146,8 @@ export async function GET(request: Request, { params }: RouteContext<'/r/[code]/
 			fonts: loaded,
 			headers: {
 				'content-disposition': `inline; filename="najdimo-${report.short_code}.png"`,
-				// A listing changes (photo, status), so the image is cached for an hour, as the link card.
-				'cache-control': 'public, max-age=3600',
+				// Private: a shared cache must not keep a hidden or removed report's photo (C5 unpublish).
+				'cache-control': 'private, max-age=300',
 			},
 		}
 	);

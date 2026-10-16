@@ -26,8 +26,8 @@ afterEach(() => {
 });
 
 describe('/r/[code]/square.png', () => {
-	it('draws a 1080 x 1080 PNG for the Facebook kit, named by the code, cached for an hour', async () => {
-		answer(200, publicReport);
+	it('draws a 1080 x 1080 PNG for the Facebook kit, named by the code, cached privately', async () => {
+		answer(200, { ...publicReport, photos: [] });
 		const response = await get('Hk3vT9qP', '?lang=en');
 		const png = Buffer.from(await response.arrayBuffer());
 
@@ -36,7 +36,7 @@ describe('/r/[code]/square.png', () => {
 		expect(response.headers.get('content-disposition')).toBe(
 			`inline; filename="najdimo-${publicReport.short_code}.png"`
 		);
-		expect(response.headers.get('cache-control')).toBe('public, max-age=3600');
+		expect(response.headers.get('cache-control')).toBe('private, max-age=300');
 		expect([png.readUInt32BE(16), png.readUInt32BE(20)]).toEqual([1080, 1080]);
 		const [url, init] = fetchMock.mock.calls[0]!;
 		expect(url).toBe('http://localhost:4000/v1/reports/Hk3vT9qP');
@@ -52,5 +52,11 @@ describe('/r/[code]/square.png', () => {
 		const failed = await get('Hk3vT9qP');
 		expect(failed.status).toBe(503);
 		expect(failed.headers.get('cache-control')).toBe('no-store');
+	});
+
+	it('answers 503, uncached, when the report has a photo that cannot be fetched', async () => {
+		answer(200, publicReport);
+		const response = await get('Hk3vT9qP');
+		expect([response.status, response.headers.get('cache-control')]).toEqual([503, 'no-store']);
 	});
 });

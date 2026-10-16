@@ -22,14 +22,19 @@ export async function GET(request: Request, { params }: RouteContext<'/r/[code]/
 
 	const [place, photo] = await Promise.all([getPlace(lang, report.area.lat, report.area.lng), fetchPhoto(report)]);
 	if (!photo) return fail(503);
-	const pdf = await renderPosterPdf(posterContent(report, place, lang), photo.data);
+	let pdf: Buffer;
+	try {
+		pdf = await renderPosterPdf(posterContent(report, place, lang), photo.data);
+	} catch {
+		return fail(503);
+	}
 
 	return new Response(new Uint8Array(pdf), {
 		headers: {
 			'content-type': 'application/pdf',
 			'content-disposition': `inline; filename="${posterFileName(report.short_code)}"`,
-			// A listing changes (status, photo), so a poster is kept for ten minutes; search engines index the page only.
-			'cache-control': 'public, max-age=600',
+			// Private: a shared cache must not keep a hidden or removed report's photo (C5 unpublish).
+			'cache-control': 'private, max-age=300',
 			'x-robots-tag': 'noindex',
 		},
 	});
