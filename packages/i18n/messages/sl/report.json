@@ -73,5 +73,21 @@
 	"mobile_back": "Nazaj",
 	"mobile_share": "Deli",
 	"action_offline": "Na voljo, ko boste spet na spletu.",
-	"offline_cached": "Brez povezave. Prikazujemo shranjeno različico ({time})."
+	"offline_cached": "Brez povezave. Prikazujemo shranjeno različico ({time}).",
+	"seo_description_lost": "{species, select, dog {Pogrešan pes {name}, {colours}. Nazadnje viden {date} v okolici kraja {area}, {municipality}. Ste ga videli? Sporočite opažanje.} cat {Pogrešana mačka {name}, {colours}. Nazadnje videna {date} v okolici kraja {area}, {municipality}. Ste jo videli? Sporočite opažanje.} other {Pogrešana žival {name}, {colours}. Nazadnje videna {date} v okolici kraja {area}, {municipality}. Ste jo videli? Sporočite opažanje.}}",
+	"seo_description_found": "{species, select, dog {Najden pes, {colours}, {date} v okolici kraja {area}, {municipality}. Je to vaš pes? Pišite osebi, ki ga je našla.} cat {Najdena mačka, {colours}, {date} v okolici kraja {area}, {municipality}. Je to vaša mačka? Pišite osebi, ki jo je našla.} other {Najdena žival, {colours}, {date} v okolici kraja {area}, {municipality}. Je to vaša žival? Pišite osebi, ki jo je našla.}}",
+	"seo_description_sighted": "{species, select, dog {Opažen pes, {colours}, {date} v okolici kraja {area}, {municipality}. Je to vaš pes? Poglejte prijavo.} cat {Opažena mačka, {colours}, {date} v okolici kraja {area}, {municipality}. Je to vaša mačka? Poglejte prijavo.} other {Opažena žival, {colours}, {date} v okolici kraja {area}, {municipality}. Je to vaša žival? Poglejte prijavo.}}",
+	"seo_colours": "{colours} barve",
+	"seo_colour": {
+		"black": "črne",
+		"white": "bele",
+		"grey": "sive",
+		"brown": "rjave",
+		"chocolate": "čokoladne",
+		"red": "rdečkaste",
+		"cream": "kremne",
+		"golden": "zlate",
+		"tan": "svetlo rjave",
+		"blue_grey": "modrosive"
+	}
 }

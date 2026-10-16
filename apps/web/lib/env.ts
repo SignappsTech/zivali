@@ -21,6 +21,9 @@ const schema = z
 		APP_VERSION: z.string().default('dev'),
 		// Origin the API presigns photo PUTs with (C5): the CSP connect-src opens exactly this.
 		R2_UPLOAD_ORIGIN: z.url(),
+		// Where the API serves public report photos (C5, the API's own MEDIA_BASE_URL): CSP img-src and the Open Graph
+		// image fetch open its origin. Unset locally, where the photos come from MinIO on R2_UPLOAD_ORIGIN.
+		MEDIA_BASE_URL: z.url().optional(),
 		// Universal / App Links (TASK-12.3): a platform's entry is left out of its .well-known file while unset (Q-007).
 		APPLE_TEAM_ID: z
 			.string()
@@ -87,6 +90,7 @@ const source = {
 	NODE_ENV: typeof window === 'undefined' ? process.env.NODE_ENV : undefined,
 	APP_VERSION: process.env.APP_VERSION,
 	R2_UPLOAD_ORIGIN: process.env.R2_UPLOAD_ORIGIN,
+	MEDIA_BASE_URL: process.env.MEDIA_BASE_URL,
 	APPLE_TEAM_ID: process.env.APPLE_TEAM_ID,
 	ANDROID_CERT_SHA256: process.env.ANDROID_CERT_SHA256,
 	MOCK_WEBHOOK_SECRET: process.env.MOCK_WEBHOOK_SECRET,

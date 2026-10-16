@@ -73,5 +73,21 @@
 	"mobile_back": "Back",
 	"mobile_share": "Share",
 	"action_offline": "Available when you are back online.",
-	"offline_cached": "You are offline. Showing the saved copy ({time})."
+	"offline_cached": "You are offline. Showing the saved copy ({time}).",
+	"seo_description_lost": "{species, select, dog {Missing dog {name}, {colours}. Last seen on {date} around {area}, {municipality}. Have you seen this dog? Report a sighting.} cat {Missing cat {name}, {colours}. Last seen on {date} around {area}, {municipality}. Have you seen this cat? Report a sighting.} other {Missing pet {name}, {colours}. Last seen on {date} around {area}, {municipality}. Have you seen it? Report a sighting.}}",
+	"seo_description_found": "{species, select, dog {Found dog, {colours}, on {date} around {area}, {municipality}. Is this your dog? Message the person who found it.} cat {Found cat, {colours}, on {date} around {area}, {municipality}. Is this your cat? Message the person who found it.} other {Found animal, {colours}, on {date} around {area}, {municipality}. Is this your pet? Message the person who found it.}}",
+	"seo_description_sighted": "{species, select, dog {Dog seen, {colours}, on {date} around {area}, {municipality}. Is this your dog? See the report.} cat {Cat seen, {colours}, on {date} around {area}, {municipality}. Is this your cat? See the report.} other {Animal seen, {colours}, on {date} around {area}, {municipality}. Is this your pet? See the report.}}",
+	"seo_colours": "{colours}",
+	"seo_colour": {
+		"black": "black",
+		"white": "white",
+		"grey": "grey",
+		"brown": "brown",
+		"chocolate": "chocolate",
+		"red": "ginger",
+		"cream": "cream",
+		"golden": "golden",
+		"tan": "tan",
+		"blue_grey": "blue-grey"
+	}
 }
