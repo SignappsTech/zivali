@@ -6,17 +6,30 @@ import sl from '@zivali/i18n/dist/sl.json';
 
 import { InboxViews } from './inbox-views';
 
+const router = vi.hoisted(() => ({ push: vi.fn(), replace: vi.fn(), prefetch: vi.fn() }));
+vi.mock('next/navigation', async (actual) => ({
+	...(await actual()),
+	useRouter: () => router,
+	usePathname: () => '/nabiralnik',
+	useParams: () => ({ locale: 'sl' }),
+}));
 vi.mock('./notifications-view', () => ({ NotificationsView: () => <h1>notifications view</h1> }));
+vi.mock('@/components/chat/conversations', () => ({
+	ConversationList: ({ selected, heading: Heading = 'h1' }: { selected?: string; heading?: 'h1' | 'h2' }) => (
+		<Heading data-selected={selected}>{sl.chat.inbox_title}</Heading>
+	),
+}));
 
-const show = (view: 'conversations' | 'notifications') =>
+const show = (view: 'conversations' | 'notifications', selected?: string) =>
 	render(
 		<NextIntlClientProvider locale="sl" messages={sl}>
-			<InboxViews view={view} />
+			<InboxViews view={view} selected={selected} />
 		</NextIntlClientProvider>
 	);
 
 afterEach(() => {
 	cleanup();
+	vi.clearAllMocks();
 	window.history.replaceState(null, '', '/');
 });
 
@@ -38,5 +51,22 @@ describe('InboxViews', () => {
 
 		fireEvent.mouseDown(screen.getByRole('tab', { name: sl.chat.view_notifications }));
 		expect(window.location.pathname + window.location.search).toBe('/nabiralnik?view=notifications');
+		expect(router.push).not.toHaveBeenCalled();
+	});
+
+	it('beside an open thread: the list heading is an h2 and Notifications opens the inbox page in that view', () => {
+		window.history.replaceState(null, '', '/nabiralnik/c1');
+		show('conversations', 'c1');
+
+		const heading = screen.getByRole('heading', { level: 2, name: sl.chat.inbox_title });
+		expect(heading.dataset.selected).toBe('c1');
+		expect(screen.queryByRole('heading', { level: 1 })).toBeNull();
+
+		fireEvent.mouseDown(screen.getByRole('tab', { name: sl.chat.view_notifications }));
+		expect(router.push).toHaveBeenCalledWith('/nabiralnik?view=notifications');
+		expect(window.location.pathname).toBe('/nabiralnik/c1');
+		expect(screen.getByRole('tab', { name: sl.chat.view_conversations }).getAttribute('aria-selected')).toBe(
+			'true'
+		);
 	});
 });

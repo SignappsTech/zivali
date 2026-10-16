@@ -30,8 +30,14 @@ export const chatApi = api.enhanceEndpoints({ addTagTypes: ['Conversation', 'Mes
 			query: ({ id, ...params }) => ({ url: `/v1/conversations/${id}/messages`, params }),
 			providesTags: (_result, _error, { id }) => [{ type: 'Message', id }],
 		}),
-		sendMessage: build.mutation<Message, { id: Uuid; body: SendMessageInput }>({
-			query: ({ id, body }) => ({ url: `/v1/conversations/${id}/messages`, method: 'POST', body }),
+		// `idempotencyKey` (uuid, C1) stays the same across retries of one message, so a lost response never doubles it.
+		sendMessage: build.mutation<Message, { id: Uuid; body: SendMessageInput; idempotencyKey: string }>({
+			query: ({ id, body, idempotencyKey }) => ({
+				url: `/v1/conversations/${id}/messages`,
+				method: 'POST',
+				body,
+				headers: { 'Idempotency-Key': idempotencyKey },
+			}),
 			invalidatesTags: ['Conversation'],
 			// The sender sees the message without Realtime (merge is idempotent by id, so the broadcast echo is a no-op).
 			async onQueryStarted({ id }, { dispatch, getState, queryFulfilled }) {

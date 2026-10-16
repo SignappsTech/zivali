@@ -289,13 +289,13 @@ describe('MatchReview review (P11)', () => {
 		expect(getMockEvents()).toEqual([]);
 	});
 
-	it('confirm opens the conversation in the inbox and fires match_confirmed', async () => {
+	it('confirm opens the conversation itself and fires match_confirmed', async () => {
 		show({ selected: 'm-chip' });
 		resetMockEvents();
 		fireEvent.click(screen.getByRole('button', { name: t.confirm }));
 		await flush();
 		expect(state.confirm).toHaveBeenCalledWith({ id: 'm-chip' });
-		expect(state.push).toHaveBeenCalledWith('/nabiralnik');
+		expect(state.push).toHaveBeenCalledWith('/nabiralnik/c1');
 		expect(getMockEvents()).toEqual([
 			{ name: 'match_confirmed', params: { species: 'dog', region: 'osrednjeslovenska', match_source: 'chip' } },
 		]);
@@ -352,7 +352,7 @@ describe('MatchReview review (P11)', () => {
 		expect(screen.queryByRole('button', { name: t.reject })).toBeNull();
 		fireEvent.click(screen.getByRole('button', { name: t.open_chat }));
 		await flush();
-		expect(state.push).toHaveBeenCalledWith('/nabiralnik');
+		expect(state.push).toHaveBeenCalledWith('/nabiralnik/c1');
 		expect(getMockEvents()).toEqual([]);
 	});
 

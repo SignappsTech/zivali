@@ -147,6 +147,24 @@ describe('ReportAbuseDialog (P10 web)', () => {
 		expect(posts()).toHaveLength(1);
 	});
 
+	it('two submits in the same tick start one request', async () => {
+		let release = () => {};
+		const { posts } = show({}, () => new Promise((resolve) => (release = () => resolve(abuseCreated))));
+
+		choose(t.reason_spam);
+		const form = send().closest('form')!;
+		// One act: React renders once after both, so the second submit still sees `sending` false.
+		act(() => {
+			fireEvent.submit(form);
+			fireEvent.submit(form);
+		});
+		await waitFor(() => expect(posts()).toHaveLength(1));
+		release();
+
+		expect(await within(dialog()).findByRole('heading', { name: t.done_title })).toBeTruthy();
+		expect(posts()).toHaveLength(1);
+	});
+
 	it('a network error or 5xx keeps the choice and says so; nothing retries until "Pošlji" again', async () => {
 		let fail = true;
 		const { posts } = show({}, () => {
