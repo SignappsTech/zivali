@@ -1,8 +1,9 @@
-// C18 directory endpoints for the Playwright run (playwright.config.ts starts it), until apps/api serves them.
+// C18 directory and C14 partner endpoints for the Playwright run (playwright.config.ts starts it), until apps/api serves them.
 // Server components and the browser both call it, so it answers CORS. Run on its own: PORT=4010 node e2e/mock-api.ts
 import { createHmac, generateKeyPairSync, sign } from 'node:crypto';
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
 
+import { partnerStats } from '@zivali/api/__fixtures__/ads';
 import {
 	ljubljanaShelter,
 	responsibleConfirmed,
@@ -100,6 +101,9 @@ const routes: Record<string, unknown> = {
 		],
 		'share.radio_form_url': 'https://radio.example/obvestila',
 	},
+	// C14 partner stats (server-rendered on P22) and the enquiry (any method answers the body, so POST is a success).
+	'/v1/partners/stats': partnerStats,
+	'/v1/leads': { id: 'a1e5f00d-0000-4000-8000-000000000001' },
 };
 
 // Supabase Auth stand-in (TASK-105): the web build points NEXT_PUBLIC_SUPABASE_URL here, so getClaims() verifies a

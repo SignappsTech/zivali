@@ -25,7 +25,7 @@ export default defineConfig(
 			'app/*/(public)/**/*.tsx',
 			'app/*/{layout,page}.tsx',
 			'app/providers.tsx',
-			'components/{analytics,consent,content,legal,shell}/**/*.tsx',
+			'components/{analytics,consent,content,legal,partners,shell}/**/*.tsx',
 			'components/auth/{parts,reset,sign-in,sign-up}.tsx',
 			'components/shelters/shelter-search.tsx',
 		],
@@ -78,6 +78,12 @@ export default defineConfig(
 				})),
 			],
 		},
+	},
+	{
+		// next/og draws a plain <img> (next/image does not exist there). @next/next/no-img-element exempts opengraph-image
+		// files by a '/' path check, so it fires on Windows and an inline disable is "unused" on Linux CI: off here instead.
+		files: ['app/**/opengraph-image/**/*.tsx', 'app/**/opengraph-image.tsx'],
+		rules: { '@next/next/no-img-element': 'off' },
 	},
 	prettier
 );
