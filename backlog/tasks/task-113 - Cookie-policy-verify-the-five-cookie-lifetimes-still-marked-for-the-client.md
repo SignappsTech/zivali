@@ -5,10 +5,12 @@ status: To Do
 assignee:
   - '@tech-lead'
 created_date: '2026-10-16 12:50'
+updated_date: '2026-10-17 09:24'
 labels:
   - legal
   - content
   - 'est:XS'
+  - bug
 dependencies: []
 parent_task_id: TASK-28
 priority: high

@@ -7,10 +7,13 @@ status: To Do
 assignee:
   - '@content-strategist'
 created_date: '2026-10-16 15:40'
+updated_date: '2026-10-17 09:24'
 labels:
   - legal
   - content
   - 'est:XS'
+  - fe
+  - no-design
 dependencies: []
 parent_task_id: TASK-114
 priority: medium

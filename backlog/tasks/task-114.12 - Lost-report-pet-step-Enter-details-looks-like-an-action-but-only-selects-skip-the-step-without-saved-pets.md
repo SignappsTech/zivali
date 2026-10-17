@@ -7,11 +7,13 @@ status: To Do
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-16 15:05'
+updated_date: '2026-10-17 09:24'
 labels:
   - bug
   - fe
   - ux
   - 'est:S'
+  - no-design
 dependencies: []
 parent_task_id: TASK-114
 priority: high

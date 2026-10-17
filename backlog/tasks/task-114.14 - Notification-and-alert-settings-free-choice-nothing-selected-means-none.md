@@ -6,10 +6,12 @@ assignee:
   - '@frontend-dev'
   - '@backend-dev'
 created_date: '2026-10-16 15:20'
+updated_date: '2026-10-17 09:24'
 labels:
   - fe
   - be
   - 'est:S'
+  - no-design
 dependencies: []
 parent_task_id: TASK-114
 priority: medium

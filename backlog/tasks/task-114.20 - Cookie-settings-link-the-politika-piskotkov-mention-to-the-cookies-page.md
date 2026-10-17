@@ -5,10 +5,12 @@ status: To Do
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-16 16:10'
+updated_date: '2026-10-17 09:24'
 labels:
   - fe
   - content
   - 'est:XS'
+  - no-design
 dependencies: []
 parent_task_id: TASK-114
 priority: medium

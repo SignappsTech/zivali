@@ -2,11 +2,14 @@
 id: TASK-116
 title: 'Footer rework: a standard footer with vertical link columns'
 status: To Do
-assignee: []
+assignee:
+  - '@design-lead'
 created_date: '2026-10-16 14:00'
+updated_date: '2026-10-17 09:24'
 labels:
-  - 'design'
-  - 'pilot'
+  - design
+  - pilot
+  - story
 dependencies: []
 priority: medium
 ordinal: 362000

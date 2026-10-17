@@ -5,11 +5,13 @@ status: To Do
 assignee:
   - '@content-strategist'
 created_date: '2026-10-16 14:00'
+updated_date: '2026-10-17 09:24'
 labels:
-  - 'content'
+  - content
   - 'est:XS'
+  - fe
 dependencies:
-  - 'TASK-115.1'
+  - TASK-115.1
 parent_task_id: TASK-115
 priority: high
 ordinal: 361300

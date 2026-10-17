@@ -1,11 +1,14 @@
 ---
 id: TASK-114
-title: Pilot feedback: bugs and fixes from the owner's najdimo.si walkthrough
+title: 'Pilot feedback: bugs and fixes from the owner''s najdimo.si walkthrough'
 status: To Do
-assignee: []
+assignee:
+  - '@tech-lead'
 created_date: '2026-10-16 13:20'
+updated_date: '2026-10-17 09:24'
 labels:
   - pilot
+  - story
 dependencies: []
 priority: high
 ordinal: 360000

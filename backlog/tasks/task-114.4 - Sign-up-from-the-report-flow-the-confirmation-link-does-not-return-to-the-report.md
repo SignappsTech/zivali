@@ -1,15 +1,19 @@
 ---
 id: TASK-114.4
-title: 'Sign-up from the report flow: the confirmation link does not return to the report'
+title: >-
+  Sign-up from the report flow: the confirmation link does not return to the
+  report
 status: To Do
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-16 13:35'
+updated_date: '2026-10-17 09:24'
 labels:
   - bug
   - fe
   - auth
   - 'est:S'
+  - no-design
 dependencies: []
 parent_task_id: TASK-114
 priority: high

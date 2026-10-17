@@ -7,10 +7,12 @@ status: To Do
 assignee:
   - '@backend-dev'
 created_date: '2026-10-16 16:25'
+updated_date: '2026-10-17 09:24'
 labels:
   - be
   - matching
   - 'est:M'
+  - no-design
 dependencies: []
 parent_task_id: TASK-114
 priority: high
