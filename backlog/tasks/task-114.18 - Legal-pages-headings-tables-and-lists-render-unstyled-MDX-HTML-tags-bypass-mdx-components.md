@@ -3,11 +3,11 @@ id: TASK-114.18
 title: >-
   Legal pages: headings, tables and lists render unstyled (MDX HTML tags bypass
   mdx-components)
-status: In Progress
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-16 16:00'
-updated_date: '2026-10-17 09:26'
+updated_date: '2026-10-17 09:27'
 labels:
   - bug
   - fe
