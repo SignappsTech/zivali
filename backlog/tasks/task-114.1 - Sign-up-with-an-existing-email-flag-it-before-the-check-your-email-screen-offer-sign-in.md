@@ -3,11 +3,11 @@ id: TASK-114.1
 title: >-
   Sign-up with an existing email: flag it before the check-your-email screen,
   offer sign-in
-status: To Do
+status: In Progress
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-16 13:20'
-updated_date: '2026-10-17 09:24'
+updated_date: '2026-10-17 09:27'
 labels:
   - bug
   - fe
