@@ -33,6 +33,19 @@ export async function legalMetadata(locale: Locale, slug: LegalSlug): Promise<Me
 const tocLinkClass =
 	'inline-flex min-h-11 items-center rounded-lg underline-offset-4 hover:underline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ring';
 
+// The MDX files use literal HTML tags (<h2 id>, <table>), which skip mdx-components.tsx, so the same T4 Article styles are applied to descendants here.
+export const legalBodyClass = [
+	'[&_h2]:mt-10 [&_h2]:scroll-mt-6 [&_h2]:font-display [&_h2]:text-2xl [&_h2]:font-bold [&_h2:first-child]:mt-0',
+	'[&_h3]:mt-6 [&_h3]:font-display [&_h3]:text-xl [&_h3]:font-bold',
+	'[&_p]:mt-4 [&_p]:leading-7',
+	'[&_ul]:mt-4 [&_ul]:list-disc [&_ul]:space-y-2 [&_ul]:pl-6 [&_ul]:leading-7',
+	'[&_ol]:mt-4 [&_ol]:list-decimal [&_ol]:space-y-2 [&_ol]:pl-6 [&_ol]:leading-7',
+	'[&_a]:underline [&_a]:underline-offset-4',
+	'[&_table]:mt-4 [&_table]:w-full [&_table]:min-w-[560px] [&_table]:border-collapse [&_table]:text-left [&_table]:text-control',
+	'[&_th]:border-b [&_th]:border-border [&_th]:py-2 [&_th]:pr-4 [&_th]:align-top [&_th]:font-bold',
+	'[&_td]:border-b [&_td]:border-border [&_td]:py-2 [&_td]:pr-4 [&_td]:align-top',
+].join(' ');
+
 /** T4 Legal (P3): h1, last updated, draft note, "On this page" list (sticky from lg, a disclosure below), numbered body. */
 export async function LegalPage({ locale, slug }: { locale: Locale; slug: LegalSlug }) {
 	const [{ default: Body, meta }, t, format] = await Promise.all([
@@ -78,7 +91,7 @@ export async function LegalPage({ locale, slug }: { locale: Locale; slug: LegalS
 						/>
 						<span>{t('draft_note')}</span>
 					</p>
-					<div className="mt-8">
+					<div className={`mt-8 ${legalBodyClass}`}>
 						<Body />
 					</div>
 				</article>

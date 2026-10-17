@@ -3,11 +3,11 @@ id: TASK-114.18
 title: >-
   Legal pages: headings, tables and lists render unstyled (MDX HTML tags bypass
   mdx-components)
-status: To Do
+status: In Progress
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-16 16:00'
-updated_date: '2026-10-17 09:24'
+updated_date: '2026-10-17 09:26'
 labels:
   - bug
   - fe
@@ -38,3 +38,9 @@ Check all five pages in SL and EN (privacy, terms, cookies, imprint, accessibili
 - [ ] #2 All five pages checked in SL and EN at 390 and 1440 px, light and dark; wide tables scroll inside their box on mobile
 - [ ] #3 A test asserts the headings carry the heading styles (legal-mdx.test.tsx), so plain HTML tags cannot regress unstyled
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+Branch: agent/task-114.18-legal-mdx-styles
+<!-- SECTION:NOTES:END -->
