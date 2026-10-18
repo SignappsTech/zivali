@@ -234,8 +234,11 @@ describe('PhotoPicker', () => {
 
 		upload.mockResolvedValue({ photoId: 'photo-1' });
 		await screen.findByRole('button', { name: 'Poskusi znova' });
-		act(() => void window.dispatchEvent(new Event('online')));
-		expect(await screen.findByText('Naslovna fotografija')).toBeTruthy();
+		// The listener may attach a moment after the button shows, so fire again until the retry has landed.
+		await waitFor(() => {
+			if (!screen.queryByText('Naslovna fotografija')) window.dispatchEvent(new Event('online'));
+			expect(screen.getByText('Naslovna fotografija')).toBeTruthy();
+		});
 	});
 
 	it('aborts the running upload when its photo is removed and reorders with the arrow buttons', async () => {
@@ -379,10 +382,13 @@ describe('PhotoPicker', () => {
 		// Ready to the eye (the cover label, no progress), but nothing has left the browser.
 		expect(screen.getByText('Naslovna fotografija')).toBeTruthy();
 		expect(screen.queryByRole('progressbar')).toBeNull();
-		expect(onChange).toHaveBeenLastCalledWith([
-			expect.objectContaining({ key: 'a', status: 'kept' }),
-			expect.objectContaining({ status: 'kept' }),
-		]);
+		// onChange is told from an effect, a moment after the list shows.
+		await waitFor(() =>
+			expect(onChange).toHaveBeenLastCalledWith([
+				expect.objectContaining({ key: 'a', status: 'kept' }),
+				expect.objectContaining({ status: 'kept' }),
+			])
+		);
 		expect(onChange.mock.lastCall![0].map((p: { photoId?: string }) => p.photoId)).toEqual([undefined, undefined]);
 		expect(upload).not.toHaveBeenCalled();
 

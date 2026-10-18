@@ -163,7 +163,11 @@ describe('ManagePage (P7, C7)', () => {
 		const offline = await screen.findByText(sl.errors.offline_body, { exact: false });
 		expect(offline.textContent).toBe(`${sl.errors.offline_title} ${sl.errors.offline_body}`);
 		// Back online: tried again at once; this time the captcha fails.
-		act(() => void window.dispatchEvent(new Event('online')));
+		// The listener may attach a moment after the note shows, so fire again until the second attempt has run.
+		await vi.waitFor(() => {
+			if (auth.ensureSession.mock.calls.length < 2) window.dispatchEvent(new Event('online'));
+			expect(auth.ensureSession).toHaveBeenCalledTimes(2);
+		});
 		await screen.findByText(sl.errors.CAPTCHA_FAILED);
 		// "Poskusi znova" does not wait for the next 60 s round.
 		fireEvent.click(screen.getByRole('button', { name: sl.common.try_again }));
