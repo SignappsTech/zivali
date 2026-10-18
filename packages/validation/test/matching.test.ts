@@ -5,15 +5,22 @@ import type { MatchStrength } from '@zivali/types';
 import {
 	distanceBand,
 	hoursBand,
+	MATCH_ALGO_VERSION,
 	scoreMatch,
+	VISUAL_WEIGHTS,
+	visualBand,
+	visualSimilarity,
 	type MatchAttributes,
 	type MatchFeatures,
 	type MatchScoreConfig,
 } from '../src/matching.ts';
 
 const config = { distance_scale_km: 3, weights: { distance: 0.4, time: 0.2, attributes: 0.4 } };
+/** The engine's config once matching.weights_visual exists (TASK-43.2): ignored without a visual term. */
+const v3 = { ...config, weights_visual: VISUAL_WEIGHTS };
 const unknown: MatchAttributes = { size: null, sex: null, colours: [], pattern: null };
 const same: MatchAttributes = { size: 'm', sex: 'female', colours: ['black', 'white'], pattern: 'bicolour' };
+// Every v2 test below runs with visual null: the fallback must score exactly as v2 did.
 const features = (overrides: Partial<MatchFeatures> = {}): MatchFeatures => ({
 	chip_match: false,
 	other_type: 'found',
@@ -21,8 +28,14 @@ const features = (overrides: Partial<MatchFeatures> = {}): MatchFeatures => ({
 	delta_hours: 0,
 	lost: same,
 	other: same,
+	visual: null,
 	...overrides,
 });
+const photos = {
+	lost_photo_id: '0b6f7c1e-2a4b-4d6f-8a8b-9c0d1e2f3a4b',
+	other_photo_id: '7c1e2a4b-5d6f-4a8b-9c0d-1e2f3a4b5c6d',
+};
+const seen = (V: number) => ({ V, ...photos });
 /** A pair that must be suggested. */
 const scored = (overrides: Partial<MatchFeatures> = {}, settings: MatchScoreConfig = config) => {
 	const result = scoreMatch(features(overrides), settings);
@@ -194,6 +207,195 @@ describe('evidence rule and contradiction veto (TASK-114.22)', () => {
 	});
 });
 
+describe('scoreMatch v3: visual similarity (C8 §Visual similarity, TASK-43.1)', () => {
+	it('stamps every score v3', () => {
+		expect(MATCH_ALGO_VERSION).toBe('v3');
+	});
+
+	it('scores exactly as v2 when visual is null or left out, whatever weights_visual says (AC#1)', () => {
+		const cases: Partial<MatchFeatures>[] = [
+			{},
+			{ distance_km: 2, delta_hours: 12, other: { ...same, colours: ['black'], pattern: 'solid' } },
+			{ distance_km: 4, delta_hours: 100, lost: { ...unknown, colours: ['black'] } },
+			{ other: { ...same, sex: 'male' } },
+			{ other: { ...same, colours: ['golden'] } },
+			{ lost: unknown },
+			{ chip_match: true, other_type: 'sighted', distance_km: 25, other: unknown },
+		];
+		for (const overrides of cases) {
+			const v2 = scoreMatch(features(overrides), config);
+			const { visual: _, ...leftOut } = features(overrides);
+			expect(scoreMatch(features(overrides), v3)).toEqual(v2);
+			expect(scoreMatch(leftOut, v3)).toEqual(v2);
+			// A V that is no number (visualSimilarity with the ceiling not above the floor) falls back too, never lifting a veto.
+			expect(scoreMatch(features({ ...overrides, visual: seen(Number.NaN) }), v3)).toEqual(v2);
+			for (const [floor, ceiling] of [
+				[0.7, 0.7],
+				[0.95, 0.7],
+			] as const) {
+				const V = visualSimilarity(0.99, floor, ceiling);
+				expect(scoreMatch(features({ ...overrides, visual: seen(V) }), v3)).toEqual(v2);
+			}
+		}
+	});
+
+	it('clamps V into 0…1, so a score stays within 0…1', () => {
+		expect(scored({ visual: seen(1.5) }, v3)).toEqual(scored({ visual: seen(1) }, v3));
+		expect(scored({ visual: seen(1.5) }, v3).score).toBe(1);
+		expect(scored({ visual: seen(-0.5) }, v3)).toEqual(scored({ visual: seen(0) }, v3));
+	});
+
+	it('blends V with matching.weights_visual, the C8 start values when the config has none (AC#2)', () => {
+		// D = e^(−2/3) = 0.5134, T = 1 − 12/720 = 0.9833, A = 1, V = 0.6: 0.3·D + 0.15·T + 0.25·A + 0.3·V
+		const near = { distance_km: 2, delta_hours: 12, visual: seen(0.6) };
+		expect(scored(near, v3)).toMatchObject({ score: 0.732, strength: 'good' });
+		expect(scoreMatch(features(near), config)).toEqual(scoreMatch(features(near), v3));
+		const onlyVisual = { ...config, weights_visual: { distance: 0, time: 0, attributes: 0, visual: 1 } };
+		expect(scored({ visual: seen(0.55) }, onlyVisual).score).toBe(0.55);
+	});
+
+	it('takes V ≥ 0.5 as evidence when no attribute known on both sides agrees (AC#2)', () => {
+		const pattern = { lost: { ...unknown, pattern: 'solid' }, other: { ...unknown, pattern: 'tabby' } } as const;
+		for (const pair of [{ lost: unknown, other: unknown }, pattern]) {
+			expect(scoreMatch(features({ ...pair, visual: seen(0.49) }), v3)).toBeNull();
+			// 0.3 + 0.15 + 0.3·0.5
+			expect(scored({ ...pair, visual: seen(0.5) }, v3)).toMatchObject({ score: 0.6, strength: 'possible' });
+		}
+	});
+
+	it('always vetoes another known sex; lifts the size and colour vetoes at V ≥ 0.8 (AC#2)', () => {
+		for (const V of [0.5, 0.8, 1])
+			expect(scoreMatch(features({ other: { ...same, sex: 'male' }, visual: seen(V) }), v3)).toBeNull();
+		for (const other of [
+			{ ...same, size: 'xl' as const },
+			{ ...same, colours: ['golden' as const] },
+		]) {
+			expect(scoreMatch(features({ other, visual: seen(0.79) }), v3)).toBeNull();
+			// A = 3/4: 0.3 + 0.15 + 0.1875 + 0.24
+			expect(scored({ other, visual: seen(0.8) }, v3)).toMatchObject({ score: 0.878, strength: 'strong' });
+		}
+	});
+
+	it('keeps visual-only and lifted-veto pairs possible without a geo-time fit (AC#2)', () => {
+		const lifted = { other: { ...same, colours: ['golden' as const] }, visual: seen(1) };
+		// Under 3 km and 72 h: no cap (0.3·e^(−2.99/3) + 0.15 + 0.1875 + 0.3 = 0.748).
+		expect(scored({ ...lifted, distance_km: 2.99 }, v3).strength).toBe('good');
+		expect(scored({ ...lifted, distance_km: 3 }, v3)).toMatchObject({ score: 0.748, strength: 'possible' });
+		const visualOnly = { lost: unknown, other: unknown, visual: seen(1) };
+		// 0.3 + 0.15·(1 − 71.9/720) + 0.3 = 0.735
+		expect(scored({ ...visualOnly, delta_hours: 71.9 }, v3).strength).toBe('good');
+		expect(scored({ ...visualOnly, delta_hours: 72 }, v3)).toMatchObject({ score: 0.735, strength: 'possible' });
+	});
+
+	it('never lets V raise a described pair above its v2 strength without a geo-time fit (CHANGE C8)', () => {
+		// All four agree, 3 km, 6 h: v3 0.809 would be strong, v2 gives 0.745 good.
+		expect(scored({ distance_km: 3, delta_hours: 6, visual: seen(1) }, v3)).toMatchObject({
+			score: 0.809,
+			strength: 'good',
+		});
+		// Far apart V cannot lower it below v2 by the cap either: the blend alone sets it (5 km: 0.755 good, v2 0.674 good).
+		expect(scored({ distance_km: 5, delta_hours: 6, visual: seen(1) }, v3).strength).toBe('good');
+	});
+
+	it('scores a chip 1.000 strong whatever V says, with the visual reason when V has a band (AC#2)', () => {
+		const chip = { chip_match: true, distance_km: 25, delta_hours: 200, other: { ...same, sex: 'male' as const } };
+		expect(scored({ ...chip, visual: seen(0) }, v3)).toMatchObject({ score: 1, strength: 'strong' });
+		expect(scored({ ...chip, visual: seen(0) }, v3).reasons.map((reason) => reason.code)).not.toContain('visual');
+		expect(scored({ ...chip, visual: seen(0.6) }, v3).reasons).toContainEqual({
+			code: 'visual',
+			band: 'similar',
+			...photos,
+		});
+	});
+
+	it('gives the visual reason its band and both photo ids, none below 0.25 (AC#3)', () => {
+		const visualReason = (V: number) => scored({ visual: seen(V) }, v3).reasons.find((r) => r.code === 'visual');
+		expect(visualReason(0.95)).toEqual({ code: 'visual', band: 'very_similar', ...photos });
+		expect(visualReason(0.5)).toEqual({ code: 'visual', band: 'similar', ...photos });
+		expect(visualReason(0.25)).toEqual({ code: 'visual', band: 'some', ...photos });
+		expect(visualReason(0.24)).toBeUndefined();
+		// Attribute reasons stay as in v2, the visual one comes last.
+		expect(scored({ visual: seen(1) }, v3).reasons.map((reason) => reason.code)).toEqual([
+			'distance',
+			'time',
+			'size',
+			'colour',
+			'sex',
+			'pattern',
+			'visual',
+		]);
+	});
+});
+
+// v3 fixture pairs (AC#3), labelled by hand with the strength the C8 placeholders must give (threshold 0.5, the engine
+// drops a score below it): a lost black cat against found reports. Scores in the comments: 0.3·exp(−km/3) +
+// 0.15·(1 − Δh/720) + 0.25·A + 0.3·V. Change the weights, rerun, relabel (TASK-43.3 sets the real ones).
+describe('v3 fixture pairs (C8 placeholders)', () => {
+	const BLACK_CAT: MatchAttributes = { size: 'm', sex: 'female', colours: ['black'], pattern: 'solid' };
+	const BLACK_ONLY: MatchAttributes = { ...unknown, colours: ['black'] };
+	const GREY_CAT: MatchAttributes = { ...BLACK_CAT, colours: ['grey'] };
+	const DAY = 24;
+	/** [name, km, Δh, other, V, chip, expected strength or null (no suggestion or below the threshold)] */
+	type Pair = [string, number, number, MatchAttributes, number, boolean, MatchStrength | null];
+	const label = ([, km, hours, other, V, chip_match]: Pair) => {
+		const result = scoreMatch(
+			features({ distance_km: km, delta_hours: hours, lost: BLACK_CAT, other, visual: seen(V), chip_match }),
+			v3
+		);
+		return result && result.score >= 0.5 ? result.strength : null;
+	};
+	// The same cat, from other photos.
+	const SAME_ANIMAL: Pair[] = [
+		['very similar, 0.5 km, 6 h', 0.5, 6, BLACK_CAT, 0.9, false, 'strong'], // 0.923
+		['similar, 2 km, 1 day', 2, DAY, BLACK_CAT, 0.6, false, 'good'], // 0.729
+		['some, 3 km, 6 h (v2 good)', 3, 6, BLACK_CAT, 0.3, false, 'possible'], // 0.599
+		['photos differ, 1 km, 6 h (v2 strong)', 1, 6, BLACK_CAT, 0.1, false, 'possible'], // 0.644
+		['finder gives only the colour, similar, 1 km', 1, 6, BLACK_ONLY, 0.7, false, 'possible'], // 0.636
+		['photo only, very similar, 0.5 km, 6 h', 0.5, 6, unknown, 0.9, false, 'good'], // 0.673
+		['photo only, identical, 2 km, 2 days', 2, 2 * DAY, unknown, 1, false, 'possible'], // 0.594
+		['photo only, similar, 2 km', 2, 6, unknown, 0.6, false, null], // 0.483
+		['photo only, below the evidence cut, 0.2 km', 0.2, 6, unknown, 0.45, false, null], // no evidence
+		['says grey, very similar photos, 1 km', 1, 6, GREY_CAT, 0.9, false, 'strong'], // 0.821, veto lifted
+		['says grey, similar photos, 1 km', 1, 6, GREY_CAT, 0.7, false, null], // veto kept
+		['size two steps apart, very similar, 0.5 km', 0.5, 6, { ...BLACK_CAT, size: 'xs' }, 0.85, false, 'strong'], // 0.845
+		['another sex, identical photos, 0.5 km', 0.5, 6, { ...BLACK_CAT, sex: 'male' }, 1, false, null], // sex veto
+		['chip, photos differ, 25 km', 25, 6, BLACK_CAT, 0, true, 'strong'], // 1.000
+		['chip, similar, 25 km, 5 days', 25, 5 * DAY, unknown, 0.6, true, 'strong'], // 1.000
+	];
+	// Another black cat whose photos look alike, far apart (3 km or more) or days apart (72 h or more).
+	const LOOKALIKES: Pair[] = [
+		['colour only, 15 km', 15, 6, BLACK_ONLY, 0.95, false, null], // 0.498
+		['colour only, 5 km', 5, 6, BLACK_ONLY, 0.95, false, 'possible'], // 0.553
+		['colour only, 3 km', 3, 6, BLACK_ONLY, 1, false, 'possible'], // 0.622
+		['colour only, 1 km, 4 days', 1, 4 * DAY, BLACK_ONLY, 1, false, 'possible'], // 0.707 capped (v2 0.560)
+		['colour only, 0.5 km, 10 days', 0.5, 10 * DAY, BLACK_ONLY, 1, false, 'possible'], // 0.716 capped (v2 0.572)
+		['all four the same, 15 km', 15, 6, BLACK_CAT, 0.95, false, 'possible'], // 0.686 capped (v2 0.601)
+		['photo only, 8 km', 8, 6, unknown, 1, false, null], // 0.470
+		['photo only, 0.5 km, 4 days', 0.5, 4 * DAY, unknown, 1, false, 'possible'], // 0.684 capped
+		['says grey, 2 km, 5 days', 2, 5 * DAY, GREY_CAT, 0.9, false, 'possible'], // 0.737 capped, veto lifted
+		['says grey, 12 km', 12, 6, GREY_CAT, 0.95, false, 'possible'], // 0.627, veto lifted
+	];
+
+	it('has at least 20 labelled pairs', () => {
+		expect(SAME_ANIMAL.length + LOOKALIKES.length).toBeGreaterThanOrEqual(20);
+	});
+
+	it.each(SAME_ANIMAL)('same animal: %s', (...pair) => {
+		expect(label(pair)).toBe(pair[6]);
+	});
+
+	it.each(LOOKALIKES)('look-alike: %s', (...pair) => {
+		expect(label(pair)).toBe(pair[6]);
+	});
+
+	it('never brings a look-alike black cat far apart or days apart to good (AC#3)', () => {
+		for (const pair of LOOKALIKES) {
+			expect(pair[1] >= 3 || pair[2] >= 72, pair[0]).toBe(true);
+			expect(['strong', 'good'], pair[0]).not.toContain(label(pair));
+		}
+	});
+});
+
 describe('bands', () => {
 	it('maps kilometres to the C6 distance bands', () => {
 		expect([0, 0.99, 1, 2.99, 3, 9.99, 10, 30].map(distanceBand)).toEqual([
@@ -218,4 +420,29 @@ describe('bands', () => {
 			'gt72',
 		]);
 	});
+
+	it('maps V to the visual bands, none below 0.25', () => {
+		expect([1, 0.8, 0.79, 0.5, 0.49, 0.25, 0.24, 0].map(visualBand)).toEqual([
+			'very_similar',
+			'very_similar',
+			'similar',
+			'similar',
+			'some',
+			'some',
+			null,
+			null,
+		]);
+	});
+
+	it('normalises a cosine between the floor and the ceiling to V, clamped to 0…1', () => {
+		// C8 placeholders: floor 0.70, ceiling 0.95.
+		expect([0.5, 0.7, 0.825, 0.95, 0.99].map((cos) => round3(visualSimilarity(cos, 0.7, 0.95)))).toEqual([
+			0, 0, 0.5, 1, 1,
+		]);
+		// A ceiling that is not above the floor (equal or inverted config) gives no V at all.
+		expect(visualSimilarity(0.99, 0.7, 0.7)).toBeNaN();
+		expect(visualSimilarity(0.99, 0.95, 0.7)).toBeNaN();
+	});
 });
+
+const round3 = (value: number) => Math.round(value * 1000) / 1000;
