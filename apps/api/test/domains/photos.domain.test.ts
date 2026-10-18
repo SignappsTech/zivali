@@ -311,6 +311,9 @@ describe('retention.purge', () => {
 		const recently = await newReport();
 		const oldPhoto = await uploaded(await jpeg(), { report_id: longAgo.id });
 		const keptPhoto = await uploaded(await jpeg(), { report_id: recently.id });
+		// Also the pet's photo (TASK-114.5): the pet keeps it.
+		const pet = await prisma.pets.create({ data: { owner_id: owner.user_id, species: 'dog', name: 'Rex' } });
+		const petPhoto = await uploaded(await jpeg(), { report_id: longAgo.id, pet_id: pet.id });
 		await PhotosDomain.processPhoto({ photo_id: oldPhoto.id }, ctx());
 		await PhotosDomain.publishReportPhotos({ report_id: longAgo.id }, ctx());
 		expect(await storage.head(mediaRef(longAgo.id, oldPhoto.id, 'display.jpg'))).not.toBeNull();
@@ -327,6 +330,8 @@ describe('retention.purge', () => {
 		expect(await storage.head(mediaRef(longAgo.id, oldPhoto.id, 'display.jpg'))).toBeNull();
 		expect(await storage.head(variantRef(oldPhoto.id, 'display.webp'))).toBeNull();
 		expect(await exists(keptPhoto.id)).toBe(true);
+		expect(await exists(petPhoto.id)).toBe(true);
+		await prisma.pets.delete({ where: { id: pet.id } });
 	});
 
 	it('keeps a photo touched or attached after the purge listing, objects included (race)', async () => {

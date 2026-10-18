@@ -123,7 +123,7 @@ export async function mapReports(
 			r.public_radius_m as radius_m, ${boosted(R, now)} as boosted,
 			(select p.public_thumb_url from app.photos p
 				where p.report_id = r.id and p.status = 'published' and p.public_thumb_url is not null
-				order by p.position limit 1) as thumb_url
+				order by p.position, p.id limit 1) as thumb_url
 		from app.reports r
 		where ${searchWhere(input, input.closedSince)}
 		order by ${boosted(R, now)} desc, r.event_at desc, r.id desc

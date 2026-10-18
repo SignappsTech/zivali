@@ -1,12 +1,12 @@
 ---
 id: TASK-114.5
 title: 'Lost report for a saved pet: Confirm loops back to the photo step'
-status: To Do
+status: In Progress
 assignee:
   - '@backend-dev'
   - '@frontend-dev'
 created_date: '2026-10-16 13:50'
-updated_date: '2026-10-17 09:24'
+updated_date: '2026-10-18 02:09'
 labels:
   - bug
   - fe
@@ -36,9 +36,13 @@ Likely server causes to confirm first (reproduce locally: create a pet with phot
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Root cause reproduced in a test (API route test and/or web flow test) for: saved pet with photos, report lost, add more photos, publish
-- [ ] #2 Reporting a saved pet lost with added photos publishes; the report shows the pet's photos and the added ones (within the 5-photo limit, with a clear message at the limit)
-- [ ] #3 Any VALIDATION on photo_ids shows a message on the photo step (e.g. "Ene od fotografij ni bilo mogoče dodati, odstranite jo in poskusite znova" / the limit), never a silent jump; SL and EN
-- [ ] #4 The pet photo save (PUT /v1/pets/:id/photos) works for the same photos; its 400 is fixed or explained to the user
-- [ ] #5 The API request log records the error code and the validation paths for 4xx responses (no values, no personal data), so the next case is visible in the logs
+- [x] #1 Root cause reproduced in a test (API route test and/or web flow test) for: saved pet with photos, report lost, add more photos, publish
+- [x] #2 Reporting a saved pet lost with added photos publishes; the report shows the pet's photos and the added ones (within the 5-photo limit, with a clear message at the limit)
+- [x] #3 Any VALIDATION on photo_ids shows a message on the photo step (e.g. "Ene od fotografij ni bilo mogoče dodati, odstranite jo in poskusite znova" / the limit), never a silent jump; SL and EN
+- [x] #4 The pet photo save (PUT /v1/pets/:id/photos) works for the same photos; its 400 is fixed or explained to the user
+- [x] #5 The API request log records the error code and the validation paths for 4xx responses (no values, no personal data), so the next case is visible in the logs
 <!-- AC:END -->
+
+## Packet
+
+Branch: agent/task-114.5-lost-photos-loop

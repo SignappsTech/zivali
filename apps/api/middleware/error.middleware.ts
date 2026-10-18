@@ -41,6 +41,10 @@ export const errorHandler: ErrorRequestHandler = (err, req, res, next) => {
 		return;
 	}
 
+	// For the request log line (lib/logger.ts): the code and the field paths only, never messages or values.
+	res.locals.error_code = known.code;
+	if (known.issues) res.locals.error_paths = known.issues.map((issue) => issue.path).slice(0, 10);
+
 	const retryAfter = known.details?.retry_after_s;
 	if ((known.code === 'RATE_LIMITED' || known.code === 'SERVICE_UNAVAILABLE') && typeof retryAfter === 'number')
 		res.set('Retry-After', String(retryAfter));

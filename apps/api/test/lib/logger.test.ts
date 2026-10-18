@@ -3,9 +3,13 @@ import express, { type ErrorRequestHandler } from 'express';
 import { pino } from 'pino';
 import request from 'supertest';
 import { describe, expect, it } from 'vitest';
+import { z } from 'zod';
 
+import { AppError } from '../../lib/errors.ts';
 import { apiRoutes } from '../../lib/openapi.ts';
 import { loggerOptions, requestLogger } from '../../lib/logger.ts';
+import { errorHandler } from '../../middleware/error.middleware.ts';
+import { validate } from '../../middleware/validate.middleware.ts';
 
 const lines: string[] = [];
 const capture = pino({ ...loggerOptions, level: 'info' }, { write: (line: string) => void lines.push(line) });
@@ -68,5 +72,31 @@ describe('request logger', () => {
 		await new Promise((resolve) => setImmediate(resolve));
 		const done = lines.map((line) => JSON.parse(line)).find((entry) => entry.route);
 		expect(done.route).toBe('GET /v1/health/ready');
+	});
+
+	it('logs the error code and the validation paths of a 4xx, never the values (TASK-114.5)', async () => {
+		lines.length = 0;
+		const failing = express();
+		failing.use(requestLogger(capture), express.json());
+		failing.post('/v1/reports', validate(z.object({ photo_ids: z.array(z.uuid()) })), (_req, res) => {
+			res.json({});
+		});
+		failing.post('/v1/pets', () => {
+			throw new AppError('FORBIDDEN', 'Not your pet');
+		});
+		failing.use(errorHandler);
+		await request(failing)
+			.post('/v1/reports')
+			.send({ photo_ids: ['not-a-uuid-041123456', 'mail@example.com'] });
+		await request(failing).post('/v1/pets').send({});
+		await new Promise((resolve) => setImmediate(resolve));
+
+		const output = lines.join('');
+		for (const leak of ['041123456', 'example.com', 'Not your pet']) expect(output).not.toContain(leak);
+		const done = lines.map((line) => JSON.parse(line)).filter((entry) => entry.route);
+		expect(done.map(({ status, error_code, error_paths }) => ({ status, error_code, error_paths }))).toEqual([
+			{ status: 400, error_code: 'VALIDATION', error_paths: ['photo_ids.0', 'photo_ids.1'] },
+			{ status: 403, error_code: 'FORBIDDEN', error_paths: undefined },
+		]);
 	});
 });

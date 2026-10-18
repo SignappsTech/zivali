@@ -17,6 +17,7 @@
 	"captcha_failed": "Preverjanje ni uspelo. Poskusili bomo znova čez minuto.",
 	"retry": "Poskusi znova",
 	"limit": "Dodate lahko največ 5 fotografij.",
+	"rejected": "Ene od fotografij ni bilo mogoče dodati. Odstranite jo in poskusite znova.",
 	"too_small": "Fotografija je premajhna. Izberite večjo, ki je na krajši stranici široka vsaj 320 slikovnih pik.",
 	"heic_unsupported": "Ta brskalnik ne more odpreti fotografij HEIC. Izberite fotografijo JPG ali poskusite z drugim brskalnikom."
 }

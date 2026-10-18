@@ -17,6 +17,7 @@
 	"captcha_failed": "The check did not pass. We will try again in a minute.",
 	"retry": "Try again",
 	"limit": "You can add up to 5 photos.",
+	"rejected": "One of the photos could not be added. Remove it and try again.",
 	"too_small": "The photo is too small. Please choose a larger one, at least 320 pixels on its shorter side.",
 	"heic_unsupported": "This browser can't open HEIC photos. Please choose a JPG photo or try another browser."
 }

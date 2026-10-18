@@ -154,6 +154,9 @@ export function usePhotoUploads(
 				{ signal: controller.signal, onProgress: (progress) => patch(key, { progress }) }
 			);
 			live.current.attempts.delete(key);
+			// The same image as a listed photo (a saved one has no hash here): the API dedupes it to that photo's id,
+			// and the same id twice would be refused (TASK-114.5).
+			if (live.current.photos.some((item) => item.key !== key && item.photoId === photoId)) return remove(key);
 			patch(key, { status: 'uploaded', progress: 1, photoId, uploadedAt: Date.now() });
 			void save();
 			setJustUploaded(true);
@@ -250,18 +253,27 @@ export function usePhotoUploads(
 	const restore = useEffectEvent(async (cancelled: () => boolean) => {
 		const stored = (await get<Stored[]>(draftKey(draft)).catch(() => undefined)) ?? [];
 		if (cancelled() || !stored.length) return;
-		const restored = stored.map((photo) => {
-			const fresh = photo.photoId && photo.uploadedAt && Date.now() - photo.uploadedAt < PHOTO_ID_TTL;
-			return {
-				...photo,
-				photoId: fresh ? photo.photoId : undefined,
-				status: fresh ? ('uploaded' as const) : live.current.hold ? ('kept' as const) : ('uploading' as const),
-				progress: fresh ? 1 : 0,
-				preview: URL.createObjectURL(photo.thumb),
-			};
-		});
-		// Saved photos stay first, then the draft's, then any picked meanwhile.
 		const current = live.current.photos;
+		// A draft photo that is a saved one (the same image: the API answered with its id) is listed once, as the
+		// saved one: the same id twice would be refused (TASK-114.5).
+		const savedIds = new Set(current.filter((photo) => photo.saved).map((photo) => photo.photoId));
+		const restored = stored
+			.filter((photo) => !(photo.photoId && savedIds.has(photo.photoId)))
+			.map((photo) => {
+				const fresh = photo.photoId && photo.uploadedAt && Date.now() - photo.uploadedAt < PHOTO_ID_TTL;
+				return {
+					...photo,
+					photoId: fresh ? photo.photoId : undefined,
+					status: fresh
+						? ('uploaded' as const)
+						: live.current.hold
+							? ('kept' as const)
+							: ('uploading' as const),
+					progress: fresh ? 1 : 0,
+					preview: URL.createObjectURL(photo.thumb),
+				};
+			});
+		// Saved photos stay first, then the draft's, then any picked meanwhile.
 		commit([...current.filter((photo) => photo.saved), ...restored, ...current.filter(isLocal)]);
 		for (const photo of restored) if (!photo.photoId) enqueue(photo.key);
 	});

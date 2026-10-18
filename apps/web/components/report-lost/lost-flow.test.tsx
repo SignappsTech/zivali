@@ -41,6 +41,7 @@ const api = vi.hoisted(() => ({
 	picker: {
 		photos: [] as Emitted[],
 		hold: undefined as boolean | undefined,
+		saved: undefined as unknown,
 		onChange: undefined as undefined | ((photos: Emitted[]) => void),
 	},
 	// Set in beforeEach (a hoisted block cannot use the imported fixture).
@@ -116,20 +117,23 @@ vi.mock('idb-keyval', () => ({
 	set: async (key: string, value: unknown) => void api.store.set(key, value),
 	del: async (key: string) => void api.store.delete(key),
 }));
-vi.mock('@/components/photos/use-photo-uploads', () => ({ clearPhotoDraft: api.clearPhotoDraft }));
+vi.mock('@/components/photos/use-photo-uploads', () => ({ clearPhotoDraft: api.clearPhotoDraft, MAX_PHOTOS: 5 }));
 // PhotoPicker and LocationPicker have their own tests: here they report what the test sets, as the real ones do.
 vi.mock('@/components/photos/photo-picker', () => ({
 	PhotoPicker: ({
 		onChange,
 		onExif,
 		hold,
+		saved,
 	}: {
 		onChange: (photos: Emitted[]) => void;
 		onExif: (exif: { lat?: number; lng?: number }) => void;
 		hold?: boolean;
+		saved?: unknown;
 	}) => {
 		api.picker.onChange = onChange;
 		api.picker.hold = hold;
+		api.picker.saved = saved;
 		api.exif = onExif;
 		useEffect(() => onChange(api.picker.photos), []); // eslint-disable-line react-hooks/exhaustive-deps
 		return null;
@@ -445,6 +449,8 @@ describe('LostFlow', () => {
 		expect(bars()).toBe('Korak 1 od 6');
 		click(t.next);
 		await heading(t.photos_title);
+		// The pet's photos are listed first and go on the report too (TASK-114.5).
+		expect(api.picker.saved).toEqual(pet.photos);
 		photosUp();
 		click(t.next);
 		await heading(sl.location.title_lost);
@@ -593,10 +599,26 @@ describe('LostFlow', () => {
 		await toReview();
 		click(t.publish);
 		await heading(t.photos_title);
+		// Never a silent jump (TASK-114.5): the step says what went wrong.
+		expect(screen.getByRole('alert').textContent).toBe(sl.photos.rejected);
 		click(t.next);
 		await heading(t.review_title);
 		click(t.publish);
 		await heading(t.details_title);
+		expect(screen.queryByText(sl.photos.rejected)).toBeNull();
+	});
+
+	it('names the 5-photo limit on the photos step when photo_ids is refused with more than 5', async () => {
+		api.createReport.mockRejectedValueOnce({
+			status: 400,
+			data: { code: 'VALIDATION', message: 'x', issues: [{ path: 'photo_ids', message: 'Too big' }] },
+		});
+		show();
+		await toReview();
+		photosUp(Array.from({ length: 6 }, (_, i) => ({ ...uploaded, key: `k${i}`, photoId: `photo-${i}` })));
+		click(t.publish);
+		await heading(t.photos_title);
+		expect(screen.getByRole('alert').textContent).toBe(sl.photos.limit);
 	});
 
 	it('starts one publish for a double click', async () => {
@@ -638,11 +660,12 @@ describe('LostFlow', () => {
 			status: 409,
 			data: { code: 'DUPLICATE_OPEN_REPORT', message: 'x', details: { short_code: 'Pq7xYz12' } },
 		});
+		// Another pet re-seeds the picker, which restores the draft's photos (here: what it reports on mount).
+		api.picker.photos = [uploaded];
 		show({ initialPet: pet.id });
 		await heading(t.pet_title);
 		click(t.next);
 		await heading(t.photos_title);
-		photosUp();
 		click(t.next);
 		await heading(sl.location.title_lost);
 		click(sl.location.confirm);
