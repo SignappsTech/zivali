@@ -37,3 +37,7 @@ Wanted (owner): flag the existing address on the sign-up form, before the verify
 - [ ] #3 The same check covers every sign-up entry (the sign-up page and the hand-off from the report flows, `next=`), and the anonymous-to-account conversion (C7) if it can hit an existing address
 - [ ] #4 Unit tests for the three cases (new, existing confirmed via empty identities, existing unconfirmed)
 <!-- AC:END -->
+
+## Packet
+
+Branch: agent/task-114.1-signup-existing-email
