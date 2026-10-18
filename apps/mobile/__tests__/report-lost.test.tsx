@@ -89,6 +89,7 @@ jest.mock('@/components/photos/photo-picker', () => {
 const mockClearPhotos = jest.fn(async (_draft: string) => {});
 jest.mock('@/components/photos/use-photo-uploads', () => ({
 	clearPhotoDraft: (draft: string) => mockClearPhotos(draft),
+	MAX_PHOTOS: 5,
 }));
 jest.mock('@/components/location/location-picker', () => {
 	const { Pressable, Text } = jest.requireActual<typeof import('react-native')>('react-native');
@@ -647,6 +648,45 @@ describe('report lost flow (P6)', () => {
 		await press(t.publish);
 		await waitFor(() => expect(onStep()).toBeTruthy());
 		expect(screen.queryByRole('heading', { name: t.review_title })).toBeNull();
+	});
+
+	test.each([
+		['a photo the API refused', 1, sl.photos.rejected],
+		['more than 5 photos', 6, sl.photos.limit],
+	])('a photo_ids refusal (%s) is said on the photo step, until the next Publish', async (_name, count, message) => {
+		let refusals = 1;
+		routes = {
+			'POST /v1/reports': () =>
+				refusals-- > 0
+					? new Response(
+							JSON.stringify({
+								error: {
+									code: 'VALIDATION',
+									message: 'x',
+									issues: [{ path: 'photo_ids.0', message: 'bad' }],
+								},
+							}),
+							{ status: 400, headers: { 'Content-Type': 'application/json' } }
+						)
+					: mockError('INTERNAL', 'x'),
+		};
+		await toReviewWithSavedPet();
+		await act(() =>
+			mockPicker.onChange!(
+				Array.from({ length: count }, (_, i) => ({ ...photo, key: `k${i}`, photoId: `ph-${i}` }))
+			)
+		);
+		await press(t.publish);
+		expect(await screen.findByText(message)).toBeTruthy();
+		expect(screen.getByRole('heading', { name: t.photos_title })).toBeTruthy();
+
+		// Back on the review, the next Publish clears it (this one fails for another reason).
+		await next();
+		await press(t.publish);
+		expect(await screen.findByText('errors.INTERNAL')).toBeTruthy();
+		await press(`Uredi: ${t.review_photos}`);
+		expect(screen.getByRole('heading', { name: t.photos_title })).toBeTruthy();
+		expect(screen.queryByText(message)).toBeNull();
 	});
 
 	test('the open search found for one pet is forgotten when another pet is chosen', async () => {
