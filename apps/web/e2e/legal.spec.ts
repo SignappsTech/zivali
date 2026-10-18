@@ -6,12 +6,12 @@ const PAGES = [
 	['sl', '/zasebnost', 'Politika zasebnosti'],
 	['sl', '/piskotki', 'Politika piškotkov'],
 	['sl', '/pogoji-uporabe', 'Pogoji uporabe'],
-	['sl', '/impresum', 'Podatki o podjetju'],
+	['sl', '/podatki-o-podjetju', 'Podatki o podjetju'],
 	['sl', '/dostopnost', 'Izjava o dostopnosti'],
 	['en', '/en/privacy', 'Privacy policy'],
 	['en', '/en/cookies', 'Cookie policy'],
 	['en', '/en/terms', 'Terms of use'],
-	['en', '/en/imprint', 'Company information'],
+	['en', '/en/company-information', 'Company information'],
 	['en', '/en/accessibility', 'Accessibility statement'],
 ] as const;
 

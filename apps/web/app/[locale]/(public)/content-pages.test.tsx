@@ -156,7 +156,9 @@ describe('T2 article pages', () => {
 		cleanup();
 
 		renderIn('en', AboutPage);
-		expect(screen.getByRole('link', { name: 'imprint' }).getAttribute('href')).toBe('/en/imprint');
+		expect(screen.getByRole('link', { name: 'company information' }).getAttribute('href')).toBe(
+			'/en/company-information'
+		);
 		expect(screen.getByRole('heading', { level: 2, name: 'How we are funded' }).id).toBe('funding');
 	});
 

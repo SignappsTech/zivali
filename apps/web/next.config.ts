@@ -2,6 +2,8 @@ import type { NextConfig } from 'next';
 import createMDX from '@next/mdx';
 import createNextIntlPlugin from 'next-intl/plugin';
 
+import { legacyRedirects } from './i18n/legacy-redirects';
+
 // Baseline for every response; the per-request CSP with its nonce is set in proxy.ts.
 const securityHeaders = [
 	{ key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains' },
@@ -30,6 +32,7 @@ const nextConfig: NextConfig = {
 	// Types are checked once by the `typecheck` task (next typegen && tsc) in pnpm verify and CI; repeating it in
 	// every build (turbo, e2e, quality, Docker) cost minutes each.
 	typescript: { ignoreBuildErrors: true },
+	redirects: async () => [...legacyRedirects],
 	headers: async () => [
 		{ source: '/:path*', headers: securityHeaders },
 		// /captcha skips the proxy (C15), so no nonce: a fixed policy for Next.js's inline scripts and Turnstile.

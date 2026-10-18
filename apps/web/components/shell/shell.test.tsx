@@ -184,7 +184,7 @@ describe('SiteFooter', () => {
 			['Zasebnost', '/zasebnost'],
 			['Piškotki', '/piskotki'],
 			['Pogoji uporabe', '/pogoji-uporabe'],
-			['Podatki o podjetju', '/impresum'],
+			['Podatki o podjetju', '/podatki-o-podjetju'],
 			['Dostopnost', '/dostopnost'],
 			['SL', '/'],
 			['EN', '/en'],
