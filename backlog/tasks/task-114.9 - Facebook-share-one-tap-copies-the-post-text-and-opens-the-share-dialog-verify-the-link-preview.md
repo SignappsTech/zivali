@@ -3,11 +3,11 @@ id: TASK-114.9
 title: >-
   Facebook share: one tap copies the post text and opens the share dialog;
   verify the link preview
-status: In Progress
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-16 14:35'
-updated_date: '2026-10-18 04:42'
+updated_date: '2026-10-18 05:21'
 labels:
   - fe
   - share
