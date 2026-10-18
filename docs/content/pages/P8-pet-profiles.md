@@ -3,7 +3,7 @@ source: 03§P8; docs/design/pages/P8-pet-profiles.md
 page: P8 Pet profiles
 stories: TASK-16 (FR-002, FR-003)
 copy-for: docs/design/pages/P8-pet-profiles.md
-version: 0.3
+version: 0.4
 status: Draft, native Slovenian review pending
 date: 2026-10-18
 ---
@@ -24,12 +24,24 @@ Namespace `pets`. Attribute labels: glossary §7. Photo controls: `photos.*` (P6
 | pets.chip_none | Brez čipa | No chip |
 | pets.chip_unknown | Čip ni znan | Chip unknown |
 | pets.open_search | Odpri iskanje | Open search |
-| pets.limit_note | Za zdaj lahko shranite en profil živali. Izgubljeno žival lahko vedno prijavite tudi brez profila. | For now you can save one pet profile. You can always report a lost pet without a profile. |
-| pets.limit_note_premium | Brezplačno lahko shranite en profil živali, več jih omogoča Premium Zaščita. Izgubljeno žival lahko vedno prijavite tudi brez profila. | You can save one pet profile for free; Premium Protect allows more. You can always report a lost pet without a profile. |
+| pets.limit_note | Za zdaj lahko shranite {limit, plural, one {# profil} two {# profila} few {# profile} other {# profilov}} živali. Izgubljeno žival lahko vedno prijavite tudi brez profila. | For now you can save {limit, plural, one {# pet profile} other {# pet profiles}}. You can always report a lost pet without a profile. |
+| pets.limit_note_premium | Brezplačno lahko shranite {limit, plural, one {# profil} two {# profila} few {# profile} other {# profilov}} živali, več jih omogoča Premium Zaščita. Izgubljeno žival lahko vedno prijavite tudi brez profila. | You can save {limit, plural, one {# pet profile} other {# pet profiles}} for free; Premium Protect allows more. You can always report a lost pet without a profile. |
 | pets.my_reports | Moje prijave | My reports |
 | pets.my_reports_empty | Nimate še nobene prijave. | You have no reports yet. |
 
-`pets.limit_note_premium` replaces `pets.limit_note` once Premium exists (M4). Open lost report on a pet row: status word `browse.status_lost` (P4) with `pets.open_search`.
+`{limit}` is the free profile limit from `app_config` `pets.free_limit` (now 2, API error `PET_LIMIT`), so the copy renders "2 profila" / "2 pet profiles" (CH-237, CH-243; lead decision 2026-10-16, PRD R-002.4). The P8 mockup's sample "dva profila" is the same sentence spelled out. `pets.limit_note_premium` replaces `pets.limit_note` once Premium exists (M4); the apps show `limit_note_premium` because the acceptance criteria ask for the Premium mention, so `limit_note` need not be in the catalogue until Premium is hidden.
+
+My reports row meta (CH-344): no `pets.my_reports_row_meta` key is added. The row reuses the report's own relative phrase `report.since_{type}` ("Pogrešana od 12. oktobra" / "Missing since 12 October"), which is the same wording as on the report; the mockup's "Prijavljena 12. 10. 2026" is superseded.
+
+Mobile additions (CH-323, TASK-16.7), draft, needs native review:
+
+| Key | SL | EN |
+|---|---|---|
+| pets.status_lost | Izgubljena | Lost |
+| pets.premium_action | Več profilov s Premium Zaščito | More profiles with Premium Protect |
+| pets.report_without_profile | Prijavi izgubljeno žival brez profila | Report a lost pet without a profile |
+
+`pets.status_lost` is the pet-row status word until P4's `browse.status_lost` is used on the row. `pets.premium_action` opens the web checkout in the in-app browser. `empty_action` and `open_search` are the slice's own keys. Open lost report on a pet row: status word `browse.status_lost` (P4) with `pets.open_search`.
 
 Empty state:
 
@@ -81,6 +93,48 @@ Empty state:
 
 `CHANGE docs/design/pages/P8-pet-profiles.md§4 Chip: replace "a link for dogs to the official CRPsi lookup (text button with external-link icon)" with the help line pets.chip_register_note under the chip field, no link (A-003).`
 
+## Chip register, cats and notes (PetFields, CH-269, TASK-16.4)
+
+Keys drafted in `packages/i18n/messages/{sl,en}/pets.json`. Draft, needs native review.
+
+| Key | SL | EN |
+|---|---|---|
+| pets.crhz_label | Ali je čip v CRHŽ vpisan z vašo trenutno telefonsko številko? | Is the chip registered in CRHŽ with your current phone number? |
+| pets.answer_yes | Da | Yes |
+| pets.answer_no | Ne | No |
+| pets.answer_unknown | Ne vem | Not sure |
+| pets.crhz_reminder | Prosite veterinarja, naj v registru posodobi vašo telefonsko številko, da vas lahko pokličejo, ko žival najdejo. | Ask your vet to update your phone number in the register so you can be called when your pet is found. |
+| pets.ear_tip_label | Ali ima prirezano konico ušesa? | Is the tip of one ear clipped? |
+| pets.ear_tip_help | Tako so pogosto označene kastrirane prostoživeče mačke. | Neutered community cats are often marked this way. |
+| pets.lifestyle_label | Kje živi? | Where does your cat live? |
+| pets.lifestyle.indoor | Samo notri | Indoors only |
+| pets.lifestyle.outdoor | Večinoma zunaj | Mostly outdoors |
+| pets.lifestyle.both | Notri in zunaj | Indoors and outdoors |
+| pets.species_first | Najprej izberite vrsto. | Choose the species first. |
+| pets.not_sure | Ne vem | Not sure |
+| pets.notes_label | Opombe | Notes |
+| pets.notes_placeholder | Na primer: zdravila, ki jih potrebuje, in kako se odziva na neznance | For example: medication it needs and how it reacts to strangers |
+
+`crhz_label` is the CRHŽ question; `crhz_reminder` shows only on "Ne" and "Ne vem". `ear_tip_*` and `lifestyle_*` are cats only (the SL lifestyle label stays neutral because the pet name is not inserted). `species_first` is the hint on breed and pattern before a species is chosen. `not_sure` is the select item that clears the birth year and the pattern. `notes_label` and `notes_placeholder` replace the separate medication and temperament fields on mobile.
+
+Photo removal on mobile (CH-237, CH-323), draft; the P8 mockup C3 uses this as sample text:
+
+| Key | SL | EN |
+|---|---|---|
+| pets.photo_delete_title | Odstranim fotografijo? | Remove this photo? |
+| pets.photo_delete_body | Fotografija bo izbrisana tudi iz shrambe. | The photo will also be deleted from storage. |
+| pets.photo_delete_confirm | Odstrani | Remove |
+
+Mobile form chrome (CH-323), draft:
+
+| Key | SL | EN |
+|---|---|---|
+| pets.step_a11y | Korak {n} od {total} | Step {n} of {total} |
+| pets.photos_required | Dodajte vsaj eno fotografijo. | Add at least one photo. |
+| pets.photos_pending | Počakajte, da se fotografije naložijo, ali odstranite tiste, ki se niso naložile. | Wait until the photos are uploaded, or remove the ones that did not upload. |
+
+`step_a11y` is the accessible name of the five-bar progress. `photos_required` applies the 1 to 5 photos rule. `photos_pending` shows when Save is pressed while an upload is still running.
+
 # 3. Pet detail
 
 | Key | SL | EN |
@@ -104,6 +158,19 @@ Empty state:
 | pets.delete_body | Izbrisali bomo tudi vse fotografije profila. Odprte prijave ostanejo. | We will also delete all the profile's photos. Open reports stay as they are. |
 | pets.delete_confirm | Izbriši profil | Delete profile |
 | pets.deleted | Profil je izbrisan. | Profile deleted. |
+
+Archive (CH-298, TASK-16.6), draft, needs native review:
+
+| Key | SL | EN |
+|---|---|---|
+| pets.archive | Arhiviraj | Archive |
+| pets.archive_title | Arhiviram ta profil? | Archive this profile? |
+| pets.archive_body | Arhiviran profil ostane shranjen, a se ne šteje več med brezplačne profile. Arhiviranja ni mogoče preklicati. | An archived profile stays saved but no longer counts towards your free profiles. Archiving cannot be undone. |
+| pets.archive_confirm | Arhiviraj profil | Archive profile |
+| pets.archived | Profil je arhiviran. | Profile archived. |
+| pets.archived_label | Arhiviran | Archived |
+
+`pets.archived` is a toast; `pets.archived_label` is the status word on an archived profile. The photo alt text of §6 is the key `pets.photo_alt` ("{name}, fotografija {n}" / "{name}, photo {n}").
 
 # 4. States
 
@@ -140,3 +207,4 @@ N/A: signed-in pages, `noindex`. Document titles: "Moje živali · Najdimo" / "M
 |---|---|
 | 2026-10-15 | CH-79: `chip_help` example is now 15 digits, 705 1234 5678 9012. |
 | 2026-10-18 | CH-496 (TASK-114.5): `photos.rejected` (P6 §3) is the save toast when a photo is rejected. |
+| 2026-10-18 | v0.4. CH-237/CH-243: `pets.limit_note` and `limit_note_premium` take `{limit}` (free limit 2); photo-delete keys. CH-269: PetFields keys. CH-298: archive keys, `photo_alt`. CH-323: mobile keys. CH-344: decided no `my_reports_row_meta` (reuse `report.since_{type}`). |

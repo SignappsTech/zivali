@@ -3,7 +3,7 @@ source: 03§P18; docs/design/pages/P18-poster-share.md; 02§FR-011
 page: P18 Poster and sharing
 stories: TASK-24 (FR-011)
 copy-for: docs/design/pages/P18-poster-share.md
-version: 0.5
+version: 0.6
 status: Draft, native Slovenian review pending
 date: 2026-10-18
 ---
@@ -132,7 +132,13 @@ Copy-ready texts for the owner of a lost-pet report, shown under the share menu.
 | share.kit_media_title | Sporočilo za lokalni radio | Message for local radio |
 | share.kit_media_intro | Lokalni radio ali krajevni portal lahko objavo prebere ali objavi. Besedilo je kratko in brez osebnih podatkov. | A local radio station or community website may read out or publish this. The text is short and has no personal details. |
 | share.kit_media_text | {species, select, dog {Pogrešan je pes {name}, nazadnje viden {date} v okolici: {area}. Če ga vidite, prosimo, sporočite prek povezave: {url}} cat {Pogrešana je mačka {name}, nazadnje videna {date} v okolici: {area}. Če jo vidite, prosimo, sporočite prek povezave: {url}} other {Pogrešana je žival {name}, nazadnje videna {date} v okolici: {area}. Če jo vidite, prosimo, sporočite prek povezave: {url}}} | {species, select, dog {Missing dog {name}, last seen {date} around {area}. If you see him, please report it through the link: {url}} cat {Missing cat {name}, last seen {date} around {area}. If you see her, please report it through the link: {url}} other {Missing pet {name}, last seen {date} around {area}. If you see them, please report it through the link: {url}}} |
+| share.kit_image_title | Kvadratna slika | Square image |
+| share.kit_image_save | Shrani sliko | Save image |
+| share.kit_image_alt | Kvadratna slika za objavo: {title} | Square image for the post: {title} |
+| share.kit_media_form | Lokalni radio: obrazec za obvestila | Local radio: announcement form |
 | share.kit_media_hint | Besedilo pošljite izbranemu lokalnemu radiu ali mediju sami. | Send the text to the local radio station or outlet of your choice yourself. |
+
+Mobile additions (TASK-24.3, CH-338), draft, please confirm: `share.kit_image_title`, `kit_image_save` and `kit_image_alt` belong to the square image block (from the M6 mockup; `{title}` = top band + name). `share.kit_media_form` is a neutral label for the link to the local radio's notice form. AC#4 names Radio Aktual but §4b says never to name a real station, so the label stays neutral and only the configured URL points at the station. Share texts that need an area name fall back to the bare report link when the area is unknown (offline, or the place is outside Slovenia). `share.text_lost_noname` stands in for the share and kit texts when a lost report has no name.
 
 # 5. States
 
@@ -151,15 +157,17 @@ N/A: an in-app screen (`noindex`). The poster PDF and OG image are served by the
 
 | Image | SL | EN |
 |---|---|---|
-| Poster preview | Predogled plakata: {top band} {name}, s fotografijo in kodo QR | Poster preview: {top band} {name}, with photo and QR code |
+| Poster preview (key `poster.preview_alt`, `{title}` = top band + name) | Predogled plakata: {title}, s fotografijo in kodo QR | Poster preview: {title}, with photo and QR code |
 | Poster photo (in the PDF) | P9 §11 rule | |
 | QR code (in the PDF and preview) | Koda QR za prijavo na {short_url} | QR code for the report at {short_url} |
 | Logo on the poster | Najdimo | Najdimo |
 | Link-card preview | P9 §11 OG alt | |
+| Square image in the share kit (key `share.kit_image_alt`) | Kvadratna slika za objavo: {title} | Square image for the post: {title} |
 
 # Change log
 
 | Version | Date | Change |
 |---|---|---|
+| 0.6 | 2026-10-18 | CH-338: `poster.preview_alt`, `share.kit_image_*`, `share.kit_media_form`; fallback rules for share texts. |
 | 0.5 | 2026-10-18 | CH-506 (TASK-114.9): added `share.facebook_copied` and `share.facebook_copy_failed` (§4) and the Facebook copy-then-open rule. SL/EN reviewed, unchanged. Not yet in the catalogues (`packages/i18n/messages/*/share.json`). |
 | 0.4 | 2026-10-15 | CH-58: added the share kit (section 4b): Facebook post text, group list intro, local radio/media line with neutral placeholder; no contact data. |

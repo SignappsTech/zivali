@@ -3,7 +3,7 @@ source: 03§P6; docs/design/pages/P6-report-lost.md
 page: P6 Report lost
 stories: TASK-29 (FR-005, FR-003, FR-002)
 copy-for: docs/design/pages/P6-report-lost.md
-version: 0.5
+version: 0.6
 status: Draft, native Slovenian review pending
 date: 2026-10-18
 ---
@@ -41,6 +41,14 @@ Namespace `report_lost` (photos in `photos`, location in `location` from P5, sig
 | report_lost.pet_enter | Vnesi podatke | Enter details |
 
 Saved pet rows show the pet name and species ("Luna · Mačka").
+
+Validation message for the mobile flow (CH-334, TASK-29.5), draft, please confirm:
+
+| Key | SL | EN |
+|---|---|---|
+| report_lost.pet_required | Izberite žival ali vnesite podatke. | Choose a pet or enter the details. |
+
+`report_lost.pet_required` shows when "Naprej" is pressed on step 1 with saved pets and none chosen.
 
 # 3. Step 2: Photos
 
@@ -114,6 +122,14 @@ Location picker (P5) with `location.title_lost` and the radius control.
 | report_lost.when_time | Ura | Time |
 | report_lost.when_future | Datum in ura ne moreta biti v prihodnosti. | The date and time cannot be in the future. |
 | report_lost.when_old | Od takrat je minilo več kot 30 dni. Prijavo lahko oddate, a ujemanj bo verjetno manj. | That was more than 30 days ago. You can still report it, but there will probably be fewer matches. |
+
+Date and time fields on the mobile flow have no native picker; invalid input shows (CH-334), draft, please confirm:
+
+| Key | SL | EN |
+|---|---|---|
+| report_lost.when_invalid | Vpišite datum in uro, na primer 15. 10. 2026 in 18.30. | Enter a date and time, for example 15/10/2026 and 18:30. |
+
+`report_lost.when_invalid` is shown when the date or time cannot be read.
 
 # 7. Step 6: What happened and contact
 
@@ -275,3 +291,4 @@ Photo keys (CH-114, CH-118; namespace `photos`, used by PhotoPicker on web and m
 | 2026-10-15 | CH-79: `chip_help` example is now 15 digits, 705 1234 5678 9012. |
 | 2026-10-15 | CH-114, CH-118: added `photos.thumb_alt`, `photos.too_small`, `photos.heic_unsupported` (§13). |
 | 2026-10-18 | CH-496 (TASK-114.5): added `photos.rejected`, shown on the photo step for any `photo_ids` VALIDATION error and when `photos.limit` is exceeded (more than 5). SL/EN reviewed, unchanged. |
+| 2026-10-18 | CH-334: `report_lost.pet_required` (§2), `report_lost.when_invalid` (§6). Version 0.6. |

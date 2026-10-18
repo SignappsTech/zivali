@@ -3,9 +3,9 @@ source: 03§P22; docs/design/pages/P22-partners.md; 02§FR-032; brief v0.7 (Vet 
 page: P22 Partners page ("Oglašujte pri nas")
 stories: TASK-38 (FR-032)
 copy-for: docs/design/pages/P22-partners.md
-version: 0.1
+version: 0.2
 status: Draft; reply time and founding-partner terms confirmed by client (2026-10-15); pricing and media kit still pending client decision
-date: 2026-10-15
+date: 2026-10-18
 ---
 
 # P22 Partners page: copy
@@ -39,8 +39,11 @@ Lede: 18 words (SL).
 | partners.stat_under5_a11y | manj kot 5 | fewer than 5 |
 | partners.pilot_note | Smo v pilotu v Ljubljani. Številke so prave in zaenkrat še majhne. Rastejo z vsako prijavo. | We are piloting in Ljubljana. The numbers are real and still small. They grow with every report. |
 | partners.stats_date | Stanje: {datetime}. Številke osvežujemo vsako uro. | As of {datetime}. We refresh the numbers every hour. |
+| partners.stats_masked | Za zasebnost v tej regiji skupne številke zaokrožimo na 10. | For privacy, we round the totals in this region to the nearest 10. |
 | partners.stats_source | Podatki iz naše baze, brez osebnih podatkov. | Figures from our own database, with no personal data. |
 | partners.stats_error | Številk ta trenutek ne moremo prikazati. Poskusite znova pozneje. | We cannot show the numbers right now. Please try again later. |
+
+`partners.stats_masked` (CH-257, TASK-38.1) shows under the figures, in the same small muted style, when the selected region is masked: its totals are rounded to the nearest 10 instead of showing exact small counts. Draft, needs native review.
 
 Zero stays "0"; any value from 1 to 4 shows as "< 5" (C14 `CountValue`).
 
@@ -185,3 +188,9 @@ States:
 | Hero (reuse `assets/house-ad-partner.png` unless the client supplies a photo) | Ilustracija: vrsta lokalnih trgovin in ambulanta ob ulici | Illustration: a row of local shops and a clinic along a street |
 | Slot previews | `partners.slot_preview_alt` with the slot name | |
 | OG image | Oglašujte pri Najdimo | Advertise with Najdimo |
+
+# Change log
+
+| Version | Date | Change |
+|---|---|---|
+| 0.2 | 2026-10-18 | CH-257: `partners.stats_masked` (§2). |

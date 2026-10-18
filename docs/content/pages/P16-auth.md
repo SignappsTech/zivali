@@ -3,7 +3,7 @@ source: 03§P16; docs/design/pages/P16-auth.md
 page: P16 Sign in and account creation
 stories: TASK-9 (FR-001)
 copy-for: docs/design/pages/P16-auth.md
-version: 0.2
+version: 0.3
 status: Draft, native Slovenian review pending
 date: 2026-10-18
 ---
@@ -38,9 +38,11 @@ Apple and Google buttons: where the platform renders its own localised button (i
 | auth.name_label | Ime | Name |
 | auth.name_help | To ime vidijo ljudje, s katerimi se pogovarjate. Lahko je tudi vzdevek. | People you talk to see this name. A nickname is fine. |
 | auth.password_hint | Najmanj 8 znakov. Daljše geslo ali več besed je varnejše. | At least 8 characters. A longer password or several words is safer. |
-| auth.terms_sentence | Z ustvaritvijo računa se strinjate s [pogoji uporabe](/pogoji-uporabe). Kako ravnamo s podatki, piše v [politiki zasebnosti](/zasebnost). | By creating an account you agree to the [terms of use](/en/terms). How we handle your data is explained in the [privacy policy](/en/privacy). |
+| auth.terms_sentence | Z ustvaritvijo računa se strinjate s <terms>pogoji uporabe</terms>. Kako ravnamo s podatki, piše v <privacy>politiki zasebnosti</privacy>. | By creating an account you agree to the <terms>terms of use</terms>. How we handle your data is explained in the <privacy>privacy policy</privacy>. |
 | auth.signup_button | Ustvari račun | Create account |
 | auth.to_signin | Že imam račun | I already have an account |
+
+`auth.terms_sentence` is stored with rich tags `<terms>…</terms>` and `<privacy>…</privacy>` instead of markdown links; the code renders them with `t.rich` and points them at `/pogoji-uporabe` and `/zasebnost` (EN `/en/terms`, `/en/privacy`) (CH-165).
 
 Minimum password length (8) to be confirmed by the tech-lead (Supabase Auth setting).
 
@@ -122,6 +124,13 @@ Minimum password length (8) to be confirmed by the tech-lead (Supabase Auth sett
 
 Captcha failure: `errors.CAPTCHA_FAILED` (P1). `auth.banned_*` is used from M4.
 
+| Key | SL | EN |
+|---|---|---|
+| auth.link_failed_title | Povezava ne deluje več | This link no longer works |
+| auth.link_failed_body | Morda je potekla ali je bila že uporabljena. Zahtevajte novo. | It may have expired or been used already. Please request a new one. |
+
+`auth.link_failed_*` is shown when a confirmation or reset link is expired or already used (mobile `app/auth/callback`; the web reuses it for the same case). Draft, needs native review (CH-165). The primary button is `auth.forgot_button` for a reset link and `auth.check_resend` for a confirmation link.
+
 # 8. SEO and alt text
 
 | Page | SL title | EN title | Indexing |
@@ -129,6 +138,8 @@ Captcha failure: `errors.CAPTCHA_FAILED` (P1). `auth.banned_*` is used from M4.
 | Sign in `/vpis` (CHANGE from `/prijava-v-racun`) | Vpis · Najdimo | Sign in · Najdimo | `noindex` |
 | Sign up `/registracija` | Ustvarite račun · Najdimo | Create an account · Najdimo | `noindex` |
 | Reset `/pozabljeno-geslo` | Pozabljeno geslo · Najdimo | Forgot password · Najdimo | `noindex` |
+
+`auth.reset_doc_title` (SL "Pozabljeno geslo", EN "Forgot password") is the key for the reset page's document title, before the " · Najdimo" suffix; the EN differs from `auth.forgot_title` ("Forgot your password"). The sign-in title uses `nav.sign_in`, the sign-up title `auth.signup_title` (CH-188).
 
 No meta descriptions needed (not indexed). Alt text: logo `alt=""` beside the wordmark; provider glyphs are part of the button's accessible name.
 
@@ -138,3 +149,4 @@ No meta descriptions needed (not indexed). Alt text: logo `alt=""` beside the wo
 |---|---|
 | 2026-10-18 | CH-492 (TASK-114.1): `auth.error_email_taken` kept and its web use documented (§7). |
 | 2026-10-18 | CH-499 (TASK-114.4): added `auth.verified_draft_elsewhere` (§3). |
+| 2026-10-18 | CH-165: `auth.terms_sentence` uses rich tags; added `auth.link_failed_title/_body` (§7). CH-188: `auth.reset_doc_title` documented (§8). Version 0.3. |

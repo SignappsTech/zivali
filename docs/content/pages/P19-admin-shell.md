@@ -3,9 +3,9 @@ source: 03§P19; docs/design/pages/P19-admin-shell.md
 page: P19 Admin console shell
 stories: TASK-34 (FR-019), TASK-89 (FR-044, shelter directory)
 copy-for: docs/design/pages/P19-admin-shell.md
-version: 0.3
+version: 0.4
 status: Draft, native Slovenian review pending
-date: 2026-10-15
+date: 2026-10-18
 ---
 
 # P19 Admin shell: copy
@@ -151,6 +151,40 @@ The "Orders" item from the design slice is dropped (QR tags are out of scope, br
 | admin.leads_closed | Zaključeno | Closed |
 | admin.leads_consent | Soglasje za stik: {date} | Consent to contact: {date} |
 
+# 7a. Abuse reports (`admin.abuse.*`, CH-261, TASK-25.5)
+
+The moderation queue. The page `h1` and the document title reuse `admin.nav_abuse` ("Prijave zlorab" / "Abuse reports"); `admin.abuse.flags_title` heads the table. Uses the shared table pattern of §3. Draft, needs native review.
+
+| Key | SL | EN |
+|---|---|---|
+| admin.abuse.flags_title | Opozorila za moderacijo | Moderation flags |
+| admin.abuse.col_target | Cilj | Target |
+| admin.abuse.col_reason | Razlog | Reason |
+| admin.abuse.col_kind | Vrsta | Kind |
+| admin.abuse.col_weight | Teža | Weight |
+| admin.abuse.col_status | Stanje | Status |
+| admin.abuse.col_date | Datum | Date |
+| admin.abuse.target_report | Prijava | Report |
+| admin.abuse.target_message | Sporočilo | Message |
+| admin.abuse.target_profile | Profil | Profile |
+| admin.abuse.target_pet | Žival | Pet |
+| admin.abuse.link_report | Prijava {code} | Report {code} |
+| admin.abuse.link_message | Sporočilo o prijavi {code} | Message about report {code} |
+| admin.abuse.reason_scam | Prevara ali zahteva po denarju | Scam or asking for money |
+| admin.abuse.reason_fake | Lažna prijava | Fake report |
+| admin.abuse.reason_spam | Neželena vsebina | Spam |
+| admin.abuse.reason_inappropriate_image | Neprimerna fotografija | Inappropriate photo |
+| admin.abuse.reason_other | Drugo | Other |
+| admin.abuse.status_open | Odprto | Open |
+| admin.abuse.status_dismissed | Zavrnjeno | Dismissed |
+| admin.abuse.status_actioned | Ukrepano | Action taken |
+| admin.abuse.status_resolved | Rešeno | Resolved |
+| admin.abuse.kind_auto_hidden | Samodejno skrito | Hidden automatically |
+| admin.abuse.kind_anon_hold | Anonimna prijava zadržana | Anonymous report on hold |
+| admin.abuse.kind_duplicate_chip | Podvojena številka čipa | Duplicate chip number |
+
+The reason values are those of P10 (`abuse.reason_*`). Terms follow the glossary: a report is "prijava" / "report", never "objava" / "listing". The code catalogue draft used "Objava" and "Listing" in `target_report`, `link_report`, `link_message` and `kind_anon_hold`; the keys keep their names and the text above replaces those values.
+
 # 8. Shelter directory (`/admin/zavetisca`, TASK-89)
 
 Namespace `admin.directory`. Every save is live at once on the public shelter pages (P3 T5, T6) and in the P6, P7 and P9 call rows; the screen says so. Reuses the shared table pattern (§3).
@@ -282,3 +316,4 @@ SEO: N/A, the console is `noindex, nofollow` and requires sign-in. Document titl
 | Version | Date | Change |
 |---|---|---|
 | 0.3 | 2026-10-15 | CH-124: §8 `admin.directory.history_system`, `error_time`, `day_mon`…`day_holidays` (full day names, replacing the short forms in the draft), `admin.doc_title` (root key, shared title pattern). Day-range notes now use full names. Draft values on branch `agent/task-89.2-dir-admin-web` (catalogue) follow this slice; update the catalogue on merge. |
+| 0.4 | 2026-10-18 | CH-261: §7a abuse reports (`admin.abuse.*`), glossary terms for report. |

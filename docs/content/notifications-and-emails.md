@@ -2,8 +2,8 @@ source: docs/tech/contracts/C10-notifications-alerts.md; 02§FR-010, FR-012, FR-
 
 # Notifications and emails (SL source, EN second)
 
-- Version: 0.1
-- Date: 2026-10-15
+- Version: 0.2
+- Date: 2026-10-18
 - Status: Draft (needs native Slovenian review and client approval)
 - Stories: TASK-22, TASK-23, TASK-26, TASK-9, TASK-32, TASK-33
 - Owner: Content Strategist
@@ -292,6 +292,29 @@ EN body:
 
 EN Vet Partner line: `Ad · Need a vet? Nearest practice: {clinic_name}, {clinic_area}`
 
+## 2.5a nearby_local (local proximity reminder, mobile only, CH-232)
+
+Generated on the phone by the OS geofence, never by the server: the person's location does not leave the device. Opt-in (P13 "Opomniki v bližini"), at most 3 a day, silent in quiet hours. Information, not an alarm. Dogs and cats only. Push-style local notification and in-app row; no email, no Vet Partner line. Deep link: `/r/<report_code>`. Draft, needs native review.
+
+| | SL | EN |
+|---|---|---|
+| Title (`notifications.nearby_local.title`) | `{species, select, dog {Izgubljen pes} cat {Izgubljena mačka} other {Izgubljena žival}} v bližini` | `{species, select, dog {Lost dog} cat {Lost cat} other {Lost animal}} nearby` |
+| Body (`.body`) | `Ste v bližini mesta, kjer je {species, select, dog {bil {when} nazadnje viden pes} cat {bila {when} nazadnje videna mačka} other {bila {when} nazadnje videna žival}}{has_name, select, yes { {pet_name}} other {}}. Bodite pozorni.` | `You are near where {has_name, select, yes {{pet_name}} other {{species, select, dog {a lost dog} cat {a lost cat} other {a lost animal}}}} was last seen {when}, keep an eye out.` |
+| Android channel (`.channel`) | `Opomniki v bližini` | `Nearby reminders` |
+
+Examples: "Izgubljen pes v bližini · Ste v bližini mesta, kjer je bil včeraj nazadnje viden pes Rex. Bodite pozorni." / "Lost dog nearby · You are near where Rex was last seen yesterday, keep an eye out."
+
+The SL body agrees with the species (pes bil viden, mačka bila videna); the pet name stays in the nominative after the species word. The EN uses the pet name when there is one and "a lost dog/cat/animal" otherwise, so no ⟦IT⟧ is needed.
+
+**iOS permission purpose strings** (`apps/mobile/locales/{sl,en}.json`, mirrored in `app.config.ts`). They must match the Play background-location declaration (TASK-75) and the primer in P13.
+
+| Key | SL | EN |
+|---|---|---|
+| NSLocationWhenInUseUsageDescription | Lokacijo uporabimo, da hitreje označite kraj in vidite prijave v bližini. Javno prikažemo le približno območje. | We use your location to mark the place faster and to show reports nearby. We only show an approximate area in public. |
+| NSLocationAlwaysAndWhenInUseUsageDescription | Če vklopite opomnike v bližini, telefon v ozadju preveri, ali ste blizu območja, kjer je bila nazadnje videna izgubljena žival. Vaša lokacija ne zapusti telefona. | If you turn on nearby reminders, your phone checks in the background whether you are near an area where a lost pet was last seen. Your location never leaves your phone. |
+
+Approved as drafted by the content side; the owner confirms the pair against the Play declaration before store submission.
+
 ## 2.6 report_reminder
 
 Day 7, 14, 30 after the lost report is published. A plain question, never guilt. Nothing is required of the owner. Quiet hours apply. Pet name only at the start of the sentence with a colon.
@@ -537,6 +560,29 @@ EN body:
 
 The legal wording of line 5 needs legal review (see Q6).
 
+**Fiscal lines (CH-291, TASK-92.1)**, shown in the email body under the three short lines (item 3) only when an invoice or an EOR exists (`has_invoice`, `has_eor`); otherwise the lines are omitted:
+
+| Key (`email.payment_receipt.*`) | SL | EN |
+|---|---|---|
+| invoice | `Račun št. {invoice_number}` | `Invoice no. {invoice_number}` |
+| zoi | `ZOI: {zoi}` | `ZOI: {zoi}` |
+| eor | `EOR: {eor}` | `EOR: {eor}` |
+
+**Invoice PDF** (`apps/api/lib/invoice-pdf.ts`). The PDF is **Slovenian only**, whatever the account language. Draft, needs legal/accounting review before fiscalisation is cleared.
+
+| Element | Text |
+|---|---|
+| Title | `Račun št. {invoice_number}` |
+| Test banner (test mode only) | `Testni račun: kartica ni bila bremenjena, račun ni davčno veljaven.` |
+| Issuer | `Izdajatelj: Najdimo, davčna številka {tax_id}` |
+| Issue date | `Datum in čas izdaje` |
+| Premises | `Poslovni prostor: {premises}, elektronska naprava: {device}` |
+| Table headings | `Postavka` / `Znesek brez DDV` / `DDV 22 %` / `Skupaj` |
+| Payment method | `Način plačila: plačilna kartica` |
+| EOR pending | `EOR: račun bo naknadno potrjen pri FURS.` |
+
+"Najdimo" and the tax number are placeholders until the company details (Q10) are final; `{tax_id}`, `{premises}` and `{device}` come from the fiscal configuration.
+
 # 3. Auth emails (Supabase Auth, sent through Brevo)
 
 Files: `supabase/templates/*.html`, localised with `{{ if eq .Data.locale "en" }} … {{ else }} … {{ end }}`. Supabase variables are used literally. Same layout, no ad line. Each carries the footer of section 6 without the notification-settings link (these are security emails).
@@ -737,7 +783,7 @@ Links:
 
 | | SL | EN |
 |---|---|---|
-| Settings (all notification emails, not auth emails) | `Nastavitve obvestil` → `/account/alerts` | `Notification settings` → `/account/alerts` |
+| Settings (all notification emails, not auth emails) | `Nastavitve obvestil` → `/account/notifications` (SL `/racun/obvestila`) | `Notification settings` → `/account/notifications` |
 | One-click, alert emails only | `Izklopi ta opozorila` → `{unsubscribe_url}` | `Turn off these alerts` → `{unsubscribe_url}` |
 
 The one-click link needs no sign-in and is also set as the `List-Unsubscribe` header (with `List-Unsubscribe-Post`). Finder and payment emails have no settings link, only the reason line and the support line.
@@ -752,13 +798,26 @@ Company line:
 
 | SL | EN |
 |---|---|
-| `Najdimo · [naročnik: naslov družbe]` | `Najdimo · [client: company address]` |
+| `Najdimo` | `Najdimo` |
+
+The company line is the brand name only until the company address is final (Q10); then it becomes `Najdimo · {company address}` (CH-164c).
 
 Replies go to the support address (`Reply-To`), never to a no-reply mailbox. The ad line, when present, sits above the footer and is a single line starting with "Oglas ·" / "Ad ·".
 
+## 6.3 Unsubscribe confirmation page (`email.unsubscribe.*`, CH-164b)
+
+Shown after the one-click link `{unsubscribe_url}` is opened. No sign-in. Draft, needs native review.
+
+| Key | SL | EN |
+|---|---|---|
+| email.unsubscribe.title | E-sporočila so izklopljena | Emails turned off |
+| email.unsubscribe.body | Tovrstnih e-sporočil vam ne bomo več pošiljali. Nastavitve obvestil lahko kadar koli spremenite v aplikaciji. | We will not send you these emails any more. You can change your notification settings in the app at any time. |
+
+CH-164d: in EN the pronoun ⟦IT⟧ is written in code as `{species, select, other {it}}` so the SL and EN messages keep the same placeholders (placeholder parity); the output reads the same.
+
 # 7. Template count
 
-12 notification types (of which `match_chip` with a sighting variant, `report_expiring` and `report_closed` with lost and found/sighted variants, and `nearby_lost` with an optional Vet Partner line), 6 auth emails, 1 internal lead email. Total 19 templates plus the shared layout footer.
+13 notification types (incl. the on-device `nearby_local`) (of which `match_chip` with a sighting variant, `report_expiring` and `report_closed` with lost and found/sighted variants, and `nearby_lost` with an optional Vet Partner line), 6 auth emails, 1 internal lead email. Total 20 templates plus the shared layout footer.
 
 # CHANGE requests
 
@@ -790,3 +849,9 @@ Replies go to the support address (`Reply-To`), never to a no-reply mailbox. The
 - **Q9 Lead response promise.** "Odgovorite v dveh delovnih dneh" in the internal email is an internal reminder; client to confirm or drop.
 - **Q10 Brand and addresses.** Final name (Q-001), sender domain, support address and company address are still markers: `[naročnik: e-naslov za podporo]`, `[naročnik: naslov družbe]`.
 - **Q11 Match notifications to the other side.** `match_suggested` goes only to the owner. If the finder should hear that a match is being reviewed, a new type is needed; copy is not written for it.
+
+# Change log
+
+| Version | Date | Change |
+|---|---|---|
+| 0.2 | 2026-10-18 | CH-232: new §2.5a nearby_local (title, body, channel, iOS purpose strings). CH-291: payment_receipt fiscal lines and Slovenian-only invoice PDF strings. CH-164: footer settings link is /account/notifications, company line is the brand only until Q10, new §6.3 unsubscribe confirmation copy, note on EN placeholder parity. |

@@ -3,9 +3,9 @@ source: 03§P7; docs/design/pages/P7-report-found.md
 page: P7 Report found or sighted (no account) and manage page
 stories: TASK-30, TASK-17 (FR-006, FR-003, FR-004)
 copy-for: docs/design/pages/P7-report-found.md
-version: 0.4
+version: 0.5
 status: Draft, native Slovenian review pending
-date: 2026-10-15
+date: 2026-10-18
 ---
 
 # P7 Report found or sighted: copy
@@ -63,6 +63,12 @@ Without AI (M2 and fallback):
 | report_found.size_label | Velikost (neobvezno) | Size (optional) |
 | report_found.colour_label | Barva (neobvezno) | Colour (optional) |
 
+Validation messages added from mobile P7 (TASK-30.3, CH-351), draft, needs native review:
+
+| Key | SL | EN |
+|---|---|---|
+| report_found.species_required | Izberite, katera žival je to. | Choose which animal it is. |
+
 # 4. Step 3: Where
 
 | Key | SL | EN |
@@ -90,6 +96,12 @@ Headings: `location.title_found` (found entry) or `location.title_sighted` (sigh
 | report_found.email_label | E-naslov (neobvezno) | Email address (optional) |
 | report_found.email_help | Pošljemo vam zasebno povezavo, da prijavo urejate tudi na drugi napravi. E-naslova ne prikažemo nikomur. | We will send you a private link so you can manage the report on another device too. We never show your email address. |
 | report_found.email_invalid | Preverite e-naslov, na primer ime@primer.si. | Please check the email address, for example name@example.com. |
+
+Validation message (CH-351), draft:
+
+| Key | SL | EN |
+|---|---|---|
+| report_found.situation_required | Izberite enega od odgovorov. | Choose one of the answers. |
 
 # 6. Step 5: Send
 
@@ -142,6 +154,14 @@ Rate limits (override `errors.RATE_LIMITED` in this flow):
 
 The SL placeholder describes a female animal on purpose (example only).
 
+Sighting date and time fields on the mobile flow (there is no native picker), added in CH-351, draft:
+
+| Key | SL | EN |
+|---|---|---|
+| report_found.sighting_date | Datum | Date |
+| report_found.sighting_time | Ura | Time |
+| report_found.sighting_when_invalid | Vpišite datum in uro, ki nista v prihodnosti, na primer 15. 10. 2026 in 18.30. | Enter a date and time that are not in the future, for example 15/10/2026 and 18:30. |
+
 # 8. Success screen
 
 | Key | SL | EN |
@@ -192,6 +212,13 @@ Responsible shelter row (v0.3, FR-044, R-006.1), under the link block: the share
 | report_found.reopen | Ponovno odpri | Reopen |
 | report_found.claim_hint | Z računom imate vse svoje prijave na enem mestu. | With an account, all your reports are in one place. |
 
+Status pill on the manage page (CH-212), from glossary §2:
+
+| Key | SL | EN |
+|---|---|---|
+| report_found.status_found | Najdena | Found |
+| report_found.status_sighted | Opažena | Sighted |
+
 The "returned" confirmation dialog and thank-you screen are in P14 §5.
 
 # 10. Lost link and invalid link
@@ -220,6 +247,29 @@ The "returned" confirmation dialog and thank-you screen are in P14 §5.
 | report_found.duplicate_photo | To fotografijo že imamo v drugi prijavi. Odprete obstoječo prijavo? | We already have this photo in another report. Open that report? |
 | report_found.duplicate_open | Odpri prijavo | Open report |
 
+Outbox queue on the mobile Profile (CH-262, TASK-86.2), draft, needs native review:
+
+| Key | SL | EN |
+|---|---|---|
+| report_found.my_reports | Moje prijave | My reports |
+| report_found.outbox_pending_title | {count, plural, one {# prijava še ni poslana} two {# prijavi še nista poslani} few {# prijave še niso poslane} other {# prijav še ni poslanih}} | {count, plural, one {# report has not been sent yet} other {# reports have not been sent yet}} |
+| report_found.outbox_pending_body | Pošljite jih zdaj ali jih izbrišite s te naprave. Izbrisanih prijav ni mogoče obnoviti. | Send them now or delete them from this device. Deleted reports cannot be recovered. |
+| report_found.outbox_send_now | Pošlji zdaj | Send now |
+| report_found.outbox_send_failed | Prijav ni bilo mogoče poslati. Poskusite znova, ko boste povezani, ali jih izbrišite. | The reports could not be sent. Try again when you are online, or delete them. |
+| report_found.open_report | Odpri mojo prijavo | Open my report |
+
+`my_reports` is the Profile section heading; `outbox_send_failed` is a toast. The delete prompt reuses `outbox_delete` and `common.cancel`; the link on a sent row is `open_report`.
+
+Cancelling a queued report (CH-351, TASK-30.3), draft:
+
+| Key | SL | EN |
+|---|---|---|
+| report_found.cancel_queued_title | Prekličete pošiljanje? | Cancel sending? |
+| report_found.cancel_queued_body | Prijavo izbrišemo s te naprave in je ne pošljemo. | We delete the report from this device and do not send it. |
+| report_found.cancel_queued_keep | Obdrži prijavo | Keep the report |
+
+The `shelter_row` namespace used by the mobile flows is the one defined verbatim in P6 §Responsible shelter row (CH-351).
+
 Camera denied: `permissions.camera_denied` (P2).
 
 # 12. SEO
@@ -241,3 +291,9 @@ Camera denied: `permissions.camera_denied` (P2).
 | AI step photo | Fotografija, iz katere je predlog | The photo the suggestion is based on |
 | Manage page photo | Rule from P9 §Alt text | |
 | QR code (web success) | Koda QR z vašo zasebno povezavo | QR code with your private link |
+
+# Change log
+
+| Version | Date | Change |
+|---|---|---|
+| 0.5 | 2026-10-18 | CH-212: status pill keys. CH-262: outbox queue keys. CH-351: validation, sighting date/time and cancel-queued keys; shelter_row note. CH-330 not applied (design decision pending). |

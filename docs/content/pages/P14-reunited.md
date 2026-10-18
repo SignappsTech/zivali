@@ -3,9 +3,9 @@ source: 03§P14; docs/design/pages/P14-reunited.md
 page: P14 Reunited and report lifecycle
 stories: TASK-26 (FR-012)
 copy-for: docs/design/pages/P14-reunited.md
-version: 0.1
+version: 0.2
 status: Draft, native Slovenian review pending
-date: 2026-10-15
+date: 2026-10-18
 ---
 
 # P14 Reunited and lifecycle: copy
@@ -63,7 +63,7 @@ Finder's side of a reunion (shorter, no tip, no ad):
 | Key | SL | EN |
 |---|---|---|
 | lifecycle.close_title | Zaključite iskanje? | Close the search? |
-| lifecycle.close_body | Opozorila in opomniki se ustavijo. Iskanje lahko v 7 dneh ponovno odprete. | Alerts and reminders will stop. You can reopen the search within 7 days. |
+| lifecycle.close_body | Opozorila in opomniki se ustavijo. Iskanje lahko v {days, plural, one {# dnevu} two {# dneh} few {# dneh} other {# dneh}} ponovno odprete. | Alerts and reminders will stop. You can reopen the search within {days, plural, one {# day} other {# days}}. |
 | lifecycle.close_reason_label | Razlog | Reason |
 | lifecycle.close_reason_home | Žival je doma po drugi poti | My pet came home another way |
 | lifecycle.close_reason_stopped | Ne iščem več | I am no longer searching |
@@ -77,7 +77,19 @@ Finder's side of a reunion (shorter, no tip, no ad):
 | lifecycle.reopened_toast | Iskanje je spet odprto. | Search reopened. |
 | lifecycle.already_closed | Iskanje je že zaključeno. | This search is already closed. |
 
-Close-reason mapping (C4 `closeReason`): home → `found_elsewhere`, stopped → `gave_up`, mistake → `removed`, other → `other`.
+The reopen window is configurable (default 7 days): `{days}` in `lifecycle.close_body` and in P9 `report.owner_disagree` comes from the setting, never a hard-coded 7 (CH-268).
+
+Close-reason mapping (C4 `closeReason`, owner): home → `found_elsewhere`, stopped → `gave_up`, mistake → `other`, other → `other`. The API rejects `removed` for a manager close (manager reasons are `found_elsewhere`, `gave_up`, `returned_to_owner`, `other`), so "Prijava je bila pomota" is sent as `other`; the optional note carries the detail (CH-343).
+
+Finder (manage page): the Close button sends the fixed reason `other`; the slice defines no reason choice for the finder. Whether a choice is wanted is a design decision and is not made here (CH-330 not applied).
+
+Closed conversations (CH-267), read-only after a reunion or a close, on the owner detail and the finder manage page:
+
+| Key | SL | EN |
+|---|---|---|
+| lifecycle.chat_closed_home | Pogovor je zaprt, ker je žival doma | This conversation is closed because the pet is home |
+
+When the report is closed without a reunion, P12 `chat.read_only` is used instead.
 
 # 5. Reminders and expiry on the detail page
 
@@ -105,6 +117,16 @@ Found or sighted reports at 30 days: P7 `report_found.expiry_note`, `report_foun
 | lifecycle.finder_thanks_body | Žival je spet doma tudi zaradi vas. | This animal is home again thanks in part to you. |
 | lifecycle.finder_thanks_account | Ustvari račun in obdrži svoje prijave | Create an account to keep your reports |
 
+Finder-side lines (CH-268, TASK-26.2), draft, needs native review:
+
+| Key | SL | EN |
+|---|---|---|
+| lifecycle.finder_contact_removed | Vaši kontaktni podatki so odstranjeni. | Your contact details have been removed. |
+| lifecycle.reopen_over | Iskanje je zaključeno in ga ni več mogoče znova odpreti. | The search is closed and can no longer be reopened. |
+| lifecycle.reopen_over_action | Ustvari novo prijavo | Create a new report |
+
+`finder_contact_removed` shows when an anonymous report was reunited: the finder contact is dropped at that point. `reopen_over` replaces the `lifecycle.reopen` button once the reopen window has passed; `reopen_over_action` links to a new report.
+
 Disagreement note for the owner: `report.owner_disagree` (P9).
 
 # 7. States
@@ -129,3 +151,9 @@ SEO: N/A (signed-in and manage pages, `noindex`). Document title "Spet doma · N
 | Pet photo on the reunited screen | {name} (or `browse.row_title_*` without a name) | {name} |
 | `assets/reunited-celebration.png` | decorative, `alt=""` | |
 | Candidate photos in "which one" | P9 §11 rule | |
+
+# Change log
+
+| Version | Date | Change |
+|---|---|---|
+| 0.2 | 2026-10-18 | CH-267: `lifecycle.chat_closed_home`. CH-268: finder-side lines, configurable reopen window (`close_body`). CH-343: close-reason mapping mistake to `other`. CH-330 not applied. |

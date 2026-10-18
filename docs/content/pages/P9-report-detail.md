@@ -3,9 +3,9 @@ source: 03§P9; docs/design/pages/P9-report-detail.md; 02§FR-007 R-007.4, §Con
 page: P9 Report detail (lost, found, sighted)
 stories: TASK-18, TASK-72 (FR-007, FR-004, FR-011, FR-012)
 copy-for: docs/design/pages/P9-report-detail.md
-version: 0.4
+version: 0.5
 status: Draft, native Slovenian review pending
-date: 2026-10-15
+date: 2026-10-18
 ---
 
 # P9 Report detail: copy
@@ -24,7 +24,9 @@ Namespace `report`. The detail page is the main SEO landing page and link-previe
 | report.subtitle | {species} · {breed} | {species} · {breed} | "Pes · Mešanec"; append " · {sex}" when known |
 | report.fact_colour | Barva | Colour | |
 | report.fact_size | Velikost | Size | |
-| report.fact_collar | Ovratnica | Collar | |
+| report.fact_collar | Ovratnica | Collar | Owner sees their own text |
+| report.collar_described | opisana | described | Public value of the "Ovratnica" fact: the public read model has only `collar_described`, so visitors see "Ovratnica: opisana" and never the text (CH-308a). Show the row only when `collar_described` is true; the description stays a check for the owner to ask about |
+| report.photo_alt_fallback | Fotografija prijavljene živali | Photo of the reported animal | Alt text when a report has no attributes to build one from (§11) |
 | report.fact_chip | Čip | Microchip | |
 | report.chip_on_file | Čip vpisan | Chip on file | Never the number |
 | report.chip_unknown | Ni podatka | Not known | |
@@ -106,7 +108,7 @@ The ad slot between "Kje je bila videna" and "V bližini" uses P21 copy.
 | report.owner_held | Prijava je v pregledu, zato je drugi še ne vidijo. Pregledamo jo čim prej. | Your report is under review, so others cannot see it yet. We will check it as soon as we can. |
 | report.owner_hidden | Več ljudi je prijavo označilo kot sporno, zato je skrita, dokler je ne pregleda naša ekipa. | Several people flagged this report, so it is hidden until our team reviews it. |
 | report.owner_hidden_contact | Pišite podpori | Contact support |
-| report.owner_disagree | Oseba, ki je žival našla, jo je označila kot vrnjeno. Če žival ni doma, iskanje v 7 dneh ponovno odprite. | The person who found the animal marked it as returned. If your pet is not home, reopen the search within 7 days. |
+| report.owner_disagree | Oseba, ki je žival našla, jo je označila kot vrnjeno. Če žival ni doma, iskanje v {days, plural, one {# dnevu} two {# dneh} few {# dneh} other {# dneh}} ponovno odprite. | The person who found the animal marked it as returned. If your pet is not home, reopen the search within {days, plural, one {# day} other {# days}}. |
 | report.owner_reopen | Ponovno odpri | Reopen |
 | report.owner_reward_note | Nagrado izročite šele, ko je žival spet pri vas. Nikoli nikomur ne plačajte vnaprej, tudi ne za prevoz ali „stroške“. | Hand over the reward only once your pet is back with you. Never pay anyone in advance, not even for transport or "costs". |
 
@@ -201,6 +203,13 @@ Built from attributes. Colours use the invariant phrase "… barve" so the sente
 | Collar | `, ovratnica: {collar}` (owner's text, nominative after the colon) | `, collar: {collar}` |
 | Extra photos | `, fotografija {n} od {total}` | `, photo {n} of {total}` |
 
-Examples: "Rex: pes rjave in bele barve, ovratnica: rdeča z zvončkom" / "Rex: brown and white dog, collar: red with a bell". "Mačka sive barve, s progastim vzorcem, fotografija 2 od 3" / "Grey tabby cat, photo 2 of 3". No attributes: "Fotografija prijavljene živali" / "Photo of the reported animal".
+Examples: "Rex: pes rjave in bele barve, ovratnica: rdeča z zvončkom" / "Rex: brown and white dog, collar: red with a bell". "Mačka sive barve, s progastim vzorcem, fotografija 2 od 3" / "Grey tabby cat, photo 2 of 3". No attributes: "Fotografija prijavljene živali" / "Photo of the reported animal", the key `report.photo_alt_fallback` (CH-308b). The offline cached thumbnail (mobile) builds its alt from this rule and uses `report.photo_alt_fallback` when the cached row has no attributes; it no longer reuses the h1 title.
 
 OG image alt: "{type and species} {name}, {municipality}", for example "Izgubljen pes Rex, Ljubljana" / "Lost dog Rex, Ljubljana".
+
+# Change log
+
+| Version | Date | Change |
+|---|---|---|
+| 0.5 | 2026-10-18 | CH-308: public collar value `report.collar_described`, key `report.photo_alt_fallback`. (c) The `report` namespace (§1 to §9), `browse` status_* and row_title_* (P4) and `location.area_line`, `area_note`, `area_map_alt`, `exact_own`, `exact_own_help` (P5) were added to packages/i18n verbatim from the slices; nothing to change here. |
+| 0.5 | 2026-10-18 | CH-268: `report.owner_disagree` takes `{days}` (reopen window, default 7). |
