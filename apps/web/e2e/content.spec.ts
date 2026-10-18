@@ -93,7 +93,8 @@ for (const { path, h1, title, ld } of PAGES)
 		expect([card.status(), card.headers()['content-type']]).toEqual([200, 'image/png']);
 		const graph = JSON.parse((await page.locator('script[type="application/ld+json"]').textContent())!)['@graph'];
 		expect(graph[0]['@type']).toBe(ld);
-		for (const img of await page.locator('main img').all()) expect(await img.getAttribute('alt')).toBeTruthy();
+		// Decorative images carry alt="" on purpose (e.g. the third mosaic tile); the axe check below still covers image-alt.
+		for (const img of await page.locator('main img').all()) expect(await img.getAttribute('alt')).not.toBeNull();
 		await expectNoAxeViolations(page);
 	});
 
