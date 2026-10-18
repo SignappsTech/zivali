@@ -3,11 +3,11 @@ id: TASK-114.29
 title: >-
   Sync the i18n catalogue with the content slices after the CHANGE batch
   (2026-10-18)
-status: In Progress
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-18 21:08'
-updated_date: '2026-10-18 21:38'
+updated_date: '2026-10-18 21:42'
 labels:
   - fe
   - 'est:S'
