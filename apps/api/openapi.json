@@ -341,6 +341,7 @@
 				},
 				"required": ["items", "next_cursor"]
 			},
+			"AiNotice": { "type": "string", "enum": ["no_animal", "other_animal", "multiple_animals"] },
 			"AlertSubscription": {
 				"allOf": [
 					{ "$ref": "#/components/schemas/AlertSubscriptionInput" },
@@ -1096,20 +1097,37 @@
 				]
 			},
 			"MatchReason": {
-				"type": "object",
-				"properties": {
-					"code": { "$ref": "#/components/schemas/MatchReasonCode" },
-					"band": { "$ref": "#/components/schemas/DistanceBand" },
-					"hours_band": { "type": "string" },
-					"match": { "type": "string" },
-					"overlap": { "type": "number", "minimum": 0, "maximum": 1 }
-				},
-				"required": ["code"],
+				"oneOf": [
+					{
+						"type": "object",
+						"properties": {
+							"code": {
+								"type": "string",
+								"enum": [
+									"chip",
+									"chip_sighting",
+									"distance",
+									"time",
+									"size",
+									"colour",
+									"sex",
+									"pattern"
+								]
+							},
+							"band": { "$ref": "#/components/schemas/DistanceBand" },
+							"hours_band": { "type": "string" },
+							"match": { "type": "string" },
+							"overlap": { "type": "number", "minimum": 0, "maximum": 1 }
+						},
+						"required": ["code"]
+					},
+					{ "$ref": "#/components/schemas/VisualMatchReason" }
+				],
 				"description": "Why two reports match: bands and overlaps only, never exact data."
 			},
 			"MatchReasonCode": {
 				"type": "string",
-				"enum": ["chip", "chip_sighting", "distance", "time", "size", "colour", "sex", "pattern"]
+				"enum": ["chip", "chip_sighting", "distance", "time", "size", "colour", "sex", "pattern", "visual"]
 			},
 			"MatchState": { "type": "string", "enum": ["suggested", "confirmed", "rejected", "closed"] },
 			"MatchStrength": { "type": "string", "enum": ["strong", "good", "possible"] },
@@ -2071,7 +2089,18 @@
 					"version"
 				]
 			},
-			"UserRole": { "type": "string", "enum": ["USER", "SHELTER_MEMBER", "MODERATOR", "ADMIN"] }
+			"UserRole": { "type": "string", "enum": ["USER", "SHELTER_MEMBER", "MODERATOR", "ADMIN"] },
+			"VisualBand": { "type": "string", "enum": ["very_similar", "similar", "some"] },
+			"VisualMatchReason": {
+				"type": "object",
+				"properties": {
+					"code": { "type": "string", "enum": ["visual"] },
+					"band": { "$ref": "#/components/schemas/VisualBand" },
+					"lost_photo_id": { "type": "string", "format": "uuid" },
+					"other_photo_id": { "type": "string", "format": "uuid" }
+				},
+				"required": ["code", "band", "lost_photo_id", "other_photo_id"]
+			}
 		},
 		"parameters": {}
 	},

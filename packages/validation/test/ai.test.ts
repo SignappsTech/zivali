@@ -65,6 +65,7 @@ describe('aiExtractionSchema', () => {
 			{ animal: 'rabbit' },
 			{ moderation: { person_prominent: false, nsfw: false, violence: false } },
 			{ collar: undefined },
+			{ breeds: null, animal: 'cat' }, // the species refine never sees a malformed list
 		];
 		for (const patch of bad) expect(issues({ ...extraction, ...patch }), JSON.stringify(patch)).not.toEqual([]);
 	});
