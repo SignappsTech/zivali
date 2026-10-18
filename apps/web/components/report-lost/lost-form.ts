@@ -12,7 +12,7 @@ import type { PetFieldValues } from '@/components/pets/pet-fields';
 export type Step = 'pet' | 'photos' | 'details' | 'where' | 'when' | 'what' | 'review';
 export type When = 'now' | 'today' | 'yesterday' | 'other';
 
-/** "Druga žival" / "Vnesi podatke": the details are entered in the flow. */
+/** "Druga žival", or no saved pets: the details are entered in the flow. */
 export const NEW_PET = 'new';
 export const REWARD_MAX = 10_000;
 export const NOTE_MAX = 80;
@@ -62,13 +62,16 @@ export const initialValues: LostValues = {
 };
 
 /**
- * A saved pet skips the details, which come from the pet. The photos stay: the API attaches only photos that belong
- * to no pet (C5), so a saved pet's photos cannot join the report yet.
+ * The pet step asks only when there are saved pets (`hasPets`); without them the flow starts at the photos with the
+ * new-pet path. A saved pet skips the details, which come from the pet. The photos stay: the API attaches only photos
+ * that belong to no pet (C5), so a saved pet's photos cannot join the report yet.
  */
-export const stepsFor = (pet?: string): Step[] =>
-	pet && pet !== NEW_PET
-		? ['pet', 'photos', 'where', 'when', 'what', 'review']
-		: ['pet', 'photos', 'details', 'where', 'when', 'what', 'review'];
+export const stepsFor = (pet: string | undefined, hasPets: boolean): Step[] =>
+	!hasPets
+		? ['photos', 'details', 'where', 'when', 'what', 'review']
+		: pet && pet !== NEW_PET
+			? ['pet', 'photos', 'where', 'when', 'what', 'review']
+			: ['pet', 'photos', 'details', 'where', 'when', 'what', 'review'];
 
 /** The form fields each step checks on Naprej (photos are the PhotoPicker's, checked by the flow). */
 export const STEP_FIELDS: Record<Step, (keyof LostValues)[]> = {

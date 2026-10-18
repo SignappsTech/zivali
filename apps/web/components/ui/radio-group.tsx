@@ -1,5 +1,6 @@
 'use client';
 
+import { CaretRightIcon } from '@phosphor-icons/react/dist/ssr/CaretRight';
 import { CheckIcon } from '@phosphor-icons/react/dist/ssr/Check';
 import { RadioGroup as RadioGroupPrimitive } from 'radix-ui';
 import * as React from 'react';
@@ -36,29 +37,31 @@ type ChoiceRowProps = Omit<React.ComponentProps<typeof RadioGroupPrimitive.Item>
 	icon?: React.ReactNode;
 };
 
+const choiceRowClass =
+	'group/row flex min-h-16 w-full cursor-pointer items-center gap-3.5 rounded-row bg-card px-5 py-3 text-left text-foreground transition-transform duration-[80ms] hover:bg-[linear-gradient(hsl(var(--foreground)/0.1),hsl(var(--foreground)/0.1))] focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ring active:scale-[0.98] active:bg-accent active:text-accent-foreground data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground disabled:cursor-not-allowed disabled:bg-muted disabled:bg-none disabled:text-muted-foreground disabled:active:scale-100 motion-reduce:transition-none motion-reduce:active:scale-100 [&>svg]:size-6 [&>svg]:shrink-0 data-[state=checked]:[&>svg]:text-inherit disabled:[&>svg]:text-inherit';
+
+function ChoiceText({ title, description }: Pick<ChoiceRowProps, 'title' | 'description'>) {
+	return (
+		<span className="min-w-0 flex-1">
+			<span className="block text-control-lg font-bold">{title}</span>
+			{description && (
+				<span className="block text-sm text-muted-foreground group-data-[state=checked]/row:text-primary-foreground/85">
+					{description}
+				</span>
+			)}
+		</span>
+	);
+}
+
 /**
  * Full-width radio row inside a RadioGroup (system §10.4): card on background, radius 20, 64 px minimum, title
  * 17 bold, description 14. Selected = primary fill plus the check on the right, never colour alone.
  */
 function ChoiceRow({ className, title, description, icon, ...props }: ChoiceRowProps) {
 	return (
-		<RadioGroupPrimitive.Item
-			data-slot="choice-row"
-			className={cn(
-				'group/row flex min-h-16 w-full cursor-pointer items-center gap-3.5 rounded-row bg-card px-5 py-3 text-left text-foreground transition-transform duration-[80ms] hover:bg-[linear-gradient(hsl(var(--foreground)/0.1),hsl(var(--foreground)/0.1))] focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ring active:scale-[0.98] active:bg-accent active:text-accent-foreground data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground disabled:cursor-not-allowed disabled:bg-muted disabled:bg-none disabled:text-muted-foreground disabled:active:scale-100 motion-reduce:transition-none motion-reduce:active:scale-100 [&>svg]:size-6 [&>svg]:shrink-0 data-[state=checked]:[&>svg]:text-inherit disabled:[&>svg]:text-inherit',
-				className
-			)}
-			{...props}
-		>
+		<RadioGroupPrimitive.Item data-slot="choice-row" className={cn(choiceRowClass, className)} {...props}>
 			{icon}
-			<span className="min-w-0 flex-1">
-				<span className="block text-control-lg font-bold">{title}</span>
-				{description && (
-					<span className="block text-sm text-muted-foreground group-data-[state=checked]/row:text-primary-foreground/85">
-						{description}
-					</span>
-				)}
-			</span>
+			<ChoiceText title={title} description={description} />
 			<CheckIcon
 				weight="bold"
 				aria-hidden="true"
@@ -68,4 +71,35 @@ function ChoiceRow({ className, title, description, icon, ...props }: ChoiceRowP
 	);
 }
 
-export { ChoiceRow, RadioGroup, RadioGroupItem };
+type ChoiceButtonProps = Omit<React.ComponentProps<'button'>, 'title'> &
+	Pick<ChoiceRowProps, 'title' | 'description' | 'icon'> & {
+		/** The choice made earlier: `aria-current`, the selected look and the check. */
+		current?: boolean;
+	};
+
+/**
+ * A choice row that acts on one press, with a caret on the right (system §10.4, as in the "Prijavi" menu). For a
+ * step whose choice moves on: a radio group must not, since its arrow keys would.
+ */
+function ChoiceButton({ className, title, description, icon, current = false, ...props }: ChoiceButtonProps) {
+	return (
+		<button
+			type="button"
+			data-slot="choice-row"
+			data-state={current ? 'checked' : 'unchecked'}
+			aria-current={current || undefined}
+			className={cn(choiceRowClass, className)}
+			{...props}
+		>
+			{icon}
+			<ChoiceText title={title} description={description} />
+			{current ? (
+				<CheckIcon weight="bold" aria-hidden="true" />
+			) : (
+				<CaretRightIcon weight="bold" aria-hidden="true" className="text-muted-foreground" />
+			)}
+		</button>
+	);
+}
+
+export { ChoiceButton, ChoiceRow, RadioGroup, RadioGroupItem };

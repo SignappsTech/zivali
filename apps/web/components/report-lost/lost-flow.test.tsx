@@ -184,10 +184,8 @@ const enter = (field: HTMLElement) =>
 		)!
 	);
 
-/** From the pet step to the review with a new pet: photos, Pes in Rjava, the picker's point, now, no reward. */
+/** Without saved pets, from the first step to the review: photos, Pes in Rjava, the picker's point, now, no reward. */
 async function toReview() {
-	await heading(t.pet_title);
-	click(t.next);
 	await heading(t.photos_title);
 	photosUp();
 	click(t.next);
@@ -230,23 +228,22 @@ afterEach(() => {
 });
 
 describe('LostFlow', () => {
-	it('walks a new pet through seven steps and publishes once, with the coarsened point (AC#1, AC#2, AC#3)', async () => {
+	it('walks a new pet through six steps and publishes once, with the coarsened point (AC#1, AC#2, AC#3)', async () => {
 		show();
 		expect(api.track).toHaveBeenCalledWith('report_lost_start');
-		await heading(t.pet_title);
-		// Without saved pets "Vnesi podatke" is the only row, and chosen.
-		expect(screen.getByRole('radio', { name: t.pet_enter }).getAttribute('aria-checked')).toBe('true');
-		expect(bars()).toBe('Korak 1 od 7');
-
-		click(t.next);
+		// Without saved pets there is nothing to choose: the photos come first, and the bars count the real steps.
 		await heading(t.photos_title);
-		expect(document.activeElement).toBe(screen.getByRole('heading', { level: 1 }));
+		expect(screen.queryByText(t.pet_title)).toBeNull();
+		expect(bars()).toBe('Korak 1 od 6');
+		expect(screen.queryByRole('button', { name: t.back })).toBeNull();
+
 		click(t.next);
 		expect(await screen.findByText(t.photos_required)).toBeTruthy();
 		photosUp();
 		click(t.next);
 
 		await heading(t.details_title);
+		expect(document.activeElement).toBe(screen.getByRole('heading', { level: 1 }));
 		click(t.next);
 		expect(await screen.findByText(t.validation_summary)).toBeTruthy();
 		expect(screen.getByText(t.colour_required)).toBeTruthy();
@@ -259,7 +256,7 @@ describe('LostFlow', () => {
 		enter(screen.getByRole('textbox', { name: sl.pets.name_label }));
 
 		await heading(sl.location.title_lost);
-		expect(bars()).toBe('Korak 4 od 7');
+		expect(bars()).toBe('Korak 3 od 6');
 		click(sl.location.confirm);
 
 		await heading(t.when_title);
@@ -333,8 +330,6 @@ describe('LostFlow', () => {
 
 	it('offers a photo place only as the picker suggestion; the body carries what the picker confirmed (AC#6)', async () => {
 		show();
-		await heading(t.pet_title);
-		click(t.next);
 		await heading(t.photos_title);
 		act(() => api.exif!(RAW_EXIF));
 		photosUp();
@@ -445,9 +440,11 @@ describe('LostFlow', () => {
 		});
 		show({ initialPet: pet.id });
 		await heading(t.pet_title);
-		expect(screen.getByRole('radio', { name: `${pet.name} · Pes` }).getAttribute('aria-checked')).toBe('true');
+		// The `?pet=` link marks its pet; one press on the row goes on (no Naprej on this step).
+		expect(button(`${pet.name} · Pes`).getAttribute('aria-current')).toBe('true');
+		expect(screen.queryByRole('button', { name: t.next })).toBeNull();
 		expect(bars()).toBe('Korak 1 od 6');
-		click(t.next);
+		click(`${pet.name} · Pes`);
 		await heading(t.photos_title);
 		// The pet's photos are listed first and go on the report too (TASK-114.5).
 		expect(api.picker.saved).toEqual(pet.photos);
@@ -482,7 +479,7 @@ describe('LostFlow', () => {
 		});
 		show({ initialPet: pet.id });
 		await heading(t.pet_title);
-		click(t.next);
+		click(`${pet.name} · Pes`);
 		await heading(t.photos_title);
 		photosUp();
 		click(t.next);
@@ -664,7 +661,7 @@ describe('LostFlow', () => {
 		api.picker.photos = [uploaded];
 		show({ initialPet: pet.id });
 		await heading(t.pet_title);
-		click(t.next);
+		click(`${pet.name} · Pes`);
 		await heading(t.photos_title);
 		click(t.next);
 		await heading(sl.location.title_lost);
@@ -679,8 +676,7 @@ describe('LostFlow', () => {
 
 		click(`${t.review_edit}: ${t.review_pet}`);
 		await heading(t.pet_title);
-		fireEvent.click(screen.getByRole('radio', { name: `${other.name} · Pes` }));
-		click(t.next);
+		click(`${other.name} · Pes`);
 		await heading(t.review_title);
 		expect(screen.queryByText(t.duplicate_title)).toBeNull();
 		click(t.publish);
@@ -689,7 +685,11 @@ describe('LostFlow', () => {
 		expect(api.createReport.mock.calls[1]![0].body).toMatchObject({ pet_id: 'pet-2' });
 	});
 
-	it('offers to resume a saved draft at its step', async () => {
+	it.each([
+		['without saved pets', [], 'Korak 4 od 6'],
+		['with saved pets (the pet step counts)', [pet], 'Korak 5 od 7'],
+	])('offers to resume a saved draft at its step, %s', async (_name, pets, step) => {
+		api.pets = pets;
 		api.store.set('draft:lost:lost', {
 			step: 'when',
 			values: { pet: 'new', species: 'cat', colours: ['black'], when: 'now', date: '', time: '' },
@@ -699,8 +699,51 @@ describe('LostFlow', () => {
 		expect(await screen.findByText(t.resume_title)).toBeTruthy();
 		click(t.resume_continue);
 		await heading(t.when_title);
-		expect(bars()).toBe('Korak 5 od 7');
+		expect(bars()).toBe(step);
 		expect(screen.getByText(t.draft_saved)).toBeTruthy();
+	});
+
+	it('with saved pets asks first: one press on a row goes on, and the choice is marked on the way back', async () => {
+		api.pets = [pet];
+		show();
+		await heading(t.pet_title);
+		const other = new RegExp(`^${t.pet_other}`);
+		// Buttons, not radios: arrow keys never move on, Enter and Space press the row.
+		expect(screen.queryByRole('radio')).toBeNull();
+		expect(screen.getByRole('group', { name: t.pet_title })).toBeTruthy();
+		expect(button(other).getAttribute('aria-current')).toBeNull();
+		expect(bars()).toBe('Korak 1 od 7');
+
+		fireEvent.click(button(other));
+		await heading(t.photos_title);
+		expect(document.activeElement).toBe(screen.getByRole('heading', { level: 1 }));
+		expect(bars()).toBe('Korak 2 od 7');
+		click(t.back);
+		await heading(t.pet_title);
+		expect(document.activeElement).toBe(screen.getByRole('heading', { level: 1 }));
+		expect(button(other).getAttribute('aria-current')).toBe('true');
+		expect(button(`${pet.name} · Pes`).getAttribute('aria-current')).toBeNull();
+
+		click(`${pet.name} · Pes`);
+		await heading(t.photos_title);
+		expect(bars()).toBe('Korak 2 od 6');
+		await waitFor(() =>
+			expect(api.store.get('draft:lost:lost')).toMatchObject({ step: 'photos', values: { pet: pet.id } })
+		);
+	});
+
+	it('asks nothing until the saved pets are in, then starts at the step that applies', async () => {
+		api.auth = { gate: 'loading', me: null, isVerified: false };
+		const view = show();
+		expect(screen.getByText(sl.common.loading)).toBeTruthy();
+		expect(screen.queryByRole('heading', { level: 1 })).toBeNull();
+		expect(screen.queryByRole('button', { name: t.next })).toBeNull();
+
+		api.auth = { gate: 'ok', me, isVerified: true };
+		view.rerender();
+		await heading(t.photos_title);
+		// Settling on the first step is not a move: focus stays where it was.
+		expect(document.activeElement).toBe(document.body);
 	});
 
 	describe('signed out (C3 draft hand-off)', () => {
@@ -733,11 +776,10 @@ describe('LostFlow', () => {
 
 		/** Pes in Rjava with a kept photo, to the review. */
 		async function fillToReview() {
-			await heading(t.pet_title);
-			expect(screen.getAllByRole('radio')).toHaveLength(1);
-			expect(screen.getByRole('radio', { name: t.pet_enter }).getAttribute('aria-checked')).toBe('true');
-			click(t.next);
+			// Signed out there are no saved pets to choose from: the flow starts at the photos.
 			await heading(t.photos_title);
+			expect(screen.queryByText(t.pet_title)).toBeNull();
+			expect(bars()).toBe('Korak 1 od 6');
 			// Nothing leaves the browser before sign-in: the picker keeps the photos.
 			expect(api.picker.hold).toBe(true);
 			photosUp([kept]);
