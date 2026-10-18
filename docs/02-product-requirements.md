@@ -1,9 +1,9 @@
 ---
 doc_id: DOC-02
 title: Product Requirements
-version: 0.9
+version: 0.10
 status: Draft
-date: 2026-10-14
+date: 2026-10-18
 owner: Product Manager
 audience: Client, team
 approvals:
@@ -140,9 +140,11 @@ approvals:
   - R-005.3 On submit: listed within 1 minute, matching runs, nearby alerts fan out, confirmation shows next steps (poster, share, tips) and a checklist: report the escape to a vet or the responsible shelter (within 3 days; the nearest shelter within 72 h) with a one-tap call from the shelter directory (FR-044). The app never claims to replace the legal duty; legal timings show only when the legal-content flag is on.
   - R-005.4 Confirmation reserves a slot for the optional contribution (FR-021); never an ad (P-2).
   - R-005.5 Events `report_lost_start`, `report_lost_submit` (FR-038).
+  - R-005.6 A lost report for a saved pet reuses that pet's photos server-side, so the flow skips the photo step when the pet has photos; photos can still be added (FR-002 "report a loss in seconds"; needs a C4/C5 change, CH-348).
 - **Acceptance criteria**
   - [ ] Given a signed-out visitor who completed the form, when they register at the end, then the report is created with all data.
   - [ ] Given a submitted report, when the map is opened, then the report appears with fuzzed location within 1 minute.
+  - [ ] Given a saved pet with photos, when the owner reports it lost, then the photo step is skipped and the report carries the pet's photos.
   - [ ] Given the lost flow, when any screen renders, then no ad slot is present.
 - **Edge cases**
   - Same pet reported twice: second submission offers to update the open report.
@@ -233,10 +235,14 @@ approvals:
   - R-010.3 Deduplication and rate limits (≤ 1 push per report per hour for nearby alerts).
   - R-010.4 Fan-out of 1000 recipients < 60 s.
   - R-010.5 Event `alert_opt_in`.
+  - R-010.6 Pausing alerts (Profile → Alerts) pauses both the server-side home-area alerts and the on-device proximity alerts (FR-043); the geofence engine reads the subscription's paused flag. The proximity opt-in stays its own switch (decided 2026-10-18, CH-345).
+  - R-010.7 The web inbox lists notifications in pages and loads more on request; quiet-hours settings reject equal start and end times on the client and reset after a server rejection (CH-285). Nearby-alert rows show a photo thumbnail once the nearby payload carries a public thumbnail URL.
 - **Acceptance criteria**
   - [ ] Given a user with a 5 km area, when a lost report is created 3 km away, then they get one alert within 2 minutes.
   - [ ] Given quiet hours 22:00–07:00, when a nearby alert is due, then it waits; a chip-match alert still arrives.
   - [ ] Given the owner marks the pet reunited, when pending alerts exist, then they are cancelled.
+  - [ ] Given alerts are paused in Profile → Alerts, when the user enters a cached lost-pet area on mobile, then no proximity notification appears until alerts are resumed.
+  - [ ] Given more than one page of notifications, when the user taps "load more" on web, then the next page appends.
 - **Edge cases**
   - Push permission denied: fall back to in-app and email.
   - Users with unverified email get no email alerts.
@@ -269,6 +275,7 @@ approvals:
   - R-012.4 Record time to reunite and time to first match.
   - R-012.5 Public success stories page, opt-in and moderated (M5).
   - R-012.6 Event `reunited`.
+  - R-012.7 Close reasons: on a lost report, "my pet came home another way" maps to `found_elsewhere` (it does not count as reunited through the app); `returned_to_owner` is for found and sighted reports a finder returned. Mobile and web use the same map (decided 2026-10-18, CH-350).
 - **Acceptance criteria**
   - [ ] Given a lost report with a confirmed match, when the owner marks reunited, then both reports show REUNITED and pending alerts and boosts stop.
   - [ ] Given a 90-day-old lost report, when no action, then it closes and the owner can extend with one tap.
@@ -552,7 +559,7 @@ approvals:
   - R-029.1 Fixed slots: feed (every N cards), lost-pet detail, reunited screen, web sidebar. No slot exists in report-lost or report-found flows (enforced by API and test).
   - R-029.2 Targeting by statistical region or municipality and by species; dates; status; fair rotation between matches.
   - R-029.3 House ads (supporter, partner with us, adopt) fill every empty slot. Blocklist: no ads that sell, give away or rehome animals (the ad-space provider must verify marking data for pet ads).
-  - R-029.4 Impressions and clicks aggregated per ad, slot, day, region in our DB with no user identifiers, cookies or device storage; clicks via counting redirect, `rel="sponsored"`. This DB is the source of truth for sponsor reports.
+  - R-029.4 Impressions (viewable: at least 50 % of the unit in view for 1 s, once per unit and ad, A-016) and clicks aggregated per ad, slot, day, region in our DB with no user identifiers, cookies or device storage; clicks via counting redirect, `rel="sponsored"`. This DB is the source of truth for sponsor reports.
   - R-029.5 Slovenian regions (12) and municipalities (212) loaded as open reference data (licence checked).
 - **Acceptance criteria**
   - [ ] Given a sponsor ad for Gorenjska/dogs, when a Ljubljana cat owner opens a slot, then a house ad is returned.
@@ -560,7 +567,7 @@ approvals:
   - [ ] Given 100 impressions and 5 clicks, when queried, then the DB shows 100 and 5 for that ad, slot and day.
 - **Edge cases**
   - No location known: use language and house ads only.
-  - Impressions are rendered counts, not viewability (A-016).
+  - Impressions are viewable counts (at least 50 % in view for 1 s, once per unit and ad), not rendered counts (A-016).
 
 ## FR-030: Ad placements
 
@@ -784,6 +791,7 @@ approvals:
   - R-043.3 On entry, a local notification ("You are near where Maks was last seen yesterday, keep an eye out") with a deep link.
   - R-043.4 Quiet hours, daily cap (default 3), each pet once per area, easy off switch removing all geofences.
   - R-043.5 Only public fuzzed areas monitored; location never uploaded.
+  - R-043.6 Paused alerts (R-010.6) also stop proximity alerts; the primer and settings say so.
 - **Acceptance criteria**
   - [ ] Given opt-in and a cached area, when the user enters it offline, then a local notification appears once.
   - [ ] Given 20 cached areas on iOS, when registering, then only the nearest and most recent are registered.
@@ -843,7 +851,9 @@ approvals:
   - [ ] Given any invoice, when issued, then VAT 22 % is itemised.
   - [ ] Given live mode without a recorded decision or a finished story, when enabled, then it is refused.
 - **Edge cases**
-  - Refunds need a fiscally verified credit note when verification applies.
+  - Refunds need a fiscally verified credit note when verification applies (TASK-92.4); if FURS never confirms after 5 attempts the receipt goes out with invoice number and ZOI but no EOR and the invoice stays FAILED for resubmission (TASK-92.3; to confirm, OQ-002).
+  - Without fiscal verification (`FISCAL_PROVIDER=off`) no invoice is issued, only the payment receipt (to confirm, OQ-002).
+  - Invoiced purposes are configurable (`app_config` key `fiscal.invoiced_purposes`, default every purpose with VAT 22 %).
 
 # Non-functional requirements
 
@@ -954,7 +964,7 @@ approvals:
 - A-005: Cloud credentials (Q-002 hosting: Hetzner VPS, Supabase Free for DB and Auth, R2 storage, Stripe; Q-007 Apple, Google, Firebase push) are pending; everything is built and tested locally first; deploy, push delivery and real GA4/Firebase data wait for them.
 - A-006: Pilot regions Ljubljana (shelter Gmajnice) and Maribor; 2–3 shelters onboarded by hand (Q-005).
 - A-007: Prices are test-mode placeholders from the client monetisation model (brief v0.8), configurable: Boost EUR 4.99 fixed (7 days); Premium EUR 2.99 per month or EUR 24.99 per year (includes 1 free Boost per year); Podpornik from EUR 2 per month (user chooses); support amounts EUR 3 / 5 (highlighted) / 10 / custom with a EUR 2 minimum (Stripe fees of about EUR 0.25 + 1.5 % and store cuts eat most of a EUR 1 payment); Vet Partner EUR 39 per month (B2B).
-- A-008: Free forever (P-1): reporting, matching, chat, alerts in the default radius, poster, 1 saved pet profile. The pet-profile limit never blocks a lost report.
+- A-008: Free forever (P-1): reporting, matching, chat, alerts in the default radius, poster, 2 saved pet profiles (R-002.4). The pet-profile limit never blocks a lost report.
 - A-009: Fuzzing defaults: LOST ≥ 500 m, FOUND/SIGHTED ≥ 150 m, configurable.
 - A-010: Matching defaults: threshold 0.5, top 10, found within 30 days after loss; tuned with pilot data.
 - A-011: Lifecycle defaults: reminders at 7/14/30 days, auto-close at 90 days (lost), 30 days (found/sighted).
@@ -962,7 +972,7 @@ approvals:
 - A-013: AI cost cap per report ≤ EUR 0.05 and per-device daily limits for anonymous users.
 - A-014: Mobile purchases (tips, Boost, subscriptions) open web checkout in this phase; the App Store and Play rules on in-app purchase, including tips and donations to non-charities, are handled before any store submission (risk in the delivery plan).
 - A-015: The client provides the GA4 property and Firebase project (Q-009); until then events go to the mock adapter.
-- A-016: Ad impressions are rendered counts without viewability; counting is aggregate and cookieless; sponsor reports state this method.
+- A-016: Ad impressions are viewable counts, the same on web and mobile: the client posts once per unit and ad when at least 50 % of the unit has been in view for 1 s (IntersectionObserver or the native equivalent), never from the server; clicks are always counted. Counting is aggregate and cookieless; sponsor reports state this method (decided 2026-10-18, CH-455; C14§Serving and the P22 copy follow).
 - A-017: Premium is ad-free (Q-010 decided); Podpornik supporters still see ads.
 - A-018: Dohodnina is deferred: the operating company can never qualify; a new society needs about 2 years; a partner-NGO model is an option (Q-008). "Donation" wording stays out until a qualifying non-profit exists.
 - A-019: Rewards are display-only (brief v1.1): owners arrange them outside the app; no escrow, fee, Stripe Connect or DAC7; Q-011 closed.
@@ -977,6 +987,8 @@ approvals:
 - A-028: The Always location permission is opt-in only, with a primer; store justification is prepared before store release (risk R-024).
 - A-029: Legal timings (3 days / 72 h owner duty, 24 h find notice, 8-day holding) appear in the product only after legal confirmation, behind a content flag.
 - OQ-001 (open, linked to Q-012, the accountant): FR-046 says "VAT 22 % on every invoice", but whether VAT applies to voluntary contributions and tips (no counter-performance) is unclear. Until the accountant decides, R-046.3 applies to Boost, Premium, Podpornik and Vet Partner; tips/contributions follow the decision recorded under Q-012.
+- OQ-002 (open, accountant and client, from TASK-92.1/92.3/92.4 reviews; Q-012): (1) Is Najdimo a VAT payer, and are tips, support and contributions taxable supplies (extends OQ-001)? Are tips and contributions invoiced at all (config `fiscal.invoiced_purposes`)? (2) If fiscal verification is not required, does the payer still get a non-fiscal invoice PDF, or only the receipt? (3) Seller legal name, address and VAT ID are missing on the invoice PDF; payments reach EUR 500 and above EUR 100 a simplified invoice may not suffice (ZDDV-1 art. 82/83). (4) Is the FURS code (QR/PDF417/Code128 of ZOI, tax number, datetime) required on e-mailed or PDF invoices? Not built. (5) Can OperatorTaxNumber be left out for automated online sales? What are the premise type and the SoftwareSupplier tax number? (6) TASK-92.1 AC1 asked for a certified provider chosen with the client; a direct FURS adapter was built: does the client confirm? (7) Retention of 10 years (ZDDV-1): confirm. (8) Receipt without EOR after 5 failed attempts (invoice FAILED, submitted later): confirm. (9) Credit notes: may one note cover two Stripe refunds, and must the Stripe refund id be on the note? Partial notes: round each at 22 % or cumulatively so the notes net the invoice (default: cumulative)? Must the customer receive the note (today stored only)? The note is dated when processed and may fall in a later VAT period than the refund: OK? Is SubsequentSubmit on in-hour retries acceptable? If FURS registered an attempt but the reply was lost and the same number is resent, how does FURS answer? Is one admin alert at 24 h enough before the 2-day deadline? To check on blagajne-test: JWS DN order (Node gives C-first, FURS examples CN-first; furs.ts:36).
+- OQ-003 (open, client, Q-012): fiscal go-live inputs: the seller's legal name, address and tax/VAT number for the invoice (the PDF prints "Izdajatelj: Najdimo, davčna številka …" until then); the FURS test and production certificates (eDavki) and the registered business premise ID, or, if a FURS-certified provider is chosen instead, that provider and its credentials. Steps: deploy/README.md §10.
 - A-030: The municipality-to-shelter directory (212 municipalities, 17 registered shelters) is refreshed yearly after 31 March.
 
 # Glossary
@@ -1023,3 +1035,4 @@ approvals:
 | 0.7 | 2026-10-15 | New FR-045 lawyer briefing pack (Q-013) and FR-046 fiscal invoices for card payments (Q-012) |
 | 0.8 | 2026-10-15 | Brief v1.1: reward escrow dropped, FR-023 now display-only reward line with scam warning (A-019, glossary, summary, A-007, FR-024 cleaned); processor list updated (Hetzner, Supabase Frankfurt, Cloudflare R2 EU/Turnstile, Brevo, Expo, Stripe, Anthropic, Voyage, Google), MapTiler removed (own GURS geocoder, ADR-007); open question OQ-001 on VAT for voluntary contributions linked to Q-012 |
 | 0.9 | 2026-10-15 | FR-023 reward range aligned to 1–10 000; stale escrow flow line removed; FR-044 unconfirmed-municipality fallback (R-044.6, R-044.7) |
+| 0.10 | 2026-10-18 | CHANGE batch: A-008 two saved profiles (CH-244); A-016 viewable impressions (CH-455); R-010.6/.7 pause covers proximity alerts, inbox load more (CH-345, CH-285); R-043.6; R-005.6 reuse saved-pet photos (CH-348); R-012.7 close-reason map (CH-350); FR-046 edges and OQ-002/OQ-003 fiscal questions (CH-289, CH-290, CH-295, CH-375) |

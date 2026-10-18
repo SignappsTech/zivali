@@ -1,9 +1,9 @@
 ---
 doc_id: DOC-06
 title: Delivery Plan
-version: 0.7
+version: 0.8
 status: Draft
-date: 2026-10-14
+date: 2026-10-18
 owner: Product Manager
 audience: Client, team
 approvals:
@@ -31,7 +31,23 @@ Notes:
 - T0 is the project start date, to be set by the client; dates are relative until then.
 - Estimates come from the backlog. Today the backlog holds stories only; the Design Lead and Tech Lead create tasks with `est:` labels, then `backlog.mjs --status` gives days per milestone and this column is refreshed.
 - Indicative PM sizing for planning only (replaced by backlog totals): M1 35–45 d, M2 120–145 d, M3 72–88 d, M4 55–70 d, M5 28–33 d, M6 about 8 d of effort; about 18–24 weeks elapsed to launch readiness with design, frontend, backend and content running in parallel.
-- Pilot readiness: after M2 the product can run an internal alpha and the client can start pitching sponsors; shelters join after M3; public pilot after M5.
+- Pilot readiness: after M2 the web app launches as the pilot on najdimo.si (release order below); shelters join after M3; the public launch follows M5.
+
+## Release order (web-first pilot)
+
+Client decision 2026-10-16 (CH-199), delta by the owner the same day (CH-487).
+
+| Step | What | Gate |
+|---|---|---|
+| 1 | M2 web complete; QA of the core-loop suite (TASK-39.1) green | M2 exit criteria on web |
+| 2 | Web pilot on najdimo.si: ONE environment, the current staging stack (www and staging.najdimo.si 301 to it in nginx), auto-deployed from main | Go-live checklist TASK-76.1 signed by the owner after a production smoke test of the core loop |
+| 3 | Mobile apps wait for the store accounts under Signapps d.o.o. (D-U-N-S first, then Apple and Google organisation accounts, TASK-75.1). Device tests (TASK-39.2 Maestro, device QA items) run after web is done. Android pilot testers may get an EAS internal build meanwhile | Store accounts approved |
+| 4 | Staging and production split before the public launch: the pilot's Supabase project and buckets become production | Launch checklist TASK-76 |
+
+- Web pilot scope: everything in M2 on web. Push, geofence proximity alerts and the offline queue stay mobile-only (web uses email and the in-app inbox).
+- Payments stay ON in Stripe test mode with `FISCAL_PROVIDER=mock` until the fiscal questions are cleared (TASK-92.x, OQ-002, OQ-003); live payments stay blocked (R-046.4). Ads are house ads only.
+- The contact mailbox (a legal contact) is live before the public launch; until then replies to the sender address bounce.
+- Steps and owner actions: `docs/tech/pilot-runbook.md`. The TASK-76 checklist items are owned by the tech lead (TASK-76.1 in progress).
 
 # Phases
 
@@ -218,6 +234,8 @@ Generated from the backlog on 2026-10-14; the backlog is the source of truth (`b
 | R-027 | Legal timings (3 days / 72 h, 24 h, 8-day holding) and ads for animals (duty to verify marking data) misstated | High | Medium | Legal-content flag until confirmed, ad blocklist for animal sale or give-away, moderation removes such listings, lawyer review (Q-006) | Client |
 | R-028 | Shelter directory out of date (wrong phone for a municipality) | Medium | Medium | Source and last-verified date shown, admin editing, yearly refresh after 31 March, never show unconfirmed numbers | Product Manager |
 | R-029 | VAT treatment of voluntary contributions and tips unclear: FR-046 says VAT 22 % on every invoice, which may not apply to tips (OQ-001, Q-012) | Medium | Medium | Accountant decides under Q-012 before live payments; VAT handling configurable per product type; live payments stay blocked until the decision is recorded (R-046.4) | Client |
+| R-030 | Pilot runs on the staging stack with auto-deploy from main: a bad merge reaches pilot users, and pilot data becomes production data | Medium | Medium | CI merge queue stays green, rollback plan in the runbook, noindex until launch (`SEARCH_INDEXING`), split staging and production before the public launch (release order step 4) | Tech Lead |
+| R-031 | Pilot testers expect real payments or invoices while payments are in Stripe test mode with the mock fiscal provider | Low | Medium | Test-mode wording on checkout, no live keys, live blocked until fiscal sign-off (OQ-002, OQ-003, R-046.4) | Product Manager |
 
 # Communication
 
@@ -234,3 +252,4 @@ Status report per milestone (generated from the backlog), demo at each milestone
 | 0.5 | 2026-10-15 | Discovery changes applied: shelter directory stories TASK-88 (M2), TASK-89, TASK-90 (M3); checklists in TASK-29/30; CRHŽ and cats first (TASK-16, 49); 8-day holding (TASK-45, 46, 47, 48); animal-sale ad blocklist (TASK-35, 37, 61, 62); Vet Partner labelling (TASK-36, 79, 80); SEO routes (TASK-72); share kit (TASK-24); marketing partners (TASK-84); risks R-026..R-028; 87 stories |
 | 0.6 | 2026-10-15 | TASK-91 lawyer briefing pack (M5, high, startable now, L1; TASK-71 now depends on it) and TASK-92 fiscal invoices (M2, depends on TASK-32; gates live payments); 89 stories |
 | 0.7 | 2026-10-15 | Reward escrow dropped (brief v1.1): TASK-66 archived, TASK-68 no longer depends on it, R-006 retired, M4 text updated; new risk R-029 (VAT on voluntary contributions, Q-012) |
+| 0.8 | 2026-10-18 | CHANGE batch: web-first pilot release order (CH-199, CH-487): one pilot environment on najdimo.si, mobile after store accounts, staging/production split before launch; risks R-030, R-031; follow-up tasks from reviews added under existing stories (TASK-22.7-22.9, 29.13-29.15, 34.8, 38.6, 87.7) |

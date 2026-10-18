@@ -5,7 +5,7 @@ status: To Do
 assignee:
   - '@qa'
 created_date: '2026-10-14 22:15'
-updated_date: '2026-10-16 09:17'
+updated_date: '2026-10-18 21:18'
 labels:
   - qa
   - 'est:XS'
@@ -42,9 +42,9 @@ Branch: - (verify on main)
 - [x] #1 Given the list or feed, when more than N cards are shown (default every 8), then a card labelled Oglas (EN: Ad) appears, visibly distinct, never first and never next to another ad.
 - [x] #2 Given the report-lost, report-found, sign-in, chat and payment screens, when rendered, then no ad is present (automated route test).
 - [x] #3 Given an ad, when rendered, then it has alt text, keyboard focus, rel sponsored noopener, 44 px targets and reserved space so layout does not shift (CLS budget on web).
-- [x] #4 Given display and click, when they happen, then they are always counted in our DB (aggregate) and ad_impression and ad_click fire to GA4 only with consent (slot, region, species, no personal data).
+- [x] #4 Given display and click, when they happen, then a display counts once per unit and ad when at least 50 % of the unit has been in view for 1 s (viewable, web and mobile alike) and a click is always counted, both in our DB (aggregate), and ad_impression and ad_click fire to GA4 only with consent (slot, region, species, no personal data).
 - [x] #5 Given a failed ad request, when the slot cannot load, then it collapses silently without blocking the page.
-- [x] #6 Given a lost-pet detail page, when shown, then one labelled ad slot appears below the primary actions (for example a vet in your region or a pet shop near you via region targeting, never worded nearest unless true), the reunited screen has one slot and the web sidebar (lg and up) has one slot.
+- [x] #6 Given a lost-pet detail page, when shown, then one labelled `ad` slot appears below "Kje je bila videna" (P9) (for example a vet in your region or a pet shop near you via region targeting, never worded nearest unless true), the reunited screen has one slot and the web sidebar (lg and up) has one slot.
 - [ ] #7 Story gates pass on main: `pnpm verify`, plus `pnpm quality` for the pages this story touches; results recorded in the QA notes.
 <!-- AC:END -->
 
