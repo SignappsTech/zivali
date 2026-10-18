@@ -7,6 +7,7 @@ status: To Do
 assignee:
   - '@backend-dev'
 created_date: '2026-10-18 21:24'
+updated_date: '2026-10-18 22:13'
 labels:
   - be
   - 'est:S'
@@ -44,3 +45,9 @@ Branch: agent/task-42.3-embedding-backfill
 - [ ] #3 The model change (next_model, backfill, switch, prune) is tested end to end with two mock models, and similarity reads only embedding.model throughout
 - [ ] #4 Tests; pnpm verify green
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+From the TASK-40.1 review and CH-562 (2026-10-19): photos uploaded while ai.extract is a stub have no ai_results row; embedding and backfill must skip any photo without a successful safety check (no ai_results row = not embedded).
+<!-- SECTION:NOTES:END -->

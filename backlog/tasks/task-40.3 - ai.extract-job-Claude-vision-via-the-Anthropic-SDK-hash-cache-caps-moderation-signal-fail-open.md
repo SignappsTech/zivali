@@ -7,7 +7,7 @@ status: To Do
 assignee:
   - '@backend-dev'
 created_date: '2026-10-18 21:22'
-updated_date: '2026-10-18 21:29'
+updated_date: '2026-10-18 22:13'
 labels:
   - be
   - 'est:M'
@@ -47,3 +47,9 @@ Branch: agent/task-40.3-ai-extract
 - [ ] #4 The mock adapter returns fixtures by sha256 (deterministic default plus refusal, invalid and person fixtures); moderation is stored; photo.embed is sent on every outcome except photos flagged person_prominent or nsfw or with animal none or other
 - [ ] #5 retention.purge deletes ai_calls older than 62 days and ai_results whose sha256 no photo has; ai.extract.done is logged with outcome and latency_ms; pnpm verify green
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+From the TASK-40.1 review (2026-10-19): an unset AI_PROVIDER on staging or production must never mean anthropic; default to the mock/no-op adapter and require an explicit opt-in (owner approvals pending: privacy text, Voyage opt-out).
+<!-- SECTION:NOTES:END -->

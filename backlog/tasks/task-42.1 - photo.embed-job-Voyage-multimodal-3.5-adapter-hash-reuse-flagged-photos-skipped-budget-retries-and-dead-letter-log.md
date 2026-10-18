@@ -7,7 +7,7 @@ status: To Do
 assignee:
   - '@backend-dev'
 created_date: '2026-10-18 21:24'
-updated_date: '2026-10-18 21:29'
+updated_date: '2026-10-18 22:13'
 labels:
   - be
   - 'est:S'
@@ -44,3 +44,9 @@ Branch: agent/task-42.1-photo-embed
 - [ ] #3 The voyage adapter sends voyage-multimodal-3.5 (model from config), image_base64 of the 1024 px JPEG and output_dimension 1024 with a 10 s timeout and no ids or text; 429 and 5xx throw for retry; the last failed attempt logs photo.embed.dead_letter without image data
 - [ ] #4 The mock embedder derives vectors from test/fixtures/embeddings/labels.json (same animal about 0.9 cosine, different about 0.1) and else from the hash; tests; pnpm verify green
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+From the TASK-40.1 review and CH-562 (2026-10-19): photos uploaded while ai.extract is a stub have no ai_results row; embedding and backfill must skip any photo without a successful safety check (no ai_results row = not embedded).
+<!-- SECTION:NOTES:END -->

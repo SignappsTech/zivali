@@ -7,6 +7,7 @@ status: To Do
 assignee:
   - '@backend-dev'
 created_date: '2026-10-18 22:06'
+updated_date: '2026-10-18 22:13'
 labels:
   - be
   - 'est:M'
@@ -38,3 +39,9 @@ Branch: agent/task-114.33-retention-purge
 - [ ] #1 retention.purge purges every record class of the data inventory at its window (windows in app_config where a key exists); each class is idempotent, batched, and logs counts only.
 - [ ] #2 Reports are deleted last, only once their conversations are past the 6-month read-only window; tests with a faked clock check cascade order (matches, conversations, alert_deliveries go with the report) and that nothing younger is touched.
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+From the TASK-40.1 review: the purge must also own app.ai_calls (62 days) and app.ai_results (by photo hash, per data-inventory.json).
+<!-- SECTION:NOTES:END -->
