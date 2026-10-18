@@ -3,11 +3,11 @@ id: TASK-114.9
 title: >-
   Facebook share: one tap copies the post text and opens the share dialog;
   verify the link preview
-status: To Do
+status: In Progress
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-16 14:35'
-updated_date: '2026-10-17 09:24'
+updated_date: '2026-10-18 04:42'
 labels:
   - fe
   - share
@@ -36,3 +36,17 @@ Constraint: Facebook does not let a site prefill the post text (Platform Policy:
 - [ ] #2 The Facebook share action copies the post text and opens the share dialog in one tap, with the paste hint; SL and EN; clipboard failure falls back to showing the text to copy
 - [ ] #3 Unit and e2e tests updated (share menu, poster-share spec); the share_* analytics event still fires once
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+AC#1 link preview, for the lead's live check (no external call made from the branch). /r/<code> (EN /en/r/<code>) emits: og:type article, og:site_name Najdimo, og:locale sl_SI | en_GB, og:url = canonical, og:title = seo.og ("Izgubljen pes Rex, Ljubljana"), og:description = seo.description, og:image = <NEXT_PUBLIC_APP_URL>/r/<code>/opengraph-image (?lang=en on EN), 1200x630, og:image:alt, twitter:card summary_large_image (metadataBase = NEXT_PUBLIC_APP_URL). The image route is outside the proxy matcher and answers image/png, cache-control public, max-age=3600 (404 for unknown codes). X-Robots-Tag noindex (SEARCH_INDEXING off) does not stop facebookexternalhit. Live: Sharing Debugger on https://najdimo.si/r/<code> ("Scrape Again"), then Cloudflare Security > Events filtered on user agent facebookexternalhit (Meta ASN 32934); it is a verified bot, so only a custom WAF or bot rule would block it.
+
+AC#2: web share menu (slot B and lost-done share the ShareMenu) and the mobile P18 screen's Facebook row; no mobile follow-up needed.
+
+Item 3 (optional groups mention): copy unchanged; the owner's kit (with "Skupine, kamor lahko objavite") now opens behind the sharer.
+<!-- SECTION:NOTES:END -->
+
+## Packet
+
+Branch: agent/TASK-114.9-facebook-share
