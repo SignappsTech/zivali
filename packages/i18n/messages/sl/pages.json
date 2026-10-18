@@ -6,7 +6,17 @@
 		"hero_lede": "Prijavite izgubljeno ali najdeno žival. Mi poiščemo možna ujemanja in obvestimo ljudi v bližini. Brezplačno.",
 		"hero_primary": "Prijavi izgubljeno žival",
 		"hero_secondary": "Prijavi najdeno žival",
+		"hero_sighted_prompt": "Videli ste žival?",
 		"hero_alt": "Pes rjave in bele barve z dolgo dlako in privzdignjenim ušesom",
+		"hero_cat_alt": "Tigrasta mačka z modro ovratnico in obeskom sedi na stopnicah",
+		"near_title_no_location": "Nedavne prijave",
+		"near_open_map": "Odpri zemljevid",
+		"near_empty_body": "To je dobra novica. Vklopite opozorila in obvestili vas bomo, če bo kdo v bližini pogrešal žival.",
+		"near_empty_action": "Vklopi opozorila",
+		"near_error": "Prijav ta trenutek ne moremo naložiti.",
+		"stat_reunited": "Živali spet doma",
+		"stat_open": "Odprtih prijav",
+		"stat_alerts": "Ljudi z vklopljenimi opozorili",
 		"how_title": "Kako deluje",
 		"how_1_title": "Prijavite",
 		"how_1_body": "Prijava izgubljene živali vzame nekaj minut, najdene pa manj kot minuto in brez računa.",
@@ -15,7 +25,6 @@
 		"how_3_title": "Pogovorite se varno",
 		"how_3_body": "Pišete si v aplikaciji. Telefonska številka in točen naslov ostaneta skrita.",
 		"how_more": "Več o tem, kako deluje",
-		"how_alt": "Tigrasta mačka z modro ovratnico in obeskom sedi na stopnicah",
 		"safe_title": "Zasnovano za vašo varnost",
 		"safe_body": "Ko se žival izgubi, se žal oglasijo tudi tisti, ki želijo izkoristiti stisko. Zato vaši podatki ostanejo pri vas.",
 		"safe_1": "Telefonska številka ni nikoli javna.",
@@ -24,6 +33,9 @@
 		"safe_action": "Preberite nasvete za varnost",
 		"shelters_title": "Za zavetišča, veterinarje in občine",
 		"shelters_body": "Najdene živali objavite hitro, mi pa jih primerjamo z vsemi prijavami izgubljenih živali. Za zavetišča in občine je vse brezplačno, za vedno.",
-		"shelters_action": "Več za zavetišča"
+		"shelters_action": "Več za zavetišča",
+		"cta_title": "Prijavite izgubljeno ali najdeno žival.",
+		"cta_primary": "Prijavi izgubljeno žival",
+		"cta_secondary": "Prijavi najdeno žival"
 	}
 }

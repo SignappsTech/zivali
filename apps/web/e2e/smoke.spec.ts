@@ -31,6 +31,23 @@ for (const { path, lang, messages } of [
 	});
 }
 
+test('home layout A: recent reports under the hero, server-rendered; empty state, no numbers without stats', async ({
+	page,
+}) => {
+	const home = sl.pages.home;
+	await page.goto('/');
+
+	// The mock API lists no reports and has no /v1/stats/public (404), so the numbers block stays out.
+	const recent = page.getByRole('region', { name: home.near_title_no_location });
+	await expect(recent.getByText(home.near_empty_body)).toBeVisible();
+	await expect(recent.getByRole('link', { name: home.near_open_map })).toHaveAttribute('href', '/zemljevid');
+	await expect(recent.getByRole('link', { name: home.near_empty_action })).toHaveAttribute(
+		'href',
+		'/racun/opozorila'
+	);
+	await expect(page.getByText(home.stat_reunited)).toHaveCount(0);
+});
+
 test('the CSP nonce differs between requests', async ({ request }) => {
 	const nonce = async () =>
 		(await request.get('/')).headers()['content-security-policy']?.match(/'nonce-([^']+)'/)?.[1];
