@@ -58,9 +58,10 @@ test('filters narrow both queries: types, species, colours, size groups, window;
 	expect(isDefault(filters)).toBe(false);
 });
 
-test('pills toggle; type and species keep at least one choice', () => {
-	expect(toggle(['lost', 'found'], 'found', 1)).toEqual(['lost']);
-	expect(toggle(['lost'], 'lost', 1)).toEqual(['lost']);
+test('pills toggle; type and species may go empty (all)', () => {
+	expect(toggle(['lost', 'found'], 'found')).toEqual(['lost']);
+	expect(toggle(['lost'], 'lost')).toEqual([]);
+	expect(isDefault({ ...DEFAULT_FILTERS, types: [], species: [] })).toBe(true);
 	expect(toggle(['black'], 'black')).toEqual([]);
 	expect(toggle([], 'red')).toEqual(['red']);
 });

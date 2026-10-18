@@ -111,9 +111,12 @@ describe('C4 queries', () => {
 });
 
 describe('filter helpers', () => {
-	it('type and species never go empty; reset keeps place, sort and closed', () => {
-		expect(toggle(['lost'], 'lost', 1)).toEqual(['lost']);
-		expect(toggle(['lost', 'found'], 'lost', 1)).toEqual(['found']);
+	it('type and species may go empty (= all); reset keeps place, sort and closed', () => {
+		expect(toggle(['lost'], 'lost')).toEqual([]);
+		expect(isDefault({ ...DEFAULT_FILTERS, types: [], species: [] })).toBe(true);
+		expect(filtersSearch({ ...DEFAULT_FILTERS, types: [], species: [] })).toBe('');
+		expect(toSearch({ ...DEFAULT_FILTERS, types: [], species: [] }, null).types).toBeUndefined();
+		expect(toggle(['lost', 'found'], 'lost')).toEqual(['found']);
 		const place = { label: 'Celje', lat: 46.2, lng: 15.2 };
 		const changed: Filters = { ...DEFAULT_FILTERS, km: 3, place, sort: 'recent', includeClosed: true };
 		expect(isDefault(changed)).toBe(false);

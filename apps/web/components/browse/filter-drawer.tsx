@@ -120,7 +120,7 @@ export function FilterDrawer({
 							<Pill
 								key={type}
 								pressed={draft.types.includes(type)}
-								onPressedChange={() => set({ types: toggle(draft.types, type, 1) })}
+								onPressedChange={() => set({ types: toggle(draft.types, type) })}
 							>
 								{t(`filter_type_${type}`)}
 							</Pill>
@@ -131,7 +131,7 @@ export function FilterDrawer({
 							<Pill
 								key={species}
 								pressed={draft.species.includes(species)}
-								onPressedChange={() => set({ species: toggle(draft.species, species, 1) })}
+								onPressedChange={() => set({ species: toggle(draft.species, species) })}
 							>
 								{t(SPECIES_LABEL[species])}
 							</Pill>
