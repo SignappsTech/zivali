@@ -14,7 +14,7 @@ All three R2 buckets are created in the **EU jurisdiction**; the adapter and pre
 
 ## Model (Prisma, schema `app`)
 
-`Photo { id, ownerId, petId?, reportId?, position (0–4), sha256, width, height, bytes, status: pending | uploaded | accepted | rejected | published | unpublished, rejectReason?, publicDisplayUrl?, publicThumbUrl?, createdAt }`, unique `(ownerId, sha256)`. A photo has at most one pet and at most one report; it may have both (a pet photo shown on that pet's report). The former check "not both `petId` and `reportId`" is dropped (migration 20261018000000, TASK-114.5).
+`Photo { id, ownerId, petId?, reportId?, position (0–4), sha256, width, height, bytes, status: pending | uploaded | accepted | rejected | published | unpublished, rejectReason?, publicDisplayUrl?, publicThumbUrl?, createdAt, updatedAt }`, unique `(ownerId, sha256)`. A photo has at most one pet and at most one report; it may have both (a pet photo shown on that pet's report). `updatedAt` (`updated_at`, `@updatedAt`) is the 24 h purge clock of unattached photos; `POST /v1/photos` answering `existing: true` touches it (CH-134, CH-189; migration 20261015172036_task_14_1_photos). The former check "not both `petId` and `reportId`" is dropped (migration 20261018000000, TASK-114.5).
 
 ## REST
 
@@ -28,11 +28,15 @@ All three R2 buckets are created in the **EU jurisdiction**; the adapter and pre
 
 Shared photos (TASK-114.5): report `photo_ids` = the owner's photos on no open report (unattached, their pets' photos, or on their closed/reunited report, which is then detached from it: status `unpublished`, public URLs null, its old public copies queued to `retention.purge`, so `photo.publish` copies it anew) or photos already on this report; a photo on another open report stays refused. `PUT /v1/pets/:id/photos` = the owner's photos on no other pet (unattached or on their report) or the pet's own. Other users' photos are refused on both. One `position` column: a shared photo keeps its order relative to the other shared photos on both; every photo ordering sorts by `(position, id)`, so the cover is deterministic. Deleting a pet keeps the photos a report shows (the FK unlinks the pet); `retention.purge` "report photos 12 months after close" skips photos that are still a pet's.
 
+**As built (CH-190)**: `DELETE /v1/photos/:id` deletes the row and queues `retention.purge { objects }` (no new queue); `CONFLICT` while the photo is `published` or its report is publishable. `GET` `thumb_url` is the private thumb's presigned GET until published (404 until the photo is accepted). A repeated `/complete` answers `202` without a second job. `public_display_url` = `display.jpg` (`display.webp` sits beside it). "Expired" = close_reason `expired`. `photo.process` deletes the upload after accept or reject (unprocessed bytes are never served or kept).
+
 ## Worker jobs (ADR-022)
 
 - `photo.process { photo_id }`: download the upload, check JPEG magic bytes and size, verify SHA-256, then **sharp** (`rotate()` from EXIF orientation, then re-encode without metadata) → `display` (≤ 1600 px, WebP q80 + JPEG q82) and `thumb` (480 px WebP) under `variants/`; status `accepted` or `rejected` (`not_jpeg`, `too_large`, `hash_mismatch`, `decode_failed`). Hook list `PHOTO_HOOKS` (empty in M2; M3: `ai.extract`, `photo.embed`; M4: screening).
 - `photo.publish { report_id }`: copy accepted variants of a visible report to the media bucket, set public URLs, status `published`; hidden, removed or expired → delete public copies, status `unpublished`.
-- `retention.purge`: uploads not attached after 24 h, pet photos of deleted pets, report photos 12 months after close.
+- `retention.purge`: media-bucket copies of photos that no longer belong to a report (dropped by a report PATCH `photo_ids`: detached, `report_id` null, so `photo.publish { report_id }` never unpublishes them; CH-198), uploads not attached after 24 h, pet photos of deleted pets, report photos 12 months after close.
+
+**Account erasure (CH-201)**: `photos.owner_id` is `onDelete Cascade`, so deleting a profile drops the rows and would orphan their objects in `zivali-private` and `zivali-media`. The erasure flow queues `retention.purge { objects: photoObjects(p) }` for all of the user's photos in the same transaction, before deleting the profile.
 
 ## Client (`@zivali/api/photos`)
 
@@ -62,3 +66,4 @@ Offline (C17): the mobile outbox keeps `PreparedPhoto` files and calls `uploadPh
 | 1.3 | 2026-10-15 | CH-131: photo status adds `pending` (POST creates pending, /complete sets uploaded) |
 | 1.4 | 2026-10-15 | CH-134: `existing: true` on an unattached photo resets its 24 h purge clock |
 | 1.5 | 2026-10-18 | CH-494 (TASK-114.5): a photo may belong to one pet and one report; check "not both" dropped; attach rules, position and purge for shared photos |
+| 1.6 | 2026-10-18 | CH-189: Photo.updatedAt; CH-190: delete, thumb_url, /complete repeat, public_display_url and process-cleanup as built; CH-198: purge media copies of photos dropped by a report PATCH; CH-201: erasure queues retention.purge for the user's photo objects |

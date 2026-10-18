@@ -29,15 +29,15 @@ Supabase Realtime **Broadcast** on private channels; no table is published.
 
 | Method and path | Guards | Request | Response | Errors |
 |---|---|---|---|---|
-| `POST /v1/conversations` | auth, verified email or anonymous manager; rate limit `contact` 10/day | `{ about_report_code, match_id? }` | `{ id }` (idempotent per report and caller; participants: caller + report managers) | `FORBIDDEN`, `UNVERIFIED_EMAIL`, `RATE_LIMITED` |
-| `GET /v1/conversations` | auth | `?cursor` | `{ items: ConversationSummary[], next_cursor }` | - |
+| `POST /v1/conversations` | auth, verified email or anonymous manager; rate limit `contact` 10/day | `{ about_report_code, match_id? }` | `200 { id }` (idempotent per report and caller; participants: caller + report managers) | `FORBIDDEN`, `NOT_FOUND`, `GONE`, `UNVERIFIED_EMAIL`, `RATE_LIMITED` |
+| `GET /v1/conversations` | auth | `?cursor` | `{ items: ConversationSummary[], next_cursor }`, ordered by latest activity | - |
 | `GET /v1/conversations/:id/messages` | participant | `?after=&before=&limit` | `{ items: Message[], next_cursor }`; items are ordered **oldest-first** (`created_at`, then `id`) in every mode. `after=<message id>` is an exclusive cursor moving forward (returns messages newer than that id, so catch-up after reconnect); `before=<message id>` is exclusive and pages backwards but still returns each page oldest-first; no cursor returns the latest `limit` messages. `next_cursor` is the id to pass as `after` (forward) or `before` (backward) for the next page, `null` at the end | `FORBIDDEN` |
-| `POST /v1/conversations/:id/messages` | participant, rate limit 30/min and 500/day | `{ body, kind?: 'text' | 'location', location?: { lat, lng } }` | `201 Message` (+ broadcast, + `notify.send` `chat_message` for offline participants, deduped per conversation per 5 min) | `FORBIDDEN` (not participant or blocked), `GONE` (read-only), `VALIDATION`, `RATE_LIMITED` |
+| `POST /v1/conversations/:id/messages` | participant, rate limit 30/min and 500/day | `{ body, kind?: 'text' | 'location', location?: { lat, lng } }` | `201 Message` (+ broadcast, + `notify.send` `chat_message` for offline participants, deduped per conversation per 5 min; `Idempotency-Key` optional; "offline" = no `POST /read` in the last 2 min, clients mark read while the conversation is open; the notify handler derives `preview_alias` and `unread_count` from `thread_id`; CH-172) | `FORBIDDEN` (not participant or blocked), `GONE` (read-only), `VALIDATION`, `RATE_LIMITED` |
 | `POST /v1/conversations/:id/read` | participant | - | `204` (+ broadcast `conversation.read`); also marks the caller's unread `chat_message` notifications for this conversation (payload `conversation_id`) read, in the same transaction; clients re-fetch notifications afterwards (C10) | - |
 | `POST /v1/conversations/:id/block` | participant | `{ participant_id }` | `204` (blocks row; further messages from them refused) | - |
 
 ```ts
-type Message = { id; conversation_id; sender_alias_key: 'owner'|'finder'|'sighter'|'contact'|'shelter'; sender_display_name?: string;
+type Message = { id; conversation_id; sender_alias_key?: 'owner'|'finder'|'sighter'|'contact'|'shelter' /* absent for kind 'system' (CH-171) */; sender_display_name?: string;
                  kind: 'text'|'location'|'system'; body; has_link: boolean; location?: { lat; lng }; created_at }
 type ConversationSummary = { id; about_report: { short_code, type, species, thumb_url }; my_alias_key; other_alias_key; other_display_name?;
                              other_participant_id: Uuid | null; last_message_preview; unread: number; status: 'active'|'read_only' }
@@ -51,7 +51,7 @@ Aliases: conversation lists and messages return alias keys (`owner` | `finder` |
 - Body rendered as plain text; URLs **not** linkified, shown with a caution icon and text (`chat.link_caution`); no previews.
 - Persistent safety banner at the top (`chat.safety_banner`: never send money or codes first).
 - `chat_started` analytics event when the user sends the first message in a conversation (consent only, C12).
-- Read-only conversations show the input disabled with an explanation; retention purge deletes messages 6 months after the related report closes (`retention.purge` job).
+- Read-only conversations show the input disabled with an explanation; retention: `app_config` key `retention.chat_months` (6); `retention.purge` deletes the conversation with its participants and messages that many months after the related report closes (CH-174). Close, reunite and expiry of the report call `ChatDomain.closeForReport` (C4, CH-173).
 
 ## Errors
 
@@ -72,3 +72,4 @@ Aliases: conversation lists and messages return alias keys (`owner` | `finder` |
 | 1.2 | 2026-10-15 | CH-75: sender_alias_key is the role alias (no 'you'); ConversationSummary gets my_alias_key |
 | 1.3 | 2026-10-16 | CH-170: ConversationSummary gets other_participant_id (user id, for block and the profile abuse report); has_link matches bare hosts on any TLD (TASK-21.7, TASK-21.8) |
 | 1.4 | 2026-10-18 | CH-493 (TASK-114.10): `POST /conversations/:id/read` also marks the caller's unread `chat_message` notifications for it read, same transaction |
+| 1.5 | 2026-10-18 | CH-171: sender_alias_key optional for system messages; CH-172: POST /conversations 200 {id} and extra errors, inbox order, optional Idempotency-Key, offline = no read in 2 min; CH-173/CH-174: closeForReport, retention.chat_months |

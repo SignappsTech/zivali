@@ -34,3 +34,13 @@ Service rules: reports from accounts younger than 24 h weigh 0.5; when the weigh
 { "target_type": "report", "target_id": "7c1e…", "reason": "scam", "note": "Asks for money upfront" }
 // → { "id": "ab1…", "duplicate": false }
 ```
+
+## Moderation actions
+
+Releasing a held report calls `ReportsDomain.releaseReport({ id }, ctx)` (moderator, admin or system ctx; `CONFLICT` when the report is not held): `held` → `visible`, then queues `photo.publish`, `match.report` and, for lost reports, `alerts.fanout` (CH-196).
+
+## Change log
+
+| Version | Date | Change |
+|---|---|---|
+| 1.1 | 2026-10-18 | CH-196: ReportsDomain.releaseReport for held reports |

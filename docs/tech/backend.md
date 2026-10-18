@@ -35,7 +35,7 @@ Read this, your task packet and the contract(s) it references. Conventions for e
       Dockerfile (multi-stage; one image for api and worker), tsup.config.ts, prisma.config.ts (loads the env file, schema folder, migrations.seed), vitest.config.ts, .env.example
     supabase/        config.toml (local Postgres, Auth, Realtime, mail catcher), templates/*.html (Auth emails), seed/geo/ (GURS data), README.md
     scripts/         deploy.mjs, geo-to-sql.mjs, geo-places.mjs, geo-shapes.mjs, admin-create.mjs
-    deploy/          docker-compose.yml, Caddyfile, backup notes (TASK-5.1)
+    deploy/          docker-compose.yml, nginx/ (edge project), remote.sh, README.md; no Caddyfile (nginx + certbot, ADR-016; CH-152)
     docker-compose.dev.yml   MinIO for local R2
 
 ### Naming
@@ -95,18 +95,18 @@ Domains throw `AppError`; unknown errors become `INTERNAL` (500) with the reques
 
 | Variable | Notes |
 |---|---|
-| `APP_ENV` (`local`/`staging`/`production`), `APP_VERSION`, `PORT` (4000), `API_URL`, `APP_URL`, `WEB_ORIGINS` | runtime; `APP_VERSION` returned by health, default `dev` |
+| `APP_ENV` (`local`/`staging`/`production`), `APP_VERSION`, `PORT` (4000), `API_URL`, `APP_URL`, `WEB_ORIGINS` | runtime; `APP_VERSION` returned by health, default `dev`. `lib/config.ts` reads `API_URL` and `APP_URL` (defaults `http://localhost:4000` / `:3000`): set both in staging and production (email links, unsubscribe; CH-163) |
 | `DATABASE_URL` (session pooler or direct, `?schema=app`), `DIRECT_URL` (migrations) | local: `postgresql://postgres:postgres@127.0.0.1:54322/postgres` |
 | `SUPABASE_URL`, `SUPABASE_SECRET_KEY` (Admin API only), `SUPABASE_JWT_SECRET` (local HS256 fallback) | JWKS at `${SUPABASE_URL}/auth/v1/.well-known/jwks.json` |
 | `FUZZ_SECRET`, `RATE_SALT`, `IDEMPOTENCY_KEY` | random 32-byte secrets per environment |
 | `STORAGE_PROVIDER` (`minio`/`r2`/`memory`), `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_PRIVATE`, `R2_BUCKET_MEDIA`, `R2_BUCKET_BACKUPS`, `MEDIA_BASE_URL`, `S3_ENDPOINT` (MinIO locally) | ADR-014; buckets are in the R2 **EU jurisdiction**, so the r2 adapter always uses `https://<R2_ACCOUNT_ID>.eu.r2.cloudflarestorage.com` (also for presigned URLs) |
 | `PAYMENTS_PROVIDER` (`mock`/`stripe`/`off`), `STRIPE_SECRET_KEY` (sk_test only), `STRIPE_WEBHOOK_SECRET`, `MOCK_WEBHOOK_SECRET` | live keys rejected (C13); `off` (the default when `APP_ENV=production` sets none; the pilot runs `stripe` test mode) answers every checkout and webhook 503 `SERVICE_UNAVAILABLE` and makes `GET /v1/config/public` report `payments.enabled: false`, which the web and app follow (C13 §Payments off) |
-| `EMAIL_PROVIDER` (`mock`/`brevo`), `BREVO_API_KEY`, `EMAIL_FROM`, `LEADS_NOTIFY_EMAIL` | mock keeps an in-memory sent list (no `email_outbox`); staging/production: configured or explicitly off |
+| `EMAIL_PROVIDER` (`mock`/`brevo`), `BREVO_API_KEY`, `EMAIL_FROM`, `LEADS_NOTIFY_EMAIL` | support address = `EMAIL_FROM` until Q10 (must be a monitored mailbox, replies go there; fallback `podpora@najdimo.si`); add `SUPPORT_EMAIL` if they differ (CH-163). The Dockerfile builds `@zivali/i18n` before the api build: run `pnpm images` once at merge. Mock keeps an in-memory sent list (no `email_outbox`); staging/production: configured or explicitly off |
 | `PUSH_PROVIDER` (`mock`/`expo`), `EXPO_ACCESS_TOKEN` | |
 | `CAPTCHA_PROVIDER` (`mock`/`turnstile`), `TURNSTILE_SECRET_KEY` | leads form; Auth captcha is configured in Supabase |
 | `AI_PROVIDER`, `ANTHROPIC_API_KEY`, `AI_VISION_MODEL`, `AI_VISION_EFFORT` (M3); `EMBEDDER_PROVIDER`, `VOYAGE_API_KEY` (M3) | ADR-012, ADR-013 |
 | `GA_PROPERTY_ID`, `GA_SERVICE_ACCOUNT_KEY_FILE` | partner-stats enrichment behind a flag; key file in `.secrets/` |
-| Deploy (CI / `scripts/deploy.mjs`): `SUPABASE_ACCESS_TOKEN`, `SUPABASE_PROJECT_REF`, `SUPABASE_DB_PASSWORD`, `HETZNER_HOST`, `HETZNER_SSH_KEY`, `GHCR_TOKEN`, `EXPO_TOKEN` | missing → `NEEDS-INPUT`, dry run |
+| Deploy (CI / `scripts/deploy.mjs`, as built, CH-152): `WEB_HOST`, `API_HOST`, `CERTBOT_CLOUDFLARE_TOKEN` or `CLOUDFLARE_API_TOKEN`, `HETZNER_HOST`, `HETZNER_SSH_KEY`, `HETZNER_KNOWN_HOSTS`, `HETZNER_API_TOKEN`, `HETZNER_FIREWALL_ID`, `SUPABASE_ACCESS_TOKEN`, `SUPABASE_PROJECT_REF`, `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY` | missing → `NEEDS-INPUT`, dry run. `SUPABASE_DB_PASSWORD` and `EXPO_TOKEN` are not used by `deploy.mjs`; no `GHCR_TOKEN` (no registry, ADR-016) |
 | `SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID/_SECRET`, `…_APPLE_…` (config.toml `env()`) | providers enabled only when set |
 
 `lib/config.ts` validates all of them with zod at startup (fails with the variable name); adapters fall back to `mock` when their credentials are missing in `local`/test only. In staging and production an adapter is either configured or explicitly `off` (feature not enabled: calls fail with `SERVICE_UNAVAILABLE`), never `mock`.
@@ -164,3 +164,4 @@ Branch `agent/<task-id>-<slug>` from `main`; commits `<task-id>: <what>`; never 
 | 1.4 | 2026-10-15 | CH-107: profiles.home_point writes must call coarsenPoint |
 | 1.5 | 2026-10-15 | CH-121: destructive admin actions require a trimmed non-empty note; role changes call invalidateProfile(id) |
 | 1.6 | 2026-10-16 | TASK-107: @zivali/* resolve from the checkout (tsconfig.base.json paths), not node_modules links |
+| 1.7 | 2026-10-18 | CH-152: deploy variables and deploy/ repo map as built; CH-163: API_URL and APP_URL in staging/production, support address = EMAIL_FROM, Dockerfile builds @zivali/i18n |

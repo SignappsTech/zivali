@@ -25,7 +25,7 @@ model profiles {
   @@schema("app")
 }
 ```
-- `ensureProfile(user)` creates the row on the first authenticated request (locale from `user_metadata.locale`, `is_anonymous` from the token). Converting an anonymous user (C7) keeps the same id; the next request flips `is_anonymous`.
+- `ensureProfile(user)` creates the row on the first authenticated request (locale from `user_metadata.locale`; `display_name` from `user_metadata.display_name` (mobile sign-up writes it) or Google's `full_name`/`name`, trimmed to 60 (CH-168); until implemented the mobile app PATCHes `/v1/me` once on the first session when `display_name` is null, `lib/profile-i18n.tsx`; `is_anonymous` from the token). Converting an anonymous user (C7) keeps the same id; the next request flips `is_anonymous`.
 - The last admin cannot be demoted (service check + test).
 
 ## Token verification (`middleware/auth.ts`)
@@ -36,7 +36,8 @@ model profiles {
 
 - Email + password with `enable_confirmations = true`; anonymous sign-ins enabled; MFA TOTP enroll and verify enabled.
 - Google and Apple providers enabled only when their client ids are set (`env(...)` in config).
-- Turnstile captcha: off locally, on in cloud for sign-up and anonymous sign-in.
+- Turnstile captcha: off locally, on in cloud for sign-up and anonymous sign-in. With it on, **every** Supabase Auth call that requires a token (sign-up, sign-in, reset, resend as well as anonymous sign-in) must send `captchaToken`, else it fails with `CAPTCHA_FAILED`. The email flows do not yet send one; TASK-17.3 (captcha, incl. the mobile WebView) is extended beyond anonymous sign-in to all of them (CH-169, CH-175). Until then staging sign-up from the app fails. `apps/mobile/lib/auth.ts` wraps `resend`, `updateUser` and `exchangeCodeForSession` locally; move them into `@zivali/api/auth` when web (TASK-9.3) needs them (CH-169).
+- Password reset links (CH-202): the PKCE verifier lives in the browser that asked, so a link works only there. The web callback (TASK-9.3) also signs in by `token_hash` with `type=recovery` (`verifyOtp`); web `recoveryEmail` accepts both that session (amr `otp`) and a PKCE one (amr `recovery`). Planned: the recovery template links `{{ .RedirectTo }}&token_hash={{ .TokenHash }}` instead of `{{ .ConfirmationURL }}` (SL and EN blocks, `supabase/templates/recovery.html`, and the cloud dashboard copy; `RedirectTo` already carries `?type=recovery` for web). The template is shared with mobile: its reset deep link may have no query string (then `&token_hash=` breaks the URL) and must first accept `token_hash` (`verifyOtp` type recovery) before the switch.
 - Redirect URLs: production allow-list is `https://<APP_URL>/**` and `zivali://**` only (`exp://` URLs are local/staging only). `secure_password_change = true`. The locale reaches the auth emails through the Admin API (`user_metadata.locale`). JWT expiry 3600 s, refresh token rotation on.
 - Email templates (confirm, recovery, magic link, email change, reauthentication, identity-linked notice) in `supabase/templates/*.html`, copy from `docs/content/notifications-and-emails.md` §3, localised with `{{ if eq .Data.locale "en" }}…{{ else }}…{{ end }}`; check `{{ .Provider }}` and `{{ .NewEmail }}` against the deployed Supabase version.
 
@@ -96,3 +97,4 @@ Clients keep report drafts locally (C4 §Drafts, C17). When a signed-out visitor
 | 1.5 | 2026-10-15 | CH-129: email copy reference §5 → §3; production redirect allow-list (`https://<APP_URL>/**`, `zivali://**`; `exp://` local/staging only); `secure_password_change = true`; locale reaches auth emails via the Admin API |
 | 1.6 | 2026-10-15 | CH-145: GET /v1/admin/audit-log and /v1/admin/queues, role body {role, note}, AdminUser email_masked + is_anonymous (no banned_at yet), limit/cursor, users query, errors NOT_FOUND and RATE_LIMITED |
 | 1.7 | 2026-10-16 | TASK-17.12: `reauthentication_needed` → `UNAUTHENTICATED`. `POST /v1/me/convert-password` (briefly added for the C7 §6 conversion) is removed before release: the Admin API password update clears the pending `email_change` token and signs out every session, so the mailed link and "Pošlji znova" died. The conversion sends password and address in one `updateUser` instead (C7 §6) |
+| 1.8 | 2026-10-18 | CH-168: ensureProfile seeds display_name; CH-169/CH-175: captchaToken on every Auth call that needs it (TASK-17.3 extended), mobile auth wrappers to move; CH-202: recovery by token_hash and the planned template change |

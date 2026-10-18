@@ -22,7 +22,7 @@ leads(id, company, contact_name, email, phone null, region_interest text null, i
 ```
 Access only through the API (RLS deny-all); models in `prisma/schemas/ads.prisma`.
 
-**Content rule (TASK-35, TASK-37):** no ad may sell, give away or rehome animals; the API rejects such ads on save, checking title, body and cta only, not link_url or image_alt (category blocklist plus keyword list in `app_config` `ads.blocked_terms`, SL and EN) and the serving query excludes ads flagged `blocked`.
+**Content rule (TASK-35, TASK-37):** no ad may sell, give away or rehome animals; the API rejects such ads on save, checking title, body and cta only, not link_url or image_alt (category blocklist plus keyword list in `app_config` `ads.blocked_terms`, SL and EN) There is no `blocked` flag on ads (CH-204): serving re-checks the category blocklist (`BLOCKED_CATEGORIES` in `domains/ads/ads.domain.ts`: sale, giveaway, rehoming) and `app_config` `ads.blocked_terms` (JSON string[], SL and EN, migration default) on every serve, whole words ignoring case and diacritics, so a term added later also stops older ads. The save-time check is `AdsDomain.assertAdWritable(input, ctx)` (admin + aal2, content, exclusive overlap), called on create, edit and activation (TASK-37.2).
 
 ## Serving (owned by TASK-35.1)
 
@@ -32,11 +32,13 @@ Access only through the API (RLS deny-all); models in `prisma/schemas/ads.prisma
 | `POST /v1/ads/:id/impressions` | none; rate limit 300/min per IP | `{ slot, region_id? }` | `204` (aggregate upsert into `ad_stats_daily`, day in Europe/Ljubljana, no user ids, no cookies) |
 | `GET /v1/ads/:id/click` (TASK-35.2) | none; rate limit 300/min per IP | `?s=<slot>&r=<region_id>` | `302` to the stored `link_url` after counting the click; unknown id → 404; never a user-supplied target |
 
-`Ad = { id, title, body, cta, image_url, image_alt, click_url /* API_URL/v1/ads/<id>/click?s=<slot>&r=<region_id> */, is_house, label: 'Oglas'|'Ad' }`. Unknown slots (including any report-flow slot) → `VALIDATION`.
+`Ad = { id, title, body, cta, image_url /* string | null: seeded house ads and ads before their image upload have no image_path; render no image when null (CH-203) */, image_alt, click_url /* API_URL/v1/ads/<id>/click?s=<slot>&r=<region_id> */, is_house, label: 'Oglas'|'Ad' }`. Unknown slots (including any report-flow slot) → `VALIDATION`.
 
 Ad-free users: when the caller has an active Premium entitlement (M4) the response is `null` (no sponsor ad and no house ad) and the slot collapses; until entitlements exist nobody is ad-free; Podpornik supporters are not ad-free.
 
 Matching: `status = 'active'` (lowercase literal; the DB enum `AD_SLOT` is uppercase while the API values are lowercase), now within dates, slot in `slots`, locale in `locales`, region or municipality null or containing the context, species null or containing it. Several matches → weighted random. None → a house ad for the locale (`supporter`, `partner`, `adopt`, rotated). Exclusive ads cannot overlap in dates for the same slot and region (service check only: an exclusion constraint cannot be built on arrays). Links carry `rel="sponsored noopener"` and `target="_blank"`. Impression = the client posts once when the ad first renders (rendered count, A-016).
+
+Implemented details (CH-205): targeting is per field (`region_ids`, `municipality_ids`, `species` each NULL/empty or containing the context, AND-ed); `region_id` is derived from `municipality_id` when absent (also used in the `click_url` `r`, 0 when unknown); an exclusive match owns the slot; house ads are the fallback only; the response carries `Vary: Accept-Language`. Impressions: an unknown region id is stored as 0; `NOT_FOUND` for an unknown or deleted ad or a slot the ad does not run in.
 
 Client hook (`@zivali/api/ads`): `useAd(slot, ctx): { ad, loading, error }` (errors collapse the slot silently).
 
@@ -84,3 +86,4 @@ Computed by the `partners.stats` job (hourly) into `partner_stats_snapshot(id uu
 | Version | Date | Change |
 |---|---|---|
 | 1.1 | 2026-10-15 | CH-137: status literal 'active', AD_SLOT case note, partner_stats_snapshot columns, slot exclusivity is a service check only |
+| 1.2 | 2026-10-18 | CH-203: Ad.image_url nullable; CH-204: no blocked flag, serve-time blocklist re-check, assertAdWritable; CH-205: targeting, region derivation, exclusive, Vary, impression details |
