@@ -1,11 +1,11 @@
 ---
 id: TASK-114.6
 title: 'Short pages: the footer floats mid-screen (page at least the viewport height)'
-status: In Progress
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-16 14:05'
-updated_date: '2026-10-18 04:03'
+updated_date: '2026-10-18 04:07'
 labels:
   - bug
   - fe
