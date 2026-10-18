@@ -3,11 +3,11 @@ id: TASK-114.22
 title: >-
   Matching too loose: species, distance and time alone make a "possible" match;
   require evidence
-status: In Progress
+status: Done
 assignee:
   - '@backend-dev'
 created_date: '2026-10-16 16:25'
-updated_date: '2026-10-18 02:22'
+updated_date: '2026-10-18 03:19'
 labels:
   - be
   - matching
