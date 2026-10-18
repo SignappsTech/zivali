@@ -5,7 +5,7 @@ status: In Review
 assignee:
   - '@design-lead'
 created_date: '2026-10-18 21:23'
-updated_date: '2026-10-18 21:54'
+updated_date: '2026-10-18 22:03'
 labels:
   - design
   - wireframe
@@ -60,4 +60,6 @@ Questions for the owner: (1) filled and marked, or highlighted only until tapped
 To do after approval: CHANGE rows for C19 §Client rules (fill only values valid for the chosen species; no fill with a notice; the one-line case if Q3 is answered so), then P7 §AI suggestions (AC #3).
 
 Approval: pending. Record here who approved, the date and the version.
+
+Lead, 2026-10-19: the wireframe (7780fd96) now uses the TASK-40.6 ai_prefill.* copy; the 'placeholder' wording above is out of date. Strings still to confirm: ai_prefill.info_body (owner + lawyer), report_found.ai_note (LQ-37); proposals without keys: 'Preveri predloge' and the P6 review-step note and row line. Awaiting owner approval.
 <!-- SECTION:NOTES:END -->
