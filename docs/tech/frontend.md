@@ -29,11 +29,14 @@ Only dependencies listed in `docs/tech/adr/017-dependency-allowlist.md` (or inst
       app/[locale]/(public)/…      public pages (home, map, report flows, /r/[code], partners, info, legal); route folders use the internal EN paths (e.g. shelters, lost-pets/[location]); next-intl `pathnames` map them to the SL URLs (e.g. /zavetisca)
       app/[locale]/(app)/…         signed-in areas (my pets, my reports, inbox, account)
       app/[locale]/(admin)/admin/… admin console (aal2)
-      app/r/[code]/opengraph-image.tsx, app/r/[code]/poster.pdf/route.ts, app/api/health/route.ts (web only; ad clicks go to the API, C14)
+      app/r/[code]/opengraph-image.tsx, app/r/[code]/poster.pdf/route.ts, app/r/[code]/square.png (C15), app/api/health/route.ts (web only; ad clicks go to the API, C14)
       app/captcha/page.tsx, public/.well-known/*; dev pages live under app/[locale]/dev/{kit,checkout}/page.tsx (SL /dev/kit, EN /en/dev/kit; CSP and fonts from the locale layout; notFound when APP_ENV=production)
       components/ui/               shadcn components, edited to the design system (§10)
       components/<feature>/        feature components; components/report/slots/<slot>.tsx (C15)
-      lib/supabase/{server,client,middleware}.ts (Auth session and Realtime only), lib/api.ts (API client with the session token), lib/env.ts, lib/store.ts (Redux store from `createApiStore`)
+      lib/supabase/{server,client,middleware}.ts (Auth session and Realtime only), lib/api.ts (API client with the session token), lib/env.ts, lib/store.ts (`getStore`: one shared Redux store per locale in the browser, a new one per server render; CH-314)
+      components/store-provider.tsx StoreProvider (Redux `<Provider>`, no longer in app/providers.tsx): wraps the (app), (admin) and dev layouts and /m; on public pages only lazy islands get it (the shelter answer, the header inbox dot `InboxDot` in shell/parts.tsx, SessionSync). The language switch's profile side is `i18n/use-profile-locale.ts` (run by SessionSync) (CH-314)
+      components/page-messages.tsx PageMessages: the root layout sends only `CLIENT_NAMESPACES` (common, consent, errors, nav); a public page adds its own (sign-in, sign-up, reset-password: auth; /m: auth, lifecycle, report_found; /zavetisca: shelters); (app), (admin) and dev layouts pass the whole catalogue (CH-363)
+      app/fonts/                   the three self-hosted woff2 subsets (`next/font/local` in `app/[locale]/layout.tsx`), their OFL files and a README with the sources (@expo-google-fonts static instances) and the pyftsubset command (fonttools 4.60.1 + brotli, run from a scratch venv, not a repo dependency) (CH-363)
       content/legal/{sl,en}/*.mdx  legal pages
       e2e/                         Playwright specs (smoke + flows)
       proxy.ts                     Next 16 (was middleware.ts): CSP nonce, Supabase session refresh, next-intl; matcher excludes /api, _next and files with an extension; /dev/* is not excluded (C15)
@@ -42,6 +45,7 @@ Only dependencies listed in `docs/tech/adr/017-dependency-allowlist.md` (or inst
       app/report/{lost,found}/…, app/pets/…, app/inbox/[id].tsx, app/settings/…, app/auth/…, app/payments/return.tsx
       components/ui/               RN Reusables components, edited to the design system
       components/<feature>/, lib/{supabase,env,store,net}.ts, e2e/*.yaml (Maestro)
+      components/browse/ (TASK-31.5, CH-312): filters.ts (P4 filters to C4 queries, ad slot insertion), list-sheet.tsx (the `renderAd` insertion point for TASK-36.6), filter-sheet.tsx, report-row.tsx, use-device-location.ts; components/ui/slider.tsx (range slider on gesture-handler, `role="slider"`); components/ui/pill.tsx has an optional `leading` element (colour swatch)
       lib/db/ (expo-sqlite store + local migrations), lib/data/reports.ts (only path for report lists: network or offline cache),
       lib/offline/{sync,outbox,geofence,wipe}.ts (C17), lib/geo.ts (distanceKm), lib/checkout.ts (payInBrowser over openAuthSessionAsync), components/payments/checkout.tsx (CheckoutSheet hand-off and CheckoutResult return states), app/dev/pay.tsx (dev-only 5 € support payment)
       index.ts                     app entry (package.json `main`): imports lib/offline/{geofence,sync} before expo-router/entry, so a headless Android launch defines the TaskManager background tasks (CH-233, CH-234)
@@ -73,6 +77,7 @@ Only dependencies listed in `docs/tech/adr/017-dependency-allowlist.md` (or inst
 - Privacy: never render or log exact coordinates, chip numbers, emails or phone numbers of other users; `track()` only with registered params (C12); no PII in `console` output.
 - Device storage (mobile): only the C17 tables (own drafts and outbox, public report cache) and secure-store tokens; never persist chat, matches, notifications or other private queries (no redux-persist or other query persistence); screens read report lists only through `lib/data/reports.ts`; sign-out calls `wipeLocalData()`.
 - Accessibility first: every map has a list alternative; every icon-only button has an accessible name; dialogs and sheets trap and restore focus.
+- Redux and the bundle (CH-314, CH-363): a client component reachable from the root layout or a public page must not statically import `@zivali/api/*` hooks; load it with `next/dynamic`, or every public page ships Redux/RTK (25 KB gz). `apps/web/eslint.config.mjs` enforces it with `no-restricted-imports` banning `use*` imports from `@zivali/api/*` in public routes, the root layout and home, `app/providers.tsx`, components/{shell,consent,analytics,content,legal}, the public auth forms and shelter-search (`eslint.config.test.ts`); a component that a public page imports statically joins that list. A new client namespace on a public page goes into `CLIENT_NAMESPACES` or the page's `PageMessages`.
 - No ad component in protected flows (C15): report-lost, report-found, manage, inbox and conversations, sign-in/up/reset, payments return.
 
 ## Error handling
@@ -99,7 +104,7 @@ Only dependencies listed in `docs/tech/adr/017-dependency-allowlist.md` (or inst
 | -                                                                                                                                                                                                                                             | `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID`, `EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID` (also adds the `@react-native-google-signin` plugin with the reversed client id as `iosUrlScheme`; the native modules need a new dev build) | native Google sign-in (credential-gated; CH-167) |
 | `NEXT_PUBLIC_GOOGLE_SIGN_IN`, `NEXT_PUBLIC_APPLE_SIGN_IN` (`true`/`false`, unset = off; Apple stays off until its account exists) | `EXPO_PUBLIC_APPLE_SIGN_IN` (`true`/`false`, default off; also sets `ios.usesAppleSignIn` in `app.config.ts`; Apple sign-in waits for the Apple Developer account) | provider buttons (CH-167, CH-186). Deploy: set `NEXT_PUBLIC_GOOGLE_SIGN_IN=true` and `NEXT_PUBLIC_TURNSTILE_SITE_KEY` on Vercel (hosted Auth has Google and Turnstile on); `proxy.ts` opens `script-src`/`frame-src` for challenges.cloudflare.com only while the site key is set |
 
-| Server-only `MEDIA_BASE_URL` (the API's public media origin, e.g. `https://media.zivali.test` in fixtures; its origin is added to the proxy CSP `img-src`, required https outside local; without it report photos are blocked) (CH-213) | - | proxy.ts, manage and detail pages |
+| Server-only `MEDIA_BASE_URL` (the API's public media origin, e.g. `https://media.zivali.test` in fixtures; its origin is added to the proxy CSP `img-src`, required https outside local; without it report photos are blocked) (CH-213). `img-src` also lists the R2 upload origin (`R2_UPLOAD_ORIGIN`, MinIO locally; the host already in `connect-src`) so the 10-minute presigned pet photo thumbs (C4 `Pet.photos[].thumb_url`) show on the P8 list, detail and edit pages (CH-297) | - | proxy.ts, manage and detail pages |
 | Server-only `MOCK_WEBHOOK_SECRET` (signs the `/dev/checkout` mock events; same value as the API's; unset = `mock-webhook-secret` in local only; in `.env.example` and `lib/env.ts`) (CH-255) | - | C13 |
 | - | `EXPO_PUBLIC_CAPTCHA` (`true`/`false`; when on, anonymous sign-in gets a Turnstile token through the `/captcha` WebView sheet; true in the `eas.json` production profile, off locally) (CH-217) | C7 |
 
@@ -161,3 +166,4 @@ Windows + pnpm 11 hoisted: a `pnpm install` inside an agent worktree can delete 
 | 1.4     | 2026-10-16 | TASK-107: @zivali/* resolve from the checkout (tsconfig paths, jest moduleNameMapper), not node_modules links |
 | 1.5     | 2026-10-18 | CH-167: mobile Apple/Google sign-in variables; CH-186: web sign-in provider flags, deploy settings, CSP while the Turnstile key is set |
 | 1.6     | 2026-10-18 | CH-213, 217, 255: MEDIA_BASE_URL, EXPO_PUBLIC_CAPTCHA, MOCK_WEBHOOK_SECRET; CH-233, 234, 265: mobile entry, checkout and geo files, native modules; CH-235: worktree installs |
+| 1.7     | 2026-10-18 | CH-297: CSP img-src R2 origin; CH-312: mobile browse components; CH-314, 363: StoreProvider, PageMessages, fonts, no-restricted-imports rule; square.png route |

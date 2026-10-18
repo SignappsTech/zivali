@@ -21,7 +21,7 @@ Runtime dependencies outside this list (and outside what the Expo SDK 57 templat
 | `exifr` | web | EXIF GPS/time read before re-encode (ADR-014) |
 | `idb-keyval` | web | IndexedDB drafts (≈ 600 B) |
 | `@react-native-firebase/app`, `@react-native-firebase/analytics` | mobile | ADR-009 |
-| `expo-image-picker`, `expo-image-manipulator`, `expo-location`, `expo-notifications`, `expo-web-browser`, `expo-secure-store`, `expo-crypto`, `expo-sqlite`, `expo-file-system`, `expo-sharing`, `expo-apple-authentication`, `expo-dev-client`, `react-native-webview`, `expo-network`, `expo-background-task`, `expo-task-manager`, `react-native-svg` | mobile | Expo-native capabilities (offline data layer and geofencing: ADR-019); `react-native-svg` is Expo-pinned (`npx expo install`) and a required peer of `phosphor-react-native` (TASK-8.3) |
+| `expo-image-picker`, `expo-image-manipulator`, `expo-location`, `expo-notifications`, `expo-web-browser`, `expo-secure-store`, `expo-crypto`, `expo-sqlite`, `expo-file-system`, `expo-sharing`, `expo-apple-authentication`, `expo-dev-client`, `react-native-webview`, `expo-network`, `expo-background-task`, `expo-clipboard` (~57.0.2, the SDK 57 bundled version: P18 "Kopiraj povezavo"/"Kopiraj besedilo", the Facebook kit texts, P9 slot C "Kopiraj povezavo"; its config plugin is not used), `expo-task-manager`, `react-native-svg` | mobile | Expo-native capabilities (offline data layer and geofencing: ADR-019); `expo-clipboard` and `@maplibre/maplibre-react-native` (TASK-15.4) are native modules, so they need a new EAS development build; `react-native-svg` is Expo-pinned (`npx expo install`) and a required peer of `phosphor-react-native` (TASK-8.3) |
 | `@react-native-google-signin/google-signin` | mobile | Native Google ID token for `signInWithIdToken` |
 | `qrcode` (+ `@types/qrcode`, dev) | web (server) | QR on posters |
 | `@next/mdx` | web | Legal and long-form pages as MDX |
@@ -67,3 +67,4 @@ Not used, on purpose: `eslint-plugin-prettier` and `eslint-plugin-import` (above
 | 1.1 | 2026-10-15 | CH-43: `expo-crypto` (mobile) for AES-256-GCM encryption of the Supabase session at rest (with `expo-secure-store`) |
 | 1.2 | 2026-10-15 | CH-122: `react-native-svg` (mobile, Expo-pinned; peer of `phosphor-react-native`) |
 | 1.3 | 2026-10-18 | CH-278: exact pin and requirements for @maplibre/maplibre-react-native 11.4.1 |
+| 1.4 | 2026-10-18 | CH-306/CH-335/CH-346: `expo-clipboard` (mobile, Expo-bundled) for copy link and share texts; new dev build |

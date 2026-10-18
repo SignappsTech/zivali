@@ -43,6 +43,7 @@ type ConversationSummary = { id; about_report: { short_code, type, species, thum
                              other_participant_id: Uuid | null; last_message_preview; unread: number; status: 'active'|'read_only' }
 ```
 `other_participant_id` is the other participant's user id (the one `other_alias_key` names; `null` when none is left): the `participant_id` for block and the `target_id` of a `profile` abuse report (C11). It is the only participant id in any DTO; never their email or phone.
+System messages (CH-171, CH-361): `body` is a key the client words, not text: `confirmed`, `contact`, `closed`, `home`, `reopened` → i18n `chat.system_<key>` (P12 copy §5). A client shows any other body as sent.
 `has_link` is set by the service (URL regex): a scheme (`https://`, …), `www.`, or a bare host on any TLD (dot-separated labels ending in 2+ letters, e.g. `is.gd/x`, `foo.dev`); numbers (`3.14`, `17.30`), ordinals (`2.nadstropje`) and abbreviations (`e.g.`) are not links. Location messages only from a manager of the related report (explicit exact-point share, R-004.3).
 Aliases: conversation lists and messages return alias keys (`owner` | `finder` | `sighter` | `contact` | `shelter`) or the participant's chosen `display_name`; clients render the neutral i18n keys `chat.alias_owner` ("Oseba, ki išče žival" / "Person searching"), `chat.alias_finder`, `chat.alias_sighter`, `chat.alias_contact`, `chat.alias_shelter` (P12 content slice). Never email or phone.
 
@@ -73,3 +74,4 @@ Aliases: conversation lists and messages return alias keys (`owner` | `finder` |
 | 1.3 | 2026-10-16 | CH-170: ConversationSummary gets other_participant_id (user id, for block and the profile abuse report); has_link matches bare hosts on any TLD (TASK-21.7, TASK-21.8) |
 | 1.4 | 2026-10-18 | CH-493 (TASK-114.10): `POST /conversations/:id/read` also marks the caller's unread `chat_message` notifications for it read, same transaction |
 | 1.5 | 2026-10-18 | CH-171: sender_alias_key optional for system messages; CH-172: POST /conversations 200 {id} and extra errors, inbox order, optional Idempotency-Key, offline = no read in 2 min; CH-173/CH-174: closeForReport, retention.chat_months |
+| 1.6 | 2026-10-18 | CH-361: system message body keys |

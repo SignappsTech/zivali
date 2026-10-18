@@ -142,6 +142,8 @@ type Path   = { id: string; points: LatLng[]; numbered?: boolean }              
 useFuzzedArea(report: PublicReport): Circle                      // convenience for detail pages
 ```
 
+Mobile `MapView` as built (TASK-15.5, CH-302): optional picker hooks `ref` (`moveTo(center, zoom)`), `onCameraChange({ center, zoom, moving })`, `label`/`hint` and `children` (an overlay under the list). `usePlaceSearch` also returns `searched` (results for the current text are in).
+
 Until `photoUrl` is drawn, mobile renders the avatar as a 44 px `status-<kind>-subtle` disc inside the 3 px status ring and halo; found and sighted then differ by ring hue only on the map (the list carries the status word) (CH-276).
 - Style: `buildMapStyle(mode)` from `@zivali/tokens/map-style` (OpenFreeMap "positron" recoloured with the `map-*` tokens, calm layer set; `detail: true` on detail maps). Markers per `docs/design/system.md` §9: photo avatar with a `marker-<kind>` ring for found/sighted, lost as a fuzzed `marker-area` disc with avatar (never an exact pin), clusters as count discs, "you" dot only after permission; status is never colour alone. Attribution always visible.
 - Keyboard (web): map focusable, arrow keys pan, +/- zoom; markers reachable through the text alternative list.
@@ -174,3 +176,4 @@ Until `photoUrl` is drawn, mobile renders the avatar as a 44 px `status-<kind>-s
 | 1.3 | 2026-10-15 | CH-131: fixed public centre when only the radius changes, seed = HMAC(FUZZ_SECRET, report_id:lat6:lng6), D = 0.75 × min radius × sqrt(0.16 + 0.84u), public slugs from public_point, FUZZ_SECRET rotation note |
 | 1.4 | 2026-10-18 | CH-147: lost offset range 150–410 m; residual risk of averaging ~10 reports from one spot (~24 m median), the 150 m found radius is the real limit |
 | 1.5 | 2026-10-18 | CH-275: MapView.bottomInset; CH-276: Marker.photoUrl |
+| 1.6 | 2026-10-18 | CH-302: mobile MapView picker hooks (ref, onCameraChange, label/hint, children), usePlaceSearch `searched` |
