@@ -511,6 +511,22 @@ a{color:inherit}
 /* annotation chips and placeholder copy */
 .dev .to{display:inline-block;font-family:ui-monospace,Consolas,monospace;font-size:12px;line-height:18px;font-weight:400;letter-spacing:0;padding:0 8px;border-radius:9999px;background:hsl(var(--status-sighted-subtle));color:hsl(var(--status-sighted-subtle-foreground));vertical-align:middle;white-space:normal}
 .dev .phc{text-decoration:underline dotted hsl(var(--chart-2));text-decoration-thickness:2px;text-underline-offset:4px}
+.dev .lgl{text-decoration:underline wavy hsl(var(--chart-5));text-decoration-thickness:1.5px;text-underline-offset:5px}
+.no-notes .dev .lgl{text-decoration:none}
+.lg-lgl{text-decoration:underline wavy hsl(var(--chart-5));text-decoration-thickness:1.5px;text-underline-offset:5px;color:hsl(var(--foreground))}
+/* info disclosure, bottom sheet on mobile */
+.dev{position:relative}
+.dev .nbtns{display:flex;flex-wrap:wrap;gap:0 8px;margin:6px 0 -10px -12px}
+.dev .nbtns .bt{margin:0}
+.dev .slot .acts{display:flex;flex-wrap:wrap;gap:0 8px;margin:2px 0 -8px -12px}
+.dev .slot .acts .bt{margin:0}
+.dev .infob{margin-top:8px;font-size:16px;line-height:24px}
+.dev .infob .to{display:table;margin-top:10px}
+.dev .scrim{position:absolute;inset:0;background:hsl(var(--scrim) / var(--scrim-alpha))}
+.dev .sheet{position:absolute;left:0;right:0;bottom:0;background:hsl(var(--card));color:hsl(var(--card-foreground));border-radius:var(--radius-sheet) var(--radius-sheet) 0 0;box-shadow:var(--shadow-lg);padding:12px 20px 44px}
+.dev .grab{display:block;width:40px;height:5px;border-radius:9999px;background:hsl(var(--input));margin:0 auto 8px}
+.dev .shead{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.dev .sht{font-size:24px;line-height:30px;font-weight:700;letter-spacing:-.015em;padding-top:8px}
 </style>
 </head>
 <body>
@@ -542,14 +558,14 @@ a{color:inherit}
 <p>Sample data is the C19 example: a black dog. Species dog 0.98, breed Labradorec 0.81, colour black 0.93, pattern solid 0.77, size below the 0.6 threshold (0.41), collar seen 0.88.</p>
 <nav aria-label="Review files"><ul class="docnav"><li><a href="P3-home.html">P3 Home (TASK-115.1)</a></li><li><a href="P1-footer.html">P1 Footer (TASK-116.1)</a></li><li><a href="M-alerts-notifications.html">Alerts mock (TASK-114.15)</a></li><li><a href="M-legal-table.html">Legal table mock (TASK-114.19)</a></li><li><a href="M-ai-prefill.html" aria-current="page">AI pre-fill mock (TASK-41.1)</a></li></ul></nav>
 <div class="tools"><button type="button" class="tbtn" id="theme">Theme: auto</button><label><input type="checkbox" id="notes" checked> Show annotations</label><div class="seg" role="group" aria-label="Viewport for all frames" id="allview"><button type="button" data-v="desktop" aria-pressed="false">All Desktop 1440</button><button type="button" data-v="mobile" aria-pressed="false">All Mobile 390</button></div></div>
-<div class="legend"><span><span class="lg-ph">Dotted underline</span> placeholder copy until TASK-40.6 delivers the shared "AI pre-fill" copy</span><span>Blue chips: annotations (hidden with the checkbox)</span></div>
+<div class="legend"><span>Copy: <code>ai_prefill.*</code> from the P7 copy §3a (TASK-40.6, draft, native review pending)</span><span><span class="lg-lgl">Wavy underline</span> owner and lawyer confirm before release (privacy claim or quoted in the lawyer pack)</span><span><span class="lg-ph">Dotted underline</span> no key yet: proposal from this wireframe</span><span>Blue chips: annotations (hidden with the checkbox)</span></div>
 <section class="qs" aria-labelledby="q-h"><h2 id="q-h">Questions for the owner</h2><ol>
 <li><b>Filled or only highlighted?</b> Shown: the AI values are selected in the fields and marked "Predlog"; your own Save or Publish confirms them (F4). The other way is the "suggested" pill style, where every value waits for a tap: safer, but slower for someone in a panic. <span class="rec">Recommended: filled.</span></li>
 <li><b>Confidence without numbers?</b> Shown: at 0.6 or more a value is filled and marked; below that the field stays empty with a hint (F3, F4). No percentages and no "maybe" level. OK?</li>
-<li><b>Nothing certain enough (F10):</b> one line by the button, or a hint under every field (as C19 reads now)? <span class="rec">Recommended: one line.</span></li>
-<li><b>Found flow sentence (F2):</b> species, size and colour only (as shown), or add the breed ("Pes, labradorec, črne barve")?</li>
+<li><b>Nothing certain enough (F10):</b> one line by the button (the <code>none_live</code> text, shown as well as read out), or a hint under every field (as C19 and the copy read now)? <span class="rec">Recommended: one line.</span></li>
+<li><b>Found flow sentence (F2):</b> species, size and colour only (as shown, and as the copy has it), or add the breed ("Pes, labradorec, črne barve")?</li>
 <li><b>Another animal (F8):</b> let the finder carry on by hand (as shown), or stop the report, because only dogs and cats can be reported?</li>
-<li><b>Several animals (F8):</b> "Zamenjaj fotografijo" only (as shown), or do you want a crop tool in M3? It is extra work on web and mobile, and the copy would then say "crop it".</li>
+<li><b>Several animals (F8):</b> the copy asks for another or a cropped photo, cropped in the phone's own gallery (as shown). Or do you want a crop tool in Najdimo in M3? It is extra work on web and mobile.</li>
 <li><b>Before saving (F7):</b> a quiet line and "Preveri predloge" next to Save, never blocking (as shown). OK, or must the person confirm each suggested field one by one?</li>
 </ol></section>
 <nav aria-label="Frames"><ul class="findex" id="findex"></ul></nav>
@@ -560,13 +576,14 @@ a{color:inherit}
 <div class="table-wrap"><table class="t">
 <thead><tr><th scope="col">API answer</th><th scope="col">On screen</th><th scope="col">Frame</th></tr></thead>
 <tbody>
-<tr><td><code>pending</code></td><td>Spinner line "Preverjamo fotografijo …" in the AI slot by the main action. Nothing is blocked.</td><td>F1</td></tr>
+<tr><td><code>pending</code></td><td>Spinner line <code>ai_prefill.checking</code> in the AI slot by the main action. Nothing is blocked.</td><td>F1</td></tr>
 <tr><td><code>ready</code>, value with confidence 0.6 or more</td><td>Filled only if the field is empty and untouched; marked "Predlog" until the person changes it or saves.</td><td>F2, F3, F4</td></tr>
 <tr><td><code>ready</code>, <code>value: null</code> (below 0.6)</td><td>Field stays empty with the low-confidence hint.</td><td>F3, F4</td></tr>
 <tr><td><code>ready</code>, field <code>null</code> (the model saw nothing)</td><td>Nothing.</td><td>-</td></tr>
-<tr><td><code>ready</code>, nothing at 0.6 or more</td><td>Proposal: one line in the slot instead of a hint under every field.</td><td>F10</td></tr>
-<tr><td><code>ready</code>, <code>notice</code> <code>no_animal</code>, <code>other_animal</code>, <code>multiple_animals</code></td><td>Nothing filled. One note on the photo step with "Zamenjaj fotografijo".</td><td>F8</td></tr>
-<tr><td><code>ready</code>, <code>species</code> differs from the one chosen</td><td>Hint under Vrsta, never switched; only values valid for the chosen species fill.</td><td>F5</td></tr>
+<tr><td><code>ready</code>, nothing at 0.6 or more</td><td><code>none_live</code> is read out. Proposal: the same text as one line in the slot instead of a hint under every field.</td><td>F10</td></tr>
+<tr><td><code>ready</code>, <code>notice</code> <code>no_animal</code> or <code>other_animal</code></td><td>Nothing filled. A note under the first photo with "Zamenjaj fotografijo" and "Obdrži fotografijo"; P7 skips "Je to pravilno?".</td><td>F8</td></tr>
+<tr><td><code>ready</code>, <code>notice</code> <code>multiple_animals</code></td><td>Fills as usual, with the same kind of note.</td><td>F8</td></tr>
+<tr><td><code>ready</code>, <code>species</code> differs from the one chosen</td><td>Hint and an "Izberi psa" text button under Vrsta; never switched by itself. Only values valid for the chosen species fill.</td><td>F5</td></tr>
 <tr><td><code>ready</code>, <code>collar.value</code> true</td><td>Hint under Ovratnica (P6, P8) or the note field (P7 step 4). The collar text is never filled.</td><td>F4</td></tr>
 <tr><td>arrives after the person touched fields</td><td>Fills only empty, untouched fields; no new hint lines; focus stays.</td><td>F6</td></tr>
 <tr><td><code>unavailable</code>, an error, 10 s without an answer, <code>ai.enabled</code> false</td><td>Nothing extra: the form as it is today.</td><td>F9</td></tr>
@@ -578,45 +595,46 @@ a{color:inherit}
 
 <h2>Rules this wireframe sets (go to P7 §AI suggestions after approval)</h2>
 <ol class="rules">
-<li><b>One AI slot per screen, next to the main action</b> (mobile footer above the primary, web above the buttons, P8 web in the summary card). It holds, in turn: the checking line, the AI note ("Predlog iz fotografije. Umetna inteligenca se lahko moti."), the check-before-saving line on the saving step, or a late notice. It sits below the fields, so changing it never moves a field.</li>
-<li><b>Predlog mark:</b> sparkle (fill, 16) and "Predlog" 14 bold in <code>primary</code>, after the field label; where the h1 is the label (P7 step 2 edit), in the selected row. It is part of the field's accessible name. It goes away when the person changes the field, and on Save or Publish. "Da, nadaljuj" accepts the P7 sentence.</li>
-<li><b>Hints</b> (low confidence, species differs, collar): sparkle outline 16 in <code>primary</code> and 14/20 <code>muted-foreground</code> text under the field. Never a boxed panel (system 10.8).</li>
+<li><b>One AI slot per screen, next to the main action</b> (mobile footer above the primary, web above the buttons, P8 web in the summary card). In turn it holds: <code>ai_prefill.checking</code>, then the note (<code>note_continue</code> in P6 and on P7's "Uredi podatke" path, <code>note_save</code> in P8) with the "Kako nastanejo predlogi?" text button, or a late notice. It sits below the fields, so changing it never moves a field. The copy slice places the note "above the filled fields"; this layout keeps it by the button because a late result would otherwise push the fields down. To settle in P7 §AI suggestions.</li>
+<li><b>Predlog mark</b> (<code>ai_prefill.suggested</code>): sparkle (fill, 16) and "Predlog" 14 bold in <code>primary</code>, after the field label; where the h1 is the label (P7 "Uredi podatke"), in the selected row. The copy calls it a pill; it is drawn as a status word because system 10.5 keeps tonal pills to one per page. <code>suggested_a11y</code> is the field's accessible description. It goes when the person changes the field, and on Save or Publish. "Da, nadaljuj" accepts the P7 sentence.</li>
+<li><b>Hints</b> (<code>low_confidence</code>, <code>low_confidence_breed</code>, <code>collar_hint</code>, <code>collar_hint_note</code>, <code>species_differs</code>): sparkle outline 16 in <code>primary</code> and 14/20 <code>muted-foreground</code> text under the field. Never a boxed panel (system 10.8).</li>
 <li><b>Fill rule:</b> only empty fields the person has not touched; a cleared suggestion counts as touched and never comes back. A field that still carries the mark counts as untouched when a replaced first photo is checked again.</li>
 <li><b>Late result:</b> after the person touched a field on the current step, it only fills and marks; it adds no hint lines and never moves focus.</li>
-<li><b>Species differs:</b> hint, never switched; breed codes of the other species are never filled (C19 drops them only against the model's own species).</li>
-<li><b>Notice:</b> nothing is filled; the note shows on the photo step, or in the slot when the person has already moved on.</li>
-<li><b>Announcements:</b> one polite live-region message per photo ("Predlogi iz fotografije so vpisani v {count} polja. Preverite jih.", plural forms per ICU); the checking line is <code>role="status"</code>.</li>
+<li><b>Species differs:</b> hint plus the <code>species_switch</code> text button; never switched by itself. Breed codes of the other species are never filled (C19 drops them only against the model's own species). Pressing "Izberi psa" is the person's choice; empty, untouched fields valid for the new species then fill and are marked.</li>
+<li><b>Notices:</b> a neutral note under the first photo with "Zamenjaj fotografijo" and "Obdrži fotografijo" (dismisses it). <code>no_animal</code> and <code>other_animal</code>: nothing is filled and P7 skips "Je to pravilno?" (manual step with the notice above it). <code>multiple_animals</code>: fills as usual. If the person has already left the photo step, the notice shows in the slot.</li>
+<li><b>Announcements</b> (one polite region per photo): <code>arrived_live</code> with the number actually filled, or <code>none_live</code>, or the notice title. Nothing when the person has filled every field already. The checking status clears without an announcement.</li>
 <li><b>Nothing saved unconfirmed:</b> values become the person's own only through Save (P8), Objavi iskanje (P6), or "Da, nadaljuj" and Objavi prijavo (P7). Save is never blocked by remaining marks.</li>
+<li><b>Disclosure:</b> "Kako nastanejo predlogi?" opens <code>info_body</code> inline on web and in a bottom sheet on mobile, with the privacy link to <code>/zasebnost#s8</code>. Shown only when <code>ai.enabled</code> is true.</li>
 </ol>
-<p>Proposed contract changes, to file after approval: C19 §Client rules gets the species-differs fill rule (6), "no fill with a notice" (7) and, if question 3 is answered so, the one-line case (F10).</p>
+<p>Proposed changes, to file after approval: C19 §Client rules gets the species-differs fill rule (6), "no fill with <code>no_animal</code> or <code>other_animal</code>" (7) and, if question 3 is answered so, the one-line case (F10). The P7 copy §3a gets the slot placement of the note (1) and keys for the three proposals marked with a dotted underline.</p>
 
 <h2>Copy used</h2>
-<p>Real keys come from <code>docs/content/pages/P7-report-found.md</code> v0.6. Placeholders wait for TASK-40.6 (§"AI pre-fill" in the P7 copy, shared with P6 and P8). Field labels and options come from the P6, P8 and glossary §7 copy.</p>
+<p>From <code>docs/content/pages/P7-report-found.md</code> §3 (<code>report_found.ai_*</code>) and §3a (<code>ai_prefill.*</code>, TASK-40.6, draft, native review pending). Field labels and options come from the P6, P8 and glossary §7 copy. Strings with a wavy underline need the owner's and the lawyer's confirmation before release; strings with a dotted underline have no key yet.</p>
 <div class="table-wrap"><table class="t">
-<thead><tr><th scope="col">Use</th><th scope="col">SL</th><th scope="col">EN</th><th scope="col">Source</th></tr></thead>
+<thead><tr><th scope="col">Key</th><th scope="col">SL (as shown)</th><th scope="col">Where</th><th scope="col">Status</th></tr></thead>
 <tbody>
-<tr><td>P7 step 2 title</td><td>Je to pravilno?</td><td>Is this right?</td><td><code>report_found.ai_title</code></td></tr>
-<tr><td>P7 sentence</td><td>{size} {species}, {colours}</td><td>{size} {species}, {colours}</td><td><code>report_found.ai_sentence</code></td></tr>
-<tr><td>AI note</td><td>Predlog iz fotografije. Umetna inteligenca se lahko moti.</td><td>Suggested from the photo. AI can be wrong.</td><td><code>report_found.ai_note</code></td></tr>
-<tr><td>Accept, edit</td><td>Da, nadaljuj · Uredi podatke</td><td>Yes, continue · Edit details</td><td><code>report_found.ai_yes</code>, <code>ai_edit</code></td></tr>
-<tr><td>Mark</td><td>Predlog</td><td>Suggested</td><td>C19 §Client rules; key from TASK-40.6</td></tr>
-<tr><td>Checking (and its live-region text)</td><td>Preverjamo fotografijo …</td><td>Checking the photo …</td><td>placeholder</td></tr>
-<tr><td>Arrived (live region)</td><td>Predlogi iz fotografije so vpisani v {count} polja. Preverite jih.</td><td>Suggestions from the photo were filled into {count} fields. Please check them.</td><td>placeholder</td></tr>
-<tr><td>Low confidence</td><td>Iz fotografije tega ne razberemo zanesljivo. Izberite sami.</td><td>We cannot tell this reliably from the photo. Please choose.</td><td>placeholder</td></tr>
-<tr><td>Species differs</td><td>Na fotografiji je morda {species}. Preverite vrsto.</td><td>The photo may show a {species}. Check the species.</td><td>placeholder</td></tr>
-<tr><td>Collar</td><td>Na fotografiji je videti ovratnico. Opišite jo. (P7 step 4: … Opišite jo v opombi.)</td><td>The photo seems to show a collar. Describe it. (P7: … in the note.)</td><td>placeholder</td></tr>
-<tr><td>Check before saving</td><td>Polja z oznako Predlog je izpolnila umetna inteligenca. Preverite jih, preden shranite. (P6: … preden objavite.)</td><td>Fields marked Suggested were filled in by AI. Check them before you save. (P6: … before you publish.)</td><td>placeholder</td></tr>
-<tr><td>Go to the first mark</td><td>Preveri predloge</td><td>Check suggestions</td><td>placeholder</td></tr>
-<tr><td>P6 review line</td><td>Predlog: {fields}</td><td>Suggested: {fields}</td><td>placeholder</td></tr>
-<tr><td>No animal</td><td>Na fotografiji ne vidimo psa ali mačke. Poskusite z drugo fotografijo.</td><td>We cannot see a dog or a cat in this photo. Try another photo.</td><td>placeholder</td></tr>
-<tr><td>Other animal</td><td>Na fotografiji je morda druga žival. Prijavite lahko le pse in mačke.</td><td>This may be another kind of animal. Only dogs and cats can be reported.</td><td>placeholder</td></tr>
-<tr><td>Several animals</td><td>Na fotografiji je več živali. Izberite fotografijo, na kateri je samo ena.</td><td>There is more than one animal in this photo. Choose a photo that shows just one.</td><td>placeholder</td></tr>
-<tr><td>Replace photo</td><td>Zamenjaj fotografijo</td><td>Replace photo</td><td>placeholder</td></tr>
-<tr><td>Nothing certain (proposal)</td><td>Iz fotografije podatkov ne razberemo zanesljivo. Izpolnite jih sami.</td><td>We cannot tell the details reliably from the photo. Please fill them in.</td><td>placeholder</td></tr>
+<tr><td><code>report_found.ai_title</code>, <code>ai_sentence</code>, <code>ai_yes</code>, <code>ai_edit</code></td><td>Je to pravilno? · Pes, črne barve · Da, nadaljuj · Uredi podatke</td><td>F2</td><td>P7 copy §3</td></tr>
+<tr><td><code>report_found.ai_note</code></td><td>Predlog iz fotografije. Umetna inteligenca se lahko moti.</td><td>F2</td><td>Quoted in lawyer pack LQ-37: do not change without it</td></tr>
+<tr><td><code>ai_prefill.checking</code></td><td>Pregledujemo fotografijo … Obrazec lahko medtem izpolnjujete naprej.</td><td>F1</td><td>§3a</td></tr>
+<tr><td><code>ai_prefill.arrived_live</code></td><td>Iz fotografije smo predlagali 4 podatke. Preverite jih. (2: … 2 podatka. Preverite ju.)</td><td>F4, F6 (read out)</td><td>§3a</td></tr>
+<tr><td><code>ai_prefill.none_live</code></td><td>Iz fotografije podatkov nismo mogli zanesljivo razbrati. Izpolnite jih sami.</td><td>F10 (read out; shown only in the proposal)</td><td>§3a</td></tr>
+<tr><td><code>ai_prefill.suggested</code>, <code>suggested_a11y</code></td><td>Predlog · Predlog iz fotografije. Preverite ga.</td><td>F3 to F7</td><td>§3a</td></tr>
+<tr><td><code>ai_prefill.note_continue</code></td><td>Nekatera polja smo izpolnili s predlogi iz fotografije. Umetna inteligenca se lahko moti, zato jih preverite, preden nadaljujete.</td><td>F3, F4, F5, F6</td><td>§3a</td></tr>
+<tr><td><code>ai_prefill.note_save</code></td><td>… zato jih preverite, preden shranite.</td><td>F4, F5, F7 (P8)</td><td>§3a</td></tr>
+<tr><td><code>ai_prefill.low_confidence</code></td><td>Iz fotografije tega ne moremo zanesljivo razbrati. Izberite sami.</td><td>F3, F4, F5, F10</td><td>§3a</td></tr>
+<tr><td><code>ai_prefill.low_confidence_breed</code></td><td>Pasme iz fotografije ne moremo zanesljivo razbrati. Izberite jo sami ali pa Mešanec oziroma Ne vem.</td><td>F10</td><td>§3a</td></tr>
+<tr><td><code>ai_prefill.collar_hint</code> (<code>collar_hint_note</code> on P7 step 4)</td><td>Na fotografiji je videti ovratnica. Če lahko, jo opišite: barva, obesek, zvonček.</td><td>F4, F7</td><td>§3a</td></tr>
+<tr><td><code>ai_prefill.species_differs</code>, <code>species_switch</code></td><td>Na fotografiji je videti pes. Če ste vrsto izbrali pravilno, jo pustite. · Izberi psa</td><td>F5</td><td>§3a</td></tr>
+<tr><td><code>ai_prefill.no_animal_*</code>, <code>other_animal_*</code>, <code>multiple_*</code></td><td>titles and bodies as in §3a</td><td>F8</td><td>§3a</td></tr>
+<tr><td><code>ai_prefill.change_photo</code>, <code>keep_photo</code></td><td>Zamenjaj fotografijo · Obdrži fotografijo</td><td>F8</td><td>§3a</td></tr>
+<tr><td><code>ai_prefill.info_link</code>, <code>info_privacy</code></td><td>Kako nastanejo predlogi? · Več v politiki zasebnosti</td><td>F2 to F7</td><td>§3a</td></tr>
+<tr><td><code>ai_prefill.info_body</code> †</td><td>Fotografijo pregleda model umetne inteligence. … Predlogi se lahko motijo in postanejo del prijave šele, ko jih potrdite.</td><td>F2 (info open)</td><td>† privacy claim: owner and lawyer approve before release (LQ-36, LQ-68 to LQ-71)</td></tr>
+<tr><td>no key (proposal)</td><td>Preveri predloge</td><td>F7 (P8)</td><td>Text button that moves focus to the first marked field</td></tr>
+<tr><td>no key (proposal)</td><td>… zato jih preverite, preden objavite. · Predlog: pasma, barva, vzorec</td><td>F7 (P6 review)</td><td>Publish variant of the note and the review-row line</td></tr>
 </tbody></table></div>
 
 <h2>Change log</h2>
-<div class="table-wrap"><table class="t"><thead><tr><th scope="col">Version</th><th scope="col">Date</th><th scope="col">Change</th></tr></thead><tbody><tr><td>v1</td><td>2026-10-18</td><td>First version for the owner (TASK-41.1). Awaiting owner approval.</td></tr></tbody></table></div>
+<div class="table-wrap"><table class="t"><thead><tr><th scope="col">Version</th><th scope="col">Date</th><th scope="col">Change</th></tr></thead><tbody><tr><td>v1</td><td>2026-10-18</td><td>First version for the owner (TASK-41.1).</td></tr><tr><td>v1 (copy)</td><td>2026-10-19</td><td>Still v1: placeholder copy replaced with <code>ai_prefill.*</code> from TASK-40.6 (P7 copy §3a), so the species switch button, "Obdrži fotografijo", the info disclosure and multiple animals filling as usual came in too. Awaiting owner approval.</td></tr></tbody></table></div>
 </main>
 </div>
 <script>
@@ -629,20 +647,31 @@ function TO(t){return ' <span class="to">'+t+'</span>'}
 function SUG(){return '<span class="sug">'+S('sparkle',16)+'Predlog</span>'}
 function H(t){return '<p class="hint">'+S('sparkle-o',16)+'<span>'+t+'</span></p>'}
 
+function L(t,tag){return '<span class="lgl">'+t+'</span>'+TO(tag)}
+/* Copy: report_found.ai_* (P7 copy §3) and ai_prefill.* (P7 copy §3a, TASK-40.6). P() marks the three strings that have no key yet. */
 var C={
- checking:P('Preverjamo fotografijo …'),
- aiNote:'Predlog iz fotografije. Umetna inteligenca se lahko moti.',
- low:P('Iz fotografije tega ne razberemo zanesljivo. Izberite sami.'),
- collar:P('Na fotografiji je videti ovratnico. Opišite jo.'),
- species:P('Na fotografiji je morda pes. Preverite vrsto.'),
- check:P('Polja z oznako Predlog je izpolnila umetna inteligenca. Preverite jih, preden shranite.'),
- checkPub:P('Polja z oznako Predlog je izpolnila umetna inteligenca. Preverite jih, preden objavite.'),
+ checking:'Pregledujemo fotografijo … Obrazec lahko medtem izpolnjujete naprej.',
+ aiNote:L('Predlog iz fotografije. Umetna inteligenca se lahko moti.','legal: quoted in LQ-37'),
+ noteContinue:'Nekatera polja smo izpolnili s predlogi iz fotografije. Umetna inteligenca se lahko moti, zato jih preverite, preden nadaljujete.',
+ noteSave:'Nekatera polja smo izpolnili s predlogi iz fotografije. Umetna inteligenca se lahko moti, zato jih preverite, preden shranite.',
+ notePub:P('Nekatera polja smo izpolnili s predlogi iz fotografije. Umetna inteligenca se lahko moti, zato jih preverite, preden objavite.'),
+ low:'Iz fotografije tega ne moremo zanesljivo razbrati. Izberite sami.',
+ lowBreed:'Pasme iz fotografije ne moremo zanesljivo razbrati. Izberite jo sami ali pa Mešanec oziroma Ne vem.',
+ collar:'Na fotografiji je videti ovratnica. Če lahko, jo opišite: barva, obesek, zvonček.',
+ species:'Na fotografiji je videti pes. Če ste vrsto izbrali pravilno, jo pustite.',
+ speciesSwitch:'Izberi psa',
  review:P('Preveri predloge'),
- noAnimal:P('Na fotografiji ne vidimo psa ali mačke. Poskusite z drugo fotografijo.'),
- other:P('Na fotografiji je morda druga žival. Prijavite lahko le pse in mačke.'),
- multi:P('Na fotografiji je več živali. Izberite fotografijo, na kateri je samo ena.'),
- replace:P('Zamenjaj fotografijo'),
- none:P('Iz fotografije podatkov ne razberemo zanesljivo. Izpolnite jih sami.')
+ reviewSug:P('Predlog: pasma, barva, vzorec'),
+ none:'Iz fotografije podatkov nismo mogli zanesljivo razbrati. Izpolnite jih sami.',
+ notice:{
+  no_animal:['Na fotografiji ne najdemo psa ali mačke','Poskusite z drugo fotografijo, na kateri je žival dobro vidna. Če je žival na fotografiji, jo obdržite in podatke vpišite sami.'],
+  other_animal:['Na fotografiji je videti druga žival','Prijave na Najdimo so samo za pse in mačke. Če je na fotografiji pes ali mačka, jo obdržite in podatke vpišite sami.'],
+  multiple_animals:['Na fotografiji je videti več živali','Če lahko, izberite drugo ali obrezano fotografijo, na kateri je ena sama žival. Sicer preverite, ali se predlogi nanašajo na pravo žival.']},
+ change:'Zamenjaj fotografijo',
+ keep:'Obdrži fotografijo',
+ infoLink:'Kako nastanejo predlogi?',
+ infoBody:L('Fotografijo pregleda model umetne inteligence. Predlaga vrsto, pasmo, barve, vzorec, velikost in ovratnico ter preveri, ali je na fotografiji v ospredju oseba ali neprimerna vsebina. Ponudniku pošljemo samo pomanjšano kopijo fotografije, brez metapodatkov in lokacije ter brez podatkov o vas ali prijavi. Isto kopijo uporabimo tudi za iskanje podobnih fotografij pri ujemanju. Predlogi se lahko motijo in postanejo del prijave šele, ko jih potrdite.','† ai_prefill.info_body: owner and lawyer approve before release'),
+ infoPrivacy:'Več v politiki zasebnosti'
 };
 var COLOURS=['Črna','Bela','Siva','Rjava','Čokoladna','Rdečkasta','Kremna','Zlata','Svetlo rjava','Modrosiva'];
 var DOG=['Zelo majhna','Majhna','Srednja','Velika','Zelo velika'];
@@ -662,11 +691,11 @@ var NAZAJ_W='<button type="button" class="btn bt">Nazaj</button>';
 /* ---------- parts ---------- */
 function photo(l,t){return '<div class="ph"'+(t?' style="--t:var('+t+')"':'')+' role="img" aria-label="Fotografija: '+l+'">'+S('paw',56)+'<span class="phl">Foto · '+l+'</span></div>'}
 function thumb(l,t){return '<li><div class="ph thumb"'+(t?' style="--t:var('+t+')"':'')+' role="img" aria-label="Fotografija: '+l+'">'+S('paw',28)+'</div><button type="button" class="iconbtn" aria-label="Odstrani fotografijo">'+S('trash',20)+'</button></li>'}
+var INFO='<button type="button" class="btn bt">'+C.infoLink+'</button>';
 function slot(k,o){o=o||{};
  if(k==='checking')return '<div class="slot" role="status"><span class="spin" aria-hidden="true"></span><span>'+C.checking+(o.to?TO(o.to):'')+'</span></div>';
- if(k==='ai')return '<div class="slot" role="status">'+S('sparkle',16)+'<span>'+C.aiNote+(o.to?TO(o.to):'')+'</span></div>';
- if(k==='check')return '<div class="slot" role="status">'+S('sparkle',16)+'<div><span>'+(o.pub?C.checkPub:C.check)+(o.to?TO(o.to):'')+'</span><br><button type="button" class="btn bt">'+C.review+'</button></div></div>';
- if(k==='none')return '<div class="slot" role="status">'+S('sparkle',16)+'<span>'+C.none+(o.to?TO(o.to):'')+'</span></div>';
+ if(k==='note')return '<div class="slot">'+S('sparkle',16)+'<div><span>'+o.t+(o.to?TO(o.to):'')+'</span><div class="acts">'+(o.review?'<button type="button" class="btn bt">'+C.review+'</button>':'')+INFO+'</div></div></div>';
+ if(k==='none')return '<div class="slot">'+S('sparkle',16)+'<span>'+C.none+(o.to?TO(o.to):'')+'</span></div>';
  return '';}
 function lab(text,id,o){return '<div class="flab"><label for="'+id+'">'+text+'</label>'+(o.sug?SUG():'')+(o.to?TO(o.to):'')+'</div>'}
 function sel(text,val,o){o=o||{};var id=uid('s');return '<div class="ff">'+lab(text,id,o)+'<button id="'+id+'" type="button" class="inp'+(val?'':' empty')+(o.focus?' focus':'')+'" aria-haspopup="listbox"><span>'+(val||o.ph||'Izberite')+'</span>'+S('caret',20)+'</button>'+(o.hint?H(o.hint):'')+(o.help?'<p class="help">'+o.help+'</p>':'')+'</div>'}
@@ -679,7 +708,7 @@ function rows(lblId,opts,on,o){o=o||{};var s='';
  opts.forEach(function(x){var c=x.t===on;s+='<button type="button" class="choice" role="radio" aria-checked="'+c+'">'+(x.i?S(x.i,24):'')+'<span class="grow"><span class="t">'+x.t+'</span>'+(c&&o.sugRow?'<span class="d">'+SUG()+'</span>':'')+'</span>'+S('check',22,'tick')+'</button>'});
  return '<div class="choices" role="radiogroup" aria-labelledby="'+lblId+'">'+s+'</div>'}
 var SPECIES=[{t:'Pes',i:'dog'},{t:'Mačka',i:'cat'}];
-function species(st){var id=uid('v'),f=st.species||{};return '<div class="ff"><div class="flab"><span class="lbl" id="'+id+'">Vrsta</span>'+(f.sug?SUG():'')+(f.to?TO(f.to):'')+'</div>'+rows(id,SPECIES,f.v)+(f.hint?H(f.hint):'')+'</div>'}
+function species(st){var id=uid('v'),f=st.species||{};return '<div class="ff"><div class="flab"><span class="lbl" id="'+id+'">Vrsta</span>'+(f.sug?SUG():'')+(f.to?TO(f.to):'')+'</div>'+rows(id,SPECIES,f.v)+(f.hint?H(f.hint):'')+(f.sw?'<button type="button" class="btn bt" style="margin-left:-12px">'+f.sw+'</button>':'')+'</div>'}
 /* PetFields looks block: breed, colours, pattern, size */
 function looks(st,h){var b=st.breed||{},c=st.colours||{},p=st.pattern||{},z=st.size||{};
  return sel('Pasma',b.v,{sug:b.sug,ph:'Poiščite pasmo',hint:b.hint,to:b.to,focus:b.focus})
@@ -712,7 +741,8 @@ function p7manual(v,sug){var d=v==='desktop',id=uid('h');
  var body='<h1 class="'+(d?'qd':'q')+'" id="'+id+'">Katera žival je to?</h1><div class="mt24">'+rows(id,[{t:'Pes',i:'dog'},{t:'Mačka',i:'cat'},{t:'Ne vem',i:'question'}],sug?'Pes':null,{sugRow:sug})+'</div>'
  +'<div class="mt32">'+pills('Velikost (neobvezno)',DOG,[],{radio:true,hint:sug?C.low:'',to:sug?'size: value null (0.41 &lt; 0.6)':''})+'</div>'
  +'<div class="mt32">'+pills('Barva (neobvezno)',COLOURS,sug?['Črna']:[],{sug:sug,to:sug?'black 0.93':''})+'</div>';
- return d?wFlow(5,2,body,'',NAZAJ_W,NAPREJ_W):mFlow(5,2,body,NAPREJ)}
+ var sl=sug?slot('note',{t:C.noteContinue}):'';
+ return d?wFlow(5,2,body,sl,NAZAJ_W,NAPREJ_W):mFlow(5,2,body,sl+NAPREJ)}
 
 /* ---------- sample states ---------- */
 function stArrived(){return {species:{v:'Pes',sug:true},breed:{v:'Labradorec',sug:true,to:'0.81'},colours:{v:['Črna'],sug:true},pattern:{v:'Enobarvna',sug:true,to:'0.77'},size:{v:null,hint:C.low,to:'value null'},sizes:DOG,collarHint:true,name:''}}
@@ -722,97 +752,107 @@ var F=[
 {id:'f1',title:'Checking the photo',sub:'P7 step 1 after the upload. The same line shows on P6 step 2 and in the P8 Fotografije section.',
  render:function(v){return p7s1(v,['črn pes'],'',slot('checking',{to:'pending · polled every 750 ms, at most 10 s'}))},
  notes:function(){return ['C19: shows after the <b>first</b> photo has uploaded, while the API answers <code>pending</code>. Only the first photo of a form is checked.',
- '<b>Never blocks:</b> Naprej stays enabled and the person can move on at once. Whatever arrives later follows F6.',
- 'The line sits in the <b>AI slot</b> just above the main action (mobile footer, web above the buttons, P8 web in the summary card). It changes in place (F2, F4) or goes away (F9), so no field above it moves.',
+ '<b>Never blocks:</b> Naprej stays enabled and the person can move on at once, as <code>ai_prefill.checking</code> says. Whatever arrives later follows F6.',
+ 'The line sits in the <b>AI slot</b> just above the main action (mobile footer, web above the buttons, P8 web in the summary card). It changes in place (F3, F4) or goes away (F9), so no field above it moves.',
  'With <code>ai.enabled</code> false there is no polling and no line at all.',
- '<code>role="status"</code>: read once. Under reduced motion the spinner turns slowly (2.4 s), as system 7 says.']}},
-{id:'f2',title:'Suggestion arrived: "Je to pravilno?" (accept or edit)',sub:'P7 step 2 with AI. Sample: dog 0.98, black 0.93, size 0.41.',
- render:function(v){var d=v==='desktop';
-  var body=photo('črn pes')+'<h1 class="'+(d?'qd':'q')+' mt24">Je to pravilno?</h1><p class="ans mt12">Pes, črne barve'+TO('size 0.41 &lt; 0.6: left out of the sentence')+'</p><p class="slot mt12" style="margin-bottom:0">'+S('sparkle',16)+'<span>'+C.aiNote+'</span></p>';
-  return d?wFlow(5,2,body,'',NAZAJ_W,'<button type="button" class="btn bt">Uredi podatke</button><button type="button" class="btn btn-lg b1">Da, nadaljuj</button>')
-   :mFlow(5,2,body,'<button type="button" class="btn btn-lg b1 block">Da, nadaljuj</button><button type="button" class="btn bt block">Uredi podatke</button>')},
- notes:function(){return ['The sentence (<code>report_found.ai_sentence</code>) uses only values of 0.6 or more. Size is <code>null</code>, so the size phrase is left out: "Pes, črne barve". Breed and pattern are not asked in the found flow (question 4).',
+ 'It is a polite live region. When the result comes, the same region reads <code>arrived_live</code>, <code>none_live</code> or the notice title once; <code>unavailable</code> and the timeout clear it without an announcement (§3a). Under reduced motion the spinner turns slowly (2.4 s), as system 7 says.']}},
+{id:'f2',title:'Suggestion arrived: "Je to pravilno?" (accept or edit)',sub:'P7 step 2 with AI. Sample: dog 0.98, black 0.93, size 0.41. Second state: "Kako nastanejo predlogi?" open.',
+ states:[['closed','Sentence'],['info','Info open']],
+ render:function(v,s){var d=v==='desktop',info=s==='info';
+  var nb='<p class="slot mt12" style="margin-bottom:0">'+S('sparkle',16)+'<span>'+C.aiNote+'</span></p><button type="button" class="btn bt" style="margin-left:-12px"'+(d?' aria-expanded="'+info+'"':'')+'>'+C.infoLink+'</button>';
+  if(d&&info)nb+='<div class="infob"><p>'+C.infoBody+'</p><a class="btn bt" style="margin-left:-12px" href="#">'+C.infoPrivacy+'</a></div>';
+  var body=photo('črn pes')+'<h1 class="'+(d?'qd':'q')+' mt24">Je to pravilno?</h1><p class="ans mt12">Pes, črne barve'+TO('size 0.41 &lt; 0.6: left out of the sentence')+'</p>'+nb;
+  if(d)return wFlow(5,2,body,'',NAZAJ_W,'<button type="button" class="btn bt">Uredi podatke</button><button type="button" class="btn btn-lg b1">Da, nadaljuj</button>');
+  var scr=mFlow(5,2,body,'<button type="button" class="btn btn-lg b1 block">Da, nadaljuj</button><button type="button" class="btn bt block">Uredi podatke</button>');
+  if(info)scr+='<div class="scrim"></div><div class="sheet" role="dialog" aria-modal="true" aria-label="'+C.infoLink+'"><span class="grab"></span><div class="shead"><h2 class="sht">'+C.infoLink+'</h2><button class="iconbtn" type="button" aria-label="Zapri">'+S('x',24)+'</button></div><div class="infob"><p>'+C.infoBody+'</p></div><a class="btn bt mt8" style="margin-left:-12px" href="#">'+C.infoPrivacy+'</a></div>';
+  return scr},
+ notes:function(s){if(s==='info')return ['"Kako nastanejo predlogi?" (<code>ai_prefill.info_link</code>) sits under <code>report_found.ai_note</code> here and under the note in P6 and P8. It opens <code>info_body</code> inline on web (a disclosure with <code>aria-expanded</code>) and in a bottom sheet on mobile, with the privacy link to <code>/zasebnost#s8</code>. Shown only when <code>ai.enabled</code> is true.',
+  '<code>info_body</code> is marked † in the copy: a privacy claim the owner and the lawyer approve before release, together with privacy policy 0.8 chapter 8 (LQ-36, LQ-68 to LQ-71).'];
+  return ['The sentence (<code>report_found.ai_sentence</code>) uses only suggested values. Size is <code>null</code>, so the size phrase is left out: "Pes, črne barve". The found flow asks no breed, so the sentence never names one (question 4).',
  '<b>Accept:</b> "Da, nadaljuj" makes species and colour the finder\'s own answers; step 5 shows them as normal summary rows, without a mark. <b>Edit:</b> "Uredi podatke" opens F3.',
- 'This screen shows only when the result (with a species and no notice) was there before the finder pressed Naprej on step 1. Otherwise step 2 is the manual step (F9), and a late result fills its untouched choices with marks (F6 rules); the screen never swaps under the finder.',
- 'Collar seen: step 4 adds the collar hint under the note field ("… Opišite jo v opombi."). Not drawn.',
- 'Focus goes to the h1 as on every step, and the sentence and note are read after it. No extra announcement here.']}},
+ 'This screen shows only when the result (with a species, and no <code>no_animal</code> or <code>other_animal</code> notice) was there before the finder pressed Naprej on step 1. Otherwise step 2 is the manual step (F9), and a late result fills its untouched choices with marks (F6 rules); the screen never swaps under the finder.',
+ '<code>report_found.ai_note</code> is quoted in the lawyer pack (LQ-37): it changes only together with LQ-37.',
+ 'Collar seen: step 4 adds <code>ai_prefill.collar_hint_note</code> under the note field. Not drawn.',
+ 'Focus goes to the h1 as on every step, and the sentence and note are read after it.']}},
 {id:'f3',title:'Edit details: suggestions in place, low-confidence hint',sub:'P7 step 2 after "Uredi podatke".',
  render:function(v){return p7manual(v,true)},
  notes:function(){return ['The manual step 2 opens with the suggestions in place: Pes and Črna are selected and marked. The h1 is the species label here, so the mark sits inside the selected row.',
- '<b>Low confidence:</b> size has <code>value: null</code> (0.41, below <code>ai.min_confidence</code> 0.6), so nothing is selected and the hint shows instead of a guess.',
+ '<b>Low confidence:</b> size has <code>value: null</code> (0.41, below <code>ai.min_confidence</code> 0.6), so nothing is selected and <code>ai_prefill.low_confidence</code> shows instead of a guess.',
  '<b>Edit:</b> choosing another row or pill removes that field\'s mark. <b>Reject:</b> deselecting Črna leaves the colour empty; a removed suggestion never comes back.',
- 'Naprej moves on with what is on screen; nothing is saved before "Objavi prijavo".']}},
+ '<code>note_continue</code> and the info button sit in the AI slot by Naprej (the copy places the note above the fields; see rule 1). Naprej moves on with what is on screen; nothing is saved before "Objavi prijavo".']}},
 {id:'f4',title:'Suggestions in the pet form (PetFields)',sub:'Desktop: P8 web "Nova žival". Mobile: P6 step 3 "Opišite žival". Both are the shared PetFields.',
- render:function(v){var st=stArrived();return v==='desktop'?p8web(st,slot('check')):p6(st,v,slot('ai'))},
+ render:function(v){var st=stArrived();return v==='desktop'?p8web(st,slot('note',{t:C.noteSave})):p6(st,v,slot('note',{t:C.noteContinue}))},
  notes:function(){return ['<b>Filled and marked</b> (0.6 or more): Vrsta, Pasma (<code>dog.labrador_retriever</code> shown as "Labradorec" from the <code>breeds</code> namespace), Barva, Vzorec. They are real selections; the person\'s Save or Publish confirms them, nothing is saved before (question 1).',
- '<b>Velikost</b> is <code>null</code>: empty with the hint. <b>Ovratnica:</b> collar seen, so only a hint; the collar text is never filled.',
- 'AI slot: the AI note on P6 (by Naprej); the check-before-saving line on the P8 summary card, because Save is there.',
- 'Live region, polite, once: "Predlogi iz fotografije so vpisani v 4 polja. Preverite jih." Focus does not move.',
- 'The mark is part of the field\'s accessible name ("Pasma, predlog"). Mixed or unknown breed (<code>dog.mixed</code>, <code>dog.unknown</code>) shows "Mešanec" or "Ne vem", never a guessed breed.',
+ '<b>Velikost</b> is <code>null</code>: empty with <code>low_confidence</code>. <b>Ovratnica:</b> collar seen, so only <code>collar_hint</code>; the collar text is never filled.',
+ 'AI slot: <code>note_continue</code> on P6 (by Naprej), <code>note_save</code> on the P8 summary card (by Shrani), each with "Kako nastanejo predlogi?".',
+ 'Live region, polite, once: "Iz fotografije smo predlagali 4 podatke. Preverite jih." (<code>arrived_live</code>). Focus does not move.',
+ 'Each marked field gets <code>suggested_a11y</code> ("Predlog iz fotografije. Preverite ga.") as its accessible description. Mixed or unknown breed (<code>dog.mixed</code>, <code>dog.unknown</code>) shows "Mešanec" or "Ne vem", never a guessed breed.',
  'P6 step 3 shows the fields in the PetFields order as built (species, looks, name, chip, collar).']}},
 {id:'f5',title:'Edit and reject a suggestion; species differs',sub:'P8 pet form. Mobile: step 3 Videz, or step 2 Osnovno for the species case.',
  states:[['edit','Edit and reject'],['species','Species differs']],
  render:function(v,s){var st;
-  if(s==='species'){st={species:{v:'Mačka',hint:C.species,to:'chosen by hand; photo says dog 0.98'},breed:{v:null,to:'dog breed codes never fill a cat form'},colours:{v:['Črna'],sug:true},pattern:{v:'Enobarvna',sug:true,to:'valid for cats too'},size:{v:null,hint:C.low},sizes:CAT,collarHint:true,name:'Muri'};
-   if(v==='desktop')return p8web(st,slot('check'));
-   return mFlow(5,2,'<h1 class="q">Osnovno</h1><div class="stack mt32">'+species(st)+inp('Ime','Muri')+pills('Spol',SEX,[],{radio:true})+'</div>',slot('ai')+NAPREJ)}
+  if(s==='species'){st={species:{v:'Mačka',hint:C.species,sw:C.speciesSwitch,to:'chosen by hand; photo says dog 0.98'},breed:{v:null,to:'dog breed codes never fill a cat form'},colours:{v:['Črna'],sug:true},pattern:{v:'Enobarvna',sug:true,to:'valid for cats too'},size:{v:null,hint:C.low},sizes:CAT,collarHint:true,name:'Muri'};
+   if(v==='desktop')return p8web(st,slot('note',{t:C.noteSave}));
+   return mFlow(5,2,'<h1 class="q">Osnovno</h1><div class="stack mt32">'+species(st)+inp('Ime','Muri')+pills('Spol',SEX,[],{radio:true})+'</div>',slot('note',{t:C.noteContinue})+NAPREJ)}
   st={species:{v:'Pes',sug:true},breed:{v:'Mešanec',to:'changed by hand: mark gone'},colours:{v:[],to:'suggestion removed: stays empty'},pattern:{v:'Enobarvna',sug:true},size:{v:'Velika',to:'chosen by hand: hint gone'},sizes:DOG,collarHint:true,name:'Medo'};
-  if(v==='desktop')return p8web(st,slot('check',{to:'2 fields still marked'}));
-  return mFlow(5,3,'<h1 class="q">Videz</h1><div class="stack mt32">'+looks(st,'h2')+'</div>',slot('ai')+NAPREJ)},
- notes:function(s){if(s==='species')return ['The person chose Mačka before the result came. The species is <b>never switched</b>; the hint says the photo may show a dog.',
+  if(v==='desktop')return p8web(st,slot('note',{t:C.noteSave,to:'2 fields still marked'}));
+  return mFlow(5,3,'<h1 class="q">Videz</h1><div class="stack mt32">'+looks(st,'h2')+'</div>',slot('note',{t:C.noteContinue})+NAPREJ)},
+ notes:function(s){if(s==='species')return ['The person chose Mačka before the result came. The species is <b>never switched by itself</b>: <code>species_differs</code> says the photo looks like a dog, and the <code>species_switch</code> text button "Izberi psa" lets the person switch with one press.',
   'Only values valid for the chosen species fill: no dog breed code in a cat form (C19 drops other-species codes only against the model\'s own species, so this needs a C19 rule). Colour and pattern ("Enobarvna" exists for cats) fill as usual.',
-  'If the person switches to Pes, nothing is filled afresh; the breed stays for them to choose.',
+  'After "Izberi psa", the empty, untouched fields valid for a dog (here Pasma) fill and are marked; the cat-only fields are cleared as the form does today.',
   'On the phone the species lives on step 2 (Osnovno), so the hint shows there; the cat-only pills (indoor or outdoor) are left out of this crop.'];
   return ['<b>Edit:</b> Pasma changed to "Mešanec": the mark is gone. <b>Reject:</b> Črna deselected: Barva is empty, no mark, no hint, and it is never filled again. Velikost picked by hand: the hint is gone.',
-  'Vrsta and Vzorec still carry the mark; the summary card counts only those.',
+  'Vrsta and Vzorec still carry the mark, so the note stays in the slot.',
   'No per-field "accept" button: leaving a value as it is and saving accepts it (question 7).']}},
 {id:'f6',title:'Late suggestion after the person started',sub:'P6 step 3. The result arrives at about 5 s, while the person types the name.',
  render:function(v){var st={species:{v:'Pes',to:'chosen by hand: no mark'},breed:{v:'Labradorec',sug:true,to:'empty and untouched: filled'},colours:{v:['Črna','Bela'],to:'touched: kept as chosen'},pattern:{v:'Enobarvna',sug:true},size:{v:null,to:'late: no new hint line'},sizes:DOG,collarHint:false,name:'Medo',nameFocus:true,nameTo:'focus stays here'};
-  return p6(st,v,slot('ai'))},
+  return p6(st,v,slot('note',{t:C.noteContinue}))},
  notes:function(){return ['The person chose Pes, picked Črna and Bela and is typing the name when the result arrives.',
  '<b>Filled:</b> only empty fields the person has not touched (Pasma, Vzorec), with the mark. <b>Kept:</b> Vrsta and Barva stay exactly as chosen, without a mark (C19: a late suggestion never overwrites).',
- 'Once the person has touched a field on the step, no hint lines are added (size and collar hints are skipped), so nothing moves under the finger. The AI note appears in the slot by the button.',
- 'Focus stays in Ime. One polite announcement: "Predlogi iz fotografije so vpisani v 2 polji. Preverite jih."']}},
+ 'Once the person has touched a field on the step, no hint lines are added (§3a: "no hint for a field the user has already touched"; here also the untouched size and collar), so nothing moves under the finger. The note appears in the slot by the button.',
+ 'Focus stays in Ime. One polite announcement: "Iz fotografije smo predlagali 2 podatka. Preverite ju." (<code>arrived_live</code>, count 2).']}},
 {id:'f7',title:'Check before saving',sub:'The step that saves: P6 Review (Objavi iskanje) or the P8 Save.',
  states:[['p6','P6 review'],['p8','P8 save']],
  render:function(v,s){var d=v==='desktop';
   if(s==='p8'){var st={species:{v:'Pes'},breed:{v:'Labradorec',sug:true,focus:d,to:d?'"Preveri predloge" moved focus here':''},colours:{v:['Črna'],sug:true},pattern:{v:'Enobarvna',sug:true},size:{v:'Velika'},sizes:DOG,collarHint:true,name:'Medo'};
-   if(d)return p8web(st,slot('check',{to:'3 fields still marked'}));
-   return mFlow(5,5,'<h1 class="q">Ovratnica in opombe</h1><div class="stack mt32">'+inp('Ovratnica','',{ph:'Na primer: rdeča ovratnica z zvončkom',hint:C.collar})+ta('Opombe',{ph:'Na primer: zdravila, ki jih potrebuje, in kako se odziva na neznance'})+'</div>',slot('check')+'<button type="button" class="btn btn-lg b1 block">Shrani</button>')}
+   if(d)return p8web(st,slot('note',{t:C.noteSave,review:true,to:'3 fields still marked'}));
+   return mFlow(5,5,'<h1 class="q">Ovratnica in opombe</h1><div class="stack mt32">'+inp('Ovratnica','',{ph:'Na primer: rdeča ovratnica z zvončkom',hint:C.collar})+ta('Opombe',{ph:'Na primer: zdravila, ki jih potrebuje, in kako se odziva na neznance'})+'</div>',slot('note',{t:C.noteSave,review:true})+'<button type="button" class="btn btn-lg b1 block">Shrani</button>')}
   var row=function(dt,dd,extra){return '<div><dt>'+dt+'</dt><dd>'+dd+'</dd>'+(extra||'')+'<dd class="e"><button type="button" class="btn bt" aria-label="Uredi: '+dt+'">Uredi</button></dd></div>'};
   var body='<h1 class="'+(d?'qd':'q')+'">Preverite in objavite</h1><dl class="rv mt32">'
    +'<div><dt>Fotografije</dt><dd><ul class="strip mt8">'+thumb('črn pes')+'</ul></dd><dd class="e"><button type="button" class="btn bt" aria-label="Uredi: Fotografije">Uredi</button></dd></div>'
-   +row('Žival','Medo · pes · labradorec · črne barve · enobarvna · velika','<dd class="s">'+S('sparkle',16)+P('Predlog: pasma, barva, vzorec')+'</dd>')
+   +row('Žival','Medo · pes · labradorec · črne barve · enobarvna · velika','<dd class="s">'+S('sparkle',16)+C.reviewSug+'</dd>')
    +row('Kraj','Bežigrad, Ljubljana · 2 km')+row('Nazadnje videno','Danes, 14:10')+row('Kaj se je zgodilo','Ušel je s povodca pri Žalah.')+row('Nagrada','Brez nagrade')
    +'</dl><p class="help mt24">Ko objavite, obvestimo ljudi v bližini, ki imajo vklopljena opozorila.</p>';
   var pub=d?'<button type="button" class="btn btn-lg b1">Objavi iskanje</button>':'<button type="button" class="btn btn-lg b1 block">Objavi iskanje</button>';
-  return d?wFlow(7,7,body,slot('check',{pub:true}),NAZAJ_W,pub):mFlow(7,7,body,slot('check',{pub:true})+pub)},
- notes:function(s){var a=['On the step that saves, the check line takes the AI note\'s place in the slot. It shows only while at least one field still carries the mark.',
+  var sl=slot('note',{t:C.notePub});
+  return d?wFlow(7,7,body,sl,NAZAJ_W,pub):mFlow(7,7,body,sl+pub)},
+ notes:function(s){var a=['On the step that saves, the note in the slot is the check: <code>note_save</code> ("… preverite, preden shranite") in P8. It shows only while at least one field still carries the mark.',
   '<b>Never blocks:</b> Save or Publish confirms the values and the marks go away (question 7).'];
-  if(s==='p8')return a.concat(['"Preveri predloge" moves focus to the first marked field (desktop: Pasma, with the focus ring).','P8 mobile saves on the last step (Ovratnica in opombe), so the line sits there above Shrani; earlier steps show the AI note.']);
-  return a.concat(['The Žival row names the fields that are still suggestions; its Uredi goes back to step 3, where the marks still are.','Sample data (place, time, circumstances) is illustrative.'])}},
-{id:'f8',title:'Notice: no animal, another animal, several animals',sub:'P7 step 1. The same note shows on P6 step 2 and in the P8 Fotografije section.',
+  if(s==='p8')return a.concat(['"Preveri predloge" (no key yet, proposal) moves focus to the first marked field (desktop: Pasma, with the focus ring).','P8 mobile saves on the last step (Ovratnica in opombe), so the note sits there above Shrani; earlier steps show <code>note_continue</code>.']);
+  return a.concat(['P6 Review has no key yet: a publish variant of the note ("… preden objavite") and the Žival row line "Predlog: pasma, barva, vzorec" are proposals (dotted underline). The row\'s Uredi goes back to step 3, where the marks still are.','Sample data (place, time, circumstances) is illustrative.'])}},
+{id:'f8',title:'Notice: no animal, another animal, several animals',sub:'P7 step 1. The same note shows under the first photo on P6 step 2 and in the P8 Fotografije section.',
  states:[['no_animal','No animal'],['other_animal','Another animal'],['multiple_animals','Several animals']],
- render:function(v,s){var m={no_animal:[['ulica, brez živali','--chart-4'],C.noAnimal],other_animal:[['zajec','--chart-5'],C.other],multiple_animals:[['dva psa','--chart-2'],C.multi]}[s];
-  var note='<div class="note mt20">'+S('info',22)+'<div><p>'+m[1]+TO('notice: '+s)+'</p><button type="button" class="btn bt">'+S('swap',20)+C.replace+'</button></div></div>';
-  return p7s1(v,m[0],note,'')},
- notes:function(s){var a=['With any notice <b>nothing is filled</b>. One note (system 10.6, one per view) under the photo, with "Zamenjaj fotografijo": camera or gallery; the new first photo is checked again.',
-  'Naprej stays enabled: the person can go on and answer step 2 by hand (F9 layout).',
-  'If the notice arrives after the person has left the photo step, it shows in the AI slot of the current step instead, with the same text button, and is read once.'];
-  if(s==='other_animal')a.push('Question 5: carry on (shown) or stop the report.');
-  if(s==='multiple_animals')a.push('Question 6: there is no crop tool in this version, so the copy asks for another photo.');
+ render:function(v,s){var ph={no_animal:['ulica, brez živali','--chart-4'],other_animal:['zajec','--chart-5'],multiple_animals:['dva psa','--chart-2']}[s],t=C.notice[s];
+  var note='<div class="note mt20">'+S('info',22)+'<div><p><b>'+t[0]+'</b>'+TO('notice: '+s)+'</p><p class="mt4">'+t[1]+'</p><div class="nbtns"><button type="button" class="btn bt">'+S('swap',20)+C.change+'</button><button type="button" class="btn bt">'+C.keep+'</button></div></div></div>';
+  return p7s1(v,ph,note,'')},
+ notes:function(s){var a=['A neutral note under the first photo (system 10.6, not an error, not red). It never blocks Naprej or Save. "Zamenjaj fotografijo" opens the picker for that photo, and the new first photo is checked again; "Obdrži fotografijo" dismisses the note.',
+  'The notice title is what the live region reads. If the notice arrives after the person has left the photo step, it shows in the AI slot of the current step instead, with the same buttons.'];
+  if(s==='multiple_animals')return a.concat(['<b>Several animals: the form fills as usual</b> (§3a), so P7 step 2 can still show "Je to pravilno?". The body asks for another or a cropped photo, cropped in the phone\'s own gallery (question 6).']);
+  a.push('<b>Nothing is filled</b>, and P7 skips "Je to pravilno?": step 2 is the manual step with this notice above it.');
+  if(s==='other_animal')a.push('The person can keep the photo and carry on by hand (question 5).');
   return a}},
 {id:'f9',title:'Unavailable or failed: nothing extra',sub:'P7 step 2 without AI. P6 and P8 look as they do today.',
  render:function(v){return p7manual(v,false)},
- notes:function(){return ['<code>unavailable</code> (AI off, budget or daily cap, refused, invalid, failed), a network error, no answer in 10 s, or <code>ai.enabled</code> false: the M2 form. <b>No error, no AI line, no hint</b> (C19: "unavailable and errors show nothing extra").',
- 'The checking line just leaves the slot; it sits by the button, so nothing moves.',
+ notes:function(){return ['<code>unavailable</code> (AI off, budget or daily cap, refused, invalid, failed), a network error, no answer in 10 s, or <code>ai.enabled</code> false: the M2 form. <b>No error, no AI line, no hint</b>. C19 and the copy (§3a) do this on purpose.',
+ 'The checking line leaves the slot without an announcement; it sits by the button, so nothing moves.',
  'The same holds for P6 step 3 and the P8 form: PetFields as built today.']}},
 {id:'f10',title:'No usable suggestion (nothing at 0.6 or more)',sub:'P6 step 3. Two ways to show it: question 3.',
- states:[['line','One line (proposal)'],['hints','Hint per field (C19 as written)']],
- render:function(v,s){if(s==='hints'){var st={species:{hint:C.low},breed:{v:null,hint:C.low},colours:{v:[],hint:C.low},pattern:{v:null,hint:C.low},size:{v:null,hint:C.low},sizes:DOG,name:''};return p6(st,v,'')}
-  return p6({species:{},breed:{},colours:{v:[]},pattern:{},size:{},sizes:DOG,name:''},v,slot('none',{to:'proposal'}))},
- notes:function(s){return s==='hints'?['As C19 reads now, every field whose value is below 0.6 gets the low-confidence hint: five hints on one screen, all saying the same thing.','A field that is <code>null</code> (the model saw nothing) gets no hint in either version.']
-  :['<b>Proposal:</b> when no value reaches 0.6, one line in the AI slot and no hint under the fields. Needs a C19 client-rule change if you agree (question 3).','Nothing is filled, nothing is marked. A field that is <code>null</code> (the model saw nothing) gets no hint in either version.']}}
+ states:[['line','One line (proposal)'],['hints','Hint per field (C19 and copy as written)']],
+ render:function(v,s){if(s==='hints'){var st={species:{hint:C.low},breed:{v:null,hint:C.lowBreed},colours:{v:[],hint:C.low},pattern:{v:null,hint:C.low},size:{v:null,hint:C.low},sizes:DOG,name:''};return p6(st,v,'')}
+  return p6({species:{},breed:{},colours:{v:[]},pattern:{},size:{},sizes:DOG,name:''},v,slot('none',{to:'proposal: none_live also shown as a line'}))},
+ notes:function(s){var a=['In both versions the live region reads <code>none_live</code> once. A field that is <code>null</code> (the model saw nothing) gets no hint.'];
+  return s==='hints'?['As C19 and §3a read now, every field whose value is below 0.6 gets <code>low_confidence</code> (<code>low_confidence_breed</code> for Pasma): five hints on one screen, all saying the same thing.'].concat(a)
+  :['<b>Proposal:</b> when no value reaches 0.6, show the <code>none_live</code> text as one line in the AI slot and no hint under the fields. Needs a C19 client-rule change and a note in §3a if you agree (question 3).','Nothing is filled and nothing is marked.'].concat(a)}}
 ];
 
 /* ---------- build ---------- */
