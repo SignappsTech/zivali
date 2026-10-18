@@ -8,6 +8,7 @@ import type {
 	MapReportQuery,
 	MyReportList,
 	PublicReport,
+	PublicStats,
 	ReportList,
 	ReportOwnerView,
 	ReportSearch,
@@ -102,6 +103,8 @@ export const reportsApi = api.enhanceEndpoints({ addTagTypes: ['Reports'] }).inj
 				},
 			}),
 		}),
+		// TASK-115.4: homepage numbers; a null count (under 50) means the block stays hidden. Cached 5 min by the API.
+		getPublicStats: build.query<PublicStats, void>({ query: () => '/v1/stats/public' }),
 	}),
 });
 
@@ -115,4 +118,5 @@ export const {
 	useTransitionReportMutation,
 	useSyncReportsQuery,
 	useLazySyncReportsQuery,
+	useGetPublicStatsQuery,
 } = reportsApi;

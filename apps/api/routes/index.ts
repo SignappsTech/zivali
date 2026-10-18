@@ -21,6 +21,7 @@ import petsRoutes from './pets.routes.ts';
 import photosRoutes from './photos.routes.ts';
 import reportsRoutes from './reports.routes.ts';
 import sheltersRoutes from './shelters.routes.ts';
+import statsRoutes from './stats.routes.ts';
 import syncRoutes from './sync.routes.ts';
 
 const router = Router();
@@ -47,6 +48,7 @@ router.use('/partners', partnersRoutes);
 router.use('/leads', leadsRoutes);
 router.use('/payments', paymentsRoutes);
 router.use('/sync', syncRoutes);
+router.use('/stats', statsRoutes);
 router.use('/abuse-reports', abuseReportsRoutes);
 
 export default router;

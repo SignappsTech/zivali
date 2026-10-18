@@ -36,6 +36,7 @@ test('wire types in @zivali/types match the zod schemas', () => {
 	expectTypeOf<Out<typeof V.CreateReportInput>>().toEqualTypeOf<Flat<T.CreateReportInput>>();
 	expectTypeOf<Out<typeof V.UpdateReportInput>>().toEqualTypeOf<Flat<T.UpdateReportInput>>();
 	expectTypeOf<Out<typeof V.CreateReportResponse>>().toEqualTypeOf<Flat<T.CreateReportResponse>>();
+	expectTypeOf<Out<typeof V.PublicStats>>().toEqualTypeOf<Flat<T.PublicStats>>();
 	expectTypeOf<Out<typeof V.PublicReport>>().toEqualTypeOf<Flat<T.PublicReport>>();
 	expectTypeOf<Out<typeof V.ReportOwnerView>>().toEqualTypeOf<Flat<T.ReportOwnerView>>();
 	expectTypeOf<Out<typeof V.ReportSearch>>().toEqualTypeOf<Flat<T.ReportSearch>>();

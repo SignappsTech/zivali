@@ -196,3 +196,10 @@ export type SyncReportsResponse = {
 /** C7 POST /v1/manage/claim */
 export type ManageClaimInput = { token: string };
 export type ManageClaimResponse = { report_id: Uuid; short_code: string };
+
+/** GET /v1/stats/public: each count rounded down to a multiple of 10, null while under 50 (no small numbers). */
+export type PublicStats = {
+	reunited_total: number | null;
+	open_reports: number | null;
+	alert_subscribers: number | null;
+};

@@ -1669,6 +1669,15 @@
 				],
 				"description": "Public read model of a report (fuzzed area, no contact or chip data)."
 			},
+			"PublicStats": {
+				"type": "object",
+				"properties": {
+					"reunited_total": { "anyOf": [{ "type": "integer", "minimum": 50 }, { "type": "null" }] },
+					"open_reports": { "anyOf": [{ "type": "integer", "minimum": 50 }, { "type": "null" }] },
+					"alert_subscribers": { "anyOf": [{ "type": "integer", "minimum": 50 }, { "type": "null" }] }
+				},
+				"required": ["reunited_total", "open_reports", "alert_subscribers"]
+			},
 			"PushPlatform": { "type": "string", "enum": ["ios", "android"] },
 			"PushTokenDeleteInput": {
 				"type": "object",
@@ -5568,6 +5577,28 @@
 					"404": {
 						"description": "NOT_FOUND",
 						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"429": {
+						"description": "RATE_LIMITED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"500": {
+						"description": "INTERNAL",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					}
+				}
+			}
+		},
+		"/v1/stats/public": {
+			"get": {
+				"operationId": "getPublicStats",
+				"summary": "Public homepage numbers",
+				"description": "Visible reunited reports, visible open or matched reports and active nearby-alert subscriptions. No personal data: each count is rounded down to a multiple of 10 and is null while under 50 (clients hide the numbers block unless all three are set). Cached 5 minutes: `Cache-Control: public, max-age=300`.",
+				"tags": ["stats"],
+				"responses": {
+					"200": {
+						"description": "The published counts",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/PublicStats" } } }
 					},
 					"429": {
 						"description": "RATE_LIMITED",

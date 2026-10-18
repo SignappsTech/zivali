@@ -265,3 +265,9 @@ export const ManageClaimInput = z
 	.object({ token: z.string().regex(/^[A-Za-z0-9_-]{43}$/, 'Invalid token') })
 	.openapi('ManageClaimInput');
 export const ManageClaimResponse = z.object({ report_id: Uuid, short_code: z.string() }).openapi('ManageClaimResponse');
+
+/** GET /v1/stats/public (TASK-115.4): each count rounded down to a multiple of 10, null while under 50. */
+const PublicCount = nullOr(z.number().int().min(50).multipleOf(10));
+export const PublicStats = z
+	.object({ reunited_total: PublicCount, open_reports: PublicCount, alert_subscribers: PublicCount })
+	.openapi('PublicStats');

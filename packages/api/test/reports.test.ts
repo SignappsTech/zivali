@@ -149,3 +149,16 @@ test('map, my reports and sync: query strings, with sync areas rounded to 2 deci
 		]
 	);
 });
+
+test('getPublicStats reads GET /v1/stats/public; null counts arrive as they are', async () => {
+	const stats = { reunited_total: 1350, open_reports: 120, alert_subscribers: null };
+	const client = createMockApi({ 'GET /v1/stats/public': stats });
+	const store = createApiStore(client);
+
+	const res = await store.dispatch(endpoints.getPublicStats.initiate(undefined, { subscribe: false }));
+	assert.deepEqual(res.data, stats);
+	assert.deepEqual(
+		client.calls.map((c) => [c.method, c.path]),
+		[['GET', '/v1/stats/public']]
+	);
+});
