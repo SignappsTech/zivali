@@ -1,10 +1,11 @@
 ---
 id: TASK-114.38
 title: Mock payment checkout_url keeps return_to (CH-252)
-status: To Do
+status: In Progress
 assignee:
   - '@backend-dev'
 created_date: '2026-10-18 22:08'
+updated_date: '2026-10-18 22:25'
 labels:
   - be
   - bug
@@ -32,6 +33,6 @@ Branch: agent/task-114.38-mock-return-to
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Mock createCheckout returns a checkout_url that carries a URL-encoded return_to when the caller gave one (validated as before by the C13 rule) and omits it otherwise; adapter test covers both.
-- [ ] #2 'Back' on the return page after a mock checkout lands on the page the payment started from.
+- [x] #1 Mock createCheckout returns a checkout_url that carries a URL-encoded return_to when the caller gave one (validated as before by the C13 rule) and omits it otherwise; adapter test covers both.
+- [x] #2 'Back' on the return page after a mock checkout lands on the page the payment started from.
 <!-- AC:END -->
