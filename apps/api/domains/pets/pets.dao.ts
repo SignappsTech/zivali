@@ -4,10 +4,13 @@ import { prisma } from '../../prisma/prisma.ts';
 
 type Tx = Prisma.TransactionClient;
 
-/** Attached photos that have an upload (pending ones have none) and were not rejected, in order. */
+/**
+ * Attached photos that have an upload (pending ones have none) and were not rejected, in order; a photo shared with a
+ * report keeps one position (TASK-114.5), so the id breaks ties.
+ */
 const photos = {
 	where: { status: { notIn: ['pending', 'rejected'] } },
-	orderBy: { position: 'asc' },
+	orderBy: [{ position: 'asc' }, { id: 'asc' }],
 	select: { id: true },
 } satisfies Prisma.pets$photosArgs;
 

@@ -308,6 +308,25 @@ describe('PhotoPicker', () => {
 		);
 	});
 
+	it('restores a draft photo that is a saved one only once, as the saved photo (TASK-114.5)', async () => {
+		idb.set('photos:lost', [
+			{ key: 'a', ...photo(1), photoId: 'saved-1', uploadedAt: Date.now() },
+			{ key: 'b', ...photo(2), photoId: 'photo-2', uploadedAt: Date.now() },
+		]);
+		const onChange = vi.fn();
+		renderPicker({ saved: [{ id: 'saved-1', thumb_url: 'https://media.test/1.webp' }], onChange });
+
+		await screen.findByRole('listitem', { name: 'Fotografija 2 od 2' });
+		expect(onChange.mock.lastCall![0].map((item: { photoId?: string }) => item.photoId)).toEqual([
+			'saved-1',
+			'photo-2',
+		]);
+		expect(screen.getByRole('img', { name: 'Fotografija 1 od 2' }).getAttribute('src')).toBe(
+			'https://media.test/1.webp'
+		);
+		expect(upload).not.toHaveBeenCalled();
+	});
+
 	it('restores the draft after a reload and resumes the upload without picking again', async () => {
 		idb.set('photos:lost', [
 			{ key: 'a', ...photo(1), photoId: 'photo-1', uploadedAt: Date.now() },

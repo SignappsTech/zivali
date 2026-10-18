@@ -343,7 +343,8 @@ const readInclude = (userId: string | undefined) =>
 		managers: { where: { user_id: { in: userId ? [userId] : [] } }, select: { role: true } },
 		photos: {
 			where: { status: 'published' },
-			orderBy: { position: 'asc' },
+			// A photo shared with a pet keeps one position (TASK-114.5): the id breaks ties, so the cover is stable.
+			orderBy: [{ position: 'asc' }, { id: 'asc' }],
 			select: { public_display_url: true, public_thumb_url: true, width: true, height: true },
 		},
 		municipality: { select: { slug: true, name_sl: true, name_en: true } },
@@ -435,19 +436,26 @@ type PublicPhoto = {
 };
 
 /**
- * Sets the report's photos in order (position = index): the owner's photos on no other report (unattached uploads,
- * their pets' photos, TASK-114.5) or photos already on this report; photos left out are detached (and unpublished).
- * Returns how many of `photo_ids` were attached and the photos that were public.
+ * Sets the report's photos in order (position = index): the owner's photos on no open report (unattached uploads,
+ * their pets' photos, photos of their closed or reunited reports, TASK-114.5) or photos already on this report.
+ * Photos left out, and those taken from an ended report (a pet lost again), are detached and unpublished, so
+ * photo.publish copies them anew for this report. Returns how many of `photo_ids` were attached and the detached
+ * photos that were public (with their old report), whose public copies the caller deletes.
  */
 export async function setPhotos(
 	input: { report_id: string; owner_id: string; photo_ids: string[] },
 	tx: Prisma.TransactionClient
 ): Promise<{ attached: number; unpublished: PublicPhoto[] }> {
 	const { report_id, owner_id, photo_ids } = input;
-	// Detached photos that were public go back to unpublished; their public copies are deleted by the caller.
+	const ended = { id: { not: report_id }, status: { in: ['closed' as const, 'reunited' as const] } };
 	const detached = await tx.photos.findMany({
-		where: { report_id, id: { notIn: photo_ids } },
-		select: { id: true, status: true, public_display_url: true, public_thumb_url: true },
+		where: {
+			OR: [
+				{ report_id, id: { notIn: photo_ids } },
+				{ id: { in: photo_ids }, owner_id, report: ended },
+			],
+		},
+		select: { id: true, report_id: true, public_display_url: true, public_thumb_url: true },
 	});
 	const ids = detached.map((p) => p.id);
 	await tx.photos.updateMany({
@@ -468,11 +476,11 @@ export async function setPhotos(
 	}
 	const unpublished = detached
 		.filter((p) => p.public_display_url || p.public_thumb_url)
-		.map(({ id, public_display_url, public_thumb_url }) => ({
-			id,
-			report_id,
-			public_display_url,
-			public_thumb_url,
+		.map((p) => ({
+			id: p.id,
+			report_id: p.report_id ?? report_id,
+			public_display_url: p.public_display_url,
+			public_thumb_url: p.public_thumb_url,
 		}));
 	return { attached, unpublished };
 }

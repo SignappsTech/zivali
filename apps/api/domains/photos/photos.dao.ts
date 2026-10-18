@@ -64,7 +64,8 @@ export async function findReportPhotos(report_id: string, tx?: Tx) {
 			...reportState,
 			photos: {
 				where: { status: { in: ['accepted', 'published', 'unpublished'] } },
-				orderBy: { position: 'asc' },
+				// A photo shared with a pet keeps one position (TASK-114.5): the id breaks ties.
+				orderBy: [{ position: 'asc' }, { id: 'asc' }],
 				select: { id: true, status: true },
 			},
 		},
