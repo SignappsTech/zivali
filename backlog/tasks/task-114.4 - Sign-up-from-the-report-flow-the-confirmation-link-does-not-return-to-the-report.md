@@ -3,11 +3,11 @@ id: TASK-114.4
 title: >-
   Sign-up from the report flow: the confirmation link does not return to the
   report
-status: In Progress
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-16 13:35'
-updated_date: '2026-10-18 03:19'
+updated_date: '2026-10-18 03:45'
 labels:
   - bug
   - fe
