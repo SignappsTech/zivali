@@ -63,7 +63,7 @@ To je prostovoljen cilj, ne uradna izjava o skladnosti. Ne trdimo, da je vsaka s
 
 ## 4. Sporočite oviro
 
-Če naletite na oviro ali potrebujete vsebino v drugi obliki, nam pišite na podpora@najdimo.si. Odgovorimo v 14 dneh.
+Če naletite na oviro ali potrebujete vsebino v drugi obliki, nam pišite na info@signapps.si. Odgovorimo v 14 dneh.
 
 ---
 
@@ -99,7 +99,7 @@ This is a voluntary goal, not a formal statement of conformance. We do not claim
 
 ## 4. Report a barrier
 
-If you meet a barrier or need content in another format, write to podpora@najdimo.si. We reply within 14 days.
+If you meet a barrier or need content in another format, write to info@signapps.si. We reply within 14 days.
 
 ---
 
@@ -107,6 +107,6 @@ If you meet a barrier or need content in another format, write to podpora@najdim
 
 1. **Exemption basis.** See "Decision and basis" above. TASK-91 may confirm that SIGNAPPS d.o.o. qualifies as a microenterprise (headcount, turnover) and that payments do not take Najdimo out of the services exemption.
 2. **Claims to verify against the build.** High contrast; keyboard and screen-reader support; list alternative to the map; reduced motion; 200 % text; labels above fields; errors as text. Remove any claim that is not true.
-3. **Contact.** podpora@najdimo.si and the 14-day reply are our proposed commitment. Confirm that it can be met.
+3. **Contact.** info@signapps.si and the 14-day reply are our proposed commitment. Confirm that it can be met.
 4. **Third-party content.** Stripe Checkout, Google and Apple sign-in and Turnstile are outside our control.
 5. **Quality.** The Slovenian text needs a native review of terminology (e.g. „bralnik zaslona“, „nadomestno besedilo“).
