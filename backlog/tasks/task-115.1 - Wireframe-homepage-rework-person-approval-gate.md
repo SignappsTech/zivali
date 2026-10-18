@@ -1,11 +1,11 @@
 ---
 id: TASK-115.1
 title: 'Wireframe: homepage rework (person approval gate)'
-status: In Review
+status: Done
 assignee:
   - '@design-lead'
 created_date: '2026-10-16 14:00'
-updated_date: '2026-10-18 02:12'
+updated_date: '2026-10-18 09:12'
 labels:
   - design
   - wireframe
@@ -36,4 +36,6 @@ Wireframe of the reworked homepage (TASK-115), desktop 1440 and mobile 390, as d
 docs/design/wireframes/P3-home.html: v1 ready for owner review (2026-10-18). Not approved yet.
 
 Review sheet for the owner (private claude.ai page, v1 2026-10-18): https://claude.ai/artifact/MTTBPrLTPgEJM8r6QfZQ45. Awaiting owner approval.
+
+APPROVED: Primož Božič (owner), 2026-10-18, wireframe v1 (docs/design/wireframes/P3-home.html). Owner: "A for home". Layout A: compact hero with the two report buttons, recent report cards straight under it. Questions 2-4 were not answered one by one, so they follow A as shown: public latest-report cards (status, species, rough area, time only); "Opažena žival" as a quiet link; the live numbers block stays optional (needs a public stats endpoint, hidden while numbers are small). Confirm those three when 115.2 starts. Owner said not to start building yet (2026-10-18).
 <!-- SECTION:NOTES:END -->

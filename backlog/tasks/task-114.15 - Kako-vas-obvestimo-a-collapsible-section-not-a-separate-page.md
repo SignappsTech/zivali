@@ -6,7 +6,7 @@ assignee:
   - '@design-lead'
   - '@frontend-dev'
 created_date: '2026-10-16 15:30'
-updated_date: '2026-10-18 02:12'
+updated_date: '2026-10-18 09:12'
 labels:
   - fe
   - design
@@ -44,4 +44,6 @@ Wanted (owner's choice): the channel and quiet-hours settings as a collapsible s
 docs/design/wireframes/M-alerts-notifications.html: v1 ready for owner review (2026-10-18). Not approved yet.
 
 Review sheet for the owner (private claude.ai page, v1 2026-10-18): https://claude.ai/artifact/MTTBPrLTPgEJM8r6QfZQ45. Awaiting owner approval.
+
+MOCK APPROVED: Primož Božič (owner), 2026-10-18, wireframe v1 (docs/design/wireframes/M-alerts-notifications.html). Owner: "alerts confirmed": a collapsible section on the alerts page, closed by default, grey summary line under the closed title, /racun/obvestila redirects to the alerts page with the section open. Implementation not started: owner said not to build yet (2026-10-18).
 <!-- SECTION:NOTES:END -->

@@ -1,11 +1,11 @@
 ---
 id: TASK-116.1
 title: 'Wireframe: footer rework (person approval gate)'
-status: In Review
+status: Done
 assignee:
   - '@design-lead'
 created_date: '2026-10-16 14:00'
-updated_date: '2026-10-18 02:12'
+updated_date: '2026-10-18 09:12'
 labels:
   - design
   - wireframe
@@ -36,4 +36,6 @@ Wireframe of the footer (TASK-116): column groups and their headings, which link
 docs/design/wireframes/P1-footer.html: v1 ready for owner review (2026-10-18). Not approved yet.
 
 Review sheet for the owner (private claude.ai page, v1 2026-10-18): https://claude.ai/artifact/MTTBPrLTPgEJM8r6QfZQ45. Awaiting owner approval.
+
+APPROVED: Primož Božič (owner), 2026-10-18, wireframe v1 (docs/design/wireframes/P1-footer.html). Owner: "standard footer", taken as the mock's defaults: four columns with the proposed headings and grouping (Pomoč, Za organizacije, Najdimo, Pravno); operator line with the full address; language switch under the logo; mobile 2x2. Owner said not to start building yet (2026-10-18).
 <!-- SECTION:NOTES:END -->

@@ -6,7 +6,7 @@ assignee:
   - '@frontend-dev'
   - '@design-lead'
 created_date: '2026-10-16 16:10'
-updated_date: '2026-10-18 02:12'
+updated_date: '2026-10-18 09:12'
 labels:
   - fe
   - design
@@ -41,4 +41,6 @@ Part of the cause is TASK-114.18 (the MDX `<table>`, `<th>`, `<td>` get no style
 docs/design/wireframes/M-legal-table.html: v1 ready for owner review (2026-10-18). Not approved yet.
 
 Review sheet for the owner (private claude.ai page, v1 2026-10-18): https://claude.ai/artifact/MTTBPrLTPgEJM8r6QfZQ45. Awaiting owner approval.
+
+MOCK APPROVED: Primož Božič (owner), 2026-10-18, wireframe v1 (docs/design/wireframes/M-legal-table.html). Owner: "legal good", so the mock's defaults: divider lines (not zebra), 640 px text-column width, stacked cards on mobile for every legal table including the cookie list. Implementation not started: owner said not to build yet (2026-10-18).
 <!-- SECTION:NOTES:END -->
