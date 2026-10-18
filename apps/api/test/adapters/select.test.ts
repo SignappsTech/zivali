@@ -117,6 +117,21 @@ describe('adapter provider selection', () => {
 		expect(createAdapters({ ...blank, AI_PROVIDER: 'anthropic' }).ai.provider).toBe('mock');
 	});
 
+	it('the AI mock never runs outside APP_ENV=local: mock, or anthropic without a key, is off (CH-562)', () => {
+		for (const APP_ENV of ['staging', 'production'] as const) {
+			for (const settings of [
+				{ AI_PROVIDER: 'mock' as const },
+				{ AI_PROVIDER: 'anthropic' as const, ANTHROPIC_API_KEY: undefined },
+			]) {
+				const { ai } = createAdapters({ ...blank, APP_ENV, NODE_ENV: 'development', ...settings });
+				expect(aiOn(ai)).toBe(false);
+				expect(() => ai.extract({ jpegBase64: '', sha256: 'a' })).toThrow(/not enabled/);
+			}
+		}
+		// NODE_ENV=production still refuses both at boot.
+		expect(() => createAdapters({ ...prodFull, APP_ENV: 'staging', AI_PROVIDER: 'mock' })).toThrow(/AI_PROVIDER/);
+	});
+
 	it('minio never passes on built-in credentials in production', () => {
 		expect(() => createAdapters({ ...prodFull, STORAGE_PROVIDER: 'minio' })).toThrow(/STORAGE_PROVIDER/);
 	});

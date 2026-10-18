@@ -254,8 +254,35 @@ describe('ai.extract: caps', () => {
 		};
 		expect(await outcomes(user, 2)).toEqual(['ok', 'skipped_limit']);
 		expect(await outcomes(anonymous, 3)).toEqual(['ok', 'ok', 'skipped_limit']);
-		// Another owner is not affected; a cached image costs nothing and does not count.
+		// Another owner is not affected.
 		expect(await outcomes(await owner(), 1)).toEqual(['ok']);
+	});
+
+	it('the daily cap counts every provider call (refused, invalid, failed too), not cache hits', async () => {
+		await setConfig('ai.daily_photos_user', 3);
+		const owner_id = await owner();
+		const { ctx } = testCtx();
+		const known = randomBytes(32).toString('hex');
+		sha256s.push(known);
+		await prisma.ai_results.create({
+			data: { sha256: known, model: 'claude-haiku-5-5', prompt_version: 'v', result: {}, moderation: {} },
+		});
+		vi.spyOn(adapters.ai, 'extract')
+			.mockImplementationOnce(async () => ({ ...MOCK_TOKENS, model: 'claude-haiku-5-5', outcome: 'refused' }))
+			.mockImplementationOnce(async () => ({ ...MOCK_TOKENS, model: 'claude-haiku-5-5', outcome: 'invalid' }))
+			.mockImplementationOnce(async () => ({
+				model: 'claude-haiku-5-5',
+				input_tokens: 0,
+				output_tokens: 0,
+				outcome: 'failed',
+			}));
+		const out: string[] = [];
+		for (const sha256 of [known, undefined, undefined, undefined, undefined]) {
+			const p = await photo({ owner_id, ...(sha256 && { sha256 }) });
+			await AiDomain.extractPhoto({ photo_id: p.id }, ctx);
+			out.push((await calls(p.id))[0]!.outcome);
+		}
+		expect(out).toEqual(['cached', 'refused', 'invalid', 'failed', 'skipped_limit']);
 	});
 });
 

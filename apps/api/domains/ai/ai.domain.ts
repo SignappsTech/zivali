@@ -48,7 +48,7 @@ async function capOutcome(photo: { owner_id: string; anonymous: boolean }, ctx: 
 	if (!(budget > (await AiDao.spendSince(monthStart, ctx.tx)))) return 'skipped_budget';
 	const limit = Number(await configStore.get(photo.anonymous ? 'ai.daily_photos_anonymous' : 'ai.daily_photos_user'));
 	const since = new Date(ctx.now.getTime() - DAY_MS);
-	if (!(limit > (await AiDao.okCallsSince(photo.owner_id, since, ctx.tx)))) return 'skipped_limit';
+	if (!(limit > (await AiDao.callsSince(photo.owner_id, since, ctx.tx)))) return 'skipped_limit';
 	return null;
 }
 
@@ -86,6 +86,7 @@ export async function extractPhoto(input: { photo_id: string; last_attempt?: boo
 			reply = { ...none, outcome: 'failed' };
 			error = errorName(err);
 		}
+		if ('error' in reply) error = reply.error;
 		if ('extraction' in reply) {
 			const { moderation, ...result } = reply.extraction;
 			stored = { result, moderation };

@@ -28,11 +28,14 @@ export async function spendSince(since: Date, tx?: Tx): Promise<number> {
 	return Number(_sum.cost_usd ?? 0);
 }
 
-/** The owner's extractions with outcome ok since the given instant (the daily cap). */
-export async function okCallsSince(owner_id: string, since: Date, tx?: Tx): Promise<number> {
+/** Outcomes of a provider call (ok, refused, invalid, failed): skips and cache hits made none. */
+const CALLED: AI_OUTCOME[] = ['ok', 'refused', 'invalid', 'failed'];
+
+/** The owner's provider calls since the given instant (the daily cap). */
+export async function callsSince(owner_id: string, since: Date, tx?: Tx): Promise<number> {
 	const db = tx ?? prisma;
 	return db.ai_calls.count({
-		where: { provider: 'anthropic', outcome: 'ok', created_at: { gte: since }, photo: { owner_id } },
+		where: { provider: 'anthropic', outcome: { in: CALLED }, created_at: { gte: since }, photo: { owner_id } },
 	});
 }
 
@@ -71,4 +74,4 @@ export async function purge(before: Date, tx?: Tx): Promise<{ ai_calls: number; 
 	return { ai_calls: calls.count, ai_results: results };
 }
 
-export default { findPhoto, findResult, spendSince, okCallsSince, insertResult, recordCall, purge };
+export default { findPhoto, findResult, spendSince, callsSince, insertResult, recordCall, purge };

@@ -3,9 +3,11 @@
 const PRICES: Record<string, { input: number; output: number }> = {
 	'claude-haiku-5-5': { input: 0.1, output: 0.5 },
 	'claude-sonnet-5-5': { input: 2, output: 10 },
+	'claude-opus-5-5': { input: 4, output: 20 },
 };
-// A model missing here is booked at the dearest listed rate, so the budget never undercounts.
-const DEAREST = PRICES['claude-sonnet-5-5']!;
+// A model missing here is booked at the dearest listed rate (Opus 5.5) rather than as free; add its row before
+// setting AI_VISION_MODEL to it.
+const DEAREST = PRICES['claude-opus-5-5']!;
 
 /** USD for one call, rounded to the column's 6 decimals. */
 export function costUsd(model: string, input_tokens: number, output_tokens: number): string {

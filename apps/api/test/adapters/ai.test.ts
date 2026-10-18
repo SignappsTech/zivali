@@ -2,7 +2,16 @@
 // the raw-JSON gate, all against a stubbed SDK client (no test reaches Anthropic); the mock's fixtures by sha256.
 import { readFileSync } from 'node:fs';
 
-import { APIConnectionError, BadRequestError, InternalServerError, RateLimitError } from '@anthropic-ai/sdk';
+import {
+	APIConnectionError,
+	AuthenticationError,
+	BadRequestError,
+	InternalServerError,
+	NotFoundError,
+	PermissionDeniedError,
+	RateLimitError,
+	UnprocessableEntityError,
+} from '@anthropic-ai/sdk';
 import { describe, expect, it, vi } from 'vitest';
 
 import { aiExtractionJsonSchema } from '@zivali/validation/ai';
@@ -139,22 +148,31 @@ describe('anthropic adapter: the reply', () => {
 			message({ stop_reason: 'max_tokens', content: [{ type: 'text', text: '{"animal": "do' }] })
 		);
 		expect(await cut.ai.extract({ jpegBase64: JPEG, sha256: SHA })).toMatchObject({ outcome: 'invalid' });
-		const tooMany = { ...valid, marks: ['a', 'b', 'c', 'd', 'e', 'f'] };
-		const bad = stubbed(message({ content: [{ type: 'text', text: JSON.stringify(tooMany) }] }));
+		const unknownColour = { ...valid, colours: { values: ['purple'], confidence: 0.9 } };
+		const bad = stubbed(message({ content: [{ type: 'text', text: JSON.stringify(unknownColour) }] }));
 		expect(await bad.ai.extract({ jpegBase64: JPEG, sha256: SHA })).toMatchObject({
 			outcome: 'invalid',
 			input_tokens: 1234,
 		});
 	});
 
-	it('BadRequestError: failed at once, no throw (no retry)', async () => {
-		const { ai } = stubbed(new BadRequestError(400, apiError('bad image'), 'bad image', headers));
-		expect(await ai.extract({ jpegBase64: JPEG, sha256: SHA })).toEqual({
-			outcome: 'failed',
-			model: MODEL,
-			input_tokens: 0,
-			output_tokens: 0,
-		});
+	it('a rejected request (400, 401, 403, 404, 422): failed at once with its error class, no throw (no retry)', async () => {
+		for (const err of [
+			new BadRequestError(400, apiError('bad image'), 'bad image', headers),
+			new AuthenticationError(401, apiError('bad key'), 'bad key', headers),
+			new PermissionDeniedError(403, apiError('denied'), 'denied', headers),
+			new NotFoundError(404, apiError('no model'), 'no model', headers),
+			new UnprocessableEntityError(422, apiError('unprocessable'), 'unprocessable', headers),
+		]) {
+			const { ai } = stubbed(err);
+			expect(await ai.extract({ jpegBase64: JPEG, sha256: SHA })).toEqual({
+				outcome: 'failed',
+				model: MODEL,
+				input_tokens: 0,
+				output_tokens: 0,
+				error: err.constructor.name,
+			});
+		}
 	});
 
 	it('rate limit, 5xx and connection errors throw for the job retry', async () => {
@@ -191,9 +209,22 @@ describe('parseExtraction (the raw-JSON gate)', () => {
 		expect(parseExtraction({ ...valid, animal: 'other' })?.breeds).toEqual([]);
 	});
 
+	it('cuts breeds and colours to 3 and marks to 5, so one extra item does not void the rest', () => {
+		const parsed = parseExtraction({
+			...valid,
+			breeds: [0.9, 0.8, 0.7, 0.6].map((confidence) => ({ code: 'dog.labrador_retriever', confidence })),
+			colours: { values: ['black', 'white', 'tan', 'brown'], confidence: 0.8 },
+			marks: ['a', 'b', 'c', 'd', 'e', 'f'],
+		});
+		expect(parsed?.breeds.map((b) => b.confidence)).toEqual([0.9, 0.8, 0.7]);
+		expect(parsed?.colours?.values).toEqual(['black', 'white', 'tan']);
+		expect(parsed?.marks).toEqual(['a', 'b', 'c', 'd', 'e']);
+	});
+
 	it('anything else outside the schema is null', () => {
 		expect(parseExtraction({ ...valid, animal_count: 3 })).toBeNull();
-		expect(parseExtraction({ ...valid, breeds: [1, 2, 3, 4].map(() => valid.breeds[0]) })).toBeNull();
+		expect(parseExtraction({ ...valid, colours: { values: ['purple'], confidence: 0.9 } })).toBeNull();
+		expect(parseExtraction({ ...valid, marks: ['x'.repeat(101)] })).toBeNull();
 		expect(parseExtraction({ ...valid, extra: true })).toEqual(valid);
 		expect(parseExtraction(null)).toBeNull();
 		expect(parseExtraction([valid])).toBeNull();

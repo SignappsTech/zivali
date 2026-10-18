@@ -18,7 +18,10 @@ export type AiExtraction = z.output<typeof aiExtractionSchema>;
 export type AiImage = { jpegBase64: string; sha256: string };
 /** One model call with its billed tokens; `extraction` only on `ok`. */
 export type AiReply = { model: string; input_tokens: number; output_tokens: number } & (
-	{ outcome: 'ok'; extraction: AiExtraction } | { outcome: 'refused' | 'invalid' | 'failed' }
+	| { outcome: 'ok'; extraction: AiExtraction }
+	| { outcome: 'refused' | 'invalid' }
+	/** `error`: the SDK error class of a rejected request (logged, never the message). */
+	| { outcome: 'failed'; error?: string }
 );
 export type AiAdapter = {
 	provider: 'mock' | 'anthropic';
@@ -36,20 +39,28 @@ const clampConfidences = (node: unknown, key = ''): unknown => {
 	return typeof node === 'number' && key.endsWith('confidence') ? Math.min(1, Math.max(0, node)) : node;
 };
 
+const LIMITS = { breeds: 3, colours: 3, marks: 5 };
+
 /**
  * Raw model JSON → AiExtraction, or null when it does not fit (C19 §Pipeline 5). Structured outputs carry no bounds,
- * so confidences are clamped to 0…1 and breeds of another species dropped here, on the raw JSON; aiExtractionSchema is
- * the final gate. Never the SDK's zod auto-parse.
+ * so on the raw JSON confidences are clamped to 0…1, breeds of another species dropped and breeds, colours and marks
+ * cut to their limits (one extra item does not void the rest); aiExtractionSchema is the final gate. Never the SDK's
+ * zod auto-parse.
  */
 export function parseExtraction(raw: unknown): AiExtraction | null {
 	const json = clampConfidences(raw) as Record<string, unknown> | null;
 	if (!json || typeof json !== 'object' || Array.isArray(json)) return null;
-	const { animal, breeds } = json;
+	const { animal, breeds, colours, marks } = json;
 	if (Array.isArray(breeds))
-		json.breeds = breeds.filter(
-			(b: { code?: unknown } | null) =>
-				(animal === 'dog' || animal === 'cat') && typeof b?.code === 'string' && isBreedOf(b.code, animal)
-		);
+		json.breeds = breeds
+			.filter(
+				(b: { code?: unknown } | null) =>
+					(animal === 'dog' || animal === 'cat') && typeof b?.code === 'string' && isBreedOf(b.code, animal)
+			)
+			.slice(0, LIMITS.breeds);
+	const values = (colours as { values?: unknown } | null)?.values;
+	if (Array.isArray(values)) json.colours = { ...(colours as object), values: values.slice(0, LIMITS.colours) };
+	if (Array.isArray(marks)) json.marks = marks.slice(0, LIMITS.marks);
 	const parsed = aiExtractionSchema.safeParse(json);
 	return parsed.success ? parsed.data : null;
 }
@@ -57,7 +68,9 @@ export function parseExtraction(raw: unknown): AiExtraction | null {
 export function createAi(cfg: Config): AiAdapter {
 	const provider = cfg.AI_PROVIDER ?? (cfg.APP_ENV === 'local' ? undefined : 'off');
 	const p = pickProvider('AI_PROVIDER', provider, !!cfg.ANTHROPIC_API_KEY, cfg.NODE_ENV === 'production');
-	if (p === 'off') return offAdapter<AiAdapter>('AI_PROVIDER');
+	// The mock only locally (tests included): elsewhere its made-up clean results would turn into cache hits and let
+	// photo.embed embed unchecked photos (CH-562). So mock, or anthropic without a key, is off in staging and production.
+	if (p === 'off' || (p === 'mock' && cfg.APP_ENV !== 'local')) return offAdapter<AiAdapter>('AI_PROVIDER');
 	if (p === 'mock') return mockAi(cfg.AI_VISION_MODEL);
 	const client = new Anthropic({ apiKey: cfg.ANTHROPIC_API_KEY, maxRetries: 0, timeout: TIMEOUT_MS });
 	return anthropicAi(client, cfg.AI_VISION_MODEL, cfg.AI_VISION_EFFORT);

@@ -1,6 +1,12 @@
 // Claude vision over the official SDK (C19 §Provider call, ADR-012): one user turn with the image and a fixed
 // instruction, a constant system prompt, structured output. No ids, metadata, location, user text or locale.
-import Anthropic, { BadRequestError } from '@anthropic-ai/sdk';
+import Anthropic, {
+	AuthenticationError,
+	BadRequestError,
+	NotFoundError,
+	PermissionDeniedError,
+	UnprocessableEntityError,
+} from '@anthropic-ai/sdk';
 
 import { aiExtractionJsonSchema } from '@zivali/validation/ai';
 
@@ -26,6 +32,8 @@ fits, use <species>.mixed or <species>.unknown. Empty when the animal is other o
 - moderation: each flag true only when the photo shows it.`;
 
 const MAX_TOKENS = 1024;
+// Rejected requests: retrying cannot help, so they fail at once. 429 (RateLimitError), 5xx and connection errors retry.
+const NO_RETRY = [BadRequestError, AuthenticationError, PermissionDeniedError, NotFoundError, UnprocessableEntityError];
 // Haiku 5.5 allows thinking off up to effort high; Sonnet 5.5 rejects `disabled`, so it gets no thinking field (C19).
 const THINKING_ALWAYS_ON = new Set(['claude-sonnet-5-5']);
 
@@ -63,9 +71,14 @@ export function anthropicAi(client: Client, model: string, effort: Effort): AiAd
 			try {
 				res = await client.messages.create(buildRequest(jpegBase64, model, effort));
 			} catch (err) {
-				// A rejected request fails at once (no retry); RateLimitError, 5xx and connection errors throw for retry.
-				if (err instanceof BadRequestError)
-					return { outcome: 'failed', model, input_tokens: 0, output_tokens: 0 };
+				if (NO_RETRY.some((type) => err instanceof type))
+					return {
+						outcome: 'failed',
+						model,
+						input_tokens: 0,
+						output_tokens: 0,
+						error: (err as Error).constructor.name,
+					};
 				throw err;
 			}
 			const usage = {
