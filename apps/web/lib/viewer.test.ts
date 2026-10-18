@@ -1,6 +1,14 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { getVerifiedViewer, getViewer, isAnonymousViewer, recoveryEmail, requireViewer, safeNext } from './viewer';
+import {
+	getVerifiedViewer,
+	getViewer,
+	isAnonymousViewer,
+	isHandoff,
+	recoveryEmail,
+	requireViewer,
+	safeNext,
+} from './viewer';
 
 const auth = vi.hoisted(() => ({ token: undefined as string | undefined, path: null as string | null }));
 vi.mock('next/headers', () => ({ headers: async () => new Headers(auth.path ? { 'x-next-path': auth.path } : {}) }));
@@ -18,7 +26,8 @@ vi.mock('@/lib/supabase/server', () => ({
 		},
 	}),
 }));
-vi.mock('@/i18n/navigation', () => ({
+vi.mock('@/i18n/navigation', async (importOriginal) => ({
+	...(await importOriginal<typeof import('@/i18n/navigation')>()),
 	redirect: ({ href, locale }: { href: string | { pathname: string; query: { next: string } }; locale: string }) => {
 		throw new Error(
 			`NEXT_REDIRECT ${locale} ${typeof href === 'string' ? href : `${href.pathname}?next=${href.query.next}`}`
@@ -171,4 +180,24 @@ describe('safeNext', () => {
 		null,
 		7,
 	])('drops %j', (next) => expect(safeNext(next)).toBeUndefined());
+});
+
+describe('isHandoff', () => {
+	it.each([
+		['/prijava/izgubljena-zival?handoff=n1', 'sl'],
+		['/prijava/izgubljena-zival?pet=p1&handoff=n1', 'sl'],
+		['/en/report/lost?handoff=n1', 'en'],
+	] as const)('takes %s (%s) back to the report draft', (next, locale) => expect(isHandoff(next, locale)).toBe(true));
+
+	it.each([
+		['/racun?handoff=1', 'sl'],
+		['/admin?handoff=1', 'sl'],
+		['/en/report/lost?handoff=n1', 'sl'],
+		['/prijava/izgubljena-zival?handoff=n1', 'en'],
+		['/report/lost?handoff=n1', 'sl'],
+		['/prijava/izgubljena-zival', 'sl'],
+		['/prijava/izgubljena-zival?y=handoff%3D1', 'sl'],
+		['/prijava/najdena-zival?handoff=n1', 'sl'],
+		[undefined, 'sl'],
+	] as const)('does not take %s (%s)', (next, locale) => expect(isHandoff(next, locale)).toBe(false));
 });

@@ -5,7 +5,7 @@ import { getPathname } from '@/i18n/navigation';
 import { routing } from '@/i18n/routing';
 import { env } from '@/lib/env';
 import { createClient } from '@/lib/supabase/server';
-import { safeNext } from '@/lib/viewer';
+import { isHandoff, safeNext } from '@/lib/viewer';
 
 type Href = Parameters<typeof getPathname>[0]['href'];
 
@@ -29,7 +29,9 @@ async function sessionFromLink(code: string | null, tokenHash: string | null) {
  * - `signup`: the "E-naslov je potrjen" view (P16 M5). GoTrue confirms the address before it issues the code, so a
  *   link opened in another browser (no verifier there, no session) still counts; only an expired or used link fails.
  *   A converted finder's link whose `next` is the set-password form (lib/auth convertAnonymous) goes straight there;
- *   without the session (another browser) it is the plain view, and "Pozabljeno geslo?" sets the password;
+ *   without the session (another browser) it is the plain view, and "Pozabljeno geslo?" sets the password. A link
+ *   from a signed-out Publish (`next` with the report's `?handoff=`, C3) goes straight back to the report, which
+ *   publishes the draft; in another browser the view says the draft waits in the browser where it was started;
  * - `oauth`: back to `next`; cancelled or failed, to sign-in with a quiet message.
  */
 export async function GET(request: NextRequest, { params }: RouteContext<'/[locale]/auth/callback'>) {
@@ -50,8 +52,14 @@ export async function GET(request: NextRequest, { params }: RouteContext<'/[loca
 		case 'recovery':
 			return to(exchanged ? '/reset-password' : { pathname: '/reset-password', query: { link: 'expired' } });
 		case 'signup':
-			// C7 §6: a converted finder whose password could not go with the address sets it in this fresh session.
-			if (exchanged && next?.startsWith(`${getPathname({ locale, href: '/reset-password' })}?set=1`))
+			// C7 §6: a converted finder whose password could not go with the address sets it in this fresh session;
+			// C3: a report drafted signed out publishes itself in this session (TASK-114.4).
+			if (
+				exchanged &&
+				next &&
+				(next.startsWith(`${getPathname({ locale, href: '/reset-password' })}?set=1`) ||
+					isHandoff(next, locale))
+			)
 				return go(next);
 			return to({
 				pathname: '/sign-in',

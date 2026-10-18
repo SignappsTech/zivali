@@ -7,7 +7,7 @@ import { pet } from '@zivali/api/__fixtures__/pets';
 import { ownerReport } from '@zivali/api/__fixtures__/reports';
 import type { Pet } from '@zivali/types';
 
-import { api, dismissConsent, signInAs } from './session';
+import { api, dismissConsent, holdVerifier, signInAs } from './session';
 
 // TASK-29.3: the P6 lost flow on web against a faked API (C4, C5, C6) and stubbed map tiles: every step is checked
 // with axe and for ad slots (C15), and the request body is read where it leaves the browser. TASK-29.4: the signed-out
@@ -126,7 +126,7 @@ async function jpeg(page: Page): Promise<Buffer> {
 
 const heading = (page: Page, name: string) => expect(page.getByRole('heading', { level: 1, name })).toBeFocused();
 
-test('signed out: fill first, sign in at Publish, and the draft (fields and photos) publishes itself (C3, AC#1)', async ({
+test('signed out: fill first, sign up at Publish, and the confirmation link publishes the draft (fields and photos) (C3)', async ({
 	page,
 	baseURL,
 }) => {
@@ -176,10 +176,13 @@ test('signed out: fill first, sign in at Publish, and the draft (fields and phot
 	);
 	expect(seen.filter((call) => call.path === '/v1/photos' || call.path === '/v1/reports')).toEqual([]);
 
-	// Sign-in sends the browser back to `next`; the session is the mock API's.
-	await signIn(page, baseURL!);
-	await page.goto(next);
+	// TASK-114.4: "Ustvari račun", then the confirmation link opened in this browser (a new tab shares its cookies and
+	// IndexedDB). The callback signs in and goes straight back to `next`, no "E-naslov je potrjen" stop, and the draft
+	// publishes itself.
+	await holdVerifier(page, baseURL!);
+	await page.goto(`/auth/callback?type=signup&code=e2e-code&next=${encodeURIComponent(next)}`);
 	await heading(page, 'Iskanje je objavljeno');
+	expect(new URL(page.url()).pathname).toBe('/prijava/izgubljena-zival');
 	await checkStep(page);
 	const posts = seen.filter((call) => call.method === 'POST' && call.path === '/v1/reports');
 	expect(posts).toHaveLength(1);
