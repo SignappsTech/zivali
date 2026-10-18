@@ -130,6 +130,14 @@ async function fillFound(email = '') {
 	expect(await screen.findByRole('heading', { level: 1, name: 'Objavite prijavo' })).toBeTruthy();
 }
 const publish = () => fireEvent.click(screen.getByRole('button', { name: 'Objavi prijavo' }));
+// A server answer renders outside act(): its effects (the `online` listener, the saved token) may run a moment after
+// the screen shows it, so the tests wait for an effect, and for each answer's note before the next tap (TASK-114.24).
+/** The browser is back online, again until the POST has gone out (the retry runs one attempt at a time). */
+const reconnect = (api: ReturnType<typeof createMockApi>, count: number) =>
+	waitFor(() => {
+		if (posts(api).length < count) window.dispatchEvent(new Event('online'));
+		expect(posts(api)).toHaveLength(count);
+	});
 
 beforeEach(() => {
 	idb.clear();
@@ -174,7 +182,7 @@ describe('FoundFlow (P7 web, FR-006)', () => {
 
 		// C7: the link is shown, kept on this device, and the email note is there.
 		expect(screen.getByText(/\/m#tok-private-123$/)).toBeTruthy();
-		expect(localStorage.getItem(`manage:${created.id}`)).toBe('tok-private-123');
+		await waitFor(() => expect(localStorage.getItem(`manage:${created.id}`)).toBe('tok-private-123'));
 		expect(screen.getByText('Povezavo smo poslali tudi na vaš e-naslov.')).toBeTruthy();
 		// C18 shelter row for "Da, žival je pri meni".
 		expect(
@@ -335,7 +343,7 @@ describe('FoundFlow publish (C1 Idempotency-Key, C7 retries)', () => {
 		await fillFound();
 		publish();
 		expect(await screen.findByText(sl.errors.NETWORK)).toBeTruthy();
-		act(() => void window.dispatchEvent(new Event('online')));
+		await reconnect(api, 2);
 		expect(await screen.findByRole('heading', { level: 1, name: 'Hvala, prijava je objavljena' })).toBeTruthy();
 		const [first, second] = posts(api);
 		expect(keyOf(second!)).toBe(keyOf(first!));
@@ -354,16 +362,19 @@ describe('FoundFlow publish (C1 Idempotency-Key, C7 retries)', () => {
 		await fillFound();
 		publish();
 		expect(await screen.findByText(sl.errors.INTERNAL)).toBeTruthy();
+		// A try clears a refusal's note at once; its own answer brings the note back.
 		publish();
-		await waitFor(() => expect(posts(api)).toHaveLength(2));
+		expect(await screen.findByText(sl.errors.INTERNAL)).toBeTruthy();
+		expect(posts(api)).toHaveLength(2);
 		expect(keyOf(posts(api)[1]!)).toBe(keyOf(posts(api)[0]!));
 		publish();
-		await waitFor(() => expect(posts(api)).toHaveLength(3));
+		expect(await screen.findByText(sl.errors.VALIDATION)).toBeTruthy();
+		expect(posts(api)).toHaveLength(3);
 		expect(keyOf(posts(api)[2]!)).toBe(keyOf(posts(api)[0]!));
 		// A definitive refusal ends that submission: the same answers go again under a new key.
-		await screen.findByText(sl.errors.VALIDATION);
 		publish();
-		await waitFor(() => expect(posts(api)).toHaveLength(4));
+		expect(await screen.findByText(sl.errors.VALIDATION)).toBeTruthy();
+		expect(posts(api)).toHaveLength(4);
 		expect(keyOf(posts(api)[3]!)).not.toBe(keyOf(posts(api)[2]!));
 		// An edit is a new submission too.
 		fireEvent.click(screen.getByRole('button', { name: 'Uredi: Žival je' }));
@@ -464,7 +475,7 @@ describe('FoundFlow publish (C1 Idempotency-Key, C7 retries)', () => {
 		expect(posts(api)).toHaveLength(1);
 		next();
 		await screen.findByRole('heading', { level: 1, name: 'Objavite prijavo' });
-		act(() => void window.dispatchEvent(new Event('online')));
+		await reconnect(api, 2);
 		expect(await screen.findByRole('heading', { level: 1, name: 'Hvala, prijava je objavljena' })).toBeTruthy();
 		expect(posts(api)).toHaveLength(2);
 	});
@@ -486,9 +497,8 @@ describe('FoundFlow publish (C1 Idempotency-Key, C7 retries)', () => {
 		const api = show();
 		await screen.findByRole('heading', { level: 1, name: 'Objavite prijavo' });
 		fireEvent.click(screen.getByRole('button', { name: 'Dodaj fotografijo', hidden: true }));
-		await waitFor(() =>
-			expect((screen.getByRole('button', { name: 'Objavi prijavo' }) as HTMLButtonElement).disabled).toBe(false)
-		);
+		// The summary shows the photo once the flow has it (Publish is on before that).
+		await screen.findByRole('img', { name: 'Fotografija 1 od 1' });
 		publish();
 		expect(await screen.findByRole('heading', { level: 1, name: 'Hvala, prijava je objavljena' })).toBeTruthy();
 		expect((posts(api)[0]!.body as CreateReportInput).event_at).toBe(startedAt);
@@ -519,7 +529,7 @@ describe('FoundFlow publish (C1 Idempotency-Key, C7 retries)', () => {
 		// Publish stays on, the answers stay.
 		expect((screen.getByRole('button', { name: 'Objavi prijavo' }) as HTMLButtonElement).disabled).toBe(false);
 		expect(screen.getByText('pri meni')).toBeTruthy();
-		act(() => void window.dispatchEvent(new Event('online')));
+		await reconnect(api, 1);
 		expect(await screen.findByRole('heading', { level: 1, name: 'Hvala, prijava je objavljena' })).toBeTruthy();
 		expect(posts(api)).toHaveLength(1);
 	});
