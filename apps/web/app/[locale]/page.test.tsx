@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, render, screen, within } from '@testing-library/react';
 import { NextIntlClientProvider } from 'next-intl';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
@@ -17,30 +17,59 @@ vi.mock('next-intl/server', async () => {
 	};
 });
 
+// The API-backed blocks are async server components with their own tests (components/home/blocks.test.tsx).
+vi.mock('@/components/home/blocks', () => ({
+	RecentReports: ({ locale }: { locale: string }) => <p data-testid="recent">{locale}</p>,
+	RecentReportsSkeleton: () => null,
+	LiveNumbers: ({ locale }: { locale: string }) => <p data-testid="numbers">{locale}</p>,
+}));
+
 afterEach(cleanup);
 
-describe('HomePage (P3 T1)', () => {
+describe('HomePage (P3 T1, layout A)', () => {
 	it.each([
 		[
 			'sl',
 			'',
-			['/prijava/izgubljena-zival', '/prijava/najdena-zival', '/kako-deluje', '/varnost', '/za-zavetisca'],
+			{
+				lost: '/prijava/izgubljena-zival',
+				found: '/prijava/najdena-zival',
+				map: '/zemljevid',
+				how: '/kako-deluje',
+				safety: '/varnost',
+				shelters: '/za-zavetisca',
+			},
 		],
-		['en', '/en', ['/en/report/lost', '/en/report/found', '/en/how-it-works', '/en/safety', '/en/for-shelters']],
-	] as const)('renders the sections in %s with the slice copy and its links', (locale, root, hrefs) => {
-		const home = catalogues[locale].pages.home;
+		[
+			'en',
+			'/en',
+			{
+				lost: '/en/report/lost',
+				found: '/en/report/found',
+				map: '/en/map',
+				how: '/en/how-it-works',
+				safety: '/en/safety',
+				shelters: '/en/for-shelters',
+			},
+		],
+	] as const)('renders the layout A sections in %s with the slice copy and its links', (locale, root, to) => {
+		const messages = catalogues[locale];
+		const home = messages.pages.home;
 		const { container } = render(
-			<NextIntlClientProvider locale={locale} messages={catalogues[locale]}>
+			<NextIntlClientProvider locale={locale} messages={messages}>
 				<HomePage />
 			</NextIntlClientProvider>
 		);
 
 		expect(screen.getAllByRole('heading', { level: 1 }).map((h) => h.textContent)).toEqual([home.hero_title]);
 		expect(screen.getByText(home.hero_lede)).toBeTruthy();
+		// Order: hero, recent reports, (numbers), how it works, safe by design, shelters, closing band.
 		expect(screen.getAllByRole('heading', { level: 2 }).map((h) => h.textContent)).toEqual([
+			home.near_title_no_location,
 			home.how_title,
 			home.safe_title,
 			home.shelters_title,
+			home.cta_title,
 		]);
 		expect(screen.getAllByRole('heading', { level: 3 }).map((h) => h.textContent)).toEqual([
 			home.how_1_title,
@@ -49,14 +78,34 @@ describe('HomePage (P3 T1)', () => {
 		]);
 		for (const key of ['safe_1', 'safe_2', 'safe_3', 'shelters_body'] as const)
 			expect(screen.getByText(home[key])).toBeTruthy();
-		expect(screen.getAllByRole('img').map((img) => img.getAttribute('alt'))).toEqual([home.hero_alt, home.how_alt]);
-		expect(screen.getByRole('img', { name: home.hero_alt }).getAttribute('loading')).toBe('eager');
-		expect(screen.getByRole('img', { name: home.how_alt }).getAttribute('loading')).toBe('lazy');
-		expect(
-			[home.hero_primary, home.hero_secondary, home.how_more, home.safe_action, home.shelters_action].map(
-				(name) => screen.getByRole('link', { name }).getAttribute('href')
-			)
-		).toEqual(hrefs);
+		// The cards sit right under the hero, the numbers right under the cards.
+		const recent = screen.getByRole('region', { name: home.near_title_no_location });
+		expect(within(recent).getByTestId('recent').textContent).toBe(locale);
+		expect(recent.nextElementSibling).toBe(screen.getByTestId('numbers'));
+
+		const href = (name: string, scope: HTMLElement = container) =>
+			within(scope)
+				.getAllByRole('link', { name })
+				.map((link) => link.getAttribute('href'));
+		const hero = screen.getByRole('region', { name: home.hero_title });
+		expect(href(home.hero_primary, hero)).toEqual([to.lost]);
+		expect(href(home.hero_secondary, hero)).toEqual([to.found]);
+		// The quiet sighted link: plain prompt, the header menu's words, the found flow as in the header.
+		expect(hero.textContent).toContain(home.hero_sighted_prompt);
+		expect(href(messages.nav.report_sighted_title, hero)).toEqual([to.found]);
+		expect(href(home.near_open_map)).toEqual([to.map]);
+		expect(href(home.how_more)).toEqual([to.how]);
+		expect(href(home.safe_action)).toEqual([to.safety]);
+		expect(href(home.shelters_action)).toEqual([to.shelters]);
+		const band = screen.getByRole('region', { name: home.cta_title });
+		expect([href(home.cta_primary, band), href(home.cta_secondary, band)]).toEqual([[to.lost], [to.found]]);
+
+		// Mosaic (desktop only): photo 1 eager, photo 2 lazy, photo 3 decorative.
+		expect([...container.querySelectorAll('img')].map((img) => [img.alt, img.getAttribute('loading')])).toEqual([
+			[home.hero_alt, 'eager'],
+			[home.hero_cat_alt, 'lazy'],
+			['', 'lazy'],
+		]);
 		// The page's one primary is the hero's; no ad slot or sidebar on T1.
 		expect(container.querySelectorAll('[data-variant="default"]')).toHaveLength(1);
 		expect(screen.queryByRole('complementary')).toBeNull();
