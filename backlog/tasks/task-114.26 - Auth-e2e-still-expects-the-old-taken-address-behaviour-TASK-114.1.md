@@ -1,10 +1,11 @@
 ---
 id: TASK-114.26
 title: Auth e2e still expects the old taken-address behaviour (TASK-114.1)
-status: To Do
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-18 03:57'
+updated_date: '2026-10-18 04:03'
 labels:
   - bug
   - fe
