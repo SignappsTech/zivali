@@ -3,6 +3,7 @@ source: 03§P15
 page: P15 Support moments (tip, contribution, checkout hand-off)
 stories: TASK-33 (FR-021, FR-020)
 platforms: web, mobile
+version: 1.1
 mockup: docs/design/mockups/P15-support-moments.html
 copy: docs/content/pages/P15-support-moments.md
 ---
@@ -43,6 +44,9 @@ Return states (full screen on web, sheet on mobile):
 
 Plain list of contributions: date, purpose, amount, receipt text button. Empty state sentence. Test-mode label on every row in non-production.
 
+- **Receipt button (CH-256):** on web the "Potrdilo" text button is left out until a receipt can be opened (`GET /v1/payments/:id/invoice.pdf`, TASK-92); receipts are emailed meanwhile.
+- **Refunds (CH-372, as built on web and mobile):** a partly refunded payment keeps the word "Plačano" and adds a muted line item before the test label: ArrowUUpLeft icon (bold, 16 px) and "Delno vrnjeno: 3,00 €". A fully refunded payment shows "Vrnjeno".
+
 ## States
 
 Below minimum amount ("minimum 2.00 EUR"), signed-out visitor taps Pay (gate sheet P16, tip needs an account for the receipt), email unverified (receipt note), network error with retry, already paid for this report (row replaced by thanks).
@@ -60,3 +64,9 @@ None.
 1. Mobile: tip block (idle, amount chosen, below minimum), collapsed and expanded contribution row, hand-off sheet, success, cancelled, failed, pending.
 2. Web: tip block, return states, My payments.
 3. Light and dark.
+
+## Change log
+
+| Version | Date | Change |
+|---|---|---|
+| 1.1 | 2026-10-18 | CH-256, CH-372: receipt button off on web until invoices exist; partial refund line |

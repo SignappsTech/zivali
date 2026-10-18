@@ -3,7 +3,7 @@ source: 03§P13
 page: P13 Notifications, nearby alerts and account settings
 stories: TASK-22, TASK-23, TASK-9 (FR-010, FR-001, FR-036)
 platforms: web, mobile
-version: 1.1
+version: 1.2
 mockup: docs/design/mockups/P13-alerts-inbox-settings.html
 copy: docs/content/pages/P13-alerts-inbox-settings.md
 ---
@@ -53,6 +53,10 @@ After the first report is published and on the Map empty state, a bottom sheet o
 
 Loading skeleton rows; saving feedback as a toast "Saved"; validation on phone; permission denial notes; offline (changes queue); language change reloads text without losing place.
 
+### Alert settings as built on mobile (TASK-23.3, CH-328)
+
+Section 1 is its own screen "Opozorila v bližini" (sections 2 to 4 are "Kako vas obvestimo", TASK-22.5). The home area opens the P5 picker in alert mode. The radius slider uses the picker's alert stops (1, 2, 3, 4, 5, 7, 10, 15, 20, 25 km) and saves when the finger lets go. Species pills have no animal icon (the kit Pill is text only); the only chosen animal is disabled (at least one). There is no daily-limit stepper. The proximity switch is TASK-87.2.
+
 ## Responsive and accessibility
 
 Switches are real `switch` roles with visible labels, sliders have number inputs on web and value text, time fields use native pickers, group labels are headings, the unread dot is accompanied by "unread" in the accessible name, no information by colour alone.
@@ -60,6 +64,8 @@ Switches are real `switch` roles with visible labels, sliders have number inputs
 ## Proximity alerts and Always-location primer
 
 An extra switch under "Alerts near me": "Alert me when I am near a lost animal" (proximity alerts, M3 offline feature). Turning it on shows an **Always-location primer** (full sheet like P2 primers): why background location is needed in two lines, what is and is not stored, primary "Allow always", text "Not now"; denial leaves the switch off with a note and a text button "Open system settings". Opt-in sheet and settings both show the same state.
+
+**As built on mobile (TASK-87.2, CH-356).** The proximity switch is its own section "Opomniki v bližini" (h2, 40 px below the alerts, shown when alerts are off too) with a line saying that pausing alerts does not stop it, the daily cap in the help line, and a "Tihi čas" row with "Spremeni" leading to Kako vas obvestimo. The primer has three bullets (what is watched, nothing is uploaded, how to turn it off) instead of "Shranimo / Ne shranimo". A permission the OS took back shows its own note text.
 
 ## Assets
 
@@ -78,3 +84,4 @@ An extra switch under "Alerts near me": "Alert me when I am near a lost animal" 
 | Version | Date | Change |
 |---|---|---|
 | 1.1 | 2026-10-18 | No in-app lock, every switch can be turned off; animal pills all switchable (CH-502, TASK-114.14, owner rule 2026-10-16). |
+| 1.2 | 2026-10-18 | CH-328, CH-356: mobile alert settings and proximity section as built |

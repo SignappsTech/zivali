@@ -3,6 +3,7 @@ source: 03§P11
 page: P11 Match review
 stories: TASK-20 (FR-008)
 platforms: web, mobile
+version: 1.1
 mockup: docs/design/mockups/P11-match-review.html
 copy: docs/content/pages/P11-match-review.md
 ---
@@ -31,6 +32,8 @@ Empty state: spot illustration, h3 "No matches yet", sentence that we keep looki
 4. **Facts table**: rows (Species, Size, Colours, Sex, Found where (area), When) with my pet's value left and the candidate's right; matching rows carry a check icon and the word "Matches", differing rows "Differs". Text, not colour.
 5. **Caveat note** when the report is a sighting only ("The animal may be elsewhere") or when the match is chip-only without a photo.
 6. Actions: primary `lg` "This is my animal"; text button "Not my animal". Neither shows contact data. Rejecting asks one confirmation: "Hide this match for good?".
+
+**As built on mobile (TASK-20.4, CH-332).** The reject dialog (M5) adds one optional multiline "Razlog (neobvezno)" field under the sentence. The overflow "Prijavi zlorabo" is left out until the P10 abuse sheet (TASK-25.4) exists, so the bar is back plus a centred title. No pinch to zoom: the toggle, a horizontal swipe and the thumbnails switch photos. The empty state has no illustration until `assets/empty-no-reports.png` exists. The "Kraj" row compares the reverse-geocoded names of the two fuzzed areas.
 
 ## After confirming
 
@@ -70,3 +73,9 @@ Strength is text plus bars with an accessible label; comparison table is a real 
 1. Mobile: list (with a chip match and others), empty, review (photo toggle), review with sighting caveat, reject confirmation, already confirmed, loading.
 2. Web 1200 px: list and review side by side.
 3. Light and dark.
+
+## Change log
+
+| Version | Date | Change |
+|---|---|---|
+| 1.1 | 2026-10-18 | CH-332: mobile review screen as built |

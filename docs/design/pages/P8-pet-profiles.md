@@ -3,6 +3,7 @@ source: 03§P8
 page: P8 Pet profiles
 stories: TASK-16 (FR-002, FR-003)
 platforms: web, mobile
+version: 1.1
 mockup: docs/design/mockups/P8-pet-profiles.html
 copy: docs/content/pages/P8-pet-profiles.md
 ---
@@ -28,11 +29,24 @@ A single column of line fields grouped by h3 labels with 40 px gaps. No cards, n
 
 1. **Photos:** up to 5, camera or gallery, drag to reorder on web, first photo is the cover, delete with confirmation (photos removed from storage). Upload progress per photo.
 2. **Basics:** species (choice rows Dog / Cat), name, sex (three pills), birth year (select).
-3. **Looks:** breed (searchable select, localised names, "Mixed / Unknown"), colours (toggle pills), pattern (select), size (three choice pills).
-4. **Chip:** line field (digits, grouped as typed), format hint; below it the `pets.chip_register_note` help text (plain text, no link); duplicates are flagged silently to moderators (never shown to the user).
-5. **Collar and notes:** collar description, medication, temperament (textareas).
+3. **Looks:** breed (searchable select, localised names; "Mixed breed" and "Not sure" always listed last), colours (all 10 as toggle pills; no "Other" expander, C4 has no other colour), pattern (select), size (three choice pills). Breed and pattern stay disabled with "Najprej izberite vrsto." until a species is chosen. Cats also get an ear-tip pill (Looks) and indoor/outdoor pills (Basics). (CH-272)
+4. **Chip:** line field (digits, grouped as typed), format hint; below it the CRHŽ register pills (yes / no / not sure) with `pets.chip_register_note` as their help line (plain text, no link; CH-272); duplicates are flagged silently to moderators (never shown to the user).
+5. **Collar and notes:** collar description and one "Opombe" textarea whose placeholder names medication and temperament. C4 `pets` has a single `notes` column, so there are no separate medication and temperament fields; `pets.medication_label`, `pets.temperament_label` and `pets.temperament_placeholder` are unused (CH-271).
 
 Sticky bottom bar on mobile with primary "Save"; web has Save at the end of the page and a sticky summary on `lg`. AI pre-fill (M3) adds the sparkle suggestion sentence on the photos step.
+
+### As built, web (TASK-16.6, CH-299)
+
+- No "Moje prijave" section on the list (TASK-26.4 owns `/moje-prijave`) and no open-report badge on rows (C4 `Pet` carries no open report; it would need an API field).
+- Photos use the PhotoPicker rows (up and down buttons, no drag). Removing a saved photo has no confirmation: it takes effect on Save, and leaving through "Moje živali" with changes asks to discard.
+- The `lg` sticky summary has the cover, name, species and breed, and Save; no checklist lines (no copy).
+- The unsaved-changes dialog covers the back link and the browser leave prompt, not header links.
+
+### As built, mobile (TASK-16.7, CH-324)
+
+- At the free limit (2 active pets) "Dodaj žival" stays active but opens no form; pressing it adds two text actions to the limit note: Premium (web checkout in the in-app browser, purpose `subscription`, answers 503 until M4) and "report without a profile" (`/report/lost`). The same note shows in the form's sticky bar on a PET_LIMIT answer.
+- Archived pets stay in the one list with an "Arhiviran" word (as on web); their detail shows that word instead of "Prijavi izgubljeno žival".
+- The mobile list has no "Moje prijave" row until a mobile My reports screen exists (TASK-26.5).
 
 ## Pet detail
 
@@ -65,3 +79,9 @@ List single column; detail two columns from `lg` (photos left, facts right). Lab
 1. Mobile: list, empty, add steps (photos, basics, looks, chip, notes), detail, invalid chip warning, delete dialog, limit note.
 2. Web: list with reports section, edit form, detail.
 3. Light and dark.
+
+## Change log
+
+| Version | Date | Change |
+|---|---|---|
+| 1.1 | 2026-10-18 | CH-271, CH-272, CH-299, CH-324: Looks and notes sections as built, web and mobile as-built notes |

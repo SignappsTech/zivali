@@ -3,6 +3,7 @@ source: 03§P16
 page: P16 Sign in and account creation
 stories: TASK-9 (FR-001)
 platforms: web, mobile
+version: 1.1
 mockup: docs/design/mockups/P16-auth.html
 copy: docs/content/pages/P16-auth.md
 ---
@@ -46,6 +47,8 @@ When the same verified email signs in with another provider: a dialog "Link this
 | Session expired | sheet "Sign in again", draft preserved |
 | Banned (M4) | page with the reason and a contact link |
 
+**Web as built (TASK-9.3, agreed in the TASK-9.4 review; CH-187).** A taken address on sign-up shows the "Check your email" screen like a success (no inline `error_email_taken`; no account enumeration). A new password saved on web shows an in-place note "Geslo je spremenjeno." with a primary "Nadaljuj" (there is no global toaster to carry a toast across the navigation). Check email on web has no "Odpri e-pošto"; "Pošlji znova" is the primary (as G2 on web). The account-linking dialog and the session-expired sheet are not built: Supabase links verified identities itself. Mockup W2 follows these rules.
+
 ## Web
 
 Centred 440 px column, logo above, no side panel, `Enter` submits, autofill and password managers supported (labelled fields, correct `autocomplete`). Mobile: full-screen with close, the keyboard never hides the primary.
@@ -63,3 +66,9 @@ None.
 1. Mobile: sign in, create account, check email, verified, forgot password, new password, contextual gate (both variants), account linking dialog, error states.
 2. Web: sign in, create account, gate dialog.
 3. Light and dark.
+
+## Change log
+
+| Version | Date | Change |
+|---|---|---|
+| 1.1 | 2026-10-18 | CH-187: web deviations (taken address, in-place password-saved note, check email without Open mail app, no linking dialog or session-expired sheet) |
