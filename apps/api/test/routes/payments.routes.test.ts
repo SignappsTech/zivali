@@ -92,7 +92,9 @@ describe('POST /v1/payments/checkout amounts', () => {
 		const res = await checkout(auth);
 		expect(res.status).toBe(200);
 		const { payment_id, checkout_url } = res.body;
-		expect(checkout_url).toBe(`${new URL('/dev/checkout', config.APP_URL)}?payment_id=${payment_id}`);
+		expect(checkout_url).toBe(
+			`${new URL('/dev/checkout', config.APP_URL)}?payment_id=${payment_id}&return_to=%2Fr%2FHk3vT9qP%2Freunited`
+		);
 		expect(await prisma.payments.findUniqueOrThrow({ where: { id: payment_id } })).toMatchObject({
 			user_id: id,
 			purpose: 'TIP',
