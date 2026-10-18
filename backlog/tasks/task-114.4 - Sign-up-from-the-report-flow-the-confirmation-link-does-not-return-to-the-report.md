@@ -3,11 +3,11 @@ id: TASK-114.4
 title: >-
   Sign-up from the report flow: the confirmation link does not return to the
   report
-status: To Do
+status: In Progress
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-16 13:35'
-updated_date: '2026-10-17 09:24'
+updated_date: '2026-10-18 03:19'
 labels:
   - bug
   - fe
@@ -31,6 +31,10 @@ What the Auth log shows (a teammate's run, 13:05 to 13:06): sign-up carried `nex
 2. Opened in another browser or the phone's mail app (no PKCE verifier there, so no session; the draft is in the first browser's IndexedDB, lost-flow.tsx `draft:lost:lost`): Nadaljuj leads to sign-in and then an empty report form; the draft is not there.
 
 Wanted: after a successful confirmation with a report-flow `next`, go straight back to the report (the hand-off then publishes the draft within its 24 h window, C3), optionally with a short "E-naslov je potrjen" notice on the report page. In another browser: say clearly that the report is saved in the browser where it was started (open the link there, or sign in there), instead of an empty form. Cover the found/sighting flow too if it has the same hand-off.
+
+## Packet
+
+Branch: agent/TASK-114.4-signup-confirm-return
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Acceptance Criteria
