@@ -37,3 +37,4 @@ Wanted: a small client island that watches the section headings (IntersectionObs
 ## Packet
 
 Branch: agent/TASK-114.21-legal-toc-active
+Branch: agent/TASK-114.21-toc-back (follow-up: Back right after a click)
