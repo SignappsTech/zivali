@@ -2,7 +2,7 @@ source: docs/tech/contracts/C10-notifications-alerts.md; 02§FR-010, FR-012, FR-
 
 # Notifications and emails (SL source, EN second)
 
-- Version: 0.2
+- Version: 0.3
 - Date: 2026-10-18
 - Status: Draft (needs native Slovenian review and client approval)
 - Stories: TASK-22, TASK-23, TASK-26, TASK-9, TASK-32, TASK-33
@@ -659,6 +659,32 @@ EN body:
 
 Button target: `{{ .ConfirmationURL }}`.
 
+### 3.3a Variant without a current address (converted anonymous finder, CH-451)
+
+A finder who reported without an account and then adds an email and password (C7 §6, updateUser with an email) gets this mail with an empty `{{ .Email }}`. The template branches on it (TASK-17.12; the lead applies the hosted template and the config.toml subject).
+
+| | SL | EN |
+|---|---|---|
+| Subject | `Potrdite e-naslov` | `Confirm your email address` |
+| Preheader | `Še en korak do računa v Najdimo.` | `One more step to your Najdimo account.` |
+| Button | `Potrdi e-naslov` | `Confirm email` |
+
+SL body:
+
+1. `Hvala, da ste ustvarili račun v Najdimo. Potrdite, da je {{ .NewEmail }} vaš e-naslov.`
+2. `Prijave, ki ste jih oddali brez računa, ostanejo vaše.`
+3. `Če računa niste ustvarili vi, tega e-sporočila ne upoštevajte.`
+4. Fallback under the button: `Gumb ne deluje? Kopirajte to povezavo v brskalnik: {{ .ConfirmationURL }}`
+
+EN body:
+
+1. `Thank you for creating a Najdimo account. Please confirm that {{ .NewEmail }} is your email address.`
+2. `The reports you made without an account stay yours.`
+3. `If you did not create an account, you can ignore this email.`
+4. Fallback: `Button not working? Copy this link into your browser: {{ .ConfirmationURL }}`
+
+Button target: `{{ .ConfirmationURL }}`.
+
 ## 3.4 Reauthentication code (`reauthentication`, for account deletion later)
 
 | | SL | EN |
@@ -855,3 +881,4 @@ CH-164d: in EN the pronoun ⟦IT⟧ is written in code as `{species, select, oth
 | Version | Date | Change |
 |---|---|---|
 | 0.2 | 2026-10-18 | CH-232: new §2.5a nearby_local (title, body, channel, iOS purpose strings). CH-291: payment_receipt fiscal lines and Slovenian-only invoice PDF strings. CH-164: footer settings link is /account/notifications, company line is the brand only until Q10, new §6.3 unsubscribe confirmation copy, note on EN placeholder parity. |
+| 0.3 | 2026-10-18 | CH-451: §3.3a `email_change` variant without a current address (converted anonymous finder). |

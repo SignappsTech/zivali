@@ -80,7 +80,7 @@ Reminders for LOST at 7, 14, 30 days after `created_at` (`lifecycle_tick`, hourl
 | `GET /v1/me/reports` | auth | - | `{ items: ReportOwnerView[], next_cursor }` | - |
 | `POST /v1/reports/:code/transitions` (TASK-26.3) | manager | `{ action: 'mark_reunited' | 'close' | 'reopen' | 'extend', reason? }` | `ReportOwnerView` | `FORBIDDEN`, `CONFLICT` (invalid transition), `GONE` (reopen after 7 days) |
 | `GET /v1/sync/reports` (TASK-85.1) | optionalAuth, rate limit 60/h per device | query `areas` (JSON, ≤ 3 circles ≤ 25 km), `since`, `limit` ≤ 1000 | `{ upserts: CachedReport[], removed_ids: uuid[], server_time, has_more }` | `VALIDATION`, `RATE_LIMITED` |
-| `GET/POST /v1/pets`, `GET/PATCH/DELETE /v1/pets/:id`, `POST /v1/pets/:id/archive` (TASK-16.3) | auth (not anonymous), owner | `PetInput` | `Pet` / `{ items: Pet[] }` | `VALIDATION`, `FORBIDDEN`, `CONFLICT` (`code: PET_LIMIT` in details; free limit 2, app_config `pets.free_limit`) |
+| `GET/POST /v1/pets`, `GET/PATCH/DELETE /v1/pets/:id`, `POST /v1/pets/:id/archive` (TASK-16.3) | auth (not anonymous), owner; `POST /v1/pets` takes an optional `Idempotency-Key` (C1: replay for 24 h, another body → `409 CONFLICT`; clients drop the key after `PET_LIMIT`; `@zivali/api` `createPet({ body, idempotencyKey })`, TASK-16.8, CH-357) | `PetInput` | `Pet` / `{ items: Pet[] }` | `VALIDATION`, `FORBIDDEN`, `CONFLICT` (`code: PET_LIMIT` in details; free limit 2, app_config `pets.free_limit`) |
 
 Limits (implemented, confirmed): `name` ≤ 60, `collar` ≤ 200, pet `notes` ≤ 1000, `breed_codes` ≤ 5; `mixed` and `unknown` are species-scoped (`dog.mixed`, `cat.unknown`); `PetInput.name` required (1–60). `location` in the request is the point already coarsened by the client; the API coarsens again (C6 §Storage).
 
@@ -169,3 +169,4 @@ Drafts live only on the device until submit: web `idb-keyval` key `draft:<kind>:
 | 1.2 | 2026-10-15 | CH-142: sync `server_time` is an opaque (updated_at, id) cursor, final value overlaps in-flight transactions |
 | 1.3 | 2026-10-18 | CH-494 (TASK-114.5): report photo_ids may reuse the owner's pet photos and photos of their ended reports (C5) |
 | 1.4 | 2026-10-18 | CH-148: non-manager distance sort, bands, bbox and alert matching use public_point; CH-173: transitions call ChatDomain.closeForReport; CH-195: create/update rules as built, POST never returns UNVERIFIED_EMAIL; CH-206: reports.device_hash, manage_token_hash unique |
+| 1.5 | 2026-10-18 | CH-357: optional Idempotency-Key on POST /v1/pets |

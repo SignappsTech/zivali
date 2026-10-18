@@ -3,7 +3,7 @@ source: 03§P9; docs/design/pages/P9-report-detail.md; 02§FR-007 R-007.4, §Con
 page: P9 Report detail (lost, found, sighted)
 stories: TASK-18, TASK-72 (FR-007, FR-004, FR-011, FR-012)
 copy-for: docs/design/pages/P9-report-detail.md
-version: 0.5
+version: 0.6
 status: Draft, native Slovenian review pending
 date: 2026-10-18
 ---
@@ -60,6 +60,7 @@ The shelter card (web; a plain block on mobile) shows `report.verified_shelter`,
 | report.action_mine | To je moja žival | This is my animal | Found (primary), sighted (text) |
 | report.reward_line | Nagrada | Reward offered | M4, lost reports only, when the owner set a note but no amount; gift icon |
 | report.reward_line_amount | Nagrada: {amount} | Reward offered: {amount} | Same, with an amount; `{amount}` as currency in the page language ("50 €" / "€50") |
+| report.contact_limited | Danes ste dosegli omejitev sporočil. Poskusite znova jutri. | You have reached today's message limit. Try again tomorrow. | Slot A note when C9 answers RATE_LIMITED (10 contacts a day), replacing `errors.RATE_LIMITED_generic` there (CH-471). Draft, needs native review |
 
 # 3. Safety note, share and more
 
@@ -179,6 +180,8 @@ Length rule (60): if the title is longer, drop `{name}`; if still longer, drop "
 | Found | {species, select, dog {Najden pes, {colours}, {date} v okolici kraja {area}, {municipality}. Je to vaš pes? Pišite osebi, ki ga je našla.} cat {Najdena mačka, {colours}, {date} v okolici kraja {area}, {municipality}. Je to vaša mačka? Pišite osebi, ki jo je našla.} other {Najdena žival, {colours}, {date} v okolici kraja {area}, {municipality}. Je to vaša žival? Pišite osebi, ki jo je našla.}} | {species, select, dog {Found dog, {colours}, on {date} around {area}, {municipality}. Is this your dog? Message the person who found it.} cat {Found cat, {colours}, on {date} around {area}, {municipality}. Is this your cat? Message the person who found it.} other {Found animal, {colours}, on {date} around {area}, {municipality}. Is this your pet? Message the person who found it.}} |
 | Sighted | {species, select, dog {Opažen pes, {colours}, {date} v okolici kraja {area}, {municipality}. Je to vaš pes? Poglejte prijavo.} cat {Opažena mačka, {colours}, {date} v okolici kraja {area}, {municipality}. Je to vaša mačka? Poglejte prijavo.} other {Opažena žival, {colours}, {date} v okolici kraja {area}, {municipality}. Je to vaša žival? Poglejte prijavo.}} | {species, select, dog {Dog seen, {colours}, on {date} around {area}, {municipality}. Is this your dog? See the report.} cat {Cat seen, {colours}, on {date} around {area}, {municipality}. Is this your cat? See the report.} other {Animal seen, {colours}, on {date} around {area}, {municipality}. Is this your pet? See the report.}} |
 
+Keys (CH-411, copy verbatim): `report.seo_description_lost`, `report.seo_description_found`, `report.seo_description_sighted` for the three descriptions above; the colour phrase is `report.seo_colours` (SL "{colours} barve", EN "{colours}") with one `report.seo_colour.<code>` per colour (SL genitive, "rjave"; EN "brown"; EN `red` = "red", aligned with the alt text, CH-416). The meta title and the OG alt reuse `browse.row_title_*` (P4). A missing value drops its part (", {colours}", " {name}") or the sentence that names the area.
+
 Example (SL, lost dog): "Pogrešan pes Rex, rjave in bele barve. Nazadnje viden 12. oktobra v okolici kraja Šiška, Ljubljana. Ste ga videli? Sporočite opažanje." (134 characters)
 
 **Other fields**
@@ -200,10 +203,11 @@ Built from attributes. Colours use the invariant phrase "… barve" so the sente
 | Species | pes / mačka / žival | dog / cat / animal |
 | Colours | ` {colours} barve` ("rjave in bele barve") | colours before the noun ("brown and white dog") |
 | Pattern | pattern phrase from glossary §7.3 (", s progastim vzorcem") | ", tabby" etc. |
-| Collar | `, ovratnica: {collar}` (owner's text, nominative after the colon) | `, collar: {collar}` |
+| Area (API alt) | `, {municipality}` after species, colours and pattern (nominative; `name_sl`/`name_en` of the fuzzed circle's municipality, already public as `municipality_slug`) | `, {municipality}` |
+| Collar (owner and manager views only) | `, ovratnica: {collar}` (owner's text, nominative after the colon) | `, collar: {collar}` |
 | Extra photos | `, fotografija {n} od {total}` | `, photo {n} of {total}` |
 
-Examples: "Rex: pes rjave in bele barve, ovratnica: rdeča z zvončkom" / "Rex: brown and white dog, collar: red with a bell". "Mačka sive barve, s progastim vzorcem, fotografija 2 od 3" / "Grey tabby cat, photo 2 of 3". No attributes: "Fotografija prijavljene živali" / "Photo of the reported animal", the key `report.photo_alt_fallback` (CH-308b). The offline cached thumbnail (mobile) builds its alt from this rule and uses `report.photo_alt_fallback` when the cached row has no attributes; it no longer reuses the h1 title.
+Examples: "Rex: pes rjave in bele barve, ovratnica: rdeča z zvončkom" / "Rex: brown and white dog, collar: red with a bell". "Mačka sive barve, s progastim vzorcem, fotografija 2 od 3" / "Grey tabby cat, photo 2 of 3". API alt (public photos, TASK-14.6) adds the area and leaves the collar out, because the collar text is manager-only in C4 (PublicReport has `collar_described` only): "Piki: pes rjave in bele barve, Ljubljana, fotografija 1 od 2" / "Grey tabby cat, Ljubljana". EN `red` is "red" here and in the SEO colour key (CH-416). No attributes: "Fotografija prijavljene živali" / "Photo of the reported animal", the key `report.photo_alt_fallback` (CH-308b); this fallback cannot occur on the API alt, because species is required. The offline cached thumbnail (mobile) builds its alt from this rule and uses `report.photo_alt_fallback` when the cached row has no attributes; it no longer reuses the h1 title.
 
 OG image alt: "{type and species} {name}, {municipality}", for example "Izgubljen pes Rex, Ljubljana" / "Lost dog Rex, Ljubljana".
 
@@ -213,3 +217,4 @@ OG image alt: "{type and species} {name}, {municipality}", for example "Izgublje
 |---|---|---|
 | 0.5 | 2026-10-18 | CH-308: public collar value `report.collar_described`, key `report.photo_alt_fallback`. (c) The `report` namespace (§1 to §9), `browse` status_* and row_title_* (P4) and `location.area_line`, `area_note`, `area_map_alt`, `exact_own`, `exact_own_help` (P5) were added to packages/i18n verbatim from the slices; nothing to change here. |
 | 0.5 | 2026-10-18 | CH-268: `report.owner_disagree` takes `{days}` (reopen window, default 7). |
+| 0.6 | 2026-10-18 | CH-411: SEO key names (§10). CH-416: area in the API alt, no collar in public alt, EN red (§11). CH-471: `report.contact_limited` (§2). |

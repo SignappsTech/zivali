@@ -3,7 +3,7 @@ source: 03§P4; docs/design/pages/P4-map-list.md
 page: P4 Map and list
 stories: TASK-31 (FR-007, FR-004)
 copy-for: docs/design/pages/P4-map-list.md
-version: 0.3
+version: 0.4
 status: Draft, native Slovenian review pending
 date: 2026-10-18
 ---
@@ -21,7 +21,7 @@ Namespaces `browse` and `map`. Status words and attribute labels come from the g
 | browse.area_pill_a11y | Območje: {place}, {radius} km. Odpri filtre | Area: {place}, {radius} km. Open filters | Accessible name |
 | browse.sheet_title | V bližini | Near you | h2 in the sheet |
 | browse.sheet_handle | Povleci ali tapni za razširitev | Drag or tap to expand | Accessible name of the list sheet's grabber button, which steps through the snap points (mobile; CH-309, from the P4 mockup). Draft, needs native review |
-| browse.count | {count, plural, one {# prijava} two {# prijavi} few {# prijave} other {# prijav}} | {count, plural, one {# report} other {# reports}} | Next to the title |
+| browse.count | {count, plural, one {# prijava} two {# prijavi} few {# prijave} other {# prijav}} | {count, plural, one {# report} other {# reports}} | Next to the title. Capped count (map full at 500, no list total): a "+" follows the number and the `other` form is used, "500+ prijav" / "500+ reports" (CH-468) |
 | browse.web_title | Prijave | Reports | Web list pane h1 |
 | browse.filters_button | Filtri | Filters | Web pane header |
 | browse.filters_summary | {types} · {species} · {when} · {radius} km | {types} · {species} · {when} · {radius} km | Plain text under the header, e.g. "Izgubljene in najdene · psi in mačke · zadnjih 7 dni · 10 km" |
@@ -113,6 +113,8 @@ Live region when the count changes (polite):
 |---|---|---|
 | browse.count_announce | {count, plural, one {Najdena je # prijava} two {Najdeni sta # prijavi} few {Najdene so # prijave} other {Najdenih je # prijav}} | {count, plural, one {# report found} other {# reports found}} |
 
+Capped counts (CH-468): when the map is full at 500 and there is no list total, `browse.count`, `browse.filters_apply` and `browse.count_announce` show a "+" after the number and use the `other` form ("Prikaži 500+ prijav", "Najdenih je 500+ prijav" / "Show 500+ reports", "500+ reports found").
+
 # 5. Map
 
 | Key | SL | EN |
@@ -127,7 +129,10 @@ Live region when the count changes (polite):
 | map.a11y_label | Zemljevid: {count, plural, one {# prijava} two {# prijavi} few {# prijave} other {# prijav}} | Map: {count, plural, one {# report} other {# reports}} |
 | map.list_show | Pokaži seznam | Show list |
 | map.list_hide | Pokaži zemljevid | Show map |
+| map.keyboard_hint | Zemljevid premikate s puščicami, povečate s tipko + in pomanjšate s tipko −. | Move the map with the arrow keys, zoom in with + and out with −. |
 | map.tiles_error | Zemljevida ta trenutek ni mogoče naložiti. Prijave so v seznamu. | The map cannot load right now. Reports are in the list. |
+
+`map.keyboard_hint` has the same text as `location.keyboard_hint` (P5): every MapView is focusable and describes its keys, not only the picker (CH-392).
 
 Mobile list toggle (C6 accessible list toggle, CH-277, TASK-15.4), draft, needs native review: `map.a11y_label` is the map's accessible name; `map.list_show` is the hint on the toggle that opens the list; `map.list_hide` is the button label that closes the list and returns to the map.
 
@@ -166,7 +171,7 @@ Offline states on mobile (CH-317, TASK-85.3), draft, native review pending:
 | Meta description | Izgubljeni in najdeni psi in mačke na zemljevidu Slovenije. Izberite kraj, vrsto in čas ter pomagajte, da se živali vrnejo domov. | Lost and found dogs and cats on a map of Slovenia. Choose a place, type and time, and help animals get home. |
 | Focus keyword | izgubljeni psi in mačke | lost dogs and cats Slovenia |
 | Slug | `/zemljevid` | `/en/map` |
-| Structured data | `CollectionPage` with an `ItemList` of the first 20 open, visible reports (`url`, `name` = row title) + `BreadcrumbList` | same |
+| Structured data | `CollectionPage` + `BreadcrumbList`. The `ItemList` of the first 20 open reports is left out: it needs a server fetch of GET /v1/reports on every request (TTFB, perf gate ≥ 80) while the list is client-rendered. It waits for the regional landing pages (TASK-72), where a cached server fetch fits (CH-407) | same |
 | Indexing | Base URL indexable. Filtered URLs (query parameters) carry `rel=canonical` to the base URL. Regional landing pages come in M5 (TASK-72). | same |
 
 # 8. Alt text
@@ -182,3 +187,4 @@ Offline states on mobile (CH-317, TASK-85.3), draft, native review pending:
 | Version | Date | Change |
 |---|---|---|
 | 0.3 | 2026-10-18 | CH-277: map list-toggle keys. CH-309: `browse.sheet_handle`. CH-317: offline states. |
+| 0.4 | 2026-10-18 | CH-392: `map.keyboard_hint` (§5). CH-407: ItemList left out of §7 until TASK-72. CH-468: capped count "500+" (§1, §4). |

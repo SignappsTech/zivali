@@ -79,6 +79,10 @@ Supabase errors become `ApiError` with C1 codes (`details.auth_code` keeps the o
 
 Clients keep report drafts locally (C4 §Drafts, C17). When a signed-out visitor submits, the app routes to sign-in or sign-up with `?next=<route>`; after sign-in the draft is restored and submitted. Nothing is sent before sign-in.
 
+Mobile as built (TASK-29.6, CH-366): no `?next=` route. The P16 AuthGate keeps the flow mounted under the auth screens and continues on `onReady`. The lost flow holds its photos on the device (PhotoPicker `hold`, status `kept`) and uploads them under the new account, then sends the same publish once the flow is the focused screen again (sign-up: after the email link and "Nadaljuj"). If the app was killed on the way (cold start from the email link), the draft (fields and photos) is offered again when the flow opens and Publish sends it; it is not sent without that tap.
+
+One home area (TASK-23.3, CH-326): the alert subscription's `center`/`radius_km` follow the profile's `home`/`home_radius_km` (C10 §Nearby alerts).
+
 ## Example
 
 ```json
@@ -100,3 +104,4 @@ Clients keep report drafts locally (C4 §Drafts, C17). When a signed-out visitor
 | 1.7 | 2026-10-16 | TASK-17.12: `reauthentication_needed` → `UNAUTHENTICATED`. `POST /v1/me/convert-password` (briefly added for the C7 §6 conversion) is removed before release: the Admin API password update clears the pending `email_change` token and signs out every session, so the mailed link and "Pošlji znova" died. The conversion sends password and address in one `updateUser` instead (C7 §6) |
 | 1.8 | 2026-10-18 | CH-168: ensureProfile seeds display_name; CH-169/CH-175: captchaToken on every Auth call that needs it (TASK-17.3 extended), mobile auth wrappers to move; CH-202: recovery by token_hash and the planned template change |
 | 1.9 | 2026-10-18 | CH-220: AuditLogEntry.actor display name; client mfa.listFactors/unenroll and listAuditLog as built (TASK-34.3) |
+| 1.10 | 2026-10-18 | CH-366: mobile draft hand-off as built; CH-326: one home area |

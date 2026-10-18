@@ -3,7 +3,7 @@ source: 03§P6; docs/design/pages/P6-report-lost.md
 page: P6 Report lost
 stories: TASK-29 (FR-005, FR-003, FR-002)
 copy-for: docs/design/pages/P6-report-lost.md
-version: 0.6
+version: 0.7
 status: Draft, native Slovenian review pending
 date: 2026-10-18
 ---
@@ -241,9 +241,12 @@ Order in the row: the body sentence (`shelter_row.lost_body` here), `shelter_row
 | report_lost.duplicate_title | Za to žival že imate odprto iskanje | You already have an open search for this pet |
 | report_lost.duplicate_update | Posodobi obstoječe iskanje | Update the existing search |
 | report_lost.duplicate_new | Ustvari novo prijavo | Create a new report |
+| report_lost.photos_failed | Ena ali več fotografij se ni naložilo. Poskusite znova ali jih odstranite. | One or more photos did not upload. Try again or remove them. |
 | report_lost.send_failed | Prijave nismo mogli poslati. Osnutek je shranjen, poskusite znova. | We could not send your report. Your draft is saved; please try again. |
 | report_lost.validation_summary | Preverite označena polja. | Please check the highlighted fields. |
 | report_lost.unverified_note | Iskanje je objavljeno. Za opozorila in sporočila še potrdite svoj e-naslov. | Your search is live. Confirm your email address to get alerts and messages. |
+
+`report_lost.photos_failed` shows on the photos step when Publish finds a photo that failed to upload (CH-426).
 
 Rate limits and other errors: `errors.*` (P1 §6).
 
@@ -264,7 +267,7 @@ The flow start page is public and indexable; the steps are client-side.
 | Image | SL | EN |
 |---|---|---|
 | Uploaded photo thumbnail | Vaša fotografija {n} | Your photo {n} |
-| Saved pet row photo | {name} | {name} |
+| Saved pet row photo (step 1) | web: decorative, `alt=""`, because the choice row's title already names the pet ("Runo · Pes"; with alt `{name}` the radio would read "Runo Runo · Pes"). Mobile (TASK-29.5) keeps `{name}` | web: decorative. Mobile: `{name}` |
 | Confirmation illustration (if used) | decorative, `alt=""` | |
 
 Photo keys (CH-114, CH-118; namespace `photos`, used by PhotoPicker on web and mobile):
@@ -292,3 +295,4 @@ Photo keys (CH-114, CH-118; namespace `photos`, used by PhotoPicker on web and m
 | 2026-10-15 | CH-114, CH-118: added `photos.thumb_alt`, `photos.too_small`, `photos.heic_unsupported` (§13). |
 | 2026-10-18 | CH-496 (TASK-114.5): added `photos.rejected`, shown on the photo step for any `photo_ids` VALIDATION error and when `photos.limit` is exceeded (more than 5). SL/EN reviewed, unchanged. |
 | 2026-10-18 | CH-334: `report_lost.pet_required` (§2), `report_lost.when_invalid` (§6). Version 0.6. |
+| 2026-10-18 | v0.7. CH-420: saved pet row photo is decorative on web (§13). CH-426: `report_lost.photos_failed` (§11). CH-513 (= CH-496): already applied. |

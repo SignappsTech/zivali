@@ -3,7 +3,7 @@ source: 03§P15; docs/design/pages/P15-support-moments.md; 02§FR-021, FR-020
 page: P15 Support moments (tip, contribution, checkout hand-off)
 stories: TASK-33, TASK-32 (FR-021, FR-020)
 copy-for: docs/design/pages/P15-support-moments.md
-version: 0.3
+version: 0.4
 status: Draft, native Slovenian review and client approval pending (wording depends on Q-008)
 date: 2026-10-18
 ---
@@ -33,6 +33,13 @@ Namespaces `support` and `payments`. Mission first: the animal is home or the se
 | support.where_money_goes | Kam gre denar | Where the money goes |
 | support.test_note | Testno plačilo: s kartice se ne bremeni denar. | Test payment: no money is taken from your card. |
 | support.not_donation_note | Prispevek je prostovoljno plačilo za delovanje storitve in ne vpliva na nobeno funkcijo. | A contribution is a voluntary payment towards running the service and does not change any feature. |
+
+Profile card (C13 `support`, mobile and web Profile), drafted by TASK-33.3 and adopted here:
+
+| Key | SL | EN |
+|---|---|---|
+| support.card_title | Pomagajte nam izboljšati Najdimo | Help us improve Najdimo |
+| support.card_body | Iskanje je brezplačno za vse in tako bo ostalo. Če želite, lahko s prispevkom pomagate pokriti strežnike, zemljevide in pošiljanje opozoril. | Searching is free for everyone and will stay that way. If you like, a contribution helps cover servers, maps and sending alerts. |
 
 `{amount}` from `formatEur` ("5,00 €" / "€5.00"; whole amounts may drop the decimals in the button). Upper bound 500 € from C13 (`tip` 200 to 50 000 cents). `support.where_money_goes` is hidden until the transparency page exists (M4). `support.test_note` shows outside production only.
 
@@ -98,12 +105,13 @@ Hiding or ignoring the row records the skip; the row is not shown again for that
 | payments.purpose_support | Podpora za Najdimo | Support for Najdimo |
 | payments.status_paid | Plačano | Paid |
 | payments.status_refunded | Vrnjeno | Refunded |
+| payments.refunded_partial | Delno vrnjeno: {amount} | Partly refunded: {amount} |
 | payments.status_failed | Neuspešno | Failed |
 | payments.receipt | Potrdilo | Receipt |
 | payments.test_label | Testno | Test |
 | payments.empty | Plačil še ni. | No payments yet. |
 
-`payments.purpose_support` is the row label for purpose `support` (the profile card) and the same text as the API Checkout product name (CH-254, CH-264). Two drafts existed, "Podpora za Najdimo" and "Prispevek za Najdimo". The first is kept: it matches the glossary concept "podpora" (§6) and the Checkout product name, and "prispevek" stays for the two per-report purposes above.
+`payments.refunded_partial` shows next to "Plačano" (`status_paid`) on a partly refunded payment (CH-371). `payments.purpose_support` is the row label for purpose `support` (the profile card) and the same text as the API Checkout product name (CH-254, CH-264). Two drafts existed, "Podpora za Najdimo" and "Prispevek za Najdimo". The first is kept: it matches the glossary concept "podpora" (§6) and the Checkout product name, and "prispevek" stays for the two per-report purposes above.
 
 # 6. States
 
@@ -126,3 +134,4 @@ SEO: N/A (in-app, `noindex`). Alt text: none (icons only, decorative).
 |---|---|---|
 | 0.2 | 2026-10-15 | CH-53 (supersedes CH-47): added support.contribution_pay_disabled, support.gate_title, support.supporter_monthly_label, support.pay_monthly, support.amount_suggested_a11y; errors.NETWORK confirmed. |
 | 0.3 | 2026-10-18 | CH-254, CH-264: `payments.purpose_support` added (§5). |
+| 0.4 | 2026-10-18 | CH-371: `payments.refunded_partial` (§5). CH-376: Profile card `support.card_title`, `support.card_body` (§1). |
