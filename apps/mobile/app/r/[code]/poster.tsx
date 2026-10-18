@@ -160,7 +160,15 @@ function Poster({ report, offline }: { report: DetailReport; offline: boolean })
 		toast.success(ts('copied'));
 		trackShare('copy_link', report);
 	};
+	// Facebook takes the link only, never a post text (Platform Policy): the text to paste (the owner's kit post, else the
+	// share text; nothing when that is the bare link) goes to the clipboard first. A refused clipboard gets the system
+	// sheet, which shows the text to copy.
+	const post = kit?.post ?? (message === url ? undefined : message);
 	const shareFacebook = async () => {
+		if (post) {
+			if (!(await copyText(post).catch(() => false))) return shareNative(report, post);
+			toast.success(ts('facebook_copied'));
+		}
 		try {
 			await Linking.openURL(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`);
 			trackShare('facebook', report);

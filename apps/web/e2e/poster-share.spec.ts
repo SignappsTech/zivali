@@ -53,6 +53,29 @@ for (const viewport of [
 	});
 }
 
+// TASK-114.9: Facebook takes no post text, so the row copies it as the sharer opens with the link.
+test('Facebook copies the post text, opens the sharer with the link and says to paste it', async ({
+	page,
+	context,
+}) => {
+	// Never reach Facebook from a test: the sharer tab gets an empty page.
+	await context.route('https://www.facebook.com/**', (route) =>
+		route.fulfill({ contentType: 'text/html', body: '' })
+	);
+	await page.goto('/r/Rex12345');
+	await (await hydrated(page.getByRole('button', { name: 'Deli ali natisni plakat' }))).click();
+
+	const popup = page.waitForEvent('popup');
+	await page.getByRole('menuitem', { name: /Facebook/ }).click();
+	expect((await popup).url()).toMatch(/^https:\/\/www\.facebook\.com\/sharer\/sharer\.php\?u=.+%2Fr%2FRex12345$/);
+	await expect(
+		page.getByRole('status').filter({ hasText: 'Besedilo objave je kopirano. Prilepite ga v objavo.' })
+	).toBeVisible();
+	expect(await page.evaluate(() => navigator.clipboard.readText())).toMatch(
+		/^Pomagajte najti psa: Rex[.] .+ \S+\/r\/Rex12345$/
+	);
+});
+
 test('the poster dialog downloads najdimo-Rex12345-sl.pdf', async ({ page }) => {
 	await page.goto('/r/Rex12345');
 	await page.getByRole('button', { name: 'Deli ali natisni plakat' }).click();

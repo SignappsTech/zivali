@@ -100,6 +100,8 @@ export function LostDone({
 		copy: tt('report.share_copy'),
 		whatsapp: tt('report.share_whatsapp'),
 		facebook: tt('report.share_facebook'),
+		facebookCopied: ts('facebook_copied'),
+		facebookCopyFailed: ts('facebook_copy_failed'),
 		more: ts('more'),
 		poster: tt('report.share_poster'),
 		copied: ts('copied'),

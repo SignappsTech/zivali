@@ -62,6 +62,8 @@ export function SlotB({ report, place }: ReportSlotProps) {
 				copy: t('report.share_copy'),
 				whatsapp: t('report.share_whatsapp'),
 				facebook: t('report.share_facebook'),
+				facebookCopied: t('share.facebook_copied'),
+				facebookCopyFailed: t('share.facebook_copy_failed'),
 				more: t('share.more'),
 				poster: t('report.share_poster'),
 				copied: t('share.copied'),

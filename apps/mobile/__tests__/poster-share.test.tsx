@@ -268,6 +268,11 @@ describe('P18 poster and sharing (mobile)', () => {
 		expect(openURL).toHaveBeenLastCalledWith(
 			`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(URL)}`
 		);
+		// Facebook takes no post text: the owner's kit post is on the clipboard to paste.
+		expect(clipboard).toHaveBeenLastCalledWith(
+			expect.stringMatching(/^Pogrešamo psa: Rex[.] .+ https:\/\/najdimo[.]test\/r\/Rex2Lost$/)
+		);
+		expect(toast.success).toHaveBeenLastCalledWith(s.facebook_copied);
 		await fireEvent.press(screen.getByRole('button', { name: s.copy }));
 		expect(clipboard).toHaveBeenLastCalledWith(URL);
 		expect(toast.success).toHaveBeenCalledWith(s.copied);
@@ -290,6 +295,20 @@ describe('P18 poster and sharing (mobile)', () => {
 		await fireEvent.press(screen.getByRole('button', { name: s.more }));
 		expect(share).toHaveBeenCalledTimes(2);
 		expect(events()).toEqual([]);
+	});
+
+	test('Facebook: a refused clipboard gets the system sheet with the text to copy, not the sharer', async () => {
+		const share = jest.spyOn(Share, 'share').mockResolvedValue({ action: 'dismissedAction' });
+		const openURL = jest.spyOn(Linking, 'openURL').mockResolvedValue(true);
+		clipboard.mockResolvedValueOnce(false);
+		await open({ data: owner });
+		await screen.findByRole('heading', { name: s.kit_title });
+		await fireEvent.press(screen.getByRole('button', { name: s.facebook }));
+		const post = expect.stringMatching(/^Pogrešamo psa: Rex[.] .+ https:\/\/najdimo[.]test\/r\/Rex2Lost$/);
+		expect(clipboard).toHaveBeenLastCalledWith(post);
+		expect(share).toHaveBeenLastCalledWith({ message: post });
+		expect(openURL).not.toHaveBeenCalled();
+		expect(toast.success).not.toHaveBeenCalled();
 	});
 
 	test('the system sheet dismissed without a target is not counted', async () => {
