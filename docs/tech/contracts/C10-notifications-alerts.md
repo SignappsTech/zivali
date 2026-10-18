@@ -21,14 +21,14 @@ email_outbox(id, user_id, template, locale, to_address_hash, status ('queued'|'s
 | `match_chip` | `{ match_id, lost_code, other_code, other_type: 'found'|'sighted', has_name, pet_name?, species }` | ignored | in-app, push, email | search | `/r/<lost_code>/matches` |
 | `match_suggested` | `{ match_id, lost_code, strength: 'good'|'strong', other_type, has_name, pet_name?, species }` | apply | in-app, push, email | search | same |
 | `match_confirmed` | `{ conversation_id, report_code, species, report_type: 'found'|'sighted' }` | apply | in-app, push, email | search | `/inbox/<id>` |
-| `chat_message` | `{ conversation_id, preview_alias (≤ 24 chars, alias or chosen display name), unread_count }` (no body) | ignored | in-app, push; email after 30 min unread | search | `/inbox/<id>` |
+| `chat_message` | `{ conversation_id, preview_alias (≤ 24 chars, alias or chosen display name), unread_count }` (no body) | ignored | in-app, push; email: one follow-up job 30 min after the first unread message of a streak (CH-161) | search | `/inbox/<id>` |
 | `nearby_lost` | `{ report_code, species, distance_band, has_area, area_name? (public approximate area), reported_at }`; email only: `{ has_vet_partner, clinic_name?, clinic_area?, clinic_url? (tracked click), ad_id?, unsubscribe_url }` | apply | in-app, push; email opt-in (default off) | alert | `/r/<code>` |
 | `report_reminder` | `{ report_code, day: 7|14|30, has_name, pet_name?, species }` | apply | in-app, push, email | search | `/my-reports?r=<code>&action=keep|close|extend` |
 | `report_expiring` | `{ report_code, report_type, days_left, has_name, pet_name?, species }` | apply | in-app, email | search / finder | same with action |
 | `report_closed` | `{ report_code, report_type, idle_days, reopen_days, has_name, pet_name?, species }` | apply | in-app, email | search / finder | `/my-reports` |
 | `report_hidden` | `{ report_code, report_type, support_email }` (no free-text reason) | apply | in-app, email | search / finder | `/my-reports` |
 | `report_reunited` | `{ report_code, species }` | apply | in-app, push | search | `/r/<code>` |
-| `manage_link` | `{ report_code, report_type: 'found'|'sighted', species, manage_url }` (email only, to `report_contacts`; transactional, not governed by prefs; URL in the recipient locale: `/m#token` or `/en/m#token`) | n/a | email | finder | `/m#token` |
+| `manage_link` | `{ report_code, report_type: 'found'|'sighted', species, manage_url }` (email only, to `report_contacts`; transactional, not governed by prefs; URL in the recipient locale: `/m#token` or `/en/m#token`; **not** a `notify.send` job, see below) | n/a | email | finder | `/m#token` |
 | `payment_receipt` | `{ payment_id, amount_cents, purpose, paid_at, receipt_ref, is_test }` (`is_test` when APP_ENV is not production or the provider is mock/test) | n/a | email, in-app | payment | `/account/payments` |
 
 The handler derives `has_name` (`yes`/`no`) and truncates `pet_name` to 18 and `preview_alias` to 24 characters; `species` may be `other` in copy for future-proofing. The email layout picks the footer reason line from the category (account, search, alert, finder, payment). Vet Partner fields are resolved from the report's region (M4) and never appear in push or in-app payloads. `unsubscribe_url` is a signed one-click link that turns the type's email channel off without sign-in.
@@ -36,6 +36,10 @@ The handler derives `has_name` (`yes`/`no`) and truncates `pet_name` to 18 and `
 Email-only types to unverified addresses are skipped (FR-010 edge). Text comes from i18n namespace `notifications` and `email` in the recipient's `profiles.locale`.
 
 Prefs: every channel of every switchable type can be off, in-app for `match_*` and `chat_message` too; all channels off for a type = no inbox row, push or email.
+
+**`manage_link` (as built, TASK-22.3, CH-160)**: the secret token must not land in `pgboss.job` and the recipient is `report_contacts`, so `NotificationsDomain.sendManageLink({ to, report_code, report_type, species, manage_token }, ctx)` emails directly with locale = `ctx.locale` and URL `/m#token` or `/en/m#token`. The caller passes only a confirmed address (FR-010).
+
+**`chat_message` email (CH-161)**: one follow-up `notify.send` 30 min after the first unread message of a streak (job id fixed by user + conversation + `last_read_at`; `dedupe_key` `email:<conversation_id>`); it emails only if the source still reports `unread_count > 0`. Without a `dedupe_key`, or with in-app off, there is no inbox-based dedupe.
 
 ## Local proximity alerts (M3, TASK-87)
 
@@ -45,17 +49,19 @@ Not server notifications: the mobile app raises them locally from OS geofences a
 
 `NotificationsDomain.enqueueNotification({ user_id, type, payload, dedupe_key? }, ctx)` sends pg-boss job `notify.send` (inside the caller's transaction when given). The `notify.send` handler: load prefs and quiet hours (`profiles.quiet_from/to`) → insert the inbox row (unique `user_id, dedupe_key`) → broadcast `notification.created` on `user:<id>` (ADR-023) → push (Expo adapter) and/or email (Brevo adapter, rendered with `@zivali/i18n` in the recipient locale) → record outcomes; `DeviceNotRegistered` deletes the token. Quiet-hour deferral re-sends the job with `startAfter` = end of quiet hours.
 
+**Variable sources (as built, TASK-22.3, CH-159)**: `notify.send` holds ids + template only (TASK-6.17); the handler loads each type's copy variables (payload column above) from a per-type source in `apps/api/domains/notifications/sources.ts` (a source returning `null` = moot, the job is dropped). The owning features add their sources: matching (`match_*`), chat (`chat_message`: `preview_alias`, `unread_count`), lifecycle and moderation (`report_*`), alerts (`nearby_lost` incl. `distance_band`, `area_name`, `reported_at`), payments (`payment_receipt`). A type without a source fails its job; those tasks' packets say so. `NotificationJobPayload` gains `payment_id` (without it `payment_receipt` cannot be resolved). The handler also writes `alert_deliveries (report_id, user_id, channel)` in the inbox transaction; `alerts.fanout` only reads it (exclusion, daily cap) and never inserts (CH-160).
+
 ## REST (owned by TASK-22.3)
 
 | Method and path | Guards | Request | Response |
 |---|---|---|---|
 | `GET /v1/notifications` | auth | `?cursor&limit` | `{ items: Notification[], next_cursor, unread }` |
 | `POST /v1/notifications/read` | auth | `{ ids: uuid[] } | { all: true }` | `204`; `POST /v1/conversations/:id/read` (C9) also marks the caller's unread `chat_message` notifications for that conversation read, so clients re-fetch the inbox after it |
-| `GET /v1/notification-prefs` | auth | - | `{ items: { type, in_app, push, email }[], quiet_from, quiet_to }` |
+| `GET /v1/notification-prefs` | auth | - | `{ items: { type, in_app, push, email }[], quiet_from, quiet_to }`; lists the 10 switchable types (not `manage_link`, `payment_receipt`: transactional, `PUT` on them = `VALIDATION`); defaults all on except `nearby_lost` email (opt-in) (CH-161) |
 | `PUT /v1/notification-prefs/:type` | auth | `{ in_app?, push?, email? }` | the pref |
 | `POST /v1/push-tokens` | auth (incl. anonymous managers) | `{ token, platform: 'ios' | 'android' }` | `204` (upsert, `last_seen_at`) |
 | `DELETE /v1/push-tokens` | auth | `{ token }` (body, so the token stays out of URLs and access logs) | `204` |
-| `GET /v1/notifications/unsubscribe?token=` | none (signed one-click token) | - | HTML confirmation; turns that type's email off |
+| `GET /v1/notifications/unsubscribe?token=` | none (signed one-click token) | - | HTML confirmation; turns that type's email off. Token `<user_id>.<type>.<HMAC(RATE_SALT)>`, no expiry; alert emails set `List-Unsubscribe` only. A state-changing GET can be triggered by mail link scanners: proposed follow-up = GET shows a confirm page, POST changes (RFC 8058, `List-Unsubscribe-Post`) (CH-162) |
 
 Client (`@zivali/api/notifications`): `listNotifications`, `markRead`, `getPrefs`, `setPref`, `setQuietHours` (`PATCH /v1/me`), `registerPushToken`, `unregisterPushToken`, `subscribeInbox(onEvent)` (Realtime `user:<id>`; events `notification.created` and `conversation.updated`, payload `{ conversation_id, status, updated_at }`, defined in C9 §Realtime; `conversation.read` is on `conversation:<id>` only, payload `{ conversation_id, reader_id, last_read_message_id, read_at }`).
 
@@ -69,7 +75,7 @@ Client (`@zivali/api/notifications`): `listNotifications`, `markRead`, `getPrefs
 
 `AlertSubscription` = the request fields plus `daily_cap`, `created_at`, `updated_at`. The centre is stored coarsened (20–30 m, C6 §Storage) like every user location.
 
-`alerts.fanout { report_id }` on a visible LOST report: TypedSQL `prisma/sql/alertRecipients.sql` finds subscriptions not paused, species match, `ST_DWithin(center_point, report.public_point, radius_km*1000)` (GiST), excluding the report's managers, users already in `alert_deliveries` for this report and users at their daily cap (default 5); an empty `species` list matches nothing (`= any(species)`; the DB check allows `'{}'`); chunks of 500 → `notify.send` type `nearby_lost` (dedupe `nearby:<report_id>`). At most 1 push per report per user. Pending deliveries for a report closed or reunited are dropped by the handler (status check); `notify.send` also drops a queued `nearby_lost` when the subscription no longer has the report's species. Target: 1000 recipients < 60 s.
+`alerts.fanout { report_id }` on a visible LOST report: a parameterised `$queryRaw` in `alerts.dao.ts` `findRecipients` (not TypedSQL, as CH-117) finds subscriptions not paused, species match, `st_dwithin(center_point, public_point, radius_km*1000)` plus a constant 25 km `st_dwithin` so the GiST index is used (always `public_point`, never `exact_point`, CH-148), excluding the report's managers, users already in `alert_deliveries` for this report and users at their daily cap (default 5; = `alert_deliveries` in the last 24 h); an empty `species` list matches nothing (`= any(species)`; the DB check allows `'{}'`); chunks of 500 → `notify.send` type `nearby_lost` (dedupe `nearby:<report_id>`). At most 1 push per report per user. Pending deliveries for a report closed or reunited are dropped by the handler (status check); `notify.send` also drops a queued `nearby_lost` when the subscription no longer has the report's species. Fan-out writes `alert_deliveries` (channel `push`) together with the ids-only `notify.send` job in one transaction; `notify.send` resolves the variables or drops the alert via `AlertsDomain.nearbyAlert()`. Guards: `GET`/`DELETE` `rejectAnonymous`, `PUT` `requireVerified` (CH-178). Target: 1000 recipients < 60 s.
 
 ## Example
 
@@ -84,3 +90,4 @@ Client (`@zivali/api/notifications`): `listNotifications`, `markRead`, `getPrefs
 | 1.1 | 2026-10-15 | CH-62: conversation.updated payload referenced (defined in C9) |
 | 1.2 | 2026-10-15 | CH-76: DELETE /v1/push-tokens takes { token } in the body, not the path |
 | 1.3 | 2026-10-18 | CH-493: conversation read marks `chat_message` notifications read (see C9); CH-504 (TASK-114.14): `species` may be empty (no nearby alerts), notify.send drops a queued nearby_lost on a species change, every channel of every switchable type can be off |
+| 1.4 | 2026-10-18 | CH-148: alert matching on public_point; CH-159: per-type variable sources, payment_id; CH-160: manage_link sent directly, notify.send writes alert_deliveries; CH-161: chat_message email follow-up, prefs list; CH-162: unsubscribe token as built; CH-178: findRecipients as built (TASK-23.1) |

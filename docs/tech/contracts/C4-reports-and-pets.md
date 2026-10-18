@@ -44,7 +44,8 @@ reports(id, short_code text unique,            -- 8 chars base58, public identif
         reward_eur int null check (reward_eur between 1 and 10000), reward_note text null (≤ 80),   -- lost only, display only (no payment, brief v1.1)
         linked_report_id → reports null,     -- a sighting of a lost report
         source, organisation_id null, boosted_until timestamptz null,
-        manage_token_hash bytea null,   -- report_contacts(report_id, email) holds the optional finder email
+        manage_token_hash bytea null unique,   -- unique for the claim lookup (CH-206); report_contacts(report_id, email) holds the optional finder email
+        device_hash text null,   -- anonymous reports only: HMAC(RATE_SALT, x-device-id), index (device_hash, created_at); feeds the C7 hold rule "> 10 reports in 7 days"; cleared 7 days after creation by retention.purge (CH-206)
         first_match_at, reunited_at, closed_at, last_owner_update_at,
         created_by → profiles, created_at, updated_at)
 report_managers(report_id, user_id, role text check (role in ('owner','finder','staff')), created_at, pk(report_id,user_id))
@@ -63,13 +64,15 @@ Photos of a report or pet: C5. Max 5 per report and per pet. A photo can belong 
 | open (found/sighted, ≥ 30 days idle, source ≠ organisation) | `expire` | closed (`expired`) | system | finder notified (email if given) |
 | any | `extend` | unchanged, `last_owner_update_at = now()` | manager | resets the idle timer |
 
+Close, reunite and expiry call `ChatDomain.closeForReport({ report_id }, ctx)` with the transition's transaction (conversations of the report become read-only, C9); reopening does not reactivate conversations (CH-173).
+
 Reminders for LOST at 7, 14, 30 days after `created_at` (`lifecycle_tick`, hourly). Timings in `app_config` (`lifecycle.*`).
 
 ## REST (owned by TASK-29.2 unless noted)
 
 | Method and path | Guards | Request | Response | Errors |
 |---|---|---|---|---|
-| `POST /v1/reports` | auth (user or anonymous), `Idempotency-Key` required, rate limit (C7 for anonymous) | `CreateReportInput` | `201 { id, short_code, moderation_state, manage_token?, warnings[] }` | `VALIDATION`, `DUPLICATE_OPEN_REPORT` (409, `details.short_code`), `RATE_LIMITED`, `UNVERIFIED_EMAIL` (lost by unverified user is allowed; see FR-001) |
+| `POST /v1/reports` | auth (user or anonymous), `Idempotency-Key` required, rate limit (C7 for anonymous) | `CreateReportInput` | `201 { id, short_code, moderation_state, manage_token?, warnings[] }` | `VALIDATION`, `DUPLICATE_OPEN_REPORT` (409, `details.short_code`), `RATE_LIMITED` (never `UNVERIFIED_EMAIL`: a lost report by an unverified user is allowed, FR-001; CH-195) |
 | `PATCH /v1/reports/:code` | manager | partial `CreateReportInput` minus `type` | `ReportOwnerView` | `FORBIDDEN`, `VALIDATION`, `GONE` |
 | `GET /v1/reports/:code` | optionalAuth | - | `PublicReport` (+ `ReportOwnerView` fields when the caller manages it) | `NOT_FOUND`, `GONE` (`details.reason`) |
 | `GET /v1/reports` (TASK-31.3) | optionalAuth | query `ReportSearch` | `{ items: PublicReport[], next_cursor, total_estimate }` | `VALIDATION` |
@@ -84,6 +87,10 @@ Limits (implemented, confirmed): `name` ≤ 60, `collar` ≤ 200, pet `notes` �
 **Sync cursor (CH-142, TASK-85.1 AC#4)**: `server_time` is an opaque cursor the client always sends back as `since` and never interprets. With `has_more` it encodes `(updated_at, id)` of the page's last row, with upserts and removals in one order; the final value (`has_more: false`) overlaps in-flight transactions slightly, so upserts are idempotent.
 
 **Query encoding (implemented, confirmed)**: lists as a comma list or repeated keys (`types=lost,found`); `bbox=w,s,e,n`; `near=lat,lng,km`; sync `areas` = JSON `[{lat,lng,radius_km}]` (1–3, radius ≤ 25). **Location in URLs (decision, CH-19)**: accepted for these read endpoints (`near`, sync `areas`, C18 `shelters/responsible`) because they must stay cacheable-friendly GETs and are used for public reads, under three rules: the client rounds the coordinates to 2 decimals (about 1 km) before putting them in a URL (`near`, sync `areas`; `bbox` on `GET /v1/reports` and `/map` is rounded outwards: west and south down, east and north up); the API and Caddy access logs record the route pattern only, never the query string; responses with a location query are `Cache-Control: private, no-store`. Anything that carries a precise point (report create/update, alert subscription, geocoder search/reverse) stays POST/PUT body only (C6).
+
+**Search and location filters (CH-148)**: for callers who do not manage the report, distance sort (`sort=distance`), the distance bands, `bbox` filters and nearby-alert matching (C10) use `public_point`, never `exact_point`; `exact_point` would let anyone probe for the stored point by moving the query point. Managers see their own reports through `/v1/me/reports`, not through search.
+
+**As built, create and update (TASK-29.2, CH-195)**: `name`, `pet_id`, `requested_radius_m` and `reward_*` are lost only (otherwise `VALIDATION`); `linked_report_id` only on found or sighted and only to a lost report; `pet_id` = the caller's own non-archived pet of the same species (row-locked) and fills omitted fields; duplicate = a lost report of that pet with status `open` or `matched`; `photo_ids` = own unattached photos or photos already on the report (plus the shared-photo cases of C5), and PATCH replaces the set. PATCH: non-managers (staff too) get `FORBIDDEN`; removed report → `GONE` reason `removed`; closed or reunited → `GONE` reason `closed`; it sets `last_owner_update_at`.
 
 ```ts
 type CreateReportInput = {
@@ -161,3 +168,4 @@ Drafts live only on the device until submit: web `idb-keyval` key `draft:<kind>:
 | 1.1 | 2026-10-15 | CH-56: bbox rounded outwards to 2 decimals like near and areas |
 | 1.2 | 2026-10-15 | CH-142: sync `server_time` is an opaque (updated_at, id) cursor, final value overlaps in-flight transactions |
 | 1.3 | 2026-10-18 | CH-494 (TASK-114.5): report photo_ids may reuse the owner's pet photos and photos of their ended reports (C5) |
+| 1.4 | 2026-10-18 | CH-148: non-manager distance sort, bands, bbox and alert matching use public_point; CH-173: transitions call ChatDomain.closeForReport; CH-195: create/update rules as built, POST never returns UNVERIFIED_EMAIL; CH-206: reports.device_hash, manage_token_hash unique |

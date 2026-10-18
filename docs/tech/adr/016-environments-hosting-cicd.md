@@ -1,6 +1,6 @@
 # ADR-016: One Hetzner VPS with Docker Compose and Caddy; Supabase Free; R2; GitHub Actions; `pnpm verify` locally
 
-- Status: Accepted (revised 2026-10-15 for brief v1.0; replaces the Vercel version) · Owner: Tech Lead
+- Status: Accepted (revised 2026-10-15 for brief v1.0; replaces the Vercel version; amended 2026-10-18 with the as-built decisions below, CH-151, CH-158) · Owner: Tech Lead
 - Source: brief v1.0 §Technical (hosting about €5–10/month), NFR-AVAIL, NFR-DEVX, TASK-4, TASK-5, R-001, R-015
 
 ## Decision
@@ -16,6 +16,13 @@
 - **Keep-alive**: Supabase Free pauses after a week without activity; real traffic plus the `db.keepalive` job every 6 h and the uptime check on `/v1/health/ready` (touches the DB) prevent it.
 - **CI**: `.github/workflows/ci.yml` on pull requests and main (repository `git@github.com:pbozic/zivali.git`); deploy workflow on main (staging) and on tags with manual approval (production). Secrets live in GitHub Actions secrets and on the VPS in `/opt/zivali/.env` (mode 600), never in images. `pnpm verify` runs the same gates locally and is required before an implementer reports done.
 - **Credential gating**: `scripts/deploy.mjs <env> [--dry-run]` checks the required variables; missing ones print `NEEDS-INPUT:` with names (never values) and the script runs the dry-run path (build images, `prisma migrate diff` against a fresh local database, tests) and exits 0.
+
+## As built (TASK-5.1, CH-151, CH-158; where this differs from the Decision above, this section wins)
+
+- **Server**: Hetzner CAX11 (arm64), not CX22. The deploy user is the only login; root login and passwords are off. Port 22 is open to the admin IP only, plus a temporary CI rule that `always()` `--close-ssh` removes (all temporary port-22 rules) after the run.
+- **Edge**: nginx + certbot with the DNS-01 challenge (Cloudflare), one edge project per VPS, instead of Caddy. Hostnames: staging `staging.najdimo.si` / `api-staging.najdimo.si`; production `najdimo.si` (+ `www`) / `api.najdimo.si`; `media.najdimo.si` = the R2 custom domain. Env files live under `/opt/zivali`.
+- **No registry (no GHCR)**: images are built locally or in CI with `--load` and sent as `docker save | zstd | ssh docker load`. Smoke checks hit `/ping`.
+- **Deploy script**: `scripts/deploy.mjs <env> --deploy` is the gate instead of `--dry-run`. Compose healthchecks; promote and rollback via `release.env` / `release.env.prev` (the last 2 tags are kept).
 
 ## Consequences
 

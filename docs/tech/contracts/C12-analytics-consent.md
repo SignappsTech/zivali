@@ -73,7 +73,7 @@ Forbidden always: names, emails, phone, chip numbers, coordinates, free text, re
 
 ## Consent storage
 
-Web: first-party cookie `zz_consent` (strictly necessary, 12 months, `SameSite=Lax`, JSON `{v,analytics,ts}`); mobile: `expo-secure-store` key `zz_consent`. Clearing it re-prompts.
+Web: first-party cookie `zz_consent` (strictly necessary, 12 months, `SameSite=Lax`, JSON `{v,analytics,ts}`); mobile: `expo-secure-store` key `zz_consent`. Clearing it re-prompts. On each `CONSENT_VERSION` bump add `consent.change_<n>` to both the `sl` and `en` catalogues: web and mobile show it as the re-ask line, and without it they show none (CH-183).
 
 ## GA4 property checklist (already configured by the client, verified in TASK-7 docs)
 
@@ -91,3 +91,4 @@ track('donation', { value: 5, currency: 'EUR', amount_bucket: '5-9', purpose: 't
 | Version | Date | Change |
 |---|---|---|
 | 1.1 | 2026-10-15 | CH-37/38/41: initAnalytics options, value cap and consent-expiry note, trackScreen page_location/page_title, Enhanced measurement OFF checklist |
+| 1.2 | 2026-10-18 | CH-183: consent.change_<n> in sl and en on every CONSENT_VERSION bump |
