@@ -31,3 +31,7 @@ Likely cause: the theme is the `dark` class on `<html>`, set by an inline script
 - [ ] #2 The theme still follows the OS setting live (changing it while the page is open), and the first paint has no flash
 - [ ] #3 An e2e test switches the language with `colorScheme: 'dark'` emulated and checks the `dark` class (or the computed background)
 <!-- AC:END -->
+
+## Packet
+
+Branch: agent/TASK-114.2-theme-locale-switch
