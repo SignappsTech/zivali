@@ -7,7 +7,7 @@ status: To Do
 assignee:
   - '@backend-dev'
 created_date: '2026-10-18 21:25'
-updated_date: '2026-10-18 21:29'
+updated_date: '2026-10-18 23:08'
 labels:
   - be
   - 'est:M'
@@ -43,3 +43,9 @@ Branch: agent/task-43.3-matching-eval
 - [ ] #2 A real-photo set in apps/api/test/eval/matching/ (licence per file, at least 50 positive pairs of the same animal in different photos) embedded once with Voyage; its vectors are committed as fixtures
 - [ ] #3 The run picks visual_floor, visual_ceiling, weights_visual and the band cut-offs; v3 ships only if not worse than v2 on both metrics; results and chosen values are in the task notes and a CHANGE to C8§Visual similarity records them
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+From the TASK-43.1 review (2026-10-19): the v3 scorer caps V when there is no geo-time fit (lt1/1to3 km and lt24/24to72 h), wider than C8's literal rule, because black look-alikes always share colour and would otherwise reach good (AC#3). Cost: a found animal 5 km away 3 days later can't be raised to a notification by V. The eval should try a looser geo-time fit for V >= 0.8 and set the cap from the data.
+<!-- SECTION:NOTES:END -->
