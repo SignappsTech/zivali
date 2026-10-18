@@ -3,13 +3,15 @@ source: 02§Content, SEO and legal requirements (Legal); FR-038; FR-039; NFR-PRI
 
 | Field | Value |
 |---|---|
-| Version | 0.3 |
-| Date | 2026-10-15 |
+| Version | 0.4 |
+| Date | 2026-10-18 |
 | Route SL | `/piskotki` |
 | Route EN | `/en/cookies` |
 | Slug SL / EN | `piskotki` / `cookies` |
 | Structured data | WebPage |
 | Template | T4 Legal (numbered h2 sections, "On this page" list, draft note) |
+
+Change in 0.4 (TASK-113): the five durations marked for the client are verified from the code and the GA4 property and written without markers; `zz_consent` lives 400 days (the choice counts 12 months); `_ga` cookies run 2 years from the last visit; GA retention detail; Turnstile row says what we store, the rest goes to the lawyer (note 3).
 
 Change in 0.3: place search runs on our own servers (GURS data, ADR-007); MapTiler and Photon removed from chapter 6.
 
@@ -33,7 +35,7 @@ Change in 0.2: mobile items for drafts and queued reports, the offline copy of p
 
 **Osnutek – zahteva pregled naročnika in pravnika.**
 
-Zadnja posodobitev: 15. 10. 2026
+Zadnja posodobitev: 18. 10. 2026
 
 ## 1. Na kratko
 
@@ -57,32 +59,32 @@ Zapise delimo na dve vrsti:
 
 | Ime | Ponudnik | Čemu služi | Vrsta | Trajanje |
 |---|---|---|---|---|
-| `zz_consent` (piškotek) | Najdimo | Shrani vašo izbiro glede piškotkov, različico besedila in čas izbire. | nujni | 12 mesecev |
-| `sb-<projekt>-auth-token` (piškotek; lahko je razdeljen na `.0`, `.1`) | Najdimo (Supabase) | Ohrani vpis, ko ste vpisani. | nujni | do 400 dni ali do odjave [naročnik: preveriti dejansko trajanje] |
-| `NEXT_LOCALE` (piškotek) | Najdimo | Si zapomni izbran jezik. | nujni | [naročnik: preveriti trajanje, verjetno do konca seje] |
+| `zz_consent` (piškotek) | Najdimo | Shrani vašo izbiro glede piškotkov, različico besedila in čas izbire. | nujni | 400 dni; izbira velja 12 mesecev, nato vas vprašamo znova |
+| `sb-<projekt>-auth-token` (piškotek; lahko je razdeljen na `.0`, `.1`) | Najdimo (Supabase) | Ohrani vpis, ko ste vpisani. | nujni | 400 dni, rok se podaljša, ko storitev uporabljate; ob odjavi ga izbrišemo |
+| `NEXT_LOCALE` (piškotek) | Najdimo | Si zapomni izbran jezik. | nujni | do zaprtja brskalnika (sejni piškotek) |
 | Osnutek prijave (lokalna shramba) | Najdimo | Shrani nedokončano prijavo, da je ne izgubite. | nujni | dokler prijave ne oddate ali osnutka ne zavržete |
 | `manage:<ID prijave>` (lokalna shramba) | Najdimo | Hrani žeton zasebne povezave, prek katere upravljate prijavo brez računa. | nujni | do zaključka prijave ali do izbrisa shrambe |
 | `manage_token` (sejna shramba) | Najdimo | Začasno hrani žeton zasebne povezave iz naslova /m, da ga po osvežitvi strani ne izgubite. | nujni | do zaprtja zavihka |
 | Identifikator naprave (lokalna shramba) | Najdimo | Naključna oznaka za omejevanje zlorab (število zahtev). | nujni | do izbrisa shrambe |
-| Preverjanje „nisem robot“ (Turnstile) | Cloudflare, Inc. | Loči ljudi od botov s tehničnimi signali naprave in brskalnika. Ne služi oglaševanju. [naročnik: preveriti, ali nastavi piškotke] | nujni | po pravilih ponudnika |
-| `_ga` (piškotek) | Google Ireland Limited | Loči uporabnike za statistiko obiska. | analitični | 2 leti |
-| `_ga_PKY4SCX3RL` (piškotek) | Google Ireland Limited | Hrani stanje seje v Google Analytics 4. | analitični | 2 leti |
+| Preverjanje „nisem robot“ (Turnstile) | Cloudflare, Inc. | Loči ljudi od botov s tehničnimi signali naprave in brskalnika. Ne služi oglaševanju. Najdimo pri tem v vaši napravi ne shrani ničesar. Preverjanje teče v Cloudflarovem okvirju (challenges.cloudflare.com), ki se naloži samo na obrazcih s preverjanjem. | nujni | Najdimo ne shrani ničesar; za Cloudflarov okvir veljajo pravila ponudnika |
+| `_ga` (piškotek) | Google Ireland Limited | Loči uporabnike za statistiko obiska. | analitični | 2 leti od zadnjega obiska |
+| `_ga_PKY4SCX3RL` (piškotek) | Google Ireland Limited | Hrani stanje seje v Google Analytics 4. | analitični | 2 leti od zadnjega obiska |
 
-Analitična piškotka nastavimo samo, če sprejmete. Podatke v Google Analytics hranimo 14 mesecev.
+Analitična piškotka nastavimo samo, če sprejmete. Podrobne podatke o dogodkih in uporabnikih v Google Analytics hranimo 14 mesecev; za podatke o uporabniku se rok ob vsaki novi dejavnosti začne znova.
 
 ## 4. Zapisi v mobilni aplikaciji
 
 | Ime | Ponudnik | Čemu služi | Vrsta | Trajanje |
 |---|---|---|---|---|
 | Izbira glede piškotkov (varna shramba naprave) | Najdimo | Shrani vašo izbiro, različico besedila in čas. | nujni | 12 mesecev |
-| Seja vpisa (shramba aplikacije) | Najdimo (Supabase) | Ohrani vpis. | nujni | do odjave [naročnik: preveriti trajanje] |
+| Seja vpisa (shramba aplikacije) | Najdimo (Supabase) | Ohrani vpis. | nujni | do odjave ali odstranitve aplikacije |
 | Žeton za potisna obvestila | Najdimo; Apple in Google prenašata obvestila | Pošiljanje obvestil, ko jih dovolite v napravi. | nujni | dokler obvestil ne izklopite ali aplikacije ne odstranite |
 | Žeton zasebne povezave (varna shramba) | Najdimo | Upravljanje prijave brez računa. | nujni | do zaključka prijave ali do odstranitve aplikacije |
 | Identifikator naprave | Najdimo | Omejevanje zlorab. | nujni | do odstranitve aplikacije |
 | Osnutki in prijave, ki čakajo na pošiljanje | Najdimo | Shrani nedokončano prijavo in prijavo najdene živali, oddano brez povezave, dokler je ne pošljemo. | nujni | dokler prijave ne pošljemo ali osnutka ne zavržete; izbrišemo ob odjavi |
 | Kopija javnih prijav v okolici | Najdimo | Zemljevid in seznam delujeta tudi brez povezave. Samo približna območja in pomanjšane fotografije. | nujni | največ 7 dni in 50 MB; izbrišemo ob odjavi |
 | Območja za opozorila, ko ste blizu | Najdimo (preverja jih operacijski sistem telefona) | Telefon vas opozori, ko vstopite v približno območje izgubljene živali. Samo če funkcijo vklopite. | nujni | dokler se iskanje ne zaključi ali funkcije ne izklopite |
-| Identifikator namestitve aplikacije (Firebase Analytics) | Google Ireland Limited | Loči namestitve za statistiko uporabe. | analitični | po pravilih ponudnika; podatke v Googlu hranimo 14 mesecev [naročnik: preveriti] |
+| Identifikator namestitve aplikacije (Firebase Analytics) | Google Ireland Limited | Loči namestitve za statistiko uporabe. | analitični | do preklica privolitve (takrat ga ponastavimo) ali odstranitve aplikacije; podrobne podatke v Google Analytics hranimo 14 mesecev |
 
 Identifikator Firebase Analytics ustvarimo šele po vaši privolitvi.
 
@@ -124,7 +126,7 @@ Vprašanja: info@signapps.si. Splošno o obdelavi podatkov: [politika zasebnosti
 
 **Draft — requires client/legal review.**
 
-Last updated: 15 October 2026
+Last updated: 18 October 2026
 
 ## 1. In short
 
@@ -148,32 +150,32 @@ We split items into two kinds:
 
 | Name | Provider | Purpose | Category | Duration |
 |---|---|---|---|---|
-| `zz_consent` (cookie) | Najdimo | Stores your cookie choice, the text version and the time of the choice. | necessary | 12 months |
-| `sb-<project>-auth-token` (cookie; may be split into `.0`, `.1`) | Najdimo (Supabase) | Keeps you signed in. | necessary | up to 400 days or until you sign out [client: verify actual duration] |
-| `NEXT_LOCALE` (cookie) | Najdimo | Remembers the language you chose. | necessary | [client: verify duration, likely session] |
+| `zz_consent` (cookie) | Najdimo | Stores your cookie choice, the text version and the time of the choice. | necessary | 400 days; the choice counts for 12 months, then we ask again |
+| `sb-<project>-auth-token` (cookie; may be split into `.0`, `.1`) | Najdimo (Supabase) | Keeps you signed in. | necessary | 400 days, extended while you use the service; deleted when you sign out |
+| `NEXT_LOCALE` (cookie) | Najdimo | Remembers the language you chose. | necessary | until you close the browser (session cookie) |
 | Report draft (local storage) | Najdimo | Saves an unfinished report so you do not lose it. | necessary | until you submit the report or discard the draft |
 | `manage:<report id>` (local storage) | Najdimo | Holds the private-link token that lets you manage a report without an account. | necessary | until the report closes or storage is cleared |
 | `manage_token` (session storage) | Najdimo | Temporarily holds the private-link token from the /m address so a page reload does not lose it. | necessary | until the tab closes |
 | Device identifier (local storage) | Najdimo | Random identifier for abuse limits (rate limiting). | necessary | until storage is cleared |
-| "Not a robot" check (Turnstile) | Cloudflare, Inc. | Tells people from bots using technical device and browser signals. Not used for advertising. [client: verify whether it sets cookies] | necessary | per the provider's rules |
-| `_ga` (cookie) | Google Ireland Limited | Distinguishes users for visit statistics. | analytics | 2 years |
-| `_ga_PKY4SCX3RL` (cookie) | Google Ireland Limited | Keeps session state in Google Analytics 4. | analytics | 2 years |
+| "Not a robot" check (Turnstile) | Cloudflare, Inc. | Tells people from bots using technical device and browser signals. Not used for advertising. Najdimo stores nothing on your device for it. The check runs in Cloudflare's frame (challenges.cloudflare.com), which loads only on forms that use the check. | necessary | Najdimo stores nothing; Cloudflare's rules apply to its frame |
+| `_ga` (cookie) | Google Ireland Limited | Distinguishes users for visit statistics. | analytics | 2 years from your last visit |
+| `_ga_PKY4SCX3RL` (cookie) | Google Ireland Limited | Keeps session state in Google Analytics 4. | analytics | 2 years from your last visit |
 
-We set the two analytics cookies only if you accept. We keep data in Google Analytics for 14 months.
+We set the two analytics cookies only if you accept. We keep detailed event and user data in Google Analytics for 14 months; for user data the period starts again with each new activity.
 
 ## 4. Items in the mobile app
 
 | Name | Provider | Purpose | Category | Duration |
 |---|---|---|---|---|
 | Cookie choice (device secure storage) | Najdimo | Stores your choice, the text version and the time. | necessary | 12 months |
-| Sign-in session (app storage) | Najdimo (Supabase) | Keeps you signed in. | necessary | until you sign out [client: verify duration] |
+| Sign-in session (app storage) | Najdimo (Supabase) | Keeps you signed in. | necessary | until you sign out or remove the app |
 | Push notification token | Najdimo; Apple and Google carry the notifications | Sends notifications once you allow them on your device. | necessary | until you turn notifications off or remove the app |
 | Private-link token (secure storage) | Najdimo | Manages a report without an account. | necessary | until the report closes or the app is removed |
 | Device identifier | Najdimo | Abuse limits. | necessary | until the app is removed |
 | Drafts and reports waiting to be sent | Najdimo | Keeps an unfinished report, and a found-animal report made offline until we send it. | necessary | until the report is sent or the draft discarded; deleted on sign-out |
 | Copy of public reports nearby | Najdimo | Lets the map and list work offline. Approximate areas and small photos only. | necessary | at most 7 days and 50 MB; deleted on sign-out |
 | Areas for alerts when you are nearby | Najdimo (checked by the phone's operating system) | Your phone alerts you when you enter the approximate area of a lost pet. Only if you turn the feature on. | necessary | until the search closes or you turn the feature off |
-| App-instance identifier (Firebase Analytics) | Google Ireland Limited | Tells installations apart for usage statistics. | analytics | per the provider's rules; we keep data in Google for 14 months [client: verify] |
+| App-instance identifier (Firebase Analytics) | Google Ireland Limited | Tells installations apart for usage statistics. | analytics | until you withdraw consent (we then reset it) or remove the app; we keep detailed data in Google Analytics for 14 months |
 
 We create the Firebase Analytics identifier only after you consent.
 
@@ -214,11 +216,11 @@ Questions: info@signapps.si. General information about data processing: [privacy
 # Notes for legal review (EN, internal, not published)
 
 1. **Markers.** Every `[naročnik: …]` / `[client: …]` marker needs a value or a verified fact; the build should fail while one remains.
-2. **Durations to verify in the built product.** `sb-<project>-auth-token` (400 days is the cookie maximum; the real value depends on the Supabase and `@supabase/ssr` settings), `NEXT_LOCALE` (likely session), the mobile session, and the Firebase app-instance id. Check with a real browser session and update the tables.
-3. **Turnstile.** Confirm whether Cloudflare Turnstile sets cookies or only uses storage and signals in the current widget mode. If it sets any, list the names. I classified it as necessary (security of anonymous forms); confirm this under ePrivacy rules (ZEKom-2) and document the legitimate interest.
+2. **Durations (verified 2026-10-18, TASK-113; no marker left).** `sb-<project>-auth-token`: Max-Age 400 days, fixed by `@supabase/ssr` 0.12 (`DEFAULT_COOKIE_OPTIONS.maxAge`; our `cookieOptions` in apps/web/lib/supabase only add `Secure`), written again on every session refresh, Max-Age 0 on sign-out; Supabase Auth has no time-box or inactivity timeout (supabase/config.toml `[auth.sessions]` off). `NEXT_LOCALE`: session cookie, no Max-Age (next-intl 4 default `localeCookie`; apps/web/i18n/route.ts `syncLocaleCookie` the same). `zz_consent`: Max-Age 400 days, the choice counts 12 months (packages/analytics/src/consent.ts). Mobile session: encrypted app storage with no expiry of its own, removed on sign-out, account deletion or app removal (apps/mobile/lib/supabase.ts). Firebase app-instance id: created after consent, reset on withdrawal (`resetAnalyticsData`, packages/analytics/src/adapters/firebase.ts). GA4 property 559038055 data retention: 14 months for event and user data, reset on new activity (GA4 Admin, checked by the lead 2026-10-18); the mobile line assumes the Firebase stream sits in the same property (brief §Analytics; Q-009 Firebase still open). `_ga` and `_ga_PKY4SCX3RL`: 2 years each (Google, "Google Analytics cookie usage on websites"), counted from the last visit (gtag default `cookie_update`; packages/analytics/src/adapters/ga4.ts sets no `cookie_expires`).
+3. **Turnstile (open, for TASK-91).** Najdimo stores nothing for the check: the token stays in memory, single-use, and goes with the form (apps/web/components/auth/turnstile.tsx). The widget runs in Cloudflare's iframe (challenges.cloudflare.com), loaded only on forms with the check. What Cloudflare itself stores in that frame is not documented in our code or on pages the policy links to; the lawyer decides whether the policy must name it (Cloudflare's own documentation) and confirms the necessary classification (security of anonymous forms, legitimate interest) under ePrivacy rules (ZEKom-2).
 4. **ePrivacy and legal basis.** Slovenian rules for storing information on a device are in ZEKom-2 (not verified by me). Confirm the necessary/consent split, in particular the device identifier for rate limits and the `manage:<id>` token.
-5. **Consent record.** `zz_consent` stores choice, version and time for 12 months. Check whether longer retention of proof of consent is needed (see privacy-policy note 7).
-6. **Consent Mode v2 (basic).** The text promises: no Google script, request or cookie before acceptance; four signals denied by default; only `analytics_storage` granted on acceptance. Confirm with the developers that this is exactly how the build behaves (also GA4 cookie names: `_ga`, `_ga_PKY4SCX3RL`, 2 years each).
+5. **Consent record.** `zz_consent` stores choice, version and time; the cookie lives 400 days so the 12-month age check can work, and the choice counts 12 months. Check whether longer retention of proof of consent is needed (see privacy-policy note 7).
+6. **Consent Mode v2 (basic).** The text promises: no Google script, request or cookie before acceptance; four signals denied by default; only `analytics_storage` granted on acceptance. Confirm with the developers that this is exactly how the build behaves (GA4 cookie names and durations: see note 2).
 7. **Reject button.** Check that "decline" is as easy as "accept" in the banner (equal prominence).
 8. **Mobile.** Confirm that the Firebase app-instance id is not created before consent, and where each token is stored (secure storage vs plain app storage).
 9. **Ad counting without consent.** The claim rests on aggregate, cookieless, identifier-free counting (privacy-policy chapter 11); confirm.
