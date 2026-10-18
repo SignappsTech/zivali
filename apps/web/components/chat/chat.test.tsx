@@ -413,7 +413,11 @@ describe('Thread (P12)', () => {
 		expect(within(screen.getByRole('log')).queryByText('Prvo')).toBeNull();
 
 		onLine.mockReturnValue(true);
-		act(() => void window.dispatchEvent(new Event('online')));
+		// The listener may attach a moment after the render, so fire again until the first message has gone out.
+		await waitFor(() => {
+			if (!sent('POST', MESSAGES).length) window.dispatchEvent(new Event('online'));
+			expect(sent('POST', MESSAGES)).toHaveLength(1);
+		});
 		await waitFor(() => expect(screen.getAllByRole('button', { name: c.retry })).toHaveLength(2));
 		expect(sent('POST', MESSAGES)).toEqual([{ body: 'Prvo' }]);
 		expect(screen.queryByText(c.sending)).toBeNull();
@@ -445,7 +449,10 @@ describe('Thread (P12)', () => {
 		expect(sent('POST', MESSAGES)).toHaveLength(0);
 
 		onLine.mockReturnValue(true);
-		act(() => void window.dispatchEvent(new Event('online')));
+		await waitFor(() => {
+			if (!sent('POST', MESSAGES).length) window.dispatchEvent(new Event('online'));
+			expect(sent('POST', MESSAGES)).toHaveLength(1);
+		});
 		expect(await screen.findByText(c.sent)).toBeTruthy();
 		expect(sent('POST', MESSAGES)).toEqual([{ body: 'Sem na poti.' }]);
 		expect(screen.queryByText(c.offline)).toBeNull();
