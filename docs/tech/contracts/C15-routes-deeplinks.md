@@ -17,6 +17,7 @@ SL slugs are proposals; the content strategist may change them through a `CHANGE
 | reportReunited | `/r/[code]/spet-doma` | `/en/r/[code]/reunited` | app | manager | reunited |
 | manage | `/m` (token in `#fragment`) | `/en/m` | public | anonymous sign-in | none |
 | myPets | `/moje-zivali` | `/en/my-pets` | app | signed in | none |
+| myPetNew, myPet, myPetEdit (P8 sub-routes as built, TASK-16.6, `apps/web/i18n/routing.ts`; anonymous sessions refused) | `/moje-zivali/nova`, `/moje-zivali/[id]`, `/moje-zivali/[id]/uredi` | `/en/my-pets/new`, `/en/my-pets/[id]`, `/en/my-pets/[id]/edit` | app | signed in | none |
 | myReports | `/moje-prijave` | `/en/my-reports` | app | signed in or manager | none |
 | inbox (messages + notifications views, design P12/P13) | `/nabiralnik` (`?pogled=obvestila`) | `/en/inbox` (`?view=notifications`) | app | signed in or manager | **none** |
 | conversation | `/nabiralnik/[id]` | `/en/inbox/[id]` | app | participant | **none** |
@@ -35,6 +36,8 @@ SL slugs are proposals; the content strategist may change them through a `CHANGE
 | admin, as built (TASK-34.3, CH-222) | `/admin`, `/admin/revizijska-sled`, `/admin/zavetisca`; sections not built yet open `/admin/[section]` | `/en/admin`, `/en/admin/audit-log`, `/en/admin/shelters`; `/en/admin/[section]` | admin | admin only for unlisted admin paths | none |
 | portal (M3) | `/portal/*` | `/en/portal/*` | portal | org member | none |
 
+"Prijavi izgubljeno žival" on the pet detail links to `/prijava/izgubljena-zival?pet=<pet id>`; the web lost flow (TASK-29.3) reads `pet` to preselect that saved pet (CH-296).
+
 Admin sections not built yet (ads, house-ads, moderation, abuse-reports, verification, organisations, users, enquiries, vet-partners, settings) open `/admin/[section]` with the EN slug in both locales until their task adds its page and SL slug (`components/admin/nav.ts`).
 
 Auth query parameters (TASK-9.3, CH-185): `signIn` and `signUp` take `?next=` (same-site paths only) and `?email=`; `signIn` also `?link=expired`, `?error=cancelled|failed`, `?confirmed=1` (verified view). Supabase Auth redirects (confirmation and reset links, Google OAuth PKCE) land on `/auth/callback`, which exchanges the code server-side and then goes to `/reset-password` (recovery), `/sign-in?confirmed=1` (verified view) or `next`. `/reset-password` renders the new-password form only for a session whose amr has `recovery` (< 1 h, checked on the server; a `token_hash` session has amr `otp`, C3). Guards send `next` (proxy header `x-next-path`).
@@ -49,6 +52,7 @@ Route groups: `app/[locale]/(public)`, `(app)`, `(admin)`, `(portal)`; guards in
 |---|---|
 | `/r/[code]/opengraph-image` | OG image (next/og): photo + type label, no location (FR-011 R-011.3) |
 | `/r/[code]/poster.pdf?lang=sl\|en` | A4 poster PDF (TASK-24) |
+| `/r/[code]/square.png?lang=sl\|en` | 1080 × 1080 Facebook kit image (next/og, P18 §5, TASK-24.2 AC#6); mobile "Shrani sliko" downloads it from here (CH-336) |
 | (moved) ad clicks | served by the API: `GET <API_URL>/v1/ads/:id/click` (C14) |
 | `/api/health` | `{ ok, version, env }` |
 | `/auth/callback` (and `/en/auth/callback`) | Supabase Auth code exchange, see Auth query parameters above (CH-185) |
@@ -56,7 +60,7 @@ Route groups: `app/[locale]/(public)`, `(app)`, `(admin)`, `(portal)`; guards in
 | `/.well-known/apple-app-site-association`, `/.well-known/assetlinks.json` | universal / app links (TASK-12) |
 | `/dev/kit`, `/dev/checkout` | dev only (`APP_ENV !== 'production'`) |
 
-`apps/web/proxy.ts` (Next 16 successor of middleware.ts: CSP nonce, session refresh, next-intl) must exclude `/api`, `/captcha`, `/dev/*`, `/.well-known/*`, `/r/*/opengraph-image`, `/r/*/poster.pdf` and static files from its matcher; the task that adds `/captcha` or `/dev/*` extends the matcher in the same commit.
+`apps/web/proxy.ts` (Next 16 successor of middleware.ts: CSP nonce, session refresh, next-intl) must exclude `/api`, `/captcha`, `/dev/*`, `/.well-known/*`, `/r/*/opengraph-image`, `/r/*/poster.pdf`, `/r/*/square.png` and static files from its matcher; the task that adds `/captcha` or `/dev/*` extends the matcher in the same commit.
 | `/sitemap.xml`, `/robots.txt` | M5 (TASK-72); until then robots disallow staging |
 
 Hub index rules (TASK-72): national, the 12 regional and the 12 city hubs are indexable; other locations only with at least 3 open listings, otherwise `noindex`. `/r/[code]` stays the listing URL.
@@ -65,16 +69,19 @@ Detail page SEO: open, visible reports are indexable with `Article`-like JSON-LD
 
 ## Report detail slots (web and mobile, named components)
 
-`<ReportSlot name="contact" | "share" | "poster" | "report-abuse" | "owner-actions" | "ad" | "matches-link" | "sighting" />`. The detail page (TASK-18) renders the layout and empty slots; feature tasks fill their slot component in their own file (`components/report/slots/<name>.tsx`). The `ad` slot sits below the primary actions.
+Web: `<ReportSlot name="contact" | "share" | "poster" | "report-abuse" | "owner-actions" | "ad" | "matches-link" | "sighting" />`. The detail page (TASK-18) renders the layout and empty slots; feature tasks fill their slot component in their own file (`components/report/slots/<name>.tsx`). The `ad` slot sits below the primary actions.
+
+Mobile slot names follow P9 (lead decision for TASK-18.3, CH-303): `slot-a` (action slot A: sighting, contact, owner actions; sticky action bar), `slot-b` (share and poster; the share button over the photo and in the top bar), `slot-c` (Več možnosti: report abuse, owner "Zaključi iskanje"), `matches-note` (owner note: matches, held, hidden), `ad`, `near-here`, each in `apps/mobile/components/report/slots/<name>.tsx`. Mapping from the web names: contact, sighting, owner-actions → `slot-a`; share, poster → `slot-b`; report-abuse → `slot-c`; matches-link → `matches-note`; ad → `ad`.
 
 ## Mobile (Expo Router)
 
-`app/(tabs)/index` (map + list), `(tabs)/report` (choose lost/found), `(tabs)/inbox` (notifications + messages), `(tabs)/profile`; stacks: `r/[code]`, `r/[code]/matches`, `r/[code]/reunited`, `m` (manage link), `report/lost`, `report/found` (the sighted flow is `report/found?type=sighted`), `pets/*`, `inbox/[id]` (conversation), `settings/*` (language, notifications, alerts, consent, payments, account), `auth/*`, `payments/return`.
+`app/(tabs)/index` (map + list), `(tabs)/report` (choose lost/found), `(tabs)/inbox` (notifications + messages), `(tabs)/profile`; stacks: `r/[code]`, `r/[code]/matches`, `r/[code]/reunited`, `m` (manage link), `report/lost`, `report/found` (the sighted flow is `report/found?type=sighted`), `pets/*`, `inbox/[id]` (conversation), `settings/*` (language, notifications, alerts, consent, payments, account), `auth/*`, `payments/return`, `r/[code]/poster` (P18 "Plakat in deljenje", opened by the owner's "Plakat" in slot A). Mobile uses `/r/[code]/opengraph-image` for the link-card preview (CH-336).
 
 ## Deep links
 
 - The landing screens `app/r/[code]` and `payments/return` do not exist yet; they arrive with TASK-18 and the payments task, and until then `+native-intent` falls back to the home tab (CH-157).
 - Scheme `zivali://` (dev and fallback), universal links for `https://<APP_HOST>/r/*`, `/en/r/*`, `/m`, `/en/m`, `/payments/*`. Android `assetlinks.json` (package `si.signapps.zivali`, SHA-256 of the EAS keystore), iOS AASA (team id from Q-007). Without the app, links open the web page.
+- As built (TASK-12.6, CH-373): the iOS AASA excludes `/r/*/poster.pdf` and `/r/*/opengraph-image*` (first path components) before `/r/*`. Android cannot exclude, so its intent filter claims listing pages by `pathPattern` on the 8-character ShortCode: `/r/<code>`, `/r/<code>/ujemanja`, `/r/<code>/spet-doma`, `/en/r/<code>`, `/en/r/<code>/matches`, `/en/r/<code>/reunited` (plus `/m`, `/en/m`, `/payments/`). The app maps ujemanja/matches to `r/[code]/matches`, spet-doma/reunited to `r/[code]/reunited` and any other sub-path to the listing; `zivali://inbox/<id>` is allowlisted. Conversation email links (`/nabiralnik/<id>`, `/en/inbox/<id>`) stay unclaimed (they open the web) unless this contract adds them.
 - Poster QR and share links use `https://<APP_HOST>/r/<code>` (short and canonical, FR-011).
 
 ## Example
@@ -89,3 +96,4 @@ Detail page SEO: open, visible reports are indexable with `Article`-like JSON-LD
 | 1.2 | 2026-10-15 | CH-144: sighted route is /report/found?type=sighted |
 | 1.3 | 2026-10-18 | CH-149: map ?type=lost\|found\|sighted, sighted entry via reportFound; CH-157: mobile deep-link screens pending; CH-185: /auth/callback and auth query parameters |
 | 1.4 | 2026-10-18 | CH-222: admin routes as built |
+| 1.5 | 2026-10-18 | CH-296: P8 pet sub-routes and `?pet=`; CH-303: mobile slot names; CH-336: square.png, mobile poster stack; CH-373: deep-link filters as built |

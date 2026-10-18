@@ -96,7 +96,7 @@ Admin errors (C1 envelope): `CONFLICT` (409) when the body `version` is stale (a
 
 ## Content rules
 
-Legal timings (3 days / 72 h owner duty, 24 h find notice, 8-day holding) render only when the content flag `content.legal_timings` is on (A-029). Copy never claims the app replaces the legal report.
+Legal timings (3 days / 72 h owner duty, 24 h find notice, 8-day holding) render only when the content flag `content.legal_timings` is on (A-029). Copy never claims the app replaces the legal report. Delivery (CH-353): `content.legal_timings` is a public `app_config` key, so web and apps read it from `GET /v1/config/public` (C1) and render no timing while it is off or unread. The P6 timing string waits for the lawyer's wording.
 
 ## Example
 
@@ -116,3 +116,4 @@ Legal timings (3 days / 72 h owner duty, 24 h find notice, 8-day holding) render
 | 1.3 | 2026-10-15 | CH-128: delete refused while municipalities are assigned = 409 CONFLICT with details.code HAS_ASSIGNMENTS (not a top-level code) |
 | 1.4 | 2026-10-15 | CH-132, CH-133: shelters.species, area from lat/lng, species split collapses to one row (CONFIRMED only if cat and dog agree, else UNCONFIRMED with likely shelter_id), server rounds /responsible coordinates; follow-ups listed |
 | 1.5 | 2026-10-18 | CH-249: import body audit_note, result shape and errors; CH-250: directory_changes.audit_note, deactivate-only DELETE, slug rules, municipalities[] semantics as built (TASK-89.1) |
+| 1.6 | 2026-10-18 | CH-353: how clients read content.legal_timings |
