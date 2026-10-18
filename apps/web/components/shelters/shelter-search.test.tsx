@@ -189,7 +189,7 @@ describe('ShelterSearch "Uporabi mojo lokacijo" (TASK-114.11)', () => {
 
 	/** The browser's geolocation answers with a fix or with an error code (1 denied, 2 unavailable, 3 timeout). */
 	function mockGeolocation(answer: { coords: typeof RAW } | { code: number } | undefined) {
-		const getCurrentPosition = vi.fn((ok: PositionCallback, fail: PositionErrorCallback) =>
+		const getCurrentPosition = vi.fn((ok: PositionCallback, fail: PositionErrorCallback, _?: PositionOptions) =>
 			answer && 'coords' in answer
 				? ok({ coords: answer.coords } as GeolocationPosition)
 				: fail({ ...codes, code: answer!.code } as GeolocationPositionError)
@@ -224,8 +224,9 @@ describe('ShelterSearch "Uporabi mojo lokacijo" (TASK-114.11)', () => {
 
 		expect(await screen.findByRole('link', { name: 'Pokliči Zavetišče Ljubljana' })).toBeTruthy();
 		expect((input as HTMLInputElement).value).toBe('Ljubljana');
-		expect(getCurrentPosition.mock.calls[0]![2]).toMatchObject({ timeout: 10_000 });
-		expect(getCurrentPosition.mock.calls[0]![2]?.enableHighAccuracy).toBeFalsy();
+		const options = getCurrentPosition.mock.calls[0]![2];
+		expect(options?.timeout).toBe(10_000);
+		expect(options?.enableHighAccuracy).toBeFalsy();
 		expect(sent).toEqual([{ lat: 46.06, lng: 14.51 }]);
 		const kept = JSON.stringify({ ...localStorage, ...sessionStorage }) + window.location.href;
 		expect(kept).not.toMatch(/46\.0|14\.5/);
