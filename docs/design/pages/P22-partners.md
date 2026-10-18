@@ -19,10 +19,11 @@ A public, honest page where a local business sees the audience and the placement
 2. **Audience (live numbers):** region select (all Slovenia by default) and a row of large numbers with labels: registered users, active reports, reunited pets, as plain text with generous gaps, not cards. Values under 5 read "< 5". A `note` says "Pilot: Ljubljana, numbers are real and still small" while the product is in pilot (honest when small). Data from our database; optional enrichment flagged; cached at most 1 hour; shows the date of the figures.
 3. **Where your ad appears:** the four slots as one visual each using the real components from P21 (Feed, Detail, Reunited, Sidebar) with a one-line description and image format (4:3, 1200 by 900 px) and text limits. Laid out as a list with the preview on the right, alternating avoided.
 4. **Targeting:** one paragraph and a plain list: region, municipality, species, dates.
-5. **Why it works here:** three short rows on trust rules: every ad labelled "Oglas", no ads in report, chat or payment flows, aggregate cookieless reporting.
-6. **Pricing and next steps:** a sentence that prices are given on request during the pilot (no invented figures), what happens after the enquiry (reply within the stated time), media kit as a text download.
-7. **Enquiry form:** company, contact name, email, region of interest (select), message (line textarea), a **consent checkbox** to be contacted (required, not pre-ticked), captcha (invisible, challenge sheet if needed), primary `lg` "Send enquiry". Below: privacy sentence with link.
-8. **Questions:** a short FAQ in the T3 style (P3).
+5. **Vet Partner** (content §5, anchor `#veterinarski-partner`): title, lede and a short plain list of what the practice gets (featured "Veterinar v bližini" placement); same Content-variant rhythm, no card; a text link to the form.
+6. **Why it works here:** three short rows on trust rules: every ad labelled "Oglas", no ads in report, chat or payment flows, aggregate cookieless reporting.
+7. **Pricing and next steps:** a sentence that prices are given on request during the pilot (no invented figures), what happens after the enquiry (reply within the stated time), media kit as a text download.
+8. **Enquiry form:** company, contact name, email, optional phone (`autocomplete="tel"`), an "interest" radio group (Advertising, Vet Partner, Not sure yet), region of interest (select), message (line textarea), a **consent checkbox** to be contacted (required, not pre-ticked), captcha (invisible, challenge sheet if needed), primary `lg` "Send enquiry". Below: privacy sentence with link.
+9. **Questions:** a short FAQ in the T3 style (P3).
 
 ## Form states
 

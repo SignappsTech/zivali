@@ -3,6 +3,7 @@ source: 03§P10
 page: P10 Report abuse
 stories: TASK-25 (FR-018)
 platforms: web, mobile
+version: 1.1
 mockup: docs/design/mockups/P10-report-abuse.html
 copy: docs/content/pages/P10-report-abuse.md
 ---
@@ -40,6 +41,7 @@ Replaces the sheet content: check icon in a tonal circle, h2 "Thank you", one se
 | Rate limited (anonymous) | calm note, nothing lost, try again later |
 | Already reported | note "You already reported this", no second submit |
 | Network error | inline retry, selection kept |
+| Rate limited (any user) | after a RATE_LIMITED answer the send button stays disabled with the sentence until the dialog is closed and reopened (web and mobile, as built) |
 | Own listing | the entry is not shown |
 | Listing hidden after three reports | owner sees a `note` on the detail page and in the inbox that the listing is under review, with a text button "Contact support"; public gets the 410 page |
 
@@ -56,3 +58,9 @@ None.
 1. Mobile: sheet for a listing, a message (with block switch), disabled primary, confirmation, rate-limited, already reported, owner "under review" note.
 2. Web: dialog for a listing and a message.
 3. Light and dark.
+
+## Change log
+
+| Version | Date | Change |
+|---|---|---|
+| 1.1 | 2026-10-18 | CH-447: rate-limited stays disabled until reopened |

@@ -3,6 +3,7 @@ source: 03§P20
 page: P20 Admin ad management
 stories: TASK-37 (FR-031)
 platforms: web
+version: 1.1
 mockup: docs/design/mockups/P20-admin-ads.html
 copy: docs/content/pages/P20-admin-ads.md
 ---
@@ -15,7 +16,7 @@ The admin creates, schedules and reviews ads by hand, sees results, manages the 
 
 ## Ads list
 
-Table pattern from P19. Columns: preview thumbnail, title, status word (Draft, Scheduled, Running, Ended), slots, targeting summary (regions, species), dates, impressions, clicks, CTR. Filters: status, slot, region, species. Primary `lg` "New ad". Row actions: Edit, Duplicate, End now, Delete (soft, confirmed).
+Table pattern from P19. Columns: preview thumbnail, title, status word (Draft, Scheduled, Running, Ended, Paused, Deleted), slots, targeting summary (regions, species), dates. Impressions, clicks and CTR columns are added when C14 has totals (not in the as-built list). Filters: status, slot, region, species; they work on the loaded pages, and there is no search field (no copy, no API search). Status words beyond the first four: "Ustavljen" with a pause icon for a paused ad (house ads switched off) and "Izbrisan" with a trash-simple icon for a soft-deleted ad kept for its statistics (its title still opens it), shown in foreground and muted words (CH-394). "Preverjanje slike" (image check) has no API state and is not shown (CH-479). Primary `lg` "New ad". Row actions: Edit, Duplicate, End now, Delete (soft, confirmed).
 
 ## Create and edit (single page, sections stacked, no cards)
 
@@ -41,7 +42,7 @@ Missing alt text, non-https link, image not the required format (see P21), overl
 
 ## House ads
 
-A short list of the three house ads (support, partner with us, adopt) with preview, text, link target and status; edit uses the same form with locked slots (all) and no targeting.
+A short list of the three house ads (support, partner with us, adopt) with preview, text, link target and status; edit uses the same form with locked slots (all) and no targeting. As built (TASK-37.3, CH-479): each house ad is one language, enabled by its own "Prikazuj" switch (status active or paused). The admin shell's breadcrumb has two levels (Konzola > Oglasi) on the list, not the third level "Nov oglas" the mockup draws.
 
 ## States
 
@@ -62,3 +63,9 @@ None.
 3. Detail with statistics, CSV note, history.
 4. House ads manager.
 5. Light and dark.
+
+## Change log
+
+| Version | Date | Change |
+|---|---|---|
+| 1.1 | 2026-10-18 | CH-394, CH-479: status words and list as built, house ads |

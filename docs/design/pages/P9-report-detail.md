@@ -3,6 +3,7 @@ source: 03§P9
 page: P9 Report detail (lost, found, sighted)
 stories: TASK-18 (FR-007, FR-004, FR-011, FR-012)
 platforms: web, mobile
+version: 1.1
 mockup: docs/design/mockups/P9-report-detail.html
 copy: docs/content/pages/P9-report-detail.md
 ---
@@ -35,6 +36,8 @@ Right column (no card, plain on `background`, sticky from `lg`):
 
 Below the columns, in order: **Where it was seen** (map left with area disc, sightings list right, plain rows with time and text), **Ad slot** (labelled "Oglas", once, P21, only on this page type), **Near here** (three pet tiles, no container). Structured data and Open Graph per FR-007.
 
+**Web sidebar (TASK-36.5, CH-457).** The 320 px P21 sidebar (landmark "Oglasi", sticky from `lg`) does not sit beside the photo/info grid, which has no room for it. It sits beside the sections below the columns ("Where it was seen", the detail ad, "Near here"), which then share the remaining `1fr` column. For a closed or reunited report there is no "Where it was seen" and the detail unit would be adjacent to the sidebar (P21: never adjacent), so the sidebar shows for an active report only.
+
 ## Mobile layout
 
 Photo carousel full-bleed under the status bar (swipe, page position shown as small text below the photo, not on it), floating round icon buttons for back and share over the photo with a soft scrim circle. Then status word, h1, facts, area line and a map thumbnail (opens a full map sheet), "About", sightings, ad slot, nearby tiles. **Sticky bottom action bar** (`card`, 20 px padding): primary `lg` action from slot A and a text button for the secondary; overflow icon opens More. Bottom navigation hides on this screen.
@@ -62,6 +65,8 @@ Replaces slot A with: primary `lg` "Animal is home again" (P14), text buttons "E
 
 Loading skeleton (photo block, title, facts), image failure (placeholder tile), map offline (text-only area line), network error note with retry, contact requires sign-in (P16 gate sheet with verified-email prompt for unverified users).
 
+**Contact gate after sign-in (CH-472).** On mobile the screen stays mounted under the auth screens, so contact continues once signed in (TASK-21.6). On web the P16 gate leaves the page and returns to it through `next`; the visitor presses the contact button again. The mockup note "the conversation opens" describes mobile; resuming contact from a `next` marker on web would be a follow-up task.
+
 ## Responsive
 
 `lg` two columns; below `lg` single column with the info before "About". Sticky action bar only on mobile and tablet. Thumbnails become a swipe carousel on mobile.
@@ -80,3 +85,9 @@ None.
 2. Mobile: lost (visitor with sticky bar), owner view with matches note, found, map sheet, More menu, gate sheet.
 3. 768 px tablet of the lost page.
 4. Light and dark.
+
+## Change log
+
+| Version | Date | Change |
+|---|---|---|
+| 1.1 | 2026-10-18 | CH-457, CH-472: web ad sidebar placement, contact after the sign-in gate |

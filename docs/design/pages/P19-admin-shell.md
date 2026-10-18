@@ -3,6 +3,7 @@ source: 03§P19
 page: P19 Admin console shell
 stories: TASK-34 (FR-019), TASK-89 (FR-044, shelter directory admin)
 platforms: web
+version: 1.1
 mockup: docs/design/mockups/P19-admin-shell.html, docs/design/mockups/P19-shelter-directory.html (directory screen)
 copy: docs/content/pages/P19-admin-shell.md
 ---
@@ -38,7 +39,7 @@ Filter row (line search, select filters as pills), table with sticky header, row
 
 | Screen | Content |
 |---|---|
-| Sign in with strong authentication | the standard sign-in (P16), then an authenticator code screen (6 digit field, "use backup code" text) and enrolment screen with QR and secret, first time |
+| Sign in with strong authentication | the standard sign-in (P16), then an authenticator code screen (6 digit field, a muted lost-device line `mfa_lost` under the code form, no backup-code link) and enrolment screen with QR and secret, first time |
 | Access denied | non-admin or wrong role: h1, sentence, text button back to the app. No hint of what exists. |
 | Session timeout | dialog "Sign in again" with the page kept |
 | Last-admin guard | removing the last admin is refused with an explaining note |
@@ -46,7 +47,7 @@ Filter row (line search, select filters as pills), table with sticky header, row
 
 ## Dashboard (placeholder)
 
-Four plain number blocks without cards (open reports, active ads, pending enquiries, reports under review) as large numbers with a label and a text link, and a recent audit entries list (five rows). Real KPIs arrive in M4.
+Four plain number blocks without cards (open reports, active ads, pending enquiries, reports under review) as large numbers with a label and a text link, and a recent audit entries list (five rows). Real KPIs arrive in M4. A "Rezervni avtentikator" card (as built, TASK-34.6, CH-470) offers a button, then QR + key + code field as in enrolment (A1).
 
 ## Audit log
 
@@ -94,3 +95,9 @@ None.
 1. Browser 1200 px: shelters table with the yearly reminder and the stale filter on, municipalities table with an unconfirmed row, edit drawer (opening hours rows, municipalities list, a field error), history with a before and after view, CSV import dry run with errors (apply disabled) and without errors, delete refused note, toast after save.
 2. 768 px: table as stacked rows, drawer stays 480 px (full width only below 640).
 3. Light and dark. Shelter data is marked sample data.
+
+## Change log
+
+| Version | Date | Change |
+|---|---|---|
+| 1.1 | 2026-10-18 | CH-470: F7 lost-device line and backup authenticator card |

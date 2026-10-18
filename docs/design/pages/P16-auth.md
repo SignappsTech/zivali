@@ -3,7 +3,7 @@ source: 03§P16
 page: P16 Sign in and account creation
 stories: TASK-9 (FR-001)
 platforms: web, mobile
-version: 1.1
+version: 1.2
 mockup: docs/design/mockups/P16-auth.html
 copy: docs/content/pages/P16-auth.md
 ---
@@ -24,6 +24,8 @@ Quick, trustworthy account creation and sign-in with email, Google or Apple, plu
 | Email verified | check icon, h1, primary "Continue" |
 | Forgot password | h1, email field, primary "Send link", sentence that the answer is always the same for privacy |
 | New password | h1, password field with hint, primary "Save password" |
+
+**Conversion variant of Create account (C7 §6, CH-449).** Opened from the anonymous finder's offers (P7 done "Ustvari račun in obdrži prijavo", P14 finder thanks) as `/registracija?convert=1` (mobile `auth/sign-up?convert=1`), and only while the session is anonymous. Same fields and validation; the `auth.convert_note` line with a ShieldCheck icon sits under the h1; no Google or Apple (they would start another user). Then "Preverite e-pošto" ("Pošlji znova" sets the address again; "Spremeni e-naslov" returns to the conversion form) and the usual "E-naslov je potrjen". A session over 24 h old cannot set the password with the address (GoTrue reauthentication): "Preverite e-pošto" adds the `auth.check_set_password` line, and the link opens the New password form in a set variant: title `setpass_title`, a body line `setpass_body` under it, done `setpass_done`, "Nadaljuj" to the page that offered the account (web `/pozabljeno-geslo?set=1&next=...`, mobile `auth/new-password`).
 
 Apple sign-in follows Apple's button rules on iOS and web (use the platform button or the specified assets); Google follows Google's branding rules. Both appear on every sign-in and sign-up screen as `provider` buttons (system 10.2), the same size as the secondary buttons, identical on the page, in sheets and in dialogs.
 
@@ -72,3 +74,4 @@ None.
 | Version | Date | Change |
 |---|---|---|
 | 1.1 | 2026-10-18 | CH-187: web deviations (taken address, in-place password-saved note, check email without Open mail app, no linking dialog or session-expired sheet) |
+| 1.2 | 2026-10-18 | CH-449: conversion variant of create account and set-password variant |

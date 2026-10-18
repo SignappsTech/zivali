@@ -3,7 +3,7 @@ source: 03§P6
 page: P6 Report lost
 stories: TASK-29 (FR-005, FR-003, FR-002)
 platforms: web, mobile
-version: 1.2
+version: 1.3
 mockup: docs/design/mockups/P6-report-lost.html
 copy: docs/content/pages/P6-report-lost.md
 ---
@@ -33,6 +33,8 @@ With a saved pet the path is 1, 4, 5, 6, 7 (five bars). With a new pet and saved
 ## Sign-in gate
 
 A visitor can fill every step. When pressing Publish, a bottom sheet (web: dialog) offers "Continue with account": Sign in, Create account, Google, Apple (P16) with the note that nothing entered is lost. After auth the report is created with all data and the flow continues to the confirmation. Unverified email: the report is saved and published, alerts and chat show the verify prompt (P16).
+
+**Web interim until TASK-29.4 (CH-421).** The web PhotoPicker uploads at once and has no hold for a signed-out visitor (mobile has `hold`), so a signed-out visitor at `/prijava/izgubljena-zival` gets the h1 `report_lost.flow_label`, `report_lost.gate_title` and Vpiši se / Ustvari račun (`next` back to the flow) instead of the fill-first steps. TASK-29.4 replaces it with the hand-off above. Step 6's `validation_summary` shows as an error line (not a note), keeping the reward warning the one note on the screen.
 
 ## Confirmation screen
 
@@ -81,3 +83,4 @@ None. The confirmation screen is text and icons only.
 |---|---|---|
 | 1.1 | 2026-10-18 | Pet step only with saved pets, as choice rows with no Next; six steps without saved pets (CH-497, TASK-114.12). |
 | 1.2 | 2026-10-18 | CH-367, CH-368: mobile confirmation as built (poster button, generic unconfirmed notice) |
+| 1.3 | 2026-10-18 | CH-421: web sign-in gate interim; CH-497, CH-530 already applied (1.2, step 1) |

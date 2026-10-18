@@ -3,7 +3,7 @@ source: 03§P7
 page: P7 Report found or sighted (no account) and manage page
 stories: TASK-30, TASK-17 (FR-006, FR-003, FR-004)
 platforms: web, mobile
-version: 1.1
+version: 1.2
 mockup: docs/design/mockups/P7-report-found.html
 copy: docs/content/pages/P7-report-found.md
 ---
@@ -38,7 +38,7 @@ h1 confirmation, one sentence that the report is live, a **private link block**:
 
 ## Manage page (private link, any device, no sign-in)
 
-Standard top bar and a content column. Sections in order: status word and photo; the report facts; a quiet note that the link is private; **Messages** entry (opens chat P12 without sign-in) with a count only when there are unread messages; actions as text rows: Edit, Close report, "Animal returned to owner" (mark returned), Delete my data (confirm dialog, R-034.4). Primary on this page: "Open messages" when messages exist, otherwise none. Expiry notice at day 25 with "Keep for 30 more days". Lost link: nothing can be recovered unless an email was given (the page for resend is a neutral request form with the generic response).
+Standard top bar and a content column. Sections in order: status word and photo; the report facts; a quiet note that the link is private; **Messages**: the report's conversations as P12 rows that open each thread (web `/nabiralnik/[id]`, mobile likewise), with no separate "Odpri sporočila" button (`report_found.manage_open_messages` is unused on both platforms, CH-441); a count only when there are unread messages; actions as text rows: Edit, Close report, "Animal returned to owner" (mark returned), Delete my data (confirm dialog, R-034.4). Primary on this page: none. Expiry notice at day 25 with "Keep for 30 more days". Lost link: nothing can be recovered unless an email was given (the page for resend is a neutral request form with the generic response).
 
 ## States
 
@@ -87,3 +87,4 @@ None.
 | Version | Date | Change |
 |---|---|---|
 | 1.1 | 2026-10-18 | CH-263: waiting-to-send dialog, sent-row action, photo-less tile, stuck reason line |
+| 1.2 | 2026-10-18 | CH-441: Messages as conversation rows, no open-messages button |
