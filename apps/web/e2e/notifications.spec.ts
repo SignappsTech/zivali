@@ -111,7 +111,11 @@ for (const [width, colorScheme] of [
 		await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content', /noindex/);
 		await expect(page.getByRole('tab', { name: 'Obvestila' })).toHaveAttribute('aria-selected', 'true');
 		await expect(page.getByRole('heading', { level: 1 })).toHaveText('Obvestila');
-		await expect(page.getByRole('heading', { level: 2 })).toHaveText(['Danes', 'Ta teden', 'Prej']);
+		await expect(page.getByRole('main').getByRole('heading', { level: 2 })).toHaveText([
+			'Danes',
+			'Ta teden',
+			'Prej',
+		]);
 		const chip = page.getByRole('link', { name: /Številka čipa se ujema · Luna, neprebrano/ });
 		await expect(chip).toHaveAttribute('href', '/r/Pq7xK2mN/ujemanja');
 		await expect(page.getByRole('link', { name: 'Nadaljuj iskanje' })).toHaveAttribute(
