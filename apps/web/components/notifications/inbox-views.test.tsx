@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { NextIntlClientProvider } from 'next-intl';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
@@ -13,7 +13,7 @@ vi.mock('next/navigation', async (actual) => ({
 	usePathname: () => '/nabiralnik',
 	useParams: () => ({ locale: 'sl' }),
 }));
-const unread = vi.hoisted(() => ({ conversations: false, notifications: false, loaded: true }));
+const unread = vi.hoisted(() => ({ conversations: false, notifications: false, loaded: true, failed: false }));
 vi.mock('./unread-dot', () => ({ useInboxUnread: () => unread }));
 vi.mock('./notifications-view', () => ({ NotificationsView: () => <h1>notifications view</h1> }));
 vi.mock('@/components/chat/conversations', () => ({
@@ -34,7 +34,8 @@ const unreadName = (label: string) => sl.chat.row_unread_a11y.replace('{title}',
 afterEach(() => {
 	cleanup();
 	vi.clearAllMocks();
-	Object.assign(unread, { conversations: false, notifications: false, loaded: true });
+	vi.useRealTimers();
+	Object.assign(unread, { conversations: false, notifications: false, loaded: true, failed: false });
 	window.history.replaceState(null, '', '/');
 });
 
@@ -75,7 +76,7 @@ describe('InboxViews', () => {
 		);
 	});
 
-	it('marks each view with unread items: the dot and ", neprebrano" in the tab name; plain labels when all is read', () => {
+	it('marks each view with unread items: the dot and ", neprebrano" in the tab name; plain when read', () => {
 		Object.assign(unread, { conversations: true, notifications: true });
 		const { container, rerender } = show('conversations');
 
@@ -102,21 +103,39 @@ describe('InboxViews', () => {
 		expect(window.location.search).toBe('');
 	});
 
-	it('waits for both lists, then keeps the view when unread items arrive later; the URL view always wins', () => {
+	it('opens no view until both lists answered (no jump), then keeps it; the URL view always wins', () => {
 		Object.assign(unread, { notifications: true, loaded: false });
 		const { rerender } = show();
-		expect(selectedTab().textContent).toBe(sl.chat.view_conversations);
+		expect(screen.queryByRole('tab', { selected: true })).toBeNull();
+		expect(screen.queryByRole('heading')).toBeNull();
+		expect(screen.getByRole('status').textContent).toBe(sl.common.loading);
 
 		unread.loaded = true;
 		rerender(tree());
 		expect(selectedTab().textContent).toContain(sl.chat.view_notifications);
+		expect(screen.queryByRole('status')).toBeNull();
 		Object.assign(unread, { conversations: true });
 		rerender(tree());
 		expect(selectedTab().textContent).toContain(sl.chat.view_notifications);
 		cleanup();
 
-		Object.assign(unread, { conversations: false, notifications: true });
+		Object.assign(unread, { conversations: false, notifications: true, loaded: false });
 		show('conversations');
+		expect(selectedTab().textContent).toBe(sl.chat.view_conversations);
+	});
+
+	it('opens Conversations when a list fails, or when the lists take longer than 2 s', () => {
+		Object.assign(unread, { notifications: true, loaded: false, failed: true });
+		show();
+		expect(selectedTab().textContent).toBe(sl.chat.view_conversations);
+		cleanup();
+
+		vi.useFakeTimers();
+		Object.assign(unread, { failed: false });
+		show();
+		act(() => vi.advanceTimersByTime(1999));
+		expect(screen.queryByRole('tab', { selected: true })).toBeNull();
+		act(() => vi.advanceTimersByTime(1));
 		expect(selectedTab().textContent).toBe(sl.chat.view_conversations);
 	});
 });

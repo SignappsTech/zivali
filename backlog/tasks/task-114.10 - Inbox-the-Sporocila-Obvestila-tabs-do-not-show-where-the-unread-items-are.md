@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-16 14:45'
-updated_date: '2026-10-18 02:17'
+updated_date: '2026-10-18 02:21'
 labels:
   - bug
   - fe
@@ -41,11 +41,11 @@ Merging the two lists into one inbox would be a design rework: it needs a person
 - [x] #2 /nabiralnik without a tab opens the tab with unread items (Sporočila first)
 - [x] #3 The header dot is on when there is any unread conversation or unread notification
 - [x] #4 Reading a conversation clears its chat_message notification state; no tab shows unread for something already read
-- [ ] #5 Unit tests for the indicators and the default tab; inbox e2e updated; mobile app inbox checked for the same gap (follow-up task if it differs)
+- [x] #5 Unit tests for the indicators and the default tab; inbox e2e updated; mobile app inbox checked for the same gap (follow-up task if it differs)
 <!-- AC:END -->
 
 ## Packet
 
 Branch: agent/TASK-114.10-inbox-unread-tabs
 
-Mobile check (AC5): apps/mobile inbox has the same gap (plain Pogovori/Obvestila tabs, no unread state on the tabs or the tab bar, no default-view rule); needs a follow-up mobile task. The API fix (reading a conversation reads its chat_message notifications) already covers mobile.
+Mobile check (AC5): apps/mobile inbox has the same gap (plain Pogovori/Obvestila tabs, no unread state on the tabs or the tab bar, no default-view rule); follow-up: TASK-114.23 (mobile parity, includes the inbox tabs). The API fix (reading a conversation reads its chat_message notifications) already covers mobile.

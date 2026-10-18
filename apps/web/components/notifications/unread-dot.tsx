@@ -19,24 +19,25 @@ const COUNT = { limit: 1 };
 /**
  * Where the inbox has unread items: any conversation with unread messages (the list's first page, newest activity
  * first, C9; the same request as the Conversations view) and any unread notification (C10 `unread`). `loaded` once both
- * answered. `subscribeInbox` re-fetches both, so this follows Realtime.
+ * answered, `failed` once either gave up. `subscribeInbox` re-fetches both, so this follows Realtime.
  */
 export function useInboxUnread() {
-	const conversations = useListConversationsQuery().data;
-	const notifications = useListNotificationsQuery(COUNT).data;
+	const conversations = useListConversationsQuery();
+	const notifications = useListNotificationsQuery(COUNT);
 	return {
-		conversations: Boolean(conversations?.items.some((conversation) => conversation.unread > 0)),
-		notifications: Boolean(notifications?.unread),
-		loaded: Boolean(conversations && notifications),
+		conversations: Boolean(conversations.data?.items.some((conversation) => conversation.unread > 0)),
+		notifications: Boolean(notifications.data?.unread),
+		loaded: Boolean(conversations.data && notifications.data),
+		failed: conversations.isError || notifications.isError,
 	};
 }
 
 /**
  * Label and unread state of the header's inbox link: the 10 px `primary` dot of the inbox rows and ", unread" in the
- * link's name while a conversation or a notification is unread, never a count (P1). `visible` shows the label (menu row), else it is for screen readers only (icon
- * button). The name is one text node, so browsers add no space before the comma. `live` (once per page) joins the
- * user's Realtime channel (`user:<id>`, ADR-023), so a new notification or a read elsewhere updates it without a
- * reload; supabase-js loads after the page.
+ * link's name while a conversation or a notification is unread, never a count (P1). `visible` shows the label (menu
+ * row), else it is for screen readers only (icon button). The name is one text node, so browsers add no space before
+ * the comma. `live` (once per page) joins the user's Realtime channel (`user:<id>`, ADR-023), so a new notification or
+ * a read elsewhere updates it without a reload; supabase-js loads after the page.
  */
 export function UnreadDot({
 	label,
