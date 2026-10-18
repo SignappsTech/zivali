@@ -80,6 +80,10 @@ vi.mock('@/components/location/location-picker', async (actual) => ({
 		</div>
 	),
 }));
+// "Kako vas obvestimo" (tested in notification-settings.test.tsx) as a stub.
+vi.mock('@/components/notifications/notification-settings', () => ({
+	NotificationSettings: () => <h2>{sl.alerts.channels_title}</h2>,
+}));
 const toast = vi.hoisted(() => ({ error: vi.fn(), success: vi.fn() }));
 vi.mock('sonner', async (actual) => ({ ...(await actual()), toast }));
 
@@ -144,13 +148,23 @@ describe('AlertSettings (P13 web)', () => {
 		expect(state.refetch).toHaveBeenCalled();
 	});
 
-	it('off shows the master switch and the link to the channels; on saves the home area with dogs and cats', async () => {
+	it('channels and quiet hours follow on the page, not behind a link, also while it loads (TASK-114.15)', () => {
+		show(undefined);
+		expect(screen.getByRole('heading', { name: alerts.channels_title })).toBeTruthy();
+		cleanup();
+		show(stored);
+		const channels = screen.getByRole('heading', { name: alerts.channels_title });
+		const pause = screen.getByRole('switch', { name: alerts.pause_label });
+		expect(pause.compareDocumentPosition(channels) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+		expect(screen.queryByRole('link', { name: alerts.channels_title })).toBeNull();
+	});
+
+	it('off shows the master switch; on saves the home area with dogs and cats', async () => {
 		show(null);
 
 		expect(master().getAttribute('aria-checked')).toBe('false');
 		expect(screen.getAllByRole('switch')).toHaveLength(1);
 		expect(screen.queryByRole('slider')).toBeNull();
-		expect(screen.getByRole('link', { name: alerts.channels_title }).getAttribute('href')).toBe('/racun/obvestila');
 
 		fireEvent.click(master());
 		await flush();

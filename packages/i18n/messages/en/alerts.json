@@ -1,6 +1,8 @@
 {
 	"title": "Nearby alerts",
 	"channels_title": "How we tell you",
+	"channels_summary_quiet": "{channels} · Quiet hours {from} to {to}",
+	"channels_summary_none": "No notifications",
 	"master_label": "Alerts about lost pets nearby",
 	"master_help": "We let you know when a dog or cat goes missing in your area.",
 	"area_label": "Home area",

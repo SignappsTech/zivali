@@ -6,7 +6,7 @@ import { me } from '@zivali/api/__fixtures__/me';
 import { prefs } from '@zivali/api/__fixtures__/notifications';
 import { ApiError } from '@zivali/api/client';
 import sl from '@zivali/i18n/dist/sl.json';
-import type { Me, NotificationPrefs } from '@zivali/types';
+import type { Me, NotificationPrefs, NotificationType } from '@zivali/types';
 
 import { NotificationSettings } from './notification-settings';
 
@@ -37,26 +37,91 @@ const alerts = sl.alerts;
 const switchFor = (type: string, channel: string) =>
 	screen.getByRole('switch', { name: `${type}: ${channel}` }) as HTMLButtonElement;
 
-function show(profile: Me | null = me, data: NotificationPrefs | null = prefs) {
+const disclosure = () => screen.getByRole('button', { name: alerts.channels_title });
+
+/** Renders the section, opened with its button unless `closed`. */
+function show(profile: Me | null = me, data: NotificationPrefs | null = prefs, { closed = false } = {}) {
 	state.me = profile;
 	state.gate = profile ? 'ok' : 'loading';
 	state.prefs = { data: data ?? undefined };
-	return render(
+	const view = render(
 		<NextIntlClientProvider locale="sl" messages={sl}>
 			<NotificationSettings />
 		</NextIntlClientProvider>
 	);
+	if (!closed) fireEvent.click(disclosure());
+	return view;
 }
 
 afterEach(() => {
 	cleanup();
 	vi.clearAllMocks();
+	window.history.replaceState(null, '', '/');
 });
 
-describe('NotificationSettings', () => {
+describe('NotificationSettings: the "Kako vas obvestimo" disclosure (TASK-114.15)', () => {
+	it('is closed, with the summary under the title; the button opens and closes the panel', () => {
+		show(me, prefs, { closed: true });
+		const button = disclosure();
+		const panel = document.getElementById(button.getAttribute('aria-controls')!)!;
+		expect([button.tagName, button.getAttribute('type'), button.getAttribute('aria-expanded')]).toEqual([
+			'BUTTON',
+			'button',
+			'false',
+		]);
+		expect(button.closest('h2')).toBeTruthy();
+		expect(panel.hidden).toBe(true);
+		expect(screen.queryAllByRole('switch')).toHaveLength(0);
+		// Push and email on somewhere, in app beside them goes without saying; quiet hours set.
+		const summary = 'Na telefonu in po e-pošti · Tihi čas 22:00 do 07:00';
+		expect(document.getElementById(button.getAttribute('aria-describedby')!)?.textContent).toBe(summary);
+
+		fireEvent.click(button);
+		expect(button.getAttribute('aria-expanded')).toBe('true');
+		expect(panel.hidden).toBe(false);
+		expect(screen.getByRole('region', { name: alerts.channels_title })).toBe(panel);
+		expect(screen.getAllByRole('switch')).toHaveLength(12);
+		expect(screen.queryByText(summary)).toBeNull();
+		expect(button.hasAttribute('aria-describedby')).toBe(false);
+
+		fireEvent.click(button);
+		expect([button.getAttribute('aria-expanded'), panel.hidden]).toEqual(['false', true]);
+	});
+
+	it('opens by itself when the address targets it, as the redirect of /racun/obvestila does', () => {
+		window.history.replaceState(null, '', '/racun/opozorila#kako-vas-obvestimo');
+		show(me, prefs, { closed: true });
+		expect(disclosure().getAttribute('aria-expanded')).toBe('true');
+		expect(disclosure().closest('#kako-vas-obvestimo')).toBeTruthy();
+		expect(screen.getAllByRole('switch')).toHaveLength(12);
+		fireEvent.click(disclosure());
+		expect(disclosure().getAttribute('aria-expanded')).toBe('false');
+	});
+
+	it.each([
+		['only in app', { push: false, email: false, in_app: true }, 'V aplikaciji'],
+		['email only', { push: false, email: true, in_app: true }, 'Po e-pošti'],
+		['nothing at all', { push: false, email: false, in_app: false }, alerts.channels_summary_none],
+	])('summarises %s, without quiet hours', (_, channels, summary) => {
+		const types: NotificationType[] = [
+			'match_chip',
+			'match_suggested',
+			'match_confirmed',
+			'chat_message',
+			'nearby_lost',
+			'report_reminder',
+			'report_expiring',
+			'report_closed',
+		];
+		const items = types.map((type) => ({ type, ...channels }));
+		show(me, { items, quiet_from: null, quiet_to: null }, { closed: true });
+		expect(document.getElementById(disclosure().getAttribute('aria-describedby')!)?.textContent).toBe(summary);
+	});
+
 	it('waits with a skeleton, and shows the inline error with a retry when the prefs fail', () => {
 		show(me, null);
 		expect(screen.getByText(sl.common.loading_page)).toBeTruthy();
+		expect(disclosure().hasAttribute('aria-describedby')).toBe(false);
 
 		cleanup();
 		state.me = me;
@@ -66,6 +131,7 @@ describe('NotificationSettings', () => {
 				<NotificationSettings />
 			</NextIntlClientProvider>
 		);
+		fireEvent.click(disclosure());
 		fireEvent.click(screen.getByRole('button', { name: sl.common.inline_error_retry }));
 		expect(state.refetch).toHaveBeenCalled();
 	});

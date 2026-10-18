@@ -2,6 +2,7 @@ import AxeBuilder from '@axe-core/playwright';
 import { expect, type Page, test } from '@playwright/test';
 
 import { me } from '@zivali/api/__fixtures__/me';
+import { prefs } from '@zivali/api/__fixtures__/notifications';
 import type { AlertSubscription, AlertSubscriptionInput, Me } from '@zivali/types';
 
 import { signInAs } from './session';
@@ -31,6 +32,9 @@ async function signIn(page: Page, baseURL: string, profile: Me = me) {
 		route.request().method() === 'OPTIONS'
 			? route.continue()
 			: route.fulfill({ json: { items: [], next_cursor: null, unread: 0 } })
+	);
+	await page.route(/\/v1\/notification-prefs$/, (route) =>
+		route.request().method() === 'OPTIONS' ? route.continue() : route.fulfill({ json: prefs })
 	);
 	await page.route(/\/v1\/geo\/reverse$/, (route) =>
 		route.request().method() === 'OPTIONS' ? route.continue() : route.fulfill({ json: { place: SISKA } })
@@ -84,12 +88,19 @@ for (const [width, colorScheme] of [
 		await expect(page.getByRole('heading', { level: 1 })).toHaveText('Opozorila v bližini');
 		const master = page.getByRole('switch', { name: 'Opozorila o izgubljenih živalih v bližini' });
 		await expect(master).not.toBeChecked();
-		await expect(page.getByRole('link', { name: 'Kako vas obvestimo' })).toHaveAttribute(
-			'href',
-			'/racun/obvestila'
-		);
+		// "Kako vas obvestimo" is a closed section at the end (TASK-114.15): its summary under the title, Enter opens it.
+		const channels = page.getByRole('button', { name: 'Kako vas obvestimo' });
+		await expect(channels).toHaveAttribute('aria-expanded', 'false');
+		await expect(page.getByText('Na telefonu in po e-pošti · Tihi čas 22:00 do 07:00')).toBeVisible();
+		await expect(page.getByRole('switch', { name: 'Sporočila: Po e-pošti' })).toBeHidden();
 		await expect(page.locator('[data-ad-slot]')).toHaveCount(0);
 		await expectNoAxeViolations(page);
+		await channels.press('Enter');
+		await expect(channels).toHaveAttribute('aria-expanded', 'true');
+		await expect(page.getByRole('switch', { name: 'Sporočila: Po e-pošti' })).toBeVisible();
+		await expectNoAxeViolations(page);
+		await channels.press('Space');
+		await expect(channels).toHaveAttribute('aria-expanded', 'false');
 
 		// Opt in: the profile's home area, 5 km, dogs and cats.
 		await master.click();

@@ -32,13 +32,13 @@ import {
 import { AuthGate } from '@/components/auth/gate';
 import { useErrorText } from '@/components/auth/parts';
 import { LocationPicker, type LocationValue, nearest, RADII, rangeClass } from '@/components/location/location-picker';
-import { InlineError, PageSkeleton, ringClass } from '@/components/shell/page';
+import { NotificationSettings } from '@/components/notifications/notification-settings';
+import { InlineError, PageSkeleton } from '@/components/shell/page';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Toaster } from '@/components/ui/sonner';
 import { Switch } from '@/components/ui/switch';
-import { Link } from '@/i18n/navigation';
 import { cn } from '@/lib/utils';
 
 const STOPS_KM = RADII.alert.stops.map((m) => m / 1000); // the picker's alert stops, 1 to 25 km
@@ -332,17 +332,6 @@ function AlertsForm({ me, sub }: { me: Me; sub: AlertSubscription | null }) {
 					</>
 				)}
 			</section>
-			{/* Channels and quiet hours live on the notification settings page (TASK-22.4). */}
-			<Link
-				href="/account/notifications"
-				className={cn(
-					'mt-10 flex min-h-14 items-center justify-between gap-4 rounded-row text-[17px] leading-6 font-bold',
-					ringClass
-				)}
-			>
-				{t('alerts.channels_title')}
-				<CaretRightIcon weight="bold" aria-hidden="true" className="size-5 shrink-0" />
-			</Link>
 			{/* Unconfirmed email: "Potrdite svoj e-naslov" first (the API takes verified accounts only). */}
 			<AuthGate reason="alerts" open={verify} onOpenChange={setVerify} onReady={turnOn} />
 			<Dialog open={picking} onOpenChange={setPicking}>
@@ -366,7 +355,7 @@ function AlertsForm({ me, sub }: { me: Me; sub: AlertSubscription | null }) {
 /**
  * P13 "Opozorila v bližini" on web (FR-010): the master switch; when on, the home area (the P5 picker in alert mode, in
  * a dialog), the radius, the animals and pause. Every change saves at once with the "Shranjeno." toast. The area is the
- * profile's home area too: a save writes both, so they never disagree. Channels and quiet hours are linked, not repeated.
+ * profile's home area too: a save writes both, so they never disagree. Channels and quiet hours follow, collapsed.
  */
 export function AlertSettings() {
 	const t = useTranslations('common');
@@ -380,7 +369,11 @@ export function AlertSettings() {
 
 	return (
 		<>
-			<div className="mt-8 max-w-[640px]">{content}</div>
+			<div className="mt-8 max-w-[640px]">
+				{content}
+				{/* Channels and quiet hours: the "Kako vas obvestimo" disclosure (TASK-114.15). */}
+				<NotificationSettings />
+			</div>
 			<Toaster closeLabel={t('close')} label={t('toasts_label')} />
 		</>
 	);
