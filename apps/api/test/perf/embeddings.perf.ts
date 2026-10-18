@@ -29,7 +29,7 @@ const RUNS_PER_RADIUS = 20;
 
 type Seeded = { id: string; type: string; species: string };
 let reports: Seeded[] = [];
-let photos: { id: string; report_id: string }[] = [];
+let photoIds: string[] = [];
 
 async function cleanup() {
 	await prisma.$executeRaw`delete from app.reports where created_by = ${OWNER}::uuid`;
@@ -37,9 +37,10 @@ async function cleanup() {
 	await prisma.$executeRaw`delete from app.profiles where id = ${OWNER}::uuid`;
 }
 
-/** A pseudo-random point inside Slovenia's bounding box (seeded per run, not per report). */
+/** A random point inside Slovenia's bounding box. */
 const randomPoint = () => ({ lat: 45.5 + Math.random() * 1.3, lng: 13.5 + Math.random() * 2.9 });
 const pick = <T>(items: T[]): T => items[Math.floor(Math.random() * items.length)]!;
+const hnswLine = (plan: string) => plan.split('\n').find((line) => line.includes('photo_embeddings_hnsw')) ?? '';
 const p95 = (ms: number[]) => [...ms].sort((a, b) => a - b)[Math.ceil(ms.length * 0.95) - 1]!;
 
 async function explain(input: NearestInput): Promise<string> {
@@ -55,12 +56,10 @@ async function explain(input: NearestInput): Promise<string> {
 	);
 }
 
-beforeAll(async () => {
-	if (!['127.0.0.1', 'localhost'].includes(new URL(config.DATABASE_URL).hostname))
-		throw new Error('test:perf runs on the local stack only');
+/** 10k reports (lost/found/sighted, dog/cat, 10 % closed, 10 % matched, 5 % hidden) with 5 photos and vectors each. */
+async function seed() {
 	await cleanup();
 	await prisma.profiles.create({ data: { id: OWNER } });
-	// Mix: lost/found/sighted, dog/cat, 10 % closed, 10 % matched, 5 % hidden, spread over Slovenia.
 	await prisma.$executeRaw`
 		insert into app.reports (id, short_code, type, species, status, moderation_state, event_at, exact_point,
 			public_point, public_radius_m, in_slovenia, created_by)
@@ -80,11 +79,8 @@ beforeAll(async () => {
 		select gen_random_uuid(), ${OWNER}::uuid, r.id, i, md5(random()::text) || md5(random()::text), 1600, 1200, 1, 'published'
 		from app.reports r cross join generate_series(0, ${PHOTOS - 1}) i
 		where r.created_by = ${OWNER}::uuid`;
-	reports = await prisma.$queryRaw<Seeded[]>`
-		select id, type::text, species::text from app.reports where created_by = ${OWNER}::uuid`;
-	const rows = await prisma.$queryRaw<{ id: string; report_id: string; sha256: string }[]>`
-		select id, report_id, sha256 from app.photos where owner_id = ${OWNER}::uuid order by id`;
-	photos = rows;
+	const rows = await prisma.$queryRaw<{ id: string; sha256: string }[]>`
+		select id, sha256 from app.photos where owner_id = ${OWNER}::uuid order by id`;
 	const embedder = mockEmbedder();
 	const started = performance.now();
 	// Inserting into the HNSW index dominates the seed, so batches go in over several connections.
@@ -109,28 +105,38 @@ beforeAll(async () => {
 	await prisma.$executeRaw`analyze app.photos`;
 	await prisma.$executeRaw`analyze app.photo_embeddings`;
 	process.stdout.write(
-		`[perf] seeded ${reports.length} reports, ${rows.length} vectors in ${Math.round(performance.now() - started)} ms\n`
+		`[perf] seeded ${REPORTS} reports, ${rows.length} vectors in ${Math.round(performance.now() - started)} ms\n`
 	);
+}
+
+beforeAll(async () => {
+	if (!['127.0.0.1', 'localhost'].includes(new URL(config.DATABASE_URL).hostname))
+		throw new Error('test:perf runs on the local stack only');
+	await seed();
+	reports = await prisma.$queryRaw<Seeded[]>`
+		select id, type::text, species::text from app.reports where created_by = ${OWNER}::uuid`;
+	photoIds = (await prisma.photos.findMany({ where: { owner_id: OWNER }, select: { id: true } })).map((p) => p.id);
 });
 
-afterAll(async () => {
-	if (!process.env.PERF_KEEP_TMP) await cleanup();
-});
+afterAll(cleanup);
 
 describe('vector queries at 50k photos (C20 §Queries)', () => {
 	it('nearest: p95 < 300 ms over radii 5–250 km, through the HNSW index', async () => {
 		const nationwide: NearestInput = {
-			photoId: pick(photos).id,
+			photoId: pick(photoIds),
 			species: 'dog',
 			point: { lat: 46.05, lng: 14.5 },
 			radiusKm: 250,
 			types: ['found', 'sighted'],
 			k: 20,
 		};
+		// Nationwide: thousands of candidates, so the HNSW scan runs; 5 km: a few dozen, ranked exactly.
 		const plan = await explain(nationwide);
 		process.stdout.write(`[perf] EXPLAIN nearest (250 km):\n${plan}\n`);
-		expect(plan).toContain('photo_embeddings_hnsw');
-		process.stdout.write(`[perf] EXPLAIN nearest (5 km):\n${await explain({ ...nationwide, radiusKm: 5 })}\n`);
+		expect(hnswLine(plan)).toMatch(/Index Scan using photo_embeddings_hnsw .*\(actual time/);
+		const local = await explain({ ...nationwide, radiusKm: 5 });
+		process.stdout.write(`[perf] EXPLAIN nearest (5 km):\n${local}\n`);
+		expect(hnswLine(local)).toContain('never executed');
 
 		const ms: number[] = [];
 		for (const radiusKm of RADII_KM) {
@@ -138,7 +144,7 @@ describe('vector queries at 50k photos (C20 §Queries)', () => {
 			for (let i = 0; i < RUNS_PER_RADIUS; i++) {
 				const lost = Math.random() < 0.5;
 				const input: NearestInput = {
-					photoId: pick(photos).id,
+					photoId: pick(photoIds),
 					species: pick(['dog', 'cat'] as const),
 					point: randomPoint(),
 					radiusKm,

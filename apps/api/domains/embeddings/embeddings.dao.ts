@@ -12,6 +12,9 @@ const LIVE_PHOTO = Prisma.sql`p.status in ('accepted', 'published')`;
 const NEAREST_MAX_K = 50;
 // A report has at most 5 photos (positions 0–4), so k × 5 nearest photos hold at least k reports when there are k.
 const PHOTOS_PER_REPORT = 5;
+// nearest ranks up to this many candidate photos exactly (about 30 ms) and walks the HNSW index above it, where an
+// iterative scan needs few tuples (measured at 50k photos, test/perf/embeddings.perf.ts).
+const EXACT_MAX_PHOTOS = 2000;
 
 export async function findPhoto(id: string, tx?: Tx) {
 	const db = tx ?? prisma;
@@ -147,28 +150,53 @@ export type NearestInput = {
 };
 export type NearestRow = { report_id: string; photo_id: string; cos: number };
 
-/** The statement of `nearest` (exported for the EXPLAIN checks); run it after hnswSettings. */
-export function nearestSql({ photoId, species, point, radiusKm, types, k }: NearestInput, model: string): Prisma.Sql {
+/**
+ * The statement of `nearest` (exported for the plan checks); run it after hnswSettings. It first collects the candidate
+ * photos (live photos with a vector of the model, of open or matched, visible reports of the species and types within
+ * the radius, not the query photo's own report). Up to `exactMax` of them are ranked exactly; more go through the HNSW
+ * index. PostGIS estimates
+ * ST_DWithin at about one row whatever the radius, so the planner cannot make that choice itself: left to it, a
+ * nationwide search joined every report to every photo (34 s at 50k photos).
+ */
+export function nearestSql(
+	{ photoId, species, point, radiusKm, types, k }: NearestInput,
+	model: string,
+	exactMax = EXACT_MAX_PHOTOS
+): Prisma.Sql {
 	const query = Prisma.sql`(select embedding from app.photo_embeddings where photo_id = ${photoId}::uuid and model = ${model})`;
-	// The inner scan orders by distance alone with a limit, so the planner can walk the HNSW index; relaxed_order may
-	// return it slightly out of order, which the outer sort by the exact distance fixes.
+	const count = Prisma.sql`(select count(*) from cand)`;
+	// The report ids go in as an array so the photos are looked up through their report_id index. In the index branch
+	// `(… in cand) is true` stays a hashed filter on the HNSW scan (a plain `in` becomes a join the planner reorders);
+	// the scan orders by distance alone with a limit, and relaxed_order's slight disorder is fixed by the outer sorts.
 	return Prisma.sql`
-		select report_id, photo_id, 1 - dist as cos from (
-			select distinct on (report_id) report_id, photo_id, dist from (
-				select p.report_id, e.photo_id, e.embedding operator(extensions.<=>) ${query} as dist
-				from app.photo_embeddings e
-				join app.photos p on p.id = e.photo_id
-				join app.reports r on r.id = p.report_id
-				where ${query} is not null and e.model = ${model} and ${LIVE_PHOTO}
-					and r.id is distinct from (select report_id from app.photos where id = ${photoId}::uuid)
-					and r.species = ${species}::app."SPECIES" and r.type = any(${types}::app."REPORT_TYPE"[])
+		with cand as materialized (
+			select p.id, p.report_id from app.photos p
+			where ${query} is not null and ${LIVE_PHOTO}
+				and exists (select from app.photo_embeddings v where v.photo_id = p.id and v.model = ${model})
+				and p.report_id = any(array(
+				select r.id from app.reports r
+				where r.species = ${species}::app."SPECIES" and r.type = any(${types}::app."REPORT_TYPE"[])
 					and r.status in ('open', 'matched') and r.moderation_state = 'visible'
+					and r.id is distinct from (select report_id from app.photos where id = ${photoId}::uuid)
 					and extensions.st_dwithin(r.public_point,
 						extensions.st_setsrid(extensions.st_makepoint(${point.lng}, ${point.lat}), 4326)::extensions.geography,
-						${radiusKm * 1000}::float8)
-				order by e.embedding operator(extensions.<=>) ${query}
-				limit ${k * PHOTOS_PER_REPORT}
-			) ann
+						${radiusKm * 1000}::float8)))
+		)
+		select report_id, photo_id, 1 - dist as cos from (
+			select distinct on (report_id) report_id, photo_id, dist from (
+				select c.report_id, c.id as photo_id, e.embedding operator(extensions.<=>) ${query} as dist
+				from cand c join app.photo_embeddings e on e.photo_id = c.id and e.model = ${model}
+				where ${count} <= ${exactMax}
+				union all
+				select p.report_id, ann.photo_id, ann.dist
+				from (
+					select e.photo_id, e.embedding operator(extensions.<=>) ${query} as dist
+					from app.photo_embeddings e
+					where ${count} > ${exactMax} and e.model = ${model} and (e.photo_id in (select id from cand)) is true
+					order by e.embedding operator(extensions.<=>) ${query}
+					limit ${k * PHOTOS_PER_REPORT}
+				) ann join app.photos p on p.id = ann.photo_id
+			) scored
 			order by report_id, dist, photo_id
 		) best
 		order by dist, report_id
@@ -176,9 +204,10 @@ export function nearestSql({ photoId, species, point, radiusKm, types, k }: Near
 }
 
 /**
- * The k reports whose best photo is nearest (cosine) to the photo's `model` vector, best first: ANN over the HNSW
- * index, filtered to the species and types, status open/matched, moderation visible and public_point within radiusKm
- * of the point (C20 §Queries, C6). The photo's own report is left out. No vector for the photo = no results.
+ * The k reports whose best photo is nearest (cosine) to the photo's `model` vector, best first, among open or matched,
+ * visible reports of the species and types whose public_point is within radiusKm of the point (C20 §Queries, C6):
+ * ANN over the HNSW index, or exact for few candidates (nearestSql). The photo's own report is left out; no vector
+ * for the photo = no results.
  */
 export async function nearest(input: NearestInput, model: string, tx?: Tx): Promise<NearestRow[]> {
 	const { radiusKm, types, k } = input;

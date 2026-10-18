@@ -16,7 +16,8 @@ import { Prisma } from '../../generated/client.ts';
 import type { PHOTO_STATUS } from '../../generated/enums.ts';
 import { prisma } from '../../prisma/prisma.ts';
 
-// Models of this run only, so vectors other test files leave in the database never show up.
+// Models of this run only (one per block), so vectors other tests leave in the database never show up.
+const SIMILARITY = `test-${randomUUID()}`;
 const MODEL = `test-${randomUUID()}`;
 const OTHER = `other-${randomUUID()}`;
 const owner = randomUUID();
@@ -93,22 +94,22 @@ describe('similarity(lostReportId, otherReportIds, model)', () => {
 
 	beforeAll(async () => {
 		lost = await report();
-		l1 = await photo(lost, { [MODEL]: 0, [OTHER]: 0 });
-		l2 = await photo(lost, { [MODEL]: 90 });
-		await photo(lost, { [MODEL]: 30 }, 'rejected'); // would pair with o2a at cos 1
+		l1 = await photo(lost, { [SIMILARITY]: 0, [OTHER]: 0 });
+		l2 = await photo(lost, { [SIMILARITY]: 90 });
+		await photo(lost, { [SIMILARITY]: 30 }, 'rejected'); // would pair with o2a at cos 1
 		o1 = await report({ type: 'found' });
-		o1a = await photo(o1, { [MODEL]: 80 });
-		await photo(o1, { [MODEL]: 175 });
+		o1a = await photo(o1, { [SIMILARITY]: 80 });
+		await photo(o1, { [SIMILARITY]: 175 });
 		o2 = await report({ type: 'found' });
-		o2a = await photo(o2, { [MODEL]: 30, [OTHER]: 0 });
-		await photo(o2, { [MODEL]: 0 }, 'unpublished'); // would pair with l1 at cos 1
+		o2a = await photo(o2, { [SIMILARITY]: 30, [OTHER]: 0 });
+		await photo(o2, { [SIMILARITY]: 0 }, 'unpublished'); // would pair with l1 at cos 1
 		o3 = await report({ type: 'found' }); // no photo
 		o4 = await report({ type: 'sighted' });
 		o4a = await photo(o4, { [OTHER]: 0 }); // another model only
 	});
 
 	it('returns the best photo pair per other report with both photo ids, live photos and one model only', async () => {
-		const rows = await EmbeddingsDao.similarity(lost, [o1, o2, o3, o4], MODEL);
+		const rows = await EmbeddingsDao.similarity(lost, [o1, o2, o3, o4], SIMILARITY);
 		const expected = [
 			{ other_report_id: o1, cos: cosDeg(10), lost_photo_id: l2, other_photo_id: o1a },
 			{ other_report_id: o2, cos: cosDeg(30), lost_photo_id: l1, other_photo_id: o2a },
@@ -131,17 +132,17 @@ describe('similarity(lostReportId, otherReportIds, model)', () => {
 
 	it('runs under a 2 s statement timeout, local to its transaction', async () => {
 		const inside = await prisma.$transaction(async (tx) => {
-			await EmbeddingsDao.similarity(lost, [o1], MODEL, tx);
+			await EmbeddingsDao.similarity(lost, [o1], SIMILARITY, tx);
 			return settings(tx);
 		});
 		expect(inside.timeout).toBe('2s');
-		await EmbeddingsDao.similarity(lost, [o1], MODEL);
+		await EmbeddingsDao.similarity(lost, [o1], SIMILARITY);
 		const after = await prisma.$queryRaw<{ t: string }[]>`select current_setting('statement_timeout') as t`;
 		expect(after[0]!.t).not.toBe('2s');
 	});
 
 	it('returns nothing for no candidates', async () => {
-		expect(await EmbeddingsDao.similarity(lost, [], MODEL)).toEqual([]);
+		expect(await EmbeddingsDao.similarity(lost, [], SIMILARITY)).toEqual([]);
 	});
 });
 
@@ -231,18 +232,31 @@ describe('nearest({ photoId, species, point, radiusKm, types, k }, model)', () =
 			expect(sql(v)).toEqual(['set local hnsw.ef_search = 100', 'set local hnsw.iterative_scan = relaxed_order']);
 	});
 
-	it('orders the inner scan so the planner can use the HNSW index', async () => {
-		// Few rows here, so the planner would sort them instead; with sorts and sequential scans priced out, the
-		// remaining ordered path is the index. The 50k perf test shows the planner choosing it unaided.
-		const plan = await prisma.$transaction(async (tx) => {
+	const wide: Partial<NearestInput> = { types: ['lost', 'found'], radiusKm: 200 };
+	/** nearestSql with the given exact-ranking limit, in a transaction with the HNSW settings. */
+	const rank = (exactMax: number) =>
+		prisma.$transaction(async (tx) => {
+			for (const setting of hnswSettings(await pgvectorVersion(tx))) await tx.$executeRaw(setting);
+			return tx.$queryRaw<{ report_id: string; photo_id: string }[]>(nearestSql(input(wide), MODEL, exactMax));
+		});
+	/** The EXPLAIN ANALYZE line of the HNSW scan. Few rows here, so the planner would rather sort them: with sorts and
+	 * sequential scans priced out, the remaining ordered path is the index (the 50k perf test shows it unaided). */
+	const hnswLine = (exactMax: number) =>
+		prisma.$transaction(async (tx) => {
 			for (const setting of hnswSettings(await pgvectorVersion(tx))) await tx.$executeRaw(setting);
 			await tx.$executeRaw`set local enable_seqscan = off`;
 			await tx.$executeRaw`set local enable_sort = off`;
 			const rows = await tx.$queryRaw<{ 'QUERY PLAN': string }[]>(
-				Prisma.sql`explain ${nearestSql(input({ radiusKm: 200 }), MODEL)}`
+				Prisma.sql`explain analyze ${nearestSql(input(wide), MODEL, exactMax)}`
 			);
-			return rows.map((r) => r['QUERY PLAN']).join('\n');
+			return rows.map((r) => r['QUERY PLAN']).find((line) => line.includes('photo_embeddings_hnsw')) ?? '';
 		});
-		expect(plan).toContain('photo_embeddings_hnsw');
+
+	it('walks the HNSW index above the exact-ranking limit, with the same results', async () => {
+		const exact = await rank(2000);
+		expect(exact.map((r) => r.report_id)).toEqual([d, h, a, b]);
+		expect(await rank(0)).toEqual(exact);
+		expect(await hnswLine(0)).toMatch(/Index Scan using photo_embeddings_hnsw .*\(actual time/);
+		expect(await hnswLine(2000)).toContain('never executed');
 	});
 });
