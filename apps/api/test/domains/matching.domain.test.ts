@@ -321,7 +321,31 @@ describe('evidence and the re-score of old suggestions (TASK-114.22)', () => {
 		]);
 	});
 
-	it('removes old suggestions that fail the rules, re-scores the rest, inserts and notifies nothing (AC#4)', async () => {
+	it('drops a suggestion once an edit adds a contradiction or takes the evidence away, without notifying', async () => {
+		const at = month();
+		const lost = await lostReport(at);
+		// Both possible, so neither is notified: the same look 10 km away (about 0.61), the colour only (about 0.58).
+		const lookalike = await foundReport(at, { location: north(10) });
+		const colourOnly = await foundReport(at, { ...nothing, colours: ['black', 'white'] });
+		await run(lost.id);
+		const matches = await matchesOf(lost.id);
+		expect(matches.map((match) => [match.other_report_id, match.strength]).sort()).toEqual(
+			[
+				[lookalike.id, 'possible'],
+				[colourOnly.id, 'possible'],
+			].sort()
+		);
+
+		// The finders correct their reports; match.report runs for the edited report, as after PATCH /v1/reports.
+		await prisma.reports.update({ where: { id: lookalike.id }, data: { colours: ['golden'] } });
+		await run(lookalike.id);
+		await prisma.reports.update({ where: { id: colourOnly.id }, data: { colours: [] } });
+		await run(colourOnly.id);
+		expect(await matchesOf(lost.id)).toEqual([]);
+		for (const match of matches) expect(await notifications(match.id)).toEqual([]);
+	});
+
+	it('re-scores the rows of older algorithm versions once: drops the failing ones, inserts and notifies nothing (AC#4)', async () => {
 		const at = month();
 		const lost = await lostReport(at);
 		const others = {
@@ -329,16 +353,26 @@ describe('evidence and the re-score of old suggestions (TASK-114.22)', () => {
 			colourOnly: await foundReport(at, { ...nothing, colours: ['black', 'white'] }),
 			twoSizesApart: await foundReport(at, { size: 'xl' }),
 			sexNotGiven: await foundReport(at, { sex: null }),
+			same: await foundReport(at),
+			current: await foundReport(at),
 			rejected: await foundReport(at, nothing),
 			chip: await foundReport(at, nothing),
 		};
-		const km = { nothingKnown: 3, colourOnly: 3, twoSizesApart: 1, sexNotGiven: 1, rejected: 1, chip: 2 };
+		const km = { colourOnly: 3, nothingKnown: 3, chip: 2 } as Record<string, number>;
 		await pin(lost.id, 0);
-		for (const [name, report] of Object.entries(others)) await pin(report.id, km[name as keyof typeof km]);
-		// Suggestions as the engine stored them before, when every unknown attribute counted 0.5.
+		for (const [name, report] of Object.entries(others)) await pin(report.id, km[name] ?? 1);
+		// Rows as the v1 engine stored them, when every unknown attribute counted 0.5 (algo_version defaults to v1), and
+		// one of today's version with a score the engine would not give now: the one-off leaves it alone.
 		const old = (
 			name: keyof typeof others,
-			data: { score: number; strength: string; state?: 'rejected'; chip_match?: boolean; notified_at?: Date }
+			data: {
+				score: number;
+				strength: string;
+				state?: 'rejected';
+				chip_match?: boolean;
+				notified_at?: Date;
+				algo_version?: string;
+			}
 		) =>
 			prisma.matches.create({
 				data: {
@@ -354,24 +388,29 @@ describe('evidence and the re-score of old suggestions (TASK-114.22)', () => {
 			colourOnly: await old('colourOnly', { score: 0.595, strength: 'possible' }),
 			twoSizesApart: await old('twoSizesApart', { score: 0.785, strength: 'good', notified_at: at }),
 			sexNotGiven: await old('sexNotGiven', { score: 0.835, strength: 'strong', notified_at: at }),
+			same: await old('same', { score: 0.885, strength: 'strong', notified_at: at }),
+			current: await old('current', { score: 0.5, strength: 'possible', algo_version: 'v2', notified_at: at }),
 			rejected: await old('rejected', { score: 0.685, strength: 'good', state: 'rejected' }),
 			chip: await old('chip', { score: 1, strength: 'strong', chip_match: true, notified_at: at }),
 		};
 
-		const rescore = () => MatchingDomain.rescoreSuggestions({ lost_report_ids: [lost.id] }, systemCtx());
-		expect(await rescore()).toEqual({ rescored: 1, removed: 3 });
-		// 0.4·e^(−1/3) + 0.2·(1 − 6/720) + 0.4·3/4, sex not known on both sides
+		const rescoreOlder = () => MatchingDomain.rescoreSuggestions({}, systemCtx());
+		await rescoreOlder();
+		// sexNotGiven: 0.4·e^(−1/3) + 0.2·(1 − 6/720) + 0.4·3/4, sex not known on both sides
 		const rows = await matchesOf(lost.id);
-		expect(rows.map((row) => [row.id, row.state, row.strength, row.score.toNumber()])).toEqual([
-			[before.chip.id, 'suggested', 'strong', 1],
-			[before.sexNotGiven.id, 'suggested', 'good', 0.785],
-			[before.rejected.id, 'rejected', 'good', 0.685],
+		expect(rows.map((row) => [row.id, row.state, row.strength, row.score.toNumber(), row.algo_version])).toEqual([
+			[before.chip.id, 'suggested', 'strong', 1, 'v1'],
+			[before.same.id, 'suggested', 'strong', 0.885, 'v2'],
+			[before.sexNotGiven.id, 'suggested', 'good', 0.785, 'v2'],
+			[before.rejected.id, 'rejected', 'good', 0.685, 'v1'],
+			[before.current.id, 'suggested', 'possible', 0.5, 'v2'],
 		]);
 		const sexNotGiven = rows.find((row) => row.id === before.sexNotGiven.id)!;
 		expect(sexNotGiven.notified_at).toEqual(at);
 		expect(sexNotGiven.reasons).toContainEqual({ code: 'size', match: 'equal' });
-		// A rerun changes nothing; the engine does not bring the removed pairs back.
-		expect(await rescore()).toEqual({ rescored: 0, removed: 0 });
+		// One-off: nothing older is left, so a rerun (the next deploy) changes nothing.
+		expect(await rescoreOlder()).toEqual({ rescored: 0, removed: 0 });
+		// The engine does not bring the removed pairs back.
 		await run(lost.id);
 		expect((await matchesOf(lost.id)).map((row) => row.id).sort()).toEqual(rows.map((row) => row.id).sort());
 		for (const match of Object.values(before)) expect(await notifications(match.id)).toEqual([]);

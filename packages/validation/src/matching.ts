@@ -28,6 +28,8 @@ export type MatchScoreConfig = {
 	weights: { distance: number; time: number; attributes: number };
 };
 export type MatchScore = { score: number; strength: MatchStrength; reasons: MatchReason[] };
+/** `matches.algo_version` of a score from scoreMatch (v1 counted every unknown attribute 0.5). */
+export const MATCH_ALGO_VERSION = 'v2';
 
 // Each similarity is 0…1 for an attribute known on both sides, null when either side does not know it.
 

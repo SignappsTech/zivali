@@ -4,7 +4,7 @@
 import { z } from 'zod';
 
 import { MATCH_STRENGTHS, type Colour, type MatchStrength, type Pattern, type Sex, type Size } from '@zivali/types';
-import { scoreMatch, type MatchScore } from '@zivali/validation/matching';
+import { MATCH_ALGO_VERSION, scoreMatch, type MatchScore } from '@zivali/validation/matching';
 
 import configStore from '../../lib/config-store.ts';
 import type { Ctx } from '../../lib/ctx.ts';
@@ -74,6 +74,8 @@ async function notifyManagers(matchId: string, pair: PairRow, ctx: Ctx): Promise
  * Matches one report against the open reports of the other side (C8 §Engine). Idempotent: a pair is stored once,
  * refreshed while suggested, never resurrected after a rejection, and notified at most once. Keeps chip pairs and
  * pairs scoreMatch suggests with a score ≥ threshold, at most top_n per lost report counting the ones it already has.
+ * Then re-scores the report's other suggestions, so an edit that adds a contradiction or takes the evidence away
+ * removes them at once.
  */
 export async function matchReport(input: { report_id: string }, ctx: Ctx): Promise<{ stored: number }> {
 	const config = await matchingConfig();
@@ -84,7 +86,6 @@ export async function matchReport(input: { report_id: string }, ctx: Ctx): Promi
 			return result && (pair.chip_match || result.score >= config.threshold) ? [{ pair, ...result }] : [];
 		})
 		.sort((a, b) => b.score - a.score);
-	if (!scored.length) return { stored: 0 };
 
 	const active = await MatchingDao.activeMatches([...new Set(scored.map(({ pair }) => pair.lost_id))], ctx.tx);
 	let stored = 0;
@@ -119,34 +120,41 @@ export async function matchReport(input: { report_id: string }, ctx: Ctx): Promi
 		stored++;
 		if (!known) active.push({ lost_report_id: pair.lost_id, other_report_id: pair.other_id, score });
 	}
-	ctx.logger.info({ report_id: input.report_id, candidates: pairs.length, stored }, 'matching done');
+	const { removed } = await rescoreSuggestions(input, ctx);
+	ctx.logger.info({ report_id: input.report_id, candidates: pairs.length, stored, removed }, 'matching done');
 	return { stored };
 }
 
 /**
- * Re-scores the stored suggestions without a chip under today's rules and app_config (C8, TASK-114.22), run on every
- * deploy by seeder 40-matching-rescore: a pair that no longer passes is deleted, so it leaves the managers' list until
- * match.report finds it again; the others get the new score and strength. Never inserts and never notifies.
- * lost_report_ids limits it to those lost reports.
+ * Re-scores stored suggestions without a chip under today's rules and app_config (C8, TASK-114.22): those of one
+ * report (either side, after match.report), or without report_id every one an older algorithm version scored (seeder
+ * 40-matching-rescore, a one-off per version). A pair that no longer passes is deleted, so it leaves the managers'
+ * list until match.report finds it again; the others get the new score, strength and algo_version. Never inserts and
+ * never notifies.
  */
 export async function rescoreSuggestions(
-	input: { lost_report_ids?: string[] },
+	input: { report_id?: string },
 	ctx: Ctx
 ): Promise<{ rescored: number; removed: number }> {
 	const config = await matchingConfig();
-	const rows = await MatchingDao.suggestedPairs(input.lost_report_ids, ctx.tx);
+	const only = input.report_id ? { report_id: input.report_id } : ({ older: true } as const);
+	const rows = await MatchingDao.suggestedPairs(only, ctx.tx);
 	const removed: string[] = [];
 	let rescored = 0;
 	for (const row of rows) {
 		const result = scorePair(row, config);
 		if (!result || (!row.chip_match && result.score < config.threshold)) removed.push(row.match_id);
-		else if (result.score !== row.score || result.strength !== row.strength) {
+		else if (
+			result.score !== row.score ||
+			result.strength !== row.strength ||
+			row.algo_version !== MATCH_ALGO_VERSION
+		) {
 			await MatchingDao.rescoreSuggestion(row.match_id, { ...result, chip_match: row.chip_match }, ctx.tx);
 			rescored++;
 		}
 	}
 	await MatchingDao.removeSuggestions(removed, ctx.tx);
-	ctx.logger.info({ suggestions: rows.length, rescored, removed: removed.length }, 'matching rescored');
+	if (!input.report_id) ctx.logger.info({ suggestions: rows.length, rescored, removed: removed.length }, 'rescored');
 	return { rescored, removed: removed.length };
 }
 
