@@ -3,7 +3,7 @@ source: 03§P8; docs/design/pages/P8-pet-profiles.md
 page: P8 Pet profiles
 stories: TASK-16 (FR-002, FR-003)
 copy-for: docs/design/pages/P8-pet-profiles.md
-version: 0.4
+version: 0.5
 status: Draft, native Slovenian review pending
 date: 2026-10-18
 ---
@@ -88,6 +88,8 @@ Empty state:
 | pets.saved | Profil je shranjen. | Profile saved. |
 | pets.species_required | Izberite, ali je pes ali mačka. | Choose dog or cat. |
 | pets.name_required | Vpišite ime. | Enter a name. |
+
+AI pre-fill (M3, TASK-40.6): after the first photo uploads, the form uses the shared `ai_prefill.*` keys and rules in P7 §3a. It fills species, breed, colour, pattern and size, with `ai_prefill.note_save`, `ai_prefill.low_confidence_breed` for the breed field, and `ai_prefill.collar_hint` under `pets.collar_label`. It fills only empty fields the user has not touched (C19), so it never changes the saved values of an existing profile.
 
 `pets.chip_register_note` replaces `pets.crpsi_link`, which is removed. It is a plain help line under the chip field for dogs and cats, with no link and no external-link icon: the public lookup closed in June 2026 and the register is not public (A-003, glossary "CRHŽ").
 
@@ -208,3 +210,4 @@ N/A: signed-in pages, `noindex`. Document titles: "Moje živali · Najdimo" / "M
 | 2026-10-15 | CH-79: `chip_help` example is now 15 digits, 705 1234 5678 9012. |
 | 2026-10-18 | CH-496 (TASK-114.5): `photos.rejected` (P6 §3) is the save toast when a photo is rejected. |
 | 2026-10-18 | v0.4. CH-237/CH-243: `pets.limit_note` and `limit_note_premium` take `{limit}` (free limit 2); photo-delete keys. CH-269: PetFields keys. CH-298: archive keys, `photo_alt`. CH-323: mobile keys. CH-344: decided no `my_reports_row_meta` (reuse `report.since_{type}`). |
+| 2026-10-18 | v0.5. TASK-40.6: AI pre-fill on the add and edit form points to the shared P7 §3a (`ai_prefill`). |

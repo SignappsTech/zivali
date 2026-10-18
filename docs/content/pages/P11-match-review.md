@@ -3,14 +3,14 @@ source: 03§P11; docs/design/pages/P11-match-review.md
 page: P11 Match review
 stories: TASK-20 (FR-008)
 copy-for: docs/design/pages/P11-match-review.md
-version: 0.2
+version: 0.3
 status: Draft, native Slovenian review pending
 date: 2026-10-18
 ---
 
 # P11 Match review: copy
 
-Namespace `matches`. The emotional peak of the product: honest and calm. No percentages, no "Našli smo vašega psa", no celebration. The owner decides. Reasons come from C8 (`chip`, `chip_sighting`, `distance` band, `time` hours band, `size`, `colour` overlap, `sex`).
+Namespace `matches`. The emotional peak of the product: honest and calm. No percentages, no "Našli smo vašega psa", no celebration. The owner decides. Reasons come from C8 (`chip`, `chip_sighting`, `distance` band, `time` hours band, `size`, `colour` overlap, `sex`, and from M3 `visual` with its band).
 
 # 1. Matches list
 
@@ -68,6 +68,21 @@ Empty state:
 | matches.reason_colour_full | Barva se ujema. | The colour matches. |
 | matches.reason_colour_partial | Barva se delno ujema. | The colour partly matches. |
 | matches.reason_sex | Spol se ujema. | The sex matches. |
+
+Photo similarity (algo v3, M3, TASK-40.6; C8 reason `visual` with `band`):
+
+| Key | SL | EN |
+|---|---|---|
+| matches.reason_visual_very_similar | Fotografiji sta si zelo podobni. | The photos look very similar. |
+| matches.reason_visual_similar | Fotografiji sta si podobni. | The photos look similar. |
+| matches.reason_visual_some | Fotografiji sta si nekoliko podobni. | The photos look somewhat alike. |
+| matches.visual_caveat | Podobnost fotografij oceni umetna inteligenca, ki se lahko moti. Fotografiji primerjajte sami. | AI rates how similar the photos are, and it can be wrong. Compare the photos yourself. |
+| matches.visual_pair_a11y | Najbolj podobni fotografiji | The two most similar photos |
+
+- The lines describe the photos, never the animal: no "ista žival", "to je vaš pes", "the same animal" or "this is your dog". SL uses the dual because the reason is about one pair (the lost photo and the other photo, C8).
+- `very_similar`, `similar` and `some` map to the three bands of C8. Below `some` there is no reason line.
+- `visual_caveat` is a muted line under the reasons. Show it once, only when a visual reason is present.
+- `visual_pair_a11y` is the accessible name of the comparison that opens with the most similar pair (C8 §Visual similarity 8: the other report's best photo first, the owner's own best photo first on their side).
 
 `matches.band` (CH-331) is that phrase as one ICU select on `lt1` / `1to3` / `3to10` / `gt10`, `other` "v bližini" / "nearby": SL `{band, select, lt1 {manj kot 1 km} 1to3 {1–3 km} 3to10 {3–10 km} gt10 {več kot 10 km} other {v bližini}}`, EN `{band, select, lt1 {under 1 km} 1to3 {1–3 km} 3to10 {3–10 km} gt10 {over 10 km} other {nearby}}`. `{band}` is the distance band phrase from the glossary §9 ("manj kot 1 km", "1–3 km"). `colour` overlap 1.0 uses `_full`, anything above 0 uses `_partial`.
 
@@ -139,3 +154,4 @@ Alt text: the prefixes are the keys `matches.alt_mine` "Vaša žival: {alt}" / "
 | Version | Date | Change |
 |---|---|---|
 | 0.2 | 2026-10-18 | CH-240: other_confirmed, multi_confirmed, "When" row result word. CH-331: band, reject_reason, result_not_compared, alt_mine, alt_other. |
+| 0.3 | 2026-10-18 | TASK-40.6: photo similarity reasons (`reason_visual_very_similar`, `_similar`, `_some`), `visual_caveat`, `visual_pair_a11y` (§3). |

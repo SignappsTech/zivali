@@ -3,13 +3,15 @@ source: 02§Content, SEO and legal requirements (Legal); FR-034; FR-035; FR-038;
 
 | Field | Value |
 |---|---|
-| Version | 0.7 |
+| Version | 0.8 |
 | Date | 2026-10-18 |
 | Route SL | `/zasebnost` |
 | Route EN | `/en/privacy` |
 | Slug SL / EN | `zasebnost` / `privacy` |
 | Structured data | WebPage |
 | Template | T4 Legal (numbered h2 sections, "On this page" list, draft note) |
+
+Change in 0.8 (TASK-40.6, FR-013 R-013.5, C19, C20): AI assistance described as built, in chapters 1, 3, 4, 6, 8, 12, 14 and 16. Only a re-encoded copy of at most 1024 px goes to Anthropic and Voyage AI, with no EXIF, identifiers, location or text. Results are keyed by image hash. Nothing about people is kept beyond four yes/no safety flags. Flagged photos are never embedded. Vectors are deleted with the photo. Call records are kept 62 days. The earlier sentence "flagged images are held for review" is removed, because that is image screening (TASK-63, M4); add it back when TASK-63 goes live. Every new claim carries **[pravni pregled]** / **[legal review]**. Points only the client can confirm carry **[naročnik: …]** / **[client: …]** (note 23). All markers must be gone before this version is published, and the AI parts are published only when AI assistance is switched on (note 14, LQ-04).
 
 Change in 0.7 (CH-505, TASK-113): the `zz_consent` cookie lives 400 days and the choice counts 12 months, then we ask again; the consent text and the retention row now say so, as the cookie policy does.
 
@@ -52,6 +54,7 @@ Najdimo pomaga, da se izgubljene živali vrnejo domov. Vse, kar živali vrača d
 - Shranjeno (približno) točko prijave vidite samo vi, razen če jo sami delite v pogovoru.
 - Google Analytics vklopimo le z vašo privolitvijo. Če jo zavrnete, Googlu ne pošljemo ničesar.
 - Oglase samo preštejemo, in sicer brez piškotkov in brez oznak, ki bi razkrile, kdo ste.
+- Ko je vklopljena pomoč umetne inteligence, iz fotografij predlagamo podatke o živali. Predlogi so označeni, lahko se motijo in jih lahko spremenite (poglavje 8). [pravni pregled]
 - Glavna zbirka podatkov je v EU (Frankfurt), v EU so tudi naši strežniki in fotografije. Nekateri ponudniki so v ZDA; zanje veljajo zaščitni ukrepi (poglavje 13).
 - Podatke lahko izvozite, račun pa izbrišete. Pravice uveljavite na info@signapps.si.
 
@@ -83,6 +86,7 @@ Večino podatkov nam daste sami: ko ustvarite račun, objavite prijavo ali piše
 | Povpraševanja partnerjev | podjetje, kontaktna oseba, e-naslov, neobvezna telefonska številka, regija zanimanja, sporočilo, čas privolitve |
 | Zgodbe z lepim koncem | besedilo in fotografije, ki jih objavimo samo z vašo izrecno privolitvijo |
 | Privolitve | vaša izbira, različica besedila, čas |
+| Pomoč umetne inteligence (ko je vklopljena) | predlagane lastnosti živali iz fotografije (vrsta, pasma, barve, vzorec, velikost, ovratnica, kratki opisi posebnih znakov), štiri varnostne oznake da ali ne (oseba v ospredju, golota, nasilje, vidni kontaktni podatki), vektor slike, zapis o vsakem klicu ponudnika (fotografija, ponudnik, model, izid, poraba, strošek, trajanje) [pravni pregled] |
 | Tehnični podatki | IP naslov ter vrsta naprave in brskalnika v strežniških zapisih, dnevnik pošiljanja e-pošte, podatki o napakah |
 
 **Ali morate podatke posredovati?** Brez računa lahko brskate in anonimno prijavite najdeno ali opaženo žival. Za račun potrebujemo e-naslov ali vpis z Googlom oziroma Applom. Druga polja, na primer telefonska številka, so neobvezna. Če podatka, ki ga funkcija nujno potrebuje, ne podate, te funkcije ne moremo zagotoviti.
@@ -99,7 +103,9 @@ Večino podatkov nam daste sami: ko ustvarite račun, objavite prijavo ali piše
 | Plačila, ko so omogočena | podatki o plačilih | pogodba |
 | Varnost, preverjanje „nisem robot“, omejevanje števila zahtev, preprečevanje zlorab | IP (zgoščen), identifikator naprave, strežniški zapisi | zakoniti interes (člen 6(1)(f)) |
 | Moderiranje, prijave zlorab, začasno skritje prijave | prijave, sporočila (samo prijavljena), odločitve | zakoniti interes |
-| Predlogi umetne inteligence in varnostni pregled slik | fotografije | zakoniti interes |
+| Predlogi lastnosti iz fotografije in varnostne oznake (Anthropic) | pomanjšana kopija fotografije, rezultat | zakoniti interes [pravni pregled] |
+| Iskanje podobnih fotografij pri ujemanju (Voyage AI) | pomanjšana kopija fotografije, vektor slike | zakoniti interes [pravni pregled] |
+| Nadzor stroškov in omejitev pomoči umetne inteligence | zapisi o klicih ponudnikov | zakoniti interes [pravni pregled] |
 | Štetje prikazov in klikov oglasov | združeni števci brez oznak oseb | zakoniti interes |
 | Izboljšave storitve brez analitičnih piškotkov | združene statistike iz naše zbirke | zakoniti interes |
 | Uveljavljanje in obramba pravnih zahtevkov | podatki, ki jih za to nujno potrebujemo | zakoniti interes |
@@ -111,6 +117,8 @@ Večino podatkov nam daste sami: ko ustvarite račun, objavite prijavo ali piše
 | Računovodske in davčne evidence | podatki o plačilih | zakonska obveznost (člen 6(1)(c)) |
 
 Pri zakoniti podlagi „zakoniti interes“ smo presodili, da vaši interesi in pravice ne prevladajo nad našim interesom, da je storitev varna in brez zlorab. Zoper tako obdelavo lahko ugovarjate (poglavje 15).
+
+Pri pomoči umetne inteligence je naš interes, da je prijava hitrejša in da se izgubljene živali hitreje najdejo. Obdelava je omejena na pomanjšano kopijo fotografije brez podatkov o vas, rezultat pa je samo predlog (poglavje 8). [pravni pregled]
 
 Če obdelava temelji na privolitvi, jo lahko kadar koli prekličete. Preklic ne vpliva na zakonitost obdelave pred njim.
 
@@ -126,7 +134,7 @@ V prosto besedilo (opis okoliščin, opombe) ne vpisujte osebnih podatkov drugih
 
 ## 6. Fotografije in lokacija
 
-**Fotografije.** Fotografije lahko vsebujejo metapodatke (EXIF), na primer čas in položaj snemanja. V vaši napravi vam lahko iz njih predlagamo kraj in čas za obrazec. V kopijah, ki jih prikažemo javno, metapodatke odstranimo. Izvirniki so zasebni.
+**Fotografije.** Fotografije lahko vsebujejo metapodatke (EXIF), na primer čas in položaj snemanja. V vaši napravi vam lahko iz njih predlagamo kraj in čas za obrazec. V kopijah, ki jih prikažemo javno, metapodatke odstranimo. Izvirniki so zasebni. Tudi kopija, ki jo pošljemo ponudnikoma umetne inteligence, je brez metapodatkov (poglavje 8). [pravni pregled]
 
 **Lokacija prijave.** Natančne (surove) točke GPS ne shranjujemo. Točko, ki jo označite, ob shranjevanju naključno premaknemo za 20 do 30 m: najprej v vaši napravi, še enkrat pa na našem strežniku. Premik se naredi samo enkrat in se pri ogledih ne spreminja. Shranjena točka je zato približna in jo vidite samo vi (označeno »Približna lokacija · vidno samo vam«). Javno prikažemo še širše območje, izračunano iz te točke: pri izgubljeni živali s polmerom najmanj 500 m, pri najdeni in opaženi najmanj 150 m. Koordinat ne zapisujemo v dnevnike. 30 dni po zaključku prijave shranjeno točko dodatno zameglimo, tako da ostaneta le zamegljena točka in ime območja.
 
@@ -148,16 +156,28 @@ Za omejevanje zlorab hranimo naključen identifikator naprave in zgoščen IP na
 
 ### Ujemanje
 
-Ko objavite prijavo, jo primerjamo z drugimi prijavami: po številki čipa, območju, času in lastnostih živali. Pozneje bomo primerjali tudi podobnost fotografij. Rezultat je samo predlog. Odloča oseba, ki žival išče: predlog potrdi ali zavrne. Predlog nima pravnih ali podobno pomembnih posledic za nikogar.
+Ko objavite prijavo, jo primerjamo z drugimi prijavami: po številki čipa, območju, času in lastnostih živali. Ko je vklopljena pomoč umetne inteligence, primerjamo tudi podobnost fotografij (spodaj). Če se prijavi ujemata samo po podobnosti fotografij, vam o tem pošljemo obvestilo le, če sta blizu tudi kraj in čas. [pravni pregled] Rezultat je samo predlog. Odloča oseba, ki žival išče: predlog potrdi ali zavrne. Predlog nima pravnih ali podobno pomembnih posledic za nikogar.
 
 ### Pomoč umetne inteligence
 
-Ko bo ta funkcija vklopljena, bomo fotografije, ki jih naložite k prijavi ali profilu živali, poslali dvema ponudnikoma:
+Ko je ta funkcija vklopljena, fotografije, ki jih naložite k prijavi ali profilu živali, obdelata dva ponudnika: [pravni pregled]
 
-- **Anthropic PBC (ZDA)**, model Claude z zmožnostjo branja slik: predlaga vrsto, pasmo, barve, velikost, ovratnico in posebne znake ter poda varnostni signal o vsebini slike.
-- **Voyage AI (ZDA)**: izračuna številčni zapis slike (vektor), s katerim iščemo vizualno podobne fotografije.
+- **Anthropic PBC (ZDA)** z modelom Claude, ki prepozna vsebino slike. Predlaga vrsto, pasmo, barve, vzorec, velikost in ovratnico ter na kratko opiše posebne znake. Vrne tudi štiri varnostne oznake (da ali ne): ali je na sliki v ospredju oseba, golota, nasilje ali vidni kontaktni podatki. [pravni pregled]
+- **Voyage AI (ZDA)** [naročnik: pogodbena družba, opomba 23] izračuna številčni zapis slike (vektor), s katerim pri ujemanju iščemo podobne fotografije. [pravni pregled]
 
-Ponudnikoma ne pošljemo niti oznak uporabnikov niti metapodatkov EXIF niti podatkov o lokaciji. Rezultati so predlogi: pred objavo jih potrdite ali popravite. Rezultat shranimo glede na zgoščeno vrednost slike, da iste slike ne obdelujemo večkrat. Slike, ki jih varnostni signal označi, pred objavo pregledajo moderatorji.
+**Kaj pošljemo.** Samo pomanjšano kopijo fotografije (daljša stranica največ 1024 pik), na novo shranjeno brez metapodatkov EXIF. Ne pošljemo vašega imena, e-naslova ali drugih oznak uporabnika, oznak prijave ali fotografije, lokacije, besedila, ki ste ga vpisali, ali jezika. [pravni pregled]
+
+**Ljudje na fotografijah.** Model opisuje samo žival. O osebah na fotografiji ne shranimo ničesar razen varnostnih oznak zgoraj in ne ugotavljamo, kdo so. Fotografij, na katerih je model zaznal osebo v ospredju ali goloto ali ni našel psa ali mačke, ne pošljemo ponudniku Voyage AI in zanje ne izračunamo vektorja. Varnostne oznake zdaj uporabljamo samo za to izločanje. [pravni pregled]
+
+**Predlogi.** V obrazcu so predlogi označeni z »Predlog«. Lahko se motijo, zato jih preverite. Del prijave ali profila postanejo šele, ko jih potrdite oziroma ko obrazec shranite ali objavite. Do takrat jih lahko spremenite ali izbrišete. Polja, za katera predlog ni dovolj zanesljiv, pustimo prazna. Če pomoč ni na voljo, obrazec izpolnite sami in prijava deluje enako. [pravni pregled]
+
+**Shranjevanje.** [pravni pregled]
+
+- Rezultat ponudnika Anthropic shranimo pod zgoščeno vrednostjo slike (prstnim odtisom datoteke), ne pod vašim imenom ali računom. Tako iste slike ne pošljemo dvakrat, tudi če jo naloži kdo drug. Rezultat izbrišemo ob rednem čiščenju, ko pri nas ne ostane nobena fotografija s to zgoščeno vrednostjo.
+- Vektor izbrišemo skupaj s fotografijo, torej tudi ob izbrisu prijave, profila živali ali računa.
+- O vsakem klicu ponudnika hranimo zapis (fotografija, ponudnik, model, izid, poraba, strošek, trajanje), da nadziramo stroške in omejitve. Zapise izbrišemo po 62 dneh. Ko fotografijo izbrišemo, zapis z njo ni več povezan.
+
+**Ponudnika in prenos v ZDA.** Anthropic in Voyage AI fotografije obdelujeta kot naša obdelovalca, po naših navodilih. [pravni pregled] Obdelava poteka v ZDA. Prenos temelji na [naročnik: za vsakega ponudnika potrdi okvir EU–ZDA za varstvo podatkov ali standardne pogodbene klavzule, opomba 23] (poglavje 13). Ali ponudnika kopijo fotografije hranita in kako dolgo ter ali jo uporabljata za učenje svojih modelov: [naročnik: potrdi za Anthropic in za Voyage AI, opomba 23].
 
 ### Samodejno začasno skritje
 
@@ -224,7 +244,8 @@ Podatkov ne prodajamo. Ponudniki, ki jih potrebujemo za delovanje storitve, so:
 | Google Ireland Limited (obdelovalec), samo z vašo privolitvijo | Google Analytics 4 in Google Analytics for Firebase | analitični dogodki iz poglavja 10 | EU, možna obdelava tudi v ZDA |
 | Google in Apple (vsak kot samostojni upravljavec) | vpis z Googlom ali Applom, če ga izberete | podatki, ki jih ponudnik pošlje ob vpisu (e-naslov, ime, identifikator) | po pravilih ponudnika |
 | Stripe Payments Europe, Limited, Irska (obdelovalec; za del obdelave samostojni upravljavec) | plačila in naročnine Veterinarski partner (ko so omogočeni), računi z DDV | podatki za plačilo, ki jih vnesete na Stripovi strani | EU, možna obdelava tudi v ZDA |
-| Anthropic PBC, ZDA, in Voyage AI, ZDA (obdelovalca), ko je pomoč umetne inteligence vklopljena | predlogi lastnosti iz fotografij, varnostni signal, vektorji slik | samo fotografija, brez oznak uporabnikov, metapodatkov EXIF in lokacije | ZDA |
+| Anthropic PBC, ZDA (obdelovalec), ko je pomoč umetne inteligence vklopljena [pravni pregled] | predlogi lastnosti živali iz fotografije, varnostne oznake | pomanjšana kopija fotografije (največ 1024 pik), brez metapodatkov EXIF, oznak uporabnikov, prijav in fotografij, lokacije in besedila | ZDA |
+| Voyage AI, ZDA [naročnik: pogodbena družba, opomba 23] (obdelovalec), ko je pomoč umetne inteligence vklopljena [pravni pregled] | vektor slike za iskanje podobnih fotografij pri ujemanju | enako kot Anthropic; ne prejme fotografij, na katerih je model zaznal osebo v ospredju ali goloto ali ni našel psa ali mačke | ZDA |
 | Sentry (Functional Software, Inc.), podatkovna regija EU (obdelovalec), ko je sledenje napakam vklopljeno | sledenje napakam | tehnični podatki o napaki; osebne podatke pred pošiljanjem odstranimo | EU |
 
 Poleg tega podatke posredujemo:
@@ -265,6 +286,9 @@ Kopijo zaščitnih ukrepov lahko zahtevate na e-naslovu iz poglavja 2.
 | Veterinarski partner: profil ambulante in kontaktna oseba | do prenehanja naročnine, nato izbris v 30 dneh |
 | Povpraševanja partnerjev | 24 mesecev po zadnjem stiku |
 | Varnostne kopije | podatki iz njih izginejo najpozneje v 30 dneh |
+| Rezultati pomoči umetne inteligence (shranjeni pod zgoščeno vrednostjo slike) | dokler pri nas obstaja fotografija s to zgoščeno vrednostjo [pravni pregled] |
+| Vektorji slik | skupaj s fotografijo [pravni pregled] |
+| Zapisi o klicih ponudnikov umetne inteligence | 62 dni; po izbrisu fotografije niso več povezani z njo [pravni pregled] |
 
 **Izbris računa.** Ob izbrisu račun takoj onemogočimo, odprte prijave zaključimo, podatke pa izbrišemo ali anonimiziramo v 30 dneh. Izjema so plačilni zapisi, ki jih moramo hraniti po zakonu. Organizacije morajo pred izbrisom prenesti ali izbrisati organizacijo.
 
@@ -295,7 +319,7 @@ Podatke varujemo z organizacijskimi in tehničnimi ukrepi, med drugim:
 - skrbniški dostop zahteva močno overitev;
 - varnostne kopije so šifrirane;
 - število zahtev je omejeno, anonimne obrazce varuje preverjanje „nisem robot“;
-- v kopijah fotografij za javni prikaz ni metapodatkov EXIF.
+- v kopijah fotografij za javni prikaz in v kopijah za ponudnika umetne inteligence ni metapodatkov EXIF. [pravni pregled]
 
 Če pride do kršitve varstva podatkov, ki bi lahko ogrozila vaše pravice, bomo ravnali v skladu z zakonom, vključno z obvestilom Informacijskemu pooblaščencu in, kjer je to potrebno, vami.
 
@@ -324,6 +348,7 @@ Najdimo helps lost animals get home again. Everything that brings animals home i
 - Only you can see the stored (approximate) point of your report, unless you share it in a chat yourself.
 - We switch on Google Analytics only with your consent. If you decline, we send nothing to Google.
 - We only count ads, without cookies and without any marker that could reveal who you are.
+- When AI assistance is switched on, we suggest details about the animal from your photos. Suggestions are labelled, can be wrong and you can change them (chapter 8). [legal review]
 - The main database is in the EU (Frankfurt), and so are our servers and photos. Some providers are in the United States; safeguards apply (chapter 13).
 - You can export your data and delete your account. Use your rights at info@signapps.si.
 
@@ -355,6 +380,7 @@ You give us most of the data yourself: when you create an account, publish a rep
 | Partner enquiries | company, contact name, email address, optional phone number, region of interest, message, time of consent |
 | Success stories | text and photos that we publish only with your explicit consent |
 | Consents | your choice, text version, time |
+| AI assistance (when switched on) | suggested attributes of the animal from the photo (species, breed, colours, pattern, size, collar, short descriptions of distinguishing marks), four yes/no safety flags (prominent person, nudity, violence, visible contact details), the image vector, a record of each provider call (photo, provider, model, outcome, usage, cost, duration) [legal review] |
 | Technical data | IP address and device and browser type in server logs, email delivery log, error data |
 
 **Do you have to provide data?** Without an account you can browse and report a found or sighted animal anonymously. For an account we need an email address or sign-in with Google or Apple. Other fields, such as the phone number, are optional. If you do not provide data that a feature strictly needs, we cannot provide that feature.
@@ -371,7 +397,9 @@ You give us most of the data yourself: when you create an account, publish a rep
 | Payments, once enabled | payment data | contract |
 | Security, "not a robot" check, rate limits, abuse prevention | IP (hashed), device identifier, server logs | legitimate interest (Article 6(1)(f)) |
 | Moderation, abuse reports, temporary hiding of a report | reports, messages (reported ones only), decisions | legitimate interest |
-| AI suggestions and safety screening of images | photos | legitimate interest |
+| Suggested attributes from the photo and safety flags (Anthropic) | smaller copy of the photo, the result | legitimate interest [legal review] |
+| Finding similar photos for matching (Voyage AI) | smaller copy of the photo, the image vector | legitimate interest [legal review] |
+| Controlling the cost and limits of AI assistance | records of provider calls | legitimate interest [legal review] |
 | Counting ad impressions and clicks | aggregate counters with no identifiers of people | legitimate interest |
 | Improving the service without analytics cookies | aggregate statistics from our database | legitimate interest |
 | Establishing, exercising and defending legal claims | data strictly needed for that | legitimate interest |
@@ -383,6 +411,8 @@ You give us most of the data yourself: when you create an account, publish a rep
 | Accounting and tax records | payment data | legal obligation (Article 6(1)(c)) |
 
 Where the legal basis is "legitimate interest", we have assessed that your interests and rights do not override our interest in keeping the service safe and free of abuse. You can object to such processing (chapter 15).
+
+For AI assistance, our interest is to make reporting faster and to find lost animals sooner. The processing is limited to a smaller copy of the photo with no data about you, and the result is only a suggestion (chapter 8). [legal review]
 
 Where processing rests on consent, you can withdraw it at any time. Withdrawal does not affect the lawfulness of processing before it.
 
@@ -398,7 +428,7 @@ Please do not enter other people's personal data in free text (circumstances, no
 
 ## 6. Photos and location
 
-**Photos.** Photos can contain metadata (EXIF), for example the time and position of the shot. On your device we can use it to suggest a place and time for the form. We remove the metadata from the copies we show publicly. The originals are private.
+**Photos.** Photos can contain metadata (EXIF), for example the time and position of the shot. On your device we can use it to suggest a place and time for the form. We remove the metadata from the copies we show publicly. The originals are private. The copy we send to the AI providers carries no metadata either (chapter 8). [legal review]
 
 **Report location.** We never store the raw GPS point. When you save, we randomly move the point you mark by 20 to 30 m: first on your device, and again on our server. The shift is made once and does not change between views. The stored point is therefore approximate and only you can see it (labelled "Approximate location · visible only to you"). The public sees a wider area calculated from that point: at least 500 m radius for a lost animal, at least 150 m for a found or sighted one. We do not write coordinates to logs. 30 days after a report closes, we blur the stored point further, so only the blurred point and the area name remain.
 
@@ -420,16 +450,28 @@ To limit abuse we keep a random device identifier and a hashed IP address. We de
 
 ### Matching
 
-When you publish a report, we compare it with other reports: by chip number, area, time and the animal's attributes. Later we will also compare how similar the photos are. The result is only a suggestion. The person looking for the animal decides: they confirm or reject the suggestion. A suggestion has no legal or similarly significant effect on anyone.
+When you publish a report, we compare it with other reports: by chip number, area, time and the animal's attributes. When AI assistance is switched on, we also compare how similar the photos are (below). If two reports match only on how similar their photos are, we send you a notification about it only if the place and time are also close. [legal review] The result is only a suggestion. The person looking for the animal decides: they confirm or reject the suggestion. A suggestion has no legal or similarly significant effect on anyone.
 
 ### AI assistance
 
-When this feature is switched on, we will send the photos you upload to a report or pet profile to two providers:
+When this feature is switched on, the photos you upload to a report or pet profile are processed by two providers: [legal review]
 
-- **Anthropic PBC (USA)**, the Claude model with image reading: suggests species, breed, colours, size, collar and distinguishing marks, and gives a safety signal about the content of the image.
-- **Voyage AI (USA)**: computes a numerical representation of the image (a vector) that we use to find visually similar photos.
+- **Anthropic PBC (USA)**, with the Claude model, which recognises what is in an image. It suggests the species, breed, colours, pattern, size and collar, and briefly describes distinguishing marks. It also returns four safety flags (yes or no): whether a person is prominent in the image, and whether it shows nudity, violence or visible contact details. [legal review]
+- **Voyage AI (USA)** [client: contracting entity, note 23] computes a numerical representation of the image (a vector) that we use to look for similar photos when matching. [legal review]
 
-We do not send the providers any user identifiers, EXIF metadata or location data. The results are suggestions: you confirm or correct them before publishing. We store the result against a hash of the image so that we do not process the same image twice. Images flagged by the safety signal are held for review by human moderators before publication.
+**What we send.** Only a smaller copy of the photo (longer side at most 1024 pixels), saved again without EXIF metadata. We do not send your name, email address or any other user identifier, report or photo identifiers, location, the text you entered, or your language. [legal review]
+
+**People in photos.** The model describes only the animal. About the people in a photo we keep nothing beyond the safety flags above, and we do not try to find out who they are. Photos in which the model detected a prominent person or nudity, or found no dog or cat, are not sent to Voyage AI and get no vector. For now, the safety flags are used only for this exclusion. [legal review]
+
+**Suggestions.** In the form, suggestions are labelled "Suggested". They can be wrong, so please check them. They become part of the report or profile only once you confirm them, or save or publish the form. Until then you can change or delete them. If a suggestion is not reliable enough, we leave the field empty. If AI assistance is not available, you fill in the form yourself and the report works the same. [legal review]
+
+**Storage.** [legal review]
+
+- We store Anthropic's result under a hash of the image (a fingerprint of the file), not under your name or account. That way we never send the same image twice, even if someone else uploads it. We delete the result in our regular clean-up once no photo with that hash remains with us.
+- We delete the vector together with the photo, so also when a report, a pet profile or an account is deleted.
+- We keep a record of every provider call (photo, provider, model, outcome, usage, cost, duration) to control costs and limits. We delete these records after 62 days. Once a photo is deleted, its record is no longer linked to it.
+
+**The providers and the transfer to the USA.** Anthropic and Voyage AI process the photos as our processors, on our instructions. [legal review] The processing takes place in the USA. The transfer is based on [client: for each provider, confirm the EU–US Data Privacy Framework or standard contractual clauses, note 23] (chapter 13). Whether the providers keep the copy of the photo, for how long, and whether they use it to train their models: [client: confirm for Anthropic and for Voyage AI, note 23].
 
 ### Automatic temporary hiding
 
@@ -496,7 +538,8 @@ We do not sell data. The providers we need to run the service are:
 | Google Ireland Limited (processor), only with your consent | Google Analytics 4 and Google Analytics for Firebase | analytics events from chapter 10 | EU, processing in the USA is also possible |
 | Google and Apple (each an independent controller) | sign-in with Google or Apple, if you choose it | data the provider sends at sign-in (email, name, identifier) | under the provider's rules |
 | Stripe Payments Europe, Limited, Ireland (processor; for part of the processing an independent controller) | payments and Vet Partner subscriptions (once enabled), VAT invoices | payment data you enter on Stripe's page | EU, processing in the USA is also possible |
-| Anthropic PBC, USA, and Voyage AI, USA (processors), when AI assistance is switched on | suggested attributes from photos, safety signal, image vectors | only the photo, with no user identifiers, EXIF metadata or location | USA |
+| Anthropic PBC, USA (processor), when AI assistance is switched on [legal review] | suggested attributes of the animal from the photo, safety flags | a smaller copy of the photo (at most 1024 pixels), with no EXIF metadata, user, report or photo identifiers, location or text | USA |
+| Voyage AI, USA [client: contracting entity, note 23] (processor), when AI assistance is switched on [legal review] | image vector to look for similar photos when matching | the same as Anthropic; it never receives photos in which the model detected a prominent person or nudity, or found no dog or cat | USA |
 | Sentry (Functional Software, Inc.), EU data region (processor), when error tracking is switched on | error tracking | technical data about the error; we remove personal data before sending | EU |
 
 We also share data with:
@@ -537,6 +580,9 @@ You can ask for a copy of the safeguards at the email address in chapter 2.
 | Vet Partner: clinic profile and contact person | until the subscription ends, then deleted within 30 days |
 | Partner enquiries | 24 months after the last contact |
 | Backups | data disappears from them within 30 days at the latest |
+| AI assistance results (stored under the image hash) | while a photo with that hash exists with us [legal review] |
+| Image vectors | together with the photo [legal review] |
+| Records of AI provider calls | 62 days; no longer linked to the photo once it is deleted [legal review] |
 
 **Deleting your account.** When you delete your account, we disable it at once, close open reports, and delete or anonymise the data within 30 days. The exception is payment records, which we must keep by law. Organisations must transfer or delete the organisation first.
 
@@ -567,7 +613,7 @@ We protect data with organisational and technical measures, including:
 - administrator access requires strong authentication;
 - backups are encrypted;
 - the number of requests is limited, and anonymous forms are protected by a "not a robot" check;
-- copies of photos shown publicly carry no EXIF metadata.
+- copies of photos shown publicly, and copies sent to the AI providers, carry no EXIF metadata. [legal review]
 
 If a personal data breach occurs that could put your rights at risk, we will act as the law requires, including by notifying the Information Commissioner and, where necessary, you.
 
@@ -593,7 +639,7 @@ We may change this policy, for example when we add a new feature or provider. We
 8. **International transfers.** Verify the Data Privacy Framework certification of each US provider at go-live (Supabase Inc., Cloudflare, Stripe, 650 Industries/Expo, Anthropic, Voyage AI (part of MongoDB, Inc. since 2025), Sentry, Google). Where not certified, standard contractual clauses and a transfer impact assessment are needed. Data processing agreements are needed with every processor in chapter 12 (the Google Analytics data processing terms must be accepted in GA4).
 9. **Hosting and backups (updated in 0.3).** Brief v1.0: a Hetzner server in the EU runs the website, API and job worker; photos and nightly database backups are on Cloudflare R2; Vercel and Supabase file storage are no longer used. The text says R2 storage is in the EU, which holds only if the buckets are created with EU jurisdiction (requested from the tech lead). The Hetzner location (Germany or Finland) is a client decision.
 10. **Map providers (changed in 0.4).** Place search and the area name for a point run on our own geocoder in the API, on GURS data (ADR-007, contract C6): queries and points travel only in POST bodies to our server, are never logged or stored, and reach no third party, so the rounding question is moot (lawyer pack LQ-21 and LQ-64 N/A). OpenFreeMap stays listed as an independent controller for map tiles (IP address) because we cannot instruct it.
-11. **AI providers.** The text does not claim that Anthropic or Voyage AI do not train on submitted images, because I could not verify the contract terms. Confirm the terms (no training, retention) and add the statement if true. Check whether any AI Act transparency duty applies.
+11. **AI providers (updated in 0.8).** The text still does not claim that Anthropic or Voyage AI do not keep or train on the photos. Those points are client markers in chapter 8 (note 23). Add a statement only once the client has confirmed it and you have approved the wording (LQ-36). AI Act transparency: LQ-37.
 12. **Ads.** Confirm that ad selection uses only context (region, species) and never a user profile; the "by context" sentence in chapter 11 depends on it. Confirm that sponsors only get aggregate reports.
 13. **Background location (updated in 0.3).** Chapter 6 now explains the opt-in proximity alerts (FR-043): the operating system checks geofences on the phone and no location leaves the device. Confirm with the mobile developers before publishing.
 14. **Features that are not live yet.** AI assistance, payments, Boost, Premium, Podpornik, Vet Partner, the reward line, success stories, self-service export and delete, and Sentry error tracking are written as they will be at launch. Publish each part only when the feature goes live, or version the page per release. Payments are test mode only now.
@@ -605,3 +651,17 @@ We may change this policy, for example when we add a new feature or provider. We
 20. **Quality.** The Slovenian text needs a native legal review of terminology (upravljavec, obdelovalec, zakoniti interes, pogodbene klavzule). Contributions are described as voluntary payments to a company, never donations (Q-008); no dohodnina text.
 21. **Version 0.3.** Processors per brief v1.0, exact location shared in a chat (FR-004 R-004.3), on-device proximity alerts and offline cache (FR-041, FR-043), API-only database access (ADR-021). Every open point of this draft is consolidated, with a proposed answer, in `docs/legal/lawyer-briefing.md` (§6).
 22. **Version 0.4.** Reward escrow is out of scope (brief v1.1, Q-011 closed): the Stripe Connect payout, the 5 % platform fee and the finder's identity and bank data (Stripe KYC) are gone from chapters 9 and 12. The owner's optional, display-only reward line is report data; no payment data about rewards exists. Lawyer pack: LQ-48, LQ-49, LQ-53 N/A; the reward line is LQ-67. Also in 0.4: own geocoder on GURS data (note 10); the processor table and chapter 13 no longer name MapTiler, Photon or Switzerland.
+23. **Client confirmations for AI assistance (new in 0.8).** These replace the `[naročnik: …]` / `[client: …]` markers in chapters 8 and 12. Real photos go to the providers only after the client confirms them (C20, TASK-40.7).
+    (a) **Voyage AI, training and retention.** Voyage's FAQ (docs.voyageai.com/docs/faq, read 2026-10-18) says customers can opt out of Voyage storing and using their data for future model training, and that the opt-out gives "zero-day retention". Opting out needs a payment method on file and an organisation Admin, and cannot be reversed in the dashboard. Without the opt-out, our photos may be stored and used for training. Client: has our organisation opted out, and on what date? Please keep a screenshot.
+    (b) **Anthropic, training and retention.** Anthropic's privacy centre (privacy.claude.com, read 2026-10-18) says API inputs and outputs are deleted within 30 days by default. They are kept longer when flagged under the Usage Policy (up to 2 years, classification scores up to 7 years), when the law requires it, or when agreed otherwise (zero data retention). That page says nothing about training; the commercial terms do. Client: which terms our API organisation accepted, and whether there is a zero data retention agreement.
+    (c) **Contracting entities and DPAs.** Anthropic PBC or an EU entity? Which Voyage AI entity, given that Voyage AI has been part of MongoDB, Inc. since 2025? Has a DPA been accepted with each?
+    (d) **Transfer basis.** DPF certification of each entity at go-live, otherwise SCCs and a transfer impact assessment (LQ-20).
+    (e) **Data location.** C19, C20 and 04 name no region other than the USA, so the text says "USA". If either provider may also process outside the USA, chapter 8 and chapter 12 need "USA and other countries" (LQ-36).
+24. **Version 0.8 (AI as built, C19 §Privacy, C20 §Privacy).** Facts for you to check against the build:
+    (a) If extraction did not run (AI off, a cap, a refusal, a failure), the photo is still sent to Voyage AI without the safety check (C19 §Pipeline 7 sends `photo.embed` on every outcome except a flagged one). The text only says that photos the model flagged are not embedded, which is accurate. If you want the rule "never without the check", that is a tech change (LQ-70).
+    (b) Private pet profile photos are processed and embedded too (C20: eligible photos are attached to a report or a pet).
+    (c) The build has no per-person way to switch AI off. An objection under Article 21 would have to be handled by email (LQ-69).
+    (d) The model also stores up to five short English descriptions of distinguishing marks. They are not shown in M3.
+    (e) The four safety flags are used today only to keep flagged photos from Voyage AI. When image screening (TASK-63, M4) holds flagged photos for a moderator, add that to chapter 8, and add the hold notice of LQ-38.
+    (f) The sentence on similarity-only notifications follows C8 §Visual similarity (a match on photo similarity alone reaches the notification strength only when distance and time are close). The tech lead confirms it at TASK-43.
+    (g) The `[pravni pregled]` / `[legal review]` markers flag the new claims of 0.8 for your review. Like the client markers, they are removed before publishing.

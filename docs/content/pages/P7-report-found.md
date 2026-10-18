@@ -3,8 +3,8 @@ source: 03§P7; docs/design/pages/P7-report-found.md
 page: P7 Report found or sighted (no account) and manage page
 stories: TASK-30, TASK-17 (FR-006, FR-003, FR-004)
 copy-for: docs/design/pages/P7-report-found.md
-version: 0.6
-status: Draft, native Slovenian review pending
+version: 0.7
+status: Draft, native Slovenian review pending; §3a strings marked † need owner and legal review
 date: 2026-10-18
 ---
 
@@ -68,6 +68,81 @@ Validation messages added from mobile P7 (TASK-30.3, CH-351), draft, needs nativ
 | Key | SL | EN |
 |---|---|---|
 | report_found.species_required | Izberite, katera žival je to. | Choose which animal it is. |
+
+# 3a. AI pre-fill (shared: P6, P7, P8)
+
+New namespace `ai_prefill` (M3, TASK-40.6), used by P6 (photo and details steps, new pet path), P7 (step 2 and the "Uredi podatke" path) and P8 (add and edit form). P6 and P8 point here. Behaviour: C19 §Client rules. Draft, needs native review.
+
+Copy rules:
+
+- Say "predlog" / "suggested". Never "prepoznali smo", "to je", "we recognised", "this is", or anything else that sounds certain. No percentages or confidence numbers anywhere.
+- AI is named in the note and in the info text, not on every field. A field label just gets the pill `ai_prefill.suggested`.
+- No message on failure: unavailable, a cap, a refusal, an error or the 10 s timeout show nothing extra, and the form simply stays manual (C19). This is deliberate. The checking status disappears without an announcement.
+- Strings marked † make a privacy claim. The owner and the lawyer approve them before release, together with privacy policy 0.8 chapter 8 (lawyer pack LQ-36, LQ-68 to LQ-71).
+
+## Checking the photo
+
+| Key | SL | EN |
+|---|---|---|
+| ai_prefill.checking | Pregledujemo fotografijo … Obrazec lahko medtem izpolnjujete naprej. | Checking the photo … You can carry on with the form in the meantime. |
+| ai_prefill.arrived_live | {count, plural, one {Iz fotografije smo predlagali # podatek. Preverite ga.} two {Iz fotografije smo predlagali # podatka. Preverite ju.} few {Iz fotografije smo predlagali # podatke. Preverite jih.} other {Iz fotografije smo predlagali # podatkov. Preverite jih.}} | {count, plural, one {We suggested # detail from the photo. Please check it.} other {We suggested # details from the photo. Please check them.}} |
+| ai_prefill.none_live | Iz fotografije podatkov nismo mogli zanesljivo razbrati. Izpolnite jih sami. | We could not tell the details reliably from the photo. Please fill them in yourself. |
+
+`checking` is a visible status next to the first photo, inside a polite live region, while the first photo is `pending` (C19 polls for up to 10 s). When the status is `ready`, the same region announces once: `arrived_live` with the number of fields actually filled, or `none_live` when every value is null and nothing was filled, or the notice title (below) when there is a notice. Nothing is announced when the user has already filled in every field. `unavailable` and the timeout clear the status silently.
+
+## Suggested fields
+
+| Key | SL | EN |
+|---|---|---|
+| ai_prefill.suggested | Predlog | Suggested |
+| ai_prefill.suggested_a11y | Predlog iz fotografije. Preverite ga. | Suggested from the photo. Please check it. |
+| ai_prefill.note_continue | Nekatera polja smo izpolnili s predlogi iz fotografije. Umetna inteligenca se lahko moti, zato jih preverite, preden nadaljujete. | We filled in some fields with suggestions from the photo. AI can be wrong, so please check them before you continue. |
+| ai_prefill.note_save | Nekatera polja smo izpolnili s predlogi iz fotografije. Umetna inteligenca se lahko moti, zato jih preverite, preden shranite. | We filled in some fields with suggestions from the photo. AI can be wrong, so please check them before you save. |
+| ai_prefill.low_confidence | Iz fotografije tega ne moremo zanesljivo razbrati. Izberite sami. | We could not tell this reliably from the photo. Please choose it yourself. |
+| ai_prefill.low_confidence_breed | Pasme iz fotografije ne moremo zanesljivo razbrati. Izberite jo sami ali pa Mešanec oziroma Ne vem. | We could not tell the breed reliably from the photo. Choose it yourself, or pick Mixed breed or Not sure. |
+| ai_prefill.collar_hint | Na fotografiji je videti ovratnica. Če lahko, jo opišite: barva, obesek, zvonček. | There seems to be a collar in the photo. If you can, describe it: colour, tag, bell. |
+| ai_prefill.collar_hint_note | Na fotografiji je videti ovratnica. Če lahko, jo omenite v opombi. | There seems to be a collar in the photo. If you can, mention it in the note. |
+| ai_prefill.species_differs | {species, select, dog {Na fotografiji je videti pes.} cat {Na fotografiji je videti mačka.} other {Na fotografiji je videti druga vrsta.}} Če ste vrsto izbrali pravilno, jo pustite. | {species, select, dog {The photo looks like a dog.} cat {The photo looks like a cat.} other {The photo looks like a different species.}} If your choice is right, leave it as it is. |
+| ai_prefill.species_switch | {species, select, dog {Izberi psa} cat {Izberi mačko} other {Spremeni vrsto}} | {species, select, dog {Choose dog} cat {Choose cat} other {Change species}} |
+
+- `suggested` is a small pill next to the label of each field the suggestion filled. `suggested_a11y` is that field's accessible description. Both go when the user edits the field. Saving or publishing the form confirms the rest (C19: nothing is saved unconfirmed).
+- `note_continue` sits once above the filled fields in P6 (details step) and on P7's "Uredi podatke" path. `note_save` is the P8 version. Show the note only when at least one field was filled.
+- `low_confidence` goes under a field whose value came back null (below the minimum confidence), and the field stays empty. Use `low_confidence_breed` for the breed field (P8). No hint for a field the user has already touched.
+- `collar_hint` goes under the collar text field (P6, P8) when `collar` is true. The collar text is never filled. P7 has no collar field, so `collar_hint_note` goes under the note field on step 4.
+- `species_differs` and `species_switch` appear when the suggested species is not the one the user already chose. The species is never switched for them. `species_switch` is a text button.
+
+## Notices about the photo
+
+| Key | SL | EN |
+|---|---|---|
+| ai_prefill.no_animal_title | Na fotografiji ne najdemo psa ali mačke | We cannot see a dog or cat in this photo |
+| ai_prefill.no_animal_body | Poskusite z drugo fotografijo, na kateri je žival dobro vidna. Če je žival na fotografiji, jo obdržite in podatke vpišite sami. | Try another photo where the animal is clearly visible. If the animal is in the photo, keep it and fill in the details yourself. |
+| ai_prefill.other_animal_title | Na fotografiji je videti druga žival | This looks like a different kind of animal |
+| ai_prefill.other_animal_body | Prijave na Najdimo so samo za pse in mačke. Če je na fotografiji pes ali mačka, jo obdržite in podatke vpišite sami. | Reports on Najdimo are for dogs and cats only. If the photo shows a dog or cat, keep it and fill in the details yourself. |
+| ai_prefill.multiple_title | Na fotografiji je videti več živali | There seem to be several animals in this photo |
+| ai_prefill.multiple_body | Če lahko, izberite drugo ali obrezano fotografijo, na kateri je ena sama žival. Sicer preverite, ali se predlogi nanašajo na pravo žival. | If you can, choose another or a cropped photo that shows just one animal. Otherwise check that the suggestions are about the right animal. |
+| ai_prefill.change_photo | Zamenjaj fotografijo | Change photo |
+| ai_prefill.keep_photo | Obdrži fotografijo | Keep photo |
+
+A notice is an inline, neutral note under the first photo (not an error, not red). It does not block Next or Save. `change_photo` opens the picker for that photo. `keep_photo` dismisses the notice. For `no_animal` and `other_animal`, P7 skips the "Je to pravilno?" screen and shows the manual step with the notice above it. `multiple_animals` fills fields as usual, with the notice.
+
+## About the suggestions (disclosure)
+
+| Key | SL | EN |
+|---|---|---|
+| ai_prefill.info_link | Kako nastanejo predlogi? | How do the suggestions work? |
+| ai_prefill.info_body † | Fotografijo pregleda model umetne inteligence. Predlaga vrsto, pasmo, barve, vzorec, velikost in ovratnico ter preveri, ali je na fotografiji v ospredju oseba ali neprimerna vsebina. Ponudniku pošljemo samo pomanjšano kopijo fotografije, brez metapodatkov in lokacije ter brez podatkov o vas ali prijavi. Isto kopijo uporabimo tudi za iskanje podobnih fotografij pri ujemanju. Predlogi se lahko motijo in postanejo del prijave šele, ko jih potrdite. | An AI model looks at the photo. It suggests the species, breed, colours, pattern, size and collar, and checks whether a person or inappropriate content is prominent in the photo. We send the provider only a smaller copy of the photo, with no metadata or location and nothing about you or the report. We use the same copy to look for similar photos when matching. Suggestions can be wrong and become part of the report only once you confirm them. |
+| ai_prefill.info_privacy | Več v politiki zasebnosti | More in the privacy policy |
+
+`info_link` is a text button under the note (P6, P8) or under `report_found.ai_note` (P7). It opens `info_body` in a disclosure, a bottom sheet on mobile. `info_privacy` links to `/zasebnost#s8` (EN `/en/privacy#s8`). In P8, "prijave" in `info_body` stays as it is: the profile is the source of a later report. Show `info_link` only when `ai.enabled` is true.
+
+## P7 sentence screen ("Je to pravilno?")
+
+The `report_found.ai_*` keys of §3 stay as they are. `report_found.ai_note` ("Predlog iz fotografije. Umetna inteligenca se lahko moti.") is the found-flow disclosure line. LQ-37 in the lawyer pack quotes it, so do not change it without updating LQ-37.
+
+- Build `report_found.ai_sentence` only from suggested values. Leave a missing size or colour out: "Pes, rjave in bele barve", "Srednje velik pes" / "Dog, brown and white", "Medium-sized dog". With no species suggestion, or with a `no_animal` or `other_animal` notice, skip the screen and show the manual step.
+- "Da, nadaljuj" confirms the suggestion. "Uredi podatke" opens the manual step with the suggested values filled, the `suggested` pills and `note_continue`.
+- The found flow asks no breed, so the sentence never names one.
 
 # 4. Step 3: Where
 
@@ -307,3 +382,4 @@ Camera denied: `permissions.camera_denied` (P2).
 |---|---|---|
 | 0.5 | 2026-10-18 | CH-212: status pill keys. CH-262: outbox queue keys. CH-351: validation, sighting date/time and cancel-queued keys; shelter_row note. CH-330 not applied (design decision pending). |
 | 0.6 | 2026-10-18 | CH-438: manager resend row on `/m`: `resend_done_manager`, `resend_no_email` (§9). |
+| 0.7 | 2026-10-18 | TASK-40.6: §3a AI pre-fill, shared with P6 and P8 (namespace `ai_prefill`): checking status and live-region text, Suggested pill, notes, low-confidence and collar hints, species hint, photo notices, disclosure (†, owner and legal review), rules for the P7 sentence screen. |

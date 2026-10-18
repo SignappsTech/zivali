@@ -3,7 +3,7 @@ source: 03§P6; docs/design/pages/P6-report-lost.md
 page: P6 Report lost
 stories: TASK-29 (FR-005, FR-003, FR-002)
 copy-for: docs/design/pages/P6-report-lost.md
-version: 0.7
+version: 0.8
 status: Draft, native Slovenian review pending
 date: 2026-10-18
 ---
@@ -75,6 +75,8 @@ Validation message for the mobile flow (CH-334, TASK-29.5), draft, please confir
 | photos.rejected | Ene od fotografij ni bilo mogoče dodati. Odstranite jo in poskusite znova. | One of the photos could not be added. Remove it and try again. |
 | report_lost.photos_required | Dodajte vsaj eno fotografijo, da bodo ljudje žival prepoznali. | Add at least one photo so people can recognise your pet. |
 | report_lost.photos_wait | Počakajte, da se naloži vsaj ena fotografija. | Please wait until at least one photo has uploaded. |
+
+AI pre-fill (M3, TASK-40.6): on this step (first photo, new pet path) and on step 3 Details, use the shared `ai_prefill.*` keys and rules in P7 §3a: checking status, Suggested pills, `ai_prefill.note_continue`, the low-confidence and collar hints, the species hint, the photo notices and the disclosure. Step 3 has no breed or pattern field, so those suggestions are not shown here.
 
 Upload states (v0.2): the progress bar carries `photos.progress_a11y` as its accessible name and `photos.uploading` as its visible label. When a photo is done, `photos.uploaded` is announced once in a polite live region (no lasting text on the thumbnail). Use `photos.failed_network` when the connection dropped and `photos.failed` for any other failure, both with `photos.retry`; wrong file type or size uses `errors.UPLOAD_TYPE` or `errors.UPLOAD_SIZE` (P1).
 
@@ -296,3 +298,4 @@ Photo keys (CH-114, CH-118; namespace `photos`, used by PhotoPicker on web and m
 | 2026-10-18 | CH-496 (TASK-114.5): added `photos.rejected`, shown on the photo step for any `photo_ids` VALIDATION error and when `photos.limit` is exceeded (more than 5). SL/EN reviewed, unchanged. |
 | 2026-10-18 | CH-334: `report_lost.pet_required` (§2), `report_lost.when_invalid` (§6). Version 0.6. |
 | 2026-10-18 | v0.7. CH-420: saved pet row photo is decorative on web (§13). CH-426: `report_lost.photos_failed` (§11). CH-513 (= CH-496): already applied. |
+| 2026-10-18 | v0.8. TASK-40.6: AI pre-fill on the photo and details steps points to the shared P7 §3a (`ai_prefill`). |
