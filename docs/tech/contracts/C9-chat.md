@@ -33,7 +33,7 @@ Supabase Realtime **Broadcast** on private channels; no table is published.
 | `GET /v1/conversations` | auth | `?cursor` | `{ items: ConversationSummary[], next_cursor }` | - |
 | `GET /v1/conversations/:id/messages` | participant | `?after=&before=&limit` | `{ items: Message[], next_cursor }`; items are ordered **oldest-first** (`created_at`, then `id`) in every mode. `after=<message id>` is an exclusive cursor moving forward (returns messages newer than that id, so catch-up after reconnect); `before=<message id>` is exclusive and pages backwards but still returns each page oldest-first; no cursor returns the latest `limit` messages. `next_cursor` is the id to pass as `after` (forward) or `before` (backward) for the next page, `null` at the end | `FORBIDDEN` |
 | `POST /v1/conversations/:id/messages` | participant, rate limit 30/min and 500/day | `{ body, kind?: 'text' | 'location', location?: { lat, lng } }` | `201 Message` (+ broadcast, + `notify.send` `chat_message` for offline participants, deduped per conversation per 5 min) | `FORBIDDEN` (not participant or blocked), `GONE` (read-only), `VALIDATION`, `RATE_LIMITED` |
-| `POST /v1/conversations/:id/read` | participant | - | `204` (+ broadcast `conversation.read`) | - |
+| `POST /v1/conversations/:id/read` | participant | - | `204` (+ broadcast `conversation.read`); also marks the caller's unread `chat_message` notifications for this conversation (payload `conversation_id`) read, in the same transaction; clients re-fetch notifications afterwards (C10) | - |
 | `POST /v1/conversations/:id/block` | participant | `{ participant_id }` | `204` (blocks row; further messages from them refused) | - |
 
 ```ts
@@ -71,3 +71,4 @@ Aliases: conversation lists and messages return alias keys (`owner` | `finder` |
 | 1.1 | 2026-10-15 | CH-61: message order oldest-first, after cursor exclusive forward; CH-62: conversation.read and conversation.updated payloads |
 | 1.2 | 2026-10-15 | CH-75: sender_alias_key is the role alias (no 'you'); ConversationSummary gets my_alias_key |
 | 1.3 | 2026-10-16 | CH-170: ConversationSummary gets other_participant_id (user id, for block and the profile abuse report); has_link matches bare hosts on any TLD (TASK-21.7, TASK-21.8) |
+| 1.4 | 2026-10-18 | CH-493 (TASK-114.10): `POST /conversations/:id/read` also marks the caller's unread `chat_message` notifications for it read, same transaction |

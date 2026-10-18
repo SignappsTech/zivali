@@ -35,6 +35,8 @@ The handler derives `has_name` (`yes`/`no`) and truncates `pet_name` to 18 and `
 
 Email-only types to unverified addresses are skipped (FR-010 edge). Text comes from i18n namespace `notifications` and `email` in the recipient's `profiles.locale`.
 
+Prefs: every channel of every switchable type can be off, in-app for `match_*` and `chat_message` too; all channels off for a type = no inbox row, push or email.
+
 ## Local proximity alerts (M3, TASK-87)
 
 Not server notifications: the mobile app raises them locally from OS geofences around cached lost-report areas (C17). They are not stored in `notifications`, never upload location, use the profile quiet hours (cached on the device), a local daily cap (default 3) and once per pet per area. Category `nearby_local`; deep link `/r/<code>`.
@@ -48,7 +50,7 @@ Not server notifications: the mobile app raises them locally from OS geofences a
 | Method and path | Guards | Request | Response |
 |---|---|---|---|
 | `GET /v1/notifications` | auth | `?cursor&limit` | `{ items: Notification[], next_cursor, unread }` |
-| `POST /v1/notifications/read` | auth | `{ ids: uuid[] } | { all: true }` | `204` |
+| `POST /v1/notifications/read` | auth | `{ ids: uuid[] } | { all: true }` | `204`; `POST /v1/conversations/:id/read` (C9) also marks the caller's unread `chat_message` notifications for that conversation read, so clients re-fetch the inbox after it |
 | `GET /v1/notification-prefs` | auth | - | `{ items: { type, in_app, push, email }[], quiet_from, quiet_to }` |
 | `PUT /v1/notification-prefs/:type` | auth | `{ in_app?, push?, email? }` | the pref |
 | `POST /v1/push-tokens` | auth (incl. anonymous managers) | `{ token, platform: 'ios' | 'android' }` | `204` (upsert, `last_seen_at`) |
@@ -62,12 +64,12 @@ Client (`@zivali/api/notifications`): `listNotifications`, `markRead`, `getPrefs
 | Method and path | Guards | Request | Response |
 |---|---|---|---|
 | `GET /v1/alert-subscription` | auth, not anonymous | - | `AlertSubscription | null` |
-| `PUT /v1/alert-subscription` | auth, verified email | `{ center: { lat, lng }, radius_km (1–25), species: ('dog'|'cat')[], paused }` | `AlertSubscription` |
+| `PUT /v1/alert-subscription` | auth, verified email | `{ center: { lat, lng }, radius_km (1–25), species: ('dog'|'cat')[] (0 to 2; empty = no nearby alerts), paused }` | `AlertSubscription` |
 | `DELETE /v1/alert-subscription` | auth | - | `204` |
 
 `AlertSubscription` = the request fields plus `daily_cap`, `created_at`, `updated_at`. The centre is stored coarsened (20–30 m, C6 §Storage) like every user location.
 
-`alerts.fanout { report_id }` on a visible LOST report: TypedSQL `prisma/sql/alertRecipients.sql` finds subscriptions not paused, species match, `ST_DWithin(center_point, report.public_point, radius_km*1000)` (GiST), excluding the report's managers, users already in `alert_deliveries` for this report and users at their daily cap (default 5); chunks of 500 → `notify.send` type `nearby_lost` (dedupe `nearby:<report_id>`). At most 1 push per report per user. Pending deliveries for a report closed or reunited are dropped by the handler (status check). Target: 1000 recipients < 60 s.
+`alerts.fanout { report_id }` on a visible LOST report: TypedSQL `prisma/sql/alertRecipients.sql` finds subscriptions not paused, species match, `ST_DWithin(center_point, report.public_point, radius_km*1000)` (GiST), excluding the report's managers, users already in `alert_deliveries` for this report and users at their daily cap (default 5); an empty `species` list matches nothing (`= any(species)`; the DB check allows `'{}'`); chunks of 500 → `notify.send` type `nearby_lost` (dedupe `nearby:<report_id>`). At most 1 push per report per user. Pending deliveries for a report closed or reunited are dropped by the handler (status check); `notify.send` also drops a queued `nearby_lost` when the subscription no longer has the report's species. Target: 1000 recipients < 60 s.
 
 ## Example
 
@@ -81,3 +83,4 @@ Client (`@zivali/api/notifications`): `listNotifications`, `markRead`, `getPrefs
 |---|---|---|
 | 1.1 | 2026-10-15 | CH-62: conversation.updated payload referenced (defined in C9) |
 | 1.2 | 2026-10-15 | CH-76: DELETE /v1/push-tokens takes { token } in the body, not the path |
+| 1.3 | 2026-10-18 | CH-493: conversation read marks `chat_message` notifications read (see C9); CH-504 (TASK-114.14): `species` may be empty (no nearby alerts), notify.send drops a queued nearby_lost on a species change, every channel of every switchable type can be off |

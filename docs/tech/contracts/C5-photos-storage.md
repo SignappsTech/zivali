@@ -14,7 +14,7 @@ All three R2 buckets are created in the **EU jurisdiction**; the adapter and pre
 
 ## Model (Prisma, schema `app`)
 
-`Photo { id, ownerId, petId?, reportId?, position (0–4), sha256, width, height, bytes, status: pending | uploaded | accepted | rejected | published | unpublished, rejectReason?, publicDisplayUrl?, publicThumbUrl?, createdAt }`, unique `(ownerId, sha256)`, check: not both `petId` and `reportId`.
+`Photo { id, ownerId, petId?, reportId?, position (0–4), sha256, width, height, bytes, status: pending | uploaded | accepted | rejected | published | unpublished, rejectReason?, publicDisplayUrl?, publicThumbUrl?, createdAt }`, unique `(ownerId, sha256)`. A photo has at most one pet and at most one report; it may have both (a pet photo shown on that pet's report). The former check "not both `petId` and `reportId`" is dropped (migration 20261018000000, TASK-114.5).
 
 ## REST
 
@@ -25,6 +25,8 @@ All three R2 buckets are created in the **EU jurisdiction**; the adapter and pre
 | `GET /v1/photos/:id` | owner | - | `{ id, status, reject_reason?, thumb_url }` (`thumb_url` is a 10-minute presigned GET while private, the public URL once published) | `NOT_FOUND` |
 | `DELETE /v1/photos/:id` | owner | - | `204`; objects deleted by the worker | `CONFLICT` if attached to a published report |
 | `PUT /v1/pets/:id/photos`, report create/update (C4) | owner/manager | `photo_ids: uuid[]` in order | attaches and sets positions | `VALIDATION` (> 5, foreign photo) |
+
+Shared photos (TASK-114.5): report `photo_ids` = the owner's photos on no open report (unattached, their pets' photos, or on their closed/reunited report, which is then detached from it: status `unpublished`, public URLs null, its old public copies queued to `retention.purge`, so `photo.publish` copies it anew) or photos already on this report; a photo on another open report stays refused. `PUT /v1/pets/:id/photos` = the owner's photos on no other pet (unattached or on their report) or the pet's own. Other users' photos are refused on both. One `position` column: a shared photo keeps its order relative to the other shared photos on both; every photo ordering sorts by `(position, id)`, so the cover is deterministic. Deleting a pet keeps the photos a report shows (the FK unlinks the pet); `retention.purge` "report photos 12 months after close" skips photos that are still a pet's.
 
 ## Worker jobs (ADR-022)
 
@@ -59,3 +61,4 @@ Offline (C17): the mobile outbox keeps `PreparedPhoto` files and calls `uploadPh
 | 1.2 | 2026-10-15 | CH-60: existing: true only after /complete succeeded; else fresh upload for the same photo_id |
 | 1.3 | 2026-10-15 | CH-131: photo status adds `pending` (POST creates pending, /complete sets uploaded) |
 | 1.4 | 2026-10-15 | CH-134: `existing: true` on an unattached photo resets its 24 h purge clock |
+| 1.5 | 2026-10-18 | CH-494 (TASK-114.5): a photo may belong to one pet and one report; check "not both" dropped; attach rules, position and purge for shared photos |

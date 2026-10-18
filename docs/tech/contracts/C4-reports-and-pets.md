@@ -49,7 +49,7 @@ reports(id, short_code text unique,            -- 8 chars base58, public identif
         created_by → profiles, created_at, updated_at)
 report_managers(report_id, user_id, role text check (role in ('owner','finder','staff')), created_at, pk(report_id,user_id))
 ```
-Photos of a report or pet: C5. Max 5 per report and per pet.
+Photos of a report or pet: C5. Max 5 per report and per pet. A photo can belong to one pet and one report at once (C5 §REST, shared photos); web P6 lists a saved pet's photos first on the photos step (they count towards the 5) and sends them in `photo_ids`; mobile still sends only new photos. A pet lost again reuses the photos of its ended report.
 
 ## Status machine (`POST /v1/reports/:code/transitions`, owned by TASK-26.3)
 
@@ -93,7 +93,7 @@ type CreateReportInput = {
   event_at: string /* ISO; offline queue: original capture time */; circumstances?: string; contact_pref?;
   reward_eur?: number | null; reward_note?: string | null;      // lost only; display only
   linked_report_id?: uuid;                                       // "I saw this pet"
-  photo_ids: uuid[];                                             // 1–5 for lost and found, 0–5 sighted
+  photo_ids: uuid[];                                             // 1–5 for lost and found, 0–5 sighted; may include the owner's pet photos and photos of their ended reports (shared photos, C5)
   finder_email?: string                                          // anonymous only, for the manage link
 }
 ```
@@ -160,3 +160,4 @@ Drafts live only on the device until submit: web `idb-keyval` key `draft:<kind>:
 |---|---|---|
 | 1.1 | 2026-10-15 | CH-56: bbox rounded outwards to 2 decimals like near and areas |
 | 1.2 | 2026-10-15 | CH-142: sync `server_time` is an opaque (updated_at, id) cursor, final value overlaps in-flight transactions |
+| 1.3 | 2026-10-18 | CH-494 (TASK-114.5): report photo_ids may reuse the owner's pet photos and photos of their ended reports (C5) |
