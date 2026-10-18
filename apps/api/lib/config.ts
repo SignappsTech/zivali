@@ -90,7 +90,9 @@ const EnvSchema = z.object({
 	TURNSTILE_SECRET_KEY: z.string().optional(),
 	AI_PROVIDER: z.enum(['mock', 'anthropic', 'off']).optional(),
 	ANTHROPIC_API_KEY: z.string().optional(),
-	AI_VISION_MODEL: z.string().default('claude-sonnet-5-5'),
+	// C19 §Provider call: thinking stays off, which Haiku 5.5 allows up to effort high.
+	AI_VISION_MODEL: z.string().default('claude-haiku-5-5'),
+	AI_VISION_EFFORT: z.enum(['low', 'medium', 'high']).default('low'),
 	EMBEDDER_PROVIDER: z.enum(['mock', 'voyage', 'off']).optional(),
 	VOYAGE_API_KEY: z.string().optional(),
 });

@@ -14,16 +14,25 @@ import {
 	SCHEDULE_TZ,
 	SCHEDULES,
 	startJobs,
+	work,
 	type QueueName,
 } from '../../lib/jobs.ts';
 import { prisma } from '../../prisma/prisma.ts';
 
-type JobRow = { name: string; state: string; retry_count: number; retry_limit: number; retry_backoff: boolean };
+type JobRow = {
+	name: string;
+	state: string;
+	retry_count: number;
+	retry_limit: number;
+	retry_delay: number;
+	retry_backoff: boolean;
+};
 
 const jobRow = async (id: string) =>
 	(
 		await prisma.$queryRaw<JobRow[]>`
-			select name, state::text as state, retry_count, retry_limit, retry_backoff from pgboss.job where id = ${id}::uuid`
+			select name, state::text as state, retry_count, retry_limit, retry_delay, retry_backoff
+			from pgboss.job where id = ${id}::uuid`
 	)[0];
 
 const countMarked = async (marker: string) =>
@@ -74,6 +83,36 @@ describe('failure → retry → failed', () => {
 		});
 		expect(attempts).toBe(6);
 		expect(await jobRow(id)).toMatchObject({ state: 'failed', retry_count: 5 });
+	});
+
+	it('retries ai.extract twice, 2 s apart without backoff, then fails it (C19)', async () => {
+		const id = (await jobs.send('ai.extract', { marker: randomUUID() }))!;
+		expect(await jobRow(id)).toMatchObject({ retry_limit: 2, retry_delay: 2, retry_backoff: false });
+		let attempts = 0;
+		await drain(async (queue, job) => {
+			if (job.id !== id) return runJob(queue, job);
+			attempts++;
+			throw new Error('boom');
+		});
+		expect(attempts).toBe(3);
+		expect(await jobRow(id)).toMatchObject({ state: 'failed', retry_count: 2 });
+	});
+});
+
+describe('worker', () => {
+	it('polls ai.extract with 4 local workers, photo.embed and every other queue with 1', async () => {
+		const boss = await startJobs();
+		const spy = vi.spyOn(boss, 'work').mockResolvedValue('');
+		try {
+			await work(async () => {});
+			const options = Object.fromEntries(spy.mock.calls.map(([queue, opts]) => [queue, opts]));
+			expect(Object.keys(options)).toEqual([...QUEUES]);
+			expect(options['ai.extract']).toEqual({ localConcurrency: 4 });
+			expect(options['photo.embed']).toEqual({ localConcurrency: 1 });
+			expect(options['match.report']).toEqual({ localConcurrency: 1 });
+		} finally {
+			spy.mockRestore();
+		}
 	});
 });
 

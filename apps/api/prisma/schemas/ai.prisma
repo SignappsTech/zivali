@@ -1,0 +1,67 @@
+// M3 AI (TASK-40.1): attribute extraction (C19 §Models) and image embeddings (C20 §Model). Written by the ai.extract
+// and photo.embed jobs only. Hand-written SQL in the migration: the provider check and the HNSW index.
+
+// The outcome of one ai.extract (provider anthropic) or photo.embed (provider voyage) call per photo (C19 §Pipeline).
+enum AI_OUTCOME {
+  ok
+  cached
+  refused
+  invalid
+  failed
+  skipped_disabled
+  skipped_budget
+  skipped_limit
+
+  @@schema("app")
+}
+
+// One extraction per image hash, whoever uploaded it: no user, photo or report id (C19 §Privacy). Purged once no photo
+// has the hash any more.
+model ai_results {
+  sha256         String   @id
+  model          String
+  prompt_version String
+  // AiExtraction without moderation
+  result         Json
+  // The four moderation booleans
+  moderation     Json
+  created_at     DateTime @default(now()) @db.Timestamptz(6)
+
+  @@schema("app")
+}
+
+// Ledger of model calls (Anthropic and Voyage): caps, monthly budgets, cost. Kept 62 days; the link to the photo is
+// cleared when the photo goes, the row stays for the budget.
+model ai_calls {
+  id            String     @id @default(uuid()) @db.Uuid
+  photo_id      String?    @db.Uuid
+  photo         photos?    @relation(fields: [photo_id], references: [id], onDelete: SetNull)
+  // anthropic | voyage (check constraint in the migration)
+  provider      String
+  model         String
+  outcome       AI_OUTCOME
+  input_tokens  Int
+  output_tokens Int
+  // Voyage only: billed pixels
+  pixels        BigInt?
+  cost_usd      Decimal    @db.Decimal(10, 6)
+  latency_ms    Int
+  created_at    DateTime   @default(now()) @db.Timestamptz(6)
+
+  @@unique([photo_id, provider, model])
+  @@index([provider, created_at])
+  @@schema("app")
+}
+
+// One vector per photo and model (C20), deleted with the photo. Read and written only through $queryRaw with
+// parameters; HNSW cosine index photo_embeddings_hnsw (m 16, ef_construction 64) in the migration.
+model photo_embeddings {
+  photo_id   String                                 @db.Uuid
+  photo      photos                                 @relation(fields: [photo_id], references: [id], onDelete: Cascade)
+  model      String
+  embedding  Unsupported("extensions.vector(1024)")
+  created_at DateTime                               @default(now()) @db.Timestamptz(6)
+
+  @@id([photo_id, model])
+  @@schema("app")
+}

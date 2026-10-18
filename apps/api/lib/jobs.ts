@@ -1,7 +1,7 @@
 // pg-boss (ADR-022) in schema pgboss of the app database: the producer behind ctx.jobs, the worker loop, the cron
 // schedules and drain() for tests and `pnpm jobs:drain`. Handlers live in jobs/<queue>.job.ts, registered in
 // jobs/index.ts.
-import { fromPrisma, PgBoss, type Job, type SendOptions as BossSendOptions } from 'pg-boss';
+import { fromPrisma, PgBoss, type Job, type QueueOptions, type SendOptions as BossSendOptions } from 'pg-boss';
 
 import type { Prisma } from '../prisma/prisma.ts';
 import { config } from './config.ts';
@@ -24,6 +24,10 @@ export const QUEUES = [
 	'directory.reminder',
 	'db.keepalive',
 	'db.backup',
+	// M3 (TASK-40.1): AI attribute extraction (C19), photo vectors and their backfill (C20).
+	'ai.extract',
+	'photo.embed',
+	'embedding.backfill',
 ] as const;
 export type QueueName = (typeof QUEUES)[number];
 
@@ -44,7 +48,13 @@ export const SCHEDULES: Partial<Record<QueueName, string>> = {
 export const SCHEDULE_TZ = 'Europe/Ljubljana';
 
 // Queue defaults, inherited by every job sent or scheduled: 5 retries with exponential backoff, then failed.
-const RETRY = { retryLimit: 5, retryBackoff: true };
+const RETRY: QueueOptions = { retryLimit: 5, retryBackoff: true };
+// ai.extract fails open fast: 2 retries 2 s apart, no backoff (C19 §Pipeline).
+const QUEUE_OPTIONS: Partial<Record<QueueName, QueueOptions>> = {
+	'ai.extract': { retryLimit: 2, retryDelay: 2, retryBackoff: false },
+};
+// Pollers per queue in one worker process (pg-boss localConcurrency; 1 when unset; C19, C20).
+const CONCURRENCY: Partial<Record<QueueName, number>> = { 'ai.extract': 4, 'photo.embed': 1 };
 
 /** pg-boss send options; `tx` sends inside that Prisma transaction, so the job exists only if the write commits. */
 export type SendOptions = Omit<BossSendOptions, 'db'> & { tx?: Prisma.TransactionClient };
@@ -75,7 +85,7 @@ export function startJobs(role: 'api' | 'worker' = 'api'): Promise<PgBoss> {
 		});
 		boss.on('error', (err) => logger.error({ err }, 'pg-boss error'));
 		await boss.start();
-		for (const queue of QUEUES) await boss.createQueue(queue, RETRY);
+		for (const queue of QUEUES) await boss.createQueue(queue, QUEUE_OPTIONS[queue] ?? RETRY);
 		await lockDownPgboss();
 		return boss;
 	})();
@@ -104,7 +114,8 @@ export async function createSchedules(): Promise<void> {
 export async function work(run: Runner): Promise<void> {
 	const boss = await startJobs('worker');
 	await createSchedules();
-	for (const queue of QUEUES) await boss.work<object>(queue, async ([job]) => run(queue, job));
+	for (const queue of QUEUES)
+		await boss.work<object>(queue, { localConcurrency: CONCURRENCY[queue] ?? 1 }, async ([job]) => run(queue, job));
 }
 
 /**

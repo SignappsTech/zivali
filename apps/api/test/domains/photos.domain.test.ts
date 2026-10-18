@@ -175,12 +175,13 @@ describe('photo.process', () => {
 		await PhotosDomain.processPhoto({ photo_id: randomUUID() }, ctx());
 	});
 
-	it('queues photo.publish for a photo already on a report; PHOTO_HOOKS is empty in M2', async () => {
-		expect(PHOTO_HOOKS).toEqual([]);
+	it('queues photo.publish for a photo already on a report, and the PHOTO_HOOKS (ai.extract, C19)', async () => {
+		expect(PHOTO_HOOKS).toEqual(['ai.extract']);
 		const report = await newReport();
 		const photo = await uploaded(await jpeg(), { report_id: report.id });
 		await PhotosDomain.processPhoto({ photo_id: photo.id }, ctx());
 		expect(await queued('photo.publish', 'report_id', report.id)).toBe(1);
+		expect(await queued('ai.extract', 'photo_id', photo.id)).toBe(1);
 	});
 
 	it('drops a job without a photo_id instead of retrying it', async () => {
