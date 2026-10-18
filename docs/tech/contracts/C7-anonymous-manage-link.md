@@ -5,7 +5,8 @@ source: docs/04-technical-design.md§Authentication and authorization, ADR-005, 
 ## Flow
 
 1. Finder fills the quick found/sighted form (drafted locally, C4 §Drafts).
-2. On submit without a session: client gets a Turnstile token (web widget; mobile WebView page `/captcha`), calls `signInAnonymously(captchaToken)` (C3). Locally captcha is off and the token is ignored.
+2. On submit without a session: client gets a Turnstile token (web widget; mobile WebView page `/captcha`, see below), calls `signInAnonymously(captchaToken)` (C3). Locally captcha is off and the token is ignored.
+   Mobile captcha WebView: opens `<APP_URL>/captcha?lang=sl|en`; the page runs one Turnstile challenge on load and posts JSON through `window.ReactNativeWebView.postMessage`: `{ type: 'captcha', token }` (`token: null` when the web build has no NEXT_PUBLIC_TURNSTILE_SITE_KEY, i.e. captcha off) or `{ type: 'captcha_error' }` (the app reloads the page to retry). The page shows `report_found.captcha_title`/`captcha_body` itself; it skips proxy.ts (C15) and gets a fixed CSP from next.config.ts (CH-211).
 3. Client uploads photos (C5) and calls `POST /v1/reports` with an `Idempotency-Key` (C4). Response includes `manage_token` (shown once, stored on device: web `localStorage` key `manage:<report_id>`, mobile `expo-secure-store`).
 4. Manage link = `<APP_URL>/m#<manage_token>` (SL) or `<APP_URL>/en/m#<manage_token>`. If `finder_email` was given, the link is emailed directly after the create commit with `NotificationsDomain.sendManageLink` (C10), not queued through `notify.send`, so the token never lands in `pgboss.job`; a failed email is recorded in `email_outbox` and never fails the POST (a 5xx would free the Idempotency-Key and duplicate the report) (CH-207).
 5. On another device the link page signs in anonymously (captcha) and calls `POST /v1/manage/claim` → the new anonymous uid becomes a manager; redirect to the report manage view.
@@ -16,7 +17,9 @@ source: docs/04-technical-design.md§Authentication and authorization, ADR-005, 
 | Method and path | Guards | Request | Response | Errors |
 |---|---|---|---|---|
 | `POST /v1/manage/claim` | auth (anonymous or user), rate limit 10/hour per IP | `{ token }` | `{ report_id, short_code }` | `NOT_FOUND` (unknown token), `GONE` (closed beyond the reopen window), `RATE_LIMITED` |
-| `POST /v1/reports/:code/manage-link/resend` | manager | - | `204` | `CONFLICT` (no finder email), `RATE_LIMITED` (3/day) |
+| `POST /v1/reports/:code/manage-link/resend` | manager | - | `204` | `NOT_FOUND`, `FORBIDDEN` (not a manager), `GONE` (removed, or closed/reunited more than 7 days ago, same rule as claim), `CONFLICT` (no finder email), `VALIDATION` (`finder_email` sent by a non-anonymous caller, issue path `finder_email`), `RATE_LIMITED` (3 per report per day, keyed by report, not caller) |
+
+Resend (CH-208): only the token hash is stored, so resend issues a NEW token; the old link and the device's stored `manage:<report_id>` token stop working for claims. The new token is emailed first, outside any transaction, and its hash is written only after a successful send, so a failed send changes nothing (500) and the old link keeps working. Claim makes the caller a `finder` manager; a repeat claim is a no-op 200.
 
 ## Submission guard (`domains/reports/submission-guard.ts`, called by `createReport` before writing; stub from TASK-29.2, real rules from TASK-17.1)
 
@@ -52,3 +55,4 @@ All clients send `x-device-id: <uuid>` (generated once per install/browser, stor
 |---|---|---|
 | 1.1 | 2026-10-16 | TASK-17.12: §Flow 6, email and password conversion = one `updateUser({ email, password, data })`; on `reauthentication_needed` the address alone, then the password in the link's fresh session; "send again" = `updateUser({ email })`; email_change copy without a current address. Replaces the short-lived `POST /v1/me/convert-password` (C3 1.7) |
 | 1.2 | 2026-10-18 | CH-207: manage-link email sent directly after the create commit; CH-206: hold rule counts reports.device_hash |
+| 1.3 | 2026-10-18 | CH-208: resend issues a new token, errors and rules; CH-211: mobile captcha WebView message protocol |

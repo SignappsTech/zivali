@@ -32,7 +32,10 @@ SL slugs are proposals; the content strategist may change them through a `CHANGE
 | SEO hubs (TASK-72, M5; folder param is the internal EN `[location]`, the SL pathname stays localised) | `/izgubljene-zivali/[location]`, `/izgubljeni-psi/[location]`, `/izgubljene-macke/[location]`, `/najdene-zivali/[location]`, `/najdeni-psi/[location]`, `/najdene-macke/[location]` | `/en/lost-pets/[location]`, `/en/lost-dogs/[location]`, `/en/lost-cats/[location]`, `/en/found-pets/[location]`, `/en/found-dogs/[location]`, `/en/found-cats/[location]` | public | - | sidebar |
 | privacy, cookies, terms, imprint, accessibility | `/zasebnost`, `/piskotki`, `/pogoji-uporabe`, `/impresum`, `/dostopnost` | `/en/privacy`, `/en/cookies`, `/en/terms`, `/en/imprint`, `/en/accessibility` | public | - | none |
 | admin | `/admin/*` | `/en/admin/*` | admin | moderator/admin + aal2 | none |
+| admin, as built (TASK-34.3, CH-222) | `/admin`, `/admin/revizijska-sled`, `/admin/zavetisca`; sections not built yet open `/admin/[section]` | `/en/admin`, `/en/admin/audit-log`, `/en/admin/shelters`; `/en/admin/[section]` | admin | admin only for unlisted admin paths | none |
 | portal (M3) | `/portal/*` | `/en/portal/*` | portal | org member | none |
+
+Admin sections not built yet (ads, house-ads, moderation, abuse-reports, verification, organisations, users, enquiries, vet-partners, settings) open `/admin/[section]` with the EN slug in both locales until their task adds its page and SL slug (`components/admin/nav.ts`).
 
 Auth query parameters (TASK-9.3, CH-185): `signIn` and `signUp` take `?next=` (same-site paths only) and `?email=`; `signIn` also `?link=expired`, `?error=cancelled|failed`, `?confirmed=1` (verified view). Supabase Auth redirects (confirmation and reset links, Google OAuth PKCE) land on `/auth/callback`, which exchanges the code server-side and then goes to `/reset-password` (recovery), `/sign-in?confirmed=1` (verified view) or `next`. `/reset-password` renders the new-password form only for a session whose amr has `recovery` (< 1 h, checked on the server; a `token_hash` session has amr `otp`, C3). Guards send `next` (proxy header `x-next-path`).
 
@@ -85,3 +88,4 @@ Detail page SEO: open, visible reports are indexable with `Article`-like JSON-LD
 | 1.1 | 2026-10-15 | CH-101: SEO hub folder param `[lokacija]` renamed `[location]` (internal EN) |
 | 1.2 | 2026-10-15 | CH-144: sighted route is /report/found?type=sighted |
 | 1.3 | 2026-10-18 | CH-149: map ?type=lost\|found\|sighted, sighted entry via reportFound; CH-157: mobile deep-link screens pending; CH-185: /auth/callback and auth query parameters |
+| 1.4 | 2026-10-18 | CH-222: admin routes as built |

@@ -66,11 +66,12 @@ Send order per item: ensure session (anonymous sign-in with Turnstile token when
 
 - Selection: open LOST reports from `reports_cache`, nearest to the device, then most recent `event_at`; iOS ≤ 18 report regions, Android ≤ 50, plus one `boundary` region (radius 2 km around the device at selection time; exiting it re-runs selection). Region radius = `max(area_radius_m, 200)`.
 - Handler (`expo-task-manager` task `zivali-geofence`), offline-capable: on enter → skip if report no longer open in cache, if `geofence_events` has `(report, area_key)`, if 3 alerts already today, or inside quiet hours (cached from the profile) → else local notification (`expo-notifications`, category `nearby_local`, deep link `zivali://r/<code>`) and insert into `geofence_events`. No network calls.
+- `expo-location` is a native module (new dev build / EAS rebuild; iOS background mode `location`, Android background location). A revoked Always permission is noticed on resume or after a cache sync, not instantly (CH-234).
 - Off switch, sign-out, account deletion or permission downgrade → `stopGeofencingAsync` and clear `geofences`.
 
 ## Device storage
 
-Besides SQLite and SecureStore, the app keeps small non-private UI preferences in the SQLite-backed `localStorage` (`expo-sqlite/localStorage/install`). Allowed keys: the encrypted session ciphertext (TASK-3.4) `locale` (the mobile language choice, TASK-10.3; not personal data) and the cache settings `cache.max_mb`, `cache.max_age_days`, `cache.mobile_photos` (TASK-85.2). Anything else needs a contract change; `wipeLocalData` on `account_deleted` clears all of it.
+Besides SQLite and SecureStore, the app keeps small non-private UI preferences in the SQLite-backed `localStorage` (`expo-sqlite/localStorage/install`). Allowed keys: the encrypted session ciphertext (TASK-3.4) `locale` (the mobile language choice, TASK-10.3; not personal data) and the cache settings `cache.max_mb`, `cache.max_age_days`, `cache.mobile_photos` (TASK-85.2), and `geofence.quiet_hours` (JSON `{ quiet_from, quiet_to }` from the profile, cached by `useOfflineCache` for the offline geofence handler; removed on sign-out and account deletion, kept by "Clear offline data", CH-231). Anything else needs a contract change; `wipeLocalData` on `account_deleted` clears all of it.
 
 ## Wipe
 
@@ -91,3 +92,4 @@ Besides SQLite and SecureStore, the app keeps small non-private UI preferences i
 | 1.2 | 2026-10-15 | CH-113: `locale` added to the allowed device-storage (localStorage) keys |
 | 1.3 | 2026-10-15 | CH-140: cache_areas.shelter and getCachedShelter(areaId) |
 | 1.4 | 2026-10-15 | CH-141: allowed device-storage keys cache.max_mb, cache.max_age_days, cache.mobile_photos |
+| 1.5 | 2026-10-18 | CH-231: allowed key geofence.quiet_hours; CH-234: geofencing native-module and permission notes |

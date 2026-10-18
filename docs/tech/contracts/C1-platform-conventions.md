@@ -67,7 +67,7 @@ Ownership ("owner of pet", "manager of report", "participant of conversation") i
 
 Adapters (`apps/api/src/adapters/*`: interface + mock + provider) are new code, not ported from any earlier branch.
 
-`jobs.send(queue, data, opts)` from domain functions (`lib/jobs.ts`, via `ctx.jobs`), optionally inside the Prisma transaction. Handlers in `jobs/<queue>.job.ts` export `async function handle(data, ctx)` and call domain functions; `ctx = { prisma, logger, adapters, now, send }`; idempotent; throw to retry (5 attempts, backoff). Queue names in C1 order: `match.report`, `notify.send`, `alerts.fanout`, `photo.process`, `photo.publish`, `report.lifecycle`, `retention.purge`, `partners.stats`, `payment.effects`, `directory.reminder`, `db.keepalive`, `db.backup`. Tests and `pnpm jobs:drain` process queues to empty.
+`jobs.send(queue, data, opts)` from domain functions (`lib/jobs.ts`, via `ctx.jobs`), optionally inside the Prisma transaction. Handlers in `jobs/<queue>.job.ts` export `async function handle(data, ctx)` and call domain functions; `ctx = { prisma, logger, adapters, now, send }`; idempotent; throw to retry (5 attempts, backoff). Queue names in C1 order: `match.report`, `notify.send`, `alerts.fanout`, `photo.process`, `photo.publish`, `report.lifecycle`, `retention.purge`, `retention.blur_location` (daily 03:45 Europe/Ljubljana; ADR-006, `app_config` `retention.exact_point_blur_days` 30), `partners.stats`, `payment.effects`, `directory.reminder`, `db.keepalive`, `db.backup`. Tests and `pnpm jobs:drain` process queues to empty.
 
 ## Seed
 
@@ -98,3 +98,4 @@ HTTP/1.1 429
 | 1.4 | 2026-10-15 | CH-121: idempotency key scoped to user + route + body hash (different body → 409), 401/403 never stored, middleware mounts after guards; guard `requireVerifiedOrAnonymous` listed |
 | 1.5 | 2026-10-16 | TASK-76.1: public config carries the computed `payments.enabled` |
 | 1.6 | 2026-10-18 | CH-495 (TASK-114.5): request log line of an error answer adds `error_code` and, for VALIDATION, `error_paths` |
+| 1.7 | 2026-10-18 | CH-273: queue `retention.blur_location` after `retention.purge` |

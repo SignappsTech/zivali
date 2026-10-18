@@ -19,11 +19,11 @@ payment_events(id, provider, provider_event_id text unique, type text, payload j
 
 Request:
 ```json
-{ "purpose": "tip", "amount_cents": 500, "refs": { "report_id": "…" }, "locale": "sl", "return_to": "/r/Hk3vT9qP/reunited" }
+{ "purpose": "tip", "amount_cents": 500, "refs": { "report_id": "…" }, "locale": "sl", "return_to": "/r/Hk3vT9qP/spet-doma" }
 ```
 Response `200 { "payment_id": "…", "checkout_url": "https://checkout.stripe.com/c/pay/cs_test_…" }`
 `payments.prices` (`app_config`, public, as built in TASK-6.8): `{ "boost_cents": 499, "premium_monthly_cents": 299, "premium_yearly_cents": 2499, "vet_partner_monthly_cents": 3900, "podpornik_min_monthly_cents": 200, "support_suggested_cents": [300, 500, 1000], "support_highlight_cents": 500, "custom_min_cents": 200 }` (EUR cents). `payments.live_allowed` (`false`, not public) keeps live Stripe keys refused.
-Rules: integer cents; `amount_cents ≥ 200` else `422 MIN_AMOUNT` (C1 `ERROR_HTTP_STATUS`; `VALIDATION` stays 400); user-chosen amounts (`tip`, `report_contribution`, `support`) 200–50 000; fixed prices (`boost`, subscriptions) come only from `app_config` key `payments.prices` (Boost EUR 4.99, Premium EUR 2.99/month or EUR 24.99/year, Vet Partner EUR 39/month; M4) and never from the client; `refs.report_id` must belong to the caller for `report_contribution`; `return_to` must be a same-origin path. `CheckoutInput`: `amount_cents` required for `tip`, `report_contribution`, `support` (integer, ≤ 50 000; the lower bound 200 is checked by the domain → `MIN_AMOUNT`), forbidden for `boost` and `subscription` (`VALIDATION`); `refs.report_id` required for `report_contribution`. `GET /v1/payments/:id` (owner) → `Payment = { id, purpose, amount_cents, currency, status, created_at, updated_at }`. Success URL `APP_URL/<locale>/payments/return?payment_id=…`, cancel URL `…&canceled=1`; mobile passes `return_scheme: true` → URLs go through `zivali://payments/return`.
+Rules: integer cents; `amount_cents ≥ 200` else `422 MIN_AMOUNT` (C1 `ERROR_HTTP_STATUS`; `VALIDATION` stays 400); user-chosen amounts (`tip`, `report_contribution`, `support`) 200–50 000; fixed prices (`boost`, subscriptions) come only from `app_config` key `payments.prices` (Boost EUR 4.99, Premium EUR 2.99/month or EUR 24.99/year, Vet Partner EUR 39/month; M4) and never from the client; `refs.report_id` must belong to the caller for `report_contribution`; `return_to` must be a same-origin path. `CheckoutInput`: `amount_cents` required for `tip`, `report_contribution`, `support` (integer, ≤ 50 000; the lower bound 200 is checked by the domain → `MIN_AMOUNT`), forbidden for `boost` and `subscription` (`VALIDATION`); `refs.report_id` required for `report_contribution`. `return_to` is the browser path as shown (localised), e.g. `/r/Hk3vT9qP/spet-doma` or `/en/r/Hk3vT9qP/reunited`, never an internal route (CH-253). `GET /v1/payments/:id` (owner) → `Payment = { id, purpose, amount_cents, currency, status, refs, created_at, updated_at }` (`refs` carries `report_id`, so the return page's "Try again" can re-open checkout with the same purpose, amount and report) (CH-253). Success URL is per C15 with `return_to` and `payment_id`: `/placila/zakljucek?payment_id=…` (SL), `/en/payments/return?payment_id=…` (EN), app `zivali://payments/return?payment_id=…`; cancel URL adds `&canceled=1`; mobile passes `return_scheme: true` → URLs go through `zivali://payments/return` (CH-224). `boost` and `subscription` checkout answer 503 `SERVICE_UNAVAILABLE` until M4 (CH-224). Open (CH-225): that Stripe accepts the `zivali://` custom scheme as a return URL is unconfirmed; confirm in the AC5 staging run, else add an https bounce page.
 
 ## `POST /v1/webhooks/stripe` (no JWT; Stripe signature on the raw body; mounted before `express.json`)
 
@@ -31,7 +31,7 @@ Verifies signature (`STRIPE_WEBHOOK_SECRET`; mock provider uses `MOCK_WEBHOOK_SE
 
 ## Provider guard
 
-The `payments` adapter refuses to initialise with keys starting `sk_live_`, `rk_live_`, or `pk_live_`, and `PAYMENTS_PROVIDER` other than `stripe|mock`; unit test proves it.
+Live keys are refused at boot outside `APP_ENV=production`. In production a live key boots (`adapter.live`) and checkout answers 422 `LIVE_MODE_FORBIDDEN` until `PaymentsDomain.liveGateOpen`: `payments.live_allowed` is true AND (the fiscal adapter is live, i.e. FURS production, none yet; OR `fiscal.required = false` with `FISCAL_PROVIDER=off`, so no mock ZOI/EOR reaches a real receipt). Livemode webhook events are accepted only with a live key (money a live checkout took is always recorded). `PAYMENTS_PROVIDER` other than `stripe|mock|off` is refused; unit test proves it. Go-live is then configuration only (CH-287; replaces "refuses to initialise with live keys in any environment").
 
 ## Mock provider
 
@@ -58,9 +58,9 @@ Analytics: `donation` fires on the return page when status is `succeeded` (conse
 ## Fiscal invoices (TASK-92, FR-046, Q-012)
 
 Card payments may need fiscally verified invoices (ZDavPR: payment cards count as cash). Built behind an adapter so the decision only switches configuration:
-- `fiscal` adapter: `issue(invoice) → { zoi, eor, issued_at }`; implementations `mock` (deterministic ZOI/EOR) and one FURS-certified provider API (chosen with the client; credentials are a client item).
-- Model `invoices` (`payment_id`, `number` = premises/device/sequence, `net_cents`, `vat_rate` 22, `vat_cents`, `gross_cents`, `zoi`, `eor`, `status` PENDING | VERIFIED | FAILED, `attempts`); created by `payment.effects` for every succeeded payment, verified through the adapter with retries; ZOI and EOR printed on the receipt email and PDF (`GET /v1/payments/:id/invoice.pdf`, PDF rendered in the worker).
-- **Live gate**: `app_config` `payments.live_allowed` is false and the payments adapter refuses live keys until fiscal invoicing is enabled or the accountant records that it is not required.
+- `fiscal` adapter: `issue(invoice) → { zoi, eor, issued_at }`; the input carries `subsequent` (FURS SubsequentSubmit on retries). It also has `zoi(invoice)` (deterministic, stored at creation so a FAILED invoice still prints it), `live`, `tax_number`, `premise_id`, `device_id`. Providers as built (TASK-92.1): `mock` (default everywhere) and `furs` (FURS test environment directly: mutual TLS, JWS RS256; the production endpoint is refused) (CH-286).
+- Model `invoices` (`payment_id`, `number` = premises/device/sequence, `net_cents`, `vat_rate` 22, `vat_cents`, `gross_cents`, `zoi`, `eor`, `status` PENDING | VERIFIED | FAILED, `attempts`; as built also `premise_id`, `device_id`, `sequence` (number = premise-device-sequence, unique per series), `issued_at` (fixed: it is the ZOI input), `provider`, `verified_at`, `pdf_key`; counter table `invoice_sequences`, row lock in the insert transaction, gapless; FAILED after 5 attempts, then the receipt goes without EOR) (CH-286); created by `payment.effects` for every succeeded payment, verified through the adapter with retries; ZOI and EOR printed on the receipt email and PDF (`GET /v1/payments/:id/invoice.pdf`, PDF rendered in the worker; owner only, 404 until the worker rendered it, 60/h per user). `app_config` `fiscal.required` (null/true/false, Q-012, private) and `fiscal.invoiced_purposes` (private).
+- **Live gate**: see §Provider guard: `payments.live_allowed` stays false until fiscal invoicing is live or the accountant records that it is not required (`fiscal.required = false`).
 
 ## Payments off (TASK-76.1)
 
@@ -82,3 +82,4 @@ A switch per environment, no code change, for an environment that must not take 
 |---|---|---|
 | 1.1 | 2026-10-15 | CH-63: startCheckout(dispatch, {…, locale, returnScheme?, idempotencyKey?}); operationIds = stub names |
 | 1.2 | 2026-10-15 | CH-138: payments.prices app_config JSON shape as built; payment_events payload redaction rule |
+| 1.3 | 2026-10-18 | CH-224: success URL per C15, boost/subscription 503 until M4; CH-225: custom-scheme return URL open; CH-253: Payment.refs, return_to is the browser path; CH-286: fiscal adapter, invoices and config as built; CH-287: live gate replaces the live-key refusal |

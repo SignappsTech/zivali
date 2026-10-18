@@ -38,15 +38,15 @@ Filter row (line search, select filters as pills), table with sticky header, row
 
 | Screen | Content |
 |---|---|
-| Sign in with strong authentication | the standard sign-in (P16), then an authenticator code screen (6 digit field, "use backup code" text) and enrolment screen with QR and secret, first time |
+| Sign in with strong authentication | the standard sign-in (P16), then an authenticator code screen (6 digit field, "use backup code" text) and enrolment screen with QR and secret, first time. As built (TASK-34.3): TOTP enrolment and code render in place at the requested admin URL (no `/admin/preverjanje` route) |
 | Access denied | non-admin or wrong role: h1, sentence, text button back to the app. No hint of what exists. |
-| Session timeout | dialog "Sign in again" with the page kept |
+| Session timeout | dialog "Sign in again" with the page kept. As built (TASK-34.3): not built; an ended session goes to sign-in with `next` (keeping the page needs an in-place re-auth) |
 | Last-admin guard | removing the last admin is refused with an explaining note |
-| Maintenance or read-only | banner at the top |
+| Maintenance or read-only | banner at the top. As built: not built (no flag or API yet) |
 
 ## Dashboard (placeholder)
 
-Four plain number blocks without cards (open reports, active ads, pending enquiries, reports under review) as large numbers with a label and a text link, and a recent audit entries list (five rows). Real KPIs arrive in M4.
+Four plain number blocks without cards (open reports, active ads, pending enquiries, reports under review) as large numbers with a label and a text link, and a recent audit entries list (five rows). Real KPIs arrive in M4. As built (TASK-34.3): the four numbers wait for a counts endpoint (M4), so the screen shows the "Kmalu" note, plus the five latest audit entries for admins.
 
 ## Audit log
 
@@ -94,3 +94,9 @@ None.
 1. Browser 1200 px: shelters table with the yearly reminder and the stale filter on, municipalities table with an unconfirmed row, edit drawer (opening hours rows, municipalities list, a field error), history with a before and after view, CSV import dry run with errors (apply disabled) and without errors, delete refused note, toast after save.
 2. 768 px: table as stacked rows, drawer stays 480 px (full width only below 640).
 3. Light and dark. Shelter data is marked sample data.
+
+## Change log
+
+| Version | Date | Change |
+|---|---|---|
+| 1.1 | 2026-10-18 | CH-222: access patterns and dashboard as built (TASK-34.3) |

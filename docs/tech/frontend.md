@@ -43,7 +43,9 @@ Only dependencies listed in `docs/tech/adr/017-dependency-allowlist.md` (or inst
       components/ui/               RN Reusables components, edited to the design system
       components/<feature>/, lib/{supabase,env,store,net}.ts, e2e/*.yaml (Maestro)
       lib/db/ (expo-sqlite store + local migrations), lib/data/reports.ts (only path for report lists: network or offline cache),
-      lib/offline/{sync,outbox,geofence,wipe}.ts (C17)
+      lib/offline/{sync,outbox,geofence,wipe}.ts (C17), lib/geo.ts (distanceKm), lib/checkout.ts (payInBrowser over openAuthSessionAsync), components/payments/checkout.tsx (CheckoutSheet hand-off and CheckoutResult return states), app/dev/pay.tsx (dev-only 5 € support payment)
+      index.ts                     app entry (package.json `main`): imports lib/offline/{geofence,sync} before expo-router/entry, so a headless Android launch defines the TaskManager background tasks (CH-233, CH-234)
+      app/+native-intent.ts        returns null for `/payments/return` while the checkout browser is open: Android delivers the return to both the auth session and the router (CH-265)
       app.config.ts (bundle id si.signapps.zivali, scheme zivali), eas.json, firebase.json
     packages/tokens/   build.mjs → dist/ (C2)                packages/api/  src/rtk.ts, src/pagination.ts, src/generated/endpoints.ts (gen:api), openapi-config.ts, geocode.ts
     packages/i18n/     messages/{sl,en}/<ns>.json (C16)      packages/analytics/ src/ (C12)
@@ -97,6 +99,10 @@ Only dependencies listed in `docs/tech/adr/017-dependency-allowlist.md` (or inst
 | -                                                                                                                                                                                                                                             | `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID`, `EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID` (also adds the `@react-native-google-signin` plugin with the reversed client id as `iosUrlScheme`; the native modules need a new dev build) | native Google sign-in (credential-gated; CH-167) |
 | `NEXT_PUBLIC_GOOGLE_SIGN_IN`, `NEXT_PUBLIC_APPLE_SIGN_IN` (`true`/`false`, unset = off; Apple stays off until its account exists) | `EXPO_PUBLIC_APPLE_SIGN_IN` (`true`/`false`, default off; also sets `ios.usesAppleSignIn` in `app.config.ts`; Apple sign-in waits for the Apple Developer account) | provider buttons (CH-167, CH-186). Deploy: set `NEXT_PUBLIC_GOOGLE_SIGN_IN=true` and `NEXT_PUBLIC_TURNSTILE_SITE_KEY` on Vercel (hosted Auth has Google and Turnstile on); `proxy.ts` opens `script-src`/`frame-src` for challenges.cloudflare.com only while the site key is set |
 
+| Server-only `MEDIA_BASE_URL` (the API's public media origin, e.g. `https://media.zivali.test` in fixtures; its origin is added to the proxy CSP `img-src`, required https outside local; without it report photos are blocked) (CH-213) | - | proxy.ts, manage and detail pages |
+| Server-only `MOCK_WEBHOOK_SECRET` (signs the `/dev/checkout` mock events; same value as the API's; unset = `mock-webhook-secret` in local only; in `.env.example` and `lib/env.ts`) (CH-255) | - | C13 |
+| - | `EXPO_PUBLIC_CAPTCHA` (`true`/`false`; when on, anonymous sign-in gets a Turnstile token through the `/captcha` WebView sheet; true in the `eas.json` production profile, off locally) (CH-217) | C7 |
+
 `lib/env.ts` validates with zod at startup and fails fast with the variable name. `NEXT_PUBLIC_API_URL` has no default outside `APP_ENV=local` (a missing value must fail, not fall back to localhost).
 
 ## Commands
@@ -123,6 +129,14 @@ Windows notes: Docker Desktop must run for Supabase; use Git Bash or PowerShell;
 
 Branch `agent/<task-id>-<slug>` from `main`; commits `<task-id>: <what>`; never merge; report with screenshots (mobile 390 px and desktop 1440 px for web UI; Android screenshots for mobile UI).
 
+### Worktrees (agents)
+
+Windows + pnpm 11 hoisted: a `pnpm install` inside an agent worktree can delete tracked files when a prune hits EPERM on `node_modules` junctions (TASK-87.1 and 35.2, 2026-10-15). Agents avoid installs in worktrees; when one is needed, remove the `node_modules` junctions with `rmdir` first, and check the tree afterwards (CH-235).
+
+### Native modules (mobile)
+
+`expo-location` (TASK-87.1) is a native module: a new dev build / EAS rebuild is needed; iOS background mode `location`, Android background location. A revoked Always permission is noticed on resume or after a cache sync, not instantly (CH-234). `@maplibre/maplibre-react-native` also needs a dev build (ADR-017).
+
 ## Definition of Done and gate checklist
 
 - [ ] Acceptance criteria met and demonstrated (screenshots / test output)
@@ -146,3 +160,4 @@ Branch `agent/<task-id>-<slug>` from `main`; commits `<task-id>: <what>`; never 
 | 1.3     | 2026-10-15 | CH-100: route folders use internal EN paths, next-intl pathnames map to SL                                     |
 | 1.4     | 2026-10-16 | TASK-107: @zivali/* resolve from the checkout (tsconfig paths, jest moduleNameMapper), not node_modules links |
 | 1.5     | 2026-10-18 | CH-167: mobile Apple/Google sign-in variables; CH-186: web sign-in provider flags, deploy settings, CSP while the Turnstile key is set |
+| 1.6     | 2026-10-18 | CH-213, 217, 255: MEDIA_BASE_URL, EXPO_PUBLIC_CAPTCHA, MOCK_WEBHOOK_SECRET; CH-233, 234, 265: mobile entry, checkout and geo files, native modules; CH-235: worktree installs |

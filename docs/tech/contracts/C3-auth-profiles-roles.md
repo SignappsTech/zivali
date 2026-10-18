@@ -49,7 +49,7 @@ model profiles {
 | `PATCH /v1/me` | auth | `{ display_name?, locale?, home?: { lat, lng } \| null, home_radius_km?, phone?, quiet_from?, quiet_to?, supporter_badge_visible? }` | `Profile` |
 | `GET /v1/admin/users?query=&cursor=&limit=` | moderator, aal2 | `query` = display_name substring or exact email | `{ items: AdminUser[], next_cursor }` (`AdminUser` = profile columns for moderation: id, display_name, role, created_at, `email_masked`, `is_anonymous`; no phone, no `banned_at` until a ban column lands; defined in `packages/types/src/domain/`, TASK-6.5) |
 | `PUT /v1/admin/users/:id/role` | admin, aal2 | `{ role, note }` (strict; `note` trimmed, 1–500 chars) | `{ id, role }` (audited; last admin protected) |
-| `GET /v1/admin/audit-log?actor_id&action&target_type&target_id&cursor&limit` | admin, aal2 | - | `AuditLogList` = `{ items, next_cursor }` |
+| `GET /v1/admin/audit-log?actor_id&action&target_type&target_id&cursor&limit` | admin, aal2 | - | `AuditLogList` = `{ items, next_cursor }`; each entry carries `actor_id` and `actor: { id, display_name } \| null` (null = system), so the P19 audit log shows who by name (CH-220; until the API returns it the web shows the first 8 characters of the uuid and "Sistem" for null) |
 | `GET /v1/admin/queues` | admin, aal2 | - | `AdminQueues` (job queue state) |
 
 Admin lists take `limit`; `cursor` is the last returned item's `id`.
@@ -66,9 +66,10 @@ signInWithGoogle({ redirectTo? } | { idToken, nonce? }), signInWithApple({ redir
 signInAnonymously(captchaToken?),
 requestPasswordReset(email, { redirectTo?, captchaToken? }),   // no locale: the recovery email is localised from user_metadata.locale
 signOut(cleanup?)               // runs DELETE /v1/push-tokens with body { token } (C10) and the mobile wipe (C17)
-mfa.enroll(), mfa.challengeAndVerify(factorId, code)
+mfa.enroll() (removes stale unverified TOTP factors first, they count against the factor limit), mfa.challengeAndVerify(factorId, code), mfa.listFactors(), mfa.unenroll(factorId)
 // API:
-getMe(api): Promise<Me>, updateMe(api, patch): Promise<Me>
+getMe(api): Promise<Me>, updateMe(api, patch): Promise<Me>,
+listAuditLog infinite query (`useListAuditLogInfiniteQuery`, filters actor_id/action/limit, keyset cursor) in @zivali/api/me
 ```
 Hooks (same names on web and mobile): `useSession(): { session, me, isAnonymous, isVerified, role, aal, loading }`, `useRequireAuth({ verified?, role?, aal2? })` returns `gate`: `ok | loading | signin | verify | forbidden | aal2 | error` (anonymous counts as signed out; `forbidden` = role is not MODERATOR or ADMIN, as in `requireRole`).
 
@@ -98,3 +99,4 @@ Clients keep report drafts locally (C4 §Drafts, C17). When a signed-out visitor
 | 1.6 | 2026-10-15 | CH-145: GET /v1/admin/audit-log and /v1/admin/queues, role body {role, note}, AdminUser email_masked + is_anonymous (no banned_at yet), limit/cursor, users query, errors NOT_FOUND and RATE_LIMITED |
 | 1.7 | 2026-10-16 | TASK-17.12: `reauthentication_needed` → `UNAUTHENTICATED`. `POST /v1/me/convert-password` (briefly added for the C7 §6 conversion) is removed before release: the Admin API password update clears the pending `email_change` token and signs out every session, so the mailed link and "Pošlji znova" died. The conversion sends password and address in one `updateUser` instead (C7 §6) |
 | 1.8 | 2026-10-18 | CH-168: ensureProfile seeds display_name; CH-169/CH-175: captchaToken on every Auth call that needs it (TASK-17.3 extended), mobile auth wrappers to move; CH-202: recovery by token_hash and the planned template change |
+| 1.9 | 2026-10-18 | CH-220: AuditLogEntry.actor display name; client mfa.listFactors/unenroll and listAuditLog as built (TASK-34.3) |
