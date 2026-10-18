@@ -14,5 +14,10 @@
 	"faq": "FAQ",
 	"nav_label": "Footer",
 	"tagline": "Home again.",
-	"copyright": "© {year} SIGNAPPS d.o.o. Najdimo is the service's working name."
+	"copyright": "© {year} SIGNAPPS d.o.o. Najdimo is the service's working name.",
+	"heading_help": "Help",
+	"heading_organisations": "For organisations",
+	"heading_najdimo": "Najdimo",
+	"heading_legal": "Legal",
+	"operator": "Najdimo is run by SIGNAPPS d.o.o., Kolomban 34B, 6280 Ankaran – Ancarano."
 }
