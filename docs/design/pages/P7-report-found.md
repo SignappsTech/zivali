@@ -3,6 +3,7 @@ source: 03§P7
 page: P7 Report found or sighted (no account) and manage page
 stories: TASK-30, TASK-17 (FR-006, FR-003, FR-004)
 platforms: web, mobile
+version: 1.1
 mockup: docs/design/mockups/P7-report-found.html
 copy: docs/content/pages/P7-report-found.md
 ---
@@ -64,6 +65,13 @@ Large controls, 56 px primary, bottom-anchored on mobile. Camera and thumbnail c
 
 A report made offline shows a success-like screen with a clock icon and "Čaka na pošiljanje": it will be sent when online, a text button "Cancel", and a quiet row on the Map tab for queued reports with status words (Waiting, Sending, Sent, Failed with retry). No duplicate on retry.
 
+Parts built provisionally in TASK-86.2 (CH-263), now the spec:
+
+1. Before sign-out with reports waiting, an alert dialog: title is the pending count; "Send now" primary, "Delete" secondary, "Cancel" text.
+2. A sent row has a text button "Odpri mojo prijavo".
+3. Rows without a photo (sent rows lose theirs) use a 64 px `muted` tile with a paw icon.
+4. A stuck row shows its reason (`errors.<code>`, 14 `muted-foreground`) under the status word.
+
 ## Assets
 
 None.
@@ -73,3 +81,9 @@ None.
 1. Mobile: steps 1 to 5 (both step-2 variants), sighted flow, success with link block and the responsible-shelter row (plus the unknown-municipality note variant), manage page (with and without messages), delete dialog, rate-limited note, camera denied.
 2. Web: steps 1, 3, 5, success with QR, manage page.
 3. Light and dark.
+
+## Change log
+
+| Version | Date | Change |
+|---|---|---|
+| 1.1 | 2026-10-18 | CH-263: waiting-to-send dialog, sent-row action, photo-less tile, stuck reason line |

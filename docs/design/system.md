@@ -2,7 +2,7 @@
 doc: design-system
 title: Design system (slice)
 source: 03§Brand and visual language
-version: 0.14
+version: 0.16
 status: Draft, direction A (Lagoon) chosen by the client
 date: 2026-10-15
 owner: Design Lead
@@ -333,6 +333,8 @@ Subset each file (pyftsubset from the OFL sources, `--flavor=woff2`) to U+0020-0
 
 React Native family names to register: `BricolageGrotesque_600SemiBold`, `BricolageGrotesque_700Bold`, `AtkinsonHyperlegibleNext_400Regular`, `AtkinsonHyperlegibleNext_600SemiBold`, `AtkinsonHyperlegibleNext_700Bold`. Map them as `font-display` (600/700) and `font-sans` (400/600/700) in the Tailwind preset. `font-sans-bold` is Atkinson Hyperlegible Next 700 (`AtkinsonHyperlegibleNext_700Bold`), generated from the `label-strong` role; on mobile use it for labels that need extra weight, since React Native cannot apply `font-bold` to a static family.
 
+**Exception (CH-246):** the web list pane of P4 is 420 px wide, so its h1 "Prijave" is drawn at 30/36 (the mobile h1 size), not 48/52.
+
 ## Scale (px, size/line-height)
 
 Mobile first. Desktop applies from `lg` (1024 px).
@@ -503,6 +505,7 @@ Web = shadcn/ui, mobile = React Native Reusables (NativeWind). Same names, same 
 | Switch | 56x32, track `input` (off) or `primary` (on), thumb `card`. The whole row (label and switch) is the target. Disabled: `muted` track with a 2 px `input` inset line (the muted track alone vanishes on `popover` in dark), `muted-foreground` thumb that keeps its position; pair it with a text reason such as a lock icon and "Vedno vklopljeno". |
 | Checkbox, radio | 24 px visual in a 44 px hit area (the whole label). Unchecked: 2 px `input` line, no fill; hover turns the line `foreground`. Checked: `primary` fill; the checkbox (radius 6) shows a 16 px bold check, the radio (round) a 10 px `primary-foreground` **dot**, not a check. Disabled: `muted` fill, `muted-foreground` mark, reason in help text. Prefer choice rows for 2 to 4 options; radios are for longer lists. |
 | Placeholder | `muted-foreground`, example format only, never a label. |
+| Exception: hidden label | The chat composer (P12) is the one field with a visually hidden label: a real `<label for>` with the content key `chat.composer_label`, not drawn. Every other field keeps its label above (CH-245). |
 
 ## 10.4 Choices
 
@@ -519,6 +522,8 @@ Web = shadcn/ui, mobile = React Native Reusables (NativeWind). Same names, same 
 | Status word | Fill icon 16 + word 14 bold, colour `status-*-subtle-foreground`. The default way to show status in rows, tiles, timelines. |
 | Tonal pill | Height 30, 14 bold, `status-*-subtle` fill. Used once on a detail page for the main status, and for the `premium` and `verified` marks. |
 | Solid | `status-*` solid only as marker rings and chart fills. |
+| Strength indicator (P11) | Word 14 bold in `foreground` plus three bars 14x6 (20x8 on the review screen): filled bars `primary`, empty `input`. One `role="img"` with the label "Moč ujemanja: {strength}". 1 bar Mogoče, 2 Verjetno, 3 Zelo verjetno; never a number. |
+| Result cell (comparison tables) | Icon plus bold word, text in `foreground`: Ujema se = check-circle in `primary`, Razlikuje se = not-equals, Ni podatka = question. |
 
 ## 10.6 Row, tile, card
 
@@ -568,6 +573,13 @@ Top bar, then (optional) a photo, an h1 question (34/40), the answer or control 
 | Drawer (right sheet, admin) | 480 px wide, full height under the top bar, `card`, leading corners 24, `shadow-pop`, scrim, modal with focus trapped, Escape closes, focus returns to the row. Head: title in the 20/28 dialog-title role and a 44 px close button (24/16/8/24 padding); body 24 px side padding, 32 px between groups; sticky footer with the one primary then a `text` cancel. Below 640 px it is full width. |
 | Tooltip (collapsed sidebar and icon buttons) | `popover`, radius 8, 8/12 padding, 14/20 semibold, `shadow-pop`, 12 px from the target, shows on hover and keyboard focus, hides on Escape, never holds interactive content. The name is also the control's accessible name. |
 | Checkbox, mixed (indeterminate) | Same 24 px box and 44 px hit as 10.3, `primary` fill with a 16 px bold minus icon instead of the check; `aria-checked="mixed"`. Used on the header checkbox when some rows are selected; pressing selects all, pressing again clears. |
+| Safety banner (chat, P12) | 48 px tonal strip: shield icon, one line, text button (`chat.safety_banner_link` is Nasveti / Tips; the page slice's "Read tips" is the same link). |
+| Message bubble (chat, P12) | Radius 20 with the tail corner at 6. Own message = `primary` surface, other = `card`, failed = `muted`. |
+| Send button (chat, P12) | 48 px round, disabled while the composer is empty. |
+| Conversation row (P12) | 80 px high: photo 64, title and last line, unread dot 10 px `primary`. |
+| Channel matrix (P13) | 4 types x 3 channels. Mobile columns are 64 px with 13 bold headers; the switch visual is 56x32 inside a 56x44 target. A locked cell is a disabled switch with a lock-simple icon and a lock note. |
+| Notification row (P13) | 48 px lead (icon or photo), 10 px `primary` unread dot, title 17, sentence 15, time 13 right-aligned. |
+| Ad unit (P21) | Feed, Detail, Reunited and Sidebar units are specified in P21 §Creative format (reserved sizes there). Until the P22 previews are drawn they reuse the P9 Detail `.ad` styling, which is provisional (CH-258). |
 
 ## 10.10 shadcn and React Native Reusables mapping
 
@@ -702,3 +714,4 @@ Each page slice in `docs/design/pages/P<n>-<slug>.md` gets one static mockup at 
 | 0.14 | 2026-10-15 | CH-85, CH-90: drawer stays full width only below 640 px (480 px at 768); chip example fixed to 15 digits. |
 | 0.15 | 2026-10-15 | CH-95 (from TASK-8.2): type steps `control` 15/20 and `control-lg` 17/24 (control labels, tabs, radio rows, toast text, large button); button state tokens `primary-hover`, `primary-pressed`, `secondary-hover`, `secondary-pressed`, `destructive-hover`, `destructive-pressed` in light and dark (replace the 14 % mix; text on every state 10.0:1 or better light and 7.0:1 or better dark, except `secondary-pressed` at 6.4:1 light and 7.0:1 dark, floor 6:1 for the transient state); new primitives `crimson.200`, `crimson.800`. Tokens 0.5.2. |
 | 0.14 | 2026-10-16 | TASK-90.5: web font loading cut to Bricolage 700 + Atkinson 400/700, custom Latin subsets, no opsz, preload, size-adjusted fallback (section 4). Tokens unchanged. |
+| 0.16 | 2026-10-18 | CH-236, CH-239, CH-242, CH-245, CH-246, CH-258: chat parts, strength indicator and result cell, channel matrix and notification row, ad unit pointer (§10.5, §10.9); composer hidden-label exception (§10.3); P4 list-pane h1 at 30/36 (§4). Tokens unchanged. |

@@ -3,7 +3,7 @@ source: 03§P18
 page: P18 Poster and sharing
 stories: TASK-24 (FR-011)
 platforms: web, mobile
-version: 1.1
+version: 1.2
 mockup: docs/design/mockups/P18-poster-share.html
 copy: docs/content/pages/P18-poster-share.md
 ---
@@ -50,6 +50,13 @@ No phone number, no email, no chip number, no exact address. The poster uses onl
 
 1200 by 630: photo left (square crop, radius 24), right side species and name in display type, short line of the area (approximate), logo at the bottom; no exact or holding location. Localised text. Used by WhatsApp, Facebook and the web app's metadata.
 
+### As built on mobile (TASK-24.3, CH-339)
+
+- The Facebook kit sits inline under the share rows (content §4b, owner lost reports only) instead of the M6 sheet, because the kit is longer than the sheet (the UI kit has no scrolling sheet). The Facebook row opens the Facebook sharer.
+- Left out: the vet ad switch (flag off, later), "Natisni" (the PDF share sheet prints), "Pokaži v polni velikosti" (the downloaded PDF is the full view) and "Dodaj fotografijo" (no mobile edit flow until TASK-26.5; the note stays).
+- The preview is a simplified native thumbnail (band, photo, QR mark, name).
+- Offline: download is disabled with the offline note; sharing the link still works.
+
 ## States
 
 | State | Behaviour |
@@ -82,3 +89,4 @@ None (the poster uses the report photo; logo mark from `docs/design/brand/`).
 | Version | Date | Change |
 |---|---|---|
 | 1.1 | 2026-10-18 | Facebook row: always the sharer link, copies the text in the same tap, clipboard-refused fallback (CH-507, TASK-114.9). |
+| 1.2 | 2026-10-18 | CH-339: mobile poster screen as built |

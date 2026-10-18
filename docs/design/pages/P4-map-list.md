@@ -3,6 +3,7 @@ source: 03§P4
 page: P4 Map and list
 stories: TASK-31 (FR-007, FR-004)
 platforms: web, mobile
+version: 1.1
 mockup: docs/design/mockups/P4-map-list.html
 copy: docs/content/pages/P4-map-list.md
 ---
@@ -46,6 +47,7 @@ Sort text button in the sheet header (Nearest, Newest). Boosted reports (M4) sor
 - `lg` and up: two panes. Left list pane 420 px (header with count, sort, filter button; rows as on mobile; keyset "Load more"), right map fills the rest. Filters open as a right drawer; the selected filters are summarised as plain text under the header and persisted in the URL. Hovering a row highlights its marker; selecting a marker scrolls the list to its row and opens the detail preview (photo, name, status, distance, "Open") as a popover.
 - Below `lg`: same as mobile (map with a sheet) inside the web shell.
 - Sidebar: none on this page (map uses the width). Ad row in the list as on mobile.
+- **h1 exception (CH-246):** the list pane is 420 px wide, so its h1 "Prijave" is drawn at 30/36 (the mobile h1 size), not the desktop 48/52. See system §4.
 
 ## States
 
@@ -83,3 +85,9 @@ A `note` above the list: "Brez povezave, zadnja posodobitev …" with the cached
 2. Web 1200 px: two panes with a selected marker popover; filter drawer open; empty; below `lg` 768 px.
 3. Boosted row example and the ad row position (placeholder from P21).
 4. Light and dark.
+
+## Change log
+
+| Version | Date | Change |
+|---|---|---|
+| 1.1 | 2026-10-18 | CH-246: web list pane h1 at 30/36 |

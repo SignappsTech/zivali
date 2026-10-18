@@ -3,7 +3,7 @@ source: 03§P6
 page: P6 Report lost
 stories: TASK-29 (FR-005, FR-003, FR-002)
 platforms: web, mobile
-version: 1.1
+version: 1.2
 mockup: docs/design/mockups/P6-report-lost.html
 copy: docs/content/pages/P6-report-lost.md
 ---
@@ -40,6 +40,7 @@ A visitor can fill every step. When pressing Publish, a bottom sheet (web: dialo
 - "What happens next" as a plain list of three rows (we notify neighbours, we look for matches, you will see matches in the inbox).
 - **Responsible shelter** (FR-044, R-005.3; this is the shared `shelter_row` pattern, P7 and P9 reference it; R-044.6 fallback below), right under that list, no card: a `phone` icon row with one sentence (report the escape to a vet or the shelter responsible for {municipality}), the shelter name in bold, the number (`tabular-nums`) and a `secondary` "Pokliči" (`tel:`); a text link to the shelter page (P3 T6). Legal timings appear only when the `content.legal_timings` flag is on, and the text never claims to replace the legal duty. Unknown or unconfirmed municipality: a `note` that says so with a link to the directory (P3 T5), never a guessed number. Works offline from the cached directory.
   - `shelter_row` states (R-044.6): *confirmed* as above. *Unconfirmed with `suggested_shelter`*: same row layout, label "Morda pristojno zavetišče" instead of the plain title, plus a small muted `caption` "Ni potrjeno" under the name. *Unconfirmed without a suggestion*: up to 2 nearest registered shelters as stacked rows of the same layout, each with the "Ni potrjeno" note, then the directory link. Unknown municipality: the `note` variant. Never present an unconfirmed shelter as the certain one.
+- **Mobile as built (TASK-29.6, CH-367, CH-368):** the confirmation has "Prenesi plakat" (opens the P18 screen `r/[code]/poster`) and the P18 share text. For an unconfirmed municipality it shows the generic `shelter_row.unconfirmed` notice, not the nearest-two list; the shared ShelterRow (with a `lost` kind, TASK-30.3) is to replace the local one in `components/report-lost/lost-done.tsx`.
 - One primary: "Download poster" (P18). Text buttons: "Share", "Open my report".
 - Optional support row, **collapsed by default**: "Help keep this free"; expands to 2, 3, 5 EUR pills (none selected) and a button (P15). Shown once per report; skipping hides it.
 - Never an ad.
@@ -79,3 +80,4 @@ None. The confirmation screen is text and icons only.
 | Version | Date | Change |
 |---|---|---|
 | 1.1 | 2026-10-18 | Pet step only with saved pets, as choice rows with no Next; six steps without saved pets (CH-497, TASK-114.12). |
+| 1.2 | 2026-10-18 | CH-367, CH-368: mobile confirmation as built (poster button, generic unconfirmed notice) |

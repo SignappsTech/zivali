@@ -3,6 +3,7 @@ source: 03§P14
 page: P14 Reunited and report lifecycle
 stories: TASK-26 (FR-012)
 platforms: web, mobile
+version: 1.1
 mockup: docs/design/mockups/P14-reunited.html
 copy: docs/content/pages/P14-reunited.md
 ---
@@ -28,7 +29,7 @@ Order top to bottom, single column, large spacing:
 2. h1 "Home again" with the pet name; one warm sentence of thanks.
 3. **Story consent:** a switch row, off by default, explaining that the story may be shown publicly after moderation and can be withdrawn at any time (A-023).
 4. **Support moment** (P15): h3, three amount pills, custom amount, and two equal buttons, Pay and Skip, the same size.
-5. **Ad slot** (P21, labelled "Oglas"), once, below the support moment.
+5. **Ad slot** (P21, labelled "Oglas"), once, below the support moment. State rule: while the tip ask is shown the ad is not rendered and not requested; it appears once the ask is skipped or paid, or at once when there is no ask (signed out). Mobile reads `useSupportTipState(code)`; web the same state.
 6. Primary `lg` "Done" goes to the map. Text button: Share the good news.
 
 The report page then shows the Reunited variant (P9). Both sides of a match see a Reunited note; the finder's version is shorter and has no tip.
@@ -73,3 +74,9 @@ Illustration decorative (empty alt); the reunited heading takes focus on arrival
 1. Mobile: which-one sheet, confirm sheet, reunited screen (with tip and ad slots, tip expanded), close-without-reunion sheet, reminder card, finder returned dialog and thank-you.
 2. Web: reunited screen at 1200 px, close dialog, manage page notices.
 3. Light and dark.
+
+## Change log
+
+| Version | Date | Change |
+|---|---|---|
+| 1.1 | 2026-10-18 | CH-385: ad appears only after the tip ask is skipped or paid |
