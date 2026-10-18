@@ -114,7 +114,9 @@ const weaker = (a: MatchStrength, b: MatchStrength) =>
  * evidence, a lifted veto): look-alikes far apart or days apart are never notified on their photos.
  */
 export function scoreMatch(features: MatchFeatures, config: MatchScoreConfig): MatchScore | null {
-	const { lost, other, visual } = features;
+	const { lost, other } = features;
+	// A V that is no number (a bad floor/ceiling) never lifts a veto: no visual term, the v2 fallback.
+	const visual = features.visual && Number.isFinite(features.visual.V) ? features.visual : null;
 	const size = sizeSim(lost.size, other.size);
 	const sex = sexSim(lost.sex, other.sex);
 	const overlap = colourOverlap(lost.colours, other.colours);

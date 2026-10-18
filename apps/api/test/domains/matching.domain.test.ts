@@ -5,7 +5,7 @@ import { randomInt, randomUUID } from 'node:crypto';
 
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-import { scoreMatch } from '@zivali/validation/matching';
+import { MATCH_ALGO_VERSION, scoreMatch } from '@zivali/validation/matching';
 
 import { adapters } from '../../adapters/index.ts';
 import { mockEmail } from '../../adapters/email/mock.ts';
@@ -389,7 +389,12 @@ describe('evidence and the re-score of old suggestions (TASK-114.22)', () => {
 			twoSizesApart: await old('twoSizesApart', { score: 0.785, strength: 'good', notified_at: at }),
 			sexNotGiven: await old('sexNotGiven', { score: 0.835, strength: 'strong', notified_at: at }),
 			same: await old('same', { score: 0.885, strength: 'strong', notified_at: at }),
-			current: await old('current', { score: 0.5, strength: 'possible', algo_version: 'v2', notified_at: at }),
+			current: await old('current', {
+				score: 0.5,
+				strength: 'possible',
+				algo_version: MATCH_ALGO_VERSION,
+				notified_at: at,
+			}),
 			rejected: await old('rejected', { score: 0.685, strength: 'good', state: 'rejected' }),
 			chip: await old('chip', { score: 1, strength: 'strong', chip_match: true, notified_at: at }),
 		};
@@ -400,10 +405,10 @@ describe('evidence and the re-score of old suggestions (TASK-114.22)', () => {
 		const rows = await matchesOf(lost.id);
 		expect(rows.map((row) => [row.id, row.state, row.strength, row.score.toNumber(), row.algo_version])).toEqual([
 			[before.chip.id, 'suggested', 'strong', 1, 'v1'],
-			[before.same.id, 'suggested', 'strong', 0.885, 'v2'],
-			[before.sexNotGiven.id, 'suggested', 'good', 0.785, 'v2'],
+			[before.same.id, 'suggested', 'strong', 0.885, MATCH_ALGO_VERSION],
+			[before.sexNotGiven.id, 'suggested', 'good', 0.785, MATCH_ALGO_VERSION],
 			[before.rejected.id, 'rejected', 'good', 0.685, 'v1'],
-			[before.current.id, 'suggested', 'possible', 0.5, 'v2'],
+			[before.current.id, 'suggested', 'possible', 0.5, MATCH_ALGO_VERSION],
 		]);
 		const sexNotGiven = rows.find((row) => row.id === before.sexNotGiven.id)!;
 		expect(sexNotGiven.notified_at).toEqual(at);

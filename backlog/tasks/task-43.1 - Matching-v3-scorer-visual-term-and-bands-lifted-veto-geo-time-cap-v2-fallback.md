@@ -3,11 +3,11 @@ id: TASK-43.1
 title: >-
   Matching v3 scorer: visual term and bands, lifted veto, geo-time cap, v2
   fallback
-status: To Do
+status: In Progress
 assignee:
   - '@backend-dev'
 created_date: '2026-10-18 21:24'
-updated_date: '2026-10-18 21:29'
+updated_date: '2026-10-18 22:51'
 labels:
   - be
   - 'est:S'
