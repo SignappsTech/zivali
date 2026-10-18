@@ -1,11 +1,11 @@
 ---
 id: TASK-114.20
 title: 'Cookie settings: link the "politika piškotkov" mention to the cookies page'
-status: To Do
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-16 16:10'
-updated_date: '2026-10-17 09:24'
+updated_date: '2026-10-18 04:52'
 labels:
   - fe
   - content
