@@ -17,7 +17,7 @@ Runtime dependencies outside this list (and outside what the Expo SDK 57 templat
 | `react-hook-form`, `@hookform/resolvers` | web, mobile | Forms with zod; RN Reusables and shadcn form patterns |
 | `next-intl` / `use-intl` | web / mobile | ADR-008 |
 | `@formatjs/intl-pluralrules` | mobile (conditional polyfill) | Only if Hermes lacks `sl` plural rules |
-| `maplibre-gl` / `@maplibre/maplibre-react-native` | web / mobile | ADR-007 |
+| `maplibre-gl` / `@maplibre/maplibre-react-native` | web / mobile | ADR-007. Mobile is pinned exactly to `@maplibre/maplibre-react-native` 11.4.1: Expo SDK 57 `bundledNativeModules.json` has no entry for it; 11.x peers are expo >= 54, react-native >= 0.80 (New Architecture); it adds its Expo config plugin (`app.config.ts`) and needs a new dev build (CH-278) |
 | `exifr` | web | EXIF GPS/time read before re-encode (ADR-014) |
 | `idb-keyval` | web | IndexedDB drafts (≈ 600 B) |
 | `@react-native-firebase/app`, `@react-native-firebase/analytics` | mobile | ADR-009 |
@@ -66,3 +66,4 @@ Not used, on purpose: `eslint-plugin-prettier` and `eslint-plugin-import` (above
 |---|---|---|
 | 1.1 | 2026-10-15 | CH-43: `expo-crypto` (mobile) for AES-256-GCM encryption of the Supabase session at rest (with `expo-secure-store`) |
 | 1.2 | 2026-10-15 | CH-122: `react-native-svg` (mobile, Expo-pinned; peer of `phosphor-react-native`) |
+| 1.3 | 2026-10-18 | CH-278: exact pin and requirements for @maplibre/maplibre-react-native 11.4.1 |

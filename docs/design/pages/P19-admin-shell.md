@@ -3,7 +3,7 @@ source: 03§P19
 page: P19 Admin console shell
 stories: TASK-34 (FR-019), TASK-89 (FR-044, shelter directory admin)
 platforms: web
-version: 1.1
+version: 1.2
 mockup: docs/design/mockups/P19-admin-shell.html, docs/design/mockups/P19-shelter-directory.html (directory screen)
 copy: docs/content/pages/P19-admin-shell.md
 ---
@@ -39,15 +39,15 @@ Filter row (line search, select filters as pills), table with sticky header, row
 
 | Screen | Content |
 |---|---|
-| Sign in with strong authentication | the standard sign-in (P16), then an authenticator code screen (6 digit field, a muted lost-device line `mfa_lost` under the code form, no backup-code link) and enrolment screen with QR and secret, first time |
+| Sign in with strong authentication | the standard sign-in (P16), then an authenticator code screen (6 digit field, a muted lost-device line `mfa_lost` under the code form, no backup-code link) and enrolment screen with QR and secret, first time. As built (TASK-34.3): TOTP enrolment and code render in place at the requested admin URL (no `/admin/preverjanje` route) |
 | Access denied | non-admin or wrong role: h1, sentence, text button back to the app. No hint of what exists. |
-| Session timeout | dialog "Sign in again" with the page kept |
+| Session timeout | dialog "Sign in again" with the page kept. As built (TASK-34.3): not built; an ended session goes to sign-in with `next` (keeping the page needs an in-place re-auth) |
 | Last-admin guard | removing the last admin is refused with an explaining note |
-| Maintenance or read-only | banner at the top |
+| Maintenance or read-only | banner at the top. As built: not built (no flag or API yet) |
 
 ## Dashboard (placeholder)
 
-Four plain number blocks without cards (open reports, active ads, pending enquiries, reports under review) as large numbers with a label and a text link, and a recent audit entries list (five rows). Real KPIs arrive in M4. A "Rezervni avtentikator" card (as built, TASK-34.6, CH-470) offers a button, then QR + key + code field as in enrolment (A1).
+Four plain number blocks without cards (open reports, active ads, pending enquiries, reports under review) as large numbers with a label and a text link, and a recent audit entries list (five rows). Real KPIs arrive in M4. As built (TASK-34.3): the four numbers wait for a counts endpoint (M4), so the screen shows the "Kmalu" note, plus the five latest audit entries for admins. A "Rezervni avtentikator" card (as built, TASK-34.6, CH-470) offers a button, then QR + key + code field as in enrolment (A1).
 
 ## Audit log
 
@@ -101,3 +101,4 @@ None.
 | Version | Date | Change |
 |---|---|---|
 | 1.1 | 2026-10-18 | CH-470: F7 lost-device line and backup authenticator card |
+| 1.2 | 2026-10-18 | CH-222: access patterns and dashboard as built (TASK-34.3) |

@@ -19,11 +19,11 @@ Access only through the API (RLS deny-all): reporters create and see their own r
 
 | Method and path | Guards | Request | Response | Errors |
 |---|---|---|---|---|
-| `POST /v1/abuse-reports` | auth (user or anonymous; anonymous visitors sign in anonymously with captcha first); rate limit 10/hour per user and IP | `{ target_type: 'report' | 'message' | 'profile', target_id, reason, note? }` | `201 { id, duplicate: false }` or `200 { id, duplicate: true }` | `VALIDATION`, `FORBIDDEN` (message target and not a participant), `RATE_LIMITED` |
+| `POST /v1/abuse-reports` | auth (user or anonymous; anonymous visitors sign in anonymously with captcha first); rate limit 10/hour per user and IP | `{ target_type: 'report' | 'message' | 'profile', target_id, reason, note? }` | `201 { id, duplicate: false }` or `200 { id, duplicate: true }` | `VALIDATION`, `FORBIDDEN` (message target and not a participant; your own listing, any manager of it; your own profile), `RATE_LIMITED` |
 | `GET /v1/admin/abuse-reports` | moderator, aal2 | `?status&target_type&cursor` | `{ items, next_cursor }` | `AAL2_REQUIRED` |
 | `GET /v1/admin/moderation-flags` | moderator, aal2 | `?cursor` | `{ items, next_cursor }` | `AAL2_REQUIRED` |
 
-`AdminAbuseReport` and `ModerationFlag` (admin list items) = the table columns above (ids, reason/kind, target, `note`/`details`, status, timestamps; reporter shown as id only), defined in `packages/types/src/domain/` (TASK-6.5).
+`AdminAbuseReport` and `ModerationFlag` (admin list items) = the table columns above (ids, reason/kind, target, `note`/`details`, status, timestamps; reporter shown as id only), defined in `packages/types/src/domain/` (TASK-6.5). Both also carry `target_code`: the short code of the listing behind the target (the listing itself, or the listing a message's conversation is about; null for profiles and pets), so admin rows link to `/r/<code>` (CH-259).
 
 Service rules: reports from accounts younger than 24 h weigh 0.5; when the weighted sum of open reports on a `report` target reaches `abuse.auto_hide_threshold` (3) the report becomes `hidden`, a `moderation_flags` row `auto_hidden` is written, `photo.publish` unpublishes its photos and the managers get `report_hidden` (C10).
 
@@ -37,6 +37,8 @@ Service rules: reports from accounts younger than 24 h weigh 0.5; when the weigh
 
 ## Moderation actions
 
+`AbuseDomain.restoreReport({ id, note? }, ctx)` (staff or system ctx; `CONFLICT` unless the report is hidden): hidden → visible, its open reports become `dismissed`, its open `auto_hidden` flag is resolved, `photo.publish` runs, audit `report.restore`. The moderation queue (TASK-62) calls it to restore a listing, so one new report does not hide it again (CH-260).
+
 Releasing a held report calls `ReportsDomain.releaseReport({ id }, ctx)` (moderator, admin or system ctx; `CONFLICT` when the report is not held): `held` → `visible`, then queues `photo.publish`, `match.report` and, for lost reports, `alerts.fanout` (CH-196).
 
 ## Change log
@@ -44,3 +46,4 @@ Releasing a held report calls `ReportsDomain.releaseReport({ id }, ctx)` (modera
 | Version | Date | Change |
 |---|---|---|
 | 1.1 | 2026-10-18 | CH-196: ReportsDomain.releaseReport for held reports |
+| 1.2 | 2026-10-18 | CH-259: target_code on admin items, FORBIDDEN for own listing or profile; CH-260: AbuseDomain.restoreReport |

@@ -118,7 +118,7 @@ UI: debounce 300 ms, minimum 3 characters, abort the previous request; labels ar
 
 ```ts
 type LatLng = { lat: number; lng: number }
-type Marker = { id: string; position: LatLng; kind: 'lost'|'found'|'sighted'|'reunited'|'me'; label: string /* a11y */; boosted?: boolean }
+type Marker = { id: string; position: LatLng; kind: 'lost'|'found'|'sighted'|'reunited'|'me'; label: string /* a11y */; boosted?: boolean; photoUrl?: string /* public 1:1 thumb, for the system §9 photo avatar */ }
 type Circle = { id: string; center: LatLng; radiusM: number; kind: 'area'|'alert' }
 type Path   = { id: string; points: LatLng[]; numbered?: boolean }              // FR-017 (M3)
 
@@ -128,6 +128,7 @@ type Path   = { id: string; points: LatLng[]; numbered?: boolean }              
   onViewportChange?(bbox: [w,s,e,n], zoom: number): void        // debounced 300 ms
   onMarkerPress?(id: string): void
   textAlternative: ReactNode                                     // required: list rendered for SR/keyboard users (web: visually adjacent; mobile: accessible list toggle)
+  bottomInset?: number                                           // px an overlay covers at the bottom (e.g. the P4 list sheet at its current snap): the attribution and the list overlay's end padding stay above it, so it is never covered. Mobile has it (TASK-15.4); the web sheet pattern below `lg` needs the same
   height?: number | string  testID?: string />
 
 <LocationPicker
@@ -140,6 +141,8 @@ type Path   = { id: string; points: LatLng[]; numbered?: boolean }              
 
 useFuzzedArea(report: PublicReport): Circle                      // convenience for detail pages
 ```
+
+Until `photoUrl` is drawn, mobile renders the avatar as a 44 px `status-<kind>-subtle` disc inside the 3 px status ring and halo; found and sighted then differ by ring hue only on the map (the list carries the status word) (CH-276).
 - Style: `buildMapStyle(mode)` from `@zivali/tokens/map-style` (OpenFreeMap "positron" recoloured with the `map-*` tokens, calm layer set; `detail: true` on detail maps). Markers per `docs/design/system.md` §9: photo avatar with a `marker-<kind>` ring for found/sighted, lost as a fuzzed `marker-area` disc with avatar (never an exact pin), clusters as count discs, "you" dot only after permission; status is never colour alone. Attribution always visible.
 - Keyboard (web): map focusable, arrow keys pan, +/- zoom; markers reachable through the text alternative list.
 - Locations outside Slovenia: picker shows a notice (FR-004 edge).
@@ -170,3 +173,4 @@ useFuzzedArea(report: PublicReport): Circle                      // convenience 
 | 1.2 | 2026-10-15 | CH-117: seeder upserts; geo lookup via `$queryRaw` + `Prisma.sql` (no TypedSQL), `extensions.geography`, lat/lng validated with `LatLng` first |
 | 1.3 | 2026-10-15 | CH-131: fixed public centre when only the radius changes, seed = HMAC(FUZZ_SECRET, report_id:lat6:lng6), D = 0.75 × min radius × sqrt(0.16 + 0.84u), public slugs from public_point, FUZZ_SECRET rotation note |
 | 1.4 | 2026-10-18 | CH-147: lost offset range 150–410 m; residual risk of averaging ~10 reports from one spot (~24 m median), the 150 m found radius is the real limit |
+| 1.5 | 2026-10-18 | CH-275: MapView.bottomInset; CH-276: Marker.photoUrl |

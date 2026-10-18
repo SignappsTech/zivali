@@ -1,6 +1,6 @@
 # ADR-016: One Hetzner VPS with Docker Compose and Caddy; Supabase Free; R2; GitHub Actions; `pnpm verify` locally
 
-- Status: Accepted (revised 2026-10-15 for brief v1.0; replaces the Vercel version; amended 2026-10-18 with the as-built decisions below, CH-151, CH-158) · Owner: Tech Lead
+- Status: Accepted (revised 2026-10-15 for brief v1.0; replaces the Vercel version; amended 2026-10-18 with the as-built decisions below, CH-151, CH-158, CH-214) · Owner: Tech Lead
 - Source: brief v1.0 §Technical (hosting about €5–10/month), NFR-AVAIL, NFR-DEVX, TASK-4, TASK-5, R-001, R-015
 
 ## Decision
@@ -22,6 +22,7 @@
 - **Server**: Hetzner CAX11 (arm64), not CX22. The deploy user is the only login; root login and passwords are off. Port 22 is open to the admin IP only, plus a temporary CI rule that `always()` `--close-ssh` removes (all temporary port-22 rules) after the run.
 - **Edge**: nginx + certbot with the DNS-01 challenge (Cloudflare), one edge project per VPS, instead of Caddy. Hostnames: staging `staging.najdimo.si` / `api-staging.najdimo.si`; production `najdimo.si` (+ `www`) / `api.najdimo.si`; `media.najdimo.si` = the R2 custom domain. Env files live under `/opt/zivali`.
 - **No registry (no GHCR)**: images are built locally or in CI with `--load` and sent as `docker save | zstd | ssh docker load`. Smoke checks hit `/ping`.
+- **Deploy sequence** (CH-214): one-off api container `prisma migrate deploy`, then a second one-off api container runs the seed (`node dist/seed/apps/api/prisma/seed.js`: reference data, idempotent, keeps admin edits; fixture seeders skip outside `APP_ENV=local`), then `up`. A failed seed fails the release like a failed migration. The api build emits `dist/seed/` (tsup.config.ts).
 - **Deploy script**: `scripts/deploy.mjs <env> --deploy` is the gate instead of `--dry-run`. Compose healthchecks; promote and rollback via `release.env` / `release.env.prev` (the last 2 tags are kept).
 
 ## Consequences
