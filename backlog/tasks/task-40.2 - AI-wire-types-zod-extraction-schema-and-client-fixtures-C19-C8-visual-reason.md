@@ -3,11 +3,11 @@ id: TASK-40.2
 title: >-
   AI wire types, zod extraction schema and client fixtures (C19, C8 visual
   reason)
-status: In Progress
+status: Done
 assignee:
   - '@backend-dev'
 created_date: '2026-10-18 21:22'
-updated_date: '2026-10-18 22:14'
+updated_date: '2026-10-18 22:32'
 labels:
   - be
   - 'est:S'
