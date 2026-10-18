@@ -1,11 +1,11 @@
 ---
 id: TASK-114.7
 title: Poster PDF and square image file names carry the language
-status: In Progress
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-16 14:15'
-updated_date: '2026-10-18 04:05'
+updated_date: '2026-10-18 04:15'
 labels:
   - bug
   - fe
