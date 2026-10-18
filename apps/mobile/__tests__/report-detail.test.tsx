@@ -230,6 +230,8 @@ describe('report detail (P9 mobile)', () => {
 		expect(screen.getByLabelText('Barva: rjava, bela, dvobarvna')).toBeOnTheScreen();
 		expect(screen.getByLabelText('Velikost: srednja')).toBeOnTheScreen();
 		expect(screen.getByLabelText('Čip: Čip vpisan')).toBeOnTheScreen();
+		// The public read model only says a collar was described (CH-308a).
+		expect(screen.getByLabelText('Ovratnica: opisana')).toBeOnTheScreen();
 		expect(screen.getByRole('heading', { name: r.about_lost })).toBeOnTheScreen();
 		expect(screen.getByText(lost.circumstances!)).toBeOnTheScreen();
 		// Photos carry their alt text; the area is named from the reverse lookup of the public point.
@@ -276,6 +278,12 @@ describe('report detail (P9 mobile)', () => {
 		const { features } = screen.getAllByTestId('GeoJSONSource:me', { includeHiddenElements: true })[0]!.props
 			.data as { features: unknown[] };
 		expect(features).toEqual([]);
+	});
+
+	test('no "Ovratnica" fact when no collar was described', async () => {
+		await open({ data: { ...lost, collar_described: false } });
+		await screen.findByRole('button', { name: /^Odpri zemljevid/ });
+		expect(screen.queryByText(r.fact_collar)).toBeNull();
 	});
 
 	test('a lost report with a reward shows "Nagrada" with the reward scam warning (AC 5)', async () => {
@@ -391,7 +399,7 @@ describe('report detail (P9 mobile)', () => {
 			conversation = () => mockError('RATE_LIMITED', 'RATE_LIMITED', { retry_after_s: 3600 });
 			await open({ data: lost });
 			await fireEvent.press(screen.getByRole('button', { name: r.action_message }));
-			expect(await screen.findByRole('status')).toHaveTextContent(sl.errors.RATE_LIMITED_generic);
+			expect(await screen.findByRole('status')).toHaveTextContent(sl.report.contact_limited);
 			expect(screen.queryByRole('alert')).toBeNull();
 			expect(screen.queryByText('conversation screen')).toBeNull();
 		});

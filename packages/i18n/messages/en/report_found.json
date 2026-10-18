@@ -31,6 +31,7 @@
 	"link_invalid_body": "The report may be closed or deleted. If you gave an email address, we can send you the link again.",
 	"resend_title": "Send me my private link",
 	"resend_done": "If this email address belongs to a report, we have sent the link to it. Please check your spam folder too.",
+	"resend_done_manager": "We have sent the link to the email address you gave when you reported. Please check your spam folder too.",
 	"resend_no_email": "You did not give an email address when you reported, so we cannot send the link.",
 	"summary_place": "Place",
 	"expiry_note": "{days, plural, one {The report expires in # day.} other {The report expires in # days.}} If the animal is still with you or you still see it, keep the report open.",

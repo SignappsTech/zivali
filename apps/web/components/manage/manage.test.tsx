@@ -268,7 +268,7 @@ describe('ManagePage (P7, C7)', () => {
 			'POST /v1/reports/:code/manage-link/resend': () => (email ? undefined : mockError('CONFLICT')),
 		});
 		fireEvent.click(await screen.findByRole('button', { name: sl.report_found.resend_title }));
-		expect(await screen.findByText(sl.report_found.resend_done)).toBeTruthy();
+		expect(await screen.findByText(sl.report_found.resend_done_manager)).toBeTruthy();
 		expect(api.calls.filter((call) => call.path === `/v1/reports/${CODE}/manage-link/resend`)).toHaveLength(1);
 
 		email = false;

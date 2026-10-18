@@ -63,7 +63,7 @@ const choose = async (filter: string, option: string) => {
 };
 
 describe('AbuseReports', () => {
-	it('lists reports with target, reason, weight, status and date, newest first, linked to the listing', async () => {
+	it('lists reports with target, reason, weight, status and date, newest first, linked to the report', async () => {
 		renderPage();
 		expect(screen.getByRole('heading', { level: 1, name: a.nav_abuse })).toBeTruthy();
 		const table = await screen.findByRole('table', { name: a.nav_abuse });
@@ -77,17 +77,17 @@ describe('AbuseReports', () => {
 		);
 		const [listing, message, profile] = within(table).getAllByRole('row').slice(1);
 		expect(cells(listing!)).toEqual([
-			'Objava Hk3vT9qP',
+			'Prijava Hk3vT9qP',
 			`${a.abuse.reason_scam}Asks for money upfront`,
 			'1',
 			a.abuse.status_open,
 			'14. 10. 2026 18:10',
 		]);
-		expect(within(listing!).getByRole('link', { name: 'Objava Hk3vT9qP' }).getAttribute('href')).toBe(
+		expect(within(listing!).getByRole('link', { name: 'Prijava Hk3vT9qP' }).getAttribute('href')).toBe(
 			'/r/Hk3vT9qP'
 		);
-		// A message links to the listing its conversation is about; a profile has no link.
-		expect(within(message!).getByRole('link', { name: 'Sporočilo o objavi Lm4wX8rS' }).getAttribute('href')).toBe(
+		// A message links to the report its conversation is about; a profile has no link.
+		expect(within(message!).getByRole('link', { name: 'Sporočilo o prijavi Lm4wX8rS' }).getAttribute('href')).toBe(
 			'/r/Lm4wX8rS'
 		);
 		expect(cells(message!).slice(1, 4)).toEqual([a.abuse.reason_spam, '0,5', a.abuse.status_open]);
@@ -108,7 +108,7 @@ describe('AbuseReports', () => {
 		expect(within(table).getAllByRole('columnheader')[1]!.textContent).toBe(a.abuse.col_kind);
 		const [hidden, chip] = within(table).getAllByRole('row').slice(1);
 		expect(cells(hidden!)).toEqual([
-			'Objava Hk3vT9qP',
+			'Prijava Hk3vT9qP',
 			a.abuse.kind_auto_hidden,
 			'3',
 			a.abuse.status_open,

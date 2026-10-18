@@ -22,7 +22,7 @@
 	"share_text": "Žival je spet doma. Hvala vsem, ki ste delili in pomagali.",
 	"finder_thanks_account": "Ustvari račun in obdrži svoje prijave",
 	"close_title": "Zaključite iskanje?",
-	"close_body": "Opozorila in opomniki se ustavijo. Iskanje lahko v 7 dneh ponovno odprete.",
+	"close_body": "Opozorila in opomniki se ustavijo. Iskanje lahko v {days, plural, one {# dnevu} two {# dneh} few {# dneh} other {# dneh}} ponovno odprete.",
 	"close_reason_label": "Razlog",
 	"close_reason_home": "Žival je doma po drugi poti",
 	"close_reason_stopped": "Ne iščem več",

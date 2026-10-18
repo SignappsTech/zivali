@@ -241,7 +241,10 @@ describe('owner actions on the report page (P9 slot A, P14)', () => {
 		await fireEvent.press(screen.getByRole('menuitem', { name: r.owner_close }));
 
 		expect(screen.getByRole('heading', { name: l.close_title })).toBeOnTheScreen();
-		expect(screen.getByText(l.close_body)).toBeOnTheScreen();
+		// The reopen window comes in as {days} (C4 lifecycle.reopen_days, CH-268).
+		expect(
+			screen.getByText('Opozorila in opomniki se ustavijo. Iskanje lahko v 7 dneh ponovno odprete.')
+		).toBeOnTheScreen();
 		const confirm = screen.getByRole('button', { name: l.close_confirm });
 		expect(confirm).toBeDisabled();
 		for (const key of ['home', 'stopped', 'mistake', 'other'] as const)

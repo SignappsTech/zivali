@@ -125,6 +125,20 @@ secure storage in the app) the same way. In this text we call them all "items".
 				<td>until the tab closes</td>
 			</tr>
 			<tr>
+				<td>
+					<code>zz_support:&lt;moment&gt;:&lt;short code&gt;</code> and{' '}
+					<code>zz_support:payment:&lt;id&gt;</code> (session storage)
+				</td>
+				<td>Najdimo</td>
+				<td>
+					Remembers that you skipped or paid the contribution ask for a report (<code>skipped</code>,{' '}
+					<code>paid</code>), and that the page has already seen the answer after you return from checkout (
+					<code>settled</code>), so the ask is not shown again. Holds no personal data.
+				</td>
+				<td>necessary</td>
+				<td>until you close the tab</td>
+			</tr>
+			<tr>
 				<td>Device identifier (local storage)</td>
 				<td>Najdimo</td>
 				<td>Random identifier for abuse limits (rate limiting).</td>

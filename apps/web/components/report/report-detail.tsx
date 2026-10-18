@@ -55,8 +55,11 @@ function Facts({ report }: { report: DetailReport }) {
 	const facts = [
 		[t('fact_colour'), colour],
 		[t('fact_size'), report.size ? lower(ta(`size.${report.size}`)) : ''],
-		// The collar text is a manager field; the public view only knows that one was described.
-		[t('fact_collar'), report.is_mine ? (report.collar ?? '') : ''],
+		// The collar text is a manager field; the public view only knows that one was described (CH-308a).
+		[
+			t('fact_collar'),
+			report.is_mine ? (report.collar ?? '') : report.collar_described ? t('collar_described') : '',
+		],
 		[t('fact_chip'), report.has_chip ? t('chip_on_file') : t('chip_unknown')],
 		[t('fact_sex'), report.sex && report.sex !== 'unknown' ? lower(ta(`sex.${report.sex}`)) : ''],
 	].filter(([, value]) => value);

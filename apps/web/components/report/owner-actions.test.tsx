@@ -136,7 +136,10 @@ describe('OwnerActions (P9 slot A for managers, P14)', () => {
 	])('closes with the reason "%s" (%s)', async (label, reason) => {
 		const api = show(lost);
 		const dialog = await openClose();
-		expect(within(dialog).getByText(sl.lifecycle.close_body)).toBeTruthy();
+		// The reopen window comes in as {days} (C4 lifecycle.reopen_days, CH-268).
+		expect(
+			within(dialog).getByText('Opozorila in opomniki se ustavijo. Iskanje lahko v 7 dneh ponovno odprete.')
+		).toBeTruthy();
 		const confirm = within(dialog).getByRole('button', { name: 'Zaključi iskanje' }) as HTMLButtonElement;
 		expect(confirm.disabled).toBe(true);
 		fireEvent.click(within(dialog).getByRole('radio', { name: label }));

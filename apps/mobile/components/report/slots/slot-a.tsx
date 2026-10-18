@@ -166,6 +166,7 @@ export function SlotA({ report, offline, children }: ReportSlotProps) {
  * chat_started fires in the conversation, with the first message.
  */
 function useStartContact(code: string) {
+	const t = useTranslations('report');
 	const router = useRouter();
 	const errorText = useErrorText();
 	const { me } = useSession();
@@ -185,7 +186,8 @@ function useStartContact(code: string) {
 			const refusal = (failure as Partial<QueryError> | null)?.data?.code;
 			if (refusal === 'UNVERIFIED_EMAIL')
 				router.push({ pathname: '/auth/check-email', params: { email: me?.email ?? '' } });
-			else setNote({ limited: refusal === 'RATE_LIMITED', text: errorText(failure) });
+			else if (refusal === 'RATE_LIMITED') setNote({ limited: true, text: t('contact_limited') });
+			else setNote({ limited: false, text: errorText(failure) });
 		} finally {
 			starting.current = false;
 		}

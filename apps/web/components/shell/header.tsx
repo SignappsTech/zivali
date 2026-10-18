@@ -90,6 +90,10 @@ export function SiteHeader({ viewer }: { viewer: Viewer | null }) {
 			? { route: '/my-pets', href: href('/my-pets'), label: t('my_pets_reports') }
 			: { route: '/how-it-works', href: href('/how-it-works'), label: t('how_it_works') },
 	];
+	// The lg bar has room for the short "Moje živali" only; the menu sheet shows the full label (P1, CH-150).
+	const sheetLinks = links.map((link) =>
+		link.route === '/my-pets' ? { ...link, label: t('my_pets_reports_full') } : link
+	);
 	const report = (extra: string): [string, string] => [
 		cn(buttonVariants({ size: 'sm' }), extra),
 		cn(buttonVariants({ size: 'sm', variant: 'secondary' }), extra),
@@ -259,7 +263,11 @@ export function SiteHeader({ viewer }: { viewer: Viewer | null }) {
 							</div>
 							<div className="px-5 pt-3 pb-10 md:px-6 md:pt-0">
 								<nav aria-label={t('main_label')}>
-									<NavLinks links={links} className="grid gap-1" linkClassName={sheetLinkClass} />
+									<NavLinks
+										links={sheetLinks}
+										className="grid gap-1"
+										linkClassName={sheetLinkClass}
+									/>
 								</nav>
 								{viewer ? (
 									<div role="group" aria-label={t('account_menu')} className="-mx-3 mt-7">

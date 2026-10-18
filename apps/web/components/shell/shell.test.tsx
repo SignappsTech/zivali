@@ -143,15 +143,12 @@ describe('SiteHeader', () => {
 			expect(button.dataset.variant).toBe('secondary');
 	});
 
-	it('signed in: My pets and reports, inbox and the account menu instead of Sign in (EN)', async () => {
+	it('signed in: My pets (full label in the menu sheet), inbox and the account menu instead of Sign in (EN)', async () => {
 		renderAt('/en/my-pets', <SiteHeader viewer={{ initials: 'AN', aal2: false }} />, 'en');
 		const header = screen.getByRole('banner');
 
-		const main = within(header).getByRole('navigation', { name: en.nav.main_label });
-		expect(within(main).getByRole('link', { current: 'page' })).toHaveProperty(
-			'textContent',
-			'My pets and reports'
-		);
+		// The lg bar has the short label, the menu sheet the full one (CH-150).
+		expect(currentLinks(en.nav.main_label)).toEqual([['My pets'], ['My pets and reports']]);
 		// The inbox label comes with the lazily loaded unread dot (TASK-90.5).
 		expect((await within(header).findByRole('link', { name: en.nav.inbox })).getAttribute('href')).toBe(
 			'/en/inbox'

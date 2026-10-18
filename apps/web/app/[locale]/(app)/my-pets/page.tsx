@@ -12,7 +12,7 @@ export async function generateMetadata({ params }: PageProps<'/[locale]/my-pets'
 }
 
 /**
- * P8 My pets (C15 /moje-zivali), the target of the signed-in header link "Moje živali in prijave"; the layout has
+ * P8 My pets (C15 /moje-zivali), the target of the signed-in header link "Moje živali" ("Moje živali in prijave" in the menu sheet); the layout has
  * checked the account. The "Moje prijave" section follows the list (P8 W1).
  */
 export default function MyPetsPage() {

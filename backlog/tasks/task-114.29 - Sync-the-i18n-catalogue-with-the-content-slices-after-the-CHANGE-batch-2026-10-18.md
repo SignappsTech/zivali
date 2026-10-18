@@ -3,10 +3,11 @@ id: TASK-114.29
 title: >-
   Sync the i18n catalogue with the content slices after the CHANGE batch
   (2026-10-18)
-status: To Do
+status: In Progress
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-18 21:08'
+updated_date: '2026-10-18 21:38'
 labels:
   - fe
   - 'est:S'
@@ -27,7 +28,16 @@ The content strategist's CHANGE batch (merge a6de0812, commit 6f7dc6c0) changed 
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Every catalogue key named in the listed CHANGEs matches its slice in SL and EN; i18n check passes
+- [x] #1 Every catalogue key named in the listed CHANGEs matches its slice in SL and EN; i18n check passes
 - [ ] #2 Code passes {days} to lifecycle.close_body and report.owner_disagree; unit tests updated
 - [ ] #3 Web and mobile render the new keys where the slices place them
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+## Packet
+Branch: agent/TASK-114.29-content-sync
+
+AC2: close_body gets {days: REOPEN_DAYS} on web and mobile. report.owner_disagree has no consumer on web or mobile (only the catalogue takes {days}), so the {days} part of AC2 applies when the owner-disagree banner is built. AC3: nav.my_pets_reports_full (menu sheet), report.collar_described, report.contact_limited and report_found.resend_done_manager render. location.no_results_list is in the catalogue but has no placement: the mobile home area uses the map picker since TASK-23.3 (CHANGE filed on main, backlog/changes.md). The account menu has no my-pets row, so the full label shows only in the menu sheet. AC2 and AC3 are left unticked for those gaps.
+<!-- SECTION:NOTES:END -->

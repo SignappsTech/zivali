@@ -40,6 +40,7 @@ import { Icon } from '@/components/ui/icon';
 import { toast } from '@/components/ui/sonner';
 import { statusIcons } from '@/components/ui/status-label';
 import { Text } from '@/components/ui/text';
+import { REOPEN_DAYS } from '@/components/report/lifecycle';
 import { trackReunited } from '@/components/report/lifecycle-helpers';
 import { claimManageLink } from '@/lib/anonymous';
 import { isOnline } from '@/lib/net';
@@ -52,8 +53,6 @@ const RETRY_MS = 60_000;
 /** Found and sighted reports expire after 30 idle days (C4); the note shows from day 25. */
 const EXPIRY_DAYS = 30;
 const NOTICE_DAYS = 5;
-/** Reopen is possible within 7 days of closing (C4). */
-const REOPEN_DAYS = 7;
 
 type Claim =
 	| { state: 'claiming' }
