@@ -155,12 +155,17 @@ for (const colorScheme of ['light', 'dark'] as const)
 		baseURL,
 	}) => {
 		const sent = await signIn(page, baseURL!);
+		await page.route(/\/v1\/alert-subscription$/, (route) => route.fulfill({ json: null }));
 		await page.emulateMedia({ colorScheme });
+		// The old URL (and the emails' "manage notifications" link) lands on the open section of the alerts page.
 		await page.goto('/racun/obvestila');
+		await expect(page).toHaveURL(/\/racun\/opozorila#kako-vas-obvestimo$/);
 
-		await expect(page).toHaveTitle('Obvestila · Najdimo');
-		await expect(page.getByRole('heading', { level: 1 })).toHaveText('Obvestila');
-		await expect(page.getByRole('switch')).toHaveCount(12);
+		await expect(page).toHaveTitle('Opozorila v bližini · Najdimo');
+		await expect(page.getByRole('heading', { level: 1 })).toHaveText('Opozorila v bližini');
+		await expect(page.getByRole('button', { name: 'Kako vas obvestimo' })).toHaveAttribute('aria-expanded', 'true');
+		const section = page.getByRole('region', { name: 'Kako vas obvestimo' });
+		await expect(section.getByRole('switch')).toHaveCount(12);
 		// No lock (TASK-114.14): in app turns off for matches and messages too, with no note.
 		await expect(page.getByRole('switch', { name: 'Možna ujemanja: V aplikaciji' })).toBeEnabled();
 		await expect(page.getByRole('switch', { name: 'Sporočila: V aplikaciji' })).toBeEnabled();
@@ -186,6 +191,15 @@ for (const colorScheme of ['light', 'dark'] as const)
 		await expect.poll(() => sent.me.at(-1)).toEqual({ quiet_from: null, quiet_to: null });
 		await expectNoAxeViolations(page);
 	});
+
+test('/en/account/notifications goes to the open section of /en/account/alerts', async ({ page, baseURL }) => {
+	await signIn(page, baseURL!);
+	await page.route(/\/v1\/alert-subscription$/, (route) => route.fulfill({ json: null }));
+	await page.goto('/en/account/notifications');
+	await expect(page).toHaveURL(/\/en\/account\/alerts#kako-vas-obvestimo$/);
+	await expect(page.getByRole('button', { name: 'How we tell you' })).toHaveAttribute('aria-expanded', 'true');
+	await expect(page.getByRole('switch', { name: 'Messages: By email' })).toBeVisible();
+});
 
 // TASK-114.10: the tabs show where the unread items are, and /nabiralnik without ?view= opens there (Pogovori first).
 test('without ?view= the inbox opens where the unread items are; tabs and header show them', async ({
