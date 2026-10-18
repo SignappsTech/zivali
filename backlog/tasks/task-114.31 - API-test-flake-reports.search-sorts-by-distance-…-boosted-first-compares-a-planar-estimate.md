@@ -3,10 +3,11 @@ id: TASK-114.31
 title: >-
   API test flake: reports.search 'sorts by distance … boosted first' compares a
   planar estimate
-status: To Do
+status: Done
 assignee:
   - '@backend-dev'
 created_date: '2026-10-18 21:49'
+updated_date: '2026-10-18 21:57'
 labels:
   - bug
   - be
