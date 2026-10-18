@@ -3,11 +3,11 @@ id: TASK-114.16
 title: >-
   Accessibility statement: microenterprise exemption (EAA, ZDPSI); decide
   voluntary page or remove
-status: To Do
+status: Done
 assignee:
   - '@content-strategist'
 created_date: '2026-10-16 15:40'
-updated_date: '2026-10-17 09:24'
+updated_date: '2026-10-18 05:16'
 labels:
   - legal
   - content
