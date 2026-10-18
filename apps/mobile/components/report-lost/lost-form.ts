@@ -51,11 +51,17 @@ export const initialValues: LostValues = {
 	reward_note: '',
 };
 
-/** A saved pet skips the details, which come from the pet (the photos stay: C5 pet photos cannot join a report). */
-export const stepsFor = (pet?: string): Step[] =>
-	pet && pet !== NEW_PET
-		? ['pet', 'photos', 'where', 'when', 'what', 'review']
-		: ['pet', 'photos', 'details', 'where', 'when', 'what', 'review'];
+/**
+ * The pet step asks only when there are saved pets (`hasPets`); without them the flow starts at the photos with the
+ * new-pet path. A saved pet skips the details, which come from the pet (the photos stay: C5 pet photos cannot join a
+ * report).
+ */
+export const stepsFor = (pet: string | undefined, hasPets: boolean): Step[] =>
+	!hasPets
+		? ['photos', 'details', 'where', 'when', 'what', 'review']
+		: pet && pet !== NEW_PET
+			? ['pet', 'photos', 'where', 'when', 'what', 'review']
+			: ['pet', 'photos', 'details', 'where', 'when', 'what', 'review'];
 
 /** The form fields each step checks on Naprej (photos are the PhotoPicker's, checked by the flow). */
 export const STEP_FIELDS: Record<Step, (keyof LostValues)[]> = {

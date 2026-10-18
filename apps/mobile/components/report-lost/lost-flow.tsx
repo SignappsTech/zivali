@@ -38,6 +38,7 @@ import type { LatLng } from '@/components/map/features';
 import { PetBasicsFields, PetChipFields, PetLooksFields, PetNotesFields } from '@/components/pets/pet-fields';
 import { PhotoPicker } from '@/components/photos/photo-picker';
 import { clearPhotoDraft, type PickedPhoto } from '@/components/photos/use-photo-uploads';
+import { MenuRow } from '@/components/shell/parts';
 import { PermissionPrimer } from '@/components/shell/permission-primer';
 import {
 	AlertDialog,
@@ -159,39 +160,36 @@ function PetThumb({ pet }: { pet: Pet }) {
 	);
 }
 
-/** Step 1: a row per saved pet plus "Druga žival"; signed out or without pets only "Vnesi podatke". */
-function PetStep({ pets, loading }: { pets: Pet[]; loading: boolean }) {
+/**
+ * Step 1, only with saved pets: a row per saved pet plus "Druga žival". One press chooses and moves on (buttons, not
+ * radios); the choice is marked when the owner comes back.
+ */
+function PetStep({ pets, onChoose }: { pets: Pet[]; onChoose: (pet: string) => void }) {
 	const t = useTranslations('report_lost');
 	const ta = useTranslations('attributes');
 	const { field, fieldState } = useController<LostValues, 'pet'>({ name: 'pet' });
 	return (
 		<View className="mt-8 gap-3">
-			<RadioGroup
-				value={field.value}
-				onValueChange={field.onChange}
-				aria-label={t('pet_title')}
-				className="gap-3"
-			>
-				{pets.map((pet) => (
-					<ChoiceRow
-						key={pet.id}
-						value={pet.id}
-						title={`${pet.name} · ${ta(`species.${pet.species}`)}`}
-						icon={<PetThumb pet={pet} />}
-					/>
-				))}
-				{loading ? <Skeleton className="h-16 rounded-row" /> : null}
-				<ChoiceRow
-					value={NEW_PET}
-					title={t(pets.length ? 'pet_other' : 'pet_enter')}
-					description={pets.length ? t('pet_other_desc') : undefined}
-					icon={
-						<View className="size-12 items-center justify-center rounded-xl bg-secondary">
-							<Icon as={PlusIcon} size={24} className="text-secondary-foreground" />
-						</View>
-					}
+			{pets.map((pet) => (
+				<MenuRow
+					key={pet.id}
+					current={field.value === pet.id}
+					title={`${pet.name} · ${ta(`species.${pet.species}`)}`}
+					icon={<PetThumb pet={pet} />}
+					onPress={() => onChoose(pet.id)}
 				/>
-			</RadioGroup>
+			))}
+			<MenuRow
+				current={field.value === NEW_PET}
+				title={t('pet_other')}
+				description={t('pet_other_desc')}
+				icon={
+					<View className="size-12 items-center justify-center rounded-xl bg-secondary">
+						<Icon as={PlusIcon} size={24} className="text-secondary-foreground" />
+					</View>
+				}
+				onPress={() => onChoose(NEW_PET)}
+			/>
 			{fieldState.error ? <FieldError>{t('pet_required')}</FieldError> : null}
 		</View>
 	);
@@ -598,7 +596,8 @@ function useTrackSubmit() {
 
 /**
  * P6 report-lost flow (FR-005): one question per screen in the flow shell (back, step bars, close), Naprej sticky at the
- * bottom. A saved pet takes pet, photos, where, when, what happened, review; a new pet adds the details. The draft
+ * bottom. A saved pet takes pet, photos, where, when, what happened, review; a new pet adds the details; without saved
+ * pets (or signed out) there is no pet step. The draft
  * (C17) is saved on every step; publishing calls create_report (C4) and handles DUPLICATE_OPEN_REPORT by offering to
  * update the open search. Lost reports need an account, so they are sent online (no outbox, C17), and the AuthGate
  * opens at Publish for a signed-out visitor. No ad in the flow (C15).
@@ -609,6 +608,7 @@ export function LostFlow() {
 	const insets = useSafeAreaInsets();
 	const errorText = useErrorText();
 	const tErrors = useTranslations('errors');
+	const tCommon = useTranslations('common');
 	const trackSubmit = useTrackSubmit();
 	const { gate, me } = useRequireAuth();
 	const petList = useListPetsQuery(gate === 'ok' ? undefined : skipToken);
@@ -626,8 +626,13 @@ export function LostFlow() {
 		defaultValues: initialValues,
 	});
 	const values = useWatch({ control: form.control }) as LostValues;
-	const [step, setStep] = React.useState<Step>('pet');
-	const steps = stepsFor(values.pet);
+	const [chosen, setStep] = React.useState<Step>();
+	// Signed out or without saved pets there is nothing to choose: the flow starts at the photos. Until the list is in,
+	// the first step is not known (`starting`: a placeholder, so no question shows that then goes away).
+	const hasPets = pets.length > 0;
+	const step = chosen ?? (hasPets || petsLoading ? 'pet' : 'photos');
+	const starting = !chosen && !hasPets && petsLoading;
+	const steps = stepsFor(values.pet, hasPets);
 	const index = Math.max(0, steps.indexOf(step));
 	// Errors show once Naprej was pressed on the step and then follow every change.
 	const [attempted, setAttempted] = React.useState(false);
@@ -669,7 +674,7 @@ export function LostFlow() {
 		};
 	}, []);
 
-	// Signed out or no saved pets: "Vnesi podatke" is the only row, so it is chosen.
+	// Signed out or no saved pets: the details are entered in the flow.
 	React.useEffect(() => {
 		if (!petsLoading && !pets.length && !form.getValues('pet')) form.setValue('pet', NEW_PET);
 	}, [petsLoading, pets.length, form]);
@@ -701,6 +706,10 @@ export function LostFlow() {
 		if (step === 'photos' && !photos.length) return;
 		const fields = STEP_FIELDS[step];
 		if (fields.length && !(await form.trigger(fields, { shouldFocus: true }))) return;
+		advance();
+	};
+	const choose = (id: string) => {
+		form.setValue('pet', id);
 		advance();
 	};
 	const back = () => (index > 0 ? go(steps[index - 1]!) : setClosing(true));
@@ -904,8 +913,16 @@ export function LostFlow() {
 						keyboardShouldPersistTaps="handled"
 						contentContainerClassName="grow px-5 pb-8 pt-2"
 					>
-						{step !== 'where' ? <Heading key={step}>{titles[step]}</Heading> : null}
-						{step === 'pet' ? <PetStep pets={pets} loading={petsLoading} /> : null}
+						{starting ? (
+							<View accessible aria-label={tCommon('loading')} aria-busy className="gap-3">
+								<Skeleton className="mb-5 h-10 w-3/4" />
+								<Skeleton className="h-16 rounded-row" />
+								<Skeleton className="h-16 rounded-row" />
+							</View>
+						) : step !== 'where' ? (
+							<Heading key={step}>{titles[step]}</Heading>
+						) : null}
+						{step === 'pet' && !starting ? <PetStep pets={pets} onChoose={choose} /> : null}
 						<View style={step === 'photos' ? undefined : hidden}>
 							<Text className="mt-3">{t('photos_help')}</Text>
 							<PhotoPicker
@@ -968,11 +985,12 @@ export function LostFlow() {
 							>
 								{sending || awaiting ? t('publishing') : t('publish')}
 							</Button>
-						) : (
+						) : step !== 'pet' ? (
+							// The pet step moves on with its rows: no Naprej.
 							<Button size="lg" onPress={() => void next()}>
 								{t('next')}
 							</Button>
-						)}
+						) : null}
 					</View>
 				</KeyboardAvoidingView>
 			</SafeAreaView>
