@@ -271,14 +271,14 @@ test('SL: a new pet in six steps, keyboard and axe on each, one POST with the co
 	await heading(page, 'Kaj se je zgodilo?');
 	await expect(page.getByRole('radio', { name: /Samo s sporočili v aplikaciji/ })).toBeChecked();
 	await page.getByRole('switch', { name: 'Ponujam nagrado za vrnitev' }).click();
-	await page.getByRole('textbox', { name: 'Opomba (neobvezno)' }).fill('Pokličite me na 041 123 456');
+	await page.getByRole('textbox', { name: 'Opomba k nagradi (neobvezno)' }).fill('Pokličite me na 041 123 456');
 	await page.getByRole('button', { name: 'Naprej' }).click();
 	await expect(
 		page.getByText('Odstranite telefonsko številko, e-naslov, povezavo ali številko računa.', { exact: false })
 	).toBeVisible();
 	await expect(page.getByText('Nikoli nikomur ne plačajte vnaprej', { exact: false })).toBeVisible();
 	await checkStep(page);
-	await page.getByRole('textbox', { name: 'Opomba (neobvezno)' }).fill('');
+	await page.getByRole('textbox', { name: 'Opomba k nagradi (neobvezno)' }).fill('');
 	await page.getByRole('textbox', { name: 'Znesek v evrih (neobvezno)' }).fill('100');
 	await page.getByRole('button', { name: 'Naprej' }).click();
 
