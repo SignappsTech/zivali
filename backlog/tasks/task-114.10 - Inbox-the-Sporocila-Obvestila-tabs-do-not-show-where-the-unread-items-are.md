@@ -1,11 +1,11 @@
 ---
 id: TASK-114.10
 title: 'Inbox: the Sporočila/Obvestila tabs do not show where the unread items are'
-status: To Do
+status: In Progress
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-16 14:45'
-updated_date: '2026-10-17 09:24'
+updated_date: '2026-10-18 02:01'
 labels:
   - bug
   - fe

@@ -105,11 +105,25 @@ export async function countUnread(user_id: string, tx?: Tx): Promise<number> {
 	return db.notifications.count({ where: { user_id, read_at: null } });
 }
 
-/** Marks the caller's own unread rows (all, or the given ids) as read; other users' ids are ignored. */
-export async function markRead(input: { user_id: string; ids?: string[]; now: Date }, tx?: Tx): Promise<number> {
+/**
+ * Marks the caller's own unread rows (all, the given ids, or a conversation's chat_message rows) as read; other users'
+ * ids are ignored.
+ */
+export async function markRead(
+	input: { user_id: string; ids?: string[]; conversation_id?: string; now: Date },
+	tx?: Tx
+): Promise<number> {
 	const db = tx ?? prisma;
 	const { count } = await db.notifications.updateMany({
-		where: { user_id: input.user_id, read_at: null, ...(input.ids && { id: { in: input.ids } }) },
+		where: {
+			user_id: input.user_id,
+			read_at: null,
+			...(input.ids && { id: { in: input.ids } }),
+			...(input.conversation_id && {
+				type: 'chat_message',
+				payload: { path: ['conversation_id'], equals: input.conversation_id },
+			}),
+		},
 		data: { read_at: input.now },
 	});
 	return count;

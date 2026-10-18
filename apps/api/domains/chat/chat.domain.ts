@@ -249,13 +249,17 @@ export async function sendMessage(
 	});
 }
 
-/** Marks the conversation read up to now and broadcasts conversation.read to the participants. */
+/**
+ * Marks the conversation read up to now, with the caller's chat_message notifications about it, and broadcasts
+ * conversation.read to the participants.
+ */
 export async function markRead(input: { conversation_id: string }, ctx: Ctx): Promise<void> {
 	const user_id = actorId(ctx);
 	await inTransaction(ctx, async (tx) => {
 		const { conversation } = await participantOf(input.conversation_id, ctx, tx);
 		const last_read_message_id = await ChatDao.latestMessageId(conversation.id, tx);
 		await ChatDao.setLastRead(conversation.id, user_id, ctx.now, tx);
+		await NotificationsDomain.markConversationRead({ conversation_id: conversation.id }, { ...ctx, tx });
 		await broadcast(
 			`conversation:${conversation.id}`,
 			'conversation.read',

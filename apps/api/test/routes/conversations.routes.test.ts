@@ -370,13 +370,32 @@ describe('messages', () => {
 		).toBeNull();
 	});
 
-	it('marks read: unread drops to 0 and conversation.read is broadcast', async () => {
+	it('marks read: unread drops to 0, its chat_message notifications are read, conversation.read is broadcast', async () => {
 		const unread = async () =>
 			(await inbox(owner)).body.items.find((item: { id: string }) => item.id === id).unread as number;
 		expect(await unread()).toBeGreaterThan(0);
+		// Only this conversation's chat_message rows of the reader: not another conversation's, type or user's.
+		const row = (user_id: string, type: string, conversation_id: string) => ({
+			user_id,
+			type,
+			payload: { conversation_id, preview_alias: 'contact', unread_count: 1 },
+		});
+		const other = randomUUID();
+		const rows = [
+			row(owner.id, 'chat_message', id),
+			row(owner.id, 'chat_message', other),
+			row(owner.id, 'match_confirmed', id),
+			row(contact.id, 'chat_message', id),
+		];
+		const ids = await Promise.all(rows.map(async (data) => (await prisma.notifications.create({ data })).id));
 		const res = await request(app).post(`/v1/conversations/${id}/read`).set('Authorization', owner.auth);
 		expect(res.status).toBe(204);
 		expect(await unread()).toBe(0);
+		const read = await prisma.notifications.findMany({
+			where: { id: { in: ids } },
+			select: { id: true, read_at: true },
+		});
+		expect(ids.map((nid) => read.find((r) => r.id === nid)!.read_at !== null)).toEqual([true, false, false, false]);
 		if (await hasRealtime())
 			expect((await broadcasts(`conversation:${id}`)).at(-1)).toMatchObject({
 				event: 'conversation.read',
