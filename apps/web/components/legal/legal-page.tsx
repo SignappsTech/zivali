@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import type { Locale } from 'next-intl';
 import { getFormatter, getTranslations } from 'next-intl/server';
 
+import { LegalToc } from '@/components/legal/legal-toc';
 import { ContentPage, h1Class } from '@/components/shell/page';
 import { noteClass } from '@/components/shelters/classes';
 import { absoluteUrl } from '@/lib/seo';
@@ -30,9 +31,6 @@ export async function legalMetadata(locale: Locale, slug: LegalSlug): Promise<Me
 	};
 }
 
-const tocLinkClass =
-	'inline-flex min-h-11 items-center rounded-lg underline-offset-4 hover:underline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ring';
-
 // The MDX files use literal HTML tags (<h2 id>, <table>), which skip mdx-components.tsx, so the same T4 Article styles are applied to descendants here.
 export const legalBodyClass = [
 	'[&_h2]:mt-10 [&_h2]:scroll-mt-6 [&_h2]:font-display [&_h2]:text-2xl [&_h2]:font-bold [&_h2:first-child]:mt-0',
@@ -53,31 +51,10 @@ export async function LegalPage({ locale, slug }: { locale: Locale; slug: LegalS
 		getTranslations({ locale, namespace: 'legal' }),
 		getFormatter({ locale }),
 	]);
-	const toc = (
-		<ol className="grid gap-0.5">
-			{meta.headings.map(({ id, text }) => (
-				<li key={id}>
-					<a href={`#${id}`} className={tocLinkClass}>
-						{text}
-					</a>
-				</li>
-			))}
-		</ol>
-	);
-
 	return (
 		<ContentPage>
 			<div className="lg:grid lg:grid-cols-[240px_minmax(0,640px)] lg:gap-12">
-				<nav aria-label={t('toc')} className="print:hidden lg:sticky lg:top-6 lg:self-start">
-					<details className="mb-6 rounded-row bg-muted px-[18px] lg:hidden">
-						<summary className="min-h-11 cursor-pointer py-3 font-bold">{t('toc')}</summary>
-						<div className="pb-3">{toc}</div>
-					</details>
-					<div className="hidden lg:block">
-						<p className="font-bold">{t('toc')}</p>
-						<div className="mt-2">{toc}</div>
-					</div>
-				</nav>
+				<LegalToc label={t('toc')} headings={meta.headings} />
 				<article>
 					<h1 className={h1Class}>{meta.title.replace(' · Najdimo', '')}</h1>
 					<p className="mt-3 text-muted-foreground">
