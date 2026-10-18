@@ -39,7 +39,6 @@ export type ShareCopy = Record<
 	| 'languageEn'
 	| 'download'
 	| 'preparing'
-	| 'readyFile'
 	| 'print'
 	| 'qrNote'
 	| 'noPhoto'
@@ -77,7 +76,15 @@ type Props = {
 		species: EventParams['share']['species'];
 		region?: string;
 	};
-	poster: { href: Record<Locale, string>; fileName: string; lang: Locale; photo: boolean; reunited: boolean };
+	poster: {
+		href: Record<Locale, string>;
+		fileName: Record<Locale, string>;
+		/** "File: najdimo-<code>-<lang>.pdf" per language. */
+		readyFile: Record<Locale, string>;
+		lang: Locale;
+		photo: boolean;
+		reunited: boolean;
+	};
 	/** The owner's Facebook kit (open lost reports with an area name). */
 	kit: Omit<KitProps, 'copy' | 'region' | 'onCopy'> | null;
 	copy: ShareCopy;
@@ -198,7 +205,7 @@ export function PosterOptions({
 			const response = await fetch(href);
 			if (!response.ok) throw new Error(`poster ${response.status}`);
 			const file = URL.createObjectURL(await response.blob());
-			const link = Object.assign(document.createElement('a'), { href: file, download: poster.fileName });
+			const link = Object.assign(document.createElement('a'), { href: file, download: poster.fileName[lang] });
 			document.body.append(link);
 			link.click();
 			link.remove();
@@ -254,7 +261,7 @@ export function PosterOptions({
 					</a>
 				</Button>
 			</div>
-			<p className="mt-2 text-sm text-muted-foreground tabular-nums">{copy.readyFile}</p>
+			<p className="mt-2 text-sm text-muted-foreground tabular-nums">{poster.readyFile[lang]}</p>
 			<p className="mt-6 flex gap-2 text-sm text-muted-foreground">
 				<QrCodeIcon weight="bold" aria-hidden="true" className="mt-px size-[18px] shrink-0" />
 				<span>{copy.qrNote}</span>

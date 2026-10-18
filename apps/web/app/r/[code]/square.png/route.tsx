@@ -5,7 +5,7 @@ import { ImageResponse } from 'next/og';
 
 import { colors } from '@zivali/tokens/values';
 import { getPlace } from '@/lib/report';
-import { fetchPhoto, getPublicReport, posterBand, printedLink, translator } from '@/lib/share';
+import { fetchPhoto, getPublicReport, posterBand, printedLink, squareFileName, translator } from '@/lib/share';
 
 const SIZE = { width: 1080, height: 1080 };
 const STATUS_COLOUR = {
@@ -145,7 +145,7 @@ export async function GET(request: Request, { params }: RouteContext<'/r/[code]/
 			...SIZE,
 			fonts: loaded,
 			headers: {
-				'content-disposition': `inline; filename="najdimo-${report.short_code}.png"`,
+				'content-disposition': `inline; filename="${squareFileName(report.short_code, lang)}"`,
 				// Private: a shared cache must not keep a hidden or removed report's photo (C5 unpublish).
 				'cache-control': 'private, max-age=300',
 			},

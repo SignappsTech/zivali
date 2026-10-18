@@ -10,4 +10,6 @@ export const reportLink = (code: string) => `${env.NEXT_PUBLIC_APP_URL}/r/${code
 export const posterPath = (code: string, lang: Locale) => `/r/${encodeURIComponent(code)}/poster.pdf?lang=${lang}`;
 export const squarePath = (code: string, lang: Locale) => `/r/${encodeURIComponent(code)}/square.png?lang=${lang}`;
 /** No pet name in the file name, so the file is safe to forward (content P18 §1). */
-export const posterFileName = (code: string) => `najdimo-${code}.pdf`;
+/** The language is in the name, so the Slovenian and the English file do not overwrite each other. */
+export const posterFileName = (code: string, lang: Locale) => `najdimo-${code}-${lang}.pdf`;
+export const squareFileName = (code: string, lang: Locale) => `najdimo-${code}-${lang}.png`;

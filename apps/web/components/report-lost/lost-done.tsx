@@ -25,7 +25,7 @@ import { ShelterRow } from '@/components/shelters/shelter-row';
 import { Button } from '@/components/ui/button';
 import { getPathname, Link } from '@/i18n/navigation';
 import { env } from '@/lib/env';
-import { posterFileName, posterPath, reportLink, squarePath } from '@/lib/poster-link';
+import { posterFileName, posterPath, reportLink, squareFileName, squarePath } from '@/lib/poster-link';
 import { cn } from '@/lib/utils';
 
 /** The safety page's "first 24 hours" section (content P6 §10). */
@@ -112,7 +112,6 @@ export function LostDone({
 		languageEn: tt('poster.language_en'),
 		download: tt('poster.download'),
 		preparing: tt('poster.preparing'),
-		readyFile: tt('poster.ready_file', { filename: posterFileName(code) }),
 		print: tt('poster.print'),
 		qrNote: tt('poster.qr_note'),
 		noPhoto: tt('poster.no_photo'),
@@ -182,7 +181,11 @@ export function LostDone({
 						analytics={{ report_type: 'lost', species, region }}
 						poster={{
 							href: { sl: posterPath(code, 'sl'), en: posterPath(code, 'en') },
-							fileName: posterFileName(code),
+							fileName: { sl: posterFileName(code, 'sl'), en: posterFileName(code, 'en') },
+							readyFile: {
+								sl: tt('poster.ready_file', { filename: posterFileName(code, 'sl') }),
+								en: tt('poster.ready_file', { filename: posterFileName(code, 'en') }),
+							},
 							lang: locale,
 							photo: true,
 							reunited: false,
@@ -193,7 +196,7 @@ export function LostDone({
 										post: kitText('kit_post_text'),
 										media: kitText('kit_media_text'),
 										image: squarePath(code, locale),
-										imageName: `najdimo-${code}.png`,
+										imageName: squareFileName(code, locale),
 										configUrl: `${env.NEXT_PUBLIC_API_URL}/v1/config/public`,
 									}
 								: null
@@ -228,7 +231,11 @@ export function LostDone({
 					<PosterOptions
 						poster={{
 							href: { sl: posterPath(code, 'sl'), en: posterPath(code, 'en') },
-							fileName: posterFileName(code),
+							fileName: { sl: posterFileName(code, 'sl'), en: posterFileName(code, 'en') },
+							readyFile: {
+								sl: tt('poster.ready_file', { filename: posterFileName(code, 'sl') }),
+								en: tt('poster.ready_file', { filename: posterFileName(code, 'en') }),
+							},
 							lang: locale,
 							photo: true,
 							reunited: false,

@@ -4,7 +4,16 @@ import type { Locale } from '@zivali/i18n/format';
 import { ShareMenu } from '@/components/report/share-menu';
 import type { ReportSlotProps } from '@/components/report/slots/types';
 import { env } from '@/lib/env';
-import { kitTexts, posterBand, posterFileName, posterPath, reportLink, shareMessage, squarePath } from '@/lib/share';
+import {
+	kitTexts,
+	posterBand,
+	posterFileName,
+	posterPath,
+	reportLink,
+	shareMessage,
+	squareFileName,
+	squarePath,
+} from '@/lib/share';
 
 /**
  * P9 slot B: the ghost button "Deli ali natisni plakat" and its menu (P18): copy link, WhatsApp, Facebook, the Web
@@ -31,7 +40,11 @@ export function SlotB({ report, place }: ReportSlotProps) {
 			analytics={{ report_type: report.type, species: report.species, region: report.region_slug }}
 			poster={{
 				href: { sl: posterPath(code, 'sl'), en: posterPath(code, 'en') },
-				fileName: posterFileName(code),
+				fileName: { sl: posterFileName(code, 'sl'), en: posterFileName(code, 'en') },
+				readyFile: {
+					sl: t('poster.ready_file', { filename: posterFileName(code, 'sl') }),
+					en: t('poster.ready_file', { filename: posterFileName(code, 'en') }),
+				},
 				lang: locale,
 				photo: report.photos.length > 0,
 				reunited: report.status === 'reunited',
@@ -40,7 +53,7 @@ export function SlotB({ report, place }: ReportSlotProps) {
 				texts && {
 					...texts,
 					image: squarePath(code, locale),
-					imageName: `najdimo-${code}.png`,
+					imageName: squareFileName(code, locale),
 					configUrl: `${env.NEXT_PUBLIC_API_URL}/v1/config/public`,
 				}
 			}
@@ -61,7 +74,6 @@ export function SlotB({ report, place }: ReportSlotProps) {
 				languageEn: t('poster.language_en'),
 				download: t('poster.download'),
 				preparing: t('poster.preparing'),
-				readyFile: t('poster.ready_file', { filename: posterFileName(code) }),
 				print: t('poster.print'),
 				qrNote: t('poster.qr_note'),
 				noPhoto: t('poster.no_photo'),
