@@ -6,6 +6,7 @@ assignee:
   - '@design-lead'
   - '@frontend-dev'
 created_date: '2026-10-16 15:30'
+updated_date: '2026-10-18 02:00'
 labels:
   - fe
   - design
@@ -36,3 +37,9 @@ Wanted (owner's choice): the channel and quiet-hours settings as a collapsible s
 - [ ] #3 /racun/obvestila and /en/account/notifications redirect to the alerts page with the section open; email "manage notifications" links still land there
 - [ ] #4 Unit and e2e tests updated; the mobile app's settings checked for the same dead end (follow-up if different)
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+docs/design/wireframes/M-alerts-notifications.html: v1 ready for owner review (2026-10-18). Not approved yet.
+<!-- SECTION:NOTES:END -->

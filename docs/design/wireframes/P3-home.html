@@ -1,0 +1,721 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Najdimo home wireframe</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:wght@400;600;700;800&family=Bricolage+Grotesque:opsz,wght@12..96,400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  color-scheme: light dark;
+  --background: 180 15% 92.2%;
+  --foreground: 193.8 28.9% 8.8%;
+  --card: 180 33.3% 98.8%;
+  --card-foreground: 193.8 28.9% 8.8%;
+  --popover: 180 33.3% 98.8%;
+  --popover-foreground: 193.8 28.9% 8.8%;
+  --primary: 190.3 65.5% 22.7%;
+  --primary-foreground: 185 42.9% 94.5%;
+  --secondary: 184.4 44.3% 88%;
+  --secondary-foreground: 191.3 64.9% 14.5%;
+  --muted: 186 13.5% 85.5%;
+  --muted-foreground: 190.9 14.3% 30.2%;
+  --accent: 184.4 44.3% 88%;
+  --accent-foreground: 191.3 64.9% 14.5%;
+  --destructive: 353.9 70.2% 32.9%;
+  --destructive-foreground: 355.7 100% 97.3%;
+  --primary-hover: 190.8 65.6% 18.2%;
+  --primary-pressed: 191.3 64.9% 14.5%;
+  --secondary-hover: 184.6 43.3% 76.5%;
+  --secondary-pressed: 185.3 41.4% 62.5%;
+  --destructive-hover: 354.1 70.8% 25.5%;
+  --destructive-pressed: 354.1 70.1% 17.1%;
+  --border: 186 13.5% 85.5%;
+  --input: 190 10% 47.1%;
+  --ring: 188.1 63.1% 27.6%;
+  --chart-1: 188.1 63.1% 27.6%;
+  --chart-2: 38.4 89.7% 38.2%;
+  --chart-3: 17.9 71.5% 49.6%;
+  --chart-4: 144.2 54.1% 35.9%;
+  --chart-5: 319.4 46.4% 43.1%;
+  --sidebar: 191.3 64.9% 14.5%;
+  --sidebar-foreground: 185 42.9% 94.5%;
+  --sidebar-primary: 185 42.9% 94.5%;
+  --sidebar-primary-foreground: 191.3 64.9% 14.5%;
+  --sidebar-accent: 190.8 65.6% 18.2%;
+  --sidebar-accent-foreground: 185 42.9% 94.5%;
+  --sidebar-border: 190.8 65.6% 18.2%;
+  --sidebar-ring: 185 42.9% 94.5%;
+  --status-lost: 17.5 75.2% 41.2%;
+  --status-lost-foreground: 18.9 100% 96.3%;
+  --status-lost-subtle: 18.3 100% 91%;
+  --status-lost-subtle-foreground: 15.7 71.9% 25.1%;
+  --status-lost-border: 17.2 100% 72%;
+  --status-found: 146.8 56.5% 22.5%;
+  --status-found-foreground: 140 46.2% 94.9%;
+  --status-found-subtle: 140 48.4% 87.8%;
+  --status-found-subtle-foreground: 147.1 56% 17.8%;
+  --status-found-border: 141.4 42.4% 61.2%;
+  --status-sighted: 228.7 58.1% 44.9%;
+  --status-sighted-foreground: 225 88.9% 96.5%;
+  --status-sighted-subtle: 223.6 89.2% 92.7%;
+  --status-sighted-subtle-foreground: 228.4 57.2% 28.4%;
+  --status-sighted-border: 224.6 82.1% 75.9%;
+  --status-reunited: 40 92.7% 56.9%;
+  --status-reunited-foreground: 193.8 28.9% 8.8%;
+  --status-reunited-subtle: 44.8 100% 86.1%;
+  --status-reunited-subtle-foreground: 34.7 73.8% 23.9%;
+  --status-reunited-border: 40 92.7% 56.9%;
+  --premium: 317.9 47.5% 27.6%;
+  --premium-foreground: 318 50% 96.1%;
+  --premium-subtle: 313 51.1% 91.2%;
+  --premium-subtle-foreground: 316.8 46.3% 21.2%;
+  --premium-border: 318.2 48.1% 69%;
+  --verified: 190.3 65.5% 22.7%;
+  --verified-foreground: 185 42.9% 94.5%;
+  --verified-subtle: 184.4 44.3% 88%;
+  --verified-subtle-foreground: 191.3 64.9% 14.5%;
+  --warning: 40 92.7% 56.9%;
+  --warning-foreground: 193.8 28.9% 8.8%;
+  --warning-subtle: 44.8 100% 86.1%;
+  --warning-subtle-foreground: 34.7 73.8% 23.9%;
+  --warning-border: 39.6 85.1% 47.5%;
+  --provider: 0 0% 100%;
+  --provider-foreground: 0 0% 12.2%;
+  --provider-border: 140 1.3% 46.1%;
+  --qr: 0 0% 100%;
+  --qr-foreground: 193.8 28.9% 8.8%;
+  --scrim: 190 46.2% 5.1%;
+  --scrim-alpha: 0.56;
+  --marker-lost: 17.5 75.2% 41.2%;
+  --marker-found: 146.8 56.5% 22.5%;
+  --marker-sighted: 228.7 58.1% 44.9%;
+  --marker-reunited: 38.4 89.7% 38.2%;
+  --marker-me: 226.3 64.5% 54.7%;
+  --marker-cluster: 194.1 24.6% 13.5%;
+  --marker-cluster-foreground: 180 14.3% 95.9%;
+  --marker-ring: 180 33.3% 98.8%;
+  --marker-area: 17.9 71.5% 49.6%;
+  --marker-area-alpha: 0.16;
+  --map-land: 180 15% 92.2%;
+  --map-water: 188.3 40.8% 86.1%;
+  --map-park: 137.1 38.2% 89.2%;
+  --map-building: 172.5 14.8% 89.4%;
+  --map-road: 180 33.3% 98.8%;
+  --map-road-casing: 186 13.5% 85.5%;
+  --map-label: 190.9 14.3% 30.2%;
+  --map-label-halo: 180 15% 92.2%;
+  --radius: 1rem;
+  --font-display: 'Bricolage Grotesque', ui-sans-serif, system-ui, sans-serif;
+  --font-sans: 'Atkinson Hyperlegible Next', ui-sans-serif, system-ui, sans-serif;
+  --radius-button: 9999px;
+  --radius-card: calc(var(--radius) + 8px);
+  --radius-input: var(--radius);
+  --radius-row: calc(var(--radius) + 4px);
+  --radius-chip: 9999px;
+  --radius-sheet: 28px;
+  --radius-photo: calc(var(--radius) + 4px);
+  --card-shadow: none;
+  --shadow-sm: none;
+  --shadow-md: 0 2px 10px 0 rgb(16 38 43 / 0.08);
+  --shadow-lg: 0 -10px 40px -12px rgb(16 38 43 / 0.16);
+  --shadow-pop: 0 8px 24px -6px rgb(16 38 43 / 0.18);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --background: 189.2 37.1% 6.9%;
+    --foreground: 180 15% 92.2%;
+    --card: 192.6 35.8% 10.4%;
+    --card-foreground: 180 15% 92.2%;
+    --popover: 191.1 36% 14.7%;
+    --popover-foreground: 180 15% 92.2%;
+    --primary: 185.3 41.4% 62.5%;
+    --primary-foreground: 194.1 68% 9.8%;
+    --secondary: 191.3 64.9% 14.5%;
+    --secondary-foreground: 184.4 44.3% 88%;
+    --muted: 191.1 36% 14.7%;
+    --muted-foreground: 188 12% 75.5%;
+    --accent: 191.1 36% 14.7%;
+    --accent-foreground: 180 14.3% 95.9%;
+    --destructive: 354.1 82% 78.2%;
+    --destructive-foreground: 352.5 61.5% 10.2%;
+    --primary-hover: 184.6 43.3% 76.5%;
+    --primary-pressed: 184.4 44.3% 88%;
+    --secondary-hover: 190.8 65.6% 18.2%;
+    --secondary-pressed: 190.3 65.5% 22.7%;
+    --destructive-hover: 354 88.2% 86.7%;
+    --destructive-pressed: 354.7 100% 93.3%;
+    --border: 190.9 32.7% 19.8%;
+    --input: 190 10% 47.1%;
+    --ring: 185.3 41.4% 62.5%;
+    --chart-1: 185.3 41.4% 62.5%;
+    --chart-2: 40 92.7% 56.9%;
+    --chart-3: 16.8 87.3% 59.8%;
+    --chart-4: 143.3 43.5% 46.5%;
+    --chart-5: 318.2 48.1% 69%;
+    --sidebar: 190 46.2% 5.1%;
+    --sidebar-foreground: 180 15% 92.2%;
+    --sidebar-primary: 180 15% 92.2%;
+    --sidebar-primary-foreground: 193.8 28.9% 8.8%;
+    --sidebar-accent: 191.1 36% 14.7%;
+    --sidebar-accent-foreground: 180 14.3% 95.9%;
+    --sidebar-border: 191.1 36% 14.7%;
+    --sidebar-ring: 180 15% 92.2%;
+    --status-lost: 16.8 87.3% 59.8%;
+    --status-lost-foreground: 14.6 75.5% 9.6%;
+    --status-lost-subtle: 15.5 70.5% 17.3%;
+    --status-lost-subtle-foreground: 18.3 100% 91%;
+    --status-lost-border: 16.8 74.9% 32.7%;
+    --status-found: 143.3 43.5% 46.5%;
+    --status-found-foreground: 139.2 64.1% 7.6%;
+    --status-found-subtle: 148.3 54.5% 12.9%;
+    --status-found-subtle-foreground: 140 48.4% 87.8%;
+    --status-found-border: 146.8 56.5% 22.5%;
+    --status-sighted: 224.6 82.1% 75.9%;
+    --status-sighted-foreground: 231.1 62.7% 14.7%;
+    --status-sighted-subtle: 229 55.6% 21.2%;
+    --status-sighted-subtle-foreground: 223.6 89.2% 92.7%;
+    --status-sighted-border: 228.7 57.6% 36.1%;
+    --status-reunited: 40 92.7% 56.9%;
+    --status-reunited-foreground: 193.8 28.9% 8.8%;
+    --status-reunited-subtle: 33.6 66.3% 17.5%;
+    --status-reunited-subtle-foreground: 44.8 100% 86.1%;
+    --status-reunited-border: 36.6 84.5% 30.4%;
+    --premium: 318.2 48.1% 69%;
+    --premium-foreground: 314.4 53.2% 9.2%;
+    --premium-subtle: 315.9 45.9% 14.5%;
+    --premium-subtle-foreground: 313 51.1% 91.2%;
+    --premium-border: 317.9 47.5% 27.6%;
+    --verified: 185.3 41.4% 62.5%;
+    --verified-foreground: 194.1 68% 9.8%;
+    --verified-subtle: 191.3 64.9% 14.5%;
+    --verified-subtle-foreground: 184.4 44.3% 88%;
+    --warning: 40 92.7% 56.9%;
+    --warning-foreground: 193.8 28.9% 8.8%;
+    --warning-subtle: 33.6 66.3% 17.5%;
+    --warning-subtle-foreground: 44.8 100% 86.1%;
+    --warning-border: 36.6 84.5% 30.4%;
+    --provider: 240 2.6% 7.6%;
+    --provider-foreground: 0 0% 89%;
+    --provider-border: 140 1.3% 56.3%;
+    --qr: 0 0% 100%;
+    --qr-foreground: 193.8 28.9% 8.8%;
+    --scrim: 190 46.2% 5.1%;
+    --scrim-alpha: 0.72;
+    --marker-lost: 16.8 87.3% 59.8%;
+    --marker-found: 143.3 43.5% 46.5%;
+    --marker-sighted: 224.6 82.1% 75.9%;
+    --marker-reunited: 40 92.7% 56.9%;
+    --marker-me: 224.6 82.1% 75.9%;
+    --marker-cluster: 180 15% 92.2%;
+    --marker-cluster-foreground: 193.8 28.9% 8.8%;
+    --marker-ring: 190 46.2% 5.1%;
+    --marker-area: 16.8 87.3% 59.8%;
+    --marker-area-alpha: 0.2;
+    --map-land: 190.6 36.2% 9.2%;
+    --map-water: 192.6 51.4% 14.5%;
+    --map-park: 168.9 39.1% 13.5%;
+    --map-building: 190 35.3% 13.3%;
+    --map-road: 192.5 24% 19.6%;
+    --map-road-casing: 190.6 36.2% 9.2%;
+    --map-label: 188 12% 75.5%;
+    --map-label-halo: 190.6 36.2% 9.2%;
+    --shadow-sm: none;
+    --shadow-md: 0 2px 10px 0 rgb(0 0 0 / 0.4);
+    --shadow-lg: 0 -10px 40px -12px rgb(0 0 0 / 0.6);
+    --shadow-pop: 0 8px 24px -6px rgb(0 0 0 / 0.55);
+  }
+}
+:root[data-theme="dark"] {
+  --background: 189.2 37.1% 6.9%;
+  --foreground: 180 15% 92.2%;
+  --card: 192.6 35.8% 10.4%;
+  --card-foreground: 180 15% 92.2%;
+  --popover: 191.1 36% 14.7%;
+  --popover-foreground: 180 15% 92.2%;
+  --primary: 185.3 41.4% 62.5%;
+  --primary-foreground: 194.1 68% 9.8%;
+  --secondary: 191.3 64.9% 14.5%;
+  --secondary-foreground: 184.4 44.3% 88%;
+  --muted: 191.1 36% 14.7%;
+  --muted-foreground: 188 12% 75.5%;
+  --accent: 191.1 36% 14.7%;
+  --accent-foreground: 180 14.3% 95.9%;
+  --destructive: 354.1 82% 78.2%;
+  --destructive-foreground: 352.5 61.5% 10.2%;
+  --primary-hover: 184.6 43.3% 76.5%;
+  --primary-pressed: 184.4 44.3% 88%;
+  --secondary-hover: 190.8 65.6% 18.2%;
+  --secondary-pressed: 190.3 65.5% 22.7%;
+  --destructive-hover: 354 88.2% 86.7%;
+  --destructive-pressed: 354.7 100% 93.3%;
+  --border: 190.9 32.7% 19.8%;
+  --input: 190 10% 47.1%;
+  --ring: 185.3 41.4% 62.5%;
+  --chart-1: 185.3 41.4% 62.5%;
+  --chart-2: 40 92.7% 56.9%;
+  --chart-3: 16.8 87.3% 59.8%;
+  --chart-4: 143.3 43.5% 46.5%;
+  --chart-5: 318.2 48.1% 69%;
+  --sidebar: 190 46.2% 5.1%;
+  --sidebar-foreground: 180 15% 92.2%;
+  --sidebar-primary: 180 15% 92.2%;
+  --sidebar-primary-foreground: 193.8 28.9% 8.8%;
+  --sidebar-accent: 191.1 36% 14.7%;
+  --sidebar-accent-foreground: 180 14.3% 95.9%;
+  --sidebar-border: 191.1 36% 14.7%;
+  --sidebar-ring: 180 15% 92.2%;
+  --status-lost: 16.8 87.3% 59.8%;
+  --status-lost-foreground: 14.6 75.5% 9.6%;
+  --status-lost-subtle: 15.5 70.5% 17.3%;
+  --status-lost-subtle-foreground: 18.3 100% 91%;
+  --status-lost-border: 16.8 74.9% 32.7%;
+  --status-found: 143.3 43.5% 46.5%;
+  --status-found-foreground: 139.2 64.1% 7.6%;
+  --status-found-subtle: 148.3 54.5% 12.9%;
+  --status-found-subtle-foreground: 140 48.4% 87.8%;
+  --status-found-border: 146.8 56.5% 22.5%;
+  --status-sighted: 224.6 82.1% 75.9%;
+  --status-sighted-foreground: 231.1 62.7% 14.7%;
+  --status-sighted-subtle: 229 55.6% 21.2%;
+  --status-sighted-subtle-foreground: 223.6 89.2% 92.7%;
+  --status-sighted-border: 228.7 57.6% 36.1%;
+  --status-reunited: 40 92.7% 56.9%;
+  --status-reunited-foreground: 193.8 28.9% 8.8%;
+  --status-reunited-subtle: 33.6 66.3% 17.5%;
+  --status-reunited-subtle-foreground: 44.8 100% 86.1%;
+  --status-reunited-border: 36.6 84.5% 30.4%;
+  --premium: 318.2 48.1% 69%;
+  --premium-foreground: 314.4 53.2% 9.2%;
+  --premium-subtle: 315.9 45.9% 14.5%;
+  --premium-subtle-foreground: 313 51.1% 91.2%;
+  --premium-border: 317.9 47.5% 27.6%;
+  --verified: 185.3 41.4% 62.5%;
+  --verified-foreground: 194.1 68% 9.8%;
+  --verified-subtle: 191.3 64.9% 14.5%;
+  --verified-subtle-foreground: 184.4 44.3% 88%;
+  --warning: 40 92.7% 56.9%;
+  --warning-foreground: 193.8 28.9% 8.8%;
+  --warning-subtle: 33.6 66.3% 17.5%;
+  --warning-subtle-foreground: 44.8 100% 86.1%;
+  --warning-border: 36.6 84.5% 30.4%;
+  --provider: 240 2.6% 7.6%;
+  --provider-foreground: 0 0% 89%;
+  --provider-border: 140 1.3% 56.3%;
+  --qr: 0 0% 100%;
+  --qr-foreground: 193.8 28.9% 8.8%;
+  --scrim: 190 46.2% 5.1%;
+  --scrim-alpha: 0.72;
+  --marker-lost: 16.8 87.3% 59.8%;
+  --marker-found: 143.3 43.5% 46.5%;
+  --marker-sighted: 224.6 82.1% 75.9%;
+  --marker-reunited: 40 92.7% 56.9%;
+  --marker-me: 224.6 82.1% 75.9%;
+  --marker-cluster: 180 15% 92.2%;
+  --marker-cluster-foreground: 193.8 28.9% 8.8%;
+  --marker-ring: 190 46.2% 5.1%;
+  --marker-area: 16.8 87.3% 59.8%;
+  --marker-area-alpha: 0.2;
+  --map-land: 190.6 36.2% 9.2%;
+  --map-water: 192.6 51.4% 14.5%;
+  --map-park: 168.9 39.1% 13.5%;
+  --map-building: 190 35.3% 13.3%;
+  --map-road: 192.5 24% 19.6%;
+  --map-road-casing: 190.6 36.2% 9.2%;
+  --map-label: 188 12% 75.5%;
+  --map-label-halo: 190.6 36.2% 9.2%;
+  --shadow-sm: none;
+  --shadow-md: 0 2px 10px 0 rgb(0 0 0 / 0.4);
+  --shadow-lg: 0 -10px 40px -12px rgb(0 0 0 / 0.6);
+  --shadow-pop: 0 8px 24px -6px rgb(0 0 0 / 0.55);
+}
+:root[data-theme="light"] { color-scheme: light; }
+:root[data-theme="dark"] { color-scheme: dark; }
+
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:hsl(var(--background));color:hsl(var(--foreground));font-family:var(--font-sans);font-size:16px;line-height:1.5}
+a{color:inherit}
+:focus-visible{outline:3px solid hsl(var(--ring));outline-offset:2px}
+.doc{max-width:1200px;margin:0 auto;padding:24px 16px 64px}
+.doc h1{font-family:var(--font-display);font-size:30px;line-height:36px;letter-spacing:-.02em;margin:8px 0 0}
+.doc h2{font-family:var(--font-display);font-size:22px;line-height:28px;margin:40px 0 8px;letter-spacing:-.01em}
+.doc p{margin:8px 0}
+.meta{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;color:hsl(var(--muted-foreground));font-size:15px}
+.pill{display:inline-flex;align-items:center;min-height:30px;padding:0 12px;border-radius:9999px;background:hsl(var(--warning-subtle));color:hsl(var(--warning-subtle-foreground));font-weight:700;font-size:14px}
+.docnav{display:flex;flex-wrap:wrap;gap:4px 16px;margin:16px 0 0;padding:0;list-style:none}
+.docnav a{display:inline-flex;align-items:center;min-height:44px;font-weight:600;text-underline-offset:4px}
+.docnav a[aria-current=page]{color:hsl(var(--muted-foreground));text-decoration:none}
+.qs{background:hsl(var(--card));border-radius:var(--radius-card);padding:20px 20px 20px 24px;margin-top:20px}
+.qs h2{margin:0 0 8px;font-size:18px}
+.qs ol{margin:0;padding-left:22px;display:grid;gap:8px}
+.tools{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;margin-top:16px}
+.tools label{display:inline-flex;align-items:center;gap:8px;min-height:44px;font-weight:600;cursor:pointer}
+.tools input{width:20px;height:20px;accent-color:hsl(var(--primary))}
+.frame{margin-top:16px}
+.frame>.bar{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;margin-bottom:8px}
+.bar .ttl{font-weight:700;margin-right:auto}
+.seg{display:inline-flex;border-radius:9999px;background:hsl(var(--muted));padding:3px}
+.seg button,.tbtn{min-height:44px;padding:0 16px;border:0;border-radius:9999px;background:transparent;color:hsl(var(--foreground));font:inherit;font-size:15px;font-weight:700;cursor:pointer}
+.seg button[aria-pressed=true]{background:hsl(var(--primary));color:hsl(var(--primary-foreground))}
+.tbtn{background:hsl(var(--secondary));color:hsl(var(--secondary-foreground))}
+.stage{background:hsl(var(--muted));border-radius:var(--radius-card);padding:12px;overflow:hidden}
+.vp{display:none;margin:0 auto;position:relative}
+.frame[data-view=desktop] .vp[data-v=desktop],.frame[data-view=mobile] .vp[data-v=mobile]{display:block}
+.frame[data-fit=full] .vp{overflow-x:auto;width:100%!important;height:auto!important}
+.frame[data-fit=full] .dev{transform:none!important}
+.vp .dev{transform-origin:top left;box-shadow:var(--shadow-pop)}
+.nofit{display:none}
+.frame[data-view=desktop] .nofit{display:inline-flex;align-items:center}
+.no-notes .anno,.no-notes .dev .to{display:none!important}
+.table-wrap{overflow-x:auto}
+.doc table.t{border-collapse:collapse;width:100%;min-width:520px}
+.doc table.t th,.doc table.t td{text-align:left;vertical-align:top;padding:10px 12px 10px 0;border-bottom:1px solid hsl(var(--border));font-size:15px}
+.doc code{font-size:14px;background:hsl(var(--muted));padding:1px 6px;border-radius:6px}
+
+/* ---- mock primitives (inside .dev) ---- */
+.dev{width:100%;background:hsl(var(--background));color:hsl(var(--foreground));font-family:var(--font-sans);font-size:16px;line-height:1.5;container-type:inline-size;container-name:dev;overflow:hidden}
+.dev h1,.dev h2,.dev h3,.dev h4{font-family:var(--font-display);margin:0;letter-spacing:-.02em;text-wrap:balance}
+.dev p{margin:0}.dev ul,.dev ol{margin:0;padding:0;list-style:none}
+.dev a{text-decoration:none}
+.dev .ic{flex:none}
+.dev .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:0 24px;border:0;border-radius:var(--radius-button);font:inherit;font-weight:700;cursor:pointer;white-space:nowrap;text-align:center}
+.dev .btn-lg{min-height:56px;padding:0 32px;font-size:17px}.dev .btn-sm{min-height:44px;padding:0 18px}
+.dev .b1{background:hsl(var(--primary));color:hsl(var(--primary-foreground))}
+.dev .b2{background:hsl(var(--secondary));color:hsl(var(--secondary-foreground))}
+.dev .b0{background:transparent;color:hsl(var(--foreground))}
+.dev .bt{background:transparent;color:hsl(var(--primary));min-height:44px;padding:0 12px}
+.dev .logo{display:inline-flex;align-items:center;gap:10px}
+.dev .lm{display:grid;place-items:center;width:34px;height:34px;border-radius:12px;background:hsl(var(--primary));color:hsl(var(--primary-foreground))}
+.dev .lw{font-family:var(--font-display);font-weight:800;font-size:22px;letter-spacing:-.02em}
+.dev .hdr{height:88px;display:flex;align-items:center;gap:24px;padding:0 48px}
+.dev .navl{display:flex;gap:24px}.dev .navl a{font-weight:600;color:hsl(var(--muted-foreground));display:inline-flex;min-height:44px;align-items:center}
+.dev .navl a[aria-current=page]{color:hsl(var(--foreground))}
+.dev .sp{flex:1}
+.dev .lang{font-weight:700;display:inline-flex;gap:6px;align-items:center;min-height:44px}.dev .lang u{text-underline-offset:5px}.dev .lang span{color:hsl(var(--muted-foreground))}
+.dev .iconbtn{display:inline-grid;place-items:center;width:44px;height:44px;border-radius:9999px;border:0;background:transparent;color:inherit}
+.dev .pg{width:100%;max-width:1216px;margin:0 auto;padding:0 20px}
+.dev .sec{margin-top:48px}
+.dev .h2{font-size:28px;line-height:34px;font-weight:700;letter-spacing:-.02em}
+.dev .h3{font-size:20px;line-height:28px;font-weight:600;letter-spacing:-.01em}
+.dev .muted{color:hsl(var(--muted-foreground))}
+.dev .ph{position:relative;display:grid;place-items:center;aspect-ratio:4/3;background:linear-gradient(135deg,color-mix(in srgb,hsl(var(--t)) 26%,hsl(var(--card))),color-mix(in srgb,hsl(var(--t)) 10%,hsl(var(--muted))));color:color-mix(in srgb,hsl(var(--t)) 55%,hsl(var(--foreground)));width:100%}
+.dev .ph .ic{opacity:.55}.dev .phl{position:absolute;left:12px;bottom:8px;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;opacity:.75}
+.dev .sl{display:inline-flex;align-items:center;gap:5px;font-size:14px;font-weight:700;white-space:nowrap}
+.dev .sl-lost{color:hsl(var(--status-lost-subtle-foreground))}.dev .sl-found{color:hsl(var(--status-found-subtle-foreground))}.dev .sl-sighted{color:hsl(var(--status-sighted-subtle-foreground))}
+.dev .card{background:hsl(var(--card));color:hsl(var(--card-foreground));border-radius:var(--radius-card)}
+.dev .rc{display:block;overflow:hidden;background:hsl(var(--card));border-radius:var(--radius-card)}
+.dev .rc .bd{padding:16px 20px 20px;display:grid;gap:4px}
+.dev .rc .ph{border-radius:0}
+.dev .rc .t{font-family:var(--font-display);font-weight:600;font-size:20px;line-height:28px;letter-spacing:-.01em}
+.dev .rc .pl{display:flex;gap:6px;align-items:center;color:hsl(var(--muted-foreground))}
+.dev .skel{background:hsl(var(--muted));border-radius:var(--radius-card)}
+.dev .anno{margin-top:12px;padding:10px 14px;border:2px dashed hsl(var(--input));border-radius:14px;font-size:14px;line-height:20px;color:hsl(var(--muted-foreground));background:hsl(var(--background))}
+.dev .anno b{color:hsl(var(--foreground))}
+.dev .to{display:inline-block;font-family:ui-monospace,Consolas,monospace;font-size:12px;line-height:18px;padding:0 8px;border-radius:9999px;background:hsl(var(--status-sighted-subtle));color:hsl(var(--status-sighted-subtle-foreground));margin-left:6px;vertical-align:middle}
+.dev .tag{display:inline-block;font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:2px 10px;border-radius:9999px;background:hsl(var(--status-reunited-subtle));color:hsl(var(--status-reunited-subtle-foreground));margin-bottom:8px}
+@container dev (max-width:899px){.dev .d-only{display:none!important}.dev .hdr{height:64px;padding:0 20px;gap:12px}}
+@container dev (min-width:900px){.dev .m-only{display:none!important}.dev .pg{padding:0 48px}.dev .sec{margin-top:96px}.dev .h2{font-size:36px;line-height:44px}.dev .h3{font-size:24px;line-height:32px}}
+
+
+.dev .stub{margin-top:64px;padding:24px 20px;background:hsl(var(--muted));color:hsl(var(--muted-foreground));text-align:center;font-size:15px}
+.dev .stub a{text-decoration:underline;text-underline-offset:4px;display:inline-flex;align-items:center;min-height:44px;min-width:44px}
+.dev .st-empty,.dev .st-load{display:none}
+.frame[data-state=empty] .st-filled,.frame[data-state=loading] .st-filled{display:none}
+.frame[data-state=empty] .st-empty,.frame[data-state=loading] .st-load{display:block}
+.dev .a-head{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:4px 16px;margin-bottom:20px}
+.dev .a-hero{padding-top:24px;display:grid;gap:32px}
+.dev .a-h1{font-size:36px;line-height:1.08;font-weight:800;letter-spacing:-.025em}
+.dev .a-lede{margin-top:16px;font-size:18px;line-height:28px;max-width:52ch}
+.dev .a-cta{margin-top:32px;display:grid;gap:12px}
+.dev .a-sight{margin-top:8px}
+.dev .a-mos{display:none}
+.dev .a-cards{display:flex;gap:16px;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:8px;margin:0 -20px;padding-left:20px;padding-right:20px}
+.dev .a-cards>*{flex:0 0 78%;scroll-snap-align:start}
+.dev .sk{aspect-ratio:3/4}
+.dev .nums{display:grid;gap:20px;padding:24px}
+.dev .nums .n,.dev .b-nums .n{font-family:var(--font-display);font-weight:800;font-size:44px;line-height:1;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.dev .a-steps{display:grid;gap:28px;margin-top:20px}
+.dev .a-steps li{display:grid;gap:4px}
+.dev .num{font-family:var(--font-display);font-weight:800;font-size:44px;line-height:1;color:hsl(var(--primary));letter-spacing:-.02em}
+.dev .a-safe{padding:24px;display:grid;gap:20px}
+.dev .shield{display:grid;place-items:center;width:88px;height:88px;border-radius:9999px;background:hsl(var(--secondary));color:hsl(var(--primary))}
+.dev .lede2{margin-top:12px;font-size:18px;line-height:28px;max-width:60ch}
+.dev .a-safel{display:grid;gap:14px;margin:20px 0 8px}.dev .a-safel li{display:flex;gap:12px;color:hsl(var(--foreground))}.dev .a-safel .ic{color:hsl(var(--primary));margin-top:1px}
+.dev .a-sh{background:hsl(var(--card));border-radius:var(--radius-card);padding:24px;display:grid;gap:12px}
+.dev .a-sh .bt{margin-left:-12px}
+.dev .a-end{background:hsl(var(--sidebar));color:hsl(var(--sidebar-foreground));border-radius:var(--radius-card);padding:32px 24px;display:grid;gap:24px}
+.dev .a-endb{display:grid;gap:12px}
+.dev .bs1{background:hsl(var(--sidebar-primary));color:hsl(var(--sidebar-primary-foreground))}
+.dev .bs2{background:transparent;color:hsl(var(--sidebar-foreground));box-shadow:inset 0 0 0 2px hsl(var(--sidebar-foreground))}
+.dev .es{display:grid;gap:20px;max-width:560px}
+.dev .esi{display:grid;place-items:center;aspect-ratio:32/21;border-radius:var(--radius-card);background:hsl(var(--accent));color:hsl(var(--primary))}
+.dev .esp{margin-top:8px;max-width:58ch}.dev .esa{margin-top:20px}
+.dev .es.flat .esi{display:none}
+/* B */
+.dev .b-hero{position:relative;border-radius:32px;overflow:hidden;margin-top:8px;color:hsl(var(--sidebar-foreground))}
+.dev .b-photo,.dev .b-scrim{position:absolute;inset:0}
+.dev .b-photo .ph{height:100%;aspect-ratio:auto}
+.dev .b-scrim{background:linear-gradient(180deg,hsl(var(--scrim)/.9),hsl(var(--scrim)/.72))}
+.dev .b-in{position:relative;display:grid;gap:24px;padding:28px 20px}
+.dev .b-h1{font-size:36px;line-height:1.08;font-weight:800;letter-spacing:-.025em}
+.dev .b-lede{margin-top:14px;font-size:18px;line-height:28px}
+.dev .b-pick{padding:20px}
+.dev .b-pick ul{margin-top:8px}
+.dev .ch{display:flex;align-items:center;gap:14px;min-height:64px;padding:8px 0;border-top:1px solid hsl(var(--border));color:hsl(var(--card-foreground))}
+.dev .b-pick li:first-child .ch{border-top:0}
+.dev .chi{display:grid;place-items:center;width:48px;height:48px;border-radius:9999px;background:hsl(var(--secondary));color:hsl(var(--primary));flex:none}
+.dev .cht{display:grid;flex:1}.dev .cht .t{font-weight:700;font-size:18px}
+.dev .b-split{display:grid;gap:20px}
+.dev .b-map{border-radius:var(--radius-card);overflow:hidden;aspect-ratio:16/9}
+.dev .map{display:block;width:100%;height:100%}
+.dev .b-list{display:grid;gap:4px}
+.dev .lr{display:flex;align-items:center;gap:14px;padding:8px 0;border-radius:var(--radius-row);min-height:80px}
+.dev .lr .th{width:72px;flex:none;border-radius:var(--radius-photo);overflow:hidden;display:block}
+.dev .lr .ph{aspect-ratio:1}.dev .lr .ph .ic{width:28px;height:28px}
+.dev .lt{display:grid;flex:1;min-width:0}.dev .lt .t{font-family:var(--font-display);font-weight:600;font-size:18px}
+.dev .lt .pl{display:flex;gap:4px;align-items:center;color:hsl(var(--muted-foreground));font-size:15px}
+.dev .b-band{background:hsl(var(--sidebar));color:hsl(var(--sidebar-foreground));border-radius:var(--radius-card);padding:28px 24px}
+.dev .b-nums{display:grid;gap:20px}
+.dev .b-how{display:grid;gap:24px}
+.dev .b-steps{display:grid;gap:28px;margin-top:20px}.dev .b-steps li{display:flex;gap:16px}.dev .b-steps .num{width:36px;flex:none}
+.dev .b-howp .ph{aspect-ratio:4/3;border-radius:var(--radius-card)}
+.dev .b-safe{display:grid;gap:12px;margin:20px 0 8px}
+.dev .b-safe li{padding:20px;display:grid;gap:10px;justify-items:start}.dev .b-safe .ic{color:hsl(var(--primary))}
+.dev .lede2{margin-top:12px}
+@container dev (min-width:900px){
+.dev .a-hero{grid-template-columns:7fr 5fr;align-items:center;gap:48px;padding-top:32px}
+.dev .a-h1{font-size:60px}.dev .a-lede{font-size:20px;line-height:32px;margin-top:24px}
+.dev .a-cta{display:flex;gap:12px;margin-top:40px}
+.dev .a-mos{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.dev .a-mos .ph{aspect-ratio:1;border-radius:32px}.dev .a-mos .tall{grid-row:span 2;aspect-ratio:auto;height:100%}
+.dev .a-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;overflow:visible;margin:0;padding:0}
+.dev .a-cards>*{flex:none}
+.dev .nums{grid-template-columns:repeat(3,1fr);padding:40px 48px}
+.dev .nums .n,.dev .b-nums .n{font-size:64px}
+.dev .a-steps{grid-template-columns:repeat(3,1fr);gap:40px;margin-top:40px}
+.dev .a-safe{grid-template-columns:88px 1fr;padding:40px 48px;gap:32px}
+.dev .a-safel{grid-template-columns:repeat(3,1fr);gap:24px}
+.dev .a-sh{grid-template-columns:5fr 7fr;align-items:center;gap:32px;padding:32px 48px}
+.dev .a-end{grid-template-columns:1fr auto;align-items:center;padding:56px 56px}
+.dev .a-endb{display:flex}
+.dev .b-hero{border-radius:40px;margin-top:0}
+.dev .b-scrim{background:linear-gradient(90deg,hsl(var(--scrim)/.92),hsl(var(--scrim)/.55))}
+.dev .b-in{grid-template-columns:7fr 5fr;align-items:center;gap:48px;padding:72px 56px}
+.dev .b-h1{font-size:60px}.dev .b-lede{font-size:20px;line-height:32px;margin-top:20px;max-width:46ch}
+.dev .b-pick{padding:24px 28px}
+.dev .b-split{grid-template-columns:5fr 7fr;align-items:stretch}.dev .b-list,.dev .es.flat{order:-1}
+.dev .b-map{aspect-ratio:auto;min-height:420px}
+.dev .b-band{padding:56px 64px}.dev .b-nums{grid-template-columns:repeat(3,1fr);gap:48px}
+.dev .b-how{grid-template-columns:7fr 5fr;align-items:center;gap:48px}
+.dev .b-howp .tall{aspect-ratio:4/5}
+.dev .b-steps{gap:40px;margin-top:40px}.dev .b-steps .num{width:48px;font-size:52px}
+.dev .b-safe{grid-template-columns:repeat(3,1fr);gap:24px}
+}
+@container dev (max-width:899px){.dev .b-map{aspect-ratio:2/1}}
+
+</style>
+</head>
+<body>
+<div class="doc">
+<header>
+<div class="meta"><strong>TASK-115.1</strong><span class="pill">v1, 2026-10-18, awaiting owner approval</span></div>
+<h1>Homepage rework: two layout options</h1>
+<p>Component mock from the real tokens and components. Testers called the current page "a bit meh", so A and B differ in structure, not in colour. Use the toggles on each frame (state and viewport). Annotation boxes with dashed borders show the data each block needs.</p>
+<nav aria-label="Review files"><ul class="docnav"><li><a href="P3-home.html" aria-current="page">P3 Home (TASK-115.1)</a></li><li><a href="P1-footer.html">P1 Footer (TASK-116.1)</a></li><li><a href="M-alerts-notifications.html">Alerts mock (TASK-114.15)</a></li><li><a href="M-legal-table.html">Legal table mock (TASK-114.19)</a></li></ul></nav>
+<div class="tools"><button type="button" class="tbtn" id="theme">Theme: auto</button><label><input type="checkbox" id="notes" checked> Show annotations</label></div>
+<section class="qs" aria-labelledby="q-h"><h2 id="q-h">Questions for the owner</h2><ol><li>Layout A (compact hero, report cards first) or B (chooser hero with photo, list + map)? A mix is possible: tell me which parts.</li><li>Show the latest reports to everyone on the home page, with only status, species, approximate area and time (no names, no exact place)?</li><li>Keep the live numbers block (needs a new public stats endpoint, hidden while numbers are small) or drop it for now?</li><li>Should "Opažena žival" (sighted) be a visible home action (B has it in the hero, A a quiet link) or stay only in the header menu?</li></ol></section>
+</header>
+<main>
+
+<h2 id="a">Option A: reports first, compact hero</h2>
+<p>Text-led hero with the two report CTAs, then the live feed straight under it. Idea: a visitor sees that real animals are being helped before reading how it works. Order: hero, latest reports (cards), numbers (optional), how it works (3 columns), safe by design, shelters, closing CTA band.</p>
+<section class="frame" id="fa" data-view="desktop" data-fit="fit" data-state="filled" aria-label="Option A">
+<div class="bar"><span class="ttl">Option A</span><div class="seg" role="group" aria-label="Latest reports state" data-key="state"><button type="button" data-v="filled" aria-pressed="true">With reports</button><button type="button" data-v="empty" aria-pressed="false">Empty</button><button type="button" data-v="loading" aria-pressed="false">Loading</button></div><div class="seg" role="group" aria-label="Viewport" data-key="view"><button type="button" data-v="desktop" aria-pressed="true">Desktop 1440</button><button type="button" data-v="mobile" aria-pressed="false">Mobile 390</button></div><button type="button" class="tbtn nofit" aria-pressed="false">Fit to width</button></div>
+<div class="stage"><div class="vp" data-v="desktop" data-w="1440"><div class="dev" data-view="desktop"><header class="hdr"><span class="logo"><span class="lm"><svg class="ic" width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" ><circle cx="6.5" cy="11" r="1.9"/><circle cx="10" cy="6.5" r="1.9"/><circle cx="14" cy="6.5" r="1.9"/><circle cx="17.5" cy="11" r="1.9"/><path d="M12 12c3 0 5 3 5 5 0 2-2 2.5-5 2.5S7 19 7 17c0-2 2-5 5-5z"/></svg></span><span class="lw">Najdimo</span></span><nav class="navl" aria-label="Glavni meni"><a href="#">Zemljevid</a><a href="#">Izgubljene</a><a href="#">Najdene</a><a href="#">Kako deluje</a></nav><span class="sp"></span><span class="lang" aria-label="Jezik: Slovenščina"><u>SL</u><span>/</span><span>EN</span></span><a class="btn btn-sm b0" href="#">Vpis</a><a class="btn btn-sm b2" href="#">Prijavi</a></header>
+<div class="pg">
+<section class="a-hero" aria-labelledby="a-h1"><div class="a-ht">
+<h1 id="a-h1" class="a-h1">Izgubljena žival? Skupaj jo pripeljemo domov.</h1>
+<p class="a-lede">Prijavite izgubljeno ali najdeno žival. Mi poiščemo možna ujemanja in obvestimo ljudi v bližini. Brezplačno.</p>
+<div class="a-cta"><a class="btn btn-lg b1" href="#">Prijavi izgubljeno žival</a><a class="btn btn-lg b2" href="#">Prijavi najdeno žival</a></div>
+<span class="to">→ /report/lost</span><span class="to">→ /report/found</span>
+<p class="a-sight"><a class="btn bt" href="#">Videli ste žival? Opažena žival<svg class="ic" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ><path d="M5 12h14M13 6l6 6-6 6"/></svg></a><span class="to">→ /report/sighted</span></p>
+</div>
+<div class="a-mos d-only" aria-hidden="true"><div class="ph tall" style="--t:var(--chart-1)" role="img" aria-label="Placeholder fotografije"><svg class="ic" width="56" height="56" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" ><circle cx="6.5" cy="11" r="1.9"/><circle cx="10" cy="6.5" r="1.9"/><circle cx="14" cy="6.5" r="1.9"/><circle cx="17.5" cy="11" r="1.9"/><path d="M12 12c3 0 5 3 5 5 0 2-2 2.5-5 2.5S7 19 7 17c0-2 2-5 5-5z"/></svg><span class="phl">foto pes</span></div><div class="ph " style="--t:var(--chart-3)" role="img" aria-label="Placeholder fotografije"><svg class="ic" width="56" height="56" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" ><circle cx="6.5" cy="11" r="1.9"/><circle cx="10" cy="6.5" r="1.9"/><circle cx="14" cy="6.5" r="1.9"/><circle cx="17.5" cy="11" r="1.9"/><path d="M12 12c3 0 5 3 5 5 0 2-2 2.5-5 2.5S7 19 7 17c0-2 2-5 5-5z"/></svg><span class="phl">foto mačka</span></div><div class="ph " style="--t:var(--chart-4)" role="img" aria-label="Placeholder fotografije"><svg class="ic" width="56" height="56" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" ><circle cx="6.5" cy="11" r="1.9"/><circle cx="10" cy="6.5" r="1.9"/><circle cx="14" cy="6.5" r="1.9"/><circle cx="17.5" cy="11" r="1.9"/><path d="M12 12c3 0 5 3 5 5 0 2-2 2.5-5 2.5S7 19 7 17c0-2 2-5 5-5z"/></svg><span class="phl">foto pes</span></div></div></section>
+<div class="anno"><b>Hero A.</b> One primary (lost) and one secondary (found); sighted stays a quiet text link. Photos are licensed placeholders (see P3 §Assets); on mobile the mosaic is dropped so the CTAs sit above the fold.</div>
+
+<section class="sec" aria-labelledby="a-near"><div class="a-head"><h2 id="a-near" class="h2">Nedavne prijave</h2><a class="btn bt" href="#">Odpri zemljevid<svg class="ic" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ><path d="M5 12h14M13 6l6 6-6 6"/></svg></a><span class="to">→ /map</span></div>
+<div class="st-filled"><div class="a-cards"><a class="rc" href="#" aria-label="Izgubljen pes, Izgubljena, pred 2 urama"><div class="ph " style="--t:var(--chart-1)" role="img" aria-label="Placeholder fotografije"><svg class="ic" width="56" height="56" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" ><circle cx="6.5" cy="11" r="1.9"/><circle cx="10" cy="6.5" r="1.9"/><circle cx="14" cy="6.5" r="1.9"/><circle cx="17.5" cy="11" r="1.9"/><path d="M12 12c3 0 5 3 5 5 0 2-2 2.5-5 2.5S7 19 7 17c0-2 2-5 5-5z"/></svg><span class="phl">foto 1</span></div><div class="bd"><div><span class="sl sl-lost"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ><path d="M4 10v4h3l7 4V6L7 10zM17 9a4 4 0 010 6"/></svg>Izgubljena</span> <span class="muted"> · pred 2 urama</span></div><div class="t">Izgubljen pes</div><div class="pl"><svg class="ic" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ><path d="M12 21s-6-5.5-6-11a6 6 0 0112 0c0 5.5-6 11-6 11zM12 10m-2 0a2 2 0 104 0a2 2 0 10-4 0"/></svg>Ljubljana, Šiška</div></div></a><a class="rc" href="#" aria-label="Najdena mačka, Najdena, pred 3 urami"><div class="ph " style="--t:var(--chart-2)" role="img" aria-label="Placeholder fotografije"><svg class="ic" width="56" height="56" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" ><circle cx="6.5" cy="11" r="1.9"/><circle cx="10" cy="6.5" r="1.9"/><circle cx="14" cy="6.5" r="1.9"/><circle cx="17.5" cy="11" r="1.9"/><path d="M12 12c3 0 5 3 5 5 0 2-2 2.5-5 2.5S7 19 7 17c0-2 2-5 5-5z"/></svg><span class="phl">foto 2</span></div><div class="bd"><div><span class="sl sl-found"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ><path d="M12 20s-7-4.5-7-10a4 4 0 017-2.5A4 4 0 0119 10c0 5.5-7 10-7 10z"/></svg>Najdena</span> <span class="muted"> · pred 3 urami</span></div><div class="t">Najdena mačka</div><div class="pl"><svg class="ic" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ><path d="M12 21s-6-5.5-6-11a6 6 0 0112 0c0 5.5-6 11-6 11zM12 10m-2 0a2 2 0 104 0a2 2 0 10-4 0"/></svg>Koper</div></div></a><a class="rc" href="#" aria-label="Izgubljena mačka, Izgubljena, pred 5 urami"><div class="ph " style="--t:var(--chart-3)" role="img" aria-label="Placeholder fotografije"><svg class="ic" width="56" height="56" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" ><circle cx="6.5" cy="11" r="1.9"/><circle cx="10" cy="6.5" r="1.9"/><circle cx="14" cy="6.5" r="1.9"/><circle cx="17.5" cy="11" r="1.9"/><path d="M12 12c3 0 5 3 5 5 0 2-2 2.5-5 2.5S7 19 7 17c0-2 2-5 5-5z"/></svg><span class="phl">foto 3</span></div><div class="bd"><div><span class="sl sl-lost"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ><path d="M4 10v4h3l7 4V6L7 10zM17 9a4 4 0 010 6"/></svg>Izgubljena</span> <span class="muted"> · pred 5 urami</span></div><div class="t">Izgubljena mačka</div><div class="pl"><svg class="ic" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ><path d="M12 21s-6-5.5-6-11a6 6 0 0112 0c0 5.5-6 11-6 11zM12 10m-2 0a2 2 0 104 0a2 2 0 10-4 0"/></svg>Maribor, Tabor</div></div></a><a class="rc" href="#" aria-label="Najden pes, Najdena, pred 1 dnevom"><div class="ph " style="--t:var(--chart-4)" role="img" aria-label="Placeholder fotografije"><svg class="ic" width="56" height="56" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" ><circle cx="6.5" cy="11" r="1.9"/><circle cx="10" cy="6.5" r="1.9"/><circle cx="14" cy="6.5" r="1.9"/><circle cx="17.5" cy="11" r="1.9"/><path d="M12 12c3 0 5 3 5 5 0 2-2 2.5-5 2.5S7 19 7 17c0-2 2-5 5-5z"/></svg><span class="phl">foto 4</span></div><div class="bd"><div><span class="sl sl-found"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ><path d="M12 20s-7-4.5-7-10a4 4 0 017-2.5A4 4 0 0119 10c0 5.5-7 10-7 10z"/></svg>Najdena</span> <span class="muted"> · pred 1 dnevom</span></div><div class="t">Najden pes</div><div class="pl"><svg class="ic" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ><path d="M12 21s-6-5.5-6-11a6 6 0 0112 0c0 5.5-6 11-6 11zM12 10m-2 0a2 2 0 104 0a2 2 0 10-4 0"/></svg>Celje</div></div></a><a class="rc" href="#" aria-label="Izgubljen pes, Izgubljena, pred 1 dnevom"><div class="ph " style="--t:var(--chart-5)" role="img" aria-label="Placeholder fotografije"><svg class="ic" width="56" height="56" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" ><circle cx="6.5" cy="11" r="1.9"/><circle cx="10" cy="6.5" r="1.9"/><circle cx="14" cy="6.5" r="1.9"/><circle cx="17.5" cy="11" r="1.9"/><path d="M12 12c3 0 5 3 5 5 0 2-2 2.5-5 2.5S7 19 7 17c0-2 2-5 5-5z"/></svg><span class="phl">foto 5</span></div><div class="bd"><div><span class="sl sl-lost"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ><path d="M4 10v4h3l7 4V6L7 10zM17 9a4 4 0 010 6"/></svg>Izgubljena</span> <span class="muted"> · pred 1 dnevom</span></div><div class="t">Izgubljen pes</div><div class="pl"><svg class="ic" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ><path d="M12 21s-6-5.5-6-11a6 6 0 0112 0c0 5.5-6 11-6 11zM12 10m-2 0a2 2 0 104 0a2 2 0 10-4 0"/></svg>Kranj</div></div></a><a class="rc" href="#" aria-label="Izgubljena mačka, Izgubljena, pred 2 dnevoma"><div class="ph " style="--t:var(--chart-1)" role="img" aria-label="Placeholder fotografije"><svg class="ic" width="56" height="56" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" ><circle cx="6.5" cy="11" r="1.9"/><circle cx="10" cy="6.5" r="1.9"/><circle cx="14" cy="6.5" r="1.9"/><circle cx="17.5" cy="11" r="1.9"/><path d="M12 12c3 0 5 3 5 5 0 2-2 2.5-5 2.5S7 19 7 17c0-2 2-5 5-5z"/></svg><span class="phl">foto 6</span></div><div class="bd"><div><span class="sl sl-lost"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ><path d="M4 10v4h3l7 4V6L7 10zM17 9a4 4 0 010 6"/></svg>Izgubljena</span> <span class="muted"> · pred 2 dnevoma</span></div><div class="t">Izgubljena mačka</div><div class="pl"><svg class="ic" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ><path d="M12 21s-6-5.5-6-11a6 6 0 0112 0c0 5.5-6 11-6 11zM12 10m-2 0a2 2 0 104 0a2 2 0 10-4 0"/></svg>Novo mesto</div></div></a></div></div>
+<div class="st-empty"><div class="es "><div class="esi" aria-hidden="true"><svg class="ic" width="72" height="72" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" ><circle cx="6.5" cy="11" r="1.9"/><circle cx="10" cy="6.5" r="1.9"/><circle cx="14" cy="6.5" r="1.9"/><circle cx="17.5" cy="11" r="1.9"/><path d="M12 12c3 0 5 3 5 5 0 2-2 2.5-5 2.5S7 19 7 17c0-2 2-5 5-5z"/></svg></div><div><h3 class="h3">V bližini ni odprtih prijav</h3><p class="esp">To je dobra novica. Vklopite opozorila in obvestili vas bomo, če bo kdo v bližini pogrešal žival.</p><div class="esa"><a class="btn b2" href="#">Vklopi opozorila</a><span class="to">→ /account/alerts (sign-in gate if signed out)</span></div></div></div></div>
+<div class="st-load"><div class="a-cards" aria-hidden="true"><div class="skel sk"></div><div class="skel sk"></div><div class="skel sk"></div></div></div>
+<div class="anno"><b>Blok 2.</b> <b>Podatki: latest reports.</b> Public <code>GET /v1/reports?sort=recent&amp;limit=6</code> (exists, no auth). Per card: <code>id, status (lost|found), species, public_area_label, created_at, photo_thumb_url</code>; no name, no exact place, no distance when signed out. Title "Nedavne prijave" (<code>near_title_no_location</code>); with a home area or geolocation, switch to "V vaši bližini" + distance band. Card links to the public report detail. Empty list (0 rows) shows the empty state; errors show the inline error with retry, never an empty hero.</div></section>
+
+<section class="sec" aria-label="Številke"><div class="nums card">
+<div><div class="n">128</div><div class="muted">Živali spet doma</div></div><div><div class="n">42</div><div class="muted">Odprtih prijav</div></div><div><div class="n">1.350</div><div class="muted">Ljudi z vklopljenimi opozorili</div></div></div>
+<div class="anno"><b>Blok 3 (optional).</b> <b>Podatki: live numbers.</b> No public endpoint yet. Needs e.g. <code>GET /v1/stats/public</code> returning <code>reunited_total, open_reports, alert_subscribers</code>, cached 5 min. Hide the whole block while the endpoint fails or the numbers are small (for example under 50), so a young product never looks empty. Labels here are proposed copy, not in the content slice.</div></section>
+
+<section class="sec" aria-labelledby="a-how"><h2 id="a-how" class="h2">Kako deluje</h2>
+<ol class="a-steps">
+<li><span class="num">1</span><h3 class="h3">Prijavite</h3><p>Prijava izgubljene živali vzame nekaj minut, najdene pa manj kot minuto in brez računa.</p></li>
+<li><span class="num">2</span><h3 class="h3">Poiščemo ujemanja</h3><p>Primerjamo številko čipa, območje, čas in opis ter vam sporočimo, ko najdemo možno ujemanje.</p></li>
+<li><span class="num">3</span><h3 class="h3">Pogovorite se varno</h3><p>Pišete si v aplikaciji. Telefonska številka in točen naslov ostaneta skrita.</p></li></ol>
+<p><a class="btn bt" href="#">Več o tem, kako deluje<svg class="ic" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ><path d="M5 12h14M13 6l6 6-6 6"/></svg></a><span class="to">→ /how-it-works</span></p>
+<div class="anno"><b>Blok 4.</b> Static copy (P3 §How it works). No data. Three columns on desktop, three stacked rows on mobile; no photo, the cards above carry the imagery.</div></section>
+
+<section class="sec" aria-labelledby="a-safe"><div class="card a-safe"><span class="shield" aria-hidden="true"><svg class="ic" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ><path d="M12 3l7 3v5c0 5-3 8.5-7 10-4-1.5-7-5-7-10V6z"/></svg></span><div><h2 id="a-safe" class="h2">Zasnovano za vašo varnost</h2><p class="lede2">Ko se žival izgubi, se žal oglasijo tudi tisti, ki želijo izkoristiti stisko. Zato vaši podatki ostanejo pri vas.</p>
+<ul class="a-safel"><li><svg class="ic" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ><path d="M5 11h14v9H5zM8 11V8a4 4 0 018 0v3"/></svg>Telefonska številka ni nikoli javna.</li><li><svg class="ic" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ><path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2zM9 4v14M15 6v14"/></svg>Javno prikažemo le približno območje, nikoli naslova.</li><li><svg class="ic" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ><path d="M4 5h16v11H9l-5 4z"/></svg>Pogovor poteka v aplikaciji, z jasnim opozorilom pred prevarami.</li></ul>
+<a class="btn bt" href="#">Preberite nasvete za varnost<svg class="ic" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ><path d="M5 12h14M13 6l6 6-6 6"/></svg></a><span class="to">→ /safety</span></div></div><div class="anno"><b>Blok 5.</b> Static copy. Becomes one card (current page has it as an open section).</div></section>
+
+<section class="sec" aria-labelledby="a-sh"><div class="a-sh"><h2 id="a-sh" class="h2">Za zavetišča, veterinarje in občine</h2><div><p>Najdene živali objavite hitro, mi pa jih primerjamo z vsemi prijavami izgubljenih živali. Za zavetišča in občine je vse brezplačno, za vedno.</p><a class="btn bt" href="#">Več za zavetišča<svg class="ic" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ><path d="M5 12h14M13 6l6 6-6 6"/></svg></a><span class="to">→ /for-shelters</span></div></div><div class="anno"><b>Blok 6.</b> Static copy, unchanged.</div></section>
+
+<section class="sec" aria-labelledby="a-end"><div class="a-end"><h2 id="a-end" class="h2">Prijavite izgubljeno ali najdeno žival.</h2><div class="a-endb"><a class="btn btn-lg bs1" href="#">Prijavi izgubljeno žival</a><a class="btn btn-lg bs2" href="#">Prijavi najdeno žival</a></div></div><div class="anno"><b>Blok 7.</b> Closing CTA band repeats the two hero actions (first sentence of the hero lede as the heading, so no new copy). The header "Prijavi" button is already secondary on this page.</div></section>
+</div>
+<div class="stub">Noga strani: glej <a href="P1-footer.html">P1-footer.html</a> (TASK-116.1)</div></div></div><div class="vp" data-v="mobile" data-w="390"><div class="dev" data-view="mobile"><header class="hdr"><span class="logo"><span class="lm"><svg class="ic" width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" ><circle cx="6.5" cy="11" r="1.9"/><circle cx="10" cy="6.5" r="1.9"/><circle cx="14" cy="6.5" r="1.9"/><circle cx="17.5" cy="11" r="1.9"/><path d="M12 12c3 0 5 3 5 5 0 2-2 2.5-5 2.5S7 19 7 17c0-2 2-5 5-5z"/></svg></span><span class="lw">Najdimo</span></span><span class="sp"></span><span class="lang"><u>SL</u><span>/</span><span>EN</span></span><button class="iconbtn" type="button" aria-label="Odpri meni"><svg class="ic" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ><path d="M4 7h16M4 12h16M4 17h16"/></svg></button></header>
+<div class="pg">
+<section class="a-hero" aria-labelledby="a-h1"><div class="a-ht">
+<h1 id="a-h1" class="a-h1">Izgubljena žival? Skupaj jo pripeljemo domov.</h1>
+<p class="a-lede">Prijavite izgubljeno ali najdeno žival. Mi poiščemo možna ujemanja in obvestimo ljudi v bližini. Brezplačno.</p>
+<div class="a-cta"><a class="btn btn-lg b1" href="#">Prijavi izgubljeno žival</a><a class="btn btn-lg b2" href="#">Prijavi najdeno žival</a></div>
+<span class="to">→ /report/lost</span><span class="to">→ /report/found</span>
+<p class="a-sight"><a class="btn bt" href="#">Videli ste žival? Opažena žival<svg class="ic" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ><path d="M5 12h14M13 6l6 6-6 6"/></svg></a><span class="to">→ /report/sighted</span></p>
+</div>
+<div class="a-mos d-only" aria-hidden="true"><div class="ph tall" style="--t:var(--chart-1)" role="img" aria-label="Placeholder fotografije"><svg class="ic" width="56" height="56" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" ><circle cx="6.5" cy="11" r="1.9"/><circle cx="10" cy="6.5" r="1.9"/><circle cx="14" cy="6.5" r="1.9"/><circle cx="17.5" cy="11" r="1.9"/><path d="M12 12c3 0 5 3 5 5 0 2-2 2.5-5 2.5S7 19 7 17c0-2 2-5 5-5z"/></svg><span class="phl">foto pes</span></div><div class="ph " style="--t:var(--chart-3)" role="img" aria-label="Placeholder fotografije"><svg class="ic" width="56" height="56" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" ><circle cx="6.5" cy="11" r="1.9"/><circle cx="10" cy="6.5" r="1.9"/><circle cx="14" cy="6.5" r="1.9"/><circle cx="17.5" cy="11" r="1.9"/><path d="M12 12c3 0 5 3 5 5 0 2-2 2.5-5 2.5S7 19 7 17c0-2 2-5 5-5z"/></svg><span class="phl">foto mačka</span></div><div class="ph " style="--t:var(--chart-4)" role="img" aria-label="Placeholder fotografije"><svg class="ic" width="56" height="56" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" ><circle cx="6.5" cy="11" r="1.9"/><circle cx="10" cy="6.5" r="1.9"/><circle cx="14" cy="6.5" r="1.9"/><circle cx="17.5" cy="11" r="1.9"/><path d="M12 12c3 0 5 3 5 5 0 2-2 2.5-5 2.5S7 19 7 17c0-2 2-5 5-5z"/></svg><span class="phl">foto pes</span></div></div></section>
+<div class="anno"><b>Hero A.</b> One primary (lost) and one secondary (found); sighted stays a quiet text link. Photos are licensed placeholders (see P3 §Assets); on mobile the mosaic is dropped so the CTAs sit above the fold.</div>
+
+<section class="sec" aria-labelledby="a-near"><div class="a-head"><h2 id="a-near" class="h2">Nedavne prijave</h2><a class="btn bt" href="#">Odpri zemljevid<svg class="ic" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ><path d="M5 12h14M13 6l6 6-6 6"/></svg></a><span class="to">→ /map</span></div>
+<div class="st-filled"><div class="a-cards"><a class="rc" href="#" aria-label="Izgubljen pes, Izgubljena, pred 2 urama"><div class="ph " style="--t:var(--chart-1)" role="img" aria-label="Placeholder fotografije"><svg class="ic" width="56" height="56" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" ><circle cx="6.5" cy="11" r="1.9"/><circle cx="10" cy="6.5" r="1.9"/><circle cx="14" cy="6.5" r="1.9"/><circle cx="17.5" cy="11" r="1.9"/><path d="M12 12c3 0 5 3 5 5 0 2-2 2.5-5 2.5S7 19 7 17c0-2 2-5 5-5z"/></svg><span class="phl">foto 1</span></div><div class="bd"><div><span class="sl sl-lost"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ><path d="M4 10v4h3l7 4V6L7 10zM17 9a4 4 0 010 6"/></svg>Izgubljena</span> <span class="muted"> · pred 2 urama</span></div><div class="t">Izgubljen pes</div><div class="pl"><svg class="ic" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ><path d="M12 21s-6-5.5-6-11a6 6 0 0112 0c0 5.5-6 11-6 11zM12 10m-2 0a2 2 0 104 0a2 2 0 10-4 0"/></svg>Ljubljana, Šiška</div></div></a><a class="rc" href="#" aria-label="Najdena mačka, Najdena, pred 3 urami"><div class="ph " style="--t:var(--chart-2)" role="img" aria-label="Placeholder fotografije"><svg class="ic" width="56" height="56" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" ><circle cx="6.5" cy="11" r="1.9"/><circle cx="10" cy="6.5" r="1.9"/><circle cx="14" cy="6.5" r="1.9"/><circle cx="17.5" cy="11" r="1.9"/><path d="M12 12c3 0 5 3 5 5 0 2-2 2.5-5 2.5S7 19 7 17c0-2 2-5 5-5z"/></svg><span class="phl">foto 2</span></div><div class="bd"><div><span class="sl sl-found"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ><path d="M12 20s-7-4.5-7-10a4 4 0 017-2.5A4 4 0 0119 10c0 5.5-7 10-7 10z"/></svg>Najdena</span> <span class="muted"> · pred 3 urami</span></div><div class="t">Najdena mačka</div><div class="pl"><svg class="ic" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ><path d="M12 21s-6-5.5-6-11a6 6 0 0112 0c0 5.5-6 11-6 11zM12 10m-2 0a2 2 0 104 0a2 2 0 10-4 0"/></svg>Koper</div></div></a><a class="rc" href="#" aria-label="Izgubljena mačka, Izgubljena, pred 5 urami"><div class="ph " style="--t:var(--chart-3)" role="img" aria-label="Placeholder fotografije"><svg class="ic" width="56" height="56" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" ><circle cx="6.5" cy="11" r="1.9"/><circle cx="10" cy="6.5" r="1.9"/><circle cx="14" cy="6.5" r="1.9"/><circle cx="17.5" cy="11" r="1.9"/><path d="M12 12c3 0 5 3 5 5 0 2-2 2.5-5 2.5S7 19 7 17c0-2 2-5 5-5z"/></svg><span class="phl">foto 3</span></div><div class="bd"><div><span class="sl sl-lost"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ><path d="M4 10v4h3l7 4V6L7 10zM17 9a4 4 0 010 6"/></svg>Izgubljena</span> <span class="muted"> · pred 5 urami</span></div><div class="t">Izgubljena mačka</div><div class="pl"><svg class="ic" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ><path d="M12 21s-6-5.5-6-11a6 6 0 0112 0c0 5.5-6 11-6 11zM12 10m-2 0a2 2 0 104 0a2 2 0 10-4 0"/></svg>Maribor, Tabor</div></div></a><a class="rc" href="#" aria-label="Najden pes, Najdena, pred 1 dnevom"><div class="ph " style="--t:var(--chart-4)" role="img" aria-label="Placeholder fotografije"><svg class="ic" width="56" height="56" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" ><circle cx="6.5" cy="11" r="1.9"/><circle cx="10" cy="6.5" r="1.9"/><circle cx="14" cy="6.5" r="1.9"/><circle cx="17.5" cy="11" r="1.9"/><path d="M12 12c3 0 5 3 5 5 0 2-2 2.5-5 2.5S7 19 7 17c0-2 2-5 5-5z"/></svg><span class="phl">foto 4</span></div><div class="bd"><div><span class="sl sl-found"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ><path d="M12 20s-7-4.5-7-10a4 4 0 017-2.5A4 4 0 0119 10c0 5.5-7 10-7 10z"/></svg>Najdena</span> <span class="muted"> · pred 1 dnevom</span></div><div class="t">Najden pes</div><div class="pl"><svg class="ic" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ><path d="M12 21s-6-5.5-6-11a6 6 0 0112 0c0 5.5-6 11-6 11zM12 10m-2 0a2 2 0 104 0a2 2 0 10-4 0"/></svg>Celje</div></div></a><a class="rc" href="#" aria-label="Izgubljen pes, Izgubljena, pred 1 dnevom"><div class="ph " style="--t:var(--chart-5)" role="img" aria-label="Placeholder fotografije"><svg class="ic" width="56" height="56" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" ><circle cx="6.5" cy="11" r="1.9"/><circle cx="10" cy="6.5" r="1.9"/><circle cx="14" cy="6.5" r="1.9"/><circle cx="17.5" cy="11" r="1.9"/><path d="M12 12c3 0 5 3 5 5 0 2-2 2.5-5 2.5S7 19 7 17c0-2 2-5 5-5z"/></svg><span class="phl">foto 5</span></div><div class="bd"><div><span class="sl sl-lost"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ><path d="M4 10v4h3l7 4V6L7 10zM17 9a4 4 0 010 6"/></svg>Izgubljena</span> <span class="muted"> · pred 1 dnevom</span></div><div class="t">Izgubljen pes</div><div class="pl"><svg class="ic" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ><path d="M12 21s-6-5.5-6-11a6 6 0 0112 0c0 5.5-6 11-6 11zM12 10m-2 0a2 2 0 104 0a2 2 0 10-4 0"/></svg>Kranj</div></div></a><a class="rc" href="#" aria-label="Izgubljena mačka, Izgubljena, pred 2 dnevoma"><div class="ph " style="--t:var(--chart-1)" role="img" aria-label="Placeholder fotografije"><svg class="ic" width="56" height="56" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" ><circle cx="6.5" cy="11" r="1.9"/><circle cx="10" cy="6.5" r="1.9"/><circle cx="14" cy="6.5" r="1.9"/><circle cx="17.5" cy="11" r="1.9"/><path d="M12 12c3 0 5 3 5 5 0 2-2 2.5-5 2.5S7 19 7 17c0-2 2-5 5-5z"/></svg><span class="phl">foto 6</span></div><div class="bd"><div><span class="sl sl-lost"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ><path d="M4 10v4h3l7 4V6L7 10zM17 9a4 4 0 010 6"/></svg>Izgubljena</span> <span class="muted"> · pred 2 dnevoma</span></div><div class="t">Izgubljena mačka</div><div class="pl"><svg class="ic" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ><path d="M12 21s-6-5.5-6-11a6 6 0 0112 0c0 5.5-6 11-6 11zM12 10m-2 0a2 2 0 104 0a2 2 0 10-4 0"/></svg>Novo mesto</div></div></a></div></div>
+<div class="st-empty"><div class="es "><div class="esi" aria-hidden="true"><svg class="ic" width="72" height="72" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" ><circle cx="6.5" cy="11" r="1.9"/><circle cx="10" cy="6.5" r="1.9"/><circle cx="14" cy="6.5" r="1.9"/><circle cx="17.5" cy="11" r="1.9"/><path d="M12 12c3 0 5 3 5 5 0 2-2 2.5-5 2.5S7 19 7 17c0-2 2-5 5-5z"/></svg></div><div><h3 class="h3">V bližini ni odprtih prijav</h3><p class="esp">To je dobra novica. Vklopite opozorila in obvestili vas bomo, če bo kdo v bližini pogrešal žival.</p><div class="esa"><a class="btn b2" href="#">Vklopi opozorila</a><span class="to">→ /account/alerts (sign-in gate if signed out)</span></div></div></div></div>
+<div class="st-load"><div class="a-cards" aria-hidden="true"><div class="skel sk"></div><div class="skel sk"></div></div></div>
+<div class="anno"><b>Blok 2.</b> <b>Podatki: latest reports.</b> Public <code>GET /v1/reports?sort=recent&amp;limit=6</code> (exists, no auth). Per card: <code>id, status (lost|found), species, public_area_label, created_at, photo_thumb_url</code>; no name, no exact place, no distance when signed out. Title "Nedavne prijave" (<code>near_title_no_location</code>); with a home area or geolocation, switch to "V vaši bližini" + distance band. Card links to the public report detail. Empty list (0 rows) shows the empty state; errors show the inline error with retry, never an empty hero.</div></section>
+
+<section class="sec" aria-label="Številke"><div class="nums card">
+<div><div class="n">128</div><div class="muted">Živali spet doma</div></div><div><div class="n">42</div><div class="muted">Odprtih prijav</div></div><div><div class="n">1.350</div><div class="muted">Ljudi z vklopljenimi opozorili</div></div></div>
+<div class="anno"><b>Blok 3 (optional).</b> <b>Podatki: live numbers.</b> No public endpoint yet. Needs e.g. <code>GET /v1/stats/public</code> returning <code>reunited_total, open_reports, alert_subscribers</code>, cached 5 min. Hide the whole block while the endpoint fails or the numbers are small (for example under 50), so a young product never looks empty. Labels here are proposed copy, not in the content slice.</div></section>
+
+<section class="sec" aria-labelledby="a-how"><h2 id="a-how" class="h2">Kako deluje</h2>
+<ol class="a-steps">
+<li><span class="num">1</span><h3 class="h3">Prijavite</h3><p>Prijava izgubljene živali vzame nekaj minut, najdene pa manj kot minuto in brez računa.</p></li>
+<li><span class="num">2</span><h3 class="h3">Poiščemo ujemanja</h3><p>Primerjamo številko čipa, območje, čas in opis ter vam sporočimo, ko najdemo možno ujemanje.</p></li>
+<li><span class="num">3</span><h3 class="h3">Pogovorite se varno</h3><p>Pišete si v aplikaciji. Telefonska številka in točen naslov ostaneta skrita.</p></li></ol>
+<p><a class="btn bt" href="#">Več o tem, kako deluje<svg class="ic" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ><path d="M5 12h14M13 6l6 6-6 6"/></svg></a><span class="to">→ /how-it-works</span></p>
+<div class="anno"><b>Blok 4.</b> Static copy (P3 §How it works). No data. Three columns on desktop, three stacked rows on mobile; no photo, the cards above carry the imagery.</div></section>
+
+<section class="sec" aria-labelledby="a-safe"><div class="card a-safe"><span class="shield" aria-hidden="true"><svg class="ic" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ><path d="M12 3l7 3v5c0 5-3 8.5-7 10-4-1.5-7-5-7-10V6z"/></svg></span><div><h2 id="a-safe" class="h2">Zasnovano za vašo varnost</h2><p class="lede2">Ko se žival izgubi, se žal oglasijo tudi tisti, ki želijo izkoristiti stisko. Zato vaši podatki ostanejo pri vas.</p>
+<ul class="a-safel"><li><svg class="ic" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ><path d="M5 11h14v9H5zM8 11V8a4 4 0 018 0v3"/></svg>Telefonska številka ni nikoli javna.</li><li><svg class="ic" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ><path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2zM9 4v14M15 6v14"/></svg>Javno prikažemo le približno območje, nikoli naslova.</li><li><svg class="ic" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ><path d="M4 5h16v11H9l-5 4z"/></svg>Pogovor poteka v aplikaciji, z jasnim opozorilom pred prevarami.</li></ul>
+<a class="btn bt" href="#">Preberite nasvete za varnost<svg class="ic" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ><path d="M5 12h14M13 6l6 6-6 6"/></svg></a><span class="to">→ /safety</span></div></div><div class="anno"><b>Blok 5.</b> Static copy. Becomes one card (current page has it as an open section).</div></section>
+
+<section class="sec" aria-labelledby="a-sh"><div class="a-sh"><h2 id="a-sh" class="h2">Za zavetišča, veterinarje in občine</h2><div><p>Najdene živali objavite hitro, mi pa jih primerjamo z vsemi prijavami izgubljenih živali. Za zavetišča in občine je vse brezplačno, za vedno.</p><a class="btn bt" href="#">Več za zavetišča<svg class="ic" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ><path d="M5 12h14M13 6l6 6-6 6"/></svg></a><span class="to">→ /for-shelters</span></div></div><div class="anno"><b>Blok 6.</b> Static copy, unchanged.</div></section>
+
+<section class="sec" aria-labelledby="a-end"><div class="a-end"><h2 id="a-end" class="h2">Prijavite izgubljeno ali najdeno žival.</h2><div class="a-endb"><a class="btn btn-lg bs1" href="#">Prijavi izgubljeno žival</a><a class="btn btn-lg bs2" href="#">Prijavi najdeno žival</a></div></div><div class="anno"><b>Blok 7.</b> Closing CTA band repeats the two hero actions (first sentence of the hero lede as the heading, so no new copy). The header "Prijavi" button is already secondary on this page.</div></section>
+</div>
+<div class="stub">Noga strani: glej <a href="P1-footer.html">P1-footer.html</a> (TASK-116.1)</div></div></div></div>
+</section>
+<h2>Option A: what links where</h2>
+<div class="table-wrap"><table class="t"><thead><tr><th>Element</th><th>Goes to</th><th>Note</th></tr></thead><tbody><tr><td>Hero primary "Prijavi izgubljeno žival"</td><td><code>/report/lost</code></td><td>Single primary on the page; header "Prijavi" becomes secondary</td></tr><tr><td>Hero secondary "Prijavi najdeno žival"</td><td><code>/report/found</code></td><td>No account needed</td></tr><tr><td>"Opažena žival" text link</td><td><code>/report/sighted</code></td><td>Quiet; also in header menu</td></tr><tr><td>Report card</td><td><code>/reports/{id}</code></td><td>Public report detail</td></tr><tr><td>"Odpri zemljevid"</td><td><code>/map</code></td><td>Keeps the species/status filter off</td></tr><tr><td>Empty state "Vklopi opozorila"</td><td><code>/account/alerts</code></td><td>Sign-in gate when signed out</td></tr><tr><td>"Več o tem, kako deluje"</td><td><code>/how-it-works</code></td><td></td></tr><tr><td>"Preberite nasvete za varnost"</td><td><code>/safety</code></td><td></td></tr><tr><td>"Več za zavetišča"</td><td><code>/for-shelters</code></td><td></td></tr><tr><td>Closing band buttons</td><td><code>/report/lost, /report/found</code></td><td>Same as hero</td></tr></tbody></table></div>
+
+<h2 id="b">Option B: the hero is the chooser, list + map</h2>
+<p>A big photo hero with the three report types as the main interaction (same rows as the header "Prijavi" menu). Then a split of a map teaser and a compact list of recent reports. Numbers become a dark band. Order: hero + chooser, recent reports (list + map), numbers band (optional), how it works (steps + photo), safe by design (three cards), shelters.</p>
+<section class="frame" id="fb" data-view="desktop" data-fit="fit" data-state="filled" aria-label="Option B">
+<div class="bar"><span class="ttl">Option B</span><div class="seg" role="group" aria-label="Latest reports state" data-key="state"><button type="button" data-v="filled" aria-pressed="true">With reports</button><button type="button" data-v="empty" aria-pressed="false">Empty</button><button type="button" data-v="loading" aria-pressed="false">Loading</button></div><div class="seg" role="group" aria-label="Viewport" data-key="view"><button type="button" data-v="desktop" aria-pressed="true">Desktop 1440</button><button type="button" data-v="mobile" aria-pressed="false">Mobile 390</button></div><button type="button" class="tbtn nofit" aria-pressed="false">Fit to width</button></div>
+<div class="stage"><div class="vp" data-v="desktop" data-w="1440"><div class="dev" data-view="desktop"><header class="hdr"><span class="logo"><span class="lm"><svg class="ic" width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" ><circle cx="6.5" cy="11" r="1.9"/><circle cx="10" cy="6.5" r="1.9"/><circle cx="14" cy="6.5" r="1.9"/><circle cx="17.5" cy="11" r="1.9"/><path d="M12 12c3 0 5 3 5 5 0 2-2 2.5-5 2.5S7 19 7 17c0-2 2-5 5-5z"/></svg></span><span class="lw">Najdimo</span></span><nav class="navl" aria-label="Glavni meni"><a href="#">Zemljevid</a><a href="#">Izgubljene</a><a href="#">Najdene</a><a href="#">Kako deluje</a></nav><span class="sp"></span><span class="lang" aria-label="Jezik: Slovenščina"><u>SL</u><span>/</span><span>EN</span></span><a class="btn btn-sm b0" href="#">Vpis</a><a class="btn btn-sm b2" href="#">Prijavi</a></header>
+<div class="pg">
+<section class="b-hero" aria-labelledby="b-h1"><div class="b-photo" aria-hidden="true"><div class="ph fill" style="--t:var(--chart-1)" role="img" aria-label="Placeholder fotografije"><svg class="ic" width="56" height="56" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" ><circle cx="6.5" cy="11" r="1.9"/><circle cx="10" cy="6.5" r="1.9"/><circle cx="14" cy="6.5" r="1.9"/><circle cx="17.5" cy="11" r="1.9"/><path d="M12 12c3 0 5 3 5 5 0 2-2 2.5-5 2.5S7 19 7 17c0-2 2-5 5-5z"/></svg><span class="phl">foto: velika fotografija psa</span></div></div><div class="b-scrim"></div>
+<div class="b-in"><div class="b-ht"><h1 id="b-h1" class="b-h1">Izgubljena žival? Skupaj jo pripeljemo domov.</h1><p class="b-lede">Prijavite izgubljeno ali najdeno žival. Mi poiščemo možna ujemanja in obvestimo ljudi v bližini. Brezplačno.</p></div>
+<div class="b-pick card"><h2 class="h3">Kaj želite prijaviti?</h2><ul>
+<li><a class="ch" href="#"><span class="chi"><svg class="ic" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ><path d="M4 10v4h3l7 4V6L7 10zM17 9a4 4 0 010 6"/></svg></span><span class="cht"><span class="t">Izgubljena žival</span><span class="muted">Pogrešate svojega psa ali mačko.</span></span><svg class="ic" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ><path d="M9 5l7 7-7 7"/></svg></a></li><li><a class="ch" href="#"><span class="chi"><svg class="ic" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ><path d="M12 20s-7-4.5-7-10a4 4 0 017-2.5A4 4 0 0119 10c0 5.5-7 10-7 10z"/></svg></span><span class="cht"><span class="t">Najdena žival</span><span class="muted">Žival je pri vas. Brez računa.</span></span><svg class="ic" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ><path d="M9 5l7 7-7 7"/></svg></a></li><li><a class="ch" href="#"><span class="chi"><svg class="ic" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12zM12 12m-3 0a3 3 0 106 0a3 3 0 10-6 0"/></svg></span><span class="cht"><span class="t">Opažena žival</span><span class="muted">Videli ste žival, ki se je morda izgubila. Brez računa.</span></span><svg class="ic" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ><path d="M9 5l7 7-7 7"/></svg></a></li></ul></div></div></section>
+<div><span class="to">→ /report/lost</span><span class="to">→ /report/found</span><span class="to">→ /report/sighted</span></div>
+<div class="anno"><b>Hero B.</b> The hero is the chooser: the three report types from the header "Prijavi" menu (same strings, <code>nav.report_*</code>), so one pattern everywhere. No primary button; each row is a 64 px target. Needs one large licensed photo (LCP element, 16:9 desktop, 4:5 mobile crop).</div>
+
+<section class="sec" aria-labelledby="b-near"><div class="a-head"><h2 id="b-near" class="h2">Nedavne prijave</h2><a class="btn bt" href="#">Odpri zemljevid<svg class="ic" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ><path d="M5 12h14M13 6l6 6-6 6"/></svg></a><span class="to">→ /map</span></div>
+<div class="st-filled"><div class="b-split"><div class="b-map"><svg class="map" viewBox="0 0 400 300" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Placeholder zemljevida"><rect width="400" height="300" style="fill:hsl(var(--map-land))"/><path d="M0 210 C80 190 120 250 220 230 S340 200 400 230 V300 H0z" style="fill:hsl(var(--map-water))"/><rect x="250" y="30" width="110" height="80" rx="18" style="fill:hsl(var(--map-park))"/><g style="fill:none;stroke:hsl(var(--map-road));stroke-width:9"><path d="M-10 90 L410 130"/><path d="M120 -10 L160 310"/><path d="M-10 170 L300 40"/></g><g transform="translate(90 80)"><circle r="13" style="fill:hsl(var(--marker-ring))"/><circle r="9" style="fill:hsl(var(--marker-lost))"/></g><g transform="translate(250 160)"><circle r="13" style="fill:hsl(var(--marker-ring))"/><circle r="9" style="fill:hsl(var(--marker-found))"/></g><g transform="translate(180 120)"><circle r="13" style="fill:hsl(var(--marker-ring))"/><circle r="9" style="fill:hsl(var(--marker-lost))"/></g><g transform="translate(310 70)"><circle r="13" style="fill:hsl(var(--marker-ring))"/><circle r="9" style="fill:hsl(var(--marker-lost))"/></g><g transform="translate(60 190)"><circle r="13" style="fill:hsl(var(--marker-ring))"/><circle r="9" style="fill:hsl(var(--marker-found))"/></g></svg></div><ul class="b-list"><li><a class="lr" href="#"><span class="th"><div class="ph sq" style="--t:var(--chart-1)" role="img" aria-label="Placeholder fotografije"><svg class="ic" width="56" height="56" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" ><circle cx="6.5" cy="11" r="1.9"/><circle cx="10" cy="6.5" r="1.9"/><circle cx="14" cy="6.5" r="1.9"/><circle cx="17.5" cy="11" r="1.9"/><path d="M12 12c3 0 5 3 5 5 0 2-2 2.5-5 2.5S7 19 7 17c0-2 2-5 5-5z"/></svg><span class="phl"></span></div></span><span class="lt"><span class="t">Izgubljen pes</span><span><span class="sl sl-lost"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ><path d="M4 10v4h3l7 4V6L7 10zM17 9a4 4 0 010 6"/></svg>Izgubljena</span> <span class="muted"> · pred 2 urama</span></span><span class="pl"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ><path d="M12 21s-6-5.5-6-11a6 6 0 0112 0c0 5.5-6 11-6 11zM12 10m-2 0a2 2 0 104 0a2 2 0 10-4 0"/></svg>Ljubljana, Šiška</span></span><svg class="ic" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ><path d="M9 5l7 7-7 7"/></svg></a></li><li><a class="lr" href="#"><span class="th"><div class="ph sq" style="--t:var(--chart-2)" role="img" aria-label="Placeholder fotografije"><svg class="ic" width="56" height="56" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" ><circle cx="6.5" cy="11" r="1.9"/><circle cx="10" cy="6.5" r="1.9"/><circle cx="14" cy="6.5" r="1.9"/><circle cx="17.5" cy="11" r="1.9"/><path d="M12 12c3 0 5 3 5 5 0 2-2 2.5-5 2.5S7 19 7 17c0-2 2-5 5-5z"/></svg><span class="phl"></span></div></span><span class="lt"><span class="t">Najdena mačka</span><span><span class="sl sl-found"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ><path d="M12 20s-7-4.5-7-10a4 4 0 017-2.5A4 4 0 0119 10c0 5.5-7 10-7 10z"/></svg>Najdena</span> <span class="muted"> · pred 3 urami</span></span><span class="pl"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ><path d="M12 21s-6-5.5-6-11a6 6 0 0112 0c0 5.5-6 11-6 11zM12 10m-2 0a2 2 0 104 0a2 2 0 10-4 0"/></svg>Koper</span></span><svg class="ic" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ><path d="M9 5l7 7-7 7"/></svg></a></li><li><a class="lr" href="#"><span class="th"><div class="ph sq" style="--t:var(--chart-3)" role="img" aria-label="Placeholder fotografije"><svg class="ic" width="56" height="56" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" ><circle cx="6.5" cy="11" r="1.9"/><circle cx="10" cy="6.5" r="1.9"/><circle cx="14" cy="6.5" r="1.9"/><circle cx="17.5" cy="11" r="1.9"/><path d="M12 12c3 0 5 3 5 5 0 2-2 2.5-5 2.5S7 19 7 17c0-2 2-5 5-5z"/></svg><span class="phl"></span></div></span><span class="lt"><span class="t">Izgubljena mačka</span><span><span class="sl sl-lost"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ><path d="M4 10v4h3l7 4V6L7 10zM17 9a4 4 0 010 6"/></svg>Izgubljena</span> <span class="muted"> · pred 5 urami</span></span><span class="pl"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ><path d="M12 21s-6-5.5-6-11a6 6 0 0112 0c0 5.5-6 11-6 11zM12 10m-2 0a2 2 0 104 0a2 2 0 10-4 0"/></svg>Maribor, Tabor</span></span><svg class="ic" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ><path d="M9 5l7 7-7 7"/></svg></a></li><li><a class="lr" href="#"><span class="th"><div class="ph sq" style="--t:var(--chart-4)" role="img" aria-label="Placeholder fotografije"><svg class="ic" width="56" height="56" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" ><circle cx="6.5" cy="11" r="1.9"/><circle cx="10" cy="6.5" r="1.9"/><circle cx="14" cy="6.5" r="1.9"/><circle cx="17.5" cy="11" r="1.9"/><path d="M12 12c3 0 5 3 5 5 0 2-2 2.5-5 2.5S7 19 7 17c0-2 2-5 5-5z"/></svg><span class="phl"></span></div></span><span class="lt"><span class="t">Najden pes</span><span><span class="sl sl-found"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ><path d="M12 20s-7-4.5-7-10a4 4 0 017-2.5A4 4 0 0119 10c0 5.5-7 10-7 10z"/></svg>Najdena</span> <span class="muted"> · pred 1 dnevom</span></span><span class="pl"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ><path d="M12 21s-6-5.5-6-11a6 6 0 0112 0c0 5.5-6 11-6 11zM12 10m-2 0a2 2 0 104 0a2 2 0 10-4 0"/></svg>Celje</span></span><svg class="ic" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ><path d="M9 5l7 7-7 7"/></svg></a></li><li><a class="lr" href="#"><span class="th"><div class="ph sq" style="--t:var(--chart-5)" role="img" aria-label="Placeholder fotografije"><svg class="ic" width="56" height="56" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" ><circle cx="6.5" cy="11" r="1.9"/><circle cx="10" cy="6.5" r="1.9"/><circle cx="14" cy="6.5" r="1.9"/><circle cx="17.5" cy="11" r="1.9"/><path d="M12 12c3 0 5 3 5 5 0 2-2 2.5-5 2.5S7 19 7 17c0-2 2-5 5-5z"/></svg><span class="phl"></span></div></span><span class="lt"><span class="t">Izgubljen pes</span><span><span class="sl sl-lost"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ><path d="M4 10v4h3l7 4V6L7 10zM17 9a4 4 0 010 6"/></svg>Izgubljena</span> <span class="muted"> · pred 1 dnevom</span></span><span class="pl"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ><path d="M12 21s-6-5.5-6-11a6 6 0 0112 0c0 5.5-6 11-6 11zM12 10m-2 0a2 2 0 104 0a2 2 0 10-4 0"/></svg>Kranj</span></span><svg class="ic" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ><path d="M9 5l7 7-7 7"/></svg></a></li></ul></div></div>
+<div class="st-empty"><div class="b-split"><div class="b-map"><svg class="map" viewBox="0 0 400 300" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Placeholder zemljevida"><rect width="400" height="300" style="fill:hsl(var(--map-land))"/><path d="M0 210 C80 190 120 250 220 230 S340 200 400 230 V300 H0z" style="fill:hsl(var(--map-water))"/><rect x="250" y="30" width="110" height="80" rx="18" style="fill:hsl(var(--map-park))"/><g style="fill:none;stroke:hsl(var(--map-road));stroke-width:9"><path d="M-10 90 L410 130"/><path d="M120 -10 L160 310"/><path d="M-10 170 L300 40"/></g></svg></div><div class="es flat"><div class="esi" aria-hidden="true"><svg class="ic" width="72" height="72" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" ><circle cx="6.5" cy="11" r="1.9"/><circle cx="10" cy="6.5" r="1.9"/><circle cx="14" cy="6.5" r="1.9"/><circle cx="17.5" cy="11" r="1.9"/><path d="M12 12c3 0 5 3 5 5 0 2-2 2.5-5 2.5S7 19 7 17c0-2 2-5 5-5z"/></svg></div><div><h3 class="h3">V bližini ni odprtih prijav</h3><p class="esp">To je dobra novica. Vklopite opozorila in obvestili vas bomo, če bo kdo v bližini pogrešal žival.</p><div class="esa"><a class="btn b2" href="#">Vklopi opozorila</a><span class="to">→ /account/alerts (sign-in gate if signed out)</span></div></div></div></div></div>
+<div class="st-load"><div class="b-split"><div class="b-map"><div class="skel" style="height:100%"></div></div><div class="b-list" aria-hidden="true"><div class="skel sk"></div><div class="skel sk"></div><div class="skel sk"></div><div class="skel sk"></div><div class="skel sk"></div></div></div></div>
+<div class="anno"><b>Blok 2.</b> <b>Podatki: latest reports.</b> Public <code>GET /v1/reports?sort=recent&amp;limit=6</code> (exists, no auth). Per card: <code>id, status (lost|found), species, public_area_label, created_at, photo_thumb_url</code>; no name, no exact place, no distance when signed out. Title "Nedavne prijave" (<code>near_title_no_location</code>); with a home area or geolocation, switch to "V vaši bližini" + distance band. Card links to the public report detail. Empty list (0 rows) shows the empty state; errors show the inline error with retry, never an empty hero. The map teaser is a static tile (no interactive map on home): <code>GET /v1/reports?sort=recent</code> gives coarse area points for the pins; pins use the marker tokens. Tapping the teaser opens /map.</div></section>
+
+<section class="sec b-band" aria-label="Številke"><div class="b-nums">
+<div><div class="n">128</div><div>Živali spet doma</div></div><div><div class="n">42</div><div>Odprtih prijav</div></div><div><div class="n">1.350</div><div>Ljudi z vklopljenimi opozorili</div></div></div>
+</section><div class="anno"><b>Blok 3 (optional).</b> <b>Podatki: live numbers.</b> No public endpoint yet. Needs e.g. <code>GET /v1/stats/public</code> returning <code>reunited_total, open_reports, alert_subscribers</code>, cached 5 min. Hide the whole block while the endpoint fails or the numbers are small (for example under 50), so a young product never looks empty. Labels here are proposed copy, not in the content slice.</div>
+
+<section class="sec b-how" aria-labelledby="b-how"><div class="b-howt"><h2 id="b-how" class="h2">Kako deluje</h2>
+<ol class="b-steps">
+<li><span class="num">1</span><div><h3 class="h3">Prijavite</h3><p>Prijava izgubljene živali vzame nekaj minut, najdene pa manj kot minuto in brez računa.</p></div></li>
+<li><span class="num">2</span><div><h3 class="h3">Poiščemo ujemanja</h3><p>Primerjamo številko čipa, območje, čas in opis ter vam sporočimo, ko najdemo možno ujemanje.</p></div></li>
+<li><span class="num">3</span><div><h3 class="h3">Pogovorite se varno</h3><p>Pišete si v aplikaciji. Telefonska številka in točen naslov ostaneta skrita.</p></div></li></ol>
+<p><a class="btn bt" href="#">Več o tem, kako deluje<svg class="ic" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ><path d="M5 12h14M13 6l6 6-6 6"/></svg></a><span class="to">→ /how-it-works</span></p></div>
+<div class="b-howp"><div class="ph tall r" style="--t:var(--chart-3)" role="img" aria-label="Placeholder fotografije"><svg class="ic" width="56" height="56" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" ><circle cx="6.5" cy="11" r="1.9"/><circle cx="10" cy="6.5" r="1.9"/><circle cx="14" cy="6.5" r="1.9"/><circle cx="17.5" cy="11" r="1.9"/><path d="M12 12c3 0 5 3 5 5 0 2-2 2.5-5 2.5S7 19 7 17c0-2 2-5 5-5z"/></svg><span class="phl">foto mačka</span></div></div></section>
+<div class="anno"><b>Blok 4.</b> Static copy; keeps today's steps + cat photo (the one block that stays close to the current page).</div>
+
+<section class="sec" aria-labelledby="b-safe"><h2 id="b-safe" class="h2">Zasnovano za vašo varnost</h2><p class="lede2">Ko se žival izgubi, se žal oglasijo tudi tisti, ki želijo izkoristiti stisko. Zato vaši podatki ostanejo pri vas.</p>
+<ul class="b-safe"><li class="card"><svg class="ic" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ><path d="M5 11h14v9H5zM8 11V8a4 4 0 018 0v3"/></svg><p>Telefonska številka ni nikoli javna.</p></li><li class="card"><svg class="ic" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ><path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2zM9 4v14M15 6v14"/></svg><p>Javno prikažemo le približno območje, nikoli naslova.</p></li><li class="card"><svg class="ic" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ><path d="M4 5h16v11H9l-5 4z"/></svg><p>Pogovor poteka v aplikaciji, z jasnim opozorilom pred prevarami.</p></li></ul>
+<p><a class="btn bt" href="#">Preberite nasvete za varnost<svg class="ic" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ><path d="M5 12h14M13 6l6 6-6 6"/></svg></a><span class="to">→ /safety</span></p><div class="anno"><b>Blok 5.</b> Static copy; three small cards instead of one icon list.</div></section>
+
+<section class="sec" aria-labelledby="b-sh"><div class="a-sh"><h2 id="b-sh" class="h2">Za zavetišča, veterinarje in občine</h2><div><p>Najdene živali objavite hitro, mi pa jih primerjamo z vsemi prijavami izgubljenih živali. Za zavetišča in občine je vse brezplačno, za vedno.</p><a class="btn bt" href="#">Več za zavetišča<svg class="ic" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ><path d="M5 12h14M13 6l6 6-6 6"/></svg></a><span class="to">→ /for-shelters</span></div></div><div class="anno"><b>Blok 6.</b> Static copy, unchanged. Mobile: sticky "Prijavi" bar (secondary, bottom) appears once the hero chooser has scrolled out of view.</div></section>
+</div>
+<div class="stub">Noga strani: glej <a href="P1-footer.html">P1-footer.html</a> (TASK-116.1)</div></div></div><div class="vp" data-v="mobile" data-w="390"><div class="dev" data-view="mobile"><header class="hdr"><span class="logo"><span class="lm"><svg class="ic" width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" ><circle cx="6.5" cy="11" r="1.9"/><circle cx="10" cy="6.5" r="1.9"/><circle cx="14" cy="6.5" r="1.9"/><circle cx="17.5" cy="11" r="1.9"/><path d="M12 12c3 0 5 3 5 5 0 2-2 2.5-5 2.5S7 19 7 17c0-2 2-5 5-5z"/></svg></span><span class="lw">Najdimo</span></span><span class="sp"></span><span class="lang"><u>SL</u><span>/</span><span>EN</span></span><button class="iconbtn" type="button" aria-label="Odpri meni"><svg class="ic" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ><path d="M4 7h16M4 12h16M4 17h16"/></svg></button></header>
+<div class="pg">
+<section class="b-hero" aria-labelledby="b-h1"><div class="b-photo" aria-hidden="true"><div class="ph fill" style="--t:var(--chart-1)" role="img" aria-label="Placeholder fotografije"><svg class="ic" width="56" height="56" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" ><circle cx="6.5" cy="11" r="1.9"/><circle cx="10" cy="6.5" r="1.9"/><circle cx="14" cy="6.5" r="1.9"/><circle cx="17.5" cy="11" r="1.9"/><path d="M12 12c3 0 5 3 5 5 0 2-2 2.5-5 2.5S7 19 7 17c0-2 2-5 5-5z"/></svg><span class="phl">foto: velika fotografija psa</span></div></div><div class="b-scrim"></div>
+<div class="b-in"><div class="b-ht"><h1 id="b-h1" class="b-h1">Izgubljena žival? Skupaj jo pripeljemo domov.</h1><p class="b-lede">Prijavite izgubljeno ali najdeno žival. Mi poiščemo možna ujemanja in obvestimo ljudi v bližini. Brezplačno.</p></div>
+<div class="b-pick card"><h2 class="h3">Kaj želite prijaviti?</h2><ul>
+<li><a class="ch" href="#"><span class="chi"><svg class="ic" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ><path d="M4 10v4h3l7 4V6L7 10zM17 9a4 4 0 010 6"/></svg></span><span class="cht"><span class="t">Izgubljena žival</span><span class="muted">Pogrešate svojega psa ali mačko.</span></span><svg class="ic" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ><path d="M9 5l7 7-7 7"/></svg></a></li><li><a class="ch" href="#"><span class="chi"><svg class="ic" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ><path d="M12 20s-7-4.5-7-10a4 4 0 017-2.5A4 4 0 0119 10c0 5.5-7 10-7 10z"/></svg></span><span class="cht"><span class="t">Najdena žival</span><span class="muted">Žival je pri vas. Brez računa.</span></span><svg class="ic" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ><path d="M9 5l7 7-7 7"/></svg></a></li><li><a class="ch" href="#"><span class="chi"><svg class="ic" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12zM12 12m-3 0a3 3 0 106 0a3 3 0 10-6 0"/></svg></span><span class="cht"><span class="t">Opažena žival</span><span class="muted">Videli ste žival, ki se je morda izgubila. Brez računa.</span></span><svg class="ic" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ><path d="M9 5l7 7-7 7"/></svg></a></li></ul></div></div></section>
+<div><span class="to">→ /report/lost</span><span class="to">→ /report/found</span><span class="to">→ /report/sighted</span></div>
+<div class="anno"><b>Hero B.</b> The hero is the chooser: the three report types from the header "Prijavi" menu (same strings, <code>nav.report_*</code>), so one pattern everywhere. No primary button; each row is a 64 px target. Needs one large licensed photo (LCP element, 16:9 desktop, 4:5 mobile crop).</div>
+
+<section class="sec" aria-labelledby="b-near"><div class="a-head"><h2 id="b-near" class="h2">Nedavne prijave</h2></div>
+<div class="st-filled"><div class="b-split"><div class="b-map"><svg class="map" viewBox="0 0 400 300" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Placeholder zemljevida"><rect width="400" height="300" style="fill:hsl(var(--map-land))"/><path d="M0 210 C80 190 120 250 220 230 S340 200 400 230 V300 H0z" style="fill:hsl(var(--map-water))"/><rect x="250" y="30" width="110" height="80" rx="18" style="fill:hsl(var(--map-park))"/><g style="fill:none;stroke:hsl(var(--map-road));stroke-width:9"><path d="M-10 90 L410 130"/><path d="M120 -10 L160 310"/><path d="M-10 170 L300 40"/></g><g transform="translate(90 80)"><circle r="13" style="fill:hsl(var(--marker-ring))"/><circle r="9" style="fill:hsl(var(--marker-lost))"/></g><g transform="translate(250 160)"><circle r="13" style="fill:hsl(var(--marker-ring))"/><circle r="9" style="fill:hsl(var(--marker-found))"/></g><g transform="translate(180 120)"><circle r="13" style="fill:hsl(var(--marker-ring))"/><circle r="9" style="fill:hsl(var(--marker-lost))"/></g><g transform="translate(310 70)"><circle r="13" style="fill:hsl(var(--marker-ring))"/><circle r="9" style="fill:hsl(var(--marker-lost))"/></g><g transform="translate(60 190)"><circle r="13" style="fill:hsl(var(--marker-ring))"/><circle r="9" style="fill:hsl(var(--marker-found))"/></g></svg></div><ul class="b-list"><li><a class="lr" href="#"><span class="th"><div class="ph sq" style="--t:var(--chart-1)" role="img" aria-label="Placeholder fotografije"><svg class="ic" width="56" height="56" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" ><circle cx="6.5" cy="11" r="1.9"/><circle cx="10" cy="6.5" r="1.9"/><circle cx="14" cy="6.5" r="1.9"/><circle cx="17.5" cy="11" r="1.9"/><path d="M12 12c3 0 5 3 5 5 0 2-2 2.5-5 2.5S7 19 7 17c0-2 2-5 5-5z"/></svg><span class="phl"></span></div></span><span class="lt"><span class="t">Izgubljen pes</span><span><span class="sl sl-lost"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ><path d="M4 10v4h3l7 4V6L7 10zM17 9a4 4 0 010 6"/></svg>Izgubljena</span> <span class="muted"> · pred 2 urama</span></span><span class="pl"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ><path d="M12 21s-6-5.5-6-11a6 6 0 0112 0c0 5.5-6 11-6 11zM12 10m-2 0a2 2 0 104 0a2 2 0 10-4 0"/></svg>Ljubljana, Šiška</span></span><svg class="ic" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ><path d="M9 5l7 7-7 7"/></svg></a></li><li><a class="lr" href="#"><span class="th"><div class="ph sq" style="--t:var(--chart-2)" role="img" aria-label="Placeholder fotografije"><svg class="ic" width="56" height="56" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" ><circle cx="6.5" cy="11" r="1.9"/><circle cx="10" cy="6.5" r="1.9"/><circle cx="14" cy="6.5" r="1.9"/><circle cx="17.5" cy="11" r="1.9"/><path d="M12 12c3 0 5 3 5 5 0 2-2 2.5-5 2.5S7 19 7 17c0-2 2-5 5-5z"/></svg><span class="phl"></span></div></span><span class="lt"><span class="t">Najdena mačka</span><span><span class="sl sl-found"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ><path d="M12 20s-7-4.5-7-10a4 4 0 017-2.5A4 4 0 0119 10c0 5.5-7 10-7 10z"/></svg>Najdena</span> <span class="muted"> · pred 3 urami</span></span><span class="pl"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ><path d="M12 21s-6-5.5-6-11a6 6 0 0112 0c0 5.5-6 11-6 11zM12 10m-2 0a2 2 0 104 0a2 2 0 10-4 0"/></svg>Koper</span></span><svg class="ic" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ><path d="M9 5l7 7-7 7"/></svg></a></li><li><a class="lr" href="#"><span class="th"><div class="ph sq" style="--t:var(--chart-3)" role="img" aria-label="Placeholder fotografije"><svg class="ic" width="56" height="56" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" ><circle cx="6.5" cy="11" r="1.9"/><circle cx="10" cy="6.5" r="1.9"/><circle cx="14" cy="6.5" r="1.9"/><circle cx="17.5" cy="11" r="1.9"/><path d="M12 12c3 0 5 3 5 5 0 2-2 2.5-5 2.5S7 19 7 17c0-2 2-5 5-5z"/></svg><span class="phl"></span></div></span><span class="lt"><span class="t">Izgubljena mačka</span><span><span class="sl sl-lost"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ><path d="M4 10v4h3l7 4V6L7 10zM17 9a4 4 0 010 6"/></svg>Izgubljena</span> <span class="muted"> · pred 5 urami</span></span><span class="pl"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ><path d="M12 21s-6-5.5-6-11a6 6 0 0112 0c0 5.5-6 11-6 11zM12 10m-2 0a2 2 0 104 0a2 2 0 10-4 0"/></svg>Maribor, Tabor</span></span><svg class="ic" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ><path d="M9 5l7 7-7 7"/></svg></a></li><li><a class="lr" href="#"><span class="th"><div class="ph sq" style="--t:var(--chart-4)" role="img" aria-label="Placeholder fotografije"><svg class="ic" width="56" height="56" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" ><circle cx="6.5" cy="11" r="1.9"/><circle cx="10" cy="6.5" r="1.9"/><circle cx="14" cy="6.5" r="1.9"/><circle cx="17.5" cy="11" r="1.9"/><path d="M12 12c3 0 5 3 5 5 0 2-2 2.5-5 2.5S7 19 7 17c0-2 2-5 5-5z"/></svg><span class="phl"></span></div></span><span class="lt"><span class="t">Najden pes</span><span><span class="sl sl-found"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ><path d="M12 20s-7-4.5-7-10a4 4 0 017-2.5A4 4 0 0119 10c0 5.5-7 10-7 10z"/></svg>Najdena</span> <span class="muted"> · pred 1 dnevom</span></span><span class="pl"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ><path d="M12 21s-6-5.5-6-11a6 6 0 0112 0c0 5.5-6 11-6 11zM12 10m-2 0a2 2 0 104 0a2 2 0 10-4 0"/></svg>Celje</span></span><svg class="ic" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ><path d="M9 5l7 7-7 7"/></svg></a></li><li><a class="lr" href="#"><span class="th"><div class="ph sq" style="--t:var(--chart-5)" role="img" aria-label="Placeholder fotografije"><svg class="ic" width="56" height="56" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" ><circle cx="6.5" cy="11" r="1.9"/><circle cx="10" cy="6.5" r="1.9"/><circle cx="14" cy="6.5" r="1.9"/><circle cx="17.5" cy="11" r="1.9"/><path d="M12 12c3 0 5 3 5 5 0 2-2 2.5-5 2.5S7 19 7 17c0-2 2-5 5-5z"/></svg><span class="phl"></span></div></span><span class="lt"><span class="t">Izgubljen pes</span><span><span class="sl sl-lost"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ><path d="M4 10v4h3l7 4V6L7 10zM17 9a4 4 0 010 6"/></svg>Izgubljena</span> <span class="muted"> · pred 1 dnevom</span></span><span class="pl"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ><path d="M12 21s-6-5.5-6-11a6 6 0 0112 0c0 5.5-6 11-6 11zM12 10m-2 0a2 2 0 104 0a2 2 0 10-4 0"/></svg>Kranj</span></span><svg class="ic" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ><path d="M9 5l7 7-7 7"/></svg></a></li></ul></div><p><a class="btn bt" href="#">Odpri zemljevid<svg class="ic" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ><path d="M5 12h14M13 6l6 6-6 6"/></svg></a><span class="to">→ /map</span></p></div>
+<div class="st-empty"><div class="b-split"><div class="b-map"><svg class="map" viewBox="0 0 400 300" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Placeholder zemljevida"><rect width="400" height="300" style="fill:hsl(var(--map-land))"/><path d="M0 210 C80 190 120 250 220 230 S340 200 400 230 V300 H0z" style="fill:hsl(var(--map-water))"/><rect x="250" y="30" width="110" height="80" rx="18" style="fill:hsl(var(--map-park))"/><g style="fill:none;stroke:hsl(var(--map-road));stroke-width:9"><path d="M-10 90 L410 130"/><path d="M120 -10 L160 310"/><path d="M-10 170 L300 40"/></g></svg></div><div class="es flat"><div class="esi" aria-hidden="true"><svg class="ic" width="72" height="72" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" ><circle cx="6.5" cy="11" r="1.9"/><circle cx="10" cy="6.5" r="1.9"/><circle cx="14" cy="6.5" r="1.9"/><circle cx="17.5" cy="11" r="1.9"/><path d="M12 12c3 0 5 3 5 5 0 2-2 2.5-5 2.5S7 19 7 17c0-2 2-5 5-5z"/></svg></div><div><h3 class="h3">V bližini ni odprtih prijav</h3><p class="esp">To je dobra novica. Vklopite opozorila in obvestili vas bomo, če bo kdo v bližini pogrešal žival.</p><div class="esa"><a class="btn b2" href="#">Vklopi opozorila</a><span class="to">→ /account/alerts (sign-in gate if signed out)</span></div></div></div></div></div>
+<div class="st-load"><div class="b-split"><div class="b-map"><div class="skel" style="height:100%"></div></div><div class="b-list" aria-hidden="true"><div class="skel sk"></div><div class="skel sk"></div><div class="skel sk"></div><div class="skel sk"></div><div class="skel sk"></div></div></div></div>
+<div class="anno"><b>Blok 2.</b> <b>Podatki: latest reports.</b> Public <code>GET /v1/reports?sort=recent&amp;limit=6</code> (exists, no auth). Per card: <code>id, status (lost|found), species, public_area_label, created_at, photo_thumb_url</code>; no name, no exact place, no distance when signed out. Title "Nedavne prijave" (<code>near_title_no_location</code>); with a home area or geolocation, switch to "V vaši bližini" + distance band. Card links to the public report detail. Empty list (0 rows) shows the empty state; errors show the inline error with retry, never an empty hero. The map teaser is a static tile (no interactive map on home): <code>GET /v1/reports?sort=recent</code> gives coarse area points for the pins; pins use the marker tokens. Tapping the teaser opens /map.</div></section>
+
+<section class="sec b-band" aria-label="Številke"><div class="b-nums">
+<div><div class="n">128</div><div>Živali spet doma</div></div><div><div class="n">42</div><div>Odprtih prijav</div></div><div><div class="n">1.350</div><div>Ljudi z vklopljenimi opozorili</div></div></div>
+</section><div class="anno"><b>Blok 3 (optional).</b> <b>Podatki: live numbers.</b> No public endpoint yet. Needs e.g. <code>GET /v1/stats/public</code> returning <code>reunited_total, open_reports, alert_subscribers</code>, cached 5 min. Hide the whole block while the endpoint fails or the numbers are small (for example under 50), so a young product never looks empty. Labels here are proposed copy, not in the content slice.</div>
+
+<section class="sec b-how" aria-labelledby="b-how"><div class="b-howt"><h2 id="b-how" class="h2">Kako deluje</h2>
+<ol class="b-steps">
+<li><span class="num">1</span><div><h3 class="h3">Prijavite</h3><p>Prijava izgubljene živali vzame nekaj minut, najdene pa manj kot minuto in brez računa.</p></div></li>
+<li><span class="num">2</span><div><h3 class="h3">Poiščemo ujemanja</h3><p>Primerjamo številko čipa, območje, čas in opis ter vam sporočimo, ko najdemo možno ujemanje.</p></div></li>
+<li><span class="num">3</span><div><h3 class="h3">Pogovorite se varno</h3><p>Pišete si v aplikaciji. Telefonska številka in točen naslov ostaneta skrita.</p></div></li></ol>
+<p><a class="btn bt" href="#">Več o tem, kako deluje<svg class="ic" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ><path d="M5 12h14M13 6l6 6-6 6"/></svg></a><span class="to">→ /how-it-works</span></p></div>
+<div class="b-howp"><div class="ph tall r" style="--t:var(--chart-3)" role="img" aria-label="Placeholder fotografije"><svg class="ic" width="56" height="56" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" ><circle cx="6.5" cy="11" r="1.9"/><circle cx="10" cy="6.5" r="1.9"/><circle cx="14" cy="6.5" r="1.9"/><circle cx="17.5" cy="11" r="1.9"/><path d="M12 12c3 0 5 3 5 5 0 2-2 2.5-5 2.5S7 19 7 17c0-2 2-5 5-5z"/></svg><span class="phl">foto mačka</span></div></div></section>
+<div class="anno"><b>Blok 4.</b> Static copy; keeps today's steps + cat photo (the one block that stays close to the current page).</div>
+
+<section class="sec" aria-labelledby="b-safe"><h2 id="b-safe" class="h2">Zasnovano za vašo varnost</h2><p class="lede2">Ko se žival izgubi, se žal oglasijo tudi tisti, ki želijo izkoristiti stisko. Zato vaši podatki ostanejo pri vas.</p>
+<ul class="b-safe"><li class="card"><svg class="ic" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ><path d="M5 11h14v9H5zM8 11V8a4 4 0 018 0v3"/></svg><p>Telefonska številka ni nikoli javna.</p></li><li class="card"><svg class="ic" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ><path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2zM9 4v14M15 6v14"/></svg><p>Javno prikažemo le približno območje, nikoli naslova.</p></li><li class="card"><svg class="ic" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ><path d="M4 5h16v11H9l-5 4z"/></svg><p>Pogovor poteka v aplikaciji, z jasnim opozorilom pred prevarami.</p></li></ul>
+<p><a class="btn bt" href="#">Preberite nasvete za varnost<svg class="ic" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ><path d="M5 12h14M13 6l6 6-6 6"/></svg></a><span class="to">→ /safety</span></p><div class="anno"><b>Blok 5.</b> Static copy; three small cards instead of one icon list.</div></section>
+
+<section class="sec" aria-labelledby="b-sh"><div class="a-sh"><h2 id="b-sh" class="h2">Za zavetišča, veterinarje in občine</h2><div><p>Najdene živali objavite hitro, mi pa jih primerjamo z vsemi prijavami izgubljenih živali. Za zavetišča in občine je vse brezplačno, za vedno.</p><a class="btn bt" href="#">Več za zavetišča<svg class="ic" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ><path d="M5 12h14M13 6l6 6-6 6"/></svg></a><span class="to">→ /for-shelters</span></div></div><div class="anno"><b>Blok 6.</b> Static copy, unchanged. Mobile: sticky "Prijavi" bar (secondary, bottom) appears once the hero chooser has scrolled out of view.</div></section>
+</div>
+<div class="stub">Noga strani: glej <a href="P1-footer.html">P1-footer.html</a> (TASK-116.1)</div></div></div></div>
+</section>
+<h2>Option B: what links where</h2>
+<div class="table-wrap"><table class="t"><thead><tr><th>Element</th><th>Goes to</th><th>Note</th></tr></thead><tbody><tr><td>Chooser "Izgubljena žival"</td><td><code>/report/lost</code></td><td>No primary button; the rows are the actions</td></tr><tr><td>Chooser "Najdena žival"</td><td><code>/report/found</code></td><td></td></tr><tr><td>Chooser "Opažena žival"</td><td><code>/report/sighted</code></td><td>Promoted to the hero in this option</td></tr><tr><td>List row</td><td><code>/reports/{id}</code></td><td></td></tr><tr><td>Map teaser and "Odpri zemljevid"</td><td><code>/map</code></td><td></td></tr><tr><td>Empty state "Vklopi opozorila"</td><td><code>/account/alerts</code></td><td>Sign-in gate when signed out</td></tr><tr><td>"Več o tem, kako deluje"</td><td><code>/how-it-works</code></td><td></td></tr><tr><td>"Preberite nasvete za varnost"</td><td><code>/safety</code></td><td></td></tr><tr><td>"Več za zavetišča"</td><td><code>/for-shelters</code></td><td></td></tr></tbody></table></div>
+<h2>Both options</h2>
+<p>Cards use the status word with its fill icon (StatusLabel, system §10.5), not the tonal Badge, which is limited to one per page. Copy is the live SL copy from P3 and P4; the number labels and the closing-band heading are the only proposed strings. Icons are placeholders for Phosphor. Photos and the map are placeholders.</p>
+</main>
+</div>
+<script>
+(function(){
+var root=document.documentElement;
+function sget(k){try{return localStorage.getItem(k)}catch(e){return null}}function sset(k,v){try{localStorage.setItem(k,v)}catch(e){}}
+var th=sget('wf-theme');if(th==='light'||th==='dark')root.setAttribute('data-theme',th);
+var tb=document.getElementById('theme');
+function label(){var v=root.getAttribute('data-theme')||'auto';tb.textContent='Theme: '+v;}
+if(tb){label();tb.addEventListener('click',function(){var v=root.getAttribute('data-theme');var n=v===null?'light':v==='light'?'dark':null;if(n){root.setAttribute('data-theme',n);sset('wf-theme',n)}else{root.removeAttribute('data-theme');sset('wf-theme','auto')}label();fitAll()})}
+var nt=document.getElementById('notes');if(nt)nt.addEventListener('change',function(){document.body.classList.toggle('no-notes',!nt.checked);fitAll()});
+function fit(f){var v=f.dataset.view;var vp=f.querySelector('.vp[data-v="'+v+'"]');if(!vp)return;var dev=vp.firstElementChild;var w=+vp.dataset.w;var st=f.querySelector('.stage');var avail=st.clientWidth-24;
+if(f.dataset.fit==='full'){dev.style.width=w+'px';vp.style.width='';vp.style.height='';return}
+var s=Math.min(1,avail/w);dev.style.width=w+'px';dev.style.transform='scale('+s+')';vp.style.width=(w*s)+'px';vp.style.height=(dev.offsetHeight*s)+'px'}
+function fitAll(){document.querySelectorAll('.frame').forEach(fit)}
+document.querySelectorAll('.frame').forEach(function(f){
+f.querySelectorAll('.seg').forEach(function(seg){var key=seg.dataset.key;seg.querySelectorAll('button').forEach(function(b){b.addEventListener('click',function(){f.dataset[key]=b.dataset.v;seg.querySelectorAll('button').forEach(function(x){x.setAttribute('aria-pressed',String(x===b))});fit(f)})})});
+var nf=f.querySelector('.nofit');if(nf)nf.addEventListener('click',function(){var full=f.dataset.fit==='full';f.dataset.fit=full?'fit':'full';nf.textContent=full?'Fit to width':'Fit: 100%';nf.setAttribute('aria-pressed',String(!full));fit(f)});
+if(window.ResizeObserver){f.querySelectorAll('.dev').forEach(function(d){new ResizeObserver(function(){fit(f)}).observe(d)})}
+});
+function sync(f){var open=f.dataset.state==='open';f.querySelectorAll('[data-disc]').forEach(function(b){b.setAttribute('aria-expanded',String(open))});f.querySelectorAll('.seg[data-key=state] button').forEach(function(x){x.setAttribute('aria-pressed',String(x.dataset.v===f.dataset.state))})}
+document.querySelectorAll('.frame').forEach(function(f){sync(f);f.querySelectorAll('.seg[data-key=state] button').forEach(function(x){x.addEventListener('click',function(){sync(f)})});f.querySelectorAll('[data-disc]').forEach(function(bt){bt.addEventListener('click',function(){f.dataset.state=f.dataset.state==='open'?'closed':'open';sync(f);fit(f)})})});
+window.addEventListener('resize',fitAll);window.addEventListener('load',fitAll);fitAll();
+})();</script>
+</body>
+</html>

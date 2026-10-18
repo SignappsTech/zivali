@@ -1,13 +1,14 @@
 ---
 id: TASK-116.1
 title: 'Wireframe: footer rework (person approval gate)'
-status: To Do
+status: In Review
 assignee:
   - '@design-lead'
 created_date: '2026-10-16 14:00'
+updated_date: '2026-10-18 02:02'
 labels:
-  - 'design'
-  - 'wireframe'
+  - design
+  - wireframe
   - 'est:XS'
 dependencies: []
 parent_task_id: TASK-116
@@ -28,3 +29,9 @@ Wireframe of the footer (TASK-116): column groups and their headings, which link
 - [ ] #1 docs/design/wireframes/P1-footer.html (desktop and mobile) with the link grouping
 - [ ] #2 A person approved it; their name, the date and the approved version are in this task's notes
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+docs/design/wireframes/P1-footer.html: v1 ready for owner review (2026-10-18). Not approved yet.
+<!-- SECTION:NOTES:END -->

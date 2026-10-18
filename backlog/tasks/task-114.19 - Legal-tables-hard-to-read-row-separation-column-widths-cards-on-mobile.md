@@ -6,6 +6,7 @@ assignee:
   - '@frontend-dev'
   - '@design-lead'
 created_date: '2026-10-16 16:10'
+updated_date: '2026-10-18 02:00'
 labels:
   - fe
   - design
@@ -33,3 +34,9 @@ Part of the cause is TASK-114.18 (the MDX `<table>`, `<th>`, `<td>` get no style
 - [ ] #2 Every legal table (SL and EN) has a distinct header, row dividers, even padding, top alignment and a fixed label column; at 390 px rows read as stacked cards
 - [ ] #3 Screen readers still get a table (or a definition list) with correct header associations; axe clean; light and dark
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+docs/design/wireframes/M-legal-table.html: v1 ready for owner review (2026-10-18). Not approved yet.
+<!-- SECTION:NOTES:END -->

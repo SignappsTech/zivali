@@ -1,0 +1,528 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Najdimo legal table mock</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:wght@400;600;700;800&family=Bricolage+Grotesque:opsz,wght@12..96,400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  color-scheme: light dark;
+  --background: 180 15% 92.2%;
+  --foreground: 193.8 28.9% 8.8%;
+  --card: 180 33.3% 98.8%;
+  --card-foreground: 193.8 28.9% 8.8%;
+  --popover: 180 33.3% 98.8%;
+  --popover-foreground: 193.8 28.9% 8.8%;
+  --primary: 190.3 65.5% 22.7%;
+  --primary-foreground: 185 42.9% 94.5%;
+  --secondary: 184.4 44.3% 88%;
+  --secondary-foreground: 191.3 64.9% 14.5%;
+  --muted: 186 13.5% 85.5%;
+  --muted-foreground: 190.9 14.3% 30.2%;
+  --accent: 184.4 44.3% 88%;
+  --accent-foreground: 191.3 64.9% 14.5%;
+  --destructive: 353.9 70.2% 32.9%;
+  --destructive-foreground: 355.7 100% 97.3%;
+  --primary-hover: 190.8 65.6% 18.2%;
+  --primary-pressed: 191.3 64.9% 14.5%;
+  --secondary-hover: 184.6 43.3% 76.5%;
+  --secondary-pressed: 185.3 41.4% 62.5%;
+  --destructive-hover: 354.1 70.8% 25.5%;
+  --destructive-pressed: 354.1 70.1% 17.1%;
+  --border: 186 13.5% 85.5%;
+  --input: 190 10% 47.1%;
+  --ring: 188.1 63.1% 27.6%;
+  --chart-1: 188.1 63.1% 27.6%;
+  --chart-2: 38.4 89.7% 38.2%;
+  --chart-3: 17.9 71.5% 49.6%;
+  --chart-4: 144.2 54.1% 35.9%;
+  --chart-5: 319.4 46.4% 43.1%;
+  --sidebar: 191.3 64.9% 14.5%;
+  --sidebar-foreground: 185 42.9% 94.5%;
+  --sidebar-primary: 185 42.9% 94.5%;
+  --sidebar-primary-foreground: 191.3 64.9% 14.5%;
+  --sidebar-accent: 190.8 65.6% 18.2%;
+  --sidebar-accent-foreground: 185 42.9% 94.5%;
+  --sidebar-border: 190.8 65.6% 18.2%;
+  --sidebar-ring: 185 42.9% 94.5%;
+  --status-lost: 17.5 75.2% 41.2%;
+  --status-lost-foreground: 18.9 100% 96.3%;
+  --status-lost-subtle: 18.3 100% 91%;
+  --status-lost-subtle-foreground: 15.7 71.9% 25.1%;
+  --status-lost-border: 17.2 100% 72%;
+  --status-found: 146.8 56.5% 22.5%;
+  --status-found-foreground: 140 46.2% 94.9%;
+  --status-found-subtle: 140 48.4% 87.8%;
+  --status-found-subtle-foreground: 147.1 56% 17.8%;
+  --status-found-border: 141.4 42.4% 61.2%;
+  --status-sighted: 228.7 58.1% 44.9%;
+  --status-sighted-foreground: 225 88.9% 96.5%;
+  --status-sighted-subtle: 223.6 89.2% 92.7%;
+  --status-sighted-subtle-foreground: 228.4 57.2% 28.4%;
+  --status-sighted-border: 224.6 82.1% 75.9%;
+  --status-reunited: 40 92.7% 56.9%;
+  --status-reunited-foreground: 193.8 28.9% 8.8%;
+  --status-reunited-subtle: 44.8 100% 86.1%;
+  --status-reunited-subtle-foreground: 34.7 73.8% 23.9%;
+  --status-reunited-border: 40 92.7% 56.9%;
+  --premium: 317.9 47.5% 27.6%;
+  --premium-foreground: 318 50% 96.1%;
+  --premium-subtle: 313 51.1% 91.2%;
+  --premium-subtle-foreground: 316.8 46.3% 21.2%;
+  --premium-border: 318.2 48.1% 69%;
+  --verified: 190.3 65.5% 22.7%;
+  --verified-foreground: 185 42.9% 94.5%;
+  --verified-subtle: 184.4 44.3% 88%;
+  --verified-subtle-foreground: 191.3 64.9% 14.5%;
+  --warning: 40 92.7% 56.9%;
+  --warning-foreground: 193.8 28.9% 8.8%;
+  --warning-subtle: 44.8 100% 86.1%;
+  --warning-subtle-foreground: 34.7 73.8% 23.9%;
+  --warning-border: 39.6 85.1% 47.5%;
+  --provider: 0 0% 100%;
+  --provider-foreground: 0 0% 12.2%;
+  --provider-border: 140 1.3% 46.1%;
+  --qr: 0 0% 100%;
+  --qr-foreground: 193.8 28.9% 8.8%;
+  --scrim: 190 46.2% 5.1%;
+  --scrim-alpha: 0.56;
+  --marker-lost: 17.5 75.2% 41.2%;
+  --marker-found: 146.8 56.5% 22.5%;
+  --marker-sighted: 228.7 58.1% 44.9%;
+  --marker-reunited: 38.4 89.7% 38.2%;
+  --marker-me: 226.3 64.5% 54.7%;
+  --marker-cluster: 194.1 24.6% 13.5%;
+  --marker-cluster-foreground: 180 14.3% 95.9%;
+  --marker-ring: 180 33.3% 98.8%;
+  --marker-area: 17.9 71.5% 49.6%;
+  --marker-area-alpha: 0.16;
+  --map-land: 180 15% 92.2%;
+  --map-water: 188.3 40.8% 86.1%;
+  --map-park: 137.1 38.2% 89.2%;
+  --map-building: 172.5 14.8% 89.4%;
+  --map-road: 180 33.3% 98.8%;
+  --map-road-casing: 186 13.5% 85.5%;
+  --map-label: 190.9 14.3% 30.2%;
+  --map-label-halo: 180 15% 92.2%;
+  --radius: 1rem;
+  --font-display: 'Bricolage Grotesque', ui-sans-serif, system-ui, sans-serif;
+  --font-sans: 'Atkinson Hyperlegible Next', ui-sans-serif, system-ui, sans-serif;
+  --radius-button: 9999px;
+  --radius-card: calc(var(--radius) + 8px);
+  --radius-input: var(--radius);
+  --radius-row: calc(var(--radius) + 4px);
+  --radius-chip: 9999px;
+  --radius-sheet: 28px;
+  --radius-photo: calc(var(--radius) + 4px);
+  --card-shadow: none;
+  --shadow-sm: none;
+  --shadow-md: 0 2px 10px 0 rgb(16 38 43 / 0.08);
+  --shadow-lg: 0 -10px 40px -12px rgb(16 38 43 / 0.16);
+  --shadow-pop: 0 8px 24px -6px rgb(16 38 43 / 0.18);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --background: 189.2 37.1% 6.9%;
+    --foreground: 180 15% 92.2%;
+    --card: 192.6 35.8% 10.4%;
+    --card-foreground: 180 15% 92.2%;
+    --popover: 191.1 36% 14.7%;
+    --popover-foreground: 180 15% 92.2%;
+    --primary: 185.3 41.4% 62.5%;
+    --primary-foreground: 194.1 68% 9.8%;
+    --secondary: 191.3 64.9% 14.5%;
+    --secondary-foreground: 184.4 44.3% 88%;
+    --muted: 191.1 36% 14.7%;
+    --muted-foreground: 188 12% 75.5%;
+    --accent: 191.1 36% 14.7%;
+    --accent-foreground: 180 14.3% 95.9%;
+    --destructive: 354.1 82% 78.2%;
+    --destructive-foreground: 352.5 61.5% 10.2%;
+    --primary-hover: 184.6 43.3% 76.5%;
+    --primary-pressed: 184.4 44.3% 88%;
+    --secondary-hover: 190.8 65.6% 18.2%;
+    --secondary-pressed: 190.3 65.5% 22.7%;
+    --destructive-hover: 354 88.2% 86.7%;
+    --destructive-pressed: 354.7 100% 93.3%;
+    --border: 190.9 32.7% 19.8%;
+    --input: 190 10% 47.1%;
+    --ring: 185.3 41.4% 62.5%;
+    --chart-1: 185.3 41.4% 62.5%;
+    --chart-2: 40 92.7% 56.9%;
+    --chart-3: 16.8 87.3% 59.8%;
+    --chart-4: 143.3 43.5% 46.5%;
+    --chart-5: 318.2 48.1% 69%;
+    --sidebar: 190 46.2% 5.1%;
+    --sidebar-foreground: 180 15% 92.2%;
+    --sidebar-primary: 180 15% 92.2%;
+    --sidebar-primary-foreground: 193.8 28.9% 8.8%;
+    --sidebar-accent: 191.1 36% 14.7%;
+    --sidebar-accent-foreground: 180 14.3% 95.9%;
+    --sidebar-border: 191.1 36% 14.7%;
+    --sidebar-ring: 180 15% 92.2%;
+    --status-lost: 16.8 87.3% 59.8%;
+    --status-lost-foreground: 14.6 75.5% 9.6%;
+    --status-lost-subtle: 15.5 70.5% 17.3%;
+    --status-lost-subtle-foreground: 18.3 100% 91%;
+    --status-lost-border: 16.8 74.9% 32.7%;
+    --status-found: 143.3 43.5% 46.5%;
+    --status-found-foreground: 139.2 64.1% 7.6%;
+    --status-found-subtle: 148.3 54.5% 12.9%;
+    --status-found-subtle-foreground: 140 48.4% 87.8%;
+    --status-found-border: 146.8 56.5% 22.5%;
+    --status-sighted: 224.6 82.1% 75.9%;
+    --status-sighted-foreground: 231.1 62.7% 14.7%;
+    --status-sighted-subtle: 229 55.6% 21.2%;
+    --status-sighted-subtle-foreground: 223.6 89.2% 92.7%;
+    --status-sighted-border: 228.7 57.6% 36.1%;
+    --status-reunited: 40 92.7% 56.9%;
+    --status-reunited-foreground: 193.8 28.9% 8.8%;
+    --status-reunited-subtle: 33.6 66.3% 17.5%;
+    --status-reunited-subtle-foreground: 44.8 100% 86.1%;
+    --status-reunited-border: 36.6 84.5% 30.4%;
+    --premium: 318.2 48.1% 69%;
+    --premium-foreground: 314.4 53.2% 9.2%;
+    --premium-subtle: 315.9 45.9% 14.5%;
+    --premium-subtle-foreground: 313 51.1% 91.2%;
+    --premium-border: 317.9 47.5% 27.6%;
+    --verified: 185.3 41.4% 62.5%;
+    --verified-foreground: 194.1 68% 9.8%;
+    --verified-subtle: 191.3 64.9% 14.5%;
+    --verified-subtle-foreground: 184.4 44.3% 88%;
+    --warning: 40 92.7% 56.9%;
+    --warning-foreground: 193.8 28.9% 8.8%;
+    --warning-subtle: 33.6 66.3% 17.5%;
+    --warning-subtle-foreground: 44.8 100% 86.1%;
+    --warning-border: 36.6 84.5% 30.4%;
+    --provider: 240 2.6% 7.6%;
+    --provider-foreground: 0 0% 89%;
+    --provider-border: 140 1.3% 56.3%;
+    --qr: 0 0% 100%;
+    --qr-foreground: 193.8 28.9% 8.8%;
+    --scrim: 190 46.2% 5.1%;
+    --scrim-alpha: 0.72;
+    --marker-lost: 16.8 87.3% 59.8%;
+    --marker-found: 143.3 43.5% 46.5%;
+    --marker-sighted: 224.6 82.1% 75.9%;
+    --marker-reunited: 40 92.7% 56.9%;
+    --marker-me: 224.6 82.1% 75.9%;
+    --marker-cluster: 180 15% 92.2%;
+    --marker-cluster-foreground: 193.8 28.9% 8.8%;
+    --marker-ring: 190 46.2% 5.1%;
+    --marker-area: 16.8 87.3% 59.8%;
+    --marker-area-alpha: 0.2;
+    --map-land: 190.6 36.2% 9.2%;
+    --map-water: 192.6 51.4% 14.5%;
+    --map-park: 168.9 39.1% 13.5%;
+    --map-building: 190 35.3% 13.3%;
+    --map-road: 192.5 24% 19.6%;
+    --map-road-casing: 190.6 36.2% 9.2%;
+    --map-label: 188 12% 75.5%;
+    --map-label-halo: 190.6 36.2% 9.2%;
+    --shadow-sm: none;
+    --shadow-md: 0 2px 10px 0 rgb(0 0 0 / 0.4);
+    --shadow-lg: 0 -10px 40px -12px rgb(0 0 0 / 0.6);
+    --shadow-pop: 0 8px 24px -6px rgb(0 0 0 / 0.55);
+  }
+}
+:root[data-theme="dark"] {
+  --background: 189.2 37.1% 6.9%;
+  --foreground: 180 15% 92.2%;
+  --card: 192.6 35.8% 10.4%;
+  --card-foreground: 180 15% 92.2%;
+  --popover: 191.1 36% 14.7%;
+  --popover-foreground: 180 15% 92.2%;
+  --primary: 185.3 41.4% 62.5%;
+  --primary-foreground: 194.1 68% 9.8%;
+  --secondary: 191.3 64.9% 14.5%;
+  --secondary-foreground: 184.4 44.3% 88%;
+  --muted: 191.1 36% 14.7%;
+  --muted-foreground: 188 12% 75.5%;
+  --accent: 191.1 36% 14.7%;
+  --accent-foreground: 180 14.3% 95.9%;
+  --destructive: 354.1 82% 78.2%;
+  --destructive-foreground: 352.5 61.5% 10.2%;
+  --primary-hover: 184.6 43.3% 76.5%;
+  --primary-pressed: 184.4 44.3% 88%;
+  --secondary-hover: 190.8 65.6% 18.2%;
+  --secondary-pressed: 190.3 65.5% 22.7%;
+  --destructive-hover: 354 88.2% 86.7%;
+  --destructive-pressed: 354.7 100% 93.3%;
+  --border: 190.9 32.7% 19.8%;
+  --input: 190 10% 47.1%;
+  --ring: 185.3 41.4% 62.5%;
+  --chart-1: 185.3 41.4% 62.5%;
+  --chart-2: 40 92.7% 56.9%;
+  --chart-3: 16.8 87.3% 59.8%;
+  --chart-4: 143.3 43.5% 46.5%;
+  --chart-5: 318.2 48.1% 69%;
+  --sidebar: 190 46.2% 5.1%;
+  --sidebar-foreground: 180 15% 92.2%;
+  --sidebar-primary: 180 15% 92.2%;
+  --sidebar-primary-foreground: 193.8 28.9% 8.8%;
+  --sidebar-accent: 191.1 36% 14.7%;
+  --sidebar-accent-foreground: 180 14.3% 95.9%;
+  --sidebar-border: 191.1 36% 14.7%;
+  --sidebar-ring: 180 15% 92.2%;
+  --status-lost: 16.8 87.3% 59.8%;
+  --status-lost-foreground: 14.6 75.5% 9.6%;
+  --status-lost-subtle: 15.5 70.5% 17.3%;
+  --status-lost-subtle-foreground: 18.3 100% 91%;
+  --status-lost-border: 16.8 74.9% 32.7%;
+  --status-found: 143.3 43.5% 46.5%;
+  --status-found-foreground: 139.2 64.1% 7.6%;
+  --status-found-subtle: 148.3 54.5% 12.9%;
+  --status-found-subtle-foreground: 140 48.4% 87.8%;
+  --status-found-border: 146.8 56.5% 22.5%;
+  --status-sighted: 224.6 82.1% 75.9%;
+  --status-sighted-foreground: 231.1 62.7% 14.7%;
+  --status-sighted-subtle: 229 55.6% 21.2%;
+  --status-sighted-subtle-foreground: 223.6 89.2% 92.7%;
+  --status-sighted-border: 228.7 57.6% 36.1%;
+  --status-reunited: 40 92.7% 56.9%;
+  --status-reunited-foreground: 193.8 28.9% 8.8%;
+  --status-reunited-subtle: 33.6 66.3% 17.5%;
+  --status-reunited-subtle-foreground: 44.8 100% 86.1%;
+  --status-reunited-border: 36.6 84.5% 30.4%;
+  --premium: 318.2 48.1% 69%;
+  --premium-foreground: 314.4 53.2% 9.2%;
+  --premium-subtle: 315.9 45.9% 14.5%;
+  --premium-subtle-foreground: 313 51.1% 91.2%;
+  --premium-border: 317.9 47.5% 27.6%;
+  --verified: 185.3 41.4% 62.5%;
+  --verified-foreground: 194.1 68% 9.8%;
+  --verified-subtle: 191.3 64.9% 14.5%;
+  --verified-subtle-foreground: 184.4 44.3% 88%;
+  --warning: 40 92.7% 56.9%;
+  --warning-foreground: 193.8 28.9% 8.8%;
+  --warning-subtle: 33.6 66.3% 17.5%;
+  --warning-subtle-foreground: 44.8 100% 86.1%;
+  --warning-border: 36.6 84.5% 30.4%;
+  --provider: 240 2.6% 7.6%;
+  --provider-foreground: 0 0% 89%;
+  --provider-border: 140 1.3% 56.3%;
+  --qr: 0 0% 100%;
+  --qr-foreground: 193.8 28.9% 8.8%;
+  --scrim: 190 46.2% 5.1%;
+  --scrim-alpha: 0.72;
+  --marker-lost: 16.8 87.3% 59.8%;
+  --marker-found: 143.3 43.5% 46.5%;
+  --marker-sighted: 224.6 82.1% 75.9%;
+  --marker-reunited: 40 92.7% 56.9%;
+  --marker-me: 224.6 82.1% 75.9%;
+  --marker-cluster: 180 15% 92.2%;
+  --marker-cluster-foreground: 193.8 28.9% 8.8%;
+  --marker-ring: 190 46.2% 5.1%;
+  --marker-area: 16.8 87.3% 59.8%;
+  --marker-area-alpha: 0.2;
+  --map-land: 190.6 36.2% 9.2%;
+  --map-water: 192.6 51.4% 14.5%;
+  --map-park: 168.9 39.1% 13.5%;
+  --map-building: 190 35.3% 13.3%;
+  --map-road: 192.5 24% 19.6%;
+  --map-road-casing: 190.6 36.2% 9.2%;
+  --map-label: 188 12% 75.5%;
+  --map-label-halo: 190.6 36.2% 9.2%;
+  --shadow-sm: none;
+  --shadow-md: 0 2px 10px 0 rgb(0 0 0 / 0.4);
+  --shadow-lg: 0 -10px 40px -12px rgb(0 0 0 / 0.6);
+  --shadow-pop: 0 8px 24px -6px rgb(0 0 0 / 0.55);
+}
+:root[data-theme="light"] { color-scheme: light; }
+:root[data-theme="dark"] { color-scheme: dark; }
+
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:hsl(var(--background));color:hsl(var(--foreground));font-family:var(--font-sans);font-size:16px;line-height:1.5}
+a{color:inherit}
+:focus-visible{outline:3px solid hsl(var(--ring));outline-offset:2px}
+.doc{max-width:1200px;margin:0 auto;padding:24px 16px 64px}
+.doc h1{font-family:var(--font-display);font-size:30px;line-height:36px;letter-spacing:-.02em;margin:8px 0 0}
+.doc h2{font-family:var(--font-display);font-size:22px;line-height:28px;margin:40px 0 8px;letter-spacing:-.01em}
+.doc p{margin:8px 0}
+.meta{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;color:hsl(var(--muted-foreground));font-size:15px}
+.pill{display:inline-flex;align-items:center;min-height:30px;padding:0 12px;border-radius:9999px;background:hsl(var(--warning-subtle));color:hsl(var(--warning-subtle-foreground));font-weight:700;font-size:14px}
+.docnav{display:flex;flex-wrap:wrap;gap:4px 16px;margin:16px 0 0;padding:0;list-style:none}
+.docnav a{display:inline-flex;align-items:center;min-height:44px;font-weight:600;text-underline-offset:4px}
+.docnav a[aria-current=page]{color:hsl(var(--muted-foreground));text-decoration:none}
+.qs{background:hsl(var(--card));border-radius:var(--radius-card);padding:20px 20px 20px 24px;margin-top:20px}
+.qs h2{margin:0 0 8px;font-size:18px}
+.qs ol{margin:0;padding-left:22px;display:grid;gap:8px}
+.tools{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;margin-top:16px}
+.tools label{display:inline-flex;align-items:center;gap:8px;min-height:44px;font-weight:600;cursor:pointer}
+.tools input{width:20px;height:20px;accent-color:hsl(var(--primary))}
+.frame{margin-top:16px}
+.frame>.bar{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;margin-bottom:8px}
+.bar .ttl{font-weight:700;margin-right:auto}
+.seg{display:inline-flex;border-radius:9999px;background:hsl(var(--muted));padding:3px}
+.seg button,.tbtn{min-height:44px;padding:0 16px;border:0;border-radius:9999px;background:transparent;color:hsl(var(--foreground));font:inherit;font-size:15px;font-weight:700;cursor:pointer}
+.seg button[aria-pressed=true]{background:hsl(var(--primary));color:hsl(var(--primary-foreground))}
+.tbtn{background:hsl(var(--secondary));color:hsl(var(--secondary-foreground))}
+.stage{background:hsl(var(--muted));border-radius:var(--radius-card);padding:12px;overflow:hidden}
+.vp{display:none;margin:0 auto;position:relative}
+.frame[data-view=desktop] .vp[data-v=desktop],.frame[data-view=mobile] .vp[data-v=mobile]{display:block}
+.frame[data-fit=full] .vp{overflow-x:auto;width:100%!important;height:auto!important}
+.frame[data-fit=full] .dev{transform:none!important}
+.vp .dev{transform-origin:top left;box-shadow:var(--shadow-pop)}
+.nofit{display:none}
+.frame[data-view=desktop] .nofit{display:inline-flex;align-items:center}
+.no-notes .anno,.no-notes .dev .to{display:none!important}
+.table-wrap{overflow-x:auto}
+.doc table.t{border-collapse:collapse;width:100%;min-width:520px}
+.doc table.t th,.doc table.t td{text-align:left;vertical-align:top;padding:10px 12px 10px 0;border-bottom:1px solid hsl(var(--border));font-size:15px}
+.doc code{font-size:14px;background:hsl(var(--muted));padding:1px 6px;border-radius:6px}
+
+/* ---- mock primitives (inside .dev) ---- */
+.dev{width:100%;background:hsl(var(--background));color:hsl(var(--foreground));font-family:var(--font-sans);font-size:16px;line-height:1.5;container-type:inline-size;container-name:dev;overflow:hidden}
+.dev h1,.dev h2,.dev h3,.dev h4{font-family:var(--font-display);margin:0;letter-spacing:-.02em;text-wrap:balance}
+.dev p{margin:0}.dev ul,.dev ol{margin:0;padding:0;list-style:none}
+.dev a{text-decoration:none}
+.dev .ic{flex:none}
+.dev .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:0 24px;border:0;border-radius:var(--radius-button);font:inherit;font-weight:700;cursor:pointer;white-space:nowrap;text-align:center}
+.dev .btn-lg{min-height:56px;padding:0 32px;font-size:17px}.dev .btn-sm{min-height:44px;padding:0 18px}
+.dev .b1{background:hsl(var(--primary));color:hsl(var(--primary-foreground))}
+.dev .b2{background:hsl(var(--secondary));color:hsl(var(--secondary-foreground))}
+.dev .b0{background:transparent;color:hsl(var(--foreground))}
+.dev .bt{background:transparent;color:hsl(var(--primary));min-height:44px;padding:0 12px}
+.dev .logo{display:inline-flex;align-items:center;gap:10px}
+.dev .lm{display:grid;place-items:center;width:34px;height:34px;border-radius:12px;background:hsl(var(--primary));color:hsl(var(--primary-foreground))}
+.dev .lw{font-family:var(--font-display);font-weight:800;font-size:22px;letter-spacing:-.02em}
+.dev .hdr{height:88px;display:flex;align-items:center;gap:24px;padding:0 48px}
+.dev .navl{display:flex;gap:24px}.dev .navl a{font-weight:600;color:hsl(var(--muted-foreground));display:inline-flex;min-height:44px;align-items:center}
+.dev .navl a[aria-current=page]{color:hsl(var(--foreground))}
+.dev .sp{flex:1}
+.dev .lang{font-weight:700;display:inline-flex;gap:6px;align-items:center;min-height:44px}.dev .lang u{text-underline-offset:5px}.dev .lang span{color:hsl(var(--muted-foreground))}
+.dev .iconbtn{display:inline-grid;place-items:center;width:44px;height:44px;border-radius:9999px;border:0;background:transparent;color:inherit}
+.dev .pg{width:100%;max-width:1216px;margin:0 auto;padding:0 20px}
+.dev .sec{margin-top:48px}
+.dev .h2{font-size:28px;line-height:34px;font-weight:700;letter-spacing:-.02em}
+.dev .h3{font-size:20px;line-height:28px;font-weight:600;letter-spacing:-.01em}
+.dev .muted{color:hsl(var(--muted-foreground))}
+.dev .ph{position:relative;display:grid;place-items:center;aspect-ratio:4/3;background:linear-gradient(135deg,color-mix(in srgb,hsl(var(--t)) 26%,hsl(var(--card))),color-mix(in srgb,hsl(var(--t)) 10%,hsl(var(--muted))));color:color-mix(in srgb,hsl(var(--t)) 55%,hsl(var(--foreground)));width:100%}
+.dev .ph .ic{opacity:.55}.dev .phl{position:absolute;left:12px;bottom:8px;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;opacity:.75}
+.dev .sl{display:inline-flex;align-items:center;gap:5px;font-size:14px;font-weight:700;white-space:nowrap}
+.dev .sl-lost{color:hsl(var(--status-lost-subtle-foreground))}.dev .sl-found{color:hsl(var(--status-found-subtle-foreground))}.dev .sl-sighted{color:hsl(var(--status-sighted-subtle-foreground))}
+.dev .card{background:hsl(var(--card));color:hsl(var(--card-foreground));border-radius:var(--radius-card)}
+.dev .rc{display:block;overflow:hidden;background:hsl(var(--card));border-radius:var(--radius-card)}
+.dev .rc .bd{padding:16px 20px 20px;display:grid;gap:4px}
+.dev .rc .ph{border-radius:0}
+.dev .rc .t{font-family:var(--font-display);font-weight:600;font-size:20px;line-height:28px;letter-spacing:-.01em}
+.dev .rc .pl{display:flex;gap:6px;align-items:center;color:hsl(var(--muted-foreground))}
+.dev .skel{background:hsl(var(--muted));border-radius:var(--radius-card)}
+.dev .anno{margin-top:12px;padding:10px 14px;border:2px dashed hsl(var(--input));border-radius:14px;font-size:14px;line-height:20px;color:hsl(var(--muted-foreground));background:hsl(var(--background))}
+.dev .anno b{color:hsl(var(--foreground))}
+.dev .to{display:inline-block;font-family:ui-monospace,Consolas,monospace;font-size:12px;line-height:18px;padding:0 8px;border-radius:9999px;background:hsl(var(--status-sighted-subtle));color:hsl(var(--status-sighted-subtle-foreground));margin-left:6px;vertical-align:middle}
+.dev .tag{display:inline-block;font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:2px 10px;border-radius:9999px;background:hsl(var(--status-reunited-subtle));color:hsl(var(--status-reunited-subtle-foreground));margin-bottom:8px}
+@container dev (max-width:899px){.dev .d-only{display:none!important}.dev .hdr{height:64px;padding:0 20px;gap:12px}}
+@container dev (min-width:900px){.dev .m-only{display:none!important}.dev .pg{padding:0 48px}.dev .sec{margin-top:96px}.dev .h2{font-size:36px;line-height:44px}.dev .h3{font-size:24px;line-height:32px}}
+
+
+.dev .lp{display:grid;grid-template-columns:minmax(0,1fr);gap:16px;padding-top:8px;padding-bottom:64px}
+.dev .tocd{border-radius:var(--radius-row);background:hsl(var(--muted));padding:0 18px}
+.dev .tocd summary{min-height:44px;display:flex;align-items:center;font-weight:700;cursor:pointer;padding:6px 0}
+.dev .toc{display:grid;gap:2px;padding-bottom:12px}
+.dev .toc a{display:inline-flex;align-items:center;min-height:44px;border-radius:8px;text-underline-offset:4px;text-decoration:none}
+.dev .toc a[aria-current]{font-weight:700;text-decoration:underline}
+.dev .tocp{font-weight:700;margin-bottom:8px}
+.dev .h1{font-size:34px;line-height:40px;font-weight:700;letter-spacing:-.025em}
+.dev .upd{margin-top:12px}
+.dev .ah2{font-size:26px;line-height:32px;font-weight:700;margin-top:32px}
+.dev .ap{margin-top:16px;line-height:28px;max-width:640px}
+.dev .lt-wrap{margin-top:16px;width:100%}
+.dev .lt{width:100%;border-collapse:separate;border-spacing:0;table-layout:fixed;text-align:left;font-size:16px;line-height:26px}
+.dev .lt th{background:hsl(var(--muted));padding:12px 20px;font-weight:700;vertical-align:middle}
+.dev .lt th:first-child{width:30%;border-top-left-radius:var(--radius-row)}.dev .lt th:last-child{border-top-right-radius:var(--radius-row)}
+.dev .lt td{padding:16px 20px;vertical-align:top;overflow-wrap:anywhere}
+.dev .lt td:first-child{font-weight:700}
+.frame[data-sep=lines] .dev .lt td{border-bottom:2px solid hsl(var(--border))}
+.frame[data-sep=zebra] .dev .lt tbody tr:nth-child(odd) td{background:hsl(var(--card))}
+.frame[data-sep=zebra] .dev .lt tbody tr:last-child td:first-child{border-bottom-left-radius:var(--radius-row)}
+.frame[data-sep=zebra] .dev .lt tbody tr:last-child td:last-child{border-bottom-right-radius:var(--radius-row)}
+@container dev (min-width:900px){
+.dev .lp{grid-template-columns:240px minmax(0,640px);gap:48px;padding-top:24px}
+.dev .tocn{position:sticky;top:24px;align-self:start}
+.dev .h1{font-size:44px;line-height:52px}
+.dev .toc{padding-bottom:0}
+.frame[data-w="800"] .dev .lt-wrap{width:800px}
+}
+@container dev (max-width:899px){.dev .lt-wrap{width:100%!important}}
+@container dev (max-width:639px){
+.dev .lt,.dev .lt tbody,.dev .lt tr,.dev .lt td{display:block}
+.dev .lt thead{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.dev .lt tr{background:hsl(var(--card));border-radius:var(--radius-card);padding:18px 20px 20px;margin-top:12px}
+.dev .lt td{padding:0!important;border:0!important;background:none!important;border-radius:0!important}
+.dev .lt td:first-child{font-family:var(--font-display);font-size:18px;line-height:26px;margin-bottom:6px;letter-spacing:-.01em}
+.dev .lt{margin-top:-12px}
+}
+
+</style>
+</head>
+<body>
+<div class="doc">
+<header>
+<div class="meta"><strong>TASK-114.19</strong><span class="pill">v1, 2026-10-18, awaiting owner approval</span></div>
+<h1>Legal tables: readable table on desktop, cards on mobile</h1>
+<p>Component mock built from the real legal page shell and tokens. One real table, shown as a table at 1440 and as stacked cards at 390.</p>
+<nav aria-label="Review files"><ul class="docnav"><li><a href="P3-home.html">P3 Home (TASK-115.1)</a></li><li><a href="P1-footer.html">P1 Footer (TASK-116.1)</a></li><li><a href="M-alerts-notifications.html">Alerts mock (TASK-114.15)</a></li><li><a href="M-legal-table.html" aria-current="page">Legal table mock (TASK-114.19)</a></li></ul></nav>
+<div class="tools"><button type="button" class="tbtn" id="theme">Theme: auto</button><label><input type="checkbox" id="notes" checked> Show annotations</label></div>
+<section class="qs" aria-labelledby="q-h"><h2 id="q-h">Questions for the owner</h2><ol><li>Row separation: divider lines (default) or zebra rows? Toggle both on the desktop frame.</li><li>Desktop table width: keep the 640 px text column, or let tables grow to 800 px so long cells breathe?</li><li>Mobile: stacked cards (label as heading, value under it) for every legal table, including the 4-column cookie list: OK?</li></ol></section>
+</header>
+<main>
+
+<h2>Privacy policy §3, "Katere podatke obdelujemo"</h2>
+<p>Real text, 13 rows. The mock uses the legal page shell (table of contents plus 640 px article). On mobile the table-of-contents disclosure and the cards are shown. Toggle the separation style and the table width on desktop.</p>
+<section class="frame" id="lg" data-view="desktop" data-fit="fit" data-sep="lines" data-w="640" aria-label="Legal table">
+<div class="bar"><span class="ttl">Legal table</span><div class="seg" role="group" aria-label="Row separation" data-key="sep"><button type="button" data-v="lines" aria-pressed="true">Divider lines</button><button type="button" data-v="zebra" aria-pressed="false">Zebra rows</button></div><div class="seg" role="group" aria-label="Table width" data-key="w"><button type="button" data-v="640" aria-pressed="true">Width 640 (text column)</button><button type="button" data-v="800" aria-pressed="false">Width 800 (wider than text)</button></div><div class="seg" role="group" aria-label="Viewport" data-key="view"><button type="button" data-v="desktop" aria-pressed="true">Desktop 1440</button><button type="button" data-v="mobile" aria-pressed="false">Mobile 390</button></div><button type="button" class="tbtn nofit" aria-pressed="false">Fit to width</button></div>
+<div class="stage"><div class="vp" data-v="desktop" data-w="1440"><div class="dev" data-view="desktop"><header class="hdr"><span class="logo"><span class="lm"><svg class="ic" width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" ><circle cx="6.5" cy="11" r="1.9"/><circle cx="10" cy="6.5" r="1.9"/><circle cx="14" cy="6.5" r="1.9"/><circle cx="17.5" cy="11" r="1.9"/><path d="M12 12c3 0 5 3 5 5 0 2-2 2.5-5 2.5S7 19 7 17c0-2 2-5 5-5z"/></svg></span><span class="lw">Najdimo</span></span><nav class="navl" aria-label="Glavni meni"><a href="#">Zemljevid</a><a href="#">Izgubljene</a><a href="#">Najdene</a><a href="#">Kako deluje</a></nav><span class="sp"></span><span class="lang"><u>SL</u><span>/</span><span>EN</span></span><a class="btn btn-sm b0" href="#">Vpis</a><a class="btn btn-sm b2" href="#">Prijavi</a></header>
+<div class="pg"><div class="lp">
+<nav class="tocn" aria-label="Na tej strani"><details class="m-only tocd"><summary>Na tej strani</summary><div><ol class="toc"><li><a href="#" >1. Na kratko</a></li><li><a href="#" >2. Kdo je upravljavec</a></li><li><a href="#" aria-current="location">3. Katere podatke obdelujemo</a></li><li><a href="#" >4. Zakaj podatke obdelujemo in na kateri pravni podlagi</a></li><li><a href="#" >5. Kaj vidijo drugi</a></li><li><a href="#" >6. Fotografije in lokacija</a></li><li><a href="#" >7. Prijave brez računa</a></li><li><a href="#" >8. Ujemanje, umetna inteligenca in samodejno skrivanje</a></li><li><a href="#" >9. Plačila</a></li><li><a href="#" >10. Analitika in piškotki</a></li><li><a href="#" >11. Štetje oglasov</a></li><li><a href="#" >12. Komu podatke zaupamo</a></li><li><a href="#" >13. Prenosi izven EU</a></li><li><a href="#" >14. Kako dolgo podatke hranimo</a></li><li><a href="#" >15. Vaše pravice</a></li><li><a href="#" >16. Varnost</a></li><li><a href="#" >17. Otroci</a></li><li><a href="#" >18. Spremembe te politike</a></li></ol></div></details><div class="d-only"><p class="tocp">Na tej strani</p><ol class="toc"><li><a href="#" >1. Na kratko</a></li><li><a href="#" >2. Kdo je upravljavec</a></li><li><a href="#" aria-current="location">3. Katere podatke obdelujemo</a></li><li><a href="#" >4. Zakaj podatke obdelujemo in na kateri pravni podlagi</a></li><li><a href="#" >5. Kaj vidijo drugi</a></li><li><a href="#" >6. Fotografije in lokacija</a></li><li><a href="#" >7. Prijave brez računa</a></li><li><a href="#" >8. Ujemanje, umetna inteligenca in samodejno skrivanje</a></li><li><a href="#" >9. Plačila</a></li><li><a href="#" >10. Analitika in piškotki</a></li><li><a href="#" >11. Štetje oglasov</a></li><li><a href="#" >12. Komu podatke zaupamo</a></li><li><a href="#" >13. Prenosi izven EU</a></li><li><a href="#" >14. Kako dolgo podatke hranimo</a></li><li><a href="#" >15. Vaše pravice</a></li><li><a href="#" >16. Varnost</a></li><li><a href="#" >17. Otroci</a></li><li><a href="#" >18. Spremembe te politike</a></li></ol></div></nav>
+<article class="art">
+<h1 class="h1">Politika zasebnosti</h1>
+<p class="muted upd">Zadnja posodobitev: 15. oktober 2026</p>
+<h2 class="ah2">3. Katere podatke obdelujemo</h2>
+<p class="ap">Večino podatkov nam daste sami: ko ustvarite račun, objavite prijavo ali pišete v pogovoru. Nekaj podatkov nastane ob uporabi storitve, na primer tehnični zapisi.</p>
+<div class="lt-wrap"><table class="lt" role="table"><thead role="rowgroup"><tr role="row"><th role="columnheader" scope="col">Vrsta podatkov</th><th role="columnheader" scope="col">Kaj vsebuje</th></tr></thead><tbody role="rowgroup"><tr role="row"><td role="rowheader">Račun in nastavitve</td><td role="cell">prikazno ime, e-naslov, zgoščeno geslo ali identiteta pri Googlu oziroma Applu, jezik, vloga (na primer lastnik, najditelj ali zavetišče), domače območje, privzeti polmer opozoril, neobvezna telefonska številka (nikoli javna), tihi čas, nastavitve obvestil, žetoni za potisna obvestila</td></tr><tr role="row"><td role="rowheader">Profili živali</td><td role="cell">vrsta, ime, pasma, barve, vzorec, velikost, spol, leto rojstva, številka čipa (nikoli javna), stanje čipa, ovratnica, opombe (tudi o zdravilih in vedenju), od ene do pet fotografij; pozneje tudi veterinarski zapisi</td></tr><tr role="row"><td role="rowheader">Prijave (izgubljena, najdena, opažena žival)</td><td role="cell">vrsta prijave, fotografije, približna točka, premaknjena za 20 do 30 m (vidna samo avtorju prijave), javno približno območje, občina in regija, datum in čas, opis okoliščin, izbira načina stika, pri izgubljeni živali neobvezna navedba nagrade (znesek, kratka opomba)</td></tr><tr role="row"><td role="rowheader">Prijave brez računa</td><td role="cell">anonimna seja, zasebna povezava (hranimo samo njeno zgoščeno vrednost), neobvezen e-naslov, na katerega pošljemo povezavo, identifikator naprave, zgoščen IP naslov za omejevanje zlorab</td></tr><tr role="row"><td role="rowheader">Pogovori</td><td role="cell">sporočila, vzdevki, stanje prebranosti, blokade</td></tr><tr role="row"><td role="rowheader">Obvestila in opozorila</td><td role="cell">nabiralnik obvestil, naročnina na opozorila v bližini (domača točka in polmer)</td></tr><tr role="row"><td role="rowheader">Zlorabe in moderiranje</td><td role="cell">prijave zlorab, odločitve moderatorjev, revizijski dnevnik skrbniških dejanj</td></tr><tr role="row"><td role="rowheader">Plačila</td><td role="cell">ID plačila, namen, znesek, stanje in časi. Podatkov o kartici ne vidimo.</td></tr><tr role="row"><td role="rowheader">Veterinarski partner (podjetja)</td><td role="cell">podatki ambulante (naziv, naslov, delovni čas, storitve, povezava za naročanje ali telefon, oznaka 24-urne nujne pomoči), ime, e-naslov in telefonska številka kontaktne osebe, podatki za obračun in davčna številka za DDV (prek Stripa), računi</td></tr><tr role="row"><td role="rowheader">Povpraševanja partnerjev</td><td role="cell">podjetje, kontaktna oseba, e-naslov, neobvezna telefonska številka, regija zanimanja, sporočilo, čas privolitve</td></tr><tr role="row"><td role="rowheader">Zgodbe z lepim koncem</td><td role="cell">besedilo in fotografije, ki jih objavimo samo z vašo izrecno privolitvijo</td></tr><tr role="row"><td role="rowheader">Privolitve</td><td role="cell">vaša izbira, različica besedila, čas</td></tr><tr role="row"><td role="rowheader">Tehnični podatki</td><td role="cell">IP naslov ter vrsta naprave in brskalnika v strežniških zapisih, dnevnik pošiljanja e-pošte, podatki o napakah</td></tr></tbody></table></div>
+<p class="ap"><strong>Ali morate podatke posredovati?</strong> Brez računa lahko brskate in anonimno prijavite najdeno ali opaženo žival. Za račun potrebujemo e-naslov ali vpis z Googlom oziroma Applom. Druga polja, na primer telefonska številka, so neobvezna. Če podatka, ki ga funkcija nujno potrebuje, ne podate, te funkcije ne moremo zagotoviti.</p>
+<div class="anno"><b>Legal table (all legal tables use this one component).</b> Desktop: a real <code>table</code> with a filled header row, a 30 % label column in bold, 16 px cell padding, top-aligned text, 1.6 line height and a 2 px divider (or zebra) between rows. At 390 (container under 640 px) each row becomes a card: the label is the card heading, the value sits under it. The element stays a table with explicit ARIA roles (<code>role=table|row|rowheader|cell</code>) and a visually hidden header row, so screen readers keep the header association; <code>display:block</code> alone would drop table semantics in some browsers. Print keeps the plain table. Tables with more columns (cookie list: name, purpose, duration, provider) show each cell as "label: value" lines inside the card via <code>data-label</code>. Source text: privacy policy §3, verbatim (13 rows).</div>
+</article></div></div></div></div><div class="vp" data-v="mobile" data-w="390"><div class="dev" data-view="mobile"><header class="hdr"><span class="logo"><span class="lm"><svg class="ic" width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" ><circle cx="6.5" cy="11" r="1.9"/><circle cx="10" cy="6.5" r="1.9"/><circle cx="14" cy="6.5" r="1.9"/><circle cx="17.5" cy="11" r="1.9"/><path d="M12 12c3 0 5 3 5 5 0 2-2 2.5-5 2.5S7 19 7 17c0-2 2-5 5-5z"/></svg></span><span class="lw">Najdimo</span></span><span class="sp"></span><span class="lang"><u>SL</u><span>/</span><span>EN</span></span><button class="iconbtn" type="button" aria-label="Odpri meni"><svg class="ic" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ><path d="M4 7h16M4 12h16M4 17h16"/></svg></button></header>
+<div class="pg"><div class="lp">
+<nav class="tocn" aria-label="Na tej strani"><details class="m-only tocd"><summary>Na tej strani</summary><div><ol class="toc"><li><a href="#" >1. Na kratko</a></li><li><a href="#" >2. Kdo je upravljavec</a></li><li><a href="#" aria-current="location">3. Katere podatke obdelujemo</a></li><li><a href="#" >4. Zakaj podatke obdelujemo in na kateri pravni podlagi</a></li><li><a href="#" >5. Kaj vidijo drugi</a></li><li><a href="#" >6. Fotografije in lokacija</a></li><li><a href="#" >7. Prijave brez računa</a></li><li><a href="#" >8. Ujemanje, umetna inteligenca in samodejno skrivanje</a></li><li><a href="#" >9. Plačila</a></li><li><a href="#" >10. Analitika in piškotki</a></li><li><a href="#" >11. Štetje oglasov</a></li><li><a href="#" >12. Komu podatke zaupamo</a></li><li><a href="#" >13. Prenosi izven EU</a></li><li><a href="#" >14. Kako dolgo podatke hranimo</a></li><li><a href="#" >15. Vaše pravice</a></li><li><a href="#" >16. Varnost</a></li><li><a href="#" >17. Otroci</a></li><li><a href="#" >18. Spremembe te politike</a></li></ol></div></details><div class="d-only"><p class="tocp">Na tej strani</p><ol class="toc"><li><a href="#" >1. Na kratko</a></li><li><a href="#" >2. Kdo je upravljavec</a></li><li><a href="#" aria-current="location">3. Katere podatke obdelujemo</a></li><li><a href="#" >4. Zakaj podatke obdelujemo in na kateri pravni podlagi</a></li><li><a href="#" >5. Kaj vidijo drugi</a></li><li><a href="#" >6. Fotografije in lokacija</a></li><li><a href="#" >7. Prijave brez računa</a></li><li><a href="#" >8. Ujemanje, umetna inteligenca in samodejno skrivanje</a></li><li><a href="#" >9. Plačila</a></li><li><a href="#" >10. Analitika in piškotki</a></li><li><a href="#" >11. Štetje oglasov</a></li><li><a href="#" >12. Komu podatke zaupamo</a></li><li><a href="#" >13. Prenosi izven EU</a></li><li><a href="#" >14. Kako dolgo podatke hranimo</a></li><li><a href="#" >15. Vaše pravice</a></li><li><a href="#" >16. Varnost</a></li><li><a href="#" >17. Otroci</a></li><li><a href="#" >18. Spremembe te politike</a></li></ol></div></nav>
+<article class="art">
+<h1 class="h1">Politika zasebnosti</h1>
+<p class="muted upd">Zadnja posodobitev: 15. oktober 2026</p>
+<h2 class="ah2">3. Katere podatke obdelujemo</h2>
+<p class="ap">Večino podatkov nam daste sami: ko ustvarite račun, objavite prijavo ali pišete v pogovoru. Nekaj podatkov nastane ob uporabi storitve, na primer tehnični zapisi.</p>
+<div class="lt-wrap"><table class="lt" role="table"><thead role="rowgroup"><tr role="row"><th role="columnheader" scope="col">Vrsta podatkov</th><th role="columnheader" scope="col">Kaj vsebuje</th></tr></thead><tbody role="rowgroup"><tr role="row"><td role="rowheader">Račun in nastavitve</td><td role="cell">prikazno ime, e-naslov, zgoščeno geslo ali identiteta pri Googlu oziroma Applu, jezik, vloga (na primer lastnik, najditelj ali zavetišče), domače območje, privzeti polmer opozoril, neobvezna telefonska številka (nikoli javna), tihi čas, nastavitve obvestil, žetoni za potisna obvestila</td></tr><tr role="row"><td role="rowheader">Profili živali</td><td role="cell">vrsta, ime, pasma, barve, vzorec, velikost, spol, leto rojstva, številka čipa (nikoli javna), stanje čipa, ovratnica, opombe (tudi o zdravilih in vedenju), od ene do pet fotografij; pozneje tudi veterinarski zapisi</td></tr><tr role="row"><td role="rowheader">Prijave (izgubljena, najdena, opažena žival)</td><td role="cell">vrsta prijave, fotografije, približna točka, premaknjena za 20 do 30 m (vidna samo avtorju prijave), javno približno območje, občina in regija, datum in čas, opis okoliščin, izbira načina stika, pri izgubljeni živali neobvezna navedba nagrade (znesek, kratka opomba)</td></tr><tr role="row"><td role="rowheader">Prijave brez računa</td><td role="cell">anonimna seja, zasebna povezava (hranimo samo njeno zgoščeno vrednost), neobvezen e-naslov, na katerega pošljemo povezavo, identifikator naprave, zgoščen IP naslov za omejevanje zlorab</td></tr><tr role="row"><td role="rowheader">Pogovori</td><td role="cell">sporočila, vzdevki, stanje prebranosti, blokade</td></tr><tr role="row"><td role="rowheader">Obvestila in opozorila</td><td role="cell">nabiralnik obvestil, naročnina na opozorila v bližini (domača točka in polmer)</td></tr><tr role="row"><td role="rowheader">Zlorabe in moderiranje</td><td role="cell">prijave zlorab, odločitve moderatorjev, revizijski dnevnik skrbniških dejanj</td></tr><tr role="row"><td role="rowheader">Plačila</td><td role="cell">ID plačila, namen, znesek, stanje in časi. Podatkov o kartici ne vidimo.</td></tr><tr role="row"><td role="rowheader">Veterinarski partner (podjetja)</td><td role="cell">podatki ambulante (naziv, naslov, delovni čas, storitve, povezava za naročanje ali telefon, oznaka 24-urne nujne pomoči), ime, e-naslov in telefonska številka kontaktne osebe, podatki za obračun in davčna številka za DDV (prek Stripa), računi</td></tr><tr role="row"><td role="rowheader">Povpraševanja partnerjev</td><td role="cell">podjetje, kontaktna oseba, e-naslov, neobvezna telefonska številka, regija zanimanja, sporočilo, čas privolitve</td></tr><tr role="row"><td role="rowheader">Zgodbe z lepim koncem</td><td role="cell">besedilo in fotografije, ki jih objavimo samo z vašo izrecno privolitvijo</td></tr><tr role="row"><td role="rowheader">Privolitve</td><td role="cell">vaša izbira, različica besedila, čas</td></tr><tr role="row"><td role="rowheader">Tehnični podatki</td><td role="cell">IP naslov ter vrsta naprave in brskalnika v strežniških zapisih, dnevnik pošiljanja e-pošte, podatki o napakah</td></tr></tbody></table></div>
+<p class="ap"><strong>Ali morate podatke posredovati?</strong> Brez računa lahko brskate in anonimno prijavite najdeno ali opaženo žival. Za račun potrebujemo e-naslov ali vpis z Googlom oziroma Applom. Druga polja, na primer telefonska številka, so neobvezna. Če podatka, ki ga funkcija nujno potrebuje, ne podate, te funkcije ne moremo zagotoviti.</p>
+<div class="anno"><b>Legal table (all legal tables use this one component).</b> Desktop: a real <code>table</code> with a filled header row, a 30 % label column in bold, 16 px cell padding, top-aligned text, 1.6 line height and a 2 px divider (or zebra) between rows. At 390 (container under 640 px) each row becomes a card: the label is the card heading, the value sits under it. The element stays a table with explicit ARIA roles (<code>role=table|row|rowheader|cell</code>) and a visually hidden header row, so screen readers keep the header association; <code>display:block</code> alone would drop table semantics in some browsers. Print keeps the plain table. Tables with more columns (cookie list: name, purpose, duration, provider) show each cell as "label: value" lines inside the card via <code>data-label</code>. Source text: privacy policy §3, verbatim (13 rows).</div>
+</article></div></div></div></div></div>
+</section>
+</main>
+</div>
+<script>
+(function(){
+var root=document.documentElement;
+function sget(k){try{return localStorage.getItem(k)}catch(e){return null}}function sset(k,v){try{localStorage.setItem(k,v)}catch(e){}}
+var th=sget('wf-theme');if(th==='light'||th==='dark')root.setAttribute('data-theme',th);
+var tb=document.getElementById('theme');
+function label(){var v=root.getAttribute('data-theme')||'auto';tb.textContent='Theme: '+v;}
+if(tb){label();tb.addEventListener('click',function(){var v=root.getAttribute('data-theme');var n=v===null?'light':v==='light'?'dark':null;if(n){root.setAttribute('data-theme',n);sset('wf-theme',n)}else{root.removeAttribute('data-theme');sset('wf-theme','auto')}label();fitAll()})}
+var nt=document.getElementById('notes');if(nt)nt.addEventListener('change',function(){document.body.classList.toggle('no-notes',!nt.checked);fitAll()});
+function fit(f){var v=f.dataset.view;var vp=f.querySelector('.vp[data-v="'+v+'"]');if(!vp)return;var dev=vp.firstElementChild;var w=+vp.dataset.w;var st=f.querySelector('.stage');var avail=st.clientWidth-24;
+if(f.dataset.fit==='full'){dev.style.width=w+'px';vp.style.width='';vp.style.height='';return}
+var s=Math.min(1,avail/w);dev.style.width=w+'px';dev.style.transform='scale('+s+')';vp.style.width=(w*s)+'px';vp.style.height=(dev.offsetHeight*s)+'px'}
+function fitAll(){document.querySelectorAll('.frame').forEach(fit)}
+document.querySelectorAll('.frame').forEach(function(f){
+f.querySelectorAll('.seg').forEach(function(seg){var key=seg.dataset.key;seg.querySelectorAll('button').forEach(function(b){b.addEventListener('click',function(){f.dataset[key]=b.dataset.v;seg.querySelectorAll('button').forEach(function(x){x.setAttribute('aria-pressed',String(x===b))});fit(f)})})});
+var nf=f.querySelector('.nofit');if(nf)nf.addEventListener('click',function(){var full=f.dataset.fit==='full';f.dataset.fit=full?'fit':'full';nf.textContent=full?'Fit to width':'Fit: 100%';nf.setAttribute('aria-pressed',String(!full));fit(f)});
+if(window.ResizeObserver){f.querySelectorAll('.dev').forEach(function(d){new ResizeObserver(function(){fit(f)}).observe(d)})}
+});
+function sync(f){var open=f.dataset.state==='open';f.querySelectorAll('[data-disc]').forEach(function(b){b.setAttribute('aria-expanded',String(open))});f.querySelectorAll('.seg[data-key=state] button').forEach(function(x){x.setAttribute('aria-pressed',String(x.dataset.v===f.dataset.state))})}
+document.querySelectorAll('.frame').forEach(function(f){sync(f);f.querySelectorAll('.seg[data-key=state] button').forEach(function(x){x.addEventListener('click',function(){sync(f)})});f.querySelectorAll('[data-disc]').forEach(function(bt){bt.addEventListener('click',function(){f.dataset.state=f.dataset.state==='open'?'closed':'open';sync(f);fit(f)})})});
+window.addEventListener('resize',fitAll);window.addEventListener('load',fitAll);fitAll();
+})();</script>
+</body>
+</html>
