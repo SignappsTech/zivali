@@ -1,11 +1,11 @@
 ---
 id: TASK-114.38
 title: Mock payment checkout_url keeps return_to (CH-252)
-status: In Progress
+status: Done
 assignee:
   - '@backend-dev'
 created_date: '2026-10-18 22:08'
-updated_date: '2026-10-18 22:25'
+updated_date: '2026-10-18 22:27'
 labels:
   - be
   - bug
