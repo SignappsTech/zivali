@@ -3,11 +3,11 @@ id: TASK-114.8
 title: >-
   Lost report: the reward note reads like a general note; make its copy
   reward-specific
-status: To Do
+status: Done
 assignee:
   - '@content-strategist'
 created_date: '2026-10-16 14:25'
-updated_date: '2026-10-17 09:24'
+updated_date: '2026-10-18 05:05'
 labels:
   - bug
   - content
