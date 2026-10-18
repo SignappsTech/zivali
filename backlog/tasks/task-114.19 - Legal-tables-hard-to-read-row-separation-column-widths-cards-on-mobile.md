@@ -1,12 +1,12 @@
 ---
 id: TASK-114.19
 title: 'Legal tables are hard to read: row separation, column widths, cards on mobile'
-status: To Do
+status: In Progress
 assignee:
   - '@frontend-dev'
   - '@design-lead'
 created_date: '2026-10-16 16:10'
-updated_date: '2026-10-18 09:12'
+updated_date: '2026-10-18 19:36'
 labels:
   - fe
   - design

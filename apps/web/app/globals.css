@@ -5,6 +5,9 @@
 /* tokens.css switches on the .dark class, which the theme script in the root layout sets from the OS. */
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* Below sm on screen only, so print keeps the plain table: legal tables stack as cards (components/legal/legal-table.tsx). */
+@custom-variant cards (@media screen and (width < 40rem));
+
 /* Skeleton shimmer (system §10.9); components/ui/skeleton.tsx stops it under reduced motion. */
 @theme {
 	--animate-shimmer: shimmer 1.6s linear infinite;
