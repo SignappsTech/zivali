@@ -37,7 +37,7 @@ import { LocationPicker } from '@/components/location/location-picker';
 import type { LatLng } from '@/components/map/features';
 import { PetBasicsFields, PetChipFields, PetLooksFields, PetNotesFields } from '@/components/pets/pet-fields';
 import { PhotoPicker } from '@/components/photos/photo-picker';
-import { clearPhotoDraft, type PickedPhoto } from '@/components/photos/use-photo-uploads';
+import { clearPhotoDraft, MAX_PHOTOS, type PickedPhoto } from '@/components/photos/use-photo-uploads';
 import { MenuRow } from '@/components/shell/parts';
 import { PermissionPrimer } from '@/components/shell/permission-primer';
 import {
@@ -609,6 +609,7 @@ export function LostFlow() {
 	const errorText = useErrorText();
 	const tErrors = useTranslations('errors');
 	const tCommon = useTranslations('common');
+	const tPhotos = useTranslations('photos');
 	const trackSubmit = useTrackSubmit();
 	const { gate, me } = useRequireAuth();
 	const petList = useListPetsQuery(gate === 'ok' ? undefined : skipToken);
@@ -652,6 +653,8 @@ export function LostFlow() {
 	const [awaiting, setAwaiting] = React.useState(false);
 	const focused = useIsFocused();
 	const [sendError, setSendError] = React.useState<string>();
+	// The API refused photo_ids: shown on the photo step until the next Publish.
+	const [photoError, setPhotoError] = React.useState<string>();
 	const [found, setFound] = React.useState<{ code: string; pet?: string }>();
 	const [update, setUpdate] = React.useState(true);
 	// Stable across repeats of one submission (C1): key, exact body and its event_at. Cleared once the server has answered.
@@ -771,9 +774,13 @@ export function LostFlow() {
 		if (data?.code === 'VALIDATION') {
 			// Other paths go to their step; a bare "check the marked fields" would point at nothing.
 			const roots = paths.map((path) => path.split(/[.[]/)[0]!);
-			const target = roots.includes('photo_ids')
-				? 'photos'
-				: roots.includes('location') || roots.includes('radius_m')
+			if (roots.includes('photo_ids')) {
+				// Said on the photo step, never a silent jump (TASK-114.5): over the limit, or a photo the API refused.
+				setPhotoError(photos.length > MAX_PHOTOS ? tPhotos('limit') : tPhotos('rejected'));
+				return edit('photos');
+			}
+			const target =
+				roots.includes('location') || roots.includes('radius_m')
 					? 'where'
 					: steps.find((s) => STEP_FIELDS[s].some((field) => roots.includes(field)));
 			if (target) {
@@ -804,6 +811,7 @@ export function LostFlow() {
 	};
 	const send = async (): Promise<boolean | void> => {
 		setSendError(undefined);
+		setPhotoError(undefined);
 		const photoIds = photos.flatMap((photo) => (photo.photoId ? [photo.photoId] : []));
 		if (!photos.length) return setSendError(t('photos_required'));
 		// Signed out, the photos wait on the device; they upload after sign-in (C3: nothing is sent before).
@@ -937,6 +945,9 @@ export function LostFlow() {
 								hold={gate === 'signin' || gate === 'loading'}
 								className="mt-6"
 							/>
+							{step === 'photos' && photoError ? (
+								<FieldError className="mt-4">{photoError}</FieldError>
+							) : null}
 							{attempted && step === 'photos' && !photos.length ? (
 								<FieldError className="mt-4">{t('photos_required')}</FieldError>
 							) : null}
