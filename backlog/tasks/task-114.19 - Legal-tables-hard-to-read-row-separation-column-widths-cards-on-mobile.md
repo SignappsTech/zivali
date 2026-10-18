@@ -1,12 +1,12 @@
 ---
 id: TASK-114.19
 title: 'Legal tables are hard to read: row separation, column widths, cards on mobile'
-status: To Do
+status: In Progress
 assignee:
   - '@frontend-dev'
   - '@design-lead'
 created_date: '2026-10-16 16:10'
-updated_date: '2026-10-18 09:12'
+updated_date: '2026-10-18 19:36'
 labels:
   - fe
   - design
@@ -44,3 +44,7 @@ Review sheet for the owner (private claude.ai page, v1 2026-10-18): https://clau
 
 MOCK APPROVED: Primož Božič (owner), 2026-10-18, wireframe v1 (docs/design/wireframes/M-legal-table.html). Owner: "legal good", so the mock's defaults: divider lines (not zebra), 640 px text-column width, stacked cards on mobile for every legal table including the cookie list. Implementation not started: owner said not to build yet (2026-10-18).
 <!-- SECTION:NOTES:END -->
+
+## Packet
+
+Branch: agent/TASK-114.19-legal-tables
