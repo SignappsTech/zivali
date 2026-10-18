@@ -1,51 +1,51 @@
 **Draft — requires client/legal review.**
-source: 02§Content, SEO and legal requirements (Legal, accessibility); NFR-A11Y (WCAG 2.2 AA); 03§Accessibility; European Accessibility Act
+source: 02§Content, SEO and legal requirements (Legal, accessibility); NFR-A11Y (WCAG 2.2 AA); 03§Accessibility; owner decision 2026-10-16 (TASK-114.16, option 1)
 
 | Field | Value |
 |---|---|
-| Version | 0.1 |
-| Date | 2026-10-15 |
+| Version | 0.2 |
+| Date | 2026-10-18 |
 | Route SL | `/dostopnost` |
 | Route EN | `/en/accessibility` |
 | Slug SL / EN | `dostopnost` / `accessibility` |
 | Structured data | WebPage |
 | Template | T4 Legal (numbered h2 sections, "On this page" list, draft note) |
 
+**Decision and basis (2026-10-16, owner).** The page is a short voluntary "Dostopnost" page, not a formal accessibility statement. It makes no legal compliance claims. The WCAG 2.2 AA work and its quality gates (axe in e2e and the quality kit) stay.
+
+Basis: the European Accessibility Act (Directive (EU) 2019/882, Art. 4(5)) and the Slovenian ZDPSI (Zakon o dostopnosti do proizvodov in storitev za invalide) exempt microenterprises providing services: fewer than 10 employees and annual turnover or balance-sheet total not above EUR 2 million. The public-sector act (ZDSMA) does not apply to a private operator. Najdimo is operated by SIGNAPPS d.o.o.
+
+To revisit: if SIGNAPPS d.o.o. grows past the thresholds, or Najdimo moves to its own company, re-check the exemption and, if it no longer applies, restore a formal statement (scope, conformance status from an audit, competent authority). The general lawyer review (TASK-91) may glance at this page and confirm that SIGNAPPS d.o.o. qualifies as a microenterprise.
+
 **SEO (SL)**
 
-- Meta title: Izjava o dostopnosti · Najdimo
-- Meta description: Kako je Najdimo dostopno vsem: cilj WCAG 2.2 AA, kaj že počnemo, znane omejitve in kam sporočite težavo.
-- Focus keyword: izjava o dostopnosti
+- Meta title: Dostopnost · Najdimo
+- Meta description: Kako si prizadevamo, da je Najdimo uporabno za vsakogar: naš cilj WCAG 2.2 AA, znane omejitve in kam sporočite oviro.
+- Focus keyword: dostopnost
 
 **SEO (EN)**
 
-- Meta title: Accessibility statement · Najdimo
-- Meta description: How Najdimo works for everyone: our WCAG 2.2 AA target, what we do, known limitations and where to report a problem.
-- Focus keyword: accessibility statement
+- Meta title: Accessibility · Najdimo
+- Meta description: How we work to make Najdimo usable for everyone: our WCAG 2.2 AA goal, known limitations and where to report a barrier.
+- Focus keyword: accessibility
 
 ---
 
-# Izjava o dostopnosti (slovenščina)
+# Dostopnost (slovenščina)
 
 **Osnutek – zahteva pregled naročnika in pravnika.**
 
-Zadnja posodobitev: 15. 10. 2026
+Zadnja posodobitev: 18. 10. 2026
 
 ## 1. Na kratko
 
-Najdimo naj bi bilo uporabno za vsakogar, tudi v stresu in na majhnem zaslonu. Cilj je skladnost s standardom WCAG 2.2 na ravni AA in z evropskim standardom EN 301 549, kot zahteva evropski akt o dostopnosti (European Accessibility Act, EAA).
+Najdimo naj bi bilo uporabno za vsakogar, tudi v stresu in na majhnem zaslonu. Delamo po smernicah WCAG 2.2 na ravni AA in jih redno preverjamo s samodejnimi testi.
 
-**Stanje: delno skladno.** To bo potrdil zunanji pregled v mejniku M5. Do takrat je izjava samoocena.
+To je prostovoljen cilj, ne uradna izjava o skladnosti. Ne trdimo, da je vsaka stran popolnoma skladna.
 
-## 2. Kaj zajema ta izjava
+## 2. Kaj že počnemo
 
-- spletna stran Najdimo;
-- mobilna aplikacija za iOS;
-- mobilna aplikacija za Android.
-
-## 3. Kaj že počnemo
-
-- Besedilo in glavno dejanje imata kontrast 7 : 1.
+- Besedilo in glavno dejanje imata visok kontrast.
 - Vse deluje s tipkovnico in bralnikom zaslona.
 - Zemljevid ima vedno enakovredno alternativo v obliki seznama.
 - Fotografije imajo nadomestno besedilo.
@@ -53,7 +53,7 @@ Najdimo naj bi bilo uporabno za vsakogar, tudi v stresu in na majhnem zaslonu. C
 - Besedilo lahko povečate do 200 %, ne da bi se vsebina pokvarila.
 - Oznake polj so nad polji, napake pa so zapisane z besedilom, ne samo z barvo.
 
-## 4. Znane omejitve
+## 3. Znane omejitve
 
 - **Interaktivni zemljevid** je dopolnilo. Vse, kar je na njem, najdete tudi na seznamu.
 - **Fotografije uporabnikov** imajo lahko samo opis, ustvarjen iz lastnosti živali, ker avtor ni napisal svojega.
@@ -61,41 +61,27 @@ Najdimo naj bi bilo uporabno za vsakogar, tudi v stresu in na majhnem zaslonu. C
 - **PDF plakati** so označeni (tagged), vendar se lahko dostopnost med plakati razlikuje.
 - **Skrbniški portal in portal za zavetišča** sta prirejena predvsem za namizne računalnike.
 
-## 5. Priprava izjave
+## 4. Sporočite oviro
 
-Izjavo smo pripravili 15. 10. 2026. Način: samoocena med razvojem. Zunanji pregled je načrtovan v mejniku M5. Po pregledu bomo izjavo posodobili.
-
-## 6. Povratne informacije in pomoč
-
-Če naletite na oviro ali potrebujete vsebino v drugi obliki, nam pišite: info@signapps.si, ali nas pokličite: 040 975 210 (+386 40 975 210). Odgovorimo v 14 dneh.
-
-## 7. Postopek uveljavljanja
-
-Če z odgovorom niste zadovoljni, se lahko obrnete na pristojni nadzorni organ: [naročnik/pravnik: preveriti pristojni organ v Sloveniji in predpis, ki prenaša evropski akt o dostopnosti, ter navesti naziv, naslov in spletno stran].
+Če naletite na oviro ali potrebujete vsebino v drugi obliki, nam pišite na info@signapps.si. Odgovorimo v 14 dneh.
 
 ---
 
-# Accessibility statement (English)
+# Accessibility (English)
 
 **Draft — requires client/legal review.**
 
-Last updated: 15 October 2026
+Last updated: 18 October 2026
 
 ## 1. In short
 
-Najdimo should work for everyone, including under stress and on a small screen. Our target is conformance with WCAG 2.2 level AA and the European standard EN 301 549, as the European Accessibility Act (EAA) requires.
+Najdimo should work for everyone, including under stress and on a small screen. We build to WCAG 2.2 level AA and check it regularly with automated tests.
 
-**Status: partially conformant.** An external audit in milestone M5 will confirm it. Until then this statement is a self-assessment.
+This is a voluntary goal, not a formal statement of conformance. We do not claim that every page is fully conformant.
 
-## 2. What this statement covers
+## 2. What we already do
 
-- the Najdimo website;
-- the iOS mobile app;
-- the Android mobile app.
-
-## 3. What we already do
-
-- Body text and the main action have a contrast of 7:1.
+- Body text and the main action have high contrast.
 - Everything works with a keyboard and a screen reader.
 - The map always has an equivalent list alternative.
 - Photos have alt text.
@@ -103,7 +89,7 @@ Najdimo should work for everyone, including under stress and on a small screen. 
 - You can enlarge text up to 200 % without breaking the content.
 - Field labels sit above the fields, and errors are written as text, not shown by colour alone.
 
-## 4. Known limitations
+## 3. Known limitations
 
 - **The interactive map** is a supplement. Everything on it is also in the list.
 - **User photos** may have only a description generated from the animal's attributes, because the author did not write one.
@@ -111,27 +97,16 @@ Najdimo should work for everyone, including under stress and on a small screen. 
 - **PDF posters** are tagged, but accessibility may vary between posters.
 - **The admin portal and the shelter portal** are designed mainly for desktop computers.
 
-## 5. How this statement was prepared
+## 4. Report a barrier
 
-We prepared this statement on 15 October 2026. Method: self-assessment during development. An external audit is planned in milestone M5. We will update the statement after the audit.
-
-## 6. Feedback and help
-
-If you meet a barrier or need content in another format, write to info@signapps.si or call 040 975 210 (+386 40 975 210). We reply within 14 days.
-
-## 7. Enforcement procedure
-
-If you are not satisfied with our reply, you can contact the competent authority: [client/legal: verify the competent Slovenian authority and the act that transposes the European Accessibility Act, and state its name, address and website].
+If you meet a barrier or need content in another format, write to info@signapps.si. We reply within 14 days.
 
 ---
 
 # Notes for legal review (EN, internal, not published)
 
-1. **Status is a claim to verify.** "Partially conformant" is the working status until the M5 audit. This statement requires an update after the M5 audit (conformance level, list of non-conformances, date and method of the audit).
-2. **Scope of the EAA.** Confirm that Najdimo falls under the EAA at all (consumer e-commerce services, mobile and web) and whether the microenterprise exemption for services could apply to Signapps. Even if exempt, the statement is good practice and the brief targets WCAG 2.2 AA.
-3. **Authority and act.** Verify the competent Slovenian market surveillance or enforcement authority and the national act that transposes the EAA (the national act's name and the authority's contact were not verified). Do not publish with a guess.
-4. **Contact.** The accessibility email and phone are client markers; the 14-day reply is our proposed commitment. Confirm that it can be met.
-5. **Claims to verify against the build.** 7:1 contrast for body text and the main action; keyboard and screen-reader support; list alternative to the map; reduced motion; 200 % text; labels above fields; errors as text. Verify each with the accessibility QA before publishing. Remove any claim that is not true.
-6. **Third-party content.** Stripe Checkout, Google and Apple sign-in and Turnstile are outside our control; check whether Turnstile offers an accessible alternative.
-7. **Alt text for user photos.** Descriptions generated from attributes are our fallback; confirm that this approach is acceptable and how it works for screen-reader users.
-8. **Quality.** The Slovenian text needs a native review of terminology (e.g. „bralnik zaslona“, „nadomestno besedilo“).
+1. **Exemption basis.** See "Decision and basis" above. TASK-91 may confirm that SIGNAPPS d.o.o. qualifies as a microenterprise (headcount, turnover) and that payments do not take Najdimo out of the services exemption.
+2. **Claims to verify against the build.** High contrast; keyboard and screen-reader support; list alternative to the map; reduced motion; 200 % text; labels above fields; errors as text. Remove any claim that is not true.
+3. **Contact.** info@signapps.si and the 14-day reply are our proposed commitment. Confirm that it can be met.
+4. **Third-party content.** Stripe Checkout, Google and Apple sign-in and Turnstile are outside our control.
+5. **Quality.** The Slovenian text needs a native review of terminology (e.g. „bralnik zaslona“, „nadomestno besedilo“).

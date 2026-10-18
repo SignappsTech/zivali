@@ -38,6 +38,6 @@ Either way: the lawyer (TASK-91) confirms that SIGNAPPS d.o.o. qualifies as a mi
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
 - [x] #1 Owner picks option 1 or 2 (2026-10-16: option 1, voluntary goals page, no formal statement, no separate lawyer approval)
-- [ ] #2 The accessibility page rewritten as a short voluntary page with our goals and a barrier contact, SL and EN (apps/web/content/legal/{sl,en}/accessibility.mdx), master docs/content/legal/accessibility-statement.md updated with the exemption basis
+- [x] #2 The accessibility page rewritten as a short voluntary page with our goals and a barrier contact, SL and EN (apps/web/content/legal/{sl,en}/accessibility.mdx), master docs/content/legal/accessibility-statement.md updated with the exemption basis
 - [ ] #3 The accessibility quality gates stay in CI unless the owner decides otherwise
 <!-- AC:END -->

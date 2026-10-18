@@ -7,12 +7,12 @@ const PAGES = [
 	['sl', '/piskotki', 'Politika piškotkov'],
 	['sl', '/pogoji-uporabe', 'Pogoji uporabe'],
 	['sl', '/podatki-o-podjetju', 'Podatki o podjetju'],
-	['sl', '/dostopnost', 'Izjava o dostopnosti'],
+	['sl', '/dostopnost', 'Dostopnost'],
 	['en', '/en/privacy', 'Privacy policy'],
 	['en', '/en/cookies', 'Cookie policy'],
 	['en', '/en/terms', 'Terms of use'],
 	['en', '/en/company-information', 'Company information'],
-	['en', '/en/accessibility', 'Accessibility statement'],
+	['en', '/en/accessibility', 'Accessibility'],
 ] as const;
 
 for (const [locale, path, title] of PAGES)
