@@ -1,11 +1,11 @@
 ---
 id: TASK-114.6
 title: 'Short pages: the footer floats mid-screen (page at least the viewport height)'
-status: To Do
+status: In Progress
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-16 14:05'
-updated_date: '2026-10-17 09:24'
+updated_date: '2026-10-18 04:03'
 labels:
   - bug
   - fe
@@ -30,3 +30,5 @@ Code: apps/web/app/[locale]/layout.tsx `<body>` and apps/web/components/shell/pa
 - [ ] #1 On short pages (e.g. /racun/placila with one item, an empty inbox, sign-in) the footer sits at the bottom of the viewport at 390 and 1440 px; long pages unchanged
 - [ ] #2 No extra scroll on mobile (dvh), no layout shift added (CLS unchanged in the e2e and Lighthouse runs)
 <!-- AC:END -->
+
+Branch: agent/TASK-114.6-footer-min-height
