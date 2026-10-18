@@ -1,11 +1,11 @@
 ---
 id: TASK-114.11
 title: 'Shelter directory: "Uporabi mojo lokacijo" finds the responsible shelter'
-status: In Progress
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-16 14:55'
-updated_date: '2026-10-18 04:12'
+updated_date: '2026-10-18 04:25'
 labels:
   - fe
   - 'est:S'
