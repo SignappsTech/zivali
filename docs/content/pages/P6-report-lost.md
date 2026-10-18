@@ -134,8 +134,8 @@ Location picker (P5) with `location.title_lost` and the radius control.
 | report_lost.reward_amount_label | Znesek v evrih (neobvezno) | Amount in euros (optional) |
 | report_lost.reward_amount_invalid | Vpišite znesek v celih evrih, na primer 50. | Enter the amount in whole euros, for example 50. |
 | report_lost.reward_amount_max | Vpišite znesek do {max}. | Enter an amount of up to {max}. |
-| report_lost.reward_note_label | Opomba (neobvezno) | Note (optional) |
-| report_lost.reward_note_placeholder | Na primer: tudi za podatek, ki pomaga pri iskanju | For example: also for information that helps the search |
+| report_lost.reward_note_label | Opomba k nagradi (neobvezno) | Note on the reward (optional) |
+| report_lost.reward_note_placeholder | Na primer: nagrada velja tudi za podatek, ki pripelje do živali | For example: the reward also applies to information that leads to the animal |
 | report_lost.reward_note_help | Največ 80 znakov. Brez telefonske številke, e-naslova in povezav: ljudje vam pišejo prek sporočil v aplikaciji. | Up to 80 characters. No phone number, email address or links: people reach you through messages in the app. |
 | report_lost.reward_note_contact_data | Odstranite telefonsko številko, e-naslov, povezavo ali številko računa. Ljudje vam pišejo prek sporočil v aplikaciji. | Remove the phone number, email address, link or account number. People reach you through messages in the app. |
 | report_lost.reward_note_too_long | Opomba je predolga. Skrajšajte jo na največ 80 znakov. | The note is too long. Please shorten it to 80 characters or fewer. |
