@@ -1,11 +1,11 @@
 ---
 id: TASK-115.7
 title: 'Home: recent-report card photo alt shows the pet''s name'
-status: In Progress
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-18 23:20'
-updated_date: '2026-10-18 23:33'
+updated_date: '2026-10-18 23:34'
 labels:
   - bug
   - 'est:XS'
