@@ -28,6 +28,7 @@
 	"action_mine": "To je moja žival",
 	"reward_line": "Nagrada",
 	"reward_line_amount": "Nagrada: {amount}",
+	"contact_limited": "Danes ste dosegli omejitev sporočil. Poskusite znova jutri.",
 	"safety_note": "Nikoli ne pošiljajte denarja vnaprej. Kdor je žival res našel, denarja ne zahteva.",
 	"safety_note_reward": "Nikoli nikomur ne plačajte vnaprej. Nagrado lastnik izroči šele, ko je žival spet doma. Najdimo nagrad ne izplačuje.",
 	"safety_link": "Nasveti za varnost",

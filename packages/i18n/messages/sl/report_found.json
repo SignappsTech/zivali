@@ -31,6 +31,7 @@
 	"link_invalid_body": "Prijava je morda zaključena ali izbrisana. Če ste navedli e-naslov, vam lahko povezavo pošljemo znova.",
 	"resend_title": "Pošljite mi zasebno povezavo",
 	"resend_done": "Če je ta e-naslov naveden pri kateri od prijav, smo nanj poslali povezavo. Preverite tudi mapo z neželeno pošto.",
+	"resend_done_manager": "Povezavo smo poslali na e-naslov, ki ste ga navedli ob prijavi. Preverite tudi mapo z neželeno pošto.",
 	"resend_no_email": "Ob prijavi niste navedli e-naslova, zato povezave ne moremo poslati.",
 	"summary_place": "Kraj",
 	"expiry_note": "{days, plural, one {Prijava bo potekla čez # dan.} two {Prijava bo potekla čez # dneva.} few {Prijava bo potekla čez # dni.} other {Prijava bo potekla čez # dni.}} Če je žival še pri vas ali jo še vedno vidite, prijavo podaljšajte.",

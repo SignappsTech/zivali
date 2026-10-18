@@ -97,7 +97,8 @@ export function ManageView({ code }: { code: string }) {
 	const sendLink = async () => {
 		try {
 			await resend({ code }).unwrap();
-			toast.success(t('resend_done'));
+			// The manager's own report: the address exists, unlike on the signed-out lost-link form (P7 §9, CH-438).
+			toast.success(t('resend_done_manager'));
 		} catch (error) {
 			// CONFLICT: no email was given with the report (C7).
 			toast.error(errorCode(error) === 'CONFLICT' ? t('resend_no_email') : errorText(error));

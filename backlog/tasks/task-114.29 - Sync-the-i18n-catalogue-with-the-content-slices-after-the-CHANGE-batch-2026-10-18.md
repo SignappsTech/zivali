@@ -7,7 +7,7 @@ status: In Progress
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-18 21:08'
-updated_date: '2026-10-18 21:11'
+updated_date: '2026-10-18 21:30'
 labels:
   - fe
   - 'est:S'
@@ -28,7 +28,14 @@ The content strategist's CHANGE batch (merge a6de0812, commit 6f7dc6c0) changed 
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Every catalogue key named in the listed CHANGEs matches its slice in SL and EN; i18n check passes
-- [ ] #2 Code passes {days} to lifecycle.close_body and report.owner_disagree; unit tests updated
-- [ ] #3 Web and mobile render the new keys where the slices place them
+- [x] #1 Every catalogue key named in the listed CHANGEs matches its slice in SL and EN; i18n check passes
+- [x] #2 Code passes {days} to lifecycle.close_body and report.owner_disagree; unit tests updated
+- [x] #3 Web and mobile render the new keys where the slices place them
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+## Packet
+Branch: agent/TASK-114.29-content-sync
+<!-- SECTION:NOTES:END -->
