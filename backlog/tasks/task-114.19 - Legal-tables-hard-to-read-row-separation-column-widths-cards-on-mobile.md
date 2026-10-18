@@ -6,7 +6,7 @@ assignee:
   - '@frontend-dev'
   - '@design-lead'
 created_date: '2026-10-16 16:10'
-updated_date: '2026-10-18 02:00'
+updated_date: '2026-10-18 02:12'
 labels:
   - fe
   - design
@@ -39,4 +39,6 @@ Part of the cause is TASK-114.18 (the MDX `<table>`, `<th>`, `<td>` get no style
 
 <!-- SECTION:NOTES:BEGIN -->
 docs/design/wireframes/M-legal-table.html: v1 ready for owner review (2026-10-18). Not approved yet.
+
+Review sheet for the owner (private claude.ai page, v1 2026-10-18): https://claude.ai/artifact/MTTBPrLTPgEJM8r6QfZQ45. Awaiting owner approval.
 <!-- SECTION:NOTES:END -->

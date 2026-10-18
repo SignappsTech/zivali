@@ -5,7 +5,7 @@ status: In Review
 assignee:
   - '@design-lead'
 created_date: '2026-10-16 14:00'
-updated_date: '2026-10-18 02:02'
+updated_date: '2026-10-18 02:12'
 labels:
   - design
   - wireframe
@@ -34,4 +34,6 @@ Wireframe of the reworked homepage (TASK-115), desktop 1440 and mobile 390, as d
 
 <!-- SECTION:NOTES:BEGIN -->
 docs/design/wireframes/P3-home.html: v1 ready for owner review (2026-10-18). Not approved yet.
+
+Review sheet for the owner (private claude.ai page, v1 2026-10-18): https://claude.ai/artifact/MTTBPrLTPgEJM8r6QfZQ45. Awaiting owner approval.
 <!-- SECTION:NOTES:END -->
