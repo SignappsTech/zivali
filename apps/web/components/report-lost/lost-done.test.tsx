@@ -170,7 +170,13 @@ describe('LostDone (P6 M9)', () => {
 			within(menu)
 				.getAllByRole('menuitem')
 				.map((row) => row.textContent)
-		).toEqual(['Kopiraj povezavo', 'WhatsApp(odpre se v novem zavihku)', 'Facebook', 'Več …', 'Plakat s QR kodo']);
+		).toEqual([
+			'Kopiraj povezavo',
+			'WhatsApp(odpre se v novem zavihku)',
+			'Facebook(odpre se v novem zavihku)',
+			'Več …',
+			'Plakat s QR kodo',
+		]);
 		// The area is the reverse lookup of the public circle; the text has no phone, chip or exact point.
 		const text = new RegExp(
 			`^Pomagajte najti psa: Medo[.] Nazadnje viden .+, območje Šiška, Ljubljana[.] .+ ${LINK}$`
@@ -201,6 +207,22 @@ describe('LostDone (P6 M9)', () => {
 		fireEvent.click(screen.getByRole('menuitem', { name: 'Kopiraj povezavo' }));
 		expect(await screen.findByText(sl.share.copy_failed)).toBeTruthy();
 		expect(window.location.origin).not.toBe('https://najdimo.si');
+
+		// Facebook: the sharer with the link, the kit's post copied to paste, the kit behind it; counted once.
+		track.mockClear();
+		fetchMock.mockResolvedValue(new Response('{}'));
+		open();
+		const facebook = screen.getByRole('menuitem', { name: /Facebook/ });
+		expect(facebook.getAttribute('href')).toBe(
+			`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(LINK)}`
+		);
+		fireEvent.click(facebook);
+		expect(writeText).toHaveBeenLastCalledWith(
+			expect.stringMatching(new RegExp(`^Pogrešamo psa: Medo[.] .+ ${LINK}$`))
+		);
+		const kit = await screen.findByRole('dialog', { name: sl.share.kit_title });
+		expect(await within(kit).findByText(sl.share.facebook_copied)).toBeTruthy();
+		expect(track.mock.calls).toEqual([['share', { method: 'facebook', report_type: 'lost', species: 'dog' }]]);
 	});
 
 	it('says what an unconfirmed address still waits for', () => {

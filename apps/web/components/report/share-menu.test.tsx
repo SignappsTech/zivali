@@ -112,6 +112,9 @@ describe('P9 slot B share menu (P18)', () => {
 	it('shares the bare link without an area name, and thanks everyone once reunited', () => {
 		show(lost, 'sl', null);
 		expect(item(/WhatsApp/).getAttribute('href')).toBe(`https://wa.me/?text=${encodeURIComponent(LINK)}`);
+		// The sharer has the link already: nothing to copy.
+		fireEvent.click(item(/Facebook/));
+		expect(writeText).not.toHaveBeenCalled();
 		cleanup();
 		show({ ...lost, status: 'reunited' }, 'en');
 		expect(item(/WhatsApp/).getAttribute('href')).toBe(
@@ -145,11 +148,44 @@ describe('P9 slot B share menu (P18)', () => {
 		expect(events()).toEqual([]);
 	});
 
-	it('counts WhatsApp and Facebook as they open', () => {
+	it('counts WhatsApp and Facebook once each as they open', async () => {
 		show(lost);
 		fireEvent.click(item(/WhatsApp/));
 		fireEvent.click(item(/Facebook/));
+		await screen.findByText(sl.share.facebook_copied);
 		expect(events().map(({ params }) => (params as { method: string }).method)).toEqual(['whatsapp', 'facebook']);
+	});
+
+	it('Facebook copies the post text in the same tap as the sharer opens, and says to paste it (SL and EN)', async () => {
+		show(lost);
+		fireEvent.click(item(/Facebook/));
+		// Synchronously, while the tap still counts as a user gesture and before the new tab takes the focus.
+		expect(writeText).toHaveBeenCalledWith(MESSAGE);
+		expect(await screen.findByText('Besedilo objave je kopirano. Prilepite ga v objavo.')).toBeTruthy();
+		cleanup();
+
+		show(lost, 'en');
+		fireEvent.click(item(/Facebook/));
+		expect(writeText).toHaveBeenLastCalledWith(
+			`Help find this dog: Rex. Last seen 12 October, area Šiška, Ljubljana. Have you seen it? ${LINK}`
+		);
+		expect(await screen.findByText('Post text copied. Paste it into your post.')).toBeTruthy();
+	});
+
+	it('shows the post text to copy by hand when the clipboard refuses it', async () => {
+		writeText.mockRejectedValueOnce(new Error('denied'));
+		show(lost);
+		fireEvent.click(item(/Facebook/));
+
+		const dialog = await screen.findByRole('dialog', { name: sl.share.kit_post_title });
+		expect(within(dialog).getByText(MESSAGE)).toBeTruthy();
+		expect(await within(dialog).findByText(sl.share.facebook_copy_failed)).toBeTruthy();
+		fireEvent.click(within(dialog).getByRole('button', { name: sl.share.kit_copy }));
+		expect(await within(dialog).findByText(sl.share.facebook_copied)).toBeTruthy();
+		expect(writeText).toHaveBeenLastCalledWith(MESSAGE);
+		expect(events()).toEqual([
+			{ name: 'share', params: { method: 'facebook', report_type: 'lost', species: 'dog' } },
+		]);
 	});
 
 	it('"Več …" opens the Web Share API, else copies the link and says why', async () => {
@@ -253,24 +289,23 @@ describe('P18 Facebook kit (owner of an open lost report)', () => {
 		'share.radio_form_url': 'https://radio.example/obvestila',
 	};
 
-	it('opens from the Facebook row: the ready text, the square image, the groups (region first) and the radio form', async () => {
+	const POST = `Pogrešamo psa: Rex. Nazadnje viden 12. oktobra, območje Šiška, Ljubljana. Če ste ga videli, nam prosim sporočite prek povezave. Hvala, da delite. ${LINK}`;
+
+	it('opens behind the sharer from the Facebook row, which copies its post: the ready text, the square image, the groups (region first) and the radio form', async () => {
 		fetchMock.mockResolvedValue(new Response(JSON.stringify(config)));
 		show(owner);
-		// The owner's row opens the kit, not the sharer.
-		expect([item('Facebook').getAttribute('href'), item('Facebook').getAttribute('aria-haspopup')]).toEqual([
-			null,
-			'dialog',
-		]);
-		fireEvent.click(item('Facebook'));
+		// The owner's row is the sharer too, and copies the kit's post rather than the share text.
+		expect(item(/Facebook/).getAttribute('href')).toBe(
+			`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(LINK)}`
+		);
+		fireEvent.click(item(/Facebook/));
+		expect(writeText).toHaveBeenCalledWith(POST);
 		await screen.findByRole('dialog');
 
 		const dialog = screen.getByRole('dialog', { name: sl.share.kit_title });
+		expect(await within(dialog).findByText(sl.share.facebook_copied)).toBeTruthy();
 		expect(fetchMock).toHaveBeenCalledWith('http://localhost:4000/v1/config/public');
-		expect(
-			within(dialog).getByText(
-				`Pogrešamo psa: Rex. Nazadnje viden 12. oktobra, območje Šiška, Ljubljana. Če ste ga videli, nam prosim sporočite prek povezave. Hvala, da delite. ${LINK}`
-			)
-		).toBeTruthy();
+		expect(within(dialog).getByText(POST)).toBeTruthy();
 		const image = within(dialog).getByRole('img', { name: 'Kvadratna slika za objavo: Pogrešan pes Rex' });
 		expect(image.getAttribute('src')).toBe('/r/Rex12345/square.png?lang=sl');
 		expect(within(dialog).getByRole('link', { name: sl.share.kit_image_save }).getAttribute('download')).toBe(
@@ -294,20 +329,26 @@ describe('P18 Facebook kit (owner of an open lost report)', () => {
 
 		fireEvent.click(within(dialog).getAllByRole('button', { name: sl.share.kit_copy })[0]!);
 		expect(await within(dialog).findByText(sl.share.kit_copied)).toBeTruthy();
+		// Counted once, by the row.
 		expect(events()).toEqual([
 			{ name: 'share', params: { method: 'facebook', report_type: 'lost', species: 'dog' } },
 		]);
 	});
 
-	it('still works without the public config', async () => {
+	it('still works without the public config, and shows its post to copy when the clipboard refuses', async () => {
 		fetchMock.mockRejectedValue(new Error('offline'));
+		writeText.mockRejectedValueOnce(new Error('denied'));
 		show(owner);
-		fireEvent.click(item('Facebook'));
+		fireEvent.click(item(/Facebook/));
 		await screen.findByRole('dialog');
 		const dialog = screen.getByRole('dialog');
 		await waitFor(() => expect(fetchMock).toHaveBeenCalled());
 		expect(within(dialog).queryAllByRole('listitem')).toHaveLength(0);
 		expect(within(dialog).getByText(sl.share.kit_groups_hint)).toBeTruthy();
+		// The kit is the text to copy by hand: no second dialog.
+		expect(await within(dialog).findByText(sl.share.facebook_copy_failed)).toBeTruthy();
+		expect(within(dialog).getByText(POST)).toBeTruthy();
+		expect(screen.getAllByRole('dialog')).toHaveLength(1);
 	});
 });
 

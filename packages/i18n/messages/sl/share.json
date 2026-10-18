@@ -28,5 +28,7 @@
 	"kit_image_save": "Shrani sliko",
 	"kit_image_alt": "Kvadratna slika za objavo: {title}",
 	"unsupported": "Deljenje ni na voljo, zato smo povezavo kopirali.",
-	"copy_failed": "Povezave ni bilo mogoče kopirati."
+	"copy_failed": "Povezave ni bilo mogoče kopirati.",
+	"facebook_copied": "Besedilo objave je kopirano. Prilepite ga v objavo.",
+	"facebook_copy_failed": "Besedila ni bilo mogoče kopirati. Kopirajte ga tukaj in ga prilepite v objavo."
 }

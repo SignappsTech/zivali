@@ -1,6 +1,7 @@
 'use client';
 
 import { CheckCircleIcon } from '@phosphor-icons/react/dist/ssr/CheckCircle';
+import { CopyIcon } from '@phosphor-icons/react/dist/ssr/Copy';
 import { DownloadSimpleIcon } from '@phosphor-icons/react/dist/ssr/DownloadSimple';
 import { FacebookLogoIcon } from '@phosphor-icons/react/dist/ssr/FacebookLogo';
 import { ImageIcon } from '@phosphor-icons/react/dist/ssr/Image';
@@ -16,7 +17,7 @@ import * as React from 'react';
 
 import { type EventParams, track } from '@zivali/analytics';
 import type { Locale } from '@zivali/i18n/format';
-import { ShareKit, type KitProps } from '@/components/report/share-kit';
+import { readyText, ShareKit, type KitProps } from '@/components/report/share-kit';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { noteClass } from '@/components/shelters/classes';
 import { Pill } from '@/components/ui/pill';
@@ -27,6 +28,8 @@ export type ShareCopy = Record<
 	| 'copy'
 	| 'whatsapp'
 	| 'facebook'
+	| 'facebookCopied'
+	| 'facebookCopyFailed'
 	| 'more'
 	| 'poster'
 	| 'copied'
@@ -272,12 +275,13 @@ export function PosterOptions({
 
 /**
  * P9 slot B menu (P18 sharing, FR-011), the same menu as slot C's "Več možnosti": "Kopiraj povezavo", WhatsApp,
- * Facebook (the sharer, or the owner's kit), "Več …" (the Web Share API, else the link is copied) and "Plakat s QR
- * kodo" (the poster dialog). A dialog opens once the menu has closed and handed focus back to the button, so the
- * dialog returns it there. `share` and `poster_download` go through track(), a no-op without analytics consent (C12).
+ * Facebook (copies the post text and opens the sharer; the owner's kit opens behind it), "Več …" (the Web Share API,
+ * else the link is copied) and "Plakat s QR kodo" (the poster dialog). A dialog opens once the menu has closed and
+ * handed focus back to the button, so the dialog returns it there. `share` and `poster_download` go through track(), a
+ * no-op without analytics consent (C12).
  */
 export function ShareMenu({ url, message, analytics, poster, kit, copy }: Props) {
-	const [dialog, setDialog] = React.useState<'poster' | 'kit' | null>(null);
+	const [dialog, setDialog] = React.useState<'poster' | 'kit' | 'post' | null>(null);
 	const chosen = React.useRef<'poster' | 'kit' | null>(null);
 	const [toast, setToast] = React.useState<Toast>();
 
@@ -295,15 +299,25 @@ export function ShareMenu({ url, message, analytics, poster, kit, copy }: Props)
 		if (region) track('poster_download', { species: analytics.species, region });
 	};
 	const closeDialog = () => setDialog(null);
-	const copyText = async (text: string, done: string) => {
+	const copyText = async (text: string, done: string, failed = copy.copyFailed) => {
 		try {
 			await navigator.clipboard.writeText(text);
 			setToast({ text: done });
 			return true;
 		} catch {
-			setToast({ text: copy.copyFailed, error: true });
+			setToast({ text: failed, error: true });
 			return false;
 		}
+	};
+	// Facebook takes the link only, never a post text (Platform Policy): the row copies the text to paste (the owner's
+	// kit post, else the share text; nothing when that is the bare link) as the sharer opens in a new tab.
+	const post = kit?.post ?? (message === url ? undefined : message);
+	const shareFacebook = async () => {
+		shared('facebook');
+		// The owner's kit opens behind the sharer, with the square image and the groups to post in next.
+		if (kit) chosen.current = 'kit';
+		// A refused clipboard shows the text to copy by hand: in the kit, or on its own.
+		if (post && !(await copyText(post, copy.facebookCopied, copy.facebookCopyFailed)) && !kit) setDialog('post');
 	};
 	const copyLink = async () => {
 		if (await copyText(url, copy.copied)) shared('copy_link');
@@ -361,28 +375,17 @@ export function ShareMenu({ url, message, analytics, poster, kit, copy }: Props)
 								<span className="sr-only">{copy.opensNewTab}</span>
 							</a>
 						</DropdownMenu.Item>
-						{kit ? (
-							<DropdownMenu.Item
-								className={rowClass}
-								aria-haspopup="dialog"
-								onSelect={() => (chosen.current = 'kit')}
+						<DropdownMenu.Item asChild className={rowClass} onSelect={() => void shareFacebook()}>
+							<a
+								href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`}
+								target="_blank"
+								rel="noopener noreferrer"
 							>
 								<FacebookLogoIcon weight="bold" aria-hidden="true" />
 								{copy.facebook}
-							</DropdownMenu.Item>
-						) : (
-							<DropdownMenu.Item asChild className={rowClass} onSelect={() => shared('facebook')}>
-								<a
-									href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`}
-									target="_blank"
-									rel="noopener noreferrer"
-								>
-									<FacebookLogoIcon weight="bold" aria-hidden="true" />
-									{copy.facebook}
-									<span className="sr-only">{copy.opensNewTab}</span>
-								</a>
-							</DropdownMenu.Item>
-						)}
+								<span className="sr-only">{copy.opensNewTab}</span>
+							</a>
+						</DropdownMenu.Item>
 						<DropdownMenu.Item className={rowClass} onSelect={() => void shareNative()}>
 							<ShareNetworkIcon weight="bold" aria-hidden="true" />
 							{copy.more}
@@ -416,10 +419,23 @@ export function ShareMenu({ url, message, analytics, poster, kit, copy }: Props)
 						{...kit}
 						region={analytics.region}
 						copy={copy}
-						onCopy={async (text, facebook) => {
-							if ((await copyText(text, copy.kitCopied)) && facebook) shared('facebook');
-						}}
+						// The Facebook row has counted the share.
+						onCopy={(text) => void copyText(text, copy.kitCopied)}
 					/>
+					<ToastRegion toast={toast} onClose={() => setToast(undefined)} closeLabel={copy.close} />
+				</ContentDialog>
+			)}
+			{dialog === 'post' && post && (
+				<ContentDialog title={copy.kitPostTitle} closeLabel={copy.close} onClose={closeDialog}>
+					<p className={readyText}>{post}</p>
+					<Button
+						size="lg"
+						className="mt-4"
+						onClick={() => void copyText(post, copy.facebookCopied, copy.facebookCopyFailed)}
+					>
+						<CopyIcon weight="bold" aria-hidden="true" />
+						{copy.kitCopy}
+					</Button>
 					<ToastRegion toast={toast} onClose={() => setToast(undefined)} closeLabel={copy.close} />
 				</ContentDialog>
 			)}

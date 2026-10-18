@@ -74,7 +74,7 @@ function LinkRow({
 }
 
 /** A ready text, read-only and selectable, on the line field look (16/24, 2 px `input` underline). */
-const readyText = 'mt-3 border-b-2 border-input px-0.5 py-2.5 [overflow-wrap:anywhere] select-text';
+export const readyText = 'mt-3 border-b-2 border-input px-0.5 py-2.5 [overflow-wrap:anywhere] select-text';
 const h3 = 'mt-8 font-display text-xl leading-7 font-semibold tracking-[-0.01em]';
 
 export type KitProps = {
@@ -87,7 +87,7 @@ export type KitProps = {
 	configUrl: string;
 	region: string | undefined;
 	copy: Record<KitCopyKey | 'opensNewTab', string>;
-	onCopy: (text: string, facebook: boolean) => void;
+	onCopy: (text: string) => void;
 };
 
 /**
@@ -115,7 +115,7 @@ export function ShareKit({ post, media, image, imageName, configUrl, region, cop
 
 			<h3 className={h3}>{copy.kitPostTitle}</h3>
 			<p className={readyText}>{post}</p>
-			<Button size="lg" className="mt-4" onClick={() => onCopy(post, true)}>
+			<Button size="lg" className="mt-4" onClick={() => onCopy(post)}>
 				<CopyIcon weight="bold" aria-hidden="true" />
 				{copy.kitCopy}
 			</Button>
@@ -161,7 +161,7 @@ export function ShareKit({ post, media, image, imageName, configUrl, region, cop
 			<h3 className={h3}>{copy.kitMediaTitle}</h3>
 			<p className="mt-2">{copy.kitMediaIntro}</p>
 			<p className={readyText}>{media}</p>
-			<Button variant="secondary" className="mt-4" onClick={() => onCopy(media, false)}>
+			<Button variant="secondary" className="mt-4" onClick={() => onCopy(media)}>
 				<CopyIcon weight="bold" aria-hidden="true" />
 				{copy.kitCopy}
 			</Button>

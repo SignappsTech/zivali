@@ -28,5 +28,7 @@
 	"kit_image_save": "Save image",
 	"kit_image_alt": "Square image for the post: {title}",
 	"unsupported": "Sharing is not available here, so we copied the link.",
-	"copy_failed": "The link could not be copied."
+	"copy_failed": "The link could not be copied.",
+	"facebook_copied": "Post text copied. Paste it into your post.",
+	"facebook_copy_failed": "The text could not be copied. Copy it here and paste it into your post."
 }
