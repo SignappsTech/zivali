@@ -1,11 +1,11 @@
 ---
 id: TASK-114.13
 title: 'Map filters: type and species may be all off (none selected means all)'
-status: In Progress
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-16 15:10'
-updated_date: '2026-10-18 04:08'
+updated_date: '2026-10-18 04:18'
 labels:
   - bug
   - fe
