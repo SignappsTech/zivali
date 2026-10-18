@@ -136,8 +136,8 @@ describe('P9 /r/[code], lost report (visitor)', () => {
 		expect(fact('Velikost')).toBe('srednja');
 		expect(fact('Čip')).toBe('Čip vpisan');
 		expect(fact('Spol')).toBe('samec');
-		// The collar text is a manager field.
-		expect(screen.queryByText('Ovratnica', { selector: 'dt' })).toBeNull();
+		// The collar text is a manager field: visitors only see that one was described (CH-308a).
+		expect(fact('Ovratnica')).toBe('opisana');
 		expect(screen.getByText('Šiška', { selector: 'b' }).parentElement?.textContent).toBe('Območje: Šiška');
 		expect(screen.getByRole('heading', { level: 2, name: 'Kaj se je zgodilo' })).toBeTruthy();
 		expect(screen.getByText('Ustrašil se je ognjemeta.')).toBeTruthy();
@@ -162,6 +162,13 @@ describe('P9 /r/[code], lost report (visitor)', () => {
 		expect(JSON.parse(map.dataset.circles!)).toEqual([
 			{ id: 'area', center: { lat: 46.064, lng: 14.493 }, radiusM: 500, kind: 'area', status: 'lost' },
 		]);
+	});
+
+	it('has no "Ovratnica" row when no collar was described', async () => {
+		show({ ...lost, collar_described: false });
+		await renderPage();
+
+		expect(screen.queryByText('Ovratnica', { selector: 'dt' })).toBeNull();
 	});
 
 	it('puts one detail ad below "Kje je bila videna" and the sidebar ad in the "Oglasi" landmark (P21, AC#2)', async () => {

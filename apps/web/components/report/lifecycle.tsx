@@ -15,7 +15,7 @@ import { useTransitionReportMutation } from '@zivali/api/reports';
 import type { QueryError } from '@zivali/api/rtk';
 import type { CloseReason, ReportTransitionInput } from '@zivali/types';
 import { useErrorText } from '@/components/auth/parts';
-import { trackReunited } from '@/components/report/lifecycle-helpers';
+import { REOPEN_DAYS, trackReunited } from '@/components/report/lifecycle-helpers';
 import type { DetailReport } from '@/components/report/slots/types';
 import { noteClass } from '@/components/shelters/classes';
 import {
@@ -289,7 +289,9 @@ export function CloseSearch({ report, open, onOpenChange, returnFocus }: DialogP
 			<DialogContent closeLabel={tc('close')} className="max-w-[560px] lg:p-7" {...focus}>
 				<DialogTitle className={titleClass}>{tl('close_title')}</DialogTitle>
 				<DialogMessage error={error}>
-					<DialogDescription className="mt-3 text-lg leading-7">{tl('close_body')}</DialogDescription>
+					<DialogDescription className="mt-3 text-lg leading-7">
+						{tl('close_body', { days: REOPEN_DAYS })}
+					</DialogDescription>
 				</DialogMessage>
 				{!isConflict(error) && (
 					<>

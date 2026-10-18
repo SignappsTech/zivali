@@ -6,7 +6,7 @@ import type { DetailReport } from '@/components/report/slots/types';
 
 const DAY = 86_400_000;
 /** C4 `lifecycle.reopen_days` (default 7). Past it the API answers GONE, which the reopen action shows. */
-const REOPEN_DAYS = 7;
+export const REOPEN_DAYS = 7;
 /** Found and sighted reports expire after 30 idle days (C4); the note shows from day 25 (P7). */
 const EXPIRY_DAYS = 30;
 const NOTICE_DAYS = 5;

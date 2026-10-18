@@ -151,11 +151,12 @@ function Facts({ report }: { report: DetailReport }) {
 		...report.colours.map((c) => ta(`colours.${c}`)),
 		...(report.pattern && report.pattern !== 'solid' ? [ta(`patterns.${report.pattern}`)] : []),
 	];
+	// The collar text is a manager field; the public view only knows that one was described (CH-308a).
+	const collar = report.is_mine ? report.collar : report.collar_described && t('collar_described');
 	const facts = [
 		colour.length ? [t('fact_colour'), lower(colour.join(', '))] : null,
 		report.size ? [t('fact_size'), lower(ta(`size.${report.size}`))] : null,
-		// The collar text is a manager field; the public view only knows that one was described.
-		report.is_mine && report.collar ? [t('fact_collar'), report.collar] : null,
+		collar ? [t('fact_collar'), collar] : null,
 		[t('fact_chip'), report.has_chip ? t('chip_on_file') : t('chip_unknown')],
 	].filter((fact): fact is [string, string] => fact !== null);
 	return (

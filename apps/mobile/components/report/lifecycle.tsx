@@ -239,7 +239,7 @@ export function CloseSearch({ report, open, onOpenChange }: SheetProps) {
 			<SheetContent closeLabel={tc('close')}>
 				<SheetTitle>{tl('close_title')}</SheetTitle>
 				<SheetMessage error={error}>
-					<Text className="mt-3 text-lg leading-7">{tl('close_body')}</Text>
+					<Text className="mt-3 text-lg leading-7">{tl('close_body', { days: REOPEN_DAYS })}</Text>
 				</SheetMessage>
 				{!isConflict(error) && (
 					<>

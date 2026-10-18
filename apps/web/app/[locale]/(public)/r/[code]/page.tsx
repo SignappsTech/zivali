@@ -137,6 +137,7 @@ export default async function ReportPage(props: Props) {
 								action_message: copy.action_message,
 								action_mine: copy.action_mine,
 								gate_body: copy.gate_body,
+								contact_limited: copy.contact_limited,
 							}),
 				},
 				...(report.is_mine

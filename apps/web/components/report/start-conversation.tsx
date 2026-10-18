@@ -29,7 +29,7 @@ type Props = {
  * Contact from P9 slot A (C9), loaded with the first press: the P16 gate (signed out or anonymous: an account; not
  * confirmed: "Potrdite svoj e-naslov"), then POST /v1/conversations { about_report_code } and the conversation. The API
  * answers the same conversation again for the same report and caller. UNVERIFIED_EMAIL opens the verify dialog;
- * RATE_LIMITED (contact, 10 a day) and other refusals are a note under the buttons. chat_started fires in the
+ * RATE_LIMITED (contact, 10 a day, "report.contact_limited") and other refusals are a note under the buttons. chat_started fires in the
  * conversation, with the first message (C9).
  */
 export function StartConversation(props: Props) {
@@ -63,7 +63,8 @@ function Start({ code, gate, onGateChange, onBusyChange }: Props) {
 		} catch (failure) {
 			const refusal = errorCode(failure);
 			if (refusal === 'UNVERIFIED_EMAIL') setVerify(true);
-			else setNote({ limited: refusal === 'RATE_LIMITED', text: errorText(failure) });
+			else if (refusal === 'RATE_LIMITED') setNote({ limited: true, text: t('contact_limited') });
+			else setNote({ limited: false, text: errorText(failure) });
 		} finally {
 			starting.current = false;
 			onBusyChange(false);

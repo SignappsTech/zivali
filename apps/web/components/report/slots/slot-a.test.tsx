@@ -174,7 +174,7 @@ describe('SlotA contact (P9, C9, TASK-21.6)', () => {
 		const api = serve(() => mockError('RATE_LIMITED', 'RATE_LIMITED', { retry_after_s: 3600 }));
 		show({ type: 'lost' });
 		fireEvent.click(screen.getByRole('button', { name: r.action_message }));
-		expect((await screen.findByRole('status')).textContent).toContain(sl.errors.RATE_LIMITED_generic);
+		expect((await screen.findByRole('status')).textContent).toContain(sl.report.contact_limited);
 		expect(screen.queryByRole('alert')).toBeNull();
 		expect(state.push).not.toHaveBeenCalled();
 
