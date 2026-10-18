@@ -12,12 +12,14 @@ export default defineConfig({
 		// MinIO (the storage adapter test builds its MinIO client explicitly). Payments likewise stay on the mock provider:
 		// no test reaches Stripe (the stripe adapter test stubs fetch), and fiscal invoices never reach FURS (the furs
 		// provider test injects its transport). Embeddings stay on the mock too: no test reaches Voyage (the voyage
-		// adapter test stubs fetch).
+		// adapter test stubs fetch). So does extraction: no test reaches Anthropic (the anthropic adapter test stubs the
+		// SDK client).
 		env: {
 			STORAGE_PROVIDER: 'memory',
 			PAYMENTS_PROVIDER: 'mock',
 			FISCAL_PROVIDER: 'mock',
 			EMBEDDER_PROVIDER: 'mock',
+			AI_PROVIDER: 'mock',
 		},
 		// One shared database: test files run one after another.
 		fileParallelism: false,

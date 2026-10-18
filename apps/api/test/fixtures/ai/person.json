@@ -1,0 +1,14 @@
+{
+	"output": {
+		"animal": "dog",
+		"animal_count": 1,
+		"species_confidence": 0.95,
+		"breeds": [{ "code": "dog.golden_retriever", "confidence": 0.7 }],
+		"colours": { "values": ["golden"], "confidence": 0.9 },
+		"pattern": { "value": "solid", "confidence": 0.8 },
+		"size": { "value": "l", "confidence": 0.6 },
+		"collar": { "present": true, "confidence": 0.9 },
+		"marks": [],
+		"moderation": { "person_prominent": true, "nsfw": false, "violence": false, "text_contact_info": false }
+	}
+}

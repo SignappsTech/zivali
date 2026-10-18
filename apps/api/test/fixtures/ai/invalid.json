@@ -1,0 +1,14 @@
+{
+	"output": {
+		"animal": "horse",
+		"animal_count": 1,
+		"species_confidence": 0.9,
+		"breeds": [],
+		"colours": null,
+		"pattern": null,
+		"size": null,
+		"collar": { "present": false, "confidence": 0.5 },
+		"marks": [],
+		"moderation": { "person_prominent": false, "nsfw": false, "violence": false, "text_contact_info": false }
+	}
+}
