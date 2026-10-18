@@ -1,11 +1,11 @@
 ---
 id: TASK-115.8
 title: 'Home: focused recent-report card stays mostly off-screen in the mobile strip'
-status: In Progress
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-18 23:21'
-updated_date: '2026-10-18 23:33'
+updated_date: '2026-10-18 23:40'
 labels:
   - bug
   - 'est:XS'
