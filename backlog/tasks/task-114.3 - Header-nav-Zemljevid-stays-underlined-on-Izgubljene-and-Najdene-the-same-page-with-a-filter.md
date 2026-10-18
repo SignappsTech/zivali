@@ -3,11 +3,11 @@ id: TASK-114.3
 title: >-
   Header nav: Zemljevid stays underlined on Izgubljene and Najdene (the same
   page with a filter)
-status: In Progress
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-16 13:20'
-updated_date: '2026-10-18 03:55'
+updated_date: '2026-10-18 03:56'
 labels:
   - bug
   - fe
