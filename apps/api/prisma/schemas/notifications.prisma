@@ -51,7 +51,7 @@ model alert_subscriptions {
   center_point Unsupported("extensions.geography(Point,4326)")
   // 1-25 (check constraint in the migration)
   radius_km    Int
-  // non-empty subset of {dog, cat} (check constraint in the migration; Prisma lists are nullable columns, the check rejects NULL)
+  // subset of {dog, cat}, empty = no alerts (check constraint in the migrations; Prisma lists are nullable columns, the check rejects NULL)
   species      String[]                                        @default(["dog", "cat"])
   paused       Boolean                                         @default(false)
   daily_cap    Int                                             @default(5)

@@ -161,7 +161,10 @@ for (const colorScheme of ['light', 'dark'] as const)
 		await expect(page).toHaveTitle('Obvestila · Najdimo');
 		await expect(page.getByRole('heading', { level: 1 })).toHaveText('Obvestila');
 		await expect(page.getByRole('switch')).toHaveCount(12);
-		await expect(page.getByRole('switch', { name: 'Možna ujemanja: V aplikaciji' })).toBeDisabled();
+		// No lock (TASK-114.14): in app turns off for matches and messages too, with no note.
+		await expect(page.getByRole('switch', { name: 'Možna ujemanja: V aplikaciji' })).toBeEnabled();
+		await expect(page.getByRole('switch', { name: 'Sporočila: V aplikaciji' })).toBeEnabled();
+		await expect(page.getByText(/ni mogoče izklopiti/)).toHaveCount(0);
 		await expect(page.getByRole('switch', { name: 'Opozorila v bližini: Po e-pošti' })).not.toBeChecked();
 		await expect(page.getByLabel('Od', { exact: true })).toHaveValue('22:00');
 		await expectNoAxeViolations(page);

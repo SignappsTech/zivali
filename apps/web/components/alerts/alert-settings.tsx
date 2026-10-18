@@ -178,17 +178,7 @@ function Radius({ km, onSave }: { km: number; onSave(km: number): void }) {
 }
 
 /** Toggle pill (system §10.4): `secondary`, selected `primary` with a check. */
-function SpeciesPill({
-	species,
-	pressed,
-	disabled,
-	onPress,
-}: {
-	species: Species;
-	pressed: boolean;
-	disabled: boolean;
-	onPress(): void;
-}) {
+function SpeciesPill({ species, pressed, onPress }: { species: Species; pressed: boolean; onPress(): void }) {
 	const t = useTranslations('alerts');
 	const SpeciesIcon = species === 'dog' ? DogIcon : CatIcon;
 	return (
@@ -196,7 +186,6 @@ function SpeciesPill({
 			size="sm"
 			variant={pressed ? 'default' : 'secondary'}
 			aria-pressed={pressed}
-			disabled={disabled}
 			className="rounded-chip text-control"
 			onClick={onPress}
 		>
@@ -316,8 +305,7 @@ function AlertsForm({ me, sub }: { me: Me; sub: AlertSubscription | null }) {
 											key={species}
 											species={species}
 											pressed={on}
-											// At least one: the only chosen animal stays chosen.
-											disabled={on && current.species.length === 1}
+											// Any animal can be switched off; none chosen means no nearby alerts.
 											onPress={() =>
 												void write(
 													alertInput(current, {
@@ -331,6 +319,9 @@ function AlertsForm({ me, sub }: { me: Me; sub: AlertSubscription | null }) {
 									);
 								})}
 							</div>
+							{current.species.length === 0 && (
+								<p className="mt-2 text-sm text-muted-foreground">{t('alerts.species_none')}</p>
+							)}
 						</div>
 						<SwitchRow
 							label={t('alerts.pause_label')}

@@ -461,16 +461,19 @@ describe('settings: how we tell you', () => {
 	const { type_matches, type_messages, type_nearby, type_reminders, channel_push, channel_email, channel_inapp } =
 		sl.alerts;
 
-	test('chip matches and messages stay on in the app; a switch saves every type of its row', async () => {
+	test('no switch is locked: in app turns off for matches and messages too; a switch saves every type of its row', async () => {
 		serve(prefsRoute());
 		await open('/settings/notifications');
 
 		await screen.findByRole('switch', { name: `${type_matches}: ${channel_inapp}` });
 		for (const type of [type_matches, type_messages]) {
-			expect(cell(type, channel_inapp)).toBeDisabled();
+			expect(cell(type, channel_inapp)).toBeEnabled();
 			expect(cell(type, channel_inapp)).toBeChecked();
 		}
-		expect(screen.getByText(sl.alerts.locked_note)).toBeOnTheScreen();
+		expect(screen.queryByText(/ni mogoče izklopiti/)).toBeNull();
+		await fireEvent.press(cell(type_messages, channel_inapp));
+		await waitFor(() => expect(cell(type_messages, channel_inapp)).not.toBeChecked());
+		expect(sent('PUT', '/v1/notification-prefs/chat_message')).toEqual([{ in_app: false }]);
 		expect(cell(type_nearby, channel_email)).not.toBeChecked();
 
 		await fireEvent.press(cell(type_nearby, channel_email));
@@ -480,6 +483,7 @@ describe('settings: how we tell you', () => {
 		await fireEvent.press(cell(type_matches, channel_push));
 		await waitFor(() =>
 			expect(calls.filter((c) => c.method === 'PUT').map((c) => [c.path, c.body])).toEqual([
+				['/v1/notification-prefs/chat_message', { in_app: false }],
 				['/v1/notification-prefs/nearby_lost', { email: true }],
 				['/v1/notification-prefs/match_chip', { push: false }],
 				['/v1/notification-prefs/match_suggested', { push: false }],

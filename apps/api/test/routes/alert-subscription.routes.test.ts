@@ -86,13 +86,12 @@ describe('guards', () => {
 });
 
 describe('PUT /v1/alert-subscription', () => {
-	it('rejects radius outside 1-25 km, unknown or no species, a bad centre and a missing paused', async () => {
+	it('rejects radius outside 1-25 km, unknown species, a bad centre and a missing paused', async () => {
 		const { id, auth } = await user();
 		for (const payload of [
 			{ ...body, radius_km: 0 },
 			{ ...body, radius_km: 26 },
 			{ ...body, radius_km: 2.5 },
-			{ ...body, species: [] },
 			{ ...body, species: ['bird'] },
 			{ ...body, species: ['dog', 'cat', 'dog'] },
 			{ ...body, center: { lat: 91, lng: 14.5 } },
@@ -136,6 +135,14 @@ describe('PUT /v1/alert-subscription', () => {
 		expect(next.paused).toBe(false);
 		expect(metres(moved, next.center)).toBeGreaterThanOrEqual(19.5);
 		expect(metres(moved, next.center)).toBeLessThanOrEqual(30.5);
+	});
+
+	it('accepts no animals: nothing selected is stored as an empty list (no alerts, TASK-114.14)', async () => {
+		const { auth } = await user();
+		const res = await put(auth, { ...body, species: [] });
+		expect(res.status).toBe(200);
+		expect(res.body).toMatchObject({ species: [], paused: false });
+		expect((await get(auth)).body.species).toEqual([]);
 	});
 });
 

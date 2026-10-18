@@ -360,12 +360,7 @@
 				"properties": {
 					"center": { "$ref": "#/components/schemas/LatLng" },
 					"radius_km": { "type": "integer", "minimum": 1, "maximum": 25 },
-					"species": {
-						"type": "array",
-						"items": { "$ref": "#/components/schemas/Species" },
-						"minItems": 1,
-						"maxItems": 2
-					},
+					"species": { "type": "array", "items": { "$ref": "#/components/schemas/Species" }, "maxItems": 2 },
 					"paused": { "type": "boolean" }
 				},
 				"required": ["center", "radius_km", "species", "paused"]

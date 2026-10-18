@@ -239,7 +239,7 @@ describe('nearby alert settings (P13)', () => {
 		expect(optIns()).toEqual([]);
 	});
 
-	test('pause, animals and radius save at once; the only chosen animal stays chosen; off deletes', async () => {
+	test('pause, animals and radius save at once; the last animal can be switched off too; off deletes', async () => {
 		mockSub = { ...alertSubscription };
 		await open();
 		expect(await master()).toBeChecked();
@@ -252,13 +252,20 @@ describe('nearby alert settings (P13)', () => {
 		await waitFor(() => expect(control('checkbox', sl.alerts.species_cats)).not.toBeChecked());
 		expect(lastPut()).toMatchObject({ species: ['dog'], paused: true });
 		expect(control('checkbox', sl.alerts.species_dogs)).toBeChecked();
-		expect(control('checkbox', sl.alerts.species_dogs)).toBeDisabled();
+		expect(control('checkbox', sl.alerts.species_dogs)).toBeEnabled();
+		expect(screen.queryByText(sl.alerts.species_none)).toBeNull();
+
+		// Nothing chosen means no nearby alerts: saved as an empty list, and said plainly.
+		await fireEvent.press(control('checkbox', sl.alerts.species_dogs));
+		await waitFor(() => expect(control('checkbox', sl.alerts.species_dogs)).not.toBeChecked());
+		expect(lastPut()).toMatchObject({ species: [], paused: true });
+		expect(screen.getByText(sl.alerts.species_none)).toBeOnTheScreen();
 
 		// One screen-reader step (or letting go after a drag) saves once, to the subscription and the profile.
 		await fireEvent(control('adjustable', sl.alerts.radius_label), 'accessibilityAction', {
 			nativeEvent: { actionName: 'increment' },
 		});
-		await waitFor(() => expect(lastPut()).toMatchObject({ radius_km: 7, species: ['dog'] }));
+		await waitFor(() => expect(lastPut()).toMatchObject({ radius_km: 7, species: [] }));
 		expect(sent('PATCH', '/v1/me')).toEqual([{ home_radius_km: 7 }]);
 		await waitFor(() => expect(screen.getByText('Šiška, Ljubljana, 7 km')).toBeOnTheScreen());
 		expect(control('adjustable', sl.alerts.radius_label).props.accessibilityValue).toMatchObject({ text: '7 km' });
@@ -266,7 +273,7 @@ describe('nearby alert settings (P13)', () => {
 		await fireEvent.press(await master());
 		await waitFor(() => expect(screen.queryByRole('switch', { name: sl.alerts.pause_label })).toBeNull());
 		expect(sent('DELETE', '/v1/alert-subscription')).toHaveLength(1);
-		expect(sent('PUT', '/v1/alert-subscription')).toHaveLength(3);
+		expect(sent('PUT', '/v1/alert-subscription')).toHaveLength(4);
 	});
 
 	test('dragging the radius shows each stop and saves once, where the finger lets go', async () => {

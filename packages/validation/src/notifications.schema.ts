@@ -39,7 +39,8 @@ export const AlertSubscriptionInput = z
 	.object({
 		center: LatLng,
 		radius_km: z.number().int().min(1).max(25),
-		species: z.array(Species).min(1).max(2),
+		// Empty is allowed: no animal chosen means no nearby alerts (TASK-114.14).
+		species: z.array(Species).max(2),
 		paused: z.boolean(),
 	})
 	.openapi('AlertSubscriptionInput');

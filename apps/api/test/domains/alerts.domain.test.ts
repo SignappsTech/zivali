@@ -161,6 +161,8 @@ describe('AlertsDomain.fanout', () => {
 		const outside = await subscribe(at(P, 0, 6_000), { radius_km: 5 });
 		const paused = await subscribe(P, { paused: true });
 		const catsOnly = await subscribe(P, { species: ['cat'] });
+		// No animal chosen means no alerts, not every animal (TASK-114.14).
+		const noAnimals = await subscribe(P, { species: [] });
 		const manager = await subscribe(P);
 		const geo = await geoLookup(P.lat, P.lng);
 		expect(geo.in_slovenia).toBe(true);
@@ -179,7 +181,8 @@ describe('AlertsDomain.fanout', () => {
 		});
 		const sorted = (list: QueuedAlert[]) => list.sort((a, b) => a.user_id.localeCompare(b.user_id));
 		expect(sorted(await queued(id))).toEqual(sorted([job(near), job(far)]));
-		for (const skipped of [outside, paused, catsOnly, manager]) expect(await recipients(id)).not.toContain(skipped);
+		for (const skipped of [outside, paused, catsOnly, noAnimals, manager])
+			expect(await recipients(id)).not.toContain(skipped);
 		const variables = (distance_band: string) => ({
 			report_code: short_code,
 			species: 'dog',
@@ -304,7 +307,7 @@ describe('jobs', () => {
 		expect(await recipients(id)).toContain(user);
 	});
 
-	it('notify.send drops a queued alert once the report is closed or reunited, or the subscription paused or deleted', async () => {
+	it('notify.send drops a queued alert once the report is closed or reunited, or the subscription paused, emptied or deleted', async () => {
 		const user = await subscribe(P);
 		const id = await report();
 		await AlertsDomain.fanout({ report_id: id }, systemCtx());
@@ -331,6 +334,10 @@ describe('jobs', () => {
 		expect(await deliverable()).toBe(false);
 		await setReport('matched');
 		expect(await deliverable()).toBe(true);
+		await AlertsDao.upsertSubscription(user, { center: P, radius_km: 1, species: ['cat'], paused: false });
+		expect(await deliverable()).toBe(false);
+		await AlertsDao.upsertSubscription(user, { center: P, radius_km: 1, species: [], paused: false });
+		expect(await deliverable()).toBe(false);
 		await AlertsDao.upsertSubscription(user, { center: P, radius_km: 1, species: ['dog'], paused: true });
 		expect(await deliverable()).toBe(false);
 		await prisma.alert_subscriptions.deleteMany({ where: { user_id: user } });

@@ -70,7 +70,7 @@ describe('NotificationSettings', () => {
 		expect(state.refetch).toHaveBeenCalled();
 	});
 
-	it('has a labelled switch per type and channel; in app is locked on for matches and messages', () => {
+	it('has a labelled switch per type and channel, none locked: in app for matches and messages too', () => {
 		show();
 
 		expect(screen.getAllByRole('switch')).toHaveLength(12);
@@ -79,15 +79,11 @@ describe('NotificationSettings', () => {
 			alerts.channel_email,
 			alerts.channel_inapp,
 		]);
-		for (const type of [alerts.type_matches, alerts.type_messages]) {
-			const locked = switchFor(type, alerts.channel_inapp);
-			expect(locked.disabled).toBe(true);
-			expect(locked.getAttribute('aria-checked')).toBe('true');
-			expect(document.getElementById(locked.getAttribute('aria-describedby')!)?.textContent).toBe(
-				alerts.locked_note
-			);
+		for (const item of screen.getAllByRole('switch') as HTMLButtonElement[]) {
+			expect(item.disabled).toBe(false);
+			expect(item.hasAttribute('aria-describedby')).toBe(false);
 		}
-		expect(switchFor(alerts.type_nearby, alerts.channel_inapp).disabled).toBe(false);
+		expect(screen.queryByText(/ni mogoče izklopiti/)).toBeNull();
 		// nearby_lost email is opt-in (fixture: off); types without a stored row are on.
 		expect(switchFor(alerts.type_nearby, alerts.channel_email).getAttribute('aria-checked')).toBe('false');
 		expect(switchFor(alerts.type_reminders, alerts.channel_push).getAttribute('aria-checked')).toBe('true');
@@ -116,6 +112,28 @@ describe('NotificationSettings', () => {
 			['report_closed', false],
 		]);
 		await vi.waitFor(() => expect(toast.success).toHaveBeenCalledWith(sl.profile.saved));
+	});
+
+	it('turns in app off for matches and messages, and every channel off with no warning', async () => {
+		state.setPref.mockReturnValue(resolves());
+		show();
+
+		fireEvent.click(switchFor(alerts.type_messages, alerts.channel_inapp));
+		fireEvent.click(switchFor(alerts.type_matches, alerts.channel_inapp));
+		for (const channel of [alerts.channel_push, alerts.channel_email])
+			fireEvent.click(switchFor(alerts.type_matches, channel));
+
+		const calls = state.setPref.mock.calls.map(([input]) => input);
+		expect(calls.slice(0, 4)).toEqual([
+			{ type: 'chat_message', body: { in_app: false } },
+			{ type: 'match_chip', body: { in_app: false } },
+			{ type: 'match_suggested', body: { in_app: false } },
+			{ type: 'match_confirmed', body: { in_app: false } },
+		]);
+		expect(calls).toHaveLength(10);
+		await vi.waitFor(() => expect(toast.success).toHaveBeenCalledTimes(4));
+		expect(screen.queryByRole('note')).toBeNull();
+		expect(screen.queryByRole('alert')).toBeNull();
 	});
 
 	it('says a failed save in a toast', async () => {

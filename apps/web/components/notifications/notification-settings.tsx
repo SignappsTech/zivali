@@ -1,7 +1,6 @@
 'use client';
 
 import { EnvelopeSimpleIcon } from '@phosphor-icons/react/dist/ssr/EnvelopeSimple';
-import { LockSimpleIcon } from '@phosphor-icons/react/dist/ssr/LockSimple';
 import { useLocale, useTranslations } from 'next-intl';
 import * as React from 'react';
 import { useStore } from 'react-redux';
@@ -28,16 +27,15 @@ import { resendConfirmation } from '@/lib/auth';
 type Channel = 'push' | 'email' | 'in_app';
 
 /**
- * The four rows of P13 "How to tell me", each switching the C10 types it stands for. In app cannot be turned off for
- * matches and messages (P13), so those switches are locked on.
+ * The four rows of P13 "How to tell me", each switching the C10 types it stands for. Every switch can be turned off,
+ * in app for matches and messages too (TASK-114.14): all off for a row means none of its notifications.
  */
 const GROUPS: {
 	label: 'type_matches' | 'type_messages' | 'type_nearby' | 'type_reminders';
 	types: NotificationType[];
-	locked?: boolean;
 }[] = [
-	{ label: 'type_matches', types: ['match_chip', 'match_suggested', 'match_confirmed'], locked: true },
-	{ label: 'type_messages', types: ['chat_message'], locked: true },
+	{ label: 'type_matches', types: ['match_chip', 'match_suggested', 'match_confirmed'] },
+	{ label: 'type_messages', types: ['chat_message'] },
 	{ label: 'type_nearby', types: ['nearby_lost'] },
 	{ label: 'type_reminders', types: ['report_reminder', 'report_expiring', 'report_closed'] },
 ];
@@ -145,40 +143,24 @@ function Settings({ me, prefs }: { me: Me; prefs: NotificationPrefs }) {
 								<th scope="row" className="py-1 text-left text-[17px] leading-6 font-bold">
 									{t(group.label)}
 								</th>
-								{CHANNELS.map(([channel, label]) => {
-									const locked = group.locked && channel === 'in_app';
-									return (
-										<td key={channel} className="text-center">
-											<span className="relative inline-flex h-12 items-center">
-												<Switch
-													aria-label={t('channel_switch_a11y', {
-														type: t(group.label),
-														channel: t(label),
-													})}
-													aria-describedby={locked ? 'locked-note' : undefined}
-													checked={locked || isOn(group.types, channel)}
-													disabled={locked}
-													onCheckedChange={(on) => void toggle(group.types, channel, on)}
-												/>
-												{locked && (
-													<LockSimpleIcon
-														weight="fill"
-														aria-hidden="true"
-														className="absolute -top-px -right-1.5 size-3.5 rounded-full bg-background"
-													/>
-												)}
-											</span>
-										</td>
-									);
-								})}
+								{CHANNELS.map(([channel, label]) => (
+									<td key={channel} className="text-center">
+										<span className="inline-flex h-12 items-center">
+											<Switch
+												aria-label={t('channel_switch_a11y', {
+													type: t(group.label),
+													channel: t(label),
+												})}
+												checked={isOn(group.types, channel)}
+												onCheckedChange={(on) => void toggle(group.types, channel, on)}
+											/>
+										</span>
+									</td>
+								))}
 							</tr>
 						))}
 					</tbody>
 				</table>
-				<p id="locked-note" className="mt-4 flex gap-2 text-sm text-muted-foreground">
-					<LockSimpleIcon weight="fill" aria-hidden="true" className="size-[18px] shrink-0" />
-					<span>{t('locked_note')}</span>
-				</p>
 			</section>
 			<QuietHours from={prefs.quiet_from} to={prefs.quiet_to} />
 		</>

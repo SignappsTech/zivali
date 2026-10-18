@@ -113,6 +113,14 @@ for (const [width, colorScheme] of [
 		await page.getByRole('slider', { name: 'Polmer' }).press('ArrowRight');
 		await expect.poll(() => sent.at(-1)).toEqual({ ...(sent[0] as object), paused: true, radius_km: 7 });
 
+		// Every animal can be switched off (TASK-114.14): none chosen means no alerts, said plainly.
+		await page.getByRole('button', { name: 'Psi' }).click();
+		await expect.poll(() => sent.at(-1)).toMatchObject({ species: ['cat'] });
+		await page.getByRole('button', { name: 'Mačke' }).click();
+		await expect.poll(() => sent.at(-1)).toMatchObject({ species: [] });
+		await expect(page.getByText('Ne prejemate opozoril za živali v bližini.')).toBeVisible();
+		await expect(page.getByRole('button', { name: 'Mačke' })).toBeEnabled();
+
 		await master.click();
 		await expect(master).not.toBeChecked();
 		await expect.poll(() => sent.at(-1)).toBe('DELETE');

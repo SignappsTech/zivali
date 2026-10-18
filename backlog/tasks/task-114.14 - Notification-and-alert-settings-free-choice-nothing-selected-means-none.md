@@ -1,12 +1,12 @@
 ---
 id: TASK-114.14
 title: 'Notification and alert settings: free choice, nothing selected means none'
-status: To Do
+status: In Progress
 assignee:
   - '@frontend-dev'
   - '@backend-dev'
 created_date: '2026-10-16 15:20'
-updated_date: '2026-10-17 09:24'
+updated_date: '2026-10-18 04:10'
 labels:
   - fe
   - be

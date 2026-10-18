@@ -3,7 +3,6 @@ import { Redirect, Stack } from 'expo-router';
 import type { Icon as PhosphorIcon } from 'phosphor-react-native';
 import { BellSlashIcon } from 'phosphor-react-native/src/icons/BellSlash';
 import { EnvelopeSimpleIcon } from 'phosphor-react-native/src/icons/EnvelopeSimple';
-import { LockSimpleIcon } from 'phosphor-react-native/src/icons/LockSimple';
 import * as React from 'react';
 import { Linking, ScrollView, View } from 'react-native';
 import { useDispatch } from 'react-redux';
@@ -34,10 +33,10 @@ import { usePushPermission, usePushStatus } from '@/lib/push';
 
 type Channel = 'push' | 'email' | 'in_app';
 
-/** P13 "How to tell me": four rows over the C10 types; chip matches and messages always reach the inbox. */
-const ROWS: { key: 'matches' | 'messages' | 'nearby' | 'reminders'; types: NotificationType[]; locked?: true }[] = [
-	{ key: 'matches', types: ['match_chip', 'match_suggested', 'match_confirmed'], locked: true },
-	{ key: 'messages', types: ['chat_message'], locked: true },
+/** P13 "How to tell me": four rows over the C10 types; every switch can be turned off (TASK-114.14). */
+const ROWS: { key: 'matches' | 'messages' | 'nearby' | 'reminders'; types: NotificationType[] }[] = [
+	{ key: 'matches', types: ['match_chip', 'match_suggested', 'match_confirmed'] },
+	{ key: 'messages', types: ['chat_message'] },
 	{ key: 'nearby', types: ['nearby_lost'] },
 	{ key: 'reminders', types: ['report_reminder', 'report_expiring', 'report_closed'] },
 ];
@@ -229,55 +228,33 @@ function Channels({ prefs, me }: { prefs: NotificationPrefs; me: Me | null }) {
 						</Text>
 					))}
 				</View>
-				{ROWS.map(({ key, types, locked }) => {
+				{ROWS.map(({ key, types }) => {
 					const type = t(`alerts.type_${key}`);
 					return (
 						<View key={key} role="group" aria-label={type} className="min-h-12 flex-row items-center">
 							<Text className="flex-1 font-sans-bold leading-5">{type}</Text>
-							{CHANNELS.map(([channel, label]) => {
-								const lockedOn = locked && channel === 'in_app';
-								// Push shows what the phone will do: off while the OS permission is missing.
-								const checked =
-									lockedOn ||
-									(isOn(prefs, types, channel) && (channel !== 'push' || push === 'granted'));
-								return (
-									<View key={channel} className="w-16 items-center">
-										<View>
-											<Switch
-												aria-label={t('alerts.channel_switch_a11y', {
-													type,
-													channel: t(`alerts.${label}`),
-												})}
-												accessibilityHint={lockedOn ? t('alerts.locked_note') : undefined}
-												checked={checked}
-												disabled={
-													lockedOn ||
-													(channel === 'push' && push !== 'granted' && push !== 'ask')
-												}
-												onCheckedChange={(value) => {
-													if (channel === 'push' && value && push === 'ask') setAsking(types);
-													else void change(types, channel, value);
-												}}
-											/>
-											{lockedOn ? (
-												<View
-													aria-hidden
-													className="absolute -right-0.5 top-px rounded-full bg-background"
-												>
-													<Icon as={LockSimpleIcon} weight="fill" size={14} />
-												</View>
-											) : null}
-										</View>
-									</View>
-								);
-							})}
+							{CHANNELS.map(([channel, label]) => (
+								<View key={channel} className="w-16 items-center">
+									<Switch
+										aria-label={t('alerts.channel_switch_a11y', {
+											type,
+											channel: t(`alerts.${label}`),
+										})}
+										// Push shows what the phone will do: off while the OS permission is missing.
+										checked={
+											isOn(prefs, types, channel) && (channel !== 'push' || push === 'granted')
+										}
+										disabled={channel === 'push' && push !== 'granted' && push !== 'ask'}
+										onCheckedChange={(value) => {
+											if (channel === 'push' && value && push === 'ask') setAsking(types);
+											else void change(types, channel, value);
+										}}
+									/>
+								</View>
+							))}
 						</View>
 					);
 				})}
-			</View>
-			<View className="flex-row gap-2">
-				<Icon as={LockSimpleIcon} weight="fill" size={18} className="mt-px text-muted-foreground" />
-				<Text className="flex-1 text-sm text-muted-foreground">{t('alerts.locked_note')}</Text>
 			</View>
 			<PermissionPrimer
 				kind="notifications"
