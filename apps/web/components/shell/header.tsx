@@ -84,8 +84,8 @@ export function SiteHeader({ viewer }: { viewer: Viewer | null }) {
 	// TODO(TASK-31.4): C15 has no map filter query yet; `type` uses the C4 report types.
 	const links = [
 		{ route: '/map', href: href('/map'), label: t('map') },
-		{ href: href({ pathname: '/map', query: { type: 'lost' } }), label: t('lost') },
-		{ href: href({ pathname: '/map', query: { type: 'found' } }), label: t('found') },
+		{ route: '/map', type: 'lost', href: href({ pathname: '/map', query: { type: 'lost' } }), label: t('lost') },
+		{ route: '/map', type: 'found', href: href({ pathname: '/map', query: { type: 'found' } }), label: t('found') },
 		viewer
 			? { route: '/my-pets', href: href('/my-pets'), label: t('my_pets_reports') }
 			: { route: '/how-it-works', href: href('/how-it-works'), label: t('how_it_works') },

@@ -3,11 +3,11 @@ id: TASK-114.3
 title: >-
   Header nav: Zemljevid stays underlined on Izgubljene and Najdene (the same
   page with a filter)
-status: To Do
+status: In Progress
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-16 13:20'
-updated_date: '2026-10-17 09:24'
+updated_date: '2026-10-18 03:55'
 labels:
   - bug
   - fe
@@ -31,7 +31,11 @@ Options for the owner/design lead: (a) mark the current item by pathname plus th
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Exactly one header item is marked current (underline and aria-current="page"): Zemljevid without a type filter, Izgubljene with type=lost, Najdene with type=found, in SL and EN, desktop and mobile menu
-- [ ] #2 Changing the type filter on the page updates the current item
-- [ ] #3 Unit or e2e test for the three states
+- [x] #1 Exactly one header item is marked current (underline and aria-current="page"): Zemljevid without a type filter, Izgubljene with type=lost, Najdene with type=found, in SL and EN, desktop and mobile menu
+- [x] #2 Changing the type filter on the page updates the current item
+- [x] #3 Unit or e2e test for the three states
 <!-- AC:END -->
+
+## Packet
+
+Branch: agent/TASK-114.3-header-nav-current
