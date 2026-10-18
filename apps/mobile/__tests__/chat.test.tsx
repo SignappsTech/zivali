@@ -15,6 +15,7 @@ import { getMockEvents, initAnalytics, resetMockEvents, setConsent } from '@ziva
 import { abuseCreated } from '@zivali/api/__fixtures__/abuse';
 import { createMockApi, mockError, type MockRequest, type MockRoutes } from '@zivali/api/mock';
 import { type ApiStore, createApiStore } from '@zivali/api/rtk';
+import en from '@zivali/i18n/dist/en.json';
 import sl from '@zivali/i18n/dist/sl.json';
 import type { ConversationSummary, Message } from '@zivali/types';
 import InboxTab from '@/app/(tabs)/inbox';
@@ -106,6 +107,7 @@ const conversation = (patch: Partial<ConversationSummary> = {}): ConversationSum
 	status: 'active',
 	...patch,
 });
+const notifications = (unread: number) => ({ items: [], next_cursor: null, unread });
 const at = (secondsAgo: number) => new Date(Date.now() - secondsAgo * 1000).toISOString();
 const msg = (id: string, patch: Partial<Message> = {}): Message => ({
 	id,
@@ -211,11 +213,16 @@ describe('Inbox tab: conversations (P12)', () => {
 	test('h1, the two views; rows with unread and closed states open the conversation', async () => {
 		const closed = conversation({ id: 'c2', unread: 0, status: 'read_only', last_message_preview: 'Hvala!' });
 		const list = { items: [conversation(), closed], next_cursor: null };
-		store = createApiStore(createMockApi({ 'GET /v1/conversations': list }));
+		store = createApiStore(
+			createMockApi({ 'GET /v1/conversations': list, 'GET /v1/notifications': notifications(0) })
+		);
 		const result = await open('/inbox');
 
 		expect(screen.getByRole('heading', { name: c.inbox_title })).toBeOnTheScreen();
-		expect(screen.getByRole('tab', { name: c.view_conversations, selected: true })).toBeOnTheScreen();
+		expect(
+			await screen.findByRole('tab', { name: `${c.view_conversations}, neprebrano`, selected: true })
+		).toBeOnTheScreen();
+		expect(screen.getByRole('tab', { name: c.view_notifications, selected: false })).toBeOnTheScreen();
 		const unread = await screen.findByRole('button', {
 			name: 'Najdena žival, neprebrano, Je pri meni, lahko pridete po 17h.',
 		});
@@ -252,6 +259,70 @@ describe('Inbox tab: conversations (P12)', () => {
 		items = [conversation({ unread: 1, last_message_preview: 'Novo' })];
 		await broadcast('user:u1', 'conversation.updated', { conversation_id: ID, status: 'active' });
 		expect(await screen.findByText('Novo')).toBeOnTheScreen();
+	});
+
+	// TASK-114.10 on mobile: each segment says where the unread items are, and the inbox opens there.
+	const inbox = (conversations: ConversationSummary[], unread: number | (() => number)) =>
+		(store = createApiStore(
+			createMockApi({
+				'GET /v1/conversations': () => ({ items: conversations, next_cursor: null }),
+				'GET /v1/notifications': () => notifications(typeof unread === 'number' ? unread : unread()),
+			})
+		));
+	const tab = (name: string, selected: boolean) => screen.findByRole('tab', { name, selected });
+
+	test('only notifications unread: opens Notifications, its segment has the dot and "neprebrano"', async () => {
+		inbox([conversation({ unread: 0 })], 2);
+		await open('/inbox');
+		expect(await tab(`${c.view_notifications}, neprebrano`, true)).toBeOnTheScreen();
+		expect(await tab(c.view_conversations, false)).toBeOnTheScreen();
+		expect(await screen.findByText(sl.notifications.empty_title)).toBeOnTheScreen();
+	});
+
+	test('both unread: Conversations first, both segments named unread', async () => {
+		inbox([conversation()], 1);
+		await open('/inbox');
+		expect(await tab(`${c.view_conversations}, neprebrano`, true)).toBeOnTheScreen();
+		expect(await tab(`${c.view_notifications}, neprebrano`, false)).toBeOnTheScreen();
+	});
+
+	test('in English: ", unread" in the segment name', async () => {
+		mockStorage.set('locale', 'en');
+		inbox([conversation({ unread: 0 })], 2);
+		await open('/inbox');
+		expect(await tab(`${en.chat.view_notifications}, unread`, true)).toBeOnTheScreen();
+		expect(await tab(en.chat.view_conversations, false)).toBeOnTheScreen();
+	});
+
+	test('the URL names the view: it opens there whatever is unread', async () => {
+		inbox([conversation({ unread: 0 })], 2);
+		await open('/inbox?view=conversations');
+		expect(await tab(c.view_conversations, true)).toBeOnTheScreen();
+		expect(await screen.findByText(conversation().last_message_preview!)).toBeOnTheScreen();
+	});
+
+	test('a list that fails opens Conversations', async () => {
+		store = createApiStore(
+			createMockApi({
+				'GET /v1/conversations': { items: [conversation({ unread: 0 })], next_cursor: null },
+				'GET /v1/notifications': () => mockError('FORBIDDEN'),
+			})
+		);
+		await open('/inbox');
+		expect(await tab(c.view_conversations, true)).toBeOnTheScreen();
+	});
+
+	test('a notification arriving in real time puts the dot on its segment, the open view stays', async () => {
+		let unread = 0;
+		inbox([conversation({ unread: 0 })], () => unread);
+		await open('/inbox');
+		expect(await tab(c.view_conversations, true)).toBeOnTheScreen();
+		expect(await tab(c.view_notifications, false)).toBeOnTheScreen();
+
+		unread = 1;
+		await broadcast('user:u1', 'notification.created', { id: 'n1' });
+		expect(await tab(`${c.view_notifications}, neprebrano`, false)).toBeOnTheScreen();
+		expect(screen.getByRole('tab', { name: c.view_conversations, selected: true })).toBeOnTheScreen();
 	});
 });
 
