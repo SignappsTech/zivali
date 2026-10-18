@@ -1,11 +1,11 @@
 ---
 id: TASK-113
 title: 'Cookie policy: verify the five cookie lifetimes still marked for the client'
-status: To Do
+status: In Progress
 assignee:
   - '@tech-lead'
 created_date: '2026-10-16 12:50'
-updated_date: '2026-10-17 09:24'
+updated_date: '2026-10-18 04:59'
 labels:
   - legal
   - content
@@ -27,6 +27,12 @@ Sources: @supabase/ssr cookie options in apps/web (maxAge), the consent cookie (
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Each of the five lifetimes is checked against the code or the hosted setting and written without a marker, in SL and EN and in the master
-- [ ] #2 No `[naročnik:` or `[client:` marker is left on the cookie page; anything that needs the lawyer goes to TASK-91 instead
+- [x] #1 Each of the five lifetimes is checked against the code or the hosted setting and written without a marker, in SL and EN and in the master
+- [x] #2 No `[naročnik:` or `[client:` marker is left on the cookie page; anything that needs the lawyer goes to TASK-91 instead
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+Branch: agent/task-113-cookie-lifetimes. Five durations verified from code + GA4 retention (lead, 2026-10-18); zz_consent row corrected to 400 days (choice 12 months). Turnstile: we store nothing; Cloudflare frame storage left to TASK-91 via cookie-policy.md note 3. CHANGE added for privacy.mdx zz_consent wording.
+<!-- SECTION:NOTES:END -->

@@ -2,7 +2,7 @@ export const meta = {
 	title: 'Politika piškotkov · Najdimo',
 	description:
 		'Kateri piškotki in podobni zapisi so v Najdimo, čemu služijo, kako dolgo trajajo in kako izbiro spremenite ali prekličete.',
-	updated: '2026-10-15',
+	updated: '2026-10-18',
 	headings: [
 		{ id: 's1', text: '1. Na kratko' },
 		{ id: 's2', text: '2. Kaj so piškotki in podobni zapisi' },
@@ -75,7 +75,7 @@ varna shramba v aplikaciji) obravnavamo enako. V tem besedilu jim skupaj rečemo
 				<td>Najdimo</td>
 				<td>Shrani vašo izbiro glede piškotkov, različico besedila in čas izbire.</td>
 				<td>nujni</td>
-				<td>12 mesecev</td>
+				<td>400 dni; izbira velja 12 mesecev, nato vas vprašamo znova</td>
 			</tr>
 			<tr>
 				<td>
@@ -85,7 +85,7 @@ varna shramba v aplikaciji) obravnavamo enako. V tem besedilu jim skupaj rečemo
 				<td>Najdimo (Supabase)</td>
 				<td>Ohrani vpis, ko ste vpisani.</td>
 				<td>nujni</td>
-				<td>do 400 dni ali do odjave [naročnik: preveriti dejansko trajanje]</td>
+				<td>400 dni, rok se podaljša, ko storitev uporabljate; ob odjavi ga izbrišemo</td>
 			</tr>
 			<tr>
 				<td>
@@ -94,7 +94,7 @@ varna shramba v aplikaciji) obravnavamo enako. V tem besedilu jim skupaj rečemo
 				<td>Najdimo</td>
 				<td>Si zapomni izbran jezik.</td>
 				<td>nujni</td>
-				<td>[naročnik: preveriti trajanje, verjetno do konca seje]</td>
+				<td>do zaprtja brskalnika (sejni piškotek)</td>
 			</tr>
 			<tr>
 				<td>Osnutek prijave (lokalna shramba)</td>
@@ -132,11 +132,12 @@ varna shramba v aplikaciji) obravnavamo enako. V tem besedilu jim skupaj rečemo
 				<td>Preverjanje „nisem robot“ (Turnstile)</td>
 				<td>Cloudflare, Inc.</td>
 				<td>
-					Loči ljudi od botov s tehničnimi signali naprave in brskalnika. Ne služi oglaševanju. [naročnik:
-					preveriti, ali nastavi piškotke]
+					Loči ljudi od botov s tehničnimi signali naprave in brskalnika. Ne služi oglaševanju. Najdimo pri
+					tem v vaši napravi ne shrani ničesar. Preverjanje teče v Cloudflarovem okvirju
+					(challenges.cloudflare.com), ki se naloži samo na obrazcih s preverjanjem.
 				</td>
 				<td>nujni</td>
-				<td>po pravilih ponudnika</td>
+				<td>Najdimo ne shrani ničesar; za Cloudflarov okvir veljajo pravila ponudnika</td>
 			</tr>
 			<tr>
 				<td>
@@ -145,7 +146,7 @@ varna shramba v aplikaciji) obravnavamo enako. V tem besedilu jim skupaj rečemo
 				<td>Google Ireland Limited</td>
 				<td>Loči uporabnike za statistiko obiska.</td>
 				<td>analitični</td>
-				<td>2 leti</td>
+				<td>2 leti od zadnjega obiska</td>
 			</tr>
 			<tr>
 				<td>
@@ -154,13 +155,14 @@ varna shramba v aplikaciji) obravnavamo enako. V tem besedilu jim skupaj rečemo
 				<td>Google Ireland Limited</td>
 				<td>Hrani stanje seje v Google Analytics 4.</td>
 				<td>analitični</td>
-				<td>2 leti</td>
+				<td>2 leti od zadnjega obiska</td>
 			</tr>
 		</tbody>
 	</table>
 </div>
 
-<p>Analitična piškotka nastavimo samo, če sprejmete. Podatke v Google Analytics hranimo 14 mesecev.</p>
+Analitična piškotka nastavimo samo, če sprejmete. Podrobne podatke o dogodkih in uporabnikih v Google Analytics hranimo
+14 mesecev; za podatke o uporabniku se rok ob vsaki novi dejavnosti začne znova.
 
 <h2 id="s4">4. Zapisi v mobilni aplikaciji</h2>
 
@@ -188,7 +190,7 @@ varna shramba v aplikaciji) obravnavamo enako. V tem besedilu jim skupaj rečemo
 				<td>Najdimo (Supabase)</td>
 				<td>Ohrani vpis.</td>
 				<td>nujni</td>
-				<td>do odjave [naročnik: preveriti trajanje]</td>
+				<td>do odjave ali odstranitve aplikacije</td>
 			</tr>
 			<tr>
 				<td>Žeton za potisna obvestila</td>
@@ -243,7 +245,10 @@ varna shramba v aplikaciji) obravnavamo enako. V tem besedilu jim skupaj rečemo
 				<td>Google Ireland Limited</td>
 				<td>Loči namestitve za statistiko uporabe.</td>
 				<td>analitični</td>
-				<td>po pravilih ponudnika; podatke v Googlu hranimo 14 mesecev [naročnik: preveriti]</td>
+				<td>
+					do preklica privolitve (takrat ga ponastavimo) ali odstranitve aplikacije; podrobne podatke v Google
+					Analytics hranimo 14 mesecev
+				</td>
 			</tr>
 		</tbody>
 	</table>

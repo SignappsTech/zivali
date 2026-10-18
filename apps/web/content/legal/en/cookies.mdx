@@ -2,7 +2,7 @@ export const meta = {
 	title: 'Cookie policy · Najdimo',
 	description:
 		'Which cookies and similar storage Najdimo uses, what they are for, how long they last and how to change or withdraw your choice.',
-	updated: '2026-10-15',
+	updated: '2026-10-18',
 	headings: [
 		{ id: 's1', text: '1. In short' },
 		{ id: 's2', text: '2. What cookies and similar storage are' },
@@ -78,7 +78,7 @@ secure storage in the app) the same way. In this text we call them all "items".
 				<td>Najdimo</td>
 				<td>Stores your cookie choice, the text version and the time of the choice.</td>
 				<td>necessary</td>
-				<td>12 months</td>
+				<td>400 days; the choice counts for 12 months, then we ask again</td>
 			</tr>
 			<tr>
 				<td>
@@ -88,7 +88,7 @@ secure storage in the app) the same way. In this text we call them all "items".
 				<td>Najdimo (Supabase)</td>
 				<td>Keeps you signed in.</td>
 				<td>necessary</td>
-				<td>up to 400 days or until you sign out [client: verify actual duration]</td>
+				<td>400 days, extended while you use the service; deleted when you sign out</td>
 			</tr>
 			<tr>
 				<td>
@@ -97,7 +97,7 @@ secure storage in the app) the same way. In this text we call them all "items".
 				<td>Najdimo</td>
 				<td>Remembers the language you chose.</td>
 				<td>necessary</td>
-				<td>[client: verify duration, likely session]</td>
+				<td>until you close the browser (session cookie)</td>
 			</tr>
 			<tr>
 				<td>Report draft (local storage)</td>
@@ -135,11 +135,12 @@ secure storage in the app) the same way. In this text we call them all "items".
 				<td>"Not a robot" check (Turnstile)</td>
 				<td>Cloudflare, Inc.</td>
 				<td>
-					Tells people from bots using technical device and browser signals. Not used for advertising.
-					[client: verify whether it sets cookies]
+					Tells people from bots using technical device and browser signals. Not used for advertising. Najdimo
+					stores nothing on your device for it. The check runs in Cloudflare's frame
+					(challenges.cloudflare.com), which loads only on forms that use the check.
 				</td>
 				<td>necessary</td>
-				<td>per the provider's rules</td>
+				<td>Najdimo stores nothing; Cloudflare's rules apply to its frame</td>
 			</tr>
 			<tr>
 				<td>
@@ -148,7 +149,7 @@ secure storage in the app) the same way. In this text we call them all "items".
 				<td>Google Ireland Limited</td>
 				<td>Distinguishes users for visit statistics.</td>
 				<td>analytics</td>
-				<td>2 years</td>
+				<td>2 years from your last visit</td>
 			</tr>
 			<tr>
 				<td>
@@ -157,13 +158,14 @@ secure storage in the app) the same way. In this text we call them all "items".
 				<td>Google Ireland Limited</td>
 				<td>Keeps session state in Google Analytics 4.</td>
 				<td>analytics</td>
-				<td>2 years</td>
+				<td>2 years from your last visit</td>
 			</tr>
 		</tbody>
 	</table>
 </div>
 
-<p>We set the two analytics cookies only if you accept. We keep data in Google Analytics for 14 months.</p>
+We set the two analytics cookies only if you accept. We keep detailed event and user data in Google Analytics for 14
+months; for user data the period starts again with each new activity.
 
 <h2 id="s4">4. Items in the mobile app</h2>
 
@@ -191,7 +193,7 @@ secure storage in the app) the same way. In this text we call them all "items".
 				<td>Najdimo (Supabase)</td>
 				<td>Keeps you signed in.</td>
 				<td>necessary</td>
-				<td>until you sign out [client: verify duration]</td>
+				<td>until you sign out or remove the app</td>
 			</tr>
 			<tr>
 				<td>Push notification token</td>
@@ -243,7 +245,10 @@ secure storage in the app) the same way. In this text we call them all "items".
 				<td>Google Ireland Limited</td>
 				<td>Tells installations apart for usage statistics.</td>
 				<td>analytics</td>
-				<td>per the provider's rules; we keep data in Google for 14 months [client: verify]</td>
+				<td>
+					until you withdraw consent (we then reset it) or remove the app; we keep detailed data in Google
+					Analytics for 14 months
+				</td>
 			</tr>
 		</tbody>
 	</table>
