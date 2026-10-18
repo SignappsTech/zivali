@@ -3,10 +3,11 @@ id: TASK-114.40
 title: >-
   Mobile test flake: report-lost 'time edit after a network failure' fails
   between 00:00 and 01:00 local
-status: To Do
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-18 22:41'
+updated_date: '2026-10-18 22:53'
 labels:
   - bug
   - fe
