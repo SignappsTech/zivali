@@ -53,19 +53,27 @@ export function LegalToc({ label, headings }: { label: string; headings: { id: s
 			},
 			{ rootMargin: `-100% 0px ${FAR} 0px` }
 		);
+		// Back and forward restore a scroll position: follow it even right after a click.
+		const unpin = () => (clickedAt.current = 0);
 		heads.forEach((head) => line.observe(head));
 		tail.observe(body);
+		window.addEventListener('popstate', unpin);
 		return () => {
 			line.disconnect();
 			tail.disconnect();
+			window.removeEventListener('popstate', unpin);
 		};
 	}, [headings]);
 
-	// From lg a list taller than the viewport scrolls inside the sticky nav: keep the current entry in it.
+	// From lg a list taller than the viewport scrolls inside the sticky nav: keep the current entry in it. By hand, as
+	// scrollIntoView would also scroll the page while the nav is pushed up at the end of the text.
 	useEffect(() => {
 		const box = nav.current;
-		if (box && box.scrollHeight > box.clientHeight)
-			sticky.current?.querySelector('[aria-current]')?.scrollIntoView({ block: 'nearest' });
+		const link = sticky.current?.querySelector<HTMLElement>('[aria-current]');
+		if (!box || !link || box.scrollHeight <= box.clientHeight) return;
+		// The sticky nav is the link's offsetParent.
+		const top = link.offsetTop;
+		box.scrollTop = Math.min(Math.max(box.scrollTop, top + link.offsetHeight - box.clientHeight), top);
 	}, [current]);
 
 	const list = (
