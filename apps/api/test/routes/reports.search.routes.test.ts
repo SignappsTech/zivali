@@ -302,7 +302,11 @@ describe('GET /v1/reports', () => {
 			.map((item: { area: { lat: number; lng: number } }) =>
 				Math.hypot(item.area.lat - lat, (item.area.lng - lng) * Math.cos((lat * Math.PI) / 180))
 			);
-		expect(distances).toEqual([...distances].sort((a, b) => a - b));
+		// The API orders by the PostGIS distance of public_point; this planar estimate of the blurred
+		// area centre may swap two near-equal items, so allow ~100 m (0.001 deg) of slack per step.
+		distances.forEach((d: number, i: number) => {
+			if (i > 0) expect(d).toBeGreaterThanOrEqual(distances[i - 1] - 0.001);
+		});
 	});
 
 	it('pages with a keyset cursor (the last item id) in both sorts', async () => {
