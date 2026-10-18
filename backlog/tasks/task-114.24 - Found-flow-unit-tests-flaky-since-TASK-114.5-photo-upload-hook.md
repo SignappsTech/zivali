@@ -1,7 +1,7 @@
 ---
 id: TASK-114.24
 title: Found-flow unit tests flaky since TASK-114.5 (photo upload hook)
-status: In Progress
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-18 03:18'
