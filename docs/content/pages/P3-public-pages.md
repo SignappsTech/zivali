@@ -3,7 +3,7 @@ source: 03§P3; docs/design/pages/P3-public-pages.md; 02§FR-035, §Content, SEO
 page: P3 Public pages (home and content templates)
 stories: TASK-27, TASK-72 (FR-035)
 copy-for: docs/design/pages/P3-public-pages.md
-version: 0.7
+version: 0.8
 status: Draft, native Slovenian review and client approval pending (TASK-27 AC#4)
 date: 2026-10-18
 ---
@@ -20,6 +20,8 @@ Public pages carry no ad slot.
 
 # T1 Home (`/`, `/en`)
 
+Layout: option A, approved by the owner on 2026-10-18 (TASK-115.1, wireframe v1). Order: hero, recent reports, live numbers (optional), how it works, safe by design, shelters, closing band, "keep it free" (hidden until M4). Option B is dropped; no copy for it.
+
 ## 1. Hero
 
 | Key | SL | EN |
@@ -28,23 +30,42 @@ Public pages carry no ad slot.
 | pages.home.hero_lede | Prijavite izgubljeno ali najdeno žival. Mi poiščemo možna ujemanja in obvestimo ljudi v bližini. Brezplačno. | Report a lost or found pet. We look for possible matches and alert people nearby. For free. |
 | pages.home.hero_primary | Prijavi izgubljeno žival | Report a lost pet |
 | pages.home.hero_secondary | Prijavi najdeno žival | Report a found animal |
+| pages.home.hero_sighted_prompt | Videli ste žival? | Seen an animal? |
+| pages.home.hero_sighted_link | Opažena žival | Sighted animal |
 
-Hero lede: 15 words (SL), within the 20-word limit. Headline wraps to two lines at 60 px.
+Hero lede: 15 words (SL), within the 20-word limit. Headline wraps to two lines at 60 px. One primary button on the page (lost); found is secondary; the sighted link is a quiet text link after the buttons (`hero_sighted_prompt` as plain text, `hero_sighted_link` as the link to `/report/sighted`). The link text matches the header menu item `nav.report_sighted`; if that string differs, use the nav string.
 
-## 2. Near you
+## 2. Recent reports (latest reports block)
 
 | Key | SL | EN |
 |---|---|---|
-| pages.home.near_title | V vaši bližini | Near you |
 | pages.home.near_title_no_location | Nedavne prijave | Recent reports |
+| pages.home.near_title | V vaši bližini | Near you |
 | pages.home.near_open_map | Odpri zemljevid | Open the map |
 | pages.home.near_empty_title | V bližini ni odprtih prijav | No open reports near you |
 | pages.home.near_empty_body | To je dobra novica. Vklopite opozorila in obvestili vas bomo, če bo kdo v bližini pogrešal žival. | That is good news. Turn on alerts and we will let you know if someone nearby is missing a pet. |
 | pages.home.near_empty_action | Vklopi opozorila | Turn on alerts |
+| pages.home.near_error | Prijav ta trenutek ne moremo naložiti. | We cannot load the reports right now. |
 
-Tiles use the row strings from P4 (status word, relative time, distance band).
+- Heading: `near_title_no_location` for everyone by default (signed out, no home area). Switch to `near_title` only when a home area or geolocation is known.
+- Cards show only status, species, approximate area and relative time: status word with icon (for example "Izgubljena · pred 2 urami"), title "Izgubljen pes" / "Lost dog", area label ("Ljubljana, Šiška"). No names, no exact place, no distance when signed out. These strings come from P4 (status word, species title, relative time); no new card strings.
+- Link "Odpri zemljevid" sits on the heading row and goes to `/map`.
+- Error: `near_error` with `common.try_again`. Loading: `common.loading`, as skeleton cards. Never show the empty-state copy for an error.
+- Empty state (0 rows): under `near_title` show `near_empty_title`, `near_empty_body` and the action. Under `near_title_no_location` (no location known) show only `near_empty_body` and the action, because "No open reports near you" would be wrong without a location.
 
-## 3. How it works
+## 3. Live numbers (optional)
+
+Rendered only when the public stats endpoint answers and every number is at least 50. Otherwise the whole block, heading included, is hidden. There is no heading.
+
+| Key | SL | EN |
+|---|---|---|
+| pages.home.stat_reunited | Živali spet doma | Pets back home |
+| pages.home.stat_open | Odprtih prijav | Open reports |
+| pages.home.stat_alerts | Ljudi z vklopljenimi opozorili | People with alerts on |
+
+Number format: SL "1.350" (full stop), EN "1,350". Labels are plain nouns so they read correctly for any count.
+
+## 4. How it works
 
 | Key | SL | EN |
 |---|---|---|
@@ -57,7 +78,9 @@ Tiles use the row strings from P4 (status word, relative time, distance band).
 | pages.home.how_3_body | Pišete si v aplikaciji. Telefonska številka in točen naslov ostaneta skrita. | You message each other in the app. Phone numbers and exact addresses stay hidden. |
 | pages.home.how_more | Več o tem, kako deluje | More about how it works |
 
-## 4. Safe by design
+Three columns on desktop, three stacked rows on mobile. No photo.
+
+## 5. Safe by design
 
 | Key | SL | EN |
 |---|---|---|
@@ -68,7 +91,9 @@ Tiles use the row strings from P4 (status word, relative time, distance band).
 | pages.home.safe_3 | Pogovor poteka v aplikaciji, z jasnim opozorilom pred prevarami. | Conversations happen in the app, with a clear warning about scams. |
 | pages.home.safe_action | Preberite nasvete za varnost | Read the safety tips |
 
-## 5. For shelters and vets
+One card; the three points are an icon list.
+
+## 6. For shelters and vets
 
 | Key | SL | EN |
 |---|---|---|
@@ -76,7 +101,17 @@ Tiles use the row strings from P4 (status word, relative time, distance band).
 | pages.home.shelters_body | Najdene živali objavite hitro, mi pa jih primerjamo z vsemi prijavami izgubljenih živali. Za zavetišča in občine je vse brezplačno, za vedno. | Publish found animals quickly and we compare them with every lost-pet report. For shelters and municipalities everything is free, forever. |
 | pages.home.shelters_action | Več za zavetišča | More for shelters |
 
-## 6. Keep it free (hidden until M4, flag `transparency_page`)
+## 7. Closing band
+
+| Key | SL | EN |
+|---|---|---|
+| pages.home.cta_title | Prijavite izgubljeno ali najdeno žival. | Report a lost or found pet. |
+| pages.home.cta_primary | Prijavi izgubljeno žival | Report a lost pet |
+| pages.home.cta_secondary | Prijavi najdeno žival | Report a found animal |
+
+Same actions and targets as the hero (`/report/lost`, `/report/found`). The heading is the first sentence of the hero lede. In EN it says "pet" instead of "animal" in the heading; the buttons keep the hero wording.
+
+## 8. Keep it free (hidden until M4, flag `transparency_page`)
 
 | Key | SL | EN |
 |---|---|---|
@@ -100,12 +135,14 @@ Organization JSON-LD values: `name` "Najdimo", `url` site root, `logo` the app i
 
 | Image | SL alt | EN alt |
 |---|---|---|
-| Hero photo (placeholder `docs/design/directions/img/dog-aussie-wide.jpg` until licensed final photo) | Pes rjave in bele barve z dolgo dlako in privzdignjenim ušesom | A brown and white long-haired dog with one ear raised |
-| How-it-works photo (placeholder `docs/design/directions/img/cat-tabby.jpg`) | Tigrasta mačka z modro ovratnico in obeskom sedi na stopnicah | A tabby cat with a blue collar and tag sitting on stairs |
+| Hero mosaic photo 1 (placeholder `docs/design/directions/img/dog-aussie-wide.jpg` until licensed final photo) | Pes rjave in bele barve z dolgo dlako in privzdignjenim ušesom | A brown and white long-haired dog with one ear raised |
+| Hero mosaic photo 2 (placeholder `docs/design/directions/img/cat-tabby.jpg`) | Tigrasta mačka z modro ovratnico in obeskom sedi na stopnicah | A tabby cat with a blue collar and tag sitting on stairs |
+| Hero mosaic photo 3 (second dog placeholder) | (empty alt, decorative; the final alt describes the licensed photo) | (empty alt) |
 | Empty-state illustration (`assets/empty-no-reports.png`) | (empty alt, decorative) | (empty alt) |
+| Report card photos | Rule P9 §Alt text (species, colour, status), for example "Izgubljen pes, rjave barve" | Same rule, for example "Lost dog, brown" |
 | OG image | Najdimo – izgubljene in najdene živali v Sloveniji | Najdimo – lost and found pets in Slovenia |
 
-Pet tiles: alt from the rule in P9 §Alt text. Final photos must be licensed and must not show a real lost animal as decoration.
+The mosaic is dropped on mobile. The how-it-works photo is gone in layout A. Pet tiles: alt from the rule in P9 §Alt text. Final photos must be licensed and must not show a real lost animal as decoration.
 
 ---
 
@@ -786,6 +823,7 @@ Alt text: the static map is decorative (`alt=""`), because the address is text.
 
 | Version | Date | Change |
 |---|---|---|
+| 0.8 | 2026-10-18 | TASK-115.3: Home T1 reworked for approved layout A: new order, sighted quiet link, recent-reports block (error, heading rule), optional live-numbers labels, closing band. Option B dropped. |
 | 0.7 | 2026-10-18 | CH-500 (TASK-114.11): T5 keys `shelters.use_location`, `locating`, `location_denied`, `location_failed`, `location_outside`. SL/EN reviewed, unchanged. |
 | 0.6 | 2026-10-15 | CH-124: `shelters.search_clear` (T5 search field); `shelters.days.mon`…`sun` plus `shelters.days.holidays` (T6 opening hours, full day names replace the short forms; holidays key added because the T6 note uses "prazniki"). Draft values on branches `agent/task-90.1-shelter-pages` (catalogue) follow this slice; update the catalogue on merge. Front matter version aligned to the log (was 0.4). |
 | 0.5 | 2026-10-15 | CH-71: `shelters.row_no_phone`, `{source}` fallback text. CH-74: breadcrumb home value `common.breadcrumb_home` (P1) for "Nazaj na začetno stran" on T2/T3. CH-82: `shelters.maybe_responsible`, `not_confirmed`, `not_confirmed_help`, `call_unconfirmed` (+ a11y), `nearest_title`, `nearest_meta`. Shelter keys live in this file (no separate P3-shelter-pages slice exists). |
