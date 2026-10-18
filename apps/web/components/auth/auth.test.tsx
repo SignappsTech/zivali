@@ -164,13 +164,59 @@ describe('SignUpForm (P16 W2)', () => {
 		expect(auth.signUp).not.toHaveBeenCalled();
 	});
 
-	it('treats a taken address like a new one, so the form never tells which addresses have an account', async () => {
-		auth.signUp.mockRejectedValue(authError('CONFLICT'));
-		show(<SignUpForm next="/racun" />);
+	const submitAna = () => {
 		type('Ime', 'Ana');
 		type('E-naslov', ' ana@example.si ');
 		type('Geslo', 'mačka v škornjih');
 		fireEvent.click(screen.getByRole('button', { name: 'Ustvari račun' }));
+	};
+
+	it('names an address that already has an account on its field, with sign-in and forgot-password (TASK-114.1)', async () => {
+		auth.signUp.mockRejectedValue(authError('CONFLICT'));
+		// The hand-off from the report flows (`next`) carries on to sign-in.
+		show(<SignUpForm next="/r/Xy7pQ2mK" />);
+		submitAna();
+
+		const alert = await screen.findByRole('alert');
+		expect(alert.textContent).toBe(sl.auth.error_email_taken);
+		const email = screen.getByLabelText('E-naslov');
+		expect(email.getAttribute('aria-describedby')).toContain(alert.id);
+		expect(document.activeElement).toBe(email);
+		expect(screen.queryByRole('heading', { name: sl.auth.check_title })).toBeNull();
+		expect(screen.getByRole('link', { name: sl.auth.signin_button }).getAttribute('href')).toBe(
+			'/vpis?email=ana%40example.si&next=%2Fr%2FXy7pQ2mK'
+		);
+		expect(screen.getByRole('link', { name: sl.auth.forgot_link }).getAttribute('href')).toBe(
+			'/pozabljeno-geslo?email=ana%40example.si'
+		);
+
+		// Another address: the flag and its actions go.
+		type('E-naslov', 'ana.novak@example.si');
+		expect(screen.queryByRole('alert')).toBeNull();
+		expect(screen.queryByRole('link', { name: sl.auth.forgot_link })).toBeNull();
+	});
+
+	it('names a taken address in English too', async () => {
+		auth.signUp.mockRejectedValue(authError('CONFLICT'));
+		show(<SignUpForm />, 'en');
+		type('Name', 'Ana');
+		type('Email address', 'ana@example.si');
+		type('Password', 'mačka v škornjih');
+		fireEvent.click(screen.getByRole('button', { name: en.auth.signup_button }));
+
+		expect((await screen.findByRole('alert')).textContent).toBe(en.auth.error_email_taken);
+		expect(screen.getByRole('link', { name: en.auth.signin_button }).getAttribute('href')).toBe(
+			'/en/sign-in?email=ana%40example.si'
+		);
+		expect(screen.getByRole('link', { name: en.auth.forgot_link }).getAttribute('href')).toBe(
+			'/en/reset-password?email=ana%40example.si'
+		);
+	});
+
+	it('waits for the link after signing up a new or an unconfirmed address', async () => {
+		auth.signUp.mockResolvedValue({});
+		show(<SignUpForm next="/racun" />);
+		submitAna();
 
 		await screen.findByRole('heading', { level: 1, name: sl.auth.check_title });
 		expect(auth.signUp).toHaveBeenCalledWith({
@@ -181,7 +227,6 @@ describe('SignUpForm (P16 W2)', () => {
 			next: '/racun',
 			captchaToken: undefined,
 		});
-		expect(screen.queryByText(sl.auth.error_email_taken)).toBeNull();
 		// Just sent: resend waits, with the wait as text.
 		expect(screen.getByRole<HTMLButtonElement>('button', { name: sl.auth.check_resend }).disabled).toBe(true);
 		expect(screen.getByText(sl.auth.check_resend_wait.replace('{seconds}', '60'))).toBeTruthy();
@@ -291,6 +336,13 @@ describe('SignUpForm converting an anonymous finder (C7 §6)', () => {
 		expect(document.activeElement).toBe(email);
 		expect(screen.getByRole('link', { name: sl.auth.to_signin }).getAttribute('href')).toBe(
 			'/vpis?email=ana%40example.si'
+		);
+		// The same actions as on the plain form (TASK-114.1).
+		expect(screen.getByRole('link', { name: sl.auth.signin_button }).getAttribute('href')).toBe(
+			'/vpis?email=ana%40example.si'
+		);
+		expect(screen.getByRole('link', { name: sl.auth.forgot_link }).getAttribute('href')).toBe(
+			'/pozabljeno-geslo?email=ana%40example.si'
 		);
 		expect(getMockEvents()).toEqual([]);
 	});

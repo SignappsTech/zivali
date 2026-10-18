@@ -93,6 +93,34 @@ describe('Supabase calls', () => {
 		});
 	});
 
+	describe('signs up a new address, refuses one with a confirmed account (TASK-114.1)', () => {
+		const signingUp = () =>
+			signUp({ name: 'Ana', email: 'ana@example.si', password: 'mačka v škornjih', locale: 'sl' });
+		const answer = (identities: unknown[]) => ({
+			data: { user: { id: 'u-1', identities }, session: null },
+			error: null,
+		});
+
+		it('a new address: the confirmation is sent', async () => {
+			supabase.signUp.mockResolvedValue(answer([{ provider: 'email' }]));
+			await expect(signingUp()).resolves.toMatchObject({ data: { user: { id: 'u-1' } } });
+		});
+
+		it('an address with a confirmed account: 200 with no identities and no email, so CONFLICT', async () => {
+			supabase.signUp.mockResolvedValue(answer([]));
+			const failure = await signingUp().catch((error: unknown) => error);
+			expect(failure).toBeInstanceOf(ApiError);
+			expect(failure).toMatchObject({ code: 'CONFLICT', details: { auth_code: 'user_already_exists' } });
+		});
+
+		it('an unconfirmed address keeps its identity and gets the confirmation again, as today', async () => {
+			supabase.signUp.mockResolvedValue(
+				answer([{ provider: 'email', identity_data: { email_verified: false } }])
+			);
+			await expect(signingUp()).resolves.toMatchObject({ data: { user: { id: 'u-1' } } });
+		});
+	});
+
 	const anonymous = { data: { session: { user: { id: 'u-anon', is_anonymous: true } } }, error: null };
 	const account = { name: 'Ana', email: 'ana@example.si', password: 'mačka v škornjih', locale: 'sl' } as const;
 	const ok = { data: { user: { id: 'u-anon' } }, error: null };

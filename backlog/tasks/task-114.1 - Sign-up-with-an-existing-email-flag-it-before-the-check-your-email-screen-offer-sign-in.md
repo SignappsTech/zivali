@@ -3,11 +3,11 @@ id: TASK-114.1
 title: >-
   Sign-up with an existing email: flag it before the check-your-email screen,
   offer sign-in
-status: To Do
+status: In Progress
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-16 13:20'
-updated_date: '2026-10-17 09:24'
+updated_date: '2026-10-17 09:27'
 labels:
   - bug
   - fe
@@ -37,3 +37,7 @@ Wanted (owner): flag the existing address on the sign-up form, before the verify
 - [ ] #3 The same check covers every sign-up entry (the sign-up page and the hand-off from the report flows, `next=`), and the anonymous-to-account conversion (C7) if it can hit an existing address
 - [ ] #4 Unit tests for the three cases (new, existing confirmed via empty identities, existing unconfirmed)
 <!-- AC:END -->
+
+## Packet
+
+Branch: agent/task-114.1-signup-existing-email

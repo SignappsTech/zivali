@@ -90,13 +90,14 @@ type Field = 'name' | 'email' | 'password';
 
 /**
  * P16 W2 create account: name, email and password; checked on submit, then live per field (E2); terms as a sentence.
- * A taken address behaves like success (the check-email view), so the form never tells which addresses have an
- * account; Supabase answers a repeated sign-up the same way.
+ * An address that already has an account is named on its field with sign-in (address and `next` carried) and
+ * forgot-password next to it, never the check-email view, as no mail comes for it (owner, TASK-114.1: this tells
+ * which addresses are registered). An unconfirmed one gets the check-email view (Supabase resends the link).
  *
  * `convert` (the server checked this browser has an anonymous finder session, C7 §6): the same form turns that session
- * into the account (convertAnonymous), so the reports made without one stay. GoTrue names a taken address here, so the
- * form says it and how to add the report to that account (sign in, then the private link); no providers (they would
- * start another user).
+ * into the account (convertAnonymous), so the reports made without one stay. A taken address is named the same way,
+ * with how to add the report to that account (sign in, then the private link); no providers (they would start another
+ * user).
  */
 export function SignUpForm({
 	next,
@@ -119,6 +120,7 @@ export function SignUpForm({
 		field?: Field;
 		text: string;
 		note?: 'limited' | 'captcha';
+		taken?: boolean;
 	}>();
 	const [busy, setBusy] = React.useState(false);
 	const [sentTo, setSentTo] = React.useState<{ email: string; setPassword?: boolean }>();
@@ -169,10 +171,14 @@ export function SignUpForm({
 			}
 		} catch (failure) {
 			const code = failure instanceof ApiError ? failure.code : null;
-			if (code === 'CONFLICT' && convert) {
-				setServerError({ field: 'email', text: t('convert_email_taken') });
+			if (code === 'CONFLICT') {
+				setServerError({
+					field: 'email',
+					text: t(convert ? 'convert_email_taken' : 'error_email_taken'),
+					taken: true,
+				});
 				emailRef.current?.focus();
-			} else if (code === 'CONFLICT') setSentTo({ email });
+			}
 			// Converting: GoTrue's own password policy (the hosted one may be stricter than the length checked here).
 			else if (convert && failure instanceof ApiError && failure.details?.auth_code === 'weak_password') {
 				setServerError({ field: 'password', text: t('error_password_weak') });
@@ -207,6 +213,11 @@ export function SignUpForm({
 		serverError?.note === 'captcha' || (serverError?.note === 'limited' && limited.active)
 			? serverError
 			: undefined;
+	const address = values.email.trim();
+	const signInHref = {
+		pathname: '/sign-in' as const,
+		query: { ...(address && { email: address }), ...(next && { next }) },
+	};
 
 	return (
 		<>
@@ -229,19 +240,33 @@ export function SignUpForm({
 							onChange={set('name')}
 						/>
 					</FormField>
-					<FormField label={t('email_label')} error={errors.email}>
-						<Input
-							ref={emailRef}
-							type="email"
-							name="email"
-							autoComplete="email"
-							inputMode="email"
-							autoCapitalize="none"
-							spellCheck={false}
-							value={values.email}
-							onChange={set('email')}
-						/>
-					</FormField>
+					<div>
+						<FormField label={t('email_label')} error={errors.email}>
+							<Input
+								ref={emailRef}
+								type="email"
+								name="email"
+								autoComplete="email"
+								inputMode="email"
+								autoCapitalize="none"
+								spellCheck={false}
+								value={values.email}
+								onChange={set('email')}
+							/>
+						</FormField>
+						{serverError?.taken && (
+							<div className="mt-1 -ml-3 flex flex-wrap">
+								<Button asChild variant="text">
+									<Link href={signInHref}>{t('signin_button')}</Link>
+								</Button>
+								<Button asChild variant="text">
+									<Link href={{ pathname: '/reset-password', query: { email: address } }}>
+										{t('forgot_link')}
+									</Link>
+								</Button>
+							</div>
+						)}
+					</div>
 					<PasswordField
 						ref={passwordRef}
 						name="new-password"
@@ -281,14 +306,7 @@ export function SignUpForm({
 			</form>
 			{!convert && <ProviderButtons next={next} className="mt-6" />}
 			<Button asChild variant="text" className="mt-4 w-full">
-				<Link
-					href={{
-						pathname: '/sign-in',
-						query: { ...(values.email.trim() && { email: values.email.trim() }), ...(next && { next }) },
-					}}
-				>
-					{t('to_signin')}
-				</Link>
+				<Link href={signInHref}>{t('to_signin')}</Link>
 			</Button>
 		</>
 	);

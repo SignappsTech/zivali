@@ -52,8 +52,14 @@ export async function ensureSession(getCaptchaToken: () => Promise<string | unde
 	await check(auth().signInAnonymously({ options: { captchaToken: await getCaptchaToken() } }));
 }
 
-/** The name waits in user_metadata until the first session saves it to the profile (components/auth/session-sync.tsx). */
-export const signUp = ({
+/**
+ * The name waits in user_metadata until the first session saves it to the profile (components/auth/session-sync.tsx).
+ * An address with a confirmed account gets a 200 with no identities and no email (Supabase's enumeration protection):
+ * thrown as CONFLICT, as `user_already_exists` is, so the form offers sign-in instead of waiting for a mail that never
+ * comes (owner, TASK-114.1: the clearer answer over hiding which addresses are registered). An unconfirmed address
+ * keeps its identity in the answer and gets the confirmation again.
+ */
+export async function signUp({
 	name,
 	email,
 	password,
@@ -67,8 +73,8 @@ export const signUp = ({
 	locale: Locale;
 	next?: string;
 	captchaToken?: string;
-}) =>
-	check(
+}) {
+	const result = await check(
 		auth().signUp({
 			email,
 			password,
@@ -79,6 +85,10 @@ export const signUp = ({
 			},
 		})
 	);
+	if (result.data.user?.identities?.length === 0)
+		throw new ApiError('CONFLICT', 'CONFLICT', { details: { auth_code: 'user_already_exists' } });
+	return result;
+}
 
 /** Conversion only ever touches the anonymous finder session (C7), never an account's address or password. */
 async function assertAnonymous() {
