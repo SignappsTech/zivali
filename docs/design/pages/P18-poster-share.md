@@ -3,6 +3,7 @@ source: 03§P18
 page: P18 Poster and sharing
 stories: TASK-24 (FR-011)
 platforms: web, mobile
+version: 1.1
 mockup: docs/design/mockups/P18-poster-share.html
 copy: docs/content/pages/P18-poster-share.md
 ---
@@ -21,6 +22,11 @@ Give an owner a printable A4 poster and one-tap sharing so the search reaches ne
 4. Primary `lg` "Download PDF" (generation under 5 s, progress state). Text button "Print".
 5. **Share:** a list of rows (WhatsApp, Facebook, Copy link, More...) or the native share sheet on mobile; a short preview of the link card (photo, title) below.
 6. Quiet note: poster contains a QR code that opens the listing.
+
+### Facebook row (as built, TASK-114.9)
+
+- **Web:** the row is always the sharer link (opens a new tab) and copies the post text in the same tap. For the owner of an open lost report the kit dialog now opens behind the sharer instead of replacing it. If the clipboard is refused, the text is shown for copying: in an "Objava za Facebook" dialog with "Kopiraj besedilo" (visitors), or inside the kit (owner).
+- **Mobile:** the row copies the post, then opens the sharer; if the clipboard is refused the system share sheet opens with the text.
 
 ## Poster layout (A4 portrait, 210 by 297 mm, print safe margin 12 mm)
 
@@ -70,3 +76,9 @@ None (the poster uses the report photo; logo mark from `docs/design/brand/`).
 2. The A4 poster (SL and EN, lost dog example) as print HTML with `@media print` rules and its greyscale rendering.
 3. The Open Graph card at 1200 by 630.
 4. Light and dark for the screen (the poster itself is always black on white).
+
+## Change log
+
+| Version | Date | Change |
+|---|---|---|
+| 1.1 | 2026-10-18 | Facebook row: always the sharer link, copies the text in the same tap, clipboard-refused fallback (CH-507, TASK-114.9). |
