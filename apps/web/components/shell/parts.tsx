@@ -2,6 +2,7 @@
 
 import dynamic from 'next/dynamic';
 import NextLink from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { type ComponentProps, Fragment, type KeyboardEvent, type ReactNode } from 'react';
 
 import { routeTemplate } from '@/components/analytics/screen-views';
@@ -58,17 +59,24 @@ export function ShellSlot({ variant, children }: { variant: 'content' | 'flow'; 
 	return shellVariant(useRoute().pathname) === variant ? children : null;
 }
 
-/** Links (localised on the server) with `aria-current="page"` on the current route. */
+/**
+ * Links (localised on the server) with `aria-current="page"` on the current one. Links can share a route and differ
+ * by the `type` filter (P4: Izgubljene `?type=lost`, Najdene `?type=found`): the one with the URL's `type` is current,
+ * else the one without (Zemljevid for no or several types). The drawer changes `type` in the URL, so this follows it.
+ */
 export function NavLinks({
 	links,
 	className,
 	linkClassName,
 }: {
-	links: { href: string; label: string; route?: string }[];
+	links: { href: string; label: string; route?: string; type?: string }[];
 	className?: string;
 	linkClassName: string;
 }) {
 	const route = routeTemplate(useRoute().pathname);
+	const type = useSearchParams().get('type') ?? undefined;
+	const onRoute = links.filter((link) => link.route === route);
+	const current = onRoute.find((link) => link.type === type) ?? onRoute.find((link) => !link.type);
 
 	return (
 		<ul className={className}>
@@ -76,7 +84,7 @@ export function NavLinks({
 				<li key={link.href}>
 					<NextLink
 						href={link.href}
-						aria-current={link.route === route ? 'page' : undefined}
+						aria-current={link === current ? 'page' : undefined}
 						className={linkClassName}
 					>
 						{link.label}

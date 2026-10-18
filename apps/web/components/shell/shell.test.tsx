@@ -12,12 +12,13 @@ import { ContentPage, ErrorPage, InlineError, PageSkeleton } from './page';
 import { shellVariant } from './parts';
 
 // next-intl maps the browser path (next/navigation) to the internal route, as on a real page.
-const nav = vi.hoisted(() => ({ pathname: '/', params: {} as Record<string, string> }));
+const nav = vi.hoisted(() => ({ pathname: '/', search: '', params: {} as Record<string, string> }));
 vi.mock('next/navigation', async (actual) => ({
 	...(await actual()),
 	useRouter: () => ({ replace: vi.fn(), push: vi.fn(), prefetch: vi.fn() }),
 	usePathname: () => nav.pathname,
 	useParams: () => nav.params,
+	useSearchParams: () => new URLSearchParams(nav.search),
 }));
 vi.mock('@zivali/api/auth', () => ({ useSession: () => ({ session: null, me: null, loading: false }) }));
 vi.mock('@zivali/api/me', () => ({ useUpdateMeMutation: () => [vi.fn()] }));
@@ -28,17 +29,28 @@ vi.mock('@/components/notifications/unread-dot', () => ({
 
 const catalogues = { sl, en };
 
+const page = (node: React.ReactNode, locale: 'sl' | 'en') => (
+	<NextIntlClientProvider locale={locale} messages={catalogues[locale]}>
+		{node}
+	</NextIntlClientProvider>
+);
+
+/** Renders `node` at the browser `path` (with an optional `?query`). */
 function renderAt(path: string, node: React.ReactNode, locale: 'sl' | 'en' = 'sl', params = {}) {
-	nav.pathname = path;
+	[nav.pathname, nav.search = ''] = path.split('?') as [string, string?];
 	nav.params = { locale, ...params };
-	return render(
-		<NextIntlClientProvider locale={locale} messages={catalogues[locale]}>
-			{node}
-		</NextIntlClientProvider>
-	);
+	return render(page(node, locale));
 }
 
 const hrefs = (links: HTMLElement[]) => links.map((link) => [link.textContent, link.getAttribute('href')]);
+
+/** The current link of each main navigation: the bar from lg and the menu sheet below. */
+const currentLinks = (name: string) =>
+	screen.getAllByRole('navigation', { name, hidden: true }).map((main) =>
+		within(main)
+			.getAllByRole('link', { current: 'page', hidden: true })
+			.map((link) => link.textContent)
+	);
 
 afterEach(cleanup);
 
@@ -91,6 +103,35 @@ describe('SiteHeader', () => {
 			[`${sl.nav.report_found_title}${sl.nav.report_found_desc}`, '/prijava/najdena-zival'],
 			[`${sl.nav.report_sighted_title}${sl.nav.report_sighted_desc}`, '/prijava/najdena-zival'],
 		]);
+	});
+
+	it('on the map marks Zemljevid, Izgubljene or Najdene by the type filter and follows it (SL, bar and menu)', () => {
+		const current = () => currentLinks(sl.nav.main_label);
+		const { rerender } = renderAt('/zemljevid', <SiteHeader viewer={null} />);
+		expect(current()).toEqual([[sl.nav.map], [sl.nav.map]]);
+
+		// The drawer writes the filter to the URL (browse.tsx); the header re-renders with the new search params.
+		for (const [search, label] of [
+			['type=lost', sl.nav.lost],
+			['type=found', sl.nav.found],
+			['type=lost,found', sl.nav.map],
+			['type=found&species=dog', sl.nav.found],
+			['', sl.nav.map],
+		] as const) {
+			nav.search = search;
+			rerender(page(<SiteHeader viewer={null} />, 'sl'));
+			expect(current()).toEqual([[label], [label]]);
+		}
+	});
+
+	it.each([
+		['/en/map', en.nav.map],
+		['/en/map?type=lost', en.nav.lost],
+		['/en/map?type=found', en.nav.found],
+	])('%s marks %s (EN)', (path, label) => {
+		renderAt(path, <SiteHeader viewer={{ initials: 'AN', aal2: false }} />, 'en');
+
+		expect(currentLinks(en.nav.main_label)).toEqual([[label], [label]]);
 	});
 
 	it('makes "Prijavi" secondary on pages with their own primary action', () => {
