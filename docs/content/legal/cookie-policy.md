@@ -3,13 +3,15 @@ source: 02§Content, SEO and legal requirements (Legal); FR-038; FR-039; NFR-PRI
 
 | Field | Value |
 |---|---|
-| Version | 0.4 |
+| Version | 0.5 |
 | Date | 2026-10-18 |
 | Route SL | `/piskotki` |
 | Route EN | `/en/cookies` |
 | Slug SL / EN | `piskotki` / `cookies` |
 | Structured data | WebPage |
 | Template | T4 Legal (numbered h2 sections, "On this page" list, draft note) |
+
+Change in 0.5 (CH-453): two session-storage rows for the support asks (`zz_support:...`).
 
 Change in 0.4 (TASK-113): the five durations marked for the client are verified from the code and the GA4 property and written without markers; `zz_consent` lives 400 days (the choice counts 12 months); `_ga` cookies run 2 years from the last visit; GA retention detail; Turnstile row says what we store, the rest goes to the lawyer (note 3).
 
@@ -65,6 +67,7 @@ Zapise delimo na dve vrsti:
 | Osnutek prijave (lokalna shramba) | Najdimo | Shrani nedokončano prijavo, da je ne izgubite. | nujni | dokler prijave ne oddate ali osnutka ne zavržete |
 | `manage:<ID prijave>` (lokalna shramba) | Najdimo | Hrani žeton zasebne povezave, prek katere upravljate prijavo brez računa. | nujni | do zaključka prijave ali do izbrisa shrambe |
 | `manage_token` (sejna shramba) | Najdimo | Začasno hrani žeton zasebne povezave iz naslova /m, da ga po osvežitvi strani ne izgubite. | nujni | do zaprtja zavihka |
+| `zz_support:<trenutek>:<kratka koda>` in `zz_support:placilo:<ID plačila>` (sejna shramba) | Najdimo | Si zapomni, da ste prošnjo za prispevek pri prijavi preskočili ali plačali (`skipped`, `paid`), in da je stran po vrnitvi s plačila odgovor že videla (`settled`), da prošnje ne prikažemo znova. Ne vsebuje osebnih podatkov. | nujni | do zaprtja zavihka |
 | Identifikator naprave (lokalna shramba) | Najdimo | Naključna oznaka za omejevanje zlorab (število zahtev). | nujni | do izbrisa shrambe |
 | Preverjanje „nisem robot“ (Turnstile) | Cloudflare, Inc. | Loči ljudi od botov s tehničnimi signali naprave in brskalnika. Ne služi oglaševanju. Najdimo pri tem v vaši napravi ne shrani ničesar. Preverjanje teče v Cloudflarovem okvirju (challenges.cloudflare.com), ki se naloži samo na obrazcih s preverjanjem. | nujni | Najdimo ne shrani ničesar; za Cloudflarov okvir veljajo pravila ponudnika |
 | `_ga` (piškotek) | Google Ireland Limited | Loči uporabnike za statistiko obiska. | analitični | 2 leti od zadnjega obiska |
@@ -156,6 +159,7 @@ We split items into two kinds:
 | Report draft (local storage) | Najdimo | Saves an unfinished report so you do not lose it. | necessary | until you submit the report or discard the draft |
 | `manage:<report id>` (local storage) | Najdimo | Holds the private-link token that lets you manage a report without an account. | necessary | until the report closes or storage is cleared |
 | `manage_token` (session storage) | Najdimo | Temporarily holds the private-link token from the /m address so a page reload does not lose it. | necessary | until the tab closes |
+| `zz_support:<moment>:<short code>` and `zz_support:payment:<id>` (session storage) | Najdimo | Remembers that you skipped or paid the contribution ask for a report (`skipped`, `paid`), and that the page has already seen the answer after you return from checkout (`settled`), so the ask is not shown again. Holds no personal data. | necessary | until you close the tab |
 | Device identifier (local storage) | Najdimo | Random identifier for abuse limits (rate limiting). | necessary | until storage is cleared |
 | "Not a robot" check (Turnstile) | Cloudflare, Inc. | Tells people from bots using technical device and browser signals. Not used for advertising. Najdimo stores nothing on your device for it. The check runs in Cloudflare's frame (challenges.cloudflare.com), which loads only on forms that use the check. | necessary | Najdimo stores nothing; Cloudflare's rules apply to its frame |
 | `_ga` (cookie) | Google Ireland Limited | Distinguishes users for visit statistics. | analytics | 2 years from your last visit |

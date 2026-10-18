@@ -3,7 +3,7 @@ source: 03§P22; docs/design/pages/P22-partners.md; 02§FR-032; brief v0.7 (Vet 
 page: P22 Partners page ("Oglašujte pri nas")
 stories: TASK-38 (FR-032)
 copy-for: docs/design/pages/P22-partners.md
-version: 0.2
+version: 0.3
 status: Draft; reply time and founding-partner terms confirmed by client (2026-10-15); pricing and media kit still pending client decision
 date: 2026-10-18
 ---
@@ -30,7 +30,7 @@ Lede: 18 words (SL).
 | Key | SL | EN |
 |---|---|---|
 | partners.audience_title | Naše občinstvo | Our audience |
-| partners.region_label | Regija | Region |
+| partners.region_label | Prikaži podatke za regijo | Show figures for region |
 | partners.region_all | Vsa Slovenija | All of Slovenia |
 | partners.stat_users | Registrirani uporabniki | Registered users |
 | partners.stat_reports | Aktivne prijave | Active reports |
@@ -49,6 +49,8 @@ Zero stays "0"; any value from 1 to 4 shows as "< 5" (C14 `CountValue`).
 
 Under `partners.stats_source`, in the same small muted style: `common.geo_attribution` (P1), because the figures are grouped by GURS statistical regions (CC BY 4.0 attribution).
 
+The label of the audience region switch is "Show figures for region", so it no longer clashes with the enquiry field `partners.form_region` "Regija" / "Region" (§8) (CH-466).
+
 # 3. Where your ad appears
 
 | Key | SL | EN |
@@ -65,6 +67,8 @@ Under `partners.stats_source`, in the same small muted style: `common.geo_attrib
 | partners.format_title | Format | Format |
 | partners.format_body | Ena slika v razmerju 4:3 (najmanj 1200 × 900 slikovnih pik, JPG ali PNG do 500 KB), naslov do 60 znakov, besedilo do 120 znakov in povezava https. Oglas za vse štiri mesta pripravimo mi. | One 4:3 image (at least 1200 × 900 pixels, JPG or PNG up to 500 KB), a title of up to 60 characters, text of up to 120 characters and an https link. We prepare the ad for all four slots. |
 | partners.slot_preview_alt | Primer oglasa na mestu {slot} | Example ad in the {slot} slot |
+
+Slot previews (CH-432): the four previews reuse the P21 copy, stored as `partners.preview_*`. Report list = the Support house ad, Report page = the Vet Partner unit (label "Oglas · Veterinar v vaši regiji", title `ads.vet_partner_mark` "Partnerska ambulanta", marks "Nujna pomoč 24 ur" and "Zdaj odprto", button `ads.vet_cta`), Home again = the Adopt house ad, Sidebar = the Partner house ad (P21 §2, §3). No invented clinic or shop names. The image boxes show an icon until the house-ad images exist (TASK-36.1 to 36.3).
 
 # 4. Targeting
 
@@ -170,6 +174,8 @@ States:
 | 5 | Ali morajo zavetišča plačati? | Ne. Zavetišča in občine uporabljajo Najdimo brezplačno, za vedno. | Do shelters have to pay? | No. Shelters and municipalities use Najdimo for free, forever. |
 | 6 | Ali je Veterinarski partner pogoj za brezplačne funkcije? | Ne. Prijava najdenih živali, preverjanje čipa, ujemanja in pogovor z lastniki so za vse ambulante brezplačni. | Is Vet Partner required for the free features? | No. Reporting found animals, chip lookup, matches and talking to owners are free for every practice. |
 
+FAQ heading (CH-431): `partners.faq_title` SL "Pogosta vprašanja", EN "Frequently asked questions". Key names for the table above: `partners.faq_<1-6>_q` and `partners.faq_<1-6>_a`, copied verbatim.
+
 # 10. SEO
 
 | Field | SL | EN |
@@ -180,6 +186,8 @@ States:
 | Slug | `/oglasevanje` | `/en/advertise` |
 | Structured data | `WebPage` + `BreadcrumbList`; `FAQPage` for §9 | same |
 | OG image | `og-partners.png` 1200 by 630 (image task) | |
+
+Key names (CH-431): `partners.seo_title`, `partners.seo_description` (§10) and `partners.og_alt` (§11), verbatim.
 
 # 11. Alt text
 
@@ -194,3 +202,4 @@ States:
 | Version | Date | Change |
 |---|---|---|
 | 0.2 | 2026-10-18 | CH-257: `partners.stats_masked` (§2). |
+| 0.3 | 2026-10-18 | CH-431: key names for SEO and FAQ, `partners.faq_title`. CH-432: slot previews reuse P21 copy (§3). CH-466: `partners.region_label` reworded (§2). |

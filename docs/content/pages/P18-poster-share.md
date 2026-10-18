@@ -3,7 +3,7 @@ source: 03§P18; docs/design/pages/P18-poster-share.md; 02§FR-011
 page: P18 Poster and sharing
 stories: TASK-24 (FR-011)
 copy-for: docs/design/pages/P18-poster-share.md
-version: 0.6
+version: 0.7
 status: Draft, native Slovenian review pending
 date: 2026-10-18
 ---
@@ -33,8 +33,9 @@ Namespaces `poster` and `share`. The poster and sharing are free for everyone, f
 | share.more | Več … | More … |
 | share.poster | Plakat s QR kodo | Poster with QR code |
 | share.copied | Povezava je kopirana. | Link copied. |
+| share.copy_failed | Povezave ni bilo mogoče kopirati. | The link could not be copied. |
 
-Share menu on the web detail page (v0.2): the button is `report.share_button` (P9) and also names the menu; items in this order: `share.facebook`, `share.whatsapp`, `share.copy`, `share.poster` (opens this screen). After copying, the toast is `share.copied`.
+Share menu on the web detail page (v0.2): the button is `report.share_button` (P9) and also names the menu; items in this order, following the P9 mockup S1: `share.copy`, `share.whatsapp`, `share.facebook`, `share.more`, a separator, `share.poster` (opens this screen). After copying, the toast is `share.copied`; when the clipboard refuses, it is `share.copy_failed` (CH-443).
 
 File name: `najdimo-{code}.pdf` (no pet name, so the file is safe to forward).
 
@@ -49,8 +50,8 @@ File name: `najdimo-{code}.pdf` (no pet name, so the file is safe to forward).
 | Fact: size | poster.fact_size | Velikost: {size} | Size: {size} |
 | Fact: collar | poster.fact_collar | Ovratnica: {collar} | Collar: {collar} |
 | Fact: breed | poster.fact_breed | Pasma: {breed} | Breed: {breed} |
-| When, lost | poster.since_lost | {species, select, dog {Pogrešan od {date}} cat {Pogrešana od {date}} other {Pogrešana od {date}}} | Missing since {date} |
-| When, found | poster.since_found | {species, select, dog {Najden {date}} cat {Najdena {date}} other {Najdena {date}}} | Found on {date} |
+| When, lost | poster.since_lost | {species, select, dog {Pogrešan od {date}} cat {Pogrešana od {date}} other {Pogrešana od {date}}} | {species, select, dog {Missing since {date}} cat {Missing since {date}} other {Missing since {date}}} |
+| When, found | poster.since_found | {species, select, dog {Najden {date}} cat {Najdena {date}} other {Najdena {date}}} | {species, select, dog {Found on {date}} cat {Found on {date}} other {Found on {date}}} |
 | Area | poster.area | Območje: {area}, {municipality} (približno) | Area: {area}, {municipality} (approximate) |
 | Call to action, lost | poster.cta_lost | {species, select, dog {Ste ga videli? Skenirajte kodo in nam sporočite.} cat {Ste jo videli? Skenirajte kodo in nam sporočite.} other {Ste jo videli? Skenirajte kodo in nam sporočite.}} | {species, select, dog {Seen this dog? Scan the code and let us know.} cat {Seen this cat? Scan the code and let us know.} other {Seen this pet? Scan the code and let us know.}} |
 | Call to action, found | poster.cta_found | {species, select, dog {Je to vaš pes? Skenirajte kodo.} cat {Je to vaša mačka? Skenirajte kodo.} other {Je to vaša žival? Skenirajte kodo.}} | {species, select, dog {Is this your dog? Scan the code.} cat {Is this your cat? Scan the code.} other {Is this your pet? Scan the code.}} |
@@ -171,3 +172,4 @@ N/A: an in-app screen (`noindex`). The poster PDF and OG image are served by the
 | 0.6 | 2026-10-18 | CH-338: `poster.preview_alt`, `share.kit_image_*`, `share.kit_media_form`; fallback rules for share texts. |
 | 0.5 | 2026-10-18 | CH-506 (TASK-114.9): added `share.facebook_copied` and `share.facebook_copy_failed` (§4) and the Facebook copy-then-open rule. SL/EN reviewed, unchanged. Not yet in the catalogues (`packages/i18n/messages/*/share.json`). |
 | 0.4 | 2026-10-15 | CH-58: added the share kit (section 4b): Facebook post text, group list intro, local radio/media line with neutral placeholder; no contact data. |
+| 0.7 | 2026-10-18 | CH-443: `share.copy_failed`; web menu order follows P9 mockup S1 (§1); EN `poster.since_*` wrapped in the species select for placeholder parity. CH-506: already applied in v0.5. |

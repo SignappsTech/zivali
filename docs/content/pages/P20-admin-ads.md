@@ -3,7 +3,7 @@ source: 03§P20; docs/design/pages/P20-admin-ads.md
 page: P20 Admin ad management
 stories: TASK-37 (FR-031)
 copy-for: docs/design/pages/P20-admin-ads.md
-version: 0.1
+version: 0.2
 status: Draft, native Slovenian review pending
 date: 2026-10-15
 ---
@@ -30,6 +30,7 @@ Namespace `admin` (prefix `admin.ads_`). Shared table, dialog and toast strings:
 | admin.ads_status_draft | Osnutek | Draft |
 | admin.ads_status_scheduled | Načrtovan | Scheduled |
 | admin.ads_status_running | Se prikazuje | Running |
+| admin.ads_status_paused | Ustavljen | Paused |
 | admin.ads_status_ended | Končan | Ended |
 | admin.ads_targeting_all | Vsa Slovenija, vse živali | All of Slovenia, all animals |
 | admin.ads_action_edit | Uredi | Edit |
@@ -53,6 +54,13 @@ Namespace `admin` (prefix `admin.ads_`). Shared table, dialog and toast strings:
 | admin.ads_text_label | Besedilo | Text |
 | admin.ads_cta_label | Besedilo gumba (neobvezno) | Button text (optional) |
 | admin.ads_cta_help | Privzeto: »Več o tem«. Do 24 znakov. | Default: "Learn more". Up to 24 characters. |
+| admin.ads_cta_label_required | Besedilo gumba | Button text |
+| admin.ads_cta_help_required | Obvezno za vsak jezik. Do 24 znakov. | Required for each language. Up to 24 characters. |
+| admin.ads_image_replace | Zamenjaj | Replace |
+| admin.ads_image_remove | Odstrani | Remove |
+| admin.ads_municipality_remove | Odstrani: {name} | Remove: {name} |
+| admin.ads_preview_light | Svetlo | Light |
+| admin.ads_preview_dark | Temno | Dark |
 | admin.ads_link | Povezava | Link |
 | admin.ads_link_help | Začeti se mora s https://. Odpre se v novem zavihku, klike pa štejemo prek naše preusmeritve. | Must start with https://. It opens in a new tab, and clicks are counted through our redirect. |
 | admin.ads_char_count | {count} / {max} | {count} / {max} |
@@ -84,6 +92,8 @@ Namespace `admin` (prefix `admin.ads_`). Shared table, dialog and toast strings:
 | admin.ads_save_draft | Shrani kot osnutek | Save as draft |
 | admin.ads_cancel | Prekliči | Cancel |
 
+`admin.ads_cta_label_required` and `admin.ads_cta_help_required` replace the optional label and its hint when the ad has two or more languages (CH-484, TASK-37.6); with one language the optional label and default hint stay. The other new keys in §1 to §5 were added by TASK-37.3 (CH-478). `admin.saved_logged` comes from P19. Drafts, SL+EN, need native review.
+
 # 3. Validation
 
 | Key | SL | EN |
@@ -97,6 +107,7 @@ Namespace `admin` (prefix `admin.ads_`). Shared table, dialog and toast strings:
 | admin.ads_err_too_long | Največ {max} znakov. | At most {max} characters. |
 | admin.ads_err_slots | Izberite vsaj eno oglasno mesto. | Choose at least one ad slot. |
 | admin.ads_err_required | To polje je obvezno. | This field is required. |
+| admin.ads_err_blocked | Oglasi ne smejo ponujati prodaje, podarjanja ali oddaje živali. Spremenite besedilo. | Ads may not sell, give away or rehome animals. Change the wording. |
 
 # 4. Ad detail and statistics
 
@@ -106,6 +117,11 @@ Namespace `admin` (prefix `admin.ads_`). Shared table, dialog and toast strings:
 | admin.ads_totals_clicks | Kliki | Clicks |
 | admin.ads_totals_ctr | Delež klikov | Click-through rate |
 | admin.ads_range | Obdobje | Date range |
+| admin.ads_range_days | Zadnjih {days} dni | Last {days} days |
+| admin.ads_by_day | Po dnevih | By day |
+| admin.ads_col_day | Dan | Day |
+| admin.ads_col_region | Regija | Region |
+| admin.ads_region_unknown | Brez regije | No region |
 | admin.ads_chart_alt | Graf prikazov in klikov po dnevih. Podatki so v tabeli pod grafom. | Chart of impressions and clicks per day. The data is in the table below. |
 | admin.ads_by_slot | Po mestih | By slot |
 | admin.ads_by_region | Po regijah | By region |
@@ -126,6 +142,7 @@ Namespace `admin` (prefix `admin.ads_`). Shared table, dialog and toast strings:
 | admin.house_kind_adopt | Posvojitev | Adoption |
 | admin.house_locked | Pri lastnih oglasih so mesta in ciljanje fiksni. | Slots and targeting are fixed for house ads. |
 | admin.house_marker | Lastni | House |
+| admin.house_enabled | Prikazuj | Show |
 
 House-ad creatives (title, text, button, link, alt): P21 §3.
 
@@ -149,3 +166,9 @@ SEO: N/A (admin). Alt text: list thumbnails use the ad's own alt field; the prev
 # 8. CHANGE requests
 
 - `CHANGE docs/tech/contracts/C14-ads-partners.md§Admin: image validation says 1200×628 and 300×600, the design (P21) uses one 4:3 format of at least 1200×900; body max 140 vs 120 in the design. Copy follows the design (4:3, 1200×900, text 120). Please align C14.`
+
+# Change log
+
+| Version | Date | Change |
+|---|---|---|
+| 0.2 | 2026-10-18 | CH-478 (TASK-37.3): status, image, preview, range, region, blocked-wording and house-ad keys. CH-484 (TASK-37.6): required button text for 2+ languages (§2). |

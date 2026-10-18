@@ -3,7 +3,7 @@ source: 03§P16; docs/design/pages/P16-auth.md
 page: P16 Sign in and account creation
 stories: TASK-9 (FR-001)
 copy-for: docs/design/pages/P16-auth.md
-version: 0.3
+version: 0.4
 status: Draft, native Slovenian review pending
 date: 2026-10-18
 ---
@@ -104,6 +104,21 @@ Minimum password length (8) to be confirmed by the tech-lead (Supabase Auth sett
 | auth.link_cancel | Prekliči | Cancel |
 | auth.apple_relay | e-naslov skriva Apple | hidden by Apple |
 
+## 6a. Converting an anonymous finder's report to an account (CH-448, TASK-17.12)
+
+Drafted by TASK-17.12 and adopted here.
+
+| Key | SL | EN |
+|---|---|---|
+| auth.convert_note | Prijave, ki ste jih oddali brez računa, ostanejo vaše. Zasebna povezava še naprej deluje. | The reports you made without an account stay yours. Your private link keeps working. |
+| auth.convert_email_taken | Račun s tem e-naslovom že obstaja. Vpišite se vanj in nato odprite zasebno povezavo, da prijavo dodate v račun. | An account with this email address already exists. Sign in to it, then open your private link to add the report to your account. |
+| auth.check_set_password | Ko e-naslov potrdite, boste izbrali še geslo. Če se povezava odpre v drugem brskalniku, geslo izberite prek »Pozabljeno geslo«. | Once you have confirmed it, you will choose your password. If the link opens in another browser, choose your password with 'Forgot password'. |
+| auth.setpass_title | Izberite geslo | Choose your password |
+| auth.setpass_body | E-naslov je potrjen. Zaradi varnosti geslo vpišite še enkrat. Z njim se boste odslej vpisovali. | Your email address is confirmed. For your security, enter your password once more. You will sign in with it from now on. |
+| auth.setpass_done | Geslo je shranjeno. Račun je pripravljen. | Your password is saved. Your account is ready. |
+
+`auth.convert_note` is the line under the h1 of the conversion form. `auth.convert_email_taken` is the email field error on conversion only (GoTrue's updateUser names a taken address); opening the manage link while signed in makes the account a manager (C7 §5). `auth.check_set_password` shows under the `auth.check_body` text when the conversion could not set the password because the session is over 24 h old (C7 §6). `auth.setpass_*` is the new-password form in its set variant, which that link opens; the label and button stay `auth.newpass_label` and `auth.newpass_button`.
+
 # 7. Errors and states
 
 | Key | SL | EN |
@@ -113,6 +128,8 @@ Minimum password length (8) to be confirmed by the tech-lead (Supabase Auth sett
 | auth.error_password_short | Geslo mora imeti najmanj 8 znakov. | The password must have at least 8 characters. |
 | auth.error_name_required | Vpišite ime ali vzdevek. | Enter a name or nickname. |
 | auth.error_email_taken | Račun s tem e-naslovom že obstaja. Vpišite se ali ponastavite geslo. | An account with this email address already exists. Sign in or reset your password. |
+| auth.error_password_weak | To geslo ni dovolj varno. Izberite daljše geslo ali več besed. | This password is not safe enough. Choose a longer password or several words. |
+| auth.error_password_long | Geslo je predolgo. Izberite geslo z največ 72 znaki. | The password is too long. Choose one with at most 72 characters. |
 | auth.error_rate_limited | Preveč poskusov. Poskusite znova čez nekaj minut. | Too many attempts. Please try again in a few minutes. |
 | auth.provider_cancelled | Vpis je bil preklican. | Sign-in was cancelled. |
 | auth.session_title | Znova se vpišite | Please sign in again |
@@ -121,6 +138,8 @@ Minimum password length (8) to be confirmed by the tech-lead (Supabase Auth sett
 | auth.banned_body | Račun smo zaprli zaradi kršitve pogojev uporabe. Razlog: {reason}. Če menite, da gre za napako, nam pišite. | We closed this account because the terms of use were broken. Reason: {reason}. If you think this is a mistake, please write to us. |
 
 `auth.error_email_taken` is shown on the email field of web sign-up when the address already has a confirmed account (CH-492, supersedes CH-177; owner choice, TASK-114.1). "Vpišite se" and "ponastavite geslo" are links: sign-in (with the address and `next` carried) and forgot-password. Mobile sign-up still behaves the old way until its own task. This slice has no "taken address behaves like success" line to remove.
+
+`auth.error_password_weak` is the password field error on conversion only (GoTrue's weak_password); the plain sign-up keeps `errors.VALIDATION`. `auth.error_password_long` is the password field error on sign-up, conversion and the new-password form, web and mobile: GoTrue refuses more than 72 bytes (`MAX_PASSWORD` in @zivali/validation); a "č" counts 2, so the wording says characters as the common case.
 
 Captcha failure: `errors.CAPTCHA_FAILED` (P1). `auth.banned_*` is used from M4.
 
@@ -150,3 +169,4 @@ No meta descriptions needed (not indexed). Alt text: logo `alt=""` beside the wo
 | 2026-10-18 | CH-492 (TASK-114.1): `auth.error_email_taken` kept and its web use documented (§7). |
 | 2026-10-18 | CH-499 (TASK-114.4): added `auth.verified_draft_elsewhere` (§3). |
 | 2026-10-18 | CH-165: `auth.terms_sentence` uses rich tags; added `auth.link_failed_title/_body` (§7). CH-188: `auth.reset_doc_title` documented (§8). Version 0.3. |
+| 2026-10-18 | v0.4. CH-448 (TASK-17.12): conversion keys (§6a) and password errors (§7). CH-509 (= CH-492) and CH-516 (= CH-499): already applied above. |
