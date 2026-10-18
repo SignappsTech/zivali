@@ -3,13 +3,15 @@ source: 02§Content, SEO and legal requirements (Legal); FR-034; FR-035; FR-038;
 
 | Field | Value |
 |---|---|
-| Version | 0.6 |
-| Date | 2026-10-15 |
+| Version | 0.7 |
+| Date | 2026-10-18 |
 | Route SL | `/zasebnost` |
 | Route EN | `/en/privacy` |
 | Slug SL / EN | `zasebnost` / `privacy` |
 | Structured data | WebPage |
 | Template | T4 Legal (numbered h2 sections, "On this page" list, draft note) |
+
+Change in 0.7 (CH-505, TASK-113): the `zz_consent` cookie lives 400 days and the choice counts 12 months, then we ask again; the consent text and the retention row now say so, as the cookie policy does.
 
 Change in 0.6: remaining "exact location" wording aligned with the coarsened point (20–30 m, never raw); retention row split: photos 12 months, stored point blurred 30 days after closure (LQ-19, proposal, lawyer to confirm).
 
@@ -39,7 +41,7 @@ Change in 0.2: removed QR/NFC pet tags and Shelter Pro (brief v0.7); added Vet P
 
 **Osnutek – zahteva pregled naročnika in pravnika.**
 
-Zadnja posodobitev: 15. 10. 2026
+Zadnja posodobitev: 18. 10. 2026
 
 ## 1. Na kratko
 
@@ -193,7 +195,7 @@ Uporabo Najdimo merimo samo, če to dovolite.
 - Vse štiri Googlove nastavitve privolitve (analytics_storage, ad_storage, ad_user_data, ad_personalization) so privzeto zavrnjene. Če sprejmete, odobrimo samo analytics_storage. Oglaševalske nastavitve ostanejo zavrnjene.
 - Dogodki vsebujejo samo ime dogodka in parametre, kot so občina, statistična regija, vrsta živali, vrsta prijave, mesto in oznaka oglasa ter razred zneska. Nikoli ne vsebujejo imen, e-naslovov, telefonskih številk, številk čipa, koordinat, prostega besedila ali oznak prijav in uporabnikov.
 - Googlovi signali so izklopljeni, deljenje podatkov je izklopljeno, podatke v Google Analytics hranimo 14 mesecev.
-- Vašo izbiro (izbira, različica in čas) shranimo v piškotku `zz_consent` za 12 mesecev, v aplikaciji pa v varni shrambi naprave. Vprašamo vas znova po 12 mesecih ali ko se spremenijo ponudniki ali nameni.
+- Vašo izbiro (izbira, različica in čas) shranimo v piškotku `zz_consent`, ki velja 400 dni, v aplikaciji pa v varni shrambi naprave. Izbira velja 12 mesecev, nato vas vprašamo znova, prav tako ko se spremenijo ponudniki ali nameni.
 - Privolitev kadar koli prekličete prek povezave „Nastavitve piškotkov“ v nogi strani ali v nastavitvah aplikacije. Preklic velja takoj, Googlove piškotke pa izbrišemo.
 
 Seznam vseh piškotkov in podobnih zapisov je v [politiki piškotkov](/piskotki).
@@ -257,7 +259,7 @@ Kopijo zaščitnih ukrepov lahko zahtevate na e-naslovu iz poglavja 2.
 | Strežniški zapisi | približno 7 dni |
 | Prijave zlorab in revizijski dnevnik skrbniških dejanj | do 24 mesecev |
 | Analitika (Google Analytics 4) | 14 mesecev |
-| Zapis privolitve za analitiko | 12 mesecev (piškotek ali varna shramba naprave) |
+| Zapis privolitve za analitiko | Izbira velja 12 mesecev (piškotek živi 400 dni; ali varna shramba naprave) |
 | Zgodbe z lepim koncem | do preklica privolitve; po preklicu jih odstranimo v 24 urah |
 | Plačilni zapisi | dokler to zahtevata davčna in računovodska zakonodaja (pričakovano do 10 let) |
 | Veterinarski partner: profil ambulante in kontaktna oseba | do prenehanja naročnine, nato izbris v 30 dneh |
@@ -311,7 +313,7 @@ Politiko lahko spremenimo, na primer ko dodamo novo funkcijo ali ponudnika. Pome
 
 **Draft — requires client/legal review.**
 
-Last updated: 15 October 2026
+Last updated: 18 October 2026
 
 ## 1. In short
 
@@ -465,7 +467,7 @@ We measure the use of Najdimo only if you allow it.
 - All four Google consent settings (analytics_storage, ad_storage, ad_user_data, ad_personalization) are denied by default. If you accept, we grant only analytics_storage. The advertising settings stay denied.
 - Events contain only the event name and parameters such as municipality, statistical region, species, report type, ad slot and ad ID, and amount range. They never contain names, email addresses, phone numbers, chip numbers, coordinates, free text, or report or user IDs.
 - Google signals are off, data sharing is off, and we keep data in Google Analytics for 14 months.
-- We store your choice (choice, version and time) in the `zz_consent` cookie for 12 months, and in the app in the device's secure storage. We ask you again after 12 months or when providers or purposes change.
+- We store your choice (choice, version and time) in the `zz_consent` cookie, which lives 400 days, and in the app in the device's secure storage. The choice counts for 12 months; we ask you again after that, or when providers or purposes change.
 - You can withdraw consent at any time through "Cookie settings" in the page footer or in the app settings. Withdrawal takes effect at once and we delete the Google cookies.
 
 The list of all cookies and similar storage is in the [cookie policy](/en/cookies).
@@ -529,7 +531,7 @@ You can ask for a copy of the safeguards at the email address in chapter 2.
 | Server logs | about 7 days |
 | Abuse reports and audit log of administrator actions | up to 24 months |
 | Analytics (Google Analytics 4) | 14 months |
-| Consent record for analytics | 12 months (cookie or the device's secure storage) |
+| Consent record for analytics | The choice counts 12 months (the cookie lives 400 days; or the device's secure storage) |
 | Success stories | until you withdraw consent; after withdrawal we remove them within 24 hours |
 | Payment records | as long as tax and accounting law requires (expected up to 10 years) |
 | Vet Partner: clinic profile and contact person | until the subscription ends, then deleted within 30 days |
@@ -587,7 +589,7 @@ We may change this policy, for example when we add a new feature or provider. We
 4. **DPIA screening** recommended before launch (location data of owners, photos, AI processing, automatic hiding). Also check the record of processing (Article 30) and the data inventory (FR-034 R-034.3) against the tables in chapters 3 and 14.
 5. **Article 22 GDPR.** Automatic temporary hiding after three independent abuse reports could be seen as a decision with significant effect for the poster. I described human review and a contest route by email. Please confirm this is sufficient.
 6. **Minimum age 15.** Proposal based on the age of digital consent under ZVOP-2; I did not verify the article number. Contract capacity of minors under 18 under Slovenian civil law is limited, so I wrote that paid options are for adults (same line in the terms). This is a proposal, not a brief requirement.
-7. **Retention values are proposals** (A-012). Items I had to propose beyond the brief: "abuse reports and audit log: up to 24 months"; "consent record 12 months" (the cookie lifetime; evidence of consent may need to be kept longer). Open: what remains of a closed report after the photos are removed at 12 months and the point is blurred at 30 days (text, municipality, dates, species)? Payment records "up to 10 years" is a likely Slovenian requirement and must be confirmed by the accountant. Sentry retention is not stated in the text; confirm and add if needed.
+7. **Retention values are proposals** (A-012). Items I had to propose beyond the brief: "abuse reports and audit log: up to 24 months"; "consent record 12 months" (how long the choice counts; the cookie itself lives 400 days; evidence of consent may need to be kept longer). Open: what remains of a closed report after the photos are removed at 12 months and the point is blurred at 30 days (text, municipality, dates, species)? Payment records "up to 10 years" is a likely Slovenian requirement and must be confirmed by the accountant. Sentry retention is not stated in the text; confirm and add if needed.
 8. **International transfers.** Verify the Data Privacy Framework certification of each US provider at go-live (Supabase Inc., Cloudflare, Stripe, 650 Industries/Expo, Anthropic, Voyage AI (part of MongoDB, Inc. since 2025), Sentry, Google). Where not certified, standard contractual clauses and a transfer impact assessment are needed. Data processing agreements are needed with every processor in chapter 12 (the Google Analytics data processing terms must be accepted in GA4).
 9. **Hosting and backups (updated in 0.3).** Brief v1.0: a Hetzner server in the EU runs the website, API and job worker; photos and nightly database backups are on Cloudflare R2; Vercel and Supabase file storage are no longer used. The text says R2 storage is in the EU, which holds only if the buckets are created with EU jurisdiction (requested from the tech lead). The Hetzner location (Germany or Finland) is a client decision.
 10. **Map providers (changed in 0.4).** Place search and the area name for a point run on our own geocoder in the API, on GURS data (ADR-007, contract C6): queries and points travel only in POST bodies to our server, are never logged or stored, and reach no third party, so the rounding question is moot (lawyer pack LQ-21 and LQ-64 N/A). OpenFreeMap stays listed as an independent controller for map tiles (IP address) because we cannot instruct it.

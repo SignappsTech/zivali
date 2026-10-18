@@ -3,9 +3,9 @@ source: 03§P16; docs/design/pages/P16-auth.md
 page: P16 Sign in and account creation
 stories: TASK-9 (FR-001)
 copy-for: docs/design/pages/P16-auth.md
-version: 0.1
+version: 0.2
 status: Draft, native Slovenian review pending
-date: 2026-10-15
+date: 2026-10-18
 ---
 
 # P16 Auth: copy
@@ -58,6 +58,9 @@ Minimum password length (8) to be confirmed by the tech-lead (Supabase Auth sett
 | auth.verified_title | E-naslov je potrjen | Your email address is confirmed |
 | auth.verified_body | Zdaj lahko prejemate opozorila in se pogovarjate. | You can now get alerts and send messages. |
 | auth.verified_continue | Nadaljuj | Continue |
+| auth.verified_draft_elsewhere | Prijava, ki ste jo začeli, je shranjena v brskalniku, v katerem ste jo izpolnjevali. Povezavo iz e-pošte odprite tam ali se tam vpišite, da jo objavite. | The report you started is saved in the browser where you filled it in. Open the email link there, or sign in there, to publish it. |
+
+`auth.verified_draft_elsewhere` replaces `auth.verified_body` on the "E-naslov je potrjen" view when the link came from a signed-out Publish (`next` with `?handoff=`) but is opened in another browser (viewer signed out); its button then reads `auth.signin_button` ("Vpiši se"). In the same browser the link skips this view and returns to the report, which publishes itself (CH-499, TASK-114.4). Native review: SL reads correctly in the formal "vi" form and follows the "Prijava = report, Vpis = sign-in" rule above, unchanged.
 
 # 4. Forgot and new password
 
@@ -115,6 +118,8 @@ Minimum password length (8) to be confirmed by the tech-lead (Supabase Auth sett
 | auth.banned_title | Račun je zaprt | This account is closed |
 | auth.banned_body | Račun smo zaprli zaradi kršitve pogojev uporabe. Razlog: {reason}. Če menite, da gre za napako, nam pišite. | We closed this account because the terms of use were broken. Reason: {reason}. If you think this is a mistake, please write to us. |
 
+`auth.error_email_taken` is shown on the email field of web sign-up when the address already has a confirmed account (CH-492, supersedes CH-177; owner choice, TASK-114.1). "Vpišite se" and "ponastavite geslo" are links: sign-in (with the address and `next` carried) and forgot-password. Mobile sign-up still behaves the old way until its own task. This slice has no "taken address behaves like success" line to remove.
+
 Captcha failure: `errors.CAPTCHA_FAILED` (P1). `auth.banned_*` is used from M4.
 
 # 8. SEO and alt text
@@ -126,3 +131,10 @@ Captcha failure: `errors.CAPTCHA_FAILED` (P1). `auth.banned_*` is used from M4.
 | Reset `/pozabljeno-geslo` | Pozabljeno geslo · Najdimo | Forgot password · Najdimo | `noindex` |
 
 No meta descriptions needed (not indexed). Alt text: logo `alt=""` beside the wordmark; provider glyphs are part of the button's accessible name.
+
+# Change log
+
+| Date | Change |
+|---|---|
+| 2026-10-18 | CH-492 (TASK-114.1): `auth.error_email_taken` kept and its web use documented (§7). |
+| 2026-10-18 | CH-499 (TASK-114.4): added `auth.verified_draft_elsewhere` (§3). |

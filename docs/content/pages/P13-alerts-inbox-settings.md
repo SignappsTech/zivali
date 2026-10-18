@@ -3,9 +3,9 @@ source: 03§P13; docs/design/pages/P13-alerts-inbox-settings.md
 page: P13 Notifications, nearby alerts and account settings
 stories: TASK-22, TASK-23, TASK-9 (FR-010, FR-001, FR-036)
 copy-for: docs/design/pages/P13-alerts-inbox-settings.md
-version: 0.1
+version: 0.2
 status: Draft, native Slovenian review pending
-date: 2026-10-15
+date: 2026-10-18
 ---
 
 # P13 Notifications, alerts and settings: copy
@@ -45,6 +45,7 @@ Namespaces `notifications` (inbox view), `alerts`, `profile`. The title and body
 | alerts.species_label | Za katere živali | Which animals |
 | alerts.species_dogs | Psi | Dogs |
 | alerts.species_cats | Mačke | Cats |
+| alerts.species_none | Ne prejemate opozoril za živali v bližini. | You are not getting alerts about pets nearby. |
 | alerts.cap_label | Največ opozoril na dan | Maximum alerts per day |
 | alerts.cap_value | {n} | {n} |
 | alerts.cap_decrease | Manj | Fewer |
@@ -53,6 +54,8 @@ Namespaces `notifications` (inbox view), `alerts`, `profile`. The title and body
 | alerts.pause_help | Nastavitve ostanejo shranjene. | Your settings stay saved. |
 
 `alerts.radius_premium` appears from M4 only.
+
+`alerts.species_none` shows under the animal pills when none is chosen: every animal can be switched off, and none chosen means no nearby alerts (CH-501, TASK-114.14).
 
 # 3. How to tell me
 
@@ -67,7 +70,8 @@ Namespaces `notifications` (inbox view), `alerts`, `profile`. The title and body
 | alerts.channel_email | Po e-pošti | By email |
 | alerts.channel_inapp | V aplikaciji | In the app |
 | alerts.channel_switch_a11y | {type}: {channel} | {type}: {channel} |
-| alerts.locked_note | Možnih ujemanj in sporočil v aplikaciji ni mogoče izklopiti, da ne zamudite česa pomembnega. | Possible matches and messages in the app cannot be turned off, so you never miss anything important. |
+
+No channel is locked in the app: there is no lock note and no warning when every channel of a row is off (`alerts.locked_note` removed, CH-501).
 
 # 4. Quiet hours
 
@@ -150,3 +154,9 @@ Namespaces `notifications` (inbox view), `alerts`, `profile`. The title and body
 SEO: N/A (signed in, `noindex`). Document titles: "Obvestila · Najdimo", "Opozorila v bližini · Najdimo", "Moj račun · Najdimo" (EN "Notifications", "Nearby alerts", "My account").
 
 Alt text: avatar `alt=""` next to the name; nearby-alert row pet photo per P9 §11; empty illustration decorative; opt-in map `alerts.optin_map_alt`.
+
+# Change log
+
+| Date | Change |
+|---|---|
+| 2026-10-18 | CH-501 (TASK-114.14): added `alerts.species_none` (§2); removed `alerts.locked_note` (§3). SL/EN reviewed, unchanged. |

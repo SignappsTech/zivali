@@ -3,9 +3,9 @@ source: 03§P18; docs/design/pages/P18-poster-share.md; 02§FR-011
 page: P18 Poster and sharing
 stories: TASK-24 (FR-011)
 copy-for: docs/design/pages/P18-poster-share.md
-version: 0.4
+version: 0.5
 status: Draft, native Slovenian review pending
-date: 2026-10-15
+date: 2026-10-18
 ---
 
 # P18 Poster and sharing: copy
@@ -107,6 +107,10 @@ PDF metadata: title "{top band} {name} – Najdimo" ("Pogrešan pes Rex – Najd
 | share.text_found | {species, select, dog {Najden pes, območje {area}. Ga poznate? Pomagajte mu domov: {url}} cat {Najdena mačka, območje {area}. Jo poznate? Pomagajte ji domov: {url}} other {Najdena žival, območje {area}. Jo poznate? Pomagajte ji domov: {url}}} | {species, select, dog {Found dog, area {area}. Do you know it? Help it get home: {url}} cat {Found cat, area {area}. Do you know it? Help it get home: {url}} other {Found animal, area {area}. Do you know it? Help it get home: {url}}} |
 | share.text_sighted | {species, select, dog {Opažen pes, območje {area}. Ga pogrešate? {url}} cat {Opažena mačka, območje {area}. Jo pogrešate? {url}} other {Opažena žival, območje {area}. Jo pogrešate? {url}}} | {species, select, dog {Dog seen around {area}. Is it yours? {url}} cat {Cat seen around {area}. Is it yours? {url}} other {Animal seen around {area}. Is it yours? {url}}} |
 | share.text_home | {name} je spet doma. Hvala vsem, ki ste delili in pomagali. {url} | {name} is home again. Thank you to everyone who shared and helped. {url} |
+| share.facebook_copied | Besedilo objave je kopirano. Prilepite ga v objavo. | Post text copied. Paste it into your post. |
+| share.facebook_copy_failed | Besedila ni bilo mogoče kopirati. Kopirajte ga tukaj in ga prilepite v objavo. | The text could not be copied. Copy it here and paste it into your post. |
+
+Facebook takes the link only (no prefilled post text), so the Facebook row copies the post text and opens the sharer; the toast `share.facebook_copied` says to paste it (CH-506, TASK-114.9). The text copied is `share.kit_post_text` for the owner of an open lost report, the text above for everyone else, and nothing when the text is the bare link. If copying fails, `share.facebook_copy_failed` shows with the text selectable.
 
 `{date}` is the short relative or calendar date ("včeraj", "12. 10.").
 
@@ -157,4 +161,5 @@ N/A: an in-app screen (`noindex`). The poster PDF and OG image are served by the
 
 | Version | Date | Change |
 |---|---|---|
+| 0.5 | 2026-10-18 | CH-506 (TASK-114.9): added `share.facebook_copied` and `share.facebook_copy_failed` (§4) and the Facebook copy-then-open rule. SL/EN reviewed, unchanged. Not yet in the catalogues (`packages/i18n/messages/*/share.json`). |
 | 0.4 | 2026-10-15 | CH-58: added the share kit (section 4b): Facebook post text, group list intro, local radio/media line with neutral placeholder; no contact data. |

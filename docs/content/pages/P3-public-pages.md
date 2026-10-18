@@ -3,9 +3,9 @@ source: 03§P3; docs/design/pages/P3-public-pages.md; 02§FR-035, §Content, SEO
 page: P3 Public pages (home and content templates)
 stories: TASK-27, TASK-72 (FR-035)
 copy-for: docs/design/pages/P3-public-pages.md
-version: 0.6
+version: 0.7
 status: Draft, native Slovenian review and client approval pending (TASK-27 AC#4)
-date: 2026-10-15
+date: 2026-10-18
 ---
 
 # P3 Public pages: copy
@@ -675,6 +675,11 @@ Namespace `shelters`. One question, one answer, then the full list. Shelter name
 | shelters.nearest_title | Najbližji zavetišči | The two nearest shelters |
 | shelters.nearest_meta | {distance} km od središča občine | {distance} km from the municipality centre |
 | shelters.no_match | Občine »{text}« ne najdemo. Preverite zapis ali jo poiščite na seznamu spodaj. | We cannot find a municipality called "{text}". Check the spelling or look for it in the list below. |
+| shelters.use_location | Uporabi mojo lokacijo | Use my location |
+| shelters.locating | Določamo vašo lokacijo … | Finding your location … |
+| shelters.location_denied | Lokacija ni dovoljena. Občino vpišite sami. | Location access is not allowed. Enter your municipality instead. |
+| shelters.location_failed | Vaše lokacije nismo mogli določiti. Občino vpišite sami. | We could not find your location. Enter your municipality instead. |
+| shelters.location_outside | Vaša lokacija ni v Sloveniji. Občino vpišite sami. | Your location is outside Slovenia. Enter your municipality instead. |
 | shelters.all_title | Vsa zavetišča ({count}) | All shelters ({count}) |
 | shelters.row_meta | {area} · {count, plural, one {# občina} two {# občini} few {# občine} other {# občin}} | {area} · {count, plural, one {# municipality} other {# municipalities}} |
 | shelters.row_no_phone | Telefon ni objavljen | No phone published |
@@ -689,6 +694,7 @@ Notes:
 - `{area}` in `shelters.row_meta` is the directory's area label ("Ljubljana z okolico"). `{date}` is a long date ("15. 10. 2026" / "15 October 2026"); `{source}` is the directory source text.
 - Unconfirmed municipality (client rule, CH-82): when a likely shelter is known, show a card with `shelters.maybe_responsible` as its title and a badge `shelters.not_confirmed` (icon plus word, never colour alone), then `shelters.not_confirmed_help`. There is no primary call button; the only phone action is a secondary button `shelters.call_unconfirmed` (accessible name `shelters.call_unconfirmed_a11y`) and a link to the shelter page. When no likely shelter is known, show `shelters.unconfirmed` followed by `shelters.nearest_title` and up to two shelters with `shelters.nearest_meta`, each linking to its page. Never present an unconfirmed shelter with the wording of a confirmed answer.
 - `shelters.row_no_phone` (CH-71; CH-82 called it `no_phone_row`, one key) shows on the right of a directory row without a published phone, in muted text, with no call button. `{source}` in `shelters.verified_line` is the source label stored on the directory row; fallback when a row has none: "Register zavetišč UVHVVR in občine" / "UVHVVR shelter register and municipalities".
+- `shelters.use_location` is a text button under the municipality field (CH-500, TASK-114.11). While it works the field shows `shelters.locating`. `shelters.location_denied` covers refused permission; `shelters.location_failed` covers no fix, timeout, no geolocation API or a failed lookup; `shelters.location_outside` covers a point outside Slovenia. Each error is announced politely under the field and leaves the field free to type in.
 - `shelters.report_error` opens the contact page with the subject "Napaka v imeniku zavetišč" / "Mistake in the shelter directory".
 - Legal note slot: rendered only when `content.legal_timings` is on, with the wording the lawyer confirms (lawyer pack LQ-06). No string until then.
 - Loading: `common.loading` (P1); error: `shelters.error` with `common.try_again`; offline: P1 offline note, the list stays when cached.
@@ -780,5 +786,6 @@ Alt text: the static map is decorative (`alt=""`), because the address is text.
 
 | Version | Date | Change |
 |---|---|---|
+| 0.7 | 2026-10-18 | CH-500 (TASK-114.11): T5 keys `shelters.use_location`, `locating`, `location_denied`, `location_failed`, `location_outside`. SL/EN reviewed, unchanged. |
 | 0.6 | 2026-10-15 | CH-124: `shelters.search_clear` (T5 search field); `shelters.days.mon`…`sun` plus `shelters.days.holidays` (T6 opening hours, full day names replace the short forms; holidays key added because the T6 note uses "prazniki"). Draft values on branches `agent/task-90.1-shelter-pages` (catalogue) follow this slice; update the catalogue on merge. Front matter version aligned to the log (was 0.4). |
 | 0.5 | 2026-10-15 | CH-71: `shelters.row_no_phone`, `{source}` fallback text. CH-74: breadcrumb home value `common.breadcrumb_home` (P1) for "Nazaj na začetno stran" on T2/T3. CH-82: `shelters.maybe_responsible`, `not_confirmed`, `not_confirmed_help`, `call_unconfirmed` (+ a11y), `nearest_title`, `nearest_meta`. Shelter keys live in this file (no separate P3-shelter-pages slice exists). |

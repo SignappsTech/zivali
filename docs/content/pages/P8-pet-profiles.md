@@ -3,9 +3,9 @@ source: 03§P8; docs/design/pages/P8-pet-profiles.md
 page: P8 Pet profiles
 stories: TASK-16 (FR-002, FR-003)
 copy-for: docs/design/pages/P8-pet-profiles.md
-version: 0.2
+version: 0.3
 status: Draft, native Slovenian review pending
-date: 2026-10-15
+date: 2026-10-18
 ---
 
 # P8 Pet profiles: copy
@@ -112,6 +112,7 @@ Empty state:
 | Loading | `common.loading` (P1) |
 | Invalid or short chip | `pets.chip_warning` |
 | Photo upload failure | `photos.failed`, `photos.retry` (P6) |
+| Photo rejected on save | `photos.rejected` (P6), shown as the save toast |
 | Pet limit | `pets.limit_note` |
 | Unsaved changes | `common.discard_title`, `common.discard_body`, `common.discard_confirm`, `common.keep_editing` (P1) |
 | Deleted | `pets.deleted` |
@@ -138,3 +139,4 @@ N/A: signed-in pages, `noindex`. Document titles: "Moje živali · Najdimo" / "M
 | Date | Change |
 |---|---|
 | 2026-10-15 | CH-79: `chip_help` example is now 15 digits, 705 1234 5678 9012. |
+| 2026-10-18 | CH-496 (TASK-114.5): `photos.rejected` (P6 §3) is the save toast when a photo is rejected. |
