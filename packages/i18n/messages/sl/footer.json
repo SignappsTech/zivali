@@ -5,7 +5,7 @@
 	"privacy": "Zasebnost",
 	"cookies": "Piškotki",
 	"terms": "Pogoji uporabe",
-	"imprint": "Impresum",
+	"imprint": "Podatki o podjetju",
 	"accessibility": "Dostopnost",
 	"cookie_settings": "Nastavitve piškotkov",
 	"how_it_works": "Kako deluje",
@@ -14,5 +14,5 @@
 	"faq": "Pogosta vprašanja",
 	"nav_label": "Noga strani",
 	"tagline": "Spet doma.",
-	"copyright": "© {year} Signapps. Najdimo je delovno ime storitve."
+	"copyright": "© {year} SIGNAPPS d.o.o. Najdimo je delovno ime storitve."
 }

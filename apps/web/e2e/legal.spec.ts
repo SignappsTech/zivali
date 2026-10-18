@@ -6,12 +6,12 @@ const PAGES = [
 	['sl', '/zasebnost', 'Politika zasebnosti'],
 	['sl', '/piskotki', 'Politika piškotkov'],
 	['sl', '/pogoji-uporabe', 'Pogoji uporabe'],
-	['sl', '/impresum', 'Impresum'],
+	['sl', '/impresum', 'Podatki o podjetju'],
 	['sl', '/dostopnost', 'Izjava o dostopnosti'],
 	['en', '/en/privacy', 'Privacy policy'],
 	['en', '/en/cookies', 'Cookie policy'],
 	['en', '/en/terms', 'Terms of use'],
-	['en', '/en/imprint', 'Imprint'],
+	['en', '/en/imprint', 'Company information'],
 	['en', '/en/accessibility', 'Accessibility statement'],
 ] as const;
 
@@ -30,7 +30,7 @@ for (const [locale, path, title] of PAGES)
 	});
 
 test('every footer legal link resolves to a real page', async ({ page }) => {
-	for (const name of ['Zasebnost', 'Piškotki', 'Pogoji uporabe', 'Impresum', 'Dostopnost']) {
+	for (const name of ['Zasebnost', 'Piškotki', 'Pogoji uporabe', 'Podatki o podjetju', 'Dostopnost']) {
 		await page.goto('/');
 		await page.getByRole('contentinfo').getByRole('link', { name, exact: true }).click();
 		await expect(page.getByRole('note')).toContainText('Osnutek');
