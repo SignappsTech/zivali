@@ -7,7 +7,7 @@ status: To Do
 assignee:
   - '@backend-dev'
 created_date: '2026-10-18 21:24'
-updated_date: '2026-10-18 22:46'
+updated_date: '2026-10-18 23:53'
 labels:
   - be
   - 'est:S'
@@ -52,4 +52,6 @@ Branch: agent/task-42.3-embedding-backfill
 From the TASK-40.1 review and CH-562 (2026-10-19): photos uploaded while ai.extract is a stub have no ai_results row; embedding and backfill must skip any photo without a successful safety check (no ai_results row = not embedded).
 
 Follow-ups from the TASK-42.1 review (2026-10-19), non-blocking, fold in here since 42.3 touches the same domain: (1) embeddings.domain.ts ~105: dead-letter a 400/401 right away instead of 5 retries; (2) embeddings.domain.ts ~73-80: a DB error before the per-model try logs no dead_letter on the last attempt; (3) embeddings.dao.ts ~70: mock calls are recorded as provider voyage, so local mock spend counts toward the budget (record provider mock).
+
+Parity with the TASK-40.3 review (2026-10-19): make the embedder like the AI adapter: EMBEDDER_PROVIDER=mock outside APP_ENV=local must resolve to off (no fake vectors for real photos on staging/production). Add a select.test case.
 <!-- SECTION:NOTES:END -->
