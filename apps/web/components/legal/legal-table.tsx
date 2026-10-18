@@ -1,4 +1,11 @@
-import { Children, cloneElement, isValidElement, type ReactElement, type ReactNode, type TdHTMLAttributes } from 'react';
+import {
+	Children,
+	cloneElement,
+	isValidElement,
+	type ReactElement,
+	type ReactNode,
+	type TdHTMLAttributes,
+} from 'react';
 
 type El = ReactElement<TdHTMLAttributes<HTMLElement>>;
 
@@ -9,8 +16,12 @@ const text = (node: ReactNode): string =>
 		.map((n) => (isValidElement<{ children?: ReactNode }>(n) ? text(n.props.children) : String(n)))
 		.join('');
 
+// MDX wraps multi-line cell text in a <p>, which took the article's paragraph margin and line height: the uneven rows.
+const unwrapP = (node: ReactNode) =>
+	Children.map(node, (n) => (isValidElement<{ children?: ReactNode }>(n) && n.type === 'p' ? n.props.children : n));
+
 const tdClass = [
-	'border-b-2 border-border px-5 py-4 align-top wrap-anywhere first:font-bold',
+	'border-b-2 border-border px-5 py-4 align-top wrap-anywhere hyphens-auto first:font-bold',
 	'cards:block cards:border-0 cards:p-0 cards:nth-[n+3]:mt-1',
 	'cards:first:mb-1.5 cards:first:font-display cards:first:text-lg/6.5 cards:first:tracking-[-0.01em]',
 ].join(' ');
@@ -46,9 +57,9 @@ export function LegalTable({ children }: { children: ReactNode }) {
 						scope: 'col',
 						className:
 							'bg-muted px-5 py-3 align-middle font-bold first:w-[30%] first:rounded-tl-row last:rounded-tr-row',
-					}),
-				),
-			),
+					})
+				)
+			)
 		),
 		cloneElement(
 			tbody,
@@ -56,7 +67,10 @@ export function LegalTable({ children }: { children: ReactNode }) {
 			...elements(tbody.props.children).map((tr) =>
 				cloneElement(
 					tr,
-					{ role: 'row', className: 'cards:block cards:rounded-card cards:bg-card cards:px-5 cards:pt-4.5 cards:pb-5' },
+					{
+						role: 'row',
+						className: 'cards:block cards:rounded-card cards:bg-card cards:px-5 cards:pt-4.5 cards:pb-5',
+					},
 					...elements(tr.props.children).map((td, i) =>
 						cloneElement(
 							td,
@@ -66,11 +80,11 @@ export function LegalTable({ children }: { children: ReactNode }) {
 									{labels[i]}:{' '}
 								</span>
 							) : null,
-							td.props.children,
-						),
-					),
-				),
-			),
-		),
+							unwrapP(td.props.children)
+						)
+					)
+				)
+			)
+		)
 	);
 }

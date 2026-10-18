@@ -28,7 +28,13 @@ describe('legal MDX', () => {
 			});
 
 	it('styles raw HTML headings and lists through the body container', async () => {
-		for (const cls of ['[&_h2]:font-display', '[&_h2]:text-2xl', '[&_h3]:font-display', '[&_p]:mt-4', '[&_ul]:list-disc'])
+		for (const cls of [
+			'[&_h2]:font-display',
+			'[&_h2]:text-2xl',
+			'[&_h3]:font-display',
+			'[&_p]:mt-4',
+			'[&_ul]:list-disc',
+		])
 			expect(legalBodyClass).toContain(cls);
 		for (const locale of locales) for (const slug of slugs) expect(await html(locale, slug)).toMatch(/<h2 id="s1"/);
 	});
@@ -63,6 +69,8 @@ describe('legal MDX', () => {
 						cells.forEach((td, i) => {
 							expect(td.getAttribute('role')).toBe(i ? 'cell' : 'rowheader');
 							expect(td.className).toContain('border-b-2');
+							// MDX's <p> around multi-line cell text took the article paragraph margin: uneven rows.
+							expect(td.querySelector('p')).toBeNull();
 							const label = td.querySelector(':scope > span[aria-hidden="true"]');
 							// Two columns: the label is the card heading. More: each value carries its column name.
 							if (i && headers.length > 2) expect(label?.textContent).toBe(`${labels[i]}: `);
