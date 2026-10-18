@@ -1,11 +1,11 @@
 ---
 id: TASK-115.4
 title: 'API: public homepage numbers (only if the approved wireframe has them)'
-status: In Progress
+status: Done
 assignee:
   - '@backend-dev'
 created_date: '2026-10-16 14:00'
-updated_date: '2026-10-18 19:48'
+updated_date: '2026-10-18 19:50'
 labels:
   - be
   - 'est:S'
