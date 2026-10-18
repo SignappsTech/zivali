@@ -16,47 +16,50 @@ import type {
 import { type RealtimeClient, subscribeBroadcast } from './broadcast.ts';
 import { api, type ApiStore } from './rtk.ts';
 
-export const chatApi = api.enhanceEndpoints({ addTagTypes: ['Conversation', 'Message'] }).injectEndpoints({
-	endpoints: (build) => ({
-		createConversation: build.mutation<IdResponse, CreateConversationInput>({
-			query: (body) => ({ url: '/v1/conversations', method: 'POST', body }),
-			invalidatesTags: ['Conversation'],
-		}),
-		listConversations: build.query<ConversationList, CursorQuery | void>({
-			query: (params) => ({ url: '/v1/conversations', params: params ?? undefined }),
-			providesTags: ['Conversation'],
-		}),
-		listMessages: build.query<MessageList, MessageListQuery & { id: Uuid }>({
-			query: ({ id, ...params }) => ({ url: `/v1/conversations/${id}/messages`, params }),
-			providesTags: (_result, _error, { id }) => [{ type: 'Message', id }],
-		}),
-		// `idempotencyKey` (uuid, C1) stays the same across retries of one message, so a lost response never doubles it.
-		sendMessage: build.mutation<Message, { id: Uuid; body: SendMessageInput; idempotencyKey: string }>({
-			query: ({ id, body, idempotencyKey }) => ({
-				url: `/v1/conversations/${id}/messages`,
-				method: 'POST',
-				body,
-				headers: { 'Idempotency-Key': idempotencyKey },
+// 'Notification' (notifications.ts): reading a conversation reads its chat_message notifications too (C10).
+export const chatApi = api
+	.enhanceEndpoints({ addTagTypes: ['Conversation', 'Message', 'Notification'] })
+	.injectEndpoints({
+		endpoints: (build) => ({
+			createConversation: build.mutation<IdResponse, CreateConversationInput>({
+				query: (body) => ({ url: '/v1/conversations', method: 'POST', body }),
+				invalidatesTags: ['Conversation'],
 			}),
-			invalidatesTags: ['Conversation'],
-			// The sender sees the message without Realtime (merge is idempotent by id, so the broadcast echo is a no-op).
-			async onQueryStarted({ id }, { dispatch, getState, queryFulfilled }) {
-				try {
-					mergeMessages({ dispatch, getState } as Store, id, [(await queryFulfilled).data]);
-				} catch {
-					// the mutation result carries the error
-				}
-			},
+			listConversations: build.query<ConversationList, CursorQuery | void>({
+				query: (params) => ({ url: '/v1/conversations', params: params ?? undefined }),
+				providesTags: ['Conversation'],
+			}),
+			listMessages: build.query<MessageList, MessageListQuery & { id: Uuid }>({
+				query: ({ id, ...params }) => ({ url: `/v1/conversations/${id}/messages`, params }),
+				providesTags: (_result, _error, { id }) => [{ type: 'Message', id }],
+			}),
+			// `idempotencyKey` (uuid, C1) stays the same across retries of one message, so a lost response never doubles it.
+			sendMessage: build.mutation<Message, { id: Uuid; body: SendMessageInput; idempotencyKey: string }>({
+				query: ({ id, body, idempotencyKey }) => ({
+					url: `/v1/conversations/${id}/messages`,
+					method: 'POST',
+					body,
+					headers: { 'Idempotency-Key': idempotencyKey },
+				}),
+				invalidatesTags: ['Conversation'],
+				// The sender sees the message without Realtime (merge is idempotent by id, so the broadcast echo is a no-op).
+				async onQueryStarted({ id }, { dispatch, getState, queryFulfilled }) {
+					try {
+						mergeMessages({ dispatch, getState } as Store, id, [(await queryFulfilled).data]);
+					} catch {
+						// the mutation result carries the error
+					}
+				},
+			}),
+			markConversationRead: build.mutation<void, { id: Uuid }>({
+				query: ({ id }) => ({ url: `/v1/conversations/${id}/read`, method: 'POST' }),
+				invalidatesTags: ['Conversation', 'Notification'],
+			}),
+			blockParticipant: build.mutation<void, { id: Uuid; body: BlockInput }>({
+				query: ({ id, body }) => ({ url: `/v1/conversations/${id}/block`, method: 'POST', body }),
+			}),
 		}),
-		markConversationRead: build.mutation<void, { id: Uuid }>({
-			query: ({ id }) => ({ url: `/v1/conversations/${id}/read`, method: 'POST' }),
-			invalidatesTags: ['Conversation'],
-		}),
-		blockParticipant: build.mutation<void, { id: Uuid; body: BlockInput }>({
-			query: ({ id, body }) => ({ url: `/v1/conversations/${id}/block`, method: 'POST', body }),
-		}),
-	}),
-});
+	});
 
 export const {
 	useCreateConversationMutation,
