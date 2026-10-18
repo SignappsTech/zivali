@@ -1,5 +1,7 @@
 // Prisma access for matching (C8): the engine and the managers' review. Candidate pairs are parameterised $queryRaw
 // (TypedSQL needs a live database at build time, CH-117) over the GiST indexes on reports.exact_point and public_point.
+import { MATCH_ALGO_VERSION } from '@zivali/validation/matching';
+
 import { Prisma } from '../../generated/client.ts';
 import type { MATCH_STATE } from '../../generated/enums.ts';
 import { prisma } from '../../prisma/prisma.ts';
@@ -82,7 +84,7 @@ export async function activeMatches(
 
 /**
  * Inserts the suggestion or refreshes it while it is still suggested; a rejected, confirmed or closed pair is left as
- * it is and returns null (never resurrected).
+ * it is and returns null (never resurrected). Either way the row is stamped with today's MATCH_ALGO_VERSION.
  */
 export async function upsertSuggestion(
 	row: {
@@ -97,15 +99,53 @@ export async function upsertSuggestion(
 	tx?: Prisma.TransactionClient
 ): Promise<{ id: string; notified_at: Date | null } | null> {
 	const [match] = await (tx ?? prisma).$queryRaw<{ id: string; notified_at: Date | null }[]>`
-		insert into app.matches as m (id, lost_report_id, other_report_id, score, strength, chip_match, reasons, updated_at)
+		insert into app.matches as m
+			(id, lost_report_id, other_report_id, score, strength, chip_match, reasons, algo_version, updated_at)
 		values (gen_random_uuid(), ${row.lost_report_id}::uuid, ${row.other_report_id}::uuid, ${row.score},
-			${row.strength}, ${row.chip_match}, ${JSON.stringify(row.reasons)}::jsonb, ${row.now})
+			${row.strength}, ${row.chip_match}, ${JSON.stringify(row.reasons)}::jsonb, ${MATCH_ALGO_VERSION}, ${row.now})
 		on conflict (lost_report_id, other_report_id) do update
 			set score = excluded.score, strength = excluded.strength, chip_match = excluded.chip_match,
-				reasons = excluded.reasons, updated_at = excluded.updated_at
+				reasons = excluded.reasons, algo_version = excluded.algo_version, updated_at = excluded.updated_at
 			where m.state = 'suggested'
 		returning m.id, m.notified_at`;
 	return match ?? null;
+}
+
+export type SuggestedPair = PairRow & { match_id: string; score: number; strength: string; algo_version: string };
+
+/**
+ * Stored suggestions without a chip, with what scoreMatch needs today: those of one report (either side), or every
+ * one scored by an older algorithm version.
+ */
+export async function suggestedPairs(
+	only: { report_id: string } | { older: true },
+	tx?: Prisma.TransactionClient
+): Promise<SuggestedPair[]> {
+	const which =
+		'report_id' in only
+			? Prisma.sql`(m.lost_report_id = ${only.report_id}::uuid or m.other_report_id = ${only.report_id}::uuid)`
+			: Prisma.sql`m.algo_version <> ${MATCH_ALGO_VERSION}`;
+	return (tx ?? prisma).$queryRaw`
+		select m.id as match_id, m.score::float8 as score, m.strength, m.algo_version, ${PAIR_COLUMNS}
+		from app.matches m join app.reports l on l.id = m.lost_report_id join app.reports o on o.id = m.other_report_id
+		where m.state = 'suggested' and not m.chip_match and ${which}`;
+}
+
+/** New score of a suggestion still suggested (a pair confirmed or rejected meanwhile keeps its row). */
+export async function rescoreSuggestion(
+	id: string,
+	data: { score: number; strength: string; chip_match: boolean; reasons: Prisma.InputJsonValue },
+	tx?: Prisma.TransactionClient
+): Promise<void> {
+	await (tx ?? prisma).matches.updateMany({
+		where: { id, state: 'suggested' },
+		data: { ...data, algo_version: MATCH_ALGO_VERSION },
+	});
+}
+
+/** Deletes suggestions still suggested, so match.report may store the pair again once it passes. */
+export async function removeSuggestions(ids: string[], tx?: Prisma.TransactionClient): Promise<void> {
+	if (ids.length) await (tx ?? prisma).matches.deleteMany({ where: { id: { in: ids }, state: 'suggested' } });
 }
 
 /** Marks the match notified; false when another run already did (notify once). */
@@ -295,6 +335,9 @@ export default {
 	candidatePairs,
 	activeMatches,
 	upsertSuggestion,
+	suggestedPairs,
+	rescoreSuggestion,
+	removeSuggestions,
 	claimNotification,
 	setFirstMatchAt,
 	managerIds,

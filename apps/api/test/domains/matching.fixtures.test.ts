@@ -1,4 +1,4 @@
-// Matching fixture suite (TASK-19.2, R-010): 36 synthetic lost ↔ found/sighted pairs, labelled by hand with the
+// Matching fixture suite (TASK-19.2, R-010; evidence rule TASK-114.22): 42 synthetic lost ↔ found/sighted pairs, labelled by hand with the
 // inclusion, rank and strength the C8 defaults must give, run through the real engine on the local database (no
 // cloud services). It prints a table of every pair, so a threshold or weight change shows its effect at once: change
 // app_config `matching.*`, rerun, relabel. Points are pinned after insert, so distances are exact and runs repeat.
@@ -37,6 +37,7 @@ const north = (km: number) => ({ lat: ORIGIN.lat + km / 111.15, lng: ORIGIN.lng 
 const chipBase = randomInt(100_000, 999_000);
 const CHIP_A = `705098100${chipBase}`;
 const CHIP_B = `705098100${chipBase + 1}`;
+const CHIP_C = `705098100${chipBase + 2}`;
 
 type Other = Partial<NewReport> & { km: number; hours: number };
 /** expect: the strength the pair must get, or null when it must not be suggested. */
@@ -45,8 +46,11 @@ type Fixture = { name: string; other: Other; expect: MatchStrength | null };
 type Group = { name: string; lost?: Partial<NewReport>; fixtures: Fixture[] };
 
 // The lost dog every group starts from (overridden per group); the other side defaults to the same animal, found
-// 6 h later. Scores in the comments are the C8 defaults: 0.4·exp(−km/3) + 0.2·(1 − Δh/720) + 0.4·A.
+// 6 h later. Scores in the comments are the C8 defaults: 0.4·exp(−km/3) + 0.2·(1 − Δh/720) + 0.4·A, A the summed
+// similarity of the attributes known on both sides / 4; without a chip a contradiction or no evidence is no suggestion.
 const LOST: Partial<NewReport> = { sex: 'female', size: 'm', colours: ['black', 'white'], pattern: 'bicolour' };
+const NONE = { sex: null, size: null, colours: [], pattern: null } satisfies Partial<NewReport>;
+const SIGHTED_CAT = { type: 'sighted', species: 'cat', ...NONE } satisfies Partial<NewReport>;
 const fx = (name: string, other: Partial<Other>, strength: MatchStrength | null): Fixture => ({
 	name,
 	other: { km: 1, hours: 6, ...other },
@@ -98,8 +102,8 @@ const GROUPS: Group[] = [
 	{
 		name: 'species-sex',
 		fixtures: [
-			fx('sex-not-given', { km: 0.5, sex: null }, 'strong'), // 0.887
-			fx('sex-unknown', { sex: 'unknown' }, 'strong'), // 0.835
+			fx('sex-not-given', { km: 0.5, sex: null }, 'strong'), // 0.837
+			fx('sex-unknown', { sex: 'unknown' }, 'good'), // 0.785
 			fx('same-sex-3km', { km: 3 }, 'good'), // 0.745
 			fx('cat', { species: 'cat' }, null), // species mismatch
 			fx('male', { sex: 'male' }, null), // sex conflict
@@ -112,18 +116,31 @@ const GROUPS: Group[] = [
 			fx('one-extra-colour', { colours: ['black', 'white', 'tan'] }, 'strong'), // 0.852, overlap 0.67
 			fx('one-of-two', { colours: ['black'] }, 'strong'), // 0.835, overlap 0.5
 			fx('one-shared-of-three', { colours: ['white', 'grey'] }, 'strong'), // 0.818, overlap 0.33
-			fx('no-shared-colour', { colours: ['grey', 'brown'] }, 'good'), // 0.785
-			fx('other-colour-and-pattern', { colours: ['golden'], pattern: 'solid' }, 'good'), // 0.685
+			fx('no-shared-colour', { colours: ['grey', 'brown'] }, null), // contradiction
+			fx('other-colour-and-pattern', { colours: ['golden'], pattern: 'solid' }, null), // contradiction
 		],
 	},
 	{
 		name: 'size',
 		fixtures: [
 			fx('adjacent-size', { size: 'l' }, 'strong'), // 0.835
-			fx('two-sizes-apart', { size: 'xl' }, 'good'), // 0.785
-			fx('nothing-known', { size: null, sex: null, colours: [], pattern: null }, 'good'), // 0.685
-			fx('nothing-shared', { size: 'xs', colours: ['golden'], pattern: 'solid' }, 'possible'), // 0.585
-			fx('nothing-shared-3km', { km: 3, size: 'xs', colours: ['golden'], pattern: 'solid' }, null), // 0.445
+			fx('two-sizes-apart', { size: 'xl' }, null), // contradiction
+			fx('nothing-known', NONE, null), // no evidence (0.685 good while unknowns counted 0.5)
+			fx('nothing-shared', { size: 'xs', colours: ['golden'], pattern: 'solid' }, null), // contradiction
+			fx('nothing-shared-3km', { km: 3, size: 'xs', colours: ['golden'], pattern: 'solid' }, null), // contradiction
+		],
+	},
+	{
+		// The owner's screenshot (TASK-114.22): a lost grey large male cat against cat sightings that know little.
+		name: 'evidence',
+		lost: { species: 'cat', sex: 'male', size: 'l', colours: ['grey'], pattern: null, chip: CHIP_C },
+		fixtures: [
+			fx('chip-nothing-known-25km', { ...SIGHTED_CAT, chip: CHIP_C, km: 25 }, 'strong'), // 1.000
+			fx('colour-size-3km', { ...SIGHTED_CAT, colours: ['grey'], size: 'l', km: 3 }, 'possible'), // 0.545
+			fx('colour-only-2km', { ...SIGHTED_CAT, colours: ['grey'], km: 2 }, 'possible'), // 0.504
+			fx('colour-only-3km', { ...SIGHTED_CAT, colours: ['grey'], km: 3 }, null), // 0.445
+			fx('other-colour-1km', { ...SIGHTED_CAT, sex: 'male', size: 'l', colours: ['black'], km: 1 }, null), // contradiction
+			fx('nothing-known-4km', { ...SIGHTED_CAT, km: 4 }, null), // no evidence (0.51 while unknowns counted 0.5)
 		],
 	},
 	{

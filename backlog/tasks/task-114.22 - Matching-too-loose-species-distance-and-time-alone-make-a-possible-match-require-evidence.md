@@ -3,11 +3,11 @@ id: TASK-114.22
 title: >-
   Matching too loose: species, distance and time alone make a "possible" match;
   require evidence
-status: To Do
+status: In Progress
 assignee:
   - '@backend-dev'
 created_date: '2026-10-16 16:25'
-updated_date: '2026-10-17 09:24'
+updated_date: '2026-10-18 02:22'
 labels:
   - be
   - matching
@@ -43,3 +43,7 @@ Follow-ups to note, not in scope: photo similarity (pgvector embeddings, EMBEDDE
 - [ ] #4 Existing weak suggestions are re-scored or hidden; no new notifications are sent by the re-score
 - [ ] #5 Matching route and QA tests (matching.qa.routes.test.ts) updated; the mobile and web match lists need no change
 <!-- AC:END -->
+
+## Packet
+
+Branch: agent/TASK-114.22-matching-evidence

@@ -1,6 +1,7 @@
 // QA TASK-19.3 (story TASK-19, matching engine v1): the whole path over HTTP. POST and PATCH /v1/reports queue
 // match.report, the worker (drain) stores the suggestion, GET /v1/reports/:code/matches shows it to the lost side only,
-// without the other side's contact data, exact point or chip number; a rejected pair never comes back after edits.
+// without the other side's contact data, exact point or chip number; a rejected pair never comes back after edits, and
+// a pair without evidence or with a contradiction is never suggested (TASK-114.22).
 // Reports sit in a random 19th-century slot with random chips, so seed data and other tests never become candidates.
 import { randomBytes, randomInt, randomUUID } from 'node:crypto';
 
@@ -206,5 +207,25 @@ describe('QA TASK-19.3: matching end to end', () => {
 		expect(feedback).toEqual([
 			expect.objectContaining({ user_id: owner.id, verdict: 'reject', reason: 'Druga ovratnica' }),
 		]);
+	});
+
+	it('TASK-114.22: a sighting that knows nothing, or another colour, is not suggested until an edit adds evidence', async () => {
+		const at = month();
+		const lost = await post(owner, { type: 'lost', location: LJ, event_at: at.toISOString(), ...attrs });
+		const when = new Date(at.getTime() + HOUR).toISOString();
+		// Nearby within the hour: a sighted dog with nothing known about it, and a found dog of another colour.
+		const sighted = await post(finder, { type: 'sighted', location: north(1.5), event_at: when });
+		await post(finder, { type: 'found', location: north(0.5), event_at: when, ...attrs, colours: ['golden'] });
+		await drain(runJob);
+		expect((await list(owner, lost.short_code)).body.items).toEqual([]);
+
+		// The finder adds the colour: evidence, so a possible suggestion (about 0.54), not notified below good.
+		await patch(finder, sighted.short_code, { colours: ['black', 'white'] }).expect(200);
+		await drain(runJob);
+		const { items } = (await list(owner, lost.short_code)).body;
+		expect(items.map((m: { other: Created }) => m.other.short_code)).toEqual([sighted.short_code]);
+		expect(items[0]).toMatchObject({ strength: 'possible', chip_match: false, state: 'suggested' });
+		expect(items[0].reasons).toContainEqual({ code: 'colour', overlap: 1 });
+		expect(await notifyJobs(items[0].id)).toEqual([]);
 	});
 });
