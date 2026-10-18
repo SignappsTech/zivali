@@ -62,3 +62,7 @@ Needs the fixture users (00-users) and the geo data (01-geo). Fixed ids, so reru
 
 - House ads (C14), ids `00000000-0000-4000-a000-000000000101`…`106`: `supporter`, `partner` and `adopt`, each in SL and EN, active in every slot. Created once and never overwritten, so admin edits survive a rerun. The copy is a **placeholder for the content strategist**.
 - Local only (`APP_ENV=local`): two made-up sponsor ads, `…201` (dogs, region 8 osrednjeslovenska, `detail` and `feed`) and `…202` (cats, region 2 podravska, `feed` and `sidebar`); a verified shelter organisation `…301` in Ljubljana with `shelter@zivali.test` as its admin. These need the fixture profiles (00-users; skipped with a warning without them) and municipality 61 (01-geo).
+
+## 40-matching-rescore: re-score stored match suggestions (all environments)
+
+Not reference data: on every deploy `MatchingDomain.rescoreSuggestions` re-scores the `suggested` matches without a chip under the C8 rules and `matching.*` config the release ships with (TASK-114.22, evidence rule). A pair that no longer passes (a contradiction, no attribute known on both sides, or a score below `matching.threshold`) is deleted, so it leaves the managers' list until `match.report` finds it again; the others get the new score and strength. It never inserts a pair or sends a notification; confirmed, rejected and closed matches and chip pairs are left alone. A rerun changes nothing. Locally it also turns 20-collab's suggested fixture (a chip pair stored as a plain one) into the chip match it is.

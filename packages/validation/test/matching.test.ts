@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
+import type { MatchStrength } from '@zivali/types';
+
 import {
 	distanceBand,
 	hoursBand,
@@ -174,22 +176,17 @@ describe('evidence rule and contradiction veto (TASK-114.22)', () => {
 	});
 
 	// C8 §Score examples (6 h apart): the realistic pairs the threshold (0.5) and the bands were checked on.
-	it.each([
-		['the same colour 2 km away', 2, { ...unknown, colours: ['black', 'white'] }, false, 0.504, 'possible'],
-		[
-			'the same colour and size 3 km away',
-			3,
-			{ ...unknown, size: 'm', colours: ['black', 'white'] },
-			false,
-			0.545,
-			'possible',
-		],
+	const colour: MatchAttributes = { ...unknown, colours: ['black', 'white'] };
+	type Example = [string, number, MatchAttributes, boolean, number | null, MatchStrength | null];
+	it.each<Example>([
+		['the same colour 2 km away', 2, colour, false, 0.504, 'possible'],
+		['the same colour and size 3 km away', 3, { ...colour, size: 'm' }, false, 0.545, 'possible'],
 		['all four the same 1 km away', 1, same, false, 0.885, 'strong'],
-		['the same colour 3 km away', 3, { ...unknown, colours: ['black', 'white'] }, false, null, null],
+		['the same colour 3 km away', 3, colour, false, null, null],
 		['another colour 1 km away', 1, { ...same, colours: ['golden'] }, false, null, null],
 		['nothing known 4 km away', 4, unknown, false, null, null],
 		['the chip 25 km away, nothing known', 25, unknown, true, 1, 'strong'],
-	] as const)('%s', (_name, distance_km, other, chip_match, score, strength) => {
+	])('%s', (_name, distance_km, other, chip_match, score, strength) => {
 		const result = scoreMatch(features({ distance_km, delta_hours: 6, other, chip_match }), config);
 		// Below the 0.5 threshold, or no suggestion at all.
 		if (score === null) expect(result === null || result.score < 0.5).toBe(true);

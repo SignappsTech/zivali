@@ -43,3 +43,7 @@ Follow-ups to note, not in scope: photo similarity (pgvector embeddings, EMBEDDE
 - [ ] #4 Existing weak suggestions are re-scored or hidden; no new notifications are sent by the re-score
 - [ ] #5 Matching route and QA tests (matching.qa.routes.test.ts) updated; the mobile and web match lists need no change
 <!-- AC:END -->
+
+## Packet
+
+Branch: agent/TASK-114.22-matching-evidence
