@@ -1,11 +1,11 @@
 ---
 id: TASK-114.2
 title: Switching language turns the site light in dark mode
-status: To Do
+status: In Progress
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-16 13:20'
-updated_date: '2026-10-17 09:24'
+updated_date: '2026-10-18 03:07'
 labels:
   - bug
   - fe

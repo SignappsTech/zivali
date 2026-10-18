@@ -13,6 +13,7 @@ import { SiteHeader } from '@/components/shell/header';
 import { getPathname } from '@/i18n/navigation';
 import { routing } from '@/i18n/routing';
 import { env } from '@/lib/env';
+import { themeScript } from '@/lib/theme';
 import { getViewer } from '@/lib/viewer';
 
 import '../globals.css';
@@ -40,9 +41,6 @@ const sans = localFont({
 	adjustFontFallback: 'Arial',
 	fallback: ['ui-sans-serif', 'system-ui', 'sans-serif'],
 });
-
-// Light and dark follow the OS before the first paint (system §12; the manual override comes with the profile).
-const themeScript = `(()=>{const m=matchMedia('(prefers-color-scheme: dark)');const s=()=>document.documentElement.classList.toggle('dark',m.matches);s();m.addEventListener('change',s)})()`;
 
 /** Defaults for every page (P1 content slice §7); pages set their own title, description and canonical (absoluteUrl). */
 export async function generateMetadata({ params }: LayoutProps<'/[locale]'>): Promise<Metadata> {
