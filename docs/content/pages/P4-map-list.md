@@ -3,9 +3,9 @@ source: 03§P4; docs/design/pages/P4-map-list.md
 page: P4 Map and list
 stories: TASK-31 (FR-007, FR-004)
 copy-for: docs/design/pages/P4-map-list.md
-version: 0.2
+version: 0.3
 status: Draft, native Slovenian review pending
-date: 2026-10-15
+date: 2026-10-18
 ---
 
 # P4 Map and list: copy
@@ -20,6 +20,7 @@ Namespaces `browse` and `map`. Status words and attribute labels come from the g
 | browse.area_pill_no_location | Slovenija | Slovenia | When location is unknown and no place chosen |
 | browse.area_pill_a11y | Območje: {place}, {radius} km. Odpri filtre | Area: {place}, {radius} km. Open filters | Accessible name |
 | browse.sheet_title | V bližini | Near you | h2 in the sheet |
+| browse.sheet_handle | Povleci ali tapni za razširitev | Drag or tap to expand | Accessible name of the list sheet's grabber button, which steps through the snap points (mobile; CH-309, from the P4 mockup). Draft, needs native review |
 | browse.count | {count, plural, one {# prijava} two {# prijavi} few {# prijave} other {# prijav}} | {count, plural, one {# report} other {# reports}} | Next to the title |
 | browse.web_title | Prijave | Reports | Web list pane h1 |
 | browse.filters_button | Filtri | Filters | Web pane header |
@@ -123,7 +124,12 @@ Live region when the count changes (polite):
 | map.preview_open | Odpri | Open |
 | map.attribution | © OpenFreeMap © OpenMapTiles, podatki © sodelavci OpenStreetMap | © OpenFreeMap © OpenMapTiles, data © OpenStreetMap contributors |
 | map.loading | Nalagamo zemljevid … | Loading the map … |
+| map.a11y_label | Zemljevid: {count, plural, one {# prijava} two {# prijavi} few {# prijave} other {# prijav}} | Map: {count, plural, one {# report} other {# reports}} |
+| map.list_show | Pokaži seznam | Show list |
+| map.list_hide | Pokaži zemljevid | Show map |
 | map.tiles_error | Zemljevida ta trenutek ni mogoče naložiti. Prijave so v seznamu. | The map cannot load right now. Reports are in the list. |
+
+Mobile list toggle (C6 accessible list toggle, CH-277, TASK-15.4), draft, needs native review: `map.a11y_label` is the map's accessible name; `map.list_show` is the hint on the toggle that opens the list; `map.list_hide` is the button label that closes the list and returns to the map.
 
 Attribution text: confirm the exact wording required by OpenFreeMap at build time. Place search is our own geocoder on GURS data (ADR-007), so its attribution is the GURS line `location.search_attribution` (P5), not MapTiler.
 
@@ -140,6 +146,17 @@ Attribution text: confirm the exact wording required by OpenFreeMap at build tim
 | Error | browse.error | Prijav ta trenutek ne moremo naložiti. Na zemljevidu so zadnje znane. | We cannot load reports right now. The map shows the last ones we had. |
 | | browse.error_action | Poskusi znova | Try again |
 | Loading | browse.loading | Nalagamo prijave v bližini … | Loading reports nearby … |
+
+Offline states on mobile (CH-317, TASK-85.3), draft, native review pending:
+
+| State | Key | SL | EN |
+|---|---|---|---|
+| Offline, cached area | browse.offline_note | Brez povezave, zadnja posodobitev {time}. | Offline, last updated {time}. |
+| Offline, rows saved while browsing | browse.offline_note_saved | Brez povezave. Prikazujemo shranjene prijave. | Offline. Showing saved reports. |
+| First launch offline, title | errors.offline_title (P1) | Ni povezave z internetom | No internet connection |
+| First launch offline, body | browse.offline_empty_body | Prijave v bližini shranimo v telefon, ko ste na spletu. Potem jih vidite tudi brez povezave. | We save reports near you on this phone while you are online, so you can see them offline too. |
+
+`{time}` is "14:20" when the update was today, otherwise "12. 10., 14:20" (EN "12 Oct, 14:20"). `browse.offline_note_saved` is for rows saved while browsing before an area sync has run.
 
 # 7. SEO
 
@@ -159,3 +176,9 @@ Attribution text: confirm the exact wording required by OpenFreeMap at build tim
 | Row and tile photo | Generated from attributes, as defined in P9 §Alt text (for example "Pes rjave in bele barve z rdečo ovratnico"). |
 | Marker avatar | `alt=""`; the marker's accessible name is `map.marker_a11y`. |
 | Empty-state illustration `assets/empty-no-reports.png` | Decorative, `alt=""`. |
+
+# Change log
+
+| Version | Date | Change |
+|---|---|---|
+| 0.3 | 2026-10-18 | CH-277: map list-toggle keys. CH-309: `browse.sheet_handle`. CH-317: offline states. |

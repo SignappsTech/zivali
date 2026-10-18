@@ -3,7 +3,7 @@ source: 03§P1; docs/design/pages/P1-web-shell.md
 page: P1 Web shell
 stories: TASK-11 (FR-035, FR-036)
 copy-for: docs/design/pages/P1-web-shell.md
-version: 0.3
+version: 0.4
 status: Draft, native Slovenian review pending
 date: 2026-10-15
 ---
@@ -21,7 +21,8 @@ Final SL and EN strings for the header, footer, shared patterns and the two shar
 | nav.lost | Izgubljene | Lost | Agrees with "živali"; opens the map filtered to lost |
 | nav.found | Najdene | Found | Map filtered to found and sighted |
 | nav.how_it_works | Kako deluje | How it works | Signed out only |
-| nav.my_pets_reports | Moje živali in prijave | My pets and reports | Signed in, replaces "Kako deluje" |
+| nav.my_pets_reports | Moje živali | My pets | Signed in, replaces "Kako deluje" in the header at lg and up. Short label so the signed-in lg header does not overflow (CH-150) |
+| nav.my_pets_reports_full | Moje živali in prijave | My pets and reports | Same destination; used where there is room (mobile menu sheet, account menu) |
 | nav.main_label | Glavni meni | Main menu | `nav` landmark name |
 | nav.language_label | Jezik: {current} | Language: {current} | Accessible name of the switcher |
 | nav.language_sl | SL | SL | Visible toggle text |
@@ -197,6 +198,17 @@ Buttons on error pages: primary `common.go_to_map`, text button `common.go_home`
 
 Required by the GURS terms and CC BY 4.0 (`supabase/seed/geo/LICENSE.md`). `{date}` is the data state date of the loaded geodata (now 15. 10. 2026 / 15 October 2026), formatted per locale; "CC BY 4.0" links to the licence. Show it in small muted text wherever boundaries or figures by municipality or region are published: the Partners statistics (P22), SEO location pages, municipality reports (PDF and CSV) and the imprint (chapter 7).
 
+## 5.8 Site meta and placeholder (added with TASK-11.2, CH-150)
+
+| Key | SL | EN |
+|---|---|---|
+| common.seo_title | Najdimo – izgubljene in najdene živali v Sloveniji | Najdimo – lost and found pets in Slovenia |
+| common.seo_description | Prijavite izgubljeno ali najdeno žival. Najdimo poveže lastnike in najditelje psov in mačk po vsej Sloveniji, brezplačno in varno. | Report a lost or found pet. Najdimo connects owners and finders of dogs and cats across Slovenia, free and safe. |
+| common.placeholder_body | To stran še pripravljamo. Kmalu bo na voljo. | We are still preparing this page. It will be available soon. |
+| common.portal_title | Portal za organizacije | Organisation portal |
+
+`seo_title` and `seo_description` are the site-wide fallback meta; a page with its own SEO block overrides them. `placeholder_body` is for routes that exist but have no content yet. `portal_title` names the organisation portal shell.
+
 # 6. Errors catalogue (`errors`, one key per C1 code)
 
 Shown in notes and toasts. Pages may override with a more specific message (for example P7 rate limit).
@@ -250,3 +262,4 @@ The shell has no content images. Logo: `alt=""` inside the link, the link carrie
 | Version | Date | Change |
 |---|---|---|
 | +CH | 2026-10-15 | CH-74: `common.breadcrumb_home` ("začetno stran" / "the home page"), the `{page}` value of `common.breadcrumb_back`. CH-80: `common.toasts_label` ("Obvestila" / "Notifications") is the accessible name of the toast live region (sonner `containerAriaLabel`); the toast close button uses `common.close`. |
+| 0.4 | 2026-10-18 | CH-150: signed-in header label decided as short `nav.my_pets_reports` "Moje živali" / "My pets" (lg header); full "Moje živali in prijave" kept as new `nav.my_pets_reports_full` for the menu sheet and account menu. New common keys added as §5.8 (`seo_title`, `seo_description`, `placeholder_body`, `portal_title`). |

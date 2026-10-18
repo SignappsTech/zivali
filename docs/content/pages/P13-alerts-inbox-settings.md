@@ -3,7 +3,7 @@ source: 03§P13; docs/design/pages/P13-alerts-inbox-settings.md
 page: P13 Notifications, nearby alerts and account settings
 stories: TASK-22, TASK-23, TASK-9 (FR-010, FR-001, FR-036)
 copy-for: docs/design/pages/P13-alerts-inbox-settings.md
-version: 0.2
+version: 0.3
 status: Draft, native Slovenian review pending
 date: 2026-10-18
 ---
@@ -57,6 +57,42 @@ Namespaces `notifications` (inbox view), `alerts`, `profile`. The title and body
 
 `alerts.species_none` shows under the animal pills when none is chosen: every animal can be switched off, and none chosen means no nearby alerts (CH-501, TASK-114.14).
 
+## 2a. Nearby reminders on the phone (mobile, CH-241, CH-248, CH-355, TASK-87.1, TASK-87.2)
+
+A second block under the alerts: local reminders the phone raises itself when the person is near where a lost animal was last seen (`notifications.nearby_local`, in `notifications-and-emails.md` §2.5a). Separate from the server alerts above: pausing alerts does not stop them. Draft, needs native review; the page-level wording follows the primer in §2b.
+
+| Key | SL | EN |
+|---|---|---|
+| alerts.reminders_title | Opomniki v bližini | Nearby reminders |
+| alerts.reminders_separate | Telefon sam opazi, ko ste blizu kraja, kjer se je izgubila žival. To je ločeno od opozoril zgoraj: premor opozoril teh opomnikov ne ustavi. | Your phone notices on its own when you are near where an animal went missing. This is separate from the alerts above: pausing alerts does not stop these reminders. |
+| alerts.reminders_label | Opozori me, ko sem blizu izgubljene živali | Alert me when I am near a lost animal |
+| alerts.reminders_help | Lokalna opozorila na telefonu: največ {cap} na dan, ne v tihem času. Vaša lokacija ostane v telefonu. | Local alerts on the phone: at most {cap} a day, never in quiet hours. Your location stays on the phone. |
+| alerts.reminders_quiet_value | od {from} do {to} | {from} to {to} |
+| alerts.reminders_quiet_change | Spremeni tihi čas | Change quiet hours |
+| alerts.reminders_lost | Opomnike smo izklopili, ker telefon ne dovoli več lokacije »vedno«. Ko jo dovolite v nastavitvah telefona, jih znova vklopite tukaj. | We turned the reminders off because your phone no longer allows location Always. Allow it in your phone settings, then switch them back on here. |
+| alerts.reminders_no_location | Lokacije telefona ta hip ne moremo določiti. Poskusite znova čez trenutek. | We cannot find the location of your phone right now. Please try again in a moment. |
+| alerts.reminders_signed_out_note | Niste prijavljeni, zato lahko opomnike le izklopite. | You are signed out, so you can only turn these reminders off. |
+
+`{cap}` is the daily cap (3 by default). `alerts.reminders_quiet_change` is the accessible name of the "Spremeni" link beside the quiet-hours value. `alerts.reminders_lost` shows when the reminders were switched off because the Always permission was revoked.
+
+## 2b. Always-location primer and denied note (mobile, CH-241, CH-248, CH-355)
+
+Shown before the system prompt when the person turns the reminders on. Buttons: primary `permissions.location_always_allow`, secondary `common.not_now`. The bullets say what is watched and what is not stored. Draft; it must match the iOS purpose string and the Play background-location declaration (TASK-75).
+
+| Key | SL | EN |
+|---|---|---|
+| permissions.location_always_title | Dovolite lokacijo vedno? | Allow location always? |
+| permissions.location_always_body | Da vas telefon opozori, ko ste blizu izgubljene živali, mora lokacijo poznati tudi, ko aplikacija ni odprta. | To alert you when you are near a lost animal, your phone needs your location even when the app is closed. |
+| permissions.location_always_watched | <b>Spremljamo:</b> le območja izgubljenih živali v vaši bližini, ki so že shranjena v telefonu. | <b>What we watch:</b> only the areas of lost animals near you, already saved on your phone. |
+| permissions.location_always_private | <b>Ničesar ne pošljemo:</b> vaš položaj in vaše poti ostanejo v telefonu. Ujemanje poteka v telefonu. | <b>Nothing is uploaded:</b> your position and your routes stay on the phone, where the matching happens. |
+| permissions.location_always_off | <b>Izklop:</b> kadar koli, tukaj v Opozorilih v bližini. | <b>Turning it off:</b> at any time, here in Nearby alerts. |
+| permissions.location_always_allow | Dovoli vedno | Allow always |
+| permissions.location_always_denied | Za ta opozorila potrebujemo dovoljenje za lokacijo »vedno«. Vklopite ga v nastavitvah telefona. | These alerts need location access set to Always. Turn it on in your phone settings. |
+
+The denied note (`location_always_denied`) is followed by the button `alerts.push_open_settings` ("Odpri nastavitve telefona" / "Open phone settings"). `<b>` is rendered with `t.rich`.
+
+The inbox on mobile has two segments in the Sporočila tab: "Sporočila" (`chat.inbox_title`, P12) and "Obvestila" (`notifications.title`, §1). No new keys.
+
 # 3. How to tell me
 
 | Key | SL | EN |
@@ -82,6 +118,10 @@ No channel is locked in the app: there is no lock note and no warning when every
 | alerts.quiet_to | Do | To |
 | alerts.quiet_help | V tihem času vas ne motimo. Izjema sta ujemanje številke čipa in nova sporočila. | We will not disturb you during quiet hours, except for a chip-number match and new messages. |
 | alerts.quiet_off | Brez tihega časa | No quiet hours |
+| alerts.quiet_reminders_note | Tudi opomniki v bližini so v tihem času utišani. | Nearby reminders are silent in quiet hours too. |
+| alerts.quiet_invalid | Vpišite uro, na primer 22:00. | Enter a time, for example 22:00. |
+
+`alerts.quiet_reminders_note` is the extra line under `quiet_help`: the exception for a chip-number match and new messages does not apply to the on-phone reminders (CH-248). `alerts.quiet_invalid` is the error under a quiet-hours field on mobile that is not a time in HH:MM; draft, needs native review (CH-283).
 
 # 5. Permission state
 
@@ -149,6 +189,28 @@ No channel is locked in the app: there is no lock note and no warning when every
 
 `profile.row_export` and `profile.row_delete` appear in M3 (FR-034).
 
+## 7a. Offline data (mobile Settings, CH-318, TASK-85.3)
+
+A Settings row on the Profile, signed in and signed out (the Map tab caches either way). Draft, needs native review.
+
+| Key | SL | EN |
+|---|---|---|
+| profile.row_offline | Podatki brez povezave | Offline data |
+| profile.offline_body | Prijave v bližini in njihove fotografije shranimo v telefon, da jih vidite tudi brez povezave. | We keep reports near you and their photos on this phone, so you can see them offline too. |
+| profile.offline_size | Zasedeno | Space used |
+| profile.offline_size_value | {size} MB | {size} MB |
+| profile.offline_updated | Zadnja posodobitev | Last updated |
+| profile.offline_updated_never | Še ni bilo posodobitve | Not updated yet |
+| profile.offline_mobile_photos | Za fotografije brez povezave uporabi mobilne podatke | Use mobile data for offline photos |
+| profile.offline_mobile_photos_help | Ko je izklopljeno, fotografije prenesemo samo prek omrežja Wi-Fi. | When this is off, we download photos over Wi-Fi only. |
+| profile.offline_clear | Počisti podatke brez povezave | Clear offline data |
+| profile.offline_clear_title | Želite počistiti podatke brez povezave? | Clear offline data? |
+| profile.offline_clear_body | S telefona izbrišemo shranjene prijave v bližini in njihove fotografije. Prijave, ki čakajo na pošiljanje, ostanejo. | We delete the saved reports near you and their photos from this phone. Reports waiting to be sent stay. |
+| profile.offline_clear_confirm | Počisti | Clear |
+| profile.offline_cleared | Podatki brez povezave so počiščeni. | Offline data cleared. |
+
+CH-318 expected the clear dialog to say that drafts go too; the catalogue body says reports waiting to be sent stay, and says nothing of drafts. The wording above follows the catalogue; the developers confirm which data the Clear action really removes before the copy is final.
+
 # 8. SEO and alt text
 
 SEO: N/A (signed in, `noindex`). Document titles: "Obvestila · Najdimo", "Opozorila v bližini · Najdimo", "Moj račun · Najdimo" (EN "Notifications", "Nearby alerts", "My account").
@@ -160,3 +222,4 @@ Alt text: avatar `alt=""` next to the name; nearby-alert row pet photo per P9 §
 | Date | Change |
 |---|---|
 | 2026-10-18 | CH-501 (TASK-114.14): added `alerts.species_none` (§2); removed `alerts.locked_note` (§3). SL/EN reviewed, unchanged. |
+| 2026-10-18 | v0.3. CH-241/CH-248/CH-355: section 2a nearby reminders, 2b Always-location primer, quiet-hours reminder line. CH-283: `alerts.quiet_invalid`. CH-318: section 7a offline data. |

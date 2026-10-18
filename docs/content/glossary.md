@@ -2,7 +2,7 @@
 source: 02§Glossary; 02§Content, SEO and legal requirements; 03§Content strategy; supabase/seed/geo (GURS regions and municipalities)
 doc: glossary
 title: SL/EN terminology glossary
-version: 0.4
+version: 0.5
 status: Approved (client, 2026-10-15); v0.3 additions (§3a, CRHŽ row) and the v0.4 reward row pending native review
 date: 2026-10-15
 owner: Content Strategist
@@ -247,7 +247,121 @@ Combined: "rjave in bele barve", "črne, rjave in bele barve".
 | pointed | (not shown) | Siamski vzorec | s temnejšim obrazom, ušesi in tačkami | Colourpoint |
 | other | Drugo | Drugo | (omit) | Other |
 
-Breeds (namespace `breeds`): localised names are written once the breed codes exist in `@zivali/validation/breeds` (TASK-16). Fallback labels: `mixed` "Mešanec" / "Mixed breed", `unknown` "Ne vem" / "Not sure".
+Breeds: see §7.4.
+
+## 7.4 Breeds (namespace `breeds`, CH-270)
+
+Drafted from `@zivali/validation/breeds` for TASK-16.4: every code exists in both locales (76 dog, 24 cat), key `breeds.<species>.<code>`. The fallback codes are `dog.mixed` / `cat.mixed` "Mešanec" / "Mixed breed" and `dog.unknown` / `cat.unknown` "Ne vem" / "Not sure". Breed names are proper names and mostly follow common Slovenian usage (Labradorec, Nemški ovčar); the rarer ones are partly the international name. All need native review. `attributes.size_help_dog` holds the dog size help line of §7.1.
+
+### Dogs
+
+| Code | SL | EN |
+|---|---|---|
+| dog.labrador_retriever | Labradorec | Labrador Retriever |
+| dog.golden_retriever | Zlati prinašalec | Golden Retriever |
+| dog.german_shepherd | Nemški ovčar | German Shepherd |
+| dog.belgian_shepherd | Belgijski ovčar | Belgian Shepherd |
+| dog.border_collie | Border collie | Border Collie |
+| dog.australian_shepherd | Avstralski ovčar | Australian Shepherd |
+| dog.rough_collie | Škotski ovčar (collie) | Rough Collie |
+| dog.shetland_sheepdog | Šetlandski ovčar | Shetland Sheepdog |
+| dog.karst_shepherd | Kraški ovčar | Karst Shepherd |
+| dog.tornjak | Tornjak | Tornjak |
+| dog.sarplaninac | Šarplaninec | Šarplaninac |
+| dog.caucasian_shepherd | Kavkaški ovčar | Caucasian Shepherd |
+| dog.central_asian_shepherd | Srednjeazijski ovčar | Central Asian Shepherd |
+| dog.maremma_sheepdog | Maremski ovčar | Maremma Sheepdog |
+| dog.jack_russell_terrier | Jack Russell terier | Jack Russell Terrier |
+| dog.yorkshire_terrier | Yorkshirski terier | Yorkshire Terrier |
+| dog.west_highland_white_terrier | West highland beli terier | West Highland White Terrier |
+| dog.fox_terrier | Foksterier | Fox Terrier |
+| dog.jagdterrier | Nemški lovski terier | German Hunting Terrier |
+| dog.airedale_terrier | Airedalski terier | Airedale Terrier |
+| dog.staffordshire_bull_terrier | Stafordshirski bulterier | Staffordshire Bull Terrier |
+| dog.american_staffordshire_terrier | Ameriški stafordshirski terier | American Staffordshire Terrier |
+| dog.american_pit_bull_terrier | Ameriški pitbulterier | American Pit Bull Terrier |
+| dog.bull_terrier | Bulterier | Bull Terrier |
+| dog.chihuahua | Čivava | Chihuahua |
+| dog.maltese | Maltežan | Maltese |
+| dog.bolognese | Bolonjski bišon | Bolognese |
+| dog.havanese | Havanski bišon | Havanese |
+| dog.bichon_frise | Kodrasti bišon | Bichon Frisé |
+| dog.shih_tzu | Shih tzu | Shih Tzu |
+| dog.lhasa_apso | Lhasa apso | Lhasa Apso |
+| dog.pomeranian | Pomeranec | Pomeranian |
+| dog.papillon | Papijon | Papillon |
+| dog.poodle | Koder | Poodle |
+| dog.cavalier_king_charles_spaniel | Kavalir King Charles španjel | Cavalier King Charles Spaniel |
+| dog.english_cocker_spaniel | Angleški koker španjel | English Cocker Spaniel |
+| dog.english_springer_spaniel | Angleški springer španjel | English Springer Spaniel |
+| dog.french_bulldog | Francoski buldog | French Bulldog |
+| dog.english_bulldog | Angleški buldog | English Bulldog |
+| dog.pug | Mops | Pug |
+| dog.boxer | Bokser | Boxer |
+| dog.beagle | Bigl | Beagle |
+| dog.basset_hound | Baset | Basset Hound |
+| dog.dachshund | Jazbečar | Dachshund |
+| dog.istrian_shorthaired_hound | Istrski kratkodlaki gonič | Istrian Shorthaired Hound |
+| dog.istrian_coarse_haired_hound | Istrski ostrodlaki gonič | Istrian Coarse-haired Hound |
+| dog.posavaz_hound | Posavski gonič | Posavaz Hound |
+| dog.bavarian_mountain_hound | Bavarski barvar | Bavarian Mountain Hound |
+| dog.german_shorthaired_pointer | Nemški kratkodlaki ptičar | German Shorthaired Pointer |
+| dog.weimaraner | Vajmarski ptičar | Weimaraner |
+| dog.hungarian_vizsla | Madžarska vižla | Hungarian Vizsla |
+| dog.english_setter | Angleški seter | English Setter |
+| dog.irish_setter | Irski seter | Irish Setter |
+| dog.rottweiler | Rotvajler | Rottweiler |
+| dog.dobermann | Doberman | Dobermann |
+| dog.cane_corso | Cane corso | Cane Corso |
+| dog.great_dane | Nemška doga | Great Dane |
+| dog.bernese_mountain_dog | Bernski planšar | Bernese Mountain Dog |
+| dog.saint_bernard | Bernardinec | Saint Bernard |
+| dog.newfoundland | Novofundlandec | Newfoundland |
+| dog.leonberger | Leonberger | Leonberger |
+| dog.hovawart | Hovavart | Hovawart |
+| dog.miniature_schnauzer | Pritlikavi šnavcer | Miniature Schnauzer |
+| dog.giant_schnauzer | Veliki šnavcer | Giant Schnauzer |
+| dog.miniature_pinscher | Pritlikavi pinč | Miniature Pinscher |
+| dog.siberian_husky | Sibirski haski | Siberian Husky |
+| dog.alaskan_malamute | Aljaški malamut | Alaskan Malamute |
+| dog.samoyed | Samojed | Samoyed |
+| dog.akita | Akita | Akita |
+| dog.shiba_inu | Šiba inu | Shiba Inu |
+| dog.chow_chow | Čau čau | Chow Chow |
+| dog.dalmatian | Dalmatinec | Dalmatian |
+| dog.pembroke_welsh_corgi | Valižanski korgi pembroke | Pembroke Welsh Corgi |
+| dog.whippet | Vipet | Whippet |
+| dog.mixed | Mešanec | Mixed breed |
+| dog.unknown | Ne vem | Not sure |
+
+### Cats
+
+| Code | SL | EN |
+|---|---|---|
+| cat.european_shorthair | Evropska kratkodlaka | European Shorthair |
+| cat.british_shorthair | Britanska kratkodlaka | British Shorthair |
+| cat.british_longhair | Britanska dolgodlaka | British Longhair |
+| cat.maine_coon | Maine coon | Maine Coon |
+| cat.persian | Perzijska | Persian |
+| cat.exotic_shorthair | Eksotična kratkodlaka | Exotic Shorthair |
+| cat.siamese | Siamska | Siamese |
+| cat.oriental_shorthair | Orientalska kratkodlaka | Oriental Shorthair |
+| cat.ragdoll | Ragdoll | Ragdoll |
+| cat.birman | Birmanska | Birman |
+| cat.norwegian_forest | Norveška gozdna | Norwegian Forest Cat |
+| cat.siberian | Sibirska | Siberian |
+| cat.bengal | Bengalska | Bengal |
+| cat.sphynx | Sfinga | Sphynx |
+| cat.scottish_fold | Škotska klapouha | Scottish Fold |
+| cat.russian_blue | Ruska modra | Russian Blue |
+| cat.chartreux | Kartezijska | Chartreux |
+| cat.abyssinian | Abesinska | Abyssinian |
+| cat.devon_rex | Devon reks | Devon Rex |
+| cat.cornish_rex | Cornish reks | Cornish Rex |
+| cat.turkish_angora | Turška angora | Turkish Angora |
+| cat.turkish_van | Turška van | Turkish Van |
+| cat.mixed | Mešanec | Mixed breed |
+| cat.unknown | Ne vem | Not sure |
 
 # 8. Counters (ICU plural forms)
 
@@ -326,6 +440,7 @@ Distance band codes are fixed in C6 (`lt1`, `1to3`, `3to10`, `gt10`). Only `lt24
 
 | Version | Date | Change |
 |---|---|---|
+| 0.5 | 2026-10-18 | CH-270: §7.4 breeds namespace (76 dog, 24 cat codes, SL and EN, native review pending); `attributes.size_help_dog` noted. |
 | 0.4 | 2026-10-15 | Reward row: display-only line and scam warning; escrow wording removed (brief v1.1). |
 | 0.3 | 2026-10-15 | §3a statistical regions (12, SL/EN confirmed) and municipality display rules; CRPsi row replaced by CRHŽ (not public, never linked); open point on "QR koda". |
 | 0.2 | 2026-10-15 | Brief v0.7: QR tags removed, Vet Partner and clinic badge added, "Oglas" applies to every paid placement. |
