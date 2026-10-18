@@ -77,7 +77,7 @@ export default async function LocaleLayout({ children, params }: LayoutProps<'/[
 			<head>
 				<script nonce={nonce} dangerouslySetInnerHTML={{ __html: themeScript }} />
 			</head>
-			<body className={`${display.variable} ${sans.variable}`}>
+			<body className={`${display.variable} ${sans.variable} flex min-h-dvh flex-col`}>
 				<Providers
 					signedIn={viewer !== null}
 					consent={{
@@ -88,7 +88,7 @@ export default async function LocaleLayout({ children, params }: LayoutProps<'/[
 					messages={errorMessages}
 				>
 					<SiteHeader viewer={viewer} />
-					{children}
+					<div className="flex-1">{children}</div>
 					<SiteFooter />
 				</Providers>
 			</body>
