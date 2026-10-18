@@ -1,11 +1,11 @@
 ---
 id: TASK-115.5
 title: 'Web: implement the homepage rework'
-status: In Progress
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-16 14:00'
-updated_date: '2026-10-18 20:03'
+updated_date: '2026-10-18 20:31'
 labels:
   - fe
   - 'est:M'
