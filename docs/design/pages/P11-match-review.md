@@ -3,7 +3,7 @@ source: 03§P11
 page: P11 Match review
 stories: TASK-20 (FR-008)
 platforms: web, mobile
-version: 1.1
+version: 1.2
 mockup: docs/design/mockups/P11-match-review.html
 copy: docs/content/pages/P11-match-review.md
 ---
@@ -22,11 +22,11 @@ Push or inbox notification "Possible match", the note on the owner's detail page
 
 Header: back, pet name and photo (small), count in one line. Rows (no cards): candidate photo 64, status word (Found or Sighted), area and distance, time gap ("found 3 hours after"), and a strength word with a three-step indicator (Possible, Likely, Very likely; shown as a word and three small bars, never a number). A chip match row shows the plain line "Chip number matches" with a shield icon above the others and sorts first. Pull to refresh. Rejected matches never reappear.
 
-Empty state: spot illustration, h3 "No matches yet", sentence that we keep looking and will notify, text button "Share the search".
+Empty state: spot illustration, h3 "No matches yet", sentence that we keep looking and will notify, then three secondary buttons on web and mobile: "Deli iskanje" (system share sheet, else copy link with `share.copied`), "Natisni plakat" (poster PDF, `/r/<code>/poster.pdf?lang=<locale>`, C15) and "Opozorila v bližini" (alerts settings). Keys `matches.empty_poster`, `matches.empty_alerts`. Web has all three (TASK-20.3, AC#3); mobile built share only (bug TASK-20.7 adds the other two, CH-461).
 
 ## Review screen
 
-1. Flow-style top bar (back, "Match" title, overflow with Report abuse).
+1. Flow-style top bar (back, "Match" title). On mobile the bar's overflow has Report abuse once the P10 sheet exists; on web "Prijavi zlorabo" is in an overflow menu below the actions of the review column (shared MoreMenu and abuse dialog, target `report`), not in the page header (CH-463). Known gap: the mobile match screen has no such entry yet (CH-435, needs a mobile task).
 2. **Comparison.** Mobile: two photos stacked in one 4:3 frame with a toggle (My pet / Candidate) and swipe; thumbnails below for more photos. Web `lg`: two photos side by side.
 3. **Strength** line: word and bars, then **Why we think so** as a plain list with check icons: same chip, distance in km, time gap, size, colours (each line one short sentence; contents from the match reasons).
 4. **Facts table**: rows (Species, Size, Colours, Sex, Found where (area), When) with my pet's value left and the candidate's right; matching rows carry a check icon and the word "Matches", differing rows "Differs". Text, not colour.
@@ -54,6 +54,10 @@ When a found report has several claiming owners the finder sees them as separate
 | Offline | cached list read-only, actions disabled with explanation |
 | Already confirmed | review screen shows "Match confirmed" and a link to the chat |
 
+### Web as built (TASK-20.3, CH-429)
+
+`/r/[code]/ujemanja?m=<match id>` picks a match; there is no separate review route (C15 lists only reportMatches). From `lg` the list (360 px) and the review sit side by side with the first match open. Below `lg` the list shows, and a picked match shows under the page h1 with "Nazaj" back to the list (the photos use the M3 toggle). Thumbnails per side when a report has several photos. Below `sm` the facts table shows the result under the row label (three columns). Header "Prijavi" is secondary on this page (W1 note).
+
 ## Responsive
 
 `lg`: list left (360 px), review right. Below: separate screens. Photos are large; pinch to zoom.
@@ -79,3 +83,4 @@ Strength is text plus bars with an accessible label; comparison table is a real 
 | Version | Date | Change |
 |---|---|---|
 | 1.1 | 2026-10-18 | CH-332: mobile review screen as built |
+| 1.2 | 2026-10-18 | CH-429, CH-434 (CH-430), CH-461, CH-463: web as built, three empty-state actions, abuse in the overflow below the actions; CH-435 gap noted |

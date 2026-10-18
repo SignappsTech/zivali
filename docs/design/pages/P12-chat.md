@@ -3,6 +3,7 @@ source: 03§P12
 page: P12 Chat
 stories: TASK-21 (FR-009)
 platforms: web, mobile
+version: 1.1
 mockup: docs/design/mockups/P12-chat.html
 copy: docs/content/pages/P12-chat.md
 ---
@@ -54,6 +55,8 @@ Reward escrow (M4) adds one row under the safety banner; leave 56 px of reserved
 
 `lg`: two panes, list 360 px left and thread right; Enter sends, Shift+Enter adds a line. Below `lg` list and thread are separate screens. Anonymous finders open the thread directly from the manage page.
 
+**As built (TASK-21.3, CH-440).** Beside an open thread (`lg`) the list pane keeps the segmented control, but its "Sporočila" heading is an h2 under it (as P13's view h1) and the thread title is the page's one h1; "Obvestila" there opens `/nabiralnik?view=notifications`. Reporting one message (P12 gives only the mobile long press): a 44 px flag icon button "Prijavi zlorabo" beside each of the other person's bubbles, shown on hover or focus where there is a pointer, always on touch. The block confirmation is the web alert dialog.
+
 ## Responsive and accessibility
 
 Composer stays above the keyboard; safety banner collapses to an icon plus one line at 320 px. Messages are a `log` region (`aria-live="polite"`), each bubble has author and time in its accessible name, the send button has a label, timestamps are real text, 200 % text keeps bubbles readable, caution text is real text.
@@ -69,3 +72,9 @@ Composer stays above the keyboard; safety banner collapses to an icon plus one l
 1. Mobile: list (with unread), empty, thread (own and other messages, link caution, system message), failed message, read-only, blocked, offline queue, anonymous session note.
 2. Web 1200 px: two panes.
 3. Light and dark.
+
+## Change log
+
+| Version | Date | Change |
+|---|---|---|
+| 1.1 | 2026-10-18 | CH-440: web as built (headings, per-message report button, block dialog) |

@@ -2,7 +2,7 @@
 doc: design-system
 title: Design system (slice)
 source: 03§Brand and visual language
-version: 0.16
+version: 0.17
 status: Draft, direction A (Lagoon) chosen by the client
 date: 2026-10-15
 owner: Design Lead
@@ -533,7 +533,7 @@ Web = shadcn/ui, mobile = React Native Reusables (NativeWind). Same names, same 
 | Pet tile (web) | Photo 4:3 radius 24, title (h3) 16 px under it, meta line (status word + "time, distance"). No container. Hover: the title underlines (2 px, offset 4); nothing changes on the photo. Pressed: `scale(0.98)`. Focus: the 3 px `ring` wraps photo and text with a **6 px offset**, so it clears the photo's corners. Skeleton: same shape. |
 | Card | `card` surface, radius 24, padding 24, no border, no shadow. Never nested in another card. Used for dialogs, forms and grouped content on web. |
 | Note | `muted` surface, radius 20, icon 22 + text 15/22. One per view at most (for example the scam warning), except the flag-gated legal note slot (P3 T5, T6), which sits in its own region and may share a view with one other note (unconfirmed, error or stale). |
-| Empty state | Spot illustration (flat geometry), h3, one sentence, one `secondary` button. |
+| Empty state | Spot illustration (flat geometry), title, one sentence, one `secondary` button (the P11 matches empty state lists three secondary actions). The title is an h3 under a section's h2, and an h2 when the page's h1 is the only heading above it (the notifications view's empty inbox; axe heading-order): `EmptyState` takes `heading="h2"` (web e2e fix, 2026-10-16, CH-481). |
 
 ## 10.7 Navigation and layout shells
 
@@ -544,7 +544,7 @@ Web = shadcn/ui, mobile = React Native Reusables (NativeWind). Same names, same 
 | Bottom sheet | `card`, top radius 28, grabber 40x5, `shadow-lg`, 20 px side padding. Snap points: peek about 40 % of the screen, full 92 %. Scrim behind modals. |
 | Flow top bar | 56 px: back (icon button), **one bar per step** (the count comes from the flow's page slice, for example 7 for the lost flow; 4 px high, gap 6, equal widths, `primary` for done steps and the current one, `muted` for the rest), close. No title. The bars are one `role="progressbar"` with `aria-valuenow` and `aria-valuemax` and the name "Korak {current} od {total}" from the content slice. Flows keep to 8 steps or fewer so the bars stay readable at 320 px. |
 | Web header | 88 px, no border, on `background`. Logo left, at most 4 text links (16 semibold; the current page is `foreground` **and underlined**, others `muted-foreground`, so it is not colour only), right: language switch, ghost "Vpis" (EN "Sign in") and a `sm` "Prijavi": `primary` by default, `secondary` on pages whose content has its own primary action (P3 home hero, P3 T5 and T6 where the primary is "Pokliči", P9 detail, P22 form); in every T5/T6 state it stays `secondary`, even when the page shows no primary, so a view never shows two primaries. Same place, label and menu either way. Signed in: the fourth link is the short label "Moje živali" (EN "My pets"; reports are inside), inbox icon button and avatar menu. The header must fit without overflow from 1024 px; if it does not, the language switch moves into the account menu below `xl`. |
-| Web footer | Content variant: logo with tagline, wrapped rows of the 13 links (How it works, Safety tips, FAQ, For shelters, Shelters (the public directory), Partners, About, Privacy, Cookies, Cookie settings, Terms, Imprint, Accessibility), language, copyright line; no panel. **Flow variant: minimal** single quiet row (Privacy, Terms, Cookie settings, Accessibility), no logo block, no copyright. |
+| Web footer | Content variant (as built, TASK-116.2, P1-footer.html v1): hairline top border; logo and tagline with the language switch under it (left, 4fr) and four headed columns (8fr; h2 headings "Pomoč", "Za organizacije", "Najdimo", "Pravno" inside the `nav` "Noga strani", each `ul` labelled by its heading; Cookie settings last under Pravno); 2 by 2 columns below `lg`; a bottom row (border-top) with the copyright and the operator line; no panel. The 13 links are the same set (How it works, Safety tips, FAQ, For shelters, Shelters (the public directory), Partners, About, Privacy, Cookies, Cookie settings, Terms, Imprint, Accessibility). **Flow variant: minimal** single quiet row (Privacy, Terms, Cookie settings, Accessibility), no logo block, no copyright. |
 
 ## 10.8 Flow screen ("one question per screen")
 
@@ -561,7 +561,7 @@ Top bar, then (optional) a photo, an h1 question (34/40), the answer or control 
 | Timeline (sightings) | Plain list: status word with date and time, then the sentence (16/24), 28 px between items. No cards, no line. |
 | Gallery | Main photo radius 32, thumbs 88x72 radius 16, inactive thumbs at 55 % opacity. |
 | Share | One ghost button "Deli ali natisni plakat" that opens a menu (Facebook, WhatsApp, copy link, poster with QR code). |
-| Menu (popover) | `popover`, radius 20, 8 px padding, `shadow-pop`, rows 48 px (icon 20, 16 semibold), hover `foreground` at 10 %. |
+| Menu (popover) | `popover`, radius 20, 8 px padding, `shadow-pop`, rows 48 px (icon 20, 16 semibold), hover `foreground` at 10 %. As built: the P9 share menu and "Več možnosti" are not modal (the APG menu button: Escape and a press outside close them, the page is not aria-hidden), because a modal Radix menu aria-hid the page while its links stayed focusable (axe aria-hidden-focus). The chat thread, admin shell and admin directory menus are still modal; whether every menu follows is open (CH-482). |
 | Avatar | 32, 48, 72 px round. Photo, or initials (bold, `secondary` fill, `secondary-foreground`) when there is none; the initials avatar has an accessible name. |
 | Skeleton | `muted` with an `accent` shimmer, static under reduced motion. Same shape as the final element. One polite "Nalaganje …" per region, not per skeleton. |
 | Inline error (region) | In place of the region that failed: a `note` with a fill `warning-circle` in `destructive`, one sentence in `foreground`, and a `text` button "Poskusi znova" under it (spinner while retrying). Field errors follow 10.3 instead. |
@@ -596,7 +596,7 @@ Top bar, then (optional) a photo, an h1 question (34/40), the answer or control 
 | Toast | `sonner` | `sonner-native` or RNR toast | Popover surface. |
 | Menu | `dropdown-menu`, `popover` | `DropdownMenu`, `Popover` | Popover surface, radius 20. |
 | Skeleton, avatar, progress | `skeleton`, `avatar`, `progress` | same names | As above. |
-| Sidebar | `sidebar` | not needed | Shelter portal and admin only. |
+| Sidebar | `sidebar` | not needed | Shelter portal and admin only, plus the closing band of the T1 home page (approved layout A, P3-home.html v1, TASK-115.1; built in TASK-115.5): `sidebar` fill, `sidebar-primary` for the accent and an inset `sidebar-foreground` outline button (CH-545). |
 
 # 11. Breakpoints and responsive behaviour
 
@@ -715,3 +715,4 @@ Each page slice in `docs/design/pages/P<n>-<slug>.md` gets one static mockup at 
 | 0.15 | 2026-10-15 | CH-95 (from TASK-8.2): type steps `control` 15/20 and `control-lg` 17/24 (control labels, tabs, radio rows, toast text, large button); button state tokens `primary-hover`, `primary-pressed`, `secondary-hover`, `secondary-pressed`, `destructive-hover`, `destructive-pressed` in light and dark (replace the 14 % mix; text on every state 10.0:1 or better light and 7.0:1 or better dark, except `secondary-pressed` at 6.4:1 light and 7.0:1 dark, floor 6:1 for the transient state); new primitives `crimson.200`, `crimson.800`. Tokens 0.5.2. |
 | 0.14 | 2026-10-16 | TASK-90.5: web font loading cut to Bricolage 700 + Atkinson 400/700, custom Latin subsets, no opsz, preload, size-adjusted fallback (section 4). Tokens unchanged. |
 | 0.16 | 2026-10-18 | CH-236, CH-239, CH-242, CH-245, CH-246, CH-258: chat parts, strength indicator and result cell, channel matrix and notification row, ad unit pointer (§10.5, §10.9); composer hidden-label exception (§10.3); P4 list-pane h1 at 30/36 (§4). Tokens unchanged. |
+| 0.17 | 2026-10-18 | CH-481, CH-482, CH-544, CH-545: empty-state heading level, non-modal menus as built, footer content variant as built, sidebar tokens on the T1 closing band. Tokens unchanged. |

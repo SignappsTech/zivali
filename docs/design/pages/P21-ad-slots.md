@@ -3,7 +3,7 @@ source: 03§P21
 page: P21 Ad slots and house ads
 stories: TASK-36 (FR-029, FR-030)
 platforms: web, mobile
-version: 1.1
+version: 1.2
 mockup: docs/design/mockups/P21-ad-slots.html
 copy: docs/content/pages/P21-ad-slots.md
 ---
@@ -35,7 +35,7 @@ One image format: **4:3, minimum 1200 by 900 px**, JPG or PNG under 500 KB. Slot
 
 **Vet Partner placement:** a featured "nearest vet" unit in the Detail slot (and optionally the Feed slot) for a verified vet partner: same layout as Detail with the partner name, area and a text button "Call or open map"; always labelled "Oglas"; the same calm rules, never in the no-ad routes. Admin previews it in P20.
 
-Reserved sizes (measured in the P21 mockup; smaller values would shift the layout): Feed 88 px row; Detail and Reunited 200 px on mobile and 176 px on web (label, 2-line title, 2 text lines, 44 px button); Sidebar 320 by 452 px (4:3 image 288 by 216, title, 3 text lines, 44 px button).
+Web placement: the Sidebar sits beside the sections below the P9 columns, for an active report only (P9 Web sidebar, CH-457). Reserved sizes (measured in the P21 mockup; smaller values would shift the layout): Feed 88 px row; Detail and Reunited 200 px on mobile and 176 px on web (label, 2-line title, 2 text lines, 44 px button); Sidebar 320 by 452 px (4:3 image 288 by 216, title, 3 text lines, 44 px button).
 
 **Reunited and the support ask (P15).** The Reunited ad stays in its slot below the tip but is not rendered, not even requested, while the tip ask is shown. It appears once the ask is skipped or paid, or when there is no ask (signed out). Web and mobile follow the same rule; the M3 frame shows the ad after the ask is closed.
 
@@ -84,3 +84,4 @@ Unit is a link with accessible name "Ad: title"; image alt from the admin field;
 | Version | Date | Change |
 |---|---|---|
 | 1.1 | 2026-10-18 | CH-238, CH-247, CH-266, CH-385: reserved sizes 200/176 and 320x452, Reunited stacked on mobile, ad hidden while the tip ask is shown |
+| 1.2 | 2026-10-18 | CH-457: sidebar placement on the report detail; CH-456 already applied (1.1) |

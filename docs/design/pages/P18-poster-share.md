@@ -3,7 +3,7 @@ source: 03§P18
 page: P18 Poster and sharing
 stories: TASK-24 (FR-011)
 platforms: web, mobile
-version: 1.2
+version: 1.3
 mockup: docs/design/mockups/P18-poster-share.html
 copy: docs/content/pages/P18-poster-share.md
 ---
@@ -22,6 +22,10 @@ Give an owner a printable A4 poster and one-tap sharing so the search reaches ne
 4. Primary `lg` "Download PDF" (generation under 5 s, progress state). Text button "Print".
 5. **Share:** a list of rows (WhatsApp, Facebook, Copy link, More...) or the native share sheet on mobile; a short preview of the link card (photo, title) below.
 6. Quiet note: poster contains a QR code that opens the listing.
+
+### Web as built (TASK-24.2, CH-442)
+
+C15 has no web route for "Plakat in deljenje", so the poster options are a content dialog opened from slot B's "Plakat s QR kodo": language pills, "Prenesi PDF" ("Pripravljamo ..." while generating, the failure note, primary "Poskusi znova" on failure), "Natisni", file name, QR note. "Natisni" opens the PDF in a new tab (its viewer prints; a framed PDF cannot print under X-Frame-Options DENY). The Facebook kit is a second dialog opened from the Facebook row, for the owner of an open lost report only (visitors get the Facebook sharer). Left out, as on mobile: the A4 preview and "Pokaži v polni velikosti" (the PDF is the full view), the vet switch (flag off) and "Dodaj fotografijo" (no web edit flow yet; the note stays). The 1080 square has no status icon (next/og cannot draw the Phosphor icon; word and colour stay). Poster as built: no collar line (the collar text is manager-only, an ownership check); facts are colour, size, breed; sighted posters have no "when" line (no key); dates print as "12. 10." / "12 Oct"; a long name shrinks to one line down to 48 pt, and the photo drops below 119 mm only when long texts would run off the page.
 
 ### Facebook row (as built, TASK-114.9)
 
@@ -90,3 +94,4 @@ None (the poster uses the report photo; logo mark from `docs/design/brand/`).
 |---|---|---|
 | 1.1 | 2026-10-18 | Facebook row: always the sharer link, copies the text in the same tap, clipboard-refused fallback (CH-507, TASK-114.9). |
 | 1.2 | 2026-10-18 | CH-339: mobile poster screen as built |
+| 1.3 | 2026-10-18 | CH-442: web as built; CH-507, CH-540 already applied (1.2) |
