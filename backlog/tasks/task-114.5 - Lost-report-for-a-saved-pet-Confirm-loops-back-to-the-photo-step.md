@@ -1,12 +1,12 @@
 ---
 id: TASK-114.5
 title: 'Lost report for a saved pet: Confirm loops back to the photo step'
-status: In Progress
+status: Done
 assignee:
   - '@backend-dev'
   - '@frontend-dev'
 created_date: '2026-10-16 13:50'
-updated_date: '2026-10-18 02:09'
+updated_date: '2026-10-18 02:28'
 labels:
   - bug
   - fe
