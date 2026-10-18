@@ -2,6 +2,7 @@ import { createHmac } from 'node:crypto';
 
 import { describe, expect, it } from 'vitest';
 
+import { aiOn } from '../../adapters/ai/index.ts';
 import { embedderOn } from '../../adapters/embedder/index.ts';
 import { createAdapters } from '../../adapters/index.ts';
 import { mockEvent, signWebhook } from '../../adapters/payments/mock.ts';
@@ -33,7 +34,8 @@ const blank: Config = {
 describe('adapter provider selection', () => {
 	it('falls back to mocks without credentials outside production', async () => {
 		const a = createAdapters(blank);
-		expect((await a.ai.vision({ prompt: 'x', images: [] })).text).toContain('mock');
+		expect(a.ai.provider).toBe('mock');
+		expect(await a.ai.extract({ jpegBase64: '', sha256: 'a' })).toMatchObject({ outcome: 'ok' });
 		expect((await a.embedder.embed([{ jpegBase64: '', sha256: 'a' }], 'm'))[0]).toHaveLength(1024);
 		expect(await a.captcha.verify('fail')).toBe(false);
 		expect(await a.captcha.verify('ok')).toBe(true);
@@ -99,6 +101,37 @@ describe('adapter provider selection', () => {
 		);
 	});
 
+	it('an unset AI provider is off in staging and production, never anthropic or the mock (TASK-40.1 review)', () => {
+		for (const APP_ENV of ['staging', 'production'] as const) {
+			for (const NODE_ENV of ['production', 'development'] as const) {
+				const { ai } = createAdapters({ ...prodFull, APP_ENV, NODE_ENV, AI_PROVIDER: undefined });
+				expect(aiOn(ai)).toBe(false);
+				expect(() => ai.extract({ jpegBase64: '', sha256: 'a' })).toThrow(/not enabled/);
+			}
+		}
+		// Locally an unset provider is the mock, even with a key; anthropic only when set explicitly.
+		expect(createAdapters({ ...blank, ANTHROPIC_API_KEY: 'a' }).ai.provider).toBe('mock');
+		expect(createAdapters({ ...blank, AI_PROVIDER: 'anthropic', ANTHROPIC_API_KEY: 'a' }).ai.provider).toBe(
+			'anthropic'
+		);
+		expect(createAdapters({ ...blank, AI_PROVIDER: 'anthropic' }).ai.provider).toBe('mock');
+	});
+
+	it('the AI mock never runs outside APP_ENV=local: mock, or anthropic without a key, is off (CH-562)', () => {
+		for (const APP_ENV of ['staging', 'production'] as const) {
+			for (const settings of [
+				{ AI_PROVIDER: 'mock' as const },
+				{ AI_PROVIDER: 'anthropic' as const, ANTHROPIC_API_KEY: undefined },
+			]) {
+				const { ai } = createAdapters({ ...blank, APP_ENV, NODE_ENV: 'development', ...settings });
+				expect(aiOn(ai)).toBe(false);
+				expect(() => ai.extract({ jpegBase64: '', sha256: 'a' })).toThrow(/not enabled/);
+			}
+		}
+		// NODE_ENV=production still refuses both at boot.
+		expect(() => createAdapters({ ...prodFull, APP_ENV: 'staging', AI_PROVIDER: 'mock' })).toThrow(/AI_PROVIDER/);
+	});
+
 	it('minio never passes on built-in credentials in production', () => {
 		expect(() => createAdapters({ ...prodFull, STORAGE_PROVIDER: 'minio' })).toThrow(/STORAGE_PROVIDER/);
 	});
@@ -109,7 +142,7 @@ describe('adapter provider selection', () => {
 			(off as Record<string, unknown>)[`${k}_PROVIDER`] = 'off';
 		}
 		const a = createAdapters(off);
-		expect(() => a.ai.vision({ prompt: 'x', images: [] })).toThrowError(
+		expect(() => a.ai.extract({ jpegBase64: '', sha256: 'a' })).toThrowError(
 			expect.objectContaining({ name: 'AppError', code: 'SERVICE_UNAVAILABLE' })
 		);
 		expect(() => a.embedder.embed([], 'm')).toThrow(/not enabled/);

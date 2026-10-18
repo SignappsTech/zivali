@@ -1,10 +1,11 @@
 // retention.purge (daily, C1): rate-limit windows older than 48 h, idempotency keys older than 24 h, chat
 // conversations read-only for `retention.chat_months` (6) with their messages (C9), and photos (C5): unattached for
 // 24 h (pet photos of deleted pets included), of reports ended 12 months ago, and the device hashes of anonymous
-// reports after 7 days (C7 hold rule). Sent with `{ objects }`
+// reports after 7 days (C7 hold rule), ai_calls after 62 days and ai_results no photo has the image of (C19). Sent with `{ objects }`
 // (DELETE /v1/photos/:id) it deletes just those storage objects.
 import { z } from 'zod';
 
+import { AiDomain } from '../domains/ai/index.ts';
 import { ChatDomain } from '../domains/chat/index.ts';
 import { PhotosDomain } from '../domains/photos/index.ts';
 import { PlatformDao } from '../domains/platform/index.ts';
@@ -22,5 +23,7 @@ export async function handle(data: unknown, ctx: JobCtx): Promise<void> {
 	const conversations = await ChatDomain.purgeExpired(undefined, ctx);
 	const photos = await PhotosDomain.purgePhotos(ctx);
 	const device_hashes = await ReportsDomain.purgeDeviceHashes(undefined, ctx);
-	ctx.logger.info({ purged: { ...purged, conversations, photos, device_hashes } }, 'retention purge done');
+	// After the photo purge, so the results of images just deleted go too.
+	const ai = await AiDomain.purgeExpired(ctx);
+	ctx.logger.info({ purged: { ...purged, conversations, photos, device_hashes, ...ai } }, 'retention purge done');
 }
