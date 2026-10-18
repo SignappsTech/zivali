@@ -32,7 +32,7 @@ export async function GET(request: Request, { params }: RouteContext<'/r/[code]/
 	return new Response(new Uint8Array(pdf), {
 		headers: {
 			'content-type': 'application/pdf',
-			'content-disposition': `inline; filename="${posterFileName(report.short_code)}"`,
+			'content-disposition': `inline; filename="${posterFileName(report.short_code, lang)}"`,
 			// Private: a shared cache must not keep a hidden or removed report's photo (C5 unpublish).
 			'cache-control': 'private, max-age=300',
 			'x-robots-tag': 'noindex',

@@ -17,7 +17,7 @@ import { reportLink } from '@/lib/poster-link';
 const catalogues = { sl, en };
 export const translator = (locale: Locale) => createTranslator({ locale, messages: catalogues[locale] });
 
-export { posterFileName, posterPath, reportLink, squarePath } from '@/lib/poster-link';
+export { posterFileName, posterPath, reportLink, squareFileName, squarePath } from '@/lib/poster-link';
 /** The link as printed under the QR and on the square: host and path, no scheme ("najdimo.si/r/k7m2qx"). */
 export const printedLink = (code: string) => reportLink(code).replace(/^https?:\/\//, '');
 /** What the texts need besides the report: the area name, when the lookup has it, and the text language. */

@@ -46,14 +46,16 @@ afterEach(() => {
 });
 
 describe('/r/[code]/poster.pdf', () => {
-	it('answers an A4 PDF named by the code only, from the public read model and the JPEG variant', async () => {
+	it('answers an A4 PDF named by the code and language only, from the public read model and the JPEG variant', async () => {
 		serve(report);
 		const response = await get('Hk3vT9qP', '?lang=en');
 		const pdf = Buffer.from(await response.arrayBuffer());
 
 		expect(response.status).toBe(200);
 		expect(response.headers.get('content-type')).toBe('application/pdf');
-		expect(response.headers.get('content-disposition')).toBe(`inline; filename="najdimo-${report.short_code}.pdf"`);
+		expect(response.headers.get('content-disposition')).toBe(
+			`inline; filename="najdimo-${report.short_code}-en.pdf"`
+		);
 		expect(response.headers.get('x-robots-tag')).toBe('noindex');
 		expect(response.headers.get('cache-control')).toBe('private, max-age=300');
 		expect(pdf.subarray(0, 5).toString()).toBe('%PDF-');

@@ -26,7 +26,7 @@ afterEach(() => {
 });
 
 describe('/r/[code]/square.png', () => {
-	it('draws a 1080 x 1080 PNG for the Facebook kit, named by the code, cached privately', async () => {
+	it('draws a 1080 x 1080 PNG for the Facebook kit, named by the code and language, cached privately', async () => {
 		answer(200, { ...publicReport, photos: [] });
 		const response = await get('Hk3vT9qP', '?lang=en');
 		const png = Buffer.from(await response.arrayBuffer());
@@ -34,7 +34,7 @@ describe('/r/[code]/square.png', () => {
 		expect(response.status).toBe(200);
 		expect(response.headers.get('content-type')).toBe('image/png');
 		expect(response.headers.get('content-disposition')).toBe(
-			`inline; filename="najdimo-${publicReport.short_code}.png"`
+			`inline; filename="najdimo-${publicReport.short_code}-en.png"`
 		);
 		expect(response.headers.get('cache-control')).toBe('private, max-age=300');
 		expect([png.readUInt32BE(16), png.readUInt32BE(20)]).toEqual([1080, 1080]);

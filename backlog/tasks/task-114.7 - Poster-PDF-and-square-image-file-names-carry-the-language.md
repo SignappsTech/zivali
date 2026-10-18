@@ -1,11 +1,11 @@
 ---
 id: TASK-114.7
 title: Poster PDF and square image file names carry the language
-status: To Do
+status: In Progress
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-16 14:15'
-updated_date: '2026-10-17 09:24'
+updated_date: '2026-10-18 04:05'
 labels:
   - bug
   - fe
@@ -33,3 +33,7 @@ Wanted: `najdimo-<code>-sl.pdf` / `najdimo-<code>-en.pdf` (and the same for the 
 - [ ] #2 Downloading both languages one after the other gives two distinct files
 - [ ] #3 Unit tests for the names; e2e poster spec ("downloads najdimo-Rex12345.pdf") updated
 <!-- AC:END -->
+
+## Packet
+
+Branch: agent/TASK-114.7-impl

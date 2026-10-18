@@ -183,14 +183,14 @@ describe('P18 poster dialog', () => {
 		await screen.findByRole('dialog');
 	};
 
-	it('downloads the PDF in the chosen language as najdimo-<code>.pdf and counts poster_download', async () => {
+	it('downloads the PDF in the chosen language as najdimo-<code>-<lang>.pdf and counts poster_download', async () => {
 		fetchMock.mockResolvedValue(new Response('%PDF-', { headers: { 'content-type': 'application/pdf' } }));
 		show(lost);
 		await openPoster();
 
 		const dialog = screen.getByRole('dialog', { name: sl.report.share_poster });
 		expect(within(dialog).getByText(sl.poster.qr_note)).toBeTruthy();
-		expect(within(dialog).getByText('Datoteka: najdimo-Rex12345.pdf')).toBeTruthy();
+		expect(within(dialog).getByText('Datoteka: najdimo-Rex12345-sl.pdf')).toBeTruthy();
 		const print = within(dialog).getByRole('link', { name: /Natisni/ });
 		expect(print.getAttribute('href')).toBe('/r/Rex12345/poster.pdf?lang=sl');
 
@@ -201,7 +201,7 @@ describe('P18 poster dialog', () => {
 		await waitFor(() => expect(click).toHaveBeenCalled());
 		expect(fetchMock).toHaveBeenCalledWith('/r/Rex12345/poster.pdf?lang=en');
 		const link = click.mock.contexts[0] as HTMLAnchorElement;
-		expect([link.download, link.href]).toEqual(['najdimo-Rex12345.pdf', 'blob:poster']);
+		expect([link.download, link.href]).toEqual(['najdimo-Rex12345-en.pdf', 'blob:poster']);
 		expect(events()).toEqual([
 			{ name: 'poster_download', params: { species: 'dog', region: 'osrednjeslovenska' } },
 		]);
@@ -274,7 +274,7 @@ describe('P18 Facebook kit (owner of an open lost report)', () => {
 		const image = within(dialog).getByRole('img', { name: 'Kvadratna slika za objavo: Pogrešan pes Rex' });
 		expect(image.getAttribute('src')).toBe('/r/Rex12345/square.png?lang=sl');
 		expect(within(dialog).getByRole('link', { name: sl.share.kit_image_save }).getAttribute('download')).toBe(
-			'najdimo-Rex12345.png'
+			'najdimo-Rex12345-sl.png'
 		);
 
 		await waitFor(() => expect(within(dialog).getAllByRole('listitem')).toHaveLength(2));
