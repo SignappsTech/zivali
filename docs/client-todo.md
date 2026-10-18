@@ -8,6 +8,7 @@ Put keys into `.env.local` (gitignored) unless noted. Never paste secrets into c
 Status 2026-10-15 15:15: tokens checked read-only. Hetzner, Turnstile, Brevo, Google OAuth, GitHub and the Cloudflare zone token work.
 
 ### Open now
+- [ ] **Pilot owner actions** not yet ticked in `docs/tech/pilot-runbook.md` §10: uptime monitors, restore drill, Supabase Pro or an accepted Auth-backup risk, the Stripe test webhook, the GA4 stream URL, the go-live approval (CH-488).
 - [ ] **Repo visibility**: make `pbozic/zivali` private when convenient. `main` is already pushed (you said go ahead).
 
 ### Done ✅
@@ -54,7 +55,10 @@ Status 2026-10-15 15:15: tokens checked read-only. Hetzner, Turnstile, Brevo, Go
   - Give the `zivali-analytics` service account the role "Firebase Cloud Messaging API Admin".
 - [ ] **Separate production Supabase project** before launch. Today staging and production would share `najdimo`. Create e.g. `najdimo-prod` (Frankfurt, Free tier is fine at first) and put its keys in the production environment only.
 - [ ] **EAS env** (once the domain exists): set the mobile API URL, app URL and Supabase publishable key per environment with `eas env:create` (development, preview, production). The EAS profiles are ready (TASK-5.2); no build has been run yet.
-- [ ] **Voyage AI** key (photo matching, M3): voyageai.com → `VOYAGE_API_KEY`. The free tier covers about 150k photos.
+- [x] **Voyage AI** key (photo matching, M3): set in `.env.local` (checked 2026-10-18).
+- [ ] **Voyage AI account** (before any real photo goes to Voyage, M3): add a payment method (Tier 1 rate limits) and turn on the training opt-out (needs a payment method and an Admin, cannot be undone, gives zero-day retention; Voyage FAQ, read 2026-10-18). Tell us the date.
+- [ ] **AI privacy text** (TASK-40.6): approve the privacy policy v0.8 AI section and the `ai_prefill.info_body` string; confirm Anthropic retention/training under our terms, the contracting entities, DPAs and the transfer basis. Lawyer questions LQ-36, 37, 68–71.
+- [ ] **AI eval runs** (TASK-40.5, about USD 0.50): approve the paid Haiku vs Sonnet extraction eval, and say which photo set to use (pilot photos or CC-licensed).
 - [ ] **GA4**: change the web stream URL from `https://test.com` to the real domain; add an internal-traffic filter.
 
 ## D. Growth and partners (whenever)
