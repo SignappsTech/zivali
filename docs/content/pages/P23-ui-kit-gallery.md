@@ -3,9 +3,9 @@ source: 03§P23; docs/design/pages/P23-ui-kit-gallery.md
 page: P23 UI kit gallery (components and states)
 stories: TASK-8 (NFR-A11Y)
 copy-for: docs/design/pages/P23-ui-kit-gallery.md
-version: 0.3
+version: 0.4
 status: Draft (internal page, minimal copy)
-date: 2026-10-15
+date: 2026-10-18
 ---
 
 # P23 UI kit gallery: copy
@@ -40,7 +40,7 @@ Internal reference page, not public, not translated for users. It uses real prod
 | Switch, disabled with reason | Opozorila v bližini · Obvestila na telefonu so izklopljena. Vse boste našli med sporočili in v e-pošti. | Nearby alerts · Phone notifications are off. You will find everything in your inbox and email. | `alerts.type_nearby` (P13), `permissions.notifications_denied` (P2) |
 | Checkbox group, legend | Kako vas obvestimo | How we tell you | `alerts.channels_title` (P13) |
 | Checkbox items | Na telefonu · Po e-pošti · V aplikaciji | On the phone · By email · In the app | `alerts.channel_push`, `alerts.channel_email`, `alerts.channel_inapp` (P13) |
-| Checkbox, checked and disabled, with reason | V aplikaciji · Možnih ujemanj in sporočil v aplikaciji ni mogoče izklopiti, da ne zamudite česa pomembnega. | In the app · Possible matches and messages in the app cannot be turned off, so you never miss anything important. | `alerts.channel_inapp`, `alerts.locked_note` (P13) |
+| Checkbox, checked and disabled, with reason | Nujni · Vedno vklopljeno | Essential · Always on | `consent.necessary_title`, `consent.necessary_locked` (P17 consent dialog) |
 | Checkbox, disabled, with reason | Po e-pošti · Za obvestila po e-pošti potrdite svoj e-naslov. | By email · Confirm your email address to get email notifications. | `alerts.channel_email`, `alerts.email_unverified` (P13) |
 | Single checkbox with help | Blokiraj tudi to osebo · Ne bo vam mogla več pisati. | Also block this person · They will not be able to message you any more. | `abuse.block_label`, `abuse.block_help` (P10) |
 | Single checkbox, error | Strinjam se, da me Najdimo kontaktira glede tega povpraševanja. · Za odgovor potrebujemo vaše soglasje. | I agree that Najdimo may contact me about this enquiry. · We need your consent to reply. | `partners.form_consent`, `partners.err_consent` (P22) |
@@ -103,6 +103,7 @@ SEO: N/A (`noindex`, dev only). Alt text: sample pet photos use the P9 §11 rule
 
 | Version | Date | Change |
 |---|---|---|
+| 0.4 | 2026-10-18 | CH-503 (TASK-114.14): the checked-and-disabled checkbox sample no longer uses the removed `alerts.locked_note`; it uses `consent.necessary_title` and `consent.necessary_locked`. The dev kit copies (`samples.ts`, web and mobile) follow. |
 | 0.3 | 2026-10-15 | CH-79: chip example is now 15 digits, 705 1234 5678 9012 (field 1 help). CH-80: toast live region uses `common.toasts_label` (P1), close uses `common.close`. |
 | 0.2 | 2026-10-15 | Product strings for every mockup sample: fields 2–4 (textarea, select, search), disabled reasons, checkbox and radio groups, segmented control, "Prekliči", the share menu, upload progress and failure; new keys `photos.uploaded`, `photos.failed_network`, `photos.progress_a11y`, `report_lost.circumstances_too_long` (P6), `report_found.note_too_long` (P7), `share.poster` (P18). |
 | 0.1 | 2026-10-15 | First sample list. |

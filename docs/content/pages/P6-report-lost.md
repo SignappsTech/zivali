@@ -3,9 +3,9 @@ source: 03§P6; docs/design/pages/P6-report-lost.md
 page: P6 Report lost
 stories: TASK-29 (FR-005, FR-003, FR-002)
 copy-for: docs/design/pages/P6-report-lost.md
-version: 0.4
+version: 0.5
 status: Draft, native Slovenian review pending
-date: 2026-10-15
+date: 2026-10-18
 ---
 
 # P6 Report lost: copy
@@ -64,6 +64,7 @@ Saved pet rows show the pet name and species ("Luna · Mačka").
 | photos.failed_network | Fotografija se ni naložila. Preverite povezavo in poskusite znova. | The photo did not upload. Check your connection and try again. |
 | photos.retry | Poskusi znova | Try again |
 | photos.limit | Dodate lahko največ 5 fotografij. | You can add up to 5 photos. |
+| photos.rejected | Ene od fotografij ni bilo mogoče dodati. Odstranite jo in poskusite znova. | One of the photos could not be added. Remove it and try again. |
 | report_lost.photos_required | Dodajte vsaj eno fotografijo, da bodo ljudje žival prepoznali. | Add at least one photo so people can recognise your pet. |
 | report_lost.photos_wait | Počakajte, da se naloži vsaj ena fotografija. | Please wait until at least one photo has uploaded. |
 
@@ -273,3 +274,4 @@ Photo keys (CH-114, CH-118; namespace `photos`, used by PhotoPicker on web and m
 |---|---|
 | 2026-10-15 | CH-79: `chip_help` example is now 15 digits, 705 1234 5678 9012. |
 | 2026-10-15 | CH-114, CH-118: added `photos.thumb_alt`, `photos.too_small`, `photos.heic_unsupported` (§13). |
+| 2026-10-18 | CH-496 (TASK-114.5): added `photos.rejected`, shown on the photo step for any `photo_ids` VALIDATION error and when `photos.limit` is exceeded (more than 5). SL/EN reviewed, unchanged. |
