@@ -56,7 +56,7 @@ for (const colorScheme of ['light', 'dark'] as const) {
 		const reports = page.getByRole('table', { name: 'Prijave zlorab' });
 		await expect(reports.getByRole('row')).toHaveCount(4);
 		await expect(reports.getByRole('row').nth(1)).toContainText('Prevara ali zahteva po denarju');
-		await expect(reports.getByRole('link', { name: 'Sporočilo o objavi Lm4wX8rS' })).toHaveAttribute(
+		await expect(reports.getByRole('link', { name: 'Sporočilo o prijavi Lm4wX8rS' })).toHaveAttribute(
 			'href',
 			'/r/Lm4wX8rS'
 		);
