@@ -7,6 +7,7 @@ status: To Do
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-16 12:55'
+updated_date: '2026-10-18 23:21'
 labels:
   - fe
   - performance
@@ -37,3 +38,9 @@ The content pages share a pattern (LCP ~2.8 s with no heavy JS): check the LCP e
 - [ ] #3 /zemljevid meets its performance and script budgets (maplibre loaded only when the map is shown), or revised as in #2
 - [ ] #4 The CI quality job passes; then make it blocking again (drop continue-on-error in ci.yml)
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+Data point from TASK-115.6 (2026-10-19, live najdimo.si a5d856e6, Lighthouse 12.6.1 mobile simulate, 1 run): / LCP 2.8 s, /en LCP 2.6 s; LCP element is the consent banner paragraph #consent-body; breakdown TTFB ~0.64 s, load delay 0, render delay ~2.0-2.1 s; FCP 1.0-1.2 s, TBT 60-70 ms, script 153 KB. The home's own content is not the LCP element while the banner shows.
+<!-- SECTION:NOTES:END -->
