@@ -43,7 +43,8 @@ const attributes = (size: string | null, sex: string | null, colours: string[], 
 	pattern: pattern as Pattern | null,
 });
 
-function scorePair(pair: PairRow, config: MatchingConfig): MatchScore {
+/** Null: no suggestion (a contradiction or no evidence without a chip, C8 §Score). */
+function scorePair(pair: PairRow, config: MatchingConfig): MatchScore | null {
 	return scoreMatch(
 		{
 			chip_match: pair.chip_match,
@@ -72,14 +73,16 @@ async function notifyManagers(matchId: string, pair: PairRow, ctx: Ctx): Promise
 /**
  * Matches one report against the open reports of the other side (C8 §Engine). Idempotent: a pair is stored once,
  * refreshed while suggested, never resurrected after a rejection, and notified at most once. Keeps chip pairs and
- * pairs scoring ≥ threshold, at most top_n per lost report counting the suggestions it already has.
+ * pairs scoreMatch suggests with a score ≥ threshold, at most top_n per lost report counting the ones it already has.
  */
 export async function matchReport(input: { report_id: string }, ctx: Ctx): Promise<{ stored: number }> {
 	const config = await matchingConfig();
 	const pairs = await MatchingDao.candidatePairs(input.report_id, config, ctx.tx);
 	const scored = pairs
-		.map((pair) => ({ pair, ...scorePair(pair, config) }))
-		.filter(({ pair, score }) => pair.chip_match || score >= config.threshold)
+		.flatMap((pair) => {
+			const result = scorePair(pair, config);
+			return result && (pair.chip_match || result.score >= config.threshold) ? [{ pair, ...result }] : [];
+		})
 		.sort((a, b) => b.score - a.score);
 	if (!scored.length) return { stored: 0 };
 
@@ -121,6 +124,33 @@ export async function matchReport(input: { report_id: string }, ctx: Ctx): Promi
 }
 
 /**
+ * Re-scores the stored suggestions without a chip under today's rules and app_config (C8, TASK-114.22), run on every
+ * deploy by seeder 40-matching-rescore: a pair that no longer passes is deleted, so it leaves the managers' list until
+ * match.report finds it again; the others get the new score and strength. Never inserts and never notifies.
+ * lost_report_ids limits it to those lost reports.
+ */
+export async function rescoreSuggestions(
+	input: { lost_report_ids?: string[] },
+	ctx: Ctx
+): Promise<{ rescored: number; removed: number }> {
+	const config = await matchingConfig();
+	const rows = await MatchingDao.suggestedPairs(input.lost_report_ids, ctx.tx);
+	const removed: string[] = [];
+	let rescored = 0;
+	for (const row of rows) {
+		const result = scorePair(row, config);
+		if (!result || (!row.chip_match && result.score < config.threshold)) removed.push(row.match_id);
+		else if (result.score !== row.score || result.strength !== row.strength) {
+			await MatchingDao.rescoreSuggestion(row.match_id, { ...result, chip_match: row.chip_match }, ctx.tx);
+			rescored++;
+		}
+	}
+	await MatchingDao.removeSuggestions(removed, ctx.tx);
+	ctx.logger.info({ suggestions: rows.length, rescored, removed: removed.length }, 'matching rescored');
+	return { rescored, removed: removed.length };
+}
+
+/**
  * Mark reunited (C4): the report's suggested and confirmed matches close, on either side; returns the reports on the
  * other side of the confirmed ones (the counterparts the reunite reaches).
  */
@@ -128,4 +158,4 @@ export async function closeMatchesOf(input: { report_id: string }, ctx: Ctx): Pr
 	return MatchingDao.closeForReport(input.report_id, ctx.tx);
 }
 
-export default { matchReport, matchingConfig, closeMatchesOf };
+export default { matchReport, matchingConfig, rescoreSuggestions, closeMatchesOf };

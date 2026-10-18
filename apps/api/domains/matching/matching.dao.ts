@@ -108,6 +108,32 @@ export async function upsertSuggestion(
 	return match ?? null;
 }
 
+/** Stored suggestions without a chip (all, or those of these lost reports), with what scoreMatch needs today. */
+export async function suggestedPairs(
+	lostIds?: string[],
+	tx?: Prisma.TransactionClient
+): Promise<(PairRow & { match_id: string; score: number; strength: string })[]> {
+	const only = lostIds ? Prisma.sql`and m.lost_report_id = any(${lostIds}::uuid[])` : Prisma.empty;
+	return (tx ?? prisma).$queryRaw`
+		select m.id as match_id, m.score::float8 as score, m.strength, ${PAIR_COLUMNS}
+		from app.matches m join app.reports l on l.id = m.lost_report_id join app.reports o on o.id = m.other_report_id
+		where m.state = 'suggested' and not m.chip_match ${only}`;
+}
+
+/** New score of a suggestion still suggested (a pair confirmed or rejected meanwhile keeps its row). */
+export async function rescoreSuggestion(
+	id: string,
+	data: { score: number; strength: string; chip_match: boolean; reasons: Prisma.InputJsonValue },
+	tx?: Prisma.TransactionClient
+): Promise<void> {
+	await (tx ?? prisma).matches.updateMany({ where: { id, state: 'suggested' }, data });
+}
+
+/** Deletes suggestions still suggested, so match.report may store the pair again once it passes. */
+export async function removeSuggestions(ids: string[], tx?: Prisma.TransactionClient): Promise<void> {
+	if (ids.length) await (tx ?? prisma).matches.deleteMany({ where: { id: { in: ids }, state: 'suggested' } });
+}
+
 /** Marks the match notified; false when another run already did (notify once). */
 export async function claimNotification(id: string, now: Date, tx?: Prisma.TransactionClient): Promise<boolean> {
 	const { count } = await (tx ?? prisma).matches.updateMany({
@@ -295,6 +321,9 @@ export default {
 	candidatePairs,
 	activeMatches,
 	upsertSuggestion,
+	suggestedPairs,
+	rescoreSuggestion,
+	removeSuggestions,
 	claimNotification,
 	setFirstMatchAt,
 	managerIds,

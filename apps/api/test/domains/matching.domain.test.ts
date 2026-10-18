@@ -223,15 +223,9 @@ describe('candidates without a chip (AC#3)', () => {
 	it('stores the scoreMatch result of the pair, below the threshold nothing', async () => {
 		const at = month();
 		const lost = await lostReport(at);
-		// Same day 2 km away with the same attributes, and 25 km away 25 days later with nothing in common.
+		// The same animal the same day 2 km away, and 25 km away 25 days later (about 0.43, below the 0.5 threshold).
 		const near = await foundReport(at, { location: north(2) });
-		await foundReport(at, {
-			location: north(25),
-			event_at: new Date(at.getTime() + 25 * 24 * HOUR),
-			size: 'xs',
-			colours: ['golden'],
-			pattern: 'solid',
-		});
+		await foundReport(at, { location: north(25), event_at: new Date(at.getTime() + 25 * 24 * HOUR) });
 		await run(lost.id);
 		const stored = await matchesOf(lost.id);
 		expect(stored.map((match) => match.other_report_id)).toEqual([near.id]);
@@ -249,7 +243,7 @@ describe('candidates without a chip (AC#3)', () => {
 				other: { ...same, colours: [...same.colours] },
 			},
 			await MatchingDomain.matchingConfig()
-		);
+		)!;
 		expect(stored[0]!.score.toNumber()).toBe(expected.score);
 		expect(stored[0]).toMatchObject({ strength: expected.strength, reasons: expected.reasons });
 	});
@@ -297,6 +291,93 @@ describe('candidates without a chip (AC#3)', () => {
 	});
 });
 
+describe('evidence and the re-score of old suggestions (TASK-114.22)', () => {
+	const nothing = { sex: null, size: null, colours: [], pattern: null } satisfies Partial<NewReport>;
+	// Both points exactly km north of LJ, so the scores below are exact (the public circle centre is fuzzed).
+	const pin = (id: string, km: number) => prisma.$executeRaw`
+		update app.reports set exact_point = extensions.st_setsrid(extensions.st_makepoint(${LJ.lng}, ${north(km).lat}), 4326),
+			public_point = extensions.st_setsrid(extensions.st_makepoint(${LJ.lng}, ${north(km).lat}), 4326)
+		where id = ${id}::uuid`;
+
+	it('suggests nothing without an attribute known on both sides or with a contradiction; a chip still matches (AC#1, AC#2)', async () => {
+		const at = month();
+		const number = chip();
+		// The owner's screenshot: a lost grey large male cat, a cat sighted about 4 km away with nothing known.
+		const cat = {
+			species: 'cat',
+			sex: 'male',
+			size: 'l',
+			colours: ['grey'],
+			pattern: null,
+		} satisfies Partial<NewReport>;
+		const lost = await lostReport(at, { ...cat, chip: number });
+		await foundReport(at, { type: 'sighted', species: 'cat', location: north(4), ...nothing });
+		await foundReport(at, { ...cat, size: 's' }); // two sizes apart
+		await foundReport(at, { ...cat, colours: ['black', 'white'] }); // no shared colour
+		const chipped = await foundReport(at, { ...cat, chip: number, size: 'xs', colours: ['golden'] });
+		expect(await run(lost.id)).toEqual({ stored: 1 });
+		expect(await matchesOf(lost.id)).toEqual([
+			expect.objectContaining({ other_report_id: chipped.id, chip_match: true, strength: 'strong' }),
+		]);
+	});
+
+	it('removes old suggestions that fail the rules, re-scores the rest, inserts and notifies nothing (AC#4)', async () => {
+		const at = month();
+		const lost = await lostReport(at);
+		const others = {
+			nothingKnown: await foundReport(at, nothing),
+			colourOnly: await foundReport(at, { ...nothing, colours: ['black', 'white'] }),
+			twoSizesApart: await foundReport(at, { size: 'xl' }),
+			sexNotGiven: await foundReport(at, { sex: null }),
+			rejected: await foundReport(at, nothing),
+			chip: await foundReport(at, nothing),
+		};
+		const km = { nothingKnown: 3, colourOnly: 3, twoSizesApart: 1, sexNotGiven: 1, rejected: 1, chip: 2 };
+		await pin(lost.id, 0);
+		for (const [name, report] of Object.entries(others)) await pin(report.id, km[name as keyof typeof km]);
+		// Suggestions as the engine stored them before, when every unknown attribute counted 0.5.
+		const old = (
+			name: keyof typeof others,
+			data: { score: number; strength: string; state?: 'rejected'; chip_match?: boolean; notified_at?: Date }
+		) =>
+			prisma.matches.create({
+				data: {
+					lost_report_id: lost.id,
+					other_report_id: others[name].id,
+					chip_match: false,
+					reasons: [{ code: 'distance', band: '1to3' }],
+					...data,
+				},
+			});
+		const before = {
+			nothingKnown: await old('nothingKnown', { score: 0.545, strength: 'possible' }),
+			colourOnly: await old('colourOnly', { score: 0.595, strength: 'possible' }),
+			twoSizesApart: await old('twoSizesApart', { score: 0.785, strength: 'good', notified_at: at }),
+			sexNotGiven: await old('sexNotGiven', { score: 0.835, strength: 'strong', notified_at: at }),
+			rejected: await old('rejected', { score: 0.685, strength: 'good', state: 'rejected' }),
+			chip: await old('chip', { score: 1, strength: 'strong', chip_match: true, notified_at: at }),
+		};
+
+		const rescore = () => MatchingDomain.rescoreSuggestions({ lost_report_ids: [lost.id] }, systemCtx());
+		expect(await rescore()).toEqual({ rescored: 1, removed: 3 });
+		// 0.4·e^(−1/3) + 0.2·(1 − 6/720) + 0.4·3/4, sex not known on both sides
+		const rows = await matchesOf(lost.id);
+		expect(rows.map((row) => [row.id, row.state, row.strength, row.score.toNumber()])).toEqual([
+			[before.chip.id, 'suggested', 'strong', 1],
+			[before.sexNotGiven.id, 'suggested', 'good', 0.785],
+			[before.rejected.id, 'rejected', 'good', 0.685],
+		]);
+		const sexNotGiven = rows.find((row) => row.id === before.sexNotGiven.id)!;
+		expect(sexNotGiven.notified_at).toEqual(at);
+		expect(sexNotGiven.reasons).toContainEqual({ code: 'size', match: 'equal' });
+		// A rerun changes nothing; the engine does not bring the removed pairs back.
+		expect(await rescore()).toEqual({ rescored: 0, removed: 0 });
+		await run(lost.id);
+		expect((await matchesOf(lost.id)).map((row) => row.id).sort()).toEqual(rows.map((row) => row.id).sort());
+		for (const match of Object.values(before)) expect(await notifications(match.id)).toEqual([]);
+	});
+});
+
 describe('idempotent suggestions and notifications (AC#1, AC#5)', () => {
 	it('stores a pair once, notifies once, and never resurrects a rejected pair', async () => {
 		const at = month();
@@ -328,14 +409,8 @@ describe('idempotent suggestions and notifications (AC#1, AC#5)', () => {
 	it('does not notify a possible suggestion', async () => {
 		const at = month();
 		const lost = await lostReport(at);
-		// 3 km away with unknown attributes: about 0.55, above the threshold and below good (0.65).
-		await foundReport(at, {
-			location: north(3),
-			sex: null,
-			size: null,
-			colours: [],
-			pattern: null,
-		});
+		// The same animal 10 km away: about 0.61, above the threshold and below good (0.65).
+		await foundReport(at, { location: north(10) });
 		await run(lost.id);
 		const [match] = await matchesOf(lost.id);
 		expect(match).toMatchObject({ strength: 'possible', notified_at: null });
