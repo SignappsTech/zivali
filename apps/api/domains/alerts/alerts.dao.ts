@@ -68,7 +68,10 @@ export async function deleteSubscription(user_id: string, tx?: Prisma.Transactio
 	await db.alert_subscriptions.deleteMany({ where: { user_id } });
 }
 
-/** Metres from the user's active (not paused) centre to the report's public point; null without one. */
+/**
+ * Metres from the user's active centre (not paused, the report's species still chosen) to the report's public point;
+ * null without one.
+ */
 export async function subscriberDistance(
 	user_id: string,
 	report_id: string,
@@ -78,7 +81,7 @@ export async function subscriberDistance(
 	const [row] = await db.$queryRaw<{ distance_m: number }[]>`
 		select extensions.st_distance(s.center_point, r.public_point) as distance_m
 		from app.alert_subscriptions s join app.reports r on r.id = ${report_id}::uuid
-		where s.user_id = ${user_id}::uuid and not s.paused`;
+		where s.user_id = ${user_id}::uuid and not s.paused and r.species::text = any(s.species::text[])`;
 	return row?.distance_m ?? null;
 }
 

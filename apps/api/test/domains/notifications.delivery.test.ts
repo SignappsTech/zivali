@@ -373,18 +373,33 @@ describe('payload and text', () => {
 });
 
 describe('prefs, verification, dedupe', () => {
-	it('honours per-type prefs: push off, in-app off, email off', async () => {
-		const user = await recipient();
-		await prisma.notification_prefs.create({
-			data: { user_id: user.id, type: 'match_suggested', push: false, in_app: false, email: false },
-		});
-		sources.match_suggested = source(SAMPLES.match_suggested);
-		const t = testCtx();
-		await NotificationsDomain.deliver(job(user.id, 'match_suggested'), t.ctx);
-		expect(await inbox(user.id)).toEqual([]);
-		expect(t.push).toEqual([]);
-		expect(t.email).toEqual([]);
-	});
+	// Every P13 row can be switched off on every channel, in-app for matches and messages too (TASK-114.14).
+	it.each([
+		'match_chip',
+		'match_suggested',
+		'match_confirmed',
+		'chat_message',
+		'nearby_lost',
+		'report_reminder',
+		'report_expiring',
+		'report_closed',
+	] as const)(
+		'honours per-type prefs: with push, in-app and email off, %s creates and sends nothing',
+		async (type) => {
+			const user = await recipient();
+			await prisma.notification_prefs.create({
+				data: { user_id: user.id, type, push: false, in_app: false, email: false },
+			});
+			sources[type] = source(SAMPLES[type]);
+			const t = testCtx();
+			await NotificationsDomain.deliver(job(user.id, type, { report_id: await report(user.id) }), t.ctx);
+			expect(await inbox(user.id)).toEqual([]);
+			expect(await outbox(user.id)).toEqual([]);
+			expect(t.push).toEqual([]);
+			expect(t.email).toEqual([]);
+			expect(t.jobs).toEqual([]);
+		}
+	);
 
 	it('sends no email to an unconfirmed address or an anonymous finder, but keeps in-app and push', async () => {
 		sources.match_confirmed = source(SAMPLES.match_confirmed);

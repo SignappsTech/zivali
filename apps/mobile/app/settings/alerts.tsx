@@ -161,8 +161,7 @@ function AlertsForm({ me, sub }: { me: Me; sub: AlertSubscription | null }) {
 									<Pill
 										key={species}
 										selected={on}
-										// At least one: the only chosen animal stays chosen.
-										disabled={on && current.species.length === 1}
+										// Any animal can be switched off; none chosen means no nearby alerts.
 										onPress={() =>
 											void write(
 												alertInput(current, {
@@ -178,6 +177,9 @@ function AlertsForm({ me, sub }: { me: Me; sub: AlertSubscription | null }) {
 								);
 							})}
 						</View>
+						{current.species.length === 0 ? (
+							<Text className="mt-2 text-sm text-muted-foreground">{t('alerts.species_none')}</Text>
+						) : null}
 					</View>
 					<SwitchRow
 						label={t('alerts.pause_label')}

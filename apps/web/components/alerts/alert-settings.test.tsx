@@ -212,12 +212,22 @@ describe('AlertSettings (P13 web)', () => {
 		expect(state.upsertQueryData).toHaveBeenLastCalledWith('getAlertSubscription', undefined, null);
 	});
 
-	it('the only chosen animal stays chosen', () => {
+	it('the last chosen animal can be switched off too: nothing chosen saves an empty list and says so', async () => {
 		show({ ...stored, species: ['cat'] });
 		const cats = screen.getByRole('button', { name: alerts.species_cats }) as HTMLButtonElement;
-		const dogs = screen.getByRole('button', { name: alerts.species_dogs }) as HTMLButtonElement;
-		expect([cats.disabled, cats.getAttribute('aria-pressed')]).toEqual([true, 'true']);
-		expect([dogs.disabled, dogs.getAttribute('aria-pressed')]).toEqual([false, 'false']);
+		expect([cats.disabled, cats.getAttribute('aria-pressed')]).toEqual([false, 'true']);
+		expect(screen.queryByText(alerts.species_none)).toBeNull();
+		fireEvent.click(cats);
+		await flush();
+		expect(state.save).toHaveBeenLastCalledWith({ ...input(stored), species: [] });
+
+		cleanup();
+		show({ ...stored, species: [] });
+		for (const name of [alerts.species_dogs, alerts.species_cats]) {
+			const pill = screen.getByRole('button', { name }) as HTMLButtonElement;
+			expect([pill.disabled, pill.getAttribute('aria-pressed')]).toEqual([false, 'false']);
+		}
+		expect(screen.getByText(alerts.species_none)).toBeTruthy();
 	});
 
 	it('the radius shows each stop while it moves and saves once, where it is let go, for the profile too', async () => {

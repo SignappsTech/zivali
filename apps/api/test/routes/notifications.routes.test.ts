@@ -191,6 +191,22 @@ describe('/v1/notification-prefs', () => {
 		expect(list.body.items).toContainEqual({ type: 'nearby_lost', in_app: true, push: false, email: true });
 	});
 
+	it('turns every channel off, in-app for matches and messages too (no lock, TASK-114.14)', async () => {
+		const me = await actor();
+		const off = { in_app: false, push: false, email: false };
+		for (const type of ['match_chip', 'match_suggested', 'match_confirmed', 'chat_message'] as const) {
+			const res = await request(app)
+				.put(`/v1/notification-prefs/${type}`)
+				.set('Authorization', me.auth)
+				.send(off);
+			expect(res.status, type).toBe(200);
+			expect(res.body).toEqual({ type, ...off });
+		}
+		const list = await request(app).get('/v1/notification-prefs').set('Authorization', me.auth);
+		expect(list.body.items).toContainEqual({ type: 'chat_message', ...off });
+		expect(list.body.items).toContainEqual({ type: 'match_chip', ...off });
+	});
+
 	it('rejects transactional and unknown types and invalid values', async () => {
 		const me = await actor();
 		for (const [type, body] of [
