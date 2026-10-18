@@ -5,7 +5,7 @@ status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:14'
-updated_date: '2026-10-16 06:27'
+updated_date: '2026-10-18 21:17'
 labels:
   - fe
   - 'est:M'
@@ -43,8 +43,8 @@ Branch: agent/task-24.2-poster-web
 <!-- AC:BEGIN -->
 - [ ] #1 /r/[code]/poster.pdf?lang=sl|en generates an A4 PDF in under 5 s with a large photo, key details, area name, QR code and short link (no phone number), high contrast and greyscale-safe, per P18.
 - [ ] #2 Reports without a usable photo block the poster with a prompt; closed reports show 'reunited' or are unavailable.
-- [ ] #3 The share slot offers WhatsApp, Facebook, copy link and the Web Share API with localised prefilled text.
+- [ ] #3 The share and poster slot (`slot-b`) offers WhatsApp, Facebook, copy link and the Web Share API with localised prefilled text.
 - [ ] #4 poster_download and share fire with consent only; the OG preview shows the photo and type label and never an exact or holding location.
 - [ ] #5 A greyscale print's QR scans and opens the listing (manual check, photo attached).
-- [ ] #6 The share slot offers a Facebook share kit: ready SL text, a square 1080×1080 image (next/og route) and links to the regional Facebook lost-pet groups (share.facebook_groups from GET /v1/config/public, supplied by the client) plus the Radio Aktual submission form.
+- [ ] #6 The share and poster slot (`slot-b`) offers a Facebook share kit: ready SL text, a square 1080×1080 image (next/og route) and links to the regional Facebook lost-pet groups (share.facebook_groups from GET /v1/config/public, supplied by the client) plus the Radio Aktual submission form.
 <!-- AC:END -->

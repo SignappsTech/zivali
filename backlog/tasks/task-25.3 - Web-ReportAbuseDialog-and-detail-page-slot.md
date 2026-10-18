@@ -5,7 +5,7 @@ status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:13'
-updated_date: '2026-10-16 05:15'
+updated_date: '2026-10-18 21:18'
 labels:
   - fe
   - 'est:S'
@@ -41,6 +41,6 @@ Branch: agent/task-25.3-abuse-web
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
 - [ ] #1 ReportAbuseDialog lets anyone pick a reason (scam, fake, spam, inappropriate image, other), add an optional note and submit, per P10; anonymous visitors sign in anonymously first.
-- [ ] #2 It fills the report-abuse slot on the detail page and is reusable from chat and profiles; duplicates show the same confirmation.
+- [ ] #2 It fills the `slot-c` ("Več možnosti": report abuse, copy link) on the detail page and is reusable from chat and profiles; duplicates show the same confirmation.
 - [ ] #3 Rate-limit and error messages are localised; axe 0 violations.
 <!-- AC:END -->

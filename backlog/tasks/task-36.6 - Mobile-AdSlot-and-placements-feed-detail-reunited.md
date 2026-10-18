@@ -5,7 +5,7 @@ status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:14'
-updated_date: '2026-10-16 04:06'
+updated_date: '2026-10-18 21:18'
 labels:
   - fe
   - 'est:S'
@@ -46,6 +46,6 @@ Branch: agent/task-36.6-adslot-mob
 <!-- AC:BEGIN -->
 - [ ] #1 AdSlot shows the labelled ad (Oglas/Ad) with alt text and opens the /a/ click URL in the in-app browser, per P21; failures collapse silently.
 - [ ] #2 Placements: list card every 8 items (never first or adjacent), detail screen and reunited screen.
-- [ ] #3 Impressions are recorded in our DB; GA events only with consent; a component test proves no AdSlot on report-flow, manage, chat, sign-in and payment screens.
+- [ ] #3 Impressions are recorded in our DB once per unit and ad when at least 50 % of the unit has been in view for 1 s (viewable, like web); GA events only with consent; a component test proves no AdSlot on report-flow, manage, chat, sign-in and payment screens.
 - [ ] #4 Detail-slot copy never claims "nearest" unless true (for example "a vet in your region"); Vet Partner units render only when vet_partner.enabled is on and always carry the Oglas/Ad label.
 <!-- AC:END -->

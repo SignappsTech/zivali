@@ -5,7 +5,7 @@ status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-14 22:14'
-updated_date: '2026-10-16 07:07'
+updated_date: '2026-10-18 21:18'
 labels:
   - fe
   - 'est:M'
@@ -45,8 +45,8 @@ Branch: agent/task-36.5-adslot-web
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
 - [ ] #1 AdSlot renders the ad with the label Oglas/Ad, alt text, keyboard focus, rel "sponsored noopener", 44 px targets and reserved size (no layout shift), and collapses silently on failure, per P21.
-- [ ] #2 Placements: a feed card every 8 cards (never first, never adjacent), one slot below the primary actions on the detail page, one on the reunited screen and one in the sidebar from lg.
-- [ ] #3 An impression is recorded once per render in our DB regardless of consent; ad_impression and ad_click go to GA only with consent (slot, ad id, region, species).
+- [ ] #2 Placements: a feed card every 8 cards (never first, never adjacent), one `ad` slot on the detail page below "Kje je bila videna" (P9), one on the reunited screen and one in the sidebar from lg.
+- [ ] #3 An impression is recorded in our DB once per unit and ad when at least 50 % of the unit has been in view for 1 s (viewable, IntersectionObserver, never on the server), regardless of consent; ad_impression and ad_click go to GA only with consent (slot, ad id, region, species).
 - [ ] #4 An automated route test proves no ad on report-lost, report-found, manage, inbox, sign-in and payment routes; CLS stays below 0.1 on pages with slots.
 - [ ] #5 Detail-slot copy never claims "nearest" unless true (for example "a vet in your region"); Vet Partner units render only when vet_partner.enabled is on and always carry the Oglas/Ad label.
 <!-- AC:END -->
