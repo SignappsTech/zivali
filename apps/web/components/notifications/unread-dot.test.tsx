@@ -9,6 +9,7 @@ import { UnreadDot } from './unread-dot';
 
 const state = vi.hoisted(() => ({
 	unread: 0,
+	conversationUnread: 0,
 	userId: 'u1' as string | undefined,
 	stop: vi.fn(),
 	subscribeInbox: vi.fn(),
@@ -18,6 +19,17 @@ const state = vi.hoisted(() => ({
 vi.mock('@zivali/api/notifications', () => ({
 	useListNotificationsQuery: () => ({ data: { items: [], next_cursor: null, unread: state.unread } }),
 	subscribeInbox: state.subscribeInbox,
+}));
+vi.mock('@zivali/api/chat', () => ({
+	useListConversationsQuery: () => ({
+		data: {
+			items: [
+				{ id: 'c1', unread: 0 },
+				{ id: 'c2', unread: state.conversationUnread },
+			],
+			next_cursor: null,
+		},
+	}),
 }));
 vi.mock('@zivali/api/auth', () => ({
 	useSession: () => ({ session: state.userId ? { user: { id: state.userId } } : null }),
@@ -39,6 +51,7 @@ afterEach(() => {
 	cleanup();
 	vi.clearAllMocks();
 	state.unread = 0;
+	state.conversationUnread = 0;
 	state.userId = 'u1';
 });
 
@@ -56,6 +69,13 @@ describe('UnreadDot', () => {
 			expect(container.querySelector('.bg-primary')).toBeTruthy();
 		}
 	);
+
+	it('is on for an unread conversation too, with every notification read', () => {
+		state.conversationUnread = 2;
+		const { container } = show(false, true);
+		expect(screen.getByRole('link', { name: 'Messages and notifications, unread' })).toBeTruthy();
+		expect(container.querySelector('.bg-primary')).toBeTruthy();
+	});
 
 	it('shows the plain label when everything is read', () => {
 		const { container } = show(false, true);

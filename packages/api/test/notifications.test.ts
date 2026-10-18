@@ -86,6 +86,29 @@ test('notification and alert errors arrive as { status, data.code }', async (t) 
 	assert.deepEqual(failure(list), [401, 'UNAUTHENTICATED']);
 });
 
+test('reading a conversation re-fetches the notifications too: the API read its chat_message rows', async (t) => {
+	const { store, client } = mockStore(t, {
+		'GET /v1/notifications': notifications,
+		'GET /v1/conversations': conversations,
+		'POST /v1/conversations/:id/read': none,
+	});
+	const views = [
+		store.dispatch(n.listNotifications.initiate({ limit: 1 })),
+		store.dispatch(chatApi.endpoints.listConversations.initiate()),
+	];
+	await Promise.all(views);
+	await store.dispatch(chatApi.endpoints.markConversationRead.initiate({ id: 'c1' }));
+	await settle();
+	assert.deepEqual(
+		client.calls
+			.map((call) => call.path)
+			.slice(2)
+			.sort(),
+		['/v1/conversations', '/v1/conversations/c1/read', '/v1/notifications']
+	);
+	for (const view of views) view.unsubscribe();
+});
+
 test('subscribeInbox: user:<id> events and every (re)subscribe re-fetch notifications and conversations', async (t) => {
 	const { store, client } = mockStore(t, {
 		'GET /v1/notifications': notifications,

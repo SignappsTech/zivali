@@ -373,6 +373,14 @@ export async function markRead(input: { ids: string[] } | { all: true }, ctx: Ct
 	});
 }
 
+/** Reading a conversation reads its chat_message notifications too, so the inbox views never disagree (TASK-114.10). */
+export async function markConversationRead(input: { conversation_id: string }, ctx: Ctx): Promise<void> {
+	await NotificationsDao.markRead(
+		{ user_id: actorId(ctx), conversation_id: input.conversation_id, now: ctx.now },
+		ctx.tx
+	);
+}
+
 /** Every type the user can switch (not the transactional manage_link and payment_receipt), plus quiet hours. */
 export async function getPrefs(_input: unknown, ctx: Ctx) {
 	const user_id = actorId(ctx);
@@ -421,6 +429,7 @@ export default {
 	unsubscribeToken,
 	listNotifications,
 	markRead,
+	markConversationRead,
 	getPrefs,
 	setPref,
 	registerPushToken,
