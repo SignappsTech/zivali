@@ -1,11 +1,11 @@
 ---
 id: TASK-114.28
 title: 'e2e flake: lifecycle.spec.ts:52 finds the close toast inside main'
-status: To Do
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-18 20:24'
-updated_date: '2026-10-18 20:25'
+updated_date: '2026-10-18 20:47'
 labels:
   - bug
   - fe
