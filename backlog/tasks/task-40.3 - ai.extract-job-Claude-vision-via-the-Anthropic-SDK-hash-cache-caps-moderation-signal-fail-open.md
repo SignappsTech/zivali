@@ -3,11 +3,11 @@ id: TASK-40.3
 title: >-
   ai.extract job: Claude vision via the Anthropic SDK, hash cache, caps,
   moderation signal, fail open
-status: In Progress
+status: Done
 assignee:
   - '@backend-dev'
 created_date: '2026-10-18 21:22'
-updated_date: '2026-10-18 23:04'
+updated_date: '2026-10-18 23:48'
 labels:
   - be
   - 'est:M'
