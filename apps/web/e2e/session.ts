@@ -31,6 +31,15 @@ export async function signInAs(page: Page, user: E2eUser, baseURL: string) {
 	await setSession(page, baseURL, token, user.id);
 }
 
+/**
+ * The PKCE verifier a sign-up leaves in this browser (supabase-js's fixed key, the one a server-side exchange reads),
+ * so a confirmation link opened here signs in (e2e/mock-api.ts answers the exchange).
+ */
+export async function holdVerifier(page: Page, baseURL: string) {
+	const value = `base64-${Buffer.from(JSON.stringify('e2e-verifier')).toString('base64url')}`;
+	await page.context().addCookies([{ name: `${cookieName()}-code-verifier`, value, url: baseURL }]);
+}
+
 /** A recorded "analytics declined" choice, so the consent banner (TASK-13.2) does not cover the page under test. */
 export async function dismissConsent(page: Page) {
 	const choice = { v: CONSENT_VERSION, analytics: false, ts: new Date().toISOString() };

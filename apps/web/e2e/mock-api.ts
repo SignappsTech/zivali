@@ -12,6 +12,7 @@ import {
 	shelterPage,
 } from '@zivali/api/__fixtures__/directory';
 import { placeReverse } from '@zivali/api/__fixtures__/geocode';
+import { me } from '@zivali/api/__fixtures__/me';
 import { publicReport } from '@zivali/api/__fixtures__/reports';
 
 // TASK-18.2 report detail: a lost report with a reward and a photo served from here (playwright.config.ts sets
@@ -230,6 +231,24 @@ function user(request: IncomingMessage, response: ServerResponse) {
 	);
 }
 
+// POST /auth/v1/token?grant_type=pkce (exchangeCodeForSession in app/[locale]/auth/callback, TASK-114.4): a sign-up
+// confirmation link's code, sent with its browser's verifier, signs in the fixture user, as GoTrue would. supabase-js
+// sends nothing without a verifier (another browser), so every exchange that gets here succeeds.
+function pkce(response: ServerResponse) {
+	const exp = Math.floor(Date.now() / 1000) + 86_400;
+	response.writeHead(200, { 'Content-Type': 'application/json' });
+	response.end(
+		JSON.stringify({
+			access_token: token(new URLSearchParams({ sub: me.id, role: me.role.toLowerCase() })),
+			token_type: 'bearer',
+			expires_in: 86_400,
+			expires_at: exp,
+			refresh_token: 'e2e',
+			user: { id: me.id, aud: 'authenticated', role: 'authenticated', app_metadata: {}, user_metadata: {} },
+		})
+	);
+}
+
 // C13 webhook as the mock provider's /dev/checkout posts it (server side, so no page.route sees it): 200 only for an
 // event signed like Stripe with the default MOCK_WEBHOOK_SECRET, as apps/api verifies it.
 function webhook(request: IncomingMessage, response: ServerResponse) {
@@ -256,6 +275,8 @@ createServer((request, response) => {
 		return void response.end(token(url.searchParams));
 	}
 	if (request.method === 'GET' && url.pathname === '/auth/v1/user') return user(request, response);
+	if (request.method === 'POST' && url.pathname === '/auth/v1/token' && url.searchParams.get('grant_type') === 'pkce')
+		return pkce(response);
 	if (url.pathname.startsWith('/media/')) {
 		response.writeHead(200, { 'Content-Type': 'image/png' });
 		return void response.end(PIXEL);
