@@ -1,9 +1,9 @@
 ---
 doc_id: DOC-03
 title: Design Specification
-version: 0.5
+version: 0.6
 status: Draft (direction approved 2026-10-14)
-date: 2026-10-15
+date: 2026-10-18
 owner: Design Lead
 audience: Client, team
 approvals:
@@ -124,6 +124,15 @@ Final copy is owned by the content strategist (one slice per page at `content/pa
 - **Commercial wording:** ads are labelled "Oglas" (EN "Ad"); support is "podpora / prispevek", never "donacija" unless the legal entity qualifies (Q-008); pricing is never invented on the Partners page.
 - **Legal and consent copy:** drafts are marked "requires client and legal review"; consent buttons carry equal weight and neutral wording.
 
+# Design workflow
+
+Owner rule, 2026-10-16 (CH-491): every design rework needs a **wireframe confirmed by a person** (the owner or someone they name) before any mockup or implementation task starts.
+
+- The wireframe is low fidelity, or a mock built from our real components when that is no more work. Files live in `docs/design/wireframes/`. An approved component mock also serves as the mockup.
+- The approval (who, date, version) is written in the notes of the wireframe task. Mockup and frontend tasks depend on that task and do not start before the approval is there.
+- Bug fixes to existing layouts do not need a wireframe.
+- First uses: TASK-115.1 (homepage), TASK-116.1 (footer).
+
 # Accessibility
 
 WCAG 2.2 AA throughout, with AAA (7:1) for body text and the primary action because users are outdoors in sunlight.
@@ -150,3 +159,4 @@ Mobile first. Breakpoints: 640 (sm), 768 (md), 1024 (lg), 1280 (xl), 1536 (2xl).
 | 0.3 | 2026-10-14 | Client approved the decluttered direction A. Information architecture, key flows, page inventory P1 to P23 (M1 and M2) with design slices, content strategy rules, accessibility and responsive sections completed from requirements v0.2. |
 | 0.4 | 2026-10-15 | FR-044 shelter directory (PRD 0.6, tech re-plan): IA and flows add /zavetisca and the admin directory; P3 gains T5 and T6, P19 the directory screen, P6 and P7 the responsible-shelter call row, P1 footer the Shelters link. Design system v0.5 to v0.7 (P23 and P16 reviews). |
 | 0.5 | 2026-10-16 | TASK-90.5: web font cuts for the mobile LCP gate (single heading weight 700, body 400/700, no opsz axis, custom Latin subsets, preload, size-adjusted fallback). Typography bullet and system.md §4 updated. |
+| 0.6 | 2026-10-18 | Design workflow section: owner wireframe rule of 2026-10-16 (CH-491). Slice updates: P6 step list (CH-497), P13 switches (CH-502), P18 Facebook row (CH-507). |

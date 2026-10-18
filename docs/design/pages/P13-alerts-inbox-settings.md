@@ -3,6 +3,7 @@ source: 03§P13
 page: P13 Notifications, nearby alerts and account settings
 stories: TASK-22, TASK-23, TASK-9 (FR-010, FR-001, FR-036)
 platforms: web, mobile
+version: 1.1
 mockup: docs/design/mockups/P13-alerts-inbox-settings.html
 copy: docs/content/pages/P13-alerts-inbox-settings.md
 ---
@@ -33,8 +34,8 @@ Where users see what happened (matches, messages, nearby alerts, reminders) and 
 
 Sections separated by 40 px, line fields and switches only:
 
-1. **Alerts near me:** master switch. When on: home area row (opens the alert-area picker, P5, with place name and radius), radius slider 1 to 25 km (Premium raises the cap, M4), species toggle pills (Dogs, Cats), daily limit stepper (1 to 10, default 5), a pause switch.
-2. **How to tell me:** a list by type (Matches, Messages, Nearby alerts, Reminders), each with three switches (Push, Email, In app); chip matches and messages cannot be turned off for In app and show a lock note.
+1. **Alerts near me:** master switch. When on: home area row (opens the alert-area picker, P5, with place name and radius), radius slider 1 to 25 km (Premium raises the cap, M4), species toggle pills (Dogs, Cats; any pill can be switched off, none disabled; with none chosen a plain muted line under the pills, `alerts` copy "Ne prejemate opozoril za živali v bližini."), daily limit stepper (1 to 10, default 5), a pause switch.
+2. **How to tell me:** a list by type (Matches, Messages, Nearby alerts, Reminders), each with three switches (Push, Email, In app). There is no in-app lock: every switch of every row can be turned off, with no lock icon, no note and no warning when all are off (conversations still list under Messages).
 3. **Quiet hours:** two time fields (from, to) and the sentence that chip matches and messages still arrive.
 4. **Permission state:** push denied shows a `note` with a primary-tone text button "Open system settings"; email unverified shows "Confirm your email to get email alerts" with "Resend".
 
@@ -71,3 +72,9 @@ An extra switch under "Alerts near me": "Alert me when I am near a lost animal" 
 1. Mobile: notifications view with every type and groups, empty, alert settings (all four sections), permission denied note, opt-in sheet, account screen (verified and not verified).
 2. Web 1200 px: inbox page, alert settings with the sub-navigation, account page.
 3. Light and dark.
+
+## Change log
+
+| Version | Date | Change |
+|---|---|---|
+| 1.1 | 2026-10-18 | No in-app lock, every switch can be turned off; animal pills all switchable (CH-502, TASK-114.14, owner rule 2026-10-16). |
