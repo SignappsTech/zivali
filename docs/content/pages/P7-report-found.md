@@ -3,7 +3,7 @@ source: 03§P7; docs/design/pages/P7-report-found.md
 page: P7 Report found or sighted (no account) and manage page
 stories: TASK-30, TASK-17 (FR-006, FR-003, FR-004)
 copy-for: docs/design/pages/P7-report-found.md
-version: 0.5
+version: 0.6
 status: Draft, native Slovenian review pending
 date: 2026-10-18
 ---
@@ -219,6 +219,15 @@ Status pill on the manage page (CH-212), from glossary §2:
 | report_found.status_found | Najdena | Found |
 | report_found.status_sighted | Opažena | Sighted |
 
+Resend row on the web manage page (C7 manager, CH-438): a row with the label `report_found.resend_title` (§10) sends the private link to the address on file.
+
+| Key | SL | EN |
+|---|---|---|
+| report_found.resend_done_manager | Povezavo smo poslali na e-naslov, ki ste ga navedli ob prijavi. Preverite tudi mapo z neželeno pošto. | We have sent the link to the email address you gave when you reported. Please check your spam folder too. |
+| report_found.resend_no_email | Ob prijavi niste navedli e-naslova, zato povezave ne moremo poslati. | You did not give an email address when you reported, so we cannot send the link. |
+
+`resend_done_manager` is the toast after the manager presses the row (the signed-out form on the lost-link screen keeps `resend_done`, which does not confirm that an address exists). `resend_no_email` shows on CONFLICT, when the report has no email on file.
+
 The "returned" confirmation dialog and thank-you screen are in P14 §5.
 
 # 10. Lost link and invalid link
@@ -297,3 +306,4 @@ Camera denied: `permissions.camera_denied` (P2).
 | Version | Date | Change |
 |---|---|---|
 | 0.5 | 2026-10-18 | CH-212: status pill keys. CH-262: outbox queue keys. CH-351: validation, sighting date/time and cancel-queued keys; shelter_row note. CH-330 not applied (design decision pending). |
+| 0.6 | 2026-10-18 | CH-438: manager resend row on `/m`: `resend_done_manager`, `resend_no_email` (§9). |

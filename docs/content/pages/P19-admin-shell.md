@@ -3,7 +3,7 @@ source: 03§P19; docs/design/pages/P19-admin-shell.md
 page: P19 Admin console shell
 stories: TASK-34 (FR-019), TASK-89 (FR-044, shelter directory)
 copy-for: docs/design/pages/P19-admin-shell.md
-version: 0.4
+version: 0.5
 status: Draft, native Slovenian review pending
 date: 2026-10-18
 ---
@@ -88,7 +88,12 @@ The "Orders" item from the design slice is dropped (QR tags are out of scope, br
 | admin.mfa_title | Vnesite kodo za preverjanje | Enter your verification code |
 | admin.mfa_body | Odprite aplikacijo za preverjanje in vnesite 6-mestno kodo. | Open your authenticator app and enter the 6-digit code. |
 | admin.mfa_label | 6-mestna koda | 6-digit code |
-| admin.mfa_backup | Uporabi rezervno kodo | Use a backup code |
+| admin.mfa_lost | Ste izgubili napravo? Prosite drugega skrbnika, da ponastavi vaše preverjanje, nato ga nastavite znova. | Lost your device? Ask another admin to reset your verification, then set it up again. |
+| admin.backup_title | Rezervni avtentikator | Backup authenticator |
+| admin.backup_body | Dodajte še eno napravo ali aplikacijo za preverjanje. Če izgubite prvo, lahko vstopite z njo. | Add a second device or authenticator app. If you lose the first one, you can sign in with it. |
+| admin.backup_add | Dodaj rezervni avtentikator | Add a backup authenticator |
+| admin.backup_done | Rezervni avtentikator je nastavljen. | Your backup authenticator is set up. |
+| admin.backup_confirm | Potrdi rezervni avtentikator | Confirm backup authenticator |
 | admin.mfa_submit | Potrdi | Confirm |
 | admin.mfa_wrong | Koda ni pravilna ali je potekla. Poskusite z novo kodo. | The code is wrong or has expired. Please try a new one. |
 | admin.enrol_title | Nastavite dvostopenjsko preverjanje | Set up two-step verification |
@@ -105,6 +110,8 @@ The "Orders" item from the design slice is dropped (QR tags are out of scope, br
 | admin.timeout_signin | Vpiši se | Sign in |
 | admin.last_admin | Zadnjega skrbnika ni mogoče odstraniti. Najprej dodajte drugega skrbnika. | The last admin cannot be removed. Add another admin first. |
 | admin.read_only_banner | Vzdrževanje: konzola je trenutno samo za branje. | Maintenance: the console is read-only right now. |
+
+`admin.mfa_backup` ("Uporabi rezervno kodo") is dropped: Supabase TOTP has no backup codes (CH-469, TASK-34.6). A lost device is handled by another admin resetting the verification (`admin.mfa_lost`), or by a second authenticator enrolled in advance (`admin.backup_*`). Drafts, SL+EN, need native review.
 
 # 5. Dashboard (placeholder)
 
@@ -317,3 +324,4 @@ SEO: N/A, the console is `noindex, nofollow` and requires sign-in. Document titl
 |---|---|---|
 | 0.3 | 2026-10-15 | CH-124: §8 `admin.directory.history_system`, `error_time`, `day_mon`…`day_holidays` (full day names, replacing the short forms in the draft), `admin.doc_title` (root key, shared title pattern). Day-range notes now use full names. Draft values on branch `agent/task-89.2-dir-admin-web` (catalogue) follow this slice; update the catalogue on merge. |
 | 0.4 | 2026-10-18 | CH-261: §7a abuse reports (`admin.abuse.*`), glossary terms for report. |
+| 0.5 | 2026-10-18 | CH-469: `admin.mfa_backup` removed; `mfa_lost` and `backup_*` added (§4). |

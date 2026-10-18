@@ -3,7 +3,7 @@ source: 03§P13; docs/design/pages/P13-alerts-inbox-settings.md
 page: P13 Notifications, nearby alerts and account settings
 stories: TASK-22, TASK-23, TASK-9 (FR-010, FR-001, FR-036)
 copy-for: docs/design/pages/P13-alerts-inbox-settings.md
-version: 0.3
+version: 0.4
 status: Draft, native Slovenian review pending
 date: 2026-10-18
 ---
@@ -41,6 +41,7 @@ Namespaces `notifications` (inbox view), `alerts`, `profile`. The title and body
 | alerts.area_none | Območje še ni izbrano | No area chosen yet |
 | alerts.radius_label | Polmer | Radius |
 | alerts.radius_value | {km} km | {km} km |
+| alerts.radius_number_label | Polmer v kilometrih | Radius in kilometres |
 | alerts.radius_premium | Večji polmer in več območij omogoča Premium Zaščita. | Premium Protect allows a larger radius and more areas. |
 | alerts.species_label | Za katere živali | Which animals |
 | alerts.species_dogs | Psi | Dogs |
@@ -53,7 +54,7 @@ Namespaces `notifications` (inbox view), `alerts`, `profile`. The title and body
 | alerts.pause_label | Začasno ustavi opozorila | Pause alerts |
 | alerts.pause_help | Nastavitve ostanejo shranjene. | Your settings stay saved. |
 
-`alerts.radius_premium` appears from M4 only.
+`alerts.radius_premium` appears from M4 only. `alerts.radius_number_label` is the accessible name of the radius number field that sits beside the slider on web (CH-418).
 
 `alerts.species_none` shows under the animal pills when none is chosen: every animal can be switched off, and none chosen means no nearby alerts (CH-501, TASK-114.14).
 
@@ -72,6 +73,8 @@ A second block under the alerts: local reminders the phone raises itself when th
 | alerts.reminders_lost | Opomnike smo izklopili, ker telefon ne dovoli več lokacije »vedno«. Ko jo dovolite v nastavitvah telefona, jih znova vklopite tukaj. | We turned the reminders off because your phone no longer allows location Always. Allow it in your phone settings, then switch them back on here. |
 | alerts.reminders_no_location | Lokacije telefona ta hip ne moremo določiti. Poskusite znova čez trenutek. | We cannot find the location of your phone right now. Please try again in a moment. |
 | alerts.reminders_signed_out_note | Niste prijavljeni, zato lahko opomnike le izklopite. | You are signed out, so you can only turn these reminders off. |
+
+The reminders' notifications-off note reuses `alerts.push_denied` (§5), not `permissions.notifications_denied`, because that one promises the inbox and email, which local reminders never use. It keeps this wording unless a sentence of its own is wanted (CH-414).
 
 `{cap}` is the daily cap (3 by default). `alerts.reminders_quiet_change` is the accessible name of the "Spremeni" link beside the quiet-hours value. `alerts.reminders_lost` shows when the reminders were switched off because the Always permission was revoked.
 
@@ -223,3 +226,4 @@ Alt text: avatar `alt=""` next to the name; nearby-alert row pet photo per P9 §
 |---|---|
 | 2026-10-18 | CH-501 (TASK-114.14): added `alerts.species_none` (§2); removed `alerts.locked_note` (§3). SL/EN reviewed, unchanged. |
 | 2026-10-18 | v0.3. CH-241/CH-248/CH-355: section 2a nearby reminders, 2b Always-location primer, quiet-hours reminder line. CH-283: `alerts.quiet_invalid`. CH-318: section 7a offline data. |
+| 2026-10-18 | v0.4. CH-414: reminders reuse `alerts.push_denied` (§2a). CH-418: `alerts.radius_number_label` (§2). CH-518 (= CH-501): already applied in v0.3. |
