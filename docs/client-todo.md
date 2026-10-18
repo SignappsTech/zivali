@@ -36,6 +36,7 @@ Status 2026-10-15 15:15: tokens checked read-only. Hetzner, Turnstile, Brevo, Go
 
 - [ ] **Accountant**:
   - **Q-012**: do online card payments need fiscally verified invoices (davčno potrjevanje, ZDavPR)? If yes, which certified provider?
+    - If yes, go-live needs (PRD OQ-003): the seller's legal name, address and tax/VAT number for the invoice; the FURS test and production certificates (eDavki) and the registered business premise ID, or the chosen FURS-certified provider and its credentials. Steps: deploy/README.md §10.
   - **VAT on voluntary tips/contributions** (OQ-001)
   - which legal entity runs Najdimo (Signapps d.o.o. or a new one)
 - [ ] **Lawyer**: send `docs/legal/najdimo-pravni-pregled.docx` (33 pages, 34 launch-blocking questions, each with a proposed answer). You already have the file.
