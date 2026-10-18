@@ -600,7 +600,9 @@ describe('report lost flow (P6)', () => {
 		await waitFor(() => expect(mockRouter.replace).toHaveBeenCalled());
 		const [first, second] = posted();
 		expect(second!.headers['Idempotency-Key']).not.toBe(first!.headers['Idempotency-Key']);
-		expect((second!.body as { event_at: string }).event_at).toMatch(/^2020-01-01/);
+		// The form keeps the current time of day, so compare the local calendar date, not the UTC one.
+		const at = new Date((second!.body as { event_at: string }).event_at);
+		expect([at.getFullYear(), at.getMonth(), at.getDate()]).toEqual([2020, 0, 1]);
 	});
 
 	test.each([
