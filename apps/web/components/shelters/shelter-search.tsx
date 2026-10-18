@@ -1,13 +1,16 @@
 'use client';
 
 import { ArrowClockwiseIcon } from '@phosphor-icons/react/dist/ssr/ArrowClockwise';
+import { CrosshairIcon } from '@phosphor-icons/react/dist/ssr/Crosshair';
+import { GpsSlashIcon } from '@phosphor-icons/react/dist/ssr/GpsSlash';
 import { MagnifyingGlassIcon } from '@phosphor-icons/react/dist/ssr/MagnifyingGlass';
 import { MapPinAreaIcon } from '@phosphor-icons/react/dist/ssr/MapPinArea';
 import { WarningCircleIcon } from '@phosphor-icons/react/dist/ssr/WarningCircle';
 import { XIcon } from '@phosphor-icons/react/dist/ssr/X';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { type ComponentType, useEffect, useId, useMemo, useRef, useState } from 'react';
 
+import type { Locale } from '@zivali/api/client';
 import type { MunicipalityRef } from '@zivali/api/directory';
 import { noteClass } from '@/components/shelters/classes';
 import { Button } from '@/components/ui/button';
@@ -19,6 +22,25 @@ import { Skeleton } from '@/components/ui/skeleton';
 /** Case- and diacritics-blind ("skof" finds "Škofja Loka"); one character in, one out, so offsets carry over. */
 const fold = (text: string) => [...text].map((c) => c.normalize('NFD')[0]!.toLowerCase()).join('');
 const MAX_OPTIONS = 8;
+// A coarse fix is enough for the municipality: a cached one up to 10 minutes old, none after 10 s.
+const FIX: PositionOptions = { maximumAge: 10 * 60_000, timeout: 10_000 };
+const round2 = (n: number) => Math.round(n * 100) / 100;
+
+type LocateNote = 'denied' | 'failed' | 'outside';
+
+/**
+ * The device position rounded to 2 decimals (C4, C6): the raw fix never leaves this function, and the rounded one only
+ * goes to the reverse lookup. Rejects with 'denied' or 'failed'.
+ */
+const roughPosition = () =>
+	new Promise<{ lat: number; lng: number }>((resolve, reject) => {
+		if (!navigator.geolocation) return reject('failed');
+		navigator.geolocation.getCurrentPosition(
+			({ coords }) => resolve({ lat: round2(coords.latitude), lng: round2(coords.longitude) }),
+			(error) => reject(error.code === error.PERMISSION_DENIED ? 'denied' : 'failed'),
+			FIX
+		);
+	});
 
 export const answerClass = 'mt-6 lg:mt-8';
 
@@ -60,7 +82,10 @@ export function ShelterSearch({
 	const [chosen, setChosen] = useState<MunicipalityRef | null>(null);
 	const [Answer, setAnswer] = useState<ComponentType<{ municipality: MunicipalityRef }> | null>(null);
 	const [loadFailed, setLoadFailed] = useState(false);
+	const [locating, setLocating] = useState(false);
+	const [note, setNote] = useState<LocateNote | null>(null);
 	const tc = useTranslations('common');
+	const locale = useLocale() as Locale;
 
 	useEffect(() => {
 		if (!chosen || Answer || loadFailed) return;
@@ -88,6 +113,23 @@ export function ShelterSearch({
 		setText(municipality.name);
 		setChosen(municipality);
 		setOpen(false);
+	};
+
+	// Denied, no fix, a failed lookup or outside Slovenia leave a note; the field stays as it was.
+	const locate = async () => {
+		setLocating(true);
+		setNote(null);
+		try {
+			const point = await roughPosition();
+			const slug = await (await loadAnswer()).municipalityAt(locale, point);
+			const found = slug !== null && municipalities.find((m) => m.slug === slug);
+			if (found) choose(found);
+			else setNote(slug === null ? 'outside' : 'failed');
+		} catch (error) {
+			setNote(error === 'denied' ? 'denied' : 'failed');
+		} finally {
+			setLocating(false);
+		}
 	};
 
 	const onKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
@@ -128,6 +170,7 @@ export function ShelterSearch({
 						onChange={(event) => {
 							setText(event.target.value);
 							setChosen(null);
+							setNote(null);
 							setActive(0);
 							setOpen(true);
 						}}
@@ -186,12 +229,22 @@ export function ShelterSearch({
 					</ul>
 				</div>
 			</FormField>
+			<Button variant="text" className="mt-1 -ml-3" loading={locating} onClick={() => void locate()}>
+				<CrosshairIcon weight="bold" aria-hidden="true" />
+				{locating ? t('locating') : t('use_location')}
+			</Button>
 			{expanded && (
 				<p role="status" className="sr-only">
 					{t('suggestions_a11y', { count: matches.length })}
 				</p>
 			)}
 			<div aria-live="polite">
+				{note && (
+					<p className={`${noteClass} mt-3`}>
+						<GpsSlashIcon weight="bold" aria-hidden="true" className="mt-px size-[22px] shrink-0" />
+						<span>{t(`location_${note}`)}</span>
+					</p>
+				)}
 				{chosen ? (
 					Answer ? (
 						<Answer municipality={chosen} />

@@ -81,6 +81,31 @@ test('T5 search answers confirmed, likely and unconfirmed municipalities by the 
 	await expect(answer).toHaveText('Občine »Kamnk« ne najdemo. Preverite zapis ali jo poiščite na seznamu spodaj.');
 });
 
+test('T5 "Uporabi mojo lokacijo" fills the municipality from the device and sends only the rounded point (TASK-114.11)', async ({
+	page,
+	context,
+}) => {
+	await context.grantPermissions(['geolocation']);
+	await context.setGeolocation({ latitude: 46.056947, longitude: 14.505751 });
+	const sent: string[] = [];
+	page.on('request', (request) => sent.push(`${request.url()} ${request.postData() ?? ''}`));
+	await page.goto('/zavetisca');
+	const reverse = page.waitForRequest(
+		(request) => request.method() === 'POST' && request.url().endsWith('/v1/geo/reverse')
+	);
+
+	await page.getByRole('button', { name: 'Uporabi mojo lokacijo' }).click();
+
+	expect((await reverse).postDataJSON()).toEqual({ lat: 46.06, lng: 14.51 });
+	await expect(page.getByRole('combobox', { name: 'Vaša občina' })).toHaveValue('Ljubljana');
+	await expect(
+		page.locator('[aria-live="polite"]').getByRole('link', { name: 'Pokliči Zavetišče Ljubljana' })
+	).toHaveAttribute('href', 'tel:+38612345678');
+	expect(sent.filter((line) => /46\.056|14\.505/.test(line))).toEqual([]);
+	expect(page.url()).not.toMatch(/46\.|14\./);
+	await expectNoAxeViolations(page);
+});
+
 test('T6 shelter page in SL and EN with AnimalShelter JSON-LD, canonical and no axe violations', async ({ page }) => {
 	for (const { path, title, call } of [
 		{

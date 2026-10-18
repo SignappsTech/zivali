@@ -8,6 +8,7 @@ import {
 	responsibleLikely,
 	responsibleUnconfirmed,
 } from '@zivali/api/__fixtures__/directory';
+import { placeReverse } from '@zivali/api/__fixtures__/geocode';
 import { createMockApi, mockError, type MockRoutes } from '@zivali/api/mock';
 import { type ApiStore, createApiStore } from '@zivali/api/rtk';
 import en from '@zivali/i18n/dist/en.json';
@@ -179,5 +180,111 @@ describe('ShelterSearch', () => {
 			await screen.findByRole('link', { name: 'Call Zavetišče Ljubljana. Responsibility is not confirmed.' })
 		).toBeTruthy();
 		expect(screen.getByText('Not confirmed')).toBeTruthy();
+	});
+});
+
+describe('ShelterSearch "Uporabi mojo lokacijo" (TASK-114.11)', () => {
+	const RAW = { latitude: 46.056947, longitude: 14.505751 };
+	const codes = { PERMISSION_DENIED: 1, POSITION_UNAVAILABLE: 2, TIMEOUT: 3 };
+
+	/** The browser's geolocation answers with a fix or with an error code (1 denied, 2 unavailable, 3 timeout). */
+	function mockGeolocation(answer: { coords: typeof RAW } | { code: number } | undefined) {
+		const getCurrentPosition = vi.fn((ok: PositionCallback, fail: PositionErrorCallback, _?: PositionOptions) =>
+			answer && 'coords' in answer
+				? ok({ coords: answer.coords } as GeolocationPosition)
+				: fail({ ...codes, code: answer!.code } as GeolocationPositionError)
+		);
+		Object.defineProperty(navigator, 'geolocation', {
+			configurable: true,
+			value: answer ? { getCurrentPosition } : undefined,
+		});
+		return getCurrentPosition;
+	}
+
+	afterEach(() => {
+		Object.defineProperty(navigator, 'geolocation', { configurable: true, value: undefined });
+		localStorage.clear();
+		sessionStorage.clear();
+	});
+
+	const button = (name = t.use_location) => screen.getByRole('button', { name });
+
+	it('fills the municipality from a coarse fix and shows its shelter; only the rounded point goes out (AC#1, AC#3)', async () => {
+		const getCurrentPosition = mockGeolocation({ coords: RAW });
+		const sent: unknown[] = [];
+		const input = renderSearch({
+			'POST /v1/geo/reverse': ({ body }) => {
+				sent.push(body);
+				return placeReverse;
+			},
+		});
+		expect(stores.getStore).not.toHaveBeenCalled();
+
+		fireEvent.click(button());
+
+		expect(await screen.findByRole('link', { name: 'Pokliči Zavetišče Ljubljana' })).toBeTruthy();
+		expect((input as HTMLInputElement).value).toBe('Ljubljana');
+		const options = getCurrentPosition.mock.calls[0]![2];
+		expect(options?.timeout).toBe(10_000);
+		expect(options?.enableHighAccuracy).toBeFalsy();
+		expect(sent).toEqual([{ lat: 46.06, lng: 14.51 }]);
+		const kept = JSON.stringify({ ...localStorage, ...sessionStorage }) + window.location.href;
+		expect(kept).not.toMatch(/46\.0|14\.5/);
+		expect(screen.queryByText(t.location_failed)).toBeNull();
+	});
+
+	it.each([
+		['denied', codes.PERMISSION_DENIED, t.location_denied],
+		['unavailable', codes.POSITION_UNAVAILABLE, t.location_failed],
+		['timed out', codes.TIMEOUT, t.location_failed],
+	])('says so when the position is %s, and the search stays usable (AC#2)', async (_, code, message) => {
+		mockGeolocation({ code });
+		const input = renderSearch();
+
+		fireEvent.click(button());
+
+		expect(await screen.findByText(message)).toBeTruthy();
+		expect((input as HTMLInputElement).value).toBe('');
+		expect(stores.getStore).not.toHaveBeenCalled();
+		choose(input, 'ljub', 'Ljubljana');
+		expect(screen.queryByText(message)).toBeNull();
+		expect(await screen.findByRole('link', { name: 'Pokliči Zavetišče Ljubljana' })).toBeTruthy();
+	});
+
+	it('says so without a geolocation API or when the lookup fails', async () => {
+		mockGeolocation(undefined);
+		renderSearch({ 'POST /v1/geo/reverse': () => mockError('NOT_FOUND') });
+		fireEvent.click(button());
+		expect(await screen.findByText(t.location_failed)).toBeTruthy();
+
+		cleanup();
+		mockGeolocation({ coords: RAW });
+		renderSearch({ 'POST /v1/geo/reverse': () => mockError('NOT_FOUND') });
+		fireEvent.click(button());
+		expect(await screen.findByText(t.location_failed)).toBeTruthy();
+		expect(screen.getByRole('button', { name: t.use_location }).getAttribute('aria-busy')).toBeNull();
+	});
+
+	it('says the position is outside Slovenia when the reverse lookup has no place, in SL and EN (AC#2)', async () => {
+		mockGeolocation({ coords: { latitude: 48.21, longitude: 16.37 } });
+		const input = renderSearch({ 'POST /v1/geo/reverse': () => ({ place: null }) });
+		fireEvent.click(button());
+		expect(await screen.findByText(t.location_outside)).toBeTruthy();
+		expect((input as HTMLInputElement).value).toBe('');
+
+		cleanup();
+		renderSearch({ 'POST /v1/geo/reverse': () => ({ place: null }) }, 'en');
+		fireEvent.click(button('Use my location'));
+		expect(
+			await screen.findByText('Your location is outside Slovenia. Enter your municipality instead.')
+		).toBeTruthy();
+
+		cleanup();
+		mockGeolocation({ code: codes.PERMISSION_DENIED });
+		renderSearch({}, 'en');
+		fireEvent.click(button('Use my location'));
+		expect(
+			await screen.findByText('Location access is not allowed. Enter your municipality instead.')
+		).toBeTruthy();
 	});
 });

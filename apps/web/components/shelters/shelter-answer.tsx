@@ -9,8 +9,11 @@ import { SealQuestionIcon } from '@phosphor-icons/react/dist/ssr/SealQuestion';
 import { WarningCircleIcon } from '@phosphor-icons/react/dist/ssr/WarningCircle';
 import { useLocale, useTranslations } from 'next-intl';
 
+import type { Locale } from '@zivali/api/client';
 import { type MunicipalityRef, toResult, useGetResponsibleShelterQuery } from '@zivali/api/directory';
+import { geocodeApi } from '@zivali/api/geocode';
 import { formatCount } from '@zivali/i18n/format';
+import type { LatLng } from '@zivali/types';
 import { answerClass, AnswerSkeleton } from '@/components/shelters/shelter-search';
 import { noteClass, titleLinkClass } from '@/components/shelters/classes';
 import { StoreProvider } from '@/components/store-provider';
@@ -18,6 +21,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Link } from '@/i18n/navigation';
+import { getStore } from '@/lib/store';
 import { cn } from '@/lib/utils';
 
 /** The answer under the T5 search with its store: ShelterSearch loads it with the first chosen municipality. */
@@ -27,6 +31,17 @@ export function ShelterAnswer({ municipality }: { municipality: MunicipalityRef 
 			<Answer municipality={municipality} />
 		</StoreProvider>
 	);
+}
+
+/**
+ * "Uporabi mojo lokacijo": the municipality slug at a point, from the C6 reverse lookup on the shared store (so it
+ * loads with this chunk, not the page); null outside Slovenia. Not subscribed, so the point leaves the cache again.
+ */
+export async function municipalityAt(locale: Locale, point: LatLng): Promise<string | null> {
+	const place = await getStore(locale)
+		.dispatch(geocodeApi.endpoints.reversePlace.initiate(point, { subscribe: false }))
+		.unwrap();
+	return place?.municipality_slug ?? null;
 }
 
 const shelterHref = (slug: string) => ({ pathname: '/shelters/[slug]', params: { slug } }) as const;
