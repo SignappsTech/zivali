@@ -1,7 +1,7 @@
-import { cleanup, render, screen, within } from '@testing-library/react';
+import { act, cleanup, render, screen, within } from '@testing-library/react';
 import { NextIntlClientProvider } from 'next-intl';
 import type * as React from 'react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, onTestFinished, vi } from 'vitest';
 
 import en from '@zivali/i18n/dist/en.json';
 import sl from '@zivali/i18n/dist/sl.json';
@@ -43,13 +43,15 @@ const report = (code: string, extra: Partial<PublicReport> = {}) =>
 		status: 'open',
 		species: 'dog',
 		name: 'Luna',
+		colours: ['brown'],
 		event_at: new Date(Date.now() - 5 * 60_000).toISOString(),
 		area: { lat: 46.07, lng: 14.48, radius_m: 300 },
 		photos: [
 			{
 				url: 'u',
 				thumb_url: `https://media.test/${code}.webp`,
-				alt: 'Izgubljen pes, rjave barve',
+				// The API's detail-page alt starts with the name (P9 §11): the card must not use it.
+				alt: `${extra.name ?? 'Luna'}: pes rjave barve, Ljubljana, fotografija 1 od 2`,
 				width: 4,
 				height: 3,
 			},
@@ -85,6 +87,65 @@ describe('RecentReports (T1 layout A, block 2)', () => {
 		expect(screen.queryByText(/Luna/)).toBeNull();
 		expect(cards[0]!.querySelector('img')?.getAttribute('src')).toBe('https://media.test/Ab3dEf7h.webp');
 		expect(cards[1]!.querySelector('img')).toBeNull();
+	});
+
+	it.each([
+		['sl', 'Izgubljena mačka, bele in sive barve', 'Izgubljena mačka'],
+		['en', 'Lost cat, white and grey', 'Lost cat'],
+	] as const)(
+		'%s: the photo alt is type, species and colours, never the name (P3 §Home alt text)',
+		async (locale, alt, bare) => {
+			answer({
+				items: [
+					report('Ab3dEf7h', { species: 'cat', name: 'Spuži Kvadratnik', colours: ['white', 'grey'] }),
+					report('Cd4fGh8j', { species: 'cat', name: 'Spuži Kvadratnik', colours: [] }),
+				],
+				next_cursor: null,
+				total_estimate: 2,
+			});
+
+			show(locale, await RecentReports({ locale }));
+
+			const cards = screen.getAllByRole('link');
+			expect(cards.map((card) => card.querySelector('img')?.getAttribute('alt'))).toEqual([alt, bare]);
+			for (const card of cards) {
+				const said = [
+					card.textContent,
+					card.getAttribute('aria-label'),
+					card.querySelector('img')?.getAttribute('alt'),
+				];
+				expect(said.join(' ')).not.toMatch(/Spuži|Kvadratnik/);
+			}
+		}
+	);
+
+	it('below lg, Tab to the second card at 390 px pulls it to its snap point; a card in full view stays put', async () => {
+		answer({ items: [report('Ab3dEf7h'), report('Cd4fGh8j')], next_cursor: null, total_estimate: 2 });
+		// jsdom has no layout and no scrollIntoView: the geometry is mocked, the call recorded.
+		const scrollIntoView = vi.fn();
+		Element.prototype.scrollIntoView = scrollIntoView;
+		onTestFinished(() => void delete (Element.prototype as Partial<Element>).scrollIntoView);
+		const rect = (left: number, right: number) => ({ left, right }) as DOMRect;
+
+		show('sl', await RecentReports({ locale: 'sl' }));
+
+		// 390 px viewport, the strip bleeding to both edges, 78 % cards: the second shows only 309-390 of 309-582 (QA).
+		const [first, second] = screen.getAllByRole('link');
+		const strip = screen.getByRole('list');
+		vi.spyOn(strip, 'getBoundingClientRect').mockReturnValue(rect(0, 390));
+		vi.spyOn(first!, 'getBoundingClientRect').mockReturnValue(rect(20, 293));
+		vi.spyOn(second!, 'getBoundingClientRect').mockReturnValue(rect(309, 582));
+
+		act(() => first!.focus());
+		expect(scrollIntoView).not.toHaveBeenCalled();
+
+		act(() => second!.focus());
+		expect(document.activeElement).toBe(second);
+		expect(scrollIntoView).toHaveBeenCalledOnce();
+		expect(scrollIntoView.mock.contexts[0]).toBe(second);
+		expect(scrollIntoView).toHaveBeenCalledWith({ block: 'nearest', inline: 'start' });
+		// Smooth only when motion is allowed: scrollIntoView follows the strip's scroll-behavior.
+		expect(strip.className).toContain('motion-safe:scroll-smooth');
 	});
 
 	it.each(['sl', 'en'] as const)(

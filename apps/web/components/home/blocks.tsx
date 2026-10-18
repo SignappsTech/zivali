@@ -7,6 +7,7 @@ import { createApiClient, type Locale } from '@zivali/api/client';
 import { formatRelative } from '@zivali/i18n/format';
 import type { PublicReport, PublicStats, ReportList } from '@zivali/types';
 import { reportStatus, reportTitle } from '@/components/browse/report-row';
+import { listOf } from '@/components/report/seo';
 import { ringClass, SpotIllustration } from '@/components/shell/page';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -15,6 +16,8 @@ import { Link } from '@/i18n/navigation';
 import { env } from '@/lib/env';
 import { getPlace } from '@/lib/report';
 import { cn } from '@/lib/utils';
+
+import { CardStrip } from './card-strip';
 
 // T1 Home layout A (TASK-115.1): the latest reports and the live numbers, server-rendered. The page renders per request
 // (CSP nonce), so the public GETs go through Next's data cache: one API call per window for every visitor.
@@ -51,27 +54,31 @@ export async function RecentReports({ locale }: { locale: Locale }) {
 
 	const places = await Promise.all(reports.map(({ area }) => getPlace(locale, area.lat, area.lng)));
 	return (
-		<ul className={strip}>
+		<CardStrip className={strip}>
 			{reports.map((report, i) => (
 				<li key={report.id}>
 					<ReportCard report={report} place={places[i]?.label} />
 				</li>
 			))}
-		</ul>
+		</CardStrip>
 	);
 }
 
 /**
  * Card: photo 4:3, status word · relative time, "Izgubljen pes", the rough area. Never the pet's name, the exact place
- * or a distance (P3 §2). The link's name reads like a P4 row, with the area in place of the distance.
+ * or a distance (P3 §2). The link's name reads like a P4 row, with the area in place of the distance. The photo alt is
+ * built here, not the API's (that one starts with the name): "Izgubljen pes, rjave barve" (P3 §Home alt text, P9 §11).
  */
 function ReportCard({ report, place }: { report: PublicReport; place?: string }) {
 	const t = useTranslations('browse');
+	const tReport = useTranslations('report');
 	const locale = useLocale() as Locale;
 	const title = reportTitle(t, { type: report.type, species: report.species });
 	const { status, word } = reportStatus(t, report);
 	const time = formatRelative(report.event_at, locale);
 	const photo = report.photos[0];
+	const colours = report.colours.map((code) => tReport(`seo_colour.${code}`));
+	const alt = colours.length ? `${title}, ${tReport('seo_colours', { colours: listOf(colours, locale) })}` : title;
 
 	return (
 		<Link
@@ -83,7 +90,7 @@ function ReportCard({ report, place }: { report: PublicReport; place?: string })
 				// eslint-disable-next-line @next/next/no-img-element -- a thumbnail from the media host, like the P4 rows
 				<img
 					src={photo.thumb_url}
-					alt={photo.alt}
+					alt={alt}
 					width={photo.width}
 					height={photo.height}
 					loading="lazy"
