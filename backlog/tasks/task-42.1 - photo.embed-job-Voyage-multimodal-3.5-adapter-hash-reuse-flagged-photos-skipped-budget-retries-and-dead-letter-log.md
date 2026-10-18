@@ -3,11 +3,11 @@ id: TASK-42.1
 title: >-
   photo.embed job: Voyage multimodal-3.5 adapter, hash reuse, flagged photos
   skipped, budget, retries and dead-letter log
-status: To Do
+status: In Progress
 assignee:
   - '@backend-dev'
 created_date: '2026-10-18 21:24'
-updated_date: '2026-10-18 22:13'
+updated_date: '2026-10-18 22:20'
 labels:
   - be
   - 'est:S'

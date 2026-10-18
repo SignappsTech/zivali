@@ -7,7 +7,7 @@ status: To Do
 assignee:
   - '@backend-dev'
 created_date: '2026-10-18 21:22'
-updated_date: '2026-10-18 22:13'
+updated_date: '2026-10-18 22:26'
 labels:
   - be
   - 'est:M'
@@ -52,4 +52,6 @@ Branch: agent/task-40.3-ai-extract
 
 <!-- SECTION:NOTES:BEGIN -->
 From the TASK-40.1 review (2026-10-19): an unset AI_PROVIDER on staging or production must never mean anthropic; default to the mock/no-op adapter and require an explicit opt-in (owner approvals pending: privacy text, Voyage opt-out).
+
+From the TASK-40.2 review (2026-10-19): the structured-output JSON schema carries no bounds or descriptions (stripped for output_config.format). The adapter must: not use SDK zod auto-parse; clamp confidences to 0-1 and drop other-species breeds (isBreedOf) on the raw JSON; then run aiExtractionSchema.safeParse as the final gate. The prompt must state the limits: at most 3 breeds, 3 colours, 5 marks; confidences 0-1; animal_count 0, 1 or 2.
 <!-- SECTION:NOTES:END -->
