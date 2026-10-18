@@ -6,8 +6,8 @@ import type { AiAnimal, AiNotice, Colour, Pattern, Size, Species } from './enums
 export type AiExtraction = {
 	/** The main animal. */
 	animal: AiAnimal;
-	/** 0, 1, 2 (2 = two or more). */
-	animal_count: number;
+	/** 2 = two or more. */
+	animal_count: 0 | 1 | 2;
 	/** 0…1 */
 	species_confidence: number;
 	/** ≤ 3, same species, highest first. */

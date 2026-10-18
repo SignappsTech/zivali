@@ -14,7 +14,12 @@ exports[`aiExtractionJsonSchema (output_config.format) > matches the snapshot 1`
       "type": "string",
     },
     "animal_count": {
-      "type": "integer",
+      "enum": [
+        0,
+        1,
+        2,
+      ],
+      "type": "number",
     },
     "breeds": {
       "items": {

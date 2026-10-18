@@ -8,13 +8,14 @@ import { nullOr } from './common.schema.ts';
 import { AiNotice, Colour, Pattern, Size, Species } from './enums.ts';
 import { z } from './zod.ts';
 
+/** 0…1; the adapter clamps raw confidences into range before parsing (C19 §Pipeline 5). */
 const confidence = z.number().min(0).max(1);
 
 export const aiExtractionSchema = z
 	.object({
 		animal: z.enum(AI_ANIMALS),
-		/** 2 = two or more */
-		animal_count: z.number().int().min(0).max(2),
+		/** 2 = two or more. A literal set, not a bound: the JSON schema keeps it as an enum. */
+		animal_count: z.literal([0, 1, 2]),
 		species_confidence: confidence,
 		/** Same species as `animal`, highest first. */
 		breeds: z.array(z.object({ code: BreedCode, confidence })).max(3),
@@ -31,14 +32,16 @@ export const aiExtractionSchema = z
 			text_contact_info: z.boolean(),
 		}),
 	})
+	// Final gate: the adapter has already dropped other-species breeds (isBreedOf) from the raw JSON.
 	.superRefine(({ animal, breeds }, ctx) => {
 		for (const [i, { code }] of breeds.entries())
 			if ((animal !== 'dog' && animal !== 'cat') || !isBreedOf(code, animal))
 				ctx.addIssue({ code: 'custom', path: ['breeds', i, 'code'], message: 'Breed of another species' });
 	});
 
-// Structured outputs reject numeric and string bounds and maxItems; the SDK call validates the reply with
-// aiExtractionSchema afterwards, which checks them (and the breed species).
+// Structured outputs reject numeric and string bounds and maxItems, so the reply may break them. The adapter
+// (C19 §Pipeline 5) clamps confidences and filters breeds with isBreedOf on the raw JSON, then runs
+// aiExtractionSchema.safeParse; it does not rely on the SDK's zod auto-parsing.
 const UNSUPPORTED = new Set([
 	'$schema',
 	'minimum',

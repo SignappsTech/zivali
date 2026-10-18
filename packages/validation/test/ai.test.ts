@@ -97,6 +97,13 @@ describe('aiExtractionJsonSchema (output_config.format)', () => {
 		// field names survive the keyword strip
 		expect(Object.keys((aiExtractionJsonSchema.properties as object) ?? {})).toEqual(Object.keys(extraction));
 	});
+
+	test('animal_count is an enum the model cannot exceed (a bound would be stripped), and two parses', () => {
+		const count = (aiExtractionJsonSchema.properties as Record<string, { enum?: unknown }>).animal_count;
+		expect(count?.enum).toEqual([0, 1, 2]);
+		expect(issues({ ...extraction, animal_count: 2 })).toEqual([]);
+		expect(issues({ ...extraction, animal_count: 3 })).not.toEqual([]);
+	});
 });
 
 describe('photoAttributesSchema', () => {
