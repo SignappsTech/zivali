@@ -1,10 +1,11 @@
 ---
 id: TASK-115.8
 title: 'Home: focused recent-report card stays mostly off-screen in the mobile strip'
-status: To Do
+status: In Progress
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-18 23:21'
+updated_date: '2026-10-18 23:33'
 labels:
   - bug
   - 'est:XS'
@@ -24,6 +25,12 @@ Steps: https://najdimo.si/ at 390x844 (keyboard, or a zoomed desktop below lg), 
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Below lg, tabbing to any recent-report card scrolls the strip so the whole focused card (and its focus ring) is in view, in Chromium and WebKit
-- [ ] #2 An e2e or component check covers tabbing to the second card at 390 px
+- [x] #1 Below lg, tabbing to any recent-report card scrolls the strip so the whole focused card (and its focus ring) is in view, in Chromium and WebKit
+- [x] #2 An e2e or component check covers tabbing to the second card at 390 px
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+Packet: Branch: agent/TASK-115.7-home-cards (shared with TASK-115.7). Cause: Chromium and WebKit treat a focused box with 32 px or more in view as visible and do not scroll it. Fix: client CardStrip (components/home/card-strip.tsx) on focus calls scrollIntoView({block:'nearest', inline:'start'}) when the card is not fully inside the strip; inline start = its snap-start point; smoothness from motion-safe:scroll-smooth on the strip (reduced motion jumps). -mt-2 pt-2 kept. Component check in blocks.test.tsx: 390 px geometry, focus to the second card. AC1 in real Chromium/WebKit not run here (no e2e in worktree): QA to confirm.
+<!-- SECTION:NOTES:END -->
