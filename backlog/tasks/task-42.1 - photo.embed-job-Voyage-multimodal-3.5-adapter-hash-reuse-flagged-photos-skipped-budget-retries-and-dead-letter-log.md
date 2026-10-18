@@ -7,7 +7,7 @@ status: In Progress
 assignee:
   - '@backend-dev'
 created_date: '2026-10-18 21:24'
-updated_date: '2026-10-18 22:20'
+updated_date: '2026-10-18 22:38'
 labels:
   - be
   - 'est:S'
@@ -49,4 +49,8 @@ Branch: agent/task-42.1-photo-embed
 
 <!-- SECTION:NOTES:BEGIN -->
 From the TASK-40.1 review and CH-562 (2026-10-19): photos uploaded while ai.extract is a stub have no ai_results row; embedding and backfill must skip any photo without a successful safety check (no ai_results row = not embedded).
+
+TASK-42.1 (backend-dev, 2026-10-19): CHANGE rows for backlog/changes.md (the worktree guard blocked writing the main inbox; lead, please move them):
+| - | - | docs/tech/contracts/C20-image-embeddings.md§Adapter | As built (TASK-42.1): `embed(images: { jpegBase64, sha256 }[], model)`; `sha256` is the photo's upload hash, read only by the mock (labels.json is keyed by `photos.sha256`, which the 1024 px re-encode would not match; also the hash fallback), never sent to Voyage. The adapter exposes `provider` (`mock`/`voyage`; `embedderOn()` is false for the off adapter) and throws `EmbedderError { code: http_<status> \| timeout \| network \| bad_response, retryAfterS? }`. Unset `EMBEDDER_PROVIDER` = mock in APP_ENV local, `off` in staging and production (never voyage or mock there; payments pattern). | TASK-42.1 | open |
+| - | - | docs/tech/contracts/C20-image-embeddings.md§Jobs | As built (TASK-42.1), photo.embed: step 1 also skips a photo without an `ai_results` row and fails closed (embeds only `animal` dog/cat with `person_prominent` and `nsfw` false; CH-562). Embedder `off` -> skip, log `photo.embed.off`, no retry. Monthly budget = UTC calendar month; an unset or 0 `embedding.monthly_budget_usd` skips every call. `ai_calls` row only for a successful call (`outcome ok`, tokens 0, `pixels` = clamp(w x h of the 1024 px JPEG, 50k, 2M)). Retry-After honoured by waiting up to 60 s inside the attempt before throwing (pg-boss `fail` takes no delay). The job ctx gains `lastAttempt` (retryCount >= the queue's retryLimit) for the dead-letter log. | TASK-42.1 | open |
 <!-- SECTION:NOTES:END -->
