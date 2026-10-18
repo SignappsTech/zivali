@@ -571,6 +571,44 @@
 				"created_at",
 				"updated_at"
 			]
+		},
+		"ai_results": {
+			"category": "photo-derived",
+			"personal_data": [],
+			"basis": "none (no personal data: keyed by image hash, no user, photo or report id; C19)",
+			"retention": "while a photo with the same sha256 exists; retention.purge deletes rows whose hash no photo has",
+			"export": false,
+			"delete": "purged by retention.purge once no photo has the hash",
+			"other_columns": ["sha256", "model", "prompt_version", "result", "moderation", "created_at"]
+		},
+		"ai_calls": {
+			"category": "photo-derived",
+			"personal_data": ["photo_id"],
+			"basis": "legitimate interest (GDPR art. 6(1)(f)): cost control and per-owner caps of the AI features",
+			"retention": "62 days (retention.purge)",
+			"export": false,
+			"delete": "photo_id set null when the photo is deleted (account deletion cascades to photos); row purged after 62 days",
+			"other_columns": [
+				"id",
+				"provider",
+				"model",
+				"outcome",
+				"input_tokens",
+				"output_tokens",
+				"pixels",
+				"cost_usd",
+				"latency_ms",
+				"created_at"
+			]
+		},
+		"photo_embeddings": {
+			"category": "photo-derived",
+			"personal_data": ["photo_id", "embedding"],
+			"basis": "contract (GDPR art. 6(1)(b)): matching lost and found reports by photo (C20)",
+			"retention": "with the photo (on delete cascade)",
+			"export": false,
+			"delete": "delete (cascade with the photo)",
+			"other_columns": ["model", "created_at"]
 		}
 	},
 	"buckets": {

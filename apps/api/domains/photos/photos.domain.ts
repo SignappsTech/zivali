@@ -39,8 +39,8 @@ const THUMB_PX = 480;
 const MAX_INPUT_PIXELS = 2048 * 2048;
 const SHARP_TIMEOUT_S = 30;
 
-/** Queues sent { photo_id } for every accepted photo: empty in M2; M3 adds ai.extract and photo.embed. */
-export const PHOTO_HOOKS: readonly QueueName[] = [];
+/** Queues sent { photo_id } for every accepted photo (C19 §Pipeline): ai.extract, which then sends photo.embed. */
+export const PHOTO_HOOKS: readonly QueueName[] = ['ai.extract'];
 
 /** Public URL of an object in the media bucket (MEDIA_BASE_URL; MinIO locally). */
 function mediaUrl(ref: ObjectRef): string {

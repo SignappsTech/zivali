@@ -6,15 +6,18 @@ import { systemCtx, type Ctx } from '../lib/ctx.ts';
 import { jobs, type Jobs, type QueueName } from '../lib/jobs.ts';
 import { logger } from '../lib/logger.ts';
 import { prisma } from '../prisma/prisma.ts';
+import * as aiExtract from './ai.extract.job.ts';
 import * as alertsFanout from './alerts.fanout.job.ts';
 import * as dbBackup from './db.backup.job.ts';
 import * as dbKeepalive from './db.keepalive.job.ts';
 import * as directoryReminder from './directory.reminder.job.ts';
+import * as embeddingBackfill from './embedding.backfill.job.ts';
 import * as fiscalResubmit from './fiscal.resubmit.job.ts';
 import * as matchReport from './match.report.job.ts';
 import * as notifySend from './notify.send.job.ts';
 import * as partnersStats from './partners.stats.job.ts';
 import * as paymentEffects from './payment.effects.job.ts';
+import * as photoEmbed from './photo.embed.job.ts';
 import * as photoProcess from './photo.process.job.ts';
 import * as photoPublish from './photo.publish.job.ts';
 import * as reportLifecycle from './report.lifecycle.job.ts';
@@ -41,6 +44,9 @@ export const handlers: Record<QueueName, JobHandler> = {
 	'directory.reminder': directoryReminder.handle,
 	'db.keepalive': dbKeepalive.handle,
 	'db.backup': dbBackup.handle,
+	'ai.extract': aiExtract.handle,
+	'photo.embed': photoEmbed.handle,
+	'embedding.backfill': embeddingBackfill.handle,
 };
 
 /** Runs one attempt with a fresh ctx whose logger carries queue and job_id; a throw makes pg-boss retry it. */

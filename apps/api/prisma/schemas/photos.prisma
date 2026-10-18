@@ -45,6 +45,9 @@ model photos {
   // The 24 h purge clock of an unattached photo: retention.purge deletes it 24 h after the last write; POST /v1/photos
   // answering `existing: true` touches it (CH-134).
   updated_at         DateTime             @default(now()) @updatedAt @db.Timestamptz(6)
+  // M3 AI (ai.prisma): model calls about the photo and its vectors.
+  ai_calls           ai_calls[]
+  embeddings         photo_embeddings[]
 
   @@unique([owner_id, sha256])
   // The anonymous hold rule looks up the same image across owners (C7).
