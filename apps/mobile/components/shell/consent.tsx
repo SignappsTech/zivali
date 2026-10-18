@@ -91,7 +91,9 @@ export function ConsentCustomise({
 				<View>
 					<Switch checked disabled label={t('necessary_title')} aria-label={t('necessary_title')} />
 					<Text className="text-sm text-muted-foreground">{t('necessary_locked')}</Text>
-					<Text className="mt-1 text-muted-foreground">{t('necessary_body')}</Text>
+					<Text className="mt-1 text-muted-foreground">
+						{t.raw('necessary_body').replace(/<\/?link>/g, '')}
+					</Text>
 				</View>
 				<View>
 					<Switch

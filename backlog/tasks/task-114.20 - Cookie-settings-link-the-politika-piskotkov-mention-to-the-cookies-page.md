@@ -31,3 +31,7 @@ Code: packages/i18n/messages/{sl,en}/consent.json `necessary_body` ends "Trajanj
 - [ ] #2 Following the link records no choice, and the banner is still there to answer afterwards
 - [ ] #3 consent-banner tests updated; i18n check passes for both catalogues
 <!-- AC:END -->
+
+## Packet
+
+Branch: agent/TASK-114.20-task

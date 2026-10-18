@@ -18,6 +18,20 @@ const textButton =
 const sw =
 	'relative h-8 w-14 shrink-0 cursor-pointer appearance-none rounded-full bg-input before:absolute before:top-1 before:left-1 before:size-6 before:rounded-full before:bg-card before:ring-1 before:ring-border before:transition-transform checked:bg-primary checked:before:translate-x-6 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ring disabled:cursor-not-allowed disabled:bg-muted motion-reduce:before:transition-none';
 
+/** Renders a `<link>text</link>` span of a catalogue string as a link to the policy (the banner has no translator). */
+function withPolicyLink(text: string, href: string) {
+	const [before = '', linked = '', after = ''] = text.split(/<\/?link>/);
+	return (
+		<>
+			{before}
+			<NextLink href={href} prefetch={false} className="text-primary underline underline-offset-4">
+				{linked}
+			</NextLink>
+			{after}
+		</>
+	);
+}
+
 type View = 'closed' | 'first' | 'custom';
 
 /**
@@ -179,7 +193,9 @@ export function ConsentBanner({
 							<label className="mt-4 flex min-h-14 items-start justify-between gap-4">
 								<span>
 									<span className="block font-bold">{t('necessary_title')}</span>
-									<span className="block text-muted-foreground">{t('necessary_body')}</span>
+									<span className="block text-muted-foreground">
+										{withPolicyLink(t('necessary_body'), policyHref)}
+									</span>
 								</span>
 								<span className="flex shrink-0 flex-col items-end gap-1 text-sm text-muted-foreground">
 									<input type="checkbox" role="switch" checked disabled readOnly className={sw} />
