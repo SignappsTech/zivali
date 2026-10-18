@@ -6,7 +6,17 @@
 		"hero_lede": "Report a lost or found pet. We look for possible matches and alert people nearby. For free.",
 		"hero_primary": "Report a lost pet",
 		"hero_secondary": "Report a found animal",
+		"hero_sighted_prompt": "Seen an animal?",
 		"hero_alt": "A brown and white long-haired dog with one ear raised",
+		"hero_cat_alt": "A tabby cat with a blue collar and tag sitting on stairs",
+		"near_title_no_location": "Recent reports",
+		"near_open_map": "Open the map",
+		"near_empty_body": "That is good news. Turn on alerts and we will let you know if someone nearby is missing a pet.",
+		"near_empty_action": "Turn on alerts",
+		"near_error": "We cannot load the reports right now.",
+		"stat_reunited": "Pets back home",
+		"stat_open": "Open reports",
+		"stat_alerts": "People with alerts on",
 		"how_title": "How it works",
 		"how_1_title": "Report",
 		"how_1_body": "Reporting a lost pet takes a few minutes. A found animal takes under a minute, with no account.",
@@ -15,7 +25,6 @@
 		"how_3_title": "Talk safely",
 		"how_3_body": "You message each other in the app. Phone numbers and exact addresses stay hidden.",
 		"how_more": "More about how it works",
-		"how_alt": "A tabby cat with a blue collar and tag sitting on stairs",
 		"safe_title": "Designed for your safety",
 		"safe_body": "When a pet goes missing, some people try to take advantage. That is why your details stay with you.",
 		"safe_1": "Your phone number is never public.",
@@ -24,6 +33,9 @@
 		"safe_action": "Read the safety tips",
 		"shelters_title": "For shelters, vets and municipalities",
 		"shelters_body": "Publish found animals quickly and we compare them with every lost-pet report. For shelters and municipalities everything is free, forever.",
-		"shelters_action": "More for shelters"
+		"shelters_action": "More for shelters",
+		"cta_title": "Report a lost or found pet.",
+		"cta_primary": "Report a lost pet",
+		"cta_secondary": "Report a found animal"
 	}
 }
