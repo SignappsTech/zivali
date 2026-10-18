@@ -1,11 +1,11 @@
 ---
 id: TASK-113
 title: 'Cookie policy: verify the five cookie lifetimes still marked for the client'
-status: In Progress
+status: Done
 assignee:
   - '@tech-lead'
 created_date: '2026-10-16 12:50'
-updated_date: '2026-10-18 04:59'
+updated_date: '2026-10-18 05:13'
 labels:
   - legal
   - content
