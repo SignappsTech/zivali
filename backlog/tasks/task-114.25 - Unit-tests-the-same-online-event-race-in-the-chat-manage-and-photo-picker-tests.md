@@ -3,10 +3,11 @@ id: TASK-114.25
 title: >-
   Unit tests: the same 'online' event race in the chat, manage and photo-picker
   tests
-status: To Do
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-18 03:41'
+updated_date: '2026-10-18 04:12'
 labels:
   - bug
   - fe
