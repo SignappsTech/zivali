@@ -1,26 +1,17 @@
-import type { Metadata } from 'next';
 import type { Locale } from 'next-intl';
-import { getTranslations } from 'next-intl/server';
+import { redirect } from 'next/navigation';
 
-import { NotificationSettings } from '@/components/notifications/notification-settings';
-import { ContentPage, h1Class } from '@/components/shell/page';
+import { getPathname } from '@/i18n/navigation';
 import { requireViewer } from '@/lib/viewer';
 
-export async function generateMetadata({ params }: PageProps<'/[locale]/account/notifications'>): Promise<Metadata> {
-	const t = await getTranslations({ locale: (await params).locale as Locale, namespace: 'notifications' });
-	return { title: t('title'), robots: { index: false } };
-}
-
-/** Notification settings (`/racun/obvestila`, `/en/account/notifications`, C15): a real account only, as /account. */
+/**
+ * The old notification settings URL (`/racun/obvestila`, `/en/account/notifications`, the emails' "manage
+ * notifications" link): "Kako vas obvestimo" is a section of the alerts page now (TASK-114.15), and its anchor opens
+ * it. Sign-in comes first, so a signed-out visitor comes back here and still lands on the open section. The target is
+ * fixed: the alerts path of the locale and the section's anchor, nothing from the request.
+ */
 export default async function AccountNotificationsPage({ params }: PageProps<'/[locale]/account/notifications'>) {
-	const { locale } = await params;
+	const locale = (await params).locale as Locale;
 	await requireViewer(locale);
-	const t = await getTranslations({ locale: locale as Locale, namespace: 'notifications' });
-
-	return (
-		<ContentPage>
-			<h1 className={h1Class}>{t('title')}</h1>
-			<NotificationSettings />
-		</ContentPage>
-	);
+	redirect(`${getPathname({ locale, href: '/account/alerts' })}#kako-vas-obvestimo`);
 }

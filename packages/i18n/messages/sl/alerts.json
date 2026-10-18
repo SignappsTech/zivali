@@ -1,6 +1,8 @@
 {
 	"title": "Opozorila v bližini",
 	"channels_title": "Kako vas obvestimo",
+	"channels_summary_quiet": "{channels} · Tihi čas {from} do {to}",
+	"channels_summary_none": "Brez obvestil",
 	"master_label": "Opozorila o izgubljenih živalih v bližini",
 	"master_help": "Obvestimo vas, ko se v vašem območju izgubi pes ali mačka.",
 	"area_label": "Domače območje",
