@@ -306,4 +306,48 @@ describe('mock provider', () => {
 			});
 		}
 	});
+
+	describe('return_to on the dev-page URL (back to the page the payment started from)', () => {
+		const mock = mockPayments('http://localhost:3000', 's');
+		const checkout = (successUrl: string) =>
+			mock.createCheckout({
+				paymentId: 'p1',
+				amountCents: 500,
+				currency: 'eur',
+				description: 'x',
+				locale: 'en',
+				successUrl,
+				cancelUrl: `${successUrl}&canceled=1`,
+			});
+		const page = 'http://localhost:3000/dev/checkout?payment_id=p1';
+
+		it('carries the URL-encoded return_to of the success URL (web and app scheme)', async () => {
+			for (const base of ['http://localhost:3000/en/payments/return', 'zivali://payments/return']) {
+				const { url } = await checkout(`${base}?payment_id=p1&return_to=%2Fen%2Fr%2FHk3vT9qP%2Freunited`);
+				expect(url).toBe(`${page}&return_to=%2Fen%2Fr%2FHk3vT9qP%2Freunited`);
+				expect(new URL(url).searchParams.get('return_to')).toBe('/en/r/Hk3vT9qP/reunited');
+			}
+		});
+
+		it('omits it when the caller gave none', async () => {
+			expect((await checkout('http://localhost:3000/placila/zakljucek?payment_id=p1')).url).toBe(page);
+		});
+
+		it('drops what the C13 rule refuses, so the dev page is no open redirect', async () => {
+			for (const returnTo of [
+				'https://evil.example/',
+				'//evil.example/',
+				'/\\evil.example',
+				'/\\/evil.example',
+				'javascript:alert(1)',
+				'evil.example',
+				'/r/x y',
+				`/${'a'.repeat(512)}`,
+			]) {
+				const success = new URL('http://localhost:3000/placila/zakljucek?payment_id=p1');
+				success.searchParams.set('return_to', returnTo);
+				expect((await checkout(success.toString())).url).toBe(page);
+			}
+		});
+	});
 });

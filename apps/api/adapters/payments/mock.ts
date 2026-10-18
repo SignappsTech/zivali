@@ -1,7 +1,9 @@
-// Mock provider (C13): Checkout is the web dev page APP_URL/dev/checkout?payment_id=…; its Success, Fail and Cancel
-// buttons post mockEvent() bodies to POST /v1/webhooks/stripe, signed like Stripe (signWebhook) with
+// Mock provider (C13): Checkout is the web dev page APP_URL/dev/checkout?payment_id=…&return_to=…; its Success,
+// Fail and Cancel buttons post mockEvent() bodies to POST /v1/webhooks/stripe, signed like Stripe (signWebhook) with
 // MOCK_WEBHOOK_SECRET, so the webhook runs the same parsing and ledger path as with real Stripe events.
 import { randomUUID } from 'node:crypto';
+
+import { CheckoutInput } from '@zivali/validation';
 
 import type { PaymentsAdapter } from './index.ts';
 import { verifyEvent } from './stripe.ts';
@@ -35,9 +37,14 @@ export function mockPayments(appUrl: string, secret: string): PaymentsAdapter {
 	return {
 		provider: 'mock',
 		live: false,
-		async createCheckout({ paymentId }) {
+		async createCheckout({ paymentId, successUrl }) {
 			const url = new URL('/dev/checkout', appUrl);
 			url.searchParams.set('payment_id', paymentId);
+			// return_to rides on the success URL the domain built; it passes only under the checkout's own C13 rule
+			// (same-origin path), so the dev page never becomes an open redirect.
+			const returnTo = new URL(successUrl).searchParams.get('return_to');
+			if (returnTo && CheckoutInput.shape.return_to.safeParse(returnTo).success)
+				url.searchParams.set('return_to', returnTo);
 			return { id: `mock_cs_${paymentId}`, url: url.toString() };
 		},
 		parseWebhook: (rawBody, signature) => verifyEvent(rawBody, signature, secret),
