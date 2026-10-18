@@ -7,7 +7,7 @@ status: In Progress
 assignee:
   - '@backend-dev'
 created_date: '2026-10-18 21:22'
-updated_date: '2026-10-18 21:36'
+updated_date: '2026-10-18 21:54'
 labels:
   - be
   - 'est:S'
@@ -43,3 +43,11 @@ Branch: agent/task-40.1-ai-foundation
 - [ ] #3 app_config defaults per C19 and C20 (ai.enabled and ai.min_confidence public) inserted with on conflict do nothing; lib/config.ts defaults AI_VISION_MODEL claude-haiku-5-5 and AI_VISION_EFFORT low, and .env.example lists them
 - [ ] #4 data-inventory.json rows for the three models (category, personal-data flag, retention: ai_calls 62 days, ai_results by hash, photo_embeddings with the photo); the data-inventory and schema-exposure tests and pnpm verify pass
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+pgvector: local stack 0.8.2 (PostgreSQL 17.11; scratch DB task_40_1). Project najdimo (omtpppzrugibquukhnyl): not read, the agent's Supabase MCP list_extensions call was denied; lead to record it (select extversion from pg_extension where extname = 'vector'). HNSW needs >= 0.5, iterative_scan (C20 nearest) >= 0.8.
+
+Prisma cannot model HNSW: every later migrate dev adds DROP INDEX photo_embeddings_hnsw; delete that line (comment in ai.prisma, guard in test/security/ai-schema.test.ts, CHANGE for backend.md).
+<!-- SECTION:NOTES:END -->
