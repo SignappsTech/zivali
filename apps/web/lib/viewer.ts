@@ -91,6 +91,13 @@ export function safeNext(next: unknown): string | undefined {
 	}
 }
 
+/**
+ * A `next` back to a signed-out Publish (report-lost/lost-flow.tsx `?handoff=`, C3): signed in there, the draft in that
+ * browser publishes itself.
+ */
+export const isHandoff = (next: string | undefined) =>
+	Boolean(next && new URL(next, 'https://next.invalid').searchParams.has('handoff'));
+
 /** How long a reset link's session may set a new password without the old one. */
 const RECOVERY_SECONDS = 3600;
 

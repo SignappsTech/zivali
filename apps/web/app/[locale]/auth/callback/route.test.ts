@@ -73,6 +73,27 @@ describe('auth callback', () => {
 		);
 	});
 
+	it('takes a signed-out Publish straight back to its report in the same browser; elsewhere, the view (C3)', async () => {
+		const set = (path: string) => `next=${encodeURIComponent(path)}`;
+		exchange.mockResolvedValue({ error: null });
+		expect(await callback('sl', `type=signup&code=c8&${set('/prijava/izgubljena-zival?handoff=n1')}`)).toBe(
+			'https://najdimo.si/prijava/izgubljena-zival?handoff=n1'
+		);
+		expect(await callback('en', `type=signup&code=c9&${set('/en/report/lost?pet=p1&handoff=n2')}`)).toBe(
+			'https://najdimo.si/en/report/lost?pet=p1&handoff=n2'
+		);
+		// Without a hand-off it stays the "confirmed" view, session or not.
+		expect(await callback('sl', `type=signup&code=c10&${set('/prijava/izgubljena-zival')}`)).toBe(
+			'https://najdimo.si/vpis?confirmed=1&next=%2Fprijava%2Fizgubljena-zival'
+		);
+		expect(await callback('en', 'type=signup&code=c11')).toBe('https://najdimo.si/en/sign-in?confirmed=1');
+		// Another browser (no verifier, no session): the view, which says where the draft is (sign-in/page.tsx).
+		exchange.mockResolvedValue({ error: new Error('code verifier not found') });
+		expect(await callback('sl', `type=signup&code=c12&${set('/prijava/izgubljena-zival?handoff=n3')}`)).toBe(
+			'https://najdimo.si/vpis?confirmed=1&next=%2Fprijava%2Fizgubljena-zival%3Fhandoff%3Dn3'
+		);
+	});
+
 	it('returns from Google to next, never off-site; a cancel goes back to sign-in quietly', async () => {
 		exchange.mockResolvedValue({ error: null });
 		expect(await callback('en', 'type=oauth&code=c4&next=%2Fen%2Fr%2FHk3vT9qP')).toBe(

@@ -10,7 +10,7 @@ import { SignInForm, type SignInNotice } from '@/components/auth/sign-in';
 import { PageMessages } from '@/components/page-messages';
 import { Button } from '@/components/ui/button';
 import { getPathname, Link } from '@/i18n/navigation';
-import { getVerifiedViewer, safeNext } from '@/lib/viewer';
+import { getVerifiedViewer, isHandoff, safeNext } from '@/lib/viewer';
 
 const NOTICES: readonly string[] = ['expired', 'cancelled', 'failed'] satisfies SignInNotice[];
 const one = (value: string | string[] | undefined) => (typeof value === 'string' ? value : undefined);
@@ -35,6 +35,9 @@ export default async function SignInPage({ params, searchParams }: PageProps<'/[
 
 	if (confirmed) {
 		const t = await getTranslations({ locale, namespace: 'auth' });
+		// A report hand-off lands here only without its session (auth/callback): the link was opened in another
+		// browser, and the draft is in the one where it was started (TASK-114.4).
+		const elsewhere = isHandoff(next);
 		// AuthMain is a client component that translates: no provider above the page (TASK-90.7).
 		return (
 			<PageMessages messages={{}}>
@@ -43,7 +46,9 @@ export default async function SignInPage({ params, searchParams }: PageProps<'/[
 						<CheckIcon weight="bold" />
 					</Spot>
 					<AuthHeading>{t('verified_title')}</AuthHeading>
-					<p className="mt-3 text-lg leading-7">{t('verified_body')}</p>
+					<p className="mt-3 text-lg leading-7">
+						{t(elsewhere ? 'verified_draft_elsewhere' : 'verified_body')}
+					</p>
 					{/* Back to the step that asked for the account, else the map; in another browser, sign in first. */}
 					<Button asChild size="lg" className="mt-8 w-full">
 						{viewer ? (
@@ -52,7 +57,7 @@ export default async function SignInPage({ params, searchParams }: PageProps<'/[
 							</NextLink>
 						) : (
 							<Link href={{ pathname: '/sign-in', query: next ? { next } : {} }}>
-								{t('verified_continue')}
+								{t(elsewhere ? 'signin_button' : 'verified_continue')}
 							</Link>
 						)}
 					</Button>
