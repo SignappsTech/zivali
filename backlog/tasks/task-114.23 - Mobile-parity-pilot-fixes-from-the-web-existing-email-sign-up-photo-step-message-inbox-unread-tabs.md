@@ -3,10 +3,11 @@ id: TASK-114.23
 title: >-
   Mobile parity: pilot fixes from the web (existing-email sign-up, photo-step
   message, inbox unread tabs)
-status: To Do
+status: In Progress
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-18 02:19'
+updated_date: '2026-10-18 05:10'
 labels:
   - fe
   - mobile

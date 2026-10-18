@@ -305,15 +305,66 @@ describe('sign up', () => {
 		expect(screen.getByText(sl.errors.VALIDATION)).toBeOnTheScreen();
 	});
 
-	test('a taken address looks like success', async () => {
-		await app('/auth/sign-up');
+	const fillSignUp = async () => {
 		await type(sl.auth.name_label, 'Ana');
-		await type(sl.auth.email_label, 'ana@primer.si');
+		await type(sl.auth.email_label, ' ana@primer.si ');
 		await type(sl.auth.password_label, 'mačka v škornjih');
+	};
+	// GoTrue: a confirmed address answers 200 with no identities (enumeration protection), an unconfirmed one keeps it.
+	const answer = (identities: unknown[]) => ({
+		data: { user: { id: 'u-1', identities }, session: null },
+		error: null,
+	});
+
+	test('a confirmed address (no identities) is named on the field with sign-in and forgot password', async () => {
+		const result = await app('/auth/sign-up');
+		await fillSignUp();
+		mockSupabase.signUp.mockResolvedValueOnce(answer([]));
+		await press(sl.auth.signup_button);
+		expect(result.getPathname()).toBe('/auth/sign-up');
+		expect(screen.getByText(sl.auth.error_email_taken)).toBeOnTheScreen();
+		await press(sl.auth.forgot_link);
+		expect(result.getPathname()).toBe('/auth/forgot-password');
+		expect(screen.getByLabelText(sl.auth.email_label)).toHaveDisplayValue('ana@primer.si');
+
+		await act(() => router.back());
+		await press(sl.auth.signin_button);
+		expect(result.getPathname()).toBe('/auth/sign-in');
+		expect(screen.getByLabelText(sl.auth.email_label)).toHaveDisplayValue('ana@primer.si');
+	});
+
+	test("GoTrue's user_already_exists is the same field error; editing the address clears it", async () => {
+		await app('/auth/sign-up');
+		await fillSignUp();
 		mockSupabase.signUp.mockResolvedValueOnce({ data: {}, error: new ApiError('CONFLICT', 'CONFLICT') });
 		await press(sl.auth.signup_button);
+		expect(screen.getByText(sl.auth.error_email_taken)).toBeOnTheScreen();
+		expect(screen.getByRole('button', { name: sl.auth.forgot_link })).toBeOnTheScreen();
+		await type(sl.auth.email_label, 'ana2@primer.si');
 		expect(screen.queryByText(sl.auth.error_email_taken)).toBeNull();
+		expect(screen.queryByRole('button', { name: sl.auth.forgot_link })).toBeNull();
+	});
+
+	test('an unconfirmed address (identity kept) waits for the email again', async () => {
+		await app('/auth/sign-up');
+		await fillSignUp();
+		mockSupabase.signUp.mockResolvedValueOnce(answer([{ id: 'i-1', provider: 'email' }]));
+		await press(sl.auth.signup_button);
 		expect(await screen.findByRole('heading', { name: sl.auth.check_title })).toBeOnTheScreen();
+		expect(screen.queryByText(sl.auth.error_email_taken)).toBeNull();
+	});
+
+	test('a taken address in English', async () => {
+		mockStorage.set('locale', 'en');
+		await app('/auth/sign-up');
+		await type(en.auth.name_label, 'Ana');
+		await type(en.auth.email_label, 'ana@primer.si');
+		await type(en.auth.password_label, 'cat in boots');
+		mockSupabase.signUp.mockResolvedValueOnce(answer([]));
+		await press(en.auth.signup_button);
+		expect(screen.getByText(en.auth.error_email_taken)).toBeOnTheScreen();
+		expect(screen.getByRole('button', { name: en.auth.signin_button })).toBeOnTheScreen();
+		expect(screen.getByRole('button', { name: en.auth.forgot_link })).toBeOnTheScreen();
 	});
 
 	test('from an anonymous finder session it converts that session in place, never a new user (C7 §6)', async () => {
@@ -468,6 +519,8 @@ describe('sign up', () => {
 		mockSupabase.updateUser.mockResolvedValueOnce({ data: {}, error: new ApiError('CONFLICT', 'CONFLICT') });
 		await press(sl.auth.signup_button);
 		expect(screen.getByText(sl.auth.convert_email_taken)).toBeOnTheScreen();
+		expect(screen.getByRole('button', { name: sl.auth.signin_button })).toBeOnTheScreen();
+		expect(screen.getByRole('button', { name: sl.auth.forgot_link })).toBeOnTheScreen();
 		expect(screen.getByRole('button', { name: sl.auth.to_signin })).toBeOnTheScreen();
 
 		// Over 72 bytes ("č" counts 2) is refused on the form, before GoTrue.

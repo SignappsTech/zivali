@@ -43,11 +43,14 @@ type Field = 'name' | 'email' | 'password';
 
 /**
  * P16 M2: name, email and password; checked on submit, then live per field (E2); terms as a sentence with links.
+ * An address that already has an account is named on its field with sign-in (address carried) and forgot-password
+ * next to it, never the check-email screen, as no mail comes for it (owner, TASK-114.1, as on the web). An unconfirmed
+ * one gets the check-email screen (Supabase resends the link).
  *
  * `convert=1` (the anonymous finder's account offer) while this session is anonymous: the same form turns the session
- * into the account (convertAnonymous, C7 §6), so the reports made without one stay. GoTrue names a taken address
- * here, so the form says it and how to add the report to that account (sign in, then the private link); no providers
- * (they would start another user).
+ * into the account (convertAnonymous, C7 §6), so the reports made without one stay. A taken address is named the same
+ * way, with how to add the report to that account (sign in, then the private link); no providers (they would start
+ * another user).
  */
 export default function SignUp() {
 	const t = useTranslations('auth');
@@ -65,6 +68,7 @@ export default function SignUp() {
 		field?: Field;
 		text: string;
 		note?: 'limited' | 'captcha';
+		taken?: boolean;
 	}>();
 	const [busy, setBusy] = React.useState(false);
 	const limited = useCooldown();
@@ -123,13 +127,14 @@ export default function SignUp() {
 			}
 		} catch (failure) {
 			const code = failure instanceof ApiError ? failure.code : null;
-			if (code === 'CONFLICT' && convert) {
-				setServerError({ field: 'email', text: t('convert_email_taken') });
+			if (code === 'CONFLICT') {
+				setServerError({
+					field: 'email',
+					text: t(convert ? 'convert_email_taken' : 'error_email_taken'),
+					taken: true,
+				});
 				emailRef.current?.focus();
-			}
-			// Taken address: same as success, so the form does not reveal which addresses have an account.
-			else if (code === 'CONFLICT') router.push(checkEmail());
-			else if (code === 'VALIDATION') {
+			} else if (code === 'VALIDATION') {
 				const authCode = failure instanceof ApiError ? failure.details?.auth_code : undefined;
 				if (authCode === 'email_address_invalid')
 					setServerError({ field: 'email', text: t('error_email_invalid') });
@@ -153,6 +158,8 @@ export default function SignUp() {
 		serverError?.note === 'captcha' || (serverError?.note === 'limited' && limited.active)
 			? serverError
 			: undefined;
+	const address = values.email.trim();
+	const toSignIn = () => router.replace({ pathname: '/auth/sign-in', params: { email: address } });
 
 	return (
 		<AuthScreen title={t('signup_title')}>
@@ -177,21 +184,38 @@ export default function SignUp() {
 						onSubmitEditing={() => emailRef.current?.focus()}
 					/>
 				</FormField>
-				<FormField label={t('email_label')} error={errors.email}>
-					<Input
-						ref={emailRef}
-						value={values.email}
-						onChangeText={set('email')}
-						keyboardType="email-address"
-						autoComplete="email"
-						textContentType="emailAddress"
-						autoCapitalize="none"
-						autoCorrect={false}
-						returnKeyType="next"
-						submitBehavior="submit"
-						onSubmitEditing={() => passwordRef.current?.focus()}
-					/>
-				</FormField>
+				<View>
+					<FormField label={t('email_label')} error={errors.email}>
+						<Input
+							ref={emailRef}
+							value={values.email}
+							onChangeText={set('email')}
+							keyboardType="email-address"
+							autoComplete="email"
+							textContentType="emailAddress"
+							autoCapitalize="none"
+							autoCorrect={false}
+							returnKeyType="next"
+							submitBehavior="submit"
+							onSubmitEditing={() => passwordRef.current?.focus()}
+						/>
+					</FormField>
+					{serverError?.taken ? (
+						<View className="-ml-3 mt-1 flex-row flex-wrap">
+							<Button variant="text" onPress={toSignIn}>
+								{t('signin_button')}
+							</Button>
+							<Button
+								variant="text"
+								onPress={() =>
+									router.push({ pathname: '/auth/forgot-password', params: { email: address } })
+								}
+							>
+								{t('forgot_link')}
+							</Button>
+						</View>
+					) : null}
+				</View>
 				<PasswordField
 					ref={passwordRef}
 					label={t('password_label')}
@@ -222,11 +246,7 @@ export default function SignUp() {
 				{t('signup_button')}
 			</Button>
 			{convert ? null : <ProviderButtons className="mt-6" onSignedIn={leave} />}
-			<Button
-				variant="text"
-				className="mt-4"
-				onPress={() => router.replace({ pathname: '/auth/sign-in', params: { email: values.email.trim() } })}
-			>
+			<Button variant="text" className="mt-4" onPress={toSignIn}>
 				{t('to_signin')}
 			</Button>
 		</AuthScreen>
