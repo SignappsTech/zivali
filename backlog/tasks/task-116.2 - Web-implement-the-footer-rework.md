@@ -1,11 +1,11 @@
 ---
 id: TASK-116.2
 title: 'Web: implement the footer rework'
-status: In Progress
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-16 14:00'
-updated_date: '2026-10-18 20:03'
+updated_date: '2026-10-18 20:14'
 labels:
   - fe
   - 'est:S'
