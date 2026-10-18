@@ -1,6 +1,7 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, type Page, test } from '@playwright/test';
 
+import { conversations } from '@zivali/api/__fixtures__/chat';
 import { me } from '@zivali/api/__fixtures__/me';
 import { prefs } from '@zivali/api/__fixtures__/notifications';
 import type { Notification, NotificationType } from '@zivali/types';
@@ -35,7 +36,7 @@ const items: Notification[] = [
 	},
 ];
 
-/** Signs in and answers the C10 endpoints; returns the bodies the page sent. */
+/** Signs in and answers the C10 endpoints and the conversation list (all read); returns the bodies the page sent. */
 async function signIn(page: Page, baseURL: string) {
 	const sent = { read: [] as unknown[], prefs: [] as [string, unknown][], me: [] as unknown[] };
 	let readIds = new Set<string>(items.filter((item) => item.read_at).map((item) => item.id));
@@ -57,6 +58,11 @@ async function signIn(page: Page, baseURL: string) {
 			json: { items: list, next_cursor: null, unread: list.filter((item) => !item.read_at).length },
 		});
 	});
+	await page.route(/\/v1\/conversations(\?.*)?$/, (route) =>
+		route.fulfill({
+			json: { ...conversations, items: conversations.items.map((item) => ({ ...item, unread: 0 })) },
+		})
+	);
 	await page.route(/\/v1\/notifications\/read$/, (route) => {
 		const body = route.request().postDataJSON();
 		sent.read.push(body);
@@ -130,7 +136,7 @@ for (const [width, colorScheme] of [
 
 test('opening an unread row marks it read; the view switch keeps ?view= in the URL', async ({ page, baseURL }) => {
 	const sent = await signIn(page, baseURL!);
-	await page.goto('/en/inbox');
+	await page.goto('/en/inbox?view=conversations');
 
 	await expect(page).toHaveTitle('Messages and notifications · Najdimo');
 	await page.getByRole('tab', { name: 'Notifications' }).click();
@@ -177,6 +183,35 @@ for (const colorScheme of ['light', 'dark'] as const)
 		await expect.poll(() => sent.me.at(-1)).toEqual({ quiet_from: null, quiet_to: null });
 		await expectNoAxeViolations(page);
 	});
+
+// TASK-114.10: the tabs show where the unread items are, and /nabiralnik without ?view= opens there (Pogovori first).
+test('without ?view= the inbox opens where the unread items are; tabs and header show them', async ({
+	page,
+	baseURL,
+}) => {
+	await signIn(page, baseURL!);
+	await page.setViewportSize({ width: 1440, height: 900 });
+	await page.goto('/nabiralnik');
+	const tabs = page.getByRole('tablist', { name: 'Sporočila' });
+	await expect(tabs.getByRole('tab', { name: 'Obvestila, neprebrano' })).toHaveAttribute('aria-selected', 'true');
+	await expect(tabs.getByRole('tab', { name: 'Pogovori', exact: true })).toBeVisible();
+	await expect(page.getByRole('heading', { level: 1 })).toHaveText('Obvestila');
+	await expect(page).toHaveURL(/\/nabiralnik$/);
+	await expectNoAxeViolations(page);
+
+	// An unread conversation comes first, and lights the header's dot on its own (the last route registered wins).
+	await page.route(/\/v1\/conversations(\?.*)?$/, (route) => route.fulfill({ json: conversations }));
+	await page.route(/\/v1\/notifications(\?.*)?$/, (route) =>
+		route.fulfill({ json: { items: [], next_cursor: null, unread: 0 } })
+	);
+	await page.reload();
+	await expect(tabs.getByRole('tab', { name: 'Pogovori, neprebrano' })).toHaveAttribute('aria-selected', 'true');
+	await expect(tabs.getByRole('tab', { name: 'Obvestila', exact: true })).toBeVisible();
+	await expect(
+		page.getByRole('banner').getByRole('link', { name: 'Sporočila in obvestila, neprebrano' })
+	).toBeVisible();
+	expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(1440);
+});
 
 // TASK-22.6 (QA): empty and error states of the notifications view (TASK-22.4 AC3), keyboard-reachable retry.
 test('empty inbox shows the empty state with a link to the alert settings', async ({ page, baseURL }) => {
