@@ -1,11 +1,11 @@
 ---
 id: TASK-114.30
 title: 'CSP: allow the R2 upload origin in img-src (CH-297)'
-status: In Progress
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-18 21:14'
-updated_date: '2026-10-18 21:18'
+updated_date: '2026-10-18 21:19'
 labels:
   - bug
   - fe
