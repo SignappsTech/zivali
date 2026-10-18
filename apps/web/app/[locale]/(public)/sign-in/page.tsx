@@ -35,9 +35,9 @@ export default async function SignInPage({ params, searchParams }: PageProps<'/[
 
 	if (confirmed) {
 		const t = await getTranslations({ locale, namespace: 'auth' });
-		// A report hand-off lands here only without its session (auth/callback): the link was opened in another
-		// browser, and the draft is in the one where it was started (TASK-114.4).
-		const elsewhere = isHandoff(next);
+		// A report hand-off lands here only without its session (auth/callback): signed out, the link was opened in
+		// another browser, and the draft is in the one where it was started (TASK-114.4).
+		const elsewhere = !viewer && isHandoff(next, locale);
 		// AuthMain is a client component that translates: no provider above the page (TASK-90.7).
 		return (
 			<PageMessages messages={{}}>

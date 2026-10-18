@@ -70,4 +70,22 @@ describe('SignInPage, the "E-naslov je potrjen" view', () => {
 			`/en/sign-in?next=${encodeURIComponent(enNext)}`
 		);
 	});
+
+	it('keeps the plain copy for a signed-in viewer, and for a hand-off of another locale or page', async () => {
+		viewer.current = { initials: 'AN', aal2: false };
+		const next = '/prijava/izgubljena-zival?handoff=n1';
+		await show('sl', { confirmed: '1', next });
+		expect(screen.getByText(sl.auth.verified_body)).toBeTruthy();
+		expect(screen.queryByText(sl.auth.verified_draft_elsewhere)).toBeNull();
+		expect(screen.getByRole('link', { name: sl.auth.verified_continue }).getAttribute('href')).toBe(next);
+		cleanup();
+
+		viewer.current = null;
+		for (const other of [next, '/en/racun?handoff=n1']) {
+			await show('en', { confirmed: '1', next: other });
+			expect(screen.getByText(en.auth.verified_body)).toBeTruthy();
+			expect(screen.getByRole('link', { name: en.auth.verified_continue })).toBeTruthy();
+			cleanup();
+		}
+	});
 });

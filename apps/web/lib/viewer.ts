@@ -2,7 +2,7 @@ import type { Locale } from 'next-intl';
 import { headers } from 'next/headers';
 import { cache } from 'react';
 
-import { redirect } from '@/i18n/navigation';
+import { getPathname, redirect } from '@/i18n/navigation';
 import { createClient } from '@/lib/supabase/server';
 
 export type Viewer = { initials: string; aal2: boolean };
@@ -92,11 +92,14 @@ export function safeNext(next: unknown): string | undefined {
 }
 
 /**
- * A `next` back to a signed-out Publish (report-lost/lost-flow.tsx `?handoff=`, C3): signed in there, the draft in that
- * browser publishes itself.
+ * A `next` (from safeNext) back to a signed-out Publish: this locale's report-lost flow with its `?handoff=`
+ * (report-lost/lost-flow.tsx, C3). Signed in there, the draft in that browser publishes itself.
  */
-export const isHandoff = (next: string | undefined) =>
-	Boolean(next && new URL(next, 'https://next.invalid').searchParams.has('handoff'));
+export function isHandoff(next: string | undefined, locale: Locale) {
+	if (!next) return false;
+	const url = new URL(next, 'https://next.invalid');
+	return url.pathname === getPathname({ locale, href: '/report/lost' }) && url.searchParams.has('handoff');
+}
 
 /** How long a reset link's session may set a new password without the old one. */
 const RECOVERY_SECONDS = 3600;

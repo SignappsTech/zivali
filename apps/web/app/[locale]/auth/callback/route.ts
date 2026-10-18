@@ -57,7 +57,8 @@ export async function GET(request: NextRequest, { params }: RouteContext<'/[loca
 			if (
 				exchanged &&
 				next &&
-				(next.startsWith(`${getPathname({ locale, href: '/reset-password' })}?set=1`) || isHandoff(next))
+				(next.startsWith(`${getPathname({ locale, href: '/reset-password' })}?set=1`) ||
+					isHandoff(next, locale))
 			)
 				return go(next);
 			return to({

@@ -94,6 +94,34 @@ describe('auth callback', () => {
 		);
 	});
 
+	it("follows a hand-off only to this locale's report flow: off-site, hidden or another page gets the view", async () => {
+		exchange.mockResolvedValue({ error: null });
+		// Off-site or not a path: safeNext drops it, so the view has no `next` at all.
+		for (const next of [
+			'https://evil.com/?handoff=1',
+			'//evil.com/?handoff=1',
+			'/\\evil.com?handoff=1',
+			'%2f%2fevil.com%3Fhandoff%3D1',
+			'javascript:alert(1)',
+		])
+			expect(await callback('sl', `type=signup&code=c13&next=${encodeURIComponent(next)}`)).toBe(
+				'https://najdimo.si/vpis?confirmed=1'
+			);
+		// Sent unencoded it reads //evil.com?handoff=1.
+		expect(await callback('sl', 'type=signup&code=c14&next=%2f%2fevil.com%3Fhandoff%3D1')).toBe(
+			'https://najdimo.si/vpis?confirmed=1'
+		);
+		// Same-site without the report flow's own hand-off: the view, still pointing on.
+		for (const [locale, next, view] of [
+			['sl', '/x?y=handoff%3D1', '/vpis'],
+			['sl', '/racun?handoff=1', '/vpis'],
+			['en', '/prijava/izgubljena-zival?handoff=1', '/en/sign-in'],
+		] as const)
+			expect(await callback(locale, `type=signup&code=c15&next=${encodeURIComponent(next)}`)).toBe(
+				`https://najdimo.si${view}?confirmed=1&next=${encodeURIComponent(next)}`
+			);
+	});
+
 	it('returns from Google to next, never off-site; a cancel goes back to sign-in quietly', async () => {
 		exchange.mockResolvedValue({ error: null });
 		expect(await callback('en', 'type=oauth&code=c4&next=%2Fen%2Fr%2FHk3vT9qP')).toBe(
