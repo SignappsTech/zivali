@@ -1,11 +1,11 @@
 ---
 id: TASK-114.21
 title: 'Legal pages: the "Na tej strani" menu marks the section you are reading'
-status: To Do
+status: In Progress
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-16 16:15'
-updated_date: '2026-10-17 09:24'
+updated_date: '2026-10-18 04:25'
 labels:
   - fe
   - 'est:S'
