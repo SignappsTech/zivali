@@ -5,7 +5,7 @@ status: Done
 assignee:
   - '@content-strategist'
 created_date: '2026-10-16 15:50'
-updated_date: '2026-10-18 02:45'
+updated_date: '2026-10-18 03:00'
 labels:
   - legal
   - content
@@ -35,9 +35,9 @@ Changes:
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
 - [x] #1 The page is titled "Podatki o podjetju" / "Company information" at its new paths, with 301s from /impresum and /en/imprint; footer and in-text links updated; SL and EN
-- [ ] #2 §3 Odgovorna oseba za vsebino and the Zastopnik row removed from the pages and the master; no person is named on the page; the ZEPT data unchanged
-- [ ] #3 Footer copyright says SIGNAPPS d.o.o.
-- [ ] #4 The TASK-91 lawyer pack lists the subscription terms and withdrawal-right check
+- [x] #2 §3 Odgovorna oseba za vsebino and the Zastopnik row removed from the pages and the master; no person is named on the page; the ZEPT data unchanged
+- [x] #3 Footer copyright says SIGNAPPS d.o.o.
+- [x] #4 The TASK-91 lawyer pack lists the subscription terms and withdrawal-right check
 - [x] #5 legal-mdx and route tests updated; sitemap and robots unchanged in behaviour
 <!-- AC:END -->
 
