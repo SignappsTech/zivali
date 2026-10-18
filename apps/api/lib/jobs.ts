@@ -53,6 +53,8 @@ const RETRY: QueueOptions = { retryLimit: 5, retryBackoff: true };
 const QUEUE_OPTIONS: Partial<Record<QueueName, QueueOptions>> = {
 	'ai.extract': { retryLimit: 2, retryDelay: 2, retryBackoff: false },
 };
+/** Retries pg-boss makes after the first attempt of a job sent with the queue defaults. */
+export const retryLimit = (queue: QueueName): number => (QUEUE_OPTIONS[queue] ?? RETRY).retryLimit ?? 0;
 // Pollers per queue in one worker process (pg-boss localConcurrency; 1 when unset; C19, C20).
 const CONCURRENCY: Partial<Record<QueueName, number>> = { 'ai.extract': 4, 'photo.embed': 1 };
 
