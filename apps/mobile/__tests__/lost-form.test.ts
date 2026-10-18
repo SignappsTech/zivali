@@ -27,9 +27,15 @@ const errors = (patch: Partial<LostValues>) => lostErrors({ ...filled, ...patch 
 
 describe('lost flow form', () => {
 	test('a new pet takes seven steps, a saved pet six (its photos cannot join a report, C5)', () => {
-		expect(stepsFor(undefined)).toHaveLength(7);
-		expect(stepsFor(NEW_PET)).toEqual(['pet', 'photos', 'details', 'where', 'when', 'what', 'review']);
-		expect(stepsFor(pet.id)).toEqual(['pet', 'photos', 'where', 'when', 'what', 'review']);
+		expect(stepsFor(undefined, true)).toHaveLength(7);
+		expect(stepsFor(NEW_PET, true)).toEqual(['pet', 'photos', 'details', 'where', 'when', 'what', 'review']);
+		expect(stepsFor(pet.id, true)).toEqual(['pet', 'photos', 'where', 'when', 'what', 'review']);
+	});
+
+	test('without saved pets there is no pet step: the photos come first, with the details', () => {
+		const steps = ['photos', 'details', 'where', 'when', 'what', 'review'];
+		expect(stepsFor(undefined, false)).toEqual(steps);
+		expect(stepsFor(NEW_PET, false)).toEqual(steps);
 	});
 
 	test('a filled report has no errors; pet, species and a colour are required', () => {

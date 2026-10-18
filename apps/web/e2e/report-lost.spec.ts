@@ -134,10 +134,9 @@ test('signed out: fill first, sign in at Publish, and the draft (fields and phot
 	const seen = await fakeApi(page, baseURL!, [], created, { signedOut: true });
 	await page.goto(`/prijava/izgubljena-zival?pet=${pet.id}`);
 	await expect(page).toHaveTitle('Prijavite izgubljenega psa ali mačko · Najdimo');
-	await expect(page.getByRole('radio', { name: 'Vnesi podatke' })).toBeChecked();
-	await page.getByRole('button', { name: 'Naprej' }).click();
-
-	await heading(page, 'Dodajte fotografije');
+	// Signed out there are no saved pets to choose from: the photos come first (the `?pet=` stays in `next`).
+	await expect(page.getByRole('heading', { level: 1, name: 'Dodajte fotografije' })).toBeVisible();
+	await expect(page.getByRole('progressbar', { name: 'Korak 1 od 6' })).toBeVisible();
 	await page
 		.locator('input[type=file][multiple]')
 		.setInputFiles({ name: 'IMG_0003.jpg', mimeType: 'image/jpeg', buffer: await jpeg(page) });
@@ -221,21 +220,17 @@ test('signed out: fill first, sign in at Publish, and the draft (fields and phot
 	await checkStep(page);
 });
 
-test('SL: a new pet in seven steps, keyboard and axe on each, one POST with the coarsened point', async ({
+test('SL: a new pet in six steps, keyboard and axe on each, one POST with the coarsened point', async ({
 	page,
 	baseURL,
 }) => {
 	test.setTimeout(120_000);
 	const seen = await fakeApi(page, baseURL!, [], created);
 	await page.goto('/prijava/izgubljena-zival');
-	await expect(page.getByRole('heading', { level: 1, name: 'Katero žival iščete?' })).toBeVisible();
-	await expect(page.getByRole('progressbar', { name: 'Korak 1 od 7' })).toBeVisible();
-	await expect(page.getByRole('radio', { name: 'Vnesi podatke' })).toBeChecked();
-	await checkStep(page);
-	// Enter on the chosen row advances.
-	await page.getByRole('radio', { name: 'Vnesi podatke' }).press('Enter');
-
-	await heading(page, 'Dodajte fotografije');
+	// No saved pets: nothing to choose, so the photos come first and the bars count the real steps.
+	await expect(page.getByRole('heading', { level: 1, name: 'Dodajte fotografije' })).toBeVisible();
+	await expect(page.getByRole('progressbar', { name: 'Korak 1 od 6' })).toBeVisible();
+	await expect(page.getByText('Katero žival iščete?')).toHaveCount(0);
 	await page.getByRole('button', { name: 'Naprej' }).click();
 	await expect(page.getByText('Dodajte vsaj eno fotografijo, da bodo ljudje žival prepoznali.')).toBeVisible();
 	await page
@@ -345,10 +340,14 @@ test('EN: a saved pet goes straight to photos and where; a duplicate open search
 		},
 	]);
 	await page.goto(`/en/report/lost?pet=${pet.id}`);
-	await expect(page.getByRole('radio', { name: 'Runo · Dog' })).toBeChecked();
+	// The `?pet=` link marks its pet; one press on its row (here Enter) goes on, with focus on the next question.
+	const runo = page.getByRole('button', { name: 'Runo · Dog' });
+	await expect(runo).toHaveAttribute('aria-current', 'true');
+	await expect(page.getByRole('button', { name: /^Another animal/ })).toBeVisible();
+	await expect(page.getByRole('button', { name: 'Next' })).toHaveCount(0);
 	await expect(page.getByRole('progressbar', { name: 'Step 1 of 6' })).toBeVisible();
 	await checkStep(page);
-	await page.getByRole('button', { name: 'Next' }).click();
+	await runo.press('Enter');
 	await heading(page, 'Add photos');
 	await page
 		.locator('input[type=file][multiple]')

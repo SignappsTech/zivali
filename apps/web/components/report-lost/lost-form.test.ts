@@ -28,8 +28,16 @@ const values = (change: Partial<LostValues> = {}): LostValues => ({
 
 describe('stepsFor', () => {
 	it('takes seven steps for a new pet and skips only the details for a saved one (photos stay, C5)', () => {
-		expect(stepsFor(NEW_PET)).toEqual(['pet', 'photos', 'details', 'where', 'when', 'what', 'review']);
-		expect(stepsFor('pet-1')).toEqual(['pet', 'photos', 'where', 'when', 'what', 'review']);
+		expect(stepsFor(NEW_PET, true)).toEqual(['pet', 'photos', 'details', 'where', 'when', 'what', 'review']);
+		expect(stepsFor('pet-1', true)).toEqual(['pet', 'photos', 'where', 'when', 'what', 'review']);
+	});
+
+	it('starts at the photos with the new-pet path when there are no saved pets to choose from', () => {
+		const steps = ['photos', 'details', 'where', 'when', 'what', 'review'];
+		expect(stepsFor(NEW_PET, false)).toEqual(steps);
+		// A `?pet=` link of a pet this visitor has not (signed out, another account): still the new-pet path.
+		expect(stepsFor('pet-1', false)).toEqual(steps);
+		expect(stepsFor(undefined, false)).toEqual(steps);
 	});
 });
 

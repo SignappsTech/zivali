@@ -46,7 +46,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { FieldError, FormField } from '@/components/ui/form-field';
 import { Input } from '@/components/ui/input';
-import { ChoiceRow, RadioGroup } from '@/components/ui/radio-group';
+import { ChoiceButton, ChoiceRow, RadioGroup } from '@/components/ui/radio-group';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
@@ -160,43 +160,45 @@ function PetThumb({ pet }: { pet: Pet }) {
 	);
 }
 
-/** Step 1: a row per saved pet plus "Druga žival"; without saved pets only "Vnesi podatke". */
-function PetStep({ pets, loading, labelledBy }: { pets: Pet[]; loading: boolean; labelledBy: string }) {
+/**
+ * Step 1, only with saved pets: a row per saved pet plus "Druga žival". One press chooses and moves on (buttons, so
+ * arrow keys never advance); the choice is marked when the owner comes back.
+ */
+function PetStep({ pets, labelledBy, onChoose }: { pets: Pet[]; labelledBy: string; onChoose: (pet: string) => void }) {
 	const t = useTranslations('report_lost');
 	const ta = useTranslations('attributes');
 	const { field, fieldState } = useController<LostValues, 'pet'>({ name: 'pet' });
+	const errorId = React.useId();
 	return (
 		<div className="mt-8 grid gap-3">
-			<RadioGroup
-				value={field.value ?? ''}
-				onValueChange={field.onChange}
+			<div
+				role="group"
 				aria-labelledby={labelledBy}
-				aria-invalid={fieldState.error ? true : undefined}
-				className="gap-3"
+				aria-describedby={fieldState.error ? errorId : undefined}
+				className="grid gap-3"
 			>
-				{pets.map((pet, index) => (
-					<ChoiceRow
+				{pets.map((pet) => (
+					<ChoiceButton
 						key={pet.id}
-						ref={index === 0 ? field.ref : undefined}
-						value={pet.id}
+						current={field.value === pet.id}
 						title={`${pet.name} · ${ta(`species.${pet.species}`)}`}
 						icon={<PetThumb pet={pet} />}
+						onClick={() => onChoose(pet.id)}
 					/>
 				))}
-				{loading && <Skeleton className="h-16 rounded-row" />}
-				<ChoiceRow
-					ref={pets.length ? undefined : field.ref}
-					value={NEW_PET}
-					title={t(pets.length ? 'pet_other' : 'pet_enter')}
-					description={pets.length ? t('pet_other_desc') : undefined}
+				<ChoiceButton
+					current={field.value === NEW_PET}
+					title={t('pet_other')}
+					description={t('pet_other_desc')}
 					icon={
 						<span className="grid size-12 shrink-0 place-items-center rounded-xl bg-secondary text-secondary-foreground group-data-[state=checked]/row:text-secondary-foreground">
 							<PlusIcon weight="bold" aria-hidden="true" className="size-6" />
 						</span>
 					}
+					onClick={() => onChoose(NEW_PET)}
 				/>
-			</RadioGroup>
-			{fieldState.error && <FieldError>{t('pet_required')}</FieldError>}
+			</div>
+			{fieldState.error && <FieldError id={errorId}>{t('pet_required')}</FieldError>}
 		</div>
 	);
 }
@@ -580,9 +582,9 @@ function useTrackSubmit() {
 
 /**
  * P6 report-lost flow on web (FR-005): one question per screen in the 560 px flow column, the step bars under the
- * header, Naprej and Nazaj at the bottom (Enter advances), focus on the heading at each step. A saved pet skips the
- * details. The draft is saved on every step (C4 §Drafts); publishing calls create_report (C4) once per submission
- * (one Idempotency-Key for the exact body, a new one after any edit), maps errors back to their fields with the input
+ * header, Naprej and Nazaj at the bottom (Enter advances), focus on the heading at each step. The pet step asks only
+ * when there are saved pets (one press on a row moves on), and a saved pet skips the details. The draft is saved on
+ * every step (C4 §Drafts); publishing calls create_report (C4) once per submission (one Idempotency-Key for the exact body, a new one after any edit), maps errors back to their fields with the input
  * kept, and offers to update the open search on DUPLICATE_OPEN_REPORT. A photo's EXIF place is only offered to the
  * LocationPicker, which coarsens what it hands back (C6). A signed-out visitor fills every step (the photos wait in
  * this browser); Publish then asks for an account (P16 dialog) and the draft hand-off (C3) publishes it once they are
@@ -605,6 +607,7 @@ export function LostFlow({
 	const errorText = useErrorText();
 	const tErrors = useTranslations('errors');
 	const tPhotos = useTranslations('photos');
+	const tCommon = useTranslations('common');
 	const trackSubmit = useTrackSubmit();
 	const auth = useRequireAuth();
 	const { me, isVerified } = auth;
@@ -625,8 +628,13 @@ export function LostFlow({
 		defaultValues: { ...initialValues, pet: initialPet },
 	});
 	const values = useWatch({ control: form.control }) as LostValues;
-	const [step, setStep] = React.useState<Step>('pet');
-	const steps = stepsFor(values.pet);
+	const [chosen, setStep] = React.useState<Step>();
+	// Without saved pets (or signed out) there is nothing to choose: the flow starts at the photos. Until the list is
+	// in, the first step is not known (`starting`: a placeholder, so no question shows that then goes away).
+	const hasPets = pets.length > 0;
+	const step = chosen ?? (hasPets || petsLoading ? 'pet' : 'photos');
+	const starting = !chosen && !hasPets && petsLoading;
+	const steps = stepsFor(values.pet, hasPets);
 	const index = Math.max(0, steps.indexOf(step));
 	// Errors show once Naprej was pressed on the step and then follow every change.
 	const [attempted, setAttempted] = React.useState(false);
@@ -690,8 +698,8 @@ export function LostFlow({
 		return () => clearTimeout(timer);
 	}, [stored, gate]);
 
-	// Without saved pets "Vnesi podatke" is the only row, so it is chosen; a pet that is gone (archived, another
-	// account's link) is not kept.
+	// Without saved pets the details are entered in the flow; a pet that is gone (archived, another account's link)
+	// is not kept.
 	React.useEffect(() => {
 		if (petsLoading) return;
 		const chosen = form.getValues('pet');
@@ -704,7 +712,8 @@ export function LostFlow({
 		if (attempted && fields.length) void form.trigger(fields);
 	}, [attempted, step, values, form]);
 
-	// Focus on the step's heading (the picker's own h1 on Kje), so a screen reader starts at the new question.
+	// Focus on the step's heading (the picker's own h1 on Kje), so a screen reader starts at the new question. Only on
+	// a move (not when the first step settles on load).
 	const first = React.useRef(true);
 	React.useEffect(() => {
 		if (first.current) {
@@ -715,7 +724,7 @@ export function LostFlow({
 		if (!heading) return;
 		heading.tabIndex = -1;
 		heading.focus();
-	}, [step, done]);
+	}, [chosen, done]);
 
 	const go = (next: Step) => {
 		setAttempted(false);
@@ -744,6 +753,10 @@ export function LostFlow({
 		form.reset({ ...initialValues, ...draft.values });
 		setSaved(true);
 		go(draft.step);
+	};
+	const choose = (id: string) => {
+		form.setValue('pet', id);
+		advance();
 	};
 	const back = () => index > 0 && go(steps[index - 1]!);
 	const edit = (target: Step) => {
@@ -989,13 +1002,26 @@ export function LostFlow({
 								event.currentTarget.requestSubmit();
 							}}
 						>
-							{step !== 'where' && (
-								<h1 key={step} id={headingId} className={cn(titleClass, 'mt-8 lg:mt-10')}>
-									{titles[step]}
-								</h1>
+							{starting ? (
+								<div className="mt-8 grid gap-3 lg:mt-10">
+									<p role="status" className="sr-only">
+										{tCommon('loading')}
+									</p>
+									<Skeleton className="mb-5 h-10 w-3/4 lg:h-[52px]" />
+									<Skeleton className="h-16 rounded-row" />
+									<Skeleton className="h-16 rounded-row" />
+								</div>
+							) : (
+								step !== 'where' && (
+									<h1 key={step} id={headingId} className={cn(titleClass, 'mt-8 lg:mt-10')}>
+										{titles[step]}
+									</h1>
+								)
 							)}
 							{summary && <FieldError className="mt-6">{t('validation_summary')}</FieldError>}
-							{step === 'pet' && <PetStep pets={pets} loading={petsLoading} labelledBy={headingId} />}
+							{step === 'pet' && !starting && (
+								<PetStep pets={pets} labelledBy={headingId} onChoose={choose} />
+							)}
 							<div hidden={step !== 'photos'}>
 								<p className="mt-3 text-lg leading-7">{t('photos_help')}</p>
 								{/* A saved pet's photos come first (C5: they go on the report too); another pet re-seeds them. */}
@@ -1040,7 +1066,9 @@ export function LostFlow({
 								/>
 							)}
 
+							{/* The pet step moves on with its rows: no Naprej (and, as the first step, no Nazaj). */}
 							<div
+								hidden={step === 'pet'}
 								className={cn(
 									'mt-10 grid gap-4 max-lg:sticky max-lg:bottom-0 max-lg:bg-background max-lg:pt-4 max-lg:pb-11',
 									step === 'review' && 'lg:max-w-[calc(100%-448px)]'

@@ -152,8 +152,7 @@ const offline = () => {
 /** From step 1 to the review with the saved pet Runo (bars: 6). */
 async function toReviewWithSavedPet() {
 	await renderFlow();
-	await fireEvent.press(await screen.findByRole('radio', { name: /Runo · Pes/ }));
-	await next();
+	await fireEvent.press(await screen.findByRole('button', { name: /Runo · Pes/ }));
 	await press('Fotografiraj');
 	await next();
 	await press('Potrdi kraj');
@@ -176,12 +175,12 @@ describe('report lost flow (P6)', () => {
 	test('a saved pet: six steps, then create_report with the pet, the coarsened point and the photo', async () => {
 		await renderFlow();
 		expect(track).toHaveBeenCalledWith('report_lost_start');
-		expect(screen.getByRole('heading', { name: t.pet_title })).toBeTruthy();
+		expect(await screen.findByRole('heading', { name: t.pet_title })).toBeTruthy();
 		expect(bars()).toHaveProp('aria-label', 'Korak 1 od 7');
+		// One press on the row moves on: no Naprej on this step.
+		expect(screen.queryByRole('button', { name: t.next })).toBeNull();
 
-		await fireEvent.press(await screen.findByRole('radio', { name: /Runo · Pes/ }));
-		expect(bars()).toHaveProp('aria-label', 'Korak 1 od 6');
-		await next();
+		await fireEvent.press(await screen.findByRole('button', { name: /Runo · Pes/ }));
 		expect(screen.getByRole('heading', { name: t.photos_title })).toBeTruthy();
 		expect(bars()).toHaveProp('aria-label', 'Korak 2 od 6');
 
@@ -234,9 +233,14 @@ describe('report lost flow (P6)', () => {
 
 	test('a new pet: the details step checks species and colour, then sends them inline', async () => {
 		await renderFlow();
-		await fireEvent.press(await screen.findByRole('radio', { name: new RegExp(`^${t.pet_other}`) }));
-		expect(bars()).toHaveProp('aria-label', 'Korak 1 od 7');
-		await next();
+		const other = new RegExp(`^${t.pet_other}`);
+		await fireEvent.press(await screen.findByRole('button', { name: other }));
+		expect(bars()).toHaveProp('aria-label', 'Korak 2 od 7');
+		// Back on the pet step the choice is marked; a press on it goes on again.
+		await press(t.back);
+		expect(screen.getByRole('button', { name: other })).toBeSelected();
+		expect(screen.getByRole('button', { name: /Runo · Pes/ })).not.toBeSelected();
+		await press(other);
 		await press('Fotografiraj');
 		await next();
 		expect(screen.getByRole('heading', { name: t.details_title })).toBeTruthy();
@@ -262,13 +266,26 @@ describe('report lost flow (P6)', () => {
 		expect(posted()[0]!.body).not.toHaveProperty('pet_id');
 	});
 
+	test('asks nothing until the saved pets are in', async () => {
+		mockAuth.gate = 'loading';
+		const view = await renderFlow();
+		expect(screen.getByLabelText(sl.common.loading)).toBeTruthy();
+		for (const title of [t.pet_title, t.photos_title])
+			expect(screen.queryByRole('heading', { name: title })).toBeNull();
+		expect(screen.queryByRole('button', { name: t.next })).toBeNull();
+		mockAuth.gate = 'ok';
+		await view.rerender();
+		expect(await screen.findByRole('heading', { name: t.pet_title })).toBeTruthy();
+	});
+
 	test('signed out: the draft (fields and photos) waits for sign-in or sign-up, then the same publish sends it', async () => {
 		mockAuth.gate = 'signin';
 		mockAuth.me = null;
 		const view = await renderFlow();
-		expect(screen.getAllByRole('radio')).toHaveLength(1);
-		await waitFor(() => expect(screen.getByRole('radio', { name: t.pet_enter })).toBeChecked());
-		await next();
+		// No saved pets to choose from: the photos come first, and the bars count the real steps.
+		expect(await screen.findByRole('heading', { name: t.photos_title })).toBeTruthy();
+		expect(screen.queryByRole('heading', { name: t.pet_title })).toBeNull();
+		expect(bars()).toHaveProp('aria-label', 'Korak 1 od 6');
 		// Nothing is sent before sign-in (C3): the photo stays on the device.
 		expect(mockPicker.hold).toBe(true);
 		await press('Fotografiraj');
@@ -320,8 +337,7 @@ describe('report lost flow (P6)', () => {
 		mockAuth.gate = 'signin';
 		mockAuth.me = null;
 		const view = await renderFlow();
-		await waitFor(() => expect(screen.getByRole('radio', { name: t.pet_enter })).toBeChecked());
-		await next();
+		await screen.findByRole('heading', { name: t.photos_title });
 		await press('Fotografiraj');
 		await next();
 		await fireEvent.press(screen.getByRole('radio', { name: 'Pes' }));
@@ -346,8 +362,7 @@ describe('report lost flow (P6)', () => {
 		mockAuth.gate = 'signin';
 		mockAuth.me = null;
 		const view = await renderFlow();
-		await waitFor(() => expect(screen.getByRole('radio', { name: t.pet_enter })).toBeChecked());
-		await next();
+		await screen.findByRole('heading', { name: t.photos_title });
 		await press('Fotografiraj');
 		await next();
 		await fireEvent.press(screen.getByRole('radio', { name: 'Mačka' }));
@@ -423,8 +438,7 @@ describe('report lost flow (P6)', () => {
 
 	test('when: Danes asks the time, a future date is refused, more than 30 days back only warns', async () => {
 		await renderFlow();
-		await fireEvent.press(await screen.findByRole('radio', { name: /Runo · Pes/ }));
-		await next();
+		await fireEvent.press(await screen.findByRole('button', { name: /Runo · Pes/ }));
 		await press('Fotografiraj');
 		await next();
 		await press('Potrdi kraj');
@@ -452,8 +466,7 @@ describe('report lost flow (P6)', () => {
 
 	test('reward (display only): the switch row, the shield note, and the contact-data error from containsContactData()', async () => {
 		await renderFlow();
-		await fireEvent.press(await screen.findByRole('radio', { name: /Runo · Pes/ }));
-		await next();
+		await fireEvent.press(await screen.findByRole('button', { name: /Runo · Pes/ }));
 		await press('Fotografiraj');
 		await next();
 		await press('Potrdi kraj');
@@ -646,8 +659,7 @@ describe('report lost flow (P6)', () => {
 					: created,
 		};
 		await renderFlow();
-		await fireEvent.press(await screen.findByRole('radio', { name: /Runo · Pes/ }));
-		await next();
+		await fireEvent.press(await screen.findByRole('button', { name: /Runo · Pes/ }));
 		await press('Fotografiraj');
 		await next();
 		await press('Potrdi kraj');
@@ -657,8 +669,10 @@ describe('report lost flow (P6)', () => {
 		expect(await screen.findByText(t.duplicate_title)).toBeTruthy();
 
 		await press(`Uredi: ${t.review_pet}`);
-		await fireEvent.press(screen.getByRole('radio', { name: /Muri · Pes/ }));
-		await next();
+		// Coming back, the pet chosen before is marked.
+		expect(screen.getByRole('button', { name: /Runo · Pes/ })).toBeSelected();
+		expect(screen.getByRole('button', { name: /Muri · Pes/ })).not.toBeSelected();
+		await fireEvent.press(screen.getByRole('button', { name: /Muri · Pes/ }));
 		expect(screen.queryByText(t.duplicate_title)).toBeNull();
 		await press(t.publish);
 		await waitFor(() => expect(mockRouter.replace).toHaveBeenCalled());
@@ -745,9 +759,9 @@ describe('report lost flow (P6)', () => {
 		await renderFlow();
 		await focused();
 		expect(screen.getAllByRole('button', { name: t.back })).toHaveLength(1);
-		expect(screen.getByLabelText(t.pet_title)).toBeTruthy();
-		await fireEvent.press(await screen.findByRole('radio', { name: /Runo · Pes/ }));
-		await next();
+		// The pet rows are buttons named by the pet (and the new-pet row by its title and note).
+		expect(screen.getByRole('button', { name: `${t.pet_other}, ${t.pet_other_desc}` })).toBeTruthy();
+		await fireEvent.press(await screen.findByRole('button', { name: /Runo · Pes/ }));
 		await focused();
 		expect(screen.getByRole('button', { name: 'Fotografiraj' })).toBeTruthy();
 		await press('Fotografiraj');
