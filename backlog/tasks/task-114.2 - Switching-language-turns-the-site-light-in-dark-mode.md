@@ -1,11 +1,11 @@
 ---
 id: TASK-114.2
 title: Switching language turns the site light in dark mode
-status: To Do
+status: In Progress
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-16 13:20'
-updated_date: '2026-10-17 09:24'
+updated_date: '2026-10-18 03:07'
 labels:
   - bug
   - fe
@@ -31,3 +31,7 @@ Likely cause: the theme is the `dark` class on `<html>`, set by an inline script
 - [ ] #2 The theme still follows the OS setting live (changing it while the page is open), and the first paint has no flash
 - [ ] #3 An e2e test switches the language with `colorScheme: 'dark'` emulated and checks the `dark` class (or the computed background)
 <!-- AC:END -->
+
+## Packet
+
+Branch: agent/TASK-114.2-theme-locale-switch

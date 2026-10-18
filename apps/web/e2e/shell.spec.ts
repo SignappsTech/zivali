@@ -1,10 +1,17 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, type Page, test } from '@playwright/test';
 
-import { dismissConsent } from './session';
+import { me } from '@zivali/api/__fixtures__/me';
+
+import { api, dismissConsent, hydrated, signInAs } from './session';
 
 // TASK-11.2: the P1 web shell (header, footer, skip link, sidebar region, menus, 404, guards) at 320, 390 and 1440 px.
 const AXE_TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'];
+const cors = {
+	'access-control-allow-origin': '*',
+	'access-control-allow-headers': '*',
+	'access-control-allow-methods': '*',
+};
 
 test.beforeEach(({ page }) => dismissConsent(page));
 
@@ -136,6 +143,59 @@ test('the language switch keeps the page', async ({ page }) => {
 		'/kako-deluje'
 	);
 });
+
+// TASK-114.2: the switch is a client navigation into a new [locale] root layout, where React remounts <html> without
+// the `dark` class the inline theme script set. Signed in, the switch saves the profile locale first.
+for (const signedIn of [false, true])
+	test(`in dark mode the language switch keeps the dark theme, signed ${signedIn ? 'in' : 'out'}`, async ({
+		page,
+		baseURL,
+	}) => {
+		if (signedIn) {
+			await signInAs(page, { id: me.id, role: me.role, aal: 'aal1' }, baseURL!);
+			await page.route(`${api()}/v1/me`, (route) => {
+				const request = route.request();
+				if (request.method() === 'OPTIONS') return route.fulfill({ status: 204, headers: cors });
+				const json = request.method() === 'PATCH' ? { ...me, ...request.postDataJSON() } : me;
+				return route.fulfill({ headers: cors, json });
+			});
+		}
+		await page.emulateMedia({ colorScheme: 'dark' });
+		await page.setViewportSize({ width: 1440, height: 900 });
+		await page.goto('/kako-deluje');
+		const html = page.locator('html');
+		const banner = page.getByRole('banner');
+		await expect(html).toHaveClass(/\bdark\b/);
+
+		// Each switch counts the animation frames (each runs before a paint) without `dark`: none may show light. A full
+		// load would drop the counter, but it runs the inline script before its first paint anyway.
+		type Counter = Window & { lightFrames?: number };
+		const switchTo = async (name: string, url: RegExp, lang: string) => {
+			await page.evaluate(() => {
+				const counter = window as Counter;
+				counter.lightFrames = 0;
+				const check = () => {
+					if (!document.documentElement.classList.contains('dark')) counter.lightFrames!++;
+					requestAnimationFrame(check);
+				};
+				requestAnimationFrame(check);
+			});
+			// Hydrated first: before that the plain link does a full load instead of the client navigation under test.
+			await (await hydrated(banner.getByRole('link', { name }))).click();
+			await expect(page).toHaveURL(url);
+			await expect(html).toHaveAttribute('lang', lang);
+			await expect(html).toHaveClass(/\bdark\b/);
+			expect(await page.evaluate(() => (window as Counter).lightFrames ?? 0)).toBe(0);
+		};
+		await switchTo('English', /\/en\/how-it-works$/, 'en');
+		await switchTo('Slovenščina', /:\d+\/kako-deluje$/, 'sl');
+
+		// Still live after the switch: the OS setting changes while the page is open.
+		await page.emulateMedia({ colorScheme: 'light' });
+		await expect(html).not.toHaveClass(/\bdark\b/);
+		await page.emulateMedia({ colorScheme: 'dark' });
+		await expect(html).toHaveClass(/\bdark\b/);
+	});
 
 test('every header and footer link answers (placeholders until their stories ship)', async ({ page, request }) => {
 	await page.goto('/');
