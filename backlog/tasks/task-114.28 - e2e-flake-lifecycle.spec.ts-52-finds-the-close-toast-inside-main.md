@@ -11,6 +11,7 @@ labels:
   - fe
   - 'est:XS'
   - trivial
+  - no-design
 dependencies: []
 references:
   - apps/web/e2e/lifecycle.spec.ts
