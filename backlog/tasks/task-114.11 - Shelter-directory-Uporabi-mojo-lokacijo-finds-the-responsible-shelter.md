@@ -1,11 +1,11 @@
 ---
 id: TASK-114.11
 title: 'Shelter directory: "Uporabi mojo lokacijo" finds the responsible shelter'
-status: To Do
+status: In Progress
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-16 14:55'
-updated_date: '2026-10-17 09:24'
+updated_date: '2026-10-18 04:12'
 labels:
   - fe
   - 'est:S'
@@ -35,3 +35,7 @@ Wanted: a "Uporabi mojo lokacijo" / "Use my location" button by the municipality
 - [ ] #3 The position is neither stored nor sent anywhere but the reverse lookup; the page stays server-rendered without it
 - [ ] #4 Unit tests with a mocked geolocation; e2e (Playwright geolocation permission) for the happy path
 <!-- AC:END -->
+
+## Packet
+
+Branch: agent/TASK-114.11-shelters-use-my-location
