@@ -1,6 +1,7 @@
-// C8 matching v1 score: pure, so the worker and (later) the clients explain a suggestion the same way. Reasons carry
-// bands and overlaps only, never a distance, a time or a chip number.
+// C8 matching score (v3: attributes plus photo similarity): pure, so the worker and (later) the clients explain a
+// suggestion the same way. Reasons carry bands and overlaps only, never a distance, a time or a chip number.
 import {
+	MATCH_STRENGTHS,
 	SIZES,
 	type Colour,
 	type DistanceBand,
@@ -9,6 +10,8 @@ import {
 	type Pattern,
 	type Sex,
 	type Size,
+	type Uuid,
+	type VisualBand,
 } from '@zivali/types';
 
 export type MatchAttributes = { size: Size | null; sex: Sex | null; colours: Colour[]; pattern: Pattern | null };
@@ -21,15 +24,30 @@ export type MatchFeatures = {
 	delta_hours: number;
 	lost: MatchAttributes;
 	other: MatchAttributes;
+	/**
+	 * The most similar photo pair (C8 §Visual similarity 1-2). Null or left out (no vector on either side, provider
+	 * down, query failed): exactly the v2 score, the fallback.
+	 */
+	visual?: VisualFeature | null;
 };
-/** app_config `matching.distance_scale_km` and `matching.weights`. */
+/** V: the pair's cosine normalised by visualSimilarity, 0…1. */
+export type VisualFeature = { V: number; lost_photo_id: Uuid; other_photo_id: Uuid };
+export type VisualWeights = { distance: number; time: number; attributes: number; visual: number };
+/** app_config `matching.distance_scale_km`, `matching.weights` and (with a visual term) `matching.weights_visual`. */
 export type MatchScoreConfig = {
 	distance_scale_km: number;
 	weights: { distance: number; time: number; attributes: number };
+	/** Used only when features.visual is set; VISUAL_WEIGHTS when left out. */
+	weights_visual?: VisualWeights;
 };
 export type MatchScore = { score: number; strength: MatchStrength; reasons: MatchReason[] };
-/** `matches.algo_version` of a score from scoreMatch (v1 counted every unknown attribute 0.5). */
-export const MATCH_ALGO_VERSION = 'v2';
+/**
+ * `matches.algo_version` of every score from scoreMatch, with or without V (v2 scored attributes only, v1 counted every
+ * unknown attribute 0.5).
+ */
+export const MATCH_ALGO_VERSION = 'v3';
+/** C8 start values of `matching.weights_visual`: placeholders until the evaluation (TASK-43.3) sets them. */
+export const VISUAL_WEIGHTS: VisualWeights = { distance: 0.3, time: 0.15, attributes: 0.25, visual: 0.3 };
 
 // Each similarity is 0…1 for an attribute known on both sides, null when either side does not know it.
 
@@ -65,7 +83,23 @@ export function hoursBand(hours: number): 'lt24' | '24to72' | 'gt72' {
 	return hours < 24 ? 'lt24' : hours < 72 ? '24to72' : 'gt72';
 }
 
+/**
+ * C8 §Visual similarity 2: V = clamp((cos − floor) / (ceiling − floor), 0, 1), floor and ceiling per embedding model
+ * (`matching.visual_floor` / `matching.visual_ceiling`, placeholders 0.70 / 0.95 until TASK-43.3).
+ */
+export function visualSimilarity(cos: number, floor: number, ceiling: number): number {
+	return Math.min(1, Math.max(0, (cos - floor) / (ceiling - floor)));
+}
+
+/** Visual reason band: V ≥ 0.8 / ≥ 0.5 / ≥ 0.25 (C8 placeholders until TASK-43.3); null below, no reason. */
+export function visualBand(V: number): VisualBand | null {
+	return V >= 0.8 ? 'very_similar' : V >= 0.5 ? 'similar' : V >= 0.25 ? 'some' : null;
+}
+
 const round = (value: number, digits: number) => Math.round(value * 10 ** digits) / 10 ** digits;
+const strengthOf = (score: number): MatchStrength => (score >= 0.8 ? 'strong' : score >= 0.65 ? 'good' : 'possible');
+const weaker = (a: MatchStrength, b: MatchStrength) =>
+	MATCH_STRENGTHS.indexOf(a) > MATCH_STRENGTHS.indexOf(b) ? a : b;
 
 /**
  * C8 §Score: D = exp(−km / scale), T = 1 − min(1, max(0, Δh) / (24 × 30)), A = the similarities of the attributes known
@@ -73,9 +107,14 @@ const round = (value: number, digits: number) => Math.round(value * 10 ** digits
  * score = wD·D + wT·T + wA·A (3 decimals). A chip match scores 1 and is strong; otherwise ≥ 0.8 strong, ≥ 0.65 good.
  * Null (no suggestion) without a chip when a known attribute contradicts (another sex, sizes two steps apart, no shared
  * colour) or none agrees, so species, distance and time alone never make a match.
+ *
+ * C8 §Visual similarity, with features.visual: score = wD·D + wT·T + wA·A + wV·V (`weights_visual`); V ≥ 0.8 lifts the
+ * size and colour vetoes (never the sex one) and V ≥ 0.5 counts as evidence. Without a geo-time fit (under 3 km and
+ * 72 h) V never raises the strength above the pair's v2 strength, possible when v2 suggests nothing (visual-only
+ * evidence, a lifted veto): look-alikes far apart or days apart are never notified on their photos.
  */
 export function scoreMatch(features: MatchFeatures, config: MatchScoreConfig): MatchScore | null {
-	const { lost, other } = features;
+	const { lost, other, visual } = features;
 	const size = sizeSim(lost.size, other.size);
 	const sex = sexSim(lost.sex, other.sex);
 	const overlap = colourOverlap(lost.colours, other.colours);
@@ -83,25 +122,44 @@ export function scoreMatch(features: MatchFeatures, config: MatchScoreConfig): M
 
 	// The mean over the k attributes known on both sides, weighted by k / 4, is their sum / 4.
 	const A = ((size ?? 0) + (overlap ?? 0) + (sex ?? 0) + (pattern ?? 0)) / 4;
-	const contradiction = sex === 0 || size === 0 || overlap === 0;
 	// After the veto only a different pattern can be known and disagree, so "one known attribute agrees" is A > 0.
-	if (!features.chip_match && (contradiction || A === 0)) return null;
+	const v2Passes = !(sex === 0 || size === 0 || overlap === 0 || A === 0);
+	// Without a vector V counts 0: no veto lifted, no visual evidence, the v2 rules.
+	const V = visual?.V ?? 0;
+	const vetoed = sex === 0 || ((size === 0 || overlap === 0) && V < 0.8);
+	if (!features.chip_match && (vetoed || (A === 0 && V < 0.5))) return null;
 
 	const D = Math.exp(-features.distance_km / config.distance_scale_km);
 	const T = 1 - Math.min(1, Math.max(0, features.delta_hours) / (24 * 30));
 	const { weights: w } = config;
-	const score = features.chip_match ? 1 : round(w.distance * D + w.time * T + w.attributes * A, 3);
-	const strength: MatchStrength =
-		features.chip_match || score >= 0.8 ? 'strong' : score >= 0.65 ? 'good' : 'possible';
+	const v2Score = round(w.distance * D + w.time * T + w.attributes * A, 3);
+	const wv = config.weights_visual ?? VISUAL_WEIGHTS;
+	const blend = visual ? round(wv.distance * D + wv.time * T + wv.attributes * A + wv.visual * V, 3) : v2Score;
+	const score = features.chip_match ? 1 : blend;
+	let strength: MatchStrength = features.chip_match ? 'strong' : strengthOf(score);
+
+	const distance = distanceBand(features.distance_km);
+	const hours = hoursBand(features.delta_hours);
+	const geoTimeFit = (distance === 'lt1' || distance === '1to3') && hours !== 'gt72';
+	if (visual && !features.chip_match && !geoTimeFit)
+		strength = weaker(strength, v2Passes ? strengthOf(v2Score) : 'possible');
 
 	const reasons: MatchReason[] = [];
 	// A sighting's chip line (P11 `reason_chip_sighting`) already says the chip is the same, so it replaces `chip`.
 	if (features.chip_match) reasons.push({ code: features.other_type === 'sighted' ? 'chip_sighting' : 'chip' });
-	reasons.push({ code: 'distance', band: distanceBand(features.distance_km) });
-	reasons.push({ code: 'time', hours_band: hoursBand(features.delta_hours) });
+	reasons.push({ code: 'distance', band: distance });
+	reasons.push({ code: 'time', hours_band: hours });
 	if (size) reasons.push({ code: 'size', match: size === 1 ? 'equal' : 'adjacent' });
 	if (overlap) reasons.push({ code: 'colour', overlap: round(overlap, 2) });
 	if (sex === 1) reasons.push({ code: 'sex', match: 'equal' });
 	if (pattern === 1) reasons.push({ code: 'pattern', match: 'equal' });
+	const band = visualBand(V);
+	if (visual && band)
+		reasons.push({
+			code: 'visual',
+			band,
+			lost_photo_id: visual.lost_photo_id,
+			other_photo_id: visual.other_photo_id,
+		});
 	return { score, strength, reasons };
 }
