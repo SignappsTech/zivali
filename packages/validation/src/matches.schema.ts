@@ -1,17 +1,24 @@
 // C8 matching: GET /v1/reports/:code/matches, POST /v1/matches/:id/confirm|reject.
 import { csv, text, Uuid } from './common.schema.ts';
-import { DistanceBand, MatchReasonCode, MatchState, MatchStrength } from './enums.ts';
+import { DistanceBand, MatchReasonCode, MatchState, MatchStrength, VisualBand } from './enums.ts';
 import { PublicReport } from './reports.schema.ts';
 import { z } from './zod.ts';
 
+/** Algo v3 (C8 §Visual similarity): the most similar photo pair. */
+export const VisualMatchReason = z
+	.object({ code: z.literal('visual'), band: VisualBand, lost_photo_id: Uuid, other_photo_id: Uuid })
+	.openapi('VisualMatchReason');
 export const MatchReason = z
-	.object({
-		code: MatchReasonCode,
-		band: DistanceBand.optional(),
-		hours_band: z.string().optional(),
-		match: z.string().optional(),
-		overlap: z.number().min(0).max(1).optional(),
-	})
+	.discriminatedUnion('code', [
+		z.object({
+			code: MatchReasonCode.exclude(['visual']),
+			band: DistanceBand.optional(),
+			hours_band: z.string().optional(),
+			match: z.string().optional(),
+			overlap: z.number().min(0).max(1).optional(),
+		}),
+		VisualMatchReason,
+	])
 	.openapi('MatchReason', { description: 'Why two reports match: bands and overlaps only, never exact data.' });
 export const MatchOther = PublicReport.pick({
 	id: true,

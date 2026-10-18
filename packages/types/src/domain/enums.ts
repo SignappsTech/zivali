@@ -144,8 +144,20 @@ export const MATCH_REASON_CODES = [
 	'colour',
 	'sex',
 	'pattern',
+	'visual',
 ] as const;
 export type MatchReasonCode = Values<typeof MATCH_REASON_CODES>;
+/** Visual reason (algo v3): V ≥ 0.8 / ≥ 0.5 / ≥ 0.25; none below. */
+export const VISUAL_BANDS = ['very_similar', 'similar', 'some'] as const;
+export type VisualBand = Values<typeof VISUAL_BANDS>;
+
+// C19 AI attribute extraction
+/** The main animal the model saw (AiExtraction.animal). */
+export const AI_ANIMALS = ['dog', 'cat', 'other', 'none'] as const;
+export type AiAnimal = Values<typeof AI_ANIMALS>;
+/** none / other / animal_count ≥ 2 */
+export const AI_NOTICES = ['no_animal', 'other_animal', 'multiple_animals'] as const;
+export type AiNotice = Values<typeof AI_NOTICES>;
 
 // C9 chat
 export const CONVERSATION_STATUSES = ['active', 'read_only'] as const;
