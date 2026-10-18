@@ -1,15 +1,16 @@
 ---
 id: TASK-115.4
 title: 'API: public homepage numbers (only if the approved wireframe has them)'
-status: To Do
+status: In Progress
 assignee:
   - '@backend-dev'
 created_date: '2026-10-16 14:00'
+updated_date: '2026-10-18 19:48'
 labels:
-  - 'be'
+  - be
   - 'est:S'
 dependencies:
-  - 'TASK-115.1'
+  - TASK-115.1
 parent_task_id: TASK-115
 priority: medium
 ordinal: 361400
@@ -23,5 +24,9 @@ Only if the approved wireframe (TASK-115.1) shows live numbers (e.g. open report
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Endpoint per the wireframe, cached, in the OpenAPI document, with route tests; or closed as not needed
+- [x] #1 Endpoint per the wireframe, cached, in the OpenAPI document, with route tests; or closed as not needed
 <!-- AC:END -->
+
+## Packet
+
+Branch: agent/TASK-115.4-public-stats
