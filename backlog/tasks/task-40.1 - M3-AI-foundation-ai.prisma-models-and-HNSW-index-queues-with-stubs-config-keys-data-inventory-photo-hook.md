@@ -3,11 +3,11 @@ id: TASK-40.1
 title: >-
   M3 AI foundation: ai.prisma models and HNSW index, queues with stubs, config
   keys, data inventory, photo hook
-status: To Do
+status: In Progress
 assignee:
   - '@backend-dev'
 created_date: '2026-10-18 21:22'
-updated_date: '2026-10-18 21:28'
+updated_date: '2026-10-18 21:36'
 labels:
   - be
   - 'est:S'
