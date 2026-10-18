@@ -36,7 +36,9 @@ export function consentCopy(
 	prompt: boolean,
 	stored: ConsentState | null
 ): ConsentCopy {
-	const copy = Object.fromEntries(KEYS.map((key) => [key, t(key)])) as ConsentCopy;
+	const copy = Object.fromEntries(
+		KEYS.map((key) => [key, key === 'necessary_body' ? t.raw(key) : t(key)])
+	) as ConsentCopy;
 	copy.reask = null;
 	if (prompt && stored) {
 		const change = `change_${CONSENT_VERSION}` as never; // a short phrase added to both catalogues with each bump

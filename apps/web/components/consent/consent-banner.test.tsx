@@ -7,6 +7,7 @@ import { CONSENT_VERSION, getConsent, initAnalytics, isCurrent, parseConsent } f
 import en from '@zivali/i18n/dist/en.json';
 import sl from '@zivali/i18n/dist/sl.json';
 
+import enConsent from '../../../../packages/i18n/messages/en/consent.json';
 import { ConsentBanner, OPEN_COOKIE_SETTINGS } from './consent-banner';
 import { consentCopy } from './copy';
 
@@ -87,6 +88,16 @@ describe('ConsentBanner', () => {
 		fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Escape' });
 		expect(screen.queryByRole('dialog')).toBeNull();
 		expect(stored).toBeNull();
+	});
+
+	it('Customise: the policy mention is a link; following it records no choice and the banner stays', () => {
+		mount('en', { necessary_body: enConsent.necessary_body });
+		fireEvent.click(button('Customise'));
+		const link = screen.getAllByRole('link', { name: 'cookie policy' })[0]!;
+		expect(link.getAttribute('href')).toBe('/piskotki');
+		fireEvent.click(link);
+		expect(getConsent()).toBeNull();
+		expect(screen.getByRole('dialog')).toBeTruthy();
 	});
 
 	it('Customise: analytics switch is off, necessary is locked on; Save stores the switch, Back returns', () => {

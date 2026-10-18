@@ -9,7 +9,7 @@
 	"back": "Nazaj",
 	"settings_title": "Nastavitve piškotkov",
 	"necessary_title": "Nujni",
-	"necessary_body": "Omogočajo vpis, si zapomnijo jezik, izbiro glede piškotkov in osnutke prijav ter ščitijo pred zlorabami. Ponudnika: Najdimo in Cloudflare (preverjanje, da niste robot). Trajanje je navedeno v politiki piškotkov.",
+	"necessary_body": "Omogočajo vpis, si zapomnijo jezik, izbiro glede piškotkov in osnutke prijav ter ščitijo pred zlorabami. Ponudnika: Najdimo in Cloudflare (preverjanje, da niste robot). Trajanje je navedeno v <link>politiki piškotkov</link>.",
 	"necessary_locked": "Vedno vklopljeno",
 	"analytics_title": "Analitični",
 	"analytics_body_web": "Pomagajo nam razumeti, katere strani in koraki se uporabljajo, da iskanje izboljšamo. Ponudnik: Google (Google Analytics 4). Piškotka _ga in _ga_* se hranita 2 leti, podatki v Google Analytics 14 mesecev. Oglaševalskih piškotkov ne uporabljamo.",

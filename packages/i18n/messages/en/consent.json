@@ -9,7 +9,7 @@
 	"back": "Back",
 	"settings_title": "Cookie settings",
 	"necessary_title": "Essential",
-	"necessary_body": "They keep you signed in, remember your language, your cookie choice and report drafts, and protect against abuse. Providers: Najdimo and Cloudflare (bot check). Durations are listed in the cookie policy.",
+	"necessary_body": "They keep you signed in, remember your language, your cookie choice and report drafts, and protect against abuse. Providers: Najdimo and Cloudflare (bot check). Durations are listed in the <link>cookie policy</link>.",
 	"necessary_locked": "Always on",
 	"analytics_title": "Analytics",
 	"analytics_body_web": "They help us understand which pages and steps are used, so we can improve searching. Provider: Google (Google Analytics 4). The _ga and _ga_* cookies are kept for 2 years and the data in Google Analytics for 14 months. We do not use advertising cookies.",
