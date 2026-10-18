@@ -683,7 +683,7 @@ function Attribution({ className }: { className?: string }) {
 	const t = useTranslations('location');
 	const locale = useLocale() as Locale;
 	const en = locale === 'en';
-	const imprint = `${env.EXPO_PUBLIC_APP_URL}${en ? '/en/imprint' : '/impresum'}`;
+	const imprint = `${env.EXPO_PUBLIC_APP_URL}${en ? '/en/company-information' : '/podatki-o-podjetju'}`;
 	const licence = `https://creativecommons.org/licenses/by/4.0/${en ? '' : 'deed.sl'}`;
 	return (
 		<Text className={cn('text-sm text-muted-foreground', className)}>

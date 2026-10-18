@@ -63,7 +63,7 @@ export const routing = defineRouting({
 		'/privacy': { sl: '/zasebnost', en: '/privacy' },
 		'/cookies': { sl: '/piskotki', en: '/cookies' },
 		'/terms': { sl: '/pogoji-uporabe', en: '/terms' },
-		'/imprint': { sl: '/impresum', en: '/imprint' },
+		'/imprint': { sl: '/podatki-o-podjetju', en: '/company-information' },
 		'/accessibility': { sl: '/dostopnost', en: '/accessibility' },
 		'/admin': '/admin',
 		'/admin/abuse-reports': { sl: '/admin/prijave-zlorab', en: '/admin/abuse-reports' },

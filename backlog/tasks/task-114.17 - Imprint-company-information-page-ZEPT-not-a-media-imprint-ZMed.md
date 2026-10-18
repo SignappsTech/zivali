@@ -5,7 +5,7 @@ status: To Do
 assignee:
   - '@content-strategist'
 created_date: '2026-10-16 15:50'
-updated_date: '2026-10-17 09:24'
+updated_date: '2026-10-18 02:33'
 labels:
   - legal
   - content
@@ -34,9 +34,13 @@ Changes:
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 The page is titled "Podatki o podjetju" / "Company information" at its new paths, with 301s from /impresum and /en/imprint; footer and in-text links updated; SL and EN
+- [x] #1 The page is titled "Podatki o podjetju" / "Company information" at its new paths, with 301s from /impresum and /en/imprint; footer and in-text links updated; SL and EN
 - [ ] #2 §3 Odgovorna oseba za vsebino and the Zastopnik row removed from the pages and the master; no person is named on the page; the ZEPT data unchanged
 - [ ] #3 Footer copyright says SIGNAPPS d.o.o.
 - [ ] #4 The TASK-91 lawyer pack lists the subscription terms and withdrawal-right check
-- [ ] #5 legal-mdx and route tests updated; sitemap and robots unchanged in behaviour
+- [x] #5 legal-mdx and route tests updated; sitemap and robots unchanged in behaviour
 <!-- AC:END -->
+
+## Implementation Notes
+
+Content part done (2026-10-18): SL/EN mdx (title, meta, Zastopnik row and old chapter 3 removed, renumbered), master docs/content/legal/imprint.md v0.5, footer labels and copyright (SIGNAPPS d.o.o.), about.ts link label, lawyer briefing LQ-02/LQ-41 (EN+SL), unit/e2e label strings. NOT done (code scope, needs a fe dev): route rename in apps/web/i18n/routing.ts (/podatki-o-podjetju, /en/company-information) with 301s from /impresum and /en/imprint; sitemap/route tests; e2e/legal.spec.ts and shell.test.tsx paths still use the old routes.

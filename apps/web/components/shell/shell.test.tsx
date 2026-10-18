@@ -184,7 +184,7 @@ describe('SiteFooter', () => {
 			['Zasebnost', '/zasebnost'],
 			['Piškotki', '/piskotki'],
 			['Pogoji uporabe', '/pogoji-uporabe'],
-			['Impresum', '/impresum'],
+			['Podatki o podjetju', '/podatki-o-podjetju'],
 			['Dostopnost', '/dostopnost'],
 			['SL', '/'],
 			['EN', '/en'],
@@ -193,7 +193,7 @@ describe('SiteFooter', () => {
 			'dialog'
 		);
 		expect(within(footer).getByText(sl.footer.tagline)).toBeTruthy();
-		expect(footer.textContent).toContain(`© ${new Date().getFullYear()} Signapps.`);
+		expect(footer.textContent).toContain(`© ${new Date().getFullYear()} SIGNAPPS d.o.o.`);
 	});
 
 	it('flows get one quiet row: privacy, terms, cookie settings, accessibility (EN)', () => {
