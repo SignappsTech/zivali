@@ -99,7 +99,9 @@ export function visualBand(V: number): VisualBand | null {
 }
 
 const round = (value: number, digits: number) => Math.round(value * 10 ** digits) / 10 ** digits;
-const strengthOf = (score: number): MatchStrength => (score >= 0.8 ? 'strong' : score >= 0.65 ? 'good' : 'possible');
+/** C8 §Score: ≥ 0.8 strong, ≥ 0.65 good, else possible (the matching eval re-applies it for a looser geo-time fit). */
+export const strengthOf = (score: number): MatchStrength =>
+	score >= 0.8 ? 'strong' : score >= 0.65 ? 'good' : 'possible';
 const weaker = (a: MatchStrength, b: MatchStrength) =>
 	MATCH_STRENGTHS.indexOf(a) > MATCH_STRENGTHS.indexOf(b) ? a : b;
 

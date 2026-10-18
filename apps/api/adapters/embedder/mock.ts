@@ -32,11 +32,15 @@ function random(seed: string): number[] {
 /** ka · a + kb · b */
 const mix = (a: number[], ka: number, b: number[], kb: number) => a.map((x, i) => ka * x + kb * b[i]!);
 
+/** The vector of a labelled photo; the synthetic matching set (TASK-43.3) labels its photos with it directly. */
+export function labelledVector({ animal, view }: Label): number[] {
+	const base = mix(random('shared'), Math.sqrt(SHARED), random(`animal:${animal}`), Math.sqrt(1 - SHARED));
+	return normalise(mix(base, 1, random(`view:${animal}:${view}`), NOISE));
+}
+
 function vector(sha256: string): number[] {
 	const label = loadLabels()[sha256];
-	if (!label) return random(`hash:${sha256}`);
-	const base = mix(random('shared'), Math.sqrt(SHARED), random(`animal:${label.animal}`), Math.sqrt(1 - SHARED));
-	return normalise(mix(base, 1, random(`view:${label.animal}:${label.view}`), NOISE));
+	return label ? labelledVector(label) : random(`hash:${sha256}`);
 }
 
 export function mockEmbedder(): EmbedderAdapter {

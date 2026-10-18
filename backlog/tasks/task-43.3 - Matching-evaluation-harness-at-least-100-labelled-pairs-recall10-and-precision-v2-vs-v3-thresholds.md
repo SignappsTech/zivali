@@ -3,11 +3,11 @@ id: TASK-43.3
 title: >-
   Matching evaluation harness: at least 100 labelled pairs, recall@10 and
   precision, v2 vs v3, thresholds
-status: To Do
+status: In Progress
 assignee:
   - '@backend-dev'
 created_date: '2026-10-18 21:25'
-updated_date: '2026-10-18 23:08'
+updated_date: '2026-10-18 23:17'
 labels:
   - be
   - 'est:M'
