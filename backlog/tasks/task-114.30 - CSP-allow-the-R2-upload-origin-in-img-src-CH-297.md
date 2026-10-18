@@ -1,10 +1,11 @@
 ---
 id: TASK-114.30
 title: 'CSP: allow the R2 upload origin in img-src (CH-297)'
-status: To Do
+status: In Progress
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-18 21:14'
+updated_date: '2026-10-18 21:18'
 labels:
   - bug
   - fe
@@ -26,6 +27,13 @@ CH-297, now written into docs/tech/frontend.md as a requirement: the web CSP img
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 img-src includes the configured R2 upload origin; no other CSP directive changes
-- [ ] #2 proxy unit test covers it
+- [x] #1 img-src includes the configured R2 upload origin; no other CSP directive changes
+- [x] #2 proxy unit test covers it
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+Already on main since ccb635a6 (TASK-16.6 fix round, 2026-10-16): proxy.ts:28 uploads = origin of env.R2_UPLOAD_ORIGIN, used in img-src (:43) and connect-src (:45); proxy.test.ts:113 covers it. No code change needed; vitest proxy.test.ts 20/20 pass. Env: R2_UPLOAD_ORIGIN (lib/env.ts:23, required; outside local must be https://<account>.eu.r2.cloudflarestorage.com, else the app fails fast). Vercel staging/production values not verifiable from the connector (no team/project visible).
+Branch: agent/TASK-114.30-csp-r2-img-src
+<!-- SECTION:NOTES:END -->
