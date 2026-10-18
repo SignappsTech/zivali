@@ -5,6 +5,7 @@ import type { z } from 'zod';
 
 import type * as T from '@zivali/types';
 
+import type * as A from '../src/ai.ts';
 import type * as V from '../src/index.ts';
 
 // Flatten intersections (`Profile & { … }`) on both sides so only the shape is compared.
@@ -71,6 +72,9 @@ test('wire types in @zivali/types match the zod schemas', () => {
 	expectTypeOf<Out<typeof V.MatchList>>().toEqualTypeOf<Flat<T.MatchList>>();
 	expectTypeOf<Out<typeof V.ConfirmMatchResponse>>().toEqualTypeOf<Flat<T.ConfirmMatchResponse>>();
 	expectTypeOf<Out<typeof V.RejectMatchInput>>().toEqualTypeOf<Flat<T.RejectMatchInput>>();
+	expectTypeOf<Out<typeof V.MatchReason>>().toEqualTypeOf<Flat<T.MatchReason>>();
+	expectTypeOf<Out<typeof V.VisualMatchReason>>().toEqualTypeOf<Flat<T.VisualMatchReason>>();
+	expectTypeOf<Out<typeof V.VisualBand>>().toEqualTypeOf<Flat<T.VisualBand>>();
 	// C9
 	expectTypeOf<Out<typeof V.CreateConversationInput>>().toEqualTypeOf<Flat<T.CreateConversationInput>>();
 	expectTypeOf<Out<typeof V.Message>>().toEqualTypeOf<Flat<T.Message>>();
@@ -115,6 +119,10 @@ test('wire types in @zivali/types match the zod schemas', () => {
 	expectTypeOf<Out<typeof V.PartnerStats>>().toEqualTypeOf<Flat<T.PartnerStats>>();
 	expectTypeOf<Out<typeof V.LeadInput>>().toEqualTypeOf<Flat<T.LeadInput>>();
 	expectTypeOf<Out<typeof V.AdminLeadList>>().toEqualTypeOf<Flat<T.AdminLeadList>>();
+	// C19
+	expectTypeOf<Out<typeof A.aiExtractionSchema>>().toEqualTypeOf<Flat<T.AiExtraction>>();
+	expectTypeOf<Out<typeof A.photoAttributesSchema>>().toEqualTypeOf<Flat<T.PhotoAttributes>>();
+	expectTypeOf<Out<typeof V.AiNotice>>().toEqualTypeOf<Flat<T.AiNotice>>();
 	// C18
 	expectTypeOf<Out<typeof V.ShelterList>>().toEqualTypeOf<Flat<T.ShelterList>>();
 	expectTypeOf<Out<typeof V.ShelterDetail>>().toEqualTypeOf<Flat<T.ShelterDetail>>();

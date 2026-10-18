@@ -5,7 +5,7 @@ import { useTranslations } from 'next-intl';
 import * as React from 'react';
 
 import { useReversePlaceQuery } from '@zivali/api/geocode';
-import type { MatchState, MatchSuggestion, PublicArea } from '@zivali/types';
+import type { AttributeMatchReason, MatchState, MatchSuggestion, PublicArea } from '@zivali/types';
 import { noteClass } from '@/components/shelters/classes';
 import { cn } from '@/lib/utils';
 
@@ -58,7 +58,8 @@ export function Strength({ strength, size = 'sm' }: { strength: MatchSuggestion[
 	);
 }
 
-const reason = (match: MatchSuggestion, code: string) => match.reasons.find((r) => r.code === code);
+const reason = (match: MatchSuggestion, code: AttributeMatchReason['code']) =>
+	match.reasons.find((r): r is AttributeMatchReason => r.code === code);
 
 /** The distance band ("1–3 km") and the time gap ("manj kot 24 ur") from the match reasons; never exact values. */
 export function useBands(match: MatchSuggestion) {

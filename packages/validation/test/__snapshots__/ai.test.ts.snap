@@ -1,0 +1,314 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`aiExtractionJsonSchema (output_config.format) > matches the snapshot 1`] = `
+{
+  "additionalProperties": false,
+  "properties": {
+    "animal": {
+      "enum": [
+        "dog",
+        "cat",
+        "other",
+        "none",
+      ],
+      "type": "string",
+    },
+    "animal_count": {
+      "enum": [
+        0,
+        1,
+        2,
+      ],
+      "type": "number",
+    },
+    "breeds": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "enum": [
+              "dog.labrador_retriever",
+              "dog.golden_retriever",
+              "dog.german_shepherd",
+              "dog.belgian_shepherd",
+              "dog.border_collie",
+              "dog.australian_shepherd",
+              "dog.rough_collie",
+              "dog.shetland_sheepdog",
+              "dog.karst_shepherd",
+              "dog.tornjak",
+              "dog.sarplaninac",
+              "dog.caucasian_shepherd",
+              "dog.central_asian_shepherd",
+              "dog.maremma_sheepdog",
+              "dog.jack_russell_terrier",
+              "dog.yorkshire_terrier",
+              "dog.west_highland_white_terrier",
+              "dog.fox_terrier",
+              "dog.jagdterrier",
+              "dog.airedale_terrier",
+              "dog.staffordshire_bull_terrier",
+              "dog.american_staffordshire_terrier",
+              "dog.american_pit_bull_terrier",
+              "dog.bull_terrier",
+              "dog.chihuahua",
+              "dog.maltese",
+              "dog.bolognese",
+              "dog.havanese",
+              "dog.bichon_frise",
+              "dog.shih_tzu",
+              "dog.lhasa_apso",
+              "dog.pomeranian",
+              "dog.papillon",
+              "dog.poodle",
+              "dog.cavalier_king_charles_spaniel",
+              "dog.english_cocker_spaniel",
+              "dog.english_springer_spaniel",
+              "dog.french_bulldog",
+              "dog.english_bulldog",
+              "dog.pug",
+              "dog.boxer",
+              "dog.beagle",
+              "dog.basset_hound",
+              "dog.dachshund",
+              "dog.istrian_shorthaired_hound",
+              "dog.istrian_coarse_haired_hound",
+              "dog.posavaz_hound",
+              "dog.bavarian_mountain_hound",
+              "dog.german_shorthaired_pointer",
+              "dog.weimaraner",
+              "dog.hungarian_vizsla",
+              "dog.english_setter",
+              "dog.irish_setter",
+              "dog.rottweiler",
+              "dog.dobermann",
+              "dog.cane_corso",
+              "dog.great_dane",
+              "dog.bernese_mountain_dog",
+              "dog.saint_bernard",
+              "dog.newfoundland",
+              "dog.leonberger",
+              "dog.hovawart",
+              "dog.miniature_schnauzer",
+              "dog.giant_schnauzer",
+              "dog.miniature_pinscher",
+              "dog.siberian_husky",
+              "dog.alaskan_malamute",
+              "dog.samoyed",
+              "dog.akita",
+              "dog.shiba_inu",
+              "dog.chow_chow",
+              "dog.dalmatian",
+              "dog.pembroke_welsh_corgi",
+              "dog.whippet",
+              "dog.mixed",
+              "dog.unknown",
+              "cat.european_shorthair",
+              "cat.british_shorthair",
+              "cat.british_longhair",
+              "cat.maine_coon",
+              "cat.persian",
+              "cat.exotic_shorthair",
+              "cat.siamese",
+              "cat.oriental_shorthair",
+              "cat.ragdoll",
+              "cat.birman",
+              "cat.norwegian_forest",
+              "cat.siberian",
+              "cat.bengal",
+              "cat.sphynx",
+              "cat.scottish_fold",
+              "cat.russian_blue",
+              "cat.chartreux",
+              "cat.abyssinian",
+              "cat.devon_rex",
+              "cat.cornish_rex",
+              "cat.turkish_angora",
+              "cat.turkish_van",
+              "cat.mixed",
+              "cat.unknown",
+            ],
+            "type": "string",
+          },
+          "confidence": {
+            "type": "number",
+          },
+        },
+        "required": [
+          "code",
+          "confidence",
+        ],
+        "type": "object",
+      },
+      "type": "array",
+    },
+    "collar": {
+      "additionalProperties": false,
+      "properties": {
+        "confidence": {
+          "type": "number",
+        },
+        "present": {
+          "type": "boolean",
+        },
+      },
+      "required": [
+        "present",
+        "confidence",
+      ],
+      "type": "object",
+    },
+    "colours": {
+      "anyOf": [
+        {
+          "additionalProperties": false,
+          "properties": {
+            "confidence": {
+              "type": "number",
+            },
+            "values": {
+              "items": {
+                "enum": [
+                  "black",
+                  "white",
+                  "grey",
+                  "brown",
+                  "chocolate",
+                  "red",
+                  "cream",
+                  "golden",
+                  "tan",
+                  "blue_grey",
+                ],
+                "type": "string",
+              },
+              "minItems": 1,
+              "type": "array",
+            },
+          },
+          "required": [
+            "values",
+            "confidence",
+          ],
+          "type": "object",
+        },
+        {
+          "type": "null",
+        },
+      ],
+    },
+    "marks": {
+      "items": {
+        "type": "string",
+      },
+      "type": "array",
+    },
+    "moderation": {
+      "additionalProperties": false,
+      "properties": {
+        "nsfw": {
+          "type": "boolean",
+        },
+        "person_prominent": {
+          "type": "boolean",
+        },
+        "text_contact_info": {
+          "type": "boolean",
+        },
+        "violence": {
+          "type": "boolean",
+        },
+      },
+      "required": [
+        "person_prominent",
+        "nsfw",
+        "violence",
+        "text_contact_info",
+      ],
+      "type": "object",
+    },
+    "pattern": {
+      "anyOf": [
+        {
+          "additionalProperties": false,
+          "properties": {
+            "confidence": {
+              "type": "number",
+            },
+            "value": {
+              "enum": [
+                "solid",
+                "bicolour",
+                "tricolour",
+                "tabby",
+                "tortoiseshell",
+                "calico",
+                "brindle",
+                "merle",
+                "spotted",
+                "pointed",
+                "other",
+              ],
+              "type": "string",
+            },
+          },
+          "required": [
+            "value",
+            "confidence",
+          ],
+          "type": "object",
+        },
+        {
+          "type": "null",
+        },
+      ],
+    },
+    "size": {
+      "anyOf": [
+        {
+          "additionalProperties": false,
+          "properties": {
+            "confidence": {
+              "type": "number",
+            },
+            "value": {
+              "enum": [
+                "xs",
+                "s",
+                "m",
+                "l",
+                "xl",
+              ],
+              "type": "string",
+            },
+          },
+          "required": [
+            "value",
+            "confidence",
+          ],
+          "type": "object",
+        },
+        {
+          "type": "null",
+        },
+      ],
+    },
+    "species_confidence": {
+      "type": "number",
+    },
+  },
+  "required": [
+    "animal",
+    "animal_count",
+    "species_confidence",
+    "breeds",
+    "colours",
+    "pattern",
+    "size",
+    "collar",
+    "marks",
+    "moderation",
+  ],
+  "type": "object",
+}
+`;

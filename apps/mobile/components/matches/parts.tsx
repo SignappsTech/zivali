@@ -3,7 +3,7 @@ import { View } from 'react-native';
 import { useTranslations } from 'use-intl';
 
 import { useReversePlaceQuery } from '@zivali/api/geocode';
-import type { MatchState, MatchSuggestion, PublicArea } from '@zivali/types';
+import type { AttributeMatchReason, MatchState, MatchSuggestion, PublicArea } from '@zivali/types';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Text } from '@/components/ui/text';
@@ -59,7 +59,8 @@ export function useBack(fallback: Href) {
 export const sortMatches = (items: MatchSuggestion[]) =>
 	[...items].sort((a, b) => Number(b.chip_match) - Number(a.chip_match));
 
-const reason = (match: MatchSuggestion, code: string) => match.reasons.find((r) => r.code === code);
+const reason = (match: MatchSuggestion, code: AttributeMatchReason['code']) =>
+	match.reasons.find((r): r is AttributeMatchReason => r.code === code);
 
 /** The distance band ("1–3 km") and the time gap ("manj kot 24 ur") from the match reasons; never exact values. */
 export function useBands(match: MatchSuggestion) {

@@ -1,11 +1,13 @@
-// C8 matching v1: suggestions for the managers of a lost report.
+// C8 matching: suggestions for the managers of a lost report.
 import type { Uuid } from './common.ts';
-import type { DistanceBand, MatchReasonCode, MatchState, MatchStrength } from './enums.ts';
+import type { DistanceBand, MatchReasonCode, MatchState, MatchStrength, VisualBand } from './enums.ts';
 import type { PublicReport } from './reports.ts';
 
 /** Why two reports match; never exact data (bands and overlaps only). */
-export type MatchReason = {
-	code: MatchReasonCode;
+export type MatchReason = AttributeMatchReason | VisualMatchReason;
+/** Chip, distance, time and attribute reasons (algo v2). */
+export type AttributeMatchReason = {
+	code: Exclude<MatchReasonCode, 'visual'>;
 	/** distance */
 	band?: DistanceBand;
 	/** time, e.g. `lt24` */
@@ -15,6 +17,8 @@ export type MatchReason = {
 	/** colour: Jaccard overlap 0–1 */
 	overlap?: number;
 };
+/** Algo v3: the most similar photo pair (lost report's photo, other report's photo). */
+export type VisualMatchReason = { code: 'visual'; band: VisualBand; lost_photo_id: Uuid; other_photo_id: Uuid };
 export type MatchOther = Pick<
 	PublicReport,
 	| 'id'
