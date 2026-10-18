@@ -33,3 +33,7 @@ Wanted: a small client island that watches the section headings (IntersectionObs
 - [ ] #2 Clicking a TOC entry jumps there and marks it; the browser back button and #hash links keep working; no JS = plain links as today
 - [ ] #3 Unit test with a mocked IntersectionObserver; e2e checks the active entry after a scroll; axe clean
 <!-- AC:END -->
+
+## Packet
+
+Branch: agent/TASK-114.21-legal-toc-active
