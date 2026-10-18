@@ -3,7 +3,7 @@
 import type { Job } from 'pg-boss';
 
 import { systemCtx, type Ctx } from '../lib/ctx.ts';
-import { jobs, type Jobs, type QueueName } from '../lib/jobs.ts';
+import { jobs, retryLimit, type Jobs, type QueueName } from '../lib/jobs.ts';
 import { logger } from '../lib/logger.ts';
 import { prisma } from '../prisma/prisma.ts';
 import * as aiExtract from './ai.extract.job.ts';
@@ -24,8 +24,11 @@ import * as reportLifecycle from './report.lifecycle.job.ts';
 import * as retentionBlurLocation from './retention.blur_location.job.ts';
 import * as retentionPurge from './retention.purge.job.ts';
 
-/** C1 job ctx: a system ctx, so handlers pass it straight to domain functions, plus prisma and send. */
-export type JobCtx = Ctx & { prisma: typeof prisma; send: Jobs['send'] };
+/**
+ * C1 job ctx: a system ctx, so handlers pass it straight to domain functions, plus prisma and send. `lastAttempt`:
+ * pg-boss will not retry this attempt (dead-letter logging, C20).
+ */
+export type JobCtx = Ctx & { prisma: typeof prisma; send: Jobs['send']; lastAttempt?: boolean };
 /** Payloads come from the database: a handler parses `data` before use. */
 export type JobHandler = (data: unknown, ctx: JobCtx) => Promise<void>;
 
@@ -55,6 +58,7 @@ export async function runJob(queue: QueueName, job: Job<object>): Promise<void> 
 		...systemCtx({ logger: logger.child({ queue, job_id: job.id }) }),
 		prisma,
 		send: jobs.send,
+		lastAttempt: job.retryCount >= retryLimit(queue),
 	};
 	try {
 		await handlers[queue](job.data, ctx);

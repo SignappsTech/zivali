@@ -1,0 +1,26 @@
+{
+	"fb5002f7c694a04c5cba6a7b20d64f6971f5cdd0ef703b21beb63652967aab3f": {
+		"animal": "rex",
+		"view": "front"
+	},
+	"7c99b9b614dd86d25e8cee1d3bf0712ebb1dbf20592f8adffd1eb8bfffb226bc": {
+		"animal": "rex",
+		"view": "side"
+	},
+	"812c9131c296c4edcb2036793a9e21f3902adbc3113bc579b474289de673703b": {
+		"animal": "rex",
+		"view": "back"
+	},
+	"3cdbb4a1efd8fe122e95351907f95305a03726dd3433bcd7d9bd29fea0516d99": {
+		"animal": "micka",
+		"view": "front"
+	},
+	"2e664150d9a4cabae9b976f36a78154698a17f64f5b4835b544bd12c88296ca7": {
+		"animal": "micka",
+		"view": "side"
+	},
+	"30e117f4faf64b6d80614a035acfb74f83e4b2c8805330259233d774dc5951a3": {
+		"animal": "luna",
+		"view": "front"
+	}
+}

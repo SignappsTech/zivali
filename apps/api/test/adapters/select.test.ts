@@ -2,6 +2,7 @@ import { createHmac } from 'node:crypto';
 
 import { describe, expect, it } from 'vitest';
 
+import { embedderOn } from '../../adapters/embedder/index.ts';
 import { createAdapters } from '../../adapters/index.ts';
 import { mockEvent, signWebhook } from '../../adapters/payments/mock.ts';
 import { config, type Config } from '../../lib/config.ts';
@@ -33,7 +34,7 @@ describe('adapter provider selection', () => {
 	it('falls back to mocks without credentials outside production', async () => {
 		const a = createAdapters(blank);
 		expect((await a.ai.vision({ prompt: 'x', images: [] })).text).toContain('mock');
-		expect((await a.embedder.embed([{ text: 'a' }]))[0]).toHaveLength(1024);
+		expect((await a.embedder.embed([{ jpegBase64: '', sha256: 'a' }], 'm'))[0]).toHaveLength(1024);
 		expect(await a.captcha.verify('fail')).toBe(false);
 		expect(await a.captcha.verify('ok')).toBe(true);
 		await a.email.send({ to: 'a@b.si', subject: 's', html: '<p>x</p>' });
@@ -83,6 +84,21 @@ describe('adapter provider selection', () => {
 		expect(() => createAdapters(prodFull)).not.toThrow();
 	});
 
+	it('an unset embedder is off in staging and production, never voyage or the mock (C20)', () => {
+		for (const APP_ENV of ['staging', 'production'] as const) {
+			for (const NODE_ENV of ['production', 'development'] as const) {
+				const { embedder } = createAdapters({ ...prodFull, APP_ENV, NODE_ENV, EMBEDDER_PROVIDER: undefined });
+				expect(embedderOn(embedder)).toBe(false);
+				expect(() => embedder.embed([], 'm')).toThrow(/not enabled/);
+			}
+		}
+		// Locally an unset provider is the mock, even with a key.
+		expect(createAdapters({ ...blank, VOYAGE_API_KEY: 'v' }).embedder.provider).toBe('mock');
+		expect(createAdapters({ ...blank, EMBEDDER_PROVIDER: 'voyage', VOYAGE_API_KEY: 'v' }).embedder.provider).toBe(
+			'voyage'
+		);
+	});
+
 	it('minio never passes on built-in credentials in production', () => {
 		expect(() => createAdapters({ ...prodFull, STORAGE_PROVIDER: 'minio' })).toThrow(/STORAGE_PROVIDER/);
 	});
@@ -96,7 +112,7 @@ describe('adapter provider selection', () => {
 		expect(() => a.ai.vision({ prompt: 'x', images: [] })).toThrowError(
 			expect.objectContaining({ name: 'AppError', code: 'SERVICE_UNAVAILABLE' })
 		);
-		expect(() => a.embedder.embed([])).toThrow(/not enabled/);
+		expect(() => a.embedder.embed([], 'm')).toThrow(/not enabled/);
 		expect(() => a.payments.parseWebhook('{}', undefined)).toThrow(/not enabled/);
 		expect(() => a.storage.head({ bucket: 'private', key: 'k' })).toThrow(/not enabled/);
 		// Unconfigured and not off still fails at boot.
