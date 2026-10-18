@@ -29,7 +29,7 @@ const cachedApi = (locale: Locale, seconds: number) =>
 
 /** Mobile: a snap strip of 78 % cards bleeding into the gutters; from lg three columns (two rows of three). */
 const strip =
-	'-mx-5 flex snap-x snap-mandatory scroll-px-5 gap-4 overflow-x-auto px-5 pb-2 *:shrink-0 *:basis-[78%] *:snap-start md:-mx-12 md:scroll-px-12 md:px-12 md:*:basis-[44%] lg:mx-0 lg:grid lg:grid-cols-3 lg:gap-6 lg:overflow-visible lg:p-0';
+	'-mx-5 -mt-2 flex snap-x snap-mandatory scroll-px-5 gap-4 overflow-x-auto px-5 pt-2 pb-2 *:shrink-0 *:basis-[78%] *:snap-start md:-mx-12 md:scroll-px-12 md:px-12 md:*:basis-[44%] lg:mx-0 lg:mt-0 lg:grid lg:grid-cols-3 lg:gap-6 lg:overflow-visible lg:p-0';
 
 /**
  * GET /v1/reports?sort=recent&limit=6 (public, C4), cached a minute, with each card's place from the reverse lookup of

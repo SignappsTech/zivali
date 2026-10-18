@@ -112,7 +112,7 @@ export default function HomePage() {
 						</Button>
 					</p>
 				</div>
-				{/* Dropped on mobile so the buttons sit above the fold; hidden there, the lazy tiles never load. */}
+				{/* Dropped on mobile so the buttons sit above the fold; hidden there, the lazy mosaic tiles skip download (the eager dog photo still loads). */}
 				<div className="hidden lg:col-span-5 lg:grid lg:grid-cols-2 lg:gap-4">
 					<Photo
 						photo={PHOTOS.dog}
