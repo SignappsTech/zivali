@@ -44,7 +44,10 @@ export function buildRequest(jpegBase64: string, model: string, effort: Effort) 
 			{
 				role: 'user' as const,
 				content: [
-					{ type: 'image' as const, source: { type: 'base64' as const, media_type: 'image/jpeg' as const, data: jpegBase64 } },
+					{
+						type: 'image' as const,
+						source: { type: 'base64' as const, media_type: 'image/jpeg' as const, data: jpegBase64 },
+					},
 					{ type: 'text' as const, text: INSTRUCTION },
 				],
 			},
@@ -61,10 +64,15 @@ export function anthropicAi(client: Client, model: string, effort: Effort): AiAd
 				res = await client.messages.create(buildRequest(jpegBase64, model, effort));
 			} catch (err) {
 				// A rejected request fails at once (no retry); RateLimitError, 5xx and connection errors throw for retry.
-				if (err instanceof BadRequestError) return { outcome: 'failed', model, input_tokens: 0, output_tokens: 0 };
+				if (err instanceof BadRequestError)
+					return { outcome: 'failed', model, input_tokens: 0, output_tokens: 0 };
 				throw err;
 			}
-			const usage = { model: res.model, input_tokens: res.usage.input_tokens, output_tokens: res.usage.output_tokens };
+			const usage = {
+				model: res.model,
+				input_tokens: res.usage.input_tokens,
+				output_tokens: res.usage.output_tokens,
+			};
 			if (res.stop_reason === 'refusal') return { ...usage, outcome: 'refused' };
 			const text = res.content.map((block) => (block.type === 'text' ? block.text : '')).join('');
 			let raw: unknown;

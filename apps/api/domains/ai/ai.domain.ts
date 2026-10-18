@@ -46,15 +46,14 @@ async function capOutcome(photo: { owner_id: string; anonymous: boolean }, ctx: 
 	const budget = Number(await configStore.get('ai.monthly_budget_usd'));
 	const monthStart = new Date(Date.UTC(ctx.now.getUTCFullYear(), ctx.now.getUTCMonth(), 1));
 	if (!(budget > (await AiDao.spendSince(monthStart, ctx.tx)))) return 'skipped_budget';
-	const limit = Number(
-		await configStore.get(photo.anonymous ? 'ai.daily_photos_anonymous' : 'ai.daily_photos_user')
-	);
+	const limit = Number(await configStore.get(photo.anonymous ? 'ai.daily_photos_anonymous' : 'ai.daily_photos_user'));
 	const since = new Date(ctx.now.getTime() - DAY_MS);
 	if (!(limit > (await AiDao.okCallsSince(photo.owner_id, since, ctx.tx)))) return 'skipped_limit';
 	return null;
 }
 
-const errorName = (err: unknown) => (err instanceof Error ? err.name : 'unknown');
+// The class (RateLimitError, APIConnectionError, …), never the message: SDK errors leave `name` as "Error".
+const errorName = (err: unknown) => (err instanceof Error ? err.constructor.name : 'unknown');
 
 /**
  * ai.extract { photo_id }: nothing for a photo that is not accepted/published any more. Else the cached result of the

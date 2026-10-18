@@ -27,7 +27,7 @@ const named = (sha256: string): Fixture | undefined => {
 };
 
 function derived(sha256: string): Fixture {
-	const n = parseInt(sha256.slice(0, 8), 16);
+	const n = parseInt(sha256.slice(0, 8), 16) || 0;
 	return {
 		output: {
 			animal: 'dog',

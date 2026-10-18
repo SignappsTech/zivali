@@ -18,8 +18,7 @@ export type AiExtraction = z.output<typeof aiExtractionSchema>;
 export type AiImage = { jpegBase64: string; sha256: string };
 /** One model call with its billed tokens; `extraction` only on `ok`. */
 export type AiReply = { model: string; input_tokens: number; output_tokens: number } & (
-	| { outcome: 'ok'; extraction: AiExtraction }
-	| { outcome: 'refused' | 'invalid' | 'failed' }
+	{ outcome: 'ok'; extraction: AiExtraction } | { outcome: 'refused' | 'invalid' | 'failed' }
 );
 export type AiAdapter = {
 	provider: 'mock' | 'anthropic';
