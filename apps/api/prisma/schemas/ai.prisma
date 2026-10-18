@@ -54,7 +54,9 @@ model ai_calls {
 }
 
 // One vector per photo and model (C20), deleted with the photo. Read and written only through $queryRaw with
-// parameters; HNSW cosine index photo_embeddings_hnsw (m 16, ef_construction 64) in the migration.
+// parameters; HNSW cosine index photo_embeddings_hnsw (m 16, ef_construction 64) in the migration. Prisma cannot model
+// it, so `prisma migrate dev` puts `DROP INDEX "photo_embeddings_hnsw"` into every later migration: delete that line
+// (test/security/ai-schema.test.ts fails while the index is missing).
 model photo_embeddings {
   photo_id   String                                 @db.Uuid
   photo      photos                                 @relation(fields: [photo_id], references: [id], onDelete: Cascade)
