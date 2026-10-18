@@ -3,10 +3,11 @@ id: TASK-114.27
 title: >-
   Leftovers from the 2026-10-18 CHANGE batch: dev-kit sample text and the lawyer
   briefing's consent-cookie line
-status: To Do
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-18 05:12'
+updated_date: '2026-10-18 05:31'
 labels:
   - fe
   - content
