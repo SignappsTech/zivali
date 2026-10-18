@@ -227,9 +227,22 @@ describe('scoreMatch v3: visual similarity (C8 §Visual similarity, TASK-43.1)',
 			const { visual: _, ...leftOut } = features(overrides);
 			expect(scoreMatch(features(overrides), v3)).toEqual(v2);
 			expect(scoreMatch(leftOut, v3)).toEqual(v2);
-			// A V that is no number (floor = ceiling) falls back too, and never lifts a veto.
+			// A V that is no number (visualSimilarity with the ceiling not above the floor) falls back too, never lifting a veto.
 			expect(scoreMatch(features({ ...overrides, visual: seen(Number.NaN) }), v3)).toEqual(v2);
+			for (const [floor, ceiling] of [
+				[0.7, 0.7],
+				[0.95, 0.7],
+			] as const) {
+				const V = visualSimilarity(0.99, floor, ceiling);
+				expect(scoreMatch(features({ ...overrides, visual: seen(V) }), v3)).toEqual(v2);
+			}
 		}
+	});
+
+	it('clamps V into 0…1, so a score stays within 0…1', () => {
+		expect(scored({ visual: seen(1.5) }, v3)).toEqual(scored({ visual: seen(1) }, v3));
+		expect(scored({ visual: seen(1.5) }, v3).score).toBe(1);
+		expect(scored({ visual: seen(-0.5) }, v3)).toEqual(scored({ visual: seen(0) }, v3));
 	});
 
 	it('blends V with matching.weights_visual, the C8 start values when the config has none (AC#2)', () => {
@@ -426,6 +439,9 @@ describe('bands', () => {
 		expect([0.5, 0.7, 0.825, 0.95, 0.99].map((cos) => round3(visualSimilarity(cos, 0.7, 0.95)))).toEqual([
 			0, 0, 0.5, 1, 1,
 		]);
+		// A ceiling that is not above the floor (equal or inverted config) gives no V at all.
+		expect(visualSimilarity(0.99, 0.7, 0.7)).toBeNaN();
+		expect(visualSimilarity(0.99, 0.95, 0.7)).toBeNaN();
 	});
 });
 

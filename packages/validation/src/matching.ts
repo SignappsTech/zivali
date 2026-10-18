@@ -85,9 +85,11 @@ export function hoursBand(hours: number): 'lt24' | '24to72' | 'gt72' {
 
 /**
  * C8 §Visual similarity 2: V = clamp((cos − floor) / (ceiling − floor), 0, 1), floor and ceiling per embedding model
- * (`matching.visual_floor` / `matching.visual_ceiling`, placeholders 0.70 / 0.95 until TASK-43.3).
+ * (`matching.visual_floor` / `matching.visual_ceiling`, placeholders 0.70 / 0.95 until TASK-43.3). NaN when the ceiling
+ * is not above the floor, so scoreMatch falls back to v2 instead of lifting every veto.
  */
 export function visualSimilarity(cos: number, floor: number, ceiling: number): number {
+	if (!(ceiling > floor)) return Number.NaN;
 	return Math.min(1, Math.max(0, (cos - floor) / (ceiling - floor)));
 }
 
@@ -126,8 +128,8 @@ export function scoreMatch(features: MatchFeatures, config: MatchScoreConfig): M
 	const A = ((size ?? 0) + (overlap ?? 0) + (sex ?? 0) + (pattern ?? 0)) / 4;
 	// After the veto only a different pattern can be known and disagree, so "one known attribute agrees" is A > 0.
 	const v2Passes = !(sex === 0 || size === 0 || overlap === 0 || A === 0);
-	// Without a vector V counts 0: no veto lifted, no visual evidence, the v2 rules.
-	const V = visual?.V ?? 0;
+	// Without a vector V counts 0: no veto lifted, no visual evidence, the v2 rules. Clamped, so a score stays 0…1.
+	const V = Math.min(1, Math.max(0, visual?.V ?? 0));
 	const vetoed = sex === 0 || ((size === 0 || overlap === 0) && V < 0.8);
 	if (!features.chip_match && (vetoed || (A === 0 && V < 0.5))) return null;
 
