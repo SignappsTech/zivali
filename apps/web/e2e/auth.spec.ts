@@ -99,13 +99,26 @@ test('a wrong pair gets one message for the whole form; Enter submits', async ({
 	await expectNoAxeViolations(page);
 });
 
-test('sign-up: a taken address looks like a new one (check your email), in English', async ({ page }) => {
-	await answerAuth(page, 'signup', {
-		status: 422,
-		body: { error_code: 'user_already_exists', msg: 'User already registered' },
-	});
+/** Fills the sign-up form and submits it. */
+async function submitSignUp(page: Page) {
+	await page.getByLabel('Name').fill('Ana');
+	await page.getByLabel('Email address').fill('ana@example.si');
+	await page.getByLabel('Password', { exact: true }).fill('cat in boots');
+	await page.getByRole('button', { name: 'Create account' }).click();
+}
+
+const hrefOf = async (link: ReturnType<Page['getByRole']>) => {
+	const url = new URL((await link.getAttribute('href'))!, 'http://localhost');
+	return { path: url.pathname, query: Object.fromEntries(url.searchParams) };
+};
+
+test('sign-up: a taken address is named on the email field with sign-in and forgot-password links, in English', async ({
+	page,
+}) => {
+	// GoTrue answers 200 with no identities for a confirmed address (lib/auth.ts signUp).
+	await answerAuth(page, 'signup', { status: 200, body: { id: 'u1', email: 'ana@example.si', identities: [] } });
 	await page.setViewportSize({ width: 390, height: 844 });
-	await page.goto('/en/sign-up');
+	await page.goto('/en/sign-up?next=%2Fen%2Faccount%2Falerts');
 	await expect(page).toHaveTitle('Create an account · Najdimo');
 
 	await page.getByRole('button', { name: 'Create account' }).click();
@@ -113,10 +126,33 @@ test('sign-up: a taken address looks like a new one (check your email), in Engli
 	await expect(page.getByRole('main').getByRole('alert')).toHaveCount(3);
 	await expectNoAxeViolations(page);
 
-	await page.getByLabel('Name').fill('Ana');
-	await page.getByLabel('Email address').fill('ana@example.si');
-	await page.getByLabel('Password', { exact: true }).fill('cat in boots');
-	await page.getByRole('button', { name: 'Create account' }).click();
+	await submitSignUp(page);
+
+	await expect(page.getByRole('heading', { level: 1, name: 'Check your email' })).toHaveCount(0);
+	await expect(page.getByRole('main').getByRole('alert')).toHaveText(
+		'An account with this email address already exists. Sign in or reset your password.'
+	);
+	await expect(page.getByLabel('Email address')).toBeFocused();
+	expect(await hrefOf(page.getByRole('link', { name: 'Sign in', exact: true }))).toEqual({
+		path: '/en/sign-in',
+		query: { email: 'ana@example.si', next: '/en/account/alerts' },
+	});
+	expect(await hrefOf(page.getByRole('link', { name: 'Forgot your password?' }))).toEqual({
+		path: '/en/reset-password',
+		query: { email: 'ana@example.si' },
+	});
+	await expectNoAxeViolations(page);
+});
+
+test('sign-up: an unconfirmed address still goes to check your email, in English', async ({ page }) => {
+	// GoTrue answers 200 with an identity and no session for a new or unconfirmed address.
+	await answerAuth(page, 'signup', {
+		status: 200,
+		body: { id: 'u2', email: 'ana@example.si', identities: [{ id: 'i1', provider: 'email' }] },
+	});
+	await page.setViewportSize({ width: 390, height: 844 });
+	await page.goto('/en/sign-up');
+	await submitSignUp(page);
 
 	await expect(page.getByRole('heading', { level: 1, name: 'Check your email' })).toBeFocused();
 	await expect(page.getByText('We have sent a link to ana@example.si.', { exact: false })).toBeVisible();
