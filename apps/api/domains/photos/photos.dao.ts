@@ -73,7 +73,8 @@ export async function findReportPhotos(report_id: string, tx?: Tx) {
 
 /**
  * retention.purge: photos not attached to a pet or report for 24 h (pet photos of a deleted pet are detached by the
- * foreign key, so they qualify too) and photos of reports closed or reunited before `endedBefore`.
+ * foreign key, so they qualify too) and photos of reports closed or reunited before `endedBefore`, unless they are
+ * also a pet's photos (TASK-114.5: the pet keeps them).
  */
 export async function listPurgeable(cutoffs: { unattachedBefore: Date; endedBefore: Date }, take: number, tx?: Tx) {
 	const db = tx ?? prisma;
@@ -83,6 +84,7 @@ export async function listPurgeable(cutoffs: { unattachedBefore: Date; endedBefo
 			OR: [
 				{ pet_id: null, report_id: null, updated_at: { lt: cutoffs.unattachedBefore } },
 				{
+					pet_id: null,
 					report: {
 						OR: [
 							{ status: 'closed', closed_at: ended },
@@ -114,7 +116,7 @@ export async function removePurgeable(ids: string[], cutoffs: { unattachedBefore
 		delete from app.photos p
 		where p.id = any(${ids}::uuid[]) and (
 			(p.pet_id is null and p.report_id is null and p.updated_at < ${cutoffs.unattachedBefore})
-			or exists (
+			or p.pet_id is null and exists (
 				select 1 from app.reports r where r.id = p.report_id and (
 					(r.status = 'closed' and r.closed_at < ${cutoffs.endedBefore})
 					or (r.status = 'reunited' and r.reunited_at < ${cutoffs.endedBefore})))

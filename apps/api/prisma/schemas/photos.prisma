@@ -25,7 +25,8 @@ model photos {
   id                 String               @id @default(uuid()) @db.Uuid
   owner_id           String               @db.Uuid
   owner              profiles             @relation(fields: [owner_id], references: [id], onDelete: Cascade)
-  // At most one of pet_id and report_id (check in the migration). Unattached uploads are purged after 24 h.
+  // A pet's photo may also be on one report (a lost report of the pet, TASK-114.5). Unattached uploads are purged
+  // after 24 h.
   pet_id             String?              @db.Uuid
   pet                pets?                @relation(fields: [pet_id], references: [id], onDelete: SetNull)
   report_id          String?              @db.Uuid

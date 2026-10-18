@@ -69,9 +69,10 @@ export async function flagDuplicateChip(pet_id: string, other_pet_ids: string[],
 }
 
 /**
- * PUT /v1/pets/:id/photos: sets the pet's photos in order (position = index), from the owner's unattached photos or
- * photos already on this pet; photos left out are detached (retention.purge removes them after 24 h). Returns how
- * many of `photo_ids` were attached.
+ * PUT /v1/pets/:id/photos: sets the pet's photos in order (position = index), from the owner's photos on no other pet
+ * (unattached, or on the owner's report, TASK-114.5) or photos already on this pet; photos left out are detached
+ * (retention.purge removes them after 24 h unless a report has them). Returns how many of `photo_ids` were attached.
+ * A photo on both shares one position, so the pet and the report keep its order relative to their shared photos.
  */
 export async function setPhotos(input: { pet_id: string; owner_id: string; photo_ids: string[] }, tx: Tx) {
 	const { pet_id, owner_id, photo_ids } = input;
@@ -79,7 +80,7 @@ export async function setPhotos(input: { pet_id: string; owner_id: string; photo
 	let attached = 0;
 	for (const [position, id] of photo_ids.entries()) {
 		const { count } = await tx.photos.updateMany({
-			where: { id, OR: [{ pet_id }, { owner_id, pet_id: null, report_id: null }] },
+			where: { id, OR: [{ pet_id }, { owner_id, pet_id: null }] },
 			data: { pet_id, position },
 		});
 		attached += count;
@@ -87,10 +88,13 @@ export async function setPhotos(input: { pet_id: string; owner_id: string; photo
 	return attached;
 }
 
-/** Deletes the pet and its photo rows; returns the photos, whose objects the caller queues for deletion. */
+/**
+ * Deletes the pet and its photo rows, except those a report shows (the foreign key only unlinks them from the pet);
+ * returns the deleted photos, whose objects the caller queues for deletion.
+ */
 export async function remove(id: string, tx: Tx) {
 	const removed = await tx.photos.findMany({
-		where: { pet_id: id },
+		where: { pet_id: id, report_id: null },
 		select: { id: true, owner_id: true, report_id: true, public_display_url: true, public_thumb_url: true },
 	});
 	await tx.photos.deleteMany({ where: { id: { in: removed.map((p) => p.id) } } });

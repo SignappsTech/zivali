@@ -32,7 +32,10 @@ export const logger = pino({
 	...(config.APP_ENV === 'local' && config.NODE_ENV !== 'test' && { transport: { target: 'pino-pretty' } }),
 });
 
-/** pino-http: one line per request with req_id, route pattern (`GET /v1/reports/:id`), status and duration_ms. */
+/**
+ * pino-http: one line per request with req_id, route pattern (`GET /v1/reports/:id`), status and duration_ms; an
+ * error answer adds error_code and, for VALIDATION, error_paths (set by the error middleware; no values).
+ */
 export function requestLogger(base: Logger = logger) {
 	return pinoHttp({
 		logger: base,
@@ -46,8 +49,13 @@ export function requestLogger(base: Logger = logger) {
 			// apiRoutes() stores the pattern in res.locals.route: Express restores req.baseUrl on next(err), so
 			// building it from req would log errored requests as e.g. `GET /ready`.
 			const { method, baseUrl, route } = req as Request;
-			const pattern = (res as Response).locals.route as string | undefined;
-			return { route: pattern ?? `${method} ${route ? `${baseUrl}${route.path}` : '(no route)'}` };
+			const { locals } = res as Response;
+			const pattern = locals.route as string | undefined;
+			return {
+				route: pattern ?? `${method} ${route ? `${baseUrl}${route.path}` : '(no route)'}`,
+				...(locals.error_code && { error_code: locals.error_code as string }),
+				...(locals.error_paths && { error_paths: locals.error_paths as string[] }),
+			};
 		},
 	});
 }

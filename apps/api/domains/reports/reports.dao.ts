@@ -435,9 +435,9 @@ type PublicPhoto = {
 };
 
 /**
- * Sets the report's photos in order (position = index): the owner's unattached uploads or photos already on this
- * report; photos left out are detached (and unpublished). Returns how many of `photo_ids` were attached and the photos that
- * were public.
+ * Sets the report's photos in order (position = index): the owner's photos on no other report (unattached uploads,
+ * their pets' photos, TASK-114.5) or photos already on this report; photos left out are detached (and unpublished).
+ * Returns how many of `photo_ids` were attached and the photos that were public.
  */
 export async function setPhotos(
 	input: { report_id: string; owner_id: string; photo_ids: string[] },
@@ -461,7 +461,7 @@ export async function setPhotos(
 	let attached = 0;
 	for (const [position, id] of photo_ids.entries()) {
 		const { count } = await tx.photos.updateMany({
-			where: { id, OR: [{ report_id }, { owner_id, report_id: null, pet_id: null }] },
+			where: { id, OR: [{ report_id }, { owner_id, report_id: null }] },
 			data: { report_id, position },
 		});
 		attached += count;

@@ -152,7 +152,10 @@ export async function archivePet(input: { id: string }, ctx: Ctx): Promise<PetVi
 	return view(pet.id, ctx);
 }
 
-/** DELETE /v1/pets/:id: the pet and its photo rows go now, their objects through retention.purge (same transaction). */
+/**
+ * DELETE /v1/pets/:id: the pet and its photo rows go now, their objects through retention.purge (same transaction);
+ * photos a report shows stay on it.
+ */
 export async function deletePet(input: { id: string }, ctx: Ctx): Promise<void> {
 	const owner_id = ownerId(ctx);
 	await inTransaction(ctx, async (tx) => {
@@ -162,7 +165,7 @@ export async function deletePet(input: { id: string }, ctx: Ctx): Promise<void> 
 	});
 }
 
-/** PUT /v1/pets/:id/photos (C5): the owner's unattached photos or the pet's own, in order. */
+/** PUT /v1/pets/:id/photos (C5): the owner's photos on no other pet (on a report too) or the pet's own, in order. */
 export async function setPetPhotos(input: { id: string; photo_ids: string[] }, ctx: Ctx): Promise<PetView> {
 	const owner_id = ownerId(ctx);
 	await inTransaction(ctx, async (tx) => {
