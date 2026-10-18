@@ -32,6 +32,10 @@ Fix:
 2. With saved pets: each row is a choice that moves on when chosen (buttons, one press: "Rex" continues with Rex, "Drug ljubljenček / Vnesi podatke" continues with the new-pet path), no separate Next on this step. Do not auto-advance a radio group on change (arrow keys would advance); use real buttons with the current selection marked when coming back.
 3. Same on the mobile app's lost flow if it has the same step (follow-up task if it differs).
 A bigger change to the step's layout would be a design rework: show the owner a component mock first (wireframe rule).
+
+## Packet
+
+Branch: agent/TASK-114.12-lost-pet-step
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Acceptance Criteria
