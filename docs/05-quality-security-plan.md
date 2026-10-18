@@ -1,9 +1,9 @@
 ---
 doc_id: DOC-05
 title: Quality and Security Plan
-version: 0.10
+version: 0.11
 status: Draft
-date: 2026-10-15
+date: 2026-10-18
 owner: Tech Lead
 audience: Team, client on request
 approvals:
@@ -47,6 +47,7 @@ Run by GitHub Actions (`.github/workflows/ci.yml`, jobs `verify`, `quality`, `im
 - **End-to-end (web)**: Playwright flows per story QA; the core-loop suite (TASK-39) runs lost → anonymous found → match → confirm → chat → reunited in SL and EN, with consent denied and granted.
 - **Mobile**: component tests (jest-expo); offline tests for the cache (airplane mode, eviction, wipe), the outbox (kill and restart, duplicate send, rate limit) and geofences (mocked task manager, caps, quiet hours); Maestro smoke on an Android dev build for found report and match confirm (TASK-39).
 - **Performance**: Lighthouse CI on home, report detail, map, partners; a seeded 500-report viewport test for the map (FR-007 AC#1); fan-out test of 1000 recipients < 60 s (FR-010); embedding search at 50k photos < 300 ms (M3).
+- **AI (M3)**: local and CI use only the mock adapters (C19, C20), never a paid API. Extraction evaluation set ≥ 40 labelled photos with per-field bars (ADR-012) and matching harness ≥ 100 labelled pairs, recall@10 and precision, v3 not worse than v2 (C8); synthetic parts run in CI, the real-provider runs once per model change with the owner's approval of the spend, results recorded in the ADR or C8. Every cap (budget, daily, disabled) and every failure has a test that the form stays manual and matching falls back to v2.
 - **Manual QA**: per story against acceptance criteria (qa agent); mobile, keyboard-only and screen-reader spot checks (VoiceOver, TalkBack, NVDA); outdoor contrast check on a phone at full brightness for key screens.
 - **Cross-browser** (NFR-BROWSER): latest 2 versions of Chrome, Edge, Firefox, Safari (desktop + iOS Safari), Android Chrome; spot checks per milestone, full pass in M5.
 - **Usability** (G-3): found report < 60 s median with 5 participants on phones (TASK-30 QA, again with AI in M3).
@@ -84,6 +85,7 @@ Run by GitHub Actions (`.github/workflows/ci.yml`, jobs `verify`, `quality`, `im
 - **Consent**: no analytics script, request or cookie before opt-in (basic Consent Mode v2, ADR-009); choice, version and timestamp stored first-party; withdrawal as easy as giving; re-ask after 12 months or version change.
 - **Retention** (NFR-PRIV): chat 6 months after close; closed-report photos and locations 12 months; payment records as legally required; implemented by `purge_retention`.
 - **Retention for `audit_log` and the `zivali-backups` bucket** (proposal, confirm with the lawyer pack LQ list): `audit_log` rows kept 12 months, then deleted; `zivali-backups` objects kept 30 days rolling. Both go into `data-inventory.json` (currently "not defined yet") and `purge_retention`.
+- **AI providers** (M3, C19, C20): only the 1024 px re-encoded image (no EXIF, ids, location or user text) goes to Anthropic and Voyage; no person attributes are extracted, only four moderation booleans; flagged photos are never embedded; results are keyed by image hash; vectors are deleted with their photo; real photos go to a provider only after the privacy-policy text is approved (legal review) and, for Voyage, the training opt-out and retention are confirmed.
 - **Rights**: export and delete (M3, FR-034); anonymous reporters delete via manage link.
 - **Processors and transfers** (for the privacy policy, TASK-28): Supabase (EU, Frankfurt), Hetzner (EU, hosting), Cloudflare (R2 storage in the EU jurisdiction, Turnstile), Stripe, Brevo (EU), Expo (push), Google (GA4, Firebase), Anthropic (M3), Voyage AI (M3), Sentry (EU, M5). DPAs to be signed by the client before production.
 - **Accessibility**: WCAG 2.2 AA (EAA); axe in CI from M1; formal audit in M5 before the accessibility statement is finalised.
@@ -117,3 +119,4 @@ Run by GitHub Actions (`.github/workflows/ci.yml`, jobs `verify`, `quality`, `im
 | 0.8 | 2026-10-15 | Quality kit in place (TASK-4.1): where the web gates live, best-practices threshold, guard helpers named, visual baselines approved by the design lead, html-validate dropped |
 | 0.9 | 2026-10-15 | CH-104: retention proposal for audit_log (12 months) and zivali-backups (30 days), pending lawyer confirmation |
 | 0.10 | 2026-10-15 | TASK-4.2: CI runs the gates (`ci.yml`; `pnpm audit` and the e2e smoke as separate CI steps, not in `pnpm verify`); secretlint also pre-commit; accepted audit advisories and their rule (§Security) |
+| 0.11 | 2026-10-18 | M3 AI breakdown: AI test strategy (mocks only in CI, evaluation sets, cap and fallback tests) and AI provider privacy rules |

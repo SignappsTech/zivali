@@ -1,0 +1,48 @@
+---
+id: TASK-41.3
+title: 'Mobile: AI pre-fill in PetFields (pet profile, lost flow) and the found flow'
+status: To Do
+assignee:
+  - '@frontend-dev'
+created_date: '2026-10-18 21:23'
+updated_date: '2026-10-18 21:29'
+labels:
+  - fe
+  - 'est:M'
+milestone: m-2
+dependencies:
+  - TASK-41.1
+  - TASK-40.2
+  - TASK-40.6
+references:
+  - docs/tech/frontend.md
+  - docs/tech/contracts/C19-ai-extraction.md§Client rules
+  - docs/design/pages/P7-report-found.md§AI suggestions
+  - docs/content/pages/P7-report-found.md§AI pre-fill
+parent_task_id: TASK-41
+priority: high
+ordinal: 379200
+---
+
+## Description
+
+<!-- SECTION:DESCRIPTION:BEGIN -->
+The same pre-fill on the phone, where most found reports start: suggestions help, never take over (FR-013, G-3).
+
+## Packet
+
+Unblocks on: Wireframe approved by a person and recorded in the wireframe task's notes (TASK-41.1); AI wire types and fixtures merged (TASK-40.2); AI copy delivered (TASK-40.6). Code against createMockApi and the fixtures until TASK-40.4 is in the spec.
+Design: docs/design/wireframes/M-ai-prefill.html and P7 §AI suggestions (P6, P8 point there)
+Copy: docs/content/pages/P7-report-found.md §AI pre-fill
+Contracts: C19 §Client rules and §REST; conventions in C1
+Review: tech-lead code review (full mode); run `pnpm verify` before reporting done.
+Branch: agent/task-41.3-ai-prefill-mobile
+<!-- SECTION:DESCRIPTION:END -->
+
+## Acceptance Criteria
+<!-- AC:BEGIN -->
+- [ ] #1 After the first photo uploads, the form polls the attributes and fills species, breed, colours, pattern and size only in empty, untouched fields, each labelled Suggested and editable; nothing is saved without the user's own save or publish
+- [ ] #2 A field with value null stays empty with the low-confidence hint; an unknown breed uses the Mixed or Unknown choice; breed names are localised (SL, EN); a different species is shown as a hint, never switched
+- [ ] #3 After 3 s, on unavailable, on an error or offline (a queued report) the user continues manually and a late suggestion never overwrites an edit (test); with ai.enabled false there is no polling
+- [ ] #4 VoiceOver and TalkBack announce arriving suggestions once (polite live region); matches the approved wireframe or mockup (design-lead visual review); jest-expo tests with the mock
+<!-- AC:END -->

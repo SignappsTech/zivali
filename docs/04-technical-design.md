@@ -1,9 +1,9 @@
 ---
 doc_id: DOC-04
 title: Technical Design
-version: 0.12
+version: 0.13
 status: Draft
-date: 2026-10-16
+date: 2026-10-18
 owner: Tech Lead
 audience: Team, client IT
 approvals:
@@ -71,8 +71,8 @@ approvals:
 | Payments | Stripe Checkout, test mode only (Node SDK in the API) | - | ADR-011, C13 |
 | Email | Brevo HTTP API (adapter; Resend is a drop-in swap), Brevo SMTP for Supabase Auth | - | ADR-010 |
 | Push | Expo Push Service | - | ADR-010 |
-| AI vision | Claude `claude-opus-5-5`, structured outputs (worker) | Anthropic TS SDK | M3, ADR-012 |
-| Image embeddings | Voyage `voyage-multimodal-3` (1024-d) + pgvector HNSW (worker) | - | M3, ADR-013 |
+| AI vision | Claude `claude-haiku-5-5` (effort low, thinking off; `claude-sonnet-5-5` if the evaluation set needs it, config only), structured outputs (worker) | Anthropic TS SDK | M3, ADR-012, C19 |
+| Image embeddings | Voyage `voyage-multimodal-3.5` (1024-d, plain `fetch`) + pgvector HNSW (worker) | - | M3, ADR-013, C20 |
 | Captcha | Cloudflare Turnstile (Supabase Auth native; adapter for the lead form) | - | ADR-005 |
 | Hosting | Hetzner VPS (Docker Compose + Caddy) for web, api, worker; Supabase Free; R2; EAS Build | - | ADR-016 |
 | Analytics (consent-gated) | GA4 web (`G-PKY4SCX3RL`, property 559038055), Firebase Analytics mobile (project `zivali-bb123`) | - | basic Consent Mode v2, ADR-009 |
@@ -132,7 +132,8 @@ All tables in schema `app` as Prisma models (snake_case plural names, `id uuid`,
 | organisations, organisation_members | minimal in M2 (seed, intake exemption), full in M3 | - | Low |
 | app_config, rate_limits, idempotency_keys, audit_log | config; hashed counters (48 h); stored responses (24 h, secrets encrypted); staff actions | - | Low / Medium |
 | pgboss.* | pg-boss tables (jobs, schedules, archive) | managed by pg-boss | Low |
-| Planned M3–M4 | photo_embeddings, ai_results, ai_calls, intake_batches, chip_lookups (hash only), subscriptions and entitlements (owners: Premium, Podpornik; vets: Vet Partner), moderation_actions | wire types in `packages/types` from M1; models with their stories | - |
+| ai_results, ai_calls, photo_embeddings (M3, `prisma/schemas/ai.prisma`) | extraction result per image hash (no user or photo id); per-photo AI and embedding ledger (outcome, tokens, pixels, cost; 62 days); one 1024-d vector per photo and model | pk(sha256); unique(photo_id, provider, model), (provider, created_at); pk(photo_id, model), HNSW cosine | Low (no person data; photo-linked ledger) |
+| Planned M3–M4 | intake_batches, chip_lookups (hash only), subscriptions and entitlements (owners: Premium, Podpornik; vets: Vet Partner), moderation_actions | wire types in `packages/types` from M1; models with their stories | - |
 
 **Deletion and retention** (NFR-PRIV, proposals for legal review, A-012): chat deleted 6 months after report close; closed-report photos and stored locations deleted or nulled 12 months after close, and the stored point replaced by the blurred public point `retention.exact_point_blur_days` (30, lawyer to confirm) after close (`retention.blur_location` job, ADR-006); raw points are never stored (coarsened 20–30 m at write, device and server); payment records kept as legally required; IP and device hashes 48 h; idempotency rows 24 h; anonymous auth users without a live report 30 days (Supabase Admin API); orphan uploads 24 h. All by the `retention.purge` job. Device data (mobile, C17): public cache ≤ 50 MB / 7 days, own drafts and outbox; wiped on sign-out, account deletion and on request. Account deletion (M3, FR-034) is one domain function that deletes or anonymises rows per `apps/api/prisma/data-inventory.json` and deletes the Supabase user; a test fails when a model is missing from the inventory.
 
@@ -147,7 +148,7 @@ All tables in schema `app` as Prisma models (snake_case plural names, `id uuid`,
 | C5 | Photos: R2 presigned uploads, processing, publishing | API / data | docs/tech/contracts/C5-photos-storage.md |
 | C6 | Location, geo reference, fuzzing, geocoder, MapView/LocationPicker API | API / data / component | docs/tech/contracts/C6-location-geo-maps.md |
 | C7 | Anonymous reporting and manage link | API | docs/tech/contracts/C7-anonymous-manage-link.md |
-| C8 | Matching v1 | API / data | docs/tech/contracts/C8-matching.md |
+| C8 | Matching: attribute scorer v2 (as built), visual similarity v3 (M3) | API / data | docs/tech/contracts/C8-matching.md |
 | C9 | Chat (REST + Realtime Broadcast) | API / data / realtime | docs/tech/contracts/C9-chat.md |
 | C10 | Notifications and nearby alerts | API / data | docs/tech/contracts/C10-notifications-alerts.md |
 | C11 | Abuse reports | API | docs/tech/contracts/C11-abuse-reports.md |
@@ -158,7 +159,9 @@ All tables in schema `app` as Prisma models (snake_case plural names, `id uuid`,
 | C16 | i18n catalogues and formatting | data / library | docs/tech/contracts/C16-i18n.md |
 | C17 | Mobile offline data layer | data (device) | docs/tech/contracts/C17-mobile-offline-data.md |
 | C18 | Responsible-shelter directory | API / data | docs/tech/contracts/C18-shelter-directory.md |
-| C19+ | M3–M6 (AI extraction, embeddings, organisations, intake/CSV, chip lookup, export/delete, owner and Vet Partner subscriptions, moderation, sponsor invoices, fiscal invoices) | - | written at each milestone's breakdown |
+| C19 | AI attribute extraction: `ai.extract`, caps, `GET /v1/photos/:id/attributes`, client pre-fill rules (M3) | API / data / job | docs/tech/contracts/C19-ai-extraction.md |
+| C20 | Image embeddings: `photo.embed`, backfill and model change, similarity and nearest queries (M3) | data / job | docs/tech/contracts/C20-image-embeddings.md |
+| C21+ | M3–M6 (organisations, intake/CSV, chip lookup, export/delete, owner and Vet Partner subscriptions, moderation, sponsor invoices, fiscal invoices) | - | written at each milestone's breakdown |
 
 **API standards**: see C1: `API_URL/v1`, Bearer Supabase token, `x-device-id`, JSON snake_case, no envelope, lists `{ items, next_cursor }`, errors `{ error: { code, message, details?, issues? } }` with stable codes, `Idempotency-Key` on retryable writes, OpenAPI spec at `apps/api/openapi.json` (Swagger UI deferred). Webhooks dedupe by provider event id.
 
@@ -199,8 +202,8 @@ Configuration through environment variables only (names in `frontend.md` / `back
 | Firebase config files | Client | **present in `.secrets/`** | - |
 | GA4 measurement id, property, service account | Client | **set** | - |
 | MapTiler key | Client | set but **no longer used** (ADR-007 revised: own geocoder) | - |
-| Anthropic API key | Client | **set** | - (M3) |
-| Voyage AI key | Client | missing | M3 embeddings on staging |
+| Anthropic API key | Client | **set** in `.env.local` | M3 extraction on staging until wired (TASK-40.7) |
+| Voyage AI key | Client | **set** in `.env.local` (owner, checked 2026-10-18); not yet on staging | M3 embeddings on staging until wired (TASK-40.7); a payment method on the Voyage account for Tier 1 rate limits; training opt-out and retention to confirm before real photos go to Voyage (ADR-013) |
 | Brevo API key + SMTP | Client | missing | real email on staging |
 | Cloudflare Turnstile keys | Client | missing | captcha on staging (test keys meanwhile) |
 | Google OAuth clients (web, Android, iOS) | Client | missing | Google sign-in |
@@ -256,8 +259,8 @@ Configuration through environment variables only (names in `frontend.md` / `back
 | Stripe | checkout, webhooks | secret key, webhook secret | test mode only | user sees retry; webhook retries idempotent | payment ids, amounts |
 | Google Analytics 4 / Firebase | audience analytics | measurement id / config files | GA4 quotas | silently dropped | none in our DB |
 | GA Data API (optional) | partner page enrichment | service account | quotas | DB-only stats | cached aggregates |
-| Anthropic (M3) | attribute extraction | API key | budget caps | manual form | AI results per photo hash |
-| Voyage AI (M3) | image embeddings | API key | budget caps | v1 matching only | vectors |
+| Anthropic (M3) | attribute extraction (C19) | API key | 1 call per image hash; 10 (anonymous) / 30 photos per user a day; `ai.monthly_budget_usd` 20 | manual form (fail open) | results per image hash, usage ledger |
+| Voyage AI (M3) | image embeddings (C20) | API key | 1 vector per photo and model, hash reuse; `embedding.monthly_budget_usd` 5; rate limits low until a payment method is added | v2 attribute matching (no visual term) | vectors per photo and model, usage ledger |
 | GURS open data (CC BY 4.0) | municipalities and regions; settlements, districts, streets and house numbers for our geocoder | none | - | static seed, refreshed by the generators | boundaries, names, points |
 | UVHVVR register + municipal reports | shelter directory sources | none | yearly refresh | admin edits | directory rows with source |
 | Hetzner Cloud | VPS | API token / SSH | one VPS | Compose restart policies; uptime alert | - |
@@ -277,8 +280,8 @@ Configuration through environment variables only (names in `frontend.md` / `back
 | ADR-009 | Analytics: typed `track()`, GA4 + Firebase adapters, basic Consent Mode v2 | Accepted |
 | ADR-010 | Notifications: inbox + Expo Push + Brevo email (amended: worker job) | Accepted |
 | ADR-011 | Payments: Stripe Checkout, webhook ledger, mock provider, live-mode guard (amended: Express routes; reward escrow dropped) | Accepted |
-| ADR-012 | AI extraction: Claude `claude-opus-5-5`, structured outputs, caps (worker) | Accepted (M3) |
-| ADR-013 | Image embeddings: Voyage multimodal behind adapter, pgvector HNSW (worker) | Accepted (M3) |
+| ADR-012 | AI extraction: Claude `claude-haiku-5-5` (amended from Opus on cost, gated by an evaluation set), structured outputs, caps (worker) | Accepted (M3, amended) |
+| ADR-013 | Image embeddings: Voyage `voyage-multimodal-3.5` behind adapter, chained after extraction, pgvector HNSW (worker) | Accepted (M3, amended) |
 | ADR-014 | Photos on R2 (EU jurisdiction): client resize, presigned uploads, sharp re-encode, public copies on publish | Accepted (revised) |
 | ADR-015 | Test toolchain: Vitest + Supertest, Playwright + axe + LHCI, jest-expo, Maestro | Accepted (amended) |
 | ADR-016 | Hetzner VPS with Docker Compose + Caddy; Supabase Free; R2; GitHub Actions | Accepted (revised) |
@@ -308,3 +311,4 @@ Full records: `docs/tech/adr/NNN-*.md` (context, decision, alternatives, consequ
 | 0.10 | 2026-10-15 | CH-109: §Environments notes that staging and production share Supabase project `najdimo` until a separate production project exists |
 | 0.11 | 2026-10-15 | TASK-4.2: CI in `ci.yml` (jobs verify, quality, images; deploy placeholder), full `pnpm verify` (secretlint, API tests; `pnpm audit` and the Playwright smoke as separate CI steps), `pnpm images`, branch protection for main, Turbo passes `DATABASE_URL`/`DIRECT_URL` through |
 | 0.12 | 2026-10-16 | TASK-76.1 (CH-199): §Environments web-first pilot as one environment on the staging stack; pilot payments in Stripe test mode; payments-off switch for later (`PAYMENTS_PROVIDER=off`, off by default in `APP_ENV=production`, reported as `payments.enabled` in the public config; `PAYMENTS_ENABLED`, `EXPO_PUBLIC_PAYMENTS_ENABLED` overrides) and `SEARCH_INDEXING` (noindex); `docs/tech/pilot-runbook.md` |
+| 0.13 | 2026-10-18 | M3 AI breakdown: AI vision default `claude-haiku-5-5` (ADR-012 amended), `voyage-multimodal-3.5` (ADR-013 amended, CH-541); data model rows ai_results, ai_calls, photo_embeddings; contracts C19 (AI extraction) and C20 (embeddings), C8 renamed (v2 as built, v3 planned); Voyage key set locally; integration limits and fallbacks |
