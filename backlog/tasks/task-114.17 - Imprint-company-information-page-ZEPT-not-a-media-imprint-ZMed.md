@@ -1,11 +1,11 @@
 ---
 id: TASK-114.17
 title: 'Imprint → "Podatki o podjetju" (ZEPT), not a media imprint (ZMed)'
-status: To Do
+status: Done
 assignee:
   - '@content-strategist'
 created_date: '2026-10-16 15:50'
-updated_date: '2026-10-18 02:33'
+updated_date: '2026-10-18 02:45'
 labels:
   - legal
   - content
