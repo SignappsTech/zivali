@@ -348,6 +348,11 @@ test.describe('AC#5: keyboard and screen reader', () => {
 		await dialog.getByRole('button', { name: 'Customise' }).focus();
 		await page.keyboard.press('Enter');
 
+		// The necessary-cookies text links to the policy before the Analytics switch (Chromium-only stop, as above).
+		if (browserName !== 'webkit') {
+			await page.keyboard.press('Tab');
+			await expect(dialog.getByRole('link', { name: 'cookie policy' })).toBeFocused();
+		}
 		await page.keyboard.press('Tab');
 		const analytics = dialog.getByRole('switch', { name: 'Analytics cookies' });
 		await expect(analytics).toBeFocused();
