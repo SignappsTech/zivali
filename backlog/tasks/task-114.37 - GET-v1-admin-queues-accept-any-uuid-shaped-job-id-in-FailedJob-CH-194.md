@@ -1,10 +1,11 @@
 ---
 id: TASK-114.37
 title: 'GET /v1/admin/queues: accept any uuid-shaped job id in FailedJob (CH-194)'
-status: To Do
+status: Done
 assignee:
   - '@backend-dev'
 created_date: '2026-10-18 22:08'
+updated_date: '2026-10-18 22:21'
 labels:
   - be
   - bug
