@@ -100,7 +100,8 @@ export async function fanout({ report_id }: { report_id: string }, ctx: Ctx): Pr
 /**
  * notify.send calls this for a queued nearby_lost alert (C10): the text variables for that user, or null when the
  * alert must be dropped because the report was closed, reunited, hidden or removed since the fan-out, or the user's
- * subscription is paused, deleted or no longer has the report's species. The distance band is from the user's centre to the public point only (C6).
+ * subscription is paused, deleted or no longer has the report's species. The distance band is from the user's
+ * centre to the public point only (C6).
  */
 export async function nearbyAlert(
 	{ user_id, report_id }: { user_id: string; report_id?: string },

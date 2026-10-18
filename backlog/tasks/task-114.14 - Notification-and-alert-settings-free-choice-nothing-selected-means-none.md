@@ -39,3 +39,7 @@ Fix:
 - [ ] #2 Every channel for every notification type can be switched off, including in-app for matches and messages; with all off for a type, no notification of that type is created or sent (test); the locked note and its copy are gone, and no warning replaces it
 - [ ] #3 SL and EN copy for the empty states and the note; unit, route and e2e tests updated; mobile checked
 <!-- AC:END -->
+
+## Packet
+
+Branch: agent/TASK-114.14-notification-free-choice
