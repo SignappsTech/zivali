@@ -261,7 +261,9 @@ describe('PhotoPicker', () => {
 	});
 
 	it("lists a pet's saved photos first, never uploads or stores them, and counts them towards the 5", async () => {
-		upload.mockResolvedValue({ photoId: 'photo-new' });
+		// One id per image, as the API answers (the draft's photo first).
+		let uploads = 0;
+		upload.mockImplementation(async () => ({ photoId: uploads++ ? `photo-${uploads}` : 'photo-new' }));
 		idb.set('photos:pet', [{ key: 'd', ...photo(7) }]);
 		const onChange = vi.fn();
 		const saved = [
@@ -288,6 +290,21 @@ describe('PhotoPicker', () => {
 		expect(upload.mock.calls.map((call) => Number(call[1].sha256))).toEqual([7, 1, 2, 3]);
 		await waitFor(() =>
 			expect((idb.get('photos:pet') as { sha256: string }[]).map((p) => Number(p.sha256))).toEqual([1, 2, 3])
+		);
+	});
+
+	it('drops a picked photo the API answers with a listed photo id (the same image as a saved one, TASK-114.5)', async () => {
+		// POST /v1/photos dedupes by owner and hash: the pet's own photo comes back as its id.
+		upload.mockResolvedValueOnce({ photoId: 'saved-1' }).mockResolvedValueOnce({ photoId: 'photo-new' });
+		const onChange = vi.fn();
+		renderPicker({ saved: [{ id: 'saved-1', thumb_url: 'https://media.test/1.webp' }], onChange });
+
+		pick(file(1), file(2));
+		const ids = () => onChange.mock.lastCall![0].map((item: { photoId?: string }) => item.photoId);
+		await waitFor(() => expect(ids()).toEqual(['saved-1', 'photo-new']));
+		expect(screen.getAllByRole('listitem')).toHaveLength(2);
+		await waitFor(() =>
+			expect((idb.get('photos:lost') as { photoId: string }[]).map((p) => p.photoId)).toEqual(['photo-new'])
 		);
 	});
 

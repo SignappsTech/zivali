@@ -274,7 +274,8 @@ describe('guards and privacy (C6 privacy rules)', () => {
 		expect((await send('/v1/geo/search', { q: 'x', near: { lat: 46.0702, lng: 14.4875 } })).status).toBe(400);
 		await new Promise((resolve) => setImmediate(resolve));
 
-		const output = lines.join('');
+		// error_paths names the refused fields (TASK-114.5), never their values: checked on its own below.
+		const output = lines.map((line) => JSON.stringify({ ...JSON.parse(line), error_paths: undefined })).join('');
 		for (const leak of [
 			'rubarjeva',
 			'jubljana',
@@ -295,6 +296,7 @@ describe('guards and privacy (C6 privacy rules)', () => {
 			['POST /v1/geo/reverse', 200],
 			['POST /v1/geo/search', 400],
 		]);
+		expect(routes[2]).toMatchObject({ error_code: 'VALIDATION', error_paths: ['q'] });
 	});
 });
 

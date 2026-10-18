@@ -154,6 +154,9 @@ export function usePhotoUploads(
 				{ signal: controller.signal, onProgress: (progress) => patch(key, { progress }) }
 			);
 			live.current.attempts.delete(key);
+			// The same image as a listed photo (a saved one has no hash here): the API dedupes it to that photo's id,
+			// and the same id twice would be refused (TASK-114.5).
+			if (live.current.photos.some((item) => item.key !== key && item.photoId === photoId)) return remove(key);
 			patch(key, { status: 'uploaded', progress: 1, photoId, uploadedAt: Date.now() });
 			void save();
 			setJustUploaded(true);

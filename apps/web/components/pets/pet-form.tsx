@@ -63,6 +63,7 @@ const sectionHeadingClass = 'font-display text-xl font-semibold tracking-[-0.01e
 export function PetForm({ pet }: { pet?: Pet }) {
 	const t = useTranslations('pets');
 	const tCommon = useTranslations('common');
+	const tPhotos = useTranslations('photos');
 	const errorText = useErrorText();
 	const meta = usePetMeta();
 	const router = useRouter();
@@ -119,8 +120,12 @@ export function PetForm({ pet }: { pet?: Pet }) {
 			toast.success(t('saved'));
 			router.push({ pathname: '/my-pets/[id]', params: { id: saved.id } });
 		} catch (failure) {
-			const details = (failure as Partial<QueryError>).data?.details;
+			const data = (failure as Partial<QueryError>).data;
+			const details = data?.details;
 			if (details?.code === 'PET_LIMIT') setLimit(Number(details.limit) || FREE_PET_LIMIT);
+			// The API refused a photo (TASK-114.5): say which part failed, not "check the marked fields".
+			else if (data?.code === 'VALIDATION' && data.issues?.some((issue) => issue.path.startsWith('photo_ids')))
+				toast.error(tPhotos('rejected'));
 			else toast.error(errorText(failure));
 		}
 	});

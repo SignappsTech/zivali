@@ -33,7 +33,7 @@ import type { LatLng } from '@/components/map/map-view';
 import { PetFields } from '@/components/pets/pet-fields';
 import { useErrorText } from '@/components/pets/pet-list';
 import { PhotoPicker } from '@/components/photos/photo-picker';
-import { clearPhotoDraft, type PickedPhoto } from '@/components/photos/use-photo-uploads';
+import { clearPhotoDraft, MAX_PHOTOS, type PickedPhoto } from '@/components/photos/use-photo-uploads';
 import { noteClass } from '@/components/shelters/classes';
 import {
 	AlertDialog,
@@ -604,6 +604,7 @@ export function LostFlow({
 	const t = useTranslations('report_lost');
 	const errorText = useErrorText();
 	const tErrors = useTranslations('errors');
+	const tPhotos = useTranslations('photos');
 	const trackSubmit = useTrackSubmit();
 	const auth = useRequireAuth();
 	const { me, isVerified } = auth;
@@ -638,6 +639,8 @@ export function LostFlow({
 	const [resume, setResume] = React.useState<Draft>();
 	const [sending, setSending] = React.useState(false);
 	const [sendError, setSendError] = React.useState<string>();
+	// The API refused photo_ids: shown on the photo step until the next Publish.
+	const [photoError, setPhotoError] = React.useState<string>();
 	const [found, setFound] = React.useState<{ code: string; pet?: string }>();
 	const [update, setUpdate] = React.useState(true);
 	const [done, setDone] = React.useState<{ code: string; name?: string; species: Pet['species']; point: LatLng }>();
@@ -785,9 +788,13 @@ export function LostFlow({
 		if (data?.code === 'VALIDATION') {
 			// Other paths go to their step; a bare "check the marked fields" would point at nothing.
 			const roots = paths.map((path) => path.split(/[.[]/)[0]!);
-			const target = roots.includes('photo_ids')
-				? 'photos'
-				: roots.includes('location') || roots.includes('radius_m')
+			if (roots.includes('photo_ids')) {
+				// Said on the photo step, never a silent jump (TASK-114.5): over the limit, or a photo the API refused.
+				setPhotoError(photos.length > MAX_PHOTOS ? tPhotos('limit') : tPhotos('rejected'));
+				return edit('photos');
+			}
+			const target =
+				roots.includes('location') || roots.includes('radius_m')
 					? 'where'
 					: steps.find((s) => STEP_FIELDS[s].some((field) => roots.includes(field)));
 			if (target) return edit(target);
@@ -817,6 +824,7 @@ export function LostFlow({
 	/** true once the report is created or updated. */
 	const send = async (): Promise<boolean> => {
 		setSendError(undefined);
+		setPhotoError(undefined);
 		const photoIds = photos.flatMap((photo) =>
 			photo.status === 'uploaded' && photo.photoId ? [photo.photoId] : []
 		);
@@ -990,9 +998,11 @@ export function LostFlow({
 							{step === 'pet' && <PetStep pets={pets} loading={petsLoading} labelledBy={headingId} />}
 							<div hidden={step !== 'photos'}>
 								<p className="mt-3 text-lg leading-7">{t('photos_help')}</p>
+								{/* A saved pet's photos come first (C5: they go on the report too); another pet re-seeds them. */}
 								<PhotoPicker
-									key={pickerKey}
+									key={`${pickerKey}:${pet?.id ?? ''}`}
 									draft={LOST_DRAFT}
+									saved={pet?.photos}
 									onChange={setPhotos}
 									onExif={({ lat, lng }) =>
 										lat !== undefined && lng !== undefined && setExif({ lat, lng })
@@ -1002,6 +1012,9 @@ export function LostFlow({
 								/>
 								{step === 'photos' && photos.some((photo) => photo.status === 'failed') && (
 									<FieldError className="mt-4">{t('photos_failed')}</FieldError>
+								)}
+								{step === 'photos' && photoError && (
+									<FieldError className="mt-4">{photoError}</FieldError>
 								)}
 								{attempted && step === 'photos' && !photos.length && (
 									<FieldError className="mt-4">{t('photos_required')}</FieldError>
