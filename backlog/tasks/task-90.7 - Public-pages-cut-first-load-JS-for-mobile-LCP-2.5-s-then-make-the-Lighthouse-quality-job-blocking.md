@@ -7,7 +7,7 @@ status: In Progress
 assignee:
   - '@tech-lead'
 created_date: '2026-10-16 02:04'
-updated_date: '2026-10-16 04:06'
+updated_date: '2026-10-18 22:08'
 labels:
   - bug
   - fe
@@ -44,4 +44,6 @@ Branch: agent/task-90.7-public-js
 
 <!-- SECTION:NOTES:BEGIN -->
 Merged (manual) after review: JS 164->151 KB on 8 pages, LCP 2.69-3.16 s, perf 0.91-0.94. AC#2 re-scoped by the lead: LCP <= 2.5 s is measured on staging (HTTP/2, CDN); the local lab has a ~2.7 s floor. AC#3 waits on the user's CI sandbox approval.
+
+CH-315/CH-364 (2026-10-19): measurements are in docs/05 section Quality gates (v0.12). No budget change in lighthouserc.json: the LCP budget stays 2.5 s and is judged on staging; the remaining options are devtools throttling or a re-scoped local budget (decision for the lead on AC#2/#3).
 <!-- SECTION:NOTES:END -->

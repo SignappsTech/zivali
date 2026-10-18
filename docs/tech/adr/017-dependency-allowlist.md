@@ -1,6 +1,6 @@
 # ADR-017: Dependency allowlist
 
-- Status: Accepted (revised 2026-10-15 for the Express + Prisma API, ADR-020, and the RTK Query toolchain; rows added 2026-10-15 from TASK-3.4 and TASK-6.5; `expo-crypto` added by CH-43) · Date: 2026-10-14 · Owner: Tech Lead
+- Status: Accepted (revised 2026-10-15 for the Express + Prisma API, ADR-020, and the RTK Query toolchain; rows added 2026-10-15 from TASK-3.4 and TASK-6.5; `expo-crypto` added by CH-43; poster PDF on `pdfkit` instead of `@react-pdf/renderer`, CH-427, 2026-10-19) · Date: 2026-10-14 · Owner: Tech Lead
 - Source: lean-architecture rule "every new dependency needs an ADR"
 
 ## Decision
@@ -39,7 +39,7 @@ Runtime dependencies outside this list (and outside what the Expo SDK 57 templat
 | `@asteasolutions/zod-to-openapi` | validation, api (client decision, TASK-6.5: the zod schemas in `@zivali/validation` are the single OpenAPI source; the package exports the registry and `registerSchemas()`, the API builds the spec from it) | OpenAPI spec from the zod schemas (`apps/api/openapi.json`) feeding the RTK codegen. Swagger UI at `/docs` is served by `swagger-ui-express` (next row) |
 | `swagger-ui-express` (+ `@types/swagger-ui-express`, dev) | api (TASK-3.12) | Swagger UI at `/docs` from the committed `openapi.json`: open in local and staging, admin + aal2 only in production. Serves its own bundled assets (no CDN) under a route-scoped CSP |
 | `stripe` | api | ADR-011 |
-| `pdfkit` (+ `@types/pdfkit`, dev) | api (worker); web (server route only: the A4 poster PDF, TASK-24.2) | Receipt and fiscal invoice PDFs (klikni uses it; TASK-92) and the poster PDF with embedded fonts (š, č, ž). Replaced `@react-pdf/renderer` for the poster on 2026-10-16: one PDF library across the repo, already in the lockfile, and Next keeps it external (`serverExternalPackages`) |
+| `pdfkit` (+ `@types/pdfkit`, dev) | api (worker); web (server route only: the A4 poster PDF, TASK-24.2) | Receipt and fiscal invoice PDFs (klikni uses it; TASK-92) and the poster PDF with embedded fonts (š, č, ž). Replaced `@react-pdf/renderer` for the poster on 2026-10-16 (CH-427): `pdfkit`, `qrcode` and their `@types` are in apps/web; neither embeds WebP, so the poster uses the report photo's JPEG variant; one PDF library across the repo, already in the lockfile, and Next keeps it external (`serverExternalPackages`) |
 | `@anthropic-ai/sdk` | api worker (M3) | ADR-012 |
 | `@sentry/nextjs`, `@sentry/react-native` | web, mobile (M5, TASK-70) | Error tracking, EU region, PII scrubbing |
 | Dev: `vitest`, `@testing-library/*`, `jsdom`, `@playwright/test`, `@axe-core/playwright`, `@lhci/cli`, `linkinator`, `jest-expo`, `secretlint` (with `@secretlint/secretlint-rule-preset-recommend`), `supabase` (CLI), `turbo`, `eslint`, `prettier`, `typescript` | repo | ADR-001, ADR-015 |

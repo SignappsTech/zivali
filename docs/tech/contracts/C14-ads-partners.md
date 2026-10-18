@@ -9,7 +9,7 @@ source: docs/04-technical-design.md§Data model (ads), ADR-003; FR-029, FR-030, 
 ## Models (columns)
 
 ```sql
-ads(id, title text (≤ 60), body text (≤ 120), cta text (≤ 24), link_url text check (link_url ~ '^https://'),
+ads(id, title text (≤ 60), body text (≤ 120), cta text (≤ 24, may be empty: the public AdView then shows t(learn_more), CH-467), link_url text check (link_url ~ '^https://'),
     image_path text, image_alt text not null check (char_length(image_alt) between 5 and 140),
     locales text[] default '{sl,en}', slots ad_slot[] not null, region_ids smallint[] null, municipality_ids smallint[] null,
     species species[] null, starts_at timestamptz, ends_at timestamptz, status text ('draft'|'active'|'paused'|'ended'),
@@ -32,7 +32,7 @@ Access only through the API (RLS deny-all); models in `prisma/schemas/ads.prisma
 | `POST /v1/ads/:id/impressions` | none; rate limit 300/min per IP | `{ slot, region_id? }` | `204` (aggregate upsert into `ad_stats_daily`, day in Europe/Ljubljana, no user ids, no cookies) |
 | `GET /v1/ads/:id/click` (TASK-35.2) | none; rate limit 300/min per IP | `?s=<slot>&r=<region_id>` | `302` to the stored `link_url` after counting the click; unknown id → 404; never a user-supplied target |
 
-`Ad = { id, title, body, cta, image_url /* string | null: seeded house ads and ads before their image upload have no image_path; render no image when null (CH-203) */, image_alt, click_url /* API_URL/v1/ads/<id>/click?s=<slot>&r=<region_id> */, is_house, label: 'Oglas'|'Ad' }`. Unknown slots (including any report-flow slot) → `VALIDATION`.
+`Ad = { id, title, body, cta /* '' allowed; the client falls back to t(learn_more) */, image_url /* string | null: seeded house ads and ads before their image upload have no image_path; render no image when null (CH-203) */, image_alt, click_url /* API_URL/v1/ads/<id>/click?s=<slot>&r=<region_id> */, is_house, label: 'Oglas'|'Ad' }`. Unknown slots (including any report-flow slot) → `VALIDATION`.
 
 Ad-free users: when the caller has an active Premium entitlement (M4) the response is `null` (no sponsor ad and no house ad) and the slot collapses; until entitlements exist nobody is ad-free; Podpornik supporters are not ad-free.
 
@@ -51,7 +51,7 @@ A verified Vet Partner clinic (organisation kind `vet` with an active Vet Partne
 | Method and path | Guards | Request | Response |
 |---|---|---|---|
 | `GET /v1/admin/ads` | admin, aal2 | `?status&cursor` | `{ items: AdminAd[], next_cursor }` |
-| `POST /v1/admin/ads`, `PUT /v1/admin/ads/:id` | admin, aal2 | `AdInput` | `AdminAd` (validation: alt 5–140, https link, image 4:3 at least 1200×900 px JPG or PNG under 500 KB, title ≤ 60, body ≤ 120, no animal sale or rehoming, no exclusive overlap; audited) |
+| `POST /v1/admin/ads`, `PUT /v1/admin/ads/:id` | admin, aal2 | `AdInput` | `AdminAd` (validation: alt 5–140, https link, image 4:3 at least 1200×900 px JPG or PNG under 500 KB, title ≤ 60, body ≤ 120, cta ≤ 24 or empty, no animal sale or rehoming, no exclusive overlap; audited) |
 | `POST /v1/admin/ads/:id/image` | admin, aal2 | `{ sha256, width, height, bytes, content_type }` | `AdImageUploadResponse = { upload: { url, method: 'PUT', headers, expires_at } }`: presigned PUT to the media bucket `ads/<id>/…` (C5 pattern) |
 | `POST /v1/admin/ads/:id/status` | admin, aal2 | `{ status }` | `AdminAd` (audited) |
 | `DELETE /v1/admin/ads/:id` | admin, aal2 | - | `204` (soft delete, audited) |
@@ -87,3 +87,4 @@ Computed by the `partners.stats` job (hourly) into `partner_stats_snapshot(id uu
 |---|---|---|
 | 1.1 | 2026-10-15 | CH-137: status literal 'active', AD_SLOT case note, partner_stats_snapshot columns, slot exclusivity is a service check only |
 | 1.2 | 2026-10-18 | CH-203: Ad.image_url nullable; CH-204: no blocked flag, serve-time blocklist re-check, assertAdWritable; CH-205: targeting, region derivation, exclusive, Vary, impression details |
+| 1.3 | 2026-10-19 | CH-467: AdInput.cta may be empty; AdView falls back to t(learn_more) |

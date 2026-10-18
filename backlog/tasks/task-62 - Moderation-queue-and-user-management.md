@@ -5,7 +5,7 @@ status: To Do
 assignee:
   - '@design-lead'
 created_date: '2026-10-14 21:05'
-updated_date: '2026-10-14 23:08'
+updated_date: '2026-10-18 22:08'
 labels:
   - story
   - 'req:FR-018'
@@ -34,6 +34,12 @@ Without a queue, abuse reports pile up and scams stay visible; moderators need o
 - [ ] #6 Given listings or chat messages offering to sell or give away animals (such as podarim or prodam), when reported or detected, then moderators can remove them and the account is warned.
 - [ ] #7 From the TASK-25.5 review: AbuseDomain.restoreReport (apps/api/domains/abuse) has no aal2 check of its own. The restore route must sit behind the moderator + aal2 guard (or the domain must check ctx.actor.aal), with a test that an aal1 moderator is refused.
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+CH-180/CH-191 (grooming 2026-10-19): the moderation actions hold, hide, remove and release must call the helper from TASK-114.32 in the same transaction: release (held to visible) queues match.report; every visibility change queues photo.publish { report_id }. Add a test per action.
+<!-- SECTION:NOTES:END -->
 
 ## Packet
 

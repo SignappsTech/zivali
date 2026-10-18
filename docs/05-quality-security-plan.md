@@ -1,9 +1,9 @@
 ---
 doc_id: DOC-05
 title: Quality and Security Plan
-version: 0.11
+version: 0.12
 status: Draft
-date: 2026-10-18
+date: 2026-10-19
 owner: Tech Lead
 audience: Team, client on request
 approvals:
@@ -38,6 +38,8 @@ Run by GitHub Actions (`.github/workflows/ci.yml`, jobs `verify`, `quality`, `im
 | Offline queue idempotency | jest (outbox) + API test (`Idempotency-Key` replay) | a replayed submission yields 1 report and the same manage token | Yes |
 | Visual | Playwright screenshots (390 and 1440 px) vs baselines committed once the design lead approves the build against the mockup | ≤ 2 % pixel diff | Review (design lead) |
 | Security | secretlint, `pnpm audit --audit-level high`, tech-lead security review on est:M/L PRs | no high/critical, no secrets | Yes |
+
+**Lighthouse measurements (CH-315, CH-364; mobile preset, simulated throttling, best of 2, localhost, `pnpm quality`).** After TASK-90.5 (Redux out, catalogue trimmed, WebP home photos): public JS 192 to 165 KB, HTML 33-39 to 26-31 KB, home page 594 to 440 KB, but simulated LCP 3.4-3.9 s and performance 0.84-0.88 on every page. After TASK-90.6 (fonts 159 to 48 KB): performance 0.90-0.93 on all 9 pages, LCP 2.84-3.21 s, CLS 0, FCP 0.91 s. Why LCP still misses 2.5 s: (1) headless Chrome presents the first frame 200-500 ms after its Paint (SwiftShader), and Lantern then counts every script loaded before that frame (observed LCP equals observed FCP, 0.47-0.64 s); (2) the remaining weight is scripts (React DOM 71 KB, Next runtime 45 KB), not fonts. What-ifs: `--disable-gpu` with an early paint 2.43 s, plus narrow latin-ext subsets 2.28 s; preloading one font only made simulated FCP worse (0.9 to 1.8 s, CLS 0.151); `throttlingMethod: devtools` gives content-page LCP 2.0-2.4 s but TBT 460-2350 ms on a shared machine (performance 0.68-0.84). Decision: the LCP threshold above stays 2.5 s and is judged on staging (HTTP/2, CDN); the local lab has a floor near 2.7 s; the quality job stays continue-on-error until TASK-90.7 AC#3. `lighthouserc.json` budgets unchanged.
 
 # Testing strategy
 
@@ -120,3 +122,4 @@ Run by GitHub Actions (`.github/workflows/ci.yml`, jobs `verify`, `quality`, `im
 | 0.9 | 2026-10-15 | CH-104: retention proposal for audit_log (12 months) and zivali-backups (30 days), pending lawyer confirmation |
 | 0.10 | 2026-10-15 | TASK-4.2: CI runs the gates (`ci.yml`; `pnpm audit` and the e2e smoke as separate CI steps, not in `pnpm verify`); secretlint also pre-commit; accepted audit advisories and their rule (§Security) |
 | 0.11 | 2026-10-18 | M3 AI breakdown: AI test strategy (mocks only in CI, evaluation sets, cap and fallback tests) and AI provider privacy rules |
+| 0.12 | 2026-10-19 | CH-315, CH-364: Lighthouse measurements after TASK-90.5 and TASK-90.6 and the LCP decision (staging); no budget change |
