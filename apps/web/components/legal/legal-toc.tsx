@@ -17,7 +17,7 @@ const FAR = '100000px';
  */
 export function LegalToc({ label, headings }: { label: string; headings: { id: string; text: string }[] }) {
 	const [current, setCurrent] = useState<string>();
-	const clickedAt = useRef(0);
+	const clicked = useRef({ id: '', at: 0 });
 	const nav = useRef<HTMLElement>(null);
 	const sticky = useRef<HTMLDivElement>(null);
 
@@ -30,11 +30,12 @@ export function LegalToc({ label, headings }: { label: string; headings: { id: s
 
 		const above = new Set<Element>();
 		let end = false;
+		const mark = (isAbove: (head: Element) => boolean, atEnd: boolean) =>
+			setCurrent((atEnd && window.scrollY > 0 ? last : (heads.findLast(isAbove) ?? first)).id);
+		// A click near the end jumps less far than its heading needs; that jump must not move the click's mark.
+		const pinned = () => Date.now() - clicked.current.at < 300;
 		const update = () => {
-			// A click near the end jumps less far than its heading needs; that jump must not move the click's mark.
-			if (Date.now() - clickedAt.current < 300) return;
-			const head = end && window.scrollY > 0 ? last : (heads.findLast((h) => above.has(h)) ?? first);
-			setCurrent(head.id);
+			if (!pinned()) mark((h) => above.has(h), end);
 		};
 		const line = new IntersectionObserver(
 			(entries) => {
@@ -53,15 +54,25 @@ export function LegalToc({ label, headings }: { label: string; headings: { id: s
 			},
 			{ rootMargin: `-100% 0px ${FAR} 0px` }
 		);
-		// Back and forward restore a scroll position: follow it even right after a click.
-		const unpin = () => (clickedAt.current = 0);
+		// Back and forward restore a scroll position, even right after a click, and maybe before the observers ever saw
+		// its jump (then they report no change): end the pin and read the position once, by the observers' rules.
+		// Chromium fires popstate before the restore and hashchange after it, and both for a click's own jump too: those
+		// carry the clicked hash and keep its mark.
+		const restore = () => {
+			if (pinned() && location.hash === `#${clicked.current.id}`) return;
+			clicked.current.at = 0;
+			const height = window.innerHeight;
+			mark((h) => h.getBoundingClientRect().top <= height * 0.3, body.getBoundingClientRect().bottom < height);
+		};
 		heads.forEach((head) => line.observe(head));
 		tail.observe(body);
-		window.addEventListener('popstate', unpin);
+		window.addEventListener('popstate', restore);
+		window.addEventListener('hashchange', restore);
 		return () => {
 			line.disconnect();
 			tail.disconnect();
-			window.removeEventListener('popstate', unpin);
+			window.removeEventListener('popstate', restore);
+			window.removeEventListener('hashchange', restore);
 		};
 	}, [headings]);
 
@@ -85,7 +96,7 @@ export function LegalToc({ label, headings }: { label: string; headings: { id: s
 						aria-current={id === current ? 'location' : undefined}
 						className={linkClass}
 						onClick={() => {
-							clickedAt.current = Date.now();
+							clicked.current = { id, at: Date.now() };
 							setCurrent(id);
 						}}
 					>

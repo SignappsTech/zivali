@@ -47,6 +47,19 @@ function scroll(above: number, { end = false, y = 1000 } = {}) {
 		tail().report([[document.querySelector('#body')!, !end]]);
 	});
 }
+/** Where the headings' tops and the text's end sit in the 768 px jsdom viewport (the reading line is at 230 px). */
+function place(tops: number[], bottom: number) {
+	headings.forEach(({ id }, i) => (head(id).getBoundingClientRect = () => ({ top: tops[i] }) as DOMRect));
+	document.querySelector('#body')!.getBoundingClientRect = () => ({ bottom }) as DOMRect;
+}
+/** A same-document history step to `hash`, with Chromium's events: popstate, then hashchange. */
+function navigate(hash: string) {
+	act(() => {
+		history.replaceState(null, '', hash);
+		window.dispatchEvent(new PopStateEvent('popstate'));
+		window.dispatchEvent(new HashChangeEvent('hashchange'));
+	});
+}
 /** The marked entries: one link per list (disclosure and sticky), so one text if exactly one entry is current. */
 const marked = () => [...new Set([...document.querySelectorAll('[aria-current]')].map((a) => a.textContent))];
 
@@ -138,15 +151,22 @@ describe('LegalToc', () => {
 		expect(marked()).toEqual(['1. Na kratko']);
 	});
 
-	it('follows the scroll position the back button restores, even right after a click', () => {
+	it('follows the URL hash when Back comes inside 300 ms of a click, before the observers report anything', () => {
 		vi.useFakeTimers({ toFake: ['Date'] });
 		show();
-		scroll(0, { y: 0 });
-		fireEvent.click(screen.getAllByRole('link', { name: '3. Katere podatke obdelujemo' })[1]!);
+		history.replaceState(null, '', '#s1');
+		scroll(1);
 
-		act(() => void window.dispatchEvent(new PopStateEvent('popstate')));
-		scroll(2);
-		expect(marked()).toEqual(['2. Kdo je upravljavec']);
+		// Chromium fires popstate and hashchange for the click's own jump as well: they keep the click's mark.
+		fireEvent.click(screen.getAllByRole('link', { name: '3. Katere podatke obdelujemo' })[1]!);
+		place([-900, -400, 300, 900], 1500);
+		navigate('#s3');
+		expect(marked()).toEqual(['3. Katere podatke obdelujemo']);
+
+		// Back at once: the position is restored before the observers ever saw the jump, so they report no change.
+		place([20, 500, 1000, 1500], 2000);
+		navigate('#s1');
+		expect(marked()).toEqual(['1. Na kratko']);
 	});
 
 	it('scrolls the overflowing sticky list (never the page) to keep the current entry in view', () => {
