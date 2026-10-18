@@ -17,6 +17,8 @@ async function expectNoAxeViolations(page: Page) {
 		violations.map(({ id, nodes }) => `${id}: ${nodes.map((node) => node.target.join(' ')).join(', ')}`)
 	).toEqual([]);
 }
+// The page's own <p> note: the toast (a div, also inside main) repeats the same words. Toast-only messages need no helper.
+const note = (page: Page, text: string) => page.getByRole('main').locator('p').filter({ hasText: text });
 const transitions = (page: Page) => {
 	const sent: unknown[] = [];
 	page.on('request', (request) => {
@@ -49,7 +51,7 @@ test('the owner closes the search with a reason, then reopens it within the wind
 	await dialog.getByRole('button', { name: 'Zaključi iskanje' }).click();
 
 	// The page's own note, not the toast with the same words.
-	await expect(page.getByRole('main').getByText('Iskanje je zaključeno.')).toBeVisible();
+	await expect(note(page, 'Iskanje je zaključeno.')).toBeVisible();
 	await expect(page.getByText('Zaključeno', { exact: true })).toBeVisible();
 	expect(sent).toEqual([{ action: 'close', reason: 'other' }]);
 
