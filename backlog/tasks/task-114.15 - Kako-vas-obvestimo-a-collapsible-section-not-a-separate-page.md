@@ -3,10 +3,9 @@ id: TASK-114.15
 title: '"Kako vas obvestimo": a collapsible section, not a separate page'
 status: To Do
 assignee:
-  - '@design-lead'
   - '@frontend-dev'
 created_date: '2026-10-16 15:30'
-updated_date: '2026-10-18 09:12'
+updated_date: '2026-10-18 19:35'
 labels:
   - fe
   - design
