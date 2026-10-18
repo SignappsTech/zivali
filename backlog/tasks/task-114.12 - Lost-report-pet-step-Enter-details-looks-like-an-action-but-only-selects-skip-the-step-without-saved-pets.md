@@ -3,11 +3,11 @@ id: TASK-114.12
 title: >-
   Lost report, pet step: "Enter details" looks like an action but only selects;
   skip the step without saved pets
-status: In Progress
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-16 15:05'
-updated_date: '2026-10-18 02:37'
+updated_date: '2026-10-18 03:07'
 labels:
   - bug
   - fe
