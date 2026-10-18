@@ -207,45 +207,94 @@ describe('SiteHeader', () => {
 });
 
 describe('SiteFooter', () => {
-	it('has the 13 links in the system order, language and the copyright (SL)', () => {
+	it('has the 13 links in four headed columns, language under the logo, copyright and operator (SL)', () => {
 		renderAt('/', <SiteFooter />);
 		const footer = screen.getByRole('contentinfo');
-		const links = within(within(footer).getByRole('navigation', { name: sl.footer.nav_label })).getAllByRole(
-			'link'
-		);
+		const nav = within(footer).getByRole('navigation', { name: sl.footer.nav_label });
+		const column = (name: string) =>
+			within(within(nav).getByRole('list', { name }))
+				.getAllByRole('listitem')
+				.map((item) => {
+					const link = within(item).queryByRole('link');
+					return link ? [link.textContent, link.getAttribute('href')] : [item.textContent, 'button'];
+				});
 
-		expect(hrefs(links)).toEqual([
+		expect(
+			within(nav)
+				.getAllByRole('heading', { level: 2 })
+				.map((h) => h.textContent)
+		).toEqual(['Pomoč', 'Za organizacije', 'Najdimo', 'Pravno']);
+		expect(column('Pomoč')).toEqual([
 			['Kako deluje', '/kako-deluje'],
 			['Nasveti za varnost', '/varnost'],
 			['Pogosta vprašanja', '/pogosta-vprasanja'],
+		]);
+		expect(column('Za organizacije')).toEqual([
 			['Za zavetišča', '/za-zavetisca'],
 			['Zavetišča', '/zavetisca'],
 			['Oglašujte pri nas', '/oglasevanje'],
+		]);
+		expect(column('Najdimo')).toEqual([
 			['O nas', '/o-nas'],
+			['Podatki o podjetju', '/podatki-o-podjetju'],
+			['Dostopnost', '/dostopnost'],
+		]);
+		expect(column('Pravno')).toEqual([
 			['Zasebnost', '/zasebnost'],
 			['Piškotki', '/piskotki'],
 			['Pogoji uporabe', '/pogoji-uporabe'],
-			['Podatki o podjetju', '/podatki-o-podjetju'],
-			['Dostopnost', '/dostopnost'],
-			['SL', '/'],
-			['EN', '/en'],
+			['Nastavitve piškotkov', 'button'],
 		]);
+		expect(within(nav).getAllByRole('link')).toHaveLength(12);
 		expect(within(footer).getByRole('button', { name: 'Nastavitve piškotkov' }).getAttribute('aria-haspopup')).toBe(
 			'dialog'
 		);
 		expect(within(footer).getByText(sl.footer.tagline)).toBeTruthy();
+		expect(
+			hrefs(within(within(footer).getByRole('group', { name: 'Jezik: Slovenščina' })).getAllByRole('link'))
+		).toEqual([
+			['SL', '/'],
+			['EN', '/en'],
+		]);
 		expect(footer.textContent).toContain(`© ${new Date().getFullYear()} SIGNAPPS d.o.o.`);
+		expect(within(footer).getByText(sl.footer.operator).textContent).toContain(
+			'SIGNAPPS d.o.o., Kolomban 34B, 6280 Ankaran'
+		);
+	});
+
+	it('EN: the same columns with English headings, the operator line and the switch on this page', () => {
+		renderAt('/en/company-information', <SiteFooter />, 'en');
+		const footer = screen.getByRole('contentinfo');
+
+		expect(
+			within(footer)
+				.getAllByRole('heading', { level: 2 })
+				.map((h) => h.textContent)
+		).toEqual(['Help', 'For organisations', 'Najdimo', 'Legal']);
+		expect(
+			within(within(footer).getByRole('list', { name: 'Najdimo' }))
+				.getAllByRole('link')
+				.map((link) => link.getAttribute('href'))
+		).toEqual(['/en/about', '/en/company-information', '/en/accessibility']);
+		expect(within(footer).getByText(en.footer.operator)).toBeTruthy();
+		expect(hrefs(within(within(footer).getByRole('group', { name: /^Language/ })).getAllByRole('link'))).toEqual([
+			['SL', '/podatki-o-podjetju'],
+			['EN', '/en/company-information'],
+		]);
 	});
 
 	it('flows get one quiet row: privacy, terms, cookie settings, accessibility (EN)', () => {
 		renderAt('/en/report/found', <SiteFooter />, 'en');
 
+		const footer = screen.getByRole('contentinfo');
 		expect(
-			within(screen.getByRole('contentinfo'))
-				.getAllByRole('link')
-				.map((link) => link.textContent)
-		).toEqual(['Privacy', 'Terms of use', 'Accessibility']);
-		expect(screen.getByRole('button', { name: 'Cookie settings' })).toBeTruthy();
+			within(footer)
+				.getAllByRole('listitem')
+				.map((item) => item.textContent)
+		).toEqual(['Privacy', 'Terms of use', 'Cookie settings', 'Accessibility']);
+		expect(within(footer).getAllByRole('link')).toHaveLength(3);
+		expect(within(footer).queryByRole('heading')).toBeNull();
+		expect(within(footer).queryByRole('group')).toBeNull();
 	});
 });
 

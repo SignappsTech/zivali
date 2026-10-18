@@ -1,15 +1,16 @@
 ---
 id: TASK-116.2
 title: 'Web: implement the footer rework'
-status: To Do
+status: In Progress
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-16 14:00'
+updated_date: '2026-10-18 20:03'
 labels:
-  - 'fe'
+  - fe
   - 'est:S'
 dependencies:
-  - 'TASK-116.1'
+  - TASK-116.1
 parent_task_id: TASK-116
 priority: medium
 ordinal: 362200
@@ -26,3 +27,7 @@ Build the footer (apps/web/components/shell/footer.tsx) from the approved design
 - [ ] #1 Matches the approved design on desktop and mobile, light and dark, SL and EN; design-lead visual review passed
 - [ ] #2 Language switch and cookie settings keep working; axe clean; shell tests and e2e updated
 <!-- AC:END -->
+
+## Packet
+
+Branch: agent/TASK-116.2-footer

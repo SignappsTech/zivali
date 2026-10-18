@@ -1,4 +1,4 @@
-import { useTranslations } from 'next-intl';
+import { type Messages, useTranslations } from 'next-intl';
 import type { ComponentProps } from 'react';
 
 import { Link } from '@/i18n/navigation';
@@ -7,80 +7,115 @@ import { Logo, ringClass, useLanguageLabels } from './page';
 import { CookieSettingsButton, LanguageSwitch, ShellSlot } from './parts';
 
 type Href = ComponentProps<typeof Link>['href'];
+type Key = Exclude<keyof Messages['footer'], 'copyright'>;
+type Item = readonly [Href | null, Key];
 
-// System 10.7 footer order: info row, then the legal row with Cookie settings after Cookies.
-const INFO = [
-	['/how-it-works', 'how_it_works'],
-	['/safety', 'safety'],
-	['/faq', 'faq'],
-	['/for-shelters', 'for_shelters'],
-	['/shelters', 'shelters'],
-	['/advertise', 'partners'],
-	['/about', 'about'],
-] as const;
-const LEGAL = [
+// P1 footer (wireframe P1-footer.html v1, approved 2026-10-18): four headed columns; null is Cookie settings.
+const COLUMNS = [
+	[
+		'heading_help',
+		[
+			['/how-it-works', 'how_it_works'],
+			['/safety', 'safety'],
+			['/faq', 'faq'],
+		],
+	],
+	[
+		'heading_organisations',
+		[
+			['/for-shelters', 'for_shelters'],
+			['/shelters', 'shelters'],
+			['/advertise', 'partners'],
+		],
+	],
+	[
+		'heading_najdimo',
+		[
+			['/about', 'about'],
+			['/imprint', 'imprint'],
+			['/accessibility', 'accessibility'],
+		],
+	],
+	[
+		'heading_legal',
+		[
+			['/privacy', 'privacy'],
+			['/cookies', 'cookies'],
+			['/terms', 'terms'],
+			[null, 'cookie_settings'],
+		],
+	],
+] as const satisfies readonly (readonly [Key, readonly Item[]])[];
+const FLOW: readonly Item[] = [
 	['/privacy', 'privacy'],
-	['/cookies', 'cookies'],
-	[null, 'cookie_settings'],
 	['/terms', 'terms'],
-	['/imprint', 'imprint'],
+	[null, 'cookie_settings'],
 	['/accessibility', 'accessibility'],
-] as const;
-const FLOW: string[] = ['privacy', 'terms', 'cookie_settings', 'accessibility'];
+];
 
-const linkClass = `inline-flex min-h-11 min-w-11 items-center rounded-sm text-control leading-[22px] whitespace-nowrap text-muted-foreground underline decoration-1 underline-offset-4 hover:text-foreground ${ringClass}`;
+const linkClass = `inline-flex min-h-11 min-w-11 items-center rounded-sm text-left text-control leading-[22px] text-muted-foreground underline decoration-1 underline-offset-4 hover:text-foreground ${ringClass}`;
 
-/** P1 footer, a server component: logo with tagline, the link rows, language and copyright; flows get one quiet row. */
+/** P1 footer, a server component: logo, tagline and language, the four link columns, copyright and operator; flows get one quiet row. */
 export function SiteFooter() {
 	const t = useTranslations('footer');
 	const languages = useLanguageLabels();
-	const list = (
-		links: readonly (readonly [Href | null, (typeof INFO | typeof LEGAL)[number][1]])[],
-		className = ''
-	) => (
-		<ul className={`flex flex-wrap gap-x-5 lg:gap-x-6 ${className}`}>
-			{links.map(([href, key]) => (
-				<li key={key}>
-					{href ? (
-						// Thirteen links on every page: no prefetch, so a page view stays one request.
-						<Link href={href} prefetch={false} className={linkClass}>
-							{t(key)}
-						</Link>
-					) : (
-						<CookieSettingsButton className={`cursor-pointer ${linkClass}`}>{t(key)}</CookieSettingsButton>
-					)}
-				</li>
-			))}
-		</ul>
-	);
+	const link = ([href, key]: Item, className = '') =>
+		href ? (
+			// Thirteen links on every page: no prefetch, so a page view stays one request.
+			<Link href={href} prefetch={false} className={`${linkClass} ${className}`}>
+				{t(key)}
+			</Link>
+		) : (
+			<CookieSettingsButton className={`cursor-pointer ${linkClass} ${className}`}>{t(key)}</CookieSettingsButton>
+		);
 
 	return (
 		<>
 			<ShellSlot variant="content">
-				<footer className="mx-auto box-content max-w-[1120px] px-5 pt-12 pb-10 md:px-12">
-					<p className="flex items-center gap-3 lg:gap-4">
-						<Logo small />
-						<span className="text-muted-foreground">{t('tagline')}</span>
-					</p>
-					<nav aria-label={t('nav_label')} className="mt-3 lg:mt-4 lg:flex lg:items-end lg:gap-8">
-						<div className="min-w-0 flex-1">
-							{list(INFO)}
-							{list(LEGAL, 'mt-3 lg:mt-0')}
+				<footer className="mt-12 border-t border-border px-5 pb-8 md:px-12 lg:mt-24 lg:pb-10">
+					<div className="mx-auto grid max-w-[1120px] gap-8 pt-10 lg:grid-cols-[4fr_8fr] lg:gap-x-12 lg:pt-14">
+						<div>
+							<p className="flex flex-wrap items-center gap-3.5">
+								<Logo small />
+								<span className="text-muted-foreground">{t('tagline')}</span>
+							</p>
+							<LanguageSwitch labels={languages} className="mt-2 -ml-1.5" />
 						</div>
-						<LanguageSwitch labels={languages} className="mt-3 -ml-1.5 lg:mt-0 lg:ml-0" />
-					</nav>
-					<p className="mt-3 text-sm text-muted-foreground lg:mt-6">
-						{t('copyright', { year: new Date().getFullYear() })}
-					</p>
+						<nav
+							aria-label={t('nav_label')}
+							className="grid grid-cols-2 gap-x-4 gap-y-6 lg:grid-cols-4 lg:gap-6"
+						>
+							{COLUMNS.map(([heading, links]) => (
+								<div key={heading}>
+									<h2
+										id={`footer-${heading}`}
+										className="mb-1 font-display text-control-lg font-bold tracking-[-0.01em]"
+									>
+										{t(heading)}
+									</h2>
+									<ul aria-labelledby={`footer-${heading}`}>
+										{links.map((item) => (
+											<li key={item[1]}>{link(item)}</li>
+										))}
+									</ul>
+								</div>
+							))}
+						</nav>
+						<div className="border-t border-border pt-6 text-control text-muted-foreground lg:col-span-2">
+							<p>{t('copyright', { year: new Date().getFullYear() })}</p>
+							<p className="mt-0.5">{t('operator')}</p>
+						</div>
+					</div>
 				</footer>
 			</ShellSlot>
 			<ShellSlot variant="flow">
 				<footer className="px-5 py-6 md:px-12">
 					<nav aria-label={t('nav_label')}>
-						{list(
-							LEGAL.filter(([, key]) => FLOW.includes(key)),
-							'justify-center'
-						)}
+						<ul className="flex flex-wrap justify-center gap-x-5 lg:gap-x-6">
+							{FLOW.map((item) => (
+								<li key={item[1]}>{link(item, 'whitespace-nowrap')}</li>
+							))}
+						</ul>
 					</nav>
 				</footer>
 			</ShellSlot>
