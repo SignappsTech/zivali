@@ -134,7 +134,7 @@ export function FilterSheet({
 								<Pill
 									key={type}
 									selected={draft.types.includes(type)}
-									onPress={() => set({ types: toggle(draft.types, type, 1) })}
+									onPress={() => set({ types: toggle(draft.types, type) })}
 								>
 									{t(`filter_type_${type}`)}
 								</Pill>
@@ -145,7 +145,7 @@ export function FilterSheet({
 								<Pill
 									key={species}
 									selected={draft.species.includes(species)}
-									onPress={() => set({ species: toggle(draft.species, species, 1) })}
+									onPress={() => set({ species: toggle(draft.species, species) })}
 								>
 									{t(SPECIES_LABEL[species])}
 								</Pill>

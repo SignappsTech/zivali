@@ -1,11 +1,11 @@
 ---
 id: TASK-114.13
 title: 'Map filters: type and species may be all off (none selected means all)'
-status: To Do
+status: In Progress
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-16 15:10'
-updated_date: '2026-10-17 09:24'
+updated_date: '2026-10-18 04:08'
 labels:
   - bug
   - fe
@@ -32,3 +32,5 @@ Fix: drop the `min` for both groups; check that `isDefault` (filters.ts ~64) and
 - [ ] #1 Every type and species pill can be switched off; with none selected the results equal "all", the URL has no type/species parameter and the drawer counts no active filter
 - [ ] #2 filters.test.ts and the browse tests cover the empty group; mobile filters checked
 <!-- AC:END -->
+
+Branch: agent/TASK-114.13-filter-empty

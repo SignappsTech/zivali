@@ -63,8 +63,8 @@ export const DEFAULT_FILTERS: Filters = {
 
 /** Only what the filter drawer changes counts; sort, place and "show closed" are not filters (P4 empty states). */
 export const isDefault = (f: Filters): boolean =>
-	f.types.length === TYPES.length &&
-	f.species.length === SPECIES.length &&
+	(f.types.length === 0 || f.types.length === TYPES.length) &&
+	(f.species.length === 0 || f.species.length === SPECIES.length) &&
 	f.when === DEFAULT_FILTERS.when &&
 	f.km === DEFAULT_FILTERS.km &&
 	f.colours.length === 0 &&
@@ -78,7 +78,7 @@ export const resetFilters = (f: Filters): Filters => ({
 	includeClosed: f.includeClosed,
 });
 
-/** Adds or removes `value`; a group with `min` keeps at least that many (type and species never go empty). */
+/** Adds or removes `value`; a group with `min` keeps at least that many (none by default; an empty type or species list means all). */
 export function toggle<T>(list: T[], value: T, min = 0): T[] {
 	if (!list.includes(value)) return [...list, value];
 	return list.length > min ? list.filter((v) => v !== value) : list;
