@@ -3749,7 +3749,7 @@
 			"post": {
 				"operationId": "sendMessage",
 				"summary": "Send a message",
-				"description": "Broadcast as message.created on conversation:<id>. Location messages only from a manager of the related report. Optional Idempotency-Key.",
+				"description": "Broadcast as message.created on conversation:<id>. Location messages only from a manager of the related report. Real accounts need a confirmed email (anonymous managers pass). Optional Idempotency-Key.",
 				"tags": ["conversations"],
 				"parameters": [
 					{ "schema": { "type": "string", "format": "uuid" }, "required": true, "name": "id", "in": "path" }
@@ -3772,7 +3772,7 @@
 						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
 					},
 					"403": {
-						"description": "FORBIDDEN",
+						"description": "UNVERIFIED_EMAIL, FORBIDDEN",
 						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
 					},
 					"409": {
