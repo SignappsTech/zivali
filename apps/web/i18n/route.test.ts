@@ -55,6 +55,8 @@ describe('@/i18n/route: next-intl paths without its client runtime', () => {
 		['sl', '/admin/oglasi', '/admin/ads'],
 		['sl', '/admin/oglasi/nov', '/admin/ads/new'],
 		['en', '/en/admin/ads/ad7/edit', '/admin/ads/[id]/edit'],
+		['sl', '/admin/povprasevanja', '/admin/enquiries'],
+		['en', '/en/admin/enquiries', '/admin/enquiries'],
 		['sl', '/admin/users', '/admin/[section]'],
 		['sl', '/r/%C5%A1apa', '/r/[code]'],
 		// No entry: the unprefixed path as it is, as next-intl's usePathname.

@@ -32,7 +32,8 @@ export type AdminItem = { key: Extract<AdminKey, `nav_${string}`>; Icon: Icon; r
 				| '/admin/audit-log'
 				| '/admin/shelters'
 				| '/admin/ads'
-				| '/admin/house-ads';
+				| '/admin/house-ads'
+				| '/admin/enquiries';
 			section?: never;
 	  }
 	| { section: string; href?: never }
@@ -70,7 +71,7 @@ export const ADMIN_NAV: { key: Extract<AdminKey, `group_${string}`>; items: Admi
 	{
 		key: 'group_business',
 		items: [
-			{ key: 'nav_enquiries', Icon: TrayIcon, roles: ADMIN, section: 'enquiries' },
+			{ key: 'nav_enquiries', Icon: TrayIcon, roles: ADMIN, href: '/admin/enquiries' },
 			{ key: 'nav_vet_partners', Icon: StethoscopeIcon, roles: ADMIN, section: 'vet-partners' },
 		],
 	},

@@ -1,5 +1,14 @@
-// C14 examples (wire shape): a served ad, admin ads with stats and history, partner stats, a lead.
-import type { Ad, AdminAd, AdminAdList, AdStats, AuditLogList, LeadInput, PartnerStats } from '@zivali/types';
+// C14 examples (wire shape): a served ad, admin ads with stats and history, partner stats, a lead and stored leads.
+import type {
+	Ad,
+	AdminAd,
+	AdminAdList,
+	AdminLeadList,
+	AdStats,
+	AuditLogList,
+	LeadInput,
+	PartnerStats,
+} from '@zivali/types';
 
 /** GET /v1/ads/slot/detail?region_id=8&species=dog&locale=sl */
 export const ad: Ad = {
@@ -33,6 +42,39 @@ export const lead: LeadInput = {
 	consent: true,
 	captcha_token: 'mock-ok',
 	locale: 'sl',
+};
+
+/** GET /v1/admin/leads: stored leads, newest first (the second chose "all of Slovenia", no phone). */
+export const adminLeads: AdminLeadList = {
+	items: [
+		{
+			id: '1ead0000-0000-4000-8000-000000000002',
+			company: lead.company,
+			contact_name: lead.contact_name,
+			email: lead.email,
+			phone: '+386 1 234 56 78',
+			region_interest: 'osrednjeslovenska',
+			interest: 'vet_partner',
+			message: lead.message,
+			consent_at: '2026-10-18T09:15:00Z',
+			status: 'new',
+			created_at: '2026-10-18T09:15:01Z',
+		},
+		{
+			id: '1ead0000-0000-4000-8000-000000000001',
+			company: 'Pasja hrana Repek d.o.o.',
+			contact_name: 'Marko Kranjc',
+			email: 'marko@example.test',
+			phone: null,
+			region_interest: null,
+			interest: 'ad',
+			message: 'Radi bi oglaševali po vsej Sloveniji.',
+			consent_at: '2026-10-12T16:40:00Z',
+			status: 'new',
+			created_at: '2026-10-12T16:40:02Z',
+		},
+	],
+	next_cursor: null,
 };
 
 const sponsor = (id: string, ad: Partial<AdminAd>): AdminAd => ({

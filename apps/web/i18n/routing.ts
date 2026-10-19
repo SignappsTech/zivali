@@ -75,6 +75,7 @@ export const routing = defineRouting({
 		'/admin/ads/[id]': { sl: '/admin/oglasi/[id]', en: '/admin/ads/[id]' },
 		'/admin/ads/[id]/edit': { sl: '/admin/oglasi/[id]/uredi', en: '/admin/ads/[id]/edit' },
 		'/admin/house-ads': { sl: '/admin/lastni-oglasi', en: '/admin/house-ads' },
+		'/admin/enquiries': { sl: '/admin/povprasevanja', en: '/admin/enquiries' },
 		// P19 sections not built yet ("Kmalu"); after the static admin paths, so those match first (routeTemplate).
 		'/admin/[section]': '/admin/[section]',
 		'/portal': '/portal',

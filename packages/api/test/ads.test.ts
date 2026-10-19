@@ -104,7 +104,7 @@ test('partner endpoints map to C14 §Partner stats and leads; captcha failures a
 			(body as { captcha_token: string }).captcha_token === 'mock-ok'
 				? { id: 'l1' }
 				: mockError('CAPTCHA_FAILED'),
-		'GET /v1/admin/leads': { items: [], next_cursor: null },
+		'GET /v1/admin/leads': { items: [], next_cursor: 'l2' },
 	});
 
 	assert.deepEqual(
@@ -114,7 +114,8 @@ test('partner endpoints map to C14 §Partner stats and leads; captcha failures a
 	assert.deepEqual((await store.dispatch(p.createLead.initiate(lead))).data, { id: 'l1' });
 	const refused = await store.dispatch(p.createLead.initiate({ ...lead, captcha_token: 'bad' }));
 	assert.deepEqual(failure(refused), [422, 'CAPTCHA_FAILED']);
-	await store.dispatch(p.listAdminLeads.initiate({ cursor: 'l2' }, { subscribe: false }));
+	await store.dispatch(p.listAdminLeads.initiate());
+	await store.dispatch(p.listAdminLeads.initiate(undefined, { direction: 'forward' }));
 
 	assert.deepEqual(
 		calls().map(({ method, path, query }) => [method, path, query]),
@@ -122,6 +123,7 @@ test('partner endpoints map to C14 §Partner stats and leads; captcha failures a
 			['GET', '/v1/partners/stats', {}],
 			['POST', '/v1/leads', {}],
 			['POST', '/v1/leads', {}],
+			['GET', '/v1/admin/leads', {}],
 			['GET', '/v1/admin/leads', { cursor: 'l2' }],
 		]
 	);
