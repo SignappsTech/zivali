@@ -69,6 +69,7 @@ import {
 	stepsFor,
 	type When,
 } from './lost-form';
+import { useStickyBarFocus } from './use-sticky-bar-focus';
 
 // Only the first steps load with the page (TASK-112 script budget): the details (PetFields, its enums and breeds), the
 // picker (MapView), the resume question (AlertDialog) and the confirmation (share, poster, P15) load when shown. Each
@@ -710,6 +711,8 @@ export function LostFlow({
 	const submission = React.useRef<{ key: string; body: string; when: LostValues['when']; at: Date } | null>(null);
 	const busy = React.useRef(false);
 	const root = React.useRef<HTMLElement>(null);
+	const bar = React.useRef<HTMLDivElement>(null);
+	useStickyBarFocus(bar, step);
 	const headingId = React.useId();
 	const pet = pets.find((p) => p.id === values.pet);
 	// The open search found by a 409 belongs to the pet it was found for; another choice is a fresh question.
@@ -999,6 +1002,8 @@ export function LostFlow({
 
 	return (
 		<FormProvider {...form}>
+			{/* Below lg the sticky Naprej/Objavi bar covers the page bottom: keep a focused control above it (WCAG 2.4.11). */}
+			<style>{'@media (max-width:1023px){html{scroll-padding-bottom:var(--lost-bar-h,11rem)}}'}</style>
 			<main
 				id="main"
 				ref={root}
@@ -1136,6 +1141,7 @@ export function LostFlow({
 
 							{/* The pet step moves on with its rows: no Naprej (and, as the first step, no Nazaj). */}
 							<div
+								ref={bar}
 								hidden={step === 'pet'}
 								className={cn(
 									'mt-10 grid gap-4 max-lg:sticky max-lg:bottom-0 max-lg:bg-background max-lg:pt-4 max-lg:pb-11',

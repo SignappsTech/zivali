@@ -33,7 +33,7 @@ Severity: medium (a11y gate miss; keyboard users on narrow screens lose sight of
 
 Unblocks on: -
 Review: local
-Branch: agent/<id>-sticky-focus from main
+Branch: agent/TASK-29.17-sticky-bar-scroll-padding
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Acceptance Criteria
