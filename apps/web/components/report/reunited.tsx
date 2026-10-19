@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/button';
 import { Toaster } from '@/components/ui/sonner';
 import { Switch } from '@/components/ui/switch';
 import { getPathname, Link } from '@/i18n/navigation';
+import { photoWhole } from '@/lib/photo';
 
 // P14 reunited page (C15 /r/[code]/spet-doma, managers only), as on mobile (app/r/[code]/reunited.tsx): the owner's
 // calm celebration with the story consent, the tip and ad slots and "Končano"; a finder gets the short thank-you (M7:
@@ -61,7 +62,7 @@ function OwnerReunited({ report, tip, testMode }: { report: DetailReport; tip: b
 					alt={report.name ?? tb(`row_title_${report.type}`, { species: report.species })}
 					width={photo.width}
 					height={photo.height}
-					className="mt-6 aspect-[4/3] w-full rounded-[24px] bg-muted object-cover"
+					className={`mt-6 aspect-[4/3] w-full rounded-[24px] bg-muted ${photoWhole}`}
 				/>
 			)}
 			<div className="mt-10">

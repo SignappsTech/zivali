@@ -7,6 +7,7 @@ import type { PublicReport } from '@zivali/types';
 import { Badge } from '@/components/ui/badge';
 import { type Status, StatusLabel } from '@/components/ui/status-label';
 import { Link } from '@/i18n/navigation';
+import { photoCrop } from '@/lib/photo';
 
 import { distanceBand, distanceKm, type Point } from './filters';
 
@@ -79,7 +80,7 @@ export function ReportRow({
 					width={64}
 					height={64}
 					loading="lazy"
-					className="size-16 shrink-0 rounded-row bg-muted object-cover"
+					className={`size-16 shrink-0 rounded-row bg-muted ${photoCrop}`}
 				/>
 			) : (
 				<span aria-hidden="true" className="size-16 shrink-0 rounded-row bg-muted" />

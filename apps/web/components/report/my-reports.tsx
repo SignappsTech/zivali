@@ -21,6 +21,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useRouter } from '@/i18n/client-navigation';
 import { Link } from '@/i18n/navigation';
+import { photoCrop } from '@/lib/photo';
 import { cn } from '@/lib/utils';
 
 /** C10 deep links into My reports (`?r=<code>&action=keep|extend|close`): reminder and expiry notifications, emails. */
@@ -46,7 +47,7 @@ function ReportRow({ report }: { report: ReportOwnerView }) {
 					alt=""
 					width={48}
 					height={48}
-					className="size-12 rounded-[16px] bg-muted object-cover"
+					className={cn('size-12 rounded-[16px] bg-muted', photoCrop)}
 				/>
 			) : (
 				<span className="grid size-12 place-items-center rounded-[16px] bg-muted text-muted-foreground">

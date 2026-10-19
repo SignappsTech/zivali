@@ -58,6 +58,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Toaster } from '@/components/ui/sonner';
 import { Textarea } from '@/components/ui/textarea';
 import { Link } from '@/i18n/navigation';
+import { photoCrop } from '@/lib/photo';
 import { cn } from '@/lib/utils';
 
 // P12 thread (C9), as the mobile one (TASK-21.4). Messages, the send queue and the reported ids live in memory only:
@@ -480,7 +481,7 @@ function ThreadView({ conversation }: { conversation: ConversationSummary }) {
 						alt=""
 						width={32}
 						height={32}
-						className="size-8 shrink-0 rounded-full bg-muted object-cover"
+						className={cn('size-8 shrink-0 rounded-full bg-muted', photoCrop)}
 					/>
 				) : (
 					<span

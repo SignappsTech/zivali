@@ -19,6 +19,7 @@ import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Link } from '@/i18n/navigation';
+import { photoCrop } from '@/lib/photo';
 import { cn } from '@/lib/utils';
 
 /** Active pets a free account keeps (C4, app_config `pets.free_limit`); the API answers more with PET_LIMIT. */
@@ -103,7 +104,7 @@ function RowPhoto({ pet }: { pet: Pet }) {
 			alt={pet.name}
 			width={64}
 			height={64}
-			className="size-16 rounded-row bg-muted object-cover"
+			className={cn('size-16 rounded-row bg-muted', photoCrop)}
 		/>
 	);
 }

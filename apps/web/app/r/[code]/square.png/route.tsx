@@ -4,6 +4,7 @@ import { join } from 'node:path';
 import { ImageResponse } from 'next/og';
 
 import { colors } from '@zivali/tokens/values';
+import { PHOTO_FOCUS } from '@/lib/photo';
 import { getPlace } from '@/lib/report';
 import { fetchPhoto, getPublicReport, posterBand, printedLink, squareFileName, translator } from '@/lib/share';
 
@@ -71,7 +72,13 @@ export async function GET(request: Request, { params }: RouteContext<'/r/[code]/
 					alt=""
 					width={968}
 					height={600}
-					style={{ width: 968, height: 600, objectFit: 'cover', borderRadius: 32 }}
+					style={{
+						width: 968,
+						height: 600,
+						objectFit: 'cover',
+						objectPosition: PHOTO_FOCUS,
+						borderRadius: 32,
+					}}
 				/>
 			)}
 			<div

@@ -63,6 +63,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { useRouter } from '@/i18n/client-navigation';
 import { getPathname, Link } from '@/i18n/navigation';
+import { photoCrop, photoWhole } from '@/lib/photo';
 import { cn } from '@/lib/utils';
 
 /** The lost report the matches belong to: the owner view for its managers. */
@@ -113,7 +114,13 @@ function PetHeader({ mine }: { mine?: Mine }) {
 		<div className="mb-6 flex items-center gap-3">
 			{thumb && (
 				// eslint-disable-next-line @next/next/no-img-element -- a 48 px thumbnail from the media host
-				<img src={thumb} alt="" width={48} height={48} className="size-12 rounded-full bg-muted object-cover" />
+				<img
+					src={thumb}
+					alt=""
+					width={48}
+					height={48}
+					className={cn('size-12 rounded-full bg-muted', photoCrop)}
+				/>
 			)}
 			{mine?.name && <span className="text-lg font-bold">{mine.name}</span>}
 		</div>
@@ -153,7 +160,7 @@ function MatchRow({ match, code, selected }: { match: MatchSuggestion; code: str
 						width={64}
 						height={64}
 						loading="lazy"
-						className="size-16 shrink-0 rounded-row bg-muted object-cover"
+						className={cn('size-16 shrink-0 rounded-row bg-muted', photoCrop)}
 					/>
 				) : (
 					<span aria-hidden="true" className="size-16 shrink-0 rounded-row bg-muted" />
@@ -310,7 +317,7 @@ function Side({ label, photos }: { label?: string; photos: Photo[] }) {
 					alt={photo.alt}
 					width={photo.width}
 					height={photo.height}
-					className="aspect-[4/3] w-full rounded-3xl bg-muted object-cover"
+					className={cn('aspect-[4/3] w-full rounded-3xl bg-muted', photoWhole)}
 				/>
 			) : (
 				<div className="grid aspect-[4/3] place-items-center rounded-3xl bg-muted">
@@ -333,7 +340,13 @@ function Side({ label, photos }: { label?: string; photos: Photo[] }) {
 							)}
 						>
 							{/* eslint-disable-next-line @next/next/no-img-element -- an 88 x 72 thumbnail */}
-							<img src={p.thumb_url} alt="" width={88} height={72} className="size-full object-cover" />
+							<img
+								src={p.thumb_url}
+								alt=""
+								width={88}
+								height={72}
+								className={cn('size-full', photoCrop)}
+							/>
 						</button>
 					))}
 				</div>

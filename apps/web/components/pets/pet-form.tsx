@@ -30,6 +30,7 @@ import {
 import { Button, buttonVariants } from '@/components/ui/button';
 import { useRouter } from '@/i18n/client-navigation';
 import { Link } from '@/i18n/navigation';
+import { photoCrop } from '@/lib/photo';
 import { cn } from '@/lib/utils';
 
 type Saved = z.output<typeof PetInput>;
@@ -180,7 +181,7 @@ export function PetForm({ pet }: { pet?: Pet }) {
 						alt=""
 						width={320}
 						height={240}
-						className="aspect-[4/3] w-full rounded-card bg-muted object-cover"
+						className={cn('aspect-[4/3] w-full rounded-card bg-muted', photoCrop)}
 					/>
 				)}
 				{name && (

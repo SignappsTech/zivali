@@ -36,6 +36,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { statusIcons } from '@/components/ui/status-label';
 import { Link } from '@/i18n/navigation';
+import { photoWhole } from '@/lib/photo';
 import { cn } from '@/lib/utils';
 
 // The claimed report of the P7 manage page (manage-page.tsx), loaded with the claim: the report and chat endpoints,
@@ -136,7 +137,7 @@ export function ManageView({ code }: { code: string }) {
 					alt={photo.alt}
 					width={photo.width}
 					height={photo.height}
-					className="mb-5 aspect-[4/3] w-full rounded-card bg-muted object-cover"
+					className={cn('mb-5 aspect-[4/3] w-full rounded-card bg-muted', photoWhole)}
 				/>
 			)}
 			<Badge variant={type}>

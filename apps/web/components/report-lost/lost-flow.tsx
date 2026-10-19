@@ -50,6 +50,7 @@ import { ChoiceButton, ChoiceRow, RadioGroup } from '@/components/ui/radio-group
 import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
+import { photoCrop } from '@/lib/photo';
 import { cn } from '@/lib/utils';
 
 import {
@@ -152,7 +153,13 @@ function PetThumb({ pet }: { pet: Pet }) {
 	return url ? (
 		// The row's title names the pet, so the photo is decorative here (alt text would say the name twice).
 		// eslint-disable-next-line @next/next/no-img-element -- a short-lived presigned thumbnail
-		<img src={url} alt="" width={48} height={48} className="size-12 shrink-0 rounded-xl bg-muted object-cover" />
+		<img
+			src={url}
+			alt=""
+			width={48}
+			height={48}
+			className={cn('size-12 shrink-0 rounded-xl bg-muted', photoCrop)}
+		/>
 	) : (
 		<span className="grid size-12 shrink-0 place-items-center rounded-xl bg-muted text-muted-foreground">
 			<Species weight="bold" aria-hidden="true" className="size-6" />
@@ -500,7 +507,8 @@ function ReviewStep({ photos, pet, edit, duplicate, update, onUpdateChange }: Re
 										width={i ? 88 : 400}
 										height={i ? 72 : 300}
 										className={cn(
-											'size-[72px] rounded-xl bg-muted object-cover',
+											'size-[72px] rounded-xl bg-muted',
+											photoCrop,
 											i
 												? 'lg:h-[72px] lg:w-[88px] lg:rounded-lg'
 												: 'lg:aspect-[4/3] lg:h-auto lg:w-full lg:rounded-[32px]'
