@@ -13,23 +13,23 @@ audience: Client, team
 | Milestone | Tasks done | Estimate | Remaining |
 |---|---|---|---|
 | M1 Foundation | 69/80 | 98 d | 6 d |
-| (none) | 72/74 | 61.5 d | 3.5 d |
+| (none) | 72/75 | 62.5 d | 4.5 d |
 | M2 Core loop MVP | 160/200 | 233 d | 19 d |
 | M5 Hardening and launch prep | 2/4 | 5.5 d | 3.5 d |
 | M4 Monetisation and moderation | 0/2 | 2 d | 2 d |
-| M3 AI and shelters | 29/44 | 54 d | 15 d |
+| M3 AI and shelters | 30/44 | 54 d | 14 d |
 
 # In progress
 
 - TASK-112 Web performance budgets: LCP over 2.5 s and JS over budget on the report flows and the map (@frontend-dev, in-progress)
 - TASK-31.6 QA: Browse lost and found on a map and in a list (@qa, in-progress)
 - TASK-34.9 API: grant admin to three pilot staff accounts (owner request 2026-10-19) (@backend-dev, in-progress)
-- TASK-40.11 API: never send photos uploaded before AI was switched on (@backend-dev, in-progress)
 - TASK-40.6 AI disclosure copy, privacy policy and data table update (requires legal review) (@content-strategist, in-progress)
 - TASK-90.7 Public pages: cut first-load JS for mobile LCP 2.5 s, then make the Lighthouse quality job blocking (@tech-lead, in-progress)
 
 # Ready to start
 
+- TASK-115.12 Web: home map teaser shows Slovenia, not made-up streets (@frontend-dev)
 - TASK-13.4 QA: Consent banner and preferences (web and mobile) (@qa)
 - TASK-17.4 QA: Anonymous reporter safeguards and manage link (@qa)
 - TASK-18.4 QA: Report detail page (@qa)

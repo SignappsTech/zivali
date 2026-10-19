@@ -19,6 +19,7 @@ flowchart LR
   TASK_112["TASK-112 Web performance budgets: LCP over 2.5 s and JS over budget on the report flows and the map<br/>@frontend-dev"]
   TASK_114_33["TASK-114.33 Retention purge job: purge per the data-inventory windows, reports last (CH-184)<br/>@backend-dev"]
   TASK_114_35["TASK-114.35 API client: token in the body for unregisterPushToken, run gen:api and drop hand-written stubs (CH-156, CH-192, CH-197)<br/>@frontend-dev"]
+  TASK_115_12["TASK-115.12 Web: home map teaser shows Slovenia, not made-up streets<br/>@frontend-dev"]
   TASK_117_1["TASK-117.1 Wireframe: report statistics view (approval gate)<br/>@design-lead"]
   TASK_12_4["TASK-12.4 QA: Mobile app shell, navigation and deep links<br/>@qa"]
   TASK_13_4["TASK-13.4 QA: Consent banner and preferences (web and mobile)<br/>@qa"]
@@ -56,7 +57,6 @@ flowchart LR
   TASK_39_2["TASK-39.2 Mobile smoke flows (Maestro) on an Android dev build<br/>@frontend-dev"]
   TASK_4_3["TASK-4.3 QA: Quality kit and CI pipeline<br/>@qa"]
   TASK_4_7["TASK-4.7 Deploy: Dockerfiles install dependencies before copying the source (layer cache)<br/>@tech-lead"]
-  TASK_40_11["TASK-40.11 API: never send photos uploaded before AI was switched on<br/>@backend-dev"]
   TASK_40_6["TASK-40.6 AI disclosure copy, privacy policy and data table update (requires legal review)<br/>@content-strategist"]
   TASK_40_9["TASK-40.9 Real-photo extraction eval run and model decision (owner-gated)<br/>@backend-dev"]
   TASK_43_7["TASK-43.7 Real-photo matching eval run and threshold picks (owner-gated)<br/>@backend-dev"]
@@ -340,6 +340,7 @@ flowchart LR
   TASK_4_6["TASK-4.6 CI: cut Actions minutes (private repo): cancel superseded runs, Lighthouse nightly, images on change, docs-only skip, 4 e2e workers, CI without the local unit gates"]
   TASK_40_1["TASK-40.1 M3 AI foundation: ai.prisma models and HNSW index, queues with stubs, config keys, data inventory, photo hook"]
   TASK_40_10["TASK-40.10 Public config: ai.enabled is false when AI_PROVIDER is off (like payments.enabled)"]
+  TASK_40_11["TASK-40.11 API: never send photos uploaded before AI was switched on"]
   TASK_40_2["TASK-40.2 AI wire types, zod extraction schema and client fixtures (C19, C8 visual reason)"]
   TASK_40_3["TASK-40.3 ai.extract job: Claude vision via the Anthropic SDK, hash cache, caps, moderation signal, fail open"]
   TASK_40_4["TASK-40.4 GET /v1/photos/:id/attributes: pending, unavailable or ready suggestions"]
@@ -1198,6 +1199,7 @@ flowchart LR
   style TASK_115_1 fill:#2e7d32,color:#fff
   style TASK_115_10 fill:#2e7d32,color:#fff
   style TASK_115_11 fill:#2e7d32,color:#fff
+  style TASK_115_12 fill:#5b6470,color:#fff
   style TASK_115_2 fill:#2e7d32,color:#fff
   style TASK_115_3 fill:#2e7d32,color:#fff
   style TASK_115_4 fill:#2e7d32,color:#fff
@@ -1421,7 +1423,7 @@ flowchart LR
   style TASK_4_7 fill:#5b6470,color:#fff
   style TASK_40_1 fill:#2e7d32,color:#fff
   style TASK_40_10 fill:#2e7d32,color:#fff
-  style TASK_40_11 fill:#1565c0,color:#fff
+  style TASK_40_11 fill:#2e7d32,color:#fff
   style TASK_40_2 fill:#2e7d32,color:#fff
   style TASK_40_3 fill:#2e7d32,color:#fff
   style TASK_40_4 fill:#2e7d32,color:#fff
