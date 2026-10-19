@@ -135,9 +135,10 @@ export async function extractPhoto(input: { photo_id: string; last_attempt?: boo
 
 /**
  * POST /v1/photos answered `existing` (TASK-40.12): a photo whose extraction failed (provider error, timeout, a
- * rejected request such as a bad key) and whose image has no stored result gets ai.extract again, at most once an hour
- * after its last call; only a photo ai.extract would take (accepted or published, created after ai.photos_since). The
- * job applies the caps and the budget as always. refused, invalid, skips, results and flagged images: never retried.
+ * rejected request such as a bad key) gets ai.extract again, at most once an hour after its last call; only a photo
+ * ai.extract would take (accepted or published, created after ai.photos_since). The job applies the cache, the caps and
+ * the budget as always (a result of the same image stored since is a cache hit, no call). refused, invalid, skips and
+ * results are never retried.
  */
 export async function retryFailedExtract(input: { photo_id: string }, ctx: Ctx): Promise<void> {
 	const photo = await AiDao.findPhoto(input.photo_id, ctx.tx);
@@ -145,7 +146,6 @@ export async function retryFailedExtract(input: { photo_id: string }, ctx: Ctx):
 	const since = await photosSince();
 	if (!since || photo.created_at <= since) return;
 	if ((await AiDao.findOutcome(photo.id, ctx.tx))?.outcome !== 'failed') return;
-	if (await AiDao.findResult(photo.sha256, ctx.tx)) return;
 	const queued = await inTransaction(ctx, async (tx) => {
 		if (!(await AiDao.claimRetry(photo.id, new Date(ctx.now.getTime() - HOUR_MS), ctx.now, tx))) return false;
 		await ctx.jobs.send('ai.extract', { photo_id: photo.id }, { tx });

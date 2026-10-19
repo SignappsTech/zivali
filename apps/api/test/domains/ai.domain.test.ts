@@ -4,7 +4,7 @@
 import { randomBytes, randomUUID } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 
-import { RateLimitError } from '@anthropic-ai/sdk';
+import { BadRequestError, RateLimitError } from '@anthropic-ai/sdk';
 import { pino } from 'pino';
 import sharp from 'sharp';
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
@@ -423,21 +423,39 @@ describe('a re-upload after a failed extraction (TASK-40.12)', () => {
 				created_at: new Date(Date.now() - hoursAgo * HOUR),
 			},
 		});
+	const asOwner = (user_id: string) =>
+		systemCtx({
+			actor: { user_id, role: 'USER', is_anonymous: false, aal: 'aal1', email_verified: true, locale: 'sl' },
+		});
 	/** POST /v1/photos of the same image by its owner: `existing` (C5). */
 	const reupload = (p: { owner_id: string; sha256: string }) =>
-		PhotosDomain.createPhoto(
-			{ sha256: p.sha256, width: 1600, height: 1200, bytes: 1 },
-			systemCtx({
-				actor: {
-					user_id: p.owner_id,
-					role: 'USER',
-					is_anonymous: false,
-					aal: 'aal1',
-					email_verified: true,
-					locale: 'sl',
-				},
-			})
-		);
+		PhotosDomain.createPhoto({ sha256: p.sha256, width: 1600, height: 1200, bytes: 1 }, asOwner(p.owner_id));
+
+	it('najdimo.si: a 400 from the SDK fails the job at once; the same image an hour later is extracted', async () => {
+		const p = await photo();
+		const create = vi.fn(async () => {
+			throw new BadRequestError(400, { type: 'error' }, 'bad key', new Headers());
+		});
+		const anthropic = anthropicAi({ messages: { create } } as never, 'claude-haiku-5-5', 'low');
+		const extract = vi.spyOn(adapters.ai, 'extract').mockImplementation(anthropic.extract);
+		await jobs.send('ai.extract', { photo_id: p.id });
+		await drain(runJob);
+		// A rejected request is not retried by pg-boss.
+		expect(create).toHaveBeenCalledTimes(1);
+		expect(await calls(p.id)).toMatchObject([{ outcome: 'failed' }]);
+		expect(await AiDomain.getPhotoAttributes({ id: p.id }, asOwner(p.owner_id))).toEqual({ status: 'unavailable' });
+
+		// The key is fixed; the owner uploads the same image again an hour later.
+		extract.mockRestore();
+		await prisma.ai_calls.updateMany({
+			where: { photo_id: p.id },
+			data: { created_at: new Date(Date.now() - 2 * HOUR) },
+		});
+		expect(await reupload(p)).toEqual({ photo_id: p.id, existing: true });
+		await drain(runJob);
+		expect(await calls(p.id)).toMatchObject([{ outcome: 'ok' }]);
+		expect(await AiDomain.getPhotoAttributes({ id: p.id }, asOwner(p.owner_id))).toMatchObject({ status: 'ready' });
+	});
 
 	it('a failed photo is queued again, then extracted and embedded; at most once an hour; a clean result never again', async () => {
 		const p = await photo();
@@ -473,7 +491,40 @@ describe('a re-upload after a failed extraction (TASK-40.12)', () => {
 		expect(await extractQueued(p.id)).toBe(1);
 	});
 
-	it('refused, invalid, skips, a stored or flagged result, within the hour, unpublished or before the cutoff: not queued', async () => {
+	it('a failed photo whose image has a result by now is retried from the cache: no call; flagged, no embed', async () => {
+		const extract = vi.spyOn(adapters.ai, 'extract');
+		const { moderation, ...rest } = extraction();
+		const clean = await photo();
+		const flagged = await photo();
+		for (const [p, person_prominent] of [
+			[clean, false],
+			[flagged, true],
+		] as const) {
+			await outcomeRow(p.id, 'failed');
+			// The same image extracted for another photo (another owner) since.
+			await prisma.ai_results.create({
+				data: {
+					sha256: p.sha256,
+					model: 'claude-haiku-5-5',
+					prompt_version: AI_PROMPT_VERSION,
+					result: rest,
+					moderation: { ...moderation, person_prominent },
+				},
+			});
+			await reupload(p);
+			expect(await extractQueued(p.id)).toBe(1);
+		}
+		await drain(runJob);
+		expect(extract).not.toHaveBeenCalled();
+		for (const p of [clean, flagged]) expect(await calls(p.id)).toMatchObject([{ outcome: 'cached' }]);
+		expect(await embedQueued(clean.id)).toBe(1);
+		expect(await embedQueued(flagged.id)).toBe(0);
+		expect(await AiDomain.getPhotoAttributes({ id: clean.id }, asOwner(clean.owner_id))).toMatchObject({
+			status: 'ready',
+		});
+	});
+
+	it('refused, invalid, skips, a result, within the hour, unpublished or before the cutoff: not queued', async () => {
 		const extract = vi.spyOn(adapters.ai, 'extract');
 		const outcomes: AI_OUTCOME[] = [
 			'refused',
@@ -489,18 +540,6 @@ describe('a re-upload after a failed extraction (TASK-40.12)', () => {
 			await reupload(p);
 			expect(await extractQueued(p.id), outcome).toBe(0);
 		}
-		// Failed, but the image has a result now (the same image of another owner, here flagged).
-		const flagged = await photo();
-		await outcomeRow(flagged.id, 'failed');
-		await prisma.ai_results.create({
-			data: {
-				sha256: flagged.sha256,
-				model: 'claude-haiku-5-5',
-				prompt_version: 'v',
-				result: { animal: 'dog' },
-				moderation: { person_prominent: true, nsfw: false, violence: false, text_contact_info: false },
-			},
-		});
 		const recent = await photo();
 		await outcomeRow(recent.id, 'failed', 1 / 6);
 		const unpublished = await photo({ status: 'unpublished' });
@@ -508,7 +547,7 @@ describe('a re-upload after a failed extraction (TASK-40.12)', () => {
 		const old = await photo();
 		await prisma.photos.update({ where: { id: old.id }, data: { created_at: new Date('2026-10-18T12:00:00Z') } });
 		await outcomeRow(old.id, 'failed');
-		for (const [name, p] of Object.entries({ flagged, recent, unpublished, old })) {
+		for (const [name, p] of Object.entries({ recent, unpublished, old })) {
 			expect(await reupload(p)).toEqual({ photo_id: p.id, existing: true });
 			expect(await extractQueued(p.id), name).toBe(0);
 		}
