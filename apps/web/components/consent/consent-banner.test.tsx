@@ -122,6 +122,44 @@ describe('ConsentBanner', () => {
 		await waitFor(() => expect(document.activeElement).toBe(heading));
 	});
 
+	it('reads no layout while the page hydrates: height from ResizeObserver, focus without scrolling (TASK-112.2)', async () => {
+		const callbacks: ResizeObserverCallback[] = [];
+		vi.stubGlobal(
+			'ResizeObserver',
+			class {
+				constructor(callback: ResizeObserverCallback) {
+					callbacks.push(callback);
+				}
+				observe() {}
+				disconnect() {}
+			}
+		);
+		const height = vi.spyOn(HTMLElement.prototype, 'offsetHeight', 'get').mockReturnValue(240);
+		const focus = vi.spyOn(HTMLElement.prototype, 'focus');
+		try {
+			mount('en');
+			const heading = screen.getByRole('heading', { name: 'Cookies and your privacy' });
+			await waitFor(() => expect(document.activeElement).toBe(heading));
+			expect(focus).toHaveBeenLastCalledWith({ preventScroll: true });
+			expect(height).not.toHaveBeenCalled();
+			expect(document.body.style.paddingBottom).toBe('');
+
+			// The observer's first report (after the browser's layout) sizes the page's bottom padding.
+			act(() => callbacks.at(-1)!([], {} as ResizeObserver));
+			expect(document.body.style.paddingBottom).toBe('240px');
+			expect(document.documentElement.style.scrollPaddingBottom).toBe('240px');
+
+			// Switching views may find the banner scrolled, so that focus scrolls the heading in.
+			fireEvent.click(button('Customise'));
+			await waitFor(() => expect(focus).toHaveBeenLastCalledWith({ preventScroll: false }));
+			fireEvent.click(button('Reject all'));
+			expect(document.body.style.paddingBottom).toBe('');
+		} finally {
+			vi.unstubAllGlobals();
+			vi.restoreAllMocks();
+		}
+	});
+
 	it('first visit: labelled dialog in the page language, focus on the heading, Reject and Accept equal, Customise a text button', async () => {
 		mount('en');
 
