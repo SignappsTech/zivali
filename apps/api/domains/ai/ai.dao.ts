@@ -65,21 +65,50 @@ export async function insertResult(
 	return db.ai_results.createMany({ data: [data], skipDuplicates: true });
 }
 
-/** One ledger row per photo and model (a re-run of the job is not counted twice). */
-export async function recordCall(
-	data: {
-		photo_id: string;
-		model: string;
-		outcome: AI_OUTCOME;
-		input_tokens: number;
-		output_tokens: number;
-		cost_usd: string;
-		latency_ms: number;
-	},
-	tx?: Tx
-) {
+type Call = {
+	photo_id: string;
+	model: string;
+	outcome: AI_OUTCOME;
+	input_tokens: number;
+	output_tokens: number;
+	cost_usd: string;
+	latency_ms: number;
+};
+
+/** One ledger row per photo and model (a re-run of the job is not counted twice); count 0 when it already exists. */
+export async function recordCall(data: Call, tx?: Tx) {
 	const db = tx ?? prisma;
 	return db.ai_calls.createMany({ data: [{ ...data, provider: 'anthropic' }], skipDuplicates: true });
+}
+
+/**
+ * A retry of a failed extraction (TASK-40.12): claims the photo's failed row when its last call was at least an hour
+ * ago, by moving created_at to now (the daily cap counts the retry). False: no failed row, or one retried within the
+ * hour (a concurrent re-upload included).
+ */
+export async function claimRetry(photo_id: string, lastCallBefore: Date, now: Date, tx?: Tx): Promise<boolean> {
+	const db = tx ?? prisma;
+	const { count } = await db.ai_calls.updateMany({
+		where: { photo_id, provider: 'anthropic', outcome: 'failed', created_at: { lte: lastCallBefore } },
+		data: { created_at: now },
+	});
+	return count > 0;
+}
+
+/** The retry's outcome on the photo's failed row of that model; tokens and cost add up (the ledger stays whole). */
+export async function bookRetry(data: Call, tx?: Tx): Promise<void> {
+	const db = tx ?? prisma;
+	const { photo_id, model, outcome, input_tokens, output_tokens, cost_usd, latency_ms } = data;
+	await db.ai_calls.updateMany({
+		where: { photo_id, provider: 'anthropic', model, outcome: 'failed' },
+		data: {
+			outcome,
+			latency_ms,
+			input_tokens: { increment: input_tokens },
+			output_tokens: { increment: output_tokens },
+			cost_usd: { increment: cost_usd },
+		},
+	});
 }
 
 /** retention.purge: ledger rows (Anthropic and Voyage) before `before`, and results no photo has the hash of. */
@@ -91,4 +120,15 @@ export async function purge(before: Date, tx?: Tx): Promise<{ ai_calls: number; 
 	return { ai_calls: calls.count, ai_results: results };
 }
 
-export default { findPhoto, findResult, findOutcome, spendSince, callsSince, insertResult, recordCall, purge };
+export default {
+	findPhoto,
+	findResult,
+	findOutcome,
+	spendSince,
+	callsSince,
+	insertResult,
+	recordCall,
+	claimRetry,
+	bookRetry,
+	purge,
+};

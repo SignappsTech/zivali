@@ -18,7 +18,8 @@ import { costUsd } from './pricing.ts';
 
 const VISION_PX = 1024;
 const SHARP_TIMEOUT_S = 30;
-const DAY_MS = 24 * 60 * 60 * 1000;
+const HOUR_MS = 60 * 60 * 1000;
+const DAY_MS = 24 * HOUR_MS;
 const CALLS_KEPT_DAYS = 62;
 
 // Embedded only when clean: a dog or cat with no prominent person or nudity (C19 §Pipeline 7). Malformed = not clean.
@@ -122,14 +123,35 @@ export async function extractPhoto(input: { photo_id: string; last_attempt?: boo
 	await inTransaction(ctx, async (tx) => {
 		if (outcome === 'ok' && stored)
 			await AiDao.insertResult({ sha256: photo.sha256, model, prompt_version: AI_PROMPT_VERSION, ...stored }, tx);
-		await AiDao.recordCall(
-			{ photo_id: photo.id, model, outcome, input_tokens, output_tokens, cost_usd, latency_ms },
-			tx
-		);
+		const call = { photo_id: photo.id, model, outcome, input_tokens, output_tokens, cost_usd, latency_ms };
+		// A retry (retryFailedExtract) books its outcome on the photo's failed row; a skip leaves that row failed.
+		if (!(await AiDao.recordCall(call, tx)).count && !outcome.startsWith('skipped_'))
+			await AiDao.bookRetry(call, tx);
 		if (!stored || Clean.safeParse(stored).success)
 			await ctx.jobs.send('photo.embed', { photo_id: photo.id }, { tx });
 	});
 	ctx.logger.info({ photo_id: photo.id, outcome, latency_ms, ...(error && { error }) }, 'ai.extract.done');
+}
+
+/**
+ * POST /v1/photos answered `existing` (TASK-40.12): a photo whose extraction failed (provider error, timeout, a
+ * rejected request such as a bad key) gets ai.extract again, at most once an hour after its last call; only a photo
+ * ai.extract would take (accepted or published, created after ai.photos_since). The job applies the cache, the caps and
+ * the budget as always (a result of the same image stored since is a cache hit, no call). refused, invalid, skips and
+ * results are never retried.
+ */
+export async function retryFailedExtract(input: { photo_id: string }, ctx: Ctx): Promise<void> {
+	const photo = await AiDao.findPhoto(input.photo_id, ctx.tx);
+	if (photo?.status !== 'accepted' && photo?.status !== 'published') return;
+	const since = await photosSince();
+	if (!since || photo.created_at <= since) return;
+	if ((await AiDao.findOutcome(photo.id, ctx.tx))?.outcome !== 'failed') return;
+	const queued = await inTransaction(ctx, async (tx) => {
+		if (!(await AiDao.claimRetry(photo.id, new Date(ctx.now.getTime() - HOUR_MS), ctx.now, tx))) return false;
+		await ctx.jobs.send('ai.extract', { photo_id: photo.id }, { tx });
+		return true;
+	});
+	if (queued) ctx.logger.info({ photo_id: photo.id }, 'ai.extract.retry');
 }
 
 /** retention.purge: ai_calls older than 62 days, ai_results of images no photo has any more (C19 §Models). */
@@ -168,4 +190,4 @@ export async function getPhotoAttributes(input: { id: string }, ctx: Ctx): Promi
 	return { status: 'ready', extraction: parsed.data, min_confidence: typeof min === 'number' ? min : Number.NaN };
 }
 
-export default { photosSince, extractPhoto, purgeExpired, getPhotoAttributes };
+export default { photosSince, extractPhoto, retryFailedExtract, purgeExpired, getPhotoAttributes };

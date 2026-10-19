@@ -15,6 +15,7 @@ import type { Ctx } from '../../lib/ctx.ts';
 import { AppError } from '../../lib/errors.ts';
 import type { QueueName } from '../../lib/jobs.ts';
 import { prisma, type Prisma } from '../../prisma/prisma.ts';
+import { AiDomain } from '../ai/index.ts';
 import { ReportsDomain } from '../reports/index.ts';
 import {
 	VARIANTS,
@@ -82,7 +83,11 @@ export async function createPhoto(input: z.infer<typeof CreatePhotoInput>, ctx: 
 		ctx.now,
 		ctx.tx
 	);
-	if (photo.status !== 'pending') return { photo_id: photo.id, existing: true };
+	if (photo.status !== 'pending') {
+		// The same image again after its AI check failed: one more try (TASK-40.12, C19).
+		await AiDomain.retryFailedExtract({ photo_id: photo.id }, ctx);
+		return { photo_id: photo.id, existing: true };
+	}
 	if (photo.width !== width || photo.height !== height || photo.bytes !== bytes)
 		await PhotosDao.update(photo.id, { width, height, bytes }, ctx.tx);
 	const upload = await ctx.adapters.storage.presignPut(uploadRef(photo), {
