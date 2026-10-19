@@ -5,7 +5,7 @@ status: To Do
 assignee:
   - '@design-lead'
 created_date: '2026-10-14 21:04'
-updated_date: '2026-10-19 14:32'
+updated_date: '2026-10-19 23:56'
 labels:
   - story
   - 'req:FR-026'
@@ -33,6 +33,12 @@ Premium sells convenience, AI extras and insight to owners at EUR 29.99 per year
 - [ ] #7 Given mobile, when the user opens Premium, then the plan page explains that checkout happens on the web in this phase.
 - [ ] #8 Given a shelter or municipality member, when they use the product, then no plan page entry or upgrade prompt appears.
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+Analytics (tech lead, TASK-119, 2026-10-20): premium_subscribe is now registered by TASK-119.2 (C12 2.0, not by the TASK-54 web task); the Premium checkout sends begin_checkout { plan } and, on a succeeded return, purchase plus premium_subscribe through commerceParams (C12b §6).
+<!-- SECTION:NOTES:END -->
 
 ## Packet
 
