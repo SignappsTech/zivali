@@ -3,11 +3,11 @@ id: TASK-17.17
 title: >-
   Manage page /m#<token>: the token path loads 466 KB script (budget 256 KB),
   mobile perf 77-81, LCP 3.3-4.3 s
-status: In Progress
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-19 20:27'
-updated_date: '2026-10-19 20:35'
+updated_date: '2026-10-19 22:14'
 labels:
   - bug
   - 'est:S'
