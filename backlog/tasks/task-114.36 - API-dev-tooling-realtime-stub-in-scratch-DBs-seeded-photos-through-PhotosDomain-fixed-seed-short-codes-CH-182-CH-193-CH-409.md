@@ -7,7 +7,7 @@ status: Done
 assignee:
   - '@backend-dev'
 created_date: '2026-10-18 22:07'
-updated_date: '2026-10-19 01:31'
+updated_date: '2026-10-19 01:36'
 labels:
   - be
   - 'est:M'
@@ -48,4 +48,6 @@ Branch: agent/task-114.36-dev-tooling
 
 <!-- SECTION:NOTES:BEGIN -->
 Scratch DB: test/helpers/scratch-db.ts (pnpm --filter api db:scratch task_<id>; global-setup runs it for a task_* TEST_DATABASE_URL): creates the DB, copies the auth schema via pg_dump/psql in the db container (restored as supabase_admin, one transaction), adds a no-op realtime.send; refuses any name but task_[a-z0-9_]+ on 127.0.0.1/localhost. Full API run on task_114_36 with SUPABASE_URL on an unused port: 1033 passed, 97 failed, all ECONNREFUSED on SUPABASE_URL (schema-exposure 90, Auth API seeders/admin:create/JWKS/anon conversion 7). Seed: photos via PhotosDomain.processPhoto + publishReportPhotos with a no-op jobs ctx (no ai.extract, no pg-boss in the seed process); fixed short codes Seed1111..Seed111W, lost 3 = Rex12345 and found 13 = Hk3vT9qP (the web mock API codes the quality pages use); scripts/quality.mjs sets MEDIA_BASE_URL to the mock so the CSP allows the detail photo. Not run in the worktree (owner rules): pnpm verify (next build), pnpm quality (Lighthouse), so AC#3's 'pnpm quality reports them' is for the merge step.
+
+Review APPROVE (2026-10-19). Open: AC#3 (pnpm quality reports the two detail pages) not run yet; run pnpm quality once memory allows. Nit for later: test/helpers/scratch-db.ts:25 checks only url.hostname, but pg honours a ?host= query param; refuse any query param except schema.
 <!-- SECTION:NOTES:END -->
