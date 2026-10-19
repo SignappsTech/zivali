@@ -5,6 +5,7 @@ import { MapPinIcon } from '@phosphor-icons/react/dist/ssr/MapPin';
 import { SlidersHorizontalIcon } from '@phosphor-icons/react/dist/ssr/SlidersHorizontal';
 import { XIcon } from '@phosphor-icons/react/dist/ssr/X';
 import { useLocale, useTranslations } from 'next-intl';
+import dynamic from 'next/dynamic';
 import { useSearchParams } from 'next/navigation';
 import * as React from 'react';
 
@@ -23,7 +24,6 @@ import { Link } from '@/i18n/navigation';
 import { photoCrop } from '@/lib/photo';
 import { cn } from '@/lib/utils';
 
-import { FilterDrawer } from './filter-drawer';
 import {
 	areaBBox,
 	type ChosenPlace,
@@ -44,6 +44,10 @@ import {
 } from './filters';
 import { ReportList } from './report-list';
 import { reportStatus, reportTitle, rowId, useDistance } from './report-row';
+
+// The drawer (Radix Dialog, radios, place search) loads on its first open: the map page's first load has MapLibre to
+// carry (TASK-112). ssr: false gives it its own Suspense, so that open does not suspend to the page's and blank it.
+const FilterDrawer = dynamic(() => import('./filter-drawer').then((m) => m.FilterDrawer), { ssr: false });
 
 type Translate = ReturnType<typeof useTranslations<'browse'>>;
 type Access = 'unknown' | 'granted' | 'ask' | 'denied';
@@ -179,6 +183,9 @@ export function Browse() {
 	const [applied, apply] = useAppliedFilters();
 	const [draft, setDraft] = React.useState<Filters>(applied);
 	const [filtersOpen, setFiltersOpen] = React.useState(false);
+	// Mounted from the first open on, so the drawer can animate out and return focus.
+	const [filtersLoaded, setFiltersLoaded] = React.useState(false);
+	if (filtersOpen && !filtersLoaded) setFiltersLoaded(true);
 	const [snap, setSnap] = React.useState(0);
 	const [active, setActive] = React.useState<string | null>(null);
 	const [selected, setSelected] = React.useState<string | null>(null);
@@ -412,23 +419,25 @@ export function Browse() {
 				)}
 			</div>
 
-			<FilterDrawer
-				open={filtersOpen}
-				onOpenChange={setFiltersOpen}
-				draft={draft}
-				onDraftChange={setDraft}
-				count={draftCount}
-				capped={draftCapped}
-				onApply={() => {
-					apply(draft);
-					setFiltersOpen(false);
-				}}
-				noLocation={!here}
-				locationDenied={access === 'denied'}
-				onUseLocation={() => void locateMe()}
-				placeLabel={place}
-				near={rounded}
-			/>
+			{filtersLoaded && (
+				<FilterDrawer
+					open={filtersOpen}
+					onOpenChange={setFiltersOpen}
+					draft={draft}
+					onDraftChange={setDraft}
+					count={draftCount}
+					capped={draftCapped}
+					onApply={() => {
+						apply(draft);
+						setFiltersOpen(false);
+					}}
+					noLocation={!here}
+					locationDenied={access === 'denied'}
+					onUseLocation={() => void locateMe()}
+					placeLabel={place}
+					near={rounded}
+				/>
+			)}
 		</main>
 	);
 }

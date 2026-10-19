@@ -6,8 +6,7 @@ import { EyeSlashIcon } from '@phosphor-icons/react/dist/ssr/EyeSlash';
 import { useTranslations } from 'next-intl';
 import * as React from 'react';
 
-import { ApiError, type ErrorCode } from '@zivali/api/client';
-import type { QueryError } from '@zivali/api/rtk';
+import { ApiError } from '@zivali/api/client';
 import { h1Class } from '@/components/shell/page';
 import { Button } from '@/components/ui/button';
 import { FieldError, FormField } from '@/components/ui/form-field';
@@ -15,6 +14,7 @@ import { Input } from '@/components/ui/input';
 import { Toaster } from '@/components/ui/sonner';
 import { cn } from '@/lib/utils';
 
+import { errorCode, useErrorText } from './error-text';
 import { useCaptcha } from './turnstile';
 
 // P16 web parts: the flow column, password field, calm note and the resend cooldown (the provider buttons are in
@@ -69,19 +69,7 @@ export function Spot({ className, children }: { className?: string; children: Re
 	);
 }
 
-/** The C1 code of a thrown ApiError or of an RTK Query error (`{ status, data: { code } }`); else INTERNAL. */
-export const errorCode = (error: unknown): ErrorCode =>
-	error instanceof ApiError ? error.code : ((error as Partial<QueryError> | undefined)?.data?.code ?? 'INTERNAL');
-
-/** ApiError or RTK Query error code → its errors.* sentence (C1); anything else is the generic one. */
-export function useErrorText() {
-	const t = useTranslations('errors');
-	return (error: unknown) => {
-		const code = errorCode(error);
-		if (code === 'RATE_LIMITED') return t('RATE_LIMITED_generic');
-		return t.has(code) ? t(code) : t('INTERNAL');
-	};
-}
+export { errorCode, useErrorText };
 
 type PasswordFieldProps = Omit<React.ComponentProps<'input'>, 'type'> & {
 	label: string;
