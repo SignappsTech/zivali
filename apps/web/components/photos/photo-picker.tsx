@@ -99,7 +99,10 @@ export function PhotoPicker({
 		if (cropping || !back.current) return;
 		const { key, opener } = back.current;
 		back.current = undefined;
-		const target = opener?.isConnected ? opener : root.current?.querySelector(`[data-key="${key}"] [data-crop]`);
+		const target =
+			opener?.isConnected && opener !== document.body
+				? opener
+				: root.current?.querySelector(`[data-key="${key}"] [data-crop]`);
 		if (target instanceof HTMLElement && !target.closest('[hidden]')) target.focus();
 	}, [cropping]);
 	const closeCrop = (key: string) => {
@@ -111,7 +114,8 @@ export function PhotoPicker({
 	React.useEffect(() => changed(photos), [photos]);
 	// The photo a pick replaces ("Zamenjaj fotografijo"); a tile or a drop adds instead.
 	const replacing = React.useRef<string>(undefined);
-	const crop = (key: string) => setCropping({ key, opener: document.activeElement });
+	// Safari does not focus a clicked button, so a row's own button is named; the note's is the focused element.
+	const crop = (key: string, opener = document.activeElement) => setCropping({ key, opener });
 	React.useImperativeHandle(
 		ref,
 		() => ({
@@ -291,7 +295,7 @@ export function PhotoPicker({
 												size="icon"
 												data-crop
 												aria-label={tai('crop_photo_n', { n })}
-												onClick={() => crop(photo.key)}
+												onClick={(event) => crop(photo.key, event.currentTarget)}
 											>
 												<CropIcon weight="bold" aria-hidden="true" />
 											</Button>
