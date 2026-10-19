@@ -86,9 +86,10 @@ const EnvSchema = z.object({
 	LEADS_NOTIFY_EMAIL: z.email().optional(),
 	PUSH_PROVIDER: z.enum(['mock', 'expo', 'off']).optional(),
 	EXPO_ACCESS_TOKEN: z.string().optional(),
-	// Worker: notify.send jobs in flight at once (lib/jobs.ts), so also the Expo and Brevo requests in flight; the
-	// default suits the small shared VPS and the Prisma pool of 5 (TASK-23.5).
-	NOTIFY_SEND_CONCURRENCY: z.coerce.number().int().min(1).max(20).default(4),
+	// Worker: notify.send jobs in flight at once (lib/jobs.ts), so also the Expo and Brevo requests in flight. The jobs
+	// mostly wait on providers and share the fixed Prisma pool of 5, so 10 adds no connections and stays far below
+	// Expo's 600 messages/s, yet delivers 1000 alerts in under 60 s (C10; test/perf/alerts.perf.ts, TASK-23.5).
+	NOTIFY_SEND_CONCURRENCY: z.coerce.number().int().min(1).max(20).default(10),
 	CAPTCHA_PROVIDER: z.enum(['mock', 'turnstile', 'off']).optional(),
 	TURNSTILE_SECRET_KEY: z.string().optional(),
 	AI_PROVIDER: z.enum(['mock', 'anthropic', 'off']).optional(),

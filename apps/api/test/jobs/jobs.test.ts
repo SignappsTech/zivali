@@ -116,13 +116,13 @@ describe('worker', () => {
 		}
 	});
 
-	it('polls notify.send with NOTIFY_SEND_CONCURRENCY workers (default 4), 10 jobs per fetch, in bursts (TASK-23.5)', async () => {
+	it('polls notify.send with NOTIFY_SEND_CONCURRENCY workers (default 10), 10 jobs per fetch, in bursts (TASK-23.5)', async () => {
 		const boss = await startJobs();
 		const spy = vi.spyOn(boss, 'work').mockResolvedValue('');
 		try {
 			await work(async () => {});
 			const [, options] = spy.mock.calls.find(([queue]) => queue === 'notify.send')!;
-			expect(config.NOTIFY_SEND_CONCURRENCY).toBe(4);
+			expect(config.NOTIFY_SEND_CONCURRENCY).toBe(10);
 			expect(options).toEqual({
 				localConcurrency: config.NOTIFY_SEND_CONCURRENCY,
 				batchSize: 10,
