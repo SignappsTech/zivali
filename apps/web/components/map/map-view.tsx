@@ -284,7 +284,7 @@ export function MapView({
 				    ring sits inside the clipped box. */}
 				<div
 					ref={container}
-					className="size-full [&_canvas]:outline-none [&_canvas:focus-visible]:outline-3 [&_canvas:focus-visible]:-outline-offset-3 [&_canvas:focus-visible]:outline-ring"
+					className="size-full [&_canvas]:outline-none [&_canvas:focus-visible]:outline-solid [&_canvas:focus-visible]:outline-3 [&_canvas:focus-visible]:-outline-offset-3 [&_canvas:focus-visible]:outline-ring"
 				/>
 				<p id={`${id}-hint`} className="sr-only">
 					{hint ?? t('keyboard_hint')}
