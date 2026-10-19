@@ -1,9 +1,9 @@
 ---
 doc_id: DOC-06
 title: Delivery Plan
-version: 0.8
+version: 0.9
 status: Draft
-date: 2026-10-18
+date: 2026-10-19
 owner: Product Manager
 audience: Client, team
 approvals:
@@ -22,7 +22,7 @@ Milestones are delivery themes, not hard phases: dependencies are story-level (c
 | M1 | Foundation | One repo, one design system, one set of contracts; auth, SL/EN, analytics and consent in place | Fresh clone runs both apps and local database stack in < 15 min without cloud credentials · CI gates green (lint, types, unit, e2e smoke, axe, Lighthouse, dependency and secret scan) · tokens and UI kit core on web and mobile · sign-in works on both · SL/EN switch with CI key check · consent banner blocks GA until accepted and mock events verified · staging pipeline passes dry-run · contracts v1 merged | none | TBD: 13 stories; tasks not yet broken down (0 d in backlog) | T0 + 3 wks |
 | M2 | Core loop MVP | The full loop works for a pilot, plus early revenue: ads (Oglas), payments core, voluntary support | E2E gate green (lost, found without account, match, confirm, chat, reunited; SL and EN; web and mobile smoke) · chip match notified < 2 min · found report < 60 s median in usability test · mobile map and list work offline from the cache and queued found reports send on reconnect · ads: admin creates an ad, it shows in the 4 slots, DB counts impressions and clicks, never in report flows · Partners page live with real stats and working contact form · Reunited tip and report contribution work in Stripe test · public copy and legal drafts approved for review · QA report per story | M1 (contracts, auth, UI kit, shells, analytics) | TBD: 29 stories | T0 + 10 wks |
 | M3 | AI and shelters | AI pre-fill, visual matching and a free shelter portal (incl. API, analytics, municipality reports, adoption page) so a pilot shelter can onboard | Median found report < 60 s with AI · v2 matching not worse than v1 on the evaluation set · a pilot shelter publishes 10 animals in < 5 min via bulk upload and via CSV · matches dashboard and chip lookup work with no personal data exposed · organisation verification in admin · API keys, analytics, municipality reports and the adoption page work for any verified organisation with no payment path · local proximity alerts (opt-in geofences) work within OS limits · export and delete work and are covered by the data inventory test | M2 contracts (photo, matching, chat, admin shell) | TBD: 18 stories | T0 + 15 wks |
-| M4 | Monetisation and moderation | Owner extras and Vet Partner in Stripe test mode and a safe, observable service | Every purchase flow passes in test mode (Boost EUR 4.99, Premium EUR 2.99/24.99 with AI extras and ad-free, Podpornik, Vet Partner EUR 39) with the mock provider in CI · shelters and municipalities never meet a plan or upgrade prompt · moderation queue and image screening live (90 % reviewed < 24 h target) · KPI dashboard matches metric definitions · GA4 funnels verified in DebugView · mobile hand-off to web checkout documented | M2 payments core, ads, admin; M3 organisations | TBD: 15 stories | T0 + 20 wks |
+| M4 | Monetisation and moderation | Owner extras and Vet Partner in Stripe test mode and a safe, observable service | Every purchase flow passes in test mode (Boost EUR 4.99, Premium EUR 29.99/year shown first and EUR 3.99/month with AI extras incl. the sightings heatmap, report statistics, chat translation SL/EN and ad-free, Podpornik, Vet Partner EUR 39) with the mock provider in CI · shelters and municipalities never meet a plan or upgrade prompt · free users' reporting, matching, alerts, chat and standard poster unchanged and not slower (R-026.5) · moderation queue and image screening live (90 % reviewed < 24 h target) · KPI dashboard matches metric definitions · GA4 funnels verified in DebugView · mobile hand-off to web checkout documented | M2 payments core, ads, admin; M3 organisations | TBD: 17 stories; 2 d in backlog (wireframes TASK-54.1, TASK-117.1), the rest not broken down | T0 + 20 wks |
 | M5 | Hardening and launch prep | Ready for a public pilot | Security pass (RLS matrix, abuse and load tests) with no high findings · WCAG 2.2 AA audit on key flows, Lighthouse budgets · backup restore drill within RTO · final legal pages reviewed, accessibility statement updated · SEO pages and sitemap · shelter onboarding kit tried by one shelter · launch checklist signed, client UAT | M2–M4 | TBD: 10 stories | T0 + 23 wks |
 | M6 | Ads self-serve (post-launch) | Sponsors book and pay without an admin | Booking, approval, card payment and invoice flow pass in test mode | M4 (subscriptions), M2 ads | TBD: 2 stories | after pilot launch |
 
@@ -30,7 +30,7 @@ Notes:
 
 - T0 is the project start date, to be set by the client; dates are relative until then.
 - Estimates come from the backlog. Today the backlog holds stories only; the Design Lead and Tech Lead create tasks with `est:` labels, then `backlog.mjs --status` gives days per milestone and this column is refreshed.
-- Indicative PM sizing for planning only (replaced by backlog totals): M1 35–45 d, M2 120–145 d, M3 72–88 d, M4 55–70 d, M5 28–33 d, M6 about 8 d of effort; about 18–24 weeks elapsed to launch readiness with design, frontend, backend and content running in parallel.
+- Indicative PM sizing for planning only (replaced by backlog totals): M1 35–45 d, M2 120–145 d, M3 72–88 d, M4 67–85 d (incl. about 12–15 d for report statistics, chat translation and the heatmap, owner 2026-10-19), M5 28–33 d, M6 about 8 d of effort; about 18–24 weeks elapsed to launch readiness with design, frontend, backend and content running in parallel.
 - Pilot readiness: after M2 the web app launches as the pilot on najdimo.si (release order below); shelters join after M3; the public launch follows M5.
 
 ## Release order (web-first pilot)
@@ -61,9 +61,9 @@ Discovery (none: new product) → Specification (brief, PRD, design, TDD) → Fo
   - L2: TASK-4 CI, TASK-5 environments, TASK-6 contracts, TASK-7 analytics, TASK-8 UI kit, TASK-10 i18n, TASK-27 public copy, TASK-28 legal drafts
   - L3: TASK-9 auth, TASK-11 and TASK-12 shells, TASK-14 photo, TASK-15 location, TASK-17 anonymous safeguards, TASK-18 detail, TASK-19 matching v1, TASK-35 ad serving, TASK-70 observability
   - L4: 16 stories (consent, pets, match review, chat, notifications, poster, abuse, reunite, found, browse, payments core, admin shell, partners page, AI extraction, embeddings, export)
-  - L5–L9: lost report, ad placements and admin, matching v2, organisations, subscriptions, display-only reward, boost, Premium and its AI extras, Vet Partner, moderation, KPI, portal, bulk, shelter matches and tools, hardening, launch
+  - L5–L9: lost report, ad placements and admin, matching v2, organisations, subscriptions, display-only reward, boost, Premium and its AI extras, report statistics, chat translation, Vet Partner, moderation, KPI, portal, bulk, shelter matches and tools, hardening, launch
 - Critical path (story level): TASK-3 scaffold → TASK-6 contracts → TASK-9 auth → TASK-16 pet profiles → TASK-29 lost report → TASK-39 core loop e2e → TASK-69 accessibility and performance audit → TASK-71 final legal pages → TASK-76 launch readiness (9 levels).
-- Shortening levers: contract docs start before the scaffold merges; feature stories build against seeded data (TASK-6) so match review, detail, browse and ad stories do not wait for the lost-report flow; the e2e gate (TASK-39) is the only story that waits for the whole loop; Low-priority stories (TASK-50, 59, 73, 75, 83, 84; TASK-77 and 78 are post-launch) are off the critical path and can be cut without affecting launch.
+- Shortening levers: contract docs start before the scaffold merges; feature stories build against seeded data (TASK-6) so match review, detail, browse and ad stories do not wait for the lost-report flow; the e2e gate (TASK-39) is the only story that waits for the whole loop; Low-priority stories (TASK-50, 59, 73, 75, 84; TASK-77 and 78 are post-launch) are off the critical path and can be cut without affecting launch.
 - Wave counts per task will come from `backlog.mjs` once tasks exist.
 
 # Estimates
@@ -147,13 +147,13 @@ Generated from the backlog on 2026-10-14; the backlog is the source of truth (`b
 | TASK-89 | Admin: edit the shelter directory and yearly refresh | design-lead | low | FR-044 | TASK-88, TASK-34 |
 | TASK-90 | Public shelter pages /zavetisca/{slug} | design-lead | medium | FR-044, NFR-SEO | TASK-88, TASK-11 |
 
-### M4 (15 stories)
+### M4 (17 stories)
 | ID | Story | Owner | Prio | Req | Depends on |
 |---|---|---|---|---|---|
 | TASK-52 | Subscriptions and entitlements (Stripe test mode) | tech-lead | high | FR-020 | TASK-32, TASK-9 |
 | TASK-53 | Boost a lost listing | design-lead | high | FR-025 | TASK-32, TASK-23, TASK-31, TASK-18, TASK-7 |
 | TASK-54 | Subscribe to Premium Protect | design-lead | medium | FR-026 | TASK-52 |
-| TASK-55 | >- | tech-lead | medium | FR-026 | TASK-52, TASK-16, TASK-53, TASK-35 |
+| TASK-55 | Premium features: unlimited pets, one-tap lost mode, yearly free Boost, ad-free | tech-lead | medium | FR-026 | TASK-52, TASK-16, TASK-53, TASK-35 |
 | TASK-62 | Moderation queue and user management | design-lead | high | FR-018, FR-019 | TASK-34, TASK-25 |
 | TASK-63 | Automated image screening on upload | tech-lead | medium | FR-018 | TASK-40, TASK-25 |
 | TASK-64 | KPI dashboard and GA4 reporting | tech-lead | medium | FR-019, FR-038 | TASK-34, TASK-32 |
@@ -163,7 +163,9 @@ Generated from the backlog on 2026-10-14; the backlog is the source of truth (`b
 | TASK-80 | >- | tech-lead | medium | FR-028 | TASK-79, TASK-35, TASK-36, TASK-23, TASK-24 |
 | TASK-81 | Premium AI: written listing and social posts (SL/EN) | tech-lead | medium | FR-026, NFR-AI | TASK-52, TASK-40, TASK-24 |
 | TASK-82 | Premium AI: poster designs | design-lead | medium | FR-026, NFR-AI | TASK-52, TASK-40, TASK-24 |
-| TASK-83 | Premium AI: search plan | tech-lead | low | FR-026, NFR-AI | TASK-52, TASK-40, TASK-18 |
+| TASK-83 | Premium AI: search plan (with sightings heatmap) | tech-lead | medium | FR-026, NFR-AI | TASK-52, TASK-40, TASK-18, TASK-31 |
+| TASK-117 | Premium: statistics for my reports | design-lead | medium | FR-026 | TASK-52, TASK-18, TASK-23, TASK-24, TASK-44 |
+| TASK-118 | Premium: automatic chat translation (SL/EN) | tech-lead | medium | FR-026, NFR-AI | TASK-52, TASK-21, TASK-40 |
 
 ### M5 (10 stories)
 | ID | Story | Owner | Prio | Req | Depends on |
@@ -206,7 +208,7 @@ Generated from the backlog on 2026-10-14; the backlog is the source of truth (`b
 | ID | Risk | Impact | Probability | Mitigation | Owner |
 |---|---|---|---|---|---|
 | R-001 | Cloud credentials (Q-002, Q-007, Q-009) arrive late: no staging deploy, no real push, no real GA4/Firebase data | Medium | High | Local-first with mocks (P-6); dry-run pipeline; list needed credentials in the environments runbook and ask early | Tech Lead |
-| R-002 | Scope is large for a lean budget (87 stories, M2 alone has 29) | High | Medium | Priority tags (Must/Should/Could); low-priority stories off the critical path (TASK-50, 59, 73, 75, 83, 84); M2 reviewed in two checkpoints (loop gate, then ads and support); cut order agreed with client | Product Manager |
+| R-002 | Scope is large for a lean budget (87 stories, M2 alone has 29) | High | Medium | Priority tags (Must/Should/Could); low-priority stories off the critical path (TASK-50, 59, 73, 75, 84); M2 reviewed in two checkpoints (loop gate, then ads and support); cut order agreed with client | Product Manager |
 | R-003 | App-store in-app purchase rules: tips and donations to non-charities, Premium, Podpornik and Boost may require IAP on iOS and Google Play billing on Android; store submission is out of scope now but the model may not survive review | High | High | Mobile opens web checkout in this phase; purchases designed to be removable on mobile; written decision in TASK-75; RevenueCat or IAP as a later milestone | Product Manager |
 | R-004 | GA4 in the EU: transfers to the US, regulator scrutiny, low consent rates make data partial | Medium | Medium | Consent Mode v2 with modelling, no personal data in events, 14-month retention, Google signals off, processor disclosure in privacy policy, our DB is the source of truth for ads and KPIs; server-side tagging later | Tech Lead |
 | R-005 | Dohodnina needs a non-profit with public-interest status (Signapps can never qualify; a new society needs about 2 years), so it is deferred or done via a partner NGO;  donation wording and VAT treatment of contributions are unclear for a company (Q-008) | Medium | High | Section hidden behind a flag; commercial wording ("podpora"); legal and accounting check before enabling | Client |
@@ -227,7 +229,10 @@ Generated from the backlog on 2026-10-14; the backlog is the source of truth (`b
 | R-020 | Native Firebase Analytics needs dev builds and Firebase config (not Expo Go) | Low | Medium | Dev client in TASK-12; mock adapter until Q-009; documented setup | Tech Lead |
 | R-021 | Revenue may not cover costs (G-5): shelters and municipalities pay nothing, vets pay only for visibility, prices are low and the core is free | High | Medium | Lean infrastructure on free tiers, AI caps (NFR-AI), ads from M2 and Vet Partner from M4, the Reunited support ask, a transparent money page, review at month 3 with the client; Premium AI extras are capped per user | Product Manager |
 | R-022 | Vet Partner and sponsor sales need an audience first | Medium | High | Marketing plan (TASK-84) starts early, pilot-region focus, honest Partners page, vets get free reunite tools so they join before they pay | Client |
-| R-023 | Premium AI extras (listing, poster designs, search plan) raise AI cost and quality risk | Medium | Medium | Per-user and monthly caps, mock locally, SL/EN review of prompts, manual fallbacks stay free | Tech Lead |
+| R-023 | Premium AI extras (listing, poster designs, search plan with heatmap, chat translation) raise AI cost and quality risk | Medium | Medium | Caps per R-026.9 (AI ≤ EUR 0.50 per Premium user per month, 300 translated messages, heatmap without AI calls), translations cached, mock locally, SL/EN review of prompts, manual fallbacks stay free | Tech Lead |
+| R-032 | Premium statistics and chat translation are read as gating reunion (P-1) and cost trust | Medium | Medium | Original message always delivered first; the free party in a Premium chat gets translations free; quiet entry points only, none in report flows; shelters and municipalities free; no paid badge; review pilot feedback at month 3 | Product Manager |
+| R-033 | Yearly-first pricing and the "37 % less" claim breach price-indication or consumer rules or read as a dark pattern | Medium | Low | Saving stated against 12 monthly payments, no struck-through price, no pre-selection, renewal reminder 7 days before, withdrawal right and renewal in the terms, lawyer review (TASK-91) | Content Strategist |
+| R-034 | Chat translation sends private messages to an AI provider; a mistranslation misleads (meeting place, time) | Medium | Medium | Masking of phone, email, URL and chip-like numbers; notice to both parties; original one tap away; no training use; retention as chat; privacy policy update | Tech Lead |
 | R-024 | Background ("Always") location permission needed for geofence alerts may be refused by App Store or Play review or by users | Medium | High | Strictly opt-in with a clear primer, feature works without it, only OS geofencing and public fuzzed areas, written justification prepared before store release (TASK-75), toggle to remove all geofences | Product Manager |
 | R-025 | Offline cache and geofences: OS region limits (about 20 on iOS), OS throttling, stale data, cache leaking exact data | Medium | Medium | Pick nearest and most recent areas, show last-updated state, cache only public fuzzed data and wipe on logout (NFR-OFFLINE), daily cap and once per pet per area | Tech Lead |
 | R-026 | Vet Partner labelling and ranking may breach advertising rules (paid clinic presented as nearest; paid lines in alerts without marketing consent) | High | Medium | Always "Oglas", "Veterinar v vaši regiji", "Kako razvrščamo" link, no paid line in push or email without consent, ranking rules in the contract, feature flag until a lawyer confirms | Product Manager |
@@ -253,3 +258,4 @@ Status report per milestone (generated from the backlog), demo at each milestone
 | 0.6 | 2026-10-15 | TASK-91 lawyer briefing pack (M5, high, startable now, L1; TASK-71 now depends on it) and TASK-92 fiscal invoices (M2, depends on TASK-32; gates live payments); 89 stories |
 | 0.7 | 2026-10-15 | Reward escrow dropped (brief v1.1): TASK-66 archived, TASK-68 no longer depends on it, R-006 retired, M4 text updated; new risk R-029 (VAT on voluntary contributions, Q-012) |
 | 0.8 | 2026-10-18 | CHANGE batch: web-first pilot release order (CH-199, CH-487): one pilot environment on najdimo.si, mobile after store accounts, staging/production split before launch; risks R-030, R-031; follow-up tasks from reviews added under existing stories (TASK-22.7-22.9, 29.13-29.15, 34.8, 38.6, 87.7) |
+| 0.9 | 2026-10-19 | Premium update (owner 2026-10-19, PRD v0.11): M4 exit criteria with the new test prices (EUR 29.99/year first, EUR 3.99/month), report statistics, chat translation and the sightings heatmap; new stories TASK-117 (statistics, wireframe gate TASK-117.1) and TASK-118 (chat translation); wireframe gate TASK-54.1 for the plan page; TASK-83 raised to medium and depends on TASK-31; M4 17 stories, indicative 67–85 d; risks R-023 updated, R-032..R-034 |
