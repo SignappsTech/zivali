@@ -72,7 +72,7 @@ Reminders for LOST at 7, 14, 30 days after `created_at` (`lifecycle_tick`, hourl
 
 | Method and path | Guards | Request | Response | Errors |
 |---|---|---|---|---|
-| `POST /v1/reports` | auth (user or anonymous), `Idempotency-Key` required, rate limit (C7 for anonymous) | `CreateReportInput` | `201 { id, short_code, moderation_state, manage_token?, warnings[] }` | `VALIDATION`, `DUPLICATE_OPEN_REPORT` (409, `details.short_code`), `RATE_LIMITED` (never `UNVERIFIED_EMAIL`: a lost report by an unverified user is allowed, FR-001; CH-195) |
+| `POST /v1/reports` | auth (user or anonymous), `Idempotency-Key` required, rate limit (C7 for anonymous) | `CreateReportInput` | `201 { id, short_code, moderation_state, manage_token?, warnings[], photo_ids[] }` (also on a submission repeat) | `VALIDATION`, `DUPLICATE_OPEN_REPORT` (409, `details.short_code`), `RATE_LIMITED` (never `UNVERIFIED_EMAIL`: a lost report by an unverified user is allowed, FR-001; CH-195) |
 | `PATCH /v1/reports/:code` | manager | partial `CreateReportInput` minus `type` | `ReportOwnerView` | `FORBIDDEN`, `VALIDATION`, `GONE` |
 | `GET /v1/reports/:code` | optionalAuth | - | `PublicReport` (+ `ReportOwnerView` fields when the caller manages it) | `NOT_FOUND`, `GONE` (`details.reason`) |
 | `GET /v1/reports` (TASK-31.3) | optionalAuth | query `ReportSearch` | `{ items: PublicReport[], next_cursor, total_estimate }` | `VALIDATION` |
@@ -81,6 +81,9 @@ Reminders for LOST at 7, 14, 30 days after `created_at` (`lifecycle_tick`, hourl
 | `POST /v1/reports/:code/transitions` (TASK-26.3) | manager | `{ action: 'mark_reunited' | 'close' | 'reopen' | 'extend', reason? }` | `ReportOwnerView` | `FORBIDDEN`, `CONFLICT` (invalid transition), `GONE` (reopen after 7 days) |
 | `GET /v1/sync/reports` (TASK-85.1) | optionalAuth, rate limit 60/h per device | query `areas` (JSON, ≤ 3 circles ≤ 25 km), `since`, `limit` ≤ 1000 | `{ upserts: CachedReport[], removed_ids: uuid[], server_time, has_more }` | `VALIDATION`, `RATE_LIMITED` |
 | `GET/POST /v1/pets`, `GET/PATCH/DELETE /v1/pets/:id`, `POST /v1/pets/:id/archive` (TASK-16.3) | auth (not anonymous), owner; `POST /v1/pets` takes an optional `Idempotency-Key` (C1: replay for 24 h, another body → `409 CONFLICT`; clients drop the key after `PET_LIMIT`; `@zivali/api` `createPet({ body, idempotencyKey })`, TASK-16.8, CH-357) | `PetInput` | `Pet` / `{ items: Pet[] }` | `VALIDATION`, `FORBIDDEN`, `CONFLICT` (`code: PET_LIMIT` in details; free limit 2, app_config `pets.free_limit`) |
+| `GET /v1/stats/public` (TASK-115.4) | public, no auth; global per-IP limit only (no input, like `/v1/config/public`) | - | `PublicStats` (`Cache-Control: public, max-age=300`; 5-minute in-process cache, failures not cached) | - |
+
+`PublicStats = { reunited_total: number | null; open_reports: number | null; alert_subscribers: number | null }`: visible reunited reports; visible open or matched reports (all types); alert subscriptions not paused with at least one species. Each count is rounded down to a multiple of 10 and is `null` while under 50; clients show the numbers block only when all three are non-null (P3 §T1 block 3). Client: `useGetPublicStatsQuery` (`@zivali/api` reports.ts).
 
 Limits (implemented, confirmed): `name` ≤ 60, `collar` ≤ 200, pet `notes` ≤ 1000, `breed_codes` ≤ 5; `mixed` and `unknown` are species-scoped (`dog.mixed`, `cat.unknown`); `PetInput.name` required (1–60). `location` in the request is the point already coarsened by the client; the API coarsens again (C6 §Storage).
 
@@ -90,7 +93,7 @@ Limits (implemented, confirmed): `name` ≤ 60, `collar` ≤ 200, pet `notes` �
 
 **Search and location filters (CH-148)**: for callers who do not manage the report, distance sort (`sort=distance`), the distance bands, `bbox` filters and nearby-alert matching (C10) use `public_point`, never `exact_point`; `exact_point` would let anyone probe for the stored point by moving the query point. Managers see their own reports through `/v1/me/reports`, not through search.
 
-**As built, create and update (TASK-29.2, CH-195)**: `name`, `pet_id`, `requested_radius_m` and `reward_*` are lost only (otherwise `VALIDATION`); `linked_report_id` only on found or sighted and only to a lost report; `pet_id` = the caller's own non-archived pet of the same species (row-locked) and fills omitted fields; duplicate = a lost report of that pet with status `open` or `matched`; `photo_ids` = own unattached photos or photos already on the report (plus the shared-photo cases of C5), and PATCH replaces the set. PATCH: non-managers (staff too) get `FORBIDDEN`; removed report → `GONE` reason `removed`; closed or reunited → `GONE` reason `closed`; it sets `last_owner_update_at`.
+**As built, create and update (TASK-29.2, CH-195)**: `name`, `pet_id`, `requested_radius_m` and `reward_*` are lost only (otherwise `VALIDATION`); `linked_report_id` only on found or sighted and only to a lost report; `pet_id` = the caller's own non-archived pet of the same species (row-locked) and fills omitted fields; duplicate = a lost report of that pet with status `open` or `matched`; `photo_ids` = own unattached photos or photos already on the report (plus the shared-photo cases of C5), and PATCH replaces the set. **Pet photos by default (TASK-29.13, CH-348)**: a lost report with `pet_id` may send `photo_ids: []`; the API then attaches that pet's photos in the pet's order (the owner's, status not `rejected`, on no open report; a photo on the pet's ended report is detached from it, as for an explicit reuse, C5 §REST shared photos). None left → `VALIDATION` on `photo_ids` ("At least one photo"). Explicit `photo_ids` win (the pet's are not added). The `201` answer lists the report's photos in order as `photo_ids: uuid[]`, also on a submission repeat. Clients (web TASK-29.14, mobile TASK-29.15) skip the photos step for a saved pet that has photos and send `photo_ids: []`. PATCH: non-managers (staff too) get `FORBIDDEN`; removed report → `GONE` reason `removed`; closed or reunited → `GONE` reason `closed`; it sets `last_owner_update_at`.
 
 ```ts
 type CreateReportInput = {
@@ -100,7 +103,7 @@ type CreateReportInput = {
   event_at: string /* ISO; offline queue: original capture time */; circumstances?: string; contact_pref?;
   reward_eur?: number | null; reward_note?: string | null;      // lost only; display only
   linked_report_id?: uuid;                                       // "I saw this pet"
-  photo_ids: uuid[];                                             // 1–5 for lost and found, 0–5 sighted; may include the owner's pet photos and photos of their ended reports (shared photos, C5)
+  photo_ids: uuid[];                                             // 1–5 for lost and found, 0–5 sighted; may include the owner's pet photos and photos of their ended reports (shared photos, C5); [] for a lost report with pet_id = the pet's photos
   finder_email?: string                                          // anonymous only, for the manage link
 }
 ```
@@ -170,3 +173,4 @@ Drafts live only on the device until submit: web `idb-keyval` key `draft:<kind>:
 | 1.3 | 2026-10-18 | CH-494 (TASK-114.5): report photo_ids may reuse the owner's pet photos and photos of their ended reports (C5) |
 | 1.4 | 2026-10-18 | CH-148: non-manager distance sort, bands, bbox and alert matching use public_point; CH-173: transitions call ChatDomain.closeForReport; CH-195: create/update rules as built, POST never returns UNVERIFIED_EMAIL; CH-206: reports.device_hash, manage_token_hash unique |
 | 1.5 | 2026-10-18 | CH-357: optional Idempotency-Key on POST /v1/pets |
+| 1.6 | 2026-10-19 | CH-542 (TASK-115.4): `GET /v1/stats/public`; CH-608 (TASK-29.13): lost report with pet_id and `photo_ids: []` takes the pet's photos; 201 returns `photo_ids` |

@@ -35,6 +35,7 @@ Adapters: `ga4` (web), `firebase` (mobile), `mock` (default locally and in tests
 | `amount_bucket` | `2-4` \| `5-9` \| `10-19` \| `20+` (donation) |
 | `method` | `whatsapp` \| `facebook` \| `copy_link` \| `native` (share) |
 | `purpose` | `tip` \| `report_contribution` \| `support` (donation) |
+| `plan` | `monthly` \| `yearly` (premium_subscribe) |
 
 Forbidden always: names, emails, phone, chip numbers, coordinates, free text, report ids/short codes, user ids.
 
@@ -53,6 +54,7 @@ Forbidden always: names, emails, phone, chip numbers, coordinates, free text, re
 | `boost_purchase` | value, currency, species, region | yes |
 | `donation` | value, currency, amount_bucket, purpose | yes |
 | `supporter_subscribe` | value, currency | yes |
+| `premium_subscribe` | plan, value, currency (`EUR`) | yes |
 | `ad_impression` | ad_slot, ad_id, region?, species? | |
 | `ad_click` | ad_slot, ad_id, region?, species? | yes |
 | `share` | method, report_type, species | |
@@ -92,3 +94,4 @@ track('donation', { value: 5, currency: 'EUR', amount_bucket: '5-9', purpose: 't
 |---|---|---|
 | 1.1 | 2026-10-15 | CH-37/38/41: initAnalytics options, value cap and consent-expiry note, trackScreen page_location/page_title, Enhanced measurement OFF checklist |
 | 1.2 | 2026-10-18 | CH-183: consent.change_<n> in sl and en on every CONSENT_VERSION bump |
+| 1.3 | 2026-10-19 | CH-635 (R-038.3): `premium_subscribe { plan, value, currency }` and the `plan` param; the registry entry ships with the TASK-54 web task |

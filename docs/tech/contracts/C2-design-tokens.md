@@ -10,7 +10,7 @@ source: docs/04-technical-design.md§Interfaces and contracts (C2), ADR-002, doc
 |---|---|
 | `primitives.color.<scale>.<step>` | hex |
 | `primitives.fontFamily.{display,sans}` | CSS font stack (Bricolage Grotesque, Atkinson Hyperlegible Next) |
-| `semantic.{light,dark}.<token>` | `"scale.step"`, `"#RRGGBB"` (map colours), or `{ "ref": "scale.step", "alpha": 0.16 }` |
+| `semantic.{light,dark}.<token>` | `"scale.step"`, `"#RRGGBB"` (map colours, brand-literal provider colours, coat swatches), or `{ "ref": "scale.step", "alpha": 0.16 }` |
 | `elevation.{light,dark}.shadow-{sm,md,lg}`, `elevation.reactNative.{sm,md,lg}`, `elevation.usage` | CSS shadow / RN shadow props / guidance |
 | `shape` | `radius` (base, `1rem`), per component `button`, `card`, `input`, `row`, `chip`, `sheet`, `photo` (scale names or px) |
 | `scale.type`, `scale.space`, `scale.radius`, `scale.size`, `scale.motion`, `scale.breakpoint`, `scale.zIndex`, `scale.component` | numbers (px) or objects; `scale.component` = button, input, row, card, bottomnav, progress, sheet, marker sizes |
@@ -37,6 +37,7 @@ Token names equal CSS variable names (`status-lost-subtle-foreground` → `--sta
 - Generated files are not committed; Turbo runs the build before the apps' `dev`, `build`, `test`, `typecheck`.
 - Fonts: web loads Bricolage Grotesque and Atkinson Hyperlegible Next with `next/font/google` and maps them to `--font-display` / `--font-sans`; mobile uses `@expo-google-fonts/bricolage-grotesque` and `@expo-google-fonts/atkinson-hyperlegible-next` with the registered static names in the preset's `fontFamily`.
 - `calc()` radii work in NativeWind 4; if a platform rejects them, the preset falls back to pre-computed px from `values.radius`.
+- **Coat swatches** (tokens 0.6.0, system.md 3.2, CH-310, CH-621): `coat-black` … `coat-blue-grey` (10 literal hex values, the same in light and dark) and `coat-edge` (translucent: mist.950 at 0.24 light, mist.100 at 0.32 dark). The generator emits them like any token, with no code change: `bg-coat-<name>` and `border-coat-edge` on web (Tailwind 4) and mobile (NativeWind preset), `values.colors.*['coat-<name>']`. Use them only for the 16 px swatch before a colour word (P4 filter, P6/P8 colour pills); semantic or status tokens never stand in for a coat colour. The swatch is decorative (`aria-hidden`), the word carries the meaning.
 - Do not add runtime theme variants; dark mode follows the OS with a manual override (system §12).
 
 ## Example (excerpt of generated `web.css`)
@@ -50,3 +51,9 @@ Token names equal CSS variable names (`status-lost-subtle-foreground` → `--sta
   --font-display: var(--font-display);
 }
 ```
+
+## Change log
+
+| Version | Date | Change |
+|---|---|---|
+| 1.1 | 2026-10-19 | CH-621: coat-* swatch tokens and coat-edge (tokens 0.6.0); literal hex allowed for coat swatches; no generator change needed |

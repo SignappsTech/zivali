@@ -19,7 +19,7 @@ Applies to every endpoint, Prisma model, migration, job and seed in `apps/api`. 
   |---|---|
   | `VALIDATION` | 400 |
   | `UNAUTHENTICATED` | 401 |
-  | `FORBIDDEN`, `UNVERIFIED_EMAIL`, `AAL2_REQUIRED` | 403 |
+  | `FORBIDDEN`, `UNVERIFIED_EMAIL`, `AAL2_REQUIRED`, `UPGRADE_REQUIRED` (a Premium feature without the entitlement, `details.entitlement`; added by TASK-52, C13 §Prices and entitlements) | 403 |
   | `NOT_FOUND` | 404 |
   | `CONFLICT`, `DUPLICATE_OPEN_REPORT` | 409 |
   | `GONE` | 410 |
@@ -102,3 +102,4 @@ HTTP/1.1 429
 | 1.7 | 2026-10-18 | CH-273: queue `retention.blur_location` after `retention.purge` |
 | 1.8 | 2026-10-18 | CH-337: share.* public keys; CH-357: Idempotency-Key on POST /v1/pets; CH-358: fiscal.resubmit queue, payment.effects retry options |
 | 1.9 | 2026-10-18 | M3 breakdown: queues `ai.extract`, `photo.embed`, `embedding.backfill`; vector columns typed `Unsupported("extensions.vector(1024)")` |
+| 1.10 | 2026-10-19 | CH-635: error code `UPGRADE_REQUIRED` (403) for Premium features (C13) |

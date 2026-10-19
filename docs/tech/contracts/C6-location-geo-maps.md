@@ -149,6 +149,15 @@ Until `photoUrl` is drawn, mobile renders the avatar as a 44 px `status-<kind>-s
 - Keyboard (web): map focusable, arrow keys pan, +/- zoom; markers reachable through the text alternative list.
 - Locations outside Slovenia: picker shows a notice (FR-004 edge).
 
+## Sightings heatmap (Premium search plan, M4, TASK-83; PRD R-026.8)
+
+- **What**: the density of same-species `found` and `sighted` reports in the search area since the loss, for the owner of a lost report. Area = a circle on the lost report's public point, default the owner's alert radius (C10), at most 25 km. Window = the lost report's `event_at` … now.
+- **Positions**: `public_point` only (P-3; never `exact_point`, whoever asks). Cells: a square grid of 250 m in EPSG:3035 (`st_snaptogrid` on `st_transform`), never smaller, so a cell never singles out a fuzzed point.
+- **Weight** per sighting: the C8 match score with this lost report (0…1; 0.3 when there is no match row) × recency `exp(-age_days / 7)`; confirmed or linked sightings (`linked_report_id` = this report, or match `confirmed`) are flagged; sightings whose match the owner rejected ("not my pet", C8 `rejected`) are excluded.
+- **Response** `GET /v1/reports/:code/search-plan/heatmap` (manager of the lost report with `hasEntitlement(user, 'premium')`, else `UPGRADE_REQUIRED`; `FORBIDDEN`, `NOT_FOUND`; lost reports only, else `VALIDATION`): `{ generated_at, radius_km, cells: { center: { lat, lng }, weight: number /* 0…1, normalised */, count: number, has_confirmed: boolean }[] | null, top_areas: { label: string /* settlement name from the geo lookup of the cell centre (§Geo reference) */, count: number, latest_at: string, has_confirmed: boolean }[] }`. Fewer than 3 sightings → `cells: null`, list only. `top_areas`: the 5 heaviest cells merged by place label, ranked by weight: the accessible alternative to the map layer.
+- **Cache**: one row per report (`search_plan_heatmaps(report_id pk → reports on delete cascade, payload jsonb, generated_at)`), rebuilt on read when older than 15 min, and queued (`search_plan.heatmap { report_id }`) when a sighting is linked to the report. No AI call.
+- **Free stays free**: the public map layer and the sighting trail of a report are unchanged and need no entitlement.
+
 ## Example
 
 ```tsx
@@ -177,3 +186,4 @@ Until `photoUrl` is drawn, mobile renders the avatar as a 44 px `status-<kind>-s
 | 1.4 | 2026-10-18 | CH-147: lost offset range 150–410 m; residual risk of averaging ~10 reports from one spot (~24 m median), the 150 m found radius is the real limit |
 | 1.5 | 2026-10-18 | CH-275: MapView.bottomInset; CH-276: Marker.photoUrl |
 | 1.6 | 2026-10-18 | CH-302: mobile MapView picker hooks (ref, onCameraChange, label/hint, children), usePlaceSearch `searched` |
+| 1.7 | 2026-10-19 | CH-638: §Sightings heatmap for the Premium search plan (TASK-83): public points, 250 m cells, weights, top areas, 15 min cache |

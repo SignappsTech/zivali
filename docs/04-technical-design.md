@@ -1,7 +1,7 @@
 ---
 doc_id: DOC-04
 title: Technical Design
-version: 0.14
+version: 0.15
 status: Draft
 date: 2026-10-19
 owner: Tech Lead
@@ -133,6 +133,7 @@ All tables in schema `app` as Prisma models (snake_case plural names, `id uuid`,
 | app_config, rate_limits, idempotency_keys, audit_log | config; hashed counters (48 h); stored responses (24 h, secrets encrypted); staff actions | - | Low / Medium |
 | pgboss.* | pg-boss tables (jobs, schedules, archive) | managed by pg-boss | Low |
 | ai_results, ai_calls, photo_embeddings (M3, `prisma/schemas/ai.prisma`) | extraction result per image hash (no user or photo id); per-photo AI and embedding ledger (outcome, tokens, pixels, cost; 62 days); one 1024-d vector per photo and model | pk(sha256); unique(photo_id, provider, model), (provider, created_at); pk(photo_id, model), HNSW cosine | Low (no person data; photo-linked ledger) |
+| report_stats_daily, message_translations, search_plan_heatmaps (M4 Premium) | per report, day, metric, channel and Boost flag counts (C21); per message and language translation (C9); heatmap cache per lost report (C6) | pk(report_id, day, metric, channel, boosted); pk(message_id, lang); pk(report_id) | No (aggregates) / Yes (chat text) / Low |
 | Planned M3–M4 | intake_batches, chip_lookups (hash only), subscriptions and entitlements (owners: Premium, Podpornik; vets: Vet Partner), moderation_actions | wire types in `packages/types` from M1; models with their stories | - |
 
 **Deletion and retention** (NFR-PRIV, proposals for legal review, A-012): chat deleted 6 months after report close; closed-report photos and stored locations deleted or nulled 12 months after close, and the stored point replaced by the blurred public point `retention.exact_point_blur_days` (30, lawyer to confirm) after close (`retention.blur_location` job, ADR-006); raw points are never stored (coarsened 20–30 m at write, device and server); payment records kept as legally required; IP and device hashes 48 h; idempotency rows 24 h; anonymous auth users without a live report 30 days (Supabase Admin API); orphan uploads 24 h. All by the `retention.purge` job. Device data (mobile, C17): public cache ≤ 50 MB / 7 days, own drafts and outbox; wiped on sign-out, account deletion and on request. Account deletion (M3, FR-034) is one domain function that deletes or anonymises rows per `apps/api/prisma/data-inventory.json` and deletes the Supabase user; a test fails when a model is missing from the inventory.
@@ -161,6 +162,7 @@ All tables in schema `app` as Prisma models (snake_case plural names, `id uuid`,
 | C18 | Responsible-shelter directory | API / data | docs/tech/contracts/C18-shelter-directory.md |
 | C19 | AI attribute extraction: `ai.extract`, caps, `GET /v1/photos/:id/attributes`, client pre-fill rules (M3) | API / data / job | docs/tech/contracts/C19-ai-extraction.md |
 | C20 | Image embeddings: `photo.embed`, backfill and model change, similarity and nearest queries (M3) | data / job | docs/tech/contracts/C20-image-embeddings.md |
+| C21 | Report statistics: cookieless view and share counters, alert rollup, Premium read endpoint (M4, TASK-117) | API / data / job | docs/tech/contracts/C21-report-statistics.md |
 | C21+ | M3–M6 (organisations, intake/CSV, chip lookup, export/delete, owner and Vet Partner subscriptions, moderation, sponsor invoices, fiscal invoices) | - | written at each milestone's breakdown |
 
 **API standards**: see C1: `API_URL/v1`, Bearer Supabase token, `x-device-id`, JSON snake_case, no envelope, lists `{ items, next_cursor }`, errors `{ error: { code, message, details?, issues? } }` with stable codes, `Idempotency-Key` on retryable writes, OpenAPI spec at `apps/api/openapi.json` (Swagger UI deferred). Webhooks dedupe by provider event id.
@@ -259,7 +261,7 @@ Configuration through environment variables only (names in `frontend.md` / `back
 | Stripe | checkout, webhooks | secret key, webhook secret | test mode only | user sees retry; webhook retries idempotent | payment ids, amounts |
 | Google Analytics 4 / Firebase | audience analytics | measurement id / config files | GA4 quotas | silently dropped | none in our DB |
 | GA Data API (optional) | partner page enrichment | service account | quotas | DB-only stats | cached aggregates |
-| Anthropic (M3) | attribute extraction (C19) | API key | 1 call per image hash; 10 (anonymous) / 30 photos per user a day; `ai.monthly_budget_usd` 20 | manual form (fail open) | results per image hash, usage ledger |
+| Anthropic (M3; M4 chat translation, ADR-024) | attribute extraction (C19); chat translation (C9) | API key | 1 call per image hash; 10 (anonymous) / 30 photos per user a day; `ai.monthly_budget_usd` 20 | manual form (fail open) | results per image hash, usage ledger |
 | Voyage AI (M3) | image embeddings (C20) | API key | 1 vector per photo and model, hash reuse; `embedding.monthly_budget_usd` 5; rate limits low until a payment method is added | v2 attribute matching (no visual term) | vectors per photo and model, usage ledger |
 | GURS open data (CC BY 4.0) | municipalities and regions; settlements, districts, streets and house numbers for our geocoder | none | - | static seed, refreshed by the generators | boundaries, names, points |
 | UVHVVR register + municipal reports | shelter directory sources | none | yearly refresh | admin edits | directory rows with source |
@@ -292,6 +294,7 @@ Configuration through environment variables only (names in `frontend.md` / `back
 | ADR-021 | Supabase for DB and Auth only; app tables in a non-exposed schema with deny-all RLS; tested | Accepted |
 | ADR-022 | Jobs with pg-boss in the same Postgres; one worker process | Accepted |
 | ADR-023 | Live chat and inbox with Supabase Realtime Broadcast on private channels | Accepted |
+| ADR-024 | Chat translation with Claude Haiku through the existing AI SDK, async job, masked contact data, mock in CI | Accepted (M4) |
 
 Full records: `docs/tech/adr/NNN-*.md` (context, decision, alternatives, consequences).
 
@@ -313,3 +316,4 @@ Full records: `docs/tech/adr/NNN-*.md` (context, decision, alternatives, consequ
 | 0.12 | 2026-10-16 | TASK-76.1 (CH-199): §Environments web-first pilot as one environment on the staging stack; pilot payments in Stripe test mode; payments-off switch for later (`PAYMENTS_PROVIDER=off`, off by default in `APP_ENV=production`, reported as `payments.enabled` in the public config; `PAYMENTS_ENABLED`, `EXPO_PUBLIC_PAYMENTS_ENABLED` overrides) and `SEARCH_INDEXING` (noindex); `docs/tech/pilot-runbook.md` |
 | 0.13 | 2026-10-18 | M3 AI breakdown: AI vision default `claude-haiku-5-5` (ADR-012 amended), `voyage-multimodal-3.5` (ADR-013 amended, CH-541); data model rows ai_results, ai_calls, photo_embeddings; contracts C19 (AI extraction) and C20 (embeddings), C8 renamed (v2 as built, v3 planned); Voyage key set locally; integration limits and fallbacks |
 | 0.14 | 2026-10-19 | TASK-4.6: §CI/CD split of the gates: CI `verify` = `verify:static`, web build, audit, e2e with 4 workers (lint, typecheck, unit and API tests stay in the local `pnpm verify` and merge.mjs), no database in CI; superseded runs cancelled; docs-only pushes skip `ci` and `mobile` (and so the deploy); `quality` nightly and on demand (`quality.yml`), `images` on Docker-relevant changes (`images.yml`); branch protection requires `verify` only; deploy builds use the BuildKit gha cache; deploy bullet as built. CH-633: repository `SignappsTech/zivali` (§Accounts, branch protection, ADR-016, README) |
+| 0.15 | 2026-10-19 | Premium (owner 2026-10-19): C21 report statistics (CH-636), ADR-024 chat translation (CH-637), C6 sightings heatmap (CH-638), C13 prices and entitlements (CH-635); data model rows for the M4 Premium tables |
