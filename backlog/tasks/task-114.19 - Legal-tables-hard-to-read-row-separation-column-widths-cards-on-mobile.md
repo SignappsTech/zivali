@@ -6,7 +6,7 @@ assignee:
   - '@frontend-dev'
   - '@design-lead'
 created_date: '2026-10-16 16:10'
-updated_date: '2026-10-18 20:00'
+updated_date: '2026-10-19 09:58'
 labels:
   - fe
   - design
@@ -43,6 +43,8 @@ docs/design/wireframes/M-legal-table.html: v1 ready for owner review (2026-10-18
 Review sheet for the owner (private claude.ai page, v1 2026-10-18): https://claude.ai/artifact/MTTBPrLTPgEJM8r6QfZQ45. Awaiting owner approval.
 
 MOCK APPROVED: Primož Božič (owner), 2026-10-18, wireframe v1 (docs/design/wireframes/M-legal-table.html). Owner: "legal good", so the mock's defaults: divider lines (not zebra), 640 px text-column width, stacked cards on mobile for every legal table including the cookie list. Implementation not started: owner said not to build yet (2026-10-18).
+
+Owner answers 2026-10-19 (Primož Božič), wireframe v1: (1) zebra rows, not divider lines; (2) tables as wide as the text column (640 px), not 800; (3) cards on mobile for every legal table, the cookie list too. Built by TASK-114.42.
 <!-- SECTION:NOTES:END -->
 
 ## Packet

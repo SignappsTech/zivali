@@ -5,7 +5,7 @@ status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-16 15:30'
-updated_date: '2026-10-18 20:45'
+updated_date: '2026-10-19 09:58'
 labels:
   - fe
   - design
@@ -49,6 +49,8 @@ MOCK APPROVED: Primož Božič (owner), 2026-10-18, wireframe v1 (docs/design/wi
 Built (2026-10-18): disclosure in components/notifications/notification-settings.tsx, rendered at the end of AlertSettings; /racun/obvestila and /en/account/notifications redirect (after requireViewer, so sign-in keeps the anchor) to the alerts page #kako-vas-obvestimo. Mobile checked: app/settings/notifications.tsx is a Stack screen with the native back button from Profile, so no dead end; no follow-up.
 
 Review (tech-lead, 2026-10-18): APPROVE. Open nits, not blocking: (1) once the user has toggled, a later hashchange to #kako-vas-obvestimo doesn't reopen the section (full loads from email and the redirect are fine); (2) the section renders outside AlertSettings' AuthGate, so a signed-out visitor or an alerts load error still shows the closed section (deliberate per the test; to confirm with the owner).
+
+Owner answers 2026-10-19 (Primož Božič), wireframe v1: (1) the section is open by default; (2) keep the grey summary line; (3) redirect /racun/obvestila to the alerts page with the section open (already built). Change (1) built by TASK-114.42.
 <!-- SECTION:NOTES:END -->
 
 ## Packet

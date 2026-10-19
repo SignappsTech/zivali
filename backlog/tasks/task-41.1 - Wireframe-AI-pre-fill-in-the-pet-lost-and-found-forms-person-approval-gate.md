@@ -5,7 +5,7 @@ status: In Review
 assignee:
   - '@design-lead'
 created_date: '2026-10-18 21:23'
-updated_date: '2026-10-18 22:03'
+updated_date: '2026-10-19 09:58'
 labels:
   - design
   - wireframe
@@ -62,4 +62,6 @@ To do after approval: CHANGE rows for C19 §Client rules (fill only values valid
 Approval: pending. Record here who approved, the date and the version.
 
 Lead, 2026-10-19: the wireframe (7780fd96) now uses the TASK-40.6 ai_prefill.* copy; the 'placeholder' wording above is out of date. Strings still to confirm: ai_prefill.info_body (owner + lawyer), report_found.ai_note (LQ-37); proposals without keys: 'Preveri predloge' and the P6 review-step note and row line. Awaiting owner approval.
+
+APPROVED WITH CHANGES: Primož Božič (owner), 2026-10-19, wireframe v1 (7780fd96). Answers: (1) filled and marked Predlog (as shown); (2) ALSO SHOW THE CONFIDENCE (new UI, needs a v2 frame); (3) a hint under every field, not the one line (as C19 and the copy read now); (4) add the breed to the found-flow sentence, e.g. 'Pes, labradorec, črne barve' (owner: 'I don't understand, let's say yes'; explained in chat 2026-10-19, may still change); (5) another animal: carry on by hand with the note (as shown); (6) A CROP TOOL IN NAJDIMO IN M3, using a library (new UI, needs v2 frames; library choice by the tech-lead); (7) the non-blocking check before saving (as shown). v1 is approved as drawn for 1, 3, 5 and 7. The confidence display, the found sentence with breed and the crop tool need v2 frames confirmed by the owner before TASK-41.2 / 41.3 start. Status stays In Review until then.
 <!-- SECTION:NOTES:END -->

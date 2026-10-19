@@ -5,7 +5,7 @@ status: Done
 assignee:
   - '@design-lead'
 created_date: '2026-10-16 14:00'
-updated_date: '2026-10-18 09:12'
+updated_date: '2026-10-19 09:58'
 labels:
   - design
   - wireframe
@@ -38,4 +38,6 @@ docs/design/wireframes/P1-footer.html: v1 ready for owner review (2026-10-18). N
 Review sheet for the owner (private claude.ai page, v1 2026-10-18): https://claude.ai/artifact/MTTBPrLTPgEJM8r6QfZQ45. Awaiting owner approval.
 
 APPROVED: Primož Božič (owner), 2026-10-18, wireframe v1 (docs/design/wireframes/P1-footer.html). Owner: "standard footer", taken as the mock's defaults: four columns with the proposed headings and grouping (Pomoč, Za organizacije, Najdimo, Pravno); operator line with the full address; language switch under the logo; mobile 2x2. Owner said not to start building yet (2026-10-18).
+
+Owner answers 2026-10-19 (Primož Božič), wireframe v1: (1) headings and grouping yes, but move the Zavetišča link into Pomoč; (2) operator line: the company name with the Podatki o podjetju link; (3) language switch under the logo; (4) mobile: one column per group. Built by TASK-114.42.
 <!-- SECTION:NOTES:END -->
