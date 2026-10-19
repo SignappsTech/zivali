@@ -114,9 +114,22 @@ describe('SiteHeader', () => {
 		expect(within(main).getByRole('link', { current: 'page' }).textContent).toBe('Kako deluje');
 		expect(within(header).getByRole('link', { name: sl.nav.sign_in }).getAttribute('href')).toBe('/vpis');
 		const language = within(header).getByRole('group', { name: 'Jezik: Slovenščina' });
-		expect(within(language).getByRole('link', { name: 'English' }).getAttribute('href')).toBe('/en/how-it-works');
-		expect(within(language).getByRole('link', { name: 'English' }).getAttribute('hreflang')).toBe('en');
-		expect(within(language).getByRole('link', { name: 'Slovenščina' }).getAttribute('aria-current')).toBe('true');
+		// WCAG 2.5.3: the accessible name starts with the visible text (EN / SL).
+		expect(
+			within(language)
+				.getByRole('link', { name: /^EN\b.*English/ })
+				.getAttribute('href')
+		).toBe('/en/how-it-works');
+		expect(
+			within(language)
+				.getByRole('link', { name: /^EN\b.*English/ })
+				.getAttribute('hreflang')
+		).toBe('en');
+		expect(
+			within(language)
+				.getByRole('link', { name: /^SL\b.*Slovenščina/ })
+				.getAttribute('aria-current')
+		).toBe('true');
 		// One "Prijavi" per breakpoint (popover from md, sheet below); the popover holds the three choices. Secondary
 		// here: the How it works closing row has the page's primary (P3 W5).
 		for (const button of within(header).getAllByRole('button', { name: sl.nav.report }))
