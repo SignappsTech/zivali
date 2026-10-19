@@ -1,10 +1,11 @@
 ---
 id: TASK-40.9
 title: Real-photo extraction eval run and model decision (owner-gated)
-status: To Do
+status: Backlog
 assignee:
   - '@backend-dev'
 created_date: '2026-10-19 00:26'
+updated_date: '2026-10-19 00:56'
 labels:
   - be
   - 'est:S'

@@ -1,10 +1,11 @@
 ---
 id: TASK-43.7
 title: Real-photo matching eval run and threshold picks (owner-gated)
-status: To Do
+status: Backlog
 assignee:
   - '@backend-dev'
 created_date: '2026-10-18 23:53'
+updated_date: '2026-10-19 00:56'
 labels:
   - be
   - 'est:S'
