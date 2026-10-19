@@ -589,6 +589,19 @@ prejmejo samo združena poročila (prikazi in kliki).
 				<td>EU (Nemčija ali Finska)</td>
 			</tr>
 			<tr>
+				<td>Cloudflare, Inc., ZDA (obdelovalec)</td>
+				<td>
+					posrednik (reverse proxy) in omrežje za dostavo vsebin (CDN) pred spletno stranjo najdimo.si in
+					našim aplikacijskim vmesnikom: sprejme vsako zahtevo, varuje storitev pred preobremenitvijo in
+					napadi ter zahtevo posreduje našemu strežniku
+				</td>
+				<td>
+					IP naslov in podatki vsake zahteve (naslov strani, glave zahteve, vrsta brskalnika in naprave);
+					Cloudflare zaključi šifrirano povezavo (TLS), zato vidi tudi vsebino zahtev in odgovorov
+				</td>
+				<td>Cloudflarovo svetovno omrežje; obdelava tudi zunaj EU, med drugim v ZDA</td>
+			</tr>
+			<tr>
 				<td>Cloudflare, Inc., ZDA, storitev R2 (obdelovalec)</td>
 				<td>
 					shramba fotografij, dostava javnih kopij fotografij prek Cloudflarovega omrežja, nočne šifrirane
@@ -700,6 +713,9 @@ tam. Za take prenose uporabljamo:
 	<li>sicer standardne pogodbene klavzule Evropske komisije.</li>
 </ul>
 
+Cloudflarov dogovor o obdelavi podatkov (poglavje 12) vključuje standardne pogodbene klavzule Evropske komisije,
+Cloudflare pa v njem navaja, da spoštuje okvir EU–ZDA za varstvo podatkov.
+
 <p>Kopijo zaščitnih ukrepov lahko zahtevate na e-naslovu iz poglavja 2.</p>
 
 <h2 id="s14">14. Kako dolgo podatke hranimo</h2>
@@ -735,7 +751,7 @@ tam. Za take prenose uporabljamo:
 			</tr>
 			<tr>
 				<td>E-naslov najditelja za zasebno povezavo</td>
-				<td>izbrišemo 30 dni po zaključku prijave</td>
+				<td>izbrišemo, ko se prijava zaključi, ko je označeno, da je žival spet doma, ali ko prijava poteče</td>
 			</tr>
 			<tr>
 				<td>Zgoščen IP naslov in podatki za omejevanje zahtev</td>
@@ -783,7 +799,7 @@ tam. Za take prenose uporabljamo:
 			</tr>
 			<tr>
 				<td>Povpraševanja partnerjev</td>
-				<td>24 mesecev po zadnjem stiku</td>
+				<td>24 mesecev po oddaji povpraševanja</td>
 			</tr>
 			<tr>
 				<td>Varnostne kopije</td>

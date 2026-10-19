@@ -2,7 +2,7 @@ export const meta = {
 	title: 'Cookie policy · Najdimo',
 	description:
 		'Which cookies and similar storage Najdimo uses, what they are for, how long they last and how to change or withdraw your choice.',
-	updated: '2026-10-18',
+	updated: '2026-10-19',
 	headings: [
 		{ id: 's1', text: '1. In short' },
 		{ id: 's2', text: '2. What cookies and similar storage are' },
@@ -42,8 +42,8 @@ switch on analytics only with your consent.
 
 <h2 id="s2">2. What cookies and similar storage are</h2>
 
-A cookie is a small file that a website saves in your browser. We treat similar items (the browser's local storage,
-secure storage in the app) the same way. In this text we call them all "items".
+A cookie is a small file that a website saves in your browser. We treat similar items (the browser's local and
+session storage, the browser database IndexedDB, secure storage in the app) the same way. In this text we call them all "items".
 
 <p>We split items into two kinds:</p>
 
@@ -100,9 +100,15 @@ secure storage in the app) the same way. In this text we call them all "items".
 				<td>until you close the browser (session cookie)</td>
 			</tr>
 			<tr>
-				<td>Report draft (local storage)</td>
+				<td>
+					Report draft: <code>draft:&lt;report type&gt;:&lt;draft id&gt;</code> and{' '}
+					<code>photos:&lt;draft id&gt;</code> (the browser database IndexedDB)
+				</td>
 				<td>Najdimo</td>
-				<td>Saves an unfinished report so you do not lose it.</td>
+				<td>
+					Saves an unfinished report and its photos so you do not lose it. The point in the draft is already
+					approximate, and the photos carry no EXIF metadata.
+				</td>
 				<td>necessary</td>
 				<td>until you submit the report or discard the draft</td>
 			</tr>
@@ -144,6 +150,19 @@ secure storage in the app) the same way. In this text we call them all "items".
 				<td>Random identifier for abuse limits (rate limiting).</td>
 				<td>necessary</td>
 				<td>until storage is cleared</td>
+			</tr>
+			<tr>
+				<td>
+					<code>zivali-admin-activity</code> (local storage)
+				</td>
+				<td>Najdimo</td>
+				<td>
+					Only in the admin area, for Najdimo staff. Holds the time of the last activity, so that we sign an
+					administrator out after 30 minutes without activity; work in one tab keeps the others signed in.
+					Holds only a time.
+				</td>
+				<td>necessary</td>
+				<td>until storage is cleared; overwritten with each activity</td>
 			</tr>
 			<tr>
 				<td>"Not a robot" check (Turnstile)</td>

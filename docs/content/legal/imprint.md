@@ -3,13 +3,15 @@ source: 02§Content, SEO and legal requirements (Legal); 03§Content strategy / 
 
 | Field | Value |
 |---|---|
-| Version | 0.5 |
-| Date | 2026-10-18 |
+| Version | 0.6 |
+| Date | 2026-10-19 |
 | Route SL | `/podatki-o-podjetju` (301 from `/impresum`) |
 | Route EN | `/en/company-information` (301 from `/en/imprint`) |
 | Slug SL / EN | `podatki-o-podjetju` / `company-information` |
 | Structured data | WebPage |
 | Template | T4 Legal (numbered h2 sections, "On this page" list, draft note) |
+
+Change in 0.6 (TASK-28.9): chapter 3 "Hosting" names Cloudflare, Inc. (San Francisco, USA) as the reverse proxy and CDN in front of the website and the API (DNS proxied since CH-488), as privacy policy 0.10 chapter 12 does (privacy-policy note 26).
 
 Change in 0.5 (TASK-114.17, owner 2026-10-16): the page is "Podatki o podjetju" / "Company information", not a media imprint (ZMed). Basis is ZEPT: company data, contact, register entry. The representative row and chapter 3 "Person responsible for content" are removed, so no person is named. The public register has the names. Chapters renumbered (7 chapters). Revisit if regular editorial content is added.
 
@@ -37,7 +39,7 @@ Change in 0.2: hosting per brief v1.0 (Hetzner server in the EU, Supabase for th
 
 **Osnutek – zahteva pregled naročnika in pravnika.**
 
-Zadnja posodobitev: 18. 10. 2026
+Zadnja posodobitev: 19. 10. 2026
 
 ## 1. Ponudnik storitve
 
@@ -61,6 +63,7 @@ Najdimo upravlja družba Signapps.
 ## 3. Gostovanje
 
 - Spletna stran in strežniški del: Hetzner Online GmbH, Gunzenhausen, Nemčija; strežnik je v EU.
+- Posrednik (reverse proxy) in omrežje za dostavo vsebin (CDN) pred spletno stranjo in aplikacijskim vmesnikom: Cloudflare, Inc., San Francisco, ZDA; Cloudflarovo svetovno omrežje.
 - Podatkovna zbirka in vpis: Supabase Inc., podatki v EU, regija Frankfurt.
 - Fotografije in varnostne kopije: Cloudflare, Inc., storitev R2, shramba v EU.
 
@@ -90,7 +93,7 @@ Pravila uporabe so v [pogojih uporabe](/pogoji-uporabe). O piškotkih beremo v [
 
 **Draft — requires client/legal review.**
 
-Last updated: 18 October 2026
+Last updated: 19 October 2026
 
 ## 1. Service provider
 
@@ -114,6 +117,7 @@ Najdimo is operated by the company Signapps.
 ## 3. Hosting
 
 - Website and server: Hetzner Online GmbH, Gunzenhausen, Germany; the server is in the EU.
+- Reverse proxy and content delivery network (CDN) in front of the website and the API: Cloudflare, Inc., San Francisco, USA; Cloudflare's global network.
 - Database and sign-in: Supabase Inc., data in the EU, Frankfurt region.
 - Photos and backups: Cloudflare, Inc., R2 service, storage in the EU.
 
@@ -144,7 +148,7 @@ The rules of use are in the [terms of use](/en/terms). Read about cookies in the
 1. **Scope (0.5).** Not a media imprint: the page carries the ZEPT data only, with no representative and no responsible editor (owner decision 2026-10-16). Counsel to confirm that ZEPT/ZGD-1 do not need a named representative here (lawyer briefing LQ-02).
 2. **Company facts.** All company details are client markers: full name and form, seat, registration number, tax number and VAT ID, register entry (court register or AJPES), share capital (only for a d.o.o.), contact email and phone. The build should fail while a marker remains.
 3. **Required content.** Confirm the minimum imprint content under Slovenian law (company law and the e-commerce act, ZVEP) and add any item that counsel requires, for example supervisory authority if the activity needs one.
-4. **Hosting (updated in 0.2, brief v1.0).** One Hetzner server in the EU (Germany or Finland, client decision) runs the website, API and job worker; Supabase Inc. hosts the database and sign-in in Frankfurt (AWS eu-central-1); photos and nightly backups are on Cloudflare R2, which is "in the EU" only if the buckets use EU jurisdiction (privacy-policy note 9). Vercel is no longer used.
+4. **Hosting (updated in 0.2, brief v1.0).** One Hetzner server in the EU (Germany or Finland, client decision) runs the website, API and job worker; Supabase Inc. hosts the database and sign-in in Frankfurt (AWS eu-central-1); photos and nightly backups are on Cloudflare R2, which is "in the EU" only if the buckets use EU jurisdiction (privacy-policy note 9). Vercel is no longer used. (Added in 0.6) The website and the API run behind Cloudflare's reverse proxy and CDN (Cloudflare, Inc., per its Self-Serve Subscription Agreement §20; privacy-policy note 26). Confirm whether a hosting line for a proxy is needed on this page at all, or whether the privacy policy is enough.
 5. **Image credits.** Confirm the licence of any stock photos, fonts or icon sets used on the site and list them here.
 6. **Working name.** The line "Najdimo is a working name" must be removed or updated when the client picks the final name (Q-001); the legal pages then change with the name.
 7. **Quality.** The Slovenian text needs a native review.

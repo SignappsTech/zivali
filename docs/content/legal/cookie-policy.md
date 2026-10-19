@@ -3,13 +3,15 @@ source: 02§Content, SEO and legal requirements (Legal); FR-038; FR-039; NFR-PRI
 
 | Field | Value |
 |---|---|
-| Version | 0.6 |
+| Version | 0.7 |
 | Date | 2026-10-19 |
 | Route SL | `/piskotki` |
 | Route EN | `/en/cookies` |
 | Slug SL / EN | `piskotki` / `cookies` |
 | Structured data | WebPage |
 | Template | T4 Legal (numbered h2 sections, "On this page" list, draft note) |
+
+Change in 0.7 (TASK-28.10; published the same day in `apps/web/content/legal/{sl,en}/cookies.mdx`): chapter 3 adds the admin key `zivali-admin-activity` (local storage, admin area only, idle sign-out) and names the report draft store correctly: IndexedDB keys `draft:<kind>:<id>` and `photos:<id>`, not local storage. Chapter 2 names session storage and IndexedDB among the similar items. Every web key checked against the code (note 12).
 
 Change in 0.6 (CH-559): the SL row names the stored key `zz_support:payment:<ID plačila>` (only the placeholder is translated); the published page already shows it. CH-641 (PRD R-026.6): chapter 5 adds the cookieless counting of report views and shares; publish that line only when counting ships (TASK-117).
 
@@ -39,7 +41,7 @@ Change in 0.2: mobile items for drafts and queued reports, the offline copy of p
 
 **Osnutek – zahteva pregled naročnika in pravnika.**
 
-Zadnja posodobitev: 18. 10. 2026
+Zadnja posodobitev: 19. 10. 2026
 
 ## 1. Na kratko
 
@@ -52,7 +54,7 @@ Najdimo uporablja le nekaj piškotkov in podobnih zapisov. Večina jih je nujnih
 
 ## 2. Kaj so piškotki in podobni zapisi
 
-Piškotek je majhna datoteka, ki jo spletna stran shrani v vaš brskalnik. Podobne zapise (lokalna shramba brskalnika, varna shramba v aplikaciji) obravnavamo enako. V tem besedilu jim skupaj rečemo „zapisi“.
+Piškotek je majhna datoteka, ki jo spletna stran shrani v vaš brskalnik. Podobne zapise (lokalna in sejna shramba brskalnika, brskalnikova zbirka podatkov IndexedDB, varna shramba v aplikaciji) obravnavamo enako. V tem besedilu jim skupaj rečemo „zapisi“.
 
 Zapise delimo na dve vrsti:
 
@@ -66,11 +68,12 @@ Zapise delimo na dve vrsti:
 | `zz_consent` (piškotek) | Najdimo | Shrani vašo izbiro glede piškotkov, različico besedila in čas izbire. | nujni | 400 dni; izbira velja 12 mesecev, nato vas vprašamo znova |
 | `sb-<projekt>-auth-token` (piškotek; lahko je razdeljen na `.0`, `.1`) | Najdimo (Supabase) | Ohrani vpis, ko ste vpisani. | nujni | 400 dni, rok se podaljša, ko storitev uporabljate; ob odjavi ga izbrišemo |
 | `NEXT_LOCALE` (piškotek) | Najdimo | Si zapomni izbran jezik. | nujni | do zaprtja brskalnika (sejni piškotek) |
-| Osnutek prijave (lokalna shramba) | Najdimo | Shrani nedokončano prijavo, da je ne izgubite. | nujni | dokler prijave ne oddate ali osnutka ne zavržete |
+| Osnutek prijave: `draft:<vrsta prijave>:<ID osnutka>` in `photos:<ID osnutka>` (brskalnikova zbirka podatkov IndexedDB) | Najdimo | Shrani nedokončano prijavo in njene fotografije, da je ne izgubite. Točka v osnutku je že približna, fotografije so brez metapodatkov EXIF. | nujni | dokler prijave ne oddate ali osnutka ne zavržete |
 | `manage:<ID prijave>` (lokalna shramba) | Najdimo | Hrani žeton zasebne povezave, prek katere upravljate prijavo brez računa. | nujni | do zaključka prijave ali do izbrisa shrambe |
 | `manage_token` (sejna shramba) | Najdimo | Začasno hrani žeton zasebne povezave iz naslova /m, da ga po osvežitvi strani ne izgubite. | nujni | do zaprtja zavihka |
 | `zz_support:<trenutek>:<kratka koda>` in `zz_support:payment:<ID plačila>` (sejna shramba) | Najdimo | Si zapomni, da ste prošnjo za prispevek pri prijavi preskočili ali plačali (`skipped`, `paid`), in da je stran po vrnitvi s plačila odgovor že videla (`settled`), da prošnje ne prikažemo znova. Ne vsebuje osebnih podatkov. | nujni | do zaprtja zavihka |
 | Identifikator naprave (lokalna shramba) | Najdimo | Naključna oznaka za omejevanje zlorab (število zahtev). | nujni | do izbrisa shrambe |
+| `zivali-admin-activity` (lokalna shramba) | Najdimo | Samo v skrbniškem delu za osebje Najdimo. Hrani čas zadnje dejavnosti, da skrbnika po 30 minutah nedejavnosti samodejno odjavimo; delo v enem zavihku ohrani vpis tudi v drugih. Hrani samo čas. | nujni | do izbrisa shrambe; ob vsaki dejavnosti se prepiše |
 | Preverjanje „nisem robot“ (Turnstile) | Cloudflare, Inc. | Loči ljudi od botov s tehničnimi signali naprave in brskalnika. Ne služi oglaševanju. Najdimo pri tem v vaši napravi ne shrani ničesar. Preverjanje teče v Cloudflarovem okvirju (challenges.cloudflare.com), ki se naloži samo na obrazcih s preverjanjem. | nujni | Najdimo ne shrani ničesar; za Cloudflarov okvir veljajo pravila ponudnika |
 | `_ga` (piškotek) | Google Ireland Limited | Loči uporabnike za statistiko obiska. | analitični | 2 leti od zadnjega obiska |
 | `_ga_PKY4SCX3RL` (piškotek) | Google Ireland Limited | Hrani stanje seje v Google Analytics 4. | analitični | 2 leti od zadnjega obiska |
@@ -132,7 +135,7 @@ Vprašanja: info@signapps.si. Splošno o obdelavi podatkov: [politika zasebnosti
 
 **Draft — requires client/legal review.**
 
-Last updated: 18 October 2026
+Last updated: 19 October 2026
 
 ## 1. In short
 
@@ -145,7 +148,7 @@ Najdimo uses only a few cookies and similar storage items. Most are necessary fo
 
 ## 2. What cookies and similar storage are
 
-A cookie is a small file that a website saves in your browser. We treat similar items (the browser's local storage, secure storage in the app) the same way. In this text we call them all "items".
+A cookie is a small file that a website saves in your browser. We treat similar items (the browser's local and session storage, the browser database IndexedDB, secure storage in the app) the same way. In this text we call them all "items".
 
 We split items into two kinds:
 
@@ -159,11 +162,12 @@ We split items into two kinds:
 | `zz_consent` (cookie) | Najdimo | Stores your cookie choice, the text version and the time of the choice. | necessary | 400 days; the choice counts for 12 months, then we ask again |
 | `sb-<project>-auth-token` (cookie; may be split into `.0`, `.1`) | Najdimo (Supabase) | Keeps you signed in. | necessary | 400 days, extended while you use the service; deleted when you sign out |
 | `NEXT_LOCALE` (cookie) | Najdimo | Remembers the language you chose. | necessary | until you close the browser (session cookie) |
-| Report draft (local storage) | Najdimo | Saves an unfinished report so you do not lose it. | necessary | until you submit the report or discard the draft |
+| Report draft: `draft:<report type>:<draft id>` and `photos:<draft id>` (the browser database IndexedDB) | Najdimo | Saves an unfinished report and its photos so you do not lose it. The point in the draft is already approximate, and the photos carry no EXIF metadata. | necessary | until you submit the report or discard the draft |
 | `manage:<report id>` (local storage) | Najdimo | Holds the private-link token that lets you manage a report without an account. | necessary | until the report closes or storage is cleared |
 | `manage_token` (session storage) | Najdimo | Temporarily holds the private-link token from the /m address so a page reload does not lose it. | necessary | until the tab closes |
 | `zz_support:<moment>:<short code>` and `zz_support:payment:<id>` (session storage) | Najdimo | Remembers that you skipped or paid the contribution ask for a report (`skipped`, `paid`), and that the page has already seen the answer after you return from checkout (`settled`), so the ask is not shown again. Holds no personal data. | necessary | until you close the tab |
 | Device identifier (local storage) | Najdimo | Random identifier for abuse limits (rate limiting). | necessary | until storage is cleared |
+| `zivali-admin-activity` (local storage) | Najdimo | Only in the admin area, for Najdimo staff. Holds the time of the last activity, so that we sign an administrator out after 30 minutes without activity; work in one tab keeps the others signed in. Holds only a time. | necessary | until storage is cleared; overwritten with each activity |
 | "Not a robot" check (Turnstile) | Cloudflare, Inc. | Tells people from bots using technical device and browser signals. Not used for advertising. Najdimo stores nothing on your device for it. The check runs in Cloudflare's frame (challenges.cloudflare.com), which loads only on forms that use the check. | necessary | Najdimo stores nothing; Cloudflare's rules apply to its frame |
 | `_ga` (cookie) | Google Ireland Limited | Distinguishes users for visit statistics. | analytics | 2 years from your last visit |
 | `_ga_PKY4SCX3RL` (cookie) | Google Ireland Limited | Keeps session state in Google Analytics 4. | analytics | 2 years from your last visit |
@@ -234,3 +238,4 @@ Questions: info@signapps.si. General information about data processing: [privacy
 9. **Ad counting without consent.** The claim rests on aggregate, cookieless, identifier-free counting (privacy-policy chapter 11); confirm.
 10. **Stripe and sign-in providers** may set their own cookies on their own pages; we only point to their policies.
 11. **Slovenian wording** needs a native legal review (e.g. „piškotki“ vs „zapisi“, „lokalna shramba“).
+12. **Web storage keys (verified 2026-10-19, TASK-28.10).** Non-test writes in apps/web: localStorage `manage:<reportId>` (lib/manage-link.ts), `device_id` (lib/store.ts, shown by description, not by name) and `zivali-admin-activity` (components/admin/idle-timeout.tsx: the time of the last input, shared across the console's tabs; `IDLE_MS` 30 minutes, warning 2 minutes before; never removed, only overwritten); sessionStorage `manage_token` (lib/manage-link.ts) and `zz_support:…` (components/payments/answers.ts); IndexedDB through idb-keyval (default store) `draft:<kind>:<id>` (components/report-lost/lost-flow.tsx, components/report-found/found-flow.tsx; the coarsened point, no EXIF) and `photos:<draft>` (components/photos/use-photo-uploads.ts; the prepared files and the uploaded photo id, no EXIF, no file name). Both draft keys are deleted when the report is sent or the draft dropped. The admin key is set only for staff in the admin console; we classify it as necessary (security of the console, WCAG 2.2.1 timeout), please confirm (note 4).

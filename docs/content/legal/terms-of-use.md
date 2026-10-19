@@ -3,13 +3,15 @@ source: 02§Content, SEO and legal requirements (Legal); FR-034; FR-035; FR-038;
 
 | Field | Value |
 |---|---|
-| Version | 0.3 |
+| Version | 0.4 |
 | Date | 2026-10-19 |
 | Route SL | `/pogoji-uporabe` |
 | Route EN | `/en/terms` |
 | Slug SL / EN | `pogoji-uporabe` / `terms` |
 | Structured data | WebPage |
 | Template | T4 Legal (numbered h2 sections, "On this page" list, draft note) |
+
+Change in 0.4 (TASK-28.6, owner decision 2026-10-19 as for privacy 0.8): the published page (`apps/web/content/legal/{sl,en}/terms.mdx`, still the 0.2 text) shows no review markers. The three markers in chapters 7, 10 and 17 are removed there; the sentences around them stay as they were and read as complete, neutral statements. This master keeps every **[naročnik/pravnik: …]**, **[naročnik: …]** and **[pravni pregled]** marker for the lawyer pack: finder duties (Q-006, LQ-08), the withdrawal right for Boost (LQ-41) and the out-of-court dispute provider (LQ-44). The legal text itself is unchanged.
 
 Change in 0.3 (CH-641, PRD v0.11 FR-026): chapter 10 describes Premium Protect: what it includes and what stays free, monthly and yearly plans, automatic renewal with the reminder 7 days before a yearly renewal, cancellation at any time, the 14-day right of withdrawal with express consent to start at once, the free Boost rule (OQ-004) and what happens when a subscription ends. Boost and Podpornik keep their short paragraph. New claims carry **[pravni pregled]** / **[legal review]** (lawyer pack LQ-41, LQ-74).
 
@@ -363,7 +365,7 @@ Najdimo, operated by SIGNAPPS, grafična in digitalna agencija, d.o.o., Kolomban
 
 # Notes for legal review (EN, internal, not published)
 
-1. **Company details.** Every `[naročnik: …]` / `[client: …]` marker needs a value (company name and form, address, contact email, phone). The build should fail while one remains.
+1. **Company details and markers (updated in 0.4).** The company details are filled. The remaining `[naročnik/pravnik: …]` / `[client/legal: …]`, `[naročnik: …]` / `[client: …]` and `[pravni pregled]` / `[legal review]` markers stay in this master until you have answered them; the published page never shows them (owner decision 2026-10-19). Open behind them: finder duties (note 3, LQ-08), the withdrawal right for a Boost that starts at once (note 5, LQ-41), the free Boost rule (OQ-004) and the dispute provider (note 8, LQ-44). Until LQ-44 is answered, the published chapter 17 says only that consumers can use an out-of-court provider, without naming one.
 2. **Age 15 and paid options for adults.** Same line as in the privacy policy (note 6 there). A proposal, not a brief requirement; verify against ZVOP-2 and contract capacity of minors.
 3. **Finders (Q-006).** I do not state any legal duty of finders (e.g. reporting to the municipality or shelter, holding periods). Counsel must confirm the applicable Slovenian rules and whether we should state them.
 4. **Reward line (changed in 0.2).** Reward escrow and the platform fee are out of scope (brief v1.1, Q-011 closed). An owner may show a display-only reward line; Najdimo is not a party and never handles the money. Confirm whether the line is a public promise of a reward (javna obljuba nagrade, Obligacijski zakonik) that binds the owner, and whether the chapter 6 wording and the chapter 15 carve-out are enough (lawyer pack LQ-67).

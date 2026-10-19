@@ -3,13 +3,15 @@ source: 02§Content, SEO and legal requirements (Legal); FR-034; FR-035; FR-038;
 
 | Field | Value |
 |---|---|
-| Version | 0.9 |
+| Version | 0.10 |
 | Date | 2026-10-19 |
 | Route SL | `/zasebnost` |
 | Route EN | `/en/privacy` |
 | Slug SL / EN | `zasebnost` / `privacy` |
 | Structured data | WebPage |
 | Template | T4 Legal (numbered h2 sections, "On this page" list, draft note) |
+
+Change in 0.10 (TASK-28.7, TASK-28.9, CH-669; published the same day in `apps/web/content/legal/{sl,en}/privacy.mdx`, without markers): (1) chapter 14: the finder's email for the private link is deleted when the report closes, is marked reunited or expires, as the code does (`report_contacts`, C7), not 30 days after closing; (2) chapter 12 lists Cloudflare, Inc. as the reverse proxy and CDN in front of najdimo.si and the API (every request, IP address and request data, TLS termination, global network), and chapter 13 names the transfer basis in Cloudflare's DPA **[pravni pregled]** (note 26); (3) chapter 14: partner enquiries are kept 24 months after the enquiry, as the retention job counts them (CH-669), not "after the last contact".
 
 Change in 0.9 (CH-641, PRD v0.11 R-026.6, R-026.7, A-031, A-032): Premium Protect. Chapter 8 adds the automatic translation of chat messages by Anthropic in chats with a Premium participant (masking of contact data, no training use, kept as the chat, notice to both people). Chapter 11 adds the aggregate, cookieless view and share counters per report (report statistics). Chapters 1, 3, 4, 9, 12 and 14 follow. New claims carry **[pravni pregled]** / **[legal review]** (lawyer pack LQ-72 to LQ-74). Publish these parts only when the features go live (note 14).
 
@@ -264,6 +266,7 @@ Podatkov ne prodajamo. Ponudniki, ki jih potrebujemo za delovanje storitve, so:
 |---|---|---|---|
 | Supabase Inc., ZDA (obdelovalec) | zbirka podatkov, vpis, dostava sporočil v pogovorih v živo | podatki iz poglavja 3 razen fotografij | podatki v EU, Frankfurt (AWS eu-central-1) |
 | Hetzner Online GmbH, Nemčija (obdelovalec) | strežnik za spletno stran, aplikacijski vmesnik in opravila v ozadju | podatki, ki potujejo skozi storitev, in strežniški zapisi (IP naslov, tehnični podatki obiska) približno 7 dni | EU (Nemčija ali Finska) |
+| Cloudflare, Inc., ZDA (obdelovalec) | posrednik (reverse proxy) in omrežje za dostavo vsebin (CDN) pred spletno stranjo najdimo.si in našim aplikacijskim vmesnikom: sprejme vsako zahtevo, varuje storitev pred preobremenitvijo in napadi ter zahtevo posreduje našemu strežniku | IP naslov in podatki vsake zahteve (naslov strani, glave zahteve, vrsta brskalnika in naprave); Cloudflare zaključi šifrirano povezavo (TLS), zato vidi tudi vsebino zahtev in odgovorov | Cloudflarovo svetovno omrežje; obdelava tudi zunaj EU, med drugim v ZDA [pravni pregled] |
 | Cloudflare, Inc., ZDA, storitev R2 (obdelovalec) | shramba fotografij, dostava javnih kopij fotografij prek Cloudflarovega omrežja, nočne šifrirane varnostne kopije zbirke | fotografije; varnostne kopije vsebujejo podatke iz poglavja 3; IP naslov, ko se naložijo javne fotografije | shramba v EU; javne kopije fotografij Cloudflare dostavlja prek svojega svetovnega omrežja |
 | Brevo (Sendinblue SAS), Francija (obdelovalec) | e-pošta za vpis in obvestila | e-naslov, ime, jezik, besedilo sporočila | EU |
 | Expo Push Service (650 Industries, Inc.), ZDA (obdelovalec); obvestila gredo prek Apple Push Notification service in Google Firebase Cloud Messaging | potisna obvestila | žeton naprave in besedilo obvestila, ki ne vsebuje osebnih podatkov | ZDA |
@@ -289,6 +292,8 @@ Glavna zbirka podatkov je v EU. Nekateri ponudniki iz poglavja 12 imajo sedež v
 - okvir EU–ZDA za varstvo podatkov (Data Privacy Framework), kadar je ponudnik vanj vpisan;
 - sicer standardne pogodbene klavzule Evropske komisije.
 
+Cloudflarov dogovor o obdelavi podatkov (poglavje 12) vključuje standardne pogodbene klavzule Evropske komisije, Cloudflare pa v njem navaja, da spoštuje okvir EU–ZDA za varstvo podatkov. [pravni pregled]
+
 Kopijo zaščitnih ukrepov lahko zahtevate na e-naslovu iz poglavja 2.
 
 ## 14. Kako dolgo podatke hranimo
@@ -301,7 +306,7 @@ Kopijo zaščitnih ukrepov lahko zahtevate na e-naslovu iz poglavja 2.
 | Shranjena (že približna) točka zaključene prijave | zameglimo 30 dni po zaključku prijave; ostaneta zamegljena točka in ime območja |
 | Pogovori | izbrišemo 6 mesecev po zaključku povezane prijave |
 | Samodejni prevodi sporočil | skupaj s pogovorom (6 mesecev po zaključku povezane prijave) [pravni pregled] |
-| E-naslov najditelja za zasebno povezavo | izbrišemo 30 dni po zaključku prijave |
+| E-naslov najditelja za zasebno povezavo | izbrišemo, ko se prijava zaključi, ko je označeno, da je žival spet doma, ali ko prijava poteče |
 | Zgoščen IP naslov in podatki za omejevanje zahtev | 48 ur |
 | Anonimni računi brez odprte prijave | 30 dni |
 | Naložene datoteke, ki niso pripete na prijavo | 24 ur |
@@ -315,7 +320,7 @@ Kopijo zaščitnih ukrepov lahko zahtevate na e-naslovu iz poglavja 2.
 | Naročnina Premium Zaščita (paket, stanje, datum obnove) | do izbrisa računa; plačila naročnine kot plačilni zapisi |
 | Statistika prijav (združeni števci) | skupaj s prijavo; števci ne vsebujejo osebnih podatkov [pravni pregled] |
 | Veterinarski partner: profil ambulante in kontaktna oseba | do prenehanja naročnine, nato izbris v 30 dneh |
-| Povpraševanja partnerjev | 24 mesecev po zadnjem stiku |
+| Povpraševanja partnerjev | 24 mesecev po oddaji povpraševanja |
 | Varnostne kopije | podatki iz njih izginejo najpozneje v 30 dneh |
 | Rezultati pomoči umetne inteligence (shranjeni pod zgoščeno vrednostjo slike) | dokler pri nas obstaja fotografija s to zgoščeno vrednostjo [pravni pregled] |
 | Vektorji slik | skupaj s fotografijo [pravni pregled] |
@@ -585,6 +590,7 @@ We do not sell data. The providers we need to run the service are:
 |---|---|---|---|
 | Supabase Inc., USA (processor) | database, sign-in, delivery of live chat messages | data from chapter 3 except photos | data in the EU, Frankfurt (AWS eu-central-1) |
 | Hetzner Online GmbH, Germany (processor) | server for the website, the API and background jobs | data passing through the service, and server logs (IP address, technical data of the visit) for about 7 days | EU (Germany or Finland) |
+| Cloudflare, Inc., USA (processor) | reverse proxy and content delivery network (CDN) in front of the najdimo.si website and our API: it receives every request, protects the service against overload and attacks, and passes the request on to our server | the IP address and request data of every request (the address requested, request headers, browser and device type); Cloudflare terminates the encrypted connection (TLS), so it also sees the content of requests and responses | Cloudflare's global network; processing also outside the EU, including the USA [legal review] |
 | Cloudflare, Inc., USA, R2 service (processor) | photo storage, delivery of public photo copies through Cloudflare's network, nightly encrypted database backups | photos; backups contain the data from chapter 3; IP address when public photos load | storage in the EU; Cloudflare delivers public photo copies through its global network |
 | Brevo (Sendinblue SAS), France (processor) | email for sign-in and notifications | email address, name, language, message text | EU |
 | Expo Push Service (650 Industries, Inc.), USA (processor); notifications travel through Apple Push Notification service and Google Firebase Cloud Messaging | push notifications | device token and notification text, which contains no personal data | USA |
@@ -610,6 +616,8 @@ The main database is in the EU. Some providers in chapter 12 are based in the Un
 - the EU–US Data Privacy Framework, where the provider is certified under it;
 - otherwise, the European Commission's standard contractual clauses.
 
+Cloudflare's data processing agreement (chapter 12) includes the European Commission's standard contractual clauses, and in it Cloudflare states that it complies with the EU–US Data Privacy Framework. [legal review]
+
 You can ask for a copy of the safeguards at the email address in chapter 2.
 
 ## 14. How long we keep data
@@ -622,7 +630,7 @@ You can ask for a copy of the safeguards at the email address in chapter 2.
 | Stored (already approximate) point of a closed report | blurred 30 days after the report closes; only the blurred point and the area name remain |
 | Chats | deleted 6 months after the related report closes |
 | Automatic message translations | together with the chat (6 months after the related report closes) [legal review] |
-| Finder's email address for the private link | deleted 30 days after the report closes |
+| Finder's email address for the private link | deleted when the report closes, is marked as reunited or expires |
 | Hashed IP address and rate-limit data | 48 hours |
 | Anonymous accounts without an open report | 30 days |
 | Uploaded files not attached to a report | 24 hours |
@@ -636,7 +644,7 @@ You can ask for a copy of the safeguards at the email address in chapter 2.
 | Premium Protect subscription (plan, status, renewal date) | until you delete your account; subscription payments as payment records |
 | Report statistics (aggregate counters) | together with the report; the counters hold no personal data [legal review] |
 | Vet Partner: clinic profile and contact person | until the subscription ends, then deleted within 30 days |
-| Partner enquiries | 24 months after the last contact |
+| Partner enquiries | 24 months after the enquiry |
 | Backups | data disappears from them within 30 days at the latest |
 | AI assistance results (stored under the image hash) | while a photo with that hash exists with us [legal review] |
 | Image vectors | together with the photo [legal review] |
@@ -735,3 +743,8 @@ We may change this policy, for example when we add a new feature or provider. We
     (c) **Masking.** C9 masks phone numbers, email addresses, URLs and chip-like numbers before the provider call; names and addresses written in words are not masked. The text claims only what C9 masks.
     (d) **Report statistics.** Counting stores no identifier, cookie or device data; the server knows a signed-in viewer at request time only to leave out the owner's own views and does not store it. We propose that ePrivacy consent is not needed and legitimate interest covers it (LQ-73). Retention "together with the report" is our proposal; the PRD sets none.
     (e) **Premium subscription.** Terms chapter 10 now describes the plans, renewal, the reminder, cancellation and the 14-day withdrawal right (LQ-74).
+26. **Cloudflare as reverse proxy and CDN (new in 0.10, TASK-28.9).** Since CH-488 the DNS records `@`, `www` and `api` of najdimo.si are proxied through Cloudflare (live response header `server: cloudflare`; Cloudflare adds `/cdn-cgi/` scripts, TASK-28.5). Every visit to the website and every API call, also from the app, passes through Cloudflare, which terminates TLS. Chapter 12 therefore lists it beside Hetzner; the R2 and Turnstile rows stay as they were. This settles client decision CD-10 ("whether the website also runs behind the Cloudflare CDN"); the lawyer briefing §5.2 and §9.1 still list only R2 and Turnstile and need the proxy row at the next refresh. Sources, each read 2026-10-19:
+    (a) **Contracting entity.** Self-Serve Subscription Agreement, https://www.cloudflare.com/terms/ (last updated 12 September 2025): §20 "The Service is offered by Cloudflare, Inc."; no other entity is named for EEA customers; §6.1 incorporates the DPA by reference. Address from the DPA, Annex 1: 101 Townsend Street, San Francisco, CA 94107, USA.
+    (b) **DPA.** Cloudflare Customer DPA, https://www.cloudflare.com/cloudflare-customer-dpa/ (version 6.4, effective 3 April 2026): Cloudflare "is a Processor (or sub-Processor, as applicable)" (§2.3); it and its sub-processors "may process outside of the European Economic Area" (§6.1); SCCs Module Two where the customer is a controller (§6.2(a)(i)); "Cloudflare complies with the Data Privacy Framework", and transfers under it are not treated as restricted transfers (§6.4); Global CBPR and Global PRP certification (§3.2, §7). Annex 1 lists customer logs with IP addresses; Annex 2 names geographically distributed data centres.
+    (c) **Not claimed in the text:** where Cloudflare stores the request logs, how long it keeps them, whether the hop from Cloudflare to our server is encrypted (TLS mode), what the CDN caches beyond public photos, and any Data Localization Suite or EU-only setting (none known). Please verify Cloudflare's DPF listing yourself (note 8) and confirm the transfer wording in chapter 13 (LQ-20).
+27. **Retention rows checked against the retention job (new in 0.10).** (a) Finder's email (TASK-28.7): `report_contacts` is deleted in the same transaction as the close, mark-reunited and expiry transitions (`apps/api/domains/reports/lifecycle.domain.ts`, `apps/api/prisma/data-inventory.json`), so chapter 14 no longer promises 30 days. When a report row itself is deleted, the email goes with it (foreign key `ON DELETE CASCADE`). (b) Partner enquiries (CH-669): the leads table has no last-contact time; the retention job counts 24 months from creation, so chapter 14 says "after the enquiry". (c) Open, not decided here: the deletion window for a closed or reunited report row (CH-667, owner decision); until it is set, chapter 14 adds no row for it (note 7). (d) The retention job (TASK-114.33) runs its new classes, among them partner enquiries, the email delivery log and abuse reports, in count-only mode until `retention.purge_live` is switched on (CH-671); the chapter 14 periods for those rows hold only from then.
