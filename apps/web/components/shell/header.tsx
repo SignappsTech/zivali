@@ -47,7 +47,9 @@ const ACCOUNT = [
 	['/account/payments', 'account_payments', CreditCardIcon],
 ] as const;
 
-const bar = 'mx-auto box-content flex h-16 max-w-[1120px] items-center gap-2 px-5 md:h-[88px] md:px-12';
+// 64 px (88 from md) as 48 + 2 × 8 px, so at 200 % text the items wrap onto more rows instead of overflowing.
+const bar =
+	'mx-auto box-content flex min-h-12 max-w-[1120px] flex-wrap items-center gap-2 px-5 py-2 md:min-h-[72px] md:px-12';
 const navLinkClass = `inline-flex min-h-11 items-center rounded-full px-3 font-semibold whitespace-nowrap text-muted-foreground hover:bg-foreground/10 hover:text-foreground aria-[current=page]:text-foreground aria-[current=page]:underline aria-[current=page]:decoration-primary aria-[current=page]:decoration-2 aria-[current=page]:underline-offset-8 ${ringClass}`;
 const sheetLinkClass = `-mx-3 flex min-h-14 items-center rounded-xl px-3 font-display text-2xl leading-[30px] font-semibold tracking-[-0.01em] hover:bg-foreground/10 aria-[current=page]:underline aria-[current=page]:decoration-primary aria-[current=page]:decoration-2 aria-[current=page]:underline-offset-8 ${ringClass}`;
 // System 10.9 menu: popover, radius 20, 8 px padding, shadow-pop; rows 48 px, icon 20, 16 semibold.
@@ -149,11 +151,11 @@ export function SiteHeader({ viewer }: { viewer: Viewer | null }) {
 					<nav aria-label={t('main_label')} className="hidden lg:block">
 						<NavLinks
 							links={links}
-							className="flex items-center gap-1 xl:gap-2"
+							className="flex flex-wrap items-center gap-1 xl:gap-2"
 							linkClassName={navLinkClass}
 						/>
 					</nav>
-					<div className="flex items-center gap-2 lg:ml-auto">
+					<div className="ml-auto flex flex-wrap items-center justify-end gap-2">
 						{/* From md; signed in it moves into the account menu between lg and xl (P1 B3). */}
 						<div className={viewer ? 'hidden md:block lg:hidden xl:block' : 'hidden md:block'}>
 							<LanguageSwitch labels={languages} />
@@ -255,7 +257,7 @@ export function SiteHeader({ viewer }: { viewer: Viewer | null }) {
 							aria-label={t('main_label')}
 							className={`${dialogClass} h-dvh max-h-none w-full max-w-none md:ml-auto md:w-[360px] md:shadow-pop`}
 						>
-							<div className="flex h-16 items-center gap-2 px-5 md:h-[88px] md:px-6">
+							<div className="flex min-h-16 flex-wrap items-center gap-2 px-5 py-2 md:min-h-[88px] md:px-6">
 								<Logo className="md:hidden" />
 								<form method="dialog" className="ml-auto">
 									<Button variant="ghost" size="icon" aria-label={t('menu_close')}>

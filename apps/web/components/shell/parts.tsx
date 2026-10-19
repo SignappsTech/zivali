@@ -229,7 +229,7 @@ export function LanguageSwitch({
 		<div
 			role="group"
 			aria-label={labels.label}
-			className={`inline-flex items-center text-control font-semibold text-muted-foreground ${className}`}
+			className={`inline-flex flex-wrap items-center text-control font-semibold text-muted-foreground ${className}`}
 		>
 			{routing.locales.map((next, index) => (
 				<Fragment key={next}>

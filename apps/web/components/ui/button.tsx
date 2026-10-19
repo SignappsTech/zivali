@@ -6,8 +6,11 @@ import { cn } from '@/lib/utils';
 
 // System §10.1 and §10.2: full pill, no border, no shadow; hover and pressed use the -hover and -pressed tokens on filled buttons and
 // lays foreground at 10 % under ghost and text buttons; disabled is the muted fill, never an opacity trick.
+// Large text (200 %, WCAG 1.4.4 / 1.4.10): a label that does not fit its container wraps inside the pill instead of
+// overflowing (max-w-full, min-w-fit keeps the one-line width wherever it fits, wrap-anywhere is the last resort for a
+// word wider than the line), py-2 keeps wrapped lines off the edge, and the side padding stops growing at its 100 % size.
 const buttonVariants = cva(
-	'inline-flex shrink-0 cursor-pointer items-center justify-center gap-2 rounded-button text-center font-sans text-base font-bold whitespace-nowrap no-underline transition-[transform,background-color] duration-150 ease-[cubic-bezier(0.2,0,0,1)] select-none focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ring active:scale-[0.98] disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground disabled:active:scale-100 aria-busy:cursor-progress aria-busy:active:scale-100 motion-reduce:transition-none motion-reduce:active:scale-100 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*=size-])]:size-5 aria-busy:[&>svg]:hidden',
+	'inline-flex max-w-full min-w-fit shrink-0 cursor-pointer items-center justify-center gap-2 rounded-button py-2 text-center font-sans text-base font-bold wrap-anywhere no-underline transition-[transform,background-color] duration-150 ease-[cubic-bezier(0.2,0,0,1)] select-none focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ring active:scale-[0.98] disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground disabled:active:scale-100 aria-busy:cursor-progress aria-busy:active:scale-100 motion-reduce:transition-none motion-reduce:active:scale-100 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*=size-])]:size-5 aria-busy:[&>svg]:hidden',
 	{
 		variants: {
 			variant: {
@@ -25,9 +28,9 @@ const buttonVariants = cva(
 					'bg-provider text-provider-foreground shadow-[inset_0_0_0_1px_hsl(var(--provider-border))] hover:bg-[color-mix(in_srgb,hsl(var(--provider))_86%,hsl(var(--provider-foreground)))]',
 			},
 			size: {
-				sm: 'min-h-11 px-4.5',
-				default: 'min-h-12 px-6',
-				lg: 'min-h-14 px-8 text-control-lg',
+				sm: 'min-h-11 px-[min(1.125rem,18px)]',
+				default: 'min-h-12 px-[min(1.5rem,24px)]',
+				lg: 'min-h-14 px-[min(2rem,32px)] text-control-lg',
 				icon: 'size-11 [&_svg:not([class*=size-])]:size-6',
 			},
 		},

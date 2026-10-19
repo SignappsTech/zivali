@@ -81,6 +81,24 @@ describe('SiteHeader', () => {
 		expect(logo.className).toContain('min-w-11');
 	});
 
+	// TASK-18.8: 48 + 2 × 8 px (72 + 2 × 8 from md) is the 64 / 88 px bar; at 200 % text its rows wrap instead of
+	// overflowing (measured in e2e/large-text.spec.ts).
+	it('wraps its items at large text: the bar, the actions, the menu sheet top row and the language switch', () => {
+		renderAt('/kako-deluje', <SiteHeader viewer={null} />);
+		const header = screen.getByRole('banner');
+		const classes = (element: Element | null | undefined) => element?.getAttribute('class')?.split(' ') ?? [];
+
+		expect(classes(header)).toEqual(expect.arrayContaining(['flex-wrap', 'min-h-12', 'py-2', 'md:min-h-[72px]']));
+		expect(classes(header)).not.toContain('h-16');
+		const menu = within(header).getByRole('button', { name: sl.nav.menu_open });
+		expect(classes(menu.parentElement)).toEqual(expect.arrayContaining(['flex-wrap', 'ml-auto', 'justify-end']));
+		const sheet = header.querySelector('#menu-sheet');
+		expect(classes(sheet?.firstElementChild)).toEqual(expect.arrayContaining(['flex-wrap', 'min-h-16']));
+		const languages = header.querySelectorAll('[role=group][aria-label="Jezik: Slovenščina"]');
+		expect(languages).toHaveLength(2);
+		for (const language of languages) expect(classes(language)).toContain('flex-wrap');
+	});
+
 	it('signed out: four links with the current page, language, Vpis and the report choices (SL)', () => {
 		renderAt('/kako-deluje', <SiteHeader viewer={null} />);
 		const header = screen.getByRole('banner');
@@ -202,6 +220,7 @@ describe('SiteHeader', () => {
 		expect(within(header).getByRole('link', { name: sl.common.close }).getAttribute('href')).toBe('/');
 		expect(within(header).queryByRole('navigation')).toBeNull();
 		expect(within(header).queryByRole('button', { name: sl.nav.report })).toBeNull();
+		expect(header.className).toContain('flex-wrap');
 	});
 
 	it('leaves admin pages to their own shell', () => {
