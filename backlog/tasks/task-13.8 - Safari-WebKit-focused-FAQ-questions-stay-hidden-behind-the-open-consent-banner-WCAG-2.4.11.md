@@ -1,12 +1,13 @@
-﻿---
+---
 id: TASK-13.8
 title: >-
   Safari/WebKit: focused FAQ questions stay hidden behind the open consent
   banner (WCAG 2.4.11)
-status: To Do
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-19 18:34'
+updated_date: '2026-10-19 18:52'
 labels:
   - bug
   - 'est:XS'
