@@ -149,8 +149,22 @@ describe('ManagePage (P7, C7)', () => {
 		const heading = await screen.findByRole('heading', { level: 1, name: 'This link no longer works' });
 		await vi.waitFor(() => expect(document.activeElement).toBe(heading));
 		expect(screen.getByText(en.report_found.link_invalid_body)).toBeTruthy();
+		// Reserves the skeleton's height so the footer does not jump (TASK-17.15).
+		expect(screen.getByRole('main').className).toContain('min-h-[456px]');
 		// Without a token nothing is requested and nothing signs in.
 		if (!token) expect([api.calls, auth.ensureSession.mock.calls]).toEqual([[], []]);
+	});
+
+	it('reserves the captcha widget slot while a captcha is configured (CLS)', async () => {
+		vi.stubEnv('NEXT_PUBLIC_TURNSTILE_SITE_KEY', 'test-key');
+		try {
+			open('bad');
+			show(<ManagePage />, {}, 'en');
+			await screen.findByRole('heading', { level: 1, name: 'This link no longer works' });
+			expect(screen.getByRole('main').querySelector('.min-h-\\[65px\\]')).toBeTruthy();
+		} finally {
+			vi.unstubAllEnvs();
+		}
 	});
 
 	it('keeps trying after a lost connection or a failed captcha, with a calm note', async () => {
