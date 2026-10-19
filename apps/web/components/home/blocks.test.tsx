@@ -89,7 +89,14 @@ describe('RecentReports (T1 layout B, block 2)', () => {
 		expect(within(cards[0]!).getByText('Šiška, Ljubljana')).toBeTruthy();
 		expect(screen.queryByText(/Luna/)).toBeNull();
 		expect(cards[0]!.querySelector('img')?.getAttribute('src')).toBe('https://media.test/Ab3dEf7h.webp');
+		// No photo: the muted tile shows a paw print, never an empty tile (TASK-115.11).
 		expect(cards[1]!.querySelector('img')).toBeNull();
+		const tile = cards[1]!.firstElementChild!;
+		expect([tile.getAttribute('aria-hidden'), tile.className]).toEqual([
+			'true',
+			expect.stringMatching(/\bbg-muted\b/),
+		]);
+		expect(tile.querySelector('svg')).not.toBeNull();
 	});
 
 	it('the map teaser: a drawn tile with a pin per report in its status colour, opening /map, no map library', async () => {
@@ -126,6 +133,67 @@ describe('RecentReports (T1 layout B, block 2)', () => {
 			'fill-marker-reunited',
 		]);
 		expect(container.querySelector('canvas, script, .maplibregl-map')).toBeNull();
+		expect(teaser!.querySelectorAll('[data-cluster]')).toHaveLength(0);
+	});
+
+	it('the map teaser: overlapping pins merge into one cluster disc with the count, at their centre', async () => {
+		answer({
+			items: [
+				// Ljubljana at (159 162); 40 units east (199 162) overlaps nothing yet, so it starts its own group.
+				report('Code0001', { area: { lat: 46.05, lng: 14.51, radius_m: 300 } }),
+				report('Code0002', { type: 'found', area: { lat: 45.55, lng: 13.73, radius_m: 300 } }),
+				report('Code0003', { area: { lat: 46.05, lng: 14.983, radius_m: 300 } }),
+				// Halfway (179 162) it overlaps both, so the two groups become one; then one more on Ljubljana.
+				report('Code0004', { area: { lat: 46.05, lng: 14.7465, radius_m: 300 } }),
+				report('Code0005', { status: 'reunited', area: { lat: 47.5, lng: 17.2, radius_m: 300 } }),
+				report('Code0006', { area: { lat: 46.06, lng: 14.5, radius_m: 300 } }),
+			],
+			next_cursor: null,
+			total_estimate: 6,
+		});
+
+		show('sl', await RecentReports({ locale: 'sl' }));
+
+		const [teaser] = screen.getAllByRole('link', { name: sl.pages.home.near_open_map });
+		const clusters = [...teaser!.querySelectorAll('[data-cluster]')];
+		expect(
+			clusters.map((c) => [c.getAttribute('data-cluster'), c.getAttribute('transform'), c.textContent])
+		).toEqual([['4', 'translate(174 162)', '4']]);
+		expect(clusters[0]!.querySelector('circle:last-of-type')?.getAttribute('class')).toBe('fill-marker-cluster');
+		expect(clusters[0]!.querySelector('text')?.getAttribute('class')).toMatch(/\bfill-marker-cluster-foreground\b/);
+		// The pins that overlap nothing stay single, in their status colours.
+		expect(
+			[...teaser!.querySelectorAll('[data-pin]')].map((pin) => [
+				pin.getAttribute('data-pin'),
+				pin.getAttribute('transform'),
+			])
+		).toEqual([
+			['found', 'translate(93 222)'],
+			['reunited', 'translate(337 63)'],
+		]);
+		// Every row stays in the list: the cluster only changes the drawing.
+		expect(rows()).toHaveLength(6);
+	});
+
+	it('the map teaser: six reports in one place are one disc with 6, kept inside the crop-safe box', async () => {
+		answer({
+			items: Array.from({ length: 6 }, (_, i) =>
+				report(`Code000${i}`, { area: { lat: 47.5, lng: 12.0, radius_m: 300 } })
+			),
+			next_cursor: null,
+			total_estimate: 6,
+		});
+
+		show('sl', await RecentReports({ locale: 'sl' }));
+
+		const [teaser] = screen.getAllByRole('link', { name: sl.pages.home.near_open_map });
+		expect(teaser!.querySelectorAll('[data-pin]')).toHaveLength(0);
+		const [cluster] = teaser!.querySelectorAll('[data-cluster]');
+		// The pins clamp to the corner (63, 63); the larger disc sits 3 units further in.
+		expect([cluster?.getAttribute('data-cluster'), cluster?.getAttribute('transform')]).toEqual([
+			'6',
+			'translate(66 66)',
+		]);
 	});
 
 	it('6 reports: six full rows on every width (nothing hidden from lg)', async () => {
