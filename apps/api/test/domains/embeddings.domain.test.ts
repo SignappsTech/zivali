@@ -1,6 +1,7 @@
 // photo.embed (C20 §Jobs) against the local database, the in-memory storage and the mock embedder: one vector per
 // photo and active model, hash reuse, safety-check and status skips (CH-562), the monthly budget, the off adapter,
-// retries and the dead-letter log.
+// retries and the dead-letter log (refused requests at once, database errors too), the call's provider (mock or voyage).
+// The backfill and the model change: test/domains/embeddings.backfill.test.ts.
 import { randomBytes, randomUUID } from 'node:crypto';
 
 import { pino } from 'pino';
@@ -10,6 +11,7 @@ import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest
 import { EmbedderError, type EmbedderAdapter } from '../../adapters/embedder/index.ts';
 import { adapters } from '../../adapters/index.ts';
 import { offAdapter } from '../../adapters/select.ts';
+import EmbeddingsDao from '../../domains/embeddings/embeddings.dao.ts';
 import { EmbeddingsDomain } from '../../domains/embeddings/index.ts';
 import { variantRef } from '../../domains/photos/photo-objects.ts';
 import type { PHOTO_STATUS } from '../../generated/enums.ts';
@@ -96,7 +98,7 @@ afterAll(async () => {
 });
 
 describe('photo.embed', () => {
-	it('stores one L2-normalised 1024-d vector for embedding.model and one ai_calls row (voyage, pixels, cost)', async () => {
+	it('stores one L2-normalised 1024-d vector for embedding.model and one ai_calls row (mock, pixels, cost)', async () => {
 		const p = await photo();
 		const embed = vi.spyOn(adapters.embedder, 'embed');
 		const { ctx } = testCtx();
@@ -117,7 +119,8 @@ describe('photo.embed', () => {
 		});
 		const calls = await prisma.ai_calls.findMany({ where: { photo_id: p.id } });
 		expect(calls).toHaveLength(1);
-		expect(calls[0]).toMatchObject({ provider: 'voyage', model: MODEL, outcome: 'ok', pixels: 786432n });
+		// The mock's call is provider mock (TASK-42.1 review): it never counts toward the Voyage budget.
+		expect(calls[0]).toMatchObject({ provider: 'mock', model: MODEL, outcome: 'ok', pixels: 786432n });
 		expect(calls[0]!.cost_usd.toString()).toBe('0.000472');
 
 		// Again: the vector exists, so no second call and no second row.
@@ -131,7 +134,17 @@ describe('photo.embed', () => {
 		const p = await photo();
 		await EmbeddingsDomain.embedPhoto({ photo_id: p.id }, testCtx().ctx);
 		expect((await vectors(p.id)).map((r) => r.model)).toEqual([MODEL, 'voyage-next-test']);
-		expect(await prisma.ai_calls.count({ where: { photo_id: p.id, provider: 'voyage' } })).toBe(2);
+		expect(await prisma.ai_calls.count({ where: { photo_id: p.id, provider: 'mock' } })).toBe(2);
+	});
+
+	it('records a voyage call as provider voyage', async () => {
+		const p = await photo();
+		const voyage: EmbedderAdapter = {
+			provider: 'voyage',
+			embed: (images, model) => adapters.embedder.embed(images, model),
+		};
+		await EmbeddingsDomain.embedPhoto({ photo_id: p.id }, testCtx(voyage).ctx);
+		expect(await prisma.ai_calls.findMany({ where: { photo_id: p.id } })).toMatchObject([{ provider: 'voyage' }]);
 	});
 
 	it('reuses the vector of another photo with the same sha256, with no adapter call', async () => {
@@ -196,6 +209,27 @@ describe('photo.embed', () => {
 		}
 	});
 
+	it('mock calls never count toward the Voyage budget', async () => {
+		const spend = await prisma.ai_calls.create({
+			data: {
+				provider: 'mock',
+				model: MODEL,
+				outcome: 'ok',
+				input_tokens: 0,
+				output_tokens: 0,
+				cost_usd: '100',
+				latency_ms: 1,
+			},
+		});
+		try {
+			const p = await photo();
+			await EmbeddingsDomain.embedPhoto({ photo_id: p.id }, testCtx().ctx);
+			expect(await vectors(p.id)).toHaveLength(1);
+		} finally {
+			await prisma.ai_calls.delete({ where: { id: spend.id } });
+		}
+	});
+
 	it('with the embedder off: skipped with a log line, nothing thrown', async () => {
 		const p = await photo();
 		const { ctx, logs } = testCtx(offAdapter<EmbedderAdapter>('EMBEDDER_PROVIDER'));
@@ -220,6 +254,32 @@ describe('photo.embed', () => {
 		expect(lines.join('\n')).not.toContain('/9j/');
 		expect(await vectors(p.id)).toEqual([]);
 		expect(await prisma.ai_calls.count({ where: { photo_id: p.id } })).toBe(0);
+	});
+
+	it('a refused request (400, 401) logs photo.embed.dead_letter at once and ends without a retry', async () => {
+		for (const code of ['http_400', 'http_401']) {
+			const p = await photo();
+			vi.spyOn(adapters.embedder, 'embed').mockRejectedValue(new EmbedderError(code));
+			const { ctx, logs } = testCtx();
+			await expect(EmbeddingsDomain.embedPhoto({ photo_id: p.id }, ctx)).resolves.toBeUndefined();
+			expect(logs().filter((l) => l.msg === 'photo.embed.dead_letter')).toEqual([
+				expect.objectContaining({ photo_id: p.id, model: MODEL, code }),
+			]);
+			expect(await vectors(p.id)).toEqual([]);
+		}
+	});
+
+	it('a database error before the model loop still logs photo.embed.dead_letter on the last attempt', async () => {
+		const p = await photo();
+		const lost = Object.assign(new Error('connection lost'), { code: 'P1001' });
+		vi.spyOn(EmbeddingsDao, 'findPhoto').mockRejectedValue(lost);
+		const { ctx, logs } = testCtx();
+		await expect(EmbeddingsDomain.embedPhoto({ photo_id: p.id }, ctx)).rejects.toBe(lost);
+		expect(logs().map((l) => l.msg)).not.toContain('photo.embed.dead_letter');
+		await expect(EmbeddingsDomain.embedPhoto({ photo_id: p.id, last_attempt: true }, ctx)).rejects.toBe(lost);
+		expect(logs().filter((l) => l.msg === 'photo.embed.dead_letter')).toEqual([
+			expect.objectContaining({ photo_id: p.id, code: 'P1001' }),
+		]);
 	});
 
 	it('waits out a short Retry-After before it throws', async () => {
@@ -251,5 +311,18 @@ describe('photo.embed job', () => {
 			{ state: string }[]
 		>`select state::text from pgboss.job where id = ${id}::uuid`;
 		expect(row).toEqual({ state: 'failed' });
+	});
+
+	it('a refused request (401) ends the job after one attempt', async () => {
+		const p = await photo();
+		vi.spyOn(adapters.embedder, 'embed').mockRejectedValue(new EmbedderError('http_401'));
+		const embedPhoto = vi.spyOn(EmbeddingsDomain, 'embedPhoto');
+		const id = (await jobs.send('photo.embed', { photo_id: p.id }))!;
+		await drain(runJob);
+		expect(embedPhoto.mock.calls.filter(([input]) => input.photo_id === p.id)).toHaveLength(1);
+		const [row] = await prisma.$queryRaw<
+			{ state: string }[]
+		>`select state::text from pgboss.job where id = ${id}::uuid`;
+		expect(row).toEqual({ state: 'completed' });
 	});
 });

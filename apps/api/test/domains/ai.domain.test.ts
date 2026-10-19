@@ -379,8 +379,8 @@ describe('ai.extract job', () => {
 		await drain(runJob);
 		expect(await result(p.sha256)).not.toBeNull();
 		expect(await calls(p.id)).toMatchObject([{ provider: 'anthropic', outcome: 'ok' }]);
-		// photo.embed ran too (mock embedder).
-		expect(await prisma.ai_calls.count({ where: { photo_id: p.id, provider: 'voyage' } })).toBe(1);
+		// photo.embed ran too (mock embedder, recorded as provider mock since TASK-42.3).
+		expect(await prisma.ai_calls.count({ where: { photo_id: p.id, provider: 'mock' } })).toBe(1);
 	});
 
 	it('runs 3 times on a retryable error, then records failed and completes (the pipeline never fails)', async () => {

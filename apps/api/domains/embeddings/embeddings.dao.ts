@@ -1,5 +1,5 @@
-// Prisma access for photo vectors (C20 §Model, §Queries) and the Voyage rows of the ai_calls ledger. Vectors are read
-// and written only through parameterised raw SQL, passed as a '[…]' text literal cast to extensions.vector.
+// Prisma access for photo vectors (C20 §Model, §Jobs, §Queries) and the embedder rows of the ai_calls ledger. Vectors
+// are read and written only through parameterised raw SQL, passed as a '[…]' text literal cast to extensions.vector.
 import { EMBED_DIM } from '../../adapters/embedder/index.ts';
 import { Prisma } from '../../generated/client.ts';
 import type { REPORT_TYPE, SPECIES } from '../../generated/enums.ts';
@@ -66,6 +66,38 @@ export async function voyageSpendSince(since: Date, tx?: Tx): Promise<number> {
 	return Number(_sum.cost_usd ?? 0);
 }
 
+/**
+ * Photos the backfill embeds (C20 §Jobs): accepted or published, on a report or a pet, with a clean safety check (an
+ * ai_results row: a dog or cat, no prominent person, no nudity; no row = never embedded, CH-562) and no vector for
+ * the model.
+ */
+const missingVector = (model: string) => Prisma.sql`
+	from app.photos p join app.ai_results a on a.sha256 = p.sha256
+	where ${LIVE_PHOTO} and (p.report_id is not null or p.pet_id is not null)
+		and a.result->>'animal' in ('dog', 'cat')
+		and a.moderation->'person_prominent' = 'false'::jsonb and a.moderation->'nsfw' = 'false'::jsonb
+		and not exists (select from app.photo_embeddings e where e.photo_id = p.id and e.model = ${model})`;
+
+/** Up to `limit` ids of photos without a vector for the model, after the id `after`, in id order. */
+export async function missingVectors(model: string, after: string, limit: number, tx?: Tx): Promise<string[]> {
+	const db = tx ?? prisma;
+	const rows = await db.$queryRaw<{ id: string }[]>`
+		select p.id ${missingVector(model)} and p.id > ${after}::uuid order by p.id limit ${limit}`;
+	return rows.map((r) => r.id);
+}
+
+export async function countMissing(model: string, tx?: Tx): Promise<number> {
+	const db = tx ?? prisma;
+	const [row] = await db.$queryRaw<{ n: number }[]>`select count(*)::int as n ${missingVector(model)}`;
+	return row?.n ?? 0;
+}
+
+/** Deletes the vectors of every model not in `keep`; returns how many. */
+export async function pruneVectors(keep: string[], tx?: Tx): Promise<number> {
+	const db = tx ?? prisma;
+	return db.$executeRaw`delete from app.photo_embeddings where model <> all(${keep}::text[])`;
+}
+
 export async function insertVector(photo_id: string, model: string, vector: number[], tx?: Tx) {
 	const db = tx ?? prisma;
 	return db.$executeRaw`
@@ -74,9 +106,19 @@ export async function insertVector(photo_id: string, model: string, vector: numb
 		on conflict do nothing`;
 }
 
-/** One ledger row per embedding call (unique per photo, provider and model; a repeat is not counted twice). */
+/**
+ * One ledger row per embedding call (unique per photo, provider and model; a repeat is not counted twice). The mock's
+ * calls are provider mock, so they never count toward the Voyage budget.
+ */
 export async function recordCall(
-	data: { photo_id: string; model: string; pixels: number; cost_usd: string; latency_ms: number },
+	data: {
+		photo_id: string;
+		provider: 'mock' | 'voyage';
+		model: string;
+		pixels: number;
+		cost_usd: string;
+		latency_ms: number;
+	},
 	tx?: Tx
 ) {
 	const db = tx ?? prisma;
@@ -84,7 +126,6 @@ export async function recordCall(
 		data: [
 			{
 				...data,
-				provider: 'voyage',
 				outcome: 'ok',
 				input_tokens: 0,
 				output_tokens: 0,
@@ -248,6 +289,9 @@ export default {
 	modelsOf,
 	copyFromSameImage,
 	voyageSpendSince,
+	missingVectors,
+	countMissing,
+	pruneVectors,
 	insertVector,
 	recordCall,
 	similarity,
