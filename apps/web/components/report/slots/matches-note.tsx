@@ -1,4 +1,4 @@
-import { EyeSlashIcon } from '@phosphor-icons/react/dist/ssr/EyeSlash';
+﻿import { EyeSlashIcon } from '@phosphor-icons/react/dist/ssr/EyeSlash';
 import { HourglassMediumIcon } from '@phosphor-icons/react/dist/ssr/HourglassMedium';
 import { NextIntlClientProvider, useLocale, useMessages, useTranslations } from 'next-intl';
 
@@ -6,6 +6,7 @@ import { SUPPORT_EMAIL } from '@/components/content/article';
 import { MatchesLink } from '@/components/report/slots/owner-lazy';
 import type { ReportSlotProps } from '@/components/report/slots/types';
 import { noteClass } from '@/components/shelters/classes';
+import { ringClass } from '@/components/shell/page';
 import { cn } from '@/lib/utils';
 
 /** The suggestions note, a client island with only its own two strings (the page scopes its client copy). */
@@ -20,7 +21,7 @@ function MatchesCount({ code, className }: { code: string; className?: string })
 
 /**
  * P9 matches-note slot: the owner's one note at the top of the info column (P9 S7), one variant at a time. Held and
- * hidden reports say why others cannot see them; an open lost report with suggestions says "N možnih ujemanj" with
+ * hidden reports say why others cannot see them; an open lost report with suggestions says "N moÅ¾nih ujemanj" with
  * "Poglej" to the P11 list (TASK-20.3). Public: nothing.
  */
 export function MatchesNote({ report, className }: ReportSlotProps) {
@@ -46,7 +47,10 @@ export function MatchesNote({ report, className }: ReportSlotProps) {
 						{' '}
 						<a
 							href={`mailto:${SUPPORT_EMAIL}`}
-							className="font-medium text-primary underline underline-offset-2"
+							className={cn(
+								ringClass,
+								'rounded-sm font-medium text-primary underline underline-offset-2'
+							)}
 						>
 							{t('owner_hidden_contact')}
 						</a>
