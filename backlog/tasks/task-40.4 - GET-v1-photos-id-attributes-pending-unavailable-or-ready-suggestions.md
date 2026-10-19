@@ -1,11 +1,11 @@
 ---
 id: TASK-40.4
 title: 'GET /v1/photos/:id/attributes: pending, unavailable or ready suggestions'
-status: In Progress
+status: Done
 assignee:
   - '@backend-dev'
 created_date: '2026-10-18 21:22'
-updated_date: '2026-10-19 00:14'
+updated_date: '2026-10-19 00:30'
 labels:
   - be
   - 'est:S'
