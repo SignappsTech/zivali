@@ -76,7 +76,9 @@ test('pets: CRUD paths and the PET_LIMIT conflict', async () => {
 
 	assert.deepEqual((await store.dispatch(endpoints.listPets.initiate(undefined, { subscribe: false }))).data, pets);
 	assert.deepEqual((await store.dispatch(endpoints.getPet.initiate({ id: pet.id }, { subscribe: false }))).data, pet);
-	const { error } = await store.dispatch(endpoints.createPet.initiate({ species: 'cat', name: 'Muca' }));
+	const { error } = await store.dispatch(
+		endpoints.createPet.initiate({ body: { species: 'cat', name: 'Muca' }, idempotencyKey: 'pet-key-1' })
+	);
 	assert.deepEqual(error, { status: 409, data: { ...petLimit.error, issues: undefined, requestId: undefined } });
 	await store.dispatch(endpoints.updatePet.initiate({ id: pet.id, body: { notes: null } }));
 	await store.dispatch(endpoints.archivePet.initiate({ id: pet.id }));
@@ -93,6 +95,7 @@ test('pets: CRUD paths and the PET_LIMIT conflict', async () => {
 			['DELETE', `/v1/pets/${pet.id}`, undefined],
 		]
 	);
+	assert.equal(client.calls[2]?.headers['Idempotency-Key'], 'pet-key-1');
 });
 
 test('matches: state filter, confirm returns the conversation, reject with a reason, UNVERIFIED_EMAIL', async () => {

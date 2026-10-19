@@ -3,10 +3,11 @@ id: TASK-16.9
 title: >-
   Pets: POST /v1/pets honours Idempotency-Key; web and mobile send one key per
   create chain
-status: To Do
+status: In Progress
 assignee:
   - '@tech-lead'
 created_date: '2026-10-16 01:40'
+updated_date: '2026-10-19 10:55'
 labels:
   - be
   - 'est:S'

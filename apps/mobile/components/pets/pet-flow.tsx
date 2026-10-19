@@ -8,6 +8,7 @@ import { KeyboardAvoidingView, ScrollView, type Text as RNText, View } from 'rea
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslations } from 'use-intl';
 
+import { uuid } from '@zivali/api/client';
 import { useCreatePetMutation, useSetPetPhotosMutation, useUpdatePetMutation } from '@zivali/api/pets';
 import { useDeletePhotoMutation } from '@zivali/api/photos';
 import type { QueryError } from '@zivali/api/rtk';
@@ -143,6 +144,9 @@ export function PetFlow({ pet }: { pet?: Pet }) {
 	const leaving = React.useRef(false);
 	// A pet created by an earlier attempt whose photo step failed: the retry patches it instead of creating another.
 	const created = React.useRef<string>(undefined);
+	// One Idempotency-Key per create chain (C1): a retry of the same values reuses it, so a lost response never makes a
+	// second pet; changed values or PET_LIMIT (a replayed answer) start a new chain.
+	const chain = React.useRef<{ body: string; key: string }>(undefined);
 	// A second tap on Shrani while the first save is in flight must not create a second pet.
 	const saving = React.useRef(false);
 	const scroll = React.useRef<ScrollView>(null);
@@ -209,7 +213,9 @@ export function PetFlow({ pet }: { pet?: Pet }) {
 						const body = initial.values ? changedFields(values, initial.values) : values;
 						if (Object.keys(body).length) await updatePet({ id, body }).unwrap();
 					} else {
-						id = (await createPet(values).unwrap()).id;
+						const pinned = JSON.stringify(values);
+						if (chain.current?.body !== pinned) chain.current = { body: pinned, key: uuid() };
+						id = (await createPet({ body: values, idempotencyKey: chain.current.key }).unwrap()).id;
 						created.current = id;
 					}
 					if (photoIds.join() !== initial.photoIds.join())
@@ -225,8 +231,10 @@ export function PetFlow({ pet }: { pet?: Pet }) {
 					if (pet) exit();
 					else router.replace(`/pets/${id}`);
 				} catch (failure) {
-					if (isPetLimit(failure)) setLimitHit(true);
-					else setSaveError(errorText(failure));
+					if (isPetLimit(failure)) {
+						chain.current = undefined;
+						setLimitHit(true);
+					} else setSaveError(errorText(failure));
 				} finally {
 					saving.current = false;
 				}

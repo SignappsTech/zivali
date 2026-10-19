@@ -8,9 +8,16 @@ export const petsApi = api.enhanceEndpoints({ addTagTypes: ['Pets'] }).injectEnd
 	endpoints: (build) => ({
 		listPets: build.query<PetList, void>({ query: () => '/v1/pets', providesTags: ['Pets'] }),
 		getPet: build.query<Pet, { id: Uuid }>({ query: ({ id }) => `/v1/pets/${id}`, providesTags: ['Pets'] }),
-		// CONFLICT with `details.code: 'PET_LIMIT'` over the free limit.
-		createPet: build.mutation<Pet, PetInput>({
-			query: (body) => ({ url: '/v1/pets', method: 'POST', body }),
+		// CONFLICT with `details.code: 'PET_LIMIT'` over the free limit. `idempotencyKey` (uuid, C1) stays the same across
+		// retries of one body, so a lost response never makes a second pet; the PET_LIMIT answer is replayed too, so
+		// callers drop the key after it.
+		createPet: build.mutation<Pet, { body: PetInput; idempotencyKey: string }>({
+			query: ({ body, idempotencyKey }) => ({
+				url: '/v1/pets',
+				method: 'POST',
+				body,
+				headers: { 'Idempotency-Key': idempotencyKey },
+			}),
 			invalidatesTags: ['Pets'],
 		}),
 		updatePet: build.mutation<Pet, { id: Uuid; body: UpdatePetInput }>({
