@@ -42,8 +42,8 @@ export function guardMessage({ databaseUrl, cwd, pending, unknown = [], allowOve
 			? `Refusing to migrate the shared database from a worktree: ${pending.length} migration(s) not yet applied there:`
 			: 'Refusing to run the API tests on the shared database from a worktree (the merge verify runs there).',
 		...pending.map((m) => `  - ${m}`),
-		'Use a scratch database (TEST_DATABASE_URL, or point DATABASE_URL/DIRECT_URL at task_<id>), set on the same command line:',
-		'  psql postgresql://postgres:postgres@127.0.0.1:55322/postgres -c "create database task_<id>" && export TEST_DATABASE_URL="postgresql://postgres:postgres@127.0.0.1:55322/task_<id>?schema=app"',
+		'Use a scratch database: set TEST_DATABASE_URL on the same command line; global-setup creates a task_* one with the auth schema and a realtime.send stub (or run pnpm --filter api db:scratch task_<id> first):',
+		'  TEST_DATABASE_URL="postgresql://postgres:postgres@127.0.0.1:55322/task_<id>?schema=app" pnpm --filter api test',
 		'Override (humans only): ALLOW_SHARED_DB_MIGRATE=1',
 	].join('\n');
 }
