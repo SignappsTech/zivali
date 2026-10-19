@@ -192,7 +192,7 @@ function Row({ row, group, onOpen }: { row: InboxRow; group: Group; onOpen: () =
 					// eslint-disable-next-line @next/next/no-img-element
 					<img
 						src={row.thumb_url}
-						alt={title}
+						alt=""
 						width={48}
 						height={48}
 						className={cn('size-12 rounded-row bg-muted', photoCrop)}

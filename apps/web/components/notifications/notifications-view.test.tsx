@@ -144,14 +144,13 @@ describe('NotificationsView', () => {
 		state.query = {
 			pages: [{ items: [nearby('Aa1', '/media/a.jpg'), nearby('Bb2', null)], next_cursor: null, unread: 2 }],
 		};
-		show();
+		const { container } = show();
 
-		const img = screen.getByRole('img');
+		const img = container.querySelector('img')!;
 		expect(img.getAttribute('src')).toBe('/media/a.jpg');
-		expect(img.getAttribute('alt')).toBe('Izgubljen pes v vaši bližini');
 		expect(img.getAttribute('width')).toBe('48');
 		expect(img.className).toContain('object-[50%_10%]');
-		expect(screen.getAllByRole('img')).toHaveLength(1);
+		expect(container.querySelectorAll('img')).toHaveLength(1);
 	});
 
 	it('appends the next page with "Load more", focuses its first row and hides the button at the end', () => {
