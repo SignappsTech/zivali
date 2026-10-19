@@ -132,6 +132,24 @@ describe('adapter provider selection', () => {
 		expect(() => createAdapters({ ...prodFull, APP_ENV: 'staging', AI_PROVIDER: 'mock' })).toThrow(/AI_PROVIDER/);
 	});
 
+	it('the embedder mock never runs outside APP_ENV=local: mock, or voyage without a key, is off (TASK-40.3 parity)', () => {
+		for (const APP_ENV of ['staging', 'production'] as const) {
+			for (const settings of [
+				{ EMBEDDER_PROVIDER: 'mock' as const },
+				{ EMBEDDER_PROVIDER: 'voyage' as const, VOYAGE_API_KEY: undefined },
+			]) {
+				const { embedder } = createAdapters({ ...blank, APP_ENV, NODE_ENV: 'development', ...settings });
+				expect(embedderOn(embedder)).toBe(false);
+				expect(() => embedder.embed([], 'm')).toThrow(/not enabled/);
+			}
+		}
+		// Locally the mock stays; NODE_ENV=production still refuses it at boot.
+		expect(createAdapters({ ...blank, EMBEDDER_PROVIDER: 'mock' }).embedder.provider).toBe('mock');
+		expect(() => createAdapters({ ...prodFull, APP_ENV: 'staging', EMBEDDER_PROVIDER: 'mock' })).toThrow(
+			/EMBEDDER_PROVIDER/
+		);
+	});
+
 	it('minio never passes on built-in credentials in production', () => {
 		expect(() => createAdapters({ ...prodFull, STORAGE_PROVIDER: 'minio' })).toThrow(/STORAGE_PROVIDER/);
 	});
