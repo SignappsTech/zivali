@@ -320,6 +320,7 @@ export async function findBySubmission(created_by: string, submission_id: string
 			submission_hash: true,
 			event_at: true,
 			created_at: true,
+			photos: { orderBy: [{ position: 'asc' }, { id: 'asc' }], select: { id: true } },
 		},
 	});
 }
@@ -452,6 +453,25 @@ export async function findOpenLostByPet(pet_id: string, exceptId: string | undef
 export async function findType(id: string, tx?: Prisma.TransactionClient): Promise<REPORT_TYPE | null> {
 	const db = tx ?? prisma;
 	return (await db.reports.findUnique({ where: { id }, select: { type: true } }))?.type ?? null;
+}
+
+/**
+ * The pet's photos a lost report of it takes when it sends none (CH-348): the owner's, not rejected, on no open report
+ * (unattached, or on an ended report, which setPhotos detaches), in the pet's order. The rows are referenced, never
+ * copied, so each keeps its own created_at (upload time).
+ */
+export async function reusablePetPhotoIds(pet_id: string, owner_id: string, tx: Prisma.TransactionClient) {
+	const photos = await tx.photos.findMany({
+		where: {
+			pet_id,
+			owner_id,
+			status: { not: 'rejected' },
+			OR: [{ report_id: null }, { report: { status: { in: ['closed', 'reunited'] } } }],
+		},
+		orderBy: [{ position: 'asc' }, { id: 'asc' }],
+		select: { id: true },
+	});
+	return photos.map((p) => p.id);
 }
 
 /** A photo that had public copies, as photo-objects' publicObjects needs it. */
@@ -596,6 +616,7 @@ export default {
 	lockOwnPet,
 	findOpenLostByPet,
 	findType,
+	reusablePetPhotoIds,
 	setPhotos,
 	releaseHeld,
 	syncPage,

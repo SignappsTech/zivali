@@ -52,7 +52,7 @@ export type CreateReportInput = {
 	reward_note?: string | null;
 	/** "I saw this pet" */
 	linked_report_id?: Uuid;
-	/** 1–5 for lost and found, 0–5 sighted */
+	/** 1–5 for lost and found, 0–5 sighted; lost with `pet_id` may send none: the pet's photos are taken (still ≥ 1) */
 	photo_ids: Uuid[];
 	/** anonymous only, for the manage link */
 	finder_email?: string;
@@ -66,6 +66,8 @@ export type CreateReportResponse = {
 	/** anonymous callers only; shown once (C7) */
 	manage_token?: string;
 	warnings: ReportWarning[];
+	/** the report's photos in order (the saved pet's when a lost report sent none) */
+	photo_ids: Uuid[];
 };
 
 /** Public read model: never exact point, chip number, manage token, creator, emails or phones. */

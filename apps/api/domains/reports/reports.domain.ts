@@ -306,6 +306,8 @@ export type CreatedReport = {
 	/** Anonymous callers only (C7), shown once. */
 	manage_token?: string;
 	warnings: ReportWarning[];
+	/** The report's photos in order. */
+	photo_ids: string[];
 };
 
 /**
@@ -327,7 +329,8 @@ async function repeatSubmission(
 		throw new AppError('CONFLICT', 'Idempotency-Key was already used for another request');
 	const old = report.created_at.getTime() - report.event_at.getTime() > OLD_EVENT_MS;
 	const { id, short_code, type, species, moderation_state } = report;
-	const created: CreatedReport = { id, short_code, moderation_state, warnings: old ? ['OLD_EVENT'] : [] };
+	const photo_ids = report.photos.map((p) => p.id);
+	const created: CreatedReport = { id, short_code, moderation_state, warnings: old ? ['OLD_EVENT'] : [], photo_ids };
 	if (!actor.is_anonymous || !report.manage_token_hash || moderation_state === 'removed') return created;
 	const to = await ReportsDao.getContactEmail(id, ctx.tx);
 	if (to) await consumeNewLink(id, ctx.now);
@@ -340,7 +343,7 @@ async function repeatSubmission(
 /**
  * POST /v1/reports (C4). A repeat of an earlier submission_id returns that report (repeatSubmission). Lost reports
  * need a real account; the submission guard runs before the other rules and may hold the report. With pet_id the
- * pet's attributes fill what the input leaves out. One transaction: the report (coarsened point, fuzz, geo lookup,
+ * pet's attributes fill what the input leaves out and no photo_ids takes the pet's photos. One transaction: the report (coarsened point, fuzz, geo lookup,
  * the submission id), its manager, its photos and the jobs photo.publish, match.report and, for visible lost reports,
  * alerts.fanout. Anonymous callers (C7) get a manage token (only its hash is stored) and, with finder_email, the
  * manage link by email after the commit.
@@ -389,10 +392,14 @@ export async function createReport(submitted: SubmitInput, ctx: Ctx): Promise<Cr
 		if (finder_email) await ReportsDao.addContact({ report_id: id, email: finder_email }, tx);
 		if (hold_reasons.length) await ReportsDao.flagHeld(id, hold_reasons, tx);
 		const report = { id, type: fields.type, moderation_state };
-		await setPhotos(report, photo_ids, actor, ctx, tx);
+		// A saved pet's lost report that sent no photos takes the pet's (CH-348); none there → still VALIDATION.
+		const photos =
+			pet && !photo_ids.length ? await ReportsDao.reusablePetPhotoIds(pet.id, actor.user_id, tx) : photo_ids;
+		await setPhotos(report, photos, actor, ctx, tx);
 		await queuePhotoPublish({ report_id: id }, { ...ctx, tx });
 		await sendJobs(report, ['match.report', 'alerts.fanout'], ctx, tx);
-		return { id, short_code, moderation_state, ...(manage && { manage_token: manage.token }), warnings };
+		const token = manage && { manage_token: manage.token };
+		return { id, short_code, moderation_state, ...token, warnings, photo_ids: photos };
 	}).catch(async (err: unknown) => {
 		// The same submission committed meanwhile (a retry after the key's 60 s stale window, C1): the unique index
 		// (created_by, submission_id) refused this one, so it is answered as a repeat, not 409.
