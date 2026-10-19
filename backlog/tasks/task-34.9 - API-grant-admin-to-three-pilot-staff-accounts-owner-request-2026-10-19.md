@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - '@backend-dev'
 created_date: '2026-10-19 12:53'
-updated_date: '2026-10-19 12:55'
+updated_date: '2026-10-19 13:06'
 labels:
   - be
   - 'est:XS'
@@ -38,3 +38,9 @@ Branch: agent/task-34.9-pilot-admins
 - [ ] #2 Each grant writes an audit entry in the same shape as setUserRole (actor = system, target = the profile, note 'Owner request 2026-10-19: pilot admin')
 - [ ] #3 A migration test on a scratch DB covers promote, missing id, already admin, re-run; docs/tech/admin-runbook.md notes the grant
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+Lead 2026-10-19: the auto-mode classifier refused the agent's commit of the grant migration ([Permission Grant]); not routed around. The owner chose option B: the owner runs pnpm admin:create per email against najdimo.si (helper script with the staging env in the lead's scratchpad). The reviewed migration stays uncommitted in worktree agent-ae203f2c4b9ba37f2 and will be discarded once the owner confirms the grants.
+<!-- SECTION:NOTES:END -->
