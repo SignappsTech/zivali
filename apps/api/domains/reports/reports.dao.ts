@@ -345,7 +345,8 @@ const readInclude = (userId: string | undefined) =>
 			where: { status: 'published' },
 			// A photo shared with a pet keeps one position (TASK-114.5): the id breaks ties, so the cover is stable.
 			orderBy: [{ position: 'asc' }, { id: 'asc' }],
-			select: { public_display_url: true, public_thumb_url: true, width: true, height: true },
+			// id: matching puts the photo of a visual reason first (C8 §Visual similarity 8); never in a public DTO.
+			select: { id: true, public_display_url: true, public_thumb_url: true, width: true, height: true },
 		},
 		municipality: { select: { slug: true, name_sl: true, name_en: true } },
 		region: { select: { slug: true } },
