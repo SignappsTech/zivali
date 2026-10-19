@@ -8,6 +8,7 @@ import { ApiError } from '@zivali/api/client';
 import { uploadPhoto } from '@zivali/api/photos';
 import { makeApiClient } from '@/lib/store';
 
+import { type CropRect, isWholePhoto } from './crop';
 import { type PhotoExif, PhotoFileError, preparePhoto, type WebPreparedPhoto } from './prepare-photo';
 
 export const MAX_PHOTOS = 5;
@@ -219,18 +220,12 @@ export function usePhotoUploads(
 				const fresh: LocalPhoto = { ...photo, key, status, progress: 0, preview };
 				const old = replace ? live.current.photos.find((item) => item.key === replace) : undefined;
 				if (!old && live.current.photos.length >= MAX_PHOTOS) continue;
-				if (old) {
-					live.current.controllers.get(old.key)?.abort();
-					clearTimeout(live.current.timers.get(old.key));
-					URL.revokeObjectURL(old.preview);
+				if (old) swap(old, fresh);
+				else {
+					commit([...live.current.photos, fresh]);
+					void save();
+					enqueue(key);
 				}
-				commit(
-					old
-						? live.current.photos.map((item) => (item.key === old.key ? fresh : item))
-						: [...live.current.photos, fresh]
-				);
-				void save();
-				enqueue(key);
 				if (exif.lat !== undefined || exif.takenAt) onExif?.(exif);
 			} catch (error) {
 				setNotice(error instanceof PhotoFileError ? fileErrors[error.code] : 'errors.UPLOAD_TYPE');
@@ -238,6 +233,43 @@ export function usePhotoUploads(
 				live.current.preparing -= 1;
 				setPreparing(live.current.preparing);
 			}
+		}
+	}
+
+	/** `fresh` takes `old`'s slot and uploads as a new photo; `old` leaves like a removed photo (upload aborted). */
+	function swap(old: PickedPhoto, fresh: LocalPhoto) {
+		live.current.controllers.get(old.key)?.abort();
+		clearTimeout(live.current.timers.get(old.key));
+		URL.revokeObjectURL(old.preview);
+		commit(live.current.photos.map((item) => (item.key === old.key ? fresh : item)));
+		void save();
+		enqueue(fresh.key);
+	}
+
+	/**
+	 * C19 §Crop: that region of a local photo, re-encoded, as a new photo in the same slot. Resolves to the copy's key,
+	 * or undefined when nothing changed: a frame over the whole photo, or a copy already in the form.
+	 */
+	async function replace(key: string, crop: CropRect): Promise<string | undefined> {
+		setNotice(undefined);
+		const old = live.current.photos.find((item) => item.key === key);
+		if (!old || !isLocal(old) || isWholePhoto(crop, old.width, old.height)) return;
+		try {
+			const { photo } = await preparePhoto(new File([old.file], 'crop.jpg', { type: 'image/jpeg' }), crop);
+			const current = live.current.photos.find((item) => item.key === key);
+			if (!live.current.alive || !current || live.current.photos.some((item) => item.sha256 === photo.sha256))
+				return;
+			const fresh: LocalPhoto = {
+				...photo,
+				key: crypto.randomUUID(),
+				status: live.current.hold ? 'kept' : 'uploading',
+				progress: 0,
+				preview: URL.createObjectURL(photo.thumb),
+			};
+			swap(current, fresh);
+			return fresh.key;
+		} catch (error) {
+			setNotice(error instanceof PhotoFileError ? fileErrors[error.code] : 'errors.UPLOAD_TYPE');
 		}
 	}
 
@@ -325,5 +357,5 @@ export function usePhotoUploads(
 		};
 	}, [draft, seeded]);
 
-	return { photos, preparing, notice, justUploaded, add, remove, move, retry };
+	return { photos, preparing, notice, justUploaded, add, replace, remove, move, retry };
 }

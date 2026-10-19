@@ -5,6 +5,7 @@ import { Provider } from 'react-redux';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
+	attributesMultipleAnimals,
 	attributesPending,
 	attributesPendingThenReady,
 	attributesReady,
@@ -39,6 +40,7 @@ vi.mock('next/navigation', async (actual) => ({
 
 const uploaded = { key: 'k1', photoId: 'photo-1', status: 'uploaded', progress: 1, preview: 'blob:1' } as PickedPhoto;
 const ATTRIBUTES = 'GET /v1/photos/:id/attributes';
+const cropFirst = vi.fn();
 
 function Harness({ photos }: { photos: PickedPhoto[] }) {
 	const form = useForm<PetFieldValues>({ defaultValues: emptyPetFields });
@@ -46,7 +48,11 @@ function Harness({ photos }: { photos: PickedPhoto[] }) {
 	return (
 		<FormProvider {...form}>
 			<PetFields ai={ai} />
-			<AiSlot ai={ai} note="save" notice onChangePhoto={() => {}} />
+			<AiSlot ai={ai} note="save" notice onChangePhoto={() => {}} onCrop={cropFirst} />
+			{/* What the photo picker's onCropped does for the first photo (TASK-41.5). */}
+			<button type="button" onClick={ai.recheck}>
+				Cropped
+			</button>
 		</FormProvider>
 	);
 }
@@ -228,6 +234,50 @@ describe('useFormPrefill with PetFields (C19 §Client rules)', () => {
 		expect(screen.queryByText(COLLAR)).toBeNull();
 		// What was filled stays: it is in the form now.
 		expect(radio('Vrsta', 'Pes').getAttribute('aria-checked')).toBe('true');
+	});
+
+	it('checks a cropped first photo again: marked fields emptied, the copy polled and filling them (C19 §Crop 6)', async () => {
+		let copyPolls = 0;
+		const api = show({
+			[ATTRIBUTES]: ({ params }) =>
+				params.id === 'photo-1'
+					? attributesMultipleAnimals
+					: copyPolls++ < 1
+						? attributesPending
+						: attributesReady,
+		});
+		// Several animals: the notice offers the crop tool first.
+		await waitFor(() => expect(keep()).toBeTruthy(), { timeout: 3000 });
+		fireEvent.click(screen.getByRole('button', { name: 'Obreži fotografijo' }));
+		expect(cropFirst).toHaveBeenCalledOnce();
+		expect((screen.getByRole('combobox', { name: 'Pasma' }) as HTMLInputElement).value).toBe('Border collie');
+		// The person's own size stays through the crop.
+		fireEvent.click(radio('Velikost', 'Velika'));
+
+		fireEvent.click(screen.getByRole('button', { name: 'Cropped' }));
+		expect(keep()).toBeNull();
+		expect(screen.queryByText('Predlog')).toBeNull();
+		expect(radio('Vrsta', 'Pes').getAttribute('aria-checked')).toBe('false');
+		expect((screen.getByRole('combobox', { name: 'Pasma' }) as HTMLInputElement).value).toBe('');
+		expect(screen.getByRole('button', { name: 'Črna' }).getAttribute('aria-pressed')).toBe('false');
+		expect(radio('Velikost', 'Velika').getAttribute('aria-checked')).toBe('true');
+
+		// The copy uploads as a new photo and is checked from pending.
+		api.swap([{ ...uploaded, key: 'k9', photoId: undefined, status: 'uploading', progress: 0 } as PickedPhoto]);
+		api.swap([{ ...uploaded, key: 'k9', photoId: 'photo-9' } as PickedPhoto]);
+		expect(await screen.findByText(CHECKING)).toBeTruthy();
+		expect(
+			await screen.findByText('Iz fotografije smo predlagali 4 podatke. Preverite jih.', undefined, {
+				timeout: 3000,
+			})
+		).toBeTruthy();
+		expect(polls(api).filter((call) => call.path.includes('photo-9')).length).toBe(2);
+		expect(radio('Vrsta', 'Pes').getAttribute('aria-checked')).toBe('true');
+		expect((screen.getByRole('combobox', { name: 'Pasma' }) as HTMLInputElement).value).toBe('Labradorec');
+		expect(screen.getByRole('button', { name: 'Črna' }).getAttribute('aria-pressed')).toBe('true');
+		expect(screen.getByRole('button', { name: 'Bela' }).getAttribute('aria-pressed')).toBe('false');
+		expect(radio('Velikost', 'Velika').getAttribute('aria-checked')).toBe('true');
+		expect(keep()).toBeNull();
 	});
 
 	it('shows nothing extra after an error, and does not poll again', async () => {

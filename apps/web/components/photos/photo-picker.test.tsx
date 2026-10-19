@@ -1,5 +1,6 @@
-import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, renderHook, screen, waitFor, within } from '@testing-library/react';
 import { NextIntlClientProvider } from 'next-intl';
+import * as React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ApiError } from '@zivali/api/client';
@@ -8,8 +9,9 @@ import sl from '@zivali/i18n/dist/sl.json';
 import { timeZone } from '@zivali/i18n/format';
 
 import { exifSegment, FIXTURE_EXIF } from '../../e2e/exif-fixture';
-import { PhotoPicker } from './photo-picker';
+import { PhotoPicker, type PhotoPickerHandle } from './photo-picker';
 import { PhotoFileError, preparePhoto, readExif } from './prepare-photo';
+import { usePhotoUploads } from './use-photo-uploads';
 
 // IndexedDB, the canvas pipeline (covered in a real browser by e2e/photos.spec.ts) and the network are faked here.
 const idb = vi.hoisted(() => new Map<string, unknown>());
@@ -480,6 +482,187 @@ describe('PhotoPicker', () => {
 	});
 });
 
+describe('crop (C19 §Crop, TASK-41.5)', () => {
+	const cropButton = (n: number) => screen.queryByRole('button', { name: `Obreži fotografijo ${n}` });
+	const openCrop = async (n: number) => {
+		fireEvent.click(cropButton(n)!);
+		return screen.findByRole('dialog', { name: 'Obreži fotografijo' });
+	};
+	const shas = (photos: { sha256?: string }[]) => photos.map((item) => Number(item.sha256));
+
+	it('offers the crop button under every photo held as a local file, never under a saved one', async () => {
+		pendingUploads();
+		renderPicker({ saved: [{ id: 'saved-1', thumb_url: 'https://media.test/1.webp' }] });
+		pick(file(1));
+
+		await screen.findByRole('listitem', { name: 'Fotografija 2 od 2' });
+		expect(cropButton(1)).toBeNull();
+		expect(cropButton(2)).toBeTruthy();
+	});
+
+	it('opens on the frame, with the corners named and the keyboard help as its description', async () => {
+		pendingUploads();
+		renderPicker();
+		pick(file(1));
+		await screen.findByRole('listitem', { name: 'Fotografija 1 od 1' });
+
+		const dialog = await openCrop(1);
+		const frame = within(dialog).getByRole('group', { name: 'Okvir obreza' });
+		await waitFor(() => expect(document.activeElement).toBe(frame));
+		expect(document.getElementById(frame.getAttribute('aria-describedby')!)?.textContent).toBe(
+			sl.ai_prefill.crop_keys
+		);
+		for (const corner of ['Vogal zgoraj levo', 'Vogal zgoraj desno', 'Vogal spodaj levo', 'Vogal spodaj desno'])
+			expect(within(dialog).getByRole('button', { name: corner })).toBeTruthy();
+		expect(within(dialog).getByText(sl.ai_prefill.crop_help)).toBeTruthy();
+		expect(within(dialog).getByRole('img', { name: 'Fotografija 1 od 1' })).toBeTruthy();
+	});
+
+	it('Uporabi puts the cropped copy in the same slot and uploads it as a new photo; the original is aborted', async () => {
+		const calls = pendingUploads();
+		const onChange = vi.fn();
+		const onCropped = vi.fn();
+		renderPicker({ onChange, onCropped });
+		pick(file(1), file(2));
+		await screen.findByRole('listitem', { name: 'Fotografija 2 od 2' });
+		await waitFor(() => expect(calls).toHaveLength(1));
+
+		prepare.mockResolvedValueOnce({ photo: photo(9), exif: {} });
+		const dialog = await openCrop(1);
+		fireEvent.click(within(dialog).getByRole('button', { name: 'Uporabi' }));
+
+		await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+		// The region of the prepared JPEG (1600 × 1200, the frame it opened with), re-encoded through preparePhoto.
+		const [input, rect] = prepare.mock.lastCall!;
+		expect(input).toBeInstanceOf(File);
+		expect(rect).toEqual({ x: 80, y: 60, width: 1440, height: 1080 });
+		expect(calls[0]!.signal?.aborted).toBe(true);
+		expect(onCropped).toHaveBeenCalledWith(0);
+		expect(screen.getByText('Fotografija je obrezana.').closest('[aria-live="polite"]')).toBeTruthy();
+		expect(shas(onChange.mock.lastCall![0])).toEqual([9, 2]);
+		// Focus goes back to the crop button under the photo in that slot.
+		await waitFor(() => expect(document.activeElement).toBe(cropButton(1)));
+
+		// The aborted upload rejects (as uploadPhoto does); the queue carries on: the second photo, then the copy.
+		await act(async () => calls[0]!.reject(new DOMException('Aborted', 'AbortError')));
+		await waitFor(() => expect(calls).toHaveLength(2));
+		await act(async () => calls[1]!.resolve('photo-2'));
+		await waitFor(() => expect(calls).toHaveLength(3));
+		await act(async () => calls[2]!.resolve('photo-9'));
+		expect(shas(upload.mock.calls.map((call) => call[1]))).toEqual([1, 2, 9]);
+		// The draft holds the copy, so a restore brings it back.
+		await waitFor(() =>
+			expect((idb.get('photos:lost') as { sha256: string; photoId?: string }[]).map((p) => p.photoId)).toEqual([
+				'photo-9',
+				'photo-2',
+			])
+		);
+		expect(shas(idb.get('photos:lost') as { sha256: string }[])).toEqual([9, 2]);
+	});
+
+	it('from a note on a later step, with the picker hidden, Uporabi moves focus to the fallback the parent gives', async () => {
+		pendingUploads();
+		const picker = React.createRef<PhotoPickerHandle>();
+		const heading = () => document.querySelector('h1');
+		function LaterStep() {
+			// The note goes once the copy is checked again, as AiSlot's does.
+			const [note, setNote] = React.useState(true);
+			return (
+				<NextIntlClientProvider locale="sl" messages={sl} timeZone={timeZone}>
+					<h1 tabIndex={-1}>Katera žival je to?</h1>
+					<div hidden>
+						<PhotoPicker draft="lost" ref={picker} onCropped={() => setNote(false)} />
+					</div>
+					{note && (
+						<button type="button" onClick={() => picker.current?.cropFirst(() => heading()?.focus())}>
+							Obreži fotografijo
+						</button>
+					)}
+				</NextIntlClientProvider>
+			);
+		}
+		render(<LaterStep />);
+		pick(file(1));
+		await waitFor(() => expect(document.querySelector('[data-crop]')).toBeTruthy());
+
+		const opener = screen.getByRole('button', { name: 'Obreži fotografijo' });
+		opener.focus();
+		fireEvent.click(opener);
+		const dialog = await screen.findByRole('dialog', { name: 'Obreži fotografijo' });
+		prepare.mockResolvedValueOnce({ photo: photo(9), exif: {} });
+		fireEvent.click(within(dialog).getByRole('button', { name: 'Uporabi' }));
+
+		await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+		expect(screen.queryByRole('button', { name: 'Obreži fotografijo' })).toBeNull();
+		await waitFor(() => expect(document.activeElement).toBe(heading()));
+	});
+
+	it('Prekliči and Esc change nothing and return focus to the crop button', async () => {
+		pendingUploads();
+		const onCropped = vi.fn();
+		renderPicker({ onCropped });
+		pick(file(1));
+		await screen.findByRole('listitem', { name: 'Fotografija 1 od 1' });
+
+		let dialog = await openCrop(1);
+		fireEvent.click(within(dialog).getByRole('button', { name: 'Prekliči' }));
+		await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+		await waitFor(() => expect(document.activeElement).toBe(cropButton(1)));
+
+		dialog = await openCrop(1);
+		fireEvent.keyDown(dialog, { key: 'Escape' });
+		await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+
+		expect(prepare).toHaveBeenCalledOnce();
+		expect(onCropped).not.toHaveBeenCalled();
+		expect(screen.queryByText('Fotografija je obrezana.')).toBeNull();
+	});
+});
+
+describe('usePhotoUploads().replace', () => {
+	const wrapper = ({ children }: { children: React.ReactNode }) => (
+		<NextIntlClientProvider locale="sl" messages={sl} timeZone={timeZone}>
+			{children}
+		</NextIntlClientProvider>
+	);
+
+	it('changes nothing for a frame over the whole photo or a copy already in the form', async () => {
+		pendingUploads();
+		const { result } = renderHook(() => usePhotoUploads('lost'), { wrapper });
+		await act(() => result.current.add([file(1), file(2)]));
+		const key = result.current.photos[0]!.key;
+
+		let copy: string | undefined = 'unset';
+		await act(async () => {
+			copy = await result.current.replace(key, { x: 0, y: 0, width: 1600, height: 1200 });
+		});
+		expect(copy).toBeUndefined();
+		expect(prepare).toHaveBeenCalledTimes(2);
+
+		prepare.mockResolvedValueOnce({ photo: photo(2), exif: {} });
+		await act(async () => {
+			copy = await result.current.replace(key, { x: 0, y: 0, width: 800, height: 600 });
+		});
+		expect(copy).toBeUndefined();
+		expect(result.current.photos.map((item) => [item.key === key, Number(item.sha256)])).toEqual([
+			[true, 1],
+			[false, 2],
+		]);
+	});
+
+	it('only replaces the local file of a photo kept in this browser (not uploaded yet)', async () => {
+		const { result } = renderHook(() => usePhotoUploads('lost', undefined, [], undefined, true), { wrapper });
+		await act(() => result.current.add([file(1)]));
+
+		prepare.mockResolvedValueOnce({ photo: photo(9), exif: {} });
+		await act(async () => {
+			await result.current.replace(result.current.photos[0]!.key, { x: 0, y: 0, width: 800, height: 600 });
+		});
+		expect(result.current.photos).toEqual([expect.objectContaining({ status: 'kept', sha256: photo(9).sha256 })]);
+		expect(upload).not.toHaveBeenCalled();
+	});
+});
+
 describe('readExif', () => {
 	it('reads GPS and the capture time from a camera JPEG', async () => {
 		const jpeg = new Blob([new Uint8Array([0xff, 0xd8]), exifSegment(), new Uint8Array([0xff, 0xd9])], {
@@ -515,5 +698,16 @@ describe('preparePhoto', () => {
 		await expect(actual.preparePhoto(file(1))).rejects.toMatchObject({ code: 'TOO_SMALL' });
 		expect(canvas).not.toHaveBeenCalled();
 		expect(close).toHaveBeenCalled();
+	});
+
+	it('decodes only the crop region (C19 §Crop 3), and the same 320 px rule applies to it', async () => {
+		const actual = await vi.importActual<typeof import('./prepare-photo')>('./prepare-photo');
+		const decode = vi.fn(async () => ({ width: 300, height: 400, close: vi.fn() }));
+		vi.stubGlobal('createImageBitmap', decode);
+
+		await expect(actual.preparePhoto(file(1), { x: 10, y: 20, width: 300, height: 400 })).rejects.toMatchObject({
+			code: 'TOO_SMALL',
+		});
+		expect(decode).toHaveBeenCalledWith(expect.any(File), 10, 20, 300, 400, { imageOrientation: 'from-image' });
 	});
 });

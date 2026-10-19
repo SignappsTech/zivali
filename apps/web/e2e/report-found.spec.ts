@@ -1,7 +1,7 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, type Page, type Request, test } from '@playwright/test';
 
-import { attributesPending, attributesReady } from '@zivali/api/__fixtures__/ai';
+import { attributesMultipleAnimals, attributesPending, attributesReady } from '@zivali/api/__fixtures__/ai';
 import { responsibleConfirmed } from '@zivali/api/__fixtures__/directory';
 import { createdReport } from '@zivali/api/__fixtures__/reports';
 import type { CreateReportInput } from '@zivali/types';
@@ -266,5 +266,103 @@ test('the AI suggestion from the photo: "Je to pravilno?", then the choices mark
 		colours: ['black'],
 	});
 	expect(body).not.toHaveProperty('size');
+	await expectNoAdSlots(page);
+});
+
+test('several animals: the photo is cropped, the copy replaces it and is checked again (TASK-41.5, AC #1 to #5)', async ({
+	page,
+}) => {
+	await page.setViewportSize(PHONE);
+	const creates = await fakeBackend(page);
+	// The original sees several animals; the cropped copy is a new photo (its own id) and sees one dog.
+	const ORIGINAL = '9b0e2d4c-1f3a-4b5c-8d6e-7f8091a2b3c4';
+	const COPY = '0c1d2e3f-4a5b-4c6d-8e7f-8091a2b3c4d5';
+	let uploads = 0;
+	let copyPolls = 0;
+	await page.route(`${API}/v1/**`, (route) => {
+		const request = route.request();
+		const path = new URL(request.url()).pathname;
+		const headers = { 'Access-Control-Allow-Origin': '*' };
+		if (request.method() === 'GET' && path === '/v1/config/public')
+			return route.fulfill({ status: 200, headers, json: { 'ai.enabled': true } });
+		if (request.method() === 'POST' && path === '/v1/photos')
+			return route.fulfill({
+				status: 201,
+				headers,
+				json: {
+					photo_id: uploads++ ? COPY : ORIGINAL,
+					upload: {
+						url: PUT_URL,
+						method: 'PUT',
+						headers: { 'Content-Type': 'image/jpeg' },
+						expires_at: '2030-01-01T00:00:00Z',
+					},
+				},
+			});
+		if (request.method() === 'GET' && path === `/v1/photos/${ORIGINAL}/attributes`)
+			return route.fulfill({ status: 200, headers, json: attributesMultipleAnimals });
+		if (request.method() === 'GET' && path === `/v1/photos/${COPY}/attributes`)
+			return route.fulfill({ status: 200, headers, json: copyPolls++ < 1 ? attributesPending : attributesReady });
+		return route.fallback();
+	});
+	await page.goto('/prijava/najdena-zival');
+	await page
+		.locator('input[type=file][multiple]')
+		.setInputFiles({ name: 'IMG_0001.jpg', mimeType: 'image/jpeg', buffer: await cameraPhoto(page) });
+	await expect(page.getByRole('button', { name: 'Obdrži fotografijo' })).toBeVisible();
+
+	// "Obreži fotografijo" in the note opens the tool on the frame; full screen on a phone.
+	await page.getByRole('button', { name: 'Obreži fotografijo', exact: true }).click();
+	const dialog = page.getByRole('dialog', { name: 'Obreži fotografijo' });
+	await expect(dialog).toBeVisible();
+	expect((await dialog.boundingBox())?.width).toBe(PHONE.width);
+	const frame = dialog.getByRole('group', { name: 'Okvir obreza' });
+	await expect(frame).toBeFocused();
+	await expectNoAxeViolations(page);
+	await page.emulateMedia({ colorScheme: 'dark' });
+	await expectNoAxeViolations(page);
+	await page.emulateMedia({ colorScheme: 'light' });
+	// Five tab stops: the frame, then the four corners (the edge handles are pointer-only), then the actions.
+	for (const corner of ['Vogal zgoraj levo', 'Vogal zgoraj desno', 'Vogal spodaj desno', 'Vogal spodaj levo']) {
+		await page.keyboard.press('Tab');
+		await expect(dialog.getByRole('button', { name: corner })).toBeFocused();
+	}
+	await page.keyboard.press('Tab');
+	await expect(dialog.getByRole('button', { name: 'Uporabi' })).toBeFocused();
+	// The keyboard: a corner resizes (Shift: 10 px), the frame moves.
+	const before = (await frame.boundingBox())!;
+	await dialog.getByRole('button', { name: 'Vogal spodaj desno' }).focus();
+	for (let i = 0; i < 5; i++) await page.keyboard.press('Shift+ArrowLeft');
+	await frame.focus();
+	await page.keyboard.press('Shift+ArrowRight');
+	const after = (await frame.boundingBox())!;
+	expect(Math.abs(after.width - (before.width - 50))).toBeLessThan(2);
+	expect(Math.abs(after.x - (before.x + 10))).toBeLessThan(2);
+
+	await dialog.getByRole('button', { name: 'Uporabi' }).click();
+	await expect(dialog).toBeHidden();
+	// The copy replaced the photo: the note is gone, it is checked again, and focus is on its crop button.
+	await expect(page.getByText('Fotografija je obrezana.')).toBeAttached();
+	await expect(page.getByRole('button', { name: 'Obreži fotografijo 1' })).toBeFocused();
+	await expect(page.getByRole('button', { name: 'Obdrži fotografijo' })).toHaveCount(0);
+	await expect(page.getByText('Pregledujemo fotografijo … Obrazec lahko medtem izpolnjujete naprej.')).toBeVisible();
+	await expect(page.getByText('Pregledujemo fotografijo …', { exact: false })).toBeHidden();
+	await expect(page.getByRole('listitem', { name: 'Fotografija 1 od 1' })).toBeVisible();
+	await page.getByRole('button', { name: 'Naprej' }).click();
+
+	// The copy's result: one dog, the labrador of the client fixture.
+	await expect(page.getByRole('heading', { level: 1, name: 'Je to pravilno?' })).toBeFocused();
+	await expect(page.getByText('Pes, labradorec, črne barve')).toBeVisible();
+	await page.getByRole('button', { name: 'Da, nadaljuj' }).click();
+	await expect(page.getByRole('heading', { level: 1, name: 'Kje ste žival našli?' })).toBeVisible();
+	await page.getByRole('button', { name: 'Naprej' }).click();
+	await page.getByRole('radio', { name: /Da, žival je pri meni/ }).click();
+	await page.getByRole('button', { name: 'Naprej' }).click();
+	await page.getByRole('button', { name: 'Objavi prijavo' }).click();
+	await expect(page.getByRole('heading', { level: 1, name: 'Hvala, prijava je objavljena' })).toBeVisible();
+	// Only the copy goes on the report; nothing was saved before Publish.
+	expect(uploads).toBe(2);
+	expect(creates).toHaveLength(1);
+	expect((creates[0]!.postDataJSON() as CreateReportInput).photo_ids).toEqual([COPY]);
 	await expectNoAdSlots(page);
 });

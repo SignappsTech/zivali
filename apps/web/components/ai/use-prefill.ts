@@ -82,6 +82,11 @@ export type Prefill = {
 	/** The person confirmed the suggestions (P7 "Da, nadaljuj"): they are their own answers now. */
 	confirm: () => void;
 	dismissNotice: () => void;
+	/**
+	 * The first photo was cropped (C19 §Crop 6): its answer and notice go, the fields still marked are emptied back to
+	 * untouched, and the copy's result fills them as a first photo's; fields the person changed or confirmed stay.
+	 */
+	recheck: () => void;
 };
 
 type State = Pick<Prefill, 'result' | 'marks' | 'confidence' | 'hints' | 'differs' | 'notice' | 'announcement'> & {
@@ -103,8 +108,8 @@ const without = (state: State, field: AiField): State =>
 /**
  * The AI pre-fill of one form (C19 §Client rules, TASK-41.2): polls for the first photo, fills only empty fields the
  * person has not touched (`write`), and keeps the marks, hints, notice and the one announcement. `read` gives the
- * form's current values; the form reports the person's own changes with `touch`. Nothing is saved here: the form's
- * own save or publish confirms the values.
+ * form's current values; the form reports the person's own changes with `touch`; `clear` empties fields (`recheck`).
+ * Nothing is saved here: the form's own save or publish confirms the values.
  */
 export function usePrefill({
 	photos,
@@ -112,12 +117,14 @@ export function usePrefill({
 	fields,
 	read,
 	write,
+	clear,
 }: {
 	photos: PickedPhoto[];
 	enabled?: boolean;
 	fields: readonly AiField[];
 	read: () => AiValues;
 	write: (fill: AiFill) => void;
+	clear: (fields: AiField[]) => void;
 }): Prefill {
 	const { checking, result, photoId } = usePhotoAttributes(photos, enabled);
 	const [state, setState] = React.useState<State>({ marks: new Set(), confidence: new Map(), hints: new Set() });
@@ -176,6 +183,15 @@ export function usePrefill({
 		setState((prev) => ({ ...prev, marks: new Set() }));
 	}, [state.marks]);
 	const dismissNotice = React.useCallback(() => setState((prev) => ({ ...prev, notice: undefined })), []);
+	// The marks as last committed: `recheck` runs after an await (the crop's encode), when a result may have come in.
+	const marked = React.useRef(state.marks);
+	React.useEffect(() => {
+		marked.current = state.marks;
+	}, [state.marks]);
+	const recheck = () => {
+		if (marked.current.size) clear([...marked.current]);
+		setState({ marks: new Set(), confidence: new Map(), hints: new Set() });
+	};
 
 	// A replaced or removed first photo, or a saved one moved first: its hints and notice are not about this one.
 	const { photoId: checked, ...shown } = state;
@@ -191,8 +207,19 @@ export function usePrefill({
 		refill,
 		confirm,
 		dismissNotice,
+		recheck,
 	};
 }
+
+// PetFields' blank values (emptyPetFields): what a field emptied back to untouched holds.
+const BLANK: Record<AiField, unknown> = {
+	species: undefined,
+	breed_codes: [],
+	colours: [],
+	pattern: null,
+	size: null,
+	collar: null,
+};
 
 const isAiField = (name: string | undefined): name is AiField => PET_AI_FIELDS.includes(name as AiField);
 
@@ -214,6 +241,10 @@ export function useFormPrefill<V extends FieldValues, T extends FieldValues>(
 			// Dirty, so the P8 edit form PATCHes them with the person's Save.
 			for (const [name, value] of Object.entries(fill))
 				getForm().setValue(name as Path<V>, value as PathValue<V, Path<V>>, { shouldDirty: true });
+		},
+		clear: (fields) => {
+			for (const name of fields)
+				getForm().setValue(name as Path<V>, BLANK[name] as PathValue<V, Path<V>>, { shouldDirty: true });
 		},
 	});
 	const { touch, cleared } = ai;

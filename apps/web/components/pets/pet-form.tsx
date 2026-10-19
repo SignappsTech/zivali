@@ -167,6 +167,7 @@ export function PetForm({ pet }: { pet?: Pet }) {
 				if (first && first !== 'collar') form.setFocus(first);
 			}}
 			onChangePhoto={() => picker.current?.replaceFirst()}
+			onCrop={() => picker.current?.cropFirst()}
 		/>
 	);
 
@@ -201,11 +202,13 @@ export function PetForm({ pet }: { pet?: Pet }) {
 								draft={draft}
 								saved={pet?.photos}
 								onChange={setPhotos}
+								onCropped={(index) => index === 0 && ai.recheck()}
 								firstNote={
 									ai.notice && (
 										<AiNotice
 											notice={ai.notice}
 											onChangePhoto={() => picker.current?.replaceFirst()}
+											onCrop={() => picker.current?.cropFirst()}
 											onKeep={ai.dismissNotice}
 										/>
 									)

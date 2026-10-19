@@ -4,8 +4,10 @@ import { ArrowClockwiseIcon } from '@phosphor-icons/react/dist/ssr/ArrowClockwis
 import { ArrowDownIcon } from '@phosphor-icons/react/dist/ssr/ArrowDown';
 import { ArrowUpIcon } from '@phosphor-icons/react/dist/ssr/ArrowUp';
 import { CameraIcon } from '@phosphor-icons/react/dist/ssr/Camera';
+import { CropIcon } from '@phosphor-icons/react/dist/ssr/Crop';
 import { ImagesIcon } from '@phosphor-icons/react/dist/ssr/Images';
 import { TrashIcon } from '@phosphor-icons/react/dist/ssr/Trash';
+import dynamic from 'next/dynamic';
 import { useTranslations } from 'next-intl';
 import * as React from 'react';
 
@@ -18,6 +20,9 @@ import { cn } from '@/lib/utils';
 
 import type { PhotoExif } from './prepare-photo';
 import { type PickedPhoto, type SavedPhoto, usePhotoUploads } from './use-photo-uploads';
+
+// The crop tool and react-image-crop load only when a crop starts, so the flows' first load stays small.
+const CropDialog = dynamic(() => import('./crop-dialog').then((m) => m.CropDialog), { ssr: false });
 
 // Photo source tile (P6 .ptile): card surface, radius 20, the tile is the button; hover lays foreground at 10 %.
 const tile =
@@ -38,15 +43,23 @@ type PhotoPickerProps = {
 	hold?: boolean;
 	/** Shown under the first photo: the AI notice about it (TASK-41.2). */
 	firstNote?: React.ReactNode;
-	/** `replaceFirst()` opens the picker for a photo that takes the first one's place. */
+	/** A cropped copy took the place of the photo at `index` (C19 §Crop): the first one is checked again. */
+	onCropped?: (index: number) => void;
+	/**
+	 * `replaceFirst()` opens the picker for a photo that takes the first one's place; `cropFirst(fallback)` the crop tool
+	 * for the first photo ("Obreži fotografijo" in the several-animals note), `fallback` moving focus once it closes when
+	 * neither the note nor the photo's row is on screen (the picker hidden on a later step).
+	 */
 	ref?: React.Ref<PhotoPickerHandle>;
 	className?: string;
 };
-export type PhotoPickerHandle = { replaceFirst: () => void };
+export type PhotoPickerHandle = { replaceFirst: () => void; cropFirst: (fallback?: () => void) => void };
+type Cropping = { key: string; opener: Element | null; fallback?: () => void };
 
 /**
  * Photo step of P6 and P7 (FR-003): camera and gallery tiles on touch screens, a file button with a drop area on
- * desktop, then a row per photo with its preview, upload progress, retry, reorder and remove. Up to 5 photos.
+ * desktop, then a row per photo with its preview, upload progress, retry, reorder, crop (a photo in this browser,
+ * not a saved one; TASK-41.5) and remove. Up to 5 photos.
  */
 export function PhotoPicker({
 	draft,
@@ -56,12 +69,14 @@ export function PhotoPicker({
 	beforeUpload,
 	hold,
 	firstNote,
+	onCropped,
 	ref,
 	className,
 }: PhotoPickerProps) {
 	const t = useTranslations('photos');
+	const tai = useTranslations('ai_prefill');
 	const message = useTranslations();
-	const { photos, preparing, notice, justUploaded, add, remove, move, retry } = usePhotoUploads(
+	const { photos, preparing, notice, justUploaded, add, replace, remove, move, retry } = usePhotoUploads(
 		draft,
 		onExif,
 		saved,
@@ -72,11 +87,40 @@ export function PhotoPicker({
 	const camera = React.useRef<HTMLInputElement>(null);
 	const gallery = React.useRef<HTMLInputElement>(null);
 	const [dragging, setDragging] = React.useState(false);
+	// The photo in the crop tool and the button that opened it; once closed, where focus goes back to: the opener, or
+	// the crop button of the photo in that slot when the opener is gone (the note, or the original's row), else the
+	// parent's fallback (both hidden on a later step).
+	const [cropping, setCropping] = React.useState<Cropping>();
+	const back = React.useRef<Cropping>(undefined);
+	const [cropped, setCropped] = React.useState(false);
+	React.useEffect(() => {
+		if (!cropped) return;
+		const timer = setTimeout(() => setCropped(false), 1500);
+		return () => clearTimeout(timer);
+	}, [cropped]);
+	React.useEffect(() => {
+		if (cropping || !back.current) return;
+		const { key, opener, fallback } = back.current;
+		back.current = undefined;
+		const target =
+			opener?.isConnected && opener !== document.body
+				? opener
+				: root.current?.querySelector(`[data-key="${key}"] [data-crop]`);
+		if (target instanceof HTMLElement && !target.closest('[hidden]')) target.focus();
+		else fallback?.();
+	}, [cropping]);
+	const closeCrop = (key: string) => {
+		back.current = { key, opener: cropping?.opener ?? null, fallback: cropping?.fallback };
+		setCropping(undefined);
+	};
 
 	const changed = React.useEffectEvent((next: PickedPhoto[]) => onChange?.(next));
 	React.useEffect(() => changed(photos), [photos]);
 	// The photo a pick replaces ("Zamenjaj fotografijo"); a tile or a drop adds instead.
 	const replacing = React.useRef<string>(undefined);
+	// Safari does not focus a clicked button, so a row's own button is named; the note's is the focused element.
+	const crop = (key: string, opener = document.activeElement, fallback?: () => void) =>
+		setCropping({ key, opener, fallback });
 	React.useImperativeHandle(
 		ref,
 		() => ({
@@ -84,9 +128,13 @@ export function PhotoPicker({
 				replacing.current = photos[0]?.key;
 				gallery.current?.click();
 			},
+			cropFirst: (fallback) => {
+				if (photos[0]?.file) crop(photos[0].key, document.activeElement, fallback);
+			},
 		}),
 		[photos]
 	);
+	const cropTarget = cropping && photos.find((photo) => photo.key === cropping.key);
 
 	const pick = (event: React.ChangeEvent<HTMLInputElement>) => {
 		void add([...(event.target.files ?? [])], replacing.current);
@@ -245,6 +293,18 @@ export function PhotoPicker({
 										)}
 										{/* type="button" on every row button: the picker sits inside step forms, where an untyped
 										    button would be the default one and take Enter from the form's text fields. */}
+										{photo.file && (
+											<Button
+												type="button"
+												variant="ghost"
+												size="icon"
+												data-crop
+												aria-label={tai('crop_photo_n', { n })}
+												onClick={(event) => crop(photo.key, event.currentTarget)}
+											>
+												<CropIcon weight="bold" aria-hidden="true" />
+											</Button>
+										)}
 										<Button
 											type="button"
 											variant="ghost"
@@ -271,8 +331,24 @@ export function PhotoPicker({
 				</ul>
 			)}
 			<p className="sr-only" aria-live="polite">
-				{justUploaded ? t('uploaded') : ''}
+				{cropped ? tai('crop_done') : justUploaded ? t('uploaded') : ''}
 			</p>
+			{cropTarget?.file && (
+				<CropDialog
+					photo={{ file: cropTarget.file, width: cropTarget.width!, height: cropTarget.height! }}
+					alt={t('thumb_alt', { n: photos.indexOf(cropTarget) + 1, total: photos.length })}
+					onCancel={() => closeCrop(cropTarget.key)}
+					onApply={async (rect) => {
+						const index = photos.indexOf(cropTarget);
+						const copy = await replace(cropTarget.key, rect);
+						if (copy) {
+							onCropped?.(index);
+							setCropped(true);
+						}
+						closeCrop(copy ?? cropTarget.key);
+					}}
+				/>
+			)}
 		</div>
 	);
 }

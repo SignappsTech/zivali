@@ -1,5 +1,6 @@
 'use client';
 
+import { CropIcon } from '@phosphor-icons/react/dist/ssr/Crop';
 import { InfoIcon } from '@phosphor-icons/react/dist/ssr/Info';
 import { SparkleIcon } from '@phosphor-icons/react/dist/ssr/Sparkle';
 import { SwapIcon } from '@phosphor-icons/react/dist/ssr/Swap';
@@ -91,15 +92,20 @@ export function useSuggestedText(): (confidence?: number) => string {
 
 const NOTICE_KEY = { no_animal: 'no_animal', other_animal: 'other_animal', multiple_animals: 'multiple' } as const;
 
-/** The photo notice (system §10.6, neutral, not an error): it never blocks Naprej or Save. */
+/**
+ * The photo notice (system §10.6, neutral, not an error): it never blocks Naprej or Save. Several animals: `onCrop`
+ * adds "Obreži fotografijo" first (wireframe v2 F8).
+ */
 export function AiNotice({
 	notice,
 	onChangePhoto,
+	onCrop,
 	onKeep,
 	className,
 }: {
 	notice: Notice;
 	onChangePhoto: () => void;
+	onCrop?: () => void;
 	onKeep: () => void;
 	className?: string;
 }) {
@@ -112,6 +118,12 @@ export function AiNotice({
 				<p className="font-bold">{t(`${key}_title`)}</p>
 				<p className="mt-1">{t(`${key}_body`)}</p>
 				<div className="mt-1.5 -mb-2.5 -ml-3 flex flex-wrap gap-x-2">
+					{notice === 'multiple_animals' && onCrop && (
+						<Button type="button" variant="text" onClick={onCrop}>
+							<CropIcon weight="bold" aria-hidden="true" />
+							{t('crop_photo')}
+						</Button>
+					)}
 					<Button type="button" variant="text" onClick={onChangePhoto}>
 						<SwapIcon weight="bold" aria-hidden="true" />
 						{t('change_photo')}
@@ -172,6 +184,7 @@ export function AiSlot({
 	notice = false,
 	onReview,
 	onChangePhoto,
+	onCrop,
 	className,
 }: {
 	ai: Prefill;
@@ -180,6 +193,8 @@ export function AiSlot({
 	/** "Preveri predloge": moves focus to the first marked field (P8). */
 	onReview?: () => void;
 	onChangePhoto: () => void;
+	/** "Obreži fotografijo" in the several-animals notice: the crop tool for the first photo. */
+	onCrop?: () => void;
 	className?: string;
 }) {
 	const t = useTranslations('ai_prefill');
@@ -203,6 +218,7 @@ export function AiSlot({
 				<AiNotice
 					notice={ai.notice!}
 					onChangePhoto={onChangePhoto}
+					onCrop={onCrop}
 					onKeep={ai.dismissNotice}
 					className={className}
 				/>
