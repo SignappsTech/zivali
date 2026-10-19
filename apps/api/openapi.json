@@ -1524,6 +1524,145 @@
 				"properties": { "items": { "type": "array", "items": { "$ref": "#/components/schemas/Pet" } } },
 				"required": ["items"]
 			},
+			"PhotoAttributes": {
+				"oneOf": [
+					{
+						"type": "object",
+						"properties": { "status": { "type": "string", "enum": ["pending"] } },
+						"required": ["status"]
+					},
+					{
+						"type": "object",
+						"properties": { "status": { "type": "string", "enum": ["unavailable"] } },
+						"required": ["status"]
+					},
+					{
+						"type": "object",
+						"properties": {
+							"status": { "type": "string", "enum": ["ready"] },
+							"notice": { "anyOf": [{ "$ref": "#/components/schemas/AiNotice" }, { "type": "null" }] },
+							"species": {
+								"anyOf": [
+									{
+										"type": "object",
+										"properties": {
+											"value": {
+												"anyOf": [
+													{ "$ref": "#/components/schemas/Species" },
+													{ "type": "null" }
+												]
+											},
+											"confidence": { "type": "number", "minimum": 0, "maximum": 1 }
+										},
+										"required": ["value", "confidence"]
+									},
+									{ "type": "null" }
+								]
+							},
+							"breed_codes": {
+								"anyOf": [
+									{
+										"type": "object",
+										"properties": {
+											"value": {
+												"anyOf": [
+													{
+														"type": "array",
+														"items": { "$ref": "#/components/schemas/BreedCode" },
+														"maxItems": 2
+													},
+													{ "type": "null" }
+												]
+											},
+											"confidence": { "type": "number", "minimum": 0, "maximum": 1 }
+										},
+										"required": ["value", "confidence"]
+									},
+									{ "type": "null" }
+								]
+							},
+							"colours": {
+								"anyOf": [
+									{
+										"type": "object",
+										"properties": {
+											"value": {
+												"anyOf": [
+													{
+														"type": "array",
+														"items": { "$ref": "#/components/schemas/Colour" },
+														"maxItems": 3
+													},
+													{ "type": "null" }
+												]
+											},
+											"confidence": { "type": "number", "minimum": 0, "maximum": 1 }
+										},
+										"required": ["value", "confidence"]
+									},
+									{ "type": "null" }
+								]
+							},
+							"pattern": {
+								"anyOf": [
+									{
+										"type": "object",
+										"properties": {
+											"value": {
+												"anyOf": [
+													{ "$ref": "#/components/schemas/Pattern" },
+													{ "type": "null" }
+												]
+											},
+											"confidence": { "type": "number", "minimum": 0, "maximum": 1 }
+										},
+										"required": ["value", "confidence"]
+									},
+									{ "type": "null" }
+								]
+							},
+							"size": {
+								"anyOf": [
+									{
+										"type": "object",
+										"properties": {
+											"value": {
+												"anyOf": [{ "$ref": "#/components/schemas/Size" }, { "type": "null" }]
+											},
+											"confidence": { "type": "number", "minimum": 0, "maximum": 1 }
+										},
+										"required": ["value", "confidence"]
+									},
+									{ "type": "null" }
+								]
+							},
+							"collar": {
+								"anyOf": [
+									{
+										"type": "object",
+										"properties": {
+											"value": { "anyOf": [{ "type": "boolean" }, { "type": "null" }] },
+											"confidence": { "type": "number", "minimum": 0, "maximum": 1 }
+										},
+										"required": ["value", "confidence"]
+									},
+									{ "type": "null" }
+								]
+							}
+						},
+						"required": [
+							"status",
+							"notice",
+							"species",
+							"breed_codes",
+							"colours",
+							"pattern",
+							"size",
+							"collar"
+						]
+					}
+				]
+			},
 			"PhotoRejectReason": {
 				"type": "string",
 				"enum": ["not_jpeg", "too_large", "hash_mismatch", "decode_failed"]
@@ -4872,6 +5011,45 @@
 					},
 					"403": {
 						"description": "FORBIDDEN",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"404": {
+						"description": "NOT_FOUND",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"429": {
+						"description": "RATE_LIMITED",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"500": {
+						"description": "INTERNAL",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					}
+				}
+			}
+		},
+		"/v1/photos/{id}/attributes": {
+			"get": {
+				"operationId": "getPhotoAttributes",
+				"summary": "AI suggestions for an own photo",
+				"description": "Owner only (unknown, rejected or someone else’s photo: NOT_FOUND). `pending` until the photo is accepted and extracted, `unavailable` when AI is off, over a cap or failed (the form stays manual), else `ready`: values below `ai.min_confidence` are null. Poll every 750 ms for at most 10 s; skip when `ai.enabled` is false.",
+				"tags": ["photos"],
+				"parameters": [
+					{ "schema": { "type": "string", "format": "uuid" }, "required": true, "name": "id", "in": "path" }
+				],
+				"responses": {
+					"200": {
+						"description": "pending, unavailable or ready",
+						"content": {
+							"application/json": { "schema": { "$ref": "#/components/schemas/PhotoAttributes" } }
+						}
+					},
+					"400": {
+						"description": "VALIDATION",
+						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
+					},
+					"401": {
+						"description": "UNAUTHENTICATED",
 						"content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiErrorBody" } } }
 					},
 					"404": {

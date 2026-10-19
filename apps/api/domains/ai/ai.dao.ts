@@ -28,6 +28,16 @@ export async function spendSince(since: Date, tx?: Tx): Promise<number> {
 	return Number(_sum.cost_usd ?? 0);
 }
 
+/** The photo's ai.extract outcome (its newest Anthropic row), or null while the job has not run. */
+export async function findOutcome(photo_id: string, tx?: Tx) {
+	const db = tx ?? prisma;
+	return db.ai_calls.findFirst({
+		where: { photo_id, provider: 'anthropic' },
+		orderBy: { created_at: 'desc' },
+		select: { outcome: true },
+	});
+}
+
 /** Outcomes of a provider call (ok, refused, invalid, failed): skips and cache hits made none. */
 const CALLED: AI_OUTCOME[] = ['ok', 'refused', 'invalid', 'failed'];
 
@@ -74,4 +84,4 @@ export async function purge(before: Date, tx?: Tx): Promise<{ ai_calls: number; 
 	return { ai_calls: calls.count, ai_results: results };
 }
 
-export default { findPhoto, findResult, spendSince, callsSince, insertResult, recordCall, purge };
+export default { findPhoto, findResult, findOutcome, spendSince, callsSince, insertResult, recordCall, purge };

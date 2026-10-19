@@ -1,7 +1,14 @@
 // C5 photos. `uploadPhoto` is hand-written (codegen cannot express the presigned PUT with progress) and runs on the
 // plain client, so the mobile outbox can use it without a store. The RTK endpoints are stubs owned by TASK-14.1 until
 // apps/api/openapi.json has them; then `gen:api` generates them and they are deleted here.
-import type { CreatePhotoInput, CreatePhotoResponse, PhotoView, PresignedUpload, Uuid } from '@zivali/types';
+import type {
+	CreatePhotoInput,
+	CreatePhotoResponse,
+	PhotoAttributes,
+	PhotoView,
+	PresignedUpload,
+	Uuid,
+} from '@zivali/types';
 
 import { type ApiClient, ApiError } from './client.ts';
 import { api } from './rtk.ts';
@@ -69,7 +76,11 @@ export const photosApi = api.enhanceEndpoints({ addTagTypes: ['Photos'] }).injec
 			query: ({ id }) => ({ url: `/v1/photos/${id}`, method: 'DELETE' }),
 			invalidatesTags: ['Photos'],
 		}),
+		// C19 (TASK-40.4): poll every 750 ms while `pending`, at most 10 s; skip when `ai.enabled` is false.
+		getPhotoAttributes: build.query<PhotoAttributes, { id: Uuid }>({
+			query: ({ id }) => `/v1/photos/${id}/attributes`,
+		}),
 	}),
 });
 
-export const { useGetPhotoQuery, useDeletePhotoMutation } = photosApi;
+export const { useGetPhotoQuery, useDeletePhotoMutation, useGetPhotoAttributesQuery } = photosApi;
