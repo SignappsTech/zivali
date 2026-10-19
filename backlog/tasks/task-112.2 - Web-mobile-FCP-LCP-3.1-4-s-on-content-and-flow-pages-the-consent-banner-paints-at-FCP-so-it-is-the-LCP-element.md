@@ -3,10 +3,11 @@ id: TASK-112.2
 title: >-
   Web: mobile FCP/LCP 3.1-4 s on content and flow pages; the consent banner
   paints at FCP, so it is the LCP element
-status: To Do
+status: In Progress
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-19 19:57'
+updated_date: '2026-10-19 19:59'
 labels:
   - fe
   - 'est:M'

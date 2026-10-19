@@ -75,8 +75,14 @@ export function ConsentBanner({
 
 	// First in the body (app/providers.tsx), the banner's effects run before the page's. Focus after them, so a page
 	// heading that takes focus on mount (payment-return) does not take it from the banner, as before TASK-112.1.
+	// A banner that has just opened is unscrolled, so its heading is in view: focus without scrolling, which needs no
+	// layout while the page hydrates (TASK-112.2). A switch between views may find it scrolled (200 % text), so that
+	// one scrolls the heading in.
+	const lastView = useRef<View>('closed');
 	useEffect(() => {
-		if (view !== 'closed') queueMicrotask(() => heading.current?.focus());
+		const preventScroll = lastView.current === 'closed';
+		lastView.current = view;
+		if (view !== 'closed') queueMicrotask(() => heading.current?.focus({ preventScroll }));
 	}, [view]);
 
 	// WCAG 2.4.11: the fixed banner must not hide the focused control. While open, the page gets bottom padding and
@@ -90,7 +96,6 @@ export function ConsentBanner({
 			root.style.scrollPaddingBottom = h;
 			document.body.style.paddingBottom = h;
 		};
-		sync();
 		// WebKit ignores scroll-padding when the focused control is already inside the viewport, so a control under the
 		// banner is not scrolled out. Scroll by the overlap ourselves (engine-independent).
 		// `el` is the fixed card itself (560px wide on lg), so the horizontal check is against the visible card. The
@@ -114,8 +119,11 @@ export function ConsentBanner({
 			});
 		};
 		document.addEventListener('focusin', onFocusIn);
+		// The observer's first report comes after the browser's own layout and before that frame paints, so the effect
+		// itself reads no height: no forced reflow while the page hydrates (TASK-112.2).
 		const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(sync);
-		observer?.observe(el);
+		if (observer) observer.observe(el);
+		else sync();
 		return () => {
 			document.removeEventListener('focusin', onFocusIn);
 			cancelAnimationFrame(frame);
