@@ -1,11 +1,11 @@
 ---
 id: TASK-29.14
 title: 'Web lost flow: skip the photo step for a saved pet with photos'
-status: To Do
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-18 21:21'
-updated_date: '2026-10-18 21:23'
+updated_date: '2026-10-19 18:39'
 labels:
   - fe
   - 'est:XS'
