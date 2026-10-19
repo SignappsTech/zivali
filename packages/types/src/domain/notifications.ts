@@ -21,6 +21,8 @@ export type NotificationPayloads = {
 		has_area: boolean;
 		area_name?: string;
 		reported_at: IsoDateTime;
+		/** Public thumbnail (C5 media path) of the report's first published photo; null without one. */
+		thumb_url: string | null;
 	};
 	report_reminder: Named & { report_code: string; day: 7 | 14 | 30 };
 	report_expiring: Named & { report_code: string; report_type: ReportType; days_left: number };

@@ -119,6 +119,7 @@ export async function nearbyAlert(
 		has_area: report.area_name !== null,
 		...(report.area_name !== null && { area_name: report.area_name }),
 		reported_at: report.created_at.toISOString(),
+		thumb_url: report.thumb_url,
 	};
 }
 

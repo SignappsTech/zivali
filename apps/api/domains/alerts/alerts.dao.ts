@@ -22,7 +22,10 @@ export type SubscriptionFields = {
 	paused: boolean;
 };
 
-/** What the fan-out and notify.send need of a report; area_name is the public municipality (from public_point, C6). */
+/**
+ * What the fan-out and notify.send need of a report; area_name is the public municipality (from public_point, C6),
+ * thumb_url the public C5 thumbnail of the first published photo (never a private object or a signed URL).
+ */
 export type AlertReport = {
 	short_code: string;
 	type: string;
@@ -30,6 +33,7 @@ export type AlertReport = {
 	moderation_state: string;
 	species: string;
 	area_name: string | null;
+	thumb_url: string | null;
 	created_at: Date;
 };
 
@@ -89,7 +93,11 @@ export async function getAlertReport(id: string, tx?: Prisma.TransactionClient):
 	const db = tx ?? prisma;
 	const [row] = await db.$queryRaw<AlertReport[]>`
 		select r.short_code, r.type::text as type, r.status::text as status,
-			r.moderation_state::text as moderation_state, r.species::text as species, m.name_sl as area_name, r.created_at
+			r.moderation_state::text as moderation_state, r.species::text as species, m.name_sl as area_name,
+			(select p.public_thumb_url from app.photos p
+				where p.report_id = r.id and p.status = 'published' and p.public_thumb_url is not null
+				order by p.position, p.id limit 1) as thumb_url,
+			r.created_at
 		from app.reports r left join app.municipalities m on m.id = r.municipality_id
 		where r.id = ${id}::uuid`;
 	return row ?? null;
