@@ -39,6 +39,7 @@ import {
 	useBands,
 	usePlaceLabel,
 	useReasonLines,
+	visualReason,
 } from '@/components/matches/parts';
 import { MoreMenu } from '@/components/report/slots/more-menu';
 import { InlineError, ringClass, SpotIllustration } from '@/components/shell/page';
@@ -343,16 +344,27 @@ function Side({ label, photos }: { label?: string; photos: Photo[] }) {
 
 /**
  * P11 comparison: from `lg` my pet and the candidate side by side with captions; below it one 4:3 frame with the
- * "Moja žival" / candidate toggle, the candidate first (it is what is new).
+ * "Moja žival" / candidate toggle, the candidate first (it is what is new). With a visual reason it opens on the most
+ * similar pair and is named for it.
  */
-function Comparison({ mine, other, type }: { mine: Photo[]; other: Photo[]; type: MatchSuggestion['other']['type'] }) {
+function Comparison({
+	mine,
+	other,
+	type,
+	visual,
+}: {
+	mine: Photo[];
+	other: Photo[];
+	type: MatchSuggestion['other']['type'];
+	visual: boolean;
+}) {
 	const t = useTranslations('matches');
 	const sides = [
 		{ key: 'mine', label: t('toggle_mine'), photos: mine },
 		{ key: 'other', label: type === 'sighted' ? t('toggle_sighted') : t('toggle_found'), photos: other },
 	];
 	return (
-		<>
+		<div role={visual ? 'group' : undefined} aria-label={visual ? t('visual_pair_a11y') : undefined}>
 			<div className="mt-6 grid grid-cols-2 gap-6 max-lg:hidden">
 				{sides.map((side) => (
 					<Side key={side.key} label={side.label} photos={side.photos} />
@@ -372,7 +384,7 @@ function Comparison({ mine, other, type }: { mine: Photo[]; other: Photo[]; type
 					))}
 				</TabsList>
 			</Tabs>
-		</>
+		</div>
 	);
 }
 
@@ -664,11 +676,17 @@ function Review({ match, mine, code }: { match: MatchSuggestion; mine?: Mine; co
 	const t = useTranslations('matches');
 	const ta = useTranslations('attributes');
 	const reasons = useReasonLines(match);
+	const visual = visualReason(match);
 	const species = ta(`species.${match.other.species}`);
-	const minePhotos = (mine?.photos ?? []).map((p) => ({
-		...p,
-		alt: t('alt_mine', { alt: p.alt || mine?.name || species }),
-	}));
+	// C8 §Visual similarity 8: the API sends the other photos most similar first; the own lost_photo_id goes first here,
+	// found by its C5 media path (r/<report_id>/<photo_id>/…). The sort is stable, so the rest keep their order.
+	const best = (p: Photo) => Number(!!visual && p.url.includes(`/${visual.lost_photo_id}/`));
+	const minePhotos = [...(mine?.photos ?? [])]
+		.sort((a, b) => best(b) - best(a))
+		.map((p) => ({
+			...p,
+			alt: t('alt_mine', { alt: p.alt || mine?.name || species }),
+		}));
 	const otherPhotos = match.other.photos.map((p) => ({ ...p, alt: t('alt_other', { alt: p.alt || species }) }));
 
 	// match_suggested (C12): the owner views a suggestion; track() is a no-op without consent.
@@ -689,7 +707,7 @@ function Review({ match, mine, code }: { match: MatchSuggestion; mine?: Mine; co
 			>
 				{t('review_title')}
 			</h2>
-			<Comparison mine={minePhotos} other={otherPhotos} type={match.other.type} />
+			<Comparison mine={minePhotos} other={otherPhotos} type={match.other.type} visual={!!visual} />
 			<div className="mt-8">
 				<Strength strength={match.strength} size="lg" />
 			</div>
@@ -711,6 +729,9 @@ function Review({ match, mine, code }: { match: MatchSuggestion; mine?: Mine; co
 					</li>
 				))}
 			</ul>
+			{visual && (
+				<p className="mt-3 max-w-[60ch] text-sm leading-5 text-muted-foreground">{t('visual_caveat')}</p>
+			)}
 			{mine && <FactsTable mine={mine} other={match.other} />}
 			{match.other.type === 'sighted' && (
 				<Note icon={EyeIcon} iconClassName="text-foreground" className="mt-5">

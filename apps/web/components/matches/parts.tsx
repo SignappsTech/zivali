@@ -5,7 +5,7 @@ import { useTranslations } from 'next-intl';
 import * as React from 'react';
 
 import { useReversePlaceQuery } from '@zivali/api/geocode';
-import type { AttributeMatchReason, MatchState, MatchSuggestion, PublicArea } from '@zivali/types';
+import type { AttributeMatchReason, MatchState, MatchSuggestion, PublicArea, VisualMatchReason } from '@zivali/types';
 import { noteClass } from '@/components/shelters/classes';
 import { cn } from '@/lib/utils';
 
@@ -61,6 +61,10 @@ export function Strength({ strength, size = 'sm' }: { strength: MatchSuggestion[
 const reason = (match: MatchSuggestion, code: AttributeMatchReason['code']) =>
 	match.reasons.find((r): r is AttributeMatchReason => r.code === code);
 
+/** The photo similarity reason (algo v3, C8 §Visual similarity 3), when the pair has one. */
+export const visualReason = (match: MatchSuggestion) =>
+	match.reasons.find((r): r is VisualMatchReason => r.code === 'visual');
+
 /** The distance band ("1–3 km") and the time gap ("manj kot 24 ur") from the match reasons; never exact values. */
 export function useBands(match: MatchSuggestion) {
 	const t = useTranslations('matches');
@@ -92,6 +96,8 @@ export function useReasonLines(match: MatchSuggestion): string[] {
 				return r.overlap === 1 ? [t('reason_colour_full')] : r.overlap ? [t('reason_colour_partial')] : [];
 			case 'sex':
 				return [t('reason_sex')];
+			case 'visual':
+				return [t(`reason_visual_${r.band}`)];
 			default:
 				return [];
 		}
