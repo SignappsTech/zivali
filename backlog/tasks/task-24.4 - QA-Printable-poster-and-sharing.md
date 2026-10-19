@@ -5,16 +5,18 @@ status: To Do
 assignee:
   - '@qa'
 created_date: '2026-10-14 22:15'
-updated_date: '2026-10-19 19:50'
+updated_date: '2026-10-19 19:51'
 labels:
   - qa
   - 'qa:fail'
   - 'est:XS'
 milestone: m-1
 dependencies:
+  - TASK-24.1
   - TASK-24.2
   - TASK-24.3
-  - TASK-24.1
+  - TASK-24.5
+  - TASK-24.6
 references:
   - docs/tech/frontend.md
   - docs/design/pages/P18-poster-share.md
