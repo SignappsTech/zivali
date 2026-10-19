@@ -96,7 +96,7 @@
 		"subject": "{is_test, select, yes {Test · } other {}}Potrdilo o plačilu: {amount}",
 		"preheader": "Hvala. Prispevki pokrivajo strežnike, zemljevide in pošiljanje opozoril.",
 		"button": "Odpri moja plačila",
-		"p1": "{purpose, select, tip {Prejeli smo vaš prispevek v zahvalo} other {Prejeli smo vaš prispevek ob objavi iskanja}} v višini {amount}. Hvala.",
+		"p1": "{purpose, select, tip {Prejeli smo vaš prispevek v zahvalo} support {Prejeli smo vaš prispevek za podporo Najdimu} other {Prejeli smo vaš prispevek ob objavi iskanja}} v višini {amount}. Hvala.",
 		"p2": "Prispevki pokrivajo strežnike, zemljevide in pošiljanje opozoril. Najdimo ostaja brezplačno za vse.",
 		"date": "Datum: {paid_at}",
 		"amount": "Znesek: {amount}",

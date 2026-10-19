@@ -96,7 +96,7 @@
 		"subject": "{is_test, select, yes {Test · } other {}}Payment receipt: {amount}",
 		"preheader": "Thank you. Contributions cover servers, maps and sending alerts.",
 		"button": "Open my payments",
-		"p1": "{purpose, select, tip {We received your thank-you contribution} other {We received your contribution for publishing your search}} of {amount}. Thank you.",
+		"p1": "{purpose, select, tip {We received your thank-you contribution} support {We received your contribution to support Najdimo} other {We received your contribution for publishing your search}} of {amount}. Thank you.",
 		"p2": "Contributions cover servers, maps and sending alerts. Najdimo stays free for everyone.",
 		"date": "Date: {paid_at}",
 		"amount": "Amount: {amount}",
