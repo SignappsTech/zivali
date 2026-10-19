@@ -149,6 +149,8 @@ describe('ManagePage (P7, C7)', () => {
 		const heading = await screen.findByRole('heading', { level: 1, name: 'This link no longer works' });
 		await vi.waitFor(() => expect(document.activeElement).toBe(heading));
 		expect(screen.getByText(en.report_found.link_invalid_body)).toBeTruthy();
+		// Reserves the skeleton's height so the footer does not jump (TASK-17.15).
+		expect(screen.getByRole('main').className).toContain('min-h-[456px]');
 		// Without a token nothing is requested and nothing signs in.
 		if (!token) expect([api.calls, auth.ensureSession.mock.calls]).toEqual([[], []]);
 	});

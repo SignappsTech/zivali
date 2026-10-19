@@ -98,7 +98,11 @@ export function ManagePage() {
 	else body = <PageSkeleton />;
 
 	return (
-		<main id="main" className="mx-auto box-content max-w-[560px] px-5 pt-6 pb-16 lg:pb-24">
+		// The skeleton is about 456 px tall: the claim result keeps that space so the footer does not jump (CLS).
+		<main
+			id="main"
+			className={`mx-auto box-content max-w-[560px] px-5 pt-6 pb-16 lg:pb-24${claimed.status === 'done' ? '' : ' min-h-[456px]'}`}
+		>
 			{claimed.status !== 'done' && captcha.widget}
 			{body}
 			<Toaster closeLabel={tCommon('close')} label={tCommon('toasts_label')} />
