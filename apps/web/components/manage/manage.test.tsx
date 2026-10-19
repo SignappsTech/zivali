@@ -29,6 +29,9 @@ vi.mock('next/navigation', async (actual) => ({
 const auth = vi.hoisted(() => ({ ensureSession: vi.fn() }));
 vi.mock('@/lib/auth', () => auth);
 vi.mock('qrcode', () => ({ toString: vi.fn(async () => '<svg xmlns="http://www.w3.org/2000/svg"></svg>') }));
+// The claim and the view take the tab's store (lib/store.ts getStore): here the test's, over the mock API.
+const stores = vi.hoisted(() => ({ current: undefined as unknown }));
+vi.mock('@/lib/store', async (actual) => ({ ...(await actual()), getStore: () => stores.current }));
 
 const CODE = ownerReport.short_code;
 const claimed = { report_id: ownerReport.id, short_code: CODE };
@@ -42,9 +45,11 @@ function show(node: React.ReactNode, routes: MockRoutes = {}, locale: 'sl' | 'en
 		'POST /v1/reports/:code/transitions': ({ body }) => ({ ...ownerReport, ...(body as object) }),
 		...routes,
 	});
+	const store = createApiStore(api);
+	stores.current = store;
 	render(
 		<NextIntlClientProvider locale={locale} messages={{ sl, en }[locale]}>
-			<Provider store={createApiStore(api)}>{node}</Provider>
+			<Provider store={store}>{node}</Provider>
 		</NextIntlClientProvider>
 	);
 	return api;
@@ -155,15 +160,40 @@ describe('ManagePage (P7, C7)', () => {
 		if (!token) expect([api.calls, auth.ensureSession.mock.calls]).toEqual([[], []]);
 	});
 
-	it('reserves the captcha widget slot while a captcha is configured (CLS)', async () => {
+	it('without a session, passes the captcha in its reserved slot (CLS) before it signs in and claims', async () => {
 		vi.stubEnv('NEXT_PUBLIC_TURNSTILE_SITE_KEY', 'test-key');
 		try {
-			open('bad');
-			show(<ManagePage />, {}, 'en');
-			await screen.findByRole('heading', { level: 1, name: 'This link no longer works' });
+			open('good');
+			const api = show(<ManagePage />);
 			expect(screen.getByRole('main').querySelector('.min-h-\\[65px\\]')).toBeTruthy();
+			// api.js is on its way (jsdom never loads it): nothing signs in or claims yet (TASK-17.17).
+			const script = await vi.waitFor(() => {
+				const found = document.head.querySelector<HTMLScriptElement>(
+					'script[src*="challenges.cloudflare.com"]'
+				);
+				expect(found).toBeTruthy();
+				return found!;
+			});
+			await act(() => new Promise((resolve) => setTimeout(resolve, 20)));
+			expect([api.calls, auth.ensureSession.mock.calls]).toEqual([[], []]);
+
+			// Cloudflare passes the visitor: the sign-in gets that token, then the claim runs.
+			let solved: (token: string) => void = () => {};
+			window.turnstile = {
+				render: (_element, options) => {
+					solved = options.callback as typeof solved;
+					return 'widget';
+				},
+				execute: () => solved('cf-token'),
+				reset: vi.fn(),
+				remove: vi.fn(),
+			};
+			script.dispatchEvent(new Event('load'));
+			expect(await screen.findByRole('heading', { level: 1, name: 'Vaša prijava' })).toBeTruthy();
+			expect(await auth.ensureSession.mock.calls[0]![0]()).toBe('cf-token');
 		} finally {
 			vi.unstubAllEnvs();
+			delete window.turnstile;
 		}
 	});
 

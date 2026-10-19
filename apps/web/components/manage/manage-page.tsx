@@ -5,26 +5,29 @@ import { HourglassMediumIcon } from '@phosphor-icons/react/dist/ssr/HourglassMed
 import { LinkBreakIcon } from '@phosphor-icons/react/dist/ssr/LinkBreak';
 import { ShieldWarningIcon } from '@phosphor-icons/react/dist/ssr/ShieldWarning';
 import { WifiSlashIcon } from '@phosphor-icons/react/dist/ssr/WifiSlash';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import dynamic from 'next/dynamic';
 import * as React from 'react';
 
-import { ApiError } from '@zivali/api/client';
-import { useClaimManageLinkMutation } from '@zivali/api/manage';
+import { ApiError, type Locale } from '@zivali/api/client';
 import { AuthHeading, AuthNote, errorCode, Spot, useErrorText } from '@/components/auth/parts';
 import { useCaptcha } from '@/components/auth/turnstile';
 import { PageSkeleton } from '@/components/shell/page';
 import { Button } from '@/components/ui/button';
-import { Toaster } from '@/components/ui/sonner';
+import { hasSessionCookie } from '@/lib/auth-light';
 import { takeManageToken } from '@/lib/manage-link';
 
 import { useAutoRetry } from './use-auto-retry';
 
-// Only a link to claim loads the session code (lib/auth: supabase-js, zod) and the report view (its endpoints, the
-// confirm dialog): a page without one, or before the claim, ships neither (TASK-17.9). The claim loads both, so a
-// failed download is the claim's error, with its retry.
+// Only a claim that can run loads the session code (lib/auth: supabase-js) and the claim with the report view (Redux,
+// its endpoints, the toaster, the confirm dialog): at once with a session, else after the captcha. A page without a
+// link, or a visit that never passes the captcha, ships none of it (TASK-17.9, TASK-17.17). A failed download is the
+// claim's error, with its retry.
 const loadView = () => import('./manage-view');
-const ManageView = dynamic(() => loadView().then((m) => m.ManageView), { ssr: false, loading: () => <PageSkeleton /> });
+const ManageClaimed = dynamic(() => loadView().then((m) => m.ManageClaimed), {
+	ssr: false,
+	loading: () => <PageSkeleton />,
+});
 
 // A link that is unknown, malformed or closed beyond the reopen window (C7 POST /v1/manage/claim).
 const INVALID = ['NOT_FOUND', 'GONE', 'VALIDATION'];
@@ -38,22 +41,27 @@ export function ManagePage() {
 	const t = useTranslations('report_found');
 	const tCommon = useTranslations('common');
 	const te = useTranslations('errors');
+	const locale = useLocale() as Locale;
 	const errorText = useErrorText();
 	// api.js loads only for a sign-in that needs the captcha: not with a session already, nor without a link.
 	const captcha = useCaptcha({ lazy: true });
-	const [claim] = useClaimManageLinkMutation();
 	const { getToken } = captcha;
 
 	const task = React.useCallback(async () => {
 		const token = takeManageToken();
 		if (!token) throw new ApiError('NOT_FOUND', 'NOT_FOUND');
+		// No session cookie: the anonymous sign-in needs the captcha, so it comes first.
+		const captchaToken = hasSessionCookie() ? undefined : await getToken();
 		// A chunk that fails to download is a lost connection: the offline note and the automatic retry.
-		const [{ ensureSession }] = await Promise.all([import('@/lib/auth'), loadView()]).catch((cause) => {
-			throw new ApiError('NETWORK', 'NETWORK', { cause });
-		});
-		await ensureSession(getToken);
-		return claim({ token }).unwrap();
-	}, [claim, getToken]);
+		const [{ ensureSession }, { claimManageLink }] = await Promise.all([import('@/lib/auth'), loadView()]).catch(
+			(cause) => {
+				throw new ApiError('NETWORK', 'NETWORK', { cause });
+			}
+		);
+		// A stale cookie (no session after all) asks for the captcha here instead.
+		await ensureSession(captchaToken ? async () => captchaToken : getToken);
+		return claimManageLink(locale, token);
+	}, [getToken, locale]);
 	const claimed = useAutoRetry(task);
 	const { run } = claimed;
 	React.useEffect(() => {
@@ -65,7 +73,7 @@ export function ManagePage() {
 
 	const code = claimed.error ? errorCode(claimed.error) : null;
 	let body: React.ReactNode;
-	if (claimed.status === 'done') body = <ManageView code={claimed.result.short_code} />;
+	if (claimed.status === 'done') body = <ManageClaimed code={claimed.result.short_code} />;
 	else if (claimed.status === 'failed' && code && INVALID.includes(code))
 		body = (
 			<>
@@ -106,7 +114,6 @@ export function ManagePage() {
 			{/* The captcha widget is 65 px tall: its slot is reserved so inserting it does not shift the page (CLS). */}
 			{claimed.status !== 'done' && captcha.widget && <div className="min-h-[65px]">{captcha.widget}</div>}
 			{body}
-			<Toaster closeLabel={tCommon('close')} label={tCommon('toasts_label')} />
 		</main>
 	);
 }

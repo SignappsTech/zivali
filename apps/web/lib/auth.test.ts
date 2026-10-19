@@ -16,7 +16,7 @@ import {
 	signUp,
 	updatePassword,
 } from './auth';
-import { MAX_PASSWORD, MIN_PASSWORD, passwordTooLong, validEmail } from './auth-light';
+import { hasSessionCookie, MAX_PASSWORD, MIN_PASSWORD, passwordTooLong, validEmail } from './auth-light';
 
 const supabase = vi.hoisted(() => ({
 	signInWithPassword: vi.fn(),
@@ -272,6 +272,23 @@ describe('Supabase calls', () => {
 			provider: 'google',
 			options: { redirectTo: `${origin}/auth/callback?type=oauth&next=%2Fr%2FHk3vT9qP` },
 		});
+	});
+});
+
+describe('hasSessionCookie (TASK-17.17)', () => {
+	// The PKCE verifier waits in a cookie of its own and is no session.
+	it.each([
+		[['sb-omtp-auth-token=base64-x'], true],
+		[['NEXT_LOCALE=en', 'sb-127-auth-token.0=base64-x'], true],
+		[['sb-omtp-auth-token-code-verifier=base64-x'], false],
+		[['NEXT_LOCALE=en'], false],
+	])('%j: %s', (cookies, expected) => {
+		for (const cookie of cookies) document.cookie = `${cookie}; path=/`;
+		try {
+			expect(hasSessionCookie()).toBe(expected);
+		} finally {
+			for (const cookie of cookies) document.cookie = `${cookie.split('=')[0]}=; max-age=0; path=/`;
+		}
 	});
 });
 

@@ -23,6 +23,12 @@ export const providers = {
 	apple: process.env.NEXT_PUBLIC_APPLE_SIGN_IN === 'true',
 };
 
+/**
+ * Whether this browser keeps a Supabase session: its @supabase/ssr cookie `sb-<ref>-auth-token` (or `.0`, `.1`… when
+ * split), read without supabase-js. An expired one still counts; ensureSession finds out and asks for the captcha.
+ */
+export const hasSessionCookie = () => /(?:^|;\s*)sb-[^=;]+-auth-token(?:\.\d+)?=/.test(document.cookie);
+
 /** lib/auth; a chunk that fails to download is a lost connection (NETWORK), as in the report flows. */
 export const loadAuth = () =>
 	import('@/lib/auth').catch((cause: unknown) => {

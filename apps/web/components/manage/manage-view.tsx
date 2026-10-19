@@ -15,8 +15,9 @@ import * as React from 'react';
 import { toast } from 'sonner';
 
 import { useListConversationsQuery } from '@zivali/api/chat';
+import type { Locale } from '@zivali/api/client';
 import { useReversePlaceQuery } from '@zivali/api/geocode';
-import { useResendManageLinkMutation } from '@zivali/api/manage';
+import { manageApi, useResendManageLinkMutation } from '@zivali/api/manage';
 import { useGetReportQuery, useTransitionReportMutation } from '@zivali/api/reports';
 import type { ReportOwnerView, ReportTransitionAction } from '@zivali/types';
 import { AuthHeading, AuthNote, errorCode, Spot, useErrorText } from '@/components/auth/parts';
@@ -24,6 +25,7 @@ import { ConversationRow } from '@/components/chat/conversations';
 import { SUPPORT_EMAIL } from '@/components/content/article';
 import { canReopen as reopenable, expiryNotice, trackReunited } from '@/components/report/lifecycle-helpers';
 import { h1Class, InlineError, PageSkeleton, ringClass } from '@/components/shell/page';
+import { StoreProvider } from '@/components/store-provider';
 import {
 	AlertDialog,
 	AlertDialogAction,
@@ -35,13 +37,36 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Toaster } from '@/components/ui/sonner';
 import { statusIcons } from '@/components/ui/status-label';
 import { Link } from '@/i18n/navigation';
 import { photoWhole } from '@/lib/photo';
+import { getStore } from '@/lib/store';
 import { cn } from '@/lib/utils';
 
-// The claimed report of the P7 manage page (manage-page.tsx), loaded with the claim: the report and chat endpoints,
-// the P14 confirm dialog and the status parts stay out of the page's first download (TASK-17.9).
+// The claim and the claimed report of the P7 manage page (manage-page.tsx), loaded once the claim can run: Redux and
+// RTK Query, the report and chat endpoints, the toaster, the P14 confirm dialog and the status parts stay out of the
+// page's first download (TASK-17.9, TASK-17.17).
+
+/**
+ * C7 POST /v1/manage/claim on the store the view then reads (lib/store.ts: one per locale in the tab); throws the
+ * mutation's error, as the hook's unwrap() does.
+ */
+export async function claimManageLink(locale: Locale, token: string) {
+	const request = getStore(locale).dispatch(manageApi.endpoints.claimManageLink.initiate({ token }));
+	return request.unwrap().finally(() => request.reset());
+}
+
+/** The claimed report with what only it needs: the store for its endpoints and the toaster for its toasts. */
+export function ManageClaimed({ code }: { code: string }) {
+	const tCommon = useTranslations('common');
+	return (
+		<StoreProvider>
+			<ManageView code={code} />
+			<Toaster closeLabel={tCommon('close')} label={tCommon('toasts_label')} />
+		</StoreProvider>
+	);
+}
 
 /**
  * The claimed report: photo, status, facts, private line, messages, the one state note (closed with "Ponovno odpri",
