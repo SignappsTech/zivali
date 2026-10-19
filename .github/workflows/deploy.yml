@@ -51,6 +51,16 @@ jobs:
       - uses: docker/setup-qemu-action@99012661954931238ded8c8b007157a8430204e1 # v4.4.0
         with:
           platforms: arm64
+      # BuildKit layer cache in the Actions cache (TASK-4.6): a docker-container builder (the docker driver cannot
+      # export a cache), and the runtime token and cache URLs, which Actions hands to actions only, for the run steps;
+      # deploy.mjs then passes --cache-from/--cache-to type=gha per image (cacheArgs).
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+      - name: Expose the Actions cache to docker buildx
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          script: |
+            for (const name of ['ACTIONS_RUNTIME_TOKEN', 'ACTIONS_CACHE_URL', 'ACTIONS_RESULTS_URL', 'ACTIONS_CACHE_SERVICE_V2'])
+              if (process.env[name]) core.exportVariable(name, process.env[name]);
       # deploy.mjs needs @aws-sdk/client-s3 (bucket checks) from apps/api.
       - run: pnpm install --frozen-lockfile --ignore-scripts --filter api...
       - run: node scripts/deploy.mjs staging --deploy --strict
@@ -106,6 +116,14 @@ jobs:
       - uses: docker/setup-qemu-action@99012661954931238ded8c8b007157a8430204e1 # v4.4.0
         with:
           platforms: arm64
+      # BuildKit layer cache, as in the staging job.
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+      - name: Expose the Actions cache to docker buildx
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          script: |
+            for (const name of ['ACTIONS_RUNTIME_TOKEN', 'ACTIONS_CACHE_URL', 'ACTIONS_RESULTS_URL', 'ACTIONS_CACHE_SERVICE_V2'])
+              if (process.env[name]) core.exportVariable(name, process.env[name]);
       - run: pnpm install --frozen-lockfile --ignore-scripts --filter api...
       - run: node scripts/deploy.mjs production --deploy --strict
         env:

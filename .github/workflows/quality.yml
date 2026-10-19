@@ -1,0 +1,73 @@
+# Quality kit on the production web build: axe, console errors, consent and ad guards, visual, Lighthouse CI, links
+# (TASK-4.1, docs/05 §Quality gates). Nightly and on demand only (TASK-4.6: about 13 minutes a run, too slow for every
+# push). Locally `pnpm quality` when web pages change. Not a required check, and the deploy (deploy.yml) waits for
+# ci.yml only.
+name: quality
+
+on:
+  schedule:
+    - cron: '30 2 * * *' # 02:30 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: quality
+  cancel-in-progress: true
+
+env:
+  # pnpm quality serves the production web build here (scripts/quality.mjs).
+  QUALITY_PORT: 8080
+  TURBO_TELEMETRY_DISABLED: 1
+
+jobs:
+  quality:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    # Temporarily non-blocking: the Lighthouse performance and script budgets on public pages fail until TASK-90.7
+    # lands. The job still runs and uploads its report; TASK-90.7 AC#3 removes this line, so a failing budget turns
+    # the nightly run red.
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: package.json
+          cache: pnpm
+      - name: Turbo cache
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: .turbo/cache
+          key: turbo-${{ runner.os }}-${{ github.job }}-${{ github.sha }}
+          restore-keys: turbo-${{ runner.os }}-${{ github.job }}-
+      - run: pnpm install --frozen-lockfile
+      - name: Playwright browser cache
+        id: pw
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+      - if: steps.pw.outputs.cache-hit != 'true'
+        run: pnpm exec playwright install --with-deps chromium
+      - if: steps.pw.outputs.cache-hit == 'true'
+        run: pnpm exec playwright install-deps chromium
+      # Once public pages read the API on the server, start it here before the kit runs (ports: supabase/README.md):
+      #   pnpm exec supabase start -x studio,postgres-meta,imgproxy > /dev/null && pnpm db:reset
+      #   pnpm --filter api build && (node apps/api/dist/server.js &)
+      # with DATABASE_URL and DIRECT_URL = postgresql://postgres:postgres@127.0.0.1:54322/postgres?schema=app
+      # Ubuntu 24.04 blocks the unprivileged user namespaces Chrome's sandbox needs (AppArmor), so Lighthouse's Chrome
+      # never opened its debugging port. Playwright runs Chromium without the sandbox; Lighthouse keeps it, with this.
+      - name: Allow Chrome's sandbox (Lighthouse)
+        run: sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+      - run: pnpm quality
+      - name: Upload the quality report
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: quality-report
+          path: quality-report/
+          retention-days: 14
+      - name: Trim the Turbo cache to the last 7 days
+        run: find .turbo/cache -type f -mtime +7 -delete 2>/dev/null || true

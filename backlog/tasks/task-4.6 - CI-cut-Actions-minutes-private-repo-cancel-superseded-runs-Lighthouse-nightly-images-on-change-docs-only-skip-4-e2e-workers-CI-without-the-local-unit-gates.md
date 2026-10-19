@@ -4,7 +4,7 @@ title: >-
   CI: cut Actions minutes (private repo): cancel superseded runs, Lighthouse
   nightly, images on change, docs-only skip, 4 e2e workers, CI without the local
   unit gates
-status: To Do
+status: In Progress
 assignee:
   - '@tech-lead'
 created_date: '2026-10-19 13:55'
@@ -37,7 +37,7 @@ Update docs/04 §CI/CD, ADR-016 and the branch-protection note (required checks:
 
 Unblocks on: -
 Review: tech-lead review by a second reviewer (CI config)
-Branch: agent/task-4.4-ci-minutes
+Branch: agent/task-4.6-ci-minutes
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Acceptance Criteria

@@ -4,7 +4,8 @@
 // The GitHub Actions workflow (.github/workflows/deploy.yml) runs this same script with --deploy --strict:
 //   1. checks, read-only: credentials (names only), the three R2 buckets (HeadBucket on the EU endpoint), the Supabase
 //      settings of ADR-021/ADR-023 (Management API GETs), the VPS files and TLS certificate (`remote.sh check` over SSH);
-//   2. only with --deploy and nothing missing: build the linux/arm64 api (also the worker) and web images here, copy
+//   2. only with --deploy and nothing missing: build the linux/arm64 api (also the worker) and web images here (in
+//      Actions with the BuildKit layer cache, cacheArgs), copy
 //      deploy/ to /opt/zivali, write cloudflare.ini (certbot's token, mode 600), stream the images to the VPS
 //      (docker save | zstd | ssh docker load; no registry), `remote.sh deploy` (one-off `prisma migrate deploy`, then
 //      the seed; up and healthy within 180 s, else back to the running release; nginx and certbot up, nginx reload);
@@ -325,8 +326,25 @@ function checkVps(ssh, target) {
 
 // --- steps ---
 
-function buildImage(dockerfile, tag, buildEnv = {}) {
+/**
+ * BuildKit layer cache in the GitHub Actions cache, one scope per image: only when the Actions runtime is exposed to
+ * run steps (deploy.yml does it, with a docker-container builder), so a workstation build passes nothing. mode=min
+ * keeps the final stage's layers (the api's emulated apt-get layer); the build stages copy the whole repo before
+ * `pnpm install`, so their layers change on every commit. A cache error never fails the build.
+ */
+export function cacheArgs(env, scope) {
+	if (!scope || !env.ACTIONS_RUNTIME_TOKEN || !(env.ACTIONS_RESULTS_URL || env.ACTIONS_CACHE_URL)) return [];
+	return [
+		'--cache-from',
+		`type=gha,scope=${scope}`,
+		'--cache-to',
+		`type=gha,mode=min,scope=${scope},ignore-error=true`,
+	];
+}
+
+function buildImage(dockerfile, tag, buildEnv = {}, cacheScope = '') {
 	const args = ['buildx', 'build', '--platform', PLATFORM, '-f', dockerfile, '-t', tag, '--load'];
+	args.push(...cacheArgs(process.env, cacheScope));
 	// `--build-arg NAME` without a value: Docker reads it from the environment, so no value is on a command line.
 	for (const name of Object.keys(buildEnv)) args.push('--build-arg', name);
 	run('docker', [...args, '.'], { env: { ...process.env, ...buildEnv } });
@@ -521,8 +539,9 @@ async function deploy(target, env, io) {
 	const tag = releaseTag(target);
 	const images = imageNames(target, tag);
 	console.log(`\nDeploying ${target} ${tag}: ${images.api}, ${images.web}`);
-	buildImage('apps/api/Dockerfile', images.api);
-	buildImage('apps/web/Dockerfile', images.web, webBuildEnv(env));
+	// The web image inlines each environment's NEXT_PUBLIC_* values, so its cache is per environment.
+	buildImage('apps/api/Dockerfile', images.api, {}, 'api');
+	buildImage('apps/web/Dockerfile', images.web, webBuildEnv(env), `web-${target}`);
 	checkImage(images.api);
 	checkImage(images.web);
 	const ssh = io.ssh(env);
