@@ -5,16 +5,18 @@ status: To Do
 assignee:
   - '@qa'
 created_date: '2026-10-14 22:15'
-updated_date: '2026-10-16 07:31'
+updated_date: '2026-10-19 19:16'
 labels:
   - qa
   - 'qa:fail'
 milestone: m-1
 dependencies:
+  - TASK-30.1
   - TASK-30.2
   - TASK-30.3
-  - TASK-30.1
   - TASK-88.2
+  - TASK-30.8
+  - TASK-112
 references:
   - docs/tech/frontend.md
   - docs/design/pages/P7-report-found.md
@@ -51,4 +53,6 @@ Branch: - (verify on main)
 
 <!-- SECTION:NOTES:BEGIN -->
 QA 2026-10-16 on main e2457eef. vitest web report-found+private-link 33 pass (+1 expected-fail); jest mobile report-found 13 pass; i18n check SL/EN OK. Gate AC8 (verify, e2e, Lighthouse, quality): merge queue on main at e2457eef. AC1 judged from code: 5 steps/about 8 taps, usability median not measured. AC2 matching/alerts are API side, not re-run (no API tests). Note: web anonymous session starts at the first photo upload, not only at Publish (TASK-17.9 design). Bugs: TASK-30.6 (web held linked sighting copy, medium), TASK-30.7 (mobile CONFLICT/429 drop the key, medium).
+
+QA re-run 2026-10-19, web only (app: later). Main a0ae40f6 read-only; live najdimo.si 69d07c9716f7 (report-found code identical to main; main 38 commits ahead, none in report-found). Unit: vitest report-found, linked, manage, turnstile, shelter-row, photo-picker 7 files 103 pass (TASK-30.6 fix in, no it.fails left); i18n check OK. verify/build/audit/e2e: lead, deploy-after-green-ci, 2026-10-19 (not run here: no DB, no build). Live (Chromium 390/320/1440, WebKit 390 with an OffscreenCanvas test shim, keyboard only 1440): 5 steps, 8 actions, GPS prefill (Center, Ljubljana), 'Ne sprasujemo, kje je zival zdaj', focus to h1 each step, 0 overflow, axe 0 on all steps and the linked sighting entry, 0 ad slots, 0 ad or analytics requests, no _ga (GA not on staging: CSP has no GA, mock provider). AC4 live: Sporoci opazanje on /r/EPeTbe2e opens the 3-step linked flow. AC3 live: public found reports show area only (radius 150 m, grid point). Publish not done live: Turnstile interactive challenge in headless, not solved (no test report created, nothing to remove). AC2/5/7 from unit tests + live /v1/shelters/responsible (Ljubljana confirmed, phone) + legal_timings flag off. AC8 FAIL: Lighthouse live /prijava/najdena-zival mobile perf 69/62/67, LCP 4.2-5.6 s (consent banner, TASK-112.1), script 431 372 B vs 300 000 (TASK-112; was 314 569 on 2026-10-16); a11y 100, BP 96, SEO 66 (staging noindex). Desktop perf 98. Bugs: TASK-30.8 (captcha challenge off screen and unexplained, medium). Gated on TASK-30.8 and TASK-112.
 <!-- SECTION:NOTES:END -->
