@@ -31,21 +31,29 @@ for (const { path, lang, messages } of [
 	});
 }
 
-test('home layout A: recent reports under the hero, server-rendered; empty state, no numbers without stats', async ({
+test('home layout B: recent reports next to the map teaser, server-rendered; empty state, no numbers without stats', async ({
 	page,
 }) => {
 	const home = sl.pages.home;
+	await page.setViewportSize({ width: 1440, height: 900 });
 	await page.goto('/');
 
 	// The mock API lists no reports and has no /v1/stats/public (404), so the numbers block stays out.
 	const recent = page.getByRole('region', { name: home.near_title_no_location });
 	await expect(recent.getByText(home.near_empty_body)).toBeVisible();
-	await expect(recent.getByRole('link', { name: home.near_open_map })).toHaveAttribute('href', '/zemljevid');
+	// From lg the heading link and the teaser open the map; at 390 only the teaser. No map library on the home page.
+	const map = recent.getByRole('link', { name: home.near_open_map });
+	await expect(map).toHaveCount(2);
+	for (const link of await map.all()) await expect(link).toHaveAttribute('href', '/zemljevid');
+	await expect(page.locator('canvas, .maplibregl-map')).toHaveCount(0);
 	await expect(recent.getByRole('link', { name: home.near_empty_action })).toHaveAttribute(
 		'href',
 		'/racun/opozorila'
 	);
 	await expect(page.getByText(home.stat_reunited)).toHaveCount(0);
+
+	await page.setViewportSize({ width: 390, height: 844 });
+	await expect(map).toHaveCount(1);
 });
 
 test('the CSP nonce differs between requests', async ({ request }) => {

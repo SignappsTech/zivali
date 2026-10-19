@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-19 10:13'
-updated_date: '2026-10-19 10:19'
+updated_date: '2026-10-19 10:43'
 labels:
   - fe
   - 'est:M'
@@ -38,7 +38,7 @@ Branch: agent/task-115.10-home-b
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
 - [ ] #1 Matches Option B on desktop and mobile, light and dark, SL and EN, with 'Opažena žival' as a quiet link
-- [ ] #2 Section order as B: hero with the chooser, recent reports (list next to a map teaser), numbers band (hidden under 50), how it works, safe by design, shelters
+- [x] #2 Section order as B: hero with the chooser, recent reports (list next to a map teaser), numbers band (hidden under 50), how it works, safe by design, shelters
 - [ ] #3 The map teaser loads no map library on the homepage and the page stays within the TASK-112 budgets
-- [ ] #4 Unit tests updated; e2e specs that read the homepage (content.spec and others) adjusted
+- [x] #4 Unit tests updated; e2e specs that read the homepage (content.spec and others) adjusted
 <!-- AC:END -->
