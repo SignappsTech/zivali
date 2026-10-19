@@ -29,14 +29,15 @@ export async function generateMetadata({ params }: PageProps<'/[locale]'>): Prom
 	});
 }
 
-// 200 % text (TASK-27.6; WCAG 1.4.4, 1.4.10): below lg the headings are clamp(1.125rem, 11.25vw, their 100 % size).
-// 11.25vw is 36 px at 320, so at 100 % every width from 320 keeps the design size, and at 200 % the longest word still
-// fits the narrowest box instead of being cut off; both ends are rem, so the user's text size moves them. The side
+// 200 % text (TASK-27.6; WCAG 1.4.4, 1.4.10): below lg each heading is clamp(1.125rem, its 100 % size at 320 px in vw,
+// its 100 % size): 11.25vw (h1, 36 px), 7.5vw (h2, 24 px), 6.25vw (h3, 20 px). At 100 % every width from 320 keeps the
+// design size; at 200 % a heading grows only as far as the width allows, so its longest word still fits instead of
+// being cut off, and never below the lede's size. Both ends are rem, so the user's text size moves them. The side
 // paddings, gaps and carets stop growing at their 100 % size (as the buttons', TASK-18.8); `main` breaks a word only
 // when it is wider than its box.
-const h2Fluid = cn(h2Class, 'text-[clamp(1.125rem,11.25vw,1.5rem)]/[1.25]');
+const h2Fluid = cn(h2Class, 'text-[clamp(1.125rem,7.5vw,1.5rem)]/[1.25]');
 const h3Class =
-	'font-display text-[clamp(1.125rem,11.25vw,1.25rem)]/[1.4] font-semibold tracking-[-0.01em] lg:text-2xl lg:leading-8';
+	'font-display text-[clamp(1.125rem,6.25vw,1.25rem)]/[1.4] font-semibold tracking-[-0.01em] lg:text-2xl lg:leading-8';
 const SAFE = [
 	['safe_1', LockSimpleIcon],
 	['safe_2', MapPinAreaIcon],
@@ -172,11 +173,16 @@ export default function HomePage() {
 						{/* The header menu's "Opažena žival" row: the same words and the same flow (found, sighted choice). */}
 						<p className="flex flex-wrap items-center border-t border-border pt-2">
 							{t('hero_sighted_prompt')}
-							{/* min-w-0: in the narrowest card (320 px, 200 % text) the label wraps inside it. */}
+							{/* min-w-0 with the 100 % padding and arrow: in the narrowest card (320 px, 200 % text) the pill
+							    shrinks with it and the label wraps, so the arrow stays on the card. */}
 							<Button asChild variant="text" className="min-w-0 px-[min(0.75rem,12px)]">
 								<Link href="/report/found">
 									{tNav('report_sighted_title')}
-									<ArrowRightIcon weight="bold" aria-hidden="true" />
+									<ArrowRightIcon
+										weight="bold"
+										aria-hidden="true"
+										className="size-[min(1.25rem,20px)]"
+									/>
 								</Link>
 							</Button>
 						</p>

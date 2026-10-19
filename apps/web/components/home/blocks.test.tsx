@@ -328,6 +328,26 @@ describe('RecentReports (T1 layout B, block 2)', () => {
 		expect(items.filter((li) => /\bhidden\b/.test(li.className))).toEqual([]);
 	});
 
+	it('200 % text (TASK-27.6): one minmax(0) column, so the teaser fits; the words wrap under the photo with the caret', async () => {
+		answer({ items: [report('Ab3dEf7h')], next_cursor: null, total_estimate: 1 });
+
+		show('sl', await RecentReports({ locale: 'sl' }));
+
+		const classes = (element: Element) => element.className.split(' ');
+		const [card] = rows();
+		const split = screen.getByRole('list').parentElement!;
+		expect(classes(split)).toContain('grid-cols-1');
+		expect(split.firstElementChild!.getAttribute('href')).toBe('/zemljevid');
+		expect(classes(card!)).toContain('flex-wrap');
+		const words = card!.lastElementChild!;
+		expect(classes(words)).toEqual(expect.arrayContaining(['flex-1', 'max-w-full']));
+		expect([words.firstElementChild!.className, words.lastElementChild!.tagName]).toEqual([
+			expect.stringMatching(/\bmin-w-0\b.*\bgrid-cols-1\b/),
+			'svg',
+		]);
+		expect(words.textContent).toMatch(/^Izgubljen pes/);
+	});
+
 	it.each([
 		['sl', /^Izgubljena mačka\s*Izgubljena/],
 		['en', /^Lost cat\s*Lost/],
@@ -411,6 +431,8 @@ describe('LiveNumbers (T1 layout B, block 3)', () => {
 			`${numbers[1]}${home.stat_open}`,
 			`${numbers[2]}${home.stat_alerts}`,
 		]);
+		// 200 % text (TASK-27.6): one minmax(0) column below lg, so a long label wraps inside the band.
+		expect(screen.getByRole('list').className.split(' ')).toContain('grid-cols-1');
 	});
 
 	it.each([

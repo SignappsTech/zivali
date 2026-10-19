@@ -47,6 +47,17 @@ for (const path of ['/', '/kako-deluje', '/vpis', '/prijava/izgubljena-zival', '
 		expect((await reach(page.getByRole('banner'))).past).toEqual([]);
 	});
 
+// TASK-27.6: the home body reflows: the hero h1, lede and report chooser wrap, the map teaser fits.
+for (const path of ['/', '/en'])
+	for (const width of [390, 320])
+		test(`the home body at ${width} px and 200 % text stays inside the viewport (${path})`, async ({ page }) => {
+			await openWithLargeText(page, path, width);
+			const { scrollWidth, width: viewport, past } = await reach(page.getByRole('main'));
+
+			expect(past).toEqual([]);
+			expect(scrollWidth).toBeLessThanOrEqual(viewport);
+		});
+
 // At 100 % text the bar keeps its P1 height: 64 px below md, 88 px from md.
 for (const [width, height] of [
 	[390, 64],

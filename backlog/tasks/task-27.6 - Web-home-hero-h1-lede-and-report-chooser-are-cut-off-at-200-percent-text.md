@@ -28,6 +28,7 @@ Severity: medium (the page's main action is partly unreadable for large-text use
 
 Unblocks on: - (TASK-115.10, 115.11, 115.13 merged)
 Branch: agent/<id>-home-hero-large-text
+Branch: agent/TASK-27.6-home-hero-large-text
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Acceptance Criteria

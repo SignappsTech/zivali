@@ -146,6 +146,60 @@ describe('HomePage (P3 T1, layout B)', () => {
 		expect(website).toEqual({ '@type': 'WebSite', name: 'Najdimo', url: organization.url, inLanguage: locale });
 	});
 
+	it('reflows at 200 % text (TASK-27.6): fluid rem-bounded headings, minmax(0) columns, wrapping rows, no clipping', () => {
+		const home = sl.pages.home;
+		const { container } = render(
+			<NextIntlClientProvider locale="sl" messages={sl}>
+				<HomePage />
+			</NextIntlClientProvider>
+		);
+		const classes = (element: Element) => element.className.split(' ');
+		const hero = screen.getByRole('region', { name: home.hero_title });
+
+		// Only the photo layer clips (the zoomed photo, to the corners); the words are never cut off.
+		expect(classes(hero)).not.toContain('overflow-hidden');
+		const layer = hero.querySelector('img')!.parentElement!;
+		expect([classes(layer), layer.textContent]).toEqual([expect.arrayContaining(['overflow-hidden', '-z-10']), '']);
+		// One minmax(0, 1fr) column below lg, so the longest word cannot widen the hero, the how-it-works block or the
+		// safe cards past the viewport; a word wider than its box breaks instead of overflowing.
+		const h1 = screen.getByRole('heading', { level: 1 });
+		const safe = screen.getByRole('region', { name: home.safe_title });
+		for (const grid of [
+			h1.parentElement!.parentElement!,
+			screen.getByRole('region', { name: home.how_title }),
+			within(safe).getByRole('list'),
+			...within(safe).getAllByRole('listitem'),
+		])
+			expect(classes(grid)).toContain('grid-cols-1');
+		expect(classes(container.querySelector('main')!)).toContain('break-words');
+
+		// Fluid type: the 100 % size at 320 px in vw, between the lede's size and the 100 % size, both in rem.
+		const fluid = (element: Element) => classes(element).find((name) => name.startsWith('text-[clamp('));
+		expect(fluid(h1)).toBe('text-[clamp(1.125rem,11.25vw,2.25rem)]');
+		expect(screen.getAllByRole('heading', { level: 2 }).map(fluid)).toEqual([
+			'text-[clamp(1.125rem,6.25vw,1.25rem)]/[1.4]',
+			...Array<string>(4).fill('text-[clamp(1.125rem,7.5vw,1.5rem)]/[1.25]'),
+		]);
+		expect(screen.getAllByRole('heading', { level: 3 }).map(fluid)).toEqual(
+			Array<string>(3).fill('text-[clamp(1.125rem,6.25vw,1.25rem)]/[1.4]')
+		);
+		// The 100 % sizes from lg stay.
+		expect(classes(h1)).toContain('lg:text-6xl');
+
+		// The chooser rows wrap: the words go under the icon together with the caret, never squeezed beside it.
+		for (const row of within(hero).getAllByRole('listitem')) {
+			const link = within(row).getByRole('link');
+			const words = link.lastElementChild!;
+			expect(classes(link)).toContain('flex-wrap');
+			expect(classes(words)).toEqual(expect.arrayContaining(['flex-1', 'max-w-full']));
+			expect(words.querySelector('svg')).not.toBeNull();
+		}
+		// The sighted link shrinks with the narrowest card, its label wraps and its arrow keeps the 100 % size.
+		const sighted = within(hero).getByRole('link', { name: sl.nav.report_sighted_title });
+		expect(classes(sighted)).toEqual(expect.arrayContaining(['min-w-0', 'px-[min(0.75rem,12px)]']));
+		expect(sighted.querySelector('svg')!.getAttribute('class')).toContain('size-[min(1.25rem,20px)]');
+	});
+
 	it.each([
 		['sl', 'https://najdimo.si/'],
 		['en', 'https://najdimo.si/en'],
