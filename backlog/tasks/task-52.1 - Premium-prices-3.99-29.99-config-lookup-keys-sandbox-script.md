@@ -1,11 +1,11 @@
 ---
 id: TASK-52.1
 title: 'Premium prices 3.99/29.99: config, lookup keys, sandbox script'
-status: In Progress
+status: Done
 assignee:
   - '@backend-dev'
 created_date: '2026-10-19 15:07'
-updated_date: '2026-10-19 19:06'
+updated_date: '2026-10-19 19:33'
 labels:
   - be
   - 'est:S'
