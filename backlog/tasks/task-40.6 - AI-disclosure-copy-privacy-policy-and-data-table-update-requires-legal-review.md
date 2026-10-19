@@ -7,7 +7,7 @@ status: In Progress
 assignee:
   - '@content-strategist'
 created_date: '2026-10-18 21:23'
-updated_date: '2026-10-18 21:52'
+updated_date: '2026-10-19 10:33'
 labels:
   - content
   - legal
@@ -55,4 +55,6 @@ Branch: agent/task-40.6-ai-copy-privacy
 - AC3 drafted, waiting for the owner: privacy policy 0.8 (ch. 1, 3, 4, 6, 8, 12, 14, 16) as built per C19/C20 §Privacy. Location USA for both (no other region in C19/C20/04). Not claimed: provider retention, training, contracting entities, transfer basis -> [naročnik: …]/[client: …] markers, questions in privacy note 23. Voyage FAQ (read 2026-10-18): data stored and used for training unless the org opts out (needs payment method + Admin, irreversible, gives zero-day retention).
 - AC4 partly done: every new claim marked [pravni pregled]/[legal review]; lawyer pack EN+SL v0.4 (LQ-36/37 changed, new LQ-68..71, F-05, §5.2, D-06, §8, §9.1, CD-08). Open: owner approval of the text (who, date, version) still to be recorded here. najdimo-pravni-pregled.docx not rebuilt (rebuild after approval).
 - Port to apps/web legal MDX only after approval, with all markers removed (dev task, not created).
+
+APPROVED IN ADVANCE: Primož Božič (owner), 2026-10-19, in chat: 'auto accept privacy text for now, we will fix it later if needed'. Covers the privacy policy v0.8 AI section with the provider blanks filled from published terms (content-strategist run of 2026-10-19), for publishing on najdimo.si before AI goes on. The lawyer review (LQ-36, 37, 68-71) stays open and may change the text later.
 <!-- SECTION:NOTES:END -->

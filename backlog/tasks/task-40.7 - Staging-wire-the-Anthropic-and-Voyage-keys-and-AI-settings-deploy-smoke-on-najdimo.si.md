@@ -7,7 +7,7 @@ status: To Do
 assignee:
   - '@tech-lead'
 created_date: '2026-10-18 21:25'
-updated_date: '2026-10-19 10:14'
+updated_date: '2026-10-19 10:34'
 labels:
   - tech
   - 'est:S'
@@ -51,4 +51,6 @@ Branch: agent/task-40.7-staging-ai
 
 <!-- SECTION:NOTES:BEGIN -->
 Owner, 2026-10-19 (Primož Božič), in chat: Voyage payment method added; Voyage training opt-out is on ('It's already on'); go to switch AI on for najdimo.si today, after privacy policy v0.8 is approved and live ('Publish v0.8 first'). Backfill: new photos only. No photo uploaded before the switch-on goes to Anthropic or Voyage (TASK-40.11).
+
+Owner 2026-10-19: privacy text v0.8 accepted in advance ('auto accept for now'); switch-on proceeds once the v0.8 web port and TASK-40.11 are live.
 <!-- SECTION:NOTES:END -->
