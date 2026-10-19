@@ -8,6 +8,7 @@ import * as React from 'react';
 
 import type { PublicPhoto } from '@zivali/types';
 import { Button } from '@/components/ui/button';
+import { photoCrop, photoWhole } from '@/lib/photo';
 import { cn } from '@/lib/utils';
 
 const frame = 'aspect-[4/3] w-full rounded-[calc(var(--radius)*2)]';
@@ -57,7 +58,7 @@ export function Gallery({ photos, className }: { photos: PublicPhoto[]; classNam
 					height={photo.height}
 					fetchPriority={index === 0 ? 'high' : undefined}
 					onError={() => fail(index)}
-					className={cn(frame, 'bg-muted object-cover')}
+					className={cn(frame, 'bg-muted', photoWhole)}
 				/>
 			)}
 			{total > 1 && (
@@ -80,7 +81,8 @@ export function Gallery({ photos, className }: { photos: PublicPhoto[]; classNam
 										height={72}
 										loading="lazy"
 										className={cn(
-											'size-full rounded-lg object-cover transition-opacity duration-150 motion-reduce:transition-none',
+											'size-full rounded-lg transition-opacity duration-150 motion-reduce:transition-none',
+											photoCrop,
 											i === index ? 'opacity-100' : 'opacity-55 group-hover:opacity-80'
 										)}
 									/>

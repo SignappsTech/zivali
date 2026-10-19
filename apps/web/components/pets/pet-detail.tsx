@@ -30,6 +30,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { useRouter } from '@/i18n/client-navigation';
 import { Link } from '@/i18n/navigation';
+import { photoCrop, photoWhole } from '@/lib/photo';
 import { cn } from '@/lib/utils';
 
 /** Codes that mean "not your pet, or no such pet": the 404 page, never a hint which one. */
@@ -131,7 +132,7 @@ export function PetDetail({ pet }: { pet: Pet }) {
 							alt={t('photo_alt', { name: pet.name, n: 1 })}
 							width={480}
 							height={360}
-							className="aspect-[4/3] w-full rounded-[32px] bg-muted object-cover"
+							className={cn('aspect-[4/3] w-full rounded-[32px] bg-muted', photoWhole)}
 						/>
 						{more.length > 0 && (
 							<ul aria-label={t('section_photos')} className="mt-4 flex flex-wrap gap-3">
@@ -143,7 +144,7 @@ export function PetDetail({ pet }: { pet: Pet }) {
 											alt={t('photo_alt', { name: pet.name, n: index + 2 })}
 											width={96}
 											height={96}
-											className="size-24 rounded-row bg-muted object-cover"
+											className={cn('size-24 rounded-row bg-muted', photoCrop)}
 										/>
 									</li>
 								))}

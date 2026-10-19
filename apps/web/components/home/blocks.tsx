@@ -17,6 +17,7 @@ import { type Status, StatusLabel } from '@/components/ui/status-label';
 import { Link } from '@/i18n/navigation';
 import { env } from '@/lib/env';
 import { getPlace } from '@/lib/report';
+import { photoCrop } from '@/lib/photo';
 import { cn } from '@/lib/utils';
 
 // T1 Home layout B (TASK-115.10): the latest reports next to a static map teaser, and the live numbers band,
@@ -181,7 +182,7 @@ function ReportRow({ report, place }: { report: PublicReport; place?: string }) 
 					height={72}
 					loading="lazy"
 					decoding="async"
-					className="size-[72px] shrink-0 rounded-photo bg-muted object-cover"
+					className={cn('size-[72px] shrink-0 rounded-photo bg-muted', photoCrop)}
 				/>
 			) : (
 				<span aria-hidden="true" className="size-[72px] shrink-0 rounded-photo bg-muted" />

@@ -7,6 +7,7 @@ import sl from '@zivali/i18n/dist/sl.json';
 import { colors } from '@zivali/tokens/values';
 import type { PublicReport } from '@zivali/types';
 import { env } from '@/lib/env';
+import { PHOTO_FOCUS } from '@/lib/photo';
 
 const catalogues = { sl, en };
 const SIZE = { width: 1200, height: 630 };
@@ -63,7 +64,7 @@ export async function GET(request: Request, { params }: RouteContext<'/r/[code]/
 					alt=""
 					width={630}
 					height={630}
-					style={{ width: 630, height: 630, objectFit: 'cover' }}
+					style={{ width: 630, height: 630, objectFit: 'cover', objectPosition: PHOTO_FOCUS }}
 				/>
 			)}
 			<div

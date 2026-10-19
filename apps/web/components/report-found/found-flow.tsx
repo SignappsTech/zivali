@@ -41,6 +41,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { StatusLabel } from '@/components/ui/status-label';
 import { Textarea } from '@/components/ui/textarea';
 import { saveManageToken } from '@/lib/manage-link';
+import { photoCrop } from '@/lib/photo';
 import { cn } from '@/lib/utils';
 
 import { FoundDone } from './found-done';
@@ -147,7 +148,13 @@ function LinkedPet({ code }: { code: string }) {
 		<div className="mt-6 flex items-center gap-3 lg:mt-8">
 			{thumb ? (
 				// eslint-disable-next-line @next/next/no-img-element -- the API's sized thumbnail (C5)
-				<img src={thumb} alt="" width={48} height={48} className="size-12 rounded-xl bg-muted object-cover" />
+				<img
+					src={thumb}
+					alt=""
+					width={48}
+					height={48}
+					className={cn('size-12 rounded-xl bg-muted', photoCrop)}
+				/>
 			) : (
 				<span className="grid size-12 place-items-center rounded-xl bg-muted text-muted-foreground">
 					<PawPrintIcon weight="bold" aria-hidden="true" className="size-6" />
@@ -816,7 +823,7 @@ export function FoundFlow({
 									alt={tph('thumb_alt', { n: 1, total: photos.length })}
 									width={72}
 									height={72}
-									className="mt-1 size-[72px] rounded-xl bg-muted object-cover"
+									className={cn('mt-1 size-[72px] rounded-xl bg-muted', photoCrop)}
 								/>
 							)}
 						</SummaryRow>

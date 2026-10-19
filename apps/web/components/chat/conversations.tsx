@@ -10,6 +10,7 @@ import { InlineError, ringClass, SpotIllustration } from '@/components/shell/pag
 import { EmptyState } from '@/components/ui/empty-state';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Link } from '@/i18n/navigation';
+import { photoCrop } from '@/lib/photo';
 import { cn } from '@/lib/utils';
 
 // P12 parts shared by the inbox list, the thread and the manage page (anonymous managers), as on mobile (TASK-21.4).
@@ -48,7 +49,13 @@ function Thumb({ url }: { url: string | null }) {
 	return url ? (
 		// The API serves the sized thumbnail (C5); next/image would proxy it again.
 		// eslint-disable-next-line @next/next/no-img-element
-		<img src={url} alt="" width={64} height={64} className="size-16 shrink-0 rounded-row bg-muted object-cover" />
+		<img
+			src={url}
+			alt=""
+			width={64}
+			height={64}
+			className={cn('size-16 shrink-0 rounded-row bg-muted', photoCrop)}
+		/>
 	) : (
 		<span aria-hidden="true" className="grid size-16 shrink-0 place-items-center rounded-row bg-muted">
 			<PawPrintIcon weight="fill" className="size-7 text-muted-foreground" />

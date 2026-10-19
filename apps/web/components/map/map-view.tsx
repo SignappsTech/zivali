@@ -7,6 +7,7 @@ import { createPortal } from 'react-dom';
 
 import type { MapMode } from '@zivali/tokens/map-style';
 import { statusIcons } from '@/components/ui/status-label';
+import { photoCrop } from '@/lib/photo';
 import { cn } from '@/lib/utils';
 
 import type { MapEngine, MapItem } from './engine';
@@ -122,7 +123,7 @@ function MarkerFace({
 		>
 			{marker.photoUrl ? (
 				// eslint-disable-next-line @next/next/no-img-element -- a 44 px thumbnail inside a map marker
-				<img src={marker.photoUrl} alt="" width={44} height={44} className={cn(avatar, 'object-cover')} />
+				<img src={marker.photoUrl} alt="" width={44} height={44} className={cn(avatar, photoCrop)} />
 			) : (
 				<span className={cn(avatar, 'grid place-items-center')}>
 					<Icon weight="fill" aria-hidden="true" className="size-6" />

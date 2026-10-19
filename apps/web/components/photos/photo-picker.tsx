@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button';
 import { FieldError } from '@/components/ui/form-field';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
+import { photoCrop } from '@/lib/photo';
 import { cn } from '@/lib/utils';
 
 import type { PhotoExif } from './prepare-photo';
@@ -148,7 +149,7 @@ export function PhotoPicker({ draft, saved, onChange, onExif, beforeUpload, hold
 									alt={t('thumb_alt', { n, total: photos.length })}
 									width={80}
 									height={80}
-									className="size-20 rounded-row bg-muted object-cover"
+									className={cn('size-20 rounded-row bg-muted', photoCrop)}
 								/>
 								<div>
 									{ready && index === 0 && <p className="text-sm font-bold">{t('cover')}</p>}
