@@ -17,6 +17,7 @@
 		"test": "vitest run",
 		"test:security": "vitest run test/security",
 		"test:perf": "vitest run --config vitest.perf.config.ts",
+		"db:scratch": "tsx test/helpers/scratch-db.ts",
 		"eval:matching": "tsx test/eval/matching/run.ts",
 		"eval:extract": "tsx test/eval/extract/run.ts"
 	},

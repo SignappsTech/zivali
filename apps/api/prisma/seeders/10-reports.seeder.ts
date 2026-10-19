@@ -1,16 +1,20 @@
 // Seeder 10-reports (C4, C5), local only: pets of the fixture owners and 30 open reports across Slovenia (lost,
 // found, sighted; two chip pairs for matching), written through ReportsDomain.insertReport so every point is
-// coarsened and fuzzed like a real one. Fixed ids: reruns skip existing rows. Photos from data/photos/ (licences in
-// data/photos/LICENSE.md) are put in the media bucket on every run, so a wiped MinIO is refilled.
+// coarsened and fuzzed like a real one. Fixed ids and short codes: reruns skip existing rows. Photos from data/photos/
+// (licences in data/photos/LICENSE.md) go through PhotosDomain like an upload (processPhoto, publishReportPhotos), so
+// the media bucket gets the real display and thumb variants; a photo whose public thumb is missing (a wiped MinIO, an
+// older seed) is processed again.
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 
 import type { Colour, Pattern, ReportType, Sex, Size, Species } from '@zivali/types';
 
 import { adapters } from '../../adapters/index.ts';
+import { mediaRef, uploadRef } from '../../domains/photos/photo-objects.ts';
+import { PhotosDomain } from '../../domains/photos/index.ts';
 import { ReportsDomain, type NewReport } from '../../domains/reports/index.ts';
 import { config } from '../../lib/config.ts';
-import { userCtx } from '../../lib/ctx.ts';
+import { systemCtx, userCtx } from '../../lib/ctx.ts';
 import { logger } from '../../lib/logger.ts';
 import { prisma } from '../prisma.ts';
 import { fixtureUsers } from './00-users.seeder.ts';
@@ -18,6 +22,17 @@ import { fixtureUsers } from './00-users.seeder.ts';
 const DAY = 24 * 3600 * 1000;
 /** Reports 1…, pets 2…, photos 3… */
 const fixtureId = (kind: 1 | 2 | 3, n: number) => `00000000-0000-4000-8000-${kind}${String(n).padStart(11, '0')}`;
+/**
+ * Report n's short code (C1: 8 base58 characters): Seed1111 for report 1 … Seed111W for report 30. Lost 3 (Rex) and
+ * found 13 take the web mock API's lost and found detail codes, so the quality pages /r/Rex12345 and /r/Hk3vT9qP
+ * (tests/quality, lighthouserc.json) also open against a seeded API (CH-409).
+ */
+const SHORT_CODES: Record<number, string> = { 3: 'Rex12345', 13: 'Hk3vT9qP' };
+const BASE58 = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+const fixtureCode = (n: number) => SHORT_CODES[n] ?? `Seed111${BASE58[n - 1]}`;
+// Seed photos send no jobs: publishing runs inline below, and no seed run triggers AI extraction (paid with a real
+// AI_PROVIDER) or starts pg-boss in the seed process.
+const seedCtx = () => systemCtx({ jobs: { send: async () => null } });
 // owner@, owner2@, finder@, shelter@, mod@, admin@
 const [OWNER, OWNER2, FINDER, SHELTER, MOD, ADMIN] = fixtureUsers.map((fixture) => fixture.id) as [
 	string,
@@ -438,7 +453,6 @@ const REPORTS: Fixture[] = [
 	},
 ];
 
-const mediaBase = () => config.MEDIA_BASE_URL ?? `${config.S3_ENDPOINT}/${config.R2_BUCKET_MEDIA}`;
 const photoDir = new URL('./data/photos/', import.meta.url);
 
 export default async function seedReports(): Promise<void> {
@@ -476,21 +490,27 @@ export default async function seedReports(): Promise<void> {
 	}
 
 	const now = Date.now();
-	const existing = new Set(
+	const existing = new Map(
 		(
 			await prisma.reports.findMany({
 				where: { id: { in: REPORTS.map((_, i) => fixtureId(1, i + 1)) } },
-				select: { id: true },
+				select: { id: true, short_code: true },
 			})
-		).map((row) => row.id)
+		).map((row) => [row.id, row.short_code])
 	);
 	let created = 0;
+	let photos = 0;
 	for (const [i, fixture] of REPORTS.entries()) {
 		const id = fixtureId(1, i + 1);
+		const short_code = fixtureCode(i + 1);
 		const { breed, colours, pattern, size } = LOOKS[fixture.look];
-		if (!existing.has(id)) {
+		if (existing.has(id)) {
+			// Seeded before the codes were fixed: take the fixed one.
+			if (existing.get(id) !== short_code) await prisma.reports.update({ where: { id }, data: { short_code } });
+		} else {
 			const input: NewReport = {
 				id,
+				short_code,
 				type: fixture.type,
 				species: fixture.species,
 				pet_id: fixture.pet ? fixtureId(2, fixture.pet) : null,
@@ -524,30 +544,33 @@ export default async function seedReports(): Promise<void> {
 			);
 			created++;
 		}
-		if (fixture.photo) {
-			const photoId = fixtureId(3, i + 1);
-			const body = readFileSync(new URL(fixture.photo, photoDir));
-			// No sharp before TASK-14.1: the original JPEG serves as display and thumb.
-			const key = `r/${id}/${photoId}/display.jpg`;
-			await adapters.storage.put({ bucket: 'media', key }, body, 'image/jpeg');
-			const [width, height] = PHOTOS[fixture.photo];
-			await prisma.photos.upsert({
-				where: { id: photoId },
-				create: {
-					id: photoId,
-					owner_id: fixture.by,
-					report_id: id,
-					sha256: createHash('sha256').update(body).digest('hex'),
-					width,
-					height,
-					bytes: body.length,
-					status: 'published',
-					public_display_url: `${mediaBase()}/${key}`,
-					public_thumb_url: `${mediaBase()}/${key}`,
-				},
-				update: {},
-			});
-		}
+		if (fixture.photo && (await seedPhoto(fixtureId(3, i + 1), id, fixture.by, fixture.photo))) photos++;
 	}
-	logger.info({ reports: REPORTS.length, created, pets: PETS.length }, 'fixture reports ready');
+	logger.info({ reports: REPORTS.length, created, pets: PETS.length, photos }, 'fixture reports ready');
+}
+
+/** Uploads, processes and publishes one fixture photo unless it is published with its thumb in the media bucket. */
+async function seedPhoto(photoId: string, reportId: string, ownerId: string, file: PhotoFile): Promise<boolean> {
+	const row = await prisma.photos.findUnique({ where: { id: photoId }, select: { status: true } });
+	if (row?.status === 'published' && (await adapters.storage.head(mediaRef(reportId, photoId, 'thumb.webp'))))
+		return false;
+	const body = readFileSync(new URL(file, photoDir));
+	const [width, height] = PHOTOS[file];
+	const photo = {
+		owner_id: ownerId,
+		report_id: reportId,
+		sha256: createHash('sha256').update(body).digest('hex'),
+		width,
+		height,
+		bytes: body.length,
+		status: 'uploaded' as const,
+		public_display_url: null,
+		public_thumb_url: null,
+	};
+	await adapters.storage.put(uploadRef({ id: photoId, owner_id: ownerId }), body, 'image/jpeg');
+	await prisma.photos.upsert({ where: { id: photoId }, create: { id: photoId, ...photo }, update: photo });
+	const ctx = seedCtx();
+	await PhotosDomain.processPhoto({ photo_id: photoId }, ctx);
+	await PhotosDomain.publishReportPhotos({ report_id: reportId }, ctx);
+	return true;
 }

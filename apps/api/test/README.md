@@ -2,6 +2,27 @@
 
 Vitest + Supertest against the real local Postgres (ADR-015). Files run one after another (`fileParallelism: false`).
 
+## Scratch database (TASK-114.36)
+
+Worktrees run the API tests on their own `task_<id>` database (TASK-101). One command, from the repository root:
+
+    TEST_DATABASE_URL="postgresql://postgres:postgres@127.0.0.1:55322/task_<id>?schema=app" pnpm --filter api test
+
+`global-setup` sees a `task_*` `TEST_DATABASE_URL` and first runs `ensureScratchDb` (`test/helpers/scratch-db.ts`), which adds
+only what is missing: the database itself, Supabase's `auth` schema (empty tables, owners and grants; `pg_dump --schema-only
+--schema=auth` of the server's `postgres` database, restored in one transaction through the db container's `psql`, since the
+host has no `pg_dump` 17), and a no-op `realtime.send(jsonb, text, text, boolean)` (no Realtime server is attached, so
+`NotificationsDomain.deliver()` and chat broadcasts succeed and send nothing). `migrate deploy` follows as before. Without them
+100-230 tests failed on `auth.users` or `realtime.send`. To prepare a database without running tests (it prints the URL):
+`pnpm --filter api db:scratch task_<id>`; moved ports: `SUPABASE_DB_PORT`.
+
+Guard: it refuses any database not named `task_<a-z0-9_>` or not on 127.0.0.1/localhost, so it never creates or changes
+`postgres`; there it only reads (`pg_database`, the auth schema definition). Still bound to the shared stack: tests that call
+the local Auth API, PostgREST or Realtime at `SUPABASE_URL` (users and reports seeders, `admin:create`, the JWKS and
+anonymous-conversion tests, `schema-exposure`, `conversations.realtime`) reach the `postgres` database, not the scratch one.
+With `SUPABASE_URL` on an unused port (nothing written there) a full run on a scratch database had 97 failures, all of them
+`ECONNREFUSED` on that URL (TASK-114.36); everything else passed (see the proposal below).
+
 ## Flake rules (TASK-108)
 
 - No wall-clock budgets (`performance.now()` < N ms). Assert the plan (`EXPLAIN` contains the index name), the query count or the

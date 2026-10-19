@@ -5,6 +5,7 @@ import { execSync } from 'node:child_process';
 import pg from 'pg';
 
 import { guardMessage, migrationDrift } from './helpers/db-guard';
+import { ensureScratchDb, isScratchUrl } from './helpers/scratch-db';
 
 // TASK-109: finished pg-boss jobs pile up in the shared local DB and slow the job-drain tests.
 // TASK-110: so do alert subscriptions/deliveries of test users (profiles without an auth.users row) left by a timed-out run.
@@ -38,9 +39,15 @@ async function purgeResidue(url: string): Promise<void> {
 }
 
 export default async function setup(): Promise<void> {
-	if (process.env.TEST_DATABASE_URL) {
-		process.env.DATABASE_URL = process.env.TEST_DATABASE_URL;
-		process.env.DIRECT_URL = process.env.TEST_DATABASE_URL;
+	const scratch = process.env.TEST_DATABASE_URL;
+	if (scratch) {
+		process.env.DATABASE_URL = scratch;
+		process.env.DIRECT_URL = scratch;
+		// TASK-114.36: a task_* scratch DB is created and given the auth schema and realtime.send stub it lacks.
+		if (isScratchUrl(scratch)) {
+			const done = await ensureScratchDb(scratch);
+			if (done.length) process.stdout.write(`[global-setup] scratch database: ${done.join(', ')}\n`);
+		}
 	}
 	const url = process.env.DIRECT_URL || process.env.DATABASE_URL;
 	if (url) {
