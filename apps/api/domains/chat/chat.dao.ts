@@ -1,6 +1,7 @@
 // Prisma access for chat (C9): conversations, participants, messages, blocks, plus the report reads chat needs
 // (managers, type and source for aliases). Messages are read oldest-first by (created_at, id).
 import { Prisma } from '../../generated/client.ts';
+import { purgeWhere } from '../../lib/purge.ts';
 import { prisma } from '../../prisma/prisma.ts';
 
 type Tx = Prisma.TransactionClient;
@@ -226,10 +227,7 @@ export async function markReadOnly(report_id: string, at: Date, tx: Tx) {
 
 /** Deletes read-only conversations closed before the cutoff (participants and messages cascade). */
 export async function deleteClosedBefore(cutoff: Date, tx?: Tx): Promise<number> {
-	const { count } = await (tx ?? prisma).conversations.deleteMany({
-		where: { status: 'read_only', closed_at: { lt: cutoff } },
-	});
-	return count;
+	return purgeWhere(Prisma.sql`app.conversations`, Prisma.sql`status = 'read_only' and closed_at < ${cutoff}`, tx);
 }
 
 export type ConversationListRow = {

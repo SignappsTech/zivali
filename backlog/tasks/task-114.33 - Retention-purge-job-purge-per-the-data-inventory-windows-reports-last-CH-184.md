@@ -3,11 +3,11 @@ id: TASK-114.33
 title: >-
   Retention purge job: purge per the data-inventory windows, reports last
   (CH-184)
-status: To Do
+status: In Progress
 assignee:
   - '@backend-dev'
 created_date: '2026-10-18 22:06'
-updated_date: '2026-10-18 22:13'
+updated_date: '2026-10-19 18:49'
 labels:
   - be
   - 'est:M'
