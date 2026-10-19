@@ -3,7 +3,7 @@ source: 03§P19
 page: P19 Admin console shell
 stories: TASK-34 (FR-019), TASK-89 (FR-044, shelter directory admin)
 platforms: web
-version: 1.3
+version: 1.4
 mockup: docs/design/mockups/P19-admin-shell.html, docs/design/mockups/P19-shelter-directory.html (directory screen)
 copy: docs/content/pages/P19-admin-shell.md
 ---
@@ -31,6 +31,10 @@ One console for the client and moderators: ads, organisations, moderation, order
 - **Top bar** (72 px, `background`): breadcrumb as text links, page title h1 below it, right side: environment label (Local, Staging, Production), role word, account menu.
 - **Content** max 1280, 48 px gutters, 40 px between blocks.
 
+## Sections
+
+**Enquiries (Commerce, M2, CH-662, build task TASK-34.10).** `/admin/enquiries` lists the partner leads served by `GET /v1/admin/leads` (C14) in the shared table pattern below: received (newest first), organisation, contact, e-mail, region, consent time; row click opens the 480 px drawer with the message and the consent record; no destructive actions. It is the only place a lead is visible when its notification e-mail failed or `LEADS_NOTIFY_EMAIL` is unset, so it must not stay a "coming soon" section. Empty state, loading rows and error note as in the pattern.
+
 ## Shared table pattern (dense)
 
 Filter row (line search, select filters as pills), table with sticky header, rows 56 px, row hover tone `accent`, hairlines (`border`) allowed here, 14 to 16 px text, sortable columns with an icon and `aria-sort`, bulk selection with checkboxes (24 px visual, 44 hit), pagination (keyset "Load more" or page numbers), per-row actions in a menu, empty state, loading skeleton rows, error note. Row click opens a right drawer (480 px) with detail and actions. Destructive actions use the dialog from system.md with the target named and an audit-note field.
@@ -41,7 +45,7 @@ Filter row (line search, select filters as pills), table with sticky header, row
 |---|---|
 | Sign in with strong authentication | the standard sign-in (P16), then an authenticator code screen (6 digit field, a muted lost-device line `mfa_lost` under the code form, no backup-code link) and enrolment screen with QR and secret, first time. As built (TASK-34.3): TOTP enrolment and code render in place at the requested admin URL (no `/admin/preverjanje` route) |
 | Access denied | non-admin or wrong role: h1, sentence, text button back to the app. No hint of what exists. |
-| Session timeout | dialog "Sign in again" with the page kept. As built (TASK-34.3): not built; an ended session goes to sign-in with `next` (keeping the page needs an in-place re-auth) |
+| Session timeout | warning dialog before the session ends, page kept. As built (TASK-34.8, CH-628): after 28 min idle a Dialog with title, a countdown description and one primary "Ostanite vpisani" button (it has focus). The button, Escape or the scrim refresh the session and restart the time. At 30 min the console signs out and goes to sign-in with `next`. The console's tabs share their activity through localStorage. Constants IDLE_MS and WARN_MS in `components/admin/idle-timeout.tsx`. |
 | Last-admin guard | removing the last admin is refused with an explaining note |
 | Maintenance or read-only | banner at the top. As built: not built (no flag or API yet) |
 
@@ -103,3 +107,4 @@ None.
 | 1.1 | 2026-10-18 | CH-470: F7 lost-device line and backup authenticator card |
 | 1.2 | 2026-10-18 | CH-222: access patterns and dashboard as built (TASK-34.3) |
 | 1.3 | 2026-10-19 | CH-221: audit actions as raw codes until M4, breadcrumb landmark name; MFA backup is the second authenticator (1.1, CH-470); Orders dropped, KPIs live on the Dashboard |
+| 1.4 | 2026-10-19 | CH-628: session timeout dialog as built (TASK-34.8). CH-662: Enquiries screen specified in Sections, build task TASK-34.10. |

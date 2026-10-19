@@ -1,7 +1,7 @@
 ---
 doc_id: DOC-03
 title: Design Specification
-version: 0.7
+version: 0.8
 status: Draft (direction approved 2026-10-14)
 date: 2026-10-19
 owner: Design Lead
@@ -111,6 +111,7 @@ IDs are canonical: design slices are `design/pages/P<n>-<slug>.md`, mockups `des
 | P21 | Ad slots and house ads | Labelled calm placements, four slots | Feed, detail, reunited, sidebar, house ads, no-ad routes | TASK-36 | design/mockups/P21-ad-slots.html | Slice written, mockup pending |
 | P22 | Partners page | Audience, placements and an enquiry | Hero, live numbers, slot previews, form | TASK-38 | design/mockups/P22-partners.html | Slice written, mockup pending |
 | P23 | UI kit gallery | Visual reference for all core components and states | Components by group in light and dark | TASK-8 | design/mockups/P23-ui-kit-gallery.html | Slice written, mockup pending |
+| P24 | Premium plan page | Honest plan choice, yearly first | Free list, Premium perks, yearly and monthly plans, active, cancel, ended, mobile web-checkout note | TASK-54 (wireframe gate TASK-54.1) | design/mockups/P24-premium-plan.html (after the wireframe approval) | Slice and mockup pending; copy slice docs/content/pages/P24-premium-plan.md (CH-639); ID P24 proposed by content, rename the slice if design picks another |
 
 # Content strategy
 
@@ -161,3 +162,4 @@ Mobile first. Breakpoints: 640 (sm), 768 (md), 1024 (lg), 1280 (xl), 1536 (2xl).
 | 0.5 | 2026-10-16 | TASK-90.5: web font cuts for the mobile LCP gate (single heading weight 700, body 400/700, no opsz axis, custom Latin subsets, preload, size-adjusted fallback). Typography bullet and system.md §4 updated. |
 | 0.6 | 2026-10-18 | Design workflow section: owner wireframe rule of 2026-10-16 (CH-491). Slice updates: P6 step list (CH-497), P13 switches (CH-502), P18 Facebook row (CH-507). |
 | 0.7 | 2026-10-19 | IA footer groups (CH-594) and P3 home layout B (CH-600) in the inventory. Slice updates: system 0.18 (photo framing, footer, unread dot, coat swatches; tokens 0.6.0), P1, P3, P4, P6, P8, P10, P11, P13, P14, P15, P19, P22, P7 (AI suggestions v2 approved). |
+| 0.8 | 2026-10-19 | CH-646: P24 Premium plan page added to the inventory (TASK-54). Slice updates: system 0.19, P7, P9, P13, P15, P17, P19. |

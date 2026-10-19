@@ -1,5 +1,6 @@
 ---
 source: 03§P17
+version: 1.1
 page: P17 Consent banner and preferences
 stories: TASK-13 (FR-039, FR-038)
 platforms: web, mobile
@@ -17,7 +18,8 @@ An honest, accessible cookie and analytics choice that is quick to answer and as
 
 - Placement: web, bottom-left on `lg` (max 560 px, radius 24, `popover` surface, `shadow-lg`) and full-width bottom sheet below `lg`. Mobile: bottom sheet over the first screen. It does not cover the top bar or the primary action of a flow.
 - Content: h2, two sentences (what analytics is used for, that nothing is sent before consent, no personal data), a text link to the Cookie policy.
-- **Three buttons with identical size, style and weight**: Accept all, Reject all, Customise. All use the `secondary` style (none uses `primary`). Order: Reject all, Accept all, Customise (neutral order, same row on web, stacked on mobile with equal width).
+- **Web banner (as built, TASK-115.11, design check 2026-10-19, CH-630):** Reject all and Accept all are an equal `secondary` pair side by side at every width (each wraps to its own line only when a label would not fit, for example at 200 % text); Customise is a text button after them, in the same row from about 390 px and under the pair below that. At 390 x 844 the first view is 280 px high (was 392, 46 % of the screen). Equal weight holds for the two choices that decide consent; Customise only opens the detail view, and the Customise view keeps three equal buttons.
+- **Mobile app sheet (unchanged):** three buttons with identical size, style and weight, all `secondary`, stacked with equal width. Order: Reject all, Accept all, Customise. It may be aligned to the web banner later.
 - Closing the banner with Escape or ignoring it keeps everything denied.
 
 ## Customise view (same surface, replaces the content)
@@ -46,7 +48,7 @@ Shown again after 12 months or when the consent version changes (new vendor or p
 
 ## Responsive
 
-Mobile sheet at content height; at 320 px buttons stack; text at 200 % scrolls inside the sheet while the buttons stay reachable.
+Mobile sheet at content height; on the web banner the pair stays side by side and only wraps when a label no longer fits (the app sheet stacks at 320 px); text at 200 % scrolls inside the sheet while the buttons stay reachable.
 
 ## Accessibility
 
@@ -61,3 +63,9 @@ None.
 1. Web 1200 px: banner over the home page, Customise view, Cookie settings reopened with analytics on, re-ask with change sentence.
 2. Mobile: sheet, Customise, settings row, 320 px stack.
 3. Light and dark.
+
+## Change log
+
+| Version | Date | Change |
+|---|---|---|
+| 1.1 | 2026-10-19 | CH-630: web banner first view as built, Reject and Accept as a side-by-side pair with Customise as a text button; app sheet unchanged. |

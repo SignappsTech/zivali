@@ -3,7 +3,7 @@ source: 03§P7
 page: P7 Report found or sighted (no account) and manage page
 stories: TASK-30, TASK-17, TASK-41 (FR-006, FR-003, FR-004)
 platforms: web, mobile
-version: 1.4
+version: 1.5
 mockup: docs/design/mockups/P7-report-found.html
 copy: docs/content/pages/P7-report-found.md
 ---
@@ -24,7 +24,7 @@ A finder or passer-by reports an animal in under a minute, without an account, f
 | 4 Situation | Do you have the animal? | two choice rows: "I have the animal with me" and "I only saw it". Optional note (line textarea) and optional email ("Send me my private link"). |
 | 5 Send | Publish | summary of one line each and primary `lg` "Publish report"; privacy line (phone numbers stay hidden, the owner writes to you in the app) |
 
-Captcha runs invisibly; if it needs a challenge it appears as a sheet. Rate limit (5 per hour, 20 per day) shows a friendly note on Send.
+Captcha runs invisibly; if it needs a challenge it appears as a sheet. **Web captcha sheet (as built, TASK-30.8; variant confirmed, CH-663):** the Turnstile widget cannot move once rendered (a moved iframe restarts the check), so its wrapper turns into the bottom sheet in place while Cloudflare needs a click: `card`, top radius 28, `shadow-lg`, `captcha_title`, `captcha_body` and a 65 px widget slot. It is non-modal, with no grabber and no close (the check must be solved for uploads and Publish), takes focus on opening and returns it when done. On mobile widths it covers the sticky action bar while open; `captcha_checking` sits under it on Send. This is the one system §10.7 bottom sheet without grabber, close or scrim. Rate limit (5 per hour, 20 per day) shows a friendly note on Send.
 
 ### Sighted from a listing
 
@@ -138,3 +138,4 @@ None.
 | 1.2 | 2026-10-18 | CH-441: Messages as conversation rows, no open-messages button |
 | 1.3 | 2026-10-19 | TASK-41.1: §AI suggestions from the wireframe the owner approved with changes on 2026-10-19; the v2 parts (confidence level, breed in the found sentence, crop tool) are marked pending |
 | 1.4 | 2026-10-19 | CH-611: v2 approved, confidence as a percentage, rules 11 to 13. CH-603: crop on local photos only, 320 px minimum, web keys 1/10/100 px, mobile actions 10 %. CH-352: no "Ne vem" species row. CH-362: already applied (1.2, CH-441). |
+| 1.5 | 2026-10-19 | CH-663: web captcha sheet variant confirmed (non-modal, no grabber or close, covers the action bar). |
