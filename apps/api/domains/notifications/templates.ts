@@ -79,7 +79,16 @@ export const TYPES: Record<NotificationType, TypeSpec> = {
 		prefs: true,
 		email_default: false,
 		link: toReport,
-		fields: ['report_code', 'species', 'distance_band', 'has_area', 'area_name', 'reported_at', ...EMAIL_ONLY],
+		fields: [
+			'report_code',
+			'species',
+			'distance_band',
+			'has_area',
+			'area_name',
+			'reported_at',
+			'thumb_url',
+			...EMAIL_ONLY,
+		],
 	},
 	report_reminder: {
 		channels: all,

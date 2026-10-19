@@ -14,7 +14,8 @@ import { Prisma } from '../../generated/client.ts';
 import type { JobCtx } from '../../jobs/index.ts';
 import { handle as fanoutJob } from '../../jobs/alerts.fanout.job.ts';
 import { handle as notifySendJob } from '../../jobs/notify.send.job.ts';
-import { systemCtx } from '../../lib/ctx.ts';
+import { NotificationsDomain } from '../../domains/notifications/index.ts';
+import { systemCtx, userCtx, type Actor } from '../../lib/ctx.ts';
 import { geoLookup } from '../../lib/geo.ts';
 import { jobs, startJobs } from '../../lib/jobs.ts';
 import { prisma } from '../../prisma/prisma.ts';
@@ -135,6 +136,27 @@ async function pastAlerts(user_id: string, count: number, hours: number): Promis
 	}
 }
 
+/** Photos of a report: `status` and the public thumb URL per position (C5 public path or null). */
+async function photos(
+	report_id: string,
+	list: { status: 'accepted' | 'published' | 'unpublished'; thumb: string | null }[]
+) {
+	const [owner] = await profiles(1);
+	await prisma.photos.createMany({
+		data: list.map(({ status, thumb }, position) => ({
+			owner_id: owner!,
+			report_id,
+			position,
+			sha256: randomUUID(),
+			width: 800,
+			height: 600,
+			bytes: 50_000,
+			status,
+			public_thumb_url: thumb,
+		})),
+	});
+}
+
 async function queued(report_id: string): Promise<QueuedAlert[]> {
 	const rows = await prisma.$queryRaw<{ data: QueuedAlert }[]>`
 		select data from pgboss.job where name = 'notify.send' and data->>'dedupe_key' = ${`nearby:${report_id}`}`;
@@ -190,6 +212,7 @@ describe('AlertsDomain.fanout', () => {
 			has_area: true,
 			area_name: area.name_sl,
 			reported_at: created_at.toISOString(),
+			thumb_url: null, // no photo (TASK-22.8)
 		});
 		expect(await AlertsDomain.nearbyAlert({ user_id: near, report_id: id }, systemCtx())).toEqual(variables('lt1'));
 		expect(await AlertsDomain.nearbyAlert({ user_id: far, report_id: id }, systemCtx())).toEqual(
@@ -351,6 +374,14 @@ describe('jobs', () => {
 			data: { user_id: user, token: `ExponentPushToken[${randomUUID()}]`, platform: 'ios' },
 		});
 		const id = await report({ species: 'cat' });
+		// TASK-22.8: the first published photo's public thumb; a stale URL on an unpublished photo never leaks.
+		const thumb = `https://media.test/r/${id}/${randomUUID()}/thumb.webp`;
+		await photos(id, [
+			{ status: 'unpublished', thumb: `https://media.test/r/${id}/stale/thumb.webp` },
+			{ status: 'accepted', thumb: null },
+			{ status: 'published', thumb },
+			{ status: 'published', thumb: `https://media.test/r/${id}/later/thumb.webp` },
+		]);
 		await AlertsDomain.fanout({ report_id: id }, systemCtx());
 		const [input] = (await queued(id)).filter((data) => data.user_id === user);
 		const push = mockPush();
@@ -367,14 +398,37 @@ describe('jobs', () => {
 				'report_code',
 				'reported_at',
 				'species',
+				'thumb_url',
 				...((rows[0]!.payload as { area_name?: string }).area_name ? ['area_name'] : []),
 			].sort()
 		);
+		expect((rows[0]!.payload as { thumb_url: string }).thumb_url).toBe(thumb);
+		const actor: Actor = {
+			user_id: user,
+			role: 'USER',
+			is_anonymous: false,
+			aal: 'aal1',
+			email_verified: true,
+			locale: 'en',
+		};
+		const listed = await NotificationsDomain.listNotifications({}, userCtx(actor));
+		expect(listed.items.map((item) => item.payload)).toEqual([expect.objectContaining({ thumb_url: thumb })]);
 		expect(push.sent).toHaveLength(1);
 		expect(push.sent![0]!.title).toBe('Lost cat near you');
 		expect(push.sent![0]!.body).toContain('Have you seen it?');
 		expect(await prisma.alert_deliveries.findMany({ where: { user_id: user } })).toEqual([
 			expect.objectContaining({ report_id: id, channel: 'push' }),
 		]);
+	});
+
+	it('stores thumb_url null for a report without a published photo (TASK-22.8)', async () => {
+		const user = await subscribe(at(P, 300, 0));
+		const id = await report();
+		await photos(id, [{ status: 'accepted', thumb: null }]);
+		await AlertsDomain.fanout({ report_id: id }, systemCtx());
+		const [input] = (await queued(id)).filter((data) => data.user_id === user);
+		await notifySendJob(input, jobCtx());
+		const rows = await prisma.notifications.findMany({ where: { user_id: user } });
+		expect(rows.map((row) => row.payload)).toEqual([expect.objectContaining({ thumb_url: null })]);
 	});
 });
