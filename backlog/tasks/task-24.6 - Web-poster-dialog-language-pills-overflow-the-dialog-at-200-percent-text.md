@@ -1,10 +1,11 @@
 ---
 id: TASK-24.6
 title: 'Web poster dialog: language pills overflow the dialog at 200 percent text'
-status: To Do
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-19 19:48'
+updated_date: '2026-10-19 20:00'
 labels:
   - bug
   - 'est:XS'
