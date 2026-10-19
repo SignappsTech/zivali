@@ -3,6 +3,7 @@
 import type { REPORT_TYPE } from '../../generated/enums.ts';
 import { Prisma } from '../../generated/client.ts';
 import type { FuzzedArea, Point } from '../../lib/fuzz.ts';
+import { inBatches } from '../../lib/purge.ts';
 import { prisma } from '../../prisma/prisma.ts';
 
 export type LocationColumns = {
@@ -357,11 +358,12 @@ export async function flagHeld(report_id: string, reasons: string[], tx?: Prisma
 /** Retention: device hashes are only needed for the 7-day hold rule. */
 export async function clearDeviceHashes(before: Date, tx?: Prisma.TransactionClient): Promise<number> {
 	const db = tx ?? prisma;
-	const { count } = await db.reports.updateMany({
-		where: { device_hash: { not: null }, created_at: { lt: before } },
-		data: { device_hash: null },
-	});
-	return count;
+	return inBatches(
+		(limit) => db.$executeRaw`
+			update app.reports set device_hash = null, updated_at = now()
+			where ctid = any(array(
+				select ctid from app.reports where device_hash is not null and created_at < ${before} limit ${limit}))`
+	);
 }
 
 /** What the read model needs; `managers` holds only the caller's row (none when signed out). */

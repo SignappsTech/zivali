@@ -1,5 +1,6 @@
 // Prisma access for the platform tables behind the rateLimit and idempotency middleware (C1).
 import { Prisma } from '../../generated/client.ts';
+import { purgeWhere } from '../../lib/purge.ts';
 import { prisma } from '../../prisma/prisma.ts';
 
 type Tx = Prisma.TransactionClient;
@@ -42,16 +43,18 @@ export async function deleteIdempotencyKey(key: string, created_at?: Date, tx?: 
 	await db.idempotency_keys.deleteMany({ where: { key, ...(created_at && { created_at }) } });
 }
 
-/** For the retention job: rate-limit windows after 48 h, idempotency keys after 24 h (C1). */
+/** For the retention job: rate-limit windows after 48 h, idempotency keys after 24 h (C1), in batches. */
 export async function purgeExpired(now: Date, tx?: Tx) {
-	const db = tx ?? prisma;
-	const rateLimits = await db.rate_limits.deleteMany({
-		where: { window_start: { lt: new Date(now.getTime() - RATE_LIMIT_RETENTION_MS) } },
-	});
-	const idempotencyKeys = await db.idempotency_keys.deleteMany({
-		where: { created_at: { lt: new Date(now.getTime() - IDEMPOTENCY_TTL_MS) } },
-	});
-	return { rate_limits: rateLimits.count, idempotency_keys: idempotencyKeys.count };
+	const rateLimitsBefore = new Date(now.getTime() - RATE_LIMIT_RETENTION_MS);
+	const keysBefore = new Date(now.getTime() - IDEMPOTENCY_TTL_MS);
+	return {
+		rate_limits: await purgeWhere(Prisma.sql`app.rate_limits`, Prisma.sql`window_start < ${rateLimitsBefore}`, tx),
+		idempotency_keys: await purgeWhere(
+			Prisma.sql`app.idempotency_keys`,
+			Prisma.sql`created_at < ${keysBefore}`,
+			tx
+		),
+	};
 }
 
 export default {
