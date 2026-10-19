@@ -3,11 +3,14 @@
 import sharp from 'sharp';
 import { z } from 'zod';
 
-import { AI_PROMPT_VERSION, aiOn, type AiReply } from '../../adapters/ai/index.ts';
+import { aiExtractionSchema } from '@zivali/validation/ai';
+
+import { AI_PROMPT_VERSION, aiOn, type AiExtraction, type AiReply } from '../../adapters/ai/index.ts';
 import type { AI_OUTCOME } from '../../generated/enums.ts';
 import { config } from '../../lib/config.ts';
 import configStore from '../../lib/config-store.ts';
 import type { Ctx } from '../../lib/ctx.ts';
+import { AppError } from '../../lib/errors.ts';
 import { prisma, type Prisma } from '../../prisma/prisma.ts';
 import { variantRef } from '../photos/photo-objects.ts';
 import AiDao from './ai.dao.ts';
@@ -115,4 +118,30 @@ export async function purgeExpired(ctx: Ctx) {
 	return AiDao.purge(new Date(ctx.now.getTime() - CALLS_KEPT_DAYS * DAY_MS), ctx.tx);
 }
 
-export default { extractPhoto, purgeExpired };
+export type AttributesView =
+	{ status: 'pending' | 'unavailable' } | { status: 'ready'; extraction: AiExtraction; min_confidence: number };
+
+/**
+ * GET /v1/photos/:id/attributes (C19 §REST). Only the photo's owner: anyone else's photo, an unknown or a rejected
+ * one is NOT_FOUND. pending until the photo is accepted and ai.extract has recorded its outcome; ok or cached with a
+ * stored result is ready; anything else (AI off, a cap, refused, invalid, failed) is unavailable.
+ */
+export async function getPhotoAttributes(input: { id: string }, ctx: Ctx): Promise<AttributesView> {
+	const photo = await AiDao.findPhoto(input.id, ctx.tx);
+	if (!photo || !ctx.actor || photo.owner_id !== ctx.actor.user_id || photo.status === 'rejected')
+		throw new AppError('NOT_FOUND', 'Photo not found');
+	if (photo.status === 'pending' || photo.status === 'uploaded') return { status: 'pending' };
+	const call = await AiDao.findOutcome(photo.id, ctx.tx);
+	if (!call) return { status: 'pending' };
+	const stored =
+		call.outcome === 'ok' || call.outcome === 'cached' ? await AiDao.findResult(photo.sha256, ctx.tx) : null;
+	// A stored result that no longer fits the schema leaves the form manual, like any other failure (fail open).
+	const parsed =
+		stored && aiExtractionSchema.safeParse({ ...(stored.result as object), moderation: stored.moderation });
+	if (!parsed?.success) return { status: 'unavailable' };
+	// Unset or not a number: NaN, so every value is null (nothing pre-filled).
+	const min = await configStore.get('ai.min_confidence');
+	return { status: 'ready', extraction: parsed.data, min_confidence: typeof min === 'number' ? min : Number.NaN };
+}
+
+export default { extractPhoto, purgeExpired, getPhotoAttributes };
