@@ -225,10 +225,10 @@ describe('SiteFooter', () => {
 			['Kako deluje', '/kako-deluje'],
 			['Nasveti za varnost', '/varnost'],
 			['Pogosta vprašanja', '/pogosta-vprasanja'],
+			['Zavetišča', '/zavetisca'],
 		]);
 		expect(column('Za organizacije')).toEqual([
 			['Za zavetišča', '/za-zavetisca'],
-			['Zavetišča', '/zavetisca'],
 			['Oglašujte pri nas', '/oglasevanje'],
 		]);
 		expect(column('Najdimo')).toEqual([
@@ -254,9 +254,11 @@ describe('SiteFooter', () => {
 			['EN', '/en'],
 		]);
 		expect(footer.textContent).toContain(`© ${new Date().getFullYear()} SIGNAPPS d.o.o.`);
-		expect(within(footer).getByText(sl.footer.operator).textContent).toContain(
-			'SIGNAPPS d.o.o., Kolomban 34B, 6280 Ankaran'
-		);
+		// Owner 2026-10-19: the company name with the Podatki o podjetju link, not the address; one column per group on mobile.
+		const operator = within(footer).getByText(sl.footer.operator);
+		expect(hrefs(within(operator).getAllByRole('link'))).toEqual([['Podatki o podjetju', '/podatki-o-podjetju']]);
+		expect(footer.textContent).not.toContain('Kolomban');
+		expect(nav.className).not.toMatch(/(^|\s)grid-cols-2/);
 	});
 
 	it('EN: the same columns with English headings, the operator line and the switch on this page', () => {
@@ -273,7 +275,9 @@ describe('SiteFooter', () => {
 				.getAllByRole('link')
 				.map((link) => link.getAttribute('href'))
 		).toEqual(['/en/about', '/en/company-information', '/en/accessibility']);
-		expect(within(footer).getByText(en.footer.operator)).toBeTruthy();
+		expect(hrefs(within(within(footer).getByText(en.footer.operator)).getAllByRole('link'))).toEqual([
+			['Company information', '/en/company-information'],
+		]);
 		expect(hrefs(within(within(footer).getByRole('group', { name: /^Language/ })).getAllByRole('link'))).toEqual([
 			['SL', '/podatki-o-podjetju'],
 			['EN', '/en/company-information'],

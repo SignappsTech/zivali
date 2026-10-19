@@ -10,7 +10,8 @@ type Href = ComponentProps<typeof Link>['href'];
 type Key = Exclude<keyof Messages['footer'], 'copyright'>;
 type Item = readonly [Href | null, Key];
 
-// P1 footer (wireframe P1-footer.html v1, approved 2026-10-18): four headed columns; null is Cookie settings.
+// P1 footer (wireframe P1-footer.html v1, owner choices 2026-10-19): four headed columns, Zavetišča under Pomoč;
+// null is Cookie settings.
 const COLUMNS = [
 	[
 		'heading_help',
@@ -18,13 +19,13 @@ const COLUMNS = [
 			['/how-it-works', 'how_it_works'],
 			['/safety', 'safety'],
 			['/faq', 'faq'],
+			['/shelters', 'shelters'],
 		],
 	],
 	[
 		'heading_organisations',
 		[
 			['/for-shelters', 'for_shelters'],
-			['/shelters', 'shelters'],
 			['/advertise', 'partners'],
 		],
 	],
@@ -53,6 +54,7 @@ const FLOW: readonly Item[] = [
 	['/accessibility', 'accessibility'],
 ];
 
+const operatorLinkClass = `inline-flex min-h-11 min-w-11 items-center rounded-sm text-foreground underline decoration-1 underline-offset-4 ${ringClass}`;
 const linkClass = `inline-flex min-h-11 min-w-11 items-center rounded-sm text-left text-control leading-[22px] text-muted-foreground underline decoration-1 underline-offset-4 hover:text-foreground ${ringClass}`;
 
 /** P1 footer, a server component: logo, tagline and language, the four link columns, copyright and operator; flows get one quiet row. */
@@ -81,10 +83,7 @@ export function SiteFooter() {
 							</p>
 							<LanguageSwitch labels={languages} className="mt-2 -ml-1.5" />
 						</div>
-						<nav
-							aria-label={t('nav_label')}
-							className="grid grid-cols-2 gap-x-4 gap-y-6 lg:grid-cols-4 lg:gap-6"
-						>
+						<nav aria-label={t('nav_label')} className="grid gap-y-6 lg:grid-cols-4 lg:gap-6">
 							{COLUMNS.map(([heading, links]) => (
 								<div key={heading}>
 									<h2
@@ -103,7 +102,12 @@ export function SiteFooter() {
 						</nav>
 						<div className="border-t border-border pt-6 text-control text-muted-foreground lg:col-span-2">
 							<p>{t('copyright', { year: new Date().getFullYear() })}</p>
-							<p className="mt-0.5">{t('operator')}</p>
+							<p className="mt-0.5">
+								{t('operator')}{' '}
+								<Link href="/imprint" prefetch={false} className={operatorLinkClass}>
+									{t('imprint')}
+								</Link>
+							</p>
 						</div>
 					</div>
 				</footer>

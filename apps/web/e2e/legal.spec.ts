@@ -69,7 +69,8 @@ test('/zasebnost: the table of contents marks the current section', async ({ pag
 test('every footer legal link resolves to a real page', async ({ page }) => {
 	for (const name of ['Zasebnost', 'Piškotki', 'Pogoji uporabe', 'Podatki o podjetju', 'Dostopnost']) {
 		await page.goto('/');
-		await page.getByRole('contentinfo').getByRole('link', { name, exact: true }).click();
+		// The column link; Podatki o podjetju is also in the operator line.
+		await page.getByRole('contentinfo').getByRole('navigation').getByRole('link', { name, exact: true }).click();
 		await expect(page.getByRole('note')).toContainText('Osnutek');
 	}
 });
