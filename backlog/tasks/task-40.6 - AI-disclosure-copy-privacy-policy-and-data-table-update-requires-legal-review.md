@@ -3,11 +3,11 @@ id: TASK-40.6
 title: >-
   AI disclosure copy, privacy policy and data table update (requires legal
   review)
-status: Done
+status: In Progress
 assignee:
   - '@content-strategist'
 created_date: '2026-10-18 21:23'
-updated_date: '2026-10-19 14:22'
+updated_date: '2026-10-19 14:26'
 labels:
   - content
   - legal
@@ -63,4 +63,6 @@ APPROVED IN ADVANCE: Primož Božič (owner), 2026-10-19, in chat: 'auto accept 
 - AC3 done: client markers in ch. 8 and 12 filled from the providers' published documents (sources with URL and read date in privacy note 23). Anthropic Ireland, Limited is the contracting party for EEA customers; Anthropic stores in the USA, may also process in selected countries in Europe, Asia and Australia (C19 sets no inference_geo); no training on our data (Commercial Terms); 30-day deletion, longer if flagged (2 y / scores 7 y) or by law; Voyage AI Innovations, Inc., opt-out -> deleted once processed; SCCs in both DPAs. Unknown, not claimed: DPF listings (list loads only by script), Anthropic ZDR, subprocessor locations, our workspace inference geo.
 - Master keeps [pravni pregled]/[legal review]; lawyer docx not rebuilt. Ported only the 0.8 changes to apps/web/content/legal/{sl,en}/privacy.mdx without markers, updated 2026-10-19. ai_prefill.info_body is not on the site yet; unchanged.
 - AC4: owner approval in advance is recorded above (not ticked by me). The lawyer pack (lawyer-briefing EN/SL, LQ-36) does not yet carry the filled provider facts of note 23; update it with the docx rebuild after the lawyer round.
+
+Lead 2026-10-19: privacy v0.8 (AI section) published on the web after an Opus fact-check against 12 provider pages and the owner's advance acceptance. Stays In Progress for the lawyer review (LQ-36, 37, 68-71) and the owner checks: Console org billed in the EEA, Voyage opt-out screenshot, default_inference_geo.
 <!-- SECTION:NOTES:END -->
