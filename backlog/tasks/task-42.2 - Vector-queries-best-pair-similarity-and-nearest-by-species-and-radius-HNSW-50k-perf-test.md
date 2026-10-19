@@ -3,11 +3,11 @@ id: TASK-42.2
 title: >-
   Vector queries: best-pair similarity and nearest by species and radius (HNSW),
   50k perf test
-status: In Progress
+status: Done
 assignee:
   - '@backend-dev'
 created_date: '2026-10-18 21:24'
-updated_date: '2026-10-19 00:32'
+updated_date: '2026-10-19 00:59'
 labels:
   - be
   - 'est:S'
