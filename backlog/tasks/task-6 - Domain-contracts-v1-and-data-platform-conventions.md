@@ -1,10 +1,11 @@
 ---
 id: TASK-6
 title: Domain contracts v1 and data platform conventions
-status: To Do
+status: Done
 assignee:
   - '@tech-lead'
 created_date: '2026-10-14 21:01'
+updated_date: '2026-10-19 15:00'
 labels:
   - story
   - 'req:NFR-DEVX'
@@ -29,6 +30,12 @@ Feature stories must build in parallel against agreed contracts (schemas, types,
 - [ ] #4 Given local development, when seeding, then realistic Slovenian fixtures exist (lost, found and sighted reports with photos and chips, organisations, ads) to build against.
 - [ ] #5 Given privacy, when a data store is added, then it is listed in a data inventory register used later for export and delete.
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+Lead: closed after its QA pass; all child tasks Done.
+<!-- SECTION:NOTES:END -->
 
 ## Packet
 
