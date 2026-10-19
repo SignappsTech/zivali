@@ -6,19 +6,33 @@
 #   node dist/seed/apps/api/prisma/seed.js
 # The JS build runs on the build machine's own platform; only the runtime stage runs as the target platform
 # (emulated by QEMU when they differ).
-FROM --platform=$BUILDPLATFORM node:22-slim AS build
+FROM --platform=$BUILDPLATFORM node:22-slim AS base
 RUN npm install -g pnpm@11.28.5
 WORKDIR /repo
-COPY . .
+
+# Only what `pnpm install` reads (TASK-4.7): the lockfile, the workspace config and the workspace's package.json files.
+# This step reruns on every commit (the bind mount is the whole context), but its output changes only with those files,
+# so the install layer below stays cached across source-only commits (deploy.mjs keeps every stage's layers, mode=max).
+FROM base AS manifests
 # sharp (photo.process) is the one native production dependency: its binary and libvips come from the
 # @img/sharp-<os>-<cpu> optional dependencies, and pnpm installs only the build machine's by default. Adding the
 # target's (TARGETARCH amd64 → x64, arm64 stays) lets the runtime stage load linux-arm64 sharp on the CAX11.
 ARG TARGETARCH
-RUN printf 'supportedArchitectures:\n  os: [current, linux]\n  cpu: [current, %s]\n  libc: [current, glibc]\n' \
-	"$([ "$TARGETARCH" = amd64 ] && echo x64 || echo "${TARGETARCH:-current}")" >> pnpm-workspace.yaml
+RUN --mount=type=bind,target=/ctx mkdir /manifests && cd /ctx \
+	&& cp --parents pnpm-lock.yaml pnpm-workspace.yaml .npmrc package.json apps/*/package.json packages/*/package.json \
+		/manifests \
+	&& printf 'supportedArchitectures:\n  os: [current, linux]\n  cpu: [current, %s]\n  libc: [current, glibc]\n' \
+		"$([ "$TARGETARCH" = amd64 ] && echo x64 || echo "${TARGETARCH:-current}")" >> /manifests/pnpm-workspace.yaml
+
+FROM base AS build
+COPY --from=manifests /manifests ./
 # --ignore-scripts: the root `prepare: husky` fails without dev tooling, so the Prisma client is generated here.
 # The other production dependencies are plain JS (Prisma 7 query compiler is wasm, pg is pure JS).
 RUN pnpm install --frozen-lockfile --ignore-scripts --filter api...
+COPY . .
+# The source brings back the plain pnpm-workspace.yaml; `pnpm deploy` below installs again and needs the target's
+# architectures too.
+COPY --from=manifests /manifests/pnpm-workspace.yaml ./
 # The worker renders push and email text from the merged i18n catalogues (dist/*.json, bundled by tsup).
 RUN pnpm --filter @zivali/i18n build
 RUN cd apps/api && pnpm exec prisma generate && pnpm build

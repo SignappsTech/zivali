@@ -328,9 +328,10 @@ function checkVps(ssh, target) {
 
 /**
  * BuildKit layer cache in the GitHub Actions cache, one scope per image: only when the Actions runtime is exposed to
- * run steps (deploy.yml does it, with a docker-container builder), so a workstation build passes nothing. mode=min
- * keeps the final stage's layers (the api's emulated apt-get layer); the build stages copy the whole repo before
- * `pnpm install`, so their layers change on every commit. A cache error never fails the build.
+ * run steps (deploy.yml does it, with a docker-container builder), so a workstation build passes nothing. mode=max
+ * keeps the build stages' layers too: both Dockerfiles install the dependencies from the manifests alone before
+ * copying the source (TASK-4.7), so a source-only commit reuses the install layer, besides the api's emulated apt-get
+ * layer. A cache error never fails the build.
  */
 export function cacheArgs(env, scope) {
 	if (!scope || !env.ACTIONS_RUNTIME_TOKEN || !(env.ACTIONS_RESULTS_URL || env.ACTIONS_CACHE_URL)) return [];
@@ -338,7 +339,7 @@ export function cacheArgs(env, scope) {
 		'--cache-from',
 		`type=gha,scope=${scope}`,
 		'--cache-to',
-		`type=gha,mode=min,scope=${scope},ignore-error=true`,
+		`type=gha,mode=max,scope=${scope},ignore-error=true`,
 	];
 }
 
