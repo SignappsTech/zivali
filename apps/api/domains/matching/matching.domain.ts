@@ -176,7 +176,8 @@ export async function matchReport(input: { report_id: string }, ctx: Ctx): Promi
 		stored++;
 		if (!known) active.push({ lost_report_id: pair.lost_id, other_report_id: pair.other_id, score });
 	}
-	const { removed } = await rescoreSuggestions(input, ctx);
+	// The candidates' V is known (also when the query failed), so the re-score queries only rows outside them.
+	const { removed } = await rescoreSuggestions(input, ctx, { visuals, checked: new Set(pairs.map(pairKey)) });
 	ctx.logger.info(
 		{ report_id: input.report_id, candidates: pairs.length, visual: visuals.size, stored, removed },
 		'matching done'
@@ -189,19 +190,23 @@ export async function matchReport(input: { report_id: string }, ctx: Ctx): Promi
  * report (either side, after match.report), or without report_id every one an older algorithm version scored (seeder
  * 40-matching-rescore, a one-off per version). A pair that no longer passes is deleted, so it leaves the managers'
  * list until match.report finds it again; the others get the new score, strength and algo_version. V as in
- * matchReport: one similarity call for the report, one per lost report for the older rows (none with the embedder
- * off, so without vectors every row keeps its v2 score). Never inserts and never notifies.
+ * matchReport: `known` carries match.report's V of its candidates (`checked`: their pair keys), so only rows outside
+ * them are queried, one similarity call for the report (none when every row was a candidate), one per lost report
+ * for the older rows (none with the embedder off, so without vectors every row keeps its v2 score). Never inserts and
+ * never notifies.
  */
 export async function rescoreSuggestions(
 	input: { report_id?: string },
-	ctx: Ctx
+	ctx: Ctx,
+	known: { visuals: Visuals; checked: ReadonlySet<string> } = { visuals: new Map(), checked: new Set() }
 ): Promise<{ rescored: number; removed: number }> {
 	const config = await matchingConfig();
 	const only = input.report_id ? { report_id: input.report_id } : ({ older: true } as const);
 	const rows = await MatchingDao.suggestedPairs(only, ctx.tx);
-	const visuals: Visuals = new Map();
-	for (const anchor of input.report_id ? [input.report_id] : new Set(rows.map((row) => row.lost_id))) {
-		const mine = rows.filter((row) => row.lost_id === anchor || row.other_id === anchor);
+	const visuals: Visuals = new Map(known.visuals);
+	const unchecked = rows.filter((row) => !known.checked.has(pairKey(row)));
+	for (const anchor of input.report_id ? [input.report_id] : new Set(unchecked.map((row) => row.lost_id))) {
+		const mine = unchecked.filter((row) => row.lost_id === anchor || row.other_id === anchor);
 		for (const [key, visual] of await visualsOf(anchor, mine, config, ctx)) visuals.set(key, visual);
 	}
 	const removed: string[] = [];

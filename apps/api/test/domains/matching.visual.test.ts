@@ -160,7 +160,9 @@ describe('visual similarity per candidate (AC#1)', () => {
 		const similarity = vi.spyOn(EmbeddingsDao, 'similarity');
 
 		expect(await run(lost.id)).toEqual({ stored: 2 });
-		expect(similarity).toHaveBeenNthCalledWith(1, lost.id, expect.any(Array), MODEL);
+		// The re-score of the report's suggestions reuses the candidates' V: no second call.
+		expect(similarity).toHaveBeenCalledTimes(1);
+		expect(similarity).toHaveBeenCalledWith(lost.id, expect.any(Array), MODEL);
 		expect((similarity.mock.calls[0]![1] as string[]).sort()).toEqual([found.id, bare.id].sort());
 		const visual = { code: 'visual', band: 'very_similar', lost_photo_id: lostBest, other_photo_id: foundBest };
 		const [withV, withoutV] = await rowsOf(lost.id);
@@ -173,10 +175,28 @@ describe('visual similarity per candidate (AC#1)', () => {
 		await prisma.matches.deleteMany({ where: { lost_report_id: lost.id } });
 		similarity.mockClear();
 		expect(await run(found.id)).toEqual({ stored: 1 });
-		expect(similarity).toHaveBeenNthCalledWith(1, found.id, [lost.id], MODEL);
+		expect(similarity).toHaveBeenCalledTimes(1);
+		expect(similarity).toHaveBeenCalledWith(found.id, [lost.id], MODEL);
 		const [reverse] = await rowsOf(lost.id);
 		expect(reverse).toMatchObject({ other_report_id: found.id, score: 0.665, strength: 'good' });
 		expect(visualReason(reverse!.reasons)).toEqual(visual);
+	});
+
+	it('the re-score queries V only for suggestions that are no longer candidates', async () => {
+		const { lost, found } = await pair();
+		await photo(lost.id, owner, 0);
+		await photo(found.id, finder, 0);
+		await run(lost.id);
+		// Now beyond the 30 km limit: no candidate, but still a suggestion. With V it stays (0.511, possible without a
+		// geo-time fit); as v2 (0.298) it would be removed.
+		await pin(found.id, 40);
+		const similarity = vi.spyOn(EmbeddingsDao, 'similarity');
+		expect(await run(lost.id)).toEqual({ stored: 0 });
+		expect(similarity).toHaveBeenCalledTimes(1);
+		expect(similarity).toHaveBeenCalledWith(lost.id, [found.id], MODEL);
+		const [kept] = await rowsOf(lost.id);
+		expect(kept).toMatchObject({ other_report_id: found.id, score: 0.511, strength: 'possible' });
+		expect(visualReason(kept!.reasons)).toMatchObject({ code: 'visual', band: 'very_similar' });
 	});
 
 	it('scores as v2 when either side has no vector, and runs no query with the embedder off', async () => {
@@ -221,6 +241,7 @@ describe('visual similarity per candidate (AC#1)', () => {
 		await photo(lost.id, owner, 0);
 		await photo(found.id, finder, 0);
 		const warn = vi.spyOn(logger, 'warn');
+		const similarity = vi.spyOn(EmbeddingsDao, 'similarity');
 		let locked!: () => void;
 		let release!: () => void;
 		const isLocked = new Promise<void>((resolve) => (locked = resolve));
@@ -235,12 +256,13 @@ describe('visual similarity per candidate (AC#1)', () => {
 		);
 		await isLocked;
 		try {
-			// Both similarity calls (candidates, then the re-score) wait for the lock until their 2 s timeout.
+			// The one similarity call waits for the lock until its 2 s timeout; the re-score reuses the fallback.
 			expect(await run(lost.id)).toEqual({ stored: 1 });
 		} finally {
 			release();
 			await holder;
 		}
+		expect(similarity).toHaveBeenCalledTimes(1);
 		expect(await rowsOf(lost.id)).toEqual([expect.objectContaining(V2_COLOUR_ONLY)]);
 		expect(warn).toHaveBeenCalledWith(
 			expect.objectContaining({ report_id: lost.id }),
