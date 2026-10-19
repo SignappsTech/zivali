@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - '@tech-lead'
 created_date: '2026-10-19 18:25'
-updated_date: '2026-10-19 19:27'
+updated_date: '2026-10-19 19:29'
 labels:
   - bug
   - 'est:XS'
@@ -40,5 +40,5 @@ Branch: agent/task-4.10-secret-scan
 ## Implementation Notes
 
 <!-- SECTION:NOTES:BEGIN -->
-Implemented (tech-lead, 2026-10-19): .github/workflows/secrets.yml, job secretlint, on every pull_request and push to main with no paths filter; npx fetches only secretlint 13.0.7 and the recommended preset 13.0.7 (lockfile versions), no pnpm install. ci.yml paths filter and deploy.yml untouched (one comment line in ci.yml points to secrets.yml). Local proof on a temp copy of HEAD with the job's exact command: clean tree exit 0 in 33 s on Windows incl. the npx download; a fake ghp_ token appended to this task file exit 1, [GITHUB_TOKEN] reported with the value masked; probe deleted. AC#3 (branch run on GitHub) is for the lead after the merge; the check is not yet required by branch protection.
+Implemented (tech-lead, 2026-10-19): .github/workflows/secrets.yml, job secretlint, on every pull_request and push to main with no paths filter. Review fix: lockfile route, pnpm install --frozen-lockfile --ignore-scripts --filter . (root devDependencies only), then pnpm exec secretlint; setup-node without a package-manager cache, so no partial store under ci.yml's key. ci.yml paths filter and deploy.yml untouched (one comment line in ci.yml points to secrets.yml). Local proof on a temp copy of HEAD with the lockfile secretlint 13.0.7 (no pnpm install allowed locally, so the install step is untested here): clean tree exit 0; a fake ghp_ token appended to this task file exit 1, [GITHUB_TOKEN] reported with the value masked; probe deleted. AC#3 (branch run on GitHub, timing under 1 minute) is for the lead after the merge; the check is not yet required by branch protection.
 <!-- SECTION:NOTES:END -->
