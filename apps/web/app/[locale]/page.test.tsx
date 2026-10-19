@@ -124,6 +124,10 @@ describe('HomePage (P3 T1, layout B)', () => {
 			['', 'eager', 'high'],
 			[home.hero_cat_alt, 'lazy', null],
 		]);
+		// From lg the footer's 96 px margin is the only gap after the shelters block, not 96 + 96 (TASK-115.11).
+		const main = container.querySelector('main')!.className.split(' ');
+		expect(main).toContain('lg:pb-0');
+		expect(main).not.toContain('lg:pb-24');
 		// No primary button (the chooser rows are the actions), no ad slot or sidebar on T1.
 		expect(container.querySelectorAll('[data-variant="default"]')).toHaveLength(0);
 		expect(screen.queryByRole('complementary')).toBeNull();

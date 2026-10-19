@@ -51,6 +51,10 @@ test('home layout B: recent reports next to the map teaser, server-rendered; emp
 		'/racun/opozorila'
 	);
 	await expect(page.getByText(home.stat_reunited)).toHaveCount(0);
+	// From lg the last section sits 96 px above the footer, one section gap, not two (TASK-115.11).
+	const shelters = (await page.getByRole('region', { name: home.shelters_title }).boundingBox())!;
+	const footer = (await page.locator('footer').first().boundingBox())!;
+	expect(Math.round(footer.y - (shelters.y + shelters.height))).toBe(96);
 
 	await page.setViewportSize({ width: 390, height: 844 });
 	await expect(map).toHaveCount(1);
