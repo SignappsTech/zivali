@@ -36,7 +36,8 @@ describe('legal MDX', () => {
 			'[&_code]:wrap-anywhere',
 		])
 			expect(legalBodyClass).toContain(cls);
-		expect(await html('sl', 'cookies')).toMatch(/<code[^>]*wrap-anywhere/);
+		// The cookie keys are literal <code>, reached by the body container class above.
+		expect(await html('sl', 'cookies')).toContain('<code>');
 	});
 
 	it('styles raw HTML headings and lists through the body container', async () => {
