@@ -1,4 +1,4 @@
-﻿import { readFileSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 import { evaluate } from '@mdx-js/mdx';
@@ -39,7 +39,7 @@ describe('legal MDX', () => {
 		for (const locale of locales) for (const slug of slugs) expect(await html(locale, slug)).toMatch(/<h2 id="s1"/);
 	});
 
-	it('renders every legal table through LegalTable: header row, label column, dividers, cards with header association', async () => {
+	it('renders every legal table through LegalTable: header row, label column, zebra rows, cards with header association', async () => {
 		const tableCounts: Record<string, number> = { privacy: 4, cookies: 2, imprint: 1, terms: 0, accessibility: 0 };
 		for (const locale of locales)
 			for (const slug of slugs) {
@@ -49,6 +49,8 @@ describe('legal MDX', () => {
 				expect(tables, `${locale}/${slug}`).toHaveLength(tableCounts[slug]);
 				for (const table of tables) {
 					expect(table.getAttribute('role')).toBe('table');
+					// As wide as the 640 px text column (owner 2026-10-19), and a card per row on narrow screens, the cookie list too.
+					expect(table.className).toContain('w-full');
 					expect(table.className).toContain('table-fixed');
 					expect(table.className).toContain('cards:block');
 					expect(table.className).not.toContain('min-w-');
@@ -68,7 +70,9 @@ describe('legal MDX', () => {
 						expect(cells).toHaveLength(headers.length);
 						cells.forEach((td, i) => {
 							expect(td.getAttribute('role')).toBe(i ? 'cell' : 'rowheader');
-							expect(td.className).toContain('border-b-2');
+							// Zebra rows instead of divider lines (owner 2026-10-19).
+							expect(td.className).toContain('[tr:nth-child(odd)>&]:bg-card');
+							expect(td.className).not.toMatch(/border-b/);
 							// MDX's <p> around multi-line cell text took the article paragraph margin: uneven rows.
 							expect(td.querySelector('p')).toBeNull();
 							const label = td.querySelector(':scope > span[aria-hidden="true"]');
