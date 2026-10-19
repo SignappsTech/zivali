@@ -1,7 +1,9 @@
 // TASK-40.11: no photo created before app_config ai.photos_since (the AI switch-on) reaches the ai or the embedder
 // adapter, by any path: a new upload, a report edit's photo.publish and match.report, the backfill and seeder 41, a
-// retried or resent job. A missing or invalid cutoff sends nothing at all. Spied mock adapters, the local database.
+// retried or resent job. A missing or invalid cutoff sends nothing at all and turns the public ai.enabled off; an
+// excluded photo's attributes are unavailable at once. The switch-on migration. Spied mock adapters, the local database.
 import { createHash, randomBytes, randomUUID } from 'node:crypto';
+import { readFileSync } from 'node:fs';
 
 import { RateLimitError } from '@anthropic-ai/sdk';
 import { pino } from 'pino';
@@ -10,6 +12,7 @@ import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest
 
 import { adapters } from '../../adapters/index.ts';
 import { AiDomain } from '../../domains/ai/index.ts';
+import { ConfigDomain } from '../../domains/config/index.ts';
 import { EmbeddingsDomain } from '../../domains/embeddings/index.ts';
 import { uploadRef, VARIANT_NAMES, VARIANTS, variantRef } from '../../domains/photos/photo-objects.ts';
 import { PhotosDomain } from '../../domains/photos/index.ts';
@@ -163,11 +166,37 @@ describe('ai.photos_since', () => {
 		}
 	});
 
-	it('the migration adds it unset (null): until the switch-on sets it, nothing is sent', async () => {
-		const row = await prisma.$queryRaw<{ value: unknown; is_public: boolean }[]>`
-			select value, is_public from app.app_config where key = 'ai.photos_since'`;
-		expect(row).toHaveLength(1);
-		expect(row[0]!.is_public).toBe(false);
+	it('the switch-on migration sets an unset cutoff to the time it runs, once; a set one never moves', async () => {
+		const switchOn = readFileSync(
+			new URL(
+				'../../prisma/schemas/migrations/20261019110000_task_40_11_ai_switch_on/migration.sql',
+				import.meta.url
+			),
+			'utf8'
+		);
+		const stored = async () =>
+			(
+				await prisma.$queryRaw<{ value: unknown; is_public: boolean }[]>`
+					select value, is_public from app.app_config where key = 'ai.photos_since'`
+			)[0];
+		try {
+			await setConfig('ai.photos_since', null);
+			expect(await AiDomain.photosSince()).toBeNull();
+			await prisma.$executeRawUnsafe(switchOn);
+			configStore.invalidate();
+			const since = await AiDomain.photosSince();
+			expect(Math.abs(since!.getTime() - Date.now())).toBeLessThan(60_000);
+			const first = await stored();
+			expect(first).toMatchObject({ value: expect.any(String), is_public: false });
+			// Applied again (or on a database whose cutoff is set): unchanged.
+			await prisma.$executeRawUnsafe(switchOn);
+			expect(await stored()).toEqual(first);
+			await setConfig('ai.photos_since', SINCE);
+			await prisma.$executeRawUnsafe(switchOn);
+			expect((await stored())!.value).toBe(SINCE);
+		} finally {
+			await setConfig('ai.photos_since', SINCE);
+		}
 	});
 });
 
@@ -262,6 +291,31 @@ describe('a retried or resent job', () => {
 		await EmbeddingsDomain.embedPhoto({ photo_id: old.id, last_attempt: true }, systemCtx());
 		expect(calls(old.sha256)).toBe(0);
 		await untouched(old.id);
+	});
+});
+
+describe('GET /v1/photos/:id/attributes and the public ai.enabled', () => {
+	it('a photo from before the switch-on answers unavailable at once (an older presign or row), a new one pending', async () => {
+		const view = (id: string) => AiDomain.getPhotoAttributes({ id }, userCtx(owner));
+		// Presigned before the switch-on and completed after, or the same image again (upsertByHash keeps the old row).
+		for (const status of ['pending', 'uploaded', 'accepted', 'published'] as PHOTO_STATUS[]) {
+			const old = await photo({ status, created_at: OLD, clean: false });
+			expect(await view(old.id), status).toEqual({ status: 'unavailable' });
+		}
+		const fresh = await photo({ status: 'uploaded', clean: false });
+		expect(await view(fresh.id)).toEqual({ status: 'pending' });
+		cutoff(null);
+		expect(await view(fresh.id)).toEqual({ status: 'unavailable' });
+	});
+
+	it('GET /v1/config/public reports ai.enabled false while there is no valid cutoff, so forms do not poll', async () => {
+		const enabled = async () => (await ConfigDomain.getPublicConfig(undefined, systemCtx()))['ai.enabled'];
+		expect(await enabled()).toBe(true);
+		for (const value of [undefined, null, 'soon']) {
+			cutoff(value);
+			expect(await enabled(), String(value)).toBe(false);
+			vi.restoreAllMocks();
+		}
 	});
 });
 

@@ -143,12 +143,17 @@ export type AttributesView =
 /**
  * GET /v1/photos/:id/attributes (C19 §REST). Only the photo's owner: anyone else's photo, an unknown or a rejected
  * one is NOT_FOUND. pending until the photo is accepted and ai.extract has recorded its outcome; ok or cached with a
- * stored result is ready; anything else (AI off, a cap, refused, invalid, failed) is unavailable.
+ * stored result is ready; anything else (AI off, a cap, refused, invalid, failed, a photo not created after
+ * ai.photos_since or no valid cutoff) is unavailable.
  */
 export async function getPhotoAttributes(input: { id: string }, ctx: Ctx): Promise<AttributesView> {
 	const photo = await AiDao.findPhoto(input.id, ctx.tx);
 	if (!photo || !ctx.actor || photo.owner_id !== ctx.actor.user_id || photo.status === 'rejected')
 		throw new AppError('NOT_FOUND', 'Photo not found');
+	// A photo ai.extract skips (a row from before the switch-on, e.g. an older presign or the same image again) never
+	// gets an outcome: answer at once instead of a pending that never ends (TASK-40.11).
+	const since = await photosSince();
+	if (!since || photo.created_at <= since) return { status: 'unavailable' };
 	if (photo.status === 'pending' || photo.status === 'uploaded') return { status: 'pending' };
 	const call = await AiDao.findOutcome(photo.id, ctx.tx);
 	if (!call) return { status: 'pending' };

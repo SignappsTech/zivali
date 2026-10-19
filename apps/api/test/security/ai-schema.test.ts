@@ -76,10 +76,10 @@ describe('AI tables (TASK-40.1)', () => {
 			select: { key: true, value: true, is_public: true },
 			orderBy: { key: 'asc' },
 		});
-		// TASK-40.11: null until the switch-on; the AI tests set it to their switch-on.
+		// TASK-40.11: the switch-on migration sets it to the time it ran; the AI tests set their own switch-on.
 		const since = rows.find((row) => row.key === 'ai.photos_since');
 		expect(since?.is_public).toBe(false);
-		expect([null, '2026-10-19T00:00:00Z']).toContainEqual(since?.value);
+		expect(typeof since?.value).toBe('string');
 		expect(rows.filter((row) => row !== since)).toEqual([
 			{ key: 'ai.daily_photos_anonymous', value: 10, is_public: false },
 			{ key: 'ai.daily_photos_user', value: 30, is_public: false },
