@@ -28,7 +28,7 @@ Severity: minor (large-text users).
 ## Packet
 
 Unblocks on: -
-Branch: agent/<id>-article-large-text
+Branch: agent/task-27.7-content-200-text
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Acceptance Criteria

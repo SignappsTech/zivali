@@ -40,7 +40,7 @@ export type FaqContent = Page & {
 	note: string;
 };
 
-export const h2Class = 'font-display text-2xl font-bold tracking-[-0.015em] text-balance lg:text-3xl';
+export const h2Class = 'hyphens-auto font-display text-2xl font-bold tracking-[-0.015em] text-balance lg:text-3xl';
 const ledeClass = 'mt-3 text-lg leading-7 lg:mt-4 lg:text-xl lg:leading-8';
 const inlineLinkClass = `rounded-[4px] text-primary underline decoration-1 underline-offset-3 hover:decoration-2 ${ringClass}`;
 const tocLinkClass = `flex min-h-11 items-center rounded-xl py-2.5 pr-3 pl-4 text-control leading-5 font-semibold text-muted-foreground hover:bg-foreground/10 hover:text-foreground ${ringClass}`;
@@ -77,7 +77,11 @@ export function Rich({ text }: { text: string }) {
 			bold ? (
 				<b key={match.index}>{bold}</b>
 			) : (
-				<a key={match.index} href={localHref(locale, href)} className={inlineLinkClass}>
+				<a
+					key={match.index}
+					href={localHref(locale, href)}
+					className={cn(inlineLinkClass, href.startsWith('mailto:') && '[overflow-wrap:anywhere]')}
+				>
 					{label}
 				</a>
 			)
@@ -138,7 +142,7 @@ function BlockView({ block }: { block: Block }) {
 						>
 							{index + 1}
 						</span>
-						<p>
+						<p className="min-w-0">
 							<Rich text={item} />
 						</p>
 					</li>
@@ -158,7 +162,7 @@ function BlockView({ block }: { block: Block }) {
 	return (
 		<div role="note" className={cn(noteClass, 'mt-4')}>
 			<LightbulbIcon weight="fill" aria-hidden="true" className="mt-px size-[22px] shrink-0 text-primary" />
-			<p>
+			<p className="min-w-0">
 				<Rich text={block.tip} />
 			</p>
 		</div>
@@ -207,9 +211,9 @@ export function ArticlePage({
 						{tocList}
 					</nav>
 				)}
-				<article className="max-w-[640px]">
+				<article className="max-w-[640px] break-words">
 					<BackLink />
-					<h1 className={cn(h1Class, 'mt-4')}>{content.h1}</h1>
+					<h1 className={cn(h1Class, 'mt-4 hyphens-auto')}>{content.h1}</h1>
 					<p className={ledeClass}>{content.lede}</p>
 					{toc && (
 						<details className={cn(rowClass, 'mt-8 lg:hidden')}>
@@ -290,7 +294,7 @@ export function FaqItem({ question, answer }: { question: string; answer: string
 	return (
 		<details className={rowClass}>
 			<summary className={cn(summaryClass, 'min-h-16 px-5 py-[18px] lg:min-h-[76px] lg:p-6')}>
-				<h3 className="font-display text-lg leading-7 font-semibold tracking-[-0.005em] lg:text-xl">
+				<h3 className="min-w-0 hyphens-auto font-display text-lg leading-7 font-semibold tracking-[-0.005em] lg:text-xl">
 					{question}
 				</h3>
 				<ToggleIcon />
@@ -308,14 +312,14 @@ export function FaqPage({ content, href }: { content: FaqContent; href: Pathname
 
 	return (
 		<ContentPage>
-			<div className="max-w-[640px]">
+			<div className="max-w-[640px] break-words">
 				<BackLink />
-				<h1 className={cn(h1Class, 'mt-4')}>{content.h1}</h1>
+				<h1 className={cn(h1Class, 'mt-4 hyphens-auto')}>{content.h1}</h1>
 				<p className={ledeClass}>{content.lede}</p>
 				{content.groups.map(({ title, items }) => (
 					<section key={title} className="mt-12">
 						<h2 className={h2Class}>{title}</h2>
-						<div className="mt-5 grid gap-3">
+						<div className="mt-5 grid grid-cols-1 gap-3">
 							{items.map(([question, answer]) => (
 								<FaqItem key={question} question={question} answer={answer} />
 							))}
@@ -328,7 +332,7 @@ export function FaqPage({ content, href }: { content: FaqContent; href: Pathname
 						aria-hidden="true"
 						className="mt-px size-[22px] shrink-0 text-primary"
 					/>
-					<p>
+					<p className="min-w-0">
 						<Rich text={content.note} />
 					</p>
 				</div>
