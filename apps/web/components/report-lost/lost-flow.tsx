@@ -29,12 +29,12 @@ import type { QueryError } from '@zivali/api/rtk';
 import { formatDate, type Locale } from '@zivali/i18n/format';
 import type { Pet } from '@zivali/types';
 import { AiNotice, AiSlot } from '@/components/ai/ai-parts';
-import type { AiField } from '@/components/ai/prefill';
+import { type AiField, PET_AI_FIELDS } from '@/components/ai/prefill';
 import { useFormPrefill } from '@/components/ai/use-prefill';
 import { AuthGate } from '@/components/auth/gate';
 import { LocationPicker } from '@/components/location/location-picker';
 import type { LatLng } from '@/components/map/map-view';
-import { PET_AI_FIELDS, PetFields } from '@/components/pets/pet-fields';
+import { PetFields } from '@/components/pets/pet-fields';
 import { useErrorText } from '@/components/pets/pet-list';
 import { PhotoPicker, type PhotoPickerHandle } from '@/components/photos/photo-picker';
 import { clearPhotoDraft, MAX_PHOTOS, type PickedPhoto } from '@/components/photos/use-photo-uploads';
@@ -1109,7 +1109,7 @@ export function LostFlow({
 									duplicate={duplicate}
 									update={update}
 									onUpdateChange={setUpdate}
-									suggested={PET_AI_FIELDS.filter((field) => ai.marks.has(field))}
+									suggested={newPet ? PET_AI_FIELDS.filter((field) => ai.marks.has(field)) : []}
 								/>
 							)}
 
@@ -1122,10 +1122,16 @@ export function LostFlow({
 								)}
 							>
 								{/* The AI slot (wireframe rule 1): checking on any step, the note on the details and on the
-								    review (the check before publishing), a late notice on the details. */}
+								    review (the check before publishing) of a new pet, a late notice on the details. */}
 								<AiSlot
 									ai={ai}
-									note={step === 'details' ? 'continue' : step === 'review' ? 'publish' : undefined}
+									note={
+										newPet && step === 'details'
+											? 'continue'
+											: newPet && step === 'review'
+												? 'publish'
+												: undefined
+									}
 									notice={step === 'details'}
 									onChangePhoto={changePhoto}
 								/>

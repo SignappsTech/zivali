@@ -23,6 +23,7 @@ import { useReversePlaceQuery } from '@zivali/api/geocode';
 import { reportsApi, useCreateReportMutation, useGetReportQuery } from '@zivali/api/reports';
 import type { QueryError } from '@zivali/api/rtk';
 import { type BreedCode, COLOURS, type CreateReportResponse, SIZES, type Size, type Species } from '@zivali/types';
+import { isBreedOf } from '@zivali/validation/breeds';
 import { coarsenPoint } from '@zivali/validation/geo';
 import { AiHint, AiInfo, AiNotice, AiSlot, SuggestedMark, useSuggestedText } from '@/components/ai/ai-parts';
 import type { AiField } from '@/components/ai/prefill';
@@ -91,7 +92,12 @@ const groupTitleClass = 'mt-8 mb-3 font-display text-xl font-semibold tracking-[
 const noteIconClass = 'mt-px size-[22px] shrink-0';
 
 /** C4 §Drafts: idb-keyval `draft:<kind>:<id>`. The location in it is the coarsened point (C6); EXIF never goes in. */
-type Draft = { step: Step; values: FoundValues };
+type Draft = {
+	step: Step;
+	values: FoundValues;
+	/** Step 2 as "Je to pravilno?" or, after "Uredi podatke", the manual step (TASK-41.2). */
+	aiMode?: 'sentence' | 'manual';
+};
 
 /** The quiet line (P7 `lp-line`): a 16 px primary icon and 14/20 muted text. */
 function Line({
@@ -236,13 +242,14 @@ function WhatStep({ values, set, errors, labelledBy, ai, breed }: StepProps & { 
 	const id = React.useId();
 	const sizes = values.species === 'cat' ? CAT_SIZES : SIZES;
 	const describedBy = (field: AiField, extra?: string) =>
-		cn(extra, (ai.marks.has(field) || ai.hints.has(field)) && `${id}-${field}`) || undefined;
+		[extra, (ai.marks.has(field) || ai.hints.has(field)) && `${id}-${field}`].filter(Boolean).join(' ') ||
+		undefined;
 	const chooseSpecies = (species: Species) =>
 		set({
 			species,
 			...(species === 'cat' && values.size && !CAT_SIZES.includes(values.size) && { size: undefined }),
 			// A breed of the other species no longer fits.
-			...(values.breed_codes?.some((code) => !code.startsWith(`${species}.`)) ? { breed_codes: undefined } : {}),
+			...(values.breed_codes?.some((code) => !isBreedOf(code, species)) ? { breed_codes: undefined } : {}),
 		});
 	const mark = (field: AiField) => ai.marks.has(field) && <SuggestedMark confidence={ai.confidence.get(field)} />;
 	const speciesMark = (species: Species) =>
@@ -673,7 +680,7 @@ export function FoundFlow({
 	});
 	// "Je to pravilno?" (wireframe F2): offered when a species was suggested before Naprej on the photo step, so the
 	// screen never swaps under the finder; "Uredi podatke" turns it into the manual step for good.
-	const [aiMode, setAiMode] = React.useState<'sentence' | 'manual'>();
+	const [aiMode, setAiMode] = React.useState<Draft['aiMode']>();
 	const sentence = step === 'what' && aiMode === 'sentence';
 	// The breed the sentence named, on "Uredi podatke" (wireframe v2 F3): asked there from then on, marked until changed.
 	const [breedAsk, setBreedAsk] = React.useState<{ marked: boolean }>();
@@ -695,8 +702,9 @@ export function FoundFlow({
 			.then((draft) => {
 				if (!live || !draft?.step || !draft.values) return;
 				setValues((prev) => ({ ...prev, ...draft.values }));
-				// A confirmed sentence named the breed: step 2 shows that sentence again, where "Uredi podatke" drops it.
-				if (draft.values.breed_codes?.length) setAiMode('sentence');
+				// Step 2 as it was left: the sentence, or the manual step with the breed now the finder's own.
+				setAiMode(draft.aiMode);
+				if (draft.aiMode === 'manual' && draft.values.breed_codes?.length) setBreedAsk({ marked: false });
 				if (steps.includes(draft.step)) setStep(draft.step);
 			})
 			.catch(() => {});
@@ -844,11 +852,11 @@ export function FoundFlow({
 		setPicking(false);
 		setStep(next);
 	};
-	const advance = (current = values) => {
+	const advance = (current = values, mode = aiMode) => {
 		const target = toReview ? last : steps[index + 1]!;
 		if (target === last) setToReview(false);
 		go(target);
-		idbSet(draftKey, { step: target, values: current } satisfies Draft).catch(() => {});
+		idbSet(draftKey, { step: target, values: current, aiMode: mode } satisfies Draft).catch(() => {});
 	};
 	// "Da, nadaljuj": the suggested answers, and the breed the sentence names, become the finder's own.
 	const accept = () => {
@@ -871,7 +879,10 @@ export function FoundFlow({
 		setAttempted(true);
 		if (Object.keys(stepErrors(step, values)).length > 0) return;
 		if (sentence) return accept();
-		if (step === 'photo' && !aiMode && ai.marks.has('species')) setAiMode('sentence');
+		if (step === 'photo' && !aiMode && ai.marks.has('species')) {
+			setAiMode('sentence');
+			return advance(values, 'sentence');
+		}
 		// Naprej on "Kje" takes the offered place into the form.
 		if (step === 'where' && !values.location && where) {
 			const current = { ...values, location: where.point, source: where.source };

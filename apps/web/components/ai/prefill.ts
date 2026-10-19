@@ -1,4 +1,5 @@
 import type { AiNotice, BreedCode, Colour, Pattern, PhotoAttributes, Size, Species } from '@zivali/types';
+import { isBreedOf } from '@zivali/validation/breeds';
 import { PATTERNS, SIZES } from '@/components/pets/species-options';
 
 // C19 §Client rules (TASK-41.2): what a ready photo suggestion fills, marks and hints in a form. Pure, so the rules
@@ -8,6 +9,8 @@ import { PATTERNS, SIZES } from '@/components/pets/species-options';
 export type AiResult = Extract<PhotoAttributes, { status: 'ready' }>;
 /** The fields a suggestion can fill or hint. `collar` only ever gets a hint: the collar text is never filled. */
 export type AiField = 'species' | 'breed_codes' | 'colours' | 'pattern' | 'size' | 'collar';
+/** Every AiField, in PetFields' order ("Preveri predloge" goes to the first mark): what P6 and P8 fill or hint. */
+export const PET_AI_FIELDS: readonly AiField[] = ['species', 'breed_codes', 'pattern', 'colours', 'size', 'collar'];
 export type AiValues = {
 	species?: Species | null;
 	breed_codes?: BreedCode[] | null;
@@ -36,9 +39,8 @@ export type AiPlan = {
 export type AiAnnouncement =
 	{ kind: 'arrived'; count: number } | { kind: 'none' } | { kind: 'notice'; notice: AiNotice };
 
-const isEmpty = (value: unknown) =>
+export const isEmpty = (value: unknown) =>
 	value === undefined || value === null || value === '' || (Array.isArray(value) && value.length === 0);
-const fits = (species: Species, code: string) => code.startsWith(`${species}.`);
 
 /**
  * Fills only empty fields the person has not touched (a field still marked from an earlier first photo counts as
@@ -84,7 +86,7 @@ export function planPrefill(
 	}
 	if (breeds) {
 		// One breed in the form; codes of another species never fill (C19 drops them only against the model's own).
-		const code = species && breeds.value?.find((candidate) => fits(species, candidate));
+		const code = species && breeds.value?.find((candidate) => isBreedOf(candidate, species));
 		if (code) fill('breed_codes', [code]);
 		else if (breeds.value === null && !plan.differs) hint('breed_codes');
 	}
@@ -103,9 +105,6 @@ export function planPrefill(
 	if (collar?.value === true) hint('collar');
 	return plan;
 }
-
-/** A suggestion's confidence (0…1): the percentage after its "Predlog" mark (owner, wireframe v2, 2026-10-19). */
-export const confidenceOf = (result: AiResult, field: AiField): number | undefined => result[field]?.confidence;
 
 /** `arrived_live` with the number filled, `none_live` when only hints came, or the notice title; else nothing. */
 export function announcementFor(result: AiResult, plan: AiPlan): AiAnnouncement | undefined {

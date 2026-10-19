@@ -148,7 +148,7 @@ export function AiInfo() {
 	);
 }
 
-export function useAnnouncement(): (announcement?: AiAnnouncement) => string {
+function useAnnouncement(): (announcement?: AiAnnouncement) => string {
 	const t = useTranslations('ai_prefill');
 	return (announcement) =>
 		!announcement

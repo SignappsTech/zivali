@@ -1,4 +1,5 @@
 import type { BreedCode, Colour, CreateReportInput, Size, Species } from '@zivali/types';
+import { isBreedOf } from '@zivali/validation/breeds';
 import type { AiResult } from '@/components/ai/prefill';
 import type { LatLng } from '@/components/map/map-view';
 
@@ -60,7 +61,7 @@ export const initialValues = (entry: 'found' | 'sighted', now = new Date()): Fou
  * left out when it is mixed or unknown (never a guess) or when there is none.
  */
 export function sentenceBreed(result: AiResult | undefined, species: Species | undefined): BreedCode | undefined {
-	const code = species && result?.breed_codes?.value?.find((candidate) => candidate.startsWith(`${species}.`));
+	const code = species && result?.breed_codes?.value?.find((candidate) => isBreedOf(candidate, species));
 	return code && !code.endsWith('.mixed') && !code.endsWith('.unknown') ? code : undefined;
 }
 

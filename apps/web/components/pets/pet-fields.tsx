@@ -34,8 +34,6 @@ export type PetFieldValues = z.input<typeof PetInput>;
 type Species = PetFieldValues['species'];
 /** The AI pre-fill of these fields (TASK-41.2): the "Predlog" marks, the hints and the species hint. */
 export type PetFieldsAi = Pick<Prefill, 'marks' | 'confidence' | 'hints' | 'differs' | 'refill'>;
-/** What the AI pre-fill may fill or hint here, in the fields' order ("Preveri predloge" goes to the first mark). */
-export const PET_AI_FIELDS: readonly AiField[] = ['species', 'breed_codes', 'pattern', 'colours', 'size', 'collar'];
 
 /** Blank values for a new pet, for `useForm({ defaultValues })`. */
 export const emptyPetFields: DefaultValues<PetFieldValues> = {
@@ -220,10 +218,12 @@ export function PetFields({ headingLevel = 2, variant = 'profile', colourError, 
 									<RadioGroup
 										aria-labelledby={`${id}-species`}
 										aria-describedby={
-											cn(
+											[
 												fieldState.error && `${id}-species-error`,
-												(note || differs) && `${id}-species-ai`
-											) || undefined
+												(note || differs) && `${id}-species-ai`,
+											]
+												.filter(Boolean)
+												.join(' ') || undefined
 										}
 										aria-invalid={fieldState.error ? true : undefined}
 										value={field.value ?? ''}
@@ -419,8 +419,9 @@ export function PetFields({ headingLevel = 2, variant = 'profile', colourError, 
 										type="multiple"
 										aria-labelledby={`${id}-colours`}
 										aria-describedby={
-											cn(colourError && `${id}-colours-error`, note && `${id}-colours-ai`) ||
-											undefined
+											[colourError && `${id}-colours-error`, note && `${id}-colours-ai`]
+												.filter(Boolean)
+												.join(' ') || undefined
 										}
 										value={field.value ?? []}
 										onValueChange={field.onChange}

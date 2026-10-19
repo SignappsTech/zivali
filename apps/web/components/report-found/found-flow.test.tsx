@@ -638,6 +638,30 @@ describe('FoundFlow AI pre-fill (C19, TASK-41.2)', () => {
 		expect(body.breed_codes).toBeUndefined();
 	});
 
+	it('a draft left after "Uredi podatke" comes back as the manual step 2, with the breed unmarked', async () => {
+		exif.on = false;
+		idb.set('draft:found:found', {
+			step: 'where',
+			aiMode: 'manual',
+			values: {
+				...initialValues('found'),
+				species: 'dog',
+				breed_codes: ['dog.labrador_retriever'],
+				colours: ['black'],
+				location: PICKED,
+				source: 'pin',
+			},
+		});
+		show({}, on());
+		expect(await screen.findByRole('heading', { level: 1, name: 'Kje ste žival našli?' })).toBeTruthy();
+		fireEvent.click(screen.getByRole('button', { name: 'Nazaj' }));
+		expect(await screen.findByRole('heading', { level: 1, name: 'Katera žival je to?' })).toBeTruthy();
+		expect((screen.getByRole('combobox', { name: 'Pasma (neobvezno)' }) as HTMLInputElement).value).toBe(
+			'Labradorec'
+		);
+		expect(screen.queryByText('Predlog')).toBeNull();
+	});
+
 	it('another animal: the note under the photo and on step 2, nothing filled, the finder carries on by hand', async () => {
 		const api = show({}, on(attributesOtherAnimal));
 		await photoChecked('Na fotografiji je videti druga žival');

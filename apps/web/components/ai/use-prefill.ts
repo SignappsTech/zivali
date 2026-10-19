@@ -16,7 +16,8 @@ import {
 	type AiResult,
 	type AiValues,
 	announcementFor,
-	confidenceOf,
+	isEmpty,
+	PET_AI_FIELDS,
 	planPrefill,
 } from './prefill';
 
@@ -24,7 +25,7 @@ const POLL_MS = 750;
 const POLL_FOR_MS = 10_000;
 
 /** `ai.enabled` from the public config (C1); false while it loads or fails, so nothing is polled by accident. */
-export function useAiOn(enabled = true): boolean {
+function useAiOn(enabled = true): boolean {
 	return useGetPublicConfigQuery(enabled ? undefined : skipToken).data?.['ai.enabled'] === true;
 }
 
@@ -33,7 +34,7 @@ export function useAiOn(enabled = true): boolean {
  * visit (a saved photo is not checked), for at most 10 s; stops on `ready`, `unavailable` or an error, which leave the
  * form manual with nothing shown. Nothing at all with `ai.enabled` false.
  */
-export function usePhotoAttributes(photos: PickedPhoto[], enabled = true) {
+function usePhotoAttributes(photos: PickedPhoto[], enabled = true) {
 	const on = useAiOn(enabled);
 	const first = photos[0];
 	const id = on && first?.status === 'uploaded' && !first.saved ? first.photoId : undefined;
@@ -83,7 +84,11 @@ export type Prefill = {
 	dismissNotice: () => void;
 };
 
-type State = Pick<Prefill, 'result' | 'marks' | 'confidence' | 'hints' | 'differs' | 'notice' | 'announcement'>;
+type State = Pick<Prefill, 'result' | 'marks' | 'confidence' | 'hints' | 'differs' | 'notice' | 'announcement'> & {
+	/** The photo the hints, the species hint and the notice are about. */
+	photoId?: string;
+};
+const NO_HINTS: ReadonlySet<AiField> = new Set();
 
 const without = (state: State, field: AiField): State =>
 	state.marks.has(field) || state.hints.has(field) || (field === 'species' && state.differs)
@@ -121,7 +126,7 @@ export function usePrefill({
 	const changed = React.useRef(false);
 	const applied = React.useRef<string>(undefined);
 
-	const apply = React.useEffectEvent((ready: AiResult, refill: boolean) => {
+	const apply = React.useEffectEvent((ready: AiResult, refill: boolean, checked?: string) => {
 		const plan = planPrefill(ready, read(), {
 			fields,
 			touched: touched.current,
@@ -130,12 +135,13 @@ export function usePrefill({
 		});
 		write(plan.fill);
 		setState((prev) => ({
+			photoId: refill ? prev.photoId : checked,
 			result: ready,
 			marks: new Set([...prev.marks, ...plan.marks]),
 			confidence: new Map([
 				...prev.confidence,
 				...plan.marks.flatMap((field) => {
-					const value = confidenceOf(ready, field);
+					const value = ready[field]?.confidence;
 					return value === undefined ? [] : [[field, value] as const];
 				}),
 			]),
@@ -149,7 +155,7 @@ export function usePrefill({
 		// Once per checked photo: a replaced first photo is checked again.
 		if (!result || !photoId || applied.current === photoId) return;
 		applied.current = photoId;
-		apply(result, false);
+		apply(result, false, photoId);
 	}, [result, photoId]);
 	const applyAgain = React.useEffectEvent(() => state.result && apply(state.result, true));
 	React.useEffect(() => {
@@ -171,17 +177,24 @@ export function usePrefill({
 	}, [state.marks]);
 	const dismissNotice = React.useCallback(() => setState((prev) => ({ ...prev, notice: undefined })), []);
 
-	return { checking, ...state, touch, cleared, refill, confirm, dismissNotice };
+	// A replaced or removed first photo, or a saved one moved first: its hints and notice are not about this one.
+	const { photoId: checked, ...shown } = state;
+	const current = checked === photoId;
+	return {
+		checking,
+		...shown,
+		hints: current ? shown.hints : NO_HINTS,
+		differs: current ? shown.differs : undefined,
+		notice: current ? shown.notice : undefined,
+		touch,
+		cleared,
+		refill,
+		confirm,
+		dismissNotice,
+	};
 }
 
-const isAiField = (name: string | undefined): name is AiField =>
-	name === 'species' ||
-	name === 'breed_codes' ||
-	name === 'colours' ||
-	name === 'pattern' ||
-	name === 'size' ||
-	name === 'collar';
-const isEmpty = (value: unknown) => value == null || value === '' || (Array.isArray(value) && value.length === 0);
+const isAiField = (name: string | undefined): name is AiField => PET_AI_FIELDS.includes(name as AiField);
 
 /**
  * usePrefill for a react-hook-form form with PetFields (P6, P8): the person's changes come from `watch`. `getForm`

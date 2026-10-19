@@ -4,15 +4,21 @@ import { FormProvider, useForm } from 'react-hook-form';
 import { Provider } from 'react-redux';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { attributesPendingThenReady, attributesReady, attributesUnavailable } from '@zivali/api/__fixtures__/ai';
+import {
+	attributesPending,
+	attributesPendingThenReady,
+	attributesReady,
+	attributesUnavailable,
+} from '@zivali/api/__fixtures__/ai';
 import { createMockApi, type MockRoutes, mockError } from '@zivali/api/mock';
 import { createApiStore } from '@zivali/api/rtk';
 import sl from '@zivali/i18n/dist/sl.json';
 import { timeZone } from '@zivali/i18n/format';
-import { emptyPetFields, PET_AI_FIELDS, PetFields, type PetFieldValues } from '@/components/pets/pet-fields';
+import { emptyPetFields, PetFields, type PetFieldValues } from '@/components/pets/pet-fields';
 import type { PickedPhoto } from '@/components/photos/use-photo-uploads';
 
 import { AiSlot } from './ai-parts';
+import { PET_AI_FIELDS } from './prefill';
 import { useFormPrefill } from './use-prefill';
 
 // TASK-41.2: the AI pre-fill of PetFields (P6, P8) against the mock API (C19 client fixtures), with real timers: the
@@ -40,21 +46,24 @@ function Harness({ photos }: { photos: PickedPhoto[] }) {
 	return (
 		<FormProvider {...form}>
 			<PetFields ai={ai} />
-			<AiSlot ai={ai} note="save" onChangePhoto={() => {}} />
+			<AiSlot ai={ai} note="save" notice onChangePhoto={() => {}} />
 		</FormProvider>
 	);
 }
 
+/** The mock API, with `swap` to give the form other photos (a replaced, removed or reordered first one). */
 function show(routes: MockRoutes, photos: PickedPhoto[] = [uploaded]) {
 	const api = createMockApi({ 'GET /v1/config/public': { 'ai.enabled': true }, ...routes });
-	render(
+	const store = createApiStore(api);
+	const tree = (next: PickedPhoto[]) => (
 		<NextIntlClientProvider locale="sl" messages={sl} timeZone={timeZone}>
-			<Provider store={createApiStore(api)}>
-				<Harness photos={photos} />
+			<Provider store={store}>
+				<Harness photos={next} />
 			</Provider>
 		</NextIntlClientProvider>
 	);
-	return api;
+	const { rerender } = render(tree(photos));
+	return Object.assign(api, { swap: (next: PickedPhoto[]) => rerender(tree(next)) });
 }
 const polls = (api: ReturnType<typeof createMockApi>) => api.calls.filter((call) => call.path.endsWith('/attributes'));
 const radio = (group: string, name: string) =>
@@ -67,6 +76,9 @@ const describedBy = (element: HTMLElement) =>
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 const CHECKING = 'Pregledujemo fotografijo … Obrazec lahko medtem izpolnjujete naprej.';
 const LOW = 'Iz fotografije tega ne moremo zanesljivo razbrati. Izberite sami.';
+const COLLAR = 'Na fotografiji je videti ovratnica. Če lahko, jo opišite: barva, obesek, zvonček.';
+/** The photo notice's own action (the live region keeps the announcement, so the title alone does not tell). */
+const keep = () => screen.queryByRole('button', { name: 'Obdrži fotografijo' });
 
 afterEach(cleanup);
 
@@ -113,9 +125,7 @@ describe('useFormPrefill with PetFields (C19 §Client rules)', () => {
 		// Size below the minimum confidence: empty, with the hint; a collar was seen: only the hint.
 		expect(radio('Velikost', 'Srednja').getAttribute('aria-checked')).toBe('false');
 		expect(describedBy(screen.getByRole('radiogroup', { name: 'Velikost' }))).toContain(LOW);
-		expect(
-			screen.getByText('Na fotografiji je videti ovratnica. Če lahko, jo opišite: barva, obesek, zvonček.')
-		).toBeTruthy();
+		expect(screen.getByText(COLLAR)).toBeTruthy();
 		// The check before saving: a quiet note by Save, with the info.
 		expect(screen.getByText(/zato jih preverite, preden shranite\./)).toBeTruthy();
 		fireEvent.click(screen.getByRole('button', { name: 'Kako nastanejo predlogi?' }));
@@ -172,6 +182,52 @@ describe('useFormPrefill with PetFields (C19 §Client rules)', () => {
 		expect(screen.queryByText(LOW)).toBeNull();
 		expect(screen.queryByText(/zato jih preverite/)).toBeNull();
 		expect(radio('Vrsta', 'Pes').getAttribute('aria-checked')).toBe('false');
+	});
+
+	it('stops polling after 10 s without an answer and clears the checking line', async () => {
+		vi.useFakeTimers({ shouldAdvanceTime: true });
+		try {
+			const api = show({ [ATTRIBUTES]: attributesPending });
+			expect(await screen.findByText(CHECKING)).toBeTruthy();
+			await vi.advanceTimersByTimeAsync(10_000);
+			await waitFor(() => expect(screen.queryByText(CHECKING)).toBeNull());
+			const count = polls(api).length;
+			expect(count).toBeGreaterThan(1);
+			await vi.advanceTimersByTimeAsync(3000);
+			expect(polls(api)).toHaveLength(count);
+			expect(screen.queryByText('Predlog')).toBeNull();
+		} finally {
+			vi.useRealTimers();
+		}
+	});
+
+	it('drops the notice and the hints of a first photo once another photo is first', async () => {
+		const second = { ...uploaded, key: 'k2', photoId: 'photo-2' } as PickedPhoto;
+		const saved = { ...uploaded, key: 'k0', photoId: 'photo-0', saved: true } as PickedPhoto;
+		const api = show({
+			[ATTRIBUTES]: ({ params }) =>
+				params.id === 'photo-1' ? { ...attributesReady, notice: 'multiple_animals' } : attributesUnavailable,
+		});
+		await waitFor(() => expect(keep()).toBeTruthy(), { timeout: 3000 });
+		expect(screen.getAllByText('Na fotografiji je videti več živali').length).toBeGreaterThan(0);
+		expect(screen.getByText(LOW)).toBeTruthy();
+		expect(screen.getByText(COLLAR)).toBeTruthy();
+
+		// A saved photo moved first: it is not checked, and the first photo's notice and hints are not about it.
+		api.swap([saved, uploaded]);
+		expect(keep()).toBeNull();
+		expect(screen.queryByText(LOW)).toBeNull();
+		expect(screen.queryByText(COLLAR)).toBeNull();
+
+		// A new first photo that comes back unavailable: still nothing of the old one.
+		api.swap([second]);
+		await waitFor(() => expect(polls(api).some((call) => call.path.includes('photo-2'))).toBe(true));
+		await waitFor(() => expect(screen.queryByText(CHECKING)).toBeNull());
+		expect(keep()).toBeNull();
+		expect(screen.queryByText(LOW)).toBeNull();
+		expect(screen.queryByText(COLLAR)).toBeNull();
+		// What was filled stays: it is in the form now.
+		expect(radio('Vrsta', 'Pes').getAttribute('aria-checked')).toBe('true');
 	});
 
 	it('shows nothing extra after an error, and does not poll again', async () => {
