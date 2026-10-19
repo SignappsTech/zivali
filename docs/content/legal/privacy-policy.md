@@ -120,7 +120,7 @@ Večino podatkov nam daste sami: ko ustvarite račun, objavite prijavo ali piše
 
 Pri zakoniti podlagi „zakoniti interes“ smo presodili, da vaši interesi in pravice ne prevladajo nad našim interesom, da je storitev varna in brez zlorab. Zoper tako obdelavo lahko ugovarjate (poglavje 15).
 
-Pri pomoči umetne inteligence je naš interes, da je prijava hitrejša in da se izgubljene živali hitreje najdejo. Obdelava je omejena na pomanjšano kopijo fotografije brez podatkov o vas, rezultat pa je samo predlog (poglavje 8). [pravni pregled]
+Pri pomoči umetne inteligence je naš interes, da je prijava hitrejša in da se izgubljene živali hitreje najdejo. Obdelava je omejena na pomanjšano kopijo fotografije, ki ji ne priložimo vašega imena, oznak ali lokacije, rezultat pa je samo predlog (poglavje 8). [pravni pregled]
 
 Če obdelava temelji na privolitvi, jo lahko kadar koli prekličete. Preklic ne vpliva na zakonitost obdelave pred njim.
 
@@ -169,7 +169,7 @@ Ko je ta funkcija vklopljena, fotografije, ki jih naložite k prijavi ali profil
 
 **Kaj pošljemo.** Samo pomanjšano kopijo fotografije (daljša stranica največ 1024 pik), na novo shranjeno brez metapodatkov EXIF. Ne pošljemo vašega imena, e-naslova ali drugih oznak uporabnika, oznak prijave ali fotografije, lokacije, besedila, ki ste ga vpisali, ali jezika. Pošljemo samo fotografije, naložene po vklopu pomoči umetne inteligence. Starejših fotografij ponudnikoma ne pošljemo. [pravni pregled]
 
-**Ljudje na fotografijah.** Model opisuje samo žival. O osebah na fotografiji ne shranimo ničesar razen varnostnih oznak zgoraj in ne ugotavljamo, kdo so. Fotografij, na katerih je model zaznal osebo v ospredju ali goloto ali ni našel psa ali mačke, ne pošljemo ponudniku Voyage AI in zanje ne izračunamo vektorja. Varnostne oznake zdaj uporabljamo samo za to izločanje. [pravni pregled]
+**Ljudje na fotografijah.** Model opisuje samo žival. O osebah na fotografiji ne shranimo ničesar razen varnostnih oznak zgoraj in ne ugotavljamo, kdo so. Fotografij, na katerih je model zaznal osebo v ospredju ali goloto ali ni našel psa ali mačke, ne pošljemo ponudniku Voyage AI in zanje ne izračunamo vektorja. Enako velja za fotografije, ki jih model ni preveril. Varnostne oznake zdaj uporabljamo samo za to izločanje. [pravni pregled]
 
 **Predlogi.** V obrazcu so predlogi označeni z »Predlog«. Lahko se motijo, zato jih preverite. Del prijave ali profila postanejo šele, ko jih potrdite oziroma ko obrazec shranite ali objavite. Do takrat jih lahko spremenite ali izbrišete. Polja, za katera predlog ni dovolj zanesljiv, pustimo prazna. Če pomoč ni na voljo, obrazec izpolnite sami in prijava deluje enako. [pravni pregled]
 
@@ -181,7 +181,7 @@ Ko je ta funkcija vklopljena, fotografije, ki jih naložite k prijavi ali profil
 
 **Ponudnika, kraj obdelave in prenos.** Anthropic in Voyage AI fotografije obdelujeta kot naša obdelovalca, po naših navodilih. Pogoji vsakega ponudnika vključujejo dogovor o obdelavi podatkov. [pravni pregled]
 
-- **Anthropic** podatke hrani v ZDA. Zahteve lahko obdela tudi v izbranih državah v Evropi, Aziji in Avstraliji, varnostne preglede pa opravlja tudi v drugih državah, kjer deluje. Po Anthropicovih poslovnih pogojih naših podatkov ne sme uporabiti za učenje svojih modelov. Kopijo fotografije in rezultat samodejno izbriše v 30 dneh. Dlje ju lahko hrani, če ju njegovi varnostni sistemi označijo kot morebitno kršitev pravil uporabe (do dveh let, oceno varnostnega sistema do sedmih let) ali če to zahteva zakon. [pravni pregled]
+- **Anthropic** podatke hrani v ZDA. Zahteve lahko obdela tudi v izbranih državah v Evropi, Aziji in Avstraliji, varnostne preglede, podporo in odzivanje na incidente pa lahko opravlja tudi v drugih državah, kjer delujejo on ali njegova povezana podjetja. Po Anthropicovih poslovnih pogojih naših podatkov ne sme uporabiti za učenje svojih modelov. Kopijo fotografije in rezultat samodejno izbriše v 30 dneh. Dlje ju lahko hrani, če ju njegovi varnostni sistemi označijo kot morebitno kršitev pravil uporabe (do dveh let, oceno varnostnega sistema do sedmih let) ali če to zahteva zakon. [pravni pregled]
 - **Voyage AI** podatke obdeluje v ZDA. Pri Voyage AI smo zavrnili, da naše podatke hrani in uporablja za učenje svojih modelov. Zato kopijo fotografije izbriše takoj, ko jo obdela. [pravni pregled]
 - Za prenos podatkov izven EU dogovora o obdelavi podatkov z obema ponudnikoma vključujeta standardne pogodbene klavzule Evropske komisije (poglavje 13). [pravni pregled]
 
@@ -418,7 +418,7 @@ You give us most of the data yourself: when you create an account, publish a rep
 
 Where the legal basis is "legitimate interest", we have assessed that your interests and rights do not override our interest in keeping the service safe and free of abuse. You can object to such processing (chapter 15).
 
-For AI assistance, our interest is to make reporting faster and to find lost animals sooner. The processing is limited to a smaller copy of the photo with no data about you, and the result is only a suggestion (chapter 8). [legal review]
+For AI assistance, our interest is to make reporting faster and to find lost animals sooner. The processing is limited to a smaller copy of the photo, sent without your name, identifiers or location, and the result is only a suggestion (chapter 8). [legal review]
 
 Where processing rests on consent, you can withdraw it at any time. Withdrawal does not affect the lawfulness of processing before it.
 
@@ -467,7 +467,7 @@ When this feature is switched on, the photos you upload to a report or pet profi
 
 **What we send.** Only a smaller copy of the photo (longer side at most 1024 pixels), saved again without EXIF metadata. We do not send your name, email address or any other user identifier, report or photo identifiers, location, the text you entered, or your language. We send only photos uploaded after AI assistance was switched on. Older photos are never sent to the providers. [legal review]
 
-**People in photos.** The model describes only the animal. About the people in a photo we keep nothing beyond the safety flags above, and we do not try to find out who they are. Photos in which the model detected a prominent person or nudity, or found no dog or cat, are not sent to Voyage AI and get no vector. For now, the safety flags are used only for this exclusion. [legal review]
+**People in photos.** The model describes only the animal. About the people in a photo we keep nothing beyond the safety flags above, and we do not try to find out who they are. Photos in which the model detected a prominent person or nudity, or found no dog or cat, are not sent to Voyage AI and get no vector. The same applies to photos the model has not checked. For now, the safety flags are used only for this exclusion. [legal review]
 
 **Suggestions.** In the form, suggestions are labelled "Suggested". They can be wrong, so please check them. They become part of the report or profile only once you confirm them, or save or publish the form. Until then you can change or delete them. If a suggestion is not reliable enough, we leave the field empty. If AI assistance is not available, you fill in the form yourself and the report works the same. [legal review]
 
@@ -479,7 +479,7 @@ When this feature is switched on, the photos you upload to a report or pet profi
 
 **The providers, where they process data, and transfers.** Anthropic and Voyage AI process the photos as our processors, on our instructions. Each provider's terms include a data processing agreement. [legal review]
 
-- **Anthropic** stores the data in the USA. It may also process requests in selected countries in Europe, Asia and Australia, and it carries out safety reviews in other countries where it operates. Under Anthropic's commercial terms, it may not use our data to train its models. It deletes the copy of the photo and the result automatically within 30 days. It may keep them longer if its safety systems flag them as a possible breach of its usage policy (up to two years, the safety system's score up to seven years), or where the law requires it. [legal review]
+- **Anthropic** stores the data in the USA. It may also process requests in selected countries in Europe, Asia and Australia, and it may carry out safety reviews, support and incident response in other countries where it or its affiliates operate. Under Anthropic's commercial terms, it may not use our data to train its models. It deletes the copy of the photo and the result automatically within 30 days. It may keep them longer if its safety systems flag them as a possible breach of its usage policy (up to two years, the safety system's score up to seven years), or where the law requires it. [legal review]
 - **Voyage AI** processes the data in the USA. We have opted out of Voyage AI storing our data and using it to train its models, so it deletes the copy of the photo as soon as it has processed it. [legal review]
 - For transfers outside the EU, the data processing agreements with both providers include the European Commission's standard contractual clauses (chapter 13). [legal review]
 
@@ -674,7 +674,7 @@ We may change this policy, for example when we add a new feature or provider. We
     (j) **DPF listings: unknown.** The DPF participant list, https://www.dataprivacyframework.gov/list (read 2026-10-19), loads only by script and could not be read; neither provider's terms, DPA or privacy policy mentions the DPF. The text therefore relies on the SCCs in the two DPAs, not on the DPF. Anthropic's subprocessor list, https://trust.anthropic.com/subprocessors (read 2026-10-19), also loads only by script: unknown. Please verify both DPF listings yourself (note 8).
     (k) **Not claimed in the text:** DPF certification; a zero data retention agreement with Anthropic; an exhaustive list of Anthropic's processing countries; the subprocessors and their locations; which SCC module applies.
 24. **Version 0.8 (AI as built, C19 §Privacy, C20 §Privacy).** Facts for you to check against the build:
-    (a) If extraction did not run (AI off, a cap, a refusal, a failure), the photo is still sent to Voyage AI without the safety check (C19 §Pipeline 7 sends `photo.embed` on every outcome except a flagged one). The text only says that photos the model flagged are not embedded, which is accurate. If you want the rule "never without the check", that is a tech change (LQ-70).
+    (a) A photo goes to Voyage AI only with a clean safety check (C20, CH-562): if extraction did not run (AI off, a cap, a refusal, a failure), it is never embedded. Chapter 8 says so.
     (b) Private pet profile photos are processed and embedded too (C20: eligible photos are attached to a report or a pet).
     (c) The build has no per-person way to switch AI off. An objection under Article 21 would have to be handled by email (LQ-69).
     (d) The model also stores up to five short English descriptions of distinguishing marks. They are not shown in M3.
