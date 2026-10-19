@@ -3,11 +3,11 @@ id: TASK-43.2
 title: >-
   Matching engine v3: similarity per candidate, fallback, re-score on new
   vectors, photo order, reverse-search budget
-status: In Progress
+status: Done
 assignee:
   - '@backend-dev'
 created_date: '2026-10-18 21:24'
-updated_date: '2026-10-19 01:33'
+updated_date: '2026-10-19 01:46'
 labels:
   - be
   - 'est:M'
