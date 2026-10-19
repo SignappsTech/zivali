@@ -5,7 +5,7 @@ status: To Do
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-18 21:23'
-updated_date: '2026-10-19 00:38'
+updated_date: '2026-10-19 10:02'
 labels:
   - fe
   - 'est:M'
@@ -47,3 +47,9 @@ Branch: agent/task-41.2-ai-prefill-web
 - [ ] #3 After 3 s, on unavailable or on an error the user continues manually and a late suggestion never overwrites an edit (test); with ai.enabled false there is no polling
 - [ ] #4 Arriving suggestions are announced once in a polite live region; axe clean; matches the approved wireframe or mockup (design-lead visual review); unit and e2e tests with the mock
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+Lead 2026-10-19: dispatched by hand on the owner's 'enable AI too, we will test today'. Scope: the wireframe v1 parts the owner approved (TASK-41.1 notes: Q1, Q3, Q5, Q7) plus the found sentence with the breed (Q4). The confidence display and the crop tool wait for v2. TASK-40.6 copy is delivered; its pending legal approval gates switching AI on (TASK-40.7), not this build.
+<!-- SECTION:NOTES:END -->

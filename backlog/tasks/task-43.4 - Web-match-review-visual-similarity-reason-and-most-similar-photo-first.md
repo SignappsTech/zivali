@@ -1,11 +1,11 @@
 ---
 id: TASK-43.4
 title: 'Web match review: visual similarity reason and most similar photo first'
-status: To Do
+status: In Progress
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-18 21:25'
-updated_date: '2026-10-18 21:29'
+updated_date: '2026-10-19 10:02'
 labels:
   - fe
   - 'est:S'
@@ -45,3 +45,9 @@ Branch: agent/task-43.4-match-visual-web
 - [ ] #2 The comparison shows the other report's photos in API order (most similar first) and the lost report's lost_photo_id first; confirm and reject work as before
 - [ ] #3 Tests with the fixture; axe clean
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+Lead 2026-10-19: dispatched by hand for the owner's AI test today; the P11 visual reason copy is delivered (TASK-40.6 AC2). Its pending legal approval gates switching AI on (TASK-40.7), not this build.
+<!-- SECTION:NOTES:END -->

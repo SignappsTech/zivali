@@ -5,7 +5,7 @@ status: Done
 assignee:
   - '@design-lead'
 created_date: '2026-10-16 14:00'
-updated_date: '2026-10-19 09:58'
+updated_date: '2026-10-19 10:12'
 labels:
   - design
   - wireframe
@@ -40,4 +40,6 @@ Review sheet for the owner (private claude.ai page, v1 2026-10-18): https://clau
 APPROVED: Primož Božič (owner), 2026-10-18, wireframe v1 (docs/design/wireframes/P3-home.html). Owner: "A for home". Layout A: compact hero with the two report buttons, recent report cards straight under it. Questions 2-4 were not answered one by one, so they follow A as shown: public latest-report cards (status, species, rough area, time only); "Opažena žival" as a quiet link; the live numbers block stays optional (needs a public stats endpoint, hidden while numbers are small). Confirm those three when 115.2 starts. Owner said not to start building yet (2026-10-18).
 
 Owner answers 2026-10-19 (Primož Božič), review sheet: (1) B; (2) yes, latest reports for everyone (status, species, rough area, time only); (3) yes, keep the live numbers block; (4) 'Opažena žival' as a quiet link (as in A). (1) differs from 'A for home' on 2026-10-18, which is live (TASK-115.5); the lead asked the owner to confirm before a rebuild.
+
+APPROVED: Primož Božič (owner), 2026-10-19, wireframe v1 (docs/design/wireframes/P3-home.html) option B, confirmed in chat ('Switch to B'), with one change: 'Opažena žival' is a quiet text link as in A, not a third hero choice. Keep: public latest-report cards, the live numbers block (hidden under 50). Built by TASK-115.10, replacing the live A (TASK-115.5).
 <!-- SECTION:NOTES:END -->

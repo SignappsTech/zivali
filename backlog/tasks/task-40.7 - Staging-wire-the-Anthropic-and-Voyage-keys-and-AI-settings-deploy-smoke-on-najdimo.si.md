@@ -7,7 +7,7 @@ status: To Do
 assignee:
   - '@tech-lead'
 created_date: '2026-10-18 21:25'
-updated_date: '2026-10-18 21:29'
+updated_date: '2026-10-19 10:14'
 labels:
   - tech
   - 'est:S'
@@ -17,6 +17,7 @@ dependencies:
   - TASK-42.1
   - TASK-42.3
   - TASK-40.6
+  - TASK-40.11
 references:
   - docs/tech/pilot-runbook.md
   - docs/tech/contracts/C19-ai-extraction.md§Config keys
@@ -45,3 +46,9 @@ Branch: agent/task-40.7-staging-ai
 - [ ] #2 Smoke on staging: one uploaded photo gets an ai_calls ok row and ai_results within 6 s and a photo_embeddings row within 60 s; GET /v1/photos/:id/attributes answers ready; the backfill logged done
 - [ ] #3 Pilot budgets set (ai.monthly_budget_usd, embedding.monthly_budget_usd, embedding.backfill_per_minute 300 after Tier 1); ai.enabled false checked to give unavailable with the form still manual
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+Owner, 2026-10-19 (Primož Božič), in chat: Voyage payment method added; Voyage training opt-out is on ('It's already on'); go to switch AI on for najdimo.si today, after privacy policy v0.8 is approved and live ('Publish v0.8 first'). Backfill: new photos only. No photo uploaded before the switch-on goes to Anthropic or Voyage (TASK-40.11).
+<!-- SECTION:NOTES:END -->
