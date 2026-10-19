@@ -3,7 +3,7 @@ import { NextIntlClientProvider } from 'next-intl';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { getMockEvents, initAnalytics, resetMockEvents, setConsent } from '@zivali/analytics';
-import { match } from '@zivali/api/__fixtures__/matches';
+import { match, visualMatch } from '@zivali/api/__fixtures__/matches';
 import { ownerReport } from '@zivali/api/__fixtures__/reports';
 import { abuseCreated } from '@zivali/api/__fixtures__/abuse';
 import { ApiError } from '@zivali/api/client';
@@ -11,7 +11,7 @@ import { createMockApi } from '@zivali/api/mock';
 import { type ApiStore, createApiStore } from '@zivali/api/rtk';
 import en from '@zivali/i18n/dist/en.json';
 import sl from '@zivali/i18n/dist/sl.json';
-import type { MatchList, MatchSuggestion, ReportOwnerView } from '@zivali/types';
+import type { MatchList, MatchSuggestion, PublicPhoto, ReportOwnerView, VisualMatchReason } from '@zivali/types';
 import { MatchesNote } from '@/components/report/slots/matches-note';
 
 import { MatchReview } from './match-review';
@@ -397,6 +397,98 @@ describe('MatchReview review (P11)', () => {
 		expect(screen.getByRole('heading', { level: 1 }).textContent).toBe(en.matches.title);
 		expect(screen.getByRole('button', { name: en.matches.confirm })).toBeTruthy();
 		expect(screen.getAllByAltText('Your pet: Luna').length).toBeGreaterThan(0);
+	});
+});
+
+describe('MatchReview photo similarity (C8 §Visual similarity, TASK-43.4)', () => {
+	const best = visualMatch.reasons.find((r): r is VisualMatchReason => r.code === 'visual')!;
+	// C5 public media path: r/<report_id>/<photo_id>/display.webp.
+	const media = (report: string, id: string, alt: string): PublicPhoto => ({
+		url: `https://media.zivali.test/r/${report}/${id}/display.webp`,
+		thumb_url: `https://media.zivali.test/r/${report}/${id}/thumb.webp`,
+		alt,
+		width: 1600,
+		height: 1200,
+	});
+	const SIDE = 'e4a7b5c9-6e8f-4a0b-8c4d-5e6f7a8b9c00';
+	const visual: MatchSuggestion = {
+		...visualMatch,
+		other: {
+			...visualMatch.other,
+			// The API order: the most similar photo (other_photo_id) first.
+			photos: [
+				media(visualMatch.other.id, best.other_photo_id, 'Najden pes od blizu'),
+				media(visualMatch.other.id, SIDE, 'Najden pes s strani'),
+			],
+		},
+	};
+	const withBand = (band: VisualMatchReason['band']): MatchSuggestion => ({
+		...visual,
+		reasons: visual.reasons.map((r) => (r.code === 'visual' ? { ...r, band } : r)),
+	});
+	const mainPhoto = (figure: HTMLElement) => within(figure).getByRole('img').getAttribute('alt');
+
+	beforeEach(() => {
+		// The owner's photos in their own order; lost_photo_id is the second.
+		state.mine = {
+			...mine,
+			photos: [media(mine.id, SIDE, 'Luna s strani'), media(mine.id, best.lost_photo_id, 'Luna od blizu')],
+		};
+	});
+
+	it('adds the band line to the reasons, the AI caveat once, and opens on the most similar pair (AC#1, AC#2)', () => {
+		show({ list: { data: { items: [visual] } }, selected: visual.id });
+		const line = screen.getByText(t.reason_visual_very_similar);
+		expect(line.closest('ul')?.textContent).toContain('Kraja sta 1–3 km narazen.');
+		expect(screen.getAllByText(t.visual_caveat)).toHaveLength(1);
+		const pair = screen.getByRole('group', { name: t.visual_pair_a11y });
+		const [own, other] = within(pair).getAllByRole('figure');
+		expect(mainPhoto(own!)).toBe('Vaša žival: Luna od blizu');
+		expect(mainPhoto(other!)).toBe('Prijavljena žival: Najden pes od blizu');
+		// The rest keep their order: the owner's other photo is the second thumbnail, the API's second photo too.
+		const thumbs = (figure: HTMLElement) =>
+			within(figure)
+				.getAllByRole('button')
+				.map((button) => button.querySelector('img')?.getAttribute('src'));
+		expect(thumbs(own!)).toEqual([
+			`https://media.zivali.test/r/${mine.id}/${best.lost_photo_id}/thumb.webp`,
+			`https://media.zivali.test/r/${mine.id}/${SIDE}/thumb.webp`,
+		]);
+		expect(thumbs(other!)).toEqual(visual.other.photos.map((p) => p.thumb_url));
+	});
+
+	it('reads every band in SL and EN', () => {
+		for (const band of ['very_similar', 'similar', 'some'] as const)
+			for (const locale of ['sl', 'en'] as const) {
+				const m = withBand(band);
+				show({ list: { data: { items: [m] } }, selected: m.id, locale });
+				const messages = locale === 'sl' ? sl : en;
+				expect(screen.getByText(messages.matches[`reason_visual_${band}`])).toBeTruthy();
+				expect(screen.getByRole('group', { name: messages.matches.visual_pair_a11y })).toBeTruthy();
+				cleanup();
+			}
+	});
+
+	it('has no photo line, caveat or pair name without a visual reason, and keeps the owner photo order', () => {
+		show({ list: { data: { items: [match] } }, selected: match.id });
+		expect(screen.queryByText(t.visual_caveat)).toBeNull();
+		expect(screen.queryByRole('group', { name: t.visual_pair_a11y })).toBeNull();
+		expect(mainPhoto(screen.getAllByRole('figure')[0]!)).toBe('Vaša žival: Luna s strani');
+	});
+
+	it('confirms and rejects a photo-based match as before (AC#2)', async () => {
+		show({ list: { data: { items: [visual] } }, selected: visual.id });
+		fireEvent.click(screen.getByRole('button', { name: t.confirm }));
+		await flush();
+		expect(state.confirm).toHaveBeenCalledWith({ id: visual.id });
+		expect(state.push).toHaveBeenCalledWith('/nabiralnik/c1');
+
+		fireEvent.click(screen.getByRole('button', { name: t.reject }));
+		const dialog = screen.getByRole('alertdialog', { name: t.reject_title });
+		fireEvent.click(within(dialog).getByRole('button', { name: t.reject_confirm }));
+		await flush();
+		expect(state.reject).toHaveBeenLastCalledWith({ id: visual.id, body: undefined });
+		expect(state.replace).toHaveBeenCalledWith(`/r/${CODE}/ujemanja`);
 	});
 });
 

@@ -1,10 +1,10 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, type Page, type Route, test } from '@playwright/test';
 
-import { match } from '@zivali/api/__fixtures__/matches';
+import { match, visualMatch } from '@zivali/api/__fixtures__/matches';
 import { me } from '@zivali/api/__fixtures__/me';
 import { ownerReport } from '@zivali/api/__fixtures__/reports';
-import type { MatchSuggestion, ReportOwnerView } from '@zivali/types';
+import type { MatchSuggestion, ReportOwnerView, VisualMatchReason } from '@zivali/types';
 
 import { api, dismissConsent, signInAs } from './session';
 
@@ -52,8 +52,17 @@ const sighted = (): MatchSuggestion => ({
 });
 
 /** Signs in and answers the endpoints; returns the reject bodies and the confirmed ids the page sent. */
-async function signIn(page: Page, baseURL: string, { forbidden = false, empty = false } = {}) {
-	let items = empty ? [] : [sighted(), chip()];
+async function signIn(
+	page: Page,
+	baseURL: string,
+	{
+		forbidden = false,
+		empty = false,
+		list,
+		report = luna(),
+	}: { forbidden?: boolean; empty?: boolean; list?: MatchSuggestion[]; report?: ReportOwnerView } = {}
+) {
+	let items = list ?? (empty ? [] : [sighted(), chip()]);
 	const rejected: unknown[] = [];
 	const confirmed: string[] = [];
 	const answer = (url: RegExp, handler: (route: Route) => Promise<void>) =>
@@ -65,7 +74,7 @@ async function signIn(page: Page, baseURL: string, { forbidden = false, empty = 
 		route.fulfill({ json: { items: [], next_cursor: null, unread: 0 } })
 	);
 	await answer(/\/v1\/geo\/reverse$/, (route) => route.fulfill({ json: { place: SISKA } }));
-	await answer(new RegExp(`/v1/reports/${CODE}$`), (route) => route.fulfill({ json: luna() }));
+	await answer(new RegExp(`/v1/reports/${CODE}$`), (route) => route.fulfill({ json: report }));
 	await answer(new RegExp(`/v1/reports/${CODE}/matches(\\?.*)?$`), (route) =>
 		forbidden
 			? route.fulfill({ status: 403, json: { error: { code: 'FORBIDDEN', message: 'FORBIDDEN' } } })
@@ -191,6 +200,44 @@ test('confirm opens the conversation', async ({ page, baseURL }) => {
 	await page.getByRole('button', { name: 'To je moja žival' }).click();
 	await expect(page).toHaveURL(/\/nabiralnik\/c0e1d2f3-4a5b-4c6d-8e7f-9a0b1c2d3e00$/);
 	expect(confirmed).toEqual([chip().id]);
+});
+
+test('a photo-based match (C8 visual): the band line, the AI caveat, the most similar pair first, no axe violations', async ({
+	page,
+	baseURL,
+}) => {
+	const best = visualMatch.reasons.find((r): r is VisualMatchReason => r.code === 'visual')!;
+	// C5 public media path r/<report_id>/<photo_id>/…: the owner's lost_photo_id is their second photo.
+	const at = (report: string, id: string, alt: string) => ({
+		...photo('x', alt),
+		url: `${api()}/media/r/${report}/${id}/display.png`,
+		thumb_url: `${api()}/media/r/${report}/${id}/thumb.png`,
+	});
+	const report = luna();
+	const visual: MatchSuggestion = {
+		...visualMatch,
+		other: { ...visualMatch.other, photos: [at(visualMatch.other.id, best.other_photo_id, 'Najden pes od blizu')] },
+	};
+	const { confirmed } = await signIn(page, baseURL!, {
+		list: [visual],
+		report: {
+			...report,
+			photos: [photo('luna', 'Pogrešana psička Luna'), at(report.id, best.lost_photo_id, 'Luna od blizu')],
+		},
+	});
+	await page.setViewportSize({ width: 1440, height: 900 });
+	await page.goto(`/r/${CODE}/ujemanja`);
+
+	await expect(page.getByText('Fotografiji sta si zelo podobni.')).toBeVisible();
+	await expect(page.getByText('Podobnost fotografij oceni umetna inteligenca', { exact: false })).toHaveCount(1);
+	const pair = page.getByRole('group', { name: 'Najbolj podobni fotografiji' });
+	await expect(pair.getByRole('img', { name: 'Vaša žival: Luna od blizu' })).toBeVisible();
+	await expect(pair.getByRole('img', { name: 'Prijavljena žival: Najden pes od blizu' })).toBeVisible();
+	await expectNoAxeViolations(page);
+
+	await page.getByRole('button', { name: 'To je moja žival' }).click();
+	await expect(page).toHaveURL(/\/nabiralnik\/c0e1d2f3-4a5b-4c6d-8e7f-9a0b1c2d3e00$/);
+	expect(confirmed).toEqual([visual.id]);
 });
 
 test('no matches: share, poster PDF and alerts are offered', async ({ page, baseURL }) => {
