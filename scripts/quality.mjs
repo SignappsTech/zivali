@@ -19,6 +19,8 @@ process.env.BASE_URL = BASE; // read by tests/quality/playwright.config.mjs
 // The shelter pages read the C18 directory API; e2e/mock-api.ts stands in for it, on its own free port.
 const API_PORT = freePort();
 process.env.NEXT_PUBLIC_API_URL = `http://localhost:${API_PORT}`;
+// The report detail pages show the mock's photos; the CSP img-src opens MEDIA_BASE_URL (as in apps/web/playwright.config.ts).
+process.env.MEDIA_BASE_URL = `http://localhost:${API_PORT}/media`;
 process.env.APP_ENV ||= 'local';
 process.env.NEXT_PUBLIC_APP_URL ||= BASE;
 const REPORT = 'quality-report';

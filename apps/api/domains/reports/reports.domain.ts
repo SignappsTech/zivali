@@ -93,6 +93,8 @@ async function locationColumns(
 export type NewReport = {
 	/** Fixed ids for seeders only; otherwise a new uuid. */
 	id?: string;
+	/** Fixed short code for seeders only (C1 ShortCode); otherwise a random one. */
+	short_code?: string;
 	type: ReportType;
 	species: Species;
 	pet_id?: string | null;
@@ -133,7 +135,17 @@ export type NewReport = {
 export async function insertReport(input: NewReport, ctx: Ctx): Promise<{ id: string; short_code: string }> {
 	const actor = ctx.actor;
 	if (!actor) throw new AppError('UNAUTHENTICATED', 'Sign in required');
-	const { id = randomUUID(), type, species, event_at, location, requested_radius_m = null, chip, ...rest } = input;
+	const {
+		id = randomUUID(),
+		short_code: fixed,
+		type,
+		species,
+		event_at,
+		location,
+		requested_radius_m = null,
+		chip,
+		...rest
+	} = input;
 	const source = rest.source ?? 'user';
 	const exact = coarsenPoint(LatLng.parse(location));
 	const cols = await locationColumns({ id, type, requested_radius_m }, exact, ctx);
@@ -142,8 +154,8 @@ export async function insertReport(input: NewReport, ctx: Ctx): Promise<{ id: st
 
 	return inTransaction(ctx, async (tx) => {
 		let short_code = '';
-		for (let attempt = 0; !short_code && attempt < SHORT_CODE_ATTEMPTS; attempt++) {
-			const candidate = newShortCode();
+		for (let attempt = 0; !short_code && attempt < (fixed ? 1 : SHORT_CODE_ATTEMPTS); attempt++) {
+			const candidate = fixed ?? newShortCode();
 			if (await ReportsDao.insertReport({ id, short_code: candidate, type, species, event_at, ...cols }, tx))
 				short_code = candidate;
 		}

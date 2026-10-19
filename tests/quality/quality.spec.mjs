@@ -40,6 +40,11 @@ const PAGES = [
 	// TASK-29.3 report lost (P6): the start page is public and indexable
 	'/prijava/izgubljena-zival',
 	'/en/report/lost',
+	// TASK-18.2 report detail (P5), lost and found: the e2e/mock-api.ts fixtures, also seeded reports 3 and 13 (CH-409)
+	'/r/Rex12345',
+	'/en/r/Rex12345',
+	'/r/Hk3vT9qP',
+	'/en/r/Hk3vT9qP',
 ];
 // Protected flows (report-lost, report-found, sign-in, chat, payment), SL and EN. Each of those stories adds its routes.
 const PROTECTED = [
