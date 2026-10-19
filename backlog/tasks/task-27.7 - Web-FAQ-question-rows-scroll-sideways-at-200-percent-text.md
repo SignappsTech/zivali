@@ -1,10 +1,11 @@
 ---
 id: TASK-27.7
 title: 'Web FAQ: question rows scroll sideways at 200 percent text'
-status: To Do
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-19 20:26'
+updated_date: '2026-10-19 20:40'
 labels:
   - bug
   - 'est:XS'
