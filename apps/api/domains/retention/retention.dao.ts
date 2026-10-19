@@ -13,9 +13,18 @@ export const purgePartnerStats = (before: Date, tx?: Tx) =>
 export const purgeLeads = (before: Date, tx?: Tx) =>
 	purgeWhere(Prisma.sql`app.leads`, Prisma.sql`created_at < ${before}`, tx);
 
-/** Open flags (resolved_at null) stay. */
+/** Open and closed alike: privacy policy §14 keeps abuse reports up to 24 months. */
+export const purgeAbuseReports = (before: Date, tx?: Tx) =>
+	purgeWhere(Prisma.sql`app.abuse_reports`, Prisma.sql`created_at < ${before}`, tx);
+
+/** Resolved before the cutoff, and flags of a report that is gone, open ones too ("delete with the target"). */
 export const purgeModerationFlags = (resolvedBefore: Date, tx?: Tx) =>
-	purgeWhere(Prisma.sql`app.moderation_flags`, Prisma.sql`resolved_at < ${resolvedBefore}`, tx);
+	purgeWhere(
+		Prisma.sql`app.moderation_flags`,
+		Prisma.sql`(resolved_at < ${resolvedBefore}
+			or (target_type = 'report' and not exists (select 1 from app.reports r where r.id = moderation_flags.target_id)))`,
+		tx
+	);
 
 /**
  * Reports closed or reunited before `endedBefore` that no conversation refers to any more (each chat goes first, at
@@ -31,4 +40,11 @@ export const purgeReports = (endedBefore: Date, tx?: Tx) =>
 		tx
 	);
 
-export default { purgeEmailOutbox, purgePartnerStats, purgeLeads, purgeModerationFlags, purgeReports };
+export default {
+	purgeEmailOutbox,
+	purgePartnerStats,
+	purgeLeads,
+	purgeAbuseReports,
+	purgeModerationFlags,
+	purgeReports,
+};

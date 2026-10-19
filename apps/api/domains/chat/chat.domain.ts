@@ -10,6 +10,7 @@ import { coarsenPoint } from '@zivali/validation/geo';
 import configStore from '../../lib/config-store.ts';
 import type { Ctx } from '../../lib/ctx.ts';
 import { AppError } from '../../lib/errors.ts';
+import { monthsAgo } from '../../lib/purge.ts';
 import { broadcast } from '../../lib/realtime.ts';
 import { prisma, type Prisma } from '../../prisma/prisma.ts';
 import { NotificationsDomain } from '../notifications/index.ts';
@@ -310,9 +311,7 @@ export async function closeForReport(input: { report_id: string }, ctx: Ctx): Pr
 /** retention.purge: read-only conversations closed `retention.chat_months` (6) ago are deleted with their messages. */
 export async function purgeExpired(_input: void, ctx: Ctx): Promise<number> {
 	const months = RetentionMonths.safeParse(await configStore.get('retention.chat_months')).data ?? 6;
-	const cutoff = new Date(ctx.now);
-	cutoff.setUTCMonth(cutoff.getUTCMonth() - months);
-	return ChatDao.deleteClosedBefore(cutoff, ctx.tx);
+	return ChatDao.deleteClosedBefore(monthsAgo(ctx.now, months), ctx.tx);
 }
 
 export default {

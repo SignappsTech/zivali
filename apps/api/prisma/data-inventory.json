@@ -286,7 +286,7 @@
 			"category": "moderation",
 			"personal_data": ["reporter_id", "target_id", "note"],
 			"basis": "legitimate interest (GDPR art. 6(1)(f)): abuse prevention (C11)",
-			"retention": "12 months after resolution; not purged yet: no resolution time is stored (TASK-114.33)",
+			"retention": "24 months after creation, open or not (retention.purge; privacy policy §14: up to 24 months)",
 			"export": true,
 			"delete": "delete (cascades with the reporter profile)",
 			"other_columns": ["id", "target_type", "reason", "weight", "status", "created_at"]
@@ -295,7 +295,7 @@
 			"category": "moderation",
 			"personal_data": ["target_id", "details"],
 			"basis": "legitimate interest (GDPR art. 6(1)(f)): abuse prevention (C11)",
-			"retention": "12 months after resolution (retention.purge; open flags stay)",
+			"retention": "12 months after resolution, or with the target report, open ones too (retention.purge)",
 			"export": false,
 			"delete": "delete with the target",
 			"other_columns": ["id", "kind", "target_type", "created_at", "resolved_at"]

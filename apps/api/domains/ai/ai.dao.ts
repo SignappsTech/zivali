@@ -1,7 +1,9 @@
 // Prisma access for attribute extraction (C19 §Models): ai_results (per image hash) and the Anthropic rows of the
 // ai_calls ledger.
+import { Prisma } from '../../generated/client.ts';
 import type { AI_OUTCOME } from '../../generated/enums.ts';
-import { prisma, type Prisma } from '../../prisma/prisma.ts';
+import { purgeWhere } from '../../lib/purge.ts';
+import { prisma } from '../../prisma/prisma.ts';
 
 type Tx = Prisma.TransactionClient;
 
@@ -111,13 +113,16 @@ export async function bookRetry(data: Call, tx?: Tx): Promise<void> {
 	});
 }
 
-/** retention.purge: ledger rows (Anthropic and Voyage) before `before`, and results no photo has the hash of. */
+/** retention.purge, batched: ledger rows (Anthropic, Voyage) before `before`, results no photo has the hash of. */
 export async function purge(before: Date, tx?: Tx): Promise<{ ai_calls: number; ai_results: number }> {
-	const db = tx ?? prisma;
-	const calls = await db.ai_calls.deleteMany({ where: { created_at: { lt: before } } });
-	const results = await db.$executeRaw`
-		delete from app.ai_results r where not exists (select 1 from app.photos p where p.sha256 = r.sha256)`;
-	return { ai_calls: calls.count, ai_results: results };
+	return {
+		ai_calls: await purgeWhere(Prisma.sql`app.ai_calls`, Prisma.sql`created_at < ${before}`, tx),
+		ai_results: await purgeWhere(
+			Prisma.sql`app.ai_results`,
+			Prisma.sql`not exists (select 1 from app.photos p where p.sha256 = ai_results.sha256)`,
+			tx
+		),
+	};
 }
 
 export default {

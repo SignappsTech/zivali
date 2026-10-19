@@ -5,6 +5,18 @@ import { prisma } from '../prisma/prisma.ts';
 
 export const PURGE_BATCH = 500;
 
+/**
+ * `months` calendar months before `now`, the day clamped to the end of a shorter month (31 Aug − 6 → 28 Feb, not
+ * 3 Mar), so a window never ends early.
+ */
+export function monthsAgo(now: Date, months: number): Date {
+	const at = new Date(now);
+	const day = at.getUTCDate();
+	at.setUTCMonth(at.getUTCMonth() - months);
+	if (at.getUTCDate() !== day) at.setUTCDate(0);
+	return at;
+}
+
 /** Repeats `step` (one statement touching at most `limit` rows) until a batch comes back short; returns the total. */
 export async function inBatches(step: (limit: number) => Promise<number>): Promise<number> {
 	let total = 0;

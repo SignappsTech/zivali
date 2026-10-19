@@ -4,6 +4,7 @@ import { z } from 'zod';
 
 import configStore from '../../lib/config-store.ts';
 import type { Ctx } from '../../lib/ctx.ts';
+import { monthsAgo } from '../../lib/purge.ts';
 import RetentionDao from './retention.dao.ts';
 
 const DAY_MS = 86_400_000;
@@ -11,21 +12,19 @@ const DAY_MS = 86_400_000;
 const EMAIL_OUTBOX_DAYS = 30;
 const PARTNER_STATS_DAYS = 90;
 const LEADS_MONTHS = 24;
-/** After resolution; open flags stay. */
+/** Privacy policy §14: "up to 24 months". */
+const ABUSE_REPORT_MONTHS = 24;
+/** After resolution; open flags stay while their target does. */
 const MODERATION_FLAG_MONTHS = 12;
 
 const daysAgo = (now: Date, days: number) => new Date(now.getTime() - days * DAY_MS);
-const monthsAgo = (now: Date, months: number) => {
-	const at = new Date(now);
-	at.setUTCMonth(at.getUTCMonth() - months);
-	return at;
-};
 
 export async function purgeRecords(_input: void, ctx: Ctx) {
 	return {
 		email_outbox: await RetentionDao.purgeEmailOutbox(daysAgo(ctx.now, EMAIL_OUTBOX_DAYS), ctx.tx),
 		partner_stats_snapshot: await RetentionDao.purgePartnerStats(daysAgo(ctx.now, PARTNER_STATS_DAYS), ctx.tx),
 		leads: await RetentionDao.purgeLeads(monthsAgo(ctx.now, LEADS_MONTHS), ctx.tx),
+		abuse_reports: await RetentionDao.purgeAbuseReports(monthsAgo(ctx.now, ABUSE_REPORT_MONTHS), ctx.tx),
 		moderation_flags: await RetentionDao.purgeModerationFlags(monthsAgo(ctx.now, MODERATION_FLAG_MONTHS), ctx.tx),
 	};
 }
@@ -43,4 +42,12 @@ export async function purgeReports(_input: void, ctx: Ctx): Promise<number | nul
 	return RetentionDao.purgeReports(monthsAgo(ctx.now, months.data), ctx.tx);
 }
 
-export default { purgeRecords, purgeReports };
+/**
+ * app_config `retention.purge_live` (false from the migration): until it is true, retention.purge only counts what
+ * purgeRecords and purgeReports would delete and rolls them back. The lead sets it after checking the staging counts.
+ */
+export async function purgeIsLive(): Promise<boolean> {
+	return (await configStore.get('retention.purge_live')) === true;
+}
+
+export default { purgeRecords, purgeReports, purgeIsLive };
