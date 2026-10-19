@@ -5,6 +5,7 @@ status: To Do
 assignee:
   - '@design-lead'
 created_date: '2026-10-19 18:16'
+updated_date: '2026-10-19 18:36'
 labels:
   - design
   - 'est:S'
@@ -33,9 +34,18 @@ Privacy: the AI attributes of the other report's photo are a new use; list it as
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Low-fi wireframe docs/design/wireframes/P11-match-ai.html (or a mock from our real components if no more work), 390 and 1200, built on the review screen as live after TASK-43.4
-- [ ] #2 Shows (1) a 'Zakaj ta predlog?' breakdown: every factor with its strength (chip, species, colours, size, distance in km, time between reports, photo similarity)
-- [ ] #3 Shows (2) what the AI saw on each photo side by side (species, breed, colours, with confidence), only for photos that have a clean AI result; marked as AI suggestions that can be wrong
-- [ ] #4 Shows (3) photo similarity in two variants for the owner to pick: three bands (today) vs a percentage; with the caveat that it is not the chance it is the same animal
-- [ ] #5 States: no vectors (old photos), only one side has AI data, chip match, low-signal match; nothing shown that the other party's report does not already show publicly; open questions listed at the top
+- [x] #1 Low-fi wireframe docs/design/wireframes/P11-match-ai.html (or a mock from our real components if no more work), 390 and 1200, built on the review screen as live after TASK-43.4
+- [x] #2 Shows (1) a 'Zakaj ta predlog?' breakdown: every factor with its strength (chip, species, colours, size, distance in km, time between reports, photo similarity)
+- [x] #3 Shows (2) what the AI saw on each photo side by side (species, breed, colours, with confidence), only for photos that have a clean AI result; marked as AI suggestions that can be wrong
+- [x] #4 Shows (3) photo similarity in two variants for the owner to pick: three bands (today) vs a percentage; with the caveat that it is not the chance it is the same animal
+- [x] #5 States: no vectors (old photos), only one side has AI data, chip match, low-signal match; nothing shown that the other party's report does not already show publicly; open questions listed at the top
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+Wireframe v1 (2026-10-19, design-lead): docs/design/wireframes/P11-match-ai.html, 390 and 1200, component mock in the M-ai-prefill style, SL copy (proposals, no keys yet). Frames: F1 full match, F2 AI panel (+ 'Kako to deluje?' open), F3 old photos / no vectors, F4 only one side has AI data, F5 chip match (found, sighting), F6 weak match (few attributes, mainly photos). Global switches: Q2 photo similarity A bands (as live) / B percentage; Q1 AI data of the other photo A both / B mine only.
+Open questions for the owner (top of the wireframe): Q1 privacy, show the AI result of the finder's photo (recommended B: only own photo, other column = public report); Q2 bands vs percentage (recommended A: bands); Q3 breakdown replaces reason list + facts table (recommended one table); Q4 per-factor strength words; Q5 AI panel closed at phone width; Q6 weak-match note.
+CHANGEs to file after the answers (listed in the wireframe, none filed yet): tech-lead C8 a) 'compared, below 0.25' vs 'not compared', b) V in the visual reason (Q2=B), c) pattern in other, d) factor strength mapping in @zivali/validation/matching, e) AI result per shown photo on the match read (other side only if Q1=A); content strategist f) P11 copy keys, g) privacy text + lawyer (Q1=A).
+Approval: PENDING. Not approved; record who, date and version here when the owner answers. No mockup or implementation before that.
+<!-- SECTION:NOTES:END -->

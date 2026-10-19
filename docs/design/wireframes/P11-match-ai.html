@@ -1,0 +1,895 @@
+<!doctype html>
+<!--
+  TASK-43.8 wireframe (owner approval gate): the match review (P11, web) shows the AI match info.
+  v1 (2026-10-19): first version for the owner. Not approved.
+  Built on the review screen as live after TASK-43.4 (three-band photo-similarity reason, its caveat, most similar photo first).
+  Same style and token values as M-ai-prefill.html (docs/design/tokens.css). Data: C8 (matching, visual similarity v3), C20 (vectors), C19 (AI result per photo).
+  Two global variant switches: Q2 photo similarity (A bands, B percentage) and Q1 AI data of the other report's photo (A both, B mine only).
+  The device frames are rendered by the script at the end from one set of builders, so desktop 1200 and mobile 390 always show the same state.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Najdimo match AI wireframe</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:wght@400;600;700;800&family=Bricolage+Grotesque:opsz,wght@12..96,400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  color-scheme: light dark;
+  --background: 180 15% 92.2%;
+  --foreground: 193.8 28.9% 8.8%;
+  --card: 180 33.3% 98.8%;
+  --card-foreground: 193.8 28.9% 8.8%;
+  --popover: 180 33.3% 98.8%;
+  --popover-foreground: 193.8 28.9% 8.8%;
+  --primary: 190.3 65.5% 22.7%;
+  --primary-foreground: 185 42.9% 94.5%;
+  --secondary: 184.4 44.3% 88%;
+  --secondary-foreground: 191.3 64.9% 14.5%;
+  --muted: 186 13.5% 85.5%;
+  --muted-foreground: 190.9 14.3% 30.2%;
+  --accent: 184.4 44.3% 88%;
+  --accent-foreground: 191.3 64.9% 14.5%;
+  --destructive: 353.9 70.2% 32.9%;
+  --destructive-foreground: 355.7 100% 97.3%;
+  --primary-hover: 190.8 65.6% 18.2%;
+  --primary-pressed: 191.3 64.9% 14.5%;
+  --secondary-hover: 184.6 43.3% 76.5%;
+  --secondary-pressed: 185.3 41.4% 62.5%;
+  --destructive-hover: 354.1 70.8% 25.5%;
+  --destructive-pressed: 354.1 70.1% 17.1%;
+  --border: 186 13.5% 85.5%;
+  --input: 190 10% 47.1%;
+  --ring: 188.1 63.1% 27.6%;
+  --chart-1: 188.1 63.1% 27.6%;
+  --chart-2: 38.4 89.7% 38.2%;
+  --chart-3: 17.9 71.5% 49.6%;
+  --chart-4: 144.2 54.1% 35.9%;
+  --chart-5: 319.4 46.4% 43.1%;
+  --sidebar: 191.3 64.9% 14.5%;
+  --sidebar-foreground: 185 42.9% 94.5%;
+  --sidebar-primary: 185 42.9% 94.5%;
+  --sidebar-primary-foreground: 191.3 64.9% 14.5%;
+  --sidebar-accent: 190.8 65.6% 18.2%;
+  --sidebar-accent-foreground: 185 42.9% 94.5%;
+  --sidebar-border: 190.8 65.6% 18.2%;
+  --sidebar-ring: 185 42.9% 94.5%;
+  --status-lost: 17.5 75.2% 41.2%;
+  --status-lost-foreground: 18.9 100% 96.3%;
+  --status-lost-subtle: 18.3 100% 91%;
+  --status-lost-subtle-foreground: 15.7 71.9% 25.1%;
+  --status-lost-border: 17.2 100% 72%;
+  --status-found: 146.8 56.5% 22.5%;
+  --status-found-foreground: 140 46.2% 94.9%;
+  --status-found-subtle: 140 48.4% 87.8%;
+  --status-found-subtle-foreground: 147.1 56% 17.8%;
+  --status-found-border: 141.4 42.4% 61.2%;
+  --status-sighted: 228.7 58.1% 44.9%;
+  --status-sighted-foreground: 225 88.9% 96.5%;
+  --status-sighted-subtle: 223.6 89.2% 92.7%;
+  --status-sighted-subtle-foreground: 228.4 57.2% 28.4%;
+  --status-sighted-border: 224.6 82.1% 75.9%;
+  --status-reunited: 40 92.7% 56.9%;
+  --status-reunited-foreground: 193.8 28.9% 8.8%;
+  --status-reunited-subtle: 44.8 100% 86.1%;
+  --status-reunited-subtle-foreground: 34.7 73.8% 23.9%;
+  --status-reunited-border: 40 92.7% 56.9%;
+  --premium: 317.9 47.5% 27.6%;
+  --premium-foreground: 318 50% 96.1%;
+  --premium-subtle: 313 51.1% 91.2%;
+  --premium-subtle-foreground: 316.8 46.3% 21.2%;
+  --premium-border: 318.2 48.1% 69%;
+  --verified: 190.3 65.5% 22.7%;
+  --verified-foreground: 185 42.9% 94.5%;
+  --verified-subtle: 184.4 44.3% 88%;
+  --verified-subtle-foreground: 191.3 64.9% 14.5%;
+  --warning: 40 92.7% 56.9%;
+  --warning-foreground: 193.8 28.9% 8.8%;
+  --warning-subtle: 44.8 100% 86.1%;
+  --warning-subtle-foreground: 34.7 73.8% 23.9%;
+  --warning-border: 39.6 85.1% 47.5%;
+  --provider: 0 0% 100%;
+  --provider-foreground: 0 0% 12.2%;
+  --provider-border: 140 1.3% 46.1%;
+  --qr: 0 0% 100%;
+  --qr-foreground: 193.8 28.9% 8.8%;
+  --scrim: 190 46.2% 5.1%;
+  --scrim-alpha: 0.56;
+  --marker-lost: 17.5 75.2% 41.2%;
+  --marker-found: 146.8 56.5% 22.5%;
+  --marker-sighted: 228.7 58.1% 44.9%;
+  --marker-reunited: 38.4 89.7% 38.2%;
+  --marker-me: 226.3 64.5% 54.7%;
+  --marker-cluster: 194.1 24.6% 13.5%;
+  --marker-cluster-foreground: 180 14.3% 95.9%;
+  --marker-ring: 180 33.3% 98.8%;
+  --marker-area: 17.9 71.5% 49.6%;
+  --marker-area-alpha: 0.16;
+  --map-land: 180 15% 92.2%;
+  --map-water: 188.3 40.8% 86.1%;
+  --map-park: 137.1 38.2% 89.2%;
+  --map-building: 172.5 14.8% 89.4%;
+  --map-road: 180 33.3% 98.8%;
+  --map-road-casing: 186 13.5% 85.5%;
+  --map-label: 190.9 14.3% 30.2%;
+  --map-label-halo: 180 15% 92.2%;
+  --radius: 1rem;
+  --font-display: 'Bricolage Grotesque', ui-sans-serif, system-ui, sans-serif;
+  --font-sans: 'Atkinson Hyperlegible Next', ui-sans-serif, system-ui, sans-serif;
+  --radius-button: 9999px;
+  --radius-card: calc(var(--radius) + 8px);
+  --radius-input: var(--radius);
+  --radius-row: calc(var(--radius) + 4px);
+  --radius-chip: 9999px;
+  --radius-sheet: 28px;
+  --radius-photo: calc(var(--radius) + 4px);
+  --card-shadow: none;
+  --shadow-sm: none;
+  --shadow-md: 0 2px 10px 0 rgb(16 38 43 / 0.08);
+  --shadow-lg: 0 -10px 40px -12px rgb(16 38 43 / 0.16);
+  --shadow-pop: 0 8px 24px -6px rgb(16 38 43 / 0.18);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --background: 189.2 37.1% 6.9%;
+    --foreground: 180 15% 92.2%;
+    --card: 192.6 35.8% 10.4%;
+    --card-foreground: 180 15% 92.2%;
+    --popover: 191.1 36% 14.7%;
+    --popover-foreground: 180 15% 92.2%;
+    --primary: 185.3 41.4% 62.5%;
+    --primary-foreground: 194.1 68% 9.8%;
+    --secondary: 191.3 64.9% 14.5%;
+    --secondary-foreground: 184.4 44.3% 88%;
+    --muted: 191.1 36% 14.7%;
+    --muted-foreground: 188 12% 75.5%;
+    --accent: 191.1 36% 14.7%;
+    --accent-foreground: 180 14.3% 95.9%;
+    --destructive: 354.1 82% 78.2%;
+    --destructive-foreground: 352.5 61.5% 10.2%;
+    --primary-hover: 184.6 43.3% 76.5%;
+    --primary-pressed: 184.4 44.3% 88%;
+    --secondary-hover: 190.8 65.6% 18.2%;
+    --secondary-pressed: 190.3 65.5% 22.7%;
+    --destructive-hover: 354 88.2% 86.7%;
+    --destructive-pressed: 354.7 100% 93.3%;
+    --border: 190.9 32.7% 19.8%;
+    --input: 190 10% 47.1%;
+    --ring: 185.3 41.4% 62.5%;
+    --chart-1: 185.3 41.4% 62.5%;
+    --chart-2: 40 92.7% 56.9%;
+    --chart-3: 16.8 87.3% 59.8%;
+    --chart-4: 143.3 43.5% 46.5%;
+    --chart-5: 318.2 48.1% 69%;
+    --sidebar: 190 46.2% 5.1%;
+    --sidebar-foreground: 180 15% 92.2%;
+    --sidebar-primary: 180 15% 92.2%;
+    --sidebar-primary-foreground: 193.8 28.9% 8.8%;
+    --sidebar-accent: 191.1 36% 14.7%;
+    --sidebar-accent-foreground: 180 14.3% 95.9%;
+    --sidebar-border: 191.1 36% 14.7%;
+    --sidebar-ring: 180 15% 92.2%;
+    --status-lost: 16.8 87.3% 59.8%;
+    --status-lost-foreground: 14.6 75.5% 9.6%;
+    --status-lost-subtle: 15.5 70.5% 17.3%;
+    --status-lost-subtle-foreground: 18.3 100% 91%;
+    --status-lost-border: 16.8 74.9% 32.7%;
+    --status-found: 143.3 43.5% 46.5%;
+    --status-found-foreground: 139.2 64.1% 7.6%;
+    --status-found-subtle: 148.3 54.5% 12.9%;
+    --status-found-subtle-foreground: 140 48.4% 87.8%;
+    --status-found-border: 146.8 56.5% 22.5%;
+    --status-sighted: 224.6 82.1% 75.9%;
+    --status-sighted-foreground: 231.1 62.7% 14.7%;
+    --status-sighted-subtle: 229 55.6% 21.2%;
+    --status-sighted-subtle-foreground: 223.6 89.2% 92.7%;
+    --status-sighted-border: 228.7 57.6% 36.1%;
+    --status-reunited: 40 92.7% 56.9%;
+    --status-reunited-foreground: 193.8 28.9% 8.8%;
+    --status-reunited-subtle: 33.6 66.3% 17.5%;
+    --status-reunited-subtle-foreground: 44.8 100% 86.1%;
+    --status-reunited-border: 36.6 84.5% 30.4%;
+    --premium: 318.2 48.1% 69%;
+    --premium-foreground: 314.4 53.2% 9.2%;
+    --premium-subtle: 315.9 45.9% 14.5%;
+    --premium-subtle-foreground: 313 51.1% 91.2%;
+    --premium-border: 317.9 47.5% 27.6%;
+    --verified: 185.3 41.4% 62.5%;
+    --verified-foreground: 194.1 68% 9.8%;
+    --verified-subtle: 191.3 64.9% 14.5%;
+    --verified-subtle-foreground: 184.4 44.3% 88%;
+    --warning: 40 92.7% 56.9%;
+    --warning-foreground: 193.8 28.9% 8.8%;
+    --warning-subtle: 33.6 66.3% 17.5%;
+    --warning-subtle-foreground: 44.8 100% 86.1%;
+    --warning-border: 36.6 84.5% 30.4%;
+    --provider: 240 2.6% 7.6%;
+    --provider-foreground: 0 0% 89%;
+    --provider-border: 140 1.3% 56.3%;
+    --qr: 0 0% 100%;
+    --qr-foreground: 193.8 28.9% 8.8%;
+    --scrim: 190 46.2% 5.1%;
+    --scrim-alpha: 0.72;
+    --marker-lost: 16.8 87.3% 59.8%;
+    --marker-found: 143.3 43.5% 46.5%;
+    --marker-sighted: 224.6 82.1% 75.9%;
+    --marker-reunited: 40 92.7% 56.9%;
+    --marker-me: 224.6 82.1% 75.9%;
+    --marker-cluster: 180 15% 92.2%;
+    --marker-cluster-foreground: 193.8 28.9% 8.8%;
+    --marker-ring: 190 46.2% 5.1%;
+    --marker-area: 16.8 87.3% 59.8%;
+    --marker-area-alpha: 0.2;
+    --map-land: 190.6 36.2% 9.2%;
+    --map-water: 192.6 51.4% 14.5%;
+    --map-park: 168.9 39.1% 13.5%;
+    --map-building: 190 35.3% 13.3%;
+    --map-road: 192.5 24% 19.6%;
+    --map-road-casing: 190.6 36.2% 9.2%;
+    --map-label: 188 12% 75.5%;
+    --map-label-halo: 190.6 36.2% 9.2%;
+    --shadow-sm: none;
+    --shadow-md: 0 2px 10px 0 rgb(0 0 0 / 0.4);
+    --shadow-lg: 0 -10px 40px -12px rgb(0 0 0 / 0.6);
+    --shadow-pop: 0 8px 24px -6px rgb(0 0 0 / 0.55);
+  }
+}
+:root[data-theme="dark"] {
+  --background: 189.2 37.1% 6.9%;
+  --foreground: 180 15% 92.2%;
+  --card: 192.6 35.8% 10.4%;
+  --card-foreground: 180 15% 92.2%;
+  --popover: 191.1 36% 14.7%;
+  --popover-foreground: 180 15% 92.2%;
+  --primary: 185.3 41.4% 62.5%;
+  --primary-foreground: 194.1 68% 9.8%;
+  --secondary: 191.3 64.9% 14.5%;
+  --secondary-foreground: 184.4 44.3% 88%;
+  --muted: 191.1 36% 14.7%;
+  --muted-foreground: 188 12% 75.5%;
+  --accent: 191.1 36% 14.7%;
+  --accent-foreground: 180 14.3% 95.9%;
+  --destructive: 354.1 82% 78.2%;
+  --destructive-foreground: 352.5 61.5% 10.2%;
+  --primary-hover: 184.6 43.3% 76.5%;
+  --primary-pressed: 184.4 44.3% 88%;
+  --secondary-hover: 190.8 65.6% 18.2%;
+  --secondary-pressed: 190.3 65.5% 22.7%;
+  --destructive-hover: 354 88.2% 86.7%;
+  --destructive-pressed: 354.7 100% 93.3%;
+  --border: 190.9 32.7% 19.8%;
+  --input: 190 10% 47.1%;
+  --ring: 185.3 41.4% 62.5%;
+  --chart-1: 185.3 41.4% 62.5%;
+  --chart-2: 40 92.7% 56.9%;
+  --chart-3: 16.8 87.3% 59.8%;
+  --chart-4: 143.3 43.5% 46.5%;
+  --chart-5: 318.2 48.1% 69%;
+  --sidebar: 190 46.2% 5.1%;
+  --sidebar-foreground: 180 15% 92.2%;
+  --sidebar-primary: 180 15% 92.2%;
+  --sidebar-primary-foreground: 193.8 28.9% 8.8%;
+  --sidebar-accent: 191.1 36% 14.7%;
+  --sidebar-accent-foreground: 180 14.3% 95.9%;
+  --sidebar-border: 191.1 36% 14.7%;
+  --sidebar-ring: 180 15% 92.2%;
+  --status-lost: 16.8 87.3% 59.8%;
+  --status-lost-foreground: 14.6 75.5% 9.6%;
+  --status-lost-subtle: 15.5 70.5% 17.3%;
+  --status-lost-subtle-foreground: 18.3 100% 91%;
+  --status-lost-border: 16.8 74.9% 32.7%;
+  --status-found: 143.3 43.5% 46.5%;
+  --status-found-foreground: 139.2 64.1% 7.6%;
+  --status-found-subtle: 148.3 54.5% 12.9%;
+  --status-found-subtle-foreground: 140 48.4% 87.8%;
+  --status-found-border: 146.8 56.5% 22.5%;
+  --status-sighted: 224.6 82.1% 75.9%;
+  --status-sighted-foreground: 231.1 62.7% 14.7%;
+  --status-sighted-subtle: 229 55.6% 21.2%;
+  --status-sighted-subtle-foreground: 223.6 89.2% 92.7%;
+  --status-sighted-border: 228.7 57.6% 36.1%;
+  --status-reunited: 40 92.7% 56.9%;
+  --status-reunited-foreground: 193.8 28.9% 8.8%;
+  --status-reunited-subtle: 33.6 66.3% 17.5%;
+  --status-reunited-subtle-foreground: 44.8 100% 86.1%;
+  --status-reunited-border: 36.6 84.5% 30.4%;
+  --premium: 318.2 48.1% 69%;
+  --premium-foreground: 314.4 53.2% 9.2%;
+  --premium-subtle: 315.9 45.9% 14.5%;
+  --premium-subtle-foreground: 313 51.1% 91.2%;
+  --premium-border: 317.9 47.5% 27.6%;
+  --verified: 185.3 41.4% 62.5%;
+  --verified-foreground: 194.1 68% 9.8%;
+  --verified-subtle: 191.3 64.9% 14.5%;
+  --verified-subtle-foreground: 184.4 44.3% 88%;
+  --warning: 40 92.7% 56.9%;
+  --warning-foreground: 193.8 28.9% 8.8%;
+  --warning-subtle: 33.6 66.3% 17.5%;
+  --warning-subtle-foreground: 44.8 100% 86.1%;
+  --warning-border: 36.6 84.5% 30.4%;
+  --provider: 240 2.6% 7.6%;
+  --provider-foreground: 0 0% 89%;
+  --provider-border: 140 1.3% 56.3%;
+  --qr: 0 0% 100%;
+  --qr-foreground: 193.8 28.9% 8.8%;
+  --scrim: 190 46.2% 5.1%;
+  --scrim-alpha: 0.72;
+  --marker-lost: 16.8 87.3% 59.8%;
+  --marker-found: 143.3 43.5% 46.5%;
+  --marker-sighted: 224.6 82.1% 75.9%;
+  --marker-reunited: 40 92.7% 56.9%;
+  --marker-me: 224.6 82.1% 75.9%;
+  --marker-cluster: 180 15% 92.2%;
+  --marker-cluster-foreground: 193.8 28.9% 8.8%;
+  --marker-ring: 190 46.2% 5.1%;
+  --marker-area: 16.8 87.3% 59.8%;
+  --marker-area-alpha: 0.2;
+  --map-land: 190.6 36.2% 9.2%;
+  --map-water: 192.6 51.4% 14.5%;
+  --map-park: 168.9 39.1% 13.5%;
+  --map-building: 190 35.3% 13.3%;
+  --map-road: 192.5 24% 19.6%;
+  --map-road-casing: 190.6 36.2% 9.2%;
+  --map-label: 188 12% 75.5%;
+  --map-label-halo: 190.6 36.2% 9.2%;
+  --shadow-sm: none;
+  --shadow-md: 0 2px 10px 0 rgb(0 0 0 / 0.4);
+  --shadow-lg: 0 -10px 40px -12px rgb(0 0 0 / 0.6);
+  --shadow-pop: 0 8px 24px -6px rgb(0 0 0 / 0.55);
+}
+:root[data-theme="light"] { color-scheme: light; }
+:root[data-theme="dark"] { color-scheme: dark; }
+
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:hsl(var(--background));color:hsl(var(--foreground));font-family:var(--font-sans);font-size:16px;line-height:1.5}
+a{color:inherit}
+:focus-visible{outline:3px solid hsl(var(--ring));outline-offset:2px}
+.doc{max-width:1200px;margin:0 auto;padding:24px 16px 64px}
+.doc h1{font-family:var(--font-display);font-size:30px;line-height:36px;letter-spacing:-.02em;margin:8px 0 0;text-wrap:balance}
+.doc h2{font-family:var(--font-display);font-size:22px;line-height:28px;margin:48px 0 8px;letter-spacing:-.01em}
+.doc p{margin:8px 0;max-width:84ch}
+.meta{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;color:hsl(var(--muted-foreground));font-size:15px}
+.pill{display:inline-flex;align-items:center;min-height:30px;padding:0 12px;border-radius:9999px;background:hsl(var(--warning-subtle));color:hsl(var(--warning-subtle-foreground));font-weight:700;font-size:14px}
+.docnav{display:flex;flex-wrap:wrap;gap:4px 16px;margin:16px 0 0;padding:0;list-style:none}
+.docnav a{display:inline-flex;align-items:center;min-height:44px;font-weight:600;text-underline-offset:4px}
+.docnav a[aria-current=page]{color:hsl(var(--muted-foreground));text-decoration:none}
+.qs{background:hsl(var(--card));border-radius:var(--radius-card);padding:20px 20px 20px 24px;margin-top:20px}
+.qs h2{margin:0 0 8px;font-size:18px}
+.qs ol{margin:0;padding-left:22px;display:grid;gap:12px}
+.qs .rec{color:hsl(var(--muted-foreground))}
+.tools{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;margin-top:16px}
+.tools label{display:inline-flex;align-items:center;gap:8px;min-height:44px;font-weight:600;cursor:pointer}
+.tools input{width:20px;height:20px;accent-color:hsl(var(--primary))}
+.vsw{display:grid;gap:8px;margin-top:12px}
+.vsw .row{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center}
+.vsw .lab{font-weight:700;min-width:250px}
+.findex{display:flex;flex-wrap:wrap;gap:4px 8px;margin:12px 0 0;padding:0;list-style:none}
+.findex a{display:inline-flex;align-items:center;min-height:44px;padding:0 14px;border-radius:9999px;background:hsl(var(--secondary));color:hsl(var(--secondary-foreground));font-weight:700;font-size:15px;text-decoration:none}
+.legend{display:flex;flex-wrap:wrap;gap:8px 20px;margin-top:12px;font-size:15px;color:hsl(var(--muted-foreground))}
+.legend span{display:inline-flex;align-items:center;gap:8px}
+.lg-lgl{text-decoration:underline wavy hsl(var(--chart-5));text-decoration-thickness:1.5px;text-underline-offset:5px;color:hsl(var(--foreground))}
+.vtag{display:inline-flex;align-items:center;min-height:28px;padding:0 10px;border-radius:9999px;background:hsl(var(--warning-subtle));color:hsl(var(--warning-subtle-foreground));font-weight:700;font-size:13px;line-height:18px}
+.frame{margin-top:28px;scroll-margin-top:16px}
+.frame>.bar{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;margin-bottom:8px}
+.bar .ttl{font-family:var(--font-display);font-size:19px;line-height:26px;font-weight:700;margin:0 auto 0 0;min-width:240px}
+.bar .ttl small{display:block;font-family:var(--font-sans);font-weight:400;font-size:14px;line-height:20px;color:hsl(var(--muted-foreground))}
+.bar .vts{display:flex;flex-wrap:wrap;gap:6px;width:100%}
+.seg{display:inline-flex;flex-wrap:wrap;border-radius:9999px;background:hsl(var(--muted));padding:3px}
+.seg button,.tbtn{min-height:44px;padding:0 16px;border:0;border-radius:9999px;background:transparent;color:hsl(var(--foreground));font:inherit;font-size:15px;font-weight:700;cursor:pointer}
+.seg button[aria-pressed=true]{background:hsl(var(--primary));color:hsl(var(--primary-foreground))}
+.tbtn{background:hsl(var(--secondary));color:hsl(var(--secondary-foreground))}
+.stage{background:hsl(var(--muted));border-radius:var(--radius-card);padding:12px;overflow:hidden}
+.vp{display:none;margin:0 auto;position:relative}
+.frame[data-view=desktop] .vp[data-v=desktop],.frame[data-view=mobile] .vp[data-v=mobile]{display:block}
+.frame[data-fit=full] .vp{overflow-x:auto;width:100%!important;height:auto!important}
+.frame[data-fit=full] .dev{transform:none!important}
+.vp .dev{transform-origin:top left;box-shadow:var(--shadow-pop)}
+.nofit{display:none}
+.frame[data-view=desktop] .nofit{display:inline-flex;align-items:center}
+.notes{margin:12px 0 0;padding:14px 18px;border:2px dashed hsl(var(--input));border-radius:16px;font-size:15px;line-height:22px;color:hsl(var(--muted-foreground))}
+.notes ul{margin:0;padding-left:20px;display:grid;gap:6px}
+.notes b,.notes strong{color:hsl(var(--foreground))}
+.no-notes .notes,.no-notes .dev .to{display:none!important}
+.table-wrap{overflow-x:auto}
+.doc table.t{border-collapse:collapse;width:100%;min-width:640px}
+.doc table.t th,.doc table.t td{text-align:left;vertical-align:top;padding:10px 12px 10px 0;border-bottom:1px solid hsl(var(--border));font-size:15px;line-height:22px}
+.doc table.t th{color:hsl(var(--muted-foreground));font-size:14px}
+.doc code{font-size:14px;background:hsl(var(--muted));padding:1px 6px;border-radius:6px}
+.doc ol.rules{display:grid;gap:8px;padding-left:22px;max-width:96ch}
+.vsheet{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));gap:16px;margin-top:12px}
+.vsheet .vcard{background:hsl(var(--card));border-radius:var(--radius-card);padding:20px}
+.vsheet .vcard h3{font-family:var(--font-display);font-size:18px;line-height:24px;margin:0}
+.vsheet .vcard>p{margin:4px 0 0;font-size:15px;color:hsl(var(--muted-foreground))}
+.vsheet .dev{background:transparent;margin-top:8px}
+
+/* ---- mock primitives (inside .dev) ---- */
+.dev{position:relative;width:100%;background:hsl(var(--background));color:hsl(var(--foreground));font-family:var(--font-sans);font-size:16px;line-height:1.5;overflow:hidden}
+.dev h1,.dev h2,.dev h3{font-family:var(--font-display);margin:0;text-wrap:balance}
+.dev p{margin:0}.dev ul,.dev dl,.dev dd{margin:0;padding:0;list-style:none}
+.dev a{text-decoration:none}
+.dev .ic{flex:none;display:inline-block}
+.dev .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:0 24px;border:0;border-radius:var(--radius-button);font:inherit;font-weight:700;font-size:16px;cursor:pointer;white-space:nowrap;text-align:center}
+.dev .btn-lg{min-height:56px;padding:0 32px;font-size:17px}.dev .btn-sm{min-height:44px;padding:0 18px}
+.dev .block{width:100%}
+.dev .b1{background:hsl(var(--primary));color:hsl(var(--primary-foreground))}
+.dev .b2{background:hsl(var(--secondary));color:hsl(var(--secondary-foreground))}
+.dev .bt{background:transparent;color:hsl(var(--primary));min-height:44px;padding:0 12px}
+.dev .iconbtn{display:inline-grid;place-items:center;width:44px;height:44px;border-radius:9999px;border:0;background:transparent;color:inherit;cursor:pointer;flex:none}
+.dev .logo{display:inline-flex;align-items:center;gap:10px}
+.dev .lm{display:grid;place-items:center;width:34px;height:34px;border-radius:12px;background:hsl(var(--primary));color:hsl(var(--primary-foreground))}
+.dev .lw{font-family:var(--font-display);font-weight:800;font-size:22px;letter-spacing:-.02em}
+.dev .hdr{height:88px;display:flex;align-items:center;gap:24px;padding:0 48px}
+.dev .whdr{height:64px;display:flex;align-items:center;gap:4px;padding:0 8px 0 16px}
+.dev .navl{display:flex;gap:24px}.dev .navl a{font-weight:600;color:hsl(var(--muted-foreground));display:inline-flex;min-height:44px;align-items:center}
+.dev .navl a[aria-current=page]{color:hsl(var(--foreground));text-decoration:underline;text-underline-offset:6px;text-decoration-thickness:2px}
+.dev .sp{flex:1}
+.dev .lang{font-weight:700;display:inline-flex;gap:6px;align-items:center;min-height:44px}.dev .lang u{text-underline-offset:5px}.dev .lang span{color:hsl(var(--muted-foreground))}
+.dev .av{background:hsl(var(--secondary));color:hsl(var(--secondary-foreground));font-weight:700;font-size:14px}
+.dev .muted{color:hsl(var(--muted-foreground))}
+.dev .mt4{margin-top:4px}.dev .mt8{margin-top:8px}.dev .mt12{margin-top:12px}.dev .mt16{margin-top:16px}.dev .mt20{margin-top:20px}.dev .mt24{margin-top:24px}
+.dev .ffoot{display:flex;flex-wrap:wrap;justify-content:center;gap:4px 24px;padding:16px 48px 32px;font-size:14px;color:hsl(var(--muted-foreground))}
+.dev .ffoot a{display:inline-flex;align-items:center;min-height:44px;text-decoration:underline;text-underline-offset:4px}
+.dev .sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+/* page */
+.dev .pgd{max-width:1200px;margin:0 auto;padding:0 48px 64px}
+.dev .pgm{padding:0 16px 40px}
+.dev .crumb a{display:inline-flex;align-items:center;gap:6px;min-height:44px;font-weight:700;color:hsl(var(--primary))}
+.dev .h1d{font-size:40px;line-height:46px;font-weight:700;letter-spacing:-.02em;margin-top:4px}
+.dev .h1m{font-size:30px;line-height:36px;font-weight:700;letter-spacing:-.02em;margin-top:4px}
+.dev .sub{margin-top:6px;font-size:15px;line-height:22px;color:hsl(var(--muted-foreground))}
+.dev .rv2{display:grid;grid-template-columns:minmax(0,1fr) 400px;gap:56px;margin-top:28px;align-items:start}
+.dev .col{display:grid;gap:24px;align-content:start}
+/* placeholder photos */
+.dev .ph{--t:var(--chart-1);position:relative;display:grid;place-items:center;width:100%;aspect-ratio:4/3;border-radius:var(--radius-photo);overflow:hidden;background:linear-gradient(135deg,color-mix(in srgb,hsl(var(--t)) 30%,hsl(var(--card))),color-mix(in srgb,hsl(var(--t)) 12%,hsl(var(--muted))));color:color-mix(in srgb,hsl(var(--t)) 60%,hsl(var(--foreground)))}
+.dev .ph .ic{opacity:.6}
+.dev .phl{position:absolute;left:14px;bottom:10px;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;opacity:.85}
+.dev .ph.tb{width:64px;height:64px;aspect-ratio:auto;border-radius:14px}
+.dev .thumbs{display:flex;flex-wrap:wrap;gap:10px}
+.dev .tbb{display:block;padding:0;border:0;background:none;border-radius:14px;cursor:pointer}
+.dev .tbb.on{outline:3px solid hsl(var(--primary));outline-offset:2px}
+/* comparison */
+.dev .cmp{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.dev .side{display:grid;gap:10px;align-content:start}
+.dev .who{display:flex;align-items:center;flex-wrap:wrap;gap:8px;font-weight:700;font-size:15px;line-height:22px;min-height:28px}
+.dev .badge{display:inline-flex;align-items:center;min-height:28px;padding:0 12px;border-radius:9999px;font-size:14px;font-weight:700}
+.dev .badge.lost{background:hsl(var(--status-lost-subtle));color:hsl(var(--status-lost-subtle-foreground))}
+.dev .badge.found{background:hsl(var(--status-found-subtle));color:hsl(var(--status-found-subtle-foreground))}
+.dev .badge.sighted{background:hsl(var(--status-sighted-subtle));color:hsl(var(--status-sighted-subtle-foreground))}
+.dev .tog{display:flex;border-radius:9999px;background:hsl(var(--muted));padding:3px}
+.dev .tog button{flex:1;min-height:44px;border:0;border-radius:9999px;background:transparent;color:inherit;font:inherit;font-weight:700;font-size:15px;cursor:pointer}
+.dev .tog button[aria-pressed=true]{background:hsl(var(--card));box-shadow:var(--shadow-md)}
+.dev .pair{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:14px;line-height:20px;font-weight:700;color:hsl(var(--primary))}
+/* strength line (as live) */
+.dev .strl{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px}
+.dev .strl .w{font-family:var(--font-display);font-size:24px;line-height:30px;font-weight:700;letter-spacing:-.01em}
+.dev .bars{display:inline-flex;gap:4px;align-items:flex-end;height:22px}
+.dev .bars i{display:block;width:8px;border-radius:3px;background:hsl(var(--muted));box-shadow:inset 0 0 0 1px hsl(var(--input) / .6)}
+.dev .bars i.h0{height:10px}.dev .bars i.h1{height:16px}.dev .bars i.h2{height:22px}
+.dev .bars i.on{background:hsl(var(--primary));box-shadow:none}
+/* note (neutral, system 10.6) */
+.dev .note{display:flex;gap:12px;padding:16px 20px;border-radius:var(--radius-row);background:hsl(var(--muted));color:hsl(var(--foreground));font-size:15px;line-height:22px}
+.dev .note>.ic{margin-top:0}
+/* "Zakaj ta predlog?" factor rows (proposal: FactorRow) */
+.dev .why h2{font-size:22px;line-height:28px;font-weight:700;letter-spacing:-.01em}
+.dev .why .intro{font-size:15px;line-height:22px;color:hsl(var(--muted-foreground));margin-top:4px}
+.dev .fl{margin-top:8px}
+.dev .fr{display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:12px;padding:12px 0;border-top:1px solid hsl(var(--border))}
+.dev .fr dt{grid-column:1;font-weight:700;font-size:16px;line-height:24px}
+.dev .fr .lv{grid-column:2;grid-row:1;display:inline-flex;align-items:center;gap:8px;font-size:14px;line-height:24px;font-weight:700;white-space:nowrap}
+.dev .fr .lv.q{font-weight:400;color:hsl(var(--muted-foreground))}
+.dev .mtr{display:inline-flex;gap:3px}
+.dev .mtr i{display:block;width:14px;height:6px;border-radius:3px;background:hsl(var(--muted));box-shadow:inset 0 0 0 1px hsl(var(--input) / .6)}
+.dev .mtr i.on{background:hsl(var(--primary));box-shadow:none}
+.dev .fr .val{grid-column:1/-1;margin-top:2px;font-size:15px;line-height:22px}
+.dev .fr .val b{font-weight:700}
+.dev .fr .vs{color:hsl(var(--muted-foreground))}
+.dev .fr .cav{grid-column:1/-1;display:flex;gap:6px;align-items:flex-start;margin-top:6px;font-size:14px;line-height:20px;color:hsl(var(--muted-foreground))}
+.dev .fr .cav .ic{margin-top:2px;color:hsl(var(--primary))}
+/* AI panel (proposal) */
+.dev .aip{background:hsl(var(--card));color:hsl(var(--card-foreground));border-radius:var(--radius-card);padding:20px}
+.dev .aip h2{display:flex;gap:8px;align-items:center;font-size:20px;line-height:26px;font-weight:700;letter-spacing:-.01em}
+.dev .aip h2 .ic,.dev .aipc .ic.sp1{color:hsl(var(--primary))}
+.dev .aip table{width:100%;border-collapse:collapse;table-layout:fixed;margin-top:12px}
+.dev .aip th,.dev .aip td{text-align:left;vertical-align:top;padding:8px 8px 8px 0;font-size:15px;line-height:22px;border-top:1px solid hsl(var(--border))}
+.dev .aip thead th{border-top:0;padding-top:0;font-size:14px;line-height:20px;color:hsl(var(--muted-foreground))}
+.dev .aip thead th:first-child{width:28%}
+.dev .aip tbody th{font-weight:700}
+.dev .aip .pc{color:hsl(var(--muted-foreground));white-space:nowrap}
+.dev .aip .na{color:hsl(var(--muted-foreground));font-size:14px;line-height:20px}
+.dev .aip .pub{color:hsl(var(--foreground))}
+.dev .aip .foot{display:flex;gap:6px;align-items:flex-start;margin-top:12px;font-size:14px;line-height:20px;color:hsl(var(--muted-foreground))}
+.dev .aip .foot .ic{margin-top:2px;color:hsl(var(--primary))}
+.dev .aip .bt{margin:4px 0 -8px -12px}
+.dev .infob{margin-top:12px;font-size:15px;line-height:22px}
+.dev .infob .bt{margin:4px 0 -8px -12px}
+.dev .aipc{display:flex;align-items:center;gap:10px;width:100%;min-height:56px;padding:0 16px 0 20px;border:0;border-radius:var(--radius-row);background:hsl(var(--card));color:hsl(var(--card-foreground));font:inherit;font-weight:700;font-size:16px;text-align:left;cursor:pointer}
+.dev .aipc .grow{flex:1}
+/* actions (as live) */
+.dev .act{display:grid;gap:4px}
+.dev .more{margin-left:-12px}
+/* annotation chips */
+.dev .to{display:inline-block;font-family:ui-monospace,Consolas,monospace;font-size:12px;line-height:18px;font-weight:400;letter-spacing:0;padding:0 8px;border-radius:9999px;background:hsl(var(--status-sighted-subtle));color:hsl(var(--status-sighted-subtle-foreground));vertical-align:middle;white-space:normal;text-transform:none}
+.dev .lgl{text-decoration:underline wavy hsl(var(--chart-5));text-decoration-thickness:1.5px;text-underline-offset:5px}
+.no-notes .dev .lgl{text-decoration:none}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+<symbol id="i-sparkle" viewBox="0 0 24 24" fill="currentColor"><path d="M11 2.5l2.1 6.4 6.4 2.1-6.4 2.1L11 19.5l-2.1-6.4L2.5 11l6.4-2.1z"/><path d="M19 15.5l.9 2.6 2.6.9-2.6.9-.9 2.6-.9-2.6-2.6-.9 2.6-.9z"/></symbol>
+<symbol id="i-back" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></symbol>
+<symbol id="i-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></symbol>
+<symbol id="i-info" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></symbol>
+<symbol id="i-bell" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 17v-6a6 6 0 0112 0v6l1.5 1.5h-15zM10 21h4"/></symbol>
+<symbol id="i-menu" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
+<symbol id="i-dots" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></symbol>
+<symbol id="i-paw" viewBox="0 0 24 24" fill="currentColor"><circle cx="6.5" cy="11" r="1.9"/><circle cx="10" cy="6.5" r="1.9"/><circle cx="14" cy="6.5" r="1.9"/><circle cx="17.5" cy="11" r="1.9"/><path d="M12 12c3 0 5 3 5 5 0 2-2 2.5-5 2.5S7 19 7 17c0-2 2-5 5-5z"/></symbol>
+</svg>
+<div class="doc">
+<header>
+<div class="meta"><strong>TASK-43.8</strong><span class="pill">v1 for the owner, not approved</span><span>Web only · 1200 and 390</span></div>
+<h1>Match review (P11) shows the AI match info</h1>
+<p>Low-fi component mock of the web match review as live after TASK-43.4 (photo-similarity reason in three bands, its caveat, most similar photo first), with three additions the owner asked for on 2026-10-19: (1) a "Zakaj ta predlog?" breakdown with every factor and its strength, (2) what the AI saw on each photo, (3) photo similarity in two variants. Same tokens and style as the AI pre-fill wireframe. Data: contracts C8 (matching and visual similarity v3), C20 (photo vectors) and C19 (AI result per photo). Copy in the screens is Slovenian; every string in the new parts is a proposal without a key yet (the content strategist writes the final strings).</p>
+<p>Sample: Medo, a black labrador, lost in Bežigrad on 17. 10. at 14.10, and a found dog (report Hk3vT9qP) in Šiška. Scores and bands follow C8 with today's placeholder values (floor 0.70, ceiling 0.95, TASK-43.7 not run yet).</p>
+<nav aria-label="Review files"><ul class="docnav"><li><a href="P3-home.html">P3 Home (TASK-115.1)</a></li><li><a href="P1-footer.html">P1 Footer (TASK-116.1)</a></li><li><a href="M-alerts-notifications.html">Alerts mock (TASK-114.15)</a></li><li><a href="M-legal-table.html">Legal table mock (TASK-114.19)</a></li><li><a href="M-ai-prefill.html">AI pre-fill mock (TASK-41.1)</a></li><li><a href="P11-match-ai.html" aria-current="page">Match AI info (TASK-43.8)</a></li></ul></nav>
+
+<section class="qs" aria-labelledby="q-h"><h2 id="q-h">Open questions for the owner</h2><ol>
+<li><b>Q1 Privacy: show what the AI saw on the other person's photo?</b> The AI result of the finder's photo (C19) is not on their public report, so showing it to you is a new use of their photo, and it can say things their report does not (in the sample the finder gave no breed; the AI says "labradorec · 64 %"). <b>A</b> both photos, as asked: needs a line in the privacy policy (chapter 8) and the lawyer, so a content-strategist CHANGE, and perhaps a line in the found and sighting forms. <b>B</b> only your own photo; the other column shows what the finder published, without AI. <span class="rec">Recommended: B, because nothing then goes beyond the public report. Switch Q1 below to see both.</span></li>
+<li><b>Q2 Photo similarity: three bands or a percentage?</b> <b>A</b> bands as live today: "Fotografiji sta si zelo podobni" (or "podobni", "nekoliko podobni"). <b>B</b> "Podobnost fotografij: 85 %". Both carry the caveat that this is not the chance that it is your animal. <span class="rec">Recommended: A. The number is a scaled photo distance, not a probability, but it reads like one. Its scale is still a placeholder until the real-photo run (TASK-43.7), so today's 85 % can become 70 % after the pick. Every pair above the top of the scale shows 100 %, also two different dogs that look alike. For the pre-fill you chose a percentage: there it is the model's own confidence in one attribute, which is a different kind of number. B also needs a C8 change, because today's reason carries only the band.</span></li>
+<li><b>Q3 One table instead of two?</b> "Zakaj ta predlog?" replaces both the live reason list and the facts table (Vrsta, Velikost, Barva, Spol, Kraj, Kdaj): every factor once, with both values, whether it matches and how much it counts. Or keep the facts table under it? <span class="rec">Recommended: one table.</span></li>
+<li><b>Q4 Strength words per factor:</b> "odločilno" (chip), "močno", "srednje", "šibko", "ne šteje", and "pogoj" for the species (we only suggest the same species). Each word comes with a three-step meter; the mapping is in the table below. OK?</li>
+<li><b>Q5 Phone width:</b> the AI panel is a closed row under the photos ("Kaj je videla umetna inteligenca"), so the verdict and the reasons stay near the top. On desktop it is open under the photos. OK?</li>
+<li><b>Q6 Weak matches:</b> one line under the strength when a possible match rests on little ("Ujema se le malo podatkov …", F6) or mainly on the photos ("Predlagamo ga predvsem zaradi podobnih fotografij …", F6). OK?</li>
+</ol></section>
+
+<div class="tools"><button type="button" class="tbtn" id="theme">Theme: auto</button><label><input type="checkbox" id="notes" checked> Show annotations</label><div class="seg" role="group" aria-label="Viewport for all frames" id="allview"><button type="button" data-v="desktop" aria-pressed="false">All Desktop 1200</button><button type="button" data-v="mobile" aria-pressed="false">All Mobile 390</button></div></div>
+<div class="vsw" role="group" aria-label="Variants for all frames">
+<div class="row"><span class="lab" id="vq2">Q2 Photo similarity</span><div class="seg" role="group" aria-labelledby="vq2" id="v-sim"><button type="button" data-v="bands" aria-pressed="true">A · Bands (as live)</button><button type="button" data-v="pct" aria-pressed="false">B · Percentage</button></div></div>
+<div class="row"><span class="lab" id="vq1">Q1 AI data of the other photo</span><div class="seg" role="group" aria-labelledby="vq1" id="v-ai"><button type="button" data-v="both" aria-pressed="true">A · Both photos</button><button type="button" data-v="mine" aria-pressed="false">B · My photo only</button></div></div>
+</div>
+<div class="legend"><span>Blue chips: annotations (hidden with the checkbox)</span><span>Yellow tags on each frame: the variants it shows</span><span><span class="lg-lgl">Wavy underline</span> privacy claim: owner and lawyer confirm before release</span><span>"as live": drawn from the P11 slice; the live strings come from the P11 copy</span></div>
+<nav aria-label="Frames"><ul class="findex" id="findex"></ul></nav>
+</header>
+<main>
+<h2>Q2 side by side: the photo row in both variants</h2>
+<p>The "Fotografije" row of "Zakaj ta predlog?" for each band, as variant A and B. The caveat stays right under the row in both. Below 0.25 (no visual reason) and without vectors the two variants are the same.</p>
+<div class="vsheet" id="vsheet"></div>
+
+<h2>What the screen gets and what each row shows</h2>
+<p>C8 §Engine 3 and §Visual similarity 3. Reasons are written only for positive signals, and only the lost report's managers see them. Values the screen already has: its own report and the other report's public subset (<code>other</code>: species, breed, colours, size, sex, photos, event time, area).</p>
+<div class="table-wrap"><table class="t">
+<thead><tr><th scope="col">Factor (row)</th><th scope="col">From</th><th scope="col">Shown as · strength</th><th scope="col">Contract today</th></tr></thead>
+<tbody>
+<tr><td>Čip</td><td>reason <code>chip</code> or <code>chip_sighting</code></td><td>"Ista številka čipa." · odločilno (first row). No chip reason: "Ni ujemanja po čipu." · ne šteje (last row). Chip numbers are never shown.</td><td>OK</td></tr>
+<tr><td>Fotografije</td><td>reason <code>visual</code> band</td><td><code>very_similar</code> · močno, <code>similar</code> · srednje, <code>some</code> · šibko. Variant A: the band sentence; B: the percentage. Below 0.25: "Podobnosti med fotografijama ne vidimo." · ne šteje. No vectors: "Teh fotografij ne moremo primerjati." · ne šteje.</td><td>B needs V in the reason. "Below 0.25" and "not compared" both give no reason today, so the screen cannot tell them apart (CHANGE a).</td></tr>
+<tr><td>Vrsta</td><td>candidate rule (same species only)</td><td>"Ujema se." · pogoj (no meter)</td><td>OK</td></tr>
+<tr><td>Velikost</td><td>reason <code>size</code> + both values</td><td>equal · močno; adjacent "Podobna." · srednje; two or more steps "Razlikuje se." · ne šteje (only when V ≥ 0.8 lifted the veto); unknown on a side "Ni podatka." · ne šteje</td><td>OK</td></tr>
+<tr><td>Barva</td><td>reason <code>colour</code> overlap + both values</td><td>overlap 1 · močno; 0.5 to 0.99 "Delno se ujema." · srednje; above 0 to 0.49 · šibko; none "Razlikuje se." (lifted veto) · ne šteje; unknown · ne šteje</td><td>OK</td></tr>
+<tr><td>Spol</td><td>reason <code>sex</code> + both values</td><td>equal · močno; unknown on a side "Ni podatka." · ne šteje (a known difference is never suggested)</td><td>OK</td></tr>
+<tr><td>Vzorec</td><td>reason <code>pattern</code></td><td>equal · močno; otherwise "Ni podatka." or "Razlikuje se." · ne šteje</td><td>The other report's pattern is not in <code>other</code>, so the screen cannot tell unknown from different (CHANGE c)</td></tr>
+<tr><td>Razdalja</td><td>reason <code>distance</code> band</td><td><code>lt1</code> "Manj kot 1 km." · močno; <code>1to3</code> · srednje; <code>3to10</code> · šibko; <code>gt10</code> "Več kot 10 km." · ne šteje. Both area names on the second line. Never an exact distance (C8).</td><td>OK</td></tr>
+<tr><td>Čas med prijavama</td><td>reason <code>time</code> band; both event times</td><td>Band as text ("Manj kot 24 ur.", "1 do 3 dni.", "Več kot 3 dni."), both times on the second line. Strength from the two times (both on screen): up to 3 days · močno, up to 10 days · srednje, longer · šibko (follows C8 T, linear over 30 days).</td><td>OK (mapping: CHANGE d)</td></tr>
+<tr><td>AI panel</td><td>C19 result of the photo on screen, each side</td><td>Vrsta, Pasma, Barva with a whole percentage; below 0.6 "ni zanesljivo". Only photos with a clean result. Other side: Q1.</td><td>Not on the match read today (CHANGE e)</td></tr>
+</tbody></table></div>
+
+<h2>Frames</h2>
+<p>Six frames, each at Desktop 1200 and Mobile 390 (the web at phone width). All of them follow the two variant switches at the top; the yellow tags on each frame say which variant it shows.</p>
+<div id="frames"></div>
+
+<h2>Rules this wireframe sets (v1, wait for the owner)</h2>
+<ol class="rules">
+<li><b>"Zakaj ta predlog?"</b> replaces the reason list and the facts table (Q3). One FactorRow per factor in a fixed order: Čip (when it matches), Fotografije, Vrsta, Velikost, Barva, Spol, Vzorec, Razdalja, Čas med prijavama, Čip (when it does not). The order is the same on every match, so people learn where to look.</li>
+<li><b>FactorRow:</b> factor name (16 bold) and the strength on the right (meter of three 14 × 6 segments in <code>primary</code>, then the word, 14 bold); a second line with the verdict in bold and both values in <code>muted-foreground</code> ("Vaša: … · Najdena: …"); an optional caveat line (info icon 16). The word carries the meaning; the meter is <code>aria-hidden</code>. A description list: <code>dt</code> factor, <code>dd</code> strength, <code>dd</code> values.</li>
+<li><b>Photo row (Q2):</b> A the band sentence, B "Podobnost fotografij: {n} %" (whole percent, no-break space). The caveat is always right under it. Below 0.25 and without vectors both variants read the same, with no number.</li>
+<li><b>Pair label</b> "Najbolj podobni fotografiji" under the photos only when there is a visual reason; the most similar pair shows first (as live, TASK-43.4).</li>
+<li><b>AI panel:</b> heading "Kaj je videla umetna inteligenca" with the sparkle, a table with "Vaša fotografija" and the other column (Q1), rows Vrsta, Pasma, Barva, each with a whole percentage (like the pre-fill); values below 0.6 read "ni zanesljivo". It follows the photo on screen (thumbnails, toggle). It always ends with "Predlogi umetne inteligence se lahko motijo." and "Kako to deluje?" (inline disclosure with the privacy link). Desktop: open under the photos. Phone width: a closed row (Q5).</li>
+<li><b>Nothing from the other report beyond its public page</b> (Q1 B). A photo without an AI result shows one neutral line, whatever the reason (old, flagged, failed): flags (person, nsfw, no animal) and the reason are never shown. No chip numbers, no exact distance, no contact data.</li>
+<li><b>Weak matches (Q6):</b> a neutral note under the strength line for a possible match that rests on one or two factors, or mainly on the photos (veto lifted or no geo-time fit, C8).</li>
+<li><b>Unchanged from live:</b> comparison (side by side on desktop, toggle on phone), strength word and bars, caveat notes (sighting, chip without photo), "To je moja žival" and "Ni moja žival", "Prijavi zlorabo" in the overflow below the actions.</li>
+</ol>
+
+<h2>Changes to file after the owner's answers</h2>
+<p>None filed yet: they depend on the answers. After approval the design lead updates the P11 slice §Review screen and §States and adds FactorRow and the AI panel to <code>docs/design/system.md</code>; the mobile review (TASK-43.5) follows the approved version.</p>
+<div class="table-wrap"><table class="t">
+<thead><tr><th scope="col">#</th><th scope="col">To</th><th scope="col">Change</th><th scope="col">When</th></tr></thead>
+<tbody>
+<tr><td>a</td><td>tech-lead, C8 §Visual similarity</td><td>Tell "compared, below 0.25" apart from "not compared" (no vectors, embedder off, query failed), e.g. a <code>visual</code> reason with band <code>none</code> for a compared pair. The screen needs it for F3 and F6.</td><td>any answer</td></tr>
+<tr><td>b</td><td>tech-lead, C8</td><td>V (two decimals) in the <code>visual</code> reason, for the percentage.</td><td>Q2 = B</td></tr>
+<tr><td>c</td><td>tech-lead, C8 §REST</td><td><code>pattern</code> in the <code>other</code> subset (a public field), so the Vzorec row can say "Razlikuje se".</td><td>any answer</td></tr>
+<tr><td>d</td><td>tech-lead, <code>@zivali/validation/matching</code></td><td>One exported mapping from reason and values to the row verdict and strength (table above), so web and mobile agree.</td><td>any answer</td></tr>
+<tr><td>e</td><td>tech-lead, C8 and C19</td><td>The AI result (species, breed, colours with confidence, clean results only) of each photo on the match read: own photos always; the other report's only with Q1 = A.</td><td>any answer</td></tr>
+<tr><td>f</td><td>content strategist, P11 copy</td><td>Keys for the new strings (table below).</td><td>after approval</td></tr>
+<tr><td>g</td><td>content strategist, privacy policy chapter 8 and lawyer pack</td><td>A line on showing the AI result of a finder's photo to the owner it was matched with; the "Kako to deluje?" text.</td><td>Q1 = A (text: any answer)</td></tr>
+</tbody></table></div>
+
+<h2>Copy used (proposals, no keys yet)</h2>
+<div class="table-wrap"><table class="t">
+<thead><tr><th scope="col">Where</th><th scope="col">SL (as shown)</th></tr></thead>
+<tbody>
+<tr><td>Breakdown heading and intro</td><td>Zakaj ta predlog? · Za vsak podatek: ali se ujema in koliko šteje pri predlogu.</td></tr>
+<tr><td>Strength words</td><td>odločilno · močno · srednje · šibko · ne šteje · pogoj</td></tr>
+<tr><td>Verdicts</td><td>Ujema se. · Podobna. · Delno se ujema. · Razlikuje se. · Ni podatka. · Ista številka čipa. · Ni ujemanja po čipu.</td></tr>
+<tr><td>Values line</td><td>Vaša: {value} · Najdena: {value} (Opažena for a sighting) · ni navedeno</td></tr>
+<tr><td>Distance and time</td><td>Manj kot 1 km. · 1 do 3 km. · 3 do 10 km. · Več kot 10 km. · Manj kot 24 ur. · 1 do 3 dni. · Več kot 3 dni.</td></tr>
+<tr><td>Photo row, A</td><td>Fotografiji sta si zelo podobni. · … podobni. · … nekoliko podobni. · Caveat: Podobnost fotografij ni verjetnost, da je to vaša žival. Tudi različne živali so si lahko zelo podobne.</td></tr>
+<tr><td>Photo row, B</td><td>Podobnost fotografij: 85 % · Caveat: 85 % ni verjetnost, da je to vaša žival, ampak le podobnost fotografij. Tudi različne živali so si lahko zelo podobne.</td></tr>
+<tr><td>Photo row, both</td><td>Podobnosti med fotografijama ne vidimo. · Teh fotografij ne moremo primerjati. Primerjamo samo fotografije, ki jih je pregledala umetna inteligenca.</td></tr>
+<tr><td>Pair label</td><td>Najbolj podobni fotografiji</td></tr>
+<tr><td>AI panel</td><td>Kaj je videla umetna inteligenca · Vaša fotografija · Najdena žival · Najditelj je navedel · Vrsta · Pasma · Barva · ni zanesljivo · ni navedena · Za to fotografijo nimamo podatkov umetne inteligence. · Predlogi umetne inteligence se lahko motijo. · Podatkov umetne inteligence za fotografije drugih ljudi ne prikazujemo. · Kako to deluje? · Več v politiki zasebnosti</td></tr>
+<tr><td>"Kako to deluje?" †</td><td>Fotografije pregleda model umetne inteligence. Predlaga vrsto, pasmo in barve ter primerja, kako podobne so si fotografije. Ne ve, ali gre za isto žival, in se lahko moti. Ponudniku pošljemo samo pomanjšano kopijo fotografije, brez metapodatkov in lokacije. († privacy claim: owner and lawyer)</td></tr>
+<tr><td>Weak-match notes</td><td>Ujema se le malo podatkov, zato je to samo možno ujemanje. Dobro si oglejte fotografije. · Predlagamo ga predvsem zaradi podobnih fotografij, čeprav se nekateri podatki razlikujejo in je bila žival najdena daleč stran.</td></tr>
+<tr><td>As live (drawn, wording from the P11 copy)</td><td>Predlog ujemanja · Močno / Dobro / Možno ujemanje · To je moja žival · Ni moja žival · Več možnosti → Prijavi zlorabo · Žival je bila samo opažena, zato je morda že drugje.</td></tr>
+</tbody></table></div>
+
+<h2>Change log</h2>
+<div class="table-wrap"><table class="t"><thead><tr><th scope="col">Version</th><th scope="col">Date</th><th scope="col">Change</th></tr></thead><tbody><tr><td>v1</td><td>2026-10-19</td><td>First version for the owner (TASK-43.8): breakdown, AI panel, photo similarity in two variants, states (no vectors, one side only, chip, weak match), open questions Q1 to Q6. Awaiting owner approval.</td></tr></tbody></table></div>
+</main>
+</div>
+<script>
+(function(){
+'use strict';
+var n=0;function uid(p){n+=1;return (p||'u')+n}
+function S(id,s,c){s=s||20;return '<svg class="ic'+(c?' '+c:'')+'" width="'+s+'" height="'+s+'" aria-hidden="true" focusable="false"><use href="#i-'+id+'"/></svg>'}
+function TO(t){return ' <span class="to">'+t+'</span>'}
+function L(t,tag){return '<span class="lgl">'+t+'</span>'+TO(tag)}
+var NB=' ';
+/* global variants: Q2 photo similarity (bands | pct), Q1 AI data of the other photo (both | mine) */
+var VAR={sim:'bands',ai:'both'};
+
+/* ---------- copy (proposals unless marked as live) ---------- */
+var C={
+ whyH:'Zakaj ta predlog?',
+ whyIntro:'Za vsak podatek: ali se ujema in koliko šteje pri predlogu.',
+ band:{very_similar:'Fotografiji sta si zelo podobni.',similar:'Fotografiji sta si podobni.',some:'Fotografiji sta si nekoliko podobni.'},
+ pct:function(p){return 'Podobnost fotografij: '+p+NB+'%'},
+ cavA:'Podobnost fotografij ni verjetnost, da je to vaša žival. Tudi različne živali so si lahko zelo podobne.',
+ cavB:function(p){return p+NB+'% ni verjetnost, da je to vaša žival, ampak le podobnost fotografij. Tudi različne živali so si lahko zelo podobne.'},
+ low:'Podobnosti med fotografijama ne vidimo.',
+ nocmp:'Teh fotografij ne moremo primerjati.',
+ nocmpWhy:'Primerjamo samo fotografije, ki jih je pregledala umetna inteligenca.',
+ pair:'Najbolj podobni fotografiji',
+ aiH:'Kaj je videla umetna inteligenca',
+ mineH:'Vaša fotografija',
+ pubH:'Najditelj je navedel',
+ unsure:'ni zanesljivo',
+ noAi:'Za to fotografijo nimamo podatkov umetne inteligence.',
+ aiWrong:'Predlogi umetne inteligence se lahko motijo.',
+ aiOthers:'Podatkov umetne inteligence za fotografije drugih ljudi ne prikazujemo.',
+ how:'Kako to deluje?',
+ howBody:L('Fotografije pregleda model umetne inteligence. Predlaga vrsto, pasmo in barve ter primerja, kako podobne so si fotografije. Ne ve, ali gre za isto žival, in se lahko moti. Ponudniku pošljemo samo pomanjšano kopijo fotografije, brez metapodatkov in lokacije.','† privacy claim: owner and lawyer (CHANGE g)'),
+ privacy:'Več v politiki zasebnosti',
+ lowFew:'Ujema se le malo podatkov, zato je to samo možno ujemanje. Dobro si oglejte fotografije.',
+ lowPhoto:'Predlagamo ga predvsem zaradi podobnih fotografij, čeprav se nekateri podatki razlikujejo in je bila žival najdena daleč stran.',
+ sighted:'Žival je bila samo opažena, zato je morda že drugje.'
+};
+var SIDE={found:'Najdena žival',sighted:'Opažena žival'};
+var SIDE1={found:'Najdena',sighted:'Opažena'};
+var STR={strong:[3,'Močno ujemanje'],good:[2,'Dobro ujemanje'],possible:[1,'Možno ujemanje']};
+var LV={dec:[3,'odločilno'],hi:[3,'močno'],mid:[2,'srednje'],lo:[1,'šibko'],no:[0,'ne šteje'],pre:[-1,'pogoj']};
+var BANDLV={very_similar:'hi',similar:'mid',some:'lo'};
+var LOGO='<span class="logo"><span class="lm">'+S('paw',22)+'</span><span class="lw">Najdimo</span></span>';
+
+/* ---------- parts ---------- */
+function ph(l,t,cls){return '<div class="ph'+(cls?' '+cls:'')+'" style="--t:var('+t+')" role="img" aria-label="Fotografija: '+l+'">'+S('paw',56)+'<span class="phl">Foto · '+l+'</span></div>'}
+function thumbs(p){var s='';for(var i=0;i<p.n;i++){var on=i===p.cur;s+='<li><button type="button" class="tbb'+(on?' on':'')+'" aria-label="Fotografija '+(i+1)+' od '+p.n+'"'+(on?' aria-current="true"':'')+'><span class="ph tb" style="--t:var('+p.t+')">'+S('paw',22)+'</span></button></li>'}return '<ul class="thumbs">'+s+'</ul>'}
+function sideD(lab,cls,name,p,to){return '<div class="side"><p class="who"><span class="badge '+cls+'">'+lab+'</span><span>'+name+'</span>'+(to?TO(to):'')+'</p>'+ph(p.l,p.t)+thumbs(p)+'</div>'}
+function cmpD(st){return '<div class="cmp">'+sideD('Moja žival','lost','Medo',st.photos.mine)+sideD(SIDE[st.type],st.type,'Hk3vT9qP',st.photos.theirs)+'</div>'}
+function cmpM(st){return '<div><div class="tog" role="group" aria-label="Prikaži fotografijo"><button type="button" aria-pressed="true">Moja žival</button><button type="button" aria-pressed="false">'+SIDE[st.type]+'</button></div>'+TO('as live: toggle and swipe')+'<div class="mt12">'+ph(st.photos.mine.l,st.photos.mine.t)+'</div><div class="mt12">'+thumbs(st.photos.mine)+'</div></div>'}
+function pair(st){return st.vis&&st.vis.band?'<p class="pair">'+S('sparkle',16)+C.pair+TO('as live (TASK-43.4): most similar pair first')+'</p>':''}
+function strl(st){var m=STR[st.strength],b='';for(var i=0;i<3;i++)b+='<i class="h'+i+(i<m[0]?' on':'')+'"></i>';
+ return '<div><div class="strl"><span class="bars" aria-hidden="true">'+b+'</span><span class="w">'+m[1]+'</span>'+TO('as live: word and bars'+(st.strTo?' · '+st.strTo:''))+'</div>'+(st.lowNote?'<div class="note mt12">'+S('info',22)+'<p>'+st.lowNote+TO('Q6 proposal')+'</p></div>':'')+'</div>'}
+function note(t,to){return '<div class="note">'+S('info',22)+'<p>'+t+(to?TO(to):'')+'</p></div>'}
+function lvl(k){var l=LV[k],m='';
+ if(l[0]>=0){for(var i=0;i<3;i++)m+='<i'+(i<l[0]?' class="on"':'')+'></i>';m='<span class="mtr" aria-hidden="true">'+m+'</span>'}
+ return '<dd class="lv'+(k==='no'||k==='pre'?' q':'')+'">'+m+'<span>'+l[1]+'</span></dd>'}
+/* one FactorRow; r: {f, lv, v (verdict), a (mine), b (theirs), cav, to} */
+function fr(r,type){var vs=(r.a!==undefined)?' <span class="vs">Vaša: '+r.a+' · '+SIDE1[type]+': '+r.b+'</span>':(r.vs?' <span class="vs">'+r.vs+'</span>':'');
+ return '<div class="fr"><dt>'+r.f+'</dt>'+lvl(r.lv)+'<dd class="val"><b>'+r.v+'</b>'+vs+(r.to?TO(r.to):'')+'</dd>'+(r.cav?'<dd class="cav">'+S('info',16)+'<span>'+r.cav+'</span></dd>':'')+'</div>'}
+/* the photo row in a given variant */
+function photoRow(vis,sim){
+ if(vis.band){var lv=BANDLV[vis.band];
+  if(sim==='pct')return {f:'Fotografije',lv:lv,v:C.pct(vis.pct),cav:C.cavB(vis.pct),to:'Q2 B: V '+(vis.pct/100).toFixed(2)+' (needs CHANGE b)'};
+  return {f:'Fotografije',lv:lv,v:C.band[vis.band],cav:C.cavA,to:'Q2 A: band '+vis.band+' (as live)'}}
+ if(vis.none==='low')return {f:'Fotografije',lv:'no',v:C.low,to:'V &lt; 0.25: needs CHANGE a'};
+ return {f:'Fotografije',lv:'no',v:C.nocmp,vs:C.nocmpWhy,to:'no V: v2 score (C8 fallback)'}}
+function why(st){var id=uid('w'),rows=[],chipFirst=st.chip&&st.chip.lv==='dec';
+ if(chipFirst)rows.push(st.chip);
+ rows.push(photoRow(st.vis,VAR.sim));
+ rows=rows.concat(st.rows);
+ if(!chipFirst)rows.push(st.chip||{f:'Čip',lv:'no',v:'Ni ujemanja po čipu.'});
+ return '<section class="why" aria-labelledby="'+id+'"><h2 id="'+id+'">'+C.whyH+'</h2><p class="intro">'+C.whyIntro+TO('replaces the reason list and the facts table (Q3)')+'</p><dl class="fl">'+rows.map(function(r){return fr(r,st.type)}).join('')+'</dl></section>'}
+/* AI panel; returns '' when there is nothing AI to show */
+function aiVal(x){if(!x)return '';if(!x[0])return '<span class="na">'+C.unsure+'</span> <span class="pc">'+x[1]+NB+'%</span>';return x[0]+' <span class="pc">· '+x[1]+NB+'%</span>'}
+function aip(st,v,o){o=o||{};var mine=st.ai.mine,both=VAR.ai==='both',theirs=both?st.ai.theirs:null;
+ if(!mine&&!theirs)return '';
+ var id=uid('a');
+ if(v==='mobile'&&!o.open)return '<div><button type="button" class="aipc" aria-expanded="false">'+S('sparkle',20,'sp1')+'<span class="grow">'+C.aiH+'</span>'+S('caret',20)+'</button>'+TO('Q5: closed on phone width')+'</div>';
+ var rows=[['Vrsta','species'],['Pasma','breed'],['Barva','colours']],b='';
+ rows.forEach(function(r,i){b+='<tr><th scope="row">'+r[0]+'</th>';
+  if(mine)b+='<td>'+aiVal(mine[r[1]])+'</td>';else if(i===0)b+='<td rowspan="3" class="na">'+C.noAi+'</td>';
+  if(both){if(theirs)b+='<td>'+aiVal(theirs[r[1]])+'</td>';else if(i===0)b+='<td rowspan="3" class="na">'+C.noAi+'</td>'}
+  else b+='<td class="pub">'+st.ai.pub[r[1]]+'</td>';
+  b+='</tr>'});
+ var head='<thead><tr><th scope="col"><span class="sr">Podatek</span></th><th scope="col">'+C.mineH+'</th><th scope="col">'+(both?SIDE[st.type]:C.pubH)+'</th></tr></thead>';
+ var foot='<p class="foot">'+S('sparkle',16)+'<span>'+C.aiWrong+(both?'':' '+C.aiOthers)+'</span></p>';
+ var info='<button type="button" class="btn bt" aria-expanded="'+(!!o.info)+'">'+C.how+'</button>';
+ if(o.info)info+='<div class="infob"><p>'+C.howBody+'</p><a class="btn bt" href="#">'+C.privacy+'</a>'+TO('/zasebnost#s8')+'</div>';
+ return '<section class="aip" aria-labelledby="'+id+'"><h2 id="'+id+'">'+S('sparkle',20)+C.aiH+'</h2>'+TO(both?'Q1 A: other column is AI (new use)':'Q1 B: other column is the public report')+'<table>'+head+'<tbody>'+b+'</tbody></table>'+foot+info+'</section>'}
+function acts(){return '<div class="act"><button type="button" class="btn btn-lg b1 block">To je moja žival</button><button type="button" class="btn bt block">Ni moja žival</button><div class="more"><button type="button" class="btn bt" aria-haspopup="menu">'+S('dots',20)+'Več možnosti</button>'+TO('as live: MoreMenu → Prijavi zlorabo')+'</div></div>'}
+function hdrD(){return '<header class="hdr">'+LOGO+'<nav class="navl" aria-label="Glavni meni"><a href="#">Zemljevid</a><a href="#">Izgubljene</a><a href="#">Najdene</a><a href="#" aria-current="page">Moje živali</a></nav><span class="sp"></span><span class="lang"><u>SL</u><span>/</span><span>EN</span></span><button class="iconbtn" type="button" aria-label="Sporočila in obvestila">'+S('bell',24)+'</button><button class="iconbtn av" type="button" aria-label="Moj račun">PB</button><a class="btn btn-sm b2" href="#">Prijavi</a></header>'}
+function hdrM(){return '<header class="whdr">'+LOGO+'<span class="sp"></span><button class="iconbtn" type="button" aria-label="Sporočila in obvestila">'+S('bell',24)+'</button><button class="iconbtn" type="button" aria-label="Meni">'+S('menu',24)+'</button></header>'}
+var FOOT='<footer class="ffoot"><a href="#">Zasebnost</a><a href="#">Pogoji uporabe</a><a href="#">Nastavitve piškotkov</a><a href="#">Dostopnost</a></footer>';
+/* the whole review screen */
+function page(v,st,o){o=o||{};var d=v==='desktop';
+ var head=(d?hdrD():hdrM())+'<div class="'+(d?'pgd':'pgm')+'"><p class="crumb"><a href="#">'+S('back',18)+'Predlogi za Meda</a></p><h1 class="'+(d?'h1d':'h1m')+'">Predlog ujemanja</h1><p class="sub">'+SIDE[st.type]+' · Hk3vT9qP · '+st.when+'</p>';
+ var left=(d?cmpD(st):cmpM(st))+pair(st)+aip(st,v,o);
+ var right=strl(st)+why(st)+(st.note?note(st.note,'as live: caveat note'):'')+acts();
+ if(d)return head+'<div class="rv2"><div class="col">'+left+'</div><div class="col">'+right+'</div></div></div>'+FOOT;
+ return head+'<div class="col mt16">'+left+right+'</div></div>'+FOOT}
+
+/* ---------- sample states ---------- */
+var AI_MINE={species:['pes',98],breed:['labradorec',81],colours:['črna',93]};
+function stMain(){return {strength:'good',type:'found',when:'18. 10. ob 8.30',
+ photos:{mine:{n:3,cur:1,l:'Medo, od strani',t:'--chart-1'},theirs:{n:2,cur:0,l:'črn pes na travniku',t:'--chart-4'}},
+ vis:{band:'very_similar',pct:85},
+ ai:{mine:AI_MINE,theirs:{species:['pes',97],breed:['labradorec',64],colours:['črna',90]},pub:{species:'pes',breed:'ni navedena',colours:'črna'}},
+ rows:[
+  {f:'Vrsta',lv:'pre',v:'Ujema se.',a:'pes',b:'pes'},
+  {f:'Velikost',lv:'mid',v:'Podobna.',a:'velika',b:'srednja'},
+  {f:'Barva',lv:'hi',v:'Ujema se.',a:'črna',b:'črna'},
+  {f:'Spol',lv:'no',v:'Ni podatka.',a:'samec',b:'ni navedeno'},
+  {f:'Vzorec',lv:'hi',v:'Ujema se.',a:'enobarvna',b:'enobarvna'},
+  {f:'Razdalja',lv:'mid',v:'1 do 3 km.',a:'Bežigrad',b:'Šiška'},
+  {f:'Čas med prijavama',lv:'hi',v:'Manj kot 24 ur.',a:'17. 10. ob 14.10',b:'18. 10. ob 8.30'}]}}
+function stOld(){var s=stMain();s.strength='possible';s.strTo='v2 score 0.648';s.vis={none:'nocmp'};s.ai={mine:null,theirs:null,pub:s.ai.pub};
+ s.photos.mine.cur=0;return s}
+function stOne(which){var s=stMain();s.vis={none:'nocmp'};s.strength='possible';s.strTo='v2 score';
+ if(which==='mine')s.ai.theirs=null;else s.ai.mine=null;return s}
+function stChip(type){var s=stMain();s.strength='strong';s.type=type;s.when='19. 10. ob 7.45';
+ s.chip={f:'Čip',lv:'dec',v:'Ista številka čipa.',to:type==='found'?'reason chip':'reason chip_sighting'};
+ s.vis={band:'some',pct:41};
+ s.photos.theirs={n:1,cur:0,l:'pes v zavetišču',t:'--chart-2'};
+ s.ai.theirs={species:['pes',96],breed:['',48],colours:['črna',71]};s.ai.pub={species:'pes',breed:'labradorec',colours:'črna, rjava'};
+ s.rows=[
+  {f:'Vrsta',lv:'pre',v:'Ujema se.',a:'pes',b:'pes'},
+  {f:'Velikost',lv:'hi',v:'Ujema se.',a:'velika',b:'velika'},
+  {f:'Barva',lv:'mid',v:'Delno se ujema.',a:'črna',b:'črna, rjava'},
+  {f:'Spol',lv:'hi',v:'Ujema se.',a:'samec',b:'samec'},
+  {f:'Vzorec',lv:'no',v:'Ni podatka.',a:'enobarvna',b:'ni navedeno'},
+  {f:'Razdalja',lv:'lo',v:'3 do 10 km.',a:'Bežigrad',b:'Črnuče'},
+  {f:'Čas med prijavama',lv:'hi',v:'1 do 3 dni.',a:'17. 10. ob 14.10',b:'19. 10. ob 7.45'}];
+ if(type==='sighted')s.note=C.sighted;
+ return s}
+function stLow(k){var s=stMain();s.strength='possible';
+ if(k==='few'){s.strTo='v2 0.504';s.lowNote=C.lowFew;s.vis={none:'low'};s.when='17. 10. ob 20.15';
+  s.photos.theirs={n:1,cur:0,l:'temen pes ponoči',t:'--chart-5'};
+  s.ai.theirs={species:['pes',91],breed:['',38],colours:['črna',66]};s.ai.pub={species:'pes',breed:'ni navedena',colours:'črna'};
+  s.rows=[
+   {f:'Vrsta',lv:'pre',v:'Ujema se.',a:'pes',b:'pes'},
+   {f:'Velikost',lv:'no',v:'Ni podatka.',a:'velika',b:'ni navedeno'},
+   {f:'Barva',lv:'hi',v:'Ujema se.',a:'črna',b:'črna'},
+   {f:'Spol',lv:'no',v:'Ni podatka.',a:'samec',b:'ni navedeno'},
+   {f:'Vzorec',lv:'no',v:'Ni podatka.',a:'enobarvna',b:'ni navedeno'},
+   {f:'Razdalja',lv:'mid',v:'1 do 3 km.',a:'Bežigrad',b:'Šiška'},
+   {f:'Čas med prijavama',lv:'hi',v:'Manj kot 24 ur.',a:'17. 10. ob 14.10',b:'17. 10. ob 20.15'}];
+  return s}
+ s.strTo='capped: no geo-time fit';s.lowNote=C.lowPhoto;s.vis={band:'very_similar',pct:88};s.when='19. 10. ob 10.00';
+ s.photos.theirs={n:2,cur:1,l:'črn pes v Kamniku',t:'--chart-3'};
+ s.ai.theirs={species:['pes',98],breed:['labradorec',77],colours:['črna',95]};s.ai.pub={species:'pes',breed:'ni navedena',colours:'črna'};
+ s.rows=[
+  {f:'Vrsta',lv:'pre',v:'Ujema se.',a:'pes',b:'pes'},
+  {f:'Velikost',lv:'no',v:'Razlikuje se.',a:'velika',b:'majhna',to:'veto lifted by V ≥ 0.8'},
+  {f:'Barva',lv:'hi',v:'Ujema se.',a:'črna',b:'črna'},
+  {f:'Spol',lv:'no',v:'Ni podatka.',a:'samec',b:'ni navedeno'},
+  {f:'Vzorec',lv:'hi',v:'Ujema se.',a:'enobarvna',b:'enobarvna'},
+  {f:'Razdalja',lv:'no',v:'Več kot 10 km.',a:'Bežigrad',b:'Kamnik'},
+  {f:'Čas med prijavama',lv:'hi',v:'1 do 3 dni.',a:'17. 10. ob 14.10',b:'19. 10. ob 10.00'}];
+ return s}
+
+/* ---------- frames ---------- */
+var F=[
+{id:'f1',title:'Full match: breakdown, photo similarity, AI panel',sub:'A good match with a very similar photo pair. Desktop: AI panel open under the photos. Phone: closed row (Q5).',
+ render:function(v){return page(v,stMain())},
+ notes:function(){return ['Built on the review screen as live after TASK-43.4: comparison, strength word and bars, caveat notes, "To je moja žival" and "Ni moja žival", "Prijavi zlorabo" in the overflow below the actions. <b>New:</b> "Zakaj ta predlog?" (replacing the reason list and the facts table, Q3) and the AI panel under the photos.',
+ '<b>Every factor, fixed order:</b> Fotografije, Vrsta, Velikost, Barva, Spol, Vzorec, Razdalja, Čas med prijavama, then Čip (first instead when it matches, F5). Each row: verdict and both values, and the strength as a word with a meter (Q4). The word carries the meaning; the meter is hidden from screen readers.',
+ '<b>Photo row:</b> the live three-band line and its caveat, now as the first row. Q2 switches it to the percentage; the caveat stays right under it in both.',
+ '<b>Distance</b> only as the band with both area names (C8: no exact data). <b>Time</b>: the band as text and both times, which are on the screen anyway.',
+ 'Sample scores (C8 v3, placeholder values): about 0.71, good; geo-time fit (1 to 3 km, under 24 h), so V can raise the strength.',
+ 'Who sees it: only the lost report\'s managers, like every reason today (C8 §Who sees what). The finder sees none of this.']}},
+{id:'f2',title:'AI panel: what the AI saw on each photo',sub:'Same match. Phone width with the panel open. Second state: "Kako to deluje?" open.',
+ states:[['open','Panel open'],['info','"Kako to deluje?" open']],
+ render:function(v,s){return page(v,stMain(),{open:true,info:s==='info'})},
+ notes:function(s){if(s==='info')return ['"Kako to deluje?" opens inline (a disclosure with <code>aria-expanded</code>) on both widths, with the privacy link to <code>/zasebnost#s8</code>. The text is a privacy claim (wavy underline): owner and lawyer confirm it before release, together with chapter 8 of the privacy policy (CHANGE g).',
+  'It says plainly that the model does not know whether it is the same animal.'];
+  return ['<b>Per photo on screen:</b> the C19 result of the photo shown on each side (the most similar pair first). Picking another thumbnail or toggling switches that column. Rows Vrsta, Pasma, Barva, each with a whole percentage, as in the pre-fill (owner, 2026-10-19). Below 0.6: "ni zanesljivo" with the number.',
+  '<b>Clean results only</b> (C19: dog or cat, no prominent person, not nsfw). The flags themselves are never shown.',
+  '<b>Q1 A (both):</b> the other column is the AI on the finder\'s photo. In the sample the finder gave no breed and the AI says "labradorec · 64 %": new information about their report. That is the privacy question.',
+  '<b>Q1 B (mine only):</b> the other column shows what the finder published, without percentages, and the footer says we do not show AI data for other people\'s photos. Nothing beyond the public report (AC 5).',
+  'Always marked: sparkle, "Predlogi umetne inteligence se lahko motijo." The panel never changes the score or the verdict buttons.',
+  'Table semantics: column headers for the two photos, row headers for the attributes; the empty corner cell has a hidden label.']}},
+{id:'f3',title:'Old photos: no vectors, no comparison',sub:'Both reports have only photos from before the AI switch-on (ai.photos_since), so there are no AI results and no vectors.',
+ render:function(v){return page(v,stOld())},
+ notes:function(){return ['<b>No V:</b> photos without a clean AI result are never embedded (C20), so the pair scores with the v2 attributes (C8 fallback): here possible. Same when the embedder is off or the similarity query failed.',
+ '<b>Photo row:</b> "Teh fotografij ne moremo primerjati." with a general reason. No pair label; the photos keep the API order.',
+ '<b>AI panel left out</b>: there is nothing AI to show on either side.',
+ '<b>Contract gap:</b> today "not compared" and "compared, below 0.25" both give no visual reason, so the screen cannot tell F3 from F6 "Malo podatkov". CHANGE a fixes this for either Q2 answer.',
+ 'The rest of the screen is as in F1.']}},
+{id:'f4',title:'Only one side has AI data',sub:'One report has a new photo with an AI result, the other only old ones. Similarity needs vectors on both sides.',
+ states:[['mine','Only my photo'],['theirs','Only their photo']],
+ render:function(v,s){return page(v,stOne(s),{open:true})},
+ notes:function(s){var a=['<b>No comparison:</b> V needs a vector on both sides, so the photo row reads as in F3 and the v2 score applies.',
+  '<b>Never why:</b> a photo without a result gets the same neutral line ("Za to fotografijo nimamo podatkov umetne inteligence.") whether it is old, was flagged or failed. Nothing about the other photo\'s check leaks.'];
+  if(s==='theirs')return a.concat(['Q1 A: only the finder\'s column has AI values; your column says there is no AI data.','Q1 B: nothing AI is left to show, so the panel is left out (switch Q1 to see it).','Adding a new photo to your report would get it checked and compared on the next match run (C8 §Visual similarity 5).']);
+  return a.concat(['Your column has the AI result of your new photo. Q1 A: the finder\'s column says there is no AI data. Q1 B: it shows their public values as usual.'])}},
+{id:'f5',title:'Chip match',sub:'Same chip number: always strong (C8). Second state: the chip match is a sighting.',
+ states:[['found','Found'],['sighted','Sighting']],
+ render:function(v,s){return page(v,stChip(s))},
+ notes:function(s){var a=['<b>Chip row first</b>, "Ista številka čipa." · odločilno. The match is strong whatever the other rows say (C8); they stay as information, so a differing colour is still visible ("Delno se ujema").',
+  'Chip numbers are never shown, on either side.',
+  'The visual reason is still written for V of 0.25 or more (C8 §Visual similarity 3): here "nekoliko podobni" (41 % in B).',
+  'AI panel, Q1 A: the finder\'s photo gives a breed below 0.6, so "ni zanesljivo · 48 %".'];
+  if(s==='sighted')return a.concat(['<b>Sighting:</b> reason <code>chip_sighting</code> instead of <code>chip</code>. The live caveat note "Žival je bila samo opažena, zato je morda že drugje." shows above the actions, and the side reads "Opažena".']);
+  return a}},
+{id:'f6',title:'Weak match',sub:'Possible matches that rest on little. Two causes: few known attributes, or mainly the photos.',
+ states:[['few','Few attributes'],['photo','Mainly the photos']],
+ render:function(v,s){return page(v,stLow(s))},
+ notes:function(s){if(s==='photo')return ['<b>FR-014 case:</b> the descriptions differ (size two steps apart) but the photos agree, V 0.88. V of 0.8 or more lifts the size veto; 15 km away is no geo-time fit, so the strength is capped at possible (C8 §Visual similarity 3).',
+  'The note under the strength (Q6) says why: mainly the photos, some data differs, found far away. The rows show it too: Velikost "Razlikuje se", Razdalja "ne šteje".',
+  'This is where the Q2 percentage could mislead most: "88 %" next to "Možno ujemanje".'];
+  return ['Only the colour is known on both sides, 1 to 3 km, the same day: v2 score about 0.50, possible (C8 example "same colour only, 2 km").',
+  'Most rows read "Ni podatka." · ne šteje, so the person can see how thin the evidence is. One neutral note under the strength (Q6).',
+  'Photo row: the pair was compared and V is below 0.25, so there is no visual reason: "Podobnosti med fotografijama ne vidimo." Needs CHANGE a; without it this row would have to read as in F3.']}}
+];
+
+/* ---------- Q2 sheet: the photo row in both variants ---------- */
+function sheet(){var rows=[{band:'very_similar',pct:85},{band:'similar',pct:62},{band:'some',pct:31},{none:'low'},{none:'nocmp'}];
+ function card(sim,t,d){return '<div class="vcard"><h3>'+t+'</h3><p>'+d+'</p><div class="dev" lang="sl"><dl class="fl">'+rows.map(function(x){return fr(photoRow(x,sim),'found')}).join('')+'</dl></div></div>'}
+ return card('bands','A · Three bands (as live)','V 0.8 or more, 0.5 or more, 0.25 or more; no number.')+card('pct','B · Percentage','Whole percent of V (needs CHANGE b). Same strength words.')}
+
+/* ---------- build ---------- */
+var host=document.getElementById('frames'),idx=document.getElementById('findex');
+document.getElementById('vsheet').innerHTML=sheet();
+F.forEach(function(f,i){f.n=i+1;
+ var li=document.createElement('li');li.innerHTML='<a href="#'+f.id+'">F'+f.n+' '+f.title.split(':')[0]+'</a>';idx.appendChild(li);
+ var segS='';if(f.states){segS='<div class="seg" role="group" aria-label="State" data-key="state">';f.states.forEach(function(s,j){segS+='<button type="button" data-v="'+s[0]+'" aria-pressed="'+(j===0)+'">'+s[1]+'</button>'});segS+='</div>'}
+ var sec=document.createElement('section');sec.className='frame';sec.id=f.id;sec.dataset.view='mobile';sec.dataset.fit='fit';if(f.states)sec.dataset.state=f.states[0][0];sec.setAttribute('aria-labelledby',f.id+'-t');
+ sec.innerHTML='<div class="bar"><h3 class="ttl" id="'+f.id+'-t">F'+f.n+' '+f.title+'<small>'+f.sub+'</small></h3>'+segS
+  +'<div class="seg" role="group" aria-label="Viewport" data-key="view"><button type="button" data-v="desktop" aria-pressed="false">Desktop 1200</button><button type="button" data-v="mobile" aria-pressed="true">Mobile 390</button></div>'
+  +'<button type="button" class="tbtn nofit" aria-pressed="false">Fit to width</button><div class="vts"></div></div>'
+  +'<div class="stage"><div class="vp" data-v="desktop" data-w="1200"><div class="dev" lang="sl"></div></div><div class="vp" data-v="mobile" data-w="390"><div class="dev" lang="sl"></div></div></div>'
+  +'<div class="notes"><ul></ul></div>';
+ host.appendChild(sec);f.el=sec;draw(f)});
+function tags(){return '<span class="vtag">Q2 '+(VAR.sim==='bands'?'A · bands':'B · percentage')+'</span><span class="vtag">Q1 '+(VAR.ai==='both'?'A · both photos':'B · my photo only')+'</span>'}
+function draw(f){var s=f.el.dataset.state;f.el.querySelectorAll('.vp').forEach(function(vp){vp.firstElementChild.innerHTML=f.render(vp.dataset.v,s)});
+ f.el.querySelector('.vts').innerHTML=tags();
+ f.el.querySelector('.notes ul').innerHTML=f.notes(s).map(function(x){return '<li>'+x+'</li>'}).join('')}
+
+/* ---------- controls (as in the earlier wireframes) ---------- */
+var root=document.documentElement;
+function sget(k){try{return localStorage.getItem(k)}catch(e){return null}}function sset(k,v){try{localStorage.setItem(k,v)}catch(e){}}
+var th=sget('wf-theme');if(th==='light'||th==='dark')root.setAttribute('data-theme',th);
+var tb=document.getElementById('theme');
+function label(){tb.textContent='Theme: '+(root.getAttribute('data-theme')||'auto')}
+label();tb.addEventListener('click',function(){var v=root.getAttribute('data-theme');var nx=v===null?'light':v==='light'?'dark':null;if(nx){root.setAttribute('data-theme',nx);sset('wf-theme',nx)}else{root.removeAttribute('data-theme');sset('wf-theme','auto')}label();fitAll()});
+var nt=document.getElementById('notes');nt.addEventListener('change',function(){document.body.classList.toggle('no-notes',!nt.checked);fitAll()});
+function fit(f){var v=f.dataset.view;var vp=f.querySelector('.vp[data-v="'+v+'"]');if(!vp)return;var dev=vp.firstElementChild;var w=+vp.dataset.w;var st=f.querySelector('.stage');var avail=st.clientWidth-24;
+ if(f.dataset.fit==='full'){dev.style.width=w+'px';dev.style.transform='';vp.style.width='';vp.style.height='';return}
+ var s=Math.min(1,avail/w);dev.style.width=w+'px';dev.style.transform='scale('+s+')';vp.style.width=(w*s)+'px';vp.style.height=(dev.offsetHeight*s)+'px'}
+function fitAll(){document.querySelectorAll('.frame').forEach(fit)}
+function setView(f,v){f.dataset.view=v;f.querySelectorAll('.seg[data-key=view] button').forEach(function(x){x.setAttribute('aria-pressed',String(x.dataset.v===v))});fit(f)}
+F.forEach(function(fr0){var f=fr0.el;
+ f.querySelectorAll('.seg[data-key=view] button').forEach(function(b){b.addEventListener('click',function(){setView(f,b.dataset.v)})});
+ f.querySelectorAll('.seg[data-key=state] button').forEach(function(b){b.addEventListener('click',function(){f.dataset.state=b.dataset.v;f.querySelectorAll('.seg[data-key=state] button').forEach(function(x){x.setAttribute('aria-pressed',String(x===b))});draw(fr0);fit(f)})});
+ var nf=f.querySelector('.nofit');nf.addEventListener('click',function(){var full=f.dataset.fit==='full';f.dataset.fit=full?'fit':'full';nf.textContent=full?'Fit to width':'Fit: 100%';nf.setAttribute('aria-pressed',String(!full));fit(f)});
+ if(window.ResizeObserver){f.querySelectorAll('.dev').forEach(function(d){new ResizeObserver(function(){fit(f)}).observe(d)})}
+});
+document.querySelectorAll('#allview button').forEach(function(b){b.addEventListener('click',function(){F.forEach(function(fr0){setView(fr0.el,b.dataset.v)});document.querySelectorAll('#allview button').forEach(function(x){x.setAttribute('aria-pressed',String(x===b))})})});
+function variant(id,key){document.querySelectorAll('#'+id+' button').forEach(function(b){b.addEventListener('click',function(){VAR[key]=b.dataset.v;document.querySelectorAll('#'+id+' button').forEach(function(x){x.setAttribute('aria-pressed',String(x===b))});F.forEach(draw);fitAll()})})}
+variant('v-sim','sim');variant('v-ai','ai');
+window.addEventListener('resize',fitAll);window.addEventListener('load',fitAll);fitAll();
+})();
+</script>
+</body>
+</html>
