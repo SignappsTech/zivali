@@ -88,19 +88,22 @@ for (const [width, colorScheme] of [
 		await expect(page.getByRole('heading', { level: 1 })).toHaveText('Opozorila v bližini');
 		const master = page.getByRole('switch', { name: 'Opozorila o izgubljenih živalih v bližini' });
 		await expect(master).not.toBeChecked();
-		// "Kako vas obvestimo" is a closed section at the end (TASK-114.15): its summary under the title, Enter opens it.
+		// "Kako vas obvestimo" is a section at the end, open by default (owner 2026-10-19); Enter closes it, its summary
+		// shows under the closed title, Space opens it again.
 		const channels = page.getByRole('button', { name: 'Kako vas obvestimo' });
-		await expect(channels).toHaveAttribute('aria-expanded', 'false');
-		await expect(page.getByText('Na telefonu in po e-pošti · Tihi čas 22:00 do 07:00')).toBeVisible();
-		await expect(page.getByRole('switch', { name: 'Sporočila: Po e-pošti' })).toBeHidden();
+		const summary = page.getByText('Na telefonu in po e-pošti · Tihi čas 22:00 do 07:00');
+		await expect(channels).toHaveAttribute('aria-expanded', 'true');
+		await expect(page.getByRole('switch', { name: 'Sporočila: Po e-pošti' })).toBeVisible();
+		await expect(summary).toBeHidden();
 		await expect(page.locator('[data-ad-slot]')).toHaveCount(0);
 		await expectNoAxeViolations(page);
 		await channels.press('Enter');
-		await expect(channels).toHaveAttribute('aria-expanded', 'true');
-		await expect(page.getByRole('switch', { name: 'Sporočila: Po e-pošti' })).toBeVisible();
+		await expect(channels).toHaveAttribute('aria-expanded', 'false');
+		await expect(summary).toBeVisible();
+		await expect(page.getByRole('switch', { name: 'Sporočila: Po e-pošti' })).toBeHidden();
 		await expectNoAxeViolations(page);
 		await channels.press('Space');
-		await expect(channels).toHaveAttribute('aria-expanded', 'false');
+		await expect(channels).toHaveAttribute('aria-expanded', 'true');
 
 		// Opt in: the profile's home area, 5 km, dogs and cats.
 		await master.click();
