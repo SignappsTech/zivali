@@ -4,11 +4,12 @@
 // for 24 h (pet photos of deleted pets included), of reports ended 12 months ago, the device hashes of anonymous
 // reports after 7 days (C7 hold rule), ai_calls after 62 days and ai_results no photo has the image of (C19), the email
 // delivery log after 30 days, partner stats snapshots after 90 days, leads and abuse reports after 24 months,
-// moderation flags 12 months after resolution or once their report is gone, and last the reports ended
-// `retention.report_months` ago that no conversation refers to any more. The steps added by TASK-114.33 (records,
-// reports) only count, in a transaction that is rolled back, until app_config `retention.purge_live` is true (the lead
-// sets it after checking the staging counts). `{ dry_run: true }` runs every step that way: the logged counts are exact
-// and nothing changes. Sent with `{ objects }` (DELETE /v1/photos/:id) it deletes just those storage objects.
+// moderation flags 12 months after resolution or once their report is gone, the reports ended
+// `retention.report_months` ago that no conversation refers to any more, and last the anonymous accounts idle for 30
+// days (TASK-28.8: with their Supabase Auth user). The steps added by TASK-114.33 and TASK-28.8 (records, reports,
+// accounts) only count, in a transaction that is rolled back and without calling the Auth admin API, until app_config
+// `retention.purge_live` is true (the lead sets it after checking the staging counts). `{ dry_run: true }` runs every
+// step that way: the logged counts are exact and nothing changes. Sent with `{ objects }` (DELETE /v1/photos/:id) it deletes just those storage objects.
 import { z } from 'zod';
 
 import { AiDomain } from '../domains/ai/index.ts';
@@ -39,13 +40,15 @@ async function purgeEstablished(ctx: Ctx) {
 	return { ...platform, conversations, photos, device_hashes, ...ai };
 }
 
-/** The steps TASK-114.33 added: live only once `retention.purge_live` is true. */
-async function purgeAdded(ctx: Ctx) {
+/** The steps TASK-114.33 and TASK-28.8 added: live only once `retention.purge_live` is true. */
+async function purgeAdded(ctx: Ctx, live: boolean) {
 	const records = await RetentionDomain.purgeRecords(undefined, ctx);
 	// Last, after the chats: matches, conversations and alert deliveries cascade from a report (TASK-6.16), so a report
 	// goes only once no conversation refers to it any more.
 	const reports = await RetentionDomain.purgeReports(undefined, ctx);
-	return { ...records, reports };
+	// `live` false: the Auth users stay (the admin API is not transactional), the rest is rolled back.
+	const anonymous_accounts = await RetentionDomain.purgeAnonymousAccounts({ live }, ctx);
+	return { ...records, reports, anonymous_accounts };
 }
 
 class Rollback extends Error {
@@ -76,11 +79,11 @@ export async function handle(data: unknown, ctx: JobCtx): Promise<void> {
 	const { dry_run = false } = Options.parse(data ?? {});
 	const purge_live = await RetentionDomain.purgeIsLive();
 	const purged = dry_run
-		? await rolledBack(ctx, async (c) => ({ ...(await purgeEstablished(c)), ...(await purgeAdded(c)) }))
+		? await rolledBack(ctx, async (c) => ({ ...(await purgeEstablished(c)), ...(await purgeAdded(c, false)) }))
 		: {
 				...(await purgeEstablished(ctx)),
-				...(purge_live ? await purgeAdded(ctx) : await rolledBack(ctx, purgeAdded)),
+				...(purge_live ? await purgeAdded(ctx, true) : await rolledBack(ctx, (c) => purgeAdded(c, false))),
 			};
-	// Counts only. Without purge_live the records and reports counts are what would go; dry_run: all of them.
+	// Counts only. Without purge_live the records, reports and accounts counts are what would go; dry_run: all of them.
 	ctx.logger.info({ purged, dry_run, purge_live }, 'retention purge done');
 }

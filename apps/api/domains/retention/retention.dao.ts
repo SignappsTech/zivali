@@ -1,4 +1,5 @@
-// Prisma access for the retention.purge windows no other area owns (data-inventory.json), in batches (lib/purge.ts).
+// Prisma access for the retention.purge windows no other area owns (data-inventory.json), in batches (lib/purge.ts),
+// and the idle anonymous accounts.
 import { Prisma } from '../../generated/client.ts';
 import { purgeWhere } from '../../lib/purge.ts';
 
@@ -40,6 +41,55 @@ export const purgeReports = (endedBefore: Date, tx?: Tx) =>
 		tx
 	);
 
+/**
+ * An anonymous account idle since before `before` (privacy policy §14, ADR-005): created before it; no report it made
+ * or manages is open, or ended after it (the finder's private link works until close, C7); it is in no chat (read
+ * only for 6 months after closing, C9: the account waits for the chat purge); and Supabase Auth does not say it was
+ * converted to a full account (no auth user left is a retry after a crash).
+ */
+const idleAnonymous = (before: Date) => Prisma.sql`profiles.is_anonymous and profiles.created_at < ${before}
+	and not exists (select 1 from app.conversation_participants cp where cp.user_id = profiles.id)
+	and not exists (
+		select 1 from app.reports r
+		where (r.created_by = profiles.id
+			or exists (select 1 from app.report_managers m where m.report_id = r.id and m.user_id = profiles.id))
+		and not ((r.status = 'closed' and r.closed_at < ${before}) or (r.status = 'reunited' and r.reunited_at < ${before})))
+	and not exists (select 1 from auth.users u where u.id = profiles.id and u.is_anonymous is not true)`;
+
+/**
+ * Locks up to `limit` idle anonymous accounts (skipping rows a request holds) and returns those still idle once
+ * locked: the first statement's snapshot predates its locks, and the locks keep new reports, chats and photos off
+ * these accounts until commit.
+ */
+export async function lockIdleAnonymous(before: Date, limit: number, tx: Tx): Promise<string[]> {
+	const locked = await tx.$queryRaw<{ id: string }[]>`
+		select id from app.profiles where ${idleAnonymous(before)}
+		order by created_at limit ${limit} for update skip locked`;
+	if (!locked.length) return [];
+	const ids = locked.map((r) => r.id);
+	const idle = await tx.$queryRaw<{ id: string }[]>`
+		select id from app.profiles where id = any(${ids}::uuid[]) and ${idleAnonymous(before)}`;
+	return idle.map((r) => r.id);
+}
+
+/** The photos of accounts about to go, returned for their storage deletes (the profile cascade would orphan them). */
+export const removeOwnedPhotos = (ownerIds: string[], tx: Tx) =>
+	tx.$queryRaw<
+		{
+			id: string;
+			owner_id: string;
+			report_id: string | null;
+			public_display_url: string | null;
+			public_thumb_url: string | null;
+		}[]
+	>`
+		delete from app.photos where owner_id = any(${ownerIds}::uuid[])
+		returning id, owner_id, report_id, public_display_url, public_thumb_url`;
+
+/** Their reports stay (created_by is set null); managers, alerts, notifications and the rest cascade. */
+export const deleteProfiles = async (ids: string[], tx: Tx) =>
+	(await tx.profiles.deleteMany({ where: { id: { in: ids } } })).count;
+
 export default {
 	purgeEmailOutbox,
 	purgePartnerStats,
@@ -47,4 +97,7 @@ export default {
 	purgeAbuseReports,
 	purgeModerationFlags,
 	purgeReports,
+	lockIdleAnonymous,
+	removeOwnedPhotos,
+	deleteProfiles,
 };

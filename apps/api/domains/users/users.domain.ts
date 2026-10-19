@@ -79,4 +79,19 @@ async function syncAuthLocale(id: string, locale: Locale): Promise<void> {
 	}
 }
 
-export default { ensureProfile, getMe, updateMe };
+/**
+ * Deletes the Supabase Auth user (admin API); one already gone counts as deleted, so a retry after a crash goes
+ * through. Throws on any other failure. The app rows are the caller's (profiles has no foreign key into `auth`).
+ */
+export async function deleteAuthUser(id: string): Promise<void> {
+	const key = config.SUPABASE_SECRET_KEY;
+	if (!key) throw new Error('SUPABASE_SECRET_KEY is not set: auth users cannot be deleted');
+	const res = await fetch(`${config.SUPABASE_URL}/auth/v1/admin/users/${encodeURIComponent(id)}`, {
+		method: 'DELETE',
+		headers: { apikey: key, Authorization: `Bearer ${key}` },
+		signal: AbortSignal.timeout(10_000),
+	});
+	if (!res.ok && res.status !== 404) throw new Error(`auth user delete failed: HTTP ${res.status}`);
+}
+
+export default { ensureProfile, getMe, updateMe, deleteAuthUser };
