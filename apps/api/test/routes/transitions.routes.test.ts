@@ -374,4 +374,28 @@ describe('side effects', () => {
 			await prisma.audit_log.findMany({ where: { target_id: found.id }, select: { action: true, diff: true } })
 		).toEqual([{ action: 'report.close', diff: { from: 'open', reason: 'other' } }]);
 	});
+
+	it('queues photo.publish with every status change, the reunited counterpart too; extend queues nothing (CH-191)', async () => {
+		const publishes = async (r: Report) =>
+			(
+				await prisma.$queryRaw<{ n: number }[]>`
+					select count(*)::int as n from pgboss.job where name = 'photo.publish' and data->>'report_id' = ${r.id}`
+			)[0]!.n;
+		const lost = await report(owner, 'lost');
+		const found = await report(finder, 'found');
+		// Expired: its photos were taken down, so the reopen must publish them again.
+		await set(lost, { status: 'closed', close_reason: 'expired', closed_at: new Date() });
+		expect((await transition(owner, lost.short_code, { action: 'reopen' })).status).toBe(200);
+		expect(await publishes(lost)).toBe(1);
+		expect((await transition(owner, lost.short_code, { action: 'extend' })).status).toBe(200);
+		expect(await publishes(lost)).toBe(1);
+		expect((await transition(owner, lost.short_code, { action: 'close', reason: 'other' })).status).toBe(200);
+		expect(await publishes(lost)).toBe(2);
+		expect((await transition(owner, lost.short_code, { action: 'reopen' })).status).toBe(200);
+		const confirmed = await match(lost, found);
+		await MatchReviewDomain.confirmMatch({ id: confirmed.id }, userCtx(owner.actor));
+		expect((await transition(owner, lost.short_code, { action: 'mark_reunited' })).status).toBe(200);
+		expect((await row(found)).status).toBe('reunited');
+		expect([await publishes(lost), await publishes(found)]).toEqual([4, 1]);
+	});
 });

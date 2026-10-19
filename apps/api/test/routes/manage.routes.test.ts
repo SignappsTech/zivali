@@ -296,7 +296,8 @@ describe('submission guard (C7)', () => {
 				(await prisma.moderation_flags.findFirstOrThrow({ where: { target_id: created.body.id } })).details
 			).toEqual({ reasons: ['photo_match'] });
 			expect((await prisma.photos.findUniqueOrThrow({ where: { id: fresh } })).status).not.toBe('published');
-			expect(await publishJobs(created.body.id)).toBe(before);
+			// The hold is a visibility change: photo.publish takes the report's public copies down (CH-191).
+			expect(await publishJobs(created.body.id)).toBe(before + 1);
 		}
 	});
 

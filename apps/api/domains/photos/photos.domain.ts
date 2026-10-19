@@ -187,7 +187,7 @@ export async function processPhoto(input: { photo_id: string }, ctx: Ctx): Promi
 			// Conditional: a DELETE that raced this job removed the row, and its variants are ours to remove.
 			if (!(await PhotosDao.settle(photo.id, { status: 'accepted', width, height }, tx))) return false;
 			for (const queue of PHOTO_HOOKS) await ctx.jobs.send(queue, { photo_id: photo.id }, { tx });
-			if (photo.report_id) await ctx.jobs.send('photo.publish', { report_id: photo.report_id }, { tx });
+			if (photo.report_id) await ReportsDomain.queuePhotoPublish({ report_id: photo.report_id }, { ...ctx, tx });
 			return true;
 		});
 		if (!accepted) {

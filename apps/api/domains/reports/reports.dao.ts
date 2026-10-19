@@ -244,6 +244,32 @@ export async function blurEnded(
 			limit ${take} for update skip locked)`;
 }
 
+/**
+ * report.lifecycle: up to `take` reports (by id, after `after`) whose 30-day public window after a close or reunite
+ * (C4) ended before `endedBefore` and that still have a published photo, for photo.publish to take down.
+ */
+export async function listPublicWindowEnded(
+	input: { endedBefore: Date; after?: string; take: number },
+	tx?: Prisma.TransactionClient
+): Promise<string[]> {
+	const db = tx ?? prisma;
+	const ended = { lt: input.endedBefore };
+	const rows = await db.reports.findMany({
+		where: {
+			...(input.after && { id: { gt: input.after } }),
+			OR: [
+				{ status: 'closed', closed_at: ended },
+				{ status: 'reunited', reunited_at: ended },
+			],
+			photos: { some: { status: 'published' } },
+		},
+		orderBy: { id: 'asc' },
+		take: input.take,
+		select: { id: true },
+	});
+	return rows.map((row) => row.id);
+}
+
 /** Adds the manager; an existing manager row stays as it is (a repeated manage-link claim). */
 export async function addManager(
 	data: { report_id: string; user_id: string; role: 'owner' | 'finder' | 'staff' },
@@ -552,6 +578,7 @@ export default {
 	claimExpiryWarnings,
 	expireIdle,
 	blurEnded,
+	listPublicWindowEnded,
 	addManager,
 	addContact,
 	getContactEmail,

@@ -18,6 +18,7 @@ import { AppError } from '../../lib/errors.ts';
 import { prisma, type Prisma } from '../../prisma/prisma.ts';
 import { NotificationsDomain } from '../notifications/index.ts';
 import { AuditDao } from '../platform/index.ts';
+import { ReportsDomain } from '../reports/index.ts';
 import AbuseDao from './abuse.dao.ts';
 
 const DAY_MS = 86_400_000;
@@ -68,7 +69,7 @@ async function autoHide(report_id: string, ctx: Ctx, tx: Prisma.TransactionClien
 		{ kind: 'auto_hidden', target_type: 'report', target_id: report_id, details: { weight, threshold } },
 		tx
 	);
-	await ctx.jobs.send('photo.publish', { report_id }, { tx });
+	await ReportsDomain.queuePhotoPublish({ report_id }, { ...ctx, tx });
 	const payload = { template: 'report_hidden', report_id } as const;
 	for (const user_id of await AbuseDao.managerIds(report_id, tx))
 		await NotificationsDomain.enqueueNotification({ user_id, type: 'report_hidden', payload }, { ...ctx, tx });
@@ -113,7 +114,7 @@ export async function restoreReport(input: { id: string; note?: string }, ctx: C
 		const target = { target_type: 'report', target_id: input.id };
 		const dismissed = await AbuseDao.dismissOpen(target.target_type, target.target_id, tx);
 		await AbuseDao.resolveFlags({ kind: 'auto_hidden', ...target }, ctx.now, tx);
-		await ctx.jobs.send('photo.publish', { report_id: input.id }, { tx });
+		await ReportsDomain.queuePhotoPublish({ report_id: input.id }, { ...ctx, tx });
 		await AuditDao.write(tx, {
 			actor_id: actorId(ctx),
 			action: 'report.restore',

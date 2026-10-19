@@ -45,7 +45,7 @@ const BASE58 = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
 const SHORT_CODE_ATTEMPTS = 5;
 const DAY_MS = 24 * 3600 * 1000;
 /** Closed or reunited reports stay public this long (C4 ReportSearch include_closed: closed ≤ 30 days). */
-const CLOSED_PUBLIC_MS = 30 * DAY_MS;
+export const CLOSED_PUBLIC_MS = 30 * DAY_MS;
 /** event_at may run this far ahead of the server clock; older than OLD_EVENT_MS is accepted with OLD_EVENT (C4). */
 const FUTURE_SKEW_MS = 10 * 60 * 1000;
 const OLD_EVENT_MS = 30 * DAY_MS;
@@ -259,6 +259,20 @@ async function setPhotos(
 }
 
 /**
+ * photo.publish { report_id } (C5) with the write's transaction, so it exists only if the write commits. The one call
+ * every write makes that changes a report's visibility or photos: create, PATCH photo_ids (and the hold it may cause),
+ * release, close, reunite, reopen, expiry, the end of the 30-day public window, abuse hide and restore, an accepted
+ * photo on a report, and the moderation hold, hide and remove (TASK-62). The job publishes or takes down the public
+ * copies to match the report's state, so a repeat is harmless.
+ */
+export async function queuePhotoPublish(
+	input: { report_id: string },
+	ctx: Ctx & { tx: Prisma.TransactionClient }
+): Promise<void> {
+	await ctx.jobs.send('photo.publish', { report_id: input.report_id }, { tx: ctx.tx });
+}
+
+/**
  * Jobs with ids-only payloads, sent with the transaction so they exist only if the write commits. match.report and
  * alerts.fanout are idempotent, so a repeat (release, a moved point) is safe. Nearby alerts only for visible lost reports.
  */
@@ -364,7 +378,8 @@ export async function createReport(submitted: SubmitInput, ctx: Ctx): Promise<Cr
 		if (hold_reasons.length) await ReportsDao.flagHeld(id, hold_reasons, tx);
 		const report = { id, type: fields.type, moderation_state };
 		await setPhotos(report, photo_ids, actor, ctx, tx);
-		await sendJobs(report, ['photo.publish', 'match.report', 'alerts.fanout'], ctx, tx);
+		await queuePhotoPublish({ report_id: id }, { ...ctx, tx });
+		await sendJobs(report, ['match.report', 'alerts.fanout'], ctx, tx);
 		return { id, short_code, moderation_state, ...(manage && { manage_token: manage.token }), warnings };
 	}).catch(async (err: unknown) => {
 		// The same submission committed meanwhile (a retry after the key's 60 s stale window, C1): the unique index
@@ -395,8 +410,9 @@ export type ManagerView = ReportView & { manager_role: ReportManagerRole };
 
 /**
  * PATCH /v1/reports/:code (C4): managers only; removed, closed and reunited reports are GONE. A moved point is
- * coarsened anew (updateReportLocation); a moved point or a changed matching input re-runs match.report, a moved
- * point of a visible lost report alerts.fanout, new photos photo.publish.
+ * coarsened anew (updateReportLocation); a moved point or a changed matching input (MATCH_INPUTS) re-runs
+ * match.report, a moved point of a visible lost report alerts.fanout, photo_ids (and the hold they may cause)
+ * photo.publish. Any other field queues nothing.
  */
 export async function updateReport(input: UpdateInput, ctx: Ctx): Promise<ManagerView> {
 	const actor = signedIn(ctx);
@@ -436,8 +452,9 @@ export async function updateReport(input: UpdateInput, ctx: Ctx): Promise<Manage
 		);
 		await ReportsDao.updateReport(report.id, data, tx);
 		const moved = await updateReportLocation({ id: report.id, location, requested_radius_m }, { ...ctx, tx });
+		// A held report is not public: photo.publish then takes its public copies down.
+		if (photo_ids) await queuePhotoPublish({ report_id: report.id }, { ...ctx, tx });
 		const queues: QueueName[] = [
-			...(photo_ids && !hold ? (['photo.publish'] as const) : []),
 			...(moved || rematch ? (['match.report'] as const) : []),
 			...(moved ? (['alerts.fanout'] as const) : []),
 		];
@@ -457,7 +474,8 @@ export async function releaseReport(input: { id: string }, ctx: Ctx): Promise<vo
 		const type = await ReportsDao.releaseHeld(input.id, tx);
 		if (!type) throw new AppError('CONFLICT', 'Report is not held');
 		const report = { id: input.id, type, moderation_state: 'visible' as const };
-		await sendJobs(report, ['photo.publish', 'match.report', 'alerts.fanout'], ctx, tx);
+		await queuePhotoPublish({ report_id: input.id }, { ...ctx, tx });
+		await sendJobs(report, ['match.report', 'alerts.fanout'], ctx, tx);
 	});
 }
 
@@ -545,6 +563,7 @@ export default {
 	createReport,
 	updateReport,
 	releaseReport,
+	queuePhotoPublish,
 	purgeDeviceHashes,
 	notPublicReason,
 	getReport,

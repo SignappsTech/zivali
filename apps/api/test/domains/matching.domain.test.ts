@@ -450,6 +450,37 @@ describe('idempotent suggestions and notifications (AC#1, AC#5)', () => {
 		expect(await notifications(match!.id)).toHaveLength(1);
 	});
 
+	it('re-runs after a PATCH of a matching input on either side without notifying the pair again (CH-180)', async () => {
+		const at = month();
+		const lost = await lostReport(at);
+		const found = await foundReport(at);
+		await run(lost.id);
+		const [match, ...rest] = await matchesOf(lost.id);
+		expect(rest).toEqual([]);
+		expect(await notifications(match!.id)).toHaveLength(1);
+
+		// Each PATCH queues match.report for its report; the pair stays the same row, already notified.
+		await ReportsDomain.updateReport(
+			{ code: found.short_code, colours: ['black', 'white', 'grey'] },
+			userCtx(finder)
+		);
+		await ReportsDomain.updateReport(
+			{ code: lost.short_code, event_at: new Date(at.getTime() + HOUR).toISOString() },
+			userCtx(owner)
+		);
+		for (const report of [found, lost]) {
+			// Taken off the queue and run here, as the worker would.
+			const taken = await prisma.$queryRaw<{ id: string }[]>`
+				delete from pgboss.job where name = 'match.report' and data->>'report_id' = ${report.id} returning id`;
+			expect(taken).toHaveLength(1);
+			await run(report.id);
+		}
+		const after = await matchesOf(lost.id);
+		expect(after.map((m) => m.id)).toEqual([match!.id]);
+		expect(['good', 'strong']).toContain(after[0]!.strength);
+		expect(await notifications(match!.id)).toHaveLength(1);
+	});
+
 	it('does not notify a possible suggestion', async () => {
 		const at = month();
 		const lost = await lostReport(at);
