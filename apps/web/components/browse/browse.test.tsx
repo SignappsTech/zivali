@@ -168,11 +168,14 @@ describe('Browse (P4 web)', () => {
 		const api = renderBrowse(three);
 		expect(await screen.findByText('3 prijave')).toBeTruthy();
 		const links = rows();
-		expect(links.map((link) => link.getAttribute('aria-label'))).toEqual([
-			`Maks, Izgubljena, ${TIME}`,
-			`Najden pes, Najdena, ${TIME}`,
-			`Opažena mačka, Opažena, ${TIME}`,
+		// WCAG 2.5.3: no aria-label; the name is built from the visible text.
+		expect(links.map((link) => link.hasAttribute('aria-label'))).toEqual([false, false, false]);
+		expect(links.map((link) => link.getAttribute('aria-label') ?? link.textContent)).toEqual([
+			expect.stringContaining('Maks'),
+			expect.stringContaining('Najden pes'),
+			expect.stringContaining('Opažena mačka'),
 		]);
+		expect(screen.getByRole('link', { name: new RegExp(`^Maks.*Izgubljena.*${TIME}`) })).toBe(links[0]);
 		expect(links.map((link) => link.getAttribute('href'))).toEqual(['/r/Code1', '/r/Code2', '/r/Code3']);
 		expect(within(links[0]!).getByText(t.boosted)).toBeTruthy();
 		expect(within(links[1]!).queryByText(t.boosted)).toBeNull();
@@ -379,7 +382,9 @@ describe('Browse (P4 web)', () => {
 		expect(api.calls.find((call) => call.path === '/v1/geo/reverse')?.body).toEqual({ lat: 46.05, lng: 14.51 });
 		// The rows carry the distance band; the area pill names the place.
 		await waitFor(() =>
-			expect(rows()[0]?.getAttribute('aria-label')).toBe(`Maks, Izgubljena, ${TIME}, manj kot 1 km`)
+			expect(screen.getByRole('link', { name: new RegExp(`^Maks.*Izgubljena.*${TIME}.*manj kot 1 km`) })).toBe(
+				rows()[0]
+			)
 		);
 		expect(screen.getByRole('button', { name: 'Območje: Šiška, Ljubljana, 10 km. Odpri filtre' })).toBeTruthy();
 

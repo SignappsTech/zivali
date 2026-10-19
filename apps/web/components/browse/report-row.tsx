@@ -42,8 +42,8 @@ export const rowId = (code: string) => `row-${code}`;
 
 /**
  * P4 pet row (system §10.6): photo 64 radius 20, title 20/28, status word · time, the `premium` pill under it when
- * boosted, distance band on the right (only with a centre). A link to the report whose name carries title, status,
- * time and distance, so the list offers what a marker press does on the map.
+ * boosted, distance band on the right (only with a centre). A link to the report whose name comes from the visible title, status,
+ * time and distance (no aria-label, WCAG 2.5.3), so the list offers what a marker press does on the map.
  */
 export function ReportRow({
 	report,
@@ -67,8 +67,6 @@ export function ReportRow({
 		<Link
 			id={rowId(report.short_code)}
 			href={{ pathname: '/r/[code]', params: { code: report.short_code } }}
-			// Without a centre there is no distance, so its separator goes too.
-			aria-label={t('row_a11y', { title, status: word, time, distance }).replace(/, $/, '')}
 			data-selected={selected || undefined}
 			className="-m-2 flex items-center gap-4 rounded-row p-2 text-foreground hover:bg-foreground/10 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ring active:bg-accent active:text-accent-foreground data-selected:bg-foreground/10"
 			{...events}
@@ -77,7 +75,7 @@ export function ReportRow({
 				// eslint-disable-next-line @next/next/no-img-element -- a 64 px thumbnail from the media host
 				<img
 					src={photo.thumb_url}
-					alt={photo.alt}
+					alt=""
 					width={64}
 					height={64}
 					loading="lazy"

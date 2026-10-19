@@ -124,7 +124,7 @@ test('500 reports draw as clusters within 2 s on a throttled 4G profile; map and
 	// Lost, found and sighted, each with its icon and word in the accessible name.
 	await expect(page.getByText('500 reports').first()).toBeVisible();
 	await expect(page.getByRole('region', { name: 'Map: 500 reports' })).toBeVisible();
-	await expect(page.getByRole('link', { name: /, Lost, / }).first()).toBeVisible();
+	await expect(page.getByRole('link', { name: /^Lost \w+\s*Lost\b/ }).first()).toBeVisible();
 });
 
 test('filters narrow map and list, live in the URL and survive a reload (AC#3)', async ({ page }) => {
@@ -154,7 +154,7 @@ test('the list is the keyboard alternative: skip the map, open a report row (AC#
 	await stubReports(page);
 	await page.setViewportSize({ width: 1440, height: 900 });
 	await page.goto('/zemljevid');
-	const first = page.getByRole('link', { name: /^Izgubljen pes, Izgubljena, / }).first();
+	const first = page.getByRole('link', { name: /^Izgubljen pes\s*Izgubljena/ }).first();
 	await expect(first).toBeVisible();
 	await first.focus();
 	await page.keyboard.press('Enter');
