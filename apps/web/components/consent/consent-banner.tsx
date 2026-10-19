@@ -93,20 +93,32 @@ export function ConsentBanner({
 		sync();
 		// WebKit ignores scroll-padding when the focused control is already inside the viewport, so a control under the
 		// banner is not scrolled out. Scroll by the overlap ourselves (engine-independent).
+		// `el` is the fixed card itself (560px wide on lg), so the horizontal check is against the visible card. The
+		// check runs a frame later: Chromium fires focusin before its own scroll-into-view.
+		let frame = 0;
 		const onFocusIn = (event: FocusEvent) => {
 			const target = event.target;
 			if (!(target instanceof Element) || el.contains(target)) return;
-			const box = target.getBoundingClientRect();
-			const bar = el.getBoundingClientRect();
-			const overlaps =
-				box.bottom > bar.top && box.top < bar.bottom && box.right > bar.left && box.left < bar.right;
-			if (overlaps) window.scrollBy(0, box.bottom - bar.top + 8);
+			try {
+				if (!target.matches(':focus-visible')) return; // pointer focus: no jump on a mouse click
+			} catch {
+				// no :focus-visible support: check anyway
+			}
+			cancelAnimationFrame(frame);
+			frame = requestAnimationFrame(() => {
+				const box = target.getBoundingClientRect();
+				const bar = el.getBoundingClientRect();
+				const overlaps =
+					box.bottom > bar.top && box.top < bar.bottom && box.right > bar.left && box.left < bar.right;
+				if (overlaps) window.scrollBy({ top: box.bottom - bar.top + 8, behavior: 'instant' });
+			});
 		};
 		document.addEventListener('focusin', onFocusIn);
 		const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(sync);
 		observer?.observe(el);
 		return () => {
 			document.removeEventListener('focusin', onFocusIn);
+			cancelAnimationFrame(frame);
 			observer?.disconnect();
 			root.style.scrollPaddingBottom = '';
 			document.body.style.paddingBottom = '';
