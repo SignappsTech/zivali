@@ -60,7 +60,7 @@ async function photo({
 	status = 'published' as PHOTO_STATUS,
 	report_id = null as string | null,
 	owner_id = owner.user_id,
-	id = randomUUID(),
+	id = randomUUID() as string,
 	body = undefined as Buffer | undefined,
 	clean = true,
 } = {}) {
