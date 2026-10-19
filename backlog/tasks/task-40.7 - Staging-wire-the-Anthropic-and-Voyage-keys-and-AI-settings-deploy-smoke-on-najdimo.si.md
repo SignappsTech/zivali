@@ -3,11 +3,11 @@ id: TASK-40.7
 title: >-
   Staging: wire the Anthropic and Voyage keys and AI settings, deploy, smoke on
   najdimo.si
-status: To Do
+status: In Progress
 assignee:
   - '@tech-lead'
 created_date: '2026-10-18 21:25'
-updated_date: '2026-10-19 10:34'
+updated_date: '2026-10-19 14:44'
 labels:
   - tech
   - 'est:S'
@@ -53,4 +53,6 @@ Branch: agent/task-40.7-staging-ai
 Owner, 2026-10-19 (Primož Božič), in chat: Voyage payment method added; Voyage training opt-out is on ('It's already on'); go to switch AI on for najdimo.si today, after privacy policy v0.8 is approved and live ('Publish v0.8 first'). Backfill: new photos only. No photo uploaded before the switch-on goes to Anthropic or Voyage (TASK-40.11).
 
 Owner 2026-10-19: privacy text v0.8 accepted in advance ('auto accept for now'); switch-on proceeds once the v0.8 web port and TASK-40.11 are live.
+
+Lead 2026-10-19 16:46 CEST: AI switched on for najdimo.si. The deploy of 69d07c97 (TASK-40.6 privacy v0.8 live + TASK-40.11 cutoff migration) set ai.photos_since = 2026-10-19T14:43:40.224Z (worker startup log). Then AI_PROVIDER=anthropic, ANTHROPIC_API_KEY, AI_VISION_MODEL=claude-haiku-5-5, AI_VISION_EFFORT=low, EMBEDDER_PROVIDER=voyage, VOYAGE_API_KEY were written to /opt/zivali/staging/.env over SSH (values never printed; backup .env.bak-ai, mode 600) and api + worker recreated (healthy). GET /v1/config/public: ai.enabled true. Budgets: migration defaults (ai.monthly_budget_usd 20, embedding.monthly_budget_usd 5, daily caps 10/30, backfill 6/min, new photos only). AC2 smoke: waiting for the owner's test upload; the lead checks the worker logs (ai.extract.done, photo.embed) without DB access.
 <!-- SECTION:NOTES:END -->
