@@ -7,7 +7,7 @@ status: Done
 assignee:
   - '@backend-dev'
 created_date: '2026-10-18 22:06'
-updated_date: '2026-10-19 01:24'
+updated_date: '2026-10-19 01:30'
 labels:
   - be
   - bug
@@ -45,11 +45,13 @@ Branch: agent/task-114.32-report-producers
 - [x] #1 PATCH /v1/reports/:code changing any of location, event_at, species, sex, size, colours, pattern or chip queues match.report in the same transaction; a PATCH that changes none of them (e.g. notes) queues nothing. Tests for both.
 - [x] #2 A helper (one call site per write) queues photo.publish { report_id } inside the write's tx for create, update with changed photo_ids, close/expire and the end of the 30-day public window; hold/hide/remove/release call it from TASK-62.
 - [x] #3 Detaching a published photo from a visible report deletes its media copies (photoObjects/deleteObjects); tests cover detach, re-attach and a hidden report.
-- [ ] #4 Exposed helper documented in docs/tech/backend.md job table if one exists.
+- [x] #4 Exposed helper documented in docs/tech/backend.md job table if one exists.
 <!-- AC:END -->
 
 ## Implementation Notes
 
 <!-- SECTION:NOTES:BEGIN -->
 TASK-114.32 (backend-dev): match.report on PATCH was already in place (MATCH_INPUTS + moved point); now tested per input. New ReportsDomain.queuePhotoPublish({ report_id }, ctx with tx) is the single photo.publish path: create, PATCH photo_ids (also the photo-match hold, which before left old public copies up), release, close, reunite (+counterpart), reopen (expired photos come back), expiry, hourly end of the 30-day window (report.lifecycle tick), abuse hide/restore, photo.process accept. TASK-62 hold/hide/remove call it. Match notifications deduped by matches.notified_at + claimNotification; tested after PATCH on both sides. CHANGE rows: backend.md §Ownership (helper bullet; no job table), C5 §Worker jobs.
+
+Review APPROVE (2026-10-19). AC#4: N/A (backend.md has no job table); CHANGE row filed for §Ownership. Optional follow-ups: (1) give the window step's photo.publish a singletonKey per report_id so a failing job isn't re-queued every hour; (2) watch the pilot for repeat match notifications when a rescore-deleted pair is found again after a PATCH (C8 allows it; a tombstone keeping notified_at would stop it).
 <!-- SECTION:NOTES:END -->
