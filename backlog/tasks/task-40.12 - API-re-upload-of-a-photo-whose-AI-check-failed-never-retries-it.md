@@ -1,11 +1,11 @@
 ---
 id: TASK-40.12
 title: 'API: re-upload of a photo whose AI check failed never retries it'
-status: In Progress
+status: Done
 assignee:
   - '@backend-dev'
 created_date: '2026-10-19 15:52'
-updated_date: '2026-10-19 18:20'
+updated_date: '2026-10-19 18:51'
 labels:
   - be
   - bug
