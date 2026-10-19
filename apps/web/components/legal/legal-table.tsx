@@ -32,8 +32,8 @@ const tdClass = [
 /**
  * Every legal table (TASK-114.19, wireframe M-legal-table v1): a filled header row, a 30 % bold label column, zebra
  * rows, top-aligned cells, as wide as the 640 px text column. On narrow screens each row is a card, the cookie list's
- * too: the label is its heading and the other cells sit
- * under it, as "column: value" lines when there are more than two columns. The legal MDX wraps its literal <table>
+ * too: the label is its heading and the other cells sit under it, as "column: value" lines when there are more than
+ * two columns. The legal MDX wraps its literal <table>
  * (which mdx-components.tsx cannot reach) in <LegalTable>. Explicit ARIA roles keep the table semantics that
  * display:block drops in some browsers, and the hidden header row keeps the header association.
  */
