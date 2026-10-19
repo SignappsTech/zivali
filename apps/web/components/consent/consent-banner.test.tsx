@@ -231,4 +231,35 @@ describe('ConsentBanner', () => {
 		mount('en', { [`change_${CONSENT_VERSION}`]: 'we added maps' });
 		expect(screen.getByText(/Something has changed since your last choice: we added maps/)).toBeTruthy();
 	});
+
+	it('WCAG 2.4.11: focus on a control under the open banner scrolls the page by the overlap (WebKit ignores scroll-padding)', () => {
+		stored = null;
+		mount('en');
+		const rect = (top: number, bottom: number) =>
+			({
+				top,
+				bottom,
+				left: 0,
+				right: 300,
+				width: 300,
+				height: bottom - top,
+				x: 0,
+				y: top,
+				toJSON: () => ({}),
+			}) as DOMRect;
+		vi.spyOn(screen.getByRole('dialog'), 'getBoundingClientRect').mockReturnValue(rect(500, 800));
+		const scrollBy = vi.fn();
+		window.scrollBy = scrollBy as unknown as typeof window.scrollBy;
+		const hidden = document.createElement('button');
+		hidden.getBoundingClientRect = () => rect(540, 580);
+		const visible = document.createElement('button');
+		visible.getBoundingClientRect = () => rect(100, 140);
+		document.body.append(hidden, visible);
+		fireEvent.focusIn(visible);
+		expect(scrollBy).not.toHaveBeenCalled();
+		fireEvent.focusIn(hidden);
+		expect(scrollBy).toHaveBeenCalledWith(0, 88);
+		hidden.remove();
+		visible.remove();
+	});
 });

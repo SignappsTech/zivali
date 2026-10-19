@@ -91,9 +91,22 @@ export function ConsentBanner({
 			document.body.style.paddingBottom = h;
 		};
 		sync();
+		// WebKit ignores scroll-padding when the focused control is already inside the viewport, so a control under the
+		// banner is not scrolled out. Scroll by the overlap ourselves (engine-independent).
+		const onFocusIn = (event: FocusEvent) => {
+			const target = event.target;
+			if (!(target instanceof Element) || el.contains(target)) return;
+			const box = target.getBoundingClientRect();
+			const bar = el.getBoundingClientRect();
+			const overlaps =
+				box.bottom > bar.top && box.top < bar.bottom && box.right > bar.left && box.left < bar.right;
+			if (overlaps) window.scrollBy(0, box.bottom - bar.top + 8);
+		};
+		document.addEventListener('focusin', onFocusIn);
 		const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(sync);
 		observer?.observe(el);
 		return () => {
+			document.removeEventListener('focusin', onFocusIn);
 			observer?.disconnect();
 			root.style.scrollPaddingBottom = '';
 			document.body.style.paddingBottom = '';
