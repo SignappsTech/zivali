@@ -219,7 +219,9 @@ function MapTeaser({ reports }: { reports: PublicReport[] }) {
 	}));
 
 	return (
-		<Link href="/map" aria-label={t('near_open_map')} className={cn(teaserBox, ringClass)}>
+		<Link href="/map" className={cn(teaserBox, ringClass)}>
+			{/* The name comes from this text, not an aria-label: the svg's town names are visible text the label would have to contain (WCAG 2.5.3). */}
+			<span className="sr-only">{t('near_open_map')}</span>
 			<svg
 				viewBox="0 0 400 300"
 				preserveAspectRatio="xMidYMid slice"
@@ -300,7 +302,6 @@ function ReportRow({ report, place }: { report: PublicReport; place?: string }) 
 	return (
 		<Link
 			href={{ pathname: '/r/[code]', params: { code: report.short_code } }}
-			aria-label={t('row_a11y', { title, status: word, time, distance: place ?? '' }).replace(/, $/, '')}
 			className={cn(
 				'-mx-2 flex min-h-20 items-center gap-3.5 rounded-row p-2 text-foreground hover:bg-foreground/10 active:bg-accent active:text-accent-foreground',
 				ringClass

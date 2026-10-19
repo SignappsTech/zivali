@@ -80,11 +80,14 @@ describe('RecentReports (T1 layout B, block 2)', () => {
 		expect(getPlace).toHaveBeenCalledWith('sl', 46.07, 14.48);
 
 		const cards = rows();
-		expect(cards.map((card) => [card.getAttribute('href'), card.getAttribute('aria-label')])).toEqual([
-			['/r/Ab3dEf7h', 'Izgubljen pes, Izgubljena, pred 5 minutami, Šiška, Ljubljana'],
-			// No place name (lookup failed): the trailing separator goes too.
-			['/r/Cd4fGh8j', 'Najdena mačka, Najdena, pred 5 minutami'],
-		]);
+		expect(cards.map((card) => card.getAttribute('href'))).toEqual(['/r/Ab3dEf7h', '/r/Cd4fGh8j']);
+		// WCAG 2.5.3: no aria-label to drift from the visible text; the name is built from the visible text (after the photo's alt).
+		expect(cards.map((card) => card.hasAttribute('aria-label'))).toEqual([false, false]);
+		expect(
+			screen.getByRole('link', { name: /Izgubljen pes\s*Izgubljena\s*pred 5 minutami\s*Šiška, Ljubljana$/ })
+		).toBe(cards[0]);
+		// No place name (lookup failed): just the title, status and time.
+		expect(screen.getByRole('link', { name: /Najdena mačka\s*Najdena\s*pred 5 minutami$/ })).toBe(cards[1]);
 		// Status, species and rough area only: never the pet's name.
 		expect(within(cards[0]!).getByText('Izgubljen pes')).toBeTruthy();
 		expect(within(cards[0]!).getByText('Šiška, Ljubljana')).toBeTruthy();
@@ -121,6 +124,8 @@ describe('RecentReports (T1 layout B, block 2)', () => {
 		expect(below!.compareDocumentPosition(screen.getByRole('list'))).toBe(Node.DOCUMENT_POSITION_PRECEDING);
 		// Hidden from assistive tech: the rows are the list alternative.
 		expect(teaser!.querySelector('svg')?.getAttribute('aria-hidden')).toBe('true');
+		// WCAG 2.5.3: named by its own text, no aria-label next to the svg's visible town names.
+		expect(teaser!.hasAttribute('aria-label')).toBe(false);
 		// The whole country: the outline unscaled on the water, in map tokens, and all eight towns named.
 		const outline = teaser!.querySelector('path')!;
 		expect([outline.getAttribute('d'), outline.getAttribute('transform'), outline.getAttribute('class')]).toEqual([
