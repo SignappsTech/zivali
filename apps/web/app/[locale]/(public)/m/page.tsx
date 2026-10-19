@@ -2,9 +2,9 @@ import type { Metadata } from 'next';
 import type { Locale } from 'next-intl';
 import { getMessages, getTranslations } from 'next-intl/server';
 
-import { ManagePage } from '@/components/manage/manage-page';
+import { ManageLazy } from '@/components/manage/manage-lazy';
 import { PageMessages } from '@/components/page-messages';
-import { StoreProvider } from '@/components/store-provider';
+import { PageSkeleton } from '@/components/shell/page';
 
 export async function generateMetadata({ params }: PageProps<'/[locale]/m'>): Promise<Metadata> {
 	const t = await getTranslations({ locale: (await params).locale as Locale, namespace: 'report_found' });
@@ -25,9 +25,12 @@ export default async function Page({ params }: PageProps<'/[locale]/m'>) {
 				chat: { row_title_fallback, row_unread_a11y, row_status_closed },
 			}}
 		>
-			<StoreProvider>
-				<ManagePage />
-			</StoreProvider>
+			<ManageLazy>
+				{/* ManagePage's first render (its <main> before the claim, the skeleton), so the swap moves nothing (CLS). */}
+				<main id="main" className="mx-auto box-content min-h-[456px] max-w-[560px] px-5 pt-6 pb-16 lg:pb-24">
+					<PageSkeleton />
+				</main>
+			</ManageLazy>
 		</PageMessages>
 	);
 }
