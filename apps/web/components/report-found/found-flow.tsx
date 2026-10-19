@@ -15,6 +15,7 @@ import { WarningCircleIcon } from '@phosphor-icons/react/dist/ssr/WarningCircle'
 import { skipToken } from '@reduxjs/toolkit/query';
 import { del, get, set as idbSet } from 'idb-keyval';
 import { useFormatter, useLocale, useTranslations } from 'next-intl';
+import dynamic from 'next/dynamic';
 import * as React from 'react';
 
 import { type EventParams, getConsent, track } from '@zivali/analytics';
@@ -28,9 +29,8 @@ import { coarsenPoint } from '@zivali/validation/geo';
 import { AiHint, AiInfo, AiNotice, AiSlot, SuggestedMark, useSuggestedText } from '@/components/ai/ai-parts';
 import type { AiField } from '@/components/ai/prefill';
 import { type Prefill, usePrefill } from '@/components/ai/use-prefill';
-import { errorCode, useErrorText } from '@/components/auth/parts';
+import { errorCode, useErrorText } from '@/components/auth/error-text';
 import { useCaptcha } from '@/components/auth/turnstile';
-import { LocationPicker } from '@/components/location/location-picker';
 import { useAutoRetry } from '@/components/manage/use-auto-retry';
 import type { LatLng } from '@/components/map/map-view';
 import { BreedField } from '@/components/pets/breed-field';
@@ -38,7 +38,6 @@ import { PhotoPicker, type PhotoPickerHandle } from '@/components/photos/photo-p
 import { clearPhotoDraft, type PickedPhoto } from '@/components/photos/use-photo-uploads';
 import { noteClass } from '@/components/shelters/classes';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { FieldError, FormField } from '@/components/ui/form-field';
 import { Input } from '@/components/ui/input';
 import { Pill } from '@/components/ui/pill';
@@ -48,9 +47,8 @@ import { StatusLabel } from '@/components/ui/status-label';
 import { Textarea } from '@/components/ui/textarea';
 import { saveManageToken } from '@/lib/manage-link';
 import { photoCrop, photoWhole } from '@/lib/photo';
-import { cn } from '@/lib/utils';
+import { cn, focusHeading } from '@/lib/utils';
 
-import { FoundDone } from './found-done';
 import {
 	capturedAt,
 	createBody,
@@ -75,6 +73,18 @@ import {
 // P7 quick found or sighted report on the web (FR-006, TASK-30.2), the twin of the mobile flow: one question per
 // screen in the 560 px flow column, no account (anonymous session with the lazy Turnstile, C7), never where the animal
 // is kept. No ad component in this flow (C15).
+
+// Only the first step loads with the page (TASK-112 script budget): the picker (MapView, the "Spremeni" dialog) on
+// "Kje", the confirmation once the report is created. Each has its own Suspense (a loading skeleton, or ssr: false for
+// the dialog), so a load never suspends to the page's and blanks it.
+const LocationPicker = dynamic(() => import('@/components/location/location-picker').then((m) => m.LocationPicker), {
+	loading: () => <Skeleton className="h-[360px] w-full rounded-card" />,
+});
+const Dialog = dynamic(() => import('@/components/ui/dialog').then((m) => m.Dialog), { ssr: false });
+const DialogContent = dynamic(() => import('@/components/ui/dialog').then((m) => m.DialogContent), { ssr: false });
+const FoundDone = dynamic(() => import('./found-done').then((m) => m.FoundDone), {
+	loading: () => <Skeleton className="h-[600px] w-full rounded-card" />,
+});
 
 const WHEN: readonly When[] = ['now', 'today', 'other'];
 const CAT_SIZES: readonly Size[] = ['s', 'm', 'l'];
@@ -688,6 +698,9 @@ export function FoundFlow({
 	const [exif, setExif] = React.useState<Offered>();
 	const { fix, locating } = useGpsFix();
 	const [picking, setPicking] = React.useState(false);
+	// The "Spremeni" dialog loads on its first open and then stays mounted, so it can animate out and return focus.
+	const [dialogLoaded, setDialogLoaded] = React.useState(false);
+	if (picking && !dialogLoaded) setDialogLoaded(true);
 	const [limit, setLimit] = React.useState<{ until: number; text: string }>();
 	const [checking, setChecking] = React.useState(false);
 	const root = React.useRef<HTMLElement>(null);
@@ -724,6 +737,11 @@ export function FoundFlow({
 			: fix && { point: fix.coarse, source: 'gps' };
 	const suggested = exif ? { ...exif.raw, source: 'exif' as const } : fix && { ...fix.raw, source: 'gps' as const };
 	const inlinePicker = step === 'where' && !where && !locating;
+	// The picker's chunk (with the dialog's) comes down as "Kje" shows, so "Spremeni" after a GPS or photo place opens
+	// at once.
+	React.useEffect(() => {
+		if (step === 'where') void import('@/components/location/location-picker').catch(() => {});
+	}, [step]);
 	const reverse = useReversePlaceQuery(where ? where.point : skipToken);
 	const address = !where
 		? ''
@@ -790,6 +808,8 @@ export function FoundFlow({
 	const send = React.useCallback(async (): Promise<CreateReportResponse> => {
 		// The automatic retry runs this on any step: only the finder on the last step, with everything checked, publishes.
 		if (!ready) throw new ApiError('NETWORK', 'NETWORK');
+		// The confirmation's chunk comes down while the report is sent.
+		void import('./found-done').catch(() => {});
 		try {
 			await session();
 		} catch (error) {
@@ -841,10 +861,7 @@ export function FoundFlow({
 			first.current = false;
 			return;
 		}
-		const heading = root.current?.querySelector('h1');
-		if (!heading) return;
-		heading.tabIndex = -1;
-		heading.focus();
+		return focusHeading(root.current);
 	}, [step, inlinePicker, result, sentence]);
 
 	const go = (next: Step) => {
@@ -1168,17 +1185,19 @@ export function FoundFlow({
 			</form>
 
 			{/* P5 E1 as a content dialog (P7 W): "Spremeni" on "Kje"; Confirm takes the place and goes on. */}
-			<Dialog open={picking} onOpenChange={setPicking}>
-				<DialogContent closeLabel={tc('close')} aria-describedby={undefined} className="max-w-[600px] p-7">
-					<LocationPicker
-						mode={kind}
-						variant="dialog"
-						value={values.location && { point: values.location }}
-						suggested={suggested}
-						onChange={pickPlace}
-					/>
-				</DialogContent>
-			</Dialog>
+			{dialogLoaded && (
+				<Dialog open={picking} onOpenChange={setPicking}>
+					<DialogContent closeLabel={tc('close')} aria-describedby={undefined} className="max-w-[600px] p-7">
+						<LocationPicker
+							mode={kind}
+							variant="dialog"
+							value={values.location && { point: values.location }}
+							suggested={suggested}
+							onChange={pickPlace}
+						/>
+					</DialogContent>
+				</Dialog>
+			)}
 		</main>
 	);
 }

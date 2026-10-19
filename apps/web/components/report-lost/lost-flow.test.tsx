@@ -1,6 +1,6 @@
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { NextIntlClientProvider } from 'next-intl';
-import { useEffect } from 'react';
+import { Suspense, useEffect } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { me } from '@zivali/api/__fixtures__/me';
@@ -166,10 +166,22 @@ vi.mock('@/components/location/location-picker', () => ({
 
 const uploaded: Emitted = { key: 'k1', preview: 'blob:1', photoId: 'photo-1', status: 'uploaded' };
 
+// next/dynamic as the App Router build aliases it (Suspense-based), not the Pages Router loader the package exports.
+vi.mock('next/dynamic', async () => ({ default: (await import('next/dist/shared/lib/app-dynamic')).default }));
+
+/** Stands in for the page's Suspense: a lazy part without its own boundary would blank the whole page while it loads. */
+let blanked = false;
+function PageFallback() {
+	blanked = true;
+	return null;
+}
+
 function show(props: Partial<React.ComponentProps<typeof LostFlow>> = {}) {
 	const ui = (more: typeof props) => (
 		<NextIntlClientProvider locale="sl" messages={sl} timeZone={timeZone}>
-			<LostFlow signedIn {...more} />
+			<Suspense fallback={<PageFallback />}>
+				<LostFlow signedIn {...more} />
+			</Suspense>
 		</NextIntlClientProvider>
 	);
 	const view = render(ui(props));
@@ -179,6 +191,8 @@ const done = () => JSON.parse(screen.getByTestId('done').textContent!);
 const button = (name: string | RegExp) => screen.getByRole('button', { name });
 const click = (name: string | RegExp) => fireEvent.click(button(name));
 const heading = (name: string) => screen.findByRole('heading', { level: 1, name });
+/** The details step's fields load with the step (next/dynamic, TASK-112). */
+const species = () => screen.findByRole('radiogroup', { name: sl.pets.species_label });
 const bars = () => screen.getByRole('progressbar').getAttribute('aria-label');
 const photosUp = (photos: Emitted[] = [uploaded]) => act(() => api.picker.onChange!(photos));
 /** Enter in a text field as browsers do it (implicit submission): a click on the form's first submit button. */
@@ -195,9 +209,7 @@ async function toReview() {
 	photosUp();
 	click(t.next);
 	await heading(t.details_title);
-	fireEvent.click(
-		within(screen.getByRole('radiogroup', { name: sl.pets.species_label })).getByRole('radio', { name: 'Pes' })
-	);
+	fireEvent.click(within(await species()).getByRole('radio', { name: 'Pes' }));
 	fireEvent.click(screen.getByRole('button', { name: 'Rjava' }));
 	click(t.next);
 	await heading(sl.location.title_lost);
@@ -210,6 +222,7 @@ async function toReview() {
 }
 
 beforeEach(() => {
+	blanked = false;
 	vi.useFakeTimers({ toFake: ['Date'] });
 	vi.setSystemTime(new Date(2026, 9, 16, 14, 20));
 	api.pets = [];
@@ -230,6 +243,7 @@ afterEach(() => {
 	vi.clearAllMocks();
 	vi.useRealTimers();
 	window.history.replaceState(null, '', '/');
+	expect(blanked, 'a lazy part suspended to the page and blanked it').toBe(false);
 });
 
 describe('LostFlow', () => {
@@ -249,18 +263,19 @@ describe('LostFlow', () => {
 
 		await heading(t.details_title);
 		expect(document.activeElement).toBe(screen.getByRole('heading', { level: 1 }));
+		await species();
 		click(t.next);
 		expect(await screen.findByText(t.validation_summary)).toBeTruthy();
 		expect(screen.getByText(t.colour_required)).toBeTruthy();
-		fireEvent.click(
-			within(screen.getByRole('radiogroup', { name: sl.pets.species_label })).getByRole('radio', { name: 'Pes' })
-		);
+		fireEvent.click(within(await species()).getByRole('radio', { name: 'Pes' }));
 		fireEvent.click(screen.getByRole('button', { name: 'Rjava' }));
 		fireEvent.change(screen.getByRole('textbox', { name: sl.pets.name_label }), { target: { value: 'Medo' } });
 		// Enter in the name field advances like Naprej.
 		enter(screen.getByRole('textbox', { name: sl.pets.name_label }));
 
-		await heading(sl.location.title_lost);
+		// The picker loads with its step (TASK-112); focus still lands on its heading once it is there.
+		const where = await heading(sl.location.title_lost);
+		await waitFor(() => expect(document.activeElement).toBe(where));
 		expect(bars()).toBe('Korak 3 od 6');
 		click(sl.location.confirm);
 
@@ -285,7 +300,8 @@ describe('LostFlow', () => {
 		expect(document.querySelector('[data-ad-slot]')).toBeNull();
 
 		click(t.publish);
-		await heading(t.done_title);
+		const confirmation = await heading(t.done_title);
+		await waitFor(() => expect(document.activeElement).toBe(confirmation));
 		expect(done()).toEqual({
 			code: 'Hk3vT9qP',
 			name: 'Medo',
@@ -340,9 +356,7 @@ describe('LostFlow', () => {
 		photosUp();
 		click(t.next);
 		await heading(t.details_title);
-		fireEvent.click(
-			within(screen.getByRole('radiogroup', { name: sl.pets.species_label })).getByRole('radio', { name: 'Pes' })
-		);
+		fireEvent.click(within(await species()).getByRole('radio', { name: 'Pes' }));
 		fireEvent.click(screen.getByRole('button', { name: 'Rjava' }));
 		click(t.next);
 		await heading(sl.location.title_lost);
@@ -791,7 +805,7 @@ describe('LostFlow', () => {
 			click(t.next);
 			await heading(t.details_title);
 			fireEvent.click(
-				within(screen.getByRole('radiogroup', { name: sl.pets.species_label })).getByRole('radio', {
+				within(await species()).getByRole('radio', {
 					name: 'Pes',
 				})
 			);

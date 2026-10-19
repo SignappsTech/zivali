@@ -1,5 +1,6 @@
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { createTranslator, NextIntlClientProvider } from 'next-intl';
+import { Suspense } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { placeReverse } from '@zivali/api/__fixtures__/geocode';
@@ -113,11 +114,23 @@ function renderBrowse(
 	render(
 		<NextIntlClientProvider locale="sl" messages={sl} timeZone="Europe/Ljubljana">
 			<StoreProvider>
-				<Browse />
+				<Suspense fallback={<PageFallback />}>
+					<Browse />
+				</Suspense>
 			</StoreProvider>
 		</NextIntlClientProvider>
 	);
 	return api;
+}
+
+// next/dynamic as the App Router build aliases it (Suspense-based), not the Pages Router loader the package exports.
+vi.mock('next/dynamic', async () => ({ default: (await import('next/dist/shared/lib/app-dynamic')).default }));
+
+/** Stands in for the page's Suspense: a lazy part without its own boundary would blank the whole page while it loads. */
+let blanked = false;
+function PageFallback() {
+	blanked = true;
+	return null;
 }
 
 const queries = (api: { calls: MockRequest[] }, path: string) =>
@@ -133,6 +146,7 @@ function stubWide(wide: boolean) {
 }
 
 beforeEach(() => {
+	blanked = false;
 	vi.useFakeTimers({ now: NOW, toFake: ['Date'] });
 	vi.spyOn(window.history, 'replaceState').mockImplementation((...args) => {
 		replaceState(...args);
@@ -146,6 +160,7 @@ afterEach(() => {
 	nav.push.mockClear();
 	for (const key of ['matchMedia'] as const) Reflect.deleteProperty(window, key);
 	for (const key of ['permissions', 'geolocation'] as const) Reflect.deleteProperty(navigator, key);
+	expect(blanked, 'a lazy part suspended to the page and blanked it').toBe(false);
 });
 
 describe('Browse (P4 web)', () => {
@@ -207,7 +222,8 @@ describe('Browse (P4 web)', () => {
 		expect(await screen.findByText('4 prijave')).toBeTruthy();
 
 		fireEvent.click(screen.getByRole('button', { name: t.filters_button }));
-		let drawer = screen.getByRole('dialog', { name: t.filters_title });
+		// The drawer loads on its first open (next/dynamic, TASK-112), then stays mounted.
+		let drawer = await screen.findByRole('dialog', { name: t.filters_title });
 		const found = within(drawer).getByRole('button', { name: t.filter_type_found });
 		expect(found.getAttribute('aria-pressed')).toBe('true');
 		fireEvent.click(found);
@@ -246,7 +262,7 @@ describe('Browse (P4 web)', () => {
 		const listCalls = queries(api, '/v1/reports').length;
 
 		fireEvent.click(screen.getByRole('button', { name: t.filters_button }));
-		const drawer = screen.getByRole('dialog', { name: t.filters_title });
+		const drawer = await screen.findByRole('dialog', { name: t.filters_title });
 		await within(drawer).findByRole('button', { name: 'Prikaži 500+ prijav' });
 		expect(within(drawer).getByText('Najdenih je 500+ prijav')).toBeTruthy();
 		fireEvent.click(within(drawer).getByRole('button', { name: t.filter_type_found }));

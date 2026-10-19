@@ -17,6 +17,7 @@ import { WarningCircleIcon } from '@phosphor-icons/react/dist/ssr/WarningCircle'
 import { skipToken } from '@reduxjs/toolkit/query';
 import { del, get, set } from 'idb-keyval';
 import { useFormatter, useLocale, useTranslations } from 'next-intl';
+import dynamic from 'next/dynamic';
 import * as React from 'react';
 import { FormProvider, useController, useForm, useFormContext, useWatch } from 'react-hook-form';
 
@@ -31,22 +32,12 @@ import type { Pet } from '@zivali/types';
 import { AiNotice, AiSlot } from '@/components/ai/ai-parts';
 import { type AiField, PET_AI_FIELDS } from '@/components/ai/prefill';
 import { useFormPrefill } from '@/components/ai/use-prefill';
+import { useErrorText } from '@/components/auth/error-text';
 import { AuthGate } from '@/components/auth/gate';
-import { LocationPicker } from '@/components/location/location-picker';
 import type { LatLng } from '@/components/map/map-view';
-import { PetFields } from '@/components/pets/pet-fields';
-import { useErrorText } from '@/components/pets/pet-list';
 import { PhotoPicker, type PhotoPickerHandle } from '@/components/photos/photo-picker';
 import { clearPhotoDraft, MAX_PHOTOS, type PickedPhoto } from '@/components/photos/use-photo-uploads';
 import { noteClass } from '@/components/shelters/classes';
-import {
-	AlertDialog,
-	AlertDialogAction,
-	AlertDialogContent,
-	AlertDialogDescription,
-	AlertDialogFooter,
-	AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { FieldError, FormField } from '@/components/ui/form-field';
 import { Input } from '@/components/ui/input';
@@ -55,7 +46,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { photoCrop, photoCropThenWhole } from '@/lib/photo';
-import { cn } from '@/lib/utils';
+import { cn, focusHeading } from '@/lib/utils';
 
 import {
 	CIRCUMSTANCES_MAX,
@@ -78,7 +69,22 @@ import {
 	stepsFor,
 	type When,
 } from './lost-form';
-import { LostDone } from './lost-done';
+
+// Only the first steps load with the page (TASK-112 script budget): the details (PetFields, its enums and breeds), the
+// picker (MapView), the resume question (AlertDialog) and the confirmation (share, poster, P15) load when shown. Each
+// has its own Suspense (a loading skeleton, or ssr: false for the dialog), so a load never suspends to the page's and
+// blanks it. AuthGate stays static: it loads its dialog lazily, and a lazy gate on top would make a signed-out Publish
+// wait for two chunks.
+const PetFields = dynamic(() => import('@/components/pets/pet-fields').then((m) => m.PetFields), {
+	loading: () => <Skeleton className="mt-8 h-[360px] w-full rounded-card" />,
+});
+const LocationPicker = dynamic(() => import('@/components/location/location-picker').then((m) => m.LocationPicker), {
+	loading: () => <Skeleton className="h-[360px] w-full rounded-card" />,
+});
+const ResumeDialog = dynamic(() => import('./resume-dialog').then((m) => m.ResumeDialog), { ssr: false });
+const LostDone = dynamic(() => import('./lost-done').then((m) => m.LostDone), {
+	loading: () => <Skeleton className="h-[800px] w-full rounded-card" />,
+});
 
 /** The one lost-report draft of this browser; PhotoPicker keeps its photos under the same name. */
 export const LOST_DRAFT = 'lost';
@@ -680,6 +686,9 @@ export function LostFlow({
 	const [exif, setExif] = React.useState<LatLng>();
 	const [saved, setSaved] = React.useState(false);
 	const [resume, setResume] = React.useState<Draft>();
+	// The resume question loads when first asked and then stays mounted, so it can animate out.
+	const [resumeLoaded, setResumeLoaded] = React.useState(false);
+	if (resume && !resumeLoaded) setResumeLoaded(true);
 	const [sending, setSending] = React.useState(false);
 	const [sendError, setSendError] = React.useState<string>();
 	// The API refused photo_ids: shown on the photo step until the next Publish.
@@ -705,7 +714,12 @@ export function LostFlow({
 
 	React.useEffect(() => {
 		let live = true;
-		void loadDraft().then((draft) => live && draft && setStored(draft));
+		void loadDraft().then((draft) => {
+			if (!live || !draft) return;
+			// The resume question's chunk comes down while the session settles.
+			void import('./resume-dialog').catch(() => {});
+			setStored(draft);
+		});
 		return () => {
 			live = false;
 		};
@@ -755,10 +769,7 @@ export function LostFlow({
 			first.current = false;
 			return;
 		}
-		const heading = root.current?.querySelector('h1');
-		if (!heading) return;
-		heading.tabIndex = -1;
-		heading.focus();
+		return focusHeading(root.current);
 	}, [chosen, done]);
 
 	const go = (next: Step) => {
@@ -904,6 +915,8 @@ export function LostFlow({
 		}
 		// "Pravkar", "Danes" and "Včeraj" mean the day Publish was pressed, not after the sign-in detour.
 		const at = eventAt(values, handoffAt.current ?? Date.now())!;
+		// The confirmation's chunk comes down while the report is sent.
+		void import('./lost-done').catch(() => {});
 		setSending(true);
 		try {
 			let code: string;
@@ -1211,55 +1224,16 @@ export function LostFlow({
 				}}
 				onReady={() => setAwaiting(true)}
 			/>
-			<ResumeDialog
-				draft={resume}
-				onContinue={restore}
-				onDiscard={() => {
-					void dropDraft().then(() => setPickerKey((key) => key + 1));
-				}}
-				onClose={() => setResume(undefined)}
-			/>
+			{resumeLoaded && (
+				<ResumeDialog
+					at={resume?.at}
+					onContinue={() => resume && restore(resume)}
+					onDiscard={() => {
+						void dropDraft().then(() => setPickerKey((key) => key + 1));
+					}}
+					onClose={() => setResume(undefined)}
+				/>
+			)}
 		</FormProvider>
-	);
-}
-
-/** "Nadaljujete prijavo?" when a draft from an earlier visit exists; closing it keeps the draft as it is. */
-function ResumeDialog({
-	draft,
-	onContinue,
-	onDiscard,
-	onClose,
-}: {
-	draft?: Draft;
-	onContinue: (draft: Draft) => void;
-	onDiscard: () => void;
-	onClose: () => void;
-}) {
-	const t = useTranslations('report_lost');
-	const locale = useLocale() as Locale;
-	return (
-		<AlertDialog open={Boolean(draft)} onOpenChange={(open) => !open && onClose()}>
-			{/* Focus goes to the restored step's heading, not back to where it was before the dialog. */}
-			<AlertDialogContent onCloseAutoFocus={(event) => event.preventDefault()}>
-				<AlertDialogTitle>{t('resume_title')}</AlertDialogTitle>
-				<AlertDialogDescription>
-					{t('resume_body', { date: draft ? formatDate(draft.at, locale) : '' })}
-				</AlertDialogDescription>
-				<AlertDialogFooter>
-					<AlertDialogAction variant="default" onClick={() => draft && onContinue(draft)}>
-						{t('resume_continue')}
-					</AlertDialogAction>
-					<Button
-						variant="text"
-						onClick={() => {
-							onDiscard();
-							onClose();
-						}}
-					>
-						{t('resume_discard')}
-					</Button>
-				</AlertDialogFooter>
-			</AlertDialogContent>
-		</AlertDialog>
 	);
 }

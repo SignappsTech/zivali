@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 
-import { errorCode } from '@/components/auth/parts';
+import { errorCode } from '@/components/auth/error-text';
 
 /** C7: a failed or unavailable captcha and a lost connection fix themselves, so the task is tried again. */
 export const isTransient = (error: unknown) => ['CAPTCHA_FAILED', 'NETWORK'].includes(errorCode(error));

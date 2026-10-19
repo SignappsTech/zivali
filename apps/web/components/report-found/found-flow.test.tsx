@@ -1,6 +1,6 @@
-import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { NextIntlClientProvider } from 'next-intl';
-import type * as React from 'react';
+import * as React from 'react';
 import { Provider } from 'react-redux';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -91,6 +91,16 @@ vi.mock('next/navigation', async (actual) => ({
 
 const created = { ...createdReport, manage_token: 'tok-private-123' };
 
+// next/dynamic as the App Router build aliases it (Suspense-based), not the Pages Router loader the package exports.
+vi.mock('next/dynamic', async () => ({ default: (await import('next/dist/shared/lib/app-dynamic')).default }));
+
+/** Stands in for the page's Suspense: a lazy part without its own boundary would blank the whole page while it loads. */
+let blanked = false;
+function PageFallback() {
+	blanked = true;
+	return null;
+}
+
 function show(props: Partial<React.ComponentProps<typeof FoundFlow>> = {}, routes: MockRoutes = {}) {
 	const api = createMockApi({
 		'POST /v1/reports': created,
@@ -102,7 +112,9 @@ function show(props: Partial<React.ComponentProps<typeof FoundFlow>> = {}, route
 	render(
 		<NextIntlClientProvider locale="sl" messages={sl} timeZone={timeZone}>
 			<Provider store={createApiStore(api)}>
-				<FoundFlow entry="found" {...props} />
+				<React.Suspense fallback={<PageFallback />}>
+					<FoundFlow entry="found" {...props} />
+				</React.Suspense>
 			</Provider>
 		</NextIntlClientProvider>
 	);
@@ -146,6 +158,7 @@ const reconnect = (api: ReturnType<typeof createMockApi>, count: number) =>
 	});
 
 beforeEach(() => {
+	blanked = false;
 	idb.clear();
 	localStorage.clear();
 	exif.on = true;
@@ -155,6 +168,7 @@ afterEach(() => {
 	vi.clearAllMocks();
 	vi.mocked(getConsent).mockReturnValue(null);
 	auth.ensureSession.mockImplementation(async () => {});
+	expect(blanked, 'a lazy part suspended to the page and blanked it').toBe(false);
 });
 
 describe('FoundFlow (P7 web, FR-006)', () => {
@@ -165,7 +179,9 @@ describe('FoundFlow (P7 web, FR-006)', () => {
 		expect(screen.getByText('pri meni')).toBeTruthy();
 		publish();
 
-		expect(await screen.findByRole('heading', { level: 1, name: 'Hvala, prijava je objavljena' })).toBeTruthy();
+		// The confirmation loads once the report is sent (TASK-112); focus lands on its heading when it is there.
+		const thanks = await screen.findByRole('heading', { level: 1, name: 'Hvala, prijava je objavljena' });
+		await waitFor(() => expect(document.activeElement).toBe(thanks));
 		const [post] = posts(api);
 		const body = post!.body as CreateReportInput;
 		expect(body).toMatchObject({
@@ -306,6 +322,24 @@ describe('FoundFlow (P7 web, FR-006)', () => {
 		expect(await screen.findByRole('heading', { level: 1, name: 'Hvala za opažanje' })).toBeTruthy();
 		expect(screen.getByText(sl.report_found.held_note)).toBeTruthy();
 		expect(screen.queryByText(sl.report_found.sighting_done_body)).toBeNull();
+	});
+
+	it('"Spremeni" on "Kje" opens the picker in a dialog over the step, and its place goes on (TASK-112)', async () => {
+		show();
+		expect(await screen.findByRole('heading', { level: 1, name: 'Fotografirajte žival' })).toBeTruthy();
+		fireEvent.click(screen.getByRole('button', { name: 'Dodaj fotografijo' }));
+		await screen.findByRole('button', { name: 'Naprej' });
+		next();
+		fireEvent.click(await screen.findByRole('radio', { name: 'Pes' }));
+		next();
+		expect(await screen.findByText('Šiška, Ljubljana')).toBeTruthy();
+
+		// The dialog loads on this first open, in its own Suspense: the step stays (afterEach checks the page).
+		fireEvent.click(screen.getByRole('button', { name: sl.report_found.where_change }));
+		const dialog = await screen.findByRole('dialog');
+		fireEvent.click(await within(dialog).findByRole('button', { name: 'Potrdi kraj' }));
+		expect(await screen.findByRole('heading', { level: 1, name: sl.report_found.situation_title })).toBeTruthy();
+		await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
 	});
 
 	it('fires report_found_start, and report_found_submit with the region only with consent', async () => {
