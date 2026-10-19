@@ -1,4 +1,4 @@
-// GET /v1/photos/:id/attributes (C19 Â§REST): pending, unavailable and ready from directly inserted ai_calls and
+// GET /v1/photos/:id/attributes (C19 §REST): pending, unavailable and ready from directly inserted ai_calls and
 // ai_results rows (no job, no model call), the permission matrix, the 600/hour rate limit, and the two public config
 // keys the forms read before polling.
 import { randomBytes, randomUUID } from 'node:crypto';

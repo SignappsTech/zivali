@@ -1,4 +1,5 @@
 // Public feature and content flags (C1): app_config keys with is_public = true, plus `payments.enabled`.
+import { aiOn } from '../../adapters/ai/index.ts';
 import { paymentsOn } from '../../adapters/payments/index.ts';
 import configStore from '../../lib/config-store.ts';
 import type { Ctx } from '../../lib/ctx.ts';
@@ -8,7 +9,13 @@ import type { Ctx } from '../../lib/ctx.ts';
  * and the app hide the P15 asks without a flag of their own (C13 §Payments off).
  */
 export async function getPublicConfig(_input: void, ctx: Ctx): Promise<Record<string, unknown>> {
-	return { ...(await configStore.getPublic()), 'payments.enabled': paymentsOn(ctx.adapters.payments) };
+	const flags = await configStore.getPublic();
+	return {
+		...flags,
+		'payments.enabled': paymentsOn(ctx.adapters.payments),
+		// Like payments: app_config ai.enabled only counts while the AI adapter is on (C19), so clients do not poll for nothing.
+		...('ai.enabled' in flags && { 'ai.enabled': flags['ai.enabled'] === true && aiOn(ctx.adapters.ai) }),
+	};
 }
 
 export default { getPublicConfig };
