@@ -770,7 +770,19 @@ export function FoundFlow({
 
 	// Submit: the anonymous session (shared by the photo uploads, so there is only ever one sign-in), then create.
 	const captcha = useCaptcha({ lazy: true });
-	const { getToken } = captcha;
+	const { getToken, interactive } = captcha;
+	// A challenge's sheet takes focus (Tab reaches the check next) and gives it back once Cloudflare is done.
+	const captchaSheet = React.useRef<HTMLDivElement>(null);
+	React.useEffect(() => {
+		const sheet = captchaSheet.current;
+		if (!interactive || !sheet) return;
+		const before = document.activeElement;
+		sheet.focus();
+		return () => {
+			const now = document.activeElement;
+			if (before instanceof HTMLElement && (now === document.body || sheet.contains(now))) before.focus();
+		};
+	}, [interactive]);
 	const signingIn = React.useRef<Promise<void> | null>(null);
 	const session = React.useCallback(() => {
 		signingIn.current ??= (async () => {
@@ -1001,7 +1013,37 @@ export function FoundFlow({
 
 	return (
 		<main id="main" ref={root} className="mx-auto box-content max-w-[560px] px-5 pt-6 pb-16 lg:pt-8 lg:pb-24">
-			{captcha.widget}
+			{/* P7: a challenge opens as a bottom sheet (system §10.7) with captcha_title and captcha_body, in view on
+			    every step. The widget never moves (a moved iframe restarts the check): its wrapper becomes the sheet
+			    while Cloudflare needs a click, with the widget's 65 px slot reserved. */}
+			{captcha.widget && (
+				<div
+					ref={captchaSheet}
+					role={interactive ? 'dialog' : undefined}
+					aria-labelledby={interactive ? `${headingId}-captcha` : undefined}
+					aria-describedby={interactive ? `${headingId}-captcha-body` : undefined}
+					tabIndex={interactive ? -1 : undefined}
+					className={cn(
+						interactive &&
+							'fixed inset-x-0 bottom-0 z-50 mx-auto w-full max-w-[560px] rounded-t-sheet bg-card px-5 pt-8 pb-[max(2rem,env(safe-area-inset-bottom))] text-card-foreground shadow-lg outline-hidden'
+					)}
+				>
+					{interactive && (
+						<>
+							<h2
+								id={`${headingId}-captcha`}
+								className="font-display text-2xl leading-[30px] font-bold tracking-[-0.015em] text-balance lg:text-3xl lg:leading-9"
+							>
+								{t('captcha_title')}
+							</h2>
+							<p id={`${headingId}-captcha-body`} className="mt-2 text-muted-foreground">
+								{t('captcha_body')}
+							</p>
+						</>
+					)}
+					<div className={cn(interactive && 'mt-5 min-h-[65px]')}>{captcha.widget}</div>
+				</div>
+			)}
 			<StepBars current={index + 1} total={steps.length} />
 			{linked?.code && <LinkedPet code={linked.code} />}
 
@@ -1168,8 +1210,10 @@ export function FoundFlow({
 					) : step === 'send' ? (
 						<Line icon={ShieldCheckIcon}>{t('privacy_line')}</Line>
 					) : null}
+					{/* Publish waits for the check while it sends or while a photo still uploads (the session starts
+					    with the first photo, TASK-17.9). */}
 					<p aria-live="polite" className="text-sm text-muted-foreground empty:hidden">
-						{step === last && sending && checking ? t('captcha_checking') : ''}
+						{step === last && checking ? t('captcha_checking') : ''}
 					</p>
 					<div className="flex flex-wrap items-center gap-x-4 gap-y-1">
 						{step === last ? (

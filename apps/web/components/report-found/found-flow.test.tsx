@@ -42,6 +42,8 @@ vi.mock('idb-keyval', () => ({
 	del: async (key: string) => void idb.delete(key),
 }));
 const exif = vi.hoisted(() => ({ on: true }));
+/** `slow`: the photo shows as uploading while its upload signs in, as the real picker does. */
+const upload = vi.hoisted(() => ({ slow: false }));
 const auth = vi.hoisted(() => ({ ensureSession: vi.fn(async () => {}) }));
 vi.mock('@/lib/auth', () => auth);
 vi.mock('@zivali/analytics', () => ({ track: vi.fn(), getConsent: vi.fn(() => null) }));
@@ -64,6 +66,7 @@ vi.mock('@/components/photos/photo-picker', () => ({
 			<button
 				type="button"
 				onClick={async () => {
+					if (upload.slow) onChange([{ key: 'k1', status: 'uploading', progress: 0, preview: 'blob:1' }]);
 					await beforeUpload();
 					if (exif.on) onExif({ ...RAW, takenAt: new Date(TAKEN) });
 					onChange([{ key: 'k1', photoId: 'photo-1', status: 'uploaded', progress: 1, preview: 'blob:1' }]);
@@ -168,6 +171,7 @@ beforeEach(() => {
 	idb.clear();
 	localStorage.clear();
 	exif.on = true;
+	upload.slow = false;
 });
 afterEach(() => {
 	cleanup();
@@ -578,6 +582,92 @@ describe('FoundFlow publish (C1 Idempotency-Key, C7 retries)', () => {
 		await reconnect(api, 1);
 		expect(await screen.findByRole('heading', { level: 1, name: 'Hvala, prijava je objavljena' })).toBeTruthy();
 		expect(posts(api)).toHaveLength(1);
+	});
+
+	it('shows an interactive check as a bottom sheet on every step, and Send says Publish waits for it (TASK-30.8)', async () => {
+		vi.stubEnv('NEXT_PUBLIC_TURNSTILE_SITE_KEY', 'test-key');
+		let options: Record<string, (value?: string) => void> = {};
+		const turnstile = {
+			render: vi.fn(
+				(_element: HTMLElement, given: Record<string, unknown>) => ((options = given as typeof options), 'w1')
+			),
+			reset: vi.fn(),
+			execute: vi.fn(),
+			remove: vi.fn(),
+		};
+		const append = vi.spyOn(document.head, 'append').mockImplementation((script) => {
+			window.turnstile = turnstile;
+			(script as HTMLScriptElement).onload?.(new Event('load'));
+		});
+		// The real sign-in asks the captcha for a token once; with a session it is a no-op.
+		let signedIn = false;
+		auth.ensureSession.mockImplementation((async (getToken: () => Promise<unknown>) => {
+			if (signedIn) return;
+			await getToken();
+			signedIn = true;
+		}) as () => Promise<void>);
+		try {
+			upload.slow = true;
+			idb.set('draft:found:found', {
+				step: 'send',
+				values: {
+					...initialValues('found'),
+					species: 'dog',
+					situation: 'have',
+					location: PICKED,
+					source: 'pin',
+				},
+			});
+			const api = show();
+			await screen.findByRole('heading', { level: 1, name: 'Objavite prijavo' });
+			const publishButton = screen.getByRole('button', { name: 'Objavi prijavo' });
+			publishButton.focus();
+			// The first photo starts the anonymous session (TASK-17.9); Cloudflare wants a click.
+			fireEvent.click(screen.getByRole('button', { name: 'Dodaj fotografijo', hidden: true }));
+			await vi.waitFor(() => expect(turnstile.execute).toHaveBeenCalledWith('w1'));
+			expect(screen.queryByRole('dialog')).toBeNull();
+			act(() => options['before-interactive-callback']!());
+
+			const sheet = screen.getByRole('dialog', { name: sl.report_found.captcha_title });
+			expect(sheet.getAttribute('aria-describedby')).toBe(
+				screen.getByText(sl.report_found.captcha_body).getAttribute('id')
+			);
+			// In view at any scroll: a bottom sheet holding the widget Turnstile renders into.
+			expect(sheet.className).toMatch(/\bfixed\b.*\bbottom-0\b/);
+			expect(sheet.contains(turnstile.render.mock.calls[0]![0])).toBe(true);
+			expect(document.activeElement).toBe(sheet);
+			// Publish waits for the photo, the photo for the check: after 2 s Send says why.
+			expect(
+				await screen.findByText(sl.report_found.captcha_checking, undefined, { timeout: 3000 })
+			).toBeTruthy();
+			expect(publishButton.getAttribute('aria-busy')).toBe('true');
+			publish();
+			expect(posts(api)).toHaveLength(0);
+
+			// Solved: the sheet goes and focus is back where it was.
+			act(() => options['after-interactive-callback']!());
+			expect(screen.queryByRole('dialog')).toBeNull();
+			expect(document.activeElement).toBe(publishButton);
+			// Asked again, on another step: the sheet is there too.
+			act(() => options['before-interactive-callback']!());
+			fireEvent.click(screen.getByRole('button', { name: 'Nazaj' }));
+			await screen.findByRole('heading', { level: 1, name: sl.report_found.situation_title });
+			expect(screen.getByRole('dialog', { name: sl.report_found.captcha_title })).toBeTruthy();
+			expect(screen.queryByText(sl.report_found.captcha_checking)).toBeNull();
+			next();
+			await screen.findByRole('heading', { level: 1, name: 'Objavite prijavo' });
+
+			act(() => options.callback!('token-1'));
+			await screen.findByRole('img', { name: 'Fotografija 1 od 1' });
+			expect(screen.queryByRole('dialog')).toBeNull();
+			expect(screen.queryByText(sl.report_found.captcha_checking)).toBeNull();
+			publish();
+			expect(await screen.findByRole('heading', { level: 1, name: 'Hvala, prijava je objavljena' })).toBeTruthy();
+		} finally {
+			vi.unstubAllEnvs();
+			append.mockRestore();
+			delete window.turnstile;
+		}
 	});
 
 	it('sends once when Enter and a click submit together (TASK-29.3 review c)', async () => {

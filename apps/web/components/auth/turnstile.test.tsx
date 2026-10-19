@@ -83,6 +83,58 @@ describe('useCaptcha', () => {
 	});
 });
 
+describe('useCaptcha interactive', () => {
+	it('is true while Cloudflare waits for a click, until it is solved or fails', async () => {
+		vi.stubEnv('NEXT_PUBLIC_TURNSTILE_SITE_KEY', '1x00000000000000000000AA');
+		let options: Record<string, (value?: string) => void> = {};
+		const turnstile = {
+			render: vi.fn(
+				(_element: HTMLElement, given: Record<string, unknown>) => ((options = given as typeof options), 'w1')
+			),
+			reset: vi.fn(),
+			execute: vi.fn(),
+			remove: vi.fn(),
+		};
+		vi.spyOn(document.head, 'append').mockImplementation((script) => {
+			window.turnstile = turnstile;
+			(script as HTMLScriptElement).onload?.(new Event('load'));
+		});
+		const { useCaptcha } = await import('./turnstile');
+		let captcha!: ReturnType<typeof useCaptcha>;
+		function Form() {
+			captcha = useCaptcha();
+			return <form>{captcha.widget}</form>;
+		}
+		render(<Form />, { wrapper });
+		await vi.waitFor(() => expect(turnstile.render).toHaveBeenCalledOnce());
+		expect(captcha.interactive).toBe(false);
+
+		const solved = captcha.getToken();
+		await vi.waitFor(() => expect(turnstile.execute).toHaveBeenCalledOnce());
+		act(() => options['before-interactive-callback']!());
+		expect(captcha.interactive).toBe(true);
+		// Left unsolved: the attempt settles, and Cloudflare's fresh challenge stays in view.
+		act(() => options['timeout-callback']!());
+		await expect(solved).rejects.toMatchObject({ code: 'CAPTCHA_FAILED' });
+		expect(captcha.interactive).toBe(true);
+		act(() => options['after-interactive-callback']!());
+		expect(captcha.interactive).toBe(false);
+
+		for (const [n, event] of [
+			[2, 'callback'],
+			[3, 'error-callback'],
+		] as const) {
+			const attempt = captcha.getToken();
+			await vi.waitFor(() => expect(turnstile.execute).toHaveBeenCalledTimes(n));
+			act(() => options['before-interactive-callback']!());
+			expect(captcha.interactive).toBe(true);
+			act(() => options[event]!('token-1'));
+			expect(captcha.interactive).toBe(false);
+			await attempt.catch(() => undefined);
+		}
+	});
+});
+
 describe('useCaptcha after a failed api.js load', () => {
 	it('loads and renders the widget on the next getToken(), then yields a token', async () => {
 		vi.stubEnv('NEXT_PUBLIC_TURNSTILE_SITE_KEY', '1x00000000000000000000AA');

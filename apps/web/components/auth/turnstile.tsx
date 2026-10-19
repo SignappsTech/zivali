@@ -46,12 +46,14 @@ const captchaFailed = () => new ApiError('CAPTCHA_FAILED', 'CAPTCHA_FAILED');
  * widget stays invisible unless Cloudflare needs a click, and it never takes focus on its own. Without
  * NEXT_PUBLIC_TURNSTILE_SITE_KEY the captcha is off: no widget, no script, `getToken()` resolves undefined. `lazy`
  * loads api.js with the first `getToken()` instead of on mount, for a page that may need no captcha at all (P7).
+ * `interactive` is true while Cloudflare waits for that click (until it is solved or fails).
  */
 export function useCaptcha({ lazy = false }: { lazy?: boolean } = {}) {
 	const locale = useLocale();
 	const element = React.useRef<HTMLDivElement | null>(null);
 	const widget = React.useRef<{ turnstile: Turnstile; id: string } | undefined>(undefined);
 	const pending = React.useRef<{ resolve: (token: string) => void; reject: (error: ApiError) => void }>(undefined);
+	const [interactive, setInteractive] = React.useState(false);
 	// Read directly: NEXT_PUBLIC_* is inlined at build.
 	const siteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
 
@@ -64,11 +66,21 @@ export function useCaptcha({ lazy = false }: { lazy?: boolean } = {}) {
 				execution: 'execute',
 				appearance: 'interaction-only',
 				language: locale,
-				callback: (token: string) => pending.current?.resolve(token),
-				'error-callback': fail,
+				callback: (token: string) => {
+					setInteractive(false);
+					pending.current?.resolve(token);
+				},
+				'error-callback': () => {
+					setInteractive(false);
+					fail();
+				},
 				'expired-callback': fail,
-				// An interactive challenge left unsolved: settle, so the caller can retry.
+				// An interactive challenge left unsolved: settle, so the caller can retry. Cloudflare shows a fresh
+				// challenge in its place, so the widget stays in view.
 				'timeout-callback': fail,
+				// Cloudflare needs a click: a caller may show the widget where the user is (P7 sheet).
+				'before-interactive-callback': () => setInteractive(true),
+				'after-interactive-callback': () => setInteractive(false),
 			});
 			widget.current = { turnstile, id };
 		},
@@ -94,6 +106,7 @@ export function useCaptcha({ lazy = false }: { lazy?: boolean } = {}) {
 				if (element.current === node) element.current = null;
 				widget.current?.turnstile.remove(widget.current.id);
 				widget.current = undefined;
+				setInteractive(false);
 			};
 		},
 		[siteKey, render, lazy]
@@ -114,5 +127,5 @@ export function useCaptcha({ lazy = false }: { lazy?: boolean } = {}) {
 		});
 	}, [siteKey, render]);
 
-	return { getToken, widget: siteKey ? <div ref={mount} className="empty:hidden" /> : null };
+	return { getToken, interactive, widget: siteKey ? <div ref={mount} className="empty:hidden" /> : null };
 }
