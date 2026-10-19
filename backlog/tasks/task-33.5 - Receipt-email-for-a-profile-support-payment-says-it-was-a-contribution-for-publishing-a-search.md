@@ -3,11 +3,11 @@ id: TASK-33.5
 title: >-
   Receipt email for a profile support payment says it was a contribution for
   publishing a search
-status: To Do
+status: Done
 assignee:
   - '@backend-dev'
 created_date: '2026-10-19 19:06'
-updated_date: '2026-10-19 19:08'
+updated_date: '2026-10-19 19:19'
 labels:
   - bug
   - 'est:XS'
