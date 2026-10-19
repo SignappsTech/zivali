@@ -3,10 +3,11 @@ id: TASK-29.16
 title: >-
   e2e: the saved-pet lost flow test still expects 6 steps and a photo step (CI
   red after TASK-29.14)
-status: To Do
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-19 19:13'
+updated_date: '2026-10-19 19:17'
 labels:
   - bug
   - 'est:XS'
