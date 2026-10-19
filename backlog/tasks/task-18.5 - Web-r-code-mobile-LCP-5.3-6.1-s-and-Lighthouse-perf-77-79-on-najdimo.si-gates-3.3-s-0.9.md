@@ -3,10 +3,11 @@ id: TASK-18.5
 title: >-
   Web /r/[code]: mobile LCP 5.3-6.1 s and Lighthouse perf 77-79 on najdimo.si
   (gates 3.3 s, 0.9)
-status: To Do
+status: In Progress
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-19 18:37'
+updated_date: '2026-10-19 18:43'
 labels:
   - bug
   - 'est:S'
@@ -31,6 +32,7 @@ Severity: major (story gate AC#6, TASK-18.4). Not covered by TASK-112 (report fl
 
 Unblocks on: -
 Branch: agent/<id>-detail-lcp from main
+Branch: agent/task-18.6-r-perf (shared with TASK-18.6)
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Acceptance Criteria

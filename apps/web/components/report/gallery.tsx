@@ -14,9 +14,26 @@ import { cn } from '@/lib/utils';
 const frame = 'aspect-[4/3] w-full rounded-[calc(var(--radius)*2)]';
 
 /**
+ * The main photo's files, smallest first (C5: `thumb.webp`, 480 px long edge, and `display.webp` beside `url`, the
+ * `display.jpg` fallback), and the width it shows at: the frame (P9 columns: 100vw less the page padding, 640 px from
+ * lg), or the share of it that a taller photo fills, as it is shown whole. Phones then load the thumb, not 300 KB.
+ */
+export function photoSources({ url, thumb_url, width, height }: PublicPhoto) {
+	const thumbWidth = Math.round(width * Math.min(1, 480 / Math.max(width, height)));
+	const fill = +Math.min(1, (0.75 * width) / height).toFixed(4);
+	const files = [`${url.replace(/\.jpg$/, '.webp')} ${width}w`];
+	if (thumbWidth < width) files.unshift(`${thumb_url} ${thumbWidth}w`);
+	return {
+		srcSet: files.join(', '),
+		sizes: `(min-width: 1024px) ${Math.round(640 * fill)}px, (min-width: 768px) calc((100vw - 96px) * ${fill}), calc((100vw - 40px) * ${fill})`,
+	};
+}
+
+/**
  * P9 gallery (system §10 Gallery): the 4:3 photo (radius 32) and, with more than one photo, the 88x72 thumbnails
  * (radius 16, inactive at 55 %) with named previous and next buttons and a live "1 / 4". A photo that fails to load
- * becomes the placeholder tile (P9 S4). The first photo is the page's LCP, so it loads eagerly at high priority.
+ * becomes the placeholder tile (P9 S4). The first photo is the page's LCP, so it loads eagerly at high priority, in
+ * the size the screen needs (`photoSources`).
  */
 export function Gallery({ photos, className }: { photos: PublicPhoto[]; className?: string }) {
 	const t = useTranslations('report');
@@ -53,6 +70,7 @@ export function Gallery({ photos, className }: { photos: PublicPhoto[]; classNam
 					ref={main}
 					key={photo.url}
 					src={photo.url}
+					{...photoSources(photo)}
 					alt={photo.alt}
 					width={photo.width}
 					height={photo.height}

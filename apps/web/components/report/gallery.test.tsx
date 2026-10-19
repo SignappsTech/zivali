@@ -5,7 +5,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import en from '@zivali/i18n/dist/en.json';
 import type { PublicPhoto } from '@zivali/types';
 
-import { Gallery } from './gallery';
+import { Gallery, photoSources } from './gallery';
 
 afterEach(cleanup);
 
@@ -42,6 +42,36 @@ describe('Gallery photo frames (TASK-114.43)', () => {
 		expect(main.className).toContain('aspect-[4/3]');
 		expect(main.className).toContain('bg-muted');
 		expect(main.className).not.toContain('object-cover');
+	});
+
+	// TASK-18.5: a phone loads the 480 px thumb, not the 300 KB display JPEG; the WebP display stays for large screens.
+	it('offers the thumb and the WebP display with the width the photo shows at', () => {
+		show([
+			{
+				...photos[0]!,
+				url: 'https://media.test/r/1/2/display.jpg',
+				thumb_url: 'https://media.test/r/1/2/thumb.webp',
+			},
+		]);
+		const main = screen.getByRole('img', { name: 'Tall' });
+		expect(main.getAttribute('src')).toBe('https://media.test/r/1/2/display.jpg');
+		expect(main.getAttribute('srcset')).toBe(
+			'https://media.test/r/1/2/thumb.webp 360w, https://media.test/r/1/2/display.webp 900w'
+		);
+		// 3:4 in the 4:3 frame fills 56.25 % of its width.
+		expect(main.getAttribute('sizes')).toBe(
+			'(min-width: 1024px) 360px, (min-width: 768px) calc((100vw - 96px) * 0.5625), calc((100vw - 40px) * 0.5625)'
+		);
+		expect(main.getAttribute('fetchpriority')).toBe('high');
+	});
+
+	it('sizes a wide photo to the whole frame, and skips a thumb that is no smaller', () => {
+		expect(photoSources(photos[1]!)).toEqual({
+			srcSet: 'https://media.test/wide-t.webp 480w, https://media.test/wide.webp 1200w',
+			sizes: '(min-width: 1024px) 640px, (min-width: 768px) calc((100vw - 96px) * 1), calc((100vw - 40px) * 1)',
+		});
+		const small = { ...photos[1]!, width: 400, height: 320 };
+		expect(photoSources(small).srcSet).toBe('https://media.test/wide.webp 400w');
 	});
 
 	it('crops the thumbnails near the top, so the head stays in view', () => {

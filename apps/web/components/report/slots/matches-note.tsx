@@ -2,7 +2,7 @@ import { EyeSlashIcon } from '@phosphor-icons/react/dist/ssr/EyeSlash';
 import { HourglassMediumIcon } from '@phosphor-icons/react/dist/ssr/HourglassMedium';
 import { NextIntlClientProvider, useLocale, useMessages, useTranslations } from 'next-intl';
 
-import { MatchesLink } from '@/components/matches/matches-link';
+import { MatchesLink } from '@/components/report/slots/owner-lazy';
 import type { ReportSlotProps } from '@/components/report/slots/types';
 import { noteClass } from '@/components/shelters/classes';
 import { cn } from '@/lib/utils';
