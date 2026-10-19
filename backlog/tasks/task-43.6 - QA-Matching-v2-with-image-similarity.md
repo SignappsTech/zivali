@@ -5,6 +5,7 @@ status: To Do
 assignee:
   - '@qa'
 created_date: '2026-10-18 21:27'
+updated_date: '2026-10-19 01:43'
 labels:
   - qa
   - 'est:XS'
@@ -43,3 +44,9 @@ Branch: agent/task-43.6-qa
 - [ ] #4 Given a new found report, when it arrives, then all open lost reports in range are re-evaluated (reverse search) and owners are notified.
 - [ ] #5 Given 1000 open lost reports, when a new found report arrives, then reverse search completes under 5 s.
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+From the TASK-43.2 review (2026-10-19), follow-ups to check in QA or a small task: (1) matching imports EmbeddingsDao.similarity directly; C8 names EmbeddingsDomain.similarity, so export it via embeddings/index.ts; (2) photo.embed.job.ts ~20-23: if the match.report send fails after the vector is stored, the retry sees the vector and never rematches (low risk); (3) after a model change (TASK-42.3) no rematch runs, so V keeps the old model's value until the next match.report.
+<!-- SECTION:NOTES:END -->
