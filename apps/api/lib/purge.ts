@@ -17,13 +17,16 @@ export function monthsAgo(now: Date, months: number): Date {
 	return at;
 }
 
-/** Repeats `step` (one statement touching at most `limit` rows) until a batch comes back short; returns the total. */
-export async function inBatches(step: (limit: number) => Promise<number>): Promise<number> {
+/**
+ * Repeats `step` (one statement touching at most `limit` rows, `size`) until a batch comes back short; returns the
+ * total.
+ */
+export async function inBatches(step: (limit: number) => Promise<number>, size = PURGE_BATCH): Promise<number> {
 	let total = 0;
 	for (;;) {
-		const n = await step(PURGE_BATCH);
+		const n = await step(size);
 		total += n;
-		if (n < PURGE_BATCH) return total;
+		if (n < size) return total;
 	}
 }
 

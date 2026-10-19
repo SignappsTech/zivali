@@ -3,11 +3,11 @@ id: TASK-28.8
 title: >-
   Anonymous accounts without an open report are never purged (privacy §14 and
   ADR-005 promise 30 days)
-status: To Do
+status: In Progress
 assignee:
   - '@backend-dev'
 created_date: '2026-10-19 20:30'
-updated_date: '2026-10-19 20:32'
+updated_date: '2026-10-19 20:37'
 labels:
   - bug
   - 'est:S'
@@ -32,6 +32,7 @@ Severity: medium.
 
 Unblocks on: -
 Branch: agent/task-28.8-anonymous-account-purge from main
+Branch: agent/task-28.8-anonymous-account-purge
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Acceptance Criteria
