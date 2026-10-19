@@ -3,11 +3,11 @@ id: TASK-25.7
 title: >-
   Web: the owner's hidden-listing note on /r/[code] has no "Pišite podpori"
   (Contact support) action
-status: In Progress
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-19 20:13'
-updated_date: '2026-10-19 20:16'
+updated_date: '2026-10-19 20:28'
 labels:
   - bug
   - 'est:XS'
