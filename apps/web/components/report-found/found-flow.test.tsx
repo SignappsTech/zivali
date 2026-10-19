@@ -619,9 +619,16 @@ describe('FoundFlow publish (C1 Idempotency-Key, C7 retries)', () => {
 				},
 			});
 			const api = show();
-			await screen.findByRole('heading', { level: 1, name: 'Objavite prijavo' });
+			const heading = await screen.findByRole('heading', { level: 1, name: 'Objavite prijavo' });
+			// The restored step takes focus to its heading first.
+			await waitFor(() => expect(document.activeElement).toBe(heading));
 			const publishButton = screen.getByRole('button', { name: 'Objavi prijavo' });
 			publishButton.focus();
+			expect(document.activeElement).toBe(publishButton);
+			const main = screen.getByRole('main');
+			const bar = publishButton.closest<HTMLElement>('.max-lg\\:sticky')!;
+			vi.useFakeTimers({ shouldAdvanceTime: true, toFake: ['setTimeout', 'clearTimeout'] });
+			vi.spyOn(HTMLElement.prototype, 'offsetHeight', 'get').mockReturnValue(235);
 			// The first photo starts the anonymous session (TASK-17.9); Cloudflare wants a click.
 			fireEvent.click(screen.getByRole('button', { name: 'Dodaj fotografijo', hidden: true }));
 			await vi.waitFor(() => expect(turnstile.execute).toHaveBeenCalledWith('w1'));
@@ -636,18 +643,28 @@ describe('FoundFlow publish (C1 Idempotency-Key, C7 retries)', () => {
 			expect(sheet.className).toMatch(/\bfixed\b.*\bbottom-0\b/);
 			expect(sheet.contains(turnstile.render.mock.calls[0]![0])).toBe(true);
 			expect(document.activeElement).toBe(sheet);
+			// The sticky action bar rides above the sheet (its height).
+			expect(main.style.getPropertyValue('--captcha-sheet')).toBe('235px');
+			expect(bar.className).toContain('max-lg:bottom-[var(--captcha-sheet,0px)]');
+			// Escape goes back to Publish; the sheet stays, the check cannot be skipped.
+			fireEvent.keyDown(sheet, { key: 'Escape' });
+			expect(document.activeElement).toBe(publishButton);
+			expect(screen.getByRole('dialog', { name: sl.report_found.captcha_title })).toBeTruthy();
 			// Publish waits for the photo, the photo for the check: after 2 s Send says why.
-			expect(
-				await screen.findByText(sl.report_found.captcha_checking, undefined, { timeout: 3000 })
-			).toBeTruthy();
+			expect(screen.queryByText(sl.report_found.captcha_checking)).toBeNull();
+			act(() => void vi.advanceTimersByTime(2000));
+			expect(screen.getByText(sl.report_found.captcha_checking)).toBeTruthy();
 			expect(publishButton.getAttribute('aria-busy')).toBe('true');
 			publish();
 			expect(posts(api)).toHaveLength(0);
 
-			// Solved: the sheet goes and focus is back where it was.
+			// Solved: the sheet goes, the bar comes down and focus is back where it was.
+			sheet.focus();
 			act(() => options['after-interactive-callback']!());
 			expect(screen.queryByRole('dialog')).toBeNull();
 			expect(document.activeElement).toBe(publishButton);
+			expect(main.style.getPropertyValue('--captcha-sheet')).toBe('');
+			expect(bar.className).toContain('max-lg:bottom-0');
 			// Asked again, on another step: the sheet is there too.
 			act(() => options['before-interactive-callback']!());
 			fireEvent.click(screen.getByRole('button', { name: 'Nazaj' }));
@@ -664,7 +681,9 @@ describe('FoundFlow publish (C1 Idempotency-Key, C7 retries)', () => {
 			publish();
 			expect(await screen.findByRole('heading', { level: 1, name: 'Hvala, prijava je objavljena' })).toBeTruthy();
 		} finally {
+			vi.useRealTimers();
 			vi.unstubAllEnvs();
+			vi.restoreAllMocks();
 			append.mockRestore();
 			delete window.turnstile;
 		}

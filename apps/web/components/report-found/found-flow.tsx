@@ -773,16 +773,31 @@ export function FoundFlow({
 	const { getToken, interactive } = captcha;
 	// A challenge's sheet takes focus (Tab reaches the check next) and gives it back once Cloudflare is done.
 	const captchaSheet = React.useRef<HTMLDivElement>(null);
+	const captchaReturn = React.useRef<Element | null>(null);
+	/** Back to where the finder was before the sheet opened, or to the step's heading if that is gone. */
+	const leaveCaptcha = React.useCallback(() => {
+		const back = captchaReturn.current;
+		if (back instanceof HTMLElement && back.isConnected && back !== document.body) back.focus();
+		else focusHeading(root.current);
+	}, []);
 	React.useEffect(() => {
 		const sheet = captchaSheet.current;
-		if (!interactive || !sheet) return;
-		const before = document.activeElement;
+		const main = root.current;
+		if (!interactive || !sheet || !main) return;
+		captchaReturn.current = document.activeElement;
 		sheet.focus();
+		// Below lg the sticky action bar rides above the sheet, so Publish, Nazaj and the captcha line stay in view.
+		const lift = () => main.style.setProperty('--captcha-sheet', `${sheet.offsetHeight}px`);
+		lift();
+		const observer = new ResizeObserver(lift);
+		observer.observe(sheet);
 		return () => {
+			observer.disconnect();
+			main.style.removeProperty('--captcha-sheet');
 			const now = document.activeElement;
-			if (before instanceof HTMLElement && (now === document.body || sheet.contains(now))) before.focus();
+			if (now === document.body || sheet.contains(now)) leaveCaptcha();
 		};
-	}, [interactive]);
+	}, [interactive, leaveCaptcha]);
 	const signingIn = React.useRef<Promise<void> | null>(null);
 	const session = React.useCallback(() => {
 		signingIn.current ??= (async () => {
@@ -1023,9 +1038,20 @@ export function FoundFlow({
 					aria-labelledby={interactive ? `${headingId}-captcha` : undefined}
 					aria-describedby={interactive ? `${headingId}-captcha-body` : undefined}
 					tabIndex={interactive ? -1 : undefined}
+					// Escape steps back to where the finder was; the sheet stays, as the check cannot be skipped.
+					onKeyDown={
+						interactive
+							? (event) => {
+									if (event.key !== 'Escape') return;
+									event.preventDefault();
+									leaveCaptcha();
+								}
+							: undefined
+					}
+					// The 300 px widget fits a 320 px screen with 10 px sides (max-[359px]).
 					className={cn(
 						interactive &&
-							'fixed inset-x-0 bottom-0 z-50 mx-auto max-h-[92dvh] w-full max-w-[560px] overflow-y-auto rounded-t-sheet bg-card px-5 pt-8 pb-[max(2rem,env(safe-area-inset-bottom))] text-card-foreground shadow-lg outline-hidden'
+							'fixed inset-x-0 bottom-0 z-50 mx-auto max-h-[92dvh] w-full max-w-[560px] overflow-y-auto rounded-t-sheet bg-card px-5 pt-8 pb-[max(2rem,env(safe-area-inset-bottom))] text-card-foreground shadow-lg outline-hidden max-[359px]:px-2.5'
 					)}
 				>
 					{interactive && (
@@ -1183,7 +1209,13 @@ export function FoundFlow({
 					</dl>
 				)}
 
-				<div className="mt-10 grid gap-4 max-lg:sticky max-lg:bottom-0 max-lg:bg-background max-lg:pt-4 max-lg:pb-11">
+				<div
+					className={cn(
+						'mt-10 grid gap-4 max-lg:sticky max-lg:bg-background max-lg:pt-4 max-lg:pb-11',
+						// Above the captcha sheet while it is open (its height, kept by a ResizeObserver).
+						interactive ? 'max-lg:bottom-[var(--captcha-sheet,0px)]' : 'max-lg:bottom-0'
+					)}
+				>
 					{/* The AI slot (wireframe rule 1): checking on any step; on the manual step 2 the note or a notice
 					    that came after the photo step. */}
 					<AiSlot
