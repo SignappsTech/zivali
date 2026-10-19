@@ -101,7 +101,7 @@ const save = async (photos?: Emitted[]) => {
 };
 
 beforeEach(() => {
-	api.createPet.mockImplementation(async (body: object) => ({ ...pet, ...body, id: 'pet-new' }));
+	api.createPet.mockImplementation(async ({ body }: { body: object }) => ({ ...pet, ...body, id: 'pet-new' }));
 	api.updatePet.mockImplementation(async ({ id }: { id: string }) => ({ ...pet, id }));
 	api.setPetPhotos.mockResolvedValue(undefined);
 });
@@ -226,7 +226,12 @@ describe('PetForm', () => {
 		]);
 
 		await waitFor(() => expect(api.push).toHaveBeenCalledWith('/moje-zivali/pet-new'));
-		expect(api.createPet).toHaveBeenCalledWith(expect.objectContaining({ species: 'dog', name: 'Rex' }));
+		expect(api.createPet).toHaveBeenCalledWith({
+			body: expect.objectContaining({ species: 'dog', name: 'Rex' }),
+			idempotencyKey: expect.stringMatching(
+				/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/
+			),
+		});
 		expect(api.setPetPhotos).toHaveBeenCalledWith({ id: 'pet-new', body: { photo_ids: ['photo-2', 'photo-1'] } });
 		expect(api.clearPhotoDraft).toHaveBeenCalledWith('pet:new');
 		expect(api.toast.success).toHaveBeenCalledWith('Profil je shranjen.');
@@ -258,6 +263,40 @@ describe('PetForm', () => {
 		expect((screen.getByRole('textbox', { name: 'Ime' }) as HTMLInputElement).value).toBe('Rex');
 		expect(api.push).not.toHaveBeenCalled();
 		expect(api.toast.error).not.toHaveBeenCalled();
+	});
+
+	it('sends one Idempotency-Key per create chain: a retry repeats it, an edit or PET_LIMIT starts a new one', async () => {
+		const network = { status: 0, data: { code: 'NETWORK', message: 'x' } };
+		api.createPet
+			.mockRejectedValueOnce(network)
+			.mockRejectedValueOnce(network)
+			.mockRejectedValueOnce(conflict({ code: 'PET_LIMIT', limit: 2 }));
+		show(<PetForm />);
+		chooseDog();
+		typeName('Rex');
+		const attempt = async (n: number) => {
+			await save();
+			await waitFor(() => expect(api.createPet).toHaveBeenCalledTimes(n));
+			await act(async () => {});
+		};
+		// The response is lost; the retry with the same values sends the same key, so the API replays the first pet.
+		await attempt(1);
+		await attempt(2);
+		// An edit is another body: a new key (the old one would be refused with CONFLICT).
+		typeName('Rexo');
+		await attempt(3);
+		await screen.findByText(/^Brezplačno lahko shranite/);
+		// PET_LIMIT is a stored answer: the next Save, same values, starts a new chain.
+		await attempt(4);
+		await waitFor(() => expect(api.push).toHaveBeenCalledWith('/moje-zivali/pet-new'));
+
+		const calls = api.createPet.mock.calls.map(
+			([arg]) => arg as { body: { name: string }; idempotencyKey: string }
+		);
+		const keys = calls.map((call) => call.idempotencyKey);
+		expect(calls.map((call) => call.body.name)).toEqual(['Rex', 'Rex', 'Rexo', 'Rexo']);
+		expect(keys[1]).toBe(keys[0]);
+		expect(new Set(keys.slice(1)).size).toBe(3);
 	});
 
 	it('after a failed photo step, Save again updates the pet it created instead of creating another', async () => {

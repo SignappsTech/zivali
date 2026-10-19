@@ -430,6 +430,49 @@ describe('Add and edit', () => {
 		expect(callsTo(api, 'PUT', '/v1/pets/pet-new/photos')).toHaveLength(0);
 	});
 
+	test('one Idempotency-Key per create chain: a retry repeats it, an edit or PET_LIMIT starts a new one', async () => {
+		const lost = () => {
+			throw new TypeError('Network request failed');
+		};
+		const answers = [lost, lost, () => mockError('CONFLICT', 'Pet limit reached', { code: 'PET_LIMIT', limit: 2 })];
+		const api = petsApi([], {
+			'POST /v1/pets': ({ body }) =>
+				answers.shift()?.() ?? { ...fixture, ...(body as Partial<Pet>), id: 'pet-new', photos: [] },
+			'PUT /v1/pets/:id/photos': () => undefined,
+		});
+		const result = await open(api, '/pets/new');
+		await heading(t.section_photos);
+		await press('test: add photo');
+		await next();
+		await fireEvent.press(screen.getByRole('radio', { name: 'Pes' }));
+		await fireEvent.changeText(screen.getByLabelText(t.name_label), 'Rex');
+		for (let i = 0; i < 3; i++) await next();
+		const attempt = async (n: number) => {
+			await press(t.save);
+			await waitFor(() => expect(callsTo(api, 'POST', '/v1/pets')).toHaveLength(n));
+			await waitFor(() => expect(screen.getByRole('button', { name: t.save })).not.toBeBusy());
+		};
+		// The response is lost; the retry with the same values sends the same key, so the API replays the first pet.
+		await attempt(1);
+		await attempt(2);
+		// An edit is another body: a new key (the old one would be refused with CONFLICT).
+		for (let i = 0; i < 3; i++) await press(sl.common.back);
+		await fireEvent.changeText(screen.getByLabelText(t.name_label), 'Rexo');
+		for (let i = 0; i < 3; i++) await next();
+		await attempt(3);
+		expect(await screen.findByText(tSl('pets.limit_note_premium', { limit: 2 }))).toBeOnTheScreen();
+		// PET_LIMIT is a stored answer: the next save, same values, starts a new chain.
+		await press(t.save);
+		await waitFor(() => expect(result.getPathname()).toBe('/pets/pet-new'));
+
+		const posts = callsTo(api, 'POST', '/v1/pets');
+		const keys = posts.map((call) => call.headers['Idempotency-Key']);
+		expect(posts.map((call) => (call.body as { name: string }).name)).toEqual(['Rex', 'Rex', 'Rexo', 'Rexo']);
+		expect(keys[0]).toMatch(/^[0-9a-f-]{36}$/);
+		expect(keys[1]).toBe(keys[0]);
+		expect(new Set(keys.slice(1)).size).toBe(3);
+	});
+
 	test('edit patches only what changed (an untouched unknown chip stays) and deletes the photos taken off', async () => {
 		const unknownChip: Pet = { ...luna, chip_number: null, chip_status: 'invalid' };
 		const api = petsApi([unknownChip]);
