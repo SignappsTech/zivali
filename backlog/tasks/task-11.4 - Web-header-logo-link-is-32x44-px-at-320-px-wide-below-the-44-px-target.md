@@ -1,10 +1,11 @@
 ---
 id: TASK-11.4
 title: 'Web: header logo link is 32x44 px at 320 px wide, below the 44 px target'
-status: To Do
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-19 18:16'
+updated_date: '2026-10-19 18:37'
 labels:
   - bug
   - 'est:XS'
