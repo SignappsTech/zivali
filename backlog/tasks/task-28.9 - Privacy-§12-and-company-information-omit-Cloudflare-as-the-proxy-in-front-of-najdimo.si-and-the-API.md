@@ -3,10 +3,11 @@ id: TASK-28.9
 title: >-
   Privacy §12 and company information omit Cloudflare as the proxy in front of
   najdimo.si and the API
-status: To Do
+status: Done
 assignee:
   - '@content-strategist'
 created_date: '2026-10-19 20:32'
+updated_date: '2026-10-19 20:51'
 labels:
   - bug
   - 'est:XS'
