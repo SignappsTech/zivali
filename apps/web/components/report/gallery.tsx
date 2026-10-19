@@ -17,12 +17,15 @@ const frame = 'aspect-[4/3] w-full rounded-[calc(var(--radius)*2)]';
  * The main photo's files, smallest first (C5: `thumb.webp`, 480 px long edge, and `display.webp` beside `url`, the
  * `display.jpg` fallback), and the width it shows at: the frame (P9 columns: 100vw less the page padding, 640 px from
  * lg), or the share of it that a taller photo fills, as it is shown whole. Phones then load the thumb, not 300 KB.
+ * The thumb counts 5 % wider than it is: Chrome takes the first file that covers the screen, so a 412 px phone at
+ * DPR 1.75 (Lighthouse's Moto G) wanted 366 px of a 360 px thumb and loaded the 176 KB display (TASK-18.9). An
+ * upscale of up to 5 % does not show.
  */
 export function photoSources({ url, thumb_url, width, height }: PublicPhoto) {
 	const thumbWidth = Math.round(width * Math.min(1, 480 / Math.max(width, height)));
 	const fill = +Math.min(1, (0.75 * width) / height).toFixed(4);
 	const files = [`${url.replace(/\.jpg$/, '.webp')} ${width}w`];
-	if (thumbWidth < width) files.unshift(`${thumb_url} ${thumbWidth}w`);
+	if (thumbWidth < width) files.unshift(`${thumb_url} ${Math.round(thumbWidth * 1.05)}w`);
 	return {
 		srcSet: files.join(', '),
 		sizes: `(min-width: 1024px) ${Math.round(640 * fill)}px, (min-width: 768px) calc((100vw - 96px) * ${fill}), calc((100vw - 40px) * ${fill})`,
@@ -91,6 +94,7 @@ export function Gallery({ photos, className }: { photos: PublicPhoto[]; classNam
 									onClick={() => setIndex(i)}
 									className="group block h-[72px] w-[88px] cursor-pointer rounded-lg bg-muted focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ring"
 								>
+									{/* Low: in view, Chrome would raise them to High beside the main photo, the LCP (TASK-18.9). */}
 									{/* eslint-disable-next-line @next/next/no-img-element -- an 88x72 thumbnail */}
 									<img
 										src={thumb.thumb_url}
@@ -98,6 +102,7 @@ export function Gallery({ photos, className }: { photos: PublicPhoto[]; classNam
 										width={88}
 										height={72}
 										loading="lazy"
+										fetchPriority="low"
 										className={cn(
 											'size-full rounded-lg transition-opacity duration-150 motion-reduce:transition-none',
 											photoCrop,
