@@ -3,11 +3,11 @@ id: TASK-17.18
 title: >-
   Manage page /m: mobile perf median 88 and LCP 3.5 s after TASK-17.16 (gates 90
   / 3.3 s); /kako-deluje passes in the same runs
-status: In Progress
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-19 20:30'
-updated_date: '2026-10-19 20:35'
+updated_date: '2026-10-19 22:15'
 labels:
   - bug
   - 'est:S'
