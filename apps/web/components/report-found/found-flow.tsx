@@ -1025,7 +1025,7 @@ export function FoundFlow({
 					tabIndex={interactive ? -1 : undefined}
 					className={cn(
 						interactive &&
-							'fixed inset-x-0 bottom-0 z-50 mx-auto w-full max-w-[560px] rounded-t-sheet bg-card px-5 pt-8 pb-[max(2rem,env(safe-area-inset-bottom))] text-card-foreground shadow-lg outline-hidden'
+							'fixed inset-x-0 bottom-0 z-50 mx-auto max-h-[92dvh] w-full max-w-[560px] overflow-y-auto rounded-t-sheet bg-card px-5 pt-8 pb-[max(2rem,env(safe-area-inset-bottom))] text-card-foreground shadow-lg outline-hidden'
 					)}
 				>
 					{interactive && (

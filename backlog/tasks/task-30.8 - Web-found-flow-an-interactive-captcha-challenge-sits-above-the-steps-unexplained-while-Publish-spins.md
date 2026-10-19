@@ -3,10 +3,11 @@ id: TASK-30.8
 title: >-
   Web found flow: an interactive captcha challenge sits above the steps
   unexplained while Publish spins
-status: To Do
+status: In Progress
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-19 19:15'
+updated_date: '2026-10-19 19:20'
 labels:
   - bug
   - 'est:S'
@@ -29,6 +30,7 @@ Severity: medium (a challenged finder cannot tell why Publish does not finish; t
 
 Unblocks on: -
 Branch: agent/<id>-captcha-challenge from main
+Branch: agent/TASK-30.8-captcha-challenge
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Acceptance Criteria
