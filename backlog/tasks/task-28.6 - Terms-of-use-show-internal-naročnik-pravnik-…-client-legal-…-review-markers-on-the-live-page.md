@@ -3,10 +3,11 @@ id: TASK-28.6
 title: >-
   Terms of use show internal [naročnik/pravnik: …] / [client/legal: …] review
   markers on the live page
-status: To Do
+status: Done
 assignee:
   - '@content-strategist'
 created_date: '2026-10-19 20:25'
+updated_date: '2026-10-19 20:51'
 labels:
   - bug
   - 'est:XS'
