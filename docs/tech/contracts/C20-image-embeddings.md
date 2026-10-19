@@ -4,7 +4,7 @@ source: docs/04-technical-design.md§External integrations, ADR-013, ADR-014, AD
 
 One vector per photo and model, stored in pgvector, used by matching v3 (C8 §Visual similarity). Matching never waits for a vector: without one it scores with the v2 attributes.
 
-**Embed only after a successful safety check** (CH-562, LQ-70): a photo goes to Voyage only when it has a clean `ai_results` row (C19: `animal` dog or cat, `person_prominent` and `nsfw` false). No row (extraction off, skipped, refused, invalid or failed) means never embedded; there is no fallback that embeds an unchecked photo, on any path (job, backfill, hash reuse).
+**Embed only after a successful safety check** (CH-562, LQ-70): a photo goes to Voyage only when it has a clean `ai_results` row (C19: `animal` dog or cat, `person_prominent` and `nsfw` false). No row (extraction off, skipped, refused, invalid or failed) means never embedded; there is no fallback that embeds an unchecked photo, on any path (job, backfill, hash reuse). Likewise a photo not created strictly after `ai.photos_since` (C19, TASK-40.11) is never embedded, and an unset or invalid value stops every embed.
 
 ## Model (Prisma `prisma/schemas/ai.prisma`, schema `app`, RLS deny-all; TASK-40.1)
 
@@ -19,7 +19,7 @@ Prisma type `Unsupported("extensions.vector(1024)")`; read and written only thro
 ## Jobs
 
 **`photo.embed { photo_id }`** (`jobs/photo.embed.job.ts` → `EmbeddingsDomain.embedPhoto`; sent by `ai.extract`, C19, and by the backfill; local concurrency 1; retry 5× with backoff):
-1. Skip when the photo is not `accepted`/`published`, has no `ai_results` row, or its row is not clean (fails closed: embeds only `animal` dog/cat with `person_prominent` and `nsfw` false). Embedder `off` → skip, log `photo.embed.off`, no retry.
+1. Skip when the photo is not created strictly after `ai.photos_since` (unset or invalid: every photo is skipped, no call and no hash-reuse copy; log `photo.embed.cutoff`), is not `accepted`/`published`, has no `ai_results` row, or its row is not clean (fails closed: embeds only `animal` dog/cat with `person_prominent` and `nsfw` false). Embedder `off` → skip, log `photo.embed.off`, no retry.
 2. Models = `embedding.model`, plus `embedding.next_model` when set. For each model without a row:
    - **Hash reuse**: another photo with the same `sha256` already has a vector for this model → copy it, no call.
    - Monthly spend (UTC calendar month; `ai_calls` of provider `voyage`) ≥ `embedding.monthly_budget_usd` → skip, log `photo.embed.budget` (matching falls back to v2). An unset or 0 budget skips every call.
@@ -30,8 +30,8 @@ Prisma type `Unsupported("extensions.vector(1024)")`; read and written only thro
 p95 from photo accepted to vector stored ≤ 60 s on staging, once Voyage has a payment method (Tier 1 limits).
 
 **`embedding.backfill { model?: string, prune?: boolean, after?: string }`** (`jobs/embedding.backfill.job.ts`):
-- `model` defaults to `embedding.next_model ?? embedding.model`. Pages (500, by photo id; `after` = the last photo id of the previous page, carried by the re-queued job and usable by hand to resume) over eligible photos (accepted or published, attached to a report or a pet, with a clean `ai_results` row; no row = never embedded) without a row for the model, and sends `photo.embed` with `singletonKey: photo_id` **and** `singletonSeconds: 3600` (pg-boss's standard queue policy dedupes a key only within a time slot; a policy cannot be changed on an existing queue), at most `embedding.backfill_per_minute` per minute (re-queues itself with `startAfter` for the next page).
-- Ends with `embedding.backfill.done { model, remaining }`; `remaining` > 0 when the budget, the embedder off or refused requests left photos (run it again). A model that is neither `embedding.model` nor `next_model` → `embedding.backfill.inactive`, nothing sent; the embedder off → `embedding.backfill.off`.
+- `model` defaults to `embedding.next_model ?? embedding.model`. Pages (500, by photo id; `after` = the last photo id of the previous page, carried by the re-queued job and usable by hand to resume) over eligible photos (accepted or published, attached to a report or a pet, created strictly after `ai.photos_since`, with a clean `ai_results` row; no row = never embedded) without a row for the model, and sends `photo.embed` with `singletonKey: photo_id` **and** `singletonSeconds: 3600` (pg-boss's standard queue policy dedupes a key only within a time slot; a policy cannot be changed on an existing queue), at most `embedding.backfill_per_minute` per minute (re-queues itself with `startAfter` for the next page).
+- Ends with `embedding.backfill.done { model, remaining }`; `remaining` > 0 when the budget, the embedder off or refused requests left photos (run it again). A model that is neither `embedding.model` nor `next_model` → `embedding.backfill.inactive`, nothing sent; the embedder off → `embedding.backfill.off`; `ai.photos_since` unset or invalid → `embedding.backfill.cutoff`, nothing queued (`remaining` counts only photos after the cutoff). Seeder 41 applies the same cutoff.
 - `prune: true` deletes rows whose model is neither `embedding.model` nor `embedding.next_model`.
 - Started on deploy by seeder `41-embedding-backfill` (`{ model: embedding.model }`) when the resolved adapter is not off and an eligible photo lacks a vector for `embedding.model` (one cheap `exists` query; a failure is logged and never stops the deploy). It checks the resolved adapter rather than the variable and always calls `stopJobs()`, so pg-boss's timers never keep the seed (and the deploy) from exiting. By hand: `pnpm --filter api jobs:send embedding.backfill '{"model":"…"}'`.
 
@@ -56,9 +56,10 @@ Both take an optional tx (their `set local` settings then last until that transa
 
 ## Privacy
 
-Only the 1024 px re-encoded image goes to Voyage: no EXIF, ids, location or text. Vectors are deleted with their photo (cascade), so retention and account deletion follow the photo. Photos with a prominent person, nsfw content, no animal or no safety check are never embedded. Before real photos go to Voyage on staging, the owner confirms the training opt-out and retention (TASK-40.7).
+Only the 1024 px re-encoded image goes to Voyage: no EXIF, ids, location or text. Vectors are deleted with their photo (cascade), so retention and account deletion follow the photo. Photos with a prominent person, nsfw content, no animal or no safety check are never embedded. Photos uploaded before the AI switch-on (`ai.photos_since`) never go to Voyage, by any path (owner 2026-10-19). Before real photos go to Voyage on staging, the owner confirms the training opt-out and retention (TASK-40.7).
 
 ## Changelog
 
 - 2026-10-18 (M3 breakdown): first version.
+- 2026-10-19 (CH-602, TASK-40.11): `ai.photos_since` cutoff in `photo.embed`, the backfill and seeder 41; privacy line.
 - 2026-10-19 (CH-562, CH-568, CH-569, CH-578, CH-580, CH-581, CH-589 to CH-592): embed only after a clean safety check (no fallback); adapter signature, provider, errors and resolution; `photo.embed` and `embedding.backfill` as built by TASK-42.1 and 42.3; queries as built by TASK-42.2; `hnsw.max_scan_tuples` watch item for a model change.
