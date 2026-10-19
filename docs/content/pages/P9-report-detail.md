@@ -3,9 +3,9 @@ source: 03§P9; docs/design/pages/P9-report-detail.md; 02§FR-007 R-007.4, §Con
 page: P9 Report detail (lost, found, sighted)
 stories: TASK-18, TASK-72 (FR-007, FR-004, FR-011, FR-012)
 copy-for: docs/design/pages/P9-report-detail.md
-version: 0.6
+version: 0.7
 status: Draft, native Slovenian review pending
-date: 2026-10-18
+date: 2026-10-19
 ---
 
 # P9 Report detail: copy
@@ -117,6 +117,85 @@ Responsible shelter row in the owner view of a lost report (FR-044, v0.3): `shel
 
 `report.owner_boost` is hidden until M4. Owner pin label: `location.exact_own` ("Približna lokacija · vidno samo vam") with help text `location.exact_own_help` (P5; the stored point is coarsened by 20–30 m). In the owner view the reward line keeps its place and `report.owner_reward_note` replaces the public safety note; the owner changes or removes the reward with "Uredi" (P6 step 6). This follows the design slice §Web layout 6–7 (display-only reward line, one safety note below it).
 
+# 5a. Report statistics (Premium, TASK-117)
+
+Namespace `stats`. PRD R-026.6. The view adds history and breakdown; everything the report page shows every owner today stays free. Wireframe gate TASK-117.1: these labels do not depend on its layout. Counting itself is described in privacy policy chapter 11.
+
+Entry on the owner view of the report page (slot C, next to `report.owner_poster`):
+
+| Key | SL | EN |
+|---|---|---|
+| report.owner_stats | Statistika | Statistics |
+| report.owner_stats_premium | Statistika prijave (Premium) | Report statistics (Premium) |
+
+- A Premium owner and an organisation member (portal, free, R-028.4) see `owner_stats`, which opens the view.
+- A free owner sees `owner_stats_premium` once, as a quiet text link in the same place: never in the report flows, never a pop-up, no badge (P-2). It opens the plan page (P24). Shelter and municipality reports never show it.
+
+The view:
+
+| Key | SL | EN |
+|---|---|---|
+| stats.title | Statistika prijave | Report statistics |
+| stats.since | Od objave {date} | Since publishing on {date} |
+| stats.since_counting | Od {date}, ko smo začeli šteti | Since {date}, when counting started |
+| stats.delay | Številke so lahko do 1 ure stare. | Figures can be up to 1 hour old. |
+| stats.views | Ogledi | Views |
+| stats.shares | Delitve | Shares |
+| stats.alerts | Poslana opozorila | Alerts sent |
+| stats.total | Skupaj | Total |
+| stats.per_day | Po dnevih | Per day |
+| stats.day | Dan | Day |
+| stats.share_whatsapp | WhatsApp | WhatsApp |
+| stats.share_facebook | Facebook | Facebook |
+| stats.share_copy | Kopirana povezava | Copied link |
+| stats.share_native | Meni za deljenje v napravi | Device share menu |
+| stats.share_poster | Prenos plakata | Poster downloads |
+| stats.alert_push | Potisna obvestila | Push notifications |
+| stats.alert_email | E-pošta | Email |
+| stats.alert_inapp | V aplikaciji | In the app |
+| stats.boost_reach | Med povečanim dosegom | During Boost |
+| stats.boost_reach_a11y | {count, plural, one {# opozorilo med povečanim dosegom} two {# opozorili med povečanim dosegom} few {# opozorila med povečanim dosegom} other {# opozoril med povečanim dosegom}} | {count, plural, one {# alert during Boost} other {# alerts during Boost}} |
+| stats.proximity_note | Opozoril, ki jih telefon pokaže sam, ko je kdo blizu, ne štejemo, ker lokacija ostane na telefonu. | Alerts that a phone shows by itself when someone is nearby are not counted, because the location stays on the phone. |
+| stats.not_counted_note | Vaših ogledov, ogledov članov organizacij in moderatorjev ter znanih robotov ne štejemo. | Your own views, views by organisation members and moderators, and known bots are not counted. |
+| stats.chart_label | Ogledi, delitve in poslana opozorila po dnevih | Views, shares and alerts sent per day |
+| stats.chart_table_note | Podatki so v tabeli pod grafom. | The data is in the table below the chart. |
+| stats.empty | Ogledov in delitev še ni. Številke se pokažejo, ko jih bo prijava dobila. | No views or shares yet. Figures appear once your report gets them. |
+| stats.error | Statistike ta trenutek ne moremo naložiti. | We cannot load the statistics right now. |
+| stats.locked_title | Statistika je zaklenjena | Statistics are locked |
+| stats.locked_body | Premium Zaščita ni več vklopljena. Štetje teče naprej, zato se vsa zgodovina vrne, ko se znova naročite. | Premium Protect has ended. Counting continues, so the full history comes back when you subscribe again. |
+| stats.locked_action | Znova naroči | Subscribe again |
+
+- Totals first (three numbers with `views`, `shares`, `alerts`), then the breakdown by channel, then the per-day chart. `since` for reports created after counting shipped; `since_counting` for older ones (A-031).
+- Every chart has a table with the same numbers (NFR-A11Y): `chart_label` is the chart's accessible name and the table caption, `chart_table_note` is its description, `day` the first column.
+- Boost reach: alerts sent while a Boost ran carry `boost_reach` as a column or a marked segment, with `boost_reach_a11y` as text, never colour alone.
+- `proximity_note` and `not_counted_note` sit under the alerts and views totals in small muted text.
+- Numbers use `formatCount`; dates are long dates.
+- The view for a free owner who opens it by a link: `locked_*` is for a lapsed subscription only; a never-Premium owner goes to P24 instead.
+
+# 5b. Search plan heatmap (Premium, TASK-83)
+
+Namespace `search_plan`. PRD R-026.8. A Premium layer in the owner's search plan; the public map and the sighting trail stay free for everyone and show no heatmap. Positions are the fuzzed public areas only.
+
+| Key | SL | EN |
+|---|---|---|
+| search_plan.heatmap_title | Kje so videli podobne živali | Where similar animals were seen |
+| search_plan.heatmap_intro | Približna območja najdenih in opaženih {species, select, dog {psov} cat {mačk} other {živali}} od {date}. | Approximate areas of found and sighted {species, select, dog {dogs} cat {cats} other {animals}} since {date}. |
+| search_plan.legend_low | Manj opažanj | Fewer sightings |
+| search_plan.legend_high | Več opažanj | More sightings |
+| search_plan.linked | Opažanja, povezana z vašo prijavo | Sightings linked to your report |
+| search_plan.heatmap_a11y | Zemljevid gostote opažanj. Seznam območij je pod zemljevidom. | Sightings heatmap. The list of areas is below the map. |
+| search_plan.top_title | Območja z največ opažanji | Areas with the most sightings |
+| search_plan.top_row | {area} · {count, plural, one {# opažanje} two {# opažanji} few {# opažanja} other {# opažanj}} · zadnje {time} | {area} · {count, plural, one {# sighting} other {# sightings}} · latest {time} |
+| search_plan.not_enough | Opažanj je še premalo za zemljevid gostote. Spodaj so vsa opažanja v območju. | There are not enough sightings yet for a heatmap. All sightings in the area are listed below. |
+| search_plan.updated | Posodobljeno {time} | Updated {time} |
+| search_plan.locked_title | Zemljevid gostote opažanj je zaklenjen | The sightings heatmap is locked |
+| search_plan.locked_body | Premium Zaščita ni več vklopljena. Vsa opažanja so še vedno na javnem zemljevidu. | Premium Protect has ended. Every sighting is still on the public map. |
+
+- The ranked list (`top_title`, `top_row`) is the accessible alternative and always shows under the map. `{area}` is the public area name, `{time}` from `formatRelative`.
+- With fewer than 3 sightings, `not_enough` replaces the heatmap, followed by the plain list of sightings (P9 §4 rows).
+- `heatmap_intro` example: "Približna območja najdenih in opaženih psov od 12. 10. 2026." / "Approximate areas of found and sighted dogs since 12/10/2026." `{date}` is the loss date (short date).
+- "Not my pet" sightings are left out without a note. After a lapse, `locked_title` and `locked_body` replace the heatmap, with `stats.locked_action`.
+
 # 6. Status variants
 
 | Key | SL | EN |
@@ -217,4 +296,5 @@ OG image alt: "{type and species} {name}, {municipality}", for example "Izgublje
 |---|---|---|
 | 0.5 | 2026-10-18 | CH-308: public collar value `report.collar_described`, key `report.photo_alt_fallback`. (c) The `report` namespace (§1 to §9), `browse` status_* and row_title_* (P4) and `location.area_line`, `area_note`, `area_map_alt`, `exact_own`, `exact_own_help` (P5) were added to packages/i18n verbatim from the slices; nothing to change here. |
 | 0.5 | 2026-10-18 | CH-268: `report.owner_disagree` takes `{days}` (reopen window, default 7). |
+| 0.7 | 2026-10-19 | CH-640: §5a report statistics (`report.owner_stats`, `owner_stats_premium`, namespace `stats`), §5b search plan heatmap (namespace `search_plan`). Not in the catalogue yet (TASK-117, TASK-83). |
 | 0.6 | 2026-10-18 | CH-411: SEO key names (§10). CH-416: area in the API alt, no collar in public alt, EN red (§11). CH-471: `report.contact_limited` (§2). |

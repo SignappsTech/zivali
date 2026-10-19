@@ -3,9 +3,9 @@ source: 03§P4; docs/design/pages/P4-map-list.md
 page: P4 Map and list
 stories: TASK-31 (FR-007, FR-004)
 copy-for: docs/design/pages/P4-map-list.md
-version: 0.4
+version: 0.5
 status: Draft, native Slovenian review pending
-date: 2026-10-18
+date: 2026-10-19
 ---
 
 # P4 Map and list: copy
@@ -24,7 +24,7 @@ Namespaces `browse` and `map`. Status words and attribute labels come from the g
 | browse.count | {count, plural, one {# prijava} two {# prijavi} few {# prijave} other {# prijav}} | {count, plural, one {# report} other {# reports}} | Next to the title. Capped count (map full at 500, no list total): a "+" follows the number and the `other` form is used, "500+ prijav" / "500+ reports" (CH-468) |
 | browse.web_title | Prijave | Reports | Web list pane h1 |
 | browse.filters_button | Filtri | Filters | Web pane header |
-| browse.filters_summary | {types} · {species} · {when} · {radius} km | {types} · {species} · {when} · {radius} km | Plain text under the header, e.g. "Izgubljene in najdene · psi in mačke · zadnjih 7 dni · 10 km" |
+| browse.filters_summary | {types} · {species} · {when} · {radius} km | {types} · {species} · {when} · {radius} km | Plain text under the header, e.g. "Izgubljene in najdene · psi in mačke · zadnjih 30 dni · 10 km" (the default window is 30 days, CH-310) |
 | browse.load_more | Naloži več | Load more | Web keyset pagination |
 | browse.show_closed | Pokaži zaključene v zadnjih 30 dneh | Show closed in the last 30 days | End of list |
 | browse.hide_closed | Skrij zaključene | Hide closed | |
@@ -44,6 +44,7 @@ Summary fragments:
 | browse.summary_24h | zadnjih 24 ur | last 24 hours |
 | browse.summary_7d | zadnjih 7 dni | last 7 days |
 | browse.summary_30d | zadnjih 30 dni | last 30 days |
+| browse.summary_all | vse odprte | all open |
 
 The summary string starts with a capital letter (format the first fragment with an initial capital).
 
@@ -90,6 +91,7 @@ The summary string starts with a capital letter (format the first fragment with 
 | browse.filter_24h | Zadnjih 24 ur | Last 24 hours |
 | browse.filter_7d | Zadnjih 7 dni | Last 7 days |
 | browse.filter_30d | Zadnjih 30 dni | Last 30 days |
+| browse.filter_all | Vse odprte | All open |
 | browse.filter_distance | Razdalja | Distance |
 | browse.filter_distance_value | {km} km | {km} km |
 | browse.filter_use_location | Uporabi mojo lokacijo | Use my location |
@@ -103,7 +105,11 @@ The summary string starts with a capital letter (format the first fragment with 
 | browse.filter_size_large | Velika | Large |
 | browse.filters_apply | {count, plural, one {Prikaži # prijavo} two {Prikaži # prijavi} few {Prikaži # prijave} other {Prikaži # prijav}} | {count, plural, one {Show # report} other {Show # reports}} |
 | browse.filters_close | Zapri filtre | Close filters |
-| browse.location_denied_note | Lokacija ni dovoljena, zato prikazujemo {place}. Kraj lahko izberete sami. | Location access is off, so we are showing {place}. You can choose the place yourself. |
+| browse.location_denied_note | Lokacija ni dovoljena, zato prikazujemo območje: {place}. Kraj lahko izberete sami. | Location access is off, so we are showing this area: {place}. You can choose a place yourself. |
+
+"Kdaj" choices, in this order: `filter_24h`, `filter_7d`, `filter_30d` (default), `filter_all`. "Vse odprte" / "All open" shows every open report, which goes back up to 90 days for a lost pet; its summary fragment is `summary_all` ("Izgubljene · psi · vse odprte · 10 km"). Keys `filter_all` and `summary_all` are new (CH-622) and not in the catalogue yet.
+
+`location_denied_note` puts `{place}` after a colon, so the name stays in the nominative and the sentence works for any place ("prikazujemo območje: Slovenija", "prikazujemo območje: Ljubljana"; CH-551).
 
 Size pills here group the five sizes: Majhna = xs and s, Srednja = m, Velika = l and xl. Colour pills use the glossary §7.2 labels.
 
@@ -187,4 +193,5 @@ Offline states on mobile (CH-317, TASK-85.3), draft, native review pending:
 | Version | Date | Change |
 |---|---|---|
 | 0.3 | 2026-10-18 | CH-277: map list-toggle keys. CH-309: `browse.sheet_handle`. CH-317: offline states. |
+| 0.5 | 2026-10-19 | CH-622: When filter "Vse odprte" (`filter_all`, `summary_all`), default 30 days in the summary example. CH-551: `location_denied_note` with "območje: {place}". |
 | 0.4 | 2026-10-18 | CH-392: `map.keyboard_hint` (§5). CH-407: ItemList left out of §7 until TASK-72. CH-468: capped count "500+" (§1, §4). |

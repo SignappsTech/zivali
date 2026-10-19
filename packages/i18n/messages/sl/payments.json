@@ -30,6 +30,6 @@
 	"receipt": "Potrdilo",
 	"test_label": "Testno",
 	"empty": "Plačil še ni.",
-	"pending_slow": "Potrditev še traja. Plačilo lahko preveriš med svojimi plačili, ko bo končano.",
+	"pending_slow": "Potrditev še traja. Ko bo plačilo končano, ga najdete med svojimi plačili.",
 	"pending_payments": "Moja plačila"
 }

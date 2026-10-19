@@ -3,9 +3,9 @@ source: 03§P7; docs/design/pages/P7-report-found.md
 page: P7 Report found or sighted (no account) and manage page
 stories: TASK-30, TASK-17 (FR-006, FR-003, FR-004)
 copy-for: docs/design/pages/P7-report-found.md
-version: 0.7
+version: 0.8
 status: Draft, native Slovenian review pending; §3a strings marked † need owner and legal review
-date: 2026-10-18
+date: 2026-10-19
 ---
 
 # P7 Report found or sighted: copy
@@ -45,12 +45,22 @@ With AI pre-fill (M3):
 | Key | SL | EN |
 |---|---|---|
 | report_found.ai_title | Je to pravilno? | Is this right? |
-| report_found.ai_sentence | {size} {species}, {colours} | {size} {species}, {colours} |
+| report_found.ai_dog | {size, select, xs {Zelo majhen pes} s {Majhen pes} m {Srednje velik pes} l {Velik pes} xl {Zelo velik pes} other {Pes}} | {size, select, xs {Very small dog} s {Small dog} m {Medium-sized dog} l {Large dog} xl {Very large dog} other {Dog}} |
+| report_found.ai_cat | {size, select, s {Majhna mačka} m {Srednje velika mačka} l {Velika mačka} other {Mačka}} | {size, select, s {Small cat} m {Medium-sized cat} l {Large cat} other {Cat}} |
+| report_found.ai_colours | {colours} barve | {colours} |
+| report_found.ai_colour.black … blue_grey | črne, bele, sive, rjave, čokoladne, rdečkaste, kremne, zlate, svetlo rjave, modrosive | black, white, grey, brown, chocolate, red, cream, golden, tan, blue-grey |
 | report_found.ai_note | Predlog iz fotografije. Umetna inteligenca se lahko moti. | Suggested from the photo. AI can be wrong. |
 | report_found.ai_yes | Da, nadaljuj | Yes, continue |
 | report_found.ai_edit | Uredi podatke | Edit details |
+| report_found.breed_label | Pasma (neobvezno) | Breed (optional) |
 
-`report_found.ai_sentence` example: "Srednje velik pes, rjave in bele barve" / "Medium-sized dog, brown and white". Size phrases for this sentence agree with the species: dog "Zelo majhen / Majhen / Srednje velik / Velik / Zelo velik pes", cat "Majhna / Srednje velika / Velika mačka"; colours use the glossary §7.2 phrase ("rjave in bele barve").
+The sentence (wireframe v2 F2, owner 2026-10-19) is built from three parts joined with ", ": the size phrase (`ai_dog` or `ai_cat`), the breed name (`breeds.*`), and the colours (`ai_colours` with the `ai_colour.*` genitive forms joined by the locale list format, "rjave in bele"). Examples: "Pes, labradorec, črne barve" / "Dog, Labrador Retriever, black"; "Srednje velik pes, rjave in bele barve" / "Medium-sized dog, brown and white"; "Velika mačka, maine coon" / "Large cat, Maine Coon". There is no `ai_sentence` key. Rules for the breed:
+
+- Left out when the suggestion is null, `*.mixed` or `*.unknown`.
+- SL: the breed is a common noun mid-sentence, so it is written in lower case ("labradorec", "nemški ovčar", "border collie"). A name with a capital after its first letter keeps the catalogue form, because it contains a proper name ("Jack Russell terier", "Kavalir King Charles španjel"). EN keeps the catalogue form.
+- `breed_label` shows on the "Uredi podatke" path only when the sentence named a breed: filled, with the Predlog mark, to change or clear. Without a breed suggestion the step has no breed field.
+
+Size phrases agree with the species: dog "Zelo majhen / Majhen / Srednje velik / Velik / Zelo velik pes", cat "Majhna / Srednje velika / Velika mačka"; colours use the glossary §7.2 phrase ("rjave in bele barve").
 
 Without AI (M2 and fallback):
 
@@ -59,9 +69,10 @@ Without AI (M2 and fallback):
 | report_found.species_title | Katera žival je to? | Which animal is it? |
 | report_found.species_dog | Pes | Dog |
 | report_found.species_cat | Mačka | Cat |
-| report_found.species_unsure | Ne vem | Not sure |
 | report_found.size_label | Velikost (neobvezno) | Size (optional) |
 | report_found.colour_label | Barva (neobvezno) | Colour (optional) |
+
+Species is dog or cat only: there is no "Ne vem" row (`report_found.species_unsure` dropped, CH-625, design P7 1.4).
 
 Validation messages added from mobile P7 (TASK-30.3, CH-351), draft, needs native review:
 
@@ -71,12 +82,13 @@ Validation messages added from mobile P7 (TASK-30.3, CH-351), draft, needs nativ
 
 # 3a. AI pre-fill (shared: P6, P7, P8)
 
-New namespace `ai_prefill` (M3, TASK-40.6), used by P6 (photo and details steps, new pet path), P7 (step 2 and the "Uredi podatke" path) and P8 (add and edit form). P6 and P8 point here. Behaviour: C19 §Client rules. Draft, needs native review.
+New namespace `ai_prefill` (M3, TASK-40.6), used by P6 (photo and details steps, new pet path), P7 (step 2 and the "Uredi podatke" path) and P8 (add and edit form). P6 and P8 point here. Behaviour: C19 §Client rules. Layout and rules: design P7 §AI suggestions, wireframe `M-ai-prefill.html` v2 (owner approved 2026-10-19). Draft, needs native review.
 
 Copy rules:
 
-- Say "predlog" / "suggested". Never "prepoznali smo", "to je", "we recognised", "this is", or anything else that sounds certain. No percentages or confidence numbers anywhere.
-- AI is named in the note and in the info text, not on every field. A field label just gets the pill `ai_prefill.suggested`.
+- Say "predlog" / "suggested". Never "prepoznali smo", "to je", "we recognised", "this is", or anything else that sounds certain.
+- The one number we show is the confidence on the Predlog mark (owner 2026-10-19): "Predlog · 81 %" / "Suggested · 81%", the confidence rounded to a whole percent, formatted with `Intl` (SL puts a no-break space before "%"), and the same number in the field's accessible description. No other percentage or confidence number anywhere: not on the "Je to pravilno?" sentence, not in notes or hints, and never on match strength (that stays words, glossary §3).
+- AI is named in the note and in the info text, not on every field. A field label just gets the mark `ai_prefill.suggested`.
 - No message on failure: unavailable, a cap, a refusal, an error or the 10 s timeout show nothing extra, and the form simply stays manual (C19). This is deliberate. The checking status disappears without an announcement.
 - Strings marked † make a privacy claim. The owner and the lawyer approve them before release, together with privacy policy 0.8 chapter 8 (lawyer pack LQ-36, LQ-68 to LQ-71).
 
@@ -96,8 +108,13 @@ Copy rules:
 |---|---|---|
 | ai_prefill.suggested | Predlog | Suggested |
 | ai_prefill.suggested_a11y | Predlog iz fotografije. Preverite ga. | Suggested from the photo. Please check it. |
+| ai_prefill.suggested_confidence_a11y | Predlog iz fotografije, verjetnost {confidence, number, percent}. Preverite ga. | Suggested from the photo, {confidence, number, percent} likely to be right. Please check it. |
 | ai_prefill.note_continue | Nekatera polja smo izpolnili s predlogi iz fotografije. Umetna inteligenca se lahko moti, zato jih preverite, preden nadaljujete. | We filled in some fields with suggestions from the photo. AI can be wrong, so please check them before you continue. |
 | ai_prefill.note_save | Nekatera polja smo izpolnili s predlogi iz fotografije. Umetna inteligenca se lahko moti, zato jih preverite, preden shranite. | We filled in some fields with suggestions from the photo. AI can be wrong, so please check them before you save. |
+| ai_prefill.note_publish | Nekatera polja smo izpolnili s predlogi iz fotografije. Umetna inteligenca se lahko moti, zato jih preverite, preden objavite. | We filled in some fields with suggestions from the photo. AI can be wrong, so please check them before you publish. |
+| ai_prefill.review | Preveri predloge | Check the suggestions |
+| ai_prefill.review_row | Predlog: {fields} | Suggested: {fields} |
+| ai_prefill.fields.species, breed_codes, colours, pattern, size | vrsta, pasma, barva, vzorec, velikost | species, breed, colour, pattern, size |
 | ai_prefill.low_confidence | Iz fotografije tega ne moremo zanesljivo razbrati. Izberite sami. | We could not tell this reliably from the photo. Please choose it yourself. |
 | ai_prefill.low_confidence_breed | Pasme iz fotografije ne moremo zanesljivo razbrati. Izberite jo sami ali pa Mešanec oziroma Ne vem. | We could not tell the breed reliably from the photo. Choose it yourself, or pick Mixed breed or Not sure. |
 | ai_prefill.collar_hint | Na fotografiji je videti ovratnica. Če lahko, jo opišite: barva, obesek, zvonček. | There seems to be a collar in the photo. If you can, describe it: colour, tag, bell. |
@@ -105,8 +122,9 @@ Copy rules:
 | ai_prefill.species_differs | {species, select, dog {Na fotografiji je videti pes.} cat {Na fotografiji je videti mačka.} other {Na fotografiji je videti druga vrsta.}} Če ste vrsto izbrali pravilno, jo pustite. | {species, select, dog {The photo looks like a dog.} cat {The photo looks like a cat.} other {The photo looks like a different species.}} If your choice is right, leave it as it is. |
 | ai_prefill.species_switch | {species, select, dog {Izberi psa} cat {Izberi mačko} other {Spremeni vrsto}} | {species, select, dog {Choose dog} cat {Choose cat} other {Change species}} |
 
-- `suggested` is a small pill next to the label of each field the suggestion filled. `suggested_a11y` is that field's accessible description. Both go when the user edits the field. Saving or publishing the form confirms the rest (C19: nothing is saved unconfirmed).
-- `note_continue` sits once above the filled fields in P6 (details step) and on P7's "Uredi podatke" path. `note_save` is the P8 version. Show the note only when at least one field was filled.
+- `suggested` is the mark after the label of each field the suggestion filled, followed by " · " and the confidence ("Predlog · 81 %"). `suggested_confidence_a11y` is that field's accessible description, with the same number (`{confidence}` is the value from 0.6 to 1, so the formatter shows "81 %" / "81%"). `suggested_a11y` is the fallback for a filled field without a confidence value. Mark and description go when the user edits the field. Saving or publishing the form confirms the rest (C19: nothing is saved unconfirmed).
+- The note sits once in the AI slot by the main action (design rule 1), not above the fields: `note_continue` in P6 (details step) and on P7's "Uredi podatke" path, `note_save` in P8, `note_publish` on the P6 review step while a mark remains. Show the note only when at least one field was filled.
+- `review` is a text button in P8 next to `note_save`: it moves focus to the first marked field. `review_row` is the line under the Žival row on the P6 review step, listing the marked fields with the `fields.*` words joined by ", " in form order ("Predlog: pasma, barva, vzorec" / "Suggested: breed, colour, pattern"; the collar is never listed, it is never filled); the row's Uredi goes back to the step with the marks.
 - `low_confidence` goes under a field whose value came back null (below the minimum confidence), and the field stays empty. Use `low_confidence_breed` for the breed field (P8). No hint for a field the user has already touched.
 - `collar_hint` goes under the collar text field (P6, P8) when `collar` is true. The collar text is never filled. P7 has no collar field, so `collar_hint_note` goes under the note field on step 4.
 - `species_differs` and `species_switch` appear when the suggested species is not the one the user already chose. The species is never switched for them. `species_switch` is a text button.
@@ -124,7 +142,40 @@ Copy rules:
 | ai_prefill.change_photo | Zamenjaj fotografijo | Change photo |
 | ai_prefill.keep_photo | Obdrži fotografijo | Keep photo |
 
-A notice is an inline, neutral note under the first photo (not an error, not red). It does not block Next or Save. `change_photo` opens the picker for that photo. `keep_photo` dismisses the notice. For `no_animal` and `other_animal`, P7 skips the "Je to pravilno?" screen and shows the manual step with the notice above it. `multiple_animals` fills fields as usual, with the notice.
+A notice is an inline, neutral note under the first photo (not an error, not red). It does not block Next or Save. `change_photo` opens the picker for that photo. `keep_photo` dismisses the notice. For `no_animal` and `other_animal`, P7 skips the "Je to pravilno?" screen and shows the manual step with the notice above it. `multiple_animals` fills fields as usual, with the notice, and adds `crop_photo` as its first action (below). `no_animal` and `other_animal` never offer the crop: cropping cannot add an animal.
+
+## Crop tool (P6, P7, P8; also with AI off)
+
+Final (CH-597, CH-632; wireframe v2 F8, F11, F12; C19 §Crop). The tool is offered under every photo the form holds as a local file and from the several-animals note.
+
+| Key | SL | EN |
+|---|---|---|
+| ai_prefill.crop_photo | Obreži fotografijo | Crop photo |
+| ai_prefill.crop_photo_n | Obreži fotografijo {n} | Crop photo {n} |
+| ai_prefill.crop_apply | Uporabi | Apply |
+| ai_prefill.crop_cancel | Prekliči | Cancel |
+| ai_prefill.crop_help | Povlecite okvir ali njegove vogale, da bo na fotografiji ena sama žival. | Drag the frame or its corners so the photo shows just one animal. |
+| ai_prefill.crop_keys | S tipkovnico: Tab izbere okvir ali vogal, puščice ga premaknejo ali spremenijo velikost, Shift pospeši, Esc prekliče. | With a keyboard: Tab selects the frame or a corner, the arrow keys move it or change its size, Shift speeds it up, Esc cancels. |
+| ai_prefill.crop_frame | Okvir obreza | Crop frame |
+| ai_prefill.crop_nw | Vogal zgoraj levo | Top left corner |
+| ai_prefill.crop_ne | Vogal zgoraj desno | Top right corner |
+| ai_prefill.crop_sw | Vogal spodaj levo | Bottom left corner |
+| ai_prefill.crop_se | Vogal spodaj desno | Bottom right corner |
+| ai_prefill.crop_done | Fotografija je obrezana. | The photo is cropped. |
+
+- `crop_photo` is the text button in the several-animals note and the dialog title (web) or screen title (mobile). `crop_photo_n` is the button under each photo, with the photo's position (1 to 5), so each button has its own name; it sits next to Odstrani.
+- `crop_help` shows above the photo and is the frame's accessible description. `crop_keys` is the web-only keyboard line under the photo (the 100 px step with Ctrl or Cmd is a bonus and is not described). The corner names are the accessible names of the four corner handles; the edge handles are pointer-only and unnamed.
+- `crop_done` is one polite announcement after Uporabi. The checking line for the cropped first photo stays silent, as in F1.
+
+Mobile only (TASK-41.6, not in the catalogue yet): the frame and each corner are accessibility elements with four actions each, moving the frame (or that corner) by 10 % of the photo. The mobile screen shows no `crop_keys`; `crop_actions_hint` is the frame's accessibility hint.
+
+| Key | SL | EN |
+|---|---|---|
+| ai_prefill.crop_left | Premakni levo | Move left |
+| ai_prefill.crop_right | Premakni desno | Move right |
+| ai_prefill.crop_up | Premakni navzgor | Move up |
+| ai_prefill.crop_down | Premakni navzdol | Move down |
+| ai_prefill.crop_actions_hint | Okvir in vogale premikate z dejanji bralnika zaslona. | Use your screen reader's actions to move the frame and its corners. |
 
 ## About the suggestions (disclosure)
 
@@ -138,11 +189,11 @@ A notice is an inline, neutral note under the first photo (not an error, not red
 
 ## P7 sentence screen ("Je to pravilno?")
 
-The `report_found.ai_*` keys of §3 stay as they are. `report_found.ai_note` ("Predlog iz fotografije. Umetna inteligenca se lahko moti.") is the found-flow disclosure line. LQ-37 in the lawyer pack quotes it, so do not change it without updating LQ-37.
+The `report_found.ai_*` keys are in §3. `report_found.ai_note` ("Predlog iz fotografije. Umetna inteligenca se lahko moti.") is the found-flow disclosure line. LQ-37 in the lawyer pack quotes it, so do not change it without updating LQ-37.
 
-- Build `report_found.ai_sentence` only from suggested values. Leave a missing size or colour out: "Pes, rjave in bele barve", "Srednje velik pes" / "Dog, brown and white", "Medium-sized dog". With no species suggestion, or with a `no_animal` or `other_animal` notice, skip the screen and show the manual step.
-- "Da, nadaljuj" confirms the suggestion. "Uredi podatke" opens the manual step with the suggested values filled, the `suggested` pills and `note_continue`.
-- The found flow asks no breed, so the sentence never names one.
+- Build the sentence (§3) only from suggested values. Leave a missing size, breed or colour out: "Pes, labradorec, črne barve", "Pes, rjave in bele barve", "Srednje velik pes" / "Dog, Labrador Retriever, black", "Dog, brown and white", "Medium-sized dog". With no species suggestion, or with a `no_animal` or `other_animal` notice, skip the screen and show the manual step.
+- The sentence screen shows no confidence number (owner 2026-10-19).
+- "Da, nadaljuj" confirms the suggestion, the breed included. "Uredi podatke" opens the manual step with the suggested values filled, the Predlog marks and `note_continue`; a suggested breed shows as `report_found.breed_label`, filled and marked.
 
 # 4. Step 3: Where
 
@@ -303,7 +354,7 @@ Resend row on the web manage page (C7 manager, CH-438): a row with the label `re
 
 `resend_done_manager` is the toast after the manager presses the row (the signed-out form on the lost-link screen keeps `resend_done`, which does not confirm that an address exists). `resend_no_email` shows on CONFLICT, when the report has no email on file.
 
-The "returned" confirmation dialog and thank-you screen are in P14 §5.
+The "returned" confirmation dialog and thank-you screen are in P14 §6. "Zaključi prijavo" opens the finder's neutral close confirm, without reason rows (P14 §4, `lifecycle.finder_close_*`; sent as C4 reason `other`).
 
 # 10. Lost link and invalid link
 
@@ -383,3 +434,4 @@ Camera denied: `permissions.camera_denied` (P2).
 | 0.5 | 2026-10-18 | CH-212: status pill keys. CH-262: outbox queue keys. CH-351: validation, sighting date/time and cancel-queued keys; shelter_row note. CH-330 not applied (design decision pending). |
 | 0.6 | 2026-10-18 | CH-438: manager resend row on `/m`: `resend_done_manager`, `resend_no_email` (§9). |
 | 0.7 | 2026-10-18 | TASK-40.6: §3a AI pre-fill, shared with P6 and P8 (namespace `ai_prefill`): checking status and live-region text, Suggested pill, notes, low-confidence and collar hints, species hint, photo notices, disclosure (†, owner and legal review), rules for the P7 sentence screen. |
+| 0.8 | 2026-10-19 | Wireframe M-ai-prefill v2 (owner 2026-10-19). CH-613, CH-618: confidence as a percentage on the Predlog mark only; final `suggested_confidence_a11y` ("verjetnost 81 %", replaces the "zelo verjetno / verjetno" proposal and the draft "81 % verjetno pravilen"); `note_publish`, `review`, `review_row`, `fields.*`; note placement in the AI slot. CH-597 (b), CH-618: the found sentence names the breed (`ai_dog`/`ai_cat` + breed + `ai_colours`; no `ai_sentence` key), SL lower-case rule, `breed_label`; "never names a breed" removed. CH-597 (c), CH-632: crop keys final as drafted, plus mobile action names (§3a Crop tool). CH-625: `species_unsure` dropped. CH-330: finder close decided by design (P14 §4). |

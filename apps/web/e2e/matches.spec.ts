@@ -244,11 +244,11 @@ test('no matches: share, poster PDF and alerts are offered', async ({ page, base
 	await signIn(page, baseURL!, { empty: true });
 	await page.goto(`/r/${CODE}/ujemanja`);
 	await expect(page.getByRole('button', { name: 'Deli iskanje' })).toBeVisible();
-	await expect(page.getByRole('link', { name: 'Natisni plakat' })).toHaveAttribute(
+	await expect(page.getByRole('link', { name: 'Prenesi plakat' })).toHaveAttribute(
 		'href',
 		`/r/${CODE}/poster.pdf?lang=sl`
 	);
-	await page.getByRole('link', { name: 'Opozorila v bližini' }).click();
+	await page.getByRole('link', { name: 'Nastavi opozorila' }).click();
 	await expect(page).toHaveURL(/\/racun\/opozorila$/);
 });
 

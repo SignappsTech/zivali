@@ -3,9 +3,9 @@ source: 03§P12; docs/design/pages/P12-chat.md
 page: P12 Chat
 stories: TASK-21 (FR-009)
 copy-for: docs/design/pages/P12-chat.md
-version: 0.1
+version: 0.2
 status: Draft, native Slovenian review pending
-date: 2026-10-15
+date: 2026-10-19
 ---
 
 # P12 Chat: copy
@@ -71,6 +71,34 @@ Namespace `chat`. Safety is visible but never scary. No ads, no payment prompts.
 
 The counter shows only in the last 100 characters of 2000. Messages with a link show `chat.link_caution` under the bubble; the link stays plain text.
 
+# 4a. Automatic translation (Premium, TASK-118)
+
+PRD R-026.7. Chat stays free and is never slower; translation is the Premium extra, SL ⇄ EN. The original arrives first, the translation follows. Privacy: privacy policy chapter 8 (†, legal review, LQ-72).
+
+| Key | SL | EN |
+|---|---|---|
+| chat.translated | Samodejno prevedeno | Auto-translated |
+| chat.show_original | Pokaži izvirnik | Show original |
+| chat.show_translation | Pokaži prevod | Show translation |
+| chat.translation_notice † | Sporočila v tem pogovoru samodejno prevaja storitev umetne inteligence. Prevod se lahko moti, izvirnik pa je en dotik stran. | Messages in this conversation are machine-translated by an AI service. A translation can be wrong; the original is one tap away. |
+| chat.menu_translate | Samodejni prevod | Automatic translation |
+| chat.menu_translate_help | Sporočila med slovenščino in angleščino prevaja za oba v pogovoru. | Translates messages between Slovenian and English for both of you. |
+| chat.translation_unsupported | Tega jezika še ne prevajamo. | This language is not supported yet. |
+| chat.translation_cap | Ta mesec je doseženo največje število prevodov. Sporočila so prikazana v izvirniku. | This month's translation limit has been reached. Messages show in the original. |
+| chat.translation_failed | Prevod ta trenutek ni na voljo. Sporočilo je prikazano v izvirniku. | The translation is not available right now. The message shows in the original. |
+| chat.translate | Prevedi | Translate |
+| chat.translate_sheet_title | Samodejni prevod je del Premium Zaščite | Automatic translation is part of Premium Protect |
+| chat.translate_sheet_body | S Premium Zaščito se sporočila med slovenščino in angleščino prevajajo samodejno, za obe osebi v pogovoru. Pogovor je brezplačen za vse. Besedilo lahko tudi kopirate in ga prevedete z orodjem v svoji napravi. | With Premium Protect, messages between Slovenian and English are translated automatically, for both people in the chat. Chat is free for everyone. You can also copy the text and translate it with a tool on your device. |
+| chat.translate_sheet_more | Več o Premium Zaščiti | About Premium Protect |
+| chat.translate_sheet_anon | Besedilo lahko kopirate in ga prevedete z orodjem v svoji napravi. | You can copy the text and translate it with a tool on your device. |
+
+- A translated bubble shows the translation with `translated` and the text button `show_original` under it; after a tap, the original with `show_translation`. The bubble's accessible text adds `translated` after the time.
+- `translation_notice` is a quiet line at the top of the thread for both people, under the safety banner, whenever translation is on in that chat (also for the free or anonymous person). It is never dismissed while translation is on.
+- `menu_translate` is a switch in `chat.menu`, only for the Premium participant, on by default; `menu_translate_help` is its description. Switching off stops new translations at once.
+- `translation_unsupported` (a message in a language other than SL or EN), `translation_cap` and `translation_failed` show once under the affected bubble in small muted text; the message stays in the original.
+- Without a Premium participant: `translate` is a quiet text button only under a message detected in another language than the reader's. For a signed-in free user it opens a sheet with `translate_sheet_title`, `translate_sheet_body`, `translate_sheet_more` (to P24) and `common.close`; for an anonymous finder the sheet shows only `translate_sheet_anon` and `common.close` (they cannot subscribe without an account). No pop-up, nothing automatic; copying text keeps working.
+- The safety banner, `link_caution`, report and block act on the original (R-026.7).
+
 # 5. System messages
 
 | Key | SL | EN |
@@ -112,3 +140,9 @@ SEO: N/A (private, `noindex`). Document title "Sporočila · Najdimo" / "Inbox �
 # 8. CHANGE requests
 
 - `CHANGE docs/tech/contracts/C9-chat.md§RPCs (Aliases): replace "Lastnik/Owner", "Najditelj/Finder" with the neutral i18n keys chat.alias_owner, chat.alias_finder, chat.alias_sighter, chat.alias_contact (P12 content slice).`
+
+# Change log
+
+| Version | Date | Change |
+|---|---|---|
+| 0.2 | 2026-10-19 | CH-640: §4a automatic translation (Premium, TASK-118): label, show original, notice for both people (†), menu switch, unsupported language, cap and failure lines, Translate action and the Premium sheet. Not in the catalogue yet. |

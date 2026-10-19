@@ -3,13 +3,15 @@ source: 02§Content, SEO and legal requirements (Legal); FR-038; FR-039; NFR-PRI
 
 | Field | Value |
 |---|---|
-| Version | 0.5 |
-| Date | 2026-10-18 |
+| Version | 0.6 |
+| Date | 2026-10-19 |
 | Route SL | `/piskotki` |
 | Route EN | `/en/cookies` |
 | Slug SL / EN | `piskotki` / `cookies` |
 | Structured data | WebPage |
 | Template | T4 Legal (numbered h2 sections, "On this page" list, draft note) |
+
+Change in 0.6 (CH-559): the SL row names the stored key `zz_support:payment:<ID plačila>` (only the placeholder is translated); the published page already shows it. CH-641 (PRD R-026.6): chapter 5 adds the cookieless counting of report views and shares; publish that line only when counting ships (TASK-117).
 
 Change in 0.5 (CH-453): two session-storage rows for the support asks (`zz_support:...`).
 
@@ -67,7 +69,7 @@ Zapise delimo na dve vrsti:
 | Osnutek prijave (lokalna shramba) | Najdimo | Shrani nedokončano prijavo, da je ne izgubite. | nujni | dokler prijave ne oddate ali osnutka ne zavržete |
 | `manage:<ID prijave>` (lokalna shramba) | Najdimo | Hrani žeton zasebne povezave, prek katere upravljate prijavo brez računa. | nujni | do zaključka prijave ali do izbrisa shrambe |
 | `manage_token` (sejna shramba) | Najdimo | Začasno hrani žeton zasebne povezave iz naslova /m, da ga po osvežitvi strani ne izgubite. | nujni | do zaprtja zavihka |
-| `zz_support:<trenutek>:<kratka koda>` in `zz_support:placilo:<ID plačila>` (sejna shramba) | Najdimo | Si zapomni, da ste prošnjo za prispevek pri prijavi preskočili ali plačali (`skipped`, `paid`), in da je stran po vrnitvi s plačila odgovor že videla (`settled`), da prošnje ne prikažemo znova. Ne vsebuje osebnih podatkov. | nujni | do zaprtja zavihka |
+| `zz_support:<trenutek>:<kratka koda>` in `zz_support:payment:<ID plačila>` (sejna shramba) | Najdimo | Si zapomni, da ste prošnjo za prispevek pri prijavi preskočili ali plačali (`skipped`, `paid`), in da je stran po vrnitvi s plačila odgovor že videla (`settled`), da prošnje ne prikažemo znova. Ne vsebuje osebnih podatkov. | nujni | do zaprtja zavihka |
 | Identifikator naprave (lokalna shramba) | Najdimo | Naključna oznaka za omejevanje zlorab (število zahtev). | nujni | do izbrisa shrambe |
 | Preverjanje „nisem robot“ (Turnstile) | Cloudflare, Inc. | Loči ljudi od botov s tehničnimi signali naprave in brskalnika. Ne služi oglaševanju. Najdimo pri tem v vaši napravi ne shrani ničesar. Preverjanje teče v Cloudflarovem okvirju (challenges.cloudflare.com), ki se naloži samo na obrazcih s preverjanjem. | nujni | Najdimo ne shrani ničesar; za Cloudflarov okvir veljajo pravila ponudnika |
 | `_ga` (piškotek) | Google Ireland Limited | Loči uporabnike za statistiko obiska. | analitični | 2 leti od zadnjega obiska |
@@ -95,6 +97,7 @@ Identifikator Firebase Analytics ustvarimo šele po vaši privolitvi.
 
 - Oglaševalskih in sledilnih piškotkov ni. Vse štiri Googlove nastavitve privolitve so privzeto zavrnjene. Če sprejmete, odobrimo samo `analytics_storage`.
 - Prikaze in klike oglasov štejemo v svoji zbirki, združeno in brez piškotkov. Pri tem ničesar ne shranimo v vaši napravi.
+- Enako štejemo oglede in delitve prijav za statistiko prijave: združeno po prijavi in dnevu, brez piškotkov in brez zapisa v vaši napravi. [pravni pregled]
 
 ## 6. Storitve tretjih oseb
 
@@ -187,6 +190,7 @@ We create the Firebase Analytics identifier only after you consent.
 
 - There are no advertising or tracking cookies. All four Google consent settings are denied by default. If you accept, we grant only `analytics_storage`.
 - We count ad impressions and clicks in our own database, in aggregate and without cookies. We store nothing on your device for it.
+- We count report views and shares for report statistics the same way: in aggregate per report and day, without cookies and without storing anything on your device. [legal review]
 
 ## 6. Third-party services
 

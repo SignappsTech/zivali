@@ -8,7 +8,6 @@
 	"search_placeholder": "Street and house number, or town",
 	"searching": "Searching …",
 	"no_results": "We cannot find that place. Try another name or move the map to the right spot.",
-	"no_results_list": "We cannot find that place. Try another name, or an address with a house number.",
 	"search_clear": "Clear search",
 	"search_attribution": "Source: <source>Surveying and Mapping Authority of the Republic of Slovenia</source>, spatial units and house numbers, as of {data_date} (<licence>CC BY 4.0</licence>)",
 	"search_offline": "Place search needs a connection. Use your location instead.",

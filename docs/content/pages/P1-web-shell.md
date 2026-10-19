@@ -3,9 +3,9 @@ source: 03§P1; docs/design/pages/P1-web-shell.md
 page: P1 Web shell
 stories: TASK-11 (FR-035, FR-036)
 copy-for: docs/design/pages/P1-web-shell.md
-version: 0.4
+version: 0.5
 status: Draft, native Slovenian review pending
-date: 2026-10-15
+date: 2026-10-19
 ---
 
 # P1 Web shell: copy
@@ -57,7 +57,7 @@ Final SL and EN strings for the header, footer, shared patterns and the two shar
 | footer.privacy | Zasebnost | Privacy | `/zasebnost` |
 | footer.cookies | Piškotki | Cookies | `/piskotki` |
 | footer.terms | Pogoji uporabe | Terms of use | `/pogoji-uporabe` |
-| footer.imprint | Impresum | Imprint | `/impresum` |
+| footer.imprint | Podatki o podjetju | Company information | `/podatki-o-podjetju` (`/en/company-information`) |
 | footer.accessibility | Dostopnost | Accessibility | `/dostopnost` |
 | footer.cookie_settings | Nastavitve piškotkov | Cookie settings | opens P17 Customise |
 | footer.how_it_works | Kako deluje | How it works | `/kako-deluje` |
@@ -66,7 +66,14 @@ Final SL and EN strings for the header, footer, shared patterns and the two shar
 | footer.faq | Pogosta vprašanja | FAQ | `/pogosta-vprasanja` |
 | footer.nav_label | Noga strani | Footer | `nav` landmark name |
 | footer.tagline | Spet doma. | Home again. | Next to the logo |
-| footer.copyright | © {year} Signapps. Najdimo je delovno ime storitve. | © {year} Signapps. Najdimo is the service's working name. | Drop the second sentence once the name is final (Q-001) |
+| footer.copyright | © {year} SIGNAPPS d.o.o. Najdimo je delovno ime storitve. | © {year} SIGNAPPS d.o.o. Najdimo is the service's working name. | Drop the second sentence once the name is final (Q-001) |
+| footer.heading_help | Pomoč | Help | Column heading |
+| footer.heading_organisations | Za organizacije | For organisations | Column heading |
+| footer.heading_najdimo | Najdimo | Najdimo | Column heading |
+| footer.heading_legal | Pravno | Legal | Column heading |
+| footer.operator | Najdimo upravlja SIGNAPPS d.o.o. | Najdimo is run by SIGNAPPS d.o.o. | Bottom line, followed by the link `footer.imprint` |
+
+Footer layout (TASK-116.2, approved P1-footer.html v1; CH-543): the logo, `footer.tagline` and the language switch, then four headed link columns, then the bottom line: `footer.copyright` and, under it, `footer.operator` followed by the link `footer.imprint` ("Najdimo upravlja SIGNAPPS d.o.o. Podatki o podjetju"). The wireframe's draft put the company address in the operator line; the address stays on the company information page instead, one link away, so the line stays short at 390 px. Columns, as built in `apps/web/components/shell/footer.tsx`: Pomoč (Kako deluje, Nasveti za varnost, Pogosta vprašanja, Zavetišča), Za organizacije (Za zavetišča, Oglašujte pri nas), Najdimo (O nas, Podatki o podjetju, Dostopnost), Pravno (Zasebnost, Piškotki, Pogoji uporabe, Nastavitve piškotkov).
 
 # 3. Page container and accessibility strings
 
@@ -262,4 +269,5 @@ The shell has no content images. Logo: `alt=""` inside the link, the link carrie
 | Version | Date | Change |
 |---|---|---|
 | +CH | 2026-10-15 | CH-74: `common.breadcrumb_home` ("začetno stran" / "the home page"), the `{page}` value of `common.breadcrumb_back`. CH-80: `common.toasts_label` ("Obvestila" / "Notifications") is the accessible name of the toast live region (sonner `containerAriaLabel`); the toast close button uses `common.close`. |
+| 0.5 | 2026-10-19 | CH-543: footer column headings, `footer.operator`, imprint renamed "Podatki o podjetju" (`/podatki-o-podjetju`), copyright "SIGNAPPS d.o.o.", synced with footer.json; address kept on the company page. |
 | 0.4 | 2026-10-18 | CH-150: signed-in header label decided as short `nav.my_pets_reports` "Moje živali" / "My pets" (lg header); full "Moje živali in prijave" kept as new `nav.my_pets_reports_full` for the menu sheet and account menu. New common keys added as §5.8 (`seo_title`, `seo_description`, `placeholder_body`, `portal_title`). |

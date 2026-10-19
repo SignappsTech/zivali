@@ -3,9 +3,9 @@ source: 03§P6; docs/design/pages/P6-report-lost.md
 page: P6 Report lost
 stories: TASK-29 (FR-005, FR-003, FR-002)
 copy-for: docs/design/pages/P6-report-lost.md
-version: 0.8
+version: 0.9
 status: Draft, native Slovenian review pending
-date: 2026-10-18
+date: 2026-10-19
 ---
 
 # P6 Report lost: copy
@@ -38,9 +38,8 @@ Namespace `report_lost` (photos in `photos`, location in `location` from P5, sig
 | report_lost.pet_title | Katero žival iščete? | Which pet are you looking for? |
 | report_lost.pet_other | Druga žival | Another animal |
 | report_lost.pet_other_desc | Podatke vnesete zdaj. | Enter the details now. |
-| report_lost.pet_enter | Vnesi podatke | Enter details |
 
-Saved pet rows show the pet name and species ("Luna · Mačka").
+Saved pet rows show the pet name and species ("Luna · Mačka"). The step shows only with saved pets, as choice rows that move on with one press; without saved pets or signed out the flow starts at the photos. There is no "Vnesi podatke" button: `report_lost.pet_enter` is dropped (CH-497, CH-530, CH-552).
 
 Validation message for the mobile flow (CH-334, TASK-29.5), draft, please confirm:
 
@@ -298,4 +297,5 @@ Photo keys (CH-114, CH-118; namespace `photos`, used by PhotoPicker on web and m
 | 2026-10-18 | CH-496 (TASK-114.5): added `photos.rejected`, shown on the photo step for any `photo_ids` VALIDATION error and when `photos.limit` is exceeded (more than 5). SL/EN reviewed, unchanged. |
 | 2026-10-18 | CH-334: `report_lost.pet_required` (§2), `report_lost.when_invalid` (§6). Version 0.6. |
 | 2026-10-18 | v0.7. CH-420: saved pet row photo is decorative on web (§13). CH-426: `report_lost.photos_failed` (§11). CH-513 (= CH-496): already applied. |
+| 2026-10-19 | v0.9. CH-552: `report_lost.pet_enter` dropped (slice and catalogue). P6 review step AI lines (`ai_prefill.note_publish`, `review_row`): P7 §3a. |
 | 2026-10-18 | v0.8. TASK-40.6: AI pre-fill on the photo and details steps points to the shared P7 §3a (`ai_prefill`). |

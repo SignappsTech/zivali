@@ -3,9 +3,9 @@ source: 03§P8; docs/design/pages/P8-pet-profiles.md
 page: P8 Pet profiles
 stories: TASK-16 (FR-002, FR-003)
 copy-for: docs/design/pages/P8-pet-profiles.md
-version: 0.5
+version: 0.6
 status: Draft, native Slovenian review pending
-date: 2026-10-18
+date: 2026-10-19
 ---
 
 # P8 Pet profiles: copy
@@ -195,8 +195,10 @@ N/A: signed-in pages, `noindex`. Document titles: "Moje živali · Najdimo" / "M
 | Image | SL | EN |
 |---|---|---|
 | Profile photo n | {name}, fotografija {n} | {name}, photo {n} |
-| Row photo | {name} | {name} |
+| Row photo (My pets list) | `alt=""`, decorative: the name is next to it, inside the same row link | |
 | Empty-state illustration `assets/empty-no-pets.png` | decorative, `alt=""` | |
+
+A named alt on the row photo made the row link read the name twice ("Runo Runo Pes · Labradorec Čip vpisan"), so the row photo is decorative, as in P12 §7 (CH-598). Profile photos keep `pets.photo_alt`.
 
 # 7. CHANGE requests
 
@@ -211,3 +213,4 @@ N/A: signed-in pages, `noindex`. Document titles: "Moje živali · Najdimo" / "M
 | 2026-10-18 | CH-496 (TASK-114.5): `photos.rejected` (P6 §3) is the save toast when a photo is rejected. |
 | 2026-10-18 | v0.4. CH-237/CH-243: `pets.limit_note` and `limit_note_premium` take `{limit}` (free limit 2); photo-delete keys. CH-269: PetFields keys. CH-298: archive keys, `photo_alt`. CH-323: mobile keys. CH-344: decided no `my_reports_row_meta` (reuse `report.since_{type}`). |
 | 2026-10-18 | v0.5. TASK-40.6: AI pre-fill on the add and edit form points to the shared P7 §3a (`ai_prefill`). |
+| 2026-10-19 | v0.6. CH-598: row photo in the list is decorative (`alt=""`). |

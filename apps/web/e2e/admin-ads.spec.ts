@@ -78,7 +78,7 @@ for (const colorScheme of ['light', 'dark'] as const) {
 		const table = page.getByRole('table', { name: 'Oglasi', exact: true });
 		await expect(table.getByRole('link', { name: running.title, exact: true })).toBeVisible();
 		await expect(table.getByText('Se prikazuje', { exact: true })).toHaveCount(1);
-		await expect(table.getByText('Podprite Najdimo', { exact: true })).toHaveCount(0);
+		await expect(table.getByText('Pomagajte ohraniti iskanje brezplačno', { exact: true })).toHaveCount(0);
 		await expectNoAxeViolations(page);
 
 		// New ad: the checks on save focus the first problem; the preview follows the form.

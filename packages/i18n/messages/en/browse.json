@@ -64,7 +64,7 @@
 	"filter_size_large": "Large",
 	"filters_apply": "{count, plural, one {Show # report} other {Show # reports}}",
 	"filters_close": "Close filters",
-	"location_denied_note": "Location access is off, so we are showing {place}. You can choose the place yourself.",
+	"location_denied_note": "Location access is off, so we are showing this area: {place}. You can choose a place yourself.",
 	"count_announce": "{count, plural, one {# report found} other {# reports found}}",
 	"empty_title": "No open reports here",
 	"empty_body": "Nobody in this area is missing a pet right now. If you have lost or found an animal, report it. Or turn on alerts for your area.",

@@ -3,9 +3,9 @@ source: 03§P22; docs/design/pages/P22-partners.md; 02§FR-032; brief v0.7 (Vet 
 page: P22 Partners page ("Oglašujte pri nas")
 stories: TASK-38 (FR-032)
 copy-for: docs/design/pages/P22-partners.md
-version: 0.3
+version: 0.4
 status: Draft; reply time and founding-partner terms confirmed by client (2026-10-15); pricing and media kit still pending client decision
-date: 2026-10-18
+date: 2026-10-19
 ---
 
 # P22 Partners page: copy
@@ -169,7 +169,7 @@ States:
 |---|---|---|---|---|
 | 1 | Kdo vidi moj oglas? | Ljudje, ki na Najdimo gledajo prijave v regijah in za živali, ki jih izberete. | Who sees my ad? | People who look at reports on Najdimo in the regions and for the animals you choose. |
 | 2 | Ali sledite uporabnikom? | Ne. Oglase prikazujemo glede na kraj in vrsto živali v prijavi. Ne uporabljamo piškotkov za sledenje in ne delimo podatkov o uporabnikih. | Do you track users? | No. We show ads based on the place and type of animal in the report. We use no tracking cookies and share no data about users. |
-| 3 | Kako merite uspešnost? | Štejemo prikaze in klike vsakega oglasa po dnevih, mestih in regijah. Prikaz pomeni, da se je oglas izrisal na zaslonu. Poročilo prejmete vsak mesec. | How do you measure results? | We count impressions and clicks per day, slot and region. An impression means the ad was rendered on screen. You get a report every month. |
+| 3 | Kako merite uspešnost? | Štejemo prikaze in klike vsakega oglasa po dnevih, mestih in regijah. Prikaz štejemo, ko je vsaj polovica oglasa vsaj 1 sekundo vidna na zaslonu. Poročilo prejmete vsak mesec. | How do you measure results? | We count impressions and clicks per day, slot and region. An impression counts when at least half of the ad has been on screen for at least 1 second. You get a report every month. |
 | 4 | Kaj potrebujete od nas? | Sliko, kratek naslov, besedilo in povezavo. Oglas za vsa mesta pripravimo mi. | What do you need from us? | An image, a short title, some text and a link. We prepare the ad for every slot. |
 | 5 | Ali morajo zavetišča plačati? | Ne. Zavetišča in občine uporabljajo Najdimo brezplačno, za vedno. | Do shelters have to pay? | No. Shelters and municipalities use Najdimo for free, forever. |
 | 6 | Ali je Veterinarski partner pogoj za brezplačne funkcije? | Ne. Prijava najdenih živali, preverjanje čipa, ujemanja in pogovor z lastniki so za vse ambulante brezplačni. | Is Vet Partner required for the free features? | No. Reporting found animals, chip lookup, matches and talking to owners are free for every practice. |
@@ -202,4 +202,5 @@ Key names (CH-431): `partners.seo_title`, `partners.seo_description` (§10) and 
 | Version | Date | Change |
 |---|---|---|
 | 0.2 | 2026-10-18 | CH-257: `partners.stats_masked` (§2). |
+| 0.4 | 2026-10-19 | CH-558 (PRD A-016, R-029.4): FAQ 3 states the viewable impression (at least half of the ad on screen for at least 1 second), web and app alike; catalogue `partners.faq_3_a` updated. |
 | 0.3 | 2026-10-18 | CH-431: key names for SEO and FAQ, `partners.faq_title`. CH-432: slot previews reuse P21 copy (§3). CH-466: `partners.region_label` reworded (§2). |

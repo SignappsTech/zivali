@@ -3,14 +3,14 @@ source: 03§P17; docs/design/pages/P17-consent.md; 02§FR-039, FR-038; docs/tech
 page: P17 Consent banner and preferences
 stories: TASK-13 (FR-039, FR-038)
 copy-for: docs/design/pages/P17-consent.md
-version: 0.1
+version: 0.2
 status: Draft, native Slovenian review and legal review pending (with the cookie policy)
-date: 2026-10-15
+date: 2026-10-19
 ---
 
 # P17 Consent: copy
 
-Namespace `consent`. Basic Consent Mode v2: nothing is sent to Google before the choice; all four signals start as denied; accepting grants only `analytics_storage`. The copy says exactly that, no more. Accept, Reject and Customise carry the same weight; nothing is pre-selected. Details and durations: `docs/content/legal/cookie-policy.md`.
+Namespace `consent`. Basic Consent Mode v2: nothing is sent to Google before the choice; all four signals start as denied; accepting grants only `analytics_storage`. The copy says exactly that, no more. Reject all and Accept all carry the same weight; nothing is pre-selected. Details and durations: `docs/content/legal/cookie-policy.md`.
 
 # 1. First view (web banner, mobile sheet)
 
@@ -25,7 +25,7 @@ Namespace `consent`. Basic Consent Mode v2: nothing is sent to Google before the
 | consent.customise | Prilagodi | Customise |
 | consent.dialog_label | Izbira piškotkov | Cookie choice |
 
-Button order on screen: Zavrni vse, Sprejmi vse, Prilagodi (all `secondary`, identical size). Escape or ignoring the banner keeps everything denied.
+Web banner (as built, TASK-115.11; design change CH-630): "Zavrni vse" and "Sprejmi vse" are an equal `secondary` pair, side by side, same size and weight; "Prilagodi" is a text button after them (in the same row from about 390 px, under the pair below that). Rejecting stays exactly as easy as accepting. Mobile app sheet: the three buttons as before, equal size, in the order Zavrni vse, Sprejmi vse, Prilagodi. Escape or ignoring the banner keeps everything denied. The labels are unchanged: "Prilagodi" / "Customise" reads as a link to the settings view, and the two choices keep their verbs.
 
 # 2. Customise view and Cookie settings
 
@@ -58,3 +58,9 @@ Customise buttons, equal size: Shrani izbiro, Sprejmi vse, Zavrni vse. The setti
 # 4. SEO and alt text
 
 N/A: overlay, no images.
+
+# Change log
+
+| Version | Date | Change |
+|---|---|---|
+| 0.2 | 2026-10-19 | CH-630 (copy side): web banner has Reject all and Accept all as the equal pair and Customise as a text button; labels unchanged; equal weight now means the two choices. |

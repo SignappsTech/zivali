@@ -3,9 +3,9 @@ source: 03§P13; docs/design/pages/P13-alerts-inbox-settings.md
 page: P13 Notifications, nearby alerts and account settings
 stories: TASK-22, TASK-23, TASK-9 (FR-010, FR-001, FR-036)
 copy-for: docs/design/pages/P13-alerts-inbox-settings.md
-version: 0.4
+version: 0.5
 status: Draft, native Slovenian review pending
-date: 2026-10-18
+date: 2026-10-19
 ---
 
 # P13 Notifications, alerts and settings: copy
@@ -42,7 +42,6 @@ Namespaces `notifications` (inbox view), `alerts`, `profile`. The title and body
 | alerts.radius_label | Polmer | Radius |
 | alerts.radius_value | {km} km | {km} km |
 | alerts.radius_number_label | Polmer v kilometrih | Radius in kilometres |
-| alerts.radius_premium | Večji polmer in več območij omogoča Premium Zaščita. | Premium Protect allows a larger radius and more areas. |
 | alerts.species_label | Za katere živali | Which animals |
 | alerts.species_dogs | Psi | Dogs |
 | alerts.species_cats | Mačke | Cats |
@@ -54,7 +53,7 @@ Namespaces `notifications` (inbox view), `alerts`, `profile`. The title and body
 | alerts.pause_label | Začasno ustavi opozorila | Pause alerts |
 | alerts.pause_help | Nastavitve ostanejo shranjene. | Your settings stay saved. |
 
-`alerts.radius_premium` appears from M4 only. `alerts.radius_number_label` is the accessible name of the radius number field that sits beside the slider on web (CH-418).
+`alerts.radius_premium` is dropped: alerts are never part of Premium (PRD R-026.5, v0.11), so no line in the alert settings mentions it. `alerts.radius_number_label` is the accessible name of the radius number field that sits beside the slider on web (CH-418).
 
 `alerts.species_none` shows under the animal pills when none is chosen: every animal can be switched off, and none chosen means no nearby alerts (CH-501, TASK-114.14).
 
@@ -110,6 +109,15 @@ The inbox on mobile has two segments in the Sporočila tab: "Sporočila" (`chat.
 | alerts.channel_inapp | V aplikaciji | In the app |
 | alerts.channel_switch_a11y | {type}: {channel} | {type}: {channel} |
 
+Closed-section summary (TASK-114.15, mock M-alerts-notifications v1). Section 3 is a disclosure on `/racun/opozorila` (`#kako-vas-obvestimo`); `/racun/obvestila` redirects there. When the disclosure is closed, its summary line says what is on:
+
+| Key | SL | EN |
+|---|---|---|
+| alerts.channels_summary_quiet | {channels} · Tihi čas {from} do {to} | {channels} · Quiet hours {from} to {to} |
+| alerts.channels_summary_none | Brez obvestil | No notifications |
+
+`{channels}` is the labels of the channels with at least one switch on, in the order Na telefonu, Po e-pošti, V aplikaciji, joined by the locale list format, the later ones in lower case: "Na telefonu in po e-pošti" / "On the phone and by email". "V aplikaciji" appears only when it is the only channel on. With every switch off, `{channels}` is `channels_summary_none`. The " · Tihi čas …" part shows only when quiet hours are set; `{from}` and `{to}` are formatted times.
+
 No channel is locked in the app: there is no lock note and no warning when every channel of a row is off (`alerts.locked_note` removed, CH-501).
 
 # 4. Quiet hours
@@ -123,8 +131,9 @@ No channel is locked in the app: there is no lock note and no warning when every
 | alerts.quiet_off | Brez tihega časa | No quiet hours |
 | alerts.quiet_reminders_note | Tudi opomniki v bližini so v tihem času utišani. | Nearby reminders are silent in quiet hours too. |
 | alerts.quiet_invalid | Vpišite uro, na primer 22:00. | Enter a time, for example 22:00. |
+| alerts.quiet_same | Tihi čas se ne more začeti in končati ob isti uri. Izberite drugo uro. | Quiet hours cannot start and end at the same time. Choose a different time. |
 
-`alerts.quiet_reminders_note` is the extra line under `quiet_help`: the exception for a chip-number match and new messages does not apply to the on-phone reminders (CH-248). `alerts.quiet_invalid` is the error under a quiet-hours field on mobile that is not a time in HH:MM; draft, needs native review (CH-283).
+`alerts.quiet_reminders_note` is the extra line under `quiet_help`: the exception for a chip-number match and new messages does not apply to the on-phone reminders (CH-248). `alerts.quiet_invalid` is the error under a quiet-hours field on mobile that is not a time in HH:MM; draft, needs native review (CH-283). `alerts.quiet_same` is the error under "Do" when the start equals the end (web, TASK-22.7, CH-607).
 
 # 5. Permission state
 
@@ -226,4 +235,5 @@ Alt text: avatar `alt=""` next to the name; nearby-alert row pet photo per P9 §
 |---|---|
 | 2026-10-18 | CH-501 (TASK-114.14): added `alerts.species_none` (§2); removed `alerts.locked_note` (§3). SL/EN reviewed, unchanged. |
 | 2026-10-18 | v0.3. CH-241/CH-248/CH-355: section 2a nearby reminders, 2b Always-location primer, quiet-hours reminder line. CH-283: `alerts.quiet_invalid`. CH-318: section 7a offline data. |
+| 2026-10-19 | v0.5. CH-607: `alerts.quiet_same` (final, replaces the draft "… ob drugi uri, kot se začne"). CH-548: closed-section summary `channels_summary_quiet`, `channels_summary_none` (§3). `alerts.radius_premium` dropped (PRD R-026.5). |
 | 2026-10-18 | v0.4. CH-414: reminders reuse `alerts.push_denied` (§2a). CH-418: `alerts.radius_number_label` (§2). CH-518 (= CH-501): already applied in v0.3. |

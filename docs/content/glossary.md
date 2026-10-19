@@ -2,9 +2,9 @@
 source: 02§Glossary; 02§Content, SEO and legal requirements; 03§Content strategy; supabase/seed/geo (GURS regions and municipalities)
 doc: glossary
 title: SL/EN terminology glossary
-version: 0.5
-status: Approved (client, 2026-10-15); v0.3 additions (§3a, CRHŽ row) and the v0.4 reward row pending native review
-date: 2026-10-15
+version: 0.6
+status: Approved (client, 2026-10-15); v0.3 additions (§3a, CRHŽ row) and the v0.4 reward row and the v0.6 rows (AI suggestion, Premium) pending native review
+date: 2026-10-19
 owner: Content Strategist
 story: TASK-2
 ---
@@ -66,6 +66,8 @@ Species in headings and SEO titles agree with the species, not with "žival": "I
 | Confirm a match | To je moja žival | This is my animal | Button. |
 | Reject a match | Ni moja žival | Not my animal | Button. |
 | Match strength: strong / good / possible | Zelo verjetno / Verjetno / Mogoče | Very likely / Likely / Possible | Words with three bars, never a percentage. |
+| AI suggestion (filled field) | Predlog; mark "Predlog · 81 %" | Suggested; mark "Suggested · 81%" | Never "prepoznali smo". The confidence as a whole percent appears only on this mark and in its accessible description ("verjetnost 81 %"), never elsewhere (P7 §3a). |
+| Crop (a photo) | Obreži fotografijo | Crop photo | Crop tool, P7 §3a. |
 | Chip match | ujemanje čipa; "Številka čipa se ujema" | chip match; "Chip number matches" | |
 | Reasons for a match | Zakaj tako mislimo | Why we think so | |
 | Microchip | čip | microchip, chip | "Mikročip" only in help text the first time. |
@@ -180,7 +182,11 @@ Rules:
 | Receipt | potrdilo o plačilu | receipt | |
 | Monthly supporter (M4) | Podpornik (plan name); badge text "Podpira Najdimo" | Supporter; badge "Supports Najdimo" | Badge text is gender-neutral. |
 | Boost (M4) | Povečan doseg | Boost | Pill "Povečan doseg"; action "Povečaj doseg". |
-| Premium (M4) | Premium Zaščita | Premium Protect | |
+| Premium (M4) | Premium Zaščita | Premium Protect | Declines in SL: "s Premium Zaščito", "Premium Zaščite". In tight labels "Premium" alone, uninflected: "Statistika prijave (Premium)". Never "premium uporabnik" as a status shown to others: Premium adds no badge. |
+| Yearly / monthly plan | letna naročnina / mesečna naročnina | yearly / monthly plan | Plan page P24. Yearly first, pill "Najboljša vrednost" / "Best value". |
+| Report statistics | statistika prijave; ogledi, delitve, poslana opozorila | report statistics; views, shares, alerts sent | Premium extra (P9 §5a). |
+| Automatic chat translation | samodejni prevod; label "Samodejno prevedeno" | automatic translation; label "Auto-translated" | P12 §4a. "Pokaži izvirnik" / "Show original". |
+| Search plan, sightings heatmap | načrt iskanja; zemljevid gostote opažanj | search plan; sightings heatmap | Premium extra (P9 §5b). Not "toplotni zemljevid". |
 | Reward (M4) | nagrada; line "Nagrada" or "Nagrada: {amount}", the owner's note after " · " | reward; line "Reward offered" or "Reward offered: {amount}" | Display only: the owner's own offer, arranged with the finder outside the app (brief v1.1). Najdimo never holds or pays it, so never "varno hrani Stripe", "izplačilo" or "provizija". Always shown with the warning that starts "Nikoli nikomur ne plačajte vnaprej." (P6, P9, P18). |
 | Vet Partner (paid clinic visibility) | Veterinarski partner (plan name); profile mark "Partnerska ambulanta" | Vet Partner; profile mark "Partner clinic" | B2B subscription for vet clinics. Its placements in ad slots, alerts and posters are paid and always carry the "Oglas" label. |
 | 24h emergency (clinic badge) | Nujna pomoč 24 ur | 24-hour emergency care | Clinic profile badge. |
@@ -251,7 +257,7 @@ Breeds: see §7.4.
 
 ## 7.4 Breeds (namespace `breeds`, CH-270)
 
-Drafted from `@zivali/validation/breeds` for TASK-16.4: every code exists in both locales (76 dog, 24 cat), key `breeds.<species>.<code>`. The fallback codes are `dog.mixed` / `cat.mixed` "Mešanec" / "Mixed breed" and `dog.unknown` / `cat.unknown` "Ne vem" / "Not sure". Breed names are proper names and mostly follow common Slovenian usage (Labradorec, Nemški ovčar); the rarer ones are partly the international name. All need native review. `attributes.size_help_dog` holds the dog size help line of §7.1.
+Drafted from `@zivali/validation/breeds` for TASK-16.4: every code exists in both locales (76 dog, 24 cat), key `breeds.<species>.<code>`. The fallback codes are `dog.mixed` / `cat.mixed` "Mešanec" / "Mixed breed" and `dog.unknown` / `cat.unknown` "Ne vem" / "Not sure". Breed names are proper names and mostly follow common Slovenian usage (Labradorec, Nemški ovčar); mid-sentence (the P7 found sentence) SL writes them in lower case, unless the name contains a proper name with its own capital ("labradorec", but "Jack Russell terier"); the rarer ones are partly the international name. All need native review. `attributes.size_help_dog` holds the dog size help line of §7.1.
 
 ### Dogs
 
@@ -440,6 +446,7 @@ Distance band codes are fixed in C6 (`lt1`, `1to3`, `3to10`, `gt10`). Only `lt24
 
 | Version | Date | Change |
 |---|---|---|
+| 0.6 | 2026-10-19 | AI suggestion mark with the confidence percent, crop; Premium short form and declension, plans, report statistics, chat translation, search plan and heatmap; breeds in lower case mid-sentence (CH-597, CH-613, CH-639, CH-640). |
 | 0.5 | 2026-10-18 | CH-270: §7.4 breeds namespace (76 dog, 24 cat codes, SL and EN, native review pending); `attributes.size_help_dog` noted. |
 | 0.4 | 2026-10-15 | Reward row: display-only line and scam warning; escrow wording removed (brief v1.1). |
 | 0.3 | 2026-10-15 | §3a statistical regions (12, SL/EN confirmed) and municipality display rules; CRPsi row replaced by CRHŽ (not public, never linked); open point on "QR koda". |

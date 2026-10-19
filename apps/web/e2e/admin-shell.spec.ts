@@ -347,7 +347,7 @@ test('an idle admin is warned with a countdown, can stay signed in, and is signe
 	const dialog = page.getByRole('dialog', { name: 'Ste še tu?' });
 	await expect(dialog).toBeVisible();
 	await expect(dialog).toContainText(/Zaradi varnosti vas bomo čez [12]:\d\d odjavili iz konzole\./);
-	await expect(dialog.getByRole('button', { name: 'Ostanite vpisani' })).toBeFocused();
+	await expect(dialog.getByRole('button', { name: 'Podaljšaj sejo' })).toBeFocused();
 	await expectNoAxeViolations(page);
 	await page.emulateMedia({ colorScheme: 'dark' });
 	await expectNoAxeViolations(page);

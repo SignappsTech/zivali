@@ -3,9 +3,9 @@ source: 03§P5; docs/design/pages/P5-location-picker.md
 page: P5 Location picker and privacy-preserving area
 stories: TASK-15 (FR-004)
 copy-for: docs/design/pages/P5-location-picker.md
-version: 0.5
+version: 0.6
 status: Draft, native Slovenian review pending
-date: 2026-10-18
+date: 2026-10-19
 ---
 
 # P5 Location picker: copy
@@ -31,15 +31,14 @@ Namespace `location`. Used inside P6, P7, P13 and the profile. Area names come f
 | location.result_line | {place}, {municipality} | {place}, {municipality} |
 | location.searching | Iščemo … | Searching … |
 | location.no_results | Tega kraja ne najdemo. Poskusite z drugim imenom ali premaknite zemljevid na pravo mesto. | We cannot find that place. Try another name or move the map to the right spot. |
-| location.no_results_list | Tega kraja ne najdemo. Poskusite z drugim imenom ali z naslovom s hišno številko. | We cannot find that place. Try another name, or an address with a house number. |
 | location.search_clear | Počisti iskanje | Clear search |
 | location.search_attribution | Vir: <source>Geodetska uprava Republike Slovenije</source>, prostorske enote in hišne številke, stanje {data_date} (<licence>CC BY 4.0</licence>) | Source: <source>Surveying and Mapping Authority of the Republic of Slovenia</source>, spatial units and house numbers, as of {data_date} (<licence>CC BY 4.0</licence>) |
 
-`location.search_attribution` now carries link tags (CH-301): `<source>` links to the imprint credit line and `<licence>` to the licence; the visible text is unchanged. The web picker renders it with `t.rich`. It sits in small muted text under the results list (and under "no results"); "CC BY 4.0" links to the licence (SL `https://creativecommons.org/licenses/by/4.0/deed.sl`, EN `https://creativecommons.org/licenses/by/4.0/`) and "Geodetska uprava Republike Slovenije" to the imprint (`/impresum`, EN `/en/imprint`), whose chapter 7 lists the data sources. `{data_date}` is the data-state date of the geocoder snapshot (`supabase/seed/geo/LICENSE.md`, TASK-15.7), as a long date ("15. 10. 2026" / "15 October 2026"). The map itself carries `map.attribution` (P4).
+`location.search_attribution` now carries link tags (CH-301): `<source>` links to the imprint credit line and `<licence>` to the licence; the visible text is unchanged. The web picker renders it with `t.rich`. It sits in small muted text under the results list (and under "no results"); "CC BY 4.0" links to the licence (SL `https://creativecommons.org/licenses/by/4.0/deed.sl`, EN `https://creativecommons.org/licenses/by/4.0/`) and "Geodetska uprava Republike Slovenije" to the company information page (`/podatki-o-podjetju`, EN `/en/company-information`), whose chapter 7 lists the data sources. `{data_date}` is the data-state date of the geocoder snapshot (`supabase/seed/geo/LICENSE.md`, TASK-15.7), as a long date ("15. 10. 2026" / "15 October 2026"). The map itself carries `map.attribution` (P4).
 
 v0.2 (ADR-007, contract C6): place search runs on our own geocoder on GURS data, so the attribution names GURS instead of MapTiler, and the placeholder no longer promises landmarks (the geocoder knows settlements, city districts, streets and house numbers only). Results use the API `label` as is ("Trubarjeva cesta 5, Ljubljana"); `location.result_line` applies only where a client builds the label itself.
 
-`location.no_results_list` (CH-166) replaces `location.no_results` on the mobile home-area screen, which has a place search but no map (stopgap until the map picker): it must not tell people to move a map. Draft, needs native review.
+`location.no_results_list` (CH-166) is dropped (CH-560): since TASK-23.3 the mobile home-area screen is the full picker with a map, so `location.no_results` fits there and no screen searches without a map. Add a map-less variant again only with a screen that needs it.
 
 # 3. Map and pin
 
@@ -126,4 +125,5 @@ N/A: a component inside flows (not indexed). The map has the text alternative ab
 
 | Version | Date | Change |
 |---|---|---|
+| 0.6 | 2026-10-19 | CH-560: `location.no_results_list` dropped (slice and catalogue). Imprint link renamed to the company information page. |
 | 0.5 | 2026-10-18 | CH-166: `location.no_results_list`. CH-300: `location.use_photo_location`. CH-301: `location.search_attribution` carries link tags. |
