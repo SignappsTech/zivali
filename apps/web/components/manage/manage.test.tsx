@@ -59,6 +59,24 @@ const open = (token: string) => history.replaceState(null, '', token ? `/m#${tok
 const actions = (api: ReturnType<typeof createMockApi>) =>
 	api.calls.filter((call) => call.path.endsWith('/transitions')).map((call) => call.body);
 
+// Turnstile's api.js, which jsdom never loads: `render` keeps the callback, `execute` passes the visitor.
+let solve: (token: string) => void = () => {};
+const fakeTurnstile = {
+	render: (_element: HTMLElement, options: Record<string, unknown>) => {
+		solve = options.callback as typeof solve;
+		return 'widget';
+	},
+	execute: vi.fn(() => solve('cf-token')),
+	reset: vi.fn(),
+	remove: vi.fn(),
+};
+/** api.js arrives; the hook loads it once per file, so every script element the tests added gets its load. */
+function apiJsArrives() {
+	window.turnstile = fakeTurnstile;
+	for (const script of document.head.querySelectorAll('script[src*="challenges.cloudflare.com"]'))
+		script.dispatchEvent(new Event('load'));
+}
+
 // The page loads the report view with the claim (TASK-17.9): load it once up front, so no test's findBy waits on
 // its first transform.
 beforeAll(async () => {
@@ -167,32 +185,45 @@ describe('ManagePage (P7, C7)', () => {
 			const api = show(<ManagePage />);
 			expect(screen.getByRole('main').querySelector('.min-h-\\[65px\\]')).toBeTruthy();
 			// api.js is on its way (jsdom never loads it): nothing signs in or claims yet (TASK-17.17).
-			const script = await vi.waitFor(() => {
-				const found = document.head.querySelector<HTMLScriptElement>(
-					'script[src*="challenges.cloudflare.com"]'
-				);
-				expect(found).toBeTruthy();
-				return found!;
-			});
+			await vi.waitFor(() =>
+				expect(document.head.querySelector('script[src*="challenges.cloudflare.com"]')).toBeTruthy()
+			);
 			await act(() => new Promise((resolve) => setTimeout(resolve, 20)));
 			expect([api.calls, auth.ensureSession.mock.calls]).toEqual([[], []]);
 
 			// Cloudflare passes the visitor: the sign-in gets that token, then the claim runs.
-			let solved: (token: string) => void = () => {};
-			window.turnstile = {
-				render: (_element, options) => {
-					solved = options.callback as typeof solved;
-					return 'widget';
-				},
-				execute: () => solved('cf-token'),
-				reset: vi.fn(),
-				remove: vi.fn(),
-			};
-			script.dispatchEvent(new Event('load'));
+			apiJsArrives();
 			expect(await screen.findByRole('heading', { level: 1, name: 'Vaša prijava' })).toBeTruthy();
 			expect(await auth.ensureSession.mock.calls[0]![0]()).toBe('cf-token');
 		} finally {
 			vi.unstubAllEnvs();
+			delete window.turnstile;
+		}
+	});
+
+	it('with a stale session cookie, claims at once and the sign-in asks for the captcha itself', async () => {
+		vi.stubEnv('NEXT_PUBLIC_TURNSTILE_SITE_KEY', 'test-key');
+		document.cookie = 'sb-x-auth-token=v; path=/';
+		// The cookie's session is gone: ensureSession asks for a token, as lib/auth does.
+		let executedBefore = -1;
+		let captchaToken: string | undefined;
+		auth.ensureSession.mockImplementationOnce(async (getCaptchaToken: () => Promise<string | undefined>) => {
+			executedBefore = fakeTurnstile.execute.mock.calls.length;
+			const pending = getCaptchaToken();
+			apiJsArrives();
+			captchaToken = await pending;
+		});
+		try {
+			open('good');
+			const api = show(<ManagePage />);
+			expect(await screen.findByRole('heading', { level: 1, name: 'Vaša prijava' })).toBeTruthy();
+			// The page took the cookie at its word: no captcha before the sign-in, then the captcha's own getToken.
+			expect(executedBefore).toBe(0);
+			expect(captchaToken).toBe('cf-token');
+			expect(api.calls.find((call) => call.path === '/v1/manage/claim')?.body).toEqual({ token: 'good' });
+		} finally {
+			vi.unstubAllEnvs();
+			document.cookie = 'sb-x-auth-token=; max-age=0; path=/';
 			delete window.turnstile;
 		}
 	});
