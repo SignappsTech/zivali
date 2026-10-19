@@ -500,10 +500,11 @@ describe('P9 matches-note slot', () => {
 			</NextIntlClientProvider>
 		);
 
-	it('counts the open suggestions of an open lost report and links to the list', () => {
+	it('counts the open suggestions of an open lost report and links to the list', async () => {
 		state.list = { data: { items: [chip, sighted, { ...likely, state: 'confirmed' }] } };
 		note(mine);
-		const status = screen.getByRole('status');
+		// The owner's island loads lazily (slots/owner-lazy), so a visitor's page ships no store.
+		const status = await screen.findByRole('status');
 		expect(status.textContent).toContain('2 možni ujemanji');
 		expect(within(status).getByRole('link', { name: sl.report.owner_matches_link }).getAttribute('href')).toBe(
 			`/r/${CODE}/ujemanja`

@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 
-import { type BBox, type Circle, type LatLng, type Marker, MapView } from '@/components/map/map-view';
+import type { BBox, Circle, LatLng, MapViewProps, Marker } from '@/components/map/map-view';
 
 const M_PER_DEG = 111_320;
 
@@ -14,10 +14,29 @@ function areaBBox({ lat, lng, radius_m }: LatLng & { radius_m: number }): BBox {
 	return [lng - dLng, lat - dLat, lng + dLng, lat + dLat];
 }
 
+/** The map's box and its text alternative: until the map is due and while its code loads, so nothing shifts. */
+function MapBox({ textAlternative }: Pick<MapViewProps, 'textAlternative'>) {
+	return (
+		<>
+			<div data-slot="map-view" className="h-(--map-height) bg-map-land" />
+			{textAlternative}
+		</>
+	);
+}
+
+// MapView is a chunk of its own and maplibre-gl another behind it (MapView's import()), so neither is in the page's
+// first load (TASK-18.6). If the chunk cannot load (offline), the box and the area line stay.
+const MapView = React.lazy<React.ComponentType<MapViewProps>>(() =>
+	import('@/components/map/map-view').then(
+		(m) => ({ default: m.MapView }),
+		() => ({ default: MapBox })
+	)
+);
+
 /**
  * P9 "Kje je bila videna" map: the public, fuzzed area (`PublicReport.area`) as the report's marker on its disc to
  * scale in the status hue, never a point. `own` is the owner's stored, coarsened point (`ReportOwnerView.location`),
- * passed only in the owner's own view and drawn as the "you" dot. maplibre-gl loads on mount (MapView's import()).
+ * passed only in the owner's own view and drawn as the "you" dot. MapLibre loads once the map is due (`useMapDue`).
  */
 export function AreaMap({
 	area,
@@ -54,57 +73,72 @@ export function AreaMap({
 		[lat, lng, radius_m, type]
 	);
 	const initialView = React.useMemo(() => ({ bbox: areaBBox({ lat, lng, radius_m }) }), [lat, lng, radius_m]);
-	const [box, near] = useNearViewport();
+	const [box, due] = useMapDue();
+	const placeholder = <MapBox textAlternative={children} />;
 
 	return (
 		<div
 			ref={box}
 			className="[--map-height:280px] lg:[--map-height:400px] [&>[data-slot=map-view]]:rounded-card [&>[data-slot=map-view]]:[clip-path:inset(0_round_var(--radius-card))]"
 		>
-			{near ? (
-				<MapView
-					detail
-					markers={markers}
-					circles={circles}
-					initialView={initialView}
-					label={label}
-					height="var(--map-height)"
-					textAlternative={children}
-				/>
-			) : (
-				<>
-					{/* The map's box until it is near the viewport, so nothing shifts when it mounts. */}
-					<div data-slot="map-view" className="h-(--map-height) bg-map-land" />
-					{children}
-				</>
-			)}
+			<React.Suspense fallback={placeholder}>
+				{due ? (
+					<MapView
+						detail
+						markers={markers}
+						circles={circles}
+						initialView={initialView}
+						label={label}
+						height="var(--map-height)"
+						textAlternative={children}
+					/>
+				) : (
+					placeholder
+				)}
+			</React.Suspense>
 		</div>
 	);
 }
 
 /**
- * The map sits below the fold, so MapLibre (its chunk, WebGL and tiles) starts only once the box comes within 400 px
- * of the viewport, keeping it out of the page's first load. Without IntersectionObserver it starts at once.
+ * The map is below the fold on phones, so MapLibre (its chunks, WebGL and tiles, about 300 KB of script) stays out of
+ * the page's first load: it starts once the box is on screen, or within 400 px of it with the visitor's next scroll.
+ * A visitor who reads the top of the page never pays for a map they do not see (TASK-18.6). Without
+ * IntersectionObserver it starts at once.
  */
-function useNearViewport() {
+function useMapDue() {
 	const ref = React.useRef<HTMLDivElement>(null);
-	const [seen, setSeen] = React.useState(false);
+	const [due, setDue] = React.useState(false);
 	React.useEffect(() => {
 		const box = ref.current;
+		if (due) return;
 		if (!box || typeof IntersectionObserver === 'undefined') {
-			setSeen(true);
+			setDue(true);
 			return;
 		}
+		let scroll: AbortController | undefined;
 		const observer = new IntersectionObserver(
-			(entries) => {
-				if (!entries.some((entry) => entry.isIntersecting)) return;
-				setSeen(true);
-				observer.disconnect();
+			([entry]) => {
+				scroll?.abort();
+				if (!entry?.isIntersecting) return;
+				if (entry.boundingClientRect.top < window.innerHeight) {
+					setDue(true);
+					return;
+				}
+				scroll = new AbortController();
+				window.addEventListener('scroll', () => setDue(true), {
+					once: true,
+					passive: true,
+					signal: scroll.signal,
+				});
 			},
 			{ rootMargin: '400px' }
 		);
 		observer.observe(box);
-		return () => observer.disconnect();
-	}, []);
-	return [ref, seen] as const;
+		return () => {
+			observer.disconnect();
+			scroll?.abort();
+		};
+	}, [due]);
+	return [ref, due] as const;
 }

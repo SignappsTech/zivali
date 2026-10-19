@@ -42,12 +42,13 @@ vi.mock('@/components/map/map-view', () => ({
 		</div>
 	),
 }));
-// The owner actions (slots A and C) are client islands with their own tests (components/report/owner-actions.test.tsx), loaded lazily by slots/owner-lazy.
+// The owner actions (slots A and C) and the matches note are client islands with their own tests (components/report/owner-actions.test.tsx, components/matches/match-review.test.tsx), loaded lazily by slots/owner-lazy.
 vi.mock('@/components/report/slots/owner-lazy', () => ({
 	OwnerActions: ({ report }: { report: DetailReport }) => (
 		<div data-testid="owner-actions" data-status={report.status} />
 	),
 	OwnerMenu: () => <div data-testid="owner-menu" />,
+	MatchesLink: () => null,
 }));
 // The ad units have their own tests (components/ads/ad-slot.test.tsx); here: where the page puts them.
 vi.mock('@/components/ads/ad-slot', () => ({
@@ -146,7 +147,7 @@ describe('P9 /r/[code], lost report (visitor)', () => {
 		// Slot C (TASK-25.3): a visitor can report abuse from "Več možnosti".
 		expect(screen.getByRole('button', { name: sl.report.more }).getAttribute('aria-haspopup')).toBe('menu');
 
-		const map = screen.getByTestId('map');
+		const map = await screen.findByTestId('map');
 		expect(map.getAttribute('aria-label')).toBe('Približno območje okoli kraja Šiška, polmer približno 500 m');
 		expect(within(map).getByText('Območje: Šiška, približno 500 m')).toBeTruthy();
 		// The public centre on a disc of the true radius, in the lost hue; no other point.
@@ -281,7 +282,7 @@ describe('P9 /r/[code], lost report (visitor)', () => {
 		expect(metadata.description).toBe('Pogrešan pes Rex, rjave in bele barve. Ste ga videli? Sporočite opažanje.');
 		await renderPage();
 		expect(screen.queryByText('Območje:', { exact: false, selector: 'p' })).toBeNull();
-		expect(screen.getByTestId('map').getAttribute('aria-label')).toBe(sl.report.area_note);
+		expect((await screen.findByTestId('map')).getAttribute('aria-label')).toBe(sl.report.area_note);
 	});
 });
 
@@ -293,7 +294,7 @@ describe('P9 /r/[code], other types and states', () => {
 		expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('Najden pes');
 		expect(screen.getByRole('heading', { level: 2, name: 'Opomba' })).toBeTruthy();
 		expect(fact('Čip')).toBe('Ni podatka');
-		expect(JSON.parse(screen.getByTestId('map').dataset.circles!)[0].status).toBe('found');
+		expect(JSON.parse((await screen.findByTestId('map')).dataset.circles!)[0].status).toBe('found');
 		const metadata = await generateMetadata(props());
 		expect(metadata.title).toEqual({ absolute: 'Najden pes – Ljubljana · Najdimo' });
 		expect(metadata.description).toMatch(
@@ -357,7 +358,7 @@ describe('P9 /r/[code], owner view', () => {
 		expect(fact('Ovratnica')).toBe('rdeča z zvončkom');
 		expect(fact('Čip')).toBe('Čip vpisan');
 		expect(document.body.textContent).not.toContain(CHIP);
-		const map = screen.getByTestId('map');
+		const map = await screen.findByTestId('map');
 		expect(JSON.parse(map.dataset.markers!)[1]).toEqual({
 			id: 'own',
 			position: owner.location,
