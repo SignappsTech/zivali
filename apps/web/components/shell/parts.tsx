@@ -244,7 +244,7 @@ export function LanguageSwitch({
 						lang={next}
 						hrefLang={next}
 						aria-current={next === locale ? 'true' : undefined}
-						aria-label={full ? undefined : labels.full[next]}
+						aria-label={full ? undefined : `${labels.short[next]} – ${labels.full[next]}`}
 						onClick={(event) => {
 							if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
 							event.preventDefault();
