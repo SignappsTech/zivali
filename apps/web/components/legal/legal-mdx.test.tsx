@@ -27,6 +27,22 @@ describe('legal MDX', () => {
 				expect(out).not.toMatch(/<p[^>]*>(?:(?!<\/p>)[\s\S])*<p[\s>]/);
 			});
 
+	// TASK-28.11: 200 % text at 320 px must not scroll sideways.
+	it('hyphenates headings, breaks body words on overflow and code keys break anywhere', async () => {
+		for (const cls of [
+			'[&_h2]:hyphens-auto',
+			'[&_h2]:wrap-anywhere',
+			'[&_li]:break-words',
+			'[&_code]:wrap-anywhere',
+		])
+			expect(legalBodyClass).toContain(cls);
+		// Body text keeps its 100 % look: no hyphenation outside headings.
+		for (const cls of ['[&_p]:hyphens-auto', '[&_li]:hyphens-auto', '[&_p]:wrap-anywhere', '[&_li]:wrap-anywhere'])
+			expect(legalBodyClass).not.toContain(cls);
+		// The cookie keys are literal <code>, reached by the body container class above.
+		expect(await html('sl', 'cookies')).toContain('<code>');
+	});
+
 	it('styles raw HTML headings and lists through the body container', async () => {
 		for (const cls of [
 			'[&_h2]:font-display',

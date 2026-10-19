@@ -45,6 +45,17 @@ const PAGES = [
 	'/en/r/Rex12345',
 	'/r/Hk3vT9qP',
 	'/en/r/Hk3vT9qP',
+	// TASK-28.12 legal pages (T4)
+	'/zasebnost',
+	'/piskotki',
+	'/pogoji-uporabe',
+	'/podatki-o-podjetju',
+	'/dostopnost',
+	'/en/privacy',
+	'/en/cookies',
+	'/en/terms',
+	'/en/company-information',
+	'/en/accessibility',
 ];
 // Protected flows (report-lost, report-found, sign-in, chat, payment), SL and EN. Each of those stories adds its routes.
 const PROTECTED = [
@@ -94,7 +105,7 @@ for (const path of PAGES) {
 			expect.soft(errors, 'console and page errors').toEqual([]);
 			await expectNoAnalyticsBeforeConsent(page);
 
-			// Visual: compared only with a design-lead-approved baseline; until one is committed the run notes it.
+			// Visual: legal routes (TASK-28.12) have no baseline until the design lead approves one; a missing baseline only annotates, it never fails. Compared only with a design-lead-approved baseline; until one is committed the run notes it.
 			const file = `${slug}-${name}.png`;
 			const writing = ['all', 'changed'].includes(test.info().config.updateSnapshots);
 			if (writing || existsSync(test.info().snapshotPath(file, { kind: 'screenshot' }))) {
