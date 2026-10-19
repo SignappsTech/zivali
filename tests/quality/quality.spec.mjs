@@ -105,7 +105,7 @@ for (const path of PAGES) {
 			expect.soft(errors, 'console and page errors').toEqual([]);
 			await expectNoAnalyticsBeforeConsent(page);
 
-			// Visual: compared only with a design-lead-approved baseline; until one is committed the run notes it.
+			// Visual: legal routes (TASK-28.12) have no baseline until the design lead approves one; a missing baseline only annotates, it never fails. Compared only with a design-lead-approved baseline; until one is committed the run notes it.
 			const file = `${slug}-${name}.png`;
 			const writing = ['all', 'changed'].includes(test.info().config.updateSnapshots);
 			if (writing || existsSync(test.info().snapshotPath(file, { kind: 'screenshot' }))) {

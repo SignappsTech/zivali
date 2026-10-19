@@ -39,8 +39,8 @@ export const legalBodyClass = [
 	'[&_ul]:mt-4 [&_ul]:list-disc [&_ul]:space-y-2 [&_ul]:pl-6 [&_ul]:leading-7',
 	'[&_ol]:mt-4 [&_ol]:list-decimal [&_ol]:space-y-2 [&_ol]:pl-6 [&_ol]:leading-7',
 	'[&_a]:underline [&_a]:underline-offset-4',
-	// 200 % text at 320 px (TASK-28.11): long words hyphenate by the article's lang, unbreakable keys break anywhere.
-	'[&_h2]:hyphens-auto [&_h3]:hyphens-auto [&_li]:hyphens-auto [&_h2]:wrap-anywhere [&_h3]:wrap-anywhere [&_li]:wrap-anywhere [&_code]:wrap-anywhere',
+	// 200 % text at 320 px (TASK-28.11): headings hyphenate by the article's lang, body words break only on overflow, unbreakable code keys break anywhere.
+	'[&_h2]:hyphens-auto [&_h3]:hyphens-auto [&_h2]:wrap-anywhere [&_h3]:wrap-anywhere [&_p]:break-words [&_li]:break-words [&_code]:wrap-anywhere',
 ].join(' ');
 
 /** T4 Legal (P3): h1, last updated, draft note, "On this page" list (sticky from lg, a disclosure below), numbered body. */
@@ -54,8 +54,8 @@ export async function LegalPage({ locale, slug }: { locale: Locale; slug: LegalS
 		<ContentPage>
 			<div className="lg:grid lg:grid-cols-[240px_minmax(0,640px)] lg:gap-12">
 				<LegalToc label={t('toc')} headings={meta.headings} />
-				<article lang={locale} className="hyphens-auto wrap-anywhere">
-					<h1 className={h1Class}>{meta.title.replace(' · Najdimo', '')}</h1>
+				<article lang={locale} className="break-words">
+					<h1 className={`${h1Class} hyphens-auto wrap-anywhere`}>{meta.title.replace(' · Najdimo', '')}</h1>
 					<p className="mt-3 text-muted-foreground">
 						{t('last_updated', { date: format.dateTime(new Date(meta.updated), { dateStyle: 'long' }) })}
 					</p>
