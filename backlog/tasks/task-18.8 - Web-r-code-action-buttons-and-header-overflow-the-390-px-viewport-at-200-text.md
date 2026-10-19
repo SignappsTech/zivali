@@ -3,11 +3,11 @@ id: TASK-18.8
 title: >-
   Web /r/[code]: action buttons and header overflow the 390 px viewport at 200%
   text
-status: In Progress
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-19 18:38'
-updated_date: '2026-10-19 18:46'
+updated_date: '2026-10-19 19:34'
 labels:
   - bug
   - 'est:S'
