@@ -1,0 +1,952 @@
+<!doctype html>
+<!--
+  TASK-117.1 wireframe (owner approval gate): report statistics view, Premium (PRD FR-026 R-026.6, story TASK-117).
+  Page id P25 (proposed; P24 is the Premium plan page, TASK-54.1). Web only: Desktop 1200 and Mobile 390 (the web at phone width).
+  v1 (2026-10-19): first version for the owner. Open questions at the top.
+  Component mock in the style of M-ai-prefill.html: token values copied from that file (docs/design/tokens.css), components per docs/design/system.md, entry point per docs/design/pages/P9-report-detail.md §Owner view.
+  Labels: FR-026 where it names them; the rest are proposals (dotted underline) until the content slice has keys (CH-640).
+  Sample data is invented and adds up: totals = sum of the days = sum of the channels; Boost reach = alerts sent on the Boost days.
+  The device frames are rendered by the script at the end from one set of builders, so desktop and mobile always show the same state.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Najdimo report statistics wireframe</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:wght@400;600;700;800&family=Bricolage+Grotesque:opsz,wght@12..96,400;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* ---- tokens and wireframe base: copied from M-ai-prefill.html (docs/design/tokens.css values) ---- */
+:root {
+  color-scheme: light dark;
+  --background: 180 15% 92.2%;
+  --foreground: 193.8 28.9% 8.8%;
+  --card: 180 33.3% 98.8%;
+  --card-foreground: 193.8 28.9% 8.8%;
+  --popover: 180 33.3% 98.8%;
+  --popover-foreground: 193.8 28.9% 8.8%;
+  --primary: 190.3 65.5% 22.7%;
+  --primary-foreground: 185 42.9% 94.5%;
+  --secondary: 184.4 44.3% 88%;
+  --secondary-foreground: 191.3 64.9% 14.5%;
+  --muted: 186 13.5% 85.5%;
+  --muted-foreground: 190.9 14.3% 30.2%;
+  --accent: 184.4 44.3% 88%;
+  --accent-foreground: 191.3 64.9% 14.5%;
+  --destructive: 353.9 70.2% 32.9%;
+  --destructive-foreground: 355.7 100% 97.3%;
+  --primary-hover: 190.8 65.6% 18.2%;
+  --primary-pressed: 191.3 64.9% 14.5%;
+  --secondary-hover: 184.6 43.3% 76.5%;
+  --secondary-pressed: 185.3 41.4% 62.5%;
+  --destructive-hover: 354.1 70.8% 25.5%;
+  --destructive-pressed: 354.1 70.1% 17.1%;
+  --border: 186 13.5% 85.5%;
+  --input: 190 10% 47.1%;
+  --ring: 188.1 63.1% 27.6%;
+  --chart-1: 188.1 63.1% 27.6%;
+  --chart-2: 38.4 89.7% 38.2%;
+  --chart-3: 17.9 71.5% 49.6%;
+  --chart-4: 144.2 54.1% 35.9%;
+  --chart-5: 319.4 46.4% 43.1%;
+  --sidebar: 191.3 64.9% 14.5%;
+  --sidebar-foreground: 185 42.9% 94.5%;
+  --sidebar-primary: 185 42.9% 94.5%;
+  --sidebar-primary-foreground: 191.3 64.9% 14.5%;
+  --sidebar-accent: 190.8 65.6% 18.2%;
+  --sidebar-accent-foreground: 185 42.9% 94.5%;
+  --sidebar-border: 190.8 65.6% 18.2%;
+  --sidebar-ring: 185 42.9% 94.5%;
+  --status-lost: 17.5 75.2% 41.2%;
+  --status-lost-foreground: 18.9 100% 96.3%;
+  --status-lost-subtle: 18.3 100% 91%;
+  --status-lost-subtle-foreground: 15.7 71.9% 25.1%;
+  --status-lost-border: 17.2 100% 72%;
+  --status-found: 146.8 56.5% 22.5%;
+  --status-found-foreground: 140 46.2% 94.9%;
+  --status-found-subtle: 140 48.4% 87.8%;
+  --status-found-subtle-foreground: 147.1 56% 17.8%;
+  --status-found-border: 141.4 42.4% 61.2%;
+  --status-sighted: 228.7 58.1% 44.9%;
+  --status-sighted-foreground: 225 88.9% 96.5%;
+  --status-sighted-subtle: 223.6 89.2% 92.7%;
+  --status-sighted-subtle-foreground: 228.4 57.2% 28.4%;
+  --status-sighted-border: 224.6 82.1% 75.9%;
+  --status-reunited: 40 92.7% 56.9%;
+  --status-reunited-foreground: 193.8 28.9% 8.8%;
+  --status-reunited-subtle: 44.8 100% 86.1%;
+  --status-reunited-subtle-foreground: 34.7 73.8% 23.9%;
+  --status-reunited-border: 40 92.7% 56.9%;
+  --premium: 317.9 47.5% 27.6%;
+  --premium-foreground: 318 50% 96.1%;
+  --premium-subtle: 313 51.1% 91.2%;
+  --premium-subtle-foreground: 316.8 46.3% 21.2%;
+  --premium-border: 318.2 48.1% 69%;
+  --verified: 190.3 65.5% 22.7%;
+  --verified-foreground: 185 42.9% 94.5%;
+  --verified-subtle: 184.4 44.3% 88%;
+  --verified-subtle-foreground: 191.3 64.9% 14.5%;
+  --warning: 40 92.7% 56.9%;
+  --warning-foreground: 193.8 28.9% 8.8%;
+  --warning-subtle: 44.8 100% 86.1%;
+  --warning-subtle-foreground: 34.7 73.8% 23.9%;
+  --warning-border: 39.6 85.1% 47.5%;
+  --provider: 0 0% 100%;
+  --provider-foreground: 0 0% 12.2%;
+  --provider-border: 140 1.3% 46.1%;
+  --qr: 0 0% 100%;
+  --qr-foreground: 193.8 28.9% 8.8%;
+  --scrim: 190 46.2% 5.1%;
+  --scrim-alpha: 0.56;
+  --marker-lost: 17.5 75.2% 41.2%;
+  --marker-found: 146.8 56.5% 22.5%;
+  --marker-sighted: 228.7 58.1% 44.9%;
+  --marker-reunited: 38.4 89.7% 38.2%;
+  --marker-me: 226.3 64.5% 54.7%;
+  --marker-cluster: 194.1 24.6% 13.5%;
+  --marker-cluster-foreground: 180 14.3% 95.9%;
+  --marker-ring: 180 33.3% 98.8%;
+  --marker-area: 17.9 71.5% 49.6%;
+  --marker-area-alpha: 0.16;
+  --map-land: 180 15% 92.2%;
+  --map-water: 188.3 40.8% 86.1%;
+  --map-park: 137.1 38.2% 89.2%;
+  --map-building: 172.5 14.8% 89.4%;
+  --map-road: 180 33.3% 98.8%;
+  --map-road-casing: 186 13.5% 85.5%;
+  --map-label: 190.9 14.3% 30.2%;
+  --map-label-halo: 180 15% 92.2%;
+  --radius: 1rem;
+  --font-display: 'Bricolage Grotesque', ui-sans-serif, system-ui, sans-serif;
+  --font-sans: 'Atkinson Hyperlegible Next', ui-sans-serif, system-ui, sans-serif;
+  --radius-button: 9999px;
+  --radius-card: calc(var(--radius) + 8px);
+  --radius-input: var(--radius);
+  --radius-row: calc(var(--radius) + 4px);
+  --radius-chip: 9999px;
+  --radius-sheet: 28px;
+  --radius-photo: calc(var(--radius) + 4px);
+  --card-shadow: none;
+  --shadow-sm: none;
+  --shadow-md: 0 2px 10px 0 rgb(16 38 43 / 0.08);
+  --shadow-lg: 0 -10px 40px -12px rgb(16 38 43 / 0.16);
+  --shadow-pop: 0 8px 24px -6px rgb(16 38 43 / 0.18);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --background: 189.2 37.1% 6.9%;
+    --foreground: 180 15% 92.2%;
+    --card: 192.6 35.8% 10.4%;
+    --card-foreground: 180 15% 92.2%;
+    --popover: 191.1 36% 14.7%;
+    --popover-foreground: 180 15% 92.2%;
+    --primary: 185.3 41.4% 62.5%;
+    --primary-foreground: 194.1 68% 9.8%;
+    --secondary: 191.3 64.9% 14.5%;
+    --secondary-foreground: 184.4 44.3% 88%;
+    --muted: 191.1 36% 14.7%;
+    --muted-foreground: 188 12% 75.5%;
+    --accent: 191.1 36% 14.7%;
+    --accent-foreground: 180 14.3% 95.9%;
+    --destructive: 354.1 82% 78.2%;
+    --destructive-foreground: 352.5 61.5% 10.2%;
+    --primary-hover: 184.6 43.3% 76.5%;
+    --primary-pressed: 184.4 44.3% 88%;
+    --secondary-hover: 190.8 65.6% 18.2%;
+    --secondary-pressed: 190.3 65.5% 22.7%;
+    --destructive-hover: 354 88.2% 86.7%;
+    --destructive-pressed: 354.7 100% 93.3%;
+    --border: 190.9 32.7% 19.8%;
+    --input: 190 10% 47.1%;
+    --ring: 185.3 41.4% 62.5%;
+    --chart-1: 185.3 41.4% 62.5%;
+    --chart-2: 40 92.7% 56.9%;
+    --chart-3: 16.8 87.3% 59.8%;
+    --chart-4: 143.3 43.5% 46.5%;
+    --chart-5: 318.2 48.1% 69%;
+    --sidebar: 190 46.2% 5.1%;
+    --sidebar-foreground: 180 15% 92.2%;
+    --sidebar-primary: 180 15% 92.2%;
+    --sidebar-primary-foreground: 193.8 28.9% 8.8%;
+    --sidebar-accent: 191.1 36% 14.7%;
+    --sidebar-accent-foreground: 180 14.3% 95.9%;
+    --sidebar-border: 191.1 36% 14.7%;
+    --sidebar-ring: 180 15% 92.2%;
+    --status-lost: 16.8 87.3% 59.8%;
+    --status-lost-foreground: 14.6 75.5% 9.6%;
+    --status-lost-subtle: 15.5 70.5% 17.3%;
+    --status-lost-subtle-foreground: 18.3 100% 91%;
+    --status-lost-border: 16.8 74.9% 32.7%;
+    --status-found: 143.3 43.5% 46.5%;
+    --status-found-foreground: 139.2 64.1% 7.6%;
+    --status-found-subtle: 148.3 54.5% 12.9%;
+    --status-found-subtle-foreground: 140 48.4% 87.8%;
+    --status-found-border: 146.8 56.5% 22.5%;
+    --status-sighted: 224.6 82.1% 75.9%;
+    --status-sighted-foreground: 231.1 62.7% 14.7%;
+    --status-sighted-subtle: 229 55.6% 21.2%;
+    --status-sighted-subtle-foreground: 223.6 89.2% 92.7%;
+    --status-sighted-border: 228.7 57.6% 36.1%;
+    --status-reunited: 40 92.7% 56.9%;
+    --status-reunited-foreground: 193.8 28.9% 8.8%;
+    --status-reunited-subtle: 33.6 66.3% 17.5%;
+    --status-reunited-subtle-foreground: 44.8 100% 86.1%;
+    --status-reunited-border: 36.6 84.5% 30.4%;
+    --premium: 318.2 48.1% 69%;
+    --premium-foreground: 314.4 53.2% 9.2%;
+    --premium-subtle: 315.9 45.9% 14.5%;
+    --premium-subtle-foreground: 313 51.1% 91.2%;
+    --premium-border: 317.9 47.5% 27.6%;
+    --verified: 185.3 41.4% 62.5%;
+    --verified-foreground: 194.1 68% 9.8%;
+    --verified-subtle: 191.3 64.9% 14.5%;
+    --verified-subtle-foreground: 184.4 44.3% 88%;
+    --warning: 40 92.7% 56.9%;
+    --warning-foreground: 193.8 28.9% 8.8%;
+    --warning-subtle: 33.6 66.3% 17.5%;
+    --warning-subtle-foreground: 44.8 100% 86.1%;
+    --warning-border: 36.6 84.5% 30.4%;
+    --provider: 240 2.6% 7.6%;
+    --provider-foreground: 0 0% 89%;
+    --provider-border: 140 1.3% 56.3%;
+    --qr: 0 0% 100%;
+    --qr-foreground: 193.8 28.9% 8.8%;
+    --scrim: 190 46.2% 5.1%;
+    --scrim-alpha: 0.72;
+    --marker-lost: 16.8 87.3% 59.8%;
+    --marker-found: 143.3 43.5% 46.5%;
+    --marker-sighted: 224.6 82.1% 75.9%;
+    --marker-reunited: 40 92.7% 56.9%;
+    --marker-me: 224.6 82.1% 75.9%;
+    --marker-cluster: 180 15% 92.2%;
+    --marker-cluster-foreground: 193.8 28.9% 8.8%;
+    --marker-ring: 190 46.2% 5.1%;
+    --marker-area: 16.8 87.3% 59.8%;
+    --marker-area-alpha: 0.2;
+    --map-land: 190.6 36.2% 9.2%;
+    --map-water: 192.6 51.4% 14.5%;
+    --map-park: 168.9 39.1% 13.5%;
+    --map-building: 190 35.3% 13.3%;
+    --map-road: 192.5 24% 19.6%;
+    --map-road-casing: 190.6 36.2% 9.2%;
+    --map-label: 188 12% 75.5%;
+    --map-label-halo: 190.6 36.2% 9.2%;
+    --shadow-sm: none;
+    --shadow-md: 0 2px 10px 0 rgb(0 0 0 / 0.4);
+    --shadow-lg: 0 -10px 40px -12px rgb(0 0 0 / 0.6);
+    --shadow-pop: 0 8px 24px -6px rgb(0 0 0 / 0.55);
+  }
+}
+:root[data-theme="dark"] {
+  --background: 189.2 37.1% 6.9%;
+  --foreground: 180 15% 92.2%;
+  --card: 192.6 35.8% 10.4%;
+  --card-foreground: 180 15% 92.2%;
+  --popover: 191.1 36% 14.7%;
+  --popover-foreground: 180 15% 92.2%;
+  --primary: 185.3 41.4% 62.5%;
+  --primary-foreground: 194.1 68% 9.8%;
+  --secondary: 191.3 64.9% 14.5%;
+  --secondary-foreground: 184.4 44.3% 88%;
+  --muted: 191.1 36% 14.7%;
+  --muted-foreground: 188 12% 75.5%;
+  --accent: 191.1 36% 14.7%;
+  --accent-foreground: 180 14.3% 95.9%;
+  --destructive: 354.1 82% 78.2%;
+  --destructive-foreground: 352.5 61.5% 10.2%;
+  --primary-hover: 184.6 43.3% 76.5%;
+  --primary-pressed: 184.4 44.3% 88%;
+  --secondary-hover: 190.8 65.6% 18.2%;
+  --secondary-pressed: 190.3 65.5% 22.7%;
+  --destructive-hover: 354 88.2% 86.7%;
+  --destructive-pressed: 354.7 100% 93.3%;
+  --border: 190.9 32.7% 19.8%;
+  --input: 190 10% 47.1%;
+  --ring: 185.3 41.4% 62.5%;
+  --chart-1: 185.3 41.4% 62.5%;
+  --chart-2: 40 92.7% 56.9%;
+  --chart-3: 16.8 87.3% 59.8%;
+  --chart-4: 143.3 43.5% 46.5%;
+  --chart-5: 318.2 48.1% 69%;
+  --sidebar: 190 46.2% 5.1%;
+  --sidebar-foreground: 180 15% 92.2%;
+  --sidebar-primary: 180 15% 92.2%;
+  --sidebar-primary-foreground: 193.8 28.9% 8.8%;
+  --sidebar-accent: 191.1 36% 14.7%;
+  --sidebar-accent-foreground: 180 14.3% 95.9%;
+  --sidebar-border: 191.1 36% 14.7%;
+  --sidebar-ring: 180 15% 92.2%;
+  --status-lost: 16.8 87.3% 59.8%;
+  --status-lost-foreground: 14.6 75.5% 9.6%;
+  --status-lost-subtle: 15.5 70.5% 17.3%;
+  --status-lost-subtle-foreground: 18.3 100% 91%;
+  --status-lost-border: 16.8 74.9% 32.7%;
+  --status-found: 143.3 43.5% 46.5%;
+  --status-found-foreground: 139.2 64.1% 7.6%;
+  --status-found-subtle: 148.3 54.5% 12.9%;
+  --status-found-subtle-foreground: 140 48.4% 87.8%;
+  --status-found-border: 146.8 56.5% 22.5%;
+  --status-sighted: 224.6 82.1% 75.9%;
+  --status-sighted-foreground: 231.1 62.7% 14.7%;
+  --status-sighted-subtle: 229 55.6% 21.2%;
+  --status-sighted-subtle-foreground: 223.6 89.2% 92.7%;
+  --status-sighted-border: 228.7 57.6% 36.1%;
+  --status-reunited: 40 92.7% 56.9%;
+  --status-reunited-foreground: 193.8 28.9% 8.8%;
+  --status-reunited-subtle: 33.6 66.3% 17.5%;
+  --status-reunited-subtle-foreground: 44.8 100% 86.1%;
+  --status-reunited-border: 36.6 84.5% 30.4%;
+  --premium: 318.2 48.1% 69%;
+  --premium-foreground: 314.4 53.2% 9.2%;
+  --premium-subtle: 315.9 45.9% 14.5%;
+  --premium-subtle-foreground: 313 51.1% 91.2%;
+  --premium-border: 317.9 47.5% 27.6%;
+  --verified: 185.3 41.4% 62.5%;
+  --verified-foreground: 194.1 68% 9.8%;
+  --verified-subtle: 191.3 64.9% 14.5%;
+  --verified-subtle-foreground: 184.4 44.3% 88%;
+  --warning: 40 92.7% 56.9%;
+  --warning-foreground: 193.8 28.9% 8.8%;
+  --warning-subtle: 33.6 66.3% 17.5%;
+  --warning-subtle-foreground: 44.8 100% 86.1%;
+  --warning-border: 36.6 84.5% 30.4%;
+  --provider: 240 2.6% 7.6%;
+  --provider-foreground: 0 0% 89%;
+  --provider-border: 140 1.3% 56.3%;
+  --qr: 0 0% 100%;
+  --qr-foreground: 193.8 28.9% 8.8%;
+  --scrim: 190 46.2% 5.1%;
+  --scrim-alpha: 0.72;
+  --marker-lost: 16.8 87.3% 59.8%;
+  --marker-found: 143.3 43.5% 46.5%;
+  --marker-sighted: 224.6 82.1% 75.9%;
+  --marker-reunited: 40 92.7% 56.9%;
+  --marker-me: 224.6 82.1% 75.9%;
+  --marker-cluster: 180 15% 92.2%;
+  --marker-cluster-foreground: 193.8 28.9% 8.8%;
+  --marker-ring: 190 46.2% 5.1%;
+  --marker-area: 16.8 87.3% 59.8%;
+  --marker-area-alpha: 0.2;
+  --map-land: 190.6 36.2% 9.2%;
+  --map-water: 192.6 51.4% 14.5%;
+  --map-park: 168.9 39.1% 13.5%;
+  --map-building: 190 35.3% 13.3%;
+  --map-road: 192.5 24% 19.6%;
+  --map-road-casing: 190.6 36.2% 9.2%;
+  --map-label: 188 12% 75.5%;
+  --map-label-halo: 190.6 36.2% 9.2%;
+  --shadow-sm: none;
+  --shadow-md: 0 2px 10px 0 rgb(0 0 0 / 0.4);
+  --shadow-lg: 0 -10px 40px -12px rgb(0 0 0 / 0.6);
+  --shadow-pop: 0 8px 24px -6px rgb(0 0 0 / 0.55);
+}
+:root[data-theme="light"] { color-scheme: light; }
+:root[data-theme="dark"] { color-scheme: dark; }
+
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:hsl(var(--background));color:hsl(var(--foreground));font-family:var(--font-sans);font-size:16px;line-height:1.5}
+a{color:inherit}
+:focus-visible{outline:3px solid hsl(var(--ring));outline-offset:2px}
+.doc{max-width:1200px;margin:0 auto;padding:24px 16px 64px}
+.doc h1{font-family:var(--font-display);font-size:30px;line-height:36px;letter-spacing:-.02em;margin:8px 0 0;text-wrap:balance}
+.doc h2{font-family:var(--font-display);font-size:22px;line-height:28px;margin:48px 0 8px;letter-spacing:-.01em}
+.doc p{margin:8px 0;max-width:84ch}
+.meta{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;color:hsl(var(--muted-foreground));font-size:15px}
+.pill{display:inline-flex;align-items:center;min-height:30px;padding:0 12px;border-radius:9999px;background:hsl(var(--warning-subtle));color:hsl(var(--warning-subtle-foreground));font-weight:700;font-size:14px}
+.docnav{display:flex;flex-wrap:wrap;gap:4px 16px;margin:16px 0 0;padding:0;list-style:none}
+.docnav a{display:inline-flex;align-items:center;min-height:44px;font-weight:600;text-underline-offset:4px}
+.docnav a[aria-current=page]{color:hsl(var(--muted-foreground));text-decoration:none}
+.qs{background:hsl(var(--card));border-radius:var(--radius-card);padding:20px 20px 20px 24px;margin-top:20px}
+.qs h2{margin:0 0 8px;font-size:18px}
+.qs ol{margin:0;padding-left:22px;display:grid;gap:10px}
+.qs .rec{color:hsl(var(--muted-foreground))}
+.tools{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;margin-top:16px}
+.tools label{display:inline-flex;align-items:center;gap:8px;min-height:44px;font-weight:600;cursor:pointer}
+.tools input{width:20px;height:20px;accent-color:hsl(var(--primary))}
+.findex{display:flex;flex-wrap:wrap;gap:4px 8px;margin:12px 0 0;padding:0;list-style:none}
+.findex a{display:inline-flex;align-items:center;min-height:44px;padding:0 14px;border-radius:9999px;background:hsl(var(--secondary));color:hsl(var(--secondary-foreground));font-weight:700;font-size:15px;text-decoration:none}
+.legend{display:flex;flex-wrap:wrap;gap:8px 20px;margin-top:12px;font-size:15px;color:hsl(var(--muted-foreground))}
+.legend span{display:inline-flex;align-items:center;gap:8px}
+.lg-ph{text-decoration:underline dotted hsl(var(--chart-2));text-decoration-thickness:2px;text-underline-offset:4px;color:hsl(var(--foreground))}
+.frame{margin-top:28px;scroll-margin-top:16px}
+.frame>.bar{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;margin-bottom:8px}
+.bar .ttl{font-family:var(--font-display);font-size:19px;line-height:26px;font-weight:700;margin:0 auto 0 0;min-width:240px}
+.bar .ttl small{display:block;font-family:var(--font-sans);font-weight:400;font-size:14px;line-height:20px;color:hsl(var(--muted-foreground))}
+.seg{display:inline-flex;flex-wrap:wrap;border-radius:9999px;background:hsl(var(--muted));padding:3px}
+.seg button,.tbtn{min-height:44px;padding:0 16px;border:0;border-radius:9999px;background:transparent;color:hsl(var(--foreground));font:inherit;font-size:15px;font-weight:700;cursor:pointer}
+.seg button[aria-pressed=true]{background:hsl(var(--primary));color:hsl(var(--primary-foreground))}
+.tbtn{background:hsl(var(--secondary));color:hsl(var(--secondary-foreground))}
+.stage{background:hsl(var(--muted));border-radius:var(--radius-card);padding:12px;overflow:hidden}
+.vp{display:none;margin:0 auto;position:relative}
+.frame[data-view=desktop] .vp[data-v=desktop],.frame[data-view=mobile] .vp[data-v=mobile]{display:block}
+.frame[data-fit=full] .vp{overflow-x:auto;width:100%!important;height:auto!important}
+.frame[data-fit=full] .dev{transform:none!important}
+.vp .dev{transform-origin:top left;box-shadow:var(--shadow-pop)}
+.nofit{display:none}
+.frame[data-view=desktop] .nofit{display:inline-flex;align-items:center}
+.notes{margin:12px 0 0;padding:14px 18px;border:2px dashed hsl(var(--input));border-radius:16px;font-size:15px;line-height:22px;color:hsl(var(--muted-foreground))}
+.notes ul{margin:0;padding-left:20px;display:grid;gap:6px}
+.notes b,.notes strong{color:hsl(var(--foreground))}
+.no-notes .notes,.no-notes .dev .to{display:none!important}
+.no-notes .dev .phc{text-decoration:none}
+.table-wrap{overflow-x:auto}
+.doc table.t{border-collapse:collapse;width:100%;min-width:640px}
+.doc table.t th,.doc table.t td{text-align:left;vertical-align:top;padding:10px 12px 10px 0;border-bottom:1px solid hsl(var(--border));font-size:15px;line-height:22px}
+.doc table.t th{color:hsl(var(--muted-foreground));font-size:14px}
+.doc code{font-size:14px;background:hsl(var(--muted));padding:1px 6px;border-radius:6px}
+.doc ol.rules{display:grid;gap:8px;padding-left:22px;max-width:96ch}
+
+/* ---- mock primitives (inside .dev) ---- */
+.dev{width:100%;background:hsl(var(--background));color:hsl(var(--foreground));font-family:var(--font-sans);font-size:16px;line-height:1.5;overflow:hidden}
+.dev h1,.dev h2,.dev h3{font-family:var(--font-display);margin:0;text-wrap:balance}
+.dev p{margin:0}.dev ul,.dev dl{margin:0;padding:0;list-style:none}
+.dev a{text-decoration:none}
+.dev .ic{flex:none;display:inline-block}
+.dev .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:0 24px;border:0;border-radius:var(--radius-button);font:inherit;font-weight:700;font-size:16px;cursor:pointer;white-space:nowrap;text-align:center}
+.dev .btn-lg{min-height:56px;padding:0 32px;font-size:17px}.dev .btn-sm{min-height:44px;padding:0 18px}
+.dev .block{width:100%}
+.dev .b1{background:hsl(var(--primary));color:hsl(var(--primary-foreground))}
+.dev .b2{background:hsl(var(--secondary));color:hsl(var(--secondary-foreground))}
+.dev .bt{background:transparent;color:hsl(var(--primary));min-height:44px;padding:0 12px}
+.dev .iconbtn{display:inline-grid;place-items:center;width:44px;height:44px;border-radius:9999px;border:0;background:transparent;color:inherit;cursor:pointer;flex:none}
+.dev .logo{display:inline-flex;align-items:center;gap:10px}
+.dev .lm{display:grid;place-items:center;width:34px;height:34px;border-radius:12px;background:hsl(var(--primary));color:hsl(var(--primary-foreground))}
+.dev .lw{font-family:var(--font-display);font-weight:800;font-size:22px;letter-spacing:-.02em}
+.dev .hdr{height:88px;display:flex;align-items:center;gap:24px;padding:0 48px}
+.dev .navl{display:flex;gap:24px}.dev .navl a{font-weight:600;color:hsl(var(--muted-foreground));display:inline-flex;min-height:44px;align-items:center}
+.dev .navl a[aria-current=page]{color:hsl(var(--foreground));text-decoration:underline;text-underline-offset:6px;text-decoration-thickness:2px}
+.dev .sp{flex:1}
+.dev .lang{font-weight:700;display:inline-flex;gap:6px;align-items:center;min-height:44px}.dev .lang u{text-underline-offset:5px}.dev .lang span{color:hsl(var(--muted-foreground))}
+.dev .av{background:hsl(var(--secondary));color:hsl(var(--secondary-foreground));font-weight:700;font-size:14px}
+.dev .muted{color:hsl(var(--muted-foreground))}
+.dev .mt4{margin-top:4px}.dev .mt8{margin-top:8px}.dev .mt12{margin-top:12px}.dev .mt16{margin-top:16px}.dev .mt20{margin-top:20px}.dev .mt24{margin-top:24px}.dev .mt32{margin-top:32px}.dev .mt40{margin-top:40px}
+/* placeholder photos */
+.dev .ph{--t:var(--chart-1);position:relative;display:grid;place-items:center;width:100%;aspect-ratio:4/3;border-radius:32px;overflow:hidden;background:linear-gradient(135deg,color-mix(in srgb,hsl(var(--t)) 30%,hsl(var(--card))),color-mix(in srgb,hsl(var(--t)) 12%,hsl(var(--muted))));color:color-mix(in srgb,hsl(var(--t)) 60%,hsl(var(--foreground)))}
+.dev .ph .ic{opacity:.6}
+.dev .phl{position:absolute;left:14px;bottom:10px;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;opacity:.85}
+.dev .thumb{width:80px;height:80px;aspect-ratio:auto;border-radius:var(--radius-photo)}
+.dev .ph.cover{border-radius:var(--radius-row)}
+/* ---- P25 additions (inside .dev) ---- */
+.lg-lgl{text-decoration:underline wavy hsl(var(--chart-5));text-decoration-thickness:1.5px;text-underline-offset:5px;color:hsl(var(--foreground))}
+.dev{position:relative}
+.dev dd{margin:0}
+.dev .mt48{margin-top:48px}
+.dev .to{display:inline-block;font-family:ui-monospace,Consolas,monospace;font-size:12px;line-height:18px;font-weight:400;letter-spacing:0;padding:0 8px;border-radius:9999px;background:hsl(var(--status-sighted-subtle));color:hsl(var(--status-sighted-subtle-foreground));vertical-align:middle;white-space:normal;text-decoration:none}
+.dev .phc{text-decoration:underline dotted hsl(var(--chart-2));text-decoration-thickness:2px;text-underline-offset:4px}
+.dev .lgl{text-decoration:underline wavy hsl(var(--chart-5));text-decoration-thickness:1.5px;text-underline-offset:5px}
+.no-notes .dev .lgl{text-decoration:none}
+.dev .sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.dev .lead{font-size:20px;line-height:32px}
+.dev .h1{font-size:48px;line-height:52px;font-weight:700;letter-spacing:-.02em;margin-top:4px}
+.dev .h1m{font-size:30px;line-height:36px;font-weight:700;letter-spacing:-.02em;margin-top:4px}
+.dev .h2{font-size:30px;line-height:36px;font-weight:700;letter-spacing:-.015em}
+.dev .h2m{font-size:24px;line-height:30px;font-weight:700;letter-spacing:-.015em}
+.dev .h3{font-size:20px;line-height:28px;font-weight:600;letter-spacing:-.01em}
+.dev .h3d{font-size:24px;line-height:32px}
+.dev .pg{max-width:1200px;margin:0 auto;padding:0 48px 80px}
+.dev .mb{padding:4px 20px 48px}
+.dev .crumb a{display:inline-flex;align-items:center;gap:6px;min-height:44px;font-weight:700;color:hsl(var(--primary))}
+.dev .mhdr{display:flex;align-items:center;gap:4px;height:64px;padding:0 8px 0 20px}
+.dev .mhdr .lw{font-size:20px}.dev .mhdr .lm{width:30px;height:30px;border-radius:10px}
+.dev .mline{font-size:14px;line-height:20px;color:hsl(var(--muted-foreground))}
+.dev .st{display:inline-flex;align-items:center;gap:6px;font-weight:700;font-size:14px;line-height:20px;vertical-align:top}
+.dev .st.lg{font-size:16px;line-height:24px}
+.dev .st.lost{color:hsl(var(--status-lost-subtle-foreground))}
+.dev .st.found{color:hsl(var(--status-found-subtle-foreground))}
+.dev .ident{display:flex;gap:16px;align-items:center;min-width:0}
+.dev .ph.t64{width:64px;height:64px;aspect-ratio:auto;border-radius:20px;flex:none}
+.dev .headrow{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px 24px}
+.dev .fresh{display:flex;flex-wrap:wrap;align-items:center;gap:0 8px;font-size:14px;line-height:20px;color:hsl(var(--muted-foreground))}
+.dev .fresh .bt{font-size:16px}
+.dev .card{background:hsl(var(--card));color:hsl(var(--card-foreground));border-radius:var(--radius-card);padding:24px}
+.dev .card.cardm{padding:20px}
+.dev .stk{display:grid;gap:16px}
+.dev .two2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:24px;align-items:start}
+.dev .tot{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px}
+.dev .lbl{font-weight:700;font-size:16px;line-height:24px}
+.dev .big{font-family:var(--font-display);font-weight:700;font-size:48px;line-height:52px;letter-spacing:-.02em;font-variant-numeric:tabular-nums;margin-top:8px}
+.dev .totm{display:grid;gap:16px}
+.dev .totm>div{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+.dev .totm dt{font-weight:700}
+.dev .totm dd{font-family:var(--font-display);font-weight:700;font-size:30px;line-height:36px;font-variant-numeric:tabular-nums}
+.dev .sechd{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px}
+.dev .segc{display:inline-flex;flex-wrap:wrap;background:hsl(var(--muted));border-radius:9999px;padding:3px}
+.dev .segc button{min-height:44px;padding:0 16px;border:0;border-radius:9999px;background:transparent;color:hsl(var(--muted-foreground));font:inherit;font-size:15px;font-weight:700;cursor:pointer}
+.dev .segc button[aria-selected=true]{background:hsl(var(--card));color:hsl(var(--foreground));box-shadow:var(--shadow-md)}
+.dev .card .segc button[aria-selected=true]{background:hsl(var(--background))}
+.dev .segc.full{display:flex}.dev .segc.full button{flex:1;padding:0 8px}
+/* chart */
+.dev .chart{display:grid;grid-template-columns:auto minmax(0,1fr);column-gap:8px;margin-top:20px}
+.dev .yax{position:relative;width:40px}
+.dev .ya{position:absolute;top:28px;bottom:0;left:0;right:0}
+.dev .ya span{position:absolute;right:0;transform:translateY(50%);font-size:14px;line-height:20px;color:hsl(var(--muted-foreground));font-variant-numeric:tabular-nums}
+.dev .plot{position:relative;border-bottom:2px solid hsl(var(--input))}
+.dev .band{position:absolute;top:0;bottom:0;background:hsl(var(--premium-subtle));border-radius:8px 8px 0 0}
+.dev .pa{position:absolute;top:28px;bottom:0;left:0;right:0}
+.dev .gl{position:absolute;left:0;right:0;height:1px;background:hsl(var(--border))}
+.dev .bars{position:absolute;inset:0;display:flex;align-items:flex-end;gap:4px;padding:0 2px}
+.dev .bars i{flex:1;display:block;position:relative;background:hsl(var(--chart-1));border-radius:6px 6px 0 0;min-height:2px}
+.dev .bars i em{position:absolute;bottom:100%;left:50%;transform:translateX(-50%);margin-bottom:4px;font-style:normal;font-size:14px;font-weight:700;line-height:20px;font-variant-numeric:tabular-nums;color:hsl(var(--foreground));white-space:nowrap}
+.dev .bars.off i{background:hsl(var(--muted));height:36%}
+.dev .xax{position:relative;height:30px;grid-column:2}
+.dev .xax span{position:absolute;top:6px;transform:translateX(-50%);font-size:14px;line-height:20px;color:hsl(var(--muted-foreground));white-space:nowrap}
+.dev .bandx{grid-column:2;margin-top:2px}
+.dev .bandx span{display:block;padding:2px 8px;border-radius:8px;background:hsl(var(--premium-subtle));color:hsl(var(--premium-subtle-foreground));font-size:14px;line-height:20px;font-weight:700}
+/* table */
+.dev .tw{overflow-x:auto;margin-top:8px}
+.dev table.dt{border-collapse:collapse;width:100%}
+.dev .dt caption{text-align:left;font-size:14px;line-height:20px;color:hsl(var(--muted-foreground));padding-bottom:8px}
+.dev .dt th,.dev .dt td{padding:10px 12px;border-bottom:1px solid hsl(var(--border));font-size:15px;line-height:22px;text-align:right;font-variant-numeric:tabular-nums;font-weight:400;vertical-align:top}
+.dev .dt.m th,.dev .dt.m td{padding:10px 4px 10px 8px}
+.dev .dt th:first-child,.dev .dt td:first-child{text-align:left;padding-left:0}
+.dev .dt thead th{font-size:14px;line-height:20px;color:hsl(var(--muted-foreground));font-weight:700}
+.dev .dt tfoot th,.dev .dt tfoot td{font-weight:700;border-bottom:0}
+.dev .dt .bm{display:block;font-size:14px;line-height:20px;font-weight:700;color:hsl(var(--premium-subtle-foreground))}
+/* channels */
+.dev .chl{display:grid;gap:20px;margin-top:20px}
+.dev .chr{display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:12px;row-gap:8px;align-items:baseline}
+.dev .chr .n{font-weight:700;font-variant-numeric:tabular-nums}
+.dev .trk{grid-column:1/-1;height:12px;border-radius:9999px;background:hsl(var(--muted));overflow:hidden;display:flex}
+.dev .trk i{display:block;height:100%;background:hsl(var(--chart-1))}
+.dev .trk i.bo{background:repeating-linear-gradient(135deg,hsl(var(--premium)) 0 5px,hsl(var(--premium-border)) 5px 9px)}
+.dev .chr .sub{grid-column:1/-1;font-size:14px;line-height:20px;color:hsl(var(--muted-foreground));font-variant-numeric:tabular-nums}
+.dev .tpill{display:inline-flex;align-items:center;gap:6px;min-height:30px;padding:0 12px;border-radius:9999px;background:hsl(var(--premium-subtle));color:hsl(var(--premium-subtle-foreground));font-weight:700;font-size:14px;line-height:20px;font-variant-numeric:tabular-nums}
+.dev .hint{display:flex;gap:8px;align-items:flex-start;font-size:14px;line-height:20px;color:hsl(var(--muted-foreground))}
+.dev .hint .ic{margin-top:2px}
+.dev .note{display:flex;gap:12px;padding:16px 20px;border-radius:var(--radius-row);background:hsl(var(--muted));color:hsl(var(--foreground));font-size:15px;line-height:22px}
+.dev .note .bt{margin:6px 0 -10px -12px}
+.dev .err{color:hsl(var(--destructive))}
+/* link rows and the quiet link */
+.dev .lrow{display:flex;align-items:center;gap:16px;width:100%;min-height:64px;padding:12px 20px;border-radius:var(--radius-row);background:hsl(var(--card));color:hsl(var(--card-foreground))}
+.dev .lrow .grow{flex:1;min-width:0}
+.dev .lrow .t{display:block;font-weight:700;font-size:17px;line-height:24px}
+.dev .lrow .d{display:block;font-size:14px;line-height:20px;color:hsl(var(--muted-foreground));font-variant-numeric:tabular-nums}
+.dev .lrow>.ic:first-child{color:hsl(var(--primary))}
+.dev a.qlink{display:inline-flex;align-items:center;gap:8px;min-height:44px;color:hsl(var(--muted-foreground));text-decoration:underline;text-underline-offset:4px}
+/* P9 owner view crop */
+.dev .p9{display:grid;grid-template-columns:7fr 5fr;gap:48px;margin-top:8px;align-items:start}
+.dev .p9 .ph{border-radius:32px}
+.dev .ph.bleed{border-radius:0}
+.dev .pname{font-size:64px;line-height:64px;font-weight:700;letter-spacing:-.025em;margin-top:12px}
+.dev .pnamem{font-size:30px;line-height:36px;font-weight:700;letter-spacing:-.02em;margin-top:8px}
+.dev .facts{display:grid;grid-template-columns:1fr 1fr;gap:12px 24px;margin-top:20px}
+.dev .facts dt{font-size:14px;line-height:20px;color:hsl(var(--muted-foreground));font-weight:700}
+.dev .area{display:flex;gap:8px;align-items:flex-start;margin-top:20px}
+.dev .area .ic{margin-top:2px;color:hsl(var(--primary))}
+.dev .acts{display:flex;flex-wrap:wrap;gap:0 4px;margin:8px 0 0 -12px}
+.dev .ghost{background:transparent;color:hsl(var(--foreground));min-height:48px;padding:0 16px;margin-left:-16px}
+.dev .stub{height:16px;border-radius:8px;background:hsl(var(--muted))}
+.dev .fl{position:absolute;top:12px;display:grid;place-items:center;width:44px;height:44px;border-radius:9999px;border:0;background:hsl(var(--card) / .92);color:hsl(var(--foreground))}
+.dev .mbar{display:grid;gap:4px;padding:20px 20px 32px;background:hsl(var(--card));box-shadow:var(--shadow-lg);margin-top:32px}
+/* locked */
+.dev .lock{max-width:640px}
+.dev .lockic{display:inline-grid;place-items:center;width:52px;height:52px;border-radius:9999px;background:hsl(var(--secondary));color:hsl(var(--secondary-foreground))}
+.dev .off .lbl,.dev .off .ic{color:hsl(var(--muted-foreground))}
+/* skeleton */
+.dev .sk{background:hsl(var(--muted));border-radius:16px}
+/* portal */
+.dev .pshell{display:flex;align-items:stretch}
+.dev .side{flex:none;width:280px;background:hsl(var(--sidebar));color:hsl(var(--sidebar-foreground));padding:20px 16px;display:flex;flex-direction:column;gap:4px;min-height:1400px}
+.dev .side .org{font-family:var(--font-display);font-weight:700;font-size:20px;line-height:28px;padding:8px 12px 20px}
+.dev .side a{display:flex;align-items:center;gap:12px;min-height:44px;padding:0 12px;border-radius:12px;font-weight:700;color:hsl(var(--sidebar-foreground))}
+.dev .side a[aria-current=page]{background:hsl(var(--sidebar-primary));color:hsl(var(--sidebar-primary-foreground))}
+.dev .pmain{flex:1;min-width:0;padding:16px 40px 64px}
+.dev .ptop{display:flex;align-items:center;gap:8px;height:56px;padding:0 12px 0 4px;background:hsl(var(--sidebar));color:hsl(var(--sidebar-foreground));font-weight:700}
+/* sheet */
+.dev .scrim{position:absolute;inset:0;background:hsl(var(--scrim) / var(--scrim-alpha))}
+.dev .sheet{position:absolute;left:0;right:0;bottom:0;background:hsl(var(--card));color:hsl(var(--card-foreground));border-radius:var(--radius-sheet) var(--radius-sheet) 0 0;box-shadow:var(--shadow-lg);padding:12px 20px 44px}
+.dev .grab{display:block;width:40px;height:5px;border-radius:9999px;background:hsl(var(--input));margin:0 auto 8px}
+.dev .shead{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.dev .sht{font-size:24px;line-height:30px;font-weight:700;letter-spacing:-.015em;padding-top:8px}
+/* doc-level */
+.qs .ans{color:hsl(var(--foreground))}
+.doc table.t td ul{margin:0;padding-left:18px}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+<symbol id="i-back" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></symbol>
+<symbol id="i-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></symbol>
+<symbol id="i-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+<symbol id="i-chart" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16"/><path d="M7 16v-5M12 16V6M17 16v-8"/></symbol>
+<symbol id="i-lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/></symbol>
+<symbol id="i-info" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></symbol>
+<symbol id="i-warn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7.5v5.5M12 16.5h.01"/></symbol>
+<symbol id="i-bell" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 17v-6a6 6 0 0112 0v6l1.5 1.5h-15zM10 21h4"/></symbol>
+<symbol id="i-menu" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
+<symbol id="i-dots" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></symbol>
+<symbol id="i-pin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-6-5.3-6-10a6 6 0 0112 0c0 4.7-6 10-6 10z"/><circle cx="12" cy="11" r="2"/></symbol>
+<symbol id="i-map" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4L3 6v14l6-2 6 2 6-2V4l-6 2z"/><path d="M9 4v14M15 6v14"/></symbol>
+<symbol id="i-boost" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></symbol>
+<symbol id="i-share" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="19" r="2.5"/><path d="M8.2 10.8l7.6-4.4M8.2 13.2l7.6 4.4"/></symbol>
+<symbol id="i-dot" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="6"/></symbol>
+<symbol id="i-home" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11l8-7 8 7v9H4z"/></symbol>
+<symbol id="i-list" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 7h12M8 12h12M8 17h12M4 7h.01M4 12h.01M4 17h.01"/></symbol>
+<symbol id="i-users" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0113 0M16 4.5a3.5 3.5 0 010 7M18 14a6 6 0 013.5 6"/></symbol>
+<symbol id="i-gear" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1"/></symbol>
+<symbol id="i-paw" viewBox="0 0 24 24" fill="currentColor"><circle cx="6.5" cy="11" r="1.9"/><circle cx="10" cy="6.5" r="1.9"/><circle cx="14" cy="6.5" r="1.9"/><circle cx="17.5" cy="11" r="1.9"/><path d="M12 12c3 0 5 3 5 5 0 2-2 2.5-5 2.5S7 19 7 17c0-2 2-5 5-5z"/></symbol>
+</svg>
+<div class="doc">
+<header>
+<div class="meta"><strong>TASK-117.1</strong><span class="pill">v1 for the owner, 2026-10-19</span><span>P25 (proposed id)</span></div>
+<h1>Report statistics (Premium)</h1>
+<p>Wireframe of the statistics view for a report the person created (PRD FR-026 R-026.6, story TASK-117): where it opens from the owner's report page (P9), totals, per day since creation with a table alternative, shares and alerts sent by channel with Boost reach marked, the line that on-phone proximity alerts are not counted, the free owner's one quiet Premium link, the locked state after a lapse, and the organisation portal variant (free, no upgrade prompt).</p>
+<p>Low-fi component mock in the style of the AI pre-fill wireframe, with the real tokens and components of <code>docs/design/system.md</code>. Web only (app later, same layout): <b>Desktop 1200</b> (at 1440 the same column stays centred) and <b>Mobile 390</b> (the web at phone width). Copy in the frames is Slovenian; notes are in English.</p>
+<p>Sample report: lost dog Medo, published 3. 10. 2026, viewed on 19. 10. 2026, with a Boost from 8. to 14. 10. Numbers are invented and add up: 1.284 views, 96 shares, 1.738 alerts sent, of which 1.396 during the Boost.</p>
+<nav aria-label="Review files"><ul class="docnav"><li><a href="P3-home.html">P3 Home (TASK-115.1)</a></li><li><a href="P1-footer.html">P1 Footer (TASK-116.1)</a></li><li><a href="M-alerts-notifications.html">Alerts mock (TASK-114.15)</a></li><li><a href="M-legal-table.html">Legal table mock (TASK-114.19)</a></li><li><a href="M-ai-prefill.html">AI pre-fill mock (TASK-41.1)</a></li><li><a href="P25-report-statistics.html" aria-current="page">Report statistics (TASK-117.1)</a></li></ul></nav>
+
+<section class="qs" aria-labelledby="q-h"><h2 id="q-h">Open questions for the owner</h2>
+<p style="margin:0 0 12px">Answer by number, for example "1a, 2 ok, 3 ok …". The frames show the recommended answer; the alternative is described in the notes.</p>
+<ol>
+<li><b>What does a free owner see? (F1, F3)</b> FR-026 gives free owners one quiet link "Statistika s Premium" on their report page. What is behind it?
+ <br>(a) <b>A locked preview:</b> the statistics page for this report with the block labels and a flat grey outline, no numbers at all, a short explanation and one secondary button "Več o Premium" to the plan page (P24). It is the same screen as the lapsed state, which we need anyway (AC 6).
+ <br>(b) <b>Nothing extra:</b> the link goes straight to the Premium plan page (P24); a free owner never sees a statistics page.
+ <br>(c) Not even the link. This needs a PRD change (R-026.6 and TASK-117 AC 2 ask for it).
+ <br><span class="rec">Recommended: (a). It costs little because the lapsed screen exists anyway, and it tells the owner what Premium would show for this report before they read a price. Either way: no numbers, no blurred real data, no pop-up, nothing in the report flows.</span></li>
+<li><b>Entry for a Premium owner (F1):</b> one row "Statistika" with the three totals (1.284 ogledov · 96 deljenj · 1.738 poslanih obvestil) that opens the view, or only a text button "Statistika" next to "Uredi" and "Plakat"? <span class="rec">Recommended: the row with the totals, so the owner sees at a glance that the report reaches people.</span></li>
+<li><b>Per-day chart (F2):</b> one bar chart with a switch Ogledi / Deljenja / Obvestila, or three small charts one under the other? <span class="rec">Recommended: one chart with the switch. The numbers differ a lot (one Boost day sends more alerts than a week of views), so a shared scale would flatten views and shares. The table always shows all three.</span></li>
+<li><b>Long searches:</b> after 60 days the daily bars get very thin. Group the chart by week from then on (the table stays per day)? <span class="rec">Recommended: yes.</span></li>
+<li><b>After a lapse (F3):</b> show no numbers at all (as for a free owner), or keep the totals up to the lapse date visible? <span class="rec">Recommended: no numbers. Same screen as free, simplest to build and explain; the full history comes back on resubscribing.</span></li>
+<li><b>Heatmap:</b> you said the sightings heatmap is Premium too. It belongs to the AI search plan (R-026.8, TASK-83). Should this view link to it for an open lost report (one row at the end, drawn in F2), or keep the two apart? <span class="rec">Recommended: the one link row here; the heatmap itself gets its own wireframe with TASK-83.</span></li>
+<li><b>Portal (F4):</b> statistics per report only, as drawn, or also an overview across all of the organisation's reports? <span class="rec">Recommended: per report now (R-026.6); an overview later if shelters ask for it.</span></li>
+</ol></section>
+
+<div class="tools"><button type="button" class="tbtn" id="theme">Theme: auto</button><label><input type="checkbox" id="notes" checked> Show annotations</label><div class="seg" role="group" aria-label="Viewport for all frames" id="allview"><button type="button" data-v="desktop" aria-pressed="false">All Desktop 1200</button><button type="button" data-v="mobile" aria-pressed="false">All Mobile 390</button></div></div>
+<div class="legend"><span>Copy: FR-026 labels where the PRD names them ("Statistika s Premium", channel names); P9 owner actions as in the P9 slice</span><span><span class="lg-ph">Dotted underline</span> no key yet: proposal from this wireframe (content strategist, CH-640)</span><span><span class="lg-lgl">Wavy underline</span> privacy claim: owner and lawyer confirm before release</span><span>Blue chips: annotations (hidden with the checkbox)</span></div>
+<nav aria-label="Frames"><ul class="findex" id="findex"></ul></nav>
+</header>
+<main>
+<h2>Blocks and the data each one needs</h2>
+<p>For the statistics endpoint of the new C-contract (CH-636, tech lead). Counts are aggregates per report and calendar day (Europe/Ljubljana); nothing about who viewed or shared.</p>
+<div class="table-wrap"><table class="t">
+<thead><tr><th scope="col">Block</th><th scope="col">Data</th><th scope="col">Frames</th></tr></thead>
+<tbody>
+<tr><td>Entry on P9 (owner view)</td><td><code>access</code>: <code>premium</code> | <code>free</code> | <code>lapsed</code> | <code>org</code>; for <code>premium</code> also <code>totals.views</code>, <code>totals.shares</code>, <code>totals.alerts</code>. Free and lapsed need the access value only.</td><td>F1</td></tr>
+<tr><td>Report row</td><td>From the detail model (TASK-18): code, name or title, species, status, <code>created_at</code>, <code>closed_at</code>, cover photo, organisation (portal).</td><td>F2 to F5</td></tr>
+<tr><td>Freshness line</td><td><code>updated_at</code> (last aggregation, at most 1 h old); <code>counting_since</code> = the later of <code>created_at</code> and the day counting shipped (A-031).</td><td>F2, F4, F5</td></tr>
+<tr><td>Skupaj (totals)</td><td><code>totals.views</code>, <code>totals.shares</code>, <code>totals.alerts</code> since <code>counting_since</code>. Each equals the sum of the days and the sum of its channels.</td><td>F2, F4, F5</td></tr>
+<tr><td>Po dnevih (chart and table)</td><td><code>daily[]</code>: <code>date</code>, <code>views</code>, <code>shares</code>, <code>alerts</code>, <code>boost</code> (true when a Boost was active that day), from <code>counting_since</code> to today; days with nothing are sent as 0, not left out.</td><td>F2, F4, F5</td></tr>
+<tr><td>Boost marks</td><td><code>boosts[]</code>: <code>start</code>, <code>end</code> (a second Boost or an extension is another range); <code>totals.alerts_boost</code>.</td><td>F2</td></tr>
+<tr><td>Deljenja po kanalih</td><td><code>shares_by_channel</code>: <code>whatsapp</code>, <code>facebook</code>, <code>copy_link</code>, <code>native_share</code>, <code>poster_download</code> (always all five, 0 allowed).</td><td>F2, F4, F5</td></tr>
+<tr><td>Poslana obvestila po kanalih</td><td><code>alerts_by_channel</code>: <code>push</code>, <code>email</code>, <code>in_app</code>, each with <code>total</code> and <code>boost</code>. Assumption to confirm in the contract: one delivery = one alert, so a person who got a push and an in-app alert counts twice and the total is the sum of the channels.</td><td>F2, F4</td></tr>
+<tr><td>Proximity line</td><td>None (static text). Shown in every alerts block.</td><td>F2, F4, F5</td></tr>
+<tr><td>Search plan link</td><td>Report type <code>lost</code>, status open, <code>access</code> <code>premium</code>. Target: the search plan (TASK-83).</td><td>F2</td></tr>
+<tr><td>Locked</td><td><code>access</code> and, when lapsed, <code>premium_ended_at</code>. <b>No numbers in the response.</b></td><td>F3</td></tr>
+<tr><td>Portal</td><td>Membership of the owning organisation (TASK-44). Same payload as Premium, no entitlement check.</td><td>F4</td></tr>
+</tbody></table></div>
+
+<h2>Frames</h2>
+<p>Five frames, each with Desktop 1200 and Mobile 390, some with a state switch.</p>
+<div id="frames"></div>
+
+<h2>Rules this wireframe sets</h2>
+<p>Proposed for the P25 page slice once the owner approves.</p>
+<ol class="rules">
+<li><b>Private page.</b> Only the report's creator with Premium, and members of the owning organisation in the portal. Route proposal <code>/r/&lt;code&gt;/statistika</code> (EN <code>/en/r/&lt;code&gt;/statistics</code>), noindex. Anyone else gets the 404 page, so nobody learns whether a report has statistics. Anonymous finders have no account and so no statistics.</li>
+<li><b>One entry, on P9 only.</b> Premium: the link row with the totals. Free and lapsed: the quiet link "Statistika s Premium" (16/24 <code>muted-foreground</code>, underlined, chart icon, 44 px target). Never in the report flows (P6, P7), their confirmations, notifications, e-mails or chat (P-2). No pop-up, no pill, no Premium colour on the free link.</li>
+<li><b>Order:</b> back link, h1 "Statistika", the report row with the freshness line and "Kako štejemo?", Skupaj, Po dnevih, Po kanalih (Deljenja, Poslana obvestila), then the search plan link (open lost report, Premium only).</li>
+<li><b>Numbers:</b> whole numbers with <code>tabular-nums</code> and the Slovenian thousands dot (1.284). No percentages, no comparison with other reports, no trend arrows, no judgement words ("dobro", "slabo").</li>
+<li><b>Every chart has a table alternative</b> behind the Graf / Tabela tabs (NFR-A11Y). The chart is one <code>role="img"</code> with a summary (period, peak, Boost); direct labels, no legend boxes, grid lines <code>border</code>, bars <code>chart-1</code> (system 10.9 Chart).</li>
+<li><b>Boost reach</b> = alerts sent while a Boost was active (TASK-117 AC 4). Marked three ways, never by colour alone: a <code>premium-subtle</code> band behind those days with a labelled strip under the axis, "Povečan doseg" under the date in the table, and per alert channel a striped plum segment plus the sentence "od tega … s povečanim dosegom". The premium tonal pill "Povečan doseg · {n}" is the page's one pill (system 10.5).</li>
+<li><b>Proximity line</b> under the alerts, always: alerts that the app raises on the phone by itself (FR-043) are not counted.</li>
+<li><b>Freshness line</b> always ("Posodobljeno danes ob 14:20"); numbers at most 1 h old; no live refresh and no animation of the numbers.</li>
+<li><b>Locked</b> (free, lapsed): no numbers on screen or in the response, one secondary button, the outline hidden from screen readers.</li>
+<li><b>Portal:</b> the same blocks with no Premium words, no plan and no entitlement check (P-7).</li>
+</ol>
+
+<h2>Copy used</h2>
+<p>None of these strings has a key yet except the FR-026 link label. The P9 copy slice has no statistics labels so far (CH-640 asked for them); the content strategist turns these proposals into keys after approval. Plural forms follow Slovenian rules (1 ogled, 2 ogleda, 3 ogledi, 5 ogledov; 1 deljenje, 2 deljenji, 3 deljenja, 5 deljenj; 1 poslano obvestilo, 2 poslani obvestili, 3 poslana obvestila, 5 poslanih obvestil).</p>
+<div class="table-wrap"><table class="t">
+<thead><tr><th scope="col">Where</th><th scope="col">SL (as shown)</th><th scope="col">Status</th></tr></thead>
+<tbody>
+<tr><td>P9 free owner link</td><td>Statistika s Premium</td><td>FR-026 R-026.6</td></tr>
+<tr><td>P9 Premium entry</td><td>Statistika · {n} ogledov · {n} deljenj · {n} poslanih obvestil</td><td>Proposal</td></tr>
+<tr><td>Page</td><td>Nazaj na prijavo · Statistika · Posodobljeno danes ob {čas} · Kako štejemo?</td><td>Proposal</td></tr>
+<tr><td>Totals</td><td>Skupaj · od {datum} · Ogledi · Deljenja · Poslana obvestila</td><td>Proposal</td></tr>
+<tr><td>Per day</td><td>Po dnevih · Graf · Tabela · Ogledi · Deljenja · Obvestila · Povečan doseg {od}–{do} · Dan · Skupaj · table caption "Ogledi, deljenja in poslana obvestila po dnevih od {od} do {do}" · chart summary "{Podatek} po dnevih od {od} do {do}. Največ {n} na dan {datum}. Povečan doseg od {od} do {do}. Vse vrednosti so v tabeli."</td><td>Proposal</td></tr>
+<tr><td>Channels</td><td>Po kanalih · WhatsApp · Facebook · Kopirana povezava · Deljenje iz telefona · Prenos plakata · Potisna obvestila · E-pošta · V aplikaciji · od tega {n} s povečanim dosegom · Povečan doseg · {n}</td><td>Channel list from FR-026; names proposal. "Povečan doseg" is the system 10.9 premium mark</td></tr>
+<tr><td>Proximity line</td><td>Ne štejemo opozoril, ki jih aplikacija pokaže sama, ko je telefon v bližini. Obveščenih je zato lahko več.</td><td>Proposal (FR-026: "the view says so")</td></tr>
+<tr><td>Kako štejemo? †</td><td>Štejemo le skupna števila za to prijavo po dnevih. Kdo si jo je ogledal, ne vemo: ne uporabljamo piškotkov in v napravi ne shranimo ničesar. Ne štejemo vaših ogledov ter ogledov članov organizacij, moderatorjev in znanih robotov. Ne štejemo opozoril, ki jih aplikacija pokaže sama, ko je telefon v bližini. Številke so stare največ eno uro.</td><td>† privacy claim: owner and lawyer confirm (as A-016)</td></tr>
+<tr><td>Search plan link</td><td>Načrt iskanja s toplotno karto opažanj · Kje so v bližini opazili podobne živali</td><td>Proposal (Q6)</td></tr>
+<tr><td>Locked, free</td><td>Statistika je del paketa Premium · Za vsako svojo prijavo vidite, kolikokrat so si jo ogledali, kolikokrat so jo delili in koliko obvestil smo poslali, po dnevih in po kanalih. · Štejemo za vse prijave, zato s Premium vidite tudi vse za nazaj. · Več o Premium</td><td>Proposal (Q1)</td></tr>
+<tr><td>Locked, lapsed</td><td>Premium je potekel {datum} · Štejemo naprej. Ko Premium obnovite, se tu pokaže vsa statistika, tudi za čas brez njega. · Obnovi Premium</td><td>Proposal (Q5)</td></tr>
+<tr><td>States</td><td>Prvi podatki bodo tu najpozneje v eni uri. · Štejemo od {datum} · Prijava je starejša od štetja, zato za čas pred {datum} podatkov ni. · Nalaganje … · Statistike ta hip ne moremo naložiti. · Poskusi znova</td><td>"Nalaganje …" and "Poskusi znova" from system 10.9; the rest proposal</td></tr>
+</tbody></table></div>
+
+<h2>Change log</h2>
+<div class="table-wrap"><table class="t"><thead><tr><th scope="col">Version</th><th scope="col">Date</th><th scope="col">Change</th></tr></thead><tbody><tr><td>v1</td><td>2026-10-19</td><td>First version for the owner (TASK-117.1): entry on P9, the statistics view with chart and table, Boost reach, proximity line, locked free and lapsed states, portal variant, new, older, loading and error states; seven open questions. Awaiting the owner.</td></tr></tbody></table></div>
+</main>
+</div>
+<script>
+(function(){
+'use strict';
+var NB=' ';
+function S(id,s,c){s=s||20;return '<svg class="ic'+(c?' '+c:'')+'" width="'+s+'" height="'+s+'" aria-hidden="true" focusable="false"><use href="#i-'+id+'"/></svg>'}
+function P(t){return '<span class="phc">'+t+'</span>'}
+function TO(t){return ' <span class="to">'+t+'</span>'}
+function L(t,tag){return '<span class="lgl">'+t+'</span>'+TO(tag)}
+function fmt(n){return String(n).replace(/\B(?=(\d{3})+(?!\d))/g,'.')}
+function sum(a){return a.reduce(function(x,y){return x+y},0)}
+function nice(x){if(x<=0)return 1;var p=Math.pow(10,Math.floor(Math.log10(x))),f=x/p;return (f<=1?1:f<=2?2:f<=2.5?2.5:f<=5?5:10)*p}
+
+/* ---------- sample data ---------- */
+var MAIN={name:'Medo',alt:'črn pes',type:'lost',meta:'objavljeno 3.'+NB+'10.'+NB+'2026',since:'3.'+NB+'10.'+NB+'2026',start:3,month:10,
+ views:[142,118,76,54,41,168,155,121,98,87,74,52,31,24,19,14,10],
+ shares:[22,12,6,4,2,14,10,7,5,4,3,2,2,1,1,1,0],
+ alerts:[312,18,6,4,2,1210,96,44,21,12,8,5,0,0,0,0,0],
+ boost:[5,11],
+ sh:[['WhatsApp',41],['Facebook',23],['Kopirana povezava',14],['Deljenje iz telefona',12],['Prenos plakata',6]],
+ al:[['Potisna obvestila',1102,890],['E-pošta',214,168],['V aplikaciji',422,338]]};
+var OLDER={name:'Medo',alt:'črn pes',type:'lost',meta:'objavljeno 2.'+NB+'9.'+NB+'2026',since:MAIN.since,start:3,month:10,views:MAIN.views,shares:MAIN.shares,alerts:MAIN.alerts,boost:MAIN.boost,sh:MAIN.sh,al:MAIN.al};
+var ORG={name:'Pika',alt:'rjava psička',type:'found',meta:'v zavetišču od 12.'+NB+'10.'+NB+'2026',since:'12.'+NB+'10.'+NB+'2026',start:12,month:10,
+ views:[64,88,51,40,33,27,22,9],shares:[6,9,4,3,2,2,1,0],alerts:[146,12,5,3,1,0,0,0],boost:null,
+ sh:[['WhatsApp',9],['Facebook',11],['Kopirana povezava',4],['Deljenje iz telefona',2],['Prenos plakata',1]],
+ al:[['Potisna obvestila',98,0],['E-pošta',21,0],['V aplikaciji',48,0]]};
+var NEWR={name:'Medo',alt:'črn pes',type:'lost',meta:'objavljeno danes ob 14:02',since:'danes',start:19,month:10,views:[0],shares:[0],alerts:[0],boost:null,
+ sh:[['WhatsApp',0],['Facebook',0],['Kopirana povezava',0],['Deljenje iz telefona',0],['Prenos plakata',0]],
+ al:[['Potisna obvestila',0,0],['E-pošta',0,0],['V aplikaciji',0,0]]};
+function day(R,i){return (R.start+i)+'.'+NB+R.month+'.'}
+
+/* ---------- copy (FR-026 where named; P() = proposal, no key yet) ---------- */
+var C={
+ link:'Statistika s Premium',
+ title:P('Statistika'),
+ back:P('Nazaj na prijavo'),
+ updated:P('Posodobljeno danes ob 14:20'),
+ how:P('Kako štejemo?'),
+ total:P('Skupaj'),
+ since:function(d){return P('od '+d)},
+ views:P('Ogledi'),shares:P('Deljenja'),alerts:P('Poslana obvestila'),
+ perDay:P('Po dnevih'),graph:P('Graf'),table:P('Tabela'),
+ mViews:P('Ogledi'),mShares:P('Deljenja'),mAlerts:P('Obvestila'),
+ byChannel:P('Po kanalih'),
+ boost:'Povečan doseg',
+ ofBoost:function(n){return P('od tega '+fmt(n)+' s povečanim dosegom')},
+ proximity:P('Ne štejemo opozoril, ki jih aplikacija pokaže sama, ko je telefon v bližini. Obveščenih je zato lahko več.'),
+ howBody:L('Štejemo le skupna števila za to prijavo po dnevih. Kdo si jo je ogledal, ne vemo: ne uporabljamo piškotkov in v napravi ne shranimo ničesar. Ne štejemo vaših ogledov ter ogledov članov organizacij, moderatorjev in znanih robotov. Ne štejemo opozoril, ki jih aplikacija pokaže sama, ko je telefon v bližini. Številke so stare največ eno uro.','† privacy claim: owner and lawyer confirm'),
+ heatT:P('Načrt iskanja s toplotno karto opažanj'),heatD:P('Kje so v bližini opazili podobne živali'),
+ lockT:P('Statistika je del paketa Premium'),
+ lockB:P('Za vsako svojo prijavo vidite, kolikokrat so si jo ogledali, kolikokrat so jo delili in koliko obvestil smo poslali, po dnevih in po kanalih.'),
+ lockH:P('Štejemo za vse prijave, zato s Premium vidite tudi vse za nazaj.'),
+ lockBtn:P('Več o Premium'),
+ lapT:P('Premium je potekel 15.'+NB+'10.'+NB+'2026'),
+ lapB:P('Štejemo naprej. Ko Premium obnovite, se tu pokaže vsa statistika, tudi za čas brez njega.'),
+ lapBtn:P('Obnovi Premium'),
+ first:P('Prvi podatki bodo tu najpozneje v eni uri.'),
+ olderSince:P('Štejemo od 3.'+NB+'10.'+NB+'2026'),
+ olderHint:P('Prijava je starejša od štetja, zato za čas pred 3.'+NB+'10.'+NB+'2026 podatkov ni.'),
+ error:P('Statistike ta hip ne moremo naložiti.'),
+ entryT:P('Statistika'),
+ entryD:P('1.284 ogledov · 96 deljenj · 1.738 poslanih obvestil')
+};
+var STW={lost:['Izgubljena','lost'],found:['Najdena','found']};
+function stw(t,lg){var x=STW[t];return '<span class="st '+x[1]+(lg?' lg':'')+'">'+S('dot',lg?18:16)+x[0]+'</span>'}
+var LOGO='<span class="logo"><span class="lm">'+S('paw',22)+'</span><span class="lw">Najdimo</span></span>';
+
+/* ---------- shells ---------- */
+function wHdr(prijaviPrimary){return '<header class="hdr">'+LOGO+'<nav class="navl" aria-label="Glavni meni"><a href="#">Zemljevid</a><a href="#">Izgubljene</a><a href="#">Najdene</a><a href="#" aria-current="page">Moje živali</a></nav><span class="sp"></span><span class="lang"><u>SL</u><span>/</span><span>EN</span></span><button class="iconbtn" type="button" aria-label="Sporočila in obvestila">'+S('bell',24)+'</button><button class="iconbtn av" type="button" aria-label="Moj račun">PB</button><a class="btn btn-sm '+(prijaviPrimary?'b1':'b2')+'" href="#">Prijavi</a></header>'}
+function mHdr(){return '<header class="mhdr">'+LOGO+'<span class="sp"></span><button class="iconbtn" type="button" aria-label="Sporočila in obvestila">'+S('bell',24)+'</button><button class="iconbtn" type="button" aria-label="Meni">'+S('menu',24)+'</button></header>'}
+function web(v,body,prijaviPrimary){return v==='desktop'?wHdr(prijaviPrimary)+'<div class="pg">'+body+'</div>':mHdr()+'<div class="mb">'+body+'</div>'}
+function portal(v,body){
+ if(v==='desktop'){var it=[['home','Pregled'],['list','Prijave',1],['paw','Živali'],['users','Člani'],['gear','Nastavitve']].map(function(x){return '<a href="#"'+(x[2]?' aria-current="page"':'')+'>'+S(x[0],20)+P(x[1])+'</a>'}).join('');
+  return '<div class="pshell"><nav class="side" aria-label="Portal"><span class="org">'+P('Zavetišče Primer')+'</span>'+it+TO('portal nav: placeholder until TASK-44 designs it')+'</nav><div class="pmain">'+body+'</div></div>'}
+ return '<div class="ptop"><button class="iconbtn" type="button" aria-label="Meni portala">'+S('menu',24)+'</button><span>'+P('Zavetišče Primer')+'</span></div><div class="mb">'+body+'</div>'}
+
+/* ---------- parts ---------- */
+function tab(label,on){return '<button type="button" role="tab" aria-selected="'+(on?'true':'false')+'">'+label+'</button>'}
+function ident(R){return '<div class="ident"><div class="ph t64" role="img" aria-label="Fotografija: '+R.alt+'">'+S('paw',28)+'</div><div><p class="h3">'+R.name+'</p><p class="mline">'+stw(R.type)+' · '+R.meta+'</p></div></div>'}
+function fresh(o){return '<div class="fresh"><span>'+(o.older?C.olderSince+' · ':'')+C.updated+'</span><button type="button" class="btn bt" aria-expanded="'+(o.howOpen?'true':'false')+'">'+S('info',18)+C.how+'</button></div>'}
+function head(R,v,o){var d=v==='desktop';
+ return '<p class="crumb"><a href="#">'+S('back',18)+(o.portal?P('Prijave'):C.back)+'</a></p><h1 class="'+(d?'h1':'h1m')+'">'+C.title+'</h1>'
+  +'<div class="headrow mt20">'+ident(R)+(o.noFresh?'':fresh(o))+'</div>'
+  +(o.older?'<p class="hint mt12">'+S('info',16)+'<span>'+C.olderHint+'</span></p>':'')
+  +(o.howOpen&&d?'<div class="note mt20" id="how-'+(o.portal?'o':'p')+'">'+S('info',22)+'<div><p><b>'+C.how+'</b></p><p class="mt4">'+C.howBody+'</p></div></div>':'')}
+function totals(R,v){var d=v==='desktop',t=[[C.views,sum(R.views)],[C.shares,sum(R.shares)],[C.alerts,sum(R.alerts)]];
+ var h='<div class="sechd mt40"><h2 class="'+(d?'h2':'h2m')+'">'+C.total+'</h2><p class="mline">'+C.since(R.since)+'</p></div>';
+ if(d)return '<section>'+h+'<div class="tot mt16">'+t.map(function(x){return '<div class="card"><p class="lbl">'+x[0]+'</p><p class="big">'+fmt(x[1])+'</p></div>'}).join('')+'</div></section>';
+ return '<section>'+h+'<div class="card cardm mt16"><dl class="totm">'+t.map(function(x){return '<div><dt>'+x[0]+'</dt><dd>'+fmt(x[1])+'</dd></div>'}).join('')+'</dl></div></section>'}
+function xlabels(R){var n=R.views.length,s='';for(var i=0;i<n;i+=7){s+='<span style="left:'+((i+0.5)/n*100)+'%">'+day(R,i)+'</span>'}return s}
+function graph(R,v,metric){var d=v==='desktop',vals=R[metric],n=vals.length,mx=Math.max.apply(null,vals),step=nice(mx/2),top=step*2,H=d?280:220,pk=vals.indexOf(mx);
+ var mt='<div class="segc'+(d?'':' full')+'" role="tablist" aria-label="Podatek v grafu">'+tab(C.mViews,metric==='views')+tab(C.mShares,metric==='shares')+tab(C.mAlerts,metric==='alerts')+'</div>';
+ var bars=vals.map(function(x,i){return '<i style="height:'+(x/top*100)+'%">'+(i===pk?'<em>'+fmt(x)+'</em>':'')+'</i>'}).join('');
+ var gl=[0,50,100].map(function(b){return '<span class="gl" style="bottom:'+b+'%"></span>'}).join('');
+ var yl=[0,step,top].map(function(t,j){return '<span style="bottom:'+(j*50)+'%">'+fmt(t)+'</span>'}).join('');
+ var b=R.boost,bl=b?b[0]/n*100:0,bw=b?(b[1]-b[0]+1)/n*100:0;
+ var band=b?'<span class="band" style="left:'+bl+'%;width:'+bw+'%"></span>':'';
+ var bandx=b?'<div class="bandx"><span style="margin-left:'+bl+'%;width:'+bw+'%">'+C.boost+' '+(R.start+b[0])+'.–'+day(R,b[1])+'</span></div>':'';
+ var mname={views:'Ogledi',shares:'Deljenja',alerts:'Poslana obvestila'}[metric];
+ var aria=mname+' po dnevih od '+day(R,0)+' do '+day(R,n-1)+' 2026. Največ '+fmt(mx)+' na dan '+day(R,pk)+(b?' Povečan doseg od '+(R.start+b[0])+'. do '+day(R,b[1]):'')+' Vse vrednosti so v tabeli.';
+ return mt+'<div class="chart" role="img" aria-label="'+aria+'"><div class="yax" style="height:'+H+'px"><div class="ya">'+yl+'</div></div><div class="plot" style="height:'+H+'px">'+band+'<div class="pa">'+gl+'<div class="bars">'+bars+'</div></div></div><div class="xax">'+xlabels(R)+'</div>'+bandx+'</div>'
+  +(metric==='alerts'&&b?TO('Boost reach = alerts on the band days'):'')}
+function table(R,v){var n=R.views.length,rows='',b=R.boost;
+ for(var i=0;i<n;i++){var on=b&&i>=b[0]&&i<=b[1];rows+='<tr><th scope="row">'+day(R,i)+(on?'<span class="bm">'+C.boost+'</span>':'')+'</th><td>'+fmt(R.views[i])+'</td><td>'+fmt(R.shares[i])+'</td><td>'+fmt(R.alerts[i])+'</td></tr>'}
+ return '<div class="tw" role="region" aria-label="Tabela po dnevih" tabindex="0"><table class="dt'+(v==='desktop'?'':' m')+'"><caption>'+P('Ogledi, deljenja in poslana obvestila po dnevih od '+day(R,0)+' do '+day(R,n-1)+' 2026')+'</caption><thead><tr><th scope="col">'+P('Dan')+'</th><th scope="col">'+C.mViews+'</th><th scope="col">'+C.mShares+'</th><th scope="col">'+C.mAlerts+'</th></tr></thead><tbody>'+rows+'</tbody><tfoot><tr><th scope="row">'+C.total+'</th><td>'+fmt(sum(R.views))+'</td><td>'+fmt(sum(R.shares))+'</td><td>'+fmt(sum(R.alerts))+'</td></tr></tfoot></table></div>'}
+function perDay(R,v,o){var d=v==='desktop',tb=o.view==='table';
+ var tabs=o.empty?'':'<div class="segc" role="tablist" aria-label="Prikaz">'+tab(C.graph,!tb)+tab(C.table,tb)+'</div>';
+ var body=o.empty?'<p class="hint">'+S('info',16)+'<span>'+C.first+'</span></p>':(tb?table(R,v):graph(R,v,o.metric||'views'));
+ return '<section><div class="sechd mt40"><h2 class="'+(d?'h2':'h2m')+'">'+C.perDay+'</h2>'+tabs+'</div><div class="card'+(d?'':' cardm')+' mt16">'+body+'</div></section>'}
+function channels(R,v){var d=v==='desktop',ts=sum(R.shares)||1,ta=sum(R.alerts)||1,bt=sum(R.al.map(function(x){return x[2]}));
+ var sh=R.sh.map(function(x){return '<li class="chr"><span>'+P(x[0])+'</span><span class="n">'+fmt(x[1])+'</span><span class="trk"><i style="width:'+(x[1]/ts*100)+'%"></i></span></li>'}).join('');
+ var al=R.al.map(function(x){return '<li class="chr"><span>'+P(x[0])+'</span><span class="n">'+fmt(x[1])+'</span><span class="trk"><i style="width:'+((x[1]-x[2])/ta*100)+'%"></i>'+(x[2]?'<i class="bo" style="width:'+(x[2]/ta*100)+'%"></i>':'')+'</span>'+(x[2]?'<span class="sub">'+C.ofBoost(x[2])+'</span>':'')+'</li>'}).join('');
+ var cc='card'+(d?'':' cardm'),hc='h3'+(d?' h3d':'');
+ var c1='<div class="'+cc+'"><h3 class="'+hc+'">'+C.shares+'</h3><ul class="chl">'+sh+'</ul></div>';
+ var c2='<div class="'+cc+'"><div class="sechd"><h3 class="'+hc+'">'+C.alerts+'</h3>'+(bt?'<span class="tpill">'+S('boost',16)+C.boost+' · '+fmt(bt)+'</span>':'')+'</div><ul class="chl">'+al+'</ul><p class="hint mt20">'+S('info',16)+'<span>'+C.proximity+'</span></p></div>';
+ return '<section><h2 class="'+(d?'h2':'h2m')+' mt40">'+C.byChannel+'</h2><div class="'+(d?'two2':'stk')+' mt16">'+c1+c2+'</div></section>'}
+function heat(){return '<a class="lrow mt40" href="#">'+S('map',24)+'<span class="grow"><span class="t">'+C.heatT+'</span><span class="d">'+C.heatD+'</span></span>'+S('chev',22)+'</a><p class="mt8">'+TO('Q6: one link row; the heatmap itself is TASK-83')+'</p>'}
+function stats(R,v,o){o=o||{};return head(R,v,o)+totals(R,v)+perDay(R,v,o)+channels(R,v)+(o.heat?heat():'')}
+function howSheet(){return '<div class="scrim"></div><div class="sheet" role="dialog" aria-modal="true" aria-label="Kako štejemo?"><span class="grab"></span><div class="shead"><h2 class="sht">'+C.how+'</h2><button class="iconbtn" type="button" aria-label="Zapri">'+S('x',24)+'</button></div><p class="mt8">'+C.howBody+'</p></div>'}
+function crop(h,html){return '<div style="height:'+h+'px;overflow:hidden;position:relative">'+html+'</div>'}
+
+/* P9 owner view crop (entry point) */
+function p9(v,prem){var d=v==='desktop';
+ var entry=prem?'<a class="lrow" href="#">'+S('chart',24)+'<span class="grow"><span class="t">'+C.entryT+'</span><span class="d">'+C.entryD+'</span></span>'+S('chev',22)+'</a>'+TO('Q2: row with the totals; opens F2')
+  :'<a class="qlink" href="#">'+S('chart',18)+C.link+'</a>'+TO('FR-026: the one quiet link; opens F3 (Q1a) or P24 (Q1b)');
+ var facts='<dl class="facts"><div><dt>Barva</dt><dd>Črna</dd></div><div><dt>Velikost</dt><dd>Velika</dd></div><div><dt>Ovratnica</dt><dd>Rdeča</dd></div><div><dt>Čip</dt><dd>Čip je vpisan</dd></div></dl>';
+ var area='<p class="area">'+S('pin',20)+'<span><b>Bežigrad, Ljubljana</b><br><span class="muted">Območje je približno.</span></span></p>';
+ var top=stw('lost',true)+' <span class="muted">od 3.'+NB+'10.'+NB+'2026</span><h1 class="'+(d?'pname':'pnamem')+'">Medo</h1><p class="'+(d?'lead':'')+' muted">Pes · labradorec</p>'+facts+area;
+ var about='<h2 class="'+(d?'h2':'h2m')+' mt40">O dogodku</h2><div class="stub mt16" style="width:92%"></div><div class="stub mt8" style="width:80%"></div><div class="stub mt8" style="width:60%"></div>';
+ if(d){var acts='<div class="mt24"><button type="button" class="btn btn-lg b1 block">Žival je spet doma</button><div class="acts"><button type="button" class="btn bt">Uredi</button><button type="button" class="btn bt">Plakat</button><button type="button" class="btn bt" aria-label="Več možnosti">'+S('dots',20)+'Več</button></div></div>';
+  var right=top+acts+'<div class="mt16">'+entry+'</div><button type="button" class="btn ghost mt16">'+S('share',20)+'Deli ali natisni plakat</button>';
+  return wHdr(false)+'<div class="pg"><p class="crumb"><a href="#">'+S('back',18)+'Moje živali</a></p><div class="p9"><div><div class="ph" role="img" aria-label="Fotografija: črn pes">'+S('paw',72)+'<span class="phl">Foto · črn pes</span></div>'+about+'</div><div>'+right+'</div></div></div>'}
+ return mHdr()+'<div style="position:relative"><div class="ph bleed" role="img" aria-label="Fotografija: črn pes">'+S('paw',64)+'</div><button type="button" class="fl" style="left:12px" aria-label="Nazaj">'+S('back',22)+'</button><button type="button" class="fl" style="right:12px" aria-label="Deli">'+S('share',20)+'</button></div>'
+  +'<div class="mb" style="padding-top:20px">'+top+'<div class="mt24">'+entry+'</div>'+about+'</div>'
+  +'<div class="mbar"><button type="button" class="btn btn-lg b1 block">Žival je spet doma</button><div style="display:flex;justify-content:space-between"><button type="button" class="btn bt">Uredi</button><button type="button" class="iconbtn" aria-label="Več možnosti">'+S('dots',22)+'</button></div>'+TO('sticky action bar (P9 mobile)')+'</div>'}
+
+/* locked (free, lapsed) */
+function locked(v,lap){var d=v==='desktop',cc='card'+(d?'':' cardm');
+ var box='<div class="'+cc+' mt32 lock"><span class="lockic">'+S('lock',26)+'</span><h2 class="'+(d?'h2':'h2m')+' mt16">'+(lap?C.lapT:C.lockT)+'</h2><p class="mt12">'+(lap?C.lapB:C.lockB)+'</p>'+(lap?'':'<p class="mline mt12">'+C.lockH+'</p>')
+  +'<a class="btn b2 mt24'+(d?'':' block')+'" href="#">'+(lap?C.lapBtn:C.lockBtn)+'</a>'+TO(lap?'to the plan page P24, renew':'to the plan page P24 (TASK-54.1)')+'</div>';
+ var tiles=['Ogledi','Deljenja','Poslana obvestila'].map(function(l){return '<div class="'+cc+' off"><p class="lbl">'+P(l)+'</p><p class="mt8">'+S('lock',d?28:22)+'</p></div>'}).join('');
+ var bars='';for(var i=0;i<17;i++){bars+='<i></i>'}
+ var outl='<div class="mt32" aria-hidden="true">'+TO('outline, aria-hidden: labels only, no numbers')+'<div class="'+(d?'tot':'stk')+' mt8">'+tiles+'</div><div class="'+cc+' off mt16"><p class="lbl">'+P('Po dnevih')+'</p><div class="plot mt16" style="height:'+(d?160:120)+'px"><div class="bars off">'+bars+'</div></div></div></div>';
+ return head(MAIN,v,{noFresh:true})+box+outl}
+
+/* states */
+function skel(v){var d=v==='desktop',k=function(h,w,c){return '<div class="sk'+(c?' '+c:'')+'" style="height:'+h+'px'+(w?';width:'+w:'')+'"></div>'};
+ var tiles=d?'<div class="tot mt16">'+k(124)+k(124)+k(124)+'</div>':k(196,'','mt16');
+ return '<div role="status"><span class="sr">Nalaganje …</span>'+TO('one polite "Nalaganje …" for the region')+k(36,'180px','mt32')+tiles+k(36,'200px','mt40')+k(d?380:320,'','mt16')+'</div>'}
+function errorBlock(){return '<div class="note mt32">'+S('warn',22,'err')+'<div><p>'+C.error+'</p><button type="button" class="btn bt">Poskusi znova</button></div></div>'}
+
+/* ---------- frames ---------- */
+var F=[
+{id:'f1',title:'Entry on the owner’s report page (P9 owner view)',sub:'Premium owner: one link row with the totals. Free owner: the one quiet FR-026 link. Nothing else on P9 changes.',
+ states:[['premium','Premium owner'],['free','Free owner']],
+ render:function(v,s){return p9(v,s==='premium')},
+ notes:function(s){if(s==='free')return ['<b>Free owner:</b> everything P9 shows today stays as it is. The only addition is the quiet link "Statistika s Premium" (FR-026 R-026.6): 16/24 <code>muted-foreground</code>, underlined, chart icon, 44 px target. No pill, no Premium colour, no count, no pop-up.',
+  'It opens the locked preview (F3, Q1a) or goes straight to the plan page P24 (Q1b). The link is never in the report flows (P6, P7), their confirmations, notifications or e-mails (P-2).',
+  'After a lapse the owner sees this same quiet link again; P25 then shows the lapsed state (F3).',
+  'Free owners’ reports are counted all the same (R-026.6), so the history is there on upgrade.'];
+  return ['<b>Where:</b> the P9 owner view. Web: right column, under the owner actions ("Žival je spet doma", "Uredi", "Plakat", "Več") and above the share button. Phone: after the area line, before "O dogodku"; not in the sticky action bar.',
+  '<b>Premium owner (Q2):</b> a link row (choice-row style with a caret, system 10.4) "Statistika" with the three totals of the last count; it opens F2. The alternative is a text button "Statistika" next to "Uredi" and "Plakat", without numbers.',
+  'Shown on every report the person created, any type, open or closed, while its page exists. Not shown on an anonymous finder’s report (no account), and never to visitors.',
+  'Organisation reports: the public P9 shows no entry to anyone; members open statistics in the portal (F4).',
+  'P9 owner actions and labels as in the P9 slice (approximate here). The Prijavi button in the header is <code>secondary</code> because P9 has its own primary.']}},
+{id:'f2',title:'Statistics: Premium owner',sub:'Lost report with a Boost. States: chart, the table alternative, "Kako štejemo?" open.',
+ states:[['graph','Graf'],['table','Tabela'],['how','Kako štejemo?']],
+ render:function(v,s){var o={heat:true,view:s==='table'?'table':'graph',howOpen:s==='how'};
+  if(s==='how'&&v==='mobile')return crop(844,web(v,stats(MAIN,v,o),true)+howSheet());
+  return web(v,stats(MAIN,v,o),true)},
+ notes:function(s){
+  if(s==='table')return ['<b>Table alternative</b> (NFR-A11Y): one row per day, oldest first (same order as the chart), "Skupaj" in the footer. Columns Dan, Ogledi, Deljenja, Obvestila. Boost days carry "Povečan doseg" under the date: every alert on those days is Boost reach. The caption names the period.',
+   'Numbers right aligned, <code>tabular-nums</code>, Slovenian thousands dot. Row headers are the dates (<code>th scope="row"</code>).',
+   'Phone: four columns fit at 390 with tight cell padding. At 200 % text the table scrolls sideways inside its own labelled, focusable region; the page itself never scrolls sideways (data tables are exempt from reflow, WCAG 1.4.10).',
+   'Graf / Tabela are tabs (system 10.4 segmented control, shadcn <code>tabs</code>); Graf is the default and the choice is not stored.'];
+  if(s==='how')return ['"Kako štejemo?" opens inline on web (a disclosure with <code>aria-expanded</code>, drawn as the page’s one note) and as a bottom sheet on the phone (system 10.7).',
+   'It says what is counted and what is not: own views, organisation members, moderators and known bots are not counted; nor are alerts the app raises on the phone by itself (FR-043); numbers are at most 1 h old.',
+   'The text is a privacy claim (cookieless, no identifier, nothing stored on the device, as A-016), so it has the wavy underline: the owner and the lawyer confirm it before release.'];
+  return ['<b>Order:</b> back to the report, h1, the report row with the freshness line and "Kako štejemo?", Skupaj, Po dnevih, Po kanalih, the search plan link. The header Prijavi is <code>primary</code>: this page has no primary of its own.',
+  '<b>Skupaj:</b> three totals since counting began (creation, or the counting start for older reports, F5). Each total is the sum of the days and of its channels.',
+  '<b>Po dnevih (Q3):</b> one bar chart, one value at a time (tabs Ogledi / Deljenja / Obvestila), peak labelled directly, three y-axis ticks, a date every 7 days. Days are calendar days in Slovenia. Try the tabs in the Tabela state: the table shows all three. Long searches: Q4.',
+  '<b>Boost:</b> a <code>premium-subtle</code> band behind 8. to 14. 10. and a labelled strip under the axis ("Povečan doseg 8.–14. 10."), so it is text, not colour alone. In the alerts card: the page’s one tonal pill "Povečan doseg · 1.396", a striped plum segment per channel and "od tega 890 s povečanim dosegom".',
+  '<b>Po kanalih:</b> shares (WhatsApp, Facebook, Kopirana povezava, Deljenje iz telefona = the phone’s own share sheet, Prenos plakata) and alerts sent (Potisna obvestila, E-pošta, V aplikaciji), in a fixed order, also when 0. Bars show the share of the total; the number is the value.',
+  '<b>Proximity line</b> under the alerts, always (TASK-117 AC 4, FR-043).',
+  '<b>Freshness:</b> "Posodobljeno danes ob 14:20" from the last count, at most 1 h old. No live refresh; reloading shows newer numbers.',
+  '<b>Search plan link (Q6):</b> only for an open lost report. The heatmap is not drawn here.',
+  'Closed or reunited report: the same view; the status word in the report row changes, and the days run on while the page is public (30 days after closing). No ads on this page (not a P21 slot; Premium is ad-free anyway).']}},
+{id:'f3',title:'Locked: free owner and after a lapse',sub:'Q1a: what the free owner’s link opens. Lapsed: the same screen once Premium has ended (TASK-117 AC 6).',
+ states:[['free','Free owner'],['lapsed','Premium ended']],
+ render:function(v,s){return web(v,locked(v,s==='lapsed'),true)},
+ notes:function(s){if(s==='lapsed')return ['<b>After the paid period ends</b> (AC 6): the same screen with the end date and "Obnovi Premium" (<code>secondary</code>). Counting goes on; on resubscribing the full history shows, also the days without Premium (R-026.4).',
+  '<b>Q5:</b> no numbers, as drawn, or the totals up to the end date? Recommended: none.',
+  'Cancelled but still inside the paid period: still Premium (F2) until the period ends. P9 then shows the quiet link of F1 Free.'];
+  return ['<b>Q1a:</b> the report row as in F2, then one card: lock icon, title, what Premium shows for this report, "we count every report, so you also see the past", and one <code>secondary</code> button "Več o Premium" to the plan page P24 (TASK-54.1). No primary, no price, no countdown, no pop-up. The back link returns to the report.',
+  'Below it, an outline of the page: the block labels and a flat grey chart with equal bars, hidden from screen readers. <b>No numbers, not even totals</b>, and nothing real is blurred; the API sends no numbers for a free owner.',
+  '<b>Q1b</b> drops this screen: the link opens P24 directly. <b>Q1c</b> drops the link (PRD change).']}},
+{id:'f4',title:'Organisation portal (shelter or municipality report)',sub:'Same blocks in the portal shell; free, no Premium words, no upgrade prompt (P-7, TASK-117 AC 5).',
+ render:function(v){return portal(v,stats(ORG,v,{portal:true}))},
+ notes:function(){return ['Opened from the report inside the portal (TASK-44). The portal pages are not designed yet, so the sidebar items and the organisation name are placeholders (system 10.9 Sidebar: 280 px, dark teal; a sheet behind the menu button below <code>lg</code>).',
+  '<b>No entitlement check, no plan, no "Premium" anywhere</b> (P-7). Every member of the owning organisation sees it; roles come from TASK-44.',
+  'Members’ own views are not counted (R-026.6). No Boost here, so no band and no pill. No search plan link (that is for owners of lost pets).',
+  'Sample: found dog Pika, in the shelter since 12. 10. 2026; 334 views, 27 shares, 167 alerts sent.',
+  '<b>Q7:</b> an overview across all the organisation’s reports later, if shelters ask for it.']}},
+{id:'f5',title:'New, older report, loading and error',sub:'The edges of the Premium view (F2).',
+ states:[['new','New report'],['older','Older than counting'],['loading','Loading'],['error','Error']],
+ render:function(v,s){
+  if(s==='new')return web(v,head(NEWR,v,{})+totals(NEWR,v)+perDay(NEWR,v,{empty:true})+channels(NEWR,v),true);
+  if(s==='older')return web(v,stats(OLDER,v,{older:true,heat:true}),true);
+  if(s==='loading')return web(v,head(MAIN,v,{noFresh:true})+skel(v),true);
+  return web(v,head(MAIN,v,{noFresh:true})+errorBlock(),true)},
+ notes:function(s){
+  if(s==='new')return ['<b>Published minutes ago:</b> zeros, and "Prvi podatki bodo tu najpozneje v eni uri." in place of the chart (no tabs until there is a day of data). Channels show 0. No "nothing happened" tone.',
+   'Alerts go out at publishing, so they usually show within the hour.'];
+  if(s==='older')return ['<b>Report created before counting shipped</b> (A-031): "Štejemo od 3. 10. 2026" joins the freshness line and one hint sentence says there is no data before that day. The chart and table start there; nothing is estimated.'];
+  if(s==='loading')return ['Skeletons in the shape of the blocks, one polite "Nalaganje …" for the region (system 10.9 Skeleton). The report row comes with the page at once.'];
+  return ['Inline error in place of the blocks (system 10.9): a note with the warning icon in <code>destructive</code>, one sentence and "Poskusi znova". The report row and the back link stay.']}}
+];
+
+/* ---------- build ---------- */
+var host=document.getElementById('frames'),idx=document.getElementById('findex');
+F.forEach(function(f,i){f.n=i+1;
+ var li=document.createElement('li');li.innerHTML='<a href="#'+f.id+'">F'+f.n+' '+f.title.split(':')[0].split(' (')[0]+'</a>';idx.appendChild(li);
+ var segS='';if(f.states){segS='<div class="seg" role="group" aria-label="State" data-key="state">';f.states.forEach(function(s,j){segS+='<button type="button" data-v="'+s[0]+'" aria-pressed="'+(j===0)+'">'+s[1]+'</button>'});segS+='</div>'}
+ var sec=document.createElement('section');sec.className='frame';sec.id=f.id;sec.dataset.view='mobile';sec.dataset.fit='fit';if(f.states)sec.dataset.state=f.states[0][0];sec.setAttribute('aria-labelledby',f.id+'-t');
+ sec.innerHTML='<div class="bar"><h3 class="ttl" id="'+f.id+'-t">F'+f.n+' '+f.title+'<small>'+f.sub+'</small></h3>'+segS
+  +'<div class="seg" role="group" aria-label="Viewport" data-key="view"><button type="button" data-v="desktop" aria-pressed="false">Desktop 1200</button><button type="button" data-v="mobile" aria-pressed="true">Mobile 390</button></div>'
+  +'<button type="button" class="tbtn nofit" aria-pressed="false">Fit to width</button></div>'
+  +'<div class="stage"><div class="vp" data-v="desktop" data-w="1200"><div class="dev" lang="sl"></div></div><div class="vp" data-v="mobile" data-w="390"><div class="dev" lang="sl"></div></div></div>'
+  +'<div class="notes"><ul></ul></div>';
+ host.appendChild(sec);f.el=sec;draw(f)});
+function draw(f){var s=f.el.dataset.state;f.el.querySelectorAll('.vp').forEach(function(vp){vp.firstElementChild.innerHTML=f.render(vp.dataset.v,s)});
+ f.el.querySelector('.notes ul').innerHTML=f.notes(s).map(function(x){return '<li>'+x+'</li>'}).join('')}
+
+/* in-frame tabs: the metric and Graf/Tabela tabs work, so the owner can try them */
+document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('.dev [role=tab]');if(!b)return;
+ var list=b.parentNode,dev=b.closest('.dev'),frame=b.closest('.frame');if(!dev||!frame)return;
+ var fr=null;F.forEach(function(x){if(x.el===frame)fr=x});if(!fr)return;
+ var label=b.textContent.trim(),aria=list.getAttribute('aria-label');
+ var R=fr.id==='f4'?ORG:(fr.id==='f5'?OLDER:MAIN),v=dev.parentNode.dataset.v;
+ if(aria==='Prikaz'){var st=label==='Tabela'?'table':'graph';
+  if(fr.id==='f2'){frame.dataset.state=st;frame.querySelectorAll('.seg[data-key=state] button').forEach(function(x){x.setAttribute('aria-pressed',String(x.dataset.v===st))});draw(fr);fit(frame);return}
+  var card=list.parentNode.parentNode.querySelector('.card');if(!card)return;
+  list.querySelectorAll('[role=tab]').forEach(function(x){x.setAttribute('aria-selected',String(x===b))});
+  card.innerHTML=st==='table'?table(R,v):graph(R,v,'views');fit(frame);return}
+ if(aria==='Podatek v grafu'){var m={'Ogledi':'views','Deljenja':'shares','Obvestila':'alerts'}[label];if(!m)return;
+  var sec=list.closest('.card');if(!sec)return;sec.innerHTML=graph(R,v,m);fit(frame)}});
+
+/* ---------- controls (as in the earlier wireframes) ---------- */
+var root=document.documentElement;
+function sget(k){try{return localStorage.getItem(k)}catch(e){return null}}function sset(k,v){try{localStorage.setItem(k,v)}catch(e){}}
+var th=sget('wf-theme');if(th==='light'||th==='dark')root.setAttribute('data-theme',th);
+var tb=document.getElementById('theme');
+function label(){tb.textContent='Theme: '+(root.getAttribute('data-theme')||'auto')}
+label();tb.addEventListener('click',function(){var v=root.getAttribute('data-theme');var nx=v===null?'light':v==='light'?'dark':null;if(nx){root.setAttribute('data-theme',nx);sset('wf-theme',nx)}else{root.removeAttribute('data-theme');sset('wf-theme','auto')}label();fitAll()});
+var nt=document.getElementById('notes');nt.addEventListener('change',function(){document.body.classList.toggle('no-notes',!nt.checked);fitAll()});
+function fit(f){var v=f.dataset.view;var vp=f.querySelector('.vp[data-v="'+v+'"]');if(!vp)return;var dev=vp.firstElementChild;var w=+vp.dataset.w;var st=f.querySelector('.stage');var avail=st.clientWidth-24;
+ if(f.dataset.fit==='full'){dev.style.width=w+'px';dev.style.transform='';vp.style.width='';vp.style.height='';return}
+ var s=Math.min(1,avail/w);dev.style.width=w+'px';dev.style.transform='scale('+s+')';vp.style.width=(w*s)+'px';vp.style.height=(dev.offsetHeight*s)+'px'}
+function fitAll(){document.querySelectorAll('.frame').forEach(fit)}
+function setView(f,v){f.dataset.view=v;f.querySelectorAll('.seg[data-key=view] button').forEach(function(x){x.setAttribute('aria-pressed',String(x.dataset.v===v))});fit(f)}
+F.forEach(function(fr){var f=fr.el;
+ f.querySelectorAll('.seg[data-key=view] button').forEach(function(b){b.addEventListener('click',function(){setView(f,b.dataset.v)})});
+ f.querySelectorAll('.seg[data-key=state] button').forEach(function(b){b.addEventListener('click',function(){f.dataset.state=b.dataset.v;f.querySelectorAll('.seg[data-key=state] button').forEach(function(x){x.setAttribute('aria-pressed',String(x===b))});draw(fr);fit(f)})});
+ var nf=f.querySelector('.nofit');nf.addEventListener('click',function(){var full=f.dataset.fit==='full';f.dataset.fit=full?'fit':'full';nf.textContent=full?'Fit to width':'Fit: 100%';nf.setAttribute('aria-pressed',String(!full));fit(f)});
+ if(window.ResizeObserver){f.querySelectorAll('.dev').forEach(function(d){new ResizeObserver(function(){fit(f)}).observe(d)})}
+});
+document.querySelectorAll('#allview button').forEach(function(b){b.addEventListener('click',function(){F.forEach(function(fr){setView(fr.el,b.dataset.v)});document.querySelectorAll('#allview button').forEach(function(x){x.setAttribute('aria-pressed',String(x===b))})})});
+window.addEventListener('resize',fitAll);window.addEventListener('load',fitAll);fitAll();
+})();
+</script>
+</body>
+</html>

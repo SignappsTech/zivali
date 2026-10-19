@@ -1,7 +1,7 @@
 ---
 id: TASK-117.1
 title: 'Wireframe: report statistics view (approval gate)'
-status: To Do
+status: In Progress
 assignee:
   - '@design-lead'
 created_date: '2026-10-19 14:35'
@@ -30,6 +30,20 @@ Wireframe of the report statistics view (TASK-117, FR-026 R-026.6), web 1440 and
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 The statistics view wireframe (desktop and mobile, owner and organisation variants) is in docs/design/wireframes/ and linked from this task, with the data each block needs
+- [x] #1 The statistics view wireframe (desktop and mobile, owner and organisation variants) is in docs/design/wireframes/ and linked from this task, with the data each block needs
 - [ ] #2 A person approved it; their name, the date and the approved version are in this task's notes
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+## Wireframe v1 (2026-10-19): awaiting the owner's approval
+
+- File: docs/design/wireframes/P25-report-statistics.html (page id P25 proposed; P24 is the Premium plan page, TASK-54.1).
+- Web only. Desktop 1200 (per the lead's brief; at 1440 the same column stays centred) and Mobile 390 (web at phone width). Slovenian copy in the frames: FR-026 labels where named ("Statistika s Premium", channel names), the rest proposals (dotted underline); the "Kako štejemo?" text is a privacy claim (wavy: owner and lawyer confirm).
+- Frames: F1 entry on the P9 owner view (Premium: row with the totals; free: the one quiet link), F2 Premium view (chart, table alternative, "Kako štejemo?"), F3 locked (free preview, after a lapse), F4 organisation portal (no entitlement, no upgrade prompt), F5 new report, older than counting, loading, error.
+- "Blocks and the data each one needs" table in the file: per-block data for the statistics C-contract (CH-636).
+- Open questions at the top of the file: 1 free owner: locked preview or straight to the plan page (rec. locked preview, same screen as the lapse); 2 Premium entry as a row with totals (rec.); 3 one chart with a switch (rec.); 4 weekly bars after 60 days (rec.); 5 no numbers after a lapse (rec.); 6 link to the search plan heatmap, TASK-83 (rec.); 7 portal per report only for now (rec.).
+- Approval: NOT recorded. The owner (or a person they name) records who, date and version here. No mockup or implementation task for the statistics view before that.
+- After approval (design lead): add P25 to 03 §Page inventory and write docs/design/pages/P25-report-statistics.md (rules section of the wireframe). CHANGEs to file then: content strategist (P25 copy slice from the wireframe's Copy table; the P9 copy slice has no statistics labels yet although CH-640 is done) and tech lead (route /r/<code>/statistika, noindex, 404 for others; contract fields: access state, counting_since, boosts[], per-channel Boost split, delivery vs person count).
+<!-- SECTION:NOTES:END -->
