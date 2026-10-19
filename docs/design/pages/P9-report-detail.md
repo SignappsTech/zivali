@@ -3,7 +3,7 @@ source: 03§P9
 page: P9 Report detail (lost, found, sighted)
 stories: TASK-18 (FR-007, FR-004, FR-011, FR-012)
 platforms: web, mobile
-version: 1.1
+version: 1.2
 mockup: docs/design/mockups/P9-report-detail.html
 copy: docs/content/pages/P9-report-detail.md
 ---
@@ -63,7 +63,7 @@ Replaces slot A with: primary `lg` "Animal is home again" (P14), text buttons "E
 
 ## States
 
-Loading skeleton (photo block, title, facts), image failure (placeholder tile), map offline (text-only area line), network error note with retry, contact requires sign-in (P16 gate sheet with verified-email prompt for unverified users).
+Loading skeleton (photo block, title, facts; **mobile only**, CH-661: web has none, the report is in the first HTML and client navigations keep the previous page until it arrives), image failure (placeholder tile), map offline (text-only area line), network error note with retry, contact requires sign-in (P16 gate sheet with verified-email prompt for unverified users).
 
 **Contact gate after sign-in (CH-472).** On mobile the screen stays mounted under the auth screens, so contact continues once signed in (TASK-21.6). On web the P16 gate leaves the page and returns to it through `next`; the visitor presses the contact button again. The mockup note "the conversation opens" describes mobile; resuming contact from a `next` marker on web would be a follow-up task.
 
@@ -91,3 +91,4 @@ None.
 | Version | Date | Change |
 |---|---|---|
 | 1.1 | 2026-10-18 | CH-457, CH-472: web ad sidebar placement, contact after the sign-in gate |
+| 1.2 | 2026-10-19 | CH-661: loading skeleton is mobile only. |

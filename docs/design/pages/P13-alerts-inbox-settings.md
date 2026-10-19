@@ -3,7 +3,7 @@ source: 03§P13
 page: P13 Notifications, nearby alerts and account settings
 stories: TASK-22, TASK-23, TASK-9 (FR-010, FR-001, FR-036)
 platforms: web, mobile
-version: 1.4
+version: 1.5
 mockup: docs/design/mockups/P13-alerts-inbox-settings.html
 copy: docs/content/pages/P13-alerts-inbox-settings.md
 ---
@@ -41,7 +41,7 @@ Sections separated by 40 px, line fields and switches only:
 
 ### Alert settings as built on web (TASK-23.2, TASK-114.15, CH-419, CH-549)
 
-`/account/alerts` shows section 1 first. "Kako vas obvestimo" (sections 2 and 3) is a disclosure at the end of the same page (mock M-alerts-notifications v1, approved 2026-10-18): an h2 containing a button with `aria-expanded` and `aria-controls`, a 56 px row with a top divider, the caret turning without motion under reduced motion, closed by default with the grey summary under the title, open when the URL has `#kako-vas-obvestimo`. "Tihi čas" inside it is an h3 (32 px above). The notifications route `/racun/obvestila` is only a redirect to it, so no extra account-menu entry is needed (CH-280). Row mapping of "Kako vas obvestimo" (CH-280, confirmed): Matches = `match_chip`, `match_suggested`, `match_confirmed`; Messages = `chat_message`; Nearby alerts = `nearby_lost`; Reminders = `report_reminder`, `report_expiring`, `report_closed`; `report_hidden` and `report_reunited` keep their defaults and have no row. Section 4 (permission state) stays where it applies. No account sub-navigation exists yet on any `/account` page; the `lg` left sub-navigation below is the target, not built.
+`/account/alerts` shows section 1 first. "Kako vas obvestimo" (sections 2 and 3) is a disclosure at the end of the same page (mock M-alerts-notifications v1, approved 2026-10-18): an h2 containing a button with `aria-expanded` and `aria-controls`, a 56 px row with a top divider, the caret turning without motion under reduced motion, **open by default** (since TASK-114.42, owner choice 2026-10-19, CH-665), the grey summary under the title shows once it is closed, and `#kako-vas-obvestimo` still opens it. "Tihi čas" inside it is an h3 (32 px above). The notifications route `/racun/obvestila` is only a redirect to it, so no extra account-menu entry is needed (CH-280). Row mapping of "Kako vas obvestimo" (CH-280, confirmed): Matches = `match_chip`, `match_suggested`, `match_confirmed`; Messages = `chat_message`; Nearby alerts = `nearby_lost`; Reminders = `report_reminder`, `report_expiring`, `report_closed`; `report_hidden` and `report_reunited` keep their defaults and have no row. Section 4 (permission state) stays where it applies. No account sub-navigation exists yet on any `/account` page; the `lg` left sub-navigation below is the target, not built.
 
 ### Opt-in moments
 
@@ -97,3 +97,4 @@ An extra switch under "Alerts near me": "Alert me when I am near a lost animal" 
 | 1.2 | 2026-10-18 | CH-328, CH-356: mobile alert settings and proximity section as built |
 | 1.3 | 2026-10-18 | CH-400, CH-413, CH-419, CH-549: notification permission order, web alert settings as built, no daily stepper, radius stops, disclosure. CH-502, CH-535 already applied (1.1). |
 | 1.4 | 2026-10-19 | CH-280: no separate notifications page or menu entry (redirect), row mapping confirmed. CH-284: mobile quiet-hour line fields, nearby row, refused change. CH-320: offline data settings. |
+| 1.5 | 2026-10-19 | CH-665: "Kako vas obvestimo" open by default on web; summary shows when closed. |
