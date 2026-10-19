@@ -27,9 +27,14 @@ const values = (change: Partial<LostValues> = {}): LostValues => ({
 });
 
 describe('stepsFor', () => {
-	it('takes seven steps for a new pet and skips only the details for a saved one (photos stay, C5)', () => {
+	it('takes seven steps for a new pet and skips only the details for a saved one (photos stay unless the pet has photos, C5)', () => {
 		expect(stepsFor(NEW_PET, true)).toEqual(['pet', 'photos', 'details', 'where', 'when', 'what', 'review']);
 		expect(stepsFor('pet-1', true)).toEqual(['pet', 'photos', 'where', 'when', 'what', 'review']);
+	});
+
+	it('skips the photo step for a saved pet with photos', () => {
+		expect(stepsFor('pet-1', true, true)).toEqual(['pet', 'where', 'when', 'what', 'review']);
+		expect(stepsFor(NEW_PET, true, true)).toEqual(['pet', 'photos', 'details', 'where', 'when', 'what', 'review']);
 	});
 
 	it('starts at the photos with the new-pet path when there are no saved pets to choose from', () => {

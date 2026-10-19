@@ -462,14 +462,12 @@ describe('LostFlow', () => {
 		// The `?pet=` link marks its pet; one press on the row goes on (no Naprej on this step).
 		expect(button(`${pet.name} · Pes`).getAttribute('aria-current')).toBe('true');
 		expect(screen.queryByRole('button', { name: t.next })).toBeNull();
-		expect(bars()).toBe('Korak 1 od 6');
+		expect(bars()).toBe('Korak 1 od 5');
 		click(`${pet.name} · Pes`);
-		await heading(t.photos_title);
-		// The pet's photos are listed first and go on the report too (TASK-114.5).
+		// The pet has photos: the photo step is skipped; they are listed first and go on the report (TASK-29.14).
+		await heading(sl.location.title_lost);
 		expect(api.picker.saved).toEqual(pet.photos);
 		photosUp();
-		click(t.next);
-		await heading(sl.location.title_lost);
 		click(sl.location.confirm);
 		await heading(t.when_title);
 		click(t.next);
@@ -490,6 +488,15 @@ describe('LostFlow', () => {
 		expect(api.getReport).not.toHaveBeenCalled();
 	});
 
+	it('keeps the photo step for a saved pet without photos', async () => {
+		api.pets = [{ ...pet, photos: [] }];
+		show({ initialPet: pet.id });
+		await heading(t.pet_title);
+		click(`${pet.name} · Pes`);
+		await heading(t.photos_title);
+		expect(bars()).toBe('Korak 2 od 6');
+	});
+
 	it('creates a new report with the pet inline when the owner chooses so after a 409', async () => {
 		api.pets = [pet];
 		api.createReport.mockRejectedValueOnce({
@@ -499,10 +506,8 @@ describe('LostFlow', () => {
 		show({ initialPet: pet.id });
 		await heading(t.pet_title);
 		click(`${pet.name} · Pes`);
-		await heading(t.photos_title);
-		photosUp();
-		click(t.next);
 		await heading(sl.location.title_lost);
+		photosUp();
 		click(sl.location.confirm);
 		await heading(t.when_title);
 		click(t.next);
@@ -681,8 +686,6 @@ describe('LostFlow', () => {
 		show({ initialPet: pet.id });
 		await heading(t.pet_title);
 		click(`${pet.name} · Pes`);
-		await heading(t.photos_title);
-		click(t.next);
 		await heading(sl.location.title_lost);
 		click(sl.location.confirm);
 		await heading(t.when_title);
@@ -744,10 +747,10 @@ describe('LostFlow', () => {
 		expect(button(`${pet.name} · Pes`).getAttribute('aria-current')).toBeNull();
 
 		click(`${pet.name} · Pes`);
-		await heading(t.photos_title);
-		expect(bars()).toBe('Korak 2 od 6');
+		await heading(sl.location.title_lost);
+		expect(bars()).toBe('Korak 2 od 5');
 		await waitFor(() =>
-			expect(api.store.get('draft:lost:lost')).toMatchObject({ step: 'photos', values: { pet: pet.id } })
+			expect(api.store.get('draft:lost:lost')).toMatchObject({ step: 'where', values: { pet: pet.id } })
 		);
 	});
 

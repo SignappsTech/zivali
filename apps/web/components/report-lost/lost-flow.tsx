@@ -138,7 +138,7 @@ function Note({
 	);
 }
 
-/** One bar per step of the real path (P6: five or seven, plus the photos step while C5 keeps it for saved pets). */
+/** One bar per step of the real path (P6: five or seven, plus the photos step for a new pet or a saved pet without photos). */
 function StepBars({ current, total }: { current: number; total: number }) {
 	const t = useTranslations('report_lost');
 	return (
@@ -669,7 +669,9 @@ export function LostFlow({
 	const hasPets = pets.length > 0;
 	const step = chosen ?? (hasPets || petsLoading ? 'pet' : 'photos');
 	const starting = !chosen && !hasPets && petsLoading;
-	const steps = stepsFor(values.pet, hasPets);
+	const savedPet = hasPets ? pets.find((p) => p.id === values.pet) : undefined;
+	// A saved pet with photos skips the photo step (its photos go on the report); Uredi on the review still opens it.
+	const steps = stepsFor(values.pet, hasPets, Boolean(savedPet?.photos.length) && step !== 'photos');
 	const index = Math.max(0, steps.indexOf(step));
 	// Errors show once Naprej was pressed on the step and then follow every change.
 	const [attempted, setAttempted] = React.useState(false);
@@ -805,7 +807,8 @@ export function LostFlow({
 	};
 	const choose = (id: string) => {
 		form.setValue('pet', id);
-		advance();
+		// `steps` is still the previous pet's: the step after the pet step depends on the chosen one.
+		advance(toReview ? 'review' : stepsFor(id, hasPets, Boolean(pets.find((p) => p.id === id)?.photos.length))[1]);
 	};
 	const back = () => index > 0 && go(steps[index - 1]!);
 	const edit = (target: Step) => {

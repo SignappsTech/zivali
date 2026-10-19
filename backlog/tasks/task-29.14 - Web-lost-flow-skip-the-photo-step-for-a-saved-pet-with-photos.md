@@ -36,3 +36,5 @@ R-005.6 (CH-348).
 
 Unblocks on: Contract C4/C5 change merged: create_report copies a saved pet's photos (TASK-29.13); web lost flow merged (TASK-29.4)
 Review: local
+
+Branch: agent/task-29.14-lost-skip-photo-step
