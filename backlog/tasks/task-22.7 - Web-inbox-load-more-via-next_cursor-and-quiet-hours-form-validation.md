@@ -1,11 +1,11 @@
 ---
 id: TASK-22.7
 title: 'Web inbox: load more via next_cursor and quiet-hours form validation'
-status: In Progress
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-18 21:20'
-updated_date: '2026-10-19 10:29'
+updated_date: '2026-10-19 11:24'
 labels:
   - fe
   - 'est:S'
