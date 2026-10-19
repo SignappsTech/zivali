@@ -687,6 +687,12 @@ export function FoundFlow({
 		read: () => ({ species: values.species, size: values.size ?? null, colours: values.colours, collar: null }),
 		write: ({ species, size, colours }) =>
 			set({ ...(species && { species }), ...(size && { size }), ...(colours && { colours }) }),
+		clear: (fields) =>
+			set({
+				...(fields.includes('species') && { species: undefined }),
+				...(fields.includes('size') && { size: undefined }),
+				...(fields.includes('colours') && { colours: [] }),
+			}),
 	});
 	// "Je to pravilno?" (wireframe F2): offered when a species was suggested before Naprej on the photo step, so the
 	// screen never swaps under the finder; "Uredi podatke" turns it into the manual step for good.
@@ -694,6 +700,16 @@ export function FoundFlow({
 	const sentence = step === 'what' && aiMode === 'sentence';
 	// The breed the sentence named, on "Uredi podatke" (wireframe v2 F3): asked there from then on, marked until changed.
 	const [breedAsk, setBreedAsk] = React.useState<{ marked: boolean }>();
+	const cropFirst = () => picker.current?.cropFirst();
+	// A cropped first photo is checked again (C19 §Crop 6); the breed the sentence named goes too while still marked.
+	const cropped = (index: number) => {
+		if (index > 0) return;
+		ai.recheck();
+		if (breedAsk?.marked) {
+			setBreedAsk({ marked: false });
+			set({ breed_codes: undefined });
+		}
+	};
 	// The photo's place wins over GPS; both are coarsened once when they arrive (C6).
 	const [exif, setExif] = React.useState<Offered>();
 	const { fix, locating } = useGpsFix();
@@ -1033,9 +1049,15 @@ export function FoundFlow({
 						draft={draftId}
 						onChange={setPhotos}
 						beforeUpload={session}
+						onCropped={cropped}
 						firstNote={
 							ai.notice && (
-								<AiNotice notice={ai.notice} onChangePhoto={changePhoto} onKeep={ai.dismissNotice} />
+								<AiNotice
+									notice={ai.notice}
+									onChangePhoto={changePhoto}
+									onCrop={cropFirst}
+									onKeep={ai.dismissNotice}
+								/>
 							)
 						}
 						onExif={({ lat, lng, takenAt }) => {
@@ -1124,6 +1146,7 @@ export function FoundFlow({
 						note={step === 'what' && !sentence ? 'continue' : undefined}
 						notice={step === 'what' && !sentence}
 						onChangePhoto={changePhoto}
+						onCrop={cropFirst}
 					/>
 					{step === last && limit ? (
 						<div id={noteId} role="alert" className={noteClass}>

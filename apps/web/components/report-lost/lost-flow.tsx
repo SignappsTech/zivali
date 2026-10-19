@@ -682,6 +682,7 @@ export function LostFlow({
 	const newPet = !hasPets || !values.pet || values.pet === NEW_PET;
 	const ai = useFormPrefill(() => form, photos, { fields: PET_AI_FIELDS, enabled: newPet });
 	const changePhoto = () => picker.current?.replaceFirst();
+	const cropFirst = () => picker.current?.cropFirst();
 	// The photo's place stays in memory for the picker to offer; it is coarsened only if the user confirms it.
 	const [exif, setExif] = React.useState<LatLng>();
 	const [saved, setSaved] = React.useState(false);
@@ -1083,11 +1084,13 @@ export function LostFlow({
 										lat !== undefined && lng !== undefined && setExif({ lat, lng })
 									}
 									hold={gate === 'signin' || gate === 'loading'}
+									onCropped={(index) => index === 0 && ai.recheck()}
 									firstNote={
 										ai.notice && (
 											<AiNotice
 												notice={ai.notice}
 												onChangePhoto={changePhoto}
+												onCrop={cropFirst}
 												onKeep={ai.dismissNotice}
 											/>
 										)
@@ -1147,6 +1150,7 @@ export function LostFlow({
 									}
 									notice={step === 'details'}
 									onChangePhoto={changePhoto}
+									onCrop={cropFirst}
 								/>
 								{step === 'review' && (
 									<p className="flex gap-2 text-sm text-muted-foreground">

@@ -2,6 +2,8 @@
 // so the upload never carries GPS, time or camera data (FR-003); the worker strips again with sharp.
 import type { PreparedPhoto } from '@zivali/api/photos';
 
+import type { CropRect } from './crop';
+
 /** MAX_PHOTO_BYTES in @zivali/validation (1 MiB); the presigned PUT is pinned to the declared size. */
 const MAX_BYTES = 1024 * 1024;
 const LONG_EDGE = 1600;
@@ -55,12 +57,19 @@ async function encode(image: ImageBitmap, longEdge: number, quality: number) {
 	};
 }
 
-/** EXIF first, then a JPEG with a long edge ≤ 1600 px and ≤ 1 MiB, a 480 px thumbnail and its SHA-256. */
-export async function preparePhoto(file: File): Promise<{ photo: WebPreparedPhoto; exif: PhotoExif }> {
-	const exif = await readExif(file);
+/**
+ * EXIF first, then a JPEG with a long edge ≤ 1600 px and ≤ 1 MiB, a 480 px thumbnail and its SHA-256. `crop`: only
+ * that region of a prepared photo (C19 §Crop 3), which has no EXIF left to read.
+ */
+export async function preparePhoto(file: File, crop?: CropRect): Promise<{ photo: WebPreparedPhoto; exif: PhotoExif }> {
+	const exif = crop ? {} : await readExif(file);
 	// Upright per the EXIF orientation, which the re-encoded file no longer carries.
 	// The decoder decides what is an image (no MIME pre-check: phones often leave the type empty).
-	const image = await createImageBitmap(file, { imageOrientation: 'from-image' }).catch(() => {
+	const options: ImageBitmapOptions = { imageOrientation: 'from-image' };
+	const decoded = crop
+		? createImageBitmap(file, crop.x, crop.y, crop.width, crop.height, options)
+		: createImageBitmap(file, options);
+	const image = await decoded.catch(() => {
 		const heic = /\.hei[cf]$/i.test(file.name) || /^image\/hei[cf]$/i.test(file.type);
 		throw new PhotoFileError(heic ? 'HEIC' : 'UPLOAD_TYPE');
 	});

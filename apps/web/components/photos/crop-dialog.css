@@ -1,0 +1,100 @@
+/* react-image-crop to wireframe M-ai-prefill F11 (TASK-41.5). The chrome on the dimmed photo is light in both themes:
+   `qr` is the fixed light token. The edge handles are pointer-only drag bars (shown on touch screens too); their
+   keyboard buttons are hidden, so the frame and its four corners are the five tab stops. Corners are 44 px targets
+   drawn as brackets. */
+.crop-tool {
+	--rc-drag-handle-size: 44px;
+	--rc-drag-handle-mobile-size: 44px;
+	--rc-drag-bar-size: 24px;
+}
+.crop-tool .ReactCrop__child-wrapper,
+.crop-tool .ReactCrop__crop-mask {
+	border-radius: var(--radius-photo);
+}
+.crop-tool .ReactCrop__crop-mask > rect {
+	fill: var(--color-scrim);
+	fill-opacity: 1;
+}
+.crop-tool .ReactCrop__crop-selection {
+	border: 2px solid var(--color-qr);
+	box-shadow: 0 0 0 1px hsl(var(--scrim) / 0.45);
+	background-image: none;
+	animation: none;
+}
+.crop-tool .ReactCrop__crop-selection:focus {
+	outline: none;
+}
+.crop-tool .ReactCrop__crop-selection:focus-visible,
+.crop-tool .ReactCrop__drag-handle:focus-visible {
+	outline: 3px solid var(--color-qr);
+	outline-offset: 2px;
+	box-shadow: 0 0 0 7px hsl(var(--scrim));
+}
+.crop-tool .ReactCrop__rule-of-thirds-hz::before,
+.crop-tool .ReactCrop__rule-of-thirds-hz::after,
+.crop-tool .ReactCrop__rule-of-thirds-vt::before,
+.crop-tool .ReactCrop__rule-of-thirds-vt::after {
+	background-color: hsl(var(--qr) / 0.5);
+}
+
+.crop-tool .ReactCrop__drag-handle,
+.crop-tool .ReactCrop__drag-handle:focus {
+	border: 0;
+	border-radius: 12px;
+	background: transparent;
+}
+.ReactCrop.crop-tool .ReactCrop__drag-handle.ord-n,
+.ReactCrop.crop-tool .ReactCrop__drag-handle.ord-e,
+.ReactCrop.crop-tool .ReactCrop__drag-handle.ord-s,
+.ReactCrop.crop-tool .ReactCrop__drag-handle.ord-w {
+	display: none;
+}
+.crop-tool .ReactCrop__drag-handle::after {
+	content: '';
+	position: absolute;
+	width: 18px;
+	height: 18px;
+	border: 0 solid var(--color-qr);
+	filter: drop-shadow(0 0 1px hsl(var(--scrim) / 0.6));
+}
+.crop-tool .ReactCrop__drag-handle.ord-nw::after {
+	left: 20px;
+	top: 20px;
+	border-width: 4px 0 0 4px;
+}
+.crop-tool .ReactCrop__drag-handle.ord-ne::after {
+	right: 20px;
+	top: 20px;
+	border-width: 4px 4px 0 0;
+}
+.crop-tool .ReactCrop__drag-handle.ord-sw::after {
+	left: 20px;
+	bottom: 20px;
+	border-width: 0 0 4px 4px;
+}
+.crop-tool .ReactCrop__drag-handle.ord-se::after {
+	right: 20px;
+	bottom: 20px;
+	border-width: 0 4px 4px 0;
+}
+
+.ReactCrop.crop-tool .ReactCrop__drag-bar {
+	display: block;
+}
+.crop-tool .ReactCrop__drag-bar::after {
+	content: '';
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	width: 28px;
+	height: 5px;
+	transform: translate(-50%, -50%);
+	border-radius: 3px;
+	background: var(--color-qr);
+	box-shadow: 0 0 0 1px hsl(var(--scrim) / 0.35);
+}
+.crop-tool .ReactCrop__drag-bar.ord-e::after,
+.crop-tool .ReactCrop__drag-bar.ord-w::after {
+	width: 5px;
+	height: 28px;
+}
