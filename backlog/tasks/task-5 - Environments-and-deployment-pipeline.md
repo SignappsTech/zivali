@@ -1,11 +1,11 @@
 ---
 id: TASK-5
 title: Environments and deployment pipeline
-status: To Do
+status: Done
 assignee:
   - '@tech-lead'
 created_date: '2026-10-14 21:01'
-updated_date: '2026-10-14 23:13'
+updated_date: '2026-10-19 15:04'
 labels:
   - story
   - 'req:NFR-AVAIL'
@@ -30,6 +30,12 @@ Continuous delivery needs staging (and later production) for the API, worker, we
 - [ ] #4 Given EAS, when a developer runs a build profile, then development and preview profiles exist (no store submission).
 - [ ] #5 Given the environments, when documented, then a runbook lists required credentials, who provides them, the monthly cost and which features stay blocked without them.
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+Lead: closed after its QA pass; all child tasks Done.
+<!-- SECTION:NOTES:END -->
 
 ## Packet
 
