@@ -7,7 +7,7 @@ status: In Progress
 assignee:
   - '@backend-dev'
 created_date: '2026-10-18 22:07'
-updated_date: '2026-10-19 00:57'
+updated_date: '2026-10-19 01:23'
 labels:
   - be
   - 'est:M'
@@ -39,7 +39,13 @@ Branch: agent/task-114.36-dev-tooling
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 A scratch DB made by the README recipe or the test global-setup has a realtime.send stub; NotificationsDomain.deliver() passes on it without manual SQL.
-- [ ] #2 Seeded report photos have distinct display and thumb variants produced by PhotosDomain; the seed stays idempotent.
+- [x] #1 A scratch DB made by the README recipe or the test global-setup has a realtime.send stub; NotificationsDomain.deliver() passes on it without manual SQL.
+- [x] #2 Seeded report photos have distinct display and thumb variants produced by PhotosDomain; the seed stays idempotent.
 - [ ] #3 Seeded reports have stable short codes; the quality PAGES list and lighthouserc.json include a lost and a found detail page in SL and EN, and pnpm quality reports them.
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+Scratch DB: test/helpers/scratch-db.ts (pnpm --filter api db:scratch task_<id>; global-setup runs it for a task_* TEST_DATABASE_URL): creates the DB, copies the auth schema via pg_dump/psql in the db container (restored as supabase_admin, one transaction), adds a no-op realtime.send; refuses any name but task_[a-z0-9_]+ on 127.0.0.1/localhost. Full API run on task_114_36 with SUPABASE_URL on an unused port: 1033 passed, 97 failed, all ECONNREFUSED on SUPABASE_URL (schema-exposure 90, Auth API seeders/admin:create/JWKS/anon conversion 7). Seed: photos via PhotosDomain.processPhoto + publishReportPhotos with a no-op jobs ctx (no ai.extract, no pg-boss in the seed process); fixed short codes Seed1111..Seed111W, lost 3 = Rex12345 and found 13 = Hk3vT9qP (the web mock API codes the quality pages use); scripts/quality.mjs sets MEDIA_BASE_URL to the mock so the CSP allows the detail photo. Not run in the worktree (owner rules): pnpm verify (next build), pnpm quality (Lighthouse), so AC#3's 'pnpm quality reports them' is for the merge step.
+<!-- SECTION:NOTES:END -->
