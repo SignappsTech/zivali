@@ -3,7 +3,7 @@ source: 03§P15
 page: P15 Support moments (tip, contribution, checkout hand-off)
 stories: TASK-33 (FR-021, FR-020)
 platforms: web, mobile
-version: 1.1
+version: 1.2
 mockup: docs/design/mockups/P15-support-moments.html
 copy: docs/content/pages/P15-support-moments.md
 ---
@@ -19,6 +19,10 @@ Two voluntary, honest ways to help keep the service free: a thank-you tip on the
 - h3 and one sentence. Three amount pills (3, 5, 10 EUR; none selected), "Other amount" line field with the minimum 2.00 EUR validated inline.
 - Two buttons of the **same size**, side by side on web and stacked on mobile: Pay (`secondary`, label includes the amount once chosen) and Skip (`secondary`), at equal weight; the page's primary lives in P14. Skip is exactly as visible as Pay. Disabled Pay explains "Choose an amount".
 - A one-line transparency link to the page Where your money goes (M4, hidden until then) and a Stripe test-mode note when not in production (a `note` that no real card is charged).
+
+## Support card (Profile, mobile, TASK-33.3, CH-377)
+
+As built and confirmed 2026-10-19: last on the signed-in Profile, after "Odjava", a flat `card` (CardTitle and body) with the tip block (amount pills 3, 5, 10 €, "Drug znesek", the not-a-donation line and the test-mode note) and **Pay only**, no Skip: it is a static card the person scrolls to, not a prompt, so there is nothing to dismiss. The monthly box (`flags.supporter_monthly`) shows here as in the tip. Web has no Profile card.
 
 ## Contribution at lost confirmation (inside P6)
 
@@ -70,3 +74,4 @@ None.
 | Version | Date | Change |
 |---|---|---|
 | 1.1 | 2026-10-18 | CH-256, CH-372: receipt button off on web until invoices exist; partial refund line |
+| 1.2 | 2026-10-19 | CH-377: mobile Profile support card as built |

@@ -3,7 +3,7 @@ source: 03§P4
 page: P4 Map and list
 stories: TASK-31 (FR-007, FR-004)
 platforms: web, mobile
-version: 1.2
+version: 1.3
 mockup: docs/design/mockups/P4-map-list.html
 copy: docs/content/pages/P4-map-list.md
 ---
@@ -30,17 +30,19 @@ Opens from the area pill. Title and a text button "Reset". Groups separated by 3
 
 | Group | Control |
 |---|---|
-| Type | three toggle pills: Lost, Found, Sighted (all on by default) |
-| Species | two toggle pills: Dogs, Cats |
-| When | choice rows: Last 24 hours, 7 days, 30 days |
+| Type | three toggle pills: Lost, Found, Sighted (all on by default); at least one stays selected (CH-310) |
+| Species | two toggle pills: Dogs, Cats; at least one stays selected (CH-310) |
+| When | choice rows: Last 24 hours, 7 days, 30 days, All open; **default 30 days** (CH-310) |
 | Distance | slider 1 to 50 km with the value; "Use my location" text button with the permission fallback |
-| More | collapsed: colour (swatch pills), size (three pills) |
+| More | collapsed: colour (all 10 C4 colours as pills, each with its 16 px `coat-*` swatch before the word, system 3.2), size (three pills) |
+
+Filter decisions (CH-310, 2026-10-19): the default window is 30 days, not 7, because lost reports stay open up to 90 days and a 7-day window hid most of them from finders; "All open" (every open report, up to 90 days) reaches the rest, so an old lost cat is never unreachable. A type or species group never empties: the last selected pill does not turn off (an empty group would mean all or nothing). Copy for "All open" comes from the content slice (CHANGE row filed).
 
 Footer: primary `lg` button "Show 12 reports" (live count, Slovenian plural forms one/two/few/other). Closing the sheet applies nothing until the button is pressed on mobile.
 
 ### Sorting and extras
 
-Sort text button in the sheet header (Nearest, Newest). Boosted reports (M4) sort first and show a `premium` pill under the status word; no other highlight. A text button "Show closed in the last 30 days" lives at the end of the list.
+Sort text button in the sheet header (Nearest, Newest). Boosted reports (M4) sort first and show a `premium` pill under the status word; no other highlight. A text button "Show closed in the last 30 days" lives at the end of the list. Rows of closed reports keep the type's status icon and say "Zaključeno" in place of the status word, in `muted-foreground` (no separate closed icon; CH-310).
 
 ## Web (`/map`)
 
@@ -74,6 +76,8 @@ Rows are links with name, status word, time and distance in the accessible name.
 
 A `note` above the list: "Brez povezave, zadnja posodobitev …" with the cached list and static map area; filters work on cached data; markers of the cached area only.
 
+As built on mobile (TASK-85.3, CH-320, confirmed 2026-10-19): the note has the fill `wifi-slash` icon and sits above the cached rows as `role="status"` (polite); it is not shown with the first-launch empty state (EmptyState without spot: h3 and sentence, no buttons). Offline, the area pill keeps the chosen place, else "Slovenija" (no reverse geocoding). Settings > Offline data (P13): a body sentence, two label/value rows, the switch with a help line, and a `secondary` "Počisti podatke brez povezave" with a confirm dialog.
+
 ## Assets
 
 | File | Brief |
@@ -93,3 +97,4 @@ A `note` above the list: "Brez povezave, zadnja posodobitev …" with the cached
 |---|---|---|
 | 1.1 | 2026-10-18 | CH-246: web list pane h1 at 30/36 |
 | 1.2 | 2026-10-18 | CH-406: web map as built (preview, sheet steps, location) |
+| 1.3 | 2026-10-19 | CH-310: coat swatches for all 10 colours, 30-day default plus All open, closed rows, groups never empty. CH-320: offline states as built. |

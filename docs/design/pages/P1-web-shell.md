@@ -3,6 +3,7 @@ source: 03§P1
 page: P1 Web shell
 stories: TASK-11 (FR-035, FR-036)
 platforms: web
+version: 1.1
 mockup: docs/design/mockups/P1-web-shell.html
 copy: docs/content/pages/P1-web-shell.md
 ---
@@ -33,11 +34,11 @@ Left to right:
 5. Signed-in: inbox icon button (links to the messages and notifications page) and account menu (avatar, opens a popover: Profile, Alerts, Payments, Sign out). Signed-out: ghost button "Sign in" (Slovenian label "Vpis").
 6. Primary `sm` button "Report" that opens a popover of three choice rows (Lost animal, Found animal, Sighted animal). This is the single primary action in the header. On pages whose content has its own primary (P3 home hero, P9, P22) it is `secondary` instead (system 10.7), so the view keeps one primary.
 
-No notification count badges. Unread state is shown inside the inbox, not on the icon.
+No notification count badges. Unread state (CH-279, as built TASK-22.4): the inbox icon button and the menu-sheet inbox row show the 10 px `primary` unread dot of the inbox rows, never a count, with "neprebrano" (`common.unread`) in the link name (system 10.7).
 
-## Footer (text row on `background`, no panel)
+## Footer
 
-Logo and a wrapped row of links: About, Safety tips, Partners, Privacy, Cookies, Terms, Imprint, Accessibility, **Cookie settings** (opens the consent preferences, P17), How it works, For shelters, **Shelters** (the public shelter directory `/zavetisca`, P3 T5; label from the content slice, kept distinct from "For shelters"). Language switcher repeated at the end. Copyright line in `muted-foreground`.
+The Content variant footer is specified in system 10.7 (Web footer): four headed groups, one column per group below `lg`, the operator line with "Podatki o podjetju", wireframe `docs/design/wireframes/P1-footer.html` with the owner's choices of 2026-10-19 (CH-594). **Cookie settings** opens the consent preferences (P17); **Shelters** is the public directory `/zavetisca` (P3 T5), listed under Pomoč and kept distinct from "For shelters". The Flow variant keeps the minimal quiet row.
 
 ## Page container rules
 
@@ -81,3 +82,9 @@ No dedicated assets. The error pages (404, 410, 500) reuse `assets/empty-inbox.p
 4. Footer in full.
 5. Patterns: loading skeleton, empty state, inline error, 404, 410, 500, toast, banner area with a sample notice.
 6. Light and dark.
+
+## Change log
+
+| Version | Date | Change |
+|---|---|---|
+| 1.1 | 2026-10-19 | CH-279: unread dot on the inbox button (no count). CH-594: footer points to system 10.7 (groups, one column per group below `lg`, operator line). |

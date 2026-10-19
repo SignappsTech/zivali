@@ -3,6 +3,7 @@ source: 03§P3
 page: P3 Public pages (home and content templates)
 stories: TASK-27, TASK-28, TASK-72 (FR-035), TASK-90 (FR-044, shelter pages)
 platforms: web
+version: 1.1
 mockup: docs/design/mockups/P3-public-pages.html, docs/design/mockups/P3-shelter-pages.html (T5, T6)
 copy: docs/content/pages/P3-public-pages.md
 ---
@@ -26,16 +27,21 @@ The home page and the reusable templates for every public content page: how it w
 
 All use the Content variant of the web shell (P1) without a sidebar. Public pages have **no ad slot** unless P21 says so (T5 and T6 have none).
 
-## T1 Home: section order
+## T1 Home: section order (layout B)
 
-1. **Hero.** Two columns: left display headline (max 2 lines), one supporting sentence (max 20 words), primary "Report lost", text button "Report found" with arrow; right large photo (radius 36, placeholder from system imagery rules). No eyebrow, no logo strip.
-2. **Near you.** H2, three pet tiles from `md` (4:3 photo, name, status word, distance or area); below `md` pet rows (system 10.6) instead of tiles from the live read model, text button "Open the map". Shows the empty-state pattern when no reports exist.
-3. **How it works.** H2 and three stacked rows (large number, h3, one sentence) on the left with one supporting photo on the right. Not three equal cards.
-4. **Safe by design.** One column: h2, a short paragraph, three plain list items (hidden phone numbers, approximate locations, in-app chat), text button "Read the safety tips".
-5. **For shelters and vets.** One block: h2, a sentence, text button "For shelters".
-6. **Keep it free.** One quiet sentence about support with a text link to the transparency page (hidden until M4).
+Layout B as built (TASK-115.10, replaces the pre-rework and A layouts): wireframe `docs/design/wireframes/P3-home.html` Option B, approved by the owner on 2026-10-19 with sighted as a quiet link. Copy: content slice §Home; the hero rows reuse the header "Prijavi" menu strings (`nav.report_*`).
 
-Section gap 96 px, each section a different layout family (split, list, stack). Structured data: Organization.
+1. **Hero: photo with the chooser.** One large licensed photo fills a rounded block (radius 40 from `lg`, 32 below; the LCP element, 16:9 from `lg`, 4:5 crop below) under a `scrim` gradient; on it, in `sidebar-foreground`, the display h1 (max 2 lines) and the lede (max 20 words). Beside it from `lg` (7 and 5 columns), under it below `lg`: the chooser `card` with the h2 "Kaj želite prijaviti?" (h3 size) and two choice rows of at least 64 px, Lost (`megaphone`) and Found (`hand-heart`), each with a one-line `muted-foreground` description. **Sighted is a quiet text link with an arrow under the rows** ("Videli ste žival? Opažena žival"), not a third row. No primary button in the hero: the chooser is the page's main action, so the header "Prijavi" stays `secondary` (system 10.7). No eyebrow, no logo strip. The home hero is the one exception to system §9 "no text on photos": a licensed marketing photo, never a report photo, and the text on the scrim keeps at least 4.5:1 over the lightest part of the photo.
+2. **Recent reports.** h2 "Nedavne prijave" (with a home area or a position: "V vaši bližini" plus distance bands) and the text button "Odpri zemljevid" in the section head. From `lg` a split (5 and 7): five pet rows (system 10.6: photo 64 top-anchored cover, title, status word and time, area) beside a **static map teaser** (no map library, radius 24, coarse area pins in the marker tokens; the whole teaser links to `/map`, decorative to assistive tech because the rows carry the data). Below `lg` the rows come first, the teaser (2:1) under them and the map link under the rows. Public fields only: status, species, approximate area, time, thumbnail; no name, no exact place, no distance when signed out. States: loading (row and teaser skeletons), empty (EmptyState h3, sentence, `secondary` "Vklopi opozorila"), error (inline error with retry; the hero never empties).
+3. **Numbers band.** Three live numbers (reunited, open reports, people with alerts) as large display numbers (`tabular-nums`) with labels on the `sidebar` surface (radius 24), three columns from `lg`, stacked below. Hidden as a whole while the public stats read fails or the numbers are small (wireframe Blok 3), so a young product never looks empty.
+4. **How it works.** h2 and three numbered steps (large number, h3, one sentence) on the left, one supporting photo (4:5, radius 24) on the right from `lg`; stacked below. Not three equal cards.
+5. **Safe by design.** h2, a short lede, three small cards (hidden phone numbers, approximate locations, in-app chat; icon, h3, one sentence), text button "Preberite nasvete za varnost".
+6. **For shelters, vets and municipalities.** h2, a sentence, text button "Več za zavetišča".
+7. **Keep it free** (M4, not built): one quiet sentence with a text link to the transparency page.
+
+There is **no closing CTA band** (A's Blok 7 is not used) and **no sticky "Prijavi" bar on mobile** (decided 2026-10-19, CH-600): the 390 px header already shows "Prijavi" at the top of the page, the page is six short sections, and a fixed bottom bar would stack with the consent banner and toasts, cover the last rows and the footer links at 200 % text and 400 % zoom, and can hide focused elements (WCAG 2.4.11). Revisit only if analytics show visitors reaching the lower sections and leaving without reporting.
+
+Section gap 96 px (48 px mobile), each section a different layout family (photo block, split, band, stack, cards). Structured data: Organization.
 
 ## T2 Article
 
@@ -101,7 +107,7 @@ Loading (skeleton for text pages is minimal), language fallback notice (an EN pa
 
 ## Responsive
 
-Hero stacks (photo under text, 4:3). Home sections become single column. Article and legal pages keep 640 px measure and 20 px gutters on mobile. 320 px and 400 % zoom reflow without horizontal scroll.
+Home (layout B): below `lg` the chooser card sits under the h1 and lede inside the photo block, the recent rows come before the map teaser, the numbers stack, the how-it-works photo goes under the steps; 320 px keeps the two chooser rows full width with their 64 px targets. Article and legal pages keep 640 px measure and 20 px gutters on mobile. 320 px and 400 % zoom reflow without horizontal scroll.
 
 ## Accessibility
 
@@ -115,7 +121,7 @@ One h1, ordered headings, FAQ rows are buttons with `aria-expanded`, legal TOC i
 
 ## Mockup scope (`P3-public-pages.html`)
 
-1. T1 Home at 1200 px and 390 px, with the "Near you" empty state variant.
+1. T1 Home: superseded by the layout B wireframe (`docs/design/wireframes/P3-home.html`, Option B, Desktop 1440 and Mobile 390, filled, empty and loading); no separate mockup.
 2. T2 Article (How it works) at 1200 and 390 px.
 3. T3 FAQ with one row expanded.
 4. T4 Legal with the draft note and the table of contents.
@@ -126,3 +132,9 @@ One h1, ordered headings, FAQ rows are buttons with `aria-expanded`, legal TOC i
 1. T5 at 1200 and 390 px: before search, suggestions open (typed "skof"), answer with call button, two answers, unknown municipality note, no match, legal note slot shown (flag on).
 2. T6 at 1200 and 390 px: full page, stale-data note, no-phone variant, loading skeleton.
 3. Light and dark. Shelter names, numbers and hours are marked sample data until the content slice and the directory provide them.
+
+## Change log
+
+| Version | Date | Change |
+|---|---|---|
+| 1.1 | 2026-10-19 | CH-600: T1 Home rewritten to layout B as built (TASK-115.10): photo hero with the chooser (lost, found; sighted as a quiet link), recent rows with a static map teaser, numbers band, how it works with photo, safe by design (3 cards), shelters; no closing band; no mobile sticky "Prijavi" bar. |

@@ -3,7 +3,7 @@ source: 03§P14
 page: P14 Reunited and report lifecycle
 stories: TASK-26 (FR-012)
 platforms: web, mobile
-version: 1.1
+version: 1.2
 mockup: docs/design/mockups/P14-reunited.html
 copy: docs/content/pages/P14-reunited.md
 ---
@@ -16,10 +16,9 @@ Close the loop gracefully: mark an animal home, close or extend a search, and ke
 
 ## Mark reunited (owner)
 
-Started from the owner view of the detail page (P9, primary "Animal is home again"), a notification, or a reminder.
+Started from the owner view of the detail page (P9, primary "Animal is home again"), a notification, or a reminder. There is no "Which one?" step (CH-342, 2026-10-19): C4 `mark_reunited` takes no counterpart, so the choice would change nothing.
 
-1. **Which one?** Shown only when there are several confirmed matches or sightings: choice rows with candidate photos plus "I found it myself". One row selected.
-2. **Confirm** (bottom sheet or dialog): h2, one sentence of what happens (listing closed, alerts and boosts stop), primary `lg` "Yes, it is home", text button "Not yet".
+1. **Confirm** (bottom sheet or dialog): h2, one sentence of what happens (listing closed, alerts and boosts stop), primary `lg` "Yes, it is home", text button "Not yet".
 
 ## Reunited screen
 
@@ -36,7 +35,7 @@ The report page then shows the Reunited variant (P9). Both sides of a match see 
 
 ## Close without reunion
 
-Owner menu "Close search" opens a sheet: reason as choice rows (Home again another way, No longer searching, Posted by mistake, Other), optional note, primary `lg` "Close search", text "Keep open". Closing cancels alerts, boosts and pending reminders. A closed report shows "Reopen" for 7 days.
+Owner menu "Close search" opens a sheet: reason as choice rows (Home again another way, No longer searching, Posted by mistake, Other), primary `lg` "Close search", text "Keep open". No note field (CH-342, CH-446): the C4 close transition takes no note and typed text must never be dropped. **A finder who manages a report** (`manager_role` not `owner`; web "Več možnosti", the /m close row, mobile) gets a neutral confirm dialog without reason rows, sent as `other` (CH-445): the owner reasons do not fit a found or sighted report, and "returned to owner" has its own action below. Closing cancels alerts, boosts and pending reminders. A closed report shows "Reopen" for 7 days.
 
 ## Reminders and expiry
 
@@ -57,7 +56,7 @@ If the owner disagrees with a finder's "returned", the owner sees a note on the 
 
 ## States
 
-Loading on confirm (button spinner), network error (note, retry), already closed, reopened (toast), multiple matches, no matches ("I found it myself" only).
+Loading on confirm (button spinner), network error (note, retry), already closed, reopened (toast).
 
 ## Responsive and accessibility
 
@@ -80,3 +79,4 @@ Illustration decorative (empty alt); the reunited heading takes focus on arrival
 | Version | Date | Change |
 |---|---|---|
 | 1.1 | 2026-10-18 | CH-385: ad appears only after the tip ask is skipped or paid |
+| 1.2 | 2026-10-19 | CH-342, CH-445, CH-446: no "Which one?" step, no close note, finders close with a neutral confirm |
