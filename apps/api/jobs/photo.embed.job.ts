@@ -15,7 +15,11 @@ export async function handle(data: unknown, ctx: JobCtx): Promise<void> {
 	if (!parsed.success) return ctx.logger.error('photo.embed: invalid job dropped');
 	// A vector matching already had (an embedding.model row before this run) is not new.
 	const had = await MatchingDomain.embeddedReport(parsed.data, ctx);
-	await EmbeddingsDomain.embedPhoto({ ...parsed.data, last_attempt: ctx.lastAttempt }, ctx);
-	const report_id = had ? null : await MatchingDomain.embeddedReport(parsed.data, ctx);
-	if (report_id) await MatchingDomain.rematchReport({ report_id }, ctx);
+	try {
+		await EmbeddingsDomain.embedPhoto({ ...parsed.data, last_attempt: ctx.lastAttempt }, ctx);
+	} finally {
+		// Also when a later model (embedding.next_model) failed after embedding.model's vector was stored.
+		const report_id = had ? null : await MatchingDomain.embeddedReport(parsed.data, ctx);
+		if (report_id) await MatchingDomain.rematchReport({ report_id }, ctx);
+	}
 }

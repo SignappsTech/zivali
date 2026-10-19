@@ -29,7 +29,9 @@ with a 120 s timeout, and the 1000-subscriber test cleans up its own users in a 
 `pnpm verify`, and only against a local database (a worktree passes its scratch `TEST_DATABASE_URL`). `embeddings.perf.ts` seeds
 10k reports with 50k mock vectors (about 3–4 min, mostly HNSW inserts), checks `nearest` p95 < 300 ms over 5–250 km and
 `similarity` for 1000 reports × 5 photos < 1 s, prints both plans and deletes its seed (fixed owner id, so a killed run is
-cleaned up by the next one). Wall-clock budgets are fine there; the flake rules above apply to the regular suite.
+cleaned up by the next one). `matching.perf.ts` (TASK-43.2) seeds 1000 open lost reports in range with 2 photos and mock
+vectors each and checks that `match.report` for a new found report (reverse search with V) takes < 5 s. Wall-clock budgets
+are fine there; the flake rules above apply to the regular suite.
 
 ## Proposal: a dedicated test database for main (not switched yet)
 
