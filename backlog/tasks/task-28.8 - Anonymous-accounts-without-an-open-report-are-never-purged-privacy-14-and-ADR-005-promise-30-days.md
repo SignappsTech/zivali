@@ -3,11 +3,11 @@ id: TASK-28.8
 title: >-
   Anonymous accounts without an open report are never purged (privacy §14 and
   ADR-005 promise 30 days)
-status: In Progress
+status: Done
 assignee:
   - '@backend-dev'
 created_date: '2026-10-19 20:30'
-updated_date: '2026-10-19 20:37'
+updated_date: '2026-10-19 22:15'
 labels:
   - bug
   - 'est:S'
