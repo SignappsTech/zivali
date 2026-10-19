@@ -1,10 +1,11 @@
 ---
 id: TASK-90.10
 title: 'Web shelter page: unknown slug 404 has no link to the shelter directory'
-status: To Do
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-19 20:20'
+updated_date: '2026-10-19 20:40'
 labels:
   - bug
   - 'est:XS'
