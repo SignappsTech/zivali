@@ -69,7 +69,8 @@ index ai_calls (provider, created_at)
 type Suggestion<T> = { value: T | null; confidence: number };   // value null: confidence < ai.min_confidence (0.6)
 type PhotoAttributes =
   | { status: 'pending' }        // photo not accepted yet, or no ai_calls row for it yet
-  | { status: 'unavailable' }    // AI off, a cap, refused, invalid or failed: the form stays manual, no error shown
+  | { status: 'unavailable' }    // AI off, a cap, refused, invalid or failed, or the photo not created strictly after
+                                 // ai.photos_since (or no valid cutoff; never 'pending' then): the form stays manual, no error shown
   | { status: 'ready';
       notice: null | 'no_animal' | 'other_animal' | 'multiple_animals';   // none / other / animal_count ≥ 2
       species: Suggestion<'dog' | 'cat'> | null;
@@ -83,20 +84,22 @@ type PhotoAttributes =
 
 ## Client rules (TASK-41, web and mobile)
 
-Owner answers of 2026-10-19 on wireframe M-ai-prefill (TASK-41.1). Items marked **v2** wait for the owner's confirmation of wireframe v2; build them only once it is in the TASK-41.1 notes.
+Owner answers of 2026-10-19 on wireframe M-ai-prefill (TASK-41.1): v1 approved with changes, v2 approved the same day (both in the TASK-41.1 notes). As built on web by TASK-41.2; mobile (TASK-41.3) follows the same rules.
 
-- After the **first** photo's upload completes (also a cropped copy, §Crop), poll `GET /v1/photos/:id/attributes` every 750 ms while `pending`, at most 10 s; stop on `ready` or `unavailable`.
+- Polling is skipped when `ai.enabled` is false (C1 public config; it is also false while the AI adapter is off or there is no valid `ai.photos_since`, §Config keys).
+- Only a **first photo uploaded in this form visit** is checked (also a cropped copy, §Crop); a saved pet photo reused in P6 is never polled. After its upload completes, poll `GET /v1/photos/:id/attributes` every 750 ms while `pending`, at most 10 s; stop on `ready` or `unavailable`.
 - Fill only fields the user has not touched and that are empty; mark each filled field **Predlog / Suggested** until the user edits or confirms it; nothing is saved unconfirmed (the form's own save confirms). A suggestion that arrives after 3 s, or after the user touched the field, never overwrites the user's input.
-- Fill only values the form offers for the species the user chose (none chosen yet: the suggested species, filled and marked): never breed codes of the other species. After the user switches species, the empty, untouched fields take the values valid for the new one.
-- `notice` `no_animal` or `other_animal` → nothing is filled, only the notice hint. `multiple_animals` fills as usual, with the "pick one animal" hint (v2: and "Obreži fotografijo", §Crop). Copy: TASK-40.6.
+- Fill only values the form offers for the species the user chose (none chosen yet: the suggested species, filled and marked): never a breed, pattern or size of the other species. After the user switches species, the empty, untouched fields take the values valid for the new one.
+- After any change by the person (a field edited, confirmed or cleared), no new hint lines appear for that field. When a replaced first photo is checked (§Crop 6), a field still marked Predlog counts as untouched.
+- `notice` `no_animal` or `other_animal` → nothing is filled, only the notice hint. `multiple_animals` fills as usual, with the "pick one animal" hint and "Obreži fotografijo" (§Crop). Copy: TASK-40.6.
 - `value: null` → field stays empty with the low-confidence hint. Unknown breed → the form's Mixed / Unknown choice, never a guess. Breed labels from the `breeds` i18n namespace (SL, EN). A `species` that differs from the species the user chose is shown as a hint, never switched.
-- **v2, confidence level** after the Predlog mark, in words, never numbers: `zelo verjetno` for confidence ≥ 0.85, `verjetno` for ≥ `ai.min_confidence` and < 0.85. The cut is the constant `AI_HIGH_CONFIDENCE = 0.85` in `@zivali/validation/ai` (a config key only if the owner wants to tune it). `breed_codes` has one confidence (the best code's). The accessible label carries the level too (copy CH-597).
-- **v2, found sentence** (P7 "Je to pravilno?"): names the breed when `breed_codes.value[0]` is a real breed (not `null`, `*.mixed` or `*.unknown`): "Pes, labradorec, črne barve". A breed the finder keeps is stored in the found report's `breed_codes` (C4 `ReportInput`, the same field lost reports use), like every other filled field: only through the form's own save.
+- **Confidence** (owner 2026-10-19, v2): every filled field shows its confidence as a whole percentage after the mark, never in words: `Predlog · 81 %` (`Intl.NumberFormat` `style: 'percent'`, `maximumFractionDigits: 0`, so the locale spacing applies: SL `81 %`, EN `81%`). `breed_codes` has one confidence (the best code's). The accessible label carries the percentage too (copy CH-597). No level cut or constant.
+- **Found sentence** (P7 "Je to pravilno?"): names the breed when `breed_codes.value[0]` is a real breed (not `null`, `*.mixed` or `*.unknown`): "Pes, labradorec, črne barve". A breed the finder keeps is stored in the found report's `breed_codes` (C4 `ReportInput`, the same field lost reports use), like every other filled field: only through the form's own save.
 - Announce arriving suggestions once in a polite live region. `unavailable` and errors show nothing extra.
 
-## Crop (v2; TASK-41.5 web, TASK-41.6 mobile; wireframe F11, F12; libraries per ADR-017)
+## Crop (TASK-41.5 web, TASK-41.6 mobile; wireframe F11, F12; libraries per ADR-017)
 
-1. **Where**: under every photo the form holds as a local file (picked in this form visit or restored from its draft) in P6, P7 and P8, also with AI off, and as "Obreži fotografijo" in the `multiple_animals` note. A saved photo (`SavedPhoto`: P8 edit, a pet photo reused in P6) has no local file, so it has no crop button in M3: remove it and add it again.
+1. **Where**: under every photo the form holds as a local file (picked in this form visit or restored from its draft) in P6, P7 and P8, also when `ai.enabled` is false (owner 2026-10-19: the crop is a photo tool, not an AI feature), and as "Obreži fotografijo" in the `multiple_animals` note. A saved photo (`SavedPhoto`: P8 edit, a pet photo reused in P6) has no local file, so it has no crop button in M3: remove it and add it again.
 2. **On the client only**: the frame works on the prepared JPEG the form already holds (C5 `preparePhoto`: upright, long edge ≤ 1600, no EXIF). Free shape; no rotation, zoom or upscaling. The rectangle is in that image's pixels, whole numbers, inside the image. **Minimum: both sides ≥ 320 px** of the prepared image (`MIN_PHOTO_EDGE`, the C5 upload rule), so the copy always passes `POST /v1/photos` and the 1024 px model input keeps the animal's detail; the library gets it in shown pixels (`320 × shown / natural`). A photo with a 320 px short side can be cropped along its long side only.
 3. **Encode**: the cropped region goes through the platform `preparePhoto` (JPEG ≤ 1 MiB, thumb, new `sha256`). It carries no EXIF, so no place or time is offered again.
 4. **Uporabi**: the copy replaces the original in the same slot (same position) and uploads as a **new photo** (`uploadPhoto`: `POST /v1/photos` → PUT → `/complete`). Nothing is saved on the report or pet until the form's own save (`photo_ids` then lists the copy). A frame equal to the whole photo, or a copy whose `sha256` is already in the form, changes nothing. Not uploaded yet (mobile `kept`, offline): only the local file is replaced. **Prekliči**, Esc or the system back change nothing.
@@ -111,7 +114,9 @@ Owner answers of 2026-10-19 on wireframe M-ai-prefill (TASK-41.1). Items marked 
 
 ## Config keys (migration of TASK-40.1, `on conflict do nothing`)
 
-`ai.enabled` true (public) · `ai.min_confidence` 0.6 (public) · `ai.monthly_budget_usd` 20 · `ai.daily_photos_anonymous` 10 · `ai.daily_photos_user` 30 · `ai.photos_since` null (not public; TASK-40.11 migration): a JSON string, ISO 8601 with `Z` or an offset, ≥ `2026-10-19T00:00:00Z`, set to the switch-on instant by TASK-40.7; only photos created strictly after it are ever sent (§Pipeline 2.0, C20). Env: `AI_PROVIDER` (`mock | anthropic | off`), `ANTHROPIC_API_KEY`, `AI_VISION_MODEL`, `AI_VISION_EFFORT`.
+`ai.enabled` true (public) · `ai.min_confidence` 0.6 (public) · `ai.monthly_budget_usd` 20 · `ai.daily_photos_anonymous` 10 · `ai.daily_photos_user` 30 · `ai.photos_since` null (not public; TASK-40.11 migration): a JSON string, ISO 8601 with `Z` or an offset, ≥ `2026-10-19T00:00:00Z`; only photos created strictly after it are ever sent (§Pipeline 2.0, C20).
+
+**Switch-on** (TASK-40.11, TASK-40.7): migration `20261019110000_task_40_11_ai_switch_on` sets `ai.photos_since` to `now()` of the deploy that applies it, only while the value is still JSON `null` (a set value is never moved). No SQL by hand on hosted DBs: that deploy is the switch-on, and privacy policy v0.8 is live before or with it. The worker logs `ai.photos_since { photos_since }` at start (`null` when unset or invalid; `ai.photos_since unreadable` on a read error). `GET /v1/config/public` answers `ai.enabled: false` while the AI adapter is off or there is no valid cutoff, whatever the stored flag says. Env: `AI_PROVIDER` (`mock | anthropic | off`), `ANTHROPIC_API_KEY`, `AI_VISION_MODEL`, `AI_VISION_EFFORT`.
 
 `AI_PROVIDER` unset = `mock` locally and `off` in staging and production (like `EMBEDDER_PROVIDER`, C20); `anthropic` only when set explicitly, and in production only with `ANTHROPIC_API_KEY` (else boot fails). `AI_PROVIDER=mock`, or `anthropic` without a key, is `off` outside `APP_ENV=local`: made-up clean results would become cache hits and let `photo.embed` embed unchecked photos.
 
@@ -130,10 +135,15 @@ Only the 1024 px re-encoded image goes to Anthropic: no EXIF, ids, location or u
   "size": { "value": null, "confidence": 0.41 },
   "collar": { "value": true, "confidence": 0.88 } }
 ```
-v2 levels for this answer: species and colours `zelo verjetno`, breed and pattern `verjetno`, size empty with the hint.
+Shown for this answer: species `Predlog · 98 %`, breed `81 %`, colours `93 %`, pattern `77 %`, size empty with the low-confidence hint.
+
+## Later (not in M3)
+
+- **Focal point per photo** (CH-605, from TASK-114.43): the model could return the main animal's box, stored as `Photo.focus { x, y }` in % of the display image, so cover crops centre on the animal. Web would pass it as an inline `object-position` over the fixed `PHOTO_FOCUS` 50% 10% of `lib/photo.ts` (cards, OG image, `square.png`, poster); mobile as expo-image `contentPosition`. Needs a prompt version, a schema field and a C5 column; not planned until the fixed anchor proves too weak in use.
 
 ## Changelog
 
 - 2026-10-18 (M3 breakdown): first version.
 - 2026-10-19 (CH-601, TASK-40.11): `ai.photos_since` cutoff, step 2.0 and privacy line.
+- 2026-10-19 (CH-612, CH-617, CH-619): owner v2 approved: confidence as a whole percentage (no words, no 0.85 cut), crop also with AI off; as built by TASK-40.11 (switch-on migration, worker log, `ai.enabled` false without a valid cutoff, `unavailable` before the cutoff) and TASK-41.2 (first photo of this visit only, species-valid pattern and size, no new hints after a change).
 - 2026-10-19 (CH-564, CH-565, CH-567, CH-572 to CH-575, CH-596): as built by TASK-40.1 to 40.3 (caps and fail-closed limits, cut before validation, `failed` on the last attempt, `ai_calls` unique on photo, provider and model, SDK client settings and error classes, pricing, prompt version, `animal_count` literal set, `@zivali/validation/ai` exports, mock fixtures, `AI_PROVIDER` resolution). Client rules from the owner's answers on wireframe v1 (species-valid fill, no fill with `no_animal`/`other_animal`); v2 pending: confidence level, breed in the found sentence, §Crop (minimum 320 px, new photo per crop, re-extraction under the normal caps, the original's rows).
