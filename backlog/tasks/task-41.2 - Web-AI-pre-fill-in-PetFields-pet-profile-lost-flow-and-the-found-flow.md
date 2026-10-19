@@ -11,6 +11,9 @@ labels:
   - 'est:M'
 milestone: m-2
 dependencies:
+  - TASK-41.1
+  - TASK-40.2
+  - TASK-40.6
   - TASK-40.10
 references:
   - docs/tech/frontend.md
