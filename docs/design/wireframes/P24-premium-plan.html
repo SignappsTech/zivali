@@ -1,0 +1,798 @@
+<!doctype html>
+<!--
+  TASK-54.1 wireframe (owner approval gate): P24 Premium plan page "Premium Zaščita" (TASK-54, FR-026 R-026.1 to R-026.5). Web only.
+  v1 (2026-10-19): first version for the owner. Not approved.
+  Component mock in the style of M-ai-prefill.html, from the Card, Button, Note, Dialog, Toast, tonal pill and web header specs (docs/design/system.md).
+  Token values copied from docs/design/tokens.css (as in M-ai-prefill.html). Desktop 1200 and Mobile 390 (owner, 2026-10-19).
+  Copy: Slovenian proposals built from the FR-026 labels; the P24 copy slice (CH-639) replaces them once it is on main.
+  The device frames are rendered by the script at the end from one set of builders, so desktop and mobile always show the same state.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Najdimo Premium plan wireframe</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:wght@400;600;700;800&family=Bricolage+Grotesque:opsz,wght@12..96,400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  color-scheme: light dark;
+  --background: 180 15% 92.2%;
+  --foreground: 193.8 28.9% 8.8%;
+  --card: 180 33.3% 98.8%;
+  --card-foreground: 193.8 28.9% 8.8%;
+  --popover: 180 33.3% 98.8%;
+  --popover-foreground: 193.8 28.9% 8.8%;
+  --primary: 190.3 65.5% 22.7%;
+  --primary-foreground: 185 42.9% 94.5%;
+  --secondary: 184.4 44.3% 88%;
+  --secondary-foreground: 191.3 64.9% 14.5%;
+  --muted: 186 13.5% 85.5%;
+  --muted-foreground: 190.9 14.3% 30.2%;
+  --accent: 184.4 44.3% 88%;
+  --accent-foreground: 191.3 64.9% 14.5%;
+  --destructive: 353.9 70.2% 32.9%;
+  --destructive-foreground: 355.7 100% 97.3%;
+  --primary-hover: 190.8 65.6% 18.2%;
+  --primary-pressed: 191.3 64.9% 14.5%;
+  --secondary-hover: 184.6 43.3% 76.5%;
+  --secondary-pressed: 185.3 41.4% 62.5%;
+  --destructive-hover: 354.1 70.8% 25.5%;
+  --destructive-pressed: 354.1 70.1% 17.1%;
+  --border: 186 13.5% 85.5%;
+  --input: 190 10% 47.1%;
+  --ring: 188.1 63.1% 27.6%;
+  --chart-1: 188.1 63.1% 27.6%;
+  --chart-2: 38.4 89.7% 38.2%;
+  --chart-3: 17.9 71.5% 49.6%;
+  --chart-4: 144.2 54.1% 35.9%;
+  --chart-5: 319.4 46.4% 43.1%;
+  --sidebar: 191.3 64.9% 14.5%;
+  --sidebar-foreground: 185 42.9% 94.5%;
+  --sidebar-primary: 185 42.9% 94.5%;
+  --sidebar-primary-foreground: 191.3 64.9% 14.5%;
+  --sidebar-accent: 190.8 65.6% 18.2%;
+  --sidebar-accent-foreground: 185 42.9% 94.5%;
+  --sidebar-border: 190.8 65.6% 18.2%;
+  --sidebar-ring: 185 42.9% 94.5%;
+  --status-lost: 17.5 75.2% 41.2%;
+  --status-lost-foreground: 18.9 100% 96.3%;
+  --status-lost-subtle: 18.3 100% 91%;
+  --status-lost-subtle-foreground: 15.7 71.9% 25.1%;
+  --status-lost-border: 17.2 100% 72%;
+  --status-found: 146.8 56.5% 22.5%;
+  --status-found-foreground: 140 46.2% 94.9%;
+  --status-found-subtle: 140 48.4% 87.8%;
+  --status-found-subtle-foreground: 147.1 56% 17.8%;
+  --status-found-border: 141.4 42.4% 61.2%;
+  --status-sighted: 228.7 58.1% 44.9%;
+  --status-sighted-foreground: 225 88.9% 96.5%;
+  --status-sighted-subtle: 223.6 89.2% 92.7%;
+  --status-sighted-subtle-foreground: 228.4 57.2% 28.4%;
+  --status-sighted-border: 224.6 82.1% 75.9%;
+  --status-reunited: 40 92.7% 56.9%;
+  --status-reunited-foreground: 193.8 28.9% 8.8%;
+  --status-reunited-subtle: 44.8 100% 86.1%;
+  --status-reunited-subtle-foreground: 34.7 73.8% 23.9%;
+  --status-reunited-border: 40 92.7% 56.9%;
+  --premium: 317.9 47.5% 27.6%;
+  --premium-foreground: 318 50% 96.1%;
+  --premium-subtle: 313 51.1% 91.2%;
+  --premium-subtle-foreground: 316.8 46.3% 21.2%;
+  --premium-border: 318.2 48.1% 69%;
+  --verified: 190.3 65.5% 22.7%;
+  --verified-foreground: 185 42.9% 94.5%;
+  --verified-subtle: 184.4 44.3% 88%;
+  --verified-subtle-foreground: 191.3 64.9% 14.5%;
+  --warning: 40 92.7% 56.9%;
+  --warning-foreground: 193.8 28.9% 8.8%;
+  --warning-subtle: 44.8 100% 86.1%;
+  --warning-subtle-foreground: 34.7 73.8% 23.9%;
+  --warning-border: 39.6 85.1% 47.5%;
+  --provider: 0 0% 100%;
+  --provider-foreground: 0 0% 12.2%;
+  --provider-border: 140 1.3% 46.1%;
+  --qr: 0 0% 100%;
+  --qr-foreground: 193.8 28.9% 8.8%;
+  --scrim: 190 46.2% 5.1%;
+  --scrim-alpha: 0.56;
+  --marker-lost: 17.5 75.2% 41.2%;
+  --marker-found: 146.8 56.5% 22.5%;
+  --marker-sighted: 228.7 58.1% 44.9%;
+  --marker-reunited: 38.4 89.7% 38.2%;
+  --marker-me: 226.3 64.5% 54.7%;
+  --marker-cluster: 194.1 24.6% 13.5%;
+  --marker-cluster-foreground: 180 14.3% 95.9%;
+  --marker-ring: 180 33.3% 98.8%;
+  --marker-area: 17.9 71.5% 49.6%;
+  --marker-area-alpha: 0.16;
+  --map-land: 180 15% 92.2%;
+  --map-water: 188.3 40.8% 86.1%;
+  --map-park: 137.1 38.2% 89.2%;
+  --map-building: 172.5 14.8% 89.4%;
+  --map-road: 180 33.3% 98.8%;
+  --map-road-casing: 186 13.5% 85.5%;
+  --map-label: 190.9 14.3% 30.2%;
+  --map-label-halo: 180 15% 92.2%;
+  --radius: 1rem;
+  --font-display: 'Bricolage Grotesque', ui-sans-serif, system-ui, sans-serif;
+  --font-sans: 'Atkinson Hyperlegible Next', ui-sans-serif, system-ui, sans-serif;
+  --radius-button: 9999px;
+  --radius-card: calc(var(--radius) + 8px);
+  --radius-input: var(--radius);
+  --radius-row: calc(var(--radius) + 4px);
+  --radius-chip: 9999px;
+  --radius-sheet: 28px;
+  --radius-photo: calc(var(--radius) + 4px);
+  --card-shadow: none;
+  --shadow-sm: none;
+  --shadow-md: 0 2px 10px 0 rgb(16 38 43 / 0.08);
+  --shadow-lg: 0 -10px 40px -12px rgb(16 38 43 / 0.16);
+  --shadow-pop: 0 8px 24px -6px rgb(16 38 43 / 0.18);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --background: 189.2 37.1% 6.9%;
+    --foreground: 180 15% 92.2%;
+    --card: 192.6 35.8% 10.4%;
+    --card-foreground: 180 15% 92.2%;
+    --popover: 191.1 36% 14.7%;
+    --popover-foreground: 180 15% 92.2%;
+    --primary: 185.3 41.4% 62.5%;
+    --primary-foreground: 194.1 68% 9.8%;
+    --secondary: 191.3 64.9% 14.5%;
+    --secondary-foreground: 184.4 44.3% 88%;
+    --muted: 191.1 36% 14.7%;
+    --muted-foreground: 188 12% 75.5%;
+    --accent: 191.1 36% 14.7%;
+    --accent-foreground: 180 14.3% 95.9%;
+    --destructive: 354.1 82% 78.2%;
+    --destructive-foreground: 352.5 61.5% 10.2%;
+    --primary-hover: 184.6 43.3% 76.5%;
+    --primary-pressed: 184.4 44.3% 88%;
+    --secondary-hover: 190.8 65.6% 18.2%;
+    --secondary-pressed: 190.3 65.5% 22.7%;
+    --destructive-hover: 354 88.2% 86.7%;
+    --destructive-pressed: 354.7 100% 93.3%;
+    --border: 190.9 32.7% 19.8%;
+    --input: 190 10% 47.1%;
+    --ring: 185.3 41.4% 62.5%;
+    --chart-1: 185.3 41.4% 62.5%;
+    --chart-2: 40 92.7% 56.9%;
+    --chart-3: 16.8 87.3% 59.8%;
+    --chart-4: 143.3 43.5% 46.5%;
+    --chart-5: 318.2 48.1% 69%;
+    --sidebar: 190 46.2% 5.1%;
+    --sidebar-foreground: 180 15% 92.2%;
+    --sidebar-primary: 180 15% 92.2%;
+    --sidebar-primary-foreground: 193.8 28.9% 8.8%;
+    --sidebar-accent: 191.1 36% 14.7%;
+    --sidebar-accent-foreground: 180 14.3% 95.9%;
+    --sidebar-border: 191.1 36% 14.7%;
+    --sidebar-ring: 180 15% 92.2%;
+    --status-lost: 16.8 87.3% 59.8%;
+    --status-lost-foreground: 14.6 75.5% 9.6%;
+    --status-lost-subtle: 15.5 70.5% 17.3%;
+    --status-lost-subtle-foreground: 18.3 100% 91%;
+    --status-lost-border: 16.8 74.9% 32.7%;
+    --status-found: 143.3 43.5% 46.5%;
+    --status-found-foreground: 139.2 64.1% 7.6%;
+    --status-found-subtle: 148.3 54.5% 12.9%;
+    --status-found-subtle-foreground: 140 48.4% 87.8%;
+    --status-found-border: 146.8 56.5% 22.5%;
+    --status-sighted: 224.6 82.1% 75.9%;
+    --status-sighted-foreground: 231.1 62.7% 14.7%;
+    --status-sighted-subtle: 229 55.6% 21.2%;
+    --status-sighted-subtle-foreground: 223.6 89.2% 92.7%;
+    --status-sighted-border: 228.7 57.6% 36.1%;
+    --status-reunited: 40 92.7% 56.9%;
+    --status-reunited-foreground: 193.8 28.9% 8.8%;
+    --status-reunited-subtle: 33.6 66.3% 17.5%;
+    --status-reunited-subtle-foreground: 44.8 100% 86.1%;
+    --status-reunited-border: 36.6 84.5% 30.4%;
+    --premium: 318.2 48.1% 69%;
+    --premium-foreground: 314.4 53.2% 9.2%;
+    --premium-subtle: 315.9 45.9% 14.5%;
+    --premium-subtle-foreground: 313 51.1% 91.2%;
+    --premium-border: 317.9 47.5% 27.6%;
+    --verified: 185.3 41.4% 62.5%;
+    --verified-foreground: 194.1 68% 9.8%;
+    --verified-subtle: 191.3 64.9% 14.5%;
+    --verified-subtle-foreground: 184.4 44.3% 88%;
+    --warning: 40 92.7% 56.9%;
+    --warning-foreground: 193.8 28.9% 8.8%;
+    --warning-subtle: 33.6 66.3% 17.5%;
+    --warning-subtle-foreground: 44.8 100% 86.1%;
+    --warning-border: 36.6 84.5% 30.4%;
+    --provider: 240 2.6% 7.6%;
+    --provider-foreground: 0 0% 89%;
+    --provider-border: 140 1.3% 56.3%;
+    --qr: 0 0% 100%;
+    --qr-foreground: 193.8 28.9% 8.8%;
+    --scrim: 190 46.2% 5.1%;
+    --scrim-alpha: 0.72;
+    --marker-lost: 16.8 87.3% 59.8%;
+    --marker-found: 143.3 43.5% 46.5%;
+    --marker-sighted: 224.6 82.1% 75.9%;
+    --marker-reunited: 40 92.7% 56.9%;
+    --marker-me: 224.6 82.1% 75.9%;
+    --marker-cluster: 180 15% 92.2%;
+    --marker-cluster-foreground: 193.8 28.9% 8.8%;
+    --marker-ring: 190 46.2% 5.1%;
+    --marker-area: 16.8 87.3% 59.8%;
+    --marker-area-alpha: 0.2;
+    --map-land: 190.6 36.2% 9.2%;
+    --map-water: 192.6 51.4% 14.5%;
+    --map-park: 168.9 39.1% 13.5%;
+    --map-building: 190 35.3% 13.3%;
+    --map-road: 192.5 24% 19.6%;
+    --map-road-casing: 190.6 36.2% 9.2%;
+    --map-label: 188 12% 75.5%;
+    --map-label-halo: 190.6 36.2% 9.2%;
+    --shadow-sm: none;
+    --shadow-md: 0 2px 10px 0 rgb(0 0 0 / 0.4);
+    --shadow-lg: 0 -10px 40px -12px rgb(0 0 0 / 0.6);
+    --shadow-pop: 0 8px 24px -6px rgb(0 0 0 / 0.55);
+  }
+}
+:root[data-theme="dark"] {
+  --background: 189.2 37.1% 6.9%;
+  --foreground: 180 15% 92.2%;
+  --card: 192.6 35.8% 10.4%;
+  --card-foreground: 180 15% 92.2%;
+  --popover: 191.1 36% 14.7%;
+  --popover-foreground: 180 15% 92.2%;
+  --primary: 185.3 41.4% 62.5%;
+  --primary-foreground: 194.1 68% 9.8%;
+  --secondary: 191.3 64.9% 14.5%;
+  --secondary-foreground: 184.4 44.3% 88%;
+  --muted: 191.1 36% 14.7%;
+  --muted-foreground: 188 12% 75.5%;
+  --accent: 191.1 36% 14.7%;
+  --accent-foreground: 180 14.3% 95.9%;
+  --destructive: 354.1 82% 78.2%;
+  --destructive-foreground: 352.5 61.5% 10.2%;
+  --primary-hover: 184.6 43.3% 76.5%;
+  --primary-pressed: 184.4 44.3% 88%;
+  --secondary-hover: 190.8 65.6% 18.2%;
+  --secondary-pressed: 190.3 65.5% 22.7%;
+  --destructive-hover: 354 88.2% 86.7%;
+  --destructive-pressed: 354.7 100% 93.3%;
+  --border: 190.9 32.7% 19.8%;
+  --input: 190 10% 47.1%;
+  --ring: 185.3 41.4% 62.5%;
+  --chart-1: 185.3 41.4% 62.5%;
+  --chart-2: 40 92.7% 56.9%;
+  --chart-3: 16.8 87.3% 59.8%;
+  --chart-4: 143.3 43.5% 46.5%;
+  --chart-5: 318.2 48.1% 69%;
+  --sidebar: 190 46.2% 5.1%;
+  --sidebar-foreground: 180 15% 92.2%;
+  --sidebar-primary: 180 15% 92.2%;
+  --sidebar-primary-foreground: 193.8 28.9% 8.8%;
+  --sidebar-accent: 191.1 36% 14.7%;
+  --sidebar-accent-foreground: 180 14.3% 95.9%;
+  --sidebar-border: 191.1 36% 14.7%;
+  --sidebar-ring: 180 15% 92.2%;
+  --status-lost: 16.8 87.3% 59.8%;
+  --status-lost-foreground: 14.6 75.5% 9.6%;
+  --status-lost-subtle: 15.5 70.5% 17.3%;
+  --status-lost-subtle-foreground: 18.3 100% 91%;
+  --status-lost-border: 16.8 74.9% 32.7%;
+  --status-found: 143.3 43.5% 46.5%;
+  --status-found-foreground: 139.2 64.1% 7.6%;
+  --status-found-subtle: 148.3 54.5% 12.9%;
+  --status-found-subtle-foreground: 140 48.4% 87.8%;
+  --status-found-border: 146.8 56.5% 22.5%;
+  --status-sighted: 224.6 82.1% 75.9%;
+  --status-sighted-foreground: 231.1 62.7% 14.7%;
+  --status-sighted-subtle: 229 55.6% 21.2%;
+  --status-sighted-subtle-foreground: 223.6 89.2% 92.7%;
+  --status-sighted-border: 228.7 57.6% 36.1%;
+  --status-reunited: 40 92.7% 56.9%;
+  --status-reunited-foreground: 193.8 28.9% 8.8%;
+  --status-reunited-subtle: 33.6 66.3% 17.5%;
+  --status-reunited-subtle-foreground: 44.8 100% 86.1%;
+  --status-reunited-border: 36.6 84.5% 30.4%;
+  --premium: 318.2 48.1% 69%;
+  --premium-foreground: 314.4 53.2% 9.2%;
+  --premium-subtle: 315.9 45.9% 14.5%;
+  --premium-subtle-foreground: 313 51.1% 91.2%;
+  --premium-border: 317.9 47.5% 27.6%;
+  --verified: 185.3 41.4% 62.5%;
+  --verified-foreground: 194.1 68% 9.8%;
+  --verified-subtle: 191.3 64.9% 14.5%;
+  --verified-subtle-foreground: 184.4 44.3% 88%;
+  --warning: 40 92.7% 56.9%;
+  --warning-foreground: 193.8 28.9% 8.8%;
+  --warning-subtle: 33.6 66.3% 17.5%;
+  --warning-subtle-foreground: 44.8 100% 86.1%;
+  --warning-border: 36.6 84.5% 30.4%;
+  --provider: 240 2.6% 7.6%;
+  --provider-foreground: 0 0% 89%;
+  --provider-border: 140 1.3% 56.3%;
+  --qr: 0 0% 100%;
+  --qr-foreground: 193.8 28.9% 8.8%;
+  --scrim: 190 46.2% 5.1%;
+  --scrim-alpha: 0.72;
+  --marker-lost: 16.8 87.3% 59.8%;
+  --marker-found: 143.3 43.5% 46.5%;
+  --marker-sighted: 224.6 82.1% 75.9%;
+  --marker-reunited: 40 92.7% 56.9%;
+  --marker-me: 224.6 82.1% 75.9%;
+  --marker-cluster: 180 15% 92.2%;
+  --marker-cluster-foreground: 193.8 28.9% 8.8%;
+  --marker-ring: 190 46.2% 5.1%;
+  --marker-area: 16.8 87.3% 59.8%;
+  --marker-area-alpha: 0.2;
+  --map-land: 190.6 36.2% 9.2%;
+  --map-water: 192.6 51.4% 14.5%;
+  --map-park: 168.9 39.1% 13.5%;
+  --map-building: 190 35.3% 13.3%;
+  --map-road: 192.5 24% 19.6%;
+  --map-road-casing: 190.6 36.2% 9.2%;
+  --map-label: 188 12% 75.5%;
+  --map-label-halo: 190.6 36.2% 9.2%;
+  --shadow-sm: none;
+  --shadow-md: 0 2px 10px 0 rgb(0 0 0 / 0.4);
+  --shadow-lg: 0 -10px 40px -12px rgb(0 0 0 / 0.6);
+  --shadow-pop: 0 8px 24px -6px rgb(0 0 0 / 0.55);
+}
+:root[data-theme="light"] { color-scheme: light; }
+:root[data-theme="dark"] { color-scheme: dark; }
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:hsl(var(--background));color:hsl(var(--foreground));font-family:var(--font-sans);font-size:16px;line-height:1.5}
+a{color:inherit}
+:focus-visible{outline:3px solid hsl(var(--ring));outline-offset:2px}
+.doc{max-width:1200px;margin:0 auto;padding:24px 16px 64px}
+.doc h1{font-family:var(--font-display);font-size:30px;line-height:36px;letter-spacing:-.02em;margin:8px 0 0;text-wrap:balance}
+.doc h2{font-family:var(--font-display);font-size:22px;line-height:28px;margin:48px 0 8px;letter-spacing:-.01em}
+.doc p{margin:8px 0;max-width:84ch}
+.meta{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;color:hsl(var(--muted-foreground));font-size:15px}
+.pill{display:inline-flex;align-items:center;min-height:30px;padding:0 12px;border-radius:9999px;background:hsl(var(--warning-subtle));color:hsl(var(--warning-subtle-foreground));font-weight:700;font-size:14px}
+.docnav{display:flex;flex-wrap:wrap;gap:4px 16px;margin:16px 0 0;padding:0;list-style:none}
+.docnav a{display:inline-flex;align-items:center;min-height:44px;font-weight:600;text-underline-offset:4px}
+.docnav a[aria-current=page]{color:hsl(var(--muted-foreground));text-decoration:none}
+.qs{background:hsl(var(--card));border-radius:var(--radius-card);padding:20px 20px 20px 24px;margin-top:20px}
+.qs h2{margin:0 0 8px;font-size:18px}
+.qs ol{margin:0;padding-left:22px;display:grid;gap:10px}
+.qs .rec{color:hsl(var(--muted-foreground))}
+.tools{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;margin-top:16px}
+.tools label{display:inline-flex;align-items:center;gap:8px;min-height:44px;font-weight:600;cursor:pointer}
+.tools input{width:20px;height:20px;accent-color:hsl(var(--primary))}
+.findex{display:flex;flex-wrap:wrap;gap:4px 8px;margin:12px 0 0;padding:0;list-style:none}
+.findex a{display:inline-flex;align-items:center;min-height:44px;padding:0 14px;border-radius:9999px;background:hsl(var(--secondary));color:hsl(var(--secondary-foreground));font-weight:700;font-size:15px;text-decoration:none}
+.legend{display:flex;flex-wrap:wrap;gap:8px 20px;margin-top:12px;font-size:15px;color:hsl(var(--muted-foreground))}
+.legend span{display:inline-flex;align-items:center;gap:8px}
+.lg-ph{text-decoration:underline dotted hsl(var(--chart-2));text-decoration-thickness:2px;text-underline-offset:4px;color:hsl(var(--foreground))}
+.frame{margin-top:28px;scroll-margin-top:16px}
+.frame>.bar{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;margin-bottom:8px}
+.bar .ttl{font-family:var(--font-display);font-size:19px;line-height:26px;font-weight:700;margin:0 auto 0 0;min-width:240px}
+.bar .ttl small{display:block;font-family:var(--font-sans);font-weight:400;font-size:14px;line-height:20px;color:hsl(var(--muted-foreground))}
+.seg{display:inline-flex;flex-wrap:wrap;border-radius:9999px;background:hsl(var(--muted));padding:3px}
+.seg button,.tbtn{min-height:44px;padding:0 16px;border:0;border-radius:9999px;background:transparent;color:hsl(var(--foreground));font:inherit;font-size:15px;font-weight:700;cursor:pointer}
+.seg button[aria-pressed=true]{background:hsl(var(--primary));color:hsl(var(--primary-foreground))}
+.tbtn{background:hsl(var(--secondary));color:hsl(var(--secondary-foreground))}
+.stage{background:hsl(var(--muted));border-radius:var(--radius-card);padding:12px;overflow:hidden}
+.vp{display:none;margin:0 auto;position:relative}
+.frame[data-view=desktop] .vp[data-v=desktop],.frame[data-view=mobile] .vp[data-v=mobile]{display:block}
+.frame[data-fit=full] .vp{overflow-x:auto;width:100%!important;height:auto!important}
+.frame[data-fit=full] .dev{transform:none!important}
+.vp .dev{transform-origin:top left;box-shadow:var(--shadow-pop)}
+.nofit{display:none}
+.frame[data-view=desktop] .nofit{display:inline-flex;align-items:center}
+.notes{margin:12px 0 0;padding:14px 18px;border:2px dashed hsl(var(--input));border-radius:16px;font-size:15px;line-height:22px;color:hsl(var(--muted-foreground))}
+.notes ul{margin:0;padding-left:20px;display:grid;gap:6px}
+.notes b,.notes strong{color:hsl(var(--foreground))}
+.no-notes .notes,.no-notes .dev .to{display:none!important}
+.no-notes .dev .phc{text-decoration:none}
+.table-wrap{overflow-x:auto}
+.doc table.t{border-collapse:collapse;width:100%;min-width:640px}
+.doc table.t th,.doc table.t td{text-align:left;vertical-align:top;padding:10px 12px 10px 0;border-bottom:1px solid hsl(var(--border));font-size:15px;line-height:22px}
+.doc table.t th{color:hsl(var(--muted-foreground));font-size:14px}
+.doc code{font-size:14px;background:hsl(var(--muted));padding:1px 6px;border-radius:6px}
+.doc ol.rules{display:grid;gap:8px;padding-left:22px;max-width:96ch}
+
+/* ---- mock primitives (inside .dev) ---- */
+.dev{width:100%;background:hsl(var(--background));color:hsl(var(--foreground));font-family:var(--font-sans);font-size:16px;line-height:1.5;overflow:hidden}
+.dev h1,.dev h2,.dev h3{font-family:var(--font-display);margin:0;text-wrap:balance}
+.dev p{margin:0}.dev ul,.dev dl{margin:0;padding:0;list-style:none}
+.dev a{text-decoration:none}
+.dev .ic{flex:none;display:inline-block}
+.dev .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:0 24px;border:0;border-radius:var(--radius-button);font:inherit;font-weight:700;font-size:16px;cursor:pointer;white-space:nowrap;text-align:center}
+.dev .btn-lg{min-height:56px;padding:0 32px;font-size:17px}.dev .btn-sm{min-height:44px;padding:0 18px}
+.dev .block{width:100%}
+.dev .b1{background:hsl(var(--primary));color:hsl(var(--primary-foreground))}
+.dev .b2{background:hsl(var(--secondary));color:hsl(var(--secondary-foreground))}
+.dev .bt{background:transparent;color:hsl(var(--primary));min-height:44px;padding:0 12px}
+.dev .iconbtn{display:inline-grid;place-items:center;width:44px;height:44px;border-radius:9999px;border:0;background:transparent;color:inherit;cursor:pointer;flex:none}
+.dev .logo{display:inline-flex;align-items:center;gap:10px}
+.dev .lm{display:grid;place-items:center;width:34px;height:34px;border-radius:12px;background:hsl(var(--primary));color:hsl(var(--primary-foreground))}
+.dev .lw{font-family:var(--font-display);font-weight:800;font-size:22px;letter-spacing:-.02em}
+.dev .hdr{height:88px;display:flex;align-items:center;gap:24px;padding:0 48px}
+.dev .navl{display:flex;gap:24px}.dev .navl a{font-weight:600;color:hsl(var(--muted-foreground));display:inline-flex;min-height:44px;align-items:center}
+.dev .navl a[aria-current=page]{color:hsl(var(--foreground));text-decoration:underline;text-underline-offset:6px;text-decoration-thickness:2px}
+.dev .sp{flex:1}
+.dev .lang{font-weight:700;display:inline-flex;gap:6px;align-items:center;min-height:44px}.dev .lang u{text-underline-offset:5px}.dev .lang span{color:hsl(var(--muted-foreground))}
+.dev .av{background:hsl(var(--secondary));color:hsl(var(--secondary-foreground));font-weight:700;font-size:14px}
+.dev .muted{color:hsl(var(--muted-foreground))}
+.dev .mt4{margin-top:4px}.dev .mt8{margin-top:8px}.dev .mt12{margin-top:12px}.dev .mt16{margin-top:16px}.dev .mt20{margin-top:20px}.dev .mt24{margin-top:24px}.dev .mt32{margin-top:32px}.dev .mt40{margin-top:40px}
+
+/* ---- P24 primitives (inside .dev; .dev.d = desktop 1200, .dev.m = mobile 390) ---- */
+.dev{position:relative}
+.dev .mhdr{height:64px;display:flex;align-items:center;gap:4px;padding:0 8px 0 20px}
+.dev .mhdr .lm{width:30px;height:30px;border-radius:10px}
+.dev .mhdr .lw{font-size:20px}
+.dev .pg{max-width:1200px;margin:0 auto;padding:24px 48px 96px}
+.dev.m .pg{padding:16px 20px 64px}
+.dev .h1{font-size:48px;line-height:52px;font-weight:700;letter-spacing:-.02em}
+.dev.m .h1{font-size:30px;line-height:36px}
+.dev .lead{font-size:20px;line-height:32px;max-width:58ch}
+.dev.m .lead{font-size:18px;line-height:28px}
+.dev .h2{font-size:30px;line-height:36px;font-weight:700;letter-spacing:-.015em}
+.dev.m .h2{font-size:24px;line-height:30px}
+.dev .h3{font-size:24px;line-height:32px;font-weight:600;letter-spacing:-.01em}
+.dev.m .h3{font-size:20px;line-height:28px}
+.dev .sec{margin-top:96px}
+.dev.m .sec{margin-top:48px}
+.dev .lists{display:grid;grid-template-columns:1fr 1fr;gap:64px;margin-top:72px}
+.dev.m .lists{grid-template-columns:1fr;gap:48px;margin-top:40px}
+.dev .feat{display:grid;gap:16px;margin-top:24px}
+.dev .feat li{display:flex;gap:12px;align-items:flex-start}
+.dev .feat .ic{color:hsl(var(--primary));margin-top:1px}
+.dev .feat b{display:block}
+.dev .feat .d{display:block;font-size:15px;line-height:22px;color:hsl(var(--muted-foreground))}
+.dev .small{font-size:14px;line-height:20px}
+.dev .plans{display:grid;grid-template-columns:1fr 1fr;gap:32px;align-items:stretch;margin-top:24px}
+.dev.m .plans{grid-template-columns:1fr;gap:20px}
+.dev .plan{display:flex;flex-direction:column;background:hsl(var(--card));color:hsl(var(--card-foreground));border-radius:var(--radius-card);padding:32px}
+.dev.m .plan{padding:24px 20px}
+.dev .tpill{display:inline-flex;align-self:flex-start;align-items:center;gap:6px;height:30px;padding:0 12px;border-radius:9999px;background:hsl(var(--premium-subtle));color:hsl(var(--premium-subtle-foreground));font-size:14px;line-height:20px;font-weight:700}
+.dev .pspace{display:block;height:30px}
+.dev .plan .h3{margin-top:12px}
+.dev .price{display:flex;align-items:baseline;flex-wrap:wrap;gap:0 10px;margin-top:8px}
+.dev .amt{font-family:var(--font-display);font-weight:700;font-size:48px;line-height:56px;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.dev.m .amt{font-size:40px;line-height:48px}
+.dev .per{font-size:18px;line-height:28px;color:hsl(var(--muted-foreground))}
+.dev .eq{font-weight:700;margin-top:4px}
+.dev .save{margin-top:2px}
+.dev .boost{display:flex;gap:8px;align-items:flex-start;margin-top:16px}
+.dev .boost .ic{color:hsl(var(--primary));margin-top:2px}
+.dev .pact{margin-top:auto;padding-top:28px}
+.dev .pnote{margin-top:12px;font-size:14px;line-height:20px;color:hsl(var(--muted-foreground))}
+.dev .pnote b{color:hsl(var(--foreground))}
+.dev ul.good{display:grid;gap:12px;margin-top:16px;padding-left:22px;list-style:disc;max-width:72ch}
+.dev .good a,.dev .tl{color:hsl(var(--primary));font-weight:700;text-decoration:underline;text-underline-offset:4px}
+.dev .fph{display:grid;place-items:center;min-height:160px;background:hsl(var(--muted));color:hsl(var(--muted-foreground));font-size:15px;line-height:22px;padding:0 20px;text-align:center}
+.dev .card{background:hsl(var(--card));color:hsl(var(--card-foreground));border-radius:var(--radius-card);padding:32px}
+.dev.m .card{padding:24px 20px}
+.dev .stat{display:grid;gap:16px;justify-items:start;max-width:720px;margin-top:40px}
+.dev.m .stat{margin-top:32px}
+.dev .kv{display:grid;gap:12px;width:100%}
+.dev .kv>div{display:grid;grid-template-columns:180px minmax(0,1fr);gap:2px 16px}
+.dev.m .kv>div{grid-template-columns:minmax(0,1fr)}
+.dev .kv dt{font-size:14px;line-height:24px;font-weight:700;color:hsl(var(--muted-foreground))}
+.dev .kv dd{margin:0}
+.dev .acts{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center}
+.dev .acts .bt{margin-left:-12px}
+.dev .acts .btn+.bt{margin-left:0}
+.dev .wh{display:flex;gap:10px;align-items:center}
+.dev .wh .ic{color:hsl(var(--warning-subtle-foreground))}
+.dev .chk{display:flex;gap:10px;align-items:flex-start}
+.dev .note{display:flex;gap:12px;padding:16px 20px;border-radius:var(--radius-row);background:hsl(var(--muted));color:hsl(var(--foreground));font-size:15px;line-height:22px;max-width:720px}
+.dev .note>.ic{flex:none;margin-top:0}
+.dev .note .bt{margin:6px 0 -10px -12px}
+.dev .note.err>.ic{color:hsl(var(--destructive))}
+.dev .spin{flex:none;display:inline-block;width:16px;height:16px;margin-top:3px;border-radius:50%;border:2.5px solid hsl(var(--input));border-top-color:hsl(var(--primary));animation:wfspin .9s linear infinite}
+.dev .btn .spin{margin-top:0;border-color:hsl(var(--primary-foreground) / .35);border-top-color:hsl(var(--primary-foreground))}
+@keyframes wfspin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.dev .spin{animation-duration:2.4s}}
+.dev .btn[aria-disabled=true]{background:hsl(var(--muted));color:hsl(var(--muted-foreground));cursor:default}
+.dev .scrim{position:absolute;inset:0;background:hsl(var(--scrim) / var(--scrim-alpha))}
+.dev .dlg{position:absolute;top:220px;left:50%;width:440px;margin-left:-220px;background:hsl(var(--popover));color:hsl(var(--popover-foreground));border-radius:var(--radius-card);box-shadow:var(--shadow-pop);padding:28px 24px 20px}
+.dev.m .dlg{left:20px;right:20px;width:auto;margin-left:0;top:180px}
+.dev .dlg .dt{font-size:20px;line-height:28px;font-weight:600;letter-spacing:-.005em}
+.dev.m .dlg .dt{font-size:18px;line-height:28px}
+.dev .dlg .stackb{display:grid;gap:4px;margin-top:24px}
+.dev .toast{position:absolute;top:104px;left:50%;transform:translateX(-50%);display:flex;gap:10px;align-items:flex-start;width:max-content;max-width:calc(100% - 40px);padding:14px 20px;border-radius:var(--radius-row);background:hsl(var(--popover));color:hsl(var(--popover-foreground));box-shadow:var(--shadow-pop);font-size:15px;line-height:22px}
+.dev .toast .ic{color:hsl(var(--primary));flex:none;margin-top:1px}
+.dev .phs{display:grid;place-items:center;min-height:120px;border:2px dashed hsl(var(--input));border-radius:var(--radius-card);color:hsl(var(--muted-foreground));font-size:15px;line-height:22px;padding:0 20px;text-align:center}
+.dev .setcol{max-width:640px}
+.dev .ring{outline:3px solid hsl(var(--ring));outline-offset:2px}
+.dev .sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+/* annotation chips and legal marks (as in M-ai-prefill.html) */
+.dev .to{display:inline-block;font-family:ui-monospace,Consolas,monospace;font-size:12px;line-height:18px;font-weight:400;letter-spacing:0;padding:0 8px;border-radius:9999px;background:hsl(var(--status-sighted-subtle));color:hsl(var(--status-sighted-subtle-foreground));vertical-align:middle;white-space:normal;text-transform:none}
+.dev .lgl{text-decoration:underline wavy hsl(var(--chart-5));text-decoration-thickness:1.5px;text-underline-offset:5px}
+.no-notes .dev .lgl{text-decoration:none}
+.lg-lgl{text-decoration:underline wavy hsl(var(--chart-5));text-decoration-thickness:1.5px;text-underline-offset:5px;color:hsl(var(--foreground))}
+.qs .q-rec{color:hsl(var(--muted-foreground))}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+<symbol id="i-sparkle" viewBox="0 0 24 24" fill="currentColor"><path d="M11 2.5l2.1 6.4 6.4 2.1-6.4 2.1L11 19.5l-2.1-6.4L2.5 11l6.4-2.1z"/><path d="M19 15.5l.9 2.6 2.6.9-2.6.9-.9 2.6-.9-2.6-2.6-.9 2.6-.9z"/></symbol>
+<symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
+<symbol id="i-check-c" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.7 2.7L16.5 9.5"/></symbol>
+<symbol id="i-plus-c" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></symbol>
+<symbol id="i-info" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></symbol>
+<symbol id="i-warning" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M12 2.5a9.5 9.5 0 110 19 9.5 9.5 0 010-19zM10.9 7h2.2l-.3 7h-1.6zM12 15.6a1.3 1.3 0 110 2.6 1.3 1.3 0 010-2.6z"/></symbol>
+<symbol id="i-menu" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
+<symbol id="i-bell" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 17v-6a6 6 0 0112 0v6l1.5 1.5h-15zM10 21h4"/></symbol>
+<symbol id="i-ext" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="M8 16L16 8M10 8h6v6"/></symbol>
+<symbol id="i-paw" viewBox="0 0 24 24" fill="currentColor"><circle cx="6.5" cy="11" r="1.9"/><circle cx="10" cy="6.5" r="1.9"/><circle cx="14" cy="6.5" r="1.9"/><circle cx="17.5" cy="11" r="1.9"/><path d="M12 12c3 0 5 3 5 5 0 2-2 2.5-5 2.5S7 19 7 17c0-2 2-5 5-5z"/></symbol>
+</svg>
+<div class="doc">
+<header>
+<div class="meta"><strong>TASK-54.1</strong><span class="pill">v1 for the owner, not approved</span><span>2026-10-19</span></div>
+<h1>Premium plan page (P24): free first, yearly first</h1>
+<p>Wireframe of the Premium Zaščita plan page on the web (TASK-54, FR-026 R-026.1 to R-026.5): what stays free, what Premium adds, the yearly and the monthly plan, the way back from Stripe Checkout, what a Premium user sees, and the subscription section in Settings. A component mock from the real Card, Button, Note, Dialog, Toast, tonal pill and web header specs, with the values of <code>docs/design/tokens.css</code>. Desktop 1200 and Mobile 390 (web at phone width), as the owner asked on 2026-10-19; web only.</p>
+<p>Sample data: the test prices 29,99 € a year and 3,99 € a month (owner 2026-10-19); today is 19. 10. 2026. Page id P24 as proposed in CH-646; route <code>/premium</code> (CH-647).</p>
+<nav aria-label="Review files"><ul class="docnav"><li><a href="P3-home.html">P3 Home (TASK-115.1)</a></li><li><a href="P1-footer.html">P1 Footer (TASK-116.1)</a></li><li><a href="M-alerts-notifications.html">Alerts mock (TASK-114.15)</a></li><li><a href="M-legal-table.html">Legal table mock (TASK-114.19)</a></li><li><a href="M-ai-prefill.html">AI pre-fill mock (TASK-41.1)</a></li><li><a href="P24-premium-plan.html" aria-current="page">P24 Premium plan (TASK-54.1)</a></li></ul></nav>
+<section class="qs" aria-labelledby="q-h"><h2 id="q-h">Open questions for the owner (v1)</h2><ol>
+<li><b>Order (F1):</b> what stays free, then what Premium adds, then the two plans, on both widths, as R-026.1 reads. On a phone the plans start after about two screens of lists. OK? <span class="q-rec">Recommended: as drawn. The lists are short and they are the honest part.</span></li>
+<li><b>Button weight (F1):</b> both plan buttons are primary (teal, large, full card width). That is an exception to "one primary per view", because equal weight is the point; the header "Prijavi" turns secondary here. Or both tonal (secondary)? <span class="q-rec">Recommended: both primary.</span></li>
+<li><b>Free Boost on the monthly plan (F1, OQ-004):</b> the cards say "takoj" (yearly) and "po 3. plačanem mesecu" (monthly), the PRD default. OK, or the free Boost on the yearly plan only? <span class="q-rec">Recommended: as drawn; it also answers OQ-004.</span></li>
+<li><b>Cancelling (F4):</b> our own "Prekliči naročnino" button in Settings with one confirmation (Premium runs to the end of the paid period); the Stripe portal only for the card, invoices and a plan switch. Or everything in the Stripe portal, as R-020.3 reads today? <span class="q-rec">Recommended: our own button, so cancelling takes no more steps than subscribing.</span></li>
+<li><b>Plan switch (F4):</b> in the Stripe portal, taking effect at the end of the current period, so nobody pays a prorated difference. Or at once with proration? <span class="q-rec">Recommended: at the end of the period.</span></li>
+<li><b>14-day withdrawal and "start at once" consent:</b> asked in Stripe Checkout (a required terms checkbox with our text), not on this page, so each plan button stays one press. The lawyer confirms (TASK-91, CH-641). <span class="q-rec">Recommended: in Checkout.</span></li>
+<li><b>After Premium ends (F3, Ended):</b> the plans come back with a short note on what is kept and what is locked; no discount and no "come back" offer. OK? <span class="q-rec">Recommended: as drawn.</span></li>
+</ol></section>
+<div class="tools"><button type="button" class="tbtn" id="theme">Theme: auto</button><label><input type="checkbox" id="notes" checked> Show annotations</label><div class="seg" role="group" aria-label="Viewport for all frames" id="allview"><button type="button" data-v="desktop" aria-pressed="false">All Desktop 1200</button><button type="button" data-v="mobile" aria-pressed="false">All Mobile 390</button></div></div>
+<div class="legend"><span>Copy: Slovenian proposals built from the FR-026 labels, no keys yet; the P24 copy slice (CH-639) replaces them</span><span><span class="lg-lgl">Wavy underline</span> owner and lawyer confirm before release (legal or privacy claim)</span><span>Blue chips: annotations (hidden with the checkbox)</span></div>
+<nav aria-label="Frames"><ul class="findex" id="findex"></ul></nav>
+</header>
+<main>
+<h2>What each block needs</h2>
+<p>Prices never sit in the copy: they come from the price config, and every derived number is computed from the same two values. Subscription state comes from the TASK-52 entitlement contract.</p>
+<div class="table-wrap"><table class="t">
+<thead><tr><th scope="col">Block</th><th scope="col">Data</th><th scope="col">Source</th><th scope="col">Frame</th></tr></thead>
+<tbody>
+<tr><td>Plan cards: the price</td><td>Yearly 2999 and monthly 399 cents, EUR, VAT included</td><td>Price config keys (C13 §Prices and entitlements, CH-635)</td><td>F1, F3 Ended</td></tr>
+<tr><td>Per month, saving, 12 monthly payments</td><td>250 cents, 37 %, 4788 cents</td><td>Computed from the same two values (rule 3)</td><td>F1</td></tr>
+<tr><td>Test-mode note</td><td>Payments mode is test (live mode is impossible in this phase, R-020.2)</td><td>Config</td><td>F1 to F4</td></tr>
+<tr><td>Free Boost line</td><td>Yearly: at once. Monthly: after the 3rd paid month (OQ-004 default). At most 1 per 12 months.</td><td>Entitlement rules (TASK-52)</td><td>F1, F3</td></tr>
+<tr><td>"Do 2 profila živali"</td><td>Free pet limit (2)</td><td>Config (FR-002)</td><td>F1</td></tr>
+<tr><td>Header and plan buttons</td><td>Signed in or not; organisation member or not (then no page, rule 9)</td><td>Session</td><td>F1</td></tr>
+<tr><td>Status card</td><td><code>hasEntitlement(premium)</code>; subscription: plan (monthly or yearly), status (active, cancelled at period end, past due, ended), price, current period end, next payment date, free Boost (available, used on, unlocks on), past-due deadline</td><td>TASK-52 entitlement and subscription contract (C13)</td><td>F2, F3, F4</td></tr>
+<tr><td>Return from Checkout</td><td><code>checkout=success</code> or <code>cancel</code> on the return URL; the entitlement is read until it is active (proposal: every 1 s, at most 10 s, then the late note)</td><td>C13 checkout return</td><td>F2</td></tr>
+<tr><td>Settings actions</td><td>Stripe customer portal session (switch, card, invoices); cancel at period end and resume</td><td>C13 portal (R-020.3); our own cancel call if Q4 is yes</td><td>F4</td></tr>
+<tr><td>Ended note</td><td>End date; read-only date for extra pets (end + 90 days)</td><td>Entitlement (R-026.4)</td><td>F3 Ended</td></tr>
+<tr><td>Analytics</td><td><code>premium_subscribe</code> {plan, value, currency EUR}, once, only with analytics consent</td><td>R-026.10, C12</td><td>F2 Confirmed</td></tr>
+</tbody></table></div>
+
+<h2>Frames</h2>
+<p>Four frames, each with Desktop 1200 and Mobile 390, and a state switch. Mobile 390 is the website at phone width; the app is not drawn (web only).</p>
+<div id="frames"></div>
+
+<h2>Rules this wireframe sets</h2>
+<ol class="rules">
+<li><b>Order:</b> what stays free, then what Premium adds, then the plans (R-026.1, AC#1). On the web the two lists sit side by side with the free list on the left, first in reading and tab order; on a phone they stack.</li>
+<li><b>Two equal cards, yearly first</b> (left on the web, on top on a phone). Same card, size, structure and button. The only extra on the yearly card is the tonal pill "Najboljša vrednost" (<code>premium-subtle</code>), the page’s one tonal pill. No toggle, no radio, nothing pre-selected, no struck-through or "was" price.</li>
+<li><b>The big number is what you pay</b> (29,99 € na leto, 3,99 € na mesec). The per-month equivalent and the saving are smaller lines under it, computed from the config: per month = yearly ÷ 12, rounded to the cent (2,50 €); saving = 1 − yearly ÷ (12 × monthly), rounded down to a whole percent (37 %), with 12 × monthly in brackets (47,88 €). If the yearly plan is not cheaper, the saving line is left out.</li>
+<li><b>At each button, one note</b> (14/20, <code>muted-foreground</code>, the button’s accessible description): price with VAT, the renewal period, cancel any time, test mode. The yearly note also names the reminder 7 days before renewal (AC#4, AC#6).</li>
+<li><b>Buttons:</b> both plan buttons are primary, large and full card width, "Izberi letni paket" and "Izberi mesečni paket" (Q2). The header "Prijavi" is secondary on this page. Signed out, a plan button goes through the P16 sign-in gate and comes straight back to Checkout for that plan.</li>
+<li><b>A Premium user never sees plan buttons.</b> The status card (plan, price, renewal or end date, free Boost) replaces the plans and sits under the lead. No upsell or cross-sell anywhere on the page.</li>
+<li><b>No pressure:</b> no countdown, no "only today", no discount for coming back, no confirmshaming ("Obdrži Premium" is a plain text button), no ads (a payment screen, PRD §Content). Premium adds no badge (R-026.5), and the page says so.</li>
+<li><b>Cancelling takes no more steps than subscribing:</b> Settings › Naročnina › "Prekliči naročnino" › one confirmation (Q4). Premium runs to the end of the paid period and the data stays.</li>
+<li><b>Organisation members</b> (shelter, municipality) see no entry point, no plan and no prompt (R-026.5, AC#8). Proposal: <code>/premium</code> sends them to their portal home (tech lead, C15).</li>
+<li><b>Back from Checkout:</b> success shows the confirming card until the entitlement is active, never the plan buttons, so nobody pays twice; cancel lands on the plans with a neutral note. Focus moves to the card or the note, announced once.</li>
+<li><b>Entry points</b> (not drawn): the P8 pet limit note ("Več profilov s Premium Zaščito"), the quiet P9 "Statistika s Premium" link, the P12 "Prevedi" sheet for a free user, and Settings › Naročnina. Route <code>/premium</code> (EN <code>/en/premium</code>), noindex until Premium is live (CH-647).</li>
+</ol>
+
+<h2>Not in this wireframe</h2>
+<p>The app (web only for now: the app plan page with the note that checkout opens on the web, AC#7, comes with the mobile work); the yearly renewal reminder email (CH-648); the Stripe Checkout and portal pages themselves; the Premium features (report statistics TASK-117, sightings heatmap TASK-83, chat translation TASK-118).</p>
+
+<h2>Copy used</h2>
+<p>No keys yet: these are proposals from the FR-026 labels, Slovenian first. The P24 copy slice (CH-639) is the source once it is on main; where it differs, it wins and the layout stays. Strings with a wavy underline need the owner’s and the lawyer’s confirmation.</p>
+<div class="table-wrap"><table class="t">
+<thead><tr><th scope="col">SL (as shown)</th><th scope="col">EN</th><th scope="col">Where</th></tr></thead>
+<tbody>
+<tr><td>Premium Zaščita · Več udobja, pomoč umetne inteligence in vpogled v vaše prijave. Vse, kar pomaga najti žival, ostane brezplačno za vse.</td><td>Premium Protect · More convenience, AI help and insight into your reports. Everything that helps find a pet stays free for everyone.</td><td>h1, lead</td></tr>
+<tr><td>Brezplačno za vedno · Za vse, s Premiumom ali brez. Nikoli ne bo plačljivo ali počasnejše.</td><td>Free forever · For everyone, with Premium or without. It will never be paid or slower.</td><td>Free list</td></tr>
+<tr><td>Prijava izgubljene, najdene ali opažene živali · Ujemanje, tudi po fotografiji z umetno inteligenco · Opozorila ljudem v privzetem polmeru · Klepet z najditelji in lastniki · Standardni plakat · Deljenje prijave · Javni zemljevid z vsemi opažanji · Do 2 profila živali</td><td>Report a lost, found or sighted pet · Matching, also by photo with AI · Alerts to people in the default radius · Chat with finders and owners · Standard poster · Sharing · Public map with every sighting · Up to 2 pet profiles</td><td>Free list</td></tr>
+<tr><td>Premium doda (Kaj imate s Premiumom) · Neomejeno profilov živali · Pomoč umetne inteligence · Statistika vaših prijav · Samodejni prevod klepeta · Način izgube z enim dotikom · 1 brezplačen Boost na leto · Brez oglasov</td><td>Premium adds (What you have with Premium) · Unlimited pet profiles · AI help · Statistics for your reports · Automatic chat translation · One-tap lost mode · 1 free Boost a year · No ads</td><td>Perks list, with one description line each</td></tr>
+<tr><td>Premium ne prinaša značke in nikomur ne pospeši ujemanja, opozoril ali klepeta.</td><td>Premium adds no badge and makes no one’s matching, alerts or chat faster.</td><td>Under the perks</td></tr>
+<tr><td>Izberite paket · Najboljša vrednost · Letni paket · Mesečni paket</td><td>Choose a plan · Best value · Yearly plan · Monthly plan</td><td>Plans</td></tr>
+<tr><td>29,99 € na leto · 2,50 € na mesec · 37 % ceneje kot 12 mesečnih plačil (47,88 €) · 3,99 € na mesec · Brez letne vezave</td><td>€29.99 a year · €2.50 a month · 37% less than 12 monthly payments (€47.88) · €3.99 a month · No yearly commitment</td><td>Plan cards</td></tr>
+<tr><td>Brezplačen Boost: takoj · Brezplačen Boost: po 3. plačanem mesecu</td><td>Free Boost: right away · Free Boost: after the 3rd paid month</td><td>Plan cards (OQ-004)</td></tr>
+<tr><td>Izberi letni paket · Izberi mesečni paket</td><td>Choose yearly · Choose monthly</td><td>Plan buttons</td></tr>
+<tr><td>Cena z DDV. Obnovi se vsako leto, 7 dni prej vas opomnimo po e-pošti. Prekličete lahko kadar koli. · Cena z DDV. Obnovi se vsak mesec. Prekličete lahko kadar koli. · Testni način: kartica ne bo bremenjena.</td><td>Price incl. VAT. Renews every year; we remind you by email 7 days before. Cancel any time. · Price incl. VAT. Renews every month. Cancel any time. · Test mode: your card will not be charged.</td><td>Note at each button</td></tr>
+<tr><td>Dobro je vedeti · (five lines, F1) · <span class="lg-lgl">Plačilo obdela Stripe. Podatkov o vaši kartici ne hranimo.</span> · <span class="lg-lgl">Pravica do odstopa v 14 dneh in vse o naročnini: Pogoji uporabe, Naročnine.</span></td><td>Good to know · Payment is handled by Stripe; we do not store your card details. · The 14-day withdrawal right and everything about the subscription: Terms of use, Subscriptions.</td><td>Small print</td></tr>
+<tr><td>Plačila trenutno ne moremo odpreti in nič vam nismo zaračunali. · Poskusi znova</td><td>We can’t open the payment right now, and nothing was charged. · Try again</td><td>F1 error</td></tr>
+<tr><td>Potrjujemo plačilo · To traja nekaj sekund. · Plačilo je v obdelavi · … Ne plačujte znova … · Osveži · Plačilo ni bilo izvedeno in nič vam nismo zaračunali. Paket lahko izberete kadar koli.</td><td>Confirming your payment · This takes a few seconds. · Payment is processing · … Don’t pay again … · Refresh · The payment didn’t go through and nothing was charged. You can choose a plan any time.</td><td>F2</td></tr>
+<tr><td>Premium je vklopljen · Paket · Obnovitev · Naslednje plačilo · Brezplačen Boost · Upravljaj naročnino · Potrdilo o plačilu smo poslali na vaš e-naslov. · Testna naročnina: kartica ni bremenjena.</td><td>Premium is on · Plan · Renewal · Next payment · Free Boost · Manage subscription · We emailed you the payment receipt. · Test subscription: your card is not charged.</td><td>Status card</td></tr>
+<tr><td>Naročnina je preklicana · Premium velja do … · Nadaljuj naročnino · Plačilo ni uspelo · Posodobi kartico · Premium je potekel …</td><td>Subscription cancelled · Premium runs until … · Resume subscription · Payment failed · Update card · Premium ended on …</td><td>F3</td></tr>
+<tr><td>Naročnina · Zamenjaj paket · Plačila in računi · Prekliči naročnino · Prekličem naročnino? · Obdrži Premium · Naročnina je preklicana. Premium velja do 19. 10. 2027.</td><td>Subscription · Change plan · Payments and invoices · Cancel subscription · Cancel the subscription? · Keep Premium · Subscription cancelled. Premium runs until 19 Oct 2027.</td><td>F4</td></tr>
+</tbody></table></div>
+
+<h2>Change log</h2>
+<div class="table-wrap"><table class="t"><thead><tr><th scope="col">Version</th><th scope="col">Date</th><th scope="col">Change</th></tr></thead><tbody><tr><td>v1</td><td>2026-10-19</td><td>First version for the owner (TASK-54.1): F1 plan page for a free user, F2 back from Checkout, F3 Premium user states, F4 Settings › Naročnina; seven open questions. Awaiting the owner’s approval.</td></tr></tbody></table></div>
+</main>
+</div>
+<script>
+(function(){
+'use strict';
+var n=0;function uid(p){n+=1;return (p||'u')+n}
+function S(id,s,c){s=s||20;return '<svg class="ic'+(c?' '+c:'')+'" width="'+s+'" height="'+s+'" aria-hidden="true" focusable="false"><use href="#i-'+id+'"/></svg>'}
+function TO(t){return t?' <span class="to">'+t+'</span>':''}
+function L(t,tag){return '<span class="lgl">'+t+'</span>'+TO(tag)}
+var NB=' ';
+/* Copy: proposals from the FR-026 labels (no keys yet). The P24 copy slice (CH-639) replaces them. */
+var C={
+ h1:'Premium Zaščita',
+ lead:'Več udobja, pomoč umetne inteligence in vpogled v vaše prijave. Vse, kar pomaga najti žival, ostane brezplačno za vse.',
+ freeH:'Brezplačno za vedno',
+ freeSub:'Za vse, s Premiumom ali brez. Nikoli ne bo plačljivo ali počasnejše.',
+ free:['Prijava izgubljene, najdene ali opažene živali','Ujemanje, tudi po fotografiji z umetno inteligenco','Opozorila ljudem v privzetem polmeru','Klepet z najditelji in lastniki','Standardni plakat','Deljenje prijave','Javni zemljevid z vsemi opažanji','Do 2 profila živali'],
+ perksH:'Premium doda',haveH:'Kaj imate s Premiumom',
+ perks:[['Neomejeno profilov živali','brezplačno sta 2'],['Pomoč umetne inteligence','besedilo prijave in objav, oblikovani plakati, načrt iskanja s toplotnim zemljevidom opažanj'],['Statistika vaših prijav','ogledi, deljenja in poslana opozorila, skupaj in po dnevih'],['Samodejni prevod klepeta','slovenščina in angleščina; sogovornik prevod dobi brezplačno'],['Način izgube z enim dotikom','prijava izgube iz profila živali v dveh dotikih'],['1 brezplačen Boost na leto','večji doseg prijave za 7 dni'],['Brez oglasov','']],
+ noBadge:'Premium ne prinaša značke in nikomur ne pospeši ujemanja, opozoril ali klepeta.',
+ plansH:'Izberite paket',
+ best:'Najboljša vrednost',
+ y:{name:'Letni paket',amt:'29,99'+NB+'€',per:'na leto',eq:'2,50'+NB+'€ na mesec',save:'37'+NB+'% ceneje kot 12 mesečnih plačil (47,88'+NB+'€)',boost:'Brezplačen Boost: takoj',btn:'Izberi letni paket',note:'Cena z DDV. Obnovi se vsako leto, 7 dni prej vas opomnimo po e-pošti. Prekličete lahko kadar koli.'},
+ m:{name:'Mesečni paket',amt:'3,99'+NB+'€',per:'na mesec',eq:'Brez letne vezave',save:'',boost:'Brezplačen Boost: po 3. plačanem mesecu',btn:'Izberi mesečni paket',note:'Cena z DDV. Obnovi se vsak mesec. Prekličete lahko kadar koli.'},
+ test:'Testni način: kartica ne bo bremenjena.',
+ testOn:'Testna naročnina: kartica ni bremenjena.',
+ goodH:'Dobro je vedeti',
+ good:['Naročnino prekličete v Nastavitvah, v razdelku Naročnina. Premium ostane do konca plačanega obdobja.',
+  'Če Premium poteče, vaši podatki ostanejo. Dodatni profili so še 90 dni na voljo za branje, statistika, prevod in toplotni zemljevid pa se zaklenejo.',
+  L('Plačilo obdela Stripe. Podatkov o vaši kartici ne hranimo.','privacy claim: owner confirms'),
+  L('Pravica do odstopa v 14 dneh in vse o naročnini: <a href="#">Pogoji uporabe, Naročnine</a>.','legal: lawyer, TASK-91 / CH-641; link /pogoji-uporabe#s10'),
+  'Najdimo je v preizkusnem obdobju: vsa plačila so testna in kartica ne bo bremenjena.'],
+ err:'Plačila trenutno ne moremo odpreti in nič vam nismo zaračunali.',retry:'Poskusi znova',
+ cancelled:'Plačilo ni bilo izvedeno in nič vam nismo zaračunali. Paket lahko izberete kadar koli.',
+ confH:'Potrjujemo plačilo',confB:'To traja nekaj sekund.',
+ lateH:'Plačilo je v obdelavi',lateB:'Potrditev traja dlje kot običajno. Ne plačujte znova: Premium se vklopi sam, ko Stripe potrdi plačilo. Stran lahko osvežite čez minuto.',refresh:'Osveži',
+ onH:'Premium je vklopljen',receipt:'Potrdilo o plačilu smo poslali na vaš e-naslov.',manage:'Upravljaj naročnino',
+ canH:'Naročnina je preklicana',resume:'Nadaljuj naročnino',
+ pdH:'Plačilo ni uspelo',pdB:'Kartice nismo mogli bremeniti za plačilo 19. 10. 2026. Poskusili bomo znova. Da Premium ostane vklopljen, posodobite kartico do 26. 10. 2026.',pdBtn:'Posodobi kartico',
+ endH:'Premium je potekel 18. 10. 2026',endB:'Vaši podatki ostanejo. Dodatni profili so na voljo za branje do 16. 1. 2027, statistika, prevod in toplotni zemljevid pa so zaklenjeni. Paket lahko znova izberete kadar koli.',
+ setH:'Nastavitve',subH:'Naročnina',switchP:'Zamenjaj paket',billing:'Plačila in računi',cancel:'Prekliči naročnino',
+ dlgT:'Prekličem naročnino?',dlgB:'Premium ostane vklopljen do 19. 10. 2027. Potem se ne obnovi in ne bomo vas več bremenili. Vaši podatki ostanejo.',keep:'Obdrži Premium',
+ toast:'Naročnina je preklicana. Premium velja do 19. 10. 2027.'
+};
+var LOGO='<span class="logo"><span class="lm">'+S('paw',22)+'</span><span class="lw">Najdimo</span></span>';
+
+/* ---------- shell ---------- */
+function hdr(d,o){o=o||{};
+ if(d){var right=o.out?'<a class="btn bt" href="#">Vpis</a>':'<button class="iconbtn" type="button" aria-label="Sporočila in obvestila">'+S('bell',24)+'</button><button class="iconbtn av" type="button" aria-label="Moj račun">PB</button>';
+  return '<header class="hdr">'+LOGO+'<nav class="navl" aria-label="Glavni meni"><a href="#">Zemljevid</a><a href="#">Izgubljene</a><a href="#">Najdene</a>'+(o.out?'':'<a href="#">Moje živali</a>')+'</nav><span class="sp"></span><span class="lang"><u>SL</u><span>/</span><span>EN</span></span>'+right+'<a class="btn btn-sm b2" href="#">Prijavi</a>'+TO(o.hto)+'</header>'}
+ return '<header class="mhdr">'+LOGO+'<span class="sp"></span>'+(o.out?'<a class="btn bt" href="#">Vpis</a>':'<button class="iconbtn av" type="button" aria-label="Moj račun">PB</button>')+'<button class="iconbtn" type="button" aria-label="Meni">'+S('menu',24)+'</button></header>'}
+function page(d,o,inner){return hdr(d,o)+'<div class="pg">'+inner+'</div><footer class="fph">Noga strani (P1, vsebinska različica)</footer>'+(o.overlay||'')}
+function hero(){return '<h1 class="h1">'+C.h1+'</h1><p class="lead mt16">'+C.lead+'</p>'}
+
+/* ---------- lists ---------- */
+function lists(d,o){o=o||{};var a=uid('h'),b=uid('h');
+ var fl=C.free.map(function(t){return '<li>'+S('check-c',24)+'<span>'+t+'</span></li>'}).join('');
+ var pl=C.perks.map(function(p){return '<li>'+S('plus-c',24)+'<span><b>'+p[0]+'</b>'+(p[1]?'<span class="d">'+p[1]+'</span>':'')+'</span></li>'}).join('');
+ return '<div class="lists"><section aria-labelledby="'+a+'"><h2 class="h2" id="'+a+'">'+C.freeH+'</h2><p class="muted mt8">'+C.freeSub+'</p><ul class="feat">'+fl+'</ul>'+TO(o.fto)+'</section>'
+  +'<section aria-labelledby="'+b+'"><h2 class="h2" id="'+b+'">'+(o.have?C.haveH:C.perksH)+'</h2><ul class="feat">'+pl+'</ul><p class="small muted mt24">'+C.noBadge+'</p>'+TO(o.pto)+'</section></div>'}
+
+/* ---------- plans ---------- */
+function plan(k,d,o){var p=C[k],y=k==='y',hid=uid('p'),nid=uid('n'),ld=o.loading===k;
+ var btn='<button type="button" class="btn btn-lg b1 block"'+(ld?' aria-busy="true"':'')+' aria-describedby="'+nid+'">'+(ld?'<span class="spin" aria-hidden="true"></span>':'')+p.btn+'</button>';
+ var top=y?'<span class="tpill">'+S('sparkle',16)+C.best+'</span>':(d?'<span class="pspace" aria-hidden="true"></span>':'');
+ return '<article class="plan" aria-labelledby="'+hid+'">'+top+'<h3 class="h3" id="'+hid+'">'+p.name+'</h3>'
+  +'<p class="price"><span class="amt">'+p.amt+'</span><span class="per">'+p.per+'</span></p>'
+  +'<p class="eq">'+p.eq+'</p>'+(p.save?'<p class="save">'+p.save+TO(o.sto&&y?o.sto:'')+'</p>':'')
+  +'<p class="boost">'+S('check',20)+'<span>'+p.boost+TO(y?'':'OQ-004 default')+'</span></p>'
+  +'<div class="pact">'+btn+(ld?TO('spinner before the label, aria-busy, presses ignored'):'')+'<p class="pnote" id="'+nid+'">'+p.note+' <b>'+C.test+'</b></p></div></article>'}
+function plans(d,o){o=o||{};var h=uid('h');
+ return '<section class="sec" aria-labelledby="'+h+'"><h2 class="h2" id="'+h+'">'+C.plansH+'</h2>'+TO(o.anchor)+(o.note||'')+'<div class="plans">'+plan('y',d,o)+plan('m',d,o)+'</div></section>'}
+function good(){var h=uid('h');return '<section class="sec" aria-labelledby="'+h+'"><h2 class="h3" id="'+h+'">'+C.goodH+'</h2><ul class="good">'+C.good.map(function(t){return '<li>'+t+'</li>'}).join('')+'</ul></section>'}
+function note(kind,icon,html,o){o=o||{};return '<div class="note '+(kind||'')+' mt24'+(o.ring?' ring':'')+'"'+(o.role?' role="'+o.role+'"':'')+' tabindex="-1">'+S(icon,22)+'<div>'+html+TO(o.to)+'</div></div>'}
+
+/* ---------- status card ---------- */
+function kv(rows){return '<dl class="kv">'+rows.map(function(r){return '<div><dt>'+r[0]+'</dt><dd>'+r[1]+'</dd></div>'}).join('')+'</dl>'}
+var PILL='<span class="tpill">'+S('sparkle',16)+'Premium Zaščita</span>';
+function stat(st,o){o=o||{};var h=uid('h');var open='<section class="card stat'+(o.ring?' ring':'')+'" aria-labelledby="'+h+'" tabindex="-1">';
+ if(st==='confirming')return open+'<h2 class="h3" id="'+h+'">'+C.confH+'</h2><p class="chk" role="status"><span class="spin" aria-hidden="true"></span><span>'+C.confB+'</span></p>'+TO(o.to)+'</section>';
+ if(st==='late')return open+'<h2 class="h3" id="'+h+'">'+C.lateH+'</h2><p>'+C.lateB+'</p><button type="button" class="btn bt" style="margin:-8px 0 -8px -12px">'+C.refresh+'</button>'+TO(o.to)+'</section>';
+ var yearly=[['Paket','Letni paket · 29,99'+NB+'€ na leto, z DDV'],['Obnovitev','19. 10. 2027. Teden prej vas opomnimo po e-pošti.'],['Brezplačen Boost','Na voljo: 1']];
+ if(st==='yearly')return open+PILL+'<h2 class="h2" id="'+h+'">'+C.onH+'</h2>'+kv(yearly)+(o.receipt?'<p>'+C.receipt+'</p>':'')+'<div class="acts"><a class="btn b2" href="#">'+C.manage+'</a></div><p class="pnote" style="margin:0">'+C.testOn+'</p>'+TO(o.to)+'</section>';
+ if(st==='monthly')return open+PILL+'<h2 class="h2" id="'+h+'">'+C.onH+'</h2>'+kv([['Paket','Mesečni paket · 3,99'+NB+'€ na mesec, z DDV'],['Naslednje plačilo','19. 11. 2026'],['Brezplačen Boost','Na voljo od 19. 1. 2027, po 3. plačanem mesecu']])+'<div class="acts"><a class="btn b2" href="#">'+C.manage+'</a></div><p class="pnote" style="margin:0">'+C.testOn+'</p>'+TO(o.to)+'</section>';
+ if(st==='canceling')return open+PILL+'<h2 class="h2" id="'+h+'">'+C.canH+'</h2>'+kv([['Paket','Letni paket · 29,99'+NB+'€ na leto, z DDV'],['Premium velja do','19. 10. 2027. Potem se ne obnovi in ne bomo vas več bremenili.'],['Brezplačen Boost','Na voljo: 1, do 19. 10. 2027']])+'<div class="acts"><button type="button" class="btn b2">'+C.resume+'</button></div>'+TO(o.to)+'</section>';
+ if(st==='past_due')return open+PILL+'<h2 class="h2 wh" id="'+h+'">'+S('warning',28)+C.pdH+'</h2><p>'+C.pdB+'</p>'+kv([['Paket','Mesečni paket · 3,99'+NB+'€ na mesec, z DDV']])+'<div class="acts"><button type="button" class="btn btn-lg b1">'+C.pdBtn+'</button></div>'+TO(o.to)+'</section>';
+ return ''}
+
+/* ---------- settings ---------- */
+function settings(d,st){var h=uid('h'),ext=S('ext',20);
+ var body=st==='done'
+  ?'<h3 class="h3">Premium Zaščita</h3><p class="mt8">Letni paket · 29,99'+NB+'€ na leto, z DDV</p><p class="mt4"><b>Preklicano.</b> Premium velja do 19. 10. 2027.</p><div class="acts mt24"><button type="button" class="btn b2">'+C.resume+'</button><a class="btn bt" href="#">'+C.billing+ext+'</a></div>'
+  :'<h3 class="h3">Premium Zaščita</h3><p class="mt8">Letni paket · 29,99'+NB+'€ na leto, z DDV</p><p class="mt4">Obnovi se 19. 10. 2027.</p><p class="pnote">'+C.testOn+'</p><div class="acts mt24"><button type="button" class="btn b2'+(st==='dialog'?'':'')+'">'+C.cancel+'</button><a class="btn bt" href="#">'+C.switchP+ext+'</a><a class="btn bt" href="#">'+C.billing+ext+'</a></div>'+TO(st==='block'?'Zamenjaj paket and Plačila in računi open the Stripe customer portal (Q5)':'');
+ return '<h1 class="h1">'+C.setH+'</h1><div class="setcol"><div class="phs mt40">Račun, jezik in videz (P13)</div><section class="mt40" aria-labelledby="'+h+'"><h2 class="h2" id="'+h+'">'+C.subH+'</h2><div class="card mt16">'+body+'</div></section><div class="phs mt40">Obvestila in opozorila (P13)</div></div>'}
+function dialog(){var t=uid('d'),b=uid('d');return '<div class="scrim"></div><div class="dlg" role="dialog" aria-modal="true" aria-labelledby="'+t+'" aria-describedby="'+b+'"><h2 class="dt" id="'+t+'">'+C.dlgT+'</h2><p class="mt8" id="'+b+'">'+C.dlgB+'</p><div class="stackb"><button type="button" class="btn btn-lg b1 block">'+C.cancel+'</button><button type="button" class="btn bt block">'+C.keep+'</button></div>'+TO('one confirmation; Esc or Obdrži Premium closes it')+'</div>'}
+function toast(){return '<div class="toast" role="status">'+S('check-c',20)+'<span>'+C.toast+'</span></div>'}
+
+/* ---------- frames ---------- */
+var F=[
+{id:'f1',title:'Plan page: free user',sub:'The default: a signed-in user without Premium, or signed out. Lists first, then the two plans.',
+ states:[['free','Free user'],['out','Signed out'],['loading','Opening checkout'],['error','Checkout unavailable']],
+ render:function(v,s){var d=v==='desktop';
+  var nt=s==='error'?note('err','warning','<p>'+C.err+'</p><button type="button" class="btn bt">'+C.retry+'</button>',{role:'alert',ring:true,to:'inline error (system 10.9); focus moves here'}):'';
+  return page(d,{out:s==='out',hto:d&&s==='free'?'secondary on this page':''},hero()+lists(d,{fto:s==='free'?'first in reading and tab order':''})+plans(d,{loading:s==='loading'?'y':'',note:nt,sto:s==='free'?'computed from the price config':''})+good())},
+ notes:function(s){var a=['<b>Order (Q1):</b> the free list, then what Premium adds, then the plans (R-026.1, AC#1). Desktop: the lists side by side, the free one on the left. Mobile: stacked; the plans come after the lists.',
+  '<b>Yearly first</b> (left on desktop, on top on mobile) with the page’s one tonal pill, "Najboljša vrednost". Otherwise the cards are the same: same size, same structure, same button. No toggle, nothing pre-selected, no struck-through price (AC#2).',
+  '<b>Both plan buttons primary</b> (Q2), large, full card width. The header "Prijavi" is secondary here, as on P9 and P22.',
+  '<b>At each button:</b> one note with VAT, renewal period, cancel any time and test mode, as the button’s accessible description (AC#6). The big number is what you pay; per month and the saving are computed (rule 3).',
+  '"Dobro je vedeti" closes the page: where to cancel, what happens at a lapse, payment by Stripe, the withdrawal right (legal) and the test phase. No ad slot.'];
+  if(s==='out')return a.concat(['<b>Signed out:</b> the same page with "Vpis" in the header. A plan button opens the P16 sign-in gate and comes straight back to Checkout for the plan chosen.']);
+  if(s==='loading')return a.concat(['<b>After a press</b> (yearly here): a spinner before the label, <code>aria-busy</code>, presses ignored, no layout shift (system 10.1). Then Stripe Checkout (test) opens in the same tab for that plan (C13).']);
+  if(s==='error')return a.concat(['<b>Checkout did not open</b> (network, or 503 before M4): an inline error above the cards with "Poskusi znova", focus moves to it. Nothing was charged; the cards stay as they are.']);
+  return a.concat(['A plan button opens Stripe Checkout (test) for that plan. The withdrawal right and "start at once" consent are asked there (Q6).'])}},
+{id:'f2',title:'Back from Stripe Checkout',sub:'The return URL /premium?checkout=success or =cancel.',
+ states:[['confirming','Confirming'],['active','Confirmed'],['late','Confirmation late'],['cancel','Checkout cancelled']],
+ render:function(v,s){var d=v==='desktop';
+  if(s==='cancel')return page(d,{},hero()+lists(d)+plans(d,{anchor:'lands here: /premium?checkout=cancel#paketi',note:note('','info','<p>'+C.cancelled+'</p>',{role:'status',ring:true,to:'neutral note; focus moves here'})})+good());
+  var card=s==='confirming'?stat('confirming',{to:'polite status; entitlement read every 1 s, at most 10 s (proposal)'}):s==='late'?stat('late',{ring:true,to:'after 10 s without the entitlement'}):stat('yearly',{receipt:true,ring:true,to:'focus to the card; premium_subscribe fires once (consent only)'});
+  return page(d,{},hero()+card+lists(d,{have:s==='active'})+good())},
+ notes:function(s){
+  if(s==='confirming')return ['Stripe sends the person back to <code>/premium?checkout=success</code>. Until the webhook has made the entitlement active, the status card shows the confirming line (polite status). The plan cards are hidden, so nobody pays twice.','The page reads the entitlement (proposal: every 1 s, at most 10 s). The webhook applies it even if the person closes the tab (FR-020 edge).'];
+  if(s==='late')return ['<b>No entitlement after 10 s:</b> Checkout finished but the webhook is late. A calm card, no error colour, "Osveži" as a text button and never a plan button, so the person does not pay twice.','When the entitlement arrives (refresh or later visit), the page shows the confirmed state.'];
+  if(s==='active')return ['<b>Confirmed</b> (AC#3): the status card with the tonal pill "Premium Zaščita", plan, price, renewal date with the reminder, and the free Boost. Focus moves to the card and it is announced once. The receipt goes by email (R-020.4).','<code>premium_subscribe</code> {plan, value, currency EUR} fires once here, only with analytics consent (R-026.10). Where it is sent from is the tech lead’s call (C12).','The second list heading becomes "Kaj imate s Premiumom". No upsell.'];
+  return ['<b>Back without paying:</b> <code>/premium?checkout=cancel#paketi</code> lands at the plans with a neutral note above the cards; focus moves to it. No guilt, no discount offer.']}},
+{id:'f3',title:'Premium user opens the plan page',sub:'The status card replaces the plans and sits under the lead.',
+ states:[['yearly','Yearly'],['monthly','Monthly'],['canceling','Cancelled, runs to the end'],['past_due','Payment failed'],['ended','Ended']],
+ render:function(v,s){var d=v==='desktop';
+  if(s==='ended')return page(d,{},hero()+note('','info','<p><b>'+C.endH+'</b></p><p class="mt4">'+C.endB+'</p>',{to:'R-026.4: data kept, Premium features locked'})+lists(d)+plans(d,{})+good());
+  var to={yearly:'renewal date and the 7-day reminder (AC#4)',monthly:'free Boost unlock date (OQ-004 default)',canceling:'resumes the same plan, no new checkout',past_due:'warning colours, not red; the one primary on the page'}[s];
+  return page(d,{},hero()+stat(s,{to:to})+lists(d,{have:true})+good())},
+ notes:function(s){var a=['A Premium user never sees plan buttons. The status card holds plan, price, the renewal or end date and the free Boost; "Upravljaj naročnino" (secondary) goes to Settings › Naročnina (F4). The lists stay in the same order.'];
+  if(s==='monthly')return a.concat(['Monthly: the next payment date, and the free Boost date after the 3rd paid month (OQ-004 default, Q3). At most 1 free Boost per 12 months, never doubled by a plan switch.']);
+  if(s==='canceling')return a.concat(['<b>Cancelled at period end:</b> Premium runs to the date shown. "Nadaljuj naročnino" resumes the same plan without a new checkout. The tonal pill stays: the person still has Premium.']);
+  if(s==='past_due')return a.concat(['<b>Payment failed:</b> Stripe retries. Warning icon and word, not red. "Posodobi kartico" opens the Stripe customer portal. Premium stays on until the date shown (proposal; the grace period is the tech lead’s, TASK-52).']);
+  if(s==='ended')return ['<b>Ended</b> (R-026.4): a note under the lead says what is kept and what is locked, then the free page with the plans again. No discount and no "come back" offer (Q7).','Extra pets stay read-only for 90 days; ads return; statistics, translation and the heatmap lock while counting continues.'];
+  return a.concat(['Yearly: the renewal date and the reminder 7 days before (AC#4).'])}},
+{id:'f4',title:'Settings: Naročnina',sub:'P13 account screen, new section. Switch, manage and cancel (AC#3, AC#6). Other sections drawn as boxes.',
+ states:[['block','Section'],['dialog','Cancel dialog'],['done','After cancelling']],
+ render:function(v,s){var d=v==='desktop';
+  var ov=s==='dialog'?dialog():s==='done'?toast():'';
+  return page(d,{overlay:ov},settings(d,s))},
+ notes:function(s){
+  if(s==='dialog')return ['<b>One confirmation</b> (Q4): the title is a first-person question, as in the P8 archive dialog. The main action "Prekliči naročnino" (primary) and the quiet "Obdrži Premium" (text). No confirmshaming, no retention offer.','Dialog per system 10.9: <code>popover</code>, 440 px, focus trapped, Esc closes and keeps Premium; focus returns to "Prekliči naročnino" in the section.'];
+  if(s==='done')return ['<b>After cancelling:</b> cancel at period end (Stripe <code>cancel_at_period_end</code>). A toast says until when Premium runs; the section shows "Preklicano" with "Nadaljuj naročnino". A confirmation email follows (proposal, content strategist).'];
+  return ['<b>Subscription section</b> in the P13 account screen (where exactly: P13 slice). "Prekliči naročnino" is a secondary button, as easy to find as the plan buttons (Q4, AC#6).','"Zamenjaj paket" and "Plačila in računi" open the Stripe customer portal in the same tab (R-020.3); a switch takes effect at the end of the period (Q5).','A free user sees here one line, "Brez naročnine", and a text link to the plan page (not drawn). Organisation members see no section (rule 9).']}}
+];
+
+/* ---------- build ---------- */
+var host=document.getElementById('frames'),idx=document.getElementById('findex');
+F.forEach(function(f,i){f.n=i+1;
+ var li=document.createElement('li');li.innerHTML='<a href="#'+f.id+'">F'+f.n+' '+f.title.split(':')[0]+'</a>';idx.appendChild(li);
+ var segS='';if(f.states){segS='<div class="seg" role="group" aria-label="State" data-key="state">';f.states.forEach(function(s,j){segS+='<button type="button" data-v="'+s[0]+'" aria-pressed="'+(j===0)+'">'+s[1]+'</button>'});segS+='</div>'}
+ var sec=document.createElement('section');sec.className='frame';sec.id=f.id;sec.dataset.view='desktop';sec.dataset.fit='fit';if(f.states)sec.dataset.state=f.states[0][0];sec.setAttribute('aria-labelledby',f.id+'-t');
+ sec.innerHTML='<div class="bar"><h3 class="ttl" id="'+f.id+'-t">F'+f.n+' '+f.title+'<small>'+f.sub+'</small></h3>'+segS
+  +'<div class="seg" role="group" aria-label="Viewport" data-key="view"><button type="button" data-v="desktop" aria-pressed="true">Desktop 1200</button><button type="button" data-v="mobile" aria-pressed="false">Mobile 390</button></div>'
+  +'<button type="button" class="tbtn nofit" aria-pressed="false">Fit to width</button></div>'
+  +'<div class="stage"><div class="vp" data-v="desktop" data-w="1200"><div class="dev d" lang="sl"></div></div><div class="vp" data-v="mobile" data-w="390"><div class="dev m" lang="sl"></div></div></div>'
+  +'<div class="notes"><ul></ul></div>';
+ host.appendChild(sec);f.el=sec;draw(f)});
+function draw(f){var s=f.el.dataset.state;f.el.querySelectorAll('.vp').forEach(function(vp){vp.firstElementChild.innerHTML=f.render(vp.dataset.v,s)});
+ f.el.querySelector('.notes ul').innerHTML=f.notes(s).map(function(x){return '<li>'+x+'</li>'}).join('')}
+
+/* ---------- controls (as in the earlier wireframes) ---------- */
+var root=document.documentElement;
+function sget(k){try{return localStorage.getItem(k)}catch(e){return null}}function sset(k,v){try{localStorage.setItem(k,v)}catch(e){}}
+var th=sget('wf-theme');if(th==='light'||th==='dark')root.setAttribute('data-theme',th);
+var tb=document.getElementById('theme');
+function label(){tb.textContent='Theme: '+(root.getAttribute('data-theme')||'auto')}
+label();tb.addEventListener('click',function(){var v=root.getAttribute('data-theme');var nx=v===null?'light':v==='light'?'dark':null;if(nx){root.setAttribute('data-theme',nx);sset('wf-theme',nx)}else{root.removeAttribute('data-theme');sset('wf-theme','auto')}label();fitAll()});
+var nt=document.getElementById('notes');nt.addEventListener('change',function(){document.body.classList.toggle('no-notes',!nt.checked);fitAll()});
+function fit(f){var v=f.dataset.view;var vp=f.querySelector('.vp[data-v="'+v+'"]');if(!vp)return;var dev=vp.firstElementChild;var w=+vp.dataset.w;var st=f.querySelector('.stage');var avail=st.clientWidth-24;
+ if(f.dataset.fit==='full'){dev.style.width=w+'px';dev.style.transform='';vp.style.width='';vp.style.height='';return}
+ var s=Math.min(1,avail/w);dev.style.width=w+'px';dev.style.transform='scale('+s+')';vp.style.width=(w*s)+'px';vp.style.height=(dev.offsetHeight*s)+'px'}
+function fitAll(){document.querySelectorAll('.frame').forEach(fit)}
+function setView(f,v){f.dataset.view=v;f.querySelectorAll('.seg[data-key=view] button').forEach(function(x){x.setAttribute('aria-pressed',String(x.dataset.v===v))});fit(f)}
+F.forEach(function(fr){var f=fr.el;
+ f.querySelectorAll('.seg[data-key=view] button').forEach(function(b){b.addEventListener('click',function(){setView(f,b.dataset.v)})});
+ f.querySelectorAll('.seg[data-key=state] button').forEach(function(b){b.addEventListener('click',function(){f.dataset.state=b.dataset.v;f.querySelectorAll('.seg[data-key=state] button').forEach(function(x){x.setAttribute('aria-pressed',String(x===b))});draw(fr);fit(f)})});
+ var nf=f.querySelector('.nofit');nf.addEventListener('click',function(){var full=f.dataset.fit==='full';f.dataset.fit=full?'fit':'full';nf.textContent=full?'Fit to width':'Fit: 100%';nf.setAttribute('aria-pressed',String(!full));fit(f)});
+ if(window.ResizeObserver){f.querySelectorAll('.dev').forEach(function(d){new ResizeObserver(function(){fit(f)}).observe(d)})}
+});
+document.querySelectorAll('#allview button').forEach(function(b){b.addEventListener('click',function(){F.forEach(function(fr){setView(fr.el,b.dataset.v)});document.querySelectorAll('#allview button').forEach(function(x){x.setAttribute('aria-pressed',String(x===b))})})});
+window.addEventListener('resize',fitAll);window.addEventListener('load',fitAll);fitAll();
+})();
+</script>
+</body>
+</html>

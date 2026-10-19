@@ -1,10 +1,11 @@
 ---
 id: TASK-54.1
 title: 'Wireframe: Premium plan page, yearly first (approval gate)'
-status: To Do
+status: In Progress
 assignee:
   - '@design-lead'
 created_date: '2026-10-19 14:33'
+updated_date: '2026-10-19 18:47'
 labels:
   - design
   - wireframe
@@ -14,6 +15,7 @@ references:
   - docs/02-product-requirements.md
   - docs/03-design-specification.md
   - docs/design/system.md
+  - docs/design/wireframes/P24-premium-plan.html
 parent_task_id: TASK-54
 priority: medium
 ordinal: 420200
@@ -29,6 +31,18 @@ Wireframe of the Premium plan page (TASK-54, FR-026 R-026.1), web 1440 and mobil
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 The plan page wireframe (desktop and mobile) is in docs/design/wireframes/ and linked from this task, with the data each block needs (prices from config, entitlement state)
+- [x] #1 The plan page wireframe (desktop and mobile) is in docs/design/wireframes/ and linked from this task, with the data each block needs (prices from config, entitlement state)
 - [ ] #2 A person approved it; their name, the date and the approved version are in this task's notes
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+v1 wireframe for the owner (2026-10-19): docs/design/wireframes/P24-premium-plan.html (page id P24, as proposed in CH-646). Web only, Desktop 1200 and Mobile 390 (owner 2026-10-19; the description's 1440 is superseded). Slovenian copy: proposals from the FR-026 labels, no keys yet; the P24 copy slice (CH-639, not yet on main) replaces them.
+
+Frames: F1 plan page, free user (free, signed out, opening checkout, checkout unavailable); F2 back from Stripe Checkout (confirming, confirmed, late, cancelled); F3 Premium user (yearly, monthly, cancelled to period end, payment failed, ended); F4 Settings > Naročnina (section, cancel dialog, after cancelling). The data each block needs is the table in the wireframe: prices from the price config (C13, CH-635), derived per-month and saving computed from it, entitlement and subscription state from TASK-52.
+
+Open questions Q1 to Q7 at the top of the file: order of lists and plans; both plan buttons primary; monthly free Boost (OQ-004); own cancel button vs Stripe portal (R-020.3); plan switch at period end; withdrawal consent in Stripe Checkout (lawyer); ended state without a win-back offer.
+
+APPROVAL: pending. No person has approved this wireframe yet. Record who, the date and the version approved here when they do.
+<!-- SECTION:NOTES:END -->
