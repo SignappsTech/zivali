@@ -38,3 +38,4 @@ Branch: agent/task-18.10-ad-200-text from main
 <!-- AC:BEGIN -->
 - [ ] #1 At 390 and 320 px with root text at 200%, /r/<code> with the inline (detail) ad has no horizontal page scroll in Chromium and WebKit: the ad's CTA wraps or the image/text stack
 <!-- AC:END -->
+Branch: agent/task-18.10-r-200-text

@@ -80,4 +80,11 @@ describe('Gallery photo frames (TASK-114.43)', () => {
 		expect(thumbs).toHaveLength(2);
 		for (const thumb of thumbs) expect(thumb.className).toContain('object-cover object-[50%_10%]');
 	});
+
+	it('wraps the controls under the thumbnails instead of overflowing at 200% text (TASK-18.11)', () => {
+		const { container } = show(photos);
+		const row = container.querySelector('ul')!;
+		expect(row.parentElement!.className).toContain('flex-wrap');
+		expect(row.className).toContain('basis-24');
+	});
 });

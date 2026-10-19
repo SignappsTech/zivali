@@ -21,7 +21,7 @@ const labelClass = 'block text-xs leading-4 font-bold text-muted-foreground';
 const titleClass = 'block font-display text-lg leading-6 font-semibold tracking-[-0.01em]';
 const bodyClass = 'block text-base leading-6';
 // The unit is the link: this is its visible text button, not a second target.
-const buttonClass = 'inline-flex min-h-11 items-center -ml-3 px-3 font-bold text-primary';
+const buttonClass = 'inline-flex min-h-11 items-center -ml-3 px-3 font-bold break-words text-primary';
 // The image boxes: the 1:1 crop of the 4:3 file (feed 64, detail and reunited 96), the sidebar's 4:3 on top.
 const BOX = { feed: 'size-16', inline: 'size-24', sidebar: 'aspect-[4/3] w-full' } as const;
 const PX = { feed: [64, 64], inline: [96, 96], sidebar: [288, 216] } as const;
@@ -100,9 +100,9 @@ export function AdView({
 		) : (
 			<>
 				{label}
-				<span className="mt-2 flex items-start gap-4">
+				<span className="mt-2 flex flex-wrap items-start gap-4">
 					<AdImage ad={ad} box="inline" />
-					<span className="block min-w-0 flex-1">
+					<span className="block min-w-0 flex-1 basis-32">
 						<span className={cn(titleClass, 'line-clamp-2 lg:line-clamp-1')}>{ad.title}</span>
 						<span className={cn(bodyClass, 'line-clamp-2')}>{ad.body}</span>
 						<span className="mt-1 block">{cta}</span>

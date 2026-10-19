@@ -80,8 +80,8 @@ export function Gallery({ photos, className }: { photos: PublicPhoto[]; classNam
 				/>
 			)}
 			{total > 1 && (
-				<div className="mt-4 flex items-center gap-3">
-					<ul className="-m-1 flex min-w-0 gap-3 overflow-x-auto p-1">
+				<div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2">
+					<ul className="-m-1 flex min-w-0 flex-1 basis-24 gap-3 overflow-x-auto p-1">
 						{photos.map((thumb, i) => (
 							<li key={thumb.url} className="shrink-0">
 								<button
