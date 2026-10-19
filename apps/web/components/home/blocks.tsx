@@ -116,12 +116,15 @@ const pinAt = ({ lat, lng }: { lat: number; lng: number }) => ({
 });
 
 type Pin = ReturnType<typeof pinAt> & { id: string; status: Status };
-/** Pins that overlap (closer than two halos) join one group, transitively, in the order the reports came. */
+/**
+ * Pins closer than a pin plus a disc join one group, transitively, in the order the reports came: a pin that would
+ * touch the cluster disc goes into it rather than under it.
+ */
 function groupPins(pins: Pin[]) {
 	const groups: Pin[][] = [];
 	for (const pin of pins) {
 		const [first, ...rest] = groups.filter((group) =>
-			group.some((other) => Math.hypot(other.x - pin.x, other.y - pin.y) < 2 * PIN_R)
+			group.some((other) => Math.hypot(other.x - pin.x, other.y - pin.y) < PIN_R + CLUSTER_R)
 		);
 		if (!first) groups.push([pin]);
 		else {

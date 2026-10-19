@@ -132,7 +132,10 @@ describe('ConsentBanner', () => {
 		const [reject, accept, customise] = ['Reject all', 'Accept all', 'Customise'].map(button);
 		expect([...dialog.querySelectorAll('button')]).toEqual([reject, accept, customise]);
 		expect(accept!.className).toBe(reject!.className);
-		expect(reject!.className.split(' ')).toContain('bg-secondary');
+		// A label never wraps: a too-narrow row moves Customise under the pair instead.
+		expect(reject!.className.split(' ')).toEqual(
+			expect.arrayContaining(['bg-secondary', 'whitespace-nowrap', 'min-w-30'])
+		);
 		expect(customise!.className.split(' ')).not.toContain('bg-secondary');
 		expect(customise!.className.split(' ')).toEqual(expect.arrayContaining(['text-primary', 'min-h-11']));
 		// Reject and Accept are one pair (side by side), Customise follows it in the same row while it fits.

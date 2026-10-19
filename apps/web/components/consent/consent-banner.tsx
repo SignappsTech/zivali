@@ -10,9 +10,10 @@ import type { ConsentCopy } from './copy';
 /** The footer's "Cookie settings" button dispatches this on `window`; the banner opens the Customise view. */
 export const OPEN_COOKIE_SETTINGS = 'zz:cookie-settings';
 
-// P17: three equal secondary buttons (none is primary), no animation, plain classes: no Radix, no cva, a small chunk.
+// P17: equal secondary buttons (none is primary), no animation, plain classes: no Radix, no cva, a small chunk. Labels
+// never wrap; the 7.5rem floor keeps a pair equal (TASK-115.11).
 const button =
-	'inline-flex min-h-11 flex-1 cursor-pointer items-center justify-center rounded-button bg-secondary px-4 text-center text-base font-bold text-secondary-foreground hover:bg-secondary-hover active:bg-secondary-pressed focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ring';
+	'inline-flex min-h-11 min-w-30 flex-1 cursor-pointer items-center justify-center rounded-button bg-secondary px-4 text-center text-base font-bold whitespace-nowrap text-secondary-foreground hover:bg-secondary-hover active:bg-secondary-pressed focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ring';
 const textButton =
 	'-ml-3 inline-flex min-h-11 cursor-pointer items-center rounded-button px-3 text-base font-bold text-primary hover:bg-foreground/10 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ring';
 const sw =
@@ -161,11 +162,11 @@ export function ConsentBanner({
 								</NextLink>
 							</p>
 							{/* Reject and Accept side by side and equal, Customise a text button after them (TASK-115.11: at
-							    390 the banner was 46 % of the screen and covered the home chooser). One row from 390 px, in
-							    both languages; the pair's 15rem basis sends Customise under it on narrower screens or with
-							    larger text, and the pair itself wraps before a label would overflow (200 % text). */}
+							    390 the banner was 46 % of the screen and covered the home chooser). The pair's basis is two
+							    7.5rem floors and the gap, so where the row is too narrow Customise drops under the pair
+							    instead of a label wrapping (one row at 390 in SL); with larger text the pair itself stacks. */}
 							<div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1">
-								<div className="flex flex-1 basis-60 flex-wrap gap-2 lg:gap-3">
+								<div className="flex flex-1 basis-62 flex-wrap gap-2 lg:gap-3">
 									<button type="button" className={button} onClick={() => choose(false)}>
 										{t('reject_all')}
 									</button>

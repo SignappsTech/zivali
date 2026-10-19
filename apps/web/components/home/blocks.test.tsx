@@ -175,6 +175,37 @@ describe('RecentReports (T1 layout B, block 2)', () => {
 		expect(rows()).toHaveLength(6);
 	});
 
+	it('the map teaser: a pin that would touch the disc joins it; the next single pin stays clear of it', async () => {
+		answer({
+			items: [
+				// Ljubljana (159 162) and (159 161) overlap; 28 units east (187 162) would sit under the 16-unit disc.
+				report('Code0001', { area: { lat: 46.05, lng: 14.51, radius_m: 300 } }),
+				report('Code0002', { area: { lat: 46.06, lng: 14.5, radius_m: 300 } }),
+				report('Code0003', { area: { lat: 46.05, lng: 14.841, radius_m: 300 } }),
+				// 40 units west (119 162): a single pin next to the cluster.
+				report('Code0004', { area: { lat: 46.05, lng: 14.037, radius_m: 300 } }),
+			],
+			next_cursor: null,
+			total_estimate: 4,
+		});
+
+		show('sl', await RecentReports({ locale: 'sl' }));
+
+		const [teaser] = screen.getAllByRole('link', { name: sl.pages.home.near_open_map });
+		const [cluster, ...others] = [...teaser!.querySelectorAll('[data-cluster]')];
+		expect(others).toEqual([]);
+		expect([cluster?.getAttribute('data-cluster'), cluster?.getAttribute('transform')]).toEqual([
+			'3',
+			'translate(168 162)',
+		]);
+		const pins = [...teaser!.querySelectorAll('[data-pin]')];
+		expect(pins.map((pin) => pin.getAttribute('transform'))).toEqual(['translate(119 162)']);
+		// Disc (16) and pin (13) halos never touch: 49 units apart.
+		const [cx, cy] = cluster!.getAttribute('transform')!.match(/\d+/g)!.map(Number);
+		const [px, py] = pins[0]!.getAttribute('transform')!.match(/\d+/g)!.map(Number);
+		expect(Math.hypot(cx! - px!, cy! - py!)).toBeGreaterThanOrEqual(16 + 13);
+	});
+
 	it('the map teaser: six reports in one place are one disc with 6, kept inside the crop-safe box', async () => {
 		answer({
 			items: Array.from({ length: 6 }, (_, i) =>
