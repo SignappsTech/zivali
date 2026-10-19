@@ -3,10 +3,11 @@ id: TASK-114.32
 title: >-
   Report writes queue match.report on relevant updates and photo.publish on
   every visibility or photo change (CH-180, CH-191)
-status: To Do
+status: In Progress
 assignee:
   - '@backend-dev'
 created_date: '2026-10-18 22:06'
+updated_date: '2026-10-19 00:57'
 labels:
   - be
   - bug
