@@ -253,6 +253,13 @@ describe('ManagePage (P7, C7)', () => {
 		expect(screen.getByRole('button', { name: 'Zaključi prijavo' })).toBeTruthy();
 	});
 
+	it('offers Contact support by mailto on the under-review note (TASK-25.7)', async () => {
+		open('good');
+		show(<ManagePage />, { 'GET /v1/reports/:code': { ...ownerReport, moderation_state: 'hidden' } });
+		const link = await screen.findByRole('link', { name: sl.report.owner_hidden_contact });
+		expect(link.getAttribute('href')).toBe('mailto:podpora@najdimo.si');
+	});
+
 	it('offers no reopen for a report removed by moderation', async () => {
 		open('good');
 		const closedAt = new Date(Date.now() - 86_400_000).toISOString();

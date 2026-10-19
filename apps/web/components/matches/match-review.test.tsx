@@ -522,6 +522,22 @@ describe('P9 matches-note slot', () => {
 		expect(screen.queryByRole('status')).toBeNull();
 	});
 
+	it('the hidden note says why and offers Contact support by mailto (TASK-25.7)', () => {
+		state.list = { data: { items } };
+		note({ ...mine, moderation_state: 'hidden' });
+		const status = screen.getByRole('status');
+		expect(status.textContent).toContain(sl.report.owner_hidden);
+		expect(within(status).getByRole('link', { name: sl.report.owner_hidden_contact }).getAttribute('href')).toBe(
+			'mailto:podpora@najdimo.si'
+		);
+	});
+
+	it('the held note has no support action', () => {
+		state.list = { data: { items } };
+		note({ ...mine, moderation_state: 'held' });
+		expect(screen.queryByRole('link')).toBeNull();
+	});
+
 	it('the held note wins over the matches', () => {
 		state.list = { data: { items } };
 		note({ ...mine, moderation_state: 'held' });
