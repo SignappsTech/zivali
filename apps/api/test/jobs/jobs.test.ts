@@ -5,6 +5,7 @@ import { randomUUID } from 'node:crypto';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { handlers, runJob, type JobCtx } from '../../jobs/index.ts';
+import { config } from '../../lib/config.ts';
 import { systemCtx } from '../../lib/ctx.ts';
 import {
 	createSchedules,
@@ -110,6 +111,51 @@ describe('worker', () => {
 			expect(options['ai.extract']).toEqual({ localConcurrency: 4 });
 			expect(options['photo.embed']).toEqual({ localConcurrency: 1 });
 			expect(options['match.report']).toEqual({ localConcurrency: 1 });
+		} finally {
+			spy.mockRestore();
+		}
+	});
+
+	it('polls notify.send with NOTIFY_SEND_CONCURRENCY workers (default 4), 10 jobs per fetch, in bursts (TASK-23.5)', async () => {
+		const boss = await startJobs();
+		const spy = vi.spyOn(boss, 'work').mockResolvedValue('');
+		try {
+			await work(async () => {});
+			const [, options] = spy.mock.calls.find(([queue]) => queue === 'notify.send')!;
+			expect(config.NOTIFY_SEND_CONCURRENCY).toBe(4);
+			expect(options).toEqual({
+				localConcurrency: config.NOTIFY_SEND_CONCURRENCY,
+				batchSize: 10,
+				burstWhenBatchFull: true,
+				perJobResults: true,
+			});
+		} finally {
+			spy.mockRestore();
+		}
+	});
+
+	it('runs a notify.send batch one job at a time and settles each job on its own', async () => {
+		const boss = await startJobs();
+		const spy = vi.spyOn(boss, 'work').mockResolvedValue('');
+		let active = 0;
+		let peak = 0;
+		const boom = new Error('boom');
+		try {
+			await work(async (_queue, job) => {
+				peak = Math.max(peak, ++active);
+				await new Promise((resolve) => setTimeout(resolve, 5));
+				active--;
+				if (job.id === 'b') throw boom;
+			});
+			const handler = spy.mock.calls.find(([queue]) => queue === 'notify.send')![2] as unknown as (
+				batch: { id: string }[]
+			) => Promise<unknown>;
+			expect(await handler([{ id: 'a' }, { id: 'b' }, { id: 'c' }])).toEqual([
+				{ id: 'a', status: 'completed' },
+				{ id: 'b', status: 'failed', output: boom },
+				{ id: 'c', status: 'completed' },
+			]);
+			expect(peak).toBe(1);
 		} finally {
 			spy.mockRestore();
 		}
