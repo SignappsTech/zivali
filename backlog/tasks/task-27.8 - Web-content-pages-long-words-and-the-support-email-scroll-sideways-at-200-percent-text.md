@@ -3,10 +3,11 @@ id: TASK-27.8
 title: >-
   Web content pages: long words and the support email scroll sideways at 200
   percent text
-status: To Do
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-19 20:29'
+updated_date: '2026-10-19 20:50'
 labels:
   - bug
   - 'est:XS'
