@@ -210,6 +210,16 @@ describe('AdSlot (P21 web)', () => {
 		expect(screen.queryByText(served.cta)).toBeNull();
 	});
 
+	it('detail: at 200% text the CTA wraps and the text column drops under the image (TASK-18.10)', async () => {
+		show(<AdSlot slot="detail" />);
+		const unit = await screen.findByRole('link', { name: name(served, 'sl', true) });
+		const cta = screen.getByText(served.cta);
+		expect(cta.className).toContain('break-words');
+		expect(cta.parentElement?.parentElement?.className).toContain('basis-32');
+		expect(cta.parentElement?.parentElement?.parentElement?.className).toContain('flex-wrap');
+		expect(unit).toBeTruthy();
+	});
+
 	it('a sponsor without an image is text-only; a house ad shows the decorative illustration; no button text → "Več o tem"', async () => {
 		answer({ ...served, image_url: null, cta: '' });
 		show(<AdSlot slot="detail" />);

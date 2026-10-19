@@ -37,3 +37,4 @@ Branch: agent/task-18.11-gallery-320 from main
 <!-- AC:BEGIN -->
 - [ ] #1 At 320 px with root text at 200%, the gallery controls of /r/zvsmkB5v (5 photos) end inside the viewport in Chromium and WebKit (no sideways scroll from the gallery)
 <!-- AC:END -->
+Branch: agent/task-18.10-r-200-text
