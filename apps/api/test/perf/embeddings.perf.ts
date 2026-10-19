@@ -118,7 +118,11 @@ beforeAll(async () => {
 	photoIds = (await prisma.photos.findMany({ where: { owner_id: OWNER }, select: { id: true } })).map((p) => p.id);
 });
 
-afterAll(cleanup);
+afterAll(async () => {
+	await cleanup();
+	// Lets the next run's inserts reuse the deleted vectors' space in the HNSW index instead of growing it.
+	await prisma.$executeRaw`vacuum app.photo_embeddings`;
+});
 
 describe('vector queries at 50k photos (C20 §Queries)', () => {
 	it('nearest: p95 < 300 ms over radii 5–250 km, through the HNSW index', async () => {
@@ -138,21 +142,22 @@ describe('vector queries at 50k photos (C20 §Queries)', () => {
 		process.stdout.write(`[perf] EXPLAIN nearest (5 km):\n${local}\n`);
 		expect(hnswLine(local)).toContain('never executed');
 
+		const randomInput = (radiusKm: number): NearestInput => ({
+			photoId: pick(photoIds),
+			species: pick(['dog', 'cat'] as const),
+			point: randomPoint(),
+			radiusKm,
+			types: Math.random() < 0.5 ? ['found', 'sighted'] : ['lost'],
+			k: 20,
+		});
+		// Warm-up, unmeasured: the first walks read the 400 MB index from disk (shared_buffers is 128 MB locally).
+		for (const radiusKm of RADII_KM) await EmbeddingsDao.nearest(randomInput(radiusKm), MODEL);
 		const ms: number[] = [];
 		for (const radiusKm of RADII_KM) {
 			const perRadius: number[] = [];
 			for (let i = 0; i < RUNS_PER_RADIUS; i++) {
-				const lost = Math.random() < 0.5;
-				const input: NearestInput = {
-					photoId: pick(photoIds),
-					species: pick(['dog', 'cat'] as const),
-					point: randomPoint(),
-					radiusKm,
-					types: lost ? ['found', 'sighted'] : ['lost'],
-					k: 20,
-				};
 				const t = performance.now();
-				await EmbeddingsDao.nearest(input, MODEL);
+				await EmbeddingsDao.nearest(randomInput(radiusKm), MODEL);
 				perRadius.push(performance.now() - t);
 			}
 			process.stdout.write(`[perf] nearest ${radiusKm} km: p95 ${p95(perRadius).toFixed(1)} ms\n`);

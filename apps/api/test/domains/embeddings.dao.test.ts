@@ -75,9 +75,11 @@ async function photo(
 }
 
 const settings = (tx: Prisma.TransactionClient) =>
-	tx.$queryRaw<{ timeout: string; ef: string; iterative: string }[]>`
+	tx.$queryRaw<{ timeout: string; ef: string; iterative: string; sort: string }[]>`
 		select current_setting('statement_timeout') as timeout, current_setting('hnsw.ef_search', true) as ef,
-			current_setting('hnsw.iterative_scan', true) as iterative`.then(([row]) => row!);
+			current_setting('hnsw.iterative_scan', true) as iterative, current_setting('enable_sort') as sort`.then(
+		([row]) => row!
+	);
 
 beforeAll(async () => {
 	await prisma.profiles.create({ data: { id: owner } });
@@ -216,20 +218,26 @@ describe('nearest({ photoId, species, point, radiusKm, types, k }, model)', () =
 			await expect(EmbeddingsDao.nearest(input({ radiusKm }), MODEL)).rejects.toThrow(RangeError);
 	});
 
-	it('scans with hnsw.ef_search 100 and relaxed iterative scans on pgvector >= 0.8 (the local stack)', async () => {
+	it('scans with hnsw.ef_search 100, relaxed iterative scans and sorts priced out on pgvector >= 0.8 (local stack)', async () => {
 		expect(Number((await pgvectorVersion()).split('.')[1])).toBeGreaterThanOrEqual(8);
 		const inside = await prisma.$transaction(async (tx) => {
 			await EmbeddingsDao.nearest(input(), MODEL, tx);
 			return settings(tx);
 		});
-		expect(inside).toMatchObject({ ef: '100', iterative: 'relaxed_order' });
+		expect(inside).toMatchObject({ ef: '100', iterative: 'relaxed_order', sort: 'off' });
+		const after = await prisma.$queryRaw<{ sort: string }[]>`select current_setting('enable_sort') as sort`;
+		expect(after[0]!.sort).toBe('on');
 	});
 
 	it('falls back to ef_search 200 without iterative scans before pgvector 0.8', () => {
 		const sql = (version: string) => hnswSettings(version).map((s) => s.sql);
-		expect(sql('0.7.4')).toEqual(['set local hnsw.ef_search = 200']);
+		expect(sql('0.7.4')).toEqual(['set local hnsw.ef_search = 200', 'set local enable_sort = off']);
 		for (const v of ['0.8.0', '0.8.2', '0.10.1', '1.0.0'])
-			expect(sql(v)).toEqual(['set local hnsw.ef_search = 100', 'set local hnsw.iterative_scan = relaxed_order']);
+			expect(sql(v)).toEqual([
+				'set local hnsw.ef_search = 100',
+				'set local hnsw.iterative_scan = relaxed_order',
+				'set local enable_sort = off',
+			]);
 	});
 
 	const wide: Partial<NearestInput> = { types: ['lost', 'found'], radiusKm: 200 };
@@ -239,13 +247,10 @@ describe('nearest({ photoId, species, point, radiusKm, types, k }, model)', () =
 			for (const setting of hnswSettings(await pgvectorVersion(tx))) await tx.$executeRaw(setting);
 			return tx.$queryRaw<{ report_id: string; photo_id: string }[]>(nearestSql(input(wide), MODEL, exactMax));
 		});
-	/** The EXPLAIN ANALYZE line of the HNSW scan. Few rows here, so the planner would rather sort them: with sorts and
-	 * sequential scans priced out, the remaining ordered path is the index (the 50k perf test shows it unaided). */
+	/** The EXPLAIN ANALYZE line of the HNSW scan, under nearest's settings (also on these few rows). */
 	const hnswLine = (exactMax: number) =>
 		prisma.$transaction(async (tx) => {
 			for (const setting of hnswSettings(await pgvectorVersion(tx))) await tx.$executeRaw(setting);
-			await tx.$executeRaw`set local enable_seqscan = off`;
-			await tx.$executeRaw`set local enable_sort = off`;
 			const rows = await tx.$queryRaw<{ 'QUERY PLAN': string }[]>(
 				Prisma.sql`explain analyze ${nearestSql(input(wide), MODEL, exactMax)}`
 			);

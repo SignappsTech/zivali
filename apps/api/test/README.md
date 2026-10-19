@@ -23,6 +23,14 @@ clear of the collab fixtures), cleans up with set-based deletes (jobs, deliverie
 with a 120 s timeout, and the 1000-subscriber test cleans up its own users in a `finally`. `global-setup` also deletes the
 `alert_deliveries` and `alert_subscriptions` of profiles without an `auth.users` row (test users; profiles are kept), same host guard.
 
+## Performance checks (TASK-42.2)
+
+`pnpm --filter api test:perf` (`vitest.perf.config.ts`, files `test/perf/*.perf.ts`) runs on demand, never in `pnpm test` or
+`pnpm verify`, and only against a local database (a worktree passes its scratch `TEST_DATABASE_URL`). `embeddings.perf.ts` seeds
+10k reports with 50k mock vectors (about 3–4 min, mostly HNSW inserts), checks `nearest` p95 < 300 ms over 5–250 km and
+`similarity` for 1000 reports × 5 photos < 1 s, prints both plans and deletes its seed (fixed owner id, so a killed run is
+cleaned up by the next one). Wall-clock budgets are fine there; the flake rules above apply to the regular suite.
+
 ## Proposal: a dedicated test database for main (not switched yet)
 
 `jobs.test.ts` ("runs one job per queue") fails whenever another process works the same `pgboss` queues: a `pnpm dev:worker`

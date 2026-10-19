@@ -15,6 +15,13 @@ const PHOTOS_PER_REPORT = 5;
 // nearest ranks up to this many candidate photos exactly (about 30 ms) and walks the HNSW index above it, where an
 // iterative scan needs few tuples (measured at 50k photos, test/perf/embeddings.perf.ts).
 const EXACT_MAX_PHOTOS = 2000;
+/**
+ * The stored vector as an in-memory copy. A 1024-d vector is stored out of line (TOAST), and a plain column reference
+ * stays a pointer that every distance call reads again: 25k similarity pairs took 1.1 s that way, 0.18 s with the copy.
+ * subvector(v, 1, 1024) is the whole vector of the vector(1024) column (C20 §Model). It only pays where the value is
+ * produced once and compared many times (behind `offset 0` or in an InitPlan).
+ */
+const loaded = (column: Prisma.Sql) => Prisma.sql`extensions.subvector(${column}, 1, 1024)`;
 
 export async function findPhoto(id: string, tx?: Tx) {
 	const db = tx ?? prisma;
@@ -111,23 +118,36 @@ export async function similarity(
 				1 - (l.embedding operator(extensions.<=>) o.embedding) as cos,
 				l.photo_id as lost_photo_id, o.photo_id as other_photo_id
 			from (
-				select e.photo_id, e.embedding from app.photo_embeddings e join app.photos p on p.id = e.photo_id
+				select e.photo_id, ${loaded(Prisma.sql`e.embedding`)} as embedding
+				from app.photo_embeddings e join app.photos p on p.id = e.photo_id
 				where p.report_id = ${lostReportId}::uuid and e.model = ${model} and ${LIVE_PHOTO}
+				offset 0
 			) l
 			cross join (
-				select p.report_id, e.photo_id, e.embedding from app.photo_embeddings e join app.photos p on p.id = e.photo_id
+				select p.report_id, e.photo_id, ${loaded(Prisma.sql`e.embedding`)} as embedding
+				from app.photo_embeddings e join app.photos p on p.id = e.photo_id
 				where p.report_id = any(${otherReportIds}::uuid[]) and e.model = ${model} and ${LIVE_PHOTO}
+				offset 0
 			) o
 			order by o.report_id, l.embedding operator(extensions.<=>) o.embedding, l.photo_id, o.photo_id`;
 	});
 }
 
+// The planner prices a distance at one operator call, not knowing that each one reads a 4 KB vector out of TOAST, so it
+// may rank every candidate with a full scan and sort (0.7 s nationwide at 50k) instead of walking the HNSW index (40 ms).
+// With sorts priced out, the index is the only ordered path left; the other sorts of nearest are needed by every plan.
+const NO_SORT_SCAN = Prisma.sql`set local enable_sort = off`;
+
 /** `set local` settings of the HNSW scan: iterative scans need pgvector 0.8, older versions widen ef_search instead. */
 export function hnswSettings(pgvectorVersion: string): Prisma.Sql[] {
 	const [major = 0, minor = 0] = pgvectorVersion.split('.').map(Number);
 	return major > 0 || minor >= 8
-		? [Prisma.sql`set local hnsw.ef_search = 100`, Prisma.sql`set local hnsw.iterative_scan = relaxed_order`]
-		: [Prisma.sql`set local hnsw.ef_search = 200`];
+		? [
+				Prisma.sql`set local hnsw.ef_search = 100`,
+				Prisma.sql`set local hnsw.iterative_scan = relaxed_order`,
+				NO_SORT_SCAN,
+			]
+		: [Prisma.sql`set local hnsw.ef_search = 200`, NO_SORT_SCAN];
 }
 
 let version: Promise<string> | undefined;
@@ -163,7 +183,8 @@ export function nearestSql(
 	model: string,
 	exactMax = EXACT_MAX_PHOTOS
 ): Prisma.Sql {
-	const query = Prisma.sql`(select embedding from app.photo_embeddings where photo_id = ${photoId}::uuid and model = ${model})`;
+	const query = Prisma.sql`(select ${loaded(Prisma.sql`embedding`)} from app.photo_embeddings
+		where photo_id = ${photoId}::uuid and model = ${model})`;
 	const count = Prisma.sql`(select count(*) from cand)`;
 	// The report ids go in as an array so the photos are looked up through their report_id index. In the index branch
 	// `(… in cand) is true` stays a hashed filter on the HNSW scan (a plain `in` becomes a join the planner reorders);
