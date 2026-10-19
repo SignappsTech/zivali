@@ -3,11 +3,11 @@ id: TASK-114.34
 title: >-
   Align packages/types with the built schema and C9: enums, chat, Organisation
   (CH-136, CH-139)
-status: In Progress
+status: Done
 assignee:
   - '@backend-dev'
 created_date: '2026-10-18 22:07'
-updated_date: '2026-10-19 02:05'
+updated_date: '2026-10-19 02:06'
 labels:
   - be
   - 'est:XS'
