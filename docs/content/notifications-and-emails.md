@@ -2,7 +2,7 @@ source: docs/tech/contracts/C10-notifications-alerts.md; 02§FR-010, FR-012, FR-
 
 # Notifications and emails (SL source, EN second)
 
-- Version: 0.4
+- Version: 0.5
 - Date: 2026-10-19
 - Status: Draft (needs native Slovenian review and client approval)
 - Stories: TASK-22, TASK-23, TASK-26, TASK-9, TASK-32, TASK-33, TASK-54
@@ -103,7 +103,7 @@ Written as `⟦NAME⟧` in this document. The developer expands each macro verba
 | report_hidden | `report_type`, `support_email` |
 | report_reunited | `species` |
 | manage_link | `report_type` (`found`\|`sighted`), `species`, `manage_url` |
-| payment_receipt | `purpose` (`tip`\|`report_contribution`), `amount` (from `formatEur`), `paid_at` (from `formatDate`), `receipt_ref`, `is_test` (`yes`\|`no`) |
+| payment_receipt | `purpose` (`tip`\|`report_contribution`\|`support`), `amount` (from `formatEur`), `paid_at` (from `formatDate`), `receipt_ref`, `is_test` (`yes`\|`no`) |
 
 Variables the C10 payloads do not have yet are listed in the CHANGE requests at the end.
 
@@ -521,7 +521,7 @@ EN body:
 
 ## 2.12 payment_receipt
 
-Sent after a successful payment. Purposes: `tip` ("prispevek v zahvalo") and `report_contribution`. States the amount, says plainly what the money does, and says it is not a donation receipt. In-app and email; no push. Test mode while `APP_ENV` is not production.
+Sent after a successful payment. Purposes: `tip` ("prispevek v zahvalo"), `report_contribution` and `support` (support payment from the profile, CH-660). States the amount, says plainly what the money does, and says it is not a donation receipt. In-app and email; no push. Test mode while `APP_ENV` is not production.
 
 Channels: in-app, email. Deep link: `/account/payments`.
 
@@ -544,7 +544,7 @@ Channels: in-app, email. Deep link: `/account/payments`.
 
 SL body:
 
-1. `{purpose, select, tip {Prejeli smo vaš prispevek v zahvalo} other {Prejeli smo vaš prispevek ob objavi iskanja}} v višini {amount}. Hvala.`
+1. `{purpose, select, tip {Prejeli smo vaš prispevek v zahvalo} support {Prejeli smo vaš prispevek za podporo storitve} other {Prejeli smo vaš prispevek ob objavi iskanja}} v višini {amount}. Hvala.`
 2. `Prispevki pokrivajo strežnike, zemljevide in pošiljanje opozoril. Najdimo ostaja brezplačno za vse.`
 3. `Datum: {paid_at}` / `Znesek: {amount}` / `Referenca: {receipt_ref}` (three short lines)
 4. `{is_test, select, yes {Testno plačilo – kartica ni bila bremenjena.} other {}}`
@@ -552,7 +552,7 @@ SL body:
 
 EN body:
 
-1. `{purpose, select, tip {We received your thank-you contribution} other {We received your contribution for publishing your search}} of {amount}. Thank you.`
+1. `{purpose, select, tip {We received your thank-you contribution} support {We received your contribution to support the service} other {We received your contribution for publishing your search}} of {amount}. Thank you.`
 2. `Contributions cover servers, maps and sending alerts. Najdimo stays free for everyone.`
 3. `Date: {paid_at}` / `Amount: {amount}` / `Reference: {receipt_ref}` (three short lines)
 4. `{is_test, select, yes {Test payment – your card was not charged.} other {}}`
@@ -910,6 +910,7 @@ CH-164d: in EN the pronoun ⟦IT⟧ is written in code as `{species, select, oth
 
 | Version | Date | Change |
 |---|---|---|
+| 0.5 | 2026-10-19 | CH-660: §2.12 payment_receipt purpose `support` (profile support payment); email line 1 final copy, brand-free so the name is not declined; in-app copy unchanged (`support` falls to the generic "prispevek" / "contribution"). |
 | 0.2 | 2026-10-18 | CH-232: new §2.5a nearby_local (title, body, channel, iOS purpose strings). CH-291: payment_receipt fiscal lines and Slovenian-only invoice PDF strings. CH-164: footer settings link is /account/notifications, company line is the brand only until Q10, new §6.3 unsubscribe confirmation copy, note on EN placeholder parity. |
 | 0.4 | 2026-10-19 | CH-639: §2.13 `premium_renewal_reminder` (yearly Premium renewal, 7 days before). |
 | 0.3 | 2026-10-18 | CH-451: §3.3a `email_change` variant without a current address (converted anonymous finder). |

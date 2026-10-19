@@ -29,13 +29,13 @@ function firstParagraph(purpose: string, locale: 'sl' | 'en') {
 describe('payment_receipt first paragraph per purpose', () => {
 	it('support (SL) names a support contribution, not a search publication', () => {
 		const line = firstParagraph('support', 'sl');
-		expect(line).toContain('za podporo Najdimu');
+		expect(line).toContain('za podporo storitve');
 		expect(line).not.toContain('objavi iskanja');
 	});
 
 	it('support (EN) names a support contribution, not a search publication', () => {
 		const line = firstParagraph('support', 'en');
-		expect(line).toContain('to support Najdimo');
+		expect(line).toContain('to support the service');
 		expect(line).not.toContain('publishing your search');
 	});
 

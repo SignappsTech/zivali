@@ -3,7 +3,7 @@ source: 03§P3; docs/design/pages/P3-public-pages.md; 02§FR-035, §Content, SEO
 page: P3 Public pages (home and content templates)
 stories: TASK-27, TASK-72 (FR-035)
 copy-for: docs/design/pages/P3-public-pages.md
-version: 0.9
+version: 0.10
 status: Draft, native Slovenian review and client approval pending (TASK-27 AC#4)
 date: 2026-10-19
 ---
@@ -141,7 +141,7 @@ Organization JSON-LD values: `name` "Najdimo", `url` site root, `logo` the app i
 | How-it-works photo (§4; placeholder `docs/design/directions/img/cat-tabby.jpg`), key `pages.home.hero_cat_alt` | Tigrasta mačka z modro ovratnico in obeskom sedi na stopnicah | A tabby cat with a blue collar and tag sitting on stairs |
 | Map teaser (§2) | No alt of its own: the teaser is a link named `near_open_map`; pins and shapes are decorative | |
 | Empty-state illustration (`assets/empty-no-reports.png`) | (empty alt, decorative) | (empty alt) |
-| Report row photos | Rule P9 §Alt text (species, colour, status), for example "Izgubljen pes, rjave barve" | Same rule, for example "Lost dog, brown" |
+| Report row photos | `alt=""`, decorative (as built, TASK-115.13, WCAG 2.5.3 Label in Name): the row link's text already names the report, so an alt would be read twice | `alt=""` |
 | OG image | Najdimo – izgubljene in najdene živali v Sloveniji | Najdimo – lost and found pets in Slovenia |
 
 Layout B has two photos: the hero photo (decorative) and the how-it-works photo. The A mosaic and its third photo are gone, so `pages.home.hero_alt` is unused. The key name `hero_cat_alt` stays as built (it was the A mosaic's cat), so no code changes for a rename. When the licensed photo replaces the placeholder, rewrite this alt to describe it. Final photos must be licensed and must not show a real lost animal as decoration.
@@ -551,7 +551,7 @@ Oglašujete lahko tudi vi: [Oglašujte pri nas](/oglasevanje).
 
 ### Stik
 
-Pišite nam na [naročnik: e-naslov za podporo]. Podatki o podjetju so v [impresumu](/impresum).
+Pišite nam na [naročnik: e-naslov za podporo]. Naslov in druge podatke družbe najdete na strani [Podatki o podjetju](/podatki-o-podjetju).
 
 ## EN
 
@@ -578,7 +578,7 @@ You can advertise too: [Advertise with us](/en/advertise).
 
 ### Contact
 
-Write to us at [client: support email address]. Company details are in the [imprint](/en/imprint).
+Write to us at [client: support email address]. You will find our company details on the [Company information](/en/company-information) page.
 
 ## SEO
 
@@ -755,6 +755,8 @@ Alt text: none (no images; icons are decorative).
 | Key | SL | EN |
 |---|---|---|
 | shelters.back | Vsa zavetišča | All shelters |
+| shelters.maybe_served_title | Morda pristojno | Possibly responsible |
+| shelters.maybe_served_note | Ni potrjeno: občine še niso potrdile, da je to zavetišče pristojno. | Not confirmed: the municipalities have not yet confirmed that this shelter is responsible for them. |
 | shelters.page_meta | Pristojno za {count, plural, one {# občino} two {# občini} few {# občine} other {# občin}} | Serves {count, plural, one {# municipality} other {# municipalities}} |
 | shelters.phone_title | Telefon | Phone |
 | shelters.no_phone | Telefonska številka ni objavljena. Stik najdete na spletni strani zavetišča. | No phone number is published. You will find contact details on the shelter's website. |
@@ -784,6 +786,7 @@ Alt text: none (no images; icons are decorative).
 
 Notes:
 
+- Shelter with no confirmed municipality (CH-674, CH-678): no `shelters.page_meta`, no `shelters.served_title`, no count. When likely, unconfirmed municipalities exist, the section is h2 `shelters.maybe_served_title` (no count), then `shelters.maybe_served_note` with an info icon (icon plus word, never colour alone), then the plain list. The note's first word repeats the T5 badge `shelters.not_confirmed`. The TASK-90.11 key names may differ; the strings are final.
 - Call button: `shelters.call` with `shelters.call_a11y` as its accessible name (T5 keys). `shelters.open_map` opens a new tab and adds `common.opens_new_tab` to its accessible name.
 - Opening hours rows: day ranges use full day names (`shelters.days.*`) joined with an en dash, SL "ponedeljek–petek", "sobota", "nedelja in prazniki"; EN "Monday–Friday", "Saturday", "Sunday and public holidays". Short forms are not used on the public pages. Times: SL "8.00–16.00", EN "8:00–16:00". A closed row shows `shelters.hours_closed`. No "open now" claim.
 - `shelters.what_lost_button` opens P6, `shelters.what_found_button` opens P7 (text buttons, not a second primary).
@@ -825,6 +828,7 @@ Alt text: the static map is decorative (`alt=""`), because the address is text.
 
 | Version | Date | Change |
 |---|---|---|
+| 0.10 | 2026-10-19 | CH-675: T2 contact line points to "Podatki o podjetju" (`/podatki-o-podjetju`, `/en/company-information`), reworded to avoid the repeated phrase; `about.ts` follows. CH-676: Home report-row photos are `alt=""` (as built). CH-678: T5 `shelters.maybe_responsible` ("Morda pristojno zavetišče") and `shelters.not_confirmed` ("Ni potrjeno") confirmed; T6 new `shelters.maybe_served_title` / `shelters.maybe_served_note` (final strings). |
 | 0.9 | 2026-10-19 | CH-599: Home T1 for layout B as built (owner 2026-10-19): chooser reuses `nav.report_*`, no hero buttons, no closing band, three safe cards, how-it-works photo with `hero_cat_alt`, hero photo decorative; `hero_primary`, `hero_secondary`, `hero_alt`, `cta_*` unused. CH-546, CH-576: sighted link goes to `/report/found` with `nav.report_sighted_title`; no `hero_sighted_link`, no `/report/sighted`. |
 | 0.8 | 2026-10-18 | TASK-115.3: Home T1 reworked for approved layout A: new order, sighted quiet link, recent-reports block (error, heading rule), optional live-numbers labels, closing band. Option B dropped. |
 | 0.7 | 2026-10-18 | CH-500 (TASK-114.11): T5 keys `shelters.use_location`, `locating`, `location_denied`, `location_failed`, `location_outside`. SL/EN reviewed, unchanged. |
