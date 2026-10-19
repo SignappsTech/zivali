@@ -1,4 +1,5 @@
 import { ArrowClockwiseIcon } from '@phosphor-icons/react/dist/ssr/ArrowClockwise';
+import { CaretRightIcon } from '@phosphor-icons/react/dist/ssr/CaretRight';
 import { MapPinIcon } from '@phosphor-icons/react/dist/ssr/MapPin';
 import { WarningCircleIcon } from '@phosphor-icons/react/dist/ssr/WarningCircle';
 import { useLocale, useTranslations } from 'next-intl';
@@ -8,19 +9,18 @@ import { formatRelative } from '@zivali/i18n/format';
 import type { PublicReport, PublicStats, ReportList } from '@zivali/types';
 import { reportStatus, reportTitle } from '@/components/browse/report-row';
 import { listOf } from '@/components/report/seo';
-import { ringClass, SpotIllustration } from '@/components/shell/page';
+import { ringClass } from '@/components/shell/page';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { StatusLabel } from '@/components/ui/status-label';
+import { type Status, StatusLabel } from '@/components/ui/status-label';
 import { Link } from '@/i18n/navigation';
 import { env } from '@/lib/env';
 import { getPlace } from '@/lib/report';
 import { cn } from '@/lib/utils';
 
-import { CardStrip } from './card-strip';
-
-// T1 Home layout A (TASK-115.1): the latest reports and the live numbers, server-rendered. The page renders per request
-// (CSP nonce), so the public GETs go through Next's data cache: one API call per window for every visitor.
+// T1 Home layout B (TASK-115.10): the latest reports next to a static map teaser, and the live numbers band,
+// server-rendered. The page renders per request (CSP nonce), so the public GETs go through Next's data cache: one API
+// call per window for every visitor.
 
 /** A visitor's client (no session) whose GETs are cached for `seconds`. */
 const cachedApi = (locale: Locale, seconds: number) =>
@@ -30,13 +30,15 @@ const cachedApi = (locale: Locale, seconds: number) =>
 		fetch: (input, init) => fetch(input, { ...init, next: { revalidate: seconds } }),
 	});
 
-/** Mobile: a snap strip of 78 % cards bleeding into the gutters; from lg three columns (two rows of three). */
-const strip =
-	'-mx-5 -mt-2 flex snap-x snap-mandatory scroll-px-5 gap-4 overflow-x-auto px-5 pt-2 pb-2 *:shrink-0 *:basis-[78%] *:snap-start md:-mx-12 md:scroll-px-12 md:px-12 md:*:basis-[44%] lg:mx-0 lg:mt-0 lg:grid lg:grid-cols-3 lg:gap-6 lg:overflow-visible lg:p-0';
+/** Mobile: the map teaser (2:1) above the rows; from lg the rows (5/12) next to the teaser (7/12, 420 px at least). */
+const split = 'grid gap-5 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]';
+const listSide = 'grid content-start gap-1 lg:order-first';
+const teaserBox = 'relative block aspect-[2/1] overflow-hidden rounded-card lg:aspect-auto lg:min-h-[420px]';
 
 /**
- * GET /v1/reports?sort=recent&limit=6 (public, C4), cached a minute, with each card's place from the reverse lookup of
- * its fuzzed point. Error and empty states as P3 §2: an error never shows the empty copy.
+ * GET /v1/reports?sort=recent&limit=6 (public, C4), cached a minute, with each row's place from the reverse lookup of
+ * its fuzzed point. Error and empty states as P3 §2: an error never shows the empty copy. A list has only full rows,
+ * and the browser scrolls a row Tab lands on into view by itself.
  */
 export async function RecentReports({ locale }: { locale: Locale }) {
 	let reports: PublicReport[];
@@ -50,28 +52,88 @@ export async function RecentReports({ locale }: { locale: Locale }) {
 	} catch {
 		return <RecentError />;
 	}
-	if (!reports.length) return <RecentEmpty />;
+	if (!reports.length)
+		return (
+			<div className={split}>
+				<MapTeaser reports={[]} />
+				<RecentEmpty />
+			</div>
+		);
 
 	const places = await Promise.all(reports.map(({ area }) => getPlace(locale, area.lat, area.lng)));
-	// From lg the grid is 3 wide: only complete rows (3-5 show 3, 6 shows 6; fewer than 3 show all). The strip shows all.
-	const shown = reports.length < 3 ? reports.length : reports.length - (reports.length % 3);
 	return (
-		<CardStrip className={strip}>
-			{reports.map((report, i) => (
-				<li key={report.id} className={i >= shown ? 'lg:hidden' : undefined}>
-					<ReportCard report={report} place={places[i]?.label} />
-				</li>
-			))}
-		</CardStrip>
+		<div className={split}>
+			<MapTeaser reports={reports} />
+			<ul className={listSide}>
+				{reports.map((report, i) => (
+					<li key={report.id}>
+						<ReportRow report={report} place={places[i]?.label} />
+					</li>
+				))}
+			</ul>
+		</div>
+	);
+}
+
+const PIN: Record<Status, string> = {
+	lost: 'fill-marker-lost',
+	found: 'fill-marker-found',
+	sighted: 'fill-marker-sighted',
+	reunited: 'fill-marker-reunited',
+};
+const clamp = (value: number, min: number, max: number) => Math.round(Math.min(max, Math.max(min, value)));
+/**
+ * Slovenia's box (lng 13.37-16.61, lat 45.42-46.88) drawn into the middle of the 400 x 300 tile, so the `slice` crop
+ * (2:1 below lg, a tall column from lg) never cuts a pin. The points are the public, fuzzed areas the map shows too.
+ */
+const pinAt = ({ lat, lng }: { lat: number; lng: number }) =>
+	`translate(${clamp(50 + ((lng - 13.37) / 3.24) * 300, 20, 380)} ${clamp(60 + ((46.88 - lat) / 1.46) * 180, 40, 260)})`;
+
+/**
+ * The map teaser: a drawn tile in the map tokens with a pin per report, so the home page loads no map library
+ * (TASK-115.10 AC #3). The whole tile opens /map; the rows next to it are its list alternative, so the drawing is hidden.
+ */
+function MapTeaser({ reports }: { reports: PublicReport[] }) {
+	const t = useTranslations('pages.home');
+	const tBrowse = useTranslations('browse');
+
+	return (
+		<Link href="/map" aria-label={t('near_open_map')} className={cn(teaserBox, ringClass)}>
+			<svg
+				viewBox="0 0 400 300"
+				preserveAspectRatio="xMidYMid slice"
+				aria-hidden="true"
+				className="absolute inset-0 size-full"
+			>
+				<rect width="400" height="300" className="fill-map-land" />
+				<path d="M0 210 C80 190 120 250 220 230 S340 200 400 230 V300 H0z" className="fill-map-water" />
+				<rect x="250" y="30" width="110" height="80" rx="18" className="fill-map-park" />
+				<g fill="none" strokeWidth="9" className="stroke-map-road">
+					<path d="M-10 90 L410 130" />
+					<path d="M120 -10 L160 310" />
+					<path d="M-10 170 L300 40" />
+				</g>
+				{reports.map((report) => {
+					const { status } = reportStatus(tBrowse, report);
+					return (
+						<g key={report.id} transform={pinAt(report.area)} data-pin={status}>
+							<circle r="13" className="fill-marker-ring" />
+							<circle r="9" className={PIN[status]} />
+						</g>
+					);
+				})}
+			</svg>
+		</Link>
 	);
 }
 
 /**
- * Card: photo 4:3, status word · relative time, "Izgubljen pes", the rough area. Never the pet's name, the exact place
- * or a distance (P3 §2). The link's name reads like a P4 row, with the area in place of the distance. The photo alt is
- * built here, not the API's (that one starts with the name): "Izgubljen pes, rjave barve" (P3 §Home alt text, P9 §11).
+ * Row: photo 72, "Izgubljen pes", status word · relative time, the rough area, a caret. Never the pet's name, the exact
+ * place or a distance (P3 §2). The link's name reads like a P4 row, with the area in place of the distance. The photo
+ * alt is built here, not the API's (that one starts with the name): "Izgubljen pes, rjave barve" (P3 §Home alt text,
+ * P9 §11).
  */
-function ReportCard({ report, place }: { report: PublicReport; place?: string }) {
+function ReportRow({ report, place }: { report: PublicReport; place?: string }) {
 	const t = useTranslations('browse');
 	const tReport = useTranslations('report');
 	const locale = useLocale() as Locale;
@@ -86,23 +148,27 @@ function ReportCard({ report, place }: { report: PublicReport; place?: string })
 		<Link
 			href={{ pathname: '/r/[code]', params: { code: report.short_code } }}
 			aria-label={t('row_a11y', { title, status: word, time, distance: place ?? '' }).replace(/, $/, '')}
-			className={cn('group block h-full overflow-hidden rounded-card bg-card text-card-foreground', ringClass)}
+			className={cn(
+				'-mx-2 flex min-h-20 items-center gap-3.5 rounded-row p-2 text-foreground hover:bg-foreground/10 active:bg-accent active:text-accent-foreground',
+				ringClass
+			)}
 		>
 			{photo ? (
 				// eslint-disable-next-line @next/next/no-img-element -- a thumbnail from the media host, like the P4 rows
 				<img
 					src={photo.thumb_url}
 					alt={alt}
-					width={photo.width}
-					height={photo.height}
+					width={72}
+					height={72}
 					loading="lazy"
 					decoding="async"
-					className="aspect-[4/3] w-full bg-muted object-cover"
+					className="size-[72px] shrink-0 rounded-photo bg-muted object-cover"
 				/>
 			) : (
-				<span aria-hidden="true" className="block aspect-[4/3] bg-muted" />
+				<span aria-hidden="true" className="size-[72px] shrink-0 rounded-photo bg-muted" />
 			)}
-			<span className="grid gap-1 px-5 pt-4 pb-5">
+			<span className="grid min-w-0 flex-1">
+				<span className="font-display text-lg leading-7 font-semibold tracking-[-0.01em]">{title}</span>
 				<span className="flex flex-wrap items-center gap-x-2 text-sm">
 					<StatusLabel status={status}>{word}</StatusLabel>
 					<span aria-hidden="true" className="text-muted-foreground">
@@ -110,21 +176,19 @@ function ReportCard({ report, place }: { report: PublicReport; place?: string })
 					</span>
 					<span className="text-muted-foreground tabular-nums">{time}</span>
 				</span>
-				<span className="font-display text-xl leading-7 font-semibold tracking-[-0.01em] group-hover:underline">
-					{title}
-				</span>
 				{place && (
-					<span className="flex items-center gap-1.5 text-muted-foreground">
-						<MapPinIcon weight="bold" aria-hidden="true" className="size-[18px] shrink-0" />
+					<span className="flex items-center gap-1 text-control text-muted-foreground">
+						<MapPinIcon weight="bold" aria-hidden="true" className="size-4 shrink-0" />
 						{place}
 					</span>
 				)}
 			</span>
+			<CaretRightIcon weight="bold" aria-hidden="true" className="size-5 shrink-0 text-muted-foreground" />
 		</Link>
 	);
 }
 
-/** Loading: the cards' shape, announced once (system §10.9). */
+/** Loading: the teaser's and the rows' shape, announced once (system §10.9). */
 export function RecentReportsSkeleton() {
 	const t = useTranslations('common');
 
@@ -133,31 +197,35 @@ export function RecentReportsSkeleton() {
 			<p role="status" className="sr-only">
 				{t('loading')}
 			</p>
-			<div className={strip}>
-				{[1, 2, 3].map((card) => (
-					<div key={card} className="overflow-hidden rounded-card bg-card">
-						<Skeleton className="aspect-[4/3] rounded-none" />
-						<div className="grid gap-2 px-5 pt-4 pb-5">
-							<Skeleton className="h-5 w-40" />
-							<Skeleton className="h-7 w-48" />
-							<Skeleton className="h-6 w-32" />
+			<div className={split}>
+				<Skeleton className={teaserBox} />
+				<div className={listSide}>
+					{[1, 2, 3, 4, 5].map((row) => (
+						<div key={row} className="flex min-h-20 items-center gap-3.5 py-2">
+							<Skeleton className="size-[72px] shrink-0 rounded-photo" />
+							<div className="grid flex-1 gap-2">
+								<Skeleton className="h-6 w-40" />
+								<Skeleton className="h-5 w-32" />
+							</div>
 						</div>
-					</div>
-				))}
+					))}
+				</div>
 			</div>
 		</div>
 	);
 }
 
-/** No location is known on the home page, so only the body and the action (P3 §2), never "No open reports near you". */
+/**
+ * Next to the empty teaser. No location is known on the home page, so only the body and the action (P3 §2), never
+ * "No open reports near you".
+ */
 function RecentEmpty() {
 	const t = useTranslations('pages.home');
 
 	return (
-		<div className="grid max-w-[560px] gap-5">
-			<SpotIllustration className="max-w-[360px]" />
+		<div className={cn(listSide, 'max-w-[560px] justify-items-start gap-5')}>
 			<p className="max-w-[58ch]">{t('near_empty_body')}</p>
-			<Button asChild variant="secondary" className="justify-self-start">
+			<Button asChild variant="secondary">
 				<Link href="/account/alerts">{t('near_empty_action')}</Link>
 			</Button>
 		</div>
@@ -207,19 +275,20 @@ export async function LiveNumbers({ locale }: { locale: Locale }) {
 	);
 }
 
+/** Layout B: a dark band on the `sidebar` fill, three columns from lg. */
 function Numbers({ counts }: { counts: [key: 'stat_reunited' | 'stat_open' | 'stat_alerts', count: number][] }) {
 	const t = useTranslations('pages.home');
 	// "1.350" in SL as the slice asks (plain `sl` grouping starts at five digits), "1,350" in EN.
 	const number = new Intl.NumberFormat(useLocale(), { useGrouping: 'always' });
 
 	return (
-		<ul className="mt-12 grid gap-5 rounded-card bg-card p-6 text-card-foreground lg:mt-24 lg:grid-cols-3 lg:px-12 lg:py-10">
+		<ul className="mt-12 grid gap-5 rounded-card bg-sidebar px-6 py-7 text-sidebar-foreground lg:mt-24 lg:grid-cols-3 lg:gap-12 lg:px-16 lg:py-14">
 			{counts.map(([key, count]) => (
 				<li key={key}>
 					<span className="block font-display text-[44px] leading-none font-bold tracking-[-0.03em] tabular-nums lg:text-[64px]">
 						{number.format(count)}
 					</span>
-					<span className="mt-2 block text-muted-foreground">{t(key)}</span>
+					<span className="mt-2 block">{t(key)}</span>
 				</li>
 			))}
 		</ul>
