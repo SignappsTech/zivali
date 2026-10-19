@@ -302,6 +302,7 @@ describe('stripe findPrice (C13 §Prices: by lookup key)', () => {
 			unit_amount: 399,
 			currency: 'eur',
 			interval: 'month',
+			interval_count: 1,
 		});
 		const [url, init] = fetch.mock.calls[0]!;
 		const u = new URL(String(url));
@@ -316,13 +317,33 @@ describe('stripe findPrice (C13 §Prices: by lookup key)', () => {
 		expect(init?.signal).toBeInstanceOf(AbortSignal);
 	});
 
-	it('answers null without a price, an interval of null for a one-time price', async () => {
+	it('answers null without a price, interval and interval_count null for a one-time price', async () => {
 		vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(list([]));
 		await expect(adapter.findPrice('premium_yearly')).resolves.toBeNull();
 		vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(
 			list([{ id: 'price_2', unit_amount: 2999, currency: 'eur', recurring: null }])
 		);
-		await expect(adapter.findPrice('premium_yearly')).resolves.toMatchObject({ interval: null });
+		await expect(adapter.findPrice('premium_yearly')).resolves.toMatchObject({
+			interval: null,
+			interval_count: null,
+		});
+	});
+
+	it('keeps interval_count, so a 3-month price is told apart from a monthly one', async () => {
+		vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(
+			list([
+				{
+					id: 'price_3m',
+					unit_amount: 399,
+					currency: 'eur',
+					recurring: { interval: 'month', interval_count: 3 },
+				},
+			])
+		);
+		await expect(adapter.findPrice('premium_monthly')).resolves.toMatchObject({
+			interval: 'month',
+			interval_count: 3,
+		});
 	});
 
 	it('maps a network failure to SERVICE_UNAVAILABLE; an HTTP error or odd body is a plain error', async () => {

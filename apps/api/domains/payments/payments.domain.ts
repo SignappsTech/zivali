@@ -89,8 +89,9 @@ function cachedPrice(payments: PaymentsAdapter, lookupKey: string): Promise<Prov
 
 /**
  * The provider price of a Premium plan: the active price with the plan's lookup key (cached 10 min). Refused with
- * SERVICE_UNAVAILABLE (log payments.price_mismatch) when it is missing or its amount, currency or interval differs
- * from app_config payments.prices, so the page never shows one price and Checkout charges another.
+ * SERVICE_UNAVAILABLE (log payments.price_mismatch) when it is missing or its amount, currency or interval (every 1
+ * month or year) differs from app_config payments.prices, so the page never shows one price and Checkout charges
+ * another.
  */
 export async function premiumPrice(
 	plan: PremiumPlan,
@@ -107,18 +108,21 @@ export async function premiumPrice(
 		!price ||
 		price.unit_amount !== amount ||
 		price.currency !== 'eur' ||
-		price.interval !== interval
+		price.interval !== interval ||
+		// Every month or year: a 3-month price under the lookup key is a mismatch too.
+		price.interval_count !== 1
 	) {
 		ctx.logger.error(
 			{
 				plan,
 				lookup_key,
-				expected: { unit_amount: amount ?? null, currency: 'eur', interval },
+				expected: { unit_amount: amount ?? null, currency: 'eur', interval, interval_count: 1 },
 				found: price && {
 					id: price.id,
 					unit_amount: price.unit_amount,
 					currency: price.currency,
 					interval: price.interval,
+					interval_count: price.interval_count,
 				},
 			},
 			'payments.price_mismatch'

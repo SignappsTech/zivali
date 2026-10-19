@@ -56,7 +56,7 @@ export function mockPayments(appUrl: string, secret: string): PaymentsAdapter {
 			const cents = prices?.[`${lookupKey}_cents`];
 			const interval = Object.hasOwn(MOCK_INTERVALS, lookupKey) ? MOCK_INTERVALS[lookupKey]! : null;
 			if (!interval || typeof cents !== 'number') return null;
-			return { id: `mock_price_${lookupKey}`, unit_amount: cents, currency: 'eur', interval };
+			return { id: `mock_price_${lookupKey}`, unit_amount: cents, currency: 'eur', interval, interval_count: 1 };
 		},
 		parseWebhook: (rawBody, signature) => verifyEvent(rawBody, signature, secret),
 	};

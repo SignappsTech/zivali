@@ -37,7 +37,7 @@ const StripePrices = z.object({
 			id: z.string().min(1).max(255),
 			unit_amount: z.number().int().nullable(),
 			currency: z.string().max(8),
-			recurring: z.object({ interval: z.string().max(16) }).nullable(),
+			recurring: z.object({ interval: z.string().max(16), interval_count: z.number().int() }).nullable(),
 		})
 	),
 });
@@ -155,7 +155,13 @@ export function stripePayments(secretKey: string, webhookSecret: string): Paymen
 			const price = parsed.data.data[0];
 			if (!price) return null;
 			const { id, unit_amount, currency, recurring } = price;
-			return { id, unit_amount, currency, interval: recurring?.interval ?? null };
+			return {
+				id,
+				unit_amount,
+				currency,
+				interval: recurring?.interval ?? null,
+				interval_count: recurring?.interval_count ?? null,
+			};
 		},
 		parseWebhook: (rawBody, signature) => verifyEvent(rawBody, signature, webhookSecret),
 	};

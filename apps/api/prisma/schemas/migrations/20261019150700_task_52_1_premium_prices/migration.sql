@@ -4,6 +4,7 @@
 -- migration inserted 299/2499 with on conflict do nothing, so only these two fields change in place; every other field
 -- of payments.prices stays as it is. Stripe's prices (lookup keys premium_monthly/premium_yearly) must match them:
 -- apps/api/scripts/stripe-prices.ts, and checkout refuses a mismatch.
+-- A missing payments.prices row is a no-op (nothing to update); a missing key is added (jsonb_set create_missing).
 update app.app_config
 set value = jsonb_set(jsonb_set(value, '{premium_monthly_cents}', '399'), '{premium_yearly_cents}', '2999'),
 	updated_at = now()

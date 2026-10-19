@@ -82,12 +82,21 @@ describe('PaymentsDomain.premiumPrice', () => {
 		expect(find).toHaveBeenCalledTimes(2);
 	});
 
-	it('refuses with SERVICE_UNAVAILABLE and logs payments.price_mismatch when amount, currency or interval differs', async () => {
-		const good: ProviderPrice = { id: 'price_x', unit_amount: 399, currency: 'eur', interval: 'month' };
+	it('refuses with SERVICE_UNAVAILABLE and logs payments.price_mismatch when amount, currency, interval or interval_count differs', async () => {
+		const good: ProviderPrice = {
+			id: 'price_x',
+			unit_amount: 399,
+			currency: 'eur',
+			interval: 'month',
+			interval_count: 1,
+		};
 		for (const found of [
 			{ ...good, unit_amount: 299 },
 			{ ...good, currency: 'usd' },
 			{ ...good, interval: 'year' },
+			// Every 3 months is not monthly.
+			{ ...good, interval_count: 3 },
+			{ ...good, interval_count: null },
 			{ ...good, unit_amount: null },
 			null,
 		]) {
@@ -98,7 +107,7 @@ describe('PaymentsDomain.premiumPrice', () => {
 				{
 					plan: 'monthly',
 					lookup_key: 'premium_monthly',
-					expected: { unit_amount: 399, currency: 'eur', interval: 'month' },
+					expected: { unit_amount: 399, currency: 'eur', interval: 'month', interval_count: 1 },
 					found,
 				},
 				'payments.price_mismatch'

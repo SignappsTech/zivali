@@ -41,7 +41,14 @@ export type PaymentEvent = {
 	};
 };
 /** A recurring price as Stripe holds it; checkout compares it with app_config payments.prices (C13 §Prices). */
-export type ProviderPrice = { id: string; unit_amount: number | null; currency: string; interval: string | null };
+export type ProviderPrice = {
+	id: string;
+	unit_amount: number | null;
+	currency: string;
+	interval: string | null;
+	/** Billed every interval_count intervals (Premium: 1); null for a one-time price. */
+	interval_count: number | null;
+};
 export type PaymentsAdapter = {
 	provider: 'stripe' | 'mock';
 	/** A live Stripe key (APP_ENV=production only): checkouts are refused while the live gate is closed. */
