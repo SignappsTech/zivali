@@ -3,10 +3,11 @@ id: TASK-114.42
 title: >-
   Web: owner choices 2026-10-19 for the footer, the alerts section and legal
   tables
-status: To Do
+status: In Progress
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-19 10:00'
+updated_date: '2026-10-19 10:02'
 labels:
   - fe
   - 'est:S'

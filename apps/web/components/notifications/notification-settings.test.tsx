@@ -39,7 +39,7 @@ const switchFor = (type: string, channel: string) =>
 
 const disclosure = () => screen.getByRole('button', { name: alerts.channels_title });
 
-/** Renders the section, opened with its button unless `closed`. */
+/** Renders the section, open by default (owner 2026-10-19); `closed` closes it with its button. */
 function show(profile: Me | null = me, data: NotificationPrefs | null = prefs, { closed = false } = {}) {
 	state.me = profile;
 	state.gate = profile ? 'ok' : 'loading';
@@ -49,7 +49,7 @@ function show(profile: Me | null = me, data: NotificationPrefs | null = prefs, {
 			<NotificationSettings />
 		</NextIntlClientProvider>
 	);
-	if (!closed) fireEvent.click(disclosure());
+	if (closed) fireEvent.click(disclosure());
 	return view;
 }
 
@@ -60,42 +60,39 @@ afterEach(() => {
 });
 
 describe('NotificationSettings: the "Kako vas obvestimo" disclosure (TASK-114.15)', () => {
-	it('is closed, with the summary under the title; the button opens and closes the panel', () => {
-		show(me, prefs, { closed: true });
+	it('is open by default; the button closes it, with the summary under the closed title, and opens it again', () => {
+		show();
 		const button = disclosure();
 		const panel = document.getElementById(button.getAttribute('aria-controls')!)!;
 		expect([button.tagName, button.getAttribute('type'), button.getAttribute('aria-expanded')]).toEqual([
 			'BUTTON',
 			'button',
-			'false',
+			'true',
 		]);
 		expect(button.closest('h2')).toBeTruthy();
-		expect(panel.hidden).toBe(true);
-		expect(screen.queryAllByRole('switch')).toHaveLength(0);
-		// Push and email on somewhere, in app beside them goes without saying; quiet hours set.
-		const summary = 'Na telefonu in po e-pošti · Tihi čas 22:00 do 07:00';
-		expect(document.getElementById(button.getAttribute('aria-describedby')!)?.textContent).toBe(summary);
-
-		fireEvent.click(button);
-		expect(button.getAttribute('aria-expanded')).toBe('true');
 		expect(panel.hidden).toBe(false);
 		expect(screen.getByRole('region', { name: alerts.channels_title })).toBe(panel);
 		expect(screen.getAllByRole('switch')).toHaveLength(12);
+		// Push and email on somewhere, in app beside them goes without saying; quiet hours set.
+		const summary = 'Na telefonu in po e-pošti · Tihi čas 22:00 do 07:00';
 		expect(screen.queryByText(summary)).toBeNull();
 		expect(button.hasAttribute('aria-describedby')).toBe(false);
 
 		fireEvent.click(button);
 		expect([button.getAttribute('aria-expanded'), panel.hidden]).toEqual(['false', true]);
+		expect(screen.queryAllByRole('switch')).toHaveLength(0);
+		expect(document.getElementById(button.getAttribute('aria-describedby')!)?.textContent).toBe(summary);
+
+		fireEvent.click(button);
+		expect([button.getAttribute('aria-expanded'), panel.hidden]).toEqual(['true', false]);
 	});
 
-	it('opens by itself when the address targets it, as the redirect of /racun/obvestila does', () => {
+	it('carries the anchor the redirect of /racun/obvestila targets, and is open there', () => {
 		window.history.replaceState(null, '', '/racun/opozorila#kako-vas-obvestimo');
-		show(me, prefs, { closed: true });
+		show();
 		expect(disclosure().getAttribute('aria-expanded')).toBe('true');
 		expect(disclosure().closest('#kako-vas-obvestimo')).toBeTruthy();
 		expect(screen.getAllByRole('switch')).toHaveLength(12);
-		fireEvent.click(disclosure());
-		expect(disclosure().getAttribute('aria-expanded')).toBe('false');
 	});
 
 	it.each([
@@ -131,7 +128,6 @@ describe('NotificationSettings: the "Kako vas obvestimo" disclosure (TASK-114.15
 				<NotificationSettings />
 			</NextIntlClientProvider>
 		);
-		fireEvent.click(disclosure());
 		fireEvent.click(screen.getByRole('button', { name: sl.common.inline_error_retry }));
 		expect(state.refetch).toHaveBeenCalled();
 	});

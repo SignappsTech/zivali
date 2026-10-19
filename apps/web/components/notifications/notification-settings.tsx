@@ -54,11 +54,6 @@ const isOn = (prefs: NotificationPrefs, types: NotificationType[], channel: Chan
 
 /** The section's anchor, also in the redirect of /racun/obvestila (app/[locale]/(app)/account/notifications/page.tsx). */
 const ANCHOR = 'kako-vas-obvestimo';
-const subscribeHash = (onChange: () => void) => {
-	window.addEventListener('hashchange', onChange);
-	return () => window.removeEventListener('hashchange', onChange);
-};
-const targeted = () => window.location.hash === `#${ANCHOR}`;
 
 /**
  * The closed section's grey line (TASK-114.15): the channels with a switch on, and the quiet hours when set. In the app
@@ -83,8 +78,8 @@ function useSummary(prefs: NotificationPrefs | undefined) {
 
 /**
  * P13 "Kako vas obvestimo" on web (FR-010, sections 2 to 4), a disclosure at the end of the alerts page (TASK-114.15):
- * closed with the summary line under its title, open when the address targets it (#kako-vas-obvestimo). Inside, a
- * switch per row and channel, quiet hours, and the unverified-email note. Each change saves at once with the alerts
+ * open by default (owner 2026-10-19), so the redirect to #kako-vas-obvestimo lands on it open; closed, the summary line
+ * shows under its title. Inside, a switch per row and channel, quiet hours, and the unverified-email note. Each change saves at once with the alerts
  * page's "Saved." toast; push is the phone's permission, so web has no permission note for it.
  */
 export function NotificationSettings() {
@@ -92,10 +87,7 @@ export function NotificationSettings() {
 	const { me, gate } = useRequireAuth();
 	const prefs = useGetPrefsQuery();
 	const summary = useSummary(prefs.data);
-	// Closed on the server; the address can open it on the client, then the visitor's own toggle decides.
-	const linked = React.useSyncExternalStore(subscribeHash, targeted, () => false);
-	const [toggled, setToggled] = React.useState<boolean>();
-	const open = toggled ?? linked;
+	const [open, setOpen] = React.useState(true);
 
 	let content: React.ReactNode = <PageSkeleton />;
 	if (me && prefs.data) content = <Settings me={me} prefs={prefs.data} />;
@@ -111,7 +103,7 @@ export function NotificationSettings() {
 					aria-controls={`${ANCHOR}-panel`}
 					aria-labelledby={`${ANCHOR}-title`}
 					aria-describedby={summary && !open ? `${ANCHOR}-summary` : undefined}
-					onClick={() => setToggled(!open)}
+					onClick={() => setOpen(!open)}
 					className={cn(
 						'flex min-h-14 w-full cursor-pointer items-center justify-between gap-4 rounded-row py-2 text-left',
 						ringClass
