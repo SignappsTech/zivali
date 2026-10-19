@@ -2,7 +2,7 @@ export const meta = {
 	title: 'Politika piškotkov · Najdimo',
 	description:
 		'Kateri piškotki in podobni zapisi so v Najdimo, čemu služijo, kako dolgo trajajo in kako izbiro spremenite ali prekličete.',
-	updated: '2026-10-18',
+	updated: '2026-10-19',
 	headings: [
 		{ id: 's1', text: '1. Na kratko' },
 		{ id: 's2', text: '2. Kaj so piškotki in podobni zapisi' },
@@ -39,8 +39,8 @@ vklopimo samo z vašo privolitvijo.
 
 <h2 id="s2">2. Kaj so piškotki in podobni zapisi</h2>
 
-Piškotek je majhna datoteka, ki jo spletna stran shrani v vaš brskalnik. Podobne zapise (lokalna shramba brskalnika,
-varna shramba v aplikaciji) obravnavamo enako. V tem besedilu jim skupaj rečemo „zapisi“.
+Piškotek je majhna datoteka, ki jo spletna stran shrani v vaš brskalnik. Podobne zapise (lokalna in sejna shramba
+brskalnika, brskalnikova zbirka podatkov IndexedDB, varna shramba v aplikaciji) obravnavamo enako. V tem besedilu jim skupaj rečemo „zapisi“.
 
 <p>Zapise delimo na dve vrsti:</p>
 
@@ -97,9 +97,15 @@ varna shramba v aplikaciji) obravnavamo enako. V tem besedilu jim skupaj rečemo
 				<td>do zaprtja brskalnika (sejni piškotek)</td>
 			</tr>
 			<tr>
-				<td>Osnutek prijave (lokalna shramba)</td>
+				<td>
+					Osnutek prijave: <code>draft:&lt;vrsta prijave&gt;:&lt;ID osnutka&gt;</code> in{' '}
+					<code>photos:&lt;ID osnutka&gt;</code> (brskalnikova zbirka podatkov IndexedDB)
+				</td>
 				<td>Najdimo</td>
-				<td>Shrani nedokončano prijavo, da je ne izgubite.</td>
+				<td>
+					Shrani nedokončano prijavo in njene fotografije, da je ne izgubite. Točka v osnutku je že približna,
+					fotografije so brez metapodatkov EXIF.
+				</td>
 				<td>nujni</td>
 				<td>dokler prijave ne oddate ali osnutka ne zavržete</td>
 			</tr>
@@ -141,6 +147,18 @@ varna shramba v aplikaciji) obravnavamo enako. V tem besedilu jim skupaj rečemo
 				<td>Naključna oznaka za omejevanje zlorab (število zahtev).</td>
 				<td>nujni</td>
 				<td>do izbrisa shrambe</td>
+			</tr>
+			<tr>
+				<td>
+					<code>zivali-admin-activity</code> (lokalna shramba)
+				</td>
+				<td>Najdimo</td>
+				<td>
+					Samo v skrbniškem delu za osebje Najdimo. Hrani čas zadnje dejavnosti, da skrbnika po 30 minutah
+					nedejavnosti samodejno odjavimo; delo v enem zavihku ohrani vpis tudi v drugih. Hrani samo čas.
+				</td>
+				<td>nujni</td>
+				<td>do izbrisa shrambe; ob vsaki dejavnosti se prepiše</td>
 			</tr>
 			<tr>
 				<td>Preverjanje „nisem robot“ (Turnstile)</td>
