@@ -3,7 +3,7 @@ source: 03§P6
 page: P6 Report lost
 stories: TASK-29 (FR-005, FR-003, FR-002)
 platforms: web, mobile
-version: 1.3
+version: 1.4
 mockup: docs/design/mockups/P6-report-lost.html
 copy: docs/content/pages/P6-report-lost.md
 ---
@@ -28,7 +28,7 @@ The step count depends on the path. The bars show the real count.
 | 6 Circumstances | What happened? | textarea (optional) and contact preference (chat only, selected, with the one-line safety reason), then the optional reward row | Reward row (display only, no payment; copy `report_lost.reward_*`): a switch row "Ponujam nagrado". On: an amount field (whole euros 1 to 10 000, `tabular-nums`, € suffix), a note field (one line, max 80 chars, with counter) and the always-visible shield-icon warning "Nikoli nikomur ne plačajte vnaprej." (`report_lost.reward_warning`). At least one of amount or note is needed; errors per the content slice. |
 | 7 Review | Check and publish | plain summary list: photo, name, area, time (each row with an "Edit" text button) | Primary `lg` "Publish search". Adds a "Nagrada" row (`report_lost.review_reward`: amount and note, or "Brez nagrade") with its own "Edit" button back to step 6. |
 
-With a saved pet the path is 1, 4, 5, 6, 7 (five bars). With a new pet and saved pets it is 1 to 7. Without saved pets, or signed out, step 1 is absent and the flow starts at the photos: six steps (2 to 7).
+With a saved pet that has at least one photo the path is 1, 4, 5, 6, 7 (five bars): the report reuses the pet's photos (C4/C5, TASK-29.13; CH-333) and step 7 shows them in its photo row, whose "Edit" opens step 2 to add a newer photo. A saved pet without photos keeps step 2 (1, 2, 4, 5, 6, 7; six bars), since a report needs at least one photo. With a new pet and saved pets it is 1 to 7. Without saved pets, or signed out, step 1 is absent and the flow starts at the photos: six steps (2 to 7).
 
 ## Sign-in gate
 
@@ -84,3 +84,4 @@ None. The confirmation screen is text and icons only.
 | 1.1 | 2026-10-18 | Pet step only with saved pets, as choice rows with no Next; six steps without saved pets (CH-497, TASK-114.12). |
 | 1.2 | 2026-10-18 | CH-367, CH-368: mobile confirmation as built (poster button, generic unconfirmed notice) |
 | 1.3 | 2026-10-18 | CH-421: web sign-in gate interim; CH-497, CH-530 already applied (1.2, step 1) |
+| 1.4 | 2026-10-19 | CH-333: a saved pet's photos are reused (no photos step) when it has any; without photos step 2 stays |

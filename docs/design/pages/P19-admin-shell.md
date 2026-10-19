@@ -3,7 +3,7 @@ source: 03§P19
 page: P19 Admin console shell
 stories: TASK-34 (FR-019), TASK-89 (FR-044, shelter directory admin)
 platforms: web
-version: 1.2
+version: 1.3
 mockup: docs/design/mockups/P19-admin-shell.html, docs/design/mockups/P19-shelter-directory.html (directory screen)
 copy: docs/content/pages/P19-admin-shell.md
 ---
@@ -51,7 +51,7 @@ Four plain number blocks without cards (open reports, active ads, pending enquir
 
 ## Audit log
 
-A table: time, actor, action, target, change summary; filter by actor and action; read only; CSV export (M4). Every mutation in the console writes an entry; the shell shows a toast "Saved, logged".
+A table: time, actor, action, target, change summary; filter by actor and action; read only; CSV export (M4). The action column shows the raw action code (`user.role.set`, `report.hide`) as plain text until M4; readable labels come with the CSV export, not now (CH-221). The system actor reuses `admin.directory.history_system`. The top-bar breadcrumb is a `nav` named by `admin.breadcrumb_label` ("Drobtine"). Every mutation in the console writes an entry; the shell shows a toast "Saved, logged".
 
 ## Shelter directory (`/admin/zavetisca`, TASK-89)
 
@@ -102,3 +102,4 @@ None.
 |---|---|---|
 | 1.1 | 2026-10-18 | CH-470: F7 lost-device line and backup authenticator card |
 | 1.2 | 2026-10-18 | CH-222: access patterns and dashboard as built (TASK-34.3) |
+| 1.3 | 2026-10-19 | CH-221: audit actions as raw codes until M4, breadcrumb landmark name; MFA backup is the second authenticator (1.1, CH-470); Orders dropped, KPIs live on the Dashboard |

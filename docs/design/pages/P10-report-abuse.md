@@ -3,7 +3,7 @@ source: 03§P10
 page: P10 Report abuse
 stories: TASK-25 (FR-018)
 platforms: web, mobile
-version: 1.1
+version: 1.2
 mockup: docs/design/mockups/P10-report-abuse.html
 copy: docs/content/pages/P10-report-abuse.md
 ---
@@ -32,14 +32,14 @@ Anyone can flag a scam, fake or inappropriate listing, profile or chat message i
 
 ## Confirmation
 
-Replaces the sheet content: check icon in a tonal circle, h2 "Thank you", one sentence about review time, text button "Done". For messages the thread shows the message folded with "You reported this message".
+Replaces the sheet content: check icon in a tonal circle, h2 "Thank you", one sentence about review time, text button "Done". A duplicate (C11 answers `200 { duplicate: true }`) shows the same confirmation (TASK-25 AC, CH-322): there is no "already reported" state, because C11 has no read of the caller's own reports. For messages the thread shows the message folded with "You reported this message".
 
 ## States
 
 | State | Behaviour |
 |---|---|
 | Rate limited (anonymous) | calm note, nothing lost, try again later |
-| Already reported | note "You already reported this", no second submit |
+| Offline (C17) | the sheet keeps the choice and note; "Pošlji" is disabled with `report.action_offline` as the reason line (as slot A) |
 | Network error | inline retry, selection kept |
 | Rate limited (any user) | after a RATE_LIMITED answer the send button stays disabled with the sentence until the dialog is closed and reopened (web and mobile, as built) |
 | Own listing | the entry is not shown |
@@ -55,7 +55,7 @@ None.
 
 ## Mockup scope (`P10-report-abuse.html`)
 
-1. Mobile: sheet for a listing, a message (with block switch), disabled primary, confirmation, rate-limited, already reported, owner "under review" note.
+1. Mobile: sheet for a listing, a message (with block switch), disabled primary, confirmation, rate-limited, offline, owner "under review" note. (Frame S3 "already reported" is void, CH-322.)
 2. Web: dialog for a listing and a message.
 3. Light and dark.
 
@@ -64,3 +64,4 @@ None.
 | Version | Date | Change |
 |---|---|---|
 | 1.1 | 2026-10-18 | CH-447: rate-limited stays disabled until reopened |
+| 1.2 | 2026-10-19 | CH-322: no already-reported state (a duplicate shows the thank-you); offline row |

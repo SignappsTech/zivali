@@ -1,9 +1,9 @@
 ---
 doc_id: DOC-03
 title: Design Specification
-version: 0.6
+version: 0.7
 status: Draft (direction approved 2026-10-14)
-date: 2026-10-18
+date: 2026-10-19
 owner: Design Lead
 audience: Client, team
 approvals:
@@ -62,7 +62,7 @@ Sitemap (web). Mobile app navigation follows below.
     └── Admin  /admin (P19): Dashboard · Ads (P20) · House ads (P20) · Enquiries · Shelter directory · Audit log · Settings
           (M3: Organisations and portal · M4: Moderation, Users, Orders, KPIs)
 
-**Header (web):** logo, at most four links (Map, Lost, Found, How it works; signed in: How it works becomes My pets and reports), language, inbox icon and account menu (signed in) or Sign in, and the single primary "Report" menu. **Footer:** About, Safety tips, Partners, Privacy, Cookies, Terms, Imprint, Accessibility, Cookie settings, For shelters, Shelters (directory), How it works, language.
+**Header (web):** logo, at most four links (Map, Lost, Found, How it works; signed in: How it works becomes My pets and reports), language, inbox icon and account menu (signed in) or Sign in, and the single primary "Report" menu. **Footer:** four groups (owner, 2026-10-19): Pomoč (How it works, Safety tips, FAQ, Shelters directory), Za organizacije (For shelters, Partners), Najdimo (About, Imprint, Accessibility), Pravno (Privacy, Cookies, Terms, Cookie settings); language; operator line with the company name and "Podatki o podjetju". Details in `design/system.md` 10.7.
 
 **Mobile app tabs (four):** Map, Inbox, Report (action, opens the Report sheet), Profile. Signed-out users get the same tabs; Inbox and Profile show sign-in prompts, Cookie settings and language stay available.
 
@@ -90,7 +90,7 @@ IDs are canonical: design slices are `design/pages/P<n>-<slug>.md`, mockups `des
 |---|---|---|---|---|---|---|
 | P1 | Web shell | Header, footer, containers, sidebar region, shared states | Header with Report menu, footer, layout variants, loading, empty and error patterns | TASK-11 | design/mockups/P1-web-shell.html | Slice written, mockup pending |
 | P2 | Mobile shell | Four tabs, Report sheet, permission primers, deep link landing | Bottom navigation, Report sheet, primers, signed-out states | TASK-12 | design/mockups/P2-mobile-shell.html | Slice written, mockup pending |
-| P3 | Public pages | Home and content templates (article, FAQ, legal); shelter directory and shelter pages | Hero, near you, how it works, safety, templates; municipality search, call, hours, municipalities served | TASK-27, TASK-28, TASK-90 | design/mockups/P3-public-pages.html, design/mockups/P3-shelter-pages.html | Slice written, mockups pending |
+| P3 | Public pages | Home and content templates (article, FAQ, legal); shelter directory and shelter pages | Home layout B (photo hero with the lost/found chooser, recent reports with a static map teaser, numbers, how it works, safety, shelters), templates; municipality search, call, hours, municipalities served | TASK-27, TASK-28, TASK-90 | design/mockups/P3-public-pages.html, design/mockups/P3-shelter-pages.html | Slice written, mockups pending |
 | P4 | Map and list | Browse reports near you, always with a list alternative | Area pill, markers, sheet and list, filter sheet, web two panes | TASK-31 | design/mockups/P4-map-list.html | Slice written, mockup pending |
 | P5 | Location picker | One picker and the fuzzed public area | Search, centre pin, radius, privacy line, fuzzed disc | TASK-15 | design/mockups/P5-location-picker.html | Slice written, mockup pending |
 | P6 | Report lost | Owner reports in minutes, one question per screen | Steps, sign-in gate, confirmation with optional support | TASK-29 | design/mockups/P6-report-lost.html | Slice written, mockup pending |
@@ -160,3 +160,4 @@ Mobile first. Breakpoints: 640 (sm), 768 (md), 1024 (lg), 1280 (xl), 1536 (2xl).
 | 0.4 | 2026-10-15 | FR-044 shelter directory (PRD 0.6, tech re-plan): IA and flows add /zavetisca and the admin directory; P3 gains T5 and T6, P19 the directory screen, P6 and P7 the responsible-shelter call row, P1 footer the Shelters link. Design system v0.5 to v0.7 (P23 and P16 reviews). |
 | 0.5 | 2026-10-16 | TASK-90.5: web font cuts for the mobile LCP gate (single heading weight 700, body 400/700, no opsz axis, custom Latin subsets, preload, size-adjusted fallback). Typography bullet and system.md §4 updated. |
 | 0.6 | 2026-10-18 | Design workflow section: owner wireframe rule of 2026-10-16 (CH-491). Slice updates: P6 step list (CH-497), P13 switches (CH-502), P18 Facebook row (CH-507). |
+| 0.7 | 2026-10-19 | IA footer groups (CH-594) and P3 home layout B (CH-600) in the inventory. Slice updates: system 0.18 (photo framing, footer, unread dot, coat swatches; tokens 0.6.0), P1, P3, P4, P6, P8, P10, P11, P13, P14, P15, P19, P22, P7 (AI suggestions v2 approved). |

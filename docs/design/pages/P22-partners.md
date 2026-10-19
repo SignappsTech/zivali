@@ -3,6 +3,7 @@ source: 03§P22
 page: P22 Partners page ("Oglašujte pri nas")
 stories: TASK-38 (FR-032)
 platforms: web
+version: 1.1
 mockup: docs/design/mockups/P22-partners.html
 copy: docs/content/pages/P22-partners.md
 ---
@@ -16,7 +17,7 @@ A public, honest page where a local business sees the audience and the placement
 ## Section order (Content variant, no sidebar)
 
 1. **Hero:** h1, one supporting sentence, primary "Send an enquiry" (anchor to the form), text button "How placements look". Right: one photograph or illustration (content decision; no generated stand-in for real pets).
-2. **Audience (live numbers):** region select (all Slovenia by default) and a row of large numbers with labels: registered users, active reports, reunited pets, as plain text with generous gaps, not cards. Values under 5 read "< 5". A `note` says "Pilot: Ljubljana, numbers are real and still small" while the product is in pilot (honest when small). Data from our database; optional enrichment flagged; cached at most 1 hour; shows the date of the figures.
+2. **Audience (live numbers):** region select (all Slovenia by default) and a row of large numbers with labels: registered users, active reports, reunited pets, as plain text with generous gaps, not cards. Values under 5 read "< 5". A `note` says "Pilot: Ljubljana, numbers are real and still small" while the product is in pilot (honest when small). Data from our database; optional enrichment flagged; cached at most 1 hour; shows the date of the figures. No masked-region note (CH-433, 2026-10-19): C14 does not say which totals are rounded, so the W2 sample "totals rounded to 10" is void; "< 5" is the only small-number rule shown. In the stats error state the region select is hidden (with no numbers it would do nothing); the inline error with retry takes the row.
 3. **Where your ad appears:** the four slots as one visual each using the real components from P21 (Feed, Detail, Reunited, Sidebar) with a one-line description and image format (4:3, 1200 by 900 px) and text limits. Laid out as a list with the preview on the right, alternating avoided.
 4. **Targeting:** one paragraph and a plain list: region, municipality, species, dates.
 5. **Vet Partner** (content §5, anchor `#veterinarski-partner`): title, lede and a short plain list of what the practice gets (featured "Veterinar v bližini" placement); same Content-variant rhythm, no card; a text link to the form.
@@ -52,3 +53,9 @@ None specific (hero photograph supplied or chosen by content; slot previews reus
 1. Web 1200 px: full page, audience section with the pilot note and "< 5" example, all four slot previews, the form with each state.
 2. 390 px mobile web version.
 3. Light and dark.
+
+## Change log
+
+| Version | Date | Change |
+|---|---|---|
+| 1.1 | 2026-10-19 | CH-433: no masked-region note, no region select in the error state |

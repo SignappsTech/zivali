@@ -2,6 +2,7 @@
 <!--
   TASK-41.1 wireframe (owner approval gate): AI pre-fill in the pet (P8), lost (P6) and found (P7) forms.
   v2 (2026-10-19): the owner's answers of 2026-10-19: confidence level, hint per field, breed in the found sentence, crop tool (F11, F12).
+  v2 approved by the owner on 2026-10-19 with the confidence as a percentage (CH-611); crop details as built (CH-603).
   Component mock from the real flow screen, ChoiceRow, Pill, Select, Input, Note and PetFields specs (docs/design/system.md).
   Token values copied from docs/design/tokens.css (generated from tokens.json). API behaviour: docs/tech/contracts/C19-ai-extraction.md.
   The device frames are rendered by the script at the end from one set of builders, so desktop and mobile always show the same state.
@@ -582,10 +583,10 @@ a{color:inherit}
 </svg>
 <div class="doc">
 <header>
-<div class="meta"><strong>TASK-41.1</strong><span class="pill">v2, 2026-10-19, v1 approved with changes on 2026-10-19; v2 changes await the owner</span></div>
+<div class="meta"><strong>TASK-41.1</strong><span class="pill">v2 approved 2026-10-19 (confidence as %)</span></div>
 <h1>AI pre-fill in the pet, lost and found forms</h1>
 <p>Component mock of the photo and details steps where suggestions appear: P7 found flow (steps 1 and 2), P6 lost flow on the new-pet path (steps 2, 3 and 7) and the P8 pet form (web page and mobile steps). Built from the real flow screen, ChoiceRow, Pill, Select, Input, Note and PetFields specs with the values of <code>docs/design/tokens.css</code>. What the form gets from the API follows contract C19 (<code>GET /v1/photos/:id/attributes</code>).</p>
-<p>Sample data is the C19 example: a black dog. Species dog 0.98, breed Labradorec 0.81, colour black 0.93, pattern solid 0.77, size below the 0.6 threshold (0.41), collar seen 0.88. In v2 the mark shows a confidence level: 0.85 or more is "zelo verjetno", 0.6 to 0.84 is "verjetno" (so species and colour read "zelo verjetno", breed and pattern "verjetno").</p>
+<p>Sample data is the C19 example: a black dog. Species dog 0.98, breed Labradorec 0.81, colour black 0.93, pattern solid 0.77, size below the 0.6 threshold (0.41), collar seen 0.88. In v2 the mark shows the confidence as a whole percentage (owner, 2026-10-19): species "98 %", colour "93 %", breed "81 %", pattern "77 %".</p>
 <nav aria-label="Review files"><ul class="docnav"><li><a href="P3-home.html">P3 Home (TASK-115.1)</a></li><li><a href="P1-footer.html">P1 Footer (TASK-116.1)</a></li><li><a href="M-alerts-notifications.html">Alerts mock (TASK-114.15)</a></li><li><a href="M-legal-table.html">Legal table mock (TASK-114.19)</a></li><li><a href="M-ai-prefill.html" aria-current="page">AI pre-fill mock (TASK-41.1)</a></li></ul></nav>
 <div class="tools"><button type="button" class="tbtn" id="theme">Theme: auto</button><label><input type="checkbox" id="notes" checked> Show annotations</label><div class="seg" role="group" aria-label="Viewport for all frames" id="allview"><button type="button" data-v="desktop" aria-pressed="false">All Desktop 1440</button><button type="button" data-v="mobile" aria-pressed="false">All Mobile 390</button></div></div>
 <div class="legend"><span>Copy: <code>ai_prefill.*</code> from the P7 copy §3a (TASK-40.6, draft, native review pending)</span><span><span class="lg-lgl">Wavy underline</span> owner and lawyer confirm before release (privacy claim or quoted in the lawyer pack)</span><span><span class="lg-ph">Dotted underline</span> no key yet: proposal from this wireframe</span><span>Blue chips: annotations (hidden with the checkbox); <span class="lg-v2">v2: …</span> marks what v2 changed</span></div>
@@ -598,8 +599,8 @@ a{color:inherit}
 <li><b>Several animals (F8):</b> a crop tool in Najdimo in M3, with a library the tech-lead picks (ADR-017). <b>New in v2:</b> F8 entry point, F11 crop tool, F12 after the crop.</li>
 <li><b>Before saving (F7):</b> the non-blocking check, as drawn. Approved.</li>
 </ol>
-<h2 style="margin-top:20px">Open points in v2 (please confirm)</h2><ol>
-<li><b>Confidence as a word (F4):</b> two levels next to "Predlog": "zelo verjetno" (0.85 or more) and "verjetno" (0.6 to 0.84). No numbers, so it never sounds more exact than the model is. OK, and is 0.85 the right cut? <span class="rec">Recommended: words. The alternative is a percentage ("81 %").</span></li>
+<h2 style="margin-top:20px">The owner's answers on v2 (Primož Božič, 2026-10-19): approved</h2><p>1. Confidence as a <b>percentage</b> ("Predlog · 81 %"), not words. 2. No level on the F2 sentence: OK. 3. Breed field on "Uredi podatke": OK. 4. Crop: free shape. 5. Crop offered under every photo, also with AI off (every photo the form holds as a local file, CH-603), plus "Obreži fotografijo" in the note. The questions as asked:</p><ol>
+<li><b>Confidence as a word (F4):</b> two levels next to "Predlog": "zelo verjetno" (0.85 or more) and "verjetno" (0.6 to 0.84). No numbers, so it never sounds more exact than the model is. OK, and is 0.85 the right cut? <span class="rec">Recommended: words. The alternative is a percentage ("81 %").</span> <b>Answer: a percentage.</b></li>
 <li><b>Sentence screen (F2):</b> the sentence carries no level; the levels show on each field after "Uredi podatke" (F3). OK?</li>
 <li><b>Breed on "Uredi podatke" (F3):</b> when the sentence names a breed, the edit step shows a "Pasma (neobvezno)" field so the finder can correct or clear it; without a breed suggestion the step stays as today. OK?</li>
 <li><b>Crop shape (F11):</b> free shape with a minimum size, or a fixed 4:3 frame like the cover photo? <span class="rec">Recommended: free, so one animal fits whatever its pose.</span></li>
@@ -614,7 +615,7 @@ a{color:inherit}
 <thead><tr><th scope="col">API answer</th><th scope="col">On screen</th><th scope="col">Frame</th></tr></thead>
 <tbody>
 <tr><td><code>pending</code></td><td>Spinner line <code>ai_prefill.checking</code> in the AI slot by the main action. Nothing is blocked.</td><td>F1</td></tr>
-<tr><td><code>ready</code>, value with confidence 0.6 or more</td><td>Filled only if the field is empty and untouched; marked "Predlog" until the person changes it or saves. v2: the mark carries the level, "zelo verjetno" (0.85 or more) or "verjetno" (0.6 to 0.84).</td><td>F2, F3, F4</td></tr>
+<tr><td><code>ready</code>, value with confidence 0.6 or more</td><td>Filled only if the field is empty and untouched; marked "Predlog" until the person changes it or saves. v2: the mark carries the confidence as a whole percentage ("Predlog · 81 %").</td><td>F2, F3, F4</td></tr>
 <tr><td><code>ready</code>, <code>breed</code> a real breed at 0.6 or more (P7)</td><td>v2: named in the found sentence, "Pes, labradorec, črne barve". Null, <code>*.mixed</code> or <code>*.unknown</code>: left out.</td><td>F2, F3</td></tr>
 <tr><td><code>ready</code>, <code>value: null</code> (below 0.6)</td><td>Field stays empty with the low-confidence hint.</td><td>F3, F4</td></tr>
 <tr><td><code>ready</code>, field <code>null</code> (the model saw nothing)</td><td>Nothing.</td><td>-</td></tr>
@@ -645,9 +646,9 @@ a{color:inherit}
 <li><b>Announcements</b> (one polite region per photo): <code>arrived_live</code> with the number actually filled, or <code>none_live</code>, or the notice title. Nothing when the person has filled every field already. The checking status clears without an announcement.</li>
 <li><b>Nothing saved unconfirmed:</b> values become the person's own only through Save (P8), Objavi iskanje (P6), or "Da, nadaljuj" and Objavi prijavo (P7). Save is never blocked by remaining marks.</li>
 <li><b>Disclosure:</b> "Kako nastanejo predlogi?" opens <code>info_body</code> inline on web and in a bottom sheet on mobile, with the privacy link to <code>/zasebnost#s8</code>. Shown only when <code>ai.enabled</code> is true.</li>
-<li><b>v2, confidence level</b> (Q2): the mark reads "Predlog · zelo verjetno" (0.85 or more) or "Predlog · verjetno" (0.6 to 0.84). The level is 14 regular <code>muted-foreground</code> after the bold "Predlog" (in a selected row it takes the row's text colour). It is text, never colour alone, and never a number. The field's accessible description becomes "Predlog iz fotografije, zelo verjetno pravilen. Preverite ga." Below 0.6 nothing changes: empty field and the hint. Level and mark go together.</li>
-<li><b>v2, breed in the found sentence</b> (Q4): <code>report_found.ai_sentence</code> becomes size, species, breed, colours: "Pes, labradorec, črne barve". The breed is left out when it is <code>null</code>, <code>*.mixed</code> or <code>*.unknown</code>. "Uredi podatke" then shows "Pasma (neobvezno)", filled and marked, so the finder can change or clear it. "Da, nadaljuj" makes the breed part of the report.</li>
-<li><b>v2, crop tool</b> (Q6): opens from "Obreži fotografijo" in the several-animals note and from the crop button under any photo. A frame with four corner handles (44 px targets) and edge handles, dragged to move and resized from a corner. With the keyboard: Tab goes to the frame, then each corner; arrows move the frame or resize from the focused corner; Shift moves faster; Esc cancels. Mobile is a full screen, web a dialog. "Uporabi" replaces the photo in the form with the cropped copy (nothing is saved yet); for the first photo the check runs again (F12). "Prekliči" changes nothing. Focus goes back to the button that opened it. The library is the tech-lead's choice (ADR-017) and must give these keyboard and screen-reader basics.</li>
+<li><b>v2, confidence as a percentage</b> (Q2, approved 2026-10-19): the mark reads "Predlog · 81 %": the confidence (0.6 or more) rounded to a whole percent, with a no-break space before "%". The number is 14 regular <code>muted-foreground</code> after the bold "Predlog" (in a selected row it takes the row's text colour); text, never colour alone. The field's accessible description carries the same number ("Predlog iz fotografije, 81 %. Preverite ga."; final string in the content slice). Below 0.6 nothing changes: empty field and the hint. Number and mark go together. The F2 sentence shows no number.</li>
+<li><b>v2, breed in the found sentence</b> (Q4, approved 2026-10-19): <code>report_found.ai_sentence</code> becomes size, species, breed, colours: "Pes, labradorec, črne barve". The breed is left out when it is <code>null</code>, <code>*.mixed</code> or <code>*.unknown</code>. "Uredi podatke" then shows "Pasma (neobvezno)", filled and marked, so the finder can change or clear it. "Da, nadaljuj" makes the breed part of the report.</li>
+<li><b>v2, crop tool</b> (Q6, approved 2026-10-19; as built per C19 §Crop and ADR-017, CH-603): free shape. Opens from "Obreži fotografijo" in the several-animals note and from the crop button under every photo the form holds as a local file (picked in this visit or restored from the draft), in all three forms and also when AI is off. A saved photo (P8 edit, a pet photo reused in P6) has no crop button: remove it and add it again. Minimum crop 320 px on both sides of the prepared image. A frame with four corner handles (44 px targets) and edge handles, dragged to move and resized from a corner. Web keyboard (react-image-crop): Tab goes to the frame, then each corner (five tab stops; the edge handles are for touch and mouse only); arrows move the frame or resize from the focused corner by 1 px, 10 px with Shift, 100 px with Ctrl; Esc cancels. Mobile has no Tab keys: VoiceOver and TalkBack actions on the frame move or resize it by 10 % of the photo per action. Mobile is a full screen, web a dialog. "Uporabi" replaces the photo in the form with the cropped copy (nothing is saved yet); for the first photo the check runs again (F12). "Prekliči" changes nothing. Focus goes back to the button that opened it.</li>
 </ol>
 <p>Changes filed to other owners (CHANGE inbox, 2026-10-19): CH-596 to the tech-lead for C19 §Client rules (species-valid fill, no fill with <code>no_animal</code> or <code>other_animal</code>, and for v2 the confidence level, the breed in the found sentence and the re-check after a crop) and CH-597 to the content strategist for the P7 copy §3a (slot placement of the note, keys for the v1 proposals, and the v2 strings for the level, the sentence with breed and the crop tool).</p>
 
@@ -674,12 +675,12 @@ a{color:inherit}
 <tr><td><code>ai_prefill.info_body</code> †</td><td>Fotografijo pregleda model umetne inteligence. … Predlogi se lahko motijo in postanejo del prijave šele, ko jih potrdite.</td><td>F2 (info open)</td><td>† privacy claim: owner and lawyer approve before release (LQ-36, LQ-68 to LQ-71)</td></tr>
 <tr><td>no key (proposal)</td><td>Preveri predloge</td><td>F7 (P8)</td><td>Text button that moves focus to the first marked field</td></tr>
 <tr><td>no key (proposal)</td><td>… zato jih preverite, preden objavite. · Predlog: pasma, barva, vzorec</td><td>F7 (P6 review)</td><td>Publish variant of the note and the review-row line</td></tr>
-<tr><td>no key (v2 proposal)</td><td>zelo verjetno · verjetno; accessible: Predlog iz fotografije, zelo verjetno pravilen. Preverite ga. (… verjetno pravilen …)</td><td>F3 to F7</td><td>Confidence level after "Predlog"; extends <code>suggested_a11y</code></td></tr>
+<tr><td>no key (v2, approved)</td><td>{n} % (whole percent, no-break space); accessible: Predlog iz fotografije, {n} %. Preverite ga. (final string: content slice)</td><td>F3 to F7</td><td>Confidence level after "Predlog"; extends <code>suggested_a11y</code></td></tr>
 <tr><td>no key (v2 proposal)</td><td>Obreži fotografijo · Uporabi · Prekliči · Povlecite okvir ali njegove vogale, da bo na fotografiji ena sama žival. · S tipkovnico: Tab izbere okvir ali vogal, puščice ga premaknejo ali spremenijo velikost, Shift pospeši, Esc prekliče. · Okvir obreza · Vogal zgoraj levo (desno, spodaj …) · Fotografija je obrezana.</td><td>F8, F11, F12</td><td>Crop tool: button and title, actions, touch and keyboard help, accessible names, announcement</td></tr>
 </tbody></table></div>
 
 <h2>Change log</h2>
-<div class="table-wrap"><table class="t"><thead><tr><th scope="col">Version</th><th scope="col">Date</th><th scope="col">Change</th></tr></thead><tbody><tr><td>v1</td><td>2026-10-18</td><td>First version for the owner (TASK-41.1).</td></tr><tr><td>v1 (copy)</td><td>2026-10-19</td><td>Still v1: placeholder copy replaced with <code>ai_prefill.*</code> from TASK-40.6 (P7 copy §3a), so the species switch button, "Obdrži fotografijo", the info disclosure and multiple animals filling as usual came in too. Awaiting owner approval.</td></tr><tr><td>v2</td><td>2026-10-19</td><td>The owner approved v1 with changes on 2026-10-19 (1, 3, 5 and 7 as drawn). v2: confidence level next to every Predlog mark (F3 to F7); F10 shows the hint under every field, the one-line option is gone; the found sentence names the breed and "Uredi podatke" gets a breed field (F2, F3); crop tool: "Obreži fotografijo" in the several-animals note and a crop button under every photo (F1, F8), new F11 crop tool and F12 after the crop. Questions replaced by the answers and the v2 open points. Changes filed: CH-596 (C19 §Client rules), CH-597 (P7 copy §3a). v2 changes await the owner.</td></tr></tbody></table></div>
+<div class="table-wrap"><table class="t"><thead><tr><th scope="col">Version</th><th scope="col">Date</th><th scope="col">Change</th></tr></thead><tbody><tr><td>v1</td><td>2026-10-18</td><td>First version for the owner (TASK-41.1).</td></tr><tr><td>v1 (copy)</td><td>2026-10-19</td><td>Still v1: placeholder copy replaced with <code>ai_prefill.*</code> from TASK-40.6 (P7 copy §3a), so the species switch button, "Obdrži fotografijo", the info disclosure and multiple animals filling as usual came in too. Awaiting owner approval.</td></tr><tr><td>v2</td><td>2026-10-19</td><td>The owner approved v1 with changes on 2026-10-19 (1, 3, 5 and 7 as drawn). v2: confidence level next to every Predlog mark (F3 to F7); F10 shows the hint under every field, the one-line option is gone; the found sentence names the breed and "Uredi podatke" gets a breed field (F2, F3); crop tool: "Obreži fotografijo" in the several-animals note and a crop button under every photo (F1, F8), new F11 crop tool and F12 after the crop. Questions replaced by the answers and the v2 open points. Changes filed: CH-596 (C19 §Client rules), CH-597 (P7 copy §3a). v2 changes await the owner.</td></tr><tr><td>v2 approved</td><td>2026-10-19</td><td>Owner approved v2 with the confidence as a percentage ("Predlog · 81 %"); free crop under every local photo, also with AI off; breed on "Uredi podatke" and no number on the F2 sentence OK (CH-611). Crop as built: local photos only, minimum 320 px, web keys 1/10/100 px, mobile actions 10 % (CH-603).</td></tr></tbody></table></div>
 </main>
 </div>
 <script>
@@ -690,11 +691,11 @@ function S(id,s,c){s=s||20;return '<svg class="ic'+(c?' '+c:'')+'" width="'+s+'"
 function P(t){return '<span class="phc">'+t+'</span>'}
 function TO(t){return ' <span class="to">'+t+'</span>'}
 /* v2 (Q2): the Predlog mark carries a confidence level as text; the control gets the full sentence as its accessible description.
-   l: 'hi' (0.85 or more) or 'mid' (0.6 to 0.84). Level words have no key yet (dotted underline). */
-var LV={hi:'zelo verjetno',mid:'verjetno'};
+   l: the whole percentage (owner, 2026-10-19), or 'hi'/'mid' for a sample value. */
+var LV={hi:98,mid:81};
 var NOM={h:'',v:'',s:'',d:''};
-function MK(l){if(!l)return NOM;l=l===true?'hi':l;var id=uid('a');
- var v='<span class="sug">'+S('sparkle',16)+'Predlog<span class="lvl"> · '+P(LV[l])+'</span></span>',s='<span class="sr" id="'+id+'">Predlog iz fotografije, '+LV[l]+' pravilen. Preverite ga.</span>';
+function MK(l){if(!l)return NOM;l=l===true?'hi':l;var id=uid('a');var n=(typeof l==='number')?l:LV[l];
+ var v='<span class="sug">'+S('sparkle',16)+'Predlog<span class="lvl"> · '+n+'\u00a0%</span></span>',s='<span class="sr" id="'+id+'">Predlog iz fotografije, '+n+'\u00a0%. Preverite ga.</span>';
  return {h:v+s,v:v,s:s,d:' aria-describedby="'+id+'"'}}
 function H(t){return '<p class="hint">'+S('sparkle-o',16)+'<span>'+t+'</span></p>'}
 
@@ -795,15 +796,15 @@ function p7s1(v,ph,extra,slotH,to){var d=v==='desktop';
  return d?wFlow(5,1,body,slotH,NAZAJ_W,NAPREJ_W):mFlow(5,1,body,(slotH||'')+NAPREJ)}
 /* P7 step 2 manual choices (with or without suggestions) */
 function p7manual(v,sug){var d=v==='desktop',id=uid('h');
- var body='<h1 class="'+(d?'qd':'q')+'" id="'+id+'">Katera žival je to?</h1><div class="mt24">'+rows(id,[{t:'Pes',i:'dog'},{t:'Mačka',i:'cat'},{t:'Ne vem',i:'question'}],sug?'Pes':null,{sugRow:sug?'hi':''})+'</div>'
- +(sug?'<div class="mt32">'+sel('Pasma (neobvezno)','Labradorec',{sug:'mid',ph:'Poiščite pasmo',to:'v2: only when the sentence named a breed (0.81)'})+'</div>':'')
+ var body='<h1 class="'+(d?'qd':'q')+'" id="'+id+'">Katera žival je to?</h1><div class="mt24">'+rows(id,[{t:'Pes',i:'dog'},{t:'Mačka',i:'cat'}],sug?'Pes':null,{sugRow:sug?'hi':''})+'</div>'
+ +(sug?'<div class="mt32">'+sel('Pasma (neobvezno)','Labradorec',{sug:81,ph:'Poiščite pasmo',to:'v2: only when the sentence named a breed (0.81)'})+'</div>':'')
  +'<div class="mt32">'+pills('Velikost (neobvezno)',DOG,[],{radio:true,hint:sug?C.low:'',to:sug?'size: value null (0.41 &lt; 0.6)':''})+'</div>'
- +'<div class="mt32">'+pills('Barva (neobvezno)',COLOURS,sug?['Črna']:[],{sug:sug?'hi':'',to:sug?'black 0.93':''})+'</div>';
+ +'<div class="mt32">'+pills('Barva (neobvezno)',COLOURS,sug?['Črna']:[],{sug:sug?93:'',to:sug?'black 0.93':''})+'</div>';
  var sl=sug?slot('note',{t:C.noteContinue}):'';
  return d?wFlow(5,2,body,sl,NAZAJ_W,NAPREJ_W):mFlow(5,2,body,sl+NAPREJ)}
 
 /* ---------- sample states ---------- */
-function stArrived(){return {species:{v:'Pes',sug:'hi',to:'v2: 0.98'},breed:{v:'Labradorec',sug:'mid',to:'v2: 0.81'},colours:{v:['Črna'],sug:'hi',to:'v2: 0.93'},pattern:{v:'Enobarvna',sug:'mid',to:'v2: 0.77'},size:{v:null,hint:C.low,to:'value null'},sizes:DOG,collarHint:true,name:''}}
+function stArrived(){return {species:{v:'Pes',sug:98,to:'v2: 0.98'},breed:{v:'Labradorec',sug:81,to:'v2: 0.81'},colours:{v:['Črna'],sug:93,to:'v2: 0.93'},pattern:{v:'Enobarvna',sug:77,to:'v2: 0.77'},size:{v:null,hint:C.low,to:'value null'},sizes:DOG,collarHint:true,name:''}}
 
 /* ---------- frames ---------- */
 var F=[
@@ -814,7 +815,7 @@ var F=[
  'The line sits in the <b>AI slot</b> just above the main action (mobile footer, web above the buttons, P8 web in the summary card). It changes in place (F3, F4) or goes away (F9), so no field above it moves.',
  'With <code>ai.enabled</code> false there is no polling and no line at all.',
  'It is a polite live region. When the result comes, the same region reads <code>arrived_live</code>, <code>none_live</code> or the notice title once; <code>unavailable</code> and the timeout clear it without an announcement (§3a). Under reduced motion the spinner turns slowly (2.4 s), as system 7 says.',
- '<b>v2:</b> the crop button under the photo (next to Odstrani) opens the crop tool (F11). Cropping the first photo while it is being checked drops that check and starts a new one on the cropped copy (F12).']}},
+ '<b>v2:</b> the crop button under the photo (next to Odstrani) opens the crop tool (F11); it shows for photos picked in this visit or restored from the draft, also with AI off, never for a saved photo (CH-603). Cropping the first photo while it is being checked drops that check and starts a new one on the cropped copy (F12).']}},
 {id:'f2',title:'Suggestion arrived: "Je to pravilno?" (accept or edit)',sub:'P7 step 2 with AI. Sample: dog 0.98, black 0.93, size 0.41. Second state: "Kako nastanejo predlogi?" open.',
  states:[['closed','Sentence'],['info','Info open']],
  render:function(v,s){var d=v==='desktop',info=s==='info';
@@ -829,7 +830,7 @@ var F=[
   '<code>info_body</code> is marked † in the copy: a privacy claim the owner and the lawyer approve before release, together with privacy policy 0.8 chapter 8 (LQ-36, LQ-68 to LQ-71).'];
   return ['The sentence (<code>report_found.ai_sentence</code>) uses only suggested values. Size is <code>null</code>, so the size phrase is left out.',
  '<b>v2 (Q4): the breed is named</b> after the species: "Pes, labradorec, črne barve". It is left out when it is <code>null</code> (below 0.6), <code>dog.mixed</code> or <code>dog.unknown</code>: "Pes, črne barve". In the sentence the breed is a common noun in lower case; the copy sets the form for names with capitals.',
- '<b>v2:</b> no confidence level here. The sentence is one suggestion; the levels show on each field after "Uredi podatke" (F3). Open point 2.',
+ '<b>v2 (approved):</b> no number here. The sentence is one suggestion; the percentages show on each field after "Uredi podatke" (F3).',
  '<b>Accept:</b> "Da, nadaljuj" makes species, breed and colour the finder\'s own answers; step 5 shows them as normal summary rows, without a mark. <b>Edit:</b> "Uredi podatke" opens F3.',
  'This screen shows only when the result (with a species, and no <code>no_animal</code> or <code>other_animal</code> notice) was there before the finder pressed Naprej on step 1. Otherwise step 2 is the manual step (F9), and a late result fills its untouched choices with marks (F6 rules); the screen never swaps under the finder.',
  '<code>report_found.ai_note</code> is quoted in the lawyer pack (LQ-37): it changes only together with LQ-37.',
@@ -838,7 +839,7 @@ var F=[
 {id:'f3',title:'Edit details: suggestions in place, low-confidence hint',sub:'P7 step 2 after "Uredi podatke".',
  render:function(v){return p7manual(v,true)},
  notes:function(){return ['The manual step 2 opens with the suggestions in place: Pes and Črna are selected and marked. The h1 is the species label here, so the mark sits inside the selected row.',
- '<b>v2 (Q2):</b> each mark carries its level: Pes and Črna "zelo verjetno" (0.98, 0.93), Pasma "verjetno" (0.81).',
+ '<b>v2 (Q2, approved):</b> each mark carries its percentage: Pes 98 %, Črna 93 %, Pasma 81 %.',
  '<b>v2 (Q4):</b> "Pasma (neobvezno)" shows here only when the sentence named a breed, filled and marked, so the finder can change or clear it. Without a breed suggestion, and without AI (F9), the step has no breed field, as today. Open point 3.',
  '<b>Low confidence:</b> size has <code>value: null</code> (0.41, below <code>ai.min_confidence</code> 0.6), so nothing is selected and <code>ai_prefill.low_confidence</code> shows instead of a guess.',
  '<b>Edit:</b> choosing another row or pill removes that field\'s mark. <b>Reject:</b> deselecting Črna leaves the colour empty; a removed suggestion never comes back.',
@@ -846,8 +847,8 @@ var F=[
 {id:'f4',title:'Suggestions in the pet form (PetFields)',sub:'Desktop: P8 web "Nova žival". Mobile: P6 step 3 "Opišite žival". Both are the shared PetFields.',
  render:function(v){var st=stArrived();return v==='desktop'?p8web(st,slot('note',{t:C.noteSave})):p6(st,v,slot('note',{t:C.noteContinue}))},
  notes:function(){return ['<b>Filled and marked</b> (0.6 or more): Vrsta, Pasma (<code>dog.labrador_retriever</code> shown as "Labradorec" from the <code>breeds</code> namespace), Barva, Vzorec. They are real selections; the person\'s Save or Publish confirms them, nothing is saved before (owner, Q1).',
- '<b>v2 (Q2): confidence level</b> after "Predlog", recommended form: a word. "zelo verjetno" at 0.85 or more (Vrsta 0.98, Barva 0.93), "verjetno" at 0.6 to 0.84 (Pasma 0.81, Vzorec 0.77). 14 regular <code>muted-foreground</code>, text and not colour. Accessible description: "Predlog iz fotografije, zelo verjetno pravilen. Preverite ga."',
- '<b>Alternative:</b> a percentage after the mark ("Predlog · 81 %"). Not recommended: the model\'s confidence is not calibrated, a number reads as more exact than it is, and the copy rule says no numbers.',
+ '<b>v2 (Q2): confidence as a percentage</b> after "Predlog" (owner, 2026-10-19): Vrsta 98 %, Barva 93 %, Pasma 81 %, Vzorec 77 %. 14 regular <code>muted-foreground</code>, text and not colour; the accessible description carries the same number.',
+ '<b>Words</b> ("zelo verjetno", "verjetno") were the other option; the owner chose the percentage.',
  '<b>Velikost</b> is <code>null</code>: empty with <code>low_confidence</code>. <b>Ovratnica:</b> collar seen, so only <code>collar_hint</code>; the collar text is never filled.',
  'AI slot: <code>note_continue</code> on P6 (by Naprej), <code>note_save</code> on the P8 summary card (by Shrani), each with "Kako nastanejo predlogi?".',
  'Live region, polite, once: "Iz fotografije smo predlagali 4 podatke. Preverite jih." (<code>arrived_live</code>). Focus does not move.',
@@ -856,10 +857,10 @@ var F=[
 {id:'f5',title:'Edit and reject a suggestion; species differs',sub:'P8 pet form. Mobile: step 3 Videz, or step 2 Osnovno for the species case.',
  states:[['edit','Edit and reject'],['species','Species differs']],
  render:function(v,s){var st;
-  if(s==='species'){st={species:{v:'Mačka',hint:C.species,sw:C.speciesSwitch,to:'chosen by hand; photo says dog 0.98'},breed:{v:null,to:'dog breed codes never fill a cat form'},colours:{v:['Črna'],sug:'hi'},pattern:{v:'Enobarvna',sug:'mid',to:'valid for cats too'},size:{v:null,hint:C.low},sizes:CAT,collarHint:true,name:'Muri'};
+  if(s==='species'){st={species:{v:'Mačka',hint:C.species,sw:C.speciesSwitch,to:'chosen by hand; photo says dog 0.98'},breed:{v:null,to:'dog breed codes never fill a cat form'},colours:{v:['Črna'],sug:93},pattern:{v:'Enobarvna',sug:77,to:'valid for cats too'},size:{v:null,hint:C.low},sizes:CAT,collarHint:true,name:'Muri'};
    if(v==='desktop')return p8web(st,slot('note',{t:C.noteSave}));
    return mFlow(5,2,'<h1 class="q">Osnovno</h1><div class="stack mt32">'+species(st)+inp('Ime','Muri')+pills('Spol',SEX,[],{radio:true})+'</div>',slot('note',{t:C.noteContinue})+NAPREJ)}
-  st={species:{v:'Pes',sug:'hi'},breed:{v:'Mešanec',to:'changed by hand: mark and level gone'},colours:{v:[],to:'suggestion removed: stays empty'},pattern:{v:'Enobarvna',sug:'mid'},size:{v:'Velika',to:'chosen by hand: hint gone'},sizes:DOG,collarHint:true,name:'Medo'};
+  st={species:{v:'Pes',sug:98},breed:{v:'Mešanec',to:'changed by hand: mark and level gone'},colours:{v:[],to:'suggestion removed: stays empty'},pattern:{v:'Enobarvna',sug:77},size:{v:'Velika',to:'chosen by hand: hint gone'},sizes:DOG,collarHint:true,name:'Medo'};
   if(v==='desktop')return p8web(st,slot('note',{t:C.noteSave,to:'2 fields still marked'}));
   return mFlow(5,3,'<h1 class="q">Videz</h1><div class="stack mt32">'+looks(st,'h2')+'</div>',slot('note',{t:C.noteContinue})+NAPREJ)},
  notes:function(s){if(s==='species')return ['The person chose Mačka before the result came. The species is <b>never switched by itself</b>: <code>species_differs</code> says the photo looks like a dog, and the <code>species_switch</code> text button "Izberi psa" lets the person switch with one press.',
@@ -870,7 +871,7 @@ var F=[
   'Vrsta and Vzorec still carry the mark, so the note stays in the slot.',
   'No per-field "accept" button: leaving a value as it is and saving accepts it (owner, Q7: approved).']}},
 {id:'f6',title:'Late suggestion after the person started',sub:'P6 step 3. The result arrives at about 5 s, while the person types the name.',
- render:function(v){var st={species:{v:'Pes',to:'chosen by hand: no mark'},breed:{v:'Labradorec',sug:'mid',to:'empty and untouched: filled'},colours:{v:['Črna','Bela'],to:'touched: kept as chosen'},pattern:{v:'Enobarvna',sug:'mid'},size:{v:null,to:'late: no new hint line'},sizes:DOG,collarHint:false,name:'Medo',nameFocus:true,nameTo:'focus stays here'};
+ render:function(v){var st={species:{v:'Pes',to:'chosen by hand: no mark'},breed:{v:'Labradorec',sug:81,to:'empty and untouched: filled'},colours:{v:['Črna','Bela'],to:'touched: kept as chosen'},pattern:{v:'Enobarvna',sug:77},size:{v:null,to:'late: no new hint line'},sizes:DOG,collarHint:false,name:'Medo',nameFocus:true,nameTo:'focus stays here'};
   return p6(st,v,slot('note',{t:C.noteContinue}))},
  notes:function(){return ['The person chose Pes, picked Črna and Bela and is typing the name when the result arrives.',
  '<b>Filled:</b> only empty fields the person has not touched (Pasma, Vzorec), with the mark. <b>Kept:</b> Vrsta and Barva stay exactly as chosen, without a mark (C19: a late suggestion never overwrites).',
@@ -879,7 +880,7 @@ var F=[
 {id:'f7',title:'Check before saving',sub:'The step that saves: P6 Review (Objavi iskanje) or the P8 Save.',
  states:[['p6','P6 review'],['p8','P8 save']],
  render:function(v,s){var d=v==='desktop';
-  if(s==='p8'){var st={species:{v:'Pes'},breed:{v:'Labradorec',sug:'mid',focus:d,to:d?'"Preveri predloge" moved focus here':''},colours:{v:['Črna'],sug:'hi'},pattern:{v:'Enobarvna',sug:'mid'},size:{v:'Velika'},sizes:DOG,collarHint:true,name:'Medo'};
+  if(s==='p8'){var st={species:{v:'Pes'},breed:{v:'Labradorec',sug:81,focus:d,to:d?'"Preveri predloge" moved focus here':''},colours:{v:['Črna'],sug:93},pattern:{v:'Enobarvna',sug:77},size:{v:'Velika'},sizes:DOG,collarHint:true,name:'Medo'};
    if(d)return p8web(st,slot('note',{t:C.noteSave,review:true,to:'3 fields still marked'}));
    return mFlow(5,5,'<h1 class="q">Ovratnica in opombe</h1><div class="stack mt32">'+inp('Ovratnica','',{ph:'Na primer: rdeča ovratnica z zvončkom',hint:C.collar})+ta('Opombe',{ph:'Na primer: zdravila, ki jih potrebuje, in kako se odziva na neznance'})+'</div>',slot('note',{t:C.noteSave,review:true})+'<button type="button" class="btn btn-lg b1 block">Shrani</button>')}
   var row=function(dt,dd,extra){return '<div><dt>'+dt+'</dt><dd>'+dd+'</dd>'+(extra||'')+'<dd class="e"><button type="button" class="btn bt" aria-label="Uredi: '+dt+'">Uredi</button></dd></div>'};
@@ -925,18 +926,18 @@ var F=[
  render:function(v,s){var d=v==='desktop',k=s==='keys';
   var tid=uid('c'),hid=uid('c');
   var help='<p class="help" style="margin:0 0 16px">'+C.cropHelp+'</p>';
-  var keys=(!d&&!k)?'<p class="sr" id="'+hid+'">'+C.cropKeys+'</p>':'<p class="hint" id="'+hid+'">'+S('info',16)+'<span>'+C.cropKeys+(k?TO('Tab: frame, then 4 corners · arrows 1 %, Shift 10 % · Esc'):'')+'</span></p>';
+  var keys=(!d&&!k)?'<p class="sr" id="'+hid+'">'+C.cropKeys+'</p>':'<p class="hint" id="'+hid+'">'+S('info',16)+'<span>'+C.cropKeys+(k?TO('Tab: frame, then 4 corners · arrows 1 px, Shift 10 px, Ctrl 100 px · Esc'):'')+'</span></p>';
   var stage=cropStage(k,hid,d);
   if(d){var page='<div style="min-height:1000px">'+p7s1('desktop',['dva psa','--chart-2'],'','')+'</div>';
    return page+'<div class="scrim"></div><div class="cdlg" role="dialog" aria-modal="true" aria-labelledby="'+tid+'"><h2 class="sht" id="'+tid+'" style="padding-top:0;margin-bottom:8px">'+C.crop+'</h2>'+help+stage+keys
     +'<div class="cact"><button type="button" class="btn bt">'+C.cancel+'</button><button type="button" class="btn btn-lg b1">'+C.apply+'</button></div></div>'}
   return '<div class="crop-m" role="dialog" aria-modal="true" aria-labelledby="'+tid+'"><div class="mtop"><h2 class="sht" id="'+tid+'" style="padding-top:0">'+C.crop+'</h2></div><div class="mbody">'+help+stage+keys+'</div>'
    +'<div class="mfoot"><button type="button" class="btn btn-lg b1 block">'+C.apply+'</button><button type="button" class="btn bt block">'+C.cancel+'</button></div></div>'},
- notes:function(s){if(s==='keys')return ['<b>Keyboard:</b> Tab moves to the frame, then to each corner. On the frame, the arrows move it; on a corner, they resize from that corner. 1 % of the photo per press, 10 % with Shift. Esc cancels (Prekliči). Focus is drawn on the bottom-right corner.',
+ notes:function(s){if(s==='keys')return ['<b>Keyboard:</b> Tab moves to the frame, then to each corner. On the frame, the arrows move it; on a corner, they resize from that corner. 1 px per press, 10 px with Shift, 100 px with Ctrl (react-image-crop, ADR-017). Esc cancels (Prekliči). Mobile: VoiceOver and TalkBack actions move or resize the frame by 10 % of the photo per action. Focus is drawn on the bottom-right corner.',
    'The help line is the frame\'s accessible description. Accessible names: "Okvir obreza" and "Vogal zgoraj levo" (desno, spodaj …). The edge handles are for touch and mouse only, so there are five tab stops, not nine.',
    'The library the tech-lead picks (ADR-017) must give this, or we add it. Focus stays inside the dialog; it opens on the frame.'];
   return ['<b>Pattern:</b> the photo dimmed outside a frame, rule-of-thirds lines inside. Drag inside the frame to move it; drag a corner (44 px target, drawn as a bracket) or an edge to resize. No rotation and no zoom.',
-   'The frame starts at the whole photo less a margin; here it is already moved to the dog on the left. It cannot go outside the photo or below a minimum size the tech-lead sets (ADR-017), so the check and the matching keep enough detail. Free shape (open point 4).',
+   'The frame starts at the whole photo less a margin; here it is already moved to the dog on the left. It cannot go outside the photo or below 320 px on either side of the prepared image (ADR-017), so the check and the matching keep enough detail. Free shape (approved).',
    '<b>Uporabi</b> replaces the photo in the form with the cropped copy (F12). <b>Prekliči</b>, Esc or the system back changes nothing. Neither saves the report or the profile: that stays with Naprej, Shrani or Objavi.',
    'Mobile 390: a full screen with Uporabi and Prekliči in the thumb zone. Desktop 1440: a dialog (680 px) over the step, the actions on the right as in the flow footer. The same in P6, P7 and P8, in the app and on the web.']}},
 {id:'f12',title:'After the crop: the check runs again',sub:'v2 (Q6). P7 step 1 after "Uporabi". The same in P6 step 2 and in the P8 Fotografije section.',

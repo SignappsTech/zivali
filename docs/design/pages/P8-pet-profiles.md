@@ -3,7 +3,7 @@ source: 03§P8
 page: P8 Pet profiles
 stories: TASK-16 (FR-002, FR-003)
 platforms: web, mobile
-version: 1.1
+version: 1.2
 mockup: docs/design/mockups/P8-pet-profiles.html
 copy: docs/content/pages/P8-pet-profiles.md
 ---
@@ -27,7 +27,7 @@ Empty state: spot illustration, h3, sentence, primary "Add an animal".
 
 A single column of line fields grouped by h3 labels with 40 px gaps. No cards, no borders.
 
-1. **Photos:** up to 5, camera or gallery, drag to reorder on web, first photo is the cover, delete with confirmation (photos removed from storage). Upload progress per photo.
+1. **Photos:** 0 to 5 (none required on web and mobile, CH-329: a profile can be saved first and photographed later; a lost report for a pet without photos asks for one in P6), camera or gallery, drag to reorder on web, first photo is the cover, delete with confirmation (photos removed from storage). Upload progress per photo.
 2. **Basics:** species (choice rows Dog / Cat), name, sex (three pills), birth year (select).
 3. **Looks:** breed (searchable select, localised names; "Mixed breed" and "Not sure" always listed last), colours (all 10 as toggle pills; no "Other" expander, C4 has no other colour), pattern (select), size (three choice pills). Breed and pattern stay disabled with "Najprej izberite vrsto." until a species is chosen. Cats also get an ear-tip pill (Looks) and indoor/outdoor pills (Basics). (CH-272)
 4. **Chip:** line field (digits, grouped as typed), format hint; below it the CRHŽ register pills (yes / no / not sure) with `pets.chip_register_note` as their help line (plain text, no link; CH-272); duplicates are flagged silently to moderators (never shown to the user).
@@ -58,7 +58,7 @@ Cover photo (radius 32), name h1, facts as a plain 2-column list, notes, chip ro
 |---|---|
 | Empty | as above |
 | Loading | row skeletons |
-| Invalid or short chip | warning `note`: saved as "unknown chip", not blocked |
+| Invalid or short chip | warning `note` when the digits fall outside 9 to 15 (C4 `normalizeChip`): saved as "unknown chip", not blocked. Mockup M5 shows "705 1234" (CH-274) |
 | Photo upload failure | per photo retry |
 | Pet limit reached | quiet note, no modal |
 | Unsaved changes | leaving with edits asks to discard or save (dialog) |
@@ -85,3 +85,4 @@ List single column; detail two columns from `lg` (photos left, facts right). Lab
 | Version | Date | Change |
 |---|---|---|
 | 1.1 | 2026-10-18 | CH-271, CH-272, CH-299, CH-324: Looks and notes sections as built, web and mobile as-built notes |
+| 1.2 | 2026-10-19 | CH-329: no minimum photo count on web and mobile. CH-274: chip warning outside 9 to 15 digits, M5 sample |

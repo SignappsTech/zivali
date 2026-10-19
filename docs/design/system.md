@@ -2,9 +2,9 @@
 doc: design-system
 title: Design system (slice)
 source: 03§Brand and visual language
-version: 0.17
+version: 0.18
 status: Draft, direction A (Lagoon) chosen by the client
-date: 2026-10-15
+date: 2026-10-19
 owner: Design Lead
 ---
 
@@ -185,6 +185,24 @@ The generated hex values below come from `tokens.json`. "Role" tells you where t
 | `provider-foreground` | Label on provider buttons (Google's label colours; read as black and white for Apple) | #1F1F1F | #E3E3E3 |
 | `provider-border` | 1 px inside stroke of provider buttons (Google's stroke; Apple allows a stroke) | #747775 | #8E918F |
 
+#### Coat swatches (literal values, CH-310)
+
+A real coat colour, so the same in light and dark. Used only as a 16 px round swatch before the colour word in colour pills (P4 filter "Barva", P6 and P8 colours, P7 edit step) and never alone: the word always carries the meaning, so the swatch needs no contrast pair. Each swatch has a 1 px inset `coat-edge` ring so white, cream and black read on every surface. One token per C4 colour code (`blue_grey` becomes `coat-blue-grey`). Do not use status or semantic tokens for coat colours.
+
+| Token | C4 code | Light and dark |
+|---|---|---|
+| `coat-black` | black | #1F1F1F |
+| `coat-white` | white | #FFFFFF |
+| `coat-grey` | grey | #9B9B9B |
+| `coat-brown` | brown | #7A4B2C |
+| `coat-chocolate` | chocolate | #4A2B1C |
+| `coat-red` | red (ginger) | #C4652E |
+| `coat-cream` | cream | #EEDFC0 |
+| `coat-golden` | golden | #D9A441 |
+| `coat-tan` | tan | #C0946A |
+| `coat-blue-grey` | blue_grey | #7C8995 |
+| `coat-edge` | swatch ring | `mist.950` at 0.24 (light), `mist.100` at 0.32 (dark) |
+
 #### Map markers
 
 | Token | Role | Light | Dark |
@@ -327,7 +345,7 @@ Both are Google Fonts with Latin Extended, so **Č, Š, Ž** (and Đ, Ć) render
 | Atkinson Hyperlegible Next | 400 | body, UI, inputs |
 | Atkinson Hyperlegible Next | 700 | labels, buttons, emphasis (`font-sans-bold`). Weights 500 and 600 are not loaded: web `font-medium` resolves to 400 and `font-semibold` to 700. |
 
-Subset each file (pyftsubset from the OFL sources, `--flavor=woff2`) to U+0020-007E, U+00A0-00FF, U+0100-017F (Č, Š, Ž, Đ, Ć, ě and friends), U+2013-2014, U+2018-201E, U+2022, U+2026, U+20AC, U+2192, U+2212, plus ligature and kerning features `kern, liga, tnum, zero`. Atkinson keeps `tnum` and `zero` (slashed zero for chip numbers). `display: swap`; fallback `Arial` with `size-adjust` (`adjustFontFallback: 'Arial'`) so the swap does not shift layout. Preload all three (they all paint above the fold on public pages). If self-hosting is not possible, the fallback is `next/font/google` with the same weights, `subsets: ['latin', 'latin-ext']`, no `axes`; expect about 80 to 100 KB because Slovenian text pulls the latin-ext file too.
+Subset each file (pyftsubset from the OFL sources, `--flavor=woff2`) to U+0020-007E, U+00A0-00FF, U+0100-017F (Č, Š, Ž, Đ, Ć, ě and friends), U+2013-2014, U+2018-201E, U+2022, U+2026, U+20AC, U+2192, U+2212, plus ligature and kerning features `kern, liga, tnum, zero`. Atkinson keeps `tnum` and `zero` (slashed zero for chip numbers). Latin Extended-A stays whole (decided 2026-10-19, CH-229, CH-316): cutting it to č š ž ć đ would break names of the Hungarian minority and of neighbours (ő, ű, ł, ř, ą), and the heading face already ships one weight only. `display: swap`; fallback `Arial` with `size-adjust` (`adjustFontFallback: 'Arial'`) so the swap does not shift layout. Preload all three (they all paint above the fold on public pages). If self-hosting is not possible, the fallback is `next/font/google` with the same weights, `subsets: ['latin', 'latin-ext']`, no `axes`; expect about 80 to 100 KB because Slovenian text pulls the latin-ext file too.
 
 **Mobile.** `expo-font` with `@expo-google-fonts/bricolage-grotesque` (600 SemiBold, 700 Bold) and `@expo-google-fonts/atkinson-hyperlegible-next` (400 Regular, 600 SemiBold, 700 Bold). React Native cannot use variable font axes, so use these static weights only. Static instances use the default optical size, so if mobile headings look loose, tighten tracking by 0.01em. Verify the package names at scaffold time. Mobile bytes are bundled, not network, so no cut there.
 
@@ -442,7 +460,16 @@ Motion has a reason: feedback (press scale 0.98), state change (sheet snap, swit
 
 # 9. Imagery
 
-**Photography.** Real pets, owner snapshots: natural light, eye level, the animal fills the frame, face readable. Crops: 1:1 for rows and markers, 4:3 for tiles and detail, 4:5 or 1:1 for hero. Photos sit in rounded frames (radii above) with **no text, pill, bar or badge on top of them**. Alt text: species, colour and one distinguishing mark ("Rjav in bel pes z rdečo ovratnico"). Show 3 to 5 photos per pet when available.
+**Photography.** Real pets, owner snapshots: natural light, eye level, the animal fills the frame, face readable. Frames: 1:1 for rows and markers, 4:3 for tiles and detail, 4:5 or 1:1 for hero.
+
+**Photo framing (user photos, CH-606, as built TASK-114.43).** Owner snapshots are any shape and the animal is often near an edge, so:
+
+| View | Fit |
+|---|---|
+| Full views: report detail gallery, pet detail cover, match comparison, manage page, reunited photo, form previews | The 4:3 frame stays; the **whole photo** shows inside it (contain), letterboxed on `muted`. Nothing is cut. |
+| Frames: cards, tiles, rows, thumbnails, map markers, alert and share images | Cover, anchored near the top (`50% 10%`), so heads and ears survive and the cut falls on legs and floor. |
+
+One shared helper per platform decides the fit (web `apps/web/lib/photo.ts`); new views pick one of the two rows, never a third. Marketing and generated images keep plain cover. Photos sit in rounded frames (radii above) with **no text, pill, bar or badge on top of them**. Alt text: species, colour and one distinguishing mark ("Rjav in bel pes z rdečo ovratnico"). Show 3 to 5 photos per pet when available.
 
 **Image generation (image tasks).** Allowed for illustration, marketing and empty states, never as a stand-in for a real report. Brief format: purpose, size, style, content, avoid, file name (`assets/<name>.png`).
 
@@ -543,8 +570,8 @@ Web = shadcn/ui, mobile = React Native Reusables (NativeWind). Same names, same 
 | Floating area control | `card` pill, 48 high, `shadow-md`: map-pin, "Ljubljana, 10 km", and a 32 px `secondary` circle with the filters icon. It is the only control on the map; it opens the filter sheet (status pills, species, radius). No locate button. |
 | Bottom sheet | `card`, top radius 28, grabber 40x5, `shadow-lg`, 20 px side padding. Snap points: peek about 40 % of the screen, full 92 %. Scrim behind modals. |
 | Flow top bar | 56 px: back (icon button), **one bar per step** (the count comes from the flow's page slice, for example 7 for the lost flow; 4 px high, gap 6, equal widths, `primary` for done steps and the current one, `muted` for the rest), close. No title. The bars are one `role="progressbar"` with `aria-valuenow` and `aria-valuemax` and the name "Korak {current} od {total}" from the content slice. Flows keep to 8 steps or fewer so the bars stay readable at 320 px. |
-| Web header | 88 px, no border, on `background`. Logo left, at most 4 text links (16 semibold; the current page is `foreground` **and underlined**, others `muted-foreground`, so it is not colour only), right: language switch, ghost "Vpis" (EN "Sign in") and a `sm` "Prijavi": `primary` by default, `secondary` on pages whose content has its own primary action (P3 home hero, P3 T5 and T6 where the primary is "Pokliči", P9 detail, P22 form); in every T5/T6 state it stays `secondary`, even when the page shows no primary, so a view never shows two primaries. Same place, label and menu either way. Signed in: the fourth link is the short label "Moje živali" (EN "My pets"; reports are inside), inbox icon button and avatar menu. The header must fit without overflow from 1024 px; if it does not, the language switch moves into the account menu below `xl`. |
-| Web footer | Content variant (as built, TASK-116.2, P1-footer.html v1): hairline top border; logo and tagline with the language switch under it (left, 4fr) and four headed columns (8fr; h2 headings "Pomoč", "Za organizacije", "Najdimo", "Pravno" inside the `nav` "Noga strani", each `ul` labelled by its heading; Cookie settings last under Pravno); 2 by 2 columns below `lg`; a bottom row (border-top) with the copyright and the operator line; no panel. The 13 links are the same set (How it works, Safety tips, FAQ, For shelters, Shelters (the public directory), Partners, About, Privacy, Cookies, Cookie settings, Terms, Imprint, Accessibility). **Flow variant: minimal** single quiet row (Privacy, Terms, Cookie settings, Accessibility), no logo block, no copyright. |
+| Web header | 88 px, no border, on `background`. Logo left, at most 4 text links (16 semibold; the current page is `foreground` **and underlined**, others `muted-foreground`, so it is not colour only), right: language switch, ghost "Vpis" (EN "Sign in") and a `sm` "Prijavi": `primary` by default, `secondary` on pages whose content has its own primary action (P3 home, where the hero chooser card is the main action, P3 T5 and T6 where the primary is "Pokliči", P9 detail, P22 form); in every T5/T6 state it stays `secondary`, even when the page shows no primary, so a view never shows two primaries. Same place, label and menu either way. Signed in: the fourth link is the short label "Moje živali" (EN "My pets"; reports are inside), inbox icon button and avatar menu. Unread state on web (CH-279, as built TASK-22.4): the inbox icon button and the menu-sheet inbox row carry the 10 px `primary` unread dot of the inbox rows, never a count, and "neprebrano" (`common.unread`) joins the link name; it updates in real time. The header must fit without overflow from 1024 px; if it does not, the language switch moves into the account menu below `xl`. |
+| Web footer | Content variant (as built, TASK-116.2 and TASK-114.42, P1-footer.html v1 with the owner's choices of 2026-10-19, CH-594): hairline top border; logo and tagline with the language switch under it (left, 4fr) and four headed columns (8fr; h2 headings "Pomoč", "Za organizacije", "Najdimo", "Pravno" inside the `nav` "Noga strani", each `ul` labelled by its heading; Cookie settings last under Pravno); **one column per group below `lg`** (stacked, in that order), not 2 by 2; a bottom row (border-top) with the copyright and the operator line; no panel. Groups: Pomoč = How it works, Safety tips, FAQ, **Shelters** (the public directory `/zavetisca`; people look for it when they need help); Za organizacije = For shelters, Partners; Najdimo = About, Imprint ("Podatki o podjetju"), Accessibility; Pravno = Privacy, Cookies, Terms, Cookie settings (13 links). **Operator line**: the company name and a text link "Podatki o podjetju" (to the imprint); no street address in the footer. **Flow variant: minimal** single quiet row (Privacy, Terms, Cookie settings, Accessibility), no logo block, no copyright. |
 
 ## 10.8 Flow screen ("one question per screen")
 
@@ -716,3 +743,4 @@ Each page slice in `docs/design/pages/P<n>-<slug>.md` gets one static mockup at 
 | 0.14 | 2026-10-16 | TASK-90.5: web font loading cut to Bricolage 700 + Atkinson 400/700, custom Latin subsets, no opsz, preload, size-adjusted fallback (section 4). Tokens unchanged. |
 | 0.16 | 2026-10-18 | CH-236, CH-239, CH-242, CH-245, CH-246, CH-258: chat parts, strength indicator and result cell, channel matrix and notification row, ad unit pointer (§10.5, §10.9); composer hidden-label exception (§10.3); P4 list-pane h1 at 30/36 (§4). Tokens unchanged. |
 | 0.17 | 2026-10-18 | CH-481, CH-482, CH-544, CH-545: empty-state heading level, non-modal menus as built, footer content variant as built, sidebar tokens on the T1 closing band. Tokens unchanged. |
+| 0.18 | 2026-10-19 | CH-606: photo framing (whole photo in full views, top-anchored cover in frames, §9). CH-594: footer groups, one column per group below `lg`, operator line (§10.7). CH-279: web unread dot on the inbox button (§10.7). CH-310: coat swatch tokens (§3.2; tokens 0.6.0). CH-229, CH-316: opsz drop and weights already applied in 0.14; Latin Extended-A kept whole (§4). Header "Prijavi" stays secondary on home B. |

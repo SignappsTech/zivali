@@ -3,7 +3,7 @@ source: 03§P11
 page: P11 Match review
 stories: TASK-20 (FR-008)
 platforms: web, mobile
-version: 1.2
+version: 1.3
 mockup: docs/design/mockups/P11-match-review.html
 copy: docs/content/pages/P11-match-review.md
 ---
@@ -48,7 +48,7 @@ When a found report has several claiming owners the finder sees them as separate
 | State | Behaviour |
 |---|---|
 | Loading | row and comparison skeletons |
-| Chip match | pinned top row and a calm banner, no celebration animation |
+| Chip match | pinned top row and a calm banner, no celebration animation. The words are "Številka čipa se ujema" (row and banner) and the strength word; the label "the strongest match" is not used: pinned first plus the chip line already says it, and a superlative would overpromise (CH-462, 2026-10-19) |
 | Low strength | shown with "Possible" wording and no emphasis |
 | Match withdrawn | row disappears, note on the list "A match was removed" |
 | Offline | cached list read-only, actions disabled with explanation |
@@ -84,3 +84,4 @@ Strength is text plus bars with an accessible label; comparison table is a real 
 |---|---|---|
 | 1.1 | 2026-10-18 | CH-332: mobile review screen as built |
 | 1.2 | 2026-10-18 | CH-429, CH-434 (CH-430), CH-461, CH-463: web as built, three empty-state actions, abuse in the overflow below the actions; CH-435 gap noted |
+| 1.3 | 2026-10-19 | CH-462: chip-match wording confirmed (no "strongest"). CH-435: mobile overflow gap already noted (1.2); needs a mobile task |
