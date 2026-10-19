@@ -1,7 +1,7 @@
 ---
 doc_id: DOC-01
 title: Project Brief
-version: 1.1
+version: 1.2
 status: Draft
 date: 2026-10-14
 owner: Project Lead
@@ -60,9 +60,11 @@ approvals:
     - **Free:** everything that gets animals home (see the free-forever list), incl. basic AI (breed/colour pre-fill, photo matching) and up to **2 pet profiles**.
     - **Voluntary support "Pomagajte nam izboljšati Najdimo"**, always optional: shown after a reunion, after a report and on the profile. €3 / **€5** (highlighted, not pre-selected) / €10 / custom; or monthly Podpornik from €2/month (badge).
     - **Boost €4.99** (fixed): 7 days of wider alert radius, top of the map, an auto-generated social post.
-    - **Premium €2.99/month or €24.99/year:**
+    - **Premium €29.99/year (shown first as the better deal) or €3.99/month:**
       - unlimited pet profiles
-      - AI extras: AI-written listing and social posts SL/EN, AI poster designs, and an AI search plan (species and behaviour-based search guidance)
+      - AI extras: AI-written listing and social posts SL/EN, AI poster designs, and an AI search plan (species and behaviour-based search guidance, with a sightings heatmap)
+      - statistics for my reports (views, shares, alerts sent)
+      - automatic chat translation (SL/EN); chat itself stays free
       - one-tap lost mode
       - 1 free Boost per year
       - **ad-free**
@@ -181,3 +183,4 @@ approvals:
 | 0.9 | 2026-10-15 | Client decisions: name Najdimo; formal vikanje, "Vpis" for sign-in; owners may remove the Vet Partner poster line; Partners page promises a reply within 2 working days and better terms for founding partners |
 | 1.0 | 2026-10-15 | Architecture change: Express + Prisma API, Supabase Free for DB/Auth only, Hetzner VPS + Cloudflare R2, budget about €5–10/month at start |
 | 1.1 | 2026-10-15 | Reward escrow dropped (no Stripe Connect, payment-services licence or DAC7); optional display-only "Nagrada" line + scam warning |
+| 1.2 | 2026-10-19 | Premium (owner): €3.99/month or €29.99/year shown first; adds report statistics, a sightings heatmap in the AI search plan and automatic chat translation; nothing that reunites animals becomes paid or slower (FR-026 v0.11) |
