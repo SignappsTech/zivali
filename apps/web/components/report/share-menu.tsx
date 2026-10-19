@@ -230,7 +230,7 @@ export function PosterOptions({
 			<p id={labelId} className="mt-5 text-control font-bold">
 				{copy.languageLabel}
 			</p>
-			<div role="group" aria-labelledby={labelId} className="mt-2 flex gap-2">
+			<div role="group" aria-labelledby={labelId} className="mt-2 flex flex-wrap gap-2">
 				<Pill pressed={lang === 'sl'} onPressedChange={() => setLang('sl')}>
 					<span lang="sl">{copy.languageSl}</span>
 				</Pill>
