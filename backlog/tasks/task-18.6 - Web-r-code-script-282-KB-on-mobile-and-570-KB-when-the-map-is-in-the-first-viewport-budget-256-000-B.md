@@ -3,11 +3,11 @@ id: TASK-18.6
 title: >-
   Web /r/[code]: script 282 KB on mobile and 570 KB when the map is in the first
   viewport (budget 256 000 B)
-status: In Progress
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-19 18:38'
-updated_date: '2026-10-19 18:43'
+updated_date: '2026-10-19 19:34'
 labels:
   - bug
   - 'est:S'
