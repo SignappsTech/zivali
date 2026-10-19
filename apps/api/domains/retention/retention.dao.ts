@@ -114,6 +114,13 @@ export const countProfilelessAnonymous = async (before: Date, tx?: Tx) =>
 			select count(*)::int as n from auth.users u where ${profilelessAnonymous(before)}`
 	)[0]!.n;
 
+/** Supabase Auth says the user is a full account now (converted after it was picked); no auth user is not converted. */
+export const isConvertedAuthUser = async (id: string, tx?: Tx) =>
+	(
+		await (tx ?? prisma).$queryRaw<{ converted: boolean }[]>`
+			select exists (select 1 from auth.users where id = ${id}::uuid and is_anonymous is not true) as converted`
+	)[0]!.converted;
+
 export default {
 	purgeEmailOutbox,
 	purgePartnerStats,
@@ -126,4 +133,5 @@ export default {
 	deleteProfiles,
 	listProfilelessAnonymous,
 	countProfilelessAnonymous,
+	isConvertedAuthUser,
 };

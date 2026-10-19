@@ -50,11 +50,15 @@ export async function purgeReports(_input: void, ctx: Ctx): Promise<number | nul
 	return RetentionDao.purgeReports(monthsAgo(ctx.now, months.data), ctx.tx);
 }
 
-/** Deletes each Auth user through the admin API; returns the ids done. A failure goes to `failed`, skipped from then. */
-async function deleteAuthUsers(ids: string[], failed: string[]): Promise<string[]> {
+/**
+ * Deletes each Auth user through the admin API; returns the ids done. One converted to a full account since it was
+ * picked is left alone (no longer idle, it is not picked again); a failure goes to `failed`, skipped from then on.
+ */
+async function deleteAuthUsers(ids: string[], failed: string[], tx?: Prisma.TransactionClient): Promise<string[]> {
 	const done: string[] = [];
 	for (const id of ids) {
 		try {
+			if (await RetentionDao.isConvertedAuthUser(id, tx)) continue;
 			await UsersDomain.deleteAuthUser(id);
 			done.push(id);
 		} catch {
@@ -65,22 +69,34 @@ async function deleteAuthUsers(ids: string[], failed: string[]): Promise<string[
 }
 
 /**
- * Anonymous accounts idle for ANONYMOUS_ACCOUNT_DAYS (RetentionDao.lockIdleAnonymous), a transaction per batch of
+ * Anonymous Supabase Auth users that never got a profile, then anonymous accounts idle for ANONYMOUS_ACCOUNT_DAYS
+ * (RetentionDao.lockIdleAnonymous). The profile-less ones come first, so a not-live run counts them before the
+ * rolled-back profile deletes would make those accounts profile-less too. Accounts go a transaction per batch of
  * ACCOUNT_BATCH: (live only) the Supabase Auth user first, inside the locks, then for the accounts whose Auth delete
  * went through their photos (a storage delete queued) and the profile, which takes managers, alerts, closed abuse
  * reports and notifications along (its reports stay, created_by cleared). The profile is the retry marker: an Auth
  * user already gone counts as deleted, so the next run completes a batch that did not commit. A failed Auth delete
  * keeps that account for the next run and does not hold up the others; the job fails after the commit
- * (`auth_delete_failures`). Then (live) the anonymous Auth users that never got a profile. Not live (a dry run, or
- * retention.purge_live not true) the Auth admin API is never called, as it cannot be rolled back: only counts.
+ * (`auth_delete_failures`). Not live (a dry run, or retention.purge_live not true) the Auth admin API is never
+ * called, as it cannot be rolled back: only counts.
  */
 export async function purgeAnonymousAccounts(input: { live: boolean }, ctx: Ctx) {
 	const before = daysAgo(ctx.now, ANONYMOUS_ACCOUNT_DAYS);
 	const failed: string[] = [];
+
+	let anonymous_auth_users = 0;
+	if (input.live) {
+		await inBatches(async (limit) => {
+			const ids = await RetentionDao.listProfilelessAnonymous(before, limit, failed, ctx.tx);
+			anonymous_auth_users += (await deleteAuthUsers(ids, failed, ctx.tx)).length;
+			return ids.length;
+		}, ACCOUNT_BATCH);
+	} else anonymous_auth_users = await RetentionDao.countProfilelessAnonymous(before, ctx.tx);
+
 	let anonymous_accounts = 0;
 	const batch = async (limit: number, tx: Prisma.TransactionClient) => {
 		const ids = await RetentionDao.lockIdleAnonymous(before, limit, failed, tx);
-		const done = input.live ? await deleteAuthUsers(ids, failed) : ids;
+		const done = input.live ? await deleteAuthUsers(ids, failed, tx) : ids;
 		if (done.length) {
 			const photos = await RetentionDao.removeOwnedPhotos(done, tx);
 			if (photos.length)
@@ -96,15 +112,6 @@ export async function purgeAnonymousAccounts(input: { live: boolean }, ctx: Ctx)
 				: prisma.$transaction((tx) => batch(limit, tx), { timeout: ACCOUNT_BATCH_TIMEOUT_MS }),
 		ACCOUNT_BATCH
 	);
-
-	let anonymous_auth_users = 0;
-	if (input.live) {
-		await inBatches(async (limit) => {
-			const ids = await RetentionDao.listProfilelessAnonymous(before, limit, failed, ctx.tx);
-			anonymous_auth_users += (await deleteAuthUsers(ids, failed)).length;
-			return ids.length;
-		}, ACCOUNT_BATCH);
-	} else anonymous_auth_users = await RetentionDao.countProfilelessAnonymous(before, ctx.tx);
 	return { anonymous_accounts, anonymous_auth_users, auth_delete_failures: failed.length };
 }
 

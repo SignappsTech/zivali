@@ -473,9 +473,13 @@ describe('retention.purge reports (last)', () => {
 describe('retention.purge anonymous accounts (last)', () => {
 	const cutoff = ago(30 * DAY);
 	const accounts: string[] = [];
-	/** A profile with a real auth.users row: anonymous in both unless `converted` (Auth says full account) or `full`. */
+	/**
+	 * A profile with a real auth.users row, both created at `created_at`: anonymous in both unless `converted` (Auth
+	 * says full account) or `full`.
+	 */
 	async function account(created_at: Date, { converted = false, full = false } = {}): Promise<string> {
 		const id = await createAuthUser({ is_anonymous: !converted && !full });
+		await prisma.$executeRaw`update auth.users set created_at = ${created_at} where id = ${id}::uuid`;
 		await prisma.profiles.create({ data: { id, is_anonymous: !full, created_at } });
 		accounts.push(id);
 		return id;
@@ -511,6 +515,8 @@ describe('retention.purge anonymous accounts (last)', () => {
 	let kept: Record<'fresh' | 'open' | 'manager' | 'recent' | 'chatting' | 'reporting' | 'converted' | 'full', string>;
 	let noProfile: Record<'old' | 'fresh' | 'full', string>;
 	let endedReport: string, photo: string;
+	/** The dry run's count of profile-less anonymous Auth users: the live run must delete exactly as many. */
+	let dryAuthUsers: number;
 	const everyone = () => [...Object.values(gone), ...Object.values(kept)].sort();
 	const authOnlyIds = () => Object.values(noProfile).sort();
 
@@ -570,6 +576,7 @@ describe('retention.purge anonymous accounts (last)', () => {
 
 	it('dry run and not live: counts the idle accounts, changes nothing and never calls the Auth admin API', async () => {
 		const dry = counts((await run({ dry_run: true })).line);
+		dryAuthUsers = dry.anonymous_auth_users;
 		expect(dry.anonymous_accounts).toBeGreaterThanOrEqual(3);
 		expect(dry.anonymous_auth_users).toBeGreaterThanOrEqual(1);
 
@@ -577,7 +584,7 @@ describe('retention.purge anonymous accounts (last)', () => {
 		const counted = await run({});
 		expect(counted.line.purge_live).toBe(false);
 		expect(counts(counted.line).anonymous_accounts).toBeGreaterThanOrEqual(3);
-		expect(counts(counted.line).anonymous_auth_users).toBeGreaterThanOrEqual(1);
+		expect(counts(counted.line).anonymous_auth_users).toBe(dryAuthUsers);
 
 		expect(authDeletes).not.toHaveBeenCalled();
 		expect(await profilesLeft(everyone())).toEqual(everyone());
@@ -590,7 +597,8 @@ describe('retention.purge anonymous accounts (last)', () => {
 	it('live: deletes accounts idle past the window with their Auth user and photos; a re-run deletes nothing', async () => {
 		const { line } = await run({});
 		expect(counts(line).anonymous_accounts).toBeGreaterThanOrEqual(3);
-		expect(counts(line).anonymous_auth_users).toBeGreaterThanOrEqual(1);
+		// Not inflated by the accounts the rolled-back run deleted first: the same count as live.
+		expect(counts(line).anonymous_auth_users).toBe(dryAuthUsers);
 		expect(counts(line).auth_delete_failures).toBe(0);
 		for (const id of [...Object.values(gone), noProfile.old]) expect(authDeletes).toHaveBeenCalledWith(id);
 		for (const id of [...Object.values(kept), noProfile.fresh, noProfile.full])
@@ -632,6 +640,22 @@ describe('retention.purge anonymous accounts (last)', () => {
 		authDeletes.mockImplementation(mocked);
 		expect(counts((await run({})).line)).toMatchObject({ anonymous_accounts: 1, auth_delete_failures: 0 });
 		expect(await profilesLeft([failing])).toEqual([]);
+	});
+
+	it('an account converted to a full one mid-batch is left alone', async () => {
+		const first = await account(outside(ago(32 * DAY)));
+		const converting = await account(outside(cutoff));
+		const mocked = authDeletes.getMockImplementation()!;
+		authDeletes.mockImplementation(async (id) => {
+			// The user links an email while the batch runs, after both were picked.
+			if (id === first)
+				await prisma.$executeRaw`update auth.users set is_anonymous = false where id = ${converting}::uuid`;
+			return mocked(id);
+		});
+		expect(counts((await run({})).line)).toMatchObject({ anonymous_accounts: 1, auth_delete_failures: 0 });
+		expect(authDeletes).not.toHaveBeenCalledWith(converting);
+		expect(await profilesLeft([first, converting])).toEqual([converting]);
+		expect(await authLeft([first, converting])).toEqual([converting]);
 	});
 
 	it('a crash after the Auth delete: the next run deletes the profile (an Auth user already gone counts as done)', async () => {
