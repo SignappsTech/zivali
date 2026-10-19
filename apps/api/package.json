@@ -16,7 +16,8 @@
 		"typecheck": "tsc",
 		"test": "vitest run",
 		"test:security": "vitest run test/security",
-		"eval:matching": "tsx test/eval/matching/run.ts"
+		"eval:matching": "tsx test/eval/matching/run.ts",
+		"eval:extract": "tsx test/eval/extract/run.ts"
 	},
 	"engines": {
 		"node": "22.x"
