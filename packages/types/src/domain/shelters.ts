@@ -35,7 +35,7 @@ export type ShelterSummary = Pick<
 	'slug' | 'name' | 'city' | 'phone_display' | 'phone' | 'verified_at' | 'source'
 > & { area: string; municipality_count: number; species: Species[] };
 export type ShelterList = { items: ShelterSummary[] };
-export type ShelterDetail = Shelter & { municipalities: MunicipalityRef[] };
+export type ShelterDetail = Shelter & { municipalities: MunicipalityRef[]; likely_municipalities?: MunicipalityRef[] };
 /** GET /v1/shelters/responsible?lat=&lng= or ?municipality=<slug> (one of the two). */
 export type ResponsibleShelterQuery = { lat?: number; lng?: number; municipality?: string };
 export type LikelyShelter = { slug: string; name: string; phone: string; distance_km: number };
