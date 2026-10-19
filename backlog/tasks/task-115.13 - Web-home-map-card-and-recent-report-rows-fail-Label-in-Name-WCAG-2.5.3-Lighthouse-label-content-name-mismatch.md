@@ -3,10 +3,11 @@ id: TASK-115.13
 title: >-
   Web home: map card and recent-report rows fail Label in Name (WCAG 2.5.3,
   Lighthouse label-content-name-mismatch)
-status: To Do
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-19 19:44'
+updated_date: '2026-10-19 20:00'
 labels:
   - bug
   - 'est:XS'
