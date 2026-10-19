@@ -30,7 +30,20 @@ const StripeEvent = z.object({
 	}),
 });
 
+// GET /v1/prices: the fields the price check (C13 §Prices) compares.
+const StripePrices = z.object({
+	data: z.array(
+		z.object({
+			id: z.string().min(1).max(255),
+			unit_amount: z.number().int().nullable(),
+			currency: z.string().max(8),
+			recurring: z.object({ interval: z.string().max(16) }).nullable(),
+		})
+	),
+});
+
 const invalid = () => new AppError('VALIDATION', 'Invalid webhook signature or payload');
+const unavailable = () => new AppError('SERVICE_UNAVAILABLE', 'Payment provider unavailable');
 
 /** The Stripe-Signature header for a body (`t=<unix s>,v1=<hex HMAC-SHA256 of "t.body">`); mock events and tests. */
 export function signWebhook(rawBody: string, secret: string, t = Math.floor(Date.now() / 1000)): string {
@@ -114,13 +127,35 @@ export function stripePayments(secretKey: string, webhookSecret: string): Paymen
 				});
 			} catch {
 				// Timeout or network failure: the provider is unavailable (C1/C13), no payment row is written.
-				throw new AppError('SERVICE_UNAVAILABLE', 'Payment provider unavailable');
+				throw unavailable();
 			}
 			if (!res.ok) throw new Error(`stripe: HTTP ${res.status}`);
 			const json = (await res.json()) as { id: string; url: string; livemode?: boolean };
 			if (json.livemode && !live)
 				throw new AppError('LIVE_MODE_FORBIDDEN', 'Live mode is refused (test mode only)');
 			return { id: json.id, url: json.url };
+		},
+		async findPrice(lookupKey) {
+			const url = new URL('https://api.stripe.com/v1/prices');
+			url.searchParams.append('lookup_keys[]', lookupKey);
+			url.searchParams.set('active', 'true');
+			let res: Response;
+			try {
+				res = await fetch(url, {
+					headers: { authorization: `Bearer ${secretKey}`, 'stripe-version': STRIPE_API_VERSION },
+					signal: AbortSignal.timeout(10_000),
+				});
+			} catch {
+				throw unavailable();
+			}
+			if (!res.ok) throw new Error(`stripe: HTTP ${res.status}`);
+			// An unexpected shape is our bug or Stripe's, never the client's: a plain error (500), not VALIDATION.
+			const parsed = StripePrices.safeParse(await res.json());
+			if (!parsed.success) throw new Error('stripe: unexpected price list');
+			const price = parsed.data.data[0];
+			if (!price) return null;
+			const { id, unit_amount, currency, recurring } = price;
+			return { id, unit_amount, currency, interval: recurring?.interval ?? null };
 		},
 		parseWebhook: (rawBody, signature) => verifyEvent(rawBody, signature, webhookSecret),
 	};

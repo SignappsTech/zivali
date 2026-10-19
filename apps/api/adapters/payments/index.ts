@@ -40,11 +40,15 @@ export type PaymentEvent = {
 		metadata: Record<string, string>;
 	};
 };
+/** A recurring price as Stripe holds it; checkout compares it with app_config payments.prices (C13 §Prices). */
+export type ProviderPrice = { id: string; unit_amount: number | null; currency: string; interval: string | null };
 export type PaymentsAdapter = {
 	provider: 'stripe' | 'mock';
 	/** A live Stripe key (APP_ENV=production only): checkouts are refused while the live gate is closed. */
 	live: boolean;
 	createCheckout(input: CheckoutInput): Promise<{ id: string; url: string }>;
+	/** The active price holding a lookup key (premium_monthly, premium_yearly), or null when none does. */
+	findPrice(lookupKey: string): Promise<ProviderPrice | null>;
 	/** Verifies the signature over the raw body and parses the event; throws AppError VALIDATION otherwise. */
 	parseWebhook(rawBody: string, signature: string | undefined): PaymentEvent;
 };
