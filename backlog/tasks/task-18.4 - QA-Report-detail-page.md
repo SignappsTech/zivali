@@ -5,7 +5,7 @@ status: To Do
 assignee:
   - '@qa'
 created_date: '2026-10-14 22:15'
-updated_date: '2026-10-19 18:40'
+updated_date: '2026-10-19 20:22'
 labels:
   - qa
   - 'qa:fail'
@@ -18,6 +18,9 @@ dependencies:
   - TASK-18.6
   - TASK-18.7
   - TASK-18.8
+  - TASK-18.9
+  - TASK-18.10
+  - TASK-18.11
 references:
   - docs/tech/frontend.md
   - docs/design/pages/P9-report-detail.md
@@ -59,4 +62,11 @@ AC#6 CI evidence: lead, deploy-after-green-ci, 2026-10-19 (ci = verify:static + 
 Lighthouse 12.6.1 live, mobile/desktop: /r/zvsmkB5v 78/91, /en/r/zvsmkB5v 78/91, /r/E1ScbpGF 79/96, /r/WD8k8UgN 62 (mobile); a11y 100, BP 100 everywhere; mobile LCP 4.2-6.1 s; script 282 KB mobile, 570 KB with map. SEO 58 = is-crawlable (pilot SEARCH_INDEXING off, expected) + meta-description (Next streaming metadata for non-bot UAs; bots incl. facebook/twitter/slack/bing get it in <head>; Googlebot renders JS): not filed. Baselines /kako-deluje 94/100, /en 89/99.
 Live checks pass: AC1 (photos, species, breed, colours, size, sex, chip "Ni podatka" never a number, date, area map, status, circumstances; date only, CHANGE already logged), AC2 (contact, share/poster, more menu with abuse, labelled ad "Oglas"), AC3 (SSR title/desc/OG image 200 png/JSON-LD Article, canonical, hreflang via Link header), AC5 (switch SL->EN: URL, lang, title, desc, og:locale en_GB, body), AC7 (Nagrada 100 EUR + scam warning on the lost report, none on found/sighted). Unknown code: 404 with message SL/EN. 410 not checked live (no gone code without creating data; proxy tests cover it). 320/390 px no overflow, Chromium + WebKit, no console errors besides the 404 resource, keyboard order logical with visible focus except the map canvas.
 FAIL: TASK-18.5 (mobile LCP/perf, major), TASK-18.6 (script budget, major), TASK-18.7 (map focus ring, major a11y), TASK-18.8 (200% text overflow, minor). Note: 404 doc title is the generic site title (shell-wide, not filed).
+
+Re-QA 2026-10-19 (web only; app: later), live najdimo.si version 1ce206002ec1 (18.5-18.8 merged). AC#6 CI evidence: lead, deploy-after-green-ci, 2026-10-19. pnpm verify/quality not run locally (QA rules).
+Lighthouse 12.6.1 mobile x3 / desktop: /r/zvsmkB5v 80/79/78, LCP 5.1-5.7 s / 98, LCP 1.08 s; /r/WD8k8UgN 87/88/89, LCP 3.8-3.9 s / 98; /en/r/zvsmkB5v 81/82, LCP 4.9-5.0 s / 98. a11y 100, BP 100, CLS 0, TBT 63-129 ms (baseline /kako-deluje 135 ms, perf 94). Script 251.3 KB on every run (<= 256 000 B: TASK-18.6 fixed). SEO 69 = staging noindex (expected).
+TASK-18.7 fixed: map canvas :focus-visible ring 3 px solid rgb(26,103,115), offset -3 px, Chromium + WebKit, /r/ and /zemljevid. At human tab speed the canvas is reached in order after 'Preskoči zemljevid'; at automation speed the lazy map (TASK-18.6) loads after focus has passed it (timing artefact, not filed).
+TASK-18.8 fixed for its scope: header and action buttons fit at 390/320 px 200% text in both engines. New: the detail ad's CTA overflows (TASK-18.10) and the gallery controls overflow at 320 px (TASK-18.11).
+Spot checks pass: SSR title/description/OG image 200 png (SL + ?lang=en)/JSON-LD Article+Place/canonical/hreflang Link header, X-Robots-Tag noindex on staging; SL->EN switch (URL, lang, title, description, og:locale en_GB, body); Nagrada: 100 € + scam warning on the lost report, neither on the found ones (safety note instead); no chip number; one h1/main; unknown code 404 with message; console clean except the 404 resource.
+FAIL: TASK-18.9 (mobile LCP/perf still below gate, major), TASK-18.10 (ad CTA overflow at 200% text, minor), TASK-18.11 (gallery controls at 320 px 200% text, minor).
 <!-- SECTION:NOTES:END -->
