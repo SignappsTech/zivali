@@ -3,10 +3,11 @@ id: TASK-29.17
 title: >-
   Web lost flow: the sticky action bar hides focused fields and Uredi buttons at
   320-390 px (WCAG 2.4.11, axe target-size)
-status: To Do
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-19 19:14'
+updated_date: '2026-10-19 19:34'
 labels:
   - bug
   - 'est:XS'
