@@ -1,10 +1,11 @@
 ---
 id: TASK-3.15
 title: 'Fresh clone: web needs a manual .env.local before pnpm dev works'
-status: To Do
+status: In Progress
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-19 15:01'
+updated_date: '2026-10-19 18:19'
 labels:
   - bug
   - fe
@@ -27,6 +28,10 @@ Actual: nothing creates apps/web/.env.local. apps/api has .env.example plus a po
 Severity: minor (developer experience; workaround: write the two values from pnpm exec supabase status into apps/web/.env.local).
 
 Options: an apps/web/.env.example with the local Supabase URL and the CLI's local publishable key plus a web postinstall env-sync like apps/api, or a bootstrap step that writes them from supabase status -o env. apps/mobile/.env.local has the same gap (mobile deferred in the web-only pilot).
+
+## Packet
+
+Branch: agent/TASK-3.15-web-env-sync
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Acceptance Criteria

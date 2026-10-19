@@ -30,7 +30,7 @@ Prerequisites: Git, Node 22 (`.nvmrc`), Corepack (ships with Node) and Docker De
 git clone <repo> izgubljene-zivali
 cd izgubljene-zivali
 corepack enable          # uses the pnpm version pinned in package.json
-pnpm bootstrap           # install, local Supabase, MinIO, migrations + seed, seed photos, tokens and i18n builds
+pnpm bootstrap           # install (+ apps/api/.env.local), local Supabase, apps/web/.env.local, MinIO, migrations + seed, seed photos, tokens and i18n builds
 pnpm dev                 # API on http://localhost:4000, worker, web on http://localhost:3000
 ```
 
@@ -44,7 +44,7 @@ Root scripts. Until the piece a script needs is merged, it prints which task add
 
 | Command                                         | What                                                                                                              | Active from                            |
 | ----------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- | -------------------------------------- |
-| `pnpm bootstrap`                                | install, `db:start`, MinIO up, `db:reset`, seed photos, build packages (tokens, i18n)                             | now                                    |
+| `pnpm bootstrap`                                | install, `db:start`, web `.env.local`, MinIO up, `db:reset`, seed photos, build packages (tokens, i18n)           | now                                    |
 | `pnpm dev`                                      | `turbo run dev dev:worker`: API on :4000, worker, web on :3000, packages in watch; starts whichever of them exist | TASK-3.3 (web), TASK-3.7 (api, worker) |
 | `pnpm build`                                    | `turbo run build`                                                                                                 | now                                    |
 | `pnpm lint`                                     | ESLint on root scripts, then `turbo run lint`                                                                     | now                                    |
@@ -64,7 +64,7 @@ Root scripts. Until the piece a script needs is merged, it prints which task add
 
 Per package: `pnpm --filter <name> <script>`, for example `pnpm --filter web e2e` or `pnpm --filter @zivali/i18n check`. Supabase CLI directly: `pnpm exec supabase <command>`.
 
-Web: the app refuses to start without `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` in `apps/web/.env.local` and names the missing one. `pnpm --filter web e2e` builds and starts the app on :3000 (or reuses a running `pnpm dev`); before the first run, `pnpm --filter web exec playwright install chromium`.
+Web: the app refuses to start without `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` in `apps/web/.env.local` and names the missing one. `pnpm bootstrap` appends both from the running local stack (`node scripts/env-sync.mjs apps/web --supabase` reads `supabase status -o env`) and never changes a line that is already there: after moving the Supabase ports, delete the two lines and rerun it. `pnpm --filter web e2e` builds and starts the app on :3000 (or reuses a running `pnpm dev`); before the first run, `pnpm --filter web exec playwright install chromium`.
 
 ## The `pnpm verify` rule
 

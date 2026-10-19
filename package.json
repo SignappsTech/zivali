@@ -8,7 +8,7 @@
 	},
 	"scripts": {
 		"prepare": "husky",
-		"bootstrap": "pnpm install && pnpm db:start && node scripts/if-exists.mjs docker-compose.dev.yml TASK-3.7 -- docker compose -f docker-compose.dev.yml up -d && pnpm db:reset && node scripts/if-exists.mjs scripts/seed-photos.mjs TASK-6.6 -- node scripts/seed-photos.mjs && turbo run build --filter=@zivali/*",
+		"bootstrap": "pnpm install && pnpm db:start && node scripts/env-sync.mjs apps/web --supabase && node scripts/if-exists.mjs docker-compose.dev.yml TASK-3.7 -- docker compose -f docker-compose.dev.yml up -d && pnpm db:reset && node scripts/if-exists.mjs scripts/seed-photos.mjs TASK-6.6 -- node scripts/seed-photos.mjs && turbo run build --filter=@zivali/*",
 		"dev": "turbo run dev dev:worker",
 		"build": "turbo run build",
 		"lint": "eslint --max-warnings=0 scripts tests eslint.config.mjs && turbo run lint",
