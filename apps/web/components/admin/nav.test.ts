@@ -9,6 +9,7 @@ describe('admin navigation rules', () => {
 		expect(adminItem('/admin/ads')?.key).toBe('nav_ads');
 		expect(adminItem('/admin/ads/[id]/edit')?.key).toBe('nav_ads');
 		expect(adminItem('/admin/house-ads')?.key).toBe('nav_house_ads');
+		expect(adminItem('/admin/enquiries')?.key).toBe('nav_enquiries');
 		expect(adminItem('/admin/unknown')).toBeUndefined();
 	});
 
@@ -20,6 +21,8 @@ describe('admin navigation rules', () => {
 		expect(canOpen('/admin/shelters', 'MODERATOR')).toBe(false);
 		expect(canOpen('/admin/ads/new', 'MODERATOR')).toBe(false);
 		expect(canOpen('/admin/house-ads', 'MODERATOR')).toBe(false);
+		expect(canOpen('/admin/enquiries', 'MODERATOR')).toBe(false);
+		expect(canOpen('/admin/enquiries', 'ADMIN')).toBe(true);
 		expect(canOpen('/admin/unknown', 'MODERATOR')).toBe(false);
 		expect(canOpen('/admin/unknown', 'ADMIN')).toBe(true);
 	});
@@ -34,5 +37,6 @@ describe('admin navigation rules', () => {
 		expect(comingSection('ads')).toBeUndefined();
 		expect(comingSection('shelters')).toBeUndefined();
 		expect(comingSection('abuse-reports')).toBeUndefined();
+		expect(comingSection('enquiries')).toBeUndefined();
 	});
 });
