@@ -145,3 +145,7 @@ The pilot's data (Supabase project `najdimo`, buckets `zivali-*`) becomes produc
 13. Uptime monitors with e-mail alerts.
 14. Restore drill (TASK-70) and the manual smoke test witnessed.
 15. Go-live approval. Later: the accountant's answer (Q-012) and the owner's approval before the switch to live payments.
+
+## 11. AI switch-on (TASK-40.7, TASK-40.11)
+
+Only photos uploaded after the switch-on go to Anthropic or Voyage (owner, 2026-10-19). The switch-on instant is `app_config` `ai.photos_since`, a JSON string in ISO 8601 (`Z` or an offset), set once on the pilot database: `update app.app_config set value = to_jsonb(now()), updated_at = now() where key = 'ai.photos_since';` after privacy policy v0.8 is live. Then `AI_PROVIDER=anthropic`, `ANTHROPIC_API_KEY`, `EMBEDDER_PROVIDER=voyage`, `VOYAGE_API_KEY` in `staging/.env` and the api and worker recreated (section 2). Unset or invalid: nothing is sent. Never set it earlier than the switch-on. Details and checks: deploy/README.md §11.
