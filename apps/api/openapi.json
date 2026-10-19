@@ -758,14 +758,16 @@
 					"short_code": { "type": "string" },
 					"moderation_state": { "$ref": "#/components/schemas/ModerationState" },
 					"manage_token": { "type": "string" },
-					"warnings": { "type": "array", "items": { "$ref": "#/components/schemas/ReportWarning" } }
+					"warnings": { "type": "array", "items": { "$ref": "#/components/schemas/ReportWarning" } },
+					"photo_ids": { "type": "array", "items": { "type": "string", "format": "uuid" } }
 				},
-				"required": ["id", "short_code", "moderation_state", "warnings"],
+				"required": ["id", "short_code", "moderation_state", "warnings", "photo_ids"],
 				"example": {
 					"id": "7c1e2a4b-5d6f-4a8b-9c0d-1e2f3a4b5c6d",
 					"short_code": "Hk3vT9qP",
 					"moderation_state": "visible",
-					"warnings": []
+					"warnings": [],
+					"photo_ids": ["9b0e6c1a-3f2d-4c5e-8a7b-1d2e3f4a5b6c"]
 				}
 			},
 			"CreateShelterInput": {

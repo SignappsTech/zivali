@@ -74,7 +74,8 @@ const ReportFields = z.object({
 
 /** POST /v1/reports. Domain rules (future event_at, duplicates, anonymous lost) stay in ReportsDomain. */
 export const CreateReportInput = ReportFields.superRefine((r, ctx) => {
-	if (r.type !== 'sighted' && r.photo_ids.length < 1)
+	// A lost report of a saved pet may send none: the API then takes the pet's photos (and still needs one, CH-348).
+	if (r.type !== 'sighted' && r.photo_ids.length < 1 && !(r.type === 'lost' && r.pet_id))
 		ctx.addIssue({ code: 'custom', path: ['photo_ids'], message: 'At least one photo' });
 	if (r.type !== 'lost')
 		for (const key of ['reward_eur', 'reward_note'] as const)
@@ -101,6 +102,8 @@ export const CreateReportResponse = z
 		moderation_state: ModerationState,
 		manage_token: z.string().optional(),
 		warnings: z.array(ReportWarning),
+		/** The report's photos in order: the sent ones, or the saved pet's when a lost report sent none. */
+		photo_ids: z.array(Uuid),
 	})
 	.openapi('CreateReportResponse', {
 		example: {
@@ -108,6 +111,7 @@ export const CreateReportResponse = z
 			short_code: 'Hk3vT9qP',
 			moderation_state: 'visible',
 			warnings: [],
+			photo_ids: ['9b0e6c1a-3f2d-4c5e-8a7b-1d2e3f4a5b6c'],
 		},
 	});
 

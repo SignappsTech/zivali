@@ -26,6 +26,7 @@ export const createdReport: CreateReportResponse = {
 	short_code: 'Hk3vT9qP',
 	moderation_state: 'visible',
 	warnings: [],
+	photo_ids: ['9b0e2c4a-1f3d-4b5e-8a7c-6d2e1f0a9b00'],
 };
 
 export const duplicateOpenReport: ApiErrorBody = {

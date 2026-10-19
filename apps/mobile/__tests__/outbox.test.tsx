@@ -101,6 +101,7 @@ function server(mockApi = createMockApi) {
 				moderation_state: 'visible',
 				manage_token: `token-${state.created}`,
 				warnings: [],
+				photo_ids: [],
 			};
 			state.replies.set(key, stored);
 		}
