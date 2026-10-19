@@ -177,8 +177,16 @@ describe('PetList', () => {
 	it('has an empty state, announces loading and offers a retry on error', () => {
 		api.list = { data: { items: [] } };
 		show(<PetList />);
-		expect(screen.getByRole('heading', { level: 3, name: sl.pets.empty_title })).toBeTruthy();
+		// An h2 under the page's h1, the P8 slice's copy as exact names.
+		expect(screen.getByRole('heading', { level: 2, name: 'Še nimate shranjenih živali' })).toBeTruthy();
+		expect(screen.getByText(sl.pets.empty_body)).toBeTruthy();
 		expect(screen.getByRole('link', { name: 'Dodaj žival' })).toBeTruthy();
+		cleanup();
+
+		show(<PetList />, 'en');
+		expect(screen.getByRole('heading', { level: 2, name: 'You have not saved any pets yet' })).toBeTruthy();
+		expect(screen.getByText(en.pets.empty_body)).toBeTruthy();
+		expect(screen.getByRole('link', { name: 'Add a pet' })).toBeTruthy();
 		cleanup();
 
 		api.list = {};

@@ -110,7 +110,7 @@ test('SL: an owner adds a pet with a photo and a chip; only they can reveal the 
 	test.setTimeout(90_000);
 	const seen = await fakeApi(page, baseURL!, []);
 	await page.goto('/moje-zivali');
-	await expect(page.getByRole('heading', { level: 3, name: 'Še nimate shranjenih živali' })).toBeVisible();
+	await expect(page.getByRole('heading', { level: 2, name: 'Še nimate shranjenih živali' })).toBeVisible();
 	await expect(page).toHaveTitle('Moje živali · Najdimo');
 	await expectNoAxeViolations(page);
 
@@ -183,7 +183,7 @@ test('SL: an owner deletes a pet after confirming, and is back on the list', asy
 
 	await expect(page).toHaveURL('/moje-zivali');
 	await expect(page.getByText('Profil je izbrisan.')).toBeVisible();
-	await expect(page.getByRole('heading', { level: 3, name: 'Še nimate shranjenih živali' })).toBeVisible();
+	await expect(page.getByRole('heading', { level: 2, name: 'Še nimate shranjenih živali' })).toBeVisible();
 	expect(seen.some((call) => call.method === 'DELETE' && call.path === `/v1/pets/${fixture.id}`)).toBe(true);
 });
 

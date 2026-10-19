@@ -8,6 +8,7 @@ import { getMockEvents, initAnalytics, resetMockEvents, setConsent } from '@ziva
 import { abuseCreated } from '@zivali/api/__fixtures__/abuse';
 import { createMockApi, mockError, type MockRequest, type MockRoutes } from '@zivali/api/mock';
 import { type ApiStore, createApiStore } from '@zivali/api/rtk';
+import en from '@zivali/i18n/dist/en.json';
 import sl from '@zivali/i18n/dist/sl.json';
 import type { ConversationSummary, Message } from '@zivali/types';
 
@@ -131,9 +132,9 @@ const keys = () =>
 const sent = (method: string, path: string) =>
 	calls.filter((call) => call.method === method && call.path === path).map((call) => call.body);
 
-function show(ui: React.ReactNode = <Thread id={ID} />) {
+function show(ui: React.ReactNode = <Thread id={ID} />, locale: 'sl' | 'en' = 'sl') {
 	return render(
-		<NextIntlClientProvider locale="sl" messages={sl}>
+		<NextIntlClientProvider locale={locale} messages={locale === 'en' ? en : sl}>
 			<Provider store={state.store!}>{ui}</Provider>
 		</NextIntlClientProvider>
 	);
@@ -211,12 +212,26 @@ describe('ConversationList (P12 inbox)', () => {
 		expect(onError).not.toHaveBeenCalled();
 	});
 
-	it('empty: the sentence about how chats start; beside a thread the heading is an h2', async () => {
-		state.store = createApiStore(createMockApi({ 'GET /v1/conversations': { items: [], next_cursor: null } }));
-		show(<ConversationList heading="h2" />);
-
-		expect(await screen.findByText(c.empty_title)).toBeTruthy();
+	it('empty: an h2 under the h1 with the sentence about how chats start, SL and EN; beside a thread an h3', async () => {
+		const empty = () =>
+			createApiStore(createMockApi({ 'GET /v1/conversations': { items: [], next_cursor: null } }));
+		state.store = empty();
+		show(<ConversationList />);
+		// The P12 slice's copy, as exact names.
+		expect(await screen.findByRole('heading', { level: 2, name: 'Pogovorov še ni' })).toBeTruthy();
 		expect(screen.getByText(c.empty_body)).toBeTruthy();
+		cleanup();
+
+		state.store = empty();
+		show(<ConversationList />, 'en');
+		expect(await screen.findByRole('heading', { level: 2, name: 'No conversations yet' })).toBeTruthy();
+		expect(screen.getByRole('heading', { level: 1, name: 'Inbox' })).toBeTruthy();
+		expect(screen.getByText(en.chat.empty_body)).toBeTruthy();
+		cleanup();
+
+		state.store = empty();
+		show(<ConversationList heading="h2" />);
+		expect(await screen.findByRole('heading', { level: 3, name: c.empty_title })).toBeTruthy();
 		expect(screen.getByRole('heading', { level: 2, name: c.inbox_title })).toBeTruthy();
 		expect(screen.queryByRole('heading', { level: 1 })).toBeNull();
 	});
@@ -568,6 +583,29 @@ describe('Thread (P12)', () => {
 		expect(composer()).toHaveProperty('disabled', true);
 		menu = await openMenu();
 		expect(within(menu).queryByRole('menuitem', { name: c.menu_block })).toBeNull();
+	});
+
+	it('the menu by keyboard (menu button pattern): Enter opens it on its first row, Escape closes it back to the button', async () => {
+		serve({ summary: conversation({ other_participant_id: OTHER }) });
+		show();
+		await screen.findByText(HISTORY[1]!.body);
+
+		// Exact names: no stray, leading or doubled space in any of them.
+		const button = screen.getByRole('button', { name: 'Možnosti pogovora' });
+		expect(button.getAttribute('aria-haspopup')).toBe('menu');
+		const menu = await openMenu();
+		const rows = ['Odpri prijavo', 'Prijavi zlorabo', 'Prijavi in blokiraj', 'Blokiraj'].map((name) =>
+			within(menu).getByRole('menuitem', { name })
+		);
+		expect(within(menu).getAllByRole('menuitem')).toEqual(rows);
+		await waitFor(() => expect(document.activeElement).toBe(rows[0]));
+		fireEvent.keyDown(rows[0]!, { key: 'ArrowDown' });
+		await waitFor(() => expect(document.activeElement).toBe(rows[1]));
+
+		fireEvent.keyDown(rows[1]!, { key: 'Escape' });
+		await waitFor(() => expect(screen.queryByRole('menu')).toBeNull());
+		await waitFor(() => expect(document.activeElement).toBe(button));
+		expect(screen.queryByRole('dialog')).toBeNull();
 	});
 
 	it('Blokiraj asks first, then blocks, says so and disables the composer', async () => {
