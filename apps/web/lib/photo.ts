@@ -11,3 +11,6 @@ export const photoCrop = 'object-cover object-[50%_10%]';
 
 /** Report detail, galleries and other full views: the whole photo, letterboxed on the frame's `bg-muted`. */
 export const photoWhole = 'object-contain';
+
+/** A thumbnail below `lg` that becomes the large preview from `lg`: cropped like `photoCrop`, then whole and centred. */
+export const photoCropThenWhole = 'object-cover object-[50%_10%] lg:object-contain lg:object-center';

@@ -50,7 +50,7 @@ import { ChoiceButton, ChoiceRow, RadioGroup } from '@/components/ui/radio-group
 import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
-import { photoCrop } from '@/lib/photo';
+import { photoCrop, photoCropThenWhole } from '@/lib/photo';
 import { cn } from '@/lib/utils';
 
 import {
@@ -508,7 +508,7 @@ function ReviewStep({ photos, pet, edit, duplicate, update, onUpdateChange }: Re
 										height={i ? 72 : 300}
 										className={cn(
 											'size-[72px] rounded-xl bg-muted',
-											photoCrop,
+											i ? photoCrop : photoCropThenWhole,
 											i
 												? 'lg:h-[72px] lg:w-[88px] lg:rounded-lg'
 												: 'lg:aspect-[4/3] lg:h-auto lg:w-full lg:rounded-[32px]'

@@ -21,6 +21,7 @@ import { StatusLabel } from '@/components/ui/status-label';
 import { useRouter } from '@/i18n/client-navigation';
 import { Link } from '@/i18n/navigation';
 import { photoCrop } from '@/lib/photo';
+import { cn } from '@/lib/utils';
 
 import { FilterDrawer } from './filter-drawer';
 import {
@@ -491,7 +492,7 @@ function Preview({
 						alt={photo?.alt ?? ''}
 						width={64}
 						height={64}
-						className={`size-16 shrink-0 rounded-row bg-muted ${photoCrop}`}
+						className={cn('size-16 shrink-0 rounded-row bg-muted', photoCrop)}
 					/>
 				) : (
 					<span aria-hidden="true" className="size-16 shrink-0 rounded-row bg-muted" />
